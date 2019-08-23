@@ -1,51 +1,24 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #include "csp_solver_mspt_receiver_222.h"
 #include "csp_solver_core.h"
@@ -56,18 +29,9 @@ C_mspt_receiver_222::C_mspt_receiver_222()
 
 	m_d_rec = std::numeric_limits<double>::quiet_NaN();
 	m_h_rec = std::numeric_limits<double>::quiet_NaN();
-	m_h_tower = std::numeric_limits<double>::quiet_NaN();
 	m_od_tube = std::numeric_limits<double>::quiet_NaN();
 	m_th_tube = std::numeric_limits<double>::quiet_NaN();
-	m_epsilon = std::numeric_limits<double>::quiet_NaN();
 	m_hl_ffact = std::numeric_limits<double>::quiet_NaN();
-	m_T_htf_hot_des = std::numeric_limits<double>::quiet_NaN();
-	m_T_htf_cold_des = std::numeric_limits<double>::quiet_NaN();
-	m_f_rec_min = std::numeric_limits<double>::quiet_NaN();
-	m_q_rec_des = std::numeric_limits<double>::quiet_NaN();
-	m_rec_su_delay = std::numeric_limits<double>::quiet_NaN();
-	m_rec_qf_delay = std::numeric_limits<double>::quiet_NaN();
-	m_m_dot_htf_max_frac = std::numeric_limits<double>::quiet_NaN();
 	m_A_sf = std::numeric_limits<double>::quiet_NaN();
 
 	m_pipe_loss_per_m = std::numeric_limits<double>::quiet_NaN();
@@ -87,7 +51,6 @@ C_mspt_receiver_222::C_mspt_receiver_222()
 
 		// Added for csp_solver/tcs wrapper
 	m_field_fl = -1;
-	error_msg = "";
 	m_mat_tube = -1;
 	m_flow_type = -1;
     m_crossover_shift = 0;
@@ -102,7 +65,6 @@ C_mspt_receiver_222::C_mspt_receiver_222()
 	m_od_control = std::numeric_limits<double>::quiet_NaN();
 	m_eta_field_iter_prev = std::numeric_limits<double>::quiet_NaN();
 	m_tol_od = std::numeric_limits<double>::quiet_NaN();
-	m_m_dot_htf_des = std::numeric_limits<double>::quiet_NaN();
 	m_q_dot_inc_min = std::numeric_limits<double>::quiet_NaN();
 
 	m_mode = -1;
@@ -984,29 +946,32 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 		m_od_control = 1.0;		//[-]
 	}
 
-	ms_outputs.m_m_dot_salt_tot = m_dot_salt_tot*3600.0;		//[kg/hr] convert from kg/s
-	ms_outputs.m_eta_therm = eta_therm;							//[-] RECEIVER thermal efficiency (includes radiation and convective losses. reflection losses are contained in receiver flux model)
-	ms_outputs.m_W_dot_pump = W_dot_pump / 1.E6;				//[MW] convert from W
-	ms_outputs.m_q_conv_sum = q_conv_sum / 1.E6;				//[MW] convert from W
-	ms_outputs.m_q_rad_sum = q_rad_sum / 1.E6;					//[MW] convert from W
-	ms_outputs.m_Q_thermal = q_thermal / 1.E6;					//[MW] convert from W
-	ms_outputs.m_T_salt_hot = T_salt_hot_guess - 273.15;		//[C] convert from K
-	ms_outputs.m_field_eff_adj = field_eff_adj;					//[-]
-	ms_outputs.m_component_defocus = m_od_control;				//[-]
-	ms_outputs.m_q_dot_rec_inc = q_dot_inc_sum / 1.E3;			//[MW] convert from kW
-	ms_outputs.m_q_startup = q_startup/1.E6;					//[MW-hr] convert from W-hr
-	ms_outputs.m_dP_receiver = DELTAP*m_n_panels / m_n_lines / 1.E5;	//[bar] receiver pressure drop, convert from Pa
-	ms_outputs.m_dP_total = Pres_D*10.0;						//[bar] total pressure drop, convert from MPa
-	ms_outputs.m_vel_htf = u_coolant;							//[m/s]
-	ms_outputs.m_T_salt_cold = T_salt_cold_in - 273.15;			//[C] convert from K
-	ms_outputs.m_m_dot_ss = m_dot_salt_tot_ss*3600.0;			//[kg/hr] convert from kg/s
-	ms_outputs.m_q_dot_ss = q_thermal_ss / 1.E6;				//[MW] convert from W
-	ms_outputs.m_f_timestep = f_rec_timestep;					//[-]
-	ms_outputs.m_time_required_su = time_required_su*3600.0;	//[s], convert from hr in code
+	outputs.m_m_dot_salt_tot = m_dot_salt_tot*3600.0;		//[kg/hr] convert from kg/s
+	outputs.m_eta_therm = eta_therm;							//[-] RECEIVER thermal efficiency (includes radiation and convective losses. reflection losses are contained in receiver flux model)
+	outputs.m_W_dot_pump = W_dot_pump / 1.E6;				//[MW] convert from W
+	outputs.m_q_conv_sum = q_conv_sum / 1.E6;				//[MW] convert from W
+	outputs.m_q_rad_sum = q_rad_sum / 1.E6;					//[MW] convert from W
+	outputs.m_Q_thermal = q_thermal / 1.E6;					//[MW] convert from W
+	outputs.m_T_salt_hot = T_salt_hot_guess - 273.15;		//[C] convert from K
+	outputs.m_field_eff_adj = field_eff_adj;					//[-]
+	outputs.m_component_defocus = m_od_control;				//[-]
+	outputs.m_q_dot_rec_inc = q_dot_inc_sum / 1.E3;			//[MW] convert from kW
+	outputs.m_q_startup = q_startup/1.E6;					//[MW-hr] convert from W-hr
+	outputs.m_dP_receiver = DELTAP*m_n_panels / m_n_lines / 1.E5;	//[bar] receiver pressure drop, convert from Pa
+	outputs.m_dP_total = Pres_D*10.0;						//[bar] total pressure drop, convert from MPa
+	outputs.m_vel_htf = u_coolant;							//[m/s]
+	outputs.m_T_salt_cold = T_salt_cold_in - 273.15;			//[C] convert from K
+	outputs.m_m_dot_ss = m_dot_salt_tot_ss*3600.0;			//[kg/hr] convert from kg/s
+	outputs.m_q_dot_ss = q_thermal_ss / 1.E6;				//[MW] convert from W
+	outputs.m_f_timestep = f_rec_timestep;					//[-]
+	outputs.m_time_required_su = time_required_su*3600.0;	//[s], convert from hr in code
 	if(q_thermal > 0.0)
-		ms_outputs.m_q_dot_piping_loss = m_Q_dot_piping_loss/1.E6;	//[MWt]
+		outputs.m_q_dot_piping_loss = m_Q_dot_piping_loss/1.E6;	//[MWt]
 	else
-		ms_outputs.m_q_dot_piping_loss = 0.0;		//[MWt]
+		outputs.m_q_dot_piping_loss = 0.0;		//[MWt]
+    outputs.m_q_heattrace = 0.0;
+
+    ms_outputs = outputs;
 
 	m_eta_field_iter_prev = field_eff;	//[-]
 }
@@ -1019,26 +984,29 @@ void C_mspt_receiver_222::off(const C_csp_weatherreader::S_outputs &weather,
 	m_mode = C_csp_collector_receiver::OFF;
 
 	// Assuming no night recirculation, so... these should be zero
-	ms_outputs.m_m_dot_salt_tot = 0.0;		//[kg/hr] convert from kg/s
-	ms_outputs.m_eta_therm = 0.0;			//[-] RECEIVER thermal efficiency (includes radiation and convective losses. reflection losses are contained in receiver flux model)
-	ms_outputs.m_W_dot_pump = 0.0;			//[MW] convert from W
-	ms_outputs.m_q_conv_sum = 0.0;			//[MW] convert from W
-	ms_outputs.m_q_rad_sum = 0.0;			//[MW] convert from W
-	ms_outputs.m_Q_thermal = 0.0;			//[MW] convert from W
-	ms_outputs.m_T_salt_hot = 0.0;			//[C] convert from K
-	ms_outputs.m_field_eff_adj = 0.0;		//[-]
-	ms_outputs.m_component_defocus = 1.0;	//[-]
-	ms_outputs.m_q_dot_rec_inc = 0.0;		//[MW] convert from kW
-	ms_outputs.m_q_startup = 0.0;			//[MW-hr] convert from W-hr
-	ms_outputs.m_dP_receiver = 0.0;			//[bar] receiver pressure drop, convert from Pa
-	ms_outputs.m_dP_total = 0.0;			//[bar] total pressure drop, convert from MPa
-	ms_outputs.m_vel_htf = 0.0;				//[m/s]
-	ms_outputs.m_T_salt_cold = 0.0;			//[C] convert from K
-	ms_outputs.m_m_dot_ss = 0.0;			//[kg/hr] convert from kg/s
-	ms_outputs.m_q_dot_ss = 0.0;			//[MW] convert from W
-	ms_outputs.m_f_timestep = 0.0;			//[-]
-	ms_outputs.m_time_required_su = sim_info.ms_ts.m_step;	//[s], convert from hr in code
-	ms_outputs.m_q_dot_piping_loss = 0.0;	//[MWt]
+	outputs.m_m_dot_salt_tot = 0.0;		//[kg/hr] convert from kg/s
+	outputs.m_eta_therm = 0.0;			//[-] RECEIVER thermal efficiency (includes radiation and convective losses. reflection losses are contained in receiver flux model)
+	outputs.m_W_dot_pump = 0.0;			//[MW] convert from W
+	outputs.m_q_conv_sum = 0.0;			//[MW] convert from W
+	outputs.m_q_rad_sum = 0.0;			//[MW] convert from W
+	outputs.m_Q_thermal = 0.0;			//[MW] convert from W
+	outputs.m_T_salt_hot = 0.0;			//[C] convert from K
+	outputs.m_field_eff_adj = 0.0;		//[-]
+	outputs.m_component_defocus = 1.0;	//[-]
+	outputs.m_q_dot_rec_inc = 0.0;		//[MW] convert from kW
+	outputs.m_q_startup = 0.0;			//[MW-hr] convert from W-hr
+	outputs.m_dP_receiver = 0.0;			//[bar] receiver pressure drop, convert from Pa
+	outputs.m_dP_total = 0.0;			//[bar] total pressure drop, convert from MPa
+	outputs.m_vel_htf = 0.0;				//[m/s]
+	outputs.m_T_salt_cold = 0.0;			//[C] convert from K
+	outputs.m_m_dot_ss = 0.0;			//[kg/hr] convert from kg/s
+	outputs.m_q_dot_ss = 0.0;			//[MW] convert from W
+	outputs.m_f_timestep = 0.0;			//[-]
+	outputs.m_time_required_su = sim_info.ms_ts.m_step;	//[s], convert from hr in code
+	outputs.m_q_dot_piping_loss = 0.0;	//[MWt]
+    outputs.m_q_heattrace = 0.0;
+
+    ms_outputs = outputs;
 	
 	return;
 }
@@ -1071,38 +1039,13 @@ void C_mspt_receiver_222::converged()
 	m_eta_field_iter_prev = 1.0;		//[-]
 
 	m_ncall = -1;
-}
 
-int C_mspt_receiver_222::get_operating_state()
-{
-	return m_mode_prev;
+    ms_outputs = outputs;
 }
 
 double C_mspt_receiver_222::get_remaining_startup_energy()
 {
 	return m_E_su_prev;
-}
-
-void C_mspt_receiver_222::clear_outputs()
-{
-	ms_outputs.m_m_dot_salt_tot = 
-		ms_outputs.m_eta_therm = 
-		ms_outputs.m_W_dot_pump = 
-		ms_outputs.m_q_conv_sum = 
-		ms_outputs.m_q_rad_sum = 
-		ms_outputs.m_Q_thermal =
-		ms_outputs.m_T_salt_hot = 
-		ms_outputs.m_field_eff_adj = 
-		ms_outputs.m_component_defocus =
-		ms_outputs.m_q_dot_rec_inc = 
-		ms_outputs.m_q_startup = 
-		ms_outputs.m_dP_receiver = 
-		ms_outputs.m_dP_total =
-		ms_outputs.m_vel_htf = 
-		ms_outputs.m_T_salt_cold = 
-		ms_outputs.m_m_dot_ss = 
-		ms_outputs.m_q_dot_ss = 
-		ms_outputs.m_f_timestep = std::numeric_limits<double>::quiet_NaN();
 }
 
 void C_mspt_receiver_222::calc_pump_performance(double rho_f, double mdot, double ffact, double &PresDrop_calc, double &WdotPump_calc)
@@ -1126,7 +1069,36 @@ void C_mspt_receiver_222::calc_pump_performance(double rho_f, double mdot, doubl
 
 }
 
-HTFProperties *C_mspt_receiver_222::get_htf_property_object()
+double C_mspt_receiver_222::get_pumping_parasitic_coef()
 {
-    return &field_htfProps;
+    double Tavg = (m_T_htf_cold_des + m_T_htf_hot_des) / 2.;
+
+    double mu_coolant = field_htfProps.visc(Tavg);				//[kg/m-s] Absolute viscosity of the coolant
+    double k_coolant = field_htfProps.cond(Tavg);				//[W/m-K] Conductivity of the coolant
+    double rho_coolant = field_htfProps.dens(Tavg, 1.0);        //[kg/m^3] Density of the coolant
+    double c_p_coolant = field_htfProps.Cp(Tavg)*1e3;           //[J/kg-K] Specific heat
+
+    double m_dot_salt = m_q_rec_des / (c_p_coolant * (m_T_htf_hot_des - m_T_htf_cold_des));
+
+    double n_t = (int)(CSP::pi*m_d_rec / (m_od_tube*m_n_panels));   // The number of tubes per panel, as a function of the number of panels and the desired diameter of the receiver
+    double id_tube = m_od_tube - 2 * m_th_tube;                 //[m] Inner diameter of receiver tube
+
+
+    double u_coolant = m_dot_salt / (n_t*rho_coolant*pow((id_tube / 2.0), 2)*CSP::pi);	//[m/s] Average velocity of the coolant through the receiver tubes
+    double Re_inner = rho_coolant * u_coolant*id_tube / mu_coolant;				        //[-] Reynolds number of internal flow
+    double Pr_inner = c_p_coolant * mu_coolant / k_coolant;						        //[-] Prandtl number of internal flow
+    double Nusselt_t, f;
+    double LoverD = m_h_rec / id_tube;
+    double RelRough = (4.5e-5) / id_tube;   //[-] Relative roughness of the tubes. http:www.efunda.com/formulae/fluids/roughness.cfm
+    CSP::PipeFlow(Re_inner, Pr_inner, LoverD, RelRough, Nusselt_t, f);
+
+    double deltap, wdot;
+    calc_pump_performance(rho_coolant, m_dot_salt, f, deltap, wdot);
+
+    return wdot / m_q_rec_des;
+}
+
+double C_mspt_receiver_222::area_proj()
+{
+    return CSP::pi * m_d_rec * m_h_rec; //[m^2] projected or aperture area of the receiver
 }
