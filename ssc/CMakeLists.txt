@@ -165,6 +165,11 @@ set_target_properties(ssc
     DEBUG_POSTFIX "d"
 	)
 
+if (MSVC)
+    set_target_properties(ssc
+        PROPERTIES
+        LINK_FLAGS /SUBSYSTEM:WINDOWS)
+endif()
 
 # dltest executable for checking ssc library
 if(UNIX AND NOT system_advisor_model_EXPORT)
@@ -216,9 +221,15 @@ if (UNIX)
 endif()
 
 
-if (MSVC)
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:WINDOWS")
+#####################################################################################################################
+#
+# Target Installation
+#
+#####################################################################################################################
+
 set(SSC_LIB $<TARGET_FILE_DIR:ssc>/$<TARGET_FILE_BASE_NAME:ssc>.lib)
+
+if (MSVC)
 	add_custom_command(
 		TARGET ssc
 		POST_BUILD
@@ -241,7 +252,7 @@ if(DEFINED ENV{PYSAMDIR})
 				TARGET ssc
 				POST_BUILD
 				COMMAND ${CMAKE_COMMAND}
-				ARGS -E copy $<TARGET_FILE:ssc> $ENV{PYSAMDIR}/files
+				ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} $ENV{PYSAMDIR}/files
 		)
 	endif()
 endif()
