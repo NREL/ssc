@@ -747,7 +747,14 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
 			p_poaTotal.push_back(cm->allocate(prefix + "poa_eff", numberOfWeatherFileRecords));
 			p_poaRear.push_back(cm->allocate(prefix + "poa_rear", numberOfWeatherFileRecords));
 			p_poaFront.push_back(cm->allocate(prefix + "poa_front", numberOfWeatherFileRecords));
-			p_derateSoiling.push_back(cm->allocate(prefix + "soiling_derate", numberOfWeatherFileRecords));
+			p_ghiInterrow.push_back(cm->allocate(prefix + "bifacial_interrow_ghi", numberOfWeatherFileRecords)); //
+			p_poaFrontFromInterrowGround.push_back(cm->allocate(prefix + "poa_front_interrow_ground", numberOfWeatherFileRecords)); //
+			p_poaFrontBifacialCalculation.push_back(cm->allocate(prefix + "poa_front_bifacial", numberOfWeatherFileRecords));
+            p_poaRearBeamCircum.push_back(cm->allocate(prefix + "poa_rear_beam_circum", numberOfWeatherFileRecords));
+            p_poaRearSkyDiff.push_back(cm->allocate(prefix + "poa_rear_sky_diff", numberOfWeatherFileRecords));
+            p_poaRearGround.push_back(cm->allocate(prefix + "poa_rear_ground", numberOfWeatherFileRecords));
+            p_poaRearRowReflected.push_back(cm->allocate(prefix + "poa_rear_row_reflected", numberOfWeatherFileRecords));
+            p_derateSoiling.push_back(cm->allocate(prefix + "soiling_derate", numberOfWeatherFileRecords));
 			p_beamShadingFactor.push_back(cm->allocate(prefix + "beam_shading_factor", numberOfWeatherFileRecords));
 			p_temperatureCell.push_back(cm->allocate(prefix + "celltemp", numberOfWeatherFileRecords));
 			p_moduleEfficiency.push_back(cm->allocate(prefix + "modeff", numberOfWeatherFileRecords));

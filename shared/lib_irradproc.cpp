@@ -845,6 +845,13 @@ void irrad::setup()
 	planeOfArrayIrradianceRear[0] = planeOfArrayIrradianceRear[1] = planeOfArrayIrradianceRear[2] = diffuseIrradianceRear[0] = diffuseIrradianceRear[1] = diffuseIrradianceRear[2] = std::numeric_limits<double>::quiet_NaN();
 	timeStepSunPosition[0] = timeStepSunPosition[1] = timeStepSunPosition[2] = -999;
 	planeOfArrayIrradianceRearAverage = 0;
+	planeOfArrayIrradianceFrontAverageFromGroundBiFa = 0;
+	groundIrradianceRearAverage = 0;
+	planeOfArrayIrradianceFrontAverageBiFa = 0;
+    planeOfArrayIrradianceRearBeam = 0;
+    planeOfArrayIrradianceRearSky = 0;
+    planeOfArrayIrradianceRearGround = 0;
+    planeOfArrayIrradianceRearReflected = 0;
 
 	calculatedDirectNormal = directNormal;
 	calculatedDiffuseHorizontal = 0.0;
@@ -962,9 +969,18 @@ void irrad::get_poa( double *beam, double *skydiff, double *gnddiff,
 	if ( horizon != 0 ) *horizon = diffuseIrradianceFront[2];
 }
 
-double irrad::get_poa_rear()
+void irrad::get_poa_rear(double *poa_rear, double *poa_front_ground, double *ghi_interrow, double *poa_front_bifacial,
+                         double *poa_rear_beam, double *poa_rear_sky_diff, double *poa_rear_ground, double *poa_rear_reflected)
 {
-	return planeOfArrayIrradianceRearAverage;
+	*poa_rear = planeOfArrayIrradianceRearAverage;
+	*poa_front_ground = planeOfArrayIrradianceFrontAverageFromGroundBiFa;
+	*ghi_interrow = groundIrradianceRearAverage;
+	*poa_front_bifacial = planeOfArrayIrradianceFrontAverageBiFa;
+    *poa_rear_beam = planeOfArrayIrradianceRearBeam;
+    *poa_rear_sky_diff = planeOfArrayIrradianceRearSky;
+    *poa_rear_ground = planeOfArrayIrradianceRearGround;
+    *poa_rear_reflected = planeOfArrayIrradianceRearReflected;
+//	return planeOfArrayIrradianceRearAverage;
 }
 
 void irrad::get_irrad (double *ghi, double *dni, double *dhi){
@@ -1255,18 +1271,36 @@ int irrad::calc_rear_side(double transmissionFactor, double groundClearanceHeigh
 
 		// Get the rear ground GHI
 		std::vector<double> rearGroundGHI, frontGroundGHI;
+		double averageGroundGHI = 0.0;
 		this->getGroundGHI(transmissionFactor, rearSkyConfigFactors, frontSkyConfigFactors, rearGroundShade, frontGroundShade, rearGroundGHI, frontGroundGHI);
+		for (size_t i = 0; i != rearGroundGHI.size(); i++)
+		    averageGroundGHI += rearGroundGHI[i] / rearGroundGHI.size();
+		groundIrradianceRearAverage = averageGroundGHI;
 
 		// Calculate the irradiance on the front of the PV module (to get front reflected)
-		std::vector<double> frontIrradiancePerCellrow, frontReflected;
+		std::vector<double> frontIrradiancePerCellrow, frontReflected, frontIrradianceFromGroundPerCellRow;
 		double frontAverageIrradiance = 0;
-		getFrontSurfaceIrradiances(pvFrontShadeFraction, rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, frontGroundGHI, frontIrradiancePerCellrow, frontAverageIrradiance, frontReflected);
-
+		double frontAverageIrradianceFromGround = 0;
+		getFrontSurfaceIrradiances(pvFrontShadeFraction, rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, frontGroundGHI,
+		                           frontIrradiancePerCellrow, frontAverageIrradiance, frontReflected, frontIrradianceFromGroundPerCellRow, frontAverageIrradianceFromGround);
+        planeOfArrayIrradianceFrontAverageFromGroundBiFa = frontAverageIrradianceFromGround;
+        planeOfArrayIrradianceFrontAverageBiFa = frontAverageIrradiance;
 		// Calculate the irradiance on the back of the PV module
 		std::vector<double> rearIrradiancePerCellrow;
 		double rearAverageIrradiance = 0;
-		getBackSurfaceIrradiances(pvBackShadeFraction, rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, rearGroundGHI, frontGroundGHI, frontReflected, rearIrradiancePerCellrow, rearAverageIrradiance);
+		double rearAverageIrradianceBeam = 0;
+		double rearAverageIrradianceSky = 0;
+		double rearAverageIrradianceGround = 0;
+		double rearAverageIrradianceReflected = 0;
+		getBackSurfaceIrradiances(pvBackShadeFraction, rowToRow, verticalHeight, clearanceGround, distanceBetweenRows,
+		                          horizontalLength, rearGroundGHI, frontGroundGHI, frontReflected, rearIrradiancePerCellrow,
+		                          rearAverageIrradiance, rearAverageIrradianceBeam, rearAverageIrradianceSky, rearAverageIrradianceGround, rearAverageIrradianceReflected);
 		planeOfArrayIrradianceRearAverage = rearAverageIrradiance;
+		planeOfArrayIrradianceRearBeam = rearAverageIrradianceBeam;
+        planeOfArrayIrradianceRearSky = rearAverageIrradianceSky;
+        planeOfArrayIrradianceRearGround = rearAverageIrradianceGround;
+        planeOfArrayIrradianceRearReflected = rearAverageIrradianceReflected;
+
 	}
 	return true;
 }
@@ -1492,7 +1526,10 @@ void irrad::getGroundGHI(double transmissionFactor, std::vector<double> rearSkyC
 	}
 }
 
-void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, std::vector<double> frontGroundGHI, std::vector<double> & frontIrradiance, double & frontAverageIrradiance, std::vector<double> & frontReflected)
+void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowToRow, double verticalHeight, double clearanceGround,
+                                       double distanceBetweenRows, double horizontalLength, std::vector<double> frontGroundGHI,
+                                       std::vector<double> & frontIrradiance, double & frontAverageIrradiance, std::vector<double> & frontReflected,
+                                       std::vector<double> & frontIrradianceFromGround, double & frontAverageIrradianceFromGround)
 {
 	// front surface assumed to be glass
 	double n2 = 1.526;
@@ -1544,6 +1581,7 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
 
 		frontIrradiance.push_back(0.);
 		frontReflected.push_back(0.);
+		frontIrradianceFromGround.push_back(0.);
 		double reflectanceNormalIncidence = pow((n2 - 1.0) / (n2 + 1.0), 2.0);
 
 		// Add sky diffuse component and horizon brightening if present
@@ -1626,6 +1664,7 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
 				}
 			}
 			frontIrradiance[i] += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] * actualGroundGHI * this->albedo;
+			frontIrradianceFromGround[i] += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] * actualGroundGHI * this->albedo;
 			frontReflected[i] += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * actualGroundGHI * this->albedo * (1.0 - MarionAOICorrectionFactorsGlass[j] * (1.0 - reflectanceNormalIncidence));
 		}
 		// Calculate and add direct and circumsolar irradiance components
@@ -1649,10 +1688,15 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
 			frontIrradiance[i] += (1.0 - cellShade) * (poa[0] + diffc[1]) * cor;
 		}
 		frontAverageIrradiance += frontIrradiance[i] / cellRows;
+		frontAverageIrradianceFromGround += frontIrradianceFromGround[i] / cellRows;
 	}
 }
 
-void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRow, double verticalHeight, double clearanceGround, double , double horizontalLength, std::vector<double> rearGroundGHI, std::vector<double> frontGroundGHI, std::vector<double> frontReflected, std::vector<double> & rearIrradiance, double & rearAverageIrradiance)
+void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRow, double verticalHeight,
+                                      double clearanceGround, double , double horizontalLength, std::vector<double> rearGroundGHI, std::vector<double> frontGroundGHI,
+                                      std::vector<double> frontReflected, std::vector<double> & rearIrradiance,
+                                      double & rearAverageIrradiance, double & rearAverageIrradianceBeam, double & rearAverageIrradianceSky,
+                                      double & rearAverageIrradianceGround, double & rearAverageIrradianceReflected)
 {
 	// front surface assumed to be glass
 	double n2 = 1.526;
@@ -1686,6 +1730,11 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 	double PtopX = rowToRow + horizontalLength;      // x value for point on top edge of PV module/panel of row in back of (in PV panel slope lengths)
 	double PtopY = verticalHeight + clearanceGround; // y value for point on top edge of PV module/panel of row in back of (in PV panel slope lengths)
 
+	rearAverageIrradianceBeam = 0;
+	rearAverageIrradianceSky = 0;
+	rearAverageIrradianceGround = 0;
+	rearAverageIrradianceReflected = 0;
+
 	// Calculate diffuse and direct component irradiances for each cell row (assuming 6 rows)
 	size_t cellRows = 6;
 	for (size_t i = 0; i != cellRows; i++)
@@ -1704,9 +1753,11 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 		for (size_t j = 0; j != iStopIso; j++)
 		{
 			rearIrradiance[i] += 0.5 * (cos(j * DTOR) - cos((j + 1)*DTOR)) * MarionAOICorrectionFactorsGlass[j]* isotropicSkyDiffuse;
+			rearAverageIrradianceSky += 0.5 * (cos(j * DTOR) - cos((j + 1)*DTOR)) * MarionAOICorrectionFactorsGlass[j]* isotropicSkyDiffuse;
 			if ((iStopIso - j) <= iHorBright)
 			{
 				rearIrradiance[i] += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j]* horizonDiffuse / 0.052264; // 0.052246 = 0.5 * [cos(84) - cos(90)]
+				rearAverageIrradianceSky += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j]* horizonDiffuse / 0.052264;
 			}
 		}
 
@@ -1751,6 +1802,7 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 			}
 			PVreflectedIrradiance /= projectedX2 - projectedX1;
 			rearIrradiance[i] += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] * PVreflectedIrradiance;
+			rearAverageIrradianceReflected += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] * PVreflectedIrradiance;
 		}
 
 
@@ -1834,6 +1886,7 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 				}
 			}
 			rearIrradiance[i] += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] * actualGroundGHI * this->albedo;
+			rearAverageIrradianceGround += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] * actualGroundGHI * this->albedo;
 		}
 		// Calculate and add direct and circumsolar irradiance components
 		incidence(0, 180.0 - tiltRadians * RTOD, (surfaceAzimuthRadians * RTOD - 180.0), 45.0, solarZenithRadians, solarAzimuthRadians, this->enableBacktrack, this->groundCoverageRatio, surfaceAnglesRadians);
@@ -1854,9 +1907,15 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 		{
 			double iamMod = iamSjerpsKoomen(n2, surfaceAnglesRadians[0]);
 			rearIrradiance[i] += (1.0 - cellShade) * (planeOfArrayIrradianceRear[0] + diffuseIrradianceRear[1]) * iamMod;
+			rearAverageIrradianceGround += (1.0 - cellShade) * (planeOfArrayIrradianceRear[0] + diffuseIrradianceRear[1]) * iamMod;
 		}
 		rearAverageIrradiance += rearIrradiance[i] / cellRows;
 	}
+	rearAverageIrradianceBeam /= cellRows;
+	rearAverageIrradianceSky /= cellRows;
+	rearAverageIrradianceGround /= cellRows;
+	rearAverageIrradianceReflected /= cellRows;
+
 }
 
 static double vec_dot(double a[3], double b[3])

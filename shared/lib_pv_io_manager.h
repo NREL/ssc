@@ -290,7 +290,14 @@ struct PVSystem_IO
 	std::vector<ssc_number_t *> p_poaDiffuseFront; 
 	std::vector<ssc_number_t *> p_poaFront; 
 	std::vector<ssc_number_t *> p_poaTotal; 
-	std::vector<ssc_number_t *> p_poaRear; 
+	std::vector<ssc_number_t *> p_poaRear;
+	std::vector<ssc_number_t *> p_ghiInterrow;
+    std::vector<ssc_number_t *> p_poaFrontFromInterrowGround;
+    std::vector<ssc_number_t *> p_poaFrontBifacialCalculation;
+    std::vector<ssc_number_t *> p_poaRearBeamCircum;
+    std::vector<ssc_number_t *> p_poaRearSkyDiff;
+    std::vector<ssc_number_t *> p_poaRearGround;
+    std::vector<ssc_number_t *> p_poaRearRowReflected;
 	std::vector<ssc_number_t *> p_derateSoiling; 
 	std::vector<ssc_number_t *> p_beamShadingFactor; 
 	std::vector<ssc_number_t *> p_temperatureCell; 

@@ -186,8 +186,8 @@ void diffuse_reduce(
 	double Gbh = Gb_nor * cosd(solzen); // beam irradiance on horizontal surface
 	// double poa_sky_iso = Gdh * (1 + cosd(stilt)) / 2;
 
-	double B = 1.0;
-	double R = B / gcr;
+//	double B = 1.0;
+//	double R = B / gcr;
 
 	// sky diffuse reduction
 	double step = 1.0 / 1000.0;
@@ -213,7 +213,7 @@ void diffuse_reduce(
 	}
 	reduced_skydiff = Fskydiff * poa_sky;
 
-	double solalt = 90 - solzen;
+//	double solalt = 90 - solzen;
 
 	// ground reflected reduction
 	// simplified to match PVsyst's approach except for in bifacial scenarios CZ 8/2019

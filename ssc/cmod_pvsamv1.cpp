@@ -536,7 +536,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_shaded_soiled",          "Subarray 1 POA front total irradiance after shading and soiling",      "W/m2",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_front",                  "Subarray 1 POA front total irradiance after reflection (IAM)",              "W/m2",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_rear",                   "Subarray 1 POA rear total irradiance after reflection (IAM) and losses","W/m2",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_eff",                    "Subarray 1 POA total irradiance after reflection (IAM) and bifaciality","W/m2",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_eff",                    "Subarray 1 POA total irradiance after reflection (IAM), backside losses, bifaciality and additional frontside","W/m2",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_soiling_derate",             "Subarray 1 Soiling beam irradiance factor",                            "frac",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_beam_shading_factor",        "Subarray 1 External shading and soiling beam irradiance factor",       "frac",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_linear_derate",              "Subarray 1 Self-shading linear beam irradiance factor",                "frac",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
@@ -1142,7 +1142,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				double ts_accum_poa_front_beam_eff = 0.0;
 
 				// calculate incident irradiance on each subarray
-				std::vector<double> ipoa_rear, ipoa_rear_after_losses, ipoa_front, ipoa;
+				std::vector<double> ipoa_rear, ipoa_rear_after_losses, ipoa_front, ipoa, ipoa_front_ground, ighi_interrow, ipoa_front_bifacial, ipoa_rear_beam, ipoa_rear_sky_diff, ipoa_rear_ground, ipoa_rear_reflected;
 				double alb;
 				alb = 0;
 
@@ -1150,6 +1150,13 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				{
 					ipoa_rear.push_back(0);
 					ipoa_rear_after_losses.push_back(0);
+					ipoa_front_ground.push_back(0);
+					ighi_interrow.push_back(0);
+					ipoa_front_bifacial.push_back(0);
+					ipoa_rear_beam.push_back(0);
+					ipoa_rear_sky_diff.push_back(0);
+					ipoa_rear_ground.push_back(0);
+					ipoa_rear_reflected.push_back(0);
 					ipoa_front.push_back(0);
 					ipoa.push_back(0);
 
@@ -1520,7 +1527,20 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 							slopeLength = Subarrays[nn]->selfShadingInputs.width * Subarrays[nn]->selfShadingInputs.nmody;
 						}
 						irr.calc_rear_side(Subarrays[0]->Module->bifacialTransmissionFactor, Subarrays[0]->Module->groundClearanceHeight, slopeLength);
-						ipoa_rear[nn] = irr.get_poa_rear();
+						double poa_rear_, poa_front_ground_, ghi_interrow_, poa_front_bifacial_, poa_rear_beam_, poa_rear_sky_diff_, poa_rear_ground_, poa_rear_reflected_;
+						irr.get_poa_rear(&poa_rear_, &poa_front_ground_, &ghi_interrow_, &poa_front_bifacial_, &poa_rear_beam_, &poa_rear_sky_diff_, &poa_rear_ground_, &poa_rear_reflected_);
+						// empirically determined correction factors to bring rearside irradiance calc into alignment with PVsyst
+//						if (Subarrays[nn]->trackMode == 0){poa_rear_ *= 1.03;} // fixed tilt
+//						else if (Subarrays[nn]->trackMode == 1){poa_rear_ *= 1.08;}  // single axis tracking
+//						else {poa_rear_ *= 1.0;} // no correction for other racking scenarios
+						ipoa_rear[nn] = poa_rear_;
+						ipoa_front_ground[nn] = poa_front_ground_;
+						ighi_interrow[nn] = ghi_interrow_;
+						ipoa_front_bifacial[nn] = poa_front_bifacial_;
+						ipoa_rear_beam[nn] = poa_rear_beam_;
+						ipoa_rear_sky_diff[nn] = poa_rear_sky_diff_;
+						ipoa_rear_ground[nn] = poa_rear_ground_;
+						ipoa_rear_reflected[nn] = poa_rear_reflected_;
 						ipoa_rear_after_losses[nn] = ipoa_rear[nn] * (1 - Subarrays[nn]->rearIrradianceLossPercent);
 					}
 
@@ -1535,6 +1555,13 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						PVSystem->p_poaBeamFront[nn][idx] = (ssc_number_t)ibeam;
 						PVSystem->p_poaDiffuseFront[nn][idx] = (ssc_number_t)(iskydiff + ignddiff);
 						PVSystem->p_poaRear[nn][idx] = (ssc_number_t)(ipoa_rear_after_losses[nn]);
+						PVSystem->p_poaFrontFromInterrowGround[nn][idx] = (ssc_number_t)(ipoa_front_ground[nn]);
+						PVSystem->p_ghiInterrow[nn][idx] = (ssc_number_t)(ighi_interrow[nn]);
+						PVSystem->p_poaFrontBifacialCalculation[nn][idx] = (ssc_number_t)(ipoa_front_bifacial[nn]);
+                        PVSystem->p_poaRearBeamCircum[nn][idx] = (ssc_number_t)(ipoa_rear_beam[nn]);
+                        PVSystem->p_poaRearSkyDiff[nn][idx] = (ssc_number_t)(ipoa_rear_sky_diff[nn]);
+                        PVSystem->p_poaRearGround[nn][idx] = (ssc_number_t)(ipoa_rear_ground[nn]);
+                        PVSystem->p_poaRearRowReflected[nn][idx] = (ssc_number_t)(ipoa_rear_reflected[nn]);
 						PVSystem->p_beamShadingFactor[nn][idx] = (ssc_number_t)beam_shading_factor;
 						PVSystem->p_axisRotation[nn][idx] = (ssc_number_t)rot;
 						PVSystem->p_idealRotation[nn][idx] = (ssc_number_t)(rot - btd);
@@ -1552,7 +1579,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					Subarrays[nn]->poa.poaDiffuseFront = iskydiff;
 					Subarrays[nn]->poa.poaGroundFront = ignddiff;
 					Subarrays[nn]->poa.poaRear = ipoa_rear_after_losses[nn];
-					Subarrays[nn]->poa.poaTotal = (radmode == irrad::POA_R) ? ipoa[nn] :(ipoa_front[nn] + ipoa_rear_after_losses[nn] * bifaciality);
+					Subarrays[nn]->poa.poaTotal = (radmode == irrad::POA_R) ? ipoa[nn] :(ipoa_front[nn] + ipoa_rear_after_losses[nn] * bifaciality + ipoa_front_ground[nn]);
 					Subarrays[nn]->poa.angleOfIncidenceDegrees = aoi;
 					Subarrays[nn]->poa.sunUp = sunup;
 					Subarrays[nn]->poa.surfaceTiltDegrees = stilt;
@@ -1598,7 +1625,8 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 								double V = stringV / (double)Subarrays[nn]->nModulesPerString; //voltage of an individual module on a string on this subarray
 
 								//initalize pvinput and pvoutput structures for the model
-								pvinput_t in(Subarrays[nn]->poa.poaBeamFront, Subarrays[nn]->poa.poaDiffuseFront, Subarrays[nn]->poa.poaGroundFront, Subarrays[nn]->poa.poaRear * bifaciality, Subarrays[nn]->poa.poaTotal,
+								double bifa_contrib = Subarrays[nn]->poa.poaRear * bifaciality + ipoa_front_ground[nn];
+								pvinput_t in(Subarrays[nn]->poa.poaBeamFront, Subarrays[nn]->poa.poaDiffuseFront, Subarrays[nn]->poa.poaGroundFront, bifa_contrib, Subarrays[nn]->poa.poaTotal,
 									wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
 									solzen, Subarrays[nn]->poa.angleOfIncidenceDegrees, hdr.elev,
 									Subarrays[nn]->poa.surfaceTiltDegrees, Subarrays[nn]->poa.surfaceAzimuthDegrees,
@@ -1637,7 +1665,8 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					{
 						int nn = SubarraysOnMpptInput[nSubarray]; //get the index of the subarray we're checking here
 						//initalize pvinput and pvoutput structures for the model
-						pvinput_t in_temp(Subarrays[nn]->poa.poaBeamFront, Subarrays[nn]->poa.poaDiffuseFront, Subarrays[nn]->poa.poaGroundFront, Subarrays[nn]->poa.poaRear * bifaciality, Subarrays[nn]->poa.poaTotal,
+						double bifa_contrib = Subarrays[nn]->poa.poaRear * bifaciality + ipoa_front_ground[nn];
+						pvinput_t in_temp(Subarrays[nn]->poa.poaBeamFront, Subarrays[nn]->poa.poaDiffuseFront, Subarrays[nn]->poa.poaGroundFront, bifa_contrib, Subarrays[nn]->poa.poaTotal,
 							wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
 							solzen, Subarrays[nn]->poa.angleOfIncidenceDegrees, hdr.elev,
 							Subarrays[nn]->poa.surfaceTiltDegrees, Subarrays[nn]->poa.surfaceAzimuthDegrees,
@@ -1754,11 +1783,11 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						if (iyear == 0)
 						{
 							ipoa_front[nn] *= out[nn].AOIModifier;
-							PVSystem->p_poaFront[nn][idx] = (radmode == irrad::POA_R) ? (ssc_number_t)ipoa[nn] : (ssc_number_t)(ipoa_front[nn]);
-							PVSystem->p_poaTotal[nn][idx] = (radmode == irrad::POA_R) ? (ssc_number_t)ipoa[nn] : (ssc_number_t)(ipoa_front[nn] + ipoa_rear_after_losses[nn] * bifaciality);
+							PVSystem->p_poaFront[nn][idx] = (radmode == irrad::POA_R) ? (ssc_number_t)ipoa[nn] : (ssc_number_t)(ipoa_front[nn] + ipoa_front_ground[nn]);
+							PVSystem->p_poaTotal[nn][idx] = (radmode == irrad::POA_R) ? (ssc_number_t)ipoa[nn] : (ssc_number_t)(ipoa_front[nn] + ipoa_rear_after_losses[nn] * bifaciality + ipoa_front_ground[nn]);
 
-							ts_accum_poa_front_total += ipoa_front[nn] * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
-							ts_accum_poa_total_eff += ((radmode == irrad::POA_R) ? ipoa[nn] : (ipoa_front[nn] + ipoa_rear_after_losses[nn] * bifaciality)) * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
+							ts_accum_poa_front_total += (ipoa_front[nn] + ipoa_front_ground[nn])* ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
+							ts_accum_poa_total_eff += ((radmode == irrad::POA_R) ? ipoa[nn] : (ipoa_front[nn] + ipoa_rear_after_losses[nn] * bifaciality + ipoa_front_ground[nn])) * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
 
 							//assign final string voltage output
 							PVSystem->p_dcStringVoltage[nn][idx] = (ssc_number_t)Subarrays[nn]->Module->dcVoltage * Subarrays[nn]->nModulesPerString;
