@@ -27,7 +27,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static var_info _cm_wave_file_reader[] = {
 /*   VARTYPE           DATATYPE         NAME                           LABEL                                        UNITS     META                      GROUP                 REQUIRED_IF                CONSTRAINTS        UI_HINTS*/
-	{ SSC_INPUT,         SSC_STRING,      "file_name",               "local weather file path",                     "",       "",                      "Weather Reader",      "*",                       "LOCAL_FILE",      "" },
+	{ SSC_INPUT,         SSC_STRING,      "wave_resource_filename",               "local weather file path",                     "",       "",                      "Weather Reader",      "*",                       "LOCAL_FILE",      "" },
 	
 // header data
 	{ SSC_OUTPUT,        SSC_STRING,      "name",                    "Name",                                        "",       "",                      "Weather Reader",      "*",                        "",               "" },
@@ -61,7 +61,7 @@ public:
 	
 	void exec( )
 	{	
-		std::string file = as_string("file_name");
+		std::string file = as_string("wave_resource_filename");
 
 		if (file.empty())
 		{
