@@ -1712,14 +1712,8 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 		averageGroundGHI += rearGroundGHI[i] / rearGroundGHI.size();
 
 	// Calculate diffuse isotropic irradiance for a horizontal surface
-	perez(0, calculatedDirectNormal, calculatedDiffuseHorizontal, albedo, solarZenithRadians, 0, solarZenithRadians, planeOfArrayIrradianceRear, diffuseIrradianceRear);
+	isotropic(0, calculatedDirectNormal, calculatedDiffuseHorizontal, albedo, solarZenithRadians, 0, solarZenithRadians, planeOfArrayIrradianceRear, diffuseIrradianceRear);
 	double isotropicSkyDiffuse = diffuseIrradianceRear[0];
-
-	// Calculate components for a 90 degree tilt 
-	double surfaceAnglesRadians90[5] = { 0,0,0,0,0 };
-	incidence(0, 90.0, 180.0, 45.0, solarZenithRadians, solarAzimuthRadians, this->enableBacktrack, this->groundCoverageRatio, surfaceAnglesRadians90);
-	perez(0, calculatedDirectNormal, calculatedDiffuseHorizontal, albedo, surfaceAnglesRadians90[0], surfaceAnglesRadians90[1], solarZenithRadians, planeOfArrayIrradianceRear, diffuseIrradianceRear);
-	double horizonDiffuse = diffuseIrradianceRear[2];
 
 	// Calculate x,y coordinates of bottom and top edges of PV row in back of desired PV row so that portions of sky and ground viewed by the 
 	// PV cell may be determined. Origin of x-y axis is the ground point below the lower front edge of the desired PV row. The row in back of 
@@ -1745,7 +1739,6 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 		double elevationAngleUp = atan((PtopY - PcellY) / (PtopX - PcellX));          // Elevation angle up from PV cell to top of PV module/panel, radians
 		double elevationAngleDown = atan((PcellY - PbotY) / (PbotX - PcellX));        // Elevation angle down from PV cell to bottom of PV module/panel, radians
 		size_t iStopIso = (size_t)round((tiltRadians - elevationAngleUp) / DTOR);							   // Last whole degree in arc range that sees sky, first is 0
-		size_t iHorBright = (size_t)round(fmax(0.0, 6.0 - elevationAngleUp / DTOR));	   			       // Number of whole degrees for which horizon brightening occurs
 		size_t iStartGrd = (size_t)round((tiltRadians + elevationAngleDown) / DTOR);                          // First whole degree in arc range that sees ground, last is 180
 
 		rearIrradiance.push_back(0);
@@ -1753,11 +1746,6 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 		{
 			rearIrradiance[i] += 0.5 * (cos(j * DTOR) - cos((j + 1)*DTOR)) * MarionAOICorrectionFactorsGlass[j]* isotropicSkyDiffuse;
 			rearAverageIrradianceSky += 0.5 * (cos(j * DTOR) - cos((j + 1)*DTOR)) * MarionAOICorrectionFactorsGlass[j]* isotropicSkyDiffuse;
-			if ((iStopIso - j) <= iHorBright)
-			{
-				rearIrradiance[i] += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j]* horizonDiffuse / 0.052264; // 0.052246 = 0.5 * [cos(84) - cos(90)]
-				rearAverageIrradianceSky += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j]* horizonDiffuse / 0.052264;
-			}
 		}
 
 		// Add relections from PV module front surfaces
