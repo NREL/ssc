@@ -1493,10 +1493,9 @@ void irrad::getGroundShadeFactors(double rowToRow, double verticalHeight, double
 void irrad::getGroundGHI(double transmissionFactor, std::vector<double> rearSkyConfigFactors, std::vector<double> frontSkyConfigFactors, std::vector<int> rearGroundShade, std::vector<int> frontGroundShade, std::vector<double> & rearGroundGHI, std::vector<double> & frontGroundGHI)
 {
 	// Calculate the diffuse components of irradiance
-	perez(0, calculatedDirectNormal, calculatedDiffuseHorizontal,albedo, sunAnglesRadians[1], 0.0, sunAnglesRadians[1], planeOfArrayIrradianceRear, diffuseIrradianceRear);
+	isotropic(0, calculatedDirectNormal, calculatedDiffuseHorizontal,albedo, sunAnglesRadians[1], 0.0, sunAnglesRadians[1], planeOfArrayIrradianceRear, diffuseIrradianceRear);
 	double incidentBeam = planeOfArrayIrradianceRear[0];
 	double isotropicDiffuse = diffuseIrradianceRear[0];
-	double circumsolarDiffuse = diffuseIrradianceRear[1];
 
 	// Sum the irradiance components for each of the ground segments to the front and rear of the front of the PV row
 	for (size_t i = 0; i != 100; i++)
@@ -1508,20 +1507,20 @@ void irrad::getGroundGHI(double transmissionFactor, std::vector<double> rearSkyC
 		if (rearGroundShade[i] == 0)
 		{
 			// Add beam and circumsolar component if not shaded
-			rearGroundGHI[i] += incidentBeam + circumsolarDiffuse;
+			rearGroundGHI[i] += incidentBeam;
 		}
 		else
 		{
 			// Add beam and circumsolar component transmitted thru module spacing if shaded
-			rearGroundGHI[i] += (incidentBeam + circumsolarDiffuse) * transmissionFactor;
+			rearGroundGHI[i] += incidentBeam * transmissionFactor;
 		}
 		if (frontGroundShade[i] == 0)
 		{
-			frontGroundGHI[i] += incidentBeam + circumsolarDiffuse;
+			frontGroundGHI[i] += incidentBeam;
 		}
 		else
 		{
-			frontGroundGHI[i] += (incidentBeam + circumsolarDiffuse) * transmissionFactor;
+			frontGroundGHI[i] += incidentBeam * transmissionFactor;
 		}
 	}
 }
