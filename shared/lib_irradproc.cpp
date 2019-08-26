@@ -24,6 +24,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 #include <limits>
 #include <math.h>
+#include <cmath>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1742,13 +1743,15 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 		size_t iStartGrd = (size_t)round((tiltRadians + elevationAngleDown) / DTOR);                          // First whole degree in arc range that sees ground, last is 180
 
 		rearIrradiance.push_back(0);
+		double theta = 0;
 		for (size_t j = 0; j != iStopIso; j++)
 		{
-			rearIrradiance[i] += 0.5 * (cos(j * DTOR) - cos((j + 1)*DTOR)) * MarionAOICorrectionFactorsGlass[j]* isotropicSkyDiffuse;
-			rearAverageIrradianceSky += 0.5 * (cos(j * DTOR) - cos((j + 1)*DTOR)) * MarionAOICorrectionFactorsGlass[j]* isotropicSkyDiffuse;
+            theta = 90.0 - j;
+			rearIrradiance[i] += 0.5 * (cos(j * DTOR) - cos((j + 1)*DTOR)) * iamASHRAE(0.04, theta * DTOR) * isotropicSkyDiffuse;
+			rearAverageIrradianceSky += 0.5 * (cos(j * DTOR) - cos((j + 1)*DTOR)) * iamASHRAE(0.04, theta * DTOR) * isotropicSkyDiffuse;
 		}
 
-		// Add relections from PV module front surfaces
+		// Add reflections from PV module front surfaces
 		for (size_t j = iStopIso; j < iStartGrd; j++)
 		{
 			double diagonalDistance = (PbotX - PcellX) / cos(elevationAngleDown);

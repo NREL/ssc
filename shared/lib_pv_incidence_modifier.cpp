@@ -121,3 +121,10 @@ double calculateIrradianceThroughCoverDeSoto(double theta, double theta_z, doubl
 
 	return Geff_total;
 }
+
+double iamASHRAE(double b0, double theta)
+{
+	double factor = (1 - b0 * (1 / cos(theta) - 1));
+	if (factor < 0.0) return 0.0;
+	return factor;
+}
