@@ -1,13 +1,21 @@
 VPATH = ../tcs
 CC = gcc
 CXX = g++
-WARNINGS = -Wno-deprecated-declarations -Wno-unknown-pragmas -Wno-ignored-attributes -Wno-deprecated
-CFLAGS = -fPIC $(WARNINGS) -g -O3 -I../ -D__64BIT__ -I../nlopt -I../shared -I../lpsolve -I../solarpilot
+WARNINGS = -Wall -Wno-unknown-pragmas -Wno-sign-compare -Wno-maybe-uninitialized -Wno-unused-but-set-variable -Wno-unused-variable -Wno-uninitialized -Wno-int-to-pointer-cast
+CXXFLAGS=-std=c++0x $(CFLAGS)
+
+OBJECTS = tcskernel.o \
+        fmin_callbacks.o \
+        fmin.o \
+
+CFLAGS = -fPIC $(WARNINGS) -g -O3 -I../ -D__64BIT__ -I../nlopt -I../shared -I../lpsolve -I../solarpilot -I../splinter
 CXXFLAGS=-std=c++0x $(CFLAGS)
 
 OBJECTS = tcskernel.o \
 	fmin_callbacks.o \
 	fmin.o \
+	csp_radiator.o \
+	csp_solver_stratified_tes.o \
 	direct_steam_receivers.o \
 	CO2_properties.o \
 	co2_compressor_library.o \

@@ -14,12 +14,16 @@ build_*/* linguist_generated=true
 
 # ...Unless the name matches the following
 # overriding patterns
+*.vcxproj text eol=crlf
+*.sln text eol=crlf
 
 # Definitively text files 
 *.txt text
 *.c text
 *.cpp text
 *.h text
+*.csv text
+*.lk text
 
 # Ensure those won't be messed up with
 *.jpg binary

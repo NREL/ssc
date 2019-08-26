@@ -24,7 +24,11 @@ protected: //doesn't really matter if this is protected or public, but you need 
 		int errors = pvwattsv5_nofinancial_testfile(data);
 		EXPECT_FALSE(errors); //make sure that the test ran ok
 	}
-	void TearDown(){} 
+	void TearDown()
+	{
+		ssc_data_free(data);
+		data = nullptr;
+	} 
 };
 
 //this function will be available to run the pvwattsV5 compute module from within tests

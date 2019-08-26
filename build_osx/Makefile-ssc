@@ -2,12 +2,11 @@ VPATH=../ssc
 
 CC = gcc -mmacosx-version-min=10.9
 CXX = g++ -mmacosx-version-min=10.9
-CFLAGS = -I../shared -I../nlopt -I../lpsolve -I../solarpilot -I../tcs -I../ssc -g -D__MACOSX__ -fPIC -Wall -O3  -DWX_PRECOMP -O2 -arch x86_64  -fno-common
+CFLAGS = -I../splinter -I../shared -I../nlopt -I../lpsolve -I../solarpilot -I../tcs -I../ssc  -g -D__MACOSX__ -fPIC -Wall -O3  -DWX_PRECOMP -O2 -arch x86_64  -fno-common
 CXXFLAGS = $(CFLAGS) -std=gnu++11
 # for __ARCHBITS__ in cmod_pvsamv1
 CFLAGS += -D__64BIT__
-LDFLAGS = -arch x86_64 -lm -lstdc++ shared.a solarpilot.a tcs.a lpsolve.a nlopt.a
-
+LDFLAGS = -arch x86_64 -lm -lstdc++ splinter.a shared.a solarpilot.a tcs.a lpsolve.a nlopt.a 
 TARGET = ssc.dylib
 
 
@@ -28,6 +27,7 @@ OBJECTS = \
 	cmod_belpe.o \
 	cmod_biomass.o \
 	cmod_annualoutput.o \
+	cmod_fuelcell.o \
 	cmod_generic_system.o \
 	cmod_wfcheck.o \
 	cmod_pvwattsv5.o \
@@ -60,6 +60,7 @@ OBJECTS = \
 	cmod_utilityrate3.o \
 	cmod_utilityrate4.o \
 	cmod_utilityrate5.o \
+	cmod_thermalrate.o \
 	cmod_ippppa.o \
 	cmod_swh.o \
 	cmod_geothermal.o \
@@ -70,6 +71,8 @@ OBJECTS = \
 	sscapi.o \
 	common.o \
 	common_financial.o \
+	cmod_mhk_wave.o \
+	cmod_mhk_tidal.o \
 	cmod_tcsdirect_steam.o \
 	cmod_tcsgeneric_solar.o \
 	cmod_tcslinear_fresnel.o \
@@ -77,6 +80,7 @@ OBJECTS = \
 	cmod_tcstrough_empirical.o \
 	cmod_tcstrough_physical.o \
 	cmod_tcstrough_physical_csp_solver.o \
+	cmod_trough_physical.o \
 	cmod_trough_physical_iph.o \
 	cmod_iph_to_lcoefcr.o \
 	cmod_linear_fresnel_dsg_iph.o \
@@ -96,6 +100,7 @@ OBJECTS = \
 	cmod_sco2_air_cooler.o \
 	cmod_inv_cec_cg.o \
 	cmod_pv_get_shade_loss_mpp.o \
+	cmod_grid.o \
 	tckernel.o 
 
 $(TARGET) : $(OBJECTS)

@@ -678,7 +678,7 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 			{
 				double x = (i + 0.5)*n_flux_x_d / n_panels_d;
 				double xlow = ceil(i*n_flux_x_d / n_panels_d) - 0.5;
-				int high = ceil(i*n_flux_x_d / n_panels_d);
+				int high = (int)ceil(i*n_flux_x_d / n_panels_d);
 				int low = high - 1;
 				if (high > m_n_flux_x - 1) high = 0;
 				if (low < 0) low = m_n_flux_x - 1;
@@ -1765,6 +1765,11 @@ void C_mspt_receiver::converged()
     ms_outputs = outputs;
 }
 
+double C_mspt_receiver::get_remaining_startup_energy()
+{
+    return std::numeric_limits<double>::quiet_NaN();
+}
+
 void C_mspt_receiver::calc_pump_performance(double rho_f, double mdot, double ffact, double &PresDrop_calc, double &WdotPump_calc)
 {
 
@@ -1931,7 +1936,7 @@ double C_mspt_receiver::integrate(double xlow, double xhigh, const std::vector<d
 void C_mspt_receiver::cubic_splines(const std::vector<double> &xarray, const std::vector<double> &yarray, util::matrix_t<double> &splines)
 {
 	// Fit cubic splines to data points in xarray, yarray
-	int n = xarray.size()-1;
+	int n = (int)xarray.size()-1;
 	splines.resize_fill(n, 5, 0.0);
 
 	vector<double> a(n + 1, 0.0);

@@ -1,51 +1,24 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #define _TCSTYPEINTERFACE_
 #include "tcstype.h"
@@ -203,6 +176,7 @@ enum{
 	I_LATITUDE,
 	I_LONGITUDE,
 	I_SHIFT,
+    I_RECIRC,
 
 	O_HEADER_DIAMS,
     O_HEADER_WALLTHK,
@@ -226,7 +200,6 @@ enum{
     O_T_FIELD_OUT_AT_DSN,
     O_P_FIELD_IN_AT_DSN,
 	O_T_SYS_H,
-    O_RECIRC,
 	O_M_DOT_AVAIL,
     O_M_DOT_FIELD_HTF,
 	O_Q_AVAIL,
@@ -263,6 +236,7 @@ enum{
 	O_E_TOT_ACCUM,
 	O_E_FIELD,
 	O_T_C_IN_CALC,
+    O_DEFOCUS,
 
 	//Include N_max
 	N_MAX
@@ -413,6 +387,7 @@ tcsvarinfo sam_mw_trough_type250_variables[] = {
 	{ TCS_INPUT,          TCS_NUMBER,          I_LATITUDE,               "latitude",                                                    "Site latitude read from weather file",          "deg",             "",             "",             "" },
 	{ TCS_INPUT,          TCS_NUMBER,         I_LONGITUDE,              "longitude",                                                   "Site longitude read from weather file",          "deg",             "",             "",             "" },
 	{ TCS_INPUT,          TCS_NUMBER,             I_SHIFT,                  "shift",                                         "shift in longitude from local standard meridian",          "deg",             "",             "",             "" },
+    { TCS_INPUT,          TCS_NUMBER,            I_RECIRC,          "recirculating",                                                 "Field recirculating (bypass valve open)",         "none",             "",             "",             "" },
 
 	{ TCS_OUTPUT,          TCS_ARRAY,      O_HEADER_DIAMS,      "pipe_header_diams",					                                        "Header piping diameter array",            "m",             "",             "",             "" },
     { TCS_OUTPUT,          TCS_ARRAY,    O_HEADER_WALLTHK,    "pipe_header_wallthk",					                                  "Header piping wall thickness array",            "m",             "",             "",             "" },
@@ -437,7 +412,6 @@ tcsvarinfo sam_mw_trough_type250_variables[] = {
     { TCS_OUTPUT,          TCS_NUMBER, O_P_FIELD_IN_AT_DSN,     "P_field_in_at_des",		                                "Field/runner inlet pressure at design conditions",          "bar",             "",             "",             "" },
 
 	{ TCS_OUTPUT,          TCS_NUMBER,           O_T_SYS_H,                "T_sys_h",                                                      "Solar field HTF outlet temperature",            "C",             "",             "",             "" },
-    { TCS_OUTPUT,          TCS_NUMBER,            O_RECIRC,          "recirculating",                                                 "Field recirculating (bypass valve open)",         "none",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,       O_M_DOT_AVAIL,            "m_dot_avail",                                                       "HTF mass flow rate from the field",        "kg/hr",             "",             "",             "" },
     { TCS_OUTPUT,          TCS_NUMBER,   O_M_DOT_FIELD_HTF,        "m_dot_field_htf",                         "HTF mass flow rate from the field, including when recirculating",        "kg/hr",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,           O_Q_AVAIL,                "q_avail",                                                     "Thermal power produced by the field",          "MWt",             "",             "",             "" },
@@ -475,6 +449,7 @@ tcsvarinfo sam_mw_trough_type250_variables[] = {
 	{ TCS_OUTPUT,          TCS_NUMBER,       O_E_TOT_ACCUM,            "E_tot_accum",                                           "Total accumulated internal energy change rate",         "MWht",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,           O_E_FIELD,                "E_field",                                   "Accumulated internal energy in the entire solar field",         "MWht",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,       O_T_C_IN_CALC,            "T_c_in_calc",                                 "Calculated HTF inlet temp (freeze prot. or stand-alone)",            "C",             "",             "",             "" },
+    { TCS_OUTPUT,          TCS_NUMBER,           O_DEFOCUS,            "defocus_rel",                "Relative defocus for passing back to the controller to force convergence",         "none",             "",             "",             "" },
 
 	{ TCS_INVALID,    TCS_INVALID,    N_MAX,                0,                    0,                                                        0,                0,        0,        0 }
 };
@@ -1015,6 +990,7 @@ public:
 		T_cold_in	= std::numeric_limits<double>::quiet_NaN();
 		m_dot_in	= std::numeric_limits<double>::quiet_NaN();
 		defocus	= std::numeric_limits<double>::quiet_NaN();
+        recirculating = false;
 		SolarAz	= std::numeric_limits<double>::quiet_NaN();
 		latitude = std::numeric_limits<double>::quiet_NaN();
 		longitude = std::numeric_limits<double>::quiet_NaN();
@@ -1593,6 +1569,23 @@ public:
 			}
 			//the estimated mass flow rate at design
 			m_dot_design = (Ap_tot*I_bn_des*opteff_des - loss_tot*float(nLoops)) / (c_htf_ave*(T_loop_out - T_loop_in_des));  //tn 4.25.11 using Ap_tot instead of A_loop. Change location of opteff_des
+            double m_dot_max = m_dot_htfmax * nLoops;
+            double m_dot_min = m_dot_htfmin * nLoops;
+            if (m_dot_design > m_dot_max) {
+                const char *msg = "The calculated field design mass flow rate of %.2f kg/s is greater than the maximum defined by the max single loop flow rate and number of loops (%.2f kg/s). "
+                    "The design mass flow rate is reset to the latter.";
+                std::string error_msg = util::format(msg, m_dot_design, m_dot_max);
+                message(TCS_NOTICE, error_msg.c_str());
+                m_dot_design = m_dot_max;
+            }
+            else if (m_dot_design < m_dot_min) {
+                const char *msg = "The calculated field design mass flow rate of %.2f kg/s is less than the minimum defined by the min single loop flow rate and number of loops (%.2f kg/s). "
+                    "The design mass flow rate is reset to the latter.";
+                std::string error_msg = util::format(msg, m_dot_design, m_dot_min);
+                message(TCS_NOTICE, error_msg.c_str());
+                m_dot_design = m_dot_min;
+            }
+
 			//mjw 1.16.2011 Design field thermal power 
 			q_design = m_dot_design * c_htf_ave * (T_loop_out - T_loop_in_des); //[Wt]
 			//mjw 1.16.2011 Convert the thermal inertia terms here
@@ -1600,6 +1593,8 @@ public:
 			mc_bal_cold = mc_bal_cold * 3.6 * q_design;  //[J/K]
 
 			//need to provide fluid density
+            double rho_cold = htfProps.dens(T_loop_in_des, P_field_in / 2); //kg/m3
+            double rho_hot = htfProps.dens(T_loop_out, P_field_in / 2); //kg/m3
 			double rho_ave = htfProps.dens((T_loop_out + T_loop_in_des) / 2.0, P_field_in / 2); //kg/m3
 			//Calculate the header design
 			nrunsec = (int)floor(float(nfsec) / 4.0) + 1;  //The number of unique runner diameters
@@ -1644,7 +1639,7 @@ public:
             }
 
 			std::string summary;
-            rnr_and_hdr_design(nhdrsec, nfsec, nrunsec, rho_ave, V_hdr_cold_max, V_hdr_cold_min,
+            rnr_and_hdr_design(nhdrsec, nfsec, nrunsec, rho_cold, rho_hot, V_hdr_cold_max, V_hdr_cold_min,
                 V_hdr_hot_max, V_hdr_hot_min, N_max_hdr_diams, m_dot_design, D_hdr, D_runner,
                 m_dot_rnr_dsn, m_dot_hdr_dsn, V_rnr_dsn, V_hdr_dsn, &summary, custom_sf_pipe_sizes);
 
@@ -1827,12 +1822,13 @@ public:
             value(I_T_COLD_IN, T_loop_in_des - 273.15); // HTF return temperature, to the field [C]
             value(I_M_DOT_IN, m_dot_design * 3600);     // HTF mass flow rate at the inlet to the field  [kg/hr]
             value(I_DEFOCUS, 1);		        // Defocus control  [none] (1 = no defocus)
+            value(I_RECIRC, 0.);
             value(I_SOLARAZ, ColAz*r2d + 180);	// Solar azimuth angle, 0 = North [deg], before SolarAz is converted so to make them equal
             latitude = value(I_LATITUDE);		// Site latitude read from weather file [deg]
             longitude = value(I_LONGITUDE);		// Site longitude read from weather file [deg]
             shift = value(I_SHIFT);			    // [deg]
 
-            call(43200, 0, 0);      // 43200 = noon
+            call(14817600, 0, 0);      // 14817600 = noon on the summer solstice
 
             // Restore parameters
             calc_design_pipe_vals = false;
@@ -1879,6 +1875,7 @@ public:
 		T_cold_in = value(I_T_COLD_IN);		//HTF return temperature [C]
 		m_dot_in = value(I_M_DOT_IN);		//HTF mass flow rate at the inlet  [kg/hr]
 		defocus_new = value(I_DEFOCUS);		//Defocus control  [none]
+        recirculating = value(I_RECIRC);
 		SolarAz = value(I_SOLARAZ);		//Solar azimuth angle reported by the Type15 weather file [deg]
 		latitude = value(I_LATITUDE);		//Site latitude read from weather file [deg]
 		longitude = value(I_LONGITUDE);		//Site longitude read from weather file [deg]
@@ -1939,9 +1936,9 @@ public:
 				T_sky = T_db - 20.0;
 
 			// Always reset the defocus control at the first call of a timestep
-			defocus_new = 1.;
-			defocus_old = 1.;
-			defocus = 1.0;
+			//defocus_new = 1.;
+			//defocus_old = 1.;
+			//defocus = 1.0;
 
 			//Time calculations
 			day_of_year = (int)ceil(time_hr/24.);  //Day of the year
@@ -2149,6 +2146,8 @@ public:
 		for(int i=0; i<nSCA; i++){ q_SCA_tot += q_SCA[i]; } //W/m
 
 		//9-27-12, TWN: This model uses relative defocus. Changed controller to provide absolute defocus, so now convert to relative here
+        // defocus_rel = defocus_abs / defocus_abs_prev
+        if (defocus_old == 0) { defocus_old = 1; }
 		defocus = defocus_new / defocus_old;
 		defocus_old = defocus_new;
 
@@ -2542,7 +2541,7 @@ freeze_prot_flag: //7   continue
 
 				E_field_loss_tot *= 1.e-6 * dt;
 
-				double E_field_pipe_hl = 2*Runner_hl_hot_tot + float(nfsec)*Header_hl_hot_tot + 2*Runner_hl_cold_tot + float(nfsec)*Header_hl_cold_tot + Intc_hl;
+				double E_field_pipe_hl = 2*Runner_hl_hot_tot + float(nfsec)*Header_hl_hot_tot + 2*Runner_hl_cold_tot + float(nfsec)*Header_hl_cold_tot + float(nLoops)*Intc_hl;
 
 				E_field_pipe_hl *= dt;		//[J]
 
@@ -3220,7 +3219,7 @@ calc_final_metrics_goto:
 			//MJW 12.14.2010 Limit to positive to avoid step-to-step oscillation introduced by using previous step. 
 			//.. This may cause a minor underestimation of annual energy output (<<.5%).
 			E_hdr_accum = (v_hot*rho_hdr_hot*c_hdr_hot + mc_bal_hot)*(T_sys_h - T_sys_h_last) + //Hot half
-				(v_cold*rho_hdr_cold*c_hdr_cold + mc_bal_cold)*(T_sys_c - T_sys_c_last);   //cold half
+				max((v_cold*rho_hdr_cold*c_hdr_cold + mc_bal_cold)*(T_sys_c - T_sys_c_last), 0.0);   //cold half
 			
 			if( !is_using_input_gen )
 				E_bal_startup = max(E_hdr_accum, 0.0); //cold half
@@ -3235,7 +3234,7 @@ calc_final_metrics_goto:
 			Pipe_hl_hot = 2*Runner_hl_hot_tot + float(nfsec)*Header_hl_hot_tot;
 			Pipe_hl_cold = 2*Runner_hl_cold_tot + float(nfsec)*Header_hl_cold_tot;
 
-			Pipe_hl = Pipe_hl_hot + Pipe_hl_cold + Intc_hl;
+			Pipe_hl = Pipe_hl_hot + Pipe_hl_cold + float(nLoops)*Intc_hl;
 
 			if( !is_using_input_gen )
 				E_avail_tot = max(E_avail_tot - Pipe_hl*dt, 0.0);    //[J] 11/1/11 TN: Include hot and cold piping losses in available energy calculation
@@ -3257,9 +3256,8 @@ calc_final_metrics_goto:
 			//Calculate the available mass flow of HTF
 			m_dot_avail = max(q_avail*1.e6 / (c_htf_ave*(T_sys_h - T_cold_in_1)), 0.0); //[kg/s]
             m_dot_field_htf = m_dot_avail;
-			if( T_sys_h < T_recirc )   // MJW 12.14.2010 Limit field production to above startup temps. Otherwise we get strange results during startup. Does this affect turbine startup?
+            if (recirculating == true)
 			{
-                recirculating = true;
                 q_avail = 0.0;
 				m_dot_avail = 0.0;
                 m_dot_field_htf = m_dot_htf_tot;
@@ -3360,8 +3358,8 @@ set_outputs_and_return:
             }
 
             value(O_T_FIELD_IN_AT_DSN, T_rnr_des_out.at(0));
-            value(O_T_FIELD_OUT_AT_DSN, T_rnr_des_out.at(T_rnr_des_out.ncells() - 1));
-            value(O_P_FIELD_IN_AT_DSN, P_rnr_des_out.at(0));
+            value(O_T_FIELD_OUT_AT_DSN, T_rnr_des_out.at(T_rnr_des_out.ncells() - 1));  // need to still account for heat loss in this last pipe
+            value(O_P_FIELD_IN_AT_DSN, P_rnr_des_out.at(0));                            // need to still account for pressure loss in this last pipe
 
             // wait to output arrays until TES/PB sizing has finished so P can be adjusted
         }
@@ -3403,7 +3401,6 @@ set_outputs_and_return:
 
 		//Set outputs
 		value(O_T_SYS_H, T_sys_h_out);				//[C] Solar field HTF outlet temperature
-        value(O_RECIRC, recirculating);             //[none] field recirculating (bypass valve open)
 		value(O_M_DOT_AVAIL, m_dot_avail_out);		//[kg/hr] HTF mass flow rate from the field
         value(O_M_DOT_FIELD_HTF, m_dot_field_htf_out);  //[kg/hr] HTF mass flow rate from the field, including when recirculating
 		value(O_Q_AVAIL, q_avail);					//[MWt] Thermal power produced by the field
@@ -3440,6 +3437,7 @@ set_outputs_and_return:
 		value(O_E_TOT_ACCUM, E_tot_accum);			//[MWht] Total accumulated internal energy change rate
 		value(O_E_FIELD, E_field_out);				//[MWht] Accumulated internal energy in the entire solar field
 		value(O_T_C_IN_CALC, T_cold_in_1 - 273.15);	//[C] Calculated cold HTF inlet temperature - used in freeze protection and for stand-alone model in recirculation
+        value(O_DEFOCUS, defocus);                  //[-] Relative defocus for passing back to the controller to ensure TCS convergence
 
 		return 0;
 	}
@@ -3452,6 +3450,7 @@ set_outputs_and_return:
 		*/
 
 		ss_init_complete = true;
+        defocus = 1.;
 
 		T_sys_c_last = T_sys_c;   //Get T_sys from the last timestep
 		T_sys_h_last = T_sys_h;
@@ -5266,7 +5265,7 @@ lab_keep_guess:
        * custom_diams - [-] Should the diameters be input instead of calculated? 
 	---------------------------------------------------------------------------------			*/
 
-	void rnr_and_hdr_design(unsigned nhsec, int nfsec, unsigned nrunsec, double rho, double V_cold_max, double V_cold_min,
+	void rnr_and_hdr_design(unsigned nhsec, int nfsec, unsigned nrunsec, double rho_cold, double rho_hot, double V_cold_max, double V_cold_min,
         double V_hot_max, double V_hot_min, int N_max_hdr_diams, double m_dot, util::matrix_t<double> &D_hdr, util::matrix_t<double> &D_runner,
         util::matrix_t<double> &m_dot_rnr, util::matrix_t<double> &m_dot_hdr, util::matrix_t<double> &V_rnr, util::matrix_t<double> &V_hdr,
         std::string *summary = NULL, bool custom_diams = false){
@@ -5286,6 +5285,8 @@ lab_keep_guess:
 		int nend, nd;
 		unsigned nst;
 		double m_dot_hdrs, m_dot_2loops;
+        double V_cold_avg = (V_cold_max + V_cold_min) / 2.;
+        double V_hot_avg = (V_hot_max + V_hot_min) / 2.;
 		
 		//Mass flow into 1 header
 		m_dot_hdrs = m_dot/float(nfsec);
@@ -5294,15 +5295,14 @@ lab_keep_guess:
 
 		//Runner diameters
 		//runner pipe needs some length to go from the power block to the headers
-        //assume symmetric hot and cold runners
 		m_dot_rnr[0] = m_dot/2.;   //mass flow through half-length runners is always half of total
         m_dot_rnr[2 * nrunsec - 1] = m_dot_rnr[0];
         if (!custom_diams) {
-		    D_runner.at(0) = CSP::pipe_sched(sqrt(4.*m_dot_rnr[0]/(rho*V_cold_max*pi)));
-            D_runner.at(2 * nrunsec - 1) = D_runner.at(0);
+		    D_runner.at(0) = CSP::pipe_sched(sqrt(4.*m_dot_rnr[0]/(rho_cold*V_cold_max*pi)));
+            D_runner.at(2 * nrunsec - 1) = CSP::pipe_sched(sqrt(4.*m_dot_rnr[2 * nrunsec - 1] / (rho_hot*V_hot_avg*CSP::pi)));
         }
-        V_rnr.at(0) = 4.*m_dot_rnr[0] / (rho*pow(D_runner.at(0), 2)*pi);
-        V_rnr.at(2 * nrunsec - 1) = V_rnr.at(0);
+        V_rnr.at(0) = 4.*m_dot_rnr[0] / (rho_cold*pow(D_runner.at(0), 2)*pi);
+        V_rnr.at(2 * nrunsec - 1) = 4.*m_dot_rnr[2 * nrunsec - 1] / (rho_hot*pow(D_runner.at(2 * nrunsec - 1), 2)*CSP::pi);
 		for (unsigned i=1; i<nrunsec; i++){
             if (i == 1) {
 		        m_dot_rnr[i] = m_dot_rnr[i-1]*(1.-float(nfsec%4)/float(nfsec));  //Adjust mass flow for first full-length runners when nfsec/2==odd
@@ -5312,11 +5312,11 @@ lab_keep_guess:
             }
             m_dot_rnr[2 * nrunsec - i - 1] = m_dot_rnr[i];
             if (!custom_diams) {
-			    D_runner[i] = CSP::pipe_sched(sqrt(4.*m_dot_rnr[i]/(rho*V_cold_max*pi)));
-                D_runner[2 * nrunsec - i - 1] = D_runner[i];
+			    D_runner[i] = CSP::pipe_sched(sqrt(4.*m_dot_rnr[i]/(rho_cold*V_cold_max*pi)));
+                D_runner[2 * nrunsec - i - 1] = CSP::pipe_sched(sqrt(4.*m_dot_rnr[2 * nrunsec - i - 1] / (rho_hot*V_hot_avg*CSP::pi)));
             }
-            V_rnr.at(i) = 4.*m_dot_rnr[i] / (rho*pow(D_runner.at(i), 2)*pi);
-            V_rnr.at(2 * nrunsec - i - 1) = V_rnr.at(i);
+            V_rnr.at(i) = 4.*m_dot_rnr[i] / (rho_cold*pow(D_runner.at(i), 2)*pi);
+            V_rnr.at(2 * nrunsec - i - 1) = 4.*m_dot_rnr[2 * nrunsec - i - 1] / (rho_hot*pow(D_runner.at(2 * nrunsec - i - 1), 2)*CSP::pi);
 		}
 
 		//Calculate each section in the cold header
@@ -5329,12 +5329,11 @@ lab_keep_guess:
             for (std::size_t i = 0; i < nhsec; i++) {
                 if (i == 0) {
                     m_dot_enter = m_dot_hdrs;
-                    V_enter = 4.*m_dot_enter / (rho*pi*D_hdr[i] * D_hdr[i]);
                 }
-                else if (nd < N_max_hdr_diams) {
+                else {
                     m_dot_enter -= m_dot_2loops;
-                    V_enter = 4.*m_dot_enter / (rho*pi*D_hdr[i - 1] * D_hdr[i - 1]);  // assuming no diameter change
                 }
+                V_enter = 4.*m_dot_enter / (rho_cold*pi*D_hdr[i] * D_hdr[i]);
                 m_dot_hdr[i] = m_dot_enter;
                 V_hdr[i] = V_enter;
             }
@@ -5345,11 +5344,11 @@ lab_keep_guess:
                     m_dot_enter = m_dot_hdrs;
                     // Size cold header diameter using V_max to allow for mass loss into loops
                     // Select actual pipe that is larger (param=true) than ideal pipe b/c if smaller it will definitely exceed V_max
-                    D_hdr[i] = CSP::pipe_sched(sqrt(4.*m_dot_enter / (rho*V_hdr_cold_max*pi)), true);
-                    V_enter = 4.*m_dot_enter / (rho*pi*D_hdr[i] * D_hdr[i]);
+                    D_hdr[i] = CSP::pipe_sched(sqrt(4.*m_dot_enter / (rho_cold*V_hdr_cold_max*pi)), true);
+                    V_enter = 4.*m_dot_enter / (rho_cold*pi*D_hdr[i] * D_hdr[i]);
                     if (V_enter < V_hdr_cold_min) {  // if the entering velocity will be below the minimum (it won't exceed V_max)
-                        D_hdr_next = CSP::pipe_sched(sqrt(4.*m_dot_enter / (rho*V_hdr_cold_max*pi)), false);   // size smaller this time, will definitely exceed V_max
-                        V_enter_next = 4.*m_dot_enter / (rho*pi*D_hdr_next*D_hdr_next);
+                        D_hdr_next = CSP::pipe_sched(sqrt(4.*m_dot_enter / (rho_cold*V_hdr_cold_max*pi)), false);   // size smaller this time, will definitely exceed V_max
+                        V_enter_next = 4.*m_dot_enter / (rho_cold*pi*D_hdr_next*D_hdr_next);
                         // Choose the smaller diameter (faster V) if it's closer to being in range
                         if (V_enter_next - V_hdr_cold_max <= V_hdr_cold_min - V_enter) {  // '<=' is so the smaller (faster) pipe is preferred in a tie
                             D_hdr[i] = D_hdr_next;
@@ -5359,14 +5358,14 @@ lab_keep_guess:
                 }
                 else if (nd < N_max_hdr_diams) {
                     m_dot_enter -= m_dot_2loops;
-                    V_enter = 4.*m_dot_enter / (rho*pi*D_hdr[i - 1] * D_hdr[i - 1]);  // assuming no diameter change
+                    V_enter = 4.*m_dot_enter / (rho_cold*pi*D_hdr[i - 1] * D_hdr[i - 1]);  // assuming no diameter change
                     if (V_enter < V_hdr_cold_min) {   // if the entering velocity will be below the minimum if there is no diameter change
-                        D_hdr_next = CSP::pipe_sched(sqrt(4.*m_dot_enter / (rho*V_hdr_cold_max*pi)), true);  // size larger than optimal so it won't exceed V_max
-                        V_enter_next = 4.*m_dot_enter / (rho*pi*D_hdr_next*D_hdr_next);
+                        D_hdr_next = CSP::pipe_sched(sqrt(4.*m_dot_enter / (rho_cold*V_hdr_cold_max*pi)), true);  // size larger than optimal so it won't exceed V_max
+                        V_enter_next = 4.*m_dot_enter / (rho_cold*pi*D_hdr_next*D_hdr_next);
                         if (V_enter_next < V_hdr_cold_min) {  // if the velocity is still below V_min (it won't exceed V_max)
                             // try smaller than the optimal this time and choose the one with the velocity closest to being in range
-                            D_hdr_next2 = CSP::pipe_sched(sqrt(4.*m_dot_enter / (rho*V_hdr_cold_max*pi)), false);  // size smaller this time (will exceed V_max)
-                            V_enter_next2 = 4.*m_dot_enter / (rho*pi*D_hdr_next2*D_hdr_next2);
+                            D_hdr_next2 = CSP::pipe_sched(sqrt(4.*m_dot_enter / (rho_cold*V_hdr_cold_max*pi)), false);  // size smaller this time (will exceed V_max)
+                            V_enter_next2 = 4.*m_dot_enter / (rho_cold*pi*D_hdr_next2*D_hdr_next2);
                             if (V_hdr_cold_min - V_enter_next < V_enter_next2 - V_hdr_cold_max) {   // '<' is so the smaller (faster) pipe is preferred in a tie
                                 D_hdr[i] = D_hdr_next;
                             }
@@ -5384,10 +5383,11 @@ lab_keep_guess:
                     }
                 }
                 else {
-                    D_hdr[i] = D_hdr[i - 1];
+                    m_dot_enter -= m_dot_2loops;
+                    D_hdr[i] = D_hdr[i - 1];        // no diameter change allowed
                 }
                 m_dot_hdr[i] = m_dot_enter;
-                V_hdr[i] = V_enter;
+                V_hdr[i] = 4.*m_dot_hdr[i] / (rho_cold*CSP::pi*D_hdr[i] * D_hdr[i]);
             }
         }
 
@@ -5400,14 +5400,8 @@ lab_keep_guess:
         nd = 0;
         if (custom_diams) {
             for (std::size_t i = nhsec; i < 2 * nhsec; i++) {
-                if (i == nhsec) {
-                    m_dot_leave = m_dot_2loops;
-                    V_leave = 4.*m_dot_leave / (rho*pi*D_hdr[i] * D_hdr[i]);
-                }
-                else if (nd < N_max_hdr_diams) {
-                    m_dot_leave += m_dot_2loops;
-                    V_leave = 4.*m_dot_leave / (rho*pi*D_hdr[i - 1] * D_hdr[i - 1]);  // assuming no diameter change
-                }
+                m_dot_leave += m_dot_2loops;
+                V_leave = 4.*m_dot_leave / (rho_hot*pi*D_hdr[i] * D_hdr[i]);
                 m_dot_hdr[i] = m_dot_leave;
                 V_hdr[i] = V_leave;
             }
@@ -5418,11 +5412,11 @@ lab_keep_guess:
                     m_dot_leave = m_dot_2loops;
                     // Size hot header diameter using V_min to allow for mass addition from downstream loops
                     // Select actual pipe that is smaller than ideal pipe b/c if sizing larger it will definitely deceed V_min
-                    D_hdr[i] = CSP::pipe_sched(sqrt(4.*m_dot_leave / (rho*V_hdr_hot_min*pi)), false);
-                    V_leave = 4.*m_dot_leave / (rho*pi*D_hdr[i] * D_hdr[i]);
+                    D_hdr[i] = CSP::pipe_sched(sqrt(4.*m_dot_leave / (rho_hot*V_hdr_hot_min*pi)), false);
+                    V_leave = 4.*m_dot_leave / (rho_hot*pi*D_hdr[i] * D_hdr[i]);
                     if (V_leave > V_hdr_hot_max) {   // if the leaving velocity will be above the maximum (it won't deceed V_min)
-                        D_hdr_next = CSP::pipe_sched(sqrt(4.*m_dot_leave / (rho*V_hdr_hot_min*pi)), true);   // size larger this time, will definitely be below V_min
-                        V_leave_next = 4.*m_dot_leave / (rho*pi*D_hdr_next*D_hdr_next);
+                        D_hdr_next = CSP::pipe_sched(sqrt(4.*m_dot_leave / (rho_hot*V_hdr_hot_min*pi)), true);   // size larger this time, will definitely be below V_min
+                        V_leave_next = 4.*m_dot_leave / (rho_hot*pi*D_hdr_next*D_hdr_next);
                             // Choose the larger diameter (slower V) if it's closer to being in range
                             if (V_hdr_hot_min - V_leave_next < V_leave - V_hdr_hot_max) {  // '<' is so the smaller (cheaper) pipe is preferred in a tie
                                 D_hdr[i] = D_hdr_next;
@@ -5432,14 +5426,14 @@ lab_keep_guess:
                 }
                 else if (nd < N_max_hdr_diams) {
                     m_dot_leave += m_dot_2loops;
-                    V_leave = 4.*m_dot_leave / (rho*pi*D_hdr[i - 1] * D_hdr[i - 1]);  // assuming no diameter change
+                    V_leave = 4.*m_dot_leave / (rho_hot*pi*D_hdr[i - 1] * D_hdr[i - 1]);  // assuming no diameter change
                     if (V_leave > V_hdr_hot_max) {   // if the leaving velocity will be above the maximum if there is no diameter change
-                        D_hdr_next = CSP::pipe_sched(sqrt(4.*m_dot_leave / (rho*V_hdr_hot_min*pi)), false);  // size smaller than optimal so it won't deceed V_min
-                        V_leave_next = 4.*m_dot_leave / (rho*pi*D_hdr_next*D_hdr_next);
+                        D_hdr_next = CSP::pipe_sched(sqrt(4.*m_dot_leave / (rho_hot*V_hdr_hot_min*pi)), false);  // size smaller than optimal so it won't deceed V_min
+                        V_leave_next = 4.*m_dot_leave / (rho_hot*pi*D_hdr_next*D_hdr_next);
                         if (V_leave_next > V_hdr_hot_max) {  // if the velocity is still above V_max (it won't be below V_min)
                             // try larger than the optimal this time and choose the one with the velocity closest to being in range
-                            D_hdr_next2 = CSP::pipe_sched(sqrt(4.*m_dot_leave / (rho*V_hdr_hot_min*pi)), true);  // size larger this time (will be below V_min)
-                            V_leave_next2 = 4.*m_dot_leave / (rho*pi*D_hdr_next2*D_hdr_next2);
+                            D_hdr_next2 = CSP::pipe_sched(sqrt(4.*m_dot_leave / (rho_hot*V_hdr_hot_min*pi)), true);  // size larger this time (will be below V_min)
+                            V_leave_next2 = 4.*m_dot_leave / (rho_hot*pi*D_hdr_next2*D_hdr_next2);
                             if (V_leave_next - V_hdr_hot_max <= V_hdr_hot_min - V_leave_next2) {   // '<=' is so the smaller (cheaper) pipe is preferred in a tie
                                 D_hdr[i] = D_hdr_next;
                             }
@@ -5457,10 +5451,11 @@ lab_keep_guess:
                     }
                 }
                 else {
-                    D_hdr[i] = D_hdr[i - 1];
+                    m_dot_leave += m_dot_2loops;
+                    D_hdr[i] = D_hdr[i - 1];        // no diameter change allowed
                 }
                 m_dot_hdr[i] = m_dot_leave;
-                V_hdr[i] = V_leave;
+                V_hdr[i] = 4.*m_dot_hdr[i] / (rho_hot*CSP::pi*D_hdr[i] * D_hdr[i]);
             }
         }
 		

@@ -1,51 +1,24 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #include "ud_power_cycle.h"
 #include "csp_solver_util.h"
@@ -384,14 +357,23 @@ C_ud_pc_table_generator::C_ud_pc_table_generator(C_od_pc_function & f_pc_eq) : m
 	return;
 }
 
-void C_ud_pc_table_generator::send_callback(int run_number, int n_runs_total,
+void C_ud_pc_table_generator::send_callback(bool is_od_model_error, int run_number, int n_runs_total,
 	double T_htf_hot, double m_dot_htf_ND, double T_amb,
 	double W_dot_gross_ND, double Q_dot_in_ND,
 	double W_dot_cooling_ND, double m_dot_water_ND)
 {
 	if (mf_callback && mp_mf_active)
 	{
-		m_log_msg = util::format("[%d/%d] At T_htf = %lg [C],"
+		std::string od_err_msg = "";
+		if (is_od_model_error)
+		{
+			od_err_msg = "***************\nWarning: off design model failed\n"
+				"Using generic off design for this point\n"
+				"Check if values are appropriate before running annual simulation\n"
+				"***************\n";
+		}
+
+		m_log_msg = od_err_msg + util::format("[%d/%d] At T_htf = %lg [C],"
 			" normalized m_dot = %lg,"
 			" and T_amb = %lg [C]. The normalized outputs are: gross power = %lg,"
 			" thermal input = %lg, cooling power = %lg, and water use = %lg",
@@ -484,6 +466,8 @@ int C_ud_pc_table_generator::generate_tables(double T_htf_ref /*C*/, double T_ht
 		m_dot_htf_ND_levels[2] = m_dot_htf_ND_high;
 		for(int j = 0; j < 3; j++)
 		{
+			bool is_od_model_error = false;
+
 			pc_inputs.m_m_dot_htf_ND = m_dot_htf_ND_levels[j];
 			int off_design_code = mf_pc_eq(pc_inputs,pc_outputs);
 
@@ -495,6 +479,16 @@ int C_ud_pc_table_generator::generate_tables(double T_htf_ref /*C*/, double T_ht
 				T_htf_ind(i,7+j) = pc_outputs.m_W_dot_cooling_ND;	//[-]
 				T_htf_ind(i,10+j) = pc_outputs.m_m_dot_water_ND;	//[-]
 			}
+			else if (off_design_code == -1)
+			{
+				// Save 'generic' off design model response
+				T_htf_ind(i, 1 + j) = pc_inputs.m_m_dot_htf_ND;		//[-]
+				T_htf_ind(i, 4 + j) = pc_inputs.m_m_dot_htf_ND;		//[-]
+				T_htf_ind(i, 7 + j) = pc_inputs.m_m_dot_htf_ND;		//[-]
+				T_htf_ind(i, 10 + j) = pc_inputs.m_m_dot_htf_ND;	//[-]
+
+				is_od_model_error = true;
+			}
 			else
 			{
 				std::string err_msg = util::format("The 1st UDPC table (primary: T_htf, interaction: m_dot_htf_ND) generation failed at T_htf = %lg [C] and m_dot_htf = %lg [-]", pc_inputs.m_T_htf_hot, pc_inputs.m_m_dot_htf_ND);
@@ -503,10 +497,10 @@ int C_ud_pc_table_generator::generate_tables(double T_htf_ref /*C*/, double T_ht
 
 			double run_number = i*3 + j;
 
-			send_callback((int)run_number + 1, (int)n_runs_total,
+			send_callback(is_od_model_error, (int)run_number + 1, (int)n_runs_total,
 				pc_inputs.m_T_htf_hot, pc_inputs.m_m_dot_htf_ND, pc_inputs.m_T_amb,
-				pc_outputs.m_W_dot_gross_ND, pc_outputs.m_Q_dot_in_ND,
-				pc_outputs.m_W_dot_cooling_ND, pc_outputs.m_m_dot_water_ND);
+				T_htf_ind(i, 1 + j), T_htf_ind(i, 4 + j),
+				T_htf_ind(i, 7 + j), T_htf_ind(i, 10 + j));
 
 		}
 
@@ -541,6 +535,8 @@ int C_ud_pc_table_generator::generate_tables(double T_htf_ref /*C*/, double T_ht
 		T_htf_levels[2] = T_htf_high;  //[C]
 		for(int j = 0; j < 3; j++)
 		{
+			bool is_od_model_error = false;
+
 			pc_inputs.m_T_htf_hot = T_htf_levels[j];
 			int off_design_code = mf_pc_eq(pc_inputs,pc_outputs);
 
@@ -552,6 +548,16 @@ int C_ud_pc_table_generator::generate_tables(double T_htf_ref /*C*/, double T_ht
 				T_amb_ind(i,7+j) = pc_outputs.m_W_dot_cooling_ND;	//[-]
 				T_amb_ind(i,10+j) = pc_outputs.m_m_dot_water_ND;	//[-]
 			}
+			else if (off_design_code == -1)
+			{
+				// Save 'generic' off design model response
+				T_amb_ind(i, 1 + j) = pc_inputs.m_m_dot_htf_ND;		//[-]
+				T_amb_ind(i, 4 + j) = pc_inputs.m_m_dot_htf_ND;		//[-]
+				T_amb_ind(i, 7 + j) = pc_inputs.m_m_dot_htf_ND;		//[-]
+				T_amb_ind(i, 10 + j) = pc_inputs.m_m_dot_htf_ND;	//[-]
+
+				is_od_model_error = true;
+			}
 			else
 			{
 				std::string err_msg = util::format("The 2nd UDPC table (primary: T_amb, interaction: T_htf) generation failed at T_amb = %lg [C] and T_htf = %lg [C]", pc_inputs.m_T_amb, pc_inputs.m_T_htf_hot);
@@ -560,10 +566,10 @@ int C_ud_pc_table_generator::generate_tables(double T_htf_ref /*C*/, double T_ht
 
 			double run_number = 3.0*n_T_htf + i*3 + j;
 
-			send_callback((int)run_number + 1, (int)n_runs_total,
+			send_callback(is_od_model_error, (int)run_number + 1, (int)n_runs_total,
 				pc_inputs.m_T_htf_hot, pc_inputs.m_m_dot_htf_ND, pc_inputs.m_T_amb,
-				pc_outputs.m_W_dot_gross_ND, pc_outputs.m_Q_dot_in_ND,
-				pc_outputs.m_W_dot_cooling_ND, pc_outputs.m_m_dot_water_ND);
+				T_amb_ind(i, 1 + j), T_amb_ind(i, 4 + j),
+				T_amb_ind(i, 7 + j), T_amb_ind(i, 10 + j));
 		}
 	}
 	// ******************************************
@@ -596,6 +602,8 @@ int C_ud_pc_table_generator::generate_tables(double T_htf_ref /*C*/, double T_ht
 		T_amb_levels[2] = T_amb_high;	//[C]
 		for(int j = 0; j < 3; j++)
 		{
+			bool is_od_model_error = false;
+
 			pc_inputs.m_T_amb = T_amb_levels[j];
 			int off_design_code = mf_pc_eq(pc_inputs, pc_outputs);
 		
@@ -607,6 +615,16 @@ int C_ud_pc_table_generator::generate_tables(double T_htf_ref /*C*/, double T_ht
 				m_dot_htf_ind(i,7+j) = pc_outputs.m_W_dot_cooling_ND;	//[-]
 				m_dot_htf_ind(i,10+j) = pc_outputs.m_m_dot_water_ND;	//[-]
 			}
+			else if (off_design_code == -1)
+			{
+				// Save 'generic' off design model response
+				m_dot_htf_ind(i, 1 + j) = pc_inputs.m_m_dot_htf_ND;		//[-]
+				m_dot_htf_ind(i, 4 + j) = pc_inputs.m_m_dot_htf_ND;		//[-]
+				m_dot_htf_ind(i, 7 + j) = pc_inputs.m_m_dot_htf_ND;		//[-]
+				m_dot_htf_ind(i, 10 + j) = pc_inputs.m_m_dot_htf_ND;	//[-]
+
+				is_od_model_error = true;
+			}
 			else
 			{
 				std::string err_msg = util::format("The 3rd UDPC table (primary: m_dot_htf_ND, interaction: T_amb) generation failed at T_amb = %lg [C] and m_dot_htf = %lg [-]", pc_inputs.m_T_amb, pc_inputs.m_m_dot_htf_ND);
@@ -615,10 +633,10 @@ int C_ud_pc_table_generator::generate_tables(double T_htf_ref /*C*/, double T_ht
 
 			double run_number = 3.0*n_T_htf + 3.0*n_T_amb  + i*3 + j;
 
-			send_callback((int)run_number + 1, (int)n_runs_total,
+			send_callback(is_od_model_error, (int)run_number + 1, (int)n_runs_total,
 				pc_inputs.m_T_htf_hot, pc_inputs.m_m_dot_htf_ND, pc_inputs.m_T_amb,
-				pc_outputs.m_W_dot_gross_ND, pc_outputs.m_Q_dot_in_ND,
-				pc_outputs.m_W_dot_cooling_ND, pc_outputs.m_m_dot_water_ND);
+				m_dot_htf_ind(i, 1 + j), m_dot_htf_ind(i, 4 + j),
+				m_dot_htf_ind(i, 7 + j), m_dot_htf_ind(i, 10 + j));
 		}
 	}
 	// ******************************************

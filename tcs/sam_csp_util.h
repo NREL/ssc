@@ -1,56 +1,30 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #ifndef __CSP_UTIL_
 #define __CSP_UTIL_
 // fix compilation errors using gcc on linux
 #include <cmath>
+#include <algorithm>
 #include <limits>
 #include "../shared/lib_util.h"
 #include "htf_props.h"
@@ -84,6 +58,12 @@ namespace CSP
 	double sign(double val);
 
 	double nint(double val);
+
+    template<typename T>
+    bool isequal(T a, T b)
+    {
+        return std::abs(a - b) <= std::min(std::abs(a), std::abs(b)) * std::numeric_limits<T>::epsilon();
+    }
 
 	int TOU_Reader(double *TOUSched, double time_sec, int nTOUSched=8760);
 
@@ -119,6 +99,11 @@ namespace CSP
 				  double T_ITD_des, double T_approach, double dT_cw_ref, double P_cond_ratio, double P_cycle, double eta_ref, 
 				  double T_db_K, double T_wb_K, double P_amb_Pa, double q_reject, double& m_dot_water, double& W_dot_acfan, 
 				  double& W_dot_wctot, double& W_dot_tot, double& P_cond, double& T_cond, double& f_hrsys);
+	// Surface condenser ARD
+	void surface_cond(int tech_type, double P_cond_min, int n_pl_inc, double DeltaT_cw_des, double T_approach, double P_cycle,
+		double eta_ref, double T_db_K, double T_wb_K, double P_amb_Pa, double T_cold, double q_reject, double &m_dot_water,
+		double &W_dot_tot, double &P_cond, double &T_cond, double &f_hrsys, double &T_cond_out);
+
 
     // Pipe sizing
     double pipe_sched(double De, bool selectLarger = true);
@@ -137,8 +122,12 @@ namespace CSP
 
     // Friction factor (iterative, helper function)
     double FricFactor_Iter(double rel_rough, double Re);
-    
+
 };
+    // Statistical mode
+    //template <typename T, typename A>  // need to specify an allocator 'A'
+    //T mode(std::vector<T,A> const& v);
+double mode(std::vector<double> v);
 
 // Set up class for Pmax function so we can save maximum pressure for various CSP types
 class P_max_check
@@ -588,4 +577,37 @@ public:
 	double FK_23(double T_2, double T_3, int hn, int hv);
 };
 
+// Functor for advanced vector of vector sorting
+class sort_vecOfvec
+{
+private:
+    std::vector<int> columns;
+    std::vector<bool> ascending;
+public:
+    sort_vecOfvec(std::vector<int> cols, std::vector<bool> asc) :
+        columns(cols), ascending(asc) {
+        if (columns.size() != ascending.size()) {
+            throw logic_error("Column indice vector and sorting vector lengths must be equal");
+        }
+    }
+
+    bool operator () (const vector<double> &a, const vector<double> &b) const {
+        int col;
+        col = 0;
+        for (size_t col_idx = 0; col_idx < columns.size(); col_idx++) {
+            col = columns[col_idx];
+            if (CSP::isequal(a[col], b[col])) {
+                continue;
+            }
+            else if ( (a[col] < b[col] && ascending[col_idx] ) ||
+                ( !(a[col] < b[col]) && !ascending[col_idx] )) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+        return false;  // all sorting values are equal, must return false to adhere to 'strict weak ordering'
+    }
+};
 #endif

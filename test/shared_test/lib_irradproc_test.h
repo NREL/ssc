@@ -245,8 +245,7 @@ protected:
 		readDataFromTextFile(rearSkyConfigFactorsFile, expectedRearSkyConfigFactors);
 
 		numberOfTimeSteps = expectedPVRearShadeFraction.size();
-		numberOfSamples = 100;
-		//samples.push_back(0);
+		numberOfSamples = 10;
 		createSamples();
 
 		// Initialize irradiation for first timestep

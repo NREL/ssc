@@ -9,6 +9,10 @@
 #include <string>
 #include <type_traits>
 
+namespace {
+	static const char * SSCDIR = std::getenv("SSCDIR");
+}
+
 static ssc_bool_t my_handler(ssc_module_t p_mod, ssc_handler_t p_handler, int action,
 	float f0, float f1, const char *s0, const char *s1, void *user_data)
 {
@@ -91,36 +95,45 @@ static int set_matrix(ssc_data_t p_data, const char *name, const char* fn, int n
 	return 1;
 }
 
-static int run_module(ssc_data_t & data, std::string module_name)
+static int run_module(ssc_data_t & data, std::string module_name, bool printErrors=true)
 {
 	ssc_module_exec_set_print(0);
 	if (data == NULL)
 	{
-		printf("error: out of memory.");
+		if (printErrors){ printf("error: out of memory.");}
 		return -1;
 	}
 	ssc_module_t module;
 	module = ssc_module_create(const_cast<char*>(module_name.c_str()));
 	if (NULL == module)
 	{
-		printf("error: could not create 'pvsamv1' module.");
-		ssc_data_free(data);
+		if (printErrors){ printf("error: could not create 'pvsamv1' module.");}
 		return -1;
 	}
-	if (ssc_module_exec(module, data) == 0)
-	{
-		printf("error during simulation.");
-		int i = 0;
-		compute_module *cm = static_cast<compute_module*>(module);
-		while (cm->log(i) != nullptr) {
-			printf("%s\n", cm->log(i)->text.c_str());
-			i++;
+
+	// C++ exception handling
+	try {
+
+		if (ssc_module_exec(module, data) == 0)
+		{
+			if (printErrors) {printf("error during simulation.");}
+			int i = 0;
+			compute_module *cm = static_cast<compute_module*>(module);
+			while (cm->log(i) != nullptr) {
+				if (printErrors) {printf("%s\n", cm->log(i)->text.c_str());}
+				i++;
+			}
+			ssc_module_free(module);
+			return -1;
 		}
-		ssc_module_free(module);
-		ssc_data_free(data);
+	}
+	catch (std::exception& e) {
+		if (printErrors) {printf("Exception: %s", e.what());}
 		return -1;
 	}
+	
 	ssc_module_free(module);
+	module = nullptr;
 	return 0;
 }
 

@@ -50,11 +50,24 @@
 #ifndef _CMOD_BATTERY_COMMON_
 #define _CMOD_BATTERY_COMMON_ 1
 
+#include <map>
+
 #include "core.h"
-#include "lib_power_electronics.h"
-#include "lib_sandia.h"
-#include "lib_pvinv.h"
-#include "lib_utility_rate.h"
+
+// forward declarations to speed up build
+class SharedInverter;
+class voltage_t;
+class lifetime_t;
+class lifetime_cycle_t;
+class lifetime_calendar_t;
+class thermal_t;
+class capacity_t;
+class battery_t;
+class battery_metrics_t;
+class dispatch_t;
+class losses_t;
+class ChargeController;
+class UtilityRate;
 
 extern var_info vtab_battery_inputs[];
 extern var_info vtab_battery_outputs[];
@@ -63,6 +76,7 @@ struct batt_variables
 {
 	bool system_use_lifetime_output;
 	bool en_batt;
+	bool en_fuelcell;
 	int analysis_period;
 	int batt_chem;
 	int batt_dispatch;
@@ -93,8 +107,14 @@ struct batt_variables
 	/*! Determines if the battery is allowed to charge from PV clipping using automated control*/
 	bool batt_dispatch_auto_can_clipcharge;
 
+	/*! Determines if the battery is allowed to charge from fuel cell using automated control*/
+	bool batt_dispatch_auto_can_fuelcellcharge;
+
 	/*! Vector of periods and if battery can charge from PV*/
 	std::vector<bool> batt_can_charge;
+
+	/*! Vector of periods if battery can charge from Fuel Cell*/
+	std::vector<bool> batt_can_fuelcellcharge;
 
 	/*! Vector of periods and if battery can discharge*/
 	std::vector<bool> batt_can_discharge;
@@ -160,7 +180,7 @@ struct batt_variables
 	double batt_height;
 	double batt_Cp;
 	double batt_h_to_ambient;
-	double T_room;
+	std::vector<double> T_room;
 
 	double LeadAcid_q20_computed;
 	double LeadAcid_tn;
@@ -195,10 +215,8 @@ struct batt_variables
 	/*! Battery costs */
 	double batt_cost_per_kwh;
 
-	/*! PPA Time-of-Delivery factors for periods 1-9 */
-	std::vector<double> ppa_factors;
-	util::matrix_t<size_t> ppa_weekday_schedule;
-	util::matrix_t<size_t> ppa_weekend_schedule;
+	/*! PPA price */
+	std::vector<double> ppa_price_series_dollar_per_kwh;
 
 	/*! Energy rates */
 	bool ec_rate_defined;
@@ -218,9 +236,11 @@ struct batt_variables
 
 struct battstor
 {
-
+	/// Pass in the single-year number of records
 	battstor( compute_module &cm, bool setup_model, size_t nrec, double dt_hr, batt_variables *batt_vars=0);
 	void parse_configuration();
+
+	/// Initialize automated dispatch with lifetime vectors
 	void initialize_automated_dispatch(std::vector<ssc_number_t> pv= std::vector<ssc_number_t>(), 
 									   std::vector<ssc_number_t> load= std::vector<ssc_number_t>(), 
 									   std::vector<ssc_number_t> cliploss= std::vector<ssc_number_t>());
@@ -314,6 +334,9 @@ struct battstor
 	std::vector<double> cliploss_prediction;
 	int prediction_index;
 
+	/*! If fuel cell is attached */
+	std::vector<double> fuelcellPower;
+
 	// outputs
 	ssc_number_t
 		*outTotalCharge,
@@ -328,7 +351,10 @@ struct battstor
 		*outCellVoltage,
 		*outBatteryVoltage,
 		*outCapacityPercent,
+		*outCapacityPercentCycle,
+		*outCapacityPercentCalendar,
 		*outCycles,
+		*outDODCycleAverage,
 		*outBatteryBankReplacement,
 		*outBatteryTemperature,
 		*outCapacityThermalPercent,
@@ -339,12 +365,15 @@ struct battstor
 		*outPVToLoad,
 		*outBatteryToLoad,
 		*outGridToLoad,
+		*outFuelCellToLoad,
 		*outGridPowerTarget,
 		*outBattPowerTarget,
 		*outPVToBatt,
 		*outGridToBatt,
+		*outFuelCellToBatt,
 		*outPVToGrid,
 		*outBatteryToGrid,
+		*outFuelCellToGrid,
 		*outBatteryConversionPowerLoss,
 		*outBatterySystemLoss,
 		*outAnnualPVChargeEnergy,
@@ -355,12 +384,12 @@ struct battstor
 		*outAnnualGridExportEnergy,
 		*outAnnualEnergySystemLoss,
 		*outAnnualEnergyLoss,
+		*outMarketPrice,
 		*outCostToCycle;
 
 	double outAverageCycleEfficiency;
 	double outAverageRoundtripEfficiency;
 	double outPVChargePercent;
 };
-
 
 #endif

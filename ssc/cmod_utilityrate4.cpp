@@ -1,51 +1,24 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #include "core.h"
 #include <algorithm>
@@ -421,7 +394,7 @@ public:
 		add_var_info( vtab_utility_rate4 );
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		ssc_number_t *parr = 0;
 		size_t count, i, j; 
@@ -885,7 +858,7 @@ public:
 				for (int m=0;m<12;m++)
 				{
 					monthly_salespurchases[m] = 0;
-					for (int d=0;d<util::nday[m];d++)
+					for (size_t d=0;d<util::nday[m];d++)
 					{
 						for(int h=0;h<24;h++)
 						{
@@ -1210,7 +1183,8 @@ public:
 	void monthly_outputs( ssc_number_t e_load[8760], ssc_number_t e_sys[8760], ssc_number_t e_grid[8760], ssc_number_t salespurchases[8760], ssc_number_t monthly_load[12], ssc_number_t monthly_generation[12], ssc_number_t monthly_elec_to_grid[12], ssc_number_t monthly_elec_needed_from_grid[12], ssc_number_t monthly_salespurchases[12])
 	{
 		// calculate the monthly net energy and monthly hours
-		int m,d,h;
+		int m,h;
+		size_t d;
 		ssc_number_t energy_use[12]; // 12 months
 		int c=0;
 //		bool sell_eq_buy = as_boolean("ur_sell_eq_buy");
@@ -1306,9 +1280,9 @@ public:
 				ss << "The weekend TOU matrix for energy rates should have 12 rows and 24 columns. Instead it has " << nrows << " rows and " << ncols << " columns.";
 				throw exec_error("utilityrate4", ss.str());
 			}
-			util::matrix_t<float> ec_schedwkday(nrows, ncols);
+			util::matrix_t<double> ec_schedwkday(nrows, ncols);
 			ec_schedwkday.assign(ec_weekday, nrows, ncols);
-			util::matrix_t<float> ec_schedwkend(nrows, ncols);
+			util::matrix_t<double> ec_schedwkend(nrows, ncols);
 			ec_schedwkend.assign(ec_weekend, nrows, ncols);
 
 			// for each row (month) determine periods in the month
@@ -1333,7 +1307,7 @@ public:
 				ss << "The energy rate table must have 6 columns. Instead it has " << ncols << " columns.";
 				throw exec_error("utilityrate4", ss.str());
 			}
-			util::matrix_t<float> ec_tou_mat(nrows, ncols);
+			util::matrix_t<double> ec_tou_mat(nrows, ncols);
 			ec_tou_mat.assign(ec_tou_in, nrows, ncols);
 
 			// adjust sell rate based on input selections
@@ -1515,9 +1489,9 @@ public:
 				ss << "The weekend TOU matrix for demand rates should have 12 rows and 24 columns. Instead it has " << nrows << " rows and " << ncols << " columns.";
 				throw exec_error("utilityrate4", ss.str());
 			}
-			util::matrix_t<float> dc_schedwkday(nrows, ncols);
+			util::matrix_t<double> dc_schedwkday(nrows, ncols);
 			dc_schedwkday.assign(dc_weekday, nrows, ncols);
-			util::matrix_t<float> dc_schedwkend(nrows, ncols);
+			util::matrix_t<double> dc_schedwkend(nrows, ncols);
 			dc_schedwkend.assign(dc_weekend, nrows, ncols);
 
 			// for each row (month) determine periods in the month
@@ -1542,7 +1516,7 @@ public:
 				ss << "The demand rate table for TOU periods must have 4 columns. Instead, it has " << ncols << "columns.";
 				throw exec_error("utilityrate4", ss.str());
 			}
-			util::matrix_t<float> dc_tou_mat(nrows, ncols);
+			util::matrix_t<double> dc_tou_mat(nrows, ncols);
 			dc_tou_mat.assign(dc_tou_in, nrows, ncols);
 
 			// find all periods for each month m through schedules
@@ -1660,7 +1634,7 @@ public:
 					ss << "The demand rate table by month must have 4 columns. Instead it has " << ncols << " columns";
 					throw exec_error("utilityrate4", ss.str());
 				}
-				util::matrix_t<float> dc_flat_mat(nrows, ncols);
+				util::matrix_t<double> dc_flat_mat(nrows, ncols);
 				dc_flat_mat.assign(dc_flat_in, nrows, ncols);
 
 				for (r = 0; r < m_month.size(); r++)
@@ -1729,7 +1703,7 @@ public:
 		ssc_number_t dc_hourly_peak[8760], ssc_number_t monthly_cumulative_excess_energy[12], 
 		ssc_number_t monthly_cumulative_excess_dollars[12], ssc_number_t monthly_bill[12], 
 		ssc_number_t rate_esc, size_t year, bool include_fixed=true, bool include_min=true, bool gen_only=false) 
-		throw(general_error)
+
 	{
 		int i;
 
@@ -1785,7 +1759,8 @@ public:
 //			sell = ur_ec_single_sell_rate*rate_esc;
 
 		// calculate the monthly net energy and monthly hours
-		int m, d, h, period, tier;
+		int m, h, period, tier;
+		size_t d;
 		int c = 0;
 		for (m = 0; m < (int)m_month.size(); m++)
 		{
@@ -2472,7 +2447,7 @@ public:
 		ssc_number_t dc_hourly_peak[8760], ssc_number_t monthly_cumulative_excess_energy[12],
 		ssc_number_t monthly_cumulative_excess_dollars[12], ssc_number_t monthly_bill[12],
 		ssc_number_t rate_esc, bool include_fixed = true, bool include_min = true)
-		throw(general_error)
+
 	{
 		int i;
 
@@ -2519,7 +2494,8 @@ public:
 		//	sell = ur_ec_single_sell_rate*rate_esc;
 
 		// calculate the monthly net energy and monthly hours
-		int m, d, h, period, tier;
+		int m, h, period, tier;
+		size_t d;
 		int c = 0;
 		for (m = 0; m < (int)m_month.size(); m++)
 		{
@@ -2928,8 +2904,8 @@ public:
 	}
 
 
-	void ur_update_ec_monthly(int month, util::matrix_t<float>& charge, util::matrix_t<float>& energy, util::matrix_t<float>& surplus)
-		throw(general_error)
+	void ur_update_ec_monthly(int month, util::matrix_t<double>& charge, util::matrix_t<double>& energy, util::matrix_t<double>& surplus)
+
 	{
 		if (month < 0 || month > (int)m_month.size())
 		{

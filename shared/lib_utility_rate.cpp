@@ -55,14 +55,15 @@ void UtilityRateCalculator::calculateEnergyUsagePerPeriod()
 }
 double UtilityRateCalculator::getEnergyRate(size_t hourOfYear)
 {
-
+	// period is the human readable value from the table (1-based)
 	size_t period = getEnergyPeriod(hourOfYear);
 
 	//size_t idx = m_loadProfile.size() - 1;
 	//double energy = m_energyTiersPerPeriod[period];
 	// add ability to check for tiered usage, for now assume one tier
 
-	return m_ecRatesMatrix(period, 4);
+	// Reduce period to 0-based index
+	return m_ecRatesMatrix(period - 1, 4);
 
 }
 size_t UtilityRateCalculator::getEnergyPeriod(size_t hourOfYear)

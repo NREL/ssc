@@ -3,6 +3,10 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+#VS Code
+.vscode/*
+*.vscode
+
 # Git generated
 *.orig
 
@@ -26,6 +30,10 @@ bld/
 [Bb]in/
 [Oo]bj/
 [Ll]og/
+build/
+cmake-build-debug/
+cmake-build-release/
+test/Test
 
 # Visual Studio 2015 cache/options directory
 .vs/
@@ -203,6 +211,8 @@ ClientBin/
 *.pfx
 *.publishsettings
 orleans.codegen.cs
+*.DS_Store
+
 
 # Since there are multiple workflows, uncomment next line to ignore bower_components
 # (https://github.com/github/gitignore/pull/1529#issuecomment-104372622)
@@ -300,8 +310,13 @@ __pycache__/
 *.d
 *.bin
 *.mod
+*.app
+*.dylib
+
 
 # Specific SAM build ignores
+doc/latex/*
+
 SDKtool
 TCSConsole
 dltest
@@ -330,4 +345,16 @@ build_linux/Test
 build_linux/config.status
 linux_test\.txt
 
-nlopt/config\.h
+nlopt/config.h
+nlopt/config.status
+build_osx/config.status
+build_sdk/sdk-release/linux64/dependencies\.txt
+build_sdk/sdk-release/linux64/filetypes\.txt
+doc/html/*
+doc/latex/*
+build_linux/linux_errors
+*.DS_Store
+
+ssc/ssc\.exp
+
+ssc/sscd\.exp

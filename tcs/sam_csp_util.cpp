@@ -1,51 +1,24 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #include <algorithm>
 
@@ -1088,6 +1061,140 @@ void CSP::HybridHR( int tech_type, double P_cond_min, int n_pl_inc, double F_wc,
 }
 
 
+// Surface condenser calculations for once through cooling ARD
+void CSP::surface_cond(int tech_type, double P_cond_min, int n_pl_inc, double DeltaT_cw_des, double T_approach, double P_cycle,
+	double eta_ref, double T_db_K, double T_wb_K, double P_amb, double T_cold, double q_reject, double &m_dot_water,
+	double &W_dot_tot, double &P_cond, double &T_cond, double &f_hrsys, double &T_cond_out)
+{
+	/*
+	double c_air, c_cw, deltah_evap, deltat_cw, dp_evap, drift_loss_frac, dt_out, eta_fan, eta_fan_s,
+	eta_pcw_s, eta_pump, h_fan_in, h_fan_out, h_fan_out_s, h_pcw_in, h_pcw_out,
+	h_pcw_out_s, m_dot_air, m_dot_blowdown, m_dot_cw, m_dot_cw_des, m_dot_drift, blowdown_frac,
+	m_dot_evap, mass_ratio_fan, p_ratio_fan, q_reject_des, R, rho_cw, s_pcw_in, t_fan_in,
+	t_fan_in_k, t_fan_out, t_fan_out_k, w_dot_cw_pump, w_dot_fan;*/
+	/*
+	!------------------------------------------------------------------------------------------------------------
+	!--Inputs
+	!   * P_cond_min    [Pa]    Minimum allowable condenser pressure
+	!   * n_pl_inc      [-]     Number of part load heat rejection levels
+	!   * DeltaT_cw_des [K]     Cooling water temperature rise across condenser
+	!   * T_approach    [K]     Cooling tower approach temperature, difference between cw out and wet bulb temp
+	!   * P_cycle       [W]     Rated power block capacity
+	!   * eta_ref       [-]     Rated gross conversion efficiency
+	!   * T_db          [K]     Dry bulb temperature (converted to C)
+	!   * P_amb         [Pa]    Atmospheric pressure
+	!	* T_cold		[C]		Cold storage temperature (inlet to condenser)
+	!------------------------------------------------------------------------------------------------------------
+	!--Output
+	!   * m_dot_water   [kg/s]  Total cooling tower water usage
+	!   * W_dot_tot     [MW]    Total parasitic power for cooling tower model
+	!   * P_cond        [Pa]    Condenser steam pressure
+	!   * T_cond        [K]     Condenser steam temperature
+	!   * f_hrsys       [-]     Fraction of the cooling system operating
+	!	* T_cond_out	[C]		Condenser water outlet temperature
+	!------------------------------------------------------------------------------------------------------------
+	*/
+
+	// Unit conversions
+	double T_db = T_db_K - 273.15;    //[C] Converted dry bulb temp
+	double T_wb = T_wb_K - 273.15;    //[C] Converted wet bulb temp
+
+	// Values that can be estimated
+	double dt_out = 3.0;				// Temperature difference at hot side of the condenser
+	double drift_loss_frac = 0.001;    // Drift loss fraction
+	double blowdown_frac = 0.003;      // Blowdown fraction
+	double dp_evap = 0.37*1.0e5;       // [Pa] Pressure drop across the condenser and cooling tower
+	double eta_pump = 0.75;            // Total pump efficiency
+	double eta_pcw_s = 0.8;            // Isentropic cooling water pump efficiency
+	double eta_fan = 0.75;             // Fan mechanical efficiency
+	double eta_fan_s = 0.8;            // Fan isentropic efficiency
+	double p_ratio_fan = 1.0025;       // Fan pressure ratio
+	double mass_ratio_fan = 1.01;      // Ratio of air flow to water flow in the cooling tower
+
+	// Cooling water specific heat
+	water_state wp;
+	water_TP(max(T_cold, 10.0) + 273.15, P_amb / 1000.0, &wp);
+	double c_cw = wp.cp * 1000.0;		// Convert to J/kg-K
+
+	// **** Calculations for design conditions
+	double q_reject_des = P_cycle*(1. / eta_ref - 1.0);    	    // Heat rejection from the cycle
+	double m_dot_cw_des = q_reject_des / (c_cw*DeltaT_cw_des);	// Mass flow rate of cooling water required to absorb the rejected heat
+	f_hrsys = 1.0;   // Initial fraction of cooling system operating
+
+	// **** Calculations for performance
+	// Calculate the cooling water temp. rise associated with normal cooling system operation
+	double m_dot_cw = m_dot_cw_des;
+	double deltat_cw = q_reject / (m_dot_cw*c_cw);
+
+	// Condenser saturation temperature
+	T_cond = T_cold + deltat_cw + dt_out; // celcius
+
+	// Condenser back pressure
+	if (tech_type != 4)
+	{
+		water_TQ(T_cond + 273.15, 1.0, &wp);
+		P_cond = wp.pres * 1000.0;
+	}
+	else
+		P_cond = CSP::P_sat4(T_cond); // isopentane
+
+
+	// MJW 7.19.2010 :: Cooling system part-load strategy uses the number of part-load increments to determine how the coolign system is
+	// partially shut down during under design operation. The condenser pressure is reduced with the cooling system running
+	// at full load until it reaches the minimum condenser pressure. The cooling system then incrementally shuts off bays until
+	// the condenser temperature/pressure rise above their minimum level. Default cond. pressure is 1.25 inHg (4233 Pa).
+	if ((P_cond < P_cond_min) && (tech_type != 4)) // Aug 3, 2011: No lower limit on Isopentane
+	{
+		for (int i = 2; i <= n_pl_inc; i++)
+		{
+			f_hrsys = (1.0 - (float)((i - 1.0) / n_pl_inc));
+			m_dot_cw = m_dot_cw_des*f_hrsys;
+			deltat_cw = q_reject / (m_dot_cw*c_cw);
+			T_cond = T_cold + deltat_cw + dt_out;
+
+			water_TQ(T_cond + 273.15, 1.0, &wp);
+			P_cond = wp.pres * 1000.0;
+
+			if (P_cond > P_cond_min) break;
+		}
+		if (P_cond <= P_cond_min)
+		{
+			// Still below min. fix to min condenser pressure and recalc. temp.
+
+			P_cond = P_cond_min;
+
+			water_PQ(P_cond / 1000.0, 1.0, &wp);
+			T_cond = wp.temp - 273.15;
+
+			deltat_cw = T_cond - (T_cold + dt_out);
+			m_dot_cw = q_reject / (deltat_cw * c_cw);
+		}
+	}
+	water_TP(T_cond - 3.0 + 273.15, P_amb / 1000.0, &wp);
+	double h_pcw_in = wp.enth*1000.0;
+	//double s_pcw_in = wp.entr*1000.0;
+	double rho_cw = wp.dens;
+
+	double h_pcw_out_s = (dp_evap / rho_cw) + h_pcw_in;								// [J/kg] isentropic outlet enthalpy.. incompressible fluid
+	double h_pcw_out = h_pcw_in + ((h_pcw_out_s - h_pcw_in) / eta_pcw_s);			// [J/kg] Outlet enthalpy accounting for irreversibility
+	double w_dot_cw_pump = (h_pcw_out - h_pcw_in) * m_dot_cw / eta_pump * 1.0E-6;	// [MW] Cooling water circulating pump power
+
+	T_cond_out = T_cond - dt_out;	// [C] Return the condenser cooling water outlet temperature
+	
+
+	// Total cooling tower parasitic power
+	W_dot_tot = w_dot_cw_pump;   // [MW]
+
+
+	// Total power block water usage
+	m_dot_water = 0;
+
+	// Unit conversions
+	T_db = T_db + 273.15;		// [C] Converted dry bulb temp (TFF - I think this is irrelevant, since it's not passed back out)
+	T_wb = T_wb + 273.15;		// [C] Converted wet bulb temp (TFF - I think this is irrelevant, since it's not passed back out)
+	T_cond = T_cond + 273.15;	// [K] Convert to K for output
+}
+
 double CSP::eta_pl(double mf)
 {
 	return 1.0 - (0.191 - 0.409*mf + 0.218*pow(mf,2.0));	// This number should be multiplied by the design-point isen. eff to get the final.
@@ -1106,12 +1213,11 @@ double CSP::pipe_sched(double De, bool selectLarger)
     Data and stress calculations were obtained from Kelly & Kearney piping model, rev. 1/2011.
     */
 
-    //D_inch = (/2.50, 3.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0, 22.0, 24.0, 26.0, &
-    //           28.0, 30.0, 32.0, 34.0, 36.0, 42.0, 48.0, 54.0, 60.0, 66.0, 72.0/)
-
-    double D_m[] = { 0.06880860, 0.08468360, 0.1082040, 0.16146780, 0.2063750, 0.260350, 0.311150, 0.33975040,
+    double D_m[] = { 0.01855, 0.02173, 0.03115, 0.0374, 0.04375, 0.0499, 0.0626,
+        0.06880860, 0.08468360, 0.1082040, 0.16146780, 0.2063750, 0.260350, 0.311150, 0.33975040,
         0.39055040, 0.438150, 0.488950, 0.53340, 0.58420, 0.6350, 0.679450, 0.730250, 0.781050,
-        0.82864960, 0.87630, 1.02870, 1.16840, 1.32080, 1.47320, 1.62560, 1.7780 };
+        0.82864960, 0.87630, 1.02870, 1.16840, 1.32080, 1.47320, 1.62560, 1.7780,
+        1.8796, 1.9812, 2.1844, 2.286 };
     int np = sizeof(D_m) / sizeof(D_m[0]);
 
     if (selectLarger) {
@@ -1127,14 +1233,14 @@ double CSP::pipe_sched(double De, bool selectLarger)
         }
     }
 
-    //Nothing was found, so return an error
+    //Nothing was found, so return the exact pipe diameter instead
     double mtoinch = 39.3700787;
-    char buffer[256];
+    char buffer[512];
     sprintf(buffer, "No suitable pipe schedule found for this plant design. Looking for a schedule above %.2f in ID. "
         "Maximum schedule is %.2f in ID. Using the exact pipe diameter instead."
         "Consider increasing the header design velocity range or the number of field subsections.",
         De*mtoinch, D_m[np - 1] * mtoinch);
-    throw std::invalid_argument(buffer);
+    //throw std::invalid_argument(buffer);
     return De;  //mjw 10/10/2014 - NO! ---> std::numeric_limits<double>::quiet_NaN();
 }
 
@@ -1203,6 +1309,39 @@ double CSP::FricFactor_Iter(double rel_rough, double Re) {
 
     //call Messages(-1," Could not find friction factor solution",'Warning',0,250) 
     return 0;
+}
+
+//template <typename T, typename A>
+//T mode(std::vector<T,A> const& v) {
+double mode(std::vector<double> v) {
+    if (v.size() == 0) { throw C_csp_exception("Vector size cannot be 0 for mode calculation."); }
+    if (v.size() == 1) { return v[0]; }
+
+    std::sort(v.begin(), v.end());
+    //T mode = v[0];
+    double mode = v[0];
+    std::size_t new_count = 1;   // starting at second element so counting first element here
+    std::size_t mode_count = 0;
+    //for (std::vector<T>::iterator it = v.begin() + 1; it != v.end(); ++it) {
+    for (std::vector<double>::iterator it = v.begin() + 1; it != v.end(); ++it) {
+        if (*it == *(it - 1)) {
+            new_count++;
+        }
+        else {  // next unique value seen
+            if (new_count > mode_count) {
+                mode = *(it - 1);
+                mode_count = new_count;
+            }
+            new_count = 1;
+        }
+    }
+    // handle last value
+    if (new_count > mode_count) {
+        mode = *(v.end() - 1);
+        mode_count = new_count;
+    }
+
+    return mode;
 }
 
 //double CSP::Re(double rho, double vel, double d, double mu) {
@@ -1443,6 +1582,22 @@ bool CSP::flow_patterns( int n_panels, int crossover_shift, int flow_type, int &
 		for( int i = 0; i < n_panels; i++ )
 			flow_pattern.at( 0, i ) = n_panels/2 - 1 - i + i/(n_panels/2)*n_panels;
 		return true;
+    case 9:
+        /* This flow type has parallel flow paths with 2 panels in each path.
+            */
+        size_t n_panels_per_path = 2;
+        n_lines = n_panels / n_panels_per_path;     //[-]
+        flow_pattern.resize(n_lines, n_panels_per_path);
+
+        size_t i_start = n_panels/2 - (int)std::floor(n_panels/4);
+
+        for (size_t i = 0; i < n_lines; i++)
+        {
+            flow_pattern(i, 0) = (i_start + i) % n_panels;
+            flow_pattern(i, 1) = (i_start + i + n_lines) % n_panels;
+        }
+
+        return true;
 	};
 	return false;
 }

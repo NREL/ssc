@@ -1,51 +1,24 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #include <stdio.h>
 #include <cmath>
@@ -985,7 +958,7 @@ bool weatherfile::open(const std::string &file, bool header_only)
 				else if (lowname == "rh" || lowname == "rhum" || lowname == "relative humidity" || lowname == "humidity") m_columns[RH].index = i;
 				else if (lowname == "pres" || lowname == "pressure" || lowname == "air pressure") m_columns[PRES].index = i;
 				else if (lowname == "snow" || lowname == "snow cover" || lowname == "snow depth") m_columns[SNOW].index = i;
-				else if (lowname == "alb" || lowname == "albedo") m_columns[ALB].index = i;
+				else if (lowname == "alb" || lowname == "albedo" || lowname == "surface albedo") m_columns[ALB].index = i;
 				else if (lowname == "aod" || lowname == "aerosol" || lowname == "aerosol optical depth") m_columns[AOD].index = i;
 			}
 		}
@@ -1216,24 +1189,6 @@ bool weatherfile::open(const std::string &file, bool header_only)
 				m_columns[DAY].data[i] = (float)day;
 				m_columns[HOUR].data[i] = (float)hour;
 				m_columns[MINUTE].data[i] = 30;
-				/*
-								m_columns[GHI].data[i] = (float)stof(cols[4]);
-								m_columns[DNI].data[i] = (float)stof(cols[7]);
-								m_columns[DHI].data[i] = (float)stof(cols[10]);
-								m_columns[POA].data[i] = (float)(-999);       //No POA in TMY3
-
-								m_columns[TDRY].data[i] = (float)stof(cols[31]);
-								m_columns[TDEW].data[i] = (float)stof(cols[34]);
-
-								m_columns[WSPD].data[i] = (float)stof(cols[46]);
-								m_columns[WDIR].data[i] = (float)stof(cols[43]);
-
-								m_columns[RH].data[i] = (float)stof(cols[37]);
-								m_columns[PRES].data[i] = (float)stof(cols[40]);
-								m_columns[SNOW].data[i] = -999.0; // no snowfall in TMY3
-								m_columns[ALB].data[i] = (float)stof(cols[61]);
-								m_columns[AOD].data[i] = -999; // no AOD in TMY3
-				*/
 				m_columns[GHI].data[i] = col_or_nan(cols[4]);
 				m_columns[DNI].data[i] = col_or_nan(cols[7]);
 				m_columns[DHI].data[i] = col_or_nan(cols[10]);
@@ -1294,21 +1249,21 @@ bool weatherfile::open(const std::string &file, bool header_only)
 				m_columns[HOUR].data[i] = (float)stoi(cols[3]) - 1;  // hour goes 0-23, not 1-24;
 				m_columns[MINUTE].data[i] = (float)stoi(cols[4]);
 
-				m_columns[GHI].data[i] = check_missing(stof(cols[13]), 9999.);
-				m_columns[DNI].data[i] = check_missing(stof(cols[14]), 9999.);
-				m_columns[DHI].data[i] = check_missing(stof(cols[15]), 9999.);
+				m_columns[GHI].data[i] = check_missing(col_or_nan(cols[13]), 9999.);
+				m_columns[DNI].data[i] = check_missing(col_or_nan(cols[14]), 9999.);
+				m_columns[DHI].data[i] = check_missing(col_or_nan(cols[15]), 9999.);
 				m_columns[POA].data[i] = (float)(-999);       /* No POA in EPW */
 
-				m_columns[WSPD].data[i] = check_missing(stof(cols[21]), 999.);
-				m_columns[WDIR].data[i] = check_missing(stof(cols[20]), 999.);
+				m_columns[WSPD].data[i] = check_missing(col_or_nan(cols[21]), 999.);
+				m_columns[WDIR].data[i] = check_missing(col_or_nan(cols[20]), 999.);
 
-				m_columns[TDRY].data[i] = check_missing(stof(cols[6]), 99.9);
+				m_columns[TDRY].data[i] = check_missing(col_or_nan(cols[6]), 99.9);
 
-				m_columns[TDEW].data[i] = check_missing(stof(cols[7]), 99.9);
+				m_columns[TDEW].data[i] = check_missing(col_or_nan(cols[7]), 99.9);
 
-				m_columns[RH].data[i] = check_missing(stof(cols[8]), 999.);
-				m_columns[PRES].data[i] = check_missing(stof(cols[6]) * 0.01, 999999.*0.01);
-				m_columns[SNOW].data[i] = check_missing(stof(cols[30]), 999.); // snowfall
+				m_columns[RH].data[i] = check_missing(col_or_nan(cols[8]), 999.);
+				m_columns[PRES].data[i] = check_missing(col_or_nan(cols[6]) * 0.01, 999999.*0.01);
+				m_columns[SNOW].data[i] = check_missing(col_or_nan(cols[30]), 999.); // snowfall
 				m_columns[ALB].data[i] = -999; /* no albedo in EPW file */
 				m_columns[AOD].data[i] = -999; /* no AOD in EPW */
 
@@ -1317,7 +1272,7 @@ bool weatherfile::open(const std::string &file, bool header_only)
 				break;
 			}
 
-			if (ifs.eof())
+			if (ifs.eof() && i < ((int)m_nRecords - 1))
 			{
 				m_message = "EPW: data line formatting error at record " + util::to_string(i);
 				return false;
@@ -1344,22 +1299,22 @@ bool weatherfile::open(const std::string &file, bool header_only)
 
 			m_time += m_stepSec; // increment by step
 
-			m_columns[GHI].data[i] = (float)stof(cols[7]);
-			m_columns[DNI].data[i] = (float)stof(cols[8]);
-			m_columns[DHI].data[i] = (float)stof(cols[9]);
+			m_columns[GHI].data[i] = col_or_nan(cols[7]);
+			m_columns[DNI].data[i] = col_or_nan(cols[8]);
+			m_columns[DHI].data[i] = col_or_nan(cols[9]);
 			m_columns[POA].data[i] = (double)(-999);       /* No POA in SMW */
 
-			m_columns[WSPD].data[i] = (float)stof(cols[4]);
-			m_columns[WDIR].data[i] = (float)stof(cols[5]);
+			m_columns[WSPD].data[i] = col_or_nan(cols[4]);
+			m_columns[WDIR].data[i] = col_or_nan(cols[5]);
 
-			m_columns[TDRY].data[i] = (float)stof(cols[0]);
-			m_columns[TDEW].data[i] = (float)stof(cols[1]);
-			m_columns[TWET].data[i] = (float)stof(cols[2]);
+			m_columns[TDRY].data[i] = col_or_nan(cols[0]);
+			m_columns[TDEW].data[i] = col_or_nan(cols[1]);
+			m_columns[TWET].data[i] = col_or_nan(cols[2]);
 
-			m_columns[RH].data[i] = (float)stof(cols[3]);
-			m_columns[PRES].data[i] = (float)stof(cols[6]);
-			m_columns[SNOW].data[i] = (float)stof(cols[11]);
-			m_columns[ALB].data[i] = (float)stof(cols[10]);
+			m_columns[RH].data[i] = col_or_nan(cols[3]);
+			m_columns[PRES].data[i] = col_or_nan(cols[6]);
+			m_columns[SNOW].data[i] = col_or_nan(cols[11]);
+			m_columns[ALB].data[i] = col_or_nan(cols[10]);
 			m_columns[AOD].data[i] = -999; /* no AOD in SMW */
 
 			if (ifs.eof())
@@ -1388,7 +1343,16 @@ bool weatherfile::open(const std::string &file, bool header_only)
 					if (m_columns[k].index >= 0
 						&& m_columns[k].index < ncols)
 					{
-						m_columns[k].data[i] = (float)stof(trimboth(cols[m_columns[k].index]));
+						if (k == YEAR) {
+							try {
+								m_columns[k].data[i] = col_or_nan(trimboth(cols[m_columns[k].index]));
+							}
+							catch (const std::exception& ) {
+								m_columns[k].data[i] = 1990;
+							}
+						}
+						else
+							m_columns[k].data[i] = col_or_nan(trimboth(cols[m_columns[k].index]));
 					}
 				}
 
@@ -1517,6 +1481,130 @@ bool weatherfile::open(const std::string &file, bool header_only)
 
 	return true;
 }
+
+bool weatherfile::read_average(weather_record *r, std::vector<int> &cols, size_t &num_timesteps)
+{
+	if (r && m_index < m_nRecords && num_timesteps > 0 && num_timesteps < m_nRecords)
+	{
+		r->year = (int)m_columns[YEAR].data[m_index];
+		r->month = (int)m_columns[MONTH].data[m_index];
+		r->day = (int)m_columns[DAY].data[m_index];
+		r->hour = (int)m_columns[HOUR].data[m_index];
+		r->minute = m_columns[MINUTE].data[m_index];
+		r->gh = m_columns[GHI].data[m_index];
+		r->dn = m_columns[DNI].data[m_index];
+		r->df = m_columns[DHI].data[m_index];
+		r->poa = m_columns[POA].data[m_index];
+		r->wspd = m_columns[WSPD].data[m_index];
+		r->wdir = m_columns[WDIR].data[m_index];
+		r->tdry = m_columns[TDRY].data[m_index];
+		r->twet = m_columns[TWET].data[m_index];
+		r->tdew = m_columns[TDEW].data[m_index];
+		r->rhum = m_columns[RH].data[m_index];
+		r->pres = m_columns[PRES].data[m_index];
+		r->snow = m_columns[SNOW].data[m_index];
+		r->alb = m_columns[ALB].data[m_index];
+		r->aod = m_columns[AOD].data[m_index];
+
+		// average columns requested
+		int start = (int)m_index - (int)num_timesteps / 2;
+		if (start < 0) 
+			start = 0;
+		if ((size_t)start + num_timesteps > m_nRecords)
+			start = (int)m_nRecords - (int)num_timesteps;
+		if (start < 0) 
+			start = 0;
+
+	
+		for (size_t i = 0; i < cols.size(); i++)
+		{
+			double col_val = 0;
+			int n_vals = 0;
+			if (cols[i] >= YEAR && cols[i] < _MAXCOL_)
+			{
+				for (size_t j = (size_t)start; j < num_timesteps && j < m_nRecords; j++)
+				{
+					col_val += m_columns[cols[i]].data[start];
+					n_vals++;
+				}
+				if (n_vals > 0)
+					col_val /= n_vals;
+			}
+			switch (cols[i])
+			{
+			case YEAR:
+				r->year = (int)col_val;
+				break;
+			case MONTH:
+				r->month = (int)col_val;
+				break;
+			case DAY:
+				r->day = (int)col_val;
+				break;
+			case HOUR:
+				r->hour = (int)col_val;
+				break;
+			case MINUTE:
+				r->minute = col_val;
+				break;
+			case GHI:
+				r->gh = col_val;
+				break;
+			case DNI:
+				r->dn = col_val;
+				break;
+			case DHI:
+				r->df = col_val;
+				break;
+			case POA:
+				r->poa = col_val;
+				break;
+			case TDRY:
+				r->tdry = col_val;
+				break;
+			case TWET: 
+				r->twet = col_val;
+				break;
+			case TDEW:
+				r->tdew = col_val;
+				break;
+			case WSPD:
+				r->wspd = col_val;
+				break;
+			case WDIR:
+				r->wdir = col_val;
+				break;
+			case RH:
+				r->rhum = col_val;
+				break;
+			case PRES:
+				r->pres = col_val;
+				break;
+			case SNOW:
+				r->snow = col_val;
+				break;
+			case ALB:
+				r->alb = col_val;
+				break;
+			case AOD:
+				r->aod = col_val;
+				break;
+			default:
+				break;
+			}
+		}
+
+
+		m_index++;
+
+		return true;
+	}
+	else
+		return false;
+
+}
+
+
 
 bool weatherfile::read( weather_record *r )
 {

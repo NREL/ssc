@@ -1,51 +1,24 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #include <cmath>
 #include "lib_physics.h"
@@ -61,7 +34,7 @@ bool windTurbine::setPowerCurve(std::vector<double> windSpeeds, std::vector<doub
 	}
 	powerCurveWS = windSpeeds;
 	powerCurveKW = powerOutput;
-	densityCorrectedWS.resize(powerCurveArrayLength, 0);
+	densityCorrectedWS = powerCurveWS;
 	powerCurveRPM.resize(powerCurveArrayLength, -1);
 	return 1;
 }
@@ -85,7 +58,8 @@ double windTurbine::tipSpeedRatio(double windSpeed)
 	return (rpm>0) ? rpm * rotorDiameter * physics::PI / (windSpeed*60.0) : 7.0;
 }
 
-void windTurbine::turbinePower(double windVelocity, double airDensity, double *turbineOutput, double *thrustCoefficient){
+void windTurbine::turbinePower(double windVelocity, double airDensity, double *turbineOutput, double *turbineGross,
+                               double *thrustCoefficient) {
 	if (!isInitialized()){
 		errDetails = "windTurbine not initialized with necessary data";
 		return;
@@ -94,10 +68,15 @@ void windTurbine::turbinePower(double windVelocity, double airDensity, double *t
 	*thrustCoefficient = 0.0;
 	*turbineOutput = 0.0;
 
-	//first, correct wind speeds in power curve for site air density. Using method 2 described in https://www.scribd.com/document/38818683/PO310-EWEC2010-Presentation
-	std::vector <double> temp_ws;
-	for (size_t i = 0; i < densityCorrectedWS.size(); i++)
-		densityCorrectedWS[i] = powerCurveWS[i] * pow((physics::AIR_DENSITY_SEA_LEVEL / airDensity), (1.0 / 3.0));
+	//correct wind speeds in power curve for site air density if necessary, using method 2 described in https://www.scribd.com/document/38818683/PO310-EWEC2010-Presentation
+	if (abs(airDensity - previousAirDensity) > 0.001 ) {
+        double correction = pow((physics::AIR_DENSITY_SEA_LEVEL / airDensity), (1.0 / 3.0));
+        for (size_t i = 0; i < densityCorrectedWS.size(); i++) {
+            densityCorrectedWS[i] = powerCurveWS[i] * correction;
+        }
+        previousAirDensity = airDensity;
+	}
+
 	int i = 0;
 	while (powerCurveKW[i] == 0)
 		i++; //find the index of the first non-zero power output in the power curve
@@ -133,7 +112,9 @@ void windTurbine::turbinePower(double windVelocity, double airDensity, double *t
 	//if (out_pwr > (m_dRatedPower * 0.001)) // if calculated power is > 0.1% of rating, set outputs
 	if (out_pwr > 0)
 	{
-		out_pwr = out_pwr*(1.0 - lossesPercent) - lossesAbsolute;
+	    if (turbineGross)
+	        *turbineGross = out_pwr;
+		out_pwr = out_pwr*(1.0 - lossesRatio) - lossesAbsolute;
 		double pden = 0.5*airDensity*pow(windVelocity, 3.0);
 		double area = physics::PI / 4.0*rotorDiameter*rotorDiameter;
 		double fPowerCoefficient = max_of(0.0, 1000.0*out_pwr / (pden*area));
@@ -185,7 +166,7 @@ void simpleWakeModel::wakeCalculations(const double airDensity, const double dis
 			dDeficit *= (1.0 - vdef);
 		}
 		windSpeed[i] = windSpeed[i] * dDeficit;
-		wTurbine->turbinePower(windSpeed[i], airDensity, &power[i], &thrust[i]);
+        wTurbine->turbinePower(windSpeed[i], airDensity, &power[i], nullptr, &thrust[i]);
 		if (wTurbine->errDetails.length() > 0){
 			errDetails = wTurbine->errDetails;
 			return;
@@ -256,7 +237,7 @@ void parkWakeModel::wakeCalculations(const double airDensity, const double dista
 			newSpeed = min_of(newSpeed, delta_V_Park(windSpeed[0], windSpeed[j], distanceCrosswindMeters, distanceDownwindMeters, turbineRadius, turbineRadius, thrust[j]));
 		}
 		windSpeed[i] = newSpeed;
-		wTurbine->turbinePower(windSpeed[i], airDensity, &power[i], &thrust[i]);
+        wTurbine->turbinePower(windSpeed[i], airDensity, &power[i], nullptr, &thrust[i]);
 		if (wTurbine->errDetails.length() > 0){
 			errDetails = wTurbine->errDetails;
 			return;
@@ -548,7 +529,7 @@ void eddyViscosityWakeModel::wakeCalculations(/*INPUTS */ const double air_densi
 		// use the max deficit found to calculate the turbine output
 		adWindSpeed[i] = adWindSpeed[0] * (1 - dDeficit);
 		aTurbulence_intensity[i] = dTotalTI;
-		wTurbine->turbinePower(adWindSpeed[i], air_density, &power[i], &Thrust[i]);
+        wTurbine->turbinePower(adWindSpeed[i], air_density, &power[i], nullptr, &Thrust[i]);
 		if (wTurbine->errDetails.length() > 0){
 			errDetails = wTurbine->errDetails;
 			return;
@@ -564,3 +545,20 @@ void eddyViscosityWakeModel::wakeCalculations(/*INPUTS */ const double air_densi
 	}
 }
 
+void constantWakeModel::wakeCalculations(const double airDensity, const double distanceDownwind[], const double distanceCrosswind[],
+                                       double power[], double eff[], double thrust[], double windSpeed[], double turbulenceIntensity[])
+{
+    double turbPower = 0., turbThrust = 0.;
+    wTurbine->turbinePower(windSpeed[0], airDensity, &turbPower, nullptr, &turbThrust);
+    if (wTurbine->errDetails.length() > 0){
+        errDetails = wTurbine->errDetails;
+        return;
+    }
+    turbPower *= derate;
+    for (size_t i = 0; i < nTurbines; i++) // loop through all turbines, starting with most upwind turbine. i=0 has already been done
+    {
+        power[i] = turbPower;
+        thrust[i] = turbThrust;
+        eff[i] = 100.;
+    }
+}

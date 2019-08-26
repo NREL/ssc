@@ -1,51 +1,24 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  ("Alliance") under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as �System Advisor Model� or �SAM�. Except
-*  to comply with the foregoing, the terms �System Advisor Model�, �SAM�, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #include <math.h>
 #include <cmath>
@@ -802,6 +775,9 @@ void lifetime_t::copy(lifetime_t * lifetime)
 	_q = lifetime->_q;
 }
 double lifetime_t::capacity_percent(){ return _q; }
+double lifetime_t::capacity_percent_cycle() { return _lifetime_cycle->capacity_percent(); }
+double lifetime_t::capacity_percent_calendar() { return _lifetime_calendar->capacity_percent(); }
+
 void lifetime_t::runLifetimeModels(size_t idx, capacity_t * capacity, double T_battery)
 {
 	double q_last = _q;
@@ -891,11 +867,14 @@ void lifetime_cycle_t::copy(lifetime_cycle_t * lifetime_cycle)
 	_Range = lifetime_cycle->_Range;
 	_average_range = lifetime_cycle->_average_range;
 }
-double lifetime_cycle_t::computeCycleDamageAtDOD(double DOD)
+double lifetime_cycle_t::estimateCycleDamage()
 {
-	if (DOD == 0)
+	// Initialize assuming 50% DOD
+	double DOD = 50;
+	if (_average_range > 0){
 		DOD = _average_range;
-	return(_q - bilinear(DOD, _nCycles + 1));
+	}
+	return(bilinear(DOD, _nCycles+1) - bilinear(DOD, _nCycles + 2));
 }
 double lifetime_cycle_t::runCycleLifetime(double DOD)
 {
@@ -1013,7 +992,8 @@ void lifetime_cycle_t::replaceBattery()
 
 int lifetime_cycle_t::cycles_elapsed(){ return _nCycles; }
 double lifetime_cycle_t::cycle_range(){ return _Range; }
-
+double lifetime_cycle_t::average_range() { return _average_range; }
+double lifetime_cycle_t::capacity_percent() { return _q; }
 
 double lifetime_cycle_t::bilinear(double DOD, int cycle_number)
 {
@@ -1174,7 +1154,7 @@ lifetime_calendar_t::lifetime_calendar_t(int calendar_choice, util::matrix_t<dou
 	_c = c;
 
 	// output based on percentage capacity (0 - 100%)
-	_q = _q0 * 100;
+	_q = _q0 * 100; 
 
 	// timestep
 	_dt_hour = dt_hour;
@@ -1188,6 +1168,10 @@ lifetime_calendar_t::lifetime_calendar_t(int calendar_choice, util::matrix_t<dou
 			_calendar_days.push_back((int)calendar_matrix.at(i, 0));
 			_calendar_capacity.push_back(calendar_matrix.at(i, 1));
 		}
+	}
+	// Ensure don't accidently initialize to 0 if not using model
+	else if (_calendar_choice == NONE) {
+		_q0 = 1.0;
 	}
 }
 lifetime_calendar_t * lifetime_calendar_t::clone(){ return new lifetime_calendar_t(*this); }
@@ -1208,6 +1192,7 @@ void lifetime_calendar_t::copy(lifetime_calendar_t * lifetime_calendar)
 	_b = lifetime_calendar->_b;
 	_c = lifetime_calendar->_c;
 }
+double lifetime_calendar_t::capacity_percent() { return _q; }
 double lifetime_calendar_t::runLifetimeCalendarModel(size_t idx, double T, double SOC)
 {
 	if (_calendar_choice != lifetime_calendar_t::NONE)
@@ -1288,18 +1273,11 @@ void lifetime_calendar_t::replaceBattery()
 Define Thermal Model
 */
 thermal_t::thermal_t() { /* nothing to do */ }
-thermal_t::thermal_t(double mass, double length, double width, double height, 
-	double Cp,  double h, double T_room, 
-	const util::matrix_t<double> &c_vs_t )
+thermal_t::thermal_t(double dt_hour, double mass, double length, double width, double height, 
+	double Cp,  double h, std::vector<double> T_room, 
+	const util::matrix_t<double> &c_vs_t ) : _dt_hour(dt_hour), _mass(mass), _length(length), _width(width), _height(height),
+	_Cp(Cp), _h(h), _T_room(T_room), _cap_vs_temp(c_vs_t)
 {
-	_cap_vs_temp = c_vs_t;
-	_mass = mass;
-	_length = length;
-	_width = width;
-	_height = height;
-	_Cp = Cp;
-	_h = h;
-	_T_room = T_room;
 	_R = 0.004;
 	_capacity_percent = 100;
 
@@ -1307,7 +1285,7 @@ thermal_t::thermal_t(double mass, double length, double width, double height,
 	_A = 2 * (length*width + length*height + width*height);
 
 	// initialize to room temperature
-	_T_battery = T_room;
+	_T_battery = T_room[0];
 
 	//initialize maximum temperature
 	_T_max = 400.;
@@ -1328,64 +1306,62 @@ void thermal_t::copy(thermal_t * thermal)
 	_height = thermal->_height;
 	_Cp = thermal->_Cp;
 	_h = thermal->_h;
-	_T_room = thermal->_T_room;
+	// _T_room = thermal->_T_room;  // don't copy, super slow in subhourly simulations
 	_R = thermal->_R;
 	_A = thermal->_A;
 	_T_battery = thermal->_T_battery;
 	_capacity_percent = thermal->_capacity_percent;
 	_T_max = thermal->_T_max;
 }
-void thermal_t::replace_battery()
+void thermal_t::replace_battery(size_t lifetimeIndex)
 { 
-	_T_battery = _T_room; 
+	_T_battery = _T_room[util::yearOneIndex(_dt_hour, lifetimeIndex)];
 	_capacity_percent = 100.;
 }
 
 #define HR2SEC 3600.0
-
-
-void thermal_t::updateTemperature(double I, double R, double dt)
+void thermal_t::updateTemperature(double I, double R, double dt, size_t lifetimeIndex)
 {
 	_R = R;
-	if (trapezoidal(I, dt*HR2SEC) < _T_max && trapezoidal(I, dt*HR2SEC) > 0)
-		_T_battery = trapezoidal(I, dt*HR2SEC);
-	else if (rk4(I, dt*HR2SEC) < _T_max && rk4(I, dt*HR2SEC) > 0)
-		_T_battery = rk4(I, dt*HR2SEC);
-	else if (implicit_euler(I, dt*HR2SEC) < _T_max && implicit_euler(I, dt*HR2SEC) > 0)
-		_T_battery = implicit_euler(I, dt*HR2SEC);
+	if (trapezoidal(I, dt*HR2SEC, lifetimeIndex) < _T_max && trapezoidal(I, dt*HR2SEC, lifetimeIndex) > 0)
+		_T_battery = trapezoidal(I, dt*HR2SEC, lifetimeIndex);
+	else if (rk4(I, dt*HR2SEC, lifetimeIndex) < _T_max && rk4(I, dt*HR2SEC, lifetimeIndex) > 0)
+		_T_battery = rk4(I, dt*HR2SEC, lifetimeIndex);
+	else if (implicit_euler(I, dt*HR2SEC, lifetimeIndex) < _T_max && implicit_euler(I, dt*HR2SEC, lifetimeIndex) > 0)
+		_T_battery = implicit_euler(I, dt*HR2SEC, lifetimeIndex);
 	else
 		_message.add("Computed battery temperature below zero or greater than max allowed, consider reducing C-rate");
 }
 
-double thermal_t::f(double T_battery, double I)
+double thermal_t::f(double T_battery, double I, size_t lifetimeindex)
 {
-	return (1 / (_mass*_Cp)) * ((_h*(_T_room - T_battery)*_A) + pow(I, 2)*_R);
+	return (1 / (_mass*_Cp)) * ((_h*(_T_room[util::yearOneIndex(_dt_hour, lifetimeindex)]  - T_battery)*_A) + pow(I, 2)*_R);
 }
-double thermal_t::rk4( double I, double dt)
+double thermal_t::rk4( double I, double dt, size_t lifetimeindex)
 {
-	double k1 = dt*f(_T_battery, I);
-	double k2 = dt*f(_T_battery + k1 / 2, I);
-	double k3 = dt*f(_T_battery + k2 / 2, I);
-	double k4 = dt*f(_T_battery + k3, I);
+	double k1 = dt*f(_T_battery, I, lifetimeindex);
+	double k2 = dt*f(_T_battery + k1 / 2, I, lifetimeindex);
+	double k3 = dt*f(_T_battery + k2 / 2, I, lifetimeindex);
+	double k4 = dt*f(_T_battery + k3, I, lifetimeindex);
 	return (_T_battery + (1. / 6)*(k1 + k4) + (1. / 3.)*(k2 + k3));
 }
-double thermal_t::trapezoidal(double I, double dt)
+double thermal_t::trapezoidal(double I, double dt, size_t lifetimeindex)
 {
 	double B = 1 / (_mass*_Cp); // [K/J]
 	double C = _h*_A;			// [W/K]
 	double D = pow(I, 2)*_R;	// [Ohm A*A]
-	double T_prime = f(_T_battery, I);	// [K]
+	double T_prime = f(_T_battery, I, lifetimeindex);	// [K]
 
-	return (_T_battery + 0.5*dt*(T_prime + B*(C*_T_room + D))) / (1 + 0.5*dt*B*C);
+	return (_T_battery + 0.5*dt*(T_prime + B*(C*_T_room[util::yearOneIndex(_dt_hour, lifetimeindex)] + D))) / (1 + 0.5*dt*B*C);
 } 
-double thermal_t::implicit_euler(double I, double dt)
+double thermal_t::implicit_euler(double I, double dt, size_t lifetimeIndex)
 {
 	double B = 1 / (_mass*_Cp); // [K/J]
 	double C = _h*_A;			// [W/K]
 	double D = pow(I, 2)*_R;	// [Ohm A*A]
 //	double T_prime = f(_T_battery, I);	// [K]
 
-	return (_T_battery + dt*(B*C*_T_room + D)) / (1 + dt*B*C);
+	return (_T_battery + dt*(B*C*_T_room[util::yearOneIndex(_dt_hour, lifetimeIndex)] + D)) / (1 + dt*B*C);
 }
 double thermal_t::T_battery(){ return _T_battery; }
 double thermal_t::capacity_percent()
@@ -1403,17 +1379,59 @@ double thermal_t::capacity_percent()
 /*
 Define Losses
 */
-losses_t::losses_t(lifetime_t * lifetime, thermal_t * thermal, capacity_t* capacity, int loss_choice, double_vec charge_loss, double_vec discharge_loss, double_vec idle_loss, double_vec losses)
+losses_t::losses_t(double dtHour, lifetime_t * lifetime, thermal_t * thermal, capacity_t* capacity, int loss_choice, double_vec charge_loss, double_vec discharge_loss, double_vec idle_loss, double_vec losses)
 {
+	_dtHour = dtHour;
 	_lifetime = lifetime;
 	_thermal = thermal;
 	_capacity = capacity;
-	_charge_loss = charge_loss;
-	_discharge_loss = discharge_loss;
-	_idle_loss = idle_loss;
-	_full_loss = losses;
 	_loss_mode = loss_choice;
 	_nCycle = 0;
+
+	// User can input vectors of size 1 or size 12
+	if (loss_choice == losses_t::MONTHLY)
+	{
+		if (charge_loss.size() == 1) {
+			for (size_t m = 0; m < 12; m++) {
+				_charge_loss.push_back(charge_loss[0]);
+			}
+		}
+		else {
+			_charge_loss = charge_loss;
+		}
+		if (discharge_loss.size() == 1) {
+			
+			for (size_t m = 0; m < 12; m++) {
+				_discharge_loss.push_back(discharge_loss[0]);
+			}
+		}
+		else {
+			_discharge_loss = discharge_loss;
+		}
+		if (idle_loss.size() == 1) {
+			for (size_t m = 0; m < 12; m++) {
+				_idle_loss.push_back(idle_loss[0]);
+			}
+		}
+		else {
+			_idle_loss = idle_loss;
+		}
+		for (size_t i = 0; i < (size_t)(8760 / dtHour); i++) {
+			_full_loss.push_back(0);
+		}
+	}
+	// User can input vectors of size 1 or size nrec (first year)
+	else {
+		if (losses.size() == 1) {
+			for (size_t i = 0; i < (size_t)(8760 / dtHour); i++) {
+				_full_loss.push_back(losses[0]);
+			}
+		}
+		else {
+			_full_loss = losses;
+		}
+
+	}
 }
 losses_t * losses_t::clone(){ return new losses_t(*this); }
 void losses_t::copy(losses_t * losses)
@@ -1433,24 +1451,25 @@ void losses_t::copy(losses_t * losses)
 }
 
 void losses_t::replace_battery(){ _nCycle = 0; }
-void losses_t::run_losses(double dt_hour, size_t idx)
+double losses_t::getLoss(size_t indexFirstYear) { return _full_loss[indexFirstYear]; }
+void losses_t::run_losses(size_t lifetimeIndex)
 {	
 	_capacity->updateCapacityForLifetime(_lifetime->capacity_percent());
 
-	size_t stepsPerHour = (size_t)(1 / dt_hour);
-	size_t stepsPerYear = util::hours_per_year * stepsPerHour;
-	size_t index = idx % stepsPerYear;
+	size_t indexYearOne = util::yearOneIndex(_dtHour, lifetimeIndex);
+	size_t hourOfYear = (size_t)std::floor(indexYearOne * _dtHour);
+	size_t monthIndex = util::month_of((double)(hourOfYear)) - 1;
 
 	// update system losses depending on user input
-	if (_loss_mode == losses_t::MONTHLY)
-	{
+	if (_loss_mode == losses_t::MONTHLY) {
 		if (_capacity->charge_operation() == capacity_t::CHARGE)
-			_full_loss[index] = _charge_loss[index];
+			_full_loss[indexYearOne] = _charge_loss[monthIndex];
 		if (_capacity->charge_operation() == capacity_t::DISCHARGE)
-			_full_loss[index] = _discharge_loss[index];
+			_full_loss[indexYearOne] = _discharge_loss[monthIndex];
 		if (_capacity->charge_operation() == capacity_t::NO_CHARGE)
-			_full_loss[index] = _idle_loss[index];
+			_full_loss[indexYearOne] = _idle_loss[monthIndex];
 	}
+
 }
 /* 
 Define Battery 
@@ -1536,7 +1555,7 @@ void battery_t::initialize(capacity_t *capacity, voltage_t * voltage, lifetime_t
 	_thermal_initial->copy(_thermal);
 }
 
-void battery_t::run(size_t idx, double I)
+void battery_t::run(size_t lifetimeIndex, double I)
 {	
 
 	// Temperature affects capacity, but capacity model can reduce current, which reduces temperature, need to iterate
@@ -1547,7 +1566,7 @@ void battery_t::run(size_t idx, double I)
 
 	while (iterate_count < 5)
 	{
-		runThermalModel(I);
+		runThermalModel(I, lifetimeIndex);
 		runCapacityModel(I);
 
 		if (fabs(I - I_initial)/fabs(I_initial) > tolerance)
@@ -1563,12 +1582,12 @@ void battery_t::run(size_t idx, double I)
 		
 	}
 	runVoltageModel();
-	runLifetimeModel(idx);
-	runLossesModel(idx);
+	runLifetimeModel(lifetimeIndex);
+	runLossesModel(lifetimeIndex);
 }
-void battery_t::runThermalModel(double I)
+void battery_t::runThermalModel(double I, size_t lifetimeIndex)
 {
-	_thermal->updateTemperature(I, _voltage->R_battery(), _dt_hour);
+	_thermal->updateTemperature(I, _voltage->R_battery(), _dt_hour, lifetimeIndex);
 }
 
 void battery_t::runCapacityModel(double &I)
@@ -1586,13 +1605,13 @@ void battery_t::runVoltageModel()
 	_voltage->updateVoltage(_capacity, _thermal, _dt_hour);
 }
 
-void battery_t::runLifetimeModel(size_t idx)
+void battery_t::runLifetimeModel(size_t lifetimeIndex)
 {
-	_lifetime->runLifetimeModels(idx, capacity_model(), thermal_model()->T_battery());
+	_lifetime->runLifetimeModels(lifetimeIndex, capacity_model(), thermal_model()->T_battery());
 	if (_lifetime->check_replaced())
 	{
 		_capacity->replace_battery();
-		_thermal->replace_battery();
+		_thermal->replace_battery(lifetimeIndex);
 		_losses->replace_battery();
 	}
 }
@@ -1600,7 +1619,7 @@ void battery_t::runLossesModel(size_t idx)
 {
 	if (idx > _last_idx || idx == 0)
 	{
-		_losses->run_losses(_dt_hour, idx);
+		_losses->run_losses(idx);
 		_last_idx = idx;
 	}
 }
@@ -1622,7 +1641,7 @@ double battery_t::battery_charge_needed(double SOC_max)
 }
 double battery_t::battery_energy_to_fill(double SOC_max)
 {
-	double battery_voltage = this->battery_voltage(); // [V] 
+	double battery_voltage = this->battery_voltage_nominal(); // [V] 
 	double charge_needed_to_fill = this->battery_charge_needed(SOC_max); // [Ah] - qmax - q0
 	return (charge_needed_to_fill * battery_voltage)*util::watt_to_kilowatt;  // [kWh]
 }

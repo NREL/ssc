@@ -291,6 +291,8 @@ public:
 
 	virtual void converged();
 
+    virtual double get_remaining_startup_energy();
+
     void calc_pump_performance(double rho_f, double mdot, double ffact, double &PresDrop_calc,
         double &WdotPump_calc);
 

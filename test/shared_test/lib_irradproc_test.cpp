@@ -63,6 +63,38 @@ TEST_F(SunriseCaseIrradProc, solarposTest_lib_irradproc){
 	}
 }
 
+TEST_F(IrradTest, sunriseAndSunsetAtDifferentLocationsTest_lib_irradproc) {
+	/*locations to test:
+	western hemisphere: Golden CO
+	eastern hemisphere: Berlin Germany
+	southern hemisphere: Lima Peru
+	location near Greenwich meridian with negative longitude and positive time zone: Madrid Spain
+	location near the international dateline with positive longitude and negative time zone: Lomaji, Fiji
+	arctic circle: Kotzebue, Alaska
+	arctic circle #2: Point Hope, Alaska
+	arctic circle #3: Kotzebue, Alaska on the first day of continuous days
+	*/
+	e = 0.001;
+	vector<double> latitudes = { 39.77, 52.5, -12.03, 40.43, -17.75, 66.9, 68.35, 66.9 };
+	vector<double> longitudes = { -105.22, 13.3, -77.06, -3.72, -179.3, -162.6, -166.8, -162.6 };
+	vector<double> time_zones = { -7, 1, -5, 1, 12, -9, -9, -9 };
+	vector<double> sunrise_times = { 4.636, 3.849, 6.521, 5.833, 6.513, -100.0, 2.552, -100.0 };
+	vector<double> sunset_times = { 19.455, 20.436, 17.814, 20.723, 17.449, 100.0, 25.885, 100.0 };
+	vector<int> month = { 6, 6, 6, 6, 6, 6, 7, 6 };
+	vector<int> day = { 21, 21, 21, 21, 21, 21, 14, 11 };
+
+
+	double sun_results[9]; //vector to hold the results of solarpos function
+	for (size_t i = 0; i < latitudes.size(); i++)
+	{
+		//run the solarpos function and check sunrise and sunset for each location
+		solarpos(2010, month[i], day[i], 14, 30, latitudes[i], longitudes[i], time_zones[i], sun_results);
+		EXPECT_NEAR((double)sun_results[4], sunrise_times[i], e) << "sunrise time for lat " << latitudes[i] << " long " << longitudes[i] << " failed\n";
+		EXPECT_NEAR((double)sun_results[5], sunset_times[i], e) << "sunset time for lat" << latitudes[i] << " long " << longitudes[i] << "failed\n";
+	}
+}
+
+
 TEST_F(DayCaseIrradProc, solarposTest_lib_irradproc){
 	double sun[9];
 	vector<double> sunrise_times;
@@ -206,7 +238,7 @@ TEST_F(NightCaseIrradProc, CalcTestRadMode0_lib_irradproc){
 	irr_hourly_night.get_irrad(&rad_p[0], &rad_p[1], &rad_p[2]);
 
 	sun_p[6] = (double)sunup;
-	vector<double> sun_solution = { -999, -999, -999, 20.795182, 5.711921, 19.515852, 0, 0.968315, 11.386113, 1286.786711 };
+	vector<double> sun_solution = { 15.400603, 125.406063, -35.406063, 20.874693, 5.707588, 19.519211, 0, 0.968315, 0.886600, 0 };
 	for (int i = 0; i < 10; i++){
 		EXPECT_NEAR(sun_p[i], sun_solution[i], e) << "hourly_night, sun parameter " << i << " fail\n";
 	}
@@ -231,7 +263,7 @@ TEST_F(NightCaseIrradProc, CalcTestRadMode0_lib_irradproc){
 	irr_15m_night.get_irrad(&rad_p[0], &rad_p[1], &rad_p[2]);
 
 	sun_p[6] = (double)sunup;
-	sun_solution = { -999, -999, -999, 20.795182, 5.711921, 19.515852, 0, 0.968315, 11.386113, 1286.786711 };
+	sun_solution = { 11.146986, 126.137563, -36.137563, 20.876572, 5.707486, 19.519211, 0, 0.968315, 0.636612, 0 };
 	for (int i = 0; i < 10; i++){
 		EXPECT_NEAR(sun_p[i], sun_solution[i], e) << "15m_night, sun parameter " << i << " fail\n";
 	}

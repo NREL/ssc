@@ -41,7 +41,7 @@ class UsingFileCaseWeatherReader : public CspWeatherReaderTest{
 protected:
 	void SetUp(){
 
-		char hourly[150];
+		char hourly[256];
 		int a = sprintf(hourly, "%s/test/input_docs/weather.csv", std::getenv("SSCDIR"));
 
 		wr.m_filename = hourly;

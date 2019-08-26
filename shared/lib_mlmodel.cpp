@@ -64,6 +64,8 @@
 
 #include "lib_mlmodel.h"
 // #include "mlm_spline.h"
+#include "bsplinebuilder.h"
+#include "datatable.h"
 
 static const double k = 1.38064852e-23; // Boltzmann constant [J/K]
 static const double q = 1.60217662e-19; // Elemenatry charge [C]
@@ -88,7 +90,8 @@ static const int AM_MODE_DESOTO = 3;
 static const int AM_MODE_LEE_PANCHULA = 4;
 
 mlmodel_module_t::mlmodel_module_t()
-{
+          {
+	m_bspline3 = BSpline(1);
 	Width = Length = V_mp_ref = I_mp_ref = V_oc_ref = I_sc_ref = S_ref = T_ref
 		= R_shref = R_sh0 = R_shexp = R_s
 		= alpha_isc = beta_voc_spec = E_g = n_0 = mu_n = D2MuTau = T_c_no_tnoct
@@ -99,7 +102,6 @@ mlmodel_module_t::mlmodel_module_t()
 	N_series = N_parallel = N_diodes = 0;
 
 	isInitialized = false;
-
 }
 
 // IAM functions
@@ -120,12 +122,12 @@ void mlmodel_module_t::initializeManual()
 		Vbi = 0.9 * N_series;
 		// Calculate values of constant reference values.
 		double R_sh_STC = R_shref + (R_sh0 - R_shref) * exp(-R_shexp * (S_ref / S_ref));
-		
+
 		nVT = N_series * n_0 * k * (T_ref + T_0) / q;
 
 		I_0ref = (I_sc_ref + (I_sc_ref * R_s - V_oc_ref) / R_sh_STC) / ((exp(V_oc_ref / nVT) - 1) - (exp((I_sc_ref * R_s) / nVT) - 1));
 		I_Lref = I_0ref * (exp(V_oc_ref / nVT) - 1) + V_oc_ref / R_sh_STC;
-				
+
 		//double I_sc_ref_string = I_sc_ref; // / N_parallel;
 		//I_0ref = (I_sc_ref_string + (I_sc_ref_string * R_s - V_oc_ref) / R_sh_STC) / ((exp(V_oc_ref / nVT) - 1) - (exp((I_sc_ref_string * R_s) / nVT) - 1));
 		//I_Lref = I_0ref * (exp(V_oc_ref / nVT) - 1) + V_oc_ref / R_sh_STC;
@@ -133,6 +135,7 @@ void mlmodel_module_t::initializeManual()
 		// set up IAM spline
 		if (IAM_mode == IAM_MODE_SPLINE)
 		{
+			/*
 			std::vector<double> X;
 			std::vector<double> Y;
 			X.clear();
@@ -142,9 +145,15 @@ void mlmodel_module_t::initializeManual()
 				Y.push_back(IAM_c_cs_iamValue[i]);
 			}
 			iamSpline.set_points(X, Y);
-		}
+			*/
+			DataTable samples;
+			for (int i = 0; i <= IAM_c_cs_elements - 1; i = i + 1) {
+				samples.addSample(IAM_c_cs_incAngle[i], IAM_c_cs_iamValue[i]);
+			}
+			m_bspline3 = BSpline::Builder(samples).degree(3).build();
 
-		isInitialized = true;
+			isInitialized = true;
+		}
 	}
 }
 
@@ -173,9 +182,16 @@ bool mlmodel_module_t::operator() (pvinput_t &input, double T_C, double opvoltag
 			f_IAM_gnd = IAMvalue_SANDIA(IAM_c_sa, theta_gnd / 180 * PI);
 			break;
 		case IAM_MODE_SPLINE:
-			f_IAM_beam = std::min(iamSpline(theta_beam), 1.0);
-			f_IAM_diff = std::min(iamSpline(theta_diff), 1.0);
-			f_IAM_gnd = std::min(iamSpline(theta_gnd), 1.0);
+//			f_IAM_beam = std::min(iamSpline(theta_beam), 1.0);
+//			f_IAM_diff = std::min(iamSpline(theta_diff), 1.0);
+//			f_IAM_gnd = std::min(iamSpline(theta_gnd), 1.0);
+			DenseVector x(1);
+			x(0) = theta_beam;
+			f_IAM_beam = std::min(m_bspline3.eval(x), 1.0);
+			x(0) = theta_diff;
+			f_IAM_diff = std::min(m_bspline3.eval(x), 1.0);
+			x(0) = theta_gnd;
+			f_IAM_gnd = std::min(m_bspline3.eval(x), 1.0);
 			break;
 	}
 
@@ -198,16 +214,25 @@ bool mlmodel_module_t::operator() (pvinput_t &input, double T_C, double opvoltag
 	}
 
 	// Total effective irradiance
-	double S = (f_IAM_beam * input.Ibeam + f_IAM_diff * input.Idiff + groundRelfectionFraction * f_IAM_gnd * input.Ignd) * f_AM;
+	double S;
+	if(input.radmode != 3){ // Skip module cover effects if using POA reference cell data
+		S = (f_IAM_beam * input.Ibeam + f_IAM_diff * input.Idiff + groundRelfectionFraction * f_IAM_gnd * input.Ignd) * f_AM;
+    }
+    else if(input.usePOAFromWF){ // Check if decomposed POA is required, if not use weather file POA directly
+		S = input.poaIrr;
+	}
+    else { // Otherwise use decomposed POA
+		S = (f_IAM_beam * input.Ibeam + f_IAM_diff * input.Idiff + groundRelfectionFraction * f_IAM_gnd * input.Ignd) * f_AM;
+	}
 
 	// Single diode model acc. to [1]
 	if (S >= 1)
 	{
-		double n, a, I_L, I_0, R_sh, I_sc;
+		double n=0.0, a=0.0, I_L=0.0, I_0=0.0, R_sh=0.0, I_sc=0.0;
 		double V_oc = V_oc_ref; // V_oc_ref as initial guess
-		double P, V, I, eff;
+		double P=0.0, V=0.0, I=0.0, eff=0.0;
 		double T_cell = T_C;
-		int iterations;
+		int iterations=0;
 
 		if (T_mode == T_MODE_FAIMAN) {
 			iterations = 1; // 2; // two iterations, 1st with guessed eff, 2nd with calculated efficiency
@@ -246,7 +271,7 @@ bool mlmodel_module_t::operator() (pvinput_t &input, double T_C, double opvoltag
 				else I = current_5par_rec(V, 0.9*I_L, a, I_L, I_0, R_s, R_sh, D2MuTau, Vbi);
 				P = V*I;
 			}
-			eff = P / ((Width * Length) * S);
+			eff = P / ((Width * Length) * (input.Ibeam + input.Idiff + input.Ignd));
 		}
 
 		out.Power = P;
@@ -256,6 +281,7 @@ bool mlmodel_module_t::operator() (pvinput_t &input, double T_C, double opvoltag
 		out.Voc_oper = V_oc;
 		out.Isc_oper = I_sc;
 		out.CellTemp = T_cell;
+		out.AOIModifier = S / (input.Ibeam + input.Idiff + input.Ignd);
 	}
 
 	return out.Power >= 0;
@@ -263,7 +289,7 @@ bool mlmodel_module_t::operator() (pvinput_t &input, double T_C, double opvoltag
 
 // mockup cell temperature model
 // to be used in cases when Tcell is calculated within the module model
-bool mock_celltemp_t::operator() (pvinput_t &input, pvmodule_t &module, double, double &Tcell)
+bool mock_celltemp_t::operator() (pvinput_t &, pvmodule_t &, double, double &Tcell)
 {
 	Tcell = -999;
 	return true;

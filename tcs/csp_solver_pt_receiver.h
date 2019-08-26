@@ -156,6 +156,8 @@ public:
 
     virtual void converged() = 0;
 
+    virtual double get_remaining_startup_energy() = 0;
+
     virtual double get_pumping_parasitic_coef() = 0;
 
     HTFProperties *get_htf_property_object();

@@ -1,59 +1,36 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+or promote products derived from this software without specific prior written permission.
 
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+ 
 #include "csp_solver_pc_Rankine_indirect_224.h"
 #include "csp_solver_util.h"
-
+ 
 #include "lib_physics.h"
 #include "water_properties.h"
 #include "lib_util.h"
 #include "sam_csp_util.h"
+#include <algorithm>
+#include <set>
+#include <fstream>
+
 
 static C_csp_reported_outputs::S_output_info S_output_info[] =
 {
@@ -64,7 +41,15 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 	{C_pc_Rankine_indirect_224::E_W_DOT, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_pc_Rankine_indirect_224::E_T_HTF_IN, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_pc_Rankine_indirect_224::E_T_HTF_OUT, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{ C_pc_Rankine_indirect_224::E_T_COND_OUT, C_csp_reported_outputs::TS_WEIGHTED_AVE },
+	{ C_pc_Rankine_indirect_224::E_T_COLD, C_csp_reported_outputs::TS_WEIGHTED_AVE },
+	{ C_pc_Rankine_indirect_224::E_M_COLD, C_csp_reported_outputs::TS_LAST },
+	{ C_pc_Rankine_indirect_224::E_M_WARM, C_csp_reported_outputs::TS_LAST },
+	{ C_pc_Rankine_indirect_224::E_T_WARM,C_csp_reported_outputs::TS_WEIGHTED_AVE },
+	{ C_pc_Rankine_indirect_224::E_T_RADOUT,C_csp_reported_outputs::TS_WEIGHTED_AVE },
 	{C_pc_Rankine_indirect_224::E_M_DOT_WATER, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_pc_Rankine_indirect_224::E_P_COND,C_csp_reported_outputs::TS_LAST },
+	{ C_pc_Rankine_indirect_224::E_RADCOOL_CNTRL,C_csp_reported_outputs::TS_WEIGHTED_AVE },
 	{C_pc_Rankine_indirect_224::E_M_DOT_HTF_REF, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 
 	csp_info_invalid
@@ -227,9 +212,69 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 			};
 			m_db.assign(dTemp[0], 18, 20);
 		}
+
+		else if (ms_params.m_tech_type == 5)
+		{	//	CUSTOM cycle with 3.06 m^2 annulus area designed at 4.75 inHg and 3.06 m^2 annulus area in IPSE.
+			double dTemp[18][12] =
+			{
+				
+				{ 0.934693878,1,1.032653061,1.032653061,1.032653061,1.032653061,1.032653061,1.032653061,1.032653061,1.032653061,1.032653061,1.032653061 },
+			{ 0.937081782,0.999998651,1.031700474,1.031700474,1.031700474,1.031700474,1.031700474,1.031700474,1.031700474,1.031700474,1.031700474,1.031700474 },
+			{ 0.948385677,1.000000875,1.026049971,1.026049971,1.026049971,1.026049971,1.026049971,1.026049971,1.026049971,1.026049971,1.026049971,1.026049971 },
+			{ 7619,9313,11010,12700,14390,16090,17780,19470,21170,22870,24550,26250 },
+			{ 0.999690724,1.001967883,1.00348071,1.003333606,1.00207008,0.999998651,0.996664374,0.992651944,0.988196283,0.983359267,0.978598926,0.97371933 },
+			{ 0.999779458,0.999840287,0.999890769,0.999941469,0.999975609,1.000000875,1.000012605,1.000020238,1.000039055,1.000031269,1.000031496,1.000032971 },
+			{ 0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1,1.1,1.2,1.2 },
+			{ 0.215149586,0.328850518,0.436394916,0.539864866,0.639394617,0.73498448,0.826843573,0.915142918,0.999998651,1.081434508,1.160440089,1.160440089 },
+			{ 0.2621648,0.37422441,0.476942504,0.57385383,0.666050657,0.754247658,0.839016491,0.92082275,1.000000875,1.076836961,1.151614098,1.151614098 },
+			{ 0.934693878,1,1.032653061,1.032653061,1.032653061,1.032653061,1.032653061,1.032653061,1.032653061,1.032653061,1.032653061,1.032653061 },
+			{ 1.639,1.000,0.759,0.759,0.759,0.759,0.759,0.759,0.759,0.759,0.759,0.759 },
+			{ 0.937,0.989,1.067,1.067,1.067,1.067,1.067,1.067,1.067,1.067,1.067,1.067 },
+			{ 7619,9313,11010,12700,14390,16090,17780,19470,21170,22870,24550,26250 },
+			{ 0.966551714,0.972009369,0.977500495,0.985690652,0.993126541,1.000004694,1.008086172,1.01640783,1.023030734,1.029294674,1.034314589,1.038480615 },
+			{ 0.99985798,0.99988411,0.99991681,0.999924596,0.999957647,0.999996831,1.000058116,1.000114471,1.000105184,1.000175662,1.000203606,1.000215132 },
+			{ 0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1,1.1,1.2,1.2 },
+			{ 1.030053251,0.964685776,0.969170019,0.976627457,0.983570294,0.989910129,0.993625786,0.997292978,1.000011907,1.004901419,1.010667996,1.010667996 },
+			{ 0.887468632,0.852454545,0.87974177,0.904559441,0.925728386,0.945839977,0.964675058,0.982688495,0.999990802,1.016408573,1.032696789,1.032696789 }
+
+
+			};
+			m_db.assign(dTemp[0], 18, 12);
+		}
+
+		else if (ms_params.m_tech_type == 6)
+		{	//	CUSTOM cycle with 5.16 annulus area last stage turbine (PT3) designed for 3"Hg backpressure in IPSE.
+			double dTemp[18][28] =
+			{
+
+				{ 0.9347,1.0000,1.0327,1.0327,1.0327,1.0327,1.0327,1.0327,1.0327,1.0327,1.0327,1.0327,1.0327,1.0327,1.0327,1.0327,1.0327,1.0327,1.0327,1.0327,1.0327,1.0327,1.0327,1.0327,1.0327,1.0327,1.0327,1.0327 },
+			{ 0.936,1.000,1.032,1.032,1.032,1.032,1.032,1.032,1.032,1.032,1.032,1.032,1.032,1.032,1.032,1.032,1.032,1.032,1.032,1.032,1.032,1.032,1.032,1.032,1.032,1.032,1.032,1.032 },
+			{ 0.948,1.000,1.026,1.026,1.026,1.026,1.026,1.026,1.026,1.026,1.026,1.026,1.026,1.026,1.026,1.026,1.026,1.026,1.026,1.026,1.026,1.026,1.026,1.026,1.026,1.026,1.026,1.026 },
+			{ 4233.0000,5080.0000,5926.0000,6773.0000,7619.0000,8466.0000,9313.0000,10160.0000,11010.0000,11850.0000,12700.0000,13550.0000,14390.0000,15240.0000,16090.0000,16930.0000,17780.0000,18620.0000,19470.0000,20320.0000,21170.0000,22020.0000,22870.0000,23700.0000,24550.0000,25400.0000,26250.0000,27100.0000 },
+			{ 1.010,1.011,1.012,1.011,1.010,1.008,1.004,1.000,0.995,0.990,0.984,0.978,0.972,0.966,0.960,0.954,0.949,0.944,0.939,0.934,0.929,0.924,0.920,0.915,0.910,0.905,0.901,0.897 },
+			{ 1.000,1.000,1.000,1.000,1.000,1.000,1.000,1.000,1.000,1.000,1.000,1.000,1.000,1.000,1.000,1.000,1.000,1.000,1.000,1.000,1.000,1.000,1.000,1.000,1.000,1.000,1.000,1.000 },
+			{ 0.2000,0.3000,0.4000,0.5000,0.6000,0.7000,0.8000,0.9000,1.0000,1.1000,1.2000,1.2000,1.2000,1.2000,1.2000,1.2000,1.2000,1.2000,1.2000,1.2000,1.2000,1.2000,1.2000,1.2000,1.2000,1.2000,1.2000,1.2000 },
+			{ 0.204,0.317,0.426,0.530,0.631,0.728,0.823,0.913,1.000,1.084,1.164,1.164,1.164,1.164,1.164,1.164,1.164,1.164,1.164,1.164,1.164,1.164,1.164,1.164,1.164,1.164,1.164,1.164 },
+			{ 0.262,0.374,0.477,0.574,0.666,0.754,0.839,0.921,1.000,1.077,1.152,1.152,1.152,1.152,1.152,1.152,1.152,1.152,1.152,1.152,1.152,1.152,1.152,1.152,1.152,1.152,1.152,1.152 },
+			{ 0.9347,1.0000,1.0327,1.0327,1.0327,1.0327,1.0327,1.0327,1.0327,1.0327,1.0327,1.0327,1.0327,1.0327,1.0327,1.0327,1.0327,1.0327,1.0327,1.0327,1.0327,1.0327,1.0327,1.0327,1.0327,1.0327,1.0327,1.0327 },
+			{ 1.23,1.00,0.91,0.91,0.91,0.91,0.91,0.91,0.91,0.91,0.91,0.91,0.91,0.91,0.91,0.91,0.91,0.91,0.91,0.91,0.91,0.91,0.91,0.91,0.91,0.91,0.91,0.91 },
+			{ 1.03,1.00,0.98,0.98,0.98,0.98,0.98,0.98,0.98,0.98,0.98,0.98,0.98,0.98,0.98,0.98,0.98,0.98,0.98,0.98,0.98,0.98,0.98,0.98,0.98,0.98,0.98,0.98 },
+			{ 4233.0000,5080.0000,5926.0000,6773.0000,7619.0000,8466.0000,9313.0000,10160.0000,11010.0000,11850.0000,12700.0000,13550.0000,14390.0000,15240.0000,16090.0000,16930.0000,17780.0000,18620.0000,19470.0000,20320.0000,21170.0000,22020.0000,22870.0000,23700.0000,24550.0000,25400.0000,26250.0000,27100.0000 },
+			{ 0.9484,0.9552,0.9612,0.9699,0.9766,0.9833,0.9905,1.0000,1.0085,1.0160,1.0224,1.0304,1.0351,1.0393,1.0412,1.0435,1.0451,1.0468,1.0484,1.0503,1.0521,1.0538,1.0542,1.0569,1.0599,1.0627,1.0654,1.0665 },
+			{ 0.9998,0.9998,0.9998,0.9999,0.9999,0.9999,1.0000,1.0000,1.0000,1.0001,1.0001,1.0001,1.0001,1.0001,1.0002,1.0002,1.0001,1.0002,1.0002,1.0002,1.0002,1.0002,1.0002,1.0002,1.0002,1.0002,1.0002,1.0002 },
+			{ 0.2000,0.3000,0.4000,0.5000,0.6000,0.7000,0.8000,0.9000,1.0000,1.1000,1.2000,1.2000,1.2000,1.2000,1.2000,1.2000,1.2000,1.2000,1.2000,1.2000,1.2000,1.2000,1.2000,1.2000,1.2000,1.2000,1.2000,1.2000 },
+			{ 1.0528,0.9862,0.9735,0.9791,0.9870,0.9946,0.9968,0.9976,1.0000,1.0022,1.0039,1.0039,1.0039,1.0039,1.0039,1.0039,1.0039,1.0039,1.0039,1.0039,1.0039,1.0039,1.0039,1.0039,1.0039,1.0039,1.0039,1.0039 },
+			{ 0.8864,0.8522,0.8795,0.9044,0.9256,0.9458,0.9649,0.9827,1.0000,1.0168,1.0330,1.0330,1.0330,1.0330,1.0330,1.0330,1.0330,1.0330,1.0330,1.0330,1.0330,1.0330,1.0330,1.0330,1.0330,1.0330,1.0330,1.0330 }
+
+
+			};
+			m_db.assign(dTemp[0], 18, 28);
+		}
+
+
 		else
 		{
-			m_error_msg = util::format("The power cycle technology type identifier, %d, must be [1..4]", ms_params.m_tech_type);
+			m_error_msg = util::format("The power cycle technology type identifier, %d, must be [1..6]", ms_params.m_tech_type);
 			throw(C_csp_exception(m_error_msg, "Power cycle initialization"));
 		}
 
@@ -319,12 +364,40 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 			}
 
 			break;
+		case 4:		// Once-through surface condenser case ARD
+			if (ms_params.m_tech_type != 4)
+			{
+				
+				water_TQ(ms_params.m_dT_cw_ref + 3.0 /*dT at hot side*/ + ms_params.m_T_approach + ms_params.m_T_amb_des + 273.15, 1.0, &wp);
+				Psat_ref = wp.pres*1000.0;
+			}
+			else
+			{
+				Psat_ref = CSP::P_sat4(ms_params.m_dT_cw_ref + 3.0 + ms_params.m_T_approach + ms_params.m_T_amb_des);	// Isopentane
+			}
 		}	// end cooling technology switch()
 
 		m_eta_adj = ms_params.m_eta_ref / (Interpolate(12, 2, Psat_ref) / Interpolate(22, 2, Psat_ref));
 	}
 	else
 	{	// Initialization calculations for User Defined power cycle model
+        
+        // Import the newer single combined UDPC table if it's populated, otherwise try using the older three separate tables
+        if (!ms_params.mc_combined_ind.is_single()) {
+            try {
+                split_ind_tbl(ms_params.mc_combined_ind, ms_params.mc_T_htf_ind, ms_params.mc_m_dot_htf_ind, ms_params.mc_T_amb_ind);
+            }
+            catch (...) {
+                m_error_msg = "Cannot import the single UDPC table";
+                mc_csp_messages.add_message(C_csp_messages::WARNING, m_error_msg);
+                if (ms_params.mc_T_htf_ind.is_single() || ms_params.mc_T_amb_ind.is_single() || ms_params.mc_m_dot_htf_ind.is_single()) {
+                    throw(C_csp_exception("UDPC tables are not set", "UDPC Table Importation"));
+                }
+            }
+        }
+        else if ( ms_params.mc_T_htf_ind.is_single() || ms_params.mc_T_amb_ind.is_single() || ms_params.mc_m_dot_htf_ind.is_single() ) {
+            throw(C_csp_exception("UDPC tables are not set", "UDPC Table Importation"));
+        }
 
 		// Load tables into user defined power cycle member class
 			// .init method will throw an error if initialization fails, so catch upstream
@@ -399,7 +472,75 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 	solved_params.m_m_dot_design = m_m_dot_design;		//[kg/hr]
 	solved_params.m_m_dot_min = m_m_dot_min;			//[kg/hr]
 	solved_params.m_m_dot_max = m_m_dot_max;			//[kg/hr]
-}
+	
+
+	// Cold storage and radiator setup ARD 
+	if (ms_params.m_CT==4)											//only if radiative cooling chosen.
+	{
+		//Radiator
+		C_csp_radiator::S_params *rad = &mc_radiator.ms_params;
+		//rad->m_night_hrs = 9;										//Numer of hours of radiative cooling in summer peak
+		
+		//If two tank cold storage
+		if (mc_two_tank_ctes.ms_params.m_ctes_type == 2)
+		{
+			mc_two_tank_ctes.ms_params.m_tes_fl = 3;										// Hardcode 3 for water liquid
+			mc_two_tank_ctes.ms_params.m_field_fl = 3;									// Hardcode 3; not used. Designate fluid in radiator model separately.
+			mc_two_tank_ctes.ms_params.m_is_hx = false;									// MSPT assumes direct storage, so no user input required here: hardcode = false
+			mc_two_tank_ctes.ms_params.m_W_dot_pc_design = ms_params.m_P_ref / 1000;		//[MWe]
+			mc_two_tank_ctes.ms_params.m_eta_pc_factor = ms_params.m_eta_ref / (1 - ms_params.m_eta_ref);	//[-] In order to allow this value to be used in the formula to determine size of tanks.
+			mc_two_tank_ctes.ms_params.m_hot_tank_Thtr = 0;								//set point [C]
+			mc_two_tank_ctes.ms_params.m_hot_tank_max_heat = 30;							//heater capacity [MWe]
+			mc_two_tank_ctes.ms_params.m_cold_tank_Thtr = 0;								//set point [C]
+			mc_two_tank_ctes.ms_params.m_cold_tank_max_heat = 15;						//capacity [MWe]
+			mc_two_tank_ctes.ms_params.m_dt_hot = 0.0;									// MSPT assumes direct storage, so no user input here: hardcode = 0.0
+			mc_two_tank_ctes.ms_params.m_htf_pump_coef = 0.55;							//pumping power for HTF thru power block [kW/kg/s]
+			mc_two_tank_ctes.ms_params.dT_cw_rad = mc_two_tank_ctes.ms_params.m_T_field_out_des - mc_two_tank_ctes.ms_params.m_T_field_in_des;	//Reference delta T based on design values given.
+			mc_two_tank_ctes.ms_params.m_dot_cw_rad = (mc_two_tank_ctes.ms_params.m_W_dot_pc_design*1000000. / mc_two_tank_ctes.ms_params.m_eta_pc_factor) / (4183 /*[J/kg-K]*/ * mc_two_tank_ctes.ms_params.dT_cw_rad);	//Calculate design cw mass flow [kg/sec]
+			rad->m_night_hrs = 2.0 / 15.0 * 180.0 / 3.1415* acos(tan(abs(mc_two_tank_ctes.ms_params.m_lat)*3.1415/180.0)*tan(0.40928)); //Calculate nighttime hours. 
+
+			mc_two_tank_ctes.ms_params.m_dot_cw_cold = (mc_two_tank_ctes.ms_params.m_dot_cw_rad*mc_two_tank_ctes.ms_params.m_ts_hours) / rad->m_night_hrs;//Set the flow rate on the storage system between tank and HX to radiative field to fill the tank in the shortest night of year (9 hours in Las Vegas Nevada).
+			//Initialize cold storage
+            C_csp_tes::S_csp_tes_init_inputs init_inputs;
+			mc_two_tank_ctes.init(init_inputs);
+		}
+		//If three-node stratified cold storage 
+		if (mc_two_tank_ctes.ms_params.m_ctes_type >2)
+		{
+			mc_stratified_ctes.ms_params.m_tes_fl = 3;										// Hardcode 3 for water liquid
+			mc_stratified_ctes.ms_params.m_field_fl = 3;									// Hardcode 3; not used. Designate fluid in radiator model separately.
+			mc_stratified_ctes.ms_params.m_is_hx = false;									// MSPT assumes direct storage, so no user input required here: hardcode = false
+			mc_stratified_ctes.ms_params.m_W_dot_pc_design = ms_params.m_P_ref / 1000;		//[MWe]
+			mc_stratified_ctes.ms_params.m_eta_pc_factor = ms_params.m_eta_ref / (1 - ms_params.m_eta_ref);	//[-] In order to allow this value to be used in the formula to determine size of tanks.
+			mc_stratified_ctes.ms_params.m_hot_tank_Thtr = 0;								//set point [C]
+			mc_stratified_ctes.ms_params.m_hot_tank_max_heat = 30;							//heater capacity [MWe]
+			mc_stratified_ctes.ms_params.m_cold_tank_Thtr = 0;								//set point [C]
+			mc_stratified_ctes.ms_params.m_cold_tank_max_heat = 15;						//capacity [MWe]
+			mc_stratified_ctes.ms_params.m_dt_hot = 0.0;									// MSPT assumes direct storage, so no user input here: hardcode = 0.0
+			mc_stratified_ctes.ms_params.m_htf_pump_coef = 0.55;							//pumping power for HTF thru power block [kW/kg/s]
+			mc_stratified_ctes.ms_params.dT_cw_rad = mc_stratified_ctes.ms_params.m_T_field_out_des - mc_stratified_ctes.ms_params.m_T_field_in_des;	//Reference delta T based on design values given.
+			mc_stratified_ctes.ms_params.m_dot_cw_rad = (mc_stratified_ctes.ms_params.m_W_dot_pc_design*1000000. / mc_stratified_ctes.ms_params.m_eta_pc_factor) / (4183 /*[J/kg-K]*/ * mc_stratified_ctes.ms_params.dT_cw_rad);	//Calculate design cw mass flow [kg/sec]
+			rad->m_night_hrs = 2.0 / 15.0 * 180.0/3.1415 * acos(tan(abs(mc_stratified_ctes.ms_params.m_lat)*3.1415 / 180.0)*tan(0.40928)); //Calculate nighttime hours. 
+
+			mc_stratified_ctes.ms_params.m_dot_cw_cold = (mc_stratified_ctes.ms_params.m_dot_cw_rad*mc_stratified_ctes.ms_params.m_ts_hours) / rad->m_night_hrs;	//Set the flow rate on the storage system between tank and HX to radiative field to fill the tank in the shortest night of year (9 hours in Las Vegas Nevada).
+
+			//Initialize cold storage
+            C_csp_tes::S_csp_tes_init_inputs tes_init_inputs;
+			mc_stratified_ctes.init(tes_init_inputs);
+
+		}
+		//Radiator
+		rad->L_c = rad->n*rad->W;									//Characteristic length for forced convection, typically equal to n*W unless wind direction is known to determine flow path : Lc[m]
+		double Afieldmin = rad->Asolar_refl*rad->RM;						//Determine radiator field based on solar and RM
+		rad->Np = static_cast<int>(Afieldmin/(rad->n*rad->W*rad->L))+1;		//Truncate to number of parallel sections required for minimum field area and add one to round up. 
+		rad->Afield = rad->n*rad->W*rad->L*rad->Np;							//Actual field area after rounding up to number of parallel sections.
+		//Initialize radiator
+		mc_radiator.init();
+
+	
+
+	}
+} //init
 
 double C_pc_Rankine_indirect_224::get_cold_startup_time()
 {
@@ -521,8 +662,8 @@ double C_pc_Rankine_indirect_224::get_efficiency_at_TPH(double T_degC, double P_
 
 	if( !ms_params.m_is_user_defined_pc )
 	{
-		double P_cycle, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond;
-
+		double P_cycle, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond, T_cond_out, T_cold;
+		T_cond_out=T_cold=std::numeric_limits<double>::quiet_NaN();		//check use of Tcold here
 //		water_state wprop;
 
 		double Twet = calc_twet(T_degC, relhum_pct, P_atm*1.01325e6);
@@ -530,9 +671,9 @@ double C_pc_Rankine_indirect_224::get_efficiency_at_TPH(double T_degC, double P_
 		RankineCycle(
 				//inputs
 				T_degC+273.15, Twet+273.15, P_atm*101325., ms_params.m_T_htf_hot_ref, m_m_dot_design, 
-				2, 0., ms_params.m_P_boil, 1., m_F_wcMin, m_F_wcMax,
+				2, 0., ms_params.m_P_boil, 1., m_F_wcMin, m_F_wcMax,T_cold,dT_cw_design,
 				//outputs
-				P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond);
+				P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond, T_cond_out);
 
         if( w_dot_condenser != 0 )
             *w_dot_condenser = W_cool_par;
@@ -588,14 +729,15 @@ double C_pc_Rankine_indirect_224::get_efficiency_at_load(double load_frac, doubl
 		double Twet = calc_twet(ms_params.m_T_amb_des, 45, 1.01325e6);
 
 		//Call
-		double P_cycle, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond;
+		double P_cycle, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond, T_cond_out,T_cold;
+		T_cond_out=T_cold=std::numeric_limits<double>::quiet_NaN();
 
         RankineCycle(
 			    //inputs
 			    ms_params.m_T_amb_des+273.15, Twet+273.15, 101325., ms_params.m_T_htf_hot_ref, mdot, 2, 
-                0., ms_params.m_P_boil, 1., m_F_wcMin, m_F_wcMax, 
+                0., ms_params.m_P_boil, 1., m_F_wcMin, m_F_wcMax, T_cold,dT_cw_design,
 			    //outputs
-			    P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond);
+			    P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond, T_cond_out);
         
         if( w_dot_condenser != 0 )
             *w_dot_condenser = W_cool_par;
@@ -667,11 +809,61 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 	double P_amb = weather.m_pres*100.0;		//[Pa], converted from mbar
 	int tou = sim_info.m_tou - 1;				//[-], convert from 1-based index
 	//double rh = weather.m_rhum/100.0;			//[-], convert from %
-
+	
+												
 	double m_dot_st_bd = 0.0;
 
-	double P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_water_cooling, W_cool_par, f_hrsys, P_cond;
-	P_cycle = eta = T_htf_cold = m_dot_demand = m_dot_htf_ref = m_dot_water_cooling = W_cool_par = f_hrsys = P_cond = std::numeric_limits<double>::quiet_NaN();
+	double zenith = weather.m_solzen;							//Solar zenith [deg] at mid-hour
+	double T_dp = weather.m_tdew + 273.15;						//[K] Dewpoint temp, convert from C
+	double hour = (double)((int)(time / 3600.0) % 24);			//Hour in solar time
+	double u = weather.m_wspd;									//Wind speed [m/s]
+	bool is_dark = (zenith > 90);								//boolean for if it is dark outside. =1 if dark out.
+	bool is_two_tank = (mc_two_tank_ctes.ms_params.m_ctes_type == 2); //boolean for cold storage type
+	bool is_stratified = (mc_two_tank_ctes.ms_params.m_ctes_type >2);
+	bool is_waterloop = (mc_radiator.ms_params.m_field_fl == 3);	//If circulating fluid in radiator is water.
+	double W_radpump = 0;										//[MW] To include pumping for radiative cooling field
+	if (ms_params.m_CT == 4)
+
+	{
+		if (is_two_tank)		//If two tank cold storage
+		{
+			m_dot_warm_avail = mc_two_tank_ctes.get_hot_massflow_avail(step_sec);	//[kg/sec] Get maximum flow rate possible from warm tank if drained to minimum height
+			m_dot_cold_avail = mc_two_tank_ctes.get_cold_massflow_avail(step_sec);	//[kg/sec] Get maximum flow rate possible from cold tank if drained to minimum height
+			T_warm_prev_K = mc_two_tank_ctes.get_hot_temp();			// Get previous warm temperature [K]
+			T_cold_prev_K = mc_two_tank_ctes.get_cold_temp();		// Get previous cold temperature [K]
+			T_cold_prev = mc_two_tank_ctes.get_cold_temp() - 273.15;	// Get previous cold temperature [C]
+			dT_cw_design = mc_two_tank_ctes.ms_params.dT_cw_rad;		//Cooling condenser cooling water design temperature drop
+			m_dot_radfield = mc_two_tank_ctes.ms_params.m_dot_cw_cold;	//Total flow through hx on storage side which connects to radiative field.
+		}
+		if (is_stratified)		//If stratified cold storage
+		{
+			m_dot_warm_avail = mc_stratified_ctes.get_hot_massflow_avail(step_sec);	//[kg/sec] Get maximum flow rate possible from warm tank if drained to minimum height
+			m_dot_cold_avail = mc_stratified_ctes.get_cold_massflow_avail(step_sec);	//[kg/sec] Get maximum flow rate possible from cold tank if drained to minimum height
+			T_warm_prev_K = mc_stratified_ctes.get_hot_temp();			// Get previous warm temperature [K]
+			T_cold_prev_K = mc_stratified_ctes.get_cold_temp();		// Get previous cold temperature [K]
+			T_cold_prev = mc_stratified_ctes.get_cold_temp() - 273.15;	// Get previous cold temperature [C]
+			dT_cw_design = mc_stratified_ctes.ms_params.dT_cw_rad;		//Cooling condenser cooling water design temperature drop
+			m_dot_radfield = mc_stratified_ctes.ms_params.m_dot_cw_cold;	//Total flow through hx on storage side which connects to radiative field.
+
+		}
+		m_dot_condenser = std::numeric_limits<double>::quiet_NaN();	//condenser mass flow rate at actual load
+		m_dot_radact = std::numeric_limits<double>::quiet_NaN();
+		idx_time = static_cast<int>((time / 3600-1));									//Zero based index to this timestep based on end of current hour in seconds.
+		T_s_measured=mc_radiator.T_S_measured[idx_time];		//Get measured sky temperature [K]
+		if (T_s_measured != 0)
+		{
+			T_s_K = T_s_measured;								//Use measured sky temp if available [K]
+		}				
+		else
+		{
+			T_s_K = CSP::skytemp(T_db, T_dp, hour);				//Use sky temp from correlation in [K]
+		}
+	}//radiative cooling and cold storage setup
+
+	double P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_water_cooling, W_cool_par, f_hrsys, P_cond, T_cond_out, T_rad_out;
+	int radcool_cntrl=0;
+	P_cycle = eta = T_htf_cold = m_dot_demand = m_dot_htf_ref = m_dot_water_cooling = W_cool_par = f_hrsys = P_cond = T_cond_out=T_rad_out= std::numeric_limits<double>::quiet_NaN();
+	
 
 	// 4.15.15 twn: hardcode these so they don't have to be passed into call(). Mode is always = 2 for CSP simulations
 	int mode = 2;
@@ -730,6 +922,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		P_cycle = 0.0;		
 		eta = 0.0;									
 		T_htf_cold = ms_params.m_T_htf_cold_ref;
+		
 		// *****
 		m_dot_demand = 0.0;
 		m_dot_water_cooling = 0.0;
@@ -737,6 +930,26 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		f_hrsys = 0.0;
 		P_cond = 0.0;
 		m_dot_st_bd = 0.0;
+
+		if (ms_params.m_CT == 4) // only if radiative cooling is chosen 
+		{
+			if (is_two_tank)
+			{
+				mc_two_tank_ctes.idle(step_sec, T_db, mc_two_tank_ctes_outputs);	//idle cold storage tanks ARD
+				T_cond_out = mc_two_tank_ctes_outputs.m_T_hot_ave - 273.15;		//Return warm tank temperature if no heat rejection [C] 
+				T_rad_out = mc_two_tank_ctes_outputs.m_T_cold_ave;				//Return cold tank temperature if radiator off [K]
+			}
+			
+			if (is_stratified)
+			{
+				mc_stratified_ctes.idle(step_sec, T_db, mc_stratified_ctes_outputs);	//idle
+				T_cond_out = mc_stratified_ctes_outputs.m_T_hot_ave - 273.15;		//Return warm tank temperature if no heat rejection [C] 
+				T_rad_out = mc_stratified_ctes_outputs.m_T_cold_ave;				//Return cold tank temperature if radiator off [K]
+			}
+
+			
+			radcool_cntrl = 10;
+		}
 
 		was_method_successful = true;
 
@@ -747,10 +960,97 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		if( !ms_params.m_is_user_defined_pc )
 		{
 
-            RankineCycle(T_db, T_wb, P_amb, T_htf_hot, m_dot_htf, mode, demand_var, ms_params.m_P_boil, 
-                ms_params.m_F_wc[tou], m_F_wcMin, m_F_wcMax, 
-			P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_water_cooling, W_cool_par, f_hrsys, P_cond);
+			RankineCycle(T_db, T_wb, P_amb, T_htf_hot, m_dot_htf, mode, demand_var, ms_params.m_P_boil,
+				ms_params.m_F_wc[tou], m_F_wcMin, m_F_wcMax, T_cold_prev,dT_cw_design,
+				P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_water_cooling, W_cool_par, f_hrsys, P_cond, T_cond_out);
 
+			if (ms_params.m_CT == 4) // only if radiative cooling is chosen ARD
+			{
+
+				double T_rad_in = std::numeric_limits<double>::quiet_NaN();				//inlet to radiator [K]
+				double T_cond_in = std::numeric_limits<double>::quiet_NaN();
+
+				if (is_two_tank)
+				{
+					m_dot_condenser = f_hrsys * mc_two_tank_ctes.ms_params.m_dot_cw_rad;		//calculate cooling water flow	[kg/sec]					
+
+					if (!is_dark) //day
+					{
+						if (m_dot_cold_avail > m_dot_condenser)								//cold tank has sufficient mass for condenser flow
+						{
+							mc_two_tank_ctes.charge(step_sec, T_db, m_dot_condenser, T_cond_out + 273.15, T_cond_in, mc_two_tank_ctes_outputs);
+							T_rad_out = mc_two_tank_ctes_outputs.m_T_cold_ave;						//Return cold tank temp [K] if radiator not on
+							radcool_cntrl = 20;
+						}
+						else																		//cold tank low
+						{
+							mc_two_tank_ctes.idle(step_sec, T_db, mc_two_tank_ctes_outputs);				//Idle tank if not enough mass during day (should not happen if tank sized well)
+							T_rad_out = mc_two_tank_ctes_outputs.m_T_cold_ave;							//Return cold tank temp [K] if radiator not on
+							radcool_cntrl = 999;														//add error message here? Not cooling cycle!
+						}
+					} //end day
+					else //night
+					{
+						if (m_dot_cold_avail > (m_dot_condenser - m_dot_radfield))					//cold tank has sufficient mass for net of condenser flow and radiator field
+						{
+							if (m_dot_warm_avail > (m_dot_radfield - m_dot_condenser))				//warm tank has sufficient for net flow also
+							{
+								mc_radiator.night_cool(T_db, T_warm_prev_K, u, T_s_K, mc_radiator.ms_params.m_dot_panel,mc_radiator.ms_params.Np,m_dot_radfield, T_rad_out,W_radpump);	//Call radiator to calculate temperature. Single series set of panels.
+								mc_two_tank_ctes.charge_discharge(step_sec, T_db, m_dot_condenser, T_cond_out + 273.15, m_dot_radfield, T_rad_out, mc_two_tank_ctes_outputs);
+								radcool_cntrl = 21;
+							}
+							else
+							{
+								mc_two_tank_ctes.charge(step_sec, T_db, m_dot_condenser, T_cond_out + 273.15, T_cond_in, mc_two_tank_ctes_outputs);
+								T_rad_out = mc_two_tank_ctes_outputs.m_T_cold_ave;					//Return cold tank temp [K] if radiator not on
+								radcool_cntrl = 22;
+							}
+						}
+						else																		//rarely would cold not be sufficient because the net flow in charge-discharge is typically into cold
+						{
+							mc_radiator.night_cool(T_db, T_warm_prev_K, u, T_s_K, mc_radiator.ms_params.m_dot_panel, mc_radiator.ms_params.Np, m_dot_radfield, T_rad_out,W_radpump);
+
+							//mc_cold_storage.idle(step_sec, T_db, mc_cold_storage_outputs);				//Idle tank if not enough mass during day (should not happen if tank sized well)
+
+							mc_two_tank_ctes.discharge(step_sec, T_db, m_dot_radfield, T_rad_out, T_rad_in, mc_two_tank_ctes_outputs);
+							radcool_cntrl = 998;
+							//throw error? not cooling power cycle!
+						}
+					}//end night
+				}//end two tank controls
+
+				if (is_stratified)
+				{
+					m_dot_condenser = f_hrsys * mc_stratified_ctes.ms_params.m_dot_cw_rad;		//calculate cooling water flow	[kg/sec]					
+
+					if (!is_dark) //day
+					{
+						T_rad_out = mc_stratified_ctes_outputs.m_T_cold_ave;					//Return cold tank temp [K] if radiator not on
+						mc_stratified_ctes.stratified_tanks(step_sec, T_db, m_dot_condenser, T_cond_out+273.15, 0.0, T_rad_out, mc_stratified_ctes_outputs);
+						radcool_cntrl = 20;
+								
+					} 
+					else //night
+					{
+						mc_radiator.night_cool(T_db, T_warm_prev_K, u, T_s_K, mc_radiator.ms_params.m_dot_panel, mc_radiator.ms_params.Np, m_dot_radfield, T_rad_out,W_radpumptest);	//Call radiator to calculate temperature. Single series set of panels.
+						if (T_rad_out < 273.15)
+						{
+							m_dot_radact = 0.0;	//If the radiator would get water to freezing, just circulate; do not cool tanks.
+							W_radpump = W_radpumptest * is_waterloop;	//If water would freeze, continue to circulate if fluid is water but do not circulate if fluid is glycol.						}
+						}
+						else
+						{
+							m_dot_radact = m_dot_radfield;	//If the radiator not too cold, use the fluid to cool tanks.
+							W_radpump = W_radpumptest;		//If the radiator not too cold, the pumps circulate regardless of fluid type.
+						}
+						mc_stratified_ctes.stratified_tanks(step_sec, T_db, m_dot_condenser, T_cond_out+273.15,m_dot_radact, T_rad_out, mc_stratified_ctes_outputs);
+						radcool_cntrl = 21;
+										
+					}
+				}// end three node controls
+			} //end rad cool controls
+          
+	
 			// Check the output to make sure it's reasonable. If not, return zeros.
 			if( ((eta > 1.0) || (eta < 0.0)) || ((T_htf_cold > T_htf_hot) || (T_htf_cold < ms_params.m_T_htf_cold_ref - 50.0)) )
 			{
@@ -858,6 +1158,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 			P_cycle = 0.0;
 			eta = 0.0;
 			T_htf_cold = ms_params.m_T_htf_cold_ref;
+		
 			m_dot_demand = m_dot_sby;
 			m_dot_st_bd = 0.0;
 			m_dot_water_cooling = 0.0;
@@ -866,6 +1167,25 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 			P_cond = 0.0;
 
 			q_dot_htf = m_dot_htf/3600.0*c_htf*(T_htf_hot - T_htf_cold)/1000.0;		//[MWt]
+
+			if (ms_params.m_CT == 4) // only if radiative cooling is chosen 
+			{
+				if (is_two_tank)
+				{
+					mc_two_tank_ctes.idle(step_sec, T_db, mc_two_tank_ctes_outputs);	//idle cold storage tanks ARD
+					T_cond_out = mc_two_tank_ctes_outputs.m_T_hot_ave - 273.15;		//Return warm tank temperature if no heat rejection 
+					T_rad_out = mc_two_tank_ctes_outputs.m_T_cold_ave;				//Return cold tank temperature if radiator off [K]
+				}
+
+				if (is_stratified)
+				{
+					mc_stratified_ctes.idle(step_sec, T_db, mc_stratified_ctes_outputs);	//idle
+					T_cond_out = mc_stratified_ctes_outputs.m_T_hot_ave - 273.15;		//Return warm tank temperature if no heat rejection 
+					T_rad_out = mc_stratified_ctes_outputs.m_T_cold_ave;				//Return cold tank temperature if radiator off [K]
+				}
+
+				radcool_cntrl = 30;
+			}
 
 			was_method_successful = true;
 		}
@@ -878,6 +1198,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		P_cycle = 0.0;
 		eta = 0.0;
 		T_htf_cold = ms_params.m_T_htf_cold_ref;
+	
 		m_dot_demand = 0.0;
 		m_dot_water_cooling = 0.0;
 		m_dot_st_bd = 0.0;
@@ -890,6 +1211,71 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		// Cycle is off, so reset startup parameters!
 		m_startup_time_remain_calc = ms_params.m_startup_time;			//[hr]
 		m_startup_energy_remain_calc = m_startup_energy_required;		//[kWt-hr]
+
+		if (ms_params.m_CT == 4) // only if radiative cooling is chosen 
+		{
+	
+			double T_rad_in = std::numeric_limits<double>::quiet_NaN();	//inlet to radiator [K]
+			if (is_two_tank)
+			{
+				if (is_dark)
+				{
+					if (m_dot_warm_avail < m_dot_radfield)						//If dark & warm empty, recirculate.
+					{
+						mc_radiator.night_cool(T_db, T_cold_prev_K, u, T_s_K, mc_radiator.ms_params.m_dot_panel, mc_radiator.ms_params.Np, m_dot_radfield, T_rad_out,W_radpump);			//Call radiator to calculate temperature.
+						mc_two_tank_ctes.recirculation(step_sec, T_db, m_dot_radfield, T_rad_out, mc_two_tank_ctes_outputs);
+						radcool_cntrl = 40;
+					}
+					else														//If dark & warm not empty, discharge (cooling)
+					{
+						mc_radiator.night_cool(T_db, T_warm_prev_K, u, T_s_K, mc_radiator.ms_params.m_dot_panel, mc_radiator.ms_params.Np, m_dot_radfield, T_rad_out,W_radpump);
+						mc_two_tank_ctes.discharge(step_sec, T_db, m_dot_radfield, T_rad_out, T_rad_in, mc_two_tank_ctes_outputs);
+						radcool_cntrl = 41;
+					}
+				}
+				else															//If daytime
+				{										
+						mc_two_tank_ctes.idle(step_sec, T_db, mc_two_tank_ctes_outputs);	//idle cold storage tanks ARD
+						T_rad_out = mc_two_tank_ctes_outputs.m_T_cold_ave;				//Return cold tank temperature if radiator off [K]
+						radcool_cntrl = 42;
+				}
+
+				
+					T_cond_out = mc_two_tank_ctes_outputs.m_T_hot_ave - 273.15;			//Return warm tank temperature if no heat rejection [C]
+				
+			
+			}//end two tank controls
+			if (is_stratified)
+			{
+				T_cond_out = mc_stratified_ctes_outputs.m_T_hot_ave - 273.15;			//Return warm tank temperature if no heat rejection [C]
+
+				if (!is_dark) //day
+				{
+					mc_stratified_ctes.idle(step_sec, T_db, mc_stratified_ctes_outputs);	//idle cold storage tanks ARD
+					T_rad_out = mc_stratified_ctes_outputs.m_T_cold_ave;					//Return cold tank temp [K] if radiator not on
+					radcool_cntrl = 42;
+
+				}
+				else //night
+				{
+					mc_radiator.night_cool(T_db, T_warm_prev_K, u, T_s_K, mc_radiator.ms_params.m_dot_panel, mc_radiator.ms_params.Np, m_dot_radfield, T_rad_out,W_radpumptest);	//Call radiator to calculate temperature. Single series set of panels.
+					if (T_rad_out < 273.15)
+					{
+						m_dot_radact = 0.0;	//If the radiator would get water to freezing, just circulate; do not cool tanks.
+						W_radpump = W_radpumptest * is_waterloop;	//If water would freeze, continue to circulate if fluid is water but do not circulate if fluid is glycol.						}
+					}
+					else
+					{
+						m_dot_radact = m_dot_radfield;	//If the radiator not too cold, use the fluid to cool tanks.
+						W_radpump = W_radpumptest;		//If the radiator not too cold, the pumps circulate regardless of fluid type.
+					}
+					mc_stratified_ctes.stratified_tanks(step_sec, T_db, 0.0, T_cond_out+273.15, m_dot_radact, T_rad_out, mc_stratified_ctes_outputs);
+					radcool_cntrl = 41;
+
+				}
+
+			}// end three node controls
+		}
 
 		was_method_successful = true;
 
@@ -963,6 +1349,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		P_cycle = 0.0;
 		eta = 0.0;
 		T_htf_cold = ms_params.m_T_htf_cold_ref;
+	
 		m_dot_htf = m_dot_htf_req_kg_s;		//[kg/hr]
 		//m_dot_demand = m_dot_htf_required*3600.0;		//[kg/hr], convert from kg/s
 		m_dot_water_cooling = 0.0;
@@ -972,6 +1359,25 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		P_cond = 0.0;
 
 		q_dot_htf = m_dot_htf_required*c_htf*(T_htf_hot - ms_params.m_T_htf_cold_ref)/1000.0;	//[MWt]
+
+		if (ms_params.m_CT == 4) // only if radiative cooling is chosen 
+		{
+			if (is_two_tank)
+			{
+				mc_two_tank_ctes.idle(step_sec, T_db, mc_two_tank_ctes_outputs);	//idle cold storage tanks ARD
+				T_cond_out = mc_two_tank_ctes_outputs.m_T_hot_ave - 273.15;		//Return warm tank temperature if no heat rejection 
+				T_rad_out = mc_two_tank_ctes_outputs.m_T_cold_ave;				//Return cold tank temperature if radiator off [K]
+			}
+
+			if (is_stratified)
+			{
+				mc_stratified_ctes.idle(step_sec, T_db, mc_stratified_ctes_outputs);	//idle
+				T_cond_out = mc_stratified_ctes_outputs.m_T_hot_ave - 273.15;		//Return warm tank temperature if no heat rejection 
+				T_rad_out = mc_stratified_ctes_outputs.m_T_cold_ave;				//Return cold tank temperature if radiator off [K]
+			}
+			
+			radcool_cntrl = 50;
+		}
 
 		was_method_successful = true;
 
@@ -1054,6 +1460,8 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		}
 	}	
 
+	
+
 	// Set outputs
 	out_solver.m_P_cycle = P_cycle/1000.0;				//[MWe] Cycle power output, convert from kWe
 	mc_reported_outputs.value(E_W_DOT, P_cycle/1000.0);	//[MWe] Cycle power output, convert from kWe
@@ -1064,18 +1472,35 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 	out_solver.m_T_htf_cold = T_htf_cold;				//[C] HTF outlet temperature
 	mc_reported_outputs.value(E_T_HTF_OUT, T_htf_cold);	//[C] HTF outlet temperature
 	mc_reported_outputs.value(E_T_HTF_IN, T_htf_hot);	//[C] HTF inlet temperature
-
+	  
 	//out_report.m_m_dot_makeup = (m_dot_water_cooling + m_dot_st_bd)*3600.0;		//[kg/hr] Cooling water makeup flow rate, convert from kg/s
 	mc_reported_outputs.value(E_M_DOT_WATER, (m_dot_water_cooling + m_dot_st_bd)*3600.0);		//[kg/hr] Cooling water makeup flow rate, convert from kg/s
-
-	//out_report.m_m_dot_demand = m_dot_demand;			//[kg/hr] HTF required flow rate to meet power load
+	mc_reported_outputs.value(E_T_COND_OUT, T_cond_out);										//[C] Cooling water outlet temperature from condenser
 	
+	if (is_two_tank)
+	{
+		mc_reported_outputs.value(E_T_COLD, mc_two_tank_ctes_outputs.m_T_cold_final - 273.15);			//[C] Cold storage temperature
+		mc_reported_outputs.value(E_M_COLD, mc_two_tank_ctes.get_cold_mass());							//[kg] Cold storage tank mass
+		mc_reported_outputs.value(E_M_WARM, mc_two_tank_ctes.get_hot_mass());							//[kg] Cold storage warm (return) tank mass
+		mc_reported_outputs.value(E_T_WARM, mc_two_tank_ctes_outputs.m_T_hot_final - 273.15);			//[C] Cold storage warm (return) tank temperature
+	}
+	if (is_stratified)
+	{
+		mc_reported_outputs.value(E_T_COLD, mc_stratified_ctes_outputs.m_T_cold_final - 273.15);		//[C] Cold storage temperature
+		mc_reported_outputs.value(E_M_COLD, mc_stratified_ctes.get_cold_mass());						//[kg] Cold storage tank mass
+		mc_reported_outputs.value(E_M_WARM, mc_stratified_ctes.get_hot_mass());							//[kg] Cold storage warm (return) tank mass
+		mc_reported_outputs.value(E_T_WARM, mc_stratified_ctes_outputs.m_T_hot_final - 273.15);			//[C] Cold storage warm (return) tank temperature
+	}
+	mc_reported_outputs.value(E_T_RADOUT, T_rad_out-273.15);//[C] Radiator outlet temperature
+	mc_reported_outputs.value(E_P_COND, P_cond);			//[Pa] Condensing pressure					//out_report.m_m_dot_demand = m_dot_demand;			//[kg/hr] HTF required flow rate to meet power load
+	mc_reported_outputs.value(E_RADCOOL_CNTRL, radcool_cntrl);	//Record control choice of radiative cooling with cold storage
+
 	out_solver.m_m_dot_htf = m_dot_htf;					//[kg/hr] Actual HTF flow rate passing through the power cycle
 	mc_reported_outputs.value(E_M_DOT_HTF,m_dot_htf);	//[kg/hr] Actual HTF flow rate passing through the power cycle
 	
 	//out_report.m_m_dot_htf_ref = m_dot_htf_ref;		//[kg/hr] Calculated reference HTF flow rate at design
 	mc_reported_outputs.value(E_M_DOT_HTF_REF, m_dot_htf_ref);	//[kg/hr]
-	out_solver.m_W_cool_par = W_cool_par;				//[MWe] Cooling system parasitic load
+	out_solver.m_W_cool_par = W_cool_par+W_radpump;				//[MWe] Cooling system parasitic load
 	//out_report.m_P_ref = ms_params.m_P_ref / 1000.0;		//[MWe] Reference power level output at design, convert from kWe
 	//out_report.m_f_hrsys = f_hrsys;					//[-] Fraction of operating heat rejection system
 	//out_report.m_P_cond = P_cond;						//[Pa] Condenser pressure
@@ -1101,6 +1526,8 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 
 void C_pc_Rankine_indirect_224::converged()
 {
+	mc_two_tank_ctes.converged();	
+	mc_stratified_ctes.converged();
 	m_standby_control_prev = m_standby_control_calc;
 	m_startup_time_remain_prev = m_startup_time_remain_calc;
 	m_startup_energy_remain_prev = m_startup_energy_remain_calc;
@@ -1117,7 +1544,7 @@ void C_pc_Rankine_indirect_224::write_output_intervals(double report_time_start,
 		v_temp_ts_time_end, report_time_end);
 }
 
-void C_pc_Rankine_indirect_224::assign(int index, float *p_reporting_ts_array, int n_reporting_ts_array)
+void C_pc_Rankine_indirect_224::assign(int index, double *p_reporting_ts_array, size_t n_reporting_ts_array)
 {
 	mc_reported_outputs.assign(index, p_reporting_ts_array, n_reporting_ts_array);
 }
@@ -1134,10 +1561,10 @@ int C_pc_Rankine_indirect_224::get_operating_state()
 
 void C_pc_Rankine_indirect_224::RankineCycle(double T_db, double T_wb,
 		double P_amb, double T_htf_hot, double m_dot_htf, int mode,
-		double demand_var, double P_boil, double F_wc, double F_wcmin, double F_wcmax, 
+		double demand_var, double P_boil, double F_wc, double F_wcmin, double F_wcmax, double T_cold /*[C]*/, double dT_cw /*[C]*/,
         //outputs
         double& P_cycle, double& eta, double& T_htf_cold, double& m_dot_demand, double& m_dot_htf_ref,
-		double& m_dot_makeup, double& W_cool_par, double& f_hrsys, double& P_cond)
+		double& m_dot_makeup, double& W_cool_par, double& f_hrsys, double& P_cond, double &T_cond_out /*[C]*/)
 {
 	
     //local names for parameters
@@ -1150,7 +1577,6 @@ void C_pc_Rankine_indirect_224::RankineCycle(double T_db, double T_wb,
     double T_ITD_des = ms_params.m_T_ITD_des;
     double P_cond_ratio = ms_params.m_P_cond_ratio;
     double P_cond_min = ms_params.m_P_cond_min;
-    
     
     water_state wp;
 
@@ -1195,7 +1621,7 @@ void C_pc_Rankine_indirect_224::RankineCycle(double T_db, double T_wb,
 	double q_reject_est = q_dot_ref*1000.0*(1.0 - m_eta_adj)*m_dot_htf_ND*T_htf_hot_ND;
 
 	double T_cond = 0, m_dot_air = 0, W_cool_parhac = 0, W_cool_parhwc = 0;
-	switch( ms_params.m_CT )  // Cooling technology type {1=evaporative cooling, 2=air cooling, 3=hybrid cooling}
+	switch( ms_params.m_CT )  // Cooling technology type {1=evaporative cooling, 2=air cooling, 3=hybrid cooling, 4=surface condenser}
 	{
 	case 1:
 		// For a wet-cooled system
@@ -1210,6 +1636,10 @@ void C_pc_Rankine_indirect_224::RankineCycle(double T_db, double T_wb,
 		// for a hybrid cooled system
 		CSP::HybridHR(/*fcall,*/ms_params.m_tech_type, P_cond_min, ms_params.m_n_pl_inc, F_wc, F_wcmax, F_wcmin, T_ITD_des, T_approach, dT_cw_ref, P_cond_ratio, (P_ref*1000.), m_eta_adj, T_db, T_wb,
 			P_amb, q_reject_est, m_dot_makeup, W_cool_parhac, W_cool_parhwc, W_cool_par, P_cond, T_cond, f_hrsys);
+		break;
+	case 4:
+		// For a once-through surface condenser
+		CSP::surface_cond(ms_params.m_tech_type, P_cond_min, ms_params.m_n_pl_inc, dT_cw, T_approach, (P_ref*1000.), m_eta_adj, T_db, T_wb, P_amb, T_cold /*[C]*/, q_reject_est, m_dot_makeup, W_cool_par, P_cond, T_cond, f_hrsys, T_cond_out /*[C]*/);
 		break;
 	}
 
@@ -1267,10 +1697,19 @@ void C_pc_Rankine_indirect_224::RankineCycle(double T_db, double T_wb,
 		P_CA = Interpolate(113, 13, T_htf_hot_ND);
 		P_AB = Interpolate(112, 12, P_cond);
 		P_BC = Interpolate(123, 23, m_dot_htf_ND);
-
-		P_ND[0] = P_ND[0] * P_AB;
-		P_ND[1] = P_ND[1] * P_BC;
-		P_ND[2] = P_ND[2] * P_CA;
+		
+		if ((ms_params.m_tech_type == 5) || (ms_params.m_tech_type == 6)) //ARD: cycles 5 & 6 based on different interaction pairs.
+		{
+			P_ND[0] = P_ND[0] * P_BC;
+			P_ND[1] = P_ND[1] * P_CA;
+			P_ND[2] = P_ND[2] * P_AB;
+		}
+		else
+		{
+			P_ND[0] = P_ND[0] * P_AB;
+			P_ND[1] = P_ND[1] * P_BC;
+			P_ND[2] = P_ND[2] * P_CA;
+		}
 
 		// HEAT
 		// Main effects
@@ -1279,13 +1718,24 @@ void C_pc_Rankine_indirect_224::RankineCycle(double T_db, double T_wb,
 		Q_ND[2] = Interpolate(23, 3, m_dot_htf_ND) - 1.0;
 
 		// Interactions
-		Q_CA = Interpolate(213, 13, T_htf_hot_ND);
-		Q_AB = Interpolate(212, 12, P_cond);
-		Q_BC = Interpolate(223, 23, m_dot_htf_ND);
+			Q_CA = Interpolate(213, 13, T_htf_hot_ND);
+			Q_AB = Interpolate(212, 12, P_cond);
+			Q_BC = Interpolate(223, 23, m_dot_htf_ND);
+			
+			if ((ms_params.m_tech_type == 5) || (ms_params.m_tech_type == 6)) //ARD: cycles 5 & 6 based on different interaction pairs.
+			{
 
-		Q_ND[0] = Q_ND[0] * Q_AB;
-		Q_ND[1] = Q_ND[1] * Q_BC;
-		Q_ND[2] = Q_ND[2] * Q_CA;
+				Q_ND[0] = Q_ND[0] * Q_BC;
+				Q_ND[1] = Q_ND[1] * Q_CA;
+				Q_ND[2] = Q_ND[2] * Q_AB;
+			}
+			else
+			{
+
+				Q_ND[0] = Q_ND[0] * Q_AB;
+				Q_ND[1] = Q_ND[1] * Q_BC;
+				Q_ND[2] = Q_ND[2] * Q_CA;
+			}
 
 		// Calculate the cumulative values
 		P_ND_tot = 1.0;
@@ -1308,7 +1758,7 @@ void C_pc_Rankine_indirect_224::RankineCycle(double T_db, double T_wb,
 		q_reject = (1.0 - eta)*q_dot_ref*Q_ND_tot*1000.0;
 		if( qq < 10 ) // MJW 10.31.2010
 		{
-			switch( ms_params.m_CT )  // Cooling technology type {1=evaporative cooling, 2=air cooling, 3=hybrid cooling}
+			switch( ms_params.m_CT )  // Cooling technology type {1=evaporative cooling, 2=air cooling, 3=hybrid cooling, 4= surface condenser}
 			{
 			case 1:
 				CSP::evap_tower(ms_params.m_tech_type, P_cond_min, ms_params.m_n_pl_inc, dT_cw_ref, T_approach, (P_ref*1000.), m_eta_adj, T_db, T_wb, P_amb, q_reject, m_dot_makeup, W_cool_par, P_cond_guess, T_cond, f_hrsys);
@@ -1319,6 +1769,9 @@ void C_pc_Rankine_indirect_224::RankineCycle(double T_db, double T_wb,
 			case 3:
 				CSP::HybridHR(/*fcall, */ms_params.m_tech_type, P_cond_min, ms_params.m_n_pl_inc, F_wc, F_wcmax, F_wcmin, T_ITD_des, T_approach, dT_cw_ref, P_cond_ratio, (P_ref*1000.), m_eta_adj, T_db, T_wb,
 					P_amb, q_reject, m_dot_makeup, W_cool_parhac, W_cool_parhwc, W_cool_par, P_cond_guess, T_cond, f_hrsys);
+				break;
+			case 4:
+				CSP::surface_cond(ms_params.m_tech_type, P_cond_min, ms_params.m_n_pl_inc, dT_cw, T_approach, (P_ref*1000.), m_eta_adj, T_db, T_wb, P_amb,T_cold, q_reject, m_dot_makeup, W_cool_par, P_cond_guess, T_cond, f_hrsys, T_cond_out);
 				break;
 			}
 		}
@@ -1479,3 +1932,401 @@ double C_pc_Rankine_indirect_224::Interpolate(int YT, int XT, double X)
 
 	return m_db.at(YI, lbi) + ind * (m_db.at(YI, ubi) - m_db.at(YI, lbi));
 } // Interpolate
+
+int C_pc_Rankine_indirect_224::split_ind_tbl(util::matrix_t<double> &cmbd_ind, util::matrix_t<double> &T_htf_ind,
+    util::matrix_t<double> &m_dot_ind, util::matrix_t<double> &T_amb_ind) {
+
+    const bool ASC = true;
+    const bool DESC = false;
+
+    const int col_T_htf = 0;
+    const int col_m_dot = 1;
+    const int col_T_amb = 2;
+	const int col_W_cyl = 3;
+    const int col_Q_cyl = 4;
+    const int col_W_h2o = 5;
+    const int col_m_h2o = 6;
+
+    // check for minimum length
+    if (cmbd_ind.nrows() < 2) throw(C_csp_exception("Not enough UDPC table rows", "UDPC Table Importation"));
+    
+    // get min, max, mode and unique indep. values (assuming the mode is the design value, which is usually safe even with a few errant duplicates)
+    // TODO - this can be relaxed so values like 1.1 and 1.101 are maybe not each considered unique
+    util::matrix_t<double> T_htf_col, m_dot_col, T_amb_col;
+    T_htf_col = cmbd_ind.col(0);
+    m_dot_col = cmbd_ind.col(1);
+    T_amb_col = cmbd_ind.col(2);
+    std::vector<double> T_htf_vec(T_htf_col.data(), T_htf_col.data() + T_htf_col.ncells());
+    std::vector<double> m_dot_vec(m_dot_col.data(), m_dot_col.data() + m_dot_col.ncells());
+    std::vector<double> T_amb_vec(T_amb_col.data(), T_amb_col.data() + T_amb_col.ncells());
+    // min\max
+    double T_htf_low, T_htf_high, m_dot_low, m_dot_high, T_amb_low, T_amb_high;
+    T_htf_low = *std::min_element(T_htf_vec.begin(), T_htf_vec.end());
+    T_htf_high = *std::max_element(T_htf_vec.begin(), T_htf_vec.end());
+    m_dot_low = *std::min_element(m_dot_vec.begin(), m_dot_vec.end());
+    m_dot_high = *std::max_element(m_dot_vec.begin(), m_dot_vec.end());
+    T_amb_low = *std::min_element(T_amb_vec.begin(), T_amb_vec.end());
+    T_amb_high = *std::max_element(T_amb_vec.begin(), T_amb_vec.end());
+    int n_min_lowhigh = 2;
+    if (std::count(T_htf_vec.begin(), T_htf_vec.end(), T_htf_low) < n_min_lowhigh ||
+        std::count(T_htf_vec.begin(), T_htf_vec.end(), T_htf_high) < n_min_lowhigh ||
+        std::count(m_dot_vec.begin(), m_dot_vec.end(), m_dot_low) < n_min_lowhigh ||
+        std::count(m_dot_vec.begin(), m_dot_vec.end(), m_dot_high) < n_min_lowhigh ||
+        std::count(T_amb_vec.begin(), T_amb_vec.end(), T_amb_low) < n_min_lowhigh ||
+        std::count(T_amb_vec.begin(), T_amb_vec.end(), T_amb_high) < n_min_lowhigh) {
+        // not true levels, possible outliers
+        throw(C_csp_exception("Incorrect number of values at high and low levels", "UDPC Table Importation"));
+    }
+    // mode
+    double T_htf_des = mode(T_htf_vec);
+    double m_dot_des = mode(m_dot_vec);
+    double T_amb_des = mode(T_amb_vec);
+    // unique values (no duplicates)
+    set<double, std::less<double>> T_htf_unique( T_htf_col.data(), T_htf_col.data() + T_htf_col.ncells() );
+    set<double, std::less<double>> m_dot_unique( m_dot_col.data(), m_dot_col.data() + m_dot_col.ncells() );
+    set<double, std::less<double>> T_amb_unique( T_amb_col.data(), T_amb_col.data() + T_amb_col.ncells() );
+    std::size_t n_T_htf_unique = T_htf_unique.size();
+    std::size_t n_m_dot_unique = m_dot_unique.size();
+    std::size_t n_T_amb_unique = T_amb_unique.size();
+
+    // convert combined matrix_t to a vector of vectors
+    std::vector<std::vector<double>> cmbd_tbl;
+    double *row_start = cmbd_ind.data();
+    double *row_end;
+    for (std::size_t i = 0; i < cmbd_ind.nrows(); i++) {
+        row_end = row_start + cmbd_ind.ncols();  // = one past last value
+        std::vector<double> mat_row(row_start, row_end);
+        row_start = row_end;
+        cmbd_tbl.push_back(mat_row);
+    }
+
+    // determine if the design values are included in the series
+    bool T_htf_des_in_series, m_dot_des_in_series, T_amb_des_in_series;
+    size_t count_1 = count_if(cmbd_tbl.begin(), cmbd_tbl.end(),
+        [T_htf_des, m_dot_low, T_amb_des](std::vector<double> v) {return (CSP::isequal(v[0], T_htf_des) && CSP::isequal(v[1], m_dot_low) && CSP::isequal(v[2], T_amb_des));});
+    count_1 > 1 ? T_htf_des_in_series = true : T_htf_des_in_series = false;
+
+    size_t count_2 = count_if(cmbd_tbl.begin(), cmbd_tbl.end(),
+        [T_htf_des, m_dot_des, T_amb_low](std::vector<double> v) {return (CSP::isequal(v[0], T_htf_des) && CSP::isequal(v[1], m_dot_des) && CSP::isequal(v[2], T_amb_low)); });
+    count_2 > 1 ? m_dot_des_in_series = true : m_dot_des_in_series = false;
+
+    size_t count_3 = count_if(cmbd_tbl.begin(), cmbd_tbl.end(),
+        [T_htf_low, m_dot_des, T_amb_des](std::vector<double> v) {return (CSP::isequal(v[0], T_htf_low) && CSP::isequal(v[1], m_dot_des) && CSP::isequal(v[2], T_amb_des)); });
+    count_3 > 1 ? T_amb_des_in_series = true : T_amb_des_in_series = false;
+
+    size_t n_T_htf_series, n_m_dot_series, n_T_amb_series;
+    T_htf_des_in_series ? n_T_htf_series = n_T_htf_unique : n_T_htf_series = n_T_htf_unique - 1;
+    m_dot_des_in_series ? n_m_dot_series = n_m_dot_unique : n_m_dot_series = n_m_dot_unique - 1;
+    T_amb_des_in_series ? n_T_amb_series = n_T_amb_unique : n_T_amb_series = n_T_amb_unique - 1;
+
+    // sort vector of vectors and remove duplicate sets
+    std::sort(cmbd_tbl.begin(), cmbd_tbl.end(), sort_vecOfvec({ col_T_htf, col_m_dot, col_T_amb }, { ASC, ASC, ASC }));
+
+    // TODO - do a smarter removal of duplicates that excludes combinations of the low, design, and high values
+    //  These duplicates should be kept as they can occur when the range includes the design value.
+    //cmbd_tbl.erase(unique(cmbd_tbl.begin(), cmbd_tbl.end(),
+    //    [](const vector<double> &a, const vector<double> &b) {return a[0] == b[0] && a[1] == b[1] && a[2] == b[2]; }),
+    //    cmbd_tbl.end());    // use lamba function as predicate function to disregard response values when testing for uniqueness
+
+    // start generating three tables
+    const int ncols = 13;
+    T_htf_ind.resize_fill(n_T_htf_series, ncols, 0.);  // subtract 1 for design value
+    m_dot_ind.resize_fill(n_m_dot_series, ncols, 0.);  // subtract 1 for design value
+    T_amb_ind.resize_fill(n_T_amb_series, ncols, 0.);  // subtract 1 for design value
+
+    // sort m_dot low to high and secondarily sort T_htf low to high.
+    // EXTRACT the first n_T_htf rows excluding the three that correspond to the design T_htf and the three T_amb levels.
+    // These are the 'low' columns in Table 1.
+    std::sort(cmbd_tbl.begin(), cmbd_tbl.end(), sort_vecOfvec({col_m_dot, col_T_htf}, {ASC, ASC}));
+    int vec_row = 0;
+    int mat_row = 0;
+    std::vector<std::vector<double>> exclude_dsns = { {T_htf_des, T_amb_low}, {T_htf_des, T_amb_des}, {T_htf_des, T_amb_high} };
+    std::vector<std::vector<double>>::iterator it;
+    for (std::vector<double>::size_type i = 0; i != n_T_htf_series + 3; i++) {
+        // Check if next value is in set to exclude
+        it = std::find(exclude_dsns.begin(), exclude_dsns.end(),
+            std::vector<double> { cmbd_tbl.at(vec_row).at(col_T_htf), cmbd_tbl.at(vec_row).at(col_T_amb) });
+        if (it == exclude_dsns.end()) {   // if not in the set to exclude
+            T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_T_htf), mat_row, 0);
+            T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_cyl), mat_row, 1);
+            T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_Q_cyl), mat_row, 4);
+            T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_h2o), mat_row, 7);
+            T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_m_h2o), mat_row, 10);
+            mat_row++;
+            cmbd_tbl.erase(cmbd_tbl.begin() + vec_row);
+        }
+        else {
+            exclude_dsns.erase(it);  // erase from set so if there are doubles (if the design value happens to be in the range) you keep this one
+            vec_row++;
+        }
+    }
+
+    // sort m_dot high to low and secondarily sort T_htf low to high.
+    // Extract the first n_T_htf rows excluding the three that correspond to the design T_htf and the three T_amb levels.
+    // These are the 'high' columns in Table 1.
+    std::sort(cmbd_tbl.begin(), cmbd_tbl.end(), sort_vecOfvec({col_m_dot, col_T_htf}, {DESC, ASC}));
+    vec_row = 0;
+    mat_row = 0;
+    exclude_dsns = { {T_htf_des, T_amb_low}, {T_htf_des, T_amb_des}, {T_htf_des, T_amb_high} };
+    for (std::vector<double>::size_type i = 0; i != n_T_htf_series + 3; i++) {
+        it = std::find(exclude_dsns.begin(), exclude_dsns.end(),
+            std::vector<double> { cmbd_tbl.at(vec_row).at(col_T_htf), cmbd_tbl.at(vec_row).at(col_T_amb) });
+        if (it == exclude_dsns.end()) {
+            T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_T_htf), mat_row, 0);  // redundant
+            T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_cyl), mat_row, 3);
+            T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_Q_cyl), mat_row, 6);
+            T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_h2o), mat_row, 9);
+            T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_m_h2o), mat_row, 12);
+            mat_row++;
+            cmbd_tbl.erase(cmbd_tbl.begin() + vec_row);
+        }
+        else {
+            exclude_dsns.erase(it);
+            vec_row++;
+        }
+    }
+
+    // sort T_amb low to high and secondarily sort m_dot low to high.
+    // Extract the first n_m_dot rows excluding the three that correspond to the design m_dot and the three T_htf levels.
+    // These are the 'low' columns in Table 2.
+    std::sort(cmbd_tbl.begin(), cmbd_tbl.end(), sort_vecOfvec({col_T_amb, col_m_dot}, {ASC, ASC}));
+    vec_row = 0;
+    mat_row = 0;
+    exclude_dsns = { {m_dot_des, T_htf_low}, {m_dot_des, T_htf_des}, {m_dot_des, T_htf_high} };
+    for (std::vector<double>::size_type i = 0; i != n_m_dot_series + 3; i++) {
+        it = std::find(exclude_dsns.begin(), exclude_dsns.end(),
+            std::vector<double> { cmbd_tbl.at(vec_row).at(col_m_dot), cmbd_tbl.at(vec_row).at(col_T_htf) });
+        if (it == exclude_dsns.end()) {
+            m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_m_dot), mat_row, 0);
+            m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_cyl), mat_row, 1);
+            m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_Q_cyl), mat_row, 4);
+            m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_h2o), mat_row, 7);
+            m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_m_h2o), mat_row, 10);
+            mat_row++;
+            cmbd_tbl.erase(cmbd_tbl.begin() + vec_row);
+        }
+        else {
+            exclude_dsns.erase(it);
+            vec_row++;
+        }
+    }
+
+    // sort T_amb high to low and secondarily sort m_dot low to high.
+    // Extract the first n_m_dot rows excluding the three that correspond to the design m_dot and the three T_htf levels.
+    // These are the 'high' columns in Table 2.
+    std::sort(cmbd_tbl.begin(), cmbd_tbl.end(), sort_vecOfvec({col_T_amb, col_m_dot}, {DESC, ASC}));
+    vec_row = 0;
+    mat_row = 0;
+    exclude_dsns = { {m_dot_des, T_htf_low}, {m_dot_des, T_htf_des}, {m_dot_des, T_htf_high} };
+    for (std::vector<double>::size_type i = 0; i != n_m_dot_series + 3; i++) {
+        it = std::find(exclude_dsns.begin(), exclude_dsns.end(),
+            std::vector<double> { cmbd_tbl.at(vec_row).at(col_m_dot), cmbd_tbl.at(vec_row).at(col_T_htf) });
+        if (it == exclude_dsns.end()) {
+            m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_m_dot), mat_row, 0);  // redundant
+            m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_cyl), mat_row, 3);
+            m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_Q_cyl), mat_row, 6);
+            m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_h2o), mat_row, 9);
+            m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_m_h2o), mat_row, 12);
+            mat_row++;
+            cmbd_tbl.erase(cmbd_tbl.begin() + vec_row);
+        }
+        else {
+            exclude_dsns.erase(it);
+            vec_row++;
+        }
+    }
+
+    // sort T_htf low to high and secondarily sort T_amb low to high.
+    // Extract the first n_T_amb rows excluding the one that corresponds to the design T_amb and the design m_dot.
+    // These are the 'low' columns in Table 3.
+    std::sort(cmbd_tbl.begin(), cmbd_tbl.end(), sort_vecOfvec({col_T_htf, col_T_amb}, {ASC, ASC}));
+    vec_row = 0;
+    mat_row = 0;
+    exclude_dsns = { {T_amb_des, m_dot_des} };
+    for (std::vector<double>::size_type i = 0; i != n_T_amb_series + 1; i++) {
+        it = std::find(exclude_dsns.begin(), exclude_dsns.end(),
+            std::vector<double> { cmbd_tbl.at(vec_row).at(col_T_amb), cmbd_tbl.at(vec_row).at(col_m_dot) });
+        if (it == exclude_dsns.end()) {
+            T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_T_amb), mat_row, 0);
+            T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_cyl), mat_row, 1);
+            T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_Q_cyl), mat_row, 4);
+            T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_h2o), mat_row, 7);
+            T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_m_h2o), mat_row, 10);
+            mat_row++;
+            cmbd_tbl.erase(cmbd_tbl.begin() + vec_row);
+        }
+        else {
+            exclude_dsns.erase(it);
+            vec_row++;
+        }
+    }
+
+    // sort T_htf high to low and secondarily sort T_amb low to high.
+    // Extract the first n_T_amb rows excluding the one that corresponds to the design T_amb and the design m_dot
+    // These are the 'high' columns in Table 3.
+    std::sort(cmbd_tbl.begin(), cmbd_tbl.end(), sort_vecOfvec({col_T_htf, col_T_amb}, {DESC, ASC}));
+    vec_row = 0;
+    mat_row = 0;
+    exclude_dsns = { {T_amb_des, m_dot_des} };
+    double T_htf_test, m_dot_test, T_amb_test;
+    for (std::vector<double>::size_type i = 0; i != n_T_amb_series + 1; i++) {
+        it = std::find(exclude_dsns.begin(), exclude_dsns.end(),
+            std::vector<double> { cmbd_tbl.at(vec_row).at(col_T_amb), cmbd_tbl.at(vec_row).at(col_m_dot) });
+        T_htf_test = cmbd_tbl.at(vec_row).at(col_T_htf);
+        m_dot_test = cmbd_tbl.at(vec_row).at(col_m_dot);
+        T_amb_test = cmbd_tbl.at(vec_row).at(col_T_amb);
+        if (it == exclude_dsns.end()) {
+            T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_T_amb), mat_row, 0);  // redundant
+            T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_cyl), mat_row, 3);
+            T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_Q_cyl), mat_row, 6);
+            T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_h2o), mat_row, 9);
+            T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_m_h2o), mat_row, 12);
+            mat_row++;
+            cmbd_tbl.erase(cmbd_tbl.begin() + vec_row);
+        }
+        else {
+            exclude_dsns.erase(it);
+            vec_row++;
+        }
+    }
+
+    // sort T_htf low to high.
+    // Extract the rows that have both T_amb and m_dot at their design conditions, exclude duplicates of all three at the design conditions
+    // These are the 'design' columns in Table 1.
+    std::sort(cmbd_tbl.begin(), cmbd_tbl.end(), sort_vecOfvec({col_T_htf}, {ASC}));
+    vec_row = 0;
+    mat_row = 0;
+    bool design_gotten = false;
+    int tbl_size = cmbd_tbl.size();
+    for (std::vector<double>::size_type i = 0; i != tbl_size; i++) {
+        T_htf_test = cmbd_tbl.at(vec_row).at(col_T_htf);
+        m_dot_test = cmbd_tbl.at(vec_row).at(col_m_dot);
+        T_amb_test = cmbd_tbl.at(vec_row).at(col_T_amb);
+        if (cmbd_tbl.at(vec_row).at(col_T_amb) == T_amb_des &&
+            cmbd_tbl.at(vec_row).at(col_m_dot) == m_dot_des &&
+            !(cmbd_tbl.at(vec_row).at(col_T_htf) == T_htf_des && design_gotten == true)) {
+            T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_T_htf), mat_row, 0);
+            T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_cyl), mat_row, 2);
+            T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_Q_cyl), mat_row, 5);
+            T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_h2o), mat_row, 8);
+            T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_m_h2o), mat_row, 11);
+            if (cmbd_tbl.at(vec_row).at(col_T_htf) == T_htf_des) { design_gotten = true; }
+            mat_row++;
+            cmbd_tbl.erase(cmbd_tbl.begin() + vec_row);
+        }
+        else {
+            vec_row++;
+        }
+    }
+
+    // sort m_dot low to high.
+    // Extract the rows that have both T_htf and T_amb at their design conditions, exclude duplicates of all three at the design conditions
+    // These are the 'design' columns in Table 2.
+    std::sort(cmbd_tbl.begin(), cmbd_tbl.end(), sort_vecOfvec({col_m_dot}, {ASC}));
+    vec_row = 0;
+    mat_row = 0;
+    design_gotten = false;
+    tbl_size = cmbd_tbl.size();
+    for (std::vector<double>::size_type i = 0; i != tbl_size; i++) {
+        if (cmbd_tbl.at(vec_row).at(col_T_htf) == T_htf_des &&
+            cmbd_tbl.at(vec_row).at(col_T_amb) == T_amb_des &&
+            !(cmbd_tbl.at(vec_row).at(col_m_dot) == m_dot_des && design_gotten == true)) {
+            m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_m_dot), mat_row, 0);
+            m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_cyl), mat_row, 2);
+            m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_Q_cyl), mat_row, 5);
+            m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_h2o), mat_row, 8);
+            m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_m_h2o), mat_row, 11);
+            if (cmbd_tbl.at(vec_row).at(col_m_dot) == m_dot_des) { design_gotten = true; }
+            mat_row++;
+            cmbd_tbl.erase(cmbd_tbl.begin() + vec_row);
+        }
+        else {
+            vec_row++;
+        }
+    }
+
+    // sort T_amb low to high.
+    // Extract the rest. These are the 'design' columns in Table 3.
+    std::sort(cmbd_tbl.begin(), cmbd_tbl.end(), sort_vecOfvec({col_T_amb}, {ASC}));
+    vec_row = 0;
+    mat_row = 0;
+    tbl_size = cmbd_tbl.size();
+    for (std::vector<double>::size_type i = 0; i != tbl_size; i++) {
+        T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_T_amb), mat_row, 0);
+        T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_cyl), mat_row, 2);
+        T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_Q_cyl), mat_row, 5);
+        T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_h2o), mat_row, 8);
+        T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_m_h2o), mat_row, 11);
+        mat_row++;
+        cmbd_tbl.erase(cmbd_tbl.begin() + vec_row);
+    }
+
+    /*
+    // Output tables to a text file for verification
+    std::ofstream T_htf_file;
+    T_htf_file.open("T_htf_file.dat");
+    T_htf_file << "T_htf"
+        << "\t" << "W_cycle_low" << "\t" << "W_cycle_design" << "\t" << "W_cycle_high"
+        << "\t" << "Heat_in_low" << "\t" << "Heat_in_design" << "\t" << "Heat_in_high"
+        << "\t" << "W_cooling_low" << "\t" << "W_cooling_design" << "\t" << "W_cooling_high"
+        << "\t" << "m_water_low" << "\t" << "m_water_design" << "\t" << "m_water_high"
+        << "\n";
+    for (int i = 0; i < T_htf_ind.nrows(); i++) {
+        for (int j = 0; j < T_htf_ind.ncols(); j++) {
+            T_htf_file << T_htf_ind.at(i, j);
+            if (j == T_htf_ind.ncols() - 1) {
+                T_htf_file << "\n";
+            }
+            else {
+                T_htf_file << "\t";
+            }
+        }
+    }
+    T_htf_file.close();
+
+    std::ofstream m_dot_file;
+    m_dot_file.open("m_dot_file.dat");
+    m_dot_file << "m_dot"
+        << "\t" << "W_cycle_low" << "\t" << "W_cycle_design" << "\t" << "W_cycle_high"
+        << "\t" << "Heat_in_low" << "\t" << "Heat_in_design" << "\t" << "Heat_in_high"
+        << "\t" << "W_cooling_low" << "\t" << "W_cooling_design" << "\t" << "W_cooling_high"
+        << "\t" << "m_water_low" << "\t" << "m_water_design" << "\t" << "m_water_high"
+        << "\n";
+    for (int i = 0; i < m_dot_ind.nrows(); i++) {
+        for (int j = 0; j < m_dot_ind.ncols(); j++) {
+            m_dot_file << m_dot_ind.at(i, j);
+            if (j == m_dot_ind.ncols() - 1) {
+                m_dot_file << "\n";
+            }
+            else {
+                m_dot_file << "\t";
+            }
+        }
+    }
+    m_dot_file.close();
+
+    std::ofstream T_amb_file;
+    T_amb_file.open("T_amb_file.dat");
+    T_amb_file << "T_amb"
+        << "\t" << "W_cycle_low" << "\t" << "W_cycle_design" << "\t" << "W_cycle_high"
+        << "\t" << "Heat_in_low" << "\t" << "Heat_in_design" << "\t" << "Heat_in_high"
+        << "\t" << "W_cooling_low" << "\t" << "W_cooling_design" << "\t" << "W_cooling_high"
+        << "\t" << "m_water_low" << "\t" << "m_water_design" << "\t" << "m_water_high"
+        << "\n";
+    for (int i = 0; i < T_amb_ind.nrows(); i++) {
+        for (int j = 0; j < T_amb_ind.ncols(); j++) {
+            T_amb_file << T_amb_ind.at(i, j);
+            if (j == T_amb_ind.ncols() - 1) {
+                T_amb_file << "\n";
+            }
+            else {
+                T_amb_file << "\t";
+            }
+        }
+    }
+    T_amb_file.close();
+    */
+
+    return 0;
+}
+

@@ -1,51 +1,24 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 // TFF notes on 25-Jan-2012
 // Differences from last version (SAM 2011-21-2) of code that will cause different answers for the same inputs
@@ -77,9 +50,9 @@ namespace geothermal
 	const double MAX_TEMP_RATIO = 1.134324;  // max valid value for (resource temp)/(plant design temp) where both are measured in Kelvin
 	const double DEFAULT_AMBIENT_TEMPC_BINARY = 10.0;			// degrees C
 	//const double WET_BULB_TEMPERATURE_FOR_FLASH_CALCS = 15.0;	// degrees C, used in Flash calcs brine effectiveness calcs an flash injection temperature calcs
-	const bool ADDITIONAL_PRESSURE_REQUIRED = false;
+	const bool ADDITIONAL_PRESSURE_REQUIRED = true;
 	//const double EFFICIENCY_PUMP_GF = 0.6;
-	const double EGS_THERMAL_CONDUCTIVITY = 3*3600*24;				// J/m-day-C
+	const double EGS_THERMAL_CONDUCTIVITY = 3 * 3600 * 24;				// J/m-day-C
 	//const double PRESSURE_CHANGE_ACROSS_SURFACE_EQUIPMENT_PSI = 25;	// 25 psi [2B.Resource&Well Input].D146, H146
 	const double TEMPERATURE_EGS_INJECTIONC = 76.1;					// degrees C, [7C.EGS Subsrfce HX].D11 [should be a function of plant design temperature]
 	const double TEMPERATURE_EGS_AMBIENT_C = 15.0;					// Note in GETEM spreadsheet says that this is only used in calculating resource temp or depth.  However, if EGS calculations are based on depth, then resource temp is based on this number, so all power calcs are based on it as well
@@ -90,24 +63,24 @@ namespace geothermal
 	const double WATER_LOSS_PERCENT = 0.02;							// 2%
 	const double EGS_TIME_INPUT = 3.076;							// years, not really explained - user is supposed to vary input until a calculated value equals plant design temp [7C.EGS Subsrfce HX].D42 (fTimeStar)
 	const double FRACTURE_LENGTH_ADJUSTMENT = 2;					// used for one instance of where the EGS fracture length is used.  All others use the original fracture length
-	const double DELTA_PRESSURE_HP_FLASH_PSI = 2.2;
+	const double DELTA_PRESSURE_HP_FLASH_PSI = 1.0;					//Was 2.2 -> now changed to 1.0 (as seen in GETEM on 10/09/18)
 	const double DELTA_PRESSURE_LP_FLASH_PSI = 1.0;
-	const double DELTA_TEMPERATURE_CWF = 30.0;						// degrees F
-	const double TEMPERATURE_PINCH_PT_CONDENSER_F = 10.0;
-	const double TEMPERATURE_PINCH_PT_COOLING_TOWER_F = 15;
-	const double PRESSURE_CONDENSER_NCG_PARTIAL_INHG = 0.5;			// inches of Mercury
+	const double DELTA_TEMPERATURE_CWF = 25.0;						// (degrees F) Was 30.0 -> now changed to 25.0 (as seen in GETEM on 10/09/18)
+	const double TEMPERATURE_PINCH_PT_CONDENSER_F = 7.5;			//Was 10.0 -> now changed to 7.5 (as seen in GETEM on 10/09/18)
+	const double TEMPERATURE_PINCH_PT_COOLING_TOWER_F = 5;			//Was 15 -> now changed to 5.0 (as seen in GETEM on 10/09/18)
+	const double PRESSURE_CONDENSER_NCG_PARTIAL_INHG = 0.32;			// (inches of Mercury) was 0.5 -> now changed to 0.32 (as seen in GETEM on 10/09/18)
 	const double GEOTHERMAL_FLUID_FOR_FLASH = 1000;					// D67 in "5C.Flash-Steam Plant Perf" [was an integer, not sure why]
-	const double EFFICIENCY_TURBINE = 0.825;
+	const double EFFICIENCY_TURBINE = 0.80;							//Was 0.825 -> now changed to 0.80 (as seen in GETEM on 10/09/18)
 	const double EFFICIENCY_GENERATOR = 0.98;
 	const double EFFICIENCY_PUMP_FLASH = 0.7;
-	const ncgRemovalTypes NCG_REMOVAL_TYPE = JET;
+	const ncgRemovalTypes NCG_REMOVAL_TYPE = HYBRID;					//Always type JET??
 	const int NUMBER_OF_COOLING_STAGES = 3;							// 1,2, or 3
-	const double NCG_LEVEL_PPM = 100;
+	const double NCG_LEVEL_PPM = 2000;								//Was 100 -> now changed to 2000 (as seen in GETEM on 10/09/18)
 	const double MOLE_WEIGHT_NCG = 44.0;
 	const double MOLE_WEIGHT_H2O = 18.0;
-	const double BASE_CW_PUMP_HEAD_FT = 60.0;
+	const double BASE_CW_PUMP_HEAD_FT = 65.0;						//Was 60.0 -> now changed to 65.0 (as seen in GETEM on 10/09/18)		
 	const condenserTypes CONDENSER_TYPE = SURFACE;
-	const double INJECTION_PUMPING_CYCLES = 6.0;
+	const double INJECTION_PUMPING_CYCLES = 5.0;					//Was  6.0 -> now changed to 5.0 (as seen in GETEM on 10/09/18) - cell #D133
 	const double ADDITIONAL_CW_PUMP_HEAD_SURFACE = 10 * 144 / physics::WATER_DENSITY;
 	//const double MAX_TEMPERATURE_DECLINE_C = 30;
 	const double FINAL_YEARS_WITH_NO_REPLACEMENT = 5;
@@ -120,18 +93,18 @@ namespace geothermal
 	const double GETEM_FT_IN_METER = (IMITATE_GETEM) ? 3.28083 : physics::FT_PER_METER; // feet per meter - largest source of discrepancy
 	const double GETEM_PSI_PER_BAR = (IMITATE_GETEM) ? 14.50377 : physics::PSI_PER_BAR; // psi per bar
 	const double GETEM_PSI_PER_INHG = (IMITATE_GETEM) ? 0.49115 : physics::PSI_PER_INHG; // psi per inch of mercury
-	const double GETEM_KGM3_PER_LBF3 = (IMITATE_GETEM) ? (35.3146/2.20462) : physics::KGM3_PER_LBF3; // lbs/ft^3 per kg/m^3 
+	const double GETEM_KGM3_PER_LBF3 = (IMITATE_GETEM) ? (35.3146 / 2.20462) : physics::KGM3_PER_LBF3; // lbs/ft^3 per kg/m^3 
 	const double GETEM_LB_PER_KG = (IMITATE_GETEM) ? 2.20462 : physics::LB_PER_KG; // pounds per kilogram
 	const double GETEM_KW_PER_HP = (IMITATE_GETEM) ? 0.7457 : physics::KW_PER_HP; // kilowatts per unit of horsepower
 	const double GRAVITY_MS2 = (IMITATE_GETEM) ? 9.807 : physics::GRAVITY_MS2; // meters per second^2; this varies between 9.78 and 9.82 depending on latitude
 	const double DAYS_PER_YEAR = 365.25;
 
-	double MetersToFeet(const double &m) {return m * GETEM_FT_IN_METER; }
-	double FeetToMeters(const double &ft) {return ft / GETEM_FT_IN_METER; }
-	double M2ToFeet2(const double &mSquared) { return (IMITATE_GETEM) ? mSquared * 10.76391 : mSquared * pow(GETEM_FT_IN_METER,2); }
+	double MetersToFeet(const double &m) { return m * GETEM_FT_IN_METER; }
+	double FeetToMeters(const double &ft) { return ft / GETEM_FT_IN_METER; }
+	double M2ToFeet2(const double &mSquared) { return (IMITATE_GETEM) ? mSquared * 10.76391 : mSquared * pow(GETEM_FT_IN_METER, 2); }
 
 	double InHgToPsi(const double &inHg) { return inHg * GETEM_PSI_PER_INHG; }
-	double PsiToInHg(const double &psi){ return psi / GETEM_PSI_PER_INHG; }
+	double PsiToInHg(const double &psi) { return psi / GETEM_PSI_PER_INHG; }
 	double BarToPsi(const double &bar) { return bar * GETEM_PSI_PER_BAR; }
 
 	double KgPerM3ToLbPerCf(const double &kgPerM3) { return kgPerM3 / GETEM_KGM3_PER_LBF3; }
@@ -144,7 +117,7 @@ namespace geothermal
 	double HPtoKW(const double &hp) { return hp * GETEM_KW_PER_HP; }
 	double KWtoHP(const double &kw) { return kw / GETEM_KW_PER_HP; }
 
-	double PSItoFTB(const double &psi) { return (IMITATE_GETEM) ? psi*144/62 : physics::PSItoFT(psi); }  // convert PSI to pump 'head' in feet.  assumes water density ~ 62 lb/ft^3 if imitating GETEM
+	double PSItoFTB(const double &psi) { return (IMITATE_GETEM) ? psi * 144 / 62 : physics::PSItoFT(psi); }  // convert PSI to pump 'head' in feet.  assumes water density ~ 62 lb/ft^3 if imitating GETEM
 
 	double pumpSizeInHP(const double &flow_LbPerHr, const double &head_Ft, const double &eff, std::string sErr)
 	{
@@ -152,7 +125,7 @@ namespace geothermal
 			sErr = ("Pump efficiency <= 0 in 'pumpSizeInHP'.");
 			return 0;
 		}
-		return (flow_LbPerHr * head_Ft)/(60 * 33000 * eff);
+		return (flow_LbPerHr * head_Ft) / (60 * 33000 * eff);
 	}
 
 	double pumpWorkInWattHr(const double &flow_LbPerHr, const double &head_Ft, const double &eff, std::string sErr)
@@ -160,7 +133,7 @@ namespace geothermal
 		return HPtoKW(1000 * pumpSizeInHP(flow_LbPerHr, head_Ft, eff, sErr));
 	}
 
-	double calcEGSTemperatureConstant(double tempC, double maxSecondLawEff) 
+	double calcEGSTemperatureConstant(double tempC, double maxSecondLawEff)
 	{	// not explained.  a constant used to calculate the 'average water temp' for EGS resource
 		// it's used in [7C.EGS Subsrfce HX].D127, and to do the makeup calculations in [6Bb.Makeup-EGS HX]
 		double c1 = (-0.0006 * tempC) - 0.0681;
@@ -188,11 +161,11 @@ namespace geothermal
 
 		//if (is) wxMessageBox(wxString::Format("Reached max loops in ERFC calculation (u <= 2). x = %2.10f\n", x));
 
-    
+
 		// returns the integral of Gauss' standard error function and complimentary error function
 		// first 6 digits match MS Excel erfc function, but they are different after that
 		int i;
-		double u, a0, a1, a2, b0, B1, b2, g, t, p, s, f1, f2=0, d;
+		double u, a0, a1, a2, b0, B1, b2, g, t, p, s, f1, f2 = 0, d;
 		double y, yc; // y = err function, yc = complimentary error function
 		const int maxloop = 2000;
 		const double tiny = 10e-15;
@@ -200,7 +173,7 @@ namespace geothermal
 		if (u <= 2)
 		{
 			t = 2 * u * u; p = 1; s = 1;
-			for(i = 3; i <= maxloop; i = i + 2)
+			for (i = 3; i <= maxloop; i = i + 2)
 			{
 				p = p * t / i;
 				s = s + p;
@@ -216,7 +189,7 @@ namespace geothermal
 		else
 		{
 			a0 = 1; b0 = 0; a1 = 0; B1 = 1; f1 = 0;
-			for (i = 1; i<= maxloop; i++)
+			for (i = 1; i <= maxloop; i++)
 			{
 				g = 2 - fmod(i, 2.0);
 				a2 = g * u * a1 + i * a0;
@@ -242,11 +215,11 @@ namespace geothermal
 
 	double evaluatePolynomial(const double &x, const double &c0, const double &c1, const double &c2, const double &c3, const double &c4, const double &c5, const double &c6)
 	{
-		return (c0 + (c1 * x) + (c2 * pow(x,2)) + (c3 * pow(x,3)) + (c4 * pow(x,4)) + (c5 * pow(x,5)) + (c6 * pow(x,6)));
+		return (c0 + (c1 * x) + (c2 * pow(x, 2)) + (c3 * pow(x, 3)) + (c4 * pow(x, 4)) + (c5 * pow(x, 5)) + (c6 * pow(x, 6)));
 	}
 
 	// Convert foot-lbs per hour to watt-hr/lb and include pump efficiency
-	double FrictionFactor(double Re) { return pow((0.79 * log(Re) - 1.640),-2);}
+	double FrictionFactor(double Re) { return pow((0.79 * log(Re) - 1.640), -2); }
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Create CPolynomial class and objects to use throughout code
@@ -254,21 +227,21 @@ namespace geothermal
 	class CPolynomial
 	{
 	public:
-		CPolynomial(void) {md1=0.0; md2=0.0; md3=0.0; md4=0.0; md5=0.0; md6=0.0; md7=0.0;}
-		CPolynomial(const double &c1) {md1=c1; md2=0.0; md3=0.0; md4=0.0; md5=0.0; md6=0.0; md7=0.0;}
-		CPolynomial(const double &c1, const double &c2) {md1=c1; md2=c2; md3=0.0; md4=0.0; md5=0.0; md6=0.0; md7=0.0;}
-		CPolynomial(const double &c1, const double &c2, const double &c3) {md1=c1; md2=c2; md3=c3; md4=0.0; md5=0.0; md6=0.0; md7=0.0;}
-		CPolynomial(const double &c1, const double &c2, const double &c3, const double &c4) {md1=c1; md2=c2; md3=c3; md4=c4; md5=0.0; md6=0.0; md7=0.0;}
-		CPolynomial(const double &c1, const double &c2, const double &c3, const double &c4, const double &c5) {md1=c1; md2=c2; md3=c3; md4=c4; md5=c5; md6=0.0; md7=0.0;}
-		CPolynomial(const double &c1, const double &c2, const double &c3, const double &c4, const double &c5, const double &c6) {md1=c1; md2=c2; md3=c3; md4=c4; md5=c5; md6=c6; md7=0.0;}
-		CPolynomial(const double &c1, const double &c2, const double &c3, const double &c4, const double &c5, const double &c6, const double &c7) {md1=c1; md2=c2; md3=c3; md4=c4; md5=c5; md6=c6; md7=c7;}
+		CPolynomial(void) { md1 = 0.0; md2 = 0.0; md3 = 0.0; md4 = 0.0; md5 = 0.0; md6 = 0.0; md7 = 0.0; }
+		CPolynomial(const double &c1) { md1 = c1; md2 = 0.0; md3 = 0.0; md4 = 0.0; md5 = 0.0; md6 = 0.0; md7 = 0.0; }
+		CPolynomial(const double &c1, const double &c2) { md1 = c1; md2 = c2; md3 = 0.0; md4 = 0.0; md5 = 0.0; md6 = 0.0; md7 = 0.0; }
+		CPolynomial(const double &c1, const double &c2, const double &c3) { md1 = c1; md2 = c2; md3 = c3; md4 = 0.0; md5 = 0.0; md6 = 0.0; md7 = 0.0; }
+		CPolynomial(const double &c1, const double &c2, const double &c3, const double &c4) { md1 = c1; md2 = c2; md3 = c3; md4 = c4; md5 = 0.0; md6 = 0.0; md7 = 0.0; }
+		CPolynomial(const double &c1, const double &c2, const double &c3, const double &c4, const double &c5) { md1 = c1; md2 = c2; md3 = c3; md4 = c4; md5 = c5; md6 = 0.0; md7 = 0.0; }
+		CPolynomial(const double &c1, const double &c2, const double &c3, const double &c4, const double &c5, const double &c6) { md1 = c1; md2 = c2; md3 = c3; md4 = c4; md5 = c5; md6 = c6; md7 = 0.0; }
+		CPolynomial(const double &c1, const double &c2, const double &c3, const double &c4, const double &c5, const double &c6, const double &c7) { md1 = c1; md2 = c2; md3 = c3; md4 = c4; md5 = c5; md6 = c6; md7 = c7; }
 		virtual ~CPolynomial(void) {}
 
 		//void init(const double &c1, const double &c2, const double &c3, const double &c4, const double &c5, const double &c6, const double &c7) { md1=c1; md2=c2; md3=c3; md4=c4; md5=c5; md6=c6; md7=c7; }
 		double evaluate(double val) { return evaluatePolynomial(val, md1, md2, md3, md4, md5, md6, md7); }
 
 	private:
-		double md1,md2,md3,md4,md5,md6,md7;
+		double md1, md2, md3, md4, md5, md6, md7;
 
 	};
 
@@ -282,7 +255,7 @@ namespace geothermal
 
 	// specific volume calculation constants
 	CPolynomial oSVC(0.017070951786, -0.000023968043944, 0.00000022418007508, -9.1528222658E-10, 2.1775771856E-12, -2.6995711458E-15, 1.4068205291E-18);
-	
+
 	// pressure calculation constants
 	CPolynomial oPC(8.0894106754, -0.19788525656, 0.0019695373372, -0.0000091909636468, 0.000000024121846658, -2.5517506351E-12);
 	CPolynomial oPressureAmbientConstants(0.320593729630411, -0.0156410175570826, 0.0003545452343917, -0.0000027120923771, 0.0000000136666056);
@@ -296,7 +269,7 @@ namespace geothermal
 
 	// EGS
 	CPolynomial oEGSDensity(0.001003773308, -0.00000043857183, 0.00000001365689, -0.00000000006419, 0.00000000000013);
-	CPolynomial oEGSSpecificHeat(4.301651536642, - 0.011554722573, 0.00020328187235, - 0.0000011433197, 0.00000000217642);
+	CPolynomial oEGSSpecificHeat(4.301651536642, -0.011554722573, 0.00020328187235, -0.0000011433197, 0.00000000217642);
 
 	// Min geothermal fluid outlet temperatures to prevent Si precipitation
 	// If fluid temp >= 356 degrees F (180 C), use quartz curve
@@ -337,8 +310,16 @@ namespace geothermal
 	CPolynomial oSecondLawConstantsDualFlashWithTempConstraint(-4424.6599, 31.149268, -0.082103498, 0.000096016499, -0.00000004211223);	// ("6Ef.Flash Makeup").Range("R21:V21")
 
 
+	//Specific Volume Coefficients (Used in Flass Vessels Cost Calculation):
+	CPolynomial specVolUnder125(11678.605, -464.41472, 8.9931223, -0.1033793, 0.00071596466, -0.0000027557218, 0.0000000045215227);
+	CPolynomial specVol125to325(3890.919, -83.834081, 0.78482148, -0.0040132715, 0.000011692082, -0.000000018270648, 0.000000000011909478);
+	CPolynomial specVol325to675(268.32894, -2.7389634, 0.011958041, -0.000028277928, 0.000000037948334, -0.000000000027284644, 8.187709e-15);
+	CPolynomial specVolOver675(1786.8983, 10.645163, -0.023769687, 0.000023582903, -0.0000000087731388);
+
 	double EGSWaterDensity(double tempC) { return 1 / oEGSDensity.evaluate(tempC); }			// kg/m^3
 	double EGSSpecificHeat(double tempC) { return oEGSSpecificHeat.evaluate(tempC) * 1000; }	// J/kg-C
+
+
 
 
 	double GetDHa(double pressurePSI)
@@ -369,7 +350,7 @@ namespace geothermal
 			return  oFlashEnthalpyF325To675.evaluate(temperatureF);
 		else if (temperatureF > 125)
 			return  oFlashEnthalpyF125To325.evaluate(temperatureF);
-		else 
+		else
 			return  oFlashEnthalpyFUnder125.evaluate(temperatureF);
 	}
 
@@ -381,7 +362,7 @@ namespace geothermal
 			return  oFlashEnthalpyG325To675.evaluate(temperatureF);
 		else if (temperatureF > 125)
 			return  oFlashEnthalpyG125To325.evaluate(temperatureF);
-		else 
+		else
 			return  oFlashEnthalpyGUnder125.evaluate(temperatureF);
 	}
 
@@ -395,8 +376,21 @@ namespace geothermal
 			return  oFlashTemperature20To200.evaluate(pressurePSI);
 		else if (pressurePSI > 2)
 			return  oFlashTemperature2To20.evaluate(pressurePSI);
-		else 
+		else
 			return  oFlashTemperatureUnder2.evaluate(pressurePSI);
+	}
+
+	double getSpecVol(double flashTempF)
+	{
+		if (flashTempF > 675)
+			return specVolOver675.evaluate(flashTempF);
+		else if (flashTempF > 325)
+			return specVol325to675.evaluate(flashTempF);
+		else if (flashTempF > 125)
+			return specVol125to325.evaluate(flashTempF);
+		else
+			return specVolUnder125.evaluate(flashTempF);
+
 	}
 
 	double GetSiPrecipitationTemperatureF(double geoFluidTempF)
@@ -412,11 +406,11 @@ namespace geothermal
 	class CGeoFluidContainer2
 	{
 	public:
-		double GetAEForBinaryWattHr(double tempF, double ambientTempF){return physics::toWattHr(GetAEForBinaryBTU(tempF, ambientTempF)); }
-		double GetAEForFlashWattHr(double tempF, double ambientTempF){return physics::toWattHr(GetAEForFlashBTU(tempF, ambientTempF)); }
+		double GetAEForBinaryWattHr(double tempF, double ambientTempF) { return physics::toWattHr(GetAEForBinaryBTU(tempF, ambientTempF)); }
+		double GetAEForFlashWattHr(double tempF, double ambientTempF) { return physics::toWattHr(GetAEForFlashBTU(tempF, ambientTempF)); }
 
-		double GetAEForBinaryWattHrUsingC(double tempC, double ambientTempC) {return GetAEForBinaryWattHr(physics::CelciusToFarenheit(tempC), physics::CelciusToFarenheit(ambientTempC)); }
-		double GetAEForFlashWattHrUsingC(double tempC, double ambientTempC) {return GetAEForFlashWattHr(physics::CelciusToFarenheit(tempC), physics::CelciusToFarenheit(ambientTempC)); }
+		double GetAEForBinaryWattHrUsingC(double tempC, double ambientTempC) { return GetAEForBinaryWattHr(physics::CelciusToFarenheit(tempC), physics::CelciusToFarenheit(ambientTempC)); }
+		double GetAEForFlashWattHrUsingC(double tempC, double ambientTempC) { return GetAEForFlashWattHr(physics::CelciusToFarenheit(tempC), physics::CelciusToFarenheit(ambientTempC)); }
 
 	private:
 		double GetAEForBinaryBTU(double tempHighF, double tempLowF)
@@ -436,256 +430,6 @@ namespace geothermal
 
 
 
-//******************************************************************************************************************************************************************************
-//******************************************************************************************************************************************************************************
-// Declaration of CGeothermalAnalyzer 
-//******************************************************************************************************************************************************************************
-//******************************************************************************************************************************************************************************
-class CGeothermalAnalyzer
-{
-public:
-	CGeothermalAnalyzer(const SGeothermal_Inputs& gti, SGeothermal_Outputs& gto);
-	CGeothermalAnalyzer(const SPowerBlockParameters& pbp, SPowerBlockInputs& pbi, const SGeothermal_Inputs& gti, SGeothermal_Outputs& gto);
-	~CGeothermalAnalyzer();
-
-	bool RunAnalysis( bool (*update_function)(float, void*), void *user_data );
-	bool InterfaceOutputsFilled(void);
-	std::string error() { return ms_ErrorString; }
-
-private:
-	// objects
-	SGeothermal_Outputs* mp_geo_out;
-	SGeothermal_Inputs mo_geo_in;
-	SPowerBlockParameters mo_pb_p;
-	SPowerBlockInputs mo_pb_in;
-	CPowerBlock_Type224 mo_PowerBlock;
-
-	// variables
-	std::string ms_ErrorString;
-	float mf_LastIntervalDone; // used to display "% done" to user
-	weatherfile m_wFile;
-	weather_header m_hdr;
-	weather_record m_wf;
-	bool mb_WeatherFileOpen;
-	long ml_ReadCount;  // resource file reads through the year, 1 to 8760
-	long ml_HourCount;	// hour of analysis (zero to yearsX8760); used to tell the Power Block how many seconds have passed.
-	makeupAlgorithmType me_makeup; // { NO_MAKEUP_ALGORITHM, MA_BINARY, MA_FLASH, MA_EGS }
-	int mi_ReservoirReplacements;	// how many times the reservoir has been 'replaced' (holes redrilled)
-	double md_WorkingTemperatureC; // current working temp of the fluid coming out of the ground
-	double md_LastProductionTemperatureC; // store the last temperature before calculating new one
-	double md_TimeOfLastReservoirReplacement; // for EGS calcs
-
-
-	// functions
-	void init(void); // code common to both constructors
-	bool IsHourly(void);
-	double PlantGrossPowerkW(void);
-	double MaxSecondLawEfficiency(void);
-	double FractionOfMaxEfficiency(void);
-	bool CanReplaceReservoir(double dTimePassedInYears);
-	void CalculateNewTemperature(double dElapsedTimeInYears);
-
-	double GetPumpWorkKW(void);
-	double NumberOfReservoirs(void);
-	double CalculatePumpWorkInKW(double flowLbPerHr, double pumpHeadFt);
-	double GetPumpWorkWattHrPerLb(void);
-	double GetCalculatedPumpDepthInFeet(void); // only used in pumpHeadFt
-	double pumpHeadFt(void);
-
-	void ReplaceReservoir(double dElapsedTimeInYears);
-	double GetTemperatureGradient(void);	// degrees C per km
-	double GetResourceTemperatureC(void);	// degrees C
-	double GetTemperaturePlantDesignC(void);
-	double GetResourceDepthM(void);			// meters
-	double GetAmbientTemperatureC(conversionTypes ct = NO_CONVERSION_TYPE);
-	double InjectionTemperatureC(void); // calculate injection temperature in degrees C
-	double InjectionTemperatureF(void);
-	double InjectionDensity(void);
-
-	double GetAEAtTemp(double tempC);
-	double GetAEBinaryAtTemp(double tempC);
-	double GetAEFlashAtTemp (double tempC);
-	double GetAE(void);
-	double GetAEBinary(void);
-	double GetAEFlash(void);
-
-
-	double EGSTimeStar(double tempC);
-	double EGSAverageWaterTemperatureC2(void);
-	double EGSThermalConductivity (void);
-	double EGSFractureLength(void);
-	double EGSFlowPerFracture(double tempC);
-	double EGSAlpha(void);
-	double EGSLengthOverVelocity(double tempC);
-	double EGSAvailableEnergy(void);
-	double EGSReservoirConstant(double avgWaterTempC, double timeDays);
-
-
-
-	double GetPressureChangeAcrossReservoir(void);		// [7B.Reservoir Hydraulics].G70 (only used in GetCalculatedPumpDepthInFeet) 
-	double pressureInjectionWellBottomHolePSI(void);	// [7B.Reservoir Hydraulics].G72, [7A.GF Pumps].G50
-	double pressureWellHeadPSI(void);					// [7A.GF Pumps].G61
-	double pressureHydrostaticPSI(void);				// [7B.Reservoir Hydraulics].G17
-	double pZero(void);
-
-
-
-	// production wells
-	double productionTempF(void);
-	double productionDensity(void);
-	double productionFlowRate(void);// lbs per hr / lbs per cf = cf/hr
-	double productionViscosity(void);
-	double flowRatePerWell(void);		// take Kg/second input and translate to lbs/hour
-	double flowRateTotal(void);			// flow rate per well * number of wells
-	double GetNumberOfWells(void);
-	double GetPlantBrineEffectiveness(void);
-
-	// turbine output
-	double calculateX(double enthalpyIn, double temperatureF);
-	double enthalpyChangeTurbine(double dEnthalpyDeltaInitial, double dEnthalpyTurbineG); // I65-I80, I87-I102
-
-	// Flash Turbine 1 - high pressure
-	double turbine1dHInitial(void); // I65
-	double turbine1TemperatureF(void); // D80
-	double turbine1EnthalpyF(void); // D81
-	double turbine1EnthalpyG(void); // D82
-	double turbine1DH(void); // I80 - btu/lb
-	double turbine1HEx(void); // I81 - btu/lb
-	double turbine1X(void); // D83 - %
-	double turbine1Steam(void); // D85 - lb/hr
-	double turbine1NetSteam(void); // I82 lb/hr
-	double turbine1OutputKWh(void); // I83 - kW/hr = (btu/lb) * (lb/hr) / (btu/kW)
-
-	// Flash Turbine 2 - low pressure
-	double turbine2dHInitial(void); // I87
-	double turbine2TemperatureF(void); // D88
-	double turbine2EnthalpyF(void); // D89
-	double turbine2EnthalpyG(void); // D90
-	double turbine2DH(void); // I102 - btu/lb
-	double turbine2HEx(void); // I103 - btu/lb
-	double turbine2X(void); // D91 %
-	double turbine2Steam(void); // I104, D93 - lb/hr
-	double turbine2OutputKWh(void); // I105 - kW/hr
-
-
-	// NCG Removal
-	double pInter(int stage); // D156, D205, D253 - psi
-	double pTotal(void); // calculated separately in spreadsheet, but mathematically equivalent to pressureCondenser					   D150,D74 - psi
-	double pRatio(void); // D151
-	double ncgFlowLbsPerHour(void); // D152 - lbs/hour
-	double ncgFlowMolesPerHour(void); // D162... - moles/hr
-	double pSuction(int stage); // D165, D214
-	double prJet(int stage); // D157, D206, D254
-	double h2oMolesPerHour(int st); // D163, D212, D260 - moles/hr
-	double totalVentFlow(int st); // D161, D210, D258
-	double moleWeightVent(int st); // D164, D213, D261
-	double suctionSteamRatio(int st); // D167, D216, D264
-	double AR(int stage); // D168, D217, D265
-	double ERd(int stage); // D169, D218, D266
-	double ER(int st); // D170, D219, D267
-	double steamFlow(int st); // D171, D220, D268 - lb/hr
-
-
-
-	int FlashCount(void);
-	double calculateDH(double pressureIn);
-	double TemperatureWetBulbF(void);
-	double temperatureCondF(void); // D71 - deg F
-	double pressureSaturation(void); // D72 - psi
-	double pressureCondenser(void); // D74 - psi
-
-
-	double FlashBrineEffectiveness(void);
-	void calculateFlashPressures(void);
-
-	// Main Pump Power
-	double overAllSteam(void); // D96
-	double qCondenser(void); // D99
-	double cwFlow(void); // D114
-	double overAllHEx(void); // I107
-
-	// CW Pump Power
-	double h2oVentFlow(int stage); // D160 - lb/hr
-	double moleRatio(int st); // D184,
-	double flowSteamMolesPerHr(int st); // D186,
-	double flowSteamLbPerHr(int st); // D187,  - lb/hr
-	double condensedSteamLbPerHour(int stage); // D188 = D171+D160-D187 = stage1CondensedSteam (lb/hr)
-	double pumpWorkFromSteamFlow(double flow); // D189-D198, 
-	double cwPumpWorkKWByStage(int st); // D199 - kW
-	double cwPumpWorkKW(void); // D305 - kW, part of I116
-
-	// Condensate Pump Power
-	double condensatePumpHead(void); // D121
-	double condensatePumpPowerKW(void); // D125->kw, part of I117
-	double condensatePumpHeadByStage(int st); // D201, D249, D297
-	double condensatePumpWorkByStage(int st); // D203, ... kW
-	double totalCondensatePumpWorkKW(void); // D306 - kW
-	double condensatePumpingKW(void); // I117 - kW
-
-	// Fan Power
-	double qRejectByStage(int stage); // D190
-	double qRejectTotal(void); // D303
-	double qRejectedTower(void); // D101
-	double fanPowerCoeffA(void); // O95
-	double fanPowerCoeffB(void); // P95
-	double fanPower(void); // D103 - hp per MMBtu/hr
-	double fanPowerKW(void); // D105, I118
-
-	// Vacuum Pump Power
-	double deltaPressureByStage(int st); // D173, D222, D270 - psi
-	double densityForVacuumPump(int st); // D166, D215, D263 - lb/ft^3
-	double vaccumPumpHead(int st); // D175, D224, D272 - ft
-	double vacuumPumpWorkByStage(int st); // D178, D227, D275 - kW
-	double vacuumPumpingKW(void); // D307, I119
-
-	// Condenser Injection Pump Power
-	double injectionDeltaP(void); // D127 - psi (condensate injection delta pressure)
-	double injectionPumpHead(void); // D128 - ft
-	double injCoeffA(void); // R95
-	double injCoeffB(void); // S95
-	double injCoeffC(void); // T95
-	double injCoeffD(void); // U95
-	double evaporativeWaterLoss(void); // D129 - lb/hr (evaporative water loss)
-	double drift(void); // D130
-	double blowDown(void); // D132
-	double waterLoss(void); // D133
-	double steamCondensate(void); // D135
-	double steamCondensateInjected(void); // D136 - lb/hr
-	double condenserInjectionPumpingKW(); // D138, I120 - kW
-
-
-
-	// Flash Pressures used mostly in calculateFlashPressures
-	bool TempConstraint(void);
-	double tempFlashLimitF(void); // D26 - deg F
-	double pressureFlashAmorphousSilica(void); // D27 - psi
-	double pressureSingleNoConstraint(void); // Q64
-	double pressureSingleWithConstraint(void); // S64
-	double pressureSingleToTest(void); // Q64 or S64
-	double pressureSingle(void); // O64
-
-	double pressureDualHighNoConstraint(void); // R64
-	double pressureDualHighWithConstraint(void); // T64
-	double pressureDualHigh(void); // P64
-	double pressureDualLowUnconstrained(void); // R65
-	double pressureDualLowConstrained(void);  // T65
-	double pressureDualLowToTest(void); // R65 or T65
-	double pressureDualLow(void); // P65
-
-
-	// weather file opening, reading, checking inputs, etc.
-	bool OpenWeatherFile(const char * fn);
-	bool ReadWeatherForTimeStep(const bool bHourly, unsigned int timeStep);
-	bool ReadNextLineInWeatherFile(void);
-	bool determineMakeupAlgorithm(void);
-	bool inputErrorsForUICalculations(void);
-	bool inputErrorsForAnalysis(void);
-	bool ReadyToAnalyze(void);
-	bool TimeToUpdateInterface(float fPercentDone, float fNotificationIntervalInPercent);
-};
-
-
-
 
 //******************************************************************************************************************************************************************************
 //******************************************************************************************************************************************************************************
@@ -693,13 +437,13 @@ private:
 //******************************************************************************************************************************************************************************
 //******************************************************************************************************************************************************************************
 CGeothermalAnalyzer::CGeothermalAnalyzer(const SGeothermal_Inputs& gti, SGeothermal_Outputs& gto)
-: mp_geo_out(&gto), mo_geo_in(gti)
+	: mp_geo_out(&gto), mo_geo_in(gti)
 {
 	init();
 }
 
 CGeothermalAnalyzer::CGeothermalAnalyzer(const SPowerBlockParameters& pbp, SPowerBlockInputs& pbi, const SGeothermal_Inputs& gti, SGeothermal_Outputs& gto)
-: mp_geo_out(&gto), mo_geo_in(gti), mo_pb_p(pbp), mo_pb_in(pbi)
+	: mp_geo_out(&gto), mo_geo_in(gti), mo_pb_p(pbp), mo_pb_in(pbi)
 {
 	init();
 }
@@ -717,10 +461,10 @@ void CGeothermalAnalyzer::init()
 	ml_ReadCount = 0;
 	ml_HourCount = 0;
 	me_makeup = NO_MAKEUP_ALGORITHM;
-	mi_ReservoirReplacements = 0; 
-	md_WorkingTemperatureC=0.0; 
+	mi_ReservoirReplacements = 0;
+	md_WorkingTemperatureC = 0.0;
 	md_LastProductionTemperatureC = 0.0;
-	md_TimeOfLastReservoirReplacement=0.0;
+	md_TimeOfLastReservoirReplacement = 0.0;
 }
 
 bool CGeothermalAnalyzer::IsHourly() { return (mo_geo_in.mi_MakeupCalculationsPerYear == 8760) ? true : false; }
@@ -730,25 +474,25 @@ double CGeothermalAnalyzer::PlantGrossPowerkW(void)
 	double dPlantBrineEfficiency = 0;  // plant Brine Efficiency as a function of temperature
 	switch (me_makeup)
 	{
-		case MA_BINARY:
-			dPlantBrineEfficiency = MaxSecondLawEfficiency() * FractionOfMaxEfficiency() * GetAEBinaryAtTemp(md_WorkingTemperatureC);
-			break;
+	case MA_BINARY:
+		dPlantBrineEfficiency = MaxSecondLawEfficiency() * mo_geo_in.md_PlantEfficiency * ((geothermal::IMITATE_GETEM) ? GetAEBinary() : GetAE());				//MaxSecondLawEfficiency() * FractionOfMaxEfficiency() * GetAEBinaryAtTemp(md_WorkingTemperatureC);
+		break;
 
-		case MA_FLASH:
-			dPlantBrineEfficiency = MaxSecondLawEfficiency() * FractionOfMaxEfficiency() * GetAEFlashAtTemp(md_WorkingTemperatureC); 
-			break;
+	case MA_FLASH:
+		dPlantBrineEfficiency = MaxSecondLawEfficiency() * FractionOfMaxEfficiency() * GetAEFlashAtTemp(md_WorkingTemperatureC);
+		break;
 
-		case MA_EGS:
-		    dPlantBrineEfficiency = MaxSecondLawEfficiency() * FractionOfMaxEfficiency() * GetAEBinaryAtTemp(md_WorkingTemperatureC);
-			break;
+	case MA_EGS:
+		dPlantBrineEfficiency = MaxSecondLawEfficiency() * FractionOfMaxEfficiency() * GetAEBinaryAtTemp(md_WorkingTemperatureC);
+		break;
 
-		default: ms_ErrorString = ("Invalid make up technology in CGeothermalAnalyzer::PlantGrossPowerkW"); return 0;
+	default: ms_ErrorString = ("Invalid make up technology in CGeothermalAnalyzer::PlantGrossPowerkW"); return 0;
 	}
 
 	return dPlantBrineEfficiency * flowRateTotal() / 1000.0;
 }
 
-double CGeothermalAnalyzer::MaxSecondLawEfficiency() 
+double CGeothermalAnalyzer::MaxSecondLawEfficiency()
 {
 	// the available energy, in GETEM (dGetemAEForSecondLaw), is actually based on plant design temp, although resource temp is being used to calculate the output
 	// this only matters for EGS resources, where resource temp and plant design temp are different
@@ -756,7 +500,11 @@ double CGeothermalAnalyzer::MaxSecondLawEfficiency()
 	// which leads to actual plant output(after pumping losses) > design output (before pump losses) ??
 	// which leads to relative revenue > 1 ??
 	double dGetemAEForSecondLaw = (geothermal::IMITATE_GETEM) ? GetAEBinary() : GetAE(); // GETEM uses the correct ambient temperature, but it always uses Binary constants, even if flash is chosen as the conversion technology
-	return  GetPlantBrineEffectiveness() / dGetemAEForSecondLaw;
+	mp_geo_out->eff_secondlaw = GetPlantBrineEffectiveness() / dGetemAEForSecondLaw;	//2nd law efficiency used in direct plant cost calculations. This is NOT the same as the MAX 2nd law efficiency.
+	if (me_makeup == MA_BINARY)
+		return (mp_geo_out->max_secondlaw);
+	else
+		return (GetPlantBrineEffectiveness() / dGetemAEForSecondLaw);
 }
 
 
@@ -772,17 +520,17 @@ double CGeothermalAnalyzer::FractionOfMaxEfficiency()
 	{
 		switch (mo_geo_in.me_ft)
 		{
-			case SINGLE_FLASH_NO_TEMP_CONSTRAINT:
-			case SINGLE_FLASH_WITH_TEMP_CONSTRAINT:
-				return (1.1 - (0.1 * pow(dTemperatureRatio, geothermal::oSecondLawConstantsSingleFlash.evaluate(physics::CelciusToKelvin(GetResourceTemperatureC())) )));
+		case SINGLE_FLASH_NO_TEMP_CONSTRAINT:
+		case SINGLE_FLASH_WITH_TEMP_CONSTRAINT:
+			return (1.1 - (0.1 * pow(dTemperatureRatio, geothermal::oSecondLawConstantsSingleFlash.evaluate(physics::CelciusToKelvin(GetResourceTemperatureC())))));
 
-			case DUAL_FLASH_NO_TEMP_CONSTRAINT:
-				return (1.1 - (0.1 * pow(dTemperatureRatio, geothermal::oSecondLawConstantsDualFlashNoTempConstraint.evaluate(physics::CelciusToKelvin(GetResourceTemperatureC())) )));
+		case DUAL_FLASH_NO_TEMP_CONSTRAINT:
+			return (1.1 - (0.1 * pow(dTemperatureRatio, geothermal::oSecondLawConstantsDualFlashNoTempConstraint.evaluate(physics::CelciusToKelvin(GetResourceTemperatureC())))));
 
-			case DUAL_FLASH_WITH_TEMP_CONSTRAINT:
-				return (1.1 - (0.1 * pow(dTemperatureRatio, geothermal::oSecondLawConstantsDualFlashWithTempConstraint.evaluate(physics::CelciusToKelvin(GetResourceTemperatureC())) )));
+		case DUAL_FLASH_WITH_TEMP_CONSTRAINT:
+			return (1.1 - (0.1 * pow(dTemperatureRatio, geothermal::oSecondLawConstantsDualFlashWithTempConstraint.evaluate(physics::CelciusToKelvin(GetResourceTemperatureC())))));
 
-			default: ms_ErrorString = ("Invalid flash technology in CGeothermalAnalyzer::FractionOfMaxEfficiency"); return 0;
+		default: ms_ErrorString = ("Invalid flash technology in CGeothermalAnalyzer::FractionOfMaxEfficiency"); return 0;
 		}
 
 	}
@@ -792,10 +540,10 @@ double CGeothermalAnalyzer::FractionOfMaxEfficiency()
 
 bool CGeothermalAnalyzer::CanReplaceReservoir(double dTimePassedInYears)
 {
-	return ( (mi_ReservoirReplacements < NumberOfReservoirs() ) && (dTimePassedInYears + geothermal::FINAL_YEARS_WITH_NO_REPLACEMENT <= mo_geo_in.mi_ProjectLifeYears ) ) ? true : false;
+	return ((mi_ReservoirReplacements < NumberOfReservoirs()) && (dTimePassedInYears + geothermal::FINAL_YEARS_WITH_NO_REPLACEMENT <= mo_geo_in.mi_ProjectLifeYears)) ? true : false;
 }
 
-void CGeothermalAnalyzer::CalculateNewTemperature( double dElapsedTimeInYears )
+void CGeothermalAnalyzer::CalculateNewTemperature(double dElapsedTimeInYears)
 {
 	if (me_makeup != MA_EGS)
 		md_WorkingTemperatureC = md_WorkingTemperatureC * (1 - (mo_geo_in.md_TemperatureDeclineRate / 12));
@@ -809,11 +557,11 @@ void CGeothermalAnalyzer::CalculateNewTemperature( double dElapsedTimeInYears )
 		double dDaysSinceLastReDrill = (dElapsedTimeInYears - md_TimeOfLastReservoirReplacement) * geothermal::DAYS_PER_YEAR;
 		double dFunctionOfRockProperties = EGSReservoirConstant(dAverageReservoirTempC, dDaysSinceLastReDrill); //[6Bb.Makeup-EGS HX] column AG
 
-		double tempBrineEfficiencyC = physics::KelvinToCelcius( exp((-0.42 * log(md_LastProductionTemperatureC) + 1.4745) * MaxSecondLawEfficiency() * FractionOfMaxEfficiency() ) * physics::CelciusToKelvin(md_LastProductionTemperatureC));
+		double tempBrineEfficiencyC = physics::KelvinToCelcius(exp((-0.42 * log(md_LastProductionTemperatureC) + 1.4745) * MaxSecondLawEfficiency() * FractionOfMaxEfficiency()) * physics::CelciusToKelvin(md_LastProductionTemperatureC));
 		double tempSILimitC = physics::FarenheitToCelcius(geothermal::GetSiPrecipitationTemperatureF(physics::CelciusToFarenheit(md_LastProductionTemperatureC)));
 		double dNewInjectionTemperatureC = MAX(tempBrineEfficiencyC, tempSILimitC);
 		double dNewEGSProductionTemperatureC = GetResourceTemperatureC() + ((dNewInjectionTemperatureC - GetResourceTemperatureC()) * dFunctionOfRockProperties);
-	
+
 		md_WorkingTemperatureC = dNewEGSProductionTemperatureC;
 	}
 }
@@ -825,30 +573,30 @@ double CGeothermalAnalyzer::GetPumpWorkKW(void)
 }
 
 double CGeothermalAnalyzer::NumberOfReservoirs(void)
-{	
+{
 	double d1 = GetAEBinary();
-	if ( (d1 == 0) && ( geothermal::IMITATE_GETEM ) )
+	if ((d1 == 0) && (geothermal::IMITATE_GETEM))
 	{
 		ms_ErrorString = ("GetAEBinary returned zero in CGeothermalAnalyzer::NumberOfReservoirs. Could not calculate the number of reservoirs.");
 		return 0;
 	}
-	
+
 	double dFactor = (geothermal::IMITATE_GETEM) ? GetAE() / d1 : 1;
 	double dPlantOutputKW = dFactor * flowRateTotal() * GetPlantBrineEffectiveness() / 1000.0; // KW = (watt-hr/lb)*(lbs/hr) / 1000
 	if (dPlantOutputKW == 0)
 	{
-			ms_ErrorString = ("The Plant Output was zero in CGeothermalAnalyzer::NumberOfReservoirs. Could not calculate the number of reservoirs.");
-			return 0;
+		ms_ErrorString = ("The Plant Output was zero in CGeothermalAnalyzer::NumberOfReservoirs. Could not calculate the number of reservoirs.");
+		return 0;
 	}
-	return floor(mo_geo_in.md_PotentialResourceMW * 1000 / dPlantOutputKW); 
-} 
+	return floor(mo_geo_in.md_PotentialResourceMW * 1000 / dPlantOutputKW);
+}
 
 
 double CGeothermalAnalyzer::CalculatePumpWorkInKW(double dFlowLbPerHr, double dPumpHeadFt)
 {
-//	double test = geothermal::pumpWorkInWattHr(dFlowLbPerHr, dPumpHeadFt, geothermal::EFFICIENCY_PUMP_FLASH, ms_ErrorString);
+	//	double test = geothermal::pumpWorkInWattHr(dFlowLbPerHr, dPumpHeadFt, geothermal::EFFICIENCY_PUMP_FLASH, ms_ErrorString);
 
-	return geothermal::HPtoKW((dFlowLbPerHr * dPumpHeadFt)/(60 * 33000 * geothermal::EFFICIENCY_PUMP_FLASH));
+	return geothermal::HPtoKW((dFlowLbPerHr * dPumpHeadFt) / (60 * 33000 * geothermal::EFFICIENCY_PUMP_FLASH));
 }
 
 double CGeothermalAnalyzer::GetPumpWorkWattHrPerLb(void)
@@ -860,7 +608,7 @@ double CGeothermalAnalyzer::GetPumpWorkWattHrPerLb(void)
 	double dInjectionPumpPower = 0;
 	if (geothermal::ADDITIONAL_PRESSURE_REQUIRED)
 	{
-		double dWaterLoss = (1/(1 - geothermal::WATER_LOSS_PERCENT)); // G130 - lb/hr
+		double dWaterLoss = (1 / (1 - geothermal::WATER_LOSS_PERCENT)); // G130 - lb/hr
 
 		double dFractionOfInletGFInjected = 1.0;
 		if (mo_geo_in.me_rt == EGS)
@@ -873,23 +621,26 @@ double CGeothermalAnalyzer::GetPumpWorkWattHrPerLb(void)
 		}
 
 		// Calculate injection pump items, on [7A.GF Pumps] unless otherwise noted
-		double dInjectionPressure = mo_geo_in.md_AdditionalPressure;
+		double dInjectionPressure = mo_geo_in.md_AdditionalPressure + geothermal::BarToPsi(mo_geo_in.md_ExcessPressureBar) + GetPressureChangeAcrossReservoir();
 		if (mo_geo_in.md_AdditionalPressure < 0)
 		{
-//			double injectionPressurePSI = 150 - (pressureInjectionWellBottomHolePSI() - pressureHydrostaticPSI() );
-//			double dInjectionPressure = (injectionPressurePSI < 0) ? 0 : injectionPressurePSI; // G40,  If it's less than zero, use zero.
+			//			double injectionPressurePSI = 150 - (pressureInjectionWellBottomHolePSI() - pressureHydrostaticPSI() );
+			//			double dInjectionPressure = (injectionPressurePSI < 0) ? 0 : injectionPressurePSI; // G40,  If it's less than zero, use zero.
 		}
 		double dInjectionPumpHeadFt = dInjectionPressure * 144 / InjectionDensity(); // G129
 
 		//dInjectionPumpPower = geothermal::pumpWorkInWattHr(dWaterLoss, dInjectionPumpHeadFt, geothermal::EFFICIENCY_PUMP_GF, ms_ErrorString) * dFractionOfInletGFInjected; // ft-lbs/hr
 		dInjectionPumpPower = geothermal::pumpWorkInWattHr(dWaterLoss, dInjectionPumpHeadFt, mo_geo_in.md_GFPumpEfficiency, ms_ErrorString) * dFractionOfInletGFInjected; // ft-lbs/hr
+
 	}
 	double retVal = dProductionPumpPower + dInjectionPumpPower; // watt-hr per lb of flow
+
 	if (retVal < 0)
 	{
-		ms_ErrorString = ("CGeothermalAnalyzer::GetPumpWorkWattHrPerLb calculated a value < 0"); 
-		return 0; 
+		ms_ErrorString = ("CGeothermalAnalyzer::GetPumpWorkWattHrPerLb calculated a value < 0");
+		return 0;
 	}
+
 	return retVal;
 }
 
@@ -904,55 +655,56 @@ double CGeothermalAnalyzer::GetCalculatedPumpDepthInFeet(void)
 	else
 		mp_geo_out->md_BottomHolePressure = pressureHydrostaticPSI() - GetPressureChangeAcrossReservoir();
 
-	double pressureDiff = mp_geo_out->md_BottomHolePressure  - pressureWellHeadPSI();
-	double dDiameterProductionWellFt = mo_geo_in.md_DiameterProductionWellInches/12;
+	double pressureDiff = mp_geo_out->md_BottomHolePressure - pressureWellHeadPSI();
+	double dDiameterProductionWellFt = mo_geo_in.md_DiameterProductionWellInches / 12;
 
-	double areaWell = physics::areaCircle(dDiameterProductionWellFt/2); // ft^2
-	double velocityWell = productionFlowRate()/areaWell; // [7A.GF Pumps].G70
-	double ReWell = dDiameterProductionWellFt * velocityWell * productionDensity()/productionViscosity();
-	double frictionHeadLossWell = (geothermal::FrictionFactor(ReWell)/dDiameterProductionWellFt)* pow(velocityWell,2)/(2 * physics::GRAVITY_FTS2);
+	double areaWell = physics::areaCircle(dDiameterProductionWellFt / 2); // ft^2
+	double velocityWell = productionFlowRate() / areaWell; // [7A.GF Pumps].G70
+	double ReWell = dDiameterProductionWellFt * velocityWell * productionDensity() / productionViscosity();
+	double frictionHeadLossWell = (geothermal::FrictionFactor(ReWell) / dDiameterProductionWellFt)* pow(velocityWell, 2) / (2 * physics::GRAVITY_FTS2);
 
-	double pumpSetting = ((pressureDiff*144)/productionDensity())*(1-frictionHeadLossWell);   // [7A.GF Pumps].D89
+	double pumpSetting = ((pressureDiff * 144) / productionDensity())*(1 - frictionHeadLossWell);   // [7A.GF Pumps].D89
 	return (geothermal::MetersToFeet(GetResourceDepthM()) - pumpSetting < 0) ? 0 : geothermal::MetersToFeet(GetResourceDepthM()) - pumpSetting; // feet - [7A.GF Pumps].D90
 }
 
 double CGeothermalAnalyzer::pumpHeadFt() // ft
 {	// calculate the friction head loss of the casing
-	double dDiameterPumpCasingFt = mo_geo_in.md_DiameterPumpCasingInches/12;
-	double areaCasing = physics::areaCircle(dDiameterPumpCasingFt/2); // ft^2
-	double velocityCasing = productionFlowRate()/areaCasing;
+	double dDiameterPumpCasingFt = mo_geo_in.md_DiameterPumpCasingInches / 12;
+	double areaCasing = physics::areaCircle(dDiameterPumpCasingFt / 2); // ft^2
+	double velocityCasing = productionFlowRate() / areaCasing;
 
-	double dReCasing = dDiameterPumpCasingFt * velocityCasing * productionDensity()/productionViscosity();
-	double frictionHeadLossCasing = (geothermal::FrictionFactor(dReCasing) * GetCalculatedPumpDepthInFeet() / dDiameterPumpCasingFt)* pow(velocityCasing,2)/(2 * physics::GRAVITY_FTS2); //feet
+	double dReCasing = dDiameterPumpCasingFt * velocityCasing * productionDensity() / productionViscosity();
+	double frictionHeadLossCasing = (geothermal::FrictionFactor(dReCasing) * GetCalculatedPumpDepthInFeet() / dDiameterPumpCasingFt)* pow(velocityCasing, 2) / (2 * physics::GRAVITY_FTS2); //feet
 
 	// Add (friction head loss) and (pump Set depth) to Get total pump head.
+
 	return frictionHeadLossCasing + GetCalculatedPumpDepthInFeet();
 }
 
 
 
-void CGeothermalAnalyzer::ReplaceReservoir( double dElapsedTimeInYears )
+void CGeothermalAnalyzer::ReplaceReservoir(double dElapsedTimeInYears)
 {
-	mi_ReservoirReplacements++; 
-	md_WorkingTemperatureC = GetResourceTemperatureC(); 
+	mi_ReservoirReplacements++;
+	md_WorkingTemperatureC = GetResourceTemperatureC();
 
-	if(me_makeup == MA_EGS)
+	if (me_makeup == MA_EGS)
 	{	// have to keep track of the last temperature of the working fluid, and the last time the reservoir was "replaced" (re-drilled)
 		md_LastProductionTemperatureC = md_WorkingTemperatureC;
-		double dYearsAtNextTimeStep = dElapsedTimeInYears + (1.0/12.0); 
+		double dYearsAtNextTimeStep = dElapsedTimeInYears + (1.0 / 12.0);
 		if (dElapsedTimeInYears > 0) md_TimeOfLastReservoirReplacement = dYearsAtNextTimeStep - (EGSTimeStar(EGSAverageWaterTemperatureC2()) / geothermal::DAYS_PER_YEAR);
 	}
 }
 
 double CGeothermalAnalyzer::GetTemperatureGradient(void) // degrees C per km
 {	// Conversation with Chad on August 30th 2010, 10am MT - just use the average gradient, even if it's changing at that point according to the depth/temp graph.
-	if (mo_geo_in.me_rt == HYDROTHERMAL) { return ((mo_geo_in.md_TemperatureResourceC - GetAmbientTemperatureC(BINARY))/mo_geo_in.md_ResourceDepthM)*1000; }
-	return ((mo_geo_in.md_TemperatureResourceC - mo_geo_in.md_TemperatureEGSAmbientC)/mo_geo_in.md_ResourceDepthM)*1000;
+	if (mo_geo_in.me_rt == HYDROTHERMAL) { return ((mo_geo_in.md_TemperatureResourceC - GetAmbientTemperatureC(BINARY)) / mo_geo_in.md_ResourceDepthM) * 1000; }
+	return ((mo_geo_in.md_TemperatureResourceC - mo_geo_in.md_TemperatureEGSAmbientC) / mo_geo_in.md_ResourceDepthM) * 1000;
 }
 
 double CGeothermalAnalyzer::GetResourceTemperatureC(void) // degrees C
 {
-	if ( (mo_geo_in.me_rt == EGS) && (mo_geo_in.me_dc == DEPTH) ) return ((mo_geo_in.md_ResourceDepthM/1000) * GetTemperatureGradient()) + mo_geo_in.md_TemperatureEGSAmbientC;
+	if ((mo_geo_in.me_rt == EGS) && (mo_geo_in.me_dc == DEPTH)) return ((mo_geo_in.md_ResourceDepthM / 1000) * GetTemperatureGradient()) + mo_geo_in.md_TemperatureEGSAmbientC;
 	return mo_geo_in.md_TemperatureResourceC;
 }
 
@@ -960,7 +712,7 @@ double CGeothermalAnalyzer::GetTemperaturePlantDesignC(void) { return (mo_geo_in
 
 double CGeothermalAnalyzer::GetResourceDepthM(void) // meters
 {
-	if ( (mo_geo_in.me_rt == EGS) && (mo_geo_in.me_dc == TEMPERATURE) ) return 1000 * (mo_geo_in.md_TemperatureResourceC - mo_geo_in.md_TemperatureEGSAmbientC) / GetTemperatureGradient();
+	if ((mo_geo_in.me_rt == EGS) && (mo_geo_in.me_dc == TEMPERATURE)) return 1000 * (mo_geo_in.md_TemperatureResourceC - mo_geo_in.md_TemperatureEGSAmbientC) / GetTemperatureGradient();
 	return mo_geo_in.md_ResourceDepthM;
 }
 
@@ -968,15 +720,15 @@ double CGeothermalAnalyzer::GetAmbientTemperatureC(conversionTypes ct)
 {
 	if (ct == NO_CONVERSION_TYPE) ct = mo_geo_in.me_ct;
 	//return (ct == BINARY) ? geothermal::DEFAULT_AMBIENT_TEMPC_BINARY : (1.3842 * geothermal::WET_BULB_TEMPERATURE_FOR_FLASH_CALCS) + 5.1772 ;
-	return (ct == BINARY) ? geothermal::DEFAULT_AMBIENT_TEMPC_BINARY : (1.3842 * mo_geo_in.md_TemperatureWetBulbC) + 5.1772 ;
+	return (ct == BINARY) ? geothermal::DEFAULT_AMBIENT_TEMPC_BINARY : (1.3842 * mo_geo_in.md_TemperatureWetBulbC) + 5.1772;
 }
 
 double CGeothermalAnalyzer::InjectionTemperatureC() // calculate injection temperature in degrees C
 {	// Plant design temp AND resource temp have to be Set correctly!!!
 	// These are the calculations done at the bottom of [10B.GeoFluid] with the result in D89
-	
+
 	// this is used in pump Power calculations, and in EGS energy produciton calculations
-	if ((GetTemperaturePlantDesignC() != GetResourceTemperatureC()) && ( (me_makeup == MA_BINARY) || (me_makeup == MA_FLASH) ) )
+	if ((GetTemperaturePlantDesignC() != GetResourceTemperatureC()) && ((me_makeup == MA_BINARY) || (me_makeup == MA_FLASH)))
 	{
 		ms_ErrorString = ("Resource temperature was not equal to plant design temp in non-EGS analysis in CGeoHourlyBaseInputs::InjectionTemperatureC");
 		return 0;
@@ -986,6 +738,8 @@ double CGeothermalAnalyzer::InjectionTemperatureC() // calculate injection tempe
 	double b = (-0.00244 * GetTemperaturePlantDesignC()) - 0.0567;
 	double dPlantBrineEffectiveness = (geothermal::IMITATE_GETEM) ? 10.35 : GetPlantBrineEffectiveness();
 	double eff = dPlantBrineEffectiveness / GetAEBinary(); //available energy based on resource temp
+
+
 	double tr = a * exp(b*eff);
 	double t1 = physics::KelvinToCelcius(physics::CelciusToKelvin(GetTemperaturePlantDesignC()) * tr);
 	double t2 = GetAmbientTemperatureC() + 27;
@@ -993,25 +747,30 @@ double CGeothermalAnalyzer::InjectionTemperatureC() // calculate injection tempe
 	double x = geothermal::evaluatePolynomial(GetTemperaturePlantDesignC(), 4.205944351495, 0.3672417729236, -0.0036294799613, 0.0000706584462, -0.0000001334837, 0, 0);
 	double x1 = geothermal::evaluatePolynomial(x, -0.294394, 0.307616, -0.000119669, -0.00000000425191, 0.0000000000249634, 0, 0);
 
-	double t3 = physics::FarenheitToCelcius(physics::CelciusToFarenheit(x1)+1);
-	double y = (t1>t2) ? t1 : t2;
+	double t3 = physics::FarenheitToCelcius(physics::CelciusToFarenheit(x1) + 1);
+	double y = (t1 > t2) ? t1 : t2;
 
-	return ( (t3>y) ? t3 : y );
+	return ((t3 > y) ? t3 : y);
 }
+
+
+
+
 
 double CGeothermalAnalyzer::InjectionTemperatureF(void)
 {
 	double dInjectionTempForResource = (mo_geo_in.me_rt == EGS) ? geothermal::TEMPERATURE_EGS_INJECTIONC : InjectionTemperatureC();	// D15 - degrees C
+
 	return physics::CelciusToFarenheit(dInjectionTempForResource);	// G15 - degrees F
 }
 
 double CGeothermalAnalyzer::InjectionDensity(void) { return (1 / geothermal::oSVC.evaluate(InjectionTemperatureF())); }											// G19,G44, G128 - lb/ft^3
 
 
-double CGeothermalAnalyzer::GetAEAtTemp(double tempC) { return (mo_geo_in.me_ct == BINARY) ? GetAEBinaryAtTemp(tempC) : GetAEFlashAtTemp(tempC) ; }
-double CGeothermalAnalyzer::GetAEBinaryAtTemp(double tempC){ return geothermal::oGFC.GetAEForBinaryWattHrUsingC(tempC, GetAmbientTemperatureC()); }	// watt-hr/lb - Calculate available energy using binary constants and plant design temp (short cut)
-double CGeothermalAnalyzer::GetAEFlashAtTemp (double tempC){ return geothermal::oGFC.GetAEForFlashWattHrUsingC(tempC, GetAmbientTemperatureC()); }	// watt-hr/lb - Calculate available energy using flash constants and plant design temp (short cut)
-double CGeothermalAnalyzer::GetAE(void) { return GetAEAtTemp(GetTemperaturePlantDesignC()) ; }
+double CGeothermalAnalyzer::GetAEAtTemp(double tempC) { return (mo_geo_in.me_ct == BINARY) ? GetAEBinaryAtTemp(tempC) : GetAEFlashAtTemp(tempC); }
+double CGeothermalAnalyzer::GetAEBinaryAtTemp(double tempC) { return geothermal::oGFC.GetAEForBinaryWattHrUsingC(tempC, GetAmbientTemperatureC()); }	// watt-hr/lb - Calculate available energy using binary constants and plant design temp (short cut)
+double CGeothermalAnalyzer::GetAEFlashAtTemp(double tempC) { return geothermal::oGFC.GetAEForFlashWattHrUsingC(tempC, GetAmbientTemperatureC()); }	// watt-hr/lb - Calculate available energy using flash constants and plant design temp (short cut)
+double CGeothermalAnalyzer::GetAE(void) { return GetAEAtTemp(GetTemperaturePlantDesignC()); }
 double CGeothermalAnalyzer::GetAEBinary(void) { return GetAEBinaryAtTemp(GetTemperaturePlantDesignC()); }// watt-hr/lb - Calculate available energy using binary constants and plant design temp (short cut)
 double CGeothermalAnalyzer::GetAEFlash(void) { return GetAEFlashAtTemp(GetTemperaturePlantDesignC()); }
 
@@ -1019,12 +778,12 @@ double CGeothermalAnalyzer::EGSTimeStar(double tempC)
 {
 	double dEGSFractureSurfaceArea = mo_geo_in.md_EGSFractureWidthM * EGSFractureLength();
 	double d2 = 27 * geothermal::EGSWaterDensity(tempC) * geothermal::EGSSpecificHeat(tempC) * EGSFlowPerFracture(tempC);
-	return ( pow(EGSThermalConductivity() * dEGSFractureSurfaceArea/(d2),2) / EGSAlpha() ) + EGSLengthOverVelocity(tempC);
+	return (pow(EGSThermalConductivity() * dEGSFractureSurfaceArea / (d2), 2) / EGSAlpha()) + EGSLengthOverVelocity(tempC);
 }
 
 double CGeothermalAnalyzer::EGSAverageWaterTemperatureC2()
 {	// degrees C (used in [6Bb.Makeup-EGS HX ].X35 to calc time*
-	return (InjectionTemperatureC() + GetResourceTemperatureC())/2;
+	return (InjectionTemperatureC() + GetResourceTemperatureC()) / 2;
 }
 
 double CGeothermalAnalyzer::EGSThermalConductivity()
@@ -1043,7 +802,7 @@ double CGeothermalAnalyzer::EGSFractureLength()
 double CGeothermalAnalyzer::EGSFlowPerFracture(double tempC)
 {	// m^3 per day
 	//double dFlowInTimePeriod = (IsHourly()) ? 60*60  : 60*60*24 ; // hourly analysis uses hourly flow, monthly analysis uses daily flow
-	double dFlowInTimePeriod = 60*60*24 ; // hourly analysis and monthly analyses use daily flow
+	double dFlowInTimePeriod = 60 * 60 * 24; // hourly analysis and monthly analyses use daily flow
 	return ((mo_geo_in.md_ProductionFlowRateKgPerS / geothermal::EGSWaterDensity(tempC)) / mo_geo_in.md_EGSNumberOfFractures) * dFlowInTimePeriod;
 }
 
@@ -1064,7 +823,7 @@ double CGeothermalAnalyzer::EGSAvailableEnergy()
 	return geothermal::oGFC.GetAEForFlashWattHrUsingC(mo_geo_in.md_TemperaturePlantDesignC, geothermal::TEMPERATURE_EGS_AMBIENT_C);
 }
 
-double CGeothermalAnalyzer::EGSReservoirConstant(double avgWaterTempC, double dDays )
+double CGeothermalAnalyzer::EGSReservoirConstant(double avgWaterTempC, double dDays)
 {	// all this is from [7C.EGS Subsrfce HX], also from the calculations over time on 6Bb.Makeup-EGS HX, AF62-AF422
 	double lv = EGSLengthOverVelocity(avgWaterTempC);	// days (or hours)
 	if (dDays <= lv) return 0;
@@ -1074,7 +833,7 @@ double CGeothermalAnalyzer::EGSReservoirConstant(double avgWaterTempC, double dD
 	double flow = EGSFlowPerFracture(avgWaterTempC);	// m^3 per day (or per hour)
 	double dEGSFractureSurfaceArea = mo_geo_in.md_EGSFractureWidthM * EGSFractureLength();//fFractureSurfaceArea, m^2
 
-	double x = (EGSThermalConductivity() * dEGSFractureSurfaceArea) / (cp * rho * flow * sqrt(EGSAlpha()*(dDays - lv) ) );
+	double x = (EGSThermalConductivity() * dEGSFractureSurfaceArea) / (cp * rho * flow * sqrt(EGSAlpha()*(dDays - lv)));
 	return geothermal::gauss_error_function(x);
 }
 
@@ -1082,28 +841,28 @@ double CGeothermalAnalyzer::GetPressureChangeAcrossReservoir()
 {	//  Only used in GetCalculatedPumpDepthInFeet
 
 	// [7B.Reservoir Hydraulics].G70
-    if (mo_geo_in.me_pc == ENTER_PC) return mo_geo_in.md_ReservoirDeltaPressure * flowRatePerWell() / 1000.0;
+	if (mo_geo_in.me_pc == ENTER_PC) return mo_geo_in.md_ReservoirDeltaPressure * flowRatePerWell() / 1000.0;
 	double md_PressureChangeAcrossReservoir = 0.0;
 
 	// if user didn't input the pressure change, we have to calculate it.  start with these
 
 	// Why does GETEM calculate the average water temperature for EGS two different ways?  Is one better?  Method 2 is certainly simpler.
-	double dEGSAverageWaterTemperatureC1 = geothermal::calcEGSAverageWaterTemperatureC(GetResourceTemperatureC(), mo_geo_in.md_TemperaturePlantDesignC, GetPlantBrineEffectiveness() / EGSAvailableEnergy() ); // degrees C (used in EGS makeup, and on [7C.EGS Subsrfce HX]
+	double dEGSAverageWaterTemperatureC1 = geothermal::calcEGSAverageWaterTemperatureC(GetResourceTemperatureC(), mo_geo_in.md_TemperaturePlantDesignC, GetPlantBrineEffectiveness() / EGSAvailableEnergy()); // degrees C (used in EGS makeup, and on [7C.EGS Subsrfce HX]
 	//double EGSAverageWaterTemperatureC1 = KelvinToCelcius(CelciusToKelvin(GetResourceTemperatureC()) * calcEGSTemperatureConstant( (GetPlantBrineEffectiveness() / EGSAvailableEnergy()), md_TemperaturePlantDesignC)); // other equation used in GETEM	
 
 	// all this is from [7C.EGS Subsrfce HX]
 	double waterTempC = (geothermal::IMITATE_GETEM) ? dEGSAverageWaterTemperatureC1 : EGSAverageWaterTemperatureC2(); // degrees C
 	double days = geothermal::EGS_TIME_INPUT * geothermal::DAYS_PER_YEAR;
 	double tempEGSProductionC = GetResourceTemperatureC() + (geothermal::TEMPERATURE_EGS_INJECTIONC - GetResourceTemperatureC()) * EGSReservoirConstant(waterTempC, days);
-	double dEGSAverageReservoirTemperatureF = physics::CelciusToFarenheit((geothermal::TEMPERATURE_EGS_INJECTIONC + tempEGSProductionC)/2);  //[7C.EGS Subsrfce HX].D52, [7B.Reservoir Hydraulics].D24
+	double dEGSAverageReservoirTemperatureF = physics::CelciusToFarenheit((geothermal::TEMPERATURE_EGS_INJECTIONC + tempEGSProductionC) / 2);  //[7C.EGS Subsrfce HX].D52, [7B.Reservoir Hydraulics].D24
 
 	mp_geo_out->md_AverageReservoirTemperatureF = (mo_geo_in.me_rt == EGS) ? dEGSAverageReservoirTemperatureF : physics::CelciusToFarenheit(GetResourceTemperatureC());	// G54 on [7B.Reservoir Hydraulics]
 
 	double density = geothermal::oDensityConstants.evaluate(mp_geo_out->md_AverageReservoirTemperatureF); // lbs per ft^3
-	double volumetricFlow =(flowRatePerWell() / density)/3600; // ft^3 per second
+	double volumetricFlow = (flowRatePerWell() / density) / 3600; // ft^3 per second
 	double viscosity = 0.115631 * pow(mp_geo_out->md_AverageReservoirTemperatureF, -1.199532); // lb per ft-second
 
-	if ((mo_geo_in.me_rt == EGS) && (mo_geo_in.me_pc == SIMPLE_FRACTURE)  )
+	if ((mo_geo_in.me_rt == EGS) && (mo_geo_in.me_pc == SIMPLE_FRACTURE))
 	{	// only a valid option for EGS resources
 		// calculate the pressure change across the reservoir using simple fracture flow
 		double dEGSFractureLengthUserAdjusted = EGSFractureLength() * geothermal::FRACTURE_LENGTH_ADJUSTMENT;
@@ -1111,10 +870,10 @@ double CGeothermalAnalyzer::GetPressureChangeAcrossReservoir()
 		double fractureFlowArea = geothermal::MetersToFeet(mo_geo_in.md_EGSFractureAperature) * geothermal::MetersToFeet(mo_geo_in.md_EGSFractureWidthM);  // ft^2
 		double hydraulicDiameter = (2 * fractureFlowArea) / (geothermal::MetersToFeet(mo_geo_in.md_EGSFractureAperature) + geothermal::MetersToFeet(mo_geo_in.md_EGSFractureWidthM));  // ft
 		double flowPerFracture = volumetricFlow / mo_geo_in.md_EGSNumberOfFractures; // ft^3 per second
-		double velocity = flowPerFracture/fractureFlowArea; // ft per second
+		double velocity = flowPerFracture / fractureFlowArea; // ft per second
 		double Re = density * velocity * hydraulicDiameter / viscosity;
-		double frictionFactor = 64/Re;
-		double headLoss = frictionFactor * (effectiveLengthFt/hydraulicDiameter) * pow(velocity,2)/(2 * physics::GRAVITY_FTS2); // ft
+		double frictionFactor = 64 / Re;
+		double headLoss = frictionFactor * (effectiveLengthFt / hydraulicDiameter) * pow(velocity, 2) / (2 * physics::GRAVITY_FTS2); // ft
 		md_PressureChangeAcrossReservoir = headLoss * density / 144; // psi
 	}
 	else {
@@ -1122,7 +881,7 @@ double CGeothermalAnalyzer::GetPressureChangeAcrossReservoir()
 		double dReservoirAreaSqFt = geothermal::MetersToFeet(mo_geo_in.md_ReservoirHeightM) * geothermal::MetersToFeet(mo_geo_in.md_ReservoirWidthM);
 		double G53 = geothermal::M2ToFeet2(mo_geo_in.md_ReservoirPermeability * dReservoirAreaSqFt *  0.000000000000986923); //ft^4
 		double G61 = volumetricFlow * viscosity * geothermal::MetersToFeet(mo_geo_in.md_DistanceBetweenProductionInjectionWellsM) / G53; // lbs per second^2-ft
-		md_PressureChangeAcrossReservoir = G61/physics::GRAVITY_FTS2/144; // change in pressure (psi)
+		md_PressureChangeAcrossReservoir = G61 / physics::GRAVITY_FTS2 / 144; // change in pressure (psi)
 	}
 	return md_PressureChangeAcrossReservoir;
 }
@@ -1134,18 +893,18 @@ double CGeothermalAnalyzer::pressureInjectionWellBottomHolePSI() // [7B.Reservoi
 	// this used to incorrectly convert PSI to bar - does this still work for Binary?????????????????????
 	double pMax = (pZero() > injectionWellSurfacePressurePSI) ? pZero() : injectionWellSurfacePressurePSI; //G18
 	double depthFt = geothermal::MetersToFeet(GetResourceDepthM()); //G22
-	double G23 = pMax + InjectionDensity() * depthFt/144; // psi
+	double G23 = pMax + InjectionDensity() * depthFt / 144; // psi
 
-	double flowRate = mo_geo_in.md_ProductionFlowRateKgPerS / mo_geo_in.md_RatioInjectionToProduction /(1 - geothermal::WATER_LOSS_PERCENT); // kg per second
+	double flowRate = mo_geo_in.md_ProductionFlowRateKgPerS / mo_geo_in.md_RatioInjectionToProduction / (1 - geothermal::WATER_LOSS_PERCENT); // kg per second
 	flowRate = geothermal::KgToLb(flowRate) / InjectionDensity();  // cf per second
-	double dDiameterInjectionWellFt = mo_geo_in.md_DiameterInjectionWellInches/12;
-	double areaInjectionWell = physics::areaCircle(dDiameterInjectionWellFt/2); // ft^2
-	double velocityInjectionWell = flowRate/areaInjectionWell;
+	double dDiameterInjectionWellFt = mo_geo_in.md_DiameterInjectionWellInches / 12;
+	double areaInjectionWell = physics::areaCircle(dDiameterInjectionWellFt / 2); // ft^2
+	double velocityInjectionWell = flowRate / areaInjectionWell;
 
-	double viscosity = 0.0925 * pow(InjectionTemperatureF(),-1.159);
-	double ReInjectionWell = dDiameterInjectionWellFt * velocityInjectionWell * InjectionDensity()/viscosity;
+	double viscosity = 0.0925 * pow(InjectionTemperatureF(), -1.159);
+	double ReInjectionWell = dDiameterInjectionWellFt * velocityInjectionWell * InjectionDensity() / viscosity;
 
-	double frictionHeadLossInjectionWell = (geothermal::FrictionFactor(ReInjectionWell) * depthFt / dDiameterInjectionWellFt)* pow(velocityInjectionWell,2)/(2 * physics::GRAVITY_FTS2); //feet
+	double frictionHeadLossInjectionWell = (geothermal::FrictionFactor(ReInjectionWell) * depthFt / dDiameterInjectionWellFt)* pow(velocityInjectionWell, 2) / (2 * physics::GRAVITY_FTS2); //feet
 	double G36 = frictionHeadLossInjectionWell * InjectionDensity() / 144; // conversion to psi
 
 	return G23 - G36; // pressureBHInjection, psi
@@ -1170,13 +929,13 @@ double CGeothermalAnalyzer::pressureHydrostaticPSI()
 	double densityAmbient = geothermal::LbPerCfToKgPerM3_B(geothermal::oDensityConstants.evaluate(tempF));
 
 	double tempAmbientC = (geothermal::IMITATE_GETEM) ? 10 : GetAmbientTemperatureC(); // GETEM assumes 10 deg C ambient temperature here. Above, the assumption is 15 deg C ambient.
-	double tempGradient = (mo_geo_in.me_rt == EGS) ? GetTemperatureGradient()/1000 : (GetResourceTemperatureC() - tempAmbientC ) / GetResourceDepthM();  
+	double tempGradient = (mo_geo_in.me_rt == EGS) ? GetTemperatureGradient() / 1000 : (GetResourceTemperatureC() - tempAmbientC) / GetResourceDepthM();
 
 	// hydrostatic pressure at production well depth (GetResourceDepthFt) in bar
 	double d1 = densityAmbient * geothermal::GRAVITY_MS2 * geothermal::CONST_CP;
-	double d2 = (exp(d1 * (GetResourceDepthM() - (0.5 * geothermal::CONST_CT * tempGradient * pow(GetResourceDepthM(),2))))-1);
-	double pressureHydrostaticBar = pressureAmbientBar + (1/geothermal::CONST_CP) * (d2)/100000;
-	
+	double d2 = (exp(d1 * (GetResourceDepthM() - (0.5 * geothermal::CONST_CT * tempGradient * pow(GetResourceDepthM(), 2)))) - 1);
+	double pressureHydrostaticBar = pressureAmbientBar + (1 / geothermal::CONST_CP) * (d2) / 100000;
+
 	return geothermal::BarToPsi(pressureHydrostaticBar);
 }
 
@@ -1186,10 +945,13 @@ double CGeothermalAnalyzer::pZero(void) { return geothermal::oPC.evaluate(Inject
 // wells
 double CGeothermalAnalyzer::productionTempF(void) { return physics::CelciusToFarenheit(GetTemperaturePlantDesignC()); }
 double CGeothermalAnalyzer::productionDensity(void) { return 1 / geothermal::oSVC.evaluate(productionTempF()); } // [7A.GF Pumps].G81; specific volume, f^3 per lb
-double CGeothermalAnalyzer::productionFlowRate(void) { return (flowRatePerWell()/productionDensity())/3600; } // [7A.GF Pumps].G69 // lbs per hr / lbs per cf = cf/hr divided by 3600 = cfs
-double CGeothermalAnalyzer::productionViscosity(void) { return 0.115631 * pow(productionTempF(),-1.199532); } // seems like this is resource temp in spreadsheet!
+double CGeothermalAnalyzer::productionFlowRate(void) { return (flowRatePerWell() / productionDensity()) / 3600; } // [7A.GF Pumps].G69 // lbs per hr / lbs per cf = cf/hr divided by 3600 = cfs
+double CGeothermalAnalyzer::productionViscosity(void) { return 0.115631 * pow(productionTempF(), -1.199532); } // seems like this is resource temp in spreadsheet!
 double CGeothermalAnalyzer::flowRatePerWell(void) { return (60 * 60 * geothermal::KgToLb(mo_geo_in.md_ProductionFlowRateKgPerS)); } // lbs per hour, one well
-double CGeothermalAnalyzer::flowRateTotal(void) { return (flowRatePerWell() * GetNumberOfWells()); }								// lbs per hour, all wells
+double CGeothermalAnalyzer::flowRateTotal(void) {
+	mp_geo_out->GF_flowrate = (flowRatePerWell() * GetNumberOfWells());
+	return (flowRatePerWell() * GetNumberOfWells());
+}								// lbs per hour, all wells
 
 double CGeothermalAnalyzer::GetNumberOfWells(void)
 {
@@ -1199,6 +961,7 @@ double CGeothermalAnalyzer::GetNumberOfWells(void)
 	{
 		double netBrineEffectiveness = GetPlantBrineEffectiveness() - GetPumpWorkWattHrPerLb();
 		double netCapacityPerWell = flowRatePerWell() * netBrineEffectiveness / 1000.0;			// after pumping losses
+
 		if (netCapacityPerWell == 0)
 		{
 			ms_ErrorString = "The well capacity was calculated to be zero.  Could not continue analysis.";
@@ -1206,20 +969,39 @@ double CGeothermalAnalyzer::GetNumberOfWells(void)
 		}
 		mp_geo_out->md_NumberOfWells = mo_geo_in.md_DesiredSalesCapacityKW / netCapacityPerWell;
 	}
+
 	return mp_geo_out->md_NumberOfWells;
 }
 
 double CGeothermalAnalyzer::GetPlantBrineEffectiveness(void)
 {
+	/*
 	double dTemperaturePlantDesignF = physics::CelciusToFarenheit(GetTemperaturePlantDesignC());
 	double exitTempLowF = (0.8229 * dTemperaturePlantDesignF ) - 127.71;
 	double exitTempHighF = (0.00035129 * pow(dTemperaturePlantDesignF,2)) + (0.69792956 * dTemperaturePlantDesignF) - 159.598;
-	double dTemperatureGFExitF = (GetTemperaturePlantDesignC() < 180) ? exitTempLowF : exitTempHighF;  // degrees farenheit - exit temperature for geothermal fluid
-	double dTemperatureGFExitC = physics::FarenheitToCelcius(dTemperatureGFExitF);
+	double dTemperatureGFExitF = 109.31;// (GetTemperaturePlantDesignC() < 180) ? exitTempLowF : exitTempHighF;  // degrees farenheit - exit temperature for geothermal fluid
+	double dTemperatureGFExitC = physics::FarenheitToCelcius(dTemperatureGFExitF);	//physics::FarenheitToCelcius();
 	double dAE_At_Exit = GetAEAtTemp(dTemperatureGFExitC); // watt-hr/lb - Calculate available energy using binary constants and plant design temp (short cut)
+	*/
+	double TSiO2 = -(0.0000001334837*pow(GetTemperaturePlantDesignC(), 4)) + (0.0000706584462*pow(GetTemperaturePlantDesignC(), 3)) - (0.0036294799613*pow(GetTemperaturePlantDesignC(), 2)) + (0.3672417729236*GetTemperaturePlantDesignC()) + 4.205944351495;
+	double TamphSiO2 = (0.0000000000249634* pow(TSiO2, 4)) - (0.00000000425191 * pow(TSiO2, 3)) - (0.000119669*pow(TSiO2, 2)) + (0.307616*TSiO2) - 0.294394;
+
+
+
+	//	double dTemperatureGFExitF = physics::CelciusToFarenheit(TamphSiO2); //109.31
+
+	double dAE_At_Exit = GetAEAtTemp(TamphSiO2);
+
+
 	// GETEM's "optimizer" seems to pick the max possible brine effectiveness for the default binary plant, so use this as a proxy for now
-	double dAEMaxPossible = (geothermal::IMITATE_GETEM) ? GetAEBinary() -  GetAEBinaryAtTemp(dTemperatureGFExitC) : GetAE() - dAE_At_Exit; // watt-hr/lb - [10B.GeoFluid].H54 "maximum possible available energy accounting for the available energy lost due to a silica constraint on outlet temperature"
-	double dMaxBinaryBrineEffectiveness = dAEMaxPossible * ((GetTemperaturePlantDesignC() < 150) ? 0.14425 * exp(0.008806 * GetTemperaturePlantDesignC()) : 0.57);
+
+
+
+//	double dAEMaxPossible = (geothermal::IMITATE_GETEM) ? GetAEBinary() -  GetAEBinaryAtTemp(TamphSiO2) : GetAE() - dAE_At_Exit; // watt-hr/lb - [10B.GeoFluid].H54 "maximum possible available energy accounting for the available energy lost due to a silica constraint on outlet temperature"
+
+	mp_geo_out->max_secondlaw = (1 - ((geothermal::IMITATE_GETEM) ? GetAEBinaryAtTemp(TamphSiO2) / GetAEBinary() : dAE_At_Exit / GetAE()) - 0.375);
+	double dMaxBinaryBrineEffectiveness = ((geothermal::IMITATE_GETEM) ? GetAEBinary() : GetAE()) * ((GetTemperaturePlantDesignC() < 150) ? 0.14425 * exp(0.008806 * GetTemperaturePlantDesignC()) : mp_geo_out->max_secondlaw);
+
 	return (mo_geo_in.me_ct == FLASH) ? FlashBrineEffectiveness() : dMaxBinaryBrineEffectiveness * mo_geo_in.md_PlantEfficiency;
 }
 
@@ -1227,7 +1009,8 @@ double CGeothermalAnalyzer::calculateX(double enthalpyIn, double temperatureF)
 {
 	double enthalpyF = geothermal::GetFlashEnthalpyF(temperatureF);
 	double enthalpyG = geothermal::GetFlashEnthalpyG(temperatureF);
-	return (enthalpyIn - enthalpyF)/(enthalpyG-enthalpyF);
+	//mp_geo_out -> getX = (enthalpyIn - enthalpyF) / (enthalpyG - enthalpyF);
+	return (enthalpyIn - enthalpyF) / (enthalpyG - enthalpyF);
 }
 
 double CGeothermalAnalyzer::enthalpyChangeTurbine(double dEnthalpyDeltaInitial, double dEnthalpyTurbineG)
@@ -1235,7 +1018,7 @@ double CGeothermalAnalyzer::enthalpyChangeTurbine(double dEnthalpyDeltaInitial, 
 	double xPrime, effTurb, dEnthapyDelta, hEx;
 
 	dEnthapyDelta = dEnthalpyDeltaInitial;
-	for (int i=0;i<4;i++) {
+	for (int i = 0; i < 4; i++) {
 		hEx = dEnthalpyTurbineG - dEnthapyDelta;
 		xPrime = calculateX(hEx, temperatureCondF());
 		xPrime = (xPrime > 0.95) ? 0 : 0.95 - xPrime;
@@ -1248,23 +1031,33 @@ double CGeothermalAnalyzer::enthalpyChangeTurbine(double dEnthalpyDeltaInitial, 
 
 // Turbine 1 - high pressure
 double CGeothermalAnalyzer::turbine1dHInitial() { return calculateDH(mp_geo_out->md_PressureHPFlashPSI - geothermal::DELTA_PRESSURE_HP_FLASH_PSI); } // I65
-double CGeothermalAnalyzer::turbine1TemperatureF() { return geothermal::GetFlashTemperature(mp_geo_out->md_PressureHPFlashPSI); } // D80
+double CGeothermalAnalyzer::turbine1TemperatureF() {
+	mp_geo_out->flash_temperature = geothermal::GetFlashTemperature(mp_geo_out->md_PressureHPFlashPSI);		//Storing HP Flash Temperature (for cmod_geothermal_costs)
+	return geothermal::GetFlashTemperature(mp_geo_out->md_PressureHPFlashPSI);
+} // D80
+
+//Getting HP and LP specific volume values
+double CGeothermalAnalyzer::GetSpecVol(double flash_temp) { return geothermal::getSpecVol(flash_temp); }
+
+
 double CGeothermalAnalyzer::turbine1EnthalpyF() { return  geothermal::GetFlashEnthalpyF(turbine1TemperatureF()); }	// D81
 double CGeothermalAnalyzer::turbine1EnthalpyG() { return  geothermal::GetFlashEnthalpyG(turbine1TemperatureF()); }	// D82
 double CGeothermalAnalyzer::turbine1DH() { return enthalpyChangeTurbine(turbine1dHInitial(), turbine1EnthalpyG()); } // I80 - btu/lb
 double CGeothermalAnalyzer::turbine1HEx() { return turbine1EnthalpyG() - turbine1DH(); } // I81 - btu/lb
 double CGeothermalAnalyzer::turbine1X()
 {	// D83 - %
+	mp_geo_out->spec_vol = GetSpecVol(mp_geo_out->flash_temperature);
 	double enthalpyPlantDesignTemp = geothermal::GetFlashEnthalpyF(physics::CelciusToFarenheit(GetTemperaturePlantDesignC()));// D69
-	return calculateX(enthalpyPlantDesignTemp, turbine1TemperatureF()); 
-}																
+	mp_geo_out->getX_hp = calculateX(enthalpyPlantDesignTemp, turbine1TemperatureF());
+	return calculateX(enthalpyPlantDesignTemp, turbine1TemperatureF());
+}
 double CGeothermalAnalyzer::turbine1Steam() { return geothermal::GEOTHERMAL_FLUID_FOR_FLASH * turbine1X(); }																										// D85 - lb/hr
 double CGeothermalAnalyzer::turbine1NetSteam()
 {	// I82 lb/hr
 	double dForNCGRemoval = 0.0;
-	if(geothermal::NCG_REMOVAL_TYPE != VAC_PUMP)
+	if (geothermal::NCG_REMOVAL_TYPE != VAC_PUMP)
 	{
-		double dSteamFlow = steamFlow(1); 
+		double dSteamFlow = steamFlow(1);
 		if (geothermal::NUMBER_OF_COOLING_STAGES > 1) { dSteamFlow += steamFlow(2); }
 		if (geothermal::NUMBER_OF_COOLING_STAGES > 2) { dSteamFlow += steamFlow(3); }
 		dForNCGRemoval = dSteamFlow;
@@ -1275,13 +1068,20 @@ double CGeothermalAnalyzer::turbine1OutputKWh() { return turbine1DH() * turbine1
 
 // Flash Turbine 2 - low pressure
 double CGeothermalAnalyzer::turbine2dHInitial(void) { return calculateDH(mp_geo_out->md_PressureLPFlashPSI - geothermal::DELTA_PRESSURE_LP_FLASH_PSI); }														// I87
-double CGeothermalAnalyzer::turbine2TemperatureF(void) { return geothermal::GetFlashTemperature(mp_geo_out->md_PressureLPFlashPSI); }														// D88
+double CGeothermalAnalyzer::turbine2TemperatureF(void) {
+	mp_geo_out->flash_temperature_lp = geothermal::GetFlashTemperature(mp_geo_out->md_PressureLPFlashPSI);	//Getting LP Flash Temperature value for calculations in cmod_geothermal_costs
+	mp_geo_out->spec_vol_lp = GetSpecVol(mp_geo_out->flash_temperature_lp);
+	return geothermal::GetFlashTemperature(mp_geo_out->md_PressureLPFlashPSI);
+}														// D88
 double CGeothermalAnalyzer::turbine2EnthalpyF(void) { return geothermal::GetFlashEnthalpyF(turbine2TemperatureF()); }															// D89
-double CGeothermalAnalyzer::turbine2EnthalpyG(void) { return geothermal::GetFlashEnthalpyG(turbine2TemperatureF());}															// D90
+double CGeothermalAnalyzer::turbine2EnthalpyG(void) { return geothermal::GetFlashEnthalpyG(turbine2TemperatureF()); }															// D90
 double CGeothermalAnalyzer::turbine2DH(void) { return enthalpyChangeTurbine(turbine2dHInitial(), turbine2EnthalpyG()); }																// I102 - btu/lb
 double CGeothermalAnalyzer::turbine2HEx(void) { return turbine2EnthalpyG() - turbine2DH(); }																							// I103 - btu/lb
-double CGeothermalAnalyzer::turbine2X(void) { return calculateX(turbine1EnthalpyF(), turbine2TemperatureF()); }																		// D91 %
-double CGeothermalAnalyzer::turbine2Steam(void) { return (FlashCount() == 2) ? geothermal::GEOTHERMAL_FLUID_FOR_FLASH * turbine2X() * (1-turbine1X()) : 0; }																						// I104, D93 - lb/hr
+double CGeothermalAnalyzer::turbine2X(void) {
+	mp_geo_out->getX_lp = calculateX(turbine1EnthalpyF(), turbine2TemperatureF());
+	return calculateX(turbine1EnthalpyF(), turbine2TemperatureF());
+}																		// D91 %
+double CGeothermalAnalyzer::turbine2Steam(void) { return (FlashCount() == 2) ? geothermal::GEOTHERMAL_FLUID_FOR_FLASH * turbine2X() * (1 - turbine1X()) : 0; }																						// I104, D93 - lb/hr
 double CGeothermalAnalyzer::turbine2OutputKWh(void) { return turbine2DH() * turbine2Steam() / 3413; }																				// I105 - kW/hr
 
 
@@ -1290,50 +1090,58 @@ double CGeothermalAnalyzer::pInter(int stage)
 {	// D156, D205, D253 - psi
 	switch (stage)
 	{
-		case 0: return pTotal();
-		case 1: return pTotal() * pRatio();
+	case 0: return pTotal();
+	case 1: return pTotal() * pRatio();
 		//case 2: return (geothermal::NUMBER_OF_COOLING_STAGES > 2) ? pTotal() * pRatio() * pRatio()  : geothermal::PRESSURE_AMBIENT_PSI;
-		case 2: return (geothermal::NUMBER_OF_COOLING_STAGES > 2) ? pTotal() * pRatio() * pRatio()  : mo_geo_in.md_PressureAmbientPSI;
+	case 2: return (geothermal::NUMBER_OF_COOLING_STAGES > 2) ? pTotal() * pRatio() * pRatio() : mo_geo_in.md_PressureAmbientPSI;
 		//case 3: return geothermal::PRESSURE_AMBIENT_PSI;
-		case 3: return mo_geo_in.md_PressureAmbientPSI;
-		default: { ms_ErrorString = ("Invalid stage in CGeothermalAnalyzer::pInter"); return 0; }
+	case 3: return mo_geo_in.md_PressureAmbientPSI;
+	default: { ms_ErrorString = ("Invalid stage in CGeothermalAnalyzer::pInter"); return 0; }
 	}
 }
 double CGeothermalAnalyzer::pTotal(void) { return (geothermal::IMITATE_GETEM) ? pressureSaturation() + (geothermal::PRESSURE_CONDENSER_NCG_PARTIAL_INHG * 0.49) : pressureCondenser(); } // calculated separately in spreadsheet, but mathematically equivalent to pressureCondenser					   D150,D74 - psi
 //double CGeothermalAnalyzer::pRatio(void) { return exp(log(geothermal::PRESSURE_AMBIENT_PSI / (pTotal()))/geothermal::NUMBER_OF_COOLING_STAGES); }
-double CGeothermalAnalyzer::pRatio(void) { return exp(log(mo_geo_in.md_PressureAmbientPSI / (pTotal()))/geothermal::NUMBER_OF_COOLING_STAGES); }
+double CGeothermalAnalyzer::pRatio(void) { return exp(log(mo_geo_in.md_PressureAmbientPSI / (pTotal())) / geothermal::NUMBER_OF_COOLING_STAGES); }
 double CGeothermalAnalyzer::ncgFlowLbsPerHour(void) { return geothermal::GEOTHERMAL_FLUID_FOR_FLASH * geothermal::NCG_LEVEL_PPM / 1000000; }
 double CGeothermalAnalyzer::ncgFlowMolesPerHour(void) { return ncgFlowLbsPerHour() / geothermal::MOLE_WEIGHT_NCG; }
-double CGeothermalAnalyzer::pSuction(int stage) { return pTotal() * pow(pRatio(),stage-1); }
-double CGeothermalAnalyzer::prJet(int stage){ return pInter(stage) / pInter(stage - 1); }
-double CGeothermalAnalyzer::h2oMolesPerHour(int st) { return ncgFlowMolesPerHour() / ((pSuction(st)/pressureSaturation()) - 1); }										
-double CGeothermalAnalyzer::totalVentFlow(int st) { return ncgFlowLbsPerHour() + (h2oMolesPerHour(st) * geothermal::MOLE_WEIGHT_H2O); }									
-double CGeothermalAnalyzer::moleWeightVent(int st) { return totalVentFlow(st) /(ncgFlowMolesPerHour() + h2oMolesPerHour(st)); }											
-double CGeothermalAnalyzer::suctionSteamRatio(int st) { return pSuction(st) / mp_geo_out->md_PressureHPFlashPSI; }																	
-double CGeothermalAnalyzer::AR(int stage) { return ((3.5879 * pow(prJet(stage),-2.1168)) + 0.1) * pow(suctionSteamRatio(stage),(-1.155 * pow(prJet(stage),-0.0453))); }
-double CGeothermalAnalyzer::ERd(int stage) { return (1.0035 * AR(stage) + 8.9374)* pow(suctionSteamRatio(stage),(2.9594* pow(AR(stage),-0.8458) + 0.99)); }
-double CGeothermalAnalyzer::ER(int st) { return ERd(st) * pow((((460 + geothermal::GetFlashTemperature(mp_geo_out->md_PressureHPFlashPSI)) * moleWeightVent(st))/((temperatureCondF() + 460) * geothermal::MOLE_WEIGHT_H2O)),0.5); }
+double CGeothermalAnalyzer::pSuction(int stage) { return pTotal() * pow(pRatio(), stage - 1); }
+double CGeothermalAnalyzer::prJet(int stage) { return pInter(stage) / pInter(stage - 1); }
+double CGeothermalAnalyzer::h2oMolesPerHour(int st) { return ncgFlowMolesPerHour() / ((pSuction(st) / pressureSaturation()) - 1); }
+double CGeothermalAnalyzer::totalVentFlow(int st) { return ncgFlowLbsPerHour() + (h2oMolesPerHour(st) * geothermal::MOLE_WEIGHT_H2O); }
+double CGeothermalAnalyzer::moleWeightVent(int st) { return totalVentFlow(st) / (ncgFlowMolesPerHour() + h2oMolesPerHour(st)); }
+double CGeothermalAnalyzer::suctionSteamRatio(int st) {
+	mp_geo_out->pressure_ratio_1 = pSuction(1) / mp_geo_out->md_PressureHPFlashPSI;
+	//mp_geo_out-> pressure_ratio_2 = pSuction(2) / mp_geo_out->md_PressureHPFlashPSI;
+	//mp_geo_out-> pressure_ratio_3 = pSuction(3) / mp_geo_out->md_PressureHPFlashPSI;
+	return pSuction(st) / mp_geo_out->md_PressureHPFlashPSI;
+}
+double CGeothermalAnalyzer::AR(int stage) { return ((3.5879 * pow(prJet(stage), -2.1168)) + 0.1) * pow(suctionSteamRatio(stage), (-1.155 * pow(prJet(stage), -0.0453))); }
+double CGeothermalAnalyzer::ERd(int stage) { return (1.0035 * AR(stage) + 8.9374)* pow(suctionSteamRatio(stage), (2.9594* pow(AR(stage), -0.8458) + 0.99)); }
+double CGeothermalAnalyzer::ER(int st) { return ERd(st) * pow((((460 + geothermal::GetFlashTemperature(mp_geo_out->md_PressureHPFlashPSI)) * moleWeightVent(st)) / ((temperatureCondF() + 460) * geothermal::MOLE_WEIGHT_H2O)), 0.5); }
 double CGeothermalAnalyzer::steamFlow(int st) { return (st >= 3 && (geothermal::NCG_REMOVAL_TYPE != JET || geothermal::NUMBER_OF_COOLING_STAGES < 3)) ? 0 : totalVentFlow(st) / ER(st); }
 
-int CGeothermalAnalyzer::FlashCount(void) { return (mo_geo_in.me_ft >= DUAL_FLASH_NO_TEMP_CONSTRAINT) ? 2 : 1; }
+int CGeothermalAnalyzer::FlashCount(void) {
+	mp_geo_out->flash_count = (mo_geo_in.me_ft >= DUAL_FLASH_NO_TEMP_CONSTRAINT) ? 2 : 1;
+	return (mo_geo_in.me_ft >= DUAL_FLASH_NO_TEMP_CONSTRAINT) ? 2 : 1;
+}
 
 double CGeothermalAnalyzer::calculateDH(double pressureIn)
 {
 	double a = geothermal::GetDHa(pressureIn);
 	double b = geothermal::GetDHb(pressureIn);
-	double x = pressureIn /(pressureCondenser());
+	double x = pressureIn / (pressureCondenser());
 	return a * log(x) + b;
 }
 
-double CGeothermalAnalyzer::TemperatureWetBulbF(void) { return physics::CelciusToFarenheit( mo_geo_in.md_TemperatureWetBulbC); }
+double CGeothermalAnalyzer::TemperatureWetBulbF(void) { return physics::CelciusToFarenheit(mo_geo_in.md_TemperatureWetBulbC); }
 double CGeothermalAnalyzer::temperatureCondF(void)
 {	// D71 - deg F
-	return TemperatureWetBulbF() + geothermal::DELTA_TEMPERATURE_CWF + geothermal::TEMPERATURE_PINCH_PT_CONDENSER_F + geothermal::TEMPERATURE_PINCH_PT_COOLING_TOWER_F;
+	return (TemperatureWetBulbF() + geothermal::DELTA_TEMPERATURE_CWF + geothermal::TEMPERATURE_PINCH_PT_CONDENSER_F + geothermal::TEMPERATURE_PINCH_PT_COOLING_TOWER_F);
 }
 double CGeothermalAnalyzer::pressureSaturation(void) { return geothermal::oPSatConstants.evaluate(temperatureCondF()); }// D72 - psi
 double CGeothermalAnalyzer::pressureCondenser(void)
 {// D74 - psi
-	return pressureSaturation() + geothermal::InHgToPsi(geothermal::PRESSURE_CONDENSER_NCG_PARTIAL_INHG); 
+	return pressureSaturation() + geothermal::InHgToPsi(geothermal::PRESSURE_CONDENSER_NCG_PARTIAL_INHG);
 }
 
 double CGeothermalAnalyzer::FlashBrineEffectiveness(void)
@@ -1347,8 +1155,10 @@ double CGeothermalAnalyzer::FlashBrineEffectiveness(void)
 		//double deltaPressureCondenserFt = (geothermal::CONDENSER_TYPE == SURFACE) ? geothermal::ADDITIONAL_CW_PUMP_HEAD_SURFACE : physics::PSItoFT(geothermal::PRESSURE_AMBIENT_PSI + 1 - (pressureCondenser())); // O102
 		double deltaPressureCondenserFt = (geothermal::CONDENSER_TYPE == SURFACE) ? geothermal::ADDITIONAL_CW_PUMP_HEAD_SURFACE : physics::PSItoFT(mo_geo_in.md_PressureAmbientPSI + 1 - (pressureCondenser())); // O102
 		double cwPumpHead = geothermal::BASE_CW_PUMP_HEAD_FT + deltaPressureCondenserFt; // D110 - ft
+		mp_geo_out->cw_pump_head = cwPumpHead;
 
-		double mainCWPumpPowerKW = CalculatePumpWorkInKW(cwFlow(), cwPumpHead);	// part of I116
+
+		double mainCWPumpPowerKW = CalculatePumpWorkInKW(cwFlow(), cwPumpHead);	// part of I105
 		double dTotalPumpingKW = mainCWPumpPowerKW + cwPumpWorkKW();
 
 
@@ -1365,7 +1175,7 @@ void CGeothermalAnalyzer::calculateFlashPressures(void)
 	// need to be calculated right when the brine effectiveness is calculated.
 
 	if (mp_geo_out->mb_FlashPressuresCalculated) return;
-	
+
 	// if single flash - add flash pressure to delta pressure and quit
 	if (FlashCount() == 1)
 	{
@@ -1386,11 +1196,17 @@ void CGeothermalAnalyzer::calculateFlashPressures(void)
 
 // Pump Power
 double CGeothermalAnalyzer::overAllSteam(void) { return (this->FlashCount() == 2) ? turbine1NetSteam() + turbine2Steam() : turbine1NetSteam(); } // D96
-double CGeothermalAnalyzer::qCondenser(void) { return overAllSteam() * (overAllHEx() - geothermal::GetFlashEnthalpyF(temperatureCondF())); } // D99
-double CGeothermalAnalyzer::cwFlow(void) { return qCondenser() / geothermal::DELTA_TEMPERATURE_CWF; } // D114
+double CGeothermalAnalyzer::qCondenser(void) {
+	mp_geo_out->condenser_q = overAllSteam() * (overAllHEx() - geothermal::GetFlashEnthalpyF(temperatureCondF()));
+	return overAllSteam() * (overAllHEx() - geothermal::GetFlashEnthalpyF(temperatureCondF()));
+} // D99
+double CGeothermalAnalyzer::cwFlow(void) {
+	mp_geo_out->cwflow = qCondenser() / geothermal::DELTA_TEMPERATURE_CWF;
+	return qCondenser() / geothermal::DELTA_TEMPERATURE_CWF;
+} // D115
 double CGeothermalAnalyzer::overAllHEx() //I107
 {
-	return (FlashCount() == 2) ? ((turbine2HEx() * turbine2Steam()) + (turbine1HEx() * turbine1NetSteam()))/(turbine1NetSteam()+turbine2Steam()) : turbine1HEx();
+	return (FlashCount() == 2) ? ((turbine2HEx() * turbine2Steam()) + (turbine1HEx() * turbine1NetSteam())) / (turbine1NetSteam() + turbine2Steam()) : turbine1HEx();
 }
 
 // CW Pump Power
@@ -1403,70 +1219,96 @@ double CGeothermalAnalyzer::pumpWorkFromSteamFlow(double flow)
 {// D189-D198,
 	double enthalpyCondF = geothermal::GetFlashEnthalpyF(temperatureCondF());
 	double enthalpyCondG = geothermal::GetFlashEnthalpyG(temperatureCondF());
-	
+
 	double qReject = flow * (enthalpyCondG - enthalpyCondF);
 	double cwFlow = qReject / geothermal::DELTA_TEMPERATURE_CWF;
 	double pumpHead = geothermal::BASE_CW_PUMP_HEAD_FT + geothermal::ADDITIONAL_CW_PUMP_HEAD_SURFACE;
 	return CalculatePumpWorkInKW(cwFlow, pumpHead);
 }
-double CGeothermalAnalyzer::cwPumpWorkKWByStage(int st) { return pumpWorkFromSteamFlow(condensedSteamLbPerHour(st)); } // D199 - kW
-double CGeothermalAnalyzer::cwPumpWorkKW(void) { return cwPumpWorkKWByStage(1) + cwPumpWorkKWByStage(2) + cwPumpWorkKWByStage(3); } // D305 - kW, part of I116
+double CGeothermalAnalyzer::cwPumpWorkKWByStage(int st) { return pumpWorkFromSteamFlow(condensedSteamLbPerHour(st)); } // D203- kW
+double CGeothermalAnalyzer::cwPumpWorkKW(void) {
+	mp_geo_out->cw_pump_work = cwPumpWorkKWByStage(1) + cwPumpWorkKWByStage(2) + cwPumpWorkKWByStage(3);
+	return cwPumpWorkKWByStage(1) + cwPumpWorkKWByStage(2) + cwPumpWorkKWByStage(3);
+} // D305 - kW, part of L105
 
 
 // Condensate Pump Power
 //double CGeothermalAnalyzer::condensatePumpHead(void) { return geothermal::PSItoFTB(geothermal::PRESSURE_AMBIENT_PSI + 1 - pressureCondenser()) + geothermal::BASE_CW_PUMP_HEAD_FT; } // D121
 double CGeothermalAnalyzer::condensatePumpHead(void) { return geothermal::PSItoFTB(mo_geo_in.md_PressureAmbientPSI + 1 - pressureCondenser()) + geothermal::BASE_CW_PUMP_HEAD_FT; } // D121
-double CGeothermalAnalyzer::condensatePumpPowerKW(void) { return CalculatePumpWorkInKW(overAllSteam(), condensatePumpHead()); } // D125->kw, part of I117
+double CGeothermalAnalyzer::condensatePumpPowerKW(void) {
+	mp_geo_out->condensate_pump_power = CalculatePumpWorkInKW(overAllSteam(), condensatePumpHead());
+	return CalculatePumpWorkInKW(overAllSteam(), condensatePumpHead());
+} // D126->kw, part of I106
 //double CGeothermalAnalyzer::condensatePumpHeadByStage(int st) { return geothermal::PSItoFTB(geothermal::PRESSURE_AMBIENT_PSI + 1 - pInter(st)); } // D201, D249, D297
 double CGeothermalAnalyzer::condensatePumpHeadByStage(int st) { return geothermal::PSItoFTB(mo_geo_in.md_PressureAmbientPSI + 1 - pInter(st)); } // D201, D249, D297
-double CGeothermalAnalyzer::condensatePumpWorkByStage(int st) { return CalculatePumpWorkInKW(condensedSteamLbPerHour(st), condensatePumpHeadByStage(st)); } // D203, ... kW
-double CGeothermalAnalyzer::totalCondensatePumpWorkKW(void) { return condensatePumpWorkByStage(1) + condensatePumpWorkByStage(2) + condensatePumpWorkByStage(3); } // D306 - kW
-double CGeothermalAnalyzer::condensatePumpingKW(void) { return condensatePumpPowerKW() + totalCondensatePumpWorkKW(); } // I117 - kW
+double CGeothermalAnalyzer::condensatePumpWorkByStage(int st) { return CalculatePumpWorkInKW(condensedSteamLbPerHour(st), condensatePumpHeadByStage(st)); } // D207, ... kW
+double CGeothermalAnalyzer::totalCondensatePumpWorkKW(void) {
+	mp_geo_out->ncg_condensate_pump = condensatePumpWorkByStage(1) + condensatePumpWorkByStage(2) + condensatePumpWorkByStage(3); //D310
+	return condensatePumpWorkByStage(1) + condensatePumpWorkByStage(2) + condensatePumpWorkByStage(3);
+} // D310 - kW
+double CGeothermalAnalyzer::condensatePumpingKW(void) { return condensatePumpPowerKW() + totalCondensatePumpWorkKW(); } // I106 - kW
 
 // Fan Power
 double CGeothermalAnalyzer::qRejectByStage(int stage) { return condensedSteamLbPerHour(stage) * (geothermal::GetFlashEnthalpyG(temperatureCondF()) - geothermal::GetFlashEnthalpyF(temperatureCondF())); } // D190
-double CGeothermalAnalyzer::qRejectTotal(void) { return qRejectByStage(1) + qRejectByStage(2) + qRejectByStage(3); } // D303
-double CGeothermalAnalyzer::qRejectedTower(void) { return qCondenser() + qRejectTotal(); } // D101
+double CGeothermalAnalyzer::qRejectTotal(void) {
+	mp_geo_out->qRejectByStage_1 = qRejectByStage(1);
+	mp_geo_out->qRejectByStage_2 = qRejectByStage(2);
+	mp_geo_out->qRejectByStage_3 = qRejectByStage(3);
+
+	//mp_geo_out->qRejectedTotal = qRejectByStage(1) + qRejectByStage(2) + qRejectByStage(3);
+	return qRejectByStage(1) + qRejectByStage(2) + qRejectByStage(3);
+} // D303
+double CGeothermalAnalyzer::qRejectedTower(void) {
+	mp_geo_out->qRejectedTotal = qCondenser() + qRejectTotal();
+	return qCondenser() + qRejectTotal();
+} // D102
 double CGeothermalAnalyzer::fanPowerCoeffA(void) { return -2.0814 * log(geothermal::DELTA_TEMPERATURE_CWF) + 10.6013; } // O95
-double CGeothermalAnalyzer::fanPowerCoeffB(void) { return -0.0188 * pow(geothermal::DELTA_TEMPERATURE_CWF,0.0232); } // P95
+double CGeothermalAnalyzer::fanPowerCoeffB(void) { return -0.0188 * pow(geothermal::DELTA_TEMPERATURE_CWF, 0.0232); } // P95
 double CGeothermalAnalyzer::fanPower(void) { return fanPowerCoeffA() * exp(this->TemperatureWetBulbF() * fanPowerCoeffB()); } // D103 - hp per MMBtu/hr
 double CGeothermalAnalyzer::fanPowerKW(void) { return geothermal::HPtoKW(fanPower() * qRejectedTower() / 1000000); } // D105, I118
 
-// Vacuum Pump Power
-double CGeothermalAnalyzer:: deltaPressureByStage(int st) { return pInter(st) - pSuction(st); } // D173, D222, D270 - psi
-double CGeothermalAnalyzer:: densityForVacuumPump(int st) { return pSuction(st) * moleWeightVent(st) /((temperatureCondF() + 460)*10.7316); }// D166, D215, D263 - lb/ft^3
-double CGeothermalAnalyzer:: vaccumPumpHead(int st) { return deltaPressureByStage(st) * 144 / densityForVacuumPump(st); }	// D175, D224, D272 - ft
-double CGeothermalAnalyzer:: vacuumPumpWorkByStage(int st)
-{ // D178, D227, D275 - kW
-	return (geothermal::NCG_REMOVAL_TYPE == VAC_PUMP || (st == 3 && geothermal::NCG_REMOVAL_TYPE == HYBRID)) ? CalculatePumpWorkInKW(totalVentFlow(st),  vaccumPumpHead(st)) : 0; 
+
+double CGeothermalAnalyzer::deltaPressureByStage(int st) { return pInter(st) - pSuction(st); } // D173, D222, D270 - psi
+double CGeothermalAnalyzer::densityForVacuumPump(int st) { return pSuction(st) * moleWeightVent(st) / ((temperatureCondF() + 460)*10.7316); }// D166, D215, D263 - lb/ft^3
+double CGeothermalAnalyzer::vaccumPumpHead(int st) { return deltaPressureByStage(st) * 144 / densityForVacuumPump(st); }	// D175, D224, D272 - ft
+double CGeothermalAnalyzer::vacuumPumpWorkByStage(int st)
+{ // D182, D231, D279 - kW
+	return (geothermal::NCG_REMOVAL_TYPE == VAC_PUMP || (st == 3 && geothermal::NCG_REMOVAL_TYPE == HYBRID)) ? CalculatePumpWorkInKW(totalVentFlow(st), vaccumPumpHead(st)) : 0;
 }
-double CGeothermalAnalyzer:: vacuumPumpingKW(void) { return vacuumPumpWorkByStage(1) + vacuumPumpWorkByStage(2) + vacuumPumpWorkByStage(3); }	// D307, I119
+double CGeothermalAnalyzer::vacuumPumpingKW(void) {
+	mp_geo_out->v_stage_1 = vacuumPumpWorkByStage(1);
+	mp_geo_out->v_stage_2 = vacuumPumpWorkByStage(2);
+	mp_geo_out->v_stage_3 = vacuumPumpWorkByStage(3);
+	mp_geo_out->pressure_ratio_2 = pInter(1) / mp_geo_out->md_PressureHPFlashPSI;				//pressure ratios used in ncg ejector cost calculation
+	mp_geo_out->pressure_ratio_3 = pInter(2) / mp_geo_out->md_PressureHPFlashPSI;
+	return vacuumPumpWorkByStage(1) + vacuumPumpWorkByStage(2) + vacuumPumpWorkByStage(3);
+}	// D311, I108
 
 // Condenser Injection Pump Power
-double CGeothermalAnalyzer:: injectionDeltaP(void)
+double CGeothermalAnalyzer::injectionDeltaP(void)
 {	// D127 - psi (condensate injection delta pressure)
 	//return (FlashCount() == 1) ? mp_geo_out->md_PressureHPFlashPSI - geothermal::PRESSURE_AMBIENT_PSI : mp_geo_out->md_PressureLPFlashPSI - geothermal::PRESSURE_AMBIENT_PSI; 
-	return (FlashCount() == 1) ? mp_geo_out->md_PressureHPFlashPSI - mo_geo_in.md_PressureAmbientPSI : mp_geo_out->md_PressureLPFlashPSI - mo_geo_in.md_PressureAmbientPSI; 
+	return (FlashCount() == 1) ? mp_geo_out->md_PressureHPFlashPSI - mo_geo_in.md_PressureAmbientPSI : mp_geo_out->md_PressureLPFlashPSI - mo_geo_in.md_PressureAmbientPSI;
 }
-double CGeothermalAnalyzer:: injectionPumpHead(void) {return physics::PSItoFT(injectionDeltaP()); } // D128 - ft
-double CGeothermalAnalyzer:: injCoeffA(void) { return -0.0001769 * log(geothermal::DELTA_TEMPERATURE_CWF) + 0.0011083; }// R95
-double CGeothermalAnalyzer:: injCoeffB(void) { return  0.0657628 * log(geothermal::DELTA_TEMPERATURE_CWF) - 0.4091309; }	// S95
-double CGeothermalAnalyzer:: injCoeffC(void) { return -6.7041142 * log(geothermal::DELTA_TEMPERATURE_CWF) + 44.3438937; }	// T95
-double CGeothermalAnalyzer:: injCoeffD(void) { return -0.0325112 * pow(geothermal::DELTA_TEMPERATURE_CWF,2) + (6.831236 * geothermal::DELTA_TEMPERATURE_CWF) - 64.6250943; }	// U95
+double CGeothermalAnalyzer::injectionPumpHead(void) { return physics::PSItoFT(injectionDeltaP()); } // D128 - ft
+double CGeothermalAnalyzer::injCoeffA(void) { return -0.0001769 * log(geothermal::DELTA_TEMPERATURE_CWF) + 0.0011083; }// R95
+double CGeothermalAnalyzer::injCoeffB(void) { return  0.0657628 * log(geothermal::DELTA_TEMPERATURE_CWF) - 0.4091309; }	// S95
+double CGeothermalAnalyzer::injCoeffC(void) { return -6.7041142 * log(geothermal::DELTA_TEMPERATURE_CWF) + 44.3438937; }	// T95
+double CGeothermalAnalyzer::injCoeffD(void) { return -0.0325112 * pow(geothermal::DELTA_TEMPERATURE_CWF, 2) + (6.831236 * geothermal::DELTA_TEMPERATURE_CWF) - 64.6250943; }	// U95
 
-double CGeothermalAnalyzer:: evaporativeWaterLoss(void) { return ( (injCoeffA() * pow(TemperatureWetBulbF(),3)) + (injCoeffB() * pow(TemperatureWetBulbF(),2)) + (injCoeffC() * TemperatureWetBulbF()) + injCoeffD()) * qRejectedTower() / 1000000; } // D129 - lb/hr (evaporative water loss)
-double CGeothermalAnalyzer:: drift(void) { return 0.0005 * cwFlow(); }																												// D130
-double CGeothermalAnalyzer:: blowDown(void) { return evaporativeWaterLoss() /(geothermal::INJECTION_PUMPING_CYCLES - 1) - drift(); }																	// D132
-double CGeothermalAnalyzer:: waterLoss(void) { return evaporativeWaterLoss() + drift() + blowDown(); }																				// D133
-double CGeothermalAnalyzer:: steamCondensate(void) { return (turbine1Steam() + turbine2Steam()) - waterLoss(); }																		// D135
-double CGeothermalAnalyzer:: steamCondensateInjected(void) { return (steamCondensate() < 0) ? 0 : steamCondensate(); }																// D136 - lb/hr
-double CGeothermalAnalyzer:: condenserInjectionPumpingKW() {	return CalculatePumpWorkInKW(steamCondensateInjected(), injectionPumpHead()); }													// D138, I120 - kW
+double CGeothermalAnalyzer::evaporativeWaterLoss(void) { return ((injCoeffA() * pow(TemperatureWetBulbF(), 3)) + (injCoeffB() * pow(TemperatureWetBulbF(), 2)) + (injCoeffC() * TemperatureWetBulbF()) + injCoeffD()) * qRejectedTower() / 1000000; } // D129 - lb/hr (evaporative water loss)
+double CGeothermalAnalyzer::drift(void) { return 0.0005 * cwFlow(); }																												// D130
+double CGeothermalAnalyzer::blowDown(void) { return evaporativeWaterLoss() / (geothermal::INJECTION_PUMPING_CYCLES - 1) - drift(); }																	// D132
+double CGeothermalAnalyzer::waterLoss(void) { return evaporativeWaterLoss() + drift() + blowDown(); }																				// D133
+double CGeothermalAnalyzer::steamCondensate(void) { return (turbine1Steam() + turbine2Steam()) - waterLoss(); }																		// D135
+double CGeothermalAnalyzer::steamCondensateInjected(void) { return (steamCondensate() < 0) ? 0 : steamCondensate(); }																// D136 - lb/hr
+double CGeothermalAnalyzer::condenserInjectionPumpingKW() { return CalculatePumpWorkInKW(steamCondensateInjected(), injectionPumpHead()); }													// D138, I120 - kW
 
 
 // Flash Pressures 
 bool CGeothermalAnalyzer::TempConstraint(void)
 {
-	return ((mo_geo_in.me_ft == DUAL_FLASH_WITH_TEMP_CONSTRAINT) || (mo_geo_in.me_ft == SINGLE_FLASH_WITH_TEMP_CONSTRAINT)) ; 
+	return ((mo_geo_in.me_ft == DUAL_FLASH_WITH_TEMP_CONSTRAINT) || (mo_geo_in.me_ft == SINGLE_FLASH_WITH_TEMP_CONSTRAINT));
 }
 double CGeothermalAnalyzer::tempFlashLimitF(void)
 {	// D26 - deg F
@@ -1475,11 +1317,11 @@ double CGeothermalAnalyzer::tempFlashLimitF(void)
 double CGeothermalAnalyzer::pressureFlashAmorphousSilica(void) { return geothermal::oPC.evaluate(tempFlashLimitF()); } // D27 - psi
 double CGeothermalAnalyzer::pressureSingleNoConstraint()
 { // Q64
-	return (0.0207 * temperatureCondF() - 0.8416) * exp(0.0334*pow(temperatureCondF(),-0.1732) * GetTemperaturePlantDesignC()); 
+	return (0.0207 * temperatureCondF() - 0.8416) * exp(0.0334*pow(temperatureCondF(), -0.1732) * GetTemperaturePlantDesignC());
 }
 double CGeothermalAnalyzer::pressureSingleWithConstraint()
 { // S64
-	return (pressureSingleNoConstraint() < pressureFlashAmorphousSilica()) ? pressureFlashAmorphousSilica() : pressureSingleNoConstraint(); 
+	return (pressureSingleNoConstraint() < pressureFlashAmorphousSilica()) ? pressureFlashAmorphousSilica() : pressureSingleNoConstraint();
 }
 double CGeothermalAnalyzer::pressureSingleToTest(void)
 {	// Q64 or S64
@@ -1488,12 +1330,12 @@ double CGeothermalAnalyzer::pressureSingleToTest(void)
 double CGeothermalAnalyzer::pressureSingle(void)
 {	// O64
 	//return (pressureSingleToTest() < geothermal::PRESSURE_AMBIENT_PSI) ? geothermal::PRESSURE_AMBIENT_PSI : pressureSingleToTest(); 
-	return (pressureSingleToTest() < mo_geo_in.md_PressureAmbientPSI) ? mo_geo_in.md_PressureAmbientPSI : pressureSingleToTest(); 
-}							
+	return (pressureSingleToTest() < mo_geo_in.md_PressureAmbientPSI) ? mo_geo_in.md_PressureAmbientPSI : pressureSingleToTest();
+}
 double CGeothermalAnalyzer::pressureDualHighNoConstraint()
 {	// R64
 	return geothermal::oFlashConstants1.evaluate(temperatureCondF()) * exp(geothermal::oFlashConstants2.evaluate(temperatureCondF()) * GetTemperaturePlantDesignC());
-} 
+}
 double CGeothermalAnalyzer::pressureDualHighWithConstraint()
 {
 	double a = (temperatureCondF() > 125) ? 1.59 + (0.0015547 * exp(0.0354727*temperatureCondF())) : 1.59 + (0.098693 * exp(0.0025283*temperatureCondF()));
@@ -1514,13 +1356,13 @@ double CGeothermalAnalyzer::pressureDualLowConstrained()
 }
 double CGeothermalAnalyzer::pressureDualLowToTest(void)
 {	// R65 or T65
-	return (TempConstraint()) ? pressureDualLowConstrained() : pressureDualLowUnconstrained(); 
-}							
-double CGeothermalAnalyzer::pressureDualLow(void) 
+	return (TempConstraint()) ? pressureDualLowConstrained() : pressureDualLowUnconstrained();
+}
+double CGeothermalAnalyzer::pressureDualLow(void)
 {	// P65
 	//return  (pressureDualLowToTest() < geothermal::PRESSURE_AMBIENT_PSI) ? geothermal::PRESSURE_AMBIENT_PSI : pressureDualLowToTest(); 
-	return  (pressureDualLowToTest() < mo_geo_in.md_PressureAmbientPSI) ? mo_geo_in.md_PressureAmbientPSI : pressureDualLowToTest(); 
-}						
+	return  (pressureDualLowToTest() < mo_geo_in.md_PressureAmbientPSI) ? mo_geo_in.md_PressureAmbientPSI : pressureDualLowToTest();
+}
 
 
 
@@ -1539,21 +1381,21 @@ bool CGeothermalAnalyzer::OpenWeatherFile(const char * fn)
 
 bool CGeothermalAnalyzer::ReadWeatherForTimeStep(bool bHourly, unsigned int timeStep)
 // Read one line in weather file for hourly analysis, or calculate the average values for a month for monthly analysis
-{	
+{
 	// if this is an hourly analysis, just ignore the time step and get the data from the next line in the weather file
 	if (bHourly) return ReadNextLineInWeatherFile();
 
 	// Not an hourly analysis, so calculate the monthly weather info
 	int month = (timeStep % 12) + 1;
-	double hours = util::hours_in_month(month);
-	if (hours==0)
+	size_t hours = util::hours_in_month(month);
+	if (hours == 0)
 	{
 		ms_ErrorString = "util::hours_in_month returned zero for month =  " + util::to_string(month) + ".";
 		return false;
 	}
 
-	double pressure=0, wetbulb=0, drybulb=0, rel_humidity=0;
-	for (int i = 0; i<hours; i++)
+	double pressure = 0, wetbulb = 0, drybulb = 0, rel_humidity = 0;
+	for (size_t i = 0; i < hours; i++)
 	{
 		ReadNextLineInWeatherFile();
 		pressure += m_wf.pres;
@@ -1579,9 +1421,9 @@ bool CGeothermalAnalyzer::ReadNextLineInWeatherFile(void)
 		ml_ReadCount = 0;
 	}
 
-	if (!m_wFile.read( &m_wf ))
+	if (!m_wFile.read(&m_wf))
 	{
-		ms_ErrorString = "Could not read  line " + util::to_string((int)ml_ReadCount+1) + " in the weather file.";
+		ms_ErrorString = "Could not read  line " + util::to_string((int)ml_ReadCount + 1) + " in the weather file.";
 		return false;
 	}
 	ml_ReadCount++;
@@ -1593,31 +1435,31 @@ bool CGeothermalAnalyzer::ReadNextLineInWeatherFile(void)
 
 bool CGeothermalAnalyzer::determineMakeupAlgorithm()
 {   // This is the logic to determine which makeup algorithm GETEM uses: Binary, Flash, or EGS
-    // Just because the user chooses "EGS" from the drop-down box on the "2A.Scenario Input" sheet,
-    // does NOT mean that the model will use the results from the EGS makeup sheet.
+	// Just because the user chooses "EGS" from the drop-down box on the "2A.Scenario Input" sheet,
+	// does NOT mean that the model will use the results from the EGS makeup sheet.
 	me_makeup = NO_MAKEUP_ALGORITHM;
-    
+
 	if ((mo_geo_in.me_rt != HYDROTHERMAL) && (mo_geo_in.me_rt != EGS)) ms_ErrorString = "Reource type not recognized in CGeoHourlyBaseInputs::determineMakeupAlgorithm.";
 	if ((mo_geo_in.me_ct != BINARY) && (mo_geo_in.me_ct != FLASH))   ms_ErrorString = "Conversion system not recognized in CGeoHourlyBaseInputs::determineMakeupAlgorithm.";
 	if (ms_ErrorString != "") return false;
 
-    if (mo_geo_in.me_tdm == ENTER_RATE)
+	if (mo_geo_in.me_tdm == ENTER_RATE)
 	{ // if user has chosen to enter the temperature decline rate, then the makeup is calculated either with the binary or flash method.
-        if (mo_geo_in.me_ct == BINARY)
-            me_makeup = MA_BINARY;
+		if (mo_geo_in.me_ct == BINARY)
+			me_makeup = MA_BINARY;
 		else if (mo_geo_in.me_rt == EGS)
 			ms_ErrorString = ("GETEM algorithms are not meant to handle flash plants with EGS resources.");
 		else
 		{
-            if ((mo_geo_in.me_ft > NO_FLASH_SUBTYPE) && (mo_geo_in.me_ft <= DUAL_FLASH_WITH_TEMP_CONSTRAINT))
-                me_makeup = MA_FLASH;
-            else
-                ms_ErrorString = ("Conversion system Set to 'flash', but the type of flash system was not recognized in CGeoHourlyBaseInputs::determineMakeupAlgorithm");
+			if ((mo_geo_in.me_ft > NO_FLASH_SUBTYPE) && (mo_geo_in.me_ft <= DUAL_FLASH_WITH_TEMP_CONSTRAINT))
+				me_makeup = MA_FLASH;
+			else
+				ms_ErrorString = ("Conversion system Set to 'flash', but the type of flash system was not recognized in CGeoHourlyBaseInputs::determineMakeupAlgorithm");
 		}
 	}
-    else if (mo_geo_in.me_tdm == CALCULATE_RATE)
+	else if (mo_geo_in.me_tdm == CALCULATE_RATE)
 	{	// this temperature decline can only be calculated for Binary conversion systems with EGS resources
-        if ( (mo_geo_in.me_rt == EGS) && (mo_geo_in.me_ct == BINARY) )
+		if ((mo_geo_in.me_rt == EGS) && (mo_geo_in.me_ct == BINARY))
 			me_makeup = MA_EGS;
 		else
 			ms_ErrorString = ("Fluid temperature decline rate can only be calculated for an EGS resource using a binary plant");
@@ -1625,7 +1467,7 @@ bool CGeothermalAnalyzer::determineMakeupAlgorithm()
 	else
 		ms_ErrorString = ("Fluid temperature decline method not recognized in CGeoHourlyBaseInputs::determineMakeupAlgorithm.");
 
-    return ( me_makeup != NO_MAKEUP_ALGORITHM );
+	return (me_makeup != NO_MAKEUP_ALGORITHM);
 }
 
 bool CGeothermalAnalyzer::inputErrorsForUICalculations(void)
@@ -1633,16 +1475,20 @@ bool CGeothermalAnalyzer::inputErrorsForUICalculations(void)
 	if (!ms_ErrorString.empty()) return true;
 	if (GetTemperaturePlantDesignC() > GetResourceTemperatureC()) { ms_ErrorString = ("Plant design temperature cannot be greater than the resource temperature."); return true; }
 
-	if ( (mo_geo_in.me_rt != EGS) && (mo_geo_in.me_pc == SIMPLE_FRACTURE) ) { ms_ErrorString = ("Reservoir pressure change based on simple fracture flow can only be calculated for EGS resources."); return true; }
+	if ((mo_geo_in.me_rt != EGS) && (mo_geo_in.me_pc == SIMPLE_FRACTURE)) { ms_ErrorString = ("Reservoir pressure change based on simple fracture flow can only be calculated for EGS resources."); return true; }
 
-	if ( (mo_geo_in.me_rt != EGS) && (mo_geo_in.me_tdm == CALCULATE_RATE) ) { ms_ErrorString = ("Temperature decline can only be calculated for EGS resources."); return true; }
+	if ((mo_geo_in.me_rt != EGS) && (mo_geo_in.me_tdm == CALCULATE_RATE)) { ms_ErrorString = ("Temperature decline can only be calculated for EGS resources."); return true; }
 
 	if ((mo_geo_in.me_tdm == ENTER_RATE) && (mo_geo_in.md_TemperatureDeclineRate < 0))
-		{ ms_ErrorString = ("Fluid temperature decline method chosen was 'enter rate', but the rate is < 0"); return true; }
+	{
+		ms_ErrorString = ("Fluid temperature decline method chosen was 'enter rate', but the rate is < 0"); return true;
+	}
 
 	double dTemperatureRatio = physics::CelciusToKelvin(GetResourceTemperatureC()) / physics::CelciusToKelvin(GetTemperaturePlantDesignC()); // max valid value is MAX_TEMP_RATIO
-	if ( ( dTemperatureRatio > geothermal::MAX_TEMP_RATIO) && ( mo_geo_in.mi_ModelChoice == 0 ) )
-		{ ms_ErrorString = ("Plant design temperature is too low for resource temperature.  GETEM equations will return invalid results."); return true; }
+	if ((dTemperatureRatio > geothermal::MAX_TEMP_RATIO) && (mo_geo_in.mi_ModelChoice == 0))
+	{
+		ms_ErrorString = ("Plant design temperature is too low for resource temperature.  GETEM equations will return invalid results."); return true;
+	}
 
 	//if ( this->netBrineEffectiveness() == 0 ) // this will cause a division by zero error
 	//	{ ms_ErrorString = ("Inputs led to a divide by zero error.  Pump work = Plant output, so the net efficiency is zero."); return true; }
@@ -1652,7 +1498,9 @@ bool CGeothermalAnalyzer::inputErrorsForUICalculations(void)
 
 
 	if (GetAEBinary() == 0)
-		{ ms_ErrorString = ("Inputs lead to available energy = zero, which will cause a division by zero error."); return true;}
+	{
+		ms_ErrorString = ("Inputs lead to available energy = zero, which will cause a division by zero error."); return true;
+	}
 
 	if (!determineMakeupAlgorithm()) return true; // determineMakeupAlgorithm sets member enum "me_makeup"
 
@@ -1661,13 +1509,13 @@ bool CGeothermalAnalyzer::inputErrorsForUICalculations(void)
 
 bool CGeothermalAnalyzer::inputErrorsForAnalysis(void)
 {	// check for errors in mo_geo_in
-	if ( inputErrorsForUICalculations() ) return true;
+	if (inputErrorsForUICalculations()) return true;
 
 	if (mo_geo_in.mi_ProjectLifeYears == 0) { ms_ErrorString = ("Project life was zero."); return true; }
 	if (mo_geo_in.mi_ModelChoice < 0) { ms_ErrorString = ("The model choice was not set."); return true; }
 
-	if ( !(NumberOfReservoirs() > 0) ) { ms_ErrorString = ("Resource potential must be greater than the gross plant output."); return true; }
-	if (mo_pb_p.P_ref == 0)	{ ms_ErrorString = ("The power block parameters were not initialized."); return true;}
+	if (!(NumberOfReservoirs() > 0)) { ms_ErrorString = ("Resource potential must be greater than the gross plant output."); return true; }
+	if (mo_pb_p.P_ref == 0) { ms_ErrorString = ("The power block parameters were not initialized."); return true; }
 
 	if (!ms_ErrorString.empty()) return true;
 	return false;
@@ -1676,12 +1524,12 @@ bool CGeothermalAnalyzer::inputErrorsForAnalysis(void)
 
 bool CGeothermalAnalyzer::ReadyToAnalyze()
 {
-	if ( inputErrorsForAnalysis() ) return false;
+	if (inputErrorsForAnalysis()) return false;
 
-	if (!OpenWeatherFile(mo_geo_in.mc_WeatherFileName) ) return false;
+	if (!OpenWeatherFile(mo_geo_in.mc_WeatherFileName)) return false;
 
-	if ( !mp_geo_out->maf_ReplacementsByYear || !mp_geo_out->maf_monthly_resource_temp || !mp_geo_out->maf_monthly_power || !mp_geo_out->maf_monthly_energy || !mp_geo_out->maf_timestep_resource_temp ||
-		 !mp_geo_out->maf_timestep_power || !mp_geo_out->maf_timestep_test_values || !mp_geo_out->maf_timestep_pressure || !mp_geo_out->maf_timestep_dry_bulb || !mp_geo_out->maf_timestep_wet_bulb )
+	if (!mp_geo_out->maf_ReplacementsByYear || !mp_geo_out->maf_monthly_resource_temp || !mp_geo_out->maf_monthly_power || !mp_geo_out->maf_monthly_energy || !mp_geo_out->maf_timestep_resource_temp ||
+		!mp_geo_out->maf_timestep_power || !mp_geo_out->maf_timestep_test_values || !mp_geo_out->maf_timestep_pressure || !mp_geo_out->maf_timestep_dry_bulb || !mp_geo_out->maf_timestep_wet_bulb)
 
 	{
 		ms_ErrorString = "One of the output arrays was not initialized in the geothermal hourly model.";
@@ -1691,11 +1539,11 @@ bool CGeothermalAnalyzer::ReadyToAnalyze()
 	return true;
 }
 
-bool CGeothermalAnalyzer::RunAnalysis( bool (*update_function)(float, void*), void *user_data )
+bool CGeothermalAnalyzer::RunAnalysis(bool(*update_function)(float, void*), void *user_data)
 {
 	if (!ReadyToAnalyze()) return false;   // open weather file m_wf
 
-	if ( (mo_geo_in.mi_ModelChoice != 0 ) && ( !mo_PowerBlock.InitializeForParameters( mo_pb_p )) )
+	if ((mo_geo_in.mi_ModelChoice != 0) && (!mo_PowerBlock.InitializeForParameters(mo_pb_p)))
 	{
 		ms_ErrorString = "There was an error initializing the power block with the input parameters: " + mo_PowerBlock.GetLastError();
 		return false;
@@ -1705,25 +1553,25 @@ bool CGeothermalAnalyzer::RunAnalysis( bool (*update_function)(float, void*), vo
 	float fPercentDone = 0.0;
 	bool bWantToReplaceReservoir = false;
 	double dElapsedTimeInYears = 0.0;
-    
-    // Initialize
-    ReplaceReservoir(dElapsedTimeInYears);
+
+	// Initialize
+	ReplaceReservoir(dElapsedTimeInYears);
 	mp_geo_out->md_PumpWorkKW = GetPumpWorkKW();
 
 	// Go through time step (hours or months) one by one
 //    bool bReDrill = false;
-	unsigned int iElapsedMonths = 0, iElapsedTimeSteps = 0, iEvaluationsInMonth = 0, iElapsedHours=0;
+	unsigned int iElapsedMonths = 0, iElapsedTimeSteps = 0, iEvaluationsInMonth = 0, iElapsedHours = 0;
 	float fMonthlyPowerTotal;
-	for (unsigned int year = 0;  year < mo_geo_in.mi_ProjectLifeYears;  year++)
+	for (unsigned int year = 0; year < mo_geo_in.mi_ProjectLifeYears; year++)
 	{
 		mp_geo_out->maf_ReplacementsByYear[year] = 0;
-		for (unsigned int month=1; month<13; month++)
+		for (unsigned int month = 1; month < 13; month++)
 		{
-			fPercentDone = (float)iElapsedMonths/(float)(12*mo_geo_in.mi_ProjectLifeYears) * 100.0f;
+			fPercentDone = (float)iElapsedMonths / (float)(12 * mo_geo_in.mi_ProjectLifeYears) * 100.0f;
 
-			if ( (update_function != 0) && (TimeToUpdateInterface( fPercentDone, 2.0f )) )
+			if ((update_function != 0) && (TimeToUpdateInterface(fPercentDone, 2.0f)))
 			{
-				if ( ! (*update_function)( fPercentDone, user_data ) )
+				if (!(*update_function)(fPercentDone, user_data))
 				{
 					ms_ErrorString = "Aborted by user.";
 					return false;
@@ -1731,7 +1579,7 @@ bool CGeothermalAnalyzer::RunAnalysis( bool (*update_function)(float, void*), vo
 			}
 
 			fMonthlyPowerTotal = 0;
-			for (unsigned int hour=0; hour < (unsigned int)util::hours_in_month(month); hour++)
+			for (unsigned int hour = 0; hour < (unsigned int)util::hours_in_month(month); hour++)
 			{
 				if (IsHourly() || (hour == 0))
 				{
@@ -1789,44 +1637,44 @@ bool CGeothermalAnalyzer::RunAnalysis( bool (*update_function)(float, void*), vo
 			}//hours
 
 			mp_geo_out->maf_monthly_resource_temp[iElapsedMonths] = (float)md_WorkingTemperatureC;	// resource temperature for this month
-			iEvaluationsInMonth = (IsHourly()) ? util::hours_in_month(month) : 1;
-			mp_geo_out->maf_monthly_power[iElapsedMonths] = fMonthlyPowerTotal/iEvaluationsInMonth;		// avg monthly power
-			mp_geo_out->maf_monthly_energy[iElapsedMonths] = fMonthlyPowerTotal*util::hours_in_month(month)/iEvaluationsInMonth;		// energy output in month (kWh)
+			iEvaluationsInMonth = (IsHourly()) ? (unsigned int)util::hours_in_month(month) : 1;
+			mp_geo_out->maf_monthly_power[iElapsedMonths] = fMonthlyPowerTotal / iEvaluationsInMonth;		// avg monthly power
+			mp_geo_out->maf_monthly_energy[iElapsedMonths] = fMonthlyPowerTotal * util::hours_in_month(month) / iEvaluationsInMonth;		// energy output in month (kWh)
 
 			// Is it possible and do we want to replace the reservoir in the next time step?
 			//bWantToReplaceReservoir = ( md_WorkingTemperatureC < (GetResourceTemperatureC() - geothermal::MAX_TEMPERATURE_DECLINE_C) ) ? true : false;
-			bWantToReplaceReservoir = ( md_WorkingTemperatureC < (GetResourceTemperatureC() - mo_geo_in.md_MaxTempDeclineC) ) ? true : false;
-			if (bWantToReplaceReservoir && CanReplaceReservoir(dElapsedTimeInYears + (1.0/12) ) )
+			bWantToReplaceReservoir = (md_WorkingTemperatureC < (GetResourceTemperatureC() - mo_geo_in.md_MaxTempDeclineC)) ? true : false;
+			if (bWantToReplaceReservoir && CanReplaceReservoir(dElapsedTimeInYears + (1.0 / 12)))
 			{
 				ReplaceReservoir(dElapsedTimeInYears); // this will 'reset' temperature back to original resource temp
 				mp_geo_out->maf_ReplacementsByYear[year] = mp_geo_out->maf_ReplacementsByYear[year] + 1;
 			}
 			else
 				//CalculateNewTemperature( dElapsedTimeInYears ); // once per month -> reduce temperature from last temp
-				CalculateNewTemperature(dElapsedTimeInYears + (1.0/12)); // once per month -> reduce temperature from last temp
+				CalculateNewTemperature(dElapsedTimeInYears + (1.0 / 12)); // once per month -> reduce temperature from last temp
 
 			iElapsedMonths++;  //for recording values into arrays, not used in calculations
 		}//months
 	}//years
 
-	if (!ms_ErrorString.empty() ) return false;
+	if (!ms_ErrorString.empty()) return false;
 	return true;
 }
 
 
 bool CGeothermalAnalyzer::TimeToUpdateInterface(float fPercentDone, float fNotificationIntervalInPercent)
 {	// Needs to be called with fPercentDone = zero at beginning of each run to reset the static var
-	
-	if (fPercentDone==0)
+
+	if (fPercentDone == 0)
 	{
 		mf_LastIntervalDone = 0;
 		return true;
 	}
 
-	if (fPercentDone >= (mf_LastIntervalDone+fNotificationIntervalInPercent) )
+	if (fPercentDone >= (mf_LastIntervalDone + fNotificationIntervalInPercent))
 	{
 		mf_LastIntervalDone += fNotificationIntervalInPercent;
-		return true;			
+		return true;
 	}
 
 	return false;
@@ -1834,25 +1682,25 @@ bool CGeothermalAnalyzer::TimeToUpdateInterface(float fPercentDone, float fNotif
 
 bool CGeothermalAnalyzer::InterfaceOutputsFilled(void)
 {
-	if ( inputErrorsForUICalculations() ) return false;
+	if (inputErrorsForUICalculations()) return false;
 
 	// This is not very efficient because it will call much of the code several times un-necessarily. Probably
 	// doesn't matter, since this is called from the user interface and not repetatively.
 	GetNumberOfWells();
 	mp_geo_out->md_PlantBrineEffectiveness = GetPlantBrineEffectiveness();
-    ReplaceReservoir(0.0); // set the working temp so the further calculations are correct
-	mp_geo_out->md_GrossPlantOutputMW = PlantGrossPowerkW()/1000;
+	ReplaceReservoir(0.0); // set the working temp so the further calculations are correct
+	mp_geo_out->md_GrossPlantOutputMW = PlantGrossPowerkW() / 1000;
 
 	mp_geo_out->md_PumpWorkKW = GetPumpWorkKW();
 	mp_geo_out->md_PumpDepthFt = GetCalculatedPumpDepthInFeet();
 	// mp_geo_out->md_BottomHolePressure  is calculated in GetCalculatedPumpDepthInFeet()
 	//mp_geo_out->md_PumpHorsePower = (flowRatePerWell() * pumpHeadFt())/(60 * 33000 * geothermal::EFFICIENCY_PUMP_GF);
-	mp_geo_out->md_PumpHorsePower = (flowRatePerWell() * pumpHeadFt())/(60 * 33000 * mo_geo_in.md_GFPumpEfficiency);
+	mp_geo_out->md_PumpHorsePower = (flowRatePerWell() * pumpHeadFt()) / (60 * 33000 * mo_geo_in.md_GFPumpEfficiency);
 
 	mp_geo_out->md_AverageReservoirTemperatureF = physics::CelciusToFarenheit(GetResourceTemperatureC());	// Set a default value, it might be recalculated in "GetPressureChangeAcrossReservoir()" if necessary
 	mp_geo_out->md_PressureChangeAcrossReservoir = GetPressureChangeAcrossReservoir();
 
-	if ( (mp_geo_out->md_NumberOfWells > 0) && (error().empty()) )
+	if ((mp_geo_out->md_NumberOfWells > 0) && (error().empty()))
 		return true;
 	else
 		return false;
@@ -1864,40 +1712,44 @@ bool CGeothermalAnalyzer::InterfaceOutputsFilled(void)
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // RunGeothermalAnalysis
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-int RunGeothermalAnalysis(bool (*update_function)(float,void*),void*user_data, std::string &err_msg, 
-				 const SPowerBlockParameters &pbp, SPowerBlockInputs &pbInputs, 
-				 const SGeothermal_Inputs &geo_inputs, SGeothermal_Outputs &geo_outputs)
+int RunGeothermalAnalysis(bool(*update_function)(float, void*), void*user_data, std::string &err_msg,
+	const SPowerBlockParameters &pbp, SPowerBlockInputs &pbInputs,
+	const SGeothermal_Inputs &geo_inputs, SGeothermal_Outputs &geo_outputs)
 {
 	// return value 0 = clean run; 1 = error with message; 2 = unknown error, no message
 	CGeothermalAnalyzer geo_analyzer(pbp, pbInputs, geo_inputs, geo_outputs);
-	if ( geo_analyzer.RunAnalysis(update_function,user_data) )  // 
+	if (geo_analyzer.RunAnalysis(update_function, user_data))  // 
 		return 0;
 	else
-		if ( geo_analyzer.error() != "")
+		if (geo_analyzer.error() != "")
 		{
 			err_msg = geo_analyzer.error();
 			return 1; // error that was flagged
 		}
-		else		
-			{ err_msg = "Unknown error during run"; return 2; }
+		else
+		{
+			err_msg = "Unknown error during run"; return 2;
+		}
 }
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Get interum values for user interface
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-int FillOutputsForUI( std::string &err_msg, const SGeothermal_Inputs &geo_inputs, SGeothermal_Outputs &geo_outputs)
+int FillOutputsForUI(std::string &err_msg, const SGeothermal_Inputs &geo_inputs, SGeothermal_Outputs &geo_outputs)
 {
 	// return value 0 = clean run; 1 = error with message; 2 = unknown error, no message
 	CGeothermalAnalyzer geo_analyzer(geo_inputs, geo_outputs);
-	if ( geo_analyzer.InterfaceOutputsFilled() ) 
+	if (geo_analyzer.InterfaceOutputsFilled())
 		return 0;
 	else
-		if ( geo_analyzer.error() != "")
+		if (geo_analyzer.error() != "")
 		{
 			err_msg = geo_analyzer.error();
 			return 1; // error that was flagged
 		}
-		else		
-			{ err_msg = "Unknown error during run"; return 2; }
+		else
+		{
+			err_msg = "Unknown error during run"; return 2;
+		}
 }

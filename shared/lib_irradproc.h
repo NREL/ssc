@@ -2,7 +2,7 @@
 *  Copyright 2017 Alliance for Sustainable Energy, LLC
 *
 *  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  (ï¿½Allianceï¿½) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
 *  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
 *  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
 *  copies to the public, perform publicly and display publicly, and to permit others to do so.
@@ -26,8 +26,8 @@
 *  4. Redistribution of this software, without modification, must refer to the software by the same
 *  designation. Redistribution of a modified version of this software (i) may not refer to the modified
 *  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  the underlying software originally provided by Alliance as ï¿½System Advisor Modelï¿½ or ï¿½SAMï¿½. Except
+*  to comply with the foregoing, the terms ï¿½System Advisor Modelï¿½, ï¿½SAMï¿½, or any confusingly similar
 *  designation may not be used to refer to any modified version of this software or any modified
 *  version of the underlying software originally provided by Alliance without the prior written consent
 *  of Alliance.
@@ -50,7 +50,11 @@
 #ifndef __irradproc_h
 #define __irradproc_h
 
-#include "lib_pv_io_manager.h"
+#include <memory>
+
+#include "lib_weatherfile.h"
+
+struct poaDecompReq;
 
 /**
 * \file
@@ -200,7 +204,7 @@ void hdkr( double hextra, double dn, double df, double alb, double inc, double t
 * \param[out] diffc diffuse components (isotropic, circumsolar, horizon) (W/m2)
 * 
 */
-void poaDecomp( double wfPOA, double angle[], double sun[], double alb, poaDecompReq* pA, double &dn, double &df, double &gh, double poa[3], double diffc[3]);
+int poaDecomp( double wfPOA, double angle[], double sun[], double alb, poaDecompReq* pA, double &dn, double &df, double &gh, double poa[3], double diffc[3]);
 
 /**
 * ModifiedDISC calculates direct normal (beam) radiation from global horizontal radiation.
@@ -281,25 +285,28 @@ double backtrack(double solazi, double solzen, double tilt, double azimuth, doub
 class irrad
 {
 protected:
-
-	poaDecompReq * poaAll;			/// Data required to decompose input plane-of-array irradiance
-	Irradiance_IO * irradiance;		/// All irradiance data from the weather file and user inputs
-	Subarray_IO * subarray;			/// All subarray orientation data for the current subarray
-
-	// Time inputs
-	int year, month, day, hour;
-	double minute, delt;
-
+	
 	// Position inputs
 	double latitudeDegrees;			///< latitude in degrees, north positive
 	double longitudeDegrees;		///< longitude in degrees, east positive
 	double timezone;				///< time zone, west longitudes negative
 
 	// Model settings
-	int radiationMode;				///< radiation input mode as defined in \link Irradiance_IO::RADMODE
 	int skyModel;					///< sky model selection as defined in \link Irradiance_IO::SKYMODEL 
+	int radiationMode;				///< radiation input mode as defined in \link Irradiance_IO::RADMODE
 	int trackingMode;				///< the subarray tracking model as defined in \link Subarray_IO::tracking
 	bool enableBacktrack;			///< Boolean value for whether backtracking is enabled or not
+
+	// Time inputs
+	int year, month, day, hour;
+	double minute, delt;
+
+	// Subarray properties
+	double tiltDegrees;				///< Surface tilt of subarray in degrees
+	double surfaceAzimuthDegrees;	///< Surface azimuth of subarray in degrees
+	double rotationLimitDegrees;	///< Rotation limit for subarray in degrees
+	double groundCoverageRatio;		///< Ground coverage ratio of subarray
+	poaDecompReq * poaAll;			///< Data required to decompose input plane-of-array irradiance
 
 	// Input Front-Side Irradiation components 
 	double globalHorizontal;		///< Input global horizontal irradiance (W/m2)
@@ -311,12 +318,6 @@ protected:
 	// Calculated Front-Side Irradiation components
 	double calculatedDirectNormal;		///< Calculated direct normal irradiance (W/m2)
 	double calculatedDiffuseHorizontal; ///< Calculated diffuse horizontal irradiance (W/m2)
-
-	// Subarray properties
-	double tiltDegrees;				///< Surface tilt of subarray in degrees
-	double surfaceAzimuthDegrees;	///< Surface azimuth of subarray in degrees
-	double rotationLimitDegrees;	///< Rotation limit for subarray in degrees
-	double groundCoverageRatio;		///< Ground coverage ratio of subarray
 
 	// Outputs
 	double sunAnglesRadians[9];				///< Sun angles in radians calculated from solarpos()	
@@ -333,11 +334,19 @@ public:
 	/// Directive to indicate that if delt_hr is less than zero, do not interpolate sunrise and sunset hours
 #define IRRADPROC_NO_INTERPOLATE_SUNRISE_SUNSET (-1.0)
 
+	/// Maximum irradiance allowed (W/m2)
+	static const int irradiationMax = 1500;	
+
 	/// Default class constructor, calls setup()
-	irrad();
+	irrad(weather_record wr, weather_header wh,
+		int skyModel, int radiationModeIn, int trackModeIn,
+		bool useWeatherFileAlbedo, bool instantaneousWeather, bool backtrackingEnabled,
+		double dtHour, double tiltDegrees, double azimuthDegrees, double trackerRotationLimitDegrees, double groundCoverageRatio,
+		std::vector<double> monthlyTiltDegrees, std::vector<double> userSpecifiedAlbedo,
+		poaDecompReq * poaAllIn);
 
 	/// Construct the irrad class with an Irradiance_IO() object and Subarray_IO() object
-	irrad(Irradiance_IO * , Subarray_IO *);
+	irrad();
 
 	/// Initialize irrad member data
 	void setup();
@@ -379,7 +388,7 @@ public:
 	int calc();
 
 	/// Run the irradiance processor for the rear-side of the surface to calculate rear-side plane-of-array irradiance
-	int calc_rear_side(double transmissionFactor, double bifaciality, double groundClearanceHeight, double slopeLength);
+	int calc_rear_side(double transmissionFactor, double groundClearanceHeight, double slopeLength);
 	
 	/// Return the calculated sun angles, some of which are converted to degrees
 	void get_sun( double *solazi,
@@ -433,6 +442,28 @@ public:
 
 	/// Return the front surface irradiances, used by \link calc_rear_side()
 	void getFrontSurfaceIrradiances(double pvBackShadeFraction, double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, std::vector<double> frontGroundGHI, std::vector<double> & frontIrradiance, double & frontAverageIrradiance, std::vector<double> & frontReflected);
+
+	enum RADMODE { DN_DF, DN_GH, GH_DF, POA_R, POA_P };
+	enum SKYMODEL { ISOTROPIC, HDKR, PEREZ };
+	enum TRACKING { FIXED_TILT, SINGLE_AXIS, TWO_AXIS, AZIMUTH_AXIS, SEASONAL_TILT };
+
+};
+
+// allow for the poa decomp model to take all daily POA measurements into consideration
+struct poaDecompReq {
+	poaDecompReq() : i(0), dayStart(0), stepSize(1), stepScale('h'), doy(-1) {}
+	size_t i; // Current time index
+	size_t dayStart; // time index corresponding to the start of the current day
+	double stepSize;
+	char stepScale; // indicates whether time steps are hours (h) or minutes (m)
+	std::vector<double> POA; // Pointer to entire POA array (will have size 8760 if time step is 1 hour)
+	std::vector<double> inc; // Pointer to angle of incident array (same size as POA)
+	std::vector<double> tilt;
+	std::vector<double> zen;
+	std::vector<double> exTer;
+	double tDew;
+	int doy;
+	double elev;
 };
 
 #endif
