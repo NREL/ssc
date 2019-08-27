@@ -1599,8 +1599,10 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
 
 
 		// Add ground reflected component
+		double theta = 0;  // angle of incidence defined relative to surface normal
 		for (size_t j = iStartGrd; j < 180; j++)
 		{
+			theta = 90.0 - j;
 			double startElevationDown = (j - iStartGrd) * DTOR + elevationAngleDown;
 			double stopElevationDown = (j + 1 - iStartGrd) * DTOR + elevationAngleDown;
 			double projectedX1 = PcellX - PcellY / tan(startElevationDown);
@@ -1663,9 +1665,9 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
 					actualGroundGHI /= projectedX2 - projectedX1;
 				}
 			}
-			frontIrradiance[i] += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] * actualGroundGHI * this->albedo;
-			frontIrradianceFromGround[i] += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] * actualGroundGHI * this->albedo;
-			frontReflected[i] += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * actualGroundGHI * this->albedo * (1.0 - MarionAOICorrectionFactorsGlass[j] * (1.0 - reflectanceNormalIncidence));
+			frontIrradiance[i] += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * iamASHRAE(0.04, theta * DTOR) * actualGroundGHI * this->albedo;
+			frontIrradianceFromGround[i] += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * iamASHRAE(0.04, theta * DTOR) * actualGroundGHI * this->albedo;
+			frontReflected[i] += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * actualGroundGHI * this->albedo * (1.0 - iamASHRAE(0.04, theta * DTOR) * (1.0 - reflectanceNormalIncidence));
 		}
 		// Calculate and add direct and circumsolar irradiance components
 		incidence(0, tiltRadians * RTOD, surfaceAzimuthRadians * RTOD, 45.0, solarZenithRadians, solarAzimuthRadians, this->enableBacktrack, this->groundCoverageRatio, surfaceAnglesRadians);
