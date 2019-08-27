@@ -129,7 +129,6 @@ public:
 		assign("notes", var_data(values[12]));
 
 		// read in 21 rows x 22 columns
-//		util::matrix_t<double> mat = allocate_matrix("freq_distribution", 21, 22);
 		ssc_number_t *mat = allocate("freq_distribution", 21, 22);
 		for (size_t r = 0; r < 21; r++)
 		{
