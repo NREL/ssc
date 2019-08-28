@@ -58,7 +58,7 @@ set(SHARED_SRC
 	lib_windwakemodel.cpp
 	lib_windwatts.cpp
 	lib_mlmodel.cpp
-	lib_ondinv.cpp)
+	lib_ondinv.cpp lib_storage_voltage.cpp lib_storage_voltage.h lib_storage_capacity.cpp lib_storage_capacity.h)
 
 
 #####################################################################################################################

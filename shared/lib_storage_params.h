@@ -3,7 +3,7 @@
 
 #include "core.h"
 
-struct batvariables
+struct battvariables
 {
     bool en_batt;
     bool en_fuelcell;
@@ -21,7 +21,7 @@ struct storage_common_params
 
     /*! Battery lifetime costs */
     int calendar_choice;
-    util::matrix_t<double>  lifetime_matrix;
+    util::matrix_t<double> lifetime_matrix;
     util::matrix_t<double> calendar_lifetime_matrix;
     double batt_calendar_q0;
     double batt_calendar_a;
@@ -213,18 +213,11 @@ struct LeadAcid_properties_params
     double LeadAcid_q10_computed;
 };
 
-struct battery_state_params
-{
-
-};
-
-
 /*! Fuelcell Storage Design Parameters */
 
 struct fuelcell_automated_FOM_params
 {
     storage_common_params common;
-    storage_state_params state;
 
     storage_front_of_meter_params FOM;
     storage_automated_dispatch_params dispatch;
@@ -233,7 +226,6 @@ struct fuelcell_automated_FOM_params
 struct fuelcell_manual_FOM_params
 {
     storage_common_params common;
-    storage_state_params state;
 
     storage_front_of_meter_params FOM;
     storage_manual_dispatch_params dispatch;
@@ -242,7 +234,6 @@ struct fuelcell_manual_FOM_params
 struct fuelcell_automated_BOM_params
 {
     storage_common_params common;
-    storage_state_params state;
 
     storage_behind_of_meter_params BOM;
     storage_automated_dispatch_params dispatch;
@@ -251,7 +242,6 @@ struct fuelcell_automated_BOM_params
 struct fuelcell_manual_BOM_params
 {
     storage_common_params common;
-    storage_state_params state;
 
     storage_behind_of_meter_params BOM;
     storage_manual_dispatch_params dispatch;
@@ -262,7 +252,6 @@ struct fuelcell_manual_BOM_params
 struct battery_automated_FOM_params
 {
     storage_common_params common;
-    storage_state_params state;
     battery_properties_params properties;
 
     storage_front_of_meter_params FOM;
@@ -272,7 +261,6 @@ struct battery_automated_FOM_params
 struct battery_manual_FOM_params
 {
     storage_common_params common;
-    storage_state_params state;
     battery_properties_params properties;
 
     storage_front_of_meter_params FOM;
@@ -282,7 +270,6 @@ struct battery_manual_FOM_params
 struct battery_automated_BOM_params
 {
     storage_common_params common;
-    storage_state_params state;
     battery_properties_params properties;
 
     storage_behind_of_meter_params FOM;
@@ -292,7 +279,6 @@ struct battery_automated_BOM_params
 struct battery_manual_BOM_params
 {
     storage_common_params common;
-    storage_state_params state;
     battery_properties_params properties;
 
     storage_behind_of_meter_params FOM;
@@ -304,7 +290,6 @@ struct battery_manual_BOM_params
 struct LeadAcid_automated_FOM_params
 {
     storage_common_params common;
-    storage_state_params state;
     battery_properties_params properties;
 
     LeadAcid_properties_params leadAcid;
@@ -316,7 +301,6 @@ struct LeadAcid_automated_FOM_params
 struct LeadAcid_manual_FOM_params
 {
     storage_common_params common;
-    storage_state_params state;
     battery_properties_params properties;
 
     LeadAcid_properties_params leadAcid;
@@ -328,7 +312,6 @@ struct LeadAcid_manual_FOM_params
 struct LeadAcid_automated_BOM_params
 {
     storage_common_params common;
-    storage_state_params state;
     battery_properties_params properties;
 
     LeadAcid_properties_params leadAcid;
@@ -340,7 +323,6 @@ struct LeadAcid_automated_BOM_params
 struct LeadAcid_manual_BOM_params
 {
     storage_common_params common;
-    storage_state_params state;
     battery_properties_params properties;
 
     LeadAcid_properties_params leadAcid;

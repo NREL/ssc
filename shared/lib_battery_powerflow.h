@@ -80,7 +80,7 @@ private:
 * \brief
 *
 *  The BatteryPower structure contains all of the power flow components for a battery simulation
-*  The structure also contains information about the single point efficiecies required to convert power from one form to another
+*  The structure also contains information about the single point efficiencies required to convert power from one form to another
 *  Power quantities in BatteryPower are either all AC or all DC depending on which part of the controller is looking at it
 */
 struct BatteryPower
