@@ -812,7 +812,7 @@ bool dispatch_automatic_t::check_constraints(double &I, size_t count)
 				}
 			}
 			// Case 2: Discharging, need to increase discharge to meet target (P_battery > 0, dP < 0)
-			else if (P_battery >= 0 && dP < 0) {
+			else if (P_battery > 0 && dP < 0) {
 				// Don't discharge more if already near min SOC
 				if (SOC < m_batteryPower->stateOfChargeMin + tolerance) {
 					iterate = false;

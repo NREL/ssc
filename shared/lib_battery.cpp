@@ -143,8 +143,13 @@ void capacity_t::check_SOC()
 	double I_orig = _I;
 
 	// set capacity to upper thermal limit
-	if (q_upper > _qmax_thermal * _SOC_max * 0.01)
+	if (q_upper > _qmax_thermal * _SOC_max * 0.01) {
 		q_upper = _qmax_thermal * _SOC_max * 0.01;
+	}
+	// do this so battery can cycle full depth and we calculate correct SOC min
+	if (q_lower > _qmax_thermal * _SOC_min * 0.01) {
+		q_lower = _qmax_thermal * _SOC_min * 0.01;
+	}
 		
 	// check if overcharged
 	if (_q0 > q_upper )
