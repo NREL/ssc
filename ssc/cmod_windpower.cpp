@@ -219,6 +219,8 @@ cm_windpower::cm_windpower(){
 	// performance adjustment factors
 	add_var_info(vtab_adjustment_factors);
 	add_var_info(vtab_technology_outputs);
+	// wind PRUF
+	add_var_info(vtab_p50p90);
 }
 
 void cm_windpower::exec()
@@ -563,6 +565,8 @@ void cm_windpower::exec()
 	assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
 	assign("cutoff_losses", var_data((ssc_number_t)((withoutLosses-annual)/ withoutLosses)));
 	assign("annual_gross_energy", annual_gross);
+
+	calculate_p50p90(this);
 
 } // exec
 
