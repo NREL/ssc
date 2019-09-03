@@ -1734,7 +1734,7 @@ void C_pc_Rankine_indirect_224::RankineCycle(double T_db, double T_wb,
 		q_reject = (1.0 - eta)*q_dot_ref*Q_ND_tot*1000.0;
 		if( qq < 10 ) // MJW 10.31.2010
 		{
-			switch( ms_params.m_CT )  // Cooling technology type {1=evaporative cooling, 2=air cooling, 3=hybrid cooling, 4= surface condenser}
+			switch( ms_params.m_CT )  // Cooling technology type {1=evaporative cooling, 2=air cooled condenser, 3=hybrid cooling, 4= surface condenser}
 			{
 			case 1:
 				CSP::evap_tower(ms_params.m_tech_type, P_cond_min, ms_params.m_n_pl_inc, dT_cw_ref, T_approach, (P_ref*1000.), m_eta_adj, T_db, T_wb, P_amb, q_reject, m_dot_makeup, W_cool_par, P_cond_guess, T_cond, f_hrsys);
