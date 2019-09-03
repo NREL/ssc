@@ -132,7 +132,8 @@ void C_mspt_receiver_222::init()
 
 	
 	// Declare instance of htf class for receiver tube material
-	if( m_mat_tube == HTFProperties::Stainless_AISI316 || m_mat_tube == HTFProperties::T91_Steel )
+	if( m_mat_tube == HTFProperties::Stainless_AISI316 || m_mat_tube == HTFProperties::T91_Steel ||
+        m_mat_tube == HTFProperties::N06230 || m_mat_tube == HTFProperties::N07740)
 	{
 		if( !tube_material.SetFluid(m_mat_tube) )
 		{
