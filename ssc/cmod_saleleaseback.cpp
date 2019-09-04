@@ -608,15 +608,15 @@ static var_info _cm_vtab_saleleaseback[] = {
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_operating_margin",    "Operating margin not including lease payment",       "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_leasepayment",    "Reserve account lease payment reserve",       "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_leasepayment_interest",    "Reserve account lease payment reserve interest",       "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_om",    "Reserve account working capital",       "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "cf_reserve_receivables", "Reserve account receivables", "$", "", "Cash Flow Reserves", "*", "LENGTH_EQUAL=cf_length", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "cf_reserve_equip1", "Reserve account major equipment 1", "$", "", "Sale Leaseback", "*", "LENGTH_EQUAL=cf_length", "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_equip2",    "Reserve account major equipment 2",       "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_equip3",    "Reserve account major equipment 3",       "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_total",    "Reserve account total",       "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_interest", "Reserve account interest on reserves",       "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_leasepayment",    "Reserve lease payment reserve",       "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_leasepayment_interest",    "Reserve lease payment reserve interest",       "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_om",    "Reserve working capital",       "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_reserve_receivables", "Reserve receivables", "$", "", "Cash Flow Reserves", "*", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_reserve_equip1", "Reserve  major equipment 1", "$", "", "Sale Leaseback", "*", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_equip2",    "Reserve major equipment 2",       "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_equip3",    "Reserve major equipment 3",       "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_total",    "Reserve total except lease payment reserve",       "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_interest", "Reserve interest on reserves except lease payment reserve",       "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_funding_leasepayment",    "Reserve funding lease payment",       "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_funding_om",    "Reserve funding working capital",       "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -800,15 +800,15 @@ static var_info _cm_vtab_saleleaseback[] = {
 	{ SSC_OUTPUT, SSC_NUMBER, "ppa", "PPA price", "", "", "Sale Leaseback", "*", "", "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "ppa_escalation",                 "PPA price escalation",                       "%",    "",                      "Sale Leaseback",      "*",                       "",                                         "" },
 
-	{ SSC_OUTPUT,        SSC_NUMBER,     "npv_ppa_revenue",                "NPV of PPA revenue",                          "$",    "",                      "Sale Leaseback",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "npv_energy_nom",                "NPV of net annual energy (nominal)",                          "kWh",    "",                      "Sale Leaseback",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "npv_energy_real",                "NPV of net annual energy (real)",                          "kWh",    "",                      "Sale Leaseback",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "npv_ppa_revenue",                "Present value of PPA revenue",                          "$",    "",                      "Sale Leaseback",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "npv_energy_nom",                "Present value of annual energy (nominal)",                          "kWh",    "",                      "Sale Leaseback",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "npv_energy_real",                "Present value of annual energy (real)",                          "kWh",    "",                      "Sale Leaseback",      "*",                       "",                                         "" },
 
 	
-	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_oandm",                      "Present value of O and M",				   "$",            "",                      "Sale Leaseback",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_oandm_nonfuel",              "Present value of non-fuel O and M",				   "$",            "",                      "Sale Leaseback",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_fuel",                      "Present value of fuel O and M",				   "$",            "",                      "Sale Leaseback",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_insandproptax",                      "Present value of Insurance and Prop Tax",				   "$",            "",                      "Sale Leaseback",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_oandm",                      "Present value of operation and maintenance costs",				   "$",            "",                      "Sale Leaseback",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_oandm_nonfuel",              "Present value of non-fuel operation and maintenance costs",				   "$",            "",                      "Sale Leaseback",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_fuel",                      "Present value of fuel operation and maintenance costs",				   "$",            "",                      "Sale Leaseback",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_insandproptax",                      "Present value of insurance and property tax",				   "$",            "",                      "Sale Leaseback",      "*",                       "",                                         "" },
 
 	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoptc_fed_real",                "Levelized Federal PTC (real)",                          "cents/kWh",    "",                      "Sale Leaseback",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoptc_fed_nom",                 "Levelized Federal PTC (nominal)",                       "cents/kWh",    "",                      "Sale Leaseback",      "*",                       "",                                         "" },
@@ -883,7 +883,6 @@ enum {
 	CF_reserve_total,
 	CF_reserve_interest,
 
-
 	// developer cash flow
 	CF_sponsor_operating_activities,
 	CF_sponsor_lpra,
@@ -902,9 +901,6 @@ enum {
 	CF_sponsor_adj_reserve_release,
 	CF_pretax_cashflow,
 	CF_pretax_operating_cashflow,
-
-
-
 
 	// tax investor returns
 	CF_tax_investor_operating_activities,
@@ -2193,7 +2189,6 @@ public:
 													
 			}
 
-
 			// lease payment calculation depends on year 1 pretax cash flow - must calculate year 0 and year nyears after other years
 			cf.at(CF_funding_leasepayment,0) = tax_investor_required_lease_reserve_frac * cf.at(CF_pretax_operating_cashflow,1);
 			sponsor_equity_in_lessee_llc = cf.at(CF_funding_leasepayment,0) + cf.at(CF_funding_om,0);
@@ -2248,7 +2243,6 @@ public:
 
 			cf.at(CF_pretax_operating_cashflow,0) = cf.at(CF_pretax_cashflow,0) + cf.at(CF_sponsor_adj_reserve_release,0);	
 													
-
 			// nyears
 			cf.at(CF_sponsor_lpra,nyears) = -cf.at(CF_funding_leasepayment,nyears) - cf.at(CF_disbursement_leasepayment,nyears);
 			cf.at(CF_sponsor_ra,nyears) =
@@ -2258,7 +2252,6 @@ public:
 				cf.at(CF_sponsor_me2ra,nyears) +
 				cf.at(CF_sponsor_me3ra,nyears);
 			cf.at(CF_sponsor_investing_activities,nyears) = cf.at(CF_sponsor_ra,nyears) + cf.at(CF_sponsor_mecs,nyears) - cf.at(CF_net_salvage_value,nyears);
-
 
 			cf.at(CF_sponsor_financing_activities,nyears) = 0;
 
@@ -2609,9 +2602,6 @@ public:
 
 	assign("npv_annual_costs", var_data((ssc_number_t)npv_annual_costs));
 	save_cf(CF_Annual_Costs, nyears, "cf_annual_costs");
-
-
-
 
 	double npv_fed_ptc = npv(CF_ptc_fed,nyears,nom_discount_rate);
 	double npv_sta_ptc = npv(CF_ptc_sta,nyears,nom_discount_rate);
