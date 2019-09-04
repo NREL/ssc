@@ -114,7 +114,7 @@ void windTurbine::turbinePower(double windVelocity, double airDensity, double *t
 	{
 	    if (turbineGross)
 	        *turbineGross = out_pwr;
-		out_pwr = out_pwr*(1.0 - lossesPercent) - lossesAbsolute;
+		out_pwr = out_pwr*(1.0 - lossesRatio) - lossesAbsolute;
 		double pden = 0.5*airDensity*pow(windVelocity, 3.0);
 		double area = physics::PI / 4.0*rotorDiameter*rotorDiameter;
 		double fPowerCoefficient = max_of(0.0, 1000.0*out_pwr / (pden*area));
@@ -545,8 +545,8 @@ void eddyViscosityWakeModel::wakeCalculations(/*INPUTS */ const double air_densi
 	}
 }
 
-void constantWakeModel::wakeCalculations(const double airDensity, const double [], const double [],
-                                       double power[], double eff[], double thrust[], double windSpeed[], double [])
+void constantWakeModel::wakeCalculations(const double airDensity, const double distanceDownwind[], const double distanceCrosswind[],
+                                       double power[], double eff[], double thrust[], double windSpeed[], double turbulenceIntensity[])
 {
     double turbPower = 0., turbThrust = 0.;
     wTurbine->turbinePower(windSpeed[0], airDensity, &turbPower, nullptr, &turbThrust);

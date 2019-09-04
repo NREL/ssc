@@ -207,7 +207,7 @@ int calc_turbomachinery_eta_isen(double T_in /*K*/, double P_in /*kPa*/,
 	else
 		eta_isen = (h_out - h_in) / (h_s_out - h_in);
 
-	if (eta_isen > 1.0)
+	if (eta_isen > 1.00001)     // leave some room for tolerance in property routines
 		return -2;
 
 	return 0;

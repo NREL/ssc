@@ -284,6 +284,11 @@ double HTFProperties::Cp( double T_K )
 		return 0.0033*T_C + 1.6132;
 	case Pressurized_Water:
 		return 1.E-5*T_C*T_C - 0.0014*T_C + 4.2092;
+    case N06230:
+        return 0.2888*T_C + 397.42; // BPVC II D
+    case N07740:
+        return -1.E-9*std::pow(T_C, 4) + 3.E-6*std::pow(T_C, 3) -
+            0.0022*std::pow(T_C, 2) + 0.6218*T_C + 434.06;  // BPVC_CC_BPV_2017 Case 2702 - 3
 	case User_defined:
 		{
 			if ( m_userTable.nrows() < 3 ) return std::numeric_limits<double>::quiet_NaN();
@@ -363,6 +368,10 @@ double HTFProperties::dens(double T_K, double P)
 			return -0.0003*T_C*T_C - 0.6963*T_C + 988.44;
 		case Pressurized_Water:
 			return -0.0023*T_C*T_C - 0.2337*T_C + 1005.6;
+        case N06230:
+            return 8970.0; // BPVC II D
+        case N07740:
+            return 8072.0;  // BPVC_CC_BPV_2017 Case 2702 - 3
 		case User_defined:
 			if ( m_userTable.nrows() < 3 )
 						return std::numeric_limits<double>::quiet_NaN();
@@ -526,6 +535,10 @@ double HTFProperties::cond(double T_K)
 		return -1.E-7*T_C*T_C - 6.E-5*T_C + 0.1227;
 	case Pressurized_Water:
 		return -6.E-6*T_C*T_C + 0.0016*T_C*T_C + 0.5631;
+    case N06230:
+        return 0.0197*T_C + 8.5359; // BPVC II D
+    case N07740:
+        return 0.0155*T_C + 9.7239;  // BPVC_CC_BPV_2017 Case 2702 - 3
 	case User_defined:
 		if ( m_userTable.nrows() < 3 )
 					return std::numeric_limits<double>::quiet_NaN();

@@ -50,7 +50,7 @@ public:
 
 	size_t powerCurveArrayLength;
 	double rotorDiameter, hubHeight, measurementHeight, shearExponent;
-	double lossesAbsolute, lossesPercent;
+	double lossesAbsolute, lossesRatio;
 	std::string errDetails;
 
 	windTurbine(){ 
@@ -59,7 +59,7 @@ public:
 		hubHeight = -999;
 		rotorDiameter = -999;
 		lossesAbsolute = 0;
-		lossesPercent = 0;
+		lossesRatio = 0;
         previousAirDensity = physics::AIR_DENSITY_SEA_LEVEL;
 	}
 	bool setPowerCurve(std::vector<double> windSpeeds, std::vector<double> powerOutput);

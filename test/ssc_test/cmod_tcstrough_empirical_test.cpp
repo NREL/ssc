@@ -5,7 +5,7 @@
 #include "../input_cases/weather_inputs.h"
 
 /// Test tcstrough_empirical with all defaults with respect to the No Financial model
-TEST_F(CMtcsTroughEmpirical, TroughEmpirical_Default_No_Financial) {
+TEST_F(CMTcsTroughEmpirical, TroughEmpirical_Default_No_Financial_cmod_tcstrough_empirical) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcstrough_empirical_tucson_default(data);
@@ -50,7 +50,7 @@ TEST_F(CMtcsTroughEmpirical, TroughEmpirical_Default_No_Financial) {
 
 /// Test tcstrough_empirical with alternative Solar Field HTF type: Hitec Solar Salt
 /// Rest default configurations with respect to the No Financial model
-TEST_F(CMtcsTroughEmpirical, TroughEmpirical_Solar_Field_HTF_No_Financial) {
+TEST_F(CMTcsTroughEmpirical, TroughEmpirical_Solar_Field_HTF_No_Financial_cmod_tcstrough_empirical) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcstrough_empirical_tucson_solar_field_HTF(data);
@@ -98,7 +98,7 @@ TEST_F(CMtcsTroughEmpirical, TroughEmpirical_Solar_Field_HTF_No_Financial) {
 
 /// Test tcstrough_empirical with alternative Solar Collector Assembly (SCA): EuroTrough ET150
 /// Rest default configurations with respect to the No Financial model
-TEST_F(CMtcsTroughEmpirical, TroughEmpirical_SCA_No_Financial) {
+TEST_F(CMTcsTroughEmpirical, TroughEmpirical_SCA_No_Financial_cmod_tcstrough_empirical) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcstrough_empirical_tucson_SCA(data);
@@ -146,7 +146,7 @@ TEST_F(CMtcsTroughEmpirical, TroughEmpirical_SCA_No_Financial) {
 
 /// Test tcstrough_empirical with alternative Heat Collection Element (HCE): Luz Cermet Vacuum, Luz Cermet Hydrogren, and Luz Cermet Broken Glass
 /// Rest default configurations with respect to the No Financial model
-TEST_F(CMtcsTroughEmpirical, TroughEmpirical_HCE_No_Financial) {
+TEST_F(CMTcsTroughEmpirical, TroughEmpirical_HCE_No_Financial_cmod_tcstrough_empirical) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcstrough_empirical_tucson_HCE(data);
@@ -191,7 +191,7 @@ TEST_F(CMtcsTroughEmpirical, TroughEmpirical_HCE_No_Financial) {
 
 /// Test tcstrough_empirical with alternative Power Cycle: APS Ormat 1MWe 300C
 /// Rest default configurations with respect to the No Financial model
-TEST_F(CMtcsTroughEmpirical, TroughEmpirical_Power_Cycle_No_Financial) {
+TEST_F(CMTcsTroughEmpirical, TroughEmpirical_Power_Cycle_No_Financial_cmod_tcstrough_empirical) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcstrough_empirical_tucson_power_cycle(data);
@@ -236,7 +236,7 @@ TEST_F(CMtcsTroughEmpirical, TroughEmpirical_Power_Cycle_No_Financial) {
 
 /// Test tcstrough_empirical with alternative Thermal Storage Fluid Type: Therminol VP-1
 /// Rest default configurations with respect to the No Financial model
-TEST_F(CMtcsTroughEmpirical, TroughEmpirical_Thermal_Storage_Fluid_No_Financial) {
+TEST_F(CMTcsTroughEmpirical, TroughEmpirical_Thermal_Storage_Fluid_No_Financial_cmod_tcstrough_empirical) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcstrough_empirical_tucson_thermal_storage(data);
@@ -281,7 +281,7 @@ TEST_F(CMtcsTroughEmpirical, TroughEmpirical_Thermal_Storage_Fluid_No_Financial)
 
 /// Test tcstrough_empirical with alternative Parasitic Electric Energy Use: 500C Molten Salt HTF
 /// Rest default configurations with respect to the No Financial model
-TEST_F(CMtcsTroughEmpirical, TroughEmpirical_Parasitic_No_Financial) {
+TEST_F(CMTcsTroughEmpirical, TroughEmpirical_Parasitic_No_Financial_cmod_tcstrough_empirical) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcstrough_empirical_tucson_parasitic(data);
@@ -326,7 +326,7 @@ TEST_F(CMtcsTroughEmpirical, TroughEmpirical_Parasitic_No_Financial) {
 
 /// Test tcstrough_empirical with alternativelocation: Phoenix, AZ
 /// Rest default configurations with respect to the No Financial model
-TEST_F(CMtcsTroughEmpirical, TroughEmpirical_Location_No_Financial) {
+TEST_F(CMTcsTroughEmpirical, TroughEmpirical_Location_No_Financial_cmod_tcstrough_empirical) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcstrough_empirical_phoenix(data);
@@ -369,7 +369,60 @@ TEST_F(CMtcsTroughEmpirical, TroughEmpirical_Location_No_Financial) {
 	}
 }
 
+/// Test series of Advanced Combinatorial Testing System (ACTS) runs 
+TEST_F(CMTcsTroughEmpirical, ACTS_Test_Empirical) {
 
+	std::vector<double> annual_energys{ 3.43731e8, 3.29297e8, 3.30659e8, 3.10436e8, 3.45672e8, 3.46698e8, 3.4736e8, 3.28189e8, 3.25897e8 };
+	std::vector<double> annual_fuel_usages{ 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+	std::vector<double> capacity_factors{ 39.278, 37.6286, 37.7843, 35.4734, 39.4998, 39.617, 39.6926, 37.502, 37.2401 };
+	std::vector<double> annual_W_cycle_grosss{ 4.03426e8, 3.87146e8, 3.88914e8, 3.66079e8, 4.05593e8, 4.06767e8, 4.07472e8, 3.86119e8, 3.83311e8 };
+	std::vector<double> kwh_per_kws{ 3440.76, 3296.27, 3309.9, 3107.47, 3460.18, 3470.45, 3477.07, 3285.17, 3262.23 };
+	std::vector<double> conversion_factors{ 88.7533, 88.6016, 88.5637, 88.3337, 88.7773, 88.784, 88.7995, 88.5383, 88.5641 };
+	std::vector<double> system_heat_rates{ 3.413, 3.413, 3.413, 3.413, 3.413, 3.413, 3.413, 3.413, 3.413 };
+	std::vector<double> system_use_lifetime_outputs{ 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+
+	ssc_data_t data = ssc_data_create();
+
+	for (std::vector<double>::size_type i = 0; i != annual_energys.size(); i++) {
+		int test_errors = ACTS_test_empirical(data, i);
+
+		EXPECT_FALSE(test_errors);
+		if (!test_errors)
+		{
+			ssc_number_t annual_energy;
+			ssc_data_get_number(data, "annual_energy", &annual_energy);
+			EXPECT_NEAR(annual_energy, annual_energys[i], annual_energys[i] * m_error_tolerance_lo) << "Annual Energy";
+
+			ssc_number_t annual_fuel_usage;
+			ssc_data_get_number(data, "annual_fuel_usage", &annual_fuel_usage);
+			EXPECT_NEAR(annual_fuel_usage, annual_fuel_usages[i], annual_fuel_usages[i] * m_error_tolerance_lo) << "Annual fuel usage";
+
+			ssc_number_t capacity_factor;
+			ssc_data_get_number(data, "capacity_factor", &capacity_factor);
+			EXPECT_NEAR(capacity_factor, capacity_factors[i], capacity_factors[i] * m_error_tolerance_lo) << "Capacity Factor";
+
+			ssc_number_t annual_W_cycle_gross;
+			ssc_data_get_number(data, "annual_W_cycle_gross", &annual_W_cycle_gross);
+			EXPECT_NEAR(annual_W_cycle_gross, annual_W_cycle_grosss[i], annual_W_cycle_grosss[i] * m_error_tolerance_lo) << "Annual W_cycle Gross";
+
+			ssc_number_t kwh_per_kw;
+			ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
+			EXPECT_NEAR(kwh_per_kw, kwh_per_kws[i], kwh_per_kws[i] * m_error_tolerance_lo) << "kwh per kw";
+
+			ssc_number_t conversion_factor;
+			ssc_data_get_number(data, "conversion_factor", &conversion_factor);
+			EXPECT_NEAR(conversion_factor, conversion_factors[i], conversion_factors[i] * m_error_tolerance_lo) << "Conversion Factor";
+
+			ssc_number_t system_heat_rate;
+			ssc_data_get_number(data, "system_heat_rate", &system_heat_rate);
+			EXPECT_NEAR(system_heat_rate, system_heat_rates[i], system_heat_rates[i] * m_error_tolerance_lo) << "System heat rate";
+
+			ssc_number_t system_use_lifetime_output;
+			ssc_data_get_number(data, "system_use_lifetime_output", &system_use_lifetime_output);
+			EXPECT_NEAR(system_use_lifetime_output, system_use_lifetime_outputs[i], system_use_lifetime_outputs[i] * m_error_tolerance_lo) << "Use lifetime output";
+		}
+	}
+}
 
 
 

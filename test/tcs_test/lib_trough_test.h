@@ -2,7 +2,7 @@
 #define __LIB_TROUGH_TEST_H__
 
 #include <gtest/gtest.h>
-#include "../tcs/csp_solver_trough_collector_receiver.h"
+#include "csp_solver_trough_collector_receiver.h"
 
 #include "lib_trough_properties.h"
 

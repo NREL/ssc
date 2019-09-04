@@ -5,7 +5,7 @@
 #include "lib_battery_test.h"
 
 /// Test  lithium ion battery capacity response
-TEST_F(BatteryTest, LithiumIonCapacityTest)
+TEST_F(BatteryTest, LithiumIonCapacityTest_lib_battery)
 {
 	q = 100;
 	SOC_init = 100;
@@ -62,7 +62,7 @@ TEST_F(BatteryTest, LithiumIonCapacityTest)
 	EXPECT_EQ(capacityModel->SOC(), SOC_min);
 }
 
-TEST_F(BatteryTest, LossesModel)
+TEST_F(BatteryTest, LossesModel_lib_battery)
 {
 	size_t idx = 1000;
 

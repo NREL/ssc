@@ -42,7 +42,7 @@ void BatteryPowerFlowTest::SetUp()
 	m_batteryPower->setSharedInverter(m_sharedInverter);
 }
 
-TEST_F(BatteryPowerFlowTest, TestInitialize)
+TEST_F(BatteryPowerFlowTest, TestInitialize_lib_battery_powerflow)
 {
 	// PV Charging Scenario
 	m_batteryPower->canPVCharge = true;
@@ -64,7 +64,7 @@ TEST_F(BatteryPowerFlowTest, TestInitialize)
 	EXPECT_EQ(m_batteryPower->powerBatteryDC, m_batteryPower->powerBatteryDischargeMaxDC);
 }
 
-TEST_F(BatteryPowerFlowTest, TestACConnected)
+TEST_F(BatteryPowerFlowTest, TestACConnected_lib_battery_powerflow)
 {
 	m_batteryPower->connectionMode = ChargeController::AC_CONNECTED;
 
@@ -114,7 +114,7 @@ TEST_F(BatteryPowerFlowTest, TestACConnected)
 }
 
 
-TEST_F(BatteryPowerFlowTest, TestDCConnected)
+TEST_F(BatteryPowerFlowTest, TestDCConnected_lib_battery_powerflow)
 {
 	m_batteryPower->connectionMode = ChargeController::DC_CONNECTED;
 

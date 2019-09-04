@@ -33,7 +33,7 @@ protected:
 };
 
 /// Test some init actions
-TEST_F(CSVCase_WeatherfileTest, initTest){
+TEST_F(CSVCase_WeatherfileTest, initTest_lib_weatherfile){
 
 	EXPECT_EQ(wf.header().location, "875760") << "CSV Case: Init test\n";
 	EXPECT_EQ(wf.header().city, "Buenos_Aires") << "CSV Case: Init test\n";
@@ -54,7 +54,7 @@ TEST_F(CSVCase_WeatherfileTest, normalizeCityTest_lib_weatherfile){
 }
 
 /// Test reading first, second and custom row
-TEST_F(CSVCase_WeatherfileTest, readTest){
+TEST_F(CSVCase_WeatherfileTest, readTest_lib_weatherfile){
 	weather_record r;
 	/* read first row */
 	wf.read(&r);
@@ -127,7 +127,7 @@ TEST_F(CSVCase_WeatherfileTest, readTest){
 	EXPECT_EQ(wf.get_counter_value(), 1);
 }
 
-TEST_F(weatherfileTest, EPWTest) {
+TEST_F(weatherfileTest, EPWTest_lib_weatherfile) {
 	char filepath[256];
 	int n1 = sprintf(filepath, "%s/test/input_docs/weather_30m.epw", std::getenv("SSCDIR"));
 	file = std::string(filepath);
@@ -137,7 +137,7 @@ TEST_F(weatherfileTest, EPWTest) {
 	EXPECT_TRUE(wf.nrecords() == 8760 * 2);
 }
 
-TEST_F(weatherfileTest, EPWNoLineEndingsTest) {
+TEST_F(weatherfileTest, EPWNoLineEndingsTest_lib_weatherfile) {
 	char filepath[256];
 	int n1 = sprintf(filepath, "%s/test/input_docs/weather_noLineEnding.epw", std::getenv("SSCDIR"));
 	file = std::string(filepath);

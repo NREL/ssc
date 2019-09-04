@@ -59,6 +59,7 @@ static var_info _cm_vtab_pvwattsv5_common[] = {
         var_info_invalid };
 
 static var_info _cm_vtab_pvwattsv5_part2[] = {
+
         { SSC_INPUT,        SSC_MATRIX,      "shading:timestep",               "Time step beam shading loss",                 "%",         "",                        "System Design",      "?",                        "",                              "" },
         { SSC_INPUT,        SSC_MATRIX,      "shading:mxh",                    "Month x Hour beam shading loss",              "%",         "",                        "System Design",      "?",                        "",                              "" },
         { SSC_INPUT,        SSC_MATRIX,      "shading:azal",                   "Azimuth x altitude beam shading loss",        "%",         "",                        "System Design",      "?",                        "",                              "" },

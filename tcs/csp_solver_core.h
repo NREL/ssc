@@ -996,6 +996,7 @@ private:
 	bool m_is_tes;			//[-] True: plant has storage
 
 		// Reporting and Output Tracking
+    bool m_is_first_timestep;           //[-]
 	int m_i_reporting;					//[-]
 	double m_report_time_start;			//[s]
 	double m_report_time_end;			//[s]

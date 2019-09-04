@@ -184,7 +184,7 @@ if(APPLE)
 		add_custom_command(
 			TARGET ssc
 			POST_BUILD
-			COMMAND install_name_tool -id @rpath/libssc.so $ENV{SSCDIR}/ssc/libssc.so
+			COMMAND install_name_tool -id @rpath/libssc.so $<TARGET_FILE:ssc>
 		)
 	endif()
 endif()
@@ -214,5 +214,36 @@ endif()
 
 if (MSVC)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:WINDOWS")
+	set(SSC_LIB $<TARGET_FILE_DIR:ssc>/$<TARGET_FILE_BASE_NAME:ssc>.lib)
+
+	add_custom_command(
+		TARGET ssc
+		POST_BUILD
+		COMMAND ${CMAKE_COMMAND}
+		ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} $ENV{SAMNTDIR}/deploy/x64
+		COMMAND ${CMAKE_COMMAND}
+		ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${CMAKE_CURRENT_BINARY_DIR}/../tcsconsole/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>
+		COMMAND ${CMAKE_COMMAND}
+		ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${CMAKE_CURRENT_BINARY_DIR}/../sdktool/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>
+		COMMAND ${CMAKE_COMMAND}
+		ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${CMAKE_CURRENT_BINARY_DIR}/../test/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>
+		)
+
+	if (${CMAKE_PROJECT_NAME} STREQUAL system_advisor_model)
+		add_custom_command(
+			TARGET ssc
+			POST_BUILD
+			COMMAND ${CMAKE_COMMAND}
+			ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${CMAKE_CURRENT_BINARY_DIR}/../../api/api_autogen/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>
+			)
+	else()
+		add_custom_command(
+			TARGET ssc
+			POST_BUILD
+			COMMAND ${CMAKE_COMMAND}
+			ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} $ENV{SAMNTDIR}/build_msvc/api/api_autogen/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>
+			)
+	endif()
+
 endif()
 
