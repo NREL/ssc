@@ -151,6 +151,9 @@ void generic_singleowner_battery_60min(ssc_data_t &data)
 	ssc_data_set_matrix( data, "ur_ec_sched_weekend", p_ur_ec_sched_weekend, 12, 24 );
 	ssc_number_t p_ur_ec_tou_mat[30] ={ 1, 1, 9.9999996802856925e+37, 0, 0.094169996678829193, 0, 2, 1, 400, 0, 0.096869997680187225, 0, 2, 2, 800, 0, 0.13817000389099121, 0, 2, 3, 3000, 0, 0.16166999936103821, 0, 2, 4, 9.9999996802856925e+37, 0, 0.17257000505924225, 0 };
 	ssc_data_set_matrix( data, "ur_ec_tou_mat", p_ur_ec_tou_mat, 5, 6 );
+	ssc_data_set_number(data, "ur_en_ts_sell_rate", 0);
+	ssc_number_t p_ur_ts_buy_rate[1] = { 0 };
+	ssc_data_set_array(data, "ur_ts_buy_rate", p_ur_ts_buy_rate, 1);
 	ssc_data_set_number( data, "ppa_price_input", 0 );
 	ssc_number_t p_dispatch_tod_factors[9] ={ 1, 1, 1, 1, 1, 1, 1, 1, 1 };
 	ssc_data_set_array( data, "dispatch_tod_factors", p_dispatch_tod_factors, 9 );
