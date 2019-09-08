@@ -969,6 +969,311 @@ void C_turbine::od_turbine_at_N_des(double T_in, double P_in, double P_out, int 
 	return;
 }
 
+int C_comp__psi_eta_vs_phi::design_given_shaft_speed(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
+    double N_rpm /*rpm*/, double eta_isen /*-*/, double & P_out /*kPa*/, double & T_out /*K*/, double & tip_ratio /*-*/)
+{
+    CO2_state co2_props;
+
+    // Get inlet state
+    int prop_error_code = CO2_TP(T_in, P_in, &co2_props);
+    if (prop_error_code != 0)
+    {
+        return prop_error_code;
+    }
+    double h_in = co2_props.enth;	//[kJ/kg]
+    double s_in = co2_props.entr;	//[kJ/kg-K]
+    double rho_in = co2_props.dens;	//[kg/m^3]
+
+    // Convert shaft speed to rad/s
+    double N_rad_s = N_rpm / 9.549296590;		//[rad/s]
+
+    // Solve for the diameter that gives the design flow coefficient
+    double D_rotor = std::pow(m_dot / (m_phi_design * rho_in * 0.5 * N_rad_s), 1.0 / 3.0);		//[m]
+
+    // Calculate psi at the design-point phi using Horner's method
+    double psi_design = calc_psi_design();
+
+    // Solve for idea head
+    double U_tip = 0.5 * D_rotor * N_rad_s;		//[m/s]
+    double w_i = psi_design * std::pow(U_tip, 2) * 0.001;		//[kJ/kg]
+
+    // Solve for isentropic outlet enthalpy
+    double h_out_isen = h_in + w_i;		//[kJ/kg]
+
+    // Get isentropic outlet state
+    prop_error_code = CO2_HS(h_out_isen, s_in, &co2_props);
+    if (prop_error_code != 0)
+    {
+        return prop_error_code;
+    }
+    P_out = co2_props.pres;		//[kPa]
+
+    // Get actual outlet state
+    double h_out = h_in + w_i / eta_isen;	//[kJ/kg]
+    prop_error_code = CO2_PH(P_out, h_out, &co2_props);
+    if (prop_error_code != 0)
+    {
+        return prop_error_code;
+    }
+    T_out = co2_props.temp;		//[K]
+    double ssnd_out = co2_props.ssnd;	//[m/s]
+
+    // Solve for tip ratio
+    tip_ratio = U_tip / ssnd_out;
+
+    ms_des_solved.m_T_in = T_in;	//[K]
+    ms_des_solved.m_P_in = P_in;	//[kPa]
+    ms_des_solved.m_D_in = rho_in;	//[kg/m^3]
+    ms_des_solved.m_h_in = h_in;	//[kJ/kg]
+    ms_des_solved.m_s_in = s_in;	//[kJ/kg-K]
+
+    ms_des_solved.m_T_out = T_out;	//[K]
+    ms_des_solved.m_P_out = P_out;	//[kPa]
+    ms_des_solved.m_h_out = h_out;	//[kJ/kg]
+    ms_des_solved.m_D_out = co2_props.dens;	//[kg/m^3]
+
+    ms_des_solved.m_m_dot = m_dot;	//[kg/s]
+
+    ms_des_solved.m_D_rotor = D_rotor;	//[m]
+    ms_des_solved.m_N_design = N_rpm;	//[rpm]
+    ms_des_solved.m_tip_ratio = tip_ratio;	//[-]
+    ms_des_solved.m_eta_design = eta_isen;		//[-]
+
+    ms_des_solved.m_phi_des = m_phi_design;
+    ms_des_solved.m_phi_surge = m_phi_min;
+    ms_des_solved.m_phi_max = m_phi_max;
+
+    return 0;
+}
+
+int C_comp__psi_eta_vs_phi::design_given_performance(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
+    double T_out /*K*/, double P_out /*K*/)
+{
+    CO2_state in_props;
+    int prop_err_code = CO2_TP(T_in, P_in, &in_props);
+    if (prop_err_code != 0)
+    {
+        return -1;
+    }
+    double s_in = in_props.entr;	//[kJ/kg-K]
+    double h_in = in_props.enth;	//[kJ/kg]
+    double rho_in = in_props.dens;	//[kg/m^3]
+
+    CO2_state isen_out_props;
+    prop_err_code = CO2_PS(P_out, s_in, &isen_out_props);
+    if (prop_err_code != 0)
+    {
+        return -1;
+    }
+    double h_isen_out = isen_out_props.enth;	//[kJ/kg]
+
+    CO2_state out_props;
+    prop_err_code = CO2_TP(T_out, P_out, &out_props);
+    if (prop_err_code != 0)
+    {
+        return -1;
+    }
+    double h_out = out_props.enth;
+
+    // Calculate psi at the design-point phi using Horner's method
+    double psi_design = calc_psi_design();	//[-]
+
+    // Determine required size and speed of compressor
+    double w_i = h_isen_out - h_in;						//[kJ/kg] positive isentropic specific work of compressor
+    double U_tip = sqrt(1000.0*w_i / psi_design);		//[m/s]
+    double D_rotor = sqrt(m_dot / (m_phi_design*rho_in*U_tip));
+    double N_rad_s = U_tip * 2.0 / D_rotor;				//[rad/s] shaft speed
+
+    double ssnd_out = out_props.ssnd;	//[m/s]
+
+    // Solve for tip ratio
+    double tip_ratio = U_tip / ssnd_out;
+
+    ms_des_solved.m_T_in = T_in;	//[K]
+    ms_des_solved.m_P_in = P_in;	//[kPa]
+    ms_des_solved.m_D_in = rho_in;	//[kg/m^3]
+    ms_des_solved.m_h_in = h_in;	//[kJ/kg]
+    ms_des_solved.m_s_in = s_in;	//[kJ/kg-K]
+
+    ms_des_solved.m_T_out = T_out;	//[K]
+    ms_des_solved.m_P_out = P_out;	//[kPa]
+    ms_des_solved.m_h_out = h_out;	//[kJ/kg]
+    ms_des_solved.m_D_out = out_props.dens;	//[kg/m^3]
+
+    ms_des_solved.m_m_dot = m_dot;	//[kg/s]
+
+    ms_des_solved.m_D_rotor = D_rotor;	//[m]
+    ms_des_solved.m_N_design = N_rad_s * 9.549296590;			//[rpm] shaft speed
+    ms_des_solved.m_tip_ratio = tip_ratio;	//[-]
+    ms_des_solved.m_eta_design = (h_isen_out - h_in) / (h_out - h_in);		//[-]
+
+    ms_des_solved.m_phi_des = m_phi_design;
+    ms_des_solved.m_phi_surge = m_phi_min;
+    ms_des_solved.m_phi_max = m_phi_max;
+
+    ms_des_solved.m_psi_des = psi_design;   //[-] ideal head coefficient
+    ms_des_solved.m_psi_max_at_N_des = calc_psi(m_phi_min, 1.0);  //[-] max ideal head coefficient at design shaft speed
+
+    return 0;
+}
+
+double C_comp__psi_eta_vs_phi::calc_psi_design()
+{
+    return calc_psi(m_phi_design, 1.0);
+}
+
+int C_comp__psi_eta_vs_phi::off_design_given_N(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/, double N_rpm /*rpm*/,
+    double & T_out /*K*/, double & P_out /*kPa*/)
+{
+    CO2_state co2_props;
+
+    ms_od_solved.m_N = N_rpm;		//[rpm]
+
+    // Fully define the inlet state of the compressor
+    int prop_error_code = CO2_TP(T_in, P_in, &co2_props);
+    if (prop_error_code != 0)
+    {
+        return prop_error_code;
+    }
+    double rho_in = co2_props.dens;	//[kg/m^3]
+    double h_in = co2_props.enth;	//[kJ/kg]
+    double s_in = co2_props.entr;	//[kJ/kg-K]
+
+    // Calculate the modified flow and head coefficients and efficiency
+    double U_tip = ms_des_solved.m_D_rotor*0.5*ms_od_solved.m_N*0.104719755;				//[m/s]
+    double phi = m_dot / (rho_in*U_tip*pow(ms_des_solved.m_D_rotor, 2));	//[-]
+    if (phi < m_phi_min)
+    {
+        ms_od_solved.m_surge = true;
+    }
+    else
+    {
+        ms_od_solved.m_surge = false;
+    }
+
+    double N_des_over_N_od = ms_des_solved.m_N_design / N_rpm;      //[-]
+
+    double psi = calc_psi(phi, N_des_over_N_od);		//[-]
+
+    double eta_ND_od = calc_eta_normalized(phi, N_des_over_N_od);
+
+    ms_od_solved.m_eta = std::max(eta_ND_od*ms_des_solved.m_eta_design, 0.0);		//[-] Actual compressor efficiency, not allowed to go negative
+
+    // Check that the specified mass flow rate is possible with the compressor's current shaft speed
+    if (psi <= 0.0)
+    {
+        return 1;
+    }
+
+    // Calculate the compressor outlet state
+    double dh_s = psi * pow(U_tip, 2.0) * 0.001;			//[kJ/kg] Ideal enthalpy rise in compressor, from definition of head coefficient
+    double dh = dh_s / ms_od_solved.m_eta;					//[kJ/kg] Actual enthalpy rise in compressor
+    double h_s_out = h_in + dh_s;							//[kJ/kg] Ideal enthalpy at compressor outlet
+    double h_out = h_in + dh;								//[kJ/kg] Actual enthalpy at compressor outlet
+
+    // Get the compressor outlet pressure
+    prop_error_code = CO2_HS(h_s_out, s_in, &co2_props);
+    if (prop_error_code != 0)
+    {
+        return 2;
+    }
+    P_out = co2_props.pres;
+
+    // Determine compressor outlet temperature and speed of sound
+    prop_error_code = CO2_PH(P_out, h_out, &co2_props);
+    if (prop_error_code != 0)
+    {
+        return 2;
+    }
+    T_out = co2_props.temp;
+    double ssnd_out = co2_props.ssnd;
+
+    // Set a few compressor variables
+    ms_od_solved.m_P_in = P_in;		//[kPa]
+    ms_od_solved.m_h_in = h_in;		//[kJ/kg]
+    ms_od_solved.m_T_in = T_in;		//[K]
+    ms_od_solved.m_s_in = s_in;		//[kJ/kg-K]
+
+    ms_od_solved.m_P_out = P_out;	//[kPa]
+    ms_od_solved.m_h_out = h_out;	//[kJ/kg]
+    ms_od_solved.m_T_out = T_out;	//[K]
+    ms_od_solved.m_s_out = co2_props.entr;	//[kJ/kg-K]
+
+    ms_od_solved.m_phi = phi;   //[-]
+    ms_od_solved.m_psi = psi;   //[-]
+    ms_od_solved.m_surge_safety = phi / m_phi_min;	//[-] If > 1, then not in surge
+    ms_od_solved.m_w_tip_ratio = U_tip / ssnd_out;
+    ms_od_solved.m_W_dot_in = m_dot * (h_out - h_in);	//[kWe]
+
+    return 0;
+}
+
+int C_comp__psi_eta_vs_phi::calc_N_from_phi(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/, double phi_in /*-*/, double & N_rpm /*rpm*/)
+{
+    CO2_state co2_props;
+
+    // Fully define the inlet state of the compressor
+    int prop_error_code = CO2_TP(T_in, P_in, &co2_props);
+    if (prop_error_code != 0)
+    {
+        return prop_error_code;
+    }
+    double rho_in = co2_props.dens;	//[kg/m^3]
+    double U_tip = m_dot / (phi_in*rho_in*std::pow(ms_des_solved.m_D_rotor, 2));		//[m/s]
+    N_rpm = (U_tip*2.0 / ms_des_solved.m_D_rotor)*9.549296590;		//[rpm]
+
+    return 0;
+}
+
+int C_comp__psi_eta_vs_phi::calc_m_dot__phi_des(double T_in /*K*/, double P_in /*kPa*/, double N_rpm /*rpm*/, double & m_dot /*kg/s*/)
+{
+    CO2_state co2_props;
+
+    // Fully define the inlet state of the compressor
+    int prop_error_code = CO2_TP(T_in, P_in, &co2_props);
+    if (prop_error_code != 0)
+    {
+        return prop_error_code;
+    }
+    double rho_in = co2_props.dens;	//[kg/m^3]
+    double h_in = co2_props.enth;	//[kJ/kg]
+    double s_in = co2_props.entr;	//[kJ/kg-K]
+
+    // Calculate the modified flow and head coefficients and efficiency
+    double U_tip = ms_des_solved.m_D_rotor*0.5*N_rpm*0.104719755;	//[m/s]
+    m_dot = ms_des_solved.m_phi_des * U_tip * rho_in * pow(ms_des_solved.m_D_rotor, 2);					//[kg/s]
+
+    return 0;
+}
+
+double C_comp__snl_radial_via_Dyreby::adjust_phi_for_N(double phi /*-*/, double N_des_over_N_od /*-*/)
+{
+    return phi*pow(1.0 / N_des_over_N_od, 0.2);		//[-] modified flow coefficient
+}
+
+double C_comp__snl_radial_via_Dyreby::calc_psi(double phi_in /*-*/, double N_des_over_N_od /*-*/)
+{
+    double phi = adjust_phi_for_N(phi_in, N_des_over_N_od);
+    
+    double psi = std::numeric_limits<double>::quiet_NaN();
+
+    if (phi >= m_phi_min)
+        psi = ((((-498626.0*phi) + 53224.0) * phi - 2505.0) * phi + 54.6)*phi + 0.04049;  // from dimensionless modified head curve(at design - point, psi and modified psi are equal)
+    else
+        return (1 + 0.5*(0.0225 - phi) / 0.0225)*0.47929;		//[-] Check for surge after model converges	
+
+    return psi / pow(N_des_over_N_od, pow(20.0*phi, 3.0));
+}
+
+double C_comp__snl_radial_via_Dyreby::calc_eta_normalized(double phi_in /*-*/, double N_des_over_N_od /*-*/)
+{
+    double phi = adjust_phi_for_N(phi_in, N_des_over_N_od);
+    
+    double eta_star = ((((-1.638e6*phi) + 182725.0)*phi - 8089.0)*phi + 168.6)*phi - 0.7069;	// from dimensionless modified efficiency curve
+
+    return eta_star * 1.47528 / pow(N_des_over_N_od, pow(20.0*phi, 5.0));
+}
+
 double C_comp_single_stage::calc_psi_design(double phi_design /*-*/)
 {
 	if (phi_design >= 0.0225)
@@ -1328,6 +1633,9 @@ int C_comp_multi_stage::C_MEQ_N_rpm__P_out::operator()(double N_rpm /*rpm*/, dou
 			P_in = P_out;	//[kPa]
 		}
 
+        mpc_multi_stage->mv_c_stages[i] = std::unique_ptr<C_comp__snl_radial_via_Dyreby>(new C_comp__snl_radial_via_Dyreby());
+        comp_err_code = mpc_multi_stage->mv_c_stages[i]->design_given_shaft_speed(T_in, P_in, m_m_dot_basis, N_rpm, m_eta_isen, P_out, T_out, tip_ratio);
+
 		comp_err_code = mpc_multi_stage->mv_stages[i].design_given_shaft_speed(T_in, P_in, m_m_dot_basis, N_rpm, m_eta_isen, P_out, T_out, tip_ratio);
 
 		if (comp_err_code != 0)
@@ -1358,6 +1666,10 @@ int C_comp_multi_stage::design_given_outlet_state(double T_in /*K*/, double P_in
 	double T_out /*K*/, double P_out /*K*/)
 {
 	double m_dot_basis = m_dot_cycle / m_r_W_dot_scale;		//[kg/s]
+
+    mv_c_stages.resize(1);
+    mv_c_stages[0] = std::unique_ptr<C_comp__snl_radial_via_Dyreby>(new C_comp__snl_radial_via_Dyreby());
+    mv_c_stages[0]->design_given_performance(T_in, P_in, m_dot_basis, T_out, P_out);
 
 	mv_stages.resize(1);
 	mv_stages[0].design_single_stage_comp(T_in, P_in, m_dot_basis, T_out, P_out);
@@ -1392,6 +1704,8 @@ int C_comp_multi_stage::design_given_outlet_state(double T_in /*K*/, double P_in
 			tip_speed_limit = 0.9;		//[-] If multi-stage, increase tip speed limit to 0.9
 			
 			n_stages++;
+
+            mv_c_stages.resize(n_stages);
 
 			mv_stages.resize(n_stages);
 
