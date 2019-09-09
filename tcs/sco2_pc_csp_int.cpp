@@ -2717,20 +2717,20 @@ int C_sco2_phx_air_cooler::off_design_core(double & eta_solved)
 	// 4) Check for compressor(s) surge?
 	// Main compressor
 	double mc_phi = mpc_sco2_cycle->get_od_solved()->ms_mc_ms_od_solved.m_phi_min;
-	double over_surge_mc = max(0.0, (C_comp_single_stage::m_snl_phi_min - mc_phi) / C_comp_single_stage::m_snl_phi_min*100.0);
+	double over_surge_mc = max(0.0, (mpc_sco2_cycle->get_design_solved()->ms_mc_ms_des_solved.m_phi_surge - mc_phi) / mpc_sco2_cycle->get_design_solved()->ms_mc_ms_des_solved.m_phi_surge*100.0);
 	// Recompressor
 	double over_surge_rc = 0.0;
 	if( ms_des_solved.ms_rc_cycle_solved.m_is_rc )
 	{
 		double rc_phi_min = mpc_sco2_cycle->get_od_solved()->ms_rc_ms_od_solved.m_phi_min;
-		over_surge_rc = max(0.0, (C_comp_single_stage::m_snl_phi_min - rc_phi_min) / C_comp_single_stage::m_snl_phi_min*100.0);
+		over_surge_rc = max(0.0, (mpc_sco2_cycle->get_design_solved()->ms_rc_ms_des_solved.m_phi_surge - rc_phi_min) / mpc_sco2_cycle->get_design_solved()->ms_rc_ms_des_solved.m_phi_surge*100.0);
 	}
 	// Pre-compressor
 	double over_surge_pc = 0.0;
 	if (ms_des_par.m_cycle_config == 2)
 	{
 		double pc_phi_min = mpc_sco2_cycle->get_od_solved()->ms_pc_ms_od_solved.m_phi_min;
-		over_surge_pc = max(0.0, (C_comp_single_stage::m_snl_phi_min - pc_phi_min) / C_comp_single_stage::m_snl_phi_min*100.0);
+		over_surge_pc = max(0.0, (mpc_sco2_cycle->get_design_solved()->ms_pc_ms_des_solved.m_phi_surge - pc_phi_min) / mpc_sco2_cycle->get_design_solved()->ms_pc_ms_des_solved.m_phi_surge*100.0);
 	}
 
 
