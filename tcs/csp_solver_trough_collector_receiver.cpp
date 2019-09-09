@@ -5549,7 +5549,7 @@ This piping loss model is derived from the pressure drop calculations presented 
 following document:
 
 Parabolic Trough Solar System Piping Model
-Final Report May 13, 2002 — December 31, 2004
+Final Report May 13, 2002 ï¿½ December 31, 2004
 
 B. Kelly
 Nexant, Inc. San Francisco, California

@@ -46,7 +46,7 @@ TEST_F(BatteryTest, LithiumIonCapacityTest_lib_battery)
 	EXPECT_EQ(capacityModel->qmax(), 95);
 
 	// check that battery replacement works
-	capacityModel->replace_battery();
+	capacityModel->replace_battery(100);
 	EXPECT_EQ(capacityModel->SOC(), SOC_max);
 	EXPECT_EQ(capacityModel->q0(), 100);
 	EXPECT_EQ(capacityModel->qmax(), 100);
@@ -69,5 +69,48 @@ TEST_F(BatteryTest, LossesModel_lib_battery)
 	// Return loss for february
 	lossModel->run_losses(idx);
 	EXPECT_EQ(lossModel->getLoss(idx), 1);
+
+}
+
+TEST_F(BatteryTest, AugmentCapacity)
+{
+	
+	std::vector<int> replacement_schedule = { 1, 1, 1 };
+	std::vector<double> augmentation_percent = { 50, 40 , 30 };
+	batteryModel->lifetime_model()->set_replacement_option(battery_t::REPLACE_BY_SCHEDULE);
+
+	// Correct future approach for augmenting batteries, by treating as seperate entities
+	std::vector<battery_t *> batteries;
+	batteries.push_back(batteryModel);
+	batteries.push_back(new battery_t(dtHour, chemistry));
+	batteries[1]->initialize(capacityModel, voltageModel, lifetimeModel, thermalModel, lossModel);
+	batteries[1]->lifetime_model()->set_replacement_option(battery_t::REPLACE_BY_SCHEDULE);
+	batteries.push_back(new battery_t(dtHour, chemistry));
+	batteries[2]->initialize(capacityModel, voltageModel, lifetimeModel, thermalModel, lossModel);
+	batteries[2]->lifetime_model()->set_replacement_option(battery_t::REPLACE_BY_SCHEDULE);
+
+	size_t i = 0;
+	double I = 100;
+	double mult = 1.0;
+	size_t replaceCount = 0;
+	for (size_t y = 0; y < replacement_schedule.size(); y++) {
+		for (size_t t = 0; t < 8760; t++) {
+			mult = fmod(t, 2) == 0 ? 1 : -1;
+			batteries[replaceCount]->run(i, mult*I);
+		}
+		if (replacement_schedule[y] == 1) {
+			replaceCount++;
+		}
+	}
+	
+	// Current, limited approach which only augments capacity in models, does not update lifetime degradation 
+	// trajectories or consider impacts on voltage and other aspects.
+	battery_t * battery = new battery_t(dtHour, chemistry);
+	battery->initialize(capacityModel, voltageModel, lifetimeModel, thermalModel, lossModel);
+	battery->lifetime_model()->set_replacement_option(battery_t::REPLACE_BY_SCHEDULE);
+
+
+
+
 
 }
