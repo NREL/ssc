@@ -1433,10 +1433,8 @@ public:
 
 			// Create battery structure and initialize
 			battstor batt(*this, true, n_rec_single_year, dt_hour_gen);
+			batt.initialize_automated_dispatch(power_input_lifetime, load_lifetime);
 
-			if (batt.batt_vars->batt_meter_position == dispatch_t::BEHIND){
-				batt.initialize_automated_dispatch(power_input_lifetime, load_lifetime);
-			}
 
 			if (load_lifetime.size() != n_rec_lifetime) {
 				throw exec_error("battery", "Load length does not match system generation length");
