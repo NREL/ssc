@@ -1043,6 +1043,9 @@ int C_comp__psi_eta_vs_phi::design_given_shaft_speed(double T_in /*K*/, double P
     ms_des_solved.m_phi_surge = m_phi_min;
     ms_des_solved.m_phi_max = m_phi_max;
 
+    ms_des_solved.m_psi_des = psi_design;   //[-] ideal head coefficient
+    ms_des_solved.m_psi_max_at_N_des = calc_psi(m_phi_min, 1.0);  //[-] max ideal head coefficient at design shaft speed
+
     return 0;
 }
 
@@ -1260,7 +1263,7 @@ double C_comp__snl_radial_via_Dyreby::calc_psi(double phi_in /*-*/, double N_des
     if (phi >= m_phi_min)
         psi = ((((-498626.0*phi) + 53224.0) * phi - 2505.0) * phi + 54.6)*phi + 0.04049;  // from dimensionless modified head curve(at design - point, psi and modified psi are equal)
     else
-        return (1 + 0.5*(0.0225 - phi) / 0.0225)*0.47929;		//[-] Check for surge after model converges	
+        psi = (1 + 0.5*(0.0225 - phi) / 0.0225)*0.47929;		//[-] Check for surge after model converges	
 
     return psi / pow(N_des_over_N_od, pow(20.0*phi, 3.0));
 }
@@ -1705,6 +1708,7 @@ int C_comp_multi_stage::design_given_outlet_state(double T_in /*K*/, double P_in
 			
 			n_stages++;
 
+            mv_c_stages.clear();
             mv_c_stages.resize(n_stages);
 
 			//mv_stages.resize(n_stages);
@@ -1788,7 +1792,7 @@ int C_comp_multi_stage::design_given_outlet_state(double T_in /*K*/, double P_in
 	ms_des_solved.m_tip_ratio_max = max_calc_tip_speed;					//[-]
 	ms_des_solved.m_n_stages = n_stages;								//[-]
 	ms_des_solved.m_phi_surge = mv_c_stages[0]->m_phi_min;				//[-]
-    ms_des_solved.m_psi_max_at_N_des = ms_des_solved.m_psi_max_at_N_des;  //[-] Max ideal head coefficient at design shaft speed
+    ms_des_solved.m_psi_max_at_N_des = mv_c_stages[0]->ms_des_solved.m_psi_max_at_N_des; //[-] Max ideal head coefficient at design shaft speed
 
 	ms_des_solved.mv_D.resize(n_stages);					//[m]
 	ms_des_solved.mv_tip_speed_ratio.resize(n_stages);		//[-]
