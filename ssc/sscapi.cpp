@@ -50,6 +50,7 @@
 #include <stdio.h>
 #include <cstring>
 #include <iostream>
+#include <vector>
 
 #include "core.h"
 #include "sscapi.h"
@@ -367,6 +368,32 @@ SSCEXPORT void ssc_data_set_table( ssc_data_t p_data, const char *name, ssc_data
 	dat->table = *value;  // invokes operator= for deep copy
 }
 
+SSCEXPORT void ssc_data_set_data_array(ssc_data_t p_data, const char *name, ssc_data_t* table_array, int nrows ){
+    var_table *vt = static_cast<var_table*>(p_data);
+    if (!vt) return;
+    std::vector<var_data> vec;
+    for (int i = 0; i < nrows; i++){
+        auto tab = static_cast<var_table*>(table_array[i]);
+        vec.emplace_back(*tab);
+    }
+    vt->assign( name, var_data(vec));
+}
+
+SSCEXPORT void ssc_data_set_data_matrix(ssc_data_t p_data, const char *name, ssc_data_t* table_array, int nrows, int ncols ){
+    var_table *vt = static_cast<var_table*>(p_data);
+    if (!vt) return;
+    std::vector<std::vector<var_data>> mat;
+    for (int i = 0; i < nrows; i++){
+        std::vector<var_data> row;
+        for (int j = 0; j < ncols; j++){
+            auto tab = static_cast<var_table*>(table_array[i * nrows + j]);
+            row.emplace_back(*tab);
+        }
+        mat.emplace_back(row);
+    }
+    vt->assign( name, var_data(mat));
+}
+
 SSCEXPORT const char *ssc_data_get_string( ssc_data_t p_data, const char *name )
 {
 	var_table *vt = static_cast<var_table*>(p_data);
@@ -415,6 +442,43 @@ SSCEXPORT ssc_data_t ssc_data_get_table( ssc_data_t p_data, const char *name )
 	var_data *dat = vt->lookup(name);
 	if (!dat || dat->type != SSC_TABLE) return 0;
 	return static_cast<ssc_data_t>( &(dat->table) );
+}
+
+SSCEXPORT ssc_data_t *ssc_data_get_data_array(ssc_data_t p_data, const char *name, int *nrows ){
+    var_table *vt = static_cast<var_table*>(p_data);
+    if (!vt) return 0;
+    var_data *dat = vt->lookup(name);
+    if (!dat || dat->type != SSC_DATAARR) return 0;
+    if (nrows)
+        *nrows = (int) dat->vec.size();
+    else
+        return nullptr;
+    ssc_data_t table_ptr_arr[*nrows];
+    for (size_t i = 0; i < *nrows; i++){
+        table_ptr_arr[i] = static_cast<ssc_data_t>(&(dat->vec[i].table));
+    }
+    return table_ptr_arr;
+}
+
+SSCEXPORT ssc_data_t *ssc_data_get_data_matrix(ssc_data_t p_data, const char *name, int *nrows, int *ncols ){
+    var_table *vt = static_cast<var_table*>(p_data);
+    if (!vt) return 0;
+    var_data *dat = vt->lookup(name);
+    if (!dat || dat->type != SSC_DATAMAT) return 0;
+    if (nrows) *nrows = (int) dat->mat.size();
+    if (ncols){
+        if (!dat->mat.empty())
+            *ncols = (int) dat->mat[0].size();
+        else
+            *ncols = 0;
+    }
+    ssc_data_t table_ptr_arr[*nrows * *ncols];
+    for (size_t i = 0; i < *nrows; i++){
+        for (size_t j = 0; j < *ncols; j++){
+            table_ptr_arr[i * *nrows + j] = static_cast<ssc_data_t>(&(dat->mat[i][j].table));
+        }
+    }
+    return table_ptr_arr;
 }
 
 SSCEXPORT ssc_entry_t ssc_module_entry( int index )

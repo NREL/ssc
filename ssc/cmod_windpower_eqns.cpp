@@ -19,15 +19,15 @@ void Turbine_calculate_powercurve(ssc_data_t data)
             cut_out;
     int drive_train;
 
-    VT_GET_INPUT(vt, "turbine_size", turbine_size)
-    VT_GET_INPUT(vt, "wind_turbine_rotor_diameter", rotor_diameter)     // ssc input
-    VT_GET_INPUT(vt, "elevation", elevation)
-    VT_GET_INPUT(vt, "wind_turbine_max_cp", max_cp)                     // ssc input
-    VT_GET_INPUT(vt, "max_tip_speed", max_tip_speed)
-    VT_GET_INPUT(vt, "max_tip_sp_ratio", max_tip_sp_ratio)
-    VT_GET_INPUT(vt, "cut_in", cut_in)
-    VT_GET_INPUT(vt, "cut_out", cut_out)
-    VT_GET_INPUT(vt, "drive_train", drive_train)
+    vt_get_double(vt, "turbine_size", &turbine_size);
+    vt_get_double(vt, "wind_turbine_rotor_diameter", &rotor_diameter);     // ssc input
+    vt_get_double(vt, "elevation", &elevation);
+    vt_get_double(vt, "wind_turbine_max_cp", &max_cp);                     // ssc input
+    vt_get_double(vt, "max_tip_speed", &max_tip_speed);
+    vt_get_double(vt, "max_tip_sp_ratio", &max_tip_sp_ratio);
+    vt_get_double(vt, "cut_in", &cut_in);
+    vt_get_double(vt, "cut_out", &cut_out);
+    vt_get_int(vt, "drive_train", &drive_train);
 
     util::matrix_t<ssc_number_t> powercurve_windspeeds;
     util::matrix_t<ssc_number_t> powercurve_powerout;

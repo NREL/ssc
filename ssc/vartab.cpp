@@ -202,7 +202,7 @@ var_table &var_table::operator=( const var_table &rhs )
 	for ( var_hash::const_iterator it = rhs.m_hash.begin();
 		it != rhs.m_hash.end();
 		++it )
-		assign( (*it).first, *((*it).second) );
+		assign_match_case( (*it).first, *((*it).second) );
 
 	return *this;
 }
@@ -212,7 +212,6 @@ void var_table::clear()
 	for (var_hash::iterator it = m_hash.begin(); it != m_hash.end(); ++it)
 	{
 		// debug heap corruption
-
 		delete it->second; // delete the var_data object
 	}
 	m_hash.clear();
@@ -229,6 +228,19 @@ var_data *var_table::assign( const std::string &name, const var_data &val )
 	
 	v->copy(val);
 	return v;
+}
+
+var_data *var_table::assign_match_case( const std::string &name, const var_data &val )
+{
+    var_data *v = lookup(name);
+    if (!v)
+    {
+        v = new var_data;
+        m_hash[ name ] = v;
+    }
+
+    v->copy(val);
+    return v;
 }
 
 void var_table::unassign( const std::string &name )
@@ -276,6 +288,15 @@ var_data *var_table::lookup( const std::string &name )
 		return (*it).second;
 	else
 		return NULL;
+}
+
+var_data *var_table::lookup_match_case( const std::string &name )
+{
+    var_hash::iterator it = m_hash.find( name );
+    if ( it != m_hash.end() )
+        return (*it).second;
+    else
+        return NULL;
 }
 
 const char *var_table::first( )

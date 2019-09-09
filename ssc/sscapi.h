@@ -81,6 +81,8 @@ typedef int ssc_bool_t;
 #define SSC_ARRAY 3
 #define SSC_MATRIX 4
 #define SSC_TABLE 5
+#define SSC_DATAARR 6
+#define SSC_DATAMAT 7
 /**@}*/ 
 
 /** Creates a new data object in memory.  A data object stores a table of named values, where each value can be of any SSC datatype. */
@@ -137,6 +139,12 @@ SSCEXPORT void ssc_data_set_matrix( ssc_data_t p_data, const char *name, ssc_num
 
 /** Assigns value of type @a SSC_TABLE. */
 SSCEXPORT void ssc_data_set_table( ssc_data_t p_data, const char *name, ssc_data_t table );
+
+/** Assigns value of type @a SSC_DATAARR. */
+SSCEXPORT void ssc_data_set_data_array(ssc_data_t p_data, const char *name, ssc_data_t* table_array, int nrows );
+
+/** Assigns value of type @a SSC_DATAMAT. */
+SSCEXPORT void ssc_data_set_data_matrix(ssc_data_t p_data, const char *name, ssc_data_t* table_array, int nrows, int ncols );
 /**@}*/ 
 
 /** @name Retrieving variable values.
@@ -157,6 +165,13 @@ SSCEXPORT ssc_number_t *ssc_data_get_matrix( ssc_data_t p_data, const char *name
 
 /** Returns the value of a @a SSC_TABLE variable with the given name. */
 SSCEXPORT ssc_data_t ssc_data_get_table( ssc_data_t p_data, const char *name );
+
+/** Returns the value of a @a SSC_DATAARR variable with the given name. */
+SSCEXPORT ssc_data_t *ssc_data_get_data_array(ssc_data_t p_data, const char *name, int* nrows );
+
+/** Returns the value of a @a SSC_DATAMAT variable with the given name. */
+SSCEXPORT ssc_data_t *ssc_data_get_data_matrix(ssc_data_t p_data, const char *name, int* nrows, int* ncols );
+
 /**@}*/ 
 
 /** The opaque data structure that stores information about a compute module. */
