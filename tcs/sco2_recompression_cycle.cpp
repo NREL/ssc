@@ -3228,7 +3228,7 @@ void C_RecompCycle::finalize_design(int & error_code)
 {
 	int cpp_offset = 1;
 
-	int mc_design_err = m_mc_ms.design_given_outlet_state(m_temp_last[MC_IN],
+	int mc_design_err = m_mc_ms.design_given_outlet_state(ms_des_par.m_mc_comp_model_code, m_temp_last[MC_IN],
 									m_pres_last[MC_IN],
 									m_m_dot_mc,
 									m_temp_last[MC_OUT],
@@ -3266,7 +3266,7 @@ void C_RecompCycle::finalize_design(int & error_code)
 
 	if( ms_des_par.m_recomp_frac > 0.01 )
 	{
-		int rc_des_err = m_rc_ms.design_given_outlet_state(m_temp_last[LTR_LP_OUT],
+		int rc_des_err = m_rc_ms.design_given_outlet_state(ms_des_par.m_rc_comp_model_code, m_temp_last[LTR_LP_OUT],
 										m_pres_last[LTR_LP_OUT],
 										m_m_dot_rc,
 										m_temp_last[RC_OUT],

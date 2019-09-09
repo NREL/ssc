@@ -246,6 +246,11 @@ class C_comp__psi_eta_vs_phi
 {
 public:
 
+    enum E_comp_models 
+    {
+        E_snl_radial_via_Dyreby
+    };
+
     struct S_des_solved
     {
         // Compressor inlet conditions
@@ -323,8 +328,6 @@ public:
     double m_phi_min;               //[-]
     double m_phi_max;               //[-]    
 
-public:
-
     C_comp__psi_eta_vs_phi()
     {
         m_phi_design = std::numeric_limits<double>::quiet_NaN();
@@ -351,6 +354,8 @@ public:
 
     int calc_m_dot__phi_des(double T_in /*K*/, double P_in /*kPa*/, double N_rpm /*rpm*/, double & m_dot /*kg/s*/);
     
+    static std::unique_ptr<C_comp__psi_eta_vs_phi> construct_derived_C_comp__psi_eta_vs_phi(int comp_model_code);
+
     virtual double calc_psi(double phi /*-*/, double N_des_over_N_od /*-*/) = 0;
 
     virtual double calc_eta_normalized(double phi /*-*/, double N_des_over_N_od /*-*/) = 0;
@@ -498,6 +503,7 @@ public:
 	double m_r_W_dot_scale;		//[-] W_dot_cycle / W_dot_comp_basis (10 MWe)
 
 	int m_cost_model;		//[-]
+    int m_compressor_model; //[-]
 
 	enum
 	{
@@ -609,6 +615,8 @@ public:
 	{
 		m_r_W_dot_scale = 1.0;
 		m_cost_model = E_CARLSON_17;
+
+        m_compressor_model = -1;
 	};
 
 	const S_des_solved * get_design_solved()
@@ -691,7 +699,7 @@ public:
 	double calculate_cost(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
 		double T_out /*K*/, double P_out /*kPa*/, double W_dot /*kWe*/);
 
-	int design_given_outlet_state(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
+	int design_given_outlet_state(int comp_model_code, double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
 		double T_out /*K*/, double P_out /*K*/);
 
 	void off_design_given_N(double T_in /*K*/, double P_in /*kPa*/, double m_dot_cycle /*kg/s*/, double N_rpm /*rpm*/,

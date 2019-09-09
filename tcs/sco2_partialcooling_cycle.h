@@ -80,8 +80,11 @@ public:
             //
         double m_recomp_frac;				//[-] Fraction of flow that bypasses the precooler and the main compressor at the design point
 		double m_eta_mc;					//[-] design-point efficiency of the main compressor; isentropic if positive, polytropic if negative
-		double m_eta_rc;					//[-] design-point efficiency of the recompressor; isentropic if positive, polytropic if negative
+        int m_mc_comp_model_code;           //[-] Main compressor model - see sco2_cycle_components.h 
+        double m_eta_rc;					//[-] design-point efficiency of the recompressor; isentropic if positive, polytropic if negative
+        int m_rc_comp_model_code;           //[-] Recompressor model - see sco2_cycle_components.h 
 		double m_eta_pc;					//[-] design-point efficiency of the pre-compressor; 
+        int m_pc_comp_model_code;           //[-] Precompressor model - see sco2_cycle_components.h 
 		double m_eta_t;						//[-] design-point efficiency of the turbine; isentropic if positive, polytropic if negative
 		int m_N_sub_hxrs;					//[-] Number of sub-heat exchangers to use when calculating UA value for a heat exchanger
 		double m_P_high_limit;				//[kPa] maximum allowable pressure in cycle
@@ -111,6 +114,11 @@ public:
 
 			// Air cooler default
 			m_is_des_air_cooler = true;
+
+            // Compressor model codes
+            m_mc_comp_model_code = C_comp__psi_eta_vs_phi::E_snl_radial_via_Dyreby;
+            m_rc_comp_model_code = C_comp__psi_eta_vs_phi::E_snl_radial_via_Dyreby;
+            m_pc_comp_model_code = C_comp__psi_eta_vs_phi::E_snl_radial_via_Dyreby;
 
             // Recuperator design target codes
             m_LTR_target_code = 1;      // default to target conductance

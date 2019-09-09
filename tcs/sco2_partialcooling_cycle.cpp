@@ -493,7 +493,7 @@ double C_PartialCooling_Cycle::opt_eta_fixed_P_high(double P_high_opt /*kPa*/)
 
 int C_PartialCooling_Cycle::finalize_design()
 {
-	int mc_des_err = mc_mc.design_given_outlet_state(m_temp_last[MC_IN],
+	int mc_des_err = mc_mc.design_given_outlet_state(ms_des_par.m_mc_comp_model_code, m_temp_last[MC_IN],
 										m_pres_last[MC_IN],
 										m_m_dot_mc,
 										m_temp_last[MC_OUT],
@@ -504,7 +504,7 @@ int C_PartialCooling_Cycle::finalize_design()
 		return 71;
 	}
 
-	int pc_des_err = mc_pc.design_given_outlet_state(m_temp_last[PC_IN],
+	int pc_des_err = mc_pc.design_given_outlet_state(ms_des_par.m_pc_comp_model_code, m_temp_last[PC_IN],
 										m_pres_last[PC_IN],
 										m_m_dot_pc,
 										m_temp_last[PC_OUT],
@@ -517,7 +517,7 @@ int C_PartialCooling_Cycle::finalize_design()
 
 	if (ms_des_par.m_recomp_frac > 0.01)
 	{
-		int rc_des_err = mc_rc.design_given_outlet_state(m_temp_last[PC_OUT],
+		int rc_des_err = mc_rc.design_given_outlet_state(ms_des_par.m_rc_comp_model_code, m_temp_last[PC_OUT],
 										m_pres_last[PC_OUT],
 										m_m_dot_rc,
 										m_temp_last[RC_OUT],

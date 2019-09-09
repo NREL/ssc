@@ -1249,6 +1249,18 @@ int C_comp__psi_eta_vs_phi::calc_m_dot__phi_des(double T_in /*K*/, double P_in /
     return 0;
 }
 
+std::unique_ptr<C_comp__psi_eta_vs_phi> C_comp__psi_eta_vs_phi::construct_derived_C_comp__psi_eta_vs_phi(int comp_model_code)
+{
+    if (comp_model_code == E_snl_radial_via_Dyreby)
+    {
+        return std::unique_ptr<C_comp__snl_radial_via_Dyreby>(new C_comp__snl_radial_via_Dyreby());
+    }
+    else
+    {
+        throw(C_csp_exception("C_comp__psi_eta_vs_phi::construct_derived_C_comp__psi_eta_vs_phi unrecognized compressor model code"));
+    }
+}
+
 double C_comp__snl_radial_via_Dyreby::adjust_phi_for_N(double phi /*-*/, double N_des_over_N_od /*-*/)
 {
     return phi*pow(1.0 / N_des_over_N_od, 0.2);		//[-] modified flow coefficient
@@ -1636,7 +1648,7 @@ int C_comp_multi_stage::C_MEQ_N_rpm__P_out::operator()(double N_rpm /*rpm*/, dou
 			P_in = P_out;	//[kPa]
 		}
 
-        mpc_multi_stage->mv_c_stages[i] = std::unique_ptr<C_comp__snl_radial_via_Dyreby>(new C_comp__snl_radial_via_Dyreby());
+        mpc_multi_stage->mv_c_stages[i] = C_comp__psi_eta_vs_phi::construct_derived_C_comp__psi_eta_vs_phi(mpc_multi_stage->m_compressor_model);
         comp_err_code = mpc_multi_stage->mv_c_stages[i]->design_given_shaft_speed(T_in, P_in, m_m_dot_basis, N_rpm, m_eta_isen, P_out, T_out, tip_ratio);
 
 		//comp_err_code = mpc_multi_stage->mv_stages[i].design_given_shaft_speed(T_in, P_in, m_m_dot_basis, N_rpm, m_eta_isen, P_out, T_out, tip_ratio);
@@ -1665,13 +1677,15 @@ double C_comp_multi_stage::calculate_cost(double T_in /*K*/, double P_in /*kPa*/
 	}
 }
 
-int C_comp_multi_stage::design_given_outlet_state(double T_in /*K*/, double P_in /*kPa*/, double m_dot_cycle /*kg/s*/,
+int C_comp_multi_stage::design_given_outlet_state(int comp_model_code, double T_in /*K*/, double P_in /*kPa*/, double m_dot_cycle /*kg/s*/,
 	double T_out /*K*/, double P_out /*K*/)
 {
-	double m_dot_basis = m_dot_cycle / m_r_W_dot_scale;		//[kg/s]
+    m_compressor_model = comp_model_code;   //[-]
+
+    double m_dot_basis = m_dot_cycle / m_r_W_dot_scale;		//[kg/s]
 
     mv_c_stages.resize(1);
-    mv_c_stages[0] = std::unique_ptr<C_comp__snl_radial_via_Dyreby>(new C_comp__snl_radial_via_Dyreby());
+    mv_c_stages[0] = C_comp__psi_eta_vs_phi::construct_derived_C_comp__psi_eta_vs_phi(m_compressor_model);        // std::unique_ptr<C_comp__snl_radial_via_Dyreby>(new C_comp__snl_radial_via_Dyreby());
     mv_c_stages[0]->design_given_performance(T_in, P_in, m_dot_basis, T_out, P_out);
 
 	//mv_stages.resize(1);
