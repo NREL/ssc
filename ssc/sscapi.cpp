@@ -454,7 +454,7 @@ SSCEXPORT ssc_data_t *ssc_data_get_data_array(ssc_data_t p_data, const char *nam
     else
         return nullptr;
     ssc_data_t* table_ptr_arr = new ssc_data_t[*nrows];
-    for (size_t i = 0; i < *nrows; i++){
+    for (int i = 0; i < *nrows; i++){
         table_ptr_arr[i] = static_cast<ssc_data_t>(&(dat->vec[i].table));
     }
     return table_ptr_arr;
@@ -473,8 +473,8 @@ SSCEXPORT ssc_data_t *ssc_data_get_data_matrix(ssc_data_t p_data, const char *na
             *ncols = 0;
     }
     ssc_data_t* table_ptr_arr = new ssc_data_t[*nrows * *ncols];
-    for (size_t i = 0; i < *nrows; i++){
-        for (size_t j = 0; j < *ncols; j++){
+    for (int i = 0; i < *nrows; i++){
+        for (int j = 0; j < *ncols; j++){
             table_ptr_arr[i * *nrows + j] = static_cast<ssc_data_t>(&(dat->mat[i][j].table));
         }
     }

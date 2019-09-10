@@ -23,7 +23,7 @@ void map_input(var_table* vt, const std::string& sam_name, var_table* reopt_tabl
     }
 }
 
-SSCEXPORT void Reopt_size_battery_params(ssc_data_t data){
+SSCEXPORT void Reopt_size_battery_params(ssc_data_t data) {
     auto vt = static_cast<var_table*>(data);
     if (!vt){
         throw std::runtime_error("ssc_data_t data invalid");
@@ -173,7 +173,7 @@ SSCEXPORT void Reopt_size_battery_params(ssc_data_t data){
     // rate structures in sam are 2d arrays but are list of list of tables in reopt
     std::vector<std::vector<var_data>> vd_mat;
     VT_GET_MATRIX(vt, "ur_dc_tou_mat", mat);
-    if (mat->nrows() < demand_n_tiers){
+    if (mat->nrows() < (size_t)demand_n_tiers){
         throw std::runtime_error("Demand rate structure should have " + std::to_string(demand_n_tiers) + " tiers to match the provided schedule.");
     }
     for (size_t i = 0; i < mat->nrows(); i++){
@@ -189,7 +189,7 @@ SSCEXPORT void Reopt_size_battery_params(ssc_data_t data){
     vd_mat.clear();
 
     VT_GET_MATRIX(vt, "ur_ec_tou_mat", mat);
-    if (mat->nrows() < energy_n_tiers){
+    if (mat->nrows() < (size_t)energy_n_tiers){
         throw std::runtime_error("Energy rate structure should have " + std::to_string(demand_n_tiers) + " tiers to match the provided schedule.");
     }
     for (size_t i = 0; i < mat->nrows(); i++) {

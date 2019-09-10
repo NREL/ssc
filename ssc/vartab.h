@@ -34,17 +34,18 @@ using std::unordered_map;
 
 #ifdef _MSC_VER
 #pragma warning(disable: 4290)  // ignore warning: 'C++ exception specification ignored except to indicate a function is not __declspec(nothrow)'
+#pragma warning(disable: 4297)	// ignore warning: 'function assumed not to throw an exception but does'
 #endif
 
 class var_data;
 
 typedef unordered_map< std::string, var_data* > var_hash;
 
-class SSCEXPORT var_table
+class var_table
 {
 public:
-	explicit var_table();
-	virtual ~var_table();
+	SSCEXPORT explicit var_table();
+	SSCEXPORT virtual ~var_table();
 
 	void clear();
 	var_data *assign( const std::string &name, const var_data &value );
@@ -52,12 +53,12 @@ public:
     void unassign( const std::string &name );
 	bool rename( const std::string &oldname, const std::string &newname );
 	var_data *lookup( const std::string &name );
-    var_data *lookup_match_case( const std::string &name );
-    const char *first();
+	SSCEXPORT var_data *lookup_match_case( const std::string &name );
+	SSCEXPORT const char *first();
 	const char *next();
 	const char *key(int pos);
 	unsigned int size() { return (unsigned int)m_hash.size(); }
-	var_table &operator=( const var_table &rhs );
+	SSCEXPORT var_table &operator=( const var_table &rhs );
 
 private:
 	var_hash m_hash;
@@ -65,7 +66,7 @@ private:
 };
 
 
-class SSCEXPORT var_data
+class var_data
 {
 public:
 	
@@ -119,15 +120,9 @@ public:
 
 };
 
-static void vt_get_int(var_table* vt, std::string name, int* lvalue){
-    if (var_data* vd = vt->lookup(name)) *lvalue = (int)vd->num;
-    else throw std::runtime_error(std::string(name)+std::string(" must be assigned."));
-}
+SSCEXPORT void vt_get_int(var_table* vt, std::string name, int* lvalue);
 
-static void vt_get_double(var_table* vt, std::string name, double* lvalue){
-    if (var_data* vd = vt->lookup(name)) *lvalue = vd->num;
-    else throw std::runtime_error(std::string(name)+std::string(" must be assigned."));
-}
+SSCEXPORT void vt_get_double(var_table* vt, std::string name, double* lvalue);
 
 #define VT_GET_ARRAY_VEC(vt, name, vec_double) \
 if (var_data* vd = vt->lookup(name)) vec_double = vd->arr_vector(); \

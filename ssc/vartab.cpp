@@ -92,26 +92,26 @@ std::vector<double> var_data::arr_vector()
 {
     if (type != SSC_ARRAY)
         throw std::runtime_error("arr_vector error: var_data type not SSC_ARRAY.");
-    std::vector<double> vec;
+    std::vector<double> v;
     for (unsigned int i = 0; i < num.length(); i++){
-        vec.push_back(num[i]);
+        v.push_back(num[i]);
     }
-    return vec;
+    return v;
 }
 
 std::vector<std::vector<double>> var_data::matrix_vector()
 {
     if (type != SSC_MATRIX)
         throw std::runtime_error("arr_matrix error: var_data type not SSC_MATRIX.");
-    std::vector<std::vector<double>> vec;
+    std::vector<std::vector<double>> v;
     for (unsigned int i = 0; i < num.nrows(); i++){
         std::vector<double> row;
         for (unsigned int j = 0; j < num.ncols(); j++){
             row.push_back(num.at(i, j));
         }
-        vec.push_back(row);
+        v.push_back(row);
     }
-    return vec;
+    return v;
 }
 
 bool var_data::parse( unsigned char type, const std::string &buf, var_data &value )
@@ -332,3 +332,12 @@ const char *var_table::next()
 	return NULL;
 }
 
+SSCEXPORT void vt_get_int(var_table* vt, std::string name, int* lvalue) {
+	if (var_data* vd = vt->lookup(name)) *lvalue = (int)vd->num;
+	else throw std::runtime_error(std::string(name) + std::string(" must be assigned."));
+}
+
+SSCEXPORT void vt_get_double(var_table* vt, std::string name, double* lvalue) {
+	if (var_data* vd = vt->lookup(name)) *lvalue = vd->num;
+	else throw std::runtime_error(std::string(name) + std::string(" must be assigned."));
+}

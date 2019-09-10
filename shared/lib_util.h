@@ -258,7 +258,7 @@ namespace util
 	};
 
 	template< typename T >
-	class matrix_t
+	class __declspec(dllexport) matrix_t
 	{
 	protected:
 		T *t_array;
