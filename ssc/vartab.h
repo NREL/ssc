@@ -40,7 +40,7 @@ class var_data;
 
 typedef unordered_map< std::string, var_data* > var_hash;
 
-class var_table
+class SSCEXPORT var_table
 {
 public:
 	explicit var_table();
@@ -65,7 +65,7 @@ private:
 };
 
 
-class var_data
+class SSCEXPORT var_data
 {
 public:
 	

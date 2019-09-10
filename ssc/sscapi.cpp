@@ -453,7 +453,7 @@ SSCEXPORT ssc_data_t *ssc_data_get_data_array(ssc_data_t p_data, const char *nam
         *nrows = (int) dat->vec.size();
     else
         return nullptr;
-    ssc_data_t table_ptr_arr[*nrows];
+    ssc_data_t* table_ptr_arr = new ssc_data_t[*nrows];
     for (size_t i = 0; i < *nrows; i++){
         table_ptr_arr[i] = static_cast<ssc_data_t>(&(dat->vec[i].table));
     }
@@ -472,7 +472,7 @@ SSCEXPORT ssc_data_t *ssc_data_get_data_matrix(ssc_data_t p_data, const char *na
         else
             *ncols = 0;
     }
-    ssc_data_t table_ptr_arr[*nrows * *ncols];
+    ssc_data_t* table_ptr_arr = new ssc_data_t[*nrows * *ncols];
     for (size_t i = 0; i < *nrows; i++){
         for (size_t j = 0; j < *ncols; j++){
             table_ptr_arr[i * *nrows + j] = static_cast<ssc_data_t>(&(dat->mat[i][j].table));
