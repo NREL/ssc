@@ -74,6 +74,7 @@ static const char *Reopt_size_battery_params_doc =
         "     'om_fixed_escal' - double [%/year], Fixed O&M escalation\\n"
         "     'om_production_escal' - double [%/year], Production-based O&M escalation\\n"
         "     'total_installed_cost' - double [$]\\n"
+        "     'value_of_lost_load' - double [$/kWh], Value placed on unmet site load during grid outages\\n"
         "Output: key-value pairs added to var_table\\n"
         "     'reopt_scenario' - table, Scenario inputs to Reopt Lite API\\n"
         "     'log' - string";
