@@ -56,16 +56,15 @@ static var_info _cm_vtab_mhk_tidal[] = {
 	{ SSC_INPUT,			SSC_MATRIX,			"tidal_resource",					    "Frequency distribution of resource as a function of stream speeds",		"",				"",             "MHKTidal",			"*",						"",						"" },	
 	{ SSC_INPUT,			SSC_MATRIX,			"tidal_power_curve",					"Power curve of tidal energy device as function of stream speeds",			"kW",			"",             "MHKTidal",			"*",						"",						"" },	
 	{ SSC_INPUT,			SSC_NUMBER,			"annual_energy_loss",					"Total energy losses",														"%",			"",             "MHKTidal",			"?=0",						"",						"" },	
-	{ SSC_INPUT,			SSC_NUMBER,			"calculate_capacity",					"Calculate device rated capacity from power curve",							"0/1",			"",             "MHKTidal",         "?=1",                      "INTEGER,MIN=0,MAX=1",	"" },
+	//{ SSC_INPUT,			SSC_NUMBER,			"calculate_capacity",					"Calculate device rated capacity from power curve",							"0/1",			"",             "MHKTidal",         "?=1",                      "INTEGER,MIN=0,MAX=1",	"" },
 	{ SSC_INPUT,			SSC_NUMBER,			"number_devices",						"Number of tidal devices in the system",									"",				"",             "MHKTidal",         "?=1",                      "INTEGER",				"" },
 
-	{ SSC_INOUT,			SSC_NUMBER,			"device_rated_capacity",				"Rated capacity of device",													"kW",			"",				"MHKTidal",			"calculate_capacity=0",		"",						"" },
-
-	{ SSC_OUTPUT,			SSC_NUMBER,			"average_power_device",					"Average power production of a single device",								"kW",			"",				"MHKTidal",			"*",						"",						"" },
-	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual energy production of farm",											"kWh",			"",				"MHKTidal",			"*",						"",						"" },
-	{ SSC_OUTPUT,			SSC_NUMBER,			"capacity_factor",						"Capacity Factor of farm",													"%",			"",				"MHKTidal",			"*",						"",						"" },
-	{ SSC_OUTPUT,			SSC_ARRAY,			"annual_energy_distribution",			"Annual energy production of farm as function of speed",					"kWh",			"",				"MHKTidal",			"*",						"",						"" },
-	{ SSC_OUTPUT,			SSC_ARRAY,			"annual_cumulative_energy_distribution","Cumulative annual energy production of farm as function of speed",			"kWh",			"",				"MHKTidal",			"*",						"",						"" },
+	{ SSC_OUTPUT,			SSC_NUMBER,			"device_rated_capacity",				"Rated capacity of device",													"kW",			"",				"MHKTidal",			"calculate_capacity=0",		"",						"" },
+	{ SSC_OUTPUT,			SSC_NUMBER,			"device_average_power",					"Average power production of a single device",								"kW",			"",				"MHKTidal",			"*",						"",						"" },
+	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual energy production of array",										"kWh",			"",				"MHKTidal",			"*",						"",						"" },
+	{ SSC_OUTPUT,			SSC_NUMBER,			"capacity_factor",						"Capacity Factor of array",													"%",			"",				"MHKTidal",			"*",						"",						"" },
+	{ SSC_OUTPUT,			SSC_ARRAY,			"annual_energy_distribution",			"Annual energy production of array as function of speed",					"kWh",			"",				"MHKTidal",			"*",						"",						"" },
+	{ SSC_OUTPUT,			SSC_ARRAY,			"annual_cumulative_energy_distribution","Cumulative annual energy production of array as function of speed",		"kWh",			"",				"MHKTidal",			"*",						"",						"" },
 
 	var_info_invalid
 };
@@ -114,7 +113,7 @@ public:
 	//Initialize variables to store calculated values and outputs:
 		ssc_number_t *p_annual_energy_dist = allocate("annual_energy_distribution", number_rows);
 		ssc_number_t *p_annual_cumulative_energy_dist = allocate("annual_cumulative_energy_distribution", number_rows);
-		double annual_energy = 0, average_power_device = 0, _probability_vect_checker = 0, capacity_factor = 0, device_rated_capacity = 0;
+		double annual_energy = 0, device_average_power = 0, _probability_vect_checker = 0, capacity_factor = 0, device_rated_capacity = 0;
 		
 		//User either sets device_rated_capacity in the UI, or allows cmod to determine from power curve:
 		if (is_assigned("device_rated_capacity")) device_rated_capacity = as_double("device_rated_capacity");
@@ -130,9 +129,9 @@ public:
 			_power_vect[i] = tidal_power_curve.at(i, 1);
 			
 			//Store max power if not set in UI:
-			if (as_boolean("calculate_capacity"))
+			/*if (as_boolean("calculate_capacity"))
 				if (_power_vect[i] > device_rated_capacity)
-					device_rated_capacity = _power_vect[i];
+					device_rated_capacity = _power_vect[i];*/
 			
 			//Checker to ensure probability distribution adds to >= 99.5%:
 			_probability_vect_checker += _probability_vect[i];
@@ -150,7 +149,7 @@ public:
 				p_annual_cumulative_energy_dist[i] = p_annual_energy_dist[i] + p_annual_cumulative_energy_dist[i - 1];
 			
 			//Contribution to Average Power from this speed bin 
-			average_power_device += _power_vect[i] * _probability_vect[i];
+			device_average_power += _power_vect[i] * _probability_vect[i];
 		}
 				
 		//Throw exception if frequency distribution vector sums to < 99.5%
@@ -166,7 +165,7 @@ public:
 
 		//Assigning values to outputs:
 		assign("annual_energy", var_data((ssc_number_t)annual_energy));
-		assign("average_power_device", var_data((ssc_number_t)average_power_device));
+		assign("device_average_power", var_data((ssc_number_t)device_average_power));
 		assign("device_rated_capacity", var_data((ssc_number_t)device_rated_capacity));
 		assign("capacity_factor", var_data((ssc_number_t)capacity_factor * 100));
 	}
