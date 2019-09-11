@@ -984,10 +984,11 @@ int C_comp__psi_eta_vs_phi::design_given_shaft_speed(double T_in /*K*/, double P
     double N_rad_s = N_rpm / 9.549296590;		//[rad/s]
 
     // Solve for the diameter that gives the design flow coefficient
-    double D_rotor = std::pow(m_dot / (m_phi_design * rho_in * 0.5 * N_rad_s), 1.0 / 3.0);		//[m]
+    double phi_design = calc_phi_design(T_in, P_in);
+    double D_rotor = std::pow(m_dot / (phi_design * rho_in * 0.5 * N_rad_s), 1.0 / 3.0);		//[m]
 
     // Calculate psi at the design-point phi using Horner's method
-    double psi_design = calc_psi_design();
+    double psi_design = calc_psi_design(T_in, P_in);
 
     // Solve for idea head
     double U_tip = 0.5 * D_rotor * N_rad_s;		//[m/s]
@@ -1035,12 +1036,12 @@ int C_comp__psi_eta_vs_phi::design_given_shaft_speed(double T_in /*K*/, double P
     ms_des_solved.m_tip_ratio = tip_ratio;	//[-]
     ms_des_solved.m_eta_design = eta_isen;		//[-]
 
-    ms_des_solved.m_phi_des = m_phi_design;
-    ms_des_solved.m_phi_surge = m_phi_min;
-    ms_des_solved.m_phi_max = m_phi_max;
+    ms_des_solved.m_phi_des = phi_design;
+    ms_des_solved.m_phi_surge = calc_phi_min(T_in, P_in);
+    ms_des_solved.m_phi_max = calc_phi_max(T_in, P_in);
 
     ms_des_solved.m_psi_des = psi_design;   //[-] ideal head coefficient
-    ms_des_solved.m_psi_max_at_N_des = calc_psi(m_phi_min, 1.0);  //[-] max ideal head coefficient at design shaft speed
+    ms_des_solved.m_psi_max_at_N_des = calc_psi(ms_des_solved.m_phi_surge, 1.0, T_in, P_in);  //[-] max ideal head coefficient at design shaft speed
 
     return 0;
 }
@@ -1075,12 +1076,13 @@ int C_comp__psi_eta_vs_phi::design_given_performance(double T_in /*K*/, double P
     double h_out = out_props.enth;
 
     // Calculate psi at the design-point phi using Horner's method
-    double psi_design = calc_psi_design();	//[-]
+    double phi_design = calc_phi_design(T_in, P_in);
+    double psi_design = calc_psi_design(T_in, P_in);	//[-]
 
     // Determine required size and speed of compressor
     double w_i = h_isen_out - h_in;						//[kJ/kg] positive isentropic specific work of compressor
     double U_tip = sqrt(1000.0*w_i / psi_design);		//[m/s]
-    double D_rotor = sqrt(m_dot / (m_phi_design*rho_in*U_tip));
+    double D_rotor = sqrt(m_dot / (phi_design*rho_in*U_tip));
     double N_rad_s = U_tip * 2.0 / D_rotor;				//[rad/s] shaft speed
 
     double ssnd_out = out_props.ssnd;	//[m/s]
@@ -1106,19 +1108,14 @@ int C_comp__psi_eta_vs_phi::design_given_performance(double T_in /*K*/, double P
     ms_des_solved.m_tip_ratio = tip_ratio;	//[-]
     ms_des_solved.m_eta_design = (h_isen_out - h_in) / (h_out - h_in);		//[-]
 
-    ms_des_solved.m_phi_des = m_phi_design;
-    ms_des_solved.m_phi_surge = m_phi_min;
-    ms_des_solved.m_phi_max = m_phi_max;
+    ms_des_solved.m_phi_des = calc_phi_design(T_in, P_in);
+    ms_des_solved.m_phi_surge = calc_phi_min(T_in, P_in);
+    ms_des_solved.m_phi_max = calc_phi_max(T_in, P_in);
 
     ms_des_solved.m_psi_des = psi_design;   //[-] ideal head coefficient
-    ms_des_solved.m_psi_max_at_N_des = calc_psi(m_phi_min, 1.0);  //[-] max ideal head coefficient at design shaft speed
+    ms_des_solved.m_psi_max_at_N_des = calc_psi(ms_des_solved.m_phi_surge, 1.0, T_in, P_in);  //[-] max ideal head coefficient at design shaft speed
 
     return 0;
-}
-
-double C_comp__psi_eta_vs_phi::calc_psi_design()
-{
-    return calc_psi(m_phi_design, 1.0);
 }
 
 int C_comp__psi_eta_vs_phi::off_design_given_N(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/, double N_rpm /*rpm*/,
@@ -1141,7 +1138,8 @@ int C_comp__psi_eta_vs_phi::off_design_given_N(double T_in /*K*/, double P_in /*
     // Calculate the modified flow and head coefficients and efficiency
     double U_tip = ms_des_solved.m_D_rotor*0.5*ms_od_solved.m_N*0.104719755;				//[m/s]
     double phi = m_dot / (rho_in*U_tip*pow(ms_des_solved.m_D_rotor, 2));	//[-]
-    if (phi < m_phi_min)
+    double phi_min = calc_phi_min(T_in, P_in);
+    if (phi < phi_min)
     {
         ms_od_solved.m_surge = true;
     }
@@ -1152,9 +1150,9 @@ int C_comp__psi_eta_vs_phi::off_design_given_N(double T_in /*K*/, double P_in /*
 
     double N_des_over_N_od = ms_des_solved.m_N_design / N_rpm;      //[-]
 
-    double psi = calc_psi(phi, N_des_over_N_od);		//[-]
+    double psi = calc_psi(phi, N_des_over_N_od, T_in, P_in);		//[-]
 
-    double eta_ND_od = calc_eta_normalized(phi, N_des_over_N_od);
+    double eta_ND_od = calc_eta_normalized(phi, N_des_over_N_od, T_in, P_in);
 
     ms_od_solved.m_eta = std::max(eta_ND_od*ms_des_solved.m_eta_design, 0.0);		//[-] Actual compressor efficiency, not allowed to go negative
 
@@ -1200,7 +1198,7 @@ int C_comp__psi_eta_vs_phi::off_design_given_N(double T_in /*K*/, double P_in /*
 
     ms_od_solved.m_phi = phi;   //[-]
     ms_od_solved.m_psi = psi;   //[-]
-    ms_od_solved.m_surge_safety = phi / m_phi_min;	//[-] If > 1, then not in surge
+    ms_od_solved.m_surge_safety = phi / phi_min;	//[-] If > 1, then not in surge
     ms_od_solved.m_w_tip_ratio = U_tip / ssnd_out;
     ms_od_solved.m_W_dot_in = m_dot * (h_out - h_in);	//[kWe]
 
@@ -1262,7 +1260,29 @@ double C_comp__snl_radial_via_Dyreby::adjust_phi_for_N(double phi /*-*/, double 
     return phi*pow(1.0 / N_des_over_N_od, 0.2);		//[-] modified flow coefficient
 }
 
-double C_comp__snl_radial_via_Dyreby::calc_psi(double phi_in /*-*/, double N_des_over_N_od /*-*/)
+double C_comp__snl_radial_via_Dyreby::calc_phi_min(double T_comp_in /*K*/, double P_comp_in /*kPa*/)
+{
+    return m_phi_min;
+}
+
+double C_comp__snl_radial_via_Dyreby::calc_phi_design(double T_comp_in /*K*/, double P_comp_in /*kPa*/)
+{
+    return m_phi_design;
+}
+
+double C_comp__snl_radial_via_Dyreby::calc_phi_max(double T_comp_in /*K*/, double P_comp_in /*kPa*/)
+{
+    return m_phi_max;
+}
+
+double C_comp__snl_radial_via_Dyreby::calc_psi_design(double T_comp_in /*K*/, double P_comp_in /*kPa*/)
+{
+    double phi_design = calc_phi_design(T_comp_in, P_comp_in);
+
+    return calc_psi(phi_design, 1.0, T_comp_in, P_comp_in);
+}
+
+double C_comp__snl_radial_via_Dyreby::calc_psi(double phi_in /*-*/, double N_des_over_N_od /*-*/, double T_comp_in /*K*/, double P_comp_in /*kPa*/)
 {
     double phi = adjust_phi_for_N(phi_in, N_des_over_N_od);
     
@@ -1276,7 +1296,7 @@ double C_comp__snl_radial_via_Dyreby::calc_psi(double phi_in /*-*/, double N_des
     return psi / pow(N_des_over_N_od, pow(20.0*phi, 3.0));
 }
 
-double C_comp__snl_radial_via_Dyreby::calc_eta_normalized(double phi_in /*-*/, double N_des_over_N_od /*-*/)
+double C_comp__snl_radial_via_Dyreby::calc_eta_normalized(double phi_in /*-*/, double N_des_over_N_od /*-*/, double T_comp_in /*K*/, double P_comp_in /*kPa*/)
 {
     double phi = adjust_phi_for_N(phi_in, N_des_over_N_od);
     
@@ -1503,7 +1523,7 @@ int C_comp_multi_stage::design_given_outlet_state(int comp_model_code, double T_
     ms_des_solved.m_psi_des = mv_c_stages[0]->ms_des_solved.m_psi_des;     //[-]
 	ms_des_solved.m_tip_ratio_max = max_calc_tip_speed;					//[-]
 	ms_des_solved.m_n_stages = n_stages;								//[-]
-	ms_des_solved.m_phi_surge = mv_c_stages[0]->m_phi_min;				//[-]
+    ms_des_solved.m_phi_surge = mv_c_stages[0]->ms_des_solved.m_phi_surge;				//[-]
     ms_des_solved.m_psi_max_at_N_des = mv_c_stages[0]->ms_des_solved.m_psi_max_at_N_des; //[-] Max ideal head coefficient at design shaft speed
 
 	ms_des_solved.mv_D.resize(n_stages);					//[m]

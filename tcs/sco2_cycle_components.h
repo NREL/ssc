@@ -322,18 +322,9 @@ public:
             m_eta = m_phi = m_psi = m_w_tip_ratio = m_N =
                 m_W_dot_in = m_surge_safety = std::numeric_limits<double>::quiet_NaN();
         }
-    };
-    
-    double m_phi_design;            //[-]
-    double m_phi_min;               //[-]
-    double m_phi_max;               //[-]    
+    };          
 
-    C_comp__psi_eta_vs_phi()
-    {
-        m_phi_design = std::numeric_limits<double>::quiet_NaN();
-        m_phi_min = std::numeric_limits<double>::quiet_NaN();
-        m_phi_max = std::numeric_limits<double>::quiet_NaN();
-    }
+    C_comp__psi_eta_vs_phi(){}
 
     S_des_solved ms_des_solved;
     S_od_solved ms_od_solved;
@@ -343,9 +334,7 @@ public:
 
     int design_given_performance(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
         double T_out /*K*/, double P_out /*K*/);
-
-    double calc_psi_design();    //[-]
-
+    
     int off_design_given_N(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/, double N_rpm /*rpm*/,
         double & T_out /*K*/, double & P_out /*kPa*/);
 
@@ -356,14 +345,26 @@ public:
     
     static std::unique_ptr<C_comp__psi_eta_vs_phi> construct_derived_C_comp__psi_eta_vs_phi(int comp_model_code);
 
-    virtual double calc_psi(double phi /*-*/, double N_des_over_N_od /*-*/) = 0;
+    virtual double calc_phi_min(double T_comp_in /*K*/, double P_comp_in /*kPa*/) = 0;
 
-    virtual double calc_eta_normalized(double phi /*-*/, double N_des_over_N_od /*-*/) = 0;
+    virtual double calc_phi_design(double T_comp_in /*K*/, double P_comp_in /*kPa*/) = 0;
+    
+    virtual double calc_phi_max(double T_comp_in /*K*/, double P_comp_in /*kPa*/) = 0;
+    
+    virtual double calc_psi_design(double T_comp_in /*K*/, double P_comp_in /*kPa*/) = 0;    //[-]
+    
+    virtual double calc_psi(double phi /*-*/, double N_des_over_N_od /*-*/, double T_comp_in /*K*/, double P_comp_in /*kPa*/) = 0;
+
+    virtual double calc_eta_normalized(double phi /*-*/, double N_des_over_N_od /*-*/, double T_comp_in /*K*/, double P_comp_in /*kPa*/) = 0;
 };
 
 class C_comp__snl_radial_via_Dyreby : public C_comp__psi_eta_vs_phi
 {
 public: 
+
+    double m_phi_design;            //[-]
+    double m_phi_min;               //[-]
+    double m_phi_max;               //[-]  
 
     C_comp__snl_radial_via_Dyreby()
     {
@@ -374,9 +375,17 @@ public:
 
     double adjust_phi_for_N(double phi /*-*/, double N_des_over_N_od /*-*/);
 
-    virtual double calc_psi(double phi /*-*/, double N_des_over_N_od /*-*/);
+    virtual double calc_phi_min(double T_comp_in /*K*/, double P_comp_in /*kPa*/);
 
-    virtual double calc_eta_normalized(double phi /*-*/, double N_des_over_N_od /*-*/);
+    virtual double calc_phi_design(double T_comp_in /*K*/, double P_comp_in /*kPa*/);
+    
+    virtual double calc_phi_max(double T_comp_in /*K*/, double P_comp_in /*kPa*/);
+
+    virtual double calc_psi_design(double T_comp_in /*K*/, double P_comp_in /*kPa*/);
+    
+    virtual double calc_psi(double phi /*-*/, double N_des_over_N_od /*-*/, double T_comp_in /*K*/, double P_comp_in /*kPa*/);
+
+    virtual double calc_eta_normalized(double phi /*-*/, double N_des_over_N_od /*-*/, double T_comp_in /*K*/, double P_comp_in /*kPa*/);
 };
 
 class C_comp_multi_stage
