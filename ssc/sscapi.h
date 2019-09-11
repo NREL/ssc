@@ -81,7 +81,7 @@ typedef int ssc_bool_t;
 #define SSC_ARRAY 3
 #define SSC_MATRIX 4
 #define SSC_TABLE 5
-#define SSC_DATAARR 6
+#define SSC_DATARR 6
 #define SSC_DATAMAT 7
 /**@}*/ 
 

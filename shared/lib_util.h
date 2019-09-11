@@ -29,6 +29,9 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cassert>
 
 #include <unordered_map>
+
+#include "../ssc/sscapi.h"
+
 using std::unordered_map;
 
 #ifdef _MSC_VER
@@ -258,7 +261,7 @@ namespace util
 	};
 
 	template< typename T >
-	class __declspec(dllexport) matrix_t
+	class SSCEXPORT matrix_t
 	{
 	protected:
 		T *t_array;

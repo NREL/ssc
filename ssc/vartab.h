@@ -81,7 +81,7 @@ public:
 	var_data(const ssc_number_t *pvalues, int nr, int nc) : type(SSC_MATRIX) { num.assign(pvalues, (size_t)nr, (size_t)nc); }
     var_data(const util::matrix_t<ssc_number_t>& matrix): type(SSC_MATRIX) { num = matrix; }
     var_data(const var_table& vt) : type(SSC_TABLE) {table = vt; }
-	var_data(const std::vector<var_data>& vd_vec): type(SSC_DATAARR) { vec = vd_vec; }
+	var_data(const std::vector<var_data>& vd_vec): type(SSC_DATARR) { vec = vd_vec; }
     var_data(const std::vector<std::vector<var_data>>& vd_mat): type(SSC_DATAMAT) { mat = vd_mat; }
 
 

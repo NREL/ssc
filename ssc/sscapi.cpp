@@ -448,7 +448,7 @@ SSCEXPORT ssc_data_t *ssc_data_get_data_array(ssc_data_t p_data, const char *nam
     var_table *vt = static_cast<var_table*>(p_data);
     if (!vt) return 0;
     var_data *dat = vt->lookup(name);
-    if (!dat || dat->type != SSC_DATAARR) return 0;
+    if (!dat || dat->type != SSC_DATARR) return 0;
     if (nrows)
         *nrows = (int) dat->vec.size();
     else
