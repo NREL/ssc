@@ -41,46 +41,71 @@ SSCEXPORT void Reopt_size_battery_params(ssc_data_t data) {
     map_input(vt, "lon", &reopt_site, "longitude");
 
     //
-    // convert required pvsamv1 + battery inputs
+    // convert required pvsamv1 or pvwatts inputs
     //
-    int opt1, opt2;
-    vt_get_int(vt, "subarray1_track_mode", &opt1);
-    vt_get_int(vt, "subarray1_backtrack", &opt2);
-    if (opt1 == 2 && opt2 == 1)
-        opt1 = 3;
-    std::vector<int> opt_map = {0, 0, 2, 3, 4};
-    reopt_pv.assign("array_type", opt_map[opt1]);
-
-    reopt_pv.assign("module_type", 1);
-    map_input(vt, "subarray1_azimuth", &reopt_pv, "azimuth");
-    map_input(vt, "subarray1_tilt", &reopt_pv, "tilt");
-    map_input(vt, "dc_degradation", &reopt_pv, "degradation_pct", false, true);
-    map_input(vt, "subarray1_gcr", &reopt_pv, "gcr");
-
     // use existing pv system from SAM, not allowing additional PV
     map_input(vt, "system_capacity", &reopt_pv, "existing_kw");
     map_input(vt, "system_capacity", &reopt_pv, "max_kw");
+    map_input(vt, "degradation", &reopt_pv, "degradation_pct", false, true);
+    reopt_pv.assign("module_type", 1);
+
+    int opt1, opt2;
+    try{
+        vt_get_int(vt, "subarray1_track_mode", &opt1);
+        vt_get_int(vt, "subarray1_backtrack", &opt2);
+        if (opt1 == 2 && opt2 == 1)
+            opt1 = 3;
+        std::vector<int> opt_map = {0, 0, 2, 3, 4};
+        reopt_pv.assign("array_type", opt_map[opt1]);
+    }
+    catch(std::runtime_error&){
+        map_input(vt, "array_type", &reopt_pv, "array_type");
+    }
+
+    auto assign_matching_pv_vars = [&vt](var_table& dest, std::string pvwatts_var, std::string pvsam_var, bool ratio=false){
+        try{
+            map_input(vt, pvsam_var, &dest, pvwatts_var, false, ratio);
+        }
+        catch(std::runtime_error&){
+            map_input(vt, pvwatts_var, &dest, pvwatts_var, false, ratio);
+        }
+    };
+
+    assign_matching_pv_vars(reopt_pv, "azimuth", "subarray1_azimuth");
+    assign_matching_pv_vars(reopt_pv, "tilt", "subarray1_tilt");
+    assign_matching_pv_vars(reopt_pv, "gcr", "subarray1_gcr");
+    assign_matching_pv_vars(reopt_pv, "losses", "annual_total_loss_percent", true);
+
 
     // Get appropriate inverter efficiency input and transform to ratio from percent
-    std::vector<std::string> inv_eff_names = {"inv_snl_eff_cec", "inv_ds_eff", "inv_pd_eff", "inv_cec_cg_eff"};
-    double eff;
-    vt_get_int(vt, "inverter_model", &opt1);
-    if (opt1 == 4)
-        throw std::runtime_error("Inverter Mermoud Lejeune Model not supported.");
-    vt_get_double(vt, inv_eff_names[opt1], &eff);
-    eff /= 100.;
-    reopt_pv.assign("inv_eff", eff);
-    reopt_batt.assign("inverter_efficiency_pct", eff);
+    try{
+        std::vector<std::string> inv_eff_names = {"inv_snl_eff_cec", "inv_ds_eff", "inv_pd_eff", "inv_cec_cg_eff"};
+        double eff;
+        vt_get_int(vt, "inverter_model", &opt1);
+        if (opt1 == 4)
+            throw std::runtime_error("Inverter Mermoud Lejeune Model not supported.");
+        vt_get_double(vt, inv_eff_names[opt1], &eff);
+        eff /= 100.;
+        reopt_pv.assign("inv_eff", eff);
+        reopt_batt.assign("inverter_efficiency_pct", eff);
+    }
+    catch(std::runtime_error&){
+        map_input(vt, "inv_eff", &reopt_pv, "inv_eff");
+        map_input(vt, "inv_eff", &reopt_batt, "inverter_efficiency_pct");
+    }
 
     // calculate the dc ac ratio
     double val1, val2, system_cap;
-    std::vector<std::string> inv_power_names = { "inv_snl_paco", "inv_ds_paco", "inv_pd_paco", "inv_cec_cg_paco"};
-    vt_get_double(vt, inv_power_names[opt1], &val1);
-    vt_get_double(vt, "inverter_count", &val2);
-    vt_get_double(vt, "system_capacity", &system_cap);
-    reopt_pv.assign("dc_ac_ratio", system_cap * 1000. / (val2 * val1) );
-
-    map_input(vt, "losses", &reopt_pv, "losses", false, true);
+    try{
+        std::vector<std::string> inv_power_names = {"inv_snl_paco", "inv_ds_paco", "inv_pd_paco", "inv_cec_cg_paco"};
+        vt_get_double(vt, inv_power_names[opt1], &val1);
+        vt_get_double(vt, "inverter_count", &val2);
+        vt_get_double(vt, "system_capacity", &system_cap);
+        reopt_pv.assign("dc_ac_ratio", system_cap * 1000. / (val2 * val1));
+    }
+    catch(std::runtime_error&) {
+        map_input(vt, "dc_ac_ratio", &reopt_pv, "dc_ac_ratio");
+    }
 
     // financial inputs
     map_input(vt, "itc_fed_percent", &reopt_pv, "federal_itc_pct", false, true);
@@ -118,24 +143,38 @@ SSCEXPORT void Reopt_size_battery_params(ssc_data_t data) {
     }
 
     // ReOpt's internal_efficient_pct = SAM's (batt_dc_ac_efficiency + batt_ac_dc_efficiency)/2
-    map_input(vt, "batt_dc_ac_efficiency", &reopt_batt, "internal_efficiency_pct");
-    map_input(vt, "batt_ac_dc_efficiency", &reopt_batt, "internal_efficiency_pct", true);
-    reopt_batt.lookup("internal_efficiency_pct")->num[0] /= 200.;
-
     map_input(vt, "battery_per_kW", &reopt_batt, "installed_cost_us_dollars_per_kw");
     map_input(vt, "battery_per_kWh", &reopt_batt, "installed_cost_us_dollars_per_kwh");
-    vd = vt->lookup("batt_replacement_cost");
-    if (vd) reopt_batt.assign("replace_cost_us_dollars_per_kwh", vd->num);
-    map_input(vt, "om_replacement_cost1", &reopt_batt, "replace_cost_us_dollars_per_kwh");
-    map_input(vt, "batt_initial_SOC", &reopt_batt, "soc_init_pct", false, true);
-    map_input(vt, "batt_minimum_SOC", &reopt_batt, "soc_min_pct", false, true);
+
+    try{
+        map_input(vt, "batt_dc_ac_efficiency", &reopt_batt, "internal_efficiency_pct");
+        map_input(vt, "batt_ac_dc_efficiency", &reopt_batt, "internal_efficiency_pct", true);
+        reopt_batt.lookup("internal_efficiency_pct")->num[0] /= 200.;
+    }
+    catch(std::runtime_error&) {
+        reopt_batt.assign("internal_efficiency_pct", 0.96);
+    }
+    try{
+        map_input(vt, "batt_initial_SOC", &reopt_batt, "soc_init_pct", false, true);
+        map_input(vt, "batt_minimum_SOC", &reopt_batt, "soc_min_pct", false, true);
+    }
+    catch(std::runtime_error&) {
+        reopt_batt.assign("soc_init_pct", 0.5);
+        reopt_batt.assign("soc_min_pct", 0.15);
+    }
+
+    // battery replacement only enabled for pvsam, use REopt defaults otherwise
+    if ((vd = vt->lookup("om_replacement_cost1")))
+        reopt_batt.assign("replace_cost_us_dollars_per_kwh", vd->num[0]);
 
     // ReOpt's battery replacement single year versus SAM's array schedule
     std::vector<double> vec;
-    VT_GET_ARRAY_VEC(vt, "batt_replacement_schedule", vec);
-    if (vec.size() > 1)
-        log += "Warning: only first value of 'batt_replacement_schedule' array is used for the ReOpt input 'battery_replacement_year'.\n";
-    reopt_batt.assign("battery_replacement_year", vec[0]);
+    if ((vd = vt->lookup("batt_replacement_schedule"))){
+        vec = vd->arr_vector();
+        if (vec.size() > 1)
+            log += "Warning: only first value of 'batt_replacement_schedule' array is used for the ReOpt input 'battery_replacement_year'.\n";
+        reopt_batt.assign("battery_replacement_year", vec[0]);
+    }
 
     //
     // convert required utilityrate5 inputs
