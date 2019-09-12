@@ -62,7 +62,7 @@ static var_info _cm_vtab_mhk_wave[] = {
 	{ SSC_INPUT,			SSC_NUMBER,			"number_devices",						"Number of wave devices in the system",								"",				"",             "MHKWave",          "?=1",                      "INTEGER",			    	"" },
 	{ SSC_INPUT,			SSC_NUMBER,			"system_capacity",						"System Nameplate Capacity",										"kW",			"",				"MHKWave",			"?=0",						"",							"" },
 	
-	{ SSC_OUTPUT,			SSC_NUMBER,			"device_rated_capacity",				"Rated capacity of device",													"kW",			"",				"MHKTidal",			"calculate_capacity=0",		"",						"" },
+	{ SSC_OUTPUT,			SSC_NUMBER,			"device_rated_capacity",				"Rated capacity of device",													"kW",			"",				"MHKTidal",			"",		"",						"" },
 	{ SSC_OUTPUT,			SSC_NUMBER,			"device_average_power",					"Average power production of a single device",											"kW",			"",				"MHKWave",			"*",						"",							"" },
 	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual energy production of array",											"kWh",			"",				"MHKWave",			"*",						"",							"" },
 	{ SSC_OUTPUT,			SSC_NUMBER,			"capacity_factor",						"Capacity Factor",													"%",			"",				"MHKWave",			"*",						"",							"" },
@@ -85,7 +85,7 @@ public:
 		util::matrix_t<double>  wave_power_matrix = as_matrix("wave_power_matrix");
 		
 		//Check to ensure size of wave_power_matrix == wave_resource_matrix :
-		if ( (wave_resource_matrix.ncols() !=  wave_power_matrix.ncols() ) || ( wave_resource_matrix.nrows() * wave_power_matrix.nrows() ) )
+		if ( (wave_resource_matrix.ncols() !=  wave_power_matrix.ncols() ) || ( wave_resource_matrix.nrows() != wave_power_matrix.nrows() ) )
 			throw compute_module::exec_error("mhk_wave", "Size of Power Matrix is not equal to Wave Resource Matrix");
 
 		//Checker to ensure frequency distribution adds to >= 99.5%:
@@ -163,6 +163,7 @@ public:
 		assign("average_power", var_data((ssc_number_t)device_average_power));
 		//assign("system_capacity", var_data((ssc_number_t)system_capacity));
 		assign("capacity_factor", var_data((ssc_number_t)capacity_factor * 100));
+		assign("device_average_power", var_data((ssc_number_t)device_average_power));
 
 	}
 };

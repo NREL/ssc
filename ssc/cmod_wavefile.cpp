@@ -46,7 +46,7 @@ static var_info _cm_wave_file_reader[] = {
 
 																										            
 // weather data records																					            
-	{ SSC_OUTPUT,        SSC_MATRIX,      "freq_distribution",              "Frequency disttribution of resource",                                  "m/s",   "",                       "Weather Reader",      "*",                        "",                            "" },
+	{ SSC_OUTPUT,        SSC_MATRIX,      "wave_resource_matrix",              "Frequency disttribution of resource",                                  "m/s",   "",                       "Weather Reader",      "*",                        "",                            "" },
 
 var_info_invalid };
 
@@ -129,7 +129,7 @@ public:
 		assign("notes", var_data(values[12]));
 
 		// read in 21 rows x 22 columns
-		ssc_number_t *mat = allocate("freq_distribution", 21, 22);
+		ssc_number_t *mat = allocate("wave_resource_matrix", 21, 22);
 		for (size_t r = 0; r < 21; r++)
 		{
 			getline(ifs, buf);
