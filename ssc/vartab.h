@@ -55,7 +55,7 @@ public:
 	var_data *lookup( const std::string &name );
 	SSCEXPORT var_data *lookup_match_case( const std::string &name );
 	SSCEXPORT const char *first();
-	const char *next();
+	SSCEXPORT const char *next();
 	const char *key(int pos);
 	unsigned int size() { return (unsigned int)m_hash.size(); }
 	SSCEXPORT var_table &operator=( const var_table &rhs );
