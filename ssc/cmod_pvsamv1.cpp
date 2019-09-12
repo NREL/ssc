@@ -822,7 +822,10 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_wiring_loss", "AC wiring loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_transmission_loss", "Transmission loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
 //	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_transformer_loss", "AC step-up transformer loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_optimizer_loss", "DC power optimizer loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
+    { SSC_OUTPUT, SSC_NUMBER, "annual_dc_optimizer_loss", "DC power optimizer loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
+
+    // total loss diagram losses for single year, does not include lifetime losses
+    { SSC_OUTPUT, SSC_NUMBER, "annual_total_loss_percent", "PV System Loss, from Nominal POA to Net AC", "kWh", "", "Annual (Year 1)", "*", "", "" },
 
 	/*
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_after_wiring_loss", "AC output after wiring loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
@@ -2469,7 +2472,24 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	assign("annual_ac_perf_adj_loss_percent", var_data((ssc_number_t)percent));
 	sys_output *= (1.0 - percent / 100.0);
 
-
+	// total loss diagram losses for single-year simulation (life time losses not included)
+	std::vector<std::string> loss_components = {"annual_poa_shading_loss_percent", "annual_poa_soiling_loss_percent",
+                                             "annual_poa_cover_loss_percent", "annual_poa_rear_gain_percent",
+                                             "annual_dc_snow_loss_percent", "annual_dc_module_loss_percent",
+                                             "annual_dc_mppt_clip_loss_percent", "annual_dc_mismatch_loss_percent",
+                                             "annual_dc_diodes_loss_percent", "annual_dc_wiring_loss_percent",
+                                             "annual_dc_tracking_loss_percent", "annual_dc_nameplate_loss_percent",
+                                             "annual_dc_optimizer_loss_percent", "annual_dc_perf_adj_loss_percent",
+                                             "annual_dc_battery_loss_percent", "annual_ac_battery_loss_percent",
+                                             "annual_ac_inv_clip_loss_percent", "annual_ac_inv_pso_loss_percent",
+                                             "annual_ac_inv_pnt_loss_percent","annual_ac_inv_eff_loss_percent",
+                                             "annual_ac_wiring_loss_percent", "annual_xfmr_loss_percent",
+                                             "annual_ac_perf_adj_loss_percent"};
+	percent = 1.;
+	for (size_t i = 0; i < loss_components.size(); i++){
+	    percent *= (1. - as_number(loss_components[i])/100.);
+	}
+    assign("annual_total_loss_percent", var_data((ssc_number_t)(1.-percent)*100.));
 	// annual_ac_net = system_output
 
 #ifdef WITH_CHECKS

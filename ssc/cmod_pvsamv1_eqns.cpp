@@ -80,14 +80,7 @@ SSCEXPORT void Reopt_size_battery_params(ssc_data_t data) {
     vt_get_double(vt, "system_capacity", &system_cap);
     reopt_pv.assign("dc_ac_ratio", system_cap * 1000. / (val2 * val1) );
 
-    // ReOpt's 'losses' ratio = sum of three SAM percent inputs, only subarray1_dcloss required
-    val1 = 0.0;
-    if (var_data* vd = vt->lookup("dc_adjust"))
-        val1 += vd->num/100.;
-    if (var_data* vd = vt->lookup("dcoptimizer_loss"))
-        val1 += vd->num/100.;
-    reopt_pv.assign("losses", val1);
-    map_input(vt, "subarray1_dcloss", &reopt_pv, "losses", true, true);
+    map_input(vt, "losses", &reopt_pv, "losses", false, true);
 
     // financial inputs
     map_input(vt, "itc_fed_percent", &reopt_pv, "federal_itc_pct", false, true);
