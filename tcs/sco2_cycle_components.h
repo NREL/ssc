@@ -351,9 +351,9 @@ public:
     
     virtual double calc_phi_max(double T_comp_in /*K*/, double P_comp_in /*kPa*/) = 0;
     
-    virtual double calc_psi_design(double T_comp_in /*K*/, double P_comp_in /*kPa*/) = 0;    //[-]
+    virtual double calc_psi_isen_design(double T_comp_in /*K*/, double P_comp_in /*kPa*/) = 0;    //[-]
     
-    virtual double calc_psi(double phi /*-*/, double N_des_over_N_od /*-*/, double T_comp_in /*K*/, double P_comp_in /*kPa*/) = 0;
+    virtual double calc_psi_isen(double phi /*-*/, double N_des_over_N_od /*-*/, double T_comp_in /*K*/, double P_comp_in /*kPa*/) = 0;
 
     virtual double calc_eta_normalized(double phi /*-*/, double N_des_over_N_od /*-*/, double T_comp_in /*K*/, double P_comp_in /*kPa*/) = 0;
 };
@@ -381,9 +381,9 @@ public:
     
     virtual double calc_phi_max(double T_comp_in /*K*/, double P_comp_in /*kPa*/);
 
-    virtual double calc_psi_design(double T_comp_in /*K*/, double P_comp_in /*kPa*/);
+    virtual double calc_psi_isen_design(double T_comp_in /*K*/, double P_comp_in /*kPa*/);
     
-    virtual double calc_psi(double phi /*-*/, double N_des_over_N_od /*-*/, double T_comp_in /*K*/, double P_comp_in /*kPa*/);
+    virtual double calc_psi_isen(double phi /*-*/, double N_des_over_N_od /*-*/, double T_comp_in /*K*/, double P_comp_in /*kPa*/);
 
     virtual double calc_eta_normalized(double phi /*-*/, double N_des_over_N_od /*-*/, double T_comp_in /*K*/, double P_comp_in /*kPa*/);
 };

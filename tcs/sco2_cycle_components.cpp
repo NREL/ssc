@@ -988,7 +988,7 @@ int C_comp__psi_eta_vs_phi::design_given_shaft_speed(double T_in /*K*/, double P
     double D_rotor = std::pow(m_dot / (phi_design * rho_in * 0.5 * N_rad_s), 1.0 / 3.0);		//[m]
 
     // Calculate psi at the design-point phi using Horner's method
-    double psi_design = calc_psi_design(T_in, P_in);
+    double psi_design = calc_psi_isen_design(T_in, P_in);
 
     // Solve for idea head
     double U_tip = 0.5 * D_rotor * N_rad_s;		//[m/s]
@@ -1041,7 +1041,7 @@ int C_comp__psi_eta_vs_phi::design_given_shaft_speed(double T_in /*K*/, double P
     ms_des_solved.m_phi_max = calc_phi_max(T_in, P_in);
 
     ms_des_solved.m_psi_des = psi_design;   //[-] ideal head coefficient
-    ms_des_solved.m_psi_max_at_N_des = calc_psi(ms_des_solved.m_phi_surge, 1.0, T_in, P_in);  //[-] max ideal head coefficient at design shaft speed
+    ms_des_solved.m_psi_max_at_N_des = calc_psi_isen(ms_des_solved.m_phi_surge, 1.0, T_in, P_in);  //[-] max ideal head coefficient at design shaft speed
 
     return 0;
 }
@@ -1077,7 +1077,7 @@ int C_comp__psi_eta_vs_phi::design_given_performance(double T_in /*K*/, double P
 
     // Calculate psi at the design-point phi using Horner's method
     double phi_design = calc_phi_design(T_in, P_in);
-    double psi_design = calc_psi_design(T_in, P_in);	//[-]
+    double psi_design = calc_psi_isen_design(T_in, P_in);	//[-]
 
     // Determine required size and speed of compressor
     double w_i = h_isen_out - h_in;						//[kJ/kg] positive isentropic specific work of compressor
@@ -1113,7 +1113,7 @@ int C_comp__psi_eta_vs_phi::design_given_performance(double T_in /*K*/, double P
     ms_des_solved.m_phi_max = calc_phi_max(T_in, P_in);
 
     ms_des_solved.m_psi_des = psi_design;   //[-] ideal head coefficient
-    ms_des_solved.m_psi_max_at_N_des = calc_psi(ms_des_solved.m_phi_surge, 1.0, T_in, P_in);  //[-] max ideal head coefficient at design shaft speed
+    ms_des_solved.m_psi_max_at_N_des = calc_psi_isen(ms_des_solved.m_phi_surge, 1.0, T_in, P_in);  //[-] max ideal head coefficient at design shaft speed
 
     return 0;
 }
@@ -1150,7 +1150,7 @@ int C_comp__psi_eta_vs_phi::off_design_given_N(double T_in /*K*/, double P_in /*
 
     double N_des_over_N_od = ms_des_solved.m_N_design / N_rpm;      //[-]
 
-    double psi = calc_psi(phi, N_des_over_N_od, T_in, P_in);		//[-]
+    double psi = calc_psi_isen(phi, N_des_over_N_od, T_in, P_in);		//[-]
 
     double eta_ND_od = calc_eta_normalized(phi, N_des_over_N_od, T_in, P_in);
 
@@ -1275,14 +1275,14 @@ double C_comp__snl_radial_via_Dyreby::calc_phi_max(double T_comp_in /*K*/, doubl
     return m_phi_max;
 }
 
-double C_comp__snl_radial_via_Dyreby::calc_psi_design(double T_comp_in /*K*/, double P_comp_in /*kPa*/)
+double C_comp__snl_radial_via_Dyreby::calc_psi_isen_design(double T_comp_in /*K*/, double P_comp_in /*kPa*/)
 {
     double phi_design = calc_phi_design(T_comp_in, P_comp_in);
 
-    return calc_psi(phi_design, 1.0, T_comp_in, P_comp_in);
+    return calc_psi_isen(phi_design, 1.0, T_comp_in, P_comp_in);
 }
 
-double C_comp__snl_radial_via_Dyreby::calc_psi(double phi_in /*-*/, double N_des_over_N_od /*-*/, double T_comp_in /*K*/, double P_comp_in /*kPa*/)
+double C_comp__snl_radial_via_Dyreby::calc_psi_isen(double phi_in /*-*/, double N_des_over_N_od /*-*/, double T_comp_in /*K*/, double P_comp_in /*kPa*/)
 {
     double phi = adjust_phi_for_N(phi_in, N_des_over_N_od);
     
