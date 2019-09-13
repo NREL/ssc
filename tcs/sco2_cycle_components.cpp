@@ -1289,9 +1289,14 @@ double C_comp__snl_radial_via_Dyreby::calc_psi(double phi_in /*-*/, double N_des
     double psi = std::numeric_limits<double>::quiet_NaN();
 
     if (phi >= m_phi_min)
+    {
         psi = ((((-498626.0*phi) + 53224.0) * phi - 2505.0) * phi + 54.6)*phi + 0.04049;  // from dimensionless modified head curve(at design - point, psi and modified psi are equal)
+    }
     else
-        psi = (1 + 0.5*(0.0225 - phi) / 0.0225)*0.47929;		//[-] Check for surge after model converges	
+    {
+        double psi_at_surge = ((((-498626.0*m_phi_min) + 53224.0)*m_phi_min - 2505.0)*m_phi_min + 54.6)*m_phi_min + 0.04049;  // from dimensionless modified head curve(at design - point, psi and modified psi are equal)
+        psi = (1 + 0.5*(m_phi_min - phi) / m_phi_min)*psi_at_surge;		//[-] Check for surge after model converges	
+    }
 
     return psi / pow(N_des_over_N_od, pow(20.0*phi, 3.0));
 }
