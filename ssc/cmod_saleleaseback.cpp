@@ -2217,6 +2217,7 @@ public:
 			cf.at(CF_sponsor_ra,0) =
 				cf.at(CF_sponsor_lpra,0) +
 				cf.at(CF_sponsor_wcra,0) +
+				cf.at(CF_sponsor_receivablesra,0) +
 				cf.at(CF_sponsor_me1ra,0) +
 				cf.at(CF_sponsor_me2ra,0) +
 				cf.at(CF_sponsor_me3ra,0);
@@ -2248,7 +2249,8 @@ public:
 			cf.at(CF_sponsor_ra,nyears) =
 				cf.at(CF_sponsor_lpra,nyears) +
 				cf.at(CF_sponsor_wcra,nyears) +
-				cf.at(CF_sponsor_me1ra,nyears) +
+				cf.at(CF_sponsor_receivablesra, nyears) +
+				cf.at(CF_sponsor_me1ra, nyears) +
 				cf.at(CF_sponsor_me2ra,nyears) +
 				cf.at(CF_sponsor_me3ra,nyears);
 			cf.at(CF_sponsor_investing_activities,nyears) = cf.at(CF_sponsor_ra,nyears) + cf.at(CF_sponsor_mecs,nyears) - cf.at(CF_net_salvage_value,nyears);
