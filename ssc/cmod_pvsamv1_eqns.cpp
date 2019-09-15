@@ -3,7 +3,7 @@
 #include "vartab.h"
 
 void map_input(var_table* vt, const std::string& sam_name, var_table* reopt_table, const std::string& reopt_name,
-        bool sum = false, bool to_ratio = false){
+               bool sum = false, bool to_ratio = false){
     double sam_input;
     vt_get_double(vt, sam_name, &sam_input);
     if (var_data* vd = reopt_table->lookup(reopt_name)){
@@ -33,7 +33,7 @@ SSCEXPORT void Reopt_size_battery_params(ssc_data_t data) {
     reopt_params.type = SSC_TABLE;
     var_table* reopt_table = &reopt_params.table;
     var_table reopt_scenario, reopt_site, reopt_electric, reopt_utility, reopt_load, reopt_fin, reopt_pv, reopt_batt,
-        reopt_wind;
+            reopt_wind;
     reopt_wind.assign("max_kw", 0);
 
     // site lat and lon
@@ -90,17 +90,17 @@ SSCEXPORT void Reopt_size_battery_params(ssc_data_t data) {
         reopt_batt.assign("inverter_efficiency_pct", eff);
     }
     catch(std::runtime_error&){
-        map_input(vt, "inv_eff", &reopt_pv, "inv_eff");
-        map_input(vt, "inv_eff", &reopt_batt, "inverter_efficiency_pct");
+        map_input(vt, "inv_eff", &reopt_pv, "inv_eff", false, true);
+        map_input(vt, "inv_eff", &reopt_batt, "inverter_efficiency_pct", false, true);
     }
 
     // calculate the dc ac ratio
     double val1, val2, system_cap;
+    vt_get_double(vt, "system_capacity", &system_cap);
     try{
         std::vector<std::string> inv_power_names = {"inv_snl_paco", "inv_ds_paco", "inv_pd_paco", "inv_cec_cg_paco"};
         vt_get_double(vt, inv_power_names[opt1], &val1);
         vt_get_double(vt, "inverter_count", &val2);
-        vt_get_double(vt, "system_capacity", &system_cap);
         reopt_pv.assign("dc_ac_ratio", system_cap * 1000. / (val2 * val1));
     }
     catch(std::runtime_error&) {
@@ -260,8 +260,8 @@ SSCEXPORT void Reopt_size_battery_params(ssc_data_t data) {
     map_input(vt, "federal_tax_rate", &reopt_fin, "offtaker_tax_pct", false, true);
     map_input(vt, "state_tax_rate", &reopt_fin, "offtaker_tax_pct", true, true);
     map_input(vt, "rate_escalation", &reopt_fin, "escalation_pct");
-	map_input(vt, "value_of_lost_load", &reopt_fin, "value_of_lost_load_us_dollars_per_kwh");
-	reopt_fin.assign("microgrid_upgrade_cost_pct", 0);
+    map_input(vt, "value_of_lost_load", &reopt_fin, "value_of_lost_load_us_dollars_per_kwh");
+    reopt_fin.assign("microgrid_upgrade_cost_pct", 0);
 
     vt_get_double(vt, "inflation_rate", &val1);
     vt_get_double(vt, "real_discount_rate", &val2);
