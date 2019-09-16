@@ -272,6 +272,162 @@ SSCEXPORT void ssc_module_free( ssc_module_t p_mod )
 	if (cm) delete cm; // calls destructors for compute_module and tcskernel if a ssc-tcs technology
 }
 
+/*************************** var object manipulation ***************************/
+
+
+SSCEXPORT ssc_var_t ssc_var_create(){
+    return static_cast<ssc_data_t >( new var_data );
+}
+
+SSCEXPORT void ssc_var_free( ssc_var_t p_var )
+{
+    auto vt = static_cast<var_data*>(p_var);
+    if (vt) delete vt;
+}
+
+SSCEXPORT int ssc_var_query(ssc_var_t p_var){
+    auto vt = static_cast<var_data*>(p_var);
+    if(!vt) return -1;
+    return vt->type;
+}
+
+SSCEXPORT void ssc_var_set_string( ssc_var_t p_var, const char *value )
+{
+    auto vt = static_cast<var_data*>(p_var);
+    if (!vt) return;
+    vt->clear();
+    vt->type = SSC_STRING;
+    vt->str = value;
+}
+
+SSCEXPORT void ssc_var_set_number( ssc_var_t p_var, ssc_number_t value )
+{
+    auto vt = static_cast<var_data*>(p_var);
+    if (!vt) return;
+    vt->clear();
+    vt->type = SSC_NUMBER;
+    vt->num = value;
+}
+
+SSCEXPORT void ssc_var_set_array( ssc_var_t p_var, ssc_number_t *pvalues, int length )
+{
+    auto vt = static_cast<var_data*>(p_var);
+    if (!vt) return;
+    vt->clear();
+    vt->type = SSC_ARRAY;
+    vt->num.assign(pvalues, length);
+}
+
+SSCEXPORT void ssc_var_set_matrix( ssc_var_t p_var, ssc_number_t *pvalues, int nrows, int ncols )
+{
+    auto vt = static_cast<var_data*>(p_var);
+    if (!vt) return;
+    vt->clear();
+    vt->type = SSC_MATRIX;
+    vt->num.assign(pvalues, nrows, ncols);
+}
+
+SSCEXPORT void ssc_var_set_table( ssc_var_t p_var, ssc_data_t table )
+{
+    auto vt = static_cast<var_data*>(p_var);
+    auto value = static_cast<var_table*>(table);
+    if (!vt || !value) return;
+    vt->clear();
+    vt->type = SSC_TABLE;
+    vt->table = *value;
+}
+
+SSCEXPORT void ssc_var_set_var_array(ssc_var_t p_var, ssc_var_t* data_array, int nrows ){
+    auto vt = static_cast<var_data*>(p_var);
+    if (!vt) return;
+    vt->clear();
+    vt->type = SSC_DATARR;
+    std::vector<var_data> vec;
+    for (int i = 0; i < nrows; i++){
+        auto tab = static_cast<var_data*>(data_array[i]);
+        vec.emplace_back(*tab);
+    }
+    vt->vec = vec;
+}
+
+SSCEXPORT void ssc_var_set_var_matrix(ssc_var_t p_var, ssc_var_t* data_matrix, int nrows, int ncols ){
+    auto vt = static_cast<var_data*>(p_var);
+    if (!vt) return;
+    vt->clear();
+    vt->type = SSC_DATMAT;
+    std::vector<std::vector<var_data>> mat;
+    for (int i = 0; i < nrows; i++){
+        std::vector<var_data> row;
+        for (int j = 0; j < ncols; j++){
+            auto tab = static_cast<var_data*>(data_matrix[i * nrows + j]);
+            row.emplace_back(*tab);
+        }
+        mat.emplace_back(row);
+    }
+    vt->mat = mat;
+}
+
+SSCEXPORT const char *ssc_var_get_string( ssc_var_t p_var )
+{
+    auto vt = static_cast<var_data*>(p_var);
+    if (!vt || vt->type != SSC_STRING) return 0;
+    return vt->str.c_str();
+}
+
+SSCEXPORT ssc_number_t ssc_var_get_number( ssc_var_t p_var )
+{
+    auto vt = static_cast<var_data*>(p_var);
+    if (!vt || vt->type != SSC_NUMBER) return 0;
+    return vt->num[0];
+}
+
+SSCEXPORT ssc_number_t *ssc_var_get_array(ssc_var_t p_var,  int *length )
+{
+    auto vt = static_cast<var_data*>(p_var);
+    if (!vt || vt->type != SSC_ARRAY) return 0;
+    if (length) *length = (int) vt->num.length();
+    return vt->num.data();
+}
+
+SSCEXPORT ssc_number_t *ssc_var_get_matrix( ssc_var_t p_var, int *nrows, int *ncols )
+{
+    auto vt = static_cast<var_data*>(p_var);
+    if (!vt || vt->type != SSC_MATRIX) return 0;
+    if (nrows) *nrows = (int) vt->num.nrows();
+    if (ncols) *ncols = (int) vt->num.ncols();
+    return vt->num.data();
+}
+
+SSCEXPORT ssc_data_t ssc_var_get_table( ssc_var_t p_var )
+{
+    auto vt = static_cast<var_data*>(p_var);
+    if (!vt || vt->type != SSC_TABLE) return 0;
+    return static_cast<ssc_data_t>( &(vt->table) );
+}
+
+SSCEXPORT ssc_var_t ssc_var_get_var_array(ssc_var_t p_var, int *nrows ){
+    auto vt = static_cast<var_data*>(p_var);
+    if (!vt || vt->type != SSC_DATARR) return 0;
+    int n = (int)vt->vec.size();
+    if (nrows)
+        *nrows = n;
+    return &(vt->vec[0]);
+}
+
+SSCEXPORT ssc_var_t ssc_var_get_var_matrix(ssc_var_t p_var, int *nrows, int *ncols ){
+    auto vt = static_cast<var_data*>(p_var);
+    if (!vt || vt->type != SSC_DATMAT) return 0;
+    if (nrows) *nrows = (int) vt->mat.size();
+    if (ncols){
+        if (!vt->mat.empty())
+            *ncols = (int) vt->mat[0].size();
+        else
+            *ncols = 0;
+    }
+    return &(vt->mat[0]);
+}
+
+
 /*************************** data object manipulation ***************************/
 
 SSCEXPORT ssc_data_t ssc_data_create()
@@ -368,25 +524,25 @@ SSCEXPORT void ssc_data_set_table( ssc_data_t p_data, const char *name, ssc_data
 	dat->table = *value;  // invokes operator= for deep copy
 }
 
-SSCEXPORT void ssc_data_set_data_array(ssc_data_t p_data, const char *name, ssc_data_t* table_array, int nrows ){
-    var_table *vt = static_cast<var_table*>(p_data);
+SSCEXPORT void ssc_data_set_data_array(ssc_data_t p_data, const char *name, ssc_var_t* data_array, int nrows ){
+    auto vt = static_cast<var_table*>(p_data);
     if (!vt) return;
     std::vector<var_data> vec;
     for (int i = 0; i < nrows; i++){
-        auto tab = static_cast<var_table*>(table_array[i]);
+        auto tab = static_cast<var_data*>(data_array[i]);
         vec.emplace_back(*tab);
     }
     vt->assign( name, var_data(vec));
 }
 
-SSCEXPORT void ssc_data_set_data_matrix(ssc_data_t p_data, const char *name, ssc_data_t* table_array, int nrows, int ncols ){
-    var_table *vt = static_cast<var_table*>(p_data);
+SSCEXPORT void ssc_data_set_data_matrix(ssc_data_t p_data, const char *name, ssc_var_t* data_matrix, int nrows, int ncols ){
+    auto  *vt = static_cast<var_table*>(p_data);
     if (!vt) return;
     std::vector<std::vector<var_data>> mat;
     for (int i = 0; i < nrows; i++){
         std::vector<var_data> row;
         for (int j = 0; j < ncols; j++){
-            auto tab = static_cast<var_table*>(table_array[i * nrows + j]);
+            auto tab = static_cast<var_data*>(data_matrix[i * nrows + j]);
             row.emplace_back(*tab);
         }
         mat.emplace_back(row);
@@ -444,8 +600,8 @@ SSCEXPORT ssc_data_t ssc_data_get_table( ssc_data_t p_data, const char *name )
 	return static_cast<ssc_data_t>( &(dat->table) );
 }
 
-SSCEXPORT ssc_data_t *ssc_data_get_data_array(ssc_data_t p_data, const char *name, int *nrows ){
-    var_table *vt = static_cast<var_table*>(p_data);
+SSCEXPORT ssc_var_t ssc_data_get_data_array(ssc_data_t p_data, const char *name, int *nrows ){
+    auto vt = static_cast<var_table*>(p_data);
     if (!vt) return 0;
     var_data *dat = vt->lookup(name);
     if (!dat || dat->type != SSC_DATARR) return 0;
@@ -453,18 +609,14 @@ SSCEXPORT ssc_data_t *ssc_data_get_data_array(ssc_data_t p_data, const char *nam
         *nrows = (int) dat->vec.size();
     else
         return nullptr;
-    ssc_data_t* table_ptr_arr = new ssc_data_t[*nrows];
-    for (int i = 0; i < *nrows; i++){
-        table_ptr_arr[i] = static_cast<ssc_data_t>(&(dat->vec[i].table));
-    }
-    return table_ptr_arr;
+    return &(dat->vec[0]);
 }
 
-SSCEXPORT ssc_data_t *ssc_data_get_data_matrix(ssc_data_t p_data, const char *name, int *nrows, int *ncols ){
-    var_table *vt = static_cast<var_table*>(p_data);
+SSCEXPORT ssc_data_t ssc_data_get_data_matrix(ssc_data_t p_data, const char *name, int *nrows, int *ncols ){
+    auto vt = static_cast<var_table*>(p_data);
     if (!vt) return 0;
     var_data *dat = vt->lookup(name);
-    if (!dat || dat->type != SSC_DATAMAT) return 0;
+    if (!dat || dat->type != SSC_DATMAT) return 0;
     if (nrows) *nrows = (int) dat->mat.size();
     if (ncols){
         if (!dat->mat.empty())
@@ -472,13 +624,7 @@ SSCEXPORT ssc_data_t *ssc_data_get_data_matrix(ssc_data_t p_data, const char *na
         else
             *ncols = 0;
     }
-    ssc_data_t* table_ptr_arr = new ssc_data_t[*nrows * *ncols];
-    for (int i = 0; i < *nrows; i++){
-        for (int j = 0; j < *ncols; j++){
-            table_ptr_arr[i * *nrows + j] = static_cast<ssc_data_t>(&(dat->mat[i][j].table));
-        }
-    }
-    return table_ptr_arr;
+    return &(dat->mat[0]);
 }
 
 SSCEXPORT ssc_entry_t ssc_module_entry( int index )

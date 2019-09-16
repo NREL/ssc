@@ -62,6 +62,23 @@ SSCEXPORT int ssc_version();
 /** Returns information about the build configuration of this particular SSC library binary as a text string that lists the compiler, platform, build date/time and other information. */
 SSCEXPORT const char *ssc_build_info();
 
+/** @name Data types:
+  * Possible data types for ssc_var_t in an ssc_data_t:
+*/
+/**@{*/
+#define SSC_INVALID 0
+#define SSC_STRING 1
+#define SSC_NUMBER 2
+#define SSC_ARRAY 3
+#define SSC_MATRIX 4
+#define SSC_TABLE 5
+#define SSC_DATARR 6
+#define SSC_DATMAT 7
+/**@}*/
+
+/** An opaque reference to a structure that holds a variable of the possible types above.*/
+typedef void* ssc_var_t;
+
 /** An opaque reference to a structure that holds a collection of variables.  This structure can contain any number of variables referenced by name, and can hold strings, numbers, arrays, and matrices.  Matrices are stored in row-major order, where the array size is nrows*ncols, and the array index is calculated by r*ncols+c. An ssc_data_t object holds all input and output variables for a simulation. It does not distinguish between input, output, and input variables - that is handled at the model context level. */
 typedef void* ssc_data_t;
 
@@ -71,19 +88,38 @@ typedef double ssc_number_t;
 /** The boolean type used internally in SSC. Zero values represent false; non-zero represents true. */
 typedef int ssc_bool_t;
 
-/** @name Data types:
-  * Possible data types for variables in an ssc_data_t:
-*/
-/**@{*/ 
-#define SSC_INVALID 0
-#define SSC_STRING 1
-#define SSC_NUMBER 2
-#define SSC_ARRAY 3
-#define SSC_MATRIX 4
-#define SSC_TABLE 5
-#define SSC_DATARR 6
-#define SSC_DATAMAT 7
-/**@}*/ 
+SSCEXPORT ssc_var_t ssc_var_create();
+
+/** Get type of variable **/
+SSCEXPORT int ssc_var_query(ssc_var_t p_var);
+
+SSCEXPORT void ssc_var_set_string( ssc_var_t p_var, const char *value );
+
+SSCEXPORT void ssc_var_set_number( ssc_var_t p_var, ssc_number_t value );
+
+SSCEXPORT void ssc_var_set_array( ssc_var_t p_var, ssc_number_t *pvalues, int length );
+
+SSCEXPORT void ssc_var_set_matrix( ssc_var_t p_var, ssc_number_t *pvalues, int nrows, int ncols );
+
+SSCEXPORT void ssc_var_set_table( ssc_var_t p_var, ssc_var_t table );
+
+SSCEXPORT void ssc_var_set_var_array(ssc_var_t p_var, ssc_var_t* data_array, int nrows );
+
+SSCEXPORT void ssc_var_set_var_matrix(ssc_var_t p_var, ssc_var_t* data_matrix, int nrows, int ncols );
+
+SSCEXPORT const char *ssc_var_get_string( ssc_var_t p_var);
+
+SSCEXPORT ssc_number_t ssc_var_get_number( ssc_var_t p_var );
+
+SSCEXPORT ssc_number_t *ssc_var_get_array(ssc_var_t p_var,  int *length );
+
+SSCEXPORT ssc_number_t *ssc_var_get_matrix( ssc_var_t p_var, int *nrows, int *ncols );
+
+SSCEXPORT ssc_data_t ssc_var_get_table( ssc_var_t p_var);
+
+SSCEXPORT ssc_var_t ssc_var_get_var_array(ssc_var_t p_var, int *nrows );
+
+SSCEXPORT ssc_var_t ssc_var_get_var_matrix(ssc_var_t p_var, int *nrows, int *ncols );
 
 /** Creates a new data object in memory.  A data object stores a table of named values, where each value can be of any SSC datatype. */
 SSCEXPORT ssc_data_t ssc_data_create();
@@ -167,10 +203,10 @@ SSCEXPORT ssc_number_t *ssc_data_get_matrix( ssc_data_t p_data, const char *name
 SSCEXPORT ssc_data_t ssc_data_get_table( ssc_data_t p_data, const char *name );
 
 /** Returns the value of a @a SSC_DATAARR variable with the given name. */
-SSCEXPORT ssc_data_t *ssc_data_get_data_array(ssc_data_t p_data, const char *name, int* nrows );
+SSCEXPORT ssc_data_t ssc_data_get_data_array(ssc_data_t p_data, const char *name, int* nrows );
 
 /** Returns the value of a @a SSC_DATAMAT variable with the given name. */
-SSCEXPORT ssc_data_t *ssc_data_get_data_matrix(ssc_data_t p_data, const char *name, int* nrows, int* ncols );
+SSCEXPORT ssc_data_t ssc_data_get_data_matrix(ssc_data_t p_data, const char *name, int* nrows, int* ncols );
 
 /**@}*/ 
 
