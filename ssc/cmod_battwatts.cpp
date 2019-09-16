@@ -34,19 +34,20 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 var_info vtab_battwatts[] = {
 	/*   VARTYPE           DATATYPE         NAME                               LABEL                                    UNITS      META                   GROUP                  REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-	{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",        "PV lifetime simulation",                 "0/1",     "0=SingleYearRepeated,1=RunEveryYear",                     "",             "?=0",                        "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                   "Lifetime analysis period",               "years",   "The number of years in the simulation",                   "",             "system_use_lifetime_output=1",   "",                               "" },	
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_simple_enable",                "Enable Battery",                         "0/1",     "",                 "battwatts",                  "?=0",                        "BOOLEAN",                       "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_simple_kwh",                   "Battery Capacity",                       "kWh",     "",                 "battwatts",                  "?=0",                        "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_simple_kw",                    "Battery Power",                          "kW",      "",                 "battwatts",                  "?=0",                        "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_simple_chemistry",             "Battery Chemistry",                      "0=lead acid/1=Li-ion/2",   "",                 "battwatts",                  "?=0",                        "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_simple_dispatch",              "Battery Dispatch",                       "0=peak shaving look ahead/1=peak shaving look behind",     "",                 "battwatts",                  "?=0",                        "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_simple_meter_position",        "Battery Meter Position",                 "0=behind meter/1=front of meter",     "",                 "battwatts",                  "?=0",                        "",                              "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "dc",								  "DC array power",                         "W",       "",                 "",                           "",                           "",                              "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "ac",								  "AC inverter power",                      "W",       "",                 "",                           "",                           "",                              "" },
-	{ SSC_INPUT,		SSC_ARRAY,	     "load",			                  "Electricity load (year 1)",              "kW",	   "",		           "",                           "",	                         "",	                          "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inverter_model",                    "Inverter model specifier",                 "",      "0=cec,1=datasheet,2=partload,3=coefficientgenerator,4=generic", "",     "",                           "INTEGER,MIN=0,MAX=4",           "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inverter_efficiency",               "Inverter Efficiency",                     "%",      "",                  "",                          "",                           "",                               "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",        "PV lifetime simulation",                 "0/1",     "0=SingleYearRepeated,1=RunEveryYear",                     "Lifetime",             "?=0",                        "BOOLEAN",                        "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                   "Lifetime analysis period",               "years",   "The number of years in the simulation",                   "Lifetime",             "system_use_lifetime_output=1",   "",                               "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_simple_enable",                "Enable Battery",                         "0/1",     "",                 "Battery",                  "?=0",                        "BOOLEAN",                       "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_simple_kwh",                   "Battery Capacity",                       "kWh",     "",                 "Battery",                  "?=0",                        "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_simple_kw",                    "Battery Power",                          "kW",      "",                 "Battery",                  "?=0",                        "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_simple_chemistry",             "Battery Chemistry",                      "0=LeadAcid,1=Li-ion/2",   "",                 "Battery",                  "?=0",                        "",                              "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_simple_dispatch",              "Battery Dispatch",                       "0=PeakShavingLookAhead,1=PeakShavingLookBehind,2=Custom",     "",                 "Battery",                  "?=0",                        "",                              "" },
+    { SSC_INPUT,        SSC_ARRAY,       "batt_custom_dispatch",              "Battery Dispatch",                       "kW",      "",                 "Battery",                  "batt_simple_dispatch=2",                        "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_simple_meter_position",        "Battery Meter Position",                 "0=BehindTheMeter,1=FrontOfMeter",     "",                 "Battery",                  "?=0",                        "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "dc",								  "DC array power",                         "W",       "",                 "Battery",                           "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "ac",								  "AC inverter power",                      "W",       "",                 "Battery",                           "",                           "",                              "" },
+	{ SSC_INPUT,		SSC_ARRAY,	     "load",			                  "Electricity load (year 1)",              "kW",	   "",		           "Battery",                           "",	                         "",	                          "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inverter_model",                    "Inverter model specifier",                 "",      "0=cec,1=datasheet,2=partload,3=coefficientgenerator,4=generic", "Battery",     "",                           "INTEGER,MIN=0,MAX=4",           "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inverter_efficiency",               "Inverter Efficiency",                     "%",      "",                  "Battery",                          "",                           "",                               "" },
 
 var_info_invalid  };
 
@@ -223,7 +224,16 @@ public:
 
 		// Storage dispatch controllers
 		int dispatch = as_integer("batt_simple_dispatch");
-		batt_vars->batt_dispatch = (dispatch == 0 ? dispatch_t::LOOK_AHEAD : dispatch_t::LOOK_BEHIND);
+		switch (dispatch){
+		    default:
+		    case 0: batt_vars->batt_dispatch = dispatch_t::LOOK_AHEAD;
+		    break;
+		    case 1: batt_vars->batt_dispatch = dispatch_t::LOOK_BEHIND;
+		    break;
+		    case 2: batt_vars->batt_dispatch = dispatch_t::CUSTOM_DISPATCH;
+            batt_vars->batt_custom_dispatch = as_vector_double("batt_custom_dispatch");
+
+        }
 		batt_vars->batt_dispatch_auto_can_charge = true;
 		batt_vars->batt_dispatch_auto_can_gridcharge = true;
 
