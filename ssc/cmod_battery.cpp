@@ -518,8 +518,11 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 			}
 
 			// Battery bank replacement
-			batt_vars->batt_cost_per_kwh = cm.as_vector_double("om_replacement_cost1")[0];
-			batt_vars->batt_replacement_option = cm.as_integer("batt_replacement_option");
+			if (cm.is_assigned("om_replacement_cost1"))
+			    batt_vars->batt_cost_per_kwh = cm.as_vector_double("om_replacement_cost1")[0];
+            else
+                batt_vars->batt_cost_per_kwh = 0.;
+            batt_vars->batt_replacement_option = cm.as_integer("batt_replacement_option");
 			batt_vars->batt_replacement_capacity = cm.as_double("batt_replacement_capacity");
 
 			if (batt_vars->batt_replacement_option == battery_t::REPLACE_BY_SCHEDULE) {
