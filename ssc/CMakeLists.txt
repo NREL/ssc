@@ -263,7 +263,7 @@ if (MSVC)
 endif()
 
 if(DEFINED ENV{PYSAMDIR})
-	if (SAMAPI_EXPORT OR MSVC)
+	if (SAMAPI_EXPORT)
 		if (MSVC)
 			add_custom_command(
                 TARGET ssc
@@ -272,12 +272,18 @@ if(DEFINED ENV{PYSAMDIR})
 					$ENV{PYSAMDIR}/files/$<TARGET_FILE_BASE_NAME:ssc>.lib
 					$ENV{PYSAMDIR}/files/$<TARGET_FILE_BASE_NAME:ssc>.dll
 			)
+			add_custom_command(
+					TARGET ssc
+					POST_BUILD
+					COMMAND ${CMAKE_COMMAND}
+					ARGS -E copy ${SSC_LIB} $ENV{PYSAMDIR}/files
+			)
 		endif()
 		add_custom_command(
 				TARGET ssc
 				POST_BUILD
 				COMMAND ${CMAKE_COMMAND}
-				ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} $ENV{PYSAMDIR}/files
+				ARGS -E copy $<TARGET_FILE:ssc> $ENV{PYSAMDIR}/files
 		)
 	endif()
 endif()

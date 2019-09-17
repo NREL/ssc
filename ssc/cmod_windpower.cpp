@@ -118,7 +118,14 @@ static var_info _cm_vtab_windpower[] = {
 	{ SSC_OUTPUT , SSC_NUMBER , "capacity_factor"                    , "Capacity factor"                          , "%"       ,""                                    , "Annual"                               , "*"                                               , ""                                                , "" } ,
 	{ SSC_OUTPUT , SSC_NUMBER , "kwh_per_kw"                         , "First year kWh/kW"                        , "kWh/kW"  ,""                                    , "Annual"                               , "*"                                               , ""                                                , "" } ,
 
-	{ SSC_OUTPUT , SSC_NUMBER , "cutoff_losses"                      , "Cutoff losses"                            , "%"       ,""                                    , "Annual"                           ,"" , ""                                                , "" } ,
+    { SSC_OUTPUT , SSC_NUMBER , "avail_losses"                       , "Availability losses"                      , "%"       ,""                                    , "Annual"                           ,"" , ""                                                , "" } ,
+    { SSC_OUTPUT , SSC_NUMBER , "elec_losses"                        , "Electrical losses"                        , "%"       ,""                                    , "Annual"                           ,"" , ""                                                , "" } ,
+    { SSC_OUTPUT , SSC_NUMBER , "env_losses"                         , "Environmental losses"                     , "%"       ,""                                    , "Annual"                           ,"" , ""                                                , "" } ,
+    { SSC_OUTPUT , SSC_NUMBER , "ops_losses"                         , "Operational losses"                       , "%"       ,""                                    , "Annual"                           ,"" , ""                                                , "" } ,
+    { SSC_OUTPUT , SSC_NUMBER , "turb_losses"                        , "Turbine losses"                           , "%"       ,""                                    , "Annual"                           ,"" , ""                                                , "" } ,
+    { SSC_OUTPUT , SSC_NUMBER , "wake_losses"                        , "Wake losses"                              , "%"       ,""                                    , "Annual"                           ,"" , ""                                                , "" } ,
+
+    { SSC_OUTPUT , SSC_NUMBER , "cutoff_losses"                      , "Low temp and Icing Cutoff losses"         , "%"       ,""                                    , "Annual"                           ,"" , ""                                                , "" } ,
 	var_info_invalid };
 
 winddata::winddata(var_data *data_table)
@@ -223,6 +230,26 @@ cm_windpower::cm_windpower(){
 	add_var_info(vtab_p50p90);
 }
 
+// wind PRUF loss framework. Can replace numerical loss percentages by calculated losses in future model
+void calculate_losses(compute_module* cm){
+    double avail_loss_percent = cm->as_double("avail_bop_loss") + cm->as_double("avail_grid_loss")
+            + cm->as_double("avail_turb_loss");
+    double elec_loss_percent = cm->as_double("elec_eff_loss") + cm->as_double("elec_eff_loss");
+    // for instance, how will icing and low temp cut off affect total env loss?
+    double env_loss_percent = cm->as_double("env_degrad_loss") + cm->as_double("env_exposure_loss")
+                              + cm->as_double("env_ext_loss") + cm->as_double("env_icing_loss");
+    double ops_loss_percent = cm->as_double("ops_env_loss") + cm->as_double("ops_grid_loss")
+                              + cm->as_double("ops_load_loss") + cm->as_double("ops_strategies_loss");
+    double turb_loss_percent = cm->as_double("turb_generic_loss") + cm->as_double("turb_hysteresis_loss")
+                               + cm->as_double("turb_perf_loss") + cm->as_double("turb_specific_loss");
+    cm->assign("avail_losses", avail_loss_percent/100.);
+    cm->assign("elec_losses", elec_loss_percent/100.);
+    cm->assign("env_losses", env_loss_percent/100.);
+    cm->assign("ops_losses", ops_loss_percent/100.);
+    cm->assign("turb_losses", turb_loss_percent/100.);
+    cm->assign("wake_losses", avail_loss_percent/100.);
+}
+
 void cm_windpower::exec()
 {
 	// create windTurbine's powerCurve
@@ -278,7 +305,7 @@ void cm_windpower::exec()
 		throw exec_error("windpower", "failed to setup adjustment factors: " + haf.error());
 	bool lowTempCutoff = as_boolean("en_low_temp_cutoff");
 	bool icingCutoff = as_boolean("en_icing_cutoff");
-	
+
 	// Run Weibull Statistical model (single outputs) if selected
 	if (as_integer("wind_resource_model_choice") == 1 ){
 		ssc_number_t *turbine_output = allocate("turbine_output_by_windspeed_bin", wt.powerCurveArrayLength);
@@ -306,7 +333,7 @@ void cm_windpower::exec()
 			farmpwr[i] = farm_kw; // fill "gen"
 			farmpwr[i] *= haf(i); //apply adjustment factor/availability and curtailment losses
 		}
-		
+
 		for (size_t i = 0; i < wpc.nTurbines; i++)
 			turbine_output[i] = (ssc_number_t)turbine_outkW[i];
 
@@ -321,7 +348,8 @@ void cm_windpower::exec()
 		assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
 		assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
 		assign("annual_gross_energy", gross_energy);
-
+        calculate_p50p90(this);
+        calculate_losses(this);
 		return;
 	}
 
@@ -383,7 +411,8 @@ void cm_windpower::exec()
         assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
         assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
         assign("annual_gross_energy", farmPowerGross);
-
+        calculate_p50p90(this);
+        calculate_losses(this);
         return;
     }
 
@@ -503,7 +532,7 @@ void cm_windpower::exec()
 					throw exec_error("windpower", util::format("the closest wind speed measurement height (%lg m) and direction measurement height (%lg m) were more than 10m apart", wt.measurementHeight, closest_dir_meas_ht));
 			}
 
-			// If the wind speed measurement height still differs from the turbine hub height (ie it wasn't corrected above, maybe because file only has one measurement height), use the shear to correct it. 
+			// If the wind speed measurement height still differs from the turbine hub height (ie it wasn't corrected above, maybe because file only has one measurement height), use the shear to correct it.
 			if (fabs(wt.measurementHeight - wt.hubHeight) > 1) {
 				if (wt.shearExponent > 1.0) wt.shearExponent = 1.0 / 7.0;
 				wind = wind * pow(wt.hubHeight / wt.measurementHeight, wt.shearExponent);
@@ -567,7 +596,7 @@ void cm_windpower::exec()
 	assign("annual_gross_energy", annual_gross);
 
 	calculate_p50p90(this);
-
+    calculate_losses(this);
 } // exec
 
 DEFINE_MODULE_ENTRY(windpower, "Utility scale wind farm model (adapted from TRNSYS code by P.Quinlan and openWind software by AWS Truepower)", 2);
