@@ -144,6 +144,9 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	{ SSC_OUTPUT, SSC_ARRAY,   "cooler_tot_W_dot_fan_od","Intermediate pressure cooler fan power",               "MWe",        "",    "",      "",     "",       "" },
 		// UDPC Table
     { SSC_OUTPUT, SSC_MATRIX,  "udpc_table",  "Columns (7): HTF Temp [C], HTF ND mass flow [-], Ambient Temp [C], ND Power, ND Heat In, ND Fan Power, ND Water. Rows = runs" "", "", "", "", "", "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "udpc_n_T_htf",         "Number of HTF temperature values in udpc parametric",    "",          "",     "",      "",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "udpc_n_T_amb",         "Number of ambient temperature values in udpc parametric","",          "",     "",      "",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "udpc_n_m_dot_htf",     "Number of HTF mass flow rate values in udpc parameteric","",          "",     "",      "",     "",       "" },
         // Solver Metrics
 	{ SSC_OUTPUT, SSC_ARRAY,   "od_code",              "Diagnostic info",                                        "-",          ""     "",      "",     "",       "" },
 
@@ -472,6 +475,7 @@ public:
             double m_dot_htf_ND_des = 1.0;          //[-]
             double m_dot_htf_ND_high = 1.05;    //[-]
             int n_m_dot_htf_ND = 11;
+            assign("udpc_n_m_dot_htf", (ssc_number_t)n_m_dot_htf_ND);
             double m_dot_htf_ND_par_start = m_dot_htf_ND_low;       // m_dot_htf_ND_low - 0.05;    //[-]
             double m_dot_htf_ND_par_end = m_dot_htf_ND_high;        // m_dot_htf_ND_high + 0.05;     //[-]
             double delta_m_dot_htf_ND = (m_dot_htf_ND_par_end - m_dot_htf_ND_par_start) / (double)(n_m_dot_htf_ND - 1);
@@ -483,6 +487,7 @@ public:
             double T_htf_low = T_htf_hot_des - 20.0;        //[K]
             double T_htf_high = T_htf_hot_des + 15.0;       //[K]
             int n_T_htf_hot = 7;
+            assign("udpc_n_T_htf", (ssc_number_t)n_T_htf_hot);
             double T_htf_par_start = T_htf_low;     // T_htf_low - 5.0;     //[K]
             double T_htf_par_end = T_htf_high;      // T_htf_high + 5.0;      //[K]
             double delta_T_htf_hot = (T_htf_par_end - T_htf_par_start) / (double)(n_T_htf_hot - 1);
@@ -494,6 +499,7 @@ public:
             double T_amb_low = 273.15 + 0.0;         //[K]
             double T_amb_high = std::max(273.15 + 45.0, T_amb_des + 5.0);   //[K]
             int n_T_amb = 13;
+            assign("udpc_n_T_amb", (ssc_number_t)n_T_amb);
             double T_amb_par_start = T_amb_low; // 273.15 + 0.0;      //[K]
             double T_amb_par_end = T_amb_high;  // T_amb_high + 1.0;    //[K]
             double delta_T_amb = (T_amb_par_end - T_amb_par_start) / (double)(n_T_amb - 1);  //[K]
@@ -976,21 +982,23 @@ public:
                 // Columns(7) : HTF Temp[C], HTF ND mass flow[-], Ambient Temp[C], ND Power, ND Heat, ND Fan Power, ND Water
                 if (is_od_generate_udpc_assigned)
                 {
-                    pm_udpc_table[n_run * 8 + 0] = (ssc_number_t)p_T_htf_hot_od[n_run];      //[C]
-                    pm_udpc_table[n_run * 8 + 1] = (ssc_number_t)p_m_dot_htf_fracs[n_run];   //[-]
-                    pm_udpc_table[n_run * 8 + 2] = (ssc_number_t)p_T_amb_od[n_run];          //[C]
-                    pm_udpc_table[n_run * 8 + 3] = (ssc_number_t)(p_W_dot_net_od[n_run] / (c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_W_dot_net*1.E-3));  //[-] 
-                    pm_udpc_table[n_run * 8 + 4] = (ssc_number_t)(p_Q_dot_od[n_run] / (c_sco2_cycle.get_design_solved()->ms_phx_des_solved.m_Q_dot_design*1.E-3));  //[-]
-                    pm_udpc_table[n_run * 8 + 5] = (ssc_number_t)(p_cooler_tot_W_dot_fan_od[n_run] / as_double("cooler_tot_W_dot_fan"));   //[-]
-                    pm_udpc_table[n_run * 8 + 6] = (ssc_number_t) 0.0;
+                    pm_udpc_table[n_run * 10 + 0] = (ssc_number_t)p_T_htf_hot_od[n_run];      //[C]
+                    pm_udpc_table[n_run * 10 + 1] = (ssc_number_t)p_m_dot_htf_fracs[n_run];   //[-]
+                    pm_udpc_table[n_run * 10 + 2] = (ssc_number_t)p_T_amb_od[n_run];          //[C]
+                    pm_udpc_table[n_run * 10 + 3] = (ssc_number_t)(p_W_dot_net_od[n_run] / (c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_W_dot_net*1.E-3));  //[-] 
+                    pm_udpc_table[n_run * 10 + 4] = (ssc_number_t)(p_Q_dot_od[n_run] / (c_sco2_cycle.get_design_solved()->ms_phx_des_solved.m_Q_dot_design*1.E-3));  //[-]
+                    pm_udpc_table[n_run * 10 + 5] = (ssc_number_t)(p_cooler_tot_W_dot_fan_od[n_run] / as_double("cooler_tot_W_dot_fan"));   //[-]
+                    pm_udpc_table[n_run * 10 + 6] = (ssc_number_t) 0.0;
                     if (T_t_in_mode == 0)    // HTF inlet temp
                     {
-                        pm_udpc_table[n_run * 8 + 7] = (ssc_number_t)((p_deltaT_HTF_PHX_od[n_run])/(T_htf_hot_des - T_htf_PHX_out_des));
+                        pm_udpc_table[n_run * 10 + 7] = (ssc_number_t)((p_deltaT_HTF_PHX_od[n_run])/(T_htf_hot_des - T_htf_PHX_out_des));
                     }
                     else if (T_t_in_mode == 1)
                     {
-                        pm_udpc_table[n_run * 8 + 7] = (ssc_number_t)((p_T_co2_PHX_out_od[n_run]-p_T_co2_PHX_in_od[n_run]) / (T_t_in_des - T_co2_PHX_in_des));
+                        pm_udpc_table[n_run * 10 + 7] = (ssc_number_t)((p_T_co2_PHX_out_od[n_run]-p_T_co2_PHX_in_od[n_run]) / (T_t_in_des - T_co2_PHX_in_des));
                     }
+                    pm_udpc_table[n_run * 10 + 8] = (ssc_number_t)(p_P_co2_PHX_in_od[n_run] / (c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::HTR_HP_OUT] * 1.E-3));
+                    pm_udpc_table[n_run * 10 + 9] = (ssc_number_t)(p_t_m_dot_od[n_run] / c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_m_dot_t);
                 }
 			}   
 			else
@@ -1108,14 +1116,16 @@ public:
                 // Columns(7) : HTF Temp[C], HTF ND mass flow[-], Ambient Temp[C], ND Power, ND Heat, ND Fan Power, ND Water
                 if (is_od_generate_udpc_assigned)
                 {
-                    pm_udpc_table[n_run * 8 + 0] = std::numeric_limits<ssc_number_t>::quiet_NaN();
-                    pm_udpc_table[n_run * 8 + 1] = std::numeric_limits<ssc_number_t>::quiet_NaN();
-                    pm_udpc_table[n_run * 8 + 2] = std::numeric_limits<ssc_number_t>::quiet_NaN();
-                    pm_udpc_table[n_run * 8 + 3] = std::numeric_limits<ssc_number_t>::quiet_NaN(); 
-                    pm_udpc_table[n_run * 8 + 4] = std::numeric_limits<ssc_number_t>::quiet_NaN();
-                    pm_udpc_table[n_run * 8 + 5] = std::numeric_limits<ssc_number_t>::quiet_NaN();
-                    pm_udpc_table[n_run * 8 + 6] = std::numeric_limits<ssc_number_t>::quiet_NaN();
-                    pm_udpc_table[n_run * 8 + 7] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_udpc_table[n_run * 10 + 0] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_udpc_table[n_run * 10 + 1] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_udpc_table[n_run * 10 + 2] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_udpc_table[n_run * 10 + 3] = std::numeric_limits<ssc_number_t>::quiet_NaN(); 
+                    pm_udpc_table[n_run * 10 + 4] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_udpc_table[n_run * 10 + 5] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_udpc_table[n_run * 10 + 6] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_udpc_table[n_run * 10 + 7] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_udpc_table[n_run * 10 + 8] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_udpc_table[n_run * 10 + 9] = std::numeric_limits<ssc_number_t>::quiet_NaN();
                 }
 			}
 
@@ -1238,7 +1248,7 @@ public:
         // UDPC Table
         if (is_udpc_table)
         {
-            pm_udpc_table = allocate("udpc_table", n_od_runs, 8);
+            pm_udpc_table = allocate("udpc_table", n_od_runs, 10);
         }
 		// Solver Metrics
 		p_od_code = allocate("od_code", n_od_runs);
