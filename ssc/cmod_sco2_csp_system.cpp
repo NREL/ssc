@@ -469,8 +469,10 @@ public:
             double m_dot_htf_ND_low = 0.5;      //[-]
             double m_dot_htf_ND_des = 1.0;          //[-]
             double m_dot_htf_ND_high = 1.05;    //[-]
-            int n_m_dot_htf_ND = 10;
-            double delta_m_dot_htf_ND = (m_dot_htf_ND_high - m_dot_htf_ND_low) / (double)(n_m_dot_htf_ND - 1);
+            int n_m_dot_htf_ND = 11;
+            double m_dot_htf_ND_par_start = m_dot_htf_ND_low;       // m_dot_htf_ND_low - 0.05;    //[-]
+            double m_dot_htf_ND_par_end = m_dot_htf_ND_high;        // m_dot_htf_ND_high + 0.05;     //[-]
+            double delta_m_dot_htf_ND = (m_dot_htf_ND_par_end - m_dot_htf_ND_par_start) / (double)(n_m_dot_htf_ND - 1);
             std::vector<double> m_dot_htf_ND_levels(3);
             m_dot_htf_ND_levels[0] = m_dot_htf_ND_low;
             m_dot_htf_ND_levels[1] = m_dot_htf_ND_des;
@@ -478,8 +480,10 @@ public:
 
             double T_htf_low = T_htf_hot_des - 20.0;        //[K]
             double T_htf_high = T_htf_hot_des + 15.0;       //[K]
-            int n_T_htf_hot = 5;
-            double delta_T_htf_hot = (T_htf_high - T_htf_low) / (double)(n_T_htf_hot - 1);
+            int n_T_htf_hot = 7;
+            double T_htf_par_start = T_htf_low;     // T_htf_low - 5.0;     //[K]
+            double T_htf_par_end = T_htf_high;      // T_htf_high + 5.0;      //[K]
+            double delta_T_htf_hot = (T_htf_par_end - T_htf_par_start) / (double)(n_T_htf_hot - 1);
             std::vector<double> T_htf_levels(3);
             T_htf_levels[0] = T_htf_low;    //[C]
             T_htf_levels[1] = T_htf_hot_des;   //[C]
@@ -487,8 +491,10 @@ public:
 
             double T_amb_low = 273.15 + 0.0;         //[K]
             double T_amb_high = std::max(273.15 + 45.0, T_amb_des + 5.0);   //[K]
-            int n_T_amb = 10;
-            double delta_T_amb = (T_amb_high - T_amb_low) / (double)(n_T_amb - 1);  //[K]
+            int n_T_amb = 13;
+            double T_amb_par_start = T_amb_low; // 273.15 + 0.0;      //[K]
+            double T_amb_par_end = T_amb_high;  // T_amb_high + 1.0;    //[K]
+            double delta_T_amb = (T_amb_par_end - T_amb_par_start) / (double)(n_T_amb - 1);  //[K]
             std::vector<double> T_amb_levels(3);
             T_amb_levels[0] = T_amb_low;    //[C]
             T_amb_levels[1] = T_amb_des;	//[C]
@@ -511,7 +517,7 @@ public:
             {
                 for (int j = 0; j < n_T_htf_hot; j++)
                 {
-                    double T_htf_hot_j = T_htf_low + delta_T_htf_hot * j;       //[K]
+                    double T_htf_hot_j = T_htf_par_start + delta_T_htf_hot * j;       //[K]
                 
                     od_cases(i*n_T_htf_hot + j, 0) = T_htf_hot_j - 273.15;      //[C] convert from K -> parametric
                     od_cases(i*n_T_htf_hot + j, 1) = m_dot_htf_ND_levels[i];    //[-] -> levels
@@ -523,7 +529,7 @@ public:
             {
                 for (int j = 0; j < n_T_amb; j++)
                 {
-                    double T_amb_j = T_amb_low + delta_T_amb * j;       //[K]
+                    double T_amb_j = T_amb_par_start + delta_T_amb * j;       //[K]
 
                     od_cases(3*n_T_htf_hot + i*n_T_amb + j, 0) = T_htf_levels[i] - 273.15;   //[C] convert from K -> levels
                     od_cases(3*n_T_htf_hot + i*n_T_amb + j, 1) = m_dot_htf_ND_des;  //[-] -> constant
@@ -535,7 +541,7 @@ public:
             {
                 for (int j = 0; j < n_m_dot_htf_ND; j++)
                 {
-                    double m_dot_j = m_dot_htf_ND_low + delta_m_dot_htf_ND * j;     //[-]
+                    double m_dot_j = m_dot_htf_ND_par_start + delta_m_dot_htf_ND * j;     //[-]
 
                     od_cases(3*n_T_htf_hot + 3*n_T_amb + i*n_m_dot_htf_ND + j, 0) = T_htf_hot_des - 273.15; //[C] convert from K -> constant
                     od_cases(3*n_T_htf_hot + 3*n_T_amb + i*n_m_dot_htf_ND + j, 1) = m_dot_j;          //[-] -> parametric
