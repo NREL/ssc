@@ -129,7 +129,7 @@ var_info vtab_battery_inputs[] = {
 
 	// storage dispatch
 	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_charge",                      "Periods 1-6 charging from system allowed?",              "",         "",                     "Battery",       "en_batt=1&batt_dispatch_choice=4",                           "",                             "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_fuelcellcharge",			   "Periods 1-6 charging from fuel cell allowed?",           "",         "",                     "FuelCell",     "",                        "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_fuelcellcharge",			     "Periods 1-6 charging from fuel cell allowed?",           "",         "",                     "FuelCell",     "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_discharge",                   "Periods 1-6 discharging allowed?",                       "",         "",                     "Battery",       "en_batt=1&batt_dispatch_choice=4",                           "",                             "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_gridcharge",                  "Periods 1-6 grid charging allowed?",                     "",         "",                     "Battery",       "en_batt=1&batt_dispatch_choice=4",                           "",                             "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_percent_discharge",           "Periods 1-6 discharge percent",                          "%",        "",                     "Battery",       "en_batt=1&batt_dispatch_choice=4",                           "",                             "" },

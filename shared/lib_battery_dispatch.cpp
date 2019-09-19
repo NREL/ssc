@@ -172,7 +172,7 @@ bool dispatch_t::check_constraints(double &I, size_t count)
 	// don't allow any changes to violate current limits
 	bool current_iterate = restrict_current(I);
 
-	// don't allow any changes to violate power limites
+	// don't allow any changes to violate power limits
 	bool power_iterate = restrict_power(I);
 
 	// iterate if any of the conditions are met

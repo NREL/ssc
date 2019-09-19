@@ -163,7 +163,8 @@ void SharedInverter::calculateACPower(const double powerDC_kW_in, const double D
 	else if (m_inverterType == OND_INVERTER)
 		m_ondInverter->acpower(std::fabs(powerDC_Watts) / m_numInverters,DCStringVoltage, T, &powerAC_Watts, &P_par, &P_lr, &efficiencyAC, &powerClipLoss_kW, &powerConsumptionLoss_kW, &powerNightLoss_kW, &dcWiringLoss_ond_kW, &acWiringLoss_ond_kW);
 
-	double tempLoss = 0.0;
+    Tdry_C = T;
+    double tempLoss = 0.0;
 	if (m_tempEnabled) {
 		calculateTempDerate(DCStringVoltage, T, powerAC_Watts, efficiencyAC, tempLoss);
 	}
@@ -195,6 +196,7 @@ void SharedInverter::calculateACPower(const std::vector<double> powerDC_kW_in, c
 	else if (m_inverterType == PARTLOAD_INVERTER)
 		m_partloadInverter->acpower(powerDC_Watts_one_inv, &powerAC_Watts, &P_lr, &P_par, &efficiencyAC, &powerClipLoss_kW, &powerNightLoss_kW);
 
+	Tdry_C = T;
 	double tempLoss = 0.0;
 	if (m_tempEnabled){
 		//use average of the DC voltages to pick which temp curve to use- a weighted average might be better but we don't have that information here
