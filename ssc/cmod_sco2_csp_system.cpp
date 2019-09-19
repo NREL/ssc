@@ -982,23 +982,24 @@ public:
                 // Columns(7) : HTF Temp[C], HTF ND mass flow[-], Ambient Temp[C], ND Power, ND Heat, ND Fan Power, ND Water
                 if (is_od_generate_udpc_assigned)
                 {
-                    pm_udpc_table[n_run * 10 + 0] = (ssc_number_t)p_T_htf_hot_od[n_run];      //[C]
-                    pm_udpc_table[n_run * 10 + 1] = (ssc_number_t)p_m_dot_htf_fracs[n_run];   //[-]
-                    pm_udpc_table[n_run * 10 + 2] = (ssc_number_t)p_T_amb_od[n_run];          //[C]
-                    pm_udpc_table[n_run * 10 + 3] = (ssc_number_t)(p_W_dot_net_od[n_run] / (c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_W_dot_net*1.E-3));  //[-] 
-                    pm_udpc_table[n_run * 10 + 4] = (ssc_number_t)(p_Q_dot_od[n_run] / (c_sco2_cycle.get_design_solved()->ms_phx_des_solved.m_Q_dot_design*1.E-3));  //[-]
-                    pm_udpc_table[n_run * 10 + 5] = (ssc_number_t)(p_cooler_tot_W_dot_fan_od[n_run] / as_double("cooler_tot_W_dot_fan"));   //[-]
-                    pm_udpc_table[n_run * 10 + 6] = (ssc_number_t) 0.0;
+                    pm_udpc_table[n_run * 11 + 0] = (ssc_number_t)p_T_htf_hot_od[n_run];      //[C]
+                    pm_udpc_table[n_run * 11 + 1] = (ssc_number_t)p_m_dot_htf_fracs[n_run];   //[-]
+                    pm_udpc_table[n_run * 11 + 2] = (ssc_number_t)p_T_amb_od[n_run];          //[C]
+                    pm_udpc_table[n_run * 11 + 3] = (ssc_number_t)(p_W_dot_net_od[n_run] / (c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_W_dot_net*1.E-3));  //[-] 
+                    pm_udpc_table[n_run * 11 + 4] = (ssc_number_t)(p_Q_dot_od[n_run] / (c_sco2_cycle.get_design_solved()->ms_phx_des_solved.m_Q_dot_design*1.E-3));  //[-]
+                    pm_udpc_table[n_run * 11 + 5] = (ssc_number_t)(p_cooler_tot_W_dot_fan_od[n_run] / as_double("cooler_tot_W_dot_fan"));   //[-]
+                    pm_udpc_table[n_run * 11 + 6] = (ssc_number_t) 0.0;
                     if (T_t_in_mode == 0)    // HTF inlet temp
                     {
-                        pm_udpc_table[n_run * 10 + 7] = (ssc_number_t)((p_deltaT_HTF_PHX_od[n_run])/(T_htf_hot_des - T_htf_PHX_out_des));
+                        pm_udpc_table[n_run * 11 + 7] = (ssc_number_t)((p_deltaT_HTF_PHX_od[n_run])/(T_htf_hot_des - T_htf_PHX_out_des));
                     }
                     else if (T_t_in_mode == 1)
                     {
-                        pm_udpc_table[n_run * 10 + 7] = (ssc_number_t)((p_T_co2_PHX_out_od[n_run]-p_T_co2_PHX_in_od[n_run]) / (T_t_in_des - T_co2_PHX_in_des));
+                        pm_udpc_table[n_run * 11 + 7] = (ssc_number_t)((p_T_co2_PHX_out_od[n_run]-p_T_co2_PHX_in_od[n_run]) / (T_t_in_des - T_co2_PHX_in_des));
                     }
-                    pm_udpc_table[n_run * 10 + 8] = (ssc_number_t)(p_P_co2_PHX_in_od[n_run] / (c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::HTR_HP_OUT] * 1.E-3));
-                    pm_udpc_table[n_run * 10 + 9] = (ssc_number_t)(p_t_m_dot_od[n_run] / c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_m_dot_t);
+                    pm_udpc_table[n_run * 11 + 8] = (ssc_number_t)(p_P_co2_PHX_in_od[n_run] / (c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::HTR_HP_OUT] * 1.E-3));
+                    pm_udpc_table[n_run * 11 + 9] = (ssc_number_t)(p_t_m_dot_od[n_run] / c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_m_dot_t);
+                    pm_udpc_table[n_run * 11 + 10] = (ssc_number_t)(p_t_P_in_od[n_run] / (c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::TURB_IN] * 1.E-3));
                 }
 			}   
 			else
@@ -1116,16 +1117,17 @@ public:
                 // Columns(7) : HTF Temp[C], HTF ND mass flow[-], Ambient Temp[C], ND Power, ND Heat, ND Fan Power, ND Water
                 if (is_od_generate_udpc_assigned)
                 {
-                    pm_udpc_table[n_run * 10 + 0] = std::numeric_limits<ssc_number_t>::quiet_NaN();
-                    pm_udpc_table[n_run * 10 + 1] = std::numeric_limits<ssc_number_t>::quiet_NaN();
-                    pm_udpc_table[n_run * 10 + 2] = std::numeric_limits<ssc_number_t>::quiet_NaN();
-                    pm_udpc_table[n_run * 10 + 3] = std::numeric_limits<ssc_number_t>::quiet_NaN(); 
-                    pm_udpc_table[n_run * 10 + 4] = std::numeric_limits<ssc_number_t>::quiet_NaN();
-                    pm_udpc_table[n_run * 10 + 5] = std::numeric_limits<ssc_number_t>::quiet_NaN();
-                    pm_udpc_table[n_run * 10 + 6] = std::numeric_limits<ssc_number_t>::quiet_NaN();
-                    pm_udpc_table[n_run * 10 + 7] = std::numeric_limits<ssc_number_t>::quiet_NaN();
-                    pm_udpc_table[n_run * 10 + 8] = std::numeric_limits<ssc_number_t>::quiet_NaN();
-                    pm_udpc_table[n_run * 10 + 9] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_udpc_table[n_run * 11 + 0] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_udpc_table[n_run * 11 + 1] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_udpc_table[n_run * 11 + 2] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_udpc_table[n_run * 11 + 3] = std::numeric_limits<ssc_number_t>::quiet_NaN(); 
+                    pm_udpc_table[n_run * 11 + 4] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_udpc_table[n_run * 11 + 5] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_udpc_table[n_run * 11 + 6] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_udpc_table[n_run * 11 + 7] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_udpc_table[n_run * 11 + 8] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_udpc_table[n_run * 11 + 9] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_udpc_table[n_run * 11 + 10] = std::numeric_limits<ssc_number_t>::quiet_NaN();
                 }
 			}
 
@@ -1248,7 +1250,7 @@ public:
         // UDPC Table
         if (is_udpc_table)
         {
-            pm_udpc_table = allocate("udpc_table", n_od_runs, 10);
+            pm_udpc_table = allocate("udpc_table", n_od_runs, 11);
         }
 		// Solver Metrics
 		p_od_code = allocate("od_code", n_od_runs);
