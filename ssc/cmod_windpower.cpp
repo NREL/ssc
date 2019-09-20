@@ -280,10 +280,15 @@ void cm_windpower::exec()
 	if (!haf.setup())
 		throw exec_error("windpower", "failed to setup adjustment factors: " + haf.error());
 	bool lowTempCutoff = as_boolean("en_low_temp_cutoff");
+	double lowTempCutoffValue = lowTempCutoff ? as_double("low_temp_cutoff") : -1;
 	bool icingCutoff = as_boolean("en_icing_cutoff");
-	
-	// Run Weibull Statistical model (single outputs) if selected
-	if (as_integer("wind_resource_model_choice") == 1 ){
+    double icingTempCutoffValue = icingCutoff ? as_double("icing_cutoff_temp") : -1;
+    double icingRHCutoffValue = icingCutoff ? as_double("icing_cutoff_rh") : -1;
+
+
+
+    // Run Weibull Statistical model (single outputs) if selected
+	if (as_integer("wind_resource_model_choice") == 1){	
 		ssc_number_t *turbine_output = allocate("turbine_output_by_windspeed_bin", wt.powerCurveArrayLength);
 		std::vector<double> turbine_outkW(wt.powerCurveArrayLength);
 		double weibull_k = as_double("weibull_k_factor");
@@ -542,10 +547,10 @@ void cm_windpower::exec()
 			// apply losses
 			withoutLosses += farmp * haf(hr);
 			if (lowTempCutoff){
-				if (temp < as_double("low_temp_cutoff")) farmp = 0.0;
+				if (temp < lowTempCutoffValue) farmp = 0.0;
 			}
 			if (icingCutoff){
-				if (temp < as_double("icing_cutoff_temp") && wdprov->relativeHumidity()[i] < as_double("icing_cutoff_rh"))
+				if (temp < icingTempCutoffValue && wdprov->relativeHumidity()[i] > icingRHCutoffValue)
 					farmp = 0.0;
 			}
 
