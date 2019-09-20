@@ -991,15 +991,15 @@ public:
                     pm_udpc_table[n_run * 11 + 6] = (ssc_number_t) 0.0;
                     if (T_t_in_mode == 0)    // Model input is HTF hot temperature
                     {
-                        pm_udpc_table[n_run * 11 + 7] = (ssc_number_t)p_T_htf_cold_od[n_run];     //((p_deltaT_HTF_PHX_od[n_run])/(T_htf_hot_des - T_htf_PHX_out_des));
+                        pm_udpc_table[n_run * 11 + 7] = (ssc_number_t)((p_deltaT_HTF_PHX_od[n_run])/(T_htf_hot_des - T_htf_PHX_out_des));
                     }
                     else if (T_t_in_mode == 1)  // Model input is CO2 turbine inlet temperature
                     {
-                        pm_udpc_table[n_run * 11 + 7] = (ssc_number_t)p_T_co2_PHX_in_od[n_run];  //((p_T_co2_PHX_out_od[n_run]-p_T_co2_PHX_in_od[n_run]) / (T_t_in_des - T_co2_PHX_in_des));
+                        pm_udpc_table[n_run * 11 + 7] = (ssc_number_t)((p_T_co2_PHX_out_od[n_run]-p_T_co2_PHX_in_od[n_run]) / (T_t_in_des - T_co2_PHX_in_des));
                     }
-                    pm_udpc_table[n_run * 11 + 8] = (ssc_number_t)(p_P_co2_PHX_in_od[n_run]); //[MPa]      // / (c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::HTR_HP_OUT] * 1.E-3));
-                    pm_udpc_table[n_run * 11 + 9] = (ssc_number_t)(p_t_m_dot_od[n_run]);    //[kg/s]         // / c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_m_dot_t);
-                    pm_udpc_table[n_run * 11 + 10] = (ssc_number_t)(p_t_P_in_od[n_run]);    //[MPa]            // / (c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::TURB_IN] * 1.E-3));
+                    pm_udpc_table[n_run * 11 + 8] = (ssc_number_t)((p_P_co2_PHX_in_od[n_run]) / (c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::HTR_HP_OUT] * 1.E-3));
+                    pm_udpc_table[n_run * 11 + 9] = (ssc_number_t)((p_t_m_dot_od[n_run]) / c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_m_dot_t);
+                    pm_udpc_table[n_run * 11 + 10] = (ssc_number_t)((p_t_P_in_od[n_run]) / (c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::TURB_IN] * 1.E-3));
                 }
 			}   
 			else
