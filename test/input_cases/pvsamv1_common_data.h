@@ -693,6 +693,7 @@ void pvsamv1_with_residential_default(ssc_data_t &data)
 	ssc_data_set_number(data, "inv_snl_eff_cec", 96.636932373046875);
 	ssc_data_set_number(data, "inv_pd_eff", 95);
 	ssc_data_set_number(data, "inv_cec_cg_eff_cec", 96.636306762695313);
+	ssc_data_set_number(data, "batt_inverter_efficiency_cutoff", 90);
 	ssc_data_set_number(data, "batt_ac_or_dc", 1);
 	ssc_data_set_number(data, "batt_dc_dc_efficiency", 99);
 	ssc_data_set_number(data, "batt_dc_ac_efficiency", 96);
