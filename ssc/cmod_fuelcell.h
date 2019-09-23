@@ -153,7 +153,7 @@ public:
 			}
 		}
 		else {
-			throw compute_module::exec_error("fuelcell", "Electric load time steps must equal generation time step or 8760");
+			throw exec_error("fuelcell", "Electric load time steps must equal generation time step or 8760");
 		}
 
 		size_t count = 0;

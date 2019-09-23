@@ -24,6 +24,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _power_electronics_h_
 
 // Required due to need for complete type in std::unique_ptr<>
+#include "lib_shared_inverter.h"
 #include "lib_battery_dispatch.h"
 
 class BatteryBidirectionalInverter

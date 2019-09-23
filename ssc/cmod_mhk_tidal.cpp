@@ -2,7 +2,7 @@
 *  Copyright 2017 Alliance for Sustainable Energy, LLC
 *
 *  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  (ï¿½Allianceï¿½) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
 *  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
 *  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
 *  copies to the public, perform publicly and display publicly, and to permit others to do so.
@@ -27,8 +27,8 @@
 *  4. Redistribution of this software, without modification, must refer to the software by the same
 *  designation. Redistribution of a modified version of this software (i) may not refer to the modified
 *  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  the underlying software originally provided by Alliance as ï¿½System Advisor Modelï¿½ or ï¿½SAMï¿½. Except
+*  to comply with the foregoing, the terms ï¿½System Advisor Modelï¿½, ï¿½SAMï¿½, or any confusingly similar
 *  designation may not be used to refer to any modified version of this software or any modified
 *  version of the underlying software originally provided by Alliance without the prior written consent
 *  of Alliance.
@@ -87,18 +87,18 @@ public:
 		
 		//Check to ensure size of _power_vect == _speed_vect : 
 		if ( tidal_power_curve.nrows() != tidal_resource_matrix.nrows() )
-			throw compute_module::exec_error("mhk_tidal", "Size of Power Curve is not equal to Tidal Resource");
+			throw exec_error("mhk_tidal", "Size of Power Curve is not equal to Tidal Resource");
 
 		//Store the number of rows- this will have to change if resource and power curve can have different stream speeds
 		int number_rows = (int)tidal_resource_matrix.nrows();
 
 		//Check that the power matrix only has two columns
 		if (tidal_power_curve.ncols() != (size_t)2)
-			throw compute_module::exec_error("mhk_tidal", "Power curve must contain two columns");
+			throw exec_error("mhk_tidal", "Power curve must contain two columns");
 
 		//Check that the resource matrix has at least two columns
 		if (tidal_power_curve.ncols() < (size_t)2)
-			throw compute_module::exec_error("mhk_tidal", "Resource matrix must have at least two columns");
+			throw exec_error("mhk_tidal", "Resource matrix must have at least two columns");
 
 
 		//Create vectors to store individual columns from the user input matrix "tidal_resource"
@@ -156,7 +156,7 @@ public:
 		//Throw exception if frequency distribution vector sums to < 99.5%
 		double probability_tolerance = 0.005;
 		if (fabs(1.0 - _probability_vect_checker) > probability_tolerance)
-			throw compute_module::exec_error("mhk_tidal", "Probability distribution vector does not add up to 100%.");
+			throw exec_error("mhk_tidal", "Probability distribution vector does not add up to 100%.");
 
 		//Factoring in losses in total annual energy production:
 		annual_energy *= (1 - (as_double("annual_energy_loss") / 100 ));

@@ -46,19 +46,47 @@ class var_table
 public:
 	SSCEXPORT explicit var_table();
 	SSCEXPORT virtual ~var_table();
+	SSCEXPORT var_table &operator=( const var_table &rhs );
 
 	void clear();
-	var_data *assign( const std::string &name, const var_data &value );
-    var_data *assign_match_case( const std::string &name, const var_data &value );
+    bool is_assigned( const std::string &name );
     void unassign( const std::string &name );
 	bool rename( const std::string &oldname, const std::string &newname );
-	var_data *lookup( const std::string &name );
-	SSCEXPORT var_data *lookup_match_case( const std::string &name );
 	SSCEXPORT const char *first();
 	SSCEXPORT const char *next();
 	const char *key(int pos);
 	unsigned int size() { return (unsigned int)m_hash.size(); }
-	SSCEXPORT var_table &operator=( const var_table &rhs );
+
+    // setters
+    ssc_number_t *allocate( const std::string &name, size_t length );
+    ssc_number_t *allocate( const std::string &name, size_t nrows, size_t ncols );
+    util::matrix_t<ssc_number_t>& allocate_matrix( const std::string &name, size_t nrows, size_t ncols );
+	var_data *assign( const std::string &name, const var_data &value );
+    var_data *assign_match_case( const std::string &name, const var_data &value );
+
+	// getters
+	var_data *lookup( const std::string &name );
+	SSCEXPORT var_data *lookup_match_case( const std::string &name );
+    size_t as_unsigned_long(const std::string &name);
+    int as_integer( const std::string &name );
+    bool as_boolean( const std::string &name );
+    float as_float( const std::string &name );
+    ssc_number_t as_number( const std::string &name );
+    double as_double( const std::string &name );
+    const char *as_string( const std::string &name );
+    ssc_number_t *as_array( const std::string &name, size_t *count );
+    std::vector<int> as_vector_integer(const std::string &name);
+    std::vector<ssc_number_t> as_vector_ssc_number_t(const std::string &name);
+    std::vector<double> as_vector_double( const std::string &name );
+    std::vector<float> as_vector_float(const std::string &name);
+    std::vector<bool> as_vector_bool(const std::string &name);
+    std::vector<size_t> as_vector_unsigned_long(const std::string &name);
+    ssc_number_t *as_matrix( const std::string &name, size_t *rows, size_t *cols );
+    util::matrix_t<double> as_matrix(const std::string & name);
+    util::matrix_t<size_t> as_matrix_unsigned_long(const std::string & name);
+    util::matrix_t<double> as_matrix_transpose(const std::string & name);
+    bool get_matrix(const std::string &name, util::matrix_t<ssc_number_t> &mat);
+
 
 private:
 	var_hash m_hash;
@@ -127,6 +155,21 @@ public:
 	std::vector<var_data> vec;
     std::vector<std::vector<var_data>> mat;
 
+};
+
+class general_error : public std::exception
+{
+public:
+    explicit general_error(std::string s, float t=-1.0) : err_text(move(s)), time(t) { }
+    std::string err_text;
+    float time;
+};
+
+class cast_error : public general_error
+{
+public:
+    cast_error(const char *target_type, var_data &source, const std::string &name)
+            : general_error( "cast fail: <" + std::string(target_type) + "> from " + std::string(source.type_name()) + " for: " + name ) { }
 };
 
 SSCEXPORT void vt_get_int(var_table* vt, std::string name, int* lvalue);

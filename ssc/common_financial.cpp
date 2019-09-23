@@ -1167,13 +1167,13 @@ bool dispatch_calculations::setup()
 	if (nrows != 12 || ncols != 24)
 	{
 		m_error = util::format("dispatch values weekday schedule must be 12x24, input is %dx%d", (int)nrows, (int)ncols);
-		throw compute_module::exec_error("dispatch_values", m_error);
+		throw exec_error("dispatch_values", m_error);
 	}
 	ssc_number_t *disp_weekend = m_cm->as_matrix("dispatch_sched_weekend", &nrows, &ncols);
 	if (nrows != 12 || ncols != 24)
 	{
 		m_error = util::format("dispatch values weekend schedule must be 12x24, input is %dx%d", (int)nrows, (int)ncols);
-		throw compute_module::exec_error("dispatch_values", m_error);
+		throw exec_error("dispatch_values", m_error);
 	}
 	util::matrix_t<double> schedwkday(12, 24);
 	schedwkday.assign(disp_weekday, nrows, ncols);
@@ -1185,7 +1185,7 @@ bool dispatch_calculations::setup()
 	if (!util::translate_schedule(tod, schedwkday, schedwkend, 1, 9))
 	{
 		m_error = "could not translate weekday and weekend schedules for dispatch values";
-		throw compute_module::general_error(m_error);
+		throw general_error(m_error);
 	}
 
 	m_periods.resize(8760, 1);
@@ -1246,7 +1246,7 @@ bool dispatch_calculations::setup_ts()
 //	if (m_ngen != m_nmultipliers)
 //	{
 //		m_error = "issue with timestep dispatch multipliers";
-//		throw compute_module::general_error(m_error);
+//		throw general_error(m_error);
 //	}
 
 	ssc_number_t *ppa_multipliers = m_cm->allocate("ppa_multipliers", m_nmultipliers);
@@ -2205,13 +2205,13 @@ bool dispatch_calculations::compute_dispatch_output_ts()
 	if (step_per_hour_gen < 1 || step_per_hour_gen > 60 || step_per_hour_gen * 8760 != nrec_gen_per_year)
 	{
 		m_error = util::format("invalid number of gen records (%d): must be an integer multiple of 8760", (int)nrec_gen_per_year);
-		throw compute_module::exec_error("dispatch_calculations", m_error);
+		throw exec_error("dispatch_calculations", m_error);
 		return false;
 	}
 	if (m_nmultipliers != nrec_gen_per_year)
 	{
 		m_error = util::format("invalid number of gen records per year (%d) must be equal to number of ppa multiplier records (%d)", (int)nrec_gen_per_year, (int)m_nmultipliers);
-		throw compute_module::exec_error("dispatch_calculations", m_error);
+		throw exec_error("dispatch_calculations", m_error);
 		return false;
 	}
 	ssc_number_t ts_hour_gen = 1.0f / step_per_hour_gen;
@@ -2378,13 +2378,13 @@ bool dispatch_calculations::compute_lifetime_dispatch_output_ts()
 	if (step_per_hour_gen < 1 || step_per_hour_gen > 60 || step_per_hour_gen * 8760 != nrec_gen_per_year)
 	{
 		m_error = util::format("invalid number of gen records (%d): must be an integer multiple of 8760", (int)nrec_gen_per_year);
-		throw compute_module::exec_error("dispatch_calculations", m_error);
+		throw exec_error("dispatch_calculations", m_error);
 		return false;
 	}
 	if (m_nmultipliers != nrec_gen_per_year)
 	{
 		m_error = util::format("invalid number of gen records per year (%d) must be equal to number of ppa multiplier records (%d)", (int)nrec_gen_per_year, (int)m_nmultipliers);
-		throw compute_module::exec_error("dispatch_calculations", m_error);
+		throw exec_error("dispatch_calculations", m_error);
 		return false;
 	}
 	ssc_number_t ts_hour_gen = 1.0f / step_per_hour_gen;
@@ -3190,7 +3190,7 @@ bool hourly_energy_calculation::calculate(compute_module *cm)
 		pgrid_batt = m_cm->as_array("grid_to_batt", &nrec_grid_batt);
 		if (nrec_gen != nrec_grid_batt)
 		{
-			throw compute_module::exec_error("hourly_energy_calculations", util::format("number of grid to battery records (%d) must be equal to number of gen records (%d)", (int)nrec_grid_batt, (int)nrec_gen));
+			throw exec_error("hourly_energy_calculations", util::format("number of grid to battery records (%d) must be equal to number of gen records (%d)", (int)nrec_grid_batt, (int)nrec_gen));
 			return false;
 		}
 		for (i = 0; i < nrec_gen; i++)
@@ -3207,7 +3207,7 @@ bool hourly_energy_calculation::calculate(compute_module *cm)
 	if (step_per_hour_gen < 1 || step_per_hour_gen > 60 || step_per_hour_gen * 8760 != nrec_gen_per_year)
 	{
 		m_error = util::format("invalid number of gen records (%d): must be an integer multiple of 8760", (int)nrec_gen_per_year);
-		throw compute_module::exec_error("hourly_energy_calculation", m_error);
+		throw exec_error("hourly_energy_calculation", m_error);
 		return false;
 	}
 	ssc_number_t ts_hour_gen = 1.0f / step_per_hour_gen;
@@ -3237,7 +3237,7 @@ bool hourly_energy_calculation::calculate(compute_module *cm)
 		if (m_hourly_energy.size() != 8760*m_nyears)
 		{
 			m_error = util::format("invalid number of hourly energy records (%d): must be %d", (int)m_hourly_energy.size(), 8760*m_nyears);
-			throw compute_module::exec_error("hourly_energy_calculation", m_error);
+			throw exec_error("hourly_energy_calculation", m_error);
 			return false;
 		}
 	}
@@ -3258,7 +3258,7 @@ bool hourly_energy_calculation::calculate(compute_module *cm)
 		if (m_hourly_energy.size() != 8760)
 		{
 			m_error = util::format("invalid number of hourly energy records (%d): must be 8760", (int)m_hourly_energy.size());
-			throw compute_module::exec_error("hourly_energy_calculation", m_error);
+			throw exec_error("hourly_energy_calculation", m_error);
 			return false;
 		}
 	}

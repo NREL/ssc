@@ -913,10 +913,11 @@ cm_pvsamv1::cm_pvsamv1()
 	add_var_info(vtab_technology_outputs);
 	add_var_info(vtab_battery_inputs);
 	add_var_info(vtab_battery_outputs);
+	add_var_info(vtab_resilience_outputs);
 }
 
 	
-void cm_pvsamv1::exec( ) throw (compute_module::general_error)
+void cm_pvsamv1::exec( ) throw (general_error)
 {
 
 	/// Underlying class which parses the compute module structure and sets up model inputs and outputs
@@ -992,7 +993,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 	// setup battery model
 	bool en_batt = as_boolean("en_batt");
-	battstor batt(*this, en_batt, nrec, ts_hour);
+	battstor batt(*m_vartab, en_batt, nrec, ts_hour);
 	batt.setSharedInverter(sharedInverter);
 	int batt_topology = (en_batt == true ? batt.batt_vars->batt_topology : 0);
 	std::vector<ssc_number_t> p_invcliploss_full;

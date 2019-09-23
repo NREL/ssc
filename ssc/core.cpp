@@ -290,63 +290,55 @@ var_data &compute_module::value( const std::string &name )
 
 bool compute_module::is_assigned( const std::string &name )
 {
-	return (lookup(name) != 0);
+	if (m_vartab) return (m_vartab->is_assigned(name));
+	else return false;
 }
 
 int compute_module::as_integer( const std::string &name )
 {
-	var_data &x = value(name);
-	if (x.type != SSC_NUMBER) throw cast_error("integer", x, name);
-	return (int) x.num;
+	if (m_vartab) m_vartab->as_integer(name);
+	else throw general_error("compute_module error: var_table does not exist.");
 }
 size_t compute_module::as_unsigned_long(const std::string &name)
 {
-	var_data &x = value(name);
-	if (x.type != SSC_NUMBER) throw cast_error("unsigned long", x, name);
-	return (size_t)x.num;
+    if (m_vartab) m_vartab->as_unsigned_long(name);
+    else throw general_error("compute_module error: var_table does not exist.");
 }
 
 bool compute_module::as_boolean( const std::string &name )
 {
-	var_data &x = value(name);
-	if (x.type != SSC_NUMBER) throw cast_error("boolean", x, name);
-	return (bool) ( (int)(x.num!=0) );
+    if (m_vartab) m_vartab->as_boolean(name);
+    else throw general_error("compute_module error: var_table does not exist.");
 }
 
 float compute_module::as_float( const std::string &name )
 {
-	var_data &x = value(name);
-	if (x.type != SSC_NUMBER) throw cast_error("float", x, name);
-	return (float) x.num;
+    if (m_vartab) m_vartab->as_float(name);
+    else throw general_error("compute_module error: var_table does not exist.");
 }
 
 ssc_number_t compute_module::as_number( const std::string &name )
 {
-	var_data &x = value(name);
-	if (x.type != SSC_NUMBER) throw cast_error("ssc_number_t", x, name);
-	return x.num;
+    if (m_vartab) m_vartab->as_number(name);
+    else throw general_error("compute_module error: var_table does not exist.");
 }
 
 double compute_module::as_double( const std::string &name )
 {
-	var_data &x = value(name);
-	if (x.type != SSC_NUMBER) throw cast_error("double", x, name);
-	return (double) x.num;
+    if (m_vartab) m_vartab->as_double(name);
+    else throw general_error("compute_module error: var_table does not exist.");
 }
 
 const char *compute_module::as_string( const std::string &name )
 {
-	var_data &x = value(name);
-	if (x.type != SSC_STRING) throw cast_error("string", x, name);
-	return x.str.c_str();
+    if (m_vartab) m_vartab->as_string(name);
+    else throw general_error("compute_module error: var_table does not exist.");
 }
 
 ssc_number_t *compute_module::as_array( const std::string &name, size_t *count )
 {
-	var_data &x = value(name);
-	if (x.type != SSC_ARRAY) throw cast_error("array", x, name);
-	if (count) *count = x.num.length();
-	return x.num.data();
+    if (m_vartab) m_vartab->as_array(name, count);
+    else throw general_error("compute_module error: var_table does not exist.");
 }
 /** 
 The obvious improvement would be to made this a template, but ran into trouble with 
@@ -354,139 +346,66 @@ The obvious improvement would be to made this a template, but ran into trouble w
 */
 std::vector<int> compute_module::as_vector_integer(const std::string &name)
 {
-	var_data &x = value(name);
-	if (x.type != SSC_ARRAY) throw cast_error("array", x, name);
-	size_t len = x.num.length();
-	std::vector<int> v(len);
-	ssc_number_t *p = x.num.data();
-	for (size_t k = 0; k<len; k++)
-		v[k] = (int)p[k];
-	return v;
+    if (m_vartab) m_vartab->as_vector_integer(name);
+    else throw general_error("compute_module error: var_table does not exist.");
 }
 
 std::vector<ssc_number_t> compute_module::as_vector_ssc_number_t(const std::string &name)
 {
-	var_data &x = value(name);
-	if (x.type != SSC_ARRAY) throw cast_error("array", x, name);
-	size_t len = x.num.length();
-	std::vector<ssc_number_t> v(len);
-	ssc_number_t *p = x.num.data();
-	for (size_t k = 0; k<len; k++)
-		v[k] = (ssc_number_t)p[k];
-	return v;
+    if (m_vartab) m_vartab->as_vector_ssc_number_t(name);
+    else throw general_error("compute_module error: var_table does not exist.");
 }
 
 std::vector<double> compute_module::as_vector_double(const std::string &name)
 {
-	var_data &x = value(name);
-	if (x.type != SSC_ARRAY) throw cast_error("array", x, name);
-	size_t len = x.num.length();
-	std::vector<double> v(len);
-	ssc_number_t *p = x.num.data();
-	for (size_t k=0;k<len;k++)
-		v[k] = (double) p[k];
-	return v;
+    if (m_vartab) m_vartab->as_vector_double(name);
+    else throw general_error("compute_module error: var_table does not exist.");
 }
 std::vector<float> compute_module::as_vector_float(const std::string &name)
 {
-	var_data &x = value(name);
-	if (x.type != SSC_ARRAY) throw cast_error("array", x, name);
-	size_t len = x.num.length();
-	std::vector<float> v(len);
-	ssc_number_t *p = x.num.data();
-	for (size_t k = 0; k<len; k++)
-		v[k] = (float)p[k];
-	return v;
+    if (m_vartab) m_vartab->as_vector_float(name);
+    else throw general_error("compute_module error: var_table does not exist.");
 }
 std::vector<size_t> compute_module::as_vector_unsigned_long(const std::string &name)
 {
-	var_data &x = value(name);
-	if (x.type != SSC_ARRAY) throw cast_error("array", x, name);
-	size_t len = x.num.length();
-	std::vector<size_t> v(len);
-	ssc_number_t *p = x.num.data();
-	for (size_t k = 0; k<len; k++)
-		v[k] = (size_t)p[k];
-	return v;
+    if (m_vartab) m_vartab->as_vector_unsigned_long(name);
+    else throw general_error("compute_module error: var_table does not exist.");
 }
 std::vector<bool> compute_module::as_vector_bool(const std::string &name)
 {
-	var_data &x = value(name);
-	if (x.type != SSC_ARRAY) throw cast_error("array", x, name);
-	size_t len = x.num.length();
-	std::vector<bool> v(len);
-	ssc_number_t *p = x.num.data();
-	for (size_t k = 0; k<len; k++)
-		v[k] = p[k] != 0;
-	return v;
+    if (m_vartab) m_vartab->as_vector_bool(name);
+    else throw general_error("compute_module error: var_table does not exist.");
 }
 
 ssc_number_t *compute_module::as_matrix( const std::string &name, size_t *rows, size_t *cols )
 {
-	var_data &x = value(name);
-	if (x.type != SSC_MATRIX) throw cast_error("matrix", x, name);
-	if (rows) *rows = x.num.nrows();
-	if (cols) *cols = x.num.ncols();
-	return x.num.data();
+    if (m_vartab) m_vartab->as_matrix(name, rows, cols);
+    else throw general_error("compute_module error: var_table does not exist.");
 }
 
 util::matrix_t<double> compute_module::as_matrix(const std::string &name)
 {
-	var_data &x = value(name);
-	if (x.type != SSC_MATRIX) throw cast_error("matrix", x, name);
-
-	util::matrix_t<double> mat(x.num.nrows(), x.num.ncols(), 0.0);
-	for (size_t r = 0; r<x.num.nrows(); r++)
-		for (size_t c = 0; c<x.num.ncols(); c++)
-			mat.at(r, c) = (double)x.num(r, c);
-
-	return mat;
+    if (m_vartab) m_vartab->as_matrix(name);
+    else throw general_error("compute_module error: var_table does not exist.");
 }
 
 util::matrix_t<size_t> compute_module::as_matrix_unsigned_long(const std::string &name)
 {
-	var_data &x = value(name);
-	if (x.type != SSC_MATRIX) throw cast_error("matrix", x, name);
-
-	util::matrix_t<size_t> mat(x.num.nrows(), x.num.ncols(), (size_t)0.0);
-	for (size_t r = 0; r<x.num.nrows(); r++)
-		for (size_t c = 0; c<x.num.ncols(); c++)
-			mat.at(r, c) = (size_t)x.num(r, c);
-
-	return mat;
+    if (m_vartab) m_vartab->as_matrix_unsigned_long(name);
+    else throw general_error("compute_module error: var_table does not exist.");
 }
 
 
 util::matrix_t<double> compute_module::as_matrix_transpose(const std::string &name)
 {
-	var_data &x = value(name);
-	if (x.type != SSC_MATRIX) throw cast_error("matrix", x, name);
-
-	util::matrix_t<double> mat(x.num.ncols(), x.num.nrows(), 0.0);
-	for (size_t r = 0; r<x.num.nrows(); r++)
-		for (size_t c = 0; c<x.num.ncols(); c++)
-			mat.at(c, r) = (double)x.num(r, c);
-
-	return mat;
+    if (m_vartab) m_vartab->as_matrix_transpose(name);
+    else throw general_error("compute_module error: var_table does not exist.");
 }
 
 bool compute_module::get_matrix(const std::string &name, util::matrix_t<ssc_number_t> &mat)
 {
-	var_data &x = value(name);
-	if (x.type != SSC_MATRIX) throw cast_error("matrix", x, name);
-
-	size_t nrows, ncols;
-	ssc_number_t *arr = as_matrix(name, &nrows, &ncols);
-
-	if (nrows < 1 || ncols < 1)
-		return false;
-
-	mat.resize_fill(nrows, ncols, 1.0);
-	for (size_t r = 0; r<nrows; r++)
-		for (size_t c = 0; c<ncols; c++)
-			mat.at(r, c) = arr[r*ncols + c];
-
-	return true;
+    if (m_vartab) m_vartab->get_matrix(name, mat);
+    else throw general_error("compute_module error: var_table does not exist.");
 }
 
 
