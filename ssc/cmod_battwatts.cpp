@@ -173,6 +173,7 @@ batt_variables * battwatts_create(size_t n_recs, int chem, int meter_pos, double
     batt_vars->batt_kw = size_kw;
     batt_vars->batt_computed_series = (int)std::ceil(voltage_guess / batt_vars->batt_Vnom_default);
     batt_vars->batt_computed_strings = (int)std::ceil((batt_vars->batt_kwh * 1000.) / (batt_vars->batt_Qfull * batt_vars->batt_computed_series * batt_vars->batt_Vnom_default)) - 1;
+    batt_vars->batt_kwh = batt_vars->batt_computed_strings * batt_vars->batt_Qfull * batt_vars->batt_computed_series * batt_vars->batt_Vnom_default / 1000.;
 
     // Common Voltage properties
     batt_vars->batt_voltage_choice = voltage_t::VOLTAGE_MODEL;
@@ -313,11 +314,12 @@ void cm_battwatts::exec()
             for (size_t jj = 0; jj < batt.step_per_hour; jj++)
             {
                 batt.initialize_time(0, hour, jj);
-                batt.advance(*this, p_ac[count], voltage, p_load[count]);
+                batt.advance(m_vartab, p_ac[count], voltage, p_load[count]);
                 p_gen[count] = batt.outGenPower[count];
                 count++;
             }
         }
+        process_messages(&batt, this);
         batt.calculate_monthly_and_annual_outputs(*this);
 
         clean_up(batt_vars);

@@ -1978,7 +1978,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 					sharedInverter->calculateACPower(dcPower_kW, dcVoltagePerMppt[0], wf.tdry); //DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
 
 					// Run PV plus battery through sharedInverter, returns AC power
-					batt.advance(*this, dcPower_kW, dcVoltagePerMppt[0], cur_load, sharedInverter->powerClipLoss_kW);
+					batt.advance(m_vartab, dcPower_kW, dcVoltagePerMppt[0], cur_load, sharedInverter->powerClipLoss_kW);
 					acpwr_gross = batt.outGenPower[idx];
 				}
 				else if (PVSystem->Inverter->inverterType == INVERTER_PVYIELD) //PVyield inverter model not currently enabled for multiple MPPT
@@ -2055,7 +2055,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 			}
 		}
 
-		if (iyear == 0)
+        if (iyear == 0)
 		{
 			int year_idx = 0;
 			if (system_use_lifetime_output) {
@@ -2067,6 +2067,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 			}
 		}
 	}
+	process_messages(&batt, this);
 
 	// Initialize AC connected battery predictive control
 	if (en_batt && batt_topology == ChargeController::AC_CONNECTED)
@@ -2100,7 +2101,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 				{
 					batt.initialize_time(iyear, hour, jj);
 					batt.check_replacement_schedule();
-					batt.advance(*this, PVSystem->p_systemACPower[idx], 0, p_load_full[idx]);
+					batt.advance(m_vartab, PVSystem->p_systemACPower[idx], 0, p_load_full[idx]);
 					PVSystem->p_systemACPower[idx] = batt.outGenPower[idx];
 				}
 
@@ -2129,9 +2130,9 @@ void cm_pvsamv1::exec( ) throw (general_error)
 
 				idx++;
 			}
-		} 
-
-	} 
+		}
+	}
+	process_messages(&batt, this);
 	// Check the snow models and if neccessary report a warning
 	//  *This only needs to be done for subarray1 since all of the activated subarrays should 
 	//   have the same number of bad values

@@ -227,7 +227,7 @@ var_info vtab_battery_outputs[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_pv_to_batt",                         "Energy to battery from PV",                             "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_grid_to_batt",                       "Energy to battery from grid",                           "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
 
-	// annual metrics													          
+	// annual metrics
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_annual_charge_from_pv",                 "Battery annual energy charged from PV",                 "kWh",      "",                      "Battery",       "",                           "",                               "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_annual_charge_from_grid",               "Battery annual energy charged from grid",               "kWh",      "",                      "Battery",       "",                           "",                               "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_annual_charge_energy",                  "Battery annual energy charged",                         "kWh",      "",                      "Battery",       "",                           "",                               "" },
@@ -1099,6 +1099,39 @@ battstor::~battstor()
 	if (make_vars) delete batt_vars;
 }
 
+battstor::battstor(const battstor& orig){
+    if (orig.batt_vars) batt_vars = orig.batt_vars;
+    if( orig.voltage_model ) voltage_model = orig.voltage_model->clone();
+    if( orig.lifetime_cycle_model ) lifetime_cycle_model = orig.lifetime_cycle_model->clone();
+    if (orig.lifetime_calendar_model) lifetime_calendar_model = orig.lifetime_calendar_model->clone();
+    if( orig.thermal_model ) thermal_model = orig.thermal_model->clone();
+
+    if( orig.battery_model )  battery_model = new battery_t(*orig.battery_model);
+    if( orig.capacity_model ) capacity_model = orig.capacity_model->clone();
+    if (orig.losses_model) losses_model = orig.losses_model->clone();
+    if (orig.dispatch_model){
+        if (auto disp = dynamic_cast<dispatch_manual_t*>(orig.dispatch_model))
+            dispatch_model = new dispatch_manual_t(*disp);
+        else if (auto disp = dynamic_cast<dispatch_automatic_behind_the_meter_t*>(orig.dispatch_model))
+            dispatch_model = new dispatch_automatic_behind_the_meter_t(*disp);
+        else if (auto disp = dynamic_cast<dispatch_automatic_front_of_meter_t*>(orig.dispatch_model))
+            dispatch_model = new dispatch_automatic_front_of_meter_t(*disp);
+        else
+            throw general_error("dispatch_model in battstor is not of recognized type.");
+    }
+    battery_metrics = new battery_metrics_t(orig._dt_hour);
+    if (orig.charge_control){
+        if (dynamic_cast<ACBatteryController*>(orig.charge_control))
+            charge_control = new ACBatteryController(dispatch_model, battery_metrics, batt_vars->batt_ac_dc_efficiency,
+                    batt_vars->batt_dc_ac_efficiency);
+        else if (dynamic_cast<DCBatteryController*>(orig.charge_control))
+            charge_control = new DCBatteryController(dispatch_model, battery_metrics, batt_vars->batt_dc_ac_efficiency);
+        else
+            throw general_error("charge_control in battstor is not of recognized type.");
+    }
+}
+
+
 void battstor::check_replacement_schedule()
 {
 	if (batt_vars->batt_replacement_option == battery_t::REPLACE_BY_SCHEDULE)
@@ -1139,7 +1172,7 @@ void battstor::initialize_time(size_t year_in, size_t hour_of_year, size_t step_
 	year_index = (hour * step_per_hour) + step; 
 	step_per_year = 8760 * step_per_hour;
 }
-void battstor::advance(compute_module &cm, double P_gen, double V_gen, double P_load, double P_gen_clipped )
+void battstor::advance(var_table *vt, double P_gen, double V_gen, double P_load, double P_gen_clipped )
 {
 	BatteryPower * powerflow = dispatch_model->getBatteryPower();
 	powerflow->reset();
@@ -1155,20 +1188,17 @@ void battstor::advance(compute_module &cm, double P_gen, double V_gen, double P_
 	powerflow->powerPVClipped = P_gen_clipped;
 
 	charge_control->run(year, hour, step, year_index);
-	outputs_fixed(cm);
-	outputs_topology_dependent(cm);
-	metrics(cm);
+	outputs_fixed(vt);
+    outputs_topology_dependent();
+    metrics();
 }
 void battstor::setSharedInverter(SharedInverter * sharedInverter)
 {
 	if (DCBatteryController * tmp = dynamic_cast<DCBatteryController *>(charge_control))
 		tmp->setSharedInverter(sharedInverter);
 }
-void battstor::outputs_fixed(compute_module &cm)
+void battstor::outputs_fixed(var_table *vt)
 {
-	if (index == total_steps - 1)
-		process_messages(cm);
-
 	// non-lifetime outputs
 	if (nyears <= 1)
 	{
@@ -1201,7 +1231,7 @@ void battstor::outputs_fixed(compute_module &cm)
 
 }
  
-void battstor::outputs_topology_dependent(compute_module &)
+void battstor::outputs_topology_dependent()
 {
 	// Power output (all Powers in kWac)
 	outBatteryPower[index] = (ssc_number_t)(dispatch_model->power_tofrom_battery());
@@ -1244,7 +1274,7 @@ void battstor::outputs_topology_dependent(compute_module &)
 	}
 }
 
-void battstor::metrics(compute_module &)
+void battstor::metrics()
 {
 	size_t annual_index;
 	nyears > 1 ? annual_index = year + 1 : annual_index = 0;
@@ -1317,16 +1347,6 @@ void battstor::calculate_monthly_and_annual_outputs( compute_module &cm )
 		cm.accumulate_monthly_for_year("batt_to_grid", "monthly_batt_to_grid", _dt_hour, step_per_hour);
 	}
 }
-void battstor::process_messages(compute_module &cm) 
-{
-	message dispatch_messages = dispatch_model->get_messages();
-	message thermal_messages = thermal_model->get_messages();
-
-	for (int i = 0; i != (int)dispatch_messages.total_message_count(); i++)
-		cm.log(dispatch_messages.construct_log_count_string(i), SSC_NOTICE);
-	for (int i = 0; i != (int)thermal_messages.total_message_count(); i++)
-		cm.log(thermal_messages.construct_log_count_string(i), SSC_NOTICE);
-}
 
 ///////////////////////////////////////////////////
 static var_info _cm_vtab_battery[] = {
@@ -1344,6 +1364,17 @@ static var_info _cm_vtab_battery[] = {
 	// other variables come from battstor common table
 	var_info_invalid };
 
+void process_messages(battstor* batt, compute_module* cm)
+{
+    message dispatch_messages = batt->dispatch_model->get_messages();
+    message thermal_messages = batt->thermal_model->get_messages();
+
+    for (int i = 0; i != (int)dispatch_messages.total_message_count(); i++)
+        cm->log(dispatch_messages.construct_log_count_string(i), SSC_NOTICE);
+    for (int i = 0; i != (int)thermal_messages.total_message_count(); i++)
+        cm->log(thermal_messages.construct_log_count_string(i), SSC_NOTICE);
+}
+
 class cm_battery : public compute_module
 {
 public:
@@ -1355,7 +1386,7 @@ public:
 		add_var_info(vtab_battery_outputs);
 	}
 
-	void exec() override
+    void exec() override
 	{
 		if (as_boolean("en_batt"))
 		{
@@ -1438,7 +1469,7 @@ public:
 	
 						batt.initialize_time(year, hour, jj);
 						batt.check_replacement_schedule();
-						batt.advance(*this, power_input_lifetime[lifetime_idx], 0, load_lifetime[lifetime_idx], 0);
+						batt.advance(m_vartab, power_input_lifetime[lifetime_idx], 0, load_lifetime[lifetime_idx], 0);
 						p_gen[lifetime_idx] = batt.outGenPower[lifetime_idx];
 						if (year == 0) {
 							annual_energy += p_gen[lifetime_idx] * batt._dt_hour;
@@ -1447,7 +1478,8 @@ public:
 					}
 				}
 			}
-			batt.calculate_monthly_and_annual_outputs(*this);
+            process_messages(&batt, this);
+            batt.calculate_monthly_and_annual_outputs(*this);
 
 			// update capacity factor and annual energy
 			assign("capacity_factor", var_data(static_cast<ssc_number_t>(annual_energy * 100.0 / (nameplate_in * util::hours_per_year))));

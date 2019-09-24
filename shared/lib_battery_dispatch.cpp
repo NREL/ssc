@@ -660,6 +660,8 @@ void dispatch_automatic_t::init_with_pointer(const dispatch_automatic_t * tmp)
 	_look_ahead_hours = tmp->_look_ahead_hours;
 	_d_index_update = tmp->_d_index_update;
 	_index_last_updated = tmp->_index_last_updated;
+    _P_pv_dc = tmp->_P_pv_dc;
+    _P_battery_use = tmp->_P_battery_use;
 }
 
 // deep copy from dispatch to this
@@ -1242,7 +1244,7 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 
 	// only create utility rate calculator if utility rate is defined
 	if (utilityRate) {
-		std::unique_ptr<UtilityRateCalculator> tmp(new UtilityRateCalculator(utilityRate, _steps_per_hour));
+		std::shared_ptr<UtilityRateCalculator> tmp(new UtilityRateCalculator(utilityRate, _steps_per_hour));
 		m_utilityRateCalculator = std::move(tmp);
 	}
 
@@ -1267,6 +1269,8 @@ void dispatch_automatic_front_of_meter_t::init_with_pointer(const dispatch_autom
 	_ppa_price_rt_series = tmp->_ppa_price_rt_series;
 
 	m_battReplacementCostPerKWH = tmp->m_battReplacementCostPerKWH;
+	m_battCycleCostChoice = tmp->m_battCycleCostChoice;
+	m_cycleCost = tmp->m_cycleCost;
 	m_etaPVCharge = tmp->m_etaPVCharge;
 	m_etaGridCharge = tmp->m_etaGridCharge;
 	m_etaDischarge = tmp->m_etaDischarge;
@@ -1468,6 +1472,41 @@ void dispatch_automatic_front_of_meter_t::costToCycle()
 		double capacityPercentDamagePerCycle = _Battery->lifetime_model()->cycleModel()->estimateCycleDamage();
 		m_cycleCost = 0.01 * capacityPercentDamagePerCycle * m_battReplacementCostPerKWH;
 	}
+}
+
+dispatch_resiliency::dispatch_resiliency(dispatch_automatic_behind_the_meter_t *orig):
+        dispatch_t(*orig)
+{
+    init_powerflow();
+}
+
+dispatch_resiliency::dispatch_resiliency(dispatch_manual_t* orig):
+        dispatch_t(*orig)
+{
+    init_powerflow();
+}
+
+void dispatch_resiliency::init_powerflow(){
+    m_batteryPower->canDischarge = true;
+    m_batteryPower->canPVCharge = true;
+    m_batteryPower->canGridCharge = false;
+    m_batteryPower->canDischarge = false;
+    m_batteryPower->canFuelCellCharge = false;
+}
+
+void dispatch_resiliency::set_pv_gen(double_vec pv){
+    if (pv.size() != )
+}
+
+void dispatch_resiliency::dispatch(size_t year, size_t hour_of_year, size_t step){
+    size_t step_per_hour = (size_t)(1 / _dt_hour);
+    size_t lifetimeIndex = util::lifetimeIndex(year, hour_of_year, step, step_per_hour);
+
+    m_batteryPower->powerBatteryTarget = battery_use[lifetimeIndex % (8760 * step_per_hour)];
+    m_batteryPower->powerBatteryDC = m_batteryPower->powerBatteryTarget;
+
+    dispatch_t::dispatch(year, hour_of_year, step);
+
 }
 
 battery_metrics_t::battery_metrics_t(double dt_hour)

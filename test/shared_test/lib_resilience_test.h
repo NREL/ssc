@@ -21,8 +21,8 @@ protected:
     double size_kwh;
     double inv_eff;
     double dispatch_custom[n_recs];
-    double dc[n_recs];
-    double load[n_recs];
+    std::vector<double> ac;
+    std::vector<double> load;
 
     batt_variables* batt_vars;
     var_table* vartab;
@@ -31,15 +31,17 @@ protected:
     void SetUp() override {
         chem = battery_t::LITHIUM_ION;
         pos = ChargeController::DC_CONNECTED;
-        dispatch = dispatch_t::CUSTOM_DISPATCH;
+        dispatch = 2;
         size_kw = 4.0;
-        size_kwh = 8.0;
+        size_kwh = 16.0;
         inv_eff = 96.0;
         for (size_t i = 0; i < n_recs; i++){
-            dc[i] = 2.;
-            load[i] = 1.;
-            if (i < 4)
+            ac.push_back(2.);
+            load.push_back(1.);
+            // charge to full SOC at 95%
+            if (i < 9)
                 dispatch_custom[i] = -1;
+            // then do nothing
             else
                 dispatch_custom[i] = 0;
         }
@@ -47,6 +49,8 @@ protected:
 
         vartab = new var_table;
         batt = new battstor(*vartab, true, n_recs, 1., batt_vars);
+        batt->initialize_automated_dispatch(ac, load);
+
     }
 
     void TearDown() override {

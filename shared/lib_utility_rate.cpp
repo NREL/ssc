@@ -9,6 +9,16 @@ UtilityRate::UtilityRate(util::matrix_t<size_t> ecWeekday, util::matrix_t<size_t
 	m_ecRatesMatrix = ecRatesMatrix;
 }
 
+UtilityRate::UtilityRate(const UtilityRate& tmp){
+    m_ecWeekday = tmp.m_ecWeekday;
+    m_ecWeekend = tmp.m_ecWeekend;
+    m_ecRatesMatrix = tmp.m_ecRatesMatrix;
+    for (auto& kv : tmp.m_energyTiersPerPeriod) {
+        m_energyTiersPerPeriod[kv.first] = kv.second;
+    }
+}
+
+
 UtilityRateCalculator::UtilityRateCalculator(UtilityRate * rate, size_t stepsPerHour) :
 	UtilityRate(*rate)
 {
@@ -22,6 +32,16 @@ UtilityRateCalculator::UtilityRateCalculator(UtilityRate * rate, size_t stepsPer
 	m_stepsPerHour = stepsPerHour;
 	m_loadProfile = loadProfile;
 	initializeRate();
+}
+
+UtilityRateCalculator::UtilityRateCalculator(const UtilityRateCalculator& tmp):
+UtilityRate(tmp){
+    m_electricBill = tmp.m_electricBill;
+    m_stepsPerHour = tmp.m_stepsPerHour;
+    for (auto& i : tmp.m_loadProfile)
+        m_loadProfile.push_back(i);
+    for (auto& i : tmp.m_energyUsagePerPeriod)
+        m_energyUsagePerPeriod.push_back(i);
 }
 
 void UtilityRateCalculator::initializeRate()
