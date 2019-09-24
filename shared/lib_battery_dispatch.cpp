@@ -1495,7 +1495,7 @@ void dispatch_resiliency::init_powerflow(){
 }
 
 void dispatch_resiliency::set_pv_gen(double_vec pv){
-    if (pv.size() != )
+//    if (pv.size() != )
 }
 
 void dispatch_resiliency::dispatch(size_t year, size_t hour_of_year, size_t step){
@@ -1505,7 +1505,7 @@ void dispatch_resiliency::dispatch(size_t year, size_t hour_of_year, size_t step
     m_batteryPower->powerBatteryTarget = battery_use[lifetimeIndex % (8760 * step_per_hour)];
     m_batteryPower->powerBatteryDC = m_batteryPower->powerBatteryTarget;
 
-    dispatch_t::dispatch(year, hour_of_year, step);
+    runDispatch(year, hour_of_year, step);
 
 }
 

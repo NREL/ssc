@@ -296,48 +296,48 @@ bool compute_module::is_assigned( const std::string &name )
 
 int compute_module::as_integer( const std::string &name )
 {
-	if (m_vartab) m_vartab->as_integer(name);
+	if (m_vartab) return m_vartab->as_integer(name);
 	else throw general_error("compute_module error: var_table does not exist.");
 }
 size_t compute_module::as_unsigned_long(const std::string &name)
 {
-    if (m_vartab) m_vartab->as_unsigned_long(name);
+    if (m_vartab) return m_vartab->as_unsigned_long(name);
     else throw general_error("compute_module error: var_table does not exist.");
 }
 
 bool compute_module::as_boolean( const std::string &name )
 {
-    if (m_vartab) m_vartab->as_boolean(name);
+    if (m_vartab) return m_vartab->as_boolean(name);
     else throw general_error("compute_module error: var_table does not exist.");
 }
 
 float compute_module::as_float( const std::string &name )
 {
-    if (m_vartab) m_vartab->as_float(name);
+    if (m_vartab) return m_vartab->as_float(name);
     else throw general_error("compute_module error: var_table does not exist.");
 }
 
 ssc_number_t compute_module::as_number( const std::string &name )
 {
-    if (m_vartab) m_vartab->as_number(name);
+    if (m_vartab) return m_vartab->as_number(name);
     else throw general_error("compute_module error: var_table does not exist.");
 }
 
 double compute_module::as_double( const std::string &name )
 {
-    if (m_vartab) m_vartab->as_double(name);
+    if (m_vartab) return m_vartab->as_double(name);
     else throw general_error("compute_module error: var_table does not exist.");
 }
 
 const char *compute_module::as_string( const std::string &name )
 {
-    if (m_vartab) m_vartab->as_string(name);
+    if (m_vartab) return m_vartab->as_string(name);
     else throw general_error("compute_module error: var_table does not exist.");
 }
 
 ssc_number_t *compute_module::as_array( const std::string &name, size_t *count )
 {
-    if (m_vartab) m_vartab->as_array(name, count);
+    if (m_vartab) return m_vartab->as_array(name, count);
     else throw general_error("compute_module error: var_table does not exist.");
 }
 /** 
@@ -346,65 +346,65 @@ The obvious improvement would be to made this a template, but ran into trouble w
 */
 std::vector<int> compute_module::as_vector_integer(const std::string &name)
 {
-    if (m_vartab) m_vartab->as_vector_integer(name);
+    if (m_vartab) return m_vartab->as_vector_integer(name);
     else throw general_error("compute_module error: var_table does not exist.");
 }
 
 std::vector<ssc_number_t> compute_module::as_vector_ssc_number_t(const std::string &name)
 {
-    if (m_vartab) m_vartab->as_vector_ssc_number_t(name);
+    if (m_vartab) return m_vartab->as_vector_ssc_number_t(name);
     else throw general_error("compute_module error: var_table does not exist.");
 }
 
 std::vector<double> compute_module::as_vector_double(const std::string &name)
 {
-    if (m_vartab) m_vartab->as_vector_double(name);
+    if (m_vartab) return m_vartab->as_vector_double(name);
     else throw general_error("compute_module error: var_table does not exist.");
 }
 std::vector<float> compute_module::as_vector_float(const std::string &name)
 {
-    if (m_vartab) m_vartab->as_vector_float(name);
+    if (m_vartab) return m_vartab->as_vector_float(name);
     else throw general_error("compute_module error: var_table does not exist.");
 }
 std::vector<size_t> compute_module::as_vector_unsigned_long(const std::string &name)
 {
-    if (m_vartab) m_vartab->as_vector_unsigned_long(name);
+    if (m_vartab) return m_vartab->as_vector_unsigned_long(name);
     else throw general_error("compute_module error: var_table does not exist.");
 }
 std::vector<bool> compute_module::as_vector_bool(const std::string &name)
 {
-    if (m_vartab) m_vartab->as_vector_bool(name);
+    if (m_vartab) return m_vartab->as_vector_bool(name);
     else throw general_error("compute_module error: var_table does not exist.");
 }
 
 ssc_number_t *compute_module::as_matrix( const std::string &name, size_t *rows, size_t *cols )
 {
-    if (m_vartab) m_vartab->as_matrix(name, rows, cols);
+    if (m_vartab) return m_vartab->as_matrix(name, rows, cols);
     else throw general_error("compute_module error: var_table does not exist.");
 }
 
 util::matrix_t<double> compute_module::as_matrix(const std::string &name)
 {
-    if (m_vartab) m_vartab->as_matrix(name);
+    if (m_vartab) return m_vartab->as_matrix(name);
     else throw general_error("compute_module error: var_table does not exist.");
 }
 
 util::matrix_t<size_t> compute_module::as_matrix_unsigned_long(const std::string &name)
 {
-    if (m_vartab) m_vartab->as_matrix_unsigned_long(name);
+    if (m_vartab) return m_vartab->as_matrix_unsigned_long(name);
     else throw general_error("compute_module error: var_table does not exist.");
 }
 
 
 util::matrix_t<double> compute_module::as_matrix_transpose(const std::string &name)
 {
-    if (m_vartab) m_vartab->as_matrix_transpose(name);
+    if (m_vartab) return m_vartab->as_matrix_transpose(name);
     else throw general_error("compute_module error: var_table does not exist.");
 }
 
 bool compute_module::get_matrix(const std::string &name, util::matrix_t<ssc_number_t> &mat)
 {
-    if (m_vartab) m_vartab->get_matrix(name, mat);
+    if (m_vartab) return m_vartab->get_matrix(name, mat);
     else throw general_error("compute_module error: var_table does not exist.");
 }
 
