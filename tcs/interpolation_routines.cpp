@@ -120,9 +120,9 @@ double Linear_Interp::get_max_x_value_x_col_0()
 std::vector<double> Linear_Interp::get_column_data(int col)
 {
     util::matrix_t<double> mt_col = m_userTable.col(col);
-    int n_rows = mt_col.nrows();
-    std::vector<double> v_col(n_rows);
-    for (int i = 0; i < n_rows; i++)
+    int n_cols = mt_col.ncols();
+    std::vector<double> v_col(n_cols);
+    for (int i = 0; i < n_cols; i++)
     {
         v_col[i] = mt_col[i];
     }
