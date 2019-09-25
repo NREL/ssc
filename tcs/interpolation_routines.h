@@ -52,6 +52,8 @@ public:
 
 	std::string get_error_msg(){ return m_error_msg; };
 
+    std::vector<double> get_column_data(int col);
+
 	int get_number_of_rows(){ return m_rows; };
 
 private:
