@@ -59,7 +59,8 @@ static var_info _cm_vtab_mhk_tidal[] = {
 	//{ SSC_INPUT,			SSC_NUMBER,			"calculate_capacity",					"Calculate device rated capacity from power curve",							"0/1",			"",             "MHKTidal",         "?=1",                      "INTEGER,MIN=0,MAX=1",	"" },
 	{ SSC_INPUT,			SSC_NUMBER,			"number_devices",						"Number of tidal devices in the system",									"",				"",             "MHKTidal",         "?=1",                      "INTEGER",				"" },
 
-	{ SSC_OUTPUT,			SSC_NUMBER,			"device_rated_capacity",				"Rated capacity of device",													"kW",			"",				"MHKTidal",			"calculate_capacity=0",		"",						"" },
+//	{ SSC_OUTPUT,			SSC_NUMBER,			"device_rated_capacity",				"Rated capacity of device",													"kW",			"",				"MHKTidal",			"calculate_capacity=0",		"",						"" },
+	{ SSC_OUTPUT,			SSC_NUMBER,			"device_rated_capacity",				"Rated capacity of device",													"kW",			"",				"MHKTidal",			"",		"",						"" },
 	{ SSC_OUTPUT,			SSC_NUMBER,			"device_average_power",					"Average power production of a single device",								"kW",			"",				"MHKTidal",			"*",						"",						"" },
 	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual energy production of array",										"kWh",			"",				"MHKTidal",			"*",						"",						"" },
 	{ SSC_OUTPUT,			SSC_NUMBER,			"capacity_factor",						"Capacity Factor of array",													"%",			"",				"MHKTidal",			"*",						"",						"" },
@@ -116,7 +117,10 @@ public:
 		double annual_energy = 0, device_average_power = 0, _probability_vect_checker = 0, capacity_factor = 0, device_rated_capacity = 0;
 		
 		//User either sets device_rated_capacity in the UI, or allows cmod to determine from power curve:
-		if (is_assigned("device_rated_capacity")) device_rated_capacity = as_double("device_rated_capacity");
+		if (is_assigned("device_rated_capacity"))
+			device_rated_capacity = as_double("device_rated_capacity");
+		else
+			device_rated_capacity = 0.0;
 
 		//Read number of devices
 		int number_devices = as_integer("number_devices");
@@ -129,9 +133,9 @@ public:
 			_power_vect[i] = tidal_power_curve.at(i, 1);
 			
 			//Store max power if not set in UI:
-			/*if (as_boolean("calculate_capacity"))
+			/*if (as_boolean("calculate_capacity")) */
 				if (_power_vect[i] > device_rated_capacity)
-					device_rated_capacity = _power_vect[i];*/
+					device_rated_capacity = _power_vect[i];
 			
 			//Checker to ensure probability distribution adds to >= 99.5%:
 			_probability_vect_checker += _probability_vect[i];
