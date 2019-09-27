@@ -106,6 +106,7 @@ set(SSC_SRC
 		cmod_windbos.cpp
 		cmod_windcsm.cpp
 		cmod_windfile.cpp
+		cmod_wavefile.cpp
 		cmod_windpower.cpp
         cmod_windpower_eqns.cpp
 		common.cpp
