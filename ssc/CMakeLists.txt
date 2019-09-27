@@ -229,21 +229,21 @@ if (MSVC)
 		ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${CMAKE_CURRENT_BINARY_DIR}/../test/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>
 		)
 
-	if (${CMAKE_PROJECT_NAME} STREQUAL system_advisor_model)
-		add_custom_command(
-			TARGET ssc
-			POST_BUILD
-			COMMAND ${CMAKE_COMMAND}
-			ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${CMAKE_CURRENT_BINARY_DIR}/../../api/api_autogen/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>
-			)
-	else()
-		add_custom_command(
-			TARGET ssc
-			POST_BUILD
-			COMMAND ${CMAKE_COMMAND}
-			ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} $ENV{SAMNTDIR}/build_msvc/api/api_autogen/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>
-			)
-	endif()
+#	if (${CMAKE_PROJECT_NAME} STREQUAL system_advisor_model)
+#		add_custom_command(
+#			TARGET ssc
+#			POST_BUILD
+#			COMMAND ${CMAKE_COMMAND}
+#			ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${CMAKE_CURRENT_BINARY_DIR}/../../api/api_autogen/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>
+#			)
+#	else()
+#		add_custom_command(
+#			TARGET ssc
+#			POST_BUILD
+#			COMMAND ${CMAKE_COMMAND}
+#			ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} $ENV{SAMNTDIR}/build_msvc/api/api_autogen/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>
+#			)
+#	endif()
 
 endif()
 
