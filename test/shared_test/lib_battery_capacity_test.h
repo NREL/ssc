@@ -91,8 +91,8 @@ class KiBam_lib_battery_capacity_test : public lib_battery_capacity_test
 {
 protected:
     double q10 = 93.;
-    double q1 = 60.;
     double t1 = 1;
+    double q1 = 60.;
     double q20 = 100;
 public:
 

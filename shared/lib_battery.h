@@ -228,7 +228,7 @@ public:
 
 	virtual ~voltage_t(){};
 
-	virtual void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt)=0;
+	virtual void updateVoltage(capacity_t * capacity, const double temp_K, double dt)=0;
 	virtual double battery_voltage(); // voltage of one battery
 
 	double battery_voltage_nominal(); // nominal voltage of battery
@@ -279,7 +279,7 @@ public:
 	// copy from voltage to this
 	void copy(voltage_t *);
 
-	void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt);
+	void updateVoltage(capacity_t * capacity, const double temp_K, double dt);
 
 protected:
 
@@ -303,7 +303,7 @@ public:
 	void copy(voltage_t *);
 
 	void parameter_compute();
-	void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt);
+	void updateVoltage(capacity_t * capacity, const double temp_K, double dt);
 
 protected:
 	double voltage_model_tremblay_hybrid(double capacity, double current, double q0);
@@ -335,7 +335,7 @@ public:
 	// copy from voltage to this
 	void copy(voltage_t *);
 
-	void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt);
+	void updateVoltage(capacity_t * capacity, const double temp_K, double dt);
 
 protected:
 	

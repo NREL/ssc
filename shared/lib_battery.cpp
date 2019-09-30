@@ -578,7 +578,7 @@ void voltage_table_t::copy(voltage_t * voltage)
 }
 
 
-void voltage_table_t::updateVoltage(capacity_t * capacity, thermal_t * , double )
+void voltage_table_t::updateVoltage(capacity_t * capacity, const double, double )
 {
 	double cell_voltage = _cell_voltage;
 	double DOD = capacity->DOD();
@@ -691,7 +691,7 @@ void voltage_dynamic_t::parameter_compute()
 	_E0 = _Vfull + _K + _R*I - _A;
 }
 
-void voltage_dynamic_t::updateVoltage(capacity_t * capacity, thermal_t * , double )
+void voltage_dynamic_t::updateVoltage(capacity_t * capacity, const double, double )
 {
 
 	double Q = capacity->qmax();
@@ -747,19 +747,16 @@ void voltage_vanadium_redox_t::copy(voltage_t * voltage)
 	_F = tmp->_F;
 	_C0 = tmp->_C0;
 }
-void voltage_vanadium_redox_t::updateVoltage(capacity_t * capacity, thermal_t * thermal, double )
+void voltage_vanadium_redox_t::updateVoltage(capacity_t * capacity, const double temp_K, double )
 {
 
 	double Q = capacity->qmax();
 	_I = capacity->I();
 	double q0 = capacity->q0();
 
-	// Kelvin
-	double T = thermal->T_battery(); 
-
 	// is on a per-cell basis.
 	// I, Q, q0 are on a per-string basis since adding cells in series does not change current or charge
-	double cell_voltage = voltage_model(Q / _num_strings, q0 / _num_strings, _I/ _num_strings, T);
+	double cell_voltage = voltage_model(Q / _num_strings, q0 / _num_strings, _I/ _num_strings, temp_K);
 
 	// the cell voltage should not increase when the battery is discharging
 	if (_I <= 0 || (_I > 0 && cell_voltage <= _cell_voltage))
@@ -1693,7 +1690,7 @@ void battery_t::runCapacityModel(double &I)
 
 void battery_t::runVoltageModel()
 {
-	_voltage->updateVoltage(_capacity, _thermal, _dt_hour);
+	_voltage->updateVoltage(_capacity, _thermal->T_battery(), _dt_hour);
 }
 
 void battery_t::runLifetimeModel(size_t lifetimeIndex)
