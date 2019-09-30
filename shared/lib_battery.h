@@ -132,7 +132,7 @@ public:
 
 	// Public APIs 
 	capacity_kibam_t();
-	capacity_kibam_t(double q20, double t1, double q1, double q10, double SOC_init, double SOC_max, double SOC_min);
+	capacity_kibam_t(double q20, double t1, double q1, double q10, double SOC_init, double SOC_max, double SOC_min, double dt_hr=1.);
 	~capacity_kibam_t(){}
 
 	// deep copy 
@@ -188,7 +188,7 @@ class capacity_lithium_ion_t : public capacity_t
 {
 public:
 	capacity_lithium_ion_t();
-	capacity_lithium_ion_t(double q, double SOC_init, double SOC_max, double SOC_min);
+	capacity_lithium_ion_t(double q, double SOC_init, double SOC_max, double SOC_min, double dt_hr=1.);
 	~capacity_lithium_ion_t(){};
 
 	// deep copy
