@@ -842,7 +842,7 @@ void lifetime_t::runLifetimeModels(size_t idx, capacity_t * capacity, double T_b
 		else if (idx==0)
 			q_cycle = _lifetime_cycle->runCycleLifetime((capacity->DOD()));
 		
-		q_calendar = _lifetime_calendar->runLifetimeCalendarModel(idx, T_battery, capacity->SOC()*0.01);
+		q_calendar = _lifetime_calendar->runLifetimeCalendarModel(idx, T_battery, capacity->SOC());
 
 		// total capacity is min of cycle (Q_neg) and calendar (Q_li) capacity
 		_q = fmin(q_cycle, q_calendar);
@@ -1264,7 +1264,7 @@ void lifetime_calendar_t::copy(lifetime_calendar_t * lifetime_calendar)
 	_c = lifetime_calendar->_c;
 }
 double lifetime_calendar_t::capacity_percent() { return _q; }
-double lifetime_calendar_t::runLifetimeCalendarModel(size_t idx, double T, double SOC)
+double lifetime_calendar_t::runLifetimeCalendarModel(size_t idx, double T, double SOC_percent)
 {
 	if (_calendar_choice != lifetime_calendar_t::NONE)
 	{
@@ -1276,7 +1276,7 @@ double lifetime_calendar_t::runLifetimeCalendarModel(size_t idx, double T, doubl
 				_day_age_of_battery++;
 
 			if (_calendar_choice == lifetime_calendar_t::LITHIUM_ION_CALENDAR_MODEL)
-				runLithiumIonModel(T, SOC);
+				runLithiumIonModel(T, SOC_percent * 0.01);
 			else if (_calendar_choice == lifetime_calendar_t::CALENDAR_LOSS_TABLE)
 				runTableModel();
 

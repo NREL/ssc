@@ -433,7 +433,7 @@ class lifetime_calendar_t
 {
 public:
 	lifetime_calendar_t(int calendar_choice, util::matrix_t<double> calendar_matrix, double dt_hour, 
-		float q0=1.02, float a=2.66e-3, float b=7280, float c=930);
+		float q0=1.02, float a=2.66e-3, float b=-7280, float c=930);
 	virtual ~lifetime_calendar_t(){/* Nothing to do */};
 
 	// deep copy
@@ -443,7 +443,7 @@ public:
 	void copy(lifetime_calendar_t *);
 
 	/// Given the index of the simulation, the tempertature and SOC, return the effective capacity percent
-	double runLifetimeCalendarModel(size_t idx, double T, double SOC);
+	double runLifetimeCalendarModel(size_t idx, double T, double SOC_percent);
 
 	/// Reset or augment the capacity
 	void replaceBattery(double replacement_percent);

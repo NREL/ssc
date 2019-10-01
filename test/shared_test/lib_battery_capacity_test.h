@@ -52,6 +52,7 @@ public:
         EXPECT_NEAR(old_cap->I_loss(), state.I_loss, tol) << msg;
         EXPECT_NEAR(old_cap->SOC(), state.SOC, tol) << msg;
         EXPECT_NEAR(old_cap->DOD(), state.DOD, tol) << msg;
+//        EXPECT_NEAR(old_cap->DOD(), state.DOD_prev, tol) << msg;
         EXPECT_NEAR(old_cap->charge_operation(), state.charge_mode, tol) << msg;
     }
 
