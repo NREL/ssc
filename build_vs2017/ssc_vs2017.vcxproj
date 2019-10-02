@@ -41,6 +41,7 @@
     <ClCompile Include="..\ssc\cmod_layoutarea.cpp" />
     <ClCompile Include="..\ssc\cmod_levpartflip.cpp" />
     <ClCompile Include="..\ssc\cmod_linear_fresnel_dsg_iph.cpp" />
+    <ClCompile Include="..\ssc\cmod_merchantplant.cpp" />
     <ClCompile Include="..\ssc\cmod_mhk_costs.cpp" />
     <ClCompile Include="..\ssc\cmod_mhk_eqns.cpp" />
     <ClCompile Include="..\ssc\cmod_mhk_tidal.cpp" />
