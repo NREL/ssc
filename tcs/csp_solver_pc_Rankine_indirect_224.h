@@ -99,6 +99,9 @@ private:
     int split_ind_tbl(util::matrix_t<double> &combined, util::matrix_t<double> &T_htf_ind,
         util::matrix_t<double> &m_dot_ind, util::matrix_t<double> &T_amb_ind);
 
+    int split_ind_tbl_v2(util::matrix_t<double> &combined, util::matrix_t<double> &T_htf_ind,
+        util::matrix_t<double> &m_dot_ind, util::matrix_t<double> &T_amb_ind);
+
 public:
 	
 	enum
