@@ -3,7 +3,7 @@
 #include <string>
 
 
-TEST(libUtilTests, testFormat_lib_util)
+TEST(lib_util_test, testFormat_lib_util)
 {
 	// test single input
 	std::string str = "invalid number of data records (43): must be an integer multiple of 8760";

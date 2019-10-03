@@ -8,9 +8,10 @@
 #include "lib_battery_properties.h"
 
 /// Test Battery Model and submodels
-class BatteryTest : public BatteryProperties
+class battery_lib_battery_model_test : public BatteryProperties
 {
 public:
+    double tol = 0.02;
 
 	capacity_lithium_ion_t * capacityModel;
 	voltage_dynamic_t * voltageModel;
@@ -29,8 +30,8 @@ public:
 		cycleModel = new lifetime_cycle_t(cycleLifeMatrix);
 		calendarModel = new lifetime_calendar_t(calendarChoice, calendarLifeMatrix, dtHour);
 		lifetimeModel = new lifetime_t(cycleModel, calendarModel, replacementOption, replacementCapacity);
-		thermalModel = new thermal_t(1.0, mass, length, width, height, Cp, h, T_room, capacityVsTemperature);
-		lossModel = new losses_t(dtHour, lifetimeModel, thermalModel, capacityModel, lossChoice, monthlyLosses, monthlyLosses, monthlyLosses, fullLosses);
+		thermalModel = new thermal_t(1.0, mass, length, width, height, resistance, Cp, h, T_room, capacityVsTemperature);
+		lossModel = new losses_t(dtHour, lossChoice, monthlyLosses, monthlyLosses, monthlyLosses, fullLosses);
 		batteryModel = new battery_t(dtHour, chemistry);
 		batteryModel->initialize(capacityModel, voltageModel, lifetimeModel, thermalModel, lossModel);
 	}

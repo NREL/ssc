@@ -502,8 +502,8 @@ public:
 	/// Copy lifetime to this
 	void copy(lifetime_t *);
 
-	/// Execute the lifetime models given the current lifetime run index, capacity model, and temperature
-	void runLifetimeModels(size_t lifetimeIndex, capacity_t *, double T_battery);
+	/// Execute the lifetime models given the current lifetime run index, SOC percent, and temperature
+    void runLifetimeModels(size_t idx, double SOC_percent, bool charge_changed, double T_battery);
 
 	/// Return the relative capacity percentage of nominal (%)
 	double capacity_percent();
@@ -573,10 +573,8 @@ class thermal_t
 {
 public:
 	thermal_t();
-	thermal_t(double dtHour, double mass, double length, double width, double height,
-		double Cp, double h, 
-		std::vector<double> T_room,
-		const util::matrix_t<double> &cap_vs_temp);
+	thermal_t(double dt_hour, double mass, double length, double width, double height, double R, double Cp,
+              double h, std::vector<double> T_room, const util::matrix_t<double> &c_vs_t);
 
 	// deep copy
 	thermal_t * clone();
@@ -584,7 +582,7 @@ public:
 	// copy thermal to this
 	void copy(thermal_t *);
 
-	void updateTemperature(double I, double R, double dt, size_t lifetimeIndex);
+	void updateTemperature(double I, double dt, size_t lifetimeIndex);
 	void replace_battery(size_t lifetimeIndex);
 
 	// outputs
@@ -635,25 +633,15 @@ public:
 	* \function losses_t
 	*
 	* Construct the losses object
-	*
-	* \param[in] lifetime_t * pointer to lifetime class
-	* \param[in] thermal_t * pointer to thermal class (currently unused)
-	* \param[in] capacity_t * pointer to capacity class
-	* \param[in] loss_mode 0 for monthy input, 1 for input time series
-	* \param[in] batt_loss_charge_kw vector (size 1 for annual or 12 for monthly) containing battery system losses when charging (kW)
-	* \param[in] batt_loss_discharge_kw vector (size 1 for annual or 12 for monthly) containing battery system losses when discharge (kW)
-	* \param[in] batt_loss_idle_kw vector (size 1 for annual or 12 for monthly) containing battery system losses when idle (kW)
-	* \param[in] batt_loss_kw vector (size 1 for annual or 12 for monthly) containing battery system losses when idle (kW)
+	* \param[in] dtHour change in hours per time step
+	* \param[in] loss_choice 0 for monthy input, 1 for input time series
+	* \param[in] charge_loss vector (size 1 for annual or 12 for monthly) containing battery system losses when charging (kW)
+	* \param[in] discharge_loss vector (size 1 for annual or 12 for monthly) containing battery system losses when discharge (kW)
+	* \param[in] idle_loss vector (size 1 for annual or 12 for monthly) containing battery system losses when idle (kW)
+	* \param[in] losses vector (size 1 for annual or 12 for monthly) containing battery system losses when idle (kW)
 	*/
-	losses_t(double dtHour,
-			lifetime_t *, 
-			thermal_t *, 
-			capacity_t*, 
-			const int loss_mode, 
-			const double_vec batt_loss_charge_kw = std::vector<double>(0), 
-			const double_vec batt_loss_discharge_kw = std::vector<double>(0), 
-			const double_vec batt_loss_idle_kw = std::vector<double>(0), 
-			const double_vec batt_loss_kw=std::vector<double>(0));
+    losses_t(double dtHour, int loss_choice, double_vec charge_loss, double_vec discharge_loss,
+             double_vec idle_loss, double_vec losses);
 
 	/// Deep copy of losses object
 	losses_t * clone();
@@ -662,7 +650,7 @@ public:
 	void copy(losses_t *);
 
 	/// Run the losses model at the present simulation index (for year 1 only)
-	void run_losses(size_t lifetimeIndex);
+    void run_losses(size_t lifetimeIndex, const int &charge_mode);
 
 	/// Replace the battery
 	void replace_battery();
@@ -679,9 +667,6 @@ protected:
 	int _nCycle;
 	double _dtHour;
 	
-	lifetime_t * _lifetime;
-	thermal_t * _thermal;
-	capacity_t * _capacity;
 	double_vec  _charge_loss;
 	double_vec  _discharge_loss;
 	double_vec  _idle_loss;

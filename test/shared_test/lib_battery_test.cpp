@@ -7,7 +7,7 @@
 #include "lib_battery_test.h"
 
 /// Test  lithium ion battery capacity response
-TEST_F(BatteryTest, LithiumIonCapacityTest_lib_battery)
+TEST_F(battery_lib_battery_model_test, LithiumIonCapacityTest)
 {
 	q = 100;
 	SOC_init = 100;
@@ -64,17 +64,17 @@ TEST_F(BatteryTest, LithiumIonCapacityTest_lib_battery)
 	EXPECT_EQ(capacityModel->SOC(), SOC_min);
 }
 
-TEST_F(BatteryTest, LossesModel_lib_battery)
+TEST_F(battery_lib_battery_model_test, LossesModel)
 {
 	size_t idx = 1000;
 
 	// Return loss for february
-	lossModel->run_losses(idx);
+    lossModel->run_losses(idx, capacityModel->charge_operation());
 	EXPECT_EQ(lossModel->getLoss(idx), 1);
 
 }
 
-TEST_F(BatteryTest, AugmentCapacity)
+TEST_F(battery_lib_battery_model_test, AugmentCapacity)
 {
 	
 	std::vector<int> replacement_schedule = { 1, 1, 1 };
@@ -110,9 +110,4 @@ TEST_F(BatteryTest, AugmentCapacity)
 	battery_t * battery = new battery_t(dtHour, chemistry);
 	battery->initialize(capacityModel, voltageModel, lifetimeModel, thermalModel, lossModel);
 	battery->lifetime_model()->set_replacement_option(battery_t::REPLACE_BY_SCHEDULE);
-
-
-
-
-
 }

@@ -796,15 +796,16 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 	}
 
 	thermal_model = new thermal_t(
-		dt_hr,
-		batt_vars->batt_mass, // [kg]
-		batt_vars->batt_length, // [m]
-		batt_vars->batt_width, // [m]
-		batt_vars->batt_height, // [m]
-		batt_vars->batt_Cp, // [J/kgK]
-		batt_vars->batt_h_to_ambient, // W/m2K
-		batt_vars->T_room, // K
-		batt_vars->cap_vs_temp);
+            dt_hr,
+            batt_vars->batt_mass, // [kg]
+            batt_vars->batt_length, // [m]
+            batt_vars->batt_width, // [m]
+            batt_vars->batt_height,
+            batt_vars->batt_resistance, // [m]
+            batt_vars->batt_Cp, // [J/kgK]
+            batt_vars->batt_h_to_ambient, // W/m2K
+            batt_vars->T_room, // K
+            batt_vars->cap_vs_temp);
 
 
 	battery_model = new battery_t(
@@ -848,8 +849,9 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 		throw compute_module::exec_error("battery", "system loss input length must be 1 or equal to weather file length for time series input mode");
 	}
 
-	losses_model = new losses_t(dt_hr, lifetime_model, thermal_model, capacity_model, batt_vars->batt_loss_choice,
-		batt_vars->batt_losses_charging,batt_vars->batt_losses_discharging, batt_vars->batt_losses_idle, batt_vars->batt_losses);
+	losses_model = new losses_t(dt_hr, batt_vars->batt_loss_choice,
+                                batt_vars->batt_losses_charging, batt_vars->batt_losses_discharging,
+                                batt_vars->batt_losses_idle, batt_vars->batt_losses);
 
 	battery_model->initialize(capacity_model, voltage_model, lifetime_model, thermal_model, losses_model);
 	battery_metrics = new battery_metrics_t(dt_hr);

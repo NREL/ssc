@@ -23,6 +23,19 @@ struct capacity_state {
     int prev_charge_mode; // {CHARGE, NO_CHARGE, DISCHARGE}
 };
 
+static void compareState(std::unique_ptr<capacity_t>& old_cap, const capacity_state& state, const std::string& msg){
+    double tol = 0.01;
+    EXPECT_NEAR(old_cap->q0(), state.q0, tol) << msg;
+    EXPECT_NEAR(old_cap->qmax_thermal(), state.qmax_thermal, tol) << msg;
+    EXPECT_NEAR(old_cap->qmax(), state.qmax, tol) << msg;
+    EXPECT_NEAR(old_cap->I(), state.I, tol) << msg;
+    EXPECT_NEAR(old_cap->I_loss(), state.I_loss, tol) << msg;
+    EXPECT_NEAR(old_cap->SOC(), state.SOC, tol) << msg;
+    EXPECT_NEAR(old_cap->DOD(), state.DOD, tol) << msg;
+//        EXPECT_NEAR(old_cap->DOD(), state.DOD_prev, tol) << msg;
+    EXPECT_NEAR(old_cap->charge_operation(), state.charge_mode, tol) << msg;
+}
+
 class lib_battery_capacity_test : public ::testing::Test
 {
 protected:
@@ -43,18 +56,6 @@ protected:
     int nyears = 1;
 
 public:
-
-    void compareState(capacity_state state, const std::string& msg){
-        EXPECT_NEAR(old_cap->q0(), state.q0, tol) << msg;
-        EXPECT_NEAR(old_cap->qmax_thermal(), state.qmax_thermal, tol) << msg;
-        EXPECT_NEAR(old_cap->qmax(), state.qmax, tol) << msg;
-        EXPECT_NEAR(old_cap->I(), state.I, tol) << msg;
-        EXPECT_NEAR(old_cap->I_loss(), state.I_loss, tol) << msg;
-        EXPECT_NEAR(old_cap->SOC(), state.SOC, tol) << msg;
-        EXPECT_NEAR(old_cap->DOD(), state.DOD, tol) << msg;
-//        EXPECT_NEAR(old_cap->DOD(), state.DOD_prev, tol) << msg;
-        EXPECT_NEAR(old_cap->charge_operation(), state.charge_mode, tol) << msg;
-    }
 
 //    void compareStates(capacity_state &s, std::string msg) {
 //        auto state = new_cap->get_state();
