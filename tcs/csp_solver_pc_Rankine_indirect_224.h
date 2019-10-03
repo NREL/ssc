@@ -34,6 +34,9 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "csp_radiator.h"
 #include "csp_solver_stratified_tes.h"
 
+#include <set>
+#include <algorithm>
+
 class C_pc_Rankine_indirect_224 : public C_csp_power_cycle
 {
 private:
@@ -96,6 +99,12 @@ private:
 		return 284.482349 + 20.8848464*P - 1.5898147*P*P + 0.0655241456*P*P*P - 0.0010168822*P*P*P*P; /*return value in Kelvin*/
 	}
 
+    void get_var_setup(std::vector<double> & vec_unique, std::vector<double> & var_vec,
+        double & var_des, double & var_low, double & var_high);
+
+    bool is_level_in_par(std::vector<std::vector<double>> test_combs,
+        std::vector<std::vector<double>> full_table);
+
     int split_ind_tbl(util::matrix_t<double> &combined, util::matrix_t<double> &T_htf_ind,
         util::matrix_t<double> &m_dot_ind, util::matrix_t<double> &T_amb_ind);
 
@@ -104,7 +113,18 @@ private:
 
 public:
 	
-	enum
+    enum
+    {
+        E_COL_T_HTF,
+        E_COL_M_DOT,
+        E_COL_T_AMB,
+        E_COL_W_CYL,
+        E_COL_Q_CYL,
+        E_COL_W_COOL,
+        E_COL_M_H2O
+    };
+
+    enum
 	{
 		E_ETA_THERMAL,		//[-] Cycle thermal efficiency (gross)
 		E_Q_DOT_HTF,		//[MWt] Cycle thermal power input
