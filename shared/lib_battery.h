@@ -454,7 +454,7 @@ public:
 	enum CALENDAR_LOSS_OPTIONS {NONE, LITHIUM_ION_CALENDAR_MODEL, CALENDAR_LOSS_TABLE};
 
 protected:
-	void runLithiumIonModel(double T, double SOC);
+	void runLithiumIonModel(double T, double SOC_ratio);
 	void runTableModel();
 
 private:
@@ -574,7 +574,7 @@ class thermal_t
 public:
 	thermal_t();
 	thermal_t(double dt_hour, double mass, double length, double width, double height, double R, double Cp,
-              double h, std::vector<double> T_room, const util::matrix_t<double> &c_vs_t);
+              double h, std::vector<double> T_room_K, const util::matrix_t<double> &c_vs_t);
 
 	// deep copy
 	thermal_t * clone();
@@ -582,37 +582,38 @@ public:
 	// copy thermal to this
 	void copy(thermal_t *);
 
-	void updateTemperature(double I, double dt, size_t lifetimeIndex);
+	void updateTemperature(double I, size_t lifetimeIndex);
 	void replace_battery(size_t lifetimeIndex);
 
 	// outputs
-	double T_battery();
+	double get_T_battery();
 	double capacity_percent();
 	message get_messages(){ return _message; }
-
-protected:
-	double f(double T_battery, double I, size_t lifetimeIndex);
-	double rk4(double I, double dt, size_t lifetimeIndex);
-	double trapezoidal(double I, double dt, size_t lifetimeIndex);
-	double implicit_euler(double I, double dt, size_t lifetimeIndex);
 
 protected:
 
 	util::matrix_t<double> _cap_vs_temp;
 
-	double _dt_hour;    // [hr] - timestep
+	double dt_sec;     // [sec] - timestep
 	double _mass;		// [kg]
 	double _length;		// [m]
 	double _width;		// [m]
 	double _height;		// [m]
 	double _Cp;			// [J/KgK] - battery specific heat capacity
 	double _h;			// [Wm2K] - general heat transfer coefficient
-	std::vector<double> _T_room; // [K] - storage room temperature
 	double _R;			// [Ohm] - internal resistance
 	double _A;			// [m2] - exposed surface area
-	double _T_battery;   // [K]
-	double _capacity_percent; //[%]
+	std::vector<double> T_room_K;   // can be year one hourly data or a single value constant throughout year
+	double T_room_init;   // [K]
+	double T_batt_init;
+	double T_batt_avg;
+    double _capacity_percent; //[%]
 	double _T_max;		 // [K]
+
+	// calc constants for heat transfer
+	double next_time_at_current_T_room;
+	double t_threshold;     // time_at_current_T_room after which diffusion term < tolerance
+
 	message _message;
 
 };
@@ -703,7 +704,7 @@ public:
 	// Run a component level model
 	void runCapacityModel(double &I);
 	void runVoltageModel();
-	void runThermalModel(double I, size_t lifetimeIndex);
+	void runThermalModel(double I, double T_room_K);
 	void runLifetimeModel(size_t lifetimeIndex);
 	void runLossesModel(size_t lifetimeIndex);
 
@@ -733,6 +734,7 @@ public:
 	enum CHEMS{ LEAD_ACID, LITHIUM_ION, VANADIUM_REDOX, IRON_FLOW};
 	enum REPLACE{ NO_REPLACEMENTS, REPLACE_BY_CAPACITY, REPLACE_BY_SCHEDULE};
 
+    std::vector<double> T_room_K;
 
 private:
 	capacity_t * _capacity;

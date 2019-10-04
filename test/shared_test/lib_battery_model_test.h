@@ -33,13 +33,16 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_battery_lifetime_test.h"
 
 struct thermal_state{
-    double T_battery;   // [K]
     double capacity_percent; //[%]
+    double T_avg;       // avg during timestep [K]
+    double T_room_init;
+    double T_batt_init;
 };
 
 static void compareState(std::unique_ptr<thermal_t>& model, const thermal_state& state, const std::string& msg){
     double tol = 0.01;
-    EXPECT_NEAR(model->T_battery(), state.T_battery, tol) << msg;
+    EXPECT_NEAR(model->get_T_battery(), state.T_avg, tol) << msg;
+//    EXPECT_NEAR(model->capacity_percent(), state.T_avg, tol) << msg;
     EXPECT_NEAR(model->capacity_percent(), state.capacity_percent, tol) << msg;
 }
 
@@ -61,7 +64,7 @@ protected:
     double batt_R = 0.2;
     double Cp = 1004;
     double h = 500;
-    std::vector<double> T_room;
+    std::vector<double> T_room = {290,290,295,295,290,270,270};
     util::matrix_t<double> capacityVsTemperature;
 
     double dt_hour = 1;
@@ -70,13 +73,12 @@ protected:
 public:
 
     void SetUp() override {
-        for (size_t i = 0; i < 8760; i++) {
-            T_room.push_back((double)i * 5 + 273.15);
-        }
         double vals3[] = { -10, 60, 0, 80, 25, 100, 40, 100 };
         capacityVsTemperature.assign(vals3, 4, 2);
+    }
+    void CreateModel(double Cp){
         model = std::unique_ptr<thermal_t>(new thermal_t(dt_hour, mass, length, width,
-                height, batt_R, Cp, h, T_room, capacityVsTemperature));
+                                                         height, batt_R, Cp, h, T_room, capacityVsTemperature));
     }
 };
 
@@ -236,9 +238,8 @@ public:
         height = 0.58;
         Cp = 1004;
         h = 500;
-        for (size_t i = 0; i < 8760; i++) {
-            T_room.push_back(20 + 273.15);
-        }
+        T_room.emplace_back(293.15);
+
         double vals3[] = { -10, 60, 0, 80, 25, 100, 40, 100 };
         capacityVsTemperature.assign(vals3, 4, 2);
 
@@ -263,7 +264,8 @@ public:
         cycleModel = new lifetime_cycle_t(cycleLifeMatrix);
         calendarModel = new lifetime_calendar_t(calendarChoice, calendarLifeMatrix, dtHour);
         lifetimeModel = new lifetime_t(cycleModel, calendarModel, replacementOption, replacementCapacity);
-        thermalModel = new thermal_t(1.0, mass, length, width, height, resistance, Cp, h, T_room, capacityVsTemperature);
+        thermalModel = new thermal_t(1.0, mass, length, width, height, resistance, Cp, h, T_room,
+                                     capacityVsTemperature);
         lossModel = new losses_t(dtHour, lossChoice, monthlyLosses, monthlyLosses, monthlyLosses, fullLosses);
         batteryModel = std::unique_ptr<battery_t>(new battery_t(dtHour, chemistry));
         batteryModel->initialize(capacityModel, voltageModel, lifetimeModel, thermalModel, lossModel);

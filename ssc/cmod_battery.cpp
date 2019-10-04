@@ -791,8 +791,8 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 		throw compute_module::exec_error("battery", "capacity vs temperature matrix must have two columns and at least two rows");
 	}
 
-	if (batt_vars->T_room.size() != nrec) {
-		throw compute_module::exec_error("battery", "Environment temperature input length must equal number of weather file records");
+	if (batt_vars->T_room.size() > 1 && batt_vars->T_room.size() != nrec) {
+		throw compute_module::exec_error("battery", "Battery ambient temperature if provided as time series must equal number of weather file records");
 	}
 
 	thermal_model = new thermal_t(
@@ -1235,7 +1235,7 @@ void battstor::outputs_fixed(compute_module &cm)
 		outMaxCharge[index] = (ssc_number_t)(capacity_model->qmax());
 		outMaxChargeThermal[index] = (ssc_number_t)(capacity_model->qmax_thermal());
 	
-		outBatteryTemperature[index] = (ssc_number_t)(thermal_model->T_battery() - 273.15);
+		outBatteryTemperature[index] = (ssc_number_t)(thermal_model->get_T_battery() - 273.15);
 		outCapacityThermalPercent[index] = (ssc_number_t)(thermal_model->capacity_percent());
 	}
 

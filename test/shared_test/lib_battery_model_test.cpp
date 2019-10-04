@@ -3,64 +3,88 @@
 #include "lib_battery_model_test.h"
 
 TEST_F(lib_battery_thermal_test, SetUpTest){
-    EXPECT_NEAR(model->T_battery(), 293.15, tol);
+    EXPECT_NEAR(model->get_T_battery(), 293.15, tol);
     EXPECT_NEAR(model->capacity_percent(), 96, tol);
 }
 
-TEST_F(lib_battery_thermal_test, updateTemperatureTest){
-    // Test with various currents at T = 273.15 k
-    size_t idx = 0;
-
+TEST_F(lib_battery_thermal_test, updateTemperatureTest) {
+    CreateModel(Cp);
+    // battery which adjusts quickly to temp
     double I = 50;
-    model->updateTemperature(I, dt_hour, idx);
-    EXPECT_NEAR(model->capacity_percent(), 80.619, tol) << "updateTemperatureTest: 1";
-    EXPECT_NEAR(model->T_battery(), 273.923, tol) << "updateTemperatureTest: 1";
+    size_t idx = 0;
+    model->updateTemperature(I, idx++);
+    auto s = thermal_state({93.87, 290.495, 290});
+    compareState(model, s, "updateTemperatureTest: 1");
 
-    I = 500;
-    model->updateTemperature(I, dt_hour, idx);
-    EXPECT_NEAR(model->capacity_percent(), 100, tol) << "updateTemperatureTest: 2";
-    EXPECT_NEAR(model->T_battery(), 350.114, tol) << "updateTemperatureTest: 2";
-
-    I = 5;
-    model->updateTemperature(I, dt_hour, idx);
-    EXPECT_NEAR(model->capacity_percent(), 80, tol) << "updateTemperatureTest: 3";
-    EXPECT_NEAR(model->T_battery(), 273.15, tol) << "updateTemperatureTest: 3";
-
-    // T = 293.15 K
-    idx = 4;
+    I = -50;
+    model->updateTemperature(I, idx++);
+    s = thermal_state({93.87, 290.495, 290});
+    compareState(model, s, "updateTemperatureTest: 2");
 
     I = 50;
-    model->updateTemperature(I, dt_hour, idx);
-    EXPECT_NEAR(model->capacity_percent(), 100, tol) << "updateTemperatureTest: 4";
-    EXPECT_NEAR(model->T_battery(), 305.168, tol) << "updateTemperatureTest: 4";
+    model->updateTemperature(I, idx++);
+    s = thermal_state({97.37, 294.86, 295});
+    compareState(model, s, "updateTemperatureTest: 3");
 
-    I = 500;
-    model->updateTemperature(I, dt_hour, idx);
-    EXPECT_NEAR(model->capacity_percent(), 100, tol) << "updateTemperatureTest: 5";
-    EXPECT_NEAR(model->T_battery(), 363.792, tol) << "updateTemperatureTest: 5";
+    I = 10;
+    model->updateTemperature(I, idx++);
+    s = thermal_state({97.49, 295.02, 295});
+    compareState(model, s, "updateTemperatureTest: 4");
 
-    I = 5;
-    model->updateTemperature(I, dt_hour, idx);
-    EXPECT_NEAR(model->capacity_percent(), 96, tol) << "updateTemperatureTest: 6";
-    EXPECT_NEAR(model->T_battery(), 293.15, tol) << "updateTemperatureTest: 6";
+    I = 10;
+    model->updateTemperature(I, idx++);
+    s = thermal_state({94.05, 290.72, 290});
+    compareState(model, s, "updateTemperatureTest: 5");
 
-    // T = 313.15
-    idx = 8;
+    I = 10;
+    model->updateTemperature(I, idx++);
+    s = thermal_state({79.54, 272.92, 270});
+    compareState(model, s, "updateTemperatureTest: 6");
+
+    I = 100;
+    model->updateTemperature(I, idx++);
+    s = thermal_state({77.66, 271.98, 270});
+    compareState(model, s, "updateTemperatureTest: 7");
+}
+
+TEST_F(lib_battery_thermal_test, updateTemperatureTest2){
+    CreateModel(Cp * 2);
+    // slower adjusting batt
+    double I = 50;
+    size_t idx = 0;
+    model->updateTemperature(I, idx++);
+    auto s = thermal_state({93.87, 290.495, 290});
+    compareState(model, s, "updateTemperatureTest: 1");
+
+    I = -50;
+    model->updateTemperature(I, idx++);
+    s = thermal_state({93.87, 290.495, 290});
+    compareState(model, s, "updateTemperatureTest: 2");
 
     I = 50;
-    model->updateTemperature(I, dt_hour, idx);
-    EXPECT_NEAR(model->capacity_percent(), 100, tol) << "updateTemperatureTest: 7";
-    EXPECT_NEAR(model->T_battery(), 325.168, tol) << "updateTemperatureTest: 7";
+    model->updateTemperature(I, idx++);
+    s = thermal_state({96.89, 294.26, 295});
+    compareState(model, s, "updateTemperatureTest: 3");
 
-    I = 500;
-    model->updateTemperature(I, dt_hour, idx);
-    EXPECT_NEAR(model->capacity_percent(), 100, tol) << "updateTemperatureTest: 8";
-    EXPECT_NEAR(model->T_battery(), 383.792, tol) << "updateTemperatureTest: 8";
+    I = 10;
+    model->updateTemperature(I, idx++);
+    s = thermal_state({97.49, 295.02, 295});
+    compareState(model, s, "updateTemperatureTest: 4");
 
-    I = 5;
-    model->updateTemperature(I, dt_hour, idx);
-    EXPECT_NEAR(model->capacity_percent(), 100, tol) << "updateTemperatureTest: 9";
-    EXPECT_NEAR(model->T_battery(), 313.15, tol) << "updateTemperatureTest: 9";
+    I = 10;
+    model->updateTemperature(I, idx++);
+    s = thermal_state({94.58, 291.38, 290});
+    compareState(model, s, "updateTemperatureTest: 5");
+
+    I = 10;
+    model->updateTemperature(I, idx++);
+    s = thermal_state({82.15, 275.84, 270});
+    compareState(model, s, "updateTemperatureTest: 6");
+
+    I = 100;
+    model->updateTemperature(I, idx++);
+    s = thermal_state({77.69, 271.99, 270});
+    compareState(model, s, "updateTemperatureTest: 7");
 }
 
 TEST_F(lib_battery_losses_test, MonthlyLossesTest){
