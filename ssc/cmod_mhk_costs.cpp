@@ -66,7 +66,11 @@ static var_info _cm_vtab_mhk_costs[] = {
 	{ SSC_OUTPUT,			SSC_NUMBER,			"insurance_during_construction",			"Modeled cost of insurance during construction",		"$",			"",								"MHKCosts",			"",						"",							"" },
 	{ SSC_OUTPUT,			SSC_NUMBER,			"reserve_accounts",							"Modeled reserve account costs",						"$",			"",								"MHKCosts",			"",						"",							"" },
 
-		var_info_invalid };
+	//O and M costs
+	{ SSC_OUTPUT,			SSC_NUMBER,			"operations_cost",							"Operations cost",										"$",			"",								"MHKCosts",			"",						"",							"" },
+	{ SSC_OUTPUT,			SSC_NUMBER,			"maintenance_cost",							"Maintenance cost",										"$",			"",								"MHKCosts",			"",						"",							"" },
+
+	var_info_invalid };
 
 
 
@@ -82,7 +86,8 @@ public:
 	{
 		//get inputs to compute module
 		double device_rating = as_double("device_rated_power");
-		double system_capacity = as_double("system_capacity");
+		double system_capacity_kW = as_double("system_capacity"); // kW
+		double system_capacity_MW = system_capacity_kW / 1000.0; // MW
 		int device_type = as_integer("device_type");
 		int technology = as_integer("marine_energy_tech");
 		int devices_per_row = as_integer("devices_per_row");
@@ -95,57 +100,64 @@ public:
 		double development, eng_and_mgmt, plant_commissioning, site_access_port_staging, assembly_and_install, other_infrastructure;
 		double array_cable_system, export_cable_system, onshore_substation, offshore_substation, other_elec_infra;
 		double project_contingency, insurance_during_construction, reserve_accounts;
+		double operations_cost, maintenance_cost;
 
 		//CapEx costs depend on technology
 		if (device_type == RM3)
 		{
-			structural_assembly = 6854912 * system_capacity + 2629191;
-			power_takeoff = 2081129 * pow(system_capacity, 0.91);
-			mooring_found_substruc = 1836365 * system_capacity + 29672;
+			structural_assembly = 6854912.0 * system_capacity_MW + 2629191.0;
+			power_takeoff = 2081129.0 * pow(system_capacity_MW, 0.91);
+			mooring_found_substruc = 1836365.0 * system_capacity_MW + 29672.0;
 		}
 
 		else if (device_type == RM5)
 		{
-			structural_assembly = 6848402 * system_capacity + 3315338;
-			power_takeoff = 1600927 * pow(system_capacity, 0.78);
-			mooring_found_substruc = 2030816 * system_capacity + 478400;
+			structural_assembly = 6848402 * system_capacity_MW + 3315338;
+			power_takeoff = 1600927 * pow(system_capacity_MW, 0.78);
+			mooring_found_substruc = 2030816 * system_capacity_MW + 478400;
 		}
 
 		else if (device_type == RM6)
 		{
-			structural_assembly = 13320092 * system_capacity + 6681164;
-			power_takeoff = 3796551 * pow(system_capacity, 0.91);
-			mooring_found_substruc = 2158462 * system_capacity + 1048932;
+			structural_assembly = 13320092 * system_capacity_MW + 6681164;
+			power_takeoff = 3796551 * pow(system_capacity_MW, 0.91);
+			mooring_found_substruc = 2158462 * system_capacity_MW + 1048932;
 		}
 		
 		else //generic model applies to everything else
 		{
-			structural_assembly = 6854912 * system_capacity + 2629191;
-			if (technology == WAVE) power_takeoff = 1179579 * system_capacity + 2495107;
-			else power_takeoff = 2906035 * system_capacity;
-			mooring_found_substruc = 2158462 * system_capacity + 1048932;
+			structural_assembly = 6854912 * system_capacity_MW + 2629191;
+			if (technology == WAVE) power_takeoff = 1179579 * system_capacity_MW + 2495107;
+			else power_takeoff = 2906035 * system_capacity_MW;
+			mooring_found_substruc = 2158462 * system_capacity_MW + 1048932;
 		}
 
 		//BOS costs are the same regardless of device technology
-		development = 3197591 * pow(system_capacity, 0.49);
-		eng_and_mgmt = 850744 * pow(system_capacity, 0.5649);
+		development = 3197591.0 * pow(system_capacity_MW, 0.49);
+		eng_and_mgmt = 850744.0 * pow(system_capacity_MW, 0.5649);
 		double capex = structural_assembly + power_takeoff + mooring_found_substruc;
 		plant_commissioning = 0.016 * capex;
 		site_access_port_staging = 0.011 * capex;
-		assembly_and_install = 2805302 * pow(system_capacity, 0.66);
+		assembly_and_install = 2805302 * pow(system_capacity_MW, 0.66);
 		other_infrastructure = 0;
 
 		//electrical infrastructure costs
 		array_cable_system = 4.4 * (device_rating * devices_per_row / 1000.0) + 162.81 * interarray_length + 4.4 * (device_rating / 1000.0) + 162.81 * riser_length;
-		export_cable_system = 4.4 * (system_capacity / 1000.0) + 162.81 * export_length;
-		onshore_substation = 75000 * system_capacity / 1000.0;
-		offshore_substation = 100000 * system_capacity / 1000.0;
-		other_elec_infra = 47966.16 * system_capacity / 1000.0 + 665841;
+		export_cable_system = 4.4 * (system_capacity_MW) + 162.81 * export_length;
+		onshore_substation = 75000.0 * system_capacity_MW;
+		offshore_substation = 100000.0 * system_capacity_MW;
+		other_elec_infra = 47966.16 * system_capacity_MW + 665841.0;
 
 		//financial costs are the same regardless of technology
 		project_contingency = 0.05 * capex;
 		insurance_during_construction = 0.01 * capex;
 		reserve_accounts = 0.03 * capex;
+
+		// operations cost
+		operations_cost = 31250.0 * (system_capacity_MW) + 879282.0;
+
+		// maintenance cost
+		maintenance_cost = 176870.0 * pow(system_capacity_MW, 0.84);
 
 		//assign all outputs
 		assign("structural_assembly_cost_modeled", var_data(static_cast<ssc_number_t>(structural_assembly)));
@@ -169,6 +181,8 @@ public:
 		assign("insurance_during_construction", var_data(static_cast<ssc_number_t>(insurance_during_construction)));
 		assign("reserve_accounts", var_data(static_cast<ssc_number_t>(reserve_accounts)));
 
+		assign("operations_cost", var_data(static_cast<ssc_number_t>(operations_cost)));
+		assign("maintenance_cost", var_data(static_cast<ssc_number_t>(maintenance_cost)));
 	}
 
 };
