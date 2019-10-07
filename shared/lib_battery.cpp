@@ -1376,6 +1376,9 @@ thermal_t::thermal_t(double dt_hour, double mass, double length, double width, d
 thermal_t * thermal_t::clone(){ return new thermal_t(*this); }
 void thermal_t::copy(thermal_t * thermal)
 {
+    dt_sec = thermal->dt_sec;
+    next_time_at_current_T_room = thermal->next_time_at_current_T_room;
+    t_threshold = thermal->t_threshold;
 	_mass = thermal->_mass;
 	_length = thermal->_length;
 	_width = thermal->_width;
@@ -1641,7 +1644,7 @@ void battery_t::run(size_t lifetimeIndex, double I)
 
 	while (iterate_count < 5)
 	{
-		runThermalModel(I, T_room_K[util::yearOneIndex(_dt_hour, lifetimeIndex)]);
+		runThermalModel(I, lifetimeIndex);
 		runCapacityModel(I);
 
 		if (fabs(I - I_initial)/fabs(I_initial) > tolerance)
@@ -1661,9 +1664,9 @@ void battery_t::run(size_t lifetimeIndex, double I)
     _capacity->updateCapacityForLifetime(_lifetime->capacity_percent());
     runLossesModel(lifetimeIndex);
 }
-void battery_t::runThermalModel(double I, double T_room_K)
+void battery_t::runThermalModel(double I, size_t lifetimeIndex)
 {
-    _thermal->updateTemperature(I, T_room_K);
+    _thermal->updateTemperature(I, lifetimeIndex);
 }
 
 void battery_t::runCapacityModel(double &I)

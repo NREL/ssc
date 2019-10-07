@@ -39,11 +39,15 @@ struct thermal_state{
     double T_batt_init;
 };
 
-static void compareState(std::unique_ptr<thermal_t>& model, const thermal_state& state, const std::string& msg){
+static void compareState(thermal_t* model, const thermal_state& state, const std::string& msg){
     double tol = 0.01;
     EXPECT_NEAR(model->get_T_battery(), state.T_avg, tol) << msg;
 //    EXPECT_NEAR(model->capacity_percent(), state.T_avg, tol) << msg;
     EXPECT_NEAR(model->capacity_percent(), state.capacity_percent, tol) << msg;
+}
+
+static void compareState(std::unique_ptr<thermal_t>& model, const thermal_state& state, const std::string& msg) {
+    compareState(model.get(), state, msg);
 }
 
 class lib_battery_thermal_test : public ::testing::Test
@@ -126,15 +130,15 @@ struct battery_state{
 };
 
 static void compareState(std::unique_ptr<battery_t>&model, const battery_state& state, const std::string& msg){
-    auto cap = std::unique_ptr<capacity_t>(model->capacity_model());
+    auto cap = model->capacity_model();
     compareState(cap, state.capacity, msg);
 
     EXPECT_NEAR(model->battery_voltage(), state.batt_voltage, 0.01);
 
-    auto l = std::unique_ptr<lifetime_t>(model->lifetime_model());
+    auto l = model->lifetime_model();
     compareState(l, state.lifetime, msg);
 
-    auto t = std::unique_ptr<thermal_t>(model->thermal_model());
+    auto t = model->thermal_model();
     compareState(t, state.thermal, msg);
 
 }

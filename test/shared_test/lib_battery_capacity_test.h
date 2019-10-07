@@ -23,7 +23,7 @@ struct capacity_state {
     int prev_charge_mode; // {CHARGE, NO_CHARGE, DISCHARGE}
 };
 
-static void compareState(std::unique_ptr<capacity_t>& old_cap, const capacity_state& state, const std::string& msg){
+static void compareState(capacity_t* old_cap, const capacity_state& state, const std::string& msg){
     double tol = 0.01;
     EXPECT_NEAR(old_cap->q0(), state.q0, tol) << msg;
     EXPECT_NEAR(old_cap->qmax_thermal(), state.qmax_thermal, tol) << msg;
@@ -34,6 +34,10 @@ static void compareState(std::unique_ptr<capacity_t>& old_cap, const capacity_st
     EXPECT_NEAR(old_cap->DOD(), state.DOD, tol) << msg;
 //        EXPECT_NEAR(old_cap->DOD(), state.DOD_prev, tol) << msg;
     EXPECT_NEAR(old_cap->charge_operation(), state.charge_mode, tol) << msg;
+}
+
+static void compareState(std::unique_ptr<capacity_t>& old_cap, const capacity_state& state, const std::string& msg) {
+    compareState(old_cap.get(), state, msg);
 }
 
 class lib_battery_capacity_test : public ::testing::Test

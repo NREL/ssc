@@ -704,7 +704,7 @@ public:
 	// Run a component level model
 	void runCapacityModel(double &I);
 	void runVoltageModel();
-	void runThermalModel(double I, double T_room_K);
+	void runThermalModel(double I, size_t lifetimeIndex);
 	void runLifetimeModel(size_t lifetimeIndex);
 	void runLossesModel(size_t lifetimeIndex);
 

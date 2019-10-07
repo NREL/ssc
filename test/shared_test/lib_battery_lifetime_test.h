@@ -18,7 +18,7 @@ struct cycle_lifetime_state {
     std::vector<double> Peaks;
 };
 
-static void compareState(std::unique_ptr<lifetime_cycle_t>& cycle_model, cycle_lifetime_state state, const std::string& msg){
+static void compareState(lifetime_cycle_t* cycle_model, const cycle_lifetime_state& state, const std::string& msg){
     double tol = 0.01;
     EXPECT_NEAR(cycle_model->capacity_percent(), state.relative_q, tol) << msg;
 //        EXPECT_NEAR(model->qmax_thermal(), state.Xlt, tol) << msg;
@@ -28,6 +28,9 @@ static void compareState(std::unique_ptr<lifetime_cycle_t>& cycle_model, cycle_l
     EXPECT_NEAR(cycle_model->cycles_elapsed(), state.nCycles, tol) << msg;
 //        EXPECT_NEAR(model->DOD(), state.Peaks, tol) << msg;
 //        EXPECT_NEAR(model->charge_operation(), state.jlt, tol) << msg;
+}
+static void compareState(std::unique_ptr<lifetime_cycle_t>& cycle_model, const cycle_lifetime_state& state, const std::string& msg) {
+    compareState(cycle_model.get(), state, msg);
 }
 
 class lib_battery_lifetime_cycle_test : public ::testing::Test
@@ -63,13 +66,17 @@ struct calendar_lifetime_state {
     double dq_new;
 };
 
-static void compareState(std::unique_ptr<lifetime_calendar_t>& cal_model, calendar_lifetime_state state, const std::string& msg){
-    double tol = 0.001;
+static void compareState(lifetime_calendar_t* cal_model, const calendar_lifetime_state& state, const std::string& msg){
+    double tol = 0.01;
 //        EXPECT_NEAR(model->, state.day_age_of_battery, tol) << msg;
     EXPECT_NEAR(cal_model->capacity_percent(), state.q, tol) << msg;
 //        EXPECT_NEAR(model->capacity_percent(), state.last_idx, tol) << msg;
 //        EXPECT_NEAR(model->average_range(), state.dq_old, tol) << msg;
 //        EXPECT_NEAR(model->cycle_range(), state.dq_new, tol) << msg;
+}
+
+static void compareState(std::unique_ptr<lifetime_calendar_t>& cal_model, const calendar_lifetime_state& state, const std::string& msg) {
+    compareState(cal_model.get(), state, msg);
 }
 
 class lib_battery_lifetime_calendar_matrix_test : public ::testing::Test
@@ -123,13 +130,16 @@ struct lifetime_state{
     int replacements;       // Number of replacements this year
 };
 
-static void compareState(std::unique_ptr<lifetime_t>& model, const lifetime_state& s, const std::string& msg){
-    auto cycle = std::unique_ptr<lifetime_cycle_t>(model->cycleModel());
+static void compareState(lifetime_t* model, const lifetime_state& s, const std::string& msg){
+    auto cycle = model->cycleModel();
     compareState(cycle, s.cycle, msg);
-    auto cal = std::unique_ptr<lifetime_calendar_t>(model->calendarModel());
+    auto cal = model->calendarModel();
     compareState(cal, s.calendar, msg);
 }
 
+static void compareState(std::unique_ptr<lifetime_t>& model, const lifetime_state& s, const std::string& msg) {
+    compareState(model.get(), s, msg);
+}
 class lib_battery_lifetime_test : public ::testing::Test{
 protected:
     std::unique_ptr<lifetime_t> model;

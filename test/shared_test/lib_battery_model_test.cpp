@@ -3,8 +3,9 @@
 #include "lib_battery_model_test.h"
 
 TEST_F(lib_battery_thermal_test, SetUpTest){
-    EXPECT_NEAR(model->get_T_battery(), 293.15, tol);
-    EXPECT_NEAR(model->capacity_percent(), 96, tol);
+    CreateModel(Cp);
+    EXPECT_NEAR(model->get_T_battery(), 290, tol);
+    EXPECT_NEAR(model->capacity_percent(), 100, tol);
 }
 
 TEST_F(lib_battery_thermal_test, updateTemperatureTest) {
@@ -148,11 +149,11 @@ TEST_F(lib_battery_test, runTest){
     double I = 5;
     batteryModel->run(idx, I);
 
-    auto s = battery_state({{495, 1000, 960.06, 5, 0, 51.56, 48.44, 0, 2}, // cap
+    auto s = battery_state({{495, 1000, 960.04, 5, 0, 51.56, 48.44, 0, 2}, // cap
                             562.37, // voltage
                            {{100, 0, 0, 0, 0, 0, 0, std::vector<double>()}, // cycle
                             {0, 102}, 100}, // calendar
-                           {293.158, 96.01}, // thermal
+                           {96.0, 293.16}, // thermal
                            0});
     compareState(batteryModel, s, "runTest: 1");
 }
