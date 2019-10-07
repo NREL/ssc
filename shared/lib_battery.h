@@ -576,7 +576,10 @@ public:
 	thermal_t(double dt_hour, double mass, double length, double width, double height, double R, double Cp,
               double h, std::vector<double> T_room_K, const util::matrix_t<double> &c_vs_t);
 
-	// deep copy
+    thermal_t(const thermal_t& thermal);
+
+
+        // deep copy
 	thermal_t * clone();
 
 	// copy thermal to this

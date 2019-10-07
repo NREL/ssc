@@ -35,6 +35,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 struct thermal_state{
     double capacity_percent; //[%]
     double T_avg;       // avg during timestep [K]
+    double time_at_current_T_room;
     double T_room_init;
     double T_batt_init;
 };
@@ -211,12 +212,12 @@ public:
         // capacity
         q = 1000;
         SOC_init = 50;
-        SOC_min = 15;
+        SOC_min = 5;
         SOC_max = 95;
 
         // voltage
         n_series = 139;
-        n_strings = 89;
+        n_strings = 9;
         Vnom_default = 3.6;
         Vfull = 4.1;
         Vexp = 4.05;

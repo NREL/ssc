@@ -681,7 +681,7 @@ void voltage_dynamic_t::copy(voltage_t * voltage)
 void voltage_dynamic_t::parameter_compute()
 {
 	// Determines parameters according to page 2 of:
-	// Tremblay 2009 "A Generic Bettery Model for the Dynamic Simulation of Hybrid Electric Vehicles"
+	// Tremblay 2009 "A Generic Battery Model for the Dynamic Simulation of Hybrid Electric Vehicles"
 //	double eta = 0.995;
 	double I = _Qfull*_C_rate; // [A]
 	//_R = _Vnom*(1. - eta) / (_C_rate*_Qnom); // [Ohm]
@@ -1372,6 +1372,27 @@ thermal_t::thermal_t(double dt_hour, double mass, double length, double width, d
 	{
 		_cap_vs_temp(i,0) += 273.15; // convert C to K
 	}
+}
+
+thermal_t::thermal_t(const thermal_t& thermal){
+    dt_sec = thermal.dt_sec;
+    next_time_at_current_T_room = thermal.next_time_at_current_T_room;
+    t_threshold = thermal.t_threshold;
+    _mass = thermal._mass;
+    _length = thermal._length;
+    _width = thermal._width;
+    _height = thermal._height;
+    _Cp = thermal._Cp;
+    _h = thermal._h;
+    // _T_room = thermal._T_room;  // don't copy, super slow in subhourly simulations
+    _R = thermal._R;
+    _A = thermal._A;
+    T_room_init = thermal.T_room_init;
+    T_batt_init = thermal.T_batt_init;
+    T_batt_avg = thermal.T_batt_avg;
+    T_room_K = thermal.T_room_K;
+    _capacity_percent = thermal._capacity_percent;
+    _T_max = thermal._T_max;
 }
 thermal_t * thermal_t::clone(){ return new thermal_t(*this); }
 void thermal_t::copy(thermal_t * thermal)

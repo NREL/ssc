@@ -36,7 +36,7 @@ dispatch_t::dispatch_t(battery_t * Battery, double dt_hour, double SOC_min, doub
 	double Pc_max_kwdc, double Pd_max_kwdc, double Pc_max_kwac, double Pd_max_kwac,
 	double t_min, int mode, int battMeterPosition)
 {
-	// initialize battery power flow 
+	// initialize battery power flow
 	std::unique_ptr<BatteryPowerFlow> tmp(new BatteryPowerFlow(dt_hour));
 	m_batteryPowerFlow = std::move(tmp);
 	m_batteryPower = m_batteryPowerFlow->getBatteryPower();
@@ -113,7 +113,6 @@ void dispatch_t::delete_clone()
 dispatch_t::~dispatch_t()
 {
 	// original _Battery doesn't need deleted, since was a pointer passed in
-	_Battery_initial->delete_clone();
 	delete _Battery_initial;
 }
 void dispatch_t::finalize(size_t idx, double &I)
@@ -1700,8 +1699,14 @@ void battery_metrics_t::accumulate_battery_charge_components(double P_tofrom_bat
 		_e_charge_from_grid += P_grid_to_batt * _dt_hour;
 		_e_charge_from_grid_annual += P_grid_to_batt * _dt_hour;
 	}
-	_average_efficiency = 100.*(_e_discharge_accumulated / _e_charge_accumulated);
-	_average_roundtrip_efficiency = 100.*(_e_discharge_accumulated / (_e_charge_accumulated + _e_loss_system));
+	if (_e_charge_accumulated == 0){
+        _average_efficiency = 0;
+        _average_roundtrip_efficiency = 0;
+	}
+	else{
+	    _average_efficiency = 100.*(_e_discharge_accumulated / _e_charge_accumulated);
+	    _average_roundtrip_efficiency = 100.*(_e_discharge_accumulated / (_e_charge_accumulated + _e_loss_system));
+	}
 	_pv_charge_percent = 100.*(_e_charge_from_pv / _e_charge_accumulated);
 }
 void battery_metrics_t::accumulate_grid_annual(double P_tofrom_grid)
