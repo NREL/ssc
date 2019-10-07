@@ -25,7 +25,7 @@ void me_array_cable_length(ssc_data_t data)
 
 		
 	double length = (devices_per_row - 1) * device_spacing_in_row * number_rows + row_spacing * (number_rows - 1);
-	length *= (1 + cable_system_overbuild / 100.0);
+	length *= (1.0 + cable_system_overbuild / 100.0);
 	var_data cablelength = var_data(length);
 	vt->assign("inter_array_cable_length", cablelength);
 
