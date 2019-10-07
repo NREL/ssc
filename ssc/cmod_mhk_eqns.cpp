@@ -1,3 +1,5 @@
+#include <math.h>
+
 #include "vartab.h"
 #include "../shared/lib_util.h"
 
