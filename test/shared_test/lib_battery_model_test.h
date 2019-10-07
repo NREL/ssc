@@ -144,7 +144,7 @@ static void compareState(std::unique_ptr<battery_t>&model, const battery_state& 
 
 }
 
-
+// entire suite of tests runs in 177ms - 10/7
 class lib_battery_test : public ::testing::Test
 {
 public:
