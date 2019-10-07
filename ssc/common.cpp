@@ -57,6 +57,15 @@ var_info vtab_battery_replacement_cost[] = {
 { SSC_OUTPUT, SSC_ARRAY , "cf_battery_replacement_cost_schedule" , "Battery replacement cost schedule"                              , "$/kWh"                                  , ""                                      , "Cash Flow"            , "*"              , ""                      , ""},
 var_info_invalid };
 
+var_info vtab_financial_grid[] = {
+
+	/*   VARTYPE           DATATYPE         NAME                                         LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS	*/
+		{ SSC_INPUT,        SSC_ARRAY,      "grid_curtailment_price",                           "Curtailment price",                                  "$/kWh",  "",                      "Financial Grid",      "?=0",                   "",          "" },
+		{ SSC_INPUT,        SSC_NUMBER,      "grid_curtailment_price_esc",                           "Curtailment price escalation",                                  "%",  "",                      "Financial Grid",      "?=0",                   "",          "" },
+		{ SSC_INPUT,        SSC_NUMBER,      "annual_energy_pre_curtailment_ac", "Annual Energy AC pre-curtailment (year 1)",   "kWh",        "",                "",                           "?=0",                     "",                              "" },
+
+var_info_invalid };
+
 var_info vtab_fuelcell_replacement_cost[] = {
 { SSC_INPUT, SSC_ARRAY  , "fuelcell_replacement"                 , "Fuel cell replacements per year"                                , "number/year"                            , ""                                      , "Fuel Cell"            , ""               , ""                      , ""},
 { SSC_INPUT, SSC_ARRAY  , "fuelcell_replacement_schedule"        , "Fuel cell replacements per year (user specified)"               , "number/year"                            , ""                                      , "Fuel Cell"            , ""               , ""                      , ""},
@@ -280,6 +289,27 @@ var_info vtab_sf_adjustment_factors[] = {
 { SSC_INPUT,SSC_ARRAY   , "sf_adjust:hourly"                     , "SF Hourly Adjustment Factors"                                   , "%"                                      , ""                                      , "Adjustment Factors"   , "?"              , "LENGTH=8760"           , ""},
 { SSC_INPUT,SSC_MATRIX  , "sf_adjust:periods"                    , "SF Period-based Adjustment Factors"                             , "%"                                      , "n x 3 matrix [ start, end, loss ]"     , "Adjustment Factors"   , "?"              , "COLS=3"                , ""},
 var_info_invalid };
+
+
+var_info vtab_financial_capacity_payments[] = {
+
+	/*   VARTYPE           DATATYPE         NAME                                    LABEL                                             UNITS        META                               GROUP                    REQUIRED_IF           CONSTRAINTS               UI_HINTS	*/
+		{ SSC_INPUT,        SSC_NUMBER,      "cp_capacity_payment_esc",             "Capacity payment escalation",                      "%/year",    "",                               "Capacity Payments",      "*",                   "",                      "" },
+		{ SSC_INPUT,        SSC_NUMBER,      "cp_capacity_payment_type",            "Capacity payment type",                            "",          "0=Energy basis,1=Fixed amount",  "Capacity Payments",      "*",                   "INTEGER,MIN=0,MAX=1",   "" },
+		{ SSC_INPUT,        SSC_ARRAY,       "cp_capacity_payment_amount",          "Capacity payment amount",                          "$ or $/MW", "",                               "Capacity Payments",      "*",                   "",                      "" },
+		{ SSC_INPUT,        SSC_ARRAY,       "cp_capacity_credit_percent",          "Capacity credit (eligible portion of nameplate)",  "%",         "",                               "Capacity Payments",      "cp_capacity_payment_type=1",   "",                      "" },
+		{ SSC_INPUT,        SSC_NUMBER,      "cp_system_nameplate",                 "System nameplate",                                 "MW",        "",                               "Capacity Payments",      "cp_capacity_payment_type=1",   "MIN=0",                 "" },
+		{ SSC_INPUT,        SSC_NUMBER,      "cp_battery_nameplate",                "Battery nameplate",                                "MW",        "",                               "Capacity Payments",      "cp_capacity_payment_type=1",   "MIN=0",                 "" },
+
+var_info_invalid };
+
+
+var_info vtab_grid_curtailment[] = {
+	/*   VARTYPE           DATATYPE         NAME                               LABEL                                       UNITS     META                                     GROUP                 REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
+
+		{ SSC_INPUT,        SSC_ARRAY,       "grid_curtailment",              "Grid curtailment",              "%",    "",                                     "Loss Adjustments",      "?",                     "",                "" },
+	var_info_invalid };
+
 
 var_info vtab_technology_outputs[] = {
 	// instantaneous power at each timestep - consistent with sun position

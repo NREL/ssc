@@ -62,7 +62,7 @@ static var_info _cm_vtab_mhk_wave[] = {
 	{ SSC_INPUT,			SSC_NUMBER,			"number_devices",						"Number of wave devices in the system",								"",				"",             "MHKWave",          "?=1",                      "INTEGER",			    	"" },
 	{ SSC_INPUT,			SSC_NUMBER,			"system_capacity",						"System Nameplate Capacity",										"kW",			"",				"MHKWave",			"?=0",						"",							"" },
 	
-	{ SSC_OUTPUT,			SSC_NUMBER,			"device_rated_capacity",				"Rated capacity of device",													"kW",			"",				"MHKTidal",			"",		"",						"" },
+	{ SSC_INPUT,			SSC_NUMBER,			"device_rated_power",				"Rated capacity of device",													"kW",			"",				"MHKWave",			"*",		"",						"" },
 	{ SSC_OUTPUT,			SSC_NUMBER,			"device_average_power",					"Average power production of a single device",											"kW",			"",				"MHKWave",			"*",						"",							"" },
 	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual energy production of array",											"kWh",			"",				"MHKWave",			"*",						"",							"" },
 	{ SSC_OUTPUT,			SSC_NUMBER,			"capacity_factor",						"Capacity Factor",													"%",			"",				"MHKWave",			"*",						"",							"" },
@@ -101,7 +101,7 @@ public:
 		//double system_capacity = as_double("system_capacity");
 
 		//User either sets device_rated_capacity in the UI, or allows cmod to determine from power curve:
-		if (is_assigned("device_rated_capacity")) device_rated_capacity = as_double("device_rated_capacity");
+		device_rated_capacity = as_double("device_rated_power");
 
 		//Read number of devices
 		int number_devices = as_integer("number_devices");
@@ -112,7 +112,7 @@ public:
 		
 		for (size_t i = 0; i < (size_t)wave_power_matrix.nrows(); i++) {
 			for (size_t j = 0; j < (size_t)wave_power_matrix.ncols(); j++) {
-				
+
 				//Store max power if not set in UI:
 				/*if(as_integer("calculate_capacity") > 0)
 					if (_power_vect[i][j] > system_capacity)

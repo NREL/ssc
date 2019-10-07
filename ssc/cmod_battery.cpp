@@ -379,7 +379,10 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 
 				batt_vars->pv_clipping_forecast = cm.as_vector_double("batt_pv_clipping_forecast");
 				batt_vars->pv_dc_power_forecast = cm.as_vector_double("batt_pv_dc_forecast");
-				double ppa_price = cm.as_double("ppa_price_input");
+				size_t count_ppa_price_input;
+				ssc_number_t* ppa_price = cm.as_array("ppa_price_input", &count_ppa_price_input);
+
+//				double ppa_price = cm.as_double("ppa_price_input");
 				int ppa_multiplier_mode = cm.as_integer("ppa_multiplier_model");
 
 				if (ppa_multiplier_mode == 0) {
@@ -387,12 +390,12 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 						cm.as_matrix_unsigned_long("dispatch_sched_weekday"), 
 						cm.as_matrix_unsigned_long("dispatch_sched_weekend"), 
 						step_per_hour,
-						cm.as_vector_double("dispatch_tod_factors"), ppa_price);
+						cm.as_vector_double("dispatch_tod_factors"), ppa_price[0]);
 				}
 				else {
 					batt_vars->ppa_price_series_dollar_per_kwh = cm.as_vector_double("dispatch_factors_ts");
 					for (size_t i = 0; i < batt_vars->ppa_price_series_dollar_per_kwh.size(); i++) {
-						batt_vars->ppa_price_series_dollar_per_kwh[i] *= ppa_price;
+						batt_vars->ppa_price_series_dollar_per_kwh[i] *= ppa_price[0];
 					}
 				}
 				outMarketPrice = cm.allocate("market_sell_rate_series_yr1",batt_vars->ppa_price_series_dollar_per_kwh.size());

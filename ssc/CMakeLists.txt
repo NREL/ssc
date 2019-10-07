@@ -53,6 +53,9 @@ set(SSC_SRC
 		cmod_lcoefcr.cpp
 		cmod_levpartflip.cpp
 		cmod_linear_fresnel_dsg_iph.cpp
+		cmod_merchantplant.cpp
+		cmod_mhk_eqns.cpp
+		cmod_mhk_costs.cpp
 		cmod_mhk_wave.cpp
 		cmod_mhk_tidal.cpp
 		cmod_poacalib.cpp
@@ -247,6 +250,6 @@ if (MSVC)
 				)
 		endif()
 	endif()
-	
+
 endif()
 
