@@ -34,12 +34,42 @@ static var_info _cm_vtab_mhk_costs[] = {
 	{ SSC_INPUT,			SSC_NUMBER,			"device_rated_power",						"Rated capacity of device",								"kW",			"",								"MHKCosts",			"*",					"MIN=0",					"" },
 	{ SSC_INPUT,			SSC_NUMBER,			"system_capacity",							"System Nameplate Capacity",							"kW",			"",								"MHKCosts",			"*",					"MIN=0",					"" },
 	{ SSC_INPUT,			SSC_NUMBER,			"devices_per_row",							"Number of wave devices per row in array",				"",				"",								"MHKCosts",         "*",                    "INTEGER",			    	"" },
-	{ SSC_INPUT,			SSC_NUMBER,			"device_type",								"Device Type",											"0/1/2/3",		"0=Generic,1=RM3,2=RM5,3=RM6",	"MHKCosts",			"?=0",					"MIN=0,MAX=3",				"" },
+	{ SSC_INPUT,			SSC_NUMBER,			"device_type",								"Device Type",											"0/1/2/3/4",		"0=Generic,1=RM3,2=RM5,3=RM6,4=RM1",	"MHKCosts",			"?=0",					"MIN=0,MAX=4",				"" },
 	{ SSC_INPUT,			SSC_NUMBER,			"marine_energy_tech",						"Marine energy technology",								"0/1",			"0=Wave,1=Tidal",				"MHKCosts",			"*",					"MIN=0,MAX=1",				"" },
 	
 	{ SSC_INPUT,			SSC_NUMBER,			"inter_array_cable_length",					"Inter-array cable length",								"m",			"",								"MHKCosts",			"*",					"MIN=0",					"" },
 	{ SSC_INPUT,			SSC_NUMBER,			"riser_cable_length",						"Riser cable length",									"m",			"",								"MHKCosts",			"*",					"MIN=0",					"" },
 	{ SSC_INPUT,			SSC_NUMBER,			"export_cable_length",						"Export cable length",									"m",			"",								"MHKCosts",			"*",					"MIN=0",					"" },
+
+	// User input for CapEx dependent costs
+		{ SSC_INPUT,			SSC_NUMBER,			"structural_assembly_cost_method",								"Structural assembly cost method",											"0/1/2",		"0=Enter in $/kW,1=Enter in $,2=Use modeled value",	"MHKCosts",			"*",					"MIN=0,MAX=2",				"" },
+		{ SSC_INPUT,			SSC_NUMBER,			"structural_assembly_cost_input",								"Structural assembly cost",											"$",		"",	"MHKCosts",			"*",					"",				"" },
+		{ SSC_INPUT,			SSC_NUMBER,			"power_takeoff_system_cost_method",								"Power take-off system cost method",											"0/1/2",		"0=Enter in $/kW,1=Enter in $,2=Use modeled value",	"MHKCosts",			"*",					"MIN=0,MAX=2",				"" },
+		{ SSC_INPUT,			SSC_NUMBER,			"power_takeoff_system_cost_input",								"Power take-off system cost",											"$",		"",	"MHKCosts",			"*",					"",				"" },
+		{ SSC_INPUT,			SSC_NUMBER,			"mooring_found_substruc_cost_method",								"Mooring, foundation, and substructure cost method",											"0/1/2",		"0=Enter in $/kW,1=Enter in $,2=Use modeled value",	"MHKCosts",			"*",					"MIN=0,MAX=2",				"" },
+		{ SSC_INPUT,			SSC_NUMBER,			"mooring_found_substruc_cost_input",								"Mooring, foundation, and substructure cost",											"$",		"",	"MHKCosts",			"*",					"",				"" },
+
+// User input BOS values
+		{ SSC_INPUT,			SSC_NUMBER,			"development_cost_method",								"Development cost method",											"0/1/2",		"0=Enter in $/kW,1=Enter in $,2=Use modeled value",	"MHKCosts",			"*",					"MIN=0,MAX=2",				"" },
+		{ SSC_INPUT,			SSC_NUMBER,			"development_cost_input",								"Development cost",											"$",		"",	"MHKCosts",			"*",					"",				"" },
+		{ SSC_INPUT,			SSC_NUMBER,			"eng_and_mgmt_cost_method",								"Engineering and management cost method",											"0/1/2",		"0=Enter in $/kW,1=Enter in $,2=Use modeled value",	"MHKCosts",			"*",					"MIN=0,MAX=2",				"" },
+		{ SSC_INPUT,			SSC_NUMBER,			"eng_and_mgmt_cost_input",								"Engineering and management cost",											"$",		"",	"MHKCosts",			"*",					"",				"" },
+		{ SSC_INPUT,			SSC_NUMBER,			"assembly_and_install_cost_method",								"Assembly and installation cost method",											"0/1/2",		"0=Enter in $/kW,1=Enter in $,2=Use modeled value",	"MHKCosts",			"*",					"MIN=0,MAX=2",				"" },
+		{ SSC_INPUT,			SSC_NUMBER,			"assembly_and_install_cost_input",								"Assembly and installation cost",											"$",		"",	"MHKCosts",			"*",					"",				"" },
+		{ SSC_INPUT,			SSC_NUMBER,			"other_infrastructure_cost_method",								"Other infrastructure cost method",											"0/1/2",		"0=Enter in $/kW,1=Enter in $,2=Use modeled value",	"MHKCosts",			"*",					"MIN=0,MAX=2",				"" },
+		{ SSC_INPUT,			SSC_NUMBER,			"other_infrastructure_cost_input",								"Other infrastructure cost",											"$",		"",	"MHKCosts",			"*",					"",				"" },
+
+		{ SSC_INPUT,			SSC_NUMBER,			"array_cable_system_cost_method",								"Array cable system cost method",											"0/1/2",		"0=Enter in $/kW,1=Enter in $,2=Use modeled value",	"MHKCosts",			"*",					"MIN=0,MAX=2",				"" },
+		{ SSC_INPUT,			SSC_NUMBER,			"array_cable_system_cost_input",								"Array cable system cost",											"$",		"",	"MHKCosts",			"*",					"",				"" },
+		{ SSC_INPUT,			SSC_NUMBER,			"export_cable_system_cost_method",								"Export cable system cost method",											"0/1/2",		"0=Enter in $/kW,1=Enter in $,2=Use modeled value",	"MHKCosts",			"*",					"MIN=0,MAX=2",				"" },
+		{ SSC_INPUT,			SSC_NUMBER,			"export_cable_system_cost_input",								"Export cable system cost",											"$",		"",	"MHKCosts",			"*",					"",				"" },
+		{ SSC_INPUT,			SSC_NUMBER,			"onshore_substation_cost_method",								"Onshore substation cost method",											"0/1/2",		"0=Enter in $/kW,1=Enter in $,2=Use modeled value",	"MHKCosts",			"*",					"MIN=0,MAX=2",				"" },
+		{ SSC_INPUT,			SSC_NUMBER,			"onshore_substation_cost_input",								"Onshore substation cost",											"$",		"",	"MHKCosts",			"*",					"",				"" },
+		{ SSC_INPUT,			SSC_NUMBER,			"offshore_substation_cost_method",								"Offshore substation cost method",											"0/1/2",		"0=Enter in $/kW,1=Enter in $,2=Use modeled value",	"MHKCosts",			"*",					"MIN=0,MAX=2",				"" },
+		{ SSC_INPUT,			SSC_NUMBER,			"offshore_substation_cost_input",								"Offshore substation cost",											"$",		"",	"MHKCosts",			"*",					"",				"" },
+		{ SSC_INPUT,			SSC_NUMBER,			"other_elec_infra_cost_method",								"Other electrical infrastructure cost method",											"0/1/2",		"0=Enter in $/kW,1=Enter in $,2=Use modeled value",	"MHKCosts",			"*",					"MIN=0,MAX=2",				"" },
+		{ SSC_INPUT,			SSC_NUMBER,			"other_elec_infra_cost_input",								"Other electrical infrastructure cost",											"$",		"",	"MHKCosts",			"*",					"",				"" },
+
 
 	//CapEx costs
 	{ SSC_OUTPUT,			SSC_NUMBER,			"structural_assembly_cost_modeled",			"Modeled structural assembly cost",						"$",			"",								"MHKCosts",			"",						"",							"" },
@@ -102,6 +132,22 @@ public:
 		double project_contingency, insurance_during_construction, reserve_accounts;
 		double operations_cost, maintenance_cost;
 
+		// user input CapEx values
+		int structural_assembly_cost_method = as_integer("structural_assembly_cost_method");
+		int power_takeoff_system_cost_method = as_integer("power_takeoff_system_cost_method");
+		int mooring_found_substruc_cost_method = as_integer("mooring_found_substruc_cost_method");
+
+		int development_cost_method = as_integer("development_cost_method");
+		int eng_and_mgmt_cost_method = as_integer("eng_and_mgmt_cost_method");
+		int assembly_and_install_cost_method = as_integer("assembly_and_install_cost_method");
+		int other_infrastructure_cost_method = as_integer("other_infrastructure_cost_method");
+
+		int array_cable_system_cost_method = as_integer("array_cable_system_cost_method");
+		int export_cable_system_cost_method = as_integer("export_cable_system_cost_method");
+		int onshore_substation_cost_method = as_integer("onshore_substation_cost_method");
+		int offshore_substation_cost_method = as_integer("offshore_substation_cost_method");
+		int other_elec_infra_cost_method = as_integer("other_elec_infra_cost_method");
+
 		//CapEx costs depend on technology
 		if (technology == TIDAL)
 		{ // device = RM1
@@ -120,41 +166,107 @@ public:
 
 			else if (device_type == RM5)
 			{
-				structural_assembly = 6848402 * system_capacity_MW + 3315338;
-				power_takeoff = 1600927 * pow(system_capacity_MW, 0.78);
-				mooring_found_substruc = 2030816 * system_capacity_MW + 478400;
+				structural_assembly = 6848402.0 * system_capacity_MW + 3315338.0;
+				power_takeoff = 1600927.0 * pow(system_capacity_MW, 0.91);
+				mooring_found_substruc = 2158462.0 * system_capacity_MW + 1048932.0;
 			}
 
 			else if (device_type == RM6)
 			{
-				structural_assembly = 13320092 * system_capacity_MW + 6681164;
-				power_takeoff = 3796551 * pow(system_capacity_MW, 0.91);
-				mooring_found_substruc = 2158462 * system_capacity_MW + 1048932;
+				structural_assembly = 13320092.0 * system_capacity_MW + 6681164.0;
+				power_takeoff = 3796551.0 * pow(system_capacity_MW, 0.78);
+				mooring_found_substruc = 2030816.0 * system_capacity_MW + 478400.0;
 			}
 
 			else //generic model applies to everything else
 			{
-				structural_assembly = 6854912 * system_capacity_MW + 2629191;
-				if (technology == WAVE) power_takeoff = 1179579 * system_capacity_MW + 2495107;
-				else power_takeoff = 2906035 * system_capacity_MW;
-				mooring_found_substruc = 2158462 * system_capacity_MW + 1048932;
+				structural_assembly = 6854912.0 * system_capacity_MW + 2629191.0;
+				if (technology == WAVE) power_takeoff = 1179579.0 * system_capacity_MW + 2495107.0;
+				else power_takeoff = 2906035.0 * system_capacity_MW;
+				mooring_found_substruc = 1178598.0 * system_capacity_MW + 1602348.0;
 			}
 		}
 		//BOS costs are the same regardless of device technology
 		development = 3197591.0 * pow(system_capacity_MW, 0.49);
 		eng_and_mgmt = 850744.0 * pow(system_capacity_MW, 0.5649);
-		double capex = structural_assembly + power_takeoff + mooring_found_substruc;
-		plant_commissioning = 0.016 * capex;
-		site_access_port_staging = 0.011 * capex;
-		assembly_and_install = 2805302 * pow(system_capacity_MW, 0.66);
+
+
+//		double capex = structural_assembly + power_takeoff + mooring_found_substruc;
+
+		// REmaining BOS costs that are not CapEx dependent
+		assembly_and_install = 2805302.0 * pow(system_capacity_MW, 0.66);
 		other_infrastructure = 0;
 
 		//electrical infrastructure costs
 		array_cable_system = 4.4 * (device_rating * devices_per_row / 1000.0) + 162.81 * interarray_length + 4.4 * (device_rating / 1000.0) + 162.81 * riser_length;
-		export_cable_system = 4.4 * (system_capacity_MW) + 162.81 * export_length;
+		export_cable_system = 4.4 * system_capacity_MW + 162.81 * export_length;
 		onshore_substation = 75000.0 * system_capacity_MW;
 		offshore_substation = 100000.0 * system_capacity_MW;
 		other_elec_infra = 47966.16 * system_capacity_MW + 665841.0;
+
+		// check for user entered values
+		if (structural_assembly_cost_method == 0)
+			structural_assembly = as_double("structural_assembly_cost_input") * system_capacity_kW;
+		else if (structural_assembly_cost_method == 1)
+			structural_assembly = as_double("structural_assembly_cost_input");
+		if (power_takeoff_system_cost_method == 0)
+			power_takeoff = as_double("power_takeoff_system_cost_input") * system_capacity_kW;
+		else if (power_takeoff_system_cost_method == 1)
+			power_takeoff = as_double("power_takeoff_system_cost_input");
+		if (mooring_found_substruc_cost_method == 0)
+			mooring_found_substruc = as_double("mooring_found_substruc_cost_input") * system_capacity_kW;
+		else if (mooring_found_substruc_cost_method == 1)
+			mooring_found_substruc = as_double("mooring_found_substruc_cost_input");
+
+		if (development_cost_method == 0)
+			development = as_double("development_cost_input") * system_capacity_kW;
+		else if (development_cost_method == 1)
+			development = as_double("development_cost_input");
+		if (eng_and_mgmt_cost_method == 0)
+			eng_and_mgmt = as_double("eng_and_mgmt_cost_input") * system_capacity_kW;
+		else if (eng_and_mgmt_cost_method == 1)
+			eng_and_mgmt = as_double("eng_and_mgmt_cost_input");
+		if (assembly_and_install_cost_method == 0)
+			assembly_and_install = as_double("assembly_and_install_cost_input") * system_capacity_kW;
+		else if (assembly_and_install_cost_method == 1)
+			assembly_and_install = as_double("assembly_and_install_cost_input");
+		if (other_infrastructure_cost_method == 0)
+			other_infrastructure = as_double("other_infrastructure_cost_input") * system_capacity_kW;
+		else if (other_infrastructure_cost_method == 1)
+			other_infrastructure = as_double("other_infrastructure_cost_input");
+
+		if (array_cable_system_cost_method == 0)
+			array_cable_system = as_double("array_cable_system_cost_input") * system_capacity_kW;
+		else if (array_cable_system_cost_method == 1)
+			array_cable_system = as_double("array_cable_system_cost_input");
+		if (export_cable_system_cost_method == 0)
+			export_cable_system = as_double("export_cable_system_cost_input") * system_capacity_kW;
+		else if (export_cable_system_cost_method == 1)
+			export_cable_system = as_double("export_cable_system_cost_input");
+		if (onshore_substation_cost_method == 0)
+			onshore_substation = as_double("onshore_substation_cost_input") * system_capacity_kW;
+		else if (onshore_substation_cost_method == 1)
+			onshore_substation = as_double("onshore_substation_cost_input");
+		if (offshore_substation_cost_method == 0)
+			offshore_substation = as_double("offshore_substation_cost_input") * system_capacity_kW;
+		else if (offshore_substation_cost_method == 1)
+			offshore_substation = as_double("offshore_substation_cost_input");
+		if (other_elec_infra_cost_method == 0)
+			other_elec_infra = as_double("other_elec_infra_cost_input") * system_capacity_kW;
+		else if (other_elec_infra_cost_method == 1)
+			other_elec_infra = as_double("other_elec_infra_cost_input");
+
+
+		// CapEx to include all device costs and BOS costs that are not CapEx dependent
+		double capex = structural_assembly + power_takeoff + mooring_found_substruc
+			+ development + eng_and_mgmt + assembly_and_install + other_infrastructure
+			+ array_cable_system + export_cable_system + onshore_substation + offshore_substation + other_elec_infra;
+
+
+		// CapEx dependent BOS costs
+		plant_commissioning = 0.016 * capex;
+		site_access_port_staging = 0.011 * capex;
+
 
 		//financial costs are the same regardless of technology
 		project_contingency = 0.05 * capex;
@@ -162,10 +274,10 @@ public:
 		reserve_accounts = 0.03 * capex;
 
 		// operations cost
-		operations_cost = 31250.0 * (system_capacity_MW) + 879282.0;
+		operations_cost = 31250.0 * system_capacity_MW + 879282.0;
 
 		// maintenance cost
-		maintenance_cost = 176870.0 * pow(system_capacity_MW, 0.84);
+		maintenance_cost = 116803.0 * system_capacity_MW + 317719.0;
 
 		//assign all outputs
 		assign("structural_assembly_cost_modeled", var_data(static_cast<ssc_number_t>(structural_assembly)));
