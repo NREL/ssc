@@ -141,7 +141,12 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 		// Intermediate Pressure Cooler
 	{ SSC_OUTPUT, SSC_ARRAY,   "IP_cooler_W_dot_fan_od","Intermediate pressure cooler fan power",                "MWe",        "",    "",      "",     "",       "" },
 		// Cooler Totals
-	{ SSC_OUTPUT, SSC_ARRAY,   "cooler_tot_W_dot_fan_od","Intermediate pressure cooler fan power",               "MWe",        "",    "",      "",     "",       "" },
+    { SSC_OUTPUT, SSC_ARRAY,   "cooler_tot_W_dot_fan_od","Intermediate pressure cooler fan power",               "MWe",        "",    "",      "",     "",       "" },
+        // Energy Balance Checks
+    { SSC_OUTPUT, SSC_ARRAY,   "diff_m_dot_od",          "Off-design mass flow rate balance",        "-",        "",    "",      "",     "",       "" },
+    { SSC_OUTPUT, SSC_ARRAY,   "diff_E_cycle",           "Off-design cycle energy balance",          "-",        "",    "",      "",     "",       "" },
+    { SSC_OUTPUT, SSC_ARRAY,   "diff_Q_LTR",             "Off-design LTR energy balance",            "-",        "",    "",      "",     "",       "" },
+    { SSC_OUTPUT, SSC_ARRAY,   "diff_Q_HTR",             "Off-design HTR energy balance",            "-",        "",    "",      "",     "",       "" },
 		// UDPC Table
     { SSC_OUTPUT, SSC_MATRIX,  "udpc_table",  "Columns (7): HTF Temp [C], HTF ND mass flow [-], Ambient Temp [C], ND Power, ND Heat In, ND Fan Power, ND Water. Rows = runs" "", "", "", "", "", "" },
     { SSC_OUTPUT, SSC_NUMBER,  "udpc_n_T_htf",         "Number of HTF temperature values in udpc parametric",    "",          "",     "",      "",     "",       "" },
@@ -258,8 +263,13 @@ public:
 	ssc_number_t *p_LP_cooler_W_dot_fan_od;
 	// Intermediate Pressure Cooler
 	ssc_number_t *p_IP_cooler_W_dot_fan_od;
-	// Coolerl Totals
+	// Cooler Totals
 	ssc_number_t *p_cooler_tot_W_dot_fan_od;
+    // Energy Balance Checks
+    ssc_number_t *p_diff_m_dot_od;
+    ssc_number_t *p_diff_E_cycle;
+    ssc_number_t *p_diff_Q_LTR;
+    ssc_number_t *p_diff_Q_HTR;
     // UDPC table
     ssc_number_t *pm_udpc_table;
 	// Solver Metrics
@@ -779,7 +789,7 @@ public:
 
 			p_od_code[n_run] = (ssc_number_t)off_design_code;
 			if(off_design_code == 0 || ((is_P_mc_in_od_sweep_assigned || is_od_set_control) && c_sco2_cycle.get_od_solved()->m_is_converged))
-			{	// Off-design call was successful, so write outputs
+			{	// Off-design call was successful, so write outputs                
 					// Control parameters
 				p_P_comp_in_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_pres[C_sco2_cycle_core::MC_IN] / 1000.0);	//[MPa]
 				for (int i_s = 0; i_s < n_mc_stages; i_s++)
@@ -1001,6 +1011,14 @@ public:
                     pm_udpc_table[n_run * 11 + 9] = (ssc_number_t)((p_t_m_dot_od[n_run]) / c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_m_dot_t);
                     pm_udpc_table[n_run * 11 + 10] = (ssc_number_t)((p_t_P_in_od[n_run]) / (c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::TURB_IN] * 1.E-3));
                 }
+                // Energy Balance Checks
+                double diff_m_dot, diff_E_cycle, diff_Q_LTR, diff_Q_HTR;
+                diff_m_dot = diff_E_cycle = diff_Q_LTR = diff_Q_HTR = std::numeric_limits<double>::quiet_NaN();
+                c_sco2_cycle.check_od_solution(diff_m_dot, diff_E_cycle, diff_Q_LTR, diff_Q_HTR);
+                p_diff_m_dot_od[n_run] = (ssc_number_t) diff_m_dot;
+                p_diff_E_cycle[n_run]  = (ssc_number_t) diff_E_cycle;
+                p_diff_Q_LTR[n_run]    = (ssc_number_t) diff_Q_LTR;
+                p_diff_Q_HTR[n_run]    = (ssc_number_t) diff_Q_HTR;
 			}   
 			else
 			{	// Off-design call failed, write NaN outptus
@@ -1111,6 +1129,11 @@ public:
 				p_IP_cooler_W_dot_fan_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 					// Coolerl Totals
 				p_cooler_tot_W_dot_fan_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    // Energy Balance Checks
+                p_diff_m_dot_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                p_diff_E_cycle[n_run]  = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                p_diff_Q_LTR[n_run]    = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                p_diff_Q_HTR[n_run]    = std::numeric_limits<ssc_number_t>::quiet_NaN();
 
 				p_LP_cooler_in_isen_deltah_to_P_mc_out_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 
@@ -1245,8 +1268,13 @@ public:
 		p_LP_cooler_W_dot_fan_od = allocate("LP_cooler_W_dot_fan_od", n_od_runs);
 		// Intermediate Pressure Cooler
 		p_IP_cooler_W_dot_fan_od = allocate("IP_cooler_W_dot_fan_od", n_od_runs);
-		// Coolerl Totals
+		// Cooler Totals
 		p_cooler_tot_W_dot_fan_od = allocate("cooler_tot_W_dot_fan_od", n_od_runs);
+        // Energy Balance Checks
+        p_diff_m_dot_od = allocate("diff_m_dot_od", n_od_runs);
+        p_diff_E_cycle  = allocate("diff_E_cycle", n_od_runs);
+        p_diff_Q_LTR    = allocate("diff_Q_LTR", n_od_runs);
+        p_diff_Q_HTR    = allocate("diff_Q_HTR", n_od_runs);
         // UDPC Table
         if (is_udpc_table)
         {

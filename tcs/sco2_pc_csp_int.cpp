@@ -2176,6 +2176,12 @@ int C_sco2_phx_air_cooler::solve_P_LP_in__target_W_dot()
     return 0;
 }
 
+void C_sco2_phx_air_cooler::check_od_solution(double & diff_m_dot, double & diff_E_cycle,
+    double & diff_Q_LTR, double & diff_Q_HTR)
+{
+    mc_rc_cycle.check_od_solution(diff_m_dot, diff_E_cycle, diff_Q_LTR, diff_Q_HTR);
+}
+
 int C_sco2_phx_air_cooler::opt_P_LP_comp_in__fixed_N_turbo()
 {
     ms_cycle_od_par.m_count_off_design_core = 0;

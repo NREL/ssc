@@ -600,6 +600,9 @@ public:
 
 	double get_od_pres(int n_state_point);
 	
+    virtual void check_od_solution(double & diff_m_dot, double & diff_E_cycle,
+        double & diff_Q_LTR, double & diff_Q_HTR);
+
 	void set_od_temp(int n_state_point, double temp_K);
 
 	void set_od_pres(int n_state_point, double pres_kPa);

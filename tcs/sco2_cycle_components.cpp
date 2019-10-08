@@ -954,6 +954,7 @@ void C_turbine::off_design_turbine(double T_in, double P_in, double P_out, doubl
 	ms_od_solved.m_N = N;
 	m_dot_cycle = m_dot_basis * m_r_W_dot_scale;				//[kg/s]
 	ms_od_solved.m_W_dot_out = m_dot_cycle*(h_in - h_out);		//[kW] Turbine power output
+    ms_od_solved.m_m_dot = m_dot_cycle;     //[kg/s]
 }
 
 void C_turbine::od_turbine_at_N_des(double T_in, double P_in, double P_out, int & error_code, double & m_dot_cycle, double & T_out)
