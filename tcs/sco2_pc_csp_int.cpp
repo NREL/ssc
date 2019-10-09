@@ -510,7 +510,32 @@ int C_sco2_phx_air_cooler::optimize_N_mc_and_N_rc__max_eta(C_sco2_phx_air_cooler
 
     if (err_mc_od != 0)
     {
-        return err_mc_od;
+        f_N_mc_2 = f_N_mc - scope_step;
+        f_N_rc_opt_local_2 = std::numeric_limits<double>::quiet_NaN();
+
+        if (is_optimize_N_rc)
+        {
+            err_mc_od = optimize_N_rc__max_eta(od_par,
+                false, f_N_mc_2,
+                is_PHX_dP_input, PHX_f_dP,
+                off_design_strategy,
+                eta_rc_max, f_N_rc_opt_local_2, W_dot_at_rc_opt_max,
+                f_N_rc_opt_local, od_opt_tol);
+        }
+        else
+        {
+            err_mc_od = optimize_off_design(od_par,
+                false, 1.0,
+                false, f_N_mc_2,
+                is_PHX_dP_input, PHX_f_dP,
+                off_design_strategy,
+                od_opt_tol);
+        }
+
+        if (err_mc_od != 0)
+        {
+            return err_mc_od;
+        }
     }
 
     double eta_f_N_mc_2 = ms_od_solved.ms_rc_cycle_od_solved.m_eta_thermal;   //[-]
@@ -2630,9 +2655,10 @@ int C_sco2_phx_air_cooler::off_design_core(double & eta_solved)
     {
         double diff_T_t_in_local = std::numeric_limits<double>::quiet_NaN();
 
+        int test_code = 0;
         try
         {
-            c_phx_cycle_solver.test_member_function(ms_phx_od_par.m_T_h_in, &diff_T_t_in_local);        //[K] Use hot HTF temp as turbine inlet temperature
+            test_code = c_phx_cycle_solver.test_member_function(ms_phx_od_par.m_T_h_in, &diff_T_t_in_local);        //[K] Use hot HTF temp as turbine inlet temperature
         }
         catch (C_csp_exception)
         {
@@ -2640,6 +2666,12 @@ int C_sco2_phx_air_cooler::off_design_core(double & eta_solved)
             ms_od_solved.m_od_error_code = -1;
             ms_od_solved.m_is_converged = false;
             return ms_od_solved.m_od_error_code;
+        }
+        if (test_code != 0)
+        {
+            ms_od_solved.m_od_error_code = test_code;
+            ms_od_solved.m_is_converged = false;
+            return test_code;
         }
     }
     else if (T_t_in_mode == C_sco2_cycle_core::E_SOLVE_PHX)
