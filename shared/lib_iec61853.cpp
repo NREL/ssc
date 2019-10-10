@@ -871,7 +871,7 @@ bool iec61853_module_t::operator() ( pvinput_t &input, double TcellC, double opv
 		if ( input.IncAng > AOI_MIN && input.IncAng < AOI_MAX )
 		{
 			iamf = iam( input.IncAng, GlassAR );
-			tpoa = poa - ( 1.0 - iamf )*input.Ibeam*cos(input.IncAng*3.1415926/180.0);
+			tpoa = poa - ( 1.0 - iamf )*input.Ibeam;
 			if( tpoa < 0.0 ) tpoa = 0.0;
 			if( tpoa > poa ) tpoa = poa;
 		}
