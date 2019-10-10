@@ -858,27 +858,32 @@ bool iec61853_module_t::operator() ( pvinput_t &input, double TcellC, double opv
 	/* initialize output first */
 	out.Power = out.Voltage = out.Current = out.Efficiency = out.Voc_oper = out.Isc_oper = 0.0;
 	
-	double poa, tpoa, iamf;
-	iamf = 1;
+	double iamf_beam = 1;
+	double iamf_diff = 1;
+	double iamf_gnd = 1;
 
+	double AOIModifier = 1;
+
+	double poa, tpoa;
 	if( input.radmode != 3 ){ // Skip module cover effects if using POA reference cell data
 		// plane of array irradiance, W/m2
 		poa = input.Ibeam + input.Idiff + input.Ignd;
 
-		// transmitted poa through module cover
-		tpoa = poa;
+		iamf_beam = iam( input.IncAng, GlassAR );
+		// Add consideration of sky diffuse and ground components to match both the cec and mlm module models - CZ 2019
+		double theta_diff = (59.7 - 0.1388 * input.Tilt + 0.001497 * pow(input.Tilt, 2)); // from [2], equation 5.4.2
+	    double theta_gnd = (90.0 - 0.5788 * input.Tilt + 0.002693 * pow(input.Tilt, 2)); // from [2], equation 5.4.1
+		iamf_diff = iam( theta_diff, GlassAR );
+		iamf_gnd = iam( theta_gnd, GlassAR );
 
-		if ( input.IncAng > AOI_MIN && input.IncAng < AOI_MAX )
-		{
-			iamf = iam( input.IncAng, GlassAR );
-			tpoa = poa - ( 1.0 - iamf )*input.Ibeam;
-			if( tpoa < 0.0 ) tpoa = 0.0;
-			if( tpoa > poa ) tpoa = poa;
-		}
+        tpoa = iamf_beam * input.Ibeam + iamf_diff * input.Idiff + iamf_gnd * input.Ignd;
+        if( tpoa < 0.0 ) tpoa = 0.0;
+        if( tpoa > poa ) tpoa = poa;
 	
 		// spectral effect via AM modifier
 		double ama = air_mass_modifier( input.Zenith, input.Elev, AMA );
 		tpoa *= ama;
+		AOIModifier = tpoa/poa;
 	} 
 	else if(input.usePOAFromWF){ // Check if decomposed POA is required, if not use weather file POA directly
 		tpoa = poa = input.poaIrr;
@@ -933,7 +938,7 @@ bool iec61853_module_t::operator() ( pvinput_t &input, double TcellC, double opv
 		out.Voc_oper = V_oc;
 		out.Isc_oper = I_sc;
 		out.CellTemp = Tc - 273.15;
-		out.AOIModifier = poa_eff_front/poa_front;
+		out.AOIModifier = AOIModifier;
 	}
 
 	return out.Power >= 0;
