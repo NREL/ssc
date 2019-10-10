@@ -933,7 +933,7 @@ bool iec61853_module_t::operator() ( pvinput_t &input, double TcellC, double opv
 		out.Voc_oper = V_oc;
 		out.Isc_oper = I_sc;
 		out.CellTemp = Tc - 273.15;
-		out.AOIModifier = iamf;
+		out.AOIModifier = poa_eff_front/poa_front;
 	}
 
 	return out.Power >= 0;
