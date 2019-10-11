@@ -1302,7 +1302,7 @@ void lifetime_calendar_t::runTableModel()
 	double capacity_lo = 100;
 	double capacity_hi = 0;
 
-	// interpolation mode f
+	// interpolation mode
 	for (int i = 0; i != (int)_calendar_days.size(); i++)
 	{
 		int day = _calendar_days[i];
