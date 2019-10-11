@@ -3,6 +3,7 @@
 
 #include "sscapi.h"
 #include "cmod_windpower_eqns.h"
+#include "cmod_mhk_eqns.h"
 
 typedef void (*ssc_equation_ptr)(ssc_data_t data);
 
@@ -14,9 +15,11 @@ struct ssc_equation_entry{
 };
 
 static ssc_equation_entry ssc_equation_table [] = {
-        {"Turbine_calculate_powercurve", Turbine_calculate_powercurve,
-                           "Windpower", Turbine_calculate_powercurve_doc},
-        {nullptr, nullptr, nullptr, nullptr}
+		{"Turbine_calculate_powercurve", Turbine_calculate_powercurve,
+						   "Windpower", Turbine_calculate_powercurve_doc},
+		{"me_array_cable_length", me_array_cable_length,
+						   "Marine energy", me_array_cable_length_doc},
+{nullptr, nullptr, nullptr, nullptr}
 };
 
 #endif

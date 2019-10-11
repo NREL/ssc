@@ -129,15 +129,12 @@ endif()
 if(MSVC)
 	set(TEST_DIR ${CMAKE_CURRENT_BINARY_DIR}/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
 
-	set(SSC_LIB $<TARGET_FILE_DIR:ssc>/$<TARGET_FILE_BASE_NAME:ssc>.lib)
-	add_custom_command(
-	    TARGET SSCtest
-	    POST_BUILD
+	foreach( file_i ${LIBCURL_FILES})
+		add_custom_command(
+		TARGET Test
+		POST_BUILD
 		COMMAND ${CMAKE_COMMAND}
-		ARGS -E remove -f ${TEST_DIR}/$<TARGET_FILE_BASE_NAME:ssc>.lib 
-		COMMAND ${CMAKE_COMMAND}
-		ARGS -E remove -f ${TEST_DIR}/$<TARGET_FILE_BASE_NAME:ssc>.dll
-	    COMMAND ${CMAKE_COMMAND}
-	    ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${TEST_DIR}
+		ARGS -E copy $ENV{WEXDIR}/build_vs2017/libcurl_ssl_x64/bin/${file_i} ${TEST_DIR}
 	)
+	endforeach( file_i )
 endif()

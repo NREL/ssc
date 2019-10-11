@@ -124,6 +124,30 @@ TEST_F(FuelCellTest, Shutdown_lib_fuel_cell)
 
 }
 
+TEST_F(FuelCellTest, Idle_lib_fuel_cell)
+{
+	fuelCell->setShutdownOption(FuelCell::FC_SHUTDOWN_OPTION::IDLE);
+
+	// Run for startup_hours
+	for (size_t h = 0; h < (size_t)startup_hours; h++) {
+		fuelCell->runSingleTimeStep(20);
+	}
+
+	// Run for a few hours started up
+	for (size_t h = (size_t)startup_hours; h < (size_t)(startup_hours + 5); h++) {
+		fuelCell->runSingleTimeStep(20);
+		EXPECT_TRUE(fuelCell->isRunning());
+	}
+
+	// Initiate shutdown.  Should produce heat and idle at minimum turndown electricity for shutdown hours
+	for (size_t h = 0; h < (size_t)shutdown_hours; h++) {
+		fuelCell->runSingleTimeStep(0);
+		EXPECT_EQ(fuelCell->getPower(), fuelCell->getMinPower());
+		EXPECT_GT(fuelCell->getPowerThermal(), 0);
+		EXPECT_TRUE(fuelCell->isRunning());
+	}
+}
+
 TEST_F(FuelCellTest, AvailableFuel_lib_fuel_cell) {
 
 	

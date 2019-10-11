@@ -95,7 +95,6 @@ int tcsfresnel_molten_salt_tucson_evap_condenser(ssc_data_t &data)
 	tcsfresnel_molten_salt_default(data);
 
 	ssc_data_set_number(data, "CT", 1);
-	ssc_data_set_number(data, "tech_type", 3);
 
 	int status = run_module(data, "tcsmslf");
 

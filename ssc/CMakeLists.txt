@@ -53,6 +53,9 @@ set(SSC_SRC
 		cmod_lcoefcr.cpp
 		cmod_levpartflip.cpp
 		cmod_linear_fresnel_dsg_iph.cpp
+		cmod_merchantplant.cpp
+		cmod_mhk_eqns.cpp
+		cmod_mhk_costs.cpp
 		cmod_mhk_wave.cpp
 		cmod_mhk_tidal.cpp
 		cmod_poacalib.cpp
@@ -106,6 +109,7 @@ set(SSC_SRC
 		cmod_windbos.cpp
 		cmod_windcsm.cpp
 		cmod_windfile.cpp
+		cmod_wavefile.cpp
 		cmod_windpower.cpp
         cmod_windpower_eqns.cpp
 		common.cpp
@@ -232,7 +236,6 @@ set(SSC_LIB $<TARGET_FILE_DIR:ssc>/$<TARGET_FILE_BASE_NAME:ssc>.lib)
 if (MSVC)
 	set(SAM_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../deploy/x64)
 	set(TEST_DIR ${CMAKE_CURRENT_BINARY_DIR}/../test/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
-	set(SAMAPI_DIR ${CMAKE_CURRENT_BINARY_DIR}/../../api/api_autogen/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
 	set(SDKTOOL_DIR ${CMAKE_CURRENT_BINARY_DIR}/../sdktool/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
 	set(TCSCONSOLE_DIR ${CMAKE_CURRENT_BINARY_DIR}/../tcsconsole/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
 	add_custom_command(
@@ -243,8 +246,6 @@ if (MSVC)
 			${SAM_DIR}/$<TARGET_FILE_BASE_NAME:ssc>.dll
 			${TEST_DIR}/$<TARGET_FILE_BASE_NAME:ssc>.lib
 			${TEST_DIR}/$<TARGET_FILE_BASE_NAME:ssc>.dll
-			${SAMAPI_DIR}/$<TARGET_FILE_BASE_NAME:ssc>.lib
-			${SAMAPI_DIR}/$<TARGET_FILE_BASE_NAME:ssc>.dll
 			${SDKTOOL_DIR}/$<TARGET_FILE_BASE_NAME:ssc>.lib
 			${SDKTOOL_DIR}/$<TARGET_FILE_BASE_NAME:ssc>.dll
 			${TCSCONSOLE_DIR}/$<TARGET_FILE_BASE_NAME:ssc>.lib
@@ -257,9 +258,19 @@ if (MSVC)
 		ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${SDKTOOL_DIR}
 		COMMAND ${CMAKE_COMMAND}
 		ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${TEST_DIR}
-		COMMAND ${CMAKE_COMMAND}
-		ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${SAMAPI_DIR}
 		)
+	if (NOT skip_api)
+		set(SAMAPI_DIR ${CMAKE_CURRENT_BINARY_DIR}/../../api/api_autogen/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
+		add_custom_command(
+				TARGET ssc
+				POST_BUILD
+				COMMAND ${CMAKE_COMMAND} -E remove
+				${SAMAPI_DIR}/$<TARGET_FILE_BASE_NAME:ssc>.lib
+				${SAMAPI_DIR}/$<TARGET_FILE_BASE_NAME:ssc>.dll
+				COMMAND ${CMAKE_COMMAND}
+				ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${SAMAPI_DIR}
+		)
+	endif()
 endif()
 
 if(DEFINED ENV{PYSAMDIR})

@@ -10,7 +10,11 @@ public:
 	
 	UtilityRate(){};
 
-	UtilityRate(util::matrix_t<size_t> ecWeekday, util::matrix_t<size_t> ecWeekend, util::matrix_t<double> ecRatesMatrix);
+	UtilityRate(bool useRealTimePrices,
+		util::matrix_t<size_t> ecWeekday, 
+		util::matrix_t<size_t> ecWeekend, 
+		util::matrix_t<double> ecRatesMatrix,
+		std::vector<double> ecRealTimeBuy);
 
 	virtual ~UtilityRate() {/* nothing to do */ };
 
@@ -26,6 +30,12 @@ protected:
 
 	/// Energy Tiers per period
 	std::map<size_t, size_t> m_energyTiersPerPeriod;
+
+	/// Real time energy prices
+	std::vector<double> m_ecRealTimeBuy;
+
+	/// Use real time prices or not
+	bool m_useRealTimePrices;
 };
 
 class UtilityRateCalculator : protected UtilityRate

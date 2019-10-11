@@ -33,7 +33,7 @@ static var_info _cm_vtab_windpower[] = {
 	{ SSC_INPUT  , SSC_NUMBER , "wind_resource_model_choice"         , "Hourly or Weibull model"                  , "0/1"     ,""                                    , "Resource"                             , "*"                                               , "INTEGER"                                         , "" } ,
 	{ SSC_INPUT  , SSC_STRING , "wind_resource_filename"             , "Local wind data file path"                , ""        ,""                                    , "Resource"                             , "?"                                               , "LOCAL_FILE"                                      , "" } ,
 	{ SSC_INPUT  , SSC_TABLE  , "wind_resource_data"                 , "Wind resouce data in memory"              , ""        ,""                                    , "Resource"                             , "?"                                               , ""                                                , "" } ,
-	{ SSC_INPUT  , SSC_MATRIX , "wind_resource_distribution"         , "Wind Speed x Dir Distribution as 2-D PDF" , "m/s,deg" ,"[(speed, direction, prob)]"          , "Resource"                             , "wind_resource_model_choice=2"                    , ""                                                , "" } ,
+	{ SSC_INPUT  , SSC_MATRIX , "wind_resource_distribution"         , "Wind Speed x Dir Distribution as 2-D PDF" , "m/s,deg" ,""                                    , "Resource"                             , "wind_resource_model_choice=2"                    , ""                                                , "" } ,
 	{ SSC_INPUT  , SSC_NUMBER , "weibull_reference_height"           , "Reference height for Weibull wind speed"  , "m"       ,""                                    , "Resource"                             , "?=50"                                            , "MIN=0"                                           , "" } ,
 	{ SSC_INPUT  , SSC_NUMBER , "weibull_k_factor"                   , "Weibull K factor for wind resource"       , ""        ,""                                    , "Resource"                             , "wind_resource_model_choice=1"                    , ""                                                , "" } ,
 	{ SSC_INPUT  , SSC_NUMBER , "weibull_wind_speed"                 , "Average wind speed for Weibull model"     , ""        ,""                                    , "Resource"                             , "wind_resource_model_choice=1"                    , "MIN=0"                                           , "" } ,
@@ -106,12 +106,14 @@ winddata::winddata(var_data *data_table)
 {
 	irecord = 0;
 
+	stdErrorMsg = "wind data must be an SSC table variable with fields: "
+                           "(number): lat, lon, elev, year, "
+                           "(array): heights, fields [dim: 4, temp=1,pres=2,speed=3,dir=4], rh (dim: nstep, optional)"
+                           "(matrix): data (dim: 4 x Nheights x nstep)";
+
 	if (data_table->type != SSC_TABLE)
 	{
-		m_errorMsg = "wind data must be an SSC table variable with fields: "
-			"(number): lat, lon, elev, year, "
-			"(array): heights, fields (temp=1,pres=2,speed=3,dir=4), "
-			"(matrix): data (nstep x Nheights)";
+		m_errorMsg = stdErrorMsg;
 		return;
 	}
 
@@ -144,9 +146,12 @@ winddata::winddata(var_data *data_table)
 	}
 
 	double* rh = get_vector(data_table, "rh", &len);
-	if (rh != 0 && len == data.nrows() )
+	if (rh != nullptr && len == data.nrows() )
 		m_relativeHumidity = std::vector<double>(rh, rh+(int)len);
-	else m_relativeHumidity.clear();
+	else if (rh != nullptr){
+        m_errorMsg = stdErrorMsg;
+        return;
+	}
 }
 
 size_t winddata::nrecords()
@@ -278,7 +283,10 @@ void cm_windpower::exec()
 	if (!haf.setup())
 		throw exec_error("windpower", "failed to setup adjustment factors: " + haf.error());
 	bool lowTempCutoff = as_boolean("en_low_temp_cutoff");
+	double lowTempCutoffValue = lowTempCutoff ? as_double("low_temp_cutoff") : -1;
 	bool icingCutoff = as_boolean("en_icing_cutoff");
+    double icingTempCutoffValue = icingCutoff ? as_double("icing_cutoff_temp") : -1;
+    double icingRHCutoffValue = icingCutoff ? as_double("icing_cutoff_rh") : -1;
 
 	// Run Weibull Statistical model (single outputs) if selected
 	if (as_integer("wind_resource_model_choice") == 1 ){
@@ -417,8 +425,12 @@ void cm_windpower::exec()
         }
         nstep = wdprov->nrecords();
         if (icingCutoff) {
+            if (wdprov->relativeHumidity().empty()){
+                std::string err = dynamic_cast<winddata*>(wdprov.get())->get_stdErrorMsg();
+                throw exec_error( "windpower", err);
+            }
             if (wdprov->relativeHumidity().size() != nstep)
-                throw exec_error("windpower", "Icing cutoff enabled but error in rh (relative humidity) data.");
+                throw exec_error("windpower", "Length of rh (relative humidity) data must be equal to length of other fields.");
         }
 	}
 	else
@@ -538,10 +550,10 @@ void cm_windpower::exec()
 			// apply losses
 			withoutLosses += farmp * haf(hr);
 			if (lowTempCutoff){
-				if (temp < as_double("low_temp_cutoff")) farmp = 0.0;
+				if (temp < lowTempCutoffValue) farmp = 0.0;
 			}
 			if (icingCutoff){
-				if (temp < as_double("icing_cutoff_temp") && wdprov->relativeHumidity()[i] < as_double("icing_cutoff_rh"))
+				if (temp < icingTempCutoffValue && wdprov->relativeHumidity()[i] > icingRHCutoffValue)
 					farmp = 0.0;
 			}
 

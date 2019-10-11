@@ -450,6 +450,9 @@ public:
 
 	virtual const C_comp_multi_stage::S_od_solved * get_rc_od_solved() = 0;
 
+    virtual void check_od_solution(double & diff_m_dot, double & diff_E_cycle,
+        double & diff_Q_LTR, double & diff_Q_HTR) = 0;
+
 	const S_design_limits & get_design_limits()
 	{
 		return ms_des_limits;

@@ -311,7 +311,7 @@ TEST_F(CMWindPowerIntegration, IcingAndLowTempCutoff_cmod_windpower) {
 
 	ssc_number_t annual_energy;
 	ssc_data_get_number(data, "annual_energy", &annual_energy);
-	EXPECT_NEAR(annual_energy, 2108935, e) << "Reduced annual energy";
+	EXPECT_NEAR(annual_energy, 2110545, e) << "Reduced annual energy";
 
 	ssc_number_t monthly_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[0];
 	EXPECT_NEAR(monthly_energy, 0, e);

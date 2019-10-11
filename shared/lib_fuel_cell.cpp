@@ -238,6 +238,9 @@ double FuelCell::getMaxPowerOriginal() {
 double FuelCell::getMaxPower() {
 	return m_powerMax_kW;
 }
+double FuelCell::getMinPower() {
+	return m_unitPowerMin_kW;
+}
 double FuelCell::getFuelConsumption() {
 	return m_fuelConsumed_MCf;
 }
@@ -408,7 +411,7 @@ void FuelCell::applyDegradation() {
 		m_powerMax_kW -= m_degradation_kWperHour * dt_hour;
 		m_power_kW = fmin(m_power_kW, m_powerMax_kW);
 	}
-	else if (isShuttingDown() && m_powerPrevious_kW > 0) {
+	else if (isShuttingDown() && m_hoursSinceStop == 1) {
 		m_powerMax_kW -= m_degradationRestart_kW;
 		if (m_powerMax_kW < 0) {
 			m_powerMax_kW = 0;
