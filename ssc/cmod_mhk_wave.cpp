@@ -154,6 +154,7 @@ public:
 
 		//Factoring in losses in total annual energy production:
 		annual_energy *= (1 - (as_double("annual_energy_loss") / 100 ));
+		annual_energy *= number_devices;
 
 		//Calculating capacity factor:
 		capacity_factor = annual_energy / (device_rated_capacity * number_devices * 8760);

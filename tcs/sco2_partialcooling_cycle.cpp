@@ -2032,6 +2032,12 @@ int C_PartialCooling_Cycle::off_design_fix_shaft_speeds(S_od_par & od_phi_par_in
 	return off_design_fix_shaft_speeds_core();
 }
 
+void C_PartialCooling_Cycle::check_od_solution(double & diff_m_dot, double & diff_E_cycle,
+    double & diff_Q_LTR, double & diff_Q_HTR)
+{
+
+}
+
 double nlopt_cb_opt_partialcooling_des(const std::vector<double> &x, std::vector<double> &grad, void *data)
 {
 	C_PartialCooling_Cycle *frame = static_cast<C_PartialCooling_Cycle*>(data);
