@@ -211,7 +211,7 @@ void calculate_losses(compute_module* cm){
     double elec_loss_percent = cm->as_double("elec_eff_loss") + cm->as_double("elec_eff_loss");
     // for instance, how will icing and low temp cut off affect total env loss?
     double env_loss_percent = cm->as_double("env_degrad_loss") + cm->as_double("env_exposure_loss")
-                              + cm->as_double("env_ext_loss") + cm->as_double("env_icing_loss");
+                              + cm->as_double("env_env_loss") + cm->as_double("env_icing_loss");
     double ops_loss_percent = cm->as_double("ops_env_loss") + cm->as_double("ops_grid_loss")
                               + cm->as_double("ops_load_loss") + cm->as_double("ops_strategies_loss");
     double turb_loss_percent = cm->as_double("turb_generic_loss") + cm->as_double("turb_hysteresis_loss")
@@ -242,7 +242,7 @@ void cm_windpower::exec()
 	wt.setPowerCurve(windSpeeds, powerOutput);
 	// add up all the percent losses
 	std::vector<std::string> loss_names = { "avail_bop_loss", "avail_grid_loss", "avail_turb_loss", "elec_eff_loss",
-                                         "elec_eff_loss", "env_degrad_loss", "env_exposure_loss", "env_ext_loss",
+                                         "elec_eff_loss", "env_degrad_loss", "env_exposure_loss", "env_env_loss",
                                          "env_icing_loss", "ops_env_loss", "ops_grid_loss", "ops_load_loss",
                                          "ops_strategies_loss", "turb_generic_loss", "turb_hysteresis_loss",
                                          "turb_perf_loss", "turb_specific_loss"};
