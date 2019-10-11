@@ -46,7 +46,12 @@ TEST_F(CMWindPowerIntegration, WakeModelsUsingFile_cmod_windpower){
 	monthly_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[11];
 	EXPECT_NEAR(monthly_energy, 2.8218e6, e) << "Simple: December";
 
-	// WAsp Model
+	ssc_number_t wake_loss;
+	ssc_data_get_number(data, "wake_losses", &wake_loss);
+    EXPECT_NEAR(wake_loss, 1.546, 1e-3) << "Simple: Wake loss";
+
+
+    // WAsp Model
 	ssc_data_set_number(data, "wind_farm_wake_model", 1);
 	compute();
 
@@ -58,6 +63,9 @@ TEST_F(CMWindPowerIntegration, WakeModelsUsingFile_cmod_windpower){
 
 	monthly_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[11];
 	EXPECT_NEAR(monthly_energy, 2.7472e6, e)<< "Wasp: Dec";
+
+    ssc_data_get_number(data, "wake_losses", &wake_loss);
+    EXPECT_NEAR(wake_loss, 4.148, 1e-3) << "Wasp: Wake loss";
 
 	// Eddy Viscosity Model
 	ssc_data_set_number(data, "wind_farm_wake_model", 2);
@@ -72,6 +80,9 @@ TEST_F(CMWindPowerIntegration, WakeModelsUsingFile_cmod_windpower){
 	monthly_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[11];
 	EXPECT_NEAR(monthly_energy, 2.6398e6, e) << "Eddy: Dec";
 
+    ssc_data_get_number(data, "wake_losses", &wake_loss);
+    EXPECT_NEAR(wake_loss, 7.895, 1e-3) << "Eddy: Wake loss";
+
 	// Constant Loss Model
     ssc_data_set_number(data, "wind_farm_wake_model", 3);
     ssc_data_set_number(data, "wake_int_loss", 5);
@@ -82,6 +93,9 @@ TEST_F(CMWindPowerIntegration, WakeModelsUsingFile_cmod_windpower){
     ssc_data_get_number(data, "annual_energy", &annual_energy);
     ssc_data_get_number(data, "annual_gross_energy", &gross);
     EXPECT_NEAR(annual_energy, gross*0.95, e) << "Constant";
+
+    ssc_data_get_number(data, "wake_losses", &wake_loss);
+    EXPECT_NEAR(wake_loss, 5, 1e-3) << "Constant: Wake loss";
 }
 
 /// Using Interpolated Subhourly Wind Data

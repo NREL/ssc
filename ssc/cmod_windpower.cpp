@@ -213,24 +213,24 @@ cm_windpower::cm_windpower(){
 
 // wind PRUF loss framework. Can replace numerical loss percentages by calculated losses in future model
 void calculate_losses(compute_module *cm, double wake_int_loss_percent) {
-    double avail_loss_percent = cm->as_double("avail_bop_loss") + cm->as_double("avail_grid_loss")
-            + cm->as_double("avail_turb_loss");
-    double elec_loss_percent = cm->as_double("elec_eff_loss") + cm->as_double("elec_eff_loss");
+    double avail_loss_percent = 1. - ( 100. - cm->as_double("avail_bop_loss"))/100. * (100. - cm->as_double("avail_grid_loss"))/100.
+            * ( 100. - cm->as_double("avail_turb_loss"))/100.;
+    double elec_loss_percent = 1. - ( 100. - cm->as_double("elec_eff_loss"))/100. * ( 100. - cm->as_double("elec_eff_loss"))/100.;
     // for instance, how will icing and low temp cut off affect total env loss?
-    double env_loss_percent = cm->as_double("env_degrad_loss") + cm->as_double("env_exposure_loss")
-                              + cm->as_double("env_env_loss") + cm->as_double("env_icing_loss");
-    double ops_loss_percent = cm->as_double("ops_env_loss") + cm->as_double("ops_grid_loss")
-                              + cm->as_double("ops_load_loss") + cm->as_double("ops_strategies_loss");
-    double turb_loss_percent = cm->as_double("turb_generic_loss") + cm->as_double("turb_hysteresis_loss")
-                               + cm->as_double("turb_perf_loss") + cm->as_double("turb_specific_loss");
-    double wake_loss_percent = cm->as_double("wake_ext_loss") + cm->as_double("wake_future_loss")
-                                + wake_int_loss_percent;
-    cm->assign("avail_losses", avail_loss_percent);
-    cm->assign("elec_losses", elec_loss_percent);
-    cm->assign("env_losses", env_loss_percent);
-    cm->assign("ops_losses", ops_loss_percent);
-    cm->assign("turb_losses", turb_loss_percent);
-    cm->assign("wake_losses", wake_loss_percent);
+    double env_loss_percent = 1. - ( 100. - cm->as_double("env_degrad_loss"))/100. * ( 100. - cm->as_double("env_exposure_loss"))/100.
+                              * ( 100. - cm->as_double("env_env_loss"))/100. * ( 100. - cm->as_double("env_icing_loss"))/100.;
+    double ops_loss_percent = 1. - ( 100. - cm->as_double("ops_env_loss"))/100. * ( 100. - cm->as_double("ops_grid_loss"))/100.
+                              * ( 100. - cm->as_double("ops_load_loss"))/100. * ( 100. - cm->as_double("ops_strategies_loss"))/100.;
+    double turb_loss_percent = 1. - ( 100. - cm->as_double("turb_generic_loss"))/100. * ( 100. - cm->as_double("turb_hysteresis_loss"))/100.
+                               * ( 100. - cm->as_double("turb_perf_loss"))/100. * ( 100. - cm->as_double("turb_specific_loss"))/100.;
+    double wake_loss_percent = 1. - ( 100. - cm->as_double("wake_ext_loss"))/100. * ( 100. - cm->as_double("wake_future_loss"))/100.
+                                * (100. - wake_int_loss_percent) / 100.;
+    cm->assign("avail_losses", avail_loss_percent * 100.);
+    cm->assign("elec_losses", elec_loss_percent * 100.);
+    cm->assign("env_losses", env_loss_percent * 100.);
+    cm->assign("ops_losses", ops_loss_percent * 100.);
+    cm->assign("turb_losses", turb_loss_percent * 100.);
+    cm->assign("wake_losses", wake_loss_percent * 100.);
 }
 
 double get_fixed_losses(compute_module* cm){
