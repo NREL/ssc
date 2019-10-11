@@ -30,7 +30,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static var_info _cm_vtab_windpower[] = {
 	// VARTYPE     DATATYPE     NAME                                    LABEL                                        UNITS     META    GROUP                                REQUIRED_IF                       CONSTRAINTS                                          UI_HINTS
-	{ SSC_INPUT  , SSC_NUMBER , "wind_resource_model_choice"         , "Hourly or Weibull model"                  , "0/1"     ,""                                    , "Resource"                             , "*"                                               , "INTEGER"                                         , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "wind_resource_model_choice"         , "Hourly, Weibull or Distribution model"    , "0/1/2"   ,""                                  , "Resource"                             , "*"                                               , "INTEGER"                                         , "" } ,
 	{ SSC_INPUT  , SSC_STRING , "wind_resource_filename"             , "Local wind data file path"                , ""        ,""                                    , "Resource"                             , "?"                                               , "LOCAL_FILE"                                      , "" } ,
 	{ SSC_INPUT  , SSC_TABLE  , "wind_resource_data"                 , "Wind resouce data in memory"              , ""        ,""                                    , "Resource"                             , "?"                                               , ""                                                , "" } ,
 	{ SSC_INPUT  , SSC_MATRIX , "wind_resource_distribution"         , "Wind Speed x Dir Distribution as 2-D PDF" , "m/s,deg" ,""                                    , "Resource"                             , "wind_resource_model_choice=2"                    , ""                                                , "" } ,
@@ -56,24 +56,26 @@ static var_info _cm_vtab_windpower[] = {
 	{ SSC_INPUT  , SSC_NUMBER , "en_icing_cutoff"                    , "Enable Icing Cutoff"                      , "0/1"     ,""                                    , "Losses"                               , "?=0"                                             , "INTEGER"                                         , "" } ,
 	{ SSC_INPUT  , SSC_NUMBER , "icing_cutoff_temp"                  , "Icing Cutoff Temperature"                 , "C"       ,""                                    , "Losses"                               , "en_icing_cutoff=1"                               , ""                                                , "" } ,
 	{ SSC_INPUT  , SSC_NUMBER , "icing_cutoff_rh"                    , "Icing Cutoff Relative Humidity"           , "%"       ,"'rh' required in wind_resource_data" , "Losses"                               , "en_icing_cutoff=1"                               , "MIN=0"                                           , "" } ,
-	{ SSC_INPUT  , SSC_NUMBER , "wake_loss"                          , "Wake effects loss percent"                , "%"       ,""                                    , "Losses"                               , "wind_farm_wake_model=3"                          , ""                                                , "" } ,
-	{ SSC_INPUT  , SSC_NUMBER , "avail_bop_loss"                     , "Balance-of-plant availability loss"       , "%"       ,""                                    , "Losses"                               , "?=0"                                             , ""                                                , "" } ,
-	{ SSC_INPUT  , SSC_NUMBER , "avail_grid_loss"                    , "Grid availability loss"                   , "%"       ,""                                    , "Losses"                               , "?=0"                                             , ""                                                , "" } ,
-	{ SSC_INPUT  , SSC_NUMBER , "avail_turb_loss"                    , "Turbine availabaility loss"               , "%"       ,""                                    , "Losses"                               , "?=0"                                             , ""                                                , "" } ,
-	{ SSC_INPUT  , SSC_NUMBER , "elec_eff_loss"                      , "Electrical efficiency loss"               , "%"       ,""                                    , "Losses"                               , "?=0"                                             , ""                                                , "" } ,
-	{ SSC_INPUT  , SSC_NUMBER , "elec_eff_loss"                      , "Electrical parasitic consumption loss"    , "%"       ,""                                    , "Losses"                               , "?=0"                                             , ""                                                , "" } ,
-	{ SSC_INPUT  , SSC_NUMBER , "env_degrad_loss"                    , "Environmental Degradation loss"           , "%"       ,""                                    , "Losses"                               , "?=0"                                             , ""                                                , "" } ,
-	{ SSC_INPUT  , SSC_NUMBER , "env_exposure_loss"                  , "Environmental Exposure loss"              , "%"       ,""                                    , "Losses"                               , "?=0"                                             , ""                                                , "" } ,
-	{ SSC_INPUT  , SSC_NUMBER , "env_env_loss"                       , "Environmental External Conditions loss"   , "%"       ,""                                    , "Losses"                               , "?=0"                                             , ""                                                , "" } ,
-	{ SSC_INPUT  , SSC_NUMBER , "env_icing_loss"                     , "Environmental Icing loss"                 , "%"       ,""                                    , "Losses"                               , "?=0"                                             , ""                                                , "" } ,
-	{ SSC_INPUT  , SSC_NUMBER , "ops_env_loss"                       , "Environmental/Permit Curtailment loss"    , "%"       ,""                                    , "Losses"                               , "?=0"                                             , ""                                                , "" } ,
-	{ SSC_INPUT  , SSC_NUMBER , "ops_grid_loss"                      , "Grid curtailment loss"                    , "%"       ,""                                    , "Losses"                               , "?=0"                                             , ""                                                , "" } ,
-	{ SSC_INPUT  , SSC_NUMBER , "ops_load_loss"                      , "Load curtailment loss"                    , "%"       ,""                                    , "Losses"                               , "?=0"                                             , ""                                                , "" } ,
-	{ SSC_INPUT  , SSC_NUMBER , "ops_strategies_loss"                , "Operational strategies loss"              , "%"       ,""                                    , "Losses"                               , "?=0"                                             , ""                                                , "" } ,
-	{ SSC_INPUT  , SSC_NUMBER , "turb_generic_loss"                  , "Turbine Generic Powercurve loss"          , "%"       ,""                                    , "Losses"                               , "?=0"                                             , ""                                                , "" } ,
-	{ SSC_INPUT  , SSC_NUMBER , "turb_hysteresis_loss"               , "Turbine High Wind Hysteresis loss"        , "%"       ,""                                    , "Losses"                               , "?=0"                                             , ""                                                , "" } ,
-	{ SSC_INPUT  , SSC_NUMBER , "turb_perf_loss"                     , "Turbine Sub-optimal performance loss"     , "%"       ,""                                    , "Losses"                               , "?=0"                                             , ""                                                , "" } ,
-	{ SSC_INPUT  , SSC_NUMBER , "turb_specific_loss"                 , "Turbine Site-specific Powercurve loss"    , "%"       ,""                                    , "Losses"                               , "?=0"                                             , ""                                                , "" } ,
+    { SSC_INPUT  , SSC_NUMBER , "wake_int_loss"                      , "Constant Wake Model, internal wake loss"  , "%"       ,""                                    , "Losses"                               , "wind_farm_wake_model=3"                          , "MIN=0,MAX=100"                                   , "" } ,
+    { SSC_INPUT  , SSC_NUMBER , "wake_ext_loss"                      , "External Wake loss"                       , "%"       ,""                                    , "Losses"                               , "?=0"                                             , "MIN=0,MAX=100"                                   , "" } ,
+    { SSC_INPUT  , SSC_NUMBER , "wake_future_loss"                   , "Future Wake loss"                         , "%"       ,""                                    , "Losses"                               , "?=0"                                             , "MIN=0,MAX=100"                                   , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "avail_bop_loss"                     , "Balance-of-plant availability loss"       , "%"       ,""                                    , "Losses"                               , "?=0"                                             , "MIN=0,MAX=100"                                   , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "avail_grid_loss"                    , "Grid availability loss"                   , "%"       ,""                                    , "Losses"                               , "?=0"                                             , "MIN=0,MAX=100"                                   , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "avail_turb_loss"                    , "Turbine availabaility loss"               , "%"       ,""                                    , "Losses"                               , "?=0"                                             , "MIN=0,MAX=100"                                   , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "elec_eff_loss"                      , "Electrical efficiency loss"               , "%"       ,""                                    , "Losses"                               , "?=0"                                             , "MIN=0,MAX=100"                                   , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "elec_eff_loss"                      , "Electrical parasitic consumption loss"    , "%"       ,""                                    , "Losses"                               , "?=0"                                             , "MIN=0,MAX=100"                                   , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "env_degrad_loss"                    , "Environmental Degradation loss"           , "%"       ,""                                    , "Losses"                               , "?=0"                                             , "MIN=0,MAX=100"                                   , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "env_exposure_loss"                  , "Environmental Exposure loss"              , "%"       ,""                                    , "Losses"                               , "?=0"                                             , "MIN=0,MAX=100"                                   , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "env_env_loss"                       , "Environmental External Conditions loss"   , "%"       ,""                                    , "Losses"                               , "?=0"                                             , "MIN=0,MAX=100"                                   , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "env_icing_loss"                     , "Environmental Icing loss"                 , "%"       ,""                                    , "Losses"                               , "?=0"                                             , "MIN=0,MAX=100"                                   , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "ops_env_loss"                       , "Environmental/Permit Curtailment loss"    , "%"       ,""                                    , "Losses"                               , "?=0"                                             , "MIN=0,MAX=100"                                   , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "ops_grid_loss"                      , "Grid curtailment loss"                    , "%"       ,""                                    , "Losses"                               , "?=0"                                             , "MIN=0,MAX=100"                                   , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "ops_load_loss"                      , "Load curtailment loss"                    , "%"       ,""                                    , "Losses"                               , "?=0"                                             , "MIN=0,MAX=100"                                   , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "ops_strategies_loss"                , "Operational strategies loss"              , "%"       ,""                                    , "Losses"                               , "?=0"                                             , "MIN=0,MAX=100"                                   , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "turb_generic_loss"                  , "Turbine Generic Powercurve loss"          , "%"       ,""                                    , "Losses"                               , "?=0"                                             , "MIN=0,MAX=100"                                   , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "turb_hysteresis_loss"               , "Turbine High Wind Hysteresis loss"        , "%"       ,""                                    , "Losses"                               , "?=0"                                             , "MIN=0,MAX=100"                                   , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "turb_perf_loss"                     , "Turbine Sub-optimal performance loss"     , "%"       ,""                                    , "Losses"                               , "?=0"                                             , "MIN=0,MAX=100"                                   , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "turb_specific_loss"                 , "Turbine Site-specific Powercurve loss"    , "%"       ,""                                    , "Losses"                               , "?=0"                                             , "MIN=0,MAX=100"                                   , "" } ,
 
 
 
@@ -210,7 +212,7 @@ cm_windpower::cm_windpower(){
 }
 
 // wind PRUF loss framework. Can replace numerical loss percentages by calculated losses in future model
-void calculate_losses(compute_module* cm){
+void calculate_losses(compute_module *cm, double wake_int_loss_percent) {
     double avail_loss_percent = cm->as_double("avail_bop_loss") + cm->as_double("avail_grid_loss")
             + cm->as_double("avail_turb_loss");
     double elec_loss_percent = cm->as_double("elec_eff_loss") + cm->as_double("elec_eff_loss");
@@ -221,12 +223,28 @@ void calculate_losses(compute_module* cm){
                               + cm->as_double("ops_load_loss") + cm->as_double("ops_strategies_loss");
     double turb_loss_percent = cm->as_double("turb_generic_loss") + cm->as_double("turb_hysteresis_loss")
                                + cm->as_double("turb_perf_loss") + cm->as_double("turb_specific_loss");
+    double wake_loss_percent = cm->as_double("wake_ext_loss") + cm->as_double("wake_future_loss")
+                                + wake_int_loss_percent;
     cm->assign("avail_losses", avail_loss_percent);
     cm->assign("elec_losses", elec_loss_percent);
     cm->assign("env_losses", env_loss_percent);
     cm->assign("ops_losses", ops_loss_percent);
     cm->assign("turb_losses", turb_loss_percent);
-    cm->assign("wake_losses", avail_loss_percent);
+    cm->assign("wake_losses", wake_loss_percent);
+}
+
+double get_fixed_losses(compute_module* cm){
+    double lossMultiplier = 1.;
+    std::vector<std::string> loss_names = { "avail_bop_loss", "avail_grid_loss", "avail_turb_loss", "elec_eff_loss",
+                                            "elec_eff_loss", "env_degrad_loss", "env_exposure_loss", "env_env_loss",
+                                            "env_icing_loss", "ops_env_loss", "ops_grid_loss", "ops_load_loss",
+                                            "ops_strategies_loss", "turb_generic_loss", "turb_hysteresis_loss",
+                                            "turb_perf_loss", "turb_specific_loss", "wake_ext_loss", "wake_future_loss"};
+    for (auto& loss : loss_names){
+        if (cm->is_assigned(loss))
+            lossMultiplier *= (1. - cm->as_double(loss)/100.);
+    }
+    return lossMultiplier;
 }
 
 void cm_windpower::exec()
@@ -245,18 +263,6 @@ void cm_windpower::exec()
 		powerOutput[i] = pc_p[i];
 	}
 	wt.setPowerCurve(windSpeeds, powerOutput);
-	// add up all the percent losses
-	std::vector<std::string> loss_names = { "avail_bop_loss", "avail_grid_loss", "avail_turb_loss", "elec_eff_loss",
-                                         "elec_eff_loss", "env_degrad_loss", "env_exposure_loss", "env_env_loss",
-                                         "env_icing_loss", "ops_env_loss", "ops_grid_loss", "ops_load_loss",
-                                         "ops_strategies_loss", "turb_generic_loss", "turb_hysteresis_loss",
-                                         "turb_perf_loss", "turb_specific_loss"};
-	for (auto& loss : loss_names){
-	    wt.lossesRatio += as_double(loss)/100.;
-	}
-	if (wt.lossesRatio > 1){
-	    throw exec_error("windpower", "Total percent losses must be less than 100.");
-	}
 
 	// create windPowerCalculator using windTurbine
 	windPowerCalculator wpc;
@@ -282,6 +288,14 @@ void cm_windpower::exec()
 	adjustment_factors haf(this, "adjust");
 	if (!haf.setup())
 		throw exec_error("windpower", "failed to setup adjustment factors: " + haf.error());
+
+    // add up all the percent losses, except for wind_int_loss, which will be applied by the turbine
+    double lossMultiplier = get_fixed_losses(this);
+    if (lossMultiplier > 1 || lossMultiplier < 0){
+        throw exec_error("windpower", "Total percent losses must be between 0 and 100.");
+    }
+    double wake_int_loss_percent = 0.;
+
 	bool lowTempCutoff = as_boolean("en_low_temp_cutoff");
 	double lowTempCutoffValue = lowTempCutoff ? as_double("low_temp_cutoff") : -1;
 	bool icingCutoff = as_boolean("en_icing_cutoff");
@@ -305,7 +319,9 @@ void cm_windpower::exec()
 
 		double turbine_kw = wpc.windPowerUsingWeibull(weibull_k, avg_speed, ref_height, &turbine_outkW[0]);
 		ssc_number_t gross_energy = turbine_kw * wpc.nTurbines;
-		turbine_kw = turbine_kw * (1 - wt.lossesRatio) - wt.lossesAbsolute;
+
+        wake_int_loss_percent = is_assigned("wake_int_loss") ? as_double("wake_int_loss") : 0.;
+		turbine_kw = turbine_kw * lossMultiplier * (1. - wake_int_loss_percent/100.);
 
 		int nstep = 8760;
 		ssc_number_t farm_kw = (ssc_number_t)turbine_kw * wpc.nTurbines / (ssc_number_t)nstep;
@@ -331,7 +347,7 @@ void cm_windpower::exec()
 		assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
 		assign("annual_gross_energy", gross_energy);
         calculate_p50p90(this);
-        calculate_losses(this);
+        calculate_losses(this, wake_int_loss_percent);
 		return;
 	}
 
@@ -349,15 +365,8 @@ void cm_windpower::exec()
     }
     else if (wakeModelChoice == 3)
     {
-        double wake_loss = as_double("wake_loss")/100.;
-        if (wt.lossesRatio + wake_loss > 1){
-            throw exec_error("windpower", "Total percent losses must be less than 100.");
-        }
-        // applying the wake_loss_adj then the lossesPercent should result in a percent derate equal to wake_loss + lossesPercent
-        double wake_loss_adj = 0;
-        if (wt.lossesRatio != 1.)
-            wake_loss_adj = (1. - (wt.lossesRatio + wake_loss) ) / (1. - wt.lossesRatio );
-        wakeModel = std::make_shared<constantWakeModel>(constantWakeModel(wpc.nTurbines, &wt, wake_loss_adj));
+        wake_int_loss_percent = as_double("wake_int_loss");
+        wakeModel = std::make_shared<constantWakeModel>(constantWakeModel(wpc.nTurbines, &wt, (100. - wake_int_loss_percent)/100.));
     }
     else{
         throw exec_error("windpower", util::format("wind_farm_wake_model must be 0, 1, 2 or 3."));
@@ -373,6 +382,9 @@ void cm_windpower::exec()
             throw exec_error("windpower", wpc.GetErrorDetails());
         }
 
+        if (wakeModelChoice != 3)
+            wake_int_loss_percent = (1. - farmPower / farmPowerGross) * 100.;
+
         int nstep = 8760;
         ssc_number_t farm_kw = farmPower / (ssc_number_t)nstep;
         ssc_number_t *farmpwr = allocate("gen", nstep);
@@ -380,6 +392,7 @@ void cm_windpower::exec()
         {
             farmpwr[i] = farm_kw; // fill "gen"
             farmpwr[i] *= haf(i); //apply adjustment factor/availability and curtailment losses
+            farmpwr[i] *= lossMultiplier;
         }
 
         accumulate_monthly("gen", "monthly_energy");
@@ -394,7 +407,7 @@ void cm_windpower::exec()
         assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
         assign("annual_gross_energy", farmPowerGross);
         calculate_p50p90(this);
-        calculate_losses(this);
+        calculate_losses(this, wake_int_loss_percent);
         return;
     }
 
@@ -468,7 +481,8 @@ void cm_windpower::exec()
 		monthly[i] = 0.0f;
 	double annual = 0.0;
 	double annual_gross = 0.0;
-	double withoutLosses = 0.0;
+	double withoutCutOffLosses = 0.0;
+	double annual_after_wake_loss = 0.0;
 
 	// compute power output at i-th timestep
 	int i = 0;
@@ -547,8 +561,10 @@ void cm_windpower::exec()
 				throw exec_error("windpower", util::format("error in wind calculation at time %d, details: %s", i, wpc.GetErrorDetails().c_str()));
 
 			annual_gross += gross_farmp;
-			// apply losses
-			withoutLosses += farmp * haf(hr);
+			annual_after_wake_loss += farmp;
+			farmp *= lossMultiplier;
+			// apply and track cutoff losses
+			withoutCutOffLosses += farmp * haf(hr);
 			if (lowTempCutoff){
 				if (temp < lowTempCutoffValue) farmp = 0.0;
 			}
@@ -578,11 +594,16 @@ void cm_windpower::exec()
 	if (nameplate > 0) kWhperkW = annual / nameplate;
 	assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
 	assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
-	assign("cutoff_losses", var_data((ssc_number_t)((withoutLosses-annual)/ withoutLosses)));
+	assign("cutoff_losses", var_data((ssc_number_t)((withoutCutOffLosses - annual) / withoutCutOffLosses)));
 	assign("annual_gross_energy", annual_gross);
 
+	// internal wake loss is calculated during simulation rather than provided
+	if (wakeModelChoice != 3){
+        wake_int_loss_percent = (1. - annual_after_wake_loss/annual_gross) * 100.;
+	}
+
 	calculate_p50p90(this);
-    calculate_losses(this);
+    calculate_losses(this, wake_int_loss_percent);
 } // exec
 
 DEFINE_MODULE_ENTRY(windpower, "Utility scale wind farm model (adapted from TRNSYS code by P.Quinlan and openWind software by AWS Truepower)", 2);

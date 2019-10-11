@@ -114,7 +114,6 @@ void windTurbine::turbinePower(double windVelocity, double airDensity, double *t
 	{
 	    if (turbineGross)
 	        *turbineGross = out_pwr;
-		out_pwr = out_pwr*(1.0 - lossesRatio) - lossesAbsolute;
 		double pden = 0.5*airDensity*pow(windVelocity, 3.0);
 		double area = physics::PI / 4.0*rotorDiameter*rotorDiameter;
 		double fPowerCoefficient = max_of(0.0, 1000.0*out_pwr / (pden*area));

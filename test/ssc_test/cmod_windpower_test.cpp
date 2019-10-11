@@ -38,39 +38,39 @@ TEST_F(CMWindPowerIntegration, WakeModelsUsingFile_cmod_windpower){
 
 	ssc_number_t annual_energy;
 	ssc_data_get_number(data, "annual_energy", &annual_energy);
-	EXPECT_NEAR(annual_energy, 33224154, e) << "Annual energy.";
+	EXPECT_NEAR(annual_energy, 33224154, e) << "Simple";
 
 	ssc_number_t monthly_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[0];
-	EXPECT_NEAR(monthly_energy, 2.8218e6, e) << "Monthly energy of January";
+	EXPECT_NEAR(monthly_energy, 2.8218e6, e) << "Simple: January";
 
 	monthly_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[11];
-	EXPECT_NEAR(monthly_energy, 2.8218e6, e) << "Month energy of December";
+	EXPECT_NEAR(monthly_energy, 2.8218e6, e) << "Simple: December";
 
 	// WAsp Model
 	ssc_data_set_number(data, "wind_farm_wake_model", 1);
 	compute();
 
 	ssc_data_get_number(data, "annual_energy", &annual_energy);
-	EXPECT_NEAR(annual_energy, 32346158, e);
+	EXPECT_NEAR(annual_energy, 32346158, e) << "Wasp";
 
 	monthly_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[0];
-	EXPECT_NEAR(monthly_energy, 2.7472e6, e);
+	EXPECT_NEAR(monthly_energy, 2.7472e6, e) << "Wasp: Jan";
 
 	monthly_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[11];
-	EXPECT_NEAR(monthly_energy, 2.7472e6, e);
+	EXPECT_NEAR(monthly_energy, 2.7472e6, e)<< "Wasp: Dec";
 
 	// Eddy Viscosity Model
 	ssc_data_set_number(data, "wind_farm_wake_model", 2);
 	compute();
 
 	ssc_data_get_number(data, "annual_energy", &annual_energy);
-	EXPECT_NEAR(annual_energy, 31081848, e);
+	EXPECT_NEAR(annual_energy, 31081848, e) << "Eddy";
 
 	monthly_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[0];
-	EXPECT_NEAR(monthly_energy, 2.6398e6, e);
+	EXPECT_NEAR(monthly_energy, 2.6398e6, e) << "Eddy: Jan";
 
 	monthly_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[11];
-	EXPECT_NEAR(monthly_energy, 2.6398e6, e);
+	EXPECT_NEAR(monthly_energy, 2.6398e6, e) << "Eddy: Dec";
 
 	// Constant Loss Model
     ssc_data_set_number(data, "wind_farm_wake_model", 3);
@@ -81,7 +81,7 @@ TEST_F(CMWindPowerIntegration, WakeModelsUsingFile_cmod_windpower){
     ssc_number_t gross;
     ssc_data_get_number(data, "annual_energy", &annual_energy);
     ssc_data_get_number(data, "annual_gross_energy", &gross);
-    EXPECT_NEAR(annual_energy, gross*0.95, e);
+    EXPECT_NEAR(annual_energy, gross*0.95, e) << "Constant";
 }
 
 /// Using Interpolated Subhourly Wind Data
@@ -284,7 +284,7 @@ TEST_F(CMWindPowerIntegration, WindDist3_cmod_windpower) {
 
     ssc_number_t monthly_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[0];
     EXPECT_NEAR(monthly_energy, 12326000, e);
-    
+
 }
 
 /// Icing and Low Temp Cutoff, with Wind Resource Data
