@@ -216,12 +216,12 @@ void calculate_losses(compute_module* cm){
                               + cm->as_double("ops_load_loss") + cm->as_double("ops_strategies_loss");
     double turb_loss_percent = cm->as_double("turb_generic_loss") + cm->as_double("turb_hysteresis_loss")
                                + cm->as_double("turb_perf_loss") + cm->as_double("turb_specific_loss");
-    cm->assign("avail_losses", avail_loss_percent/100.);
-    cm->assign("elec_losses", elec_loss_percent/100.);
-    cm->assign("env_losses", env_loss_percent/100.);
-    cm->assign("ops_losses", ops_loss_percent/100.);
-    cm->assign("turb_losses", turb_loss_percent/100.);
-    cm->assign("wake_losses", avail_loss_percent/100.);
+    cm->assign("avail_losses", avail_loss_percent);
+    cm->assign("elec_losses", elec_loss_percent);
+    cm->assign("env_losses", env_loss_percent);
+    cm->assign("ops_losses", ops_loss_percent);
+    cm->assign("turb_losses", turb_loss_percent);
+    cm->assign("wake_losses", avail_loss_percent);
 }
 
 void cm_windpower::exec()
