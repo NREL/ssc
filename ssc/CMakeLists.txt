@@ -160,20 +160,12 @@ endif(MSVC)
 #####################################################################################################################
 
 add_library(ssc SHARED ${SSC_SRC})
-
-target_include_directories(ssc PRIVATE . ../splinter ../shared ../nlopt ../lpsolve ../solarpilot ../tcs ../ssc)
-
 set_target_properties(ssc
     PROPERTIES
     PREFIX ""
     DEBUG_POSTFIX "d"
 	)
 
-if (MSVC)
-    set_target_properties(ssc
-        PROPERTIES
-        LINK_FLAGS /SUBSYSTEM:WINDOWS)
-endif()
 
 # dltest executable for checking ssc library
 if(UNIX AND NOT system_advisor_model_EXPORT)
@@ -188,10 +180,10 @@ if(UNIX AND NOT system_advisor_model_EXPORT)
 endif()
 
 # libssc for PySAM
-if(SAMAPI_EXPORT AND UNIX)
-	set_property(TARGET ssc PROPERTY PREFIX "lib")
-	if (APPLE)
+if(APPLE)
+	if (system_advisor_model_EXPORT)
 		set(CMAKE_MACOSX_RPATH 1)
+		set_property(TARGET ssc PROPERTY PREFIX "lib")
 		set(CMAKE_SHARED_LIBRARY_SUFFIX ".so")
 		add_custom_command(
 			TARGET ssc
@@ -224,77 +216,40 @@ if (UNIX)
 	target_link_libraries(ssc -lm -ldl -lstdc++)
 endif()
 
-
-#####################################################################################################################
-#
-# Target Installation
-#
-#####################################################################################################################
-
-set(SSC_LIB $<TARGET_FILE_DIR:ssc>/$<TARGET_FILE_BASE_NAME:ssc>.lib)
-
 if (MSVC)
-	set(SAM_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../deploy/x64)
-	set(TEST_DIR ${CMAKE_CURRENT_BINARY_DIR}/../test/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
-	set(SDKTOOL_DIR ${CMAKE_CURRENT_BINARY_DIR}/../sdktool/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
-	set(TCSCONSOLE_DIR ${CMAKE_CURRENT_BINARY_DIR}/../tcsconsole/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:WINDOWS")
+	set(SSC_LIB $<TARGET_FILE_DIR:ssc>/$<TARGET_FILE_BASE_NAME:ssc>.lib)
+
 	add_custom_command(
 		TARGET ssc
 		POST_BUILD
-		COMMAND ${CMAKE_COMMAND} -E remove 
-			${SAM_DIR}/$<TARGET_FILE_BASE_NAME:ssc>.lib
-			${SAM_DIR}/$<TARGET_FILE_BASE_NAME:ssc>.dll
-			${TEST_DIR}/$<TARGET_FILE_BASE_NAME:ssc>.lib
-			${TEST_DIR}/$<TARGET_FILE_BASE_NAME:ssc>.dll
-			${SDKTOOL_DIR}/$<TARGET_FILE_BASE_NAME:ssc>.lib
-			${SDKTOOL_DIR}/$<TARGET_FILE_BASE_NAME:ssc>.dll
-			${TCSCONSOLE_DIR}/$<TARGET_FILE_BASE_NAME:ssc>.lib
-			${TCSCONSOLE_DIR}/$<TARGET_FILE_BASE_NAME:ssc>.dll
 		COMMAND ${CMAKE_COMMAND}
-		ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${SAM_DIR}
+		ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} $ENV{SAMNTDIR}/deploy/x64
 		COMMAND ${CMAKE_COMMAND}
-		ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${TCSCONSOLE_DIR}
+		ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${CMAKE_CURRENT_BINARY_DIR}/../tcsconsole/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>
 		COMMAND ${CMAKE_COMMAND}
-		ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${SDKTOOL_DIR}
+		ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${CMAKE_CURRENT_BINARY_DIR}/../sdktool/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>
 		COMMAND ${CMAKE_COMMAND}
-		ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${TEST_DIR}
+		ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${CMAKE_CURRENT_BINARY_DIR}/../test/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>
 		)
+
 	if (NOT skip_api)
-		set(SAMAPI_DIR ${CMAKE_CURRENT_BINARY_DIR}/../../api/api_autogen/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
-		add_custom_command(
+		if (${CMAKE_PROJECT_NAME} STREQUAL system_advisor_model)
+			add_custom_command(
 				TARGET ssc
 				POST_BUILD
-				COMMAND ${CMAKE_COMMAND} -E remove
-				${SAMAPI_DIR}/$<TARGET_FILE_BASE_NAME:ssc>.lib
-				${SAMAPI_DIR}/$<TARGET_FILE_BASE_NAME:ssc>.dll
 				COMMAND ${CMAKE_COMMAND}
-				ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${SAMAPI_DIR}
-		)
+				ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${CMAKE_CURRENT_BINARY_DIR}/../../api/api_autogen/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>
+				)
+		else()
+			add_custom_command(
+				TARGET ssc
+				POST_BUILD
+				COMMAND ${CMAKE_COMMAND}
+				ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} $ENV{SAMNTDIR}/build_msvc/api/api_autogen/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>
+				)
+		endif()
 	endif()
+
 endif()
 
-if(DEFINED ENV{PYSAMDIR})
-	if (SAMAPI_EXPORT)
-		if (MSVC)
-			add_custom_command(
-                TARGET ssc
-                POST_BUILD
-				COMMAND ${CMAKE_COMMAND} -E remove 
-					$ENV{PYSAMDIR}/files/$<TARGET_FILE_BASE_NAME:ssc>.lib
-					$ENV{PYSAMDIR}/files/$<TARGET_FILE_BASE_NAME:ssc>.dll
-			)
-			add_custom_command(
-					TARGET ssc
-					POST_BUILD
-					COMMAND ${CMAKE_COMMAND}
-					ARGS -E copy ${SSC_LIB} $ENV{PYSAMDIR}/files
-			)
-		endif()
-		add_custom_command(
-				TARGET ssc
-				POST_BUILD
-				COMMAND ${CMAKE_COMMAND}
-				ARGS -E copy $<TARGET_FILE:ssc> $ENV{PYSAMDIR}/files
-		)
-	endif()
-endif()
