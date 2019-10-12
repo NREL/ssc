@@ -26,6 +26,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cstdlib>
 #include <limits>
 #include <numeric>
+#include <algorithm>
 
 #ifdef _WIN32
 #include <direct.h>
@@ -1148,18 +1149,14 @@ std::vector<double> util::frequency_table(double* values, size_t n_vals, double 
     if (bin_width <= 0)
         throw std::runtime_error("frequency_table bin_width must be greater than 0.");
 
-    double max_val = -1;
-    for (size_t i = 0; i < n_vals; i++){
-        if (values[i] > max_val)
-            max_val = values[i];
-    }
+    double max_val = *(std::max_element(values, values + n_vals));
 
     std::vector<double> freq(size_t(max_val/bin_width) + 1, 0);
     for (size_t i = 0; i < n_vals; i++){
-        size_t bin = (size_t)std::floor(values[i]/bin_width);
+        auto bin = (size_t)std::floor(values[i]/bin_width);
         freq[bin] += 1;
     }
-    for (auto f : freq){
+    for (auto& f : freq){
         f /= n_vals;
     }
     return freq;

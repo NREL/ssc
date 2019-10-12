@@ -316,6 +316,23 @@ var_info vtab_technology_outputs[] = {
 { SSC_OUTPUT, SSC_ARRAY , "gen"                                  , "System power generated"                                         , "kW"                                     , ""                                      , "Time Series"          , "*"              , ""                      , ""},
 	var_info_invalid };
 
+var_info vtab_p50p90[] = {
+        { SSC_INPUT, SSC_NUMBER ,  "total_uncert"                 , "Total uncertainty in energy production as percent of annual energy", "%"                                   , ""                                      , "Uncertainty"          , ""              , "MIN=0,MAX=100"         , ""},
+        { SSC_OUTPUT, SSC_NUMBER , "annual_energy_p75"            , "Annual energy with 75% probability of exceedance"                  , "kWh"                                 , ""                                      , "Uncertainty"          , ""              , ""                      , ""},
+        { SSC_OUTPUT, SSC_NUMBER , "annual_energy_p90"            , "Annual energy with 90% probability of exceedance"                  , "kWh"                                 , ""                                      , "Uncertainty"          , ""              , ""                      , ""},
+        { SSC_OUTPUT, SSC_NUMBER , "annual_energy_p95"            , "Annual energy with 95% probability of exceedance"                  , "kWh"                                 , ""                                      , "Uncertainty"          , ""              , ""                      , ""},
+        var_info_invalid };
+
+bool calculate_p50p90(compute_module *cm){
+    if (!cm->is_assigned("total_uncert") || !cm->is_assigned("annual_energy"))
+        return false;
+    double aep = cm->as_double("annual_energy");
+    double uncert = cm->as_double("total_uncert")/100.;
+    cm->assign("annual_energy_p75", aep * (-0.67 * uncert + 1));
+    cm->assign("annual_energy_p90", aep * (-1.28 * uncert + 1));
+    cm->assign("annual_energy_p95", aep * (-1.64 * uncert + 1));
+}
+
 adjustment_factors::adjustment_factors( compute_module *cm, const std::string &prefix )
 : m_cm(cm), m_prefix(prefix)
 {	
