@@ -100,7 +100,7 @@ public:
 		}
 		single_year_to_lifetime_interpolated<double>(
 			(bool)cm.as_integer("system_use_lifetime_output"),
-			(size_t)cm.as_integer("analysis_period"),
+			(size_t)analysis_period,
 			n_rec_lifetime,
 			curtailment_year_one,
 			gridCurtailmentLifetime_percent,
