@@ -55,9 +55,18 @@ static var_info _cm_vtab_mhk_tidal[] = {
 	//   VARTYPE			DATATYPE			NAME									LABEL																		UNITS           META            GROUP              REQUIRED_IF					CONSTRAINTS				UI_HINTS	
 	{ SSC_INPUT,			SSC_MATRIX,			"tidal_resource",					    "Frequency distribution of resource as a function of stream speeds",		"",				"",             "MHKTidal",			"*",						"",						"" },	
 	{ SSC_INPUT,			SSC_MATRIX,			"tidal_power_curve",					"Power curve of tidal energy device as function of stream speeds",			"kW",			"",             "MHKTidal",			"*",						"",						"" },	
-	{ SSC_INPUT,			SSC_NUMBER,			"annual_energy_loss",					"Total energy losses",														"%",			"",             "MHKTidal",			"?=0",						"",						"" },	
 	//{ SSC_INPUT,			SSC_NUMBER,			"calculate_capacity",					"Calculate device rated capacity from power curve",							"0/1",			"",             "MHKTidal",         "?=1",                      "INTEGER,MIN=0,MAX=1",	"" },
 	{ SSC_INPUT,			SSC_NUMBER,			"number_devices",						"Number of tidal devices in the system",									"",				"",             "MHKTidal",         "?=1",                      "INTEGER",				"" },
+
+
+
+	// losses
+	{ SSC_INPUT,			SSC_NUMBER,			"loss_array_spacing",				"Array spacing loss",													"%",			"",				"MHKTidal",			"*",		"",						"" },
+	{ SSC_INPUT,			SSC_NUMBER,			"loss_resource_overprediction",				"Resource overprediction loss",													"%",			"",				"MHKTidal",			"*",		"",						"" },
+	{ SSC_INPUT,			SSC_NUMBER,			"loss_transmission",				"Transmission losses",													"%",			"",				"MHKTidal",			"*",		"",						"" },
+	{ SSC_INPUT,			SSC_NUMBER,			"loss_downtime",				"Array/WEC downtime loss",													"%",			"",				"MHKTidal",			"*",		"",						"" },
+	{ SSC_INPUT,			SSC_NUMBER,			"loss_additional",				"Additional losses",													"%",			"",				"MHKTidal",			"*",		"",						"" },
+
 
 //	{ SSC_OUTPUT,			SSC_NUMBER,			"device_rated_capacity",				"Rated capacity of device",													"kW",			"",				"MHKTidal",			"calculate_capacity=0",		"",						"" },
 	{ SSC_OUTPUT,			SSC_NUMBER,			"device_rated_capacity",				"Rated capacity of device",													"kW",			"",				"MHKTidal",			"",		"",						"" },
@@ -125,6 +134,14 @@ public:
 		//Read number of devices
 		int number_devices = as_integer("number_devices");
 
+		// total loss
+		double total_loss = as_double("loss_array_spacing")
+			+ as_double("loss_resource_overprediction")
+			+ as_double("loss_transmission")
+			+ as_double("loss_downtime")
+			+ as_double("loss_additional");
+
+
 		//Storing each column of the tidal_resource_matrix and tidal_power_curve as vectors:
 		for (int i = 0; i < number_rows; i++) {
 			
@@ -162,7 +179,8 @@ public:
 			throw compute_module::exec_error("mhk_tidal", "Probability distribution vector does not add up to 100%.");
 
 		//Factoring in losses in total annual energy production:
-		annual_energy *= (1 - (as_double("annual_energy_loss") / 100 ));
+		annual_energy *= (1 - (total_loss / 100 ));
+		// leave device power without losses
 
 		//Calculating capacity factor:
 		capacity_factor = annual_energy / (device_rated_capacity * number_devices * 8760);
