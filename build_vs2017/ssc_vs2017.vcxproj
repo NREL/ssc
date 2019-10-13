@@ -41,6 +41,9 @@
     <ClCompile Include="..\ssc\cmod_layoutarea.cpp" />
     <ClCompile Include="..\ssc\cmod_levpartflip.cpp" />
     <ClCompile Include="..\ssc\cmod_linear_fresnel_dsg_iph.cpp" />
+    <ClCompile Include="..\ssc\cmod_merchantplant.cpp" />
+    <ClCompile Include="..\ssc\cmod_mhk_costs.cpp" />
+    <ClCompile Include="..\ssc\cmod_mhk_eqns.cpp" />
     <ClCompile Include="..\ssc\cmod_mhk_tidal.cpp" />
     <ClCompile Include="..\ssc\cmod_mhk_wave.cpp" />
     <ClCompile Include="..\ssc\cmod_poacalib.cpp" />
@@ -86,6 +89,7 @@
     <ClCompile Include="..\ssc\cmod_utilityrate3.cpp" />
     <ClCompile Include="..\ssc\cmod_utilityrate4.cpp" />
     <ClCompile Include="..\ssc\cmod_utilityrate5.cpp" />
+    <ClCompile Include="..\ssc\cmod_wavefile.cpp" />
     <ClCompile Include="..\ssc\cmod_wfcheck.cpp" />
     <ClCompile Include="..\ssc\cmod_wfcsv.cpp" />
     <ClCompile Include="..\ssc\cmod_wfreader.cpp" />
@@ -109,8 +113,10 @@
     <ClInclude Include="..\ssc\cmod_battery.h" />
     <ClInclude Include="..\ssc\cmod_fuelcell.h" />
     <ClInclude Include="..\ssc\cmod_grid.h" />
+    <ClInclude Include="..\ssc\cmod_mhk_eqns.h" />
     <ClInclude Include="..\ssc\cmod_pvsamv1.h" />
     <ClInclude Include="..\ssc\cmod_windpower.h" />
+    <ClInclude Include="..\ssc\cmod_windpower_eqns.h" />
     <ClInclude Include="..\ssc\common_financial.h" />
     <ClInclude Include="..\ssc\core.h" />
     <ClInclude Include="..\ssc\common.h" />

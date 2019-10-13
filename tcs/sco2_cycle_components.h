@@ -195,12 +195,13 @@ public:
 		double m_eta;						//[-] turbine efficiency
 		double m_w_tip_ratio;				//[-] ratio of the tip speed to the local (turbine inlet) speed of sound
 		double m_N;							//[rpm] off-design turbine shaft speed
+        double m_m_dot;                     //[kg/s] mass flow rate
 
 		double m_W_dot_out;			//[kW] Turbine power output, expected to be positive (cycle, not basis)
 
 		S_od_solved()
 		{
-			m_nu = m_eta = m_w_tip_ratio = m_N =
+			m_nu = m_eta = m_w_tip_ratio = m_N = m_m_dot =
 				m_W_dot_out = std::numeric_limits<double>::quiet_NaN();
 		}
 	};

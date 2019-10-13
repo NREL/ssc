@@ -53,6 +53,9 @@ set(SSC_SRC
 		cmod_lcoefcr.cpp
 		cmod_levpartflip.cpp
 		cmod_linear_fresnel_dsg_iph.cpp
+		cmod_merchantplant.cpp
+		cmod_mhk_eqns.cpp
+		cmod_mhk_costs.cpp
 		cmod_mhk_wave.cpp
 		cmod_mhk_tidal.cpp
 		cmod_poacalib.cpp
@@ -106,6 +109,7 @@ set(SSC_SRC
 		cmod_windbos.cpp
 		cmod_windcsm.cpp
 		cmod_windfile.cpp
+		cmod_wavefile.cpp
 		cmod_windpower.cpp
         cmod_windpower_eqns.cpp
 		common.cpp
@@ -229,20 +233,22 @@ if (MSVC)
 		ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${CMAKE_CURRENT_BINARY_DIR}/../test/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>
 		)
 
-	if (${CMAKE_PROJECT_NAME} STREQUAL system_advisor_model)
-		add_custom_command(
-			TARGET ssc
-			POST_BUILD
-			COMMAND ${CMAKE_COMMAND}
-			ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${CMAKE_CURRENT_BINARY_DIR}/../../api/api_autogen/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>
-			)
-	else()
-		add_custom_command(
-			TARGET ssc
-			POST_BUILD
-			COMMAND ${CMAKE_COMMAND}
-			ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} $ENV{SAMNTDIR}/build_msvc/api/api_autogen/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>
-			)
+	if (NOT skip_api)
+		if (${CMAKE_PROJECT_NAME} STREQUAL system_advisor_model)
+			add_custom_command(
+				TARGET ssc
+				POST_BUILD
+				COMMAND ${CMAKE_COMMAND}
+				ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${CMAKE_CURRENT_BINARY_DIR}/../../api/api_autogen/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>
+				)
+		else()
+			add_custom_command(
+				TARGET ssc
+				POST_BUILD
+				COMMAND ${CMAKE_COMMAND}
+				ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} $ENV{SAMNTDIR}/build_msvc/api/api_autogen/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>
+				)
+		endif()
 	endif()
 
 endif()

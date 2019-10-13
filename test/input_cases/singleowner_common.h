@@ -243,4 +243,5 @@ int singleowner_common(ssc_data_t &data)
 	ssc_data_set_number( data, "depr_fedbas_method", 1 );
 	ssc_data_set_number( data, "battery_per_kWh", 300 );
 	ssc_data_set_number( data, "batt_replacement_cost_escal", 0 );
+	return 0;
 }

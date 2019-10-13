@@ -157,7 +157,13 @@ void generic_singleowner_battery_60min(ssc_data_t &data)
 	ssc_data_set_number(data, "ur_en_ts_sell_rate", 0);
 	ssc_number_t p_ur_ts_buy_rate[1] = { 0 };
 	ssc_data_set_array(data, "ur_ts_buy_rate", p_ur_ts_buy_rate, 1);
-	ssc_data_set_number( data, "ppa_price_input", 0 );
+	ssc_number_t p_ppa_price_input[1] = { 0 };
+	ssc_data_set_array( data, "ppa_price_input", p_ppa_price_input, 1 );
+	ssc_data_set_number(data, "cp_capacity_payment_esc", 0);
+	ssc_data_set_number(data, "cp_capacity_payment_type", 0);
+	ssc_data_set_number(data, "cp_system_nameplate", 0);
+	ssc_data_set_array(data, "cp_capacity_credit_percent", p_ppa_price_input, 1);
+	ssc_data_set_array( data, "cp_capacity_payment_amount", p_ppa_price_input, 1);
 	ssc_number_t p_dispatch_tod_factors[9] ={ 1, 1, 1, 1, 1, 1, 1, 1, 1 };
 	ssc_data_set_array( data, "dispatch_tod_factors", p_dispatch_tod_factors, 9 );
 	ssc_number_t p_dispatch_sched_weekday[288] ={ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
