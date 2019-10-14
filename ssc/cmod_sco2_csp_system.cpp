@@ -484,7 +484,7 @@ public:
             double m_dot_htf_ND_low = 0.5;      //[-]
             double m_dot_htf_ND_des = 1.0;          //[-]
             double m_dot_htf_ND_high = 1.05;    //[-]
-            int n_m_dot_htf_ND = 11;
+            int n_m_dot_htf_ND = 12;
             assign("udpc_n_m_dot_htf", (ssc_number_t)n_m_dot_htf_ND);
             double m_dot_htf_ND_par_start = m_dot_htf_ND_low;       // m_dot_htf_ND_low - 0.05;    //[-]
             double m_dot_htf_ND_par_end = m_dot_htf_ND_high;        // m_dot_htf_ND_high + 0.05;     //[-]
@@ -494,9 +494,9 @@ public:
             m_dot_htf_ND_levels[1] = m_dot_htf_ND_des;
             m_dot_htf_ND_levels[2] = m_dot_htf_ND_high;
 
-            double T_htf_low = T_htf_hot_des - 20.0;        //[K]
+            double T_htf_low = T_htf_hot_des - 30.0;        //[K]
             double T_htf_high = T_htf_hot_des + 15.0;       //[K]
-            int n_T_htf_hot = 7;
+            int n_T_htf_hot = 4;
             assign("udpc_n_T_htf", (ssc_number_t)n_T_htf_hot);
             double T_htf_par_start = T_htf_low;     // T_htf_low - 5.0;     //[K]
             double T_htf_par_end = T_htf_high;      // T_htf_high + 5.0;      //[K]
@@ -508,7 +508,7 @@ public:
 
             double T_amb_low = 273.15 + 0.0;         //[K]
             double T_amb_high = std::max(273.15 + 45.0, T_amb_des + 5.0);   //[K]
-            int n_T_amb = 13;
+            int n_T_amb = T_amb_high - T_amb_low + 1;
             assign("udpc_n_T_amb", (ssc_number_t)n_T_amb);
             double T_amb_par_start = T_amb_low; // 273.15 + 0.0;      //[K]
             double T_amb_par_end = T_amb_high;  // T_amb_high + 1.0;    //[K]
