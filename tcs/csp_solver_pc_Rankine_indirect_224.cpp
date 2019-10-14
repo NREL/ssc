@@ -384,16 +384,16 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
         
         // Import the newer single combined UDPC table if it's populated, otherwise try using the older three separate tables
         if (!ms_params.mc_combined_ind.is_single()) {
-            try {
+            //try {
                 split_ind_tbl(ms_params.mc_combined_ind, ms_params.mc_T_htf_ind, ms_params.mc_m_dot_htf_ind, ms_params.mc_T_amb_ind);
-            }
-            catch (...) {
-                m_error_msg = "Cannot import the single UDPC table";
-                mc_csp_messages.add_message(C_csp_messages::WARNING, m_error_msg);
-                if (ms_params.mc_T_htf_ind.is_single() || ms_params.mc_T_amb_ind.is_single() || ms_params.mc_m_dot_htf_ind.is_single()) {
-                    throw(C_csp_exception("UDPC tables are not set", "UDPC Table Importation"));
-                }
-            }
+            //}
+            //catch (...) {
+            //    m_error_msg = "Cannot import the single UDPC table";
+            //    mc_csp_messages.add_message(C_csp_messages::WARNING, m_error_msg);
+            //    if (ms_params.mc_T_htf_ind.is_single() || ms_params.mc_T_amb_ind.is_single() || ms_params.mc_m_dot_htf_ind.is_single()) {
+            //        throw(C_csp_exception("UDPC tables are not set", "UDPC Table Importation"));
+            //    }
+            //}
         }
         else if ( ms_params.mc_T_htf_ind.is_single() || ms_params.mc_T_amb_ind.is_single() || ms_params.mc_m_dot_htf_ind.is_single() ) {
             throw(C_csp_exception("UDPC tables are not set", "UDPC Table Importation"));
@@ -1948,8 +1948,21 @@ void C_pc_Rankine_indirect_224::get_var_setup(std::vector<double> & vec_unique, 
         }
         it_map++;
     }
-    var_low = std::min(var_level_1, var_level_2);
-    var_high = std::max(var_level_1, var_level_2);
+    if (var_level_1 < var_level_2)
+    {
+        var_low = var_level_1;  
+        var_high = var_level_2;
+    }
+    else
+    {
+        var_low = var_level_2;
+        var_high = var_level_1;
+    }
+
+    if (var_count_3 < 4)
+    {
+        throw(C_csp_exception("UDPC parametric for each variable must contain at least 4 unique values"));
+    }
 }
 
 bool C_pc_Rankine_indirect_224::is_level_in_par(std::vector<std::vector<double>> test_combs,
@@ -2097,6 +2110,11 @@ int C_pc_Rankine_indirect_224::split_ind_tbl(util::matrix_t<double> &cmbd_ind, u
     int n_m_dot_pars = m_dot_pars.size();
     int n_T_amb_pars = T_amb_pars.size();
     int n_T_htf_pars = T_htf_pars.size();
+
+    if (n_m_dot_pars < 4 || n_T_amb_pars < 4 || n_T_htf_pars < 4)
+    {
+        throw(C_csp_exception("Filtered UDPC parametric for each variable must contain at least 4 unique values"));
+    }
 
     const int ncols = 13;
     T_htf_ind.resize_fill(n_T_htf_pars, ncols, 0.0);
