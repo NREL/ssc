@@ -83,6 +83,7 @@
     <ClCompile Include="..\ssc\cmod_trough_physical.cpp" />
     <ClCompile Include="..\ssc\cmod_trough_physical_iph.cpp" />
     <ClCompile Include="..\ssc\cmod_ui_tes_calcs.cpp" />
+    <ClCompile Include="..\ssc\cmod_ui_udpc_checks.cpp" />
     <ClCompile Include="..\ssc\cmod_user_htf_comparison.cpp" />
     <ClCompile Include="..\ssc\cmod_utilityrate.cpp" />
     <ClCompile Include="..\ssc\cmod_utilityrate2.cpp" />

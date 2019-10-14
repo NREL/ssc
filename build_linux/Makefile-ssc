@@ -14,6 +14,7 @@ TARGET = ssc.so
 OBJECTS = \
 	cmod_singlediode.o \
 	cmod_ui_tes_calcs.o \
+	cmod_ui_udpc_checks.o \
 	csp_common.o \
 	cmod_lcoefcr.o \
 	cmod_thirdpartyownership.o \
