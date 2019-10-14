@@ -1909,7 +1909,7 @@ double C_pc_Rankine_indirect_224::Interpolate(int YT, int XT, double X)
 	return m_db.at(YI, lbi) + ind * (m_db.at(YI, ubi) - m_db.at(YI, lbi));
 } // Interpolate
 
-void C_pc_Rankine_indirect_224::get_var_setup(std::vector<double> & vec_unique, std::vector<double> & var_vec,
+void get_var_setup(std::vector<double> & vec_unique, std::vector<double> & var_vec,
     double & var_des, double & var_low, double & var_high)
 {
     //set<double, std::less<double>> ::iterator it = var_unique.begin();
@@ -1965,7 +1965,7 @@ void C_pc_Rankine_indirect_224::get_var_setup(std::vector<double> & vec_unique, 
     }
 }
 
-bool C_pc_Rankine_indirect_224::is_level_in_par(std::vector<std::vector<double>> test_combs,
+bool is_level_in_par(std::vector<std::vector<double>> test_combs,
     std::vector<std::vector<double>> full_table)
 {
     int n_tbl_rows = full_table.size();
@@ -1975,17 +1975,17 @@ bool C_pc_Rankine_indirect_224::is_level_in_par(std::vector<std::vector<double>>
     for (int i = 0; i < n_tbl_rows; i++)
     {
         // Is T_amb_design in a row with T_htf_low and m_dot_des?
-        if (test_combs[0] == std::vector<double>{ full_table[i][E_COL_T_HTF], full_table[i][E_COL_M_DOT], full_table[i][E_COL_T_AMB] })
+        if (test_combs[0] == std::vector<double>{ full_table[i][C_pc_Rankine_indirect_224::E_COL_T_HTF], full_table[i][C_pc_Rankine_indirect_224::E_COL_M_DOT], full_table[i][C_pc_Rankine_indirect_224::E_COL_T_AMB] })
         {
             des__low = true;
         }
         // Is T_amb_design in a row with T_htf_des and m_dot_des?
-        if (test_combs[1] == std::vector<double>{ full_table[i][E_COL_T_HTF], full_table[i][E_COL_M_DOT], full_table[i][E_COL_T_AMB] })
+        if (test_combs[1] == std::vector<double>{ full_table[i][C_pc_Rankine_indirect_224::E_COL_T_HTF], full_table[i][C_pc_Rankine_indirect_224::E_COL_M_DOT], full_table[i][C_pc_Rankine_indirect_224::E_COL_T_AMB] })
         {
             des__des = true;
         }
         // Is T_amb_design in a row with T_htf_high and m_dot_des?
-        if (test_combs[2] == std::vector<double>{ full_table[i][E_COL_T_HTF], full_table[i][E_COL_M_DOT], full_table[i][E_COL_T_AMB] })
+        if (test_combs[2] == std::vector<double>{ full_table[i][C_pc_Rankine_indirect_224::E_COL_T_HTF], full_table[i][C_pc_Rankine_indirect_224::E_COL_M_DOT], full_table[i][C_pc_Rankine_indirect_224::E_COL_T_AMB] })
         {
             des__high = true;
         }
@@ -1999,7 +1999,7 @@ bool C_pc_Rankine_indirect_224::is_level_in_par(std::vector<std::vector<double>>
     return des__low && des__des && des__high;
 }
 
-int C_pc_Rankine_indirect_224::split_ind_tbl(util::matrix_t<double> &cmbd_ind, util::matrix_t<double> &T_htf_ind,
+int split_ind_tbl(util::matrix_t<double> &cmbd_ind, util::matrix_t<double> &T_htf_ind,
     util::matrix_t<double> &m_dot_ind, util::matrix_t<double> &T_amb_ind)
 {
     int n_T_htf_pars, n_T_amb_pars, n_m_dot_pars;
@@ -2014,7 +2014,7 @@ int C_pc_Rankine_indirect_224::split_ind_tbl(util::matrix_t<double> &cmbd_ind, u
         T_amb_low, T_amb_des, T_amb_high);
 }
 
-int C_pc_Rankine_indirect_224::split_ind_tbl(util::matrix_t<double> &cmbd_ind, util::matrix_t<double> &T_htf_ind,
+int split_ind_tbl(util::matrix_t<double> &cmbd_ind, util::matrix_t<double> &T_htf_ind,
     util::matrix_t<double> &m_dot_ind, util::matrix_t<double> &T_amb_ind,
     int & n_T_htf_pars, int & n_T_amb_pars, int & n_m_dot_pars,
     double & m_dot_low, double & m_dot_des, double & m_dot_high,
@@ -2146,13 +2146,13 @@ int C_pc_Rankine_indirect_224::split_ind_tbl(util::matrix_t<double> &cmbd_ind, u
             for (int k = 0; k < n_table_rows; k++)
             {
                 if (std::vector<double>{T_htf_pars[i], m_dot_levels[j], T_amb_des} ==
-                    std::vector<double>{ cmbd_tbl[k][E_COL_T_HTF], cmbd_tbl[k][E_COL_M_DOT], cmbd_tbl[k][E_COL_T_AMB] })
+                    std::vector<double>{ cmbd_tbl[k][C_pc_Rankine_indirect_224::E_COL_T_HTF], cmbd_tbl[k][C_pc_Rankine_indirect_224::E_COL_M_DOT], cmbd_tbl[k][C_pc_Rankine_indirect_224::E_COL_T_AMB] })
                 {
-                    T_htf_ind.set_value(cmbd_tbl[k][E_COL_T_HTF], i, 0);
-                    T_htf_ind.set_value(cmbd_tbl[k][E_COL_W_CYL], i, 3*C_ud_power_cycle::i_W_dot_gross + 1 + j);
-                    T_htf_ind.set_value(cmbd_tbl[k][E_COL_Q_CYL], i, 3*C_ud_power_cycle::i_Q_dot_HTF + 1 + j);
-                    T_htf_ind.set_value(cmbd_tbl[k][E_COL_W_COOL], i, 3*C_ud_power_cycle::i_W_dot_cooling + 1 + j);
-                    T_htf_ind.set_value(cmbd_tbl[k][E_COL_M_H2O], i, 3*C_ud_power_cycle::i_m_dot_water + 1 + j);
+                    T_htf_ind.set_value(cmbd_tbl[k][C_pc_Rankine_indirect_224::E_COL_T_HTF], i, 0);
+                    T_htf_ind.set_value(cmbd_tbl[k][C_pc_Rankine_indirect_224::E_COL_W_CYL], i, 3*C_ud_power_cycle::i_W_dot_gross + 1 + j);
+                    T_htf_ind.set_value(cmbd_tbl[k][C_pc_Rankine_indirect_224::E_COL_Q_CYL], i, 3*C_ud_power_cycle::i_Q_dot_HTF + 1 + j);
+                    T_htf_ind.set_value(cmbd_tbl[k][C_pc_Rankine_indirect_224::E_COL_W_COOL], i, 3*C_ud_power_cycle::i_W_dot_cooling + 1 + j);
+                    T_htf_ind.set_value(cmbd_tbl[k][C_pc_Rankine_indirect_224::E_COL_M_H2O], i, 3*C_ud_power_cycle::i_m_dot_water + 1 + j);
                 }
             }
         }
@@ -2168,13 +2168,13 @@ int C_pc_Rankine_indirect_224::split_ind_tbl(util::matrix_t<double> &cmbd_ind, u
             for (int k = 0; k < n_table_rows; k++)
             {
                 if (std::vector<double>{T_htf_des, m_dot_pars[i], T_amb_levels[j]} ==
-                    std::vector<double>{ cmbd_tbl[k][E_COL_T_HTF], cmbd_tbl[k][E_COL_M_DOT], cmbd_tbl[k][E_COL_T_AMB] })
+                    std::vector<double>{ cmbd_tbl[k][C_pc_Rankine_indirect_224::E_COL_T_HTF], cmbd_tbl[k][C_pc_Rankine_indirect_224::E_COL_M_DOT], cmbd_tbl[k][C_pc_Rankine_indirect_224::E_COL_T_AMB] })
                 {
-                    m_dot_ind.set_value(cmbd_tbl[k][E_COL_M_DOT], i, 0);
-                    m_dot_ind.set_value(cmbd_tbl[k][E_COL_W_CYL], i, 3 * C_ud_power_cycle::i_W_dot_gross + 1 + j);
-                    m_dot_ind.set_value(cmbd_tbl[k][E_COL_Q_CYL], i, 3 * C_ud_power_cycle::i_Q_dot_HTF + 1 + j);
-                    m_dot_ind.set_value(cmbd_tbl[k][E_COL_W_COOL], i, 3 * C_ud_power_cycle::i_W_dot_cooling + 1 + j);
-                    m_dot_ind.set_value(cmbd_tbl[k][E_COL_M_H2O], i, 3 * C_ud_power_cycle::i_m_dot_water + 1 + j);
+                    m_dot_ind.set_value(cmbd_tbl[k][C_pc_Rankine_indirect_224::E_COL_M_DOT], i, 0);
+                    m_dot_ind.set_value(cmbd_tbl[k][C_pc_Rankine_indirect_224::E_COL_W_CYL], i, 3 * C_ud_power_cycle::i_W_dot_gross + 1 + j);
+                    m_dot_ind.set_value(cmbd_tbl[k][C_pc_Rankine_indirect_224::E_COL_Q_CYL], i, 3 * C_ud_power_cycle::i_Q_dot_HTF + 1 + j);
+                    m_dot_ind.set_value(cmbd_tbl[k][C_pc_Rankine_indirect_224::E_COL_W_COOL], i, 3 * C_ud_power_cycle::i_W_dot_cooling + 1 + j);
+                    m_dot_ind.set_value(cmbd_tbl[k][C_pc_Rankine_indirect_224::E_COL_M_H2O], i, 3 * C_ud_power_cycle::i_m_dot_water + 1 + j);
                 }
             }
         }
@@ -2190,13 +2190,13 @@ int C_pc_Rankine_indirect_224::split_ind_tbl(util::matrix_t<double> &cmbd_ind, u
             for (int k = 0; k < n_table_rows; k++)
             {
                 if (std::vector<double>{T_htf_levels[j], m_dot_des, T_amb_pars[i]} ==
-                    std::vector<double>{ cmbd_tbl[k][E_COL_T_HTF], cmbd_tbl[k][E_COL_M_DOT], cmbd_tbl[k][E_COL_T_AMB] })
+                    std::vector<double>{ cmbd_tbl[k][C_pc_Rankine_indirect_224::E_COL_T_HTF], cmbd_tbl[k][C_pc_Rankine_indirect_224::E_COL_M_DOT], cmbd_tbl[k][C_pc_Rankine_indirect_224::E_COL_T_AMB] })
                 {
-                    T_amb_ind.set_value(cmbd_tbl[k][E_COL_T_AMB], i, 0);
-                    T_amb_ind.set_value(cmbd_tbl[k][E_COL_W_CYL], i, 3 * C_ud_power_cycle::i_W_dot_gross + 1 + j);
-                    T_amb_ind.set_value(cmbd_tbl[k][E_COL_Q_CYL], i, 3 * C_ud_power_cycle::i_Q_dot_HTF + 1 + j);
-                    T_amb_ind.set_value(cmbd_tbl[k][E_COL_W_COOL], i, 3 * C_ud_power_cycle::i_W_dot_cooling + 1 + j);
-                    T_amb_ind.set_value(cmbd_tbl[k][E_COL_M_H2O], i, 3 * C_ud_power_cycle::i_m_dot_water + 1 + j);
+                    T_amb_ind.set_value(cmbd_tbl[k][C_pc_Rankine_indirect_224::E_COL_T_AMB], i, 0);
+                    T_amb_ind.set_value(cmbd_tbl[k][C_pc_Rankine_indirect_224::E_COL_W_CYL], i, 3 * C_ud_power_cycle::i_W_dot_gross + 1 + j);
+                    T_amb_ind.set_value(cmbd_tbl[k][C_pc_Rankine_indirect_224::E_COL_Q_CYL], i, 3 * C_ud_power_cycle::i_Q_dot_HTF + 1 + j);
+                    T_amb_ind.set_value(cmbd_tbl[k][C_pc_Rankine_indirect_224::E_COL_W_COOL], i, 3 * C_ud_power_cycle::i_W_dot_cooling + 1 + j);
+                    T_amb_ind.set_value(cmbd_tbl[k][C_pc_Rankine_indirect_224::E_COL_M_H2O], i, 3 * C_ud_power_cycle::i_m_dot_water + 1 + j);
                 }
             }
         }
