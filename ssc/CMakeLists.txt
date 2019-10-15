@@ -112,6 +112,7 @@ set(SSC_SRC
 		cmod_wavefile.cpp
 		cmod_windpower.cpp
         cmod_windpower_eqns.cpp
+        cmod_ui_udpc_checks.cpp
 		common.cpp
 		common_financial.cpp
 		core.cpp
