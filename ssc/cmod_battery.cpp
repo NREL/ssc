@@ -322,10 +322,10 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, b
 			batt_vars->batt_computed_strings = vt.as_integer("batt_computed_strings");
 			batt_vars->batt_kwh = vt.as_double("batt_computed_bank_capacity");
 			batt_vars->batt_kw = vt.as_double("batt_power_discharge_max");
-			batt_vars->batt_computed_series = cm.as_integer("batt_computed_series");
-			batt_vars->batt_computed_strings = cm.as_integer("batt_computed_strings");
-			batt_vars->batt_kwh = cm.as_double("batt_computed_bank_capacity");
-			batt_vars->batt_kw = cm.as_double("batt_power_discharge_max_kwdc");
+			batt_vars->batt_computed_series = vt.as_integer("batt_computed_series");
+			batt_vars->batt_computed_strings = vt.as_integer("batt_computed_strings");
+			batt_vars->batt_kwh = vt.as_double("batt_computed_bank_capacity");
+			batt_vars->batt_kw = vt.as_double("batt_power_discharge_max_kwdc");
 
 			// Voltage properties
 			batt_vars->batt_voltage_choice = vt.as_integer("batt_voltage_choice");
@@ -341,13 +341,13 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, b
 			batt_vars->batt_resistance = vt.as_double("batt_resistance");
 
 			// Current and capacity
-			batt_vars->batt_current_choice = cm.as_integer("batt_current_choice");
-			batt_vars->batt_current_charge_max = cm.as_double("batt_current_charge_max");
-			batt_vars->batt_current_discharge_max = cm.as_double("batt_current_discharge_max");
-			batt_vars->batt_power_charge_max_kwdc = cm.as_double("batt_power_charge_max_kwdc");
-			batt_vars->batt_power_discharge_max_kwdc = cm.as_double("batt_power_discharge_max_kwdc");
-			batt_vars->batt_power_charge_max_kwac = cm.as_double("batt_power_charge_max_kwac");
-			batt_vars->batt_power_discharge_max_kwac = cm.as_double("batt_power_discharge_max_kwac");
+			batt_vars->batt_current_choice = vt.as_integer("batt_current_choice");
+			batt_vars->batt_current_charge_max = vt.as_double("batt_current_charge_max");
+			batt_vars->batt_current_discharge_max = vt.as_double("batt_current_discharge_max");
+			batt_vars->batt_power_charge_max_kwdc = vt.as_double("batt_power_charge_max_kwdc");
+			batt_vars->batt_power_discharge_max_kwdc = vt.as_double("batt_power_discharge_max_kwdc");
+			batt_vars->batt_power_charge_max_kwac = vt.as_double("batt_power_charge_max_kwac");
+			batt_vars->batt_power_discharge_max_kwac = vt.as_double("batt_power_discharge_max_kwac");
 
 			// Power converters and topology
 			batt_vars->batt_topology = vt.as_integer("batt_ac_or_dc");
@@ -383,20 +383,20 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, b
 			if (batt_vars->batt_meter_position == dispatch_t::FRONT)
 			{
 
-				batt_vars->pv_clipping_forecast = cm.as_vector_double("batt_pv_clipping_forecast");
-				batt_vars->pv_dc_power_forecast = cm.as_vector_double("batt_pv_dc_forecast");
+				batt_vars->pv_clipping_forecast = vt.as_vector_double("batt_pv_clipping_forecast");
+				batt_vars->pv_dc_power_forecast = vt.as_vector_double("batt_pv_dc_forecast");
 				size_t count_ppa_price_input;
-				ssc_number_t* ppa_price = cm.as_array("ppa_price_input", &count_ppa_price_input);
+				ssc_number_t* ppa_price = vt.as_array("ppa_price_input", &count_ppa_price_input);
 
-//				double ppa_price = cm.as_double("ppa_price_input");
-				int ppa_multiplier_mode = cm.as_integer("ppa_multiplier_model");
+//				double ppa_price = vt.as_double("ppa_price_input");
+				int ppa_multiplier_mode = vt.as_integer("ppa_multiplier_model");
 
 				if (ppa_multiplier_mode == 0) {
 					batt_vars->ppa_price_series_dollar_per_kwh = flatten_diurnal(
 						vt.as_matrix_unsigned_long("dispatch_sched_weekday"), 
 						vt.as_matrix_unsigned_long("dispatch_sched_weekend"), 
 						step_per_hour,
-						cm.as_vector_double("dispatch_tod_factors"), ppa_price[0]);
+						vt.as_vector_double("dispatch_tod_factors"), ppa_price[0]);
 				}
 				else {
 					batt_vars->ppa_price_series_dollar_per_kwh = vt.as_vector_double("dispatch_factors_ts");
@@ -414,21 +414,21 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, b
 				if (vt.is_assigned("en_electricity_rates")) {
 					if (vt.as_integer("en_electricity_rates"))
 					{
-						batt_vars->ec_use_realtime = cm.as_boolean("ur_en_ts_sell_rate");
+						batt_vars->ec_use_realtime = vt.as_boolean("ur_en_ts_sell_rate");
 						if (!batt_vars->ec_use_realtime) {
-						batt_vars->ec_weekday_schedule = cm.as_matrix_unsigned_long("ur_ec_sched_weekday");
-						batt_vars->ec_weekend_schedule = cm.as_matrix_unsigned_long("ur_ec_sched_weekend");
-						batt_vars->ec_tou_matrix = cm.as_matrix("ur_ec_tou_mat");
+						batt_vars->ec_weekday_schedule = vt.as_matrix_unsigned_long("ur_ec_sched_weekday");
+						batt_vars->ec_weekend_schedule = vt.as_matrix_unsigned_long("ur_ec_sched_weekend");
+						batt_vars->ec_tou_matrix = vt.as_matrix("ur_ec_tou_mat");
 						}
 						else {
-							batt_vars->ec_realtime_buy = cm.as_vector_double("ur_ts_buy_rate");
+							batt_vars->ec_realtime_buy = vt.as_vector_double("ur_ts_buy_rate");
 						}
 						batt_vars->ec_rate_defined = true;
 					}
 					else {
 						batt_vars->ec_use_realtime = true;
 						batt_vars->ec_realtime_buy = batt_vars->ppa_price_series_dollar_per_kwh;
-						cm.assign("en_electricity_rates", 1);
+						vt.assign("en_electricity_rates", 1);
 						batt_vars->ec_rate_defined = true;
 					}
 				}
@@ -527,16 +527,16 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, b
 			}
 
 			// Battery bank replacement
-			if (cm.is_assigned("om_replacement_cost1"))
-			    batt_vars->batt_cost_per_kwh = cm.as_vector_double("om_replacement_cost1")[0];
+			if (vt.is_assigned("om_replacement_cost1"))
+			    batt_vars->batt_cost_per_kwh = vt.as_vector_double("om_replacement_cost1")[0];
             else
                 batt_vars->batt_cost_per_kwh = 0.;
-            batt_vars->batt_replacement_option = cm.as_integer("batt_replacement_option");
-			batt_vars->batt_replacement_capacity = cm.as_double("batt_replacement_capacity");
+            batt_vars->batt_replacement_option = vt.as_integer("batt_replacement_option");
+			batt_vars->batt_replacement_capacity = vt.as_double("batt_replacement_capacity");
 
 			if (batt_vars->batt_replacement_option == battery_t::REPLACE_BY_SCHEDULE) {
-				batt_vars->batt_replacement_schedule = cm.as_vector_integer("batt_replacement_schedule");
-				batt_vars->batt_replacement_schedule_percent = cm.as_vector_double("batt_replacement_schedule_percent");
+				batt_vars->batt_replacement_schedule = vt.as_vector_integer("batt_replacement_schedule");
+				batt_vars->batt_replacement_schedule_percent = vt.as_vector_double("batt_replacement_schedule_percent");
 			}
 
 			// Battery lifetime
@@ -564,11 +564,11 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, b
 			}
 			
 			// Inverter settings
-			if (cm.is_assigned("inverter_model"))
+			if (vt.is_assigned("inverter_model"))
 			{
-				batt_vars->inverter_model = cm.as_integer("inverter_model");
-				batt_vars->inverter_count = cm.as_integer("inverter_count");
-				batt_vars->batt_inverter_efficiency_cutoff = cm.as_double("batt_inverter_efficiency_cutoff");
+				batt_vars->inverter_model = vt.as_integer("inverter_model");
+				batt_vars->inverter_count = vt.as_integer("inverter_count");
+				batt_vars->batt_inverter_efficiency_cutoff = vt.as_double("batt_inverter_efficiency_cutoff");
 
 				if (batt_vars->inverter_model == SharedInverter::SANDIA_INVERTER)
 				{
@@ -740,12 +740,12 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, b
 		outBatteryToGrid = vt.allocate("batt_to_grid", nrec*nyears);
 
 		if (batt_vars->batt_dispatch != dispatch_t::FOM_MANUAL) {
-			outCostToCycle = cm.allocate("batt_cost_to_cycle", nrec*nyears);
-			outBattPowerTarget = cm.allocate("batt_power_target", nrec*nyears);
-			outBenefitCharge = cm.allocate("batt_revenue_charge", nrec*nyears);
-			outBenefitGridcharge = cm.allocate("batt_revenue_gridcharge", nrec*nyears);
-			outBenefitClipcharge = cm.allocate("batt_revenue_clipcharge", nrec*nyears);
-			outBenefitDischarge = cm.allocate("batt_revenue_discharge", nrec*nyears);
+			outCostToCycle = vt.allocate("batt_cost_to_cycle", nrec*nyears);
+			outBattPowerTarget = vt.allocate("batt_power_target", nrec*nyears);
+			outBenefitCharge = vt.allocate("batt_revenue_charge", nrec*nyears);
+			outBenefitGridcharge = vt.allocate("batt_revenue_gridcharge", nrec*nyears);
+			outBenefitClipcharge = vt.allocate("batt_revenue_clipcharge", nrec*nyears);
+			outBenefitDischarge = vt.allocate("batt_revenue_discharge", nrec*nyears);
 		}
 	}
 	outPVToBatt = vt.allocate("pv_to_batt", nrec*nyears);
@@ -1183,7 +1183,7 @@ battstor::battstor(const battstor& orig){
             charge_control = new ACBatteryController(dispatch_model, battery_metrics, batt_vars->batt_ac_dc_efficiency,
                     batt_vars->batt_dc_ac_efficiency);
         else if (dynamic_cast<DCBatteryController*>(orig.charge_control))
-            charge_control = new DCBatteryController(dispatch_model, battery_metrics, batt_vars->batt_dc_ac_efficiency);
+            charge_control = new DCBatteryController(dispatch_model, battery_metrics, batt_vars->batt_dc_dc_bms_efficiency, batt_vars->batt_inverter_efficiency_cutoff);
         else
             throw general_error("charge_control in battstor is not of recognized type.");
     }
@@ -1475,7 +1475,7 @@ public:
 				dt_hour_gen);
 
 			// Create battery structure and initialize
-			battstor batt(*this, true, n_rec_single_year, dt_hour_gen);
+			battstor batt(*m_vartab, true, n_rec_single_year, dt_hour_gen);
 			batt.initialize_automated_dispatch(power_input_lifetime, load_lifetime);
 
 			if (load_lifetime.size() != n_rec_lifetime) {

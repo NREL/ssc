@@ -3,6 +3,7 @@
 
 
 #include "../ssc/cmod_battery.h"
+#include "lib_battery_dispatch.h"
 
 class resilience {
 private:

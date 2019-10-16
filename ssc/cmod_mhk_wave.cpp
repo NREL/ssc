@@ -96,7 +96,7 @@ public:
 		
 		//Check to ensure size of wave_power_matrix == wave_resource_matrix :
 		if ( (wave_resource_matrix.ncols() !=  wave_power_matrix.ncols() ) || ( wave_resource_matrix.nrows() != wave_power_matrix.nrows() ) )
-			throw compute_module::exec_error("mhk_wave", "Size of Power Matrix is not equal to Wave Resource Matrix");
+			throw exec_error("mhk_wave", "Size of Power Matrix is not equal to Wave Resource Matrix");
 
 		//Checker to ensure frequency distribution adds to >= 99.5%:
 		double resource_vect_checker = 0;
