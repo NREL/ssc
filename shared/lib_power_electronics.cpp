@@ -73,13 +73,15 @@ void ACBatteryController::run(size_t year, size_t hour_of_year, size_t step_of_h
 	m_batteryMetrics->compute_metrics_ac(m_dispatch->getBatteryPower());
 }
 
-DCBatteryController::DCBatteryController(dispatch_t * dispatch, battery_metrics_t * battery_metrics, double efficiencyDCToDC) : ChargeController(dispatch, battery_metrics)
+DCBatteryController::DCBatteryController(dispatch_t * dispatch, battery_metrics_t * battery_metrics, double efficiencyDCToDC, double inverterEfficiencyCutoff) 
+	: ChargeController(dispatch, battery_metrics)
 {
 	std::unique_ptr<Battery_DC_DC_ChargeController> tmp(new Battery_DC_DC_ChargeController(efficiencyDCToDC, 100));
 	m_DCDCChargeController = std::move(tmp);
 	m_batteryPower = dispatch->getBatteryPower();
 	m_batteryPower->connectionMode = ChargeController::DC_CONNECTED;
 	m_batteryPower->singlePointEfficiencyDCToDC = m_DCDCChargeController->batt_dc_dc_bms_efficiency();
+	m_batteryPower->inverterEfficiencyCutoff = inverterEfficiencyCutoff;
 }
 
 void DCBatteryController::setSharedInverter(SharedInverter * sharedInverter)

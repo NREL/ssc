@@ -42,7 +42,11 @@ extern var_info vtab_adjustment_factors[];
 extern var_info vtab_dc_adjustment_factors[];
 extern var_info vtab_sf_adjustment_factors[];
 extern var_info vtab_technology_outputs[];
+extern var_info vtab_grid_curtailment[];
+extern var_info vtab_p50p90[];
 extern var_info vtab_resilience_outputs[];
+
+bool calculate_p50p90(compute_module *cm);
 
 class adjustment_factors
 {

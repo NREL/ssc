@@ -460,6 +460,9 @@ public:
     
     int opt_P_LP_comp_in__fixed_N_turbo();   // opt_P_mc_in_nest_f_recomp_max_eta_core();
 
+    void check_od_solution(double & diff_m_dot, double & diff_E_cycle,
+        double & diff_Q_LTR, double & diff_Q_HTR);
+
 	int off_design(C_sco2_phx_air_cooler::S_od_par od_par, S_od_operation_inputs od_op_inputs);
 
 	int off_design_core(double & eta_solved);

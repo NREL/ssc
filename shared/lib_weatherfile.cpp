@@ -62,7 +62,7 @@ static std::string trimboth(std::string &buf)
 	const auto strRange = strEnd - strBegin + 1;
 	return buf.substr(strBegin, strRange);
 }
-
+ 
 static std::vector<std::string> split(const std::string &buf, char delim = ',')
 {
 	std::string token;

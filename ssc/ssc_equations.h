@@ -3,6 +3,7 @@
 
 #include "sscapi.h"
 #include "cmod_windpower_eqns.h"
+#include "cmod_mhk_eqns.h"
 #include "cmod_pvsamv1_eqns.h"
 
 
@@ -16,10 +17,12 @@ struct ssc_equation_entry{
 };
 
 static ssc_equation_entry ssc_equation_table [] = {
-        {"Turbine_calculate_powercurve", Turbine_calculate_powercurve,
-            "Windpower", Turbine_calculate_powercurve_doc},
+		{"me_array_cable_length", me_array_cable_length,
+						   "Marine energy", me_array_cable_length_doc},
         {"Reopt_size_battery_post", Reopt_size_battery_params,
             "Pvsamv1", Reopt_size_battery_params_doc},
+        {"Turbine_calculate_powercurve", Turbine_calculate_powercurve,
+            "Windpower", Turbine_calculate_powercurve_doc},
         {nullptr, nullptr, nullptr, nullptr}
 };
 

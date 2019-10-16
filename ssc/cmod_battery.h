@@ -165,8 +165,10 @@ struct batt_variables
 	double batt_minimum_SOC;
 	double batt_current_charge_max;
 	double batt_current_discharge_max;
-	double batt_power_charge_max;
-	double batt_power_discharge_max;
+	double batt_power_charge_max_kwdc;
+	double batt_power_discharge_max_kwdc;
+	double batt_power_charge_max_kwac;
+	double batt_power_discharge_max_kwac;
 	double batt_minimum_modetime;
 
 	int batt_topology;
@@ -179,6 +181,7 @@ struct batt_variables
 	double inverter_efficiency;
 	double inverter_paco;
 	size_t inverter_count;
+	double batt_inverter_efficiency_cutoff;
 
 	double batt_calendar_q0;
 	double batt_calendar_a;
@@ -192,14 +195,16 @@ struct batt_variables
 	std::vector<double> ppa_price_series_dollar_per_kwh;
 
 	/*! Energy rates */
-	bool ec_rate_defined;
+	bool ec_rate_defined, ec_use_realtime;
 	util::matrix_t<size_t> ec_weekday_schedule;
 	util::matrix_t<size_t> ec_weekend_schedule;
 	util::matrix_t<double> ec_tou_matrix;
+	std::vector<double> ec_realtime_buy;
 
 	/* Battery replacement options */
 	int batt_replacement_option;
 	std::vector<int> batt_replacement_schedule;
+	std::vector<double> batt_replacement_schedule_percent;
 
 	/* Battery cycle costs */
 	int batt_cycle_cost_choice;
@@ -262,7 +267,7 @@ struct battstor
 	bool input_custom_dispatch = false;
 
 	// for user schedule
-	void force_replacement();
+	void force_replacement(double replacement_percent);
 	void check_replacement_schedule();
 	void calculate_monthly_and_annual_outputs( compute_module &cm );
 
@@ -368,7 +373,11 @@ struct battstor
 		*outAnnualEnergySystemLoss,
 		*outAnnualEnergyLoss,
 		*outMarketPrice,
-		*outCostToCycle;
+		*outCostToCycle,
+		*outBenefitCharge,
+		*outBenefitGridcharge,
+		*outBenefitClipcharge,
+		*outBenefitDischarge;
 
 	double outAverageCycleEfficiency;
 	double outAverageRoundtripEfficiency;

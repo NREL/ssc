@@ -1712,7 +1712,7 @@ int C_csp_solver::C_MEQ_cr_on__pc_target__tes_empty__T_htf_cold::operator()(doub
 	}
 
 	// Solve PC model with calculated inlet and timestep values
-	solve_pc(time_max, c_eq.m_T_htf_pc_hot, c_eq.m_m_dot_pc);
+	solve_pc(time_solved, c_eq.m_T_htf_pc_hot, c_eq.m_m_dot_pc);
 
 	*diff_T_htf_cold = (mpc_csp_solver->mc_pc_out_solver.m_T_htf_cold - T_htf_cold) / T_htf_cold;
 	m_step = time_solved;	//[s]

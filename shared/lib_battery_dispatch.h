@@ -62,8 +62,10 @@ public:
 		int current_choice,
 		double Ic_max,
 		double Id_max,
-		double Pc_max,
-		double Pd_max,
+		double Pc_max_kwdc,
+		double Pd_max_kwdc,
+		double Pc_max_kwac,
+		double Pd_max_kwac,
 		double t_min,
 		int dispatch_mode,
 		int meter_position);
@@ -189,8 +191,10 @@ public:
 		int current_choice,
 		double Ic_max,
 		double Id_max,
-		double Pc_max,
-		double Pd_max,
+		double Pc_max_kwdc,
+		double Pd_max_kwdc,
+		double Pc_max_kwac,
+		double Pd_max_kwac,
 		double t_min,
 		int mode,
 		int meterPosition,
@@ -305,8 +309,10 @@ public:
 		int current_choice,
 		double Ic_max,
 		double Id_max,
-		double Pc_max,
-		double Pd_max,
+		double Pc_max_kwdc,
+		double Pd_max_kwdc,
+		double Pc_max_kwac,
+		double Pd_max_kwac,
 		double t_min,
 		int dispatch_mode,
 		int pv_dispatch,
@@ -420,8 +426,10 @@ public:
 		int current_choice,
 		double Ic_max,
 		double Id_max,
-		double Pc_max,
-		double Pd_max,
+		double Pc_max_kwdc,
+		double Pd_max_kwdc,
+		double Pc_max_kwac,
+		double Pd_max_kwac,
 		double t_min,
 		int dispatch_mode,
 		int pv_dispatch,
@@ -519,8 +527,10 @@ public:
 		int current_choice,
 		double Ic_max,
 		double Id_max,
-		double Pc_max,
-		double Pd_max,
+		double Pc_max_kwdc,
+		double Pd_max_kwdc,
+		double Pc_max_kwac,
+		double Pd_max_kwac,
 		double t_min,
 		int dispatch_mode,
 		int pv_dispatch,
@@ -558,8 +568,11 @@ public:
 	/// Compute the updated power to send to the battery over the next N hours
 	void update_dispatch(size_t hour_of_year, size_t step, size_t lifetimeIndex);
 
-	/// Update cliploss data
+	/// Update cliploss data [kW]
 	void update_cliploss_data(double_vec P_cliploss);
+
+	/// Pass in the PV power forecast [kW]
+	virtual void update_pv_data(std::vector<double> P_pv_dc);
 
 	/*! Calculate the cost to cycle */
 	void costToCycle();
@@ -567,12 +580,19 @@ public:
 	/*! Return the calculated cost to cycle ($/cycle)*/
 	double cost_to_cycle() { return m_cycleCost; }
 
+	/// Return benefit calculations
+	double benefit_charge(){ return revenueToPVCharge; }
+	double benefit_gridcharge() { return revenueToGridCharge; }
+	double benefit_clipcharge() { return revenueToClipCharge; }
+	double benefit_discharge() { return revenueToDischarge; }
+
+
 protected:
 	
 	void init_with_pointer(const dispatch_automatic_front_of_meter_t* tmp);
 	void setup_cost_forecast_vector();
 
-	/*! Full clipping loss due to AC power limits vector */
+	/*! Full clipping loss due to AC power limits vector [kW] */
 	double_vec _P_cliploss_dc;
 
 	/*! Inverter AC power limit */
@@ -596,8 +616,11 @@ protected:
 	double m_etaGridCharge;
 	double m_etaDischarge;
 
-private:
-    friend class dispatch_resiliency;
+	/* Computed benefits to charge, discharge, gridcharge, clipcharge */
+	double revenueToPVCharge;
+	double revenueToGridCharge;
+	double revenueToClipCharge;
+	double revenueToDischarge;
 };
 
 /*! Dispatches the battery in the case where the grid is unavailable */

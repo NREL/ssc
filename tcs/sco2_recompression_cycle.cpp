@@ -3223,12 +3223,101 @@ double C_RecompCycle::opt_eta_fixed_P_high(double P_high_opt /*kPa*/)
 	return -max(local_eta_rc, local_eta_s);
 
 }
+void C_RecompCycle::check_od_solution(double & diff_m_dot, double & diff_E_cycle, 
+    double & diff_Q_LTR, double & diff_Q_HTR)
+{
+    CO2_state c_co2_props;
+
+    double m_dot_mc = m_mc_ms.get_od_solved()->m_m_dot;  //m_m_dot_mc; // ms_od_solved.m_m_dot_mc;  //[kg/s]
+    double m_dot_rc = m_rc_ms.get_od_solved()->m_m_dot; //m_m_dot_rc; // ms_od_solved.m_m_dot_rc;  //[kg/s]
+    if (!std::isfinite(m_dot_rc))
+    {
+        m_dot_rc = 0.0;
+    }
+    double m_dot_t = m_t.get_od_solved()->m_m_dot;           //[kg/s]
+
+    diff_m_dot = ((m_dot_mc + m_dot_rc) - m_dot_t) / m_dot_t;
+
+    double P_co2_phx_in = m_pres_od[HTR_HP_OUT];    //[kPa]
+    double T_co2_phx_in = m_temp_od[HTR_HP_OUT];    //[K]
+    int co2_err = CO2_TP(T_co2_phx_in, P_co2_phx_in, &c_co2_props);
+    double h_co2_phx_in = c_co2_props.enth;         //[kJ/kg]
+
+    double P_t_in = m_pres_od[TURB_IN];             //[kPa]
+    double T_t_in = m_temp_od[TURB_IN];             //[K]
+    co2_err = CO2_TP(T_t_in, P_t_in, &c_co2_props);
+    double h_co2_t_in = c_co2_props.enth;           //[kJ/kg]
+
+    double Q_dot_phx = m_dot_t*(h_co2_t_in - h_co2_phx_in); //[kWt]
+
+    double P_t_out = m_pres_od[TURB_OUT];           //[kPa]
+    double T_t_out = m_temp_od[TURB_OUT];           //[K]
+    co2_err = CO2_TP(T_t_out, P_t_out, &c_co2_props);
+    double h_t_out = c_co2_props.enth;      //[kJ/kg]
+
+    double W_dot_t = m_dot_t*(h_co2_t_in - h_t_out);    //[kWe]
+
+    double P_cool_in = m_pres_od[LTR_LP_OUT];   //[kPa]
+    double T_cool_in = m_temp_od[LTR_LP_OUT];   //[K]
+    co2_err = CO2_TP(T_cool_in, P_cool_in, &c_co2_props);
+    double h_cool_in = c_co2_props.enth;        //[kJ/kg]
+
+    double P_mc_in = m_pres_od[MC_IN];          //[kPa]
+    double T_mc_in = m_temp_od[MC_IN];          //[K]
+    co2_err = CO2_TP(T_mc_in, P_mc_in, &c_co2_props);
+    double h_mc_in = c_co2_props.enth;          //[kJ/kg]
+
+    double Q_dot_cool = m_dot_mc*(h_cool_in - h_mc_in); //[kWt]
+
+    double P_rc_out = m_pres_od[RC_OUT];        //[kPa]
+    double T_rc_out = m_temp_od[RC_OUT];        //[K]
+    co2_err = CO2_TP(T_rc_out, P_rc_out, &c_co2_props);
+    double h_rc_out = c_co2_props.enth;         //[kJ/kg]
+
+    double W_dot_rc = m_dot_rc*(h_rc_out - h_cool_in);  //[kWe]
+
+    double P_mc_out = m_pres_od[MC_OUT];        //[kPa]
+    double T_mc_out = m_temp_od[MC_OUT];        //[K]
+    co2_err = CO2_TP(T_mc_out, P_mc_out, &c_co2_props);
+    double h_mc_out = c_co2_props.enth;         //[kJ/kg]
+
+    double W_dot_mc = m_dot_mc*(h_mc_out - h_mc_in);    //[kWe]
+
+    diff_E_cycle = (Q_dot_phx - Q_dot_cool - (W_dot_t - W_dot_mc - W_dot_rc)) / Q_dot_phx;
+
+    double Q_dot_cool_from_eta = Q_dot_phx * (1.0 - ms_od_solved.m_eta_thermal);
+    double diff_E_reject = (Q_dot_cool_from_eta - Q_dot_cool) / Q_dot_cool;
+
+    double P_LTR_HP_out = m_pres_od[LTR_HP_OUT];    //[kPa]
+    double T_LTR_HP_out = m_temp_od[LTR_HP_OUT];    //[K]
+    co2_err = CO2_TP(T_LTR_HP_out, P_LTR_HP_out, &c_co2_props);
+    double h_LTR_HP_out = c_co2_props.enth;         //[kJ/kg]
+
+    double Q_dot_LTR_HP = m_dot_mc * (h_LTR_HP_out - h_mc_out); //[kWt]
+
+    double P_HTR_LP_out = m_pres_od[HTR_LP_OUT];    //[kPa]
+    double T_HTR_LP_out = m_temp_od[HTR_LP_OUT];    //[K]
+    co2_err = CO2_TP(T_HTR_LP_out, P_HTR_LP_out, &c_co2_props);
+    double h_HTR_LP_out = c_co2_props.enth;         //[kJ/kg]
+
+    double Q_dot_LTR_LP = m_dot_t*(h_HTR_LP_out - h_cool_in);   //[kWt]
+    diff_Q_LTR = (Q_dot_LTR_HP - Q_dot_LTR_LP) / Q_dot_LTR_LP;
+    double Q_dot_HTR_LP = m_dot_t*(h_t_out - h_HTR_LP_out);     //[kWt]
+
+    double P_HTR_HP_in = m_pres_od[MIXER_OUT];      //[kPa]
+    double T_HTR_HP_in = m_temp_od[MIXER_OUT];      //[K]
+    co2_err = CO2_TP(T_HTR_HP_in, P_HTR_HP_in, &c_co2_props);
+    double h_HTR_HP_in = c_co2_props.enth;          //[kJ/kg]
+
+    double Q_dot_HTR_HP = m_dot_t*(h_co2_phx_in - h_HTR_HP_in); //[kWt]
+    diff_Q_HTR = (Q_dot_HTR_HP - Q_dot_HTR_LP) / Q_dot_HTR_LP;
+}
 
 void C_RecompCycle::finalize_design(int & error_code)
 {
 	int cpp_offset = 1;
 
-	int mc_design_err = m_mc_ms.design_given_outlet_state(m_temp_last[MC_IN],
+	int mc_design_err = m_mc_ms.design_given_outlet_state(ms_des_par.m_mc_comp_model_code, m_temp_last[MC_IN],
 									m_pres_last[MC_IN],
 									m_m_dot_mc,
 									m_temp_last[MC_OUT],
@@ -3266,7 +3355,7 @@ void C_RecompCycle::finalize_design(int & error_code)
 
 	if( ms_des_par.m_recomp_frac > 0.01 )
 	{
-		int rc_des_err = m_rc_ms.design_given_outlet_state(m_temp_last[LTR_LP_OUT],
+		int rc_des_err = m_rc_ms.design_given_outlet_state(ms_des_par.m_rc_comp_model_code, m_temp_last[LTR_LP_OUT],
 										m_pres_last[LTR_LP_OUT],
 										m_m_dot_rc,
 										m_temp_last[RC_OUT],
@@ -3893,7 +3982,8 @@ int C_RecompCycle::C_mono_eq_HTR_od::operator()(double T_HTR_LP_out_guess /*K*/,
 	// Go through mixing valve
 	if( m_m_dot_rc >= 1.E-12 )
 	{
-		double f_recomp = mpc_rc_cycle->m_m_dot_rc / mpc_rc_cycle->m_m_dot_t;	//[-]
+		//double f_recomp = mpc_rc_cycle->m_m_dot_rc / mpc_rc_cycle->m_m_dot_t;	//[-]
+        double f_recomp = m_m_dot_rc / m_m_dot_t;	//[-]
 		// Conservation of energy
 		mpc_rc_cycle->m_enth_od[MIXER_OUT] = (1.0 - f_recomp)*mpc_rc_cycle->m_enth_od[LTR_HP_OUT] +
 												f_recomp*mpc_rc_cycle->m_enth_od[RC_OUT];

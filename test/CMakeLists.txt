@@ -73,7 +73,7 @@ endif(MSVC)
 #
 #####################################################################################################################
 
-add_executable(SSCtest
+add_executable(Test
 	${SSC_TESTS}
 	${SHARED_TESTS}
 	${TCS_TESTS}
@@ -82,14 +82,14 @@ add_executable(SSCtest
 	${SRC_TO_TEST}
 	main.cpp)
 
-set_target_properties(SSCtest
+set_target_properties(Test
     PROPERTIES
     DEBUG_POSTFIX "d"
 	PREFIX ""
 	)
 
 if (MSVC)
-	set_target_properties(SSCtest PROPERTIES
+	set_target_properties(Test PROPERTIES
         LINK_FLAGS /SUBSYSTEM:CONSOLE)
 endif()
 
@@ -104,19 +104,19 @@ unset(GTEST_LIB CACHE)
 find_library( GTEST_LIB
 	NAMES libgtest.a gtest.lib
 	PATHS ${GTDIR}/build/lib ${GTDIR}/build/lib/Release)
-target_link_libraries(SSCtest optimized ${GTEST_LIB})
+target_link_libraries(Test optimized ${GTEST_LIB})
 	
 if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR MSVC)
 	unset(GTESTD_LIB CACHE)
 	find_library( GTESTD_LIB
 		NAMES libgtestd.a gtestd.lib
 		PATHS ${GTDIR}/build/lib ${GTDIR}/build/lib/Debug)
-	target_link_libraries(SSCtest debug ${GTESTD_LIB})
+	target_link_libraries(Test debug ${GTESTD_LIB})
 endif()
-target_link_libraries(SSCtest ssc splinter)
+target_link_libraries(Test ssc splinter)
 
 if (UNIX)
-	target_link_libraries(SSCtest -ldl -lpthread)
+	target_link_libraries(Test -ldl -lpthread)
 endif()
 
 
@@ -129,15 +129,12 @@ endif()
 if(MSVC)
 	set(TEST_DIR ${CMAKE_CURRENT_BINARY_DIR}/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
 
-	set(SSC_LIB $<TARGET_FILE_DIR:ssc>/$<TARGET_FILE_BASE_NAME:ssc>.lib)
-	add_custom_command(
-	    TARGET SSCtest
-	    POST_BUILD
+	foreach( file_i ${LIBCURL_FILES})
+		add_custom_command(
+		TARGET Test
+		POST_BUILD
 		COMMAND ${CMAKE_COMMAND}
-		ARGS -E remove -f ${TEST_DIR}/$<TARGET_FILE_BASE_NAME:ssc>.lib 
-		COMMAND ${CMAKE_COMMAND}
-		ARGS -E remove -f ${TEST_DIR}/$<TARGET_FILE_BASE_NAME:ssc>.dll
-	    COMMAND ${CMAKE_COMMAND}
-	    ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${TEST_DIR}
+		ARGS -E copy $ENV{WEXDIR}/build_vs2017/libcurl_ssl_x64/bin/${file_i} ${TEST_DIR}
 	)
+	endforeach( file_i )
 endif()
