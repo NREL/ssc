@@ -2021,14 +2021,6 @@ int split_ind_tbl(util::matrix_t<double> &cmbd_ind, util::matrix_t<double> &T_ht
     double & T_htf_low, double & T_htf_des, double & T_htf_high,
     double & T_amb_low, double & T_amb_des, double & T_amb_high)
 {
-    const int col_T_htf = 0;
-    const int col_m_dot = 1;
-    const int col_T_amb = 2;
-    const int col_W_cyl = 3;
-    const int col_Q_cyl = 4;
-    const int col_W_h2o = 5;
-    const int col_m_h2o = 6;
-
     // check for minimum length
     int n_par_min = 4;
     int n_levels = 3;
