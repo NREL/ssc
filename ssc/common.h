@@ -60,6 +60,20 @@ public:
 	std::string error() { return m_error; }
 };
 
+class dispatch_price_signal
+{
+	compute_module *m_cm;
+	std::vector<float> m_factors;
+	std::string m_error;
+	std::string m_prefix;
+public:
+	dispatch_price_signal(compute_module *cm, const std::string &prefix);
+//	bool setup(int nsteps = 8760);
+//	float operator()(size_t time);
+	std::string error() { return m_error; }
+};
+
+
 class sf_adjustment_factors
 {
 	compute_module *m_cm;

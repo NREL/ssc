@@ -333,6 +333,12 @@ bool calculate_p50p90(compute_module *cm){
     cm->assign("annual_energy_p95", aep * (-1.64 * uncert + 1));
 }
 
+dispatch_price_signal::dispatch_price_signal(compute_module *cm, const std::string &prefix)
+	: m_cm(cm), m_prefix(prefix)
+{
+}
+
+
 adjustment_factors::adjustment_factors( compute_module *cm, const std::string &prefix )
 : m_cm(cm), m_prefix(prefix)
 {	
