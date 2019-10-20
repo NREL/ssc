@@ -104,14 +104,6 @@ static var_info _cm_vtab_merchantplant[] = {
                                                                                   
 /* salvage value */	                                                          
 	{ SSC_INPUT,        SSC_NUMBER,     "salvage_percentage",                     "Net pre-tax cash salvage value",	                               "%",	 "",					  "Salvage Value",             "?=10",                     "MIN=0,MAX=100",      			"" },
-/* market specific inputs - leveraged partnership flip */                     
-	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_mode",                          "PPA solution mode",                                             "0/1",   "0=solve ppa,1=specify ppa", "Solution Mode",         "?=0",                     "INTEGER,MIN=0,MAX=1",            "" },
-//	{ SSC_INPUT, SSC_NUMBER, "ppa_soln_tolerance", "PPA solution tolerance", "", "", "Solution Mode", "?=1e-3", "", "" },
-
-	{ SSC_INPUT, SSC_NUMBER, "ppa_soln_tolerance", "PPA solution tolerance", "", "", "Solution Mode", "?=1e-5", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "ppa_soln_min", "PPA solution minimum ppa", "cents/kWh", "", "Solution Mode", "?=0", "", "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_max",                           "PPA solution maximum ppa",                                      "cents/kWh",   "", "Solution Mode",         "?=100",                     "",            "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_max_iterations",                "PPA solution maximum number of iterations",                     "",   "", "Solution Mode",         "?=100",                     "INTEGER,MIN=1",            "" },
                                                                                   
 /* construction period */                                                     
 	{ SSC_INPUT,       SSC_NUMBER,      "construction_financing_cost",	          "Construction financing total",	                                "$",	 "",					  "Construction Financing",			 "*",                         "",                             "" },
@@ -2061,13 +2053,8 @@ public:
 		double pbi_oth_for_ds_frac = as_boolean("pbi_oth_for_ds") ? 1.0 : 0.0;
 
 		
-		//		if (ppa_mode == 0) // iterate to meet flip target by varying ppa price
-		double ppa_soln_tolerance = as_double("ppa_soln_tolerance");
-		double flip_target_percent = as_double("flip_target_percent") ;
-		int flip_target_year = as_integer("flip_target_year");
-		// check for accessing off of the end of cashflow matrix
-		if (flip_target_year > nyears) flip_target_year = nyears;
-		int flip_year=-1;
+		int flip_target_year = nyears;
+		int flip_year=nyears;
 		double purchase_of_property;
 
 
@@ -2772,18 +2759,6 @@ public:
 			cf.at(CF_project_return_aftertax_max_irr,i) = max(cf.at(CF_project_return_aftertax_max_irr,i-1),cf.at(CF_project_return_aftertax_irr,i));
 			cf.at(CF_project_return_aftertax_npv,i) = npv(CF_project_return_aftertax,i,nom_discount_rate) +  cf.at(CF_project_return_aftertax,0) ;
 
-			if (flip_year <=0) 
-			{
-				double residual = fabs(cf.at(CF_project_return_aftertax_irr, i) - flip_target_percent) / 100.0; // solver checks fractions and not percentages
-				if ( ( cf.at(CF_project_return_aftertax_max_irr,i-1) < flip_target_percent ) &&  (   residual  < ppa_soln_tolerance ) 	) 
-				{
-					flip_year = i;
-					cf.at(CF_project_return_aftertax_max_irr,i)=flip_target_percent; //within tolerance so pre-flip and post-flip percentages applied correctly
-				}
-				else if ((cf.at(CF_project_return_aftertax_max_irr, i - 1) < flip_target_percent) && (cf.at(CF_project_return_aftertax_max_irr, i) >= flip_target_percent)) flip_year = i;
-			}
-
-
 		}
 		cf.at(CF_project_return_aftertax_npv,0) = cf.at(CF_project_return_aftertax,0) ;
 
@@ -2793,6 +2768,7 @@ public:
 //	log(util::format("after loop  - size of debt =%lg .", size_of_debt), SSC_WARNING);
 
 
+	double	flip_target_percent = cf.at(CF_project_return_aftertax_irr, flip_target_year);
 
 	assign("flip_target_year", var_data((ssc_number_t) flip_target_year ));
 	assign("flip_target_irr", var_data((ssc_number_t)  flip_target_percent ));
