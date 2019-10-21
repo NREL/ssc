@@ -192,7 +192,7 @@ struct batt_variables
 	double batt_cost_per_kwh;
 
 	/*! PPA price */
-	std::vector<double> ppa_price_series_dollar_per_kwh;
+	std::vector<double> forecast_price_series_dollar_per_kwh;
 
 	/*! Energy rates */
 	bool ec_rate_defined, ec_use_realtime;

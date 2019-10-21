@@ -60,16 +60,16 @@ public:
 	std::string error() { return m_error; }
 };
 
-class dispatch_price_signal
+class forecast_price_signal
 {
 	compute_module *m_cm;
-	std::vector<float> m_factors;
+	std::vector<ssc_number_t> m_forecast_price;
 	std::string m_error;
-	std::string m_prefix;
 public:
-	dispatch_price_signal(compute_module *cm, const std::string &prefix);
-//	bool setup(int nsteps = 8760);
-//	float operator()(size_t time);
+	forecast_price_signal(compute_module *cm);
+	bool setup(size_t nsteps = 8760);
+	std::vector<ssc_number_t> forecast_price() { return m_forecast_price; }
+	ssc_number_t operator()(size_t time);
 	std::string error() { return m_error; }
 };
 
