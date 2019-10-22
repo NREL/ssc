@@ -44,6 +44,7 @@ extern var_info vtab_sf_adjustment_factors[];
 extern var_info vtab_technology_outputs[];
 extern var_info vtab_grid_curtailment[];
 extern var_info vtab_p50p90[];
+extern var_info vtab_forecast_price_signal[];
 
 bool calculate_p50p90(compute_module *cm);
 

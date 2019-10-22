@@ -368,19 +368,138 @@ forecast_price_signal::forecast_price_signal(compute_module *cm)
 
 bool forecast_price_signal::setup(size_t nsteps)
 {
-	size_t count_ppa_price_input;
-	ssc_number_t* ppa_price = m_cm->as_array("ppa_price_input", &count_ppa_price_input);
 	int forecast_price_signal_model = m_cm->as_integer("forecast_price_signal_model");
-	int ppa_multiplier_mode = m_cm->as_integer("ppa_multiplier_model");
 	size_t step_per_hour = 1;
 	if (nsteps > 8760) step_per_hour =  nsteps / 8760;
 
+
 	if (forecast_price_signal_model == 1)
 	{
+		// merchant plant additional revenue streams
+		// enabled/disabled booleans
+		bool en_mp_energy_market = (m_cm->as_integer("mp_enable_energy_market_revenue") == 1);
+		bool en_mp_ancserv1 = (m_cm->as_integer("mp_enable_ancserv1") == 1);
+		bool en_mp_ancserv2 = (m_cm->as_integer("mp_enable_ancserv2") == 1);
+		bool en_mp_ancserv3 = (m_cm->as_integer("mp_enable_ancserv3") == 1);
+		bool en_mp_ancserv4 = (m_cm->as_integer("mp_enable_ancserv4") == 1);
+		// cleared capacity and price columns
+		// need to check sum of all cleared capacities.
+		size_t nrows, ncols;
+		util::matrix_t<double> mp_energy_market_revenue_mat(1, 2, 0.0);
+		if (en_mp_energy_market)
+		{
+			ssc_number_t *mp_energy_market_revenue_in = m_cm->as_matrix("mp_energy_market_revenue", &nrows, &ncols);
+			if (ncols != 2)
+			{
+				m_error = util::format("The energy market revenue table must have 2 columns. Instead it has %d columns.", ncols);
+				return false;
+			}
+			mp_energy_market_revenue_mat.resize(nrows, ncols);
+			mp_energy_market_revenue_mat.assign(mp_energy_market_revenue_in, nrows, ncols);
+		}
 
+		util::matrix_t<double> mp_ancserv_1_revenue_mat(1, 2, 0.0);
+		if (en_mp_ancserv1)
+		{
+			ssc_number_t *mp_ancserv1_revenue_in = m_cm->as_matrix("mp_ancserv1_revenue", &nrows, &ncols);
+			if (ncols != 2)
+			{
+				m_error = util::format("The ancillary services revenue 1 table must have 2 columns. Instead it has %d columns.", ncols);
+				return false;
+			}
+			mp_ancserv_1_revenue_mat.resize(nrows, ncols);
+			mp_ancserv_1_revenue_mat.assign(mp_ancserv1_revenue_in, nrows, ncols);
+		}
+
+		util::matrix_t<double> mp_ancserv_2_revenue_mat(1, 2, 0.0);
+		if (en_mp_ancserv2)
+		{
+			ssc_number_t *mp_ancserv2_revenue_in = m_cm->as_matrix("mp_ancserv2_revenue", &nrows, &ncols);
+			if (ncols != 2)
+			{
+				m_error = util::format("The ancillary services revenue 2 table must have 2 columns. Instead it has %d columns.", ncols);
+				return false;
+			}
+			mp_ancserv_2_revenue_mat.resize(nrows, ncols);
+			mp_ancserv_2_revenue_mat.assign(mp_ancserv2_revenue_in, nrows, ncols);
+		}
+
+		util::matrix_t<double> mp_ancserv_3_revenue_mat(1, 2, 0.0);
+		if (en_mp_ancserv3)
+		{
+			ssc_number_t *mp_ancserv3_revenue_in = m_cm->as_matrix("mp_ancserv3_revenue", &nrows, &ncols);
+			if (ncols != 2)
+			{
+				m_error = util::format("The ancillary services revenue 3 table must have 2 columns. Instead it has %d columns.", ncols);
+				return false;
+			}
+			mp_ancserv_3_revenue_mat.resize(nrows, ncols);
+			mp_ancserv_3_revenue_mat.assign(mp_ancserv3_revenue_in, nrows, ncols);
+		}
+
+		util::matrix_t<double> mp_ancserv_4_revenue_mat(1, 2, 0.0);
+		if (en_mp_ancserv4)
+		{
+			ssc_number_t *mp_ancserv4_revenue_in = m_cm->as_matrix("mp_ancserv4_revenue", &nrows, &ncols);
+			if (ncols != 2)
+			{
+				m_error = util::format("The ancillary services revenue 4 table must have 2 columns. Instead it has %d columns.", ncols);
+				return false;
+			}
+			mp_ancserv_4_revenue_mat.resize(nrows, ncols);
+			mp_ancserv_4_revenue_mat.assign(mp_ancserv4_revenue_in, nrows, ncols);
+		}
+
+		// TODO need to check sum of all cleared capacities at each timestep
+		int nyears = m_cm->as_integer("analysis_period");
+		// calculate revenue for first year only and consolidate to m_forecast_price
+		double as_revenue = 0;
+		size_t n_marketrevenue_per_year = mp_energy_market_revenue_mat.nrows() / (size_t)nyears;
+		as_revenue = 0;
+		// compare n_marketrevenue_per_year steps with requested nsteps and either set all values in m_forecast_price accordingly.
+		for (size_t j = 0; j < n_marketrevenue_per_year; j++)
+		{
+			as_revenue += mp_energy_market_revenue_mat.at(j, 0) * mp_energy_market_revenue_mat.at(j, 1);
+		}
+
+		size_t n_ancserv_1_revenue_per_year = mp_ancserv_1_revenue_mat.nrows() / (size_t)nyears;
+		as_revenue = 0;
+		// compare n_marketrevenue_per_year steps with requested nsteps and either set all values in m_forecast_price accordingly.
+		for (size_t j = 0; j < n_ancserv_1_revenue_per_year; j++)
+		{
+			as_revenue += mp_ancserv_1_revenue_mat.at(j, 0) * mp_ancserv_1_revenue_mat.at(j, 1);
+		}
+
+		size_t n_ancserv_2_revenue_per_year = mp_ancserv_2_revenue_mat.nrows() / (size_t)nyears;
+		as_revenue = 0;
+		// compare n_marketrevenue_per_year steps with requested nsteps and either set all values in m_forecast_price accordingly.
+		for (size_t j = 0; j < n_ancserv_2_revenue_per_year; j++)
+		{
+			as_revenue += mp_ancserv_2_revenue_mat.at(j, 0) * mp_ancserv_2_revenue_mat.at(j, 1);
+		}
+
+		size_t n_ancserv_3_revenue_per_year = mp_ancserv_3_revenue_mat.nrows() / (size_t)nyears;
+		as_revenue = 0;
+		// compare n_marketrevenue_per_year steps with requested nsteps and either set all values in m_forecast_price accordingly.
+		for (size_t j = 0; j < n_ancserv_3_revenue_per_year; j++)
+		{
+			as_revenue += mp_ancserv_3_revenue_mat.at(j, 0) * mp_ancserv_3_revenue_mat.at(j, 1);
+		}
+
+		size_t n_ancserv_4_revenue_per_year = mp_ancserv_4_revenue_mat.nrows() / (size_t)nyears;
+		as_revenue = 0;
+		// compare n_marketrevenue_per_year steps with requested nsteps and either set all values in m_forecast_price accordingly.
+		for (size_t j = 0; j < n_ancserv_4_revenue_per_year; j++)
+		{
+			as_revenue += mp_ancserv_4_revenue_mat.at(j, 0) * mp_ancserv_4_revenue_mat.at(j, 1);
+		}
+		// setup m_forecast_price to nsteps for both ppa and merchant plant options. Price!
 	}
 	else
 	{
+		int ppa_multiplier_mode = m_cm->as_integer("ppa_multiplier_model");
+		size_t count_ppa_price_input;
+		ssc_number_t* ppa_price = m_cm->as_array("ppa_price_input", &count_ppa_price_input);
 		if (ppa_multiplier_mode == 0)
 		{
 			m_forecast_price = flatten_diurnal(
