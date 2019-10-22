@@ -254,7 +254,7 @@ static var_info _cm_vtab_singleowner[] = {
 	{ SSC_INPUT, SSC_NUMBER, "cost_other_financing", "Other financing cost", "$", "", "Other Capital Costs", "?=150000", "MIN=0", "" },
 /* Equity Structure */                                                        
 	{ SSC_INPUT,        SSC_NUMBER,     "flip_target_percent",			          "After-tax IRR target",		"%",	 "",					  "IRR Targets",             "?=11",					  "MIN=0,MAX=100",     			        "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "flip_target_year",		                  "IRR target year",				"",		 "",					  "IRR Targets",             "?=11",					  "MIN=1",     			        "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "flip_target_year",		                  "IRR target year",				"Year",		 "",					  "IRR Targets",             "?=11",					  "MIN=1",     			        "" },
 /* depreciation allocation */                                                 
 	{ SSC_INPUT,        SSC_NUMBER,     "depr_alloc_macrs_5_percent",		      "5-yr MACRS depreciation federal and state allocation",	"%", "",	  "Depreciation",             "?=89",					  "MIN=0,MAX=100",     			        "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "depr_alloc_macrs_15_percent",		      "15-yr MACRS depreciation federal and state allocation",	"%", "",  "Depreciation",             "?=1.5",					  "MIN=0,MAX=100",     			        "" },
