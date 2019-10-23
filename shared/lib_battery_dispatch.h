@@ -258,8 +258,6 @@ protected:
 	std::map<size_t, double> _percent_discharge_array;
 	std::map<size_t, double> _percent_charge_array;
 
-private:
-    friend class dispatch_resiliency;
 };
 
 /*! Class containing calculated grid power at a single time step */
@@ -503,8 +501,6 @@ protected:
 	/* Vector of length (24 hours * steps_per_hour) containing sorted grid calculation [P_grid, hour, step] */
 	grid_vec sorted_grid;
 
-private:
-    friend class dispatch_resiliency;
 };
 
 /*! Automated Front of Meter DC-connected battery dispatch */
@@ -622,29 +618,6 @@ protected:
 	double revenueToClipCharge;
 	double revenueToDischarge;
 };
-
-/*! Dispatches the battery in the case where the grid is unavailable */
-class dispatch_resiliency : public dispatch_t {
-public:
-
-    explicit dispatch_resiliency(dispatch_automatic_behind_the_meter_t* orig);
-
-    explicit dispatch_resiliency(dispatch_manual_t* orig);
-
-protected:
-    double_vec battery_use;
-
-    double_vec load;
-
-    double_vec pv_gen;
-
-    void init_powerflow();
-
-    void set_pv_gen(double_vec pv);
-
-    void dispatch(size_t year, size_t hour_of_year, size_t step) override;
-
-    };
 
 /*! Battery metrics class */
 class battery_metrics_t

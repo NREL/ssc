@@ -229,7 +229,18 @@ public:
 	virtual ~voltage_t(){};
 
 	virtual void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt)=0;
-	virtual double battery_voltage(); // voltage of one battery
+
+	virtual double calculate_voltage(double I, double q, double qmax, double T) = 0;
+
+	virtual double calculate_current(double V, double q, double qmax, double T) = 0;
+
+	virtual double calculate_max_charge_kw(double q, double qmax, double dt_hour) =0;
+
+	virtual double calculate_max_discharge_kw(double q, double qmax, double dt_hour) =0;
+
+    virtual double get_current_for_power(double P, double q, double qmax) = 0;
+
+    virtual double battery_voltage(); // voltage of one battery
 
 	double battery_voltage_nominal(); // nominal voltage of battery
 	double cell_voltage(); // voltage of one cell
@@ -281,6 +292,17 @@ public:
 
 	void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt);
 
+    double calculate_voltage(double I, double q, double qmax, double T) override;
+
+    double calculate_current(double V, double q, double qmax, double T) override;
+
+    double calculate_max_charge_kw(double q, double qmax, double dt_hour) override;
+
+    double calculate_max_discharge_kw(double q, double qmax, double dt_hour) override;
+
+    // return current for targeted power, or 0 if unable
+    double get_current_for_power(double P, double q, double qmax) override;
+
 protected:
 
 	bool exactVoltageFound(double DOD, double &V);
@@ -305,6 +327,17 @@ public:
 	void parameter_compute();
 	void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt);
 
+    double calculate_voltage(double I, double q, double qmax, double T) override;
+
+    double calculate_current(double V, double q, double qmax, double T) override;
+
+    double calculate_max_charge_kw(double q, double qmax, double dt_hour) override;
+
+    double calculate_max_discharge_kw(double q, double qmax, double dt_hour) override;
+
+    // return current for targeted power, or 0 if unable
+	double get_current_for_power(double P, double q, double qmax) override;
+
 protected:
 	double voltage_model_tremblay_hybrid(double capacity, double current, double q0);
 
@@ -320,6 +353,10 @@ private:
 	double _B0;
 	double _E0;
 	double _K;
+
+	// solver quantities
+	double solver_Q;
+	double solver_q0;
 
 };
 
@@ -337,9 +374,19 @@ public:
 
 	void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt);
 
+    double calculate_voltage(double I, double q, double qmax, double T_kelvi) override;
+
+    double calculate_current(double V, double q, double qmax, double T) override;
+
+    double calculate_max_charge_kw(double q, double qmax, double dt_hour) override;
+
+    double calculate_max_discharge_kw(double q, double qmax, double dt_hour) override;
+
+    double get_current_for_power(double P, double q, double qmax) override;
+
 protected:
 	
-	// cell voltage model
+	// cell voltage model is on a per-cell basis
 	double voltage_model(double q0, double qmax, double I_string, double T);
 
 private:
@@ -715,7 +762,13 @@ public:
 	// Run all for single time step
 	void run(size_t lifetimeIndex, double I);
 
-	// Run a component level model
+	double calculate_voltage_for_current(double I);
+	double calculate_current_for_voltage(double V);
+	double calculate_current_for_power(double P);
+    double calculate_max_charge_kw();
+    double calculate_max_discharge_kw();
+
+    // Run a component level model
 	void runCapacityModel(double &I);
 	void runVoltageModel();
 	void runThermalModel(double I, size_t lifetimeIndex);

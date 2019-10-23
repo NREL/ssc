@@ -18,6 +18,18 @@ SharedInverter::SharedInverter(int inverterType, size_t numberOfInverters,
 		m_nameplateAC_kW = m_numInverters * m_partloadInverter->Paco * util::watt_to_kilowatt;
 }
 
+SharedInverter::SharedInverter(const SharedInverter& orig){
+    m_inverterType = orig.m_inverterType;
+    m_numInverters = orig.m_numInverters;
+    m_nameplateAC_kW = orig.m_nameplateAC_kW;
+    m_tempEnabled = orig.m_tempEnabled;
+    m_thermalDerateCurves = orig.m_thermalDerateCurves;
+    *m_sandiaInverter = sandia_inverter_t(*orig.m_sandiaInverter);
+    *m_partloadInverter = partload_inverter_t(*orig.m_partloadInverter);
+    *m_ondInverter = ond_inverter(*orig.m_ondInverter);
+    efficiencyAC = orig.efficiencyAC;
+}
+
 bool sortByVoltage(std::vector<double> i, std::vector<double> j)
 {
 	return (i[0] < j[0]);

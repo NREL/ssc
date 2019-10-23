@@ -21,6 +21,8 @@ public:
 	SharedInverter(int inverterType, size_t numberOfInverters,
 		sandia_inverter_t * sandiaInverter, partload_inverter_t * partloadInverter, ond_inverter * ondInverter);
 
+	SharedInverter(const SharedInverter& orig);
+
 	/// Setup efficiency vs ambient T curves for temp derating, returns which curve has error if fails, 0 success
 	int setTempDerateCurves(std::vector<std::vector<double>> tempDerateCurves);
 

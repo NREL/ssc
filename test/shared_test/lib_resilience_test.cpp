@@ -17,7 +17,7 @@ TEST_F(ResilienceTest, PVWattsSetUp)
 
 TEST_F(ResilienceTest, PVWattsResilience)
 {
-    resilience resilience(batt);
+    resiliency_runner resilience(batt);
     const double voltage = 500;
     std::vector<double> batt_power, soc;
     std::vector<int> outage_days_survived = {17, 18, 20};

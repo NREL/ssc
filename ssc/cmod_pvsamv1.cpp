@@ -22,6 +22,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "cmod_pvsamv1.h"
 #include "lib_pv_io_manager.h"
+#include "lib_resilience.h"
 
 // comment following define if do not want shading database validation outputs
 //#define SHADE_DB_OUTPUTS
@@ -996,6 +997,8 @@ void cm_pvsamv1::exec( ) throw (general_error)
 	battstor batt(*m_vartab, en_batt, nrec, ts_hour);
 	batt.setSharedInverter(sharedInverter);
 	int batt_topology = (en_batt == true ? batt.batt_vars->batt_topology : 0);
+
+    // clipping losses for battery dispatch
 	std::vector<ssc_number_t> p_invcliploss_full;
 	p_invcliploss_full.reserve(nlifetime);
 
@@ -1018,6 +1021,9 @@ void cm_pvsamv1::exec( ) throw (general_error)
 		p_pv_dc_forecast = as_vector_ssc_number_t("batt_pv_dc_forecast");
 	}
 
+    // resilience metrics for battery
+    std::unique_ptr<resiliency_runner> resilience = nullptr;
+
 	// electric load - lifetime load data?
 	double cur_load = 0.0;
 	size_t nload = 0;
@@ -1028,6 +1034,13 @@ void cm_pvsamv1::exec( ) throw (general_error)
 		nload = p_load_in.size();
 		if ( nload != nrec && nload != 8760 )
 			throw exec_error("pvsamv1", "electric load profile must have same number of values as weather file, or 8760");
+
+        if (en_batt)
+            resilience = std::unique_ptr<resiliency_runner>(new resiliency_runner(&batt, p_load_in));
+        auto logs = resilience->get_logs();
+        if (!logs.empty()){
+                log(logs[0], SSC_WARNING);
+        }
 	}
 
 	// for reporting status updates
@@ -1978,7 +1991,9 @@ void cm_pvsamv1::exec( ) throw (general_error)
 					sharedInverter->calculateACPower(dcPower_kW, dcVoltagePerMppt[0], wf.tdry); //DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
 
 					// Run PV plus battery through sharedInverter, returns AC power
+                    resilience->run_surviving_batteries(idx, cur_load, sharedInverter->powerAC_kW, dcPower_kW, dcVoltagePerMppt[0], sharedInverter->powerClipLoss_kW, wf.tdry);
 					batt.advance(m_vartab, dcPower_kW, dcVoltagePerMppt[0], cur_load, sharedInverter->powerClipLoss_kW);
+                    resilience->add_battery_at_outage_index(*batt.dispatch_model, idx);
 					acpwr_gross = batt.outGenPower[idx];
 				}
 				else if (PVSystem->Inverter->inverterType == INVERTER_PVYIELD) //PVyield inverter model not currently enabled for multiple MPPT
@@ -2099,16 +2114,18 @@ void cm_pvsamv1::exec( ) throw (general_error)
 
 				if (en_batt && batt_topology == ChargeController::AC_CONNECTED)
 				{
+				    resilience->run_surviving_batteries(idx, p_load_full[idx], PVSystem->p_systemACPower[idx]);
 					batt.initialize_time(iyear, hour, jj);
 					batt.check_replacement_schedule();
 					batt.advance(m_vartab, PVSystem->p_systemACPower[idx], 0, p_load_full[idx]);
-					PVSystem->p_systemACPower[idx] = batt.outGenPower[idx];
+                    resilience->add_battery_at_outage_index(*batt.dispatch_model, idx);
+                    PVSystem->p_systemACPower[idx] = batt.outGenPower[idx];
 				}
 
 				// accumulate system generation before curtailment and availability
 				if (iyear == 0)
 					annual_ac_pre_avail += PVSystem->p_systemACPower[idx] * ts_hour;
-		
+
 
 				//apply availability and curtailment
 				PVSystem->p_systemACPower[idx] *= haf(hour);
