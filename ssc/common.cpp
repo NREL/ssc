@@ -342,7 +342,7 @@ var_info vtab_forecast_price_signal[] = {
 
 	// PPA financial inputs
 	{ SSC_INPUT,        SSC_ARRAY,      "ppa_price_input",		                        "PPA Price Input",	                                        "",      "",                  "Time of Delivery", "forecast_price_signal_model=0&en_batt=1&batt_meter_position=1"   "",          "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "ppa_multiplier_model",                         "PPA multiplier model",                                    "0/1",    "0=diurnal,1=timestep","Time of Delivery", "en_batt=1&batt_meter_position=1",                                                  "INTEGER,MIN=0", "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ppa_multiplier_model",                         "PPA multiplier model",                                    "0/1",    "0=diurnal,1=timestep","Time of Delivery", "forecast_price_signal_model=0&en_batt=1&batt_meter_position=1",                                                  "INTEGER,MIN=0", "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_factors_ts",                          "Dispatch payment factor time step",                        "",      "",                  "Time of Delivery", "forecast_price_signal_model=0&en_batt=1&batt_meter_position=1&ppa_multiplier_model=1", "", "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_tod_factors",		                    "TOD factors for periods 1-9",	                            "",      "",                  "Time of Delivery", "en_batt=1&batt_meter_position=1&forecast_price_signal_model=0&ppa_multiplier_model=0"   "",          "" },
 	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_sched_weekday",                       "Diurnal weekday TOD periods",                              "1..9",  "12 x 24 matrix",    "Time of Delivery", "en_batt=1&batt_meter_position=1&forecast_price_signal_model=0&ppa_multiplier_model=0",  "",          "" },
@@ -494,6 +494,10 @@ bool forecast_price_signal::setup(size_t nsteps)
 			as_revenue += mp_ancserv_4_revenue_mat.at(j, 0) * mp_ancserv_4_revenue_mat.at(j, 1);
 		}
 		// setup m_forecast_price to nsteps for both ppa and merchant plant options. Price!
+		// testing while price_for_timestep(m,d,h,m) is constructed
+		m_forecast_price.reserve(nsteps);
+		for (size_t i = 0; i < nsteps; i++)
+			m_forecast_price.push_back(0.0);
 	}
 	else
 	{
