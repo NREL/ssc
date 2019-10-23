@@ -338,26 +338,26 @@ bool calculate_p50p90(compute_module *cm){
 
 var_info vtab_forecast_price_signal[] = {
 	// model selected PPA or Merchant Plant based
-	{ SSC_INPUT,        SSC_NUMBER,     "forecast_price_signal_model",		      "Forecast price signal model selected",   "0/1",   "0=PPA based,1=Merchant Plant",    "",  "?=0",	"INTEGER,MIN=0,MAX=1",      "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "forecast_price_signal_model",					"Forecast price signal model selected",   "0/1",   "0=PPA based,1=Merchant Plant",    "",  "?=0",	"INTEGER,MIN=0,MAX=1",      "" },
 
 	// PPA financial inputs
-	{ SSC_INPUT,        SSC_ARRAY,      "ppa_price_input",		                        "PPA Price Input",	                                        "",      "",                  "Time of Delivery", "forecast_price_signal_model=0"   "",          "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "ppa_multiplier_model",                         "PPA multiplier model",                                    "0/1",    "0=diurnal,1=timestep","Time of Delivery", "?=0",                                                  "INTEGER,MIN=0", "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_factors_ts",                          "Dispatch payment factor time step",                        "",      "",                  "Time of Delivery", "forecast_price_signal_model=0&ppa_multiplier_model=1", "", "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_tod_factors",		                    "TOD factors for periods 1-9",	                            "",      "",                  "Time of Delivery", "forecast_price_signal_model=0&ppa_multiplier_model=0"   "",          "" },
-	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_sched_weekday",                       "Diurnal weekday TOD periods",                              "1..9",  "12 x 24 matrix",    "Time of Delivery", "forecast_price_signal_model=0&ppa_multiplier_model=0",  "",          "" },
-	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_sched_weekend",                       "Diurnal weekend TOD periods",                              "1..9",  "12 x 24 matrix",    "Time of Delivery", "forecast_price_signal_model=0&ppa_multiplier_model=0",  "",          "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "ppa_price_input",		                        "PPA Price Input",	                                        "",      "",                  "Time of Delivery", "forecast_price_signal_model=0&en_batt=1&batt_meter_position=1"   "",          "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ppa_multiplier_model",                         "PPA multiplier model",                                    "0/1",    "0=diurnal,1=timestep","Time of Delivery", "en_batt=1&batt_meter_position=1",                                                  "INTEGER,MIN=0", "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_factors_ts",                          "Dispatch payment factor time step",                        "",      "",                  "Time of Delivery", "forecast_price_signal_model=0&en_batt=1&batt_meter_position=1&ppa_multiplier_model=1", "", "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_tod_factors",		                    "TOD factors for periods 1-9",	                            "",      "",                  "Time of Delivery", "en_batt=1&batt_meter_position=1&forecast_price_signal_model=0&ppa_multiplier_model=0"   "",          "" },
+	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_sched_weekday",                       "Diurnal weekday TOD periods",                              "1..9",  "12 x 24 matrix",    "Time of Delivery", "en_batt=1&batt_meter_position=1&forecast_price_signal_model=0&ppa_multiplier_model=0",  "",          "" },
+	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_sched_weekend",                       "Diurnal weekend TOD periods",                              "1..9",  "12 x 24 matrix",    "Time of Delivery", "en_batt=1&batt_meter_position=1&forecast_price_signal_model=0&ppa_multiplier_model=0",  "",          "" },
 // Merchant plant inputs
-	{ SSC_INPUT,        SSC_NUMBER,     "mp_enable_energy_market_revenue",		      "Enable energy market revenue",   "0/1",   "",    "",  "forecast_price_signal_model=1",	"INTEGER,MIN=0,MAX=1",      "" },
-	{ SSC_INPUT, SSC_MATRIX, "mp_energy_market_revenue", "Energy market revenue input", "", "","forecast_price_signal_model=1", "", ""},
-	{ SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv1",		      "Enable ancillary services 1 revenue",   "0/1",   "",    "",  "forecast_price_signal_model=1",	"INTEGER,MIN=0,MAX=1",      "" },
-	{ SSC_INPUT, SSC_MATRIX, "mp_ancserv1_revenue", "Ancillary services 1 revenue input", "", "","forecast_price_signal_model=1", "", "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv2",		      "Enable ancillary services 2 revenue",   "0/1",   "",    "",  "forecast_price_signal_model=1",	"INTEGER,MIN=0,MAX=1",      "" },
-	{ SSC_INPUT, SSC_MATRIX, "mp_ancserv2_revenue", "Ancillary services 2 revenue input", "", "","forecast_price_signal_model=1", "", "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv3",		      "Enable ancillary services 3 revenue",   "0/1",   "",    "",  "forecast_price_signal_model=1",	"INTEGER,MIN=0,MAX=1",      "" },
-	{ SSC_INPUT, SSC_MATRIX, "mp_ancserv3_revenue", "Ancillary services 3 revenue input", "", "","forecast_price_signal_model=1", "", "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv4",		      "Enable ancillary services 4 revenue",   "0/1",   "",    "",  "forecast_price_signal_model=1",	"INTEGER,MIN=0,MAX=1",      "" },
-	{ SSC_INPUT, SSC_MATRIX, "mp_ancserv4_revenue", "Ancillary services 4 revenue input", "", "","forecast_price_signal_model=1", "", "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "mp_enable_energy_market_revenue",				"Enable energy market revenue",   "0/1",   "",    "",  "en_batt=1&batt_meter_position=1&forecast_price_signal_model=1",	"INTEGER,MIN=0,MAX=1",      "" },
+	{ SSC_INPUT,		SSC_MATRIX,		"mp_energy_market_revenue",						"Energy market revenue input", "", "","en_batt=1&batt_meter_position=1&forecast_price_signal_model=1", "", ""},
+	{ SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv1",							"Enable ancillary services 1 revenue",   "0/1",   "",    "",  "forecast_price_signal_model=1",	"INTEGER,MIN=0,MAX=1",      "" },
+	{ SSC_INPUT,		SSC_MATRIX,		"mp_ancserv1_revenue",							"Ancillary services 1 revenue input", "", "","en_batt=1&batt_meter_position=1&forecast_price_signal_model=1", "", "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv2",							"Enable ancillary services 2 revenue",   "0/1",   "",    "",  "forecast_price_signal_model=1",	"INTEGER,MIN=0,MAX=1",      "" },
+	{ SSC_INPUT,		SSC_MATRIX,		"mp_ancserv2_revenue",							"Ancillary services 2 revenue input", "", "","en_batt=1&batt_meter_position=1&forecast_price_signal_model=1", "", "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv3",							"Enable ancillary services 3 revenue",   "0/1",   "",    "",  "forecast_price_signal_model=1",	"INTEGER,MIN=0,MAX=1",      "" },
+	{ SSC_INPUT,		SSC_MATRIX,		"mp_ancserv3_revenue",							"Ancillary services 3 revenue input", "", "","en_batt=1&batt_meter_position=1&forecast_price_signal_model=1", "", "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv4",							"Enable ancillary services 4 revenue",   "0/1",   "",    "",  "forecast_price_signal_model=1",	"INTEGER,MIN=0,MAX=1",      "" },
+	{ SSC_INPUT,		SSC_MATRIX,		"mp_ancserv4_revenue",							"Ancillary services 4 revenue input", "", "","en_batt=1&batt_meter_position=1&forecast_price_signal_model=1", "", "" },
 
 var_info_invalid };
 
