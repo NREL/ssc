@@ -26,7 +26,12 @@ a vector
 template<typename T>
 std::vector<T> flatten_diurnal(util::matrix_t<size_t> weekday_schedule, util::matrix_t<size_t> weekend_schedule, size_t steps_per_hour, std::vector<T> period_values, T multiplier = 1.0);
 
-
+/**
+Function takes input values, desired steps per hour, and an optional multiplier and returns
+a vector
+*/
+template<typename T>
+std::vector<T> extrapolate_timeseries(std::vector<T> input_values, size_t steps_per_hour, T multiplier = 1.0);
 
 #endif // !__LIB_TIME_H__
 

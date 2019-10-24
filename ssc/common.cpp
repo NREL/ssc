@@ -335,7 +335,7 @@ bool calculate_p50p90(compute_module *cm){
 	return true;
 }
 
-
+/* the conditions on inputs will have to be expanded and abstracted to handle all technologies with dispatchable storage */
 var_info vtab_forecast_price_signal[] = {
 	// model selected PPA or Merchant Plant based
 	{ SSC_INPUT,        SSC_NUMBER,     "forecast_price_signal_model",					"Forecast price signal model selected",   "0/1",   "0=PPA based,1=Merchant Plant",    "",  "?=0",	"INTEGER,MIN=0,MAX=1",      "" },
