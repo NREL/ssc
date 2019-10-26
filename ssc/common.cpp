@@ -368,10 +368,18 @@ forecast_price_signal::forecast_price_signal(compute_module *cm)
 
 bool forecast_price_signal::setup(size_t nsteps)
 {
-	int forecast_price_signal_model = m_cm->as_integer("forecast_price_signal_model");
 	size_t step_per_hour = 1;
-	if (nsteps > 8760) step_per_hour =  nsteps / 8760;
+	if (nsteps > 8760) step_per_hour = nsteps / 8760;
+	if (step_per_hour < 1 || step_per_hour > 60 || step_per_hour * 8760 != nsteps)
+	{
+		m_error = util::format("The requested number of timesteps must be a multiple of 8760. Instead requested timesteps is %d.", (int)nsteps);
+		return false;
+	}
+	m_forecast_price.reserve(nsteps);
+	for (size_t i = 0; i < nsteps; i++) 
+		m_forecast_price.push_back(0.0);
 
+	int forecast_price_signal_model = m_cm->as_integer("forecast_price_signal_model");
 
 	if (forecast_price_signal_model == 1)
 	{
@@ -391,7 +399,7 @@ bool forecast_price_signal::setup(size_t nsteps)
 			ssc_number_t *mp_energy_market_revenue_in = m_cm->as_matrix("mp_energy_market_revenue", &nrows, &ncols);
 			if (ncols != 2)
 			{
-				m_error = util::format("The energy market revenue table must have 2 columns. Instead it has %d columns.", ncols);
+				m_error = util::format("The energy market revenue table must have 2 columns. Instead it has %d columns.", (int)ncols);
 				return false;
 			}
 			mp_energy_market_revenue_mat.resize(nrows, ncols);
@@ -404,7 +412,7 @@ bool forecast_price_signal::setup(size_t nsteps)
 			ssc_number_t *mp_ancserv1_revenue_in = m_cm->as_matrix("mp_ancserv1_revenue", &nrows, &ncols);
 			if (ncols != 2)
 			{
-				m_error = util::format("The ancillary services revenue 1 table must have 2 columns. Instead it has %d columns.", ncols);
+				m_error = util::format("The ancillary services revenue 1 table must have 2 columns. Instead it has %d columns.", (int)ncols);
 				return false;
 			}
 			mp_ancserv_1_revenue_mat.resize(nrows, ncols);
@@ -417,7 +425,7 @@ bool forecast_price_signal::setup(size_t nsteps)
 			ssc_number_t *mp_ancserv2_revenue_in = m_cm->as_matrix("mp_ancserv2_revenue", &nrows, &ncols);
 			if (ncols != 2)
 			{
-				m_error = util::format("The ancillary services revenue 2 table must have 2 columns. Instead it has %d columns.", ncols);
+				m_error = util::format("The ancillary services revenue 2 table must have 2 columns. Instead it has %d columns.", (int)ncols);
 				return false;
 			}
 			mp_ancserv_2_revenue_mat.resize(nrows, ncols);
@@ -430,7 +438,7 @@ bool forecast_price_signal::setup(size_t nsteps)
 			ssc_number_t *mp_ancserv3_revenue_in = m_cm->as_matrix("mp_ancserv3_revenue", &nrows, &ncols);
 			if (ncols != 2)
 			{
-				m_error = util::format("The ancillary services revenue 3 table must have 2 columns. Instead it has %d columns.", ncols);
+				m_error = util::format("The ancillary services revenue 3 table must have 2 columns. Instead it has %d columns.", (int)ncols);
 				return false;
 			}
 			mp_ancserv_3_revenue_mat.resize(nrows, ncols);
@@ -443,7 +451,7 @@ bool forecast_price_signal::setup(size_t nsteps)
 			ssc_number_t *mp_ancserv4_revenue_in = m_cm->as_matrix("mp_ancserv4_revenue", &nrows, &ncols);
 			if (ncols != 2)
 			{
-				m_error = util::format("The ancillary services revenue 4 table must have 2 columns. Instead it has %d columns.", ncols);
+				m_error = util::format("The ancillary services revenue 4 table must have 2 columns. Instead it has %d columns.", (int)ncols);
 				return false;
 			}
 			mp_ancserv_4_revenue_mat.resize(nrows, ncols);
@@ -453,57 +461,60 @@ bool forecast_price_signal::setup(size_t nsteps)
 		// TODO need to check sum of all cleared capacities at each timestep
 		int nyears = m_cm->as_integer("analysis_period");
 		// calculate revenue for first year only and consolidate to m_forecast_price
-		double as_revenue = 0;
+		std::vector<double> as_revenue;
+		std::vector<double> as_revenue_extrapolated(nsteps,0.0);
+
 		size_t n_marketrevenue_per_year = mp_energy_market_revenue_mat.nrows() / (size_t)nyears;
-		as_revenue = 0;
-		// compare n_marketrevenue_per_year steps with requested nsteps and either set all values in m_forecast_price accordingly.
+		as_revenue.clear();
+		as_revenue.reserve(n_marketrevenue_per_year);
 		for (size_t j = 0; j < n_marketrevenue_per_year; j++)
-		{
-			as_revenue += mp_energy_market_revenue_mat.at(j, 0) * mp_energy_market_revenue_mat.at(j, 1);
-		}
+			as_revenue.push_back(mp_energy_market_revenue_mat.at(j, 0) * mp_energy_market_revenue_mat.at(j, 1));
+		as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
+		std::transform(m_forecast_price.begin(), m_forecast_price.end(), as_revenue_extrapolated.begin(), m_forecast_price.begin(), std::plus<double>());
 
 		size_t n_ancserv_1_revenue_per_year = mp_ancserv_1_revenue_mat.nrows() / (size_t)nyears;
-		as_revenue = 0;
-		// compare n_marketrevenue_per_year steps with requested nsteps and either set all values in m_forecast_price accordingly.
+		as_revenue.clear();
+		as_revenue.reserve(n_ancserv_1_revenue_per_year);
 		for (size_t j = 0; j < n_ancserv_1_revenue_per_year; j++)
-		{
-			as_revenue += mp_ancserv_1_revenue_mat.at(j, 0) * mp_ancserv_1_revenue_mat.at(j, 1);
-		}
+			as_revenue.push_back(mp_ancserv_1_revenue_mat.at(j, 0) * mp_ancserv_1_revenue_mat.at(j, 1));
+		as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
+		std::transform(m_forecast_price.begin(), m_forecast_price.end(), as_revenue_extrapolated.begin(), m_forecast_price.begin(), std::plus<double>());
 
 		size_t n_ancserv_2_revenue_per_year = mp_ancserv_2_revenue_mat.nrows() / (size_t)nyears;
-		as_revenue = 0;
-		// compare n_marketrevenue_per_year steps with requested nsteps and either set all values in m_forecast_price accordingly.
+		as_revenue.clear();
+		as_revenue.reserve(n_ancserv_2_revenue_per_year);
 		for (size_t j = 0; j < n_ancserv_2_revenue_per_year; j++)
-		{
-			as_revenue += mp_ancserv_2_revenue_mat.at(j, 0) * mp_ancserv_2_revenue_mat.at(j, 1);
-		}
+			as_revenue.push_back(mp_ancserv_2_revenue_mat.at(j, 0) * mp_ancserv_2_revenue_mat.at(j, 1));
+		as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
+		std::transform(m_forecast_price.begin(), m_forecast_price.end(), as_revenue_extrapolated.begin(), m_forecast_price.begin(), std::plus<double>());
 
 		size_t n_ancserv_3_revenue_per_year = mp_ancserv_3_revenue_mat.nrows() / (size_t)nyears;
-		as_revenue = 0;
-		// compare n_marketrevenue_per_year steps with requested nsteps and either set all values in m_forecast_price accordingly.
+		as_revenue.clear();
+		as_revenue.reserve(n_ancserv_3_revenue_per_year);
 		for (size_t j = 0; j < n_ancserv_3_revenue_per_year; j++)
-		{
-			as_revenue += mp_ancserv_3_revenue_mat.at(j, 0) * mp_ancserv_3_revenue_mat.at(j, 1);
-		}
+			as_revenue.push_back(mp_ancserv_3_revenue_mat.at(j, 0) * mp_ancserv_3_revenue_mat.at(j, 1));
+		as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
+		std::transform(m_forecast_price.begin(), m_forecast_price.end(), as_revenue_extrapolated.begin(), m_forecast_price.begin(), std::plus<double>());
 
 		size_t n_ancserv_4_revenue_per_year = mp_ancserv_4_revenue_mat.nrows() / (size_t)nyears;
-		as_revenue = 0;
-		// compare n_marketrevenue_per_year steps with requested nsteps and either set all values in m_forecast_price accordingly.
+		as_revenue.clear();
+		as_revenue.reserve(n_ancserv_4_revenue_per_year);
 		for (size_t j = 0; j < n_ancserv_4_revenue_per_year; j++)
-		{
-			as_revenue += mp_ancserv_4_revenue_mat.at(j, 0) * mp_ancserv_4_revenue_mat.at(j, 1);
-		}
-		// setup m_forecast_price to nsteps for both ppa and merchant plant options. Price!
-		// testing while price_for_timestep(m,d,h,m) is constructed
-		m_forecast_price.reserve(nsteps);
-		for (size_t i = 0; i < nsteps; i++)
-			m_forecast_price.push_back(0.0);
+			as_revenue.push_back(mp_ancserv_4_revenue_mat.at(j, 0) * mp_ancserv_4_revenue_mat.at(j, 1));
+		as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
+		std::transform(m_forecast_price.begin(), m_forecast_price.end(), as_revenue_extrapolated.begin(), m_forecast_price.begin(), std::plus<double>());
 	}
 	else
 	{
 		int ppa_multiplier_mode = m_cm->as_integer("ppa_multiplier_model");
 		size_t count_ppa_price_input;
 		ssc_number_t* ppa_price = m_cm->as_array("ppa_price_input", &count_ppa_price_input);
+		if (count_ppa_price_input < 1)
+		{
+			m_error = util::format("The ppa price array needs at least one entry. Input had less than one input.");
+			return false;
+		}
+
 		if (ppa_multiplier_mode == 0)
 		{
 			m_forecast_price = flatten_diurnal(
@@ -513,10 +524,9 @@ bool forecast_price_signal::setup(size_t nsteps)
 				m_cm->as_vector_double("dispatch_tod_factors"), ppa_price[0]);
 		}
 		else
-		{
-			m_forecast_price = m_cm->as_vector_double("dispatch_factors_ts");
-			for (size_t i = 0; i < m_forecast_price.size(); i++)
-				m_forecast_price[i] *= ppa_price[0];
+		{ // assumption on size - check that is requested size.
+			std::vector<double> factors = m_cm->as_vector_double("dispatch_factors_ts");
+			m_forecast_price = extrapolate_timeseries(factors, step_per_hour, ppa_price[0]);
 		}
 	}
 
