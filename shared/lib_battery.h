@@ -82,6 +82,11 @@ public:
 	virtual void updateCapacityForLifetime(double capacity_percent)=0;
 	virtual void replace_battery(double replacement_percent)=0;
 
+	void change_SOC_limits(double min, double max){
+	    _SOC_min = min;
+	    _SOC_max = max;
+	}
+
 	virtual double q1() = 0; // available charge
 	virtual double q10() = 0; // capacity at 10 hour discharge rate
 
@@ -230,7 +235,7 @@ public:
 
 	virtual void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt)=0;
 
-	virtual double calculate_voltage(double I, double q, double qmax, double T) = 0;
+	virtual double calculate_voltage(double I, double q, double qmax, double T=0) = 0;
 
 	virtual double calculate_current(double V, double q, double qmax, double T) = 0;
 
@@ -238,7 +243,7 @@ public:
 
 	virtual double calculate_max_discharge_kw(double q, double qmax, double dt_hour) =0;
 
-    virtual double get_current_for_power(double P, double q, double qmax) = 0;
+    virtual double get_current_for_power(double P, double q, double qmax, double dt_hr) = 0;
 
     virtual double battery_voltage(); // voltage of one battery
 
@@ -301,7 +306,7 @@ public:
     double calculate_max_discharge_kw(double q, double qmax, double dt_hour) override;
 
     // return current for targeted power, or 0 if unable
-    double get_current_for_power(double P, double q, double qmax) override;
+    double get_current_for_power(double P, double q, double qmax, double dt_hr) override;
 
 protected:
 
@@ -336,7 +341,7 @@ public:
     double calculate_max_discharge_kw(double q, double qmax, double dt_hour) override;
 
     // return current for targeted power, or 0 if unable
-	double get_current_for_power(double P, double q, double qmax) override;
+    double get_current_for_power(double P, double q, double qmax, double dt_hr);
 
 protected:
 	double voltage_model_tremblay_hybrid(double capacity, double current, double q0);
@@ -382,7 +387,7 @@ public:
 
     double calculate_max_discharge_kw(double q, double qmax, double dt_hour) override;
 
-    double get_current_for_power(double P, double q, double qmax) override;
+    double get_current_for_power(double P, double q, double qmax, double dt_hr) override;
 
 protected:
 	

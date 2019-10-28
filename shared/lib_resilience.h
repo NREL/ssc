@@ -22,6 +22,9 @@ public:
         m_batteryPower->canPVCharge = true;
         m_batteryPower->canGridCharge = false;
         m_batteryPower->canDischarge = true;
+
+        // change SOC limits
+        _Battery->capacity_model()->change_SOC_limits(0., 100.);
     }
 
     const CONNECTION connection;

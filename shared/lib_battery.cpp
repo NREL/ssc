@@ -575,7 +575,7 @@ double voltage_table_t::calculate_max_discharge_kw(double q, double qmax, double
 
 }
 
-double voltage_table_t::get_current_for_power(double P, double q, double qmax) {
+double voltage_table_t::get_current_for_power(double P, double q, double qmax, double dt_hr) {
 
 }
 
@@ -690,7 +690,7 @@ void voltage_dynamic_t::updateVoltage(capacity_t * capacity, thermal_t * , doubl
 }
 
 double voltage_dynamic_t::calculate_voltage(double I, double q, double qmax, double ) {
-    return _num_strings * voltage_model_tremblay_hybrid(qmax / _num_strings, I/_num_strings , q / _num_strings);
+    return _num_cells_series * voltage_model_tremblay_hybrid(qmax / _num_strings, I/_num_strings , q / _num_strings);
 }
 
 double voltage_dynamic_t::calculate_current(double V, double q, double qmax, double T) {
@@ -698,22 +698,19 @@ double voltage_dynamic_t::calculate_current(double V, double q, double qmax, dou
 }
 
 double voltage_dynamic_t::calculate_max_charge_kw(double q, double qmax, double dt_hour) {
-    q /= (double)_num_strings;
-    qmax /= (double) _num_strings;
-    double maxI = (qmax - q) / dt_hour;
-    return (_E0*maxI - _K*qmax*maxI/q + _A*maxI*exp(-_B0*(qmax-q))-_R*pow(maxI, 2)) * pow(_num_strings, 2);
+    return (qmax - q) * _Vfull * _num_cells_series;
 }
 
 double voltage_dynamic_t::calculate_max_discharge_kw(double q, double qmax, double dt_hour) {
-    q /= (double)_num_strings;
-    qmax /= (double) _num_strings;
-    double maxI = q / dt_hour;
-    return (_E0*maxI - _K*qmax*maxI/q + _A*maxI*exp(-_B0*(qmax-q))-_R*pow(maxI, 2)) * pow(_num_strings, 2);
+    return q * _Vnom * 0.5 * _num_cells_series;
 }
 
-double voltage_dynamic_t::get_current_for_power(double P, double q, double qmax) {
+double voltage_dynamic_t::get_current_for_power(double P, double q, double qmax, double dt_hr){
+    P /= _num_cells_series * _num_strings;
+    q /= _num_strings;
+    qmax /= _num_strings;
     double b = _E0 - _K*qmax/q + _A*exp(-_B0*(qmax-q));
-    return fmin(-(-b + sqrt(pow(b, 2) - 4*_R*P)) / (2*_R), 0);
+    return fmax(-(-b + sqrt(pow(b, 2) - 4*_R*P)) / (2*_R), 0) * _num_strings;
 }
 
 double voltage_dynamic_t::voltage_model_tremblay_hybrid(double Q, double I, double q0)
@@ -780,7 +777,7 @@ double voltage_vanadium_redox_t::calculate_max_discharge_kw(double q, double qma
 
 }
 
-double voltage_vanadium_redox_t::get_current_for_power(double P, double q, double qmax) {
+double voltage_vanadium_redox_t::get_current_for_power(double P, double q, double qmax, double dt_hr) {
 
 }
 
@@ -1675,7 +1672,7 @@ double battery_t::calculate_current_for_voltage(double V){
 }
 
 double battery_t::calculate_current_for_power(double P){
-    return _voltage->get_current_for_power(P, _capacity->q0(), _capacity->qmax());
+    return _voltage->get_current_for_power(P, _capacity->q0(), _capacity->qmax(), _dt_hour);
 }
 
 double battery_t::calculate_max_charge_kw() {
