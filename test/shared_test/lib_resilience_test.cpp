@@ -26,6 +26,8 @@ TEST_F(ResilienceTest_lib_resilience, DischargePower)
 
 TEST_F(ResilienceTest_lib_resilience, PVWattsSetUp)
 {
+    auto cap_model = batt->battery_model->capacity_model();
+    auto voltage_model = batt->battery_model->voltage_model();
     const double voltage = 500;
     std::vector<double> batt_power, soc, charge;
     for (size_t i = 0; i < 10; i++){
@@ -36,31 +38,21 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsSetUp)
         charge.push_back(batt->outTotalCharge[i]);
         printf("%f ac, %f load, %f dispatch, %f charge, %f nominal power, %f max discharge, %f timestep power \n",
                 ac[i], load[i], batt_vars->batt_custom_dispatch[i], charge.back(),
-                batt->voltage_model->battery_voltage_nominal() * batt->capacity_model->q0() / 1000.,
-                batt->voltage_model->calculate_max_discharge_kw(batt->capacity_model->q0(), batt->capacity_model->qmax(), 1) / 1000.,
+               voltage_model->battery_voltage_nominal() * cap_model->q0() / 1000.,
+               voltage_model->calculate_max_discharge_kw(cap_model->q0(), cap_model->qmax(),
+                                                               1, nullptr) / 1000.,
                 batt->outBatteryVoltage[i] * batt->outCurrent[i]/1000.);
     }
-    batt->battery_model->capacity_model()->change_SOC_limits(1., 99.);
-    double max_discharge = batt->voltage_model->calculate_max_discharge_kw(batt->capacity_model->q0(), batt->capacity_model->qmax(), 1);
-    double current = batt->voltage_model->get_current_for_power(max_discharge, batt->capacity_model->q0(),
-                                                                batt->capacity_model->qmax(), 1);
-    double voltage_ = batt->voltage_model->battery_voltage();
-    double vol_pred = batt->voltage_model->calculate_voltage(current, batt->capacity_model->q0(), batt->capacity_model->qmax());
-    double power = current * voltage_;
-    double power_pred = current * vol_pred;
-
-    batt->battery_model->run(10, batt->capacity_model->q0());
-
-    power = batt->capacity_model->I() * batt->voltage_model->battery_voltage();
-
-
-    double vol_cur = batt->voltage_model->battery_voltage();
-    printf("%f q0, %f soc, %f max current, %f req voltage, %f current voltage\n", batt->capacity_model->q0(), batt->capacity_model->SOC(),
-           current, vol_pred, vol_cur);
+    cap_model->change_SOC_limits(0, 99.);
+    double current;
+    double max_discharge = voltage_model->calculate_max_discharge_kw(cap_model->q0(),
+                                                                     cap_model->qmax(), 1, &current);
     batt->battery_model->run(10, current);
-    printf("%f q0, %f soc, %f max current, %f actual current, %f actual vol, %f power\n", batt->capacity_model->q0(), batt->capacity_model->SOC(),
-            current, batt->capacity_model->I(), batt->voltage_model->battery_voltage(),
-           batt->capacity_model->I() * vol_pred);
+
+    double vol_cur = voltage_model->battery_voltage();
+    double power = cap_model->I() * vol_cur;
+    printf("%f batt current, %f batt soc, %f batt power, %f target power\n", cap_model->I(),
+           cap_model->SOC(), power, max_discharge);
 }
 
 TEST_F(ResilienceTest_lib_resilience, PVWattsResilience)

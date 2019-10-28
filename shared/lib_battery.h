@@ -235,15 +235,11 @@ public:
 
 	virtual void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt)=0;
 
-	virtual double calculate_voltage(double I, double q, double qmax, double T=0) = 0;
+	virtual double calculate_max_charge_kw(double q, double qmax, double dt_hour, double *max_current=nullptr) =0;
 
-	virtual double calculate_current(double V, double q, double qmax, double T) = 0;
+	virtual double  calculate_max_discharge_kw(double q, double qmax, double dt_hour, double *max_current=nullptr) =0;
 
-	virtual double calculate_max_charge_kw(double q, double qmax, double dt_hour) =0;
-
-	virtual double calculate_max_discharge_kw(double q, double qmax, double dt_hour) =0;
-
-    virtual double get_current_for_power(double P, double q, double qmax, double dt_hr) = 0;
+    virtual double calculate_current_for_target_power(double P, double q, double qmax, double dt_hr) = 0;
 
     virtual double battery_voltage(); // voltage of one battery
 
@@ -297,16 +293,12 @@ public:
 
 	void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt);
 
-    double calculate_voltage(double I, double q, double qmax, double T) override;
+    double calculate_max_charge_kw(double q, double qmax, double dt_hour, double *max_current=nullptr) override;
 
-    double calculate_current(double V, double q, double qmax, double T) override;
-
-    double calculate_max_charge_kw(double q, double qmax, double dt_hour) override;
-
-    double calculate_max_discharge_kw(double q, double qmax, double dt_hour) override;
+    double calculate_max_discharge_kw(double q, double qmax, double dt_hour, double *max_current=nullptr) override;
 
     // return current for targeted power, or 0 if unable
-    double get_current_for_power(double P, double q, double qmax, double dt_hr) override;
+    double calculate_current_for_target_power(double P, double q, double qmax, double dt_hr) override;
 
 protected:
 
@@ -329,22 +321,19 @@ public:
 	// copy from voltage to this
 	void copy(voltage_t *);
 
-	void parameter_compute();
 	void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt);
 
-    double calculate_voltage(double I, double q, double qmax, double T) override;
+    double calculate_max_charge_kw(double q, double qmax, double dt_hour, double *max_current=nullptr) override;
 
-    double calculate_current(double V, double q, double qmax, double T) override;
+    double calculate_max_discharge_kw(double q, double qmax, double dt_hour, double *max_current=nullptr) override;
 
-    double calculate_max_charge_kw(double q, double qmax, double dt_hour) override;
+    // returns current for power (discharge > 0, charge < 0), use above functions to first check feasibility
+    double calculate_current_for_target_power(double P, double q, double qmax, double dt_hr);
 
-    double calculate_max_discharge_kw(double q, double qmax, double dt_hour) override;
-
-    // return current for targeted power, or 0 if unable
-    double get_current_for_power(double P, double q, double qmax, double dt_hr);
+    void fit_current_to_cutoff_voltage(double cutoff_voltage_ratio = 0.75);
 
 protected:
-	double voltage_model_tremblay_hybrid(double capacity, double current, double q0);
+	double voltage_model_tremblay_hybrid(double Q_cell, double I, double q0_cell);
 
 private:
 	double _Vfull;
@@ -359,10 +348,22 @@ private:
 	double _E0;
 	double _K;
 
+	void parameter_compute();
+
+    double max_current_b2;
+    double max_current_b1;
+	double max_current_a;
+
 	// solver quantities
 	double solver_Q;
-	double solver_q0;
+	double solver_q;
 
+    double solver_cutoff_voltage;
+    void solve_current_for_cutoff_voltage(const double x[1], double f[1]);
+
+    double solver_power;
+    void solve_current_for_charge_power(const double *x, double *f);
+    void solve_current_for_discharge_power(const double *x, double *f);
 };
 
 // D'Agostino Vanadium Redox Flow Model
@@ -379,15 +380,11 @@ public:
 
 	void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt);
 
-    double calculate_voltage(double I, double q, double qmax, double T_kelvi) override;
+    double calculate_max_charge_kw(double q, double qmax, double dt_hour, double *max_current=nullptr) override;
 
-    double calculate_current(double V, double q, double qmax, double T) override;
+    double calculate_max_discharge_kw(double q, double qmax, double dt_hour, double *max_current=nullptr) override;
 
-    double calculate_max_charge_kw(double q, double qmax, double dt_hour) override;
-
-    double calculate_max_discharge_kw(double q, double qmax, double dt_hour) override;
-
-    double get_current_for_power(double P, double q, double qmax, double dt_hr) override;
+    double calculate_current_for_target_power(double P, double q, double qmax, double dt_hr) override;
 
 protected:
 	
@@ -767,8 +764,6 @@ public:
 	// Run all for single time step
 	void run(size_t lifetimeIndex, double I);
 
-	double calculate_voltage_for_current(double I);
-	double calculate_current_for_voltage(double V);
 	double calculate_current_for_power(double P);
     double calculate_max_charge_kw();
     double calculate_max_discharge_kw();
