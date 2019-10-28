@@ -671,6 +671,13 @@ void voltage_dynamic_t::parameter_compute()
 	_B0 = 3. / _Qexp;     // [1/Ah]
 	_K = ((_Vfull - _Vnom + _A*(std::exp(-_B0*_Qnom) - 1))*(_Qfull - _Qnom)) / (_Qnom); // [V] - polarization voltage
 	_E0 = _Vfull + _K + _R*I - _A;
+
+	if (_A < 0 || _B0 < 0 || _K < 0 || _E0 < 0){
+	    char err[254];
+	    std::sprintf(err, "Error during calculation of battery voltage model parameters: negative value(s) found.\n"
+                                  "A: %f, B: %f, K: %f, E0: %f", _A, _B0, _K, _E0);
+	    throw std::runtime_error(err);
+	}
 }
 
 void voltage_dynamic_t::updateVoltage(capacity_t * capacity, thermal_t * , double )

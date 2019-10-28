@@ -80,8 +80,8 @@ batt_variables * battwatts_create(size_t n_recs, int chem, int meter_pos, double
         batt_vars->batt_Vnom = 3.4;
         batt_vars->batt_Qfull = 2.25;
         batt_vars->batt_Qfull_flow = 0;
-        batt_vars->batt_Qexp = 1.78;
-        batt_vars->batt_Qnom = 88.9;
+        batt_vars->batt_Qexp = 0.178 * batt_vars->batt_Qfull;
+        batt_vars->batt_Qnom = 0.889 * batt_vars->batt_Qfull;
         batt_vars->batt_C_rate = 0.2;
         batt_vars->batt_resistance = 0.1;
 
@@ -134,8 +134,8 @@ batt_variables * battwatts_create(size_t n_recs, int chem, int meter_pos, double
         batt_vars->batt_Vexp = 2.06;
         batt_vars->batt_Vnom = 2.03;
         batt_vars->batt_Qfull = 20;
-        batt_vars->batt_Qexp = 0.25;
-        batt_vars->batt_Qnom = 90;
+        batt_vars->batt_Qexp = 0.025 * batt_vars->batt_Qfull;
+        batt_vars->batt_Qnom = 0.90 * batt_vars->batt_Qfull;
         batt_vars->batt_C_rate = 0.05;
         batt_vars->batt_resistance = 0.1;
 
@@ -232,6 +232,11 @@ batt_variables * battwatts_create(size_t n_recs, int chem, int meter_pos, double
     batt_vars->batt_width = std::pow(batt_volume, 1. / 3.);
     batt_vars->batt_height = std::pow(batt_volume, 1. / 3.);
 
+    // Losses
+    batt_vars->batt_loss_choice = losses_t::MONTHLY;
+    batt_vars->batt_losses_charging.emplace_back(0);
+    batt_vars->batt_losses_discharging.emplace_back(0);
+    batt_vars->batt_losses_idle.emplace_back(0);
 
     // Inverter model must be
     batt_vars->inverter_model = SharedInverter::NONE;
