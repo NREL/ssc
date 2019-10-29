@@ -553,15 +553,15 @@ void voltage_table_t::updateVoltage(capacity_t * capacity, thermal_t * , double 
 	
 }
 
-double voltage_table_t::calculate_max_charge_kw(double q, double qmax, double dt_hour, double *max_current) {
+double voltage_table_t::calculate_max_charge_w(double q, double qmax, double *max_current) {
 
 }
 
-double voltage_table_t::calculate_max_discharge_kw(double q, double qmax, double dt_hour, double *max_current) {
+double voltage_table_t::calculate_max_discharge_w(double q, double qmax, double *max_current) {
 
 }
 
-double voltage_table_t::calculate_current_for_target_power(double P, double q, double qmax, double dt_hr) {
+double voltage_table_t::calculate_current_for_target_w(double P_watts, double q, double qmax) {
 
 }
 
@@ -689,37 +689,40 @@ void voltage_dynamic_t::updateVoltage(capacity_t * capacity, thermal_t * , doubl
 	_cell_voltage = voltage_model_tremblay_hybrid(Q, I , q0);
 }
 
-double voltage_dynamic_t::calculate_max_charge_kw(double q, double qmax, double dt_hour, double *max_current) {
+double voltage_dynamic_t::calculate_max_charge_w(double q, double qmax, double *max_current) {
     q /= _num_strings;
     qmax /= _num_strings;
     double current = qmax - q;
     if (max_current)
-        *max_current = current * _num_strings;
-    return current * voltage_model_tremblay_hybrid(qmax, current , q + current) * _num_strings * _num_cells_series / 1000.;
+        *max_current = -current * _num_strings;
+    return current * voltage_model_tremblay_hybrid(qmax, -current , q + current) * _num_strings * _num_cells_series;
 }
 
-double voltage_dynamic_t::calculate_max_discharge_kw(double q, double qmax, double dt_hour, double *max_current) {
+double voltage_dynamic_t::calculate_max_discharge_w(double q, double qmax, double *max_current) {
     q /= _num_strings;
     qmax /= _num_strings;
-    double current = max_current_a + max_current_b1 * q + max_current_b2 * qmax;
+    double current =max_current_a + max_current_b1 * q + max_current_b2 * qmax;
     if (max_current)
         *max_current = current  * _num_strings;
-    return current * voltage_model_tremblay_hybrid(qmax, current , q - current) * _num_strings * _num_cells_series / 1000.;
+    return current * voltage_model_tremblay_hybrid(qmax, current , q - current) * _num_strings * _num_cells_series;
 }
 
 using namespace std::placeholders;
-double voltage_dynamic_t::calculate_current_for_target_power(double P, double q, double qmax, double dt_hr){
-    if (P == 0) return 0.;
+double voltage_dynamic_t::calculate_current_for_target_w(double P_watts, double q, double qmax) {
+    if (P_watts == 0) return 0.;
 
-    solver_power = P / (_num_cells_series * _num_strings);
+    solver_power = abs(P_watts) / (_num_cells_series * _num_strings);
     solver_q = q /_num_strings;
     solver_Q = qmax / _num_strings;
 
     std::function<void(const double*, double*)> f;
-    if (P > 0)
+    double direction = 1.;
+    if (P_watts > 0)
         f = std::bind(&voltage_dynamic_t::solve_current_for_discharge_power, this, _1, _2);
-    else
+    else{
         f = std::bind(&voltage_dynamic_t::solve_current_for_charge_power, this, _1, _2);
+        direction = -1.;
+    }
 
     double x[1], resid[1];
     x[0] = solver_power / _cell_voltage;
@@ -727,11 +730,7 @@ double voltage_dynamic_t::calculate_current_for_target_power(double P, double q,
 
     int niter = newton<double, std::function<void(const double*, double*)>, 1>( x, resid, check, f,
                                                                                 100, 1e-6, 1e-6, 0.7);
-    if (niter >= 0 && !check){
-        return x[0];
-    }
-    else
-        return 0;
+    return x[0] * _num_strings * direction;
 }
 
 void voltage_dynamic_t::fit_current_to_cutoff_voltage(double cutoff_voltage_ratio) {
@@ -808,7 +807,7 @@ void voltage_dynamic_t::solve_current_for_cutoff_voltage(const double x[1], doub
 
 void voltage_dynamic_t::solve_current_for_charge_power(const double *x, double *f){
     double I = x[0];
-    double V = _E0 - _K*solver_Q/(solver_q+I) + _A*exp(-_B0*(solver_Q-(solver_q+I))) - _R*I;
+    double V = _E0 - _K*solver_Q/(solver_q+I) + _A*exp(-_B0*(solver_Q-(solver_q+I))) + _R*I;
     f[0] = I*V - solver_power;
 }
 
@@ -850,16 +849,16 @@ void voltage_vanadium_redox_t::updateVoltage(capacity_t * capacity, thermal_t * 
         _cell_voltage = cell_voltage;
 }
 
-double voltage_vanadium_redox_t::calculate_max_charge_kw(double q, double qmax, double dt_hour, double *max_current) {
+double voltage_vanadium_redox_t::calculate_max_charge_w(double q, double qmax, double *max_current) {
 
 }
 
 double
-voltage_vanadium_redox_t::calculate_max_discharge_kw(double q, double qmax, double dt_hour, double *max_current) {
+voltage_vanadium_redox_t::calculate_max_discharge_w(double q, double qmax, double *max_current) {
 
 }
 
-double voltage_vanadium_redox_t::calculate_current_for_target_power(double P, double q, double qmax, double dt_hr) {
+double voltage_vanadium_redox_t::calculate_current_for_target_w(double P_watts, double q, double qmax) {
 
 }
 
@@ -1746,20 +1745,19 @@ void battery_t::initialize(capacity_t *capacity, voltage_t * voltage, lifetime_t
 }
 
 double battery_t::calculate_current_for_power(double P){
-    return _voltage->calculate_current_for_target_power(P, _capacity->q0(), _capacity->qmax(), _dt_hour);
+    return _voltage->calculate_current_for_target_w(P, _capacity->q0(), _capacity->qmax());
 }
 
 double battery_t::calculate_max_charge_kw() {
-    return _voltage->calculate_max_charge_kw(_capacity->q0(), _capacity->qmax(), _dt_hour, nullptr);
+    return _voltage->calculate_max_charge_w(_capacity->q0(), _capacity->qmax(), nullptr);
 }
 
 double battery_t::calculate_max_discharge_kw() {
-    return _voltage->calculate_max_discharge_kw(_capacity->q0(), _capacity->qmax(), _dt_hour, nullptr);
+    return _voltage->calculate_max_discharge_w(_capacity->q0(), _capacity->qmax(), nullptr);
 }
 
 void battery_t::run(size_t lifetimeIndex, double I)
-{	
-
+{
 	// Temperature affects capacity, but capacity model can reduce current, which reduces temperature, need to iterate
 	double I_initial = I;
 	size_t iterate_count = 0;
