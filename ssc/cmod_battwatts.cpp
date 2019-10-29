@@ -108,7 +108,7 @@ batt_variables * battwatts_create(size_t n_recs, int chem, int meter_pos, double
         batt_vars->batt_Cp = 1004;
         batt_vars->batt_h_to_ambient = 500;
         for (size_t i = 0; i < n_recs; i++) {
-            batt_vars->T_room.push_back(20);
+            batt_vars->T_room.push_back(293);
         }
         batt_specific_energy_per_mass = 197.33;  // Wh/kg
         batt_specific_energy_per_volume = 501.25; // Wh/L
@@ -163,7 +163,7 @@ batt_variables * battwatts_create(size_t n_recs, int chem, int meter_pos, double
         batt_vars->batt_Cp = 600;
         batt_vars->batt_h_to_ambient = 500;
         for (size_t i = 0; i < n_recs; i++) {
-            batt_vars->T_room.push_back(20);
+            batt_vars->T_room.push_back(293);
         }
         batt_specific_energy_per_mass = 30;  // Wh/kg
         batt_specific_energy_per_volume = 30; // Wh/L
