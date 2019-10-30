@@ -77,7 +77,8 @@ protected:
     }
 
     void meet_load_charge_battery(double load_ac, double pv_ac_kw, double pv_dc_kw, double V_pv, double pv_clipped, double tdry){
-        double max_charge_power = _Battery->calculate_max_charge_kw();
+        double max_current;
+        double max_charge_power = _Battery->calculate_max_charge_kw(&max_current);
         double dc_dc_eff = batt_vars->batt_dc_dc_bms_efficiency * 0.01;
 
         if (connection == DC_CONNECTED){

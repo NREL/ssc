@@ -572,7 +572,7 @@ void voltage_table_t::updateVoltage(capacity_t * capacity, thermal_t * , double 
 
 inline double calc_DOD(double q, double qmax) {return (1. - q/qmax) * 100.;}
 
-double voltage_table_t::calculate_max_charge_w(double q, double qmax, double *max_current) {
+double voltage_table_t::calculate_max_charge_w(double q, double qmax, double, double *max_current) {
     double DOD0 = calc_DOD(q, qmax);
     double current = qmax*( (1.-DOD0/100.) - 1. );
     if (max_current)
@@ -580,7 +580,7 @@ double voltage_table_t::calculate_max_charge_w(double q, double qmax, double *ma
     return calculate_voltage(0.) * current;
 }
 
-double voltage_table_t::calculate_max_discharge_w(double q, double qmax, double *max_current) {
+double voltage_table_t::calculate_max_discharge_w(double q, double qmax, double, double *max_current) {
     double DOD0 = calc_DOD(q, qmax);
     double A = q - qmax;
     double B = qmax/100.;
@@ -599,15 +599,15 @@ double voltage_table_t::calculate_max_discharge_w(double q, double qmax, double 
     return max;
 }
 
-double voltage_table_t::calculate_current_for_target_w(double P_watts, double q, double qmax) {
+double voltage_table_t::calculate_current_for_target_w(double P_watts, double q, double qmax, double) {
     double DOD = calc_DOD(q, qmax);
     double max_p, current;
     if (P_watts == 0)
         return 0.;
     else if (P_watts < 0)
-        max_p = calculate_max_charge_w(q, qmax, &current);
+        max_p = calculate_max_charge_w(q, qmax, 0, &current);
     else
-        max_p = calculate_max_discharge_w(q, qmax, &current);
+        max_p = calculate_max_discharge_w(q, qmax, 0, &current);
 
     if (abs(max_p) < abs(P_watts))
         return current;
@@ -648,7 +648,9 @@ double voltage_table_t::calculate_current_for_target_w(double P_watts, double q,
 // Dynamic voltage model
 typedef void (voltage_dynamic_t::*voltage_dynamic_fptr)(const double*, double*);
 
-voltage_dynamic_t::voltage_dynamic_t(int num_cells_series, int num_strings, double voltage, double Vfull, double Vexp, double Vnom, double Qfull, double Qexp, double Qnom, double C_rate, double R):
+voltage_dynamic_t::voltage_dynamic_t(int num_cells_series, int num_strings, double voltage, double Vfull,
+                                     double Vexp, double Vnom, double Qfull, double Qexp, double Qnom,
+                                     double C_rate, double R, double dt_hr) :
         voltage_t(voltage_t::VOLTAGE_MODEL, num_cells_series, num_strings, voltage)
 {
 	_Vfull = Vfull;
@@ -660,6 +662,10 @@ voltage_dynamic_t::voltage_dynamic_t(int num_cells_series, int num_strings, doub
 	_C_rate = C_rate;
 	_R = R;
 	_R_battery = _R * num_cells_series / num_strings;
+
+	if (dt_hr < 1/60.)
+	    throw std::runtime_error("Battery time step size must be greater than 1/60th of hour.");
+    solver_dhr = dt_hr;
 
 	// assume fully charged, not the nominal value
 	_cell_voltage = _Vfull;
@@ -686,6 +692,12 @@ void voltage_dynamic_t::copy(voltage_t * voltage)
 	_B0 = tmp->_B0;
 	_E0 = tmp->_E0;
 	_K = tmp->_K;
+
+	solver_dhr = tmp->solver_dhr;
+	solver_power = tmp->solver_power;
+	solver_Q = tmp->solver_Q;
+	solver_q = tmp->solver_q;
+	solver_cutoff_voltage = tmp->solver_cutoff_voltage;
 }
 void voltage_dynamic_t::parameter_compute()
 {
@@ -726,7 +738,7 @@ void voltage_dynamic_t::updateVoltage(capacity_t * capacity, thermal_t * , doubl
 	_cell_voltage = fmax(voltage_model_tremblay_hybrid(Q, I , q0), 0);
 }
 
-double voltage_dynamic_t::calculate_max_charge_w(double q, double qmax, double *max_current) {
+double voltage_dynamic_t::calculate_max_charge_w(double q, double qmax, double, double *max_current) {
     q /= _num_strings;
     qmax /= _num_strings;
     double current = qmax - q;
@@ -735,7 +747,7 @@ double voltage_dynamic_t::calculate_max_charge_w(double q, double qmax, double *
     return -current * voltage_model_tremblay_hybrid(qmax, -current , q + current) * _num_strings * _num_cells_series;
 }
 
-double voltage_dynamic_t::calculate_max_discharge_w(double q, double qmax, double *max_current) {
+double voltage_dynamic_t::calculate_max_discharge_w(double q, double qmax, double, double *max_current) {
     q /= _num_strings;
     qmax /= _num_strings;
     double current = max_current_a + max_current_b1 * q + max_current_b2 * qmax;
@@ -745,7 +757,7 @@ double voltage_dynamic_t::calculate_max_discharge_w(double q, double qmax, doubl
 }
 
 using namespace std::placeholders;
-double voltage_dynamic_t::calculate_current_for_target_w(double P_watts, double q, double qmax) {
+double voltage_dynamic_t::calculate_current_for_target_w(double P_watts, double q, double qmax, double) {
     if (P_watts == 0) return 0.;
 
     solver_power = abs(P_watts) / (_num_cells_series * _num_strings);
@@ -765,7 +777,7 @@ double voltage_dynamic_t::calculate_current_for_target_w(double P_watts, double 
     x[0] = solver_power / _cell_voltage;
     bool check = false;
 
-    int niter = newton<double, std::function<void(const double*, double*)>, 1>( x, resid, check, f,
+    newton<double, std::function<void(const double*, double*)>, 1>( x, resid, check, f,
                                                                                 100, 1e-6, 1e-6, 0.7);
     return x[0] * _num_strings * direction;
 }
@@ -838,32 +850,33 @@ void voltage_dynamic_t::fit_current_to_cutoff_voltage(double cutoff_voltage_rati
 
 void voltage_dynamic_t::solve_current_for_cutoff_voltage(const double x[1], double f[1]){
     double I = x[0];
-    double E = _E0 - _K*solver_Q/(solver_q-I) + _A*exp(-_B0*(solver_Q-(solver_q-I)));
+    double E = _E0 - _K*solver_Q/(solver_q-I*solver_dhr) + _A*exp(-_B0*(solver_Q-(solver_q-I*solver_dhr)));
     f[0] = E - _R*I - solver_cutoff_voltage;
 }
 
 void voltage_dynamic_t::solve_current_for_charge_power(const double *x, double *f){
     double I = x[0];
-    double V = _E0 - _K*solver_Q/(solver_q+I) + _A*exp(-_B0*(solver_Q-(solver_q+I))) + _R*I;
+    double V = _E0 - _K*solver_Q/(solver_q+I*solver_dhr) + _A*exp(-_B0*(solver_Q-(solver_q+I*solver_dhr))) + _R*I;
     f[0] = I*V - solver_power;
 }
 
 void voltage_dynamic_t::solve_current_for_discharge_power(const double *x, double *f){
     double I = x[0];
-    double V = _E0 - _K*solver_Q/(solver_q-I) + _A*exp(-_B0*(solver_Q-(solver_q-I))) - _R*I;
+    double V = _E0 - _K*solver_Q/(solver_q-I*solver_dhr) + _A*exp(-_B0*(solver_Q-(solver_q-I*solver_dhr))) - _R*I;
     f[0] = I*V - solver_power;
 }
 
 // Vanadium redox flow model
-voltage_vanadium_redox_t::voltage_vanadium_redox_t(int num_cells_series, int num_strings, double V_ref_50,  double R):
+voltage_vanadium_redox_t::voltage_vanadium_redox_t(int num_cells_series, int num_strings, double V_ref_50, double R,
+                                                   double dt_hr) :
         voltage_t(voltage_t::VOLTAGE_MODEL, num_cells_series, num_strings, V_ref_50)
 {
-	_I = 0;
 	_V_ref_50 = V_ref_50;
 	_R = R;
-    _R_molar = 8.314;  // Molar gas constant [J/mol/K]^M
-    _F = 26.801 * 3600;// Faraday constant [As/mol]^M
-    _C0 = 1.38;                 // model correction factor^M	
+    m_RCF = 8.314 * 1.38 / (26.801 * 3600);
+    if (dt_hr < 1/60.)
+        throw std::runtime_error("Battery time step size must be greater than 1/60th of hour.");
+    solver_dhr = dt_hr;
 }
 voltage_vanadium_redox_t * voltage_vanadium_redox_t::clone(){ return new voltage_vanadium_redox_t(*this); }
 void voltage_vanadium_redox_t::copy(voltage_t * voltage)
@@ -873,51 +886,91 @@ void voltage_vanadium_redox_t::copy(voltage_t * voltage)
 
 	_V_ref_50 = tmp->_V_ref_50;
 	_R = tmp->_R;
-	_I = tmp->_I;
-	_R_molar = tmp->_R_molar;
-	_F = tmp->_F;
-	_C0 = tmp->_C0;
+	m_RCF = tmp->m_RCF;
+	solver_dhr = tmp->solver_dhr;
+	solver_power = tmp->solver_power;
+	solver_T_k = tmp->solver_T_k;
+	solver_q = tmp->solver_q;
+	solver_Q = tmp->solver_Q;
 }
 void voltage_vanadium_redox_t::updateVoltage(capacity_t * capacity, thermal_t * thermal, double )
 {
-	_I = capacity->I();
-	double cell_voltage = voltage_model(capacity->qmax() / _num_strings, capacity->q0() / _num_strings, _I/ _num_strings, thermal->T_battery());
-    if (_I <= 0 || (_I > 0 && cell_voltage <= _cell_voltage))
-        _cell_voltage = cell_voltage;
+	_cell_voltage = voltage_model(capacity->q0() / _num_strings, capacity->qmax() / _num_strings,
+                                  capacity->I()/ _num_strings, thermal->T_battery());
 }
 
-double voltage_vanadium_redox_t::calculate_max_charge_w(double q, double qmax, double *max_current) {
+double voltage_vanadium_redox_t::calculate_max_charge_w(double q, double qmax, double kelvin, double *max_current) {
+    qmax /= _num_strings;
+    q = qmax - tolerance;
+    double max_I = qmax - q;
 
+    if (max_current)
+        *max_current = -max_I;
+
+    return -voltage_model(q, qmax, max_I, kelvin) * max_I * _num_strings * _num_cells_series;
 }
 
-double
-voltage_vanadium_redox_t::calculate_max_discharge_w(double q, double qmax, double *max_current) {
+double voltage_vanadium_redox_t::calculate_max_discharge_w(double q, double qmax, double kelvin, double *max_current) {
 
+    solver_q = q /_num_strings;
+    solver_Q = qmax / _num_strings;
+    solver_T_k = kelvin;
+
+    std::function<void(const double*, double*)> f = std::bind(&voltage_vanadium_redox_t::solve_max_discharge_power, this, _1, _2);
+
+    double x[1], resid[1];
+    x[0] = solver_q - tolerance;
+    bool check = false;
+
+    newton<double, std::function<void(const double*, double*)>, 1>( x, resid, check, f,
+                                                                    100, 1e-6, 1e-6, 0.7);
+    if (max_current)
+        *max_current = x[0];
+
+    return x[0] * voltage_model(solver_q - x[0], solver_Q, x[0], kelvin) * _num_strings * _num_cells_series;
 }
 
-double voltage_vanadium_redox_t::calculate_current_for_target_w(double P_watts, double q, double qmax) {
+double voltage_vanadium_redox_t::calculate_current_for_target_w(double P_watts, double q, double qmax, double kelvin) {
+    if (P_watts == 0) return 0.;
 
+    solver_power = P_watts / (_num_cells_series * _num_strings);
+    solver_q = q /_num_strings;
+    solver_Q = qmax / _num_strings;
+    solver_T_k = kelvin;
+
+    std::function<void(const double*, double*)> f = std::bind(&voltage_vanadium_redox_t::solve_current_for_power, this, _1, _2);
+
+    double x[1], resid[1];
+    x[0] = solver_power / _cell_voltage;
+    bool check = false;
+
+    newton<double, std::function<void(const double*, double*)>, 1>( x, resid, check, f,
+                                                                    100, 1e-6, 1e-6, 0.7);
+    return x[0] * _num_strings;
 }
 
 // I, Q, q0 are on a per-string basis since adding cells in series does not change current or charge
-double voltage_vanadium_redox_t::voltage_model(double qmax, double q0, double I_string, double T)
+double voltage_vanadium_redox_t::voltage_model(double q0, double qmax, double I_string, double T)
 {
-	double SOC = q0 / qmax;
-	double SOC_use = SOC;
-	if (SOC > 1 - tolerance)
-		SOC_use = 1 - tolerance;
+	double SOC_use = q0 / qmax;
+	if (SOC_use > 1. - tolerance)
+		SOC_use = 1. - tolerance;
 
 	double A = std::log(std::pow(SOC_use, 2) / std::pow(1 - SOC_use, 2));
 
-	
-	double V_cell = 0.;
+	return _V_ref_50 + m_RCF * T * A + I_string * _R;
+}
 
-	if (std::isfinite(A))
-	{
-		double V_stack_cell = _V_ref_50 + (_R_molar * T / _F) * A *_C0;
-		V_cell = V_stack_cell - I_string * _R;
-	}
-	return V_cell;
+void voltage_vanadium_redox_t::solve_current_for_power(const double *x, double *f){
+    double I = x[0];
+    double SOC = (solver_q - I*solver_dhr) / solver_Q;
+    f[0] = I * (_V_ref_50 + m_RCF * solver_T_k * std::log(SOC*SOC/std::pow(1.-SOC, 2)) + I * _R) - solver_power;
+}
+
+void voltage_vanadium_redox_t::solve_max_discharge_power(const double *x, double *f){
+    double I = x[0];
+    double SOC = (solver_q - I*solver_dhr) / solver_Q;
+    f[0] = _V_ref_50 + 2 * I * _R + m_RCF*solver_T_k*(std::log(SOC*SOC/pow(1.-SOC,2)) - 2*I/solver_Q*(1./SOC - 1./(1.-SOC)));
 }
 
 /*
@@ -1782,15 +1835,15 @@ void battery_t::initialize(capacity_t *capacity, voltage_t * voltage, lifetime_t
 }
 
 double battery_t::calculate_current_for_power(double P){
-    return _voltage->calculate_current_for_target_w(P, _capacity->q0(), _capacity->qmax());
+    return _voltage->calculate_current_for_target_w(P, _capacity->q0(), _capacity->qmax(), _thermal->T_battery());
 }
 
-double battery_t::calculate_max_charge_kw() {
-    return _voltage->calculate_max_charge_w(_capacity->q0(), _capacity->qmax(), nullptr);
+double battery_t::calculate_max_charge_kw(double *max_current) {
+    return _voltage->calculate_max_charge_w(_capacity->q0(), _capacity->qmax(), _thermal->T_battery(), max_current);
 }
 
-double battery_t::calculate_max_discharge_kw() {
-    return _voltage->calculate_max_discharge_w(_capacity->q0(), _capacity->qmax(), nullptr);
+double battery_t::calculate_max_discharge_kw(double *max_current) {
+    return _voltage->calculate_max_discharge_w(_capacity->q0(), _capacity->qmax(), _thermal->T_battery(), max_current);
 }
 
 void battery_t::run(size_t lifetimeIndex, double I)

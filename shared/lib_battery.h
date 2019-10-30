@@ -235,11 +235,11 @@ public:
 
 	virtual void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt)=0;
 
-	virtual double calculate_max_charge_w(double q, double qmax, double *max_current)=0;
+	virtual double calculate_max_charge_w(double q, double qmax, double kelvin, double *max_current) =0;
 
-	virtual double calculate_max_discharge_w(double q, double qmax, double *max_current)=0;
+	virtual double calculate_max_discharge_w(double q, double qmax, double kelvin, double *max_current) =0;
 
-    virtual double calculate_current_for_target_w(double P_watts, double q, double qmax)=0;
+    virtual double calculate_current_for_target_w(double P_watts, double q, double qmax, double kelvin) =0;
 
     virtual double battery_voltage(); // voltage of one battery
 
@@ -272,12 +272,12 @@ public:
 
 	void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt) override ;
 
-    double calculate_max_charge_w(double q, double qmax, double *max_current) override;
+    double calculate_max_charge_w(double q, double qmax, double kelvin, double *max_current) override;
 
-    double calculate_max_discharge_w(double q, double qmax, double *max_current) override;
+    double calculate_max_discharge_w(double q, double qmax, double kelvin, double *max_current) override;
 
     // return current for targeted power, or 0 if unable
-    double calculate_current_for_target_w(double P_watts, double q, double qmax) override;
+    double calculate_current_for_target_w(double P_watts, double q, double qmax, double kelvin) override;
 
 protected:
 
@@ -295,7 +295,9 @@ private:
 class voltage_dynamic_t : public voltage_t
 {
 public:
-	voltage_dynamic_t(int num_cells_series, int num_strings, double voltage, double Vfull, double Vexp, double Vnom, double Qfull, double Qexp, double Qnom, double C_rate, double R);
+	voltage_dynamic_t(int num_cells_series, int num_strings, double voltage, double Vfull,
+                      double Vexp, double Vnom, double Qfull, double Qexp, double Qnom,
+                      double C_rate, double R, double dt_hr=1.);
 
 	// deep copy
 	voltage_dynamic_t * clone();
@@ -305,12 +307,12 @@ public:
 
 	void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt) override;
 
-    double calculate_max_charge_w(double q, double qmax, double *max_current) override;
+    double calculate_max_charge_w(double q, double qmax, double kelvin, double *max_current) override;
 
-    double calculate_max_discharge_w(double q, double qmax, double *max_current) override;
+    double calculate_max_discharge_w(double q, double qmax, double kelvin, double *max_current) override;
 
     // returns current for power (discharge > 0, charge < 0), use above functions to first check feasibility
-    double calculate_current_for_target_w(double P_watts, double q, double qmax) override;
+    double calculate_current_for_target_w(double P_watts, double q, double qmax, double kelvin) override;
 
     void fit_current_to_cutoff_voltage(double cutoff_voltage_ratio = 0.75);
 
@@ -339,6 +341,7 @@ private:
 	// solver quantities
 	double solver_Q;
 	double solver_q;
+	double solver_dhr;
 
     double solver_cutoff_voltage;
     void solve_current_for_cutoff_voltage(const double x[1], double f[1]);
@@ -352,7 +355,8 @@ private:
 class voltage_vanadium_redox_t : public voltage_t
 {
 public:
-	voltage_vanadium_redox_t(int num_cells_series, int num_strings, double V_ref_50, double R);
+	voltage_vanadium_redox_t(int num_cells_series, int num_strings, double V_ref_50, double R,
+                             double dt_hr=1.);
 
 	// deep copy
 	voltage_vanadium_redox_t * clone();
@@ -362,24 +366,34 @@ public:
 
 	void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt) override;
 
-    double calculate_max_charge_w(double q, double qmax, double *max_current) override;
+    double calculate_max_charge_w(double q, double qmax, double kelvin, double *max_current) override;
 
-    double calculate_max_discharge_w(double q, double qmax, double *max_current) override;
+    double calculate_max_discharge_w(double q, double qmax, double kelvin, double *max_current) override;
 
-    double calculate_current_for_target_w(double P_watts, double q, double qmax) override;
+    double calculate_current_for_target_w(double P_watts, double q, double qmax, double kelvin) override;
 
 protected:
-	
+
 	// cell voltage model is on a per-cell basis
-	double voltage_model(double q0, double qmax, double I_string, double T);
+	double voltage_model(double q, double qmax, double I_string, double T);
 
 private:
-	double _V_ref_50;				// Reference voltage at 50% SOC
-	double _R;						// Internal resistance [Ohm]
-	double _I;						// Current level [A]
-	double _R_molar;
-	double _F;
-	double _C0;
+
+    // RC/F: R is Molar gas constant [J/mol/K]^M, R is Faraday constant [As/mol]^M, C is model correction factor^M
+    double m_RCF;
+
+    double _V_ref_50;				// Reference voltage at 50% SOC
+    // solver quantities
+    double solver_dhr;
+
+    double solver_Q;
+    double solver_q;
+    double solver_T_k;              // temp in Kelvin
+
+    double solver_power;
+    void solve_current_for_power(const double *x, double *f);
+
+    void solve_max_discharge_power(const double *x, double *f);
 };
 
 
@@ -747,8 +761,8 @@ public:
 	void run(size_t lifetimeIndex, double I);
 
 	double calculate_current_for_power(double P);
-    double calculate_max_charge_kw();
-    double calculate_max_discharge_kw();
+    double calculate_max_charge_kw(double *max_current = nullptr);
+    double calculate_max_discharge_kw(double *max_current = nullptr);
 
     // Run a component level model
 	void runCapacityModel(double &I);

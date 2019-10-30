@@ -137,7 +137,8 @@ public:
 		// For Manual Dispatch Test
 		BatteryProperties::SetUp();
 		capacityModel = new capacity_lithium_ion_t(q, SOC_init, SOC_max, SOC_min);
-		voltageModel = new voltage_dynamic_t(n_series, n_strings, Vnom_default, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom, C_rate, resistance);
+		voltageModel = new voltage_dynamic_t(n_series, n_strings, Vnom_default, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom,
+                                             C_rate, resistance, dtHour);
 		cycleModel = new lifetime_cycle_t(cycleLifeMatrix);
 		calendarModel = new lifetime_calendar_t(calendarChoice, calendarLifeMatrix, dtHour);
 		lifetimeModel = new lifetime_t(cycleModel, calendarModel, replacementOption, replacementCapacity);
@@ -154,7 +155,7 @@ public:
 		// For Debugging Input Battery Target front of meter minute time steps
 		double dtHourFOM = 1.0 / 60.0;
 		capacityModelFOM = new capacity_lithium_ion_t(2.25 * 444, 63.3475, 95, 15);
-		voltageModelFOM = new voltage_dynamic_t(139, 444, 3.6, 4.10, 4.05, 3.4, 2.25, 0.04, 2.00, 0.2, 0.2);
+		voltageModelFOM = new voltage_dynamic_t(139, 444, 3.6, 4.10, 4.05, 3.4, 2.25, 0.04, 2.00, 0.2, 0.2, dtHourFOM);
 		lossModelFOM = new losses_t(dtHourFOM, lifetimeModel, thermalModel, capacityModel, lossChoice, monthlyLosses, monthlyLosses, monthlyLosses, fullLossesMinute);
 		batteryModelFOM = new battery_t(dtHourFOM, chemistry);
 		batteryModelFOM->initialize(capacityModelFOM, voltageModelFOM, lifetimeModel, thermalModel, lossModelFOM);
@@ -163,7 +164,7 @@ public:
 		// For testing Automated Front-of-meter DC-coupled
 		double dtHourDC = 1.0;
 		capacityModelDC = new capacity_lithium_ion_t(2.25 * 133227, 50, 100, 10);
-		voltageModelDC = new voltage_dynamic_t(139, 133227, 3.6, 4.10, 4.05, 3.4, 2.25, 0.04, 2.00, 0.2, 0.2);
+		voltageModelDC = new voltage_dynamic_t(139, 133227, 3.6, 4.10, 4.05, 3.4, 2.25, 0.04, 2.00, 0.2, 0.2, dtHourDC);
 		lossModelDC = new losses_t(dtHourDC, lifetimeModel, thermalModel, capacityModel, lossChoice);
 		batteryModelDC = new battery_t(dtHourDC, chemistry);
 		batteryModelDC->initialize(capacityModelDC, voltageModelDC, lifetimeModel, thermalModel, lossModelDC);
