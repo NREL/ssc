@@ -171,6 +171,99 @@ TEST_F(ResilienceTest_lib_resilience, ChargeVoltageTable){
     volt.updateVoltage(&cap, nullptr, 1);
     double v = volt.cell_voltage();
     EXPECT_NEAR(req_cur * v, -1.5, 1e-2);
+
+    double max_p = volt.calculate_max_charge_w(cap.q0(), cap.qmax(), &current);
+    cap.updateCapacity(current, 1);
+    volt.updateVoltage(&cap, nullptr, 1);
+    EXPECT_NEAR(max_p, cap.I() * volt.cell_voltage(), 1e-3);
+}
+
+TEST_F(ResilienceTest_lib_resilience, RoundtripEffModel){
+    auto cap = batt->battery_model->capacity_model();
+    auto vol = batt->battery_model->voltage_model();
+    cap->change_SOC_limits(0, 100);
+
+
+    double full_current = 1000;
+    double max_current;
+    vol->calculate_max_charge_w(cap->q0(), cap->qmax(), &max_current);
+
+    double current = abs(max_current) * 0.01;
+    while (current < abs(max_current)){
+        cap->updateCapacity(full_current, 1);   //discharge to empty
+
+        size_t n_t = 0;
+        current *= -1;
+        double input_power = 0.;
+        while(cap->SOC() < 100 ){
+            double input_current = current;
+            cap->updateCapacity(input_current, 1);
+            vol->updateVoltage(cap, nullptr, 1);
+            input_power += cap->I() * vol->battery_voltage();
+            n_t += 1;
+
+        }
+
+        current *= -1;
+        double output_power = 0.;
+        while(vol->calculate_max_discharge_w(cap->q0(), cap->qmax(), nullptr) > 0 ){
+            double output_current = current;
+            cap->updateCapacity(output_current, 1);
+            vol->updateVoltage(cap, nullptr, 1);
+            output_power += cap->I() * vol->battery_voltage();
+            n_t += 1;
+
+        }
+
+        printf("current %f, eff %f, n %d\n", current, -output_power/input_power, n_t);
+
+        current += abs(max_current) / 100.;
+    }
+}
+
+TEST_F(ResilienceTest_lib_resilience, RoundtripEffTable){
+    std::vector<double> vals = {0, batt_vars->batt_Vfull, 1.78, batt_vars->batt_Vexp,
+                                88.9, batt_vars->batt_Vnom, 99, 0};
+    util::matrix_t<double> table(4, 2, &vals);
+    auto vol = std::unique_ptr<voltage_table_t>(new voltage_table_t(batt_vars->batt_computed_series,
+            batt_vars->batt_computed_strings, batt_vars->batt_Vnom_default, table, batt_vars->batt_resistance));
+    auto cap = batt->battery_model->capacity_model();
+    cap->change_SOC_limits(0, 100);
+
+
+    double full_current = 1000;
+    double max_current;
+    vol->calculate_max_charge_w(cap->q0(), cap->qmax(), &max_current);
+
+    double current = abs(max_current) * 0.01;
+    while (current < abs(max_current)){
+        cap->updateCapacity(full_current, 1);   //discharge to empty
+
+        size_t n_t = 0;
+        current *= -1;
+        double input_power = 0.;
+        while(cap->SOC() < 100 ){
+            double input_current = current;
+            cap->updateCapacity(input_current, 1);
+            vol->updateVoltage(cap, nullptr, 1);
+            input_power += cap->I() * vol->battery_voltage();
+            n_t += 1;
+        }
+
+        current *= -1;
+        double output_power = 0.;
+        while(vol->calculate_max_discharge_w(cap->q0(), cap->qmax(), nullptr) > 0 ){
+            double output_current = current;
+            cap->updateCapacity(output_current, 1);
+            vol->updateVoltage(cap, nullptr, 1);
+            output_power += cap->I() * vol->battery_voltage();
+            n_t += 1;
+        }
+
+        printf("current %f, eff %f, n %d\n", current, -output_power/input_power, n_t);
+
+        current += abs(max_current) / 100.;
+    }
 }
 
 TEST_F(ResilienceTest_lib_resilience, PVWattsResilience)

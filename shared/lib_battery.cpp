@@ -723,7 +723,7 @@ void voltage_dynamic_t::updateVoltage(capacity_t * capacity, thermal_t * , doubl
 	double I = capacity->I() / _num_strings;
 	double q0 = capacity->q0() / _num_strings;
 
-	_cell_voltage = voltage_model_tremblay_hybrid(Q, I , q0);
+	_cell_voltage = fmax(voltage_model_tremblay_hybrid(Q, I , q0), 0);
 }
 
 double voltage_dynamic_t::calculate_max_charge_w(double q, double qmax, double *max_current) {
@@ -732,13 +732,13 @@ double voltage_dynamic_t::calculate_max_charge_w(double q, double qmax, double *
     double current = qmax - q;
     if (max_current)
         *max_current = -current * _num_strings;
-    return current * voltage_model_tremblay_hybrid(qmax, -current , q + current) * _num_strings * _num_cells_series;
+    return -current * voltage_model_tremblay_hybrid(qmax, -current , q + current) * _num_strings * _num_cells_series;
 }
 
 double voltage_dynamic_t::calculate_max_discharge_w(double q, double qmax, double *max_current) {
     q /= _num_strings;
     qmax /= _num_strings;
-    double current =max_current_a + max_current_b1 * q + max_current_b2 * qmax;
+    double current = max_current_a + max_current_b1 * q + max_current_b2 * qmax;
     if (max_current)
         *max_current = current  * _num_strings;
     return current * voltage_model_tremblay_hybrid(qmax, current , q - current) * _num_strings * _num_cells_series;
