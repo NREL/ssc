@@ -222,7 +222,7 @@ class thermal_t;
 class voltage_t
 {
 public:
-	voltage_t(int mode, int num_cells_series, int num_strings, double voltage, util::matrix_t<double> voltage_table);
+	voltage_t(int mode, int num_cells_series, int num_strings, double voltage);
 
 	// deep copy
 	virtual voltage_t * clone()=0;
@@ -257,28 +257,7 @@ protected:
 	double _cell_voltage_nominal; // nominal cell voltage [V]
 	double _R;                    // internal cell resistance (Ohm)
 	double _R_battery;            // internal battery resistance (Ohm)
-	util::matrix_t<double> _batt_voltage_matrix;  // voltage vs depth-of-discharge
 };
-
-// A row in the table
-class table_point
-{
-public:
-	table_point(double DOD = 0., double V = 0.) :
-		_DOD(DOD), _V(V){}
-	double DOD() const{ return _DOD; }
-	double V() const{ return _V; }
-
-private:
-	double _DOD;
-	double _V;
-};
-
-struct byDOD
-{
-	bool operator()(table_point const &a, table_point const &b){ return a.DOD() < b.DOD(); }
-};
-
 
 class voltage_table_t : public voltage_t
 {
@@ -302,11 +281,14 @@ public:
 
 protected:
 
-	bool exactVoltageFound(double DOD, double &V);
-	void prepareInterpolation(double & DOD_lo, double & V_lo, double & DOD_hi, double & V_hi, double DOD);
-
 private:
-	std::vector<table_point> _voltage_table;
+    //  depth-of-discharge [%] and cell voltage [V] pairs
+	std::vector<std::pair<double, double>> m_voltage_table;
+
+    std::vector<double> slopes;
+    std::vector<double> intercepts;
+
+    double calculate_voltage(double DOD);
 };
 
 // Shepard + Tremblay Model

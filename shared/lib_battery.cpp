@@ -93,7 +93,7 @@ capacity_t::capacity_t(double q, double SOC_init, double SOC_max, double SOC_min
 	_SOC_init = SOC_init;
 	_SOC_max = SOC_max;
 	_SOC_min = SOC_min;
-	_DOD = 0;
+	_DOD = 100. - _SOC;
 	_DOD_prev = 0;
 
 	// Initialize charging states
@@ -480,7 +480,7 @@ double capacity_lithium_ion_t::q10(){return _qmax;}
 /*
 Define Voltage Model
 */
-voltage_t::voltage_t(int mode, int num_cells_series, int num_strings, double voltage, util::matrix_t<double> voltage_matrix)
+voltage_t::voltage_t(int mode, int num_cells_series, int num_strings, double voltage)
 {
 	_mode = mode;
 	_num_cells_series = num_cells_series;
@@ -489,7 +489,6 @@ voltage_t::voltage_t(int mode, int num_cells_series, int num_strings, double vol
 	_cell_voltage_nominal = voltage;
 	_R = 0.004; // just a default, will get recalculated upon construction
 	_R_battery = _R * num_cells_series / num_strings;
-	_batt_voltage_matrix = voltage_matrix;
 }
 void voltage_t::copy(voltage_t * voltage)
 {
@@ -501,8 +500,6 @@ void voltage_t::copy(voltage_t * voltage)
 	_R = voltage->_R;
 	_R_battery = voltage->_R_battery;
 
-	// doesn't change;
-	//_batt_voltage_matrix = voltage->_batt_voltage_matrix;
 }
 double voltage_t::battery_voltage(){ return _num_cells_series*_cell_voltage; }
 double voltage_t::battery_voltage_nominal(){ return _num_cells_series * _cell_voltage_nominal; }
@@ -511,14 +508,36 @@ double voltage_t::R_battery(){ return _R_battery; }
 
 // Voltage Table 
 voltage_table_t::voltage_table_t(int num_cells_series, int num_strings, double voltage, util::matrix_t<double> &voltage_table, double R) :
-voltage_t(voltage_t::VOLTAGE_TABLE, num_cells_series, num_strings, voltage, voltage_table)
+        voltage_t(voltage_t::VOLTAGE_TABLE, num_cells_series, num_strings, voltage)
 {
-	for (int r = 0; r != (int)_batt_voltage_matrix.nrows(); r++)
-		_voltage_table.push_back(table_point(_batt_voltage_matrix.at(r, 0), _batt_voltage_matrix.at(r, 1)));
-	
-	std::sort(_voltage_table.begin(), _voltage_table.end(), byDOD());
-
 	_R = R;
+
+    // extract and sort calendar life info from table
+	for (int r = 0; r != (int)voltage_table.nrows(); r++)
+		m_voltage_table.emplace_back(std::make_pair(voltage_table.at(r, 0), voltage_table.at(r, 1)));
+
+	std::sort(m_voltage_table.begin(), m_voltage_table.end(), [](std::pair<double, double> a, std::pair<double, double> b) {return a.second > b.second; });
+
+	// save slope and intercept for every set of points to interpolate between
+    for (size_t i = 0; i != m_voltage_table.size(); i++) {
+        double DOD = m_voltage_table[i].first;
+        double V = m_voltage_table[i].second;
+        double slope = 0;
+        double intercept = V;
+        if (i > 0){
+            double DOD0 = m_voltage_table[i-1].first;
+            double V0 = m_voltage_table[i-1].second;
+            slope = (V - V0)/(DOD - DOD0);
+            intercept = V0 - (slope * DOD0);
+        }
+        slopes.emplace_back(slope);
+        intercepts.emplace_back(intercept);
+    }
+
+    // for extrapolation beyond given points
+    slopes.emplace_back(slopes.back());
+    intercepts.emplace_back(intercepts.back());
+
 }
 
 voltage_table_t * voltage_table_t::clone(){ return new voltage_table_t(*this); }
@@ -533,86 +552,104 @@ void voltage_table_t::copy(voltage_t * voltage)
 	*/
 }
 
+double voltage_table_t::calculate_voltage(double DOD) {
+    DOD = fmax(0., DOD);
+    DOD = fmin(DOD, 100.);
+
+    size_t row = 0;
+    while (row < m_voltage_table.size() && DOD > m_voltage_table[row].first){
+        row++;
+    }
+
+    return fmax(slopes[row] * DOD + intercepts[row], 0);
+}
+
 
 void voltage_table_t::updateVoltage(capacity_t * capacity, thermal_t * , double )
 {
-	double cell_voltage = _cell_voltage;
-	double DOD = capacity->DOD();
-	double I_string = capacity->I() / _num_strings;
-	double DOD_lo, DOD_hi, V_lo, V_hi;
-	bool voltage_found = exactVoltageFound(DOD, cell_voltage);
-	if (!voltage_found)
-	{
-		prepareInterpolation(DOD_lo, V_lo, DOD_hi, V_hi, DOD);
-		cell_voltage = util::interpolate(DOD_lo, V_lo, DOD_hi, V_hi, DOD) - I_string * _R;
-	}
-
-	// the cell voltage should not increase when the battery is discharging
-	if (I_string <= 0 || (I_string > 0 && cell_voltage <= _cell_voltage))
-		_cell_voltage = cell_voltage;
-	
+    _cell_voltage = calculate_voltage(capacity->DOD());
 }
 
-double voltage_table_t::calculate_max_charge_w(double q, double qmax, double *max_current) {
+inline double calc_DOD(double q, double qmax) {return (1. - q/qmax) * 100.;}
 
+double voltage_table_t::calculate_max_charge_w(double q, double qmax, double *max_current) {
+    double DOD0 = calc_DOD(q, qmax);
+    double current = qmax*( (1.-DOD0/100.) - 1. );
+    if (max_current)
+        *max_current = current;
+    return calculate_voltage(0.) * current;
 }
 
 double voltage_table_t::calculate_max_discharge_w(double q, double qmax, double *max_current) {
+    double DOD0 = calc_DOD(q, qmax);
+    double A = q - qmax;
+    double B = qmax/100.;
 
+    double max = 0;
+    for (size_t i = 0; i < slopes.size(); i++){
+        double dod = -(A*slopes[i] + B*intercepts[i])/(2*B*slopes[i]);
+        double current = qmax*( (1.-DOD0/100.) - (1.-dod/100.) );
+        double p = calculate_voltage(dod) * current;
+        if (p > max){
+            max = p;
+            if (max_current)
+                *max_current = current;
+        }
+    }
+    return max;
 }
 
 double voltage_table_t::calculate_current_for_target_w(double P_watts, double q, double qmax) {
+    double DOD = calc_DOD(q, qmax);
+    double max_p, current;
+    if (P_watts == 0)
+        return 0.;
+    else if (P_watts < 0)
+        max_p = calculate_max_charge_w(q, qmax, &current);
+    else
+        max_p = calculate_max_discharge_w(q, qmax, &current);
 
-}
+    if (abs(max_p) < abs(P_watts))
+        return current;
 
-bool voltage_table_t::exactVoltageFound(double DOD, double & V)
-{
-	bool contained = false;
-	for (size_t r = 0; r != _voltage_table.size(); r++)
-	{
-		if (_voltage_table[r].DOD() == DOD)
-		{
-			V = _voltage_table[r].V();
-			contained = true;
-			break;
-		}
-	}
-	return contained;
-}
+    double multiplier = 1.;
+    if (P_watts < 0)
+        multiplier = -1.;
 
-void voltage_table_t::prepareInterpolation(double & DOD_lo, double & V_lo, double & DOD_hi, double & V_hi, double DOD)
-{
-	size_t nrows = _voltage_table.size();
-	DOD_lo = _voltage_table[0].DOD();
-	DOD_hi = _voltage_table[nrows - 1].DOD();
-	V_lo = _voltage_table[0].V();
-	V_hi = _voltage_table[nrows - 1].V();
+    size_t row = 0;
+    while (DOD > m_voltage_table[row].first && row < m_voltage_table.size()){
+        row++;
+    }
 
-	for (size_t r = 0; r != nrows; r++)
-	{
-		double DOD_r = _voltage_table[r].DOD();
-		double V_r = _voltage_table[r].V();
+    double A = q - qmax;
+    double B = qmax/100.;
 
-		if (DOD_r <= DOD)
-		{
-			DOD_lo = DOD_r;
-			V_lo = V_r;
-		}
+    double DOD_new = 0.;
+    double incr = 0;
+    while (incr + row < slopes.size() && incr + row >= 0){
+        double i = row + incr;
 
-		if (DOD_r >= DOD)
-		{
-			DOD_hi = DOD_r;
-			V_hi = V_r;
-			break;
-		}
-	}
+        double a = B * slopes[i];
+        double b = A * slopes[i] + B * intercepts[i];
+        double c = A * intercepts[i] - P_watts;
+
+        DOD_new = abs((-b + sqrt(b*b - 4*a*c))/(2*a));
+
+        auto upper = (size_t)fmin(i, m_voltage_table.size());
+        auto lower = (size_t)fmax(0, i-1);
+        if (DOD_new <= m_voltage_table[upper].first && DOD_new >= m_voltage_table[lower].first){
+            break;
+        }
+        incr += 1 * multiplier;
+    }
+    return qmax*((1.-DOD/100.) - (1.-DOD_new/100.));
 }
 
 // Dynamic voltage model
 typedef void (voltage_dynamic_t::*voltage_dynamic_fptr)(const double*, double*);
 
 voltage_dynamic_t::voltage_dynamic_t(int num_cells_series, int num_strings, double voltage, double Vfull, double Vexp, double Vnom, double Qfull, double Qexp, double Qnom, double C_rate, double R):
-voltage_t(voltage_t::VOLTAGE_MODEL, num_cells_series, num_strings, voltage, util::matrix_t<double>())
+        voltage_t(voltage_t::VOLTAGE_MODEL, num_cells_series, num_strings, voltage)
 {
 	_Vfull = Vfull;
 	_Vexp = Vexp;
@@ -819,7 +856,7 @@ void voltage_dynamic_t::solve_current_for_discharge_power(const double *x, doubl
 
 // Vanadium redox flow model
 voltage_vanadium_redox_t::voltage_vanadium_redox_t(int num_cells_series, int num_strings, double V_ref_50,  double R):
-voltage_t(voltage_t::VOLTAGE_MODEL, num_cells_series, num_strings, V_ref_50, util::matrix_t<double>())
+        voltage_t(voltage_t::VOLTAGE_MODEL, num_cells_series, num_strings, V_ref_50)
 {
 	_I = 0;
 	_V_ref_50 = V_ref_50;

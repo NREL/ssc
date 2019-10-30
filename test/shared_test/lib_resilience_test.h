@@ -37,7 +37,7 @@ protected:
         size_kwh = 16.0;
         inv_eff = 96.0;
         for (size_t i = 0; i < n_recs; i++){
-            ac.push_back(2.);
+            ac.push_back(1.5);
             load.push_back(1.);
             // charge to full SOC at 95%
             if (i < 9)
