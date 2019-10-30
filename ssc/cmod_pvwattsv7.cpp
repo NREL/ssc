@@ -754,7 +754,7 @@ public:
 
 				if (module.bifaciality > 0)
 				{
-					irr.calc_rear_side(0.013, module.bifaciality, 1, module.length * pv.nmody);
+					irr.calc_rear_side(0.013, 1, module.length * pv.nmody);
 					irear = irr.get_poa_rear();
 				}
 
@@ -855,7 +855,7 @@ public:
 							double irear_stow = 0.0;
 							if (module.bifaciality > 0)
 							{
-								irr.calc_rear_side(0.013, module.bifaciality, 1, module.length * pv.nmody);
+								irr.calc_rear_side(0.013, 1, module.length * pv.nmody);
 								irear_stow = irr.get_poa_rear();
 							}
 
@@ -916,10 +916,13 @@ public:
 						ssoutputs ssout;
 
 						ss_exec(ssin,
-							stilt, sazi, solzen, solazi,
+							stilt, sazi, //surface tilt and azimuth
+							solzen, solazi, //solar zenith and azimuth
 							wf.dn, // Gb_nor (e.g. DNI)
+							wf.df, //Gdh (e.g. DHI)
 							ibeam*(1.0 - shad1xf), // Gb_poa
-							(iskydiff + ignddiff), // Gd_poa 
+							iskydiff, //poa_sky
+							ignddiff, // poa_gnd 
 							alb,
 							pv.type == ONE_AXIS, // is tracking system? 
 							module.type == THINFILM,  // is linear shading? (only with long cell thin films)
@@ -972,13 +975,13 @@ public:
 						double reduced_gnddiff = ignddiff;
 
 						// worst-case mask angle using calculated surface tilt
-						double phi0 = 180 / 3.1415926*atan2(sind(stilt), 1 / pv.gcr - cosd(stilt));
+						//double phi0 = 180 / 3.1415926*atan2(sind(stilt), 1 / pv.gcr - cosd(stilt));
 
 						// calculate sky and gnd diffuse derate factors
 						// based on view factor reductions from self-shading
 						diffuse_reduce(solzen, stilt,
-							wf.dn, iskydiff + ignddiff,
-							pv.gcr, phi0, alb, 1000,
+							wf.dn, wf.df, iskydiff, ignddiff,
+							pv.gcr, alb, 1000,
 
 							// outputs (pass by reference)
 							reduced_skydiff, Fskydiff,
