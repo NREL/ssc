@@ -9,15 +9,23 @@ extern "C" {
 #endif
 
 static const char* mp_capacity_check_doc =
-    "Calculates the cable length in an ME array\\n"
+    "Checks the capacities specified in the Ancillary Services markets against the system capacity\\n"
     "Input: var_table with key-value pairs\\n"
-    "     'devices_per_row' - double [-]\\n"
-    "     'device_spacing_in_row' - double [m]\\n"
-	"     'number_rows' - double [-]\\n"
-	"     'row_spacing' - double [m]\\n"
-	"     'cable_system_overbuild' - double [%]\\n"
-    "Output: key-value pairs added to var_table\\n"
-    "     'inter_array_cable_length' - double [m]\\n";
+    "     'analysis_period' - double [-]\\n"
+    "     'system_capacity' - double [kW]\\n"
+	"     'mp_enable_energy_market_revenue' - boolean [-]\\n"
+	"     'mp_energy_market_revenue' - matrix [MW, $/MW]\\n"
+	"     'mp_enable_ancserv1' - boolean [-]\\n"
+	"     'mp_ancserv1_revenue' - matrix [MW, $/MW]\\n"
+	"     'mp_enable_ancserv2' - boolean [-]\\n"
+	"     'mp_ancserv2_revenue' - matrix [MW, $/MW]\\n"
+	"     'mp_enable_ancserv3' - boolean [-]\\n"
+	"     'mp_ancserv3_revenue' - matrix [MW, $/MW]\\n"
+	"     'mp_enable_ancserv4' - boolean [-]\\n"
+	"     'mp_ancserv4_revenue' - matrix [MW, $/MW]\\n"
+	"Output: key-value pairs added to var_table\\n"
+	"     'mp_capacity_check' - boolean\\n"
+	"     'mp_capacity_check_error' - string\\n";
 
 SSCEXPORT void mp_capacity_check(ssc_data_t data);
 
