@@ -79,6 +79,9 @@ public:
 	/// Get fuel cell max power kW
 	double getMaxPower();
 
+	/// Get fuel cell min power kW
+	double getMinPower();
+
 	/// Return the final power kW
 	double getPower();
 

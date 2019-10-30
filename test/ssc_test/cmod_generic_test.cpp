@@ -3,7 +3,7 @@
 #include "cmod_generic_test.h"
 
 /// Test Generic System with Battery for SingleOwner PPA
-TEST_F(CMGeneric, SingleOwnerWithBattery) {
+TEST_F(CMGeneric, SingleOwnerWithBattery_cmod_generic) {
 
 	generic_singleowner_battery_60min(data);
 
@@ -37,7 +37,7 @@ TEST_F(CMGeneric, SingleOwnerWithBattery) {
 }
 
 /// Test Generic System with Battery for various timesteps
-TEST_F(CMGeneric, CommercialWithBattery) {
+TEST_F(CMGeneric, CommercialWithBattery_cmod_generic) {
 
 	generic_commerical_battery_60min(data);
 	

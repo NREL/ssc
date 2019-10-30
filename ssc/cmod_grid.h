@@ -59,7 +59,7 @@ struct gridVariables
 {
 public:
 
-	gridVariables() {/* nothing to do */ };
+//	gridVariables() {/* nothing to do */ };
 	gridVariables(compute_module & cm) : 
 		enable_interconnection_limit(cm.as_boolean("enable_interconnection_limit")),
 		grid_interconnection_limit_kW(cm.as_double("grid_interconnection_limit_kwac"))
@@ -76,28 +76,55 @@ public:
 			load_year_one = cm.as_vector_double("load");
 		}
 
+		size_t analysis_period = 1;
+		if (cm.is_assigned("analysis_period")) {
+			analysis_period = (size_t)cm.as_integer("analysis_period");
+		}
+		bool system_use_lifetime_output = false;
+		if (cm.is_assigned("system_use_lifetime_output")) {
+			system_use_lifetime_output = (bool)cm.as_integer("system_use_lifetime_output");
+		}
 
 		single_year_to_lifetime_interpolated<double>(
-			(bool)cm.as_integer("system_use_lifetime_output"),
-			(size_t)cm.as_integer("analysis_period"),
+			system_use_lifetime_output,
+			analysis_period,
 			n_rec_lifetime,
 			load_year_one,
 			loadLifetime_kW,
 			n_rec_single_year,
 			dt_hour_gen);
-	
+
+		std::vector<double> curtailment_year_one;
+		if (cm.is_assigned("grid_curtailment")) {
+			curtailment_year_one = cm.as_vector_double("grid_curtailment");
+		}
+		single_year_to_lifetime_interpolated<double>(
+			(bool)cm.as_integer("system_use_lifetime_output"),
+			(size_t)analysis_period,
+			n_rec_lifetime,
+			curtailment_year_one,
+			gridCurtailmentLifetime_percent,
+			n_rec_single_year,
+			dt_hour_gen);
+
+
+
 		numberOfLifetimeRecords = n_rec_lifetime;
 		numberOfSingleYearRecords = n_rec_single_year;
 		numberOfYears = n_rec_lifetime / n_rec_single_year;
 
 		grid_kW.reserve(numberOfLifetimeRecords);
-		systemGenerationPreInterconnect_kW = systemGenerationLifetime_kW;
-	}
+		grid_kW = systemGenerationLifetime_kW;
 
-	// generation input with interconnection curtailment
+		
+	}
+	// curtailment percentage input
+	std::vector<double> gridCurtailmentLifetime_percent;
+
+	// generation input with interconnection limit
 	std::vector<double> systemGenerationLifetime_kW;
 
-	// pre-curailed generation output
+	// pre-interconnected limited generation output
 	std::vector<double> systemGenerationPreInterconnect_kW;
 
 	// electric load input
@@ -147,7 +174,8 @@ protected:
 	std::unique_ptr<gridVariables> gridVars;
 
 	// outputs
-	ssc_number_t * p_genInterconnect_kW;
+	ssc_number_t * p_genGrid_kW;
+	ssc_number_t * p_genPreCurtailment_kW;
 	ssc_number_t * p_genPreInterconnect_kW;
 
 	

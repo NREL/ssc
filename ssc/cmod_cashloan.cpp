@@ -1,51 +1,24 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 #include <sstream>
 #include <vector>
 
@@ -67,9 +40,9 @@ static var_info vtab_cashloan[] = {
 	
 	{ SSC_INPUT,        SSC_ARRAY,       "annual_energy_value",             "Energy value",                       "$",            "",                      "Cashloan",      "*",                       "",                                         "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "annual_themal_value",             "Energy value",                       "$",            "",                      "Cashloan",      "",                       "",                                         "" },
-	{ SSC_INPUT, SSC_ARRAY, "gen", "Power generated by renewable resource", "kW", "", "", "*", "", "" },
-	{ SSC_INPUT, SSC_ARRAY, "degradation", "Annual degradation", "%", "", "AnnualOutput", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "system_use_lifetime_output", "Lifetime hourly system outputs", "0/1", "0=hourly first year,1=hourly lifetime", "AnnualOutput", "*", "INTEGER,MIN=0", "" },
+	{ SSC_INPUT, SSC_ARRAY, "gen", "Power generated by renewable resource", "kW", "", "System Output", "*", "", "" },
+	{ SSC_INPUT, SSC_ARRAY, "degradation", "Annual degradation", "%", "", "System Output", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "system_use_lifetime_output", "Lifetime hourly system outputs", "0/1", "0=hourly first year,1=hourly lifetime", "Lifetime", "*", "INTEGER,MIN=0", "" },
 
 	/* financial outputs */
 	{ SSC_OUTPUT,        SSC_NUMBER,     "cf_length",                "Number of periods in cash flow",      "",             "",                      "Cash Flow",      "*",                       "INTEGER",                                  "" },
@@ -162,7 +135,10 @@ static var_info vtab_cashloan[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sta_incentive_income_less_deductions",  "State incentive income less deductions",   "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sta_taxable_income_less_deductions",    "State taxable income less deductions",     "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sta_tax_savings",                       "State tax savings",                        "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	
+
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sta_taxable_incentive_income",    "State taxable incentive income",     "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_fed_taxable_incentive_income",    "Federal taxable incentive income",     "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_fed_depr_sched",                        "Federal depreciation schedule",            "%",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_fed_depreciation",                      "Federal depreciation",                     "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_fed_incentive_income_less_deductions",  "Federal incentive income less deductions", "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -179,15 +155,11 @@ static var_info vtab_cashloan[] = {
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_discounted_payback", "Discounted payback", "$", "", "Cash Flow", "*", "LENGTH_EQUAL=cf_length", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_discounted_cumulative_payback", "Cumulative discounted payback", "$", "", "Cash Flow", "*", "LENGTH_EQUAL=cf_length", "" },
 
-
-
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_payback_with_expenses", "Simple payback with expenses", "$", "", "Cash Flow", "*", "LENGTH_EQUAL=cf_length", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_cumulative_payback_with_expenses", "Cumulative simple payback with expenses", "$", "", "Cash Flow", "*", "LENGTH_EQUAL=cf_length", "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_payback_without_expenses",              "Simple payback without expenses",                 "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_cumulative_payback_without_expenses",   "Cumulative simple payback without expenses",      "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	
-
 
 	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoptc_fed_real",                "Levelized federal PTC (real)",                          "cents/kWh",    "",                      "Financial Metrics",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoptc_fed_nom",                 "Levelized federal PTC (nominal)",                       "cents/kWh",    "",                      "Financial Metrics",      "*",                       "",                                         "" },
@@ -198,8 +170,8 @@ static var_info vtab_cashloan[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "effective_tax_rate",                 "Effective tax rate",                       "%",    "",                      "Financial Metrics",      "*",                       "",                                         "" },
 
 // NTE additions 8/10/17
-	{ SSC_INPUT,        SSC_ARRAY,       "elec_cost_with_system",             "Energy value",                       "$",            "",                      "thirdpartyownership",      "*",                       "",                                         "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "elec_cost_without_system",             "Energy value",                       "$",            "",                      "thirdpartyownership",      "*",                       "",                                         "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "elec_cost_with_system",             "Energy value",                       "$",            "",                      "ThirdPartyOwnership",      "*",                       "",                                         "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "elec_cost_without_system",             "Energy value",                       "$",            "",                      "ThirdPartyOwnership",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_nte",      "Not to exceed (NTE)",         "cents/kWh",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "year1_nte",                "Year 1 NTE",                          "cents/kWh",    "",                      "Cash Flow",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "lnte_real",                "Real LNTE",                          "cents/kWh",    "",                      "Cash Flow",      "*",                       "",                                         "" },
@@ -271,7 +243,10 @@ enum {
 	CF_sta_incentive_income_less_deductions,
 	CF_sta_taxable_income_less_deductions,
 	CF_sta_tax_savings,
-	
+
+	CF_sta_taxable_incentive_income,
+	CF_fed_taxable_incentive_income,
+
 	CF_fed_depr_sched,
 	CF_fed_depreciation,
 	CF_fed_incentive_income_less_deductions,
@@ -343,7 +318,7 @@ public:
 		add_var_info(vtab_cashloan);
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		int i;
 
@@ -440,6 +415,19 @@ public:
 		}
 		
 		double year1_fuel_use = as_double("annual_fuel_usage"); // kWht
+		std::vector<double> fuel_use;
+		if ((as_integer("system_use_lifetime_output") == 1) && is_assigned("annual_fuel_usage_lifetime")) {
+			fuel_use = as_vector_double("annual_fuel_usage_lifetime");
+			if (fuel_use.size() != (size_t)(nyears + 1)) {
+				throw exec_error("singleowner", util::format("fuel usage years (%d) not equal to analysis period years (%d).", (int)fuel_use.size() - 1, nyears));
+			}
+		}
+		else {
+			fuel_use.push_back(0.);
+			for (size_t y = 0; y < (size_t)(nyears); y++) {
+				fuel_use.push_back(year1_fuel_use);
+			}
+		}
     	double nameplate = as_double("system_capacity"); // kW
 		
 		double inflation_rate = as_double("inflation_rate")*0.01;
@@ -745,7 +733,7 @@ public:
 			// TODO additional production o and m here
 
 
-			cf.at(CF_om_fuel_expense,i) *= year1_fuel_use;
+			cf.at(CF_om_fuel_expense,i) *= fuel_use[i];
 			cf.at(CF_om_opt_fuel_1_expense,i) *= om_opt_fuel_1_usage;
 			cf.at(CF_om_opt_fuel_2_expense,i) *= om_opt_fuel_2_usage;
 			double decline_percent = 100 - (i-1)*property_tax_decline_percentage;
@@ -846,8 +834,10 @@ public:
 			cf.at(CF_sta_taxable_income_less_deductions, i) = taxable_incentive_income( i, "sta" )
 				+ cf.at(CF_deductible_expenses,i)
 				- cf.at(CF_sta_depreciation,i);
+
+			cf.at(CF_sta_taxable_incentive_income, i) = taxable_incentive_income(i, "sta");
 			
-// sales tax is in depreciable bases and is already written off according to depreciation schedule.
+			// sales tax is incf_fed_taxable_incentive_income" depreciable bases and is already written off according to depreciation schedule.
 //			if (is_commercial && i == 1) cf.at(CF_sta_taxable_income_less_deductions,i) -= total_sales_tax;
 
 			if (is_commercial || is_mortgage) // interest only deductible if residential mortgage or commercial
@@ -877,6 +867,8 @@ public:
 				+ cf.at(CF_deductible_expenses,i)
 				- cf.at(CF_fed_depreciation,i)
 				+ cf.at(CF_sta_tax_savings, i);
+
+			cf.at(CF_fed_taxable_incentive_income, i) = taxable_incentive_income(i, "fed");
 
 // sales tax is in depreciable bases and is already written off according to depreciation schedule.
 //			if (is_commercial && i == 1) cf.at(CF_fed_taxable_income_less_deductions, i) -= total_sales_tax;
@@ -1069,10 +1061,6 @@ public:
 		save_cf(CF_nte, nyears, "cf_nte");
 		assign( "year1_nte", var_data((ssc_number_t)cf.at(CF_nte,1)) );
 
-
-
-
-
 		assign( "cf_length", var_data( (ssc_number_t) nyears+1 ));
 
 		assign("payback", var_data((ssc_number_t)payback));
@@ -1176,6 +1164,9 @@ public:
 		save_cf( CF_sta_taxable_income_less_deductions, nyears, "cf_sta_taxable_income_less_deductions" );
 		save_cf( CF_sta_tax_savings, nyears, "cf_sta_tax_savings" );
 	
+		save_cf( CF_sta_taxable_incentive_income, nyears, "cf_sta_taxable_incentive_income");
+		save_cf( CF_fed_taxable_incentive_income, nyears, "cf_fed_taxable_incentive_income");
+
 		save_cf( CF_fed_depr_sched, nyears, "cf_fed_depr_sched" );
 		save_cf( CF_fed_depreciation, nyears, "cf_fed_depreciation" );
 		save_cf( CF_fed_incentive_income_less_deductions, nyears, "cf_fed_incentive_income_less_deductions" );
@@ -1291,7 +1282,7 @@ public:
 
 		void compute_production_incentive_IRS_2010_37( int cf_line, int nyears, const std::string &s_val, const std::string &s_term, const std::string &s_escal )
 	{
-		// rounding based on IRS document and emails from John and Matt from DHF Financials 2/24/2011 and DHF model v4.4
+		// rounding based on IRS document and emails 2/24/2011
 		size_t len = 0;
 		ssc_number_t *parr = as_array(s_val, &len);
 		int term = as_integer(s_term);
@@ -1300,7 +1291,7 @@ public:
 		if (len == 1)
 		{
 			for (int i=1;i<=nyears;i++)
-				cf.at(cf_line, i) = (i <= term) ? cf.at(CF_energy_net,i) / 1000.0 * round_dhf(1000.0 * parr[0] * pow(1 + escal, i-1)) : 0.0;
+				cf.at(cf_line, i) = (i <= term) ? cf.at(CF_energy_net,i) / 1000.0 * round_irs(1000.0 * parr[0] * pow(1 + escal, i-1)) : 0.0;
 		}
 		else
 		{

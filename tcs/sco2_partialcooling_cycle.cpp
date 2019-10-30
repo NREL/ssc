@@ -1,51 +1,24 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #include "sco2_partialcooling_cycle.h"
 
@@ -520,7 +493,7 @@ double C_PartialCooling_Cycle::opt_eta_fixed_P_high(double P_high_opt /*kPa*/)
 
 int C_PartialCooling_Cycle::finalize_design()
 {
-	int mc_des_err = mc_mc.design_given_outlet_state(m_temp_last[MC_IN],
+	int mc_des_err = mc_mc.design_given_outlet_state(ms_des_par.m_mc_comp_model_code, m_temp_last[MC_IN],
 										m_pres_last[MC_IN],
 										m_m_dot_mc,
 										m_temp_last[MC_OUT],
@@ -531,7 +504,7 @@ int C_PartialCooling_Cycle::finalize_design()
 		return 71;
 	}
 
-	int pc_des_err = mc_pc.design_given_outlet_state(m_temp_last[PC_IN],
+	int pc_des_err = mc_pc.design_given_outlet_state(ms_des_par.m_pc_comp_model_code, m_temp_last[PC_IN],
 										m_pres_last[PC_IN],
 										m_m_dot_pc,
 										m_temp_last[PC_OUT],
@@ -544,7 +517,7 @@ int C_PartialCooling_Cycle::finalize_design()
 
 	if (ms_des_par.m_recomp_frac > 0.01)
 	{
-		int rc_des_err = mc_rc.design_given_outlet_state(m_temp_last[PC_OUT],
+		int rc_des_err = mc_rc.design_given_outlet_state(ms_des_par.m_rc_comp_model_code, m_temp_last[PC_OUT],
 										m_pres_last[PC_OUT],
 										m_m_dot_rc,
 										m_temp_last[RC_OUT],
@@ -584,7 +557,12 @@ int C_PartialCooling_Cycle::finalize_design()
 	}
 
 	// Design air coolers
-	// Low Pressure
+        // Calculate cooler duties
+    double q_dot_IP_local = m_m_dot_mc*(m_enth_last[PC_OUT] - m_enth_last[MC_IN]);      //[kWt]
+    double q_dot_LP_local = m_m_dot_t*(m_enth_last[LTR_LP_OUT] - m_enth_last[PC_IN]);   //[kWt]
+    double f_W_dot_fan_to_IP = q_dot_IP_local / (q_dot_IP_local + q_dot_LP_local);     //[-] Fraction of total fan power allocated to the IP cooler fan
+	
+        // Low Pressure
 		// Structure for design parameters that are dependent on cycle design solution
 	C_CO2_to_air_cooler::S_des_par_cycle_dep s_LP_air_cooler_des_par_dep;
 		// Set air cooler design parameters that are dependent on the cycle design solution
@@ -600,7 +578,7 @@ int C_PartialCooling_Cycle::finalize_design()
 
 	s_LP_air_cooler_des_par_dep.m_T_hot_out_des = m_temp_last[C_sco2_cycle_core::PC_IN];			//[K]
 		// Use half the rated fan power on each cooler fan
-	s_LP_air_cooler_des_par_dep.m_W_dot_fan_des = ms_des_par.m_frac_fan_power*0.5*ms_des_par.m_W_dot_net / 1000.0;		//[MWe]
+	s_LP_air_cooler_des_par_dep.m_W_dot_fan_des = ms_des_par.m_frac_fan_power*(1.0 - f_W_dot_fan_to_IP)*ms_des_par.m_W_dot_net / 1000.0;		//[MWe]
 		// Structure for design parameters that are independent of cycle design solution
 	C_CO2_to_air_cooler::S_des_par_ind s_LP_air_cooler_des_par_ind;
 	s_LP_air_cooler_des_par_ind.m_T_amb_des = ms_des_par.m_T_amb_des;		//[K]
@@ -628,7 +606,7 @@ int C_PartialCooling_Cycle::finalize_design()
 
 	s_IP_air_cooler_des_par_dep.m_T_hot_out_des = m_temp_last[C_sco2_cycle_core::MC_IN];			//[K]
 		// Use half the rated fan power on each cooler fan
-	s_IP_air_cooler_des_par_dep.m_W_dot_fan_des = ms_des_par.m_frac_fan_power*0.5*ms_des_par.m_W_dot_net / 1000.0;		//[MWe]
+	s_IP_air_cooler_des_par_dep.m_W_dot_fan_des = ms_des_par.m_frac_fan_power*f_W_dot_fan_to_IP*ms_des_par.m_W_dot_net / 1000.0;		//[MWe]
 		// Structure for design parameters that are independent of cycle design solution
 	C_CO2_to_air_cooler::S_des_par_ind s_IP_air_cooler_des_par_ind;
 	s_IP_air_cooler_des_par_ind.m_T_amb_des = ms_des_par.m_T_amb_des;		//[K]
@@ -1686,6 +1664,8 @@ int C_PartialCooling_Cycle::off_design_fix_shaft_speeds_core()
 	m_Q_dot_PHX_od = m_dot_t * (mv_enth_od[TURB_IN] - mv_enth_od[HTR_HP_OUT]);
 	m_W_dot_net_od = w_pc*m_dot_pc + w_mc*m_dot_mc + w_rc*m_dot_rc + w_t*m_dot_t;
 	m_eta_thermal_od = m_W_dot_net_od / m_Q_dot_PHX_od;
+    m_Q_dot_mc_cooler_od = m_dot_mc * (mv_enth_od[PC_OUT] - mv_enth_od[MC_IN])*1.E-3;       //[MWt] convert from kwt
+    m_Q_dot_pc_cooler_od = m_dot_pc * (mv_enth_od[LTR_LP_OUT] - mv_enth_od[PC_IN])*1.E-3;   //[MWt] convert from kwt
 
 	// Get 'od_solved' structures from component classes
 	//ms_od_solved.ms_mc_od_solved = *m_mc.get_od_solved();
@@ -1700,6 +1680,8 @@ int C_PartialCooling_Cycle::off_design_fix_shaft_speeds_core()
 	ms_od_solved.m_eta_thermal = m_eta_thermal_od;
 	ms_od_solved.m_W_dot_net = m_W_dot_net_od;
 	ms_od_solved.m_Q_dot = m_Q_dot_PHX_od;
+    ms_od_solved.m_Q_dot_mc_cooler = m_Q_dot_mc_cooler_od;  //[MWt]
+    ms_od_solved.m_Q_dot_pc_cooler = m_Q_dot_pc_cooler_od;  //[MWt]
 	ms_od_solved.m_m_dot_mc = m_dot_mc;
 	ms_od_solved.m_m_dot_rc = m_dot_rc;
 	ms_od_solved.m_m_dot_pc = m_dot_pc;
@@ -1718,29 +1700,47 @@ int C_PartialCooling_Cycle::off_design_fix_shaft_speeds_core()
 	return 0;
 }
 
-int C_PartialCooling_Cycle::calculate_off_design_fan_power(double T_amb /*K*/, double & W_dot_fan /*MWe*/)
+int C_PartialCooling_Cycle::solve_OD_all_coolers_fan_power(double T_amb /*K*/, double & W_dot_fan_total /*MWe*/)
 {
 	double W_dot_LP_cooler = std::numeric_limits<double>::quiet_NaN();
 	double W_dot_IP_cooler = std::numeric_limits<double>::quiet_NaN();
 
-	int LP_err_code = mc_LP_air_cooler.off_design_given_T_out(T_amb, mv_temp_od[LTR_LP_OUT], mv_pres_od[LTR_LP_OUT],
-		ms_od_solved.m_m_dot_pc, mv_temp_od[PC_IN], W_dot_LP_cooler);
+    int LP_err_code = solve_OD_pc_cooler_fan_power(T_amb, W_dot_LP_cooler);
 
 	if (LP_err_code != 0)
 		return LP_err_code;
 
 	ms_od_solved.ms_LP_air_cooler_od_solved = mc_LP_air_cooler.get_od_solved();
 
-	int IP_err_code = mc_IP_air_cooler.off_design_given_T_out(T_amb, mv_temp_od[PC_OUT], mv_pres_od[PC_OUT],
-		ms_od_solved.m_m_dot_mc, mv_temp_od[MC_IN], W_dot_IP_cooler);
+    int IP_err_code = solve_OD_mc_cooler_fan_power(T_amb, W_dot_IP_cooler);
 
-	W_dot_fan = W_dot_LP_cooler + W_dot_IP_cooler;	//[MWe]
+	W_dot_fan_total = W_dot_LP_cooler + W_dot_IP_cooler;	//[MWe]
 
-	ms_od_solved.m_W_dot_cooler_tot = W_dot_fan * 1.E3;	//[kWe] convert from MWe
+	ms_od_solved.m_W_dot_cooler_tot = W_dot_fan_total * 1.E3;	//[kWe] convert from MWe
 
 	ms_od_solved.ms_IP_air_cooler_od_solved = mc_IP_air_cooler.get_od_solved();
 
 	return IP_err_code;
+}
+
+int C_PartialCooling_Cycle::solve_OD_mc_cooler_fan_power(double T_amb /*K*/, double & W_dot_mc_cooler_fan /*MWe*/)
+{
+    int IP_err_code = mc_IP_air_cooler.off_design_given_T_out(T_amb, mv_temp_od[PC_OUT], mv_pres_od[PC_OUT],
+        ms_od_solved.m_m_dot_mc, mv_temp_od[MC_IN], W_dot_mc_cooler_fan);
+
+    ms_od_solved.ms_IP_air_cooler_od_solved = mc_IP_air_cooler.get_od_solved();
+
+    return IP_err_code;
+}
+
+int C_PartialCooling_Cycle::solve_OD_pc_cooler_fan_power(double T_amb /*K*/, double & W_dot_pc_cooler_fan /*MWe*/)
+{
+    int LP_err_code = mc_LP_air_cooler.off_design_given_T_out(T_amb, mv_temp_od[LTR_LP_OUT], mv_pres_od[LTR_LP_OUT],
+        ms_od_solved.m_m_dot_pc, mv_temp_od[PC_IN], W_dot_pc_cooler_fan);
+
+    ms_od_solved.ms_LP_air_cooler_od_solved = mc_LP_air_cooler.get_od_solved();
+
+    return LP_err_code;
 }
 
 int C_PartialCooling_Cycle::C_MEQ_recup_od::operator()(double T_HTR_LP_out_guess /*K*/, double *diff_T_HTR_LP_out /*K*/)
@@ -2030,6 +2030,122 @@ int C_PartialCooling_Cycle::off_design_fix_shaft_speeds(S_od_par & od_phi_par_in
 	ms_od_par = od_phi_par_in;
 
 	return off_design_fix_shaft_speeds_core();
+}
+
+void C_PartialCooling_Cycle::check_od_solution(double & diff_m_dot, double & diff_E_cycle,
+    double & diff_Q_LTR, double & diff_Q_HTR)
+{
+    CO2_state c_co2_props;
+
+    double m_dot_pc = mc_pc.get_od_solved()->m_m_dot; //[kg/s]   
+    double m_dot_mc = mc_mc.get_od_solved()->m_m_dot;  //m_m_dot_mc; // ms_od_solved.m_m_dot_mc;  //[kg/s]
+    double m_dot_rc = mc_rc.get_od_solved()->m_m_dot; //m_m_dot_rc; // ms_od_solved.m_m_dot_rc;  //[kg/s]
+    if (!std::isfinite(m_dot_rc))
+    {
+        m_dot_rc = 0.0;
+    }
+    double m_dot_t = mc_t.get_od_solved()->m_m_dot;           //[kg/s]
+
+    double diff_m_dot_pc_t = (m_dot_pc - m_dot_t) / m_dot_t;    //[-]
+    double diff_m_dot_mc_rc_t = ((m_dot_mc + m_dot_rc) - m_dot_t) / m_dot_t;    //[-]
+
+    if (fabs(diff_m_dot_mc_rc_t) > fabs(diff_m_dot_pc_t))
+    {
+        diff_m_dot = diff_m_dot_mc_rc_t;    //[-]
+    }
+    else
+    {
+        diff_m_dot = diff_m_dot_pc_t;       //[-]
+    }
+     
+    double P_co2_phx_in = mv_pres_od[HTR_HP_OUT];    //[kPa]
+    double T_co2_phx_in = mv_temp_od[HTR_HP_OUT];    //[K]
+    int co2_err = CO2_TP(T_co2_phx_in, P_co2_phx_in, &c_co2_props);
+    double h_co2_phx_in = c_co2_props.enth;         //[kJ/kg]
+
+    double P_t_in = mv_pres_od[TURB_IN];             //[kPa]
+    double T_t_in = mv_temp_od[TURB_IN];             //[K]
+    co2_err = CO2_TP(T_t_in, P_t_in, &c_co2_props);
+    double h_co2_t_in = c_co2_props.enth;           //[kJ/kg]
+
+    double Q_dot_phx = m_dot_t * (h_co2_t_in - h_co2_phx_in); //[kWt]
+
+    double P_t_out = mv_pres_od[TURB_OUT];           //[kPa]
+    double T_t_out = mv_temp_od[TURB_OUT];           //[K]
+    co2_err = CO2_TP(T_t_out, P_t_out, &c_co2_props);
+    double h_t_out = c_co2_props.enth;      //[kJ/kg]
+
+    double W_dot_t = m_dot_t * (h_co2_t_in - h_t_out);    //[kWe]
+
+    double P_pc_cool_in = mv_pres_od[LTR_LP_OUT];   //[kPa]
+    double T_pc_cool_in = mv_temp_od[LTR_LP_OUT];   //[K]
+    co2_err = CO2_TP(T_pc_cool_in, P_pc_cool_in, &c_co2_props);
+    double h_pc_cool_in = c_co2_props.enth;        //[kJ/kg]
+
+    double P_pc_in = mv_pres_od[PC_IN];         //[kPa]
+    double T_pc_in = mv_temp_od[PC_IN];         //[K]
+    co2_err = CO2_TP(T_pc_in, P_pc_in, &c_co2_props);
+    double h_pc_in = c_co2_props.enth;          //[kJ/kg]
+
+    double Q_dot_pc_cool = m_dot_pc*(h_pc_cool_in - h_pc_in);   //[kWt]
+
+    double P_mc_cool_in = mv_pres_od[PC_OUT];   //[kPa]
+    double T_mc_cool_in = mv_temp_od[PC_OUT];   //[K]
+    co2_err = CO2_TP(T_mc_cool_in, P_mc_cool_in, &c_co2_props);
+    double h_mc_cool_in = c_co2_props.enth;     //[kJ/kg]
+
+    double W_dot_pc = m_dot_pc * (h_mc_cool_in - h_pc_in);      //[kWe]
+
+    double P_mc_in = mv_pres_od[MC_IN];          //[kPa]
+    double T_mc_in = mv_temp_od[MC_IN];          //[K]
+    co2_err = CO2_TP(T_mc_in, P_mc_in, &c_co2_props);
+    double h_mc_in = c_co2_props.enth;          //[kJ/kg]
+
+    double Q_dot_mc_cool = m_dot_mc * (h_mc_cool_in - h_mc_in); //[kWt]
+
+    double P_rc_out = mv_pres_od[RC_OUT];        //[kPa]
+    double T_rc_out = mv_temp_od[RC_OUT];        //[K]
+    co2_err = CO2_TP(T_rc_out, P_rc_out, &c_co2_props);
+    double h_rc_out = c_co2_props.enth;         //[kJ/kg]
+
+    double W_dot_rc = m_dot_rc * (h_rc_out - h_mc_cool_in);  //[kWe]
+
+    double P_mc_out = mv_pres_od[MC_OUT];        //[kPa]
+    double T_mc_out = mv_temp_od[MC_OUT];        //[K]
+    co2_err = CO2_TP(T_mc_out, P_mc_out, &c_co2_props);
+    double h_mc_out = c_co2_props.enth;         //[kJ/kg]
+
+    double W_dot_mc = m_dot_mc * (h_mc_out - h_mc_in);    //[kWe]
+
+    diff_E_cycle = (Q_dot_phx - Q_dot_mc_cool - Q_dot_pc_cool - (W_dot_t - W_dot_mc - W_dot_rc - W_dot_pc)) / Q_dot_phx;
+
+    double Q_dot_cool_from_eta = Q_dot_phx * (1.0 - ms_od_solved.m_eta_thermal);
+    double diff_E_reject = (Q_dot_cool_from_eta - Q_dot_mc_cool - Q_dot_pc_cool) / (Q_dot_pc_cool + Q_dot_mc_cool);
+
+    double P_LTR_HP_out = mv_pres_od[LTR_HP_OUT];    //[kPa]
+    double T_LTR_HP_out = mv_temp_od[LTR_HP_OUT];    //[K]
+    co2_err = CO2_TP(T_LTR_HP_out, P_LTR_HP_out, &c_co2_props);
+    double h_LTR_HP_out = c_co2_props.enth;         //[kJ/kg]
+
+    double Q_dot_LTR_HP = m_dot_mc * (h_LTR_HP_out - h_mc_out); //[kWt]
+
+    double P_HTR_LP_out = mv_pres_od[HTR_LP_OUT];    //[kPa]
+    double T_HTR_LP_out = mv_temp_od[HTR_LP_OUT];    //[K]
+    co2_err = CO2_TP(T_HTR_LP_out, P_HTR_LP_out, &c_co2_props);
+    double h_HTR_LP_out = c_co2_props.enth;         //[kJ/kg]
+
+    double Q_dot_LTR_LP = m_dot_t * (h_HTR_LP_out - h_pc_cool_in);   //[kWt]
+    diff_Q_LTR = (Q_dot_LTR_HP - Q_dot_LTR_LP) / Q_dot_LTR_LP;
+    double Q_dot_HTR_LP = m_dot_t * (h_t_out - h_HTR_LP_out);     //[kWt]
+
+    double P_HTR_HP_in = mv_pres_od[MIXER_OUT];      //[kPa]
+    double T_HTR_HP_in = mv_temp_od[MIXER_OUT];      //[K]
+    co2_err = CO2_TP(T_HTR_HP_in, P_HTR_HP_in, &c_co2_props);
+    double h_HTR_HP_in = c_co2_props.enth;          //[kJ/kg]
+
+    double Q_dot_HTR_HP = m_dot_t * (h_co2_phx_in - h_HTR_HP_in); //[kWt]
+    diff_Q_HTR = (Q_dot_HTR_HP - Q_dot_HTR_LP) / Q_dot_HTR_LP;
+
 }
 
 double nlopt_cb_opt_partialcooling_des(const std::vector<double> &x, std::vector<double> &grad, void *data)

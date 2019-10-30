@@ -1,51 +1,24 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  ("Alliance") under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as �System Advisor Model� or �SAM�. Except
-*  to comply with the foregoing, the terms �System Advisor Model�, �SAM�, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #ifndef battery_h
 #define battery_h
@@ -107,7 +80,7 @@ public:
 	virtual void updateCapacity(double &I, double dt) = 0;
 	virtual void updateCapacityForThermal(double capacity_percent)=0;
 	virtual void updateCapacityForLifetime(double capacity_percent)=0;
-	virtual void replace_battery()=0;
+	virtual void replace_battery(double replacement_percent)=0;
 
 	virtual double q1() = 0; // available charge
 	virtual double q10() = 0; // capacity at 10 hour discharge rate
@@ -171,7 +144,7 @@ public:
 	void updateCapacity(double &I, double dt);
 	void updateCapacityForThermal(double capacity_percent);
 	void updateCapacityForLifetime(double capacity_percent);
-	void replace_battery();
+	void replace_battery(double replacement_percent);
 	double q1(); // Available charge
 	double q2(); // Bound charge
 	double q10(); // Capacity at 10 hour discharge rate
@@ -228,7 +201,7 @@ public:
 	void updateCapacity(double &I, double dt);
 	void updateCapacityForThermal(double capacity_percent);
 	void updateCapacityForLifetime(double capacity_percent);
-	void replace_battery();
+	void replace_battery(double replacement_percent);
 
 	double q1(); // Available charge
 	double q10(); // Capacity at 10 hour discharge rate
@@ -390,22 +363,34 @@ public:
 	lifetime_cycle_t(const util::matrix_t<double> &cyles_vs_DOD);
 	virtual ~lifetime_cycle_t();
 
-	// deep copy
+	/// deep copy
 	lifetime_cycle_t * clone();
 
-	// copy from lifetime_cycle to this
+	/// copy from lifetime_cycle to this
 	void copy(lifetime_cycle_t *);
 
-	// return q, the effective capacity percent
+	/// return q, the effective capacity percent
 	double runCycleLifetime(double DOD);
 
-	// return hypothetical dq the average cycle
+	/// return hypothetical dq the average cycle
 	double estimateCycleDamage();
 
+	/// Return the relative capacity percentage of nominal (%)
+	double capacity_percent();
+
+	/// Run the rainflow counting algorithm at the current depth-of-discharge to determine cycle
 	void rainflow(double DOD);
-	void replaceBattery();
+
+	/// Replace or partially replace a batteyr
+	void replaceBattery(double replacement_percent);
+
+	/// Return the total cycles elapse
 	int cycles_elapsed();
+
+	/// Return the range of the last cycle
 	double cycle_range();
+
+	/// Return the average cycle range
 	double average_range();
 
 protected:
@@ -413,6 +398,8 @@ protected:
 	void rainflow_ranges();
 	void rainflow_ranges_circular(int index);
 	int rainflow_compareRanges();
+
+	/// Bilinear interpolation, given the depth-of-discharge and cycle number, return the capacity percent
 	double bilinear(double DOD, int cycle_number);
 
 	util::matrix_t<double> _cycles_vs_DOD;
@@ -458,7 +445,11 @@ public:
 	/// Given the index of the simulation, the tempertature and SOC, return the effective capacity percent
 	double runLifetimeCalendarModel(size_t idx, double T, double SOC);
 
-	void replaceBattery();
+	/// Reset or augment the capacity
+	void replaceBattery(double replacement_percent);
+
+	/// Return the relative capacity percentage of nominal (%)
+	double capacity_percent();
 
 	enum CALENDAR_LOSS_OPTIONS {NONE, LITHIUM_ION_CALENDAR_MODEL, CALENDAR_LOSS_TABLE};
 
@@ -502,41 +493,76 @@ public:
 	lifetime_t(lifetime_cycle_t *, lifetime_calendar_t *, const int replacement_option, const double replacement_capacity);
 	virtual ~lifetime_t(){};
 
-	// deep copy
+	/// Deep copy
 	lifetime_t * clone();
 
-	// delete deep copy
+	/// Delete deep copy
 	void delete_clone();
 
-	// copy lifetime to this
+	/// Copy lifetime to this
 	void copy(lifetime_t *);
 
-	void runLifetimeModels(size_t idx, capacity_t *, double T_battery);
+	/// Execute the lifetime models given the current lifetime run index, capacity model, and temperature
+	void runLifetimeModels(size_t lifetimeIndex, capacity_t *, double T_battery);
 
+	/// Return the relative capacity percentage of nominal (%)
 	double capacity_percent();
 
-	// data access
+	/// Return the relative capacity percentage of nominal caused by cycle damage (%)
+	double capacity_percent_cycle();
+
+	/// Return the relative capacity percentage of nominal caused by calendar fade (%)
+	double capacity_percent_calendar();
+
+	/// Return pointer to underlying lifetime cycle model
 	lifetime_cycle_t * cycleModel() { return _lifetime_cycle; }
+
+	/// Return pointer to underlying lifetime capacity model
 	lifetime_calendar_t * calendarModel() { return _lifetime_calendar; }
 
-	// replacement methods
+	/// Check if the battery should be replaced based upon the replacement criteria
 	bool check_replaced();
+
+	/// Reset the number of replacements at the year end
 	void reset_replacements();
-	int replacements();
-	void force_replacement();
+
+	/// Return the number of total replacements in the year
+	int get_replacements();
+
+	/// Return the replacement percent
+	double get_replacement_percent();
+
+	/// Set the replacement option
+	void set_replacement_option(int option);
+
+	/// Replace the battery and reset the lifetime degradation
+	void force_replacement(double replacement_percent);
 
 protected:
 
+	/// Underlying lifetime cycle model
 	lifetime_cycle_t * _lifetime_cycle;
+
+	/// Underlying lifetime calendar model
 	lifetime_calendar_t * _lifetime_calendar;
 
-	// battery replacement
+	/// Replacement option, 0 = none, 1 = replace at capacity 2 = replace by schedule
 	int _replacement_option;
+
+	/// Maximum capacity relative to nameplate at which to replace battery
 	double _replacement_capacity;
+
+	/// Number of replacements this year
 	int _replacements;
+
+	/// Boolean describing if replacement has been scheduled
 	bool _replacement_scheduled;
 
-	double _q;      // battery relative capacity (0 - 100%)
+	/// Percentage of how much capacity to replace (0 - 100%)
+	double _replacement_percent;
+
+	/// battery relative capacity (0 - 100%)
+	double _q;      
 };
 
 

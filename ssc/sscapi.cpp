@@ -58,7 +58,7 @@
 
 SSCEXPORT int ssc_version()
 {
-	return 209;
+	return 220;
 }
 
 SSCEXPORT const char *ssc_build_info()
@@ -106,6 +106,7 @@ extern module_entry_info
 	cm_entry_equpartflip,
 	cm_entry_saleleaseback,
 	cm_entry_singleowner,
+	cm_entry_merchantplant,
 	cm_entry_host_developer,
 	cm_entry_swh,
 	cm_entry_geothermal,
@@ -117,7 +118,7 @@ extern module_entry_info
 	cm_entry_wfcsvconv,
 	cm_entry_tcstrough_empirical,
 	cm_entry_tcstrough_physical,
-    	cm_entry_trough_physical,
+	cm_entry_trough_physical,
 	cm_entry_trough_physical_csp_solver,
 	cm_entry_trough_physical_process_heat,
 	cm_entry_iph_to_lcoefcr,
@@ -147,6 +148,7 @@ extern module_entry_info
 	cm_entry_sco2_air_cooler,
 	cm_entry_user_htf_comparison,
 	cm_entry_ui_tes_calcs,
+    cm_entry_ui_udpc_checks,
 	cm_entry_cb_mspt_system_costs,
 	cm_entry_cb_construction_financing,
 	cm_entry_cb_empirical_hce_heat_loss,
@@ -158,6 +160,10 @@ extern module_entry_info
 	cm_entry_pv_get_shade_loss_mpp,
 	cm_entry_inv_cec_cg,
 	cm_entry_thermalrate,
+	cm_entry_mhk_tidal,
+	cm_entry_mhk_wave,
+	cm_entry_mhk_costs,
+	cm_entry_wave_file_reader,
 	cm_entry_grid;
 
 /* official module table */
@@ -194,6 +200,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_equpartflip,
 	&cm_entry_saleleaseback,
 	&cm_entry_singleowner,
+	&cm_entry_merchantplant,
 	&cm_entry_host_developer,
 	&cm_entry_swh,
 	&cm_entry_geothermal,
@@ -235,6 +242,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_sco2_air_cooler,
 	&cm_entry_user_htf_comparison,
 	&cm_entry_ui_tes_calcs,
+    &cm_entry_ui_udpc_checks,
 	&cm_entry_cb_mspt_system_costs,
 	&cm_entry_cb_construction_financing,
 	&cm_entry_cb_empirical_hce_heat_loss,
@@ -246,6 +254,10 @@ static module_entry_info *module_table[] = {
 	&cm_entry_pv_get_shade_loss_mpp,
 	&cm_entry_inv_cec_cg,
 	&cm_entry_thermalrate,
+	&cm_entry_mhk_tidal,
+	&cm_entry_mhk_wave,
+	&cm_entry_mhk_costs,
+	&cm_entry_wave_file_reader,
 	&cm_entry_grid,
 	0 };
 

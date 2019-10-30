@@ -14,6 +14,7 @@ TARGET = ssc.so
 OBJECTS = \
 	cmod_singlediode.o \
 	cmod_ui_tes_calcs.o \
+	cmod_ui_udpc_checks.o \
 	csp_common.o \
 	cmod_lcoefcr.o \
 	cmod_thirdpartyownership.o \
@@ -32,11 +33,12 @@ OBJECTS = \
 	cmod_generic_system.o \
 	cmod_wfcheck.o \
 	cmod_pvwattsv5.o \
-	cmod_pvwattsv5_lifetime.o \
 	cmod_windfile.o \
 	cmod_pvwattsv1_1ts.o \
 	cmod_pvwattsv1_poa.o \
 	cmod_battwatts.o \
+	cmod_mhk_wave.o \
+	cmod_mhk_tidal.o \
 	cmod_wfcsv.o \
 	cmod_6parsolve.o \
 	cmod_windpower.o \

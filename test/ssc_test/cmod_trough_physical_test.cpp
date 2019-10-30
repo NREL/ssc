@@ -5,7 +5,7 @@
 #include "../input_cases/weather_inputs.h"
 
 /// Test trough_physical with all defaults and no-financial model
-TEST_F(CMTroughPhysical, DefaultNoFinancialModel){
+TEST_F(CMTroughPhysical, DefaultNoFinancialModel_cmod_trough_physical){
 	
 	int test_errors = run_module(data, "trough_physical");
 

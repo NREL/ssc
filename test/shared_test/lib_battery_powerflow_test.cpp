@@ -20,8 +20,8 @@ void BatteryPowerFlowTest::SetUp()
 	m_batteryPower->singlePointEfficiencyACToDC = 0.96;
 	m_batteryPower->singlePointEfficiencyDCToAC = 0.96;
 	m_batteryPower->singlePointEfficiencyDCToDC = 0.98;
-	m_batteryPower->powerBatteryChargeMax = 100;
-	m_batteryPower->powerBatteryDischargeMax = 50;
+	m_batteryPower->powerBatteryChargeMaxDC = 100;
+	m_batteryPower->powerBatteryDischargeMaxDC = 50;
 	m_batteryPower->connectionMode = ChargeController::AC_CONNECTED;
 
 	// setup Sandia inverter using SMA America: SB3800TL-US-22 (240V) [CEC 2013]
@@ -42,7 +42,7 @@ void BatteryPowerFlowTest::SetUp()
 	m_batteryPower->setSharedInverter(m_sharedInverter);
 }
 
-TEST_F(BatteryPowerFlowTest, TestInitialize)
+TEST_F(BatteryPowerFlowTest, TestInitialize_lib_battery_powerflow)
 {
 	// PV Charging Scenario
 	m_batteryPower->canPVCharge = true;
@@ -54,17 +54,17 @@ TEST_F(BatteryPowerFlowTest, TestInitialize)
 	// Grid charging Scenario
 	m_batteryPower->canGridCharge = true;
 	m_batteryPowerFlow->initialize(50);
-	EXPECT_EQ(m_batteryPower->powerBatteryDC, -m_batteryPower->powerBatteryChargeMax);
+	EXPECT_EQ(m_batteryPower->powerBatteryDC, -m_batteryPower->powerBatteryChargeMaxDC);
 
 	// Discharging Scenario
 	m_batteryPower->canDischarge = true;
 	m_batteryPower->powerPV = 50;
 	m_batteryPower->powerLoad = 100;
 	m_batteryPowerFlow->initialize(50);
-	EXPECT_EQ(m_batteryPower->powerBatteryDC, m_batteryPower->powerBatteryDischargeMax);
+	EXPECT_EQ(m_batteryPower->powerBatteryDC, m_batteryPower->powerBatteryDischargeMaxDC);
 }
 
-TEST_F(BatteryPowerFlowTest, TestACConnected)
+TEST_F(BatteryPowerFlowTest, TestACConnected_lib_battery_powerflow)
 {
 	m_batteryPower->connectionMode = ChargeController::AC_CONNECTED;
 
@@ -114,7 +114,7 @@ TEST_F(BatteryPowerFlowTest, TestACConnected)
 }
 
 
-TEST_F(BatteryPowerFlowTest, TestDCConnected)
+TEST_F(BatteryPowerFlowTest, TestDCConnected_lib_battery_powerflow)
 {
 	m_batteryPower->connectionMode = ChargeController::DC_CONNECTED;
 

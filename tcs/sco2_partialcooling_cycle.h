@@ -1,51 +1,24 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #ifndef __SCO2_PARTIAL_COOLING_
 #define __SCO2_PARTIAL_COOLING_
@@ -107,8 +80,11 @@ public:
             //
         double m_recomp_frac;				//[-] Fraction of flow that bypasses the precooler and the main compressor at the design point
 		double m_eta_mc;					//[-] design-point efficiency of the main compressor; isentropic if positive, polytropic if negative
-		double m_eta_rc;					//[-] design-point efficiency of the recompressor; isentropic if positive, polytropic if negative
+        int m_mc_comp_model_code;           //[-] Main compressor model - see sco2_cycle_components.h 
+        double m_eta_rc;					//[-] design-point efficiency of the recompressor; isentropic if positive, polytropic if negative
+        int m_rc_comp_model_code;           //[-] Recompressor model - see sco2_cycle_components.h 
 		double m_eta_pc;					//[-] design-point efficiency of the pre-compressor; 
+        int m_pc_comp_model_code;           //[-] Precompressor model - see sco2_cycle_components.h 
 		double m_eta_t;						//[-] design-point efficiency of the turbine; isentropic if positive, polytropic if negative
 		int m_N_sub_hxrs;					//[-] Number of sub-heat exchangers to use when calculating UA value for a heat exchanger
 		double m_P_high_limit;				//[kPa] maximum allowable pressure in cycle
@@ -138,6 +114,11 @@ public:
 
 			// Air cooler default
 			m_is_des_air_cooler = true;
+
+            // Compressor model codes
+            m_mc_comp_model_code = C_comp__psi_eta_vs_phi::E_snl_radial_via_Dyreby;
+            m_rc_comp_model_code = C_comp__psi_eta_vs_phi::E_snl_radial_via_Dyreby;
+            m_pc_comp_model_code = C_comp__psi_eta_vs_phi::E_snl_radial_via_Dyreby;
 
             // Recuperator design target codes
             m_LTR_target_code = 1;      // default to target conductance
@@ -294,6 +275,8 @@ private:
 	double m_eta_thermal_od;
 	double m_W_dot_net_od;
 	double m_Q_dot_PHX_od;
+    double m_Q_dot_mc_cooler_od;
+    double m_Q_dot_pc_cooler_od;
 
 	int design_core();
 
@@ -320,7 +303,8 @@ public:
 		m_objective_metric_last = m_objective_metric_opt = m_objective_metric_auto_opt = std::numeric_limits<double>::quiet_NaN();
 
 		mv_temp_od = mv_pres_od = mv_enth_od = mv_entr_od = mv_dens_od = m_temp_last;
-		m_eta_thermal_od = m_W_dot_net_od = m_Q_dot_PHX_od = std::numeric_limits<double>::quiet_NaN();
+		m_eta_thermal_od = m_W_dot_net_od = m_Q_dot_PHX_od =
+        m_Q_dot_mc_cooler_od = m_Q_dot_pc_cooler_od = std::numeric_limits<double>::quiet_NaN();
 	}
 
 	class C_MEQ__f_recomp__y_N_rc : public C_monotonic_equation
@@ -489,7 +473,14 @@ public:
 
 	int off_design_fix_shaft_speeds(S_od_par & od_phi_par_in);
 
-	int calculate_off_design_fan_power(double T_amb /*K*/, double & W_dot_fan /*MWe*/);
+    virtual void check_od_solution(double & diff_m_dot, double & diff_E_cycle,
+        double & diff_Q_LTR, double & diff_Q_HTR);
+
+	virtual int solve_OD_all_coolers_fan_power(double T_amb /*K*/, double & W_dot_fan /*MWe*/);
+
+    virtual int solve_OD_mc_cooler_fan_power(double T_amb /*K*/, double & W_dot_mc_cooler_fan /*MWe*/);
+
+    virtual int solve_OD_pc_cooler_fan_power(double T_amb /*K*/, double & W_dot_pc_cooler_fan /*MWe*/);
 
 	// Called by 'nlopt_callback_opt_des_1', so needs to be public
 	double design_cycle_return_objective_metric(const std::vector<double> &x);

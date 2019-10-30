@@ -1,51 +1,24 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #include "common_financial.h"
 #include "lib_financial.h"
@@ -61,21 +34,22 @@ static var_info _cm_vtab_saleleaseback[] = {
 
 
 /*   VARTYPE           DATATYPE         NAME                         LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-		{ SSC_INPUT, SSC_ARRAY, "gen", "Power generated by renewable resource", "kW", "", "", "*", "", "" },
+		{ SSC_INPUT, SSC_ARRAY, "gen", "Power generated by renewable resource", "kW", "", "System Output", "*", "", "" },
 
 
-		{ SSC_INPUT, SSC_ARRAY, "degradation", "Annual energy degradation", "", "", "DHF", "*", "", "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "system_capacity",			"System nameplate capacity",		"kW",    "",                      "DHF",             "*",						   "MIN=1e-3",                         "" },
+
+		{ SSC_INPUT, SSC_ARRAY, "degradation", "Annual energy degradation", "", "", "System Output", "*", "", "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "system_capacity",			"System nameplate capacity",		"kW",    "",                      "System Output",             "*",						   "MIN=1e-3",                         "" },
 
 /* Recapitalization */
-	{ SSC_INOUT, SSC_NUMBER, "system_use_recapitalization", "Recapitalization expenses", "0/1", "0=None,1=Recapitalize", "DHF", "?=0", "INTEGER,MIN=0", "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "system_recapitalization_cost",	"Recapitalization cost",	"$",   "",                      "DHF",             "?=0",						   "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "system_recapitalization_escalation", "Recapitalization escalation (above inflation)",					"%",	 "",					  "DHF",             "?=0",                     "MIN=0,MAX=100",      			"" },
-	{ SSC_INPUT,        SSC_ARRAY,      "system_lifetime_recapitalize",		"Recapitalization boolean",	"",   "",                      "DHF",             "?=0",						   "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_recapitalization",	"Recapitalization operating expense",	"$",   "",                      "DHF",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
+	{ SSC_INOUT, SSC_NUMBER, "system_use_recapitalization", "Recapitalization expenses", "0/1", "0=None,1=Recapitalize", "Sale Leaseback", "?=0", "INTEGER,MIN=0", "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "system_recapitalization_cost",	"Recapitalization cost",	"$",   "",                      "Sale Leaseback",             "?=0",						   "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "system_recapitalization_escalation", "Recapitalization escalation (above inflation)",					"%",	 "",					  "Sale Leaseback",             "?=0",                     "MIN=0,MAX=100",      			"" },
+	{ SSC_INPUT,        SSC_ARRAY,      "system_lifetime_recapitalize",		"Recapitalization boolean",	"",   "",                      "Sale Leaseback",             "?=0",						   "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_recapitalization",	"Recapitalization operating expense",	"$",   "",                      "Sale Leaseback",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
 
 /* Dispatch */
-	{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",		"Lifetime hourly system outputs",	"0/1",   "0=hourly first year,1=hourly lifetime",                      "DHF",             "*",						   "INTEGER,MIN=0",                 "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",		"Lifetime hourly system outputs",	"0/1",   "0=hourly first year,1=hourly lifetime",                      "Sale Leaseback",             "*",						   "INTEGER,MIN=0",                 "" },
 
 	// dispatch update TODO - remove SO output label below after consildated with CSP
 	{ SSC_INPUT, SSC_NUMBER, "ppa_multiplier_model", "PPA multiplier model", "0/1", "0=diurnal,1=timestep", "Time of Delivery", "?=0", "INTEGER,MIN=0", "" },
@@ -99,30 +73,30 @@ static var_info _cm_vtab_saleleaseback[] = {
 
 
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net_jan",	"Energy produced by the system in January",	"kWh",   "",                      "DHF",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_revenue_jan",		"Revenue from the system in January",	"$",   "",                      "DHF",             "*",				   "LENGTH_EQUAL=cf_length",                 "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net_feb",	"Energy produced by the system in February",	"kWh",   "",                      "DHF",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_revenue_feb",		"Revenue from the system in February",	"$",   "",                      "DHF",             "*",				   "LENGTH_EQUAL=cf_length",                 "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net_mar",	"Energy produced by the system in March",	"kWh",   "",                      "DHF",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_revenue_mar",		"Revenue from the system in March",	"$",   "",                      "DHF",             "*",				   "LENGTH_EQUAL=cf_length",                 "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net_apr",	"Energy produced by the system in April",	"kWh",   "",                      "DHF",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_revenue_apr",		"Revenue from the system in April",	"$",   "",                      "DHF",             "*",				   "LENGTH_EQUAL=cf_length",                 "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net_may",	"Energy produced by the system in May",	"kWh",   "",                      "DHF",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_revenue_may",		"Revenue from the system in May",	"$",   "",                      "DHF",             "*",				   "LENGTH_EQUAL=cf_length",                 "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net_jun",	"Energy produced by the system in June",	"kWh",   "",                      "DHF",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_revenue_jun",		"Revenue from the system in June",	"$",   "",                      "DHF",             "*",				   "LENGTH_EQUAL=cf_length",                 "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net_jul",	"Energy produced by the system in July",	"kWh",   "",                      "DHF",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_revenue_jul",		"Revenue from the system in July",	"$",   "",                      "DHF",             "*",				   "LENGTH_EQUAL=cf_length",                 "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net_aug",	"Energy produced by the system in August",	"kWh",   "",                      "DHF",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_revenue_aug",		"Revenue from the system in August",	"$",   "",                      "DHF",             "*",				   "LENGTH_EQUAL=cf_length",                 "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net_sep",	"Energy produced by the system in September",	"kWh",   "",                      "DHF",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_revenue_sep",		"Revenue from the system in September",	"$",   "",                      "DHF",             "*",				   "LENGTH_EQUAL=cf_length",                 "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net_oct",	"Energy produced by the system in October",	"kWh",   "",                      "DHF",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_revenue_oct",		"Revenue from the system in October",	"$",   "",                      "DHF",             "*",				   "LENGTH_EQUAL=cf_length",                 "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net_nov",	"Energy produced by the system in November",	"kWh",   "",                      "DHF",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_revenue_nov",		"Revenue from the system in November",	"$",   "",                      "DHF",             "*",				   "LENGTH_EQUAL=cf_length",                 "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net_dec",	"Energy produced by the system in December",	"kWh",   "",                      "DHF",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_revenue_dec",		"Revenue from the system in December",	"$",   "",                      "DHF",             "*",				   "LENGTH_EQUAL=cf_length",                 "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net_jan",	"Energy produced by the system in January",	"kWh",   "",                      "Sale Leaseback",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_revenue_jan",		"Revenue from the system in January",	"$",   "",                      "Sale Leaseback",             "*",				   "LENGTH_EQUAL=cf_length",                 "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net_feb",	"Energy produced by the system in February",	"kWh",   "",                      "Sale Leaseback",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_revenue_feb",		"Revenue from the system in February",	"$",   "",                      "Sale Leaseback",             "*",				   "LENGTH_EQUAL=cf_length",                 "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net_mar",	"Energy produced by the system in March",	"kWh",   "",                      "Sale Leaseback",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_revenue_mar",		"Revenue from the system in March",	"$",   "",                      "Sale Leaseback",             "*",				   "LENGTH_EQUAL=cf_length",                 "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net_apr",	"Energy produced by the system in April",	"kWh",   "",                      "Sale Leaseback",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_revenue_apr",		"Revenue from the system in April",	"$",   "",                      "Sale Leaseback",             "*",				   "LENGTH_EQUAL=cf_length",                 "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net_may",	"Energy produced by the system in May",	"kWh",   "",                      "Sale Leaseback",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_revenue_may",		"Revenue from the system in May",	"$",   "",                      "Sale Leaseback",             "*",				   "LENGTH_EQUAL=cf_length",                 "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net_jun",	"Energy produced by the system in June",	"kWh",   "",                      "Sale Leaseback",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_revenue_jun",		"Revenue from the system in June",	"$",   "",                      "Sale Leaseback",             "*",				   "LENGTH_EQUAL=cf_length",                 "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net_jul",	"Energy produced by the system in July",	"kWh",   "",                      "Sale Leaseback",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_revenue_jul",		"Revenue from the system in July",	"$",   "",                      "Sale Leaseback",             "*",				   "LENGTH_EQUAL=cf_length",                 "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net_aug",	"Energy produced by the system in August",	"kWh",   "",                      "Sale Leaseback",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_revenue_aug",		"Revenue from the system in August",	"$",   "",                      "Sale Leaseback",             "*",				   "LENGTH_EQUAL=cf_length",                 "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net_sep",	"Energy produced by the system in September",	"kWh",   "",                      "Sale Leaseback",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_revenue_sep",		"Revenue from the system in September",	"$",   "",                      "Sale Leaseback",             "*",				   "LENGTH_EQUAL=cf_length",                 "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net_oct",	"Energy produced by the system in October",	"kWh",   "",                      "Sale Leaseback",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_revenue_oct",		"Revenue from the system in October",	"$",   "",                      "Sale Leaseback",             "*",				   "LENGTH_EQUAL=cf_length",                 "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net_nov",	"Energy produced by the system in November",	"kWh",   "",                      "Sale Leaseback",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_revenue_nov",		"Revenue from the system in November",	"$",   "",                      "Sale Leaseback",             "*",				   "LENGTH_EQUAL=cf_length",                 "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net_dec",	"Energy produced by the system in December",	"kWh",   "",                      "Sale Leaseback",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_revenue_dec",		"Revenue from the system in December",	"$",   "",                      "Sale Leaseback",             "*",				   "LENGTH_EQUAL=cf_length",                 "" },
 
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_net_dispatch1", "Energy produced by the system in TOD period 1", "kWh", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "LENGTH_EQUAL=cf_length", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_revenue_dispatch1", "Revenue from the system in TOD period 1", "$", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "LENGTH_EQUAL=cf_length", "" },
@@ -196,17 +170,11 @@ static var_info _cm_vtab_saleleaseback[] = {
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_revenue_monthly_firstyear_TOD9", "First year revenue from the system by month for TOD period 9", "$", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_net_monthly_firstyear_TOD9", "First year energy from the system by month for TOD period 9", "kWh", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "", "" },
 
+/* inputs in model not currently in SAM 11/15/10 */
+	{ SSC_INPUT,       SSC_NUMBER,      "total_installed_cost",          "Installed cost",                   "$",     "",					  "Sale Leaseback",			 "*",                         "",                             "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "reserves_interest",        "Interest on reserves",				"%",	 "",					  "Sale Leaseback",             "?=1.75",                     "MIN=0,MAX=100",      			"" },
 
-
-
-
-
-
-/* inputs in DHF model not currently in SAM 11/15/10 */
-	{ SSC_INPUT,       SSC_NUMBER,      "total_installed_cost",          "Installed cost",                   "$",     "",					  "DHF",			 "*",                         "",                             "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "reserves_interest",        "Interest on reserves",				"%",	 "",					  "DHF",             "?=1.75",                     "MIN=0,MAX=100",      			"" },
-
-	/* DHF replacement reserve on top of regular o and m */
+	/* replacement reserve on top of regular o and m */
 	{ SSC_INPUT, SSC_NUMBER, "equip1_reserve_cost", "Major equipment reserve 1 cost", "$/W", "", "Reserve Accounts", "?=0.25", "MIN=0", "" },
 	{ SSC_INPUT, SSC_NUMBER, "equip1_reserve_freq", "Major equipment reserve 1 frequency", "years", "", "Reserve Accounts", "?=12", "INTEGER,MIN=0", "" },
 	{ SSC_INPUT, SSC_NUMBER, "equip2_reserve_cost", "Major equipment reserve 2 cost", "$/W", "", "Reserve Accounts", "?=0", "MIN=0", "" },
@@ -215,393 +183,397 @@ static var_info _cm_vtab_saleleaseback[] = {
 	{ SSC_INPUT, SSC_NUMBER, "equip3_reserve_freq", "Major equipment reserve 3 frequency", "years", "", "Reserve Accounts", "?=20", "INTEGER,MIN=0", "" },
 
 /* major equipment depreciation schedules - can extend to three different schedules */
-	{ SSC_INPUT,        SSC_NUMBER,     "equip_reserve_depr_sta",   "Major equipment reserve state depreciation",	"",	 "0=5yr MACRS,1=15yr MACRS,2=5yr SL,3=15yr SL, 4=20yr SL,5=39yr SL,6=Custom",  "DHF", "?=0",   "INTEGER,MIN=0,MAX=6",  "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "equip_reserve_depr_fed",   "Major equipment reserve federal depreciation",	"",	 "0=5yr MACRS,1=15yr MACRS,2=5yr SL,3=15yr SL, 4=20yr SL,5=39yr SL,6=Custom",  "DHF", "?=0",   "INTEGER,MIN=0,MAX=6",  "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "equip_reserve_depr_sta",   "Major equipment reserve state depreciation",	"",	 "0=5yr MACRS,1=15yr MACRS,2=5yr SL,3=15yr SL, 4=20yr SL,5=39yr SL,6=Custom",  "Sale Leaseback", "?=0",   "INTEGER,MIN=0,MAX=6",  "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "equip_reserve_depr_fed",   "Major equipment reserve federal depreciation",	"",	 "0=5yr MACRS,1=15yr MACRS,2=5yr SL,3=15yr SL, 4=20yr SL,5=39yr SL,6=Custom",  "Sale Leaseback", "?=0",   "INTEGER,MIN=0,MAX=6",  "" },
 
-/* DHF salvage value */	
-	{ SSC_INPUT,        SSC_NUMBER,     "salvage_percentage",          "Net pre-tax cash salvage value",	"%",	 "",					  "DHF",             "?=10",                     "MIN=0,MAX=100",      			"" },
-/* DHF market specific inputs - leveraged partnership flip */
-	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_mode",            "PPA solution mode",                "0/1",   "0=solve ppa,1=specify ppa", "DHF",         "?=0",                     "INTEGER,MIN=0,MAX=1",            "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_tolerance",            "PPA solution tolerance",                "",   "", "DHF",         "?=1e-3",                     "",            "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_min",            "PPA solution minimum ppa",                "cents/kWh",   "", "DHF",         "?=0",                     "",            "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_max",            "PPA solution maximum ppa",                "cents/kWh",   "", "DHF",         "?=100",                     "",            "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_max_iterations",            "PPA solution maximum number of iterations",                "",   "", "DHF",         "?=100",                     "INTEGER,MIN=1",            "" },
+/* salvage value */	
+	{ SSC_INPUT,        SSC_NUMBER,     "salvage_percentage",          "Net pre-tax cash salvage value",	"%",	 "",					  "Sale Leaseback",             "?=10",                     "MIN=0,MAX=100",      			"" },
+/* market specific inputs - leveraged partnership flip */
+	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_mode",            "PPA solution mode",                "0/1",   "0=solve ppa,1=specify ppa", "Sale Leaseback",         "?=0",                     "INTEGER,MIN=0,MAX=1",            "" },
+	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_tolerance",            "PPA solution tolerance",                "",   "", "Sale Leaseback",         "?=1e-3",                     "",            "" },
+	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_min",            "PPA solution minimum ppa",                "cents/kWh",   "", "Sale Leaseback",         "?=0",                     "",            "" },
+	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_max",            "PPA solution maximum ppa",                "cents/kWh",   "", "Sale Leaseback",         "?=100",                     "",            "" },
+	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_max_iterations",            "PPA solution maximum number of iterations",                "",   "", "Sale Leaseback",         "?=100",                     "INTEGER,MIN=1",            "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,     "ppa_price_input",			"Initial year PPA price",			"$/kWh",	 "",			  "DHF",			 "?=10",         "",      			"" },
-	{ SSC_INPUT,        SSC_NUMBER,     "ppa_escalation",           "PPA escalation",					"%",	 "",					  "DHF",             "?=0",                     "",      			"" },
-/* DHF construction period */
-	{ SSC_INPUT,       SSC_NUMBER,      "construction_financing_cost",	"Construction financing total",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
+	{ SSC_INPUT,        SSC_ARRAY,     "ppa_price_input",			"Initial year PPA price",			"$/kWh",	 "",			  "Sale Leaseback",			 "?=10",         "",      			"" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ppa_escalation",           "PPA escalation",					"%",	 "",					  "Sale Leaseback",             "?=0",                     "",      			"" },
+/* construction period */
+	{ SSC_INPUT,       SSC_NUMBER,      "construction_financing_cost",	"Construction financing total",	"$",	 "",					  "Sale Leaseback",			 "*",                         "",                             "" },
 
-/* DHF Capital Cost */
-	{ SSC_INPUT,        SSC_NUMBER,     "cost_dev_fee_percent",		"Development fee (% pre-financing cost)","%",	 "",					  "DHF",             "?=3",					    "MIN=0,MAX=100",      			        "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "cost_equity_closing",		"Equity closing cost",				"$",	 "",					  "DHF",             "?=100000",					    "MIN=0",      			        "" },
+/* Capital Cost */
+	{ SSC_INPUT,        SSC_NUMBER,     "cost_dev_fee_percent",		"Development fee (% pre-financing cost)","%",	 "",					  "Sale Leaseback",             "?=3",					    "MIN=0,MAX=100",      			        "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "cost_equity_closing",		"Equity closing cost",				"$",	 "",					  "Sale Leaseback",             "?=100000",					    "MIN=0",      			        "" },
 	{ SSC_INPUT, SSC_NUMBER, "months_working_reserve", "Working capital reserve months of operating costs", "months", "", "Other Capital Costs", "?=6", "MIN=0", "" },
 	{ SSC_INPUT, SSC_NUMBER, "months_receivables_reserve", "Receivables reserve months of PPA revenue", "months", "", "Other Capital Costs", "?=0", "MIN=0", "" },
-	{ SSC_INPUT, SSC_NUMBER, "cost_other_financing", "", "$", "Other Financing Cost", "DHF", "?=150000", "MIN=0", "" },
-/* DHF Equity Structure */
-	{ SSC_INPUT,        SSC_NUMBER,     "sponsor_operating_margin",		"Annual Developer (Lessee) Operating Margin",		"$/kW",	 "",  "DHF",             "?=40",					  "",     			        "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "sponsor_operating_margin_escalation",			"Annual Developer (Lessee) Operating Margin Escalation",		"%",	 "",					  "DHF",             "?=2",					  "MIN=0,MAX=100",     			        "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "tax_investor_required_lease_reserve",		"Lessor Required Lease Payment Reserve",		"months",	 "",  "DHF",             "?=6",					  "INTEGER",     			        "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "flip_target_percent",			"After-tax flip/return target",		"%",	 "",					  "DHF",             "?=11",					  "MIN=0,MAX=100",     			        "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "flip_target_year",		"Return target year",				"",		 "",					  "DHF",             "?=11",					  "MIN=1",     			        "" },
-/* DHF depreciation allocation */
-	{ SSC_INPUT,        SSC_NUMBER,     "depr_alloc_macrs_5_percent",		"5-yr MACRS depreciation federal and state allocation",	"%", "",	  "DHF",             "?=89",					  "MIN=0,MAX=100",     			        "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "depr_alloc_macrs_15_percent",		"15-yr MACRS depreciation federal and state allocation",	"%", "",  "DHF",             "?=1.5",					  "MIN=0,MAX=100",     			        "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "depr_alloc_sl_5_percent",		"5-yr straight line depreciation federal and state allocation",	"%", "",  "DHF",             "?=0",						  "MIN=0,MAX=100",     			        "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "depr_alloc_sl_15_percent",		"15-yr straight line depreciation federal and state allocation","%", "",  "DHF",             "?=3",						  "MIN=0,MAX=100",     			        "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "depr_alloc_sl_20_percent",		"20-yr straight line depreciation federal and state allocation","%", "",  "DHF",             "?=3",						  "MIN=0,MAX=100",     			        "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "depr_alloc_sl_39_percent",		"39-yr straight line depreciation federal and state allocation","%", "",  "DHF",             "?=0.5",					  "MIN=0,MAX=100",     			        "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "depr_alloc_custom_percent",		"Custom depreciation federal and state allocation","%", "",  "DHF",             "?=0",					  "MIN=0,MAX=100",     			        "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "depr_custom_schedule",		"Custom depreciation schedule",	"%",   "",                      "DHF",             "*",						   "",                              "" },
-/* DHF bonus depreciation */
-	{ SSC_INPUT,        SSC_NUMBER,     "depr_bonus_sta",			"State bonus depreciation",			"%",	 "",					  "DHF",             "?=0",						  "MIN=0,MAX=100",     			        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_sta_macrs_5",   "State bonus depreciation 5-yr MACRS","0/1", "",                      "DHF",			 "?=1",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_sta_macrs_15",   "State bonus depreciation 15-yr MACRS","0/1","",                     "DHF",			 "?=0",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_sta_sl_5",   "State bonus depreciation 5-yr straight line","0/1","",                  "DHF",			 "?=0",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_sta_sl_15",   "State bonus depreciation 15-yr straight line","0/1","",                  "DHF",			 "?=0",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_sta_sl_20",   "State bonus depreciation 20-yr straight line","0/1","",                  "DHF",			 "?=0",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_sta_sl_39",   "State bonus depreciation 39-yr straight line","0/1","",                  "DHF",			 "?=0",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_sta_custom",   "State bonus depreciation custom","0/1","",                  "DHF",			 "?=0",                       "BOOLEAN",                        "" },
+	{ SSC_INPUT, SSC_NUMBER, "cost_other_financing", "", "$", "Other Financing Cost", "Sale Leaseback", "?=150000", "MIN=0", "" },
+/* Equity Structure */
+	{ SSC_INPUT,        SSC_NUMBER,     "sponsor_operating_margin",		"Annual Developer (Lessee) Operating Margin",		"$/kW",	 "",  "Sale Leaseback",             "?=40",					  "",     			        "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "sponsor_operating_margin_escalation",			"Annual Developer (Lessee) Operating Margin Escalation",		"%",	 "",					  "Sale Leaseback",             "?=2",					  "MIN=0,MAX=100",     			        "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "tax_investor_required_lease_reserve",		"Lessor Required Lease Payment Reserve",		"months",	 "",  "Sale Leaseback",             "?=6",					  "INTEGER",     			        "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "flip_target_percent",			"After-tax flip/return target",		"%",	 "",					  "Sale Leaseback",             "?=11",					  "MIN=0,MAX=100",     			        "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "flip_target_year",		"Return target year",				"",		 "",					  "Sale Leaseback",             "?=11",					  "MIN=1",     			        "" },
+/* depreciation allocation */
+	{ SSC_INPUT,        SSC_NUMBER,     "depr_alloc_macrs_5_percent",		"5-yr MACRS depreciation federal and state allocation",	"%", "",	  "Sale Leaseback",             "?=89",					  "MIN=0,MAX=100",     			        "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "depr_alloc_macrs_15_percent",		"15-yr MACRS depreciation federal and state allocation",	"%", "",  "Sale Leaseback",             "?=1.5",					  "MIN=0,MAX=100",     			        "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "depr_alloc_sl_5_percent",		"5-yr straight line depreciation federal and state allocation",	"%", "",  "Sale Leaseback",             "?=0",						  "MIN=0,MAX=100",     			        "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "depr_alloc_sl_15_percent",		"15-yr straight line depreciation federal and state allocation","%", "",  "Sale Leaseback",             "?=3",						  "MIN=0,MAX=100",     			        "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "depr_alloc_sl_20_percent",		"20-yr straight line depreciation federal and state allocation","%", "",  "Sale Leaseback",             "?=3",						  "MIN=0,MAX=100",     			        "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "depr_alloc_sl_39_percent",		"39-yr straight line depreciation federal and state allocation","%", "",  "Sale Leaseback",             "?=0.5",					  "MIN=0,MAX=100",     			        "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "depr_alloc_custom_percent",		"Custom depreciation federal and state allocation","%", "",  "Sale Leaseback",             "?=0",					  "MIN=0,MAX=100",     			        "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "depr_custom_schedule",		"Custom depreciation schedule",	"%",   "",                      "Sale Leaseback",             "*",						   "",                              "" },
+/* bonus depreciation */
+	{ SSC_INPUT,        SSC_NUMBER,     "depr_bonus_sta",			"State bonus depreciation",			"%",	 "",					  "Sale Leaseback",             "?=0",						  "MIN=0,MAX=100",     			        "" },
+	{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_sta_macrs_5",   "State bonus depreciation 5-yr MACRS","0/1", "",                      "Sale Leaseback",			 "?=1",                       "BOOLEAN",                        "" },
+	{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_sta_macrs_15",   "State bonus depreciation 15-yr MACRS","0/1","",                     "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
+	{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_sta_sl_5",   "State bonus depreciation 5-yr straight line","0/1","",                  "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
+	{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_sta_sl_15",   "State bonus depreciation 15-yr straight line","0/1","",                  "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
+	{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_sta_sl_20",   "State bonus depreciation 20-yr straight line","0/1","",                  "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
+	{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_sta_sl_39",   "State bonus depreciation 39-yr straight line","0/1","",                  "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
+	{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_sta_custom",   "State bonus depreciation custom","0/1","",                  "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,     "depr_bonus_fed",			"Federal bonus depreciation",			"%",	 "",					  "DHF",             "?=0",						  "MIN=0,MAX=100",     			        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_fed_macrs_5",   "Federal bonus depreciation 5-yr MACRS","0/1", "",                      "DHF",			 "?=1",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_fed_macrs_15",   "Federal bonus depreciation 15-yr MACRS","0/1","",                     "DHF",			 "?=0",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_fed_sl_5",   "Federal bonus depreciation 5-yr straight line","0/1","",                  "DHF",			 "?=0",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_fed_sl_15",   "Federal bonus depreciation 15-yr straight line","0/1","",                  "DHF",			 "?=0",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_fed_sl_20",   "Federal bonus depreciation 20-yr straight line","0/1","",                  "DHF",			 "?=0",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_fed_sl_39",   "Federal bonus depreciation 39-yr straight line","0/1","",                  "DHF",			 "?=0",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_fed_custom",   "Federal bonus depreciation custom","0/1","",                  "DHF",			 "?=0",                       "BOOLEAN",                        "" },
-/* DHF ITC depreciation */
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_sta_macrs_5",   "State itc depreciation 5-yr MACRS","0/1", "",                      "DHF",			 "?=1",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_sta_macrs_15",   "State itc depreciation 15-yr MACRS","0/1","",                     "DHF",			 "?=0",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_sta_sl_5",   "State itc depreciation 5-yr straight line","0/1","",                  "DHF",			 "?=0",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_sta_sl_15",   "State itc depreciation 15-yr straight line","0/1","",                  "DHF",			 "?=0",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_sta_sl_20",   "State itc depreciation 20-yr straight line","0/1","",                  "DHF",			 "?=0",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_sta_sl_39",   "State itc depreciation 39-yr straight line","0/1","",                  "DHF",			 "?=0",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_sta_custom",   "State itc depreciation custom","0/1","",                  "DHF",			 "?=0",                       "BOOLEAN",                        "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "depr_bonus_fed",			"Federal bonus depreciation",			"%",	 "",					  "Sale Leaseback",             "?=0",						  "MIN=0,MAX=100",     			        "" },
+	{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_fed_macrs_5",   "Federal bonus depreciation 5-yr MACRS","0/1", "",                      "Sale Leaseback",			 "?=1",                       "BOOLEAN",                        "" },
+	{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_fed_macrs_15",   "Federal bonus depreciation 15-yr MACRS","0/1","",                     "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
+	{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_fed_sl_5",   "Federal bonus depreciation 5-yr straight line","0/1","",                  "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
+	{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_fed_sl_15",   "Federal bonus depreciation 15-yr straight line","0/1","",                  "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
+	{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_fed_sl_20",   "Federal bonus depreciation 20-yr straight line","0/1","",                  "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
+	{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_fed_sl_39",   "Federal bonus depreciation 39-yr straight line","0/1","",                  "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
+	{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_fed_custom",   "Federal bonus depreciation custom","0/1","",                  "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
+/* ITC depreciation */
+	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_sta_macrs_5",   "State itc depreciation 5-yr MACRS","0/1", "",                      "Sale Leaseback",			 "?=1",                       "BOOLEAN",                        "" },
+	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_sta_macrs_15",   "State itc depreciation 15-yr MACRS","0/1","",                     "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
+	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_sta_sl_5",   "State itc depreciation 5-yr straight line","0/1","",                  "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
+	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_sta_sl_15",   "State itc depreciation 15-yr straight line","0/1","",                  "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
+	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_sta_sl_20",   "State itc depreciation 20-yr straight line","0/1","",                  "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
+	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_sta_sl_39",   "State itc depreciation 39-yr straight line","0/1","",                  "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
+	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_sta_custom",   "State itc depreciation custom","0/1","",                  "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_fed_macrs_5",   "Federal itc depreciation 5-yr MACRS","0/1", "",                      "DHF",			 "?=1",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_fed_macrs_15",   "Federal itc depreciation 15-yr MACRS","0/1","",                     "DHF",			 "?=0",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_fed_sl_5",   "Federal itc depreciation 5-yr straight line","0/1","",                  "DHF",			 "?=0",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_fed_sl_15",   "Federal itc depreciation 15-yr straight line","0/1","",                  "DHF",			 "?=0",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_fed_sl_20",   "Federal itc depreciation 20-yr straight line","0/1","",                  "DHF",			 "?=0",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_fed_sl_39",   "Federal itc depreciation 39-yr straight line","0/1","",                  "DHF",			 "?=0",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_fed_custom",   "Federal itc depreciation custom","0/1","",                  "DHF",			 "?=0",                       "BOOLEAN",                        "" },
+	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_fed_macrs_5",   "Federal itc depreciation 5-yr MACRS","0/1", "",                      "Sale Leaseback",			 "?=1",                       "BOOLEAN",                        "" },
+	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_fed_macrs_15",   "Federal itc depreciation 15-yr MACRS","0/1","",                     "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
+	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_fed_sl_5",   "Federal itc depreciation 5-yr straight line","0/1","",                  "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
+	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_fed_sl_15",   "Federal itc depreciation 15-yr straight line","0/1","",                  "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
+	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_fed_sl_20",   "Federal itc depreciation 20-yr straight line","0/1","",                  "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
+	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_fed_sl_39",   "Federal itc depreciation 39-yr straight line","0/1","",                  "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
+	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_fed_custom",   "Federal itc depreciation custom","0/1","",                  "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
 
 /* intermediate outputs */
-	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_financing",   "Financing Cost",          "$",   "",					  "DHF",			 "*",                         "",                             "" },
-//	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_prefinancingperwatt",   "Installed cost per watt",          "$/W",   "",					  "DHF",			 "*",                         "",                             "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_installed",          "Initial cost",                   "",     "",					  "DHF",			 "*",                         "",                             "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "size_of_equity",			"Total equity",	"",	 "",					  "DHF",			 "*",                         "",                             "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_installedperwatt",   "Installed cost per watt",          "$/W",   "",					  "DHF",			 "*",                         "",                             "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "nominal_discount_rate",   "Nominal discount rate",            "%",     "",					  "DHF",			 "*",                         "",                             "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "prop_tax_assessed_value", "Assessed value of property for tax purposes","$", "",				  "DHF",			 "*",                         "",                             "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "salvage_value",			"Net pre-tax cash salvage value",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
-	
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_none_percent",		"Non-depreciable federal and state allocation",	"%", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_none",		"Non-depreciable federal and state allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_total",		"Total depreciation federal and state allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_financing",   "Financing cost",          "$",   "",					  "Sale Leaseback",			 "*",                         "",                             "" },
+
+		//	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_prefinancingperwatt",   "Installed cost per watt",          "$/W",   "",					  "Sale Leaseback",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_prefinancing",          "Total installed cost",                   "$",     "",					  "Sale Leaseback",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_installed",          "Initial cost",                   "$",     "",					  "Sale Leaseback",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "size_of_equity",			"Total equity",	"$",	 "",					  "Sale Leaseback",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_installedperwatt",   "Installed cost per watt",          "$/W",   "",					  "Sale Leaseback",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "nominal_discount_rate",   "Nominal discount rate",            "%",     "",					  "Sale Leaseback",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "prop_tax_assessed_value", "Assessed value of property for tax purposes","$", "",				  "Sale Leaseback",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "salvage_value",			"Net pre-tax cash salvage value",	"$",	 "",					  "Sale Leaseback",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "sponsor_pretax_development",			"Sponsor pre-tax development fee",	"$",	 "",					  "Sale Leaseback",			 "*",                         "",                             "" },
+
+		//	
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_none_percent",		"Non-depreciable federal and state allocation",	"%", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_none",		"Non-depreciable federal and state allocation",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_total",		"Total depreciation federal and state allocation",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
 
 // state itc table
-/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_macrs_5",		"5-yr MACRS state percent of total depreciable basis",	"%", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_macrs_5",		"5-yr MACRS depreciation federal and state allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_ibi_reduc_macrs_5",		"5-yr MACRS state ibi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_cbi_reduc_macrs_5",		"5-yr MACRS state cbi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_prior_itc_macrs_5",		"5-yr MACRS state depreciation basis prior ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_qual_macrs_5",		"5-yr MACRS depreciation state ITC adj qualifying costs",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_qual_macrs_5",		"5-yr MACRS state percent of qualifying costs",	"%", "",	  "DHF",             "*",					  "",     			        "" },
-/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_amount_macrs_5",		"5-yr MACRS depreciation ITC basis from state percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_percent_macrs_5",		"5-yr MACRS depreciation ITC basis disallowance from state percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_fixed_amount_macrs_5",		"5-yr MACRS depreciation ITC basis from state fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_fixed_macrs_5",		"5-yr MACRS depreciation ITC basis disallowance from state fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_sta_reduction_macrs_5",		"5-yr MACRS state basis state ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_fed_reduction_macrs_5",		"5-yr MACRS state basis federal ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_after_itc_macrs_5",		"5-yr MACRS state depreciation basis after ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_first_year_bonus_macrs_5",		"5-yr MACRS state first year bonus depreciation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_macrs_5",		"5-yr MACRS state depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_macrs_5",		"5-yr MACRS state percent of total depreciable basis",	"%", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_macrs_5",		"5-yr MACRS depreciation federal and state allocation",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_ibi_reduc_macrs_5",		"5-yr MACRS state ibi reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_cbi_reduc_macrs_5",		"5-yr MACRS state cbi reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_prior_itc_macrs_5",		"5-yr MACRS state depreciation basis prior ITC reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_qual_macrs_5",		"5-yr MACRS depreciation state ITC adj qualifying costs",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_qual_macrs_5",		"5-yr MACRS state percent of qualifying costs",	"%", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_amount_macrs_5",		"5-yr MACRS depreciation ITC basis from state percentage",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_percent_macrs_5",		"5-yr MACRS depreciation ITC basis disallowance from state percentage",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_fixed_amount_macrs_5",		"5-yr MACRS depreciation ITC basis from state fixed amount",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_fixed_macrs_5",		"5-yr MACRS depreciation ITC basis disallowance from state fixed amount",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_sta_reduction_macrs_5",		"5-yr MACRS state basis state ITC recution",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_fed_reduction_macrs_5",		"5-yr MACRS state basis federal ITC recution",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_after_itc_macrs_5",		"5-yr MACRS state depreciation basis after ITC reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_first_year_bonus_macrs_5",		"5-yr MACRS state first year bonus depreciation",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_macrs_5",		"5-yr MACRS state depreciation basis",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
 
-/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_macrs_15",		"15-yr MACRS state percent of total depreciable basis",	"%", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_macrs_15",		"15-yr MACRS depreciation federal and state allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_ibi_reduc_macrs_15",		"15-yr MACRS state ibi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_cbi_reduc_macrs_15",		"15-yr MACRS state cbi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_prior_itc_macrs_15",		"15-yr MACRS state depreciation basis prior ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_qual_macrs_15",		"15-yr MACRS depreciation state ITC adj qualifying costs",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_qual_macrs_15",		"15-yr MACRS state percent of qualifying costs",	"%", "",	  "DHF",             "*",					  "",     			        "" },
-/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_amount_macrs_15",		"15-yr MACRS depreciation ITC basis from state percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_percent_macrs_15",		"15-yr MACRS depreciation ITC basis disallowance from state percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_fixed_amount_macrs_15",		"15-yr MACRS depreciation ITC basis from state fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_fixed_macrs_15",		"15-yr MACRS depreciation ITC basis disallowance from state fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_sta_reduction_macrs_15",		"15-yr MACRS state basis state ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_fed_reduction_macrs_15",		"15-yr MACRS state basis federal ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_after_itc_macrs_15",		"15-yr MACRS state depreciation basis after ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_first_year_bonus_macrs_15",		"15-yr MACRS state first year bonus depreciation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_macrs_15",		"15-yr MACRS state depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_macrs_15",		"15-yr MACRS state percent of total depreciable basis",	"%", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_macrs_15",		"15-yr MACRS depreciation federal and state allocation",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_ibi_reduc_macrs_15",		"15-yr MACRS state ibi reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_cbi_reduc_macrs_15",		"15-yr MACRS state cbi reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_prior_itc_macrs_15",		"15-yr MACRS state depreciation basis prior ITC reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_qual_macrs_15",		"15-yr MACRS depreciation state ITC adj qualifying costs",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_qual_macrs_15",		"15-yr MACRS state percent of qualifying costs",	"%", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_amount_macrs_15",		"15-yr MACRS depreciation ITC basis from state percentage",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_percent_macrs_15",		"15-yr MACRS depreciation ITC basis disallowance from state percentage",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_fixed_amount_macrs_15",		"15-yr MACRS depreciation ITC basis from state fixed amount",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_fixed_macrs_15",		"15-yr MACRS depreciation ITC basis disallowance from state fixed amount",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_sta_reduction_macrs_15",		"15-yr MACRS state basis state ITC recution",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_fed_reduction_macrs_15",		"15-yr MACRS state basis federal ITC recution",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_after_itc_macrs_15",		"15-yr MACRS state depreciation basis after ITC reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_first_year_bonus_macrs_15",		"15-yr MACRS state first year bonus depreciation",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_macrs_15",		"15-yr MACRS state depreciation basis",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
 
-/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_sl_5",		"5-yr straight line state percent of total depreciable basis",	"%", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_sl_5",		"5-yr straight line depreciation federal and state allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_ibi_reduc_sl_5",		"5-yr straight line state ibi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_cbi_reduc_sl_5",		"5-yr straight line state cbi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_prior_itc_sl_5",		"5-yr straight line state depreciation basis prior ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_qual_sl_5",		"5-yr straight line depreciation state ITC adj qualifying costs",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_qual_sl_5",		"5-yr straight line state percent of qualifying costs",	"%", "",	  "DHF",             "*",					  "",     			        "" },
-/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_amount_sl_5",		"5-yr straight line depreciation ITC basis from state percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_percent_sl_5",		"5-yr straight line depreciation ITC basis disallowance from state percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_fixed_amount_sl_5",		"5-yr straight line depreciation ITC basis from state fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_fixed_sl_5",		"5-yr straight line depreciation ITC basis disallowance from state fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_sta_reduction_sl_5",		"5-yr straight line state basis state ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_fed_reduction_sl_5",		"5-yr straight line state basis federal ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_after_itc_sl_5",		"5-yr straight line state depreciation basis after ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_first_year_bonus_sl_5",		"5-yr straight line state first year bonus depreciation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_sl_5",		"5-yr straight line state depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_sl_5",		"5-yr straight line state percent of total depreciable basis",	"%", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_sl_5",		"5-yr straight line depreciation federal and state allocation",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_ibi_reduc_sl_5",		"5-yr straight line state ibi reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_cbi_reduc_sl_5",		"5-yr straight line state cbi reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_prior_itc_sl_5",		"5-yr straight line state depreciation basis prior ITC reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_qual_sl_5",		"5-yr straight line depreciation state ITC adj qualifying costs",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_qual_sl_5",		"5-yr straight line state percent of qualifying costs",	"%", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_amount_sl_5",		"5-yr straight line depreciation ITC basis from state percentage",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_percent_sl_5",		"5-yr straight line depreciation ITC basis disallowance from state percentage",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_fixed_amount_sl_5",		"5-yr straight line depreciation ITC basis from state fixed amount",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_fixed_sl_5",		"5-yr straight line depreciation ITC basis disallowance from state fixed amount",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_sta_reduction_sl_5",		"5-yr straight line state basis state ITC recution",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_fed_reduction_sl_5",		"5-yr straight line state basis federal ITC recution",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_after_itc_sl_5",		"5-yr straight line state depreciation basis after ITC reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_first_year_bonus_sl_5",		"5-yr straight line state first year bonus depreciation",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_sl_5",		"5-yr straight line state depreciation basis",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
 
-/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_sl_15",		"15-yr straight line state percent of total depreciable basis",	"%", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_sl_15",		"15-yr straight line depreciation federal and state allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_ibi_reduc_sl_15",		"15-yr straight line state ibi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_cbi_reduc_sl_15",		"15-yr straight line state cbi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_prior_itc_sl_15",		"15-yr straight line state depreciation basis prior ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_qual_sl_15",		"15-yr straight line depreciation state ITC adj qualifying costs",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_qual_sl_15",		"15-yr straight line state percent of qualifying costs",	"%", "",	  "DHF",             "*",					  "",     			        "" },
-/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_amount_sl_15",		"15-yr straight line depreciation ITC basis from state percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_percent_sl_15",		"15-yr straight line depreciation ITC basis disallowance from state percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_fixed_amount_sl_15",		"15-yr straight line depreciation ITC basis from state fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_fixed_sl_15",		"15-yr straight line depreciation ITC basis disallowance from state fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_sta_reduction_sl_15",		"15-yr straight line state basis state ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_fed_reduction_sl_15",		"15-yr straight line state basis federal ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_after_itc_sl_15",		"15-yr straight line state depreciation basis after ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_first_year_bonus_sl_15",		"15-yr straight line state first year bonus depreciation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_sl_15",		"15-yr straight line state depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_sl_15",		"15-yr straight line state percent of total depreciable basis",	"%", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_sl_15",		"15-yr straight line depreciation federal and state allocation",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_ibi_reduc_sl_15",		"15-yr straight line state ibi reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_cbi_reduc_sl_15",		"15-yr straight line state cbi reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_prior_itc_sl_15",		"15-yr straight line state depreciation basis prior ITC reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_qual_sl_15",		"15-yr straight line depreciation state ITC adj qualifying costs",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_qual_sl_15",		"15-yr straight line state percent of qualifying costs",	"%", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_amount_sl_15",		"15-yr straight line depreciation ITC basis from state percentage",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_percent_sl_15",		"15-yr straight line depreciation ITC basis disallowance from state percentage",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_fixed_amount_sl_15",		"15-yr straight line depreciation ITC basis from state fixed amount",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_fixed_sl_15",		"15-yr straight line depreciation ITC basis disallowance from state fixed amount",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_sta_reduction_sl_15",		"15-yr straight line state basis state ITC recution",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_fed_reduction_sl_15",		"15-yr straight line state basis federal ITC recution",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_after_itc_sl_15",		"15-yr straight line state depreciation basis after ITC reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_first_year_bonus_sl_15",		"15-yr straight line state first year bonus depreciation",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_sl_15",		"15-yr straight line state depreciation basis",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
 
-/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_sl_20",		"20-yr straight line state percent of total depreciable basis",	"%", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_sl_20",		"20-yr straight line depreciation federal and state allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_ibi_reduc_sl_20",		"20-yr straight line state ibi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_cbi_reduc_sl_20",		"20-yr straight line state cbi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_prior_itc_sl_20",		"20-yr straight line state depreciation basis prior ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_qual_sl_20",		"20-yr straight line depreciation state ITC adj qualifying costs",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_qual_sl_20",		"20-yr straight line state percent of qualifying costs",	"%", "",	  "DHF",             "*",					  "",     			        "" },
-/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_amount_sl_20",		"20-yr straight line depreciation ITC basis from state percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_percent_sl_20",		"20-yr straight line depreciation ITC basis disallowance from state percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_fixed_amount_sl_20",		"20-yr straight line depreciation ITC basis from state fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_fixed_sl_20",		"20-yr straight line depreciation ITC basis disallowance from state fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_sta_reduction_sl_20",		"20-yr straight line state basis state ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_fed_reduction_sl_20",		"20-yr straight line state basis federal ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_after_itc_sl_20",		"20-yr straight line state depreciation basis after ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_first_year_bonus_sl_20",		"20-yr straight line state first year bonus depreciation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_sl_20",		"20-yr straight line state depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_sl_20",		"20-yr straight line state percent of total depreciable basis",	"%", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_sl_20",		"20-yr straight line depreciation federal and state allocation",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_ibi_reduc_sl_20",		"20-yr straight line state ibi reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_cbi_reduc_sl_20",		"20-yr straight line state cbi reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_prior_itc_sl_20",		"20-yr straight line state depreciation basis prior ITC reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_qual_sl_20",		"20-yr straight line depreciation state ITC adj qualifying costs",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_qual_sl_20",		"20-yr straight line state percent of qualifying costs",	"%", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_amount_sl_20",		"20-yr straight line depreciation ITC basis from state percentage",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_percent_sl_20",		"20-yr straight line depreciation ITC basis disallowance from state percentage",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_fixed_amount_sl_20",		"20-yr straight line depreciation ITC basis from state fixed amount",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_fixed_sl_20",		"20-yr straight line depreciation ITC basis disallowance from state fixed amount",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_sta_reduction_sl_20",		"20-yr straight line state basis state ITC recution",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_fed_reduction_sl_20",		"20-yr straight line state basis federal ITC recution",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_after_itc_sl_20",		"20-yr straight line state depreciation basis after ITC reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_first_year_bonus_sl_20",		"20-yr straight line state first year bonus depreciation",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_sl_20",		"20-yr straight line state depreciation basis",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
 
-/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_sl_39",		"39-yr straight line state percent of total depreciable basis",	"%", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_sl_39",		"39-yr straight line depreciation federal and state allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_ibi_reduc_sl_39",		"39-yr straight line state ibi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_cbi_reduc_sl_39",		"39-yr straight line state cbi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_prior_itc_sl_39",		"39-yr straight line state depreciation basis prior ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_qual_sl_39",		"39-yr straight line depreciation state ITC adj qualifying costs",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_qual_sl_39",		"39-yr straight line state percent of qualifying costs",	"%", "",	  "DHF",             "*",					  "",     			        "" },
-/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_amount_sl_39",		"39-yr straight line depreciation ITC basis from state percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_percent_sl_39",		"39-yr straight line depreciation ITC basis disallowance from state percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_fixed_amount_sl_39",		"39-yr straight line depreciation ITC basis from state fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_fixed_sl_39",		"39-yr straight line depreciation ITC basis disallowance from state fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_sta_reduction_sl_39",		"39-yr straight line state basis state ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_fed_reduction_sl_39",		"39-yr straight line state basis federal ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_after_itc_sl_39",		"39-yr straight line state depreciation basis after ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_first_year_bonus_sl_39",		"39-yr straight line state first year bonus depreciation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_sl_39",		"39-yr straight line state depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_sl_39",		"39-yr straight line state percent of total depreciable basis",	"%", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_sl_39",		"39-yr straight line depreciation federal and state allocation",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_ibi_reduc_sl_39",		"39-yr straight line state ibi reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_cbi_reduc_sl_39",		"39-yr straight line state cbi reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_prior_itc_sl_39",		"39-yr straight line state depreciation basis prior ITC reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_qual_sl_39",		"39-yr straight line depreciation state ITC adj qualifying costs",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_qual_sl_39",		"39-yr straight line state percent of qualifying costs",	"%", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_amount_sl_39",		"39-yr straight line depreciation ITC basis from state percentage",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_percent_sl_39",		"39-yr straight line depreciation ITC basis disallowance from state percentage",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_fixed_amount_sl_39",		"39-yr straight line depreciation ITC basis from state fixed amount",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_fixed_sl_39",		"39-yr straight line depreciation ITC basis disallowance from state fixed amount",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_sta_reduction_sl_39",		"39-yr straight line state basis state ITC recution",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_fed_reduction_sl_39",		"39-yr straight line state basis federal ITC recution",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_after_itc_sl_39",		"39-yr straight line state depreciation basis after ITC reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_first_year_bonus_sl_39",		"39-yr straight line state first year bonus depreciation",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_sl_39",		"39-yr straight line state depreciation basis",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
 
-/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_custom",		"Custom straight line state percent of total depreciable basis",	"%", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_custom",		"Custom straight line depreciation federal and state allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_ibi_reduc_custom",		"Custom straight line state ibi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_cbi_reduc_custom",		"Custom straight line state cbi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_prior_itc_custom",		"Custom straight line state depreciation basis prior ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_qual_custom",		"Custom straight line depreciation state ITC adj qualifying costs",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_qual_custom",		"Custom straight line state percent of qualifying costs",	"%", "",	  "DHF",             "*",					  "",     			        "" },
-/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_amount_custom",		"Custom straight line depreciation ITC basis from state percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_percent_custom",		"Custom straight line depreciation ITC basis disallowance from state percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_fixed_amount_custom",		"Custom straight line depreciation ITC basis from state fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_fixed_custom",		"Custom straight line depreciation ITC basis disallowance from state fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_sta_reduction_custom",		"Custom straight line state basis state ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_fed_reduction_custom",		"Custom straight line state basis federal ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_after_itc_custom",		"Custom straight line state depreciation basis after ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_first_year_bonus_custom",		"Custom straight line state first year bonus depreciation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_custom",		"Custom straight line state depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_custom",		"Custom straight line state percent of total depreciable basis",	"%", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_custom",		"Custom straight line depreciation federal and state allocation",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_ibi_reduc_custom",		"Custom straight line state ibi reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_cbi_reduc_custom",		"Custom straight line state cbi reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_prior_itc_custom",		"Custom straight line state depreciation basis prior ITC reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_qual_custom",		"Custom straight line depreciation state ITC adj qualifying costs",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_qual_custom",		"Custom straight line state percent of qualifying costs",	"%", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_amount_custom",		"Custom straight line depreciation ITC basis from state percentage",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_percent_custom",		"Custom straight line depreciation ITC basis disallowance from state percentage",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_fixed_amount_custom",		"Custom straight line depreciation ITC basis from state fixed amount",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_fixed_custom",		"Custom straight line depreciation ITC basis disallowance from state fixed amount",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_sta_reduction_custom",		"Custom straight line state basis state ITC recution",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_fed_reduction_custom",		"Custom straight line state basis federal ITC recution",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_after_itc_custom",		"Custom straight line state depreciation basis after ITC reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_first_year_bonus_custom",		"Custom straight line state first year bonus depreciation",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_custom",		"Custom straight line state depreciation basis",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
 
 
-/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_total",		"Total state percent of total depreciable basis",	"%", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_total",		"Total depreciation federal and state allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_ibi_reduc_total",		"Total state ibi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_cbi_reduc_total",		"Total state cbi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_prior_itc_total",		"Total state depreciation basis prior ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_qual_total",		"Total state ITC adj qualifying costs",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_qual_total",		"Total state percent of qualifying costs",	"%", "",	  "DHF",             "*",					  "",     			        "" },
-/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_amount_total",		"Total depreciation ITC basis from state percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_percent_total",		"Total depreciation ITC basis disallowance from state percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_fixed_amount_total",		"Total depreciation ITC basis from state fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_fixed_total",		"Total depreciation ITC basis disallowance from state fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_sta_reduction_total",		"Total state basis state ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_fed_reduction_total",		"Total state basis federal ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_after_itc_total",		"Total state depreciation basis after ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_first_year_bonus_total",		"Total state first year bonus depreciation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_total",		"Total state depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_total",		"Total state percent of total depreciable basis",	"%", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_total",		"Total depreciation federal and state allocation",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_ibi_reduc_total",		"Total state ibi reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_cbi_reduc_total",		"Total state cbi reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_prior_itc_total",		"Total state depreciation basis prior ITC reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_qual_total",		"Total state ITC adj qualifying costs",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_qual_total",		"Total state percent of qualifying costs",	"%", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_amount_total",		"Total depreciation ITC basis from state percentage",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_percent_total",		"Total depreciation ITC basis disallowance from state percentage",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_fixed_amount_total",		"Total depreciation ITC basis from state fixed amount",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_sta_fixed_total",		"Total depreciation ITC basis disallowance from state fixed amount",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_sta_reduction_total",		"Total state basis state ITC reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_itc_fed_reduction_total",		"Total state basis federal ITC reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_after_itc_total",		"Total state depreciation basis after ITC reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_first_year_bonus_total",		"Total state first year bonus depreciation",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_total",		"Total state depreciation basis",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
 
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_percent_total",		"State ITC percent total",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_fixed_total",		"State ITC fixed total",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_percent_total",		"State ITC percent total",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_sta_fixed_total",		"State ITC fixed total",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
 
 // federal itc table
-/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_macrs_5",		"5-yr MACRS federal percent of total depreciable basis",	"%", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_macrs_5",		"5-yr MACRS depreciation federal and federal allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_ibi_reduc_macrs_5",		"5-yr MACRS federal ibi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_cbi_reduc_macrs_5",		"5-yr MACRS federal cbi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_prior_itc_macrs_5",		"5-yr MACRS federal depreciation basis prior ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_qual_macrs_5",		"5-yr MACRS depreciation federal ITC adj qualifying costs",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_qual_macrs_5",		"5-yr MACRS federal percent of qualifying costs",	"%", "",	  "DHF",             "*",					  "",     			        "" },
-/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_amount_macrs_5",		"5-yr MACRS depreciation ITC basis from federal percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_percent_macrs_5",		"5-yr MACRS depreciation ITC basis disallowance from federal percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_fixed_amount_macrs_5",		"5-yr MACRS depreciation ITC basis from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_macrs_5",		"5-yr MACRS depreciation ITC basis disallowance from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_sta_reduction_macrs_5",		"5-yr MACRS federal basis state ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_fed_reduction_macrs_5",		"5-yr MACRS federal basis federal ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_after_itc_macrs_5",		"5-yr MACRS federal depreciation basis after ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_first_year_bonus_macrs_5",		"5-yr MACRS federal first year bonus depreciation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_macrs_5",		"5-yr MACRS federal depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_macrs_5",		"5-yr MACRS federal percent of total depreciable basis",	"%", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_macrs_5",		"5-yr MACRS depreciation federal and federal allocation",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_ibi_reduc_macrs_5",		"5-yr MACRS federal ibi reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_cbi_reduc_macrs_5",		"5-yr MACRS federal cbi reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_prior_itc_macrs_5",		"5-yr MACRS federal depreciation basis prior ITC reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_qual_macrs_5",		"5-yr MACRS depreciation federal ITC adj qualifying costs",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_qual_macrs_5",		"5-yr MACRS federal percent of qualifying costs",	"%", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_amount_macrs_5",		"5-yr MACRS depreciation ITC basis from federal percentage",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_percent_macrs_5",		"5-yr MACRS depreciation ITC basis disallowance from federal percentage",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_fixed_amount_macrs_5",		"5-yr MACRS depreciation ITC basis from federal fixed amount",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_macrs_5",		"5-yr MACRS depreciation ITC basis disallowance from federal fixed amount",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_sta_reduction_macrs_5",		"5-yr MACRS federal basis state ITC reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_fed_reduction_macrs_5",		"5-yr MACRS federal basis federal ITC reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_after_itc_macrs_5",		"5-yr MACRS federal depreciation basis after ITC reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_first_year_bonus_macrs_5",		"5-yr MACRS federal first year bonus depreciation",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_macrs_5",		"5-yr MACRS federal depreciation basis",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
 
-/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_macrs_15",		"15-yr MACRS federal percent of total depreciable basis",	"%", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_macrs_15",		"15-yr MACRS depreciation federal and federal allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_ibi_reduc_macrs_15",		"15-yr MACRS federal ibi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_cbi_reduc_macrs_15",		"15-yr MACRS federal cbi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_prior_itc_macrs_15",		"15-yr MACRS federal depreciation basis prior ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_qual_macrs_15",		"15-yr MACRS depreciation federal ITC adj qualifying costs",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_qual_macrs_15",		"15-yr MACRS federal percent of qualifying costs",	"%", "",	  "DHF",             "*",					  "",     			        "" },
-/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_amount_macrs_15",		"15-yr MACRS depreciation ITC basis from federal percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_percent_macrs_15",		"15-yr MACRS depreciation ITC basis disallowance from federal percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_fixed_amount_macrs_15",		"15-yr MACRS depreciation ITC basis from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_macrs_15",		"15-yr MACRS depreciation ITC basis disallowance from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_sta_reduction_macrs_15",		"15-yr MACRS federal basis state ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_fed_reduction_macrs_15",		"15-yr MACRS federal basis federal ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_after_itc_macrs_15",		"15-yr MACRS federal depreciation basis after ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_first_year_bonus_macrs_15",		"15-yr MACRS federal first year bonus depreciation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_macrs_15",		"15-yr MACRS federal depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_macrs_15",		"15-yr MACRS federal percent of total depreciable basis",	"%", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_macrs_15",		"15-yr MACRS depreciation federal and federal allocation",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_ibi_reduc_macrs_15",		"15-yr MACRS federal ibi reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_cbi_reduc_macrs_15",		"15-yr MACRS federal cbi reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_prior_itc_macrs_15",		"15-yr MACRS federal depreciation basis prior ITC reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_qual_macrs_15",		"15-yr MACRS depreciation federal ITC adj qualifying costs",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_qual_macrs_15",		"15-yr MACRS federal percent of qualifying costs",	"%", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_amount_macrs_15",		"15-yr MACRS depreciation ITC basis from federal percentage",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_percent_macrs_15",		"15-yr MACRS depreciation ITC basis disallowance from federal percentage",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_fixed_amount_macrs_15",		"15-yr MACRS depreciation ITC basis from federal fixed amount",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_macrs_15",		"15-yr MACRS depreciation ITC basis disallowance from federal fixed amount",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_sta_reduction_macrs_15",		"15-yr MACRS federal basis state ITC recution",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_fed_reduction_macrs_15",		"15-yr MACRS federal basis federal ITC recution",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_after_itc_macrs_15",		"15-yr MACRS federal depreciation basis after ITC reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_first_year_bonus_macrs_15",		"15-yr MACRS federal first year bonus depreciation",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_macrs_15",		"15-yr MACRS federal depreciation basis",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
 
-/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_sl_5",		"5-yr straight line federal percent of total depreciable basis",	"%", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_sl_5",		"5-yr straight line depreciation federal and federal allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_ibi_reduc_sl_5",		"5-yr straight line federal ibi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_cbi_reduc_sl_5",		"5-yr straight line federal cbi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_prior_itc_sl_5",		"5-yr straight line federal depreciation basis prior ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_qual_sl_5",		"5-yr straight line depreciation federal ITC adj qualifying costs",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_qual_sl_5",		"5-yr straight line federal percent of qualifying costs",	"%", "",	  "DHF",             "*",					  "",     			        "" },
-/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_amount_sl_5",		"5-yr straight line depreciation ITC basis from federal percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_percent_sl_5",		"5-yr straight line depreciation ITC basis disallowance from federal percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_fixed_amount_sl_5",		"5-yr straight line depreciation ITC basis from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_sl_5",		"5-yr straight line depreciation ITC basis disallowance from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_sta_reduction_sl_5",		"5-yr straight line federal basis state ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_fed_reduction_sl_5",		"5-yr straight line federal basis federal ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_after_itc_sl_5",		"5-yr straight line federal depreciation basis after ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_first_year_bonus_sl_5",		"5-yr straight line federal first year bonus depreciation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_sl_5",		"5-yr straight line federal depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_sl_5",		"5-yr straight line federal percent of total depreciable basis",	"%", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_sl_5",		"5-yr straight line depreciation federal and federal allocation",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_ibi_reduc_sl_5",		"5-yr straight line federal ibi reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_cbi_reduc_sl_5",		"5-yr straight line federal cbi reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_prior_itc_sl_5",		"5-yr straight line federal depreciation basis prior ITC reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_qual_sl_5",		"5-yr straight line depreciation federal ITC adj qualifying costs",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_qual_sl_5",		"5-yr straight line federal percent of qualifying costs",	"%", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_amount_sl_5",		"5-yr straight line depreciation ITC basis from federal percentage",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_percent_sl_5",		"5-yr straight line depreciation ITC basis disallowance from federal percentage",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_fixed_amount_sl_5",		"5-yr straight line depreciation ITC basis from federal fixed amount",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_sl_5",		"5-yr straight line depreciation ITC basis disallowance from federal fixed amount",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_sta_reduction_sl_5",		"5-yr straight line federal basis state ITC recution",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_fed_reduction_sl_5",		"5-yr straight line federal basis federal ITC recution",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_after_itc_sl_5",		"5-yr straight line federal depreciation basis after ITC reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_first_year_bonus_sl_5",		"5-yr straight line federal first year bonus depreciation",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_sl_5",		"5-yr straight line federal depreciation basis",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
 
-/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_sl_15",		"15-yr straight line federal percent of total depreciable basis",	"%", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_sl_15",		"15-yr straight line depreciation federal and federal allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_ibi_reduc_sl_15",		"15-yr straight line federal ibi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_cbi_reduc_sl_15",		"15-yr straight line federal cbi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_prior_itc_sl_15",		"15-yr straight line federal depreciation basis prior ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_qual_sl_15",		"15-yr straight line depreciation federal ITC adj qualifying costs",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_qual_sl_15",		"15-yr straight line federal percent of qualifying costs",	"%", "",	  "DHF",             "*",					  "",     			        "" },
-/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_amount_sl_15",		"15-yr straight line depreciation ITC basis from federal percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_percent_sl_15",		"15-yr straight line depreciation ITC basis disallowance from federal percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_fixed_amount_sl_15",		"15-yr straight line depreciation ITC basis from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_sl_15",		"15-yr straight line depreciation ITC basis disallowance from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_sta_reduction_sl_15",		"15-yr straight line federal basis state ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_fed_reduction_sl_15",		"15-yr straight line federal basis federal ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_after_itc_sl_15",		"15-yr straight line federal depreciation basis after ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_first_year_bonus_sl_15",		"15-yr straight line federal first year bonus depreciation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_sl_15",		"15-yr straight line federal depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_sl_15",		"15-yr straight line federal percent of total depreciable basis",	"%", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_sl_15",		"15-yr straight line depreciation federal and federal allocation",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_ibi_reduc_sl_15",		"15-yr straight line federal ibi reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_cbi_reduc_sl_15",		"15-yr straight line federal cbi reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_prior_itc_sl_15",		"15-yr straight line federal depreciation basis prior ITC reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_qual_sl_15",		"15-yr straight line depreciation federal ITC adj qualifying costs",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_qual_sl_15",		"15-yr straight line federal percent of qualifying costs",	"%", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_amount_sl_15",		"15-yr straight line depreciation ITC basis from federal percentage",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_percent_sl_15",		"15-yr straight line depreciation ITC basis disallowance from federal percentage",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_fixed_amount_sl_15",		"15-yr straight line depreciation ITC basis from federal fixed amount",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_sl_15",		"15-yr straight line depreciation ITC basis disallowance from federal fixed amount",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_sta_reduction_sl_15",		"15-yr straight line federal basis state ITC recution",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_fed_reduction_sl_15",		"15-yr straight line federal basis federal ITC recution",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_after_itc_sl_15",		"15-yr straight line federal depreciation basis after ITC reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_first_year_bonus_sl_15",		"15-yr straight line federal first year bonus depreciation",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_sl_15",		"15-yr straight line federal depreciation basis",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
 
-/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_sl_20",		"20-yr straight line federal percent of total depreciable basis",	"%", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_sl_20",		"20-yr straight line depreciation federal and federal allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_ibi_reduc_sl_20",		"20-yr straight line federal ibi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_cbi_reduc_sl_20",		"20-yr straight line federal cbi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_prior_itc_sl_20",		"20-yr straight line federal depreciation basis prior ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_qual_sl_20",		"20-yr straight line depreciation federal ITC adj qualifying costs",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_qual_sl_20",		"20-yr straight line federal percent of qualifying costs",	"%", "",	  "DHF",             "*",					  "",     			        "" },
-/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_amount_sl_20",		"20-yr straight line depreciation ITC basis from federal percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_percent_sl_20",		"20-yr straight line depreciation ITC basis disallowance from federal percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_fixed_amount_sl_20",		"20-yr straight line depreciation ITC basis from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_sl_20",		"20-yr straight line depreciation ITC basis disallowance from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_sta_reduction_sl_20",		"20-yr straight line federal basis state ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_fed_reduction_sl_20",		"20-yr straight line federal basis federal ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_after_itc_sl_20",		"20-yr straight line federal depreciation basis after ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_first_year_bonus_sl_20",		"20-yr straight line federal first year bonus depreciation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_sl_20",		"20-yr straight line federal depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_sl_20",		"20-yr straight line federal percent of total depreciable basis",	"%", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_sl_20",		"20-yr straight line depreciation federal and federal allocation",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_ibi_reduc_sl_20",		"20-yr straight line federal ibi reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_cbi_reduc_sl_20",		"20-yr straight line federal cbi reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_prior_itc_sl_20",		"20-yr straight line federal depreciation basis prior ITC reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_qual_sl_20",		"20-yr straight line depreciation federal ITC adj qualifying costs",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_qual_sl_20",		"20-yr straight line federal percent of qualifying costs",	"%", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_amount_sl_20",		"20-yr straight line depreciation ITC basis from federal percentage",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_percent_sl_20",		"20-yr straight line depreciation ITC basis disallowance from federal percentage",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_fixed_amount_sl_20",		"20-yr straight line depreciation ITC basis from federal fixed amount",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_sl_20",		"20-yr straight line depreciation ITC basis disallowance from federal fixed amount",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_sta_reduction_sl_20",		"20-yr straight line federal basis state ITC recution",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_fed_reduction_sl_20",		"20-yr straight line federal basis federal ITC recution",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_after_itc_sl_20",		"20-yr straight line federal depreciation basis after ITC reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_first_year_bonus_sl_20",		"20-yr straight line federal first year bonus depreciation",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_sl_20",		"20-yr straight line federal depreciation basis",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
 
-/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_sl_39",		"39-yr straight line federal percent of total depreciable basis",	"%", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_sl_39",		"39-yr straight line depreciation federal and federal allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_ibi_reduc_sl_39",		"39-yr straight line federal ibi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_cbi_reduc_sl_39",		"39-yr straight line federal cbi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_prior_itc_sl_39",		"39-yr straight line federal depreciation basis prior ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_qual_sl_39",		"39-yr straight line depreciation federal ITC adj qualifying costs",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_qual_sl_39",		"39-yr straight line federal percent of qualifying costs",	"%", "",	  "DHF",             "*",					  "",     			        "" },
-/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_amount_sl_39",		"39-yr straight line depreciation ITC basis from federal percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_percent_sl_39",		"39-yr straight line depreciation ITC basis disallowance from federal percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_fixed_amount_sl_39",		"39-yr straight line depreciation ITC basis from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_sl_39",		"39-yr straight line depreciation ITC basis disallowance from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_sta_reduction_sl_39",		"39-yr straight line federal basis state ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_fed_reduction_sl_39",		"39-yr straight line federal basis federal ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_after_itc_sl_39",		"39-yr straight line federal depreciation basis after ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_first_year_bonus_sl_39",		"39-yr straight line federal first year bonus depreciation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_sl_39",		"39-yr straight line federal depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_sl_39",		"39-yr straight line federal percent of total depreciable basis",	"%", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_sl_39",		"39-yr straight line depreciation federal and federal allocation",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_ibi_reduc_sl_39",		"39-yr straight line federal ibi reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_cbi_reduc_sl_39",		"39-yr straight line federal cbi reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_prior_itc_sl_39",		"39-yr straight line federal depreciation basis prior ITC reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_qual_sl_39",		"39-yr straight line depreciation federal ITC adj qualifying costs",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_qual_sl_39",		"39-yr straight line federal percent of qualifying costs",	"%", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_amount_sl_39",		"39-yr straight line depreciation ITC basis from federal percentage",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_percent_sl_39",		"39-yr straight line depreciation ITC basis disallowance from federal percentage",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_fixed_amount_sl_39",		"39-yr straight line depreciation ITC basis from federal fixed amount",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_sl_39",		"39-yr straight line depreciation ITC basis disallowance from federal fixed amount",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_sta_reduction_sl_39",		"39-yr straight line federal basis state ITC recution",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_fed_reduction_sl_39",		"39-yr straight line federal basis federal ITC recution",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_after_itc_sl_39",		"39-yr straight line federal depreciation basis after ITC reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_first_year_bonus_sl_39",		"39-yr straight line federal first year bonus depreciation",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_sl_39",		"39-yr straight line federal depreciation basis",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
 
-/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_custom",		"Custom straight line federal percent of total depreciable basis",	"%", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_custom",		"Custom straight line depreciation federal and federal allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_ibi_reduc_custom",		"Custom straight line federal ibi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_cbi_reduc_custom",		"Custom straight line federal cbi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_prior_itc_custom",		"Custom straight line federal depreciation basis prior ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_qual_custom",		"Custom straight line depreciation federal ITC adj qualifying costs",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_qual_custom",		"Custom straight line federal percent of qualifying costs",	"%", "",	  "DHF",             "*",					  "",     			        "" },
-/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_amount_custom",		"Custom straight line depreciation ITC basis from federal percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_percent_custom",		"Custom straight line depreciation ITC basis disallowance from federal percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_fixed_amount_custom",		"Custom straight line depreciation ITC basis from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_custom",		"Custom straight line depreciation ITC basis disallowance from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_sta_reduction_custom",		"Custom straight line federal basis state ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_fed_reduction_custom",		"Custom straight line federal basis federal ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_after_itc_custom",		"Custom straight line federal depreciation basis after ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_first_year_bonus_custom",		"Custom straight line federal first year bonus depreciation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_custom",		"Custom straight line federal depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_custom",		"Custom straight line federal percent of total depreciable basis",	"%", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_custom",		"Custom straight line depreciation federal and federal allocation",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_ibi_reduc_custom",		"Custom straight line federal ibi reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_cbi_reduc_custom",		"Custom straight line federal cbi reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_prior_itc_custom",		"Custom straight line federal depreciation basis prior ITC reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_qual_custom",		"Custom straight line depreciation federal ITC adj qualifying costs",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_qual_custom",		"Custom straight line federal percent of qualifying costs",	"%", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_amount_custom",		"Custom straight line depreciation ITC basis from federal percentage",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_percent_custom",		"Custom straight line depreciation ITC basis disallowance from federal percentage",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_fixed_amount_custom",		"Custom straight line depreciation ITC basis from federal fixed amount",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_custom",		"Custom straight line depreciation ITC basis disallowance from federal fixed amount",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_sta_reduction_custom",		"Custom straight line federal basis state ITC recution",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_fed_reduction_custom",		"Custom straight line federal basis federal ITC recution",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_after_itc_custom",		"Custom straight line federal depreciation basis after ITC reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_first_year_bonus_custom",		"Custom straight line federal first year bonus depreciation",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_custom",		"Custom straight line federal depreciation basis",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
 
-/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_total",		"Total federal percent of total depreciable basis",	"%", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_total",		"Total depreciation federal and federal allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_ibi_reduc_total",		"Total federal ibi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_cbi_reduc_total",		"Total federal cbi reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_prior_itc_total",		"Total federal depreciation basis prior ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_qual_total",		"Total federal ITC adj qualifying costs",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_qual_total",		"Total federal percent of qualifying costs",	"%", "",	  "DHF",             "*",					  "",     			        "" },
-/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_amount_total",		"Total depreciation ITC basis from federal percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_percent_total",		"Total depreciation ITC basis disallowance from federal percentage",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_fixed_amount_total",		"Total depreciation ITC basis from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_total",		"Total depreciation ITC basis disallowance from federal fixed amount",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_sta_reduction_total",		"Total federal basis state ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_fed_reduction_total",		"Total federal basis federal ITC reduciton",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_after_itc_total",		"Total federal depreciation basis after ITC reduction",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_first_year_bonus_total",		"Total federal first year bonus depreciation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_total",		"Total federal depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+/*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_total",		"Total federal percent of total depreciable basis",	"%", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_total",		"Total depreciation federal and federal allocation",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*2*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_ibi_reduc_total",		"Total federal ibi reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*3*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_cbi_reduc_total",		"Total federal cbi reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*4*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_prior_itc_total",		"Total federal depreciation basis prior ITC reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_qual_total",		"Total federal ITC adj qualifying costs",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*5*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_qual_total",		"Total federal percent of qualifying costs",	"%", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*6*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_percent_amount_total",		"Total depreciation ITC basis from federal percentage",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_percent_total",		"Total depreciation ITC basis disallowance from federal percentage",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*7*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_fixed_amount_total",		"Total depreciation ITC basis from federal fixed amount",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_disallow_fed_fixed_total",		"Total depreciation ITC basis disallowance from federal fixed amount",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*8*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_sta_reduction_total",		"Total federal basis state ITC recution",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*9*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_itc_fed_reduction_total",		"Total federal basis federal ITC recution",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*10*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_after_itc_total",		"Total federal depreciation basis after ITC reduction",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+/*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_first_year_bonus_total",		"Total federal first year bonus depreciation",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_total",		"Total federal depreciation basis",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
 
 
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_percent_total",		"federal ITC percent total",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_fixed_total",		"federal ITC fixed total",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_percent_total",		"federal ITC percent total",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_fixed_total",		"federal ITC fixed total",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
 
 
 
 /* depreciation bases method - added with version 4.1    0=5-yrMacrs, 1=proportional */
-	{ SSC_INPUT,        SSC_NUMBER,      "depr_stabas_method",    "Method of state depreciation reduction",     "",      "0=5yr MACRS,1=Proportional",                      "DHF",      "?=0",                       "INTEGER,MIN=0,MAX=1",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "depr_fedbas_method",    "Method of federal depreciation reduction",     "",      "0=5yr MACRS,1=Proportional",                      "DHF",      "?=0",                       "INTEGER,MIN=0,MAX=1",                                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "depr_stabas_method",    "Method of state depreciation reduction",     "",      "0=5yr MACRS,1=Proportional",                      "Sale Leaseback",      "?=0",                       "INTEGER,MIN=0,MAX=1",                                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "depr_fedbas_method",    "Method of federal depreciation reduction",     "",      "0=5yr MACRS,1=Proportional",                      "Sale Leaseback",      "?=0",                       "INTEGER,MIN=0,MAX=1",                                         "" },
 
 /* State depreciation table */
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_total",		"Total state depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_total",		"Total state depreciation basis",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
 
 /* Federal depreciation table */
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_macrs_5",		"5-yr MACRS federal depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_macrs_15",		"15-yr MACRS federal depreciation basis",	"$", "",  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_sl_5",		"5-yr straight line federal depreciation basis",	"$", "",  "DHF",             "*",						  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_sl_15",		"15-yr straight line federal depreciation basis","$", "",  "DHF",             "*",						  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_sl_20",		"20-yr straight line federal depreciation basis","$", "",  "DHF",             "*",						  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_sl_39",		"39-yr straight line federal depreciation basis","$", "",  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_custom",		"Custom federal depreciation basis","$", "",  "DHF",             "*",					  "",     			        "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_total",		"Total federal depreciation basis",	"$", "",	  "DHF",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_macrs_5",		"5-yr MACRS federal depreciation basis",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_macrs_15",		"15-yr MACRS federal depreciation basis",	"$", "",  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_sl_5",		"5-yr straight line federal depreciation basis",	"$", "",  "Sale Leaseback",             "*",						  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_sl_15",		"15-yr straight line federal depreciation basis","$", "",  "Sale Leaseback",             "*",						  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_sl_20",		"20-yr straight line federal depreciation basis","$", "",  "Sale Leaseback",             "*",						  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_sl_39",		"39-yr straight line federal depreciation basis","$", "",  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_custom",		"Custom federal depreciation basis","$", "",  "Sale Leaseback",             "*",					  "",     			        "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_total",		"Total federal depreciation basis",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
 
 
 /* State taxes */
@@ -609,244 +581,242 @@ static var_info _cm_vtab_saleleaseback[] = {
 	/* intermediate outputs for validation */
 
 /* model outputs */
-	{ SSC_OUTPUT,        SSC_NUMBER,     "cf_length",                "Number of periods in cashflow",      "",             "",                      "DHF",      "*",                       "INTEGER",                                  "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "ppa_price",			    "Initial year PPA price",			"cents/kWh",	"",				   "DHF",			  "*",                         "",      					   "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "cf_length",                "Number of periods in cashflow",      "",             "",                      "Sale Leaseback",      "*",                       "INTEGER",                                  "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "ppa_price",			    "Initial year PPA price",			"cents/kWh",	"",				   "Sale Leaseback",			  "*",                         "",      					   "" },
 /* Production - input as energy_net above */
 
 /* Partial Income Statement: Project */
-	{ SSC_OUTPUT,        SSC_ARRAY,       "cf_energy_net",            "Energy",                     "kWh",      "",                      "DHF",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,       "cf_ppa_price",            "PPA price",                     "cents/kWh",      "",                      "DHF",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,       "cf_energy_value",         "PPA revenue",                     "$",      "",                      "DHF",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fixed_expense",      "O&M fixed expense",                  "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_production_expense", "O&M production-based expense",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_capacity_expense",   "O&M capacity-based expense",         "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fuel_expense",       "O&M fuel expense",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,       "cf_energy_net",            "Energy",                     "kWh",      "",                      "Sale Leaseback",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,       "cf_ppa_price",            "PPA price",                     "cents/kWh",      "",                      "Sale Leaseback",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,       "cf_energy_value",         "PPA revenue",                     "$",      "",                      "Sale Leaseback",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fixed_expense",      "O&M fixed expense",                  "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_production_expense", "O&M production-based expense",       "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_capacity_expense",   "O&M capacity-based expense",         "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fuel_expense",       "O&M fuel expense",                   "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_opt_fuel_1_expense",       "O&M biomass feedstock expense",                   "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_opt_fuel_2_expense",       "O&M coal feedstock expense",                   "$",            "",                      "Cashloan",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_property_tax_assessed_value","Property tax net assessed value", "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_property_tax_expense",  "Property tax expense",               "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_insurance_expense",     "Insurance expense",                  "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_margin",     "Annual developer (lessee) margin",                  "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_operating_expenses",    "Total operating expense",            "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_net_salvage_value",    "Salvage value",            "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_total_revenue",    "Total revenue",            "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_property_tax_assessed_value","Property tax net assessed value", "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_property_tax_expense",  "Property tax expense",               "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_insurance_expense",     "Insurance expense",                  "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_margin",     "Developer (lessee) operating margin",                  "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_operating_expenses",    "Total operating expense",            "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_net_salvage_value",    "Salvage value",            "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_total_revenue",    "Total revenue",            "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_operating_margin",    "Operating margin not including lease payment",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_operating_margin",    "Operating margin not including lease payment",       "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_leasepayment",    "Reserve account lease payment reserve",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_leasepayment_interest",    "Reserve account lease payment reserve interest",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_om",    "Reserve account working capital",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "cf_reserve_receivables", "Reserve account receivables", "$", "", "Cash Flow Reserves", "*", "LENGTH_EQUAL=cf_length", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "cf_reserve_equip1", "Reserve account major equipment 1", "$", "", "DHF", "*", "LENGTH_EQUAL=cf_length", "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_equip2",    "Reserve account major equipment 2",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_equip3",    "Reserve account major equipment 3",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_total",    "Reserve account total",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_interest", "Reserve account interest on reserves",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_leasepayment",    "Reserve lease payment reserve",       "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_leasepayment_interest",    "Reserve lease payment reserve interest",       "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_om",    "Reserve working capital",       "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_reserve_receivables", "Reserve receivables", "$", "", "Cash Flow Reserves", "*", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_reserve_equip1", "Reserve  major equipment 1", "$", "", "Sale Leaseback", "*", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_equip2",    "Reserve major equipment 2",       "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_equip3",    "Reserve major equipment 3",       "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_total",    "Reserve total except lease payment reserve",       "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_interest", "Reserve interest on reserves except lease payment reserve",       "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_funding_leasepayment",    "Reserve funding lease payment",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_funding_om",    "Reserve funding working capital",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_funding_leasepayment",    "Reserve funding lease payment",       "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_funding_om",    "Reserve funding working capital",       "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_funding_receivables", "Reserve funding receivables", "$", "", "Cash Flow Reserves", "*", "LENGTH_EQUAL=cf_length", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "cf_funding_equip1", "Reserve funding major equipment 1", "$", "", "DHF", "*", "LENGTH_EQUAL=cf_length", "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_funding_equip2",    "Reserve funding major equipment 2",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_funding_equip3",    "Reserve funding major equipment 3",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_funding_equip1", "Reserve funding major equipment 1", "$", "", "Sale Leaseback", "*", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_funding_equip2",    "Reserve funding major equipment 2",       "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_funding_equip3",    "Reserve funding major equipment 3",       "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_disbursement_leasepayment",    "Reserve disbursement lease payment",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_disbursement_om",    "Reserve disbursement working capital",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_disbursement_leasepayment",    "Reserve disbursement lease payment",       "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_disbursement_om",    "Reserve disbursement working capital",       "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_disbursement_receivables", "Reserve disbursement receivables", "$", "", "Cash Flow Reserves", "*", "LENGTH_EQUAL=cf_length", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "cf_disbursement_equip1", "Reserve disbursement major equipment 1", "$", "", "DHF", "*", "LENGTH_EQUAL=cf_length", "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_disbursement_equip2",    "Reserve disbursement major equipment 2",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "cf_disbursement_equip3", "Reserve disbursement major equipment 3", "$", "", "DHF", "*", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_disbursement_equip1", "Reserve disbursement major equipment 1", "$", "", "Sale Leaseback", "*", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_disbursement_equip2",    "Reserve disbursement major equipment 2",       "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_disbursement_equip3", "Reserve disbursement major equipment 3", "$", "", "Sale Leaseback", "*", "LENGTH_EQUAL=cf_length", "" },
 
-	{ SSC_OUTPUT, SSC_ARRAY, "cf_disbursement_merr", "Reserve disbursement major equipment total", "$", "", "DHF", "*", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_disbursement_merr", "Reserve disbursement major equipment total", "$", "", "Sale Leaseback", "*", "LENGTH_EQUAL=cf_length", "" },
 
 
 	// Lessee (Sponsor) cash flow
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_operating_activities",    "Cash flow from operating activities",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_operating_activities",    "Developer (lessee) cash flow from operating activities",  "$", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	
-	{ SSC_OUTPUT,       SSC_NUMBER,      "distribution_of_development_fee",	"Distribution of development fee",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "sale_of_property",	"Sale of property",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "purchase_of_plant",	"Purchase of plant",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_lpra",    "Reserve (increase)/decrease lease payment",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_wcra",    "Reserve (increase)/decrease working capital",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "distribution_of_development_fee",	"Distribution of development fee",	"$",	 "",					  "Sale Leaseback",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "sale_of_property",	"Sale of property",	"$",	 "",					  "Sale Leaseback",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "purchase_of_plant",	"Purchase of plant",	"$",	 "",					  "Sale Leaseback",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_lpra",    "Reserve (increase)/decrease lease payment",  "$", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_wcra",    "Reserve (increase)/decrease working capital",  "$", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_sponsor_receivablesra", "Reserve (increase)/decrease receivables", "$", "", "Cash Flow Pre Tax", "*", "LENGTH_EQUAL=cf_length", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "cf_sponsor_me1ra", "Reserve (increase)/decrease major equipment 1", "$", "", "DHF", "*", "LENGTH_EQUAL=cf_length", "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_me2ra",    "Reserve (increase)/decrease major equipment 2",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_me3ra",    "Reserve (increase)/decrease major equipment 3",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_ra",    "Reserve (increase)/decrease total",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_me1cs",    "Reserve capital spending major equipment 1",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_me2cs",    "Reserve capital spending major equipment 2",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_me3cs",    "Reserve capital spending major equipment 3",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_mecs",    "Reserve capital spending major equipment total",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_investing_activities",    "After-tax annual costs",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_sponsor_me1ra", "Reserve (increase)/decrease major equipment 1", "$", "", "Sale Leaseback", "*", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_me2ra",    "Reserve (increase)/decrease major equipment 2",  "$", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_me3ra",    "Reserve (increase)/decrease major equipment 3",  "$", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_ra",    "Reserve (increase)/decrease total",  "$", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_me1cs",    "Reserve capital spending major equipment 1",  "$", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_me2cs",    "Reserve capital spending major equipment 2",  "$", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_me3cs",    "Reserve capital spending major equipment 3",  "$", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_mecs",    "Reserve capital spending major equipment total",  "$", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_investing_activities",    "Developer (lessee) cash flow from investing activities",  "$", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
-	{ SSC_OUTPUT,       SSC_NUMBER,      "sponsor_equity_in_lessee_llc",	"Developer equity in lessee LLC (funding of reserve accounts)",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_financing_activities",    "Cash flow from financing activities",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_adj_reserve_release",    "Adjustment for release of reserves",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "sponsor_equity_in_lessee_llc",	"Developer (lessee) equity in lessee LLC (funding of reserve accounts)",	"$",	 "",					  "Sale Leaseback",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_financing_activities",    "Developer (lessee) cash flow from financing activities",  "$", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_adj_reserve_release",    "Developer (lessee) adjustment for release of reserves",  "$", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pretax_cashflow",    "Pre-tax cash flow",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pretax_operating_cashflow",    "Pre-tax operating cash flow",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pretax_cashflow",    "Pre-tax cash flow",  "$", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pretax_operating_cashflow",    "Pre-tax operating cash flow (effective lease payment)",  "$", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 // Lessor (tax investor) cash flow
-	{ SSC_OUTPUT,       SSC_NUMBER,      "issuance_of_equity",	"Issuance of equity",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_operating_activities",    "Cash flow from operating activities",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_investing_activities",    "Cash flow from investing activities",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_financing_activities",    "Cash flow from financing activities",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_pretax_cashflow",    "Pre-tax cash flow",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "issuance_of_equity",	"Issuance of equity",	"$",	 "",					  "Sale Leaseback",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_operating_activities",    "Investor (lessor) cash flow from operating activities",  "$", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_investing_activities",    "Investor (lessor) cash flow from investing activities",  "$", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_financing_activities",    "Investor (lessor) cash flow from financing activities",  "$", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_pretax_cashflow",    "Investor (lessor) pre-tax cash flow",  "$", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 
-	{ SSC_OUTPUT,        SSC_NUMBER,      "cbi_total_fed",             "Total federal CBI incentive income",         "$",            "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "cbi_total_sta",             "Total state CBI incentive income",         "$",            "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "cbi_total_oth",             "Total other CBI incentive income",         "$",            "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "cbi_total_uti",             "Total utility CBI incentive income",         "$",            "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "cbi_total",             "Total CBI incentive income",         "$",            "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "cbi_statax_total",             "Total state taxable CBI incentive income",         "$",            "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "cbi_fedtax_total",             "Total federal taxable CBI incentive income",         "$",            "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "ibi_total_fed",             "Total federal IBI incentive income",         "$",            "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "ibi_total_sta",             "Total state IBI incentive income",         "$",            "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "ibi_total_oth",             "Total other IBI incentive income",         "$",            "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "ibi_total_uti",             "Total utility IBI incentive income",         "$",            "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "ibi_total",             "Total IBI incentive income",         "$",            "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "ibi_statax_total",             "Total state taxable IBI incentive income",         "$",            "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "ibi_fedtax_total",             "Total federal taxable IBI incentive income",         "$",            "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "itc_total_fed",             "Total federal ITC ",         "$",            "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "itc_total_sta",             "Total state ITC ",         "$",            "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "itc_total",             "Total ITC ",         "$",            "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pbi_total_fed",             "Total federal PBI incentive income",         "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pbi_total_sta",             "Total state PBI incentive income",         "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pbi_total_oth",             "Total other PBI incentive income",         "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pbi_total_uti",             "Total utility PBI incentive income",         "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pbi_total",             "Total PBI incentive income",         "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pbi_statax_total",             "Total state taxable PBI incentive income",         "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pbi_fedtax_total",             "Total federal taxable PBI incentive income",         "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "cbi_total_fed",             "Total federal CBI incentive",         "$",            "",                      "Sale Leaseback",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "cbi_total_sta",             "Total state CBI incentive",         "$",            "",                      "Sale Leaseback",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "cbi_total_oth",             "Total other CBI incentive",         "$",            "",                      "Sale Leaseback",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "cbi_total_uti",             "Total utility CBI incentive",         "$",            "",                      "Sale Leaseback",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "cbi_total",             "Total CBI incentive",         "$",            "",                      "Sale Leaseback",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "cbi_statax_total",             "Total state taxable CBI incentive",         "$",            "",                      "Sale Leaseback",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "cbi_fedtax_total",             "Total federal taxable CBI incentive",         "$",            "",                      "Sale Leaseback",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "ibi_total_fed",             "Total federal IBI incentive",         "$",            "",                      "Sale Leaseback",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "ibi_total_sta",             "Total state IBI incentive",         "$",            "",                      "Sale Leaseback",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "ibi_total_oth",             "Total other IBI incentive",         "$",            "",                      "Sale Leaseback",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "ibi_total_uti",             "Total utility IBI incentive",         "$",            "",                      "Sale Leaseback",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "ibi_total",             "Total IBI incentive",         "$",            "",                      "Sale Leaseback",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "ibi_statax_total",             "Total state taxable IBI incentive",         "$",            "",                      "Sale Leaseback",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "ibi_fedtax_total",             "Total federal taxable IBI incentive",         "$",            "",                      "Sale Leaseback",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "itc_total_fed",             "Total federal ITC ",         "$",            "",                      "Sale Leaseback",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "itc_total_sta",             "Total state ITC ",         "$",            "",                      "Sale Leaseback",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "itc_total",             "Total ITC ",         "$",            "",                      "Sale Leaseback",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pbi_total_fed",             "Total federal PBI incentive",         "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pbi_total_sta",             "Total state PBI incentive",         "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pbi_total_oth",             "Total other PBI incentive",         "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pbi_total_uti",             "Total utility PBI incentive",         "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pbi_total",             "Total PBI incentive",         "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pbi_statax_total",             "Total state taxable PBI incentive",         "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pbi_fedtax_total",             "Total federal taxable PBI incentive",         "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_ptc_fed",               "Federal PTC income",                 "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_ptc_sta",               "State PTC income",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_ptc_fed",               "Federal PTC income",                 "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_ptc_sta",               "State PTC income",                   "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 
 /* state depreciation and tax */
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_stadepr_macrs_5",         "State depreciation from 5-yr MACRS",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_stadepr_macrs_15",         "State depreciation from 15-yr MACRS",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_stadepr_sl_5",         "State depreciation from 5-yr straight line",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_stadepr_sl_15",         "State depreciation from 15-yr straight line",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_stadepr_sl_20",         "State depreciation from 20-yr straight line",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_stadepr_sl_39",         "State depreciation from 39-yr straight line",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_stadepr_custom",         "State depreciation from custom",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_stadepr_me1",         "State depreciation from major equipment 1",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_stadepr_me2",         "State depreciation from major equipment 2",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_stadepr_me3",         "State depreciation from major equipment 3",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_stadepr_total",         "Total state tax depreciation",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_stadepr_macrs_5",         "State depreciation from 5-yr MACRS",                   "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_stadepr_macrs_15",         "State depreciation from 15-yr MACRS",                   "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_stadepr_sl_5",         "State depreciation from 5-yr straight line",                   "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_stadepr_sl_15",         "State depreciation from 15-yr straight line",                   "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_stadepr_sl_20",         "State depreciation from 20-yr straight line",                   "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_stadepr_sl_39",         "State depreciation from 39-yr straight line",                   "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_stadepr_custom",         "State depreciation from custom",                   "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_stadepr_me1",         "State depreciation from major equipment 1",                   "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_stadepr_me2",         "State depreciation from major equipment 2",                   "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_stadepr_me3",         "State depreciation from major equipment 3",                   "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_stadepr_total",         "Total state tax depreciation",                   "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 
 /* federal depreciation and tax */
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_feddepr_macrs_5",         "Federal depreciation from 5-yr MACRS",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_feddepr_macrs_15",         "Federal depreciation from 15-yr MACRS",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_feddepr_sl_5",         "Federal depreciation from 5-yr straight line",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_feddepr_sl_15",         "Federal depreciation from 15-yr straight line",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_feddepr_sl_20",         "Federal depreciation from 20-yr straight line",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_feddepr_sl_39",         "Federal depreciation from 39-yr straight line",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_feddepr_custom",         "Federal depreciation from custom",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_feddepr_me1",         "Federal depreciation from major equipment 1",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_feddepr_me2",         "Federal depreciation from major equipment 2",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_feddepr_me3",         "Federal depreciation from major equipment 3",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_feddepr_total",         "Total federal tax depreciation",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_feddepr_macrs_5",         "Federal depreciation from 5-yr MACRS",                   "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_feddepr_macrs_15",         "Federal depreciation from 15-yr MACRS",                   "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_feddepr_sl_5",         "Federal depreciation from 5-yr straight line",                   "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_feddepr_sl_15",         "Federal depreciation from 15-yr straight line",                   "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_feddepr_sl_20",         "Federal depreciation from 20-yr straight line",                   "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_feddepr_sl_39",         "Federal depreciation from 39-yr straight line",                   "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_feddepr_custom",         "Federal depreciation from custom",                   "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_feddepr_me1",         "Federal depreciation from major equipment 1",                   "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_feddepr_me2",         "Federal depreciation from major equipment 2",                   "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_feddepr_me3",         "Federal depreciation from major equipment 3",                   "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_feddepr_total",         "Total federal tax depreciation",                   "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 // tax investor
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_pretax",        "Pre-tax tax investor returns",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_pretax_irr",    "Pre-tax tax investor cumulative IRR",  "%", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_pretax_npv",    "Pre-tax tax investor cumulative NPV",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax_cash",    "After-tax tax investor cash returns",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax_itc",    "After-tax tax investor itc returns",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax_ptc",    "After-tax tax investor ptc returns",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax_tax",    "After-tax tax investor tax returns",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_pretax",        "Investor (lessor) pre-tax returns",  "$", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_pretax_irr",    "Investor (lessor) pre-tax cumulative IRR",  "%", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_pretax_npv",    "Investor (lessor) pre-tax cumulative NPV",  "$", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax_cash",    "Investor (lessor) cash returns",  "$", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax_itc",    "Investor (lessor) ITC",  "$", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax_ptc",    "Investor (lessor) PTC",  "$", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax_tax",    "Investor (lessor) tax benefit (liability)",  "$", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_statax_income_prior_incentives",        "Tax investor state taxable income prior to incentives",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_fedtax_income_prior_incentives",        "Tax investor federal taxable income prior to incentives",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_statax_income_with_incentives",        "Tax investor state taxable income with incentives",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_fedtax_income_with_incentives",        "Tax investor federal taxable income with incentives",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_statax_taxable_incentives",        "Tax investor state taxable incentives",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_fedtax_taxable_incentives",        "Tax investor federal taxable incentives",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_statax",        "Tax investor state tax",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_fedtax",        "Tax investor federal tax",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_statax_income_prior_incentives",        "Investor (lessor)  state taxable income prior to incentives",  "$", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_fedtax_income_prior_incentives",        "Investor (lessor)  federal taxable income prior to incentives",  "$", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_statax_income_with_incentives",        "Investor (lessor)  state taxable income with incentives",  "$", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_fedtax_income_with_incentives",        "Investor (lessor)  federal taxable income with incentives",  "$", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_statax_taxable_incentives",        "Investor (lessor)  state taxable incentives",  "$", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_fedtax_taxable_incentives",        "Investor (lessor)  federal taxable incentives",  "$", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_statax",        "Investor (lessor)  state tax",  "$", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_fedtax",        "Investor (lessor)  federal tax",  "$", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax",        "After-tax tax investor returns",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax_irr",    "After-tax tax investor cumulative IRR",  "%", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax_npv",    "After-tax tax investor cumulative NPV",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax_max_irr",    "After-tax tax investor maximum IRR",  "%", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "tax_investor_aftertax_irr",    "After-tax tax investor IRR",  "", "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "tax_investor_aftertax_npv",    "After-tax tax investor NPV",  "", "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "tax_investor_pretax_irr",    "Pre-tax tax investor IRR",  "%", "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "tax_investor_pretax_npv",    "Pre-tax tax investor NPV",  "$", "",                      "DHF",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax",        "Investor (lessor) after-tax returns",  "$", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax_irr",    "Investor (lessor) after-tax cumulative IRR",  "%", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax_npv",    "Investor (lessor) after-tax cumulative NPV",  "$", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax_max_irr",    "Investor (lessor) after-tax maximum IRR",  "%", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "tax_investor_aftertax_irr",    "Investor (lessor) after-tax IRR",  "", "",                      "Sale Leaseback",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "tax_investor_aftertax_npv",    "Investor (lessor) after-tax NPV",  "", "",                      "Sale Leaseback",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "tax_investor_pretax_irr",    "Investor (lessor) pre-tax IRR",  "%", "",                      "Sale Leaseback",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "tax_investor_pretax_npv",    "Investor (lessor) pre-tax NPV",  "$", "",                      "Sale Leaseback",      "*",                     "",                "" },
 
 	// Sponsor= Lessee
 
 // developer returns
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_pretax",    "Pre-tax developer returns",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_pretax_irr",    "Pre-tax developer cumulative IRR",  "%", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_pretax_npv",    "Pre-tax developer cumulative NPV",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_pretax",    "Developer (lessee) pre-tax returns",  "$", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_pretax_irr",    "Developer (lessee) pre-tax cumulative IRR",  "%", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_pretax_npv",    "Developer (lessee) pre-tax cumulative NPV",  "$", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_aftertax_cash",    "After-tax developer returns cash total",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_aftertax",    "After-tax developer returns",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_aftertax_irr",    "After-tax developer cumulative IRR",  "%", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_aftertax_npv",    "After-tax developer cumulative NPV",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_aftertax_tax",    "After-tax sponsor tax returns",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_aftertax_devfee",    "After-tax sponsor developer fee tax liability",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_aftertax_cash",    "Developer (lessee) after-tax cash returns",  "$", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_aftertax",    "Developer (lessee) after-tax returns",  "$", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_aftertax_irr",    "Developer (lessee) after-tax cumulative IRR",  "%", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_aftertax_npv",    "Developer (lessee) after-tax cumulative NPV",  "$", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_aftertax_tax",    "Developer (lessee) after-tax tax returns",  "$", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_aftertax_devfee",    "Developer (lessee) after-tax developer fee tax liability",  "$", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	
-	{ SSC_OUTPUT,        SSC_NUMBER,      "sponsor_pretax_irr",    "Pre-tax developer IRR",  "%", "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "sponsor_pretax_npv",    "Pre-tax developer NPV",  "$", "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "sponsor_aftertax_irr",    "After-tax developer IRR",  "%", "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "sponsor_aftertax_npv",    "After-tax developer NPV",  "$", "",                      "DHF",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "sponsor_pretax_irr",    "Developer (lessee) pre-tax IRR",  "%", "",                      "Sale Leaseback",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "sponsor_pretax_npv",    "Developer (lessee) pre-tax NPV",  "$", "",                      "Sale Leaseback",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "sponsor_aftertax_irr",    "Developer (lessee) after-tax IRR",  "%", "",                      "Sale Leaseback",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "sponsor_aftertax_npv",    "Developer (lessee) after-tax NPV",  "$", "",                      "Sale Leaseback",      "*",                     "",                "" },
 
 	
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_statax_income_prior_incentives", "Developer state taxable income prior incentives",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_statax_income_with_incentives", "Developer state taxable income with incentives",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_statax_taxable_incentives", "Developer state taxable incentives",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_statax",				"Developer state tax benefit/(liability)",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_fedtax_income_prior_incentives", "Developer federal taxable income prior incentives",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_fedtax_income_with_incentives", "Developer federal tax income with incentives",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_fedtax_taxable_incentives", "Developer federal taxable incentives",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_fedtax",				"Developer federal tax benefit/(liability)",                   "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_statax_income_prior_incentives", "Developer (lessee) state taxable income prior to incentives",                   "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_statax_income_with_incentives", "Developer (lessee) state taxable income with incentives",                   "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_statax_taxable_incentives", "Developer (lessee) state taxable incentives",                   "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_statax",				"Developer (lessee) state tax benefit (liability)",                   "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_fedtax_income_prior_incentives", "Developer (lessee) federal taxable income prior to incentives",                   "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_fedtax_income_with_incentives", "Developer (lessee) federal tax income with incentives",                   "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_fedtax_taxable_incentives", "Developer (lessee) federal taxable incentives",                   "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_fedtax",				"Developer (lessee) federal tax benefit (liability)",                   "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 
 	// metrics table
-//	{ SSC_OUTPUT,        SSC_NUMBER,      "first_year_energy_net",    "Net Annual Energy",  "", "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "debt_fraction",    "Debt percent",  "%", "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "flip_target_year",    "IRR target year",  "", "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "flip_target_irr",    "IRR target",  "%", "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "flip_actual_year",    "IRR actual year",  "", "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "flip_actual_irr",    "IRR in target year",  "%", "",                      "DHF",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoe_real",                "Levelized cost (real)",                          "cents/kWh",    "",                      "DHF",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoe_nom",                 "Levelized cost (nominal)",                       "cents/kWh",    "",                      "DHF",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "lppa_real", "Levelized PPA price (real)", "cents/kWh", "", "DHF", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "lppa_nom", "Levelized PPA price (nominal)", "cents/kWh", "", "DHF", "*", "", "" },
+//	{ SSC_OUTPUT,        SSC_NUMBER,      "first_year_energy_net",    "Net Annual Energy",  "", "",                      "Sale Leaseback",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "debt_fraction",    "Debt percent",  "%", "",                      "Sale Leaseback",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "flip_target_year",    "IRR target year",  "Year", "",                      "Sale Leaseback",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "flip_target_irr",    "IRR target",  "%", "",                      "Sale Leaseback",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "flip_actual_year",    "IRR actual year",  "Year", "",                      "Sale Leaseback",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "flip_actual_irr",    "IRR in target year",  "%", "",                      "Sale Leaseback",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoe_real",                "Levelized cost (real)",                          "cents/kWh",    "",                      "Sale Leaseback",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoe_nom",                 "Levelized cost (nominal)",                       "cents/kWh",    "",                      "Sale Leaseback",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "lppa_real", "Levelized PPA price (real)", "cents/kWh", "", "Sale Leaseback", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "lppa_nom", "Levelized PPA price (nominal)", "cents/kWh", "", "Sale Leaseback", "*", "", "" },
 
-	{ SSC_OUTPUT, SSC_NUMBER, "ppa", "PPA price", "", "", "DHF", "*", "", "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "ppa_escalation",                 "PPA price escalation",                       "%",    "",                      "DHF",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "ppa", "PPA price", "", "", "Sale Leaseback", "*", "", "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "ppa_escalation",                 "PPA price escalation",                       "%",    "",                      "Sale Leaseback",      "*",                       "",                                         "" },
 
-	{ SSC_OUTPUT,        SSC_NUMBER,     "npv_ppa_revenue",                "NPV of PPA revenue",                          "$",    "",                      "DHF",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "npv_energy_nom",                "NPV of net annual energy (nominal)",                          "kWh",    "",                      "DHF",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "npv_energy_real",                "NPV of net annual energy (real)",                          "kWh",    "",                      "DHF",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "npv_ppa_revenue",                "Present value of PPA revenue",                          "$",    "",                      "Sale Leaseback",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "npv_energy_nom",                "Present value of annual energy (nominal)",                          "kWh",    "",                      "Sale Leaseback",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "npv_energy_real",                "Present value of annual energy (real)",                          "kWh",    "",                      "Sale Leaseback",      "*",                       "",                                         "" },
 
 	
-	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_oandm",                      "Present value of O and M",				   "$",            "",                      "DHF",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_oandm_nonfuel",              "Present value of non-fuel O and M",				   "$",            "",                      "DHF",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_fuel",                      "Present value of fuel O and M",				   "$",            "",                      "DHF",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_insandproptax",                      "Present value of Insurance and Prop Tax",				   "$",            "",                      "DHF",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_oandm",                      "Present value of operation and maintenance costs",				   "$",            "",                      "Sale Leaseback",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_oandm_nonfuel",              "Present value of non-fuel operation and maintenance costs",				   "$",            "",                      "Sale Leaseback",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_fuel",                      "Present value of fuel operation and maintenance costs",				   "$",            "",                      "Sale Leaseback",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_insandproptax",                      "Present value of insurance and property tax",				   "$",            "",                      "Sale Leaseback",      "*",                       "",                                         "" },
 
+	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoptc_fed_real",                "Levelized Federal PTC (real)",                          "cents/kWh",    "",                      "Sale Leaseback",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoptc_fed_nom",                 "Levelized Federal PTC (nominal)",                       "cents/kWh",    "",                      "Sale Leaseback",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoptc_sta_real",                "Levelized State PTC (real)",                          "cents/kWh",    "",                      "Sale Leaseback",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoptc_sta_nom",                 "Levelized State PTC (nominal)",                       "cents/kWh",    "",                      "Sale Leaseback",      "*",                       "",                                         "" },
 
-
-	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoptc_fed_real",                "Levelized Federal PTC (real)",                          "cents/kWh",    "",                      "DHF",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoptc_fed_nom",                 "Levelized Federal PTC (nominal)",                       "cents/kWh",    "",                      "DHF",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoptc_sta_real",                "Levelized State PTC (real)",                          "cents/kWh",    "",                      "DHF",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoptc_sta_nom",                 "Levelized State PTC (nominal)",                       "cents/kWh",    "",                      "DHF",      "*",                       "",                                         "" },
-
-	{ SSC_OUTPUT,        SSC_NUMBER,     "wacc",                "Weighted Average Cost of Capital (WACC)",                          "",    "",                      "DHF",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "effective_tax_rate",                 "Effective Tax Rate",                       "%",    "",                      "DHF",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "analysis_period_irr",                "Analysis Period IRR",                          "%",    "",                      "DHF",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "wacc",                "Weighted Average Cost of Capital (WACC)",                          "",    "",                      "Sale Leaseback",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "effective_tax_rate",                 "Effective Tax Rate",                       "%",    "",                      "Sale Leaseback",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "analysis_period_irr",                "Analysis Period IRR",                          "%",    "",                      "Sale Leaseback",      "*",                       "",                                         "" },
 
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_annual_costs", "Annual costs", "$", "", "LCOE calculations", "*", "LENGTH_EQUAL=cf_length", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "npv_annual_costs", "Present value of annual costs", "$", "", "LCOE calculations", "*", "", "" },
@@ -912,7 +882,6 @@ enum {
 	CF_reserve_total,
 	CF_reserve_interest,
 
-
 	// developer cash flow
 	CF_sponsor_operating_activities,
 	CF_sponsor_lpra,
@@ -932,9 +901,6 @@ enum {
 	CF_pretax_cashflow,
 	CF_pretax_operating_cashflow,
 
-
-
-
 	// tax investor returns
 	CF_tax_investor_operating_activities,
 	CF_tax_investor_investing_activities,	
@@ -946,7 +912,7 @@ enum {
 
 	CF_tax_investor_statax_income_prior_incentives,
 	CF_tax_investor_fedtax_income_prior_incentives,
-	CF_tax_investor_statax_income_with_incenitves,
+	CF_tax_investor_statax_income_with_incentives,
 	CF_tax_investor_fedtax_income_with_incentives,
 	CF_tax_investor_statax_taxable_incentives,
 	CF_tax_investor_fedtax_taxable_incentives,
@@ -1075,7 +1041,7 @@ public:
 		add_var_info(vtab_battery_replacement_cost);
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		int i = 0;
 
@@ -1128,7 +1094,7 @@ public:
 		// In conjunction with SAM - take installed costs and salestax costs (for deducting if necessary)
 		double cost_prefinancing = as_double("total_installed_cost");
 
-		// use DHF named range names for variables whenever possible
+		// use named range names for variables whenever possible
 		double nameplate = as_double("system_capacity");
 		double year1_fuel_use = as_double("annual_fuel_usage"); // kWht
 
@@ -1262,7 +1228,11 @@ public:
 
 
 
-		double ppa = as_double("ppa_price_input")*100.0; // either initial guess for ppa_mode=1 or final ppa for ppa_mode=0
+		size_t count_ppa_price_input;
+		ssc_number_t* ppa_price_input = as_array("ppa_price_input", &count_ppa_price_input);
+		double ppa = 0;
+		if (count_ppa_price_input > 0) ppa = ppa_price_input[0] * 100.0;
+		//		double ppa = as_double("ppa_price_input")*100.0; // either initial guess for ppa_mode=1 or final ppa for ppa_mode=0
 		if (ppa_mode == 0) ppa = 0; // initial guess for target irr mode
 
 
@@ -1882,8 +1852,17 @@ public:
 		for (i=1; i<=nyears; i++)
 		{
 		// Project partial income statement
-			// energy_value = DHF Total PPA Revenue
-			cf.at(CF_ppa_price,i) = ppa * pow( 1 + ppa_escalation, i-1 ); // ppa_mode==1
+			// energy_value = Total PPA Revenue
+			// energy_value = DHF Total PPA Revenue (cents/kWh)
+			if ((ppa_mode == 1) && (count_ppa_price_input > 1))
+			{
+				if (i <= (int)count_ppa_price_input)
+					cf.at(CF_ppa_price, i) = ppa_price_input[i - 1] * 100.0; // $/kWh to cents/kWh
+				else
+					cf.at(CF_ppa_price, i) = 0;
+			}
+			else
+				cf.at(CF_ppa_price, i) = ppa * pow(1 + ppa_escalation, i - 1); // ppa_mode==0 or single value 
 //			cf.at(CF_energy_value,i) = cf.at(CF_energy_net,i) * cf.at(CF_ppa_price,i) /100.0;
 			// dispatch
 			cf.at(CF_energy_value, i) = cf.at(CF_ppa_price, i) / 100.0 *(
@@ -2222,7 +2201,6 @@ public:
 													
 			}
 
-
 			// lease payment calculation depends on year 1 pretax cash flow - must calculate year 0 and year nyears after other years
 			cf.at(CF_funding_leasepayment,0) = tax_investor_required_lease_reserve_frac * cf.at(CF_pretax_operating_cashflow,1);
 			sponsor_equity_in_lessee_llc = cf.at(CF_funding_leasepayment,0) + cf.at(CF_funding_om,0);
@@ -2251,6 +2229,7 @@ public:
 			cf.at(CF_sponsor_ra,0) =
 				cf.at(CF_sponsor_lpra,0) +
 				cf.at(CF_sponsor_wcra,0) +
+				cf.at(CF_sponsor_receivablesra,0) +
 				cf.at(CF_sponsor_me1ra,0) +
 				cf.at(CF_sponsor_me2ra,0) +
 				cf.at(CF_sponsor_me3ra,0);
@@ -2277,17 +2256,16 @@ public:
 
 			cf.at(CF_pretax_operating_cashflow,0) = cf.at(CF_pretax_cashflow,0) + cf.at(CF_sponsor_adj_reserve_release,0);	
 													
-
 			// nyears
 			cf.at(CF_sponsor_lpra,nyears) = -cf.at(CF_funding_leasepayment,nyears) - cf.at(CF_disbursement_leasepayment,nyears);
 			cf.at(CF_sponsor_ra,nyears) =
 				cf.at(CF_sponsor_lpra,nyears) +
 				cf.at(CF_sponsor_wcra,nyears) +
-				cf.at(CF_sponsor_me1ra,nyears) +
+				cf.at(CF_sponsor_receivablesra, nyears) +
+				cf.at(CF_sponsor_me1ra, nyears) +
 				cf.at(CF_sponsor_me2ra,nyears) +
 				cf.at(CF_sponsor_me3ra,nyears);
 			cf.at(CF_sponsor_investing_activities,nyears) = cf.at(CF_sponsor_ra,nyears) + cf.at(CF_sponsor_mecs,nyears) - cf.at(CF_net_salvage_value,nyears);
-
 
 			cf.at(CF_sponsor_financing_activities,nyears) = 0;
 
@@ -2318,18 +2296,20 @@ public:
 			cf.at(CF_tax_investor_pretax_cashflow,i) = cf.at(CF_tax_investor_operating_activities,i) + cf.at(CF_tax_investor_investing_activities,i) + cf.at(CF_tax_investor_financing_activities,i);
 		}
 		
-		cf.at(CF_sponsor_statax_income_prior_incentives,0)=
-			cf.at(CF_energy_value,0) + cf.at(CF_reserve_interest,0) + cf.at(CF_reserve_leasepayment_interest,0)
-			- (cf.at(CF_om_fixed_expense,0) + cf.at(CF_om_capacity_expense,0) + cf.at(CF_om_production_expense,0) + cf.at(CF_om_fuel_expense,0) + cf.at(CF_om_opt_fuel_1_expense,0) + cf.at(CF_om_opt_fuel_2_expense,0) + cf.at(CF_insurance_expense,0) + cf.at(CF_property_tax_expense,0) )
-			- cf.at(CF_pretax_operating_cashflow,0);
+		//cf.at(CF_sponsor_statax_income_prior_incentives,0)=
+		//	cf.at(CF_energy_value,0) + cf.at(CF_reserve_interest,0) + cf.at(CF_reserve_leasepayment_interest,0)
+		//	- (cf.at(CF_om_fixed_expense,0) + cf.at(CF_om_capacity_expense,0) + cf.at(CF_om_production_expense,0) + cf.at(CF_om_fuel_expense,0) + cf.at(CF_om_opt_fuel_1_expense,0) + cf.at(CF_om_opt_fuel_2_expense,0) + cf.at(CF_insurance_expense,0) + cf.at(CF_property_tax_expense,0) )
+		//	- cf.at(CF_pretax_operating_cashflow,0);
+		cf.at(CF_sponsor_statax_income_prior_incentives, 0) = 0;
 		cf.at(CF_sponsor_statax_income_with_incentives,0) = cf.at(CF_sponsor_statax_income_prior_incentives,0) + cf.at(CF_sponsor_statax_taxable_incentives,0);
 		cf.at(CF_sponsor_statax, 0) = -cf.at(CF_state_tax_frac, 0) * cf.at(CF_sponsor_statax_income_with_incentives, 0);
 
-		cf.at(CF_sponsor_fedtax_income_prior_incentives,0)=
-			cf.at(CF_energy_value,0) + cf.at(CF_reserve_interest,0) + cf.at(CF_reserve_leasepayment_interest,0)
-			- (cf.at(CF_om_fixed_expense,0) + cf.at(CF_om_capacity_expense,0) + cf.at(CF_om_production_expense,0) + cf.at(CF_om_fuel_expense,0) + cf.at(CF_om_opt_fuel_1_expense,0) + cf.at(CF_om_opt_fuel_2_expense,0) + cf.at(CF_insurance_expense,0) + cf.at(CF_property_tax_expense,0) )
-			- cf.at(CF_pretax_operating_cashflow,0) + cf.at(CF_sponsor_statax,0);
-		cf.at(CF_sponsor_fedtax_income_with_incentives,0) = cf.at(CF_sponsor_fedtax_income_prior_incentives,0) + cf.at(CF_sponsor_fedtax_taxable_incentives,0);
+		//cf.at(CF_sponsor_fedtax_income_prior_incentives,0)=
+		//	cf.at(CF_energy_value,0) + cf.at(CF_reserve_interest,0) + cf.at(CF_reserve_leasepayment_interest,0)
+		//	- (cf.at(CF_om_fixed_expense,0) + cf.at(CF_om_capacity_expense,0) + cf.at(CF_om_production_expense,0) + cf.at(CF_om_fuel_expense,0) + cf.at(CF_om_opt_fuel_1_expense,0) + cf.at(CF_om_opt_fuel_2_expense,0) + cf.at(CF_insurance_expense,0) + cf.at(CF_property_tax_expense,0) )
+		//	- cf.at(CF_pretax_operating_cashflow,0) + cf.at(CF_sponsor_statax,0);
+		cf.at(CF_sponsor_fedtax_income_prior_incentives, 0) = 0;
+			cf.at(CF_sponsor_fedtax_income_with_incentives,0) = cf.at(CF_sponsor_fedtax_income_prior_incentives,0) + cf.at(CF_sponsor_fedtax_taxable_incentives,0);
 		cf.at(CF_sponsor_fedtax, 0) = -cf.at(CF_federal_tax_frac, 0) * cf.at(CF_sponsor_fedtax_income_with_incentives, 0);
 
 		
@@ -2425,19 +2405,20 @@ public:
 		cf.at(CF_tax_investor_aftertax_npv,0) = cf.at(CF_tax_investor_aftertax,0) ;
 
 
-		for (i=1;i<=nyears;i++)
+		for (i=1;i<=nyears;i++) 
 		{
 			cf.at(CF_tax_investor_pretax,i) = cf.at(CF_pretax_operating_cashflow,i) + cf.at(CF_net_salvage_value,i);
 			cf.at(CF_tax_investor_pretax_irr,i) = irr(CF_tax_investor_pretax,i)*100.0;
 			cf.at(CF_tax_investor_pretax_npv,i) = npv(CF_tax_investor_pretax,i,nom_discount_rate) +  cf.at(CF_tax_investor_pretax,0) ;
 
-			cf.at(CF_tax_investor_statax_income_prior_incentives,i) = cf.at(CF_pretax_operating_cashflow,i) - cf.at(CF_stadepr_total,i) + cf.at(CF_net_salvage_value,i);
+			if (i==0) cf.at(CF_tax_investor_statax_income_prior_incentives, i) = 0;
+			else cf.at(CF_tax_investor_statax_income_prior_incentives,i) = cf.at(CF_pretax_operating_cashflow,i) - cf.at(CF_stadepr_total,i) + cf.at(CF_net_salvage_value,i);
 
-			cf.at(CF_tax_investor_statax_income_with_incenitves,i) = cf.at(CF_tax_investor_statax_income_prior_incentives,i) + cf.at(CF_tax_investor_statax_taxable_incentives,i);
-			cf.at(CF_tax_investor_statax, i) = -cf.at(CF_tax_investor_statax_income_with_incenitves, i)*cf.at(CF_state_tax_frac, i);
+			cf.at(CF_tax_investor_statax_income_with_incentives,i) = cf.at(CF_tax_investor_statax_income_prior_incentives,i) + cf.at(CF_tax_investor_statax_taxable_incentives,i);
+			cf.at(CF_tax_investor_statax, i) = -cf.at(CF_tax_investor_statax_income_with_incentives, i)*cf.at(CF_state_tax_frac, i);
 
-			cf.at(CF_tax_investor_fedtax_income_prior_incentives,i) = cf.at(CF_pretax_operating_cashflow,i) - cf.at(CF_feddepr_total,i) + cf.at(CF_net_salvage_value,i)
-				+ cf.at(CF_tax_investor_statax,i) + cf.at(CF_ptc_sta,i);
+			if (i==0) cf.at(CF_tax_investor_fedtax_income_prior_incentives, i) = 0;
+			else cf.at(CF_tax_investor_fedtax_income_prior_incentives,i) = cf.at(CF_pretax_operating_cashflow,i) - cf.at(CF_feddepr_total,i) + cf.at(CF_net_salvage_value,i) + cf.at(CF_tax_investor_statax,i) + cf.at(CF_ptc_sta,i);
 
 			if (i==1) cf.at(CF_tax_investor_fedtax_income_prior_incentives,i) += itc_sta_total;
 			cf.at(CF_tax_investor_fedtax_income_with_incentives,i) = cf.at(CF_tax_investor_fedtax_income_prior_incentives,i) + cf.at(CF_tax_investor_fedtax_taxable_incentives,i);
@@ -2591,7 +2572,7 @@ public:
 	}
 	assign("flip_actual_irr", var_data((ssc_number_t)actual_flip_irr));
 
-	// LPPA - change form total revenue to PPA revenue 7/19/15 consistent with DHF v4.4
+	// LPPA - change form total revenue to PPA revenue 7/19/15 consistent with v4.4
 	// fixed price PPA - LPPA independent of salvage value per 7/16/15 meeting
 	double npv_ppa_revenue = npv(CF_energy_value, nyears, nom_discount_rate);
 	//	double npv_ppa_revenue = npv(CF_total_revenue, nyears, nom_discount_rate);
@@ -2638,9 +2619,6 @@ public:
 
 	assign("npv_annual_costs", var_data((ssc_number_t)npv_annual_costs));
 	save_cf(CF_Annual_Costs, nyears, "cf_annual_costs");
-
-
-
 
 	double npv_fed_ptc = npv(CF_ptc_fed,nyears,nom_discount_rate);
 	double npv_sta_ptc = npv(CF_ptc_sta,nyears,nom_discount_rate);
@@ -2824,7 +2802,7 @@ public:
 
 	save_cf( CF_tax_investor_statax_income_prior_incentives, nyears, "cf_tax_investor_statax_income_prior_incentives" );
 	save_cf( CF_tax_investor_fedtax_income_prior_incentives, nyears, "cf_tax_investor_fedtax_income_prior_incentives" );
-	save_cf( CF_tax_investor_statax_income_with_incenitves, nyears, "cf_tax_investor_statax_income_with_incentives" );
+	save_cf( CF_tax_investor_statax_income_with_incentives, nyears, "cf_tax_investor_statax_income_with_incentives" );
 	save_cf( CF_tax_investor_fedtax_income_with_incentives, nyears, "cf_tax_investor_fedtax_income_with_incentives" );
 	save_cf( CF_tax_investor_statax, nyears, "cf_tax_investor_statax" );
 	save_cf( CF_tax_investor_fedtax, nyears, "cf_tax_investor_fedtax" );
@@ -2918,6 +2896,7 @@ public:
 	save_cf( CF_sponsor_me2cs, nyears, "cf_sponsor_me2cs" );
 	save_cf( CF_sponsor_me3cs, nyears, "cf_sponsor_me3cs" );
 	save_cf( CF_sponsor_mecs, nyears, "cf_sponsor_mecs" );
+	save_cf(CF_sponsor_adj_reserve_release, nyears, "cf_sponsor_adj_reserve_release");
 	save_cf( CF_sponsor_investing_activities, nyears, "cf_sponsor_investing_activities" );
 
 	save_cf( CF_pv_interest_factor, nyears, "cf_pv_interest_factor" );
@@ -3388,7 +3367,7 @@ public:
 		// depreciate equipment cost in expenditure_year according to depr_sched schedule subject to cutoff by analysis_period
 		if ( (expenditure_year > 0 ) && (expenditure_year <= analysis_period))
 		{
-			// sign convention from DHF v3 model
+			// sign convention from v3 model
 			double depreciable_basis = -cf.at(cf_equipment_expenditure, expenditure_year);
 			for (int i=expenditure_year; i<=analysis_period; i++)
 			{
@@ -3678,7 +3657,7 @@ public:
 
 		void compute_production_incentive_IRS_2010_37( int cf_line, int nyears, const std::string &s_val, const std::string &s_term, const std::string &s_escal )
 	{
-		// rounding based on IRS document and emails from John and Matt from DHF Financials 2/24/2011 and DHF model v4.4
+		// rounding based on IRS document and emails 2/24/2011
 		size_t len = 0;
 		ssc_number_t *parr = as_array(s_val, &len);
 		int term = as_integer(s_term);
@@ -3687,7 +3666,7 @@ public:
 		if (len == 1)
 		{
 			for (int i=1;i<=nyears;i++)
-				cf.at(cf_line, i) = (i <= term) ? cf.at(CF_energy_net,i) / 1000.0 * round_dhf(1000.0 * parr[0] * pow(1 + escal, i-1)) : 0.0;
+				cf.at(cf_line, i) = (i <= term) ? cf.at(CF_energy_net,i) / 1000.0 * round_irs(1000.0 * parr[0] * pow(1 + escal, i-1)) : 0.0;
 		}
 		else
 		{
@@ -3905,9 +3884,6 @@ public:
 
 };
 
-
-
-
-DEFINE_MODULE_ENTRY( saleleaseback, "DHF Sales Leaseback Financial Model_", 1 );
+DEFINE_MODULE_ENTRY( saleleaseback, "Sale Leaseback Financial Model_", 1 );
 
 

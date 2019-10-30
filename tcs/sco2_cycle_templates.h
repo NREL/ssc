@@ -302,6 +302,8 @@ public:
 		double m_eta_thermal;	//[-]
 		double m_W_dot_net;		//[kWe]
 		double m_Q_dot;			//[kWt]
+        double m_Q_dot_mc_cooler;   //[MWt]
+        double m_Q_dot_pc_cooler;   //[MWt]
 		double m_m_dot_mc;		//[kg/s]
 		double m_m_dot_rc;		//[kg/s]
 		double m_m_dot_pc;		//[kg/s]
@@ -325,7 +327,8 @@ public:
 
 		S_od_solved()
 		{
-			m_eta_thermal = m_W_dot_net = m_Q_dot = m_m_dot_mc = m_m_dot_rc = m_m_dot_pc =
+			m_eta_thermal = m_W_dot_net = m_Q_dot = m_Q_dot_mc_cooler = m_Q_dot_pc_cooler =
+                m_m_dot_mc = m_m_dot_rc = m_m_dot_pc =
 				m_m_dot_t = m_recomp_frac = m_mc_f_bypass = m_pc_f_bypass =
 				m_W_dot_cooler_tot = std::numeric_limits<double>::quiet_NaN();
 		}
@@ -353,19 +356,35 @@ public:
                                         // False: = m_mc_N_od_in
         double m_mc_N_od_f_des;        //[-] input MC off design shaft speed fraction of design. used if m_is_mc_N_od_at_design = true
 
+        // PHX pressure drop options
+        bool m_is_PHX_dP_input;     //[-] False: use built-in pressure drop scaling
+                                    //[-] True: use input fractional pressure drop
+        double m_PHX_f_dP;          //[-] PHX fractional pressure drop
+
+        // Other convergence parameters
 		int m_N_sub_hxrs;		//[-] Number of sub heat exchangers
 		double m_tol;			//[-] Convergence tolerance
+
+
+
+
+        int m_count_off_design_core;
+
+
 
 		S_od_par()
 		{
 			m_T_mc_in = m_T_pc_in = m_T_t_in = m_P_LP_comp_in = 
                 m_rc_N_od_f_des = m_mc_N_od_f_des =
+                m_PHX_f_dP =
 				m_tol = std::numeric_limits<double>::quiet_NaN();
 
             m_T_t_in_mode = E_SOLVE_PHX;  //[-] Default to using PHX and HTF temp and mass flow rate
 
             m_is_rc_N_od_at_design = true;  //[-] Default to using design RC shaft speed
             m_is_mc_N_od_at_design = true;  //[-] Default to using design MC shaft speed
+
+            m_is_PHX_dP_input = false;  //[-] Default to using built-in pressure drop scaling
 
 			m_N_sub_hxrs = -1;
 
@@ -423,9 +442,16 @@ public:
 
 	virtual int off_design_fix_shaft_speeds(S_od_par & od_phi_par_in) = 0;
 
-	virtual int calculate_off_design_fan_power(double T_amb /*K*/, double & W_dot_fan /*MWe*/) = 0;
+	virtual int solve_OD_all_coolers_fan_power(double T_amb /*K*/, double & W_dot_fan /*MWe*/) = 0;
+
+    virtual int solve_OD_mc_cooler_fan_power(double T_amb /*K*/, double & W_dot_mc_cooler_fan /*MWe*/) = 0;
+
+    virtual int solve_OD_pc_cooler_fan_power(double T_amb /*K*/, double & W_dot_pc_cooler_fan /*MWe*/) = 0;
 
 	virtual const C_comp_multi_stage::S_od_solved * get_rc_od_solved() = 0;
+
+    virtual void check_od_solution(double & diff_m_dot, double & diff_E_cycle,
+        double & diff_Q_LTR, double & diff_Q_HTR) = 0;
 
 	const S_design_limits & get_design_limits()
 	{

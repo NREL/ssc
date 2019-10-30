@@ -1,369 +1,543 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #include <string>
 #include "common.h"
 #include "lib_weatherfile.h"
+#include "lib_time.h"
 
 var_info vtab_standard_financial[] = {
+{ SSC_INPUT,SSC_NUMBER  , "analysis_period"                      , "Analyis period"                                                 , "years"                                  , ""                                      , "Financial Parameters" , "?=30"           , "INTEGER,MIN=0,MAX=50"  , ""},
+{ SSC_INPUT, SSC_ARRAY  , "federal_tax_rate"                     , "Federal income tax rate"                                        , "%"                                      , ""                                      , "Financial Parameters" , "*"              , ""                      , ""},
+{ SSC_INPUT, SSC_ARRAY  , "state_tax_rate"                       , "State income tax rate"                                          , "%"                                      , ""                                      , "Financial Parameters" , "*"              , ""                      , ""},
 
-/*   VARTYPE           DATATYPE         NAME                                         LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                           "Analyis period",                                  "years",  "",                      "Financials",      "?=30",                   "INTEGER,MIN=0,MAX=50",          "" },
-//	{ SSC_INPUT, SSC_NUMBER, "federal_tax_rate", "Federal tax rate", "%", "", "Financials", "*", "MIN=0,MAX=100", "" },
-//	{ SSC_INPUT, SSC_NUMBER, "state_tax_rate", "State tax rate", "%", "", "Financials", "*", "MIN=0,MAX=100", "" },
-	{ SSC_INPUT, SSC_ARRAY, "federal_tax_rate", "Federal income tax rate", "%", "", "Financials", "*", "", "" },
-	{ SSC_INPUT, SSC_ARRAY, "state_tax_rate", "State income tax rate", "%", "", "Financials", "*", "", "" },
-
-	{ SSC_OUTPUT, SSC_ARRAY, "cf_federal_tax_frac", "Federal income tax rate", "frac", "", "Financials", "*", "LENGTH_EQUAL=cf_length", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "cf_state_tax_frac", "State income tax rate", "frac", "", "Financials", "*", "LENGTH_EQUAL=cf_length", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "cf_effective_tax_frac", "Effective income tax rate", "frac", "", "Financials", "*", "LENGTH_EQUAL=cf_length", "" },
+{ SSC_OUTPUT, SSC_ARRAY , "cf_federal_tax_frac"                  , "Federal income tax rate"                                        , "frac"                                   , ""                                      , "Financial Parameters" , "*"              , "LENGTH_EQUAL=cf_length", ""},
+{ SSC_OUTPUT, SSC_ARRAY , "cf_state_tax_frac"                    , "State income tax rate"                                          , "frac"                                   , ""                                      , "Financial Parameters" , "*"              , "LENGTH_EQUAL=cf_length", ""},
+{ SSC_OUTPUT, SSC_ARRAY , "cf_effective_tax_frac"                , "Effective income tax rate"                                      , "frac"                                   , ""                                      , "Financial Parameters" , "*"              , "LENGTH_EQUAL=cf_length", ""},
 
 
-	{ SSC_INPUT, SSC_NUMBER, "property_tax_rate", "Property tax rate", "%", "", "Financials", "?=0.0", "MIN=0,MAX=100", "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "prop_tax_cost_assessed_percent",            "Percent of pre-financing costs assessed","%","",			  "Financials",			 "?=95",                     "MIN=0,MAX=100",      			"" },
-	{ SSC_INPUT,        SSC_NUMBER,     "prop_tax_assessed_decline",                 "Assessed value annual decline",	"%",	 "",					  "Financials",             "?=5",                     "MIN=0,MAX=100",      			"" },
-//	{ SSC_INPUT,        SSC_NUMBER,      "sales_tax_rate",                           "Sales tax rate",                                  "%",      "",                      "Financials",      "?=0.0",                  "MIN=0,MAX=100",                 "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "real_discount_rate",                       "Real discount rate",                              "%",      "",                      "Financials",      "*",                      "MIN=-99",                 "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inflation_rate",                           "Inflation rate",                                  "%",      "",                      "Financials",      "*",                      "MIN=-99",                 "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "insurance_rate",                           "Insurance rate",                                  "%",      "",                      "Financials",      "?=0.0",                  "MIN=0,MAX=100",                 "" },
+{ SSC_INPUT, SSC_NUMBER , "property_tax_rate"                    , "Property tax rate"                                              , "%"                                      , ""                                      , "Financial Parameters" , "?=0.0"          , "MIN=0,MAX=100"         , ""},
+{ SSC_INPUT,SSC_NUMBER  , "prop_tax_cost_assessed_percent"       , "Percent of pre-financing costs assessed"                        , "%"                                      , ""                                      , "Financial Parameters" , "?=95"           , "MIN=0,MAX=100"         , ""},
+{ SSC_INPUT,SSC_NUMBER  , "prop_tax_assessed_decline"            , "Assessed value annual decline"                                  , "%"                                      , ""                                      , "Financial Parameters" , "?=5"            , "MIN=0,MAX=100"         , ""},
+{ SSC_INPUT,SSC_NUMBER  , "real_discount_rate"                   , "Real discount rate"                                             , "%"                                      , ""                                      , "Financial Parameters" , "*"              , "MIN=-99"               , ""},
+{ SSC_INPUT,SSC_NUMBER  , "inflation_rate"                       , "Inflation rate"                                                 , "%"                                      , ""                                      , "Financial Parameters" , "*"              , "MIN=-99"               , ""},
+{ SSC_INPUT,SSC_NUMBER  , "insurance_rate"                       , "Insurance rate"                                                 , "%"                                      , ""                                      , "Financial Parameters" , "?=0.0"          , "MIN=0,MAX=100"         , ""},
 
-	{ SSC_INPUT,        SSC_NUMBER,      "system_capacity",                          "System nameplate capacity",                       "kW",     "",                      "System",          "*",                      "POSITIVE",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "system_heat_rate",                         "System heat rate",                                "MMBTus/MWh", "",                  "System",          "?=0.0",                  "MIN=0",                                         "" },
-
+{ SSC_INPUT,SSC_NUMBER  , "system_capacity"                      , "System nameplate capacity"                                      , "kW"                                     , ""                                      , "Financial Parameters" , "*"              , "POSITIVE"              , ""},
+{ SSC_INPUT,SSC_NUMBER  , "system_heat_rate"                     , "System heat rate"                                               , "MMBTus/MWh"                             , ""                                      , "Financial Parameters" , "?=0.0"          , "MIN=0"                 , ""},
 var_info_invalid };
 
 var_info vtab_battery_replacement_cost[] = {
+{ SSC_INPUT, SSC_ARRAY  , "batt_bank_replacement"                , "Battery bank replacements per year"                             , "number/year"                            , ""                                      , "Battery"              , ""               , ""                      , ""},
+{ SSC_INPUT, SSC_ARRAY  , "batt_replacement_schedule"            , "Battery bank replacements per year (user specified)"            , "number/year"                            , ""                                      , "Battery"              , ""               , ""                      , ""},
+{ SSC_INPUT, SSC_ARRAY  , "batt_replacement_schedule"            , "Battery bank replacements per year (user specified)"            , "number/year"                            , ""                                      , "Battery"              , ""               , ""                     , "" },
+{ SSC_INPUT, SSC_NUMBER , "en_batt"                              , "Enable battery storage model"                                   , "0/1"                                    , ""                                      , "Battery"              , "?=0"            , ""                      , ""},
+{ SSC_INPUT, SSC_NUMBER , "batt_replacement_option"              , "Enable battery replacement?"                                    , "0=none,1=capacity based,2=user schedule", ""                                      , "Battery"              , "?=0"            , "INTEGER,MIN=0,MAX=2"   , ""},
+{ SSC_INPUT, SSC_NUMBER , "battery_per_kWh"                      , "Battery cost"                                                   , "$/kWh"                                  , ""                                      , "Battery"              , "?=0.0"          , ""                      , ""},
+{ SSC_INPUT, SSC_NUMBER , "batt_computed_bank_capacity"          , "Battery bank capacity"                                          , "kWh"                                    , ""                                      , "Battery"              , "?=0.0"          , ""                      , ""},
+{ SSC_OUTPUT, SSC_ARRAY , "cf_battery_replacement_cost"          , "Battery replacement cost"                                       , "$"                                      , ""                                      , "Cash Flow"            , "*"              , ""                      , ""},
+{ SSC_OUTPUT, SSC_ARRAY , "cf_battery_replacement_cost_schedule" , "Battery replacement cost schedule"                              , "$/kWh"                                  , ""                                      , "Cash Flow"            , "*"              , ""                      , ""},
+var_info_invalid };
 
-	/*   VARTYPE           DATATYPE         NAME                            LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-		{ SSC_INPUT, SSC_ARRAY, "batt_bank_replacement", "Battery bank replacements per year", "number/year", "", "Battery", "", "", "" },
-		{ SSC_INPUT, SSC_ARRAY, "batt_replacement_schedule", "Battery bank replacements per year (user specified)", "number/year", "", "Battery", "", "", "" },
-		{ SSC_INPUT, SSC_NUMBER, "en_batt", "Enable battery storage model", "0/1", "", "Battery", "?=0", "", "" },
-		{ SSC_INPUT, SSC_NUMBER, "batt_replacement_option", "Enable battery replacement?", "0=none,1=capacity based,2=user schedule", "", "Battery", "?=0", "INTEGER,MIN=0,MAX=2", "" },
-		{ SSC_INPUT, SSC_NUMBER, "battery_per_kWh", "Battery cost", "$/kWh", "", "Battery", "?=0.0", "", "" },
-		{ SSC_INPUT, SSC_NUMBER, "batt_computed_bank_capacity", "Battery bank capacity", "kWh", "", "Battery", "?=0.0", "", "" },
-		{ SSC_OUTPUT, SSC_ARRAY, "cf_battery_replacement_cost", "Battery replacement cost", "$", "", "Cash Flow", "*", "", "" },
-		{ SSC_OUTPUT, SSC_ARRAY, "cf_battery_replacement_cost_schedule", "Battery replacement cost schedule", "$/kWh", "", "Cash Flow", "*", "", "" },
+var_info vtab_financial_grid[] = {
 
-		var_info_invalid };
+	/*   VARTYPE           DATATYPE         NAME                                         LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS	*/
+		{ SSC_INPUT,        SSC_ARRAY,      "grid_curtailment_price",                           "Curtailment price",                                  "$/kWh",  "",                      "Financial Grid",      "?=0",                   "",          "" },
+		{ SSC_INPUT,        SSC_NUMBER,      "grid_curtailment_price_esc",                           "Curtailment price escalation",                                  "%",  "",                      "Financial Grid",      "?=0",                   "",          "" },
+		{ SSC_INPUT,        SSC_NUMBER,      "annual_energy_pre_curtailment_ac", "Annual Energy AC pre-curtailment (year 1)",   "kWh",        "",                "",                           "?=0",                     "",                              "" },
 
+var_info_invalid };
 
 var_info vtab_fuelcell_replacement_cost[] = {
-
-	/*   VARTYPE           DATATYPE         NAME                            LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-		{ SSC_INPUT, SSC_ARRAY, "fuelcell_replacement", "Fuel cell replacements per year", "number/year", "", "fuelcell", "", "", "" },
-		{ SSC_INPUT, SSC_ARRAY, "fuelcell_replacement_schedule", "Fuel cell replacements per year (user specified)", "number/year", "", "fuelcell", "", "", "" },
-		{ SSC_INPUT, SSC_NUMBER, "en_fuelcell", "Enable fuel cell storage model", "0/1", "", "fuelcell", "?=0", "", "" },
-		{ SSC_INPUT, SSC_NUMBER, "fuelcell_replacement_option", "Enable fuel cell replacement?", "0=none,1=capacity based,2=user schedule", "", "fuelcell", "?=0", "INTEGER,MIN=0,MAX=2", "" },
-		{ SSC_INPUT, SSC_NUMBER, "fuelcell_per_kWh", "Fuel cell cost", "$/kWh", "", "fuelcell", "?=0.0", "", "" },
-		{ SSC_INPUT, SSC_NUMBER, "fuelcell_computed_bank_capacity", "Fuel cell capacity", "kWh", "", "fuelcell", "?=0.0", "", "" },
-		{ SSC_OUTPUT, SSC_ARRAY, "cf_fuelcell_replacement_cost", "Fuel cell replacement cost", "$", "", "Cash Flow", "*", "", "" },
-		{ SSC_OUTPUT, SSC_ARRAY, "cf_fuelcell_replacement_cost_schedule", "Fuel cell replacement cost schedule", "$/kW", "", "Cash Flow", "*", "", "" },
-
-		var_info_invalid };
-
+{ SSC_INPUT, SSC_ARRAY  , "fuelcell_replacement"                 , "Fuel cell replacements per year"                                , "number/year"                            , ""                                      , "Fuel Cell"            , ""               , ""                      , ""},
+{ SSC_INPUT, SSC_ARRAY  , "fuelcell_replacement_schedule"        , "Fuel cell replacements per year (user specified)"               , "number/year"                            , ""                                      , "Fuel Cell"            , ""               , ""                      , ""},
+{ SSC_INPUT, SSC_NUMBER , "en_fuelcell"                          , "Enable fuel cell storage model"                                 , "0/1"                                    , ""                                      , "Fuel Cell"            , "?=0"            , ""                      , ""},
+{ SSC_INPUT, SSC_NUMBER , "fuelcell_replacement_option"          , "Enable fuel cell replacement?"                                  , "0=none,1=capacity based,2=user schedule", ""                                      , "Fuel Cell"            , "?=0"            , "INTEGER,MIN=0,MAX=2"   , ""},
+{ SSC_INPUT, SSC_NUMBER , "fuelcell_per_kWh"                     , "Fuel cell cost"                                                 , "$/kWh"                                  , ""                                      , "Fuel Cell"            , "?=0.0"          , ""                      , ""},
+{ SSC_INPUT, SSC_NUMBER , "fuelcell_computed_bank_capacity"      , "Fuel cell capacity"                                             , "kWh"                                    , ""                                      , "Fuel Cell"            , "?=0.0"          , ""                      , ""},
+{ SSC_OUTPUT, SSC_ARRAY , "cf_fuelcell_replacement_cost"         , "Fuel cell replacement cost"                                     , "$"                                      , ""                                      , "Cash Flow"            , "*"              , ""                      , ""},
+{ SSC_OUTPUT, SSC_ARRAY , "cf_fuelcell_replacement_cost_schedule", "Fuel cell replacement cost schedule"                            , "$/kW"                                   , ""                                      , "Cash Flow"            , "*"              , ""                      , ""},
+var_info_invalid };
 
 var_info vtab_standard_loan[] = {
-
-/*   VARTYPE           DATATYPE         NAME                            LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-	{ SSC_INPUT,        SSC_NUMBER,      "loan_term",					"Loan term",					  "years",  "",                      "Loan",            "?=0",                    "INTEGER,MIN=0,MAX=50",          "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "loan_rate",					"Loan rate",					  "%",      "",                      "Loan",            "?=0",                    "MIN=0,MAX=100",                 "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "debt_fraction",                   "Debt percentage",                "%",      "",                      "Loan",			"?=0",                    "MIN=0,MAX=100",                 "" },
+{ SSC_INPUT,SSC_NUMBER  , "loan_term"                            , "Loan term"                                                      , "years"                                  , ""                                      , "Financial Parameters" , "?=0"            , "INTEGER,MIN=0,MAX=50"  , ""},
+{ SSC_INPUT,SSC_NUMBER  , "loan_rate"                            , "Loan rate"                                                      , "%"                                      , ""                                      , "Financial Parameters" , "?=0"            , "MIN=0,MAX=100"         , ""},
+{ SSC_INPUT,SSC_NUMBER  , "debt_fraction"                        , "Debt percentage"                                                , "%"                                      , ""                                      , "Financial Parameters" , "?=0"            , "MIN=0,MAX=100"         , ""},
 var_info_invalid };
 
 var_info vtab_oandm[] = {
 /*   VARTYPE           DATATYPE         NAME                             LABEL                                UNITS      META                 GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	
-	{ SSC_INPUT,        SSC_ARRAY,       "om_fixed",                     "Fixed O&M annual amount",           "$/year",  "",                  "O&M",            "?=0.0",                 "",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "om_fixed_escal",               "Fixed O&M escalation",              "%/year",  "",                  "O&M",            "?=0.0",                 "",                                         "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "om_production",                "Production-based O&M amount",       "$/MWh",   "",                  "O&M",            "?=0.0",                 "",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "om_production_escal",          "Production-based O&M escalation",   "%/year",  "",                  "O&M",            "?=0.0",                 "",                                         "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "om_capacity",                  "Capacity-based O&M amount",         "$/kWcap", "",                  "O&M",            "?=0.0",                 "",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "om_capacity_escal",            "Capacity-based O&M escalation",     "%/year",  "",                  "O&M",            "?=0.0",                 "",                                         "" },
-	{ SSC_INPUT,        SSC_ARRAY,		 "om_fuel_cost",                 "Fuel cost",                         "$/MMBtu", "",                  "O&M",            "?=0.0",                 "",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "om_fuel_cost_escal",           "Fuel cost escalation",              "%/year",  "",                  "O&M",            "?=0.0",                 "",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "annual_fuel_usage",        "Fuel usage",                         "kWht",         "",                      "O&M",      "?=0",                     "MIN=0",                                         "" },
+{ SSC_INPUT,        SSC_ARRAY,       "om_fixed",                     "Fixed O&M annual amount",           "$/year",  "",                  "System Costs",            "?=0.0",                 "",                                         "" },
+{ SSC_INPUT,        SSC_NUMBER,      "om_fixed_escal",               "Fixed O&M escalation",              "%/year",  "",                  "System Costs",            "?=0.0",                 "",                                         "" },
+{ SSC_INPUT,        SSC_ARRAY,       "om_production",                "Production-based O&M amount",       "$/MWh",   "",                  "System Costs",            "?=0.0",                 "",                                         "" },
+{ SSC_INPUT,        SSC_NUMBER,      "om_production_escal",          "Production-based O&M escalation",   "%/year",  "",                  "System Costs",            "?=0.0",                 "",                                         "" },
+{ SSC_INPUT,        SSC_ARRAY,       "om_capacity",                  "Capacity-based O&M amount",         "$/kWcap", "",                  "System Costs",            "?=0.0",                 "",                                         "" },
+{ SSC_INPUT,        SSC_NUMBER,      "om_capacity_escal",            "Capacity-based O&M escalation",     "%/year",  "",                  "System Costs",            "?=0.0",                 "",                                         "" },
+{ SSC_INPUT,        SSC_ARRAY,		 "om_fuel_cost",                 "Fuel cost",                         "$/MMBtu", "",                  "System Costs",            "?=0.0",                 "",                                         "" },
+{ SSC_INPUT,        SSC_NUMBER,      "om_fuel_cost_escal",           "Fuel cost escalation",              "%/year",  "",                  "System Costs",            "?=0.0",                 "",                                         "" },
+{ SSC_INPUT,        SSC_NUMBER,      "annual_fuel_usage",            "Fuel usage (yr 1)",                 "kWht",    "",                  "System Costs",            "?=0",                     "MIN=0",                                         "" },
+{ SSC_INPUT,        SSC_ARRAY,       "annual_fuel_usage_lifetime",   "Fuel usage (lifetime)",             "kWht",    "",                  "System Costs",            "",                     "",                                         "" },
 
-	// replacements
-	{ SSC_INPUT,        SSC_ARRAY,		 "om_replacement_cost1",           "Repacement cost 1",                "$/kWh", "",                  "O&M",            "?=0.0",                 "",                                         "" },
-	{ SSC_INPUT,        SSC_ARRAY,		 "om_replacement_cost2",           "Repacement cost 2",                "$/kW",  "",                  "O&M",            "?=0.0",                 "",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "om_replacement_cost_escal",      "Replacement cost escalation",      "%/year",  "",                "O&M",            "?=0.0",                 "",                                         "" },
+// replacements
+{ SSC_INPUT,SSC_ARRAY   , "om_replacement_cost1"                 , "Repacement cost 1"                                              , "$/kWh"                                  , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
+{ SSC_INPUT,SSC_ARRAY   , "om_replacement_cost2"                 , "Repacement cost 2"                                              , "$/kW"                                   , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "om_replacement_cost_escal"            , "Replacement cost escalation"                                    , "%/year"                                 , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
 
+// optional fuel o and m for Biopower - usage can be in any unit and cost is in $ per usage unit
+{ SSC_INPUT,SSC_NUMBER  , "om_opt_fuel_1_usage"                  , "Biomass feedstock usage"                                        , "unit"                                   , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
+{ SSC_INPUT,SSC_ARRAY   , "om_opt_fuel_1_cost"                   , "Biomass feedstock cost"                                         , "$/unit"                                 , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "om_opt_fuel_1_cost_escal"             , "Biomass feedstock cost escalation"                              , "%/year"                                 , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "om_opt_fuel_2_usage"                  , "Coal feedstock usage"                                           , "unit"                                   , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
+{ SSC_INPUT,SSC_ARRAY   , "om_opt_fuel_2_cost"                   , "Coal feedstock cost"                                            , "$/unit"                                 , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "om_opt_fuel_2_cost_escal"             , "Coal feedstock cost escalation"                                 , "%/year"                                 , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
 
-	// optional fuel o and m for Biopower - usage can be in any unit and cost is in $ per usage unit
-	{ SSC_INPUT,        SSC_NUMBER,      "om_opt_fuel_1_usage",           "Biomass feedstock usage",              "unit",  "",                  "O&M",            "?=0.0",                 "",                                         "" },
-	{ SSC_INPUT,        SSC_ARRAY,		 "om_opt_fuel_1_cost",                 "Biomass feedstock cost",          "$/unit", "",                  "O&M",            "?=0.0",                 "",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "om_opt_fuel_1_cost_escal",           "Biomass feedstock cost escalation","%/year",  "",                  "O&M",            "?=0.0",                 "",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "om_opt_fuel_2_usage",           "Coal feedstock usage",              "unit",  "",                  "O&M",            "?=0.0",                 "",                                         "" },
-	{ SSC_INPUT,        SSC_ARRAY,		 "om_opt_fuel_2_cost",                 "Coal feedstock cost",          "$/unit", "",                  "O&M",            "?=0.0",                 "",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "om_opt_fuel_2_cost_escal",           "Coal feedstock cost escalation","%/year",  "",                  "O&M",            "?=0.0",                 "",                                         "" },
+// optional additional base o and m types
+{ SSC_INPUT,SSC_NUMBER  , "add_om_num_types"                     , "Number of O and M types"                                        , ""                                       , ""                                      , "System Costs"         , "?=0"            , "INTEGER,MIN=0,MAX=2"   , ""},
+{ SSC_INPUT,SSC_NUMBER  , "om_capacity1_nameplate"               , "Battery capacity for System Costs values"                       , "kW"                                     , ""                                      , "System Costs"         , "?=0"            , ""                      , ""},
+{ SSC_INPUT,SSC_ARRAY   , "om_production1_values"                , "Battery production for System Costs values"                     , "kWh"                                    , ""                                      , "System Costs"         , "?=0"            , ""                      , ""},
 
-	// optional additional base o and m types
+{ SSC_INPUT,SSC_ARRAY   , "om_fixed1"                            , "Battery fixed System Costs annual amount"                       , "$/year"                                 , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
+{ SSC_INPUT,SSC_ARRAY   , "om_production1"                       , "Battery production-based System Costs amount"                   , "$/MWh"                                  , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
+{ SSC_INPUT,SSC_ARRAY   , "om_capacity1"                         , "Battery capacity-based System Costs amount"                     , "$/kWcap"                                , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
 
-	{ SSC_INPUT,        SSC_NUMBER,      "add_om_num_types",           "Number of O and M types","",  "",                  "O&M",            "?=0",                 "INTEGER,MIN=0,MAX=2",                                         "" },
-	/*
-	// capacity variable names for capacity o and m calculations (semicolon delimited)
-	{ SSC_INPUT,        SSC_STRING,      "add_om_capacity_names",           "Names of O and M types","",  "",                  "O&M",            "?=n/a",                 "",                                         "" },
-	// production variable names for variable o and m calculations (semicolon delimited)
-	{ SSC_INPUT,        SSC_STRING,      "add_om_production_names",           "Names of O and M types","",  "",                  "O&M",            "?=n/a",                 "",                                         "" },
-	*/ 
+{ SSC_INPUT,SSC_NUMBER  , "om_capacity2_nameplate"               , "Fuel cell capacity for System Costs values"                     , "kW"                                     , ""                                      , "System Costs"         , "?=0"            , ""                      , ""},
+{ SSC_INPUT,SSC_ARRAY   , "om_production2_values"                , "Fuel cell production for System Costs values"                   , "kWh"                                    , ""                                      , "System Costs"         , "?=0"            , ""                      , ""},
 
-	{ SSC_INPUT,        SSC_NUMBER,      "om_capacity1_nameplate",           "Battery capacity for O&M values","kW",  "",                  "O&M",            "?=0",                 "",                                         "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "om_production1_values",           "Battery production for O&M values","kWh",  "",                  "O&M",            "?=0",                 "",                                         "" },
-
-
-	{ SSC_INPUT,        SSC_ARRAY,       "om_fixed1",                     "Battery fixed O&M annual amount",           "$/year",  "",                  "O&M",            "?=0.0",                 "",                                         "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "om_production1",                "Battery production-based O&M amount",       "$/MWh",   "",                  "O&M",            "?=0.0",                 "",                                         "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "om_capacity1",                  "Battery capacity-based O&M amount",         "$/kWcap", "",                  "O&M",            "?=0.0",                 "",                                         "" },
-
-	{ SSC_INPUT,        SSC_NUMBER,      "om_capacity2_nameplate",           "Fuel cell capacity for O&M values","kW",  "",                  "O&M",            "?=0",                 "",                                         "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "om_production2_values",           "Fuel cell production for O&M values","kWh",  "",                  "O&M",            "?=0",                 "",                                         "" },
-
-
-	{ SSC_INPUT,        SSC_ARRAY,       "om_fixed2",                     "Fuel cell fixed O&M annual amount",           "$/year",  "",                  "O&M",            "?=0.0",                 "",                                         "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "om_production2",                "Fuel cell production-based O&M amount",       "$/MWh",   "",                  "O&M",            "?=0.0",                 "",                                         "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "om_capacity2",                  "Fuel cell capacity-based O&M amount",         "$/kWcap", "",                  "O&M",            "?=0.0",                 "",                                         "" },
-
-
-
-
+{ SSC_INPUT,SSC_ARRAY   , "om_fixed2"                            , "Fuel cell fixed System Costs annual amount"                     , "$/year"                                 , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
+{ SSC_INPUT,SSC_ARRAY   , "om_production2"                       , "Fuel cell production-based System Costs amount"                 , "$/MWh"                                  , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
+{ SSC_INPUT,SSC_ARRAY   , "om_capacity2"                         , "Fuel cell capacity-based System Costs amount"                   , "$/kWcap"                                , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
 var_info_invalid };
 
 var_info vtab_depreciation[] = {
-/*   VARTYPE           DATATYPE         NAME                              LABEL                                 UNITS     META                                      GROUP             REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-
-	{ SSC_INPUT,        SSC_NUMBER,      "depr_fed_type",                "Federal depreciation type",           "",       "0=none,1=macrs_half_year,2=sl,3=custom",  "Depreciation",      "?=0",                     "INTEGER,MIN=0,MAX=3",        "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "depr_fed_sl_years",            "Federal depreciation straight-line Years",       "years",  "",                                        "Depreciation",      "depr_fed_type=2",                     "INTEGER,POSITIVE",           "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "depr_fed_custom",              "Federal custom depreciation",         "%/year", "",                                        "Depreciation",      "depr_fed_type=3",         "",                           "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "depr_sta_type",                "State depreciation type",             "",       "0=none,1=macrs_half_year,2=sl,3=custom",  "Depreciation",      "?=0",                     "INTEGER,MIN=0,MAX=3",        "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "depr_sta_sl_years",            "State depreciation straight-line years",         "years",  "",                                        "Depreciation",      "depr_sta_type=2",                     "INTEGER,POSITIVE",           "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "depr_sta_custom",              "State custom depreciation",           "%/year", "",                                        "Depreciation",      "depr_sta_type=3",         "",                           "" },
-
+{ SSC_INPUT,SSC_NUMBER  , "depr_fed_type"                        , "Federal depreciation type"                                      , ""                                       , "0=none,1=macrs_half_year,2=sl,3=custom", "Depreciation"         , "?=0"            , "INTEGER,MIN=0,MAX=3"   , ""},
+{ SSC_INPUT,SSC_NUMBER  , "depr_fed_sl_years"                    , "Federal depreciation straight-line Years"                       , "years"                                  , ""                                      , "Depreciation"         , "depr_fed_type=2", "INTEGER,POSITIVE"      , ""},
+{ SSC_INPUT,SSC_ARRAY   , "depr_fed_custom"                      , "Federal custom depreciation"                                    , "%/year"                                 , ""                                      , "Depreciation"         , "depr_fed_type=3", ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "depr_sta_type"                        , "State depreciation type"                                        , ""                                       , "0=none,1=macrs_half_year,2=sl,3=custom", "Depreciation"         , "?=0"            , "INTEGER,MIN=0,MAX=3"   , ""},
+{ SSC_INPUT,SSC_NUMBER  , "depr_sta_sl_years"                    , "State depreciation straight-line years"                         , "years"                                  , ""                                      , "Depreciation"         , "depr_sta_type=2", "INTEGER,POSITIVE"      , ""},
+{ SSC_INPUT,SSC_ARRAY   , "depr_sta_custom"                      , "State custom depreciation"                                      , "%/year"                                 , ""                                      , "Depreciation"         , "depr_sta_type=3", ""                      , ""},
 var_info_invalid };
-	
+
 var_info vtab_tax_credits[] = {
-/*   VARTYPE           DATATYPE         NAME                               LABEL                                                UNITS     META                      GROUP                 REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
+{ SSC_INPUT,SSC_NUMBER  , "itc_fed_amount"                       , "Federal amount-based ITC amount"                                , "$"                                      , ""                                      , "Tax Credit Incentives", "?=0"            , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "itc_fed_amount_deprbas_fed"           , "Federal amount-based ITC reduces federal depreciation basis"    , "0/1"                                    , ""                                      , "Tax Credit Incentives", "?=1"            , "BOOLEAN"               , ""},
+{ SSC_INPUT,SSC_NUMBER  , "itc_fed_amount_deprbas_sta"           , "Federal amount-based ITC reduces state depreciation basis"      , "0/1"                                    , ""                                      , "Tax Credit Incentives", "?=1"            , "BOOLEAN"               , ""},
 
-	{ SSC_INPUT,        SSC_NUMBER,       "itc_fed_amount",                 "Federal amount-based ITC amount",                         "$",      "",          "Tax Credit Incentives",      "?=0",                       "",                            "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "itc_fed_amount_deprbas_fed",     "Federal amount-based ITC reduces federal depreciation basis",       "0/1",    "",          "Tax Credit Incentives",      "?=1",                       "BOOLEAN",                     "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "itc_fed_amount_deprbas_sta",     "Federal amount-based ITC reduces state depreciation basis",       "0/1",    "",          "Tax Credit Incentives",      "?=1",                       "BOOLEAN",                     "" },
-	
-	{ SSC_INPUT,        SSC_NUMBER,       "itc_sta_amount",                 "State amount-based ITC amount",                           "$",      "",          "Tax Credit Incentives",      "?=0",                       "",                            "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "itc_sta_amount_deprbas_fed",     "State amount-based ITC reduces federal depreciation basis",         "0/1",    "",          "Tax Credit Incentives",      "?=0",                       "BOOLEAN",                     "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "itc_sta_amount_deprbas_sta",     "State amount-based ITC reduces state depreciation basis",         "0/1",    "",          "Tax Credit Incentives",      "?=0",                       "BOOLEAN",                     "" },
-	
-	{ SSC_INPUT,        SSC_NUMBER,       "itc_fed_percent",                "Federal percentage-based ITC percent",                    "%",      "",          "Tax Credit Incentives",      "?=0",                       "",                            "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "itc_fed_percent_maxvalue",       "Federal percentage-based ITC maximum value",                 "$",      "",          "Tax Credit Incentives",      "?=1e99",                    "",                            "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "itc_fed_percent_deprbas_fed",    "Federal percentage-based ITC reduces federal depreciation basis",   "0/1",    "",          "Tax Credit Incentives",      "?=1",                       "BOOLEAN",                     "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "itc_fed_percent_deprbas_sta",    "Federal percentage-based ITC reduces state depreciation basis",   "0/1",    "",          "Tax Credit Incentives",      "?=1",                       "BOOLEAN",                     "" },
+{ SSC_INPUT,SSC_NUMBER  , "itc_sta_amount"                       , "State amount-based ITC amount"                                  , "$"                                      , ""                                      , "Tax Credit Incentives", "?=0"            , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "itc_sta_amount_deprbas_fed"           , "State amount-based ITC reduces federal depreciation basis"      , "0/1"                                    , ""                                      , "Tax Credit Incentives", "?=0"            , "BOOLEAN"               , ""},
+{ SSC_INPUT,SSC_NUMBER  , "itc_sta_amount_deprbas_sta"           , "State amount-based ITC reduces state depreciation basis"        , "0/1"                                    , ""                                      , "Tax Credit Incentives", "?=0"            , "BOOLEAN"               , ""},
 
-	{ SSC_INPUT,        SSC_NUMBER,       "itc_sta_percent",               "State percentage-based ITC percent",                      "%",      "",          "Tax Credit Incentives",      "?=0",                       "",                            "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "itc_sta_percent_maxvalue",       "State percentage-based ITC maximum Value",                   "$",      "",          "Tax Credit Incentives",      "?=1e99",                    "",                            "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "itc_sta_percent_deprbas_fed",    "State percentage-based ITC reduces federal depreciation basis",     "0/1",    "",          "Tax Credit Incentives",      "?=0",                       "BOOLEAN",                     "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "itc_sta_percent_deprbas_sta",    "State percentage-based ITC reduces state depreciation basis",     "0/1",    "",          "Tax Credit Incentives",      "?=0",                       "BOOLEAN",                     "" },
+{ SSC_INPUT,SSC_NUMBER  , "itc_fed_percent"                      , "Federal percentage-based ITC percent"                           , "%"                                      , ""                                      , "Tax Credit Incentives", "?=0"            , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "itc_fed_percent_maxvalue"             , "Federal percentage-based ITC maximum value"                     , "$"                                      , ""                                      , "Tax Credit Incentives", "?=1e99"         , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "itc_fed_percent_deprbas_fed"          , "Federal percentage-based ITC reduces federal depreciation basis", "0/1"                                    , ""                                      , "Tax Credit Incentives", "?=1"            , "BOOLEAN"               , ""},
+{ SSC_INPUT,SSC_NUMBER  , "itc_fed_percent_deprbas_sta"          , "Federal percentage-based ITC reduces state depreciation basis"  , "0/1"                                    , ""                                      , "Tax Credit Incentives", "?=1"            , "BOOLEAN"               , ""},
 
-	{ SSC_INPUT,        SSC_ARRAY,       "ptc_fed_amount",                 "Federal PTC amount",                                      "$/kWh",  "",          "Tax Credit Incentives",      "?=0",                       "",                            "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ptc_fed_term",                   "Federal PTC term",                                        "years",  "",          "Tax Credit Incentives",      "?=10",                      "",                            "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ptc_fed_escal",                  "Federal PTC escalation",                                  "%/year", "",          "Tax Credit Incentives",      "?=0",                       "",                            "" },
-	
-	{ SSC_INPUT,        SSC_ARRAY,       "ptc_sta_amount",                 "State PTC amount",                                        "$/kWh",  "",          "Tax Credit Incentives",      "?=0",                       "",                            "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ptc_sta_term",                   "State PTC term",                                          "years",  "",          "Tax Credit Incentives",      "?=10",                      "",                            "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ptc_sta_escal",                  "State PTC escalation",                                    "%/year", "",          "Tax Credit Incentives",      "?=0",                       "",                            "" },
-	
+{ SSC_INPUT,SSC_NUMBER  , "itc_sta_percent"                      , "State percentage-based ITC percent"                             , "%"                                      , ""                                      , "Tax Credit Incentives", "?=0"            , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "itc_sta_percent_maxvalue"             , "State percentage-based ITC maximum Value"                       , "$"                                      , ""                                      , "Tax Credit Incentives", "?=1e99"         , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "itc_sta_percent_deprbas_fed"          , "State percentage-based ITC reduces federal depreciation basis"  , "0/1"                                    , ""                                      , "Tax Credit Incentives", "?=0"            , "BOOLEAN"               , ""},
+{ SSC_INPUT,SSC_NUMBER  , "itc_sta_percent_deprbas_sta"          , "State percentage-based ITC reduces state depreciation basis"    , "0/1"                                    , ""                                      , "Tax Credit Incentives", "?=0"            , "BOOLEAN"               , ""},
+
+{ SSC_INPUT,SSC_ARRAY   , "ptc_fed_amount"                       , "Federal PTC amount"                                             , "$/kWh"                                  , ""                                      , "Tax Credit Incentives", "?=0"            , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "ptc_fed_term"                         , "Federal PTC term"                                               , "years"                                  , ""                                      , "Tax Credit Incentives", "?=10"           , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "ptc_fed_escal"                        , "Federal PTC escalation"                                         , "%/year"                                 , ""                                      , "Tax Credit Incentives", "?=0"            , ""                      , ""},
+
+{ SSC_INPUT,SSC_ARRAY   , "ptc_sta_amount"                       , "State PTC amount"                                               , "$/kWh"                                  , ""                                      , "Tax Credit Incentives", "?=0"            , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "ptc_sta_term"                         , "State PTC term"                                                 , "years"                                  , ""                                      , "Tax Credit Incentives", "?=10"           , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "ptc_sta_escal"                        , "State PTC escalation"                                           , "%/year"                                 , ""                                      , "Tax Credit Incentives", "?=0"            , ""                      , ""},
 var_info_invalid };
-
 
 var_info vtab_payment_incentives[] = {
-	/*   VARTYPE           DATATYPE         NAME                          LABEL                                                  UNITS     META                      GROUP                   REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
+{ SSC_INPUT,SSC_NUMBER  , "ibi_fed_amount"                       , "Federal amount-based IBI amount"                                , "$"                                      , ""                                      , "Payment Incentives"   , "?=0"            , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "ibi_fed_amount_tax_fed"               , "Federal amount-based IBI federal taxable"                       , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=1"            , "BOOLEAN"               , ""},
+{ SSC_INPUT,SSC_NUMBER  , "ibi_fed_amount_tax_sta"               , "Federal amount-based IBI state taxable"                         , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=1"            , "BOOLEAN"               , ""},
+{ SSC_INPUT,SSC_NUMBER  , "ibi_fed_amount_deprbas_fed"           , "Federal amount-based IBI reduces federal depreciation basis"    , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=0"            , "BOOLEAN"               , ""},
+{ SSC_INPUT,SSC_NUMBER  , "ibi_fed_amount_deprbas_sta"           , "Federal amount-based IBI reduces state depreciation basis"      , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=0"            , "BOOLEAN"               , ""},
 
-	{ SSC_INPUT,        SSC_NUMBER,       "ibi_fed_amount",                "Federal amount-based IBI amount",                    "$",      "",                      "Payment Incentives",      "?=0",                 "",                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ibi_fed_amount_tax_fed",        "Federal amount-based IBI federal taxable",              "0/1",    "",                      "Payment Incentives",      "?=1",                 "BOOLEAN",                       "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ibi_fed_amount_tax_sta",        "Federal amount-based IBI state taxable",              "0/1",    "",                      "Payment Incentives",      "?=1",                 "BOOLEAN",                       "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ibi_fed_amount_deprbas_fed",    "Federal amount-based IBI reduces federal depreciation basis",  "0/1",    "",                      "Payment Incentives",      "?=0",                 "BOOLEAN",                       "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ibi_fed_amount_deprbas_sta",    "Federal amount-based IBI reduces state depreciation basis",  "0/1",    "",                      "Payment Incentives",      "?=0",                 "BOOLEAN",                       "" },
-	
-	{ SSC_INPUT,        SSC_NUMBER,       "ibi_sta_amount",                "State amount-based IBI amount",                    "$",      "",                      "Payment Incentives",      "?=0",                   "",                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ibi_sta_amount_tax_fed",        "State amount-based IBI federal taxable",              "0/1",    "",                      "Payment Incentives",      "?=1",                   "BOOLEAN",                       "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ibi_sta_amount_tax_sta",        "State amount-based IBI state taxable",              "0/1",    "",                      "Payment Incentives",      "?=1",                   "BOOLEAN",                       "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ibi_sta_amount_deprbas_fed",    "State amount-based IBI reduces federal depreciation basis",  "0/1",    "",                      "Payment Incentives",      "?=0",                   "BOOLEAN",                       "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ibi_sta_amount_deprbas_sta",    "State amount-based IBI reduces state depreciation basis",  "0/1",    "",                      "Payment Incentives",      "?=0",                   "BOOLEAN",                       "" },
-	
-	{ SSC_INPUT,        SSC_NUMBER,       "ibi_uti_amount",                "Utility amount-based IBI amount",                    "$",      "",                      "Payment Incentives",      "?=0",                 "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ibi_uti_amount_tax_fed",        "Utility amount-based IBI federal taxable",              "0/1",    "",                      "Payment Incentives",      "?=1",                 "BOOLEAN",                       "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ibi_uti_amount_tax_sta",        "Utility amount-based IBI state taxable",              "0/1",    "",                      "Payment Incentives",      "?=1",                 "BOOLEAN",                       "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ibi_uti_amount_deprbas_fed",    "Utility amount-based IBI reduces federal depreciation basis",  "0/1",    "",                      "Payment Incentives",      "?=0",                 "BOOLEAN",                       "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ibi_uti_amount_deprbas_sta",    "Utility amount-based IBI reduces state depreciation basis",  "0/1",    "",                      "Payment Incentives",      "?=0",                 "BOOLEAN",                       "" },
-	
-	{ SSC_INPUT,        SSC_NUMBER,       "ibi_oth_amount",                "Other amount-based IBI amount",                    "$",      "",                      "Payment Incentives",      "?=0",                   "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ibi_oth_amount_tax_fed",        "Other amount-based IBI federal taxable",              "0/1",    "",                      "Payment Incentives",      "?=1",                   "BOOLEAN",                       "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ibi_oth_amount_tax_sta",        "Other amount-based IBI state taxable",              "0/1",    "",                      "Payment Incentives",      "?=1",                   "BOOLEAN",                       "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ibi_oth_amount_deprbas_fed",    "Other amount-based IBI reduces federal depreciation basis",  "0/1",    "",                      "Payment Incentives",      "?=0",                   "BOOLEAN",                       "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ibi_oth_amount_deprbas_sta",    "Other amount-based IBI reduces state depreciation basis",  "0/1",    "",                      "Payment Incentives",      "?=0",                   "BOOLEAN",                       "" },
+{ SSC_INPUT,SSC_NUMBER  , "ibi_sta_amount"                       , "State amount-based IBI amount"                                  , "$"                                      , ""                                      , "Payment Incentives"   , "?=0"            , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "ibi_sta_amount_tax_fed"               , "State amount-based IBI federal taxable"                         , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=1"            , "BOOLEAN"               , ""},
+{ SSC_INPUT,SSC_NUMBER  , "ibi_sta_amount_tax_sta"               , "State amount-based IBI state taxable"                           , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=1"            , "BOOLEAN"               , ""},
+{ SSC_INPUT,SSC_NUMBER  , "ibi_sta_amount_deprbas_fed"           , "State amount-based IBI reduces federal depreciation basis"      , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=0"            , "BOOLEAN"               , ""},
+{ SSC_INPUT,SSC_NUMBER  , "ibi_sta_amount_deprbas_sta"           , "State amount-based IBI reduces state depreciation basis"        , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=0"            , "BOOLEAN"               , ""},
 
-	{ SSC_INPUT,        SSC_NUMBER,       "ibi_fed_percent",               "Federal percentage-based IBI percent",                   "%",      "",                      "Payment Incentives",      "?=0.0",           "",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ibi_fed_percent_maxvalue",      "Federal percentage-based IBI maximum value",             "$",      "",                      "Payment Incentives",      "?=1e99",          "",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ibi_fed_percent_tax_fed",       "Federal percentage-based IBI federal taxable",              "0/1",    "",                      "Payment Incentives",      "?=1",             "BOOLEAN",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ibi_fed_percent_tax_sta",       "Federal percentage-based IBI state taxable",              "0/1",    "",                      "Payment Incentives",      "?=1",             "BOOLEAN",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ibi_fed_percent_deprbas_fed",   "Federal percentage-based IBI reduces federal depreciation basis",  "0/1",    "",                      "Payment Incentives",      "?=0",             "BOOLEAN",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ibi_fed_percent_deprbas_sta",   "Federal percentage-based IBI reduces state depreciation basis",  "0/1",    "",                      "Payment Incentives",      "?=0",             "BOOLEAN",                                         "" },
+{ SSC_INPUT,SSC_NUMBER  , "ibi_uti_amount"                       , "Utility amount-based IBI amount"                                , "$"                                      , ""                                      , "Payment Incentives"   , "?=0"            , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "ibi_uti_amount_tax_fed"               , "Utility amount-based IBI federal taxable"                       , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=1"            , "BOOLEAN"               , ""},
+{ SSC_INPUT,SSC_NUMBER  , "ibi_uti_amount_tax_sta"               , "Utility amount-based IBI state taxable"                         , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=1"            , "BOOLEAN"               , ""},
+{ SSC_INPUT,SSC_NUMBER  , "ibi_uti_amount_deprbas_fed"           , "Utility amount-based IBI reduces federal depreciation basis"    , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=0"            , "BOOLEAN"               , ""},
+{ SSC_INPUT,SSC_NUMBER  , "ibi_uti_amount_deprbas_sta"           , "Utility amount-based IBI reduces state depreciation basis"      , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=0"            , "BOOLEAN"               , ""},
 
-	{ SSC_INPUT,        SSC_NUMBER,       "ibi_sta_percent",               "State percentage-based IBI percent",                   "%",      "",                      "Payment Incentives",      "?=0.0",           "",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ibi_sta_percent_maxvalue",      "State percentage-based IBI maximum value",             "$",      "",                      "Payment Incentives",      "?=1e99",          "",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ibi_sta_percent_tax_fed",       "State percentage-based IBI federal taxable",              "0/1",    "",                      "Payment Incentives",      "?=1",             "BOOLEAN",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ibi_sta_percent_tax_sta",       "State percentage-based IBI state taxable",              "0/1",    "",                      "Payment Incentives",      "?=1",             "BOOLEAN",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ibi_sta_percent_deprbas_fed",   "State percentage-based IBI reduces federal depreciation basis",  "0/1",    "",                      "Payment Incentives",      "?=0",             "BOOLEAN",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ibi_sta_percent_deprbas_sta",   "State percentage-based IBI reduces state depreciation basis",  "0/1",    "",                      "Payment Incentives",      "?=0",             "BOOLEAN",                                         "" },
+{ SSC_INPUT,SSC_NUMBER  , "ibi_oth_amount"                       , "Other amount-based IBI amount"                                  , "$"                                      , ""                                      , "Payment Incentives"   , "?=0"            , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "ibi_oth_amount_tax_fed"               , "Other amount-based IBI federal taxable"                         , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=1"            , "BOOLEAN"               , ""},
+{ SSC_INPUT,SSC_NUMBER  , "ibi_oth_amount_tax_sta"               , "Other amount-based IBI state taxable"                           , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=1"            , "BOOLEAN"               , ""},
+{ SSC_INPUT,SSC_NUMBER  , "ibi_oth_amount_deprbas_fed"           , "Other amount-based IBI reduces federal depreciation basis"      , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=0"            , "BOOLEAN"               , ""},
+{ SSC_INPUT,SSC_NUMBER  , "ibi_oth_amount_deprbas_sta"           , "Other amount-based IBI reduces state depreciation basis"        , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=0"            , "BOOLEAN"               , ""},
 
-	{ SSC_INPUT,        SSC_NUMBER,       "ibi_uti_percent",               "Utility percentage-based IBI percent",                   "%",      "",                      "Payment Incentives",      "?=0.0",           "",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ibi_uti_percent_maxvalue",      "Utility percentage-based IBI maximum value",             "$",      "",                      "Payment Incentives",      "?=1e99",          "",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ibi_uti_percent_tax_fed",       "Utility percentage-based IBI federal taxable",              "0/1",    "",                      "Payment Incentives",      "?=1",             "BOOLEAN",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ibi_uti_percent_tax_sta",       "Utility percentage-based IBI state taxable",              "0/1",    "",                      "Payment Incentives",      "?=1",             "BOOLEAN",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ibi_uti_percent_deprbas_fed",   "Utility percentage-based IBI reduces federal depreciation basis",  "0/1",    "",                      "Payment Incentives",      "?=0",             "BOOLEAN",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ibi_uti_percent_deprbas_sta",   "Utility percentage-based IBI reduces state depreciation basis",  "0/1",    "",                      "Payment Incentives",      "?=0",             "BOOLEAN",                                         "" },
+{ SSC_INPUT,SSC_NUMBER  , "ibi_fed_percent"                      , "Federal percentage-based IBI percent"                           , "%"                                      , ""                                      , "Payment Incentives"   , "?=0.0"          , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "ibi_fed_percent_maxvalue"             , "Federal percentage-based IBI maximum value"                     , "$"                                      , ""                                      , "Payment Incentives"   , "?=1e99"         , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "ibi_fed_percent_tax_fed"              , "Federal percentage-based IBI federal taxable"                   , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=1"            , "BOOLEAN"               , ""},
+{ SSC_INPUT,SSC_NUMBER  , "ibi_fed_percent_tax_sta"              , "Federal percentage-based IBI state taxable"                     , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=1"            , "BOOLEAN"               , ""},
+{ SSC_INPUT,SSC_NUMBER  , "ibi_fed_percent_deprbas_fed"          , "Federal percentage-based IBI reduces federal depreciation basis", "0/1"                                    , ""                                      , "Payment Incentives"   , "?=0"            , "BOOLEAN"               , ""},
+{ SSC_INPUT,SSC_NUMBER  , "ibi_fed_percent_deprbas_sta"          , "Federal percentage-based IBI reduces state depreciation basis"  , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=0"            , "BOOLEAN"               , ""},
 
-	{ SSC_INPUT,        SSC_NUMBER,       "ibi_oth_percent",               "Other percentage-based IBI percent",                   "%",      "",                      "Payment Incentives",      "?=0.0",           "",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ibi_oth_percent_maxvalue",      "Other percentage-based IBI maximum value",             "$",      "",                      "Payment Incentives",      "?=1e99",          "",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ibi_oth_percent_tax_fed",       "Other percentage-based IBI federal taxable",              "0/1",    "",                      "Payment Incentives",      "?=1",             "BOOLEAN",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ibi_oth_percent_tax_sta",       "Other percentage-based IBI state taxable",              "0/1",    "",                      "Payment Incentives",      "?=1",             "BOOLEAN",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ibi_oth_percent_deprbas_fed",   "Other percentage-based IBI reduces federal depreciation basis",  "0/1",    "",                      "Payment Incentives",      "?=0",             "BOOLEAN",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ibi_oth_percent_deprbas_sta",   "Other percentage-based IBI reduces state depreciation basis",  "0/1",    "",                      "Payment Incentives",      "?=0",             "BOOLEAN",                                         "" },
+{ SSC_INPUT,SSC_NUMBER  , "ibi_sta_percent"                      , "State percentage-based IBI percent"                             , "%"                                      , ""                                      , "Payment Incentives"   , "?=0.0"          , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "ibi_sta_percent_maxvalue"             , "State percentage-based IBI maximum value"                       , "$"                                      , ""                                      , "Payment Incentives"   , "?=1e99"         , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "ibi_sta_percent_tax_fed"              , "State percentage-based IBI federal taxable"                     , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=1"            , "BOOLEAN"               , ""},
+{ SSC_INPUT,SSC_NUMBER  , "ibi_sta_percent_tax_sta"              , "State percentage-based IBI state taxable"                       , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=1"            , "BOOLEAN"               , ""},
+{ SSC_INPUT,SSC_NUMBER  , "ibi_sta_percent_deprbas_fed"          , "State percentage-based IBI reduces federal depreciation basis"  , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=0"            , "BOOLEAN"               , ""},
+{ SSC_INPUT,SSC_NUMBER  , "ibi_sta_percent_deprbas_sta"          , "State percentage-based IBI reduces state depreciation basis"    , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=0"            , "BOOLEAN"               , ""},
 
+{ SSC_INPUT,SSC_NUMBER  , "ibi_uti_percent"                      , "Utility percentage-based IBI percent"                           , "%"                                      , ""                                      , "Payment Incentives"   , "?=0.0"          , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "ibi_uti_percent_maxvalue"             , "Utility percentage-based IBI maximum value"                     , "$"                                      , ""                                      , "Payment Incentives"   , "?=1e99"         , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "ibi_uti_percent_tax_fed"              , "Utility percentage-based IBI federal taxable"                   , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=1"            , "BOOLEAN"               , ""},
+{ SSC_INPUT,SSC_NUMBER  , "ibi_uti_percent_tax_sta"              , "Utility percentage-based IBI state taxable"                     , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=1"            , "BOOLEAN"               , ""},
+{ SSC_INPUT,SSC_NUMBER  , "ibi_uti_percent_deprbas_fed"          , "Utility percentage-based IBI reduces federal depreciation basis", "0/1"                                    , ""                                      , "Payment Incentives"   , "?=0"            , "BOOLEAN"               , ""},
+{ SSC_INPUT,SSC_NUMBER  , "ibi_uti_percent_deprbas_sta"          , "Utility percentage-based IBI reduces state depreciation basis"  , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=0"            , "BOOLEAN"               , ""},
 
-	{ SSC_INPUT,        SSC_NUMBER,       "cbi_fed_amount",         "Federal CBI amount",                   "$/Watt", "",                      "Payment Incentives",      "?=0.0",                     "",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cbi_fed_maxvalue",       "Federal CBI maximum",                  "$",      "",                      "Payment Incentives",      "?=1e99",                    "",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cbi_fed_tax_fed",        "Federal CBI federal taxable",             "0/1",    "",                      "Payment Incentives",      "?=1",                       "BOOLEAN",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cbi_fed_tax_sta",        "Federal CBI state taxable",             "0/1",    "",                      "Payment Incentives",      "?=1",                       "BOOLEAN",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cbi_fed_deprbas_fed",    "Federal CBI reduces federal depreciation basis", "0/1",    "",                      "Payment Incentives",      "?=0",                       "BOOLEAN",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cbi_fed_deprbas_sta",    "Federal CBI reduces state depreciation basis", "0/1",    "",                      "Payment Incentives",      "?=0",                       "BOOLEAN",                                         "" },
-	
-	{ SSC_INPUT,        SSC_NUMBER,       "cbi_sta_amount",         "State CBI amount",                   "$/Watt", "",                      "Payment Incentives",      "?=0.0",                     "",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cbi_sta_maxvalue",       "State CBI maximum",                  "$",      "",                      "Payment Incentives",      "?=1e99",                    "",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cbi_sta_tax_fed",        "State CBI federal taxable",             "0/1",    "",                      "Payment Incentives",      "?=1",                       "BOOLEAN",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cbi_sta_tax_sta",        "State CBI state taxable",             "0/1",    "",                      "Payment Incentives",      "?=1",                       "BOOLEAN",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cbi_sta_deprbas_fed",    "State CBI reduces federal depreciation basis", "0/1",    "",                      "Payment Incentives",      "?=0",                       "BOOLEAN",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cbi_sta_deprbas_sta",    "State CBI reduces state depreciation basis", "0/1",    "",                      "Payment Incentives",      "?=0",                       "BOOLEAN",                                         "" },
-	
-	{ SSC_INPUT,        SSC_NUMBER,       "cbi_uti_amount",         "Utility CBI amount",                   "$/Watt", "",                      "Payment Incentives",      "?=0.0",                     "",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cbi_uti_maxvalue",       "Utility CBI maximum",                  "$",      "",                      "Payment Incentives",      "?=1e99",                    "",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cbi_uti_tax_fed",        "Utility CBI federal taxable",             "0/1",    "",                      "Payment Incentives",      "?=1",                       "BOOLEAN",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cbi_uti_tax_sta",        "Utility CBI state taxable",             "0/1",    "",                      "Payment Incentives",      "?=1",                       "BOOLEAN",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cbi_uti_deprbas_fed",    "Utility CBI reduces federal depreciation basis", "0/1",    "",                      "Payment Incentives",      "?=0",                       "BOOLEAN",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cbi_uti_deprbas_sta",    "Utility CBI reduces state depreciation basis", "0/1",    "",                      "Payment Incentives",      "?=0",                       "BOOLEAN",                                         "" },
-	
-	{ SSC_INPUT,        SSC_NUMBER,       "cbi_oth_amount",         "Other CBI amount",                   "$/Watt", "",                      "Payment Incentives",      "?=0.0",                     "",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cbi_oth_maxvalue",       "Other CBI maximum",                  "$",      "",                      "Payment Incentives",      "?=1e99",                    "",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cbi_oth_tax_fed",        "Other CBI federal taxable",             "0/1",    "",                      "Payment Incentives",      "?=1",                       "BOOLEAN",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cbi_oth_tax_sta",        "Other CBI state taxable",             "0/1",    "",                      "Payment Incentives",      "?=1",                       "BOOLEAN",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cbi_oth_deprbas_fed",    "Other CBI reduces federal depreciation basis", "0/1",    "",                      "Payment Incentives",      "?=0",                       "BOOLEAN",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cbi_oth_deprbas_sta",    "Other CBI reduces state depreciation basis", "0/1",    "",                      "Payment Incentives",      "?=0",                       "BOOLEAN",                                         "" },
+{ SSC_INPUT,SSC_NUMBER  , "ibi_oth_percent"                      , "Other percentage-based IBI percent"                             , "%"                                      , ""                                      , "Payment Incentives"   , "?=0.0"          , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "ibi_oth_percent_maxvalue"             , "Other percentage-based IBI maximum value"                       , "$"                                      , ""                                      , "Payment Incentives"   , "?=1e99"         , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "ibi_oth_percent_tax_fed"              , "Other percentage-based IBI federal taxable"                     , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=1"            , "BOOLEAN"               , ""},
+{ SSC_INPUT,SSC_NUMBER  , "ibi_oth_percent_tax_sta"              , "Other percentage-based IBI state taxable"                       , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=1"            , "BOOLEAN"               , ""},
+{ SSC_INPUT,SSC_NUMBER  , "ibi_oth_percent_deprbas_fed"          , "Other percentage-based IBI reduces federal depreciation basis"  , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=0"            , "BOOLEAN"               , ""},
+{ SSC_INPUT,SSC_NUMBER  , "ibi_oth_percent_deprbas_sta"          , "Other percentage-based IBI reduces state depreciation basis"    , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=0"            , "BOOLEAN"               , ""},
+
+{ SSC_INPUT,SSC_NUMBER  , "cbi_fed_amount"                       , "Federal CBI amount"                                             , "$/Watt"                                 , ""                                      , "Payment Incentives"   , "?=0.0"          , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "cbi_fed_maxvalue"                     , "Federal CBI maximum"                                            , "$"                                      , ""                                      , "Payment Incentives"   , "?=1e99"         , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "cbi_fed_tax_fed"                      , "Federal CBI federal taxable"                                    , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=1"            , "BOOLEAN"               , ""},
+{ SSC_INPUT,SSC_NUMBER  , "cbi_fed_tax_sta"                      , "Federal CBI state taxable"                                      , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=1"            , "BOOLEAN"               , ""},
+{ SSC_INPUT,SSC_NUMBER  , "cbi_fed_deprbas_fed"                  , "Federal CBI reduces federal depreciation basis"                 , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=0"            , "BOOLEAN"               , ""},
+{ SSC_INPUT,SSC_NUMBER  , "cbi_fed_deprbas_sta"                  , "Federal CBI reduces state depreciation basis"                   , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=0"            , "BOOLEAN"               , ""},
+
+{ SSC_INPUT,SSC_NUMBER  , "cbi_sta_amount"                       , "State CBI amount"                                               , "$/Watt"                                 , ""                                      , "Payment Incentives"   , "?=0.0"          , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "cbi_sta_maxvalue"                     , "State CBI maximum"                                              , "$"                                      , ""                                      , "Payment Incentives"   , "?=1e99"         , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "cbi_sta_tax_fed"                      , "State CBI federal taxable"                                      , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=1"            , "BOOLEAN"               , ""},
+{ SSC_INPUT,SSC_NUMBER  , "cbi_sta_tax_sta"                      , "State CBI state taxable"                                        , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=1"            , "BOOLEAN"               , ""},
+{ SSC_INPUT,SSC_NUMBER  , "cbi_sta_deprbas_fed"                  , "State CBI reduces federal depreciation basis"                   , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=0"            , "BOOLEAN"               , ""},
+{ SSC_INPUT,SSC_NUMBER  , "cbi_sta_deprbas_sta"                  , "State CBI reduces state depreciation basis"                     , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=0"            , "BOOLEAN"               , ""},
+
+{ SSC_INPUT,SSC_NUMBER  , "cbi_uti_amount"                       , "Utility CBI amount"                                             , "$/Watt"                                 , ""                                      , "Payment Incentives"   , "?=0.0"          , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "cbi_uti_maxvalue"                     , "Utility CBI maximum"                                            , "$"                                      , ""                                      , "Payment Incentives"   , "?=1e99"         , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "cbi_uti_tax_fed"                      , "Utility CBI federal taxable"                                    , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=1"            , "BOOLEAN"               , ""},
+{ SSC_INPUT,SSC_NUMBER  , "cbi_uti_tax_sta"                      , "Utility CBI state taxable"                                      , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=1"            , "BOOLEAN"               , ""},
+{ SSC_INPUT,SSC_NUMBER  , "cbi_uti_deprbas_fed"                  , "Utility CBI reduces federal depreciation basis"                 , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=0"            , "BOOLEAN"               , ""},
+{ SSC_INPUT,SSC_NUMBER  , "cbi_uti_deprbas_sta"                  , "Utility CBI reduces state depreciation basis"                   , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=0"            , "BOOLEAN"               , ""},
+
+{ SSC_INPUT,SSC_NUMBER  , "cbi_oth_amount"                       , "Other CBI amount"                                               , "$/Watt"                                 , ""                                      , "Payment Incentives"   , "?=0.0"          , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "cbi_oth_maxvalue"                     , "Other CBI maximum"                                              , "$"                                      , ""                                      , "Payment Incentives"   , "?=1e99"         , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "cbi_oth_tax_fed"                      , "Other CBI federal taxable"                                      , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=1"            , "BOOLEAN"               , ""},
+{ SSC_INPUT,SSC_NUMBER  , "cbi_oth_tax_sta"                      , "Other CBI state taxable"                                        , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=1"            , "BOOLEAN"               , ""},
+{ SSC_INPUT,SSC_NUMBER  , "cbi_oth_deprbas_fed"                  , "Other CBI reduces federal depreciation basis"                   , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=0"            , "BOOLEAN"               , ""},
+{ SSC_INPUT,SSC_NUMBER  , "cbi_oth_deprbas_sta"                  , "Other CBI reduces state depreciation basis"                     , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=0"            , "BOOLEAN"               , ""},
 
 
-	{ SSC_INPUT,        SSC_ARRAY,       "pbi_fed_amount",                "Federal PBI amount",           "$/kWh",    "",                      "Payment Incentives",      "?=0",                       "",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "pbi_fed_term",                  "Federal PBI term",             "years",    "",                      "Payment Incentives",      "?=0",                       "",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "pbi_fed_escal",                 "Federal PBI escalation",       "%",        "",                      "Payment Incentives",      "?=0",                       "",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "pbi_fed_tax_fed",               "Federal PBI federal taxable",     "0/1",      "",                      "Payment Incentives",      "?=1",                       "BOOLEAN",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "pbi_fed_tax_sta",               "Federal PBI state taxable",     "0/1",      "",                      "Payment Incentives",      "?=1",                       "BOOLEAN",                                         "" },
-	
-	{ SSC_INPUT,        SSC_ARRAY,       "pbi_sta_amount",                "State PBI amount",           "$/kWh",    "",                      "Payment Incentives",      "?=0",                       "",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "pbi_sta_term",                  "State PBI term",             "years",    "",                      "Payment Incentives",      "?=0",                       "",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "pbi_sta_escal",                 "State PBI escalation",       "%",        "",                      "Payment Incentives",      "?=0",                       "",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "pbi_sta_tax_fed",               "State PBI federal taxable",     "0/1",      "",                      "Payment Incentives",      "?=1",                       "BOOLEAN",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "pbi_sta_tax_sta",               "State PBI state taxable",     "0/1",      "",                      "Payment Incentives",      "?=1",                       "BOOLEAN",                                         "" },
-	
-	{ SSC_INPUT,        SSC_ARRAY,       "pbi_uti_amount",                "Utility PBI amount",           "$/kWh",    "",                      "Payment Incentives",      "?=0",                       "",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "pbi_uti_term",                  "Utility PBI term",             "years",    "",                      "Payment Incentives",      "?=0",                       "",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "pbi_uti_escal",                 "Utility PBI escalation",       "%",        "",                      "Payment Incentives",      "?=0",                       "",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "pbi_uti_tax_fed",               "Utility PBI federal taxable",     "0/1",      "",                      "Payment Incentives",      "?=1",                       "BOOLEAN",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "pbi_uti_tax_sta",               "Utility PBI state taxable",     "0/1",      "",                      "Payment Incentives",      "?=1",                       "BOOLEAN",                                         "" },
-	
-	{ SSC_INPUT,        SSC_ARRAY,       "pbi_oth_amount",                "Other PBI amount",           "$/kWh",    "",                      "Payment Incentives",      "?=0",                       "",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "pbi_oth_term",                  "Other PBI term",             "years",    "",                      "Payment Incentives",      "?=0",                       "",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "pbi_oth_escal",                 "Other PBI escalation",       "%",        "",                      "Payment Incentives",      "?=0",                       "",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "pbi_oth_tax_fed",               "Other PBI federal taxable",     "0/1",      "",                      "Payment Incentives",      "?=1",                       "BOOLEAN",                                         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "pbi_oth_tax_sta",               "Other PBI state taxable",     "0/1",      "",                      "Payment Incentives",      "?=1",                       "BOOLEAN",                                         "" },
+{ SSC_INPUT,SSC_ARRAY   , "pbi_fed_amount"                       , "Federal PBI amount"                                             , "$/kWh"                                  , ""                                      , "Payment Incentives"   , "?=0"            , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "pbi_fed_term"                         , "Federal PBI term"                                               , "years"                                  , ""                                      , "Payment Incentives"   , "?=0"            , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "pbi_fed_escal"                        , "Federal PBI escalation"                                         , "%"                                      , ""                                      , "Payment Incentives"   , "?=0"            , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "pbi_fed_tax_fed"                      , "Federal PBI federal taxable"                                    , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=1"            , "BOOLEAN"               , ""},
+{ SSC_INPUT,SSC_NUMBER  , "pbi_fed_tax_sta"                      , "Federal PBI state taxable"                                      , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=1"            , "BOOLEAN"               , ""},
 
+{ SSC_INPUT,SSC_ARRAY   , "pbi_sta_amount"                       , "State PBI amount"                                               , "$/kWh"                                  , ""                                      , "Payment Incentives"   , "?=0"            , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "pbi_sta_term"                         , "State PBI term"                                                 , "years"                                  , ""                                      , "Payment Incentives"   , "?=0"            , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "pbi_sta_escal"                        , "State PBI escalation"                                           , "%"                                      , ""                                      , "Payment Incentives"   , "?=0"            , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "pbi_sta_tax_fed"                      , "State PBI federal taxable"                                      , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=1"            , "BOOLEAN"               , ""},
+{ SSC_INPUT,SSC_NUMBER  , "pbi_sta_tax_sta"                      , "State PBI state taxable"                                        , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=1"            , "BOOLEAN"               , ""},
+
+{ SSC_INPUT,SSC_ARRAY   , "pbi_uti_amount"                       , "Utility PBI amount"                                             , "$/kWh"                                  , ""                                      , "Payment Incentives"   , "?=0"            , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "pbi_uti_term"                         , "Utility PBI term"                                               , "years"                                  , ""                                      , "Payment Incentives"   , "?=0"            , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "pbi_uti_escal"                        , "Utility PBI escalation"                                         , "%"                                      , ""                                      , "Payment Incentives"   , "?=0"            , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "pbi_uti_tax_fed"                      , "Utility PBI federal taxable"                                    , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=1"            , "BOOLEAN"               , ""},
+{ SSC_INPUT,SSC_NUMBER  , "pbi_uti_tax_sta"                      , "Utility PBI state taxable"                                      , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=1"            , "BOOLEAN"               , ""},
+
+{ SSC_INPUT,SSC_ARRAY   , "pbi_oth_amount"                       , "Other PBI amount"                                               , "$/kWh"                                  , ""                                      , "Payment Incentives"   , "?=0"            , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "pbi_oth_term"                         , "Other PBI term"                                                 , "years"                                  , ""                                      , "Payment Incentives"   , "?=0"            , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "pbi_oth_escal"                        , "Other PBI escalation"                                           , "%"                                      , ""                                      , "Payment Incentives"   , "?=0"            , ""                      , ""},
+{ SSC_INPUT,SSC_NUMBER  , "pbi_oth_tax_fed"                      , "Other PBI federal taxable"                                      , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=1"            , "BOOLEAN"               , ""},
+{ SSC_INPUT,SSC_NUMBER  , "pbi_oth_tax_sta"                      , "Other PBI state taxable"                                        , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=1"            , "BOOLEAN"               , ""},
 var_info_invalid };
 
 
 var_info vtab_adjustment_factors[] = {
-/*   VARTYPE           DATATYPE         NAME                               LABEL                                       UNITS     META                                     GROUP                 REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-
-	{ SSC_INPUT,        SSC_NUMBER,      "adjust:constant",               "Constant loss adjustment",                "%",    "",                                     "Loss Adjustments",      "*",                     "MAX=100",                     "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "adjust:hourly",                 "Hourly loss adjustments",                 "%",    "",                                     "Loss Adjustments",      "?",                     "LENGTH=8760",                "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "adjust:periods",                "Period-based loss adjustments",           "%",    "n x 3 matrix [ start, end, loss ]",    "Loss Adjustments",      "?",                     "COLS=3",                     "" },
-	
+{ SSC_INPUT,SSC_NUMBER  , "adjust:constant"                      , "Constant loss adjustment"                                       , "%"                                      , ""                                      , "Adjustment Factors"   , "*"              , "MAX=100"               , ""},
+{ SSC_INPUT,SSC_ARRAY   , "adjust:hourly"                        , "Hourly Adjustment Factors"                                      , "%"                                      , ""                                      , "Adjustment Factors"   , "?"              , "LENGTH=8760"           , ""},
+{ SSC_INPUT,SSC_MATRIX  , "adjust:periods"                       , "Period-based Adjustment Factors"                                , "%"                                      , "n x 3 matrix [ start, end, loss ]"     , "Adjustment Factors"   , "?"              , "COLS=3"                , ""},
 var_info_invalid };
 
 var_info vtab_dc_adjustment_factors[] = {
-/*   VARTYPE           DATATYPE         NAME                               LABEL                                       UNITS     META                                     GROUP                 REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-
-	{ SSC_INPUT,        SSC_NUMBER,      "dc_adjust:constant",            "DC Constant loss adjustment",             "%",    "",                                     "Loss Adjustments",      "",                     "MAX=100",                     "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "dc_adjust:hourly",              "DC Hourly loss adjustments",              "%",    "",                                     "Loss Adjustments",      "",                     "LENGTH=8760",                "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "dc_adjust:periods",             "DC Period-based loss adjustments",        "%",    "n x 3 matrix [ start, end, loss ]",    "Loss Adjustments",      "",                     "COLS=3",                     "" },
-	
+{ SSC_INPUT,SSC_NUMBER  , "dc_adjust:constant"                   , "DC Constant loss adjustment"                                    , "%"                                      , ""                                      , "Adjustment Factors"   , ""               , "MAX=100"               , ""},
+{ SSC_INPUT,SSC_ARRAY   , "dc_adjust:hourly"                     , "DC Hourly Adjustment Factors"                                   , "%"                                      , ""                                      , "Adjustment Factors"   , ""               , "LENGTH=8760"           , ""},
+{ SSC_INPUT,SSC_MATRIX  , "dc_adjust:periods"                    , "DC Period-based Adjustment Factors"                             , "%"                                      , "n x 3 matrix [ start, end, loss ]"     , "Adjustment Factors"   , ""               , "COLS=3"                , ""},
 var_info_invalid };
 
 var_info vtab_sf_adjustment_factors[] = {
-/*   VARTYPE           DATATYPE         NAME                               LABEL                                       UNITS     META                                     GROUP                 REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-
-	{ SSC_INPUT,        SSC_NUMBER,      "sf_adjust:constant",            "SF Constant loss adjustment",             "%",    "",                                     "Loss Adjustments",      "*",                     "MAX=100",                     "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "sf_adjust:hourly",              "SF Hourly loss adjustments",              "%",    "",                                     "Loss Adjustments",      "?",                     "LENGTH=8760",                "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "sf_adjust:periods",             "SF Period-based loss adjustments",        "%",    "n x 3 matrix [ start, end, loss ]",    "Loss Adjustments",      "?",                     "COLS=3",                     "" },
-	
+{ SSC_INPUT,SSC_NUMBER  , "sf_adjust:constant"                   , "SF Constant loss adjustment"                                    , "%"                                      , ""                                      , "Adjustment Factors"   , "*"              , "MAX=100"               , ""},
+{ SSC_INPUT,SSC_ARRAY   , "sf_adjust:hourly"                     , "SF Hourly Adjustment Factors"                                   , "%"                                      , ""                                      , "Adjustment Factors"   , "?"              , "LENGTH=8760"           , ""},
+{ SSC_INPUT,SSC_MATRIX  , "sf_adjust:periods"                    , "SF Period-based Adjustment Factors"                             , "%"                                      , "n x 3 matrix [ start, end, loss ]"     , "Adjustment Factors"   , "?"              , "COLS=3"                , ""},
 var_info_invalid };
 
 
-var_info vtab_technology_outputs[] = {
-	/*   VARTYPE           DATATYPE         NAME                               LABEL                                       UNITS     META                                     GROUP                 REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-// instantaneous power at each timestep - consistent with sun position
-		{ SSC_OUTPUT, SSC_ARRAY, "gen", "System power generated", "kW", "", "Time Series", "*", "", "" },
-		var_info_invalid };
+var_info vtab_financial_capacity_payments[] = {
 
+	/*   VARTYPE           DATATYPE         NAME                                    LABEL                                             UNITS        META                               GROUP                    REQUIRED_IF           CONSTRAINTS               UI_HINTS	*/
+		{ SSC_INPUT,        SSC_NUMBER,      "cp_capacity_payment_esc",             "Capacity payment escalation",                      "%/year",    "",                               "Capacity Payments",      "*",                   "",                      "" },
+		{ SSC_INPUT,        SSC_NUMBER,      "cp_capacity_payment_type",            "Capacity payment type",                            "",          "0=Energy basis,1=Fixed amount",  "Capacity Payments",      "*",                   "INTEGER,MIN=0,MAX=1",   "" },
+		{ SSC_INPUT,        SSC_ARRAY,       "cp_capacity_payment_amount",          "Capacity payment amount",                          "$ or $/MW", "",                               "Capacity Payments",      "*",                   "",                      "" },
+		{ SSC_INPUT,        SSC_ARRAY,       "cp_capacity_credit_percent",          "Capacity credit (eligible portion of nameplate)",  "%",         "",                               "Capacity Payments",      "cp_capacity_payment_type=0",   "",                      "" },
+		{ SSC_INPUT,        SSC_NUMBER,      "cp_system_nameplate",                 "System nameplate",                                 "MW",        "",                               "Capacity Payments",      "cp_capacity_payment_type=0",   "MIN=0",                 "" },
+		{ SSC_INPUT,        SSC_NUMBER,      "cp_battery_nameplate",                "Battery nameplate",                                "MW",        "",                               "Capacity Payments",      "cp_capacity_payment_type=0",   "MIN=0",                 "" },
+
+var_info_invalid };
+
+
+var_info vtab_grid_curtailment[] = {
+	/*   VARTYPE           DATATYPE         NAME                               LABEL                                       UNITS     META                                     GROUP                 REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
+
+		{ SSC_INPUT,        SSC_ARRAY,       "grid_curtailment",              "Grid curtailment",              "%",    "",                                     "Loss Adjustments",      "?",                     "",                "" },
+	var_info_invalid };
+
+
+var_info vtab_technology_outputs[] = {
+	// instantaneous power at each timestep - consistent with sun position
+{ SSC_OUTPUT, SSC_ARRAY , "gen"                                  , "System power generated"                                         , "kW"                                     , ""                                      , "Time Series"          , "*"              , ""                      , ""},
+	var_info_invalid };
+
+var_info vtab_p50p90[] = {
+        { SSC_INPUT, SSC_NUMBER ,  "total_uncert"                 , "Total uncertainty in energy production as percent of annual energy", "%"                                   , ""                                      , "Uncertainty"          , ""              , "MIN=0,MAX=100"         , ""},
+        { SSC_OUTPUT, SSC_NUMBER , "annual_energy_p75"            , "Annual energy with 75% probability of exceedance"                  , "kWh"                                 , ""                                      , "Uncertainty"          , ""              , ""                      , ""},
+        { SSC_OUTPUT, SSC_NUMBER , "annual_energy_p90"            , "Annual energy with 90% probability of exceedance"                  , "kWh"                                 , ""                                      , "Uncertainty"          , ""              , ""                      , ""},
+        { SSC_OUTPUT, SSC_NUMBER , "annual_energy_p95"            , "Annual energy with 95% probability of exceedance"                  , "kWh"                                 , ""                                      , "Uncertainty"          , ""              , ""                      , ""},
+        var_info_invalid };
+
+bool calculate_p50p90(compute_module *cm){
+    if (!cm->is_assigned("total_uncert") || !cm->is_assigned("annual_energy"))
+        return false;
+    double aep = cm->as_double("annual_energy");
+    double uncert = cm->as_double("total_uncert")/100.;
+    cm->assign("annual_energy_p75", aep * (-0.67 * uncert + 1));
+    cm->assign("annual_energy_p90", aep * (-1.28 * uncert + 1));
+    cm->assign("annual_energy_p95", aep * (-1.64 * uncert + 1));
+	return true;
+}
+
+/* the conditions on inputs will have to be expanded and abstracted to handle all technologies with dispatchable storage */
+var_info vtab_forecast_price_signal[] = {
+	// model selected PPA or Merchant Plant based
+	{ SSC_INPUT,        SSC_NUMBER,     "forecast_price_signal_model",					"Forecast price signal model selected",   "0/1",   "0=PPA based,1=Merchant Plant",    "",  "?=0",	"INTEGER,MIN=0,MAX=1",      "" },
+
+	// PPA financial inputs
+	{ SSC_INPUT,        SSC_ARRAY,      "ppa_price_input",		                        "PPA Price Input",	                                        "",      "",                  "Time of Delivery", "forecast_price_signal_model=0&en_batt=1&batt_meter_position=1"   "",          "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ppa_multiplier_model",                         "PPA multiplier model",                                    "0/1",    "0=diurnal,1=timestep","Time of Delivery", "forecast_price_signal_model=0&en_batt=1&batt_meter_position=1",                                                  "INTEGER,MIN=0", "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_factors_ts",                          "Dispatch payment factor time step",                        "",      "",                  "Time of Delivery", "forecast_price_signal_model=0&en_batt=1&batt_meter_position=1&ppa_multiplier_model=1", "", "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_tod_factors",		                    "TOD factors for periods 1-9",	                            "",      "",                  "Time of Delivery", "en_batt=1&batt_meter_position=1&forecast_price_signal_model=0&ppa_multiplier_model=0"   "",          "" },
+	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_sched_weekday",                       "Diurnal weekday TOD periods",                              "1..9",  "12 x 24 matrix",    "Time of Delivery", "en_batt=1&batt_meter_position=1&forecast_price_signal_model=0&ppa_multiplier_model=0",  "",          "" },
+	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_sched_weekend",                       "Diurnal weekend TOD periods",                              "1..9",  "12 x 24 matrix",    "Time of Delivery", "en_batt=1&batt_meter_position=1&forecast_price_signal_model=0&ppa_multiplier_model=0",  "",          "" },
+// Merchant plant inputs
+	{ SSC_INPUT,        SSC_NUMBER,     "mp_enable_energy_market_revenue",				"Enable energy market revenue",   "0/1",   "",    "",  "en_batt=1&batt_meter_position=1&forecast_price_signal_model=1",	"INTEGER,MIN=0,MAX=1",      "" },
+	{ SSC_INPUT,		SSC_MATRIX,		"mp_energy_market_revenue",						"Energy market revenue input", "", "","en_batt=1&batt_meter_position=1&forecast_price_signal_model=1", "", ""},
+	{ SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv1",							"Enable ancillary services 1 revenue",   "0/1",   "",    "",  "forecast_price_signal_model=1",	"INTEGER,MIN=0,MAX=1",      "" },
+	{ SSC_INPUT,		SSC_MATRIX,		"mp_ancserv1_revenue",							"Ancillary services 1 revenue input", "", "","en_batt=1&batt_meter_position=1&forecast_price_signal_model=1", "", "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv2",							"Enable ancillary services 2 revenue",   "0/1",   "",    "",  "forecast_price_signal_model=1",	"INTEGER,MIN=0,MAX=1",      "" },
+	{ SSC_INPUT,		SSC_MATRIX,		"mp_ancserv2_revenue",							"Ancillary services 2 revenue input", "", "","en_batt=1&batt_meter_position=1&forecast_price_signal_model=1", "", "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv3",							"Enable ancillary services 3 revenue",   "0/1",   "",    "",  "forecast_price_signal_model=1",	"INTEGER,MIN=0,MAX=1",      "" },
+	{ SSC_INPUT,		SSC_MATRIX,		"mp_ancserv3_revenue",							"Ancillary services 3 revenue input", "", "","en_batt=1&batt_meter_position=1&forecast_price_signal_model=1", "", "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv4",							"Enable ancillary services 4 revenue",   "0/1",   "",    "",  "forecast_price_signal_model=1",	"INTEGER,MIN=0,MAX=1",      "" },
+	{ SSC_INPUT,		SSC_MATRIX,		"mp_ancserv4_revenue",							"Ancillary services 4 revenue input", "", "","en_batt=1&batt_meter_position=1&forecast_price_signal_model=1", "", "" },
+
+var_info_invalid };
+
+forecast_price_signal::forecast_price_signal(compute_module *cm)
+	: m_cm(cm)
+{
+}
+
+bool forecast_price_signal::setup(size_t nsteps)
+{
+	size_t step_per_hour = 1;
+	if (nsteps > 8760) step_per_hour = nsteps / 8760;
+	if (step_per_hour < 1 || step_per_hour > 60 || step_per_hour * 8760 != nsteps)
+	{
+		m_error = util::format("The requested number of timesteps must be a multiple of 8760. Instead requested timesteps is %d.", (int)nsteps);
+		return false;
+	}
+	m_forecast_price.reserve(nsteps);
+	for (size_t i = 0; i < nsteps; i++) 
+		m_forecast_price.push_back(0.0);
+
+	int forecast_price_signal_model = m_cm->as_integer("forecast_price_signal_model");
+
+	if (forecast_price_signal_model == 1)
+	{
+		// merchant plant additional revenue streams
+		// enabled/disabled booleans
+		bool en_mp_energy_market = (m_cm->as_integer("mp_enable_energy_market_revenue") == 1);
+		bool en_mp_ancserv1 = (m_cm->as_integer("mp_enable_ancserv1") == 1);
+		bool en_mp_ancserv2 = (m_cm->as_integer("mp_enable_ancserv2") == 1);
+		bool en_mp_ancserv3 = (m_cm->as_integer("mp_enable_ancserv3") == 1);
+		bool en_mp_ancserv4 = (m_cm->as_integer("mp_enable_ancserv4") == 1);
+		// cleared capacity and price columns
+		// need to check sum of all cleared capacities.
+		size_t nrows, ncols;
+		util::matrix_t<double> mp_energy_market_revenue_mat(1, 2, 0.0);
+		if (en_mp_energy_market)
+		{
+			ssc_number_t *mp_energy_market_revenue_in = m_cm->as_matrix("mp_energy_market_revenue", &nrows, &ncols);
+			if (ncols != 2)
+			{
+				m_error = util::format("The energy market revenue table must have 2 columns. Instead it has %d columns.", (int)ncols);
+				return false;
+			}
+			mp_energy_market_revenue_mat.resize(nrows, ncols);
+			mp_energy_market_revenue_mat.assign(mp_energy_market_revenue_in, nrows, ncols);
+		}
+
+		util::matrix_t<double> mp_ancserv_1_revenue_mat(1, 2, 0.0);
+		if (en_mp_ancserv1)
+		{
+			ssc_number_t *mp_ancserv1_revenue_in = m_cm->as_matrix("mp_ancserv1_revenue", &nrows, &ncols);
+			if (ncols != 2)
+			{
+				m_error = util::format("The ancillary services revenue 1 table must have 2 columns. Instead it has %d columns.", (int)ncols);
+				return false;
+			}
+			mp_ancserv_1_revenue_mat.resize(nrows, ncols);
+			mp_ancserv_1_revenue_mat.assign(mp_ancserv1_revenue_in, nrows, ncols);
+		}
+
+		util::matrix_t<double> mp_ancserv_2_revenue_mat(1, 2, 0.0);
+		if (en_mp_ancserv2)
+		{
+			ssc_number_t *mp_ancserv2_revenue_in = m_cm->as_matrix("mp_ancserv2_revenue", &nrows, &ncols);
+			if (ncols != 2)
+			{
+				m_error = util::format("The ancillary services revenue 2 table must have 2 columns. Instead it has %d columns.", (int)ncols);
+				return false;
+			}
+			mp_ancserv_2_revenue_mat.resize(nrows, ncols);
+			mp_ancserv_2_revenue_mat.assign(mp_ancserv2_revenue_in, nrows, ncols);
+		}
+
+		util::matrix_t<double> mp_ancserv_3_revenue_mat(1, 2, 0.0);
+		if (en_mp_ancserv3)
+		{
+			ssc_number_t *mp_ancserv3_revenue_in = m_cm->as_matrix("mp_ancserv3_revenue", &nrows, &ncols);
+			if (ncols != 2)
+			{
+				m_error = util::format("The ancillary services revenue 3 table must have 2 columns. Instead it has %d columns.", (int)ncols);
+				return false;
+			}
+			mp_ancserv_3_revenue_mat.resize(nrows, ncols);
+			mp_ancserv_3_revenue_mat.assign(mp_ancserv3_revenue_in, nrows, ncols);
+		}
+
+		util::matrix_t<double> mp_ancserv_4_revenue_mat(1, 2, 0.0);
+		if (en_mp_ancserv4)
+		{
+			ssc_number_t *mp_ancserv4_revenue_in = m_cm->as_matrix("mp_ancserv4_revenue", &nrows, &ncols);
+			if (ncols != 2)
+			{
+				m_error = util::format("The ancillary services revenue 4 table must have 2 columns. Instead it has %d columns.", (int)ncols);
+				return false;
+			}
+			mp_ancserv_4_revenue_mat.resize(nrows, ncols);
+			mp_ancserv_4_revenue_mat.assign(mp_ancserv4_revenue_in, nrows, ncols);
+		}
+
+		// TODO need to check sum of all cleared capacities at each timestep
+		int nyears = m_cm->as_integer("analysis_period");
+		// calculate revenue for first year only and consolidate to m_forecast_price
+		std::vector<double> as_revenue;
+		std::vector<double> as_revenue_extrapolated(nsteps,0.0);
+
+		size_t n_marketrevenue_per_year = mp_energy_market_revenue_mat.nrows() / (size_t)nyears;
+		as_revenue.clear();
+		as_revenue.reserve(n_marketrevenue_per_year);
+		for (size_t j = 0; j < n_marketrevenue_per_year; j++)
+			as_revenue.push_back(mp_energy_market_revenue_mat.at(j, 0) * mp_energy_market_revenue_mat.at(j, 1));
+		as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
+		std::transform(m_forecast_price.begin(), m_forecast_price.end(), as_revenue_extrapolated.begin(), m_forecast_price.begin(), std::plus<double>());
+
+		size_t n_ancserv_1_revenue_per_year = mp_ancserv_1_revenue_mat.nrows() / (size_t)nyears;
+		as_revenue.clear();
+		as_revenue.reserve(n_ancserv_1_revenue_per_year);
+		for (size_t j = 0; j < n_ancserv_1_revenue_per_year; j++)
+			as_revenue.push_back(mp_ancserv_1_revenue_mat.at(j, 0) * mp_ancserv_1_revenue_mat.at(j, 1));
+		as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
+		std::transform(m_forecast_price.begin(), m_forecast_price.end(), as_revenue_extrapolated.begin(), m_forecast_price.begin(), std::plus<double>());
+
+		size_t n_ancserv_2_revenue_per_year = mp_ancserv_2_revenue_mat.nrows() / (size_t)nyears;
+		as_revenue.clear();
+		as_revenue.reserve(n_ancserv_2_revenue_per_year);
+		for (size_t j = 0; j < n_ancserv_2_revenue_per_year; j++)
+			as_revenue.push_back(mp_ancserv_2_revenue_mat.at(j, 0) * mp_ancserv_2_revenue_mat.at(j, 1));
+		as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
+		std::transform(m_forecast_price.begin(), m_forecast_price.end(), as_revenue_extrapolated.begin(), m_forecast_price.begin(), std::plus<double>());
+
+		size_t n_ancserv_3_revenue_per_year = mp_ancserv_3_revenue_mat.nrows() / (size_t)nyears;
+		as_revenue.clear();
+		as_revenue.reserve(n_ancserv_3_revenue_per_year);
+		for (size_t j = 0; j < n_ancserv_3_revenue_per_year; j++)
+			as_revenue.push_back(mp_ancserv_3_revenue_mat.at(j, 0) * mp_ancserv_3_revenue_mat.at(j, 1));
+		as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
+		std::transform(m_forecast_price.begin(), m_forecast_price.end(), as_revenue_extrapolated.begin(), m_forecast_price.begin(), std::plus<double>());
+
+		size_t n_ancserv_4_revenue_per_year = mp_ancserv_4_revenue_mat.nrows() / (size_t)nyears;
+		as_revenue.clear();
+		as_revenue.reserve(n_ancserv_4_revenue_per_year);
+		for (size_t j = 0; j < n_ancserv_4_revenue_per_year; j++)
+			as_revenue.push_back(mp_ancserv_4_revenue_mat.at(j, 0) * mp_ancserv_4_revenue_mat.at(j, 1));
+		as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
+		std::transform(m_forecast_price.begin(), m_forecast_price.end(), as_revenue_extrapolated.begin(), m_forecast_price.begin(), std::plus<double>());
+	}
+	else
+	{
+		int ppa_multiplier_mode = m_cm->as_integer("ppa_multiplier_model");
+		size_t count_ppa_price_input;
+		ssc_number_t* ppa_price = m_cm->as_array("ppa_price_input", &count_ppa_price_input);
+		if (count_ppa_price_input < 1)
+		{
+			m_error = util::format("The ppa price array needs at least one entry. Input had less than one input.");
+			return false;
+		}
+
+		if (ppa_multiplier_mode == 0)
+		{
+			m_forecast_price = flatten_diurnal(
+				m_cm->as_matrix_unsigned_long("dispatch_sched_weekday"),
+				m_cm->as_matrix_unsigned_long("dispatch_sched_weekend"),
+				step_per_hour,
+				m_cm->as_vector_double("dispatch_tod_factors"), ppa_price[0]);
+		}
+		else
+		{ // assumption on size - check that is requested size.
+			std::vector<double> factors = m_cm->as_vector_double("dispatch_factors_ts");
+			m_forecast_price = extrapolate_timeseries(factors, step_per_hour, ppa_price[0]);
+		}
+	}
+
+	return true;
+}
+
+ssc_number_t forecast_price_signal::operator()(size_t time)
+{
+	if (time < m_forecast_price.size()) return m_forecast_price[time];
+	else return 0.0;
+}
 
 adjustment_factors::adjustment_factors( compute_module *cm, const std::string &prefix )
 : m_cm(cm), m_prefix(prefix)

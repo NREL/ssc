@@ -1,51 +1,24 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #include "csp_solver_core.h"
 #include "csp_solver_util.h"
@@ -521,7 +494,11 @@ void C_csp_solver::init()
 	m_cycle_P_hot_des = pc_solved_params.m_P_hot_des;					//[kPa]
 	m_cycle_x_hot_des = pc_solved_params.m_x_hot_des;					//[-]
 		// TES
-	mc_tes.init();
+    C_csp_tes::S_csp_tes_init_inputs tes_init_inputs;
+    tes_init_inputs.T_to_cr_at_des = cr_solved_params.m_T_htf_cold_des;
+    tes_init_inputs.T_from_cr_at_des = cr_solved_params.m_T_htf_hot_des;
+    tes_init_inputs.P_to_cr_at_des = cr_solved_params.m_dP_sf;
+	mc_tes.init(tes_init_inputs);
 		// TOU
     mc_tou.mc_dispatch_params.m_isleapyear = mc_weather.ms_solved_params.m_leapyear;
 	mc_tou.init();
@@ -577,6 +554,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 	double wf_step = 3600.0 / step_per_hour;	//[s] Weather file time step - would like to check this against weather file, some day
 	
+    m_is_first_timestep = true;
 	double step_tolerance = 10.0;		//[s] For adjustable timesteps, if within 10 seconds, assume it equals baseline timestep
 	double baseline_step = wf_step;		//[s] Baseline timestep of the simulation - this should probably be technology/model specific
 	// Check the collector-receiver model for a maximum step
@@ -777,6 +755,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			throw(C_csp_exception(msg,"CSP Solver Core"));
 		}
 		pc_operating_state = mc_power_cycle.get_operating_state();
+        if (m_is_first_timestep && f_turbine_tou <= 0.) pc_operating_state = C_csp_power_cycle::OFF;
 
 		// Calculate maximum thermal power to power cycle for startup. This will be zero if power cycle is on.
 		double q_dot_pc_su_max = mc_power_cycle.get_max_q_pc_startup();		//[MWt]
@@ -908,7 +887,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 
 		// After rules, reset booleans if necessary
-		if( q_pc_target < q_pc_min )
+		if( q_pc_target < q_pc_min || q_pc_target <= 0. )
 		{
 			is_pc_su_allowed = false;
 			is_pc_sb_allowed = false;
@@ -2366,6 +2345,13 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 					// Reset sim_info values
 					mc_kernel.mc_sim_info.ms_ts.m_step = mc_pc_out_solver.m_time_required_su;						//[s]
 					mc_kernel.mc_sim_info.ms_ts.m_time = mc_kernel.mc_sim_info.ms_ts.m_time_start + mc_pc_out_solver.m_time_required_su;		//[s]
+
+					// Call collector/receiver model again with new time step
+					mc_collector_receiver.on(mc_weather.ms_outputs,
+						mc_cr_htf_state_in,
+						m_defocus,
+						mc_cr_out_solver,
+						mc_kernel.mc_sim_info);
 				}
 
 				if( m_is_tes )
@@ -4852,10 +4838,26 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			(ms_system_params.m_bop_par_0 + ms_system_params.m_bop_par_1*W_dot_ratio + ms_system_params.m_bop_par_2*pow(W_dot_ratio,2));
 			// [MWe]
 
+        double W_dot_tes_pump;
+        if (m_is_tes) {
+            W_dot_tes_pump = mc_tes.pumping_power(mc_cr_out_solver.m_m_dot_salt_tot / 3600., mc_pc_out_solver.m_m_dot_htf / 3600., mc_tes_outputs.m_m_dot,
+                mc_cr_htf_state_in.m_temp + 273.15, mc_cr_out_solver.m_T_salt_hot + 273.15,
+                mc_pc_htf_state_in.m_temp + 273.15, mc_pc_out_solver.m_T_htf_cold + 273.15,
+                mc_cr_out_solver.m_is_recirculating);
+        }
+        else {
+            W_dot_tes_pump = 0.;
+        }
+        if (W_dot_tes_pump < 0 || W_dot_tes_pump != W_dot_tes_pump){
+            error_msg = "TES pumping power failed";
+            throw(C_csp_exception(error_msg, "System-level parasitics"));
+        }
+
 		double W_dot_net = mc_pc_out_solver.m_P_cycle - 
 			mc_cr_out_solver.m_W_dot_col_tracking -
 			mc_cr_out_solver.m_W_dot_htf_pump - 
-			(mc_pc_out_solver.m_W_dot_htf_pump + mc_tes_outputs.m_W_dot_rhtf_pump) -
+			(mc_pc_out_solver.m_W_dot_htf_pump + W_dot_tes_pump) -
+			mc_cr_out_solver.m_q_rec_heattrace -
 			mc_pc_out_solver.m_W_cool_par -
 			mc_tes_outputs.m_q_heater - 
 			W_dot_fixed -
@@ -4969,7 +4971,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			// Parasitics outputs
 		mc_reported_outputs.value(C_solver_outputs::COL_W_DOT_TRACK, mc_cr_out_solver.m_W_dot_col_tracking);    //[MWe] Collector tracking, startup, stow power consumption 
 		mc_reported_outputs.value(C_solver_outputs::CR_W_DOT_PUMP, mc_cr_out_solver.m_W_dot_htf_pump);          //[MWe] Receiver/tower HTF pumping power   
-		mc_reported_outputs.value(C_solver_outputs::SYS_W_DOT_PUMP, (mc_pc_out_solver.m_W_dot_htf_pump + mc_tes_outputs.m_W_dot_rhtf_pump));    //[MWe] TES & PC HTF pumping power (Receiver - PC side HTF)  
+		mc_reported_outputs.value(C_solver_outputs::SYS_W_DOT_PUMP, (mc_pc_out_solver.m_W_dot_htf_pump + W_dot_tes_pump ));    //[MWe] TES & PC HTF pumping power (Receiver - PC side HTF)  
 		mc_reported_outputs.value(C_solver_outputs::PC_W_DOT_COOLING, mc_pc_out_solver.m_W_cool_par);           //[MWe] Power cycle cooling power consumption (fan, pumps, etc.)
 		mc_reported_outputs.value(C_solver_outputs::SYS_W_DOT_FIXED, W_dot_fixed);								//[MWe] Fixed electric parasitic power load 
 		mc_reported_outputs.value(C_solver_outputs::SYS_W_DOT_BOP, W_dot_bop);									//[MWe] Balance-of-plant electric parasitic power load   
@@ -5146,6 +5148,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			throw(C_csp_exception("Kernel end time is larger than the baseline end time. This shouldn't happen"));
 		}
 		
+        m_is_first_timestep = false;
 	}	// End timestep loop
 
 }	// End simulate() method
