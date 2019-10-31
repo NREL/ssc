@@ -4,7 +4,7 @@
 #ifndef _CMOD_TCSDIRECT_STEAM_TEST_H_
 #define _CMOD_TCSDIRECT_STEAM_TEST_H_
 
-#include "../ssc/vartab.h"
+#include "../shared/vartab.h"
 #include "../ssc/common.h"
 #include "../tcs_test/tcsdirect_steam_cases.h"
 

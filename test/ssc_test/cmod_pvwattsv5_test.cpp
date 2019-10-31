@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "../ssc/core.h"
-#include "../ssc/vartab.h"
+#include "../shared/vartab.h"
 #include "../ssc/common.h"
 #include "cmod_pvwattsv5_test.h"
 

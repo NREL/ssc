@@ -4,7 +4,7 @@
 #ifndef _CMOD_TCSFRESNEL_MOLTEN_SALT_TEST_H_
 #define _CMOD_TCSFRESNEL_MOLTEN_SALT_TEST_H_
 
-#include "../ssc/vartab.h"
+#include "../shared/vartab.h"
 #include "../ssc/common.h"
 #include "../tcs_test/tcsfresnel_molten_salt_cases.h"
 

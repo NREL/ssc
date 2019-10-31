@@ -4,7 +4,7 @@
 #ifndef _CMOD_TCSTROUGH_EMPIRICAL_TEST_H_
 #define _CMOD_TCSTROUGH_EMPIRICAL_TEST_H_
 
-#include "../ssc/vartab.h"
+#include "../shared/vartab.h"
 #include "../ssc/common.h"
 #include "../tcs_test/tcstrough_empirical_cases.h"
 

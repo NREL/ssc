@@ -4,7 +4,7 @@
 #include <gtest/gtest.h>
 #include "core.h"
 
-#include "../ssc/vartab.h"
+#include "../shared/vartab.h"
 #include "../ssc/common.h"
 #include "../input_cases/pvsamv1_cases.h"
 

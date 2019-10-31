@@ -119,7 +119,6 @@ set(SSC_SRC
 		csp_common.cpp
 		sscapi.cpp
 		tckernel.cpp
-		vartab.cpp
         cmod_pvsamv1_eqns.cpp cmod_pvsamv1_eqns.h)
 
 

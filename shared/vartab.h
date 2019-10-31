@@ -23,11 +23,9 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef __lib_vartab_h
 #define __lib_vartab_h
 
-#include "../shared/lib_util.h"
+#include "lib_util.h"
 #include <string>
 #include <vector>
-#include "sscapi.h"
-
 
 #include <unordered_map>
 using std::unordered_map;
@@ -44,16 +42,16 @@ typedef unordered_map< std::string, var_data* > var_hash;
 class var_table
 {
 public:
-	SSCEXPORT explicit var_table();
-	SSCEXPORT virtual ~var_table();
-	SSCEXPORT var_table &operator=( const var_table &rhs );
+	explicit var_table();
+	virtual ~var_table();
+	var_table &operator=( const var_table &rhs );
 
 	void clear();
     bool is_assigned( const std::string &name );
     void unassign( const std::string &name );
 	bool rename( const std::string &oldname, const std::string &newname );
-	SSCEXPORT const char *first();
-	SSCEXPORT const char *next();
+	const char *first();
+	const char *next();
 	const char *key(int pos);
 	unsigned int size() { return (unsigned int)m_hash.size(); }
 
@@ -66,7 +64,7 @@ public:
 
 	// getters
 	var_data *lookup( const std::string &name );
-	SSCEXPORT var_data *lookup_match_case( const std::string &name );
+	var_data *lookup_match_case( const std::string &name );
     size_t as_unsigned_long(const std::string &name);
     int as_integer( const std::string &name );
     bool as_boolean( const std::string &name );
@@ -172,9 +170,9 @@ public:
             : general_error( "cast fail: <" + std::string(target_type) + "> from " + std::string(source.type_name()) + " for: " + name ) { }
 };
 
-SSCEXPORT void vt_get_int(var_table* vt, std::string name, int* lvalue);
+void vt_get_int(var_table* vt, std::string name, int* lvalue);
 
-SSCEXPORT void vt_get_double(var_table* vt, std::string name, double* lvalue);
+void vt_get_double(var_table* vt, std::string name, double* lvalue);
 
 #define VT_GET_ARRAY_VEC(vt, name, vec_double) \
 if (var_data* vd = vt->lookup(name)) vec_double = vd->arr_vector(); \
