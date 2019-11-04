@@ -1035,7 +1035,7 @@ public:
 			if (ncols != 2)
 			{
 				std::ostringstream ss;
-				ss << "The energy market revenue table must have 2 columns. Instead it has " << ncols << " columns.";
+				ss << "The Energy Market Revenue table must have 2 columns for Cleared Capacity (MW) and Price ($/MW). Instead it has " << ncols << " columns.";
 				throw exec_error("merchant plant", ss.str());
 			}
 			mp_energy_market_revenue_mat.resize(nrows, ncols);
@@ -1049,7 +1049,7 @@ public:
 			if (ncols != 2)
 			{
 				std::ostringstream ss;
-				ss << "The ancillary services revenue 1 table must have 2 columns. Instead it has " << ncols << " columns.";
+				ss << "The Ancillary Services Revenue 1 table must have 2 columns for Cleared Capacity (MW) and Price ($/MW). Instead it has " << ncols << " columns.";
 				throw exec_error("merchant plant", ss.str());
 			}
 			mp_ancserv_1_revenue_mat.resize(nrows, ncols);
@@ -1063,7 +1063,7 @@ public:
 			if (ncols != 2)
 			{
 				std::ostringstream ss;
-				ss << "The ancillary services revenue 2 table must have 2 columns. Instead it has " << ncols << " columns.";
+				ss << "The Ancillary Services Revenue 2 table must have 2 columns for Cleared Capacity (MW) and Price ($/MW). Instead it has " << ncols << " columns.";
 				throw exec_error("merchant plant", ss.str());
 			}
 			mp_ancserv_2_revenue_mat.resize(nrows, ncols);
@@ -1077,7 +1077,7 @@ public:
 			if (ncols != 2)
 			{
 				std::ostringstream ss;
-				ss << "The ancillary services revenue 3 table must have 2 columns. Instead it has " << ncols << " columns.";
+				ss << "The Ancillary Services Revenue 3 table must have 2 columns for Cleared Capacity (MW) and Price ($/MW). Instead it has " << ncols << " columns.";
 				throw exec_error("merchant plant", ss.str());
 			}
 			mp_ancserv_3_revenue_mat.resize(nrows, ncols);
@@ -1091,7 +1091,7 @@ public:
 			if (ncols != 2)
 			{
 				std::ostringstream ss;
-				ss << "The ancillary services revenue 4 table must have 2 columns. Instead it has " << ncols << " columns.";
+				ss << "The Ancillary Services Revenue 4 table must have 2 columns for Cleared Capacity (MW) and Price ($/MW). Instead it has " << ncols << " columns.";
 				throw exec_error("merchant plant", ss.str());
 			}
 			mp_ancserv_4_revenue_mat.resize(nrows, ncols);
