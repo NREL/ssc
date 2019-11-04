@@ -802,6 +802,23 @@ double util::percent_of_year(int month, int hours)
 	return (hours_from_months + hours)/8760.0;
 }
 
+int util::day_of(double time)
+{
+	/* returns day number 0..6 (Monday..Sunday) given 
+	   time: hour index in year 0..8759 */
+	int daynum = (((int)(time / 24.0)));   // day goes 0-364
+	return (daynum % 7);
+}
+
+int util::week_of(double time)
+{
+	/* returns week number 0..51 given
+	   time: hour index in year 0..8759 */
+	int weeknum = ((int)(time / (24.0*7.0)));   // week goes 0-51
+	return weeknum;
+}
+
+
 int util::month_of(double time)
 { 
 	/* returns month number 1..12 given 
