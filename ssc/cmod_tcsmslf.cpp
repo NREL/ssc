@@ -770,6 +770,9 @@ public:
 		bConnected &= connect(solarfield, "E_fp_tot", enet, "Q_par_sf_fp");
 		bConnected &= connect(controller, "q_aux_heat", enet, "Q_aux_backup");
 	
+        bConnected &= connect(solarfield, "defocus_rel", controller, "defocus_prev");   // unique tolerance is just to stand out when debugging
+        
+        set_unit_value_ssc_double(controller, "defocus_prev", 0.9);  //
 
 		// check if all connections worked
 		if ( !bConnected )
