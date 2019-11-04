@@ -1609,8 +1609,53 @@ int C_sco2_phx_air_cooler::optimize_off_design(C_sco2_phx_air_cooler::S_od_par o
             T_comp_in_min = ms_cycle_od_par.m_T_mc_in;     //[K]
         }
 
-		if (opt_P_LP_err == -31)
-		{
+        if (opt_P_LP_err == -31)
+        {
+            double W_dot_fan_local = std::numeric_limits<double>::quiet_NaN();    //[MWe]
+            if (mpc_sco2_cycle->solve_OD_mc_cooler_fan_power(ms_od_par.m_T_amb, W_dot_fan_local) != 0)
+            {
+                throw(C_csp_exception("Off design main compressor air cooler model failed"));
+            }
+
+            if (W_dot_fan_local > W_dot_mc_cooler_fan_target)
+            {
+                while (W_dot_fan_local > W_dot_mc_cooler_fan_target && opt_P_LP_err == -31)
+                {
+                    ms_cycle_od_par.m_T_mc_in += 0.5;
+
+                    if (is_modified_P_mc_in_solver)
+                    {
+                        try
+                        {
+                            opt_P_LP_err = solve_P_LP_in__target_W_dot();
+                        }
+                        catch (...)
+                        {
+                            double abc = 1.23;
+                        }
+                    }
+                    else
+                    {
+                        opt_P_LP_err = opt_P_LP_comp_in__fixed_N_turbo();
+                    }
+
+                    if (opt_P_LP_err != 0 && opt_P_LP_err != -31)
+                    {
+                        throw(C_csp_exception("2D nested optimization to maximize efficiency failed"));
+                    }
+
+                    double W_dot_fan_local = std::numeric_limits<double>::quiet_NaN();    //[MWe]
+                    if (mpc_sco2_cycle->solve_OD_mc_cooler_fan_power(ms_od_par.m_T_amb, W_dot_fan_local) != 0)
+                    {
+                        throw(C_csp_exception("Off design main compressor air cooler model failed"));
+                    }
+                }
+            }
+            T_comp_in_min = ms_cycle_od_par.m_T_mc_in;     //[K]
+        }
+
+        if( opt_P_LP_err == -31 )
+        {
             while (opt_P_LP_err == -31 && ms_cycle_od_par.m_f_mc_pc_bypass < 0.9)
 			{
 				ms_cycle_od_par.m_f_mc_pc_bypass += 0.01;
@@ -1642,7 +1687,14 @@ int C_sco2_phx_air_cooler::optimize_off_design(C_sco2_phx_air_cooler::S_od_par o
             }
             else if (is_mc_cooler_fan_limit)
             {
-                solve_T_mc_in_for_cooler_constraint(W_dot_mc_cooler_fan_target, T_comp_in_min, is_modified_P_mc_in_solver);
+                try
+                {
+                    solve_T_mc_in_for_cooler_constraint(W_dot_mc_cooler_fan_target, T_comp_in_min, is_modified_P_mc_in_solver);
+                }
+                catch (C_csp_exception)
+                {
+                    return -1;
+                }
             } 
             			
             if (is_iterate_for_power_and_eta)
@@ -1664,17 +1716,31 @@ int C_sco2_phx_air_cooler::optimize_off_design(C_sco2_phx_air_cooler::S_od_par o
 
                 double T_mc_in_opt_global = ms_cycle_od_par.m_T_mc_in;		//[K]
 
-                check_increasing_T_mc_in(W_dot_target, W_dot_pc_cooler_fan_target*1.001,
-                    is_modified_P_mc_in_solver,
-                    W_dot_opt_global, eta_max_global,
-                    P_LP_in_opt_global, T_mc_in_opt_global);
+                try
+                {
+                    check_increasing_T_mc_in(W_dot_target, W_dot_pc_cooler_fan_target*1.001,
+                        is_modified_P_mc_in_solver,
+                        W_dot_opt_global, eta_max_global,
+                        P_LP_in_opt_global, T_mc_in_opt_global);
+                }
+                catch (C_csp_exception)
+                {
+                    return -1;
+                }
 
                 while (cycle_config == 2)
                 {
                     ms_cycle_od_par.m_T_pc_in += 0.5;   //[K]
 
                     // find ms_cycle_od_par.m_T_mc_in that satisfies cooler requirement
-                    solve_T_mc_in_for_cooler_constraint(W_dot_mc_cooler_fan_target, T_comp_in_min, is_modified_P_mc_in_solver);
+                    try
+                    {
+                        solve_T_mc_in_for_cooler_constraint(W_dot_mc_cooler_fan_target, T_comp_in_min, is_modified_P_mc_in_solver);
+                    }
+                    catch (C_csp_exception)
+                    {
+                        break;
+                    }
 
                     double W_dot_opt_mc = std::numeric_limits<double>::quiet_NaN(); 	//[kWe]
 
