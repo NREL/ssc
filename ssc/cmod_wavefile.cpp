@@ -46,7 +46,7 @@ static var_info _cm_wave_file_reader[] = {
 
 																										            
 // weather data records																					            
-	{ SSC_OUTPUT,        SSC_MATRIX,      "wave_resource_matrix",              "Frequency disttribution of resource",                                  "m/s",   "",                       "Weather Reader",      "*",                        "",                            "" },
+	{ SSC_OUTPUT,        SSC_MATRIX,      "wave_resource_matrix",              "Frequency distribution of resource",                                  "m/s",   "",                       "Weather Reader",      "*",                        "",                            "" },
 
 var_info_invalid };
 
