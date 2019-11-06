@@ -115,7 +115,7 @@ public:
 	void exec()
 	{
 		//get inputs to compute module
-		double device_rating = as_double("device_rated_power");
+		double device_rating = as_double("device_rated_power"); // kW
 		double system_capacity_kW = as_double("system_capacity"); // kW
 		double system_capacity_MW = system_capacity_kW / 1000.0; // MW
 		int device_type = as_integer("device_type");
