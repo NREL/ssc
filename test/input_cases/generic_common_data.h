@@ -162,6 +162,7 @@ void generic_singleowner_battery_60min(ssc_data_t &data)
 	ssc_data_set_number(data, "cp_capacity_payment_esc", 0);
 	ssc_data_set_number(data, "cp_capacity_payment_type", 0);
 	ssc_data_set_number(data, "cp_system_nameplate", 0);
+	ssc_data_set_number(data, "cp_battery_nameplate", 0);
 	ssc_data_set_array(data, "cp_capacity_credit_percent", p_ppa_price_input, 1);
 	ssc_data_set_array( data, "cp_capacity_payment_amount", p_ppa_price_input, 1);
 	ssc_number_t p_dispatch_tod_factors[9] ={ 1, 1, 1, 1, 1, 1, 1, 1, 1 };

@@ -460,8 +460,15 @@ void trough_physical_single_owner_default(ssc_data_t &data)
     ssc_data_set_number(data, "equip_reserve_depr_fed", 0);
     ssc_data_set_number(data, "salvage_percentage", 0);
     ssc_data_set_number(data, "ppa_soln_mode", 0);
-    ssc_data_set_number(data, "ppa_price_input", 0.12999999523162842);
-    ssc_data_set_number(data, "ppa_escalation", 1);
+	ssc_number_t p_ppa_price_input[1] = { 0.13 };
+	ssc_data_set_array(data, "ppa_price_input", p_ppa_price_input, 1);
+	ssc_data_set_number(data, "cp_capacity_payment_esc", 0);
+	ssc_data_set_number(data, "cp_capacity_payment_type", 0);
+	ssc_data_set_number(data, "cp_system_nameplate", 0);
+	ssc_data_set_number(data, "cp_battery_nameplate", 0);
+	ssc_data_set_array(data, "cp_capacity_credit_percent", p_ppa_price_input, 1);
+	ssc_data_set_array(data, "cp_capacity_payment_amount", p_ppa_price_input, 1);
+	ssc_data_set_number(data, "ppa_escalation", 1);
     ssc_data_set_number(data, "construction_financing_cost", 28110074);
     ssc_data_set_number(data, "term_tenor", 18);
     ssc_data_set_number(data, "term_int_rate", 7);
