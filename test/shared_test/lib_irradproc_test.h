@@ -11,6 +11,7 @@
 
 #include "lib_irradproc.h"
 #include "core.h"
+#include "../test/input_cases/code_generator_utilities.h"
 
 /**
 * \class IrradTest
@@ -222,21 +223,27 @@ protected:
 		lat = 37.517;
 		lon = -77.317;
 		tz = -5.0;
-
+		/*
+		char frontSkyConfigFactorsFile[256];
+		char resource_matrix[256];
+		int nb2 = sprintf(resource_matrix, "%s/test/input_cases/mhk/wave_resource_matrix.csv", SSCDIR);
+		int nb3 = sprintf(device_matrix, "%s/test/input_cases/mhk/wave_power_matrix.csv", SSCDIR);
+		*/
+		std::string sscdir(SSCDIR);
 		// Truth datasets for github.com/NREL/bifacialvf test case
-		frontSkyConfigFactorsFile = "test/input_cases/bifacialvf_data/expectedFrontSkyConfigFactors.txt";
-		rearSkyConfigFactorsFile = "test/input_cases/bifacialvf_data/expectedRearSkyConfigFactors.txt";
-		pvFrontSHFile = "test/input_cases/bifacialvf_data/expectedPVFrontSH.txt";
-		pvBackSHFile = "test/input_cases/bifacialvf_data/expectedPVBackSH.txt";
-		frontGroundShadeFile = "test/input_cases/bifacialvf_data/expectedFrontGroundShade.txt";
-		rearGroundShadeFile = "test/input_cases/bifacialvf_data/expectedRearGroundShade.txt";
-		frontGroundGHIFile = "test/input_cases/bifacialvf_data/expectedFrontGroundGHI.txt";
-		rearGroundGHIFile = "test/input_cases/bifacialvf_data/expectedRearGroundGHI.txt";
-		frontIrradianceFile = "test/input_cases/bifacialvf_data/expectedFrontIrradiance.txt";
-		rearIrradianceFile = "test/input_cases/bifacialvf_data/expectedRearIrradiance.txt";
-		frontReflectedFile = "test/input_cases/bifacialvf_data/expectedFrontReflected.txt";
-		weatherFile = "test/input_cases/bifacialvf_data/expectedWeather.txt";
-		averageIrradianceFile = "test/input_cases/bifacialvf_data/expectedAverageIrradiance.txt";
+		frontSkyConfigFactorsFile = sscdir + "test/input_cases/bifacialvf_data/expectedFrontSkyConfigFactors.txt";
+		rearSkyConfigFactorsFile = sscdir + "test/input_cases/bifacialvf_data/expectedRearSkyConfigFactors.txt";
+		pvFrontSHFile = sscdir + "test/input_cases/bifacialvf_data/expectedPVFrontSH.txt";
+		pvBackSHFile = sscdir + "test/input_cases/bifacialvf_data/expectedPVBackSH.txt";
+		frontGroundShadeFile = sscdir + "test/input_cases/bifacialvf_data/expectedFrontGroundShade.txt";
+		rearGroundShadeFile = sscdir + "test/input_cases/bifacialvf_data/expectedRearGroundShade.txt";
+		frontGroundGHIFile = sscdir + "test/input_cases/bifacialvf_data/expectedFrontGroundGHI.txt";
+		rearGroundGHIFile = sscdir + "test/input_cases/bifacialvf_data/expectedRearGroundGHI.txt";
+		frontIrradianceFile = sscdir + "test/input_cases/bifacialvf_data/expectedFrontIrradiance.txt";
+		rearIrradianceFile = sscdir + "test/input_cases/bifacialvf_data/expectedRearIrradiance.txt";
+		frontReflectedFile = sscdir + "test/input_cases/bifacialvf_data/expectedFrontReflected.txt";
+		weatherFile = sscdir + "test/input_cases/bifacialvf_data/expectedWeather.txt";
+		averageIrradianceFile = sscdir + "test/input_cases/bifacialvf_data/expectedAverageIrradiance.txt";
 
 
 		readDataFromTextFile(pvBackSHFile, expectedPVRearShadeFraction);
