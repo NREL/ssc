@@ -1378,7 +1378,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 					//self-shading calculations
 					if (((Subarrays[nn]->trackMode == 0 || Subarrays[nn]->trackMode == 4) && (Subarrays[nn]->shadeMode == 1 || Subarrays[nn]->shadeMode == 2)) //fixed tilt or timeseries tilt, self-shading (linear or non-linear) OR
-						|| (Subarrays[nn]->trackMode == 1 && (Subarrays[nn]->shadeMode == 1 || Subarrays[nn]->shadeMode == 2))) //one-axis tracking, self-shading (linear or non-linear)
+						|| (Subarrays[nn]->trackMode == 1 && (Subarrays[nn]->shadeMode == 1 || Subarrays[nn]->shadeMode == 2))) //one-axis tracking (both backtracking and true tracking), self-shading (linear or non-linear)
 					{
 
 						if (radmode == irrad::POA_R || radmode == irrad::POA_P){

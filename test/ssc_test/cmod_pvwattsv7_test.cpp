@@ -42,7 +42,7 @@ TEST_F(CMPvwattsV7Integration, DefaultNoFinancialModel){
 /// PVWattsV7 using different technology input options
 TEST_F(CMPvwattsV7Integration, DifferentTechnologyInputs)
 {
-	std::vector<double> annual_energy_expected = { 6909.79, 7123.32, 7336.478, 6909.79, 6804.376, 8601.011, 8727.704, 9690.735 };
+	std::vector<double> annual_energy_expected = { 6909.79, 7123.32, 7336.478, 6909.79, 6804.376, 8601.011, 8727.704, 9690.735};
 	std::map<std::string, double> pairs;
 	size_t count = 0;
 
@@ -61,11 +61,41 @@ TEST_F(CMPvwattsV7Integration, DifferentTechnologyInputs)
 			}
 			count++;
 	}
+	pairs["module_type"] = 0; //reset module type to its default value
+
+	// Array types: Fixed open rack, fixed roof mount, 1-axis tracking, 1-axis backtracking, 2-axis tracking
+	for (int array_type = 0; array_type < 5; array_type++)
+	{		
+		pairs["array_type"] = array_type;
+		int pvwatts_errors = modify_ssc_data_and_run_module(data, "pvwattsv7", pairs);
+		EXPECT_FALSE(pvwatts_errors);
+
+		if (!pvwatts_errors)
+		{
+			ssc_number_t annual_energy;
+			ssc_data_get_number(data, "annual_energy", &annual_energy);
+			EXPECT_NEAR(annual_energy, annual_energy_expected[count], error_tolerance) << "Annual energy.";
+		}
+		count++;
+	}
+	pairs["array_type"] = 0; //reset array type to fixed open rack
+
+}
+
+/// PVWattsV7 using a larger system size
+TEST_F(CMPvwattsV7Integration, LargeSystem)
+{
+	std::vector<double> annual_energy_expected = { 1727447.4, 1701094.0, 2150252.8, 2181925.8, 2422683.7 };
+	std::map<std::string, double> pairs;
+	size_t count = 0;
+	error_tolerance = 0.1; //use a larger error tolerance for large numbers
+
+	// Larger size
+	pairs["system_capacity"] = 1000; //1 MW system
 
 	// Array types: Fixed open rack, fixed roof mount, 1-axis tracking, 1-axis backtracking, 2-axis tracking
 	for (int array_type = 0; array_type < 5; array_type++)
 	{
-		pairs["module_type"] = 0; //reset module type to its default value
 		pairs["array_type"] = array_type;
 		int pvwatts_errors = modify_ssc_data_and_run_module(data, "pvwattsv7", pairs);
 		EXPECT_FALSE(pvwatts_errors);

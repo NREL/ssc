@@ -1,51 +1,23 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #include <memory>
 
@@ -141,40 +113,48 @@ public:
 static var_info _cm_vtab_pvwattsv7[] = {
 
 	/*   VARTYPE           DATATYPE          NAME                              LABEL                                          UNITS        META                                            GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-		{ SSC_INPUT,        SSC_STRING,      "solar_resource_file",            "Weather file path",                           "",          "",                                             "Weather",      "?",                       "",                              "" },
-		{ SSC_INPUT,        SSC_TABLE,       "solar_resource_data",            "Weather data",                                "",          "dn,df,tdry,wspd,lat,lon,tz",                   "Weather",      "?",                       "",                              "" },
+		{ SSC_INPUT,        SSC_STRING,      "solar_resource_file",            "Weather file path",                           "",          "",                                             "Location and Resource",      "?",                       "",                              "" },
+		{ SSC_INPUT,        SSC_TABLE,       "solar_resource_data",            "Weather data",                                "",          "dn,df,tdry,wspd,lat,lon,tz",                   "Location and Resource",      "?",                       "",                              "" },
+		{ SSC_INPUT,        SSC_ARRAY,       "albedo",                         "Albedo",                                      "frac",      "if provided, will overwrite weather file albedo","Location and Resource",    "",                        "",                              "" },
+	
+		{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",     "Run lifetime simulation",                    "0/1",        "",                       "Lifetime",            "*",                        "",                              "" },
+		{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                "Analysis period",                            "years",      "",                       "Lifetime",            "system_use_lifetime_output=1", "",                          "" },
+		{ SSC_INPUT,        SSC_ARRAY,       "dc_degradation",                 "Annual AC degradation",                      "%/year",    "",                        "Lifetime",            "system_use_lifetime_output=1", "",                          "" },
+
+		{ SSC_INPUT,        SSC_NUMBER,      "system_capacity",                "System size (DC nameplate)",                  "kW",        "",											   "System Design",      "*",                       "",                      "" },
+		{ SSC_INPUT,        SSC_NUMBER,      "module_type",                    "Module type",                                 "0/1/2",     "Standard,Premium,Thin film",                   "System Design",      "?=0",                     "MIN=0,MAX=2,INTEGER",           "" },
+		{ SSC_INPUT,        SSC_NUMBER,      "dc_ac_ratio",                    "DC to AC ratio",                              "ratio",     "",                                             "System Design",      "?=1.1",                   "POSITIVE",                      "" },
+
+		{ SSC_INPUT,        SSC_NUMBER,      "bifaciality",                    "Module bifaciality factor",                   "0 or ~0.65","",                                             "System Design",      "?=0",                       "",                              "" },
+		{ SSC_INPUT,        SSC_NUMBER,      "ac_plant_max_f",                 "Plant controller max output (as f(ac_size))", "ratio",     "",                                             "System Design",      "?=1.0",                   "",                              "" },
+
+		{ SSC_INPUT,        SSC_NUMBER,      "array_type",                     "Array type",                                  "0/1/2/3/4", "Fixed Rack,Fixed Roof,1Axis,Backtracked,2Axis",  "System Design",      "*",                       "MIN=0,MAX=4,INTEGER",           "" },
+		{ SSC_INPUT,        SSC_NUMBER,      "tilt",                           "Tilt angle",                                  "deg",       "H=0,V=90",                                     "System Design",      "array_type<4",            "MIN=0,MAX=90",                  "" },
+		{ SSC_INPUT,        SSC_NUMBER,      "azimuth",                        "Azimuth angle",                               "deg",       "E=90,S=180,W=270",                             "System Design",      "array_type<4",            "MIN=0,MAX=360",                 "" },
+		{ SSC_INPUT,        SSC_NUMBER,      "gcr",                            "Ground coverage ratio",                       "0..1",      "",                                             "System Design",      "?=0.4",                   "MIN=0,MAX=3",                   "" },
+		{ SSC_INPUT,        SSC_NUMBER,      "rotlim",                         "Tracker rotation angle limit",                "deg",       "",                                             "System Design",      "?=45.0",                  "",                              "" },
 		
-		{ SSC_INPUT,        SSC_NUMBER,      "dc_size",                        "DC system size",                              "kW",        "",                                             "PVWatts",      "*",                       "",                              "" },
-		{ SSC_INPUT,        SSC_NUMBER,      "dc_ac_ratio",                    "DC to AC ratio",                              "ratio",     "",                                             "PVWatts",      "?=1.1",                   "POSITIVE",                      "" },
-		{ SSC_INPUT,        SSC_NUMBER,      "module_type",                    "Module type",                                 "0/1/2",     "Standard,Premium,Thin film",                   "PVWatts",      "?=0",                     "MIN=0,MAX=2,INTEGER",           "" },
-		{ SSC_INPUT,        SSC_NUMBER,      "bifaciality",                    "Module bifaciality factor",                   "0 or ~0.65","",                                             "PVWatts",      "?=0",                       "",                              "" },
-		{ SSC_INPUT,        SSC_NUMBER,      "ac_plant_max_f",                 "Plant controller max output (as f(ac_size))", "ratio",     "",                                             "PVWatts",      "?=1.0",                   "",                              "" },
+		{ SSC_INPUT,        SSC_ARRAY,       "soiling",                        "Soiling loss",                                "%",         "",                                             "System Design",      "?",                       "",                              "" },
+		{ SSC_INPUT,        SSC_NUMBER,      "losses",                      "Other DC losses",                             "%",         "Total system losses",                          "System Design",      "*",                       "MIN=-5,MAX=99",                 "" },
 
-		{ SSC_INPUT,        SSC_NUMBER,      "array_type",                     "Array type",                                  "0/1/2/3/4", "Fixed OR,Fixed Roof,1Axis,Backtracked,2Axis",  "PVWatts",      "*",                       "MIN=0,MAX=4,INTEGER",           "" },
-		{ SSC_INPUT,        SSC_NUMBER,      "tilt",                           "Tilt angle",                                  "deg",       "H=0,V=90",                                     "PVWatts",      "array_type<4",            "MIN=0,MAX=90",                  "" },
-		{ SSC_INPUT,        SSC_NUMBER,      "azimuth",                        "Azimuth angle",                               "deg",       "E=90,S=180,W=270",                             "PVWatts",      "array_type<4",            "MIN=0,MAX=360",                 "" },
-		{ SSC_INPUT,        SSC_NUMBER,      "gcr",                            "Ground coverage ratio",                       "0..1",      "",                                             "PVWatts",      "?=0.4",                   "MIN=0,MAX=3",                   "" },
-		{ SSC_INPUT,        SSC_NUMBER,      "rotlim",                         "Tracker rotation angle limit",                "deg",       "",                                             "PVWatts",      "?=45.0",                  "",                              "" },
-		
-		{ SSC_INPUT,        SSC_ARRAY,       "soiling",                        "Soiling loss",                                "%",         "",                                             "PVWatts",      "?",                       "",                              "" },
-		{ SSC_INPUT,        SSC_ARRAY,       "albedo",                         "Albedo",                                      "frac",      "",                                             "PVWatts",      "",                        "",                              "" },
-		{ SSC_INPUT,        SSC_NUMBER,      "dc_losses",                      "Other DC losses",                             "%",         "Total system losses",                          "PVWatts",      "*",                       "MIN=-5,MAX=99",                 "" },
+		{ SSC_INPUT,        SSC_NUMBER,      "enable_wind_stow",               "Enable tracker stow at high wind speeds"      "0/1",       "",                                             "System Design",      "?=0",                     "",                              "" },
+		{ SSC_INPUT,        SSC_NUMBER,      "stow_wspd",                      "Tracker stow wind speed threshold"            "m/s",       "",                                             "System Design",      "?=10",                    "",                              "" },
+		{ SSC_INPUT,        SSC_NUMBER,      "gust_factor",                    "Wind gust estimation factor",                 "",          "",                                             "System Design",      "?",                       "",                              "" },
+		{ SSC_INPUT,        SSC_NUMBER,      "wind_stow_angle",                "Tracker angle for wind stow",                 "deg",       "",                                             "System Design",      "?=30.0",                  "",                              "" },
 
-		{ SSC_INPUT,        SSC_NUMBER,      "enable_wind_stow",               "Enable tracker stow at high wind speeds"      "0/1",       "",                                             "PVWatts",      "?=0",                     "",                              "" },
-		{ SSC_INPUT,        SSC_NUMBER,      "stow_wspd",                      "Tracker stow wind speed threshold"            "m/s",       "",                                             "PVWatts",      "?=10",                    "",                              "" },
-		{ SSC_INPUT,        SSC_NUMBER,      "gust_factor",                    "Wind gust estimation factor",                 "",          "",                                             "PVWatts",      "?",                       "",                              "" },
-		{ SSC_INPUT,        SSC_NUMBER,      "wind_stow_angle",                "Tracker angle for wind stow",                 "deg",       "",                                             "PVWatts",      "?=30.0",                  "",                              "" },
+		{ SSC_INPUT,        SSC_NUMBER,      "en_snowloss",                    "Enable snow loss model",                      "0/1",       "",                                             "System Design",      "?=0",                     "BOOLEAN",                       "" },
 
-		{ SSC_INPUT,        SSC_NUMBER,      "inv_eff",                        "Inverter efficiency at rated power",          "%",         "",                                             "PVWatts",      "?=96",                    "MIN=90,MAX=99.5",               "" },
-		{ SSC_INPUT,        SSC_NUMBER,      "xfmr_nll",                       "GSU transformer no load loss (iron core)",    "%(ac)",     "",                                             "PVWatts",      "?=0.0",                   "",                              "" },
-		{ SSC_INPUT,        SSC_NUMBER,      "xfmr_ll",                        "GSU transformer load loss (resistive)",       "%(ac)",     "",                                             "PVWatts",      "?=0.0",                   "",                              "" },
-		{ SSC_INPUT,        SSC_NUMBER,      "en_snowloss",                    "Enable snow loss model",                      "0/1",       "",                                             "PVWatts",      "?=0",                     "BOOLEAN",                       "" },
+		{ SSC_INPUT,        SSC_NUMBER,      "inv_eff",                        "Inverter efficiency at rated power",          "%",         "",                                             "System Design",      "?=96",                    "MIN=90,MAX=99.5",               "" },
 
-		{ SSC_INPUT,        SSC_MATRIX,      "shading:timestep",               "Time step beam shading loss",                 "%",         "",                                             "PVWatts",      "?",                        "",                             "" },
-		{ SSC_INPUT,        SSC_MATRIX,      "shading:mxh",                    "Month x Hour beam shading loss",              "%",         "",                                             "PVWatts",      "?",                        "",                             "" },
-		{ SSC_INPUT,        SSC_MATRIX,      "shading:azal",                   "Azimuth x altitude beam shading loss",        "%",         "",                                             "PVWatts",      "?",                        "",                             "" },
-		{ SSC_INPUT,        SSC_NUMBER,      "shading:diff",                   "Diffuse shading loss",                        "%",         "",                                             "PVWatts",      "?",                        "",                             "" },
+		{ SSC_INPUT,        SSC_NUMBER,      "xfmr_nll",                       "GSU transformer no load loss (iron core)",    "%(ac)",     "",                                             "System Design",      "?=0.0",                   "",                              "" },
+		{ SSC_INPUT,        SSC_NUMBER,      "xfmr_ll",                        "GSU transformer load loss (resistive)",       "%(ac)",     "",                                             "System Design",      "?=0.0",                   "",                              "" },
 
+		{ SSC_INPUT,        SSC_MATRIX,      "shading:timestep",               "Time step beam shading loss",                 "%",         "",                                             "System Design",      "?",                        "",                             "" },
+		{ SSC_INPUT,        SSC_MATRIX,      "shading:mxh",                    "Month x Hour beam shading loss",              "%",         "",                                             "System Design",      "?",                        "",                             "" },
+		{ SSC_INPUT,        SSC_MATRIX,      "shading:azal",                   "Azimuth x altitude beam shading loss",        "%",         "",                                             "System Design",      "?",                        "",                             "" },
+		{ SSC_INPUT,        SSC_NUMBER,      "shading:diff",                   "Diffuse shading loss",                        "%",         "",                                             "System Design",      "?",                        "",                             "" },
+
+		{ SSC_INPUT,        SSC_NUMBER,      "batt_simple_enable",             "Enable Battery",                              "0/1",        "",                      "System Design",     "?=0",                     "BOOLEAN",                        "" },
 
 		/* outputs */
 		{ SSC_OUTPUT,       SSC_ARRAY,       "gh",                             "Global horizontal irradiance",                "W/m2",   "",                        "Time Series",      "*",                       "",                          "" },
@@ -182,14 +162,14 @@ static var_info _cm_vtab_pvwattsv7[] = {
 		{ SSC_OUTPUT,       SSC_ARRAY,       "df",                             "Diffuse irradiance",                          "W/m2",   "",                        "Time Series",      "*",                       "",                          "" },
 		{ SSC_OUTPUT,       SSC_ARRAY,       "tamb",                           "Ambient temperature",                         "C",      "",                        "Time Series",      "*",                       "",                          "" },
 		{ SSC_OUTPUT,       SSC_ARRAY,       "wspd",                           "Wind speed",                                  "m/s",    "",                        "Time Series",      "*",                       "",                          "" },
-		{ SSC_OUTPUT,       SSC_ARRAY,       "snow",                           "Snow depth",                                  "cm",     "",                        "Time Series",      "*",                       "",                          "" },
+		{ SSC_OUTPUT,       SSC_ARRAY,       "snow",                           "Snow depth",                                  "cm",     "",                        "Time Series",      "",                        "",                          "" },
 
 		{ SSC_OUTPUT,       SSC_ARRAY,       "sunup",                          "Sun up over horizon",                         "0/1",    "",                        "Time Series",      "*",                       "",                          "" },
 		{ SSC_OUTPUT,       SSC_ARRAY,       "shad_beam_factor",               "Shading factor for beam radiation",           "",       "",                        "Time Series",      "*",                       "",                                     "" },
 		{ SSC_OUTPUT,       SSC_ARRAY,       "aoi",                            "Angle of incidence",                          "deg",    "",                        "Time Series",      "*",                       "",                          "" },
 		{ SSC_OUTPUT,       SSC_ARRAY,       "poa",                            "Plane of array irradiance",                   "W/m2",   "",                        "Time Series",      "*",                       "",                          "" },
 		{ SSC_OUTPUT,       SSC_ARRAY,       "tpoa",                           "Transmitted plane of array irradiance",       "W/m2",   "",                        "Time Series",      "*",                       "",                          "" },
-		{ SSC_OUTPUT,       SSC_ARRAY,       "tmod",                           "Module temperature",                          "C",      "",                        "Time Series",      "*",                       "",                          "" },
+		{ SSC_OUTPUT,       SSC_ARRAY,       "tcell",                          "Module temperature",                          "C",      "",                        "Time Series",      "*",                       "",                          "" },
 
 		{ SSC_OUTPUT,       SSC_ARRAY,       "dc",                             "DC array power",                              "W",     "",                         "Time Series",      "*",                       "",                          "" },
 		{ SSC_OUTPUT,       SSC_ARRAY,       "ac",                             "AC inverter power",                           "W",     "",                         "Time Series",      "*",                       "",                          "" },
@@ -217,6 +197,9 @@ static var_info _cm_vtab_pvwattsv7[] = {
 		{ SSC_OUTPUT,       SSC_NUMBER,      "inverter_model",                 "Inverter model specifier",                     "",                               "0=cec,1=datasheet,2=partload,3=coefficientgenerator,4=generic", "", "", "INTEGER,MIN=0,MAX=4", "" },
 		{ SSC_OUTPUT,       SSC_NUMBER,      "inverter_efficiency",            "Inverter efficiency at rated power",          "%",         "",                   "PVWatts",      "?=96",                        "MIN=90,MAX=99.5",                              "" },
 
+		{ SSC_OUTPUT,       SSC_NUMBER,      "ts_shift_hours",                 "Time offset for interpreting time series outputs", "hours", "",                 "Miscellaneous", "*",                       "",                          "" },
+		{ SSC_OUTPUT,       SSC_NUMBER,      "percent_complete",               "Estimated percent of total completed simulation", "%", "",                       "Miscellaneous", "",                        "",                          "" },
+
 		var_info_invalid };
 
 class cm_pvwattsv7 : public compute_module
@@ -225,22 +208,22 @@ protected:
 
 	enum module_type { STANDARD, PREMIUM, THINFILM };
 	enum module_orientation { PORTRAIT, LANDSCAPE };
-	enum array_type { FIXED_RACK, FIXED_ROOF, ONE_AXIS, ONE_AXIS_BACKTRACKING, TWO_AXIS, AZIMUTH_AXIS };
+	enum array_type { FIXED_RACK, FIXED_ROOF, ONE_AXIS, ONE_AXIS_BACKTRACKING, TWO_AXIS, AZIMUTH_AXIS }; //azimuth axis not enabled in inputs?
 
 	struct {
-		module_type type;
-		double stc_watts;
-		double stc_eff;
-		double ff;
-		double aspect_ratio;
-		double width;
-		double length;
-		double area;
-		double vmp;
-		int ndiode;
-		double gamma;
-		bool ar_glass;
-		double bifaciality;
+		module_type type;		//standard, premium, thinfilm
+		double stc_watts;		//rated power at STC in Watts
+		double stc_eff;			//rated efficiency at STC (unitless)
+		double ff;				//fill factor (unitless)
+		double aspect_ratio;	//module length / width (unitless)
+		double width;			//module width in meters
+		double length;			//module length in meters
+		double area;			//module area in square meters
+		double vmp;				//maximum power voltage in volts
+		int ndiode;				//number of diodes in module (unitless)
+		double gamma;			//temperature coefficient of maximum power- units are 1 / degree Celsius
+		bool ar_glass;			//whether or not module has anti-reflective glass
+		double bifaciality;		//bifaciality factor for bifacial modules (unitless)
 	} module;
 
 	struct {
@@ -268,7 +251,7 @@ protected:
 
 	} pv;
 
-	struct sdmml {
+	struct sdmml { //single diode model mermoud lejeune (alternative to pvwatts linear model)
 		double Area;
 		double Vmp;
 		double Imp;
@@ -330,7 +313,7 @@ public:
 		// nothing to do
 	}
 
-	double sdmml_power(sdmml &m, double S, double T_cell)
+	double sdmml_power(sdmml &m, double S, double T_cell) //single diode model structure, S=irradiance, T_cell is cell temperature
 	{
 		static const double S_ref = 1000;
 		static const double T_ref = 25;
@@ -361,6 +344,10 @@ public:
 
 	void exec() throw(general_error)
 	{
+		// don't add "gen" output if battery enabled, gets added later
+		if (!as_boolean("batt_simple_enable"))
+			add_var_info(vtab_technology_outputs);
+
 		std::unique_ptr<weather_data_provider> wdprov;
 
 		if (is_assigned("solar_resource_file"))
@@ -379,11 +366,10 @@ public:
 		else
 			throw exec_error("pvwattsv7", "no weather data supplied");
 
-		pv.dc_nameplate = as_double("dc_size") * 1000;
+		pv.dc_nameplate = as_double("system_capacity") * 1000;
 		pv.dc_ac_ratio = as_double("dc_ac_ratio");
 		pv.ac_nameplate = pv.dc_nameplate / pv.dc_ac_ratio;
 
-		pv.ac_plant_max = pv.ac_nameplate * as_double("ac_plant_max_f");
 		pv.xfmr_rating = pv.ac_nameplate;
 
 		pv.inv_eff_percent = as_double("inv_eff");
@@ -398,16 +384,18 @@ public:
 		size_t albedo_len = 0;
 		ssc_number_t *albedo = 0;
 		if (is_assigned("albedo"))
+		{
 			albedo = as_array("albedo", &albedo_len);
+		}
 
-		pv.dc_loss_percent = as_double("dc_losses");
+		pv.dc_loss_percent = as_double("losses");
 		pv.tilt = pv.azimuth = std::numeric_limits<double>::quiet_NaN();
 		pv.rotlim = 45.0;
 		if (is_assigned("tilt")) pv.tilt = as_double("tilt");
 		if (is_assigned("azimuth")) pv.azimuth = as_double("azimuth");
 		if (is_assigned("rotlim")) pv.rotlim = as_double("rotlim");
 
-		pv.xfmr_ll_f = as_double("xfmr_ll")*0.01;
+		pv.xfmr_ll_f = as_double("xfmr_ll")*0.01; //transformer inputs always present, but default to 0
 		pv.xfmr_nll_f = as_double("xfmr_nll")*0.01;
 
 		bool enable_wind_stow = as_boolean("enable_wind_stow");
@@ -418,15 +406,15 @@ public:
 		double wind_stow_angle_deg = 30; // assume stowing at 30 degrees for better dynamic torsional stability, despite higher static loading on piles
 		if (is_assigned("wind_stow_angle")) wind_stow_angle_deg = as_double("wind_stow_angle");
 
-		int en_sdm = is_assigned("en_sdm") ? as_integer("en_sdm") : 0;
+		int en_sdm = is_assigned("en_sdm") ? as_integer("en_sdm") : 0; //whether or not to use the mermoud lejeune single diode model as defined above
 
 		module.type = (module_type)as_integer("module_type");
 		switch (module.type)
 		{
-		case STANDARD:
-			module.gamma = -0.0038;
+		case STANDARD: //need to update or get source for defaults!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+			module.gamma = -0.0047; // -0.0038; latter is updated from aron
 			module.ar_glass = false;
-			module.ff = 0.771;
+			module.ff = 0.771; //fill factors required for self-shading calculations
 			module.stc_eff = 0.17;
 
 			// for optional SDM module model: 
@@ -450,7 +438,7 @@ public:
 			break;
 
 		case PREMIUM:
-			module.gamma = -0.0030;
+			module.gamma = -0.0035; //-0.0030; latter is updated from aron
 			module.ar_glass = true;
 			module.ff = 0.801;
 			module.stc_eff = 0.201;
@@ -476,11 +464,10 @@ public:
 			break;
 
 		case THINFILM:
-			module.gamma = -0.0028;
+			module.gamma = -0.0020; // -0.0028; latter is updated from aron
 			module.ar_glass = false;
 			module.ff = 0.706;
 			module.stc_eff = 0.156;
-
 
 			// for optional SDM module model: 
 			// selected module from PVsyst PAN database: FS-4112-3
@@ -533,7 +520,7 @@ public:
 
 		pv.gcr = as_double("gcr");
 
-
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////should we have shading enabled all the time as per this?
 
 		if (FIXED_RACK == pv.type
 			|| ONE_AXIS == pv.type
@@ -624,9 +611,33 @@ public:
 		else
 			throw exec_error("pvwattsv7", "subhourly weather files must specify the minute for each record");
 
+		assign("ts_shift_hours", var_data((ssc_number_t)ts_shift_hours));
+
 		weather_record wf;
 
+		size_t nyears = 1;
+		std::vector<double> degradationFactor;
+		if (as_boolean("system_use_lifetime_output")) {
+			nyears = as_unsigned_long("analysis_period");
+			std::vector<double> ac_degradation = as_vector_double("dc_degradation");
+			if (ac_degradation.size() == 1) {
+				degradationFactor.push_back(1.0);
+				for (size_t y = 1; y < nyears; y++) {
+					degradationFactor.push_back(pow((1.0 - ac_degradation[0] / 100.0), y));
+				}
+			}
+			else {
+				for (size_t y = 0; y < nyears; y++) {
+					degradationFactor.push_back(1.0 - ac_degradation[y] / 100.0);
+				}
+			}
+		}
+		else {
+			degradationFactor.push_back(1.0);
+		}
+
 		size_t nrec = wdprov->nrecords();
+		size_t nlifetime = nrec * nyears;
 		size_t step_per_hour = nrec / 8760;
 		if (step_per_hour < 1 || step_per_hour > 60 || step_per_hour * 8760 != nrec)
 			throw exec_error("pvwattsv7", util::format("invalid number of data records (%d): must be an integer multiple of 8760", (int)nrec));
@@ -644,562 +655,559 @@ public:
 		ssc_number_t *p_shad_beam = allocate("shad_beam_factor", nrec); // just for reporting output
 		ssc_number_t *p_stow = allocate("tracker_stowing", nrec); // just for reporting output
 
-		ssc_number_t *p_tmod = allocate("tmod", nrec);
+		ssc_number_t *p_tmod = allocate("tcell", nrec);
 		ssc_number_t *p_dcshadederate = allocate("dcshadederate", nrec);
 		ssc_number_t *p_dcsnowderate = allocate("dcsnowderate", nrec);
 		ssc_number_t *p_poa = allocate("poa", nrec);
 		ssc_number_t *p_tpoa = allocate("tpoa", nrec);
 		ssc_number_t *p_dc = allocate("dc", nrec);
 		ssc_number_t *p_ac = allocate("ac", nrec);
-		ssc_number_t *p_gen = allocate("gen", nrec);
+		ssc_number_t *p_gen = allocate("gen", nlifetime);
 
 		double ts_hour = 1.0 / step_per_hour;
 
-		pvwatts_celltemp tccalc(pv.inoct + 273.15, PVWATTS_HEIGHT, ts_hour);
+		pvwatts_celltemp tccalc(pv.inoct + 273.15, PVWATTS_HEIGHT, ts_hour); //in pvwattsv5 there is some code about previous tcell and poa that doesn't appear to get used, so not adding it here
 
 		double annual_kwh = 0;
 
-		size_t hour = 0, idx = 0;
-		while (hour < 8760)
+		size_t idx_life = 0;
+		float percent = 0;
+		for (size_t y = 0; y < nyears; y++)
 		{
+			size_t idx = 0;
+			for (size_t hour = 0; hour < 8760; hour++)
+			{
 
 #define NSTATUS_UPDATES 50  // set this to the number of times a progress update should be issued for the simulation
-			if (hour % (8760 / NSTATUS_UPDATES) == 0)
-			{
-				float percent = 100.0f * ((float)hour + 1) / ((float)8760);
-				if (!update("", percent, (float)hour))
-					throw exec_error("pvwattsv7", "simulation canceled at hour " + util::to_string(hour + 1.0));
-			}
-
-
-			for (size_t jj = 0; jj < step_per_hour; jj++)
-			{
-				if (!wdprov->read(&wf))
-					throw exec_error("pvwattsv7", util::format("could not read data line %d of %d in weather file", (int)(idx + 1), (int)nrec));
-
-				bool tracker_stowing = false;
-
-				p_gh[idx] = (ssc_number_t)wf.gh;
-				p_dn[idx] = (ssc_number_t)wf.dn;
-				p_df[idx] = (ssc_number_t)wf.df;
-				p_tamb[idx] = (ssc_number_t)wf.tdry;
-				p_wspd[idx] = (ssc_number_t)wf.wspd;
-				p_snow[idx] = (ssc_number_t)wf.snow;
-				p_tmod[idx] = (ssc_number_t)wf.tdry;
-
-
-				// allow monthly/daily albedo options for albedo, but default otherwise to simply 0.2
-				double alb = 0.2;
-				if (albedo_len == 1)
-					alb = albedo[0];
-				else if (albedo_len == 12)
-					alb = albedo[wf.month - 1];
-				else if (albedo_len == nrec)
-					alb = albedo[idx];
-
-
-				// if the snow loss model is enabled, and there's valid snow > 0.5 cm depth
-				// then increase the albedo.  
-				// however, if the snow loss model is disabled, do not artificially increase
-				// apparent production if snow covering the modules is not being accounted for
-				if (std::isfinite(wf.snow) && wf.snow > 0.5 && wf.snow < 999
-					&& en_snowloss)
-					alb = 0.6;
-
-				// if the weather file gives an hourly albedo, then just use it
-				if (std::isfinite(wf.alb) && wf.alb > 0 && wf.alb < 1 && albedo_len == 0)
-					alb = wf.alb;
-
-
-				irrad irr;
-				irr.set_time(wf.year, wf.month, wf.day, wf.hour, wf.minute,
-					instantaneous ? IRRADPROC_NO_INTERPOLATE_SUNRISE_SUNSET : ts_hour);
-				irr.set_location(hdr.lat, hdr.lon, hdr.tz);
-				irr.set_sky_model(2, alb);
-				irr.set_beam_diffuse(wf.dn, wf.df);
-
-				int track_mode = 0;
-				switch (pv.type)
+				if (hour % (8760 / NSTATUS_UPDATES) == 0)
 				{
-				case FIXED_RACK:
-				case FIXED_ROOF:
-					track_mode = 0;
-					break;
-				case ONE_AXIS:
-				case ONE_AXIS_BACKTRACKING:
-					track_mode = 1;
-					break;
-				case TWO_AXIS:
-					track_mode = 2;
-					break;
-				case AZIMUTH_AXIS:
-					track_mode = 3;
-					break;
+					float percent = 100.0f * ((float)idx_life + 1) / ((float)nlifetime / 3.0f); //3 is the number of technologies we're assuming for this output (pvwatts + fuel cell + battery)
+					if (!update("", percent, (float)hour))
+						throw exec_error("pvwattsv7", "simulation canceled at hour " + util::to_string(hour + 1.0));
 				}
 
-				irr.set_surface(track_mode, pv.tilt, pv.azimuth, pv.rotlim,
-					pv.type == ONE_AXIS_BACKTRACKING, // backtracking mode
-					pv.gcr, false, 0.0);
-
-				int code = irr.calc();
-
-				double solazi, solzen, solalt;
-				int sunup;
-				double aoi, stilt, sazi, rot, btd;
-				double ibeam = 0.0, iskydiff = 0.0, ignddiff = 0.0, irear = 0.0;
-
-				irr.get_sun(&solazi, &solzen, &solalt, 0, 0, 0, &sunup, 0, 0, 0);
-				irr.get_angles(&aoi, &stilt, &sazi, &rot, &btd);
-				irr.get_poa(&ibeam, &iskydiff, &ignddiff, 0, 0, 0);
-
-				if (module.bifaciality > 0)
+				for (size_t jj = 0; jj < step_per_hour; jj++)
 				{
-					irr.calc_rear_side(0.013, 1, module.length * pv.nmody);
-					irear = irr.get_poa_rear();
-				}
+					if (!wdprov->read(&wf))
+						throw exec_error("pvwattsv7", util::format("could not read data line %d of %d in weather file", (int)(idx + 1), (int)nrec));
 
-				if (-1 == code)
-				{
-					log(util::format("beam irradiance exceeded extraterrestrial value at record [y:%d m:%d d:%d h:%d]",
-						wf.year, wf.month, wf.day, wf.hour));
-				}
-				else if (0 != code)
-					throw exec_error("pvwattsv7",
-						util::format("failed to process irradiation on surface (code: %d) [y:%d m:%d d:%d h:%d]",
-							code, wf.year, wf.month, wf.day, wf.hour));
+					bool tracker_stowing = false;
 
-				p_sunup[idx] = (ssc_number_t)sunup;
-				p_aoi[idx] = (ssc_number_t)aoi;
-
-				double shad_beam = 1.0;
-				if (shad.fbeam(hour, solalt, solazi, jj, step_per_hour))
-					shad_beam = shad.beam_shade_factor();
-
-				p_shad_beam[idx] = (ssc_number_t)shad_beam;
+					p_gh[idx] = (ssc_number_t)wf.gh;
+					p_dn[idx] = (ssc_number_t)wf.dn;
+					p_df[idx] = (ssc_number_t)wf.df;
+					p_tamb[idx] = (ssc_number_t)wf.tdry;
+					p_wspd[idx] = (ssc_number_t)wf.wspd;
+					p_snow[idx] = (ssc_number_t)wf.snow; //what happens if there is no snow value in the weather file? should this be conditionally defined?
+					p_tmod[idx] = (ssc_number_t)wf.tdry;
 
 
-				double poa = 0, tpoa = 0, tmod = 0, dc = 0, ac = 0;
+					// start by defaulting albedo value to 0.2
+					double alb = 0.2;
 
-				if (sunup > 0)
-				{
-					double wm2_to_wh = module_m2;
+					// if the snow loss model is enabled, and there's valid snow > 0.5 cm depth, then increase the albedo.  
+					// however, if the snow loss model is disabled, do not artificially increase
+					// apparent production if snow covering the modules is not being accounted for
+					if (std::isfinite(wf.snow) && wf.snow > 0.5 && wf.snow < 999
+						&& en_snowloss)
+						alb = 0.6;
 
-					// save the total available POA for the loss diagram
-					ld("poa_nominal") += (ibeam + iskydiff + ignddiff)*wm2_to_wh;
+					// if the user has defined single value, monthly, or timeseries albedo input, then use the value they've specified
+					if (albedo_len == 1)
+						alb = albedo[0];
+					else if (albedo_len == 12)
+						alb = albedo[wf.month - 1];
+					else if (albedo_len == nrec)
+						alb = albedo[idx];
 
-					ld("poa_loss_bifacial") += (-irear)*wm2_to_wh;
+					// if the user hasn't specified an albedo, and the weather file contains hourly albedo, use that instead
+					// albedo_len will be zero if the albedo input isn't assigned
+					if (std::isfinite(wf.alb) && wf.alb > 0 && wf.alb < 1 && albedo_len == 0)
+						alb = wf.alb;
 
 
-					// check for wind stowing on trackers
-					if ((pv.type == ONE_AXIS
-						|| pv.type == ONE_AXIS_BACKTRACKING
-						|| pv.type == TWO_AXIS)
-						&& std::isfinite(wf.wspd) && wf.wspd > 0 && wf.wspd < 20
-						&& std::isfinite(wstow)
-						&& enable_wind_stow)
+					irrad irr;
+					irr.set_time(wf.year, wf.month, wf.day, wf.hour, wf.minute,
+						instantaneous ? IRRADPROC_NO_INTERPOLATE_SUNRISE_SUNSET : ts_hour);
+					irr.set_location(hdr.lat, hdr.lon, hdr.tz);
+					irr.set_sky_model(2, alb);
+					irr.set_beam_diffuse(wf.dn, wf.df);
+
+					int track_mode = 0;
+					switch (pv.type)
 					{
-						double gf = gustf;
-						if (!std::isfinite(gf))
-						{
-							// determine the sustained 1 minute gust wind speed
-							// based on the current time step
-							// this translation is for the 'in-land' category in
-							// table 1.1 of the World Metereological Organization report
-							//  'Guidelines for converting between various wind averaging periods
-							//   in tropical cyclone conditions', October 2008
-
-							double ts_sec = ts_hour * 3600.0;
-							if (ts_sec >= 600)
-								gf = 1.28;
-							else if (ts_sec >= 180)
-								gf = 1.21;
-							else if (ts_sec >= 120)
-								gf = 1.15;
-							else if (ts_sec >= 60)
-								gf = 1.13;
-							else
-								gf = 1.0;
-						}
-
-						double gust = gf * wf.wspd;
-
-						if (gust > wstow)
-						{
-							// save poa before going into stow position
-							double poa_no_stow = ibeam + iskydiff + ignddiff;
-
-							if (pv.type == TWO_AXIS)
-							{
-								// two axis tracker stows at the horizontal position
-								irr.set_surface(irrad::FIXED_TILT, // tracking 0=fixed 
-									0, 180, // tilt, azimuth 
-									0, 0, 0.4, false, 0.0); // rotlim, bt, gcr, force to stow, stow angle
-							}
-							else
-							{
-								// one axis tracker stows at a prescribed rotation angle,
-								// but still need to consider the rotation axis tilt and azimuth
-								double stow_angle = fabs(wind_stow_angle_deg);
-								if (rot < 0) stow_angle = -stow_angle;  // go to stow in the same direction of current tracker position
-
-								irr.set_surface(irrad::SINGLE_AXIS, pv.tilt, pv.azimuth,
-									stow_angle, // rotation angle limit, the forced stow position
-									false, // backtracking mode
-									pv.gcr,
-									true, stow_angle  // force tracker to the rotation limit (stow_angle here)
-								);
-							}
-
-							irr.calc(); // recalculate POA and aoi, and rear side irradiance if bifacial
-
-							double irear_stow = 0.0;
-							if (module.bifaciality > 0)
-							{
-								irr.calc_rear_side(0.013, 1, module.length * pv.nmody);
-								irear_stow = irr.get_poa_rear();
-							}
-
-							irr.get_angles(&aoi, &stilt, &sazi, &rot, &btd);
-							irr.get_poa(&ibeam, &iskydiff, &ignddiff, 0, 0, 0);
-							double poa_stow = ibeam + iskydiff + ignddiff;
-
-							double stow_loss = (poa_no_stow - poa_stow) + (irear - irear_stow);
-							ld("poa_loss_tracker_stow") += stow_loss * wm2_to_wh;
-							irear = irear_stow;
-							tracker_stowing = true;
-						}
+					case FIXED_RACK:
+					case FIXED_ROOF:
+						track_mode = 0;
+						break;
+					case ONE_AXIS:
+					case ONE_AXIS_BACKTRACKING:
+						track_mode = 1;
+						break;
+					case TWO_AXIS:
+						track_mode = 2;
+						break;
+					case AZIMUTH_AXIS:
+						track_mode = 3;
+						break;
 					}
 
-					// apply hourly external shading factors to beam (if none enabled, factors are 1.0)
-					ld("poa_loss_ext_beam_shade") += ibeam * (1.0 - shad_beam)*wm2_to_wh;
-					ibeam *= shad_beam;
+					irr.set_surface(track_mode, pv.tilt, pv.azimuth, pv.rotlim,
+						pv.type == ONE_AXIS_BACKTRACKING, // backtracking mode
+						pv.gcr, false, 0.0);
 
-					// apply hourly external sky diffuse shading factor (specified as constant, nominally 1.0 if disabled in UI)
-					ld("poa_loss_ext_diff_shade") += (iskydiff + ignddiff)*(1.0 - shad.fdiff())*wm2_to_wh;
-					iskydiff *= shad.fdiff();
+					int code = irr.calc();
 
-					// also applies to back irradiance if sky is blocked
-					irear *= shad.fdiff();
+					//create variables to store outputs 
+					double solazi, solzen, solalt, aoi, stilt, sazi, rot, btd;
+					int sunup;
+					double ibeam = 0.0, iskydiff = 0.0, ignddiff = 0.0, irear = 0.0;
+					double poa = 0, tpoa = 0, tmod = 0, dc = 0, ac = 0;
 
-					// save the unselfshaded beam irradiance if nonlinear losses are calculated
-					// to avoid double counting the beam irradiance loss when calculating module power output
-					double ibeam_unselfshaded = ibeam;
+					irr.get_sun(&solazi, &solzen, &solalt, 0, 0, 0, &sunup, 0, 0, 0);
+					irr.get_angles(&aoi, &stilt, &sazi, &rot, &btd);
+					irr.get_poa(&ibeam, &iskydiff, &ignddiff, 0, 0, 0);
 
-					// calculate any self-shading effects in fixed or tracking regular row systems
-					double f_nonlinear = 1.0;
-					double Fskydiff = 1.0;
-					double Fgnddiff = 1.0;
-
-					if ((pv.nrows >= 10)
-						&& (pv.type == FIXED_RACK || pv.type == ONE_AXIS)
-						&& !tracker_stowing)
+					if (module.bifaciality > 0)
 					{
-						// calculate one axis tracker self-shade fraction if needed
-						double shad1xf = 0.0; // default: zero shade fraction
-						if (pv.type == ONE_AXIS)
-							shad1xf = shadeFraction1x(solazi, solzen, pv.tilt, pv.azimuth, pv.gcr, rot);
+						irr.calc_rear_side(0.013, 1, module.length * pv.nmody);
+						irear = irr.get_poa_rear();
+					}
 
-						ssinputs ssin;
-						ssin.nstrx = (int)(((double)pv.nmodx) / pv.nmodperstr);
-						ssin.nmodx = pv.nmodx;
-						ssin.nmody = pv.nmody;
-						ssin.nrows = pv.nrows;
-						ssin.length = module.length;
-						ssin.width = module.width;
-						ssin.mod_orient = 0; // portrait module orientation
-						ssin.str_orient = 1; // horizontal stringing
-						ssin.row_space = pv.row_spacing;
-						ssin.ndiode = module.ndiode;
-						ssin.Vmp = module.vmp;
-						ssin.mask_angle_calc_method = 0; // worst case mask angle assumption
-						ssin.FF0 = module.ff;
-						ssoutputs ssout;
+					if (-1 == code)
+					{
+						log(util::format("beam irradiance exceeded extraterrestrial value at record [y:%d m:%d d:%d h:%d]",
+							wf.year, wf.month, wf.day, wf.hour));
+					}
+					else if (0 != code)
+						throw exec_error("pvwattsv7",
+							util::format("failed to process irradiation on surface (code: %d) [y:%d m:%d d:%d h:%d]",
+								code, wf.year, wf.month, wf.day, wf.hour));
 
-						ss_exec(ssin,
-							stilt, sazi, //surface tilt and azimuth
-							solzen, solazi, //solar zenith and azimuth
-							wf.dn, // Gb_nor (e.g. DNI)
-							wf.df, //Gdh (e.g. DHI)
-							ibeam*(1.0 - shad1xf), // Gb_poa
-							iskydiff, //poa_sky
-							ignddiff, // poa_gnd 
-							alb,
-							pv.type == ONE_AXIS, // is tracking system? 
-							module.type == THINFILM,  // is linear shading? (only with long cell thin films)
-							shad1xf,
-							ssout);
+					p_sunup[idx] = (ssc_number_t)sunup;
+					p_aoi[idx] = (ssc_number_t)aoi;
+
+					double shad_beam = 1.0;
+					if (shad.fbeam(hour, solalt, solazi, jj, step_per_hour))
+						shad_beam = shad.beam_shade_factor();
+
+					p_shad_beam[idx] = (ssc_number_t)shad_beam;
+
+					if (sunup > 0)
+					{
+						double wm2_to_wh = module_m2; //does this work for subhourly- wh? I don't think so. Think you need to convert with ts_hour here
+
+						// save the total available POA for the loss diagram
+						if (y==0) ld("poa_nominal") += (ibeam + iskydiff + ignddiff)*wm2_to_wh;
+						if (y==0) ld("poa_loss_bifacial") += (-irear)*wm2_to_wh;
 
 
-						if (pv.type == ONE_AXIS)
+						// check for wind stowing on trackers
+						if ((pv.type == ONE_AXIS
+							|| pv.type == ONE_AXIS_BACKTRACKING
+							|| pv.type == TWO_AXIS)
+							&& std::isfinite(wf.wspd) && wf.wspd > 0 && wf.wspd < 20
+							&& std::isfinite(wstow)
+							&& enable_wind_stow)
 						{
-							// one-axis tracker with linear self-shading
-							ld("poa_loss_self_beam_shade") += ibeam * shad1xf*wm2_to_wh;
-							ibeam *= (1 - shad1xf);
+							double gf = gustf;
+							if (!std::isfinite(gf)) //if gust factor isn't defined by user, determine it for them
+							{
+								// determine the sustained 1 minute gust wind speed
+								// based on the current time step
+								// this translation is for the 'in-land' category in
+								// table 1.1 of the World Metereological Organization report
+								//  'Guidelines for converting between various wind averaging periods
+								//   in tropical cyclone conditions', October 2008
+
+								double ts_sec = ts_hour * 3600.0;
+								if (ts_sec >= 600)
+									gf = 1.28;
+								else if (ts_sec >= 180)
+									gf = 1.21;
+								else if (ts_sec >= 120)
+									gf = 1.15;
+								else if (ts_sec >= 60)
+									gf = 1.13;
+								else
+									gf = 1.0;
+							}
+
+							double gust = gf * wf.wspd;
+
+							if (gust > wstow)
+							{
+								// save poa before going into stow position
+								double poa_no_stow = ibeam + iskydiff + ignddiff;
+
+								if (pv.type == TWO_AXIS)
+								{
+									// two axis tracker stows at the horizontal position
+									irr.set_surface(irrad::FIXED_TILT, // tracking 0=fixed 
+										0, 180, // tilt, azimuth 
+										0, 0, 0.4, false, 0.0); // rotlim, bt, gcr, force to stow, stow angle
+								}
+								else
+								{
+									// one axis tracker stows at a prescribed rotation angle,
+									// but still need to consider the rotation axis tilt and azimuth
+									double stow_angle = fabs(wind_stow_angle_deg);
+									if (rot < 0) stow_angle = -stow_angle;  // go to stow in the same direction of current tracker position
+
+									irr.set_surface(irrad::SINGLE_AXIS, pv.tilt, pv.azimuth,
+										stow_angle, // rotation angle limit, the forced stow position
+										false, // backtracking mode
+										pv.gcr,
+										true, stow_angle  // force tracker to the rotation limit (stow_angle here)
+									);
+								}
+
+								irr.calc(); // recalculate POA and aoi, and rear side irradiance if bifacial, in the new stow position
+
+								double irear_stow = 0.0;
+								if (module.bifaciality > 0)
+								{
+									irr.calc_rear_side(0.013, 1, module.length * pv.nmody);
+									irear_stow = irr.get_poa_rear();
+								}
+
+								irr.get_angles(&aoi, &stilt, &sazi, &rot, &btd);
+								irr.get_poa(&ibeam, &iskydiff, &ignddiff, 0, 0, 0);
+								double poa_stow = ibeam + iskydiff + ignddiff;
+
+								double stow_loss = (poa_no_stow - poa_stow) + (irear - irear_stow);
+								if (y==0) ld("poa_loss_tracker_stow") += stow_loss * wm2_to_wh;
+								irear = irear_stow;
+								tracker_stowing = true;
+							}
 						}
-						else if (pv.type == FIXED_RACK)
+
+						// apply hourly external shading factors to beam (if none enabled, factors are 1.0)
+						if (y==0) ld("poa_loss_ext_beam_shade") += ibeam * (1.0 - shad_beam)*wm2_to_wh;
+						ibeam *= shad_beam;
+
+						// apply hourly external sky diffuse shading factor (specified as constant, nominally 1.0 if disabled in UI)
+						if (y == 0) ld("poa_loss_ext_diff_shade") += (iskydiff + ignddiff)*(1.0 - shad.fdiff())*wm2_to_wh;
+						iskydiff *= shad.fdiff();
+
+						// also applies to back irradiance if sky is blocked
+						irear *= shad.fdiff();
+
+						// save the unselfshaded beam irradiance if nonlinear losses are calculated
+						// to avoid double counting the beam irradiance loss when calculating module power output
+						double ibeam_unselfshaded = ibeam;
+
+						// calculate any self-shading effects in fixed or tracking regular row systems
+						double f_nonlinear = 1.0; //nonlinear shading factor, 1 for no shading
+						double Fskydiff = 1.0; //shading factor for sky diffuse, 1 for no shading
+						double Fgnddiff = 1.0; //shading factor for ground-reflected diffuse, 1 for no shading
+
+						
+						if ( (pv.type == FIXED_RACK || pv.type == ONE_AXIS || pv.type == ONE_AXIS_BACKTRACKING) //shading applies in each of these three cases- see reference implementation in pvsamv1
+							&& (pv.nrows >= 10) // only for big enough systems?
+							&& !tracker_stowing ) //why not calculating shading in tracker stowing?
 						{
-							// fixed tilt system with linear self-shading
-							ld("poa_loss_self_beam_shade") += ibeam * ssout.m_shade_frac_fixed*wm2_to_wh;
-							ibeam *= (1 - ssout.m_shade_frac_fixed);///////////////////////////////////////////////////////////////////////////??????????????????????????????????
+							// first calculate linear shading for one-axis trackers for use in self-shading algorithms
+							double shad1xf = 0.0; // default: zero shade fraction
+							if (pv.type == ONE_AXIS)
+							{
+								shad1xf = shadeFraction1x(solazi, solzen, pv.tilt, pv.azimuth, pv.gcr, rot);
+							}
+
+							// run self-shading calculations for both FIXED_RACK and ONE_AXIS because the non-linear derate applies in both cases (below)
+							ssinputs ssin;
+							ssin.nstrx = (int)(((double)pv.nmodx) / pv.nmodperstr);
+							ssin.nmodx = pv.nmodx;
+							ssin.nmody = pv.nmody;
+							ssin.nrows = pv.nrows;
+							ssin.length = module.length;
+							ssin.width = module.width;
+							ssin.mod_orient = 0; // portrait module orientation
+							ssin.str_orient = 1; // horizontal stringing
+							ssin.row_space = pv.row_spacing;
+							ssin.ndiode = module.ndiode;
+							ssin.Vmp = module.vmp;
+							ssin.mask_angle_calc_method = 0; // worst case mask angle assumption
+							ssin.FF0 = module.ff;
+							ssoutputs ssout;
+
+							if (!ss_exec(ssin,
+									stilt, sazi, //surface tilt and azimuth
+									solzen, solazi, //solar zenith and azimuth
+									wf.dn, // Gb_nor (e.g. DNI)
+									wf.df, //Gdh (e.g. DHI)
+									ibeam*(1.0 - shad1xf), // Gb_poa
+									iskydiff, //poa_sky
+									ignddiff, // poa_gnd 
+									alb,
+									pv.type == ONE_AXIS, // is tracking system? 
+									module.type == THINFILM,  // is linear shading? (only with long cell thin films)
+									shad1xf,
+									ssout))
+							{
+								throw exec_error("pvwattsv7", util::format("Self-shading calculation failed at %d", (int)idx_life));
+							}
+
+							// fixed tilt system with linear self-shading: beam is derated by fixed shade fraction
+							// fixed tilt non-linear self-shading, beam would NOT usually be derated, because non-linear dc derate accounts for it
+							// however, to be able to distinguish between irradiance and non-linear shading in loss diagram:
+							// we will apply it here, BUT, we will use an un-self-shaded irradiance in the power calculations later
+							// so that the loss isn't double counted.
+							if (pv.type == FIXED_RACK) 
+							{
+								if (y == 0) ld("poa_loss_self_beam_shade") += ibeam * ssout.m_shade_frac_fixed*wm2_to_wh;
+								ibeam *= (1 - ssout.m_shade_frac_fixed);
+							}
+
+							// one-axis true tracking system with linear self-shading: beam is derated by linear shade fraction for 1-axis trackers
+							// one-axis non-linear self-shading, beam would NOT usually be derated, because non-linear dc derate accounts for it
+							// however, to be able to distinguish between irradiance and non-linear shading in loss diagram:
+							// we will apply it here, BUT, we will use an un-self-shaded irradiance in the power calculations later
+							// so that the loss isn't double counted.
+							else if (pv.type == ONE_AXIS)
+							{
+								if (y == 0) ld("poa_loss_self_beam_shade") += ibeam * shad1xf * wm2_to_wh;
+								ibeam *= (1 - shad1xf);
+							}
+
+							// for non-linear self-shading (fixed and one-axis, but not backtracking)
+							// the non-linear dc derate is calculated and we need to save it for later
+							else if ((pv.type == FIXED_RACK || pv.type == ONE_AXIS) && module.type != THINFILM)
+							{
+								f_nonlinear = ssout.m_dc_derate;
+							}
+							
+							// for backtracked systems, there is no beam irradiance reduction or non-linear DC derate
+							// however, sky and ground-reflected diffuse are still blocked, so apply those to everything below
+
+							// always derate diffuse for any self-shaded system,
+							// due to inter-row blocking of sky and ground view factors.
+							// the derates are calculated by the lib_pvshade.cpp:diffuse_reduce() function and are
+							// purely geometric - apply independent of whether DC derate loss is linear or nonlinear
+							Fskydiff = ssout.m_diffuse_derate;
+							Fgnddiff = ssout.m_reflected_derate;
+
 						}
 
-						if (module.type == STANDARD || module.type == PREMIUM)
+						// apply derate factors to diffuse
+						if (Fskydiff >= 0 && Fskydiff <= 1)
 						{
-							// non linear self shading, fixed OR one-axis				
-								// note: don't use derated ibeam for module power calcs: 
-								// total loss is encapsulated in the DC derate
-								// SO: if dcshadedderate < 1.0, then use ibeam_noselfshade
-								// as the POA in the module power calculation below...
-							f_nonlinear = ssout.m_dc_derate;
+							if (y == 0) ld("poa_loss_self_diff_shade") += (1.0 - Fskydiff)*(iskydiff + irear)*wm2_to_wh; //irear is zero if not bifacial
+							iskydiff *= Fskydiff;
+							irear *= Fskydiff;
+						}
+						else log(util::format("sky diffuse reduction factor invalid at time %lg: fskydiff=%lg, stilt=%lg", idx, Fskydiff, stilt), SSC_NOTICE, (float)idx);
+
+						if (Fgnddiff >= 0 && Fgnddiff <= 1)
+						{
+							if (y == 0) ld("poa_loss_self_diff_shade") += (1.0 - Fgnddiff)*ignddiff*wm2_to_wh;
+							ignddiff *= Fgnddiff;
+						}
+						else log(util::format("ground diffuse reduction factor invalid at time %lg: fgnddiff=%lg, stilt=%lg", idx, Fgnddiff, stilt), SSC_NOTICE, (float)idx);
+
+
+						// apply soiling loss to the total effective POA
+						if (is_assigned("soiling"))
+						{
+							double soiling_f = 0.0;
+							if (soiling_len == 1)
+								soiling_f = soiling[0] * 0.01; //convert from percentage to decimal
+							else if (soiling_len == 12)
+								soiling_f = soiling[wf.month - 1] * 0.01; //convert from percentage to decimal
+							else if (soiling_len == nrec)
+								soiling_f = soiling[idx] * 0.01; //convert from percentage to decimal
+							else
+								throw exec_error("pvwattsv7", "soiling input array must have 1, 12, or nrecords values");
+
+							if (y == 0) ld("poa_loss_soiling") += (ibeam + iskydiff + ignddiff) * soiling_f * wm2_to_wh;
+
+							ibeam *= (1.0 - soiling_f);
+							iskydiff *= (1.0 - soiling_f);
+							ignddiff *= (1.0 - soiling_f);
+							// note: assume no soiling on rear side?
 						}
 						else
-						{ // linear loss for any thin films
-							f_nonlinear = 1.0;
-						}
+							if (y == 0) ld("poa_loss_soiling") = 0;
 
-						// always derate diffuse also for fixed or one axis self shaded systems,
-						// due to inter-row blocking of sky and ground view factors.
-						// the derates are calculated by the lib_pvshade.cpp:diffuse_reduce() function and are
-						// purely geometric - should apply independent of whether DC derate loss is linear or nonlinear
-						Fskydiff = ssout.m_diffuse_derate;
-						Fgnddiff = ssout.m_reflected_derate;
-					}
-					else if (pv.nrows >= 10 && pv.type == ONE_AXIS_BACKTRACKING)
-					{
-						// for backtracked systems, there is no nonlinear DC derate or beam irradiance reduction.
-						// however, sky and ground-reflected diffuse is still blocked, so calculate
-						// the reductions and apply it
-						// note: the diffuse_reduce() function is called in ss_exec above
+						// now add up total effective POA, accounting for external and self shading
+						poa = ibeam + iskydiff + ignddiff + irear; //irear is zero if not bifacial
 
-						double reduced_skydiff = iskydiff;
-						double reduced_gnddiff = ignddiff;
+						// dc power nominal before any losses
+						double dc_nom = pv.dc_nameplate*poa / 1000; // Watts_DC * (POA W/m2 / 1000 W/m2 STC value );
+						if (y == 0) ld("dc_nominal") += dc_nom;
 
-						// worst-case mask angle using calculated surface tilt
-						//double phi0 = 180 / 3.1415926*atan2(sind(stilt), 1 / pv.gcr - cosd(stilt));
-
-						// calculate sky and gnd diffuse derate factors
-						// based on view factor reductions from self-shading
-						diffuse_reduce(solzen, stilt,
-							wf.dn, wf.df, iskydiff, ignddiff,
-							pv.gcr, alb, 1000,
-
-							// outputs (pass by reference)
-							reduced_skydiff, Fskydiff,
-							reduced_gnddiff, Fgnddiff);
-
-					}
-
-					// apply derate factors to diffuse
-					if (Fskydiff >= 0 && Fskydiff <= 1)
-					{
-						ld("poa_loss_self_diff_shade") += (1.0 - Fskydiff)*(iskydiff + irear)*wm2_to_wh;
-						iskydiff *= Fskydiff;
-						irear *= Fskydiff;
-					}
-
-					if (Fgnddiff >= 0 && Fgnddiff <= 1)
-					{
-						ld("poa_loss_self_diff_shade") += (1.0 - Fgnddiff)*ignddiff*wm2_to_wh;
-						ignddiff *= Fgnddiff;
-					}
-
-
-					// apply soiling loss to the total effective POA
-					if (is_assigned("soiling"))
-					{
-						double soiling_f = 0.0;
-						if (soiling_len == 1)
-							soiling_f = soiling[0] * 0.01;
-						else if (soiling_len == 12)
-							soiling_f = soiling[wf.month - 1] * 0.01;
-						else if (soiling_len == nrec)
-							soiling_f = soiling[idx] * 0.01;
-						else
-							throw exec_error("pvwattsv7", "soiling input array must have 1, 12, or nrecords values");
-
-						ld("poa_loss_soiling") += (ibeam + iskydiff + ignddiff) * soiling_f * wm2_to_wh;
-
-						ibeam *= (1.0 - soiling_f);
-						iskydiff *= (1.0 - soiling_f);
-						ignddiff *= (1.0 - soiling_f);
-					}
-					else
-						ld("poa_loss_soiling") = 0;
-					// note: assume no soiling on rear side?
-
-					// now add up total effective POA, accounting for external and self shading
-					poa = ibeam + iskydiff + ignddiff + irear;
-
-					// dc power nominal before any losses
-					double dc_nom = pv.dc_nameplate*poa / 1000; // Watts_DC * (POA W/m2 / 1000 W/m2 );
-					ld("dc_nominal") += dc_nom;
-
-					// module cover module to handle transmitted POA
-					double f_cover = 1.0;
-					if (aoi > AOI_MIN && aoi < AOI_MAX && poa > 0)
-					{
-						//double modifier = iam( aoi, module.ar_glass );
-						//double tpoa = poa - ( 1.0 - modifier )*wf.dn*cosd(aoi); // basic PVWatts method, skips diffuse calc
-
-						double tpoa = calculateIrradianceThroughCoverDeSoto(
-							aoi, solzen, stilt, ibeam, iskydiff, ignddiff, en_sdm == 0 && module.ar_glass);
-						if (tpoa < 0.0) tpoa = 0.0;
-						if (tpoa > poa) tpoa = poa;
-
-						f_cover = tpoa / poa;
-					}
-
-					ld("dc_loss_cover") += (1 - f_cover)*dc_nom;
-
-					// spectral correction via air mass modifier
-					double f_AM = air_mass_modifier(solzen, hdr.elev, AMdesoto);
-					ld("dc_loss_spectral") += (1 - f_AM)*dc_nom;
-
-					// cell temperature
-					double wspd_corr = wf.wspd < 0 ? 0 : wf.wspd;
-					tmod = tccalc(poa, wspd_corr, wf.tdry);
-
-					/*
-						// optional: maybe can use sandia typical open rack module thermal model
-						double a = -3.56;
-						double b = -0.075;
-						double dT = 3.0;
-						double Tmod = sandia_celltemp_t::sandia_module_temperature( poa, wspd_corr, wf.tdry, 1.0, a, b );
-						tmod = sandia_celltemp_t::sandia_tmod_from_tmodule( Tmod, poa, 1.0, dT);
-					*/
-
-					// module temperature losses
-					double f_temp = (1.0 + module.gamma*(tmod - 25.0));
-					ld("dc_loss_thermal") += dc_nom * (1.0 - f_temp);
-
-					// nonlinear dc loss from shading
-					ld("dc_loss_nonlinear") += dc_nom * (1.0 - f_nonlinear);
-
-					// dc losses
-					ld("dc_loss_other") += dc_nom * pv.dc_loss_percent*0.01;
-					double f_losses = (1 - pv.dc_loss_percent*0.01);
-
-					// run the snow loss model
-					double f_snow = 1.0;
-					if (en_snowloss)
-					{
-						float smLoss = 0.0f;
-						if (snowmodel.getLoss(
-							(float)poa, (float)stilt,
-							(float)wf.wspd, (float)wf.tdry, (float)wf.snow,
-							sunup, (float)ts_hour,
-							smLoss))
+						// module cover module to handle transmitted POA
+						double f_cover = 1.0;
+						if (aoi > AOI_MIN && aoi < AOI_MAX && poa > 0)
 						{
-							if (!snowmodel.good)
-								throw exec_error("pvwattsv7", snowmodel.msg);
+							double modifier = iam( aoi, module.ar_glass );
+							double tpoa = poa - ( 1.0 - modifier )*wf.dn*cosd(aoi); // basic PVWatts method, skips diffuse calc
+							
+							/*double tpoa = calculateIrradianceThroughCoverDeSoto(
+								aoi, solzen, stilt, ibeam, iskydiff, ignddiff, en_sdm == 0 && module.ar_glass);
+							if (tpoa < 0.0) tpoa = 0.0;
+							if (tpoa > poa) tpoa = poa;*/
+
+							f_cover = tpoa / poa;
 						}
-						f_snow = (1.0 - smLoss);
-					}
 
-					// dc snow loss
-					ld("dc_loss_snow") += dc_nom * (1.0 - f_snow);
+						if (y == 0) ld("dc_loss_cover") += (1 - f_cover)*dc_nom;
 
-					// calculate actual DC power now with all the derates/losses
-					double poa_for_power =
-						(f_nonlinear < 1.0 && poa > 0.0) // if there is a nonlinear self-shading derate
-						? (ibeam_unselfshaded + iskydiff + ignddiff) // then use the unshaded beam to calculate eff POA for power calc but adjust for IAM and spectral
-						: (ibeam + iskydiff + ignddiff); // otherwise, use the 'linearly' derated beam irradiance
+						// spectral correction via air mass modifier
+						double f_AM = 1.0; /* air_mass_modifier(solzen, hdr.elev, AMdesoto);
+						if (y == 0) ld("dc_loss_spectral") += (1 - f_AM)*dc_nom; */
 
-					poa_for_power *= f_cover * f_AM;
-					poa_for_power += irear * f_AM; // backside irradiance model already includes back cover effects
+						// cell temperature
+						double wspd_corr = wf.wspd < 0 ? 0 : wf.wspd; //correct the wind speed if it is negative
+						tmod = tccalc(poa, wspd_corr, wf.tdry);
 
-					if (en_sdm)
-					{
-						// single diode model per PVsyst using representative module parameters for each module type
-						double P_single_module_sdm = sdmml_power(sdm, poa_for_power, tmod);
-						dc = P_single_module_sdm * pv.dc_nameplate / (sdm.Vmp*sdm.Imp);
+						/*
+							// optional: maybe can use sandia typical open rack module thermal model
+							double a = -3.56;
+							double b = -0.075;
+							double dT = 3.0;
+							double Tmod = sandia_celltemp_t::sandia_module_temperature( poa, wspd_corr, wf.tdry, 1.0, a, b );
+							tmod = sandia_celltemp_t::sandia_tmod_from_tmodule( Tmod, poa, 1.0, dT);
+						*/
+
+						// module temperature losses
+						double f_temp = (1.0 + module.gamma*(tmod - 25.0));
+						if (y == 0) ld("dc_loss_thermal") += dc_nom * (1.0 - f_temp);
+
+						// nonlinear dc loss from shading
+						if (y == 0) ld("dc_loss_nonlinear") += dc_nom * (1.0 - f_nonlinear);
+
+						// dc losses
+						if (y == 0) ld("dc_loss_other") += dc_nom * pv.dc_loss_percent*0.01;
+						double f_losses = (1 - pv.dc_loss_percent*0.01);
+
+						// run the snow loss model
+						double f_snow = 1.0;
+						if (en_snowloss)
+						{
+							float smLoss = 0.0f;
+							if (snowmodel.getLoss(
+								(float)poa, (float)stilt,
+								(float)wf.wspd, (float)wf.tdry, (float)wf.snow,
+								sunup, (float)ts_hour,
+								smLoss))
+							{
+								if (!snowmodel.good)
+									throw exec_error("pvwattsv7", snowmodel.msg);
+							}
+							f_snow = (1.0 - smLoss);
+						}
+
+						// dc snow loss
+						if (y == 0) ld("dc_loss_snow") += dc_nom * (1.0 - f_snow);
+
+						// calculate actual DC power now with all the derates/losses
+						// remember, that for non-linear self-shading, we don't use derated ibeam for module power 
+						// calculations because total loss is encapsulated in the DC derate
+						// but, we derated it earlier so we could break out the beam shading from the non-linear component.
+						// SO: if dcshadedderate < 1.0, then use ibeam_noselfshade
+						double poa_for_power =
+							(f_nonlinear < 1.0 && poa > 0.0) // if there is a nonlinear self-shading derate
+							? (ibeam_unselfshaded + iskydiff + ignddiff) // then use the unshaded beam to calculate eff POA for power calc but adjust for IAM and spectral
+							: (ibeam + iskydiff + ignddiff); // otherwise, use the 'linearly' derated beam irradiance
+						poa_for_power *= f_cover * f_AM; //derate irradiance for module cover and spectral effects
+						poa_for_power += irear * f_AM; // backside irradiance model already includes back cover effects
+
+						if (en_sdm)
+						{
+							// single diode model per PVsyst using representative module parameters for each module type
+							double P_single_module_sdm = sdmml_power(sdm, poa_for_power, tmod);
+							dc = P_single_module_sdm * pv.dc_nameplate / (sdm.Vmp*sdm.Imp);
+						}
+						else
+						{
+							// basic linear PVWatts model 
+							dc = pv.dc_nameplate * (poa_for_power / 1000) * f_temp;
+						}
+
+						// apply common DC losses here (independent of module model)
+						dc *= f_nonlinear * f_snow * f_losses;
+
+						// inverter efficiency
+						double etanom = pv.inv_eff_percent*0.01;
+						double etaref = 0.9637;
+						double A = -0.0162;
+						double B = -0.0059;
+						double C = 0.9858;
+						double pdc0 = pv.ac_nameplate / etanom;
+						double plr = dc / pdc0; //power loading ratio of the inverter
+						ac = 0;
+
+						if (y == 0) ld("ac_nominal") += dc;
+
+						if (plr > 0)
+						{ // normal operation
+							double eta = (A*plr + B / plr + C)*etanom / etaref;
+							ac = dc * eta;
+						}
+
+						if (y == 0) ld("ac_loss_efficiency") += dc - ac;
+
+						// power clipping
+						double cliploss = ac > pv.ac_nameplate ? ac - pv.ac_nameplate : 0.0;
+						if (y == 0) ld("ac_loss_inverter_clipping") += cliploss;
+						ac -= cliploss;
+
+						// make sure no negative AC values during daytime hour (no parasitic nighttime losses calculated for PVWatts)
+						if (ac < 0) ac = 0;
+
+						p_dcshadederate[idx] = (ssc_number_t)f_nonlinear;
+						p_dcsnowderate[idx] = (ssc_number_t)f_snow;
 					}
 					else
 					{
-						// basic linear PVWatts model 
-						dc = pv.dc_nameplate*(poa_for_power / 1000)*f_temp;
+						poa = 0;
+						tpoa = 0;
+						tmod = wf.tdry;
+						dc = 0;
+						ac = 0;
 					}
 
-					// apply common DC losses here (independent of module model)
-					dc *= f_nonlinear * f_snow * f_losses;
+					// transformer loss (night and day)
+					double iron_loss = pv.xfmr_nll_f * pv.xfmr_rating;
+					double winding_loss = pv.xfmr_ll_f * ac * (ac / pv.xfmr_rating);
+					double xfmr_loss = iron_loss + winding_loss;
+					if (y == 0) ld("ac_loss_transformer") += xfmr_loss;
+					ac -= xfmr_loss;
 
-					// inverter efficiency
-					double etanom = pv.inv_eff_percent*0.01;
-					double etaref = 0.9637;
-					double A = -0.0162;
-					double B = -0.0059;
-					double C = 0.9858;
-					double pdc0 = pv.ac_nameplate / etanom;
-					double plr = dc / pdc0;
-					ac = 0;
+					p_stow[idx] = (tracker_stowing ? 1.0f : 0.0f);
+					p_shad_beam[idx] = (ssc_number_t)shad_beam; // might be updated by 1 axis self shading so report updated value
 
-					ld("ac_nominal") += dc;
+					p_poa[idx] = (ssc_number_t)poa; // W/m2
+					p_tpoa[idx] = (ssc_number_t)tpoa;  // W/m2
+					p_tmod[idx] = (ssc_number_t)tmod;
+					p_dc[idx] = (ssc_number_t)dc; // power, Watts
+					p_ac[idx] = (ssc_number_t)ac; // power, Watts
 
-					if (plr > 0)
-					{ // normal operation
-						double eta = (A*plr + B / plr + C)*etanom / etaref;
-						ac = dc * eta;
+					// accumulate hourly energy (kWh) (was initialized to zero when allocated)
+					p_gen[idx_life] = (ssc_number_t)(ac * haf(hour) * util::watt_to_kilowatt * degradationFactor[y]);
+
+					if (y == 0) { //report first year annual energy
+						annual_kwh += p_gen[idx] / step_per_hour;
 					}
 
-					ld("ac_loss_efficiency") += dc - ac;
+					if (y == 0) ld("ac_loss_adjustments") += ac * (1.0 - haf(hour));
+					if (y == 0) ld("ac_delivered") += ac * haf(hour);
 
-					// power clipping
-					double cliploss = ac > pv.ac_nameplate ? ac - pv.ac_nameplate : 0.0;
-					ld("ac_loss_inverter_clipping") += cliploss;
-					ac -= cliploss;
-
-					double plantcliploss = ac > pv.ac_plant_max ? ac - pv.ac_plant_max : 0.0;
-					ld("ac_loss_plant_clipping") += plantcliploss;
-					ac -= plantcliploss;
-
-					// make sure no negative AC values during daytime hour
-					if (ac < 0) ac = 0;
-
-					p_dcshadederate[idx] = (ssc_number_t)f_nonlinear;
-					p_dcsnowderate[idx] = (ssc_number_t)f_snow;
+					idx++;
+					idx_life++;
 				}
-				else
-				{
-					poa = 0;
-					tpoa = 0;
-					tmod = wf.tdry;
-					dc = 0;
-					ac = 0;
-				}
-
-				// transformer loss (night and day)
-				double iron_loss = pv.xfmr_nll_f * pv.xfmr_rating;
-				double winding_loss = pv.xfmr_ll_f * ac * (ac / pv.xfmr_rating);
-				double xfmr_loss = iron_loss + winding_loss;
-				ld("ac_loss_transformer") += xfmr_loss;
-				ac -= xfmr_loss;
-
-				p_stow[idx] = (tracker_stowing ? 1.0f : 0.0f);
-				p_shad_beam[idx] = (ssc_number_t)shad_beam; // might be updated by 1 axis self shading so report updated value
-
-				p_poa[idx] = (ssc_number_t)poa; // W/m2
-				p_tpoa[idx] = (ssc_number_t)tpoa;  // W/m2
-				p_tmod[idx] = (ssc_number_t)tmod;
-				p_dc[idx] = (ssc_number_t)dc; // power, Watts
-				p_ac[idx] = (ssc_number_t)ac; // power, Watts
-
-				// accumulate hourly energy (kWh) (was initialized to zero when allocated)
-				p_gen[idx] = (ssc_number_t)(ac * haf(hour) * 0.001f); // W to kW
-
-				ld("ac_loss_adjustments") += ac * (1.0 - haf(hour));
-				ld("ac_delivered") += ac * haf(hour);
-
-				annual_kwh += p_gen[idx] * ts_hour;
-
-				idx++;
 			}
 
-			hour++;
+			wdprov->rewind();
+			if (y == 0) {
+				accumulate_monthly("gen", "monthly_energy", ts_hour);
+				accumulate_annual("gen", "annual_energy", ts_hour);
+			}
 		}
 
 		accumulate_monthly("dc", "dc_monthly", 0.001*ts_hour);
 		accumulate_monthly("ac", "ac_monthly", 0.001*ts_hour);
-		accumulate_monthly("gen", "monthly_energy", ts_hour);
 
 		ssc_number_t *poam = accumulate_monthly("poa", "poa_monthly", 0.001*ts_hour); // convert to energy
 		ssc_number_t *solrad = allocate("solrad_monthly", 12);
@@ -1212,7 +1220,6 @@ public:
 		assign("solrad_annual", var_data(solrad_ann / 12));
 
 		accumulate_annual("ac", "ac_annual", 0.001*ts_hour);
-		accumulate_annual("gen", "annual_energy", ts_hour);
 
 		assign("location", var_data(hdr.location));
 		assign("city", var_data(hdr.city));
@@ -1221,6 +1228,7 @@ public:
 		assign("lon", var_data((ssc_number_t)hdr.lon));
 		assign("tz", var_data((ssc_number_t)hdr.tz));
 		assign("elev", var_data((ssc_number_t)hdr.elev));
+		assign("percent_complete", var_data((ssc_number_t)percent));
 
 		double gcr_for_land = pv.gcr;
 		if (gcr_for_land < 0.01) gcr_for_land = 1.0;
@@ -1232,7 +1240,7 @@ public:
 		assign("inverter_efficiency", var_data((ssc_number_t)(as_double("inv_eff"))));
 
 		// metric outputs moved to technology
-		double kWhperkW = 1000.0*annual_kwh / pv.dc_nameplate;
+		double kWhperkW = util::kilowatt_to_watt * annual_kwh / pv.dc_nameplate;
 
 		// adjustment for timestep values
 		kWhperkW *= ts_hour;
