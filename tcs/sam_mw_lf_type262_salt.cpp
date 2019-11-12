@@ -155,6 +155,7 @@ enum{
 	O_E_TOT_ACCUM,
 	O_E_FIELD,
 	O_PIPING_SUMMARY,
+    O_DEFOCUS,
 
 	//Include N_max
 	N_MAX
@@ -291,6 +292,7 @@ tcsvarinfo sam_mw_lf_type262_variables[] = {
 	{ TCS_OUTPUT,          TCS_NUMBER,       O_E_TOT_ACCUM,            "E_tot_accum",                                           "Total accumulated internal energy change rate",         "MWht",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,           O_E_FIELD,                "E_field",                                   "Accumulated internal energy in the entire solar field",         "MWht",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_STRING,    O_PIPING_SUMMARY,         "piping_summary",                                    "String containing description of field piping design",         "none",             "",             "",             "" },
+    { TCS_OUTPUT,          TCS_NUMBER,           O_DEFOCUS,            "defocus_rel",                "Relative defocus for passing back to the controller to force convergence",         "none",             "",             "",             "" },
 
 	{ TCS_INVALID,    TCS_INVALID,    N_MAX,                0,                    0,                                                        0,                0,        0,        0 }
 };
@@ -2201,6 +2203,7 @@ set_outputs_and_return:
 		value(O_E_TOT_ACCUM, E_tot_accum);		//[MWht] Total accumulated internal energy change rate
 		value(O_E_FIELD, E_field_out);		//[MWht] Accumulated internal energy in the entire solar field
 		value_str(O_PIPING_SUMMARY, piping_summary);	//String containing description of field piping design
+        value(O_DEFOCUS, defocus);          //[-] Relative defocus for passing back to the controller to ensure TCS convergence
 
 		return 0;
 	}

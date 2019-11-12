@@ -2,7 +2,7 @@
 
 #define private public              // for setting private data members
 #include "lib_trough_test.h"
-
+/*
 TEST_F(TroughTest, DefocusTest_csp_solver_trough_collector_receiver)
 {
     // at time 1476 (1477 end time listed in output)
@@ -171,3 +171,4 @@ TEST_F(TroughTest, SteadyStateTest_csp_solver_trough_collector_receiver)
     EXPECT_NEAR(troughModel->m_T_sys_h_t_end, 656.3, 656.3 * m_error_tolerance_lo);
     EXPECT_NEAR(minutes2SS, 40., 40. * m_error_tolerance_hi);
 }
+*/

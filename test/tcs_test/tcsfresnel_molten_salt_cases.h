@@ -75,103 +75,103 @@ int tcsfresnel_molten_salt_tucson_optical_char_solar(ssc_data_t &data)
 // Linear Fresnel molten salt with alternative receiver model type
 // Receiver model type: Polynomial heat loss model
 // Rest default configurations with respect to the No Finanical model
-int tcsfresnel_molten_salt_tucson_polynomial_heat_loss_model(ssc_data_t &data)
-{
-	tcsfresnel_molten_salt_default(data);
-
-	ssc_data_set_number(data, "nLoops", 148);
-	ssc_data_set_number(data, "rec_model", 1);
-
-	int status = run_module(data, "tcsmslf");
-
-	return status;
-}
+//int tcsfresnel_molten_salt_tucson_polynomial_heat_loss_model(ssc_data_t &data)
+//{
+//	tcsfresnel_molten_salt_default(data);
+//
+//	ssc_data_set_number(data, "nLoops", 148);
+//	ssc_data_set_number(data, "rec_model", 1);
+//
+//	int status = run_module(data, "tcsmslf");
+//
+//	return status;
+//}
 
 // Linear Fresnel molten salt with alternative condenser type
 // Condenser type: Evaporative
 // Rest default configurations with respect to the No Finanical model
-int tcsfresnel_molten_salt_tucson_evap_condenser(ssc_data_t &data)
-{
-	tcsfresnel_molten_salt_default(data);
-
-	ssc_data_set_number(data, "CT", 1);
-
-	int status = run_module(data, "tcsmslf");
-
-	return status;
-}
+//int tcsfresnel_molten_salt_tucson_evap_condenser(ssc_data_t &data)
+//{
+//	tcsfresnel_molten_salt_default(data);
+//
+//	ssc_data_set_number(data, "CT", 1);
+//
+//	int status = run_module(data, "tcsmslf");
+//
+//	return status;
+//}
 
 // Linear Fresnel molten salt with alternative condenser type
 // Condenser type: Hybrid
 // Rest default configurations with respect to the No Finanical model
-int tcsfresnel_molten_salt_tucson_hybrid_condenser(ssc_data_t &data)
-{
-	tcsfresnel_molten_salt_default(data);
-
-	ssc_data_set_number(data, "CT", 3);
-
-	int status = run_module(data, "tcsmslf");
-
-	return status;
-}
+//int tcsfresnel_molten_salt_tucson_hybrid_condenser(ssc_data_t &data)
+//{
+//	tcsfresnel_molten_salt_default(data);
+//
+//	ssc_data_set_number(data, "CT", 3);
+//
+//	int status = run_module(data, "tcsmslf");
+//
+//	return status;
+//}
 
 // Linear Fresnel molten salt with alternative turbine inlet pressure control
 // Turbine inlet pressure control: Sliding pressure
 // Rest default configurations with respect to the No Finanical model
-int tcsfresnel_molten_salt_tucson_sliding_p(ssc_data_t &data)
-{
-	tcsfresnel_molten_salt_default(data);
-
-	ssc_data_set_number(data, "tech_type", 3);
-
-	int status = run_module(data, "tcsmslf");
-
-	return status;
-}
+//int tcsfresnel_molten_salt_tucson_sliding_p(ssc_data_t &data)
+//{
+//	tcsfresnel_molten_salt_default(data);
+//
+//	ssc_data_set_number(data, "tech_type", 3);
+//
+//	int status = run_module(data, "tcsmslf");
+//
+//	return status;
+//}
 
 // Linear Fresnel molten salt with alternative HTF freeze protection mode
 // HTF freeze protection mode: Electric heating
 // Rest default configurations with respect to the No Finanical model
-int tcsfresnel_molten_salt_tucson_HTF_freeze_protection(ssc_data_t &data)
-{
-	tcsfresnel_molten_salt_default(data);
-
-	ssc_data_set_number(data, "fp_mode", 1);
-
-	int status = run_module(data, "tcsmslf");
-
-	return status;
-}
+//int tcsfresnel_molten_salt_tucson_HTF_freeze_protection(ssc_data_t &data)
+//{
+//	tcsfresnel_molten_salt_default(data);
+//
+//	ssc_data_set_number(data, "fp_mode", 1);
+//
+//	int status = run_module(data, "tcsmslf");
+//
+//	return status;
+//}
 
 // Linear Fresnel molten salt with alternative storage HTF
 // Storage HTF: Therminol VP-1
 // Rest default configurations with respect to the No Finanical model
-int tcsfresnel_molten_salt_tucson_storage_HTF(ssc_data_t &data)
-{
-	tcsfresnel_molten_salt_default(data);
-
-	ssc_data_set_number(data, "store_fluid", 21);
-	ssc_data_set_number(data, "is_hx", 1);
-	ssc_data_set_number(data, "V_tank_hot_ini", 1963.66443);
-	ssc_data_set_number(data, "vol_tank", 9818.3223);
-
-	int status = run_module(data, "tcsmslf");
-
-	return status;
-}
+//int tcsfresnel_molten_salt_tucson_storage_HTF(ssc_data_t &data)
+//{
+//	tcsfresnel_molten_salt_default(data);
+//
+//	ssc_data_set_number(data, "store_fluid", 21);
+//	ssc_data_set_number(data, "is_hx", 1);
+//	ssc_data_set_number(data, "V_tank_hot_ini", 1963.66443);
+//	ssc_data_set_number(data, "vol_tank", 9818.3223);
+//
+//	int status = run_module(data, "tcsmslf");
+//
+//	return status;
+//}
 
 // Linear Fresnel molten salt with alternative Power Cycle
 // Power Cycle: User Defined 
 // Rest default configurations with respect to the No Finanical model
-int tcsfresnel_molten_salt_tucson_userdefined_default(ssc_data_t &data)
-{
-	tcsfresnel_molten_salt_default(data);
-
-	ssc_data_set_number(data, "pc_config", 1);
-
-	int status = run_module(data, "tcsmslf");
-
-	return status;
-}
+//int tcsfresnel_molten_salt_tucson_userdefined_default(ssc_data_t &data)
+//{
+//	tcsfresnel_molten_salt_default(data);
+//
+//	ssc_data_set_number(data, "pc_config", 1);
+//
+//	int status = run_module(data, "tcsmslf");
+//
+//	return status;
+//}
 
 #endif

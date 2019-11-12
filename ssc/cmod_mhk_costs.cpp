@@ -115,7 +115,7 @@ public:
 	void exec()
 	{
 		//get inputs to compute module
-		double device_rating = as_double("device_rated_power");
+		double device_rating = as_double("device_rated_power"); // kW
 		double system_capacity_kW = as_double("system_capacity"); // kW
 		double system_capacity_MW = system_capacity_kW / 1000.0; // MW
 		int device_type = as_integer("device_type");
@@ -181,8 +181,7 @@ public:
 			else //generic model applies to everything else
 			{
 				structural_assembly = 6854912.0 * system_capacity_MW + 2629191.0;
-				if (technology == WAVE) power_takeoff = 1179579.0 * system_capacity_MW + 2495107.0;
-				else power_takeoff = 2906035.0 * system_capacity_MW;
+				power_takeoff = 1179579.0 * system_capacity_MW + 2495107.0;
 				mooring_found_substruc = 1178598.0 * system_capacity_MW + 1602348.0;
 			}
 		}

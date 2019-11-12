@@ -88,6 +88,17 @@ void tidal_inputs(ssc_data_t &data) {
 	ssc_data_set_number(data, "annual_energy_loss", 0);	//in %
 	ssc_data_set_number(data, "calculate_capacity", 1);	//Calculate rated capacity outside UI?
 	ssc_data_set_number(data, "device_rated_capacity", 0);
+	ssc_data_set_number(data,"number_devices", 1);
+	ssc_data_set_number(data, "loss_array_spacing", 0);
+	ssc_data_set_number(data, "loss_resource_overprediction", 0);
+	ssc_data_set_number(data, "loss_transmission", 5);
+	ssc_data_set_number(data, "loss_downtime", 2);
+	ssc_data_set_number(data, "loss_additional", 0);
+	ssc_data_set_number(data, "capital_cost", 14902710);
+	ssc_data_set_number(data, "fixed_operating_cost", 1362080.125);
+	ssc_data_set_number(data, "variable_operating_cost", 0.30000001192092896);
+	ssc_data_set_number(data, "fixed_charge_rate", 0.1080000028014183);
+
 }
 
 

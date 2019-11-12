@@ -3165,11 +3165,11 @@ int C_CO2_to_air_cooler::off_design_given_T_out(double T_amb /*K*/, double T_hot
 	// Generate guess values
 	double m_dot_air_guess1 = m_dot_hot/ms_des_par_cycle_dep.m_m_dot_total*m_m_dot_air_des;		//[kg/s]
 	
-	double T_hot_in_calc = 1000.0;
+	double T_hot_in_calc1 = 1000.0;
 	int i_m_dot_guess = -1;
 
     // As air mass flow rate increases, T_hot_in_calc increases
-	while (T_hot_in_calc >= 965.0 || !std::isfinite(T_hot_in_calc))
+	while (T_hot_in_calc1 >= 965.0 || !std::isfinite(T_hot_in_calc1))
 	{
 		i_m_dot_guess++;
 
@@ -3179,10 +3179,19 @@ int C_CO2_to_air_cooler::off_design_given_T_out(double T_amb /*K*/, double T_hot
 		if (i_m_dot_guess > 10)
 			return -2;
 
-		int solver_code = c_m_dot_od_solver.test_member_function(m_dot_air_guess1, &T_hot_in_calc);
+		int solver_code = c_m_dot_od_solver.test_member_function(m_dot_air_guess1, &T_hot_in_calc1);
 	}
 	
 	double m_dot_air_guess2 = 0.7*m_dot_air_guess1;	//[kg/s]
+    double T_hot_in_calc2 = std::numeric_limits<double>::quiet_NaN();
+    int solver_code = c_m_dot_od_solver.test_member_function(m_dot_air_guess2, &T_hot_in_calc2);
+
+    while (T_hot_in_calc2 == T_hot_in_calc1 || !std::isfinite(T_hot_in_calc2))
+    {
+        m_dot_air_guess2 *= 1.25;
+
+        int solver_code = c_m_dot_od_solver.test_member_function(m_dot_air_guess2, &T_hot_in_calc2);
+    }
 
 	c_m_dot_od_solver.settings(tol_m_dot, 50, m_dot_air_lower, m_dot_air_upper, true);
 
