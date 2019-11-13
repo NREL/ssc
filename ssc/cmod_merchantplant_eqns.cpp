@@ -7,7 +7,7 @@
 
 #include "cmod_merchantplant_eqns.h"
 
-void mp_cpacity_check(ssc_data_t data)
+void mp_capacity_check(ssc_data_t data)
 {
     auto vt = static_cast<var_table*>(data);
     if (!vt){
@@ -72,6 +72,7 @@ void mp_cpacity_check(ssc_data_t data)
 
 			if (nsteps > 0)
 			{
+				if (nsteps < (8760 * analysis_period)) nsteps = 8760 * analysis_period; // extrapolated timeseries has minimum of hourly values for use in all forecasting 
 				std::vector<ssc_number_t> cleared_capacity(nsteps, 0.0);
 				std::vector<ssc_number_t> current_year_capacity;
 				std::vector<ssc_number_t> extrapolated_current_year_capacity;
