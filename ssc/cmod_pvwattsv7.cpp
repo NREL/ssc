@@ -904,7 +904,7 @@ public:
 
 						
 						if ( (pv.type == FIXED_RACK || pv.type == ONE_AXIS || pv.type == ONE_AXIS_BACKTRACKING) //shading applies in each of these three cases- see reference implementation in pvsamv1
-							&& (pv.nrows >= 10) // only for big enough systems?
+							//&& (pv.nrows >= 10) // only for big enough systems?
 							&& !tracker_stowing ) //why not calculating shading in tracker stowing?
 						{
 							// first calculate linear shading for one-axis trackers for use in self-shading algorithms
