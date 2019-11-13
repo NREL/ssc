@@ -157,6 +157,7 @@ std::vector<T> extrapolate_timeseries(std::vector<T> input_values, size_t steps_
 	for (size_t hour_of_year = 0; hour_of_year != 8760; hour_of_year++)
 	{
 		month = util::month_of(hour_of_year);
+		if (month > 0) month--; // month_of is 1 based and all other time functions are 0 based.
 		week = util::week_of(hour_of_year);
 		day = util::day_of(hour_of_year);
 		hour = hour_of_year;
