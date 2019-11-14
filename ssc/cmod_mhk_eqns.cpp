@@ -4,6 +4,7 @@
 #include "../shared/lib_util.h"
 
 #include "cmod_mhk_eqns.h"
+#pragma warning(disable: 4297)  // ignore warning: 'function assumed not to throw an exception but does'
 
 void me_array_cable_length(ssc_data_t data)
 {
