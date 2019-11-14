@@ -23,12 +23,14 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef __lib_vartab_h
 #define __lib_vartab_h
 
-#include "lib_util.h"
 #include <string>
 #include <vector>
 
 #include <unordered_map>
 using std::unordered_map;
+
+#include "lib_util.h"
+#include "sscapi.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable: 4290)  // ignore warning: 'C++ exception specification ignored except to indicate a function is not __declspec(nothrow)'

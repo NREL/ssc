@@ -59,7 +59,7 @@ protected:
 		CspWeatherReaderTest::SetUp();
 		sim_info.ms_ts.m_step = 3600;
 		sim_info.ms_ts.m_time_start = 0;
-		data = create_weatherdata_array(1); // allocates memory for weatherdata
+		data = create_weatherdata_array(); // allocates memory for weatherdata
 		wr.m_weather_data_provider = make_shared<weatherdata>(data);
 	}
 	void TearDown(){

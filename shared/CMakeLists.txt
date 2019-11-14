@@ -60,7 +60,6 @@ set(SHARED_SRC
 	lib_wind_obos_cable_vessel.cpp
 	lib_windwakemodel.cpp
 	lib_windwatts.cpp
-	vartab.cpp
 		)
 
 

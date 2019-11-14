@@ -5,7 +5,7 @@
 #include <gtest/gtest.h>
 #include "lib_weatherfile.h"
 #include "../ssc/common.h"
-#include "../shared/vartab.h"
+#include "vartab.h"
 
 /**
 * \class weatherfileTest

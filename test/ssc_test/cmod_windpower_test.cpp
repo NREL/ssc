@@ -2,7 +2,7 @@
 #include <vector>
 
 #include "../ssc/core.h"
-#include "../shared/vartab.h"
+#include "vartab.h"
 #include "../ssc/common.h"
 #include "cmod_windpower.h"
 #include "cmod_windpower_test.h"

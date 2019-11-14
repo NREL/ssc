@@ -4,7 +4,7 @@
 #ifndef _CMOD_TROUGH_PHYSICAL_IPH_TEST_H_
 #define _CMOD_TROUGH_PHYSICAL_IPH_TEST_H_
 
-#include "../shared/vartab.h"
+#include "vartab.h"
 #include "../ssc/common.h"
 #include "../tcs_test/trough_physical_iph_cases.h"
 

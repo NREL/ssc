@@ -4,7 +4,7 @@
 #ifndef _CMOD_TCSMOLTEN_SALT_TEST_H_
 #define _CMOD_TCSMOLTEN_SALT_TEST_H_
 
-#include "../shared/vartab.h"
+#include "vartab.h"
 #include "../ssc/common.h"
 #include "../tcs_test/tcsmolten_salt_cases.h"
 

@@ -7,7 +7,7 @@
 #include "core.h"
 #include "sscapi.h"
 
-#include "../shared/vartab.h"
+#include "vartab.h"
 #include "../ssc/common.h"
 #include "../test/input_cases/code_generator_utilities.h"
 

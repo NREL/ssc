@@ -4,7 +4,7 @@
 #ifndef _CMOD_PVYIELD_TEST_H_
 #define _CMOD_PVYIELD_TEST_H_
 
-#include "../shared/vartab.h"
+#include "vartab.h"
 #include "../ssc/common.h"
 #include "../input_cases/pvyield_cases.h"
 
