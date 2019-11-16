@@ -20,14 +20,15 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "common_financial.h"
-#include "lib_financial.h"
-using namespace libfin;
 #include <sstream>
 
 #ifndef WIN32
 #include <float.h>
 #endif
+#include "common_financial.h"
+#include "lib_financial.h"
+#include "cmod_merchantplant_eqns.h"
+using namespace libfin;
 
 static var_info _cm_vtab_merchantplant[] = {
 
@@ -1027,6 +1028,45 @@ public:
 		bool en_mp_ancserv4 = (as_integer("mp_enable_ancserv4") == 1);
 		// cleared capacity and price columns
 		// need to check sum of all cleared capacities.
+		/*
+		"analysis_period", analysis_period)
+			VT_GET_INPUT(vt, "mp_enable_energy_market_revenue", mp_enable_energy_market_revenue)
+			VT_GET_INPUT(vt, "mp_enable_ancserv1", mp_enable_ancserv1)
+			VT_GET_INPUT(vt, "mp_enable_ancserv2", mp_enable_ancserv2)
+			VT_GET_INPUT(vt, "mp_enable_ancserv3", mp_enable_ancserv3)
+			VT_GET_INPUT(vt, "mp_enable_ancserv4", mp_enable_ancserv4)
+			VT_GET_INPUT(vt, "mp_energy_market_revenue", mp_energy_market_revenue)
+			VT_GET_INPUT(vt, "mp_ancserv1_revenue", mp_ancserv1_revenue)
+			VT_GET_INPUT(vt, "mp_ancserv2_revenue", mp_ancserv2_revenue)
+			VT_GET_INPUT(vt, "mp_ancserv3_revenue", mp_ancserv3_revenue)
+			VT_GET_INPUT(vt, "mp_ancserv4_revenue", mp_ancserv4_revenue)
+			gen_is_assigned = (vt->lookup("gen") != NULL);
+*/
+		var_table* vd = new var_table;
+		vd->assign("analysis_period", *lookup("analysis_period"));
+		vd->assign("mp_enable_energy_market_revenue", *lookup("mp_enable_energy_market_revenue"));
+		vd->assign("mp_enable_ancserv1", *lookup("mp_enable_ancserv1"));
+		vd->assign("mp_enable_ancserv2", *lookup("mp_enable_ancserv2"));
+		vd->assign("mp_enable_ancserv3", *lookup("mp_enable_ancserv3"));
+		vd->assign("mp_enable_ancserv4", *lookup("mp_enable_ancserv4"));
+		vd->assign("mp_energy_market_revenue", *lookup("mp_energy_market_revenue"));
+		vd->assign("mp_ancserv1_revenue", *lookup("mp_ancserv1_revenue"));
+		vd->assign("mp_ancserv2_revenue", *lookup("mp_ancserv2_revenue"));
+		vd->assign("mp_ancserv3_revenue", *lookup("mp_ancserv3_revenue"));
+		vd->assign("mp_ancserv4_revenue", *lookup("mp_ancserv4_revenue"));
+		vd->assign("gen", *lookup("gen"));
+
+
+		mp_capacity_check(vd);
+		if (vd->lookup("mp_capacity_check")->num == 0)
+		{
+			std::ostringstream ss;
+			ss << "The generation is not sufficient to meet the ancillary markets requirements.  Specifically, " << (vd->lookup("mp_capacity_check_error")->str);
+			throw exec_error("merchant plant", ss.str());
+		}
+
+
+
 		size_t nrows, ncols;
 		util::matrix_t<double> mp_energy_market_revenue_mat(1, 2, 0.0);
 		if (en_mp_energy_market)

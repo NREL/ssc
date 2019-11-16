@@ -110,8 +110,8 @@ void mp_capacity_check(ssc_data_t data)
 							current_year_capacity.clear();
 							current_num_per_year = system_gen.ncols() / (size_t)analysis_period;
 							current_year_capacity.reserve(current_num_per_year);
-							for (size_t ic = 0; (ic < current_num_per_year) && ((ic + iyear * current_num_per_year) < mp_energy_market_revenue.nrows()); ic++)
-								current_year_capacity.push_back(system_gen(0, ic + iyear * current_num_per_year));
+							for (size_t ic = 0; (ic < current_num_per_year) && ((ic + iyear * current_num_per_year) < system_gen.ncols()); ic++)
+								current_year_capacity.push_back(system_gen(0, ic + iyear * current_num_per_year)/1000.0); // kW to MW
 							extrapolated_current_year_capacity = extrapolate_timeseries(current_year_capacity, steps_per_hour);
 							for (size_t ic = 0; (ic < extrapolated_current_year_capacity.size()) && ((ic + iyear * current_num_per_year) < cleared_capacity.size()); ic++)
 								capacity_check[ic + iyear * nsteps_per_year] = extrapolated_current_year_capacity[ic];
@@ -186,9 +186,9 @@ void mp_capacity_check(ssc_data_t data)
 					{
 						for (size_t i = 0; (i < cleared_capacity.size()) && (i < capacity_check.size()); i++)
 						{
-							if (cleared_capacity[i] > system_capacity)
+							if (cleared_capacity[i] > capacity_check[i])
 							{
-								error = util::format("Sum of cleared capacity %g exceeds system capacity %g at timestep %d", cleared_capacity[i], system_capacity, int(i));
+								error = util::format("Sum of cleared capacity %g exceeds system capacity %g at timestep %d", cleared_capacity[i], capacity_check[i], int(i));
 								break;
 							}
 						}
