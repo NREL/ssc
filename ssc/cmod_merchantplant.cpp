@@ -1064,7 +1064,7 @@ public:
 			ss << "The generation is not sufficient to meet the ancillary markets requirements.  Specifically, " << (vd->lookup("mp_capacity_check_error")->str);
 			throw exec_error("merchant plant", ss.str());
 		}
-
+		delete vd;
 
 
 		size_t nrows, ncols;
@@ -1137,8 +1137,6 @@ public:
 			mp_ancserv_4_revenue_mat.resize(nrows, ncols);
 			mp_ancserv_4_revenue_mat.assign(mp_ancserv4_revenue_in, nrows, ncols);
 		}
-
-		// TODO need to check sum of all cleared capacities at each timestep
 
 		// calculate revenue per year
 		double as_revenue = 0;
