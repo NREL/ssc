@@ -1020,28 +1020,6 @@ public:
 		}
 
 		// merchant plant additional revenue streams
-		// enabled/disabled booleans
-		bool en_mp_energy_market = (as_integer("mp_enable_energy_market_revenue") == 1);
-		bool en_mp_ancserv1 = (as_integer("mp_enable_ancserv1") == 1);
-		bool en_mp_ancserv2 = (as_integer("mp_enable_ancserv2") == 1);
-		bool en_mp_ancserv3 = (as_integer("mp_enable_ancserv3") == 1);
-		bool en_mp_ancserv4 = (as_integer("mp_enable_ancserv4") == 1);
-		// cleared capacity and price columns
-		// need to check sum of all cleared capacities.
-		/*
-		"analysis_period", analysis_period)
-			VT_GET_INPUT(vt, "mp_enable_energy_market_revenue", mp_enable_energy_market_revenue)
-			VT_GET_INPUT(vt, "mp_enable_ancserv1", mp_enable_ancserv1)
-			VT_GET_INPUT(vt, "mp_enable_ancserv2", mp_enable_ancserv2)
-			VT_GET_INPUT(vt, "mp_enable_ancserv3", mp_enable_ancserv3)
-			VT_GET_INPUT(vt, "mp_enable_ancserv4", mp_enable_ancserv4)
-			VT_GET_INPUT(vt, "mp_energy_market_revenue", mp_energy_market_revenue)
-			VT_GET_INPUT(vt, "mp_ancserv1_revenue", mp_ancserv1_revenue)
-			VT_GET_INPUT(vt, "mp_ancserv2_revenue", mp_ancserv2_revenue)
-			VT_GET_INPUT(vt, "mp_ancserv3_revenue", mp_ancserv3_revenue)
-			VT_GET_INPUT(vt, "mp_ancserv4_revenue", mp_ancserv4_revenue)
-			gen_is_assigned = (vt->lookup("gen") != NULL);
-*/
 		var_table* vd = new var_table;
 		vd->assign("analysis_period", *lookup("analysis_period"));
 		vd->assign("mp_enable_energy_market_revenue", *lookup("mp_enable_energy_market_revenue"));
@@ -1055,148 +1033,84 @@ public:
 		vd->assign("mp_ancserv3_revenue", *lookup("mp_ancserv3_revenue"));
 		vd->assign("mp_ancserv4_revenue", *lookup("mp_ancserv4_revenue"));
 		vd->assign("gen", *lookup("gen"));
+		vd->assign("mp_calculate_revenue", var_data(ssc_number_t(1.0)));
 
 
-		mp_capacity_check(vd);
-		if (vd->lookup("mp_capacity_check")->num == 0)
+		mp_ancillary_services(vd);
+		if (vd->lookup("mp_ancillary_services")->num == 0)
 		{
 			std::ostringstream ss;
-			ss << "The generation is not sufficient to meet the ancillary markets requirements.  Specifically, " << (vd->lookup("mp_capacity_check_error")->str);
+			ss << "The generation is not sufficient to meet the ancillary markets requirements.  Specifically, " << (vd->lookup("mp_ancillary_services_error")->str);
 			throw exec_error("merchant plant", ss.str());
 		}
+		// return lifetime vectors
+		std::vector<double> mp_energy_market_generated_revenue = vd->lookup("mp_energy_market_generated_revenue")->arr_vector();
+		std::vector<double> mp_ancillary_services1_generated_revenue = vd->lookup("mp_ancillary_services1_generated_revenue")->arr_vector();
+		std::vector<double> mp_ancillary_services2_generated_revenue = vd->lookup("mp_ancillary_services2_generated_revenue")->arr_vector();
+		std::vector<double> mp_ancillary_services3_generated_revenue = vd->lookup("mp_ancillary_services3_generated_revenue")->arr_vector();
+		std::vector<double> mp_ancillary_services4_generated_revenue = vd->lookup("mp_ancillary_services4_generated_revenue")->arr_vector();
+
 		delete vd;
-
-
-		size_t nrows, ncols;
-		util::matrix_t<double> mp_energy_market_revenue_mat(1, 2, 0.0);
-		if (en_mp_energy_market)
-		{
-			ssc_number_t *mp_energy_market_revenue_in = as_matrix("mp_energy_market_revenue", &nrows, &ncols);
-			if (ncols != 2)
-			{
-				std::ostringstream ss;
-				ss << "The Energy Market Revenue table must have 2 columns for Cleared Capacity (MW) and Price ($/MW). Instead it has " << ncols << " columns.";
-				throw exec_error("merchant plant", ss.str());
-			}
-			mp_energy_market_revenue_mat.resize(nrows, ncols);
-			mp_energy_market_revenue_mat.assign(mp_energy_market_revenue_in, nrows, ncols);
-		}
-
-		util::matrix_t<double> mp_ancserv_1_revenue_mat(1, 2, 0.0);
-		if (en_mp_ancserv1)
-		{
-			ssc_number_t *mp_ancserv1_revenue_in = as_matrix("mp_ancserv1_revenue", &nrows, &ncols);
-			if (ncols != 2)
-			{
-				std::ostringstream ss;
-				ss << "The Ancillary Services Revenue 1 table must have 2 columns for Cleared Capacity (MW) and Price ($/MW). Instead it has " << ncols << " columns.";
-				throw exec_error("merchant plant", ss.str());
-			}
-			mp_ancserv_1_revenue_mat.resize(nrows, ncols);
-			mp_ancserv_1_revenue_mat.assign(mp_ancserv1_revenue_in, nrows, ncols);
-		}
-
-		util::matrix_t<double> mp_ancserv_2_revenue_mat(1, 2, 0.0);
-		if (en_mp_ancserv2)
-		{
-			ssc_number_t *mp_ancserv2_revenue_in = as_matrix("mp_ancserv2_revenue", &nrows, &ncols);
-			if (ncols != 2)
-			{
-				std::ostringstream ss;
-				ss << "The Ancillary Services Revenue 2 table must have 2 columns for Cleared Capacity (MW) and Price ($/MW). Instead it has " << ncols << " columns.";
-				throw exec_error("merchant plant", ss.str());
-			}
-			mp_ancserv_2_revenue_mat.resize(nrows, ncols);
-			mp_ancserv_2_revenue_mat.assign(mp_ancserv2_revenue_in, nrows, ncols);
-		}
-
-		util::matrix_t<double> mp_ancserv_3_revenue_mat(1, 2, 0.0);
-		if (en_mp_ancserv3)
-		{
-			ssc_number_t *mp_ancserv3_revenue_in = as_matrix("mp_ancserv3_revenue", &nrows, &ncols);
-			if (ncols != 2)
-			{
-				std::ostringstream ss;
-				ss << "The Ancillary Services Revenue 3 table must have 2 columns for Cleared Capacity (MW) and Price ($/MW). Instead it has " << ncols << " columns.";
-				throw exec_error("merchant plant", ss.str());
-			}
-			mp_ancserv_3_revenue_mat.resize(nrows, ncols);
-			mp_ancserv_3_revenue_mat.assign(mp_ancserv3_revenue_in, nrows, ncols);
-		}
-
-		util::matrix_t<double> mp_ancserv_4_revenue_mat(1, 2, 0.0);
-		if (en_mp_ancserv4)
-		{
-			ssc_number_t *mp_ancserv4_revenue_in = as_matrix("mp_ancserv4_revenue", &nrows, &ncols);
-			if (ncols != 2)
-			{
-				std::ostringstream ss;
-				ss << "The Ancillary Services Revenue 4 table must have 2 columns for Cleared Capacity (MW) and Price ($/MW). Instead it has " << ncols << " columns.";
-				throw exec_error("merchant plant", ss.str());
-			}
-			mp_ancserv_4_revenue_mat.resize(nrows, ncols);
-			mp_ancserv_4_revenue_mat.assign(mp_ancserv4_revenue_in, nrows, ncols);
-		}
 
 		// calculate revenue per year
 		double as_revenue = 0;
 		size_t base_index = 0;
-		size_t n_marketrevenue_per_year = mp_energy_market_revenue_mat.nrows() / (size_t)nyears;
+		size_t n_marketrevenue_per_year = mp_energy_market_generated_revenue.size() / (size_t)nyears;
 		for (i = 1; i <= nyears; i++)
 		{
 			as_revenue = 0;
 			base_index = (i - 1)*n_marketrevenue_per_year;
 			for (size_t j = 0; j < n_marketrevenue_per_year; j++)
 			{
-				as_revenue += mp_energy_market_revenue_mat.at(base_index + j, 0) * mp_energy_market_revenue_mat.at(base_index + j, 1);
+				as_revenue += mp_energy_market_generated_revenue[base_index+j];
 			}
 			cf.at(CF_energy_market_revenue, i) = as_revenue;
 		}
 
-		size_t n_ancserv_1_revenue_per_year = mp_ancserv_1_revenue_mat.nrows() / (size_t)nyears;
+		size_t n_ancserv_1_revenue_per_year = mp_ancillary_services1_generated_revenue.size() / (size_t)nyears;
 		for ( i = 1; i <= nyears; i++)
 		{
 			as_revenue = 0;
 			base_index = (i - 1)*n_ancserv_1_revenue_per_year;
 			for (size_t j = 0; j < n_ancserv_1_revenue_per_year; j++)
 			{
-				as_revenue += mp_ancserv_1_revenue_mat.at(base_index + j, 0) * mp_ancserv_1_revenue_mat.at(base_index + j, 1);
+				as_revenue += mp_ancillary_services1_generated_revenue[base_index + j];
 			}
 			cf.at(CF_ancillary_services_1_revenue, i) = as_revenue;
 		}
 
-		size_t n_ancserv_2_revenue_per_year = mp_ancserv_2_revenue_mat.nrows() / (size_t)nyears;
-		for ( i = 1; i <= nyears; i++)
+		size_t n_ancserv_2_revenue_per_year = mp_ancillary_services2_generated_revenue.size() / (size_t)nyears;
+		for (i = 2; i <= nyears; i++)
 		{
 			as_revenue = 0;
-			base_index = (i - 1)*n_ancserv_2_revenue_per_year;
+			base_index = (i - 2)*n_ancserv_2_revenue_per_year;
 			for (size_t j = 0; j < n_ancserv_2_revenue_per_year; j++)
 			{
-				as_revenue += mp_ancserv_2_revenue_mat.at(base_index + j, 0) * mp_ancserv_2_revenue_mat.at(base_index + j, 1);
+				as_revenue += mp_ancillary_services2_generated_revenue[base_index + j];
 			}
 			cf.at(CF_ancillary_services_2_revenue, i) = as_revenue;
 		}
 
-		size_t n_ancserv_3_revenue_per_year = mp_ancserv_3_revenue_mat.nrows() / (size_t)nyears;
-		for ( i = 1; i <= nyears; i++)
+		size_t n_ancserv_3_revenue_per_year = mp_ancillary_services3_generated_revenue.size() / (size_t)nyears;
+		for (i = 3; i <= nyears; i++)
 		{
 			as_revenue = 0;
-			base_index = (i - 1)*n_ancserv_3_revenue_per_year;
+			base_index = (i - 3)*n_ancserv_3_revenue_per_year;
 			for (size_t j = 0; j < n_ancserv_3_revenue_per_year; j++)
 			{
-				as_revenue += mp_ancserv_3_revenue_mat.at(base_index + j, 0) * mp_ancserv_3_revenue_mat.at(base_index + j, 1);
+				as_revenue += mp_ancillary_services3_generated_revenue[base_index + j];
 			}
 			cf.at(CF_ancillary_services_3_revenue, i) = as_revenue;
 		}
 
-		size_t n_ancserv_4_revenue_per_year = mp_ancserv_4_revenue_mat.nrows() / (size_t)nyears;
-		for ( i = 1; i <= nyears; i++)
+		size_t n_ancserv_4_revenue_per_year = mp_ancillary_services4_generated_revenue.size() / (size_t)nyears;
+		for (i = 4; i <= nyears; i++)
 		{
 			as_revenue = 0;
-			base_index = (i - 1)*n_ancserv_4_revenue_per_year;
+			base_index = (i - 4)*n_ancserv_4_revenue_per_year;
 			for (size_t j = 0; j < n_ancserv_4_revenue_per_year; j++)
 			{
-				as_revenue += mp_ancserv_4_revenue_mat.at(base_index + j, 0) * mp_ancserv_4_revenue_mat.at(base_index + j, 1);
+				as_revenue += mp_ancillary_services4_generated_revenue[base_index + j];
 			}
 			cf.at(CF_ancillary_services_4_revenue, i) = as_revenue;
 		}

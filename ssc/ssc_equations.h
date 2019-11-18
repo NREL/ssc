@@ -20,8 +20,8 @@ static ssc_equation_entry ssc_equation_table [] = {
 						   "Windpower", Turbine_calculate_powercurve_doc},
 		{"me_array_cable_length", me_array_cable_length,
 						   "Marine energy", me_array_cable_length_doc},
-		{"mp_capacity_check", mp_capacity_check,
-						   "Merchant plant", mp_capacity_check_doc},
+		{"mp_ancillary_services", mp_ancillary_services,
+						   "Merchant plant", mp_ancillary_services_doc},
 {nullptr, nullptr, nullptr, nullptr}
 };
 
