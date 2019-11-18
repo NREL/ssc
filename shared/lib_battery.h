@@ -265,10 +265,10 @@ public:
 	voltage_table_t(int num_cells_series, int num_strings, double voltage, util::matrix_t<double> &voltage_table, double R);
 
 	// deep copy
-	voltage_table_t * clone();
+	voltage_table_t * clone() override;
 
 	// copy from voltage to this
-	void copy(voltage_t *);
+	void copy(voltage_t *) override;
 
 	void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt) override ;
 
@@ -300,10 +300,10 @@ public:
                       double C_rate, double R, double dt_hr=1.);
 
 	// deep copy
-	voltage_dynamic_t * clone();
+	voltage_dynamic_t * clone() override;
 
 	// copy from voltage to this
-	void copy(voltage_t *);
+	void copy(voltage_t *) override;
 
 	void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt) override;
 
@@ -359,10 +359,10 @@ public:
                              double dt_hr=1.);
 
 	// deep copy
-	voltage_vanadium_redox_t * clone();
+	voltage_vanadium_redox_t * clone() override;
 
 	// copy from voltage to this
-	void copy(voltage_t *);
+	void copy(voltage_t *) override;
 
 	void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt) override;
 
@@ -757,12 +757,13 @@ public:
 
 	void initialize(capacity_t *, voltage_t *, lifetime_t *, thermal_t *, losses_t *);
 
-	// Run all for single time step
-	void run(size_t lifetimeIndex, double I);
+	// Run all for single time step and return the dispatched power [kW]
+	double run(size_t lifetimeIndex, double I);
 
-	double calculate_current_for_power(double P);
-    double calculate_max_charge_kw(double *max_current = nullptr);
-    double calculate_max_discharge_kw(double *max_current = nullptr);
+	// Returns current [V] required to dispatch input power [kW]
+	double calculate_current_for_power_kw(double P_kw);
+    double calculate_max_charge_kw(double *max_current_v = nullptr);
+    double calculate_max_discharge_kw(double *max_current_v = nullptr);
 
     // Run a component level model
 	void runCapacityModel(double &I);

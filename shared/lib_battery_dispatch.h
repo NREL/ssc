@@ -218,7 +218,7 @@ public:
 	/// Public API to run the battery dispatch model for the current timestep, given the system power, and optionally the electric load, amount of system clipping, or specified battery power
 	virtual void dispatch(size_t year,
 		size_t hour_of_year,
-		size_t step);
+		size_t step) override;
 
 protected:
 
@@ -241,8 +241,8 @@ protected:
 		std::map<size_t, double> dm_percent_discharge,
 		std::map<size_t, double> dm_percent_gridcharge);
 
-	void SOC_controller();
-	bool check_constraints(double &I, size_t count);
+	void SOC_controller() override;
+	bool check_constraints(double &I, size_t count) override;
 
 	util::matrix_t < size_t > _sched;
 	util::matrix_t < size_t > _sched_weekend;

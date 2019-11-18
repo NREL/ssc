@@ -1162,6 +1162,104 @@ battstor::~battstor()
 }
 
 battstor::battstor(const battstor& orig){
+    // copy values
+    manual_dispatch = orig.manual_dispatch;
+    look_ahead = orig.look_ahead;
+    look_behind = orig.look_behind;
+    input_forecast = orig.input_forecast;
+    input_target = orig.input_target;
+    input_custom_dispatch = orig.input_custom_dispatch;
+    step_per_hour = orig.step_per_hour;
+    step_per_year = orig.step_per_year;
+    nyears = orig.nyears;
+    total_steps = orig.total_steps;
+    _dt_hour = orig._dt_hour;
+
+    year = orig.year;
+    hour = orig.hour;
+    step = orig.step;
+    index = orig.index;
+    year_index = orig.year_index;
+    en = orig.en;
+    chem = orig.chem;
+
+    dm_percent_discharge = orig.dm_percent_discharge;
+
+    dm_percent_gridcharge = orig.dm_percent_gridcharge;
+
+    target_power = orig.target_power;
+    target_power_monthly = orig.target_power_monthly;
+
+    e_charge = orig.e_charge;
+    e_discharge = orig.e_discharge;
+
+    /*! Variables to store forecast data */
+    pv_prediction = orig.pv_prediction;
+    load_prediction = orig.load_prediction;
+    cliploss_prediction = orig.cliploss_prediction;
+    prediction_index = orig.prediction_index;
+
+    /*! If fuel cell is attached */
+    fuelcellPower = orig.fuelcellPower;
+
+    // outputs
+    outTotalCharge = orig.outTotalCharge;
+    outAvailableCharge = orig.outAvailableCharge;
+    outBoundCharge = orig.outBoundCharge;
+    outMaxChargeAtCurrent = orig.outMaxChargeAtCurrent;
+    outMaxCharge = orig.outMaxCharge;
+    outMaxChargeThermal = orig.outMaxChargeThermal;
+    outSOC = orig.outSOC;
+    outDOD = orig.outDOD;
+    outCurrent = orig.outCurrent;
+    outCellVoltage = orig.outCellVoltage;
+    outBatteryVoltage = orig.outBatteryVoltage;
+    outCapacityPercent = orig.outCapacityPercent;
+    outCapacityPercentCycle = orig.outCapacityPercentCycle;
+    outCapacityPercentCalendar = orig.outCapacityPercentCalendar;
+    outCycles = orig.outCycles;
+    outDODCycleAverage = orig.outDODCycleAverage;
+    outBatteryBankReplacement = orig.outBatteryBankReplacement;
+    outBatteryTemperature = orig.outBatteryTemperature;
+    outCapacityThermalPercent = orig.outCapacityThermalPercent;
+    outDispatchMode = orig.outDispatchMode;
+    outBatteryPower = orig.outBatteryPower;
+    outGenPower = orig.outGenPower;
+    outGridPower = orig.outGridPower;
+    outPVToLoad = orig.outPVToLoad;
+    outBatteryToLoad = orig.outBatteryToLoad;
+    outGridToLoad = orig.outGridToLoad;
+    outFuelCellToLoad = orig.outFuelCellToLoad;
+    outGridPowerTarget = orig.outGridPowerTarget;
+    outBattPowerTarget = orig.outBattPowerTarget;
+    outPVToBatt = orig.outPVToBatt;
+    outGridToBatt = orig.outGridToBatt;
+    outFuelCellToBatt = orig.outFuelCellToBatt;
+    outPVToGrid = orig.outPVToGrid;
+    outBatteryToGrid = orig.outBatteryToGrid;
+    outFuelCellToGrid = orig.outFuelCellToGrid;
+    outBatteryConversionPowerLoss = orig.outBatteryConversionPowerLoss;
+    outBatterySystemLoss = orig.outBatterySystemLoss;
+    outAnnualPVChargeEnergy = orig.outAnnualPVChargeEnergy;
+    outAnnualGridChargeEnergy = orig.outAnnualGridChargeEnergy;
+    outAnnualChargeEnergy = orig.outAnnualChargeEnergy;
+    outAnnualDischargeEnergy = orig.outAnnualDischargeEnergy;
+    outAnnualGridImportEnergy = orig.outAnnualGridImportEnergy;
+    outAnnualGridExportEnergy = orig.outAnnualGridExportEnergy;
+    outAnnualEnergySystemLoss = orig.outAnnualEnergySystemLoss;
+    outAnnualEnergyLoss = orig.outAnnualEnergyLoss;
+    outMarketPrice = orig.outMarketPrice;
+    outCostToCycle = orig.outCostToCycle;
+    outBenefitCharge = orig.outBenefitCharge;
+    outBenefitGridcharge = orig.outBenefitGridcharge;
+    outBenefitClipcharge = orig.outBenefitClipcharge;
+    outBenefitDischarge = orig.outBenefitDischarge;
+
+    outAverageCycleEfficiency = orig.outAverageCycleEfficiency;
+    outAverageRoundtripEfficiency = orig.outAverageRoundtripEfficiency;
+    outPVChargePercent = orig.outPVChargePercent;
+
+    // copy models
     if (orig.batt_vars) batt_vars = orig.batt_vars;
     if( orig.voltage_model ) voltage_model = orig.voltage_model->clone();
     if( orig.lifetime_cycle_model ) lifetime_cycle_model = orig.lifetime_cycle_model->clone();
@@ -1260,6 +1358,7 @@ void battstor::setSharedInverter(SharedInverter * sharedInverter)
 {
 	if (DCBatteryController * tmp = dynamic_cast<DCBatteryController *>(charge_control))
 		tmp->setSharedInverter(sharedInverter);
+	dispatch_model->getBatteryPower()->setSharedInverter(sharedInverter);
 }
 void battstor::outputs_fixed(var_table *vt)
 {

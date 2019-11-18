@@ -303,16 +303,34 @@ TEST_F(ResilienceTest_lib_resilience, RoundtripEffTable){
     }
 }
 
-TEST_F(ResilienceTest_lib_resilience, PVWattsResilience)
+TEST_F(ResilienceTest_lib_resilience, PVWattsResilienceAC)
 {
-//    resiliency_runner resilience(batt);
-//    const double voltage = 500;
-//    std::vector<double> batt_power, soc;
-//    std::vector<int> outage_days_survived = {17, 18, 20};
-//    for (size_t i = 0; i < 3; i++){
-//        batt->initialize_time(0, i, 0);
-//        batt->advance(vartab, ac[i], voltage, load[i]);
-//        resilience.compute_metrics();
-//        EXPECT_TRUE(resilience.get_outage_days_survived() == outage_days_survived[i]);
-//    }
+    // batt is ac-connected
+    CreateBattery(true);
+
+    resiliency_runner resilience(batt);
+    const double voltage = 500;
+    std::vector<double> batt_power, soc;
+    for (size_t i = 0; i < 10; i++){
+        batt->initialize_time(0, i, 0);
+        resilience.add_battery_at_outage_timestep(*dispatch, i);
+        resilience.run_surviving_batteries(load[i], 0, 0, 0, 0, 0);
+        batt->advance(vartab, ac[i], voltage, load[i]);
+        EXPECT_NEAR(batt->outBatteryPower[i], 1., 1e-3) << "timestep " << i;
+    }
+    resilience.run_surviving_batteries_by_looping(&load[0], &ac[0]);
+    resilience.compute_metrics(1.);
+    auto survived_hours = resilience.get_hours_survived();
+    EXPECT_EQ(survived_hours[0], 7);
+    EXPECT_EQ(survived_hours[9], 1);
+
+    auto outage_durations = resilience.get_outage_durations();
+    EXPECT_EQ(outage_durations[0], 0);
+    EXPECT_EQ(outage_durations[7], 7);
+
+    auto probs = resilience.get_probs_of_surviving();
+    EXPECT_NEAR(probs[0], 0.999, 1e-3);
+    EXPECT_NEAR(probs[1], 0.000456, 1e-6);
+    EXPECT_NEAR(probs[2], 0.000114, 1e-6);
+
 }

@@ -47,7 +47,51 @@ BatteryPower::BatteryPower(double dtHour) :
 		depthOfDischargeMax(1),
 		tolerance(0.001){}
 
-BatteryPower::BatteryPower(const BatteryPower& ) { /* nothing to do */ }
+BatteryPower::BatteryPower(const BatteryPower& orig) {
+    sharedInverter = orig.sharedInverter;
+    dtHour = orig.dtHour;
+    powerPV = orig.powerPV;
+    powerPVThroughSharedInverter = orig.powerPVThroughSharedInverter;
+    powerLoad = orig.powerLoad;
+    powerBatteryDC = orig.powerBatteryDC;
+    powerBatteryAC = orig.powerBatteryAC;
+    powerBatteryTarget = orig.powerBatteryTarget;
+    powerGrid = orig.powerGrid;
+    powerGeneratedBySystem = orig.powerGeneratedBySystem;
+    powerPVToLoad = orig.powerPVToLoad;
+    powerPVToBattery = orig.powerPVToBattery;
+    powerPVToGrid = orig.powerPVToGrid;
+    powerPVClipped = orig.powerPVClipped;
+    powerClippedToBattery = orig.powerClippedToBattery;
+    powerGridToBattery = orig.powerGridToBattery;
+    powerGridToLoad = orig.powerGridToLoad;
+    powerBatteryToLoad = orig.powerBatteryToLoad;
+    powerBatteryToGrid = orig.powerBatteryToGrid;
+    powerFuelCell = orig.powerFuelCell;
+    powerFuelCellToGrid = orig.powerFuelCellToGrid;
+    powerFuelCellToLoad = orig.powerFuelCellToLoad;
+    powerFuelCellToBattery = orig.powerFuelCellToBattery;
+    powerPVInverterDraw = orig.powerPVInverterDraw;
+    powerBatteryChargeMaxDC = orig.powerBatteryChargeMaxDC;
+    powerBatteryDischargeMaxDC = orig.powerBatteryDischargeMaxDC;
+    powerBatteryChargeMaxAC = orig.powerBatteryChargeMaxAC;
+    powerBatteryDischargeMaxAC = orig.powerBatteryDischargeMaxAC;
+    powerSystemLoss = orig.powerSystemLoss;
+    powerConversionLoss = orig.powerConversionLoss;
+    connectionMode = orig.connectionMode;
+    singlePointEfficiencyACToDC = orig.singlePointEfficiencyACToDC;
+    singlePointEfficiencyDCToAC = orig.singlePointEfficiencyDCToAC;
+    singlePointEfficiencyDCToDC = orig.singlePointEfficiencyDCToDC;
+    canPVCharge = orig.canPVCharge;
+    canClipCharge = orig.canClipCharge;
+    canGridCharge = orig.canGridCharge;
+    canDischarge = orig.canDischarge;
+    canFuelCellCharge = orig.canFuelCellCharge;
+    stateOfChargeMax = orig.stateOfChargeMax;
+    stateOfChargeMin = orig.stateOfChargeMin;
+    depthOfDischargeMax = orig.depthOfDischargeMax;
+    tolerance = orig.tolerance;
+}
 
 void BatteryPower::setSharedInverter(SharedInverter * a_sharedInverter) {
 	sharedInverter = a_sharedInverter;

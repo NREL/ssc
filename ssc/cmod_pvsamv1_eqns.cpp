@@ -323,14 +323,14 @@ SSCEXPORT void Reopt_size_battery_params(ssc_data_t data) {
     }
 
     // convert load profile inputs, which are not net loads
-    VT_GET_ARRAY_VEC(vt, "load_user_data", vec);
+    VT_GET_ARRAY_VEC(vt, "load", vec);
     if (vec.size() != 8760){
         throw std::runtime_error("Load profile must have 8760 entries.");
     }
     reopt_load.assign("loads_kw", var_data(&vec[0], 8760));
     reopt_load.assign("loads_kw_is_net", false);
 
-    VT_GET_ARRAY_VEC(vt, "crit_load_user_data", vec);
+    VT_GET_ARRAY_VEC(vt, "crit_load", vec);
     if (vec.size() != 8760){
         throw std::runtime_error("Critical load profile must have 8760 entries.");
     }

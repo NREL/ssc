@@ -1834,19 +1834,19 @@ void battery_t::initialize(capacity_t *capacity, voltage_t * voltage, lifetime_t
 	_thermal_initial->copy(_thermal);
 }
 
-double battery_t::calculate_current_for_power(double P){
-    return _voltage->calculate_current_for_target_w(P, _capacity->q0(), _capacity->qmax(), _thermal->T_battery());
+double battery_t::calculate_current_for_power_kw(double P_kw){
+    return _voltage->calculate_current_for_target_w(P_kw * 1000, _capacity->q0(), _capacity->qmax(), _thermal->T_battery());
 }
 
 double battery_t::calculate_max_charge_kw(double *max_current) {
-    return _voltage->calculate_max_charge_w(_capacity->q0(), _capacity->qmax(), _thermal->T_battery(), max_current);
+    return _voltage->calculate_max_charge_w(_capacity->q0(), _capacity->qmax(), _thermal->T_battery(), max_current) / 1000.;
 }
 
 double battery_t::calculate_max_discharge_kw(double *max_current) {
-    return _voltage->calculate_max_discharge_w(_capacity->q0(), _capacity->qmax(), _thermal->T_battery(), max_current);
+    return _voltage->calculate_max_discharge_w(_capacity->q0(), _capacity->qmax(), _thermal->T_battery(), max_current) / 1000.;
 }
 
-void battery_t::run(size_t lifetimeIndex, double I)
+double battery_t::run(size_t lifetimeIndex, double I)
 {
 	// Temperature affects capacity, but capacity model can reduce current, which reduces temperature, need to iterate
 	double I_initial = I;
@@ -1874,6 +1874,8 @@ void battery_t::run(size_t lifetimeIndex, double I)
 	runVoltageModel();
 	runLifetimeModel(lifetimeIndex);
 	runLossesModel(lifetimeIndex);
+
+	return I * voltage_model()->battery_voltage() / 1000;
 }
 void battery_t::runThermalModel(double I, size_t lifetimeIndex)
 {

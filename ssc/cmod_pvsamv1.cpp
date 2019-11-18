@@ -483,6 +483,7 @@ static var_info _cm_vtab_pvsamv1[] = {
     	// battery storage and dispatch
     { SSC_INPUT, SSC_NUMBER,   "en_batt",                              "Enable battery storage model",                        "0/1",    "",                                                                                                                                                                                      "Battery",                                               "?=0",                                "",                    "" },
     { SSC_INPUT, SSC_ARRAY,    "load",                                 "Electricity load (year 1)",                           "kW",     "",                                                                                                                                                                                      "Battery",                                               "?",                                  "",                    "" },
+    { SSC_INPUT, SSC_ARRAY,    "crit_load",                            "Critical Electricity load (year 1)",                  "kW",     "",                                                                                                                                                                                      "Battery",                                               "?",                                  "",                    "" },
 
 	// NOTE:  other battery storage model inputs and outputs are defined in batt_common.h/batt_common.cpp
 
@@ -1028,15 +1029,19 @@ void cm_pvsamv1::exec( ) throw (general_error)
 	double cur_load = 0.0;
 	size_t nload = 0;
 	std::vector<ssc_number_t> p_load_in;
+	std::vector<ssc_number_t> p_crit_load_in;
 	if ( is_assigned( "load" ) )
 	{
 		p_load_in = as_vector_ssc_number_t("load");
+		p_crit_load_in = as_vector_ssc_number_t("crit_load");
 		nload = p_load_in.size();
 		if ( nload != nrec && nload != 8760 )
 			throw exec_error("pvsamv1", "electric load profile must have same number of values as weather file, or 8760");
-
+        nload = p_crit_load_in.size();
+		if (nload != nrec && nload != 8760 )
+            throw exec_error("pvsamv1", "critical electric load profile must have same number of values as weather file, or 8760");
         if (en_batt)
-            resilience = std::unique_ptr<resiliency_runner>(new resiliency_runner(&batt, p_load_in));
+            resilience = std::unique_ptr<resiliency_runner>(new resiliency_runner(&batt));
         auto logs = resilience->get_logs();
         if (!logs.empty()){
                 log(logs[0], SSC_WARNING);
@@ -1991,9 +1996,10 @@ void cm_pvsamv1::exec( ) throw (general_error)
 					sharedInverter->calculateACPower(dcPower_kW, dcVoltagePerMppt[0], wf.tdry); //DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
 
 					// Run PV plus battery through sharedInverter, returns AC power
-                    resilience->run_surviving_batteries(idx, cur_load, sharedInverter->powerAC_kW, dcPower_kW, dcVoltagePerMppt[0], sharedInverter->powerClipLoss_kW, wf.tdry);
+                    resilience->add_battery_at_outage_timestep(*batt.dispatch_model, idx);
+                    resilience->run_surviving_batteries(p_crit_load_in[idx], sharedInverter->powerAC_kW, dcPower_kW,
+                                                        dcVoltagePerMppt[0], sharedInverter->powerClipLoss_kW, wf.tdry);
 					batt.advance(m_vartab, dcPower_kW, dcVoltagePerMppt[0], cur_load, sharedInverter->powerClipLoss_kW);
-                    resilience->add_battery_at_outage_index(*batt.dispatch_model, idx);
 					acpwr_gross = batt.outGenPower[idx];
 				}
 				else if (PVSystem->Inverter->inverterType == INVERTER_PVYIELD) //PVyield inverter model not currently enabled for multiple MPPT
@@ -2114,11 +2120,11 @@ void cm_pvsamv1::exec( ) throw (general_error)
 
 				if (en_batt && batt_topology == ChargeController::AC_CONNECTED)
 				{
-				    resilience->run_surviving_batteries(idx, p_load_full[idx], PVSystem->p_systemACPower[idx]);
+                    resilience->add_battery_at_outage_timestep(*batt.dispatch_model, idx);
+                    resilience->run_surviving_batteries(p_crit_load_in[idx], PVSystem->p_systemACPower[idx], 0, 0, 0, 0);
 					batt.initialize_time(iyear, hour, jj);
 					batt.check_replacement_schedule();
 					batt.advance(m_vartab, PVSystem->p_systemACPower[idx], 0, p_load_full[idx]);
-                    resilience->add_battery_at_outage_index(*batt.dispatch_model, idx);
                     PVSystem->p_systemACPower[idx] = batt.outGenPower[idx];
 				}
 
@@ -2548,6 +2554,20 @@ void cm_pvsamv1::exec( ) throw (general_error)
 //	_CrtDumpMemoryLeaks();
 //	_CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_DEBUG);
 
+    // resiliency metrics
+    resilience->run_surviving_batteries_by_looping(&p_crit_load_in[0], PVSystem->p_systemACPower, PVSystem->p_systemDCPower,
+            PVSystem->p_mpptVoltage[0], PVSystem->p_inverterClipLoss, Irradiance->p_weatherFileAmbientTemp);
+
+    double avg_hours_survived = resilience->compute_metrics(step_per_hour);
+    auto outage_durations = resilience->get_outage_durations();
+    auto probs_surviving = resilience->get_probs_of_surviving();
+    assign("resilience_hrs", resilience->get_hours_survived());
+    assign("resilience_hrs_min", (int)(*outage_durations.begin()));
+    assign("resilience_hrs_max", (int)(*outage_durations.end()));
+    assign("resilience_hrs_avg", avg_hours_survived);
+    assign("outage_durations", outage_durations);
+    assign("probs_of_surviving", probs_surviving);
+    assign("avg_critical_load", resilience->get_avg_critical_load());
 }
 	
 double cm_pvsamv1::module_eff(int mod_type)

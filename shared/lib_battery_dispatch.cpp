@@ -819,7 +819,7 @@ bool dispatch_automatic_t::check_constraints(double &I, size_t count)
 				}
 				// Don't discharge more if would violate current or power discharge limits
 				if (I > m_batteryPower->currentDischargeMax - tolerance || 
-					P_battery > m_batteryPower->powerBatteryDischargeMaxDC - tolerance,
+					P_battery > m_batteryPower->powerBatteryDischargeMaxDC - tolerance ||
 					m_batteryPower->powerBatteryAC > m_batteryPower->powerBatteryDischargeMaxAC - tolerance) {
 					iterate = false;
 				}

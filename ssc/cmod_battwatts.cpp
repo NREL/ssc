@@ -53,7 +53,7 @@ var_info vtab_battwatts[] = {
 var_info_invalid  };
 
 batt_variables * battwatts_create(size_t n_recs, int chem, int meter_pos, double size_kwh, double size_kw, double inv_eff,
-        int dispatch, double* dispatch_custom){
+        int dispatch, std::vector<double> dispatch_custom){
     auto batt_vars = new batt_variables();
 
     // allocate vectors
@@ -211,7 +211,7 @@ batt_variables * battwatts_create(size_t n_recs, int chem, int meter_pos, double
         case 1: batt_vars->batt_dispatch = dispatch_t::LOOK_BEHIND;
             break;
         case 2: batt_vars->batt_dispatch = dispatch_t::CUSTOM_DISPATCH;
-            batt_vars->batt_custom_dispatch = std::vector<double>(dispatch_custom, dispatch_custom + n_recs);
+            batt_vars->batt_custom_dispatch = dispatch_custom;
 
     }
     batt_vars->batt_dispatch_auto_can_charge = true;
@@ -264,11 +264,10 @@ batt_variables * cm_battwatts::setup_variables(size_t n_recs)
     double kw = as_number("batt_simple_kw");
     double inv_eff = as_number("inverter_efficiency");
     int dispatch = as_integer("batt_simple_dispatch");
-    double* dispatch_custom = nullptr;
-    size_t n;
+    std::vector<double> dispatch_custom;
     if (dispatch == 2){
-        dispatch_custom = as_array("batt_custom_dispatch", &n);
-        if (n!=n_recs) throw exec_error("battwatts",
+        dispatch_custom = as_vector_double("batt_custom_dispatch");
+        if (dispatch_custom.size()!=n_recs) throw exec_error("battwatts",
                 "'batt_custom_dispatch' length must be equal to length of 'ac'.");
     }
     return battwatts_create(n_recs, chem, pos, kwh, kw, inv_eff, dispatch, dispatch_custom);
