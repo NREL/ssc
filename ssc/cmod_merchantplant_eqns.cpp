@@ -174,8 +174,8 @@ void mp_ancillary_services(ssc_data_t data)
 							{
 								current_year_revenue.clear();
 								current_year_revenue.reserve(current_num_per_year);
-								for (size_t ic = 0; (ic < current_num_per_year) && ((ic + iyear * current_num_per_year) < mp_energy_market_revenue.nrows()); ic++)
-									current_year_revenue.push_back(mp_energy_market_revenue(ic + iyear * current_num_per_year, 1));
+								for (size_t ic = 0; (ic < current_num_per_year) && ((ic + iyear * current_num_per_year) < mp_ancserv1_revenue.nrows()); ic++)
+									current_year_revenue.push_back(mp_ancserv1_revenue(ic + iyear * current_num_per_year, 1));
 								extrapolated_current_year_revenue = extrapolate_timeseries(current_year_revenue, steps_per_hour);
 								for (size_t ic = 0; (ic < extrapolated_current_year_revenue.size()) && ((ic + iyear * current_num_per_year) < ancillary_services1_revenue.size()); ic++)
 									ancillary_services1_revenue[ic + iyear * nsteps_per_year] = extrapolated_current_year_revenue[ic]; // $/MWh
@@ -197,8 +197,8 @@ void mp_ancillary_services(ssc_data_t data)
 							{
 								current_year_revenue.clear();
 								current_year_revenue.reserve(current_num_per_year);
-								for (size_t ic = 0; (ic < current_num_per_year) && ((ic + iyear * current_num_per_year) < mp_energy_market_revenue.nrows()); ic++)
-									current_year_revenue.push_back(mp_energy_market_revenue(ic + iyear * current_num_per_year, 1));
+								for (size_t ic = 0; (ic < current_num_per_year) && ((ic + iyear * current_num_per_year) < mp_ancserv2_revenue.nrows()); ic++)
+									current_year_revenue.push_back(mp_ancserv2_revenue(ic + iyear * current_num_per_year, 1));
 								extrapolated_current_year_revenue = extrapolate_timeseries(current_year_revenue, steps_per_hour);
 								for (size_t ic = 0; (ic < extrapolated_current_year_revenue.size()) && ((ic + iyear * current_num_per_year) < ancillary_services2_revenue.size()); ic++)
 									ancillary_services2_revenue[ic + iyear * nsteps_per_year] = extrapolated_current_year_revenue[ic]; // $/MWh
@@ -220,8 +220,8 @@ void mp_ancillary_services(ssc_data_t data)
 							{
 								current_year_revenue.clear();
 								current_year_revenue.reserve(current_num_per_year);
-								for (size_t ic = 0; (ic < current_num_per_year) && ((ic + iyear * current_num_per_year) < mp_energy_market_revenue.nrows()); ic++)
-									current_year_revenue.push_back(mp_energy_market_revenue(ic + iyear * current_num_per_year, 1));
+								for (size_t ic = 0; (ic < current_num_per_year) && ((ic + iyear * current_num_per_year) < mp_ancserv3_revenue.nrows()); ic++)
+									current_year_revenue.push_back(mp_ancserv3_revenue(ic + iyear * current_num_per_year, 1));
 								extrapolated_current_year_revenue = extrapolate_timeseries(current_year_revenue, steps_per_hour);
 								for (size_t ic = 0; (ic < extrapolated_current_year_revenue.size()) && ((ic + iyear * current_num_per_year) < ancillary_services3_revenue.size()); ic++)
 									ancillary_services3_revenue[ic + iyear * nsteps_per_year] = extrapolated_current_year_revenue[ic]; // $/MWh
@@ -243,8 +243,8 @@ void mp_ancillary_services(ssc_data_t data)
 							{
 								current_year_revenue.clear();
 								current_year_revenue.reserve(current_num_per_year);
-								for (size_t ic = 0; (ic < current_num_per_year) && ((ic + iyear * current_num_per_year) < mp_energy_market_revenue.nrows()); ic++)
-									current_year_revenue.push_back(mp_energy_market_revenue(ic + iyear * current_num_per_year, 1));
+								for (size_t ic = 0; (ic < current_num_per_year) && ((ic + iyear * current_num_per_year) < mp_ancserv4_revenue.nrows()); ic++)
+									current_year_revenue.push_back(mp_ancserv4_revenue(ic + iyear * current_num_per_year, 1));
 								extrapolated_current_year_revenue = extrapolate_timeseries(current_year_revenue, steps_per_hour);
 								for (size_t ic = 0; (ic < extrapolated_current_year_revenue.size()) && ((ic + iyear * current_num_per_year) < ancillary_services4_revenue.size()); ic++)
 									ancillary_services4_revenue[ic + iyear * nsteps_per_year] = extrapolated_current_year_revenue[ic]; // $/MWh
@@ -268,7 +268,7 @@ void mp_ancillary_services(ssc_data_t data)
 					}
 
 					if (calculate_revenue)
-					{
+					{ // TODO: apply in order and check for energy left and apply in next market as necessary system_generation - market cap for current ancillary service
 						if (en_mp_energy_market)
 						{
 							if (system_generation.size() != energy_market_revenue.size())

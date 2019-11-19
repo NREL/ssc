@@ -1080,10 +1080,10 @@ public:
 		}
 
 		size_t n_ancserv_2_revenue_per_year = mp_ancillary_services2_generated_revenue.size() / (size_t)nyears;
-		for (i = 2; i <= nyears; i++)
+		for (i = 1; i <= nyears; i++)
 		{
 			as_revenue = 0;
-			base_index = (i - 2)*n_ancserv_2_revenue_per_year;
+			base_index = (i - 1)*n_ancserv_2_revenue_per_year;
 			for (size_t j = 0; j < n_ancserv_2_revenue_per_year; j++)
 			{
 				as_revenue += mp_ancillary_services2_generated_revenue[base_index + j];
@@ -1092,10 +1092,10 @@ public:
 		}
 
 		size_t n_ancserv_3_revenue_per_year = mp_ancillary_services3_generated_revenue.size() / (size_t)nyears;
-		for (i = 3; i <= nyears; i++)
+		for (i = 1; i <= nyears; i++)
 		{
 			as_revenue = 0;
-			base_index = (i - 3)*n_ancserv_3_revenue_per_year;
+			base_index = (i - 1)*n_ancserv_3_revenue_per_year;
 			for (size_t j = 0; j < n_ancserv_3_revenue_per_year; j++)
 			{
 				as_revenue += mp_ancillary_services3_generated_revenue[base_index + j];
@@ -1104,10 +1104,10 @@ public:
 		}
 
 		size_t n_ancserv_4_revenue_per_year = mp_ancillary_services4_generated_revenue.size() / (size_t)nyears;
-		for (i = 4; i <= nyears; i++)
+		for (i = 1; i <= nyears; i++)
 		{
 			as_revenue = 0;
-			base_index = (i - 4)*n_ancserv_4_revenue_per_year;
+			base_index = (i - 1)*n_ancserv_4_revenue_per_year;
 			for (size_t j = 0; j < n_ancserv_4_revenue_per_year; j++)
 			{
 				as_revenue += mp_ancillary_services4_generated_revenue[base_index + j];
