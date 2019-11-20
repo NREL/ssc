@@ -42,27 +42,30 @@ public:
             throw std::runtime_error("Error in resilience::run_outage_step_ac: called for battery with DC connection.");
 
         double battery_dispatched_kwac;
-        double max_discharge_kwac = _Battery->calculate_max_discharge_kw();
-        double max_charge_kwac = _Battery->calculate_max_charge_kw();
+        double max_discharge_kwdc = _Battery->calculate_max_discharge_kw();
+        double max_charge_kwdc = _Battery->calculate_max_charge_kw();
+
+        double met_load;
 
         if (pv_kwac > crit_load_kwac){
-            double remaining_kwac = pv_kwac - crit_load_kwac;
-            remaining_kwac = fmin(remaining_kwac, max_charge_kwac);
-            battery_dispatched_kwac = dispatch_kw(remaining_kwac);
+            double remaining_kwdc = -(pv_kwac - crit_load_kwac) * m_batteryPower->singlePointEfficiencyACToDC;
+            remaining_kwdc = fmax(remaining_kwdc, max_charge_kwdc);
+            dispatch_kw(remaining_kwdc) / m_batteryPower->singlePointEfficiencyACToDC;
+            met_load = crit_load_kwac;
         }
         else{
-            double max_to_load_kwac = max_discharge_kwac + pv_kwac;
+            double max_to_load_kwac = max_discharge_kwdc * m_batteryPower->singlePointEfficiencyDCToAC + pv_kwac;
 
             if (max_to_load_kwac > crit_load_kwac){
-                double discharge_kw = crit_load_kwac - pv_kwac;
-                discharge_kw = fmin(discharge_kw, max_discharge_kwac);
-                battery_dispatched_kwac = dispatch_kw(discharge_kw);
+                double discharge_kwdc = (crit_load_kwac - pv_kwac) / m_batteryPower->singlePointEfficiencyDCToAC;
+                discharge_kwdc = fmin(discharge_kwdc, max_discharge_kwdc);
+                battery_dispatched_kwac = dispatch_kw(discharge_kwdc) * m_batteryPower->singlePointEfficiencyDCToAC;
             }
             else
-                battery_dispatched_kwac = dispatch_kw(max_discharge_kwac);
+                battery_dispatched_kwac = dispatch_kw(max_discharge_kwdc) * m_batteryPower->singlePointEfficiencyDCToAC;
+            met_load = battery_dispatched_kwac + pv_kwac;
         }
 
-        double met_load = fmax(0, battery_dispatched_kwac) + pv_kwac;
         double unmet_load = crit_load_kwac - met_load;
         met_loads_kw += met_load;
         bool survived = abs(unmet_load) < tolerance;
@@ -86,29 +89,27 @@ public:
         double max_discharge_kwdc = _Battery->calculate_max_discharge_kw();
         double max_charge_kwdc = _Battery->calculate_max_charge_kw();
 
+        double met_load;
         if (pv_kwac > crit_load_kwac){
-            double remaining_kwdc = (pv_kwac - crit_load_kwac) / dc_ac_eff + pv_clipped;
-            remaining_kwdc = fmin(remaining_kwdc, max_charge_kwdc);
-            battery_dispatched_kwdc = dispatch_kw(remaining_kwdc);
-            battery_dispatched_kwac = 0;
+            double remaining_kwdc = -(pv_kwac - crit_load_kwac) / dc_ac_eff + pv_clipped;
+            remaining_kwdc = fmax(remaining_kwdc / dc_dc_eff, max_charge_kwdc);
+            dispatch_kw(remaining_kwdc);
+            met_load = crit_load_kwac;
         }
         else{
             // find dc power required from pv + battery discharge to meet load
             do {
                 dc_ac_eff = inverter->efficiencyAC * 0.01;
                 inverter->calculateACPower(crit_load_kwac / dc_ac_eff, V_pv, tdry);
-            } while (abs(dc_ac_eff * 100 - inverter->efficiencyAC) > 0.1);
+            } while (abs(dc_ac_eff * 100 - inverter->efficiencyAC) > tolerance);
             double required_kwdc = crit_load_kwac / dc_ac_eff;
 
-            // find max dc power
-            inverter->calculateACPower(max_discharge_kwdc * dc_dc_eff + pv_kwdc, V_pv, tdry);
-
-            battery_dispatched_kwdc = dispatch_kw(fmin(required_kwdc, inverter->powerAC_kW));
-            inverter->calculateACPower(battery_dispatched_kwdc, V_pv, tdry);
+            battery_dispatched_kwdc = dispatch_kw(fmin(required_kwdc / dc_dc_eff, max_discharge_kwdc));
+            inverter->calculateACPower(battery_dispatched_kwdc * dc_dc_eff, V_pv, tdry);
             battery_dispatched_kwac = inverter->powerAC_kW;
+            met_load = battery_dispatched_kwac + pv_kwac;
         }
 
-        double met_load = fmax(0, battery_dispatched_kwac) + pv_kwac;
         double unmet_load = crit_load_kwac - met_load;
         met_loads_kw += met_load;
         bool survived = abs(unmet_load) < tolerance;
@@ -167,6 +168,9 @@ public:
     std::vector<std::string> get_logs() {return logs;}
 
     void add_battery_at_outage_timestep(const dispatch_t& orig, size_t index){
+        if (battery_per_outage_start.find(index) != battery_per_outage_start.end())
+            logs.emplace_back(
+                    "Replacing battery which already existed at index " + to_string(index) + ".");
         battery_per_outage_start.insert({index, std::make_shared<dispatch_resiliency>(orig, index, batt->batt_vars)});
     }
 
@@ -181,7 +185,7 @@ public:
 
         std::vector<size_t> depleted_battery_keys;
         for (auto& i : battery_per_outage_start){
-            size_t start_hour = i.first;
+            size_t start_index = i.first;
             auto batt_system = i.second;
             bool survived;
             if (batt_system->connection == dispatch_resiliency::DC_CONNECTED)
@@ -189,8 +193,8 @@ public:
             else
                 survived = batt_system->run_outage_step_ac(load_ac, pv_ac_kw);
             if (!survived){
-                depleted_battery_keys.emplace_back(start_hour);
-                indices_survived[start_hour] = batt_system->get_indices_survived();
+                depleted_battery_keys.emplace_back(start_index);
+                indices_survived[start_index] = batt_system->get_indices_survived();
             }
         }
         for (auto& i : depleted_battery_keys){
@@ -218,7 +222,7 @@ public:
         if (battery_per_outage_start.empty())
             return;
 
-        double total_load = std::accumulate(crit_loads_kwac, crit_loads_kwac + steps_lifetime, 0.0);
+        double total_load = std::accumulate(crit_loads_kwac, crit_loads_kwac + nrec, 0.0) * batt->nyears;
         for (auto& b : battery_per_outage_start){
             indices_survived[b.first] = steps_lifetime;
             total_load_met[b.first] = total_load;
@@ -231,17 +235,17 @@ public:
         outage_durations.clear();
         probs_of_surviving.clear();
 
-
+        double hrs_per_yr = (double)batt->step_per_hour * 8760.;
         outage_durations = std::vector<double>(indices_survived.begin(), indices_survived.end());;
         std::sort(outage_durations.begin(), outage_durations.end());
         outage_durations.erase(unique(outage_durations.begin(), outage_durations.end()), outage_durations.end());
         for (auto& i : outage_durations){
-            double prob = std::count(indices_survived.begin(), indices_survived.end(), i) / (double)indices_survived.size();
-            i *= batt->step_per_hour;       // convert to hours
+            double prob = std::count(indices_survived.begin(), indices_survived.end(), i) / hrs_per_yr;
+            i /= batt->step_per_hour;       // convert to hours
             probs_of_surviving.emplace_back(prob);
         }
 
-        return std::accumulate(indices_survived.begin(), indices_survived.end(), 0.0)*batt->step_per_hour/(double) indices_survived.size();
+        return std::accumulate(indices_survived.begin(), indices_survived.end(), 0.0)/batt->step_per_hour/(double)indices_survived.size();
     }
 
     size_t get_n_surviving_batteries() {
@@ -260,7 +264,7 @@ public:
         return std::accumulate(total_load_met.begin(), total_load_met.end(), 0.0) / (double)total_load_met.size();
     }
 
-    std::vector<double> get_outage_durations() {
+    std::vector<double> get_outage_duration_hrs() {
         return outage_durations;
     }
 

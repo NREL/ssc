@@ -278,11 +278,9 @@ void dispatch_t::switch_controller()
 	}
 	_t_at_mode += (int)(round(_dt_hour * util::hour_to_min));
 }
-double dispatch_t::current_controller(double battery_voltage)
+double dispatch_t::current_controller(double power_kw)
 {
-	double P, I = 0.; // [W],[V]
-	P = util::kilowatt_to_watt*m_batteryPower->powerBatteryDC;
-	I = P / battery_voltage;
+    double I = _Battery->calculate_current_for_power_kw(power_kw);
 	restrict_current(I);
 	return I;
 }
@@ -381,7 +379,7 @@ void dispatch_t::runDispatch(size_t year, size_t hour_of_year, size_t step)
 	switch_controller();
 
 	// Calculate current, and ensure the battery falls within the current limits
-	double I = current_controller(_Battery->battery_voltage_nominal());
+	double I = current_controller(m_batteryPower->powerBatteryTarget);
 
 	// Setup battery iteration
 	_Battery_initial->copy(_Battery);
@@ -392,12 +390,7 @@ void dispatch_t::runDispatch(size_t year, size_t hour_of_year, size_t step)
 	do {
 
 		// Run Battery Model to update charge based on charge/discharge
-		_Battery->run(lifetimeIndex, I);
-
-		// Update how much power was actually used to/from battery
-		I = _Battery->capacity_model()->I();
-		double battery_voltage_new = _Battery->battery_voltage();
-		m_batteryPower->powerBatteryDC = I * battery_voltage_new * util::watt_to_kilowatt;
+		m_batteryPower->powerBatteryDC = _Battery->run(lifetimeIndex, I);
 
 		// Update power flow calculations, calculate AC power, and check the constraints
 		m_batteryPowerFlow->calculate();
@@ -1029,8 +1022,14 @@ void dispatch_automatic_behind_the_meter_t::update_dispatch(size_t hour_of_year,
 	else
 	{
 		m_batteryPower->powerBatteryTarget = _P_battery_use[idx % (8760 *_steps_per_hour)];
+        if (m_batteryPower->connectionMode == AC_CONNECTED){
+            if (m_batteryPower->powerBatteryTarget < 0)
+                m_batteryPower->powerBatteryTarget *= m_batteryPower->singlePointEfficiencyDCToAC;
+            else
+                m_batteryPower->powerBatteryTarget /= m_batteryPower->singlePointEfficiencyDCToAC;
+        }
 	}
-	
+
 	m_batteryPower->powerBatteryDC = m_batteryPower->powerBatteryTarget;
 
 	if (debug)
@@ -1585,6 +1584,12 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 	{
 		// extract input power by modifying lifetime index to year 1
 		m_batteryPower->powerBatteryTarget = _P_battery_use[lifetimeIndex % (8760 * _steps_per_hour)];
+        if (m_batteryPower->connectionMode == AC_CONNECTED){
+            if (m_batteryPower->powerBatteryTarget < 0)
+                m_batteryPower->powerBatteryTarget *= m_batteryPower->singlePointEfficiencyDCToAC;
+            else
+                m_batteryPower->powerBatteryTarget /= m_batteryPower->singlePointEfficiencyDCToAC;
+        }
 	}
 
 	m_batteryPower->powerBatteryDC = m_batteryPower->powerBatteryTarget;

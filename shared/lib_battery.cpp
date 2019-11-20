@@ -744,7 +744,7 @@ double voltage_dynamic_t::calculate_max_charge_w(double q, double qmax, double, 
     double current = qmax - q;
     if (max_current)
         *max_current = -current * _num_strings;
-    return -current * voltage_model_tremblay_hybrid(qmax, -current , q + current) * _num_strings * _num_cells_series;
+    return -current * voltage_model_tremblay_hybrid(qmax, -current , q + current * solver_dhr) * _num_strings * _num_cells_series;
 }
 
 double voltage_dynamic_t::calculate_max_discharge_w(double q, double qmax, double, double *max_current) {
@@ -753,7 +753,7 @@ double voltage_dynamic_t::calculate_max_discharge_w(double q, double qmax, doubl
     double current = max_current_a + max_current_b1 * q + max_current_b2 * qmax;
     if (max_current)
         *max_current = current  * _num_strings;
-    return current * voltage_model_tremblay_hybrid(qmax, current , q - current) * _num_strings * _num_cells_series;
+    return current * voltage_model_tremblay_hybrid(qmax, current , q - current * solver_dhr) * _num_strings * _num_cells_series;
 }
 
 using namespace std::placeholders;
@@ -799,15 +799,15 @@ void voltage_dynamic_t::fit_current_to_cutoff_voltage(double cutoff_voltage_rati
             while (solver_q > 0){
 
                 double x[1], resid[1];
-                x[0] = solver_q * 0.9;
+                x[0] = solver_q * 0.9 * solver_dhr / 2.;
                 bool check = false;
 
                 int niter = newton<double, std::function<void(const double*, double*)>, 1>( x, resid, check, f,
                                                                                     100, 1e-6, 1e-6, 0.7);
                 if (niter >= 0 && !check){
                     // make sure the numerical root produces meaningful results
-                    if (abs(voltage_model_tremblay_hybrid(solver_Q, x[0], solver_q-x[0]) - solver_cutoff_voltage) < 1e-3
-                        && x[0] < solver_q){
+                    double remaining_q = solver_q-x[0]*solver_dhr;
+                    if (remaining_q >= 0 && abs(voltage_model_tremblay_hybrid(solver_Q, x[0], remaining_q) - solver_cutoff_voltage) < 1e-3){
                         currents.push_back(x[0]);
                         capacities.push_back(solver_q);
                         qmax.push_back(solver_Q);
@@ -821,7 +821,7 @@ void voltage_dynamic_t::fit_current_to_cutoff_voltage(double cutoff_voltage_rati
     }
 
     if (currents.size() < 4){
-        throw std::runtime_error("Error during calculation of battery voltage model parameters: could not determine"
+        throw std::runtime_error("Error during calculation of battery voltage model parameters: could not determine "
                                  "relationship between max current vs remaining and max capacity");
     }
 
@@ -927,7 +927,7 @@ double voltage_vanadium_redox_t::calculate_max_discharge_w(double q, double qmax
     if (max_current)
         *max_current = x[0];
 
-    return x[0] * voltage_model(solver_q - x[0], solver_Q, x[0], kelvin) * _num_strings * _num_cells_series;
+    return x[0] * voltage_model(solver_q - x[0] * solver_dhr, solver_Q, x[0], kelvin) * _num_strings * _num_cells_series;
 }
 
 double voltage_vanadium_redox_t::calculate_current_for_target_w(double P_watts, double q, double qmax, double kelvin) {
@@ -1875,7 +1875,7 @@ double battery_t::run(size_t lifetimeIndex, double I)
 	runLifetimeModel(lifetimeIndex);
 	runLossesModel(lifetimeIndex);
 
-	return I * voltage_model()->battery_voltage() / 1000;
+	return I * voltage_model()->battery_voltage() * util::watt_to_kilowatt;
 }
 void battery_t::runThermalModel(double I, size_t lifetimeIndex)
 {

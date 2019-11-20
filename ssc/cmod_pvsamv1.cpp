@@ -2559,7 +2559,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
             PVSystem->p_mpptVoltage[0], PVSystem->p_inverterClipLoss, Irradiance->p_weatherFileAmbientTemp);
 
     double avg_hours_survived = resilience->compute_metrics(step_per_hour);
-    auto outage_durations = resilience->get_outage_durations();
+    auto outage_durations = resilience->get_outage_duration_hrs();
     auto probs_surviving = resilience->get_probs_of_surviving();
     assign("resilience_hrs", resilience->get_hours_survived());
     assign("resilience_hrs_min", (int)(*outage_durations.begin()));

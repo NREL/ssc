@@ -211,7 +211,7 @@ batt_variables * battwatts_create(size_t n_recs, int chem, int meter_pos, double
         case 1: batt_vars->batt_dispatch = dispatch_t::LOOK_BEHIND;
             break;
         case 2: batt_vars->batt_dispatch = dispatch_t::CUSTOM_DISPATCH;
-            batt_vars->batt_custom_dispatch = dispatch_custom;
+            batt_vars->batt_custom_dispatch = std::move(dispatch_custom);
 
     }
     batt_vars->batt_dispatch_auto_can_charge = true;

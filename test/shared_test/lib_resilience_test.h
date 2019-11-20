@@ -32,17 +32,13 @@ protected:
 
     class fakeInverter : public SharedInverter{
     public:
-        fakeInverter():SharedInverter(-1, 1, nullptr, nullptr, nullptr){
+        fakeInverter():SharedInverter(NONE, 1, nullptr, nullptr, nullptr){
             efficiencyAC = 96;
+            powerAC_kW = 0.;
         }
-        void calculateACPower(const double, const double, double) {}
     };
 
-    void SetUp() override{
-        CreateBattery(false);
-    }
-
-    void CreateBattery(bool ac_not_dc_connected) {
+    void CreateBattery(bool ac_not_dc_connected, size_t steps_per_hour, double pv_ac, double load_ac, double batt_dc) {
         delete batt_vars;
         delete vartab;
         delete batt;
@@ -50,26 +46,28 @@ protected:
         load.clear();
         dispatch_custom.clear();
         chem = battery_t::LITHIUM_ION;
-        if (ac_not_dc_connected)
-            pos = ChargeController::AC_CONNECTED;
-        else{
-            pos = ChargeController::DC_CONNECTED;
-            inverter = new fakeInverter;
-        }
+        pos = dispatch_t::BEHIND;
         dispatch_mode = 2;
         size_kw = 4.0;
         size_kwh = 16.0;
         inv_eff = 96.0;
-        for (size_t i = 0; i < 8760; i++){
-            ac.push_back(0);
-            load.push_back(1.);
-            dispatch_custom.push_back(1.);
+        double dt_hr = 1. / (double)steps_per_hour;
+        for (size_t i = 0; i < 8760 * steps_per_hour; i++){
+            ac.push_back(pv_ac);
+            load.push_back(load_ac);
+            dispatch_custom.push_back(batt_dc);
         }
-        size_t n_recs = 8760;
+        size_t n_recs = 8760 * steps_per_hour;
         batt_vars = battwatts_create(n_recs, chem, pos, size_kwh, size_kw, inv_eff, dispatch_mode, dispatch_custom);
+        if (ac_not_dc_connected)
+            batt_vars->batt_topology = ChargeController::AC_CONNECTED;
+        else{
+            batt_vars->batt_topology = ChargeController::DC_CONNECTED;
+            inverter = new fakeInverter;
+        }
 
         vartab = new var_table;
-        batt = new battstor(*vartab, true, n_recs, 1., batt_vars);
+        batt = new battstor(*vartab, true, n_recs, dt_hr, batt_vars);
         batt->initialize_automated_dispatch(ac, load);
         batt->setSharedInverter(inverter);
         dispatch = batt->dispatch_model;

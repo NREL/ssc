@@ -16,6 +16,20 @@ SharedInverter::SharedInverter(int inverterType, size_t numberOfInverters,
 		m_nameplateAC_kW = m_numInverters * m_sandiaInverter->Paco * util::watt_to_kilowatt;
 	else if (m_inverterType == PARTLOAD_INVERTER)
 		m_nameplateAC_kW = m_numInverters * m_partloadInverter->Paco * util::watt_to_kilowatt;
+	else if (m_inverterType == OND_INVERTER)
+	    m_nameplateAC_kW = m_numInverters * m_ondInverter->PMaxOUT * util::watt_to_kilowatt;
+
+    powerDC_kW = 0.;
+    powerAC_kW = 0.;
+    efficiencyAC = 96.;
+    powerClipLoss_kW = 0.;
+    powerConsumptionLoss_kW = 0.;
+    powerNightLoss_kW = 0.;
+    powerTempLoss_kW = 0.;
+    powerLossTotal_kW = 0.;
+    dcWiringLoss_ond_kW = 0.;
+    acWiringLoss_ond_kW = 0.;
+
 }
 
 SharedInverter::SharedInverter(const SharedInverter& orig){
@@ -24,9 +38,12 @@ SharedInverter::SharedInverter(const SharedInverter& orig){
     m_nameplateAC_kW = orig.m_nameplateAC_kW;
     m_tempEnabled = orig.m_tempEnabled;
     m_thermalDerateCurves = orig.m_thermalDerateCurves;
-    *m_sandiaInverter = sandia_inverter_t(*orig.m_sandiaInverter);
-    *m_partloadInverter = partload_inverter_t(*orig.m_partloadInverter);
-    *m_ondInverter = ond_inverter(*orig.m_ondInverter);
+    if (orig.m_sandiaInverter)
+        *m_sandiaInverter = sandia_inverter_t(*orig.m_sandiaInverter);
+    if (orig.m_partloadInverter)
+        *m_partloadInverter = partload_inverter_t(*orig.m_partloadInverter);
+    if (orig.m_ondInverter)
+        *m_ondInverter = ond_inverter(*orig.m_ondInverter);
     efficiencyAC = orig.efficiencyAC;
 }
 
@@ -174,6 +191,13 @@ void SharedInverter::calculateACPower(const double powerDC_kW_in, const double D
 		m_partloadInverter->acpower(std::fabs(powerDC_Watts) / m_numInverters, &powerAC_Watts, &P_lr, &P_par, &efficiencyAC, &powerClipLoss_kW, &powerNightLoss_kW);
 	else if (m_inverterType == OND_INVERTER)
 		m_ondInverter->acpower(std::fabs(powerDC_Watts) / m_numInverters,DCStringVoltage, T, &powerAC_Watts, &P_par, &P_lr, &efficiencyAC, &powerClipLoss_kW, &powerConsumptionLoss_kW, &powerNightLoss_kW, &dcWiringLoss_ond_kW, &acWiringLoss_ond_kW);
+    else if (m_inverterType == NONE){
+        powerClipLoss_kW = 0.;
+        powerConsumptionLoss_kW = 0.;
+        powerNightLoss_kW = 0.;
+        efficiencyAC *= 0.01;
+        powerAC_Watts = powerDC_Watts * efficiencyAC;
+    }
 
     Tdry_C = T;
     double tempLoss = 0.0;

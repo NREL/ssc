@@ -140,7 +140,7 @@ protected:
 	// Controllers
 	virtual	void SOC_controller();
 	void switch_controller();
-	double current_controller(double battery_voltage);
+	double current_controller(double power_kw);
 	bool restrict_current(double &I);
 	bool restrict_power(double &I);
 
