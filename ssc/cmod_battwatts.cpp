@@ -57,7 +57,7 @@ var_info_invalid  };
 std::shared_ptr<batt_variables>
 battwatts_create(size_t n_recs, int chem, int meter_pos, double size_kwh, double size_kw, double inv_eff,
                  int dispatch, std::vector<double> dispatch_custom){
-    auto batt_vars = std::shared_ptr<batt_variables>();
+    auto batt_vars = std::make_shared<batt_variables>();
 
     // allocate vectors
     auto lifetime_matrix = new std::vector < double >;
@@ -257,6 +257,7 @@ cm_battwatts::cm_battwatts()
     add_var_info(vtab_battwatts);
     add_var_info(vtab_battery_outputs);
     add_var_info(vtab_technology_outputs);
+    add_var_info(vtab_resilience_outputs);
 }
 
 std::shared_ptr<batt_variables> cm_battwatts::setup_variables(size_t n_recs)
