@@ -29,6 +29,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_battery_dispatch.h"
 #include "lib_battery_powerflow.h"
 #include "lib_power_electronics.h"
+#include "lib_resilience.h"
 #include "lib_shared_inverter.h"
 #include "lib_time.h"
 #include "lib_util.h"
@@ -318,10 +319,6 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, b
 			}
 
 			// Battery bank sizing
-			batt_vars->batt_computed_series = vt.as_integer("batt_computed_series");
-			batt_vars->batt_computed_strings = vt.as_integer("batt_computed_strings");
-			batt_vars->batt_kwh = vt.as_double("batt_computed_bank_capacity");
-			batt_vars->batt_kw = vt.as_double("batt_power_discharge_max");
 			batt_vars->batt_computed_series = vt.as_integer("batt_computed_series");
 			batt_vars->batt_computed_strings = vt.as_integer("batt_computed_strings");
 			batt_vars->batt_kwh = vt.as_double("batt_computed_bank_capacity");
@@ -1520,11 +1517,12 @@ void battstor::calculate_monthly_and_annual_outputs( compute_module &cm )
 static var_info _cm_vtab_battery[] = {
 	/*   VARTYPE           DATATYPE         NAME                                             LABEL                                                   UNITS      META                           GROUP                  REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	{ SSC_INOUT,        SSC_NUMBER,      "percent_complete",                           "Estimated simulation status",                             "%",          "",                     "Simulation",                        "",                            "",                               "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",                 "Lifetime simulation",                                     "0/1",        "0=SingleYearRepeated,1=RunEveryYear",   "Simulation",        "?=0",                   "BOOLEAN",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                            "Lifetime analysis period",                                "years",      "The number of years in the simulation", "Simulation",        "system_use_lifetime_output=1","",                               "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",                 "Lifetime simulation",                                     "0/1",        "0=SingleYearRepeated,1=RunEveryYear",   "Lifetime",        "?=0",                   "BOOLEAN",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                            "Lifetime analysis period",                                "years",      "The number of years in the simulation", "Lifetime",        "system_use_lifetime_output=1","",                               "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "en_batt",                                    "Enable battery storage model",                            "0/1",        "",                     "Battery",                      "?=0",                    "",                               "" },
-	{ SSC_INOUT,        SSC_ARRAY,       "gen",										  "System power generated",                                  "kW",         "",                     "System",                             "",                       "",                               "" },
-	{ SSC_INPUT,		SSC_ARRAY,	     "load",			                              "Electricity load (year 1)",                               "kW",	        "",				        "ElectricLoad",                             "",	                      "",	                            "" },
+	{ SSC_INOUT,        SSC_ARRAY,       "gen",										  "System power generated",                                  "kW",         "",                     "System Output",                             "",                       "",                               "" },
+	{ SSC_INPUT,		SSC_ARRAY,	     "load",			                              "Electricity load (year 1)",                               "kW",	        "",				        "Load",                             "",	                      "",	                            "" },
+    { SSC_INPUT,		SSC_ARRAY,	     "crit_load",			                      "Critical electricity load (year 1)",                      "kW",	        "",				        "Load",                             "",	                      "",	                            "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_replacement_option",                    "Enable battery replacement?",                             "0=none,1=capacity based,2=user schedule", "", "Battery",             "?=0",                    "INTEGER,MIN=0,MAX=2",           "" },
 	{ SSC_INOUT,        SSC_NUMBER,      "capacity_factor",                            "Capacity factor",                                         "%",          "",                     "System",                             "?=0",                    "",                               "" },
 	{ SSC_INOUT,        SSC_NUMBER,      "annual_energy",                              "Annual Energy",                                           "kWh",        "",                     "Battery",                      "?=0",                    "",                               "" },
@@ -1550,8 +1548,9 @@ public:
 	cm_battery()
 	{
 		add_var_info(_cm_vtab_battery);
-		add_var_info( vtab_battery_inputs);
+		add_var_info(vtab_battery_inputs);
 		add_var_info(vtab_battery_outputs);
+		add_var_info(vtab_resilience_outputs);
 	}
 
     void exec() override
@@ -1585,10 +1584,24 @@ public:
 				throw exec_error("battery", "Load length does not match system generation length");
 			}
 			if (batt.batt_vars->batt_topology == ChargeController::DC_CONNECTED) {
-				batt.batt_vars->batt_topology = ChargeController::AC_CONNECTED;
 				throw exec_error("battery", "Generic System must be AC connected to battery");
 			}
-			
+
+            // resilience metrics for battery
+            std::unique_ptr<resiliency_runner> resilience = nullptr;
+			std::vector<ssc_number_t> p_crit_load;
+			if (is_assigned("crit_load")){
+			    p_crit_load = as_vector_ssc_number_t("crit_load");
+			    size_t nload = p_crit_load.size();
+			    if (nload != n_rec_single_year)
+                    throw exec_error("battery", "electric load profile must have same number of values as weather file, or 8760");
+                resilience = std::unique_ptr<resiliency_runner>(new resiliency_runner(&batt));
+                auto logs = resilience->get_logs();
+                if (!logs.empty()){
+                    log(logs[0], SSC_WARNING);
+                }
+			}
+
 			// Prepare outputs
 			ssc_number_t * p_gen = allocate("gen", n_rec_lifetime);
 			double capacity_factor_in, annual_energy_in, nameplate_in;
@@ -1634,6 +1647,12 @@ public:
 	
 						batt.initialize_time(year, hour, jj);
 						batt.check_replacement_schedule();
+
+						if (resilience){
+                            resilience->add_battery_at_outage_timestep(*batt.dispatch_model, lifetime_idx);
+                            resilience->run_surviving_batteries(p_crit_load[lifetime_idx], power_input_lifetime[lifetime_idx]);
+						}
+
 						batt.advance(m_vartab, power_input_lifetime[lifetime_idx], 0, load_lifetime[lifetime_idx], 0);
 						p_gen[lifetime_idx] = batt.outGenPower[lifetime_idx];
 						if (year == 0) {
@@ -1650,6 +1669,22 @@ public:
 			assign("capacity_factor", var_data(static_cast<ssc_number_t>(annual_energy * 100.0 / (nameplate_in * util::hours_per_year))));
 			assign("annual_energy", var_data(static_cast<ssc_number_t>(annual_energy)));
 			assign("percent_complete", var_data((ssc_number_t)percent));
+
+            // resiliency metrics
+            if (resilience) {
+                resilience->run_surviving_batteries_by_looping(&p_crit_load[0], &power_input_lifetime[0]);
+
+                double avg_hours_survived = resilience->compute_metrics(batt.step_per_hour);
+                auto outage_durations = resilience->get_outage_duration_hrs();
+                auto probs_surviving = resilience->get_probs_of_surviving();
+                assign("resilience_hrs", resilience->get_hours_survived());
+                assign("resilience_hrs_min", (int) outage_durations[0]);
+                assign("resilience_hrs_max", (int) outage_durations.back());
+                assign("resilience_hrs_avg", avg_hours_survived);
+                assign("outage_durations", outage_durations);
+                assign("probs_of_surviving", probs_surviving);
+                assign("avg_critical_load", resilience->get_avg_critical_load());
+            }
 		}
 		else
 			assign("average_battery_roundtrip_efficiency", var_data((ssc_number_t)0.));

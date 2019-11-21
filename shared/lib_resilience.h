@@ -50,7 +50,7 @@ public:
         if (pv_kwac > crit_load_kwac){
             double remaining_kwdc = -(pv_kwac - crit_load_kwac) * m_batteryPower->singlePointEfficiencyACToDC;
             remaining_kwdc = fmax(remaining_kwdc, max_charge_kwdc);
-            dispatch_kw(remaining_kwdc) / m_batteryPower->singlePointEfficiencyACToDC;
+            dispatch_kw(remaining_kwdc);
             met_load = crit_load_kwac;
         }
         else{

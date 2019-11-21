@@ -29,6 +29,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_battery.h"
 #include "cmod_battery.h"
 #include "lib_power_electronics.h"
+#include "lib_resilience.h"
 
 #include "cmod_battwatts.h"
 
@@ -44,9 +45,10 @@ var_info vtab_battwatts[] = {
     { SSC_INPUT,        SSC_NUMBER,      "batt_simple_dispatch",              "Battery Dispatch",                       "0=PeakShavingLookAhead,1=PeakShavingLookBehind,2=Custom",     "",                 "Battery",                  "?=0",                        "",                              "" },
     { SSC_INPUT,        SSC_ARRAY,       "batt_custom_dispatch",              "Battery Dispatch",                       "kW",      "",                 "Battery",                  "batt_simple_dispatch=2",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_simple_meter_position",        "Battery Meter Position",                 "0=BehindTheMeter,1=FrontOfMeter",     "",                 "Battery",                  "?=0",                        "",                              "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "dc",								  "DC array power",                         "W",       "",                 "Battery",                           "",                           "",                              "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "ac",								  "AC inverter power",                      "W",       "",                 "Battery",                           "",                           "",                              "" },
-	{ SSC_INPUT,		SSC_ARRAY,	     "load",			                  "Electricity load (year 1)",              "kW",	   "",		           "Battery",                           "",	                         "",	                          "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "dc",						         "DC array power",                         "W",       "",                 "Battery",                           "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "ac",							     "AC inverter power",                      "W",       "",                 "Battery",                           "",                           "",                              "" },
+    { SSC_INPUT,		SSC_ARRAY,	     "load",			                     "Electricity load (year 1)",              "kW",	   "",		           "Battery",                           "",	                         "",	                          "" },
+    { SSC_INPUT,		SSC_ARRAY,	     "crit_load",			             "Critical electricity load (year 1)",     "kW",	   "",		           "Battery",                           "",	                         "",	                          "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "inverter_model",                    "Inverter model specifier",                 "",      "0=cec,1=datasheet,2=partload,3=coefficientgenerator,4=generic", "Battery",     "",                           "INTEGER,MIN=0,MAX=4",           "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "inverter_efficiency",               "Inverter Efficiency",                     "%",      "",                  "Battery",                          "",                           "MIN=0,MAX=100",                               "" },
 
@@ -291,10 +293,22 @@ void cm_battwatts::exec()
         util::vector_multiply_scalar<ssc_number_t>(p_ac, static_cast<ssc_number_t>(util::watt_to_kilowatt));
         p_load = as_vector_ssc_number_t("load");
 
-
         batt_variables * batt_vars = setup_variables(p_ac.size());
         battstor batt(*m_vartab, true, p_ac.size(), static_cast<double>(8760 / p_ac.size()), batt_vars);
         batt.initialize_automated_dispatch(p_ac, p_load);
+
+        std::unique_ptr<resiliency_runner> resilience = nullptr;
+        std::vector<ssc_number_t> p_crit_load;
+        if (is_assigned("crit_load")){
+            p_crit_load = as_vector_ssc_number_t("crit_load");
+            if (p_crit_load.size() != p_ac.size())
+                throw exec_error("battwatts", "electric load profile must have same number of values as ac");
+            resilience = std::unique_ptr<resiliency_runner>(new resiliency_runner(&batt));
+            auto logs = resilience->get_logs();
+            if (!logs.empty()){
+                log(logs[0], SSC_WARNING);
+            }
+        }
 
         /* *********************************************************************************************
         Run Simulation
@@ -308,6 +322,12 @@ void cm_battwatts::exec()
             for (size_t jj = 0; jj < batt.step_per_hour; jj++)
             {
                 batt.initialize_time(0, hour, jj);
+
+                if (resilience){
+                    resilience->add_battery_at_outage_timestep(*batt.dispatch_model, count);
+                    resilience->run_surviving_batteries(p_crit_load[count], p_ac[count]);
+                }
+
                 batt.advance(m_vartab, p_ac[count], voltage, p_load[count]);
                 p_gen[count] = batt.outGenPower[count];
                 count++;
@@ -315,6 +335,21 @@ void cm_battwatts::exec()
         }
         process_messages(&batt, this);
         batt.calculate_monthly_and_annual_outputs(*this);
+
+        if (resilience) {
+            resilience->run_surviving_batteries_by_looping(&p_crit_load[0], &p_ac[0]);
+
+            double avg_hours_survived = resilience->compute_metrics(batt.step_per_hour);
+            auto outage_durations = resilience->get_outage_duration_hrs();
+            auto probs_surviving = resilience->get_probs_of_surviving();
+            assign("resilience_hrs", resilience->get_hours_survived());
+            assign("resilience_hrs_min", (int) outage_durations[0]);
+            assign("resilience_hrs_max", (int) outage_durations.back());
+            assign("resilience_hrs_avg", avg_hours_survived);
+            assign("outage_durations", outage_durations);
+            assign("probs_of_surviving", probs_surviving);
+            assign("avg_critical_load", resilience->get_avg_critical_load());
+        }
 
         clean_up(batt_vars);
     }

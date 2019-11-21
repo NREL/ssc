@@ -1,0 +1,30 @@
+#include <gtest/gtest.h>
+
+#include "code_generator_utilities.h"
+#include "vartab.h"
+#include "cmod_battwatts_test.h"
+
+TEST_F(CMBattwatts_cmod_battwatts, ResilienceMetricsHalfLoad){
+    auto ssc_data = static_cast<ssc_data_t>(&data);
+    int errors = run_module(ssc_data, "battwatts");
+    EXPECT_FALSE(errors);
+
+    auto resilience_hours = data.as_vector_ssc_number_t("resilience_hrs");
+    double resilience_hrs_min = data.as_number("resilience_hrs_min");
+    double resilience_hrs_max = data.as_number("resilience_hrs_max");
+    double resilience_hrs_avg = data.as_number("resilience_hrs_avg");
+    auto outage_durations = data.as_vector_ssc_number_t("outage_durations");
+    auto probs_of_surviving = data.as_vector_ssc_number_t("probs_of_surviving");
+    double avg_critical_load = data.as_double("avg_critical_load");
+
+    EXPECT_EQ(resilience_hours[0], 15);
+    EXPECT_EQ(resilience_hours[1], 16);
+    EXPECT_NEAR(avg_critical_load, 8.06, 0.1);
+    EXPECT_NEAR(resilience_hrs_avg, 31.7, 0.01);
+    EXPECT_EQ(resilience_hrs_min, 15);
+    EXPECT_EQ(outage_durations[0], 15);
+    EXPECT_EQ(resilience_hrs_max, 32);
+    EXPECT_EQ(outage_durations[17], 32);
+    EXPECT_NEAR(probs_of_surviving[0], 0.000114, 1e-3);
+    EXPECT_NEAR(probs_of_surviving[1], 0.00217, 1e-3);
+}
