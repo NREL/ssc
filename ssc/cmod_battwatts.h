@@ -26,19 +26,16 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "core.h"
 #include "cmod_battery.h"
 
-batt_variables * battwatts_create(size_t n_recs, int chem, int meter_pos, double size_kwh, double size_kw, double inv_eff,
-                                  int dispatch, std::vector<double> dispatch_custom = std::vector<double>());
+std::shared_ptr<batt_variables>
+battwatts_create(size_t n_recs, int chem, int meter_pos, double size_kwh, double size_kw, double inv_eff,
+                 int dispatch, std::vector<double> dispatch_custom = std::vector<double>());
 
 class cm_battwatts : public compute_module {
 public:
 
     cm_battwatts();
 
-    batt_variables *setup_variables(size_t n_recs);
-
-    static void clean_up(batt_variables *batt_vars) {
-        delete batt_vars;
-    }
+    std::shared_ptr<batt_variables> setup_variables(size_t n_recs);
 
     void exec() override;
 };

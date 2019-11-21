@@ -26,7 +26,7 @@ protected:
 
     batt_variables* batt_vars = nullptr;
     var_table* vartab = nullptr;
-    battstor* batt = nullptr;
+    std::shared_ptr<battstor> batt = nullptr;
     dispatch_t* dispatch = nullptr;
     SharedInverter* inverter = nullptr;
 
@@ -41,7 +41,6 @@ protected:
     void CreateBattery(bool ac_not_dc_connected, size_t steps_per_hour, double pv_ac, double load_ac, double batt_dc) {
         delete batt_vars;
         delete vartab;
-        delete batt;
         ac.clear();
         load.clear();
         dispatch_custom.clear();
@@ -67,7 +66,7 @@ protected:
         }
 
         vartab = new var_table;
-        batt = new battstor(*vartab, true, n_recs, dt_hr, batt_vars);
+        batt = std::make_shared<battstor>(*vartab, true, n_recs, dt_hr, batt_vars);
         batt->initialize_automated_dispatch(ac, load);
         batt->setSharedInverter(inverter);
         dispatch = batt->dispatch_model;
@@ -76,7 +75,6 @@ protected:
     void TearDown() override {
         delete vartab;
         delete batt_vars;
-        delete batt;
     }
 };
 

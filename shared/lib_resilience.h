@@ -14,7 +14,7 @@
 class dispatch_resiliency : public dispatch_t {
 public:
 
-    dispatch_resiliency(const dispatch_t& orig, size_t index, batt_variables* vars):
+    dispatch_resiliency(const dispatch_t& orig, size_t index, std::shared_ptr<batt_variables> vars):
             dispatch_t(orig),
             connection(static_cast<CONNECTION>(m_batteryPower->connectionMode)),
             start_outage_index(index){
@@ -131,7 +131,7 @@ protected:
     size_t current_outage_index;
     double met_loads_kw;
 
-    batt_variables* batt_vars;
+    std::shared_ptr<batt_variables> batt_vars;
     std::unique_ptr<SharedInverter> inverter;
 
     double dispatch_kw(double kw){
@@ -158,7 +158,7 @@ private:
     std::vector<std::string> logs;
 
 public:
-    explicit resiliency_runner(battstor* battery){
+    explicit resiliency_runner(const std::shared_ptr<battstor>& battery){
         batt = std::make_shared<battstor>(*battery);
         size_t steps_lifetime = batt->step_per_hour * batt->nyears * 8760;
         indices_survived.resize(steps_lifetime);
@@ -260,8 +260,9 @@ public:
         return hours_survived;
     }
 
-    double get_avg_critical_load(){
-        return std::accumulate(total_load_met.begin(), total_load_met.end(), 0.0) / (double)total_load_met.size();
+
+    double get_avg_crit_load_kwh(){
+        return std::accumulate(total_load_met.begin(), total_load_met.end(), 0.0) / (double)(total_load_met.size() * batt->step_per_hour);
     }
 
     std::vector<double> get_outage_duration_hrs() {

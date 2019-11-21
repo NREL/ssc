@@ -29,7 +29,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <unordered_map>
 using std::unordered_map;
 
-#include "lib_util.h"
+#include "../shared/lib_util.h"
 #include "sscapi.h"
 
 #ifdef _MSC_VER

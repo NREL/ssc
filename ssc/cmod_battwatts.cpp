@@ -54,9 +54,10 @@ var_info vtab_battwatts[] = {
 
 var_info_invalid  };
 
-batt_variables * battwatts_create(size_t n_recs, int chem, int meter_pos, double size_kwh, double size_kw, double inv_eff,
-        int dispatch, std::vector<double> dispatch_custom){
-    auto batt_vars = new batt_variables();
+std::shared_ptr<batt_variables>
+battwatts_create(size_t n_recs, int chem, int meter_pos, double size_kwh, double size_kw, double inv_eff,
+                 int dispatch, std::vector<double> dispatch_custom){
+    auto batt_vars = std::shared_ptr<batt_variables>();
 
     // allocate vectors
     auto lifetime_matrix = new std::vector < double >;
@@ -258,7 +259,7 @@ cm_battwatts::cm_battwatts()
     add_var_info(vtab_technology_outputs);
 }
 
-batt_variables * cm_battwatts::setup_variables(size_t n_recs)
+std::shared_ptr<batt_variables> cm_battwatts::setup_variables(size_t n_recs)
 {
     int chem = as_integer("batt_simple_chemistry");
     int pos = as_integer("batt_simple_meter_position");
@@ -293,9 +294,9 @@ void cm_battwatts::exec()
         util::vector_multiply_scalar<ssc_number_t>(p_ac, static_cast<ssc_number_t>(util::watt_to_kilowatt));
         p_load = as_vector_ssc_number_t("load");
 
-        batt_variables * batt_vars = setup_variables(p_ac.size());
-        battstor batt(*m_vartab, true, p_ac.size(), static_cast<double>(8760 / p_ac.size()), batt_vars);
-        batt.initialize_automated_dispatch(p_ac, p_load);
+        std::shared_ptr<batt_variables> batt_vars = setup_variables(p_ac.size());
+        auto batt = std::make_shared<battstor>(*m_vartab, true, p_ac.size(), static_cast<double>(8760 / p_ac.size()), batt_vars);
+        batt->initialize_automated_dispatch(p_ac, p_load);
 
         std::unique_ptr<resiliency_runner> resilience = nullptr;
         std::vector<ssc_number_t> p_crit_load;
@@ -303,10 +304,12 @@ void cm_battwatts::exec()
             p_crit_load = as_vector_ssc_number_t("crit_load");
             if (p_crit_load.size() != p_ac.size())
                 throw exec_error("battwatts", "electric load profile must have same number of values as ac");
-            resilience = std::unique_ptr<resiliency_runner>(new resiliency_runner(&batt));
-            auto logs = resilience->get_logs();
-            if (!logs.empty()){
-                log(logs[0], SSC_WARNING);
+            if (!p_crit_load.empty() && *std::max_element(p_crit_load.begin(), p_crit_load.end()) > 0){
+                resilience = std::unique_ptr<resiliency_runner>(new resiliency_runner(batt));
+                auto logs = resilience->get_logs();
+                if (!logs.empty()){
+                    log(logs[0], SSC_WARNING);
+                }
             }
         }
 
@@ -319,27 +322,27 @@ void cm_battwatts::exec()
 
         for (hour = 0; hour < 8760; hour++)
         {
-            for (size_t jj = 0; jj < batt.step_per_hour; jj++)
+            for (size_t jj = 0; jj < batt->step_per_hour; jj++)
             {
-                batt.initialize_time(0, hour, jj);
+                batt->initialize_time(0, hour, jj);
 
                 if (resilience){
-                    resilience->add_battery_at_outage_timestep(*batt.dispatch_model, count);
+                    resilience->add_battery_at_outage_timestep(*batt->dispatch_model, count);
                     resilience->run_surviving_batteries(p_crit_load[count], p_ac[count]);
                 }
 
-                batt.advance(m_vartab, p_ac[count], voltage, p_load[count]);
-                p_gen[count] = batt.outGenPower[count];
+                batt->advance(m_vartab, p_ac[count], voltage, p_load[count]);
+                p_gen[count] = batt->outGenPower[count];
                 count++;
             }
         }
-        process_messages(&batt, this);
-        batt.calculate_monthly_and_annual_outputs(*this);
+        process_messages(batt, this);
+        batt->calculate_monthly_and_annual_outputs(*this);
 
         if (resilience) {
             resilience->run_surviving_batteries_by_looping(&p_crit_load[0], &p_ac[0]);
 
-            double avg_hours_survived = resilience->compute_metrics(batt.step_per_hour);
+            double avg_hours_survived = resilience->compute_metrics(batt->step_per_hour);
             auto outage_durations = resilience->get_outage_duration_hrs();
             auto probs_surviving = resilience->get_probs_of_surviving();
             assign("resilience_hrs", resilience->get_hours_survived());
@@ -348,10 +351,8 @@ void cm_battwatts::exec()
             assign("resilience_hrs_avg", avg_hours_survived);
             assign("outage_durations", outage_durations);
             assign("probs_of_surviving", probs_surviving);
-            assign("avg_critical_load", resilience->get_avg_critical_load());
+            assign("avg_critical_load", resilience->get_avg_crit_load_kwh());
         }
-
-        clean_up(batt_vars);
     }
     else
         assign("average_battery_roundtrip_efficiency", var_data((ssc_number_t)0.));

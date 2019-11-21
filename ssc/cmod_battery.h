@@ -222,7 +222,7 @@ struct batt_time_settings
 struct battstor
 {
 	/// Pass in the single-year number of records
-	battstor( var_table &vt, bool setup_model, size_t nrec, double dt_hr, batt_variables *batt_vars=0);
+	battstor(var_table &vt, bool setup_model, size_t nrec, double dt_hr, const std::shared_ptr<batt_variables> batt_vars_in=0);
 
     battstor(const battstor& orig);
 
@@ -301,7 +301,7 @@ struct battstor
 	bool en;
 	int chem;
 
-	batt_variables * batt_vars;
+	std::shared_ptr<batt_variables> batt_vars;
 	bool make_vars;
 	
 	/*! Map of profile to discharge percent */
@@ -384,6 +384,6 @@ struct battstor
 	double outPVChargePercent;
 };
 
-void process_messages(battstor* batt, compute_module* cm);
+void process_messages(std::shared_ptr<battstor> batt, compute_module* cm);
 
 #endif

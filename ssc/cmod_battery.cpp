@@ -263,7 +263,7 @@ var_info vtab_battery_outputs[] = {
 
 var_info_invalid };
 
-battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, batt_variables *batt_vars_in)
+battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, const std::shared_ptr<batt_variables> batt_vars_in)
 {
 	make_vars = false;
 
@@ -283,7 +283,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, b
 	if (batt_vars_in == 0) 
 	{
 		make_vars = true;
-		batt_vars = new batt_variables();
+		batt_vars = std::make_shared<batt_variables>();
 		
 
 		// fuel cell variables
@@ -1155,7 +1155,6 @@ battstor::~battstor()
 	if (losses_model) delete losses_model;
 	if( dispatch_model ) delete dispatch_model;
 	if (charge_control) delete charge_control;
-	if (make_vars) delete batt_vars;
 }
 
 battstor::battstor(const battstor& orig){
@@ -1530,8 +1529,10 @@ static var_info _cm_vtab_battery[] = {
 	// other variables come from battstor common table
 	var_info_invalid };
 
-void process_messages(battstor* batt, compute_module* cm)
+void process_messages(shared_ptr<battstor> batt, compute_module* cm)
 {
+    if (!batt)
+        return;
     message dispatch_messages = batt->dispatch_model->get_messages();
     message thermal_messages = batt->thermal_model->get_messages();
 
@@ -1577,13 +1578,13 @@ public:
 				dt_hour_gen);
 
 			// Create battery structure and initialize
-			battstor batt(*m_vartab, true, n_rec_single_year, dt_hour_gen);
-			batt.initialize_automated_dispatch(power_input_lifetime, load_lifetime);
+			auto batt = std::make_shared<battstor>(*m_vartab, true, n_rec_single_year, dt_hour_gen);
+			batt->initialize_automated_dispatch(power_input_lifetime, load_lifetime);
 
 			if (load_lifetime.size() != n_rec_lifetime) {
 				throw exec_error("battery", "Load length does not match system generation length");
 			}
-			if (batt.batt_vars->batt_topology == ChargeController::DC_CONNECTED) {
+			if (batt->batt_vars->batt_topology == ChargeController::DC_CONNECTED) {
 				throw exec_error("battery", "Generic System must be AC connected to battery");
 			}
 
@@ -1595,10 +1596,12 @@ public:
 			    size_t nload = p_crit_load.size();
 			    if (nload != n_rec_single_year)
                     throw exec_error("battery", "electric load profile must have same number of values as weather file, or 8760");
-                resilience = std::unique_ptr<resiliency_runner>(new resiliency_runner(&batt));
-                auto logs = resilience->get_logs();
-                if (!logs.empty()){
-                    log(logs[0], SSC_WARNING);
+                if (!p_crit_load.empty() && *std::max_element(p_crit_load.begin(), p_crit_load.end()) > 0){
+                    resilience = std::unique_ptr<resiliency_runner>(new resiliency_runner(batt));
+                    auto logs = resilience->get_logs();
+                    if (!logs.empty()){
+                        log(logs[0], SSC_WARNING);
+                    }
                 }
 			}
 
@@ -1627,7 +1630,7 @@ public:
 			}
 
 			size_t lifetime_idx = 0;
-			for (size_t year = 0; year != batt.nyears; year++)
+			for (size_t year = 0; year != batt->nyears; year++)
 			{
 				for (size_t hour = 0; hour < 8760; hour++)
 				{
@@ -1642,28 +1645,28 @@ public:
 						}
 					}
 
-					for (size_t jj = 0; jj < batt.step_per_hour; jj++)
+					for (size_t jj = 0; jj < batt->step_per_hour; jj++)
 					{
 	
-						batt.initialize_time(year, hour, jj);
-						batt.check_replacement_schedule();
+						batt->initialize_time(year, hour, jj);
+						batt->check_replacement_schedule();
 
 						if (resilience){
-                            resilience->add_battery_at_outage_timestep(*batt.dispatch_model, lifetime_idx);
+                            resilience->add_battery_at_outage_timestep(*batt->dispatch_model, lifetime_idx);
                             resilience->run_surviving_batteries(p_crit_load[lifetime_idx], power_input_lifetime[lifetime_idx]);
 						}
 
-						batt.advance(m_vartab, power_input_lifetime[lifetime_idx], 0, load_lifetime[lifetime_idx], 0);
-						p_gen[lifetime_idx] = batt.outGenPower[lifetime_idx];
+						batt->advance(m_vartab, power_input_lifetime[lifetime_idx], 0, load_lifetime[lifetime_idx], 0);
+						p_gen[lifetime_idx] = batt->outGenPower[lifetime_idx];
 						if (year == 0) {
-							annual_energy += p_gen[lifetime_idx] * batt._dt_hour;
+							annual_energy += p_gen[lifetime_idx] * batt->_dt_hour;
 						}
 						lifetime_idx++;
 					}
 				}
 			}
-            process_messages(&batt, this);
-            batt.calculate_monthly_and_annual_outputs(*this);
+            process_messages(batt, this);
+            batt->calculate_monthly_and_annual_outputs(*this);
 
 			// update capacity factor and annual energy
 			assign("capacity_factor", var_data(static_cast<ssc_number_t>(annual_energy * 100.0 / (nameplate_in * util::hours_per_year))));
@@ -1674,7 +1677,7 @@ public:
             if (resilience) {
                 resilience->run_surviving_batteries_by_looping(&p_crit_load[0], &power_input_lifetime[0]);
 
-                double avg_hours_survived = resilience->compute_metrics(batt.step_per_hour);
+                double avg_hours_survived = resilience->compute_metrics(batt->step_per_hour);
                 auto outage_durations = resilience->get_outage_duration_hrs();
                 auto probs_surviving = resilience->get_probs_of_surviving();
                 assign("resilience_hrs", resilience->get_hours_survived());
@@ -1683,7 +1686,7 @@ public:
                 assign("resilience_hrs_avg", avg_hours_survived);
                 assign("outage_durations", outage_durations);
                 assign("probs_of_surviving", probs_surviving);
-                assign("avg_critical_load", resilience->get_avg_critical_load());
+                assign("avg_critical_load", resilience->get_avg_crit_load_kwh());
             }
 		}
 		else
