@@ -24,7 +24,7 @@ protected:
     std::vector<double> dispatch_custom;
 
 
-    batt_variables* batt_vars = nullptr;
+    std::shared_ptr<batt_variables> batt_vars = nullptr;
     var_table* vartab = nullptr;
     std::shared_ptr<battstor> batt = nullptr;
     dispatch_t* dispatch = nullptr;
@@ -39,7 +39,6 @@ protected:
     };
 
     void CreateBattery(bool ac_not_dc_connected, size_t steps_per_hour, double pv_ac, double load_ac, double batt_dc) {
-        delete batt_vars;
         delete vartab;
         ac.clear();
         load.clear();
@@ -57,7 +56,7 @@ protected:
             dispatch_custom.push_back(batt_dc);
         }
         size_t n_recs = 8760 * steps_per_hour;
-        batt_vars = battwatts_create(n_recs, chem, pos, size_kwh, size_kw, inv_eff, dispatch_mode, dispatch_custom);
+        batt_vars = battwatts_create(n_recs, 1, chem, pos, size_kwh, size_kw, inv_eff, dispatch_mode, dispatch_custom);
         if (ac_not_dc_connected)
             batt_vars->batt_topology = ChargeController::AC_CONNECTED;
         else{
@@ -74,7 +73,6 @@ protected:
 
     void TearDown() override {
         delete vartab;
-        delete batt_vars;
     }
 };
 

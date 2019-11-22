@@ -41,7 +41,7 @@ public:
         if (connection != CONNECTION::AC_CONNECTED)
             throw std::runtime_error("Error in resilience::run_outage_step_ac: called for battery with DC connection.");
 
-        double battery_dispatched_kwac;
+        double battery_dispatched_kwac = 0;
         double max_discharge_kwdc = _Battery->calculate_max_discharge_kw();
         double max_charge_kwdc = _Battery->calculate_max_charge_kw();
 

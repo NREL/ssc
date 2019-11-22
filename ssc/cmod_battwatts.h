@@ -27,7 +27,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "cmod_battery.h"
 
 std::shared_ptr<batt_variables>
-battwatts_create(size_t n_recs, int chem, int meter_pos, double size_kwh, double size_kw, double inv_eff,
+battwatts_create(size_t n_recs, size_t n_years, int chem, int meter_pos, double size_kwh, double size_kw, double inv_eff,
                  int dispatch, std::vector<double> dispatch_custom = std::vector<double>());
 
 class cm_battwatts : public compute_module {

@@ -267,10 +267,9 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 {
 	make_vars = false;
 
-	// time quantities
-	nyears = 1;
-	_dt_hour = dt_hr;
-	step_per_hour = static_cast<size_t>(1. / _dt_hour);
+    // time quantities
+    _dt_hour = dt_hr;
+    step_per_hour = static_cast<size_t>(1. / _dt_hour);
 	initialize_time(0, 0, 0);
 
 	bool has_fuelcell = false;
@@ -598,8 +597,10 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 			}
 		}
 	}
-	else
+	else{
+        nyears = (batt_vars_in->system_use_lifetime_output) ? batt_vars_in->analysis_period : 1;
 		batt_vars = batt_vars_in;
+	}
 
 	// component models
 	voltage_model = 0;

@@ -25,6 +25,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "common.h"
 #include "core.h"
 #include "lib_util.h"
+#include "lib_time.h"
 #include "lib_shared_inverter.h"
 #include "lib_battery.h"
 #include "cmod_battery.h"
@@ -55,7 +56,7 @@ var_info vtab_battwatts[] = {
 var_info_invalid  };
 
 std::shared_ptr<batt_variables>
-battwatts_create(size_t n_recs, int chem, int meter_pos, double size_kwh, double size_kw, double inv_eff,
+battwatts_create(size_t n_recs, size_t n_years, int chem, int meter_pos, double size_kwh, double size_kw, double inv_eff,
                  int dispatch, std::vector<double> dispatch_custom){
     auto batt_vars = std::make_shared<batt_variables>();
 
@@ -67,9 +68,9 @@ battwatts_create(size_t n_recs, int chem, int meter_pos, double size_kwh, double
 
     // Basic information
     batt_vars->batt_chem = chem;
-    batt_vars->analysis_period = 25;
+    batt_vars->analysis_period = n_years;
     batt_vars->batt_meter_position = meter_pos;
-    batt_vars->system_use_lifetime_output = false;
+    batt_vars->system_use_lifetime_output = (n_years > 1);
     double voltage_guess = 0;
 
     // lithium ion NMC
@@ -262,6 +263,9 @@ cm_battwatts::cm_battwatts()
 
 std::shared_ptr<batt_variables> cm_battwatts::setup_variables(size_t n_recs)
 {
+    size_t nyears = 1;
+    if (as_boolean("system_use_lifetime_output"))
+        nyears = (size_t)as_double("analysis_period");
     int chem = as_integer("batt_simple_chemistry");
     int pos = as_integer("batt_simple_meter_position");
     double kwh = as_number("batt_simple_kwh");
@@ -274,7 +278,7 @@ std::shared_ptr<batt_variables> cm_battwatts::setup_variables(size_t n_recs)
         if (dispatch_custom.size()!=n_recs) throw exec_error("battwatts",
                 "'batt_custom_dispatch' length must be equal to length of 'ac'.");
     }
-    return battwatts_create(n_recs, chem, pos, kwh, kw, inv_eff, dispatch, dispatch_custom);
+    return battwatts_create(n_recs, nyears, chem, pos, kwh, kw, inv_eff, dispatch, dispatch_custom);
 }
 
 
@@ -296,15 +300,30 @@ void cm_battwatts::exec()
         p_load = as_vector_ssc_number_t("load");
 
         std::shared_ptr<batt_variables> batt_vars = setup_variables(p_ac.size());
-        auto batt = std::make_shared<battstor>(*m_vartab, true, p_ac.size(), static_cast<double>(8760 / p_ac.size()), batt_vars);
+        size_t n_rec_lifetime = p_ac.size();
+
+        std::vector<ssc_number_t> load_lifetime;
+        size_t n_rec_single_year;
+        double dt_hour_gen;
+        single_year_to_lifetime_interpolated<ssc_number_t>(
+                (bool)as_integer("system_use_lifetime_output"),
+                (size_t)as_integer("analysis_period"),
+                n_rec_lifetime,
+                p_load,
+                load_lifetime,
+                n_rec_single_year,
+                dt_hour_gen);
+
+        auto batt = std::make_shared<battstor>(*m_vartab, true, p_ac.size(), dt_hour_gen, batt_vars);
         batt->initialize_automated_dispatch(p_ac, p_load);
+
 
         std::unique_ptr<resiliency_runner> resilience = nullptr;
         std::vector<ssc_number_t> p_crit_load;
         if (is_assigned("crit_load")){
             p_crit_load = as_vector_ssc_number_t("crit_load");
-            if (p_crit_load.size() != p_ac.size())
-                throw exec_error("battwatts", "electric load profile must have same number of values as ac");
+            if (p_crit_load.size() != p_load.size())
+                throw exec_error("battwatts", "critical electric load profile must have same number of values as load");
             if (!p_crit_load.empty() && *std::max_element(p_crit_load.begin(), p_crit_load.end()) > 0){
                 resilience = std::unique_ptr<resiliency_runner>(new resiliency_runner(batt));
                 auto logs = resilience->get_logs();
@@ -318,23 +337,26 @@ void cm_battwatts::exec()
         Run Simulation
         *********************************************************************************************** */
         ssc_number_t *p_gen = allocate("gen", p_ac.size());
+        size_t year = 0;
         size_t hour = 0;
         int count = 0;
 
-        for (hour = 0; hour < 8760; hour++)
-        {
-            for (size_t jj = 0; jj < batt->step_per_hour; jj++)
+        for (year = 0; year < batt->nyears; year++){
+            for (hour = 0; hour < 8760; hour++)
             {
-                batt->initialize_time(0, hour, jj);
+                for (size_t jj = 0; jj < batt->step_per_hour; jj++)
+                {
+                    batt->initialize_time(year, hour, jj);
 
-                if (resilience){
-                    resilience->add_battery_at_outage_timestep(*batt->dispatch_model, count);
-                    resilience->run_surviving_batteries(p_crit_load[count], p_ac[count]);
+                    if (resilience){
+                        resilience->add_battery_at_outage_timestep(*batt->dispatch_model, count);
+                        resilience->run_surviving_batteries(p_crit_load[count % n_rec_single_year], p_ac[count]);
+                    }
+
+                    batt->advance(m_vartab, p_ac[count], voltage, p_load[count]);
+                    p_gen[count] = batt->outGenPower[count];
+                    count++;
                 }
-
-                batt->advance(m_vartab, p_ac[count], voltage, p_load[count]);
-                p_gen[count] = batt->outGenPower[count];
-                count++;
             }
         }
         process_messages(batt, this);
