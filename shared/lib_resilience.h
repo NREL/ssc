@@ -272,6 +272,15 @@ public:
     std::vector<double> get_probs_of_surviving(){
         return probs_of_surviving;
     }
+
+    std::vector<double> get_probs_cumulative_of_surviving(){
+        std::vector<double> cum_prob;
+        cum_prob.push_back(probs_of_surviving[0]);
+        for (size_t i = 1; i < probs_of_surviving.size(); i++){
+            cum_prob.emplace_back(probs_of_surviving[i] + cum_prob[i-1]);
+        }
+        return cum_prob;
+    }
 };
 
 

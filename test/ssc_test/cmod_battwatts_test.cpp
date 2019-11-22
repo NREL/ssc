@@ -15,7 +15,7 @@ TEST_F(CMBattwatts_cmod_battwatts, ResilienceMetricsHalfLoad){
     double resilience_hrs_max = data.as_number("resilience_hrs_max");
     double resilience_hrs_avg = data.as_number("resilience_hrs_avg");
     auto outage_durations = data.as_vector_ssc_number_t("outage_durations");
-    auto probs_of_surviving = data.as_vector_ssc_number_t("probs_of_surviving");
+    auto pdf_of_surviving = data.as_vector_ssc_number_t("pdf_of_surviving");
     double avg_critical_load = data.as_double("avg_critical_load");
 
     EXPECT_EQ(resilience_hours[0], 15);
@@ -26,8 +26,8 @@ TEST_F(CMBattwatts_cmod_battwatts, ResilienceMetricsHalfLoad){
     EXPECT_EQ(outage_durations[0], 15);
     EXPECT_EQ(resilience_hrs_max, 32);
     EXPECT_EQ(outage_durations[17], 32);
-    EXPECT_NEAR(probs_of_surviving[0], 0.000114, 1e-3);
-    EXPECT_NEAR(probs_of_surviving[1], 0.00217, 1e-3);
+    EXPECT_NEAR(pdf_of_surviving[0], 0.000114, 1e-3);
+    EXPECT_NEAR(pdf_of_surviving[1], 0.00217, 1e-3);
 
 }
 
@@ -42,7 +42,8 @@ TEST_F(CMBattwatts_cmod_battwatts, ResilienceMetricsHalfLoadLifetime){
     double resilience_hrs_max = data.as_number("resilience_hrs_max");
     double resilience_hrs_avg = data.as_number("resilience_hrs_avg");
     auto outage_durations = data.as_vector_ssc_number_t("outage_durations");
-    auto probs_of_surviving = data.as_vector_ssc_number_t("probs_of_surviving");
+    auto pdf_of_surviving = data.as_vector_ssc_number_t("pdf_of_surviving");
+    auto cdf_of_surviving = data.as_vector_ssc_number_t("cdf_of_surviving");
     double avg_critical_load = data.as_double("avg_critical_load");
 
     EXPECT_EQ(resilience_hours[0], 15);
@@ -53,7 +54,7 @@ TEST_F(CMBattwatts_cmod_battwatts, ResilienceMetricsHalfLoadLifetime){
     EXPECT_EQ(resilience_hrs_max, 32);
     EXPECT_EQ(outage_durations[0], 15);
     EXPECT_EQ(outage_durations[17], 32);
-    EXPECT_NEAR(probs_of_surviving[0], 0.000114, 1e-5);
-    EXPECT_NEAR(probs_of_surviving[1], 0.00205, 1e-5);
+    EXPECT_NEAR(pdf_of_surviving[0], 0.000114/2, 1e-5);
+    EXPECT_NEAR(pdf_of_surviving[1], 0.00205/2, 1e-5);
 
 }

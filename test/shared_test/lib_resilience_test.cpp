@@ -412,7 +412,6 @@ TEST_F(ResilienceTest_lib_resilience, HourlyVsSubHourly)
         volt_subhourly->updateVoltage(cap_subhourly, nullptr, 0.5);
         EXPECT_NEAR(cap_subhourly->I() * volt_subhourly->battery_voltage(), discharge_watts, 0.1);
 
-        std::cerr << cap_hourly->q0() << ", " << cap_subhourly->q0() << "\n";
     }
 }
 
@@ -656,7 +655,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsACHourly_Charge)
         resilience.run_surviving_batteries(load[i], ac[i], 0, 0, 0, 0);
         batt->advance(vartab, ac[i], voltage, load[i]);
         charge_total.emplace_back(batt->battery_model->battery_charge_total());
-        EXPECT_NEAR(batt->outBatteryPower[i], 1., 1e-3) << "timestep " << i;
+        EXPECT_NEAR(batt->outBatteryPower[i], -0.5, 1e-3) << "timestep " << i;
     }
     std::vector<double> correct_charge_total = {16.61, 17.46, 18.32, 19.17, 20.02};
 
