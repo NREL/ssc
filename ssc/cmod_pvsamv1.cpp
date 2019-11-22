@@ -2007,7 +2007,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 
                     if (resilience){
 					    resilience->add_battery_at_outage_timestep(*batt->dispatch_model, idx);
-                        resilience->run_surviving_batteries(p_crit_load_in[idx], sharedInverter->powerAC_kW, dcPower_kW,
+                        resilience->run_surviving_batteries(p_crit_load_in[idx % nrec], sharedInverter->powerAC_kW, dcPower_kW,
                                                         dcVoltagePerMppt[0], sharedInverter->powerClipLoss_kW, wf.tdry);
                     }
 
@@ -2138,7 +2138,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 
 					if (resilience){
 					    resilience->add_battery_at_outage_timestep(*batt->dispatch_model, idx);
-                        resilience->run_surviving_batteries(p_crit_load_in[idx], PVSystem->p_systemACPower[idx], 0, 0, 0, 0);
+                        resilience->run_surviving_batteries(p_crit_load_in[idx  % nrec], PVSystem->p_systemACPower[idx], 0, 0, 0, 0);
 					}
 
 					batt->advance(m_vartab, PVSystem->p_systemACPower[idx], 0, p_load_full[idx]);

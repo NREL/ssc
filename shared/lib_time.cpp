@@ -28,15 +28,14 @@ void single_year_to_lifetime_interpolated(
 {
 	// Parse lifetime properties
 	n_rec_single_year = n_rec_lifetime;
-	dt_hour = (double)(util::hours_per_year) / (double)(n_rec_lifetime);
 
 	if (is_lifetime) {
-		dt_hour = (double)(util::hours_per_year * n_years) / n_rec_lifetime;
 		n_rec_single_year = n_rec_lifetime / n_years;
 	}
 	else {
 		n_years = 1;
 	}
+	dt_hour = (double)(util::hours_per_year * n_years) / n_rec_lifetime;
 	size_t step_per_hour = (size_t)(1 / dt_hour);
 	lifetime_from_singleyear_vector.reserve(n_rec_lifetime);
 

@@ -5,7 +5,7 @@
 #include "../input_cases/weather_inputs.h"
 
 /// Test PVSAMv1 with all defaults and no-financial model
-TEST_F(CMPvsamv1PowerIntegration, DefaultNoFinancialModel_cmod_pvsamv1){
+TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, DefaultNoFinancialModel){
 	
 	int pvsam_errors = run_module(data, "pvsamv1");
 
@@ -31,7 +31,7 @@ TEST_F(CMPvsamv1PowerIntegration, DefaultNoFinancialModel_cmod_pvsamv1){
 }
 
 /// Run PVSAMv1 with all defaults and lifetime mode for no-financial model
-TEST_F(CMPvsamv1PowerIntegration, DefaultLifetimeNoFinancialModel_cmod_pvsamv1) {
+TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, DefaultLifetimeNoFinancialModel) {
 
 	std::map<std::string, double> pairs;
 	pairs["system_use_lifetime_output"] = 1;
@@ -69,7 +69,7 @@ TEST_F(CMPvsamv1PowerIntegration, DefaultLifetimeNoFinancialModel_cmod_pvsamv1) 
 
 
 /// Test PVSAMv1 with all defaults and residential financial model
-TEST_F(CMPvsamv1PowerIntegration, DefaultResidentialModel_cmod_pvsamv1)
+TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, DefaultResidentialModel)
 {
 
 	ssc_data_t data = ssc_data_create();
@@ -141,7 +141,7 @@ TEST_F(CMPvsamv1PowerIntegration, DefaultResidentialModel_cmod_pvsamv1)
 }
 
 /// Test PVSAMv1 with default no-financial model and a 15-minute weather file 
-TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelCustomWeatherFile_cmod_pvsamv1) {
+TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelCustomWeatherFile) {
 
 	std::map<std::string, std::string> pairs; 
 	pairs["solar_resource_file"] = solar_resource_path_15_min;
@@ -170,7 +170,7 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelCustomWeatherFile_cmod_pvsamv1
 }
 
 /// Test PVSAMv1 with default no-financial model and combinations of Sky Diffuse Model and Weather File Irradiance
-TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelSkyDiffuseAndIrradModels_cmod_pvsamv1)
+TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelSkyDiffuseAndIrradModels)
 {
 	std::vector<double> annual_energy_expected = { 8513, 8522, 8525, 8635, 8645, 8647, 8714, 8723, 8726, 7623, 7300};
 	std::map<std::string, double> pairs;
@@ -218,7 +218,7 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelSkyDiffuseAndIrradModels_cmod_
 }
 	
 /// Test PVSAMv1 with default no-financial model and combinations of module and inverter models
-TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelModuleAndInverterModels_cmod_pvsamv1)
+TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelModuleAndInverterModels)
 {
 	std::vector<double> annual_energy_expected = { 2518, 2548, 2476, 2518, 8714, 8694, 8661, 8714, 54, 57, 60, 54, 5405, 5400, 5347, 5404, 1767, 1807, 1736, 1767};
 	std::map<std::string, double> pairs;
@@ -248,7 +248,7 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelModuleAndInverterModels_cmod_p
 
 /// Test PVSAMv1 with default no-financial model and combinations of module thermal, spectral, and reflection models
 //This test can be expanded when we allow different combinations of thermal, spectral, and reflection models with different module models 
-TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelModuleThermalSpectralReflection_cmod_pvsamv1)
+TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelModuleThermalSpectralReflection)
 {
 	std::vector<double> annual_energy_expected = { 8714, 8749 };
 	std::map<std::string, double> pairs;
@@ -272,7 +272,7 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelModuleThermalSpectralReflectio
 }
 
 /// Test PVSAMv1 with default no-financial model and sytem design page changes
-TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelSystemDesign_cmod_pvsamv1)
+TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelSystemDesign)
 {
 	pvsamv_nofinancial_default(data);
 
@@ -385,7 +385,7 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelSystemDesign_cmod_pvsamv1)
 }
 
 /// Test PVSAMv1 with default no-financial model and different shading options
-TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelShading_cmod_pvsamv1)
+TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelShading)
 {
 	// 0: No Shading, 1: 3D Shading, 2: 3D shading with self shading (non-linear), 3: Snow
 // PR 280	std::vector<double> annual_energy_expected = { 12911, 10607, 10579, 10377 };
@@ -473,7 +473,7 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelShading_cmod_pvsamv1)
 }
 
 /// Test PVSAMv1 with default no-financial model and different loss options
-TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelLosses_cmod_pvsamv1)
+TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelLosses)
 {
 	// 0: Default Losses, 1: Modify Point Losses, 2: Modify Availability
 	std::vector<double> annual_energy_expected = { 8714, 7874, 7607 };
@@ -524,7 +524,7 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelLosses_cmod_pvsamv1)
 
 /// Change half of all temperatures so that inv eff is derated by ~50% for half the year
 /// DC production & inverter efficiency both decrease as result
-TEST_F(CMPvsamv1PowerIntegration, InvTempDerate_cmod_pvsamv1) {
+TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, InvTempDerate) {
 	var_data* weatherData = create_weatherdata_array();
 	ssc_data_unassign(data, "solar_resource_file");
 	var_table *vt = static_cast<var_table*>(data);
@@ -563,7 +563,7 @@ TEST_F(CMPvsamv1PowerIntegration, InvTempDerate_cmod_pvsamv1) {
 }
 
 /// Test PVSAMv1 multiple MPPT inverter, otherwise using default no financial model inputs
-TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelMultipleMPPT_cmod_pvsamv1)
+TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelMultipleMPPT)
 {
 	std::vector<double> annual_energy_expected = { 7633 };
 	std::map<std::string, double> pairs;
@@ -592,7 +592,7 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelMultipleMPPT_cmod_pvsamv1)
 }
 
 /// Test PVSAMv1 with Snow Model enabled and set to 1-axis Tracking
-TEST_F(CMPvsamv1PowerIntegration, SnowModel_cmod_pvsamv1)
+TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, SnowModel)
 {
 	std::map<std::string, double> pairs;
 
@@ -604,5 +604,10 @@ TEST_F(CMPvsamv1PowerIntegration, SnowModel_cmod_pvsamv1)
 	ssc_number_t annual_energy;
 	ssc_data_get_number(data, "annual_energy", &annual_energy);
 	EXPECT_NEAR(annual_energy, 11354.7, m_error_tolerance_hi) << "Annual energy.";
+
+}
+
+TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, BatteryResilience)
+{
 
 }

@@ -235,12 +235,12 @@ public:
         outage_durations.clear();
         probs_of_surviving.clear();
 
-        double hrs_per_yr = (double)batt->step_per_hour * 8760.;
+        double hrs_total = (double)batt->step_per_hour * 8760. * (double)batt->nyears;
         outage_durations = std::vector<double>(indices_survived.begin(), indices_survived.end());;
         std::sort(outage_durations.begin(), outage_durations.end());
         outage_durations.erase(unique(outage_durations.begin(), outage_durations.end()), outage_durations.end());
         for (auto& i : outage_durations){
-            double prob = std::count(indices_survived.begin(), indices_survived.end(), i) / hrs_per_yr;
+            double prob = std::count(indices_survived.begin(), indices_survived.end(), i) / hrs_total;
             i /= batt->step_per_hour;       // convert to hours
             probs_of_surviving.emplace_back(prob);
         }
