@@ -45,7 +45,7 @@ void me_array_cable_length(ssc_data_t data)
 
 	if (fabs(export_cable_redundancy) > 0.1)
 	{
-		length = water_depth + distance_to_shore * 2;
+		length = (water_depth + distance_to_shore) * 2;
 		length *= (1.0 + cable_system_overbuild / 100.0);
 	}
 	else
