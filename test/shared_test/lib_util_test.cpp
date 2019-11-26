@@ -1,8 +1,9 @@
 #include <string>
 #include <gtest/gtest.h>
 #include <lib_util.h>
-#include <vartab.h>
+#include "sscapi.h"
 
+#include "vartab.h"
 
 TEST(libUtilTests, testFormat_lib_util)
 {
@@ -18,43 +19,63 @@ TEST(libUtilTests, testFormat_lib_util)
 
 TEST(sscapiTest, SSC_DATARR_test)
 {
-    std::vector<ssc_var_t > vd;
-    vd.resize(2);
-    for (auto& i : vd){
-        i = ssc_var_create();
-        ssc_var_set_number(i, 2);
+    // create data entries
+    ssc_var_t vd[2];
+    for (size_t i = 0; i < 2; i++){
+        vd[i] = ssc_var_create();
+        ssc_var_set_number(vd[i], 2 + i);
     }
 
+    // set using ssc_data
     auto data = ssc_data_create();
-
     ssc_data_set_data_array(data, "array", &vd[0], 2);
+
+    // get using ssc_data
     int n;
-    auto data_arr = static_cast<var_data*>(ssc_data_get_data_array(data, "array", &n));
+    ssc_var_t data_arr = ssc_data_get_data_array(data, "array", &n);
+
+    ssc_var_size(data_arr, &n, nullptr);
+    EXPECT_EQ(n, 2);
+//    ssc_var_size(data_arr, &n, nullptr);
     for (size_t i = 0; i < n; i++){
-        double var = ssc_var_get_number(static_cast<ssc_var_t>(&data_arr[i]));
-        assert(var == 2);
+        double var = ssc_var_get_number(ssc_var_get_var_array(data_arr, i));
+        EXPECT_EQ(var, 2 + i);
     }
+
+    for (size_t i = 0; i < 2; i++)
+        ssc_var_free(vd[i]);
+    ssc_data_free(data);
 }
 
 TEST(sscapiTest, SSC_DATMAT_test)
 {
-    std::vector<ssc_var_t > vd;
-    vd.resize(2);
-    for (auto& i : vd){
-        i = ssc_var_create();
-        ssc_var_set_number(i, 2);
+    // create data entries
+    ssc_var_t vd[4];
+    for (size_t i = 0; i < 4; i++){
+        vd[i] = ssc_var_create();
+        ssc_var_set_number(vd[i], 2 + i);
     }
-    std::vector<std::vector<ssc_var_t>> vm;
-    vm.push_back(vd);
-    vm.push_back(vd);
 
+    // set using ssc_data
     auto data = ssc_data_create();
+    ssc_data_set_data_matrix(data, "matrix", &vd[0], 2, 2);
 
-    ssc_data_set_data_matrix(data, "matrix", &vm[0][0], 2, 2);
+    // get using ssc_data
     int n, m;
-    auto data_mat = static_cast<var_data*>(ssc_data_get_data_matrix(data, "matrix", &n, &m));
-    for (size_t i = 0; i < n*m; i++){
-        double var = ssc_var_get_number(static_cast<ssc_var_t>(&data_mat[i]));
-        assert(var == 2);
+    ssc_var_t data_mat = ssc_data_get_data_matrix(data, "matrix", &n, &m);
+
+    ssc_var_size(data_mat, &n, &m);
+    EXPECT_EQ(n, 2);
+    EXPECT_EQ(m, 2);
+
+    for (size_t i = 0; i < n; i++){
+        for (size_t j = 0; j < m; j++){
+            double var = ssc_var_get_number(ssc_var_get_var_matrix(data_mat, i, j));
+            EXPECT_EQ(var, 2 + i * n + j);
+        }
     }
+
+    for (size_t i = 0; i < 4; i++)
+        ssc_var_free(vd[i]);
+    ssc_data_free(data);
 }

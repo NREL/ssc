@@ -127,7 +127,10 @@ public:
 
 	var_data &operator=(const var_data &rhs) { copy(rhs); return *this; }
 	void copy( const var_data &rhs ) {
-	    type=rhs.type; num=rhs.num; str=rhs.str; table = rhs.table;
+	    type=rhs.type;
+	    num=rhs.num;
+	    str=rhs.str;
+	    table = rhs.table;
 	    for (const auto& i : rhs.vec){
 	        vec.push_back(i);
 	    }

@@ -90,8 +90,12 @@ typedef int ssc_bool_t;
 
 SSCEXPORT ssc_var_t ssc_var_create();
 
+SSCEXPORT void ssc_var_free(ssc_var_t p_var);
+
 /** Get type of variable **/
 SSCEXPORT int ssc_var_query(ssc_var_t p_var);
+
+SSCEXPORT void ssc_var_size(ssc_var_t p_var, int* nrows, int* ncols);
 
 SSCEXPORT void ssc_var_set_string( ssc_var_t p_var, const char *value );
 
@@ -103,9 +107,11 @@ SSCEXPORT void ssc_var_set_matrix( ssc_var_t p_var, ssc_number_t *pvalues, int n
 
 SSCEXPORT void ssc_var_set_table( ssc_var_t p_var, ssc_var_t table );
 
-SSCEXPORT void ssc_var_set_var_array(ssc_var_t p_var, ssc_var_t* data_array, int nrows );
+// set the r entry in the array
+SSCEXPORT void ssc_var_set_var_array(ssc_var_t p_var, ssc_var_t p_var_entry, int r );
 
-SSCEXPORT void ssc_var_set_var_matrix(ssc_var_t p_var, ssc_var_t* data_matrix, int nrows, int ncols );
+// set the r, c entry in the matrix
+SSCEXPORT void ssc_var_set_var_matrix(ssc_var_t p_var, ssc_var_t p_var_entry, int r, int c );
 
 SSCEXPORT const char *ssc_var_get_string( ssc_var_t p_var);
 
@@ -117,9 +123,9 @@ SSCEXPORT ssc_number_t *ssc_var_get_matrix( ssc_var_t p_var, int *nrows, int *nc
 
 SSCEXPORT ssc_data_t ssc_var_get_table( ssc_var_t p_var);
 
-SSCEXPORT ssc_var_t ssc_var_get_var_array(ssc_var_t p_var, int *nrows );
+SSCEXPORT ssc_var_t ssc_var_get_var_array(ssc_var_t p_var, int r);
 
-SSCEXPORT ssc_var_t ssc_var_get_var_matrix(ssc_var_t p_var, int *nrows, int *ncols );
+SSCEXPORT ssc_var_t ssc_var_get_var_matrix(ssc_var_t p_var, int r, int c);
 
 /** Creates a new data object in memory.  A data object stores a table of named values, where each value can be of any SSC datatype. */
 SSCEXPORT ssc_data_t ssc_data_create();
@@ -156,6 +162,9 @@ SSCEXPORT const char *ssc_data_first( ssc_data_t p_data );
  */
 SSCEXPORT const char *ssc_data_next( ssc_data_t p_data );
 
+/** Returns the data by case-matching the name */
+SSCEXPORT ssc_var_t ssc_data_lookup_case(ssc_data_t p_data, const char *name);
+
 /** @name Assigning variable values.
 The following functions do not take ownership of the data pointeres for arrays, matrices, and tables. A deep copy is made into the internal SSC engine. You must remember to free the table that you create to pass into 
 ssc_data_set_table( ) for example.
@@ -177,10 +186,10 @@ SSCEXPORT void ssc_data_set_matrix( ssc_data_t p_data, const char *name, ssc_num
 SSCEXPORT void ssc_data_set_table( ssc_data_t p_data, const char *name, ssc_data_t table );
 
 /** Assigns value of type @a SSC_DATAARR. */
-SSCEXPORT void ssc_data_set_data_array(ssc_data_t p_data, const char *name, ssc_data_t* table_array, int nrows );
+SSCEXPORT void ssc_data_set_data_array(ssc_data_t p_data, const char *name, ssc_var_t *data_array, int nrows );
 
 /** Assigns value of type @a SSC_DATAMAT. */
-SSCEXPORT void ssc_data_set_data_matrix(ssc_data_t p_data, const char *name, ssc_data_t* table_array, int nrows, int ncols );
+SSCEXPORT void ssc_data_set_data_matrix(ssc_data_t p_data, const char *name, ssc_var_t *data_matrix, int nrows, int ncols );
 /**@}*/ 
 
 /** @name Retrieving variable values.
@@ -203,7 +212,7 @@ SSCEXPORT ssc_number_t *ssc_data_get_matrix( ssc_data_t p_data, const char *name
 SSCEXPORT ssc_data_t ssc_data_get_table( ssc_data_t p_data, const char *name );
 
 /** Returns the value of a @a SSC_DATAARR variable with the given name. */
-SSCEXPORT ssc_data_t ssc_data_get_data_array(ssc_data_t p_data, const char *name, int* nrows );
+SSCEXPORT ssc_var_t ssc_data_get_data_array(ssc_data_t p_data, const char *name, int *nrows);
 
 /** Returns the value of a @a SSC_DATAMAT variable with the given name. */
 SSCEXPORT ssc_data_t ssc_data_get_data_matrix(ssc_data_t p_data, const char *name, int* nrows, int* ncols );
