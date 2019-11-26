@@ -143,7 +143,7 @@ void cm_grid::exec() throw (general_error)
 	assign("annual_energy_pre_interconnect_ac", var_data(annual_energy_pre_interconnect));
 	assign("annual_energy_pre_curtailment_ac", var_data(annual_energy_pre_curtailment));
 	assign("annual_energy", var_data(annual_energy)); 
-	assign("annual_ac_interconnect_loss_kwh", var_data(std::roundf(annual_energy_pre_interconnect - annual_energy_pre_curtailment)));
+	assign("annual_ac_interconnect_loss_kwh", var_data(std::round(annual_energy_pre_interconnect - annual_energy_pre_curtailment)));
 	assign("annual_ac_interconnect_loss_percent", var_data(100.0*(annual_energy_pre_interconnect - annual_energy_pre_curtailment)/ annual_energy_pre_interconnect));
 
 }
