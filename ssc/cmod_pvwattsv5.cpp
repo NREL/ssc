@@ -37,7 +37,7 @@ enum pvwatts_tracking_input { FIXED_OPEN_RACK, FIXED_ROOF_MOUNT, ONE_AXIS_SELF_S
 
 static var_info _cm_vtab_pvwattsv5_part1[] = {
         /*   VARTYPE           DATATYPE          NAME                         LABEL                                               UNITS        META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-        { SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",     "Run lifetime simulation",                    "0/1",        "",                       "Lifetime",            "*",                        "",                              "" },
+        { SSC_INOUT,        SSC_NUMBER,      "system_use_lifetime_output",     "Run lifetime simulation",                    "0/1",        "",                       "Lifetime",            "?=0",                        "",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "analysis_period",                "Analysis period",                            "years",      "",                       "Lifetime",            "system_use_lifetime_output=1", "",                          "" },
         { SSC_INPUT,        SSC_ARRAY,       "dc_degradation",                 "Annual AC degradation",                      "%/year",    "",                        "Lifetime",            "system_use_lifetime_output=1", "",                          "" },
         { SSC_INPUT,        SSC_STRING,      "solar_resource_file",            "Weather file path",                           "",          "",                       "Location and Resource",     "?",                        "",                              "" },

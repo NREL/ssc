@@ -5,7 +5,7 @@
 
 FuelCell::FuelCell() { /* Nothing to do */ };
 
-FuelCell::FuelCell(double unitPowerMax_kW, double unitPowerMin_kW, double startup_hours, double shutdown_hours,
+FuelCell::FuelCell(double unitPowerMax_kW, double unitPowerMin_kW, double startup_hours, bool is_started, double shutdown_hours,
 	double dynamicResponseUp_kWperHour, double dynamicResponseDown_kWperHour,
 	double degradation_kWperHour, double degradationRestart_kW,
 	size_t replacementOption, double replacement_percent, std::vector<size_t> replacementSchedule,
@@ -16,7 +16,8 @@ FuelCell::FuelCell(double unitPowerMax_kW, double unitPowerMin_kW, double startu
 	dt_hour(dt_hour),
 	m_unitPowerMax_kW(unitPowerMax_kW), 
 	m_unitPowerMin_kW(unitPowerMin_kW), 
-	m_startup_hours(startup_hours), 
+	m_startup_hours(startup_hours),
+	m_is_started(is_started),
 	m_shutdown_hours(shutdown_hours),
 	m_dynamicResponseUp_kWperHour(dynamicResponseUp_kWperHour), 
 	m_dynamicResponseDown_kWperHour(dynamicResponseDown_kWperHour),
@@ -73,6 +74,7 @@ FuelCell::FuelCell(const FuelCell &fuelCell) :
 	m_unitPowerMax_kW(fuelCell.m_unitPowerMax_kW),
 	m_unitPowerMin_kW(fuelCell.m_unitPowerMin_kW),
 	m_startup_hours(fuelCell.m_startup_hours),
+	m_is_started(fuelCell.m_startup_hours),
 	m_shutdown_hours(fuelCell.m_shutdown_hours),
 	m_dynamicResponseUp_kWperHour(fuelCell.m_dynamicResponseUp_kWperHour),
 	m_dynamicResponseDown_kWperHour(fuelCell.m_dynamicResponseDown_kWperHour),
@@ -108,8 +110,9 @@ void FuelCell::init() {
 	m_initialized = true;
 
 	// In event of 0 startup hours, assume fuel cell is running at idle
-	if (m_startup_hours == 0) {
-		m_initialized = false;
+//	if (m_startup_hours == 0) {
+	if (m_is_started == 0) {
+			m_initialized = false;
 	}
 }
 void FuelCell::initializeHourZeroPower(double power_kW) {
@@ -287,10 +290,11 @@ void FuelCell::setDegradationRestartkW(double degradation_kW) {
 void FuelCell::setScheduledShutdowns(util::matrix_t<size_t> shutdowns) {
 	m_scheduledShutdowns = shutdowns;
 }
-void FuelCell::setStartupHours(double startup_hours) {
+void FuelCell::setStartupHours(double startup_hours, bool is_started) {
 	m_startup_hours = startup_hours;
 	// Assume that this function is only called at the beginning of a simulation and implies that fuel cell already running
-	if (startup_hours == 0) {
+//	if (startup_hours == 0) {
+	if (is_started) {
 		m_power_kW = m_unitPowerMin_kW;
 	}
 }
@@ -306,7 +310,7 @@ void FuelCell::checkStatus(double power_kW) {
 		m_hoursSinceStart += dt_hour;
 
 		// Fully started once past the startup hour criteria
-		if (m_hoursSinceStart > m_startup_hours) {
+		if ((m_hoursSinceStart > m_startup_hours) || (m_hour <= m_startup_hours && m_is_started)) {
 			m_startedUp = true;
 			m_startingUp = false;
 			m_power_kW = power_kW;

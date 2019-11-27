@@ -15,6 +15,7 @@ protected:
 	double unitPowerMax_kW;
 	double unitPowerMin_kW;
 	double startup_hours;
+	bool is_started;
 	double shutdown_hours;
 	double dynamicResponseUp_kWperHour;
 	double dynamicResponseDown_kWperHour;
@@ -112,14 +113,14 @@ public:
 	{
 		FuelCellProperties::SetUp();
 		
-		fuelCell = new FuelCell(unitPowerMax_kW, unitPowerMin_kW, startup_hours, shutdown_hours,
+		fuelCell = new FuelCell(unitPowerMax_kW, unitPowerMin_kW, startup_hours, is_started, shutdown_hours,
 			dynamicResponseUp_kWperHour, dynamicResponseDown_kWperHour,
 			degradation_kWperHour, degradationRestart_kW,
 			replacementOption, replacement_percent, replacementSchedule, 
 			shutdownTable, efficiencyChoice, efficiencyTable,
 			lowerHeatingValue_BtuPerFt3, higherHeatingValue_BtuPerFt3, availableFuel_Mcf, shutdownOption, dt_hour);
 	
-		fuelCellSubHourly = new FuelCell(unitPowerMax_kW, unitPowerMin_kW, startup_hours, shutdown_hours,
+		fuelCellSubHourly = new FuelCell(unitPowerMax_kW, unitPowerMin_kW, startup_hours, is_started, shutdown_hours,
 			dynamicResponseUp_kWperHour, dynamicResponseDown_kWperHour,
 			degradation_kWperHour, degradationRestart_kW,
 			replacementOption, replacement_percent, replacementSchedule, shutdownTable, efficiencyChoice, efficiencyTable, lowerHeatingValue_BtuPerFt3, higherHeatingValue_BtuPerFt3, availableFuel_Mcf, shutdownOption, dt_subHourly);

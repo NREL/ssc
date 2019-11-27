@@ -85,7 +85,7 @@ TEST_F(FuelCellTest, Startup_lib_fuel_cell)
 /// Test case for when fuel cell is already started at beginning of year
 TEST_F(FuelCellTest, StartedUp_lib_fuel_cell)
 {
-	fuelCell->setStartupHours(0);
+	fuelCell->setStartupHours(0, true);
 	
 	// First hour is fully started up
 	fuelCell->runSingleTimeStep(dynamicResponseUp_kWperHour * 2);
@@ -187,7 +187,7 @@ TEST_F(FuelCellTest, HeatCalculation_lib_fuel_cell) {
 // Verify that replacements are being handled
 TEST_F(FuelCellTest, Replacements_lib_fuel_cell) {
 
-	fuelCell->setStartupHours(1);
+	fuelCell->setStartupHours(1,false);
 	fuelCell->setDegradationkWPerHour(40);
 	fuelCell->setReplacementOption(FuelCell::FC_REPLACEMENT_OPTION::REPLACE_AT_CAPACITY);
 	fuelCell->setReplacementCapacity(50);
@@ -206,7 +206,7 @@ TEST_F(FuelCellTest, ScheduleRestarts_lib_fuel_cell) {
 	util::matrix_t<size_t> shutdowns;
 	shutdowns.resize_fill(1, 2, 4);
 
-	fuelCell->setStartupHours(1);
+	fuelCell->setStartupHours(1,false);
 	fuelCell->setDegradationkWPerHour(0);
 	fuelCell->setDegradationRestartkW(1);
 	fuelCell->setScheduledShutdowns(shutdowns);
