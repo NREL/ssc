@@ -361,8 +361,10 @@ TEST_F(FuelCellTest, DispatchManualUnits_lib_fuel_cell_dispatch) {
 
 	fuelCellDispatchMultiple->setDispatchOption(FuelCellDispatch::FC_DISPATCH_OPTION::MANUAL);
 	fuelCellDispatchMultiple->setManualDispatchUnits(discharge_units);
-	
-	// Allow fuel cell to startup
+//	fuelCellDispatchMultipleStarted->setDispatchOption(FuelCellDispatch::FC_DISPATCH_OPTION::MANUAL);
+//	fuelCellDispatchMultipleStarted->setManualDispatchUnits(discharge_units);
+
+	// Allow fuel cell to startup - only failing test
 	for (size_t h = 0; h < sh; h++) {
 		fuelCellDispatchMultiple->runSingleTimeStep(h, h, 0, 20);
 	}
@@ -386,20 +388,20 @@ TEST_F(FuelCellTest, DispatchInput_lib_fuel_cell_dispatch) {
 	// Allow fuel cell to startup
 	for (size_t h = 0; h < sh; h++) {
 		fuelCellDispatch->runSingleTimeStep(h, h, 0, 20);
-		EXPECT_EQ(fuelCell->getPower(), 0);
+		EXPECT_EQ(fuelCellDispatch->getPower(), 0);
 	}
 
 	// Dispatch fuel cell at 50% of max output (50 kW, limited by dynamic response)
 	fuelCellDispatch->runSingleTimeStep(sh, sh, 0, 0);
-	EXPECT_EQ(fuelCell->getPower(), 20);
+	EXPECT_EQ(fuelCellDispatch->getPower(), 20);
 
 	// Dispatch fuel cell at 50% of max output (50 kW, limited by dynamic response)
 	fuelCellDispatch->runSingleTimeStep(sh + 1, sh + 1, 0, 0);
-	EXPECT_EQ(fuelCell->getPower(), 40);
+	EXPECT_EQ(fuelCellDispatch->getPower(), 40);
 
 	// Dispatch fuel cell at 50% of max output (50 kW)
 	for (size_t h = sh + 2; h < 50; h++) {
 		fuelCellDispatch->runSingleTimeStep(h, h, 0, 0);
-		EXPECT_EQ(fuelCell->getPower(), 50);
+		EXPECT_EQ(fuelCellDispatch->getPower(), 50);
 	}
 }

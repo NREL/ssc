@@ -51,6 +51,7 @@ protected:
 		unitPowerMax_kW = 100;
 		unitPowerMin_kW = 20;
 		startup_hours = 8;
+		is_started = false;
 		shutdown_hours = 8;
 		dynamicResponseUp_kWperHour = 20;
 		dynamicResponseDown_kWperHour = 10;
@@ -99,8 +100,11 @@ class FuelCellTest : public FuelCellProperties
 protected:
 
 	FuelCell * fuelCell;
+//	FuelCell * fuelCellStarted;
 	FuelCellDispatch * fuelCellDispatch;
+//	FuelCellDispatch * fuelCellDispatchStarted;
 	FuelCellDispatch * fuelCellDispatchMultiple;
+//	FuelCellDispatch * fuelCellDispatchMultipleStarted;
 	size_t n_multipleFuelCells = 4;
 	
 	double dt_subHourly = 0.25;
@@ -116,25 +120,38 @@ public:
 		fuelCell = new FuelCell(unitPowerMax_kW, unitPowerMin_kW, startup_hours, is_started, shutdown_hours,
 			dynamicResponseUp_kWperHour, dynamicResponseDown_kWperHour,
 			degradation_kWperHour, degradationRestart_kW,
-			replacementOption, replacement_percent, replacementSchedule, 
+			replacementOption, replacement_percent, replacementSchedule,
 			shutdownTable, efficiencyChoice, efficiencyTable,
 			lowerHeatingValue_BtuPerFt3, higherHeatingValue_BtuPerFt3, availableFuel_Mcf, shutdownOption, dt_hour);
-	
+
+/*		fuelCellStarted = new FuelCell(unitPowerMax_kW, unitPowerMin_kW, startup_hours, true, shutdown_hours,
+			dynamicResponseUp_kWperHour, dynamicResponseDown_kWperHour,
+			degradation_kWperHour, degradationRestart_kW,
+			replacementOption, replacement_percent, replacementSchedule,
+			shutdownTable, efficiencyChoice, efficiencyTable,
+			lowerHeatingValue_BtuPerFt3, higherHeatingValue_BtuPerFt3, availableFuel_Mcf, shutdownOption, dt_hour);
+*/
 		fuelCellSubHourly = new FuelCell(unitPowerMax_kW, unitPowerMin_kW, startup_hours, is_started, shutdown_hours,
 			dynamicResponseUp_kWperHour, dynamicResponseDown_kWperHour,
 			degradation_kWperHour, degradationRestart_kW,
 			replacementOption, replacement_percent, replacementSchedule, shutdownTable, efficiencyChoice, efficiencyTable, lowerHeatingValue_BtuPerFt3, higherHeatingValue_BtuPerFt3, availableFuel_Mcf, shutdownOption, dt_subHourly);
 
+/*		fuelCellDispatchStarted = new FuelCellDispatch(fuelCellStarted, numberOfUnits, dispatchOption, shutdownOption, dt_hour, fixed_percent,
+			dispatchInput_kW, canCharge, canDischarge, discharge_percent, discharge_units, scheduleWeekday, scheduleWeekend);
+*/
 		fuelCellDispatch = new FuelCellDispatch(fuelCell, numberOfUnits, dispatchOption, shutdownOption, dt_hour, fixed_percent,
 			dispatchInput_kW, canCharge, canDischarge, discharge_percent, discharge_units, scheduleWeekday, scheduleWeekend);
-		
+
 		fuelCellDispatchSubhourly = new FuelCellDispatch(fuelCellSubHourly, numberOfUnits, dispatchOption, shutdownOption, dt_subHourly, fixed_percent,
 			dispatchInput_kW, canCharge, canDischarge, discharge_percent, discharge_units, scheduleWeekday, scheduleWeekend);
 
 		discharge_units[0] = n_multipleFuelCells;
 		fuelCellDispatchMultiple = new FuelCellDispatch(fuelCell, n_multipleFuelCells, dispatchOption, shutdownOption, dt_hour, fixed_percent,
 			dispatchInput_kW, canCharge, canDischarge, discharge_percent, discharge_units, scheduleWeekday, scheduleWeekend);
-	}
+
+/*		fuelCellDispatchMultipleStarted = new FuelCellDispatch(fuelCellStarted, n_multipleFuelCells, dispatchOption, shutdownOption, dt_hour, fixed_percent,
+			dispatchInput_kW, canCharge, canDischarge, discharge_percent, discharge_units, scheduleWeekday, scheduleWeekend);
+*/	}
 	void TearDown()
 	{
 		if (fuelCell) {
@@ -149,7 +166,19 @@ public:
 			delete fuelCellDispatchMultiple;
 			fuelCellDispatchMultiple = nullptr;
 		}
-	}
+/*		if (fuelCellStarted) {
+			delete fuelCellStarted;
+			fuelCellStarted = nullptr;
+		}
+		if (fuelCellDispatchStarted) {
+			delete fuelCellDispatchStarted;
+			fuelCellDispatchStarted = nullptr;
+		}
+		if (fuelCellDispatchMultipleStarted) {
+			delete fuelCellDispatchMultipleStarted;
+			fuelCellDispatchMultipleStarted = nullptr;
+		}
+*/	}
 
 };
 

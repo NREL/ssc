@@ -74,7 +74,7 @@ FuelCell::FuelCell(const FuelCell &fuelCell) :
 	m_unitPowerMax_kW(fuelCell.m_unitPowerMax_kW),
 	m_unitPowerMin_kW(fuelCell.m_unitPowerMin_kW),
 	m_startup_hours(fuelCell.m_startup_hours),
-	m_is_started(fuelCell.m_startup_hours),
+	m_is_started(fuelCell.m_is_started),
 	m_shutdown_hours(fuelCell.m_shutdown_hours),
 	m_dynamicResponseUp_kWperHour(fuelCell.m_dynamicResponseUp_kWperHour),
 	m_dynamicResponseDown_kWperHour(fuelCell.m_dynamicResponseDown_kWperHour),
@@ -111,7 +111,7 @@ void FuelCell::init() {
 
 	// In event of 0 startup hours, assume fuel cell is running at idle
 //	if (m_startup_hours == 0) {
-	if (m_is_started == 0) {
+	if (m_is_started ) {
 			m_initialized = false;
 	}
 }
