@@ -289,8 +289,14 @@ SSCEXPORT ssc_var_t ssc_var_create(){
 
 SSCEXPORT void ssc_var_free( ssc_var_t p_var )
 {
-    auto vt = static_cast<var_data*>(p_var);
-    delete vt;
+    auto vd = static_cast<var_data*>(p_var);
+    delete vd;
+}
+
+SSCEXPORT void ssc_var_clear( ssc_var_t p_var )
+{
+    auto vd = static_cast<var_data*>(p_var);
+    if (vd) vd->clear();
 }
 
 SSCEXPORT int ssc_var_query(ssc_var_t p_var){
@@ -382,7 +388,7 @@ SSCEXPORT void ssc_var_set_table( ssc_var_t p_var, ssc_data_t table )
     vt->table = *value;
 }
 
-SSCEXPORT void ssc_var_set_var_array(ssc_var_t p_var, ssc_var_t p_var_entry, int r ){
+SSCEXPORT void ssc_var_set_data_array(ssc_var_t p_var, ssc_var_t p_var_entry, int r ){
     auto vt = static_cast<var_data*>(p_var);
     if (!vt) return;
     vt->type = SSC_DATARR;
@@ -392,7 +398,7 @@ SSCEXPORT void ssc_var_set_var_array(ssc_var_t p_var, ssc_var_t p_var_entry, int
     vec[r] = *static_cast<var_data*>(p_var_entry);
 }
 
-SSCEXPORT void ssc_var_set_var_matrix(ssc_var_t p_var, ssc_var_t p_var_entry, int r, int c ){
+SSCEXPORT void ssc_var_set_data_matrix(ssc_var_t p_var, ssc_var_t p_var_entry, int r, int c ){
     auto vt = static_cast<var_data*>(p_var);
     if (!vt) return;
     vt->type = SSC_DATMAT;
@@ -525,6 +531,15 @@ SSCEXPORT ssc_var_t ssc_data_lookup_case(ssc_data_t p_data, const char *name)
     var_table *vt = static_cast<var_table*>(p_data);
     if (!vt) return nullptr;
     return vt->lookup_match_case(name);
+}
+
+SSCEXPORT void ssc_data_set_var(ssc_data_t p_data, const char *name, ssc_var_t p_var)
+{
+    auto vt = static_cast<var_table*>(p_data);
+    if (!vt) return;
+    auto vd = static_cast<var_data*>(p_var);
+    if (!p_var) return;
+    vt->assign(name, *vd);
 }
 
 SSCEXPORT void ssc_data_set_string( ssc_data_t p_data, const char *name, const char *value )

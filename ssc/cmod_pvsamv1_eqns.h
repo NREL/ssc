@@ -1,7 +1,6 @@
 #ifndef SYSTEM_ADVISOR_MODEL_CMOD_PVSAMV1_EQNS_H
 #define SYSTEM_ADVISOR_MODEL_CMOD_PVSAMV1_EQNS_H
 
-#include "vartab.h"
 #include "sscapi.h"
 
 #ifdef __cplusplus

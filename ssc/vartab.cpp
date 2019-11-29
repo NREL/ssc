@@ -214,7 +214,7 @@ void var_table::clear()
 		// debug heap corruption
 		delete it->second; // delete the var_data object
 	}
-	m_hash.clear();
+	if (!m_hash.empty()) m_hash.clear();
 }
 
 var_data *var_table::assign( const std::string &name, const var_data &val )

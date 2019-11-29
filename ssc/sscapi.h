@@ -92,6 +92,9 @@ SSCEXPORT ssc_var_t ssc_var_create();
 
 SSCEXPORT void ssc_var_free(ssc_var_t p_var);
 
+/** Clears all of the values in a var object. */
+SSCEXPORT void ssc_var_clear( ssc_var_t p_var );
+
 /** Get type of variable **/
 SSCEXPORT int ssc_var_query(ssc_var_t p_var);
 
@@ -108,10 +111,10 @@ SSCEXPORT void ssc_var_set_matrix( ssc_var_t p_var, ssc_number_t *pvalues, int n
 SSCEXPORT void ssc_var_set_table( ssc_var_t p_var, ssc_var_t table );
 
 // set the r entry in the array
-SSCEXPORT void ssc_var_set_var_array(ssc_var_t p_var, ssc_var_t p_var_entry, int r );
+SSCEXPORT void ssc_var_set_data_array(ssc_var_t p_var, ssc_var_t p_var_entry, int r );
 
 // set the r, c entry in the matrix
-SSCEXPORT void ssc_var_set_var_matrix(ssc_var_t p_var, ssc_var_t p_var_entry, int r, int c );
+SSCEXPORT void ssc_var_set_data_matrix(ssc_var_t p_var, ssc_var_t p_var_entry, int r, int c );
 
 SSCEXPORT const char *ssc_var_get_string( ssc_var_t p_var);
 
@@ -121,6 +124,7 @@ SSCEXPORT ssc_number_t *ssc_var_get_array(ssc_var_t p_var,  int *length );
 
 SSCEXPORT ssc_number_t *ssc_var_get_matrix( ssc_var_t p_var, int *nrows, int *ncols );
 
+/** Return a pointer to the ssc_data_t stored in p_var */
 SSCEXPORT ssc_data_t ssc_var_get_table( ssc_var_t p_var);
 
 SSCEXPORT ssc_var_t ssc_var_get_var_array(ssc_var_t p_var, int r);
@@ -166,10 +170,13 @@ SSCEXPORT const char *ssc_data_next( ssc_data_t p_data );
 SSCEXPORT ssc_var_t ssc_data_lookup_case(ssc_data_t p_data, const char *name);
 
 /** @name Assigning variable values.
-The following functions do not take ownership of the data pointeres for arrays, matrices, and tables. A deep copy is made into the internal SSC engine. You must remember to free the table that you create to pass into 
+The following functions do not take ownership of the data pointers for arrays, matrices, and tables. A deep copy is made into the internal SSC engine. You must remember to free the table that you create to pass into
 ssc_data_set_table( ) for example.
 */
 /**@{*/
+
+SSCEXPORT void ssc_data_set_var(ssc_data_t p_data, const char *name, ssc_var_t p_var);
+
 /** Assigns value of type @a SSC_STRING */
 SSCEXPORT void ssc_data_set_string( ssc_data_t p_data, const char *name, const char *value );
 
