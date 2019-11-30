@@ -28,21 +28,22 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static var_info _cm_wave_file_reader[] = {
 /*   VARTYPE           DATATYPE         NAME                           LABEL                                        UNITS     META                      GROUP                 REQUIRED_IF                CONSTRAINTS        UI_HINTS*/
 	{ SSC_INPUT,         SSC_STRING,      "wave_resource_filename",               "local weather file path",                     "",       "",                      "Weather Reader",      "*",                       "LOCAL_FILE",      "" },
+	{ SSC_INPUT,         SSC_NUMBER,      "use_specific_wf_wave",               "user specified file",                     "0/1",       "",                      "Weather Reader",      "?=0",                       "INTEGER,MIN=0,MAX=1",      "" },
 	
 // header data
-	{ SSC_OUTPUT,        SSC_STRING,      "name",                    "Name",                                        "",       "",                      "Weather Reader",      "*",                        "",               "" },
-	{ SSC_OUTPUT,        SSC_STRING,      "city",                    "City",                                        "",       "",                      "Weather Reader",      "*",                        "",               "" },
-	{ SSC_OUTPUT,        SSC_STRING,      "state",                   "State",                                       "",       "",                      "Weather Reader",      "*",                        "",               "" },
-	{ SSC_OUTPUT,        SSC_STRING,      "country",                 "Country",                                     "",       "",                      "Weather Reader",      "*",                        "",               "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "lat",                     "Latitude",                                    "deg",    "",                      "Weather Reader",      "*",                        "",               "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "lon",                     "Longitude",                                   "deg",    "",                      "Weather Reader",      "*",                        "",               "" },
-	{ SSC_OUTPUT,        SSC_STRING,      "nearby_buoy_number",      "Nearby buoy number",                          "",       "",                      "Weather Reader",      "*",                        "",               "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "average_power_flux",      "Distance to shore",                           "kW/m",   "",                      "Weather Reader",      "*",                        "",               "" },
-	{ SSC_OUTPUT,        SSC_STRING,      "bathymetry",              "Bathymetry",                                  "",       "",                      "Weather Reader",      "*",                        "",               "" },
-	{ SSC_OUTPUT,        SSC_STRING,      "sea_bed",                 "Sea bed",                                     "",       "",                      "Weather Reader",      "*",                        "",               "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "tz",                      "Time zone",                                   "",       "",                      "Weather Reader",      "*",                        "",               "" },
-	{ SSC_OUTPUT,        SSC_STRING,      "data_source",             "Data source",                                 "",       "",                      "Weather Reader",      "*",                        "",               "" },
-	{ SSC_OUTPUT,        SSC_STRING,      "notes",                   "Notes",                                       "",       "",                      "Weather Reader",      "*",                        "",               "" },
+	{ SSC_OUTPUT,        SSC_STRING,      "name",                    "Name",                                        "",       "",                      "Weather Reader",      "use_specific_wf_wave=0",                        "",               "" },
+	{ SSC_OUTPUT,        SSC_STRING,      "city",                    "City",                                        "",       "",                      "Weather Reader",      "use_specific_wf_wave=0",                        "",               "" },
+	{ SSC_OUTPUT,        SSC_STRING,      "state",                   "State",                                       "",       "",                      "Weather Reader",      "use_specific_wf_wave=0",                        "",               "" },
+	{ SSC_OUTPUT,        SSC_STRING,      "country",                 "Country",                                     "",       "",                      "Weather Reader",      "use_specific_wf_wave=0",                        "",               "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "lat",                     "Latitude",                                    "deg",    "",                      "Weather Reader",      "use_specific_wf_wave=0",                        "",               "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "lon",                     "Longitude",                                   "deg",    "",                      "Weather Reader",      "use_specific_wf_wave=0",                        "",               "" },
+	{ SSC_OUTPUT,        SSC_STRING,      "nearby_buoy_number",      "Nearby buoy number",                          "",       "",                      "Weather Reader",      "use_specific_wf_wave=0",                        "",               "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "average_power_flux",      "Distance to shore",                           "kW/m",   "",                      "Weather Reader",      "use_specific_wf_wave=0",                        "",               "" },
+	{ SSC_OUTPUT,        SSC_STRING,      "bathymetry",              "Bathymetry",                                  "",       "",                      "Weather Reader",      "use_specific_wf_wave=0",                        "",               "" },
+	{ SSC_OUTPUT,        SSC_STRING,      "sea_bed",                 "Sea bed",                                     "",       "",                      "Weather Reader",      "use_specific_wf_wave=0",                        "",               "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "tz",                      "Time zone",                                   "",       "",                      "Weather Reader",      "use_specific_wf_wave=0",                        "",               "" },
+	{ SSC_OUTPUT,        SSC_STRING,      "data_source",             "Data source",                                 "",       "",                      "Weather Reader",      "use_specific_wf_wave=0",                        "",               "" },
+	{ SSC_OUTPUT,        SSC_STRING,      "notes",                   "Notes",                                       "",       "",                      "Weather Reader",      "use_specific_wf_wave=0",                        "",               "" },
 
 																										            
 // weather data records																					            
@@ -77,57 +78,60 @@ public:
 			throw exec_error("wave_file_reader", "could not open file for reading: " + file);
 		}
 
-		getline(ifs, buf);
-		getline(ifs, buf1);
-
-		// header name value pairs
-		std::vector<std::string> keys = split(buf);
-		std::vector<std::string> values = split(buf1);
-		int ncols = (int)keys.size();
-		int ncols1 = (int)values.size();
-		 
-
-		if (ncols !=  ncols1 || ncols < 13)
+		std::vector<std::string> values;
+		// header if not use_specific_wf_file
+		if (as_integer("use_specific_wf_wave") == 0)
 		{
-			throw exec_error("wave_file_reader", "incorrect number of header columns: " + ncols );
-		}
+			getline(ifs, buf);
+			getline(ifs, buf1);
 
-		assign("name", var_data(values[0]));
-		assign("city", var_data(values[1]));
-		assign("state", var_data(values[2]));
-		assign("country", var_data(values[3]));
-		// lat with S is negative
-		ssc_number_t dlat = std::numeric_limits<double>::quiet_NaN();
-		std::vector<std::string> slat = split(values[4],' ');
-		if (slat.size() > 0)
-		{
-			dlat = std::stod(slat[0]);
-			if (slat.size() > 1)
+			// header name value pairs
+			std::vector<std::string> keys = split(buf);
+			values = split(buf1);
+			int ncols = (int)keys.size();
+			int ncols1 = (int)values.size();
+
+			if (ncols != ncols1 || ncols < 13)
 			{
-				if (slat[1] == "S") dlat = 0.0 - dlat;
+				throw exec_error("wave_file_reader", "incorrect number of header columns: " + ncols);
 			}
-		}
-		assign("lat", var_data(dlat));
-		// lon with W is negative
-		ssc_number_t dlon = std::numeric_limits<double>::quiet_NaN();
-		std::vector<std::string> slon = split(values[5], ' ');
-		if (slon.size() > 0)
-		{
-			dlon = std::stod(slon[0]);
-			if (slon.size() > 1)
-			{
-				if (slon[1] == "W") dlon = 0.0 - dlon;
-			}
-		}
-		assign("lon", var_data(dlon));
-		assign("nearby_buoy_number", var_data(values[6]));
-		assign("average_power_flux", var_data(std::stod(values[7])));
-		assign("bathymetry", var_data(values[8]));
-		assign("sea_bed", var_data(values[9]));
-		assign("tz", var_data(std::stod(values[10])));
-		assign("data_source", var_data(values[11]));
-		assign("notes", var_data(values[12]));
 
+			assign("name", var_data(values[0]));
+			assign("city", var_data(values[1]));
+			assign("state", var_data(values[2]));
+			assign("country", var_data(values[3]));
+			// lat with S is negative
+			ssc_number_t dlat = std::numeric_limits<double>::quiet_NaN();
+			std::vector<std::string> slat = split(values[4], ' ');
+			if (slat.size() > 0)
+			{
+				dlat = std::stod(slat[0]);
+				if (slat.size() > 1)
+				{
+					if (slat[1] == "S") dlat = 0.0 - dlat;
+				}
+			}
+			assign("lat", var_data(dlat));
+			// lon with W is negative
+			ssc_number_t dlon = std::numeric_limits<double>::quiet_NaN();
+			std::vector<std::string> slon = split(values[5], ' ');
+			if (slon.size() > 0)
+			{
+				dlon = std::stod(slon[0]);
+				if (slon.size() > 1)
+				{
+					if (slon[1] == "W") dlon = 0.0 - dlon;
+				}
+			}
+			assign("lon", var_data(dlon));
+			assign("nearby_buoy_number", var_data(values[6]));
+			assign("average_power_flux", var_data(std::stod(values[7])));
+			assign("bathymetry", var_data(values[8]));
+			assign("sea_bed", var_data(values[9]));
+			assign("tz", var_data(std::stod(values[10])));
+			assign("data_source", var_data(values[11]));
+			assign("notes", var_data(values[12]));
+		}
 		// read in 21 rows x 22 columns
 		ssc_number_t *mat = allocate("wave_resource_matrix", 21, 22);
 		for (size_t r = 0; r < 21; r++)
