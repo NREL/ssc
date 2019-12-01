@@ -187,7 +187,7 @@ public:
 		}
 		//BOS costs are the same regardless of device technology
 		development = 3197591.0 * pow(system_capacity_MW, 0.49);
-		eng_and_mgmt = 850744.0 * pow(system_capacity_MW, 0.5649);
+		eng_and_mgmt = 850744.0 * pow(system_capacity_MW, 0.565);
 
 
 //		double capex = structural_assembly + power_takeoff + mooring_found_substruc;
@@ -197,8 +197,9 @@ public:
 		other_infrastructure = 0;
 
 		//electrical infrastructure costs
-		array_cable_system = 4.4 * (device_rating * devices_per_row / 1000.0) + 162.81 * interarray_length + 4.4 * (device_rating / 1000.0) + 162.81 * riser_length;
-		export_cable_system = 4.4 * system_capacity_MW + 162.81 * export_length;
+		array_cable_system = (4.40 * (device_rating * devices_per_row / 1000.0) + 162.81) * interarray_length 
+			+ (4.40 * (device_rating / 1000.0) + 162.81) * riser_length;
+		export_cable_system = (4.40 * system_capacity_MW + 162.81) * export_length;
 		onshore_substation = 75000.0 * system_capacity_MW;
 		offshore_substation = 100000.0 * system_capacity_MW;
 		other_elec_infra = 47966.16 * system_capacity_MW + 665841.0;
