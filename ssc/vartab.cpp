@@ -337,13 +337,23 @@ const char *var_table::next()
 	return NULL;
 }
 
-SSCEXPORT void vt_get_int(var_table* vt, const std::string name, int* lvalue) {
+void vt_get_int(var_table* vt, const std::string name, int* lvalue) {
 	if (var_data* vd = vt->lookup(name)) *lvalue = (int)vd->num;
 	else throw std::runtime_error(std::string(name) + std::string(" must be assigned."));
 }
 
-SSCEXPORT void vt_get_double(var_table* vt, const std::string name, double* lvalue) {
+void vt_get_double(var_table* vt, const std::string name, double* lvalue) {
 	if (var_data* vd = vt->lookup(name)) *lvalue = vd->num;
+	else throw std::runtime_error(std::string(name) + std::string(" must be assigned."));
+}
+
+void vt_get_array_vec(var_table* vt, std::string name, std::vector<double> vec_double) {
+	if (var_data* vd = vt->lookup(name)) vec_double = vd->arr_vector();
+	else throw std::runtime_error(std::string(name) + std::string(" must be assigned."));
+}
+
+void vt_get_matrix(var_table* vt, std::string name, util::matrix_t<double>* matrix) {
+	if (var_data* vd = vt->lookup(name)) matrix = &vd->num; \
 	else throw std::runtime_error(std::string(name) + std::string(" must be assigned."));
 }
 

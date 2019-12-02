@@ -225,10 +225,10 @@ SSCEXPORT void Reopt_size_battery_params(ssc_data_t data) {
                                                 "ur_ec_sched_weekend"};
     std::vector<std::string> reopt_sched_names = {"demandweekdayschedule", "demandweekendschedule",
                                                   "energyweekdayschedule", "energyweekendschedule"};
-    util::matrix_t<double>* mat;
+	util::matrix_t<double>* mat = nullptr;
     int demand_n_tiers = 0, energy_n_tiers = 0;
     for (size_t n = 0; n < sam_sched_names.size(); n++){
-        VT_GET_MATRIX(vt, sam_sched_names[n], mat);
+        vt_get_matrix(vt, sam_sched_names[n], mat);
         for (size_t i = 0; i < mat->nrows(); i++){
             for (size_t j = 0; j < mat->ncols(); j++ ) {
                 mat->at(i, j) -= 1;
@@ -243,7 +243,7 @@ SSCEXPORT void Reopt_size_battery_params(ssc_data_t data) {
 
     // rate structures in sam are 2d arrays but are list of list of tables in reopt
     std::vector<std::vector<var_data>> vd_mat;
-    VT_GET_MATRIX(vt, "ur_dc_tou_mat", mat);
+	vt_get_matrix(vt, "ur_dc_tou_mat", mat);
     if (mat->nrows() < (size_t)demand_n_tiers){
         throw std::runtime_error("Demand rate structure should have " + std::to_string(demand_n_tiers) + " tiers to match the provided schedule.");
     }
@@ -259,7 +259,7 @@ SSCEXPORT void Reopt_size_battery_params(ssc_data_t data) {
     reopt_utility.assign("demandratestructure", vd_mat);
     vd_mat.clear();
 
-    VT_GET_MATRIX(vt, "ur_ec_tou_mat", mat);
+	vt_get_matrix(vt, "ur_ec_tou_mat", mat);
     if (mat->nrows() < (size_t)energy_n_tiers){
         throw std::runtime_error("Energy rate structure should have " + std::to_string(demand_n_tiers) + " tiers to match the provided schedule.");
     }
@@ -279,7 +279,7 @@ SSCEXPORT void Reopt_size_battery_params(ssc_data_t data) {
     ssc_number_t flatdemandmonths[12] = {0};
     reopt_utility.assign("flatdemandmonths", var_data(flatdemandmonths, 12));
 
-    VT_GET_MATRIX(vt, "ur_dc_flat_mat", mat);
+	vt_get_matrix(vt, "ur_dc_flat_mat", mat);
     for (size_t i = 0; i < mat->nrows(); i++){
         std::vector<var_data> vd_vec;
         double rate = mat->row(i)[3];
@@ -323,14 +323,14 @@ SSCEXPORT void Reopt_size_battery_params(ssc_data_t data) {
     }
 
     // convert load profile inputs, which are not net loads
-    VT_GET_ARRAY_VEC(vt, "load", vec);
+    vt_get_array_vec(vt, "load", vec);
     if (vec.size() != 8760){
         throw std::runtime_error("Load profile must have 8760 entries.");
     }
     reopt_load.assign("loads_kw", var_data(&vec[0], 8760));
     reopt_load.assign("loads_kw_is_net", false);
 
-    VT_GET_ARRAY_VEC(vt, "crit_load", vec);
+	vt_get_array_vec(vt, "crit_load", vec);
     if (vec.size() != 8760){
         throw std::runtime_error("Critical load profile must have 8760 entries.");
     }

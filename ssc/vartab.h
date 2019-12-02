@@ -180,13 +180,9 @@ void vt_get_int(var_table* vt, std::string name, int* lvalue);
 
 void vt_get_double(var_table* vt, std::string name, double* lvalue);
 
-#define VT_GET_ARRAY_VEC(vt, name, vec_double) \
-if (var_data* vd = vt->lookup(name)) vec_double = vd->arr_vector(); \
-else throw std::runtime_error(std::string(name)+std::string(" must be assigned."));
+void vt_get_array_vec(var_table* vt, std::string name, std::vector<double> vec_double);
 
-#define VT_GET_MATRIX(vt, name, matrix) \
-if (var_data* vd = vt->lookup(name)) matrix = &vd->num; \
-else throw std::runtime_error(std::string(name)+std::string(" must be assigned."));
+void vt_get_matrix(var_table* vt, std::string name, util::matrix_t<double>* mat);
 
 #define VT_GET_MATRIX_VEC(vt, name, vec_vec_double) \
 if (var_data* vd = vt->lookup(name)) vec_vec_double = vd->matrix_vector(); \

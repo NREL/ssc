@@ -243,7 +243,7 @@ struct battstor
 	/// Given a DC connected battery, set the shared PV and battery invertr
 	void setSharedInverter(SharedInverter * sharedInverter);
 
-	void outputs_fixed(var_table *vt);
+	void outputs_fixed();
 	void outputs_topology_dependent();
 	void metrics();
 	void update_grid_power(compute_module &cm, double P_gen_ac, double P_load_ac, size_t index);

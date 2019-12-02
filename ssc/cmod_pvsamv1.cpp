@@ -2576,7 +2576,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
         resilience->run_surviving_batteries_by_looping(&p_crit_load_in[0], PVSystem->p_systemACPower, PVSystem->p_systemDCPower,
                 PVSystem->p_mpptVoltage[0], PVSystem->p_inverterClipLoss, Irradiance->p_weatherFileAmbientTemp);
 
-        double avg_hours_survived = resilience->compute_metrics(step_per_hour);
+        double avg_hours_survived = resilience->compute_metrics();
         auto outage_durations = resilience->get_outage_duration_hrs();
         assign("resilience_hrs", resilience->get_hours_survived());
         assign("resilience_hrs_min", (int)outage_durations[0]);

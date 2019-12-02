@@ -1268,12 +1268,12 @@ battstor::battstor(const battstor& orig){
     if( orig.capacity_model ) capacity_model = orig.capacity_model->clone();
     if (orig.losses_model) losses_model = orig.losses_model->clone();
     if (orig.dispatch_model){
-        if (auto disp = dynamic_cast<dispatch_manual_t*>(orig.dispatch_model))
-            dispatch_model = new dispatch_manual_t(*disp);
-        else if (auto disp = dynamic_cast<dispatch_automatic_behind_the_meter_t*>(orig.dispatch_model))
-            dispatch_model = new dispatch_automatic_behind_the_meter_t(*disp);
-        else if (auto disp = dynamic_cast<dispatch_automatic_front_of_meter_t*>(orig.dispatch_model))
-            dispatch_model = new dispatch_automatic_front_of_meter_t(*disp);
+        if (auto disp_man = dynamic_cast<dispatch_manual_t*>(orig.dispatch_model))
+            dispatch_model = new dispatch_manual_t(*disp_man);
+        else if (auto disp_man_BTM = dynamic_cast<dispatch_automatic_behind_the_meter_t*>(orig.dispatch_model))
+            dispatch_model = new dispatch_automatic_behind_the_meter_t(*disp_man_BTM);
+        else if (auto disp_auto = dynamic_cast<dispatch_automatic_front_of_meter_t*>(orig.dispatch_model))
+            dispatch_model = new dispatch_automatic_front_of_meter_t(*disp_auto);
         else
             throw general_error("dispatch_model in battstor is not of recognized type.");
     }
@@ -1348,7 +1348,7 @@ void battstor::advance(var_table *vt, double P_gen, double V_gen, double P_load,
 	powerflow->powerPVClipped = P_gen_clipped;
 
 	charge_control->run(year, hour, step, year_index);
-	outputs_fixed(vt);
+	outputs_fixed();
     outputs_topology_dependent();
     metrics();
 }
@@ -1358,7 +1358,7 @@ void battstor::setSharedInverter(SharedInverter * sharedInverter)
 		tmp->setSharedInverter(sharedInverter);
 	dispatch_model->getBatteryPower()->setSharedInverter(sharedInverter);
 }
-void battstor::outputs_fixed(var_table *vt)
+void battstor::outputs_fixed()
 {
 	// non-lifetime outputs
 	if (nyears <= 1)
@@ -1679,7 +1679,7 @@ public:
             if (resilience) {
                 resilience->run_surviving_batteries_by_looping(&p_crit_load[0], &power_input_lifetime[0]);
 
-                double avg_hours_survived = resilience->compute_metrics(batt->step_per_hour);
+                double avg_hours_survived = resilience->compute_metrics();
                 auto outage_durations = resilience->get_outage_duration_hrs();
                 assign("resilience_hrs", resilience->get_hours_survived());
                 assign("resilience_hrs_min", (int) outage_durations[0]);

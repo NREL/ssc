@@ -68,7 +68,7 @@ battwatts_create(size_t n_recs, size_t n_years, int chem, int meter_pos, double 
 
     // Basic information
     batt_vars->batt_chem = chem;
-    batt_vars->analysis_period = n_years;
+    batt_vars->analysis_period = (int)n_years;
     batt_vars->batt_meter_position = meter_pos;
     batt_vars->system_use_lifetime_output = (n_years > 1);
     double voltage_guess = 0;
@@ -365,7 +365,7 @@ void cm_battwatts::exec()
         if (resilience) {
             resilience->run_surviving_batteries_by_looping(&p_crit_load[0], &p_ac[0]);
 
-            double avg_hours_survived = resilience->compute_metrics(batt->step_per_hour);
+            double avg_hours_survived = resilience->compute_metrics();
             auto outage_durations = resilience->get_outage_duration_hrs();
             assign("resilience_hrs", resilience->get_hours_survived());
             assign("resilience_hrs_min", (int) outage_durations[0]);

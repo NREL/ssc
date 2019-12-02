@@ -789,7 +789,7 @@ void voltage_dynamic_t::fit_current_to_cutoff_voltage(double cutoff_voltage_rati
 
     std::vector<double> currents, capacities, qmax;
     double itv = 10.;
-    while (currents.size() < 4 and itv < 30.){
+    while (currents.size() < 4 && itv < 30.){
         double qfull_incr = _Qfull / itv;
         solver_Q = _Qfull;
 

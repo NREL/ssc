@@ -438,7 +438,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsACHourly_Discharge)
     }
 
     resilience.run_surviving_batteries_by_looping(&load[0], &ac[0]);
-    double avg_hours = resilience.compute_metrics(1.);
+    double avg_hours = resilience.compute_metrics();
     EXPECT_NEAR(avg_hours, 0.0028, 1e-4);
 
     auto survived_hours = resilience.get_hours_survived();
@@ -495,7 +495,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsACHalfHourly_Discharge)
     }
 
     resilience.run_surviving_batteries_by_looping(&load[0], &ac[0]);
-    double avg_hours = resilience.compute_metrics(batt->_dt_hour);
+    double avg_hours = resilience.compute_metrics();
     EXPECT_NEAR(avg_hours, 0.0030, 1e-4);
 
     auto survived_hours = resilience.get_hours_survived();
@@ -553,7 +553,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsDCHourly_Discharge)
     }
 
     resilience.run_surviving_batteries_by_looping(&load[0], &ac[0]);
-    double avg_hours = resilience.compute_metrics(1.);
+    double avg_hours = resilience.compute_metrics();
     EXPECT_NEAR(avg_hours, 0.0028, 1e-4);
 
     auto survived_hours = resilience.get_hours_survived();
@@ -610,7 +610,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsDCHalfHourly_Discharge)
     }
 
     resilience.run_surviving_batteries_by_looping(&load[0], &ac[0]);
-    double avg_hours = resilience.compute_metrics(batt->_dt_hour);
+    double avg_hours = resilience.compute_metrics();
     EXPECT_NEAR(avg_hours, 0.0032, 1e-4);
 
     auto survived_hours = resilience.get_hours_survived();
@@ -666,7 +666,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsACHourly_Charge)
     EXPECT_EQ(resilience.get_n_surviving_batteries(), 5);
 
     resilience.run_surviving_batteries_by_looping(&load[0], &ac[0]);
-    double avg_hours = resilience.compute_metrics(1.);
+    double avg_hours = resilience.compute_metrics();
     EXPECT_NEAR(avg_hours, 5, 1e-4);
 
     auto survived_hours = resilience.get_hours_survived();

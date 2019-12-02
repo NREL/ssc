@@ -393,7 +393,7 @@ SSCEXPORT void ssc_var_set_data_array(ssc_var_t p_var, ssc_var_t p_var_entry, in
     if (!vt) return;
     vt->type = SSC_DATARR;
     auto& vec = vt->vec;
-    if (r >= vec.size())
+    if (r >= (int)vec.size())
         vec.resize(r + 1);
     vec[r] = *static_cast<var_data*>(p_var_entry);
 }
@@ -403,10 +403,10 @@ SSCEXPORT void ssc_var_set_data_matrix(ssc_var_t p_var, ssc_var_t p_var_entry, i
     if (!vt) return;
     vt->type = SSC_DATMAT;
     auto& mat = vt->mat;
-    if (r >= mat.size())
+    if (r >= (int)mat.size())
         mat.resize(r + 1);
     for (auto& i : mat)
-        if (c >= i.size())
+        if (c >= (int)i.size())
             i.resize(c + 1);
     mat[r][c] = *static_cast<var_data*>(p_var_entry);
 }
@@ -452,7 +452,7 @@ SSCEXPORT ssc_data_t ssc_var_get_table( ssc_var_t p_var )
 SSCEXPORT ssc_var_t ssc_var_get_var_array(ssc_var_t p_var, int r) {
     auto vt = static_cast<var_data*>(p_var);
     if (!vt) return 0;
-    if (r < vt->vec.size())
+    if (r < (int)vt->vec.size())
         return &vt->vec[r];
     else
         return nullptr;
@@ -461,7 +461,7 @@ SSCEXPORT ssc_var_t ssc_var_get_var_array(ssc_var_t p_var, int r) {
 SSCEXPORT ssc_var_t ssc_var_get_var_matrix(ssc_var_t p_var, int r, int c) {
     auto vt = static_cast<var_data*>(p_var);
     if (!vt) return 0;
-    if (r < vt->mat.size() && c < vt->mat[r].size())
+    if (r < (int)vt->mat.size() && c < (int)vt->mat[r].size())
         return &vt->mat[r][c];
     else
         return nullptr;

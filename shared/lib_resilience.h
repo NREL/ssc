@@ -139,7 +139,7 @@ protected:
         return _Battery->run(current_outage_index, charging_current);
     }
 
-    void dispatch(size_t year, size_t hour_of_year, size_t step) override {}
+    void dispatch(size_t, size_t, size_t) override {}
 
 };
 
@@ -231,7 +231,7 @@ public:
     }
 
     // return average hours survived
-    double compute_metrics(size_t steps_per_hour){
+    double compute_metrics(){
         outage_durations.clear();
         probs_of_surviving.clear();
 
