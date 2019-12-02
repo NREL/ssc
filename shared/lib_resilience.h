@@ -138,7 +138,7 @@ public:
                                             double* V = nullptr, double* pv_clipped_kw = nullptr, double* tdry_c = nullptr);
 
     /// Return average hours survived
-    double compute_metrics(size_t steps_per_hour);
+    double compute_metrics();
 
     /// Returns how many batteries are still operating during their respective outages
     size_t get_n_surviving_batteries();

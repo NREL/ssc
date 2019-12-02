@@ -85,7 +85,7 @@ static var_info vtab_wind_obos[] = {
   //# Turbine / Plant parameters
 { SSC_INPUT, SSC_NUMBER, "turbCapEx","Turbine Capital Cost","$/kW","","wobos","?=1605","","" },
 { SSC_INPUT, SSC_NUMBER, "nTurb","Number of Turbines","","","wobos","?=20","MIN=2,MAX=200","" },
-{ SSC_INPUT, SSC_NUMBER, "turbR","Turbine Rating","MW","","wobos","?=5","MIN=1,MAX=10","" },
+{ SSC_INPUT, SSC_NUMBER, "turbR","Turbine Rating","MW","","wobos","?=5","MIN=1,MAX=15","" },
 { SSC_INPUT, SSC_NUMBER, "rotorD","Rotor Diameter","m","","wobos","?=120","","" },
 { SSC_INPUT, SSC_NUMBER, "hubH","Hub Height","m","","wobos","?=90","","" },
 { SSC_INPUT, SSC_NUMBER, "waterD","Max Water Depth","m","","wobos","?=30","MIN=3,MAX=1000","" },

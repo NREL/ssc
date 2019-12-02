@@ -7,6 +7,7 @@
 #include "../shared/lib_util.h"
 
 #include "cmod_windpower_eqns.h"
+#pragma warning(disable: 4297)  // ignore warning: 'function assumed not to throw an exception but does'
 
 void Turbine_calculate_powercurve(ssc_data_t data)
 {
@@ -14,7 +15,7 @@ void Turbine_calculate_powercurve(ssc_data_t data)
     if (!vt){
         throw std::runtime_error("ssc_data_t data invalid");
     }
-
+	 
     double turbine_size, rotor_diameter, elevation, max_cp, max_tip_speed, max_tip_sp_ratio, cut_in,
             cut_out;
     int drive_train;

@@ -2021,14 +2021,6 @@ int split_ind_tbl(util::matrix_t<double> &cmbd_ind, util::matrix_t<double> &T_ht
     double & T_htf_low, double & T_htf_des, double & T_htf_high,
     double & T_amb_low, double & T_amb_des, double & T_amb_high)
 {
-    const int col_T_htf = 0;
-    const int col_m_dot = 1;
-    const int col_T_amb = 2;
-    const int col_W_cyl = 3;
-    const int col_Q_cyl = 4;
-    const int col_W_h2o = 5;
-    const int col_m_h2o = 6;
-
     // check for minimum length
     int n_par_min = 4;
     int n_levels = 3;
@@ -2091,6 +2083,7 @@ int split_ind_tbl(util::matrix_t<double> &cmbd_ind, util::matrix_t<double> &T_ht
 
     std::vector<std::vector<double>> vv_test(3);
 
+    std::vector<std::vector<double>::iterator> v_it_erase;
     for (std::vector<double>::iterator i_it = T_amb_pars.begin(); i_it < T_amb_pars.end(); i_it++)
     {
         vv_test[0] = (std::vector<double>{T_htf_low, m_dot_des, *i_it});
@@ -2098,10 +2091,15 @@ int split_ind_tbl(util::matrix_t<double> &cmbd_ind, util::matrix_t<double> &T_ht
         vv_test[2] = (std::vector<double>{T_htf_high, m_dot_des, *i_it});
         if (!is_level_in_par(vv_test, cmbd_tbl))
         {
-            T_amb_pars.erase(i_it);
+            v_it_erase.push_back(i_it);
         }
     }
+    for (int i = 0; i < v_it_erase.size(); i++)
+    {
+        T_amb_pars.erase(v_it_erase[i]);
+    }
 
+    v_it_erase.resize(0);
     for (std::vector<double>::iterator i_it = T_htf_pars.begin(); i_it < T_htf_pars.end(); i_it++)
     {
         vv_test[0] = std::vector<double>{ *i_it, m_dot_low, T_amb_des };
@@ -2109,10 +2107,15 @@ int split_ind_tbl(util::matrix_t<double> &cmbd_ind, util::matrix_t<double> &T_ht
         vv_test[2] = std::vector<double>{ *i_it, m_dot_high, T_amb_des };
         if (!is_level_in_par(vv_test, cmbd_tbl))
         {
-            T_htf_pars.erase(i_it);
+            v_it_erase.push_back(i_it);
         }
     }
+    for (int i = 0; i < v_it_erase.size(); i++)
+    {
+        T_htf_pars.erase(v_it_erase[i]);
+    }
 
+    v_it_erase.resize(0);
     for (std::vector<double>::iterator i_it = m_dot_pars.begin(); i_it < m_dot_pars.end(); i_it++)
     {
         vv_test[0] = std::vector<double>{ T_htf_des, *i_it, T_amb_low };
@@ -2120,8 +2123,12 @@ int split_ind_tbl(util::matrix_t<double> &cmbd_ind, util::matrix_t<double> &T_ht
         vv_test[2] = std::vector<double>{ T_htf_des, *i_it, T_amb_high };
         if (!is_level_in_par(vv_test, cmbd_tbl))
         {
-            m_dot_pars.erase(i_it);
+            v_it_erase.push_back(i_it);
         }
+    }
+    for (int i = 0; i < v_it_erase.size(); i++)
+    {
+        m_dot_pars.erase(v_it_erase[i]);
     }
 
     int total_row_check = 3 * (m_dot_pars.size() + T_amb_pars.size() + T_htf_pars.size());

@@ -115,7 +115,7 @@ public:
 	void exec()
 	{
 		//get inputs to compute module
-		double device_rating = as_double("device_rated_power");
+		double device_rating = as_double("device_rated_power"); // kW
 		double system_capacity_kW = as_double("system_capacity"); // kW
 		double system_capacity_MW = system_capacity_kW / 1000.0; // MW
 		int device_type = as_integer("device_type");
@@ -154,6 +154,9 @@ public:
 			structural_assembly = 284245.0 * system_capacity_MW + 785137.0;
 			power_takeoff = 1527017.0 * system_capacity_MW +  505548.0;
 			mooring_found_substruc = 437091.0 * system_capacity_MW + 433518.0;
+			//BOS costs SAM Cost Model v8.xlsx
+			development = 3197591.76 * pow(system_capacity_MW, 0.49);
+			eng_and_mgmt = 850744.0 * pow(system_capacity_MW, 0.565);
 		}
 		else // wave
 		{
@@ -162,6 +165,9 @@ public:
 				structural_assembly = 6854912.0 * system_capacity_MW + 2629191.0;
 				power_takeoff = 2081129.0 * pow(system_capacity_MW, 0.91);
 				mooring_found_substruc = 1836365.0 * system_capacity_MW + 29672.0;
+				//BOS costs SAM Cost Model v8.xlsx
+				development = 3197591.76 * pow(system_capacity_MW, 0.49);
+				eng_and_mgmt = 850744.0 * pow(system_capacity_MW, 0.5649);
 			}
 
 			else if (device_type == RM5)
@@ -169,6 +175,9 @@ public:
 				structural_assembly = 6848402.0 * system_capacity_MW + 3315338.0;
 				power_takeoff = 1600927.0 * pow(system_capacity_MW, 0.91);
 				mooring_found_substruc = 2158462.0 * system_capacity_MW + 1048932.0;
+				//BOS costs SAM Cost Model v8.xlsx
+				development = 3197591.76 * pow(system_capacity_MW, 0.49);
+				eng_and_mgmt = 850744.0 * pow(system_capacity_MW, 0.5649);
 			}
 
 			else if (device_type == RM6)
@@ -176,19 +185,21 @@ public:
 				structural_assembly = 13320092.0 * system_capacity_MW + 6681164.0;
 				power_takeoff = 3796551.0 * pow(system_capacity_MW, 0.78);
 				mooring_found_substruc = 2030816.0 * system_capacity_MW + 478400.0;
+				//BOS costs SAM Cost Model v8.xlsx
+				development = 3197591.76 * pow(system_capacity_MW, 0.49);
+				eng_and_mgmt = 850744.0 * pow(system_capacity_MW, 0.565);
 			}
 
 			else //generic model applies to everything else
 			{
 				structural_assembly = 6854912.0 * system_capacity_MW + 2629191.0;
-				if (technology == WAVE) power_takeoff = 1179579.0 * system_capacity_MW + 2495107.0;
-				else power_takeoff = 2906035.0 * system_capacity_MW;
+				power_takeoff = 1179579.0 * system_capacity_MW + 2495107.0;
 				mooring_found_substruc = 1178598.0 * system_capacity_MW + 1602348.0;
+				//BOS costs SAM Cost Model v8.xlsx
+				development = 3197591.0 * pow(system_capacity_MW, 0.49);
+				eng_and_mgmt = 850744.0 * pow(system_capacity_MW, 0.565);
 			}
 		}
-		//BOS costs are the same regardless of device technology
-		development = 3197591.0 * pow(system_capacity_MW, 0.49);
-		eng_and_mgmt = 850744.0 * pow(system_capacity_MW, 0.5649);
 
 
 //		double capex = structural_assembly + power_takeoff + mooring_found_substruc;
@@ -198,8 +209,9 @@ public:
 		other_infrastructure = 0;
 
 		//electrical infrastructure costs
-		array_cable_system = 4.4 * (device_rating * devices_per_row / 1000.0) + 162.81 * interarray_length + 4.4 * (device_rating / 1000.0) + 162.81 * riser_length;
-		export_cable_system = 4.4 * system_capacity_MW + 162.81 * export_length;
+		array_cable_system = (4.40 * (device_rating * devices_per_row / 1000.0) + 162.81) * interarray_length 
+			+ (4.40 * (device_rating / 1000.0) + 162.81) * riser_length;
+		export_cable_system = (4.40 * system_capacity_MW + 162.81) * export_length;
 		onshore_substation = 75000.0 * system_capacity_MW;
 		offshore_substation = 100000.0 * system_capacity_MW;
 		other_elec_infra = 47966.16 * system_capacity_MW + 665841.0;

@@ -44,6 +44,7 @@ extern var_info vtab_sf_adjustment_factors[];
 extern var_info vtab_technology_outputs[];
 extern var_info vtab_grid_curtailment[];
 extern var_info vtab_p50p90[];
+extern var_info vtab_forecast_price_signal[];
 extern var_info vtab_resilience_outputs[];
 
 bool calculate_p50p90(compute_module *cm);
@@ -60,6 +61,20 @@ public:
 	float operator()(size_t time);
 	std::string error() { return m_error; }
 };
+
+class forecast_price_signal
+{
+	var_table *vartab;
+	std::vector<ssc_number_t> m_forecast_price;
+	std::string m_error;
+public:
+	forecast_price_signal(var_table *vt);
+	bool setup(size_t nsteps = 8760);
+	std::vector<ssc_number_t> forecast_price() { return m_forecast_price; }
+	ssc_number_t operator()(size_t time);
+	std::string error() { return m_error; }
+};
+
 
 class sf_adjustment_factors
 {

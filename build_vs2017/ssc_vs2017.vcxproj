@@ -42,6 +42,7 @@
     <ClCompile Include="..\ssc\cmod_levpartflip.cpp" />
     <ClCompile Include="..\ssc\cmod_linear_fresnel_dsg_iph.cpp" />
     <ClCompile Include="..\ssc\cmod_merchantplant.cpp" />
+    <ClCompile Include="..\ssc\cmod_merchantplant_eqns.cpp" />
     <ClCompile Include="..\ssc\cmod_mhk_costs.cpp" />
     <ClCompile Include="..\ssc\cmod_mhk_eqns.cpp" />
     <ClCompile Include="..\ssc\cmod_mhk_tidal.cpp" />
@@ -114,6 +115,7 @@
     <ClInclude Include="..\ssc\cmod_battery.h" />
     <ClInclude Include="..\ssc\cmod_fuelcell.h" />
     <ClInclude Include="..\ssc\cmod_grid.h" />
+    <ClInclude Include="..\ssc\cmod_merchantplant_eqns.h" />
     <ClInclude Include="..\ssc\cmod_mhk_eqns.h" />
     <ClInclude Include="..\ssc\cmod_pvsamv1.h" />
     <ClInclude Include="..\ssc\cmod_windpower.h" />

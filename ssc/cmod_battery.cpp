@@ -170,7 +170,7 @@ var_info vtab_battery_inputs[] = {
 	{ SSC_INPUT,        SSC_MATRIX,     "ur_ec_tou_mat",                               "Energy rates table",                                      "",        "",                       "ElectricityRate",              "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2",  "",          "" },
 
 
-
+/*
 	// PPA financial inputs
 	{ SSC_INPUT,        SSC_ARRAY,      "ppa_price_input",		                        "PPA Price Input",	                                        "",      "",                  "Time of Delivery", "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2"   "",          "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ppa_multiplier_model",                         "PPA multiplier model",                                    "0/1",    "0=diurnal,1=timestep","Time of Delivery", "?=0",                                                  "INTEGER,MIN=0", "" },
@@ -178,6 +178,7 @@ var_info vtab_battery_inputs[] = {
 	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_tod_factors",		                    "TOD factors for periods 1-9",	                            "",      "",                  "Time of Delivery", "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2&ppa_multiplier_model=0"   "",          "" },
 	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_sched_weekday",                       "Diurnal weekday TOD periods",                              "1..9",  "12 x 24 matrix",    "Time of Delivery", "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2&ppa_multiplier_model=0",  "",          "" },
 	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_sched_weekend",                       "Diurnal weekend TOD periods",                              "1..9",  "12 x 24 matrix",    "Time of Delivery", "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2&ppa_multiplier_model=0",  "",          "" },
+*/
 
 	// Powerflow calculation inputs
 	{ SSC_INPUT,       SSC_ARRAY,       "fuelcell_power",                               "Electricity from fuel cell",                            "kW",       "",                     "FuelCell",     "",                           "",                         "" },
@@ -382,28 +383,32 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 
 				batt_vars->pv_clipping_forecast = vt.as_vector_double("batt_pv_clipping_forecast");
 				batt_vars->pv_dc_power_forecast = vt.as_vector_double("batt_pv_dc_forecast");
-				size_t count_ppa_price_input;
-				ssc_number_t* ppa_price = vt.as_array("ppa_price_input", &count_ppa_price_input);
-
-//				double ppa_price = vt.as_double("ppa_price_input");
-				int ppa_multiplier_mode = vt.as_integer("ppa_multiplier_model");
-
-				if (ppa_multiplier_mode == 0) {
-					batt_vars->ppa_price_series_dollar_per_kwh = flatten_diurnal(
-						vt.as_matrix_unsigned_long("dispatch_sched_weekday"), 
-						vt.as_matrix_unsigned_long("dispatch_sched_weekend"), 
-						step_per_hour,
-						vt.as_vector_double("dispatch_tod_factors"), ppa_price[0]);
-				}
-				else {
-					batt_vars->ppa_price_series_dollar_per_kwh = vt.as_vector_double("dispatch_factors_ts");
-					for (size_t i = 0; i < batt_vars->ppa_price_series_dollar_per_kwh.size(); i++) {
-						batt_vars->ppa_price_series_dollar_per_kwh[i] *= ppa_price[0];
-					}
-				}
-				outMarketPrice = vt.allocate("market_sell_rate_series_yr1",batt_vars->ppa_price_series_dollar_per_kwh.size());
-				for (size_t i = 0; i < batt_vars->ppa_price_series_dollar_per_kwh.size(); i++) {
-					outMarketPrice[i] = (ssc_number_t)(batt_vars->ppa_price_series_dollar_per_kwh[i] * 1000.0);
+//
+//				size_t count_ppa_price_input;
+//				ssc_number_t* ppa_price = cm.as_array("ppa_price_input", &count_ppa_price_input);
+//
+////				double ppa_price = cm.as_double("ppa_price_input");
+//				int ppa_multiplier_mode = cm.as_integer("ppa_multiplier_model");
+//
+//				if (ppa_multiplier_mode == 0) {
+//					batt_vars->forecast_price_series_dollar_per_kwh = flatten_diurnal(
+//						cm.as_matrix_unsigned_long("dispatch_sched_weekday"), 
+//						cm.as_matrix_unsigned_long("dispatch_sched_weekend"), 
+//						step_per_hour,
+//						cm.as_vector_double("dispatch_tod_factors"), ppa_price[0]);
+//				}
+//				else {
+//					batt_vars->forecast_price_series_dollar_per_kwh = cm.as_vector_double("dispatch_factors_ts");
+//					for (size_t i = 0; i < batt_vars->forecast_price_series_dollar_per_kwh.size(); i++) {
+//						batt_vars->forecast_price_series_dollar_per_kwh[i] *= ppa_price[0];
+//					}
+//				}
+				forecast_price_signal fps(&vt);
+				fps.setup(8760 * step_per_hour);
+				batt_vars->forecast_price_series_dollar_per_kwh = fps.forecast_price();
+				outMarketPrice = vt.allocate("market_sell_rate_series_yr1",batt_vars->forecast_price_series_dollar_per_kwh.size());
+				for (size_t i = 0; i < batt_vars->forecast_price_series_dollar_per_kwh.size(); i++) {
+					outMarketPrice[i] = (ssc_number_t)(batt_vars->forecast_price_series_dollar_per_kwh[i] * 1000.0);
 				}
 
 				// For automated front of meter with electricity rates
@@ -424,7 +429,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 					}
 					else {
 						batt_vars->ec_use_realtime = true;
-						batt_vars->ec_realtime_buy = batt_vars->ppa_price_series_dollar_per_kwh;
+						batt_vars->ec_realtime_buy = batt_vars->forecast_price_series_dollar_per_kwh;
 						vt.assign("en_electricity_rates", 1);
 						batt_vars->ec_rate_defined = true;
 					}
@@ -939,7 +944,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 			batt_vars->batt_dispatch_auto_can_charge, batt_vars->batt_dispatch_auto_can_clipcharge, batt_vars->batt_dispatch_auto_can_gridcharge, batt_vars->batt_dispatch_auto_can_fuelcellcharge,
 			batt_vars->inverter_paco, batt_vars->batt_cost_per_kwh,
 			batt_vars->batt_cycle_cost_choice, batt_vars->batt_cycle_cost,
-			batt_vars->ppa_price_series_dollar_per_kwh, utilityRate,
+			batt_vars->forecast_price_series_dollar_per_kwh, utilityRate,
 			eta_pvcharge, eta_gridcharge , eta_discharge);
 
 		if (batt_vars->batt_dispatch == dispatch_t::CUSTOM_DISPATCH)
@@ -1551,7 +1556,8 @@ public:
 	cm_battery()
 	{
 		add_var_info(_cm_vtab_battery);
-		add_var_info(vtab_battery_inputs);
+		add_var_info( vtab_battery_inputs);
+		add_var_info(vtab_forecast_price_signal);
 		add_var_info(vtab_battery_outputs);
 		add_var_info(vtab_resilience_outputs);
 	}

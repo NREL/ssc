@@ -1319,7 +1319,7 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 	double batt_cost_per_kwh,
 	int battCycleCostChoice,
 	double battCycleCost,
-	std::vector<double> ppa_price_series_dollar_per_kwh,
+	std::vector<double> forecast_price_series_dollar_per_kwh,
 	UtilityRate * utilityRate,
 	double etaPVCharge,
 	double etaGridCharge,
@@ -1331,7 +1331,7 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 		_look_ahead_hours = 24;
 
 	_inverter_paco = inverter_paco;
-	_ppa_price_rt_series = ppa_price_series_dollar_per_kwh;
+	_forecast_price_rt_series = forecast_price_series_dollar_per_kwh;
 
 	// only create utility rate calculator if utility rate is defined
 	if (utilityRate) {
@@ -1359,7 +1359,7 @@ void dispatch_automatic_front_of_meter_t::init_with_pointer(const dispatch_autom
 {
 	_look_ahead_hours = tmp->_look_ahead_hours;
 	_inverter_paco = tmp->_inverter_paco;
-	_ppa_price_rt_series = tmp->_ppa_price_rt_series;
+	_forecast_price_rt_series = tmp->_forecast_price_rt_series;
 
 	m_battReplacementCostPerKWH = tmp->m_battReplacementCostPerKWH;
 	m_etaPVCharge = tmp->m_etaPVCharge;
@@ -1370,7 +1370,7 @@ void dispatch_automatic_front_of_meter_t::init_with_pointer(const dispatch_autom
 void dispatch_automatic_front_of_meter_t::setup_cost_forecast_vector()
 {
 	std::vector<double> ppa_price_series;
-	ppa_price_series.reserve(_ppa_price_rt_series.size());
+	ppa_price_series.reserve(_forecast_price_rt_series.size());
 
 	// add elements at beginning, so our forecast is looking at yesterday's prices
 	if (_mode == dispatch_t::FOM_LOOK_BEHIND) {
@@ -1379,13 +1379,13 @@ void dispatch_automatic_front_of_meter_t::setup_cost_forecast_vector()
 	}
 
 	// add elements at the end, so we have forecast information at end of year
-	for (size_t i = 0; i != _ppa_price_rt_series.size(); i++){
-		ppa_price_series.push_back(_ppa_price_rt_series[i]);
+	for (size_t i = 0; i != _forecast_price_rt_series.size(); i++){
+		ppa_price_series.push_back(_forecast_price_rt_series[i]);
 	}
 	for (size_t i = 0; i != _look_ahead_hours * _steps_per_hour; i++) {
-		ppa_price_series.push_back(_ppa_price_rt_series[i]);
+		ppa_price_series.push_back(_forecast_price_rt_series[i]);
 	}
-	_ppa_price_rt_series = ppa_price_series;
+	_forecast_price_rt_series = ppa_price_series;
 }
 
 // deep copy from dispatch to this
@@ -1441,9 +1441,9 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 			// Compute forecast variables which don't change from year to year
 			size_t idx_year1 = hour_of_year * _steps_per_hour;
 			size_t idx_lookahead = _look_ahead_hours * _steps_per_hour;
-			auto max_ppa_cost = std::max_element(_ppa_price_rt_series.begin() + idx_year1, _ppa_price_rt_series.begin() + idx_year1 + idx_lookahead);
-			auto min_ppa_cost = std::min_element(_ppa_price_rt_series.begin() + idx_year1, _ppa_price_rt_series.begin() + idx_year1 + idx_lookahead);
-			double ppa_cost = _ppa_price_rt_series[idx_year1];
+			auto max_ppa_cost = std::max_element(_forecast_price_rt_series.begin() + idx_year1, _forecast_price_rt_series.begin() + idx_year1 + idx_lookahead);
+			auto min_ppa_cost = std::min_element(_forecast_price_rt_series.begin() + idx_year1, _forecast_price_rt_series.begin() + idx_year1 + idx_lookahead);
+			double ppa_cost = _forecast_price_rt_series[idx_year1];
 
 			/*! Cost to purchase electricity from the utility */
 			double usage_cost = ppa_cost;
@@ -1461,7 +1461,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 			// Compute forecast variables which potentially do change from year to year
 			double energyToStoreClipped = 0;
 			if (_P_cliploss_dc.size() > lifetimeIndex + _look_ahead_hours) {
-				energyToStoreClipped = std::accumulate(_P_cliploss_dc.begin() + lifetimeIndex, _P_cliploss_dc.begin() + lifetimeIndex + _look_ahead_hours * _steps_per_hour, 0.0f) * _dt_hour;
+				energyToStoreClipped = std::accumulate(_P_cliploss_dc.begin() + lifetimeIndex, _P_cliploss_dc.begin() + lifetimeIndex + _look_ahead_hours * _steps_per_hour, 0.0) * _dt_hour;
 			}
 
 			/*! Economic benefit of charging from the grid in current time step to discharge sometime in next X hours ($/kWh)*/
@@ -1477,7 +1477,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 						revenueToGridChargeForecast.push_back(*max_ppa_cost * m_etaDischarge - usage_cost_forecast[j] / m_etaGridCharge - m_cycleCost);
 					} 
 					else {
-						revenueToGridChargeForecast.push_back(*max_ppa_cost * m_etaDischarge - _ppa_price_rt_series[i] / m_etaGridCharge - m_cycleCost);
+						revenueToGridChargeForecast.push_back(*max_ppa_cost * m_etaDischarge - _forecast_price_rt_series[i] / m_etaGridCharge - m_cycleCost);
 					}
 					j++;
 				}
@@ -1497,7 +1497,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 					// when considering grid charging, require PV output to exceed battery input capacity before accepting as a better option
 					bool system_on = _P_pv_dc[i] >= m_batteryPower->powerBatteryChargeMaxDC ? 1 : 0;
 					if (system_on) {
-						revenueToPVChargeForecast.push_back(system_on * (*max_ppa_cost * m_etaDischarge - _ppa_price_rt_series[i] / m_etaPVCharge - m_cycleCost));
+						revenueToPVChargeForecast.push_back(system_on * (*max_ppa_cost * m_etaDischarge - _forecast_price_rt_series[i] / m_etaPVCharge - m_cycleCost));
 					}
 				}
 				pv_hours_on = revenueToPVChargeForecast.size() / _steps_per_hour;

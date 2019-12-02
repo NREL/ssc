@@ -20,14 +20,15 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "common_financial.h"
-#include "lib_financial.h"
-using namespace libfin;
 #include <sstream>
 
 #ifndef WIN32
 #include <float.h>
 #endif
+#include "common_financial.h"
+#include "lib_financial.h"
+#include "cmod_merchantplant_eqns.h"
+using namespace libfin;
 
 static var_info _cm_vtab_merchantplant[] = {
 
@@ -104,14 +105,6 @@ static var_info _cm_vtab_merchantplant[] = {
                                                                                   
 /* salvage value */	                                                          
 	{ SSC_INPUT,        SSC_NUMBER,     "salvage_percentage",                     "Net pre-tax cash salvage value",	                               "%",	 "",					  "Salvage Value",             "?=10",                     "MIN=0,MAX=100",      			"" },
-/* market specific inputs - leveraged partnership flip */                     
-	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_mode",                          "PPA solution mode",                                             "0/1",   "0=solve ppa,1=specify ppa", "Solution Mode",         "?=0",                     "INTEGER,MIN=0,MAX=1",            "" },
-//	{ SSC_INPUT, SSC_NUMBER, "ppa_soln_tolerance", "PPA solution tolerance", "", "", "Solution Mode", "?=1e-3", "", "" },
-
-	{ SSC_INPUT, SSC_NUMBER, "ppa_soln_tolerance", "PPA solution tolerance", "", "", "Solution Mode", "?=1e-5", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "ppa_soln_min", "PPA solution minimum ppa", "cents/kWh", "", "Solution Mode", "?=0", "", "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_max",                           "PPA solution maximum ppa",                                      "cents/kWh",   "", "Solution Mode",         "?=100",                     "",            "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_max_iterations",                "PPA solution maximum number of iterations",                     "",   "", "Solution Mode",         "?=100",                     "INTEGER,MIN=1",            "" },
                                                                                   
 /* construction period */                                                     
 	{ SSC_INPUT,       SSC_NUMBER,      "construction_financing_cost",	          "Construction financing total",	                                "$",	 "",					  "Construction Financing",			 "*",                         "",                             "" },
@@ -1027,146 +1020,97 @@ public:
 		}
 
 		// merchant plant additional revenue streams
-		// enabled/disabled booleans
-		bool en_mp_energy_market = (as_integer("mp_enable_energy_market_revenue") == 1);
-		bool en_mp_ancserv1 = (as_integer("mp_enable_ancserv1") == 1);
-		bool en_mp_ancserv2 = (as_integer("mp_enable_ancserv2") == 1);
-		bool en_mp_ancserv3 = (as_integer("mp_enable_ancserv3") == 1);
-		bool en_mp_ancserv4 = (as_integer("mp_enable_ancserv4") == 1);
-		// cleared capacity and price columns
-		// need to check sum of all cleared capacities.
-		size_t nrows, ncols;
-		util::matrix_t<double> mp_energy_market_revenue_mat(1, 2, 0.0);
-		if (en_mp_energy_market)
-		{
-			ssc_number_t *mp_energy_market_revenue_in = as_matrix("mp_energy_market_revenue", &nrows, &ncols);
-			if (ncols != 2)
-			{
-				std::ostringstream ss;
-				ss << "The energy market revenue table must have 2 columns. Instead it has " << ncols << " columns.";
-				throw exec_error("merchant plant", ss.str());
-			}
-			mp_energy_market_revenue_mat.resize(nrows, ncols);
-			mp_energy_market_revenue_mat.assign(mp_energy_market_revenue_in, nrows, ncols);
-		}
+		var_table* vd = new var_table;
+		vd->assign("analysis_period", *lookup("analysis_period"));
+		vd->assign("mp_enable_energy_market_revenue", *lookup("mp_enable_energy_market_revenue"));
+		vd->assign("mp_enable_ancserv1", *lookup("mp_enable_ancserv1"));
+		vd->assign("mp_enable_ancserv2", *lookup("mp_enable_ancserv2"));
+		vd->assign("mp_enable_ancserv3", *lookup("mp_enable_ancserv3"));
+		vd->assign("mp_enable_ancserv4", *lookup("mp_enable_ancserv4"));
+		vd->assign("mp_energy_market_revenue", *lookup("mp_energy_market_revenue"));
+		vd->assign("mp_ancserv1_revenue", *lookup("mp_ancserv1_revenue"));
+		vd->assign("mp_ancserv2_revenue", *lookup("mp_ancserv2_revenue"));
+		vd->assign("mp_ancserv3_revenue", *lookup("mp_ancserv3_revenue"));
+		vd->assign("mp_ancserv4_revenue", *lookup("mp_ancserv4_revenue"));
+		vd->assign("gen", *lookup("gen"));
+		vd->assign("mp_calculate_revenue", var_data(ssc_number_t(1.0)));
 
-		util::matrix_t<double> mp_ancserv_1_revenue_mat(1, 2, 0.0);
-		if (en_mp_ancserv1)
-		{
-			ssc_number_t *mp_ancserv1_revenue_in = as_matrix("mp_ancserv1_revenue", &nrows, &ncols);
-			if (ncols != 2)
-			{
-				std::ostringstream ss;
-				ss << "The ancillary services revenue 1 table must have 2 columns. Instead it has " << ncols << " columns.";
-				throw exec_error("merchant plant", ss.str());
-			}
-			mp_ancserv_1_revenue_mat.resize(nrows, ncols);
-			mp_ancserv_1_revenue_mat.assign(mp_ancserv1_revenue_in, nrows, ncols);
-		}
 
-		util::matrix_t<double> mp_ancserv_2_revenue_mat(1, 2, 0.0);
-		if (en_mp_ancserv2)
+		mp_ancillary_services(vd);
+		if (vd->lookup("mp_ancillary_services")->num == 0)
 		{
-			ssc_number_t *mp_ancserv2_revenue_in = as_matrix("mp_ancserv2_revenue", &nrows, &ncols);
-			if (ncols != 2)
-			{
-				std::ostringstream ss;
-				ss << "The ancillary services revenue 2 table must have 2 columns. Instead it has " << ncols << " columns.";
-				throw exec_error("merchant plant", ss.str());
-			}
-			mp_ancserv_2_revenue_mat.resize(nrows, ncols);
-			mp_ancserv_2_revenue_mat.assign(mp_ancserv2_revenue_in, nrows, ncols);
+			std::ostringstream ss;
+			ss << "The generation is not sufficient to meet the ancillary markets requirements.  Specifically, " << (vd->lookup("mp_ancillary_services_error")->str);
+			throw exec_error("merchant plant", ss.str());
 		}
+		// return lifetime vectors
+		std::vector<double> mp_energy_market_generated_revenue = vd->lookup("mp_energy_market_generated_revenue")->arr_vector();
+		std::vector<double> mp_ancillary_services1_generated_revenue = vd->lookup("mp_ancillary_services1_generated_revenue")->arr_vector();
+		std::vector<double> mp_ancillary_services2_generated_revenue = vd->lookup("mp_ancillary_services2_generated_revenue")->arr_vector();
+		std::vector<double> mp_ancillary_services3_generated_revenue = vd->lookup("mp_ancillary_services3_generated_revenue")->arr_vector();
+		std::vector<double> mp_ancillary_services4_generated_revenue = vd->lookup("mp_ancillary_services4_generated_revenue")->arr_vector();
 
-		util::matrix_t<double> mp_ancserv_3_revenue_mat(1, 2, 0.0);
-		if (en_mp_ancserv3)
-		{
-			ssc_number_t *mp_ancserv3_revenue_in = as_matrix("mp_ancserv3_revenue", &nrows, &ncols);
-			if (ncols != 2)
-			{
-				std::ostringstream ss;
-				ss << "The ancillary services revenue 3 table must have 2 columns. Instead it has " << ncols << " columns.";
-				throw exec_error("merchant plant", ss.str());
-			}
-			mp_ancserv_3_revenue_mat.resize(nrows, ncols);
-			mp_ancserv_3_revenue_mat.assign(mp_ancserv3_revenue_in, nrows, ncols);
-		}
-
-		util::matrix_t<double> mp_ancserv_4_revenue_mat(1, 2, 0.0);
-		if (en_mp_ancserv4)
-		{
-			ssc_number_t *mp_ancserv4_revenue_in = as_matrix("mp_ancserv4_revenue", &nrows, &ncols);
-			if (ncols != 2)
-			{
-				std::ostringstream ss;
-				ss << "The ancillary services revenue 4 table must have 2 columns. Instead it has " << ncols << " columns.";
-				throw exec_error("merchant plant", ss.str());
-			}
-			mp_ancserv_4_revenue_mat.resize(nrows, ncols);
-			mp_ancserv_4_revenue_mat.assign(mp_ancserv4_revenue_in, nrows, ncols);
-		}
-
-		// TODO need to check sum of all cleared capacities at each timestep
+		delete vd;
 
 		// calculate revenue per year
 		double as_revenue = 0;
 		size_t base_index = 0;
-		size_t n_marketrevenue_per_year = mp_energy_market_revenue_mat.nrows() / (size_t)nyears;
+		size_t n_marketrevenue_per_year = mp_energy_market_generated_revenue.size() / (size_t)nyears;
 		for (i = 1; i <= nyears; i++)
 		{
 			as_revenue = 0;
 			base_index = (i - 1)*n_marketrevenue_per_year;
 			for (size_t j = 0; j < n_marketrevenue_per_year; j++)
 			{
-				as_revenue += mp_energy_market_revenue_mat.at(base_index + j, 0) * mp_energy_market_revenue_mat.at(base_index + j, 1);
+				as_revenue += mp_energy_market_generated_revenue[base_index+j];
 			}
 			cf.at(CF_energy_market_revenue, i) = as_revenue;
 		}
 
-		size_t n_ancserv_1_revenue_per_year = mp_ancserv_1_revenue_mat.nrows() / (size_t)nyears;
+		size_t n_ancserv_1_revenue_per_year = mp_ancillary_services1_generated_revenue.size() / (size_t)nyears;
 		for ( i = 1; i <= nyears; i++)
 		{
 			as_revenue = 0;
 			base_index = (i - 1)*n_ancserv_1_revenue_per_year;
 			for (size_t j = 0; j < n_ancserv_1_revenue_per_year; j++)
 			{
-				as_revenue += mp_ancserv_1_revenue_mat.at(base_index + j, 0) * mp_ancserv_1_revenue_mat.at(base_index + j, 1);
+				as_revenue += mp_ancillary_services1_generated_revenue[base_index + j];
 			}
 			cf.at(CF_ancillary_services_1_revenue, i) = as_revenue;
 		}
 
-		size_t n_ancserv_2_revenue_per_year = mp_ancserv_2_revenue_mat.nrows() / (size_t)nyears;
-		for ( i = 1; i <= nyears; i++)
+		size_t n_ancserv_2_revenue_per_year = mp_ancillary_services2_generated_revenue.size() / (size_t)nyears;
+		for (i = 1; i <= nyears; i++)
 		{
 			as_revenue = 0;
 			base_index = (i - 1)*n_ancserv_2_revenue_per_year;
 			for (size_t j = 0; j < n_ancserv_2_revenue_per_year; j++)
 			{
-				as_revenue += mp_ancserv_2_revenue_mat.at(base_index + j, 0) * mp_ancserv_2_revenue_mat.at(base_index + j, 1);
+				as_revenue += mp_ancillary_services2_generated_revenue[base_index + j];
 			}
 			cf.at(CF_ancillary_services_2_revenue, i) = as_revenue;
 		}
 
-		size_t n_ancserv_3_revenue_per_year = mp_ancserv_3_revenue_mat.nrows() / (size_t)nyears;
-		for ( i = 1; i <= nyears; i++)
+		size_t n_ancserv_3_revenue_per_year = mp_ancillary_services3_generated_revenue.size() / (size_t)nyears;
+		for (i = 1; i <= nyears; i++)
 		{
 			as_revenue = 0;
 			base_index = (i - 1)*n_ancserv_3_revenue_per_year;
 			for (size_t j = 0; j < n_ancserv_3_revenue_per_year; j++)
 			{
-				as_revenue += mp_ancserv_3_revenue_mat.at(base_index + j, 0) * mp_ancserv_3_revenue_mat.at(base_index + j, 1);
+				as_revenue += mp_ancillary_services3_generated_revenue[base_index + j];
 			}
 			cf.at(CF_ancillary_services_3_revenue, i) = as_revenue;
 		}
 
-		size_t n_ancserv_4_revenue_per_year = mp_ancserv_4_revenue_mat.nrows() / (size_t)nyears;
-		for ( i = 1; i <= nyears; i++)
+		size_t n_ancserv_4_revenue_per_year = mp_ancillary_services4_generated_revenue.size() / (size_t)nyears;
+		for (i = 1; i <= nyears; i++)
 		{
 			as_revenue = 0;
 			base_index = (i - 1)*n_ancserv_4_revenue_per_year;
 			for (size_t j = 0; j < n_ancserv_4_revenue_per_year; j++)
 			{
-				as_revenue += mp_ancserv_4_revenue_mat.at(base_index + j, 0) * mp_ancserv_4_revenue_mat.at(base_index + j, 1);
+				as_revenue += mp_ancillary_services4_generated_revenue[base_index + j];
 			}
 			cf.at(CF_ancillary_services_4_revenue, i) = as_revenue;
 		}
@@ -2061,13 +2005,8 @@ public:
 		double pbi_oth_for_ds_frac = as_boolean("pbi_oth_for_ds") ? 1.0 : 0.0;
 
 		
-		//		if (ppa_mode == 0) // iterate to meet flip target by varying ppa price
-		double ppa_soln_tolerance = as_double("ppa_soln_tolerance");
-		double flip_target_percent = as_double("flip_target_percent") ;
-		int flip_target_year = as_integer("flip_target_year");
-		// check for accessing off of the end of cashflow matrix
-		if (flip_target_year > nyears) flip_target_year = nyears;
-		int flip_year=-1;
+		int flip_target_year = nyears;
+		int flip_year=nyears;
 		double purchase_of_property;
 
 
@@ -2772,18 +2711,6 @@ public:
 			cf.at(CF_project_return_aftertax_max_irr,i) = max(cf.at(CF_project_return_aftertax_max_irr,i-1),cf.at(CF_project_return_aftertax_irr,i));
 			cf.at(CF_project_return_aftertax_npv,i) = npv(CF_project_return_aftertax,i,nom_discount_rate) +  cf.at(CF_project_return_aftertax,0) ;
 
-			if (flip_year <=0) 
-			{
-				double residual = fabs(cf.at(CF_project_return_aftertax_irr, i) - flip_target_percent) / 100.0; // solver checks fractions and not percentages
-				if ( ( cf.at(CF_project_return_aftertax_max_irr,i-1) < flip_target_percent ) &&  (   residual  < ppa_soln_tolerance ) 	) 
-				{
-					flip_year = i;
-					cf.at(CF_project_return_aftertax_max_irr,i)=flip_target_percent; //within tolerance so pre-flip and post-flip percentages applied correctly
-				}
-				else if ((cf.at(CF_project_return_aftertax_max_irr, i - 1) < flip_target_percent) && (cf.at(CF_project_return_aftertax_max_irr, i) >= flip_target_percent)) flip_year = i;
-			}
-
-
 		}
 		cf.at(CF_project_return_aftertax_npv,0) = cf.at(CF_project_return_aftertax,0) ;
 
@@ -2793,6 +2720,7 @@ public:
 //	log(util::format("after loop  - size of debt =%lg .", size_of_debt), SSC_WARNING);
 
 
+	double	flip_target_percent = cf.at(CF_project_return_aftertax_irr, flip_target_year);
 
 	assign("flip_target_year", var_data((ssc_number_t) flip_target_year ));
 	assign("flip_target_irr", var_data((ssc_number_t)  flip_target_percent ));

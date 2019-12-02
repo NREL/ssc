@@ -180,7 +180,7 @@ void resilience_runner::run_surviving_batteries_by_looping(double* crit_loads_kw
 }
 
 // return average hours survived
-double resilience_runner::compute_metrics(size_t steps_per_hour){
+double resilience_runner::compute_metrics(){
     outage_durations.clear();
     probs_of_surviving.clear();
 

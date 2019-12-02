@@ -54,6 +54,7 @@ set(SSC_SRC
 		cmod_levpartflip.cpp
 		cmod_linear_fresnel_dsg_iph.cpp
 		cmod_merchantplant.cpp
+		cmod_merchantplant_eqns.cpp
 		cmod_mhk_eqns.cpp
 		cmod_mhk_costs.cpp
 		cmod_mhk_wave.cpp

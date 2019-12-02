@@ -595,7 +595,7 @@ protected:
 	double _inverter_paco;
 
 	/*! Market real time and forecast prices */
-	std::vector<double> _ppa_price_rt_series;
+	std::vector<double> _forecast_price_rt_series;
 
 	/*! Utility rate information */
 	std::shared_ptr<UtilityRateCalculator> m_utilityRateCalculator;

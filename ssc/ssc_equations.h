@@ -4,6 +4,7 @@
 #include "sscapi.h"
 #include "cmod_windpower_eqns.h"
 #include "cmod_mhk_eqns.h"
+#include "cmod_merchantplant_eqns.h"
 #include "cmod_pvsamv1_eqns.h"
 
 
@@ -18,7 +19,9 @@ struct ssc_equation_entry{
 
 static ssc_equation_entry ssc_equation_table [] = {
 		{"me_array_cable_length", me_array_cable_length,
-            "Marine energy", me_array_cable_length_doc},
+						   "Marine energy", me_array_cable_length_doc},
+		{"mp_ancillary_services", mp_ancillary_services,
+						   "Merchant plant", mp_ancillary_services_doc},
         {"Reopt_size_battery_post", Reopt_size_battery_params,
             "Pvsamv1", Reopt_size_battery_params_doc},
         {"Reopt_size_battery_post", Reopt_size_battery_params,
