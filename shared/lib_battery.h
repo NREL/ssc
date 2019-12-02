@@ -239,6 +239,7 @@ public:
 
 	virtual double calculate_max_discharge_w(double q, double qmax, double kelvin, double *max_current) =0;
 
+    // Returns current [A] required to dispatch input power [W], only valid if less than max possible
     virtual double calculate_current_for_target_w(double P_watts, double q, double qmax, double kelvin) =0;
 
     virtual double battery_voltage(); // voltage of one battery
@@ -760,10 +761,12 @@ public:
 	// Run all for single time step and return the dispatched power [kW]
 	double run(size_t lifetimeIndex, double I);
 
-	// Returns current [V] required to dispatch input power [kW]
-	double calculate_current_for_power_kw(double P_kw);
-    double calculate_max_charge_kw(double *max_current_v = nullptr);
-    double calculate_max_discharge_kw(double *max_current_v = nullptr);
+	// Return the max charge or discharge power achievable in the next time step, and the required current [A]
+    double calculate_max_charge_kw(double *max_current_A = nullptr);
+    double calculate_max_discharge_kw(double *max_current_A = nullptr);
+
+	// Returns current [A] required to dispatch input power [kW], or the max power (to which P_kw is set)
+	double calculate_current_for_power_kw(double &P_kw);
 
     // Run a component level model
 	void runCapacityModel(double &I);

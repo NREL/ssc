@@ -1834,16 +1834,33 @@ void battery_t::initialize(capacity_t *capacity, voltage_t * voltage, lifetime_t
 	_thermal_initial->copy(_thermal);
 }
 
-double battery_t::calculate_current_for_power_kw(double P_kw){
+double battery_t::calculate_current_for_power_kw(double &P_kw){
+    if (P_kw == 0.)
+        return 0.;
+    double current;
+    if (P_kw < 0){
+        double max_P = _voltage->calculate_max_charge_w(_capacity->q0(), _capacity->qmax(), _thermal->T_battery(), & current);
+        if (max_P > P_kw){
+            P_kw = max_P;
+            return current;
+        }
+    }
+    else{
+        double max_P = _voltage->calculate_max_discharge_w(_capacity->q0(), _capacity->qmax(), _thermal->T_battery(), & current);
+        if (max_P < P_kw){
+            P_kw = max_P;
+            return current;
+        }
+    }
     return _voltage->calculate_current_for_target_w(P_kw * 1000, _capacity->q0(), _capacity->qmax(), _thermal->T_battery());
 }
 
-double battery_t::calculate_max_charge_kw(double *max_current) {
-    return _voltage->calculate_max_charge_w(_capacity->q0(), _capacity->qmax(), _thermal->T_battery(), max_current) / 1000.;
+double battery_t::calculate_max_charge_kw(double *max_current_A) {
+    return _voltage->calculate_max_charge_w(_capacity->q0(), _capacity->qmax(), _thermal->T_battery(), max_current_A) / 1000.;
 }
 
-double battery_t::calculate_max_discharge_kw(double *max_current) {
-    return _voltage->calculate_max_discharge_w(_capacity->q0(), _capacity->qmax(), _thermal->T_battery(), max_current) / 1000.;
+double battery_t::calculate_max_discharge_kw(double *max_current_A) {
+    return _voltage->calculate_max_discharge_w(_capacity->q0(), _capacity->qmax(), _thermal->T_battery(), max_current_A) / 1000.;
 }
 
 double battery_t::run(size_t lifetimeIndex, double I)

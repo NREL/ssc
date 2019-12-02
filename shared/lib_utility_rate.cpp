@@ -13,16 +13,18 @@ UtilityRate::UtilityRate(
 	m_ecWeekday = ecWeekday;
 	m_ecWeekend = ecWeekend;
 	m_ecRatesMatrix = ecRatesMatrix;
-	m_ecRealTimeBuy = ecRealTimeBuy;
+	m_ecRealTimeBuy = std::move(ecRealTimeBuy);
 }
 
 UtilityRate::UtilityRate(const UtilityRate& tmp){
+    m_useRealTimePrices = tmp.m_useRealTimePrices;
     m_ecWeekday = tmp.m_ecWeekday;
     m_ecWeekend = tmp.m_ecWeekend;
     m_ecRatesMatrix = tmp.m_ecRatesMatrix;
     for (auto& kv : tmp.m_energyTiersPerPeriod) {
         m_energyTiersPerPeriod[kv.first] = kv.second;
     }
+    m_ecRealTimeBuy = tmp.m_ecRealTimeBuy;
 }
 
 
@@ -37,7 +39,7 @@ UtilityRateCalculator::UtilityRateCalculator(UtilityRate * rate, size_t stepsPer
 	UtilityRate(*rate)
 {
 	m_stepsPerHour = stepsPerHour;
-	m_loadProfile = loadProfile;
+	m_loadProfile = std::move(loadProfile);
 	initializeRate();
 }
 

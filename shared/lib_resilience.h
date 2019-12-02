@@ -98,11 +98,7 @@ public:
         }
         else{
             // find dc power required from pv + battery discharge to meet load
-            do {
-                dc_ac_eff = inverter->efficiencyAC * 0.01;
-                inverter->calculateACPower(crit_load_kwac / dc_ac_eff, V_pv, tdry);
-            } while (abs(dc_ac_eff * 100 - inverter->efficiencyAC) > tolerance);
-            double required_kwdc = crit_load_kwac / dc_ac_eff;
+            double required_kwdc = inverter->calculateRequiredDCPower(crit_load_kwac, V_pv, tdry);
 
             battery_dispatched_kwdc = dispatch_kw(fmin(required_kwdc / dc_dc_eff, max_discharge_kwdc));
             inverter->calculateACPower(battery_dispatched_kwdc * dc_dc_eff, V_pv, tdry);
