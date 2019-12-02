@@ -49,6 +49,8 @@
 #ifndef _LIB_6PAR_NEWTON_H_
 #define _LIB_6PAR_NEWTON_H_
 
+#include <cmath>
+
 #include "6par_jacobian.h"
 #include "6par_lu.h"
 #include "6par_search.h"

@@ -314,7 +314,13 @@ bool dispatch_t::restrict_power(double &I)
 	if (_current_choice == RESTRICT_POWER || _current_choice == RESTRICT_BOTH)
 	{
 		double powerBattery = I * _Battery->battery_voltage() * util::watt_to_kilowatt;
-		double dP = 0;
+		double powerBatteryAC = powerBattery;
+        if (powerBattery < 0)
+            powerBatteryAC = powerBattery / m_batteryPower->singlePointEfficiencyACToDC;
+        else if (powerBattery > 0)
+            powerBatteryAC = powerBattery * m_batteryPower->singlePointEfficiencyDCToAC;
+
+        double dP = 0.;
 
 		// charging
 		if (powerBattery < 0)
@@ -328,9 +334,9 @@ bool dispatch_t::restrict_power(double &I)
 				iterate = true;
 			}
 			else if (m_batteryPower->connectionMode == m_batteryPower->AC_CONNECTED && 
-				fabs(m_batteryPower->powerBatteryAC) > m_batteryPower->powerBatteryChargeMaxAC * (1 + low_tolerance))
+				fabs(powerBatteryAC) > m_batteryPower->powerBatteryChargeMaxAC * (1 + low_tolerance))
 			{
-				dP = fabs(m_batteryPower->powerBatteryChargeMaxAC - fabs(m_batteryPower->powerBatteryAC));
+				dP = fabs(m_batteryPower->powerBatteryChargeMaxAC - fabs(powerBatteryAC));
 
 				// increase (reduce) charging magnitude by percentage
 				I -= (dP / fabs(powerBattery)) * I;
@@ -338,9 +344,9 @@ bool dispatch_t::restrict_power(double &I)
 			}
 			// This could just be grid power since that's technically the only AC component.  But, limit all to this
 			else if (m_batteryPower->connectionMode == m_batteryPower->DC_CONNECTED &&
-				fabs(m_batteryPower->powerBatteryAC) > m_batteryPower->powerBatteryChargeMaxAC * (1 + low_tolerance))
+				fabs(powerBatteryAC) > m_batteryPower->powerBatteryChargeMaxAC * (1 + low_tolerance))
 			{
-				dP = fabs(m_batteryPower->powerBatteryChargeMaxAC - fabs(m_batteryPower->powerBatteryAC));
+				dP = fabs(m_batteryPower->powerBatteryChargeMaxAC - fabs(powerBatteryAC));
 
 				// increase (reduce) charging magnitude by percentage
 				I -= (dP / fabs(powerBattery)) * I;
@@ -357,9 +363,9 @@ bool dispatch_t::restrict_power(double &I)
 				I -= (dP / fabs(powerBattery)) * I;
 				iterate = true;
 			}
-			else if (fabs(m_batteryPower->powerBatteryAC) > m_batteryPower->powerBatteryDischargeMaxAC * (1 + low_tolerance))
+			else if (fabs(powerBatteryAC) > m_batteryPower->powerBatteryDischargeMaxAC * (1 + low_tolerance))
 			{
-				dP = fabs(m_batteryPower->powerBatteryDischargeMaxAC - m_batteryPower->powerBatteryAC);
+				dP = fabs(m_batteryPower->powerBatteryDischargeMaxAC - powerBatteryAC);
 
 				// decrease discharging magnitude
 				I -= (dP / fabs(powerBattery)) * I;

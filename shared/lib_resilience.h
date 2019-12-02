@@ -10,277 +10,153 @@
 #include "lib_battery_powerflow.h"
 #include "../ssc/cmod_battery.h"
 
-/*! Dispatches the battery in the case where the grid is unavailable */
-class dispatch_resiliency : public dispatch_t {
+/**
+*
+* \class dispatch_resilience
+*
+*  Dispatches the battery when the grid is unavailable is during an outage.
+*
+*  The battery model is run according to the purpose of meeting a critical load for as many time steps as possible.
+*  Normal operational limits such as min/max state-of-charge and dis/charging power and current are disregarded.
+*
+*  A fully-initialized dispatch_t instance is required to construct a dispatch_resilience. The original dispatch_t's
+*  dispatch algorithm is not used, but its underlying models (capacity, voltage, inverter for DC-connected batteries, etc)
+*  and certain dispatch parameters (conversion efficiencies, connection mode, time interval) are required.
+*
+* The start_outage_index is the time step at which the outage starts. Each time one of the run_outage_step functions are
+* run, met_loads_kw is updated and if the battery system meets the critical load, the current_outage_index is incremented.
+*
+*/
+class dispatch_resilience : public dispatch_t {
 public:
 
-    dispatch_resiliency(const dispatch_t& orig, size_t index, std::shared_ptr<batt_variables> vars):
-            dispatch_t(orig),
-            connection(static_cast<CONNECTION>(m_batteryPower->connectionMode)),
-            start_outage_index(index){
-        inverter = nullptr;
-        if (connection == CONNECTION::DC_CONNECTED)
-            inverter = std::unique_ptr<SharedInverter>(new SharedInverter(*m_batteryPower->sharedInverter));
-        batt_vars = vars;
-        current_outage_index = start_outage_index;
-        met_loads_kw = 0;
+    /// Construct from fully-initialized dispatch_t
+    dispatch_resilience(const dispatch_t &orig, size_t start_index);
 
-        m_batteryPower->canClipCharge = true;
-        m_batteryPower->canPVCharge = true;
-        m_batteryPower->canGridCharge = false;
-        m_batteryPower->canDischarge = true;
-
-        // change SOC limits
-        _Battery->capacity_model()->change_SOC_limits(0., 100.);
-    }
-
+    /// AC or DC connection
     const CONNECTION connection;
 
-    // Runs a timestep of an outage for an AC-connected battery
-    bool run_outage_step_ac(double crit_load_kwac, double pv_kwac){
-        if (connection != CONNECTION::AC_CONNECTED)
-            throw std::runtime_error("Error in resilience::run_outage_step_ac: called for battery with DC connection.");
+    /// Runs a time step of an outage for an AC-connected battery, returns true if critical load was met
+    bool run_outage_step_ac(double crit_load_kwac, double pv_kwac);
 
-        double battery_dispatched_kwac = 0;
-        double max_discharge_kwdc = _Battery->calculate_max_discharge_kw();
-        double max_charge_kwdc = _Battery->calculate_max_charge_kw();
+    /// Runs a time step of an outage for an DC-connected battery, returns true if critical load was met
+    bool run_outage_step_dc(double crit_load_kwac, double pv_kwdc, double V_pv, double pv_clipped, double tdry);
 
-        double met_load;
+    /// Returns the number of time steps during which the battery has met the critical load
+    size_t get_indices_survived();
 
-        if (pv_kwac > crit_load_kwac){
-            double remaining_kwdc = -(pv_kwac - crit_load_kwac) * m_batteryPower->singlePointEfficiencyACToDC;
-            remaining_kwdc = fmax(remaining_kwdc, max_charge_kwdc);
-            dispatch_kw(remaining_kwdc);
-            met_load = crit_load_kwac;
-        }
-        else{
-            double max_to_load_kwac = max_discharge_kwdc * m_batteryPower->singlePointEfficiencyDCToAC + pv_kwac;
-
-            if (max_to_load_kwac > crit_load_kwac){
-                double discharge_kwdc = (crit_load_kwac - pv_kwac) / m_batteryPower->singlePointEfficiencyDCToAC;
-                discharge_kwdc = fmin(discharge_kwdc, max_discharge_kwdc);
-                battery_dispatched_kwac = dispatch_kw(discharge_kwdc) * m_batteryPower->singlePointEfficiencyDCToAC;
-            }
-            else
-                battery_dispatched_kwac = dispatch_kw(max_discharge_kwdc) * m_batteryPower->singlePointEfficiencyDCToAC;
-            met_load = battery_dispatched_kwac + pv_kwac;
-        }
-
-        double unmet_load = crit_load_kwac - met_load;
-        met_loads_kw += met_load;
-        bool survived = abs(unmet_load) < tolerance;
-        if (survived)
-            current_outage_index += 1;
-        return survived;
-    }
-
-    bool run_outage_step_dc(double crit_load_kwac, double pv_kwdc, double V_pv, double pv_clipped, double tdry) {
-        if (connection != CONNECTION::DC_CONNECTED)
-            throw std::runtime_error("Error in resilience::run_outage_step_dc: called for battery with AC connection.");
-
-        double dc_dc_eff = batt_vars->batt_dc_dc_bms_efficiency * 0.01;
-
-        inverter->calculateACPower(pv_kwdc, V_pv, tdry);
-        double dc_ac_eff = inverter->efficiencyAC * 0.01;
-        double pv_kwac = inverter->powerAC_kW;
-
-        double battery_dispatched_kwdc;
-        double battery_dispatched_kwac;
-        double max_discharge_kwdc = _Battery->calculate_max_discharge_kw();
-        double max_charge_kwdc = _Battery->calculate_max_charge_kw();
-
-        double met_load;
-        if (pv_kwac > crit_load_kwac){
-            double remaining_kwdc = -(pv_kwac - crit_load_kwac) / dc_ac_eff + pv_clipped;
-            remaining_kwdc = fmax(remaining_kwdc / dc_dc_eff, max_charge_kwdc);
-            dispatch_kw(remaining_kwdc);
-            met_load = crit_load_kwac;
-        }
-        else{
-            // find dc power required from pv + battery discharge to meet load
-            do {
-                dc_ac_eff = inverter->efficiencyAC * 0.01;
-                inverter->calculateACPower(crit_load_kwac / dc_ac_eff, V_pv, tdry);
-            } while (abs(dc_ac_eff * 100 - inverter->efficiencyAC) > tolerance);
-            double required_kwdc = crit_load_kwac / dc_ac_eff;
-
-            battery_dispatched_kwdc = dispatch_kw(fmin(required_kwdc / dc_dc_eff, max_discharge_kwdc));
-            inverter->calculateACPower(battery_dispatched_kwdc * dc_dc_eff, V_pv, tdry);
-            battery_dispatched_kwac = inverter->powerAC_kW;
-            met_load = battery_dispatched_kwac + pv_kwac;
-        }
-
-        double unmet_load = crit_load_kwac - met_load;
-        met_loads_kw += met_load;
-        bool survived = abs(unmet_load) < tolerance;
-        if (survived)
-            current_outage_index += 1;
-        return survived;
-    }
-
-    size_t get_indices_survived() {
-        return current_outage_index - start_outage_index;
-    }
-
-    double get_met_loads(){
-        return met_loads_kw;
-    }
+    /// Returns the total critical loads met at all survived time steps [kW]
+    double get_met_loads();
 
 protected:
     size_t start_outage_index;
     size_t current_outage_index;
     double met_loads_kw;
 
-    std::shared_ptr<batt_variables> batt_vars;
+    /// valid inverter required for DC-connected batteries
     std::unique_ptr<SharedInverter> inverter;
 
-    double dispatch_kw(double kw){
-        double charging_current = _Battery->calculate_current_for_power_kw(kw);
-        return _Battery->run(current_outage_index, charging_current);
-    }
+    /// dispatch the battery model with the target power, where kw < 0 is discharging
+    double dispatch_kw(double kw);
 
     void dispatch(size_t, size_t, size_t) override {}
-
 };
 
-class resiliency_runner {
+/**
+*
+* \class resilience_runner
+*
+*  Maintains a collection of batteries operating for resilience (no grid access, access to renewable energy sources)
+*  organized by the starting time step of the outage, for calculating annual or lifetime statistics about hours of
+*  autonomy and total met loads for a battery system design.
+*
+*  An example from cmod_battwatts.cpp for calculating how a battery would respond if an outage occurred at every time step
+*  of the simulation. This is done by simulating the original battery system as it steps through the entire simulation
+*  while adding a copy of the dispatch_t to resilience_runner for simulating outage conditions. After the annual simulation
+*  is complete, the battery added at the last time step (and likely several of the ones added before that) is still
+*  surviving so run_surviving_batteries_by_looping simulates how many hours the batteries still surviving would last until
+*  the next year assuming the critical load and pv production is exactly the same.
+*
+*    for (hour = 0; hour < 8760; hour++)
+*    {
+*       for (size_t jj = 0; jj < batt->step_per_hour; jj++)
+*       {
+*           batt->initialize_time(year, hour, jj);
+*
+*           resilience->add_battery_at_outage_timestep(*batt->dispatch_model, count);
+*           resilience->run_surviving_batteries(p_crit_load[count % n_rec_single_year], p_ac[count]);
+*
+*           batt->advance(m_vartab, p_ac[count], voltage, p_load[count]);
+*           p_gen[count] = batt->outGenPower[count];
+*           count++;
+*       }
+*    }
+*
+*    resilience->run_surviving_batteries_by_looping(&p_crit_load[0], &p_ac[0]);
+*
+*  Provides metrics for the total load met and the time steps survived for each outage.
+*/
+
+class resilience_runner {
 private:
+    /// Required for time interval, battery connection and inverter parameters
     std::shared_ptr<battstor> batt;
 
-    std::map<size_t, std::shared_ptr<dispatch_resiliency>> battery_per_outage_start;
+    /// Outage simulations mapped by the index at which the outage started
+    std::map<size_t, std::shared_ptr<dispatch_resilience>> battery_per_outage_start;
 
+    /// i-th entry is the number of time steps survived for an outage starting at time step i
     std::vector<size_t> indices_survived;
+
+    /// i-th entry is the total load met during an outage starting at time step i
     std::vector<double> total_load_met;
 
+    /// i-th entry is the i-th smallest possible number of hours survived during any outage
     std::vector<double> outage_durations;
+
+    /// i-th entry corresponds to the number of hours in the i-th entry of outage_durations
     std::vector<double> probs_of_surviving;
 
     std::vector<std::string> logs;
 
 public:
-    explicit resiliency_runner(const std::shared_ptr<battstor>& battery){
-        batt = std::make_shared<battstor>(*battery);
-        size_t steps_lifetime = batt->step_per_hour * batt->nyears * 8760;
-        indices_survived.resize(steps_lifetime);
-        total_load_met.resize(steps_lifetime);
-    }
+    /// Construct from fully-initialized battstor with time interval information
+    explicit resilience_runner(const std::shared_ptr<battstor>& battery);
 
     std::vector<std::string> get_logs() {return logs;}
 
-    void add_battery_at_outage_timestep(const dispatch_t& orig, size_t index){
-        if (battery_per_outage_start.find(index) != battery_per_outage_start.end())
-            logs.emplace_back(
-                    "Replacing battery which already existed at index " + to_string(index) + ".");
-        battery_per_outage_start.insert({index, std::make_shared<dispatch_resiliency>(orig, index, batt->batt_vars)});
-    }
+    /// Adds a battery operating during an outage starting at given index for simulating hours of autonomy
+    void add_battery_at_outage_timestep(const dispatch_t& orig, size_t index);
 
-    void run_surviving_batteries(double load_ac, double pv_ac_kw, double pv_dc_kw = 0., double V = 0.,
-                                 double pv_clipped = 0.,
-                                 double tdry = 0.) {
-        if (batt->batt_vars->batt_topology == dispatch_resiliency::DC_CONNECTED) {
-            if (batt->batt_vars->inverter_paco * batt->batt_vars->inverter_count < load_ac)
-                logs.emplace_back(
-                        "For DC-connected battery, maximum inverter AC Power less than max load will lead to dropped load.");
-        }
+    /// Given the crit load and PV production (and string voltage, clipped pv power and temperature for DC-connected),
+    /// run another outage time step for all surviving batteries
+    void run_surviving_batteries(double crit_loads_kwac, double pv_kwac, double pv_kwdc = 0., double V = 0.,
+                                 double pv_clipped_kw = 0., double tdry_c = 0.);
 
-        std::vector<size_t> depleted_battery_keys;
-        for (auto& i : battery_per_outage_start){
-            size_t start_index = i.first;
-            auto batt_system = i.second;
-            bool survived;
-            if (batt_system->connection == dispatch_resiliency::DC_CONNECTED)
-                survived = batt_system->run_outage_step_dc(load_ac, pv_dc_kw, V, pv_clipped, tdry);
-            else
-                survived = batt_system->run_outage_step_ac(load_ac, pv_ac_kw);
-            if (!survived){
-                depleted_battery_keys.emplace_back(start_index);
-                indices_survived[start_index] = batt_system->get_indices_survived();
-            }
-        }
-        for (auto& i : depleted_battery_keys){
-            auto b = battery_per_outage_start[i];
-            indices_survived[i] = b->get_indices_survived();
-            total_load_met[i] = b->get_met_loads();
-            battery_per_outage_start.erase(i);
-        }
-    }
-
-    // crit loads and tdry are single year; pv, V, clipped are lifetime arrays
+    /// Critical load and temp are single year arrays; pv production, string voltage, clipped power  are lifetime arrays
     void run_surviving_batteries_by_looping(double* crit_loads_kwac, double* pv_kwac, double* pv_kwdc = nullptr,
-                                            double* V = nullptr, double* pv_clipped = nullptr, double* tdry = nullptr){
-        size_t nrec = batt->step_per_year;
-        size_t steps_lifetime = nrec * batt->nyears;
-        size_t i = 0;
-        while (get_n_surviving_batteries() > 0 && i < steps_lifetime){
-            if (pv_kwdc && V && pv_clipped && tdry)
-                run_surviving_batteries(crit_loads_kwac[i % nrec], pv_kwac[i], pv_kwdc[i], V[i], pv_clipped[i], tdry[i % nrec]);
-            else
-                run_surviving_batteries(crit_loads_kwac[i % nrec], pv_kwac[i]);
-            i++;
-        }
+                                            double* V = nullptr, double* pv_clipped_kw = nullptr, double* tdry_c = nullptr);
 
-        if (battery_per_outage_start.empty())
-            return;
+    /// Return average hours survived
+    double compute_metrics(size_t steps_per_hour);
 
-        double total_load = std::accumulate(crit_loads_kwac, crit_loads_kwac + nrec, 0.0) * batt->nyears;
-        for (auto& b : battery_per_outage_start){
-            indices_survived[b.first] = steps_lifetime;
-            total_load_met[b.first] = total_load;
-        }
-        battery_per_outage_start.clear();
-    }
+    /// Returns how many batteries are still operating during their respective outages
+    size_t get_n_surviving_batteries();
 
-    // return average hours survived
-    double compute_metrics(){
-        outage_durations.clear();
-        probs_of_surviving.clear();
+    /// Returns how many hours were survived by a battery during an outage that started at the vector's index
+    std::vector<double> get_hours_survived();
 
-        double hrs_total = (double)batt->step_per_hour * 8760. * (double)batt->nyears;
-        outage_durations = std::vector<double>(indices_survived.begin(), indices_survived.end());;
-        std::sort(outage_durations.begin(), outage_durations.end());
-        outage_durations.erase(unique(outage_durations.begin(), outage_durations.end()), outage_durations.end());
-        for (auto& i : outage_durations){
-            double prob = std::count(indices_survived.begin(), indices_survived.end(), i) / hrs_total;
-            i /= batt->step_per_hour;       // convert to hours
-            probs_of_surviving.emplace_back(prob);
-        }
+    /// Returns the average critical energy load met
+    double get_avg_crit_load_kwh();
 
-        return std::accumulate(indices_survived.begin(), indices_survived.end(), 0.0)/batt->step_per_hour/(double)indices_survived.size();
-    }
+    /// Returns the set of possible hours of autonomy, ordered from least to greatest
+    std::vector<double> get_outage_duration_hrs();
 
-    size_t get_n_surviving_batteries() {
-        return battery_per_outage_start.size();
-    }
+    /// i-th entry is the probability of surviving for x hours, where x is the i-th entry of get_outage_duration_hrs
+    std::vector<double> get_probs_of_surviving();
 
-    std::vector<double> get_hours_survived() {
-        double hours_per_step = 1. / batt->step_per_hour;
-        std::vector<double> hours_survived;
-        for (const auto& i : indices_survived)
-            hours_survived.push_back(i * hours_per_step);
-        return hours_survived;
-    }
-
-
-    double get_avg_crit_load_kwh(){
-        return std::accumulate(total_load_met.begin(), total_load_met.end(), 0.0) / (double)(total_load_met.size() * batt->step_per_hour);
-    }
-
-    std::vector<double> get_outage_duration_hrs() {
-        return outage_durations;
-    }
-
-    std::vector<double> get_probs_of_surviving(){
-        return probs_of_surviving;
-    }
-
-    std::vector<double> get_probs_cumulative_of_surviving(){
-        std::vector<double> cum_prob;
-        cum_prob.push_back(probs_of_surviving[0]);
-        for (size_t i = 1; i < probs_of_surviving.size(); i++){
-            cum_prob.emplace_back(probs_of_surviving[i] + cum_prob[i-1]);
-        }
-        return cum_prob;
-    }
+    /// i-th entry is the probability of surviving for at least x hours, where x is the i-th entry of get_outage_duration_hrs
+    std::vector<double> get_probs_cumulative_of_surviving();
 };
 
 

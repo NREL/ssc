@@ -29,13 +29,16 @@ public:
 	std::vector<std::vector<double>> getTempDerateCurves();
 
 	/// Modifies pAc, eff, and loss by calculating derate, using curves interpolated by input V
-	void calculateTempDerate(double V, double T, double& pAC, double& eff, double& loss);
+	void calculateTempDerate(double V, double tempC, double& pAC, double& eff, double& loss);
 
 	/// Given the combined PV plus battery DC power (kW), voltage and ambient T, compute the AC power (kW) for a single inverter with one MPPT input
-	void calculateACPower(const double powerDC_kW, const double DCStringVoltage, double ambientT);
+	void calculateACPower(const double powerDC_kW, const double DCStringVoltage, double tempC);
 	
 	/// Given the combined PV plus battery DC power (kW), voltage and ambient T, compute the AC power (kW) for a single inverter with multiple MPPT inputs
-	void calculateACPower(const std::vector<double> powerDC_kW, const std::vector<double> DCStringVoltage, double ambientT);
+	void calculateACPower(const std::vector<double> powerDC_kW, const std::vector<double> DCStringVoltage, double tempC);
+
+	/// Given a target AC power production, calculate the required DC power if possible, otherwise if eff is too low return kwAC.
+	double calculateRequiredDCPower(const double kwAC, const double DCStringV, double tempC);
 
 	/// Return the nominal DC voltage input
 	double getInverterDCNominalVoltage();
@@ -48,13 +51,15 @@ public:
 
 	enum { SANDIA_INVERTER, DATASHEET_INVERTER, PARTLOAD_INVERTER, COEFFICIENT_GENERATOR, OND_INVERTER, NONE };
 
-public:
+    const constexpr static double NONE_INVERTER_EFF = 0.96;
 
+public:
+    double StringV;
     double Tdry_C;
 	// calculated values for the current timestep
 	double powerDC_kW;
 	double powerAC_kW;
-	double efficiencyAC;
+	double efficiencyAC;        // 0-100
 	double powerClipLoss_kW;
 	double powerConsumptionLoss_kW;
 	double powerNightLoss_kW;
@@ -84,6 +89,10 @@ private:
 
 	void convertOutputsToKWandScale(double tempLoss, double powerAC_watts);
 
+	// x[0] is dc power input in kW, x[1] is target ac power output in kW
+	void solve_kwdc_for_kwac(const double *x, double *f);
+
+	double solver_AC;
 };
 
 

@@ -1591,7 +1591,7 @@ public:
 			}
 
             // resilience metrics for battery
-            std::unique_ptr<resiliency_runner> resilience = nullptr;
+            std::unique_ptr<resilience_runner> resilience = nullptr;
 			std::vector<ssc_number_t> p_crit_load;
 			if (is_assigned("crit_load")){
 			    p_crit_load = as_vector_ssc_number_t("crit_load");
@@ -1599,7 +1599,7 @@ public:
 			    if (nload != n_rec_single_year)
                     throw exec_error("battery", "electric load profile must have same number of values as weather file, or 8760");
                 if (!p_crit_load.empty() && *std::max_element(p_crit_load.begin(), p_crit_load.end()) > 0){
-                    resilience = std::unique_ptr<resiliency_runner>(new resiliency_runner(batt));
+                    resilience = std::unique_ptr<resilience_runner>(new resilience_runner(batt));
                     auto logs = resilience->get_logs();
                     if (!logs.empty()){
                         log(logs[0], SSC_WARNING);

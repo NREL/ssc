@@ -231,6 +231,27 @@ TEST_F(ResilienceTest_lib_resilience, DischargeVoltageTable){
     volt.updateVoltage(&cap, nullptr, 1);
     double v = volt.cell_voltage();
     EXPECT_NEAR(req_cur * v, 0.5, 1e-2);
+
+    // test max discharge
+    cap = capacity_lithium_ion_t(2.25, 50, 100, 0);
+    double max_p = volt.calculate_max_discharge_w(cap.q0(), cap.qmax(), 0, &req_cur);
+    cap.updateCapacity(req_cur, 1);
+    volt.updateVoltage(&cap, nullptr, 1);
+    EXPECT_NEAR(max_p, cap.I() * volt.cell_voltage(), 1e-3);
+
+    // test over max discharge
+    cap = capacity_lithium_ion_t(2.25, 50, 100, 0);
+    req_cur *= 1.5;
+    cap.updateCapacity(req_cur, 1);
+    volt.updateVoltage(&cap, nullptr, 1);
+    EXPECT_GT(max_p, cap.I() * volt.cell_voltage()) << "resulting power should be less than max";
+
+
+    double overmax_I = volt.calculate_current_for_target_w(max_p * 1.1, cap.q0(), cap.qmax(), 0);
+    cap = capacity_lithium_ion_t(2.25, 50, 100, 0);
+    cap.updateCapacity(overmax_I, 1);
+    volt.updateVoltage(&cap, nullptr, 1);
+    EXPECT_GT(max_p, cap.I() * volt.cell_voltage()) << "resulting power should be less than max";
 }
 
 TEST_F(ResilienceTest_lib_resilience, ChargeVoltageTable){
@@ -242,13 +263,22 @@ TEST_F(ResilienceTest_lib_resilience, ChargeVoltageTable){
     // test charging
     double current = 10;
     cap.updateCapacity(current, 1);
-    double req_cur = volt.calculate_current_for_target_w(-1.5, 0, 2.25, 0);
+    double req_cur = volt.calculate_current_for_target_w(-1.5, cap.q0(), cap.qmax(), 0);
     cap.updateCapacity(req_cur, 1);
     volt.updateVoltage(&cap, nullptr, 1);
     double v = volt.cell_voltage();
     EXPECT_NEAR(req_cur * v, -1.5, 1e-2);
 
+    // test max charge
     double max_p = volt.calculate_max_charge_w(cap.q0(), cap.qmax(), 0, &current);
+    cap.updateCapacity(current, 1);
+    volt.updateVoltage(&cap, nullptr, 1);
+    EXPECT_NEAR(max_p, cap.I() * volt.cell_voltage(), 1e-3);
+
+    // test over max charge
+    current *= -1; // reset last charge
+    cap.updateCapacity(current, 1);
+    current *= -1.5;
     cap.updateCapacity(current, 1);
     volt.updateVoltage(&cap, nullptr, 1);
     EXPECT_NEAR(max_p, cap.I() * volt.cell_voltage(), 1e-3);
@@ -420,7 +450,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsACHourly_Discharge)
     // batt is ac-connected
     CreateBattery(true, 1, 0. ,1., 1.);
 
-    resiliency_runner resilience(batt);
+    resilience_runner resilience(batt);
     const double voltage = 500;
     std::vector<double> batt_power, charge_total;
     for (size_t i = 0; i < 10; i++){
@@ -475,7 +505,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsACHalfHourly_Discharge)
     // batt is ac-connected
     CreateBattery(true, 2, 0. ,1., 1.);
 
-    resiliency_runner resilience(batt);
+    resilience_runner resilience(batt);
     const double voltage = 500;
     std::vector<double> batt_power, charge_total;
     for (size_t i = 0; i < 10; i++){
@@ -535,7 +565,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsDCHourly_Discharge)
 {
     CreateBattery(false, 1, 0. ,1., 1.);
 
-    resiliency_runner resilience(batt);
+    resilience_runner resilience(batt);
     const double voltage = 500;
     std::vector<double> batt_power, charge_total;
     for (size_t i = 0; i < 10; i++){
@@ -590,7 +620,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsDCHalfHourly_Discharge)
     // batt is ac-connected
     CreateBattery(false, 2, 0. ,1., 1.);
 
-    resiliency_runner resilience(batt);
+    resilience_runner resilience(batt);
     const double voltage = 500;
     std::vector<double> batt_power, charge_total;
     for (size_t i = 0; i < 10; i++){
@@ -646,7 +676,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsACHourly_Charge)
     // batt is ac-connected
     CreateBattery(true, 1, 1. ,0.5, -0.5);
 
-    resiliency_runner resilience(batt);
+    resilience_runner resilience(batt);
     const double voltage = 500;
     std::vector<double> batt_power, charge_total;
     for (size_t i = 0; i < 5; i++){

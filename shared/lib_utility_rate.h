@@ -75,7 +75,7 @@ protected:
 	std::vector<double> m_loadProfile;
 	
 	/// The calculated electricity bill for the UtilityRate and load profile ($)
-	double m_electricBill;
+	double m_electricBill{};
 
 	/// The number of time steps per hour
 	size_t m_stepsPerHour;

@@ -1034,7 +1034,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
     }
 
     // resilience metrics for battery
-    std::unique_ptr<resiliency_runner> resilience = nullptr;
+    std::unique_ptr<resilience_runner> resilience = nullptr;
 
     // setup battery model
     std::shared_ptr<battstor> batt = nullptr;
@@ -1050,7 +1050,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
             throw exec_error("pvsamv1", "A DC-connected battery cannot be modeled with multiple MPPT inverters at this time.");
 
         if (!p_crit_load_in.empty() && *std::max_element(p_crit_load_in.begin(), p_crit_load_in.end()) > 0){
-            resilience = std::unique_ptr<resiliency_runner>(new resiliency_runner(batt));
+            resilience = std::unique_ptr<resilience_runner>(new resilience_runner(batt));
             auto logs = resilience->get_logs();
             if (!logs.empty()){
                 log(logs[0], SSC_WARNING);
