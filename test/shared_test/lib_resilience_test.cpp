@@ -450,7 +450,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsACHourly_Discharge)
     // batt is ac-connected
     CreateBattery(true, 1, 0. ,1., 1.);
 
-    resiliency_runner resilience(batt);
+    resilience_runner resilience(batt);
     const double voltage = 500;
     std::vector<double> batt_power, charge_total;
     for (size_t i = 0; i < 10; i++){
@@ -505,7 +505,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsACHalfHourly_Discharge)
     // batt is ac-connected
     CreateBattery(true, 2, 0. ,1., 1.);
 
-    resiliency_runner resilience(batt);
+    resilience_runner resilience(batt);
     const double voltage = 500;
     std::vector<double> batt_power, charge_total;
     for (size_t i = 0; i < 10; i++){
@@ -565,7 +565,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsDCHourly_Discharge)
 {
     CreateBattery(false, 1, 0. ,1., 1.);
 
-    resiliency_runner resilience(batt);
+    resilience_runner resilience(batt);
     const double voltage = 500;
     std::vector<double> batt_power, charge_total;
     for (size_t i = 0; i < 10; i++){
@@ -620,7 +620,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsDCHalfHourly_Discharge)
     // batt is ac-connected
     CreateBattery(false, 2, 0. ,1., 1.);
 
-    resiliency_runner resilience(batt);
+    resilience_runner resilience(batt);
     const double voltage = 500;
     std::vector<double> batt_power, charge_total;
     for (size_t i = 0; i < 10; i++){
@@ -676,7 +676,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsACHourly_Charge)
     // batt is ac-connected
     CreateBattery(true, 1, 1. ,0.5, -0.5);
 
-    resiliency_runner resilience(batt);
+    resilience_runner resilience(batt);
     const double voltage = 500;
     std::vector<double> batt_power, charge_total;
     for (size_t i = 0; i < 5; i++){
