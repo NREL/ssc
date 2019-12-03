@@ -180,9 +180,9 @@ void vt_get_int(var_table* vt, std::string name, int* lvalue);
 
 void vt_get_double(var_table* vt, std::string name, double* lvalue);
 
-void vt_get_array_vec(var_table* vt, std::string name, std::vector<double> vec_double);
+void vt_get_array_vec(var_table* vt, std::string name, std::vector<double>& vec_double);
 
-void vt_get_matrix(var_table* vt, std::string name, util::matrix_t<double>* mat);
+void vt_get_matrix(var_table* vt, std::string name, util::matrix_t<double>& mat);
 
 #define VT_GET_MATRIX_VEC(vt, name, vec_vec_double) \
 if (var_data* vd = vt->lookup(name)) vec_vec_double = vd->matrix_vector(); \
