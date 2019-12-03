@@ -8,7 +8,7 @@
 extern "C" {
 #endif
 
-static const char* mp_capacity_check_doc =
+static const char* mp_ancillary_services_doc =
     "Checks the capacities specified in the Ancillary Services markets against the system capacity\\n"
     "Input: var_table with key-value pairs\\n"
     "     'analysis_period' - double [-]\\n"
@@ -27,7 +27,7 @@ static const char* mp_capacity_check_doc =
 	"     'mp_capacity_check' - boolean\\n"
 	"     'mp_capacity_check_error' - string\\n";
 
-SSCEXPORT void mp_capacity_check(ssc_data_t data);
+SSCEXPORT void mp_ancillary_services(ssc_data_t data);
 
 
 #ifdef __cplusplus

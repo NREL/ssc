@@ -44,6 +44,7 @@ void fuelcell_nofinancial_default(ssc_data_t &data)
 	ssc_number_t p_fuelcell_replacement_schedule[1] = { 0 };
 	ssc_data_set_array(data, "fuelcell_replacement_schedule", p_fuelcell_replacement_schedule, 1);
 	ssc_data_set_number(data, "fuelcell_startup_time", 24);
+	ssc_data_set_number(data, "fuelcell_is_started", 0);
 	ssc_data_set_number(data, "fuelcell_shutdown_time", 24);
 	ssc_data_set_number(data, "fuelcell_type", 0);
 	ssc_data_set_number(data, "fuelcell_unit_max_power", 100);
