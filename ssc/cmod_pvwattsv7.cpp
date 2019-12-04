@@ -117,7 +117,7 @@ static var_info _cm_vtab_pvwattsv7[] = {
 		{ SSC_INPUT,        SSC_TABLE,       "solar_resource_data",            "Weather data",                                "",          "dn,df,tdry,wspd,lat,lon,tz",                   "Location and Resource",      "?",                       "",                              "" },
 		{ SSC_INPUT,        SSC_ARRAY,       "albedo",                         "Albedo",                                      "frac",      "if provided, will overwrite weather file albedo","Location and Resource",    "",                        "",                              "" },
 	
-		{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",     "Run lifetime simulation",                    "0/1",        "",                       "Lifetime",            "*",                        "",                              "" },
+		{ SSC_INOUT,        SSC_NUMBER,      "system_use_lifetime_output",     "Run lifetime simulation",                    "0/1",        "",                       "Lifetime",            "?=0",                        "",                              "" },
 		{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                "Analysis period",                            "years",      "",                       "Lifetime",            "system_use_lifetime_output=1", "",                          "" },
 		{ SSC_INPUT,        SSC_ARRAY,       "dc_degradation",                 "Annual AC degradation",                      "%/year",    "",                        "Lifetime",            "system_use_lifetime_output=1", "",                          "" },
 
@@ -194,8 +194,9 @@ static var_info _cm_vtab_pvwattsv7[] = {
 		{ SSC_OUTPUT,       SSC_NUMBER,      "lon",                            "Longitude",                                   "deg", "",                        "Location",      "*",                       "",                          "" },
 		{ SSC_OUTPUT,       SSC_NUMBER,      "tz",                             "Time zone",                                   "hr",  "",                        "Location",      "*",                       "",                          "" },
 		{ SSC_OUTPUT,       SSC_NUMBER,      "elev",                           "Site elevation",                              "m",   "",                        "Location",      "*",                       "",                          "" },
-		{ SSC_OUTPUT,       SSC_NUMBER,      "inverter_model",                 "Inverter model specifier",                     "",                               "0=cec,1=datasheet,2=partload,3=coefficientgenerator,4=generic", "", "", "INTEGER,MIN=0,MAX=4", "" },
-		{ SSC_OUTPUT,       SSC_NUMBER,      "inverter_efficiency",            "Inverter efficiency at rated power",          "%",         "",                   "PVWatts",      "?=96",                        "MIN=90,MAX=99.5",                              "" },
+		{ SSC_OUTPUT,       SSC_NUMBER,      "inverter_model",                 "Inverter model specifier",                    "",                               "0=cec,1=datasheet,2=partload,3=coefficientgenerator,4=generic", "", "", "INTEGER,MIN=0,MAX=4", "" },
+		{ SSC_OUTPUT,       SSC_NUMBER,      "inverter_count",                 "Inverter count",							  "",                               "",              "", "", "INTEGER,MIN=0", "" },
+		{ SSC_OUTPUT,       SSC_NUMBER,      "inverter_efficiency",            "Inverter efficiency at rated power",          "%",         "",                  "PVWatts",      "?=96",                        "MIN=90,MAX=99.5",                              "" },
 
 		{ SSC_OUTPUT,       SSC_NUMBER,      "ts_shift_hours",                 "Time offset for interpreting time series outputs", "hours", "",                 "Miscellaneous", "*",                       "",                          "" },
 		{ SSC_OUTPUT,       SSC_NUMBER,      "percent_complete",               "Estimated percent of total completed simulation", "%", "",                       "Miscellaneous", "",                        "",                          "" },
@@ -520,7 +521,6 @@ public:
 
 		pv.gcr = as_double("gcr");
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////should we have shading enabled all the time as per this?
 
 		if (FIXED_RACK == pv.type
 			|| ONE_AXIS == pv.type
@@ -698,7 +698,7 @@ public:
 					p_df[idx] = (ssc_number_t)wf.df;
 					p_tamb[idx] = (ssc_number_t)wf.tdry;
 					p_wspd[idx] = (ssc_number_t)wf.wspd;
-					p_snow[idx] = (ssc_number_t)wf.snow; //what happens if there is no snow value in the weather file? should this be conditionally defined?
+					p_snow[idx] = (ssc_number_t)wf.snow; // if there is no snow data in the weather file, this will be NaN- consistent with pvsamv1
 					p_tmod[idx] = (ssc_number_t)wf.tdry;
 
 
@@ -1237,6 +1237,7 @@ public:
 
 		// for battery model, force inverter model
 		assign("inverter_model", var_data((ssc_number_t)4));
+		assign("inverter_count", var_data((ssc_number_t)1));
 		assign("inverter_efficiency", var_data((ssc_number_t)(as_double("inv_eff"))));
 
 		// metric outputs moved to technology
