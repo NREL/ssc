@@ -89,7 +89,7 @@ struct DispatchProperties
 * Test various components of the battery dispatch algorithms
 *
 */
-class BatteryDispatchTest : public BatteryProperties , public DispatchProperties
+class BatteryDispatchTest_lib_battery_dispatch : public BatteryProperties , public DispatchProperties
 {
 protected:
 	

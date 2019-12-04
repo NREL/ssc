@@ -574,7 +574,11 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsDCHourly_Discharge)
         resilience.run_surviving_batteries(load[i], 0, 0, 0, 0, 0);
         batt->advance(vartab, ac[i], voltage, load[i]);
         charge_total.emplace_back(batt->battery_model->battery_charge_total());
-        EXPECT_NEAR(batt->outBatteryPower[i], 1. * inverter->efficiencyAC/100. * batt_vars->batt_dc_dc_bms_efficiency/100., 1e-3) << "timestep " << i;
+        if (i < 6)
+            EXPECT_NEAR(batt->outBatteryPower[i], 1. * inverter->efficiencyAC/100. * batt_vars->batt_dc_dc_bms_efficiency/100., 1e-3) << "timestep " << i << " battery discharging";
+        else
+            EXPECT_NEAR(batt->outBatteryPower[i], 0, 1e-3) << "timestep " << i << " battery at min SOC";
+
     }
     std::vector<double> correct_charge_total = {13.94, 12.12, 10.28, 8.42, 6.51, 4.57, 4.57, 4.57, 4.57, 4.57};
 

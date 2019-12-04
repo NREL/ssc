@@ -60,7 +60,7 @@ bool dispatch_resilience::run_outage_step_dc(double crit_load_kwac, double pv_kw
     if (connection != CONNECTION::DC_CONNECTED)
         throw std::runtime_error("Error in resilience::run_outage_step_dc: called for battery with AC connection.");
 
-    double dc_dc_eff = m_batteryPower->singlePointEfficiencyDCToDC * 0.01;
+    double dc_dc_eff = m_batteryPower->singlePointEfficiencyDCToDC;
 
     inverter->calculateACPower(pv_kwdc, V_pv, tdry);
     double dc_ac_eff = inverter->efficiencyAC * 0.01;

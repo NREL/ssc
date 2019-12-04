@@ -385,7 +385,7 @@ void dispatch_t::runDispatch(size_t year, size_t hour_of_year, size_t step)
 	switch_controller();
 
 	// Calculate current, and ensure the battery falls within the current limits
-	double I = current_controller(m_batteryPower->powerBatteryTarget);
+	double I = current_controller(m_batteryPower->powerBatteryDC);
 
 	// Setup battery iteration
 	_Battery_initial->copy(_Battery);

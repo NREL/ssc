@@ -133,7 +133,7 @@ public:
     void run_surviving_batteries(double crit_loads_kwac, double pv_kwac, double pv_kwdc = 0., double V = 0.,
                                  double pv_clipped_kw = 0., double tdry_c = 0.);
 
-    /// Critical load and temp are single year arrays; pv production, string voltage, clipped power  are lifetime arrays
+    /// Critical load and temp are single year arrays; pv production, string voltage, clipped power are lifetime arrays
     void run_surviving_batteries_by_looping(double* crit_loads_kwac, double* pv_kwac, double* pv_kwdc = nullptr,
                                             double* V = nullptr, double* pv_clipped_kw = nullptr, double* tdry_c = nullptr);
 
