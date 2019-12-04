@@ -313,14 +313,12 @@
     <ClInclude Include="..\test\tcs_test\lib_trough_properties.h">
       <Filter>tcs_test</Filter>
     </ClInclude>
-<<<<<<< HEAD
     <ClInclude Include="..\test\input_cases\pvwattsv7_cases.h">
       <Filter>input_cases</Filter>
     </ClInclude>
     <ClInclude Include="..\test\ssc_test\cmod_pvwattsv7_test.h">
       <Filter>ssc_test</Filter>
     </ClInclude>
-=======
     <ClInclude Include="..\test\tcs_test\lib_trough_test.h">
       <Filter>tcs_test</Filter>
     </ClInclude>
@@ -344,6 +342,5 @@
     <Filter Include="tcs_test">
       <UniqueIdentifier>{af65529c-c8b2-4be4-a8d5-9b2ce41124f1}</UniqueIdentifier>
     </Filter>
->>>>>>> develop
   </ItemGroup>
 </Project>
