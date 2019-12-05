@@ -177,7 +177,7 @@ TEST_F(ResilienceTest_lib_resilience, VoltageTable)
 {
     std::vector<double> vals = {99, 0, 50, 2, 0, 3};
     util::matrix_t<double> table(3, 2, &vals);
-    auto volt = voltage_table_t(1, 1, 3, table, 0.1);
+    auto volt = voltage_table_t(1, 1, 3, table, 0.1, 1);
     auto cap = capacity_lithium_ion_t(2.25, 50, 100, 0);
 
     volt.updateVoltage(&cap, nullptr, 0.);
@@ -213,7 +213,7 @@ TEST_F(ResilienceTest_lib_resilience, VoltageTable)
 TEST_F(ResilienceTest_lib_resilience, DischargeVoltageTable){
     std::vector<double> vals = {99, 0, 50, 2, 0, 3};
     util::matrix_t<double> table(3, 2, &vals);
-    auto volt = voltage_table_t(1, 1, 3, table, 0.1);
+    auto volt = voltage_table_t(1, 1, 3, table, 0.1, 1);
     auto cap = capacity_lithium_ion_t(2.25, 50, 100, 0);
 
     // test discharging
@@ -257,7 +257,7 @@ TEST_F(ResilienceTest_lib_resilience, DischargeVoltageTable){
 TEST_F(ResilienceTest_lib_resilience, ChargeVoltageTable){
     std::vector<double> vals = {99, 0, 50, 2, 0, 3};
     util::matrix_t<double> table(3, 2, &vals);
-    auto volt = voltage_table_t(1, 1, 3, table, 0.1);
+    auto volt = voltage_table_t(1, 1, 3, table, 0.1, 1);
     auto cap = capacity_lithium_ion_t(2.25, 50, 100, 0);
 
     // test charging
@@ -374,7 +374,7 @@ TEST_F(ResilienceTest_lib_resilience, RoundtripEffTable){
                                 88.9, batt_vars->batt_Vnom, 99, 0};
     util::matrix_t<double> table(4, 2, &vals);
     auto vol = std::unique_ptr<voltage_table_t>(new voltage_table_t(batt_vars->batt_computed_series,
-            batt_vars->batt_computed_strings, batt_vars->batt_Vnom_default, table, batt_vars->batt_resistance));
+            batt_vars->batt_computed_strings, batt_vars->batt_Vnom_default, table, batt_vars->batt_resistance, 1));
     auto cap = batt->battery_model->capacity_model();
     cap->change_SOC_limits(0, 100);
 

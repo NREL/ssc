@@ -222,7 +222,7 @@ class thermal_t;
 class voltage_t
 {
 public:
-	voltage_t(int mode, int num_cells_series, int num_strings, double voltage);
+	voltage_t(int mode, int num_cells_series, int num_strings, double voltage, double dt_hour);
 
 	// deep copy
 	virtual voltage_t * clone()=0;
@@ -233,7 +233,6 @@ public:
 
 	virtual ~voltage_t(){};
 
-	virtual void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt)=0;
 
 	virtual double calculate_max_charge_w(double q, double qmax, double kelvin, double *max_current) =0;
 
@@ -241,6 +240,11 @@ public:
 
     // Returns current [A] required to dispatch input power [W], only valid if less than max possible
     virtual double calculate_current_for_target_w(double P_watts, double q, double qmax, double kelvin) =0;
+
+    virtual double calculate_voltage_for_current(double I, double q, double qmax, double T_k) =0;
+
+    // runs calculate_voltage_for_current and changes the internal cell voltage
+    virtual void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt)=0;
 
     virtual double battery_voltage(); // voltage of one battery
 
@@ -258,12 +262,13 @@ protected:
 	double _cell_voltage_nominal; // nominal cell voltage [V]
 	double _R;                    // internal cell resistance (Ohm)
 	double _R_battery;            // internal battery resistance (Ohm)
+	double dt_hr;
 };
 
 class voltage_table_t : public voltage_t
 {
 public:
-	voltage_table_t(int num_cells_series, int num_strings, double voltage, util::matrix_t<double> &voltage_table, double R);
+	voltage_table_t(int num_cells_series, int num_strings, double voltage, util::matrix_t<double> &voltage_table, double R, double dt_hour);
 
 	// deep copy
 	voltage_table_t * clone() override;
@@ -271,14 +276,16 @@ public:
 	// copy from voltage to this
 	void copy(voltage_t *) override;
 
-	void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt) override ;
-
     double calculate_max_charge_w(double q, double qmax, double kelvin, double *max_current) override;
 
     double calculate_max_discharge_w(double q, double qmax, double kelvin, double *max_current) override;
 
     // return current for targeted power, or 0 if unable
     double calculate_current_for_target_w(double P_watts, double q, double qmax, double kelvin) override;
+
+    double calculate_voltage_for_current(double I, double q, double qmax, double T_k) override;
+
+    void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt) override ;
 
 protected:
 
@@ -306,8 +313,6 @@ public:
 	// copy from voltage to this
 	void copy(voltage_t *) override;
 
-	void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt) override;
-
     double calculate_max_charge_w(double q, double qmax, double kelvin, double *max_current) override;
 
     double calculate_max_discharge_w(double q, double qmax, double kelvin, double *max_current) override;
@@ -316,6 +321,11 @@ public:
     double calculate_current_for_target_w(double P_watts, double q, double qmax, double kelvin) override;
 
     void fit_current_to_cutoff_voltage(double cutoff_voltage_ratio = 0.75);
+
+    double calculate_voltage_for_current(double I, double q, double qmax, double T_k) override;
+
+	void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt) override;
+
 
 protected:
 	double voltage_model_tremblay_hybrid(double Q_cell, double I, double q0_cell);
@@ -342,7 +352,6 @@ private:
 	// solver quantities
 	double solver_Q;
 	double solver_q;
-	double solver_dhr;
 
     double solver_cutoff_voltage;
     void solve_current_for_cutoff_voltage(const double x[1], double f[1]);
@@ -365,13 +374,15 @@ public:
 	// copy from voltage to this
 	void copy(voltage_t *) override;
 
-	void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt) override;
-
     double calculate_max_charge_w(double q, double qmax, double kelvin, double *max_current) override;
 
     double calculate_max_discharge_w(double q, double qmax, double kelvin, double *max_current) override;
 
     double calculate_current_for_target_w(double P_watts, double q, double qmax, double kelvin) override;
+
+    double calculate_voltage_for_current(double I, double q, double qmax, double T_k) override;
+
+    void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt) override;
 
 protected:
 
@@ -758,8 +769,10 @@ public:
 
 	void initialize(capacity_t *, voltage_t *, lifetime_t *, thermal_t *, losses_t *);
 
-	// Run all for single time step and return the dispatched power [kW]
+	// Run all for single time step, updating all component model states and return the dispatched power [kW]
 	double run(size_t lifetimeIndex, double I);
+
+	double calculate_voltage_for_current(double I);
 
 	// Return the max charge or discharge power achievable in the next time step, and the required current [A]
     double calculate_max_charge_kw(double *max_current_A = nullptr);
