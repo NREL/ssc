@@ -128,7 +128,7 @@ endif()
 #####################################################################################################################
 
 if (${CMAKE_PROJECT_NAME} STREQUAL system_advisor_model)
-	target_link_libraries(SDKtool lk wex)
+	target_link_libraries(SDKtool wex lk)
 else()
 	unset(WEX_LIB CACHE)
 	unset(LK_LIB CACHE)
