@@ -328,7 +328,13 @@ protected:
 	double diffuseIrradianceRear[3];		///< Rear-side diffuse irradiance for isotropic, circumsolar, and horizon (W/m2)
 	int timeStepSunPosition[3];				///< [0] effective hour of day used for sun position, [1] effective minute of hour used for sun position, [2] is sun up?  (0=no, 1=midday, 2=sunup, 3=sundown)
 	double planeOfArrayIrradianceRearAverage; ///< Average rear side plane-of-array irradiance (W/m2)
-
+    double planeOfArrayIrradianceFrontAverageFromGroundBiFa; ///< Average front side plane-of-array irradiance that comes from ground reflection according to bifacial analysis (W/m2)
+    double groundIrradianceRearAverage; ///< Average irradiance hitting the ground between leading edge of one row to leading edge of next row according to bifacial analysis (W/m2)
+    double planeOfArrayIrradianceFrontAverageBiFa; ///< Average total irradiance hitting the front of the row according to bifacial analysis (W/m2)
+    double planeOfArrayIrradianceRearBeam; ///< Average rear side irradiance contribution from direct beam and circumsolar components
+    double planeOfArrayIrradianceRearSky; ///< Average rear side irradiance contribution from diffuse sky components
+    double planeOfArrayIrradianceRearGround; ///< Average rear side irradiance contribution from interrow ground component
+    double planeOfArrayIrradianceRearReflected; ///< Average rear side irradiance contribution from component reflected from row behind
 public:
 
 	/// Directive to indicate that if delt_hr is less than zero, do not interpolate sunrise and sunset hours
@@ -417,7 +423,8 @@ public:
 		double *isotrop, double *circum, double *horizon );
 
 	/// Return the rear-side average total plane-of-array irradiance
-	double get_poa_rear();
+	void get_poa_rear(double *poa_rear, double *poa_front_ground, double *ghi_interrow, double *poa_front_bifacial,
+                         double *poa_rear_beam, double *poa_rear_sky_diff, double *poa_rear_ground, double *poa_rear_reflected);
 
 	/// Return the front-side irradiance components
 	void get_irrad (double *ghi, double *dni, double *dhi);
@@ -438,10 +445,15 @@ public:
 	void getGroundGHI(double transmissionFactor, std::vector<double> rearSkyConfigFactors, std::vector<double> frontSkyConfigFactors, std::vector<int> rearGroundShadeFactors, std::vector<int> frontGroundShadeFactors, std::vector<double> & rearGroundGHI, std::vector<double> & frontGroundGHI);
 
 	/// Return the back surface irradiances, used by \link calc_rear_side()
-	void getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, std::vector<double> rearGroundGHI, std::vector<double> frontGroundGHI, std::vector<double> frontReflected, std::vector<double> & rearIrradiance, double & rearAverageIrradiance);
+	void getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRow, double verticalHeight, double clearanceGround,
+	                               double distanceBetweenRows, double horizontalLength, std::vector<double> rearGroundGHI,
+	                               std::vector<double> frontGroundGHI, std::vector<double> frontReflected, std::vector<double> & rearIrradiance,
+	                               double & rearAverageIrradiance, double & rearAverageIrradianceBeam, double & rearAverageIrradianceSky,
+	                               double & rearAverageIrradianceGround, double & rearAverageIrradianceReflected);
 
 	/// Return the front surface irradiances, used by \link calc_rear_side()
-	void getFrontSurfaceIrradiances(double pvBackShadeFraction, double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, std::vector<double> frontGroundGHI, std::vector<double> & frontIrradiance, double & frontAverageIrradiance, std::vector<double> & frontReflected);
+	void getFrontSurfaceIrradiances(double pvBackShadeFraction, double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, std::vector<double> frontGroundGHI, std::vector<double> & frontIrradiance, double & frontAverageIrradiance, std::vector<double> & frontReflected,
+	                                std::vector<double> & frontIrradianceFromGround, double & frontAverageIrradianceFromGround);
 
 	enum RADMODE { DN_DF, DN_GH, GH_DF, POA_R, POA_P };
 	enum SKYMODEL { ISOTROPIC, HDKR, PEREZ };

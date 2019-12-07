@@ -1,22 +1,22 @@
 /**
 BSD-3-Clause
 Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
 that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
 and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
 and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
 or promote products derived from this software without specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
@@ -858,47 +858,51 @@ bool iec61853_module_t::operator() ( pvinput_t &input, double TcellC, double opv
 	/* initialize output first */
 	out.Power = out.Voltage = out.Current = out.Efficiency = out.Voc_oper = out.Isc_oper = 0.0;
 	
-	double poa, tpoa, iamf;
+	double iamf;
 	iamf = 1;
 
-	if( input.radmode != 3 ){ // Skip module cover effects if using POA reference cell data 
+	double poa_front, poa_total, poa_eff_front, poa_eff_total;
+	if( input.radmode != 3 ){ // Skip module cover effects if using POA reference cell data
 		// plane of array irradiance, W/m2
-		poa = input.Ibeam + input.Idiff + input.Ignd; 
+		poa_front = input.Ibeam + input.Idiff + input.Ignd;
+		poa_total = poa_front + input.Irear; // Note the rear irradiance has already taken bifaciality into consideration
 
 		// transmitted poa through module cover
-		tpoa = poa;
+		poa_eff_front = poa_front;
 
 		if ( input.IncAng > AOI_MIN && input.IncAng < AOI_MAX )
 		{
 			iamf = iam( input.IncAng, GlassAR );
-			tpoa = poa - ( 1.0 - iamf )*input.Ibeam*cos(input.IncAng*3.1415926/180.0);
-			if( tpoa < 0.0 ) tpoa = 0.0;
-			if( tpoa > poa ) tpoa = poa;
+			poa_eff_front = poa_front - ( 1.0 - iamf )*input.Ibeam*cos(input.IncAng*3.1415926/180.0);
+			if( poa_eff_front < 0.0 ) poa_eff_front = 0.0;
+			if( poa_eff_front > poa_front ) poa_eff_front = poa_front;
 		}
 	
 		// spectral effect via AM modifier
 		double ama = air_mass_modifier( input.Zenith, input.Elev, AMA );
-		tpoa *= ama;
+		poa_eff_front *= ama;
+		poa_eff_total = poa_eff_front + input.Irear * ama;
 	} 
 	else if(input.usePOAFromWF){ // Check if decomposed POA is required, if not use weather file POA directly
-		tpoa = poa = input.poaIrr;
+		poa_total = poa_eff_total = input.poaIrr;
 	} 
 	else { // Otherwise use decomposed POA
-		tpoa = poa = input.Ibeam + input.Idiff + input.Ignd;
+		poa_total = input.poaIrr;
+		poa_eff_total = input.Ibeam + input.Idiff + input.Ignd + input.Irear;
 	}
 	
 	double Tc = input.Tdry + 273.15;
-	if ( tpoa >= 1.0 )
+	if ( poa_eff_total >= 1.0 )
 	{
 		Tc = TcellC + 273.15;
 		double q = 1.6e-19;
 		double k = 1.38e-23;
 		double aop = NcellSer*n*k*Tc/q;
-		double Ilop = tpoa/1000*(Il + alphaIsc*(Tc-298.15));
+		double Ilop = poa_eff_total/1000*(Il + alphaIsc*(Tc-298.15));
 		double Egop = (1-0.0002677*(Tc-298.15))*Egref;
 		double Ioop = Io*pow(Tc/298.15,3.0)*exp( 11600 * (Egref/298.15 - Egop/Tc));
-		double Rsop = D1 + D2*(Tc-298.15) + D3*( 1-tpoa/1000.0)*pow(1000.0/poa,2.0);
-		double Rshop = C1 + C2*( pow(1000.0/tpoa,C3)-1 );
+		double Rsop = D1 + D2*(Tc-298.15) + D3*( 1-poa_eff_total/1000.0)*pow(1000.0/poa_total,2.0);
+		double Rshop = C1 + C2*( pow(1000.0/poa_eff_total,C3)-1 );
 					
 
 		// at some very low irradiances, these parameters can blow up due to
@@ -929,7 +933,7 @@ bool iec61853_module_t::operator() ( pvinput_t &input, double TcellC, double opv
 		out.Power = P;
 		out.Voltage  = V;
 		out.Current = I;
-		out.Efficiency = P/(Area*poa);
+		out.Efficiency = P/(Area*poa_total);
 		out.Voc_oper = V_oc;
 		out.Isc_oper = I_sc;
 		out.CellTemp = Tc - 273.15;

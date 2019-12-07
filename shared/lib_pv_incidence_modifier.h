@@ -35,6 +35,9 @@ double iam_nonorm(double theta_deg, bool ar_glass);  // non-normalized cover los
 *
 *
 */
+
+double iamASHRAE(double b0, double theta);
+
 double iamSjerpsKoomen(double n, double incidenceAngleRadians);
 
 /// Calculate Irradiance through the cover using the DeSoto model

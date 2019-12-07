@@ -747,7 +747,14 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
 			p_poaTotal.push_back(cm->allocate(prefix + "poa_eff", numberOfWeatherFileRecords));
 			p_poaRear.push_back(cm->allocate(prefix + "poa_rear", numberOfWeatherFileRecords));
 			p_poaFront.push_back(cm->allocate(prefix + "poa_front", numberOfWeatherFileRecords));
-			p_derateSoiling.push_back(cm->allocate(prefix + "soiling_derate", numberOfWeatherFileRecords));
+			p_ghiInterrow.push_back(cm->allocate(prefix + "bifacial_interrow_ghi", numberOfWeatherFileRecords)); //
+			p_poaFrontFromInterrowGround.push_back(cm->allocate(prefix + "poa_front_interrow_ground", numberOfWeatherFileRecords)); //
+			p_poaFrontBifacialCalculation.push_back(cm->allocate(prefix + "poa_front_bifacial", numberOfWeatherFileRecords));
+            p_poaRearBeamCircum.push_back(cm->allocate(prefix + "poa_rear_beam_circum", numberOfWeatherFileRecords));
+            p_poaRearSkyDiff.push_back(cm->allocate(prefix + "poa_rear_sky_diff", numberOfWeatherFileRecords));
+            p_poaRearGround.push_back(cm->allocate(prefix + "poa_rear_ground", numberOfWeatherFileRecords));
+            p_poaRearRowReflected.push_back(cm->allocate(prefix + "poa_rear_row_reflected", numberOfWeatherFileRecords));
+            p_derateSoiling.push_back(cm->allocate(prefix + "soiling_derate", numberOfWeatherFileRecords));
 			p_beamShadingFactor.push_back(cm->allocate(prefix + "beam_shading_factor", numberOfWeatherFileRecords));
 			p_temperatureCell.push_back(cm->allocate(prefix + "celltemp", numberOfWeatherFileRecords));
 			p_moduleEfficiency.push_back(cm->allocate(prefix + "modeff", numberOfWeatherFileRecords));
@@ -1136,6 +1143,10 @@ Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
 	else if (modulePowerModel == MODULE_IEC61853)
 	{
 		// IEC 61853 model
+		isBifacial = cm->as_boolean("sd11par_is_bifacial");
+		bifaciality = cm->as_double("sd11par_bifaciality");
+		bifacialTransmissionFactor = cm->as_double("sd11par_bifacial_transmission_factor");
+		groundClearanceHeight = cm->as_double("sd11par_bifacial_ground_clearance_height");
 		elevenParamSingleDiodeModel.NcellSer = cm->as_integer("sd11par_nser");
 		elevenParamSingleDiodeModel.Area = cm->as_double("sd11par_area");
 		elevenParamSingleDiodeModel.AMA[0] = cm->as_double("sd11par_AMa0");
@@ -1173,6 +1184,10 @@ Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
 	else if (modulePowerModel == MODULE_PVYIELD)
 	{
 		// Mermoud/Lejeune single-diode model
+		isBifacial = cm->as_boolean("mlm_is_bifacial");
+		bifaciality = cm->as_double("mlm_bifaciality");
+		bifacialTransmissionFactor = cm->as_double("mlm_bifacial_transmission_factor");
+		groundClearanceHeight = cm->as_double("mlm_bifacial_ground_clearance_height");
 		size_t elementCount1 = 0;
 		size_t elementCount2 = 0;
 		ssc_number_t *arrayIncAngle = 0;
