@@ -535,12 +535,13 @@ public:
 			pv.nrows = (int)ceil(sqrt(pv.nmodules)); // estimate of # rows, assuming 1 module in each row
 			assign("estimated_rows", var_data((ssc_number_t)pv.nrows));
 
+			// see note farther down in code about self-shading for small systems
 			// assume at least some reasonable number of rows.  
 			// otherwise self shading model may not really apply very well.
 			// in fact, should have some minimum system size
-			if (pv.nrows < 10)
+			/*if (pv.nrows < 10)
 				log(util::format("system size is too small to accurately estimate regular row-row self shading impacts. (estimates: #modules=%d, #rows=%d).  disabling self-shading calculations.",
-				(int)pv.nmodules, (int)pv.nrows), SSC_WARNING);
+				(int)pv.nmodules, (int)pv.nrows), SSC_WARNING);*/
 
 			if (pv.type == ONE_AXIS)
 				pv.nmody = 1; // e.g. Nextracker or ArrayTechnologies single portrait
@@ -900,9 +901,11 @@ public:
 						double Fgnddiff = 1.0; //shading factor for ground-reflected diffuse, 1 for no shading
 
 						
-						if ( (pv.type == FIXED_RACK || pv.type == ONE_AXIS || pv.type == ONE_AXIS_BACKTRACKING) //shading applies in each of these three cases- see reference implementation in pvsamv1
-							//&& (pv.nrows >= 10) // only for big enough systems?
-							&& !tracker_stowing ) //why not calculating shading in tracker stowing?
+						if ( pv.type == FIXED_RACK || pv.type == ONE_AXIS || pv.type == ONE_AXIS_BACKTRACKING) //shading applies in each of these three cases- see reference implementation in pvsamv1
+							//&& (pv.nrows >= 10) // note that enabling self-shading for small systems might be suspicious 
+							// because the intent of the self-shading algorithms used here are to apply to large systems
+							// however, some testing of the self-shading algorithms for smaller systems doesn't reveal any wildly wrong behavior, 
+							// so enabling it for all systems sizes to prevent confusion to users
 						{
 							// first calculate linear shading for one-axis trackers for use in self-shading algorithms
 							double shad1xf = 0.0; // default: zero shade fraction
@@ -1031,7 +1034,7 @@ public:
 
 						// dc power nominal before any losses
 						double dc_nom = pv.dc_nameplate*poa / 1000; // Watts_DC * (POA W/m2 / 1000 W/m2 STC value );
-						if (y == 0) ld("dc_nominal") += dc_nom;
+						if (y == 0) ld("dc_nominal") += dc_nom * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
 
 						// module cover module to handle transmitted POA
 						double f_cover = 1.0;
@@ -1048,11 +1051,11 @@ public:
 							f_cover = tpoa / poa;
 						}
 
-						if (y == 0) ld("dc_loss_cover") += (1 - f_cover)*dc_nom;
+						if (y == 0) ld("dc_loss_cover") += (1 - f_cover)*dc_nom * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
 
 						// spectral correction via air mass modifier
 						double f_AM = air_mass_modifier(solzen, hdr.elev, AMdesoto);
-						if (y == 0) ld("dc_loss_spectral") += (1 - f_AM)*dc_nom;
+						if (y == 0) ld("dc_loss_spectral") += (1 - f_AM)*dc_nom * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
 
 						// cell temperature
 						double wspd_corr = wf.wspd < 0 ? 0 : wf.wspd; //correct the wind speed if it is negative
@@ -1069,13 +1072,13 @@ public:
 
 						// module temperature losses
 						double f_temp = (1.0 + module.gamma*(tmod - 25.0));
-						if (y == 0) ld("dc_loss_thermal") += dc_nom * (1.0 - f_temp);
+						if (y == 0) ld("dc_loss_thermal") += dc_nom * (1.0 - f_temp) * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
 
 						// nonlinear dc loss from shading
-						if (y == 0) ld("dc_loss_nonlinear") += dc_nom * (1.0 - f_nonlinear);
+						if (y == 0) ld("dc_loss_nonlinear") += dc_nom * (1.0 - f_nonlinear) * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
 
 						// dc losses
-						if (y == 0) ld("dc_loss_other") += dc_nom * pv.dc_loss_percent*0.01;
+						if (y == 0) ld("dc_loss_other") += dc_nom * pv.dc_loss_percent * 0.01 * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
 						double f_losses = (1 - pv.dc_loss_percent*0.01);
 
 						// run the snow loss model
@@ -1096,7 +1099,7 @@ public:
 						}
 
 						// dc snow loss
-						if (y == 0) ld("dc_loss_snow") += dc_nom * (1.0 - f_snow);
+						if (y == 0) ld("dc_loss_snow") += dc_nom * (1.0 - f_snow) * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
 
 						// calculate actual DC power now with all the derates/losses
 						// remember, that for non-linear self-shading, we don't use derated ibeam for module power 
@@ -1135,7 +1138,7 @@ public:
 						double plr = dc / pdc0; //power loading ratio of the inverter
 						ac = 0;
 
-						if (y == 0) ld("ac_nominal") += dc;
+						if (y == 0) ld("ac_nominal") += dc * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
 
 						if (plr > 0)
 						{ // normal operation
@@ -1143,11 +1146,11 @@ public:
 							ac = dc * eta;
 						}
 
-						if (y == 0) ld("ac_loss_efficiency") += dc - ac;
+						if (y == 0) ld("ac_loss_efficiency") += (dc - ac) * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
 
 						// power clipping
 						double cliploss = ac > pv.ac_nameplate ? ac - pv.ac_nameplate : 0.0;
-						if (y == 0) ld("ac_loss_inverter_clipping") += cliploss;
+						if (y == 0) ld("ac_loss_inverter_clipping") += cliploss * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
 						ac -= cliploss;
 
 						// make sure no negative AC values during daytime hour (no parasitic nighttime losses calculated for PVWatts)
@@ -1169,7 +1172,7 @@ public:
 					double iron_loss = pv.xfmr_nll_f * pv.xfmr_rating;
 					double winding_loss = pv.xfmr_ll_f * ac * (ac / pv.xfmr_rating);
 					double xfmr_loss = iron_loss + winding_loss;
-					if (y == 0) ld("ac_loss_transformer") += xfmr_loss;
+					if (y == 0) ld("ac_loss_transformer") += xfmr_loss * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
 					ac -= xfmr_loss;
 
 					p_stow[idx] = (tracker_stowing ? 1.0f : 0.0f);
@@ -1188,8 +1191,8 @@ public:
 						annual_kwh += p_gen[idx] / step_per_hour;
 					}
 
-					if (y == 0) ld("ac_loss_adjustments") += ac * (1.0 - haf(hour));
-					if (y == 0) ld("ac_delivered") += ac * haf(hour);
+					if (y == 0) ld("ac_loss_adjustments") += ac * (1.0 - haf(hour)) * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
+					if (y == 0) ld("ac_delivered") += ac * haf(hour) * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
 
 					idx++;
 					idx_life++;
