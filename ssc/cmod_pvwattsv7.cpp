@@ -1042,8 +1042,8 @@ public:
 						double f_cover = 1.0;
 						if (aoi > AOI_MIN && aoi < AOI_MAX && poa > 0)
 						{
-							double modifier = iam( aoi, module.ar_glass );
-							//double tpoa = poa - ( 1.0 - modifier )*wf.dn*cosd(aoi); // basic PVWatts method, skips diffuse calc
+							/*double modifier = iam( aoi, module.ar_glass );
+							double tpoa = poa - ( 1.0 - modifier )*wf.dn*cosd(aoi); */ // previous PVWatts method, skips diffuse calc
 							
 							double tpoa = calculateIrradianceThroughCoverDeSoto(
 								aoi, solzen, stilt, ibeam, iskydiff, ignddiff, en_sdm == 0 && module.ar_glass);
