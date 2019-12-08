@@ -39,7 +39,7 @@ static var_info _cm_vtab_pvwattsv5_part1[] = {
         /*   VARTYPE           DATATYPE          NAME                         LABEL                                               UNITS        META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
         { SSC_INOUT,        SSC_NUMBER,      "system_use_lifetime_output",     "Run lifetime simulation",                    "0/1",        "",                       "Lifetime",            "?=0",                        "",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "analysis_period",                "Analysis period",                            "years",      "",                       "Lifetime",            "system_use_lifetime_output=1", "",                          "" },
-        { SSC_INPUT,        SSC_ARRAY,       "dc_degradation",                 "Annual AC degradation",                      "%/year",    "",                        "Lifetime",            "system_use_lifetime_output=1", "",                          "" },
+        { SSC_INPUT,        SSC_ARRAY,       "dc_degradation",                 "Annual DC degradation for lifetime simulations","%/year",  "",                       "Lifetime",            "system_use_lifetime_output=1", "",                          "" },
         { SSC_INPUT,        SSC_STRING,      "solar_resource_file",            "Weather file path",                           "",          "",                       "Location and Resource",     "?",                        "",                              "" },
         { SSC_INPUT,        SSC_TABLE,       "solar_resource_data",            "Weather data",                                "",          "dn,df,tdry,wspd,lat,lon,tz", "Location and Resource", "?",                        "",                              "" },
 
@@ -240,7 +240,7 @@ public:
 		return code;
 	}
 
-	void powerout(double time, double &shad_beam, double shad_diff, double dni, double dhi, double alb, double wspd, double tdry)
+	void powerout(double time, double degradationFactor, double &shad_beam, double shad_diff, double dni, double dhi, double alb, double wspd, double tdry)
 	{
 
 		if (sunup > 0)
@@ -308,6 +308,9 @@ public:
 
 			// dc losses
 			dc = dc * (1 - loss_percent / 100);
+
+			// dc degradation
+			dc *= degradationFactor; //this will be 1.0 in year 1 or if degradation isn't specified
 
 			// inverter efficiency
 			double etanom = inv_eff_percent / 100.0;
@@ -427,18 +430,18 @@ public:
 		std::vector<double> degradationFactor;
 		if (as_boolean("system_use_lifetime_output")) {
 			nyears = as_unsigned_long("analysis_period");
-			std::vector<double> ac_degradation = as_vector_double("dc_degradation");
-			if (ac_degradation.size() != nyears)
+			std::vector<double> dc_degradation = as_vector_double("dc_degradation");
+			if (dc_degradation.size() != nyears)
 				throw exec_error("pvwattsv5", "length of degradation array must be equal to analysis period");
-			if (ac_degradation.size() == 1) {
+			if (dc_degradation.size() == 1) {
 				degradationFactor.push_back(1.0);
 				for (size_t y = 1; y < nyears; y++) {
-					degradationFactor.push_back(pow((1.0 - ac_degradation[0] / 100.0), y));
+					degradationFactor.push_back(pow((1.0 - dc_degradation[0] / 100.0), y));
 				}
 			}
 			else {
 				for (size_t y = 0; y < nyears; y++) {
-					degradationFactor.push_back(1.0 - ac_degradation[y] / 100.0);
+					degradationFactor.push_back(1.0 - dc_degradation[y] / 100.0);
 				}
 			}
 		}
@@ -535,7 +538,7 @@ public:
 
 					if (sunup > 0)
 					{
-						powerout((double)idx, shad_beam, shad.fdiff(), wf.dn, wf.df, alb, wf.wspd, wf.tdry);
+						powerout((double)idx, degradationFactor[y], shad_beam, shad.fdiff(), wf.dn, wf.df, alb, wf.wspd, wf.tdry);
 						p_shad_beam[idx] = (ssc_number_t)shad_beam; // might be updated by 1 axis self shading so report updated value
 
 						p_poa[idx] = (ssc_number_t)poa; // W/m2
@@ -544,7 +547,7 @@ public:
 						p_dc[idx] = (ssc_number_t)dc; // power, Watts
 						p_ac[idx] = (ssc_number_t)ac; // power, Watts
 
-						p_gen[idx_life] = (ssc_number_t)(ac * haf(hour) * util::watt_to_kilowatt * degradationFactor[y]);
+						p_gen[idx_life] = (ssc_number_t)(ac * haf(hour) * util::watt_to_kilowatt);
 
 						if (y == 0) {
 							annual_kwh += p_gen[idx] / step_per_hour;
@@ -667,7 +670,7 @@ public:
 		double last_poa = as_double("poa");
 
 		double shad_beam = 1.0;
-		powerout(0, shad_beam, 1.0, beam, diff, alb, wspd, tamb);
+		powerout(0, 1.0, shad_beam, 1.0, beam, diff, alb, wspd, tamb);
 
 		int code = process_irradiance(year, month, day, hour, minute,
 			IRRADPROC_NO_INTERPOLATE_SUNRISE_SUNSET,
@@ -676,7 +679,7 @@ public:
 		if (code != 0)
 			throw exec_error("pvwattsv5_1ts", "failed to calculate plane of array irradiance with given input parameters");
 
-		powerout(0, shad_beam, 1.0, beam, diff, alb, wspd, tamb);
+		powerout(0, 1.0, shad_beam, 1.0, beam, diff, alb, wspd, tamb);
 
 		assign("poa", var_data((ssc_number_t)poa));
 		assign("tcell", var_data((ssc_number_t)pvt));

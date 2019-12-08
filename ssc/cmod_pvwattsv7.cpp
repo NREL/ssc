@@ -113,7 +113,7 @@ static var_info _cm_vtab_pvwattsv7[] = {
 	
 		{ SSC_INOUT,        SSC_NUMBER,      "system_use_lifetime_output",     "Run lifetime simulation",                    "0/1",        "",                                             "Lifetime",            "?=0",                        "",                              "" },
 		{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                "Analysis period",                            "years",      "",                                             "Lifetime",            "system_use_lifetime_output=1", "",                          "" },
-		{ SSC_INPUT,        SSC_ARRAY,       "dc_degradation",                 "Annual AC degradation",                      "%/year",     "",                                             "Lifetime",            "system_use_lifetime_output=1", "",                          "" },
+		{ SSC_INPUT,        SSC_ARRAY,       "dc_degradation",                 "Annual DC degradation for lifetime simulations","%/year",  "",                                             "Lifetime",            "system_use_lifetime_output=1", "",                          "" },
 
 		{ SSC_INPUT,        SSC_NUMBER,      "system_capacity",                "System size (DC nameplate)",                  "kW",        "",											   "System Design",      "*",                       "",                      "" },
 		{ SSC_INPUT,        SSC_NUMBER,      "module_type",                    "Module type",                                 "0/1/2",     "Standard,Premium,Thin film",                   "System Design",      "?=0",                     "MIN=0,MAX=2,INTEGER",           "" },
@@ -617,18 +617,18 @@ public:
 		std::vector<double> degradationFactor;
 		if (as_boolean("system_use_lifetime_output")) {
 			nyears = as_unsigned_long("analysis_period");
-			std::vector<double> ac_degradation = as_vector_double("dc_degradation");
-			if (ac_degradation.size() != nyears)
+			std::vector<double> dc_degradation = as_vector_double("dc_degradation");
+			if (dc_degradation.size() != nyears)
 				throw exec_error("pvwattsv5", "length of degradation array must be equal to analysis period");
-			if (ac_degradation.size() == 1) {
+			if (dc_degradation.size() == 1) {
 				degradationFactor.push_back(1.0);
 				for (size_t y = 1; y < nyears; y++) {
-					degradationFactor.push_back(pow((1.0 - ac_degradation[0] / 100.0), y));
+					degradationFactor.push_back(pow((1.0 - dc_degradation[0] / 100.0), y));
 				}
 			}
 			else {
 				for (size_t y = 0; y < nyears; y++) {
-					degradationFactor.push_back(1.0 - ac_degradation[y] / 100.0);
+					degradationFactor.push_back(1.0 - dc_degradation[y] / 100.0);
 				}
 			}
 		}
@@ -1130,6 +1130,9 @@ public:
 						// apply common DC losses here (independent of module model)
 						dc *= f_nonlinear * f_snow * f_losses;
 
+						// apply DC degradation
+						dc *= degradationFactor[y];
+
 						// inverter efficiency
 						double etanom = pv.inv_eff_percent*0.01;
 						double etaref = 0.9637;
@@ -1187,7 +1190,7 @@ public:
 					p_ac[idx] = (ssc_number_t)ac; // power, Watts
 
 					// accumulate hourly energy (kWh) (was initialized to zero when allocated)
-					p_gen[idx_life] = (ssc_number_t)(ac * haf(hour) * util::watt_to_kilowatt * degradationFactor[y]);
+					p_gen[idx_life] = (ssc_number_t)(ac * haf(hour) * util::watt_to_kilowatt);
 
 					if (y == 0) { //report first year annual energy
 						annual_kwh += p_gen[idx] / step_per_hour;
