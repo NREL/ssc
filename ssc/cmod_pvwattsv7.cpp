@@ -618,6 +618,8 @@ public:
 		if (as_boolean("system_use_lifetime_output")) {
 			nyears = as_unsigned_long("analysis_period");
 			std::vector<double> ac_degradation = as_vector_double("dc_degradation");
+			if (ac_degradation.size() != nyears)
+				throw exec_error("pvwattsv5", "length of degradation array must be equal to analysis period");
 			if (ac_degradation.size() == 1) {
 				degradationFactor.push_back(1.0);
 				for (size_t y = 1; y < nyears; y++) {
