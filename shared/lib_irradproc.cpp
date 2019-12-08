@@ -348,9 +348,16 @@ void incidence(int mode,double tilt,double sazm,double rlim,double zen,double az
 			else if( rot > rlim )
 				rot = rlim;
 
+			//optionally force the tracker to a "stow" angle if specified
+			if (force_to_stow)
+			{
+				rot = stow_angle_deg * DTOR;
+				//do not report angle difference for backtracking if forced to stow, since this isn't backtracking
+			}
+
 			// apd: added 21jan2012 to enable backtracking for 1 axis arrays using 3D iterative method
 			// coded originally by intern M.Kasberg summer 2011
-			if ( en_backtrack )
+			else if ( en_backtrack )
 			{
 				// find backtracking rotation angle
 				double backrot = backtrack( azm*180/M_PI, zen*180/M_PI, // solar azimuth, zenith (deg)
@@ -362,10 +369,6 @@ void incidence(int mode,double tilt,double sazm,double rlim,double zen,double az
 				btdiff *= M_PI/180; // convert output to radians
 				rot = backrot * M_PI/180; // convert backtracked rotation angle to radians
 			}
-
-			//optionally force the tracker to a "stow" angle if specified
-			if (force_to_stow)
-				rot = stow_angle_deg * DTOR;
 
 
 			/* Find tilt angle for the tracking surface */
