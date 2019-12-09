@@ -42,17 +42,17 @@ void mp_ancillary_services(ssc_data_t data)
 		{ SSC_INPUT, SSC_MATRIX, "mp_ancserv4_revenue", "Ancillary services 4 revenue input", "", "","*", "", "" },
 		*/
 		VT_GET_INPUT(vt, "analysis_period", analysis_period)
-			VT_GET_INPUT(vt, "mp_enable_energy_market_revenue", mp_enable_energy_market_revenue)
-			VT_GET_INPUT(vt, "mp_enable_ancserv1", mp_enable_ancserv1)
-			VT_GET_INPUT(vt, "mp_enable_ancserv2", mp_enable_ancserv2)
-			VT_GET_INPUT(vt, "mp_enable_ancserv3", mp_enable_ancserv3)
-			VT_GET_INPUT(vt, "mp_enable_ancserv4", mp_enable_ancserv4)
-			VT_GET_INPUT(vt, "mp_energy_market_revenue", mp_energy_market_revenue)
-			VT_GET_INPUT(vt, "mp_ancserv1_revenue", mp_ancserv1_revenue)
-			VT_GET_INPUT(vt, "mp_ancserv2_revenue", mp_ancserv2_revenue)
-			VT_GET_INPUT(vt, "mp_ancserv3_revenue", mp_ancserv3_revenue)
-			VT_GET_INPUT(vt, "mp_ancserv4_revenue", mp_ancserv4_revenue)
-			gen_is_assigned = (vt->lookup("gen") != NULL);
+		VT_GET_INPUT(vt, "mp_enable_energy_market_revenue", mp_enable_energy_market_revenue)
+		VT_GET_INPUT(vt, "mp_enable_ancserv1", mp_enable_ancserv1)
+		VT_GET_INPUT(vt, "mp_enable_ancserv2", mp_enable_ancserv2)
+		VT_GET_INPUT(vt, "mp_enable_ancserv3", mp_enable_ancserv3)
+		VT_GET_INPUT(vt, "mp_enable_ancserv4", mp_enable_ancserv4)
+		VT_GET_INPUT(vt, "mp_energy_market_revenue", mp_energy_market_revenue)
+		VT_GET_INPUT(vt, "mp_ancserv1_revenue", mp_ancserv1_revenue)
+		VT_GET_INPUT(vt, "mp_ancserv2_revenue", mp_ancserv2_revenue)
+		VT_GET_INPUT(vt, "mp_ancserv3_revenue", mp_ancserv3_revenue)
+		VT_GET_INPUT(vt, "mp_ancserv4_revenue", mp_ancserv4_revenue)
+		gen_is_assigned = (vt->lookup("gen") != NULL);
 		if (gen_is_assigned)
 		{
 			system_capacity = 0.0;
@@ -69,9 +69,7 @@ void mp_ancillary_services(ssc_data_t data)
 				calculate_revenue = (mp_calculate_revenue > 0.5);
 		}
 
-			   		 
 		// kW to MW for comparison
-
 		system_capacity /= 1000.0;
 		// sum up all power values from all revenue inputs and find smallest timestep and compare sum to system capacity
 		bool en_mp_energy_market = (mp_enable_energy_market_revenue > 0.5);
@@ -82,10 +80,29 @@ void mp_ancillary_services(ssc_data_t data)
 		// if none enabled then check passes
 		ancillary_services_success = (!mp_enable_energy_market_revenue && !mp_enable_ancserv1 && !mp_enable_ancserv2 && !mp_enable_ancserv3 && !mp_enable_ancserv4);
 
+		size_t nsteps = 0, nsteps_per_year = 8760;
+		if (en_mp_energy_market)
+			nsteps = std::max(nsteps, mp_energy_market_revenue.nrows());
+		if (en_mp_ancserv1)
+			nsteps = std::max(nsteps, mp_ancserv1_revenue.nrows());
+		if (en_mp_ancserv2)
+			nsteps = std::max(nsteps, mp_ancserv2_revenue.nrows());
+		if (en_mp_ancserv3)
+			nsteps = std::max(nsteps, mp_ancserv3_revenue.nrows());
+		if (en_mp_ancserv4)
+			nsteps = std::max(nsteps, mp_ancserv4_revenue.nrows());
+
+		if (nsteps < (8760 * (size_t)analysis_period)) nsteps = 8760 * (size_t)analysis_period; // extrapolated timeseries has minimum of hourly values for use in all forecasting 
+
+		std::vector<ssc_number_t> energy_market_revenue(nsteps, 0.0);
+		std::vector<ssc_number_t> ancillary_services1_revenue(nsteps, 0.0);
+		std::vector<ssc_number_t> ancillary_services2_revenue(nsteps, 0.0);
+		std::vector<ssc_number_t> ancillary_services3_revenue(nsteps, 0.0);
+		std::vector<ssc_number_t> ancillary_services4_revenue(nsteps, 0.0);
+
 		if (!ancillary_services_success)
 		{
 			// cleared capacity and price columns
-			size_t nsteps = 0, nsteps_per_year = 8760;
 			if (analysis_period > 0)
 			{
 				if (en_mp_energy_market)
@@ -109,11 +126,6 @@ void mp_ancillary_services(ssc_data_t data)
 					std::vector<ssc_number_t> ancillary_services2_capacity(nsteps, 0.0);
 					std::vector<ssc_number_t> ancillary_services3_capacity(nsteps, 0.0);
 					std::vector<ssc_number_t> ancillary_services4_capacity(nsteps, 0.0);
-					std::vector<ssc_number_t> energy_market_revenue(nsteps, 0.0);
-					std::vector<ssc_number_t> ancillary_services1_revenue(nsteps, 0.0);
-					std::vector<ssc_number_t> ancillary_services2_revenue(nsteps, 0.0);
-					std::vector<ssc_number_t> ancillary_services3_revenue(nsteps, 0.0);
-					std::vector<ssc_number_t> ancillary_services4_revenue(nsteps, 0.0);
 					std::vector<ssc_number_t> current_year_capacity;
 					std::vector<ssc_number_t> extrapolated_current_year_capacity;
 					std::vector<ssc_number_t> current_year_revenue;
@@ -389,17 +401,6 @@ void mp_ancillary_services(ssc_data_t data)
 								}
 							}
 						}
-
-						var_data mp_energy_market_generated_revenue = var_data(energy_market_revenue.data(), energy_market_revenue.size());
-						vt->assign("mp_energy_market_generated_revenue", mp_energy_market_generated_revenue);
-						var_data mp_ancillary_services1_generated_revenue = var_data(ancillary_services1_revenue.data(), ancillary_services1_revenue.size());
-						vt->assign("mp_ancillary_services1_generated_revenue", mp_ancillary_services1_generated_revenue);
-						var_data mp_ancillary_services2_generated_revenue = var_data(ancillary_services2_revenue.data(), ancillary_services2_revenue.size());
-						vt->assign("mp_ancillary_services2_generated_revenue", mp_ancillary_services2_generated_revenue);
-						var_data mp_ancillary_services3_generated_revenue = var_data(ancillary_services3_revenue.data(), ancillary_services3_revenue.size());
-						vt->assign("mp_ancillary_services3_generated_revenue", mp_ancillary_services3_generated_revenue);
-						var_data mp_ancillary_services4_generated_revenue = var_data(ancillary_services4_revenue.data(), ancillary_services4_revenue.size());
-						vt->assign("mp_ancillary_services4_generated_revenue", mp_ancillary_services4_generated_revenue);
 					}
 
 				}
@@ -409,6 +410,20 @@ void mp_ancillary_services(ssc_data_t data)
 			else
 				error = util::format("Invalid analysis period %d", int(analysis_period));
 		}
+		// expected outputs regardless of which markets enabled
+
+		var_data mp_energy_market_generated_revenue = var_data(energy_market_revenue.data(), energy_market_revenue.size());
+		vt->assign("mp_energy_market_generated_revenue", mp_energy_market_generated_revenue);
+		var_data mp_ancillary_services1_generated_revenue = var_data(ancillary_services1_revenue.data(), ancillary_services1_revenue.size());
+		vt->assign("mp_ancillary_services1_generated_revenue", mp_ancillary_services1_generated_revenue);
+		var_data mp_ancillary_services2_generated_revenue = var_data(ancillary_services2_revenue.data(), ancillary_services2_revenue.size());
+		vt->assign("mp_ancillary_services2_generated_revenue", mp_ancillary_services2_generated_revenue);
+		var_data mp_ancillary_services3_generated_revenue = var_data(ancillary_services3_revenue.data(), ancillary_services3_revenue.size());
+		vt->assign("mp_ancillary_services3_generated_revenue", mp_ancillary_services3_generated_revenue);
+		var_data mp_ancillary_services4_generated_revenue = var_data(ancillary_services4_revenue.data(), ancillary_services4_revenue.size());
+		vt->assign("mp_ancillary_services4_generated_revenue", mp_ancillary_services4_generated_revenue);
+
+
 	}
 	catch (std::exception& e)
 	{
