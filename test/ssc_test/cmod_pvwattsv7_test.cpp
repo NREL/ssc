@@ -5,6 +5,8 @@
 #include "../ssc/common.h"
 #include "cmod_pvwattsv7_test.h"
 
+
+
 ///Default PVWattsV7, but with TMY2 instead of TMY3
 TEST_F(CMPvwattsV7Integration, DefaultNoFinancialModel){
 	compute();
@@ -114,5 +116,30 @@ TEST_F(CMPvwattsV7Integration, LargeSystem)
 			EXPECT_NEAR(annual_energy, annual_energy_expected[count], error_tolerance) << "Annual energy.";
 		}
 		count++;
+	}
+}
+
+/// Test pvwattsv7 with default inputs and a 15-minute weather file 
+TEST_F(CMPvwattsV7Integration, SubhourlyWeather) {
+
+	char subhourly[256];
+	int b = sprintf(subhourly, "%s/test/input_cases/pvsamv1_data/LosAngeles_WeatherFile_15min.csv", std::getenv(SSCDIR));
+	ssc_data_set_string(data, "solar_resource_file", subhourly); //file set above
+
+	//std::map<std::string, std::string> pairs;
+	int pvwatts_errors = run_module(data, "pvwattsv7");
+
+	EXPECT_FALSE(pvwatts_errors);
+
+	if (!pvwatts_errors)
+	{
+		ssc_number_t annual_energy;
+		ssc_data_get_number(data, "annual_energy", &annual_energy);
+		EXPECT_NEAR(annual_energy, 7587, error_tolerance) << "Annual energy.";
+
+		ssc_number_t capacity_factor;
+		ssc_data_get_number(data, "capacity_factor", &capacity_factor);
+		EXPECT_NEAR(capacity_factor, 18.5, error_tolerance) << "Capacity factor";
+
 	}
 }
