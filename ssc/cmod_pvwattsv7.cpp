@@ -403,7 +403,8 @@ public:
 		double wind_stow_angle_deg = 30; // assume stowing at 30 degrees for better dynamic torsional stability, despite higher static loading on piles
 		if (is_assigned("wind_stow_angle")) wind_stow_angle_deg = as_double("wind_stow_angle");
 
-		int en_sdm = is_assigned("en_sdm") ? as_integer("en_sdm") : 0; //whether or not to use the mermoud lejeune single diode model as defined above
+		//whether or not to use the mermoud lejeune single diode model as defined above (0 = don't use model, 1 = use model)
+		int en_sdm = is_assigned("en_sdm") ? as_integer("en_sdm") : 0; 
 
 		module.type = (module_type)as_integer("module_type");
 		switch (module.type)
