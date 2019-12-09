@@ -143,3 +143,51 @@ TEST_F(CMPvwattsV7Integration, SubhourlyWeather) {
 
 	}
 }
+
+/// Test PVWattsV7 in lifetime mode
+TEST_F(CMPvwattsV7Integration, LifetimeModeTest) {
+
+	// set lifetime mode
+	std::map<std::string, double> pairs;
+	pairs["system_use_lifetime_output"] = 1;
+	pairs["analysis_period"] = 25;
+
+	// test degradation array with a length of 1, which should work
+	// annual energy of this test should be higher than the array length 25, because this is year 1 energy
+	// and with a single value array, degradation doesn't start applying until year 2
+	double dc_degradation_single[1];
+	dc_degradation_single[0] = 0.5;
+	ssc_data_set_array(data, "dc_degradation", (ssc_number_t*)dc_degradation_single, 1);
+	int pvwatts_errors = modify_ssc_data_and_run_module(data, "pvwattsv7", pairs);
+	EXPECT_FALSE(pvwatts_errors);
+	if (!pvwatts_errors)
+	{
+		ssc_number_t annual_energy;
+		ssc_data_get_number(data, "annual_energy", &annual_energy);
+		EXPECT_NEAR(annual_energy, 6750.424, error_tolerance) << "Annual energy degradation array length 1.";
+	}
+
+	// next, test degradation array with length the same as analysis period, which should also work
+	double dc_degradation[25];
+	for (size_t i = 0; i < 25; i++) {
+		dc_degradation[i] = 0.5;
+	}
+	ssc_data_set_array(data, "dc_degradation", (ssc_number_t*)dc_degradation, 25);
+	pvwatts_errors = modify_ssc_data_and_run_module(data, "pvwattsv7", pairs);
+	EXPECT_FALSE(pvwatts_errors);
+	if (!pvwatts_errors)
+	{
+		ssc_number_t annual_energy;
+		ssc_data_get_number(data, "annual_energy", &annual_energy);
+		EXPECT_NEAR(annual_energy, 6716.589, error_tolerance) << "Annual energy degradation array length 25.";
+	}
+
+	// lastly, test degradation array with the wrong length, which should fail
+	double dc_degradation_fail[2];
+	for (size_t i = 0; i < 22; i++) {
+		dc_degradation_fail[i] = 0.5;
+	}
+	ssc_data_set_array(data, "dc_degradation", (ssc_number_t*)dc_degradation_fail, 2);
+	pvwatts_errors = modify_ssc_data_and_run_module(data, "pvwattsv7", pairs);
+	EXPECT_TRUE(pvwatts_errors);
+}
