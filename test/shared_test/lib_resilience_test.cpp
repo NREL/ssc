@@ -717,4 +717,9 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsACHourly_Charge)
     auto probs = resilience.get_probs_of_surviving();
     EXPECT_NEAR(probs[0], 0.999, 1e-3);
     EXPECT_NEAR(probs[1], 0.000571, 1e-6);
+
+    auto cdf = resilience.get_cdf_of_surviving();
+    auto survival_fx = resilience.get_survival_function();
+    for (size_t i = 0; i < cdf.size(); i++)
+        EXPECT_NEAR(cdf[i] + survival_fx[i], 1., 1e-3) << i;
 }

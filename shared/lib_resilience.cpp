@@ -222,11 +222,22 @@ std::vector<double> resilience_runner::get_probs_of_surviving(){
     return probs_of_surviving;
 }
 
-std::vector<double> resilience_runner::get_probs_cumulative_of_surviving(){
+std::vector<double> resilience_runner::get_cdf_of_surviving(){
     std::vector<double> cum_prob;
     cum_prob.push_back(probs_of_surviving[0]);
     for (size_t i = 1; i < probs_of_surviving.size(); i++){
         cum_prob.emplace_back(probs_of_surviving[i] + cum_prob[i-1]);
     }
     return cum_prob;
+}
+
+std::vector<double> resilience_runner::get_survival_function(){
+    std::vector<double> survival_fx;
+    survival_fx.push_back(1. - probs_of_surviving[0]);
+    for (size_t i = 1; i < probs_of_surviving.size(); i++){
+        survival_fx.emplace_back(survival_fx[i-1] - probs_of_surviving[i]);
+    }
+    if (survival_fx.back() < 1e-7)
+        survival_fx.back() = 0.;
+    return survival_fx;
 }

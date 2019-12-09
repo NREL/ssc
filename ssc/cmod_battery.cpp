@@ -1685,17 +1685,7 @@ public:
             // resiliency metrics
             if (resilience) {
                 resilience->run_surviving_batteries_by_looping(&p_crit_load[0], &power_input_lifetime[0]);
-
-                double avg_hours_survived = resilience->compute_metrics();
-                auto outage_durations = resilience->get_outage_duration_hrs();
-                assign("resilience_hrs", resilience->get_hours_survived());
-                assign("resilience_hrs_min", (int) outage_durations[0]);
-                assign("resilience_hrs_max", (int) outage_durations.back());
-                assign("resilience_hrs_avg", avg_hours_survived);
-                assign("outage_durations", outage_durations);
-                assign("pdf_of_surviving", resilience->get_probs_of_surviving());
-                assign("cdf_of_surviving", resilience->get_probs_cumulative_of_surviving());
-                assign("avg_critical_load", resilience->get_avg_crit_load_kwh());
+                calculate_resilience_outputs(this, resilience);
             }
 		}
 		else

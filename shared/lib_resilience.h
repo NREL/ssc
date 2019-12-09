@@ -156,7 +156,10 @@ public:
     std::vector<double> get_probs_of_surviving();
 
     /// i-th entry is the probability of surviving for at least x hours, where x is the i-th entry of get_outage_duration_hrs
-    std::vector<double> get_probs_cumulative_of_surviving();
+    std::vector<double> get_cdf_of_surviving();
+
+    /// i-th entry is the probability of surviving for greater than x hours, where x is the i-th entry of get_outage_duration_hrs
+    std::vector<double> get_survival_function();
 };
 
 

@@ -30,6 +30,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../shared/lib_util.h"
 #include "../shared/lib_weatherfile.h"
 #include "../shared/lib_pv_shade_loss_mpp.h"
+#include "../shared/lib_resilience.h"
 
 extern var_info vtab_standard_financial[];
 extern var_info vtab_standard_loan[];
@@ -48,6 +49,8 @@ extern var_info vtab_forecast_price_signal[];
 extern var_info vtab_resilience_outputs[];
 
 bool calculate_p50p90(compute_module *cm);
+
+bool calculate_resilience_outputs(compute_module *cm, std::unique_ptr<resilience_runner> &resilience);
 
 class adjustment_factors
 {

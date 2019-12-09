@@ -24,6 +24,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "common.h"
 #include "lib_weatherfile.h"
 #include "lib_time.h"
+#include "lib_resilience.h"
 
 var_info vtab_standard_financial[] = {
 { SSC_INPUT,SSC_NUMBER  , "analysis_period"                      , "Analyis period"                                                 , "years"                                  , ""                                      , "Financial Parameters" , "?=30"           , "INTEGER,MIN=0,MAX=50"  , ""},
@@ -539,16 +540,33 @@ ssc_number_t forecast_price_signal::operator()(size_t time)
 }
 
 var_info vtab_resilience_outputs[] = {
-{ SSC_OUTPUT, SSC_ARRAY  , "resilience_hrs"                       , "Hours of autonomy during outage at each timestep for resilience"       , "hr"                                     , ""                                      , "Resilience"          , ""               , ""                      , ""},
-{ SSC_OUTPUT, SSC_NUMBER , "resilience_hrs_min"                   , "Min hours of autonomy for resilience "                                 , "hr"                                     , ""                                      , "Resilience"          , ""               , "MIN=0"                 , ""},
-{ SSC_OUTPUT, SSC_NUMBER , "resilience_hrs_max"                   , "Max hours of autonomy for resilience"                                  , "hr"                                     , ""                                      , "Resilience"          , ""               , "MIN=0"                 , ""},
-{ SSC_OUTPUT, SSC_NUMBER , "resilience_hrs_avg"                   , "Avg hours of autonomy for resilience"                                  , "hr"                                     , ""                                      , "Resilience"          , ""               , "MIN=0"                 , ""},
-{ SSC_OUTPUT, SSC_ARRAY  , "outage_durations"                     , "List of autonomous hours for resilience"                               , "hr"                                     , ""                                      , "Resilience"          , ""               , ""                      , ""},
-{ SSC_OUTPUT, SSC_ARRAY  , "pdf_of_surviving"                     , "Probabilities of autonomous hours for resilience"                      , ""                                       , ""                                      , "Resilience"          , ""               , "MIN=0,MAX=1"           , ""},
-{ SSC_OUTPUT, SSC_ARRAY  , "cdf_of_surviving"                     , "Cumulative probabilities of autonomous hours for resilience"           , ""                                       , ""                                      , "Resilience"          , ""               , "MIN=0,MAX=1"           , ""},
-{ SSC_OUTPUT, SSC_NUMBER , "avg_critical_load"                    , "Average critical load met for resilience"                              , "kWh"                                    , ""                                      , "Resilience"          , ""               , "MIN=0"                 , ""},
+{ SSC_OUTPUT, SSC_ARRAY  , "resilience_hrs"                       , "Hours of autonomy during outage at each timestep for resilience"       , "hr"                                     , ""                                                         , "Resilience"          , ""               , ""                      , ""},
+{ SSC_OUTPUT, SSC_NUMBER , "resilience_hrs_min"                   , "Min hours of autonomy for resilience "                                 , "hr"                                     , ""                                                         , "Resilience"          , ""               , "MIN=0"                 , ""},
+{ SSC_OUTPUT, SSC_NUMBER , "resilience_hrs_max"                   , "Max hours of autonomy for resilience"                                  , "hr"                                     , ""                                                         , "Resilience"          , ""               , "MIN=0"                 , ""},
+{ SSC_OUTPUT, SSC_NUMBER , "resilience_hrs_avg"                   , "Avg hours of autonomy for resilience"                                  , "hr"                                     , ""                                                         , "Resilience"          , ""               , "MIN=0"                 , ""},
+{ SSC_OUTPUT, SSC_ARRAY  , "outage_durations"                     , "List of autonomous hours for resilience from min to max"               , "hr"                                     , "Hours from resilience_hrs_min to resilience_hrs_max"      , "Resilience"          , ""               , ""                      , ""},
+{ SSC_OUTPUT, SSC_ARRAY  , "pdf_of_surviving"                     , "Probabilities of autonomous hours for resilience "                     , ""                                       , "Hours from resilience_hrs_min to resilience_hrs_max"      , "Resilience"          , ""               , "MIN=0,MAX=1"           , ""},
+{ SSC_OUTPUT, SSC_ARRAY  , "cdf_of_surviving"                     , "Cumulative probabilities of autonomous hours for resilience"           , ""                                       , "Prob surviving at least x hrs; hrs from min to max"       , "Resilience"          , ""               , "MIN=0,MAX=1"           , ""},
+{ SSC_OUTPUT, SSC_ARRAY  , "survival_function"                    , "Survival function of autonomous hours for resilience"                  , ""                                       , "Prob surviving greater than x hours; hrs from min to max" , "Resilience"          , ""               , "MIN=0,MAX=1"           , ""},
+{ SSC_OUTPUT, SSC_NUMBER , "avg_critical_load"                    , "Average critical load met for resilience"                              , "kWh"                                    , ""                                                         , "Resilience"          , ""               , "MIN=0"                 , ""},
         var_info_invalid
 };
+
+bool calculate_resilience_outputs(compute_module *cm, std::unique_ptr<resilience_runner> &resilience)
+{
+	double avg_hours_survived = resilience->compute_metrics();
+	auto outage_durations = resilience->get_outage_duration_hrs();
+	cm->assign("resilience_hrs", resilience->get_hours_survived());
+	cm->assign("resilience_hrs_min", (int) outage_durations[0]);
+	cm->assign("resilience_hrs_max", (int) outage_durations.back());
+	cm->assign("resilience_hrs_avg", avg_hours_survived);
+	cm->assign("outage_durations", outage_durations);
+	cm->assign("pdf_of_surviving", resilience->get_probs_of_surviving());
+	cm->assign("cdf_of_surviving", resilience->get_cdf_of_surviving());
+	cm->assign("survival_function", resilience->get_survival_function());
+	cm->assign("avg_critical_load", resilience->get_avg_crit_load_kwh());
+}
+
 
 adjustment_factors::adjustment_factors( compute_module *cm, const std::string &prefix )
 : m_cm(cm), m_prefix(prefix)
