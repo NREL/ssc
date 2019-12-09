@@ -123,7 +123,7 @@ TEST_F(CMPvwattsV7Integration, LargeSystem)
 TEST_F(CMPvwattsV7Integration, SubhourlyWeather) {
 
 	char subhourly[256];
-	int b = sprintf(subhourly, "%s/test/input_cases/pvsamv1_data/LosAngeles_WeatherFile_15min.csv", std::getenv(SSCDIR));
+	int b = sprintf(subhourly, "%s/test/input_cases/pvsamv1_data/LosAngeles_WeatherFile_15min.csv", SSCDIR);
 	ssc_data_set_string(data, "solar_resource_file", subhourly); //file set above
 
 	//std::map<std::string, std::string> pairs;
