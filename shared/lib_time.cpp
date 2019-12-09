@@ -86,7 +86,7 @@ void single_year_to_lifetime_interpolated(
 	}
 	else if (singleyear_vector.size() == 1) {
 	    for (size_t i = 0; i < n_rec_lifetime; i++)
-	        lifetime_from_singleyear_vector.emplace_back(lifetime_from_singleyear_vector[0]);
+	        lifetime_from_singleyear_vector.emplace_back(singleyear_vector[0]);
 	}
 }
 

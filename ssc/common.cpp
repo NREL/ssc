@@ -552,8 +552,10 @@ var_info vtab_resilience_outputs[] = {
         var_info_invalid
 };
 
-bool calculate_resilience_outputs(compute_module *cm, std::unique_ptr<resilience_runner> &resilience)
+void calculate_resilience_outputs(compute_module *cm, std::unique_ptr<resilience_runner> &resilience)
 {
+	if (!cm || !resilience)
+		return;
 	double avg_hours_survived = resilience->compute_metrics();
 	auto outage_durations = resilience->get_outage_duration_hrs();
 	cm->assign("resilience_hrs", resilience->get_hours_survived());

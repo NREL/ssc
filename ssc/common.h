@@ -50,7 +50,7 @@ extern var_info vtab_resilience_outputs[];
 
 bool calculate_p50p90(compute_module *cm);
 
-bool calculate_resilience_outputs(compute_module *cm, std::unique_ptr<resilience_runner> &resilience);
+void calculate_resilience_outputs(compute_module *cm, std::unique_ptr<resilience_runner> &resilience);
 
 class adjustment_factors
 {
