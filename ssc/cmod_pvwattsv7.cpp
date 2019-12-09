@@ -719,6 +719,8 @@ public:
 						alb = albedo[wf.month - 1];
 					else if (albedo_len == nrec)
 						alb = albedo[idx];
+					else if (is_assigned("albedo"))
+						log("Albedo array was assigned but is not the correct length (1, 12, or nrec entries). Using a different value.", SSC_WARNING);
 
 					// if the user hasn't specified an albedo, and the weather file contains hourly albedo, use that instead
 					// albedo_len will be zero if the albedo input isn't assigned
