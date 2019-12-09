@@ -3178,13 +3178,22 @@ bool hourly_energy_calculation::calculate(compute_module *cm)
 
 
 	ssc_number_t *pgen;
-	size_t nrec_gen = 0, step_per_hour_gen = 1, i;
+	size_t nrec_gen = 0, step_per_hour_gen = 1;
 	pgen = m_cm->as_array("gen", &nrec_gen);
 
 	// in front of meter 
 	// update for battery in front of meter case
-	if ((cm->is_assigned("en_batt")) && (cm->as_number("en_batt") == 1) && (cm->is_assigned("batt_meter_position") ) && (cm->as_number("batt_meter_position") == 1) && cm->is_assigned("grid_to_batt"))
-	{ // add grid_batt to gen for ppa revenue
+	//In the case of no electricity rate, grid_to_batt is included in gen, and assuming buy=sell, this should be accounted for.
+	size_t i;
+	if ((cm->is_assigned("en_batt")) && (cm->as_number("en_batt") == 1) && 
+		(cm->is_assigned("batt_meter_position") ) && (cm->as_number("batt_meter_position") == 1) && 
+		cm->is_assigned("grid_to_batt") &&
+		cm->is_assigned("en_electricity_rates") && cm->as_number("en_electricity_rates") == 1)
+	{  
+		ssc_number_t *ppa_gen = cm->allocate("ppa_gen", nrec_gen);
+		 
+
+		// add grid_batt to gen for ppa revenue, since it is in 'gen' as a negative generation source, but should be valued at a different rate.
 		ssc_number_t *pgrid_batt;
 		size_t nrec_grid_batt = 0;
 		pgrid_batt = m_cm->as_array("grid_to_batt", &nrec_grid_batt);
@@ -3193,10 +3202,12 @@ bool hourly_energy_calculation::calculate(compute_module *cm)
 			throw compute_module::exec_error("hourly_energy_calculations", util::format("number of grid to battery records (%d) must be equal to number of gen records (%d)", (int)nrec_grid_batt, (int)nrec_gen));
 			return false;
 		}
-		for (i = 0; i < nrec_gen; i++)
+		// we do this so that grid energy purchased through the electricity rate is not inadvertently double counted as lost revenue
+		for (i = 0; i < nrec_gen; i++) {
 			pgen[i] += pgrid_batt[i];
+			ppa_gen[i] = pgen[i];
+		}
 	}
-
 
 
 	// for lifetime analysis

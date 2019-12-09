@@ -205,12 +205,12 @@ static var_info _cm_vtab_equpartflip[] = {
 	{ SSC_INPUT,        SSC_NUMBER,     "salvage_percentage",          "Net pre-tax cash salvage value",	"%",	 "",					  "Salvage Value",             "?=10",                     "MIN=0,MAX=100",      			"" },
 /* market specific inputs - leveraged partnership flip */
 	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_mode",            "PPA solution mode",                "0/1",   "0=solve ppa,1=specify ppa", "Solution Mode",         "?=0",                     "INTEGER,MIN=0,MAX=1",            "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_tolerance",            "PPA solution tolerance",                "",   "", "Solution Mode",         "?=1e-3",                     "",            "" },
+	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_tolerance",            "PPA solution tolerance",                "",   "", "Solution Mode",         "?=1e-4",                     "",            "" },
 	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_min",            "PPA solution minimum ppa",                "cents/kWh",   "", "Solution Mode",         "?=0",                     "",            "" },
 	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_max",            "PPA solution maximum ppa",                "cents/kWh",   "", "Solution Mode",         "?=100",                     "",            "" },
 	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_max_iterations",            "PPA solution maximum number of iterations",                "",   "", "Solution Mode",         "?=100",                     "INTEGER,MIN=1",            "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,     "ppa_price_input",			"Initial year PPA price",			"$/kWh",	 "",			  "Solution Mode",			 "?=10",         "",      			"" },
+	{ SSC_INPUT,        SSC_ARRAY,     "ppa_price_input",			"Initial year PPA price",			"$/kWh",	 "",			  "Solution Mode",			 "?=10",         "",      			"" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ppa_escalation",           "PPA escalation",					"%",	 "",					  "Solution Mode",             "?=0",                     "",      			"" },
 
 /* construction period */
@@ -223,13 +223,13 @@ static var_info _cm_vtab_equpartflip[] = {
 	{ SSC_INPUT, SSC_NUMBER, "months_receivables_reserve", "Receivables reserve months of PPA revenue", "months", "", "Other Capital Costs", "?=0", "MIN=0", "" },
 	{ SSC_INPUT, SSC_NUMBER, "cost_other_financing", "", "$", "Other financing cost", "Other Capital Costs", "?=150000", "MIN=0", "" },
 /* Equity Structure */
-	{ SSC_INPUT,        SSC_NUMBER,     "tax_investor_equity_percent",		"Tax investor equity",				"%",	 "",					  "IRR Targets",             "?=98",					  "MIN=0,MAX=100",     			        "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "tax_investor_preflip_cash_percent",		"Tax investor pre-flip cash ",		"%",	 "",  "IRR Targets",             "?=98",					  "MIN=0,MAX=100",     			        "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "tax_investor_postflip_cash_percent",	"Tax investor post-flip cash ",	"%",	 "",  "IRR Targets",             "?=15",					  "MIN=0,MAX=100",     			        "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "tax_investor_preflip_tax_percent",		"Tax investor pre-flip tax benefit ",		"%",	 "",  "IRR Targets",             "?=98",					  "MIN=0,MAX=100",     			        "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "tax_investor_postflip_tax_percent",	"Tax investor post-flip tax benefit ",	"%",	 "",  "IRR Targets",             "?=15",					  "MIN=0,MAX=100",     			        "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "flip_target_percent",			"After-tax flip/return target",		"%",	 "",					  "IRR Targets",             "?=11",					  "MIN=0,MAX=100",     			        "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "flip_target_year",		"Return target year",				"",		 "",					  "IRR Targets",             "?=11",					  "MIN=1",     			        "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "tax_investor_equity_percent",		"Investor equity",				"%",	 "",					  "IRR Targets",             "?=98",					  "MIN=0,MAX=100",     			        "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "tax_investor_preflip_cash_percent",		"Investor pre-flip cash ",		"%",	 "",  "IRR Targets",             "?=98",					  "MIN=0,MAX=100",     			        "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "tax_investor_postflip_cash_percent",	"Investor post-flip cash ",	"%",	 "",  "IRR Targets",             "?=15",					  "MIN=0,MAX=100",     			        "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "tax_investor_preflip_tax_percent",		"Investor pre-flip tax benefit ",		"%",	 "",  "IRR Targets",             "?=98",					  "MIN=0,MAX=100",     			        "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "tax_investor_postflip_tax_percent",	"Investor post-flip tax benefit ",	"%",	 "",  "IRR Targets",             "?=15",					  "MIN=0,MAX=100",     			        "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "flip_target_percent",			"Investor percent of project benefit",		"%",	 "",					  "IRR Targets",             "?=11",					  "MIN=0,MAX=100",     			        "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "flip_target_year",		"Target flip year",				"",		 "",					  "IRR Targets",             "?=11",					  "MIN=1",     			        "" },
 /*  depreciation allocation */
 	{ SSC_INPUT,        SSC_NUMBER,     "depr_alloc_macrs_5_percent",		"5-yr MACRS depreciation federal and state allocation",	"%", "",	  "Depreciation",             "?=89",					  "MIN=0,MAX=100",     			        "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "depr_alloc_macrs_15_percent",		"15-yr MACRS depreciation federal and state allocation",	"%", "",  "Depreciation",             "?=1.5",					  "MIN=0,MAX=100",     			        "" },
@@ -675,7 +675,7 @@ static var_info _cm_vtab_equpartflip[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_return_pretax_irr",    "Project pre-tax cumulative IRR",  "%", "",                      "Cash Flow Pre Tax Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_return_pretax_npv",    "Project pre-tax cumulative NPV",  "$", "",                      "Cash Flow Pre Tax Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_return_aftertax_cash",    "Project after-tax operating cash",  "$", "",                      "Cash Flow After Tax Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_return_aftertax_cash",    "Project operating cash",  "$", "",                      "Cash Flow After Tax Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_return_aftertax",    "Project after-tax returns",  "$", "",                      "Cash Flow After Tax Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_return_aftertax_irr",    "Project after-tax cumulative IRR",  "%", "",                      "Cash Flow After Tax Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_return_aftertax_npv",    "Project after-tax cumulative NPV",  "$", "",                      "Cash Flow After Tax Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -746,39 +746,37 @@ static var_info _cm_vtab_equpartflip[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_fedtax",				"Federal tax benefit (liability)",                   "$",            "",                      "Cash Flow Federal Income Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 // tax investor
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_pretax",        "Tax investor pre-tax returns",  "$", "",                      "Cash Flow Tax Investor Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_pretax_irr",    "Tax investor pre-tax cumulative IRR",  "%", "",                      "Cash Flow Tax Investor Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_pretax_npv",    "Tax investor pre-tax cumulative NPV",  "$", "",                      "Cash Flow Tax Investor Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax_cash",   "Tax investor after-tax cash returns",  "$", "",                      "Cash Flow Tax Investor Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax_itc",    "Tax investor share of ITC",  "$", "",                      "Cash Flow Tax Investor Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax_ptc",    "Tax investor share of PTC",  "$", "",                      "Cash Flow Tax Investor Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax_tax",    "Tax investor share of tax benefit (liability)",  "$", "",                      "Cash Flow Tax Investor Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax",        "Tax investor after-tax returns",  "$", "",                      "Cash Flow Tax Investor Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax_irr",    "Tax investor after-tax cumulative IRR",  "%", "",                      "Cash Flow Tax Investor Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax_npv",    "Tax investor after-tax cumulative NPV",  "$", "",                      "Cash Flow Tax Investor Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax_max_irr",    "Tax investor after-tax maximum IRR",  "%", "",                      "Cash Flow Tax Investor Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "tax_investor_aftertax_irr",    "Tax investor after-tax IRR",  "", "",                      "Cash Flow Tax Investor Returns",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "tax_investor_aftertax_npv",    "Tax investor after-tax NPV",  "", "",                      "Cash Flow Tax Investor Returns",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "tax_investor_pretax_irr",    "Tax investor pre-tax IRR",  "%", "",                      "Cash Flow Tax Investor Returns",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "tax_investor_pretax_npv",    "Tax investor pre-tax NPV",  "$", "",                      "Cash Flow Tax Investor Returns",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_pretax",        "Investor pre-tax returns",  "$", "",                      "Cash Flow Tax Investor Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_pretax_irr",    "Investor pre-tax cumulative IRR",  "%", "",                      "Cash Flow Tax Investor Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_pretax_npv",    "Investor pre-tax cumulative NPV",  "$", "",                      "Cash Flow Tax Investor Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax_cash",   "Investor after-tax cash returns",  "$", "",                      "Cash Flow Tax Investor Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax_itc",    "Investor share of ITC",  "$", "",                      "Cash Flow Tax Investor Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax_ptc",    "Investor share of PTC",  "$", "",                      "Cash Flow Tax Investor Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax_tax",    "Investor share of tax benefit (liability)",  "$", "",                      "Cash Flow Tax Investor Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax",        "Investor after-tax returns",  "$", "",                      "Cash Flow Tax Investor Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax_irr",    "Investor after-tax cumulative IRR",  "%", "",                      "Cash Flow Tax Investor Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax_npv",    "Investor after-tax cumulative NPV",  "$", "",                      "Cash Flow Tax Investor Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_aftertax_max_irr",    "Investor after-tax maximum IRR",  "%", "",                      "Cash Flow Tax Investor Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "tax_investor_aftertax_irr",    "Investor after-tax IRR at end of project",  "", "",                      "Cash Flow Tax Investor Returns",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "tax_investor_aftertax_npv",    "Investor after-tax NPV",  "", "",                      "Cash Flow Tax Investor Returns",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "tax_investor_pretax_irr",    "Investor pre-tax IRR at end of project",  "%", "",                      "Cash Flow Tax Investor Returns",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "tax_investor_pretax_npv",    "Investor pre-tax NPV",  "$", "",                      "Cash Flow Tax Investor Returns",      "*",                     "",                "" },
 
 	// Sponsor
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_capital_recovery_balance",    "Developer capital recovery balance",  "$", "",                      "Cash Flow Developer Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_capital_recovery_cash",    "Developer capital recovery cash",  "$", "",                      "Cash Flow Developer Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_pretax_cash_post_recovery",    "Developer pre-tax cash post recovery",  "$", "",                      "Cash Flow Developer Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_pretax_cash_during_recovery",    "Developer pre-tax cash during recovery",  "$", "",                      "Cash Flow Developer Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_pretax_cash_post_recovery",    "Developer operating cash post recovery",  "$", "",                      "Cash Flow Developer Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_pretax_cash_during_recovery",    "Developer operating cash during recovery",  "$", "",                      "Cash Flow Developer Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "sponsor_pretax_equity",    "Developer pre-tax equity investment",  "$", "",                      "Cash Flow Developer Returns",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "sponsor_pretax_development",    "Development fee",  "$", "",                      "Cash Flow Developer Returns",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_pretax_cash_post_recovery",    "Developer pre-tax cash post recovery",  "$", "",                      "Cash Flow Developer Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_pretax_cash_during_recovery",    "Developer pre-tax cash during recovery",  "$", "",                      "Cash Flow Developer Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_pretax",    "Developer pre-tax total",  "$", "",                      "Cash Flow Developer Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_pretax_irr",    "Developer pre-tax cumulative IRR",  "%", "",                      "Cash Flow Developer Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_pretax_npv",    "Developer pre-tax cumulative NPV",  "$", "",                      "Cash Flow Developer Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "sponsor_pretax_irr",    "Developer pre-tax IRR",  "%", "",                      "Cash Flow Developer Returns",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "sponsor_pretax_irr",    "Developer pre-tax IRR at end of project",  "%", "",                      "Cash Flow Developer Returns",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "sponsor_pretax_npv",    "Developer pre-tax NPV",  "$", "",                      "Cash Flow Developer Returns",      "*",                     "",                "" },
 
 	{ SSC_OUTPUT,        SSC_NUMBER,      "sponsor_aftertax_equity",    "Developer after-tax equity investment",  "$", "",                      "Cash Flow Developer Returns",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "sponsor_aftertax_development",    "Developer after-tax development fee",  "$", "",                      "Cash Flow Developer Returns",      "*",                     "",                "" },
+	//{ SSC_OUTPUT,        SSC_NUMBER,      "sponsor_aftertax_development",    "Developer after-tax development fee",  "$", "",                      "Cash Flow Developer Returns",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_aftertax_cash",    "Developer after-tax cash returns",  "$", "",                      "Cash Flow Developer Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_aftertax",    "Developer after-tax total",  "$", "",                      "Cash Flow Developer Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_aftertax_itc",    "Developer after-tax share of ITC",  "$", "",                      "Cash Flow Developer Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -786,16 +784,17 @@ static var_info _cm_vtab_equpartflip[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_aftertax_tax",    "Developer after-tax share of tax benefit (liability)",  "$", "",                      "Cash Flow Developer Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_aftertax_irr",    "Developer after-tax cumulative IRR",  "%", "",                      "Cash Flow Developer Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_aftertax_npv",    "Developer after-tax cumulative NPV",  "$", "",                      "Cash Flow Developer Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "sponsor_aftertax_irr",    "Developer after-tax IRR",  "%", "",                      "Cash Flow Developer Returns",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "sponsor_aftertax_irr",    "Developer after-tax IRR at end of project",  "%", "",                      "Cash Flow Developer Returns",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "sponsor_aftertax_npv",    "Developer after-tax NPV",  "$", "",                      "Cash Flow Developer Returns",      "*",                     "",                "" },
 
 	// metrics table 
 //	{ SSC_OUTPUT,        SSC_NUMBER,      "first_year_energy_net",    "Net Annual Energy",  "", "",                      "Metrics",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "debt_fraction",    "Debt percent",  "%", "",                      "Metrics",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "flip_target_year",    "IRR target year",  "", "",                      "Metrics",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "flip_target_irr",    "IRR target",  "%", "",                      "Metrics",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "flip_actual_year",    "IRR actual year",  "%", "",                      "Metrics",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "flip_actual_irr",    "IRR in target year",  "%", "",                      "Metrics",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "flip_target_year",    "Target flip year",  "Year", "",                      "Metrics",      "*",                     "",                "" },
+//	{ SSC_INOUT,        SSC_NUMBER,      "flip_target_year",    "Target flip year",  "Year", "",                      "Metrics",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "flip_target_irr",    "Target investor IRR",  "%", "",                      "Metrics",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "flip_actual_year",    "Actual flip year",  "Year", "",                      "Metrics",      "*",                     "",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "flip_actual_irr",    "Investor IRR in flip year",  "%", "",                      "Metrics",      "*",                     "",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoe_real",                "Levelized cost (real)",                          "cents/kWh",    "",                      "Metrics",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoe_nom",                 "Levelized cost (nominal)",                       "cents/kWh",    "",                      "Metrics",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "lppa_real", "Levelized PPA price (real)", "cents/kWh", "", "Metrics", "*", "", "" },
@@ -822,7 +821,7 @@ static var_info _cm_vtab_equpartflip[] = {
 
 	{ SSC_OUTPUT,        SSC_NUMBER,     "wacc",                "Weighted average cost of capital (WACC)",                          "",    "",                      "Metrics",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "effective_tax_rate",                 "Effective tax rate",                       "",    "",                      "Metrics",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "analysis_period_irr",                "Analysis period IRR",                          "",    "",                      "Metrics",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "analysis_period_irr",                "IRR at end of project",                          "",    "",                      "Metrics",      "*",                       "",                                         "" },
 
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_annual_costs", "Annual costs", "$", "", "LCOE calculations", "*", "LENGTH_EQUAL=cf_length", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "npv_annual_costs", "Present value of annual costs", "", "", "LCOE calculations", "*", "", "" },
@@ -1231,7 +1230,11 @@ public:
 		}
 
 
-		double ppa = as_double("ppa_price_input")*100.0; // either initial guess for ppa_mode=1 or final ppa for ppa_mode=0
+		size_t count_ppa_price_input;
+		ssc_number_t* ppa_price_input = as_array("ppa_price_input", &count_ppa_price_input);
+		double ppa = 0;
+		if (count_ppa_price_input > 0) ppa = ppa_price_input[0] * 100.0;
+		//		double ppa = as_double("ppa_price_input")*100.0; // either initial guess for ppa_mode=1 or final ppa for ppa_mode=0
 		if (ppa_mode == 0) ppa = 0; // initial guess for target irr mode
 
 
@@ -1853,7 +1856,16 @@ public:
 		{			
 		// Project partial income statement			
 			// energy_value =  Total PPA Revenue
-			cf.at(CF_ppa_price,i) = ppa * pow( 1 + ppa_escalation, i-1 ); // ppa_mode==1
+			// energy_value = DHF Total PPA Revenue (cents/kWh)
+			if ((ppa_mode == 1) && (count_ppa_price_input > 1))
+			{
+				if (i <= (int)count_ppa_price_input)
+					cf.at(CF_ppa_price, i) = ppa_price_input[i - 1] * 100.0; // $/kWh to cents/kWh
+				else
+					cf.at(CF_ppa_price, i) = 0;
+			}
+			else
+				cf.at(CF_ppa_price, i) = ppa * pow(1 + ppa_escalation, i - 1); // ppa_mode==0 or single value 
 //			cf.at(CF_energy_value,i) = cf.at(CF_energy_net,i) * cf.at(CF_ppa_price,i) /100.0;
 			// dispatch
 			cf.at(CF_energy_value, i) = cf.at(CF_ppa_price, i) / 100.0 *(
@@ -2315,9 +2327,9 @@ public:
 		cf.at(CF_tax_investor_pretax_irr,0) = irr(CF_tax_investor_pretax,0)*100.0;
 		cf.at(CF_tax_investor_pretax_npv,0) = cf.at(CF_tax_investor_pretax,0) ;
 
-
 		cf.at(CF_sponsor_aftertax_cash,0) = sponsor_pretax_equity_investment + sponsor_pretax_development_fee;
 		cf.at(CF_sponsor_aftertax,0) = cf.at(CF_sponsor_aftertax_cash,0);
+		cf.at(CF_sponsor_pretax, 0) = cf.at(CF_sponsor_aftertax_cash, 0);
 		cf.at(CF_sponsor_pretax_irr,0) = irr(CF_sponsor_aftertax_tax,0)*100.0;
 		cf.at(CF_sponsor_pretax_npv,0) = cf.at(CF_sponsor_aftertax,0) ;
 		cf.at(CF_sponsor_aftertax_irr,0) = irr(CF_sponsor_aftertax_tax,0)*100.0;
@@ -2496,18 +2508,18 @@ public:
 	*/
 
 	// Paul 1/27/15 - update for ppa specified and IRR year requested
-	if (ppa_mode == 1) flip_year = flip_target_year;
-
+	//if (ppa_mode == 1) flip_year = flip_target_year;
 
 	double actual_flip_irr = std::numeric_limits<double>::quiet_NaN();
 	if (flip_year > -1)
 	{
-		actual_flip_irr = cf.at(CF_tax_investor_aftertax_irr, flip_target_year);
+		//actual_flip_irr = cf.at(CF_tax_investor_aftertax_irr, flip_target_year);
+		actual_flip_irr = cf.at(CF_tax_investor_aftertax_irr, flip_year);
 		assign("flip_actual_year", var_data((ssc_number_t)flip_year));
 	}
 	else
 	{
-		assign("flip_actual_year", var_data((ssc_number_t)actual_flip_irr));
+		assign("flip_actual_year", var_data((ssc_number_t)actual_flip_irr)); // NaN
 	}
 	assign("flip_actual_irr", var_data((ssc_number_t)actual_flip_irr));
 
@@ -2675,7 +2687,7 @@ public:
 	    assign("sponsor_pretax_equity", var_data((ssc_number_t) sponsor_pretax_equity_investment));
 		assign("sponsor_pretax_development", var_data((ssc_number_t) sponsor_pretax_development_fee));
 		assign("sponsor_aftertax_equity", var_data((ssc_number_t) sponsor_pretax_equity_investment));
-		assign("sponsor_aftertax_development", var_data((ssc_number_t) sponsor_pretax_development_fee));
+		//assign("sponsor_pretax_development", var_data((ssc_number_t) sponsor_pretax_development_fee));
 
 
 		// output variable and cashflow line item assignments

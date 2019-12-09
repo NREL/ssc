@@ -200,7 +200,7 @@ public:
 
 
 		C_comp_multi_stage c_rc_ms;
-		c_rc_ms.design_given_outlet_state(T_rc_in, P_rc_in, m_dot_rc, T_rc_out, P_rc_out);
+		c_rc_ms.design_given_outlet_state(C_comp__psi_eta_vs_phi::E_snl_radial_via_Dyreby, T_rc_in, P_rc_in, m_dot_rc, T_rc_out, P_rc_out);
 
 
 
@@ -219,7 +219,7 @@ public:
 
 
 		C_comp_multi_stage c_comp_ms;
-		c_comp_ms.design_given_outlet_state(T_in, P_in, m_dot_mc, T_out, P_out);
+		c_comp_ms.design_given_outlet_state(C_comp__psi_eta_vs_phi::E_snl_radial_via_Dyreby, T_in, P_in, m_dot_mc, T_out, P_out);
 
 		double P_in_od = 1.15*P_in;
 		double T_in_od = T_in + 5.0;

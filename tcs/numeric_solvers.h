@@ -179,7 +179,13 @@ public:
     int solve(std::vector<double> x_solved_vector, std::vector<double> y_solved_vector, double y_target,
         double &x_solved, double &tol_solved, int &iter_solved);
 
+    bool is_last_x_best(double & x_at_lowest);
+
+    bool get_min_abs_diff_no_err(C_monotonic_eq_solver::S_eq_chars & s_eq_chars_min_abs_diff);
+
 	int call_mono_eq(double x, double *y);
+
+    double call_mono_eq_calc_y_err(double x, double y_target);
 
 	bool did_solver_find_positive_error(int solver_exit_mode);
 

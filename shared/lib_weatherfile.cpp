@@ -62,7 +62,7 @@ static std::string trimboth(std::string &buf)
 	const auto strRange = strEnd - strBegin + 1;
 	return buf.substr(strBegin, strRange);
 }
-
+ 
 static std::vector<std::string> split(const std::string &buf, char delim = ',')
 {
 	std::string token;
@@ -1262,7 +1262,7 @@ bool weatherfile::open(const std::string &file, bool header_only)
 				m_columns[TDEW].data[i] = check_missing(col_or_nan(cols[7]), 99.9);
 
 				m_columns[RH].data[i] = check_missing(col_or_nan(cols[8]), 999.);
-				m_columns[PRES].data[i] = check_missing(col_or_nan(cols[6]) * 0.01, 999999.*0.01);
+				m_columns[PRES].data[i] = check_missing(col_or_nan(cols[9]) * 0.01, 999999.*0.01);
 				m_columns[SNOW].data[i] = check_missing(col_or_nan(cols[30]), 999.); // snowfall
 				m_columns[ALB].data[i] = -999; /* no albedo in EPW file */
 				m_columns[AOD].data[i] = -999; /* no AOD in EPW */

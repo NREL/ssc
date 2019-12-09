@@ -53,6 +53,10 @@ set(SSC_SRC
 		cmod_lcoefcr.cpp
 		cmod_levpartflip.cpp
 		cmod_linear_fresnel_dsg_iph.cpp
+		cmod_merchantplant.cpp
+		cmod_merchantplant_eqns.cpp
+		cmod_mhk_eqns.cpp
+		cmod_mhk_costs.cpp
 		cmod_mhk_wave.cpp
 		cmod_mhk_tidal.cpp
 		cmod_poacalib.cpp
@@ -106,8 +110,10 @@ set(SSC_SRC
 		cmod_windbos.cpp
 		cmod_windcsm.cpp
 		cmod_windfile.cpp
+		cmod_wavefile.cpp
 		cmod_windpower.cpp
         cmod_windpower_eqns.cpp
+        cmod_ui_udpc_checks.cpp
 		common.cpp
 		common_financial.cpp
 		core.cpp
@@ -216,34 +222,61 @@ if (MSVC)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:WINDOWS")
 	set(SSC_LIB $<TARGET_FILE_DIR:ssc>/$<TARGET_FILE_BASE_NAME:ssc>.lib)
 
+	set(TESTDIR ${CMAKE_CURRENT_BINARY_DIR}/../test/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
+
 	add_custom_command(
 		TARGET ssc
 		POST_BUILD
 		COMMAND ${CMAKE_COMMAND}
 		ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} $ENV{SAMNTDIR}/deploy/x64
 		COMMAND ${CMAKE_COMMAND}
-		ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${CMAKE_CURRENT_BINARY_DIR}/../tcsconsole/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>
-		COMMAND ${CMAKE_COMMAND}
-		ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${CMAKE_CURRENT_BINARY_DIR}/../sdktool/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>
-		COMMAND ${CMAKE_COMMAND}
-		ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${CMAKE_CURRENT_BINARY_DIR}/../test/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>
+		ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${TESTDIR}
 		)
 
-	if (${CMAKE_PROJECT_NAME} STREQUAL system_advisor_model)
+	set (SDKTOOLDIR ${CMAKE_CURRENT_BINARY_DIR}/../sdktool/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
+	if (EXISTS ${SDKTOOLDIR})
 		add_custom_command(
 			TARGET ssc
 			POST_BUILD
 			COMMAND ${CMAKE_COMMAND}
-			ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${CMAKE_CURRENT_BINARY_DIR}/../../api/api_autogen/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>
-			)
-	else()
-		add_custom_command(
-			TARGET ssc
-			POST_BUILD
-			COMMAND ${CMAKE_COMMAND}
-			ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} $ENV{SAMNTDIR}/build_msvc/api/api_autogen/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>
+			ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${SDKTOOLDIR}
 			)
 	endif()
+
+	set (TCSCONSOLDEDIR ${CMAKE_CURRENT_BINARY_DIR}/../tcsconsole/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
+	if (EXISTS ${TCSCONSOLDEDIR})
+		add_custom_command(
+			TARGET ssc
+			POST_BUILD
+			COMMAND ${CMAKE_COMMAND}
+			ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${TCSCONSOLDEDIR}>
+			)
+	endif()
+
+	if (NOT skip_api)
+
+		if (${CMAKE_PROJECT_NAME} STREQUAL system_advisor_model)
+			set(APIGENDIR ${CMAKE_CURRENT_BINARY_DIR}/../../api/api_autogen/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
+			add_custom_command(
+				TARGET ssc
+				POST_BUILD
+				COMMAND ${CMAKE_COMMAND}
+				ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${APIGENDIR}
+				)
+		else()
+			set(APIGENDIR $ENV{SAMNTDIR}/build_msvc/api/api_autogen/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
+			add_custom_command(
+				TARGET ssc
+				POST_BUILD
+				COMMAND ${CMAKE_COMMAND}
+				ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${APIGENDIR}
+				)
+		endif()
+	endif()
+
+	add_custom_target(build-time-make-directory ALL
+		COMMAND ${CMAKE_COMMAND} -E make_directory ${TESTDIR} ${APIGENDIR})
+	add_dependencies(ssc build-time-make-directory)
 
 endif()
 

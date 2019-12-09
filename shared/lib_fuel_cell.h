@@ -37,7 +37,7 @@ public:
 
 	/// Construct FuelCell with arguments
 	FuelCell(double unitPowerMax_kW, double unitPowerMin_kW, 
-		double startup_hours, double shutdown_hours,
+		double startup_hours, bool is_started, double shutdown_hours,
 		double dynamicResponseUp_kWperMin, double dynamicResponseDown_kWperMin,
 		double degradation_kWperHour, double degradationRestart_kW, 
 		size_t replacement_option, double replacement_percent, std::vector<size_t> replacementSchedule,
@@ -78,6 +78,9 @@ public:
 
 	/// Get fuel cell max power kW
 	double getMaxPower();
+
+	/// Get fuel cell min power kW
+	double getMinPower();
 
 	/// Return the final power kW
 	double getPower();
@@ -133,7 +136,7 @@ public:
 	void setScheduledShutdowns(util::matrix_t<size_t> shutdowns);
 
 	/// Set startup hours
-	void setStartupHours(double startup_hours);
+	void setStartupHours(double startup_hours, bool is_started);
 
 	/// Calculate fuel consumption at percent load
 	void calculateEfficiencyCurve(double percent);
@@ -185,6 +188,7 @@ protected:
 	double m_unitPowerMax_kW;
 	double m_unitPowerMin_kW;
 	double m_startup_hours;
+	bool m_is_started;
 	double m_shutdown_hours;
 
 	double m_dynamicResponseUp_kWperHour;

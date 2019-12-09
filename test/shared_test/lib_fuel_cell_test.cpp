@@ -85,7 +85,7 @@ TEST_F(FuelCellTest, Startup_lib_fuel_cell)
 /// Test case for when fuel cell is already started at beginning of year
 TEST_F(FuelCellTest, StartedUp_lib_fuel_cell)
 {
-	fuelCell->setStartupHours(0);
+	fuelCell->setStartupHours(0, true);
 	
 	// First hour is fully started up
 	fuelCell->runSingleTimeStep(dynamicResponseUp_kWperHour * 2);
@@ -122,6 +122,30 @@ TEST_F(FuelCellTest, Shutdown_lib_fuel_cell)
 	EXPECT_EQ(fuelCell->getPowerThermal(), 0);
 	EXPECT_FALSE(fuelCell->isRunning());
 
+}
+
+TEST_F(FuelCellTest, Idle_lib_fuel_cell)
+{
+	fuelCell->setShutdownOption(FuelCell::FC_SHUTDOWN_OPTION::IDLE);
+
+	// Run for startup_hours
+	for (size_t h = 0; h < (size_t)startup_hours; h++) {
+		fuelCell->runSingleTimeStep(20);
+	}
+
+	// Run for a few hours started up
+	for (size_t h = (size_t)startup_hours; h < (size_t)(startup_hours + 5); h++) {
+		fuelCell->runSingleTimeStep(20);
+		EXPECT_TRUE(fuelCell->isRunning());
+	}
+
+	// Initiate shutdown.  Should produce heat and idle at minimum turndown electricity for shutdown hours
+	for (size_t h = 0; h < (size_t)shutdown_hours; h++) {
+		fuelCell->runSingleTimeStep(0);
+		EXPECT_EQ(fuelCell->getPower(), fuelCell->getMinPower());
+		EXPECT_GT(fuelCell->getPowerThermal(), 0);
+		EXPECT_TRUE(fuelCell->isRunning());
+	}
 }
 
 TEST_F(FuelCellTest, AvailableFuel_lib_fuel_cell) {
@@ -163,7 +187,7 @@ TEST_F(FuelCellTest, HeatCalculation_lib_fuel_cell) {
 // Verify that replacements are being handled
 TEST_F(FuelCellTest, Replacements_lib_fuel_cell) {
 
-	fuelCell->setStartupHours(1);
+	fuelCell->setStartupHours(1,false);
 	fuelCell->setDegradationkWPerHour(40);
 	fuelCell->setReplacementOption(FuelCell::FC_REPLACEMENT_OPTION::REPLACE_AT_CAPACITY);
 	fuelCell->setReplacementCapacity(50);
@@ -182,7 +206,7 @@ TEST_F(FuelCellTest, ScheduleRestarts_lib_fuel_cell) {
 	util::matrix_t<size_t> shutdowns;
 	shutdowns.resize_fill(1, 2, 4);
 
-	fuelCell->setStartupHours(1);
+	fuelCell->setStartupHours(1,false);
 	fuelCell->setDegradationkWPerHour(0);
 	fuelCell->setDegradationRestartkW(1);
 	fuelCell->setScheduledShutdowns(shutdowns);
@@ -337,8 +361,10 @@ TEST_F(FuelCellTest, DispatchManualUnits_lib_fuel_cell_dispatch) {
 
 	fuelCellDispatchMultiple->setDispatchOption(FuelCellDispatch::FC_DISPATCH_OPTION::MANUAL);
 	fuelCellDispatchMultiple->setManualDispatchUnits(discharge_units);
-	
-	// Allow fuel cell to startup
+//	fuelCellDispatchMultipleStarted->setDispatchOption(FuelCellDispatch::FC_DISPATCH_OPTION::MANUAL);
+//	fuelCellDispatchMultipleStarted->setManualDispatchUnits(discharge_units);
+
+	// Allow fuel cell to startup - only failing test
 	for (size_t h = 0; h < sh; h++) {
 		fuelCellDispatchMultiple->runSingleTimeStep(h, h, 0, 20);
 	}
@@ -362,20 +388,20 @@ TEST_F(FuelCellTest, DispatchInput_lib_fuel_cell_dispatch) {
 	// Allow fuel cell to startup
 	for (size_t h = 0; h < sh; h++) {
 		fuelCellDispatch->runSingleTimeStep(h, h, 0, 20);
-		EXPECT_EQ(fuelCell->getPower(), 0);
+		EXPECT_EQ(fuelCellDispatch->getPower(), 0);
 	}
 
 	// Dispatch fuel cell at 50% of max output (50 kW, limited by dynamic response)
 	fuelCellDispatch->runSingleTimeStep(sh, sh, 0, 0);
-	EXPECT_EQ(fuelCell->getPower(), 20);
+	EXPECT_EQ(fuelCellDispatch->getPower(), 20);
 
 	// Dispatch fuel cell at 50% of max output (50 kW, limited by dynamic response)
 	fuelCellDispatch->runSingleTimeStep(sh + 1, sh + 1, 0, 0);
-	EXPECT_EQ(fuelCell->getPower(), 40);
+	EXPECT_EQ(fuelCellDispatch->getPower(), 40);
 
 	// Dispatch fuel cell at 50% of max output (50 kW)
 	for (size_t h = sh + 2; h < 50; h++) {
 		fuelCellDispatch->runSingleTimeStep(h, h, 0, 0);
-		EXPECT_EQ(fuelCell->getPower(), 50);
+		EXPECT_EQ(fuelCellDispatch->getPower(), 50);
 	}
 }

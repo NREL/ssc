@@ -226,10 +226,10 @@ static var_info _cm_vtab_tcsmslf[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "ud_T_amb_high",        "High level ambient temperature for HTF mass flow rate parametric",               "C",		"",                        "user_defined_PC", "pc_config=1",            "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "ud_m_dot_htf_low",     "Low level normalized HTF mass flow rate for T_HTF parametric",                   "-",	    "",                        "user_defined_PC", "pc_config=1",            "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "ud_m_dot_htf_high",    "High level normalized HTF mass flow rate for T_HTF parametric",                  "-",	    "",                        "user_defined_PC", "pc_config=1",            "",                      "" },		
-	{ SSC_INPUT,        SSC_MATRIX,      "ud_T_htf_ind_od",      "Off design table of user-defined power cycle performance formed from parametric on T_htf_hot [C]", "", "",           "user_defined_PC", "pc_config=1",            "",                      "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "ud_T_amb_ind_od",      "Off design table of user-defined power cycle performance formed from parametric on T_amb [C]",	 "", "",           "user_defined_PC", "pc_config=1",            "",                      "" }, 
-	{ SSC_INPUT,        SSC_MATRIX,      "ud_m_dot_htf_ind_od",  "Off design table of user-defined power cycle performance formed from parametric on m_dot_htf [ND]","", "",           "user_defined_PC", "pc_config=1",            "",                      "" }, 
-    { SSC_INPUT,        SSC_MATRIX,      "ud_ind_od",            "Off design user-defined power cycle performance as function of T_htf, m_dot_htf [ND], and T_amb", "", "", "user_defined_PC", "pc_config=1",     "",                      "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "ud_T_htf_ind_od",      "Off design table of user-defined power cycle performance formed from parametric on T_htf_hot [C]", "", "",           "user_defined_PC", "?=[[0]]",            "",                      "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "ud_T_amb_ind_od",      "Off design table of user-defined power cycle performance formed from parametric on T_amb [C]",	 "", "",           "user_defined_PC", "?=[[0]]",            "",                      "" }, 
+	{ SSC_INPUT,        SSC_MATRIX,      "ud_m_dot_htf_ind_od",  "Off design table of user-defined power cycle performance formed from parametric on m_dot_htf [ND]","", "",           "user_defined_PC", "?=[[0]]",            "",                      "" }, 
+    { SSC_INPUT,        SSC_MATRIX,      "ud_ind_od",            "Off design user-defined power cycle performance as function of T_htf, m_dot_htf [ND], and T_amb", "", "", "user_defined_PC", "?=[[0]]",     "",                      "" },
 
 
 		//  enet calculator																															
@@ -770,6 +770,9 @@ public:
 		bConnected &= connect(solarfield, "E_fp_tot", enet, "Q_par_sf_fp");
 		bConnected &= connect(controller, "q_aux_heat", enet, "Q_aux_backup");
 	
+        bConnected &= connect(solarfield, "defocus_rel", controller, "defocus_prev");   // unique tolerance is just to stand out when debugging
+        
+        set_unit_value_ssc_double(controller, "defocus_prev", 0.9);  //
 
 		// check if all connections worked
 		if ( !bConnected )

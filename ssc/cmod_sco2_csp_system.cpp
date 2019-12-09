@@ -36,30 +36,31 @@ static var_info _cm_vtab_sco2_csp_system[] = {
     { SSC_INPUT,  SSC_NUMBER,  "od_T_t_in_mode",       "0: model solves co2/HTF PHX od model to calculate turbine inlet temp, 1: model sets turbine inlet temp to HTF hot temp", "", "", "", "?=0", "", ""},  // default to solving PHX
     { SSC_INPUT,  SSC_MATRIX,  "od_cases",             "Columns: T_htf_C, m_dot_htf_ND, T_amb_C, f_N_rc (=1 use design, =0 optimize, <0, frac_des = abs(input), f_N_mc (=1 use design, =0 optimize, <0, frac_des = abs(input), PHX_f_dP (=1 use design, <0 = abs(input), Rows: cases", "", "", "", "", "", "" },
 	{ SSC_INPUT,  SSC_ARRAY,   "od_P_mc_in_sweep",     "Columns: T_htf_C, m_dot_htf_ND, T_amb_C, f_N_rc (=1 use design, <0, frac_des = abs(input), f_N_mc (=1 use design, <0, frac_des = abs(input), PHX_f_dP (=1 use design, <0 = abs(input)", "", "", "", "",  "", "" },
-	{ SSC_INPUT,  SSC_MATRIX,  "od_set_control",       "Columns: T_htf_C, m_dot_htf_ND, T_amb_C, P_LP_in_MPa, f_N_rc (=1 use design, <0, frac_des = abs(input), f_N_mc (=1 use design, <0, frac_des = abs(input), PHX_f_dP (=1 use design, <0 = abs(input), Rows: cases", "", "", "", "", "", "" },
-	{ SSC_INPUT,  SSC_NUMBER,  "is_gen_od_polynomials","Generate off-design polynomials for Generic CSP models? 1 = Yes, 0 = No", "", "", "",  "?=0",     "",       "" },
+    { SSC_INPUT,  SSC_MATRIX,  "od_set_control",       "Columns: T_htf_C, m_dot_htf_ND, T_amb_C, P_LP_in_MPa, f_N_rc (=1 use design, <0, frac_des = abs(input), f_N_mc (=1 use design, <0, frac_des = abs(input), PHX_f_dP (=1 use design, <0 = abs(input), Rows: cases", "", "", "", "", "", "" },
+    { SSC_INPUT,  SSC_ARRAY,   "od_generate_udpc",     "True/False, f_N_rc (=1 use design, =0 optimize, <0, frac_des = abs(input), f_N_mc (=1 use design, =0 optimize, <0, frac_des = abs(input), PHX_f_dP (=1 use design, <0 = abs(input)", "", "", "", "",  "", "" },
+    { SSC_INPUT,  SSC_NUMBER,  "is_gen_od_polynomials","Generate off-design polynomials for Generic CSP models? 1 = Yes, 0 = No", "", "", "",  "?=0",     "",       "" },
 
 	// ** Off-Design Outputs **
 		// Parameters
-	{ SSC_OUTPUT, SSC_ARRAY,   "m_dot_htf_fracs",      "Normalized mass flow rate",                              "",           "",    "",      "",     "",       "" },
-	{ SSC_OUTPUT, SSC_ARRAY,   "T_amb_od",             "Ambient temperatures",                                   "C",          "",    "",      "",     "",       "" },
-	{ SSC_OUTPUT, SSC_ARRAY,   "T_htf_hot_od",         "HTF hot temperatures",                                   "C",          "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "m_dot_htf_fracs",      "Normalized mass flow rate",                              "",           "Off-Design",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "T_amb_od",             "Ambient temperatures",                                   "C",          "Off-Design",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "T_htf_hot_od",         "HTF hot temperatures",                                   "C",          "Off-Design",    "",      "",     "",       "" },
 		// Cycle control parameters
-	{ SSC_OUTPUT, SSC_ARRAY,   "od_opt_obj_code",      "1: MAX_ETA, 2: MAX_POWER",                               "",           "",    "",      "",     "",       "" },
-	{ SSC_OUTPUT, SSC_ARRAY,   "od_opt_conv_tol",      "Off design optimizer convergence tolerance",             "",           "",    "",      "",     "",       "" },
-	{ SSC_OUTPUT, SSC_ARRAY,   "P_comp_in_od",         "Main compressor inlet pressures",                        "MPa",        "",    "",      "",     "",       "" },
-	{ SSC_OUTPUT, SSC_MATRIX,  "mc_phi_od",            "Off-design main compressor flow coefficient [od run][stage]", "",      "",    "",      "",     "",       "" },
-	{ SSC_OUTPUT, SSC_ARRAY,   "recomp_frac_od",       "Recompression fractions",                                "",           "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "od_opt_obj_code",      "1: MAX_ETA, 2: MAX_POWER",                               "",           "Off-Design Cycle Control",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "od_opt_conv_tol",      "Off design optimizer convergence tolerance",             "",           "Off-Design Cycle Control",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "P_comp_in_od",         "Main compressor inlet pressures",                        "MPa",        "Off-Design Cycle Control",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_MATRIX,  "mc_phi_od",            "Off-design main compressor flow coefficient [od run][stage]", "",      "Off-Design Cycle Control",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "recomp_frac_od",       "Recompression fractions",                                "",           "Off-Design Cycle Control",    "",      "",     "",       "" },
 		// Optimizer outputs
-	{ SSC_OUTPUT, SSC_ARRAY,   "sim_time_od",          "Simulation time for off design optimization",            "s",          "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "sim_time_od",          "Simulation time for off design optimization",            "s",          "Off-Design Optimizer",    "",      "",     "",       "" },
 		// System solution
-	{ SSC_OUTPUT, SSC_ARRAY,   "eta_thermal_od",       "Off-design cycle thermal efficiency",                    "",           "",    "",      "",     "",       "" },
-	{ SSC_OUTPUT, SSC_ARRAY,   "T_mc_in_od",           "Off-design compressor inlet temperature",                "C",          "",    "",      "",     "",       "" },
-	{ SSC_OUTPUT, SSC_ARRAY,   "P_mc_out_od",          "Off-design high side pressure",                          "MPa",        "",    "",      "",     "",       "" },
-	{ SSC_OUTPUT, SSC_ARRAY,   "T_htf_cold_od",        "Off-design cold return temperature",                     "C",          "",    "",      "",     "",       "" },
-	{ SSC_OUTPUT, SSC_ARRAY,   "m_dot_co2_full_od",    "Off-design mass flow rate through turbine",              "kg/s",       "",    "",      "",     "",       "" },
-	{ SSC_OUTPUT, SSC_ARRAY,   "W_dot_net_od",         "Off-design cycle net output (no cooling pars)",          "MWe",        "",    "",      "",     "",       "" },
-	{ SSC_OUTPUT, SSC_ARRAY,   "Q_dot_od",             "Off-design thermal input",                               "MWt",        "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "eta_thermal_od",       "Off-design cycle thermal efficiency",                    "",           "Off-Design System Solution",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "T_mc_in_od",           "Off-design compressor inlet temperature",                "C",          "Off-Design System Solution",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "P_mc_out_od",          "Off-design high side pressure",                          "MPa",        "Off-Design System Solution",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "T_htf_cold_od",        "Off-design cold return temperature",                     "C",          "Off-Design System Solution",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "m_dot_co2_full_od",    "Off-design mass flow rate through turbine",              "kg/s",       "Off-Design System Solution",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "W_dot_net_od",         "Off-design cycle net output (no cooling pars)",          "MWe",        "Off-Design System Solution",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "Q_dot_od",             "Off-design thermal input",                               "MWt",        "Off-Design System Solution",    "",      "",     "",       "" },
 		// Compressor
 	{ SSC_OUTPUT, SSC_ARRAY,   "mc_T_out_od",          "Off-design main compressor outlet temperature",          "C",          "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "mc_W_dot_od",          "Off-design main compressor power",                       "MWe",        "",    "",      "",     "",       "" },
@@ -132,16 +133,26 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	{ SSC_OUTPUT, SSC_ARRAY,   "phx_eff_od",           "Off-design PHX effectiveness",                           "-",          "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "phx_co2_deltaP_od",    "Off-design PHX co2 side pressure drop",                  "-",          "",    "",      "",     "",       "" },
 		// Low Pressure Cooler
-	{ SSC_OUTPUT, SSC_ARRAY,   "LP_cooler_T_in_od",    "Low pressure cooler inlet temperature",                  "C",          "",    "",      "",     "",       "" },
-	{ SSC_OUTPUT, SSC_ARRAY,   "LP_cooler_rho_in_od",  "Low pressure cooler inlet density",                      "kg/m3",      "",    "",      "",     "",       "" },
-	{ SSC_OUTPUT, SSC_ARRAY,   "LP_cooler_in_isen_deltah_to_P_mc_out_od",  "Low pressure cooler inlet isen enthalpy rise to mc outlet pressure", "kJ/kg", "", "", "", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY,   "LP_cooler_co2_deltaP_od", "Off-design low pressure cooler co2 side pressure drop","-",         "",    "",      "",     "",       "" },
-	{ SSC_OUTPUT, SSC_ARRAY,   "LP_cooler_W_dot_fan_od","Low pressure cooler fan power",                         "MWe",        "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "LP_cooler_T_in_od",    "Off-design Low pressure cooler inlet temperature",                  "C",          "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "LP_cooler_rho_in_od",  "Off-design Low pressure cooler inlet density",                      "kg/m3",      "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "LP_cooler_in_isen_deltah_to_P_mc_out_od",  "Off-design Low pressure cooler inlet isen enthalpy rise to mc outlet pressure", "kJ/kg", "", "", "", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "LP_cooler_co2_deltaP_od", "Off-design Off-design low pressure cooler co2 side pressure drop","-",         "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "LP_cooler_W_dot_fan_od","Off-design Low pressure cooler fan power",                         "MWe",        "",    "",      "",     "",       "" },
 		// Intermediate Pressure Cooler
-	{ SSC_OUTPUT, SSC_ARRAY,   "IP_cooler_W_dot_fan_od","Intermediate pressure cooler fan power",                "MWe",        "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "IP_cooler_W_dot_fan_od","Off-design Intermediate pressure cooler fan power",                "MWe",        "",    "",      "",     "",       "" },
 		// Cooler Totals
-	{ SSC_OUTPUT, SSC_ARRAY,   "cooler_tot_W_dot_fan_od","Intermediate pressure cooler fan power",               "MWe",        "",    "",      "",     "",       "" },
-		// Solver Metrics
+    { SSC_OUTPUT, SSC_ARRAY,   "cooler_tot_W_dot_fan_od","Intermediate pressure cooler fan power",               "MWe",        "",    "",      "",     "",       "" },
+        // Energy Balance Checks
+    { SSC_OUTPUT, SSC_ARRAY,   "diff_m_dot_od",          "Off-design mass flow rate balance",        "-",        "",    "",      "",     "",       "" },
+    { SSC_OUTPUT, SSC_ARRAY,   "diff_E_cycle",           "Off-design cycle energy balance",          "-",        "",    "",      "",     "",       "" },
+    { SSC_OUTPUT, SSC_ARRAY,   "diff_Q_LTR",             "Off-design LTR energy balance",            "-",        "",    "",      "",     "",       "" },
+    { SSC_OUTPUT, SSC_ARRAY,   "diff_Q_HTR",             "Off-design HTR energy balance",            "-",        "",    "",      "",     "",       "" },
+		// UDPC Table
+    { SSC_OUTPUT, SSC_MATRIX,  "udpc_table",  "Columns (7): HTF Temp [C], HTF ND mass flow [-], Ambient Temp [C], ND Power, ND Heat In, ND Fan Power, ND Water. Rows = runs" "", "", "", "", "", "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "udpc_n_T_htf",         "Number of HTF temperature values in udpc parametric",    "",          "",     "",      "",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "udpc_n_T_amb",         "Number of ambient temperature values in udpc parametric","",          "",     "",      "",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "udpc_n_m_dot_htf",     "Number of HTF mass flow rate values in udpc parameteric","",          "",     "",      "",     "",       "" },
+        // Solver Metrics
 	{ SSC_OUTPUT, SSC_ARRAY,   "od_code",              "Diagnostic info",                                        "-",          ""     "",      "",     "",       "" },
 
 	var_info_invalid };
@@ -252,8 +263,15 @@ public:
 	ssc_number_t *p_LP_cooler_W_dot_fan_od;
 	// Intermediate Pressure Cooler
 	ssc_number_t *p_IP_cooler_W_dot_fan_od;
-	// Coolerl Totals
+	// Cooler Totals
 	ssc_number_t *p_cooler_tot_W_dot_fan_od;
+    // Energy Balance Checks
+    ssc_number_t *p_diff_m_dot_od;
+    ssc_number_t *p_diff_E_cycle;
+    ssc_number_t *p_diff_Q_LTR;
+    ssc_number_t *p_diff_Q_HTR;
+    // UDPC table
+    ssc_number_t *pm_udpc_table;
 	// Solver Metrics
 	ssc_number_t *p_od_code;
 
@@ -291,6 +309,7 @@ public:
 		bool is_od_cases_assigned = is_assigned("od_cases");
 		bool is_P_mc_in_od_sweep_assigned = is_assigned("od_P_mc_in_sweep");
 		bool is_od_set_control = is_assigned("od_set_control");
+        bool is_od_generate_udpc_assigned = is_assigned("od_generate_udpc");
 		if (is_od_cases_assigned && is_P_mc_in_od_sweep_assigned)
 		{
 			log("Both off design cases and main compressor inlet sweep assigned. Only modeling off design cases");
@@ -301,12 +320,27 @@ public:
 			log("Both off design cases and od set control assigned. Only modeling off design cases");
 			is_od_set_control = false;
 		}
+        if (is_od_cases_assigned && is_od_generate_udpc_assigned)
+        {
+            log("Both 'od_cases' and 'od_generate_udpc' were assigned. Only modeling 'od_cases'");
+            is_od_generate_udpc_assigned = false;
+        }
 		if (is_P_mc_in_od_sweep_assigned && is_od_set_control)
 		{
 			log("Both main compressor inlet sweep and od set control assigned. Only modeling off design cases");
 			is_od_set_control = false;
 		}
-		if (!is_od_cases_assigned && !is_P_mc_in_od_sweep_assigned && !is_od_set_control)
+        if (is_P_mc_in_od_sweep_assigned && is_od_generate_udpc_assigned)
+        {
+            log("Both 'od_P_mc_in_sweep' and 'od_generate_udpc' were assigned. Only modeling 'od_P_mc_in_sweep'");
+            is_od_generate_udpc_assigned = false;
+        }
+        if (is_od_set_control && is_od_generate_udpc_assigned)
+        {
+            log("Both 'od_set_control' and 'od_generate_udpc' were assigned. Only modeling 'od_set_control'");
+            is_od_generate_udpc_assigned = false;
+        }
+		if (!is_od_cases_assigned && !is_P_mc_in_od_sweep_assigned && !is_od_set_control && !is_od_generate_udpc_assigned)
 		{
 			log("No off-design cases or main compressor inlet sweep specified");
 			return;
@@ -329,6 +363,13 @@ public:
 
         // Get turbine inlet mode
         int T_t_in_mode = as_integer("od_T_t_in_mode");
+
+        // Get some cycle design info
+        double T_htf_hot_des = c_sco2_cycle.get_design_par()->m_T_htf_hot_in;      //[K]
+        double T_amb_des = c_sco2_cycle.get_design_par()->m_T_amb_des;         //[K]
+        double T_t_in_des = c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_temp[C_sco2_cycle_core::TURB_IN];	//[K] 
+        double T_co2_PHX_in_des = c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_temp[C_sco2_cycle_core::HTR_HP_OUT];   //[K]
+        double T_htf_PHX_out_des = c_sco2_cycle.get_design_solved()->ms_phx_des_solved.m_T_h_out;   //[K]
 
 		util::matrix_t<double> od_cases;
 		if (is_od_cases_assigned)
@@ -394,7 +435,7 @@ public:
                 od_cases(i, 6) = P_mc_in_low + delta_P_i * i;	//[MPa]
 			}
 		}
-		else
+		else if(is_od_set_control)
 		{
             util::matrix_t<double> od_cases_local = as_matrix("od_set_control");
 
@@ -429,9 +470,106 @@ public:
                 od_cases = od_cases_local;
             }
 		}
+        else        // od_generate_udpc
+        {
+            if (as_integer("od_T_t_in_mode") == 1)
+            {
+                T_htf_hot_des = T_t_in_des;     //[K]
+            }
+        
+            std::vector<double> udpc_pars = as_vector_double("od_generate_udpc");
+            int n_udpc_pars = udpc_pars.size();
+            int n_od_cases_mode_pars = std::min(3, n_udpc_pars-1);
+
+            double m_dot_htf_ND_low = 0.5;      //[-]
+            double m_dot_htf_ND_des = 1.0;          //[-]
+            double m_dot_htf_ND_high = 1.05;    //[-]
+            int n_m_dot_htf_ND = 12;
+            assign("udpc_n_m_dot_htf", (ssc_number_t)n_m_dot_htf_ND);
+            double m_dot_htf_ND_par_start = m_dot_htf_ND_low;       // m_dot_htf_ND_low - 0.05;    //[-]
+            double m_dot_htf_ND_par_end = m_dot_htf_ND_high;        // m_dot_htf_ND_high + 0.05;     //[-]
+            double delta_m_dot_htf_ND = (m_dot_htf_ND_par_end - m_dot_htf_ND_par_start) / (double)(n_m_dot_htf_ND - 1);
+            std::vector<double> m_dot_htf_ND_levels(3);
+            m_dot_htf_ND_levels[0] = m_dot_htf_ND_low;
+            m_dot_htf_ND_levels[1] = m_dot_htf_ND_des;
+            m_dot_htf_ND_levels[2] = m_dot_htf_ND_high;
+
+            double T_htf_low = T_htf_hot_des - 30.0;        //[K]
+            double T_htf_high = T_htf_hot_des + 15.0;       //[K]
+            int n_T_htf_hot = 4;
+            assign("udpc_n_T_htf", (ssc_number_t)n_T_htf_hot);
+            double T_htf_par_start = T_htf_low;     // T_htf_low - 5.0;     //[K]
+            double T_htf_par_end = T_htf_high;      // T_htf_high + 5.0;      //[K]
+            double delta_T_htf_hot = (T_htf_par_end - T_htf_par_start) / (double)(n_T_htf_hot - 1);
+            std::vector<double> T_htf_levels(3);
+            T_htf_levels[0] = T_htf_low;    //[C]
+            T_htf_levels[1] = T_htf_hot_des;   //[C]
+            T_htf_levels[2] = T_htf_high;  //[C]
+
+            double T_amb_low = 273.15 + 0.0;         //[K]
+            double T_amb_high = std::max(273.15 + 45.0, T_amb_des + 5.0);   //[K]
+            int n_T_amb = T_amb_high - T_amb_low + 1;
+            assign("udpc_n_T_amb", (ssc_number_t)n_T_amb);
+            double T_amb_par_start = T_amb_low; // 273.15 + 0.0;      //[K]
+            double T_amb_par_end = T_amb_high;  // T_amb_high + 1.0;    //[K]
+            double delta_T_amb = (T_amb_par_end - T_amb_par_start) / (double)(n_T_amb - 1);  //[K]
+            std::vector<double> T_amb_levels(3);
+            T_amb_levels[0] = T_amb_low;    //[C]
+            T_amb_levels[1] = T_amb_des;	//[C]
+            T_amb_levels[2] = T_amb_high;	//[C]
+
+            int n_total_runs = 3 * (n_m_dot_htf_ND + n_T_htf_hot + n_T_amb);
+
+            od_cases.resize_fill(n_total_runs, 6, 1.0);
+
+            // Set constant cycle operating mode parameters from 'od_generate_udpc'
+            for (int i = 0; i < n_total_runs; i++)
+            {
+                for (int j = 0; j < n_od_cases_mode_pars; j++)
+                {
+                    od_cases(i, 3 + j) = udpc_pars[j + 1];
+                }
+            }
+
+            for (int i = 0; i < 3; i++)
+            {
+                for (int j = 0; j < n_T_htf_hot; j++)
+                {
+                    double T_htf_hot_j = T_htf_par_start + delta_T_htf_hot * j;       //[K]
+                
+                    od_cases(i*n_T_htf_hot + j, 0) = T_htf_hot_j - 273.15;      //[C] convert from K -> parametric
+                    od_cases(i*n_T_htf_hot + j, 1) = m_dot_htf_ND_levels[i];    //[-] -> levels
+                    od_cases(i*n_T_htf_hot + j, 2) = T_amb_des - 273.15;        //[C] convert from K -> constant
+                }
+            }
+
+            for (int i = 0; i < 3; i++)
+            {
+                for (int j = 0; j < n_T_amb; j++)
+                {
+                    double T_amb_j = T_amb_par_start + delta_T_amb * j;       //[K]
+
+                    od_cases(3*n_T_htf_hot + i*n_T_amb + j, 0) = T_htf_levels[i] - 273.15;   //[C] convert from K -> levels
+                    od_cases(3*n_T_htf_hot + i*n_T_amb + j, 1) = m_dot_htf_ND_des;  //[-] -> constant
+                    od_cases(3*n_T_htf_hot + i*n_T_amb + j, 2) = T_amb_j - 273.15;  //[C] convert from K -> parametric 
+                }
+            }
+
+            for (int i = 0; i < 3; i++)
+            {
+                for (int j = 0; j < n_m_dot_htf_ND; j++)
+                {
+                    double m_dot_j = m_dot_htf_ND_par_start + delta_m_dot_htf_ND * j;     //[-]
+
+                    od_cases(3*n_T_htf_hot + 3*n_T_amb + i*n_m_dot_htf_ND + j, 0) = T_htf_hot_des - 273.15; //[C] convert from K -> constant
+                    od_cases(3*n_T_htf_hot + 3*n_T_amb + i*n_m_dot_htf_ND + j, 1) = m_dot_j;          //[-] -> parametric
+                    od_cases(3*n_T_htf_hot + 3*n_T_amb + i*n_m_dot_htf_ND + j, 2) = T_amb_levels[i] - 273.15;     //[C] convert from K -> levels
+                }
+            }
+        }
 		
 		int n_od_runs = (int)od_cases.nrows();
-		allocate_ssc_outputs(n_od_runs, n_mc_stages, n_rc_stages, n_pc_stages);
+		allocate_ssc_outputs(n_od_runs, n_mc_stages, n_rc_stages, n_pc_stages, is_od_generate_udpc_assigned);
 		C_sco2_phx_air_cooler::S_od_par s_sco2_od_par;
 
 		// For try/catch below
@@ -460,7 +598,7 @@ public:
 			std::clock_t clock_start = std::clock();
 			try
 			{
-				if (is_od_cases_assigned)
+				if (is_od_cases_assigned || is_od_generate_udpc_assigned)
 				{
 					// 2D optimization
 					//off_design_code = sco2_recomp_csp.off_design_opt(sco2_rc_od_par, od_strategy);
@@ -651,7 +789,7 @@ public:
 
 			p_od_code[n_run] = (ssc_number_t)off_design_code;
 			if(off_design_code == 0 || ((is_P_mc_in_od_sweep_assigned || is_od_set_control) && c_sco2_cycle.get_od_solved()->m_is_converged))
-			{	// Off-design call was successful, so write outputs
+			{	// Off-design call was successful, so write outputs                
 					// Control parameters
 				p_P_comp_in_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_pres[C_sco2_cycle_core::MC_IN] / 1000.0);	//[MPa]
 				for (int i_s = 0; i_s < n_mc_stages; i_s++)
@@ -850,7 +988,38 @@ public:
 					h_isen_out_od, s_isen_out_od, rho_isen_out_od, deltah_isen_od);
 
 				p_LP_cooler_in_isen_deltah_to_P_mc_out_od[n_run] = (ssc_number_t)-deltah_isen_od;		//[kJ/kg]
-			}
+
+                // Columns(7) : HTF Temp[C], HTF ND mass flow[-], Ambient Temp[C], ND Power, ND Heat, ND Fan Power, ND Water
+                if (is_od_generate_udpc_assigned)
+                {
+                    pm_udpc_table[n_run * 11 + 0] = (ssc_number_t)p_T_htf_hot_od[n_run];      //[C]
+                    pm_udpc_table[n_run * 11 + 1] = (ssc_number_t)p_m_dot_htf_fracs[n_run];   //[-]
+                    pm_udpc_table[n_run * 11 + 2] = (ssc_number_t)p_T_amb_od[n_run];          //[C]
+                    pm_udpc_table[n_run * 11 + 3] = (ssc_number_t)(p_W_dot_net_od[n_run] / (c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_W_dot_net*1.E-3));  //[-] 
+                    pm_udpc_table[n_run * 11 + 4] = (ssc_number_t)(p_Q_dot_od[n_run] / (c_sco2_cycle.get_design_solved()->ms_phx_des_solved.m_Q_dot_design*1.E-3));  //[-]
+                    pm_udpc_table[n_run * 11 + 5] = (ssc_number_t)(p_cooler_tot_W_dot_fan_od[n_run] / as_double("cooler_tot_W_dot_fan"));   //[-]
+                    pm_udpc_table[n_run * 11 + 6] = (ssc_number_t) 0.0;
+                    if (T_t_in_mode == 0)    // Model input is HTF hot temperature
+                    {
+                        pm_udpc_table[n_run * 11 + 7] = (ssc_number_t)((p_deltaT_HTF_PHX_od[n_run])/(T_htf_hot_des - T_htf_PHX_out_des));
+                    }
+                    else if (T_t_in_mode == 1)  // Model input is CO2 turbine inlet temperature
+                    {
+                        pm_udpc_table[n_run * 11 + 7] = (ssc_number_t)((p_T_co2_PHX_out_od[n_run]-p_T_co2_PHX_in_od[n_run]) / (T_t_in_des - T_co2_PHX_in_des));
+                    }
+                    pm_udpc_table[n_run * 11 + 8] = (ssc_number_t)((p_P_co2_PHX_in_od[n_run]) / (c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::HTR_HP_OUT] * 1.E-3));
+                    pm_udpc_table[n_run * 11 + 9] = (ssc_number_t)((p_t_m_dot_od[n_run]) / c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_m_dot_t);
+                    pm_udpc_table[n_run * 11 + 10] = (ssc_number_t)((p_t_P_in_od[n_run]) / (c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::TURB_IN] * 1.E-3));
+                }
+                // Energy Balance Checks
+                double diff_m_dot, diff_E_cycle, diff_Q_LTR, diff_Q_HTR;
+                diff_m_dot = diff_E_cycle = diff_Q_LTR = diff_Q_HTR = std::numeric_limits<double>::quiet_NaN();
+                c_sco2_cycle.check_od_solution(diff_m_dot, diff_E_cycle, diff_Q_LTR, diff_Q_HTR);
+                p_diff_m_dot_od[n_run] = (ssc_number_t) diff_m_dot;
+                p_diff_E_cycle[n_run]  = (ssc_number_t) diff_E_cycle;
+                p_diff_Q_LTR[n_run]    = (ssc_number_t) diff_Q_LTR;
+                p_diff_Q_HTR[n_run]    = (ssc_number_t) diff_Q_HTR;
+			}   
 			else
 			{	// Off-design call failed, write NaN outptus
 					// Control parameters
@@ -960,10 +1129,30 @@ public:
 				p_IP_cooler_W_dot_fan_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 					// Coolerl Totals
 				p_cooler_tot_W_dot_fan_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    // Energy Balance Checks
+                p_diff_m_dot_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                p_diff_E_cycle[n_run]  = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                p_diff_Q_LTR[n_run]    = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                p_diff_Q_HTR[n_run]    = std::numeric_limits<ssc_number_t>::quiet_NaN();
 
 				p_LP_cooler_in_isen_deltah_to_P_mc_out_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
-			}
 
+                // Columns(7) : HTF Temp[C], HTF ND mass flow[-], Ambient Temp[C], ND Power, ND Heat, ND Fan Power, ND Water
+                if (is_od_generate_udpc_assigned)
+                {
+                    pm_udpc_table[n_run * 11 + 0] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_udpc_table[n_run * 11 + 1] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_udpc_table[n_run * 11 + 2] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_udpc_table[n_run * 11 + 3] = std::numeric_limits<ssc_number_t>::quiet_NaN(); 
+                    pm_udpc_table[n_run * 11 + 4] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_udpc_table[n_run * 11 + 5] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_udpc_table[n_run * 11 + 6] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_udpc_table[n_run * 11 + 7] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_udpc_table[n_run * 11 + 8] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_udpc_table[n_run * 11 + 9] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_udpc_table[n_run * 11 + 10] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                }
+			}
 
 		}
 
@@ -976,7 +1165,7 @@ public:
 		
 	}
 
-	void allocate_ssc_outputs(int n_od_runs, int n_mc_stages, int n_rc_stages, int n_pc_stages)
+	void allocate_ssc_outputs(int n_od_runs, int n_mc_stages, int n_rc_stages, int n_pc_stages, bool is_udpc_table)
 	{
 		// Off-design parameters
 		p_m_dot_htf_fracs = allocate("m_dot_htf_fracs", n_od_runs);
@@ -1079,8 +1268,18 @@ public:
 		p_LP_cooler_W_dot_fan_od = allocate("LP_cooler_W_dot_fan_od", n_od_runs);
 		// Intermediate Pressure Cooler
 		p_IP_cooler_W_dot_fan_od = allocate("IP_cooler_W_dot_fan_od", n_od_runs);
-		// Coolerl Totals
+		// Cooler Totals
 		p_cooler_tot_W_dot_fan_od = allocate("cooler_tot_W_dot_fan_od", n_od_runs);
+        // Energy Balance Checks
+        p_diff_m_dot_od = allocate("diff_m_dot_od", n_od_runs);
+        p_diff_E_cycle  = allocate("diff_E_cycle", n_od_runs);
+        p_diff_Q_LTR    = allocate("diff_Q_LTR", n_od_runs);
+        p_diff_Q_HTR    = allocate("diff_Q_HTR", n_od_runs);
+        // UDPC Table
+        if (is_udpc_table)
+        {
+            pm_udpc_table = allocate("udpc_table", n_od_runs, 11);
+        }
 		// Solver Metrics
 		p_od_code = allocate("od_code", n_od_runs);
 

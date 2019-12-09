@@ -352,7 +352,9 @@ int C_csp_solver::C_mono_eq_pc_target_tes_dc__T_cold::operator()(double T_htf_co
 		}
 		else
 		{
-			throw(C_csp_exception(util::format("At time = %lg, C_csp_solver::C_mono_eq_pc_target_tes_dc__T_cold failed with Eq Solver Code %d", mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time, m_dot_code), ""));
+            *diff_T_htf_cold = std::numeric_limits<double>::quiet_NaN();
+            return -3;
+            //throw(C_csp_exception(util::format("At time = %lg, C_csp_solver::C_mono_eq_pc_target_tes_dc__T_cold failed with Eq Solver Code %d", mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time, m_dot_code), ""));
 		}
 	}
 
