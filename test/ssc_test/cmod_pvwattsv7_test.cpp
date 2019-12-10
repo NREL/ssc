@@ -8,7 +8,7 @@
 
 
 ///Default PVWattsV7, but with TMY2 instead of TMY3
-TEST_F(CMPvwattsV7Integration, DefaultNoFinancialModel){
+TEST_F(CMPvwattsV7Integration, DefaultNoFinancialModel_cmod_pvwattsv7){
 	compute();
 
 	double tmp=0;
@@ -43,7 +43,7 @@ TEST_F(CMPvwattsV7Integration, DefaultNoFinancialModel){
 }
 
 /// PVWattsV7 using different technology input options
-TEST_F(CMPvwattsV7Integration, DifferentTechnologyInputs)
+TEST_F(CMPvwattsV7Integration, DifferentTechnologyInputs_cmod_pvwattsv7)
 {
 	//PVWattsV5 results: annual_energy_expected = { 6909.79, 7123.32, 7336.478, 6909.79, 6804.376, 8601.011, 8727.704, 9690.735};
 	std::vector<double> annual_energy_expected = { 6750.42, 7034.39, 7166.88, 6750.42, 6693.49, 8514.26, 8441.60, 9631.76 };
@@ -90,7 +90,7 @@ TEST_F(CMPvwattsV7Integration, DifferentTechnologyInputs)
 }
 
 /// PVWattsV7 using a larger system size
-TEST_F(CMPvwattsV7Integration, LargeSystem)
+TEST_F(CMPvwattsV7Integration, LargeSystem_cmod_pvwattsv7)
 {
 	//PVWattsV5 results: std::vector<double> annual_energy_expected = { 1727447.4, 1701094.0, 2150252.8, 2181925.8, 2422683.7 };
 	std::vector<double> annual_energy_expected = { 1686353.2, 1673371.8, 2123603.8, 2105794.1, 2407940.7 };
@@ -120,7 +120,7 @@ TEST_F(CMPvwattsV7Integration, LargeSystem)
 }
 
 /// Test pvwattsv7 with default inputs and a 15-minute weather file 
-TEST_F(CMPvwattsV7Integration, SubhourlyWeather) {
+TEST_F(CMPvwattsV7Integration, SubhourlyWeather_cmod_pvwattsv7) {
 
 	char subhourly[256];
 	int b = sprintf(subhourly, "%s/test/input_cases/pvsamv1_data/LosAngeles_WeatherFile_15min.csv", SSCDIR);
@@ -145,7 +145,7 @@ TEST_F(CMPvwattsV7Integration, SubhourlyWeather) {
 }
 
 /// Test PVWattsV7 in lifetime mode
-TEST_F(CMPvwattsV7Integration, LifetimeModeTest) {
+TEST_F(CMPvwattsV7Integration, LifetimeModeTest_cmod_pvwattsv7) {
 
 	// set lifetime mode
 	std::map<std::string, double> pairs;

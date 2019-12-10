@@ -106,7 +106,6 @@ static var_info _cm_vtab_pvwattsv5_part2[] = {
         { SSC_OUTPUT,       SSC_NUMBER,      "lon",                            "Longitude",                                   "deg", "",                        "Location",      "*",                       "",                          "" },
         { SSC_OUTPUT,       SSC_NUMBER,      "tz",                             "Time zone",                                   "hr",  "",                        "Location",      "*",                       "",                          "" },
         { SSC_OUTPUT,       SSC_NUMBER,      "elev",                           "Site elevation",                              "m",   "",                        "Location",      "*",                       "",                          "" },
-		{ SSC_OUTPUT,       SSC_NUMBER,      "inverter_model",                 "Inverter model specifier",                     "",                              "0=cec,1=datasheet,2=partload,3=coefficientgenerator,4=generic", "", "", "INTEGER,MIN=0,MAX=4", "" },
 		{ SSC_OUTPUT,       SSC_NUMBER,      "inverter_count",                 "Inverter count",								"",                              "", "", "", "INTEGER,MIN=0", "" },
 		{ SSC_OUTPUT,       SSC_NUMBER,      "inverter_efficiency",            "Inverter efficiency at rated power",          "%",         "",                  "PVWatts",      "?=96",                        "MIN=90,MAX=99.5",                              "" },
         { SSC_OUTPUT,       SSC_NUMBER,      "ts_shift_hours",                 "Time offset for interpreting time series outputs",  "hours", "",                "Miscellaneous", "*",                       "",                          "" },
@@ -588,8 +587,7 @@ public:
 		assign("elev", var_data((ssc_number_t)hdr.elev));
 		assign("percent_complete", var_data((ssc_number_t)percent));
 
-		// for battery model, force inverter model
-		assign("inverter_model", var_data((ssc_number_t)4));
+		// for battery model, specify a number of inverters
 		assign("inverter_count", var_data((ssc_number_t)1));
 		assign("inverter_efficiency", var_data((ssc_number_t)(as_double("inv_eff"))));
 

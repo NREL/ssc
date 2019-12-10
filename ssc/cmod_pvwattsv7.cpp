@@ -189,7 +189,6 @@ static var_info _cm_vtab_pvwattsv7[] = {
 		{ SSC_OUTPUT,       SSC_NUMBER,      "tz",                             "Time zone",                                   "hr",        "",                                             "Location",      "*",                       "",                          "" },
 		{ SSC_OUTPUT,       SSC_NUMBER,      "elev",                           "Site elevation",                              "m",         "",                                             "Location",      "*",                       "",                          "" },
 		
-		{ SSC_OUTPUT,       SSC_NUMBER,      "inverter_model",                 "Inverter model specifier",                    "",          "0=cec,1=datasheet,2=partload,3=coefficientgenerator,4=generic", "", "", "", "" },
 		{ SSC_OUTPUT,       SSC_NUMBER,      "inverter_count",                 "Inverter count",							  "",          "",                                             "",             "", "", "" },
 		{ SSC_OUTPUT,       SSC_NUMBER,      "inverter_efficiency",            "Inverter efficiency at rated power",          "%",         "",                                             "PVWatts",      "",                        "",                              "" },
 		{ SSC_OUTPUT,       SSC_NUMBER,      "estimated_rows",				   "Estimated number of rows in the system",	  "",          "",                                             "PVWatts",      "",                        "",                              "" },
@@ -206,6 +205,8 @@ protected:
 	enum module_type { STANDARD, PREMIUM, THINFILM };
 	enum module_orientation { PORTRAIT, LANDSCAPE };
 	enum array_type { FIXED_RACK, FIXED_ROOF, ONE_AXIS, ONE_AXIS_BACKTRACKING, TWO_AXIS, AZIMUTH_AXIS }; //azimuth axis not enabled in inputs?
+
+	static const constexpr double bifacialTransmissionFactor = 0.013;
 
 	struct {
 		module_type type;		//standard, premium, thinfilm
@@ -398,10 +399,9 @@ public:
 		bool enable_wind_stow = as_boolean("enable_wind_stow");
 		double wstow = std::numeric_limits<double>::quiet_NaN();
 		if (is_assigned("stow_wspd")) wstow = as_double("stow_wspd"); // wind stow speed, m/s.
-		double gustf = std::numeric_limits<double>::quiet_NaN(); // gust factor
-		if (is_assigned("gust_factor")) gustf = as_double("gust_factor");
-		double wind_stow_angle_deg = 30; // assume stowing at 30 degrees for better dynamic torsional stability, despite higher static loading on piles
+		double wind_stow_angle_deg; // default is to assume stowing at 30 degrees (set in var_table) for better dynamic torsional stability, despite higher static loading on piles
 		if (is_assigned("wind_stow_angle")) wind_stow_angle_deg = as_double("wind_stow_angle");
+		// gust factor defined later because it depends on timestep
 
 		//hidden input variable (not in var_table): whether or not to use the mermoud lejeune single diode model as defined above (0 = don't use model, 1 = use model)
 		int en_sdm = is_assigned("en_sdm") ? as_integer("en_sdm") : 0; 
@@ -642,6 +642,34 @@ public:
 		size_t step_per_hour = nrec / 8760;
 		if (step_per_hour < 1 || step_per_hour > 60 || step_per_hour * 8760 != nrec)
 			throw exec_error("pvwattsv7", util::format("invalid number of data records (%d): must be an integer multiple of 8760", (int)nrec));
+		double ts_hour = 1.0 / step_per_hour; //timestep in fraction of hours (decimal)
+		
+		double wm2_to_wh = module_m2 * ts_hour; //conversion from watts per meter squared to watt hours- need to convert with ts_hour for subhourly data
+
+		double gustf = std::numeric_limits<double>::quiet_NaN(); // gust factor
+		if (is_assigned("gust_factor")) gustf = as_double("gust_factor");
+		double gf = gustf;
+		if (!std::isfinite(gf)) //if gust factor isn't defined by user, determine it for them
+		{
+			// determine the sustained 1 minute gust wind speed
+			// based on the current time step
+			// this translation is for the 'in-land' category in
+			// table 1.1 of the World Metereological Organization report
+			//  'Guidelines for converting between various wind averaging periods
+			//   in tropical cyclone conditions', October 2008
+
+			double ts_sec = ts_hour * 3600.0;
+			if (ts_sec >= 600)
+				gf = 1.28;
+			else if (ts_sec >= 180)
+				gf = 1.21;
+			else if (ts_sec >= 120)
+				gf = 1.15;
+			else if (ts_sec >= 60)
+				gf = 1.13;
+			else
+				gf = 1.0;
+		}
 
 		/* allocate output arrays */
 		ssc_number_t *p_gh = allocate("gh", nrec);
@@ -664,8 +692,6 @@ public:
 		ssc_number_t *p_dc = allocate("dc", nrec);
 		ssc_number_t *p_ac = allocate("ac", nrec);
 		ssc_number_t *p_gen = allocate("gen", nlifetime);
-
-		double ts_hour = 1.0 / step_per_hour; //timestep in fraction of hours (decimal)
 
 		pvwatts_celltemp tccalc(pv.inoct + 273.15, PVWATTS_HEIGHT, ts_hour); //in pvwattsv5 there is some code about previous tcell and poa that doesn't appear to get used, so not adding it here
 
@@ -767,9 +793,9 @@ public:
 					double ibeam = 0.0, iskydiff = 0.0, ignddiff = 0.0, irear = 0.0;
 					double poa = 0, tpoa = 0, tmod = 0, dc = 0, ac = 0;
 
-					irr.get_sun(&solazi, &solzen, &solalt, 0, 0, 0, &sunup, 0, 0, 0);
+					irr.get_sun(&solazi, &solzen, &solalt, nullptr, nullptr, nullptr, &sunup, nullptr, nullptr, nullptr); //nullptr used when you don't need to retrieve the output
 					irr.get_angles(&aoi, &stilt, &sazi, &rot, &btd);
-					irr.get_poa(&ibeam, &iskydiff, &ignddiff, 0, 0, 0);
+					irr.get_poa(&ibeam, &iskydiff, &ignddiff, nullptr, nullptr, nullptr); //nullptr used when you don't need to retrieve the output
 
 					if (module.bifaciality > 0)
 					{
@@ -798,8 +824,6 @@ public:
 
 					if (sunup > 0)
 					{
-						double wm2_to_wh = module_m2 * ts_hour; //need to convert with ts_hour for subhourly data
-
 						// save the total available POA for the loss diagram
 						if (y==0) ld("poa_nominal") += (ibeam + iskydiff + ignddiff)*wm2_to_wh;
 						if (y==0) ld("poa_loss_bifacial") += (-irear)*wm2_to_wh;
@@ -809,33 +833,10 @@ public:
 						if ((pv.type == ONE_AXIS
 							|| pv.type == ONE_AXIS_BACKTRACKING
 							|| pv.type == TWO_AXIS)
-							&& std::isfinite(wf.wspd) && wf.wspd > 0 && wf.wspd < 20
+							&& std::isfinite(wf.wspd) && wf.wspd > 0
 							&& std::isfinite(wstow)
 							&& enable_wind_stow)
 						{
-							double gf = gustf;
-							if (!std::isfinite(gf)) //if gust factor isn't defined by user, determine it for them
-							{
-								// determine the sustained 1 minute gust wind speed
-								// based on the current time step
-								// this translation is for the 'in-land' category in
-								// table 1.1 of the World Metereological Organization report
-								//  'Guidelines for converting between various wind averaging periods
-								//   in tropical cyclone conditions', October 2008
-
-								double ts_sec = ts_hour * 3600.0;
-								if (ts_sec >= 600)
-									gf = 1.28;
-								else if (ts_sec >= 180)
-									gf = 1.21;
-								else if (ts_sec >= 120)
-									gf = 1.15;
-								else if (ts_sec >= 60)
-									gf = 1.13;
-								else
-									gf = 1.0;
-							}
-
 							double gust = gf * wf.wspd;
 
 							if (gust > wstow)
@@ -846,6 +847,8 @@ public:
 								if (pv.type == TWO_AXIS)
 								{
 									// two axis tracker stows at the horizontal position
+									// easiest way to do this in two dimensions is to set it as a flat fixed tilt system
+									// because the force to stow flag only fixes one rotation angle, not both
 									irr.set_surface(irrad::FIXED_TILT, // tracking 0=fixed 
 										0, 180, // tilt, azimuth 
 										0, 0, 0.4, false, 0.0); // rotlim, bt, gcr, force to stow, stow angle
@@ -870,12 +873,12 @@ public:
 								double irear_stow = 0.0;
 								if (module.bifaciality > 0)
 								{
-									irr.calc_rear_side(0.013, 1, module.length * pv.nmody);
+									irr.calc_rear_side(bifacialTransmissionFactor, 1, module.length * pv.nmody);
 									irear_stow = irr.get_poa_rear();
 								}
 
 								irr.get_angles(&aoi, &stilt, &sazi, &rot, &btd);
-								irr.get_poa(&ibeam, &iskydiff, &ignddiff, 0, 0, 0);
+								irr.get_poa(&ibeam, &iskydiff, &ignddiff, nullptr, nullptr, nullptr); //nullptr used when you don't need to retrieve the output
 								double poa_stow = ibeam + iskydiff + ignddiff;
 
 								double stow_loss = (poa_no_stow - poa_stow) + (irear - irear_stow);
@@ -977,7 +980,7 @@ public:
 
 							// for non-linear self-shading (fixed and one-axis, but not backtracking)
 							// the non-linear dc derate is calculated and we need to save it for later
-							else if ((pv.type == FIXED_RACK || pv.type == ONE_AXIS) && module.type != THINFILM)
+							if ((pv.type == FIXED_RACK || pv.type == ONE_AXIS) && module.type != THINFILM)
 							{
 								f_nonlinear = ssout.m_dc_derate;
 							}
@@ -1183,7 +1186,7 @@ public:
 					if (y == 0) ld("ac_loss_transformer") += xfmr_loss * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
 					ac -= xfmr_loss;
 
-					p_stow[idx] = (tracker_stowing ? 1.0f : 0.0f);
+					p_stow[idx] = (tracker_stowing ? 1.0 : 0.0);
 					p_shad_beam[idx] = (ssc_number_t)shad_beam; // might be updated by 1 axis self shading so report updated value
 
 					p_poa[idx] = (ssc_number_t)poa; // W/m2
@@ -1243,8 +1246,7 @@ public:
 		double landf = is_assigned("landf") ? as_number("landf") : 1.0f;
 		assign("land_acres", var_data((ssc_number_t)(landf * module_m2 / gcr_for_land * 0.0002471)));
 
-		// for battery model, force inverter model
-		assign("inverter_model", var_data((ssc_number_t)4));
+		// for battery model, specify a number of inverters
 		assign("inverter_count", var_data((ssc_number_t)1));
 		assign("inverter_efficiency", var_data((ssc_number_t)(as_double("inv_eff"))));
 

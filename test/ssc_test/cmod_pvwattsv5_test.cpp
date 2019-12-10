@@ -83,7 +83,7 @@ TEST_F(CMPvwattsV5Integration, DifferentTechnologyInputs_cmod_pvwattsv5)
 }
 
 /// PVWattsV5 using a larger system size
-TEST_F(CMPvwattsV5Integration, LargeSystem)
+TEST_F(CMPvwattsV5Integration, LargeSystem_cmod_pvwattsv5)
 {
 	std::vector<double> annual_energy_expected = { 1727447.4, 1701094.0, 2150252.8, 2181925.8, 2422683.7 };
 	std::map<std::string, double> pairs;
