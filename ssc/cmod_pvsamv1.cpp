@@ -952,6 +952,13 @@ void cm_pvsamv1::exec( ) throw (general_error)
 	double module_watts_stc = Subarrays[0]->Module->moduleWattsSTC;
 	SharedInverter * sharedInverter = PVSystem->m_sharedInverter.get();
 
+	//overwrite tilt with latitude if flag is set- can't do this in PVIOManager because need latitude from weather file
+	for (size_t nn = 0; nn < num_subarrays; nn++)
+	{
+		if (Subarrays[nn]->tiltEqualLatitude)
+			Subarrays[nn]->tiltDegrees = Irradiance->weatherHeader.lat;
+	}
+
 	double annual_snow_loss = 0;
 	
 	// SELF-SHADING MODULE INFORMATION
@@ -1705,13 +1712,12 @@ void cm_pvsamv1::exec( ) throw (general_error)
 							avgVoltage += out[nn].Voltage * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
 						}
 						avgVoltage /= nStrings;
-						PVSystem->p_mpptVoltage[mpptInput][idx] = (ssc_number_t)avgVoltage;
 
 						//check the weighted average string voltage against the inverter MPPT bounds
 						bool recalculatePower = false;
 						if (PVSystem->clipMpptWindow)
 						{
-							if (avgVoltage < PVSystem->Inverter->mpptLowVoltage)
+							if (avgVoltage < PVSystem->Inverter->mpptLowVoltage && sunup > 0) //check for sunup to avoid setting MPPT voltage at night
 							{
 								avgVoltage = PVSystem->Inverter->mpptLowVoltage;
 								recalculatePower = true;
@@ -1740,6 +1746,9 @@ void cm_pvsamv1::exec( ) throw (general_error)
 								}
 							}
 						}
+
+						//assign final voltage at the MPPT input now that it has been checked against MPPT bounds
+						PVSystem->p_mpptVoltage[mpptInput][idx] = (ssc_number_t)avgVoltage;
 					}
 
 					//now that we have the correct power for all subarrays, subject to inverter MPPT clipping, save outputs 
