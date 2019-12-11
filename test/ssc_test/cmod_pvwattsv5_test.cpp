@@ -4,7 +4,7 @@
 #include "vartab.h"
 #include "../ssc/common.h"
 
-#include "weather_inputs.h"
+#include "input_cases/weather_inputs.h"
 #include "cmod_pvwattsv5_test.h"
 
 ///Default PVWattsV5, but with TMY2 instead of TMY3

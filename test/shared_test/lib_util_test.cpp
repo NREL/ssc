@@ -38,7 +38,7 @@ TEST(sscapiTest, SSC_DATARR_test)
     EXPECT_EQ(n, 2);
 //    ssc_var_size(data_arr, &n, nullptr);
     for (size_t i = 0; i < n; i++){
-        double var = ssc_var_get_number(ssc_var_get_var_array(data_arr, i));
+        double var = ssc_var_get_number(ssc_var_get_var_array(data_arr, (int)i));
         EXPECT_EQ(var, 2 + i);
     }
 
@@ -70,7 +70,7 @@ TEST(sscapiTest, SSC_DATMAT_test)
 
     for (size_t i = 0; i < n; i++){
         for (size_t j = 0; j < m; j++){
-            double var = ssc_var_get_number(ssc_var_get_var_matrix(data_mat, i, j));
+            double var = ssc_var_get_number(ssc_var_get_var_matrix(data_mat, (int)i, (int)j));
             EXPECT_EQ(var, 2 + i * n + j);
         }
     }
