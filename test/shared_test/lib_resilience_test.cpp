@@ -574,8 +574,10 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsDCHourly_Discharge)
         resilience.run_surviving_batteries(load[i], 0, 0, 0, 0, 0);
         batt->advance(vartab, ac[i], voltage, load[i]);
         charge_total.emplace_back(batt->battery_model->battery_charge_total());
-        if (i < 6)
+        if (i < 5)
             EXPECT_NEAR(batt->outBatteryPower[i], 1. * inverter->efficiencyAC/100. * batt_vars->batt_dc_dc_bms_efficiency/100., 1e-3) << "timestep " << i << " battery discharging";
+        else if (i == 5)
+            EXPECT_NEAR(batt->outBatteryPower[i], 0.947, 1e-3) << "timestep 5 battery SOC limits";
         else
             EXPECT_NEAR(batt->outBatteryPower[i], 0, 1e-3) << "timestep " << i << " battery at min SOC";
 

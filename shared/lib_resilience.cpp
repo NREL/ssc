@@ -25,6 +25,7 @@ bool dispatch_resilience::run_outage_step_ac(double crit_load_kwac, double pv_kw
 
     double battery_dispatched_kwac = 0;
     double max_discharge_kwdc = _Battery->calculate_max_discharge_kw();
+    double max_discharge_kwac = max_discharge_kwdc * m_batteryPower->singlePointEfficiencyDCToDC;
     double max_charge_kwdc = _Battery->calculate_max_charge_kw();
 
     double met_load;
@@ -36,12 +37,25 @@ bool dispatch_resilience::run_outage_step_ac(double crit_load_kwac, double pv_kw
         met_load = crit_load_kwac;
     }
     else{
-        double max_to_load_kwac = max_discharge_kwdc * m_batteryPower->singlePointEfficiencyDCToAC + pv_kwac;
+        double max_to_load_kwac = max_discharge_kwac + pv_kwac;
+        double required_kwdc = (crit_load_kwac - pv_kwac) / m_batteryPower->singlePointEfficiencyDCToAC;
 
         if (max_to_load_kwac > crit_load_kwac){
             double discharge_kwdc = (crit_load_kwac - pv_kwac) / m_batteryPower->singlePointEfficiencyDCToAC;
             discharge_kwdc = fmin(discharge_kwdc, max_discharge_kwdc);
-            battery_dispatched_kwac = dispatch_kw(discharge_kwdc) * m_batteryPower->singlePointEfficiencyDCToAC;
+
+            // iterate in case the dispatched power is slightly less (by tolerance) than required
+            auto Battery_initial = new battery_t(*_Battery);
+            double battery_dispatched_kwdc = dispatch_kw(discharge_kwdc);
+            while (max_discharge_kwdc - battery_dispatched_kwdc > required_kwdc && battery_dispatched_kwdc < max_discharge_kwdc){
+                if (battery_dispatched_kwdc - required_kwdc > tolerance)
+                    break;
+                discharge_kwdc *= 1.01;
+                _Battery->copy(Battery_initial);
+                battery_dispatched_kwdc = dispatch_kw(discharge_kwdc);
+            }
+            battery_dispatched_kwac = battery_dispatched_kwdc * m_batteryPower->singlePointEfficiencyDCToAC;
+            delete Battery_initial;
         }
         else
             battery_dispatched_kwac = dispatch_kw(max_discharge_kwdc) * m_batteryPower->singlePointEfficiencyDCToAC;
@@ -50,7 +64,7 @@ bool dispatch_resilience::run_outage_step_ac(double crit_load_kwac, double pv_kw
 
     double unmet_load = crit_load_kwac - met_load;
     met_loads_kw += met_load;
-    bool survived = abs(unmet_load) < tolerance;
+    bool survived = unmet_load < tolerance;
     if (survived)
         current_outage_index += 1;
     return survived;
@@ -69,6 +83,7 @@ bool dispatch_resilience::run_outage_step_dc(double crit_load_kwac, double pv_kw
     double battery_dispatched_kwdc;
     double battery_dispatched_kwac;
     double max_discharge_kwdc = _Battery->calculate_max_discharge_kw();
+
     double max_charge_kwdc = _Battery->calculate_max_charge_kw();
 
     double met_load;
@@ -79,18 +94,31 @@ bool dispatch_resilience::run_outage_step_dc(double crit_load_kwac, double pv_kw
         met_load = crit_load_kwac;
     }
     else{
-        // find dc power required from pv + battery discharge to meet load
-        double required_kwdc = inverter->calculateRequiredDCPower(crit_load_kwac, V_pv, tdry);
+        // find dc power required from pv + battery discharge to meet load, then get just the power required from battery
+        double required_kwdc = inverter->calculateRequiredDCPower(crit_load_kwac, V_pv, tdry) - pv_kwdc;
+        double discharge_kwdc = fmin(required_kwdc / dc_dc_eff, max_discharge_kwdc);
 
-        battery_dispatched_kwdc = dispatch_kw(fmin(required_kwdc / dc_dc_eff, max_discharge_kwdc));
+        // iterate in case the dispatched power is slightly less (by tolerance) than required
+        auto Battery_initial = new battery_t(*_Battery);
+        battery_dispatched_kwdc = dispatch_kw(discharge_kwdc);
+        double pre_inverter_tol = tolerance * 10;   // need to enforce a larger difference since it'll get reduced by inverter
+        while (max_discharge_kwdc - battery_dispatched_kwdc > required_kwdc && battery_dispatched_kwdc < max_discharge_kwdc){
+            if (battery_dispatched_kwdc - required_kwdc > pre_inverter_tol)
+                break;
+            discharge_kwdc *= 1.01;
+            _Battery->copy(Battery_initial);
+            battery_dispatched_kwdc = dispatch_kw(discharge_kwdc);
+        }
         inverter->calculateACPower(battery_dispatched_kwdc * dc_dc_eff, V_pv, tdry);
         battery_dispatched_kwac = inverter->powerAC_kW;
+        delete Battery_initial;
+
         met_load = battery_dispatched_kwac + pv_kwac;
     }
 
     double unmet_load = crit_load_kwac - met_load;
     met_loads_kw += met_load;
-    bool survived = abs(unmet_load) < tolerance;
+    bool survived = unmet_load < tolerance;
     if (survived)
         current_outage_index += 1;
     return survived;
@@ -105,8 +133,12 @@ double dispatch_resilience::get_met_loads(){
 }
 
 double dispatch_resilience::dispatch_kw(double kw){
+    if (kw == 0.) return 0;
     double charging_current = _Battery->calculate_current_for_power_kw(kw);
-    return _Battery->run(current_outage_index, charging_current);
+    double power_dc = _Battery->run(current_outage_index, charging_current);
+    if (abs(kw - power_dc) < tolerance)
+        return kw;
+    return power_dc;
 }
 
 
