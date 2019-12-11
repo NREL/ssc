@@ -227,7 +227,7 @@ protected:
 	struct {
 		array_type type;
 
-		double dc_nameplate;
+		double dc_nameplate; //units of this variable are W, while input is in kW
 		double dc_ac_ratio;
 		double ac_nameplate;
 		double xfmr_rating;
@@ -364,7 +364,7 @@ public:
 		else
 			throw exec_error("pvwattsv7", "no weather data supplied");
 
-		pv.dc_nameplate = as_double("system_capacity") * 1000;
+		pv.dc_nameplate = as_double("system_capacity") * 1000; //units of this variable are W, while input is in kW
 		pv.dc_ac_ratio = as_double("dc_ac_ratio");
 		pv.ac_nameplate = pv.dc_nameplate / pv.dc_ac_ratio;
 
@@ -980,10 +980,10 @@ public:
 
 							// for non-linear self-shading (fixed and one-axis, but not backtracking)
 							// the non-linear dc derate is calculated and we need to save it for later
-							if ((pv.type == FIXED_RACK || pv.type == ONE_AXIS) && module.type != THINFILM)
+							/*if ((pv.type == FIXED_RACK || pv.type == ONE_AXIS) && module.type != THINFILM)
 							{
 								f_nonlinear = ssout.m_dc_derate;
-							}
+							}*/ //disconnecting non-linear shading for now due to possible bug in non-linear shading algorithm resulting in 9% loss in annual energy compared to linear case for large systems
 							
 							// for backtracked systems, there is no beam irradiance reduction or non-linear DC derate
 							// however, sky and ground-reflected diffuse are still blocked, so apply those to everything below
@@ -1250,13 +1250,10 @@ public:
 		assign("inverter_count", var_data((ssc_number_t)1));
 		assign("inverter_efficiency", var_data((ssc_number_t)(as_double("inv_eff"))));
 
-		// metric outputs moved to technology
+		// metric outputs
 		double kWhperkW = util::kilowatt_to_watt * annual_kwh / pv.dc_nameplate;
-
-		// adjustment for timestep values
-		kWhperkW *= ts_hour;
-		assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
 		assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
+		assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6))); //convert from kWh/kW to percent, so divide by 8760 hours and multiply by 100 percent
 
 		if (en_snowloss && snowmodel.badValues > 0)
 			log(util::format("The snow model has detected %d bad snow depth values (less than 0 or greater than 610 cm). These values have been set to zero.", snowmodel.badValues), SSC_WARNING);

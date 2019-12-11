@@ -135,11 +135,11 @@ TEST_F(CMPvwattsV7Integration, SubhourlyWeather_cmod_pvwattsv7) {
 	{
 		ssc_number_t annual_energy;
 		ssc_data_get_number(data, "annual_energy", &annual_energy);
-		EXPECT_NEAR(annual_energy, 7587, error_tolerance) << "Annual energy.";
+		EXPECT_NEAR(annual_energy, 5943.613, error_tolerance) << "Annual energy.";
 
 		ssc_number_t capacity_factor;
 		ssc_data_get_number(data, "capacity_factor", &capacity_factor);
-		EXPECT_NEAR(capacity_factor, 18.5, error_tolerance) << "Capacity factor";
+		EXPECT_NEAR(capacity_factor, 16.9, 0.1) << "Capacity factor";
 
 	}
 }
