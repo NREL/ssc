@@ -946,6 +946,13 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	double module_watts_stc = Subarrays[0]->Module->moduleWattsSTC;
 	SharedInverter * sharedInverter = PVSystem->m_sharedInverter.get();
 
+	//overwrite tilt with latitude if flag is set- can't do this in PVIOManager because need latitude from weather file
+	for (size_t nn = 0; nn < num_subarrays; nn++)
+	{
+		if (Subarrays[nn]->tiltEqualLatitude)
+			Subarrays[nn]->tiltDegrees = Irradiance->weatherHeader.lat;
+	}
+
 	double annual_snow_loss = 0;
 	
 	// SELF-SHADING MODULE INFORMATION

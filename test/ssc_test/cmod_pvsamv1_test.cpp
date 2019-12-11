@@ -620,3 +620,20 @@ TEST_F(CMPvsamv1PowerIntegration, InverterNighttime_cmod_pvsamv1) {
 		EXPECT_NEAR(inverterMppt1Voltage, 0.0, 0.001) << "MPPT Voltage should be 0 at night.";
 	}
 }
+
+/// Test PVSAMv1 tilt equals latitude input
+TEST_F(CMPvsamv1PowerIntegration, TiltEqualsLat_cmod_pvsamv1) {
+
+	std::map<std::string, double> pairs;
+
+	pairs["subarray1_tilt_eq_lat"] = 1;
+	int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+
+	EXPECT_FALSE(pvsam_errors);
+	if (!pvsam_errors)
+	{
+		ssc_number_t subarray1SurfaceTilt;
+		subarray1SurfaceTilt = ssc_data_get_array(data, "subarray1_surf_tilt", nullptr)[12];
+		EXPECT_NEAR(subarray1SurfaceTilt, 33.4, 0.1) << "Subarray 1 tilt should be equal to latitude.";
+	}
+}
