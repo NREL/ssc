@@ -606,3 +606,17 @@ TEST_F(CMPvsamv1PowerIntegration, SnowModel_cmod_pvsamv1)
 	EXPECT_NEAR(annual_energy, 11354.7, m_error_tolerance_hi) << "Annual energy.";
 
 }
+
+/// Test PVSAMv1 with all defaults and no-financial model- look at MPPT input 1 voltage at night
+TEST_F(CMPvsamv1PowerIntegration, InverterNighttime_cmod_pvsamv1) {
+
+	int pvsam_errors = run_module(data, "pvsamv1");
+
+	EXPECT_FALSE(pvsam_errors);
+	if (!pvsam_errors)
+	{
+		ssc_number_t inverterMppt1Voltage;
+		inverterMppt1Voltage = ssc_data_get_array(data, "inverterMPPT1_DCVoltage", nullptr)[0];
+		EXPECT_NEAR(inverterMppt1Voltage, 0.0, 0.001) << "MPPT Voltage should be 0 at night.";
+	}
+}
