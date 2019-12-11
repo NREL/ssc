@@ -236,6 +236,7 @@ public:
 
 	virtual double calculate_max_charge_w(double q, double qmax, double kelvin, double *max_current) =0;
 
+	// Returns estimated max discharge power
 	virtual double calculate_max_discharge_w(double q, double qmax, double kelvin, double *max_current) =0;
 
     // Returns current [A] required to dispatch input power [W], only valid if less than max possible
@@ -317,10 +318,8 @@ public:
 
     double calculate_max_discharge_w(double q, double qmax, double kelvin, double *max_current) override;
 
-    // returns current for power (discharge > 0, charge < 0), use above functions to first check feasibility
+	// returns current for power (discharge > 0, charge < 0), use above functions to first check feasibility
     double calculate_current_for_target_w(double P_watts, double q, double qmax, double kelvin) override;
-
-    void fit_current_to_cutoff_voltage(double cutoff_voltage_ratio = 0.75);
 
     double calculate_voltage_for_current(double I, double q, double qmax, double T_k) override;
 
@@ -345,16 +344,11 @@ private:
 
 	void parameter_compute();
 
-    double max_current_b2;
-    double max_current_b1;
-	double max_current_a;
-
 	// solver quantities
 	double solver_Q;
 	double solver_q;
 
     double solver_cutoff_voltage;
-    void solve_current_for_cutoff_voltage(const double x[1], double f[1]);
 
     double solver_power;
     void solve_current_for_charge_power(const double *x, double *f);

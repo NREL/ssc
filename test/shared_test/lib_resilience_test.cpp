@@ -1,5 +1,52 @@
 #include "lib_resilience_test.h"
 
+TEST_F(ResilienceTest_lib_resilience, VoltageCutoffParameterSetup)
+{
+    int n_series = 2;
+    int n_strings = 3;
+    for (auto dtHour : {1., .5, 0.25}){
+        for (auto Vfull : {1.1, 2.2, 2.5, 3.3, 3.8, 4.4, 5.5}){
+            for (auto Vexp : {.8, .85, .9}){
+                Vexp *= Vfull;
+                for (auto Vnom : {.8, .85, .9}){
+                    Vnom *= Vexp;
+                    for (auto Qfull : {2., 5.6, 17., 25., 35., 55., 70.}){
+                        for (auto Qexp : {0.9975, 0.98, 0.97}){
+                            Qexp *= Qfull;
+                            for (auto Qnom : {0.8, 0.9}){
+                                Qnom *= Qexp;
+                                for (auto C_rate : {0.05, 0.1, 0.2}){
+                                    for (auto resistance : {0.05, 0.1, 0.2}){
+                                        char buf[300];
+                                        sprintf(buf, "dtHour, %f, Vfull, %f, Vexp, %f, Vnom, %f, Qfull, %f, Qexp, %f, Qnom, %f, C rate, %f, res, %f",
+                                                dtHour, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom, C_rate, resistance);
+                                        try{
+                                            auto voltageModel = new voltage_dynamic_t(n_series, n_strings, Vnom * 0.98, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom,
+                                                                                  C_rate, resistance, dtHour);
+                                            double current1;
+                                            for (auto q_ratio : {0.25, 0.5, 0.75}){
+                                                double q = n_strings * Qfull * q_ratio;
+                                                double qmax = n_strings * Qfull;
+                                                auto max_1 = voltageModel->calculate_max_discharge_w(q, qmax, 0, &current1);
+                                                auto power1 = voltageModel->calculate_voltage_for_current(current1, q - current1 * dtHour, qmax, 0) * current1;
+                                                EXPECT_NEAR(max_1, power1, 1e-3) << buf << ", q_ratio, " << q_ratio;
+                                            }
+
+                                        }
+                                        catch (std::exception& e){
+                                            std::cerr << buf;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 TEST_F(ResilienceTest_lib_resilience, DischargeBatteryModelHourly)
 {
     CreateBattery(false, 1, 0. ,1., 1.);
@@ -7,11 +54,16 @@ TEST_F(ResilienceTest_lib_resilience, DischargeBatteryModelHourly)
     auto cap = batt->battery_model->capacity_model();
     auto vol = batt->battery_model->voltage_model();
     cap->change_SOC_limits(0, 100);
-    while (cap->SOC() > 10)
+    while (cap->SOC() > 40)
         batt->battery_model->run(0, 1);
 
     battery_t initial_batt = battery_t(*batt->battery_model);
-    double max_power = vol->calculate_max_discharge_w(cap->q0(), cap->qmax(), 0, nullptr);
+
+    double current1;
+    double max_power = vol->calculate_max_discharge_w(cap->q0(), cap->qmax_thermal(), 0, &current1);
+
+    // this is the estimated max power, but the actual limit is 3981.12
+    EXPECT_NEAR(max_power, 3991.3, 0.1);
 
     double desired_power = 0.;
     while (desired_power < max_power * 1.2){
@@ -22,11 +74,13 @@ TEST_F(ResilienceTest_lib_resilience, DischargeBatteryModelHourly)
 
         batt->battery_model->run(1, current);
 
-        if (desired_power < max_power){
-            EXPECT_NEAR(cap->I() * vol->battery_voltage(), desired_power, 1e-2);
+        double actual_power = cap->I() * vol->battery_voltage();
+
+        if (desired_power < 3981.12 ){
+            EXPECT_NEAR(actual_power, desired_power, 1e-2);
         }
         else{
-            EXPECT_LT(vol->cell_voltage(), 0.75 * batt->batt_vars->batt_Vnom + 0.01);
+            EXPECT_LT(actual_power, desired_power);
         }
 
         desired_power += max_power / 100.;
@@ -41,11 +95,14 @@ TEST_F(ResilienceTest_lib_resilience, DischargeBatteryModelSubHourly)
     auto cap = batt->battery_model->capacity_model();
     auto vol = batt->battery_model->voltage_model();
     cap->change_SOC_limits(0, 100);
-    while (cap->SOC() > 10)
+    while (cap->SOC() > 40)
         batt->battery_model->run(0, 1);
 
     battery_t initial_batt = battery_t(*batt->battery_model);
-    double max_power = vol->calculate_max_discharge_w(cap->q0(), cap->qmax(), 0, nullptr);
+    double max_current;
+    double max_power = vol->calculate_max_discharge_w(cap->q0(), cap->qmax(), 0, &max_current);
+
+    EXPECT_NEAR(max_power, 5446.1, 0.1);
 
     double desired_power = 0.;
     while (desired_power < max_power * 1.2){
@@ -55,12 +112,13 @@ TEST_F(ResilienceTest_lib_resilience, DischargeBatteryModelSubHourly)
         double current = vol->calculate_current_for_target_w(desired_power, cap->q0(), cap->qmax(), 0);
 
         batt->battery_model->run(1, current);
+        double actual_power = cap->I() * vol->battery_voltage();
 
         if (desired_power < max_power){
-            EXPECT_NEAR(cap->I() * vol->battery_voltage(), desired_power, 1e-2);
+            EXPECT_NEAR(actual_power, desired_power, 1e-2);
         }
         else{
-            EXPECT_LT(vol->cell_voltage(), 0.75 * batt->batt_vars->batt_Vnom + 0.01);
+            EXPECT_LT(actual_power, desired_power);
         }
 
         desired_power += max_power / 100.;
@@ -147,7 +205,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsSetUp)
     CreateBattery(false, 1, 0. ,1., 1.);
 
     auto cap = batt->battery_model->capacity_model();
-    auto vol = batt->battery_model->voltage_model();
+//    auto vol = batt->battery_model->voltage_model();
     cap->change_SOC_limits(0, 100);
 
     batt_vars->batt_loss_choice = losses_t::TIMESERIES;
@@ -160,7 +218,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsSetUp)
 
     batt->battery_model->initialize(batt->capacity_model, batt->voltage_model, batt->lifetime_model, batt->thermal_model, &losses);
 
-    auto power_model = batt->dispatch_model->getBatteryPowerFlow()->getBatteryPower();
+//    auto power_model = batt->dispatch_model->getBatteryPowerFlow()->getBatteryPower();
 
     size_t count = 0;
     while (batt->battery_model->losses_model()->getLoss(count) < 100.){
@@ -497,7 +555,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsACHourly_Discharge)
     EXPECT_NEAR(probs[4], 0.000114, 1e-6);
 
     double avg_load = resilience.get_avg_crit_load_kwh();
-    EXPECT_NEAR(avg_load, 0.00346, 1e-5);
+    EXPECT_NEAR(avg_load, 0.003504, 1e-5);
 }
 
 TEST_F(ResilienceTest_lib_resilience, PVWattsACHalfHourly_Discharge)
@@ -553,7 +611,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsACHalfHourly_Discharge)
     EXPECT_NEAR(probs[3], 0.0000571, 1e-6);
 
     double avg_load = resilience.get_avg_crit_load_kwh();
-    EXPECT_NEAR(avg_load, 0.00343, 1e-5);
+    EXPECT_NEAR(avg_load, 0.00347, 1e-5);
 }
 
 
@@ -618,7 +676,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsDCHourly_Discharge)
     EXPECT_NEAR(probs[4], 0.000114, 1e-6);
 
     double avg_load = resilience.get_avg_crit_load_kwh();
-    EXPECT_NEAR(avg_load, 0.00348, 1e-5);
+    EXPECT_NEAR(avg_load, 0.00352, 1e-5);
 }
 
 TEST_F(ResilienceTest_lib_resilience, PVWattsDCHalfHourly_Discharge)
@@ -656,8 +714,8 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsDCHalfHourly_Discharge)
     EXPECT_EQ(survived_hours[3], 5);
     EXPECT_EQ(survived_hours[4], 4.5);
     EXPECT_EQ(survived_hours[5], 4);
-    EXPECT_EQ(survived_hours[6], 4);
-    EXPECT_EQ(survived_hours[7], 3.5);
+    EXPECT_EQ(survived_hours[6], 3.5);
+    EXPECT_EQ(survived_hours[7], 3);
     EXPECT_EQ(survived_hours[11], 1.5);
 
     auto outage_durations = resilience.get_outage_duration_hrs();
@@ -674,7 +732,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsDCHalfHourly_Discharge)
     EXPECT_NEAR(probs[3], 0.0000571, 1e-6);
 
     double avg_load = resilience.get_avg_crit_load_kwh();
-    EXPECT_NEAR(avg_load, 0.00348, 1e-5);
+    EXPECT_NEAR(avg_load, 0.00353, 1e-5);
 }
 
 TEST_F(ResilienceTest_lib_resilience, PVWattsACHourly_Charge)

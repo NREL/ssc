@@ -606,6 +606,11 @@ double voltage_table_t::calculate_max_discharge_w(double q, double qmax, double,
                 *max_current = current;
         }
     }
+    if (max < 0){
+        max = 0.;
+        if (max_current)
+            *max_current = 0.;
+    }
     return max;
 }
 
@@ -677,9 +682,8 @@ voltage_dynamic_t::voltage_dynamic_t(int num_cells_series, int num_strings, doub
 	_cell_voltage = _Vfull;
 
 	parameter_compute();
+}
 
-    fit_current_to_cutoff_voltage();
-};
 voltage_dynamic_t * voltage_dynamic_t::clone(){ return new voltage_dynamic_t(*this); }
 void voltage_dynamic_t::copy(voltage_t * voltage)
 {
@@ -756,16 +760,31 @@ double voltage_dynamic_t::calculate_max_charge_w(double q, double qmax, double, 
     return -current * voltage_model_tremblay_hybrid(qmax, -current , q + current * dt_hr) * _num_strings * _num_cells_series;
 }
 
+using namespace std::placeholders;
 double voltage_dynamic_t::calculate_max_discharge_w(double q, double qmax, double, double *max_current) {
     q /= _num_strings;
     qmax /= _num_strings;
-    double current = max_current_a + max_current_b1 * q + max_current_b2 * qmax;
+
+    double current = 0., vol = 0;
+    double incr = q / 10;
+    double max_p = 0, max_I = 0;
+    while (current < q - tolerance && vol >= 0){
+        vol = voltage_model_tremblay_hybrid(qmax, current , q - current * dt_hr);
+        double p = current * vol;
+        if (p > max_p){
+            max_p = p;
+            max_I = current;
+        }
+        current += incr;
+    }
+    current = max_I;
+
     if (max_current)
-        *max_current = current  * _num_strings;
-    return current * voltage_model_tremblay_hybrid(qmax, current , q - current * dt_hr) * _num_strings * _num_cells_series;
+        *max_current = current * _num_strings;
+
+    return max_p * _num_strings * _num_cells_series;
 }
 
-using namespace std::placeholders;
 double voltage_dynamic_t::calculate_current_for_target_w(double P_watts, double q, double qmax, double) {
     if (P_watts == 0) return 0.;
 
@@ -789,78 +808,6 @@ double voltage_dynamic_t::calculate_current_for_target_w(double P_watts, double 
     newton<double, std::function<void(const double*, double*)>, 1>( x, resid, check, f,
                                                                                 100, 1e-6, 1e-6, 0.7);
     return x[0] * _num_strings * direction;
-}
-
-void voltage_dynamic_t::fit_current_to_cutoff_voltage(double cutoff_voltage_ratio) {
-    solver_cutoff_voltage = cutoff_voltage_ratio * _Vnom;
-
-    std::function<void(const double*, double*)> f = std::bind(&voltage_dynamic_t::solve_current_for_cutoff_voltage, this, _1, _2);
-
-    std::vector<double> currents, capacities, qmax;
-    double itv = 10.;
-    while (currents.size() < 4 && itv < 30.){
-        double qfull_incr = _Qfull / itv;
-        solver_Q = _Qfull;
-
-        while (solver_Q > 0){
-            double q_incr = solver_Q / itv;
-            solver_q = solver_Q;
-            while (solver_q > 0){
-
-                double x[1], resid[1];
-                x[0] = solver_q * 0.9 * dt_hr / 2.;
-                bool check = false;
-
-                int niter = newton<double, std::function<void(const double*, double*)>, 1>( x, resid, check, f,
-                                                                                    100, 1e-6, 1e-6, 0.7);
-                if (niter >= 0 && !check){
-                    // make sure the numerical root produces meaningful results
-                    double remaining_q = solver_q-x[0]*dt_hr;
-                    if (remaining_q >= 0 && abs(voltage_model_tremblay_hybrid(solver_Q, x[0], remaining_q) - solver_cutoff_voltage) < 1e-3){
-                        currents.push_back(x[0]);
-                        capacities.push_back(solver_q);
-                        qmax.push_back(solver_Q);
-                    }
-                }
-                solver_q -= q_incr;
-            }
-            solver_Q -= qfull_incr;
-        }
-        itv += 10;
-    }
-
-    if (currents.size() < 4){
-        throw std::runtime_error("Error during calculation of battery voltage model parameters: could not determine "
-                                 "relationship between max current vs remaining and max capacity");
-    }
-
-    // linear reg for two variables from uncorrected sum of squares
-    double count = currents.size();
-    double sum_x1 = std::accumulate(capacities.begin(), capacities.end(), 0.);
-    double sum_x2 = std::accumulate(qmax.begin(), qmax.end(), 0.);
-    double sum_y = std::accumulate(currents.begin(), currents.end(), 0.);
-
-    double uss_x1 = -sum_x1*sum_x1/count;
-    double uss_x2 = -sum_x2*sum_x2/count;
-    double uss_x1y = -sum_x1*sum_y/count;
-    double uss_x2y = -sum_x2*sum_y/count;
-    double uss_x1x2 = -sum_x1*sum_x2/count;
-    for (size_t n = 0; n < count; n++){
-        uss_x1 += capacities[n] * capacities[n];
-        uss_x2 += qmax[n] * qmax[n];
-        uss_x1y += capacities[n] * currents[n];
-        uss_x2y += qmax[n] * currents[n];
-        uss_x1x2 += capacities[n] * qmax[n];
-    }
-    max_current_b1 = (uss_x2 * uss_x1y - uss_x1x2 * uss_x2y)/(uss_x1 * uss_x2 - uss_x1x2*uss_x1x2);
-    max_current_b2 = (uss_x1 * uss_x2y - uss_x1x2 * uss_x1y)/(uss_x1 * uss_x2 - uss_x1x2*uss_x1x2);
-    max_current_a = sum_y/count - max_current_b1 * sum_x1/count - max_current_b2 * sum_x2/count;
-}
-
-void voltage_dynamic_t::solve_current_for_cutoff_voltage(const double x[1], double f[1]){
-    double I = x[0];
-    double E = _E0 - _K*solver_Q/(solver_q-I*dt_hr) + _A*exp(-_B0*(solver_Q-(solver_q-I*dt_hr)));
-    f[0] = E - _R*I - solver_cutoff_voltage;
 }
 
 void voltage_dynamic_t::solve_current_for_charge_power(const double *x, double *f){
@@ -940,10 +887,17 @@ double voltage_vanadium_redox_t::calculate_max_discharge_w(double q, double qmax
 
     newton<double, std::function<void(const double*, double*)>, 1>( x, resid, check, f,
                                                                     100, 1e-6, 1e-6, 0.7);
-    if (max_current)
-        *max_current = x[0];
+    double current = x[0];
 
-    return x[0] * voltage_model(solver_q - x[0] * dt_hr, solver_Q, x[0], kelvin) * _num_strings * _num_cells_series;
+    double power = current * voltage_model(solver_q - current * dt_hr, solver_Q, current, kelvin) * _num_strings * _num_cells_series;
+
+    if (power < 0){
+        current = 0.;
+        power = 0.;
+    }
+    if (max_current)
+        *max_current = current;
+    return power;
 }
 
 double voltage_vanadium_redox_t::calculate_current_for_target_w(double P_watts, double q, double qmax, double kelvin) {

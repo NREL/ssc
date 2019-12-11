@@ -19,6 +19,7 @@ size_t hour_of_year = 0;
 size_t step_of_hour = 0;
 
 
+
 TEST_F(BatteryDispatchTest_lib_battery_dispatch, DispatchManual)
 {
 	

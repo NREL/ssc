@@ -58,7 +58,7 @@ public:
 	int chemistry;
 	double dtHour;
 
-	void SetUp()
+	void SetUp() override
 	{
 		// capacity
 		q = 1000;
@@ -115,9 +115,8 @@ public:
 		// battery
 		chemistry = 1;
 		dtHour = 1.0;
-
-
 	}
+
 	// nothing to do
 	void TearDown(){}
 
