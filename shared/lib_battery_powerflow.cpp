@@ -233,7 +233,13 @@ void BatteryPowerFlow::calculateACConnected()
 
 		// Error checking for battery charging
 		if (P_pv_to_batt_ac + P_grid_to_batt_ac + P_fuelcell_to_batt_ac != fabs(P_battery_ac)) {
-			P_grid_to_batt_ac = fabs(P_battery_ac) - P_pv_to_batt_ac - P_fuelcell_to_batt_ac;
+		    if (P_battery_ac < 0){
+		        if (m_BatteryPower->canPVCharge && -P_battery_ac < P_gen_ac){
+                    P_pv_to_batt_ac = fabs(P_battery_ac) - P_grid_to_batt_ac - P_fuelcell_to_batt_ac;
+                }
+		        else if (m_BatteryPower->canGridCharge)
+                    P_grid_to_batt_ac = fabs(P_battery_ac) - P_pv_to_batt_ac - P_fuelcell_to_batt_ac;
+		    }
 		}
 	}
 	else

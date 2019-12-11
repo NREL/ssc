@@ -58,7 +58,7 @@ TEST_F(BatteryDispatchTest_lib_battery_dispatch, DispatchAutoBTM)
 	// TEST 1: Verify no grid charging since disallowed
 	dispatchAutoBTM->dispatch(0, 0, 0);
 	EXPECT_EQ(batteryPower->powerGridToBattery, 0);
-	EXPECT_EQ(batteryPower->powerBatteryDC, 0);
+	EXPECT_NEAR(batteryPower->powerBatteryDC, -39.42, 0.02);
 
 	// TEST 2: Now, allow grid charging, should charge
 	batteryPower->canGridCharge = true;
