@@ -608,7 +608,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, SnowModel)
 }
 
 /// Test PVSAMv1 with all defaults and no-financial model- look at MPPT input 1 voltage at night
-TEST_F(CMPvsamv1PowerIntegration, InverterNighttime_cmod_pvsamv1) {
+TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, InverterNighttime_cmod_pvsamv1) {
 
 	int pvsam_errors = run_module(data, "pvsamv1");
 
@@ -622,7 +622,7 @@ TEST_F(CMPvsamv1PowerIntegration, InverterNighttime_cmod_pvsamv1) {
 }
 
 /// Test PVSAMv1 tilt equals latitude input
-TEST_F(CMPvsamv1PowerIntegration, TiltEqualsLat_cmod_pvsamv1) {
+TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, TiltEqualsLat_cmod_pvsamv1) {
 
 	std::map<std::string, double> pairs;
 
