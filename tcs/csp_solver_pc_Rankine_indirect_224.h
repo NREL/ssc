@@ -91,7 +91,7 @@ private:
         double& P_cycle, double& eta, double& T_htf_cold, double& m_dot_demand, double& m_dot_htf_ref,
 		double& m_dot_makeup, double& W_cool_par, double& f_hrsys, double& P_cond, double &T_cond_out);
 
-	double Interpolate(int YT, int XT, double X);
+	double Interpolate(int YT, int XT, double X, double Z = std::numeric_limits<double>::quiet_NaN());
 
 	// Isopentane
 	double T_sat4(double P/*Bar*/) 

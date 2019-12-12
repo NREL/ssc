@@ -934,7 +934,11 @@ public:
                 pc->m_CT = as_integer("CT");                    // cooling tech type: 1=evaporative, 2=air, 3=hybrid    , 5= custom for rad cool, 6= custom for rad cool
                 pc->m_tech_type = as_integer("tech_type");      // 1: Fixed, 3: Sliding
                 if (pc->m_tech_type == 2) { pc->m_tech_type = 1; }; // changing fixed pressure for the trough to fixed pressure for the tower
-                if (!(pc->m_tech_type == 1 || pc->m_tech_type == 3 || pc->m_tech_type ==5 || pc->m_tech_type==6))
+                //if (pc->m_tech_type == 8) { pc->m_tech_type = 3; }; // changing sliding pressure for the trough to sliding pressure for the tower  ->  don't, this disallows the use of the old tower sliding curves
+                // the new scc power cycle curves do not work with dispatch optimization, so use old curves:
+                if (as_boolean("is_dispatch") && pc->m_tech_type == 1) { pc->m_tech_type = 7; };
+                if (as_boolean("is_dispatch") && pc->m_tech_type == 3) { pc->m_tech_type = 8; };
+                if (!(pc->m_tech_type == 1 || pc->m_tech_type == 3 || pc->m_tech_type ==5 || pc->m_tech_type==6 || pc->m_tech_type == 7 || pc->m_tech_type == 8))
                 {
                     std::string tech_msg = util::format("tech_type must be either 1 (fixed pressure) or 3 (sliding). Input was %d."
                         " Simulation proceeded with fixed pressure", pc->m_tech_type);
