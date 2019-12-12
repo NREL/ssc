@@ -23,6 +23,8 @@ GTEST_API_ int main(int argc, char **argv) {
 //	::testing::GTEST_FLAG(filter) = "CMSingleOwner*";
 //	::testing::GTEST_FLAG(filter) = "BifacialIrradTest*";
 //	::testing::GTEST_FLAG(filter) = "FuelCellTest*";
+//	::testing::GTEST_FLAG(filter) = "CMWindPowerIntegration*";
+
 	int status = RUN_ALL_TESTS();
 
 	if (!status)
