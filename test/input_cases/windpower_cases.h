@@ -14,7 +14,7 @@ int windpower_nofinancial_testfile(ssc_data_t &data)
 		return -1;
 	}
 
-	char filepath[256];
+	char filepath[1024];
 	int n1 = sprintf(filepath, "%s/test/input_docs/wind.srw", std::getenv("SSCDIR"));
 
 	ssc_data_set_string(data, "wind_resource_filename", filepath);
