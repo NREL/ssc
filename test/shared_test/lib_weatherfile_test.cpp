@@ -25,7 +25,7 @@ class CSVCase_WeatherfileTest : public weatherfileTest{
 protected:
 	void SetUp(){
 		e = 0.001;
-		char filepath[256];
+		char filepath[1024];
 		int n1 = sprintf(filepath, "%s/test/input_docs/weather-noRHum.csv", std::getenv("SSCDIR"));
 		file = std::string(filepath);
 		ASSERT_TRUE(wf.open(file));
@@ -128,7 +128,7 @@ TEST_F(CSVCase_WeatherfileTest, readTest_lib_weatherfile){
 }
 
 TEST_F(weatherfileTest, EPWTest_lib_weatherfile) {
-	char filepath[256];
+	char filepath[1024];
 	int n1 = sprintf(filepath, "%s/test/input_docs/weather_30m.epw", std::getenv("SSCDIR"));
 	file = std::string(filepath);
 	EXPECT_TRUE(wf.open(file));
@@ -138,7 +138,7 @@ TEST_F(weatherfileTest, EPWTest_lib_weatherfile) {
 }
 
 TEST_F(weatherfileTest, EPWNoLineEndingsTest_lib_weatherfile) {
-	char filepath[256];
+	char filepath[1024];
 	int n1 = sprintf(filepath, "%s/test/input_docs/weather_noLineEnding.epw", std::getenv("SSCDIR"));
 	file = std::string(filepath);
 	EXPECT_TRUE(wf.open(file));
