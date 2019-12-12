@@ -970,9 +970,17 @@ weatherdata::weatherdata( var_data *data_table )
 			n_irr++;
 		}
 	}
-	if (nrec == 0 || n_irr < 1)
+	if (nrec == 0 || n_irr < 2) //poa required if two other types of irradiance are not defined
 	{
-		if (data_table->table.lookup("poa") == nullptr){
+		if (var_data *value = data_table->table.lookup("poa")) //if poa is supplied, use it to specify nrec
+		{
+			if (value->type == SSC_ARRAY) {
+				nrec = value->num.length();
+				n_irr++;
+			}
+		}
+		else //otherwise, not enough irradiance components are specified
+		{
 			m_message = "missing irradiance: could not find gh, dn, df, or poa";
 			m_ok = false;
 			return;

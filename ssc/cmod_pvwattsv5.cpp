@@ -660,10 +660,10 @@ public:
         double tamb = as_double("tamb");
         double wspd = as_double("wspd");
         double alb = as_double("alb");
-        double time_step = as_double("time_step");
+        //double time_step = as_double("time_step");
 
-        double last_tcell = as_double("tcell");
-        double last_poa = as_double("poa");
+        //double last_tcell = as_double("tcell");
+        //double last_poa = as_double("poa");
 
 		double shad_beam = 1.0;
 		powerout(0, shad_beam, 1.0, beam, diff, alb, wspd, tamb);
