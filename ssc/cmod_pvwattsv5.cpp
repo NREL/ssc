@@ -205,6 +205,9 @@ public:
                 track_mode = 3; inoct = 45; shade_mode_1x = 0; break;
         }
 
+		//throw a warning if tilt is > 0 for a tracking system, since this is a very uncommon configuration but an easy mistake to make
+		if ((array_type == ONE_AXIS_SELF_SHADED || array_type == ONE_AXIS_BACKTRACKED) && tilt > 0)
+			log("A non-zero tilt was assigned for a single-axis tracking system. This is a very uncommon configuration.", SSC_WARNING);
 
         gcr = 0.4;
         if (track_mode == 1 && is_assigned("gcr")) gcr = as_double("gcr");
