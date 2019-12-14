@@ -947,10 +947,13 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	SharedInverter * sharedInverter = PVSystem->m_sharedInverter.get();
 
 	//overwrite tilt with latitude if flag is set- can't do this in PVIOManager because need latitude from weather file
+	//also check here for tilt > 0 for tracking systems, since this is a very uncommon configuration but an easy mistake to make
 	for (size_t nn = 0; nn < num_subarrays; nn++)
 	{
 		if (Subarrays[nn]->tiltEqualLatitude)
 			Subarrays[nn]->tiltDegrees = Irradiance->weatherHeader.lat;
+		if (Subarrays[nn]->trackMode == irrad::SINGLE_AXIS && Subarrays[nn]->tiltDegrees > 0)
+			log(util::format("A non-zero tilt was assigned for a single-axis tracking system in Subarray %d. This is a very uncommon configuration.", nn+1), SSC_WARNING);
 	}
 
 	double annual_snow_loss = 0;
