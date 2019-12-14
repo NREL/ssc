@@ -516,6 +516,10 @@ public:
 			break;
 		}
 
+		//throw a warning if tilt is > 0 for a tracking system, since this is a very uncommon configuration but an easy mistake to make
+		if ((pv.type == ONE_AXIS ||	pv.type == ONE_AXIS_BACKTRACKING) && pv.tilt > 0)
+			log("A non-zero tilt was assigned for a single-axis tracking system. This is a very uncommon configuration.", SSC_WARNING);
+
 		pv.gcr = as_double("gcr");
 
 
