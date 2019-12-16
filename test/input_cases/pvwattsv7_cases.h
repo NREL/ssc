@@ -44,7 +44,7 @@ int pvwattsv7_nofinancial_testfile(ssc_data_t &data)
 	ssc_data_set_number(data, "gcr", 0.40000000596046448);
 
 	ssc_data_set_number(data, "losses", 14.075660705566406);
-	ssc_data_set_number(data, "enable_wind_stow", 0);
+	//ssc_data_set_number(data, "enable_wind_stow", 0);
 	ssc_data_set_number(data, "inv_eff", 96);
 
 	ssc_data_set_number(data, "adjust:constant", 0);
