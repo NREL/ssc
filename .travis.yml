@@ -24,7 +24,7 @@ before_script:
   - user=$(echo $TRAVIS_REPO_SLUG | sed 's,/.*$,,')
   - (cd ../ && pwd)
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then git clone https://github.com/google/googletest /home/travis/build/$user/googletest; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export GTEST=/home/travis/build/$user/googletest; mkdir ${GTEST}/build; cd ${GTEST}/build; cmake ..; make -j2;fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export GTEST=/home/travis/build/$user/googletest; mkdir ${GTEST}/build; cd ${GTEST}/build; cmake ..; make;fi
  # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export LKDIR=/home/travis/build/$user/lk; fi
  # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export WEXDIR=/home/travis/build/$user/wex; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export SSCDIR=/home/travis/build/$user/ssc; fi
@@ -44,7 +44,7 @@ script:
  # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then make -j4 -C $WEXDIR/build_linux; fi
  # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then make -j4 -C $SSCDIR/build_linux; fi
   - mkdir ${SSCDIR}/build && cd ${SSCDIR}/build
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cmake .. -DCMAKE_BUILD_TYPE=Release -Dskip_tools=1  && make -j4; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cmake .. -DCMAKE_BUILD_TYPE=Release -Dskip_tools=1  && make; fi
 #  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then test/Test --gtest_filter=*UsingInterpolatedSub*; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then travis_wait 30 test/Test; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then cmake .. -DCMAKE_BUILD_TYPE=Release -Dskip_tools=1  && make VERBOSE=1 -j4; fi
