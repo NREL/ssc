@@ -114,6 +114,7 @@ csp_dispatch_opt::csp_dispatch_opt()
     params.q_rec_min = numeric_limits<double>::quiet_NaN();
     params.w_rec_pump = numeric_limits<double>::quiet_NaN();
     params.q_pb_des = numeric_limits<double>::quiet_NaN();
+    params.disp_inventory_incentive = numeric_limits<double>::quiet_NaN();
     params.siminfo = 0;   
     params.col_rec = 0;
 	params.mpc_pc = 0;
@@ -507,8 +508,8 @@ bool csp_dispatch_opt::optimize()
         --------------------------------------------------------------------------------
         */
 		{
-            int *col = new int[12 * nt];
-            REAL *row = new REAL[12 * nt];
+            int *col = new int[12 * nt +1];
+            REAL *row = new REAL[12 * nt +1];
             double tadj = P["disp_time_weighting"];
             int i = 0;
 
@@ -526,22 +527,22 @@ bool csp_dispatch_opt::optimize()
                 row[ t + nt*(i++) ] = P["delta"] * price_signal.at(t)*tadj*(1.-outputs.w_condf_expected.at(t));
 
                 col[ t + nt*(i  ) ] = O.column("xr", t);
-                row[ t + nt*(i++) ] = -(P["delta"] * price_signal.at(t) * P["Lr"])+tadj*pmean;  // tadj added to prefer receiver production sooner (i.e. delay dumping)
+                row[ t + nt*(i++) ] = -(P["delta"] * price_signal.at(t)*tadj * P["Lr"]); // +tadj * pmean;  // tadj added to prefer receiver production sooner (i.e. delay dumping)
 
                 col[ t + nt*(i  ) ] = O.column("xrsu", t);
-                row[ t + nt*(i++) ] = -P["delta"] * price_signal.at(t) * P["Lr"];
+                row[ t + nt*(i++) ] = -P["delta"] * price_signal.at(t)*tadj * P["Lr"];
 
                 col[ t + nt*(i  ) ] = O.column("yrsu", t);
-                row[ t + nt*(i++) ] = -price_signal.at(t) * (params.w_rec_ht + params.w_stow);
+                row[ t + nt*(i++) ] = -price_signal.at(t)*tadj * (params.w_rec_ht + params.w_stow);
 
                 col[ t + nt*(i  ) ] = O.column("yr", t);
-                row[ t + nt*(i++) ] = -(P["delta"] * price_signal.at(t) * params.w_track) + tadj;	// tadj added to prefer receiver operation in nearer term to longer term
+                row[ t + nt*(i++) ] = -(P["delta"] * price_signal.at(t)*tadj * params.w_track); // +tadj;	// tadj added to prefer receiver operation in nearer term to longer term
 
                 col[ t + nt*(i  ) ] = O.column("x", t);
-                row[ t + nt*(i++) ] = -P["delta"] * price_signal.at(t) * params.w_cycle_pump;
+                row[ t + nt*(i++) ] = -P["delta"] * price_signal.at(t)*tadj * params.w_cycle_pump;
 
                 col[ t + nt*(i  ) ] = O.column("ycsb", t);
-                row[ t + nt*(i++) ] = -P["delta"] * price_signal.at(t) * params.w_cycle_standby;
+                row[ t + nt*(i++) ] = -P["delta"] * price_signal.at(t)*tadj * params.w_cycle_standby;
 
                 //xxcol[ t + nt*(i   ] = O.column("yrsb", t);
                 //xxrow[ t + nt*(i++) ] = -delta * price_signal.at(t) * (Lr * Qrl + (params.w_stow / delta));
@@ -570,7 +571,11 @@ bool csp_dispatch_opt::optimize()
                 tadj *= P["disp_time_weighting"];
             }
 
-            set_obj_fnex(lp, i*nt, row, col);
+
+            col[i * nt] = O.column("s", nt - 1);       //terminal inventory
+            row[i * nt] = P["delta"] * pmean*P["W_dot_cycle"] * nt / params.e_tes_max * params.disp_inventory_incentive;
+
+            set_obj_fnex(lp, i*nt+1, row, col);
 
             delete[] col;
             delete[] row;
