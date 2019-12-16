@@ -314,55 +314,28 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
         pars["M"] = 1.e6;
         pars["W_dot_cycle"] = optinst->params.q_pb_des * optinst->params.eta_cycle_ref;
 		
-		/*pars["wlim_min"] = 9.e99;
-		for (int t = 0; t < nt; t++)
-			pars["wlim_min"] = fmin(pars["wlim_min"], optinst->w_lim.at(t));*/
-
-        //calculate Z parameters
-        pars["Z_1"] = 0.;
-        pars["Z_2"] = 0.;
-        {
-            double fi = 0.;
-            double fhfi2 = 0.;
-            double fhfi = 0.;
-            double fhfi_2 = 0.;
-            vector<double> fiv;
-            int m = (int)optinst->params.eff_table_load.get_size();
-            for(int i=0; i<m; i++)
-            {
-                if( i==0 ) continue; // first data point is zero, so skip
-
-                double q, eta, f, fh;
-                optinst->params.eff_table_load.get_point(i, q, eta);
-                fh = optinst->params.eta_cycle_ref / eta;
-                f = q / optinst->params.q_pb_des;
-                fiv.push_back(f);
-
-                fi += f;
-                fhfi += fh*f;
-                fhfi2 += fh*f*f;
-                fhfi_2 += fh*fh*f*f;
-            }
-            m += -1;
-
-            double fi_fhfi = 0.;
-            for(int i=0; i<m; i++)
-                fi_fhfi += fiv[i]*fhfi;
-
-            pars["Z_1"] = (fhfi2 - 1./(double)m*fi_fhfi)/(fhfi_2 - 1./(double)m *fhfi * fhfi);
-
-            pars["Z_2"] = 1./(double)m * ( fi - pars["Z_1"] * fhfi );
-        }
-
-        pars["etap"] = pars["Z_1"]*optinst->params.eta_cycle_ref; //rate2
-
-        double limit1 = (-pars["Z_2"]*pars["W_dot_cycle"])/(pars["Z_1"]*optinst->params.eta_cycle_ref);  //q at point where power curve crosses x-axis
+        //linear power-heat fit requires that the efficiency table has 3 points.. 0->zero point, 1->min load point, 2->max load point. This is created in csp_solver_core::Ssimulate().
+        int m = optinst->params.eff_table_load.get_size()-1;
+        if (m != 2)
+            throw C_csp_exception("Model failure during dispatch optimization problem formulation. Ill-formed load table.");
+        //get the two points used to create the linear fit
+        double q[2], eta[2];
+        optinst->params.eff_table_load.get_point(1, q[0], eta[0]);
+        optinst->params.eff_table_load.get_point(2, q[1], eta[1]);
+        //calculate the rate of change in power output versus heat input
+        pars["etap"] = (q[1] * eta[1] - q[0] * eta[0]) / (q[1] - q[0]);
+        //calculate the y-intercept of the linear fit at 'b'
+        double b = q[1] * eta[1] - q[1] * pars["etap"];
+        //locate the heat input at which the linear fit crosses zero power
+        double limit1 = -b / pars["etap"];
 
         pars["Wdot0"] = 0.;
         if( pars["q0"] >= pars["Ql"] )
             pars["Wdot0"]= pars["etap"]*pars["q0"]*optinst->outputs.eta_pb_expected.at(0);
-
+        double wdot0 = pars["Wdot0"];
+        //maximum power based on linear fit
         pars["Wdotu"] = (pars["Qu"] - limit1) * pars["etap"];
+        // minimum power based on linear fit
         pars["Wdotl"] = (pars["Ql"] - limit1) * pars["etap"];
 
         // Adjust wlim if specified value is too low to permit cycle operation
