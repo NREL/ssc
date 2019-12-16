@@ -81,7 +81,7 @@ static var_info _cm_vtab_pvwattsv5_common[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "array_type",                     "Array type",                                  "0/1/2/3/4", "Fixed OR,Fixed Roof,1Axis,Backtracked,2Axis",  "PVWatts",      "*",                       "MIN=0,MAX=4,INTEGER",                      "" }, 
 	{ SSC_INPUT,        SSC_NUMBER,      "tilt",                           "Tilt angle",                                  "deg",       "H=0,V=90",                                     "PVWatts",      "array_type<4",                       "MIN=0,MAX=90",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "azimuth",                        "Azimuth angle",                               "deg",       "E=90,S=180,W=270",                             "PVWatts",      "array_type<4",                       "MIN=0,MAX=360",                            "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "gcr",                            "Ground coverage ratio",                       "0..1",      "",                                             "PVWatts",      "?=0.4",                   "MIN=0,MAX=3",               "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "gcr",                            "Ground coverage ratio",                       "0..1",      "",                                             "PVWatts",      "?=0.4",                   "MIN=0,MAX=1",               "" },
 	
 	var_info_invalid };
 
@@ -253,7 +253,7 @@ public:
 		irr.set_beam_diffuse(dn, df);
 		irr.set_surface( track_mode, tilt, azimuth, 45.0, 
 			shade_mode_1x == 1, // backtracking mode
-			gcr );
+			gcr, false, 0.0 );
 
 		int code = irr.calc();
 			
@@ -284,13 +284,13 @@ public:
 					double Fgnddiff = 1.0;
 						
 					// worst-case mask angle using calculated surface tilt
-					double phi0 = 180/3.1415926*atan2( sind( stilt ), 1/gcr - cosd( stilt ) );
+					//double phi0 = 180/3.1415926*atan2( sind( stilt ), 1/gcr - cosd( stilt ) );
 
 					// calculate sky and gnd diffuse derate factors
 					// based on view factor reductions from self-shading
 					diffuse_reduce( solzen, stilt,
 						dni, dhi, iskydiff, ignddiff,
-						gcr, phi0, alb, 1000,
+						gcr, alb, 1000,
 
 						// outputs (pass by reference)
 						reduced_skydiff, Fskydiff,

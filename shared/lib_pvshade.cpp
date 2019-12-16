@@ -459,11 +459,16 @@ bool ss_exec(
 	Hs = fmax( Hs, 0.0);	// Hs must be positive
 	Hs = fmin( Hs, m_B);	// Hs cannot be greater than the height of the row
 
+	//calculate the relative shaded area, Applebaum equation A15
+	//this would only apply to linearly shaded systems, but we'll report it as an output
+	//in order to be able to distinguish the linear beam shading component from the non-linear dc effect
+	//in loss diagrams and such. 
+	double relative_shaded_area = Hs * (m_row_length - g) / (m_A * m_row_length); //numerator is shadow area, denom is row area
+	outputs.m_shade_frac_fixed = relative_shaded_area;
+	
+	//now we'll apply the diffuse reduction and return because we're done for linearly shaded systems
 	if (linear)
 	{
-		//relative shaded area, Applebaum equation A15
-		double relative_shaded_area = Hs * (m_row_length - g) / (m_A * m_row_length); //numerator is shadow area, denom is row area
-		outputs.m_shade_frac_fixed = relative_shaded_area;
 		//determine reduction of diffuse incident on shaded sections due to self-shading (beam is not derated because that shading is taken into account in dc derate)
 		diffuse_reduce(solzen, tilt, Gb_nor, Gdh, poa_sky, poa_gnd, m_B / m_R, albedo, m_r,
 			// outputs

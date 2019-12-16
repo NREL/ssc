@@ -113,6 +113,9 @@
     <ClCompile Include="..\test\ssc_test\cmod_tcstrough_empirical_test.cpp">
       <Filter>ssc_test</Filter>
     </ClCompile>
+    <ClCompile Include="..\test\ssc_test\cmod_pvwattsv7_test.cpp">
+      <Filter>ssc_test</Filter>
+    </ClCompile>
     <ClCompile Include="..\test\ssc_test\cmod_tcsfresnel_molten_salt_test.cpp">
       <Filter>ssc_test</Filter>
     </ClCompile>
@@ -309,6 +312,12 @@
     </ClInclude>
     <ClInclude Include="..\test\tcs_test\lib_trough_properties.h">
       <Filter>tcs_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\input_cases\pvwattsv7_cases.h">
+      <Filter>input_cases</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\ssc_test\cmod_pvwattsv7_test.h">
+      <Filter>ssc_test</Filter>
     </ClInclude>
     <ClInclude Include="..\test\tcs_test\lib_trough_test.h">
       <Filter>tcs_test</Filter>
