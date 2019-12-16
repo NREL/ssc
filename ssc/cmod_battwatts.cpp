@@ -45,8 +45,7 @@ var_info vtab_battwatts[] = {
 	{ SSC_INPUT,        SSC_ARRAY,       "dc",								  "DC array power",                         "W",       "",                 "",                           "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "ac",								  "AC inverter power",                      "W",       "",                 "",                           "",                           "",                              "" },
 	{ SSC_INPUT,		SSC_ARRAY,	     "load",			                  "Electricity load (year 1)",              "kW",	   "",		           "",                           "",	                         "",	                          "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inverter_model",                    "Inverter model specifier",               "",      "0=cec,1=datasheet,2=partload,3=coefficientgenerator,4=generic", "", "?=4",    "INTEGER,MIN=0,MAX=4",           "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inverter_efficiency",               "Inverter Efficiency",                    "%",      "",                  "",                          "",                         "",                               "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inverter_efficiency",               "Inverter Efficiency",                    "%",      "",                  "",                          "?=96",                        "",                               "" },
 
 var_info_invalid  };
 
@@ -247,9 +246,8 @@ public:
 		
 	
 		// Inverter model
-		batt_vars->inverter_model = as_integer("inverter_model");
-		if (batt_vars->inverter_model > 3)
-			batt_vars->inverter_efficiency = as_double("inverter_efficiency");
+		batt_vars->inverter_model = 4; //this is the SharedInverter::NONE option, but for some reason that won't build for me		
+		batt_vars->inverter_efficiency = as_double("inverter_efficiency");
 
 		// Clean up
 		delete lifetime_matrix;

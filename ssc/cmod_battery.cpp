@@ -563,9 +563,9 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 			}
 			
 			// Inverter settings
-			if (cm.is_assigned("inverter_model"))
-			{
-				batt_vars->inverter_model = cm.as_integer("inverter_model");
+			batt_vars->inverter_model = cm.as_integer("inverter_model");
+			if (batt_vars->inverter_model < 4) //user has assigned an actual inverter model
+			{			
 				batt_vars->inverter_count = cm.as_integer("inverter_count");
 				batt_vars->batt_inverter_efficiency_cutoff = cm.as_double("batt_inverter_efficiency_cutoff");
 
@@ -591,7 +591,7 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 					batt_vars->inverter_paco = batt_vars->inverter_count * cm.as_double("inv_cec_cg_paco") * util::watt_to_kilowatt;
 				}
 			}
-			else
+			else //use the default "none" inverter model, which is the default behavior of this input
 			{
 				batt_vars->inverter_model = SharedInverter::NONE;
 				batt_vars->inverter_count = 1;
