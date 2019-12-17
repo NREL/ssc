@@ -504,7 +504,7 @@ static var_info _cm_vtab_merchantplant[] = {
 /* Production - input as energy_net above */
 
 /* Partial Income Statement: Project */	
-	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_net",                          "Energy",                     "kWh",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_net",                          "Energy produced",                     "kWh",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
 { SSC_OUTPUT,       SSC_ARRAY,      "cf_thermal_value",                        "Thermal revenue",                     "$",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
 { SSC_OUTPUT,       SSC_ARRAY,      "cf_om_fixed_expense",                    "O&M fixed expense",                  "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_om_production_expense",               "O&M production-based expense",       "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
