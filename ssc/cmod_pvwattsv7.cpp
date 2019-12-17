@@ -409,14 +409,15 @@ public:
 		module.type = (module_type)as_integer("module_type");
 		switch (module.type)
 		{
-		case STANDARD: //need to update or get source for defaults!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-			module.gamma = -0.0047; // -0.0038; latter is updated from aron
-			module.ar_glass = false;
-			module.ff = 0.771; //fill factors required for self-shading calculations
-			module.stc_eff = 0.17;
+		case STANDARD:
+			module.gamma = -0.0037;
+			module.ar_glass = true;
+			module.ff = 0.778; //fill factors required for self-shading calculations
+			module.stc_eff = 0.190;
 
 			// for optional SDM module model: 
 			// selected module from PVsyst PAN database: TSM-330DD14A(II)
+			// note that this is a DIFFERENT module than the four main factors listed above
 			sdm.Area = 1.940;
 			sdm.Vmp = 37.8;
 			sdm.Imp = 8.73;
@@ -436,13 +437,14 @@ public:
 			break;
 
 		case PREMIUM:
-			module.gamma = -0.0035; //-0.0030; latter is updated from aron
+			module.gamma = -0.0035;
 			module.ar_glass = true;
-			module.ff = 0.801;
-			module.stc_eff = 0.201;
+			module.ff = 0.780;
+			module.stc_eff = 0.204;
 
 			// for optional SDM module model: 
 			// selected module from PVsyst PAN database: SPR-X20-327-COM
+			// note that this is a DIFFERENT module than the four main factors listed above
 			sdm.Area = 1.630;
 			sdm.Vmp = 59.5;
 			sdm.Imp = 5.49;
@@ -462,13 +464,14 @@ public:
 			break;
 
 		case THINFILM:
-			module.gamma = -0.0020; // -0.0028; latter is updated from aron
-			module.ar_glass = false;
-			module.ff = 0.706;
-			module.stc_eff = 0.156;
+			module.gamma = -0.0032;
+			module.ar_glass = true;
+			module.ff = 0.777;
+			module.stc_eff = 0.176;
 
 			// for optional SDM module model: 
 			// selected module from PVsyst PAN database: FS-4112-3
+			// note that this is a DIFFERENT module than the four main factors listed above
 			sdm.Area = 0.72;
 			sdm.Vmp = 68.5;
 			sdm.Imp = 1.64;

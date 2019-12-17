@@ -46,8 +46,10 @@ TEST_F(CMPvwattsV7Integration, DefaultNoFinancialModel_cmod_pvwattsv7){
 TEST_F(CMPvwattsV7Integration, DifferentTechnologyInputs_cmod_pvwattsv7)
 {
 	//PVWattsV5 results: annual_energy_expected = { 6909.79, 7123.32, 7336.478, 6909.79, 6804.376, 8601.011, 8727.704, 9690.735};
-	std::vector<double> annual_energy_expected = { 6750.42, 7034.39, 7166.88, 6750.42, 6693.49, 8514.26, 8441.60, 9631.76 };
+	//V7 prior to module coefficient updates: std::vector<double> annual_energy_expected = { 6750.42, 7034.39, 7166.88, 6750.42, 6693.49, 8514.26, 8441.60, 9631.76 };
 	//standard fixed -2.4%, premium fixed -1.3%, thinfilm fixed -2.4%, standard fixed -2.4%, standard roof -1.7%, standard 1-axis -1.0%, standard backtrack -3.4%, standard 2-axis -0.6%
+	std::vector<double> annual_energy_expected = { 7003.14, 7034.39, 7081.20, 7003.14, 6975.36, 8800.64, 8731.63, 9884.35 };
+	//standard fixed +3.6%, premium fixed 0%, thinfilm fixed -1.2%, standard fixed +3.6%, standard roof +4.0%, standard 1-axis +3.3%, standard backtrack +3.3%, standard 2-axis +2.6%
 
 	std::map<std::string, double> pairs;
 	size_t count = 0;
