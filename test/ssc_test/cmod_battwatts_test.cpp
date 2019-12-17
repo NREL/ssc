@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "code_generator_utilities.h"
+#include "../input_cases/code_generator_utilities.h"
 #include "vartab.h"
 #include "cmod_battwatts_test.h"
 

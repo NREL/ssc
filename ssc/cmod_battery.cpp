@@ -1338,7 +1338,7 @@ void battstor::initialize_time(size_t year_in, size_t hour_of_year, size_t step_
 	year_index = (hour * step_per_hour) + step; 
 	step_per_year = 8760 * step_per_hour;
 }
-void battstor::advance(var_table *vt, double P_gen, double V_gen, double P_load, double P_gen_clipped )
+void battstor::advance(var_table *, double P_gen, double V_gen, double P_load, double P_gen_clipped )
 {
 	BatteryPower * powerflow = dispatch_model->getBatteryPower();
 	powerflow->reset();

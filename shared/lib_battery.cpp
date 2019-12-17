@@ -632,7 +632,7 @@ double voltage_table_t::calculate_current_for_target_w(double P_watts, double q,
         multiplier = -1.;
 
     size_t row = 0;
-    while (DOD > m_voltage_table[row].first && row < m_voltage_table.size()){
+    while (row < m_voltage_table.size() && DOD > m_voltage_table[row].first){
         row++;
     }
 
@@ -642,7 +642,7 @@ double voltage_table_t::calculate_current_for_target_w(double P_watts, double q,
     double DOD_new = 0.;
     double incr = 0;
     while (incr + row < slopes.size() && incr + row >= 0){
-        double i = row + incr;
+        size_t i = row + (size_t)incr;
 
         double a = B * slopes[i];
         double b = A * slopes[i] + B * intercepts[i];
@@ -650,7 +650,7 @@ double voltage_table_t::calculate_current_for_target_w(double P_watts, double q,
 
         DOD_new = abs((-b + sqrt(b*b - 4*a*c))/(2*a));
 
-        auto upper = (size_t)fmin(i, m_voltage_table.size());
+        auto upper = (size_t)fmin(i, m_voltage_table.size() - 1);
         auto lower = (size_t)fmax(0, i-1);
         if (DOD_new <= m_voltage_table[upper].first && DOD_new >= m_voltage_table[lower].first){
             break;
@@ -1682,7 +1682,11 @@ losses_t::losses_t(double dtHour, lifetime_t * lifetime, thermal_t * thermal, ca
 
 	}
 }
-losses_t * losses_t::clone(){ return new losses_t(*this); }
+losses_t * losses_t::clone(){
+	auto new_losses = new losses_t(*this); 
+	new_losses->copy(this);
+	return new_losses;
+}
 void losses_t::copy(losses_t * losses)
 {
 	_lifetime = losses->_lifetime;

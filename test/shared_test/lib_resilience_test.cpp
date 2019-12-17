@@ -33,7 +33,7 @@ TEST_F(ResilienceTest_lib_resilience, VoltageCutoffParameterSetup)
                                             }
 
                                         }
-                                        catch (std::exception& e){
+                                        catch (std::exception&){
                                             std::cerr << buf;
                                         }
                                     }

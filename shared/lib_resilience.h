@@ -33,6 +33,9 @@ public:
     /// Construct from fully-initialized dispatch_t
     dispatch_resilience(const dispatch_t &orig, size_t start_index);
 
+	/// Delete battery and battery initial
+	~dispatch_resilience();
+
     /// AC or DC connection
     const CONNECTION connection;
 

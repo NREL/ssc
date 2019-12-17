@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
@@ -20,12 +20,14 @@
     <ClCompile Include="..\test\shared_test\lib_fuel_cell_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_geothermal_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_irradproc_test.cpp" />
+    <ClCompile Include="..\test\shared_test\lib_resilience_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_shared_inverter_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_time_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_util_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_weatherfile_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_windfile_test.cpp" />
     <ClCompile Include="..\test\splinter_test\splinter_test.cpp" />
+    <ClCompile Include="..\test\ssc_test\cmod_battwatts_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_biomass_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_battery_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_fuelcell_test.cpp" />

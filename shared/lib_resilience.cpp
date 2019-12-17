@@ -19,6 +19,11 @@ dispatch_resilience::dispatch_resilience(const dispatch_t &orig, size_t start_in
     _Battery->capacity_model()->change_SOC_limits(0., 100.);
 }
 
+dispatch_resilience::~dispatch_resilience() {
+	delete_clone();
+	_Battery_initial = nullptr;
+}
+
 bool dispatch_resilience::run_outage_step_ac(double crit_load_kwac, double pv_kwac){
     if (connection != CONNECTION::AC_CONNECTED)
         throw std::runtime_error("Error in resilience::run_outage_step_ac: called for battery with DC connection.");
@@ -57,7 +62,8 @@ bool dispatch_resilience::run_outage_step_ac(double crit_load_kwac, double pv_kw
                 }
             }
             battery_dispatched_kwac = battery_dispatched_kwdc * m_batteryPower->singlePointEfficiencyDCToAC;
-            delete Battery_initial;
+			Battery_initial->delete_clone();
+			delete Battery_initial;
         }
         else
             battery_dispatched_kwac = dispatch_kw(max_discharge_kwdc) * m_batteryPower->singlePointEfficiencyDCToAC;
@@ -121,6 +127,7 @@ bool dispatch_resilience::run_outage_step_dc(double crit_load_kwac, double pv_kw
                     battery_dispatched_kwac = inverter->powerAC_kW;
                 }
             }
+			Battery_initial->delete_clone();
             delete Battery_initial;
         }
         else{
