@@ -605,6 +605,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		dispatch.params.rsu_cost = mc_tou.mc_dispatch_params.m_rsu_cost;
 		dispatch.params.csu_cost = mc_tou.mc_dispatch_params.m_csu_cost;
 		dispatch.params.pen_delta_w = mc_tou.mc_dispatch_params.m_pen_delta_w;
+        dispatch.params.disp_inventory_incentive = mc_tou.mc_dispatch_params.m_disp_inventory_incentive;
 		dispatch.params.q_rec_standby = mc_tou.mc_dispatch_params.m_q_rec_standby;
 		
 		dispatch.params.w_rec_ht = mc_tou.mc_dispatch_params.m_w_rec_ht;
@@ -618,7 +619,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		//add zero point
 		dispatch.params.eff_table_load.add_point(0., 0.);    //this is required to allow the model to converge
 
-		int neff = 2;
+		int neff = 2;   //mjw: if using something other than 2, the linear approximation assumption and associated code in csp_dispatch.cpp/calculate_parameters() needs to be reformulated.
 		for(int i=0; i<neff; i++)
 		{
 			double x = dispatch.params.q_pb_min + (dispatch.params.q_pb_max - dispatch.params.q_pb_min)/(double)(neff - 1)*i;

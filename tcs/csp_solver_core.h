@@ -259,6 +259,7 @@ public:
         double m_csu_cost;
         double m_q_rec_standby;
         double m_pen_delta_w;
+        double m_disp_inventory_incentive;
 		double m_w_rec_ht;
 		std::vector<double> m_w_lim_full;
 
@@ -296,6 +297,7 @@ public:
             m_rsu_cost = 952.;
             m_csu_cost = 10000.;
             m_pen_delta_w = 0.1;
+            m_disp_inventory_incentive = 0.;
             m_q_rec_standby = 9.e99;
 			m_w_rec_ht = 0.0;
 			m_w_lim_full.resize(8760);
