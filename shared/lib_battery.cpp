@@ -579,6 +579,7 @@ void voltage_table_t::updateVoltage(capacity_t * capacity, thermal_t * , double 
     _cell_voltage = calculate_voltage(capacity->DOD());
 }
 
+// helper fx to calculate depth of discharge from current and max capacities
 inline double calc_DOD(double q, double qmax) {return (1. - q/qmax) * 100.;}
 
 double voltage_table_t::calculate_max_charge_w(double q, double qmax, double, double *max_current) {
