@@ -57,7 +57,7 @@ static var_info _cm_vtab_saleleaseback[] = {
 
 	{ SSC_OUTPUT, SSC_ARRAY, "ppa_multipliers", "TOD factors", "", "", "Time of Delivery", "*", "", "" },
 
-PPA revenue by year for 
+// PPA revenue by year for 
 
 	{ SSC_INPUT, SSC_NUMBER, "dispatch_factor1", "TOD factor for period 1", "", "", "Time of Delivery", "ppa_multiplier_model=0", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "dispatch_factor2", "TOD factor for period 2", "", "", "Time of Delivery", "ppa_multiplier_model=0", "", "" },
