@@ -466,7 +466,7 @@ bool is_missing(double v) {
 }
 
 float check_missing(double v, double missing = -999.) {
-	if (std::abs(v - missing) <= 0.01) {
+	if (std::fabs(v - missing) <= 0.01) {
 		return std::numeric_limits<float>::quiet_NaN();
 	}
 	else return (float)v;

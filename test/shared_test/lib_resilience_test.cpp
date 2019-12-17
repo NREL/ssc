@@ -392,8 +392,8 @@ TEST_F(ResilienceTest_lib_resilience, RoundtripEffModel){
     double max_current;
     vol->calculate_max_charge_w(cap->q0(), cap->qmax(), 0, &max_current);
 
-    double current = abs(max_current) * 0.01;
-    while (current < abs(max_current)){
+    double current = fabs(max_current) * 0.01;
+    while (current < fabs(max_current)){
         cap->updateCapacity(full_current, 1);   //discharge to empty
 
         size_t n_t = 0;
@@ -421,7 +421,7 @@ TEST_F(ResilienceTest_lib_resilience, RoundtripEffModel){
 
 //        printf("current %f, eff %f, n %d\n", current, -output_power/input_power, n_t);
 
-        current += abs(max_current) / 100.;
+        current += fabs(max_current) / 100.;
     }
 }
 
@@ -441,8 +441,8 @@ TEST_F(ResilienceTest_lib_resilience, RoundtripEffTable){
     double max_current;
     vol->calculate_max_charge_w(cap->q0(), cap->qmax(), 0, &max_current);
 
-    double current = abs(max_current) * 0.01;
-    while (current < abs(max_current)){
+    double current = fabs(max_current) * 0.01;
+    while (current < fabs(max_current)){
         cap->updateCapacity(full_current, 1);   //discharge to empty
 
         size_t n_t = 0;
@@ -468,7 +468,7 @@ TEST_F(ResilienceTest_lib_resilience, RoundtripEffTable){
 
 //        printf("current %f, eff %f, n %d\n", current, -output_power/input_power, n_t);
 
-        current += abs(max_current) / 100.;
+        current += fabs(max_current) / 100.;
     }
 }
 

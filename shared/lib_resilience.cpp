@@ -52,7 +52,7 @@ bool dispatch_resilience::run_outage_step_ac(double crit_load_kwac, double pv_kw
             // iterate in case the dispatched power is slightly less (by tolerance) than required
             auto Battery_initial = new battery_t(*_Battery);
             double battery_dispatched_kwdc = dispatch_kw(discharge_kwdc);
-            if (abs(battery_dispatched_kwdc - required_kwdc) > tolerance) {
+            if (fabs(battery_dispatched_kwdc - required_kwdc) > tolerance) {
                 while (discharge_kwdc < max_discharge_kwdc) {
                     if (battery_dispatched_kwdc - required_kwdc > tolerance)
                         break;
@@ -116,7 +116,7 @@ bool dispatch_resilience::run_outage_step_dc(double crit_load_kwac, double pv_kw
             inverter->calculateACPower(battery_dispatched_kwdc * dc_dc_eff, V_pv, tdry);
             battery_dispatched_kwac = inverter->powerAC_kW;
 
-            if (abs(battery_dispatched_kwac - required_kwac) > tolerance){
+            if (fabs(battery_dispatched_kwac - required_kwac) > tolerance){
                 while (discharge_kwdc < max_discharge_kwdc){
                     if (battery_dispatched_kwac - required_kwac > tolerance)
                         break;
@@ -158,7 +158,7 @@ double dispatch_resilience::dispatch_kw(double kw){
     if (kw == 0.) return 0;
     double charging_current = _Battery->calculate_current_for_power_kw(kw);
     double power_dc = _Battery->run(current_outage_index, charging_current);
-    if (abs(kw - power_dc) < tolerance)
+    if (fabs(kw - power_dc) < tolerance)
         return kw;
     return power_dc;
 }

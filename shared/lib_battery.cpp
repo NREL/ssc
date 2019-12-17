@@ -20,7 +20,6 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <math.h>
 #include <cmath>
 #include <cfloat>
 #include <sstream>
@@ -624,7 +623,7 @@ double voltage_table_t::calculate_current_for_target_w(double P_watts, double q,
     else
         max_p = calculate_max_discharge_w(q, qmax, 0, &current);
 
-    if (abs(max_p) < abs(P_watts))
+    if (fabs(max_p) < fabs(P_watts))
         return current;
 
     double multiplier = 1.;
@@ -648,7 +647,7 @@ double voltage_table_t::calculate_current_for_target_w(double P_watts, double q,
         double b = A * slopes[i] + B * intercepts[i];
         double c = A * intercepts[i] - P_watts;
 
-        DOD_new = abs((-b + sqrt(b*b - 4*a*c))/(2*a));
+        DOD_new = fabs((-b + sqrt(b*b - 4*a*c))/(2*a));
 
         auto upper = (size_t)fmin(i, m_voltage_table.size() - 1);
         auto lower = (size_t)fmax(0, i-1);
@@ -788,7 +787,7 @@ double voltage_dynamic_t::calculate_max_discharge_w(double q, double qmax, doubl
 double voltage_dynamic_t::calculate_current_for_target_w(double P_watts, double q, double qmax, double) {
     if (P_watts == 0) return 0.;
 
-    solver_power = abs(P_watts) / (_num_cells_series * _num_strings);
+    solver_power = fabs(P_watts) / (_num_cells_series * _num_strings);
     solver_q = q /_num_strings;
     solver_Q = qmax / _num_strings;
 
@@ -1841,7 +1840,7 @@ double battery_t::calculate_max_charge_kw(double *max_current_A) {
     double power_W = 0;
     double current = 0;
     size_t its = 0;
-    while (abs(power_W - _voltage->calculate_max_charge_w(q, qmax, _thermal->T_battery(), &current)) > tolerance
+    while (fabs(power_W - _voltage->calculate_max_charge_w(q, qmax, _thermal->T_battery(), &current)) > tolerance
            && its++ < 10){
         power_W = _voltage->calculate_max_charge_w(q, qmax, _thermal->T_battery(), &current);
         _thermal->updateTemperature(current, _voltage->R_battery(), _dt_hour, _last_idx + 1);
@@ -1856,7 +1855,7 @@ double battery_t::calculate_max_discharge_kw(double *max_current_A) {
     double power_W = 0;
     double current = 0;
     size_t its = 0;
-    while (abs(power_W - _voltage->calculate_max_discharge_w(q, qmax, _thermal->T_battery(), &current)) > tolerance
+    while (fabs(power_W - _voltage->calculate_max_discharge_w(q, qmax, _thermal->T_battery(), &current)) > tolerance
         && its++ < 10){
         power_W = _voltage->calculate_max_discharge_w(q, qmax, _thermal->T_battery(), &current);
         _thermal->updateTemperature(current, _voltage->R_battery(), _dt_hour, _last_idx + 1);

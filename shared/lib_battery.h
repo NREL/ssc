@@ -390,7 +390,6 @@ private:
 
     double _V_ref_50;				// Reference voltage at 50% SOC
     // solver quantities
-    double solver_dhr;
 
     double solver_Q;
     double solver_q;
