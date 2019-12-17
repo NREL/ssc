@@ -566,10 +566,10 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 			}
 			
 			// Inverter settings
-			if (vt.is_assigned("inverter_model"))
-			{
-				batt_vars->inverter_model = vt.as_integer("inverter_model");
-				batt_vars->inverter_count = vt.as_integer("inverter_count");
+            batt_vars->inverter_model = vt.as_integer("inverter_model");
+            if (batt_vars->inverter_model < 4) //user has assigned an actual inverter model
+            {
+                batt_vars->inverter_count = vt.as_integer("inverter_count");
 				batt_vars->batt_inverter_efficiency_cutoff = vt.as_double("batt_inverter_efficiency_cutoff");
 
 				if (batt_vars->inverter_model == SharedInverter::SANDIA_INVERTER)
