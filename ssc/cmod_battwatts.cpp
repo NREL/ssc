@@ -50,7 +50,6 @@ var_info vtab_battwatts[] = {
 	{ SSC_INPUT,        SSC_ARRAY,       "ac",							     "AC inverter power",                      "W",       "",                 "Battery",                           "",                           "",                              "" },
     { SSC_INPUT,		SSC_ARRAY,	     "load",			                     "Electricity load (year 1)",              "kW",	   "",		           "Battery",                           "",	                         "",	                          "" },
     { SSC_INPUT,		SSC_ARRAY,	     "crit_load",			             "Critical electricity load (year 1)",     "kW",	   "",		           "Battery",                           "",	                         "",	                          "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inverter_model",                    "Inverter model specifier",                 "",      "0=cec,1=datasheet,2=partload,3=coefficientgenerator,4=generic", "Battery",     "",                           "INTEGER,MIN=0,MAX=4",           "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "inverter_efficiency",               "Inverter Efficiency",                     "%",      "",                  "Battery",                          "",                           "MIN=0,MAX=100",                               "" },
 
 var_info_invalid  };

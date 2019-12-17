@@ -95,3 +95,31 @@ TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, DifferentTechnologyInputs)
 		count++;
 	}
 }
+
+/// PVWattsV5 using a larger system size
+TEST_F(CMPvwattsV5Integration, LargeSystem_cmod_pvwattsv5)
+{
+	std::vector<double> annual_energy_expected = { 1727447.4, 1701094.0, 2150252.8, 2181925.8, 2422683.7 };
+	std::map<std::string, double> pairs;
+	size_t count = 0;
+	error_tolerance = 0.1; //use a larger error tolerance for large numbers
+
+	// Larger size
+	pairs["system_capacity"] = 1000; //1 MW system
+
+	// Array types: Fixed open rack, fixed roof mount, 1-axis tracking, 1-axis backtracking, 2-axis tracking
+	for (int array_type = 0; array_type < 5; array_type++)
+	{
+		pairs["array_type"] = array_type;
+		int pvwatts_errors = modify_ssc_data_and_run_module(data, "pvwattsv5", pairs);
+		EXPECT_FALSE(pvwatts_errors);
+
+		if (!pvwatts_errors)
+		{
+			ssc_number_t annual_energy;
+			ssc_data_get_number(data, "annual_energy", &annual_energy);
+			EXPECT_NEAR(annual_energy, annual_energy_expected[count], error_tolerance) << "Annual energy.";
+		}
+		count++;
+	}
+}

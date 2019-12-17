@@ -127,6 +127,7 @@ public:
 		double w_stow;				//[kWe-hr] Heliostat stow electricity requirement
 		double w_cycle_standby;		//[kWe] Cycle HTF pumping power during standby
 		double w_cycle_pump;		//[kWe/kWt] Cycle HTF pumping power per thermal energy consumed
+        double disp_inventory_incentive;    //[-]   Terminal storage inventory objective incentive multiplier
 
         C_csp_solver_sim_info *siminfo;     //Pointer to existing simulation info object
         C_csp_collector_receiver *col_rec;   //Pointer to collector/receiver object

@@ -66,12 +66,12 @@ protected:
 		irr_hourly_night.set_location(lat, lon, tz);
 		irr_hourly_night.set_sky_model(skymodel, alb);
 		irr_hourly_night.set_beam_diffuse(0, 0);
-		irr_hourly_night.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr);
+		irr_hourly_night.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr, false, 0.0);
 		irr_15m_night.set_time(year, month, day, night_hr, 15, -1);
 		irr_15m_night.set_location(lat, lon, tz);
 		irr_15m_night.set_sky_model(skymodel, alb);
 		irr_15m_night.set_beam_diffuse(0, 0);
-		irr_15m_night.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr);
+		irr_15m_night.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr, false, 0.0);
 	}
 };
 
@@ -89,12 +89,12 @@ protected:
 		irr_hourly_sunrise.set_location(lat, lon, tz);
 		irr_hourly_sunrise.set_sky_model(skymodel, alb);
 		irr_hourly_sunrise.set_beam_diffuse(0, 1);
-		irr_hourly_sunrise.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr);
+		irr_hourly_sunrise.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr, false, 0.0);
 		irr_15m_sunrise.set_time(year, month, day, sr_hr, 30, 1);
 		irr_15m_sunrise.set_location(lat, lon, tz);
 		irr_15m_sunrise.set_sky_model(skymodel, alb);
 		irr_15m_sunrise.set_beam_diffuse(0, 1);
-		irr_15m_sunrise.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr);
+		irr_15m_sunrise.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr, false, 0.0);
 	}
 };
 
@@ -112,12 +112,12 @@ protected:
 		irr_hourly_day.set_location(lat, lon, tz);
 		irr_hourly_day.set_sky_model(skymodel, alb);
 		irr_hourly_day.set_beam_diffuse(2, 2);
-		irr_hourly_day.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr);
+		irr_hourly_day.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr, false, 0.0);
 		irr_15m_day.set_time(year, month, day, day_hr, 45, 1);
 		irr_15m_day.set_location(lat, lon, tz);
 		irr_15m_day.set_sky_model(skymodel, alb);
 		irr_15m_day.set_beam_diffuse(2, 2);
-		irr_15m_day.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr);
+		irr_15m_day.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr, false, 0.0);
 	}
 };
 
@@ -135,12 +135,12 @@ protected:
 		irr_hourly_sunset.set_location(lat, lon, tz);
 		irr_hourly_sunset.set_sky_model(skymodel, alb);
 		irr_hourly_sunset.set_beam_diffuse(0, 1);
-		irr_hourly_sunset.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr);
+		irr_hourly_sunset.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr, false, 0.0);
 		irr_15m_sunset.set_time(year, month, day, ss_hr, 30, 1);
 		irr_15m_sunset.set_location(lat, lon, tz);
 		irr_15m_sunset.set_sky_model(skymodel, alb);
 		irr_15m_sunset.set_beam_diffuse(0, 1);
-		irr_15m_sunset.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr);
+		irr_15m_sunset.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr, false, 0.0);
 	}
 };
 /**
@@ -289,7 +289,7 @@ protected:
 		solarZenithRadians = expectedWeather[8];
 		solarElevationRadians = expectedWeather[9];
 		
-		irr->set_surface(tracking, tilt, azim, rotlim, backtrack, gcr);
+		irr->set_surface(tracking, tilt, azim, rotlim, backtrack, gcr, false, 0.0);
 		irr->set_beam_diffuse(beam, diffuse);
 		irr->set_time(year, month, day, hour, minute, 1);
 		irr->set_location(lat, lon, tz);
