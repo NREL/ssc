@@ -23,6 +23,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include "common.h"
 #include "lib_weatherfile.h"
+#include "lib_time.h"
 
 var_info vtab_standard_financial[] = {
 { SSC_INPUT,SSC_NUMBER  , "analysis_period"                      , "Analyis period"                                                 , "years"                                  , ""                                      , "Financial Parameters" , "?=30"           , "INTEGER,MIN=0,MAX=50"  , ""},
@@ -48,12 +49,22 @@ var_info_invalid };
 var_info vtab_battery_replacement_cost[] = {
 { SSC_INPUT, SSC_ARRAY  , "batt_bank_replacement"                , "Battery bank replacements per year"                             , "number/year"                            , ""                                      , "Battery"              , ""               , ""                      , ""},
 { SSC_INPUT, SSC_ARRAY  , "batt_replacement_schedule"            , "Battery bank replacements per year (user specified)"            , "number/year"                            , ""                                      , "Battery"              , ""               , ""                      , ""},
+{ SSC_INPUT, SSC_ARRAY  , "batt_replacement_schedule"            , "Battery bank replacements per year (user specified)"            , "number/year"                            , ""                                      , "Battery"              , ""               , ""                     , "" },
 { SSC_INPUT, SSC_NUMBER , "en_batt"                              , "Enable battery storage model"                                   , "0/1"                                    , ""                                      , "Battery"              , "?=0"            , ""                      , ""},
 { SSC_INPUT, SSC_NUMBER , "batt_replacement_option"              , "Enable battery replacement?"                                    , "0=none,1=capacity based,2=user schedule", ""                                      , "Battery"              , "?=0"            , "INTEGER,MIN=0,MAX=2"   , ""},
 { SSC_INPUT, SSC_NUMBER , "battery_per_kWh"                      , "Battery cost"                                                   , "$/kWh"                                  , ""                                      , "Battery"              , "?=0.0"          , ""                      , ""},
 { SSC_INPUT, SSC_NUMBER , "batt_computed_bank_capacity"          , "Battery bank capacity"                                          , "kWh"                                    , ""                                      , "Battery"              , "?=0.0"          , ""                      , ""},
 { SSC_OUTPUT, SSC_ARRAY , "cf_battery_replacement_cost"          , "Battery replacement cost"                                       , "$"                                      , ""                                      , "Cash Flow"            , "*"              , ""                      , ""},
 { SSC_OUTPUT, SSC_ARRAY , "cf_battery_replacement_cost_schedule" , "Battery replacement cost schedule"                              , "$/kWh"                                  , ""                                      , "Cash Flow"            , "*"              , ""                      , ""},
+var_info_invalid };
+
+var_info vtab_financial_grid[] = {
+
+	/*   VARTYPE           DATATYPE         NAME                                         LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS	*/
+		{ SSC_INPUT,        SSC_ARRAY,      "grid_curtailment_price",                           "Curtailment price",                                  "$/kWh",  "",                      "Financial Grid",      "?=0",                   "",          "" },
+		{ SSC_INPUT,        SSC_NUMBER,      "grid_curtailment_price_esc",                           "Curtailment price escalation",                                  "%",  "",                      "Financial Grid",      "?=0",                   "",          "" },
+		{ SSC_INPUT,        SSC_NUMBER,      "annual_energy_pre_curtailment_ac", "Annual Energy AC pre-curtailment (year 1)",   "kWh",        "",                "",                           "?=0",                     "",                              "" },
+
 var_info_invalid };
 
 var_info vtab_fuelcell_replacement_cost[] = {
@@ -280,10 +291,252 @@ var_info vtab_sf_adjustment_factors[] = {
 { SSC_INPUT,SSC_MATRIX  , "sf_adjust:periods"                    , "SF Period-based Adjustment Factors"                             , "%"                                      , "n x 3 matrix [ start, end, loss ]"     , "Adjustment Factors"   , "?"              , "COLS=3"                , ""},
 var_info_invalid };
 
+
+var_info vtab_financial_capacity_payments[] = {
+
+	/*   VARTYPE           DATATYPE         NAME                                    LABEL                                             UNITS        META                               GROUP                    REQUIRED_IF           CONSTRAINTS               UI_HINTS	*/
+		{ SSC_INPUT,        SSC_NUMBER,      "cp_capacity_payment_esc",             "Capacity payment escalation",                      "%/year",    "",                               "Capacity Payments",      "*",                   "",                      "" },
+		{ SSC_INPUT,        SSC_NUMBER,      "cp_capacity_payment_type",            "Capacity payment type",                            "",          "0=Energy basis,1=Fixed amount",  "Capacity Payments",      "*",                   "INTEGER,MIN=0,MAX=1",   "" },
+		{ SSC_INPUT,        SSC_ARRAY,       "cp_capacity_payment_amount",          "Capacity payment amount",                          "$ or $/MW", "",                               "Capacity Payments",      "*",                   "",                      "" },
+		{ SSC_INPUT,        SSC_ARRAY,       "cp_capacity_credit_percent",          "Capacity credit (eligible portion of nameplate)",  "%",         "",                               "Capacity Payments",      "cp_capacity_payment_type=0",   "",                      "" },
+		{ SSC_INPUT,        SSC_NUMBER,      "cp_system_nameplate",                 "System nameplate",                                 "MW",        "",                               "Capacity Payments",      "cp_capacity_payment_type=0",   "MIN=0",                 "" },
+		{ SSC_INPUT,        SSC_NUMBER,      "cp_battery_nameplate",                "Battery nameplate",                                "MW",        "",                               "Capacity Payments",      "cp_capacity_payment_type=0",   "MIN=0",                 "" },
+
+var_info_invalid };
+
+
+var_info vtab_grid_curtailment[] = {
+	/*   VARTYPE           DATATYPE         NAME                               LABEL                                       UNITS     META                                     GROUP                 REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
+
+		{ SSC_INPUT,        SSC_ARRAY,       "grid_curtailment",              "Grid curtailment",              "%",    "",                                     "Loss Adjustments",      "?",                     "",                "" },
+	var_info_invalid };
+
+
 var_info vtab_technology_outputs[] = {
 	// instantaneous power at each timestep - consistent with sun position
 { SSC_OUTPUT, SSC_ARRAY , "gen"                                  , "System power generated"                                         , "kW"                                     , ""                                      , "Time Series"          , "*"              , ""                      , ""},
 	var_info_invalid };
+
+var_info vtab_p50p90[] = {
+        { SSC_INPUT, SSC_NUMBER ,  "total_uncert"                 , "Total uncertainty in energy production as percent of annual energy", "%"                                   , ""                                      , "Uncertainty"          , ""              , "MIN=0,MAX=100"         , ""},
+        { SSC_OUTPUT, SSC_NUMBER , "annual_energy_p75"            , "Annual energy with 75% probability of exceedance"                  , "kWh"                                 , ""                                      , "Uncertainty"          , ""              , ""                      , ""},
+        { SSC_OUTPUT, SSC_NUMBER , "annual_energy_p90"            , "Annual energy with 90% probability of exceedance"                  , "kWh"                                 , ""                                      , "Uncertainty"          , ""              , ""                      , ""},
+        { SSC_OUTPUT, SSC_NUMBER , "annual_energy_p95"            , "Annual energy with 95% probability of exceedance"                  , "kWh"                                 , ""                                      , "Uncertainty"          , ""              , ""                      , ""},
+        var_info_invalid };
+
+bool calculate_p50p90(compute_module *cm){
+    if (!cm->is_assigned("total_uncert") || !cm->is_assigned("annual_energy"))
+        return false;
+    double aep = cm->as_double("annual_energy");
+    double uncert = cm->as_double("total_uncert")/100.;
+    cm->assign("annual_energy_p75", aep * (-0.67 * uncert + 1));
+    cm->assign("annual_energy_p90", aep * (-1.28 * uncert + 1));
+    cm->assign("annual_energy_p95", aep * (-1.64 * uncert + 1));
+	return true;
+}
+
+/* the conditions on inputs will have to be expanded and abstracted to handle all technologies with dispatchable storage */
+var_info vtab_forecast_price_signal[] = {
+	// model selected PPA or Merchant Plant based
+	{ SSC_INPUT,        SSC_NUMBER,     "forecast_price_signal_model",					"Forecast price signal model selected",   "0/1",   "0=PPA based,1=Merchant Plant",    "Price Signal",  "?=0",	"INTEGER,MIN=0,MAX=1",      "" },
+
+	// PPA financial inputs
+	{ SSC_INPUT,        SSC_ARRAY,      "ppa_price_input",		                        "PPA Price Input",	                                        "",      "",                  "Price Signal", "forecast_price_signal_model=0&en_batt=1&batt_meter_position=1"   "",          "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ppa_multiplier_model",                         "PPA multiplier model",                                    "0/1",    "0=diurnal,1=timestep","Price Signal", "forecast_price_signal_model=0&en_batt=1&batt_meter_position=1",                                                  "INTEGER,MIN=0", "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_factors_ts",                          "Dispatch payment factor time step",                        "",      "",                  "Price Signal", "forecast_price_signal_model=0&en_batt=1&batt_meter_position=1&ppa_multiplier_model=1", "", "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_tod_factors",		                    "TOD factors for periods 1-9",	                            "",      "",                  "Price Signal", "en_batt=1&batt_meter_position=1&forecast_price_signal_model=0&ppa_multiplier_model=0"   "",          "" },
+	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_sched_weekday",                       "Diurnal weekday TOD periods",                              "1..9",  "12 x 24 matrix",    "Price Signal", "en_batt=1&batt_meter_position=1&forecast_price_signal_model=0&ppa_multiplier_model=0",  "",          "" },
+	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_sched_weekend",                       "Diurnal weekend TOD periods",                              "1..9",  "12 x 24 matrix",    "Price Signal", "en_batt=1&batt_meter_position=1&forecast_price_signal_model=0&ppa_multiplier_model=0",  "",          "" },
+// Merchant plant inputs
+	{ SSC_INPUT,        SSC_NUMBER,     "mp_enable_energy_market_revenue",				"Enable energy market revenue",   "0/1",   "0=false,1=true",    "Price Signal",  "en_batt=1&batt_meter_position=1&forecast_price_signal_model=1",	"INTEGER,MIN=0,MAX=1",      "" },
+	{ SSC_INPUT,		SSC_MATRIX,		"mp_energy_market_revenue",						"Energy market revenue input", " [MW, $/MW]", "", "Price Signal","en_batt=1&batt_meter_position=1&forecast_price_signal_model=1",  ""},
+	{ SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv1",							"Enable ancillary services 1 revenue",   "0/1",   "",    "Price Signal",  "forecast_price_signal_model=1",	"INTEGER,MIN=0,MAX=1",      "" },
+	{ SSC_INPUT,		SSC_MATRIX,		"mp_ancserv1_revenue",							"Ancillary services 1 revenue input", " [MW, $/MW]", "", "Price Signal", "en_batt=1&batt_meter_position=1&forecast_price_signal_model=1", "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv2",							"Enable ancillary services 2 revenue",   "0/1",   "",    "Price Signal",  "forecast_price_signal_model=1",	"INTEGER,MIN=0,MAX=1",      "" },
+	{ SSC_INPUT,		SSC_MATRIX,		"mp_ancserv2_revenue",							"Ancillary services 2 revenue input", " [MW, $/MW]", "", "Price Signal", "en_batt=1&batt_meter_position=1&forecast_price_signal_model=1", ""},
+	{ SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv3",							"Enable ancillary services 3 revenue",   "0/1",   "",    "Price Signal",  "forecast_price_signal_model=1",	"INTEGER,MIN=0,MAX=1",      "" },
+	{ SSC_INPUT,		SSC_MATRIX,		"mp_ancserv3_revenue",							"Ancillary services 3 revenue input", " [MW, $/MW]", "","Price Signal", "en_batt=1&batt_meter_position=1&forecast_price_signal_model=1", "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv4",							"Enable ancillary services 4 revenue",   "0/1",   "",    "Price Signal",  "forecast_price_signal_model=1",	"INTEGER,MIN=0,MAX=1",      "" },
+	{ SSC_INPUT,		SSC_MATRIX,		"mp_ancserv4_revenue",							"Ancillary services 4 revenue input", " [MW, $/MW]", "","Price Signal", "en_batt=1&batt_meter_position=1&forecast_price_signal_model=1", ""},
+
+var_info_invalid };
+
+forecast_price_signal::forecast_price_signal(compute_module *cm)
+	: m_cm(cm)
+{
+}
+
+bool forecast_price_signal::setup(size_t nsteps)
+{
+	size_t step_per_hour = 1;
+	if (nsteps > 8760) step_per_hour = nsteps / 8760;
+	if (step_per_hour < 1 || step_per_hour > 60 || step_per_hour * 8760 != nsteps)
+	{
+		m_error = util::format("The requested number of timesteps must be a multiple of 8760. Instead requested timesteps is %d.", (int)nsteps);
+		return false;
+	}
+	m_forecast_price.reserve(nsteps);
+	for (size_t i = 0; i < nsteps; i++) 
+		m_forecast_price.push_back(0.0);
+
+	int forecast_price_signal_model = m_cm->as_integer("forecast_price_signal_model");
+
+	if (forecast_price_signal_model == 1)
+	{
+		// merchant plant additional revenue streams
+		// enabled/disabled booleans
+		bool en_mp_energy_market = (m_cm->as_integer("mp_enable_energy_market_revenue") == 1);
+		bool en_mp_ancserv1 = (m_cm->as_integer("mp_enable_ancserv1") == 1);
+		bool en_mp_ancserv2 = (m_cm->as_integer("mp_enable_ancserv2") == 1);
+		bool en_mp_ancserv3 = (m_cm->as_integer("mp_enable_ancserv3") == 1);
+		bool en_mp_ancserv4 = (m_cm->as_integer("mp_enable_ancserv4") == 1);
+		// cleared capacity and price columns
+		// assume cleared capacities valid and use as generation for forecasting - will verify after generation in the financial models.
+		size_t nrows, ncols;
+		util::matrix_t<double> mp_energy_market_revenue_mat(1, 2, 0.0);
+		if (en_mp_energy_market)
+		{
+			ssc_number_t *mp_energy_market_revenue_in = m_cm->as_matrix("mp_energy_market_revenue", &nrows, &ncols);
+			if (ncols != 2)
+			{
+				m_error = util::format("The energy market revenue table must have 2 columns. Instead it has %d columns.", (int)ncols);
+				return false;
+			}
+			mp_energy_market_revenue_mat.resize(nrows, ncols);
+			mp_energy_market_revenue_mat.assign(mp_energy_market_revenue_in, nrows, ncols);
+		}
+
+		util::matrix_t<double> mp_ancserv_1_revenue_mat(1, 2, 0.0);
+		if (en_mp_ancserv1)
+		{
+			ssc_number_t *mp_ancserv1_revenue_in = m_cm->as_matrix("mp_ancserv1_revenue", &nrows, &ncols);
+			if (ncols != 2)
+			{
+				m_error = util::format("The ancillary services revenue 1 table must have 2 columns. Instead it has %d columns.", (int)ncols);
+				return false;
+			}
+			mp_ancserv_1_revenue_mat.resize(nrows, ncols);
+			mp_ancserv_1_revenue_mat.assign(mp_ancserv1_revenue_in, nrows, ncols);
+		}
+
+		util::matrix_t<double> mp_ancserv_2_revenue_mat(1, 2, 0.0);
+		if (en_mp_ancserv2)
+		{
+			ssc_number_t *mp_ancserv2_revenue_in = m_cm->as_matrix("mp_ancserv2_revenue", &nrows, &ncols);
+			if (ncols != 2)
+			{
+				m_error = util::format("The ancillary services revenue 2 table must have 2 columns. Instead it has %d columns.", (int)ncols);
+				return false;
+			}
+			mp_ancserv_2_revenue_mat.resize(nrows, ncols);
+			mp_ancserv_2_revenue_mat.assign(mp_ancserv2_revenue_in, nrows, ncols);
+		}
+
+		util::matrix_t<double> mp_ancserv_3_revenue_mat(1, 2, 0.0);
+		if (en_mp_ancserv3)
+		{
+			ssc_number_t *mp_ancserv3_revenue_in = m_cm->as_matrix("mp_ancserv3_revenue", &nrows, &ncols);
+			if (ncols != 2)
+			{
+				m_error = util::format("The ancillary services revenue 3 table must have 2 columns. Instead it has %d columns.", (int)ncols);
+				return false;
+			}
+			mp_ancserv_3_revenue_mat.resize(nrows, ncols);
+			mp_ancserv_3_revenue_mat.assign(mp_ancserv3_revenue_in, nrows, ncols);
+		}
+
+		util::matrix_t<double> mp_ancserv_4_revenue_mat(1, 2, 0.0);
+		if (en_mp_ancserv4)
+		{
+			ssc_number_t *mp_ancserv4_revenue_in = m_cm->as_matrix("mp_ancserv4_revenue", &nrows, &ncols);
+			if (ncols != 2)
+			{
+				m_error = util::format("The ancillary services revenue 4 table must have 2 columns. Instead it has %d columns.", (int)ncols);
+				return false;
+			}
+			mp_ancserv_4_revenue_mat.resize(nrows, ncols);
+			mp_ancserv_4_revenue_mat.assign(mp_ancserv4_revenue_in, nrows, ncols);
+		}
+
+		int nyears = m_cm->as_integer("analysis_period");
+		// calculate revenue for first year only and consolidate to m_forecast_price
+		std::vector<double> as_revenue;
+		std::vector<double> as_revenue_extrapolated(nsteps,0.0);
+
+		size_t n_marketrevenue_per_year = mp_energy_market_revenue_mat.nrows() / (size_t)nyears;
+		as_revenue.clear();
+		as_revenue.reserve(n_marketrevenue_per_year);
+		for (size_t j = 0; j < n_marketrevenue_per_year; j++)
+			as_revenue.push_back(mp_energy_market_revenue_mat.at(j, 0) * mp_energy_market_revenue_mat.at(j, 1) / step_per_hour);
+		as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
+		std::transform(m_forecast_price.begin(), m_forecast_price.end(), as_revenue_extrapolated.begin(), m_forecast_price.begin(), std::plus<double>());
+
+		size_t n_ancserv_1_revenue_per_year = mp_ancserv_1_revenue_mat.nrows() / (size_t)nyears;
+		as_revenue.clear();
+		as_revenue.reserve(n_ancserv_1_revenue_per_year);
+		for (size_t j = 0; j < n_ancserv_1_revenue_per_year; j++)
+			as_revenue.push_back(mp_ancserv_1_revenue_mat.at(j, 0) * mp_ancserv_1_revenue_mat.at(j, 1) / step_per_hour);
+		as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
+		std::transform(m_forecast_price.begin(), m_forecast_price.end(), as_revenue_extrapolated.begin(), m_forecast_price.begin(), std::plus<double>());
+
+		size_t n_ancserv_2_revenue_per_year = mp_ancserv_2_revenue_mat.nrows() / (size_t)nyears;
+		as_revenue.clear();
+		as_revenue.reserve(n_ancserv_2_revenue_per_year);
+		for (size_t j = 0; j < n_ancserv_2_revenue_per_year; j++)
+			as_revenue.push_back(mp_ancserv_2_revenue_mat.at(j, 0) * mp_ancserv_2_revenue_mat.at(j, 1) / step_per_hour);
+		as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
+		std::transform(m_forecast_price.begin(), m_forecast_price.end(), as_revenue_extrapolated.begin(), m_forecast_price.begin(), std::plus<double>());
+
+		size_t n_ancserv_3_revenue_per_year = mp_ancserv_3_revenue_mat.nrows() / (size_t)nyears;
+		as_revenue.clear();
+		as_revenue.reserve(n_ancserv_3_revenue_per_year);
+		for (size_t j = 0; j < n_ancserv_3_revenue_per_year; j++)
+			as_revenue.push_back(mp_ancserv_3_revenue_mat.at(j, 0) * mp_ancserv_3_revenue_mat.at(j, 1) / step_per_hour);
+		as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
+		std::transform(m_forecast_price.begin(), m_forecast_price.end(), as_revenue_extrapolated.begin(), m_forecast_price.begin(), std::plus<double>());
+
+		size_t n_ancserv_4_revenue_per_year = mp_ancserv_4_revenue_mat.nrows() / (size_t)nyears;
+		as_revenue.clear();
+		as_revenue.reserve(n_ancserv_4_revenue_per_year);
+		for (size_t j = 0; j < n_ancserv_4_revenue_per_year; j++)
+			as_revenue.push_back(mp_ancserv_4_revenue_mat.at(j, 0) * mp_ancserv_4_revenue_mat.at(j, 1) / step_per_hour);
+		as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
+		std::transform(m_forecast_price.begin(), m_forecast_price.end(), as_revenue_extrapolated.begin(), m_forecast_price.begin(), std::plus<double>());
+	}
+	else // TODO verify that return value is $/timestep (units of dollar) and NOT $/kWh
+	{
+		int ppa_multiplier_mode = m_cm->as_integer("ppa_multiplier_model");
+		size_t count_ppa_price_input;
+		ssc_number_t* ppa_price = m_cm->as_array("ppa_price_input", &count_ppa_price_input);
+		if (count_ppa_price_input < 1)
+		{
+			m_error = util::format("The ppa price array needs at least one entry. Input had less than one input.");
+			return false;
+		}
+
+		if (ppa_multiplier_mode == 0)
+		{
+			m_forecast_price = flatten_diurnal(
+				m_cm->as_matrix_unsigned_long("dispatch_sched_weekday"),
+				m_cm->as_matrix_unsigned_long("dispatch_sched_weekend"),
+				step_per_hour,
+				m_cm->as_vector_double("dispatch_tod_factors"), ppa_price[0] / step_per_hour);
+		}
+		else
+		{ // assumption on size - check that is requested size.
+			std::vector<double> factors = m_cm->as_vector_double("dispatch_factors_ts");
+			m_forecast_price = extrapolate_timeseries(factors, step_per_hour, ppa_price[0] / step_per_hour);
+		}
+	}
+
+	return true;
+}
+
+ssc_number_t forecast_price_signal::operator()(size_t time)
+{ // dollar value at timestep "time"
+	if (time < m_forecast_price.size()) return m_forecast_price[time];
+	else return 0.0;
+}
 
 adjustment_factors::adjustment_factors( compute_module *cm, const std::string &prefix )
 : m_cm(cm), m_prefix(prefix)
@@ -717,9 +970,17 @@ weatherdata::weatherdata( var_data *data_table )
 			n_irr++;
 		}
 	}
-	if (nrec == 0 || n_irr < 1)
+	if (nrec == 0 || n_irr < 2) //poa required if two other types of irradiance are not defined
 	{
-		if (data_table->table.lookup("poa") == nullptr){
+		if (var_data *value = data_table->table.lookup("poa")) //if poa is supplied, use it to specify nrec
+		{
+			if (value->type == SSC_ARRAY) {
+				nrec = value->num.length();
+				n_irr++;
+			}
+		}
+		else //otherwise, not enough irradiance components are specified
+		{
 			m_message = "missing irradiance: could not find gh, dn, df, or poa";
 			m_ok = false;
 			return;

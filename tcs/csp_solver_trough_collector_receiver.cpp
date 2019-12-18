@@ -864,10 +864,6 @@ double C_csp_trough_collector_receiver::get_col_startup_power()
     return m_p_start * 1.e-3 * m_nSCA * m_nLoops;             //MWe-hr
 }
 
-double C_csp_trough_collector_receiver::get_remaining_startup_energy()
-{
-	return std::numeric_limits<double>::quiet_NaN();	//kWh
-}
 
 void C_csp_trough_collector_receiver::get_design_parameters(C_csp_collector_receiver::S_csp_cr_solved_params & solved_params)
 {
@@ -2177,6 +2173,8 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 	cr_out_solver.m_W_dot_col_tracking = m_W_dot_sca_tracking;	//[MWe]
 	cr_out_solver.m_W_dot_htf_pump = m_W_dot_pump;				//[MWe]
 
+    cr_out_solver.m_q_rec_heattrace = m_q_dot_freeze_protection;    //[MWt]
+
 	m_operating_mode = C_csp_collector_receiver::OFF;
 
 	set_output_value();
@@ -2356,6 +2354,8 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	cr_out_solver.m_W_dot_col_tracking = m_W_dot_sca_tracking;	//[MWe]
 		// Is this calculated in the 'energy balance' method, or a TBD 'metrics' method?
 	cr_out_solver.m_W_dot_htf_pump = m_W_dot_pump;				//[MWe]
+
+    cr_out_solver.m_q_rec_heattrace = m_q_dot_freeze_protection;    //[MWt]
 
 	set_output_value();
 }
@@ -2617,6 +2617,8 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		cr_out_solver.m_W_dot_col_tracking = m_W_dot_sca_tracking;	//[MWe]
 		cr_out_solver.m_W_dot_htf_pump = m_W_dot_pump;				//[MWe]
         cr_out_solver.m_dP_sf = m_dP_total;         //[bar]
+
+        cr_out_solver.m_q_rec_heattrace = m_q_dot_freeze_protection;    //[MWt]
 	}
 	else
 	{	// Solution failed, so tell controller/solver
@@ -2643,6 +2645,8 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		cr_out_solver.m_W_dot_col_tracking = 0.0;
 		cr_out_solver.m_W_dot_htf_pump = 0.0;
         cr_out_solver.m_dP_sf = 0.0;                //[bar]
+
+        cr_out_solver.m_q_rec_heattrace = m_q_dot_freeze_protection;    //[MWt]
 	}
 
 	set_output_value();
@@ -3098,6 +3102,8 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 				cr_out_solver.m_E_fp_total = 0.0;
 				cr_out_solver.m_W_dot_col_tracking = 0.0;
 				cr_out_solver.m_W_dot_htf_pump = 0.0;
+
+                cr_out_solver.m_q_rec_heattrace = 0.0;    //[MWt]
 
 				//cr_out_report.m_q_dot_field_inc = 0.0;
 				//cr_out_report.m_eta_field = 0.0;
@@ -3900,6 +3906,8 @@ set_outputs_and_return:
 	cr_out_solver.m_E_fp_total = E_fp_tot_out;	//[MW] Freeze protection energy
 	//value(O_E_FP_TOT, E_fp_tot_out);			//[MW] Freeze protection energy
 	
+    cr_out_solver.m_q_rec_heattrace = m_q_dot_freeze_protection;    //[MWt]
+
 	//value(O_QQ, m_qq);							//[none] Number of iterations required to solve
 	//value(O_T_SYS_C, T_sys_c_out);				//[C] Collector inlet temperature
 	//value(O_EQOPTEFF, EqOpteff_out);			//[none] Collector equivalent optical efficiency
@@ -5553,7 +5561,7 @@ This piping loss model is derived from the pressure drop calculations presented 
 following document:
 
 Parabolic Trough Solar System Piping Model
-Final Report May 13, 2002 — December 31, 2004
+Final Report May 13, 2002 ï¿½ December 31, 2004
 
 B. Kelly
 Nexant, Inc. San Francisco, California

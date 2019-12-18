@@ -24,7 +24,6 @@
     <ClCompile Include="..\solarpilot\IOUtil.cpp" />
     <ClCompile Include="..\solarpilot\Land.cpp" />
     <ClCompile Include="..\solarpilot\mod_base.cpp" />
-    <ClCompile Include="..\solarpilot\MultiRecOptimize.cpp" />
     <ClCompile Include="..\solarpilot\OpticalMesh.cpp" />
     <ClCompile Include="..\solarpilot\optimize.cpp" />
     <ClCompile Include="..\solarpilot\Receiver.cpp" />
@@ -49,7 +48,6 @@
     <ClInclude Include="..\solarpilot\IOUtil.h" />
     <ClInclude Include="..\solarpilot\Land.h" />
     <ClInclude Include="..\solarpilot\mod_base.h" />
-    <ClInclude Include="..\solarpilot\MultiRecOptimize.h" />
     <ClInclude Include="..\solarpilot\OpticalMesh.h" />
     <ClInclude Include="..\solarpilot\optimize.h" />
     <ClInclude Include="..\solarpilot\rapidxml.hpp" />

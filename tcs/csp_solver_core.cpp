@@ -616,6 +616,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		dispatch.params.rsu_cost = mc_tou.mc_dispatch_params.m_rsu_cost;
 		dispatch.params.csu_cost = mc_tou.mc_dispatch_params.m_csu_cost;
 		dispatch.params.pen_delta_w = mc_tou.mc_dispatch_params.m_pen_delta_w;
+        dispatch.params.disp_inventory_incentive = mc_tou.mc_dispatch_params.m_disp_inventory_incentive;
 		dispatch.params.q_rec_standby = mc_tou.mc_dispatch_params.m_q_rec_standby;
 		
 		dispatch.params.w_rec_ht = mc_tou.mc_dispatch_params.m_w_rec_ht;
@@ -633,7 +634,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		//add zero point
 		dispatch.params.eff_table_load.add_point(0., 0.);    //this is required to allow the model to converge
 
-		int neff = 2;
+		int neff = 2;   //mjw: if using something other than 2, the linear approximation assumption and associated code in csp_dispatch.cpp/calculate_parameters() needs to be reformulated.
 		for(int i=0; i<neff; i++)
 		{
 			double x = dispatch.params.q_pb_min + (dispatch.params.q_pb_max - dispatch.params.q_pb_min)/(double)(neff - 1)*i;
@@ -701,7 +702,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
     dispatch.solver_params.ampl_thread_id = mc_tou.mc_dispatch_params.m_ampl_thread_id;
     
     dispatch.forecast_params.is_stochastic = false;
-    dispatch.forecast_params.fc_gamma = mc_tou.mc_dispatch_params.m_fc_gamma;
     dispatch.forecast_params.n_to_update = mc_tou.mc_dispatch_params.m_horizon_update_frequency;
     //-------------------------------
 
@@ -2145,7 +2145,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                             {
                                 // Next operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
                                 m_is_CR_DF__PC_MAX__TES_OFF__AUX_OFF_avail = false;
-                                is_rec_su_allowed = false;   // Only allowable operating mode left is CR_OFF__PC_OFF__TES_OFF -> Allow controller to try logic branch with just CR_OFF instead
                             }
                             are_models_converged = false;
                             break;
@@ -2288,7 +2287,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						{
 							// Weird that controller chose Defocus operating mode, so report message and shut down CR and PC
 							error_msg = util::format("At time = %lg the controller chose %s operating mode, but the code"
-								" failed to achieve a PC thermal power less than the maximum. Controller will shut-down CR",
+								" failed to achieve a PC thermal power less than the maximum. Controller will shut-down CR and PC",
 								mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str());
 							mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
@@ -4834,7 +4833,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 					    {
 						    // Weird that controller chose Defocus operating mode, so report message and shut down CR and PC
 						    error_msg = util::format("At time = %lg the controller chose %s operating mode, but the code"
-							    " failed to solve at defocus = %lg. Controller will shut-down CR",
+							    " failed to solve at defocus = %lg. Controller will shut-down CR and PC",
 							    mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str(), xy2.x);
 						    mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
@@ -4845,7 +4844,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						    else
 						    {
 							    m_is_CR_DF__PC_MAX__TES_FULL__AUX_OFF_avail = false;
-                                is_rec_su_allowed = false;   // Only allowable operating mode left is CR_OFF__PC_OFF__TES_OFF -> Allow controller to try logic branch with just CR_OFF instead
 						    }
 						    are_models_converged = false;
 						    break;

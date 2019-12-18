@@ -220,7 +220,7 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelSkyDiffuseAndIrradModels_cmod_
 /// Test PVSAMv1 with default no-financial model and combinations of module and inverter models
 TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelModuleAndInverterModels_cmod_pvsamv1)
 {
-	std::vector<double> annual_energy_expected = { 2518, 2548, 2476, 2518, 8714, 8694, 8661, 8714, 54, 57, 60, 54, 5405, 5400, 5347, 5404, 1767, 1807, 1736, 1767};
+	std::vector<double> annual_energy_expected = { 2518, 2548, 2476, 2518, 8714, 8694, 8661, 8714, 54, 57, 60, 54, 5405, 5400, 5347, 5404, 1726, 1766, 1695, 1726};
 	std::map<std::string, double> pairs;
 	size_t count = 0;
 
@@ -605,4 +605,35 @@ TEST_F(CMPvsamv1PowerIntegration, SnowModel_cmod_pvsamv1)
 	ssc_data_get_number(data, "annual_energy", &annual_energy);
 	EXPECT_NEAR(annual_energy, 11354.7, m_error_tolerance_hi) << "Annual energy.";
 
+}
+
+/// Test PVSAMv1 with all defaults and no-financial model- look at MPPT input 1 voltage at night
+TEST_F(CMPvsamv1PowerIntegration, InverterNighttime_cmod_pvsamv1) {
+
+	int pvsam_errors = run_module(data, "pvsamv1");
+
+	EXPECT_FALSE(pvsam_errors);
+	if (!pvsam_errors)
+	{
+		ssc_number_t inverterMppt1Voltage;
+		inverterMppt1Voltage = ssc_data_get_array(data, "inverterMPPT1_DCVoltage", nullptr)[0];
+		EXPECT_NEAR(inverterMppt1Voltage, 0.0, 0.001) << "MPPT Voltage should be 0 at night.";
+	}
+}
+
+/// Test PVSAMv1 tilt equals latitude input
+TEST_F(CMPvsamv1PowerIntegration, TiltEqualsLat_cmod_pvsamv1) {
+
+	std::map<std::string, double> pairs;
+
+	pairs["subarray1_tilt_eq_lat"] = 1;
+	int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+
+	EXPECT_FALSE(pvsam_errors);
+	if (!pvsam_errors)
+	{
+		ssc_number_t subarray1SurfaceTilt;
+		subarray1SurfaceTilt = ssc_data_get_array(data, "subarray1_surf_tilt", nullptr)[12];
+		EXPECT_NEAR(subarray1SurfaceTilt, 33.4, 0.1) << "Subarray 1 tilt should be equal to latitude.";
+	}
 }

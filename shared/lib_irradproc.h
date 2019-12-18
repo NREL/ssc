@@ -110,6 +110,8 @@ void solarpos(int year,int month,int day,int hour,double minute,double lat,doubl
 * \param[in] azm sun azimuth in radians, measured east from north
 * \param[in] en_backtrack enable backtracking, using Ground coverage ratio ( below )
 * \param[in] gcr  ground coverage ratio ( used for backtracking )
+* \param[in] force_to_stow: force the single-axis tracking array to the stow angle specified in the next input
+* \param[in] stow_angle_deg: the angle to force the single-axis tracking array to stow to, in degrees
 * \param[out] angle array of elements to return angles to calling function
 * \param[out] angle[0] incident angle in radians
 * \param[out] angle[1] tilt angle of surface from horizontal in radians
@@ -117,7 +119,7 @@ void solarpos(int year,int month,int day,int hour,double minute,double lat,doubl
 * \param[out] angle[3] tracking axis rotation angle in radians, measured from surface normal of unrotating axis (only for 1 axis trackers)
 * \param[out] angle[4] backtracking difference (rot - ideal_rot) will be zero except in case of backtracking for 1 axis tracking
 */
-void incidence(int mode,double tilt,double sazm,double rlim,double zen,double azm, bool en_backtrack, double gcr, double angle[5]);
+void incidence(int mode,double tilt,double sazm,double rlim,double zen,double azm, bool en_backtrack, double gcr, bool force_to_stow, double stow_angle_deg, double angle[5]);
 
 
 /**
@@ -296,6 +298,7 @@ protected:
 	int radiationMode;				///< radiation input mode as defined in \link Irradiance_IO::RADMODE
 	int trackingMode;				///< the subarray tracking model as defined in \link Subarray_IO::tracking
 	bool enableBacktrack;			///< Boolean value for whether backtracking is enabled or not
+	bool forceToStow;				///< Boolean value for whether or not a single-axis tracker can be set to a stow angle
 
 	// Time inputs
 	int year, month, day, hour;
@@ -305,6 +308,7 @@ protected:
 	double tiltDegrees;				///< Surface tilt of subarray in degrees
 	double surfaceAzimuthDegrees;	///< Surface azimuth of subarray in degrees
 	double rotationLimitDegrees;	///< Rotation limit for subarray in degrees
+	double stowAngleDegrees;		///< Optional stow angle for the subarray in degrees
 	double groundCoverageRatio;		///< Ground coverage ratio of subarray
 	poaDecompReq * poaAll;			///< Data required to decompose input plane-of-array irradiance
 
@@ -340,9 +344,9 @@ public:
 	/// Default class constructor, calls setup()
 	irrad(weather_record wr, weather_header wh,
 		int skyModel, int radiationModeIn, int trackModeIn,
-		bool useWeatherFileAlbedo, bool instantaneousWeather, bool backtrackingEnabled,
-		double dtHour, double tiltDegrees, double azimuthDegrees, double trackerRotationLimitDegrees, double groundCoverageRatio,
-		std::vector<double> monthlyTiltDegrees, std::vector<double> userSpecifiedAlbedo,
+		bool useWeatherFileAlbedo, bool instantaneousWeather, bool backtrackingEnabled, bool forceToStowIn,
+		double dtHour, double tiltDegrees, double azimuthDegrees, double trackerRotationLimitDegrees, double stowAngleDegreesIn, 
+		double groundCoverageRatio, std::vector<double> monthlyTiltDegrees, std::vector<double> userSpecifiedAlbedo,
 		poaDecompReq * poaAllIn);
 
 	/// Construct the irrad class with an Irradiance_IO() object and Subarray_IO() object
@@ -364,7 +368,7 @@ public:
 	void set_sky_model( int skymodel, double albedo );
 
 	/// Set the surface orientation for the irradiance processor
-	void set_surface( int tracking, double tilt_deg, double azimuth_deg, double rotlim_deg, bool en_backtrack, double gcr );
+	void set_surface( int tracking, double tilt_deg, double azimuth_deg, double rotlim_deg, bool en_backtrack, double gcr, bool forceToStowFlag, double stowAngle);
 
 	/// Set the direct normal and diffuse horizontal components of irradiation
 	void set_beam_diffuse( double beam, double diffuse );

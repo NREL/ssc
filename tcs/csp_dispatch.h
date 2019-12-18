@@ -142,6 +142,7 @@ public:
 		double w_stow;				//[kWe-hr] Heliostat stow electricity requirement
 		double w_cycle_standby;		//[kWe] Cycle HTF pumping power during standby
 		double w_cycle_pump;		//[kWe/kWt] Cycle HTF pumping power per thermal energy consumed
+        double disp_inventory_incentive;    //[-]   Terminal storage inventory objective incentive multiplier
 
 		
 		double pb_max_rampup;       // Maximum cycle ramp-up (fraction of capacity per hr)
@@ -316,7 +317,6 @@ public:
         bool is_dni_scenarios;
         bool is_price_scenarios;
         bool is_tdry_scenarios; 
-        double fc_gamma;            //Factor indicating storage inventory incentive for forecast uncertainty. 1-maximize storage, 0-maximize revenue
 
         s_forecast_params()
         {
@@ -328,7 +328,6 @@ public:
             is_dni_scenarios = false;
             is_price_scenarios = false;
             is_tdry_scenarios = false;
-            fc_gamma = 0.;
         };
     
     } forecast_params;

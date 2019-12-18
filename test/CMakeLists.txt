@@ -64,6 +64,7 @@ else()
 	else()
 		add_compile_options(-O3 -DNDEBUG)
 	endif()
+	add_compile_options(-Wno-unused-function -Wno-unused-variable -Wno-unused-value)
 endif(MSVC)
 
 

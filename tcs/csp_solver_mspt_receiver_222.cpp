@@ -135,7 +135,8 @@ void C_mspt_receiver_222::init()
 
 	
 	// Declare instance of htf class for receiver tube material
-	if( m_mat_tube == HTFProperties::Stainless_AISI316 || m_mat_tube == HTFProperties::T91_Steel )
+	if( m_mat_tube == HTFProperties::Stainless_AISI316 || m_mat_tube == HTFProperties::T91_Steel ||
+        m_mat_tube == HTFProperties::N06230 || m_mat_tube == HTFProperties::N07740)
 	{
 		if( !tube_material.SetFluid(m_mat_tube) )
 		{
@@ -677,9 +678,9 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 				int j = -1;
 				int i_comp = -1;
 				bool found_loc = false;
-				for( j = 0; j < 2; j++ )
+				for( j = 0; j < m_n_lines; j++ )
 				{
-					for( int abc = 0; abc < m_n_panels / m_n_lines && !found_loc; abc++ )
+					for( int abc = 0; abc < m_flow_pattern.ncols() && !found_loc; abc++ )
 					{
 						if( m_flow_pattern.at(j, abc) == i )
 							found_loc = true;

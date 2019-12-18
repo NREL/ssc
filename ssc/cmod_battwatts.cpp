@@ -45,8 +45,7 @@ var_info vtab_battwatts[] = {
 	{ SSC_INPUT,        SSC_ARRAY,       "dc",								  "DC array power",                         "W",       "",                 "",                           "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "ac",								  "AC inverter power",                      "W",       "",                 "",                           "",                           "",                              "" },
 	{ SSC_INPUT,		SSC_ARRAY,	     "load",			                  "Electricity load (year 1)",              "kW",	   "",		           "",                           "",	                         "",	                          "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inverter_model",                    "Inverter model specifier",                 "",      "0=cec,1=datasheet,2=partload,3=coefficientgenerator,4=generic", "",     "",                           "INTEGER,MIN=0,MAX=4",           "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inverter_efficiency",               "Inverter Efficiency",                     "%",      "",                  "",                          "",                           "",                               "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inverter_efficiency",               "Inverter Efficiency",                    "%",      "",                  "",                          "?=96",                        "",                               "" },
 
 var_info_invalid  };
 
@@ -187,21 +186,24 @@ public:
 		batt_vars->batt_voltage_choice = voltage_t::VOLTAGE_MODEL;
 		batt_vars->batt_voltage_matrix = util::matrix_t<double>();
 
-		// Current and Capacity
-		double batt_time_hour = batt_vars->batt_kwh / batt_vars->batt_kw;
-		double batt_C_rate_discharge = 1. / batt_time_hour;
-		batt_vars->batt_current_choice = dispatch_t::RESTRICT_CURRENT;
-		batt_vars->batt_current_charge_max = 1000 * batt_C_rate_discharge * batt_vars->batt_kwh / voltage_guess;
-		batt_vars->batt_current_discharge_max = 1000 * batt_C_rate_discharge * batt_vars->batt_kwh / voltage_guess;
-		batt_vars->batt_power_charge_max = batt_vars->batt_kw;
-		batt_vars->batt_power_discharge_max = batt_vars->batt_kw;
-
 		// Power converters and topology
 		batt_vars->batt_topology = ChargeController::AC_CONNECTED;
 		batt_vars->batt_ac_dc_efficiency = 96;
 		batt_vars->batt_dc_ac_efficiency = 96;
 		batt_vars->batt_dc_dc_bms_efficiency = 99;
 		batt_vars->pv_dc_dc_mppt_efficiency = 99;
+
+		// Current and Capacity
+		double batt_time_hour = batt_vars->batt_kwh / batt_vars->batt_kw;
+		double batt_C_rate_discharge = 1. / batt_time_hour;
+		batt_vars->batt_current_choice = dispatch_t::RESTRICT_CURRENT;
+		batt_vars->batt_current_charge_max = 1000 * batt_C_rate_discharge * batt_vars->batt_kwh / voltage_guess;
+		batt_vars->batt_current_discharge_max = 1000 * batt_C_rate_discharge * batt_vars->batt_kwh / voltage_guess;
+		batt_vars->batt_power_charge_max_kwac = batt_vars->batt_kw;
+		batt_vars->batt_power_discharge_max_kwac = batt_vars->batt_kw;
+		batt_vars->batt_power_charge_max_kwdc = batt_vars->batt_kw / (batt_vars->batt_dc_ac_efficiency * 0.01);
+		batt_vars->batt_power_discharge_max_kwdc = batt_vars->batt_kw / (batt_vars->batt_ac_dc_efficiency * 0.01); ;
+
 
 		// Ancillary equipment losses
 		double_vec batt_losses;
@@ -244,9 +246,8 @@ public:
 		
 	
 		// Inverter model
-		batt_vars->inverter_model = as_integer("inverter_model");
-		if (batt_vars->inverter_model > 3)
-			batt_vars->inverter_efficiency = as_double("inverter_efficiency");
+		batt_vars->inverter_model = 4; //this is the SharedInverter::NONE option, but for some reason that won't build for me		
+		batt_vars->inverter_efficiency = as_double("inverter_efficiency");
 
 		// Clean up
 		delete lifetime_matrix;

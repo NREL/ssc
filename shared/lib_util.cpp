@@ -26,6 +26,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cstdlib>
 #include <limits>
 #include <numeric>
+#include <algorithm>
 
 #ifdef _WIN32
 #include <direct.h>
@@ -801,6 +802,23 @@ double util::percent_of_year(int month, int hours)
 	return (hours_from_months + hours)/8760.0;
 }
 
+int util::day_of(double time)
+{
+	/* returns day number 0..6 (Monday..Sunday) given 
+	   time: hour index in year 0..8759 */
+	int daynum = (((int)(time / 24.0)));   // day goes 0-364
+	return (daynum % 7);
+}
+
+int util::week_of(double time)
+{
+	/* returns week number 0..51 given
+	   time: hour index in year 0..8759 */
+	int weeknum = ((int)(time / (24.0*7.0)));   // week goes 0-51
+	return weeknum;
+}
+
+
 int util::month_of(double time)
 { 
 	/* returns month number 1..12 given 
@@ -1148,18 +1166,14 @@ std::vector<double> util::frequency_table(double* values, size_t n_vals, double 
     if (bin_width <= 0)
         throw std::runtime_error("frequency_table bin_width must be greater than 0.");
 
-    double max_val = -1;
-    for (size_t i = 0; i < n_vals; i++){
-        if (values[i] > max_val)
-            max_val = values[i];
-    }
+    double max_val = *(std::max_element(values, values + n_vals));
 
     std::vector<double> freq(size_t(max_val/bin_width) + 1, 0);
     for (size_t i = 0; i < n_vals; i++){
-        size_t bin = (size_t)std::floor(values[i]/bin_width);
+        auto bin = (size_t)std::floor(values[i]/bin_width);
         freq[bin] += 1;
     }
-    for (auto f : freq){
+    for (auto& f : freq){
         f /= n_vals;
     }
     return freq;

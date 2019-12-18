@@ -41,6 +41,10 @@
     <ClCompile Include="..\ssc\cmod_layoutarea.cpp" />
     <ClCompile Include="..\ssc\cmod_levpartflip.cpp" />
     <ClCompile Include="..\ssc\cmod_linear_fresnel_dsg_iph.cpp" />
+    <ClCompile Include="..\ssc\cmod_merchantplant.cpp" />
+    <ClCompile Include="..\ssc\cmod_merchantplant_eqns.cpp" />
+    <ClCompile Include="..\ssc\cmod_mhk_costs.cpp" />
+    <ClCompile Include="..\ssc\cmod_mhk_eqns.cpp" />
     <ClCompile Include="..\ssc\cmod_mhk_tidal.cpp" />
     <ClCompile Include="..\ssc\cmod_mhk_wave.cpp" />
     <ClCompile Include="..\ssc\cmod_poacalib.cpp" />
@@ -52,6 +56,7 @@
     <ClCompile Include="..\ssc\cmod_pvwattsv0.cpp" />
     <ClCompile Include="..\ssc\cmod_pvwattsv1.cpp" />
     <ClCompile Include="..\ssc\cmod_pvwattsv5.cpp" />
+    <ClCompile Include="..\ssc\cmod_pvwattsv7.cpp" />
     <ClCompile Include="..\ssc\cmod_pv_get_shade_loss_mpp.cpp" />
     <ClCompile Include="..\ssc\cmod_saleleaseback.cpp" />
     <ClCompile Include="..\ssc\cmod_sco2_air_cooler.cpp" />
@@ -80,12 +85,14 @@
     <ClCompile Include="..\ssc\cmod_trough_physical.cpp" />
     <ClCompile Include="..\ssc\cmod_trough_physical_iph.cpp" />
     <ClCompile Include="..\ssc\cmod_ui_tes_calcs.cpp" />
+    <ClCompile Include="..\ssc\cmod_ui_udpc_checks.cpp" />
     <ClCompile Include="..\ssc\cmod_user_htf_comparison.cpp" />
     <ClCompile Include="..\ssc\cmod_utilityrate.cpp" />
     <ClCompile Include="..\ssc\cmod_utilityrate2.cpp" />
     <ClCompile Include="..\ssc\cmod_utilityrate3.cpp" />
     <ClCompile Include="..\ssc\cmod_utilityrate4.cpp" />
     <ClCompile Include="..\ssc\cmod_utilityrate5.cpp" />
+    <ClCompile Include="..\ssc\cmod_wavefile.cpp" />
     <ClCompile Include="..\ssc\cmod_wfcheck.cpp" />
     <ClCompile Include="..\ssc\cmod_wfcsv.cpp" />
     <ClCompile Include="..\ssc\cmod_wfreader.cpp" />
@@ -109,8 +116,11 @@
     <ClInclude Include="..\ssc\cmod_battery.h" />
     <ClInclude Include="..\ssc\cmod_fuelcell.h" />
     <ClInclude Include="..\ssc\cmod_grid.h" />
+    <ClInclude Include="..\ssc\cmod_merchantplant_eqns.h" />
+    <ClInclude Include="..\ssc\cmod_mhk_eqns.h" />
     <ClInclude Include="..\ssc\cmod_pvsamv1.h" />
     <ClInclude Include="..\ssc\cmod_windpower.h" />
+    <ClInclude Include="..\ssc\cmod_windpower_eqns.h" />
     <ClInclude Include="..\ssc\common_financial.h" />
     <ClInclude Include="..\ssc\core.h" />
     <ClInclude Include="..\ssc\common.h" />

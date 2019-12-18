@@ -544,6 +544,15 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 					call_mono_eq(x_solved, &y_eq);
 				}
 
+                double x_at_lowest = std::numeric_limits<double>::quiet_NaN();
+                if (is_last_x_best(x_at_lowest))
+                {
+                    m_x_guess = x_at_lowest;
+                    m_y_err = call_mono_eq_calc_y_err(m_x_guess, y_target);
+                    x_solved = m_x_guess;
+                    tol_solved = m_y_err;
+                }
+
 				if (m_E_slope > 0.0)
 					return SLOPE_POS_NO_NEG_ERR;
 				else
@@ -569,6 +578,15 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 					call_mono_eq(x_solved, &y_eq);
 				}
 
+                double x_at_lowest = std::numeric_limits<double>::quiet_NaN();
+                if (is_last_x_best(x_at_lowest))
+                {
+                    m_x_guess = x_at_lowest;
+                    m_y_err = call_mono_eq_calc_y_err(m_x_guess, y_target);
+                    x_solved = m_x_guess;
+                    tol_solved = m_y_err;
+                }
+
 				if (m_E_slope > 0.0)
 					return SLOPE_POS_NO_POS_ERR;
 				else
@@ -593,6 +611,15 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 					double y_eq;
 					call_mono_eq(x_solved, &y_eq);
 				}
+
+                double x_at_lowest = std::numeric_limits<double>::quiet_NaN();
+                if (is_last_x_best(x_at_lowest))
+                {
+                    m_x_guess = x_at_lowest;
+                    m_y_err = call_mono_eq_calc_y_err(m_x_guess, y_target);
+                    x_solved = m_x_guess;
+                    tol_solved = m_y_err;
+                }
 
 				if (m_E_slope > 0.0)
 					return SLOPE_POS_BOTH_ERRS;
@@ -623,6 +650,15 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 					call_mono_eq(x_solved, &y_eq);
 				}
 
+                double x_at_lowest = std::numeric_limits<double>::quiet_NaN();
+                if (is_last_x_best(x_at_lowest))
+                {
+                    m_x_guess = x_at_lowest;
+                    m_y_err = call_mono_eq_calc_y_err(m_x_guess, y_target);
+                    x_solved = m_x_guess;
+                    tol_solved = m_y_err;
+                }
+
 				if (m_E_slope > 0.0)
 					return MAX_ITER_SLOPE_POS_NO_NEG_ERR;
 				else
@@ -648,6 +684,15 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 					call_mono_eq(x_solved, &y_eq);
 				}
 
+                double x_at_lowest = std::numeric_limits<double>::quiet_NaN();
+                if (is_last_x_best(x_at_lowest))
+                {
+                    m_x_guess = x_at_lowest;
+                    m_y_err = call_mono_eq_calc_y_err(m_x_guess, y_target);
+                    x_solved = m_x_guess;
+                    tol_solved = m_y_err;
+                }
+
 				if (m_E_slope > 0.0)
 					return MAX_ITER_SLOPE_POS_NO_POS_ERR;
 				else
@@ -672,6 +717,15 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 					double y_eq;
 					call_mono_eq(x_solved, &y_eq);
 				}
+
+                double x_at_lowest = std::numeric_limits<double>::quiet_NaN();
+                if (is_last_x_best(x_at_lowest))
+                {
+                    m_x_guess = x_at_lowest;
+                    m_y_err = call_mono_eq_calc_y_err(m_x_guess, y_target);
+                    x_solved = m_x_guess;
+                    tol_solved = m_y_err;
+                }
 
 				if (m_E_slope > 0.0)
 					return MAX_ITER_SLOPE_POS_BOTH_ERRS;
@@ -841,16 +895,7 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 		}
 
 		// Call function with new x_guess
-		double y_calc;
-		if(call_mono_eq(m_x_guess, &y_calc) != 0)
-		{
-			y_calc = std::numeric_limits<double>::quiet_NaN();
-		}
-
-		m_y_err = y_calc - y_target;
-
-		if( m_is_err_rel )
-			m_y_err = m_y_err / fabs(y_target);
+        m_y_err = call_mono_eq_calc_y_err(m_x_guess, y_target);
 
 	}	// End of iteration on x
 
@@ -859,6 +904,23 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 	iter_solved = m_iter;
 
 	return CONVERGED;
+}
+
+double C_monotonic_eq_solver::call_mono_eq_calc_y_err(double x, double y_target)
+{
+    // Call function with new x_guess
+    double y_calc;
+    if (call_mono_eq(x, &y_calc) != 0)
+    {
+        y_calc = std::numeric_limits<double>::quiet_NaN();
+    }
+
+    double y_err = y_calc - y_target;
+
+    if (m_is_err_rel)
+        y_err = y_err / fabs(y_target);
+
+    return y_err;
 }
 
 int C_monotonic_eq_solver::call_mono_eq(double x, double *y)
@@ -871,6 +933,60 @@ int C_monotonic_eq_solver::call_mono_eq(double x, double *y)
 	ms_eq_call_tracker.push_back(ms_eq_tracker_temp);
 
 	return ms_eq_tracker_temp.err_code;
+}
+
+bool C_monotonic_eq_solver::is_last_x_best(double & x_at_lowest)
+{
+    C_monotonic_eq_solver::S_eq_chars s_eq_chars_min_abs_diff;
+
+    bool is_use_last_x = false;
+    x_at_lowest = std::numeric_limits<double>::quiet_NaN();
+
+    if (get_min_abs_diff_no_err(s_eq_chars_min_abs_diff))
+    {
+        double min_abs_diff = fabs(s_eq_chars_min_abs_diff.y);
+        if (min_abs_diff < m_y_err)
+        {
+            x_at_lowest = s_eq_chars_min_abs_diff.x;
+
+            is_use_last_x = true;
+        }
+    }
+
+    return is_use_last_x;
+}
+
+ bool C_monotonic_eq_solver::get_min_abs_diff_no_err(C_monotonic_eq_solver::S_eq_chars & s_eq_chars_min_abs_diff)
+{
+    int len = ms_eq_call_tracker.size();
+    if (len == 0)
+    {
+        return false;
+    }
+    
+    bool is_found_min = false;
+    double min_abs_diff = std::numeric_limits<double>::quiet_NaN();
+
+    for (int i = 0; i < len; i++)
+    {
+        C_monotonic_eq_solver::S_eq_chars i_ms_eq = ms_eq_call_tracker[i];
+        if (i_ms_eq.err_code == 0 && std::isfinite(i_ms_eq.y))
+        {
+            if (is_found_min && fabs(i_ms_eq.y) < min_abs_diff)
+            {
+                min_abs_diff = i_ms_eq.y;
+                s_eq_chars_min_abs_diff = i_ms_eq;
+            }
+            else if (!is_found_min)
+            {
+                min_abs_diff = i_ms_eq.y;
+                is_found_min = true;
+                s_eq_chars_min_abs_diff = i_ms_eq;
+            }
+        }
+    }
+
+    return is_found_min;
 }
 
 const C_monotonic_eq_solver::S_eq_chars C_monotonic_eq_solver::get_last_mono_eq_call()

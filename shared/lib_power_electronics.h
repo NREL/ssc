@@ -164,7 +164,7 @@ class DCBatteryController : public ChargeController
 {
 public:
 	/// Construct a DCBatteryController with a dispatch object, battery metrics object, and single-point efficiency for the battery charge controller
-	DCBatteryController(dispatch_t * dispatch, battery_metrics_t * battery_metrics, double efficiencyDCToDC);
+	DCBatteryController(dispatch_t * dispatch, battery_metrics_t * battery_metrics, double efficiencyDCToDC, double inverterEfficiencyCutoff);
 
 	/// Destroy the DCBatteryController object
 	~DCBatteryController() {};

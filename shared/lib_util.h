@@ -117,6 +117,8 @@ namespace util
 	size_t hour_of_day(size_t hour_of_year); /* return the hour of day (0 - 23) given the hour of year (0 - 8759) */
 	double percent_of_year(int month, int hours); /* returns the fraction of a year, based on months and hours */
 	int month_of(double time); /* hour: 0 = jan 1st 12am-1am, returns 1-12 */
+	int day_of(double time); /* hour: 0 = jan 1st Monday 12am-1am, returns 0-6 */
+	int week_of(double time); /* hour: 0 = jan 1st Monday 12am-1am, returns 0-6 */
 	int day_of_month(int month, double time); /* month: 1-12 time: hours, starting 0=jan 1st 12am, returns 1-nday*/
 	int days_in_month(int month); /*month: 0-11, return 0-30, depending on the month*/
 	void month_hour(size_t hour_of_year, size_t & out_month, size_t & out_hour); /*given the hour of year, return the month, and hour of day*/
