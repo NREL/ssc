@@ -28,7 +28,8 @@ void mp_ancillary_services(ssc_data_t data)
 		bool gen_is_assigned = false;
 
 		int mp_enable_energy_market_revenue, mp_enable_ancserv1, mp_enable_ancserv2, mp_enable_ancserv3, mp_enable_ancserv4;
-		ssc_number_t analysis_period, system_capacity, mp_calculate_revenue;
+		int mp_calculate_revenue;
+		ssc_number_t analysis_period, system_capacity;
 		util::matrix_t<ssc_number_t> mp_energy_market_revenue, mp_ancserv1_revenue, mp_ancserv2_revenue, mp_ancserv3_revenue, mp_ancserv4_revenue, system_gen;
 		/*
 		{ SSC_INPUT,        SSC_NUMBER,     "mp_enable_energy_market_revenue",		      "Enable energy market revenue",   "0/1",   "",    "",  "*",	"INTEGER,MIN=0,MAX=1",      "" },
@@ -66,8 +67,8 @@ void mp_ancillary_services(ssc_data_t data)
 		calculate_revenue = (vt->lookup("mp_calculate_revenue") != NULL);
 		if (calculate_revenue)
 		{
-            vt_get_number(vt, "mp_calculate_revenue", &mp_calculate_revenue);
-            calculate_revenue = (mp_calculate_revenue > 0.5);
+            vt_get_int(vt, "mp_calculate_revenue", &mp_calculate_revenue);
+            calculate_revenue = (bool)mp_calculate_revenue;
 		}
 
 		// kW to MW for comparison
