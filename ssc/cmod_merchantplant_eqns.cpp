@@ -42,7 +42,7 @@ void mp_ancillary_services(ssc_data_t data)
 		{ SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv4",		      "Enable ancillary services 4 revenue",   "0/1",   "",    "",  "*",	"INTEGER,MIN=0,MAX=1",      "" },
 		{ SSC_INPUT, SSC_MATRIX, "mp_ancserv4_revenue", "Ancillary services 4 revenue input", "", "","*", "", "" },
 		*/
-		vt_get_double(vt, "analysis_period", &analysis_period);
+        vt_get_number(vt, "analysis_period", &analysis_period);
         vt_get_int(vt, "mp_enable_energy_market_revenue", &mp_enable_energy_market_revenue);
         vt_get_int(vt, "mp_enable_ancserv1", &mp_enable_ancserv1);
         vt_get_int(vt, "mp_enable_ancserv2", &mp_enable_ancserv2);
@@ -61,12 +61,12 @@ void mp_ancillary_services(ssc_data_t data)
 		}
 		else
 		{
-			vt_get_double(vt, "system_capacity", &system_capacity);
+            vt_get_number(vt, "system_capacity", &system_capacity);
 		}
 		calculate_revenue = (vt->lookup("mp_calculate_revenue") != NULL);
 		if (calculate_revenue)
 		{
-			vt_get_double(vt, "mp_calculate_revenue", &mp_calculate_revenue);
+            vt_get_number(vt, "mp_calculate_revenue", &mp_calculate_revenue);
             calculate_revenue = (mp_calculate_revenue > 0.5);
 		}
 

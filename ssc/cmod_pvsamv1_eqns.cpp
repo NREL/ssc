@@ -5,7 +5,7 @@
 void map_input(var_table* vt, const std::string& sam_name, var_table* reopt_table, const std::string& reopt_name,
                bool sum = false, bool to_ratio = false){
     double sam_input;
-    vt_get_double(vt, sam_name, &sam_input);
+    vt_get_number(vt, sam_name, &sam_input);
     if (var_data* vd = reopt_table->lookup(reopt_name)){
         if (sum){
             if (to_ratio)
@@ -27,7 +27,7 @@ void map_optional_input(var_table* vt, const std::string& sam_name, var_table* r
         double def_val, bool to_ratio = false){
     double sam_input;
     try{
-        vt_get_double(vt, sam_name, &sam_input);
+        vt_get_number(vt, sam_name, &sam_input);
         if (to_ratio) sam_input /= 100.;
     }
     catch (std::runtime_error&) {
@@ -100,7 +100,7 @@ SSCEXPORT void Reopt_size_battery_params(ssc_data_t data) {
     // Get appropriate inverter efficiency input and transform to ratio from percent
     int inv_model = 0;
     double val1, val2, system_cap;
-    vt_get_double(vt, "system_capacity", &system_cap);
+    vt_get_number(vt, "system_capacity", &system_cap);
 	vd = vt->lookup("inverter_model");
 	if (vd){
         std::vector<std::string> inv_eff_names = {"inv_snl_eff_cec", "inv_ds_eff", "inv_pd_eff", "inv_cec_cg_eff"};
@@ -108,15 +108,15 @@ SSCEXPORT void Reopt_size_battery_params(ssc_data_t data) {
         inv_model = (int)vd->num[0];
         if (inv_model == 4)
             throw std::runtime_error("Inverter Mermoud Lejeune Model not supported.");
-        vt_get_double(vt, inv_eff_names[inv_model], &eff);
+        vt_get_number(vt, inv_eff_names[inv_model], &eff);
         eff /= 100.;
         reopt_pv.assign("inv_eff", eff);
         reopt_batt.assign("inverter_efficiency_pct", eff);
 
         // calculate the dc ac ratio
         std::vector<std::string> inv_power_names = {"inv_snl_paco", "inv_ds_paco", "inv_pd_paco", "inv_cec_cg_paco"};
-        vt_get_double(vt, inv_power_names[inv_model], &val1);
-        vt_get_double(vt, "inverter_count", &val2);
+        vt_get_number(vt, inv_power_names[inv_model], &val1);
+        vt_get_number(vt, "inverter_count", &val2);
         reopt_pv.assign("dc_ac_ratio", system_cap * 1000. / (val2 * val1));
     }
 	else{
@@ -306,8 +306,8 @@ SSCEXPORT void Reopt_size_battery_params(ssc_data_t data) {
         reopt_fin.assign("offtaker_tax_pct", vd->num[0]/100. + vd2->num[0]/100.);
     }
 
-    vt_get_double(vt, "inflation_rate", &val1);
-    vt_get_double(vt, "real_discount_rate", &val2);
+    vt_get_number(vt, "inflation_rate", &val1);
+    vt_get_number(vt, "real_discount_rate", &val2);
     reopt_fin.assign("offtaker_discount_pct", (1 + val1/100.)*(1 + val2/100.) - 1);
 
     vd = vt->lookup("om_fixed_escal");

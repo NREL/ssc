@@ -14,16 +14,16 @@ void me_array_cable_length(ssc_data_t data)
 
     double devices_per_row, device_spacing_in_row, number_rows, row_spacing, cable_system_overbuild, floating_array, export_cable_redundancy, water_depth, number_devices, distance_to_shore;
 
-    vt_get_double(vt, "devices_per_row", &devices_per_row);
-    vt_get_double(vt, "device_spacing_in_row", &device_spacing_in_row);
-    vt_get_double(vt, "number_rows", &number_rows);
-    vt_get_double(vt, "row_spacing", &row_spacing);
-    vt_get_double(vt, "cable_system_overbuild", &cable_system_overbuild);
-    vt_get_double(vt, "floating_array", &floating_array);
-    vt_get_double(vt, "export_cable_redundancy", &export_cable_redundancy);
-    vt_get_double(vt, "water_depth", &water_depth);
-    vt_get_double(vt, "number_devices", &number_devices);
-    vt_get_double(vt, "distance_to_shore", &distance_to_shore);
+    vt_get_number(vt, "devices_per_row", &devices_per_row);
+    vt_get_number(vt, "device_spacing_in_row", &device_spacing_in_row);
+    vt_get_number(vt, "number_rows", &number_rows);
+    vt_get_number(vt, "row_spacing", &row_spacing);
+    vt_get_number(vt, "cable_system_overbuild", &cable_system_overbuild);
+    vt_get_number(vt, "floating_array", &floating_array);
+    vt_get_number(vt, "export_cable_redundancy", &export_cable_redundancy);
+    vt_get_number(vt, "water_depth", &water_depth);
+    vt_get_number(vt, "number_devices", &number_devices);
+    vt_get_number(vt, "distance_to_shore", &distance_to_shore);
 
 		
 	double length = (devices_per_row - 1) * device_spacing_in_row * number_rows + row_spacing * (number_rows - 1);

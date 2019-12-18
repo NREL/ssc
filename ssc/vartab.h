@@ -178,7 +178,7 @@ public:
 
 void vt_get_int(var_table* vt, std::string name, int* lvalue);
 
-void vt_get_double(var_table* vt, std::string name, double* lvalue);
+void vt_get_number(var_table* vt, std::string name, double* lvalue);
 
 void vt_get_array_vec(var_table* vt, std::string name, std::vector<double>& vec_double);
 

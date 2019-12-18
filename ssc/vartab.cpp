@@ -342,7 +342,7 @@ void vt_get_int(var_table* vt, const std::string name, int* lvalue) {
 	else throw std::runtime_error(std::string(name) + std::string(" must be assigned."));
 }
 
-void vt_get_double(var_table* vt, const std::string name, double* lvalue) {
+void vt_get_number(var_table* vt, std::string name, double* lvalue) {
 	if (var_data* vd = vt->lookup(name)) *lvalue = vd->num;
 	else throw std::runtime_error(std::string(name) + std::string(" must be assigned."));
 }
