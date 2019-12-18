@@ -39,6 +39,12 @@ void single_year_to_lifetime_interpolated(
 	size_t step_per_hour = (size_t)(1 / dt_hour);
 	lifetime_from_singleyear_vector.reserve(n_rec_lifetime);
 
+    if (singleyear_vector.empty() ) {
+        for (size_t i = 0; i < n_rec_lifetime; i++)
+            lifetime_from_singleyear_vector.emplace_back(0);
+        return;
+    }
+
 	// Parse single year properties
 	double dt_hour_singleyear_input = (double)(util::hours_per_year) / (double)(singleyear_vector.size());
 	size_t step_per_hour_singleyear_input = (size_t)(1 / dt_hour_singleyear_input);
@@ -79,14 +85,9 @@ void single_year_to_lifetime_interpolated(
 			}
 		}
 	}
-	// In the case of no single year vector, create lifetime vector of zeros
-	else if (singleyear_vector.empty() ) {
-	    for (size_t i = 0; i < n_rec_lifetime; i++)
-		    lifetime_from_singleyear_vector.emplace_back(0);
-	}
 	else if (singleyear_vector.size() == 1) {
 	    for (size_t i = 0; i < n_rec_lifetime; i++)
-	        lifetime_from_singleyear_vector.emplace_back(singleyear_vector[0]);
+	        lifetime_from_singleyear_vector.push_back(singleyear_vector[0]);
 	}
 }
 
