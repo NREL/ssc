@@ -12,8 +12,11 @@ os:
 compiler:
   - gcc
 
+settings:
+  maximum_number_of_builds --set 1
+
 before_script:
-  - travis settings maximum_number_of_builds --set 1
+
  # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then wget -q https://github.com/wxWidgets/wxWidgets/releases/download/v3.1.1/wxWidgets-3.1.1.tar.bz2; fi
  # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then tar jxf wxWidgets-3.1.1.tar.bz2; fi
  # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cd wxWidgets-3.1.1; fi
