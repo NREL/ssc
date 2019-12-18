@@ -33,12 +33,16 @@ OBJECTS = \
 	cmod_generic_system.o \
 	cmod_wfcheck.o \
 	cmod_pvwattsv5.o \
+	cmod_pvwattsv7.o \
 	cmod_windfile.o \
 	cmod_pvwattsv1_1ts.o \
 	cmod_pvwattsv1_poa.o \
 	cmod_battwatts.o \
+	cmod_wavefile.o \
 	cmod_mhk_wave.o \
 	cmod_mhk_tidal.o \
+	cmod_mhk_costs.o \
+	cmod_mhk_eqns.o \
 	cmod_wfcsv.o \
 	cmod_6parsolve.o \
 	cmod_windpower.o \
@@ -58,6 +62,8 @@ OBJECTS = \
 	cmod_levpartflip.o \
 	cmod_saleleaseback.o \
 	cmod_singleowner.o \
+	cmod_merchantplant.o \
+	cmod_merchantplant_eqns.o \
 	cmod_timeseq.o \
 	cmod_utilityrate.o \
 	cmod_utilityrate2.o \

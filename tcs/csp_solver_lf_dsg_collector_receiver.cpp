@@ -1045,6 +1045,12 @@ double C_csp_lf_dsg_collector_receiver::get_tracking_power()
 	return std::numeric_limits<double>::quiet_NaN(); //MWe
 }
 
+double C_csp_lf_dsg_collector_receiver::get_remaining_startup_energy()
+{
+	throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::get_remaining_startup_energy() is not complete"));
+	return std::numeric_limits<double>::quiet_NaN(); //kWh
+}
+
 double C_csp_lf_dsg_collector_receiver::get_col_startup_power()
 {
 	throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::get_col_startup_power() is not complete"));

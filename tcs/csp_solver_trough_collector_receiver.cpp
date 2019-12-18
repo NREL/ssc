@@ -857,6 +857,12 @@ double C_csp_trough_collector_receiver::get_tracking_power()
     return m_SCA_drives_elec * 1.e-6 * m_nSCA * m_nLoops;     //MWe
 }
 
+double C_csp_trough_collector_receiver::get_remaining_startup_energy()
+{
+	throw(C_csp_exception("C_csp_trough_collector_receiver::get_remaining_startup_energy() is not complete"));
+	return std::numeric_limits<double>::quiet_NaN(); //kWh
+}
+
 double C_csp_trough_collector_receiver::get_col_startup_power()
 {
     // Note: C_csp_trough_collector_receiver::startup() is called after this function
