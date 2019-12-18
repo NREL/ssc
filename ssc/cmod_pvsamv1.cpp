@@ -841,7 +841,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "performance_ratio",                           "Performance ratio",         "",       "",  "Annual (Year 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "capacity_factor",                             "Capacity factor",           "%",      "",  "Annual (Year 1)", "*", "", "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "capacity_factor_ac",                          "Capacity factor based on AC system capacity",           "%",      "",  "Annual (Year 1)", "*", "", "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "kwh_per_kw",                                  "First year kWh(AC)/kW(DC)", "kWh/kW", "",	"Annual (Year 1)", "*", "", "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "kwh_per_kw",                                  "Energy yield", "kWh/kW", "",	"Annual (Year 1)", "*", "", "" },
 
 	//miscellaneous outputs
 	{ SSC_OUTPUT,        SSC_NUMBER,     "ts_shift_hours",                            "Sun position time offset",   "hours",  "",  "Miscellaneous", "*",                       "",                          "" },

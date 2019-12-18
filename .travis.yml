@@ -12,7 +12,11 @@ os:
 compiler:
   - gcc
 
+settings:
+  - maximum_number_of_builds --set 1
+
 before_script:
+
  # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then wget -q https://github.com/wxWidgets/wxWidgets/releases/download/v3.1.1/wxWidgets-3.1.1.tar.bz2; fi
  # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then tar jxf wxWidgets-3.1.1.tar.bz2; fi
  # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cd wxWidgets-3.1.1; fi
@@ -39,15 +43,16 @@ before_script:
  # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then git clone https://github.com/$user/wex $WEXDIR; fi
 
 script:
+
   # - export PATH=$PATH:$HOME/wx-3.1.1/bin
  # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then make -j4 -C $LKDIR/build_linux; fi
  # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then make -j4 -C $WEXDIR/build_linux; fi
  # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then make -j4 -C $SSCDIR/build_linux; fi
   - mkdir ${SSCDIR}/build && cd ${SSCDIR}/build
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cmake .. -DCMAKE_BUILD_TYPE=Release -Dskip_tools=1  && make VERBOSE=1 && test/Test; fi
- # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then travis_wait 30 test/Test; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then cmake .. -DCMAKE_BUILD_TYPE=Release -Dskip_tools=1  && make VERBOSE=1 && test/Test; fi
- # - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then travis_wait 30 test/Test; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cmake .. -DCMAKE_BUILD_TYPE=Release -Dskip_tools=1  && make; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then travis_wait 30 test/Test; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then cmake .. -DCMAKE_BUILD_TYPE=Release -Dskip_tools=1  && make; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then travis_wait 30 test/Test; fi
 
 
 install:
