@@ -1203,7 +1203,6 @@ battstor::battstor(const battstor& orig){
     cliploss_prediction = orig.cliploss_prediction;
     prediction_index = orig.prediction_index;
 
-    /*! If fuel cell is attached */
     fuelcellPower = orig.fuelcellPower;
 
     // outputs
