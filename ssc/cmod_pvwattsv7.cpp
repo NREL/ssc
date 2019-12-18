@@ -179,7 +179,7 @@ static var_info _cm_vtab_pvwattsv7[] = {
 		{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",                  "Annual energy",                               "kWh",       "",                                             "Annual",      "*",                       "",                          "" },
 
 		{ SSC_OUTPUT,       SSC_NUMBER,      "capacity_factor",                "Capacity factor",                             "%",         "",                                             "Annual",        "*",                       "",                          "" },
-		{ SSC_OUTPUT,       SSC_NUMBER,      "kwh_per_kw",                     "First year kWh/kW",                           "",          "",                                             "Annual",        "*",                       "",                          "" },
+		{ SSC_OUTPUT,       SSC_NUMBER,      "kwh_per_kw",                     "Energy yeld",                           "kWh/kW",          "",                                             "Annual",        "*",                       "",                          "" },
 
 		{ SSC_OUTPUT,       SSC_STRING,      "location",                       "Location ID",                                 "",          "",                                             "Location",      "*",                       "",                          "" },
 		{ SSC_OUTPUT,       SSC_STRING,      "city",                           "City",                                        "",          "",                                             "Location",      "*",                       "",                          "" },
