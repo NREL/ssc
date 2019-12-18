@@ -155,7 +155,7 @@ static var_info _cm_vtab_hcpv[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "dc_nominal",                      "Annual DC nominal",                                               "kWh",    "",        "Annual",          "*",                    "",                                         "" },
 
 	{ SSC_OUTPUT, SSC_NUMBER, "capacity_factor", "Capacity factor", "%", "", "", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "kwh_per_kw", "First year kWh/kW", "kWh/kW", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "kwh_per_kw", "Energy yield", "kWh/kW", "", "", "*", "", "" },
 
 
 var_info_invalid };
