@@ -49,14 +49,13 @@ public:
     bool runWithOutOfMemoryCheck()
     {
         ssc_module_t module;
-        module = ssc_module_create("battery");
-        try {
-            ssc_module_exec(module, &data);
-        }
-        catch (std::exception& e) {
+        module = ssc_module_create("battwatts");
+        bool success = ssc_module_exec(module, &data);
+        if (!success) {
             std::string mod_name = "battwatts";
             std::string reason = "Out of memory during resilience simulations. Try reducing analysis years, increasing critical load or reducing PV generation.";
-            EXPECT_EQ(e.what(), "exec fail(" + mod_name + "): " + reason);
+            std::string err = ssc_module_log(module, 0, nullptr, nullptr);
+            EXPECT_EQ(err, "exec fail(" + mod_name + "): " + reason);
             return false;
         }
         return true;

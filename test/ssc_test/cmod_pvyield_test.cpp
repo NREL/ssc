@@ -125,7 +125,6 @@ TEST_F(CMPvYieldTimo, NoFinancialModelSystemDesign_cmod_pvsamv1)
 			ssc_number_t annual_energy;
 			ssc_data_get_number(data, "annual_energy", &annual_energy);
 			EXPECT_NEAR(annual_energy, annual_energy_expected[tracking_option], m_error_tolerance_hi) << "Annual energy.";
-			i = tracking_option;
 			//cout << "-----------------------------------------------------" << endl;
 			//cout << i << " of " << annual_energy_expected.size() << " track mode Computed annual energy : " << annual_energy << endl;
 			//cout << i << " of " << annual_energy_expected.size() << " track mode Expected annual energy : " << annual_energy_expected[i] << endl;
