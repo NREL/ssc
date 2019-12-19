@@ -293,7 +293,7 @@ void mp_ancillary_services(ssc_data_t data)
 					{
 						for (size_t i = 0; (i < cleared_capacity.size()) && (i < system_generation.size()); i++)
 						{
-							if (cleared_capacity[i] > system_generation[i])
+							if ((cleared_capacity[i] > 0) && (cleared_capacity[i] > system_generation[i]))
 							{
 								error = util::format("sum of cleared capacity %g exceeds system capacity %g at timestep %d", cleared_capacity[i], system_generation[i], int(i));
 								break;

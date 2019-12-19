@@ -59,9 +59,9 @@
 
 SSCEXPORT int ssc_version()
 {
-	return 225;
+	return 226;
 }
-
+ 
 SSCEXPORT const char *ssc_build_info()
 {
 	static const char *_bi = __PLATFORM__ " " __ARCH__ " " __COMPILER__ " " __DATE__ " " __TIME__;

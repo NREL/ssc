@@ -261,7 +261,8 @@ static var_info _cm_vtab_tcstrough_empirical[] = {
 
 //	{ SSC_OUTPUT, SSC_ARRAY, "hourly_energy", "Hourly energy", "kWh", "", "tcs_trough_empirical", "*", "LENGTH=8760", "" },
 
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_energy", "Annual energy", "kWh", "", "tcs_trough_empirical", "*", "", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "monthly_energy", "Monthly energy", "kWh", "", "tcs_trough_empirical", "*", "", "" },
+    { SSC_OUTPUT, SSC_NUMBER, "annual_energy", "Annual energy", "kWh", "", "tcs_trough_empirical", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_W_cycle_gross", "Electrical source - Power cycle gross output", "kWh", "", "tcs_trough_empirical", "*", "", "" },
 
 	{ SSC_OUTPUT, SSC_NUMBER, "conversion_factor", "Gross to Net Conversion Factor", "%", "", "Calculated", "*", "", "" },
@@ -563,6 +564,7 @@ public:
 		}
 
 		accumulate_annual("gen", "annual_energy"); // already in kWh
+        accumulate_monthly("gen", "monthly_energy"); // already in kWh
 
 		// metric outputs moved to technology
 		double kWhperkW = 0.0;

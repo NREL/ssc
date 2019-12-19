@@ -726,6 +726,11 @@ static var_info _cm_vtab_merchantplant[] = {
 
 	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_curtailment_revenue",                        "Present value of curtailment payment revenue",              "$",                   "", "Metrics", "*", "", "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_capacity_revenue",                        "Present value of capacity payment revenue",              "$",                   "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_energy_market_revenue",                        "Present value of energy market revenue",              "$",                   "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_ancillary_services_1_revenue",                        "Present value of ancillary services 1 revenue",              "$",                   "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_ancillary_services_2_revenue",                        "Present value of ancillary services 2 revenue",              "$",                   "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_ancillary_services_3_revenue",                        "Present value of ancillary services 3 revenue",              "$",                   "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_ancillary_services_4_revenue",                        "Present value of ancillary services 4 revenue",              "$",                   "", "Metrics", "*", "", "" },
 		// only count toward revenue if user selected
 	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_fed_pbi_income",                        "Present value of federal PBI income",              "$",                   "", "Metrics", "*", "", "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_sta_pbi_income",                        "Present value of state PBI income",              "$",                   "", "Metrics", "*", "", "" },
@@ -2743,6 +2748,11 @@ public:
 	/*
 		{ SSC_OUTPUT,       SSC_NUMBER,     "npv_curtailment_revenue",                        "Present value of curtailment payment revenue",              "$",                   "", "Metrics", "*", "", "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_capacity_revenue",                        "Present value of capacity payment revenue",              "$",                   "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_energy_market_revenue",                        "Present value of energy market revenue",              "$",                   "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_ancillary_services_1_revenue",                        "Present value of ancillary services 1 revenue",              "$",                   "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_ancillary_services_2_revenue",                        "Present value of ancillary services 2 revenue",              "$",                   "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_ancillary_services_3_revenue",                        "Present value of ancillary services 3 revenue",              "$",                   "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_ancillary_services_4_revenue",                        "Present value of ancillary services 4 revenue",              "$",                   "", "Metrics", "*", "", "" },
 		// only count toward revenue if user selected
 	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_fed_pbi_income",                        "Present value of federal PBI income",              "$",                   "", "Metrics", "*", "", "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_sta_pbi_income",                        "Present value of state PBI income",              "$",                   "", "Metrics", "*", "", "" },
@@ -2754,6 +2764,11 @@ public:
 	*/
 	assign("npv_curtailment_revenue", var_data((ssc_number_t)npv(CF_curtailment_value, nyears, nom_discount_rate)));
 	assign("npv_capacity_revenue", var_data((ssc_number_t)npv(CF_capacity_payment, nyears, nom_discount_rate)));
+	assign("npv_energy_market_revenue", var_data((ssc_number_t)npv(CF_energy_market_revenue, nyears, nom_discount_rate)));
+	assign("npv_ancillary_services_1_revenue", var_data((ssc_number_t)npv(CF_ancillary_services_1_revenue, nyears, nom_discount_rate)));
+	assign("npv_ancillary_services_2_revenue", var_data((ssc_number_t)npv(CF_ancillary_services_2_revenue, nyears, nom_discount_rate)));
+	assign("npv_ancillary_services_3_revenue", var_data((ssc_number_t)npv(CF_ancillary_services_3_revenue, nyears, nom_discount_rate)));
+	assign("npv_ancillary_services_4_revenue", var_data((ssc_number_t)npv(CF_ancillary_services_4_revenue, nyears, nom_discount_rate)));
 	assign("npv_fed_pbi_income", var_data((ssc_number_t)npv(CF_pbi_fed, nyears, nom_discount_rate)));
 	assign("npv_sta_pbi_income", var_data((ssc_number_t)npv(CF_pbi_sta, nyears, nom_discount_rate)));
 	assign("npv_uti_pbi_income", var_data((ssc_number_t)npv(CF_pbi_uti, nyears, nom_discount_rate)));
