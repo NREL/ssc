@@ -51,7 +51,7 @@ script:
   - mkdir ${SSCDIR}/build && cd ${SSCDIR}/build
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cmake .. -DCMAKE_BUILD_TYPE=Release -Dskip_tools=1  && make; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then cmake .. -DCMAKE_BUILD_TYPE=Release -Dskip_tools=1  && make; fi
-  - echo $$TRAVIS_COMMIT_RANGE
+  - echo $TRAVIS_COMMIT_RANGE
   - cd ${SSCDIR}
   - IFS=$'\n' && read -ra array <<< $(git diff --name-only $TRAVIS_COMMIT_RANGE)
   - IFS=$' ' && read -ra array <<< ${array[0]}
@@ -62,7 +62,7 @@ script:
         xbase=${a##*/}
         xpref=${xbase%.*}
         var="--gtest_filter=*${xpref}*"
-        build/test/Testd ${var}
+        build/test/Test ${var}
     done
 
 
