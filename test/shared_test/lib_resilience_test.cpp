@@ -20,9 +20,9 @@ TEST_F(ResilienceTest_lib_resilience, VoltageCutoffParameterSetup)
                                         char buf[300];
                                         sprintf(buf, "dtHour, %f, Vfull, %f, Vexp, %f, Vnom, %f, Qfull, %f, Qexp, %f, Qnom, %f, C rate, %f, res, %f",
                                                 dtHour, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom, C_rate, resistance);
-                                        try{
-                                            auto voltageModel = new voltage_dynamic_t(n_series, n_strings, Vnom * 0.98, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom,
+                                        auto voltageModel = new voltage_dynamic_t(n_series, n_strings, Vnom * 0.98, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom,
                                                                                   C_rate, resistance, dtHour);
+                                        try{
                                             double current1;
                                             for (auto q_ratio : {0.25, 0.5, 0.75}){
                                                 double q = n_strings * Qfull * q_ratio;
@@ -31,10 +31,12 @@ TEST_F(ResilienceTest_lib_resilience, VoltageCutoffParameterSetup)
                                                 auto power1 = voltageModel->calculate_voltage_for_current(current1, q - current1 * dtHour, qmax, 0) * current1;
                                                 EXPECT_NEAR(max_1, power1, 1e-3) << buf << ", q_ratio, " << q_ratio;
                                             }
+                                            delete voltageModel;
 
                                         }
                                         catch (std::exception&){
                                             std::cerr << buf;
+                                            delete voltageModel;
                                         }
                                     }
                                 }
