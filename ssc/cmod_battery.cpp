@@ -1153,16 +1153,18 @@ void battstor::initialize_automated_dispatch(std::vector<ssc_number_t> pv, std::
 }
 battstor::~battstor()
 {
-	if( voltage_model ) delete voltage_model;
-	if( lifetime_cycle_model ) delete lifetime_cycle_model;
-	if (lifetime_calendar_model) delete lifetime_calendar_model;
-	if( thermal_model ) delete thermal_model;
-	if( battery_model ) delete battery_model;
-	if (battery_metrics) delete battery_metrics;
-	if( capacity_model ) delete capacity_model;
-	if (losses_model) delete losses_model;
-	if( dispatch_model ) delete dispatch_model;
-	if (charge_control) delete charge_control;
+	delete voltage_model;
+	delete lifetime_model;
+	delete lifetime_cycle_model;
+	delete lifetime_calendar_model;
+	delete thermal_model;
+	delete capacity_model;
+	delete battery_model;
+	delete battery_metrics;
+	delete dispatch_model;
+	delete losses_model;
+	delete charge_control;
+	delete utilityRate;
 }
 
 battstor::battstor(const battstor& orig){

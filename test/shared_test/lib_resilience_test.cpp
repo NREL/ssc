@@ -84,9 +84,11 @@ TEST_F(ResilienceTest_lib_resilience, DischargeBatteryModelHourly)
         }
 
         desired_power += max_power / 100.;
+        batt->battery_model->delete_clone();
         delete batt->battery_model;
         batt->battery_model = new battery_t(initial_batt);
     }
+    initial_batt.delete_clone();
 }
 
 TEST_F(ResilienceTest_lib_resilience, DischargeBatteryModelSubHourly)
@@ -122,6 +124,7 @@ TEST_F(ResilienceTest_lib_resilience, DischargeBatteryModelSubHourly)
         }
 
         desired_power += max_power / 100.;
+        batt->battery_model->delete_clone();
         delete batt->battery_model;
         batt->battery_model = new battery_t(initial_batt);
     }
@@ -162,6 +165,7 @@ TEST_F(ResilienceTest_lib_resilience, ChargeBatteryModelHourly)
         delete batt->battery_model;
         batt->battery_model = new battery_t(initial_batt);
     }
+    initial_batt.delete_clone();
 }
 
 TEST_F(ResilienceTest_lib_resilience, ChargeBatteryModelSubhourly)
@@ -195,9 +199,12 @@ TEST_F(ResilienceTest_lib_resilience, ChargeBatteryModelSubhourly)
         }
 
         desired_power += max_power / 100.;
+        batt->battery_model->delete_clone();
         delete batt->battery_model;
         batt->battery_model = new battery_t(initial_batt);
     }
+    initial_batt.delete_clone();
+
 }
 
 TEST_F(ResilienceTest_lib_resilience, PVWattsSetUp)
