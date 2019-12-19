@@ -59,7 +59,7 @@ public:
         catch (std::exception& e) {
             std::string mod_name = "battery";
             std::string reason = "Out of memory during resilience simulations. Try reducing analysis years, increasing critical load or reducing PV generation.";
-            ASSERT_EQ(e.what(), "exec fail(" + mod_name + "): " + reason);
+            EXPECT_EQ(e.what(), "exec fail(" + mod_name + "): " + reason);
             return false;
         }
         return true;

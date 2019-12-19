@@ -6,9 +6,11 @@
 
 TEST_F(CMBattwatts_cmod_battwatts, ResilienceMetricsHalfLoad){
     CreateData(1);
-    auto ssc_data = static_cast<ssc_data_t>(&data);
-    int errors = run_module(ssc_data, "battwatts");
-    EXPECT_FALSE(errors);
+
+    // if simulation error, assert it's a out of memory error and stop testing; otherwise check values
+    int errors = runWithOutOfMemoryCheck();
+    if (!errors)
+        return;
 
     auto resilience_hours = data.as_vector_ssc_number_t("resilience_hrs");
     double resilience_hrs_min = data.as_number("resilience_hrs_min");
@@ -33,9 +35,11 @@ TEST_F(CMBattwatts_cmod_battwatts, ResilienceMetricsHalfLoad){
 
 TEST_F(CMBattwatts_cmod_battwatts, ResilienceMetricsHalfLoadLifetime){
     CreateData(2);
-    auto ssc_data = static_cast<ssc_data_t>(&data);
-    int errors = run_module(ssc_data, "battwatts");
-    EXPECT_FALSE(errors);
+    
+    // if simulation error, assert it's a out of memory error and stop testing; otherwise check values
+    int errors = runWithOutOfMemoryCheck();
+    if (!errors)
+        return;
 
     auto resilience_hours = data.as_vector_ssc_number_t("resilience_hrs");
     double resilience_hrs_min = data.as_number("resilience_hrs_min");
