@@ -634,7 +634,7 @@ public:
 			}
 			else {
 				if (dc_degradation.size() != nyears)
-					throw exec_error("pvwattsv5", "length of degradation array must be equal to analysis period");
+					throw exec_error("pvwattsv7", "length of degradation array must be equal to analysis period");
 				for (size_t y = 0; y < nyears; y++) {
 					degradationFactor.push_back(1.0 - dc_degradation[y] / 100.0);
 				}
@@ -1101,7 +1101,7 @@ public:
 						if (en_snowloss)
 						{
 							float smLoss = 0.0f;
-							if (snowmodel.getLoss(
+							if (!snowmodel.getLoss(
 								(float)poa, (float)stilt,
 								(float)wf.wspd, (float)wf.tdry, (float)wf.snow,
 								sunup, (float)ts_hour,
