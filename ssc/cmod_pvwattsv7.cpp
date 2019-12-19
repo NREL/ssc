@@ -164,6 +164,7 @@ static var_info _cm_vtab_pvwattsv7[] = {
 		{ SSC_OUTPUT,       SSC_ARRAY,       "poa",                            "Plane of array irradiance",                   "W/m2",      "",                                             "Time Series",      "*",                       "",                          "" },
 		{ SSC_OUTPUT,       SSC_ARRAY,       "tpoa",                           "Transmitted plane of array irradiance",       "W/m2",      "",                                             "Time Series",      "*",                       "",                          "" },
 		{ SSC_OUTPUT,       SSC_ARRAY,       "tcell",                          "Module temperature",                          "C",         "",                                             "Time Series",      "*",                       "",                          "" },
+		{ SSC_OUTPUT,       SSC_ARRAY,       "dcsnowderate",                   "DC Energy lost due to snow cover",            "%",         "",                                             "Time Series",      "*",                       "",                          "" },
 
 		{ SSC_OUTPUT,       SSC_ARRAY,       "dc",                             "DC array power",                              "W",         "",                                             "Time Series",      "*",                       "",                          "" },
 		{ SSC_OUTPUT,       SSC_ARRAY,       "ac",                             "AC inverter power",                           "W",         "",                                             "Time Series",      "*",                       "",                          "" },
@@ -177,7 +178,6 @@ static var_info _cm_vtab_pvwattsv7[] = {
 		{ SSC_OUTPUT,       SSC_NUMBER,      "solrad_annual",                  "Daily average solar irradiance",              "kWh/m2/day","",                                             "Annual",      "*",                       "",                          "" },
 		{ SSC_OUTPUT,       SSC_NUMBER,      "ac_annual",                      "Annual AC system output",                     "kWh",       "",                                             "Annual",      "*",                       "",                          "" },
 		{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",                  "Annual energy",                               "kWh",       "",                                             "Annual",      "*",                       "",                          "" },
-
 		{ SSC_OUTPUT,       SSC_NUMBER,      "capacity_factor",                "Capacity factor",                             "%",         "",                                             "Annual",        "*",                       "",                          "" },
 		{ SSC_OUTPUT,       SSC_NUMBER,      "kwh_per_kw",                     "Energy yeld",                           "kWh/kW",          "",                                             "Annual",        "*",                       "",                          "" },
 
@@ -189,7 +189,6 @@ static var_info _cm_vtab_pvwattsv7[] = {
 		{ SSC_OUTPUT,       SSC_NUMBER,      "tz",                             "Time zone",                                   "hr",        "",                                             "Location",      "*",                       "",                          "" },
 		{ SSC_OUTPUT,       SSC_NUMBER,      "elev",                           "Site elevation",                              "m",         "",                                             "Location",      "*",                       "",                          "" },
 		
-		{ SSC_OUTPUT,       SSC_NUMBER,      "inverter_count",                 "Inverter count",							  "",          "",                                             "",             "", "", "" },
 		{ SSC_OUTPUT,       SSC_NUMBER,      "inverter_efficiency",            "Inverter efficiency at rated power",          "%",         "",                                             "PVWatts",      "",                        "",                              "" },
 		{ SSC_OUTPUT,       SSC_NUMBER,      "estimated_rows",				   "Estimated number of rows in the system",	  "",          "",                                             "PVWatts",      "",                        "",                              "" },
 
@@ -1254,7 +1253,6 @@ public:
 		assign("land_acres", var_data((ssc_number_t)(landf * module_m2 / gcr_for_land * 0.0002471)));
 
 		// for battery model, specify a number of inverters
-		assign("inverter_count", var_data((ssc_number_t)1));
 		assign("inverter_efficiency", var_data((ssc_number_t)(as_double("inv_eff"))));
 
 		// metric outputs
