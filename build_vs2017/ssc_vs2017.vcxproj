@@ -50,6 +50,7 @@
     <ClCompile Include="..\ssc\cmod_poacalib.cpp" />
     <ClCompile Include="..\ssc\cmod_pv6parmod.cpp" />
     <ClCompile Include="..\ssc\cmod_pvsamv1.cpp" />
+    <ClCompile Include="..\ssc\cmod_pvsamv1_eqns.cpp" />
     <ClCompile Include="..\ssc\cmod_pvsandiainv.cpp" />
     <ClCompile Include="..\ssc\cmod_pvwattsv1_poa.cpp" />
     <ClCompile Include="..\ssc\cmod_pvwattsv1_1ts.cpp" />

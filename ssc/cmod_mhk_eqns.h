@@ -1,7 +1,6 @@
 #ifndef _CMOD_MHK_BUILDER_H_
 #define _CMOD_MHK_BUILDER_H_
 
-#include "vartab.h"
 #include "sscapi.h"
 
 #ifdef __cplusplus

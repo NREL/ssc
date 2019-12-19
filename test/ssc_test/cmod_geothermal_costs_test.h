@@ -6,7 +6,7 @@
 
 #include "core.h"
 #include "sscapi.h"
-#include "../ssc/vartab.h"
+#include "vartab.h"
 #include "../ssc/common.h"
 #include "../input_cases/code_generator_utilities.h"
 #include "../input_cases/geothermal_costs_common_data.h"

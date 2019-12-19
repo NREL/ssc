@@ -69,7 +69,7 @@ void windTurbine::turbinePower(double windVelocity, double airDensity, double *t
 	*turbineOutput = 0.0;
 
 	//correct wind speeds in power curve for site air density if necessary, using method 2 described in https://www.scribd.com/document/38818683/PO310-EWEC2010-Presentation
-	if (abs(airDensity - previousAirDensity) > 0.001 ) {
+	if (fabs(airDensity - previousAirDensity) > 0.001 ) {
         double correction = pow((physics::AIR_DENSITY_SEA_LEVEL / airDensity), (1.0 / 3.0));
         for (size_t i = 0; i < densityCorrectedWS.size(); i++) {
             densityCorrectedWS[i] = powerCurveWS[i] * correction;
@@ -503,7 +503,7 @@ void eddyViscosityWakeModel::wakeCalculations(/*INPUTS */ const double air_densi
 		{
 			// distance downwind = distance from turbine i to turbine j along axis of wind direction
 			double dDistAxialInDiameters = fabs(aDistanceDownwind[i] - aDistanceDownwind[j]) / 2.0;
-			if (std::abs(dDistAxialInDiameters) <= 0.0001)
+			if (fabs(dDistAxialInDiameters) <= 0.0001)
 				continue; // if this turbine isn't really upwind, move on to the next
 
 			// separation crosswind between turbine i and turbine j

@@ -16,6 +16,8 @@ public:
 		util::matrix_t<double> ecRatesMatrix,
 		std::vector<double> ecRealTimeBuy);
 
+	UtilityRate(const UtilityRate& tmp);
+
 	virtual ~UtilityRate() {/* nothing to do */ };
 
 protected:
@@ -46,6 +48,9 @@ public:
 
 	/// Constructor for rate calculator where full load is known
 	UtilityRateCalculator(UtilityRate * Rate, size_t stepsPerHour, std::vector<double> loadProfile);
+
+	/// Copy Ctor
+	UtilityRateCalculator(const UtilityRateCalculator& tmp);
 
 	/// Parse the incoming data
 	void initializeRate();

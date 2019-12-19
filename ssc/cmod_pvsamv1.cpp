@@ -22,6 +22,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "cmod_pvsamv1.h"
 #include "lib_pv_io_manager.h"
+#include "lib_resilience.h"
 
 // comment following define if do not want shading database validation outputs
 //#define SHADE_DB_OUTPUTS
@@ -482,6 +483,7 @@ static var_info _cm_vtab_pvsamv1[] = {
     	// battery storage and dispatch
     { SSC_INPUT, SSC_NUMBER,   "en_batt",                              "Enable battery storage model",                        "0/1",    "",                                                                                                                                                                                      "Battery",                                               "?=0",                                "",                    "" },
     { SSC_INPUT, SSC_ARRAY,    "load",                                 "Electricity load (year 1)",                           "kW",     "",                                                                                                                                                                                      "Battery",                                               "?",                                  "",                    "" },
+    { SSC_INPUT, SSC_ARRAY,    "crit_load",                            "Critical Electricity load (year 1)",                  "kW",     "",                                                                                                                                                                                      "Battery",                                               "",                                   "",                    "" },
 
 	// NOTE:  other battery storage model inputs and outputs are defined in batt_common.h/batt_common.cpp
 
@@ -822,7 +824,10 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_wiring_loss", "AC wiring loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_transmission_loss", "Transmission loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
 //	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_transformer_loss", "AC step-up transformer loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_optimizer_loss", "DC power optimizer loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
+    { SSC_OUTPUT, SSC_NUMBER, "annual_dc_optimizer_loss", "DC power optimizer loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
+
+    // total loss diagram losses for single year, does not include lifetime losses
+    { SSC_OUTPUT, SSC_NUMBER, "annual_total_loss_percent", "PV System Loss, from Nominal POA to Net AC", "kWh", "", "Annual (Year 1)", "*", "", "" },
 
 	/*
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_after_wiring_loss", "AC output after wiring loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
@@ -911,10 +916,11 @@ cm_pvsamv1::cm_pvsamv1()
 	add_var_info(vtab_battery_inputs);
 	add_var_info(vtab_forecast_price_signal);
 	add_var_info(vtab_battery_outputs);
+	add_var_info(vtab_resilience_outputs);
 }
 
 	
-void cm_pvsamv1::exec( ) throw (compute_module::general_error)
+void cm_pvsamv1::exec( ) throw (general_error)
 {
 
 	/// Underlying class which parses the compute module structure and sets up model inputs and outputs
@@ -998,17 +1004,9 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	if (!haf.setup())
 		throw exec_error("pvsamv1", "failed to setup adjustment factors: " + haf.error());
 
-	// setup battery model
-	bool en_batt = as_boolean("en_batt");
-	battstor batt(*this, en_batt, nrec, ts_hour);
-	batt.setSharedInverter(sharedInverter);
-	int batt_topology = (en_batt == true ? batt.batt_vars->batt_topology : 0);
+    // clipping losses for battery dispatch
 	std::vector<ssc_number_t> p_invcliploss_full;
 	p_invcliploss_full.reserve(nlifetime);
-
-	// Multiple MPPT inverters not enabled with DC-connected batteries
-	if (PVSystem->Inverter->nMpptInputs > 1 && en_batt && batt_topology == ChargeController::DC_CONNECTED)
-		throw exec_error("pvsamv1", "A DC-connected battery cannot be modeled with multiple MPPT inverters at this time.");
 
 	// Multiple MPPT inverters not enabled with PVyield inverter model
 	if (PVSystem->Inverter->nMpptInputs > 1 && PVSystem->Inverter->inverterType == INVERTER_PVYIELD)
@@ -1025,10 +1023,12 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 		p_pv_dc_forecast = as_vector_ssc_number_t("batt_pv_dc_forecast");
 	}
 
+
 	// electric load - lifetime load data?
 	double cur_load = 0.0;
 	size_t nload = 0;
 	std::vector<ssc_number_t> p_load_in;
+	std::vector<ssc_number_t> p_crit_load_in;
 	if ( is_assigned( "load" ) )
 	{
 		p_load_in = as_vector_ssc_number_t("load");
@@ -1036,6 +1036,38 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 		if ( nload != nrec && nload != 8760 )
 			throw exec_error("pvsamv1", "electric load profile must have same number of values as weather file, or 8760");
 	}
+	if (is_assigned("crit_load"))
+       {
+        p_crit_load_in = as_vector_ssc_number_t("crit_load");
+        nload = p_crit_load_in.size();
+        if (nload != nrec && nload != 8760 )
+            throw exec_error("pvsamv1", "critical electric load profile must have same number of values as weather file, or 8760");
+    }
+
+    // resilience metrics for battery
+    std::unique_ptr<resilience_runner> resilience = nullptr;
+
+    // setup battery model
+    std::shared_ptr<battstor> batt = nullptr;
+    bool en_batt = as_boolean("en_batt");
+    int batt_topology = 0;
+    if (en_batt){
+        batt = std::make_shared<battstor>(*m_vartab, en_batt, nrec, ts_hour);
+        batt->setSharedInverter(sharedInverter);
+        batt_topology = batt->batt_vars->batt_topology;
+
+        // Multiple MPPT inverters not enabled with DC-connected batteries
+        if (PVSystem->Inverter->nMpptInputs > 1 && en_batt && batt_topology == ChargeController::DC_CONNECTED)
+            throw exec_error("pvsamv1", "A DC-connected battery cannot be modeled with multiple MPPT inverters at this time.");
+
+        if (!p_crit_load_in.empty() && *std::max_element(p_crit_load_in.begin(), p_crit_load_in.end()) > 0){
+            resilience = std::unique_ptr<resilience_runner>(new resilience_runner(batt));
+            auto logs = resilience->get_logs();
+            if (!logs.empty()){
+                log(logs[0], SSC_WARNING);
+            }
+        }
+    }
 
 	// for reporting status updates
 	float percent_baseline = 0.;
@@ -1930,8 +1962,8 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	}
 
 	// Initialize DC battery predictive controller
-	if (en_batt && (batt_topology == ChargeController::DC_CONNECTED))
-		batt.initialize_automated_dispatch(util::array_to_vector<ssc_number_t>(PVSystem->p_systemDCPower, nlifetime), p_load_full, p_invcliploss_full);
+	if (en_batt && batt_topology == ChargeController::DC_CONNECTED)
+	    batt->initialize_automated_dispatch(util::array_to_vector<ssc_number_t>(PVSystem->p_systemDCPower, nlifetime), p_load_full, p_invcliploss_full);
 
 	/* *********************************************************************************************
 	PV AC calculation
@@ -1964,8 +1996,8 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				// Battery replacement
 				if (en_batt && (batt_topology == ChargeController::DC_CONNECTED))
 				{
-					batt.initialize_time(iyear, hour, jj);
-					batt.check_replacement_schedule();
+					batt->initialize_time(iyear, hour, jj);
+					batt->check_replacement_schedule();
 				}
 
 				double acpwr_gross = 0, ac_wiringloss = 0, transmissionloss = 0;
@@ -1986,9 +2018,15 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					// Compute PV clipping before adding battery
 					sharedInverter->calculateACPower(dcPower_kW, dcVoltagePerMppt[0], wf.tdry); //DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
 
-					// Run PV plus battery through sharedInverter, returns AC power
-					batt.advance(*this, dcPower_kW, dcVoltagePerMppt[0], cur_load, sharedInverter->powerClipLoss_kW);
-					acpwr_gross = batt.outGenPower[idx];
+                    if (resilience){
+					    resilience->add_battery_at_outage_timestep(*batt->dispatch_model, idx);
+                        resilience->run_surviving_batteries(p_crit_load_in[idx % nrec], sharedInverter->powerAC_kW, dcPower_kW,
+                                                        dcVoltagePerMppt[0], sharedInverter->powerClipLoss_kW, wf.tdry);
+                    }
+
+                    // Run PV plus battery through sharedInverter, returns AC power
+					batt->advance(m_vartab, dcPower_kW, dcVoltagePerMppt[0], cur_load, sharedInverter->powerClipLoss_kW);
+					acpwr_gross = batt->outGenPower[idx];
 				}
 				else if (PVSystem->Inverter->inverterType == INVERTER_PVYIELD) //PVyield inverter model not currently enabled for multiple MPPT
 				{
@@ -2064,7 +2102,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 			}
 		}
 
-		if (iyear == 0)
+        if (iyear == 0)
 		{
 			int year_idx = 0;
 			if (system_use_lifetime_output) {
@@ -2072,14 +2110,15 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 			}
 			// accumulate DC power after the battery
 			if (en_batt && (batt_topology == ChargeController::DC_CONNECTED)) {
-				annual_battery_loss = batt.outAnnualEnergyLoss[year_idx];
+				annual_battery_loss = batt->outAnnualEnergyLoss[year_idx];
 			}
 		}
 	}
+	process_messages(batt, this);
 
 	// Initialize AC connected battery predictive control
 	if (en_batt && batt_topology == ChargeController::AC_CONNECTED)
-		batt.initialize_automated_dispatch(util::array_to_vector<ssc_number_t>(PVSystem->p_systemACPower, nlifetime), p_load_full);
+		batt->initialize_automated_dispatch(util::array_to_vector<ssc_number_t>(PVSystem->p_systemACPower, nlifetime), p_load_full);
 
 	/* *********************************************************************************************
 	Post PV AC 
@@ -2107,16 +2146,22 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 				if (en_batt && batt_topology == ChargeController::AC_CONNECTED)
 				{
-					batt.initialize_time(iyear, hour, jj);
-					batt.check_replacement_schedule();
-					batt.advance(*this, PVSystem->p_systemACPower[idx], 0, p_load_full[idx]);
-					PVSystem->p_systemACPower[idx] = batt.outGenPower[idx];
+					batt->initialize_time(iyear, hour, jj);
+					batt->check_replacement_schedule();
+
+					if (resilience){
+					    resilience->add_battery_at_outage_timestep(*batt->dispatch_model, idx);
+                        resilience->run_surviving_batteries(p_crit_load_in[idx  % nrec], PVSystem->p_systemACPower[idx], 0, 0, 0, 0);
+					}
+
+					batt->advance(m_vartab, PVSystem->p_systemACPower[idx], 0, p_load_full[idx]);
+                    PVSystem->p_systemACPower[idx] = batt->outGenPower[idx];
 				}
 
 				// accumulate system generation before curtailment and availability
 				if (iyear == 0)
 					annual_ac_pre_avail += PVSystem->p_systemACPower[idx] * ts_hour;
-		
+
 
 				//apply availability and curtailment
 				PVSystem->p_systemACPower[idx] *= haf(hour);
@@ -2131,16 +2176,16 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				}
 				// Update battery with final gen to compute grid power
 				if (en_batt)
-					batt.update_grid_power(*this, PVSystem->p_systemACPower[idx], p_load_full[idx], idx);
+					batt->update_grid_power(*this, PVSystem->p_systemACPower[idx], p_load_full[idx], idx);
 
 				if (iyear == 0)
 					annual_energy += (ssc_number_t)(PVSystem->p_systemACPower[idx] * ts_hour);
 
 				idx++;
 			}
-		} 
-
-	} 
+		}
+	}
+	process_messages(batt, this);
 	// Check the snow models and if neccessary report a warning
 	//  *This only needs to be done for subarray1 since all of the activated subarrays should 
 	//   have the same number of bad values
@@ -2206,7 +2251,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	assign("performance_ratio", var_data((ssc_number_t)(ac_net / (nom_rad * mod_eff / 100.0))));
 
 	// accumulate annual and monthly battery model outputs
-	if ( en_batt ) batt.calculate_monthly_and_annual_outputs( *this );
+	if ( en_batt ) batt->calculate_monthly_and_annual_outputs( *this );
 	else assign( "average_battery_roundtrip_efficiency", var_data( 0.0f ) ); // if battery disabled, since it's shown in the metrics table
 
 	// calculate nominal dc input
@@ -2482,7 +2527,24 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	assign("annual_ac_perf_adj_loss_percent", var_data((ssc_number_t)percent));
 	sys_output *= (1.0 - percent / 100.0);
 
-
+	// total loss diagram losses for single-year simulation (life time losses not included)
+	std::vector<std::string> loss_components = {"annual_poa_shading_loss_percent", "annual_poa_soiling_loss_percent",
+                                             "annual_poa_cover_loss_percent", "annual_poa_rear_gain_percent",
+                                             "annual_dc_snow_loss_percent", "annual_dc_module_loss_percent",
+                                             "annual_dc_mppt_clip_loss_percent", "annual_dc_mismatch_loss_percent",
+                                             "annual_dc_diodes_loss_percent", "annual_dc_wiring_loss_percent",
+                                             "annual_dc_tracking_loss_percent", "annual_dc_nameplate_loss_percent",
+                                             "annual_dc_optimizer_loss_percent", "annual_dc_perf_adj_loss_percent",
+                                             "annual_dc_battery_loss_percent", "annual_ac_battery_loss_percent",
+                                             "annual_ac_inv_clip_loss_percent", "annual_ac_inv_pso_loss_percent",
+                                             "annual_ac_inv_pnt_loss_percent","annual_ac_inv_eff_loss_percent",
+                                             "annual_ac_wiring_loss_percent", "annual_xfmr_loss_percent",
+                                             "annual_ac_perf_adj_loss_percent"};
+	percent = 1.;
+	for (size_t i = 0; i < loss_components.size(); i++){
+	    percent *= (1. - as_number(loss_components[i])/100.);
+	}
+    assign("annual_total_loss_percent", var_data((ssc_number_t)(1.-percent)*100.));
 	// annual_ac_net = system_output
 
 #ifdef WITH_CHECKS
@@ -2522,6 +2584,12 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 //	_CrtDumpMemoryLeaks();
 //	_CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_DEBUG);
 
+    // resiliency metrics
+    if (resilience){
+        resilience->run_surviving_batteries_by_looping(&p_crit_load_in[0], PVSystem->p_systemACPower, PVSystem->p_systemDCPower,
+                PVSystem->p_mpptVoltage[0], PVSystem->p_inverterClipLoss, Irradiance->p_weatherFileAmbientTemp);
+		calculate_resilience_outputs(this, resilience);
+    }
 }
 	
 double cm_pvsamv1::module_eff(int mod_type)

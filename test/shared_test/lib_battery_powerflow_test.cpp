@@ -78,8 +78,8 @@ TEST_F(BatteryPowerFlowTest, TestACConnected_lib_battery_powerflow)
 	EXPECT_NEAR(m_batteryPower->powerBatteryAC, -52.08, error); // The extra 2.08 kW is due to conversion efficiency
 	EXPECT_NEAR(m_batteryPower->powerPVToLoad, 50, error);
 	EXPECT_NEAR(m_batteryPower->powerPVToBattery, 50, error);
-	EXPECT_NEAR(m_batteryPower->powerGridToBattery, 2.08, error);  // Note, grid power charging is NOT allowed here, but this model does not enforce.  It is enforced elsewhere, where this would be iterated upon.
-	EXPECT_NEAR(m_batteryPower->powerConversionLoss, 2.08, error);
+	EXPECT_NEAR(m_batteryPower->powerGridToBattery, 0, error);  
+	EXPECT_NEAR(m_batteryPower->powerConversionLoss, 2.0, error);
 
 	// Exclusive Grid Charging Scenario
 	m_batteryPower->canGridCharge = true;

@@ -27,7 +27,9 @@ void mp_ancillary_services(ssc_data_t data)
 	try {
 		bool gen_is_assigned = false;
 
-		ssc_number_t analysis_period, system_capacity, mp_enable_energy_market_revenue, mp_enable_ancserv1, mp_enable_ancserv2, mp_enable_ancserv3, mp_enable_ancserv4, mp_calculate_revenue;
+		int mp_enable_energy_market_revenue, mp_enable_ancserv1, mp_enable_ancserv2, mp_enable_ancserv3, mp_enable_ancserv4;
+		int mp_calculate_revenue;
+		ssc_number_t analysis_period, system_capacity;
 		util::matrix_t<ssc_number_t> mp_energy_market_revenue, mp_ancserv1_revenue, mp_ancserv2_revenue, mp_ancserv3_revenue, mp_ancserv4_revenue, system_gen;
 		/*
 		{ SSC_INPUT,        SSC_NUMBER,     "mp_enable_energy_market_revenue",		      "Enable energy market revenue",   "0/1",   "",    "",  "*",	"INTEGER,MIN=0,MAX=1",      "" },
@@ -41,32 +43,32 @@ void mp_ancillary_services(ssc_data_t data)
 		{ SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv4",		      "Enable ancillary services 4 revenue",   "0/1",   "",    "",  "*",	"INTEGER,MIN=0,MAX=1",      "" },
 		{ SSC_INPUT, SSC_MATRIX, "mp_ancserv4_revenue", "Ancillary services 4 revenue input", "", "","*", "", "" },
 		*/
-		VT_GET_INPUT(vt, "analysis_period", analysis_period)
-		VT_GET_INPUT(vt, "mp_enable_energy_market_revenue", mp_enable_energy_market_revenue)
-		VT_GET_INPUT(vt, "mp_enable_ancserv1", mp_enable_ancserv1)
-		VT_GET_INPUT(vt, "mp_enable_ancserv2", mp_enable_ancserv2)
-		VT_GET_INPUT(vt, "mp_enable_ancserv3", mp_enable_ancserv3)
-		VT_GET_INPUT(vt, "mp_enable_ancserv4", mp_enable_ancserv4)
-		VT_GET_INPUT(vt, "mp_energy_market_revenue", mp_energy_market_revenue)
-		VT_GET_INPUT(vt, "mp_ancserv1_revenue", mp_ancserv1_revenue)
-		VT_GET_INPUT(vt, "mp_ancserv2_revenue", mp_ancserv2_revenue)
-		VT_GET_INPUT(vt, "mp_ancserv3_revenue", mp_ancserv3_revenue)
-		VT_GET_INPUT(vt, "mp_ancserv4_revenue", mp_ancserv4_revenue)
-		gen_is_assigned = (vt->lookup("gen") != NULL);
+        vt_get_number(vt, "analysis_period", &analysis_period);
+        vt_get_int(vt, "mp_enable_energy_market_revenue", &mp_enable_energy_market_revenue);
+        vt_get_int(vt, "mp_enable_ancserv1", &mp_enable_ancserv1);
+        vt_get_int(vt, "mp_enable_ancserv2", &mp_enable_ancserv2);
+        vt_get_int(vt, "mp_enable_ancserv3", &mp_enable_ancserv3);
+        vt_get_int(vt, "mp_enable_ancserv4", &mp_enable_ancserv4);
+        vt_get_matrix(vt, "mp_energy_market_revenue", mp_energy_market_revenue);
+        vt_get_matrix(vt, "mp_ancserv1_revenue", mp_ancserv1_revenue);
+        vt_get_matrix(vt, "mp_ancserv2_revenue", mp_ancserv2_revenue);
+        vt_get_matrix(vt, "mp_ancserv3_revenue", mp_ancserv3_revenue);
+        vt_get_matrix(vt, "mp_ancserv4_revenue", mp_ancserv4_revenue);
+        gen_is_assigned = (vt->lookup("gen") != NULL);
 		if (gen_is_assigned)
 		{
 			system_capacity = 0.0;
-			VT_GET_INPUT(vt, "gen", system_gen)
+            vt_get_matrix(vt, "gen", system_gen);
 		}
 		else
 		{
-			VT_GET_INPUT(vt, "system_capacity", system_capacity)
+            vt_get_number(vt, "system_capacity", &system_capacity);
 		}
 		calculate_revenue = (vt->lookup("mp_calculate_revenue") != NULL);
 		if (calculate_revenue)
 		{
-			VT_GET_INPUT(vt, "mp_calculate_revenue", mp_calculate_revenue)
-				calculate_revenue = (mp_calculate_revenue > 0.5);
+            vt_get_int(vt, "mp_calculate_revenue", &mp_calculate_revenue);
+            calculate_revenue = (bool)mp_calculate_revenue;
 		}
 
 		// kW to MW for comparison

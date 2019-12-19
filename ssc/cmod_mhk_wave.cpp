@@ -2,7 +2,7 @@
 *  Copyright 2017 Alliance for Sustainable Energy, LLC
 *
 *  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  (ï¿½Allianceï¿½) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
 *  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
 *  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
 *  copies to the public, perform publicly and display publicly, and to permit others to do so.
@@ -27,8 +27,8 @@
 *  4. Redistribution of this software, without modification, must refer to the software by the same
 *  designation. Redistribution of a modified version of this software (i) may not refer to the modified
 *  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  the underlying software originally provided by Alliance as ï¿½System Advisor Modelï¿½ or ï¿½SAMï¿½. Except
+*  to comply with the foregoing, the terms ï¿½System Advisor Modelï¿½, ï¿½SAMï¿½, or any confusingly similar
 *  designation may not be used to refer to any modified version of this software or any modified
 *  version of the underlying software originally provided by Alliance without the prior written consent
 *  of Alliance.
@@ -96,7 +96,7 @@ public:
 		
 		//Check to ensure size of wave_power_matrix == wave_resource_matrix :
 		if ( (wave_resource_matrix.ncols() !=  wave_power_matrix.ncols() ) || ( wave_resource_matrix.nrows() != wave_power_matrix.nrows() ) )
-			throw compute_module::exec_error("mhk_wave", "Size of Power Matrix is not equal to Wave Resource Matrix");
+			throw exec_error("mhk_wave", "Size of Power Matrix is not equal to Wave Resource Matrix");
 
 		//Checker to ensure frequency distribution adds to >= 99.5%:
 		double resource_vect_checker = 0;
@@ -166,7 +166,7 @@ public:
 		
 		//Throw exception if cummulative sum of _resource_vector is < 99.5%
 		if (resource_vect_checker < 99.5)
-			throw compute_module::exec_error("mhk_wave", "Probability vector does not add up to 100%.");
+			throw exec_error("mhk_wave", "Probability vector does not add up to 100%.");
 
 		//Factoring in losses in total annual energy production:
 		//Factoring in losses in total annual energy production:

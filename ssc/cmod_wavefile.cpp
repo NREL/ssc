@@ -93,7 +93,7 @@ public:
 
 			if (ncols != ncols1 || ncols < 13)
 			{
-				throw exec_error("wave_file_reader", "incorrect number of header columns: " + ncols);
+				throw exec_error("wave_file_reader", "incorrect number of header columns: " + std::to_string(ncols));
 			}
 
 			assign("name", var_data(values[0]));
@@ -141,7 +141,7 @@ public:
 			values = split(buf);
 			if (values.size() != 22)
 			{
-				throw exec_error("wave_file_reader", "incorrect number of data columns: " + values.size());
+				throw exec_error("wave_file_reader", "incorrect number of data columns: " + std::to_string(values.size()));
 			}
 			for (size_t c = 0; c < 22; c++)
 			{

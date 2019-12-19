@@ -47,6 +47,28 @@ TEST_F(libTimeTests, TestSameSizeSingleYear_lib_time)
 	}
 }
 
+TEST_F(libTimeTests, TestSize1SingleYear_lib_time)
+{
+    is_lifetime = false;
+    std::vector<float> lifetime_from_single;
+    size_t n_rec_lifetime = 8760;
+    size_t n_rec_singleyear;
+    std::vector<float> single_val = {1.};
+    double dt_hour;
+    single_year_to_lifetime_interpolated<float>(is_lifetime, n_years, n_rec_lifetime,
+                                                single_val, lifetime_from_single, n_rec_singleyear, dt_hour);
+
+    EXPECT_EQ(n_rec_lifetime, util::hours_per_year);
+    EXPECT_EQ(n_rec_singleyear, util::hours_per_year);
+    EXPECT_EQ(dt_hour, 1.0);
+    EXPECT_EQ(lifetime_from_single.size(), n_rec_lifetime);
+
+
+    for (size_t i = 0; i < n_rec_singleyear; i += increment) {
+        EXPECT_EQ(lifetime_from_single[i], 1);
+    }
+}
+
 TEST_F(libTimeTests, TestSameSizeSubhourlySingleYear_lib_time)
 {
 	is_lifetime = false;
