@@ -4,7 +4,7 @@
 
 #include <gtest/gtest.h>
 #include "../ssc/core.h"
-#include "../ssc/vartab.h"
+#include "vartab.h"
 #include "../ssc/common.h"
 #include "../input_cases/pvwattsv5_cases.h"
 
@@ -12,7 +12,7 @@
 * CMPVWattsV5 tests cmod_pvwattsv5 using a solar resource file. SetUp() creates default case,
 * which can be modified within each individual test before running compute() and tests.
 */
-class CMPvwattsV5Integration : public ::testing::Test {
+class CMPvwattsV5Integration_cmod_pvwattsv5 : public ::testing::Test {
 protected: //doesn't really matter if this is protected or public, but you need to declare one or the other or it will default to private which doesn't work
 	ssc_data_t data;
 
@@ -32,7 +32,7 @@ protected: //doesn't really matter if this is protected or public, but you need 
 };
 
 //this function will be available to run the pvwattsV5 compute module from within tests
-bool CMPvwattsV5Integration::compute() {
+bool CMPvwattsV5Integration_cmod_pvwattsv5::compute() {
 	ssc_module_t module = ssc_module_create("pvwattsv5");
 	if (NULL == module)
 	{

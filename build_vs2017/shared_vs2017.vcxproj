@@ -78,6 +78,7 @@
     <ClCompile Include="..\shared\lib_pv_incidence_modifier.cpp" />
     <ClCompile Include="..\shared\lib_pv_io_manager.cpp" />
     <ClCompile Include="..\shared\lib_pv_shade_loss_mpp.cpp" />
+    <ClCompile Include="..\shared\lib_resilience.cpp" />
     <ClCompile Include="..\shared\lib_sandia.cpp" />
     <ClCompile Include="..\shared\lib_shared_inverter.cpp" />
     <ClCompile Include="..\shared\lib_snowmodel.cpp" />

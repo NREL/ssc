@@ -68,7 +68,7 @@ void free_weatherdata_array(var_data* data){
 	data->table.unassign("alb");
 }
 
-var_data* create_weatherdata_array(int /*not implemented yet: intervalsPerHour*/){
+var_data* create_weatherdata_array( /*not implemented yet: intervalsPerHour*/){
 	double* year = new double[8760];
 	double* month = new double[8760];
 	double* day = new double[8760];

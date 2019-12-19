@@ -24,6 +24,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "common.h"
 #include "lib_weatherfile.h"
 #include "lib_time.h"
+#include "lib_resilience.h"
 
 var_info vtab_standard_financial[] = {
 { SSC_INPUT,SSC_NUMBER  , "analysis_period"                      , "Analyis period"                                                 , "years"                                  , ""                                      , "Financial Parameters" , "?=30"           , "INTEGER,MIN=0,MAX=50"  , ""},
@@ -99,8 +100,8 @@ var_info vtab_oandm[] = {
 { SSC_INPUT,        SSC_ARRAY,       "annual_fuel_usage_lifetime",   "Fuel usage (lifetime)",             "kWht",    "",                  "System Costs",            "",                     "",                                         "" },
 
 // replacements
-{ SSC_INPUT,SSC_ARRAY   , "om_replacement_cost1"                 , "Repacement cost 1"                                              , "$/kWh"                                  , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
-{ SSC_INPUT,SSC_ARRAY   , "om_replacement_cost2"                 , "Repacement cost 2"                                              , "$/kW"                                   , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
+{ SSC_INPUT,SSC_ARRAY   , "om_replacement_cost1"                 , "Replacement cost 1"                                             , "$/kWh"                                  , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
+{ SSC_INPUT,SSC_ARRAY   , "om_replacement_cost2"                 , "Replacement cost 2"                                             , "$/kW"                                   , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
 { SSC_INPUT,SSC_NUMBER  , "om_replacement_cost_escal"            , "Replacement cost escalation"                                    , "%/year"                                 , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
 
 // optional fuel o and m for Biopower - usage can be in any unit and cost is in $ per usage unit
@@ -361,8 +362,8 @@ var_info vtab_forecast_price_signal[] = {
 
 var_info_invalid };
 
-forecast_price_signal::forecast_price_signal(compute_module *cm)
-	: m_cm(cm)
+forecast_price_signal::forecast_price_signal(var_table *vt)
+	: vartab(vt)
 {
 }
 
@@ -379,24 +380,24 @@ bool forecast_price_signal::setup(size_t nsteps)
 	for (size_t i = 0; i < nsteps; i++) 
 		m_forecast_price.push_back(0.0);
 
-	int forecast_price_signal_model = m_cm->as_integer("forecast_price_signal_model");
+	int forecast_price_signal_model = vartab->as_integer("forecast_price_signal_model");
 
 	if (forecast_price_signal_model == 1)
 	{
 		// merchant plant additional revenue streams
 		// enabled/disabled booleans
-		bool en_mp_energy_market = (m_cm->as_integer("mp_enable_energy_market_revenue") == 1);
-		bool en_mp_ancserv1 = (m_cm->as_integer("mp_enable_ancserv1") == 1);
-		bool en_mp_ancserv2 = (m_cm->as_integer("mp_enable_ancserv2") == 1);
-		bool en_mp_ancserv3 = (m_cm->as_integer("mp_enable_ancserv3") == 1);
-		bool en_mp_ancserv4 = (m_cm->as_integer("mp_enable_ancserv4") == 1);
+		bool en_mp_energy_market = (vartab->as_integer("mp_enable_energy_market_revenue") == 1);
+		bool en_mp_ancserv1 = (vartab->as_integer("mp_enable_ancserv1") == 1);
+		bool en_mp_ancserv2 = (vartab->as_integer("mp_enable_ancserv2") == 1);
+		bool en_mp_ancserv3 = (vartab->as_integer("mp_enable_ancserv3") == 1);
+		bool en_mp_ancserv4 = (vartab->as_integer("mp_enable_ancserv4") == 1);
 		// cleared capacity and price columns
 		// assume cleared capacities valid and use as generation for forecasting - will verify after generation in the financial models.
 		size_t nrows, ncols;
 		util::matrix_t<double> mp_energy_market_revenue_mat(1, 2, 0.0);
 		if (en_mp_energy_market)
 		{
-			ssc_number_t *mp_energy_market_revenue_in = m_cm->as_matrix("mp_energy_market_revenue", &nrows, &ncols);
+			ssc_number_t *mp_energy_market_revenue_in = vartab->as_matrix("mp_energy_market_revenue", &nrows, &ncols);
 			if (ncols != 2)
 			{
 				m_error = util::format("The energy market revenue table must have 2 columns. Instead it has %d columns.", (int)ncols);
@@ -409,7 +410,7 @@ bool forecast_price_signal::setup(size_t nsteps)
 		util::matrix_t<double> mp_ancserv_1_revenue_mat(1, 2, 0.0);
 		if (en_mp_ancserv1)
 		{
-			ssc_number_t *mp_ancserv1_revenue_in = m_cm->as_matrix("mp_ancserv1_revenue", &nrows, &ncols);
+			ssc_number_t *mp_ancserv1_revenue_in = vartab->as_matrix("mp_ancserv1_revenue", &nrows, &ncols);
 			if (ncols != 2)
 			{
 				m_error = util::format("The ancillary services revenue 1 table must have 2 columns. Instead it has %d columns.", (int)ncols);
@@ -422,7 +423,7 @@ bool forecast_price_signal::setup(size_t nsteps)
 		util::matrix_t<double> mp_ancserv_2_revenue_mat(1, 2, 0.0);
 		if (en_mp_ancserv2)
 		{
-			ssc_number_t *mp_ancserv2_revenue_in = m_cm->as_matrix("mp_ancserv2_revenue", &nrows, &ncols);
+			ssc_number_t *mp_ancserv2_revenue_in = vartab->as_matrix("mp_ancserv2_revenue", &nrows, &ncols);
 			if (ncols != 2)
 			{
 				m_error = util::format("The ancillary services revenue 2 table must have 2 columns. Instead it has %d columns.", (int)ncols);
@@ -435,7 +436,7 @@ bool forecast_price_signal::setup(size_t nsteps)
 		util::matrix_t<double> mp_ancserv_3_revenue_mat(1, 2, 0.0);
 		if (en_mp_ancserv3)
 		{
-			ssc_number_t *mp_ancserv3_revenue_in = m_cm->as_matrix("mp_ancserv3_revenue", &nrows, &ncols);
+			ssc_number_t *mp_ancserv3_revenue_in = vartab->as_matrix("mp_ancserv3_revenue", &nrows, &ncols);
 			if (ncols != 2)
 			{
 				m_error = util::format("The ancillary services revenue 3 table must have 2 columns. Instead it has %d columns.", (int)ncols);
@@ -448,7 +449,7 @@ bool forecast_price_signal::setup(size_t nsteps)
 		util::matrix_t<double> mp_ancserv_4_revenue_mat(1, 2, 0.0);
 		if (en_mp_ancserv4)
 		{
-			ssc_number_t *mp_ancserv4_revenue_in = m_cm->as_matrix("mp_ancserv4_revenue", &nrows, &ncols);
+			ssc_number_t *mp_ancserv4_revenue_in = vartab->as_matrix("mp_ancserv4_revenue", &nrows, &ncols);
 			if (ncols != 2)
 			{
 				m_error = util::format("The ancillary services revenue 4 table must have 2 columns. Instead it has %d columns.", (int)ncols);
@@ -458,7 +459,7 @@ bool forecast_price_signal::setup(size_t nsteps)
 			mp_ancserv_4_revenue_mat.assign(mp_ancserv4_revenue_in, nrows, ncols);
 		}
 
-		int nyears = m_cm->as_integer("analysis_period");
+		int nyears = vartab->as_integer("analysis_period");
 		// calculate revenue for first year only and consolidate to m_forecast_price
 		std::vector<double> as_revenue;
 		std::vector<double> as_revenue_extrapolated(nsteps,0.0);
@@ -505,9 +506,9 @@ bool forecast_price_signal::setup(size_t nsteps)
 	}
 	else // TODO verify that return value is $/timestep (units of dollar) and NOT $/kWh
 	{
-		int ppa_multiplier_mode = m_cm->as_integer("ppa_multiplier_model");
+		int ppa_multiplier_mode = vartab->as_integer("ppa_multiplier_model");
 		size_t count_ppa_price_input;
-		ssc_number_t* ppa_price = m_cm->as_array("ppa_price_input", &count_ppa_price_input);
+		ssc_number_t* ppa_price = vartab->as_array("ppa_price_input", &count_ppa_price_input);
 		if (count_ppa_price_input < 1)
 		{
 			m_error = util::format("The ppa price array needs at least one entry. Input had less than one input.");
@@ -517,14 +518,14 @@ bool forecast_price_signal::setup(size_t nsteps)
 		if (ppa_multiplier_mode == 0)
 		{
 			m_forecast_price = flatten_diurnal(
-				m_cm->as_matrix_unsigned_long("dispatch_sched_weekday"),
-				m_cm->as_matrix_unsigned_long("dispatch_sched_weekend"),
+                    vartab->as_matrix_unsigned_long("dispatch_sched_weekday"),
+                    vartab->as_matrix_unsigned_long("dispatch_sched_weekend"),
 				step_per_hour,
-				m_cm->as_vector_double("dispatch_tod_factors"), ppa_price[0] / step_per_hour);
+                    vartab->as_vector_double("dispatch_tod_factors"), ppa_price[0] / step_per_hour);
 		}
 		else
 		{ // assumption on size - check that is requested size.
-			std::vector<double> factors = m_cm->as_vector_double("dispatch_factors_ts");
+			std::vector<double> factors = vartab->as_vector_double("dispatch_factors_ts");
 			m_forecast_price = extrapolate_timeseries(factors, step_per_hour, ppa_price[0] / step_per_hour);
 		}
 	}
@@ -537,6 +538,37 @@ ssc_number_t forecast_price_signal::operator()(size_t time)
 	if (time < m_forecast_price.size()) return m_forecast_price[time];
 	else return 0.0;
 }
+
+var_info vtab_resilience_outputs[] = {
+{ SSC_OUTPUT, SSC_ARRAY  , "resilience_hrs"                       , "Hours of autonomy during outage at each timestep for resilience"       , "hr"                                     , ""                                                         , "Resilience"          , ""               , ""                      , ""},
+{ SSC_OUTPUT, SSC_NUMBER , "resilience_hrs_min"                   , "Min hours of autonomy for resilience "                                 , "hr"                                     , ""                                                         , "Resilience"          , ""               , "MIN=0"                 , ""},
+{ SSC_OUTPUT, SSC_NUMBER , "resilience_hrs_max"                   , "Max hours of autonomy for resilience"                                  , "hr"                                     , ""                                                         , "Resilience"          , ""               , "MIN=0"                 , ""},
+{ SSC_OUTPUT, SSC_NUMBER , "resilience_hrs_avg"                   , "Avg hours of autonomy for resilience"                                  , "hr"                                     , ""                                                         , "Resilience"          , ""               , "MIN=0"                 , ""},
+{ SSC_OUTPUT, SSC_ARRAY  , "outage_durations"                     , "List of autonomous hours for resilience from min to max"               , "hr"                                     , "Hours from resilience_hrs_min to resilience_hrs_max"      , "Resilience"          , ""               , ""                      , ""},
+{ SSC_OUTPUT, SSC_ARRAY  , "pdf_of_surviving"                     , "Probabilities of autonomous hours for resilience "                     , ""                                       , "Hours from resilience_hrs_min to resilience_hrs_max"      , "Resilience"          , ""               , "MIN=0,MAX=1"           , ""},
+{ SSC_OUTPUT, SSC_ARRAY  , "cdf_of_surviving"                     , "Cumulative probabilities of autonomous hours for resilience"           , ""                                       , "Prob surviving at least x hrs; hrs from min to max"       , "Resilience"          , ""               , "MIN=0,MAX=1"           , ""},
+{ SSC_OUTPUT, SSC_ARRAY  , "survival_function"                    , "Survival function of autonomous hours for resilience"                  , ""                                       , "Prob surviving greater than x hours; hrs from min to max" , "Resilience"          , ""               , "MIN=0,MAX=1"           , ""},
+{ SSC_OUTPUT, SSC_NUMBER , "avg_critical_load"                    , "Average critical load met for resilience"                              , "kWh"                                    , ""                                                         , "Resilience"          , ""               , "MIN=0"                 , ""},
+        var_info_invalid
+};
+
+void calculate_resilience_outputs(compute_module *cm, std::unique_ptr<resilience_runner> &resilience)
+{
+	if (!cm || !resilience)
+		return;
+	double avg_hours_survived = resilience->compute_metrics();
+	auto outage_durations = resilience->get_outage_duration_hrs();
+	cm->assign("resilience_hrs", resilience->get_hours_survived());
+	cm->assign("resilience_hrs_min", (int) outage_durations[0]);
+	cm->assign("resilience_hrs_max", (int) outage_durations.back());
+	cm->assign("resilience_hrs_avg", avg_hours_survived);
+	cm->assign("outage_durations", outage_durations);
+	cm->assign("pdf_of_surviving", resilience->get_probs_of_surviving());
+	cm->assign("cdf_of_surviving", resilience->get_cdf_of_surviving());
+	cm->assign("survival_function", resilience->get_survival_function());
+	cm->assign("avg_critical_load", resilience->get_avg_crit_load_kwh());
+}
+
 
 adjustment_factors::adjustment_factors( compute_module *cm, const std::string &prefix )
 : m_cm(cm), m_prefix(prefix)

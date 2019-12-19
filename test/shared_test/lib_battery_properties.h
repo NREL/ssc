@@ -58,7 +58,7 @@ public:
 	int chemistry;
 	double dtHour;
 
-	void SetUp()
+	void SetUp() override
 	{
 		// capacity
 		q = 1000;
@@ -83,7 +83,7 @@ public:
 		double vals[] = { 20, 0, 100, 20, 5000, 80, 20, 10000, 60, 80, 0, 100, 80, 1000, 80, 80, 2000, 60 };
 		cycleLifeMatrix.assign(vals, 6, 3);
 		double vals2[] = { 0, 100, 3650, 80, 7300, 50 };
-		calendarLifeMatrix.assign(vals, 3, 2);
+		calendarLifeMatrix.assign(vals2, 3, 2);
 		calendarChoice = 1;
 		replacementOption = 0;
 
@@ -115,9 +115,8 @@ public:
 		// battery
 		chemistry = 1;
 		dtHour = 1.0;
-
-
 	}
+
 	// nothing to do
 	void TearDown(){}
 

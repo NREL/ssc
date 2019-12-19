@@ -605,8 +605,8 @@ void cm_windpower::exec()
 	assign("annual_gross_energy", annual_gross);
 
     double wsp_avg = 0.;
-    for (size_t i = 0; i < nstep; i++)
-        wsp_avg += wspd[i];
+    for (size_t n = 0; n < nstep; n++)
+        wsp_avg += wspd[n];
     wsp_avg /= nstep;
     assign("wind_speed_average", wsp_avg);
 

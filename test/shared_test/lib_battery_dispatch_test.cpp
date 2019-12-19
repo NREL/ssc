@@ -18,7 +18,9 @@ size_t year = 0;
 size_t hour_of_year = 0;
 size_t step_of_hour = 0;
 
-TEST_F(BatteryDispatchTest, DispatchManual_lib_battery_dispatch)
+
+
+TEST_F(BatteryDispatchTest_lib_battery_dispatch, DispatchManual)
 {
 	
 	batteryPower = dispatchManual->getBatteryPower();
@@ -36,7 +38,7 @@ TEST_F(BatteryDispatchTest, DispatchManual_lib_battery_dispatch)
 
 }
 
-TEST_F(BatteryDispatchTest, DispatchAutoBTM_lib_battery_dispatch)
+TEST_F(BatteryDispatchTest_lib_battery_dispatch, DispatchAutoBTM)
 {
 	// Setup pv and load signal for peak shaving algorithm
 	for (size_t d = 0; d < 365; d++) {
@@ -56,7 +58,7 @@ TEST_F(BatteryDispatchTest, DispatchAutoBTM_lib_battery_dispatch)
 	// TEST 1: Verify no grid charging since disallowed
 	dispatchAutoBTM->dispatch(0, 0, 0);
 	EXPECT_EQ(batteryPower->powerGridToBattery, 0);
-	EXPECT_EQ(batteryPower->powerBatteryDC, 0);
+	EXPECT_NEAR(batteryPower->powerBatteryDC, -39.42, 0.02);
 
 	// TEST 2: Now, allow grid charging, should charge
 	batteryPower->canGridCharge = true;
@@ -65,7 +67,7 @@ TEST_F(BatteryDispatchTest, DispatchAutoBTM_lib_battery_dispatch)
 	EXPECT_LT(batteryPower->powerBatteryDC, 0);
 }
 
-TEST_F(BatteryDispatchTest, DispatchFOMInput_lib_battery_dispatch)
+TEST_F(BatteryDispatchTest_lib_battery_dispatch, DispatchFOMInput_lib_battery_dispatch)
 {
 	std::vector<double> P_batt;
 	for (int i = 0; i < 8760 * 60; i++) {
@@ -82,7 +84,7 @@ TEST_F(BatteryDispatchTest, DispatchFOMInput_lib_battery_dispatch)
 
 }
 
-TEST_F(BatteryDispatchTest, DispatchFOM_DCAuto)
+TEST_F(BatteryDispatchTest_lib_battery_dispatch, DispatchFOM_DCAuto)
 {
 	// inverter
 	int numberOfInverters = 100;

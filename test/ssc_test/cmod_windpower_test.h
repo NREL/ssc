@@ -4,7 +4,7 @@
 #include <gtest/gtest.h>
 
 #include "../ssc/core.h"
-#include "../ssc/vartab.h"
+#include "vartab.h"
 #include "../ssc/common.h"
 #include "../ssc/cmod_windpower_eqns.h"
 #include "../input_cases/weather_inputs.h"
