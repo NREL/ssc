@@ -1612,14 +1612,13 @@ double thermal_t::capacity_percent()
 /*
 Define Losses
 */
-losses_t::losses_t(double dtHour, lifetime_t * lifetime, thermal_t * thermal, capacity_t* capacity, int loss_choice, double_vec charge_loss, double_vec discharge_loss, double_vec idle_loss, double_vec losses)
+losses_t::losses_t(double dtHour, lifetime_t * lifetime, thermal_t * thermal, capacity_t* capacity, int loss_choice, double_vec charge_loss, double_vec discharge_loss, double_vec idle_loss, double_vec losses):
+_loss_mode(loss_choice)
 {
 	_dtHour = dtHour;
 	_lifetime = lifetime;
 	_thermal = thermal;
 	_capacity = capacity;
-	_loss_mode = loss_choice;
-	_nCycle = 0;
 
 	// User can input vectors of size 1 or size 12
 	if (loss_choice == losses_t::MONTHLY)
@@ -1682,28 +1681,20 @@ losses_t::losses_t(double dtHour, lifetime_t * lifetime, thermal_t * thermal, ca
 
 	}
 }
-losses_t * losses_t::clone(){
-	auto new_losses = new losses_t(*this); 
-	new_losses->copy(this);
-	return new_losses;
+void losses_t::set_models(lifetime_t * l, thermal_t * t, capacity_t* c){
+    _lifetime = l;
+    _thermal = t;
+    _capacity = c;
 }
 void losses_t::copy(losses_t * losses)
 {
-	_lifetime = losses->_lifetime;
-	_thermal = losses->_thermal;
-	_capacity = losses->_capacity;
 	_loss_mode = losses->_loss_mode;
-	_nCycle = losses->_nCycle;
-
-	// don't copy these, they don't change and are slow (need to re-design)
-	/*
 	_charge_loss = losses->_charge_loss;
 	_discharge_loss = losses->_discharge_loss;
 	_idle_loss = losses->_idle_loss;
-	_full_loss = losses->_full_loss;*/
+	_full_loss = losses->_full_loss;
 }
 
-void losses_t::replace_battery(){ _nCycle = 0; }
 double losses_t::getLoss(size_t indexFirstYear) { return _full_loss[indexFirstYear]; }
 void losses_t::run_losses(size_t lifetimeIndex)
 {	
@@ -1746,17 +1737,18 @@ battery_t::battery_t(double dt_hour, int battery_chemistry)
 
 battery_t::battery_t(const battery_t& battery)
 {
+	_battery_chemistry = battery._battery_chemistry;
+	_dt_hour = battery._dt_hour;
+	_dt_min = battery._dt_min;
+	_last_idx = battery._last_idx;
 	_capacity = battery.capacity_model()->clone();
 	_capacity_initial = battery.capacity_initial_model()->clone();
 	_voltage = battery.voltage_model()->clone();
 	_thermal = battery.thermal_model()->clone();
 	_thermal_initial = battery.thermal_initial_model()->clone();
 	_lifetime = battery.lifetime_model()->clone();
-	_losses = battery.losses_model()->clone();
-	_battery_chemistry = battery._battery_chemistry;
-	_dt_hour = battery._dt_hour;
-	_dt_min = battery._dt_min;
-	_last_idx = battery._last_idx;
+	_losses = new losses_t(_dt_hour, _lifetime, _thermal, _capacity, 0);
+	_losses->copy(battery.losses_model());
 }
 
 battery_t::~battery_t()
@@ -1776,7 +1768,7 @@ void battery_t::copy(const battery_t * battery)
 	_thermal_initial->copy(battery->thermal_initial_model());
 	_lifetime->copy(battery->lifetime_model());
 	_voltage->copy(battery->voltage_model());
-	_losses->copy(battery->losses_model());
+	_losses->set_models(_lifetime, _thermal, _capacity);
 
 	_battery_chemistry = battery->_battery_chemistry;
 	_dt_hour = battery->_dt_hour;
@@ -1923,7 +1915,6 @@ void battery_t::runLifetimeModel(size_t lifetimeIndex)
 	{
 		_capacity->replace_battery(_lifetime->get_replacement_percent());
 		_thermal->replace_battery(lifetimeIndex);
-		_losses->replace_battery();
 	}
 }
 void battery_t::runLossesModel(size_t idx)

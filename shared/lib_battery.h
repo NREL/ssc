@@ -705,17 +705,13 @@ public:
 			const double_vec batt_loss_idle_kw = std::vector<double>(0), 
 			const double_vec batt_loss_kw=std::vector<double>(0));
 
-	/// Deep copy of losses object
-	losses_t * clone();
+	void set_models(lifetime_t *, thermal_t *, capacity_t*);
 
 	/// Copy input losses to this object
 	void copy(losses_t *);
 
 	/// Run the losses model at the present simulation index (for year 1 only)
 	void run_losses(size_t lifetimeIndex);
-
-	/// Replace the battery
-	void replace_battery();
 
 	/// Get the loss at the specified simulation index (year 1)
 	double getLoss(size_t indexFirstYear);
@@ -724,9 +720,8 @@ public:
 	enum { MONTHLY, TIMESERIES};
 
 protected:
-	
-	int _loss_mode;
-	int _nCycle;
+
+    int _loss_mode;
 	double _dtHour;
 	
 	lifetime_t * _lifetime;
