@@ -101,8 +101,11 @@ TEST_F(CMBattery_cmod_battery, ResilienceMetricsFullLoadLifetime){
     data_vtab->assign("gen", var_data(data_vtab->as_array("gen", nullptr), 8760 * nyears));
     data_vtab->assign("batt_replacement_option", 0);
 
-    int errors = run_module(data, "battery");
-    EXPECT_FALSE(errors);
+
+    // if simulation error, assert it's a out of memory error and stop testing; otherwise check values
+    int errors = runWithOutOfMemoryCheck();
+    if (!errors)
+        return;
 
     auto resilience_hours = data_vtab->as_vector_ssc_number_t("resilience_hrs");
     double resilience_hrs_min = data_vtab->as_number("resilience_hrs_min");

@@ -49,10 +49,21 @@ script:
  # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then make -j4 -C $WEXDIR/build_linux; fi
  # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then make -j4 -C $SSCDIR/build_linux; fi
   - mkdir ${SSCDIR}/build && cd ${SSCDIR}/build
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cmake .. -DCMAKE_BUILD_TYPE=Release -Dskip_tools=1 -Dskip_tests=1 && make; fi
- # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then travis_wait 30 test/Test; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then cmake .. -DCMAKE_BUILD_TYPE=Release -Dskip_tools=1 -Dskip_tests=1 && make; fi
-  #- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then travis_wait 30 test/Test; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cmake .. -DCMAKE_BUILD_TYPE=Release -Dskip_tools=1  && make; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then cmake .. -DCMAKE_BUILD_TYPE=Release -Dskip_tools=1  && make; fi
+  - echo $TRAVIS_COMMIT_RANGE
+  - cd ${SSCDIR}
+  - IFS=$'\n' && read -ra array <<< $(git diff --name-only $TRAVIS_COMMIT_RANGE) && echo ${array}
+  - IFS=$' ' && read -ra array <<< ${array[0]}
+  - |
+    for (( i=0; i<${#array[@]}; i++ ))
+    do
+        a=${array[$i]}
+        xbase=${a##*/}
+        xpref=${xbase%.*}
+        var="--gtest_filter=*${xpref}*"
+        build/test/Test ${var}
+    done
 
 
 install:

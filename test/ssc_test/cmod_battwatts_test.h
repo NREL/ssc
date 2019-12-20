@@ -3,7 +3,9 @@
 
 #include <gtest/gtest.h>
 
+#include "../input_cases/sscapi.h"
 #include "vartab.h"
+
 
 class CMBattwatts_cmod_battwatts : public ::testing::Test {
 
@@ -44,7 +46,20 @@ public:
         data.assign("inverter_efficiency", 96);
     }
 
-
+    bool runWithOutOfMemoryCheck()
+    {
+        ssc_module_t module;
+        module = ssc_module_create("battwatts");
+        bool success = ssc_module_exec(module, &data);
+        if (!success) {
+            std::string mod_name = "battwatts";
+            std::string reason = "Out of memory during resilience simulations. Try reducing analysis years, increasing critical load or reducing PV generation.";
+            std::string err = ssc_module_log(module, 0, nullptr, nullptr);
+            EXPECT_EQ(err, "exec fail(" + mod_name + "): " + reason);
+            return false;
+        }
+        return true;
+    }
 };
 
 #endif //SAM_SIMULATION_CORE_CMOD_BATTWATTS_TEST_H

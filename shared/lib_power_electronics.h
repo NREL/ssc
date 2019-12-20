@@ -119,10 +119,9 @@ public:
 	/// The supported configurations of a battery system
 	enum CONNECTION{ DC_CONNECTED, AC_CONNECTED };
 
-protected:
+	dispatch_t* dispatch_model() {return m_dispatch;}
 
-	// allocated and managed internally
-	std::unique_ptr<dispatch_t> m_dispatchInitial;	/// An internally managed copy of the initial dispatch of the timestep
+protected:
 
 	// memory managed elsewhere
 	BatteryPower * m_batteryPower;

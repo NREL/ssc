@@ -107,9 +107,15 @@ void dispatch_t::copy(const dispatch_t * dispatch)
 void dispatch_t::delete_clone()
 {
 	// need to delete both, since allocated memory for both in deep copy 
-	if (_Battery) delete _Battery;
-	if (_Battery_initial) delete _Battery_initial;
-	_Battery_initial = nullptr;
+	if (_Battery){
+        _Battery->delete_clone();
+        delete _Battery;
+	}
+	if (_Battery_initial){
+        _Battery_initial->delete_clone();
+	    delete _Battery_initial;
+	    _Battery_initial = nullptr;
+	}
 }
 dispatch_t::~dispatch_t()
 {
