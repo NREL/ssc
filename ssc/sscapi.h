@@ -212,6 +212,8 @@ SSCEXPORT const char *ssc_data_first( ssc_data_t p_data );
  */
 SSCEXPORT const char *ssc_data_next( ssc_data_t p_data );
 
+SSCEXPORT ssc_var_t ssc_data_lookup(ssc_data_t p_data, const char *name);
+
 /** Returns a reference to a stored variable by case-matching the name. */
 SSCEXPORT ssc_var_t ssc_data_lookup_case(ssc_data_t p_data, const char *name);
 

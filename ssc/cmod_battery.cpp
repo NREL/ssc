@@ -1164,7 +1164,6 @@ battstor::~battstor()
 	delete dispatch_model;
 	delete losses_model;
 	delete charge_control;
-	delete utilityRate;
 }
 
 battstor::battstor(const battstor& orig){
