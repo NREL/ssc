@@ -164,8 +164,9 @@ double dispatch_resilience::dispatch_kw(double kw){
 }
 
 
-resilience_runner::resilience_runner(const std::shared_ptr<battstor>& battery){
-    batt = std::make_shared<battstor>(*battery);
+resilience_runner::resilience_runner(const std::shared_ptr<battstor>& battery)
+{
+    batt = battery;
     size_t steps_lifetime = batt->step_per_hour * batt->nyears * 8760;
     indices_survived.resize(steps_lifetime);
     total_load_met.resize(steps_lifetime);

@@ -73,7 +73,6 @@ protected:
 
     void TearDown() override {
         delete vartab;
-        batt->battery_model->delete_clone();
     }
 };
 
