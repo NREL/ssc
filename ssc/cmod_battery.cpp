@@ -1265,8 +1265,20 @@ battstor::battstor(const battstor& orig){
 
     // copy models
     if (orig.batt_vars) batt_vars = orig.batt_vars;
-    if( orig.battery_model ){
-        battery_model = new battery_t(*orig.battery_model);
+    battery_metrics = new battery_metrics_t(orig._dt_hour);
+
+
+    if (orig.dispatch_model) {
+        if (auto disp_man = dynamic_cast<dispatch_manual_t *>(orig.dispatch_model))
+            dispatch_model = new dispatch_manual_t(*disp_man);
+        else if (auto disp_man_BTM = dynamic_cast<dispatch_automatic_behind_the_meter_t *>(orig.dispatch_model))
+            dispatch_model = new dispatch_automatic_behind_the_meter_t(*disp_man_BTM);
+        else if (auto disp_auto = dynamic_cast<dispatch_automatic_front_of_meter_t *>(orig.dispatch_model))
+            dispatch_model = new dispatch_automatic_front_of_meter_t(*disp_auto);
+        else
+            throw general_error("dispatch_model in battstor is not of recognized type.");
+
+        battery_model = dispatch_model->battery_model();
         capacity_model = battery_model->capacity_model();
         voltage_model = battery_model->voltage_model();
         lifetime_model = battery_model->lifetime_model();
@@ -1275,35 +1287,59 @@ battstor::battstor(const battstor& orig){
         thermal_model = battery_model->thermal_model();
         losses_model = battery_model->losses_model();
     }
-    else {
-        battery_model = nullptr;
-        if( orig.voltage_model ) voltage_model = orig.voltage_model->clone();
-        if( orig.capacity_model ) capacity_model = battery_model->capacity_model();
-        if( orig.lifetime_model ) lifetime_model = orig.lifetime_model->clone();
-        lifetime_cycle_model = lifetime_model->cycleModel();
-        lifetime_calendar_model = lifetime_model->calendarModel();
-        if( orig.thermal_model ) thermal_model = orig.thermal_model->clone();
-        if (orig.losses_model) losses_model = orig.losses_model->clone();
+    else{
+        dispatch_model = nullptr;
     }
-    if (orig.dispatch_model){
-        if (auto disp_man = dynamic_cast<dispatch_manual_t*>(orig.dispatch_model))
-            dispatch_model = new dispatch_manual_t(*disp_man);
-        else if (auto disp_man_BTM = dynamic_cast<dispatch_automatic_behind_the_meter_t*>(orig.dispatch_model))
-            dispatch_model = new dispatch_automatic_behind_the_meter_t(*disp_man_BTM);
-        else if (auto disp_auto = dynamic_cast<dispatch_automatic_front_of_meter_t*>(orig.dispatch_model))
-            dispatch_model = new dispatch_automatic_front_of_meter_t(*disp_auto);
-        else
-            throw general_error("dispatch_model in battstor is not of recognized type.");
-    }
-    battery_metrics = new battery_metrics_t(orig._dt_hour);
-    if (orig.charge_control){
+    if (orig.charge_control) {
         if (dynamic_cast<ACBatteryController*>(orig.charge_control))
             charge_control = new ACBatteryController(dispatch_model, battery_metrics, batt_vars->batt_ac_dc_efficiency,
-                    batt_vars->batt_dc_ac_efficiency);
+                                                     batt_vars->batt_dc_ac_efficiency);
         else if (dynamic_cast<DCBatteryController*>(orig.charge_control))
             charge_control = new DCBatteryController(dispatch_model, battery_metrics, batt_vars->batt_dc_dc_bms_efficiency, batt_vars->batt_inverter_efficiency_cutoff);
         else
             throw general_error("charge_control in battstor is not of recognized type.");
+    }
+    else{
+        charge_control = nullptr;
+        if( orig.battery_model ){
+            battery_model = new battery_t(*orig.battery_model);
+            capacity_model = battery_model->capacity_model();
+            voltage_model = battery_model->voltage_model();
+            lifetime_model = battery_model->lifetime_model();
+            lifetime_cycle_model = battery_model->lifetime_model()->cycleModel();
+            lifetime_calendar_model = battery_model->lifetime_model()->calendarModel();
+            thermal_model = battery_model->thermal_model();
+            losses_model = battery_model->losses_model();
+        }
+        else {
+            battery_model = nullptr;
+            if( orig.voltage_model )
+                voltage_model = orig.voltage_model->clone();
+            else
+                voltage_model = nullptr;
+            if( orig.capacity_model )
+                capacity_model = battery_model->capacity_model();
+            else
+                capacity_model = nullptr;
+            if( orig.lifetime_model ) {
+                lifetime_model = orig.lifetime_model->clone();
+                lifetime_cycle_model = lifetime_model->cycleModel();
+                lifetime_calendar_model = lifetime_model->calendarModel();
+            }
+            else {
+                lifetime_model = nullptr;
+                lifetime_cycle_model = nullptr;
+                lifetime_calendar_model = nullptr;
+            }
+            if( orig.thermal_model )
+                thermal_model = orig.thermal_model->clone();
+            else
+                thermal_model = nullptr;
+            if (orig.losses_model)
+                losses_model = orig.losses_model->clone();
+            else
+                losses_model = nullptr;
+        }
     }
 }
 

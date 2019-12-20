@@ -119,6 +119,8 @@ public:
 	/// The supported configurations of a battery system
 	enum CONNECTION{ DC_CONNECTED, AC_CONNECTED };
 
+	dispatch_t* dispatch_model() {return m_dispatch;}
+
 protected:
 
 	// memory managed elsewhere
