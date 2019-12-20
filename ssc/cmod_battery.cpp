@@ -1335,8 +1335,10 @@ battstor::battstor(const battstor& orig){
                 thermal_model = orig.thermal_model->clone();
             else
                 thermal_model = nullptr;
-            if (orig.losses_model)
-                losses_model = orig.losses_model->clone();
+            if (orig.losses_model){
+                losses_model = new losses_t(_dt_hour, lifetime_model, thermal_model, capacity_model, 0);
+                losses_model->copy(orig.losses_model);
+            }
             else
                 losses_model = nullptr;
         }
