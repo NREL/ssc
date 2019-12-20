@@ -2019,9 +2019,14 @@ void cm_pvsamv1::exec( ) throw (general_error)
 					sharedInverter->calculateACPower(dcPower_kW, dcVoltagePerMppt[0], wf.tdry); //DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
 
                     if (resilience){
-					    resilience->add_battery_at_outage_timestep(*batt->dispatch_model, idx);
-                        resilience->run_surviving_batteries(p_crit_load_in[idx % nrec], sharedInverter->powerAC_kW, dcPower_kW,
-                                                        dcVoltagePerMppt[0], sharedInverter->powerClipLoss_kW, wf.tdry);
+                        try {
+                            resilience->add_battery_at_outage_timestep(*batt->dispatch_model, idx);
+                            resilience->run_surviving_batteries(p_crit_load_in[idx % nrec], sharedInverter->powerAC_kW, dcPower_kW,
+                                                            dcVoltagePerMppt[0], sharedInverter->powerClipLoss_kW, wf.tdry);
+                        }
+                        catch (const std::bad_alloc&) {
+                                throw exec_error("battwatts", "Out of memory during resilience simulations. Try reducing analysis years, increasing critical load or reducing PV generation.");
+                        }
                     }
 
                     // Run PV plus battery through sharedInverter, returns AC power
@@ -2150,8 +2155,13 @@ void cm_pvsamv1::exec( ) throw (general_error)
 					batt->check_replacement_schedule();
 
 					if (resilience){
-					    resilience->add_battery_at_outage_timestep(*batt->dispatch_model, idx);
-                        resilience->run_surviving_batteries(p_crit_load_in[idx  % nrec], PVSystem->p_systemACPower[idx], 0, 0, 0, 0);
+					    try {
+					        resilience->add_battery_at_outage_timestep(*batt->dispatch_model, idx);
+                            resilience->run_surviving_batteries(p_crit_load_in[idx  % nrec], PVSystem->p_systemACPower[idx], 0, 0, 0, 0);
+					    }
+                        catch (const std::bad_alloc&) {
+                                throw exec_error("battwatts", "Out of memory during resilience simulations. Try reducing analysis years, increasing critical load or reducing PV generation.");
+                        }
 					}
 
 					batt->advance(m_vartab, PVSystem->p_systemACPower[idx], 0, p_load_full[idx]);

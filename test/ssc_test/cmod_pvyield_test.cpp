@@ -114,7 +114,6 @@ TEST_F(CMPvYieldTimo, NoFinancialModelSystemDesign_cmod_pvsamv1)
 	pairs["subarray1_track_mode"] = 0;
 
 	std::vector<double> annual_energy_expected = { 183243, 242540, 258572, 216242, 192975 };
-	size_t i;
 	for (int tracking_option = 0; tracking_option != 5; tracking_option++)
 	{
 		// update tracking option
@@ -126,7 +125,6 @@ TEST_F(CMPvYieldTimo, NoFinancialModelSystemDesign_cmod_pvsamv1)
 			ssc_number_t annual_energy;
 			ssc_data_get_number(data, "annual_energy", &annual_energy);
 			EXPECT_NEAR(annual_energy, annual_energy_expected[tracking_option], m_error_tolerance_hi) << "Annual energy.";
-			i = tracking_option;
 			//cout << "-----------------------------------------------------" << endl;
 			//cout << i << " of " << annual_energy_expected.size() << " track mode Computed annual energy : " << annual_energy << endl;
 			//cout << i << " of " << annual_energy_expected.size() << " track mode Expected annual energy : " << annual_energy_expected[i] << endl;
@@ -187,7 +185,7 @@ TEST_F(CMPvYieldTimo, NoFinancialModelSystemDesign_cmod_pvsamv1)
 	std::vector<double> subarray4_track_mode = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4 };
 	annual_energy_expected = { 167392, 176331, 183243, 166251, 175833, 183243, 171952, 178321, 183243, 171952, 178321, 183243, 183243, 183235, 183243, 183243, 183243, 183243, 183243, 183243, 183243, 183243, 183243, 183243, 183243, 183243, 177310, 182927, 162456, 176883, 182902, 160961, 179014, 183024, 168431, 179014, 183024, 168431, 183243, 183243, 183243, 183243, 183243, 198796, 205187, 192695, 186088, 183243, 201501, 206750, 193370, 186290, 183243, 195419, 198926, 189995, 185277, 183243, 195419, 198926, 189995, 185277 };
 
-	for (int i = 0; i != annual_energy_expected.size(); i++)
+	for (size_t i = 0; i != annual_energy_expected.size(); i++)
 	{
 		pairs["enable_mismatch_vmax_calc"] = enable_mismatch[i];
 		pairs["subarray1_azimuth"] = subarray1_azimuth[i];

@@ -528,6 +528,13 @@ SSCEXPORT const char *ssc_data_next( ssc_data_t p_data ) // returns the next nam
 	return vt->next();
 }
 
+SSCEXPORT ssc_var_t ssc_data_lookup(ssc_data_t p_data, const char *name)
+{
+    var_table *vt = static_cast<var_table*>(p_data);
+    if (!vt) return nullptr;
+    return vt->lookup(name);
+}
+
 SSCEXPORT ssc_var_t ssc_data_lookup_case(ssc_data_t p_data, const char *name)
 {
     var_table *vt = static_cast<var_table*>(p_data);

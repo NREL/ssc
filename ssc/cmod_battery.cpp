@@ -1153,16 +1153,17 @@ void battstor::initialize_automated_dispatch(std::vector<ssc_number_t> pv, std::
 }
 battstor::~battstor()
 {
-	if( voltage_model ) delete voltage_model;
-	if( lifetime_cycle_model ) delete lifetime_cycle_model;
-	if (lifetime_calendar_model) delete lifetime_calendar_model;
-	if( thermal_model ) delete thermal_model;
-	if( battery_model ) delete battery_model;
-	if (battery_metrics) delete battery_metrics;
-	if( capacity_model ) delete capacity_model;
-	if (losses_model) delete losses_model;
-	if( dispatch_model ) delete dispatch_model;
-	if (charge_control) delete charge_control;
+	delete voltage_model;
+	delete lifetime_model;
+	delete lifetime_cycle_model;
+	delete lifetime_calendar_model;
+	delete thermal_model;
+	delete capacity_model;
+	delete battery_model;
+	delete battery_metrics;
+	delete dispatch_model;
+	delete losses_model;
+	delete charge_control;
 }
 
 battstor::battstor(const battstor& orig){
@@ -1660,8 +1661,13 @@ public:
 						batt->check_replacement_schedule();
 
 						if (resilience){
-                            resilience->add_battery_at_outage_timestep(*batt->dispatch_model, lifetime_idx);
-                            resilience->run_surviving_batteries(p_crit_load[lifetime_idx % n_rec_single_year], power_input_lifetime[lifetime_idx]);
+						    try {
+                                resilience->add_battery_at_outage_timestep(*batt->dispatch_model, lifetime_idx);
+                                resilience->run_surviving_batteries(p_crit_load[lifetime_idx % n_rec_single_year], power_input_lifetime[lifetime_idx]);
+						    }
+                            catch (const std::bad_alloc&) {
+                                    throw exec_error("battery", "Out of memory during resilience simulations. Try reducing analysis years, increasing critical load or reducing PV generation.");
+                            }
 						}
 
 						batt->advance(m_vartab, power_input_lifetime[lifetime_idx], 0, load_lifetime[lifetime_idx], 0);
