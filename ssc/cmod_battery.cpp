@@ -1265,14 +1265,26 @@ battstor::battstor(const battstor& orig){
 
     // copy models
     if (orig.batt_vars) batt_vars = orig.batt_vars;
-    if( orig.voltage_model ) voltage_model = orig.voltage_model->clone();
-    if( orig.lifetime_cycle_model ) lifetime_cycle_model = orig.lifetime_cycle_model->clone();
-    if (orig.lifetime_calendar_model) lifetime_calendar_model = orig.lifetime_calendar_model->clone();
-    if( orig.thermal_model ) thermal_model = orig.thermal_model->clone();
-
-    if( orig.battery_model )  battery_model = new battery_t(*orig.battery_model);
-    if( orig.capacity_model ) capacity_model = orig.capacity_model->clone();
-    if (orig.losses_model) losses_model = orig.losses_model->clone();
+    if( orig.battery_model ){
+        battery_model = new battery_t(*orig.battery_model);
+        capacity_model = battery_model->capacity_model();
+        voltage_model = battery_model->voltage_model();
+        lifetime_model = battery_model->lifetime_model();
+        lifetime_cycle_model = battery_model->lifetime_model()->cycleModel();
+        lifetime_calendar_model = battery_model->lifetime_model()->calendarModel();
+        thermal_model = battery_model->thermal_model();
+        losses_model = battery_model->losses_model();
+    }
+    else {
+        battery_model = nullptr;
+        if( orig.voltage_model ) voltage_model = orig.voltage_model->clone();
+        if( orig.capacity_model ) capacity_model = battery_model->capacity_model();
+        if( orig.lifetime_model ) lifetime_model = orig.lifetime_model->clone();
+        lifetime_cycle_model = lifetime_model->cycleModel();
+        lifetime_calendar_model = lifetime_model->calendarModel();
+        if( orig.thermal_model ) thermal_model = orig.thermal_model->clone();
+        if (orig.losses_model) losses_model = orig.losses_model->clone();
+    }
     if (orig.dispatch_model){
         if (auto disp_man = dynamic_cast<dispatch_manual_t*>(orig.dispatch_model))
             dispatch_model = new dispatch_manual_t(*disp_man);

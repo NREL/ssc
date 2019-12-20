@@ -30,18 +30,6 @@ ChargeController::ChargeController(dispatch_t * dispatch, battery_metrics_t * ba
 	m_batteryMetrics(battery_metrics),
 	m_dispatch(dispatch)
 {
-	if (dynamic_cast<dispatch_manual_t*>(m_dispatch)) {
-		std::unique_ptr<dispatch_t> tmp2(new dispatch_manual_t(*dispatch));
-		m_dispatchInitial = std::move(tmp2);
-	}
-	if (dynamic_cast<dispatch_automatic_behind_the_meter_t*>(m_dispatch)) {
-		std::unique_ptr<dispatch_t> tmp3(new dispatch_automatic_behind_the_meter_t(*dispatch));
-		m_dispatchInitial = std::move(tmp3);
-	}
-	if (dynamic_cast<dispatch_automatic_front_of_meter_t*>(m_dispatch)) {
-		std::unique_ptr<dispatch_t> tmp4(new dispatch_automatic_front_of_meter_t(*dispatch));
-		m_dispatchInitial = std::move(tmp4);
-	}
 }
 
 ACBatteryController::ACBatteryController(dispatch_t * dispatch, battery_metrics_t * battery_metrics, double efficiencyACToDC, double efficiencyDCToAC) : ChargeController(dispatch, battery_metrics)

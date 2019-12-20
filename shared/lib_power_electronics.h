@@ -121,9 +121,6 @@ public:
 
 protected:
 
-	// allocated and managed internally
-	std::unique_ptr<dispatch_t> m_dispatchInitial;	/// An internally managed copy of the initial dispatch of the timestep
-
 	// memory managed elsewhere
 	BatteryPower * m_batteryPower;
 	battery_metrics_t *m_batteryMetrics;    /// An object that tracks battery metrics for later analysis

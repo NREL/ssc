@@ -440,7 +440,7 @@ public:
 		bool can_fuelcell_charge
 		);
 
-	virtual ~dispatch_automatic_behind_the_meter_t(){};
+	~dispatch_automatic_behind_the_meter_t() override {};
 
 	// deep copy constructor (new memory), from dispatch to this
 	dispatch_automatic_behind_the_meter_t(const dispatch_t& dispatch);
