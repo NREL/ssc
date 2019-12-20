@@ -412,7 +412,7 @@ public:
 			module.gamma = -0.0037;
 			module.ar_glass = true;
 			module.ff = 0.778; //fill factors required for self-shading calculations
-			module.stc_eff = 0.190;
+			module.stc_eff = 0.19;
 
 			// for optional SDM module model: 
 			// selected module from PVsyst PAN database: TSM-330DD14A(II)
@@ -439,7 +439,7 @@ public:
 			module.gamma = -0.0035;
 			module.ar_glass = true;
 			module.ff = 0.780;
-			module.stc_eff = 0.204;
+			module.stc_eff = 0.21;
 
 			// for optional SDM module model: 
 			// selected module from PVsyst PAN database: SPR-X20-327-COM
@@ -466,7 +466,7 @@ public:
 			module.gamma = -0.0032;
 			module.ar_glass = true;
 			module.ff = 0.777;
-			module.stc_eff = 0.176;
+			module.stc_eff = 0.18;
 
 			// for optional SDM module model: 
 			// selected module from PVsyst PAN database: FS-4112-3
