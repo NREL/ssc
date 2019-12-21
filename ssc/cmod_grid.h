@@ -103,7 +103,7 @@ public:
 			(size_t)analysis_period,
 			n_rec_lifetime,
 			curtailment_year_one,
-			gridCurtailmentLifetime_percent,
+			gridCurtailmentLifetime_MW,
 			n_rec_single_year,
 			dt_hour_gen);
 
@@ -118,8 +118,8 @@ public:
 
 		
 	}
-	// curtailment percentage input
-	std::vector<double> gridCurtailmentLifetime_percent;
+	// curtailment MW input
+	std::vector<double> gridCurtailmentLifetime_MW;
 
 	// generation input with interconnection limit
 	std::vector<double> systemGenerationLifetime_kW;

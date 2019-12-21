@@ -46,18 +46,19 @@ var_info_invalid };
 var_info vtab_grid_output[] = {
 
 	{ SSC_OUTPUT,        SSC_ARRAY,       "system_pre_interconnect_kwac",     "System power before grid interconnect",  "kW",       "Lifetime system generation" "",                 "",                        "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "capacity_factor_interconnect_ac",  "Capacity factor of the interconnection (year 1)",  "%",          "",                "",                           "?=0",                     "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_energy_pre_interconnect_ac", "Annual Energy AC pre-interconnection (year 1)",   "kWh",        "",                "",                           "?=0",                     "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_energy",                    "Annual Energy AC (year 1)",                        "kWh",        "",                "",                           "?=0",                     "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_ac_interconnect_loss_percent","Annual Energy loss from interconnection limit (year 1)", "%", "",                "",                           "?=0",                     "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_ac_interconnect_loss_kwh",   "Annual Energy loss from interconnection limit (year 1)", "kWh", "",                "",                           "?=0",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "capacity_factor_interconnect_ac",  "Capacity factor of the interconnection (year 1)",  "%",          "",                "",                           "",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_energy_pre_interconnect_ac", "Annual Energy AC pre-interconnection (year 1)",   "kWh",        "",                "",                           "",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_energy",                    "Annual Energy AC (year 1)",                        "kWh",        "",                "",                           "",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_ac_interconnect_loss_percent","Annual Energy loss from interconnection limit (year 1)", "%", "",                "",                           "",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_ac_interconnect_loss_kwh",   "Annual Energy loss from interconnection limit (year 1)", "kWh", "",                "",                           "",                     "",                              "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,       "system_pre_curtailment_kwac",     "System power before grid curtailment",  "kW",       "Lifetime system generation" "",                 "",                        "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "capacity_factor_curtailment_ac",  "Capacity factor of the curtailment (year 1)",  "%",          "",                "",                           "?=0",                     "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_energy_pre_curtailment_ac", "Annual Energy AC pre-curtailment (year 1)",   "kWh",        "",                "",                           "?=0",                     "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_energy",                    "Annual Energy AC  (year 1)",                        "kWh",        "",                "",                           "?=0",                     "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_ac_curtailment_loss_percent","Annual Energy loss from curtailment (year 1)", "%", "",                "",                           "?=0",                     "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_ac_curtailment_loss_kwh",   "Annual Energy loss from curtailment (year 1)", "kWh", "",                "",                           "?=0",                     "",
+	
+// outputs to be assigned
+{ SSC_OUTPUT,        SSC_NUMBER,      "capacity_factor_curtailment_ac",  "Capacity factor of the curtailment (year 1)",  "%",          "",                "",                           "",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_energy_pre_curtailment_ac", "Annual Energy AC pre-curtailment (year 1)",   "kWh",        "",                "",                           "",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_ac_curtailment_loss_percent","Annual Energy loss from curtailment (year 1)", "%", "",                "",                           "",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_ac_curtailment_loss_kwh",   "Annual Energy loss from curtailment (year 1)", "kWh", "",                "",                           "",                     "",
 			  "" },
 
 var_info_invalid };
@@ -85,8 +86,8 @@ void cm_grid::exec() throw (general_error)
 	construct();
 
 	// interconnection  calculations
-	double capacity_factor_interconnect, annual_energy_pre_interconnect, annual_energy_pre_curtailment, annual_energy;
-	capacity_factor_interconnect = annual_energy_pre_interconnect = annual_energy_pre_curtailment = annual_energy = 0;
+	double capacity_factor_interconnect, annual_energy_pre_interconnect, annual_energy_pre_curtailment, annual_energy, capacity_factor_curtailment;
+	capacity_factor_interconnect = annual_energy_pre_interconnect = annual_energy_pre_curtailment = annual_energy = capacity_factor_curtailment = 0;
 
 //	annual_energy_pre_interconnect = std::accumulate(gridVars->systemGenerationLifetime_kW.begin(), gridVars->systemGenerationLifetime_kW.begin() + gridVars->numberOfSingleYearRecords, (double)0.0)*gridVars->dt_hour_gen;
 
@@ -107,8 +108,11 @@ void cm_grid::exec() throw (general_error)
 
 		p_genPreCurtailment_kW[i] = static_cast<ssc_number_t>(gridVars->systemGenerationLifetime_kW[i]);
 
-		// compute curtailment
-		gridVars->systemGenerationLifetime_kW[i] *= (1.0 - gridVars->gridCurtailmentLifetime_percent[i]/100.0);
+		// compute curtailment percentage
+//		gridVars->systemGenerationLifetime_kW[i] *= (1.0 - gridVars->gridCurtailmentLifetime_percent[i]/100.0);
+		// compute curtailment MW
+		if (gridVars->systemGenerationLifetime_kW[i] > (gridVars->gridCurtailmentLifetime_MW[i]*1000.0))
+			gridVars->systemGenerationLifetime_kW[i] = (gridVars->gridCurtailmentLifetime_MW[i]*1000.0);
 
 		p_genGrid_kW[i] = static_cast<ssc_number_t>(gridVars->systemGenerationLifetime_kW[i]);
 
@@ -135,6 +139,8 @@ void cm_grid::exec() throw (general_error)
 
 //	annual_energy_interconnect = std::accumulate(gridVars->systemGenerationLifetime_kW.begin(), gridVars->systemGenerationLifetime_kW.begin() + gridVars->numberOfSingleYearRecords, (double)0.0)*gridVars->dt_hour_gen;
 	capacity_factor_interconnect = annual_energy_pre_curtailment * util::fraction_to_percent / (gridVars->grid_interconnection_limit_kW * 8760.);
+	//	annual_energy_interconnect = std::accumulate(gridVars->systemGenerationLifetime_kW.begin(), gridVars->systemGenerationLifetime_kW.begin() + gridVars->numberOfSingleYearRecords, (double)0.0)*gridVars->dt_hour_gen;
+	capacity_factor_curtailment = annual_energy * util::fraction_to_percent / (gridVars->grid_interconnection_limit_kW * 8760.);
 
 
 
@@ -144,7 +150,11 @@ void cm_grid::exec() throw (general_error)
 	assign("annual_energy_pre_curtailment_ac", var_data(annual_energy_pre_curtailment));
 	assign("annual_energy", var_data(annual_energy)); 
 	assign("annual_ac_interconnect_loss_kwh", var_data(std::round(annual_energy_pre_interconnect - annual_energy_pre_curtailment)));
-	assign("annual_ac_interconnect_loss_percent", var_data(100.0*(annual_energy_pre_interconnect - annual_energy_pre_curtailment)/ annual_energy_pre_interconnect));
+	assign("annual_ac_interconnect_loss_percent", var_data(100.0*(annual_energy_pre_interconnect - annual_energy_pre_curtailment) / annual_energy_pre_interconnect));
+	assign("capacity_factor_interconnect_ac", var_data(capacity_factor_curtailment));
+	assign("annual_ac_curtailment_loss_kwh", var_data(std::round(annual_energy_pre_curtailment - annual_energy)));
+	assign("annual_ac_curtailment_loss_percent", var_data(100.0*(annual_energy_pre_curtailment - annual_energy) / annual_energy_pre_curtailment));
+
 
 }
 
