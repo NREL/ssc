@@ -136,7 +136,7 @@ void dispatch_t::finalize(size_t idx, double &I)
 
 bool dispatch_t::check_constraints(double &I, size_t count)
 {
-	bool iterate = true;
+	bool iterate;
 	double I_initial = I;
 	bool current_iterate = false;
 	bool power_iterate = false;
@@ -152,38 +152,54 @@ bool dispatch_t::check_constraints(double &I, size_t count)
 		power_iterate = true;
 	}
 	// decrease the current draw if took too much
-	else if (I > 0 && _Battery->battery_soc() < m_batteryPower->stateOfChargeMin - tolerance)
+	if (I > 0 && _Battery->battery_soc() < m_batteryPower->stateOfChargeMin - tolerance)
 	{
 		double dQ = 0.01 * (m_batteryPower->stateOfChargeMin - _Battery->battery_soc()) * _Battery->battery_charge_maximum_thermal();
 		I -= dQ / _dt_hour;
+		m_batteryPower->powerBatteryTarget = _Battery->calculate_voltage_for_current(I) * I * util::watt_to_kilowatt;
 	}
 	// decrease the current charging if charged too much
 	else if (I < 0 &&_Battery->battery_soc() > m_batteryPower->stateOfChargeMax + tolerance)
 	{
 		double dQ = 0.01 * (_Battery->battery_soc() - m_batteryPower->stateOfChargeMax) * _Battery->battery_charge_maximum_thermal();
 		I += dQ / _dt_hour;
-	}
+        m_batteryPower->powerBatteryTarget = _Battery->calculate_voltage_for_current(I) * I * util::watt_to_kilowatt;
+    }
 	// Don't allow grid charging unless explicitly allowed (reduce charging) 
-	else if (I < 0 && m_batteryPower->powerGridToBattery > tolerance && !m_batteryPower->canGridCharge)
+	if (!m_batteryPower->canGridCharge && I < 0 && m_batteryPower->powerGridToBattery > tolerance)
 	{
-		if (fabs(m_batteryPower->powerBatteryAC) < tolerance)
-			I += (m_batteryPower->powerGridToBattery * util::kilowatt_to_watt / _Battery->battery_voltage());
-		else
-			I += (m_batteryPower->powerGridToBattery / fabs(m_batteryPower->powerBatteryAC)) *fabs(I);
+        m_batteryPower->powerBatteryTarget += m_batteryPower->powerGridToBattery * util::kilowatt_to_watt;
+        I = _Battery->calculate_current_for_power_kw(m_batteryPower->powerBatteryTarget);
 	}
 	// Don't allow grid charging if producing PV
 	else if (m_batteryPower->connectionMode == dispatch_t::DC_CONNECTED &&
-		m_batteryPower->powerGridToBattery &&
+		m_batteryPower->powerGridToBattery > 0 &&
 		(m_batteryPower->powerPVToGrid > 0 || m_batteryPower->powerPVToLoad > 0))
 	{
-		if (fabs(m_batteryPower->powerBatteryAC) < tolerance)
-			I += (m_batteryPower->powerGridToBattery * util::kilowatt_to_watt / _Battery->battery_voltage());
-		else
-			I += (m_batteryPower->powerGridToBattery / fabs(m_batteryPower->powerBatteryAC)) *fabs(I);
+        m_batteryPower->powerBatteryTarget += m_batteryPower->powerGridToBattery * util::kilowatt_to_watt;
+        I = _Battery->calculate_current_for_power_kw(m_batteryPower->powerBatteryTarget);
 	}
+    // Error checking for battery charging
+    double power_to_batt = m_batteryPower->powerBatteryDC;
+	if (m_batteryPower->connectionMode == dispatch_t::DC_CONNECTED){
+	    double grid_charge_ac = m_batteryPower->sharedInverter->calculateRequiredDCPower(m_batteryPower->powerGridToBattery,
+	            m_batteryPower->sharedInverter->StringV, m_batteryPower->sharedInverter->Tdry_C);
+	    power_to_batt = m_batteryPower->powerPVToBattery + grid_charge_ac + m_batteryPower->powerFuelCellToBattery;
+	    power_to_batt *= m_batteryPower->singlePointEfficiencyDCToDC;
+	}
+	else {
+	    power_to_batt = fmax(power_to_batt, -(m_batteryPower->powerPVToBattery + m_batteryPower->powerGridToBattery + m_batteryPower->powerFuelCellToBattery));
+	    power_to_batt *= m_batteryPower->singlePointEfficiencyACToDC;
+    }
+    if (m_batteryPower->powerBatteryTarget < 0 && abs(power_to_batt + m_batteryPower->powerBatteryTarget) > tolerance) {
+        m_batteryPower->powerBatteryTarget = -power_to_batt;
+        m_batteryPower->powerBatteryDC = m_batteryPower->powerBatteryTarget;
+        I = _Battery->calculate_current_for_power_kw(m_batteryPower->powerBatteryTarget);
+        double x = _Battery->calculate_voltage_for_current(I) * I;
+    }
 	// Don't allow battery to discharge if it gets wasted due to inverter efficiency limitations
 	// Typically, this would be due to low power flow, so just cut off battery.
-	else if (m_batteryPower->connectionMode == dispatch_t::DC_CONNECTED && m_batteryPower->sharedInverter->efficiencyAC < m_batteryPower->inverterEfficiencyCutoff)
+	if (m_batteryPower->connectionMode == dispatch_t::DC_CONNECTED && m_batteryPower->sharedInverter->efficiencyAC < m_batteryPower->inverterEfficiencyCutoff)
 	{
 		// The requested DC power
 		double powerBatterykWdc = _Battery->capacity_model()->I() * _Battery->battery_voltage() * util::watt_to_kilowatt;
@@ -193,19 +209,18 @@ bool dispatch_t::check_constraints(double &I, size_t count)
 			if (powerBatterykWdc + m_batteryPower->powerPV > m_batteryPower->sharedInverter->getACNameplateCapacitykW()) {
 				powerBatterykWdc = m_batteryPower->sharedInverter->getACNameplateCapacitykW() - m_batteryPower->powerPV;
 				powerBatterykWdc = fmax(powerBatterykWdc, 0);
-			}
-			I = powerBatterykWdc * util::kilowatt_to_watt / _Battery->battery_voltage();
+                m_batteryPower->powerBatteryTarget = powerBatterykWdc;
+                I = _Battery->calculate_current_for_power_kw(m_batteryPower->powerBatteryTarget);
+            }
 		}
 		// if charging, this will also be due to low powerflow from grid-charging, just cut off that component
 		else if (m_batteryPower->powerBatteryDC < 0 && m_batteryPower->powerGridToBattery > 0){
 			I *= fmax(1.0 - fabs(m_batteryPower->powerGridToBattery * m_batteryPower->sharedInverter->efficiencyAC * 0.01 / m_batteryPower->powerBatteryDC), 0);
-		}
-		else {
-			iterate = false;
-		}
+            m_batteryPower->powerBatteryTarget = _Battery->calculate_voltage_for_current(I) * I * util::watt_to_kilowatt;
+        }
 	}
-	else
-		iterate = false;
+
+	iterate = abs(I_initial - I) > tolerance;
 
 	// update constraints for current, power, if they are now violated
 	if (!current_iterate) {
@@ -229,16 +244,13 @@ bool dispatch_t::check_constraints(double &I, size_t count)
 		iterate = false;
 	}
 
-	// reset
+
+    // reset
 	if (iterate)
 	{
 		_Battery->copy(_Battery_initial);
-		m_batteryPower->powerBatteryDC = 0;
-		m_batteryPower->powerBatteryAC = 0;
-		m_batteryPower->powerGridToBattery = 0;
-		m_batteryPower->powerBatteryToGrid = 0;
-		m_batteryPower->powerPVToGrid = 0;
-	}
+        m_batteryPowerFlow->calculate();
+    }
 
 	return iterate;
 }
@@ -619,7 +631,6 @@ bool dispatch_manual_t::check_constraints(double &I, size_t count)
 		if (iterate)
 		{
 			_Battery->copy(_Battery_initial);
-			m_batteryPower->powerBatteryDC = 0;
 			m_batteryPower->powerBatteryAC = 0;
 			m_batteryPower->powerGridToBattery = 0;
 			m_batteryPower->powerBatteryToGrid = 0;
@@ -763,7 +774,8 @@ void dispatch_automatic_t::dispatch(size_t year,
 
 bool dispatch_automatic_t::check_constraints(double &I, size_t count)
 {
-	// check common constraints before checking manual dispatch specific ones
+    m_batteryPowerFlow->calculate();
+    // check common constraints before checking manual dispatch specific ones
 	bool iterate = dispatch_t::check_constraints(I, count);
 
 	if (!iterate)
@@ -903,11 +915,10 @@ bool dispatch_automatic_t::check_constraints(double &I, size_t count)
 		if (iterate)
 		{
 			_Battery->copy(_Battery_initial);
-			m_batteryPower->powerBatteryDC = 0;
-			m_batteryPower->powerBatteryAC = 0;
-			m_batteryPower->powerGridToBattery = 0;
-			m_batteryPower->powerBatteryToGrid = 0;
-			m_batteryPower->powerPVToGrid  = 0;
+//			m_batteryPower->powerBatteryAC = 0;
+//			m_batteryPower->powerGridToBattery = 0;
+//			m_batteryPower->powerBatteryToGrid = 0;
+//			m_batteryPower->powerPVToGrid  = 0;
 		}
 	}
 	return iterate;
