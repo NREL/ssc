@@ -311,7 +311,12 @@ void mp_ancillary_services(ssc_data_t data)
 							{
 								for (size_t i = 0; (i < system_generation.size()) && (i < energy_market_capacity.size()) && (i < energy_market_revenue.size()); i++)
 								{
-									if (system_generation[i] > energy_market_capacity[i])
+									if (fabs(cleared_capacity[i]) < 1e-5) // override, compensate generation at first enabled market
+									{
+										energy_market_revenue[i] *= system_generation[i] / steps_per_hour; // [MW] * [$/MWh] / fraction per hour [1/h]
+										system_generation[i] = 0.0;
+									}
+									else if (system_generation[i] > energy_market_capacity[i])
 									{
 										energy_market_revenue[i] *= energy_market_capacity[i] / steps_per_hour; // [MW] * [$/MWh] / fraction per hour [1/h]
 										system_generation[i] -= energy_market_capacity[i];
@@ -331,7 +336,12 @@ void mp_ancillary_services(ssc_data_t data)
 							{
 								for (size_t i = 0; (i < system_generation.size()) && (i < ancillary_services1_capacity.size()) && (i < ancillary_services1_revenue.size()); i++)
 								{
-									if (system_generation[i] > ancillary_services1_capacity[i])
+									if (fabs(cleared_capacity[i]) < 1e-5) // override, compensate generation at first enabled market
+									{
+										ancillary_services1_revenue[i] *= system_generation[i] / steps_per_hour; // [MW] * [$/MWh] / fraction per hour [1/h]
+										system_generation[i] = 0.0;
+									}
+									else if (system_generation[i] > ancillary_services1_capacity[i])
 									{
 										ancillary_services1_revenue[i] *= ancillary_services1_capacity[i] / steps_per_hour; // [MW] * [$/MWh] / fraction per hour [1/h]
 										system_generation[i] -= ancillary_services1_capacity[i];
@@ -351,7 +361,12 @@ void mp_ancillary_services(ssc_data_t data)
 							{
 								for (size_t i = 0; (i < system_generation.size()) && (i < ancillary_services2_capacity.size()) && (i < ancillary_services2_revenue.size()); i++)
 								{
-									if (system_generation[i] > ancillary_services2_capacity[i])
+									if (fabs(cleared_capacity[i]) < 1e-5) // override, compensate generation at first enabled market
+									{
+										ancillary_services2_revenue[i] *= system_generation[i] / steps_per_hour; // [MW] * [$/MWh] / fraction per hour [1/h]
+										system_generation[i] = 0.0;
+									}
+									else if (system_generation[i] > ancillary_services2_capacity[i])
 									{
 										ancillary_services2_revenue[i] *= ancillary_services2_capacity[i] / steps_per_hour; // [MW] * [$/MWh] / fraction per hour [1/h]
 										system_generation[i] -= ancillary_services2_capacity[i];
@@ -371,7 +386,12 @@ void mp_ancillary_services(ssc_data_t data)
 							{
 								for (size_t i = 0; (i < system_generation.size()) && (i < ancillary_services3_capacity.size()) && (i < ancillary_services3_revenue.size()); i++)
 								{
-									if (system_generation[i] > ancillary_services3_capacity[i])
+									if (fabs(cleared_capacity[i]) < 1e-5) // override, compensate generation at first enabled market
+									{
+										ancillary_services3_revenue[i] *= system_generation[i] / steps_per_hour; // [MW] * [$/MWh] / fraction per hour [1/h]
+										system_generation[i] = 0.0;
+									}
+									else 									if (system_generation[i] > ancillary_services3_capacity[i])
 									{
 										ancillary_services3_revenue[i] *= ancillary_services3_capacity[i] / steps_per_hour; // [MW] * [$/MWh] / fraction per hour [1/h]
 										system_generation[i] -= ancillary_services3_capacity[i];
@@ -391,7 +411,12 @@ void mp_ancillary_services(ssc_data_t data)
 							{
 								for (size_t i = 0; (i < system_generation.size()) && (i < ancillary_services4_capacity.size()) && (i < ancillary_services4_revenue.size()); i++)
 								{
-									if (system_generation[i] > ancillary_services4_capacity[i])
+									if (fabs(cleared_capacity[i]) < 1e-5) // override, compensate generation at first enabled market
+									{
+										ancillary_services4_revenue[i] *= system_generation[i] / steps_per_hour; // [MW] * [$/MWh] / fraction per hour [1/h]
+										system_generation[i] = 0.0;
+									}
+									else 									if (system_generation[i] > ancillary_services4_capacity[i])
 									{
 										ancillary_services4_revenue[i] *= ancillary_services4_capacity[i] / steps_per_hour; // [MW] * [$/MWh] / fraction per hour [1/h]
 										system_generation[i] -= ancillary_services4_capacity[i];

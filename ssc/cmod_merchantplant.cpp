@@ -1040,9 +1040,12 @@ public:
 		vd->assign("gen", *lookup("gen"));
 		vd->assign("mp_calculate_revenue", var_data(ssc_number_t(1.0)));
 
-
 		mp_ancillary_services(vd);
 		if (vd->lookup("mp_ancillary_services")->num == 0)
+	
+// does not work
+//		mp_ancillary_services(m_vartab);
+//		if (lookup("mp_ancillary_services")->num == 0)
 		{
 			std::ostringstream ss;
 			ss << "The generation is not sufficient to meet the ancillary markets requirements.  Specifically, " << (vd->lookup("mp_ancillary_services_error")->str);
