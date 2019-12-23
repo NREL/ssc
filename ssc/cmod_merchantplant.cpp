@@ -1026,6 +1026,7 @@ public:
 
 		// merchant plant additional revenue streams
 		var_table* vd = new var_table;
+		vd->assign("system_use_lifetime_output", *lookup("system_use_lifetime_output"));
 		vd->assign("analysis_period", *lookup("analysis_period"));
 		vd->assign("mp_enable_energy_market_revenue", *lookup("mp_enable_energy_market_revenue"));
 		vd->assign("mp_enable_ancserv1", *lookup("mp_enable_ancserv1"));
@@ -1038,6 +1039,7 @@ public:
 		vd->assign("mp_ancserv3_revenue", *lookup("mp_ancserv3_revenue"));
 		vd->assign("mp_ancserv4_revenue", *lookup("mp_ancserv4_revenue"));
 		vd->assign("gen", *lookup("gen"));
+		vd->assign("degradation", *lookup("degradation"));
 		vd->assign("mp_calculate_revenue", var_data(ssc_number_t(1.0)));
 
 		mp_ancillary_services(vd);

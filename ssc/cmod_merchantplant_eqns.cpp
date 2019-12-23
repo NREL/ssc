@@ -27,10 +27,10 @@ void mp_ancillary_services(ssc_data_t data)
 	try {
 		bool gen_is_assigned = false;
 
-		int mp_enable_energy_market_revenue, mp_enable_ancserv1, mp_enable_ancserv2, mp_enable_ancserv3, mp_enable_ancserv4;
+		int mp_enable_energy_market_revenue, mp_enable_ancserv1, mp_enable_ancserv2, mp_enable_ancserv3, mp_enable_ancserv4, system_use_lifetime_output;
 		int mp_calculate_revenue;
 		ssc_number_t analysis_period, system_capacity;
-		util::matrix_t<ssc_number_t> mp_energy_market_revenue, mp_ancserv1_revenue, mp_ancserv2_revenue, mp_ancserv3_revenue, mp_ancserv4_revenue, system_gen;
+		util::matrix_t<ssc_number_t> mp_energy_market_revenue, mp_ancserv1_revenue, mp_ancserv2_revenue, mp_ancserv3_revenue, mp_ancserv4_revenue, system_gen, degradation;
 		/*
 		{ SSC_INPUT,        SSC_NUMBER,     "mp_enable_energy_market_revenue",		      "Enable energy market revenue",   "0/1",   "",    "",  "*",	"INTEGER,MIN=0,MAX=1",      "" },
 		{ SSC_INPUT, SSC_MATRIX, "mp_energy_market_revenue", "Energy market revenue input", "", "","*", "", ""},
@@ -43,8 +43,9 @@ void mp_ancillary_services(ssc_data_t data)
 		{ SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv4",		      "Enable ancillary services 4 revenue",   "0/1",   "",    "",  "*",	"INTEGER,MIN=0,MAX=1",      "" },
 		{ SSC_INPUT, SSC_MATRIX, "mp_ancserv4_revenue", "Ancillary services 4 revenue input", "", "","*", "", "" },
 		*/
-        vt_get_number(vt, "analysis_period", &analysis_period);
-        vt_get_int(vt, "mp_enable_energy_market_revenue", &mp_enable_energy_market_revenue);
+		vt_get_int(vt, "system_use_lifetime_output", &system_use_lifetime_output);
+		vt_get_number(vt, "analysis_period", &analysis_period);
+		vt_get_int(vt, "mp_enable_energy_market_revenue", &mp_enable_energy_market_revenue);
         vt_get_int(vt, "mp_enable_ancserv1", &mp_enable_ancserv1);
         vt_get_int(vt, "mp_enable_ancserv2", &mp_enable_ancserv2);
         vt_get_int(vt, "mp_enable_ancserv3", &mp_enable_ancserv3);
@@ -59,6 +60,7 @@ void mp_ancillary_services(ssc_data_t data)
 		{
 			system_capacity = 0.0;
             vt_get_matrix(vt, "gen", system_gen);
+			vt_get_matrix(vt, "degradation", degradation);
 		}
 		else
 		{
@@ -142,10 +144,37 @@ void mp_ancillary_services(ssc_data_t data)
 						if (gen_is_assigned)
 						{
 							current_year_capacity.clear();
-							current_num_per_year = system_gen.ncols() / (size_t)analysis_period;
+
+							// note that arrays inputs retrieved as matrices are single rows.
+							if (system_use_lifetime_output > 0.5) // lifetime "gen" = "system_gen"
+								current_num_per_year = system_gen.ncols() / (size_t)analysis_period;
+							else // adjust single year for lifetime system_generation
+								current_num_per_year = system_gen.ncols();
 							current_year_capacity.reserve(current_num_per_year);
-							for (size_t ic = 0; (ic < current_num_per_year) && ((ic + iyear * current_num_per_year) < system_gen.ncols()); ic++)
-								current_year_capacity.push_back(system_gen(0, ic + iyear * current_num_per_year)/1000.0); // kW to MW
+							for (size_t ic = 0; (ic < current_num_per_year); ic++)
+							{
+								if (system_use_lifetime_output > 0.5) // lifetime "gen" = "system_gen"
+								{
+									if ((ic + iyear * current_num_per_year) < system_gen.ncols())
+										current_year_capacity.push_back(system_gen(0, ic + iyear * current_num_per_year) / 1000.0); // kW to MW
+								}
+								else // single year - adjust with degradation
+								{
+									// degradation
+									// degradation starts in year 2 for single value degradation - no degradation in year 1 - degradation =1.0
+									// lifetime degradation applied in technology compute modules
+									if (system_use_lifetime_output < 1) // adjust single year for lifetime system_generation
+									{
+										ssc_number_t degrade_factor;
+										if (degradation.nrows() == 1)
+											degrade_factor = pow((1.0 - degradation(0, 0) / 100.0), iyear);
+										else 
+											degrade_factor = (1.0 - degradation(0, ic) / 100.0);
+										current_year_capacity.push_back((system_gen(0, ic) * degrade_factor) / 1000.0); // kW to MW
+									}
+
+								}
+							}
 							extrapolated_current_year_capacity = extrapolate_timeseries(current_year_capacity, steps_per_hour);
 							for (size_t ic = 0; (ic < extrapolated_current_year_capacity.size()) && ((ic + iyear * current_num_per_year) < cleared_capacity.size()); ic++)
 								system_generation[ic + iyear * nsteps_per_year] = extrapolated_current_year_capacity[ic];
@@ -437,8 +466,7 @@ void mp_ancillary_services(ssc_data_t data)
 			else
 				error = util::format("Invalid analysis period %d", int(analysis_period));
 		}
-		// expected outputs regardless of which markets enabled
-
+		// expected outputs regardless of which markets enabled - does not work when passing in and casting m_vartab
 		var_data mp_energy_market_generated_revenue = var_data(energy_market_revenue.data(), energy_market_revenue.size());
 		vt->assign("mp_energy_market_generated_revenue", mp_energy_market_generated_revenue);
 		var_data mp_ancillary_services1_generated_revenue = var_data(ancillary_services1_revenue.data(), ancillary_services1_revenue.size());
