@@ -332,6 +332,22 @@ void mp_ancillary_services(ssc_data_t data)
 
 					if (calculate_revenue)
 					{ // apply in order and check for power left and apply in next market as necessary system_generation - market cap for current ancillary service
+								// additional outputs for data tables
+						// cleared capacity
+						vt->assign("mp_energy_market_cleared_capacity", var_data(energy_market_capacity.data(), energy_market_capacity.size()));
+						vt->assign("mp_ancillary_services1_cleared_capacity", var_data(ancillary_services1_capacity.data(), ancillary_services1_capacity.size()));
+						vt->assign("mp_ancillary_services2_cleared_capacity", var_data(ancillary_services2_capacity.data(), ancillary_services2_capacity.size()));
+						vt->assign("mp_ancillary_services3_cleared_capacity", var_data(ancillary_services3_capacity.data(), ancillary_services3_capacity.size()));
+						vt->assign("mp_ancillary_services4_cleared_capacity", var_data(ancillary_services4_capacity.data(), ancillary_services4_capacity.size()));
+						// price (modified below from price to revenue)
+						vt->assign("mp_energy_market_price", var_data(energy_market_revenue.data(), energy_market_revenue.size()));
+						vt->assign("mp_ancillary_services1_price", var_data(ancillary_services1_revenue.data(), ancillary_services1_revenue.size()));
+						vt->assign("mp_ancillary_services2_price", var_data(ancillary_services2_revenue.data(), ancillary_services2_revenue.size()));
+						vt->assign("mp_ancillary_services3_price", var_data(ancillary_services3_revenue.data(), ancillary_services3_revenue.size()));
+						vt->assign("mp_ancillary_services4_price", var_data(ancillary_services4_revenue.data(), ancillary_services4_revenue.size()));
+						// total cleared capacity
+						vt->assign("mp_total_cleared_capacity", var_data(cleared_capacity.data(), cleared_capacity.size()));
+
 						if (en_mp_energy_market)
 						{
 							if (system_generation.size() != energy_market_revenue.size())
@@ -467,18 +483,13 @@ void mp_ancillary_services(ssc_data_t data)
 				error = util::format("Invalid analysis period %d", int(analysis_period));
 		}
 		// expected outputs regardless of which markets enabled - does not work when passing in and casting m_vartab
-		var_data mp_energy_market_generated_revenue = var_data(energy_market_revenue.data(), energy_market_revenue.size());
-		vt->assign("mp_energy_market_generated_revenue", mp_energy_market_generated_revenue);
-		var_data mp_ancillary_services1_generated_revenue = var_data(ancillary_services1_revenue.data(), ancillary_services1_revenue.size());
-		vt->assign("mp_ancillary_services1_generated_revenue", mp_ancillary_services1_generated_revenue);
-		var_data mp_ancillary_services2_generated_revenue = var_data(ancillary_services2_revenue.data(), ancillary_services2_revenue.size());
-		vt->assign("mp_ancillary_services2_generated_revenue", mp_ancillary_services2_generated_revenue);
-		var_data mp_ancillary_services3_generated_revenue = var_data(ancillary_services3_revenue.data(), ancillary_services3_revenue.size());
-		vt->assign("mp_ancillary_services3_generated_revenue", mp_ancillary_services3_generated_revenue);
-		var_data mp_ancillary_services4_generated_revenue = var_data(ancillary_services4_revenue.data(), ancillary_services4_revenue.size());
-		vt->assign("mp_ancillary_services4_generated_revenue", mp_ancillary_services4_generated_revenue);
+		vt->assign("mp_energy_market_generated_revenue", var_data(energy_market_revenue.data(), energy_market_revenue.size()));
+		vt->assign("mp_ancillary_services1_generated_revenue", var_data(ancillary_services1_revenue.data(), ancillary_services1_revenue.size()));
+		vt->assign("mp_ancillary_services2_generated_revenue", var_data(ancillary_services2_revenue.data(), ancillary_services2_revenue.size()));
+		vt->assign("mp_ancillary_services3_generated_revenue", var_data(ancillary_services3_revenue.data(), ancillary_services3_revenue.size()));
+		vt->assign("mp_ancillary_services4_generated_revenue", var_data(ancillary_services4_revenue.data(), ancillary_services4_revenue.size()));
 
-
+		
 	}
 	catch (std::exception& e)
 	{

@@ -738,6 +738,28 @@ static var_info _cm_vtab_merchantplant[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_oth_pbi_income",                        "Present value of other PBI income",              "$",                   "", "Metrics", "*", "", "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_salvage_value",                        "Present value of salvage value",              "$",                   "", "Metrics", "*", "", "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_thermal_value",                        "Present value of thermal value",              "$",                   "", "Metrics", "*", "", "" },
+	// Additional lifetime outputs for data tables and plotting.
+		// calculated revenue
+	{ SSC_OUTPUT, SSC_ARRAY, "mp_energy_market_generated_revenue", "Energy market generated revenue", "$", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "mp_ancillary_services1_generated_revenue", "Ancillary services 1 generated revenue", "$", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "mp_ancillary_services2_generated_revenue", "Ancillary services 2 generated revenue", "$", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "mp_ancillary_services3_generated_revenue", "Ancillary services 3 generated revenue", "$", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "mp_ancillary_services4_generated_revenue", "Ancillary services 4 generated revenue", "$", "", "", "*", "", "" },
+		// cleared capacity user input
+	{ SSC_OUTPUT, SSC_ARRAY, "mp_energy_market_cleared_capacity", "Energy market cleared capacity", "MW", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "mp_ancillary_services1_cleared_capacity", "Ancillary services 1 cleared capacity", "MW", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "mp_ancillary_services2_cleared_capacity", "Ancillary services 2 cleared capacity", "MW", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "mp_ancillary_services3_cleared_capacity", "Ancillary services 3 cleared capacity", "MW", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "mp_ancillary_services4_cleared_capacity", "Ancillary services 4 cleared capacity", "MW", "", "", "*", "", "" },
+		// price user input
+	{ SSC_OUTPUT, SSC_ARRAY, "mp_energy_market_price", "Energy market price", "$/MWh", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "mp_ancillary_services1_price", "Ancillary services 1 generated price", "$/MWh", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "mp_ancillary_services2_price", "Ancillary services 2 generated price", "$/MWh", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "mp_ancillary_services3_price", "Ancillary services 3 generated price", "$/MWh", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "mp_ancillary_services4_price", "Ancillary services 4 generated price", "$/MWh", "", "", "*", "", "" },
+		// sum of all cleared capacities
+	{ SSC_OUTPUT, SSC_ARRAY, "mp_total_cleared_capacity", "Total cleared capacity", "MW", "", "", "*", "", "" },
+
 
 
 var_info_invalid };
@@ -1023,7 +1045,7 @@ public:
 				i++;
 			}
 		}
-
+/*
 		// merchant plant additional revenue streams
 		var_table* vd = new var_table;
 		vd->assign("system_use_lifetime_output", *lookup("system_use_lifetime_output"));
@@ -1061,11 +1083,33 @@ public:
 		std::vector<double> mp_ancillary_services4_generated_revenue = vd->lookup("mp_ancillary_services4_generated_revenue")->arr_vector();
 
 		delete vd;
+*/
+// does not work
+		//ssc_number_t * mp_energy_market_generated_revenue = allocate()
+		//size_t max_as_num_recs = 8760 * nyears; // testing for hourly inputs
+		//ssc_number_t* mp_energy_market_generated_revenue = allocate("mp_energy_market_generated_revenue", max_as_num_recs);
 
-		// calculate revenue per year
+		assign("mp_calculate_revenue", var_data(ssc_number_t(1.0)));
+		mp_ancillary_services(m_vartab);
+		if (lookup("mp_ancillary_services")->num == 0)
+		{
+			std::ostringstream ss;
+			ss << "The generation is not sufficient to meet the ancillary markets requirements.  Specifically, " << (lookup("mp_ancillary_services_error")->str);
+			throw exec_error("merchant plant", ss.str());
+		}
+		// return lifetime vectors
+		std::vector<double> mp_energy_market_generated_revenue = lookup("mp_energy_market_generated_revenue")->arr_vector();
+		std::vector<double> mp_ancillary_services1_generated_revenue = lookup("mp_ancillary_services1_generated_revenue")->arr_vector();
+		std::vector<double> mp_ancillary_services2_generated_revenue = lookup("mp_ancillary_services2_generated_revenue")->arr_vector();
+		std::vector<double> mp_ancillary_services3_generated_revenue = lookup("mp_ancillary_services3_generated_revenue")->arr_vector();
+		std::vector<double> mp_ancillary_services4_generated_revenue = lookup("mp_ancillary_services4_generated_revenue")->arr_vector();
+
+
+// calculate revenue per year
 		double as_revenue = 0;
 		size_t base_index = 0;
 		size_t n_marketrevenue_per_year = mp_energy_market_generated_revenue.size() / (size_t)nyears;
+//		size_t n_marketrevenue_per_year = max_as_num_recs / (size_t)nyears;
 		for (i = 1; i <= nyears; i++)
 		{
 			as_revenue = 0;
