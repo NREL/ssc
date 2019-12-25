@@ -271,9 +271,13 @@ void BatteryPowerFlow::calculateACConnected()
 
 	// Compute total system output and grid power flow
 	P_grid_to_load_ac = P_load_ac - P_pv_to_load_ac - P_batt_to_load_ac - P_fuelcell_to_load_ac;
-	P_gen_ac = P_pv_ac + P_fuelcell_ac - P_pv_to_batt_ac + P_inverter_draw_ac - P_system_loss_ac;
+	P_gen_ac = P_pv_ac + P_fuelcell_ac + P_inverter_draw_ac - P_system_loss_ac;
+	if (P_battery_ac < 0)
+	    P_gen_ac -= P_pv_to_batt_ac;
+	else
+	    P_gen_ac += P_battery_ac;
 
-	// Grid charging loss accounted for in P_battery_ac 
+                // Grid charging loss accounted for in P_battery_ac
 	P_grid_ac = P_gen_ac - P_load_ac;
 
 	// Error checking for power to load

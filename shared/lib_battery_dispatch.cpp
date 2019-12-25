@@ -188,14 +188,13 @@ bool dispatch_t::check_constraints(double &I, size_t count)
 	    power_to_batt *= m_batteryPower->singlePointEfficiencyDCToDC;
 	}
 	else {
-	    power_to_batt = fmax(power_to_batt, -(m_batteryPower->powerPVToBattery + m_batteryPower->powerGridToBattery + m_batteryPower->powerFuelCellToBattery));
+	    power_to_batt = -(m_batteryPower->powerPVToBattery + m_batteryPower->powerGridToBattery + m_batteryPower->powerFuelCellToBattery);
 	    power_to_batt *= m_batteryPower->singlePointEfficiencyACToDC;
     }
-    if (m_batteryPower->powerBatteryTarget < 0 && abs(power_to_batt + m_batteryPower->powerBatteryTarget) > tolerance) {
-        m_batteryPower->powerBatteryTarget = -power_to_batt;
+    if (m_batteryPower->powerBatteryTarget < 0 && abs(power_to_batt - m_batteryPower->powerBatteryTarget) > tolerance) {
+        m_batteryPower->powerBatteryTarget = power_to_batt;
         m_batteryPower->powerBatteryDC = m_batteryPower->powerBatteryTarget;
-        I = _Battery->calculate_current_for_power_kw(m_batteryPower->powerBatteryTarget);
-        double x = _Battery->calculate_voltage_for_current(I) * I;
+        I = _Battery_initial->calculate_current_for_power_kw(m_batteryPower->powerBatteryTarget);
     }
 	// Don't allow battery to discharge if it gets wasted due to inverter efficiency limitations
 	// Typically, this would be due to low power flow, so just cut off battery.
