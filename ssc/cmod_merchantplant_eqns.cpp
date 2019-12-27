@@ -123,7 +123,7 @@ void mp_ancillary_services(ssc_data_t data)
 				if (nsteps > 0)
 				{
 					if (nsteps < (8760 * (size_t)analysis_period)) nsteps = 8760 * (size_t)analysis_period; // extrapolated timeseries has minimum of hourly values for use in all forecasting 
-					std::vector<ssc_number_t> cleared_capacity(nsteps, 0.0);
+					std::vector<ssc_number_t> cleared_capacity_sum(nsteps, 0.0);
 					std::vector<ssc_number_t> system_generation(nsteps, 0.0);
 					std::vector<ssc_number_t> energy_market_capacity(nsteps, 0.0);
 					std::vector<ssc_number_t> ancillary_services1_capacity(nsteps, 0.0);
@@ -176,7 +176,7 @@ void mp_ancillary_services(ssc_data_t data)
 								}
 							}
 							extrapolated_current_year_capacity = extrapolate_timeseries(current_year_capacity, steps_per_hour);
-							for (size_t ic = 0; (ic < extrapolated_current_year_capacity.size()) && ((ic + iyear * current_num_per_year) < cleared_capacity.size()); ic++)
+							for (size_t ic = 0; (ic < extrapolated_current_year_capacity.size()) && ((ic + iyear * current_num_per_year) < cleared_capacity_sum.size()); ic++)
 								system_generation[ic + iyear * nsteps_per_year] = extrapolated_current_year_capacity[ic];
 						}
 						else
@@ -192,10 +192,10 @@ void mp_ancillary_services(ssc_data_t data)
 							for (size_t ic = 0; (ic < current_num_per_year) && ((ic + iyear * current_num_per_year) < mp_energy_market_revenue.nrows()); ic++)
 								current_year_capacity.push_back(mp_energy_market_revenue(ic + iyear * current_num_per_year, 0));
 							extrapolated_current_year_capacity = extrapolate_timeseries(current_year_capacity, steps_per_hour);
-							for (size_t ic = 0; (ic < extrapolated_current_year_capacity.size()) && ((ic + iyear * current_num_per_year) < cleared_capacity.size()); ic++)
+							for (size_t ic = 0; (ic < extrapolated_current_year_capacity.size()) && ((ic + iyear * current_num_per_year) < cleared_capacity_sum.size()); ic++)
 							{
 								energy_market_capacity[ic + iyear * nsteps_per_year] = extrapolated_current_year_capacity[ic];
-								cleared_capacity[ic + iyear * nsteps_per_year] += extrapolated_current_year_capacity[ic];
+								cleared_capacity_sum[ic + iyear * nsteps_per_year] += extrapolated_current_year_capacity[ic];
 							}
 
 							if (calculate_revenue)
@@ -218,10 +218,10 @@ void mp_ancillary_services(ssc_data_t data)
 							for (size_t ic = 0; (ic < current_num_per_year) && ((ic + iyear * current_num_per_year) < mp_ancserv1_revenue.nrows()); ic++)
 								current_year_capacity.push_back(mp_ancserv1_revenue(ic + iyear * current_num_per_year, 0));
 							extrapolated_current_year_capacity = extrapolate_timeseries(current_year_capacity, steps_per_hour);
-							for (size_t ic = 0; (ic < extrapolated_current_year_capacity.size()) && ((ic + iyear * current_num_per_year) < cleared_capacity.size()); ic++)
+							for (size_t ic = 0; (ic < extrapolated_current_year_capacity.size()) && ((ic + iyear * current_num_per_year) < cleared_capacity_sum.size()); ic++)
 							{
 								ancillary_services1_capacity[ic + iyear * nsteps_per_year] = extrapolated_current_year_capacity[ic];
-								cleared_capacity[ic + iyear * nsteps_per_year] += extrapolated_current_year_capacity[ic];
+								cleared_capacity_sum[ic + iyear * nsteps_per_year] += extrapolated_current_year_capacity[ic];
 							}
 
 							if (calculate_revenue)
@@ -244,10 +244,10 @@ void mp_ancillary_services(ssc_data_t data)
 							for (size_t ic = 0; (ic < current_num_per_year) && ((ic + iyear * current_num_per_year) < mp_ancserv2_revenue.nrows()); ic++)
 								current_year_capacity.push_back(mp_ancserv2_revenue(ic + iyear * current_num_per_year, 0));
 							extrapolated_current_year_capacity = extrapolate_timeseries(current_year_capacity, steps_per_hour);
-							for (size_t ic = 0; (ic < extrapolated_current_year_capacity.size()) && ((ic + iyear * current_num_per_year) < cleared_capacity.size()); ic++)
+							for (size_t ic = 0; (ic < extrapolated_current_year_capacity.size()) && ((ic + iyear * current_num_per_year) < cleared_capacity_sum.size()); ic++)
 							{
 								ancillary_services2_capacity[ic + iyear * nsteps_per_year] = extrapolated_current_year_capacity[ic];
-								cleared_capacity[ic + iyear * nsteps_per_year] += extrapolated_current_year_capacity[ic];
+								cleared_capacity_sum[ic + iyear * nsteps_per_year] += extrapolated_current_year_capacity[ic];
 							}
 
 							if (calculate_revenue)
@@ -270,10 +270,10 @@ void mp_ancillary_services(ssc_data_t data)
 							for (size_t ic = 0; (ic < current_num_per_year) && ((ic + iyear * current_num_per_year) < mp_ancserv3_revenue.nrows()); ic++)
 								current_year_capacity.push_back(mp_ancserv3_revenue(ic + iyear * current_num_per_year, 0));
 							extrapolated_current_year_capacity = extrapolate_timeseries(current_year_capacity, steps_per_hour);
-							for (size_t ic = 0; (ic < extrapolated_current_year_capacity.size()) && ((ic + iyear * current_num_per_year) < cleared_capacity.size()); ic++)
+							for (size_t ic = 0; (ic < extrapolated_current_year_capacity.size()) && ((ic + iyear * current_num_per_year) < cleared_capacity_sum.size()); ic++)
 							{
 								ancillary_services3_capacity[ic + iyear * nsteps_per_year] = extrapolated_current_year_capacity[ic];
-								cleared_capacity[ic + iyear * nsteps_per_year] += extrapolated_current_year_capacity[ic];
+								cleared_capacity_sum[ic + iyear * nsteps_per_year] += extrapolated_current_year_capacity[ic];
 							}
 
 							if (calculate_revenue)
@@ -296,10 +296,10 @@ void mp_ancillary_services(ssc_data_t data)
 							for (size_t ic = 0; (ic < current_num_per_year) && ((ic + iyear * current_num_per_year) < mp_ancserv4_revenue.nrows()); ic++)
 								current_year_capacity.push_back(mp_ancserv4_revenue(ic + iyear * current_num_per_year, 0));
 							extrapolated_current_year_capacity = extrapolate_timeseries(current_year_capacity, steps_per_hour);
-							for (size_t ic = 0; (ic < extrapolated_current_year_capacity.size()) && ((ic + iyear * current_num_per_year) < cleared_capacity.size()); ic++)
+							for (size_t ic = 0; (ic < extrapolated_current_year_capacity.size()) && ((ic + iyear * current_num_per_year) < cleared_capacity_sum.size()); ic++)
 							{
 								ancillary_services4_capacity[ic + iyear * nsteps_per_year] = extrapolated_current_year_capacity[ic];
-								cleared_capacity[ic + iyear * nsteps_per_year] += extrapolated_current_year_capacity[ic];
+								cleared_capacity_sum[ic + iyear * nsteps_per_year] += extrapolated_current_year_capacity[ic];
 							}
 
 							if (calculate_revenue)
@@ -316,24 +316,48 @@ void mp_ancillary_services(ssc_data_t data)
 						}
 					}
 					// check each timestep against system capacity
-					if (cleared_capacity.size() != system_generation.size())
-						error = util::format("cleared capacity size %d and capacity check size %d do not match", int(cleared_capacity.size()), int(system_generation.size()));
+					// TODO: check that each enabled market cleared capacity is greater than or equal to zero.
+					if (cleared_capacity_sum.size() != system_generation.size())
+						error = util::format("cleared capacity size %d and capacity check size %d do not match", int(cleared_capacity_sum.size()), int(system_generation.size()));
 					else
 					{
-						for (size_t i = 0; (i < cleared_capacity.size()) && (i < system_generation.size()); i++)
+						for (size_t i = 0; (i < cleared_capacity_sum.size()) && (i < system_generation.size()); i++)
 						{
-							if ((cleared_capacity[i] > 0) && (cleared_capacity[i] > system_generation[i]))
+							if (energy_market_capacity[i] < 0)
 							{
-								error = util::format("sum of cleared capacity %g MW exceeds system capacity %g MW at timestep %d", cleared_capacity[i], system_generation[i], int(i));
+								error = util::format("energy market cleared capacity %g is less than zerod at timestep %d", energy_market_capacity[i], int(i));
+								break;
+							}
+							else if (ancillary_services1_capacity[i] < 0)
+							{
+								error = util::format("ancillary services 1 market cleared capacity %g is less than zerod at timestep %d", ancillary_services1_capacity[i], int(i));
+								break;
+							}
+							else if (ancillary_services2_capacity[i] < 0)
+							{
+								error = util::format("ancillary services 2 market cleared capacity %g is less than zerod at timestep %d", ancillary_services2_capacity[i], int(i));
+								break;
+							}
+							else if (ancillary_services3_capacity[i] < 0)
+							{
+								error = util::format("ancillary services 3 market cleared capacity %g is less than zerod at timestep %d", ancillary_services3_capacity[i], int(i));
+								break;
+							}
+							else if (ancillary_services4_capacity[i] < 0)
+							{
+								error = util::format("ancillary services 4 market cleared capacity %g is less than zerod at timestep %d", ancillary_services4_capacity[i], int(i));
+								break;
+							}
+							else if (cleared_capacity_sum[i] > system_generation[i])
+							{
+								error = util::format("sum of cleared capacity %g MW exceeds system capacity %g MW at timestep %d", cleared_capacity_sum[i], system_generation[i], int(i));
 								break;
 							}
 						}
 					}
 
 					if (calculate_revenue)
-					{ // apply in order and check for power left and apply in next market as necessary system_generation - market cap for current ancillary service
-								// additional outputs for data tables
-						// cleared capacity
+					{ // all user specified capacities are greater than zero and sum of all less than system generation at timestep i
 						vt->assign("mp_energy_market_cleared_capacity", var_data(energy_market_capacity.data(), energy_market_capacity.size()));
 						vt->assign("mp_ancillary_services1_cleared_capacity", var_data(ancillary_services1_capacity.data(), ancillary_services1_capacity.size()));
 						vt->assign("mp_ancillary_services2_cleared_capacity", var_data(ancillary_services2_capacity.data(), ancillary_services2_capacity.size()));
@@ -346,7 +370,7 @@ void mp_ancillary_services(ssc_data_t data)
 						vt->assign("mp_ancillary_services3_price", var_data(ancillary_services3_revenue.data(), ancillary_services3_revenue.size()));
 						vt->assign("mp_ancillary_services4_price", var_data(ancillary_services4_revenue.data(), ancillary_services4_revenue.size()));
 						// total cleared capacity
-						vt->assign("mp_total_cleared_capacity", var_data(cleared_capacity.data(), cleared_capacity.size()));
+						vt->assign("mp_total_cleared_capacity", var_data(cleared_capacity_sum.data(), cleared_capacity_sum.size()));
 
 						if (en_mp_energy_market)
 						{
@@ -356,7 +380,7 @@ void mp_ancillary_services(ssc_data_t data)
 							{
 								for (size_t i = 0; (i < system_generation.size()) && (i < energy_market_capacity.size()) && (i < energy_market_revenue.size()); i++)
 								{
-									if (fabs(cleared_capacity[i]) < 1e-5) // override, compensate generation at first enabled market if greater than zero.
+									if (fabs(cleared_capacity_sum[i]) < 1e-5) // override, compensate generation at first enabled market if greater than zero.
 									{
 										energy_market_revenue[i] = 0.0;
 									}
@@ -384,7 +408,7 @@ void mp_ancillary_services(ssc_data_t data)
 							{
 								for (size_t i = 0; (i < system_generation.size()) && (i < ancillary_services1_capacity.size()) && (i < ancillary_services1_revenue.size()); i++)
 								{
-									if (fabs(cleared_capacity[i]) < 1e-5) // override, compensate generation at first enabled market
+									if (fabs(cleared_capacity_sum[i]) < 1e-5) // override, compensate generation at first enabled market
 									{
 										ancillary_services1_revenue[i] = 0.0;
 									}
@@ -412,7 +436,7 @@ void mp_ancillary_services(ssc_data_t data)
 							{
 								for (size_t i = 0; (i < system_generation.size()) && (i < ancillary_services2_capacity.size()) && (i < ancillary_services2_revenue.size()); i++)
 								{
-									if (fabs(cleared_capacity[i]) < 1e-5) // override, compensate generation at first enabled market
+									if (fabs(cleared_capacity_sum[i]) < 1e-5) // override, compensate generation at first enabled market
 									{
 										ancillary_services2_revenue[i] = 0.0;
 									}
@@ -440,7 +464,7 @@ void mp_ancillary_services(ssc_data_t data)
 							{
 								for (size_t i = 0; (i < system_generation.size()) && (i < ancillary_services3_capacity.size()) && (i < ancillary_services3_revenue.size()); i++)
 								{
-									if (fabs(cleared_capacity[i]) < 1e-5) // override, compensate generation at first enabled market
+									if (fabs(cleared_capacity_sum[i]) < 1e-5) // override, compensate generation at first enabled market
 									{
 										ancillary_services3_revenue[i] = 0.0;
 									}
@@ -468,7 +492,7 @@ void mp_ancillary_services(ssc_data_t data)
 							{
 								for (size_t i = 0; (i < system_generation.size()) && (i < ancillary_services4_capacity.size()) && (i < ancillary_services4_revenue.size()); i++)
 								{
-									if (fabs(cleared_capacity[i]) < 1e-5) // override, compensate generation at first enabled market
+									if (fabs(cleared_capacity_sum[i]) < 1e-5) // override, compensate generation at first enabled market
 									{
 										ancillary_services4_revenue[i] = 0.0;
 									}
