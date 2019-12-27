@@ -371,145 +371,30 @@ void mp_ancillary_services(ssc_data_t data)
 						vt->assign("mp_ancillary_services4_price", var_data(ancillary_services4_revenue.data(), ancillary_services4_revenue.size()));
 						// total cleared capacity
 						vt->assign("mp_total_cleared_capacity", var_data(cleared_capacity_sum.data(), cleared_capacity_sum.size()));
-
-						if (en_mp_energy_market)
+						for (size_t i = 0; (i < system_generation.size()) && (i < energy_market_capacity.size()) && (i < energy_market_revenue.size()); i++)
 						{
-							if (system_generation.size() != energy_market_revenue.size())
-								error = util::format("system generation size %d and energy market revenue size %d do not match", int(system_generation.size()), int(energy_market_revenue.size()));
-							else
+							//									if (fabs(cleared_capacity_sum[i]) < 1e-5) // override, compensate generation at first enabled market if greater than zero.
 							{
-								for (size_t i = 0; (i < system_generation.size()) && (i < energy_market_capacity.size()) && (i < energy_market_revenue.size()); i++)
-								{
-									if (fabs(cleared_capacity_sum[i]) < 1e-5) // override, compensate generation at first enabled market if greater than zero.
-									{
-										energy_market_revenue[i] = 0.0;
-									}
-									else if (system_generation[i] > energy_market_capacity[i])
-									{
-										energy_market_revenue[i] *= energy_market_capacity[i] / steps_per_hour; // [MW] * [$/MWh] / fraction per hour [1/h]
-										system_generation[i] -= energy_market_capacity[i];
-									}
-									else if (system_generation[i] > 0.0)
-									{
-										energy_market_revenue[i] *= system_generation[i] / steps_per_hour; // [MW] * [$/MWh] / fraction per hour [1/h]
-									}
-									else
-									{
-										energy_market_revenue[i] = 0.0;
-									}
-								}
-							}
-						}
-						if (en_mp_ancserv1)
-						{
-							if (system_generation.size() != ancillary_services1_revenue.size())
-								error = util::format("system generation size %d and ancillary services1 revenue revenue size %d do not match", int(system_generation.size()), int(ancillary_services1_revenue.size()));
-							else
-							{
-								for (size_t i = 0; (i < system_generation.size()) && (i < ancillary_services1_capacity.size()) && (i < ancillary_services1_revenue.size()); i++)
-								{
-									if (fabs(cleared_capacity_sum[i]) < 1e-5) // override, compensate generation at first enabled market
-									{
-										ancillary_services1_revenue[i] = 0.0;
-									}
-									else if (system_generation[i] > ancillary_services1_capacity[i])
-									{
-										ancillary_services1_revenue[i] *= ancillary_services1_capacity[i] / steps_per_hour; // [MW] * [$/MWh] / fraction per hour [1/h]
-										system_generation[i] -= ancillary_services1_capacity[i];
-									}
-									else if (system_generation[i] > 0.0)
-									{
-										ancillary_services1_revenue[i] *= system_generation[i] / steps_per_hour; // [MW] * [$/MWh] / fraction per hour [1/h]
-									}
-									else
-									{
-										ancillary_services1_revenue[i] = 0.0;
-									}
-								}
-							}
-						}
-						if (en_mp_ancserv2)
-						{
-							if (system_generation.size() != ancillary_services2_revenue.size())
-								error = util::format("system generation size %d and ancillary services2 revenue revenue size %d do not match", int(system_generation.size()), int(ancillary_services2_revenue.size()));
-							else
-							{
-								for (size_t i = 0; (i < system_generation.size()) && (i < ancillary_services2_capacity.size()) && (i < ancillary_services2_revenue.size()); i++)
-								{
-									if (fabs(cleared_capacity_sum[i]) < 1e-5) // override, compensate generation at first enabled market
-									{
-										ancillary_services2_revenue[i] = 0.0;
-									}
-									else if (system_generation[i] > ancillary_services2_capacity[i])
-									{
-										ancillary_services2_revenue[i] *= ancillary_services2_capacity[i] / steps_per_hour; // [MW] * [$/MWh] / fraction per hour [1/h]
-										system_generation[i] -= ancillary_services2_capacity[i];
-									}
-									else if (system_generation[i] > 0.0)
-									{
-										ancillary_services2_revenue[i] *= system_generation[i] / steps_per_hour; // [MW] * [$/MWh] / fraction per hour [1/h]
-									}
-									else
-									{
-										ancillary_services2_revenue[i] = 0.0;
-									}
-								}
-							}
-						}
-						if (en_mp_ancserv3)
-						{
-							if (system_generation.size() != ancillary_services3_revenue.size())
-								error = util::format("system generation size %d and ancillary services3 revenue revenue size %d do not match", int(system_generation.size()), int(ancillary_services3_revenue.size()));
-							else
-							{
-								for (size_t i = 0; (i < system_generation.size()) && (i < ancillary_services3_capacity.size()) && (i < ancillary_services3_revenue.size()); i++)
-								{
-									if (fabs(cleared_capacity_sum[i]) < 1e-5) // override, compensate generation at first enabled market
-									{
-										ancillary_services3_revenue[i] = 0.0;
-									}
-									else if (system_generation[i] > ancillary_services3_capacity[i])
-									{
-										ancillary_services3_revenue[i] *= ancillary_services3_capacity[i] / steps_per_hour; // [MW] * [$/MWh] / fraction per hour [1/h]
-										system_generation[i] -= ancillary_services3_capacity[i];
-									}
-									else if (system_generation[i] > 0.0)
-									{
-										ancillary_services3_revenue[i] *= system_generation[i] / steps_per_hour; // [MW] * [$/MWh] / fraction per hour [1/h]
-									}
-									else
-									{
-										ancillary_services3_revenue[i] = 0.0;
-									}
-								}
-							}
-						}
-						if (en_mp_ancserv4)
-						{
-							if (system_generation.size() != ancillary_services4_revenue.size())
-								error = util::format("system generation size %d and ancillary services4 revenue revenue size %d do not match", int(system_generation.size()), int(ancillary_services4_revenue.size()));
-							else
-							{
-								for (size_t i = 0; (i < system_generation.size()) && (i < ancillary_services4_capacity.size()) && (i < ancillary_services4_revenue.size()); i++)
-								{
-									if (fabs(cleared_capacity_sum[i]) < 1e-5) // override, compensate generation at first enabled market
-									{
-										ancillary_services4_revenue[i] = 0.0;
-									}
-									else if (system_generation[i] > ancillary_services4_capacity[i])
-									{
-										ancillary_services4_revenue[i] *= ancillary_services4_capacity[i] / steps_per_hour; // [MW] * [$/MWh] / fraction per hour [1/h]
-										system_generation[i] -= ancillary_services4_capacity[i];
-									}
-									else if (system_generation[i] > 0.0)
-									{
-										ancillary_services4_revenue[i] *= system_generation[i] / steps_per_hour; // [MW] * [$/MWh] / fraction per hour [1/h]
-									}
-									else
-									{
-										ancillary_services4_revenue[i] = 0.0;
-									}
-								}
+								if (en_mp_energy_market)
+									energy_market_revenue[i] *= energy_market_capacity[i] / steps_per_hour; // [MW] * [$/MWh] / fraction per hour [1/h]
+								else
+									energy_market_revenue[i] = 0.0;
+								if (en_mp_ancserv1)
+									ancillary_services1_revenue[i] *= ancillary_services1_capacity[i] / steps_per_hour; // [MW] * [$/MWh] / fraction per hour [1/h]
+								else
+									ancillary_services1_revenue[i] = 0.0;
+								if (en_mp_ancserv2)
+									ancillary_services2_revenue[i] *= ancillary_services2_capacity[i] / steps_per_hour; // [MW] * [$/MWh] / fraction per hour [1/h]
+								else
+									ancillary_services2_revenue[i] = 0.0;
+								if (en_mp_ancserv3)
+									ancillary_services3_revenue[i] *= ancillary_services3_capacity[i] / steps_per_hour; // [MW] * [$/MWh] / fraction per hour [1/h]
+								else
+									ancillary_services3_revenue[i] = 0.0;
+								if (en_mp_ancserv4)
+									ancillary_services4_revenue[i] *= ancillary_services4_capacity[i] / steps_per_hour; // [MW] * [$/MWh] / fraction per hour [1/h]
+								else
+									ancillary_services4_revenue[i] = 0.0;
 							}
 						}
 					}
