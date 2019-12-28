@@ -702,6 +702,8 @@ static var_info _cm_vtab_merchantplant[] = {
 	{ SSC_OUTPUT, SSC_NUMBER, "min_dscr", "Minimum DSCR", "", "", "DSCR", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_pretax_dscr", "DSCR (pre-tax)", "", "", "DSCR", "*", "LENGTH_EQUAL=cf_length", "" },
 
+	{ SSC_INPUT,        SSC_ARRAY,       "system_pre_curtailment_kwac",     "System power before grid curtailment",  "kW",       "System generation" "",                 "",                        "",                              "" },
+
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_curtailed", "Curtailed energy", "kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_curtailment_value", "Curtailment payment revenue", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_capacity_payment", "Capacity payment revenue", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
@@ -1045,49 +1047,6 @@ public:
 				i++;
 			}
 		}
-/*
-		// merchant plant additional revenue streams
-		var_table* vd = new var_table;
-		vd->assign("system_use_lifetime_output", *lookup("system_use_lifetime_output"));
-		vd->assign("analysis_period", *lookup("analysis_period"));
-		vd->assign("mp_enable_energy_market_revenue", *lookup("mp_enable_energy_market_revenue"));
-		vd->assign("mp_enable_ancserv1", *lookup("mp_enable_ancserv1"));
-		vd->assign("mp_enable_ancserv2", *lookup("mp_enable_ancserv2"));
-		vd->assign("mp_enable_ancserv3", *lookup("mp_enable_ancserv3"));
-		vd->assign("mp_enable_ancserv4", *lookup("mp_enable_ancserv4"));
-		vd->assign("mp_energy_market_revenue", *lookup("mp_energy_market_revenue"));
-		vd->assign("mp_ancserv1_revenue", *lookup("mp_ancserv1_revenue"));
-		vd->assign("mp_ancserv2_revenue", *lookup("mp_ancserv2_revenue"));
-		vd->assign("mp_ancserv3_revenue", *lookup("mp_ancserv3_revenue"));
-		vd->assign("mp_ancserv4_revenue", *lookup("mp_ancserv4_revenue"));
-		vd->assign("gen", *lookup("gen"));
-		vd->assign("degradation", *lookup("degradation"));
-		vd->assign("mp_calculate_revenue", var_data(ssc_number_t(1.0)));
-
-		mp_ancillary_services(vd);
-		if (vd->lookup("mp_ancillary_services")->num == 0)
-	
-// does not work
-//		mp_ancillary_services(m_vartab);
-//		if (lookup("mp_ancillary_services")->num == 0)
-		{
-			std::ostringstream ss;
-			ss << "The generation is not sufficient to meet the ancillary markets requirements.  Specifically, " << (vd->lookup("mp_ancillary_services_error")->str);
-			throw exec_error("merchant plant", ss.str());
-		}
-		// return lifetime vectors
-		std::vector<double> mp_energy_market_generated_revenue = vd->lookup("mp_energy_market_generated_revenue")->arr_vector();
-		std::vector<double> mp_ancillary_services1_generated_revenue = vd->lookup("mp_ancillary_services1_generated_revenue")->arr_vector();
-		std::vector<double> mp_ancillary_services2_generated_revenue = vd->lookup("mp_ancillary_services2_generated_revenue")->arr_vector();
-		std::vector<double> mp_ancillary_services3_generated_revenue = vd->lookup("mp_ancillary_services3_generated_revenue")->arr_vector();
-		std::vector<double> mp_ancillary_services4_generated_revenue = vd->lookup("mp_ancillary_services4_generated_revenue")->arr_vector();
-
-		delete vd;
-*/
-// does not work
-		//ssc_number_t * mp_energy_market_generated_revenue = allocate()
-		//size_t max_as_num_recs = 8760 * nyears; // testing for hourly inputs
-		//ssc_number_t* mp_energy_market_generated_revenue = allocate("mp_energy_market_generated_revenue", max_as_num_recs);
 
 		assign("mp_calculate_revenue", var_data(ssc_number_t(1.0)));
 		mp_ancillary_services(m_vartab);
@@ -1358,15 +1317,39 @@ public:
 				cf.at(CF_energy_net, i) = first_year_energy * cf.at(CF_degradation, i);
 		}
 
+
 		// curtailed energy and revenue
 		ssc_number_t pre_curtailement_year1_energy = as_number("annual_energy_pre_curtailment_ac");
 		size_t count_curtailment_price;
 		ssc_number_t *grid_curtailment_price = as_array("grid_curtailment_price", &count_curtailment_price);
 		ssc_number_t grid_curtailment_price_esc = as_number("grid_curtailment_price_esc") * 0.01;
 		// does not work with degraded energy production escal_or_annual(CF_curtailment_value, nyears, "grid_curtailment_price", 0.0, pre_curtailement_year1_energy, false, as_double("grid_curtailment_price_esc")*0.01);
+
+		// use "system_pre_curtailment_kwac" input to determine energy curtailed for lifetime output
+		if (as_integer("system_use_lifetime_output") == 1)
+		{
+			size_t count_pre_curtailment_kwac;
+			ssc_number_t *system_pre_curtailment_kwac = as_array("system_pre_curtailment_kwac", &count_pre_curtailment_kwac);
+			size_t num_rec_pre_curtailment_kwac_per_year = count_pre_curtailment_kwac / nyears;
+			// hourly_enet includes all curtailment, availability
+			for (size_t y = 1; y <= (size_t)nyears; y++)
+			{
+				cf.at(CF_energy_curtailed, y) = 0.0;
+				for (size_t h = 0; h < num_rec_pre_curtailment_kwac_per_year; h++)
+				{
+					cf.at(CF_energy_curtailed, y) += system_pre_curtailment_kwac[h + (y-1)*num_rec_pre_curtailment_kwac_per_year];
+				}
+				cf.at(CF_energy_curtailed, y) -= cf.at(CF_energy_net, y);
+			}
+		}
+		else
+		{
+			for (size_t y = 1; y <= (size_t)nyears; y++)
+				cf.at(CF_energy_curtailed, y) = pre_curtailement_year1_energy * cf.at(CF_degradation, y) - cf.at(CF_energy_net, y);
+		}
+
 		for (size_t y = 1; y <= (size_t)nyears; y++)
 		{
-			cf.at(CF_energy_curtailed, y) = pre_curtailement_year1_energy * cf.at(CF_degradation, y) - cf.at(CF_energy_net, y);
 			if (count_curtailment_price == 1)
 				cf.at(CF_curtailment_value, y) = cf.at(CF_energy_curtailed, y) * grid_curtailment_price[0] * pow(1 + grid_curtailment_price_esc, y - 1);
 			else if (y <= count_curtailment_price)// schedule

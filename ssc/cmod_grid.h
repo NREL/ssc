@@ -99,7 +99,7 @@ public:
 			curtailment_year_one = cm.as_vector_double("grid_curtailment");
 		}
 		single_year_to_lifetime_interpolated<double>(
-			(bool)cm.as_integer("system_use_lifetime_output"),
+			system_use_lifetime_output,
 			(size_t)analysis_period,
 			n_rec_lifetime,
 			curtailment_year_one,

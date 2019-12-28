@@ -837,7 +837,9 @@ static var_info _cm_vtab_singleowner[] = {
 	{ SSC_OUTPUT, SSC_NUMBER, "min_dscr", "Minimum DSCR", "", "", "DSCR", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_pretax_dscr", "DSCR (pre-tax)", "", "", "DSCR", "*", "LENGTH_EQUAL=cf_length", "" },
 
-	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_curtailed", "Energy curtailed", "kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "system_pre_curtailment_kwac",     "System power before grid curtailment",  "kW",       "System generation" "",                 "",                        "",                              "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_curtailed", "Curtailed energy", "kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_curtailment_value", "Curtailment payment revenue", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_capacity_payment", "Capacity payment revenue", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
 
@@ -1224,7 +1226,7 @@ public:
 			// replace at capacity percent
 			if (as_integer("batt_replacement_option") == 1) {
 				batt_rep = as_array("batt_bank_replacement", &count); // replacements per year calculated
-				for (size_t i = 0; i < count; i++) {
+				for ( i = 0; i < (int)count; i++) {
 					replacement_percent.push_back(100);
 				}
 			}
@@ -1236,7 +1238,7 @@ public:
 			// updated 10/17/15 per 10/14/15 meeting
 			escal_or_annual(CF_battery_replacement_cost_schedule, nyears, "om_replacement_cost1", inflation_rate, batt_cap, false, as_double("om_replacement_cost_escal")*0.01);
 
-			for (int i = 0; i < nyears && i < (int)count; i++) {
+			for (i = 0; i < nyears && i < (int)count; i++) {
 				cf.at(CF_battery_replacement_cost, i + 1) = batt_rep[i] * replacement_percent[i] * 0.01 *
 					cf.at(CF_battery_replacement_cost_schedule, i + 1);
 			}
@@ -1253,7 +1255,7 @@ public:
 				fuelcell_rep = as_array("fuelcell_replacement_schedule", &count); // replacements per year user-defined
 			escal_or_annual(CF_fuelcell_replacement_cost_schedule, nyears, "om_replacement_cost2", inflation_rate, nameplate2, false, as_double("om_replacement_cost_escal")*0.01);
 
-			for (int i = 0; i < nyears && i < (int)count; i++) {
+			for (i = 0; i < nyears && i < (int)count; i++) {
 				cf.at(CF_fuelcell_replacement_cost, i + 1) = fuelcell_rep[i] *
 					cf.at(CF_fuelcell_replacement_cost_schedule, i + 1);
 			}
@@ -1341,9 +1343,31 @@ public:
 		ssc_number_t *grid_curtailment_price = as_array("grid_curtailment_price", &count_curtailment_price);
 		ssc_number_t grid_curtailment_price_esc = as_number("grid_curtailment_price_esc") * 0.01;
 		// does not work with degraded energy production escal_or_annual(CF_curtailment_value, nyears, "grid_curtailment_price", 0.0, pre_curtailement_year1_energy, false, as_double("grid_curtailment_price_esc")*0.01);
+		// use "system_pre_curtailment_kwac" input to determine energy curtailed for lifetime output
+		if (as_integer("system_use_lifetime_output") == 1)
+		{
+			size_t count_pre_curtailment_kwac;
+			ssc_number_t *system_pre_curtailment_kwac = as_array("system_pre_curtailment_kwac", &count_pre_curtailment_kwac);
+			size_t num_rec_pre_curtailment_kwac_per_year = count_pre_curtailment_kwac / nyears;
+			// hourly_enet includes all curtailment, availability
+			for (size_t y = 1; y <= (size_t)nyears; y++)
+			{
+				cf.at(CF_energy_curtailed, y) = 0.0;
+				for (size_t h = 0; h < num_rec_pre_curtailment_kwac_per_year; h++)
+				{
+					cf.at(CF_energy_curtailed, y) += system_pre_curtailment_kwac[h + (y - 1)*num_rec_pre_curtailment_kwac_per_year];
+				}
+				cf.at(CF_energy_curtailed, y) -= cf.at(CF_energy_net, y);
+			}
+		}
+		else
+		{
+			for (size_t y = 1; y <= (size_t)nyears; y++)
+				cf.at(CF_energy_curtailed, y) = pre_curtailement_year1_energy * cf.at(CF_degradation, y) - cf.at(CF_energy_net, y);
+		}
+
 		for (size_t y = 1; y <= (size_t)nyears; y++)
 		{
-			cf.at(CF_energy_curtailed, y) = pre_curtailement_year1_energy * cf.at(CF_degradation, y) - cf.at(CF_energy_net, y);
 			if (count_curtailment_price == 1)
 				cf.at(CF_curtailment_value, y) = cf.at(CF_energy_curtailed, y) * grid_curtailment_price[0] * pow(1 + grid_curtailment_price_esc, y - 1);
 			else if (y <= count_curtailment_price)// schedule
