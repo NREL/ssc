@@ -293,8 +293,9 @@ struct PVSystem_IO
 	std::vector<ssc_number_t *> p_poaRear; 
 	std::vector<ssc_number_t *> p_derateSoiling; 
 	std::vector<ssc_number_t *> p_beamShadingFactor; 
-	std::vector<ssc_number_t *> p_temperatureCell; 
-	std::vector<ssc_number_t *> p_moduleEfficiency; 
+	std::vector<ssc_number_t *> p_temperatureCell;
+	std::vector<ssc_number_t *> p_temperatureCellSS; // steady state cell temperature
+	std::vector<ssc_number_t *> p_moduleEfficiency;
 	std::vector<ssc_number_t *> p_dcStringVoltage; /// An output vector containing dc string voltage for each subarray [V]
 	std::vector<ssc_number_t *> p_voltageOpenCircuit; /// Open circuit voltage of a string in the subarray [V]
 	std::vector<ssc_number_t *> p_currentShortCircuit; 
@@ -502,7 +503,8 @@ public:
 	double voltageOpenCircuit;  /// The DC open circuit voltage of the module [V]
 	double currentShortCircuit; /// The DC short circuit current of the module [A]
 	double dcEfficiency;		/// The DC conversion efficiency of the module [%]
-	double temperatureCellCelcius; /// The average cell temperature of the module [C]
+	double temperatureCellCelcius; /// The weighted moving average  cell temperature of the module [C]
+	double temperatureCellCelciusSS; /// The SS average cell temperature of the module [C]
 	double angleOfIncidenceModifier; /// The angle of incidence modifier on the total poa front-side irradiance [0-1]
 	
 };

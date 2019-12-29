@@ -1691,6 +1691,12 @@ void cm_pvsamv1::exec( ) throw (general_error)
 							// calculate cell temperature using selected temperature model
 							// calculate module power output using conversion model previously specified
 							(*Subarrays[nn]->Module->cellTempModel)(in[nn], *Subarrays[nn]->Module->moduleModel, module_voltage, tcell);
+							// steady state cell temperature - confirm modification from module model to cell temp
+							Subarrays[nn]->Module->temperatureCellCelciusSS = tcell;
+							PVSystem->p_temperatureCellSS[nn][idx] = tcell;
+
+							// TODO: calculate weighted moving average cell temperature
+
 							(*Subarrays[nn]->Module->moduleModel)(in[nn], tcell, module_voltage, out[nn]);
 						}
 					}
@@ -1858,7 +1864,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 						annualMpptVoltageClipping += mpptVoltageClipping[nn]*util::watt_to_kilowatt*ts_hour; //power W to energy kWh
 						// save to SSC output arrays
 						PVSystem->p_temperatureCell[nn][idx] = (ssc_number_t)Subarrays[nn]->Module->temperatureCellCelcius;
-						PVSystem->p_moduleEfficiency[nn][idx] = (ssc_number_t)Subarrays[nn]->Module->dcEfficiency;					
+						PVSystem->p_moduleEfficiency[nn][idx] = (ssc_number_t)Subarrays[nn]->Module->dcEfficiency;
 						PVSystem->p_voltageOpenCircuit[nn][idx] = (ssc_number_t)(Subarrays[nn]->Module->voltageOpenCircuit * (double)Subarrays[nn]->nModulesPerString);
 						PVSystem->p_currentShortCircuit[nn][idx] = (ssc_number_t)Subarrays[nn]->Module->currentShortCircuit;
 						PVSystem->p_angleOfIncidenceModifier[nn][idx] = (ssc_number_t)(Subarrays[nn]->Module->angleOfIncidenceModifier);
