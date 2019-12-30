@@ -773,7 +773,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_poa_rear_gain_percent",    "POA rear-side bifacial gain", "%", "", "Loss", "*", "", "" },
 
 	// annual_dc_nominal
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_module_loss_percent", "DC module modeled loss", "%", "", "Loss", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_module_loss_percent", "DC module deviation from STC", "%", "", "Loss", "*", "", "" },
 	// annual_dc_gross
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_snow_loss_percent", "DC snow loss", "%", "", "Loss", "*", "", "" },
 
