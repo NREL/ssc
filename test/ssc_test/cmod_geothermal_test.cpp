@@ -4,6 +4,8 @@
 TEST_F(CMGeothermal, SingleOwnerDefault_cmod_geothermal) {
 	int geo_errors = run_module(data, "geothermal");
 	ASSERT_EQ(geo_errors, 0);
+	int grid_errors = run_module(data, "grid");
+	EXPECT_EQ(grid_errors, 0);
 	int singleowner_errors = run_module(data, "singleowner");
 	EXPECT_EQ(singleowner_errors, 0);
 
