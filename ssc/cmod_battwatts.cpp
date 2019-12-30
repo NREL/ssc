@@ -119,16 +119,6 @@ battwatts_create(size_t n_recs, size_t n_years, int chem, int meter_pos, double 
         // Lead acid AGM defaults
     else if (batt_vars->batt_chem == battery_t::LEAD_ACID)
     {
-        // Capacity properties
-        double LeadAcid_q20 = 100;
-        double LeadAcid_q10 = 93.2;
-        double LeadAcid_qn = 58.12;
-        double LeadAcid_tn = 1;
-
-        batt_vars->LeadAcid_q10_computed = batt_vars->batt_computed_strings * LeadAcid_q10 * batt_vars->batt_Qfull / 100;
-        batt_vars->LeadAcid_q20_computed = batt_vars->batt_computed_strings * LeadAcid_q20 * batt_vars->batt_Qfull / 100;
-        batt_vars->LeadAcid_qn_computed = batt_vars->batt_computed_strings * LeadAcid_qn * batt_vars->batt_Qfull / 100;
-        batt_vars->LeadAcid_tn = LeadAcid_tn;
 
         // Voltage properties
         voltage_guess = 48;
@@ -177,6 +167,19 @@ battwatts_create(size_t n_recs, size_t n_years, int chem, int meter_pos, double 
     batt_vars->batt_computed_series = (int)std::ceil(voltage_guess / batt_vars->batt_Vnom_default);
     batt_vars->batt_computed_strings = (int)std::ceil((batt_vars->batt_kwh * 1000.) / (batt_vars->batt_Qfull * batt_vars->batt_computed_series * batt_vars->batt_Vnom_default)) - 1;
     batt_vars->batt_kwh = batt_vars->batt_computed_strings * batt_vars->batt_Qfull * batt_vars->batt_computed_series * batt_vars->batt_Vnom_default / 1000.;
+
+    if (batt_vars->batt_chem == battery_t::LEAD_ACID){
+        // Capacity properties
+        double LeadAcid_q20 = 100;
+        double LeadAcid_q10 = 93.2;
+        double LeadAcid_qn = 58.12;
+        double LeadAcid_tn = 1;
+
+        batt_vars->LeadAcid_q10_computed = batt_vars->batt_computed_strings * LeadAcid_q10 * batt_vars->batt_Qfull / 100;
+        batt_vars->LeadAcid_q20_computed = batt_vars->batt_computed_strings * LeadAcid_q20 * batt_vars->batt_Qfull / 100;
+        batt_vars->LeadAcid_qn_computed = batt_vars->batt_computed_strings * LeadAcid_qn * batt_vars->batt_Qfull / 100;
+        batt_vars->LeadAcid_tn = LeadAcid_tn;
+    }
 
     // Common Voltage properties
     batt_vars->batt_voltage_choice = voltage_t::VOLTAGE_MODEL;
