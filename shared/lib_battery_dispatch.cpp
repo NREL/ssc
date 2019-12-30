@@ -168,15 +168,16 @@ bool dispatch_t::check_constraints(double &I, size_t count)
 	// Don't allow grid charging unless explicitly allowed (reduce charging) 
 	if (!m_batteryPower->canGridCharge && I < 0 && m_batteryPower->powerGridToBattery > tolerance)
 	{
-        m_batteryPower->powerBatteryTarget += m_batteryPower->powerGridToBattery * util::kilowatt_to_watt;
+        m_batteryPower->powerBatteryTarget += m_batteryPower->powerGridToBattery;
         I = _Battery->calculate_current_for_power_kw(m_batteryPower->powerBatteryTarget);
+        m_batteryPower->powerGridToBattery = 0;
 	}
 	// Don't allow grid charging if producing PV
 	else if (m_batteryPower->connectionMode == dispatch_t::DC_CONNECTED &&
 		m_batteryPower->powerGridToBattery > 0 &&
 		(m_batteryPower->powerPVToGrid > 0 || m_batteryPower->powerPVToLoad > 0))
 	{
-        m_batteryPower->powerBatteryTarget += m_batteryPower->powerGridToBattery * util::kilowatt_to_watt;
+        m_batteryPower->powerBatteryTarget += m_batteryPower->powerGridToBattery;
         I = _Battery->calculate_current_for_power_kw(m_batteryPower->powerBatteryTarget);
 	}
     // Error checking for battery charging
@@ -184,7 +185,7 @@ bool dispatch_t::check_constraints(double &I, size_t count)
 	if (m_batteryPower->connectionMode == dispatch_t::DC_CONNECTED){
 	    double grid_charge_ac = m_batteryPower->sharedInverter->calculateRequiredDCPower(m_batteryPower->powerGridToBattery,
 	            m_batteryPower->sharedInverter->StringV, m_batteryPower->sharedInverter->Tdry_C);
-	    power_to_batt = m_batteryPower->powerPVToBattery + grid_charge_ac + m_batteryPower->powerFuelCellToBattery;
+	    power_to_batt = -(m_batteryPower->powerPVToBattery + grid_charge_ac + m_batteryPower->powerFuelCellToBattery);
 	    power_to_batt *= m_batteryPower->singlePointEfficiencyDCToDC;
 	}
 	else {
