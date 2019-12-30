@@ -750,6 +750,7 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
 			p_derateSoiling.push_back(cm->allocate(prefix + "soiling_derate", numberOfWeatherFileRecords));
 			p_beamShadingFactor.push_back(cm->allocate(prefix + "beam_shading_factor", numberOfWeatherFileRecords));
 			p_temperatureCell.push_back(cm->allocate(prefix + "celltemp", numberOfWeatherFileRecords));
+			p_temperatureCellSS.push_back(cm->allocate(prefix + "celltempSS", numberOfWeatherFileRecords));
 			p_moduleEfficiency.push_back(cm->allocate(prefix + "modeff", numberOfWeatherFileRecords));
 			p_dcStringVoltage.push_back(cm->allocate(prefix + "dc_voltage", numberOfWeatherFileRecords));
 			p_voltageOpenCircuit.push_back(cm->allocate(prefix + "voc", numberOfWeatherFileRecords));
