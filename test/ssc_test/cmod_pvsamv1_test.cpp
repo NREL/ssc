@@ -153,7 +153,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelCustomWeatherFile
 	{
 		ssc_number_t annual_energy;
 		ssc_data_get_number(data, "annual_energy", &annual_energy);
-		EXPECT_NEAR(annual_energy, 7587, m_error_tolerance_hi) << "Annual energy.";
+		EXPECT_NEAR(annual_energy, 7591, m_error_tolerance_hi) << "Annual energy.";
 
 		ssc_number_t capacity_factor;
 		ssc_data_get_number(data, "capacity_factor", &capacity_factor);

@@ -1699,13 +1699,15 @@ void cm_pvsamv1::exec( ) throw (general_error)
 							(*Subarrays[nn]->Module->cellTempModel)(in[nn], *Subarrays[nn]->Module->moduleModel, module_voltage, tcell);
 							
 							// steady state cell temperature - confirm modification from module model to cell temp
-							tcellSS = tcell;
+							tcellSS = tcell; 
 							// calculate weighted moving average cell temperature base on "Transient Weighted Moving Average Model of Photovoltaic Module Back-Surface Temperature" Prilliman, et. al.
 							// wind speed corrected to 2m, assumed measured at 10m, equation 9 in reference
-							ssc_number_t wma_z0 = 0.25;
-							ssc_number_t wma_ws = wf.wspd * std::log(2.0/wma_z0) / std::log(10.0/wma_z0);
-							// module unit mass - Figure 2 in reference
-							ssc_number_t wma_mu = 12.0; // kg/m2
+							// ssc_number_t wma_z0 = 0.25;
+							// ssc_number_t wma_ws = wf.wspd * std::log(2.0/wma_z0) / std::log(10.0/wma_z0);
+							// precalculate to save execution time
+							ssc_number_t wma_ws = wf.wspd * 0.563705;
+							// module unit mass - Figure 2 in reference and size and weight from https://news.energysage.com/average-solar-panel-size-weight/
+							ssc_number_t wma_mu = 11.09186; // kg/m2
 							// weight function
 							ssc_number_t wma_a0 = 0.0046; // Table II in reference
 							ssc_number_t wma_a1 = 0.00046; // Table II in reference
@@ -1745,7 +1747,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 									throw exec_error("pvsamv1", "Transient thermal weighting factor sum <= 0");
 								tcell =  wma_tcellMA_numerator / wma_tcellMA_denominator;
 							}
-							//
+							// 
 
 							(*Subarrays[nn]->Module->moduleModel)(in[nn], tcell, module_voltage, out[nn]);
 						}
