@@ -1587,6 +1587,8 @@ static var_info _cm_vtab_battery[] = {
 	// other variables come from battstor common table
 	var_info_invalid };
 
+extern var_info vtab_fuelcell_output[];
+
 void process_messages(shared_ptr<battstor> batt, compute_module* cm)
 {
     if (!batt)
@@ -1617,7 +1619,7 @@ public:
 	{
 		if (as_boolean("en_batt"))
 		{
-			// System generation output, which is lifetime (if system_lifetime_output == true);
+            // System generation output, which is lifetime (if system_lifetime_output == true);
 			std::vector<ssc_number_t> power_input_lifetime = as_vector_ssc_number_t("gen");
 			std::vector<ssc_number_t> load_lifetime, load_year_one;
 			size_t n_rec_lifetime = power_input_lifetime.size();
@@ -1638,6 +1640,8 @@ public:
 
 			// Create battery structure and initialize
 			auto batt = std::make_shared<battstor>(*m_vartab, true, n_rec_single_year, dt_hour_gen);
+            if (is_assigned("fuelcell_power"))
+                add_var_info(vtab_fuelcell_output);
 			batt->initialize_automated_dispatch(power_input_lifetime, load_lifetime);
 
 			if (load_lifetime.size() != n_rec_lifetime) {
