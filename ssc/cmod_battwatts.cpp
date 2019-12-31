@@ -258,6 +258,7 @@ battwatts_create(size_t n_recs, size_t n_years, int chem, int meter_pos, double 
 cm_battwatts::cm_battwatts()
 {
     add_var_info(vtab_battwatts);
+    add_var_info(vtab_grid_curtailment);
     add_var_info(vtab_battery_outputs);
     add_var_info(vtab_technology_outputs);
     add_var_info(vtab_resilience_outputs);

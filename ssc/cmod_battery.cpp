@@ -377,6 +377,12 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 			batt_vars->batt_dispatch = vt.as_integer("batt_dispatch_choice");
 			batt_vars->batt_meter_position = vt.as_integer("batt_meter_position");
 
+            if (vt.is_assigned("grid_curtailment")){
+                batt_vars->grid_curtailment = vt.as_vector_double("grid_curtailment");
+                if (batt_vars->grid_curtailment.size() != nrec && batt_vars->grid_curtailment.size() != 1)
+                    throw exec_error("battery", "invalid number of grid curtailment limits, must be a 1 or equal to number of records in weather file");
+            }
+
 			// Front of meter
 			if (batt_vars->batt_meter_position == dispatch_t::FRONT)
 			{
@@ -906,16 +912,22 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 		if ((batt_vars->batt_meter_position == dispatch_t::BEHIND && batt_vars->batt_dispatch == dispatch_t::MANUAL) || 
 			(batt_vars->batt_meter_position == dispatch_t::FRONT && batt_vars->batt_dispatch == dispatch_t::FOM_MANUAL))
 		{
-			dispatch_model = new dispatch_manual_t(battery_model, dt_hr, batt_vars->batt_minimum_SOC, batt_vars->batt_maximum_SOC,
-				batt_vars->batt_current_choice,
-				batt_vars->batt_current_charge_max, batt_vars->batt_current_discharge_max,
-				batt_vars->batt_power_charge_max_kwdc, batt_vars->batt_power_discharge_max_kwdc,
-				batt_vars->batt_power_charge_max_kwac, batt_vars->batt_power_discharge_max_kwac,
-				batt_vars->batt_minimum_modetime,
-				batt_vars->batt_dispatch, batt_vars->batt_meter_position,
-				batt_vars->batt_discharge_schedule_weekday, batt_vars->batt_discharge_schedule_weekend,
-				batt_vars->batt_can_charge, batt_vars->batt_can_discharge, batt_vars->batt_can_gridcharge, batt_vars->batt_can_fuelcellcharge, 
-				dm_percent_discharge, dm_percent_gridcharge);
+			dispatch_model = new dispatch_manual_t(battery_model, dt_hr, batt_vars->batt_minimum_SOC,
+                                                   batt_vars->batt_maximum_SOC,
+                                                   batt_vars->batt_current_choice,
+                                                   batt_vars->batt_current_charge_max,
+                                                   batt_vars->batt_current_discharge_max,
+                                                   batt_vars->batt_power_charge_max_kwdc,
+                                                   batt_vars->batt_power_discharge_max_kwdc,
+                                                   batt_vars->batt_power_charge_max_kwac,
+                                                   batt_vars->batt_power_discharge_max_kwac,
+                                                   batt_vars->batt_minimum_modetime,
+                                                   batt_vars->batt_dispatch, batt_vars->batt_meter_position,
+                                                   batt_vars->batt_discharge_schedule_weekday,
+                                                   batt_vars->batt_discharge_schedule_weekend,
+                                                   batt_vars->batt_can_charge, batt_vars->batt_can_discharge,
+                                                   batt_vars->batt_can_gridcharge, batt_vars->batt_can_fuelcellcharge,
+                                                   dm_percent_discharge, dm_percent_gridcharge, &batt_vars->grid_curtailment);
 		}
 	}
 	/*! Front of meter automated DC-connected dispatch */
@@ -935,18 +947,30 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 		if (batt_vars->ec_rate_defined) {
 			utilityRate = new UtilityRate(batt_vars->ec_use_realtime, batt_vars->ec_weekday_schedule, batt_vars->ec_weekend_schedule, batt_vars->ec_tou_matrix, batt_vars->ec_realtime_buy);
 		}
-		dispatch_model = new dispatch_automatic_front_of_meter_t(battery_model, dt_hr, batt_vars->batt_minimum_SOC, batt_vars->batt_maximum_SOC,
-			batt_vars->batt_current_choice, batt_vars->batt_current_charge_max, batt_vars->batt_current_discharge_max,
-			batt_vars->batt_power_charge_max_kwdc, batt_vars->batt_power_discharge_max_kwdc,
-			batt_vars->batt_power_charge_max_kwac, batt_vars->batt_power_discharge_max_kwac,
-			batt_vars->batt_minimum_modetime,
-			batt_vars->batt_dispatch, batt_vars->batt_meter_position,
-			nyears, batt_vars->batt_look_ahead_hours, batt_vars->batt_dispatch_update_frequency_hours,
-			batt_vars->batt_dispatch_auto_can_charge, batt_vars->batt_dispatch_auto_can_clipcharge, batt_vars->batt_dispatch_auto_can_gridcharge, batt_vars->batt_dispatch_auto_can_fuelcellcharge,
-			batt_vars->inverter_paco, batt_vars->batt_cost_per_kwh,
-			batt_vars->batt_cycle_cost_choice, batt_vars->batt_cycle_cost,
-			batt_vars->forecast_price_series_dollar_per_kwh, utilityRate,
-			eta_pvcharge, eta_gridcharge , eta_discharge);
+		dispatch_model = new dispatch_automatic_front_of_meter_t(battery_model, dt_hr, batt_vars->batt_minimum_SOC,
+                                                                 batt_vars->batt_maximum_SOC,
+                                                                 batt_vars->batt_current_choice,
+                                                                 batt_vars->batt_current_charge_max,
+                                                                 batt_vars->batt_current_discharge_max,
+                                                                 batt_vars->batt_power_charge_max_kwdc,
+                                                                 batt_vars->batt_power_discharge_max_kwdc,
+                                                                 batt_vars->batt_power_charge_max_kwac,
+                                                                 batt_vars->batt_power_discharge_max_kwac,
+                                                                 batt_vars->batt_minimum_modetime,
+                                                                 batt_vars->batt_dispatch,
+                                                                 batt_vars->batt_meter_position,
+                                                                 nyears, batt_vars->batt_look_ahead_hours,
+                                                                 batt_vars->batt_dispatch_update_frequency_hours,
+                                                                 batt_vars->batt_dispatch_auto_can_charge,
+                                                                 batt_vars->batt_dispatch_auto_can_clipcharge,
+                                                                 batt_vars->batt_dispatch_auto_can_gridcharge,
+                                                                 batt_vars->batt_dispatch_auto_can_fuelcellcharge,
+                                                                 batt_vars->inverter_paco, batt_vars->batt_cost_per_kwh,
+                                                                 batt_vars->batt_cycle_cost_choice,
+                                                                 batt_vars->batt_cycle_cost,
+                                                                 batt_vars->forecast_price_series_dollar_per_kwh,
+                                                                 utilityRate,
+                                                                 eta_pvcharge, eta_gridcharge, eta_discharge, &batt_vars->grid_curtailment);
 
 		if (batt_vars->batt_dispatch == dispatch_t::CUSTOM_DISPATCH)
 		{
@@ -963,15 +987,25 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 	/*! Behind-the-meter automated dispatch for peak shaving */
 	else
 	{			
-		dispatch_model = new dispatch_automatic_behind_the_meter_t(battery_model, dt_hr, batt_vars->batt_minimum_SOC, batt_vars->batt_maximum_SOC,
-			batt_vars->batt_current_choice, batt_vars->batt_current_charge_max, batt_vars->batt_current_discharge_max,
-			batt_vars->batt_power_charge_max_kwdc, batt_vars->batt_power_discharge_max_kwdc,
-			batt_vars->batt_power_charge_max_kwac, batt_vars->batt_power_discharge_max_kwac, 
-			batt_vars->batt_minimum_modetime,
-			batt_vars->batt_dispatch, batt_vars->batt_meter_position, nyears,
-			batt_vars->batt_look_ahead_hours, batt_vars->batt_dispatch_update_frequency_hours,
-			batt_vars->batt_dispatch_auto_can_charge, batt_vars->batt_dispatch_auto_can_clipcharge, batt_vars->batt_dispatch_auto_can_gridcharge, batt_vars->batt_dispatch_auto_can_fuelcellcharge
-			);
+		dispatch_model = new dispatch_automatic_behind_the_meter_t(battery_model, dt_hr, batt_vars->batt_minimum_SOC,
+                                                                   batt_vars->batt_maximum_SOC,
+                                                                   batt_vars->batt_current_choice,
+                                                                   batt_vars->batt_current_charge_max,
+                                                                   batt_vars->batt_current_discharge_max,
+                                                                   batt_vars->batt_power_charge_max_kwdc,
+                                                                   batt_vars->batt_power_discharge_max_kwdc,
+                                                                   batt_vars->batt_power_charge_max_kwac,
+                                                                   batt_vars->batt_power_discharge_max_kwac,
+                                                                   batt_vars->batt_minimum_modetime,
+                                                                   batt_vars->batt_dispatch,
+                                                                   batt_vars->batt_meter_position, nyears,
+                                                                   batt_vars->batt_look_ahead_hours,
+                                                                   batt_vars->batt_dispatch_update_frequency_hours,
+                                                                   batt_vars->batt_dispatch_auto_can_charge,
+                                                                   batt_vars->batt_dispatch_auto_can_clipcharge,
+                                                                   batt_vars->batt_dispatch_auto_can_gridcharge,
+                                                                   batt_vars->batt_dispatch_auto_can_fuelcellcharge,
+                                                                   &batt_vars->grid_curtailment);
 		if (batt_vars->batt_dispatch == dispatch_t::CUSTOM_DISPATCH)
 		{
 			if (dispatch_automatic_behind_the_meter_t * dispatch_btm = dynamic_cast<dispatch_automatic_behind_the_meter_t*>(dispatch_model))

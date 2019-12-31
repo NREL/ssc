@@ -32,9 +32,10 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /*
 Dispatch base class
 */
-dispatch_t::dispatch_t(battery_t * Battery, double dt_hour, double SOC_min, double SOC_max, int current_choice, double Ic_max, double Id_max, 
-	double Pc_max_kwdc, double Pd_max_kwdc, double Pc_max_kwac, double Pd_max_kwac,
-	double t_min, int mode, int battMeterPosition)
+dispatch_t::dispatch_t(battery_t *Battery, double dt_hour, double SOC_min, double SOC_max, int current_choice,
+                       double Ic_max, double Id_max, double Pc_max_kwdc, double Pd_max_kwdc, double Pc_max_kwac,
+                       double Pd_max_kwac, double t_min, int mode, int battMeterPosition,
+                       std::vector<double> *grid_curtailment)
 {
 	// initialize battery power flow 
 	std::unique_ptr<BatteryPowerFlow> tmp(new BatteryPowerFlow(dt_hour));
@@ -56,10 +57,11 @@ dispatch_t::dispatch_t(battery_t * Battery, double dt_hour, double SOC_min, doub
 	_Battery_initial = new battery_t(*_Battery);
 
 	// Call the dispatch init method
-	init(_Battery, dt_hour, current_choice, t_min, mode);
+    init(_Battery, dt_hour, current_choice, t_min, mode, grid_curtailment);
 }
 
-void dispatch_t::init(battery_t * Battery, double dt_hour, int current_choice, double t_min, int mode)
+void dispatch_t::init(battery_t *Battery, double dt_hour, int current_choice, double t_min, int mode,
+                      std::vector<double> *curtailment)
 {
 	_dt_hour = dt_hour; 
 	_current_choice = current_choice;
@@ -78,6 +80,8 @@ void dispatch_t::init(battery_t * Battery, double dt_hour, int current_choice, d
 	m_batteryPower->canPVCharge = false;
 	m_batteryPower->canGridCharge = false;
 	m_batteryPower->canDischarge = false;
+    m_batteryPower->gridCurtailment = curtailment;
+
 }
 
 // deep copy
@@ -89,7 +93,7 @@ dispatch_t::dispatch_t(const dispatch_t& dispatch)
 
 	_Battery = new battery_t(*dispatch._Battery);
 	_Battery_initial = new battery_t(*dispatch._Battery_initial);
-	init(_Battery, dispatch._dt_hour, dispatch._current_choice, dispatch._t_min, dispatch._mode);
+    init(_Battery, dispatch._dt_hour, dispatch._current_choice, dispatch._t_min, dispatch._mode, m_batteryPower->gridCurtailment);
 }
 
 // shallow copy from dispatch to this
@@ -97,7 +101,7 @@ void dispatch_t::copy(const dispatch_t * dispatch)
 {
 	_Battery->copy(dispatch->_Battery);
 	_Battery_initial->copy(dispatch->_Battery_initial);
-	init(_Battery, dispatch->_dt_hour,  dispatch->_current_choice, dispatch->_t_min, dispatch->_mode);
+    init(_Battery, dispatch->_dt_hour, dispatch->_current_choice, dispatch->_t_min, dispatch->_mode, m_batteryPower->gridCurtailment);
 
 	// can't create shallow copy of unique ptr
 	std::unique_ptr<BatteryPowerFlow> tmp(new BatteryPowerFlow(*dispatch->m_batteryPowerFlow));
@@ -132,6 +136,43 @@ void dispatch_t::finalize(size_t idx, double &I)
 	m_batteryPower->powerBatteryToGrid = 0;
 	m_batteryPower->powerPVToGrid = 0;
 	_Battery->run(idx, I);
+}
+
+void dispatch_t::enforce_curtailment(size_t hour_of_year, size_t step) {
+    if (m_batteryPower->gridCurtailment->empty())
+        return;
+
+    size_t ind = 0;
+    if (m_batteryPower->gridCurtailment->size() != 1){
+        ind = hour_of_year * _dt_hour + step;
+    }
+    double curtailment_limit_kw = (*m_batteryPower->gridCurtailment)[ind] * 1000;
+
+    // if PV production is too high, prioritize charging battery
+    if (m_batteryPower->powerPV > curtailment_limit_kw){
+        double charge_kw = curtailment_limit_kw - m_batteryPower->powerPV;
+        double max_charge_kw = _Battery->calculate_max_charge_kw();
+        if (charge_kw < max_charge_kw){
+            charge_kw = max_charge_kw;
+            // powerPV will get curtailed by cmod_grid where it'll get added to the loss
+        }
+        m_batteryPower->powerBatteryDC = charge_kw;
+    }
+    // if PV + Battery production too high, reduce battery discharge
+    else if (m_batteryPower->connectionMode == dispatch_t::DC_CONNECTED){
+        double max_dc_kw = m_batteryPower->sharedInverter->calculateRequiredDCPower(curtailment_limit_kw,
+                m_batteryPower->sharedInverter->StringV, m_batteryPower->sharedInverter->Tdry_C);
+        if (m_batteryPower->powerPV + m_batteryPower->powerBatteryDC > max_dc_kw){
+            m_batteryPower->powerBatteryDC = max_dc_kw - m_batteryPower->powerPV;
+        }
+    }
+    else{
+        double system_ac_kw = m_batteryPower->powerPV + m_batteryPower->powerBatteryDC * m_batteryPower->singlePointEfficiencyDCToAC;
+        if (system_ac_kw > curtailment_limit_kw){
+            m_batteryPower->powerBatteryDC = -(curtailment_limit_kw - m_batteryPower->powerPV) / m_batteryPower->singlePointEfficiencyDCToAC;
+        }
+    }
+    m_batteryPower->powerBatteryTarget = m_batteryPower->powerBatteryDC;
 }
 
 bool dispatch_t::check_constraints(double &I, size_t count)
@@ -458,14 +499,19 @@ BatteryPower * dispatch_t::getBatteryPower() { return m_batteryPower; }
 /*
 Manual Dispatch
 */
-dispatch_manual_t::dispatch_manual_t(battery_t * Battery, double dt, double SOC_min, double SOC_max, int current_choice, double Ic_max, double Id_max, 
-	double Pc_max_kwdc, double Pd_max_kwdc, double Pc_max_kwac, double Pd_max_kwac,
-	double t_min, int mode, int battMeterPosition,
-	util::matrix_t<size_t> dm_dynamic_sched, util::matrix_t<size_t> dm_dynamic_sched_weekend,
-	std::vector<bool> dm_charge, std::vector<bool> dm_discharge, std::vector<bool> dm_gridcharge, std::vector<bool> dm_fuelcellcharge,
-	std::map<size_t, double>  dm_percent_discharge, std::map<size_t, double>  dm_percent_gridcharge)
-	: dispatch_t(Battery, dt, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max_kwdc, Pd_max_kwdc, Pc_max_kwac, Pd_max_kwac,
-	t_min, mode, battMeterPosition)
+dispatch_manual_t::dispatch_manual_t(battery_t *Battery, double dt, double SOC_min, double SOC_max,
+                                     int current_choice, double Ic_max, double Id_max, double Pc_max_kwdc,
+                                     double Pd_max_kwdc, double Pc_max_kwac, double Pd_max_kwac, double t_min,
+                                     int mode, int battMeterPosition, util::matrix_t<size_t> dm_dynamic_sched,
+                                     util::matrix_t<size_t> dm_dynamic_sched_weekend, std::vector<bool> dm_charge,
+                                     std::vector<bool> dm_discharge, std::vector<bool> dm_gridcharge,
+                                     std::vector<bool> dm_fuelcellcharge,
+                                     std::map<size_t, double> dm_percent_discharge,
+                                     std::map<size_t, double> dm_percent_gridcharge,
+                                     std::vector<double> *grid_curtailment)
+	: dispatch_t(Battery, dt, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max_kwdc, Pd_max_kwdc, Pc_max_kwac,
+                 Pd_max_kwac,
+                 t_min, mode, battMeterPosition, grid_curtailment)
 {
 	init_with_vects(dm_dynamic_sched, dm_dynamic_sched_weekend, dm_charge, dm_discharge, dm_gridcharge, dm_fuelcellcharge, dm_percent_discharge, dm_percent_gridcharge);
 }
@@ -543,8 +589,9 @@ void dispatch_manual_t::dispatch(size_t year,
 	size_t step)
 {
 	prepareDispatch(hour_of_year, step);
-														
-	// Initialize power flow model by calculating the battery power to dispatch
+    dispatch_t::enforce_curtailment(hour_of_year, step);
+
+    // Initialize power flow model by calculating the battery power to dispatch
 	m_batteryPowerFlow->initialize(_Battery->capacity_model()->SOC());
 
 	// Run the dispatch
@@ -674,31 +721,16 @@ void dispatch_manual_t::SOC_controller()
 		_charging = _prev_charging;
 }
 
-dispatch_automatic_t::dispatch_automatic_t(
-	battery_t * Battery,
-	double dt_hour,
-	double SOC_min,
-	double SOC_max,
-	int current_choice,
-	double Ic_max,
-	double Id_max,
-	double Pc_max_kwdc, 
-	double Pd_max_kwdc, 
-	double Pc_max_kwac, 
-	double Pd_max_kwac,
-	double t_min,
-	int dispatch_mode,
-	int pv_dispatch,
-	size_t nyears,
-	size_t look_ahead_hours,
-	double dispatch_update_frequency_hours,
-	bool can_charge,
-	bool can_clip_charge,
-	bool can_grid_charge,
-	bool can_fuelcell_charge
-	) : dispatch_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max_kwdc, Pd_max_kwdc, Pc_max_kwac, Pd_max_kwac,
-
-	t_min, dispatch_mode, pv_dispatch)
+dispatch_automatic_t::dispatch_automatic_t(battery_t *Battery, double dt_hour, double SOC_min, double SOC_max,
+                                           int current_choice, double Ic_max, double Id_max, double Pc_max_kwdc,
+                                           double Pd_max_kwdc, double Pc_max_kwac, double Pd_max_kwac, double t_min,
+                                           int dispatch_mode, int pv_dispatch, size_t nyears,
+                                           size_t look_ahead_hours, double dispatch_update_frequency_hours,
+                                           bool can_charge, bool can_clip_charge, bool can_grid_charge,
+                                           bool can_fuelcell_charge, std::vector<double> *grid_curtailment) :
+dispatch_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max_kwdc, Pd_max_kwdc,
+           Pc_max_kwac, Pd_max_kwac,
+           t_min, dispatch_mode, pv_dispatch, grid_curtailment)
 {
 
 	_dt_hour = dt_hour;
@@ -774,7 +806,6 @@ void dispatch_automatic_t::dispatch(size_t year,
 
 bool dispatch_automatic_t::check_constraints(double &I, size_t count)
 {
-    m_batteryPowerFlow->calculate();
     // check common constraints before checking manual dispatch specific ones
 	bool iterate = dispatch_t::check_constraints(I, count);
 
@@ -924,30 +955,24 @@ bool dispatch_automatic_t::check_constraints(double &I, size_t count)
 	return iterate;
 }
 
-dispatch_automatic_behind_the_meter_t::dispatch_automatic_behind_the_meter_t(
-	battery_t * Battery,
-	double dt_hour,
-	double SOC_min,
-	double SOC_max,
-	int current_choice,
-	double Ic_max,
-	double Id_max,
-	double Pc_max_kwdc, 
-	double Pd_max_kwdc, 
-	double Pc_max_kwac, 
-	double Pd_max_kwac,
-	double t_min,
-	int dispatch_mode,
-	int pv_dispatch,
-	size_t nyears,
-	size_t look_ahead_hours,
-	double dispatch_update_frequency_hours,
-	bool can_charge,
-	bool can_clip_charge,
-	bool can_grid_charge,
-	bool can_fuelcell_charge
-	) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max_kwdc, Pd_max_kwdc, Pc_max_kwac, Pd_max_kwac,
-		t_min, dispatch_mode, pv_dispatch, nyears, look_ahead_hours, dispatch_update_frequency_hours, can_charge, can_clip_charge, can_grid_charge, can_fuelcell_charge)
+dispatch_automatic_behind_the_meter_t::dispatch_automatic_behind_the_meter_t(battery_t *Battery, double dt_hour,
+                                                                             double SOC_min, double SOC_max,
+                                                                             int current_choice, double Ic_max,
+                                                                             double Id_max, double Pc_max_kwdc,
+                                                                             double Pd_max_kwdc, double Pc_max_kwac,
+                                                                             double Pd_max_kwac, double t_min,
+                                                                             int dispatch_mode, int pv_dispatch,
+                                                                             size_t nyears, size_t look_ahead_hours,
+                                                                             double dispatch_update_frequency_hours,
+                                                                             bool can_charge, bool can_clip_charge,
+                                                                             bool can_grid_charge,
+                                                                             bool can_fuelcell_charge,
+                                                                             std::vector<double> *grid_curtailment) :
+ dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max_kwdc,
+     Pd_max_kwdc, Pc_max_kwac, Pd_max_kwac,
+     t_min, dispatch_mode, pv_dispatch, nyears, look_ahead_hours,
+     dispatch_update_frequency_hours, can_charge, can_clip_charge, can_grid_charge,
+     can_fuelcell_charge, grid_curtailment)
 {
 	_P_target_month = -1e16;
 	_P_target_current = -1e16;
@@ -1001,6 +1026,7 @@ void dispatch_automatic_behind_the_meter_t::dispatch(size_t year,
 	size_t lifetimeIndex = util::lifetimeIndex(year, hour_of_year, step, step_per_hour);
 
 	update_dispatch(hour_of_year, step, lifetimeIndex);
+    dispatch_t::enforce_curtailment(hour_of_year, step);
 	dispatch_automatic_t::dispatch(year, hour_of_year, step);
 }
 
@@ -1311,38 +1337,32 @@ void dispatch_automatic_behind_the_meter_t::set_battery_power(FILE *p, bool debu
 	}
 }
 
-dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
-	battery_t * Battery,
-	double dt_hour,
-	double SOC_min,
-	double SOC_max,
-	int current_choice,
-	double Ic_max,
-	double Id_max,
-	double Pc_max_kwdc, 
-	double Pd_max_kwdc, 
-	double Pc_max_kwac,
-	double Pd_max_kwac,
-	double t_min,
-	int dispatch_mode,
-	int pv_dispatch,
-	size_t nyears,
-	size_t look_ahead_hours,
-	double dispatch_update_frequency_hours,
-	bool can_charge,
-	bool can_clip_charge,
-	bool can_grid_charge,
-	bool can_fuelcell_charge,
-	double inverter_paco,
-	double batt_cost_per_kwh,
-	int battCycleCostChoice,
-	double battCycleCost,
-	std::vector<double> forecast_price_series_dollar_per_kwh,
-	UtilityRate * utilityRate,
-	double etaPVCharge,
-	double etaGridCharge,
-	double etaDischarge) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max_kwdc, Pd_max_kwdc, Pc_max_kwac, Pd_max_kwac,
-		t_min, dispatch_mode, pv_dispatch, nyears, look_ahead_hours, dispatch_update_frequency_hours, can_charge, can_clip_charge, can_grid_charge, can_fuelcell_charge)
+dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(battery_t *Battery, double dt_hour,
+                                                                         double SOC_min, double SOC_max,
+                                                                         int current_choice, double Ic_max,
+                                                                         double Id_max, double Pc_max_kwdc,
+                                                                         double Pd_max_kwdc, double Pc_max_kwac,
+                                                                         double Pd_max_kwac, double t_min,
+                                                                         int dispatch_mode, int pv_dispatch,
+                                                                         size_t nyears, size_t look_ahead_hours,
+                                                                         double dispatch_update_frequency_hours,
+                                                                         bool can_charge, bool can_clip_charge,
+                                                                         bool can_grid_charge,
+                                                                         bool can_fuelcell_charge,
+                                                                         double inverter_paco,
+                                                                         double batt_cost_per_kwh,
+                                                                         int battCycleCostChoice,
+                                                                         double battCycleCost,
+                                                                         std::vector<double> forecast_price_series_dollar_per_kwh,
+                                                                         UtilityRate *utilityRate,
+                                                                         double etaPVCharge, double etaGridCharge,
+                                                                         double etaDischarge,
+                                                                         std::vector<double> *grid_curtailment) :
+dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max,
+    Pc_max_kwdc, Pd_max_kwdc, Pc_max_kwac, Pd_max_kwac,
+    t_min, dispatch_mode, pv_dispatch, nyears, look_ahead_hours,
+    dispatch_update_frequency_hours, can_charge, can_clip_charge,
+    can_grid_charge, can_fuelcell_charge, grid_curtailment)
 {
 	// if look behind, only allow 24 hours
 	if (_mode == dispatch_t::FOM_LOOK_BEHIND)
@@ -1430,7 +1450,8 @@ void dispatch_automatic_front_of_meter_t::dispatch(size_t year,
 	size_t lifetimeIndex = util::lifetimeIndex(year, hour_of_year, step, step_per_hour);
 
 	update_dispatch(hour_of_year, step, lifetimeIndex);
-	dispatch_automatic_t::dispatch(year, hour_of_year, step);
+    dispatch_t::enforce_curtailment(hour_of_year, step);
+    dispatch_automatic_t::dispatch(year, hour_of_year, step);
 }
 
 void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, size_t , size_t lifetimeIndex)
