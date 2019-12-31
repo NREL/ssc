@@ -228,6 +228,10 @@ void BatteryPowerFlow::calculateACConnected()
 			P_grid_to_batt_ac = std::fmax(0, fabs(P_battery_ac) - P_pv_to_batt_ac - P_fuelcell_to_batt_ac);
 		}
 
+		if (P_pv_to_batt_ac + P_grid_to_batt_ac + P_fuelcell_to_batt_ac <= P_battery_ac){
+
+		}
+
 		P_pv_to_grid_ac = P_pv_ac - P_pv_to_batt_ac - P_pv_to_load_ac;
 		P_fuelcell_to_grid_ac = P_fuelcell_ac - P_fuelcell_to_load_ac - P_fuelcell_to_batt_ac;
 	}

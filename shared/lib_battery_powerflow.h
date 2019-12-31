@@ -160,7 +160,6 @@ public:
 	double currentChargeMax; ///< The maximum sustained current for charging [A]
 	double currentDischargeMax; ///< The maximum sustained current for discharging [A]
 
-    std::vector<double>* gridCurtailment; ///< The energy delivery limit due to grid curtailment [MW] of first year
 
 	double tolerance;  ///< A numerical tolerance. Below this value, zero out the power flow
 };

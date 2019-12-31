@@ -209,9 +209,6 @@ struct batt_variables
 	/* Battery cycle costs */
 	int batt_cycle_cost_choice;
 	double batt_cycle_cost;
-
-	/*! Curtailment [MW]*/
-	std::vector<double> grid_curtailment;
 };
 
 struct batt_time_settings
