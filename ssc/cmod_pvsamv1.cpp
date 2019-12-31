@@ -541,8 +541,9 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_snow_loss",                  "Subarray 1 Snow cover DC power loss",                                  "kW",     "", "Time Series (Subarray 1)",       "",                     "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_modeff",                     "Subarray 1 Module efficiency",                                         "%",      "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_celltemp",                   "Subarray 1 Cell temperature",                                          "C",      "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_celltempSS",                 "Subarray 1 Cell temperature (steady state)",                           "C",      "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_dc_voltage",                 "Subarray 1 Operating DC voltage",                                         "V",      "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_dc_gross",                 "Subarray 1 DC power gross",                                         "kW",      "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_dc_gross",                   "Subarray 1 DC power gross",                                             "kW",      "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_voc",                        "Subarray 1 Open circuit DC voltage",                                      "V",      "", "Time Series (Subarray 1)",       "",                     "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_isc",                        "Subarray 1 Short circuit DC current",                                     "A",      "", "Time Series (Subarray 1)",       "",                     "",                              "" },
 
@@ -571,6 +572,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_snow_loss",					 "Subarray 2 Snow cover DC power loss",                                  "kW",     "", "Time Series (Subarray 2)",       "",                     "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_modeff",                     "Subarray 2 Module efficiency",                                         "%",      "", "Time Series (Subarray 2)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_celltemp",                   "Subarray 2 Cell temperature",                                          "C",      "", "Time Series (Subarray 2)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_celltempSS",                 "Subarray 2 Cell temperature (steady state)",                           "C",      "", "Time Series (Subarray 2)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_dc_voltage",                 "Subarray 2 Operating DC voltage",                                         "V",      "", "Time Series (Subarray 2)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_dc_gross",                 "Subarray 2 DC power gross",                                         "kW",      "", "Time Series (Subarray 2)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_voc",                        "Subarray 2 Open circuit DC voltage",                                      "V",      "", "Time Series (Subarray 2)",       "",                     "",                              "" },
@@ -601,6 +603,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_snow_loss",					 "Subarray 3 Snow cover DC power loss",			                         "kW",     "", "Time Series (Subarray 3)",       "",                     "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_modeff",                     "Subarray 3 Module efficiency",                                         "%",      "", "Time Series (Subarray 3)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_celltemp",                   "Subarray 3 Cell temperature",                                          "C",      "", "Time Series (Subarray 3)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_celltempSS",                 "Subarray 3 Cell temperature (steady state)",                           "C",      "", "Time Series (Subarray 3)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_dc_voltage",                 "Subarray 3 Operating DC voltage",                                         "V",      "", "Time Series (Subarray 3)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_dc_gross",                 "Subarray 3 DC power gross",                                         "kW",      "", "Time Series (Subarray 3)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_voc",                        "Subarray 3 Open circuit DC voltage",                                      "V",      "", "Time Series (Subarray 3)",       "",                     "",                              "" },
@@ -631,6 +634,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_snow_loss",					 "Subarray 4 Snow cover DC power loss",                                  "kW",     "", "Time Series (Subarray 4)",       "",                     "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_modeff",                     "Subarray 4 Module efficiency",                                         "%",      "", "Time Series (Subarray 4)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_celltemp",                   "Subarray 4 Cell temperature",                                          "C",      "", "Time Series (Subarray 4)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_celltempSS",                 "Subarray 4 Cell temperature (steady state)",                           "C",      "", "Time Series (Subarray 4)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_dc_voltage",                 "Subarray 4 Operating DC voltage",                                         "V",      "", "Time Series (Subarray 4)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_dc_gross",                 "Subarray 4 DC power gross",                                         "kW",      "", "Time Series (Subarray 4)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_voc",                        "Subarray 4 Open circuit DC voltage",                                      "V",      "", "Time Series (Subarray 4)",       "",                     "",                              "" },
@@ -1667,6 +1671,8 @@ void cm_pvsamv1::exec( ) throw (general_error)
 					std::vector<pvinput_t> in{ num_subarrays }; //create arrays for the pv input and output structures because we have to deal with them in multiple loops to check for MPPT clipping
 					std::vector<pvoutput_t> out{ num_subarrays };
 					double tcell = wf.tdry;
+					double tcellSS = wf.tdry;
+
 					for (int nSubarray = 0; nSubarray < nSubarraysOnMpptInput; nSubarray++) //sweep across all subarrays connected to this MPPT input
 					{
 						int nn = SubarraysOnMpptInput[nSubarray]; //get the index of the subarray we're checking here
@@ -1691,6 +1697,58 @@ void cm_pvsamv1::exec( ) throw (general_error)
 							// calculate cell temperature using selected temperature model
 							// calculate module power output using conversion model previously specified
 							(*Subarrays[nn]->Module->cellTempModel)(in[nn], *Subarrays[nn]->Module->moduleModel, module_voltage, tcell);
+							
+							// steady state cell temperature - confirm modification from module model to cell temp
+							tcellSS = tcell; 
+							// calculate weighted moving average cell temperature base on "Transient Weighted Moving Average Model of Photovoltaic Module Back-Surface Temperature" Prilliman, et. al.
+							// wind speed corrected to 2m, assumed measured at 10m, equation 9 in reference
+							// ssc_number_t wma_z0 = 0.25;
+							// ssc_number_t wma_ws = wf.wspd * std::log(2.0/wma_z0) / std::log(10.0/wma_z0);
+							// precalculate to save execution time
+							ssc_number_t wma_ws = wf.wspd * 0.563705;
+							// module unit mass - Figure 2 in reference and size and weight from https://news.energysage.com/average-solar-panel-size-weight/
+							ssc_number_t wma_mu = 11.09186; // kg/m2
+							// weight function
+							ssc_number_t wma_a0 = 0.0046; // Table II in reference
+							ssc_number_t wma_a1 = 0.00046; // Table II in reference
+							ssc_number_t wma_a2 = -0.00023; // Table II in reference
+							ssc_number_t wma_a3 = -1.6e-5; // Table II in reference
+							ssc_number_t wma_P = wma_a0 + wma_a1 * wma_ws + wma_a2 * wma_mu + wma_a3 * wma_ws * wma_mu;
+							// 20 minute window of weighting values does not include current timestep SS value per refernce
+							int wma_window_minutes = 20;
+							// determine number of past timesteps to average
+							int wma_timestep_minutes = 60 / (int)step_per_hour;
+							if (wma_timestep_minutes <= 0) 
+								throw exec_error("pvsamv1", "Transient thermal timestep minutes <= 0");
+
+							// if timestep minute >= window minute use steady state - reference...
+							if (wma_timestep_minutes >= wma_window_minutes)
+								tcell = tcellSS;  // redundant but for code clarification
+							else 
+							{
+								int wma_num_prior_timesteps = (wma_window_minutes / wma_timestep_minutes);
+								if (wma_num_prior_timesteps <= 0)
+									throw exec_error("pvsamv1", "Transient thermal prior timesteps <= 0");
+								ssc_number_t wma_tcellMA_numerator = 0.0;
+								ssc_number_t wma_tcellMA_denominator = 0.0;
+								for (size_t wma_i = 1; wma_i <= (size_t)wma_num_prior_timesteps; wma_i++)
+								{
+									size_t wma_ti = 60 * wma_timestep_minutes * (wma_i); //number of seconds in the past 
+									ssc_number_t wma_weight = std::exp(0.0 - wma_P * (ssc_number_t)wma_ti);
+									size_t wma_ts_idx = idx;
+									if (wma_ts_idx > wma_i)
+										wma_ts_idx -= wma_i;
+									else
+										wma_ts_idx = 0;
+									wma_tcellMA_numerator += wma_weight * PVSystem->p_temperatureCellSS[nn][wma_ts_idx];
+									wma_tcellMA_denominator += wma_weight;
+								}
+								if (wma_tcellMA_denominator <= 0)
+									throw exec_error("pvsamv1", "Transient thermal weighting factor sum <= 0");
+								tcell =  wma_tcellMA_numerator / wma_tcellMA_denominator;
+							}
+							// 
+
 							(*Subarrays[nn]->Module->moduleModel)(in[nn], tcell, module_voltage, out[nn]);
 						}
 					}
@@ -1779,6 +1837,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 						Subarrays[nn]->Module->dcEfficiency = out[nn].Efficiency * 100;
 						Subarrays[nn]->Module->dcVoltage = out[nn].Voltage;
 						Subarrays[nn]->Module->temperatureCellCelcius = out[nn].CellTemp;
+						Subarrays[nn]->Module->temperatureCellCelciusSS = tcellSS;
 						Subarrays[nn]->Module->currentShortCircuit = out[nn].Isc_oper;
 						Subarrays[nn]->Module->voltageOpenCircuit = out[nn].Voc_oper;
 						Subarrays[nn]->Module->angleOfIncidenceModifier = out[nn].AOIModifier;
@@ -1857,8 +1916,10 @@ void cm_pvsamv1::exec( ) throw (general_error)
 						//Add to annual MPPT clipping
 						annualMpptVoltageClipping += mpptVoltageClipping[nn]*util::watt_to_kilowatt*ts_hour; //power W to energy kWh
 						// save to SSC output arrays
+						PVSystem->p_temperatureCellSS[nn][idx] = (ssc_number_t)Subarrays[nn]->Module->temperatureCellCelciusSS;
+
 						PVSystem->p_temperatureCell[nn][idx] = (ssc_number_t)Subarrays[nn]->Module->temperatureCellCelcius;
-						PVSystem->p_moduleEfficiency[nn][idx] = (ssc_number_t)Subarrays[nn]->Module->dcEfficiency;					
+						PVSystem->p_moduleEfficiency[nn][idx] = (ssc_number_t)Subarrays[nn]->Module->dcEfficiency;
 						PVSystem->p_voltageOpenCircuit[nn][idx] = (ssc_number_t)(Subarrays[nn]->Module->voltageOpenCircuit * (double)Subarrays[nn]->nModulesPerString);
 						PVSystem->p_currentShortCircuit[nn][idx] = (ssc_number_t)Subarrays[nn]->Module->currentShortCircuit;
 						PVSystem->p_angleOfIncidenceModifier[nn][idx] = (ssc_number_t)(Subarrays[nn]->Module->angleOfIncidenceModifier);
