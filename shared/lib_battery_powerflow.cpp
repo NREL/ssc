@@ -228,19 +228,12 @@ void BatteryPowerFlow::calculateACConnected()
 			P_grid_to_batt_ac = std::fmax(0, fabs(P_battery_ac) - P_pv_to_batt_ac - P_fuelcell_to_batt_ac);
 		}
 
+		if (P_pv_to_batt_ac + P_grid_to_batt_ac + P_fuelcell_to_batt_ac <= P_battery_ac){
+
+		}
+
 		P_pv_to_grid_ac = P_pv_ac - P_pv_to_batt_ac - P_pv_to_load_ac;
 		P_fuelcell_to_grid_ac = P_fuelcell_ac - P_fuelcell_to_load_ac - P_fuelcell_to_batt_ac;
-
-		// Error checking for battery charging
-		if (P_pv_to_batt_ac + P_grid_to_batt_ac + P_fuelcell_to_batt_ac != fabs(P_battery_ac)) {
-		    if (P_battery_ac < 0){
-		        if (m_BatteryPower->canPVCharge && -P_battery_ac < P_gen_ac){
-                    P_pv_to_batt_ac = fabs(P_battery_ac) - P_grid_to_batt_ac - P_fuelcell_to_batt_ac;
-                }
-		        else if (m_BatteryPower->canGridCharge)
-                    P_grid_to_batt_ac = fabs(P_battery_ac) - P_pv_to_batt_ac - P_fuelcell_to_batt_ac;
-		    }
-		}
 	}
 	else
 	{
@@ -278,14 +271,21 @@ void BatteryPowerFlow::calculateACConnected()
 
 	// Compute total system output and grid power flow
 	P_grid_to_load_ac = P_load_ac - P_pv_to_load_ac - P_batt_to_load_ac - P_fuelcell_to_load_ac;
-	P_gen_ac = P_pv_ac + P_fuelcell_ac + P_battery_ac + P_inverter_draw_ac - P_system_loss_ac;
+	P_gen_ac = P_pv_ac + P_fuelcell_ac + P_inverter_draw_ac - P_system_loss_ac;
+	if (P_battery_ac < 0)
+	    P_gen_ac -= P_pv_to_batt_ac;
+	else
+	    P_gen_ac += P_battery_ac;
 
-	// Grid charging loss accounted for in P_battery_ac 
+                // Grid charging loss accounted for in P_battery_ac
 	P_grid_ac = P_gen_ac - P_load_ac;
 
 	// Error checking for power to load
-	if (P_pv_to_load_ac + P_grid_to_load_ac + P_batt_to_load_ac + P_fuelcell_to_load_ac != P_load_ac)
-		P_grid_to_load_ac = P_load_ac - P_pv_to_load_ac - P_batt_to_load_ac - P_fuelcell_to_load_ac;
+	if (!m_BatteryPower->canGridCharge && P_grid_to_batt_ac < -tolerance && P_battery_ac < -tolerance){
+        m_BatteryPower->powerBatteryDC = (P_pv_to_batt_ac + P_fuelcell_to_batt_ac) * m_BatteryPower->singlePointEfficiencyACToDC;
+        calculateACConnected();
+        return;
+	}
 
 	// check tolerances
 	if (fabs(P_grid_to_load_ac) < m_BatteryPower->tolerance)

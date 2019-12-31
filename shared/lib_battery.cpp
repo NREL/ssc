@@ -1822,7 +1822,7 @@ double battery_t::calculate_current_for_power_kw(double &P_kw){
 }
 
 double battery_t::calculate_voltage_for_current(double I) {
-    // TODO: add looping when this function will actually be used
+    // TODO: add looping when this function will actually be used... doesn't work that well atm
     double qmax = fmin(_capacity->qmax(), _capacity->qmax_thermal());
     return voltage_model()->calculate_voltage_for_current(I, battery_charge_total(), qmax, _thermal->T_battery());
 }
