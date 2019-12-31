@@ -1697,6 +1697,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 							// calculate cell temperature using selected temperature model
 							// calculate module power output using conversion model previously specified
 							(*Subarrays[nn]->Module->cellTempModel)(in[nn], *Subarrays[nn]->Module->moduleModel, module_voltage, tcell);
+							
 							// steady state cell temperature - confirm modification from module model to cell temp
 							tcellSS = tcell;
 							// calculate weighted moving average cell temperature base on "Transient Weighted Moving Average Model of Photovoltaic Module Back-Surface Temperature" Prilliman, et. al.
