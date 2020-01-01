@@ -539,6 +539,25 @@ ssc_number_t forecast_price_signal::operator()(size_t time)
 	else return 0.0;
 }
 
+var_info vtab_fuelcell_output[] = {
+
+	{ SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_power",                     "Electricity from fuel cell",            "kW",        "",                 "Fuel Cell",                  "",                        "",                              "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_power_max_percent",         "Fuel cell max power percent available",  "%",        "",                 "Fuel Cell",                  "",                        "",                              "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_percent_load",              "Fuel cell percent load",                 "%",        "",                 "Fuel Cell",                  "",                        "",                              "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_electrical_efficiency",     "Fuel cell electrical efficiency",       "%",          "",                 "Fuel Cell",                  "",                        "",                              "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_power_thermal",             "Heat from fuel cell",                   "kWt",        "",                 "Fuel Cell",                  "",                        "",                              "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_fuel_consumption_mcf",      "Fuel consumption of fuel cell",         "MCf",        "",                 "Fuel Cell",                  "",                        "",                              "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_to_load",                   "Electricity to load from fuel cell",    "kW",        "",                 "Fuel Cell",                  "",                        "",                              "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_to_grid",                   "Electricity to grid from fuel cell",    "kW",        "",                 "Fuel Cell",                  "",                        "",                              "" },
+
+	{ SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_replacement",                "Fuel cell replacements per year",      "number/year", "",              "Fuel Cell",           "",                           "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "system_heat_rate",                    "Heat rate conversion factor (MMBTUs/MWhe)",  "MMBTUs/MWhe",   "",      "Fuel Cell",           "*",               "",                    "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_fuel_usage",                   "Annual Fuel Usage",                          "kWht",          "",      "Fuel Cell",           "*",               "",                    "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "annual_fuel_usage_lifetime",            "Annual Fuel Usage (lifetime)",               "kWht",          "",      "Fuel Cell",           "",               "",                    "" },
+
+
+var_info_invalid };
+
 var_info vtab_resilience_outputs[] = {
 { SSC_OUTPUT, SSC_ARRAY  , "resilience_hrs"                       , "Hours of autonomy during outage at each timestep for resilience"       , "hr"                                     , ""                                                         , "Resilience"          , ""               , ""                      , ""},
 { SSC_OUTPUT, SSC_NUMBER , "resilience_hrs_min"                   , "Min hours of autonomy for resilience "                                 , "hr"                                     , ""                                                         , "Resilience"          , ""               , "MIN=0"                 , ""},

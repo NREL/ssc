@@ -47,6 +47,8 @@ extern var_info vtab_grid_curtailment[];
 extern var_info vtab_p50p90[];
 extern var_info vtab_forecast_price_signal[];
 extern var_info vtab_resilience_outputs[];
+extern var_info vtab_fuelcell_output[];
+
 
 bool calculate_p50p90(compute_module *cm);
 
