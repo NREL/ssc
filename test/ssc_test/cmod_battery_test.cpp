@@ -23,7 +23,7 @@ TEST_F(CMBattery_cmod_battery, CommercialLifetimePeakShaving) {
 		// roundtrip efficiency test will ensure that the battery cycled
 		ssc_number_t roundtripEfficiency;
 		ssc_data_get_number(data, "average_battery_roundtrip_efficiency", &roundtripEfficiency);
-		EXPECT_NEAR(roundtripEfficiency, 18.02, 2);
+		EXPECT_NEAR(roundtripEfficiency, 82.75, 2);
 
 		// test that lifetime output is achieved
 		int n;
@@ -59,18 +59,18 @@ TEST_F(CMBattery_cmod_battery, ResilienceMetricsFullLoad){
 
     EXPECT_EQ(resilience_hours[0], 0);
     EXPECT_EQ(resilience_hours[1], 1);
-    EXPECT_NEAR(avg_critical_load, 755.8, 0.1);
-    EXPECT_NEAR(resilience_hrs_avg, 0.94, 0.01);
+    EXPECT_NEAR(avg_critical_load, 764.73, 0.1);
+    EXPECT_NEAR(resilience_hrs_avg, 0.965, 0.01);
     EXPECT_EQ(resilience_hrs_min, 0);
     EXPECT_EQ(outage_durations[0], 0);
     EXPECT_EQ(resilience_hrs_max, 17);
     EXPECT_EQ(outage_durations[17], 17);
-    EXPECT_NEAR(pdf_of_surviving[0], 0.706, 1e-3);
+    EXPECT_NEAR(pdf_of_surviving[0], 0.704, 1e-3);
     EXPECT_NEAR(pdf_of_surviving[1], 0.066, 1e-3);
 
     auto batt_power = data_vtab->as_vector_ssc_number_t("batt_power");
     auto power_max = *std::max_element(batt_power.begin(), batt_power.end());
-    EXPECT_NEAR(power_max, 165.97, 1e-2);
+    EXPECT_NEAR(power_max, 166.02, 1e-2);
 
     std::vector<size_t> max_indices;
     for (size_t i = 0; i < batt_power.size(); i++){
@@ -102,10 +102,8 @@ TEST_F(CMBattery_cmod_battery, ResilienceMetricsFullLoadLifetime){
     data_vtab->assign("batt_replacement_option", 0);
 
 
-    // if simulation error, assert it's a out of memory error and stop testing; otherwise check values
-    int errors = runWithOutOfMemoryCheck();
-    if (!errors)
-        return;
+    int errors = run_module(data, "battery");
+    EXPECT_FALSE(errors);
 
     auto resilience_hours = data_vtab->as_vector_ssc_number_t("resilience_hrs");
     double resilience_hrs_min = data_vtab->as_number("resilience_hrs_min");
@@ -117,8 +115,8 @@ TEST_F(CMBattery_cmod_battery, ResilienceMetricsFullLoadLifetime){
 
     EXPECT_EQ(resilience_hours[0], 0);
     EXPECT_EQ(resilience_hours[1], 1);
-    EXPECT_NEAR(avg_critical_load, 718.9, 0.1);
-    EXPECT_NEAR(resilience_hrs_avg, 0.869, 0.01);
+    EXPECT_NEAR(avg_critical_load, 725.9, 0.1);
+    EXPECT_NEAR(resilience_hrs_avg, 0.883, 0.01);
     EXPECT_EQ(resilience_hrs_min, 0);
     EXPECT_EQ(outage_durations[0], 0);
     EXPECT_EQ(resilience_hrs_max, 17);
@@ -128,7 +126,7 @@ TEST_F(CMBattery_cmod_battery, ResilienceMetricsFullLoadLifetime){
 
     auto batt_power = data_vtab->as_vector_ssc_number_t("batt_power");
     auto power_max = *std::max_element(batt_power.begin(), batt_power.end());
-    EXPECT_NEAR(power_max, 165.96, 1e-2);
+    EXPECT_NEAR(power_max, 166.02, 1e-2);
 
     std::vector<size_t> max_indices;
     for (size_t i = 0; i < batt_power.size(); i++){

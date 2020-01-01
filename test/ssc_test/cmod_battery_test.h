@@ -49,21 +49,6 @@ public:
 		int n;
 		calculated_array = ssc_data_get_array(data, const_cast<char *>(name.c_str()), &n);
 	}
-	bool runWithOutOfMemoryCheck()
-    {
-        ssc_module_t module;
-        module = ssc_module_create("battery");
-        bool success = ssc_module_exec(module, data);
-        if (!success) {
-            std::string mod_name = "battery";
-            std::string reason = "Out of memory during resilience simulations. Try reducing analysis years, increasing critical load or reducing PV generation.";
-            EXPECT_EQ(ssc_module_log(module, 0, nullptr, nullptr), "exec fail(" + mod_name + "): " + reason);
-			ssc_module_free(module);
-            return false;
-        }
-		ssc_module_free(module);
-        return true;
-    }
 };
 
 #endif 

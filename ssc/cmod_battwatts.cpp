@@ -351,13 +351,8 @@ void cm_battwatts::exec()
                     batt->initialize_time(year, hour, jj);
 
                     if (resilience){
-                        try {
-                            resilience->add_battery_at_outage_timestep(*batt->dispatch_model, count);
-                            resilience->run_surviving_batteries(p_crit_load[count % n_rec_single_year], p_ac[count]);
-                        }
-                        catch (const std::bad_alloc&) {
-                            throw exec_error("battwatts", "Out of memory during resilience simulations. Try reducing analysis years, increasing critical load or reducing PV generation.");
-                        }
+                        resilience->add_battery_at_outage_timestep(*batt->dispatch_model, count);
+                        resilience->run_surviving_batteries(p_crit_load[count % n_rec_single_year], p_ac[count]);
                     }
 
                     batt->advance(m_vartab, p_ac[count], voltage, p_load[count]);

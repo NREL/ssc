@@ -1715,13 +1715,8 @@ public:
 						batt->check_replacement_schedule();
 
 						if (resilience){
-						    try {
-                                resilience->add_battery_at_outage_timestep(*batt->dispatch_model, lifetime_idx);
-                                resilience->run_surviving_batteries(p_crit_load[lifetime_idx % n_rec_single_year], power_input_lifetime[lifetime_idx]);
-						    }
-                            catch (const std::bad_alloc&) {
-                                    throw exec_error("battery", "Out of memory during resilience simulations. Try reducing analysis years, increasing critical load or reducing PV generation.");
-                            }
+                            resilience->add_battery_at_outage_timestep(*batt->dispatch_model, lifetime_idx);
+                            resilience->run_surviving_batteries(p_crit_load[lifetime_idx % n_rec_single_year], power_input_lifetime[lifetime_idx]);
 						}
 
 						batt->advance(m_vartab, power_input_lifetime[lifetime_idx], 0, load_lifetime[lifetime_idx], 0);
