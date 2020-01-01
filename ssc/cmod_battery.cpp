@@ -1587,6 +1587,8 @@ static var_info _cm_vtab_battery[] = {
 	// other variables come from battstor common table
 	var_info_invalid };
 
+extern var_info vtab_fuelcell_output[];
+
 void process_messages(shared_ptr<battstor> batt, compute_module* cm)
 {
     if (!batt)

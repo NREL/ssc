@@ -58,8 +58,10 @@ public:
             std::string mod_name = "battery";
             std::string reason = "Out of memory during resilience simulations. Try reducing analysis years, increasing critical load or reducing PV generation.";
             EXPECT_EQ(ssc_module_log(module, 0, nullptr, nullptr), "exec fail(" + mod_name + "): " + reason);
+			ssc_module_free(module);
             return false;
         }
+		ssc_module_free(module);
         return true;
     }
 };
