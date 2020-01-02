@@ -1698,6 +1698,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 							// calculate module power output using conversion model previously specified
 							(*Subarrays[nn]->Module->cellTempModel)(in[nn], *Subarrays[nn]->Module->moduleModel, module_voltage, tcell);
 							
+							// begin Transient Thermal model
 							// steady state cell temperature - confirm modification from module model to cell temp
 							tcellSS = tcell; 
 							// calculate weighted moving average cell temperature base on "Transient Weighted Moving Average Model of Photovoltaic Module Back-Surface Temperature" Prilliman, et. al.
@@ -1747,7 +1748,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 									throw exec_error("pvsamv1", "Transient thermal weighting factor sum <= 0");
 								tcell =  wma_tcellMA_numerator / wma_tcellMA_denominator;
 							}
-							// 
+							// end Transient Thermal model
 
 							(*Subarrays[nn]->Module->moduleModel)(in[nn], tcell, module_voltage, out[nn]);
 						}
