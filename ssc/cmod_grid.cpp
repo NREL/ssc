@@ -86,41 +86,39 @@ void cm_grid::exec() throw (general_error)
 	construct();
 
 	// interconnection  calculations
-	double capacity_factor_interconnect, annual_energy_pre_interconnect, annual_energy_pre_curtailment, annual_energy, capacity_factor_curtailment;
-	capacity_factor_interconnect = annual_energy_pre_interconnect = annual_energy_pre_curtailment = annual_energy = capacity_factor_curtailment = 0;
+	double capacity_factor_interconnect, annual_energy_pre_curtailment, annual_energy, capacity_factor_curtailment;
+	capacity_factor_interconnect = annual_energy_pre_curtailment = annual_energy = capacity_factor_curtailment = 0;
 
 //	annual_energy_pre_interconnect = std::accumulate(gridVars->systemGenerationLifetime_kW.begin(), gridVars->systemGenerationLifetime_kW.begin() + gridVars->numberOfSingleYearRecords, (double)0.0)*gridVars->dt_hour_gen;
 
 	size_t hour = 0;
 	size_t num_steps_per_hour = size_t(1.0 / gridVars->dt_hour_gen);
-	// compute grid export, apply interconnection limit
+	double annual_energy_pre_interconnect = as_double("annual_energy");
+	// compute grid export, apply limit
 	for (size_t i = 0; i < gridVars->numberOfLifetimeRecords; i++) 
 	{
-		double gridNet = gridVars->systemGenerationLifetime_kW[i] - gridVars->loadLifetime_kW[i];
-		double gridNetInterconnectionLimited = gridNet;
+	    double gen = gridVars->systemGenerationLifetime_kW[i];
+		double gridNet = gen - gridVars->loadLifetime_kW[i];
 
-		p_genPreInterconnect_kW[i] = static_cast<ssc_number_t>(gridVars->systemGenerationLifetime_kW[i]);
 
-		if (gridVars->enable_interconnection_limit)
-			gridNetInterconnectionLimited = fmin(gridNet, gridVars->grid_interconnection_limit_kW);
-		double interconnectionLimited = gridNet - gridNetInterconnectionLimited;
-		gridVars->systemGenerationLifetime_kW[i] -= interconnectionLimited;
+		if (gridVars->enable_interconnection_limit){
+		    p_genPreInterconnect_kW[i] = static_cast<ssc_number_t>(gen);
+            double interconnectionLimited = fmax(0., gridNet - gridVars->grid_interconnection_limit_kW);
+		    gen -= interconnectionLimited;
+		    gridNet -= interconnectionLimited;
+		}
 
-		p_genPreCurtailment_kW[i] = static_cast<ssc_number_t>(gridVars->systemGenerationLifetime_kW[i]);
-
-		// compute curtailment percentage
-//		gridVars->systemGenerationLifetime_kW[i] *= (1.0 - gridVars->gridCurtailmentLifetime_percent[i]/100.0);
 		// compute curtailment MW
-		if (gridVars->systemGenerationLifetime_kW[i] > (gridVars->gridCurtailmentLifetime_MW[i]*1000.0))
-			gridVars->systemGenerationLifetime_kW[i] = (gridVars->gridCurtailmentLifetime_MW[i]*1000.0);
+		p_genPreCurtailment_kW[i] = static_cast<ssc_number_t>(gen);
+		double curtailed = fmax(0., gridNet - gridVars->gridCurtailmentLifetime_MW[i]*1000.0);
+        gen -= curtailed;
 
-		p_genGrid_kW[i] = static_cast<ssc_number_t>(gridVars->systemGenerationLifetime_kW[i]);
+        p_gen_kW[i] = static_cast<ssc_number_t>(gen);
 
 		if (i < gridVars->numberOfSingleYearRecords)
 		{
-			annual_energy_pre_interconnect += p_genPreInterconnect_kW[i];
 			annual_energy_pre_curtailment += p_genPreCurtailment_kW[i];
-			annual_energy += p_genGrid_kW[i];
+			annual_energy += p_gen_kW[i];
 		}
 
 
@@ -131,27 +129,27 @@ void cm_grid::exec() throw (general_error)
 
 	}
 
-
-	annual_energy_pre_interconnect *= gridVars->dt_hour_gen;
 	annual_energy_pre_curtailment *= gridVars->dt_hour_gen;
 	annual_energy *= gridVars->dt_hour_gen;
 
 
 //	annual_energy_interconnect = std::accumulate(gridVars->systemGenerationLifetime_kW.begin(), gridVars->systemGenerationLifetime_kW.begin() + gridVars->numberOfSingleYearRecords, (double)0.0)*gridVars->dt_hour_gen;
-	capacity_factor_interconnect = annual_energy_pre_curtailment * util::fraction_to_percent / (gridVars->grid_interconnection_limit_kW * 8760.);
+    if (gridVars->enable_interconnection_limit)
+	    capacity_factor_interconnect = annual_energy_pre_curtailment * util::fraction_to_percent / (gridVars->grid_interconnection_limit_kW * 8760.);
 	//	annual_energy_interconnect = std::accumulate(gridVars->systemGenerationLifetime_kW.begin(), gridVars->systemGenerationLifetime_kW.begin() + gridVars->numberOfSingleYearRecords, (double)0.0)*gridVars->dt_hour_gen;
 	capacity_factor_curtailment = annual_energy * util::fraction_to_percent / (gridVars->grid_interconnection_limit_kW * 8760.);
 
 
 
-
-	assign("capacity_factor_interconnect_ac", var_data(capacity_factor_interconnect));
-	assign("annual_energy_pre_interconnect_ac", var_data(annual_energy_pre_interconnect));
+    if (gridVars->enable_interconnection_limit){
+	    assign("capacity_factor_interconnect_ac", var_data(capacity_factor_interconnect));
+	    assign("annual_energy_pre_interconnect_ac", var_data(annual_energy_pre_interconnect));
+	    assign("annual_ac_interconnect_loss_kwh", var_data(std::round(annual_energy_pre_interconnect - annual_energy_pre_curtailment)));
+	    assign("annual_ac_interconnect_loss_percent", var_data(100.0*(annual_energy_pre_interconnect - annual_energy_pre_curtailment) / annual_energy_pre_interconnect));
+	    assign("capacity_factor_interconnect_ac", var_data(capacity_factor_curtailment));
+    }
 	assign("annual_energy_pre_curtailment_ac", var_data(annual_energy_pre_curtailment));
-	assign("annual_energy", var_data(annual_energy)); 
-	assign("annual_ac_interconnect_loss_kwh", var_data(std::round(annual_energy_pre_interconnect - annual_energy_pre_curtailment)));
-	assign("annual_ac_interconnect_loss_percent", var_data(100.0*(annual_energy_pre_interconnect - annual_energy_pre_curtailment) / annual_energy_pre_interconnect));
-	assign("capacity_factor_interconnect_ac", var_data(capacity_factor_curtailment));
+	assign("annual_energy", var_data(annual_energy));
 	assign("annual_ac_curtailment_loss_kwh", var_data(std::round(annual_energy_pre_curtailment - annual_energy)));
 	assign("annual_ac_curtailment_loss_percent", var_data(100.0*(annual_energy_pre_curtailment - annual_energy) / annual_energy_pre_curtailment));
 
@@ -160,7 +158,7 @@ void cm_grid::exec() throw (general_error)
 
 void cm_grid::allocateOutputs()
 {
-	p_genGrid_kW = allocate("gen", gridVars->systemGenerationLifetime_kW.size());
+    p_gen_kW = allocate("gen", gridVars->systemGenerationLifetime_kW.size());
 	p_genPreCurtailment_kW = allocate("system_pre_curtailment_kwac", gridVars->systemGenerationLifetime_kW.size());
 	p_genPreInterconnect_kW = allocate("system_pre_interconnect_kwac", gridVars->systemGenerationLifetime_kW.size());
 }
