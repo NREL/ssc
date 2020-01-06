@@ -44,7 +44,7 @@ TEST_F(CMGrid, SingleYearSubHourly_cmod_grid) {
 		EXPECT_EQ(gen_size, 8760*2);
 		EXPECT_NEAR(capacity_factor, 30.78777, 0.001);
 		EXPECT_NEAR(annual_energy_interconnect, 485461500, 10);
-		EXPECT_NEAR(annual_energy_pre_interconnect, 498820000, 10);
+		EXPECT_NEAR(annual_energy_pre_interconnect, 997640000, 10);
 	}
 }
 
@@ -66,7 +66,7 @@ TEST_F(CMGrid, SingleYearSubHourlyLifetime_cmod_grid) {
 		EXPECT_EQ(gen_size, 8760 * 2 * 2);
 		EXPECT_NEAR(capacity_factor, 30.78777, 0.001);
 		EXPECT_NEAR(annual_energy_interconnect, 485461500, 10);
-		EXPECT_NEAR(annual_energy_pre_interconnect, 498820000, 10);
+		EXPECT_NEAR(annual_energy_pre_interconnect, 997640000, 10);
 	}
 }
 

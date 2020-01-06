@@ -86,14 +86,14 @@ void cm_grid::exec() throw (general_error)
 	construct();
 
 	// interconnection  calculations
-	double capacity_factor_interconnect, annual_energy_pre_curtailment, annual_energy, capacity_factor_curtailment;
-	capacity_factor_interconnect = annual_energy_pre_curtailment = annual_energy = capacity_factor_curtailment = 0;
+	double capacity_factor_interconnect, annual_energy_pre_curtailment, annual_energy_pre_interconnect, annual_energy, capacity_factor_curtailment;
+	capacity_factor_interconnect = annual_energy_pre_curtailment = annual_energy_pre_interconnect = annual_energy = capacity_factor_curtailment = 0;
 
 //	annual_energy_pre_interconnect = std::accumulate(gridVars->systemGenerationLifetime_kW.begin(), gridVars->systemGenerationLifetime_kW.begin() + gridVars->numberOfSingleYearRecords, (double)0.0)*gridVars->dt_hour_gen;
 
 	size_t hour = 0;
 	size_t num_steps_per_hour = size_t(1.0 / gridVars->dt_hour_gen);
-	double annual_energy_pre_interconnect = as_double("annual_energy");
+//	double annual_energy_pre_interconnect = as_double("annual_energy");
 	// compute grid export, apply limit
 	for (size_t i = 0; i < gridVars->numberOfLifetimeRecords; i++) 
 	{
@@ -117,6 +117,7 @@ void cm_grid::exec() throw (general_error)
 
 		if (i < gridVars->numberOfSingleYearRecords)
 		{
+			annual_energy_pre_interconnect += p_genPreInterconnect_kW[i];
 			annual_energy_pre_curtailment += p_genPreCurtailment_kW[i];
 			annual_energy += p_gen_kW[i];
 		}
