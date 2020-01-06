@@ -131,6 +131,7 @@ void cm_grid::exec() throw (general_error)
 	}
 
 	annual_energy_pre_curtailment *= gridVars->dt_hour_gen;
+	annual_energy_pre_interconnect *= gridVars->dt_hour_gen;
 	annual_energy *= gridVars->dt_hour_gen;
 
 
