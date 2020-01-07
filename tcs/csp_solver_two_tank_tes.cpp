@@ -694,6 +694,12 @@ void C_csp_two_tank_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs
 		V_cold_ini, T_cold_ini);
 
     // Size TES piping and output values
+    if (ms_params.tes_lengths.ncells() < 11) {
+        // set defaults
+        double vals1[11] = { 0., 90., 100., 120., 0., 0., 0., 0., 80., 120., 80. };
+        ms_params.tes_lengths.assign(vals1, 11);
+    }
+
     if (ms_params.custom_tes_pipe_sizes &&
         (ms_params.tes_diams.ncells() != N_tes_pipe_sections ||
             ms_params.tes_wallthicks.ncells() != N_tes_pipe_sections)) {
