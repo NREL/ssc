@@ -15,7 +15,7 @@
 /**
  * CMGrid tests the cmod_grid using the SAM code generator to generate data
  */
-class CMGrid : public ::testing::Test {
+class CMGrid_cmod_grid : public ::testing::Test {
 
 public:
 

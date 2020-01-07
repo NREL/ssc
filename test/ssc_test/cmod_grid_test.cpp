@@ -2,7 +2,7 @@
 
 #include "cmod_grid_test.h"
 
-TEST_F(CMGrid, SingleYearHourly_cmod_grid) {
+TEST_F(CMGrid_cmod_grid, SingleYearHourly_cmod_grid) {
 
 	grid_default_60_min(data);
 
@@ -26,7 +26,7 @@ TEST_F(CMGrid, SingleYearHourly_cmod_grid) {
 	}
 }
 
-TEST_F(CMGrid, SingleYearSubHourly_cmod_grid) {
+TEST_F(CMGrid_cmod_grid, SingleYearSubHourly_cmod_grid) {
 
 	grid_default_30_min(data);
 	int errors = run_module(data, "grid");
@@ -50,7 +50,7 @@ TEST_F(CMGrid, SingleYearSubHourly_cmod_grid) {
 	}
 }
 
-TEST_F(CMGrid, SingleYearSubHourlyLifetime_cmod_grid) {
+TEST_F(CMGrid_cmod_grid, SingleYearSubHourlyLifetime_cmod_grid) {
 
 	grid_default_30_min_lifetime(data);
 	int errors = run_module(data, "grid");
@@ -72,7 +72,7 @@ TEST_F(CMGrid, SingleYearSubHourlyLifetime_cmod_grid) {
 	}
 }
 
-TEST_F(CMGrid, SingleYearNoFinancial_cmod_grid) {
+TEST_F(CMGrid_cmod_grid, SingleYearNoFinancial_cmod_grid) {
 
 	grid_default_60_min_no_financial(data);
 	int errors = run_module(data, "grid");
