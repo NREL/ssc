@@ -538,10 +538,6 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 					x_solved = m_x_pos_err;
 					tol_solved = m_y_err_pos;
 					iter_solved = m_iter;
-
-					// Call function again with value we know produces a result
-					double y_eq;
-					call_mono_eq(x_solved, &y_eq);
 				}
 
                 double x_at_lowest = std::numeric_limits<double>::quiet_NaN();
@@ -572,10 +568,6 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 					x_solved = m_x_neg_err;
 					tol_solved = m_y_err_neg;
 					iter_solved = m_iter;
-
-					// Call function again with value we know produces a result
-					double y_eq;
-					call_mono_eq(x_solved, &y_eq);
 				}
 
                 double x_at_lowest = std::numeric_limits<double>::quiet_NaN();
@@ -606,11 +598,7 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 					x_solved = m_x_guess;
 					tol_solved = m_y_err;
 					iter_solved = m_iter;
-
-					// Call function again with value we know produces a result
-					double y_eq;
-					call_mono_eq(x_solved, &y_eq);
-				}
+                }
 
                 double x_at_lowest = std::numeric_limits<double>::quiet_NaN();
                 if (is_last_x_best(x_at_lowest, y_target))
@@ -644,10 +632,6 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 					x_solved = m_x_pos_err;
 					tol_solved = m_y_err_pos;
 					iter_solved = m_iter;
-
-					// Call function again with value we know produces a result
-					double y_eq;
-					call_mono_eq(x_solved, &y_eq);
 				}
 
                 double x_at_lowest = std::numeric_limits<double>::quiet_NaN();
@@ -678,10 +662,6 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 					x_solved = m_x_neg_err;
 					tol_solved = m_y_err_neg;
 					iter_solved = m_iter;
-
-					// Call function again with value we know produces a result
-					double y_eq;
-					call_mono_eq(x_solved, &y_eq);
 				}
 
                 double x_at_lowest = std::numeric_limits<double>::quiet_NaN();
@@ -712,10 +692,6 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 					x_solved = m_x_guess;
 					tol_solved = m_y_err;
 					iter_solved = m_iter;
-
-					// Call function again with value we know produces a result
-					double y_eq;
-					call_mono_eq(x_solved, &y_eq);
 				}
 
                 double x_at_lowest = std::numeric_limits<double>::quiet_NaN();
