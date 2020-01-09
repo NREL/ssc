@@ -944,12 +944,12 @@ bool C_monotonic_eq_solver::is_last_x_best(double & x_at_lowest, double y_target
 
     if (get_min_abs_diff_no_err(s_eq_chars_min_abs_diff, y_target))
     {
-        double y_err = s_eq_chars_min_abs_diff.y;
+        double y_err = s_eq_chars_min_abs_diff.y - y_target;
         if (m_is_err_rel)
             y_err = y_err / fabs(y_target);
 
         double min_abs_diff = fabs(y_err);
-        if (min_abs_diff < m_y_err)
+        if (min_abs_diff < m_y_err || !std::isfinite(m_y_err))
         {
             x_at_lowest = s_eq_chars_min_abs_diff.x;
 
@@ -978,23 +978,20 @@ bool C_monotonic_eq_solver::is_last_x_best(double & x_at_lowest, double y_target
         C_monotonic_eq_solver::S_eq_chars i_ms_eq = ms_eq_call_tracker[i];
         if (i_ms_eq.err_code == 0 && std::isfinite(i_ms_eq.y))
         {
+            y_err = fabs(i_ms_eq.y - y_target);
             if (m_is_err_rel)
             {
-                y_err = i_ms_eq.y / fabs(y_target);
-            }
-            else
-            {
-                y_err = i_ms_eq.y;
+                y_err = y_err / fabs(y_target);
             }
 
-            if (is_found_min && fabs(y_err) < min_abs_diff)
+            if (is_found_min && y_err < min_abs_diff)
             {
-                min_abs_diff = i_ms_eq.y;
+                min_abs_diff = y_err;
                 s_eq_chars_min_abs_diff = i_ms_eq;
             }
             else if (!is_found_min)
             {
-                min_abs_diff = i_ms_eq.y;
+                min_abs_diff = y_err;
                 is_found_min = true;
                 s_eq_chars_min_abs_diff = i_ms_eq;
             }
