@@ -1342,11 +1342,12 @@ public:
         D_cpnt.assign(D_cpnt_in, nrow_D_cpnt, ncol_D_cpnt);
         L_cpnt.assign(L_cpnt_in, nrow_L_cpnt, ncol_L_cpnt);
         Type_cpnt.assign(Type_cpnt_in, nrow_Type_cpnt, ncol_Type_cpnt);
-        rough_cpnt.resize_fill(nrow_K_cpnt, ncol_K_cpnt, HDR_rough);
+        rough_cpnt.resize(nrow_K_cpnt, ncol_K_cpnt);
         u_cpnt.resize_fill(nrow_K_cpnt, ncol_K_cpnt, Pipe_hl_coef);
         mc_cpnt.resize(nrow_K_cpnt, ncol_K_cpnt);
         for (std::size_t i = 0; i < mc_cpnt.ncells(); i++) {
             mc_cpnt[i] = mc_bal_sca * 3.6e3 * L_cpnt[i];
+            rough_cpnt[i] = HDR_rough / D_cpnt[i];
         }
 
         interconnects.reserve(nrow_K_cpnt);  // nrow_K_cpnt = number of interconnects
@@ -2968,7 +2969,7 @@ calc_final_metrics_goto:
 				int CT = (int)SCAInfoArray(i,1)-1;    //Collector type    
 				int HT = (int)SCAInfoArray(i,0)-1;    //HCE type
         
-				DP_tube[i] = DP_tube[i] + PressureDrop(m_dot_htf,T_htf_ave[i],P_field_in - i*P_field_in/nSCA,D_h(HT,j),(Rough(HT,j)*D_h(HT,j)),
+				DP_tube[i] = DP_tube[i] + PressureDrop(m_dot_htf,T_htf_ave[i],P_field_in - i*P_field_in/nSCA,D_h(HT,j),Rough(HT,j),
 							 L_SCA[CT],0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0)*HCE_FieldFrac(HT,j);
 
 			}
@@ -5086,9 +5087,9 @@ lab_keep_guess:
 	  3 | P            | Fluid pressure                        | Pa        | float
 	  4 | D            | Diameter of the contact surface       | m         | float
 	  5 | Rough        | Pipe roughness                        | m         | float
-	  6 | L_pipe       | Length of pipe for pressure drop      | m         | float
-	  7 | Nexp         | Number of expansions                  | none      | float
-	  8 | Ncon         | Number of contractions                | none      | float
+      6 | L_pipe       | Length of pipe for pressure drop      | m         | float
+      7 | Nexp         | Number of expansions                  | none      | float
+      8 | Ncon         | Number of contractions                | none      | float
 	  9 | Nels         | Number of standard elbows             | none      | float
 	 10 | Nelm         | Number of medium elbows               | none      | float
 	 11 | Nell         | Number of long elbows                 | none      | float
