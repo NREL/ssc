@@ -1805,7 +1805,7 @@ double C_csp_trough_collector_receiver::field_pressure_drop(double T_db, double 
             int HT = (int)m_SCAInfoArray(i, 0) - 1;    //HCE type
 
             double T_htf_ave = (T_in_SCA[i] + T_out_SCA[i]) / 2.;
-            DP_tube[i] = DP_tube[i] + PressureDrop(m_dot_htf, T_htf_ave, P_field_in - i * P_field_in / m_nSCA, m_D_h(HT, j), m_Rough(HT, j),
+            DP_tube[i] = DP_tube[i] + PressureDrop(m_dot_htf, T_htf_ave, P_field_in - i * P_field_in / m_nSCA, m_D_h(HT, j), m_Rough(HT, j)*m_D_h(HT, j),
                 m_L_SCA[CT], 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)*m_HCE_FieldFrac(HT, j);
 
         }
@@ -3596,7 +3596,7 @@ calc_final_metrics_goto:
 				x1 = 0.0;
 				x2 = 1.0;
 			}
-			m_DP_tube[i] = m_DP_tube[i] + PressureDrop(m_dot_htf, m_TCS_T_htf_ave[i], 1.0, m_D_h(HT, j), m_Rough(HT, j),
+			m_DP_tube[i] = m_DP_tube[i] + PressureDrop(m_dot_htf, m_TCS_T_htf_ave[i], 1.0, m_D_h(HT, j), m_Rough(HT, j)*m_D_h(HT, j),
 				(m_L_SCA[CT] + m_Distance_SCA[CT]), 0.0, 0.0, x1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, x2)*m_HCE_FieldFrac(HT, j);
 			//if(ErrorFound()) return 1
 		}
