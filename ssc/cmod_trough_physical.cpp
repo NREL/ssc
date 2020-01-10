@@ -533,7 +533,7 @@ public:
         //c_trough.m_fthrok = as_integer("fthrok");                 //[-] Flag to allow partial defocusing of the collectors
         c_trough.m_fthrctrl = 2;                                    //[-] Defocusing strategy; hardcode = 2 for now
         c_trough.m_accept_loc = as_integer("accept_loc");           //[-] In acceptance testing mode - temperature sensor location (1=hx,2=loop)
-        c_trough.m_HDR_rough = as_double("HDR_rough");              //[m] Header pipe roughness
+        c_trough.m_HDR_rough = as_double("HDR_rough");              //[-] Header pipe relative roughness
         c_trough.m_theta_stow = as_double("theta_stow");            //[deg] stow angle
         c_trough.m_theta_dep = as_double("theta_dep");              //[deg] deploy angle
         c_trough.m_Row_Distance = as_double("Row_Distance");        //[m] Spacing between rows (centerline to centerline)
@@ -660,7 +660,7 @@ public:
         c_trough.m_D_5 = as_matrix("D_5");                              //[m] Outer glass envelope diameter
         c_trough.m_D_p = as_matrix("D_p");                              //[m] Diameter of the absorber flow plug (optional)
         c_trough.m_Flow_type = as_matrix("Flow_type");                  //[-] Flow type through the absorber
-        c_trough.m_Rough = as_matrix("Rough");                          //[m] Roughness of the internal surface
+        c_trough.m_Rough = as_matrix("Rough");                          //[m] Absolute roughness of the internal surface
         c_trough.m_alpha_env = as_matrix("alpha_env");                  //[-] Envelope absorptance
         // **********************************************************
         

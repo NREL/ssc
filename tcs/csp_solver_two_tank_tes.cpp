@@ -1401,7 +1401,7 @@ int C_csp_two_tank_tes::pressure_drops(double m_dot_sf, double m_dot_pb,
             if (i == gen_first_section + 5) T = T_pb_out;                                 // 10
             i < gen_first_section ? v_dot_ref = v_dot_sf : v_dot_ref = v_dot_pb;
             v_dot = v_dot_rel.at(i) * v_dot_ref;
-            Area = CSP::pi * pow(D, 2) / 4.;
+            Area = CSP::pi * pow(D.at(i), 2) / 4.;
             vel = v_dot / Area;
             rho = this->mc_field_htfProps.dens(T, P);
             Re = this->mc_field_htfProps.Re(T, P, vel, D.at(i));
@@ -1604,19 +1604,19 @@ int size_tes_piping_TandP(HTFProperties &field_htf_props, double T_field_in, dou
     const double P_lo = 1 / 1.e-5;                // atmospheric pressure [Pa]
 
     // P_10
-    ff = CSP::FrictionFactor(pipe_rough, field_htf_props.Re(TES_T_des.at(10), P_lo, vel.at(10), diams.at(10)));
+    ff = CSP::FrictionFactor(pipe_rough / diams.at(10), field_htf_props.Re(TES_T_des.at(10), P_lo, vel.at(10), diams.at(10)));
     TES_P_des.at(10) = 0 +
         CSP::MajorPressureDrop(vel.at(10), rho_avg, ff, L.at(10), diams.at(10)) +
         CSP::MinorPressureDrop(vel.at(10), rho_avg, k_tes_loss_coeffs.at(10));
 
     // P_9
-    ff = CSP::FrictionFactor(pipe_rough, field_htf_props.Re(TES_T_des.at(9), P_lo, vel.at(9), diams.at(9)));
+    ff = CSP::FrictionFactor(pipe_rough / diams.at(9), field_htf_props.Re(TES_T_des.at(9), P_lo, vel.at(9), diams.at(9)));
     TES_P_des.at(9) = TES_P_des.at(10) +
         CSP::MajorPressureDrop(vel.at(9), rho_avg, ff, L.at(9), diams.at(9)) +
         CSP::MinorPressureDrop(vel.at(9), rho_avg, k_tes_loss_coeffs.at(9));
 
     // P_8
-    ff = CSP::FrictionFactor(pipe_rough, field_htf_props.Re(TES_T_des.at(8), P_hi, vel.at(8), diams.at(8)));
+    ff = CSP::FrictionFactor(pipe_rough / diams.at(8), field_htf_props.Re(TES_T_des.at(8), P_hi, vel.at(8), diams.at(8)));
     TES_P_des.at(8) = TES_P_des.at(9) + DP_SGS +
         CSP::MajorPressureDrop(vel.at(8), rho_avg, ff, L.at(8), diams.at(8)) +
         CSP::MinorPressureDrop(vel.at(8), rho_avg, k_tes_loss_coeffs.at(8));
@@ -1628,13 +1628,13 @@ int size_tes_piping_TandP(HTFProperties &field_htf_props, double T_field_in, dou
     }
     else {
         // P_7
-        ff = CSP::FrictionFactor(pipe_rough, field_htf_props.Re(TES_T_des.at(7), P_hi, vel.at(7), diams.at(7)));
+        ff = CSP::FrictionFactor(pipe_rough / diams.at(7), field_htf_props.Re(TES_T_des.at(7), P_hi, vel.at(7), diams.at(7)));
         TES_P_des.at(7) = TES_P_des.at(8) +
             CSP::MajorPressureDrop(vel.at(7), rho_avg, ff, L.at(7), diams.at(7)) +
             CSP::MinorPressureDrop(vel.at(7), rho_avg, k_tes_loss_coeffs.at(7));
 
         // P_6
-        ff = CSP::FrictionFactor(pipe_rough, field_htf_props.Re(TES_T_des.at(6), P_hi, vel.at(6), diams.at(6)));
+        ff = CSP::FrictionFactor(pipe_rough / diams.at(6), field_htf_props.Re(TES_T_des.at(6), P_hi, vel.at(6), diams.at(6)));
         TES_P_des.at(6) = TES_P_des.at(7) +
             CSP::MajorPressureDrop(vel.at(6), rho_avg, ff, L.at(6), diams.at(6)) +
             CSP::MinorPressureDrop(vel.at(6), rho_avg, k_tes_loss_coeffs.at(6));
@@ -1644,7 +1644,7 @@ int size_tes_piping_TandP(HTFProperties &field_htf_props, double T_field_in, dou
     }
 
     // P_3
-    ff = CSP::FrictionFactor(pipe_rough, field_htf_props.Re(TES_T_des.at(3), P_lo, vel.at(3), diams.at(3)));
+    ff = CSP::FrictionFactor(pipe_rough / diams.at(3), field_htf_props.Re(TES_T_des.at(3), P_lo, vel.at(3), diams.at(3)));
     TES_P_des.at(3) = 0 +
         CSP::MajorPressureDrop(vel.at(3), rho_avg, ff, L.at(3), diams.at(3)) +
         CSP::MinorPressureDrop(vel.at(3), rho_avg, k_tes_loss_coeffs.at(3));
@@ -1653,13 +1653,13 @@ int size_tes_piping_TandP(HTFProperties &field_htf_props, double T_field_in, dou
     TES_P_des.at(4) = TES_P_des.at(3);
 
     // P_2
-    ff = CSP::FrictionFactor(pipe_rough, field_htf_props.Re(TES_T_des.at(2), P_hi, vel.at(2), diams.at(2)));
+    ff = CSP::FrictionFactor(pipe_rough / diams.at(2), field_htf_props.Re(TES_T_des.at(2), P_hi, vel.at(2), diams.at(2)));
     TES_P_des.at(2) = P_field_in +
         CSP::MajorPressureDrop(vel.at(2), rho_avg, ff, L.at(2), diams.at(2)) +
         CSP::MinorPressureDrop(vel.at(2), rho_avg, k_tes_loss_coeffs.at(2));
 
     // P_1
-    ff = CSP::FrictionFactor(pipe_rough, field_htf_props.Re(TES_T_des.at(1), P_hi, vel.at(1), diams.at(1)));
+    ff = CSP::FrictionFactor(pipe_rough / diams.at(1), field_htf_props.Re(TES_T_des.at(1), P_hi, vel.at(1), diams.at(1)));
     TES_P_des.at(1) = TES_P_des.at(2) +
         CSP::MajorPressureDrop(vel.at(1), rho_avg, ff, L.at(1), diams.at(1)) +
         CSP::MinorPressureDrop(vel.at(1), rho_avg, k_tes_loss_coeffs.at(1));

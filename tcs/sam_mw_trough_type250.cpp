@@ -251,7 +251,7 @@ tcsvarinfo sam_mw_trough_type250_variables[] = {
 	{ TCS_PARAM,          TCS_NUMBER,           P_NHCEVAR,                "nHCEVar",                                                         "Number of HCE variants per type",         "none",             "",             "",            "4" },
 	{ TCS_PARAM,          TCS_NUMBER,            P_NLOOPS,                 "nLoops",                                                            "Number of loops in the field",         "none",             "",             "",          "230" },
 	{ TCS_PARAM,          TCS_NUMBER,          P_ETA_PUMP,               "eta_pump",                                                                     "HTF pump efficiency",         "none",             "",             "",         "0.85" },
-	{ TCS_PARAM,          TCS_NUMBER,         P_HDR_ROUGH,              "HDR_rough",                                                          "Header pipe relative roughness",            "-",             "",             "",     "4.57E-05" },
+	{ TCS_PARAM,          TCS_NUMBER,         P_HDR_ROUGH,              "HDR_rough",                                                                   "Header pipe roughness",            "m",             "",             "",     "4.57E-05" },
 	{ TCS_PARAM,          TCS_NUMBER,        P_THETA_STOW,             "theta_stow",                                                                              "stow angle",          "deg",             "",             "",          "170" },
 	{ TCS_PARAM,          TCS_NUMBER,         P_THETA_DEP,              "theta_dep",                                                                            "deploy angle",          "deg",             "",             "",           "10" },
 	{ TCS_PARAM,          TCS_NUMBER,      P_ROW_DISTANCE,           "Row_Distance",                                         "Spacing between rows (centerline to centerline)",            "m",             "",             "",           "15" },
@@ -326,7 +326,7 @@ tcsvarinfo sam_mw_trough_type250_variables[] = {
 	{ TCS_PARAM,          TCS_MATRIX,               P_D_5,                 "D_5",                                                      "The outer glass envelope diameter ",            "m",             "",             "","[0.12,0.12,0.12,0.12][0.12,0.12,0.12,0.12][0.12,0.12,0.12,0.12][0.12,0.12,0.12,0.12]" },
 	{ TCS_PARAM,          TCS_MATRIX,               P_D_P,                 "D_p",                                      "The diameter of the absorber flow plug (optional) ",            "m",             "",             "","[0,0,0,0][0,0,0,0][0,0,0,0][0,0,0,0]" },
 	{ TCS_PARAM,          TCS_MATRIX,         P_FLOW_TYPE,           "Flow_type",                                                      "The flow type through the absorber",         "none",             "",             "","[1,1,1,1][1,1,1,1][1,1,1,1][1,1,1,1]" },
-	{ TCS_PARAM,          TCS_MATRIX,             P_ROUGH,               "Rough",                                             "Relative roughness of the internal surface ",            "-",             "",             "","[4.50E-05,4.50E-05,4.50E-05,4.50E-05][4.50E-05,4.50E-05,4.50E-05,4.50E-05][4.50E-05,4.50E-05,4.50E-05,4.50E-05][4.50E-05,4.50E-05,4.50E-05,4.50E-05]" },
+	{ TCS_PARAM,          TCS_MATRIX,             P_ROUGH,               "Rough",                                                      "Roughness of the internal surface ",            "m",             "",             "","[4.50E-05,4.50E-05,4.50E-05,4.50E-05][4.50E-05,4.50E-05,4.50E-05,4.50E-05][4.50E-05,4.50E-05,4.50E-05,4.50E-05][4.50E-05,4.50E-05,4.50E-05,4.50E-05]" },
 	{ TCS_PARAM,          TCS_MATRIX,         P_ALPHA_ENV,           "alpha_env",                                                                   "Envelope absorptance ",         "none",             "",             "","[0.02,0.02,0,0][0.02,0.02,0,0][0.02,0.02,0,0][0.02,0.02,0,0]" },
 	{ TCS_PARAM,          TCS_MATRIX,      P_EPSILON_3_11,        "epsilon_3_11",                                       "Absorber emittance - HCE type 1 - HCE variation 1",         "none",             "",             "","[100,150,200,250,300,350,400,450,500][0.064,0.0665,0.07,0.0745,0.08,0.0865,0.094,0.1025,0.112]" },
 	{ TCS_PARAM,          TCS_MATRIX,      P_EPSILON_3_12,        "epsilon_3_12",                                       "Absorber emittance - HCE type 1 - HCE variation 2",         "none",             "",             "",        "0,.65" },
@@ -468,7 +468,7 @@ private:
 	int nHCEVar;		//Number of HCE variants per type
 	int nLoops;		//Number of loops in the field
 	double eta_pump;		//HTF pump efficiency
-	double HDR_rough;		//Header pipe relative roughness
+	double HDR_rough;		//Header pipe roughness
 	double theta_stow;		//stow angle
 	double theta_dep;		//deploy angle
 	double Row_Distance;		//Spacing between rows (centerline to centerline)
@@ -1129,7 +1129,7 @@ public:
 		nHCEVar = (int)value(P_NHCEVAR);		//Number of HCE variants per type [none]
 		nLoops = (int)value(P_NLOOPS);		//Number of loops in the field [none]
 		eta_pump = value(P_ETA_PUMP);		//HTF pump efficiency [none]
-		HDR_rough = value(P_HDR_ROUGH);		//Header pipe relative roughness [-]
+		HDR_rough = value(P_HDR_ROUGH);		//Header pipe roughness [m]
 		theta_stow = value(P_THETA_STOW);		//stow angle [deg]
 		theta_dep = value(P_THETA_DEP);		//deploy angle [deg]
 		Row_Distance = value(P_ROW_DISTANCE);		//Spacing between rows (centerline to centerline) [m]
@@ -3033,9 +3033,9 @@ calc_final_metrics_goto:
 			for( int i = 0; i<nrunsec; i++ )
 			{
                 (i < nrunsec - 1 ? x3 = 1.0 : x3 = 0.0);  // contractions/expansions
-                DP_rnr[i] = PressureDrop(m_dot_temp, T_loop_in, P_field_in, D_runner[i], HDR_rough * D_runner[i],
+                DP_rnr[i] = PressureDrop(m_dot_temp, T_loop_in, P_field_in, D_runner[i], HDR_rough,
                     L_runner[i], 0.0, x3, 0.0, 0.0, N_rnr_xpans[i] * elbows_per_xpan, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0);
-                DP_rnr[2*nrunsec - i - 1] = PressureDrop(m_dot_temp, T_loop_outX, 1.e5, D_runner[2 * nrunsec - i - 1], HDR_rough * D_runner[2 * nrunsec - i - 1],
+                DP_rnr[2*nrunsec - i - 1] = PressureDrop(m_dot_temp, T_loop_outX, 1.e5, D_runner[2 * nrunsec - i - 1], HDR_rough,
                     L_runner[2 * nrunsec - i - 1], x3, 0.0, 0.0, 0.0, N_rnr_xpans[2 * nrunsec - i - 1] * elbows_per_xpan, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0);
 
 				if( i>1 )
@@ -3056,7 +3056,7 @@ calc_final_metrics_goto:
 						x2 = 1.;
 				}
 
-                DP_hdr[i] = PressureDrop(m_dot_hdr, T_loop_in, P_field_in, D_hdr[i], HDR_rough * D_hdr[i],
+                DP_hdr[i] = PressureDrop(m_dot_hdr, T_loop_in, P_field_in, D_hdr[i], HDR_rough,
                     L_hdr[i], 0.0, x2, 0.0, 0.0, N_hdr_xpans[i] * 4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
 				//if(ErrorFound()) return 1
 				//Siphon off header mass flow rate at each loop.  Multiply by 2 because there are 2 loops per hdr section
@@ -3075,7 +3075,7 @@ calc_final_metrics_goto:
                         x2 = 1.;
                 }
 
-                DP_hdr[i] = PressureDrop(m_dot_hdr, T_loop_outX, 1.e5, D_hdr[i], HDR_rough * D_hdr[i],
+                DP_hdr[i] = PressureDrop(m_dot_hdr, T_loop_outX, 1.e5, D_hdr[i], HDR_rough,
                     L_hdr[i], x2, 0.0, 0.0, 0.0, N_hdr_xpans[i] * 4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
                 //if(ErrorFound()) return 1
                 //Add to header mass flow rate at each loop.  Multiply by 2 because there are 2 loops per hdr section
