@@ -174,7 +174,7 @@ protected:
 	std::unique_ptr<gridVariables> gridVars;
 
 	// outputs
-	ssc_number_t * p_genGrid_kW;
+	ssc_number_t * p_gen_kW;
 	ssc_number_t * p_genPreCurtailment_kW;
 	ssc_number_t * p_genPreInterconnect_kW;
 

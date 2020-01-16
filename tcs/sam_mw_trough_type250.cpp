@@ -326,7 +326,7 @@ tcsvarinfo sam_mw_trough_type250_variables[] = {
 	{ TCS_PARAM,          TCS_MATRIX,               P_D_5,                 "D_5",                                                      "The outer glass envelope diameter ",            "m",             "",             "","[0.12,0.12,0.12,0.12][0.12,0.12,0.12,0.12][0.12,0.12,0.12,0.12][0.12,0.12,0.12,0.12]" },
 	{ TCS_PARAM,          TCS_MATRIX,               P_D_P,                 "D_p",                                      "The diameter of the absorber flow plug (optional) ",            "m",             "",             "","[0,0,0,0][0,0,0,0][0,0,0,0][0,0,0,0]" },
 	{ TCS_PARAM,          TCS_MATRIX,         P_FLOW_TYPE,           "Flow_type",                                                      "The flow type through the absorber",         "none",             "",             "","[1,1,1,1][1,1,1,1][1,1,1,1][1,1,1,1]" },
-	{ TCS_PARAM,          TCS_MATRIX,             P_ROUGH,               "Rough",                                                      "Roughness of the internal surface ",            "m",             "",             "","[4.50E-05,4.50E-05,4.50E-05,4.50E-05][4.50E-05,4.50E-05,4.50E-05,4.50E-05][4.50E-05,4.50E-05,4.50E-05,4.50E-05][4.50E-05,4.50E-05,4.50E-05,4.50E-05]" },
+	{ TCS_PARAM,          TCS_MATRIX,             P_ROUGH,               "Rough",                                         "Relative roughness of the internal HCE surface ",            "-",             "",             "","[4.50E-05,4.50E-05,4.50E-05,4.50E-05][4.50E-05,4.50E-05,4.50E-05,4.50E-05][4.50E-05,4.50E-05,4.50E-05,4.50E-05][4.50E-05,4.50E-05,4.50E-05,4.50E-05]" },
 	{ TCS_PARAM,          TCS_MATRIX,         P_ALPHA_ENV,           "alpha_env",                                                                   "Envelope absorptance ",         "none",             "",             "","[0.02,0.02,0,0][0.02,0.02,0,0][0.02,0.02,0,0][0.02,0.02,0,0]" },
 	{ TCS_PARAM,          TCS_MATRIX,      P_EPSILON_3_11,        "epsilon_3_11",                                       "Absorber emittance - HCE type 1 - HCE variation 1",         "none",             "",             "","[100,150,200,250,300,350,400,450,500][0.064,0.0665,0.07,0.0745,0.08,0.0865,0.094,0.1025,0.112]" },
 	{ TCS_PARAM,          TCS_MATRIX,      P_EPSILON_3_12,        "epsilon_3_12",                                       "Absorber emittance - HCE type 1 - HCE variation 2",         "none",             "",             "",        "0,.65" },
@@ -1342,11 +1342,12 @@ public:
         D_cpnt.assign(D_cpnt_in, nrow_D_cpnt, ncol_D_cpnt);
         L_cpnt.assign(L_cpnt_in, nrow_L_cpnt, ncol_L_cpnt);
         Type_cpnt.assign(Type_cpnt_in, nrow_Type_cpnt, ncol_Type_cpnt);
-        rough_cpnt.resize_fill(nrow_K_cpnt, ncol_K_cpnt, HDR_rough);
+        rough_cpnt.resize(nrow_K_cpnt, ncol_K_cpnt);
         u_cpnt.resize_fill(nrow_K_cpnt, ncol_K_cpnt, Pipe_hl_coef);
         mc_cpnt.resize(nrow_K_cpnt, ncol_K_cpnt);
         for (std::size_t i = 0; i < mc_cpnt.ncells(); i++) {
             mc_cpnt[i] = mc_bal_sca * 3.6e3 * L_cpnt[i];
+            rough_cpnt[i] = HDR_rough / D_cpnt[i];
         }
 
         interconnects.reserve(nrow_K_cpnt);  // nrow_K_cpnt = number of interconnects
@@ -2968,7 +2969,7 @@ calc_final_metrics_goto:
 				int CT = (int)SCAInfoArray(i,1)-1;    //Collector type    
 				int HT = (int)SCAInfoArray(i,0)-1;    //HCE type
         
-				DP_tube[i] = DP_tube[i] + PressureDrop(m_dot_htf,T_htf_ave[i],P_field_in - i*P_field_in/nSCA,D_h(HT,j),(Rough(HT,j)*D_h(HT,j)),
+				DP_tube[i] = DP_tube[i] + PressureDrop(m_dot_htf,T_htf_ave[i],P_field_in - i*P_field_in/nSCA,D_h(HT,j),Rough(HT,j)*D_h(HT, j),
 							 L_SCA[CT],0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0)*HCE_FieldFrac(HT,j);
 
 			}
@@ -5086,9 +5087,9 @@ lab_keep_guess:
 	  3 | P            | Fluid pressure                        | Pa        | float
 	  4 | D            | Diameter of the contact surface       | m         | float
 	  5 | Rough        | Pipe roughness                        | m         | float
-	  6 | L_pipe       | Length of pipe for pressure drop      | m         | float
-	  7 | Nexp         | Number of expansions                  | none      | float
-	  8 | Ncon         | Number of contractions                | none      | float
+      6 | L_pipe       | Length of pipe for pressure drop      | m         | float
+      7 | Nexp         | Number of expansions                  | none      | float
+      8 | Ncon         | Number of contractions                | none      | float
 	  9 | Nels         | Number of standard elbows             | none      | float
 	 10 | Nelm         | Number of medium elbows               | none      | float
 	 11 | Nell         | Number of long elbows                 | none      | float
