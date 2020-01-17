@@ -115,6 +115,41 @@ extern const var_info var_info_invalid;
 
 class handler_interface; // forward decl
 
+class check_error : public general_error
+{
+public:
+    check_error( const std::string &cur_var, const std::string &reason, const std::string &expr )
+            : general_error( "check fail: reason " + reason + ", with '" + expr + "' for: " + cur_var ) {  }
+};
+
+class constraint_error : public general_error
+{
+public:
+    constraint_error( const std::string &cur_var, const std::string &reason, const std::string &expr )
+            : general_error( "constraint fail: reason " + reason + ", with '" + expr + "' for: " + cur_var ) {  }
+};
+
+class exec_error : public general_error
+{
+public:
+    exec_error( const std::string &mod_name, const std::string &reason )
+            : general_error( "exec fail(" + mod_name + "): " + reason ) {  }
+};
+
+class mismatch_error : public general_error
+{
+public:
+    mismatch_error( int required, int specified, const std::string &reason )
+            : general_error(util::format("size mismatch error with %d required, but %d given: %s", required, specified, reason.c_str())) {  }
+};
+
+class timestep_error : public general_error
+{
+public:
+    timestep_error( double start, double end, double step, const char *reason )
+            : general_error( util::format("timestep fail(%lg %lg %lg): %s", start, end, step, reason) ) {  }
+};
+
 class compute_module
 {
 public:
@@ -122,63 +157,13 @@ public:
 	{
 	public:
 		log_item() { }
-		log_item(int t, const std::string &s, float f=-1.0) 
-			: type(t), text(s), time(f) {  }
+		log_item(int t, std::string s, float f=-1.0)
+			: type(t), text(move(s)), time(f) {  }
 
 		int type;
+
 		std::string text;
 		float time;
-	};
-	
-	class general_error : public std::exception
-	{
-	public:
-		general_error(const std::string &s, float t=-1.0) : err_text(s), time(t) { }
-		virtual ~general_error() { }
-		std::string err_text;
-		float time;
-	};
-
-	class cast_error : public general_error
-	{
-	public:
-		cast_error(const char *target_type, var_data &source, const std::string &name)
-			: general_error( "cast fail: <" + std::string(target_type) + "> from " + std::string(source.type_name()) + " for: " + name ) { }
-	};
-
-	class check_error : public general_error
-	{
-	public:
-		check_error( const std::string &cur_var, const std::string &reason, const std::string &expr )
-			: general_error( "check fail: reason " + reason + ", with '" + expr + "' for: " + cur_var ) {  }
-	};
-
-	class constraint_error : public general_error
-	{
-	public:
-		constraint_error( const std::string &cur_var, const std::string &reason, const std::string &expr )
-			: general_error( "constraint fail: reason " + reason + ", with '" + expr + "' for: " + cur_var ) {  }
-	};
-
-	class exec_error : public general_error
-	{
-	public:
-		exec_error( const std::string &mod_name, const std::string &reason )
-			: general_error( "exec fail(" + mod_name + "): " + reason ) {  }
-	};
-
-	class mismatch_error : public general_error
-	{
-	public:
-		mismatch_error( int required, int specified, const std::string &reason )
-			: general_error(util::format("size mismatch error with %d required, but %d given: %s", required, specified, reason.c_str())) {  }
-	};
-
-	class timestep_error : public general_error
-	{
-	public:
-		timestep_error( double start, double end, double step, const char *reason )
-			: general_error( util::format("timestep fail(%lg %lg %lg): %s", start, end, step, reason) ) {  }
 	};
 
 public:
@@ -210,6 +195,11 @@ public:
 	virtual bool on_extproc_output( const std::string & ) { return false; }	
 	
 protected:
+    /* these members are take values only during a call to 'compute(..)'
+  and are NULL otherwise */
+    handler_interface   *m_handler;
+    var_table           *m_vartab;
+
 	/* must be implemented to perform calculations
 	   note: can throw exceptions of type 'compute_module::error' */
 	virtual void exec( ) = 0;
@@ -279,11 +269,6 @@ private:
 	std::vector< log_item > m_loglist;
 	
 	unordered_map< std::string, var_info* > *m_infomap;
-
-	/* these members are take values only during a call to 'compute(..)'
-	  and are NULL otherwise */
-	handler_interface   *m_handler;
-	var_table           *m_vartab;
 };
 
 

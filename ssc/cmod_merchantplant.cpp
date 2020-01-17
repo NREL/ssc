@@ -702,6 +702,8 @@ static var_info _cm_vtab_merchantplant[] = {
 	{ SSC_OUTPUT, SSC_NUMBER, "min_dscr", "Minimum DSCR", "", "", "DSCR", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_pretax_dscr", "DSCR (pre-tax)", "", "", "DSCR", "*", "LENGTH_EQUAL=cf_length", "" },
 
+	{ SSC_INPUT,        SSC_ARRAY,       "system_pre_curtailment_kwac",     "System power before grid curtailment",  "kW",       "System generation" "",                 "",                        "",                              "" },
+
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_curtailed", "Curtailed energy", "kWh", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_curtailment_value", "Curtailment payment revenue", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_capacity_payment", "Capacity payment revenue", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
@@ -726,6 +728,11 @@ static var_info _cm_vtab_merchantplant[] = {
 
 	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_curtailment_revenue",                        "Present value of curtailment payment revenue",              "$",                   "", "Metrics", "*", "", "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_capacity_revenue",                        "Present value of capacity payment revenue",              "$",                   "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_energy_market_revenue",                        "Present value of energy market revenue",              "$",                   "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_ancillary_services_1_revenue",                        "Present value of ancillary services 1 revenue",              "$",                   "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_ancillary_services_2_revenue",                        "Present value of ancillary services 2 revenue",              "$",                   "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_ancillary_services_3_revenue",                        "Present value of ancillary services 3 revenue",              "$",                   "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_ancillary_services_4_revenue",                        "Present value of ancillary services 4 revenue",              "$",                   "", "Metrics", "*", "", "" },
 		// only count toward revenue if user selected
 	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_fed_pbi_income",                        "Present value of federal PBI income",              "$",                   "", "Metrics", "*", "", "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_sta_pbi_income",                        "Present value of state PBI income",              "$",                   "", "Metrics", "*", "", "" },
@@ -733,6 +740,28 @@ static var_info _cm_vtab_merchantplant[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_oth_pbi_income",                        "Present value of other PBI income",              "$",                   "", "Metrics", "*", "", "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_salvage_value",                        "Present value of salvage value",              "$",                   "", "Metrics", "*", "", "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_thermal_value",                        "Present value of thermal value",              "$",                   "", "Metrics", "*", "", "" },
+	// Additional lifetime outputs for data tables and plotting.
+		// calculated revenue
+	{ SSC_OUTPUT, SSC_ARRAY, "mp_energy_market_generated_revenue", "Energy market generated revenue", "$", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "mp_ancillary_services1_generated_revenue", "Ancillary services 1 generated revenue", "$", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "mp_ancillary_services2_generated_revenue", "Ancillary services 2 generated revenue", "$", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "mp_ancillary_services3_generated_revenue", "Ancillary services 3 generated revenue", "$", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "mp_ancillary_services4_generated_revenue", "Ancillary services 4 generated revenue", "$", "", "", "*", "", "" },
+		// cleared capacity user input
+	{ SSC_OUTPUT, SSC_ARRAY, "mp_energy_market_cleared_capacity", "Energy market cleared capacity", "MW", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "mp_ancillary_services1_cleared_capacity", "Ancillary services 1 cleared capacity", "MW", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "mp_ancillary_services2_cleared_capacity", "Ancillary services 2 cleared capacity", "MW", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "mp_ancillary_services3_cleared_capacity", "Ancillary services 3 cleared capacity", "MW", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "mp_ancillary_services4_cleared_capacity", "Ancillary services 4 cleared capacity", "MW", "", "", "*", "", "" },
+		// price user input
+	{ SSC_OUTPUT, SSC_ARRAY, "mp_energy_market_price", "Energy market price", "$/MWh", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "mp_ancillary_services1_price", "Ancillary services 1 generated price", "$/MWh", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "mp_ancillary_services2_price", "Ancillary services 2 generated price", "$/MWh", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "mp_ancillary_services3_price", "Ancillary services 3 generated price", "$/MWh", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "mp_ancillary_services4_price", "Ancillary services 4 generated price", "$/MWh", "", "", "*", "", "" },
+		// sum of all cleared capacities
+	{ SSC_OUTPUT, SSC_ARRAY, "mp_total_cleared_capacity", "Total cleared capacity", "MW", "", "", "*", "", "" },
+
 
 
 var_info_invalid };
@@ -1019,43 +1048,27 @@ public:
 			}
 		}
 
-		// merchant plant additional revenue streams
-		var_table* vd = new var_table;
-		vd->assign("analysis_period", *lookup("analysis_period"));
-		vd->assign("mp_enable_energy_market_revenue", *lookup("mp_enable_energy_market_revenue"));
-		vd->assign("mp_enable_ancserv1", *lookup("mp_enable_ancserv1"));
-		vd->assign("mp_enable_ancserv2", *lookup("mp_enable_ancserv2"));
-		vd->assign("mp_enable_ancserv3", *lookup("mp_enable_ancserv3"));
-		vd->assign("mp_enable_ancserv4", *lookup("mp_enable_ancserv4"));
-		vd->assign("mp_energy_market_revenue", *lookup("mp_energy_market_revenue"));
-		vd->assign("mp_ancserv1_revenue", *lookup("mp_ancserv1_revenue"));
-		vd->assign("mp_ancserv2_revenue", *lookup("mp_ancserv2_revenue"));
-		vd->assign("mp_ancserv3_revenue", *lookup("mp_ancserv3_revenue"));
-		vd->assign("mp_ancserv4_revenue", *lookup("mp_ancserv4_revenue"));
-		vd->assign("gen", *lookup("gen"));
-		vd->assign("mp_calculate_revenue", var_data(ssc_number_t(1.0)));
-
-
-		mp_ancillary_services(vd);
-		if (vd->lookup("mp_ancillary_services")->num == 0)
+		assign("mp_calculate_revenue", var_data(ssc_number_t(1.0)));
+		mp_ancillary_services(m_vartab);
+		if (lookup("mp_ancillary_services")->num == 0)
 		{
 			std::ostringstream ss;
-			ss << "The generation is not sufficient to meet the ancillary markets requirements.  Specifically, " << (vd->lookup("mp_ancillary_services_error")->str);
+			ss << "The generation is not sufficient to meet the ancillary markets requirements.  Specifically, " << (lookup("mp_ancillary_services_error")->str);
 			throw exec_error("merchant plant", ss.str());
 		}
 		// return lifetime vectors
-		std::vector<double> mp_energy_market_generated_revenue = vd->lookup("mp_energy_market_generated_revenue")->arr_vector();
-		std::vector<double> mp_ancillary_services1_generated_revenue = vd->lookup("mp_ancillary_services1_generated_revenue")->arr_vector();
-		std::vector<double> mp_ancillary_services2_generated_revenue = vd->lookup("mp_ancillary_services2_generated_revenue")->arr_vector();
-		std::vector<double> mp_ancillary_services3_generated_revenue = vd->lookup("mp_ancillary_services3_generated_revenue")->arr_vector();
-		std::vector<double> mp_ancillary_services4_generated_revenue = vd->lookup("mp_ancillary_services4_generated_revenue")->arr_vector();
+		std::vector<double> mp_energy_market_generated_revenue = lookup("mp_energy_market_generated_revenue")->arr_vector();
+		std::vector<double> mp_ancillary_services1_generated_revenue = lookup("mp_ancillary_services1_generated_revenue")->arr_vector();
+		std::vector<double> mp_ancillary_services2_generated_revenue = lookup("mp_ancillary_services2_generated_revenue")->arr_vector();
+		std::vector<double> mp_ancillary_services3_generated_revenue = lookup("mp_ancillary_services3_generated_revenue")->arr_vector();
+		std::vector<double> mp_ancillary_services4_generated_revenue = lookup("mp_ancillary_services4_generated_revenue")->arr_vector();
 
-		delete vd;
 
-		// calculate revenue per year
+// calculate revenue per year
 		double as_revenue = 0;
 		size_t base_index = 0;
 		size_t n_marketrevenue_per_year = mp_energy_market_generated_revenue.size() / (size_t)nyears;
+//		size_t n_marketrevenue_per_year = max_as_num_recs / (size_t)nyears;
 		for (i = 1; i <= nyears; i++)
 		{
 			as_revenue = 0;
@@ -1304,15 +1317,39 @@ public:
 				cf.at(CF_energy_net, i) = first_year_energy * cf.at(CF_degradation, i);
 		}
 
+
 		// curtailed energy and revenue
 		ssc_number_t pre_curtailement_year1_energy = as_number("annual_energy_pre_curtailment_ac");
 		size_t count_curtailment_price;
 		ssc_number_t *grid_curtailment_price = as_array("grid_curtailment_price", &count_curtailment_price);
 		ssc_number_t grid_curtailment_price_esc = as_number("grid_curtailment_price_esc") * 0.01;
 		// does not work with degraded energy production escal_or_annual(CF_curtailment_value, nyears, "grid_curtailment_price", 0.0, pre_curtailement_year1_energy, false, as_double("grid_curtailment_price_esc")*0.01);
+
+		// use "system_pre_curtailment_kwac" input to determine energy curtailed for lifetime output
+		if (as_integer("system_use_lifetime_output") == 1)
+		{
+			size_t count_pre_curtailment_kwac;
+			ssc_number_t *system_pre_curtailment_kwac = as_array("system_pre_curtailment_kwac", &count_pre_curtailment_kwac);
+			size_t num_rec_pre_curtailment_kwac_per_year = count_pre_curtailment_kwac / nyears;
+			// hourly_enet includes all curtailment, availability
+			for (size_t y = 1; y <= (size_t)nyears; y++)
+			{
+				cf.at(CF_energy_curtailed, y) = 0.0;
+				for (size_t h = 0; h < num_rec_pre_curtailment_kwac_per_year; h++)
+				{
+					cf.at(CF_energy_curtailed, y) += system_pre_curtailment_kwac[h + (y-1)*num_rec_pre_curtailment_kwac_per_year];
+				}
+				cf.at(CF_energy_curtailed, y) -= cf.at(CF_energy_net, y);
+			}
+		}
+		else
+		{
+			for (size_t y = 1; y <= (size_t)nyears; y++)
+				cf.at(CF_energy_curtailed, y) = pre_curtailement_year1_energy * cf.at(CF_degradation, y) - cf.at(CF_energy_net, y);
+		}
+
 		for (size_t y = 1; y <= (size_t)nyears; y++)
 		{
-			cf.at(CF_energy_curtailed, y) = pre_curtailement_year1_energy * cf.at(CF_degradation, y) - cf.at(CF_energy_net, y);
 			if (count_curtailment_price == 1)
 				cf.at(CF_curtailment_value, y) = cf.at(CF_energy_curtailed, y) * grid_curtailment_price[0] * pow(1 + grid_curtailment_price_esc, y - 1);
 			else if (y <= count_curtailment_price)// schedule
@@ -2743,6 +2780,11 @@ public:
 	/*
 		{ SSC_OUTPUT,       SSC_NUMBER,     "npv_curtailment_revenue",                        "Present value of curtailment payment revenue",              "$",                   "", "Metrics", "*", "", "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_capacity_revenue",                        "Present value of capacity payment revenue",              "$",                   "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_energy_market_revenue",                        "Present value of energy market revenue",              "$",                   "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_ancillary_services_1_revenue",                        "Present value of ancillary services 1 revenue",              "$",                   "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_ancillary_services_2_revenue",                        "Present value of ancillary services 2 revenue",              "$",                   "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_ancillary_services_3_revenue",                        "Present value of ancillary services 3 revenue",              "$",                   "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_ancillary_services_4_revenue",                        "Present value of ancillary services 4 revenue",              "$",                   "", "Metrics", "*", "", "" },
 		// only count toward revenue if user selected
 	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_fed_pbi_income",                        "Present value of federal PBI income",              "$",                   "", "Metrics", "*", "", "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_sta_pbi_income",                        "Present value of state PBI income",              "$",                   "", "Metrics", "*", "", "" },
@@ -2754,6 +2796,11 @@ public:
 	*/
 	assign("npv_curtailment_revenue", var_data((ssc_number_t)npv(CF_curtailment_value, nyears, nom_discount_rate)));
 	assign("npv_capacity_revenue", var_data((ssc_number_t)npv(CF_capacity_payment, nyears, nom_discount_rate)));
+	assign("npv_energy_market_revenue", var_data((ssc_number_t)npv(CF_energy_market_revenue, nyears, nom_discount_rate)));
+	assign("npv_ancillary_services_1_revenue", var_data((ssc_number_t)npv(CF_ancillary_services_1_revenue, nyears, nom_discount_rate)));
+	assign("npv_ancillary_services_2_revenue", var_data((ssc_number_t)npv(CF_ancillary_services_2_revenue, nyears, nom_discount_rate)));
+	assign("npv_ancillary_services_3_revenue", var_data((ssc_number_t)npv(CF_ancillary_services_3_revenue, nyears, nom_discount_rate)));
+	assign("npv_ancillary_services_4_revenue", var_data((ssc_number_t)npv(CF_ancillary_services_4_revenue, nyears, nom_discount_rate)));
 	assign("npv_fed_pbi_income", var_data((ssc_number_t)npv(CF_pbi_fed, nyears, nom_discount_rate)));
 	assign("npv_sta_pbi_income", var_data((ssc_number_t)npv(CF_pbi_sta, nyears, nom_discount_rate)));
 	assign("npv_uti_pbi_income", var_data((ssc_number_t)npv(CF_pbi_uti, nyears, nom_discount_rate)));

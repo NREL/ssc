@@ -12,7 +12,7 @@
 * CMPVWattsV7 tests cmod_pvwattsv7 using a solar resource file. SetUp() creates default case,
 * which can be modified within each individual test before running compute() and tests.
 */
-class CMPvwattsV7Integration : public ::testing::Test {
+class CMPvwattsV7Integration_cmod_pvwattsv7 : public ::testing::Test {
 protected: //doesn't really matter if this is protected or public, but you need to declare one or the other or it will default to private which doesn't work
 	ssc_data_t data;
 
@@ -32,7 +32,7 @@ protected: //doesn't really matter if this is protected or public, but you need 
 };
 
 //this function will be available to run the pvwattsV7 compute module from within tests
-bool CMPvwattsV7Integration::compute() {
+bool CMPvwattsV7Integration_cmod_pvwattsv7::compute() {
 	ssc_module_t module = ssc_module_create("pvwattsv7");
 	if (NULL == module)
 	{

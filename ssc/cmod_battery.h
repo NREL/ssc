@@ -211,32 +211,42 @@ struct batt_variables
 	double batt_cycle_cost;
 };
 
+struct batt_time_settings
+{
+    int current_year;
+    int current_hr;
+    int current_step;
+
+};
 
 struct battstor
 {
 	/// Pass in the single-year number of records
-	battstor( compute_module &cm, bool setup_model, size_t nrec, double dt_hr, batt_variables *batt_vars=0);
+	battstor(var_table &vt, bool setup_model, size_t nrec, double dt_hr, const std::shared_ptr<batt_variables> batt_vars_in=0);
+
+    battstor(const battstor& orig);
+
 	void parse_configuration();
 
 	/// Initialize automated dispatch with lifetime vectors
-	void initialize_automated_dispatch(std::vector<ssc_number_t> pv= std::vector<ssc_number_t>(), 
-									   std::vector<ssc_number_t> load= std::vector<ssc_number_t>(), 
+	void initialize_automated_dispatch(std::vector<ssc_number_t> pv= std::vector<ssc_number_t>(),
+									   std::vector<ssc_number_t> load= std::vector<ssc_number_t>(),
 									   std::vector<ssc_number_t> cliploss= std::vector<ssc_number_t>());
 	~battstor();
+
 
 	void initialize_time(size_t year, size_t hour_of_year, size_t step);
 
 	/// Run the battery for the current timestep, given the PV power, load, and clipped power
-	void advance(compute_module &cm, double P_pv, double V_pv=0, double P_load=0, double P_pv_clipped=0);
+	void advance(var_table *vt, double P_gen, double V_gen=0, double P_load=0, double P_gen_clipped=0);
 
 	/// Given a DC connected battery, set the shared PV and battery invertr
 	void setSharedInverter(SharedInverter * sharedInverter);
 
-	void outputs_fixed(compute_module &cm);
-	void outputs_topology_dependent(compute_module &cm);
-	void metrics(compute_module &cm);
+	void outputs_fixed();
+	void outputs_topology_dependent();
+	void metrics();
 	void update_grid_power(compute_module &cm, double P_gen_ac, double P_load_ac, size_t index);
-	void process_messages(compute_module &cm);
 
 	/*! Manual dispatch*/
 	bool manual_dispatch = false;
@@ -291,7 +301,7 @@ struct battstor
 	bool en;
 	int chem;
 
-	batt_variables * batt_vars;
+	std::shared_ptr<batt_variables> batt_vars;
 	bool make_vars;
 	
 	/*! Map of profile to discharge percent */
@@ -373,5 +383,7 @@ struct battstor
 	double outAverageRoundtripEfficiency;
 	double outPVChargePercent;
 };
+
+void process_messages(std::shared_ptr<battstor> batt, compute_module* cm);
 
 #endif

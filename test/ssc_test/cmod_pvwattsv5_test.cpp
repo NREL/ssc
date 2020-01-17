@@ -1,12 +1,14 @@
 #include <gtest/gtest.h>
 
 #include "../ssc/core.h"
-#include "../ssc/vartab.h"
+#include "vartab.h"
 #include "../ssc/common.h"
+
+#include "input_cases/weather_inputs.h"
 #include "cmod_pvwattsv5_test.h"
 
 ///Default PVWattsV5, but with TMY2 instead of TMY3
-TEST_F(CMPvwattsV5Integration, DefaultNoFinancialModel_cmod_pvwattsv5){
+TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, DefaultNoFinancialModel){
 	compute();
 
 	double tmp=0;
@@ -39,8 +41,20 @@ TEST_F(CMPvwattsV5Integration, DefaultNoFinancialModel_cmod_pvwattsv5){
 
 }
 
+TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, UsingData){
+    auto weather_data = create_weatherdata_array();
+    ssc_data_unassign(data, "solar_resource_file");
+    ssc_data_set_table(data, "solar_resource_data", &weather_data->table);
+    compute();
+    delete weather_data;
+
+    ssc_number_t capacity_factor;
+    ssc_data_get_number(data, "capacity_factor", &capacity_factor);
+    EXPECT_NEAR(capacity_factor, 11.7368, error_tolerance) << "Capacity factor";
+}
+
 /// PVWattsV5 using different technology input options
-TEST_F(CMPvwattsV5Integration, DifferentTechnologyInputs_cmod_pvwattsv5)
+TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, DifferentTechnologyInputs)
 {
 //	std::vector<double> annual_energy_expected = { 6909.79, 7123.32, 7336.478, 6909.79, 6804.376, 8711.946, 8727.704, 9690.735 };
 	// single axis tracking reduction due to pull request 280
@@ -83,7 +97,7 @@ TEST_F(CMPvwattsV5Integration, DifferentTechnologyInputs_cmod_pvwattsv5)
 }
 
 /// PVWattsV5 using a larger system size
-TEST_F(CMPvwattsV5Integration, LargeSystem_cmod_pvwattsv5)
+TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, LargeSystem_cmod_pvwattsv5)
 {
 	std::vector<double> annual_energy_expected = { 1727447.4, 1701094.0, 2150252.8, 2181925.8, 2422683.7 };
 	std::map<std::string, double> pairs;

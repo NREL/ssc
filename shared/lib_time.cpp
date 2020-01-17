@@ -28,17 +28,22 @@ void single_year_to_lifetime_interpolated(
 {
 	// Parse lifetime properties
 	n_rec_single_year = n_rec_lifetime;
-	dt_hour = (double)(util::hours_per_year) / (double)(n_rec_lifetime);
 
 	if (is_lifetime) {
-		dt_hour = (double)(util::hours_per_year * n_years) / n_rec_lifetime;
 		n_rec_single_year = n_rec_lifetime / n_years;
 	}
 	else {
 		n_years = 1;
 	}
+	dt_hour = (double)(util::hours_per_year * n_years) / n_rec_lifetime;
 	size_t step_per_hour = (size_t)(1 / dt_hour);
 	lifetime_from_singleyear_vector.reserve(n_rec_lifetime);
+
+    if (singleyear_vector.empty() ) {
+        for (size_t i = 0; i < n_rec_lifetime; i++)
+            lifetime_from_singleyear_vector.emplace_back(0);
+        return;
+    }
 
 	// Parse single year properties
 	double dt_hour_singleyear_input = (double)(util::hours_per_year) / (double)(singleyear_vector.size());
@@ -46,7 +51,7 @@ void single_year_to_lifetime_interpolated(
 	T interpolation_factor = (T)step_per_hour / (T)step_per_hour_singleyear_input;
 
 	// Possible that there is no single year vector
-	if (singleyear_vector.size() > 0)
+	if (singleyear_vector.size() > 1)
 	{
 		// Interpolate single year vector to dt_hour
 		std::vector<T> singleyear_sampled;
@@ -80,11 +85,9 @@ void single_year_to_lifetime_interpolated(
 			}
 		}
 	}
-	// In the case of no single year vector, create lifetime vector of zeros
-	else {
-		for (size_t i = 0; i < n_rec_lifetime; i++) {
-			lifetime_from_singleyear_vector.push_back(0);
-		}
+	else if (singleyear_vector.size() == 1) {
+	    for (size_t i = 0; i < n_rec_lifetime; i++)
+	        lifetime_from_singleyear_vector.push_back(singleyear_vector[0]);
 	}
 }
 

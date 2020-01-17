@@ -25,7 +25,8 @@ public:
 	{
 		BatteryProperties::SetUp();
 		capacityModel = new capacity_lithium_ion_t(q, SOC_init, SOC_max, SOC_min);
-		voltageModel = new voltage_dynamic_t(n_series, n_strings, Vnom_default, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom, C_rate, resistance);
+		voltageModel = new voltage_dynamic_t(n_series, n_strings, Vnom_default, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom,
+                                             C_rate, resistance, dtHour);
 		cycleModel = new lifetime_cycle_t(cycleLifeMatrix);
 		calendarModel = new lifetime_calendar_t(calendarChoice, calendarLifeMatrix, dtHour);
 		lifetimeModel = new lifetime_t(cycleModel, calendarModel, replacementOption, replacementCapacity);

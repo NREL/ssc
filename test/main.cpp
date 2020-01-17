@@ -16,7 +16,7 @@ GTEST_API_ int main(int argc, char **argv) {
 //	  ::testing::GTEST_FLAG(filter) = "BatteryPowerFlowTest*";
 //	::testing::GTEST_FLAG(filter) = "CMGeneric*";
 //	::testing::GTEST_FLAG(filter) = "CMGeothermal*";
-	//	::testing::GTEST_FLAG(filter) = "CMPvsamv1PowerIntegration.NoFinancialModelShading";
+//		::testing::GTEST_FLAG(filter) = "CMPvsamv1PowerIntegration.NoFinancialModelShading";
 //	::testing::GTEST_FLAG(filter) = "CMPvwattsV5Integration.DifferentTechnologyInputs";
 //	::testing::GTEST_FLAG(filter) = "CMGeneric.SingleOwnerWithBattery_cmod_generic";
 //	::testing::GTEST_FLAG(filter) = "CM_MHK*";
@@ -24,6 +24,10 @@ GTEST_API_ int main(int argc, char **argv) {
 //	::testing::GTEST_FLAG(filter) = "BifacialIrradTest*";
 //	::testing::GTEST_FLAG(filter) = "FuelCellTest*";
 //	::testing::GTEST_FLAG(filter) = "CMWindPowerIntegration*";
+//	::testing::GTEST_FLAG(filter) = "CMGrid*";
+//	::testing::GTEST_FLAG(filter) = "CMPvsamv1PowerIntegration_cmod_pvsamv1.DefaultNoFinancialModel";
+//	::testing::GTEST_FLAG(filter) = "CMPvsamv1PowerIntegration_cmod_pvsamv1.NoFinancialModelCustomWeatherFile";
+	
 
 	int status = RUN_ALL_TESTS();
 

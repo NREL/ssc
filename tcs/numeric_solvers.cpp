@@ -538,14 +538,10 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 					x_solved = m_x_pos_err;
 					tol_solved = m_y_err_pos;
 					iter_solved = m_iter;
-
-					// Call function again with value we know produces a result
-					double y_eq;
-					call_mono_eq(x_solved, &y_eq);
 				}
 
                 double x_at_lowest = std::numeric_limits<double>::quiet_NaN();
-                if (is_last_x_best(x_at_lowest))
+                if (is_last_x_best(x_at_lowest, y_target))
                 {
                     m_x_guess = x_at_lowest;
                     m_y_err = call_mono_eq_calc_y_err(m_x_guess, y_target);
@@ -572,14 +568,10 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 					x_solved = m_x_neg_err;
 					tol_solved = m_y_err_neg;
 					iter_solved = m_iter;
-
-					// Call function again with value we know produces a result
-					double y_eq;
-					call_mono_eq(x_solved, &y_eq);
 				}
 
                 double x_at_lowest = std::numeric_limits<double>::quiet_NaN();
-                if (is_last_x_best(x_at_lowest))
+                if (is_last_x_best(x_at_lowest, y_target))
                 {
                     m_x_guess = x_at_lowest;
                     m_y_err = call_mono_eq_calc_y_err(m_x_guess, y_target);
@@ -606,14 +598,10 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 					x_solved = m_x_guess;
 					tol_solved = m_y_err;
 					iter_solved = m_iter;
-
-					// Call function again with value we know produces a result
-					double y_eq;
-					call_mono_eq(x_solved, &y_eq);
-				}
+                }
 
                 double x_at_lowest = std::numeric_limits<double>::quiet_NaN();
-                if (is_last_x_best(x_at_lowest))
+                if (is_last_x_best(x_at_lowest, y_target))
                 {
                     m_x_guess = x_at_lowest;
                     m_y_err = call_mono_eq_calc_y_err(m_x_guess, y_target);
@@ -644,14 +632,10 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 					x_solved = m_x_pos_err;
 					tol_solved = m_y_err_pos;
 					iter_solved = m_iter;
-
-					// Call function again with value we know produces a result
-					double y_eq;
-					call_mono_eq(x_solved, &y_eq);
 				}
 
                 double x_at_lowest = std::numeric_limits<double>::quiet_NaN();
-                if (is_last_x_best(x_at_lowest))
+                if (is_last_x_best(x_at_lowest, y_target))
                 {
                     m_x_guess = x_at_lowest;
                     m_y_err = call_mono_eq_calc_y_err(m_x_guess, y_target);
@@ -678,14 +662,10 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 					x_solved = m_x_neg_err;
 					tol_solved = m_y_err_neg;
 					iter_solved = m_iter;
-
-					// Call function again with value we know produces a result
-					double y_eq;
-					call_mono_eq(x_solved, &y_eq);
 				}
 
                 double x_at_lowest = std::numeric_limits<double>::quiet_NaN();
-                if (is_last_x_best(x_at_lowest))
+                if (is_last_x_best(x_at_lowest, y_target))
                 {
                     m_x_guess = x_at_lowest;
                     m_y_err = call_mono_eq_calc_y_err(m_x_guess, y_target);
@@ -712,14 +692,10 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 					x_solved = m_x_guess;
 					tol_solved = m_y_err;
 					iter_solved = m_iter;
-
-					// Call function again with value we know produces a result
-					double y_eq;
-					call_mono_eq(x_solved, &y_eq);
 				}
 
                 double x_at_lowest = std::numeric_limits<double>::quiet_NaN();
-                if (is_last_x_best(x_at_lowest))
+                if (is_last_x_best(x_at_lowest, y_target))
                 {
                     m_x_guess = x_at_lowest;
                     m_y_err = call_mono_eq_calc_y_err(m_x_guess, y_target);
@@ -935,17 +911,21 @@ int C_monotonic_eq_solver::call_mono_eq(double x, double *y)
 	return ms_eq_tracker_temp.err_code;
 }
 
-bool C_monotonic_eq_solver::is_last_x_best(double & x_at_lowest)
+bool C_monotonic_eq_solver::is_last_x_best(double & x_at_lowest, double y_target)
 {
     C_monotonic_eq_solver::S_eq_chars s_eq_chars_min_abs_diff;
 
     bool is_use_last_x = false;
     x_at_lowest = std::numeric_limits<double>::quiet_NaN();
 
-    if (get_min_abs_diff_no_err(s_eq_chars_min_abs_diff))
+    if (get_min_abs_diff_no_err(s_eq_chars_min_abs_diff, y_target))
     {
-        double min_abs_diff = fabs(s_eq_chars_min_abs_diff.y);
-        if (min_abs_diff < m_y_err)
+        double y_err = s_eq_chars_min_abs_diff.y - y_target;
+        if (m_is_err_rel)
+            y_err = y_err / fabs(y_target);
+
+        double min_abs_diff = fabs(y_err);
+        if (min_abs_diff < m_y_err || !std::isfinite(m_y_err))
         {
             x_at_lowest = s_eq_chars_min_abs_diff.x;
 
@@ -956,7 +936,8 @@ bool C_monotonic_eq_solver::is_last_x_best(double & x_at_lowest)
     return is_use_last_x;
 }
 
- bool C_monotonic_eq_solver::get_min_abs_diff_no_err(C_monotonic_eq_solver::S_eq_chars & s_eq_chars_min_abs_diff)
+ bool C_monotonic_eq_solver::get_min_abs_diff_no_err(C_monotonic_eq_solver::S_eq_chars & s_eq_chars_min_abs_diff,
+                                            double y_target)
 {
     int len = ms_eq_call_tracker.size();
     if (len == 0)
@@ -966,20 +947,27 @@ bool C_monotonic_eq_solver::is_last_x_best(double & x_at_lowest)
     
     bool is_found_min = false;
     double min_abs_diff = std::numeric_limits<double>::quiet_NaN();
+    double y_err = std::numeric_limits<double>::quiet_NaN();
 
     for (int i = 0; i < len; i++)
     {
         C_monotonic_eq_solver::S_eq_chars i_ms_eq = ms_eq_call_tracker[i];
         if (i_ms_eq.err_code == 0 && std::isfinite(i_ms_eq.y))
         {
-            if (is_found_min && fabs(i_ms_eq.y) < min_abs_diff)
+            y_err = fabs(i_ms_eq.y - y_target);
+            if (m_is_err_rel)
             {
-                min_abs_diff = i_ms_eq.y;
+                y_err = y_err / fabs(y_target);
+            }
+
+            if (is_found_min && y_err < min_abs_diff)
+            {
+                min_abs_diff = y_err;
                 s_eq_chars_min_abs_diff = i_ms_eq;
             }
             else if (!is_found_min)
             {
-                min_abs_diff = i_ms_eq.y;
+                min_abs_diff = y_err;
                 is_found_min = true;
                 s_eq_chars_min_abs_diff = i_ms_eq;
             }

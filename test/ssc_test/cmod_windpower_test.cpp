@@ -2,7 +2,7 @@
 #include <vector>
 
 #include "../ssc/core.h"
-#include "../ssc/vartab.h"
+#include "vartab.h"
 #include "../ssc/common.h"
 #include "cmod_windpower.h"
 #include "cmod_windpower_test.h"
@@ -104,7 +104,7 @@ TEST_F(CMWindPowerIntegration, UsingInterpolatedSubhourly_cmod_windpower){
 
     const char * SSCDIR = std::getenv("SSCDIR");
     char file[256];
-    int n1 = sprintf(file, "%s/test/input_docs/AR Northwestern-Flat Lands.srw", SSCDIR);
+    sprintf(file, "%s/test/input_docs/AR Northwestern-Flat Lands.srw", SSCDIR);
 
 	ssc_data_set_string(data, "wind_resource_filename", file);
 	bool success = compute();
@@ -118,7 +118,7 @@ TEST_F(CMWindPowerIntegration, UsingInterpolatedSubhourly_cmod_windpower){
 
 
 	// Using 15 min File
-    n1 = sprintf(file, "%s/test/input_docs/AR Northwestern-Flat Lands-15min.srw", SSCDIR);
+	sprintf(file, "%s/test/input_docs/AR Northwestern-Flat Lands-15min.srw", SSCDIR);
 
 	ssc_data_set_string(data, "wind_resource_filename", file);
 	success = compute();
@@ -136,7 +136,7 @@ TEST_F(CMWindPowerIntegration, UsingInterpolatedSubhourly_cmod_windpower){
 	EXPECT_EQ(nEntries, 8760 * 4);
 
 	// Using 5 min File
-    n1 = sprintf(file, "%s/test/input_docs/AR Northwestern-Flat Lands-5min.srw", SSCDIR);
+    sprintf(file, "%s/test/input_docs/AR Northwestern-Flat Lands-5min.srw", SSCDIR);
 
 	ssc_data_set_string(data, "wind_resource_filename", file);
 	success = compute();

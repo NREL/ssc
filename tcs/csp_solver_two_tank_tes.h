@@ -260,7 +260,7 @@ public:
         util::matrix_t<double> tes_wallthicks;    //[m] Imported wall thicknesses for the TES piping as read from the modified output files
         util::matrix_t<double> tes_lengths;       //[m] Imported lengths for the TES piping as read from the modified output files
         bool calc_design_pipe_vals;               //[-] Should the HTF state be calculated at design conditions
-        double pipe_rough;                        //[m] Pipe roughness
+        double pipe_rough;                        //[m] Pipe absolute roughness
         double DP_SGS;                            //[bar] Pressure drop within the steam generator
 
 

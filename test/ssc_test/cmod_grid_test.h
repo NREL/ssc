@@ -7,7 +7,7 @@
 #include "core.h"
 #include "sscapi.h"
 
-#include "../ssc/vartab.h"
+#include "vartab.h"
 #include "../ssc/common.h"
 #include "../input_cases/code_generator_utilities.h"
 #include "../input_cases/grid_common_data.h"
@@ -15,7 +15,7 @@
 /**
  * CMGrid tests the cmod_grid using the SAM code generator to generate data
  */
-class CMGrid : public ::testing::Test {
+class CMGrid_cmod_grid : public ::testing::Test {
 
 public:
 

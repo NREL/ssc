@@ -151,12 +151,12 @@ static var_info _cm_vtab_pvwattsv7[] = {
 		{ SSC_INPUT,        SSC_NUMBER,      "batt_simple_enable",             "Enable Battery",                              "0/1",       "",                                             "System Design",     "?=0",                     "BOOLEAN",                        "" },
 
 		/* outputs */
-		{ SSC_OUTPUT,       SSC_ARRAY,       "gh",                             "Global horizontal irradiance",                "W/m2",      "",                                             "Time Series",      "*",                       "",                          "" },
-		{ SSC_OUTPUT,       SSC_ARRAY,       "dn",                             "Beam irradiance",                             "W/m2",      "",											   "Time Series",      "*",                       "",                          "" },
-		{ SSC_OUTPUT,       SSC_ARRAY,       "df",                             "Diffuse irradiance",                          "W/m2",      "",											   "Time Series",      "*",                       "",                          "" },
-		{ SSC_OUTPUT,       SSC_ARRAY,       "tamb",                           "Ambient temperature",                         "C",         "",										       "Time Series",      "*",                       "",                          "" },
-		{ SSC_OUTPUT,       SSC_ARRAY,       "wspd",                           "Wind speed",                                  "m/s",       "",											   "Time Series",      "*",                       "",                          "" },
-		{ SSC_OUTPUT,       SSC_ARRAY,       "snow",                           "Snow depth",                                  "cm",        "",										       "Time Series",      "",                        "",                          "" },
+		{ SSC_OUTPUT,       SSC_ARRAY,       "gh",                             "Weather file global horizontal irradiance",                "W/m2",      "",                                             "Time Series",      "*",                       "",                          "" },
+		{ SSC_OUTPUT,       SSC_ARRAY,       "dn",                             "Weather file beam irradiance",                             "W/m2",      "",											   "Time Series",      "*",                       "",                          "" },
+		{ SSC_OUTPUT,       SSC_ARRAY,       "df",                             "Weather file diffuse irradiance",                          "W/m2",      "",											   "Time Series",      "*",                       "",                          "" },
+		{ SSC_OUTPUT,       SSC_ARRAY,       "tamb",                           "Weather file ambient temperature",                         "C",         "",										       "Time Series",      "*",                       "",                          "" },
+		{ SSC_OUTPUT,       SSC_ARRAY,       "wspd",                           "Weather file wind speed",                                  "m/s",       "",											   "Time Series",      "*",                       "",                          "" },
+		{ SSC_OUTPUT,       SSC_ARRAY,       "snow",                           "Weather file snow depth",                                  "cm",        "",										       "Time Series",      "",                        "",                          "" },
 
 		{ SSC_OUTPUT,       SSC_ARRAY,       "sunup",                          "Sun up over horizon",                         "0/1",       "",                                             "Time Series",      "*",                       "",                          "" },
 		{ SSC_OUTPUT,       SSC_ARRAY,       "shad_beam_factor",               "Shading factor for beam radiation",           "",          "",                                             "Time Series",      "*",                       "",                                     "" },
@@ -164,6 +164,7 @@ static var_info _cm_vtab_pvwattsv7[] = {
 		{ SSC_OUTPUT,       SSC_ARRAY,       "poa",                            "Plane of array irradiance",                   "W/m2",      "",                                             "Time Series",      "*",                       "",                          "" },
 		{ SSC_OUTPUT,       SSC_ARRAY,       "tpoa",                           "Transmitted plane of array irradiance",       "W/m2",      "",                                             "Time Series",      "*",                       "",                          "" },
 		{ SSC_OUTPUT,       SSC_ARRAY,       "tcell",                          "Module temperature",                          "C",         "",                                             "Time Series",      "*",                       "",                          "" },
+		{ SSC_OUTPUT,       SSC_ARRAY,       "dcsnowderate",                   "Array DC power loss due to snow",            "%",         "",                                             "Time Series",      "*",                       "",                          "" },
 
 		{ SSC_OUTPUT,       SSC_ARRAY,       "dc",                             "DC array power",                              "W",         "",                                             "Time Series",      "*",                       "",                          "" },
 		{ SSC_OUTPUT,       SSC_ARRAY,       "ac",                             "AC inverter power",                           "W",         "",                                             "Time Series",      "*",                       "",                          "" },
@@ -177,9 +178,8 @@ static var_info _cm_vtab_pvwattsv7[] = {
 		{ SSC_OUTPUT,       SSC_NUMBER,      "solrad_annual",                  "Daily average solar irradiance",              "kWh/m2/day","",                                             "Annual",      "*",                       "",                          "" },
 		{ SSC_OUTPUT,       SSC_NUMBER,      "ac_annual",                      "Annual AC system output",                     "kWh",       "",                                             "Annual",      "*",                       "",                          "" },
 		{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",                  "Annual energy",                               "kWh",       "",                                             "Annual",      "*",                       "",                          "" },
-
 		{ SSC_OUTPUT,       SSC_NUMBER,      "capacity_factor",                "Capacity factor",                             "%",         "",                                             "Annual",        "*",                       "",                          "" },
-		{ SSC_OUTPUT,       SSC_NUMBER,      "kwh_per_kw",                     "Energy yeld",                           "kWh/kW",          "",                                             "Annual",        "*",                       "",                          "" },
+		{ SSC_OUTPUT,       SSC_NUMBER,      "kwh_per_kw",                     "Energy yield",                           "kWh/kW",          "",                                             "Annual",        "*",                       "",                          "" },
 
 		{ SSC_OUTPUT,       SSC_STRING,      "location",                       "Location ID",                                 "",          "",                                             "Location",      "*",                       "",                          "" },
 		{ SSC_OUTPUT,       SSC_STRING,      "city",                           "City",                                        "",          "",                                             "Location",      "*",                       "",                          "" },
@@ -189,7 +189,6 @@ static var_info _cm_vtab_pvwattsv7[] = {
 		{ SSC_OUTPUT,       SSC_NUMBER,      "tz",                             "Time zone",                                   "hr",        "",                                             "Location",      "*",                       "",                          "" },
 		{ SSC_OUTPUT,       SSC_NUMBER,      "elev",                           "Site elevation",                              "m",         "",                                             "Location",      "*",                       "",                          "" },
 		
-		{ SSC_OUTPUT,       SSC_NUMBER,      "inverter_count",                 "Inverter count",							  "",          "",                                             "",             "", "", "" },
 		{ SSC_OUTPUT,       SSC_NUMBER,      "inverter_efficiency",            "Inverter efficiency at rated power",          "%",         "",                                             "PVWatts",      "",                        "",                              "" },
 		{ SSC_OUTPUT,       SSC_NUMBER,      "estimated_rows",				   "Estimated number of rows in the system",	  "",          "",                                             "PVWatts",      "",                        "",                              "" },
 
@@ -409,14 +408,15 @@ public:
 		module.type = (module_type)as_integer("module_type");
 		switch (module.type)
 		{
-		case STANDARD: //need to update or get source for defaults!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-			module.gamma = -0.0047; // -0.0038; latter is updated from aron
-			module.ar_glass = false;
-			module.ff = 0.771; //fill factors required for self-shading calculations
-			module.stc_eff = 0.17;
+		case STANDARD:
+			module.gamma = -0.0037;
+			module.ar_glass = true;
+			module.ff = 0.778; //fill factors required for self-shading calculations
+			module.stc_eff = 0.19;
 
 			// for optional SDM module model: 
 			// selected module from PVsyst PAN database: TSM-330DD14A(II)
+			// note that this is a DIFFERENT module than the four main factors listed above
 			sdm.Area = 1.940;
 			sdm.Vmp = 37.8;
 			sdm.Imp = 8.73;
@@ -436,13 +436,14 @@ public:
 			break;
 
 		case PREMIUM:
-			module.gamma = -0.0035; //-0.0030; latter is updated from aron
+			module.gamma = -0.0035;
 			module.ar_glass = true;
-			module.ff = 0.801;
-			module.stc_eff = 0.201;
+			module.ff = 0.780;
+			module.stc_eff = 0.21;
 
 			// for optional SDM module model: 
 			// selected module from PVsyst PAN database: SPR-X20-327-COM
+			// note that this is a DIFFERENT module than the four main factors listed above
 			sdm.Area = 1.630;
 			sdm.Vmp = 59.5;
 			sdm.Imp = 5.49;
@@ -462,13 +463,14 @@ public:
 			break;
 
 		case THINFILM:
-			module.gamma = -0.0020; // -0.0028; latter is updated from aron
-			module.ar_glass = false;
-			module.ff = 0.706;
-			module.stc_eff = 0.156;
+			module.gamma = -0.0032;
+			module.ar_glass = true;
+			module.ff = 0.777;
+			module.stc_eff = 0.18;
 
 			// for optional SDM module model: 
 			// selected module from PVsyst PAN database: FS-4112-3
+			// note that this is a DIFFERENT module than the four main factors listed above
 			sdm.Area = 0.72;
 			sdm.Vmp = 68.5;
 			sdm.Imp = 1.64;
@@ -631,7 +633,7 @@ public:
 			}
 			else {
 				if (dc_degradation.size() != nyears)
-					throw exec_error("pvwattsv5", "length of degradation array must be equal to analysis period");
+					throw exec_error("pvwattsv7", "length of degradation array must be equal to analysis period");
 				for (size_t y = 0; y < nyears; y++) {
 					degradationFactor.push_back(1.0 - dc_degradation[y] / 100.0);
 				}
@@ -1098,7 +1100,7 @@ public:
 						if (en_snowloss)
 						{
 							float smLoss = 0.0f;
-							if (snowmodel.getLoss(
+							if (!snowmodel.getLoss(
 								(float)poa, (float)stilt,
 								(float)wf.wspd, (float)wf.tdry, (float)wf.snow,
 								sunup, (float)ts_hour,
@@ -1251,7 +1253,6 @@ public:
 		assign("land_acres", var_data((ssc_number_t)(landf * module_m2 / gcr_for_land * 0.0002471)));
 
 		// for battery model, specify a number of inverters
-		assign("inverter_count", var_data((ssc_number_t)1));
 		assign("inverter_efficiency", var_data((ssc_number_t)(as_double("inv_eff"))));
 
 		// metric outputs

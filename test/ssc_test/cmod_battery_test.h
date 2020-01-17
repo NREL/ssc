@@ -7,7 +7,7 @@
 #include "core.h"
 #include "sscapi.h"
 
-#include "../ssc/vartab.h"
+#include "vartab.h"
 #include "../ssc/common.h"
 #include "../input_cases/code_generator_utilities.h"
 #include "../input_cases/battery_common_data.h"
@@ -17,7 +17,7 @@
  * Eventually a method can be written to write this data to a vartable so that lower-level methods of pvsamv1 can be tested
  * For now, this uses the SSCAPI interfaces to run the compute module and compare results
  */
-class CMBattery : public ::testing::Test {
+class CMBattery_cmod_battery : public ::testing::Test {
 
 public:
 
