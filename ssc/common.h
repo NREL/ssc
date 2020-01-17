@@ -35,9 +35,15 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 extern var_info vtab_standard_financial[];
 extern var_info vtab_standard_loan[];
 extern var_info vtab_oandm[];
+extern var_info vtab_equip_reserve[];
 extern var_info vtab_depreciation[];
+extern var_info vtab_depreciation_inputs[];
+extern var_info vtab_depreciation_outputs[];
 extern var_info vtab_tax_credits[];
 extern var_info vtab_payment_incentives[];
+extern var_info vtab_debt[];
+extern var_info vtab_ppa_soln[];
+extern var_info vtab_financial_metrics[];
 
 extern var_info vtab_adjustment_factors[];
 extern var_info vtab_dc_adjustment_factors[];

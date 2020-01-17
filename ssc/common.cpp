@@ -129,6 +129,24 @@ var_info vtab_oandm[] = {
 { SSC_INPUT,SSC_ARRAY   , "om_capacity2"                         , "Fuel cell capacity-based System Costs amount"                   , "$/kWcap"                                , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
 var_info_invalid };
 
+var_info vtab_equip_reserve[] = {
+{ SSC_INPUT,         SSC_NUMBER,    "reserves_interest",                      "Interest on reserves",				                           "%",	 "",					  "Financial Parameters",             "?=1.75",                     "MIN=0,MAX=100",      			"" },
+
+/* replacement reserve on top of regular o and m */
+{ SSC_INPUT,        SSC_NUMBER,     "equip1_reserve_cost",                    "Major equipment reserve 1 cost",	                               "$/W",	        "",				  "Financial Parameters",             "?=0.25",               "MIN=0",                         "" },
+{ SSC_INPUT,        SSC_NUMBER,     "equip1_reserve_freq",                    "Major equipment reserve 1 frequency",	                       "years",	 "",			  "Financial Parameters",             "?=12",               "INTEGER,MIN=0",                         "" },
+{ SSC_INPUT,        SSC_NUMBER,     "equip2_reserve_cost",                    "Major equipment reserve 2 cost",	                               "$/W",	 "",				  "Financial Parameters",             "?=0",               "MIN=0",                         "" },
+{ SSC_INPUT,        SSC_NUMBER,     "equip2_reserve_freq",                    "Major equipment reserve 2 frequency",	                       "years",	 "",			  "Financial Parameters",             "?=15",               "INTEGER,MIN=0",                         "" },
+{ SSC_INPUT,        SSC_NUMBER,     "equip3_reserve_cost",                    "Major equipment reserve 3 cost",	                               "$/W",	 "",				  "Financial Parameters",             "?=0",               "MIN=0",                         "" },
+{ SSC_INPUT,        SSC_NUMBER,     "equip3_reserve_freq",                    "Major equipment reserve 3 frequency",	                       "years",	 "",			  "Financial Parameters",             "?=20",               "INTEGER,MIN=0",                         "" },
+
+/* major equipment depreciation schedules - can extend to three different schedu  les */
+{ SSC_INPUT,        SSC_NUMBER,     "equip_reserve_depr_sta",                 "Major equipment reserve state depreciation",	                   "",	 "0=5yr MACRS,1=15yr MACRS,2=5yr SL,3=15yr SL, 4=20yr SL,5=39yr SL,6=Custom",  "Financial Parameters", "?=0",   "INTEGER,MIN=0,MAX=6",  "" },
+{ SSC_INPUT,        SSC_NUMBER,     "equip_reserve_depr_fed",                 "Major equipment reserve federal depreciation",	               "",	 "0=5yr MACRS,1=15yr MACRS,2=5yr SL,3=15yr SL, 4=20yr SL,5=39yr SL,6=Custom",  "Financial Parameters", "?=0",   "INTEGER,MIN=0,MAX=6",  "" },
+
+var_info_invalid
+};
+
 var_info vtab_depreciation[] = {
 { SSC_INPUT,SSC_NUMBER  , "depr_fed_type"                        , "Federal depreciation type"                                      , ""                                       , "0=none,1=macrs_half_year,2=sl,3=custom", "Depreciation"         , "?=0"            , "INTEGER,MIN=0,MAX=3"   , ""},
 { SSC_INPUT,SSC_NUMBER  , "depr_fed_sl_years"                    , "Federal depreciation straight-line Years"                       , "years"                                  , ""                                      , "Depreciation"         , "depr_fed_type=2", "INTEGER,POSITIVE"      , ""},
@@ -137,6 +155,94 @@ var_info vtab_depreciation[] = {
 { SSC_INPUT,SSC_NUMBER  , "depr_sta_sl_years"                    , "State depreciation straight-line years"                         , "years"                                  , ""                                      , "Depreciation"         , "depr_sta_type=2", "INTEGER,POSITIVE"      , ""},
 { SSC_INPUT,SSC_ARRAY   , "depr_sta_custom"                      , "State custom depreciation"                                      , "%/year"                                 , ""                                      , "Depreciation"         , "depr_sta_type=3", ""                      , ""},
 var_info_invalid };
+
+var_info vtab_depreciation_inputs[] = {
+/* depreciation allocation */
+{ SSC_INPUT,        SSC_NUMBER,     "depr_alloc_macrs_5_percent",		      "5-yr MACRS depreciation federal and state allocation",	"%", "",	  "Depreciation",             "?=89",					  "MIN=0,MAX=100",     			        "" },
+{ SSC_INPUT,        SSC_NUMBER,     "depr_alloc_macrs_15_percent",		      "15-yr MACRS depreciation federal and state allocation",	"%", "",  "Depreciation",             "?=1.5",					  "MIN=0,MAX=100",     			        "" },
+{ SSC_INPUT,        SSC_NUMBER,     "depr_alloc_sl_5_percent",		          "5-yr straight line depreciation federal and state allocation",	"%", "",  "Depreciation",             "?=0",						  "MIN=0,MAX=100",     			        "" },
+{ SSC_INPUT,        SSC_NUMBER,     "depr_alloc_sl_15_percent",		          "15-yr straight line depreciation federal and state allocation","%", "",  "Depreciation",             "?=3",						  "MIN=0,MAX=100",     			        "" },
+{ SSC_INPUT,        SSC_NUMBER,     "depr_alloc_sl_20_percent",		          "20-yr straight line depreciation federal and state allocation","%", "",  "Depreciation",             "?=3",						  "MIN=0,MAX=100",     			        "" },
+{ SSC_INPUT,        SSC_NUMBER,     "depr_alloc_sl_39_percent",		          "39-yr straight line depreciation federal and state allocation","%", "",  "Depreciation",             "?=0.5",					  "MIN=0,MAX=100",     			        "" },
+{ SSC_INPUT,        SSC_NUMBER,     "depr_alloc_custom_percent",	          "Custom depreciation federal and state allocation","%", "",  "Depreciation",             "?=0",					  "MIN=0,MAX=100",     			        "" },
+{ SSC_INPUT,        SSC_ARRAY,      "depr_custom_schedule",		              "Custom depreciation schedule",	"%",   "",                      "Depreciation",             "*",						   "",                              "" },
+/* bonus depreciation */
+{ SSC_INPUT,        SSC_NUMBER,     "depr_bonus_sta",			              "State bonus depreciation",			"%",	 "",					  "Depreciation",             "?=0",						  "MIN=0,MAX=100",     			        "" },
+{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_sta_macrs_5",                 "State bonus depreciation 5-yr MACRS","0/1", "",                      "Depreciation",			 "?=1",                       "BOOLEAN",                        "" },
+{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_sta_macrs_15",                "State bonus depreciation 15-yr MACRS","0/1","",                     "Depreciation",			 "?=0",                       "BOOLEAN",                        "" },
+{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_sta_sl_5",                    "State bonus depreciation 5-yr straight line","0/1","",                  "Depreciation",			 "?=0",                       "BOOLEAN",                        "" },
+{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_sta_sl_15",                   "State bonus depreciation 15-yr straight line","0/1","",                  "Depreciation",			 "?=0",                       "BOOLEAN",                        "" },
+{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_sta_sl_20",                   "State bonus depreciation 20-yr straight line","0/1","",                  "Depreciation",			 "?=0",                       "BOOLEAN",                        "" },
+{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_sta_sl_39",                   "State bonus depreciation 39-yr straight line","0/1","",                  "Depreciation",			 "?=0",                       "BOOLEAN",                        "" },
+{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_sta_custom",                  "State bonus depreciation custom","0/1","",                  "Depreciation",			 "?=0",                       "BOOLEAN",                        "" },
+
+{ SSC_INPUT,        SSC_NUMBER,     "depr_bonus_fed",			              "Federal bonus depreciation",			"%",	 "",					  "Depreciation",             "?=0",						  "MIN=0,MAX=100",     			        "" },
+{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_fed_macrs_5",                 "Federal bonus depreciation 5-yr MACRS","0/1", "",                      "Depreciation",			 "?=1",                       "BOOLEAN",                        "" },
+{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_fed_macrs_15",                "Federal bonus depreciation 15-yr MACRS","0/1","",                     "Depreciation",			 "?=0",                       "BOOLEAN",                        "" },
+{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_fed_sl_5",                    "Federal bonus depreciation 5-yr straight line","0/1","",                  "Depreciation",			 "?=0",                       "BOOLEAN",                        "" },
+{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_fed_sl_15",                   "Federal bonus depreciation 15-yr straight line","0/1","",                  "Depreciation",			 "?=0",                       "BOOLEAN",                        "" },
+{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_fed_sl_20",                   "Federal bonus depreciation 20-yr straight line","0/1","",                  "Depreciation",			 "?=0",                       "BOOLEAN",                        "" },
+{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_fed_sl_39",                   "Federal bonus depreciation 39-yr straight line","0/1","",                  "Depreciation",			 "?=0",                       "BOOLEAN",                        "" },
+{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_fed_custom",                  "Federal bonus depreciation custom","0/1","",                  "Depreciation",			 "?=0",                       "BOOLEAN",                        "" },
+/* ITC depreciation */
+{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_sta_macrs_5",                   "State ITC depreciation 5-yr MACRS","0/1", "",                      "Depreciation",			 "?=1",                       "BOOLEAN",                        "" },
+{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_sta_macrs_15",                  "State ITC depreciation 15-yr MACRS","0/1","",                     "Depreciation",			 "?=0",                       "BOOLEAN",                        "" },
+{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_sta_sl_5",                      "State ITC depreciation 5-yr straight line","0/1","",                  "Depreciation",			 "?=0",                       "BOOLEAN",                        "" },
+{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_sta_sl_15",                     "State ITC depreciation 15-yr straight line","0/1","",                  "Depreciation",			 "?=0",                       "BOOLEAN",                        "" },
+{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_sta_sl_20",                     "State ITC depreciation 20-yr straight line","0/1","",                  "Depreciation",			 "?=0",                       "BOOLEAN",                        "" },
+{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_sta_sl_39",                     "State ITC depreciation 39-yr straight line","0/1","",                  "Depreciation",			 "?=0",                       "BOOLEAN",                        "" },
+{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_sta_custom",                    "State ITC depreciation custom","0/1","",                  "Depreciation",			 "?=0",                       "BOOLEAN",                        "" },
+
+{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_fed_macrs_5",                   "Federal ITC depreciation 5-yr MACRS","0/1", "",                      "Depreciation",			 "?=1",                       "BOOLEAN",                        "" },
+{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_fed_macrs_15",                  "Federal ITC depreciation 15-yr MACRS","0/1","",                     "Depreciation",			 "?=0",                       "BOOLEAN",                        "" },
+{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_fed_sl_5",                      "Federal ITC depreciation 5-yr straight line","0/1","",                  "Depreciation",			 "?=0",                       "BOOLEAN",                        "" },
+{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_fed_sl_15",                     "Federal ITC depreciation 15-yr straight line","0/1","",                  "Depreciation",			 "?=0",                       "BOOLEAN",                        "" },
+{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_fed_sl_20",                     "Federal ITC depreciation 20-yr straight line","0/1","",                  "Depreciation",			 "?=0",                       "BOOLEAN",                        "" },
+{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_fed_sl_39",                     "Federal ITC depreciation 39-yr straight line","0/1","",                  "Depreciation",			 "?=0",                       "BOOLEAN",                        "" },
+{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_fed_custom",                    "Federal ITC depreciation custom","0/1","",                  "Depreciation",			 "?=0",                       "BOOLEAN",                        "" },
+var_info_invalid
+};
+
+var_info vtab_depreciation_outputs[] = {
+/* state depreciation and tax */
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_stadepr_macrs_5",                     "State depreciation from 5-yr MACRS",                   "$",            "",                      "Cash Flow State Income Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_stadepr_macrs_15",                    "State depreciation from 15-yr MACRS",                   "$",            "",                      "Cash Flow State Income Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_stadepr_sl_5",                        "State depreciation from 5-yr straight line",                   "$",            "",                      "Cash Flow State Income Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_stadepr_sl_15",                       "State depreciation from 15-yr straight line",                   "$",            "",                      "Cash Flow State Income Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_stadepr_sl_20",                       "State depreciation from 20-yr straight line",                   "$",            "",                      "Cash Flow State Income Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_stadepr_sl_39",                       "State depreciation from 39-yr straight line",                   "$",            "",                      "Cash Flow State Income Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_stadepr_custom",                      "State depreciation from custom",                   "$",            "",                      "Cash Flow State Income Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_stadepr_me1",                         "State depreciation from major equipment 1",                   "$",            "",                      "Cash Flow State Income Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_stadepr_me2",                         "State depreciation from major equipment 2",                   "$",            "",                      "Cash Flow State Income Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_stadepr_me3",                         "State depreciation from major equipment 3",                   "$",            "",                      "Cash Flow State Income Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_stadepr_total",                       "Total state tax depreciation",                   "$",            "",                      "Cash Flow State Income Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_statax_income_prior_incentives",      "State taxable income without incentives",                   "$",            "",                      "Cash Flow State Income Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_statax_taxable_incentives",           "State taxable incentives",                   "$",            "",                      "Cash Flow State Income Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_statax_income_with_incentives",       "State taxable income",                   "$",            "",                      "Cash Flow State Income Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_state_tax_frac",				      "State tax rate",                   "%",            "",                      "Cash Flow State Income Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_statax",				              "State tax benefit (liability)",                   "$",            "",                      "Cash Flow State Income Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+
+/* federal depreciation and tax */
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_feddepr_macrs_5",                     "Federal depreciation from 5-yr MACRS",                   "$",            "",                      "Cash Flow Federal Income Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_feddepr_macrs_15",                    "Federal depreciation from 15-yr MACRS",                   "$",            "",                      "Cash Flow Federal Income Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_feddepr_sl_5",                        "Federal depreciation from 5-yr straight line",                   "$",            "",                      "Cash Flow Federal Income Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_feddepr_sl_15",                       "Federal depreciation from 15-yr straight line",                   "$",            "",                      "Cash Flow Federal Income Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_feddepr_sl_20",                       "Federal depreciation from 20-yr straight line",                   "$",            "",                      "Cash Flow Federal Income Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_feddepr_sl_39",                       "Federal depreciation from 39-yr straight line",                   "$",            "",                      "Cash Flow Federal Income Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_feddepr_custom",                      "Federal depreciation from custom",                   "$",            "",                      "Cash Flow Federal Income Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_feddepr_me1",                         "Federal depreciation from major equipment 1",                   "$",            "",                      "Cash Flow Federal Income Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_feddepr_me2",                         "Federal depreciation from major equipment 2",                   "$",            "",                      "Cash Flow Federal Income Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_feddepr_me3",                         "Federal depreciation from major equipment 3",                   "$",            "",                      "Cash Flow Federal Income Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_feddepr_total",                       "Total federal tax depreciation",                   "$",            "",                      "Cash Flow Federal Income Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_fedtax_income_prior_incentives",      "Federal taxable income without incentives",                   "$",            "",                      "Cash Flow Federal Income Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_fedtax_taxable_incentives",           "Federal taxable incentives",                   "$",            "",                      "Cash Flow Federal Income Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_fedtax_income_with_incentives",       "Federal taxable income",                   "$",            "",                      "Cash Flow Federal Income Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_federal_tax_frac",				      "Federal tax rate",                   "%",            "",                      "Cash Flow Federal Income Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_effective_tax_frac",				  "Effective tax rate",                   "$",            "",                      "Cash Flow Federal Income Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_fedtax",				              "Federal tax benefit (liability)",                   "$",            "",                      "Cash Flow Federal Income Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+
+var_info_invalid
+};
 
 var_info vtab_tax_credits[] = {
 { SSC_INPUT,SSC_NUMBER  , "itc_fed_amount"                       , "Federal amount-based ITC amount"                                , "$"                                      , ""                                      , "Tax Credit Incentives", "?=0"            , ""                      , ""},
@@ -271,8 +377,110 @@ var_info vtab_payment_incentives[] = {
 { SSC_INPUT,SSC_NUMBER  , "pbi_oth_escal"                        , "Other PBI escalation"                                           , "%"                                      , ""                                      , "Payment Incentives"   , "?=0"            , ""                      , ""},
 { SSC_INPUT,SSC_NUMBER  , "pbi_oth_tax_fed"                      , "Other PBI federal taxable"                                      , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=1"            , "BOOLEAN"               , ""},
 { SSC_INPUT,SSC_NUMBER  , "pbi_oth_tax_sta"                      , "Other PBI state taxable"                                        , "0/1"                                    , ""                                      , "Payment Incentives"   , "?=1"            , "BOOLEAN"               , ""},
+
+// outputs
+{ SSC_OUTPUT,       SSC_NUMBER,     "cbi_total_fed",                          "Federal CBI income",         "$",            "",                      "Cash Flow Incentives",      "*",                     "",                                      "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "cbi_total_sta",                          "State CBI income",           "$",            "",                      "Cash Flow Incentives",      "*",                     "",                                      "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "cbi_total_oth",                          "Other CBI income",           "$",            "",                      "Cash Flow Incentives",      "*",                     "",                                      "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "cbi_total_uti",                          "Utility CBI income",         "$",            "",                      "Cash Flow Incentives",      "*",                     "",                                      "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "cbi_total",                              "Total CBI income",           "$",            "",                      "Cash Flow Incentives",      "*",                     "",                                      "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "cbi_statax_total",                       "State taxable CBI income",   "$",            "",                      "Cash Flow Incentives",      "",                     "",                                      "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "cbi_fedtax_total",                       "Federal taxable CBI income", "$",            "",                      "Cash Flow Incentives",      "",                     "",                                      "" },
+
+{ SSC_OUTPUT,       SSC_NUMBER,     "ibi_total_fed",                          "Federal IBI income",         "$",            "",                      "Cash Flow Incentives",      "*",                     "",                                      "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "ibi_total_sta",                          "State IBI income",           "$",            "",                      "Cash Flow Incentives",      "*",                     "",                                      "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "ibi_total_oth",                          "Other IBI income",           "$",            "",                      "Cash Flow Incentives",      "*",                     "",                                      "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "ibi_total_uti",                          "Utility IBI income",         "$",            "",                      "Cash Flow Incentives",      "*",                     "",                                      "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "ibi_total",                              "Total IBI income",           "$",            "",                      "Cash Flow Incentives",      "*",                     "",                                      "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "ibi_statax_total",                       "State taxable IBI income",   "$",            "",                      "Cash Flow Incentives",      "",                     "",                                      "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "ibi_fedtax_total",                       "Federal taxable IBI income", "$",            "",                      "Cash Flow Incentives",      "",                     "",                                      "" },
+
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_pbi_total_fed",                       "Federal PBI income",         "$",            "",                      "Cash Flow Incentives",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_pbi_total_sta",                       "State PBI income",           "$",            "",                      "Cash Flow Incentives",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_pbi_total_oth",                       "Other PBI income",           "$",            "",                      "Cash Flow Incentives",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_pbi_total_uti",                       "Utility PBI income",         "$",            "",                      "Cash Flow Incentives",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_pbi_total",                           "Total PBI income",           "$",            "",                      "Cash Flow Incentives",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_pbi_statax_total",                    "State taxable PBI income",   "$",            "",                      "Cash Flow Incentives",      "",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_pbi_fedtax_total",                    "Federal taxable PBI income", "$",            "",                      "Cash Flow Incentives",      "",                     "LENGTH_EQUAL=cf_length",                "" },
+
+{ SSC_OUTPUT,       SSC_NUMBER,     "itc_total_fed",                          "Federal ITC income",         "$",            "",                      "Cash Flow Incentives",      "*",                     "",                                      "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "itc_total_sta",                          "State ITC income",           "$",            "",                      "Cash Flow Incentives",      "*",                     "",                                      "" },
+{ SSC_OUTPUT,        SSC_NUMBER,    "itc_total",							  "Total ITC income",                 "$",            "",                      "Cash Flow Incentives",      "*",                     "",                "" },
+
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_ptc_fed",                             "Federal PTC income",                 "$",            "",                      "Cash Flow Incentives",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+{ SSC_OUTPUT,       SSC_ARRAY,      "cf_ptc_sta",                             "State PTC income",                   "$",            "",                      "Cash Flow Incentives",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+
 var_info_invalid };
 
+var_info vtab_ppa_soln[] = {
+{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_mode",                          "PPA solution mode",                              "0/1",   "0=solve ppa,1=specify ppa", "Revenue",         "?=0",                     "INTEGER,MIN=0,MAX=1",            "" },
+{ SSC_INPUT,        SSC_NUMBER,     "ppa_soln_tolerance",                     "PPA solution tolerance",                         "",                 "", "Revenue", "?=1e-5", "", "" },
+{ SSC_INPUT,        SSC_NUMBER,     "ppa_soln_min",                           "PPA solution minimum ppa",                       "cents/kWh",        "", "Revenue", "?=0", "", "" },
+{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_max",                           "PPA solution maximum ppa",                       "cents/kWh",        "", "Revenue",         "?=100",                     "",            "" },
+{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_max_iterations",                "PPA solution maximum number of iterations",      "",                 "", "Revenue",         "?=100",                     "INTEGER,MIN=1",            "" },
+
+{ SSC_INPUT,        SSC_ARRAY,      "ppa_price_input",			              "PPA price in first year",			            "$/kWh",	        "",	"Revenue",			 "*",         "",      			"" },
+{ SSC_INPUT,        SSC_NUMBER,     "ppa_escalation",                         "PPA escalation rate",                            "%/year",           "", "Revenue", "?=0", "", "" },
+
+var_info_invalid };
+
+var_info vtab_financial_metrics[] = {
+//	{ SSC_OUTPUT,       SSC_NUMBER,     "first_year_energy_net",                  "Annual energy",                             "kWh",                 "", "Metrics", "*", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "debt_fraction",                          "Debt percent",                             "%", "", "Metrics", "*", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "flip_target_year",                       "Target year to meet IRR",                   "",                    "", "Metrics", "*", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "flip_target_irr",                        "IRR target",                                "%",                   "", "Metrics", "*", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "flip_actual_year",                       "Year target IRR was achieved",              "year",                    "", "Metrics", "*", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "flip_actual_irr",                        "IRR in target year",                        "%",                   "", "Metrics", "*", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "lcoe_real",                              "Levelized cost (real)",                               "cents/kWh",               "", "Metrics", "*", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "lcoe_nom",                               "Levelized cost (nominal)",                            "cents/kWh",               "", "Metrics", "*", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "lppa_real",                              "Levelized PPA price (real)",                         "cents/kWh",               "", "Metrics", "*", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "lppa_nom",                               "Levelized PPA price (nominal)",                      "cents/kWh",               "", "Metrics", "*", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "ppa",                                    "PPA price (Year 1)",                        "cents/kWh",               "", "Metrics", "*", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "ppa_escalation",                         "PPA price escalation",                      "%/year",              "", "Metrics", "*", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "npv_ppa_revenue",                        "Present value of PPA revenue",              "$",                   "", "Metrics", "*", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "npv_energy_nom",                         "Present value of annual energy (nominal)",     "kWh",                 "", "Metrics", "*", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "npv_energy_real",                        "Present value of annual energy (real)",     "kWh",                 "", "Metrics", "*", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "present_value_oandm",                    "Present value of O&M",				       "$",                   "", "Metrics", "*", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "present_value_oandm_nonfuel",            "Present value of non-fuel O&M",         "$",                   "", "Metrics", "*", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "present_value_fuel",                     "Present value of fuel O&M",             "$",                   "", "Metrics", "*", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "present_value_insandproptax",            "Present value of insurance and prop tax",   "$",                   "", "Metrics", "*", "", "" },
+
+{ SSC_OUTPUT,       SSC_NUMBER,     "lcoptc_fed_real",                        "Levelized federal PTC (real)",              "cents/kWh",                   "", "Metrics", "*", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "lcoptc_fed_nom",                         "Levelized federal PTC (nominal)",           "cents/kWh",                   "", "Metrics", "*", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "lcoptc_sta_real",                        "Levelized state PTC (real)",                "cents/kWh",                   "", "Metrics", "*", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "lcoptc_sta_nom",                         "Levelized state PTC (nominal)",             "cents/kWh",                   "", "Metrics", "*", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "wacc",                                   "Weighted average cost of capital (WACC)",   "$",                   "", "Metrics", "*", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "effective_tax_rate",                     "Effective tax rate",                        "%",                   "", "Metrics", "*", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "analysis_period_irr",                    "IRR at end of analysis period",             "%",                   "", "Metrics", "*", "", "" },
+var_info_invalid
+};
+
+var_info vtab_debt[] = {
+/* term financing */
+{ SSC_INPUT,        SSC_NUMBER,     "term_tenor",                             "Term financing period",				                            "years", "",				      "Financial Parameters",             "?=10",					"INTEGER,MIN=0",      			"" },
+{ SSC_INPUT,        SSC_NUMBER,     "term_int_rate",                          "Term financing interest rate",		                            "%",	 "",					  "Financial Parameters",             "?=8.5",                   "MIN=0,MAX=100",      			"" },
+{ SSC_INPUT,        SSC_NUMBER,     "dscr",						              "Debt service coverage ratio",		                            "",	     "",				      "Financial Parameters",             "?=1.5",					"MIN=0",      			        "" },
+{ SSC_INPUT,        SSC_NUMBER,     "dscr_reserve_months",		              "Debt service reserve account",		                            "months P&I","",			      "Financial Parameters",             "?=6",					    "MIN=0",      			        "" },
+/* Debt fraction input option */
+{ SSC_INPUT, SSC_NUMBER, "debt_percent", "Debt percent", "%", "", "Financial Parameters", "?=50", "MIN=0,MAX=100", "" },
+{ SSC_INPUT, SSC_NUMBER, "debt_option", "Debt option", "0/1", "0=debt percent,1=dscr", "Financial Parameters", "?=1", "INTEGER,MIN=0,MAX=1", "" },
+{ SSC_INPUT, SSC_NUMBER, "payment_option", "Debt repayment option", "0/1", "0=Equal payments (standard amortization),1=Fixed principal declining interest", "Financial Parameters", "?=0", "INTEGER,MIN=0,MAX=1", "" },
+/* Capital Cost */
+{ SSC_INPUT,        SSC_NUMBER,     "cost_debt_closing",		              "Debt closing cost",                                              "$",                 "",       "Financial Parameters",        "?=250000",         "MIN=0",              "" },
+{ SSC_INPUT,        SSC_NUMBER,     "cost_debt_fee",		                  "Debt closing fee (% of total debt amount)",                      "%",                 "",       "Financial Parameters",        "?=1.5",            "MIN=0",              "" },
+{ SSC_INPUT, SSC_NUMBER, "months_working_reserve", "Working capital reserve months of operating costs", "months", "", "Financial Parameters", "?=6", "MIN=0", "" },
+{ SSC_INPUT, SSC_NUMBER, "months_receivables_reserve", "Receivables reserve months of PPA revenue", "months", "", "Financial Parameters", "?=0", "MIN=0", "" },
+{ SSC_INPUT, SSC_NUMBER, "cost_other_financing", "Other financing cost", "$", "", "Financial Parameters", "?=150000", "MIN=0", "" },
+/* Equity Structure */
+{ SSC_INPUT,        SSC_NUMBER,     "flip_target_percent",			          "After-tax IRR target",		"%",	 "",					  "Revenue",             "?=11",					  "MIN=0,MAX=100",     			        "" },
+{ SSC_INPUT,        SSC_NUMBER,     "flip_target_year",		                  "IRR target year",				"Year",		 "",					  "Revenue",             "?=11",					  "MIN=1",     			        "" },
+/* PBI for debt service TODO - other yearly incentives */
+{ SSC_INPUT,        SSC_NUMBER,     "pbi_fed_for_ds",                         "Federal PBI available for debt service",     "0/1",      "",                      "Incentives",      "?=0",                       "BOOLEAN",                                         "" },
+{ SSC_INPUT,        SSC_NUMBER,     "pbi_sta_for_ds",                         "State PBI available for debt service",     "0/1",      "",                      "Incentives",      "?=0",                       "BOOLEAN",                                         "" },
+{ SSC_INPUT,        SSC_NUMBER,     "pbi_uti_for_ds",                         "Utility PBI available for debt service",     "0/1",      "",                      "Incentives",      "?=0",                       "BOOLEAN",                                         "" },
+{ SSC_INPUT,        SSC_NUMBER,     "pbi_oth_for_ds",                         "Other PBI available for debt service",     "0/1",      "",                      "Incentives",      "?=0",                       "BOOLEAN",                                         "" },
+var_info_invalid
+};
 
 var_info vtab_adjustment_factors[] = {
 { SSC_INPUT,SSC_NUMBER  , "adjust:constant"                      , "Constant loss adjustment"                                       , "%"                                      , ""                                      , "Adjustment Factors"   , "*"              , "MAX=100"               , ""},
