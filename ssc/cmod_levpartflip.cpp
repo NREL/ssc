@@ -662,9 +662,6 @@ static var_info _cm_vtab_levpartflip[] = {
 	{ SSC_OUTPUT,    SSC_NUMBER,   "sponsor_aftertax_npv",  "Developer after-tax NPV", "$", "",           "Cash Flow Developer Returns",   "*",           "",        "" },
 
 	// metrics table
-    { SSC_OUTPUT,       SSC_NUMBER,     "project_return_aftertax_irr",            "Internal rate of return (after-tax)",       "%",                   "", "Metrics", "*", "", "" },
-    { SSC_OUTPUT,       SSC_NUMBER,     "project_return_aftertax_npv",            "Net present value (after-tax)",             "$",                   "", "Metrics", "*", "", "" },
-
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_annual_costs", "Annual costs", "$", "", "LCOE calculations", "*", "LENGTH_EQUAL=cf_length", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "npv_annual_costs", "Present value of annual costs", "$", "", "LCOE calculations", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "adjusted_installed_cost", "Initial cost less cash incentives", "$", "", "", "*", "", "" },
@@ -676,7 +673,7 @@ static var_info _cm_vtab_levpartflip[] = {
 var_info_invalid };
 
 extern var_info
-    vtab_ppa_soln[],
+    vtab_ppa_inout[],
 	vtab_standard_financial[],
 	vtab_oandm[],
     vtab_equip_reserve[],
@@ -894,12 +891,13 @@ private:
 public:
 	cm_levpartflip()
 	{
-        add_var_info( vtab_ppa_soln );
+        add_var_info(vtab_ppa_inout );
         add_var_info( vtab_standard_financial );
 		add_var_info( vtab_oandm );
         add_var_info( vtab_equip_reserve );
         add_var_info( vtab_tax_credits );
 		add_var_info(vtab_depreciation_inputs );
+        add_var_info(vtab_depreciation_outputs );
 		add_var_info( vtab_payment_incentives );
         add_var_info( vtab_debt );
         add_var_info( vtab_financial_metrics );

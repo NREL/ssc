@@ -629,7 +629,7 @@ static var_info _cm_vtab_host_developer[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_project_return_aftertax_irr",         "After-tax project cumulative IRR",  "%", "",                      "Cash Flow After Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_project_return_aftertax_max_irr",     "After-tax project maximum IRR",  "%", "",                      "Cash Flow After Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_project_return_aftertax_npv",         "After-tax project cumulative NPV",  "$", "",                      "Cash Flow After Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-		
+
 	// metrics table
     { SSC_OUTPUT,       SSC_NUMBER,     "project_return_aftertax_irr",            "Internal rate of return (after-tax)",       "%",                   "", "Metrics", "*", "", "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "project_return_aftertax_npv",            "Net present value (after-tax)",             "$",                   "", "Metrics", "*", "", "" },
@@ -646,7 +646,7 @@ static var_info _cm_vtab_host_developer[] = {
 var_info_invalid };
 
 extern var_info
-    vtab_ppa_soln[],
+    vtab_ppa_inout[],
 	vtab_standard_financial[],
 	vtab_oandm[],
     vtab_equip_reserve[],
@@ -854,13 +854,14 @@ private:
 public:
 	cm_host_developer()
 	{
-	    add_var_info( vtab_ppa_soln );
+	    add_var_info(vtab_ppa_inout );
 		add_var_info( vtab_standard_financial );
 		add_var_info( vtab_oandm );
         add_var_info( vtab_equip_reserve );
         add_var_info( vtab_tax_credits );
 		add_var_info(vtab_depreciation_inputs);
-		add_var_info( vtab_payment_incentives );
+        add_var_info(vtab_depreciation_outputs);
+        add_var_info( vtab_payment_incentives );
 		add_var_info( vtab_debt );
         add_var_info( vtab_financial_metrics );
 //		add_var_info(vtab_advanced_financing_cost);

@@ -42,7 +42,7 @@ extern var_info vtab_depreciation_outputs[];
 extern var_info vtab_tax_credits[];
 extern var_info vtab_payment_incentives[];
 extern var_info vtab_debt[];
-extern var_info vtab_ppa_soln[];
+extern var_info vtab_ppa_inout[];
 extern var_info vtab_financial_metrics[];
 
 extern var_info vtab_adjustment_factors[];

@@ -699,7 +699,7 @@ static var_info _cm_vtab_saleleaseback[] = {
 var_info_invalid };
 
 extern var_info
-    vtab_ppa_soln[],
+    vtab_ppa_inout[],
 	vtab_standard_financial[],
 	vtab_oandm[],
 	vtab_equip_reserve[],
@@ -909,13 +909,13 @@ private:
 public:
 	cm_saleleaseback()
 	{
-        add_var_info( vtab_ppa_soln );
+        add_var_info(vtab_ppa_inout );
         add_var_info( vtab_standard_financial );
 		add_var_info( vtab_oandm );
         add_var_info( vtab_equip_reserve );
         add_var_info( vtab_tax_credits );
-		add_var_info(vtab_depreciation_inputs );
-		add_var_info( vtab_payment_incentives );
+		add_var_info( vtab_depreciation_inputs );
+        add_var_info( vtab_payment_incentives );
         add_var_info( vtab_financial_metrics );
 //		add_var_info(vtab_advanced_financing_cost);
 		add_var_info(_cm_vtab_saleleaseback);

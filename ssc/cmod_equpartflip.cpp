@@ -582,6 +582,38 @@ static var_info _cm_vtab_equpartflip[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_disbursement_equip2",    "Reserve disbursement major equipment 2",       "$",            "",                      "Cash Flow Reserves",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_disbursement_equip3",    "Reserve disbursement major equipment 3",       "$",            "",                      "Cash Flow Reserves",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
+        // Project cash flow
+
+        { SSC_OUTPUT,        SSC_ARRAY,      "cf_project_operating_activities",    "Cash flow from operating activities",  "$", "",                      "Cash Flow Pre Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+
+        { SSC_OUTPUT,       SSC_NUMBER,      "purchase_of_property",	"Purchase of property cost",	"$",	 "",					  "Cash Flow Pre Tax",			 "*",                         "",                             "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "cf_project_wcra",    "Reserve (increase)/decrease working capital",  "$", "",                      "Cash Flow Pre Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+        { SSC_OUTPUT, SSC_ARRAY, "cf_project_receivablesra", "Reserve (increase)/decrease receivables", "$", "", "Cash Flow Pre Tax", "*", "LENGTH_EQUAL=cf_length", "" },
+        { SSC_OUTPUT, SSC_ARRAY, "cf_project_me1ra", "Reserve (increase)/decrease) major equipment reserve 1", "$", "", "Cash Flow Pre Tax", "*", "LENGTH_EQUAL=cf_length", "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "cf_project_me2ra",    "Reserve (increase)/decrease) major equipment reserve 2",  "$", "",                      "Cash Flow Pre Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "cf_project_me3ra",    "Reserve (increase)/decrease) major equipment reserve 3",  "$", "",                      "Cash Flow Pre Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "cf_project_ra",    "Reserve (increase)/decrease total",  "$", "",                      "Cash Flow Pre Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "cf_project_me1cs",    "Reserve capital spending major equipment 1",  "$", "",                      "Cash Flow Pre Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "cf_project_me2cs",    "Reserve capital spending major equipment 2",  "$", "",                      "Cash Flow Pre Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "cf_project_me3cs",    "Reserve capital spending major equipment 3",  "$", "",                      "Cash Flow Pre Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "cf_project_mecs",    "Reserve capital spending major equipment total",  "$", "",                      "Cash Flow Pre Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "cf_project_investing_activities",    "Project cash flow from investing activities",  "$", "",                      "Cash Flow Pre Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+
+        { SSC_OUTPUT,       SSC_NUMBER,      "issuance_of_equity",	"Issuance of equity",	"$",	 "",					  "Cash Flow Pre Tax",			 "*",                         "",                             "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "cf_project_financing_activities",    "Cash flow from financing activities",  "$", "",                      "Cash Flow Pre Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+
+        { SSC_OUTPUT,        SSC_ARRAY,      "cf_pretax_cashflow",    "Project pre-tax cash flow",  "$", "",                      "Cash Flow Pre Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+
+// Project returns
+        { SSC_OUTPUT,        SSC_ARRAY,      "cf_project_return_pretax",    "Project pre-tax returns",  "$", "",                      "Cash Flow Pre Tax Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "cf_project_return_pretax_irr",    "Project pre-tax cumulative IRR",  "%", "",                      "Cash Flow Pre Tax Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "cf_project_return_pretax_npv",    "Project pre-tax cumulative NPV",  "$", "",                      "Cash Flow Pre Tax Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+
+        { SSC_OUTPUT,        SSC_ARRAY,      "cf_project_return_aftertax_cash",    "Project operating cash",  "$", "",                      "Cash Flow After Tax Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "cf_project_return_aftertax",    "Project after-tax returns",  "$", "",                      "Cash Flow After Tax Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "cf_project_return_aftertax_irr",    "Project after-tax cumulative IRR",  "%", "",                      "Cash Flow After Tax Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "cf_project_return_aftertax_npv",    "Project after-tax cumulative NPV",  "$", "",                      "Cash Flow After Tax Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+
 	// tax investor
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_pretax",        "Investor pre-tax returns",  "$", "",                      "Cash Flow Tax Investor Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_pretax_irr",    "Investor pre-tax cumulative IRR",  "%", "",                      "Cash Flow Tax Investor Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -635,7 +667,7 @@ static var_info _cm_vtab_equpartflip[] = {
 var_info_invalid };
 
 extern var_info
-    vtab_ppa_soln[],
+    vtab_ppa_inout[],
 	vtab_standard_financial[],
 	vtab_oandm[],
     vtab_equip_reserve[],
@@ -841,13 +873,14 @@ private:
 public:
 	cm_equpartflip()
 	{
-        add_var_info( vtab_ppa_soln );
+        add_var_info(vtab_ppa_inout );
         add_var_info( vtab_standard_financial );
 		add_var_info( vtab_oandm );
         add_var_info( vtab_equip_reserve );
         add_var_info( vtab_tax_credits );
 		add_var_info(vtab_depreciation_inputs );
-		add_var_info( vtab_payment_incentives );
+        add_var_info(vtab_depreciation_outputs );
+        add_var_info( vtab_payment_incentives );
         add_var_info( vtab_financial_metrics );
 //		add_var_info(vtab_advanced_financing_cost);
 		add_var_info( _cm_vtab_equpartflip );

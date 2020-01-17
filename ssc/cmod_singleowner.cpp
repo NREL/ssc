@@ -630,7 +630,8 @@ static var_info _cm_vtab_singleowner[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_project_return_aftertax_cash",        "Total after-tax cash returns",  "$", "",                      "Cash Flow Total and Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_project_return_aftertax",             "Total after-tax returns",  "$", "",                      "Cash Flow Total and Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_project_return_aftertax_irr",         "After-tax cumulative IRR",  "%", "",                      "Cash Flow Total and Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_project_return_aftertax_npv",         "After-tax cumulative NPV",  "$", "",                      "Cash Flow Total and Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_project_return_aftertax_max_irr",     "After-tax project maximum IRR",  "%", "",                      "Cash Flow After Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_project_return_aftertax_npv",         "After-tax cumulative NPV",  "$", "",                      "Cash Flow Total and Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 	// metrics table
     { SSC_OUTPUT,       SSC_NUMBER,     "project_return_aftertax_irr",            "Internal rate of return (after-tax)",       "%",                   "", "Metrics", "*", "", "" },
@@ -664,7 +665,7 @@ static var_info _cm_vtab_singleowner[] = {
 var_info_invalid };
 
 extern var_info
-	vtab_ppa_soln[],
+	vtab_ppa_inout[],
 	vtab_standard_financial[],
 	vtab_oandm[],
     vtab_equip_reserve[],
@@ -882,13 +883,14 @@ private:
 public:
 	cm_singleowner()
 	{
-        add_var_info( vtab_ppa_soln );
+        add_var_info(vtab_ppa_inout );
         add_var_info( vtab_standard_financial );
 		add_var_info( vtab_oandm );
 		add_var_info( vtab_equip_reserve );
 		add_var_info( vtab_tax_credits );
 		add_var_info(vtab_depreciation_inputs );
-		add_var_info( vtab_payment_incentives );
+        add_var_info(vtab_depreciation_outputs );
+        add_var_info( vtab_payment_incentives );
 		add_var_info( vtab_debt );
 		add_var_info( vtab_financial_metrics );
 		add_var_info( _cm_vtab_singleowner );
