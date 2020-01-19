@@ -164,19 +164,11 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "P_cond_min",                "Minimum condenser pressure",                                                       "inHg",         "",               "powerblock",     "pc_config=0",             "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "n_pl_inc",                  "Number of part-load increments for the heat rejection system",                     "none",         "",               "powerblock",     "pc_config=0",             "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "F_wc",                      "Fraction indicating wet cooling use for hybrid system",                            "none",         "constant=[0,0,0,0,0,0,0,0,0]",     "powerblock", "pc_config=0", "",                    "" },
-    { SSC_INPUT,        SSC_NUMBER,      "ud_T_amb_des",              "Ambient temperature at user-defined power cycle design point",                     "C",            "",               "powerblock",     "pc_config=1",             "",                      "" },
+    
+    // UDPC parameters
     { SSC_INPUT,        SSC_NUMBER,      "ud_f_W_dot_cool_des",       "Percent of user-defined power cycle design gross output consumed by cooling",      "%",            "",               "powerblock",     "pc_config=1",             "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "ud_m_dot_water_cool_des",   "Mass flow rate of water required at user-defined power cycle design point",        "kg/s",         "",               "powerblock",     "pc_config=1",             "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "ud_T_htf_low",              "Low level HTF inlet temperature for T_amb parametric",                             "C",            "",               "powerblock",     "pc_config=1",             "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "ud_T_htf_high",             "High level HTF inlet temperature for T_amb parametric",                            "C",            "",               "powerblock",     "pc_config=1",             "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "ud_T_amb_low",              "Low level ambient temperature for HTF mass flow rate parametric",                  "C",            "",               "powerblock",     "pc_config=1",             "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "ud_T_amb_high",             "High level ambient temperature for HTF mass flow rate parametric",                 "C",            "",               "powerblock",     "pc_config=1",             "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "ud_m_dot_htf_low",          "Low level normalized HTF mass flow rate for T_HTF parametric",                     "-",            "",               "powerblock",     "pc_config=1",             "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "ud_m_dot_htf_high",         "High level normalized HTF mass flow rate for T_HTF parametric",                    "-",            "",               "powerblock",     "pc_config=1",             "",                      "" },
-    { SSC_INPUT,        SSC_MATRIX,      "ud_T_htf_ind_od",           "Off design table of user-defined power cycle performance formed from parametric on T_htf_hot [C]",  "", "",          "powerblock",     "?=[[0]]",             "",                      "" },
-    { SSC_INPUT,        SSC_MATRIX,      "ud_T_amb_ind_od",           "Off design table of user-defined power cycle performance formed from parametric on T_amb [C]",      "", "",          "powerblock",     "?=[[0]]",             "",                      "" },
-    { SSC_INPUT,        SSC_MATRIX,      "ud_m_dot_htf_ind_od",       "Off design table of user-defined power cycle performance formed from parametric on m_dot_htf [ND]", "", "",          "powerblock",     "?=[[0]]",             "",                      "" },
-    { SSC_INPUT,        SSC_MATRIX,      "ud_ind_od",                 "Off design user-defined power cycle performance as function of T_htf, m_dot_htf [ND], and T_amb",   "", "",          "powerblock",     "?=[[0]]",             "",                      "" },
+    { SSC_INPUT,        SSC_MATRIX,      "ud_ind_od",                 "Off design user-defined power cycle performance as function of T_htf, m_dot_htf [ND], and T_amb",   "", "",          "powerblock",     "pc_config=1",             "",                      "" },
 
     // TES
     { SSC_INPUT,        SSC_NUMBER,      "store_fluid",               "Material number for storage fluid",                                                "-",            "",               "TES",            "*",                       "",                      "" },
@@ -841,22 +833,10 @@ public:
                 pc->m_is_user_defined_pc = true;
 
                 // User-Defined Cycle Parameters
-                pc->m_T_amb_des = as_double("ud_T_amb_des");    //[C]
                 pc->m_W_dot_cooling_des = as_double("ud_f_W_dot_cool_des") / 100.0*as_double("P_ref");  //[MWe]
                 pc->m_m_dot_water_des = as_double("ud_m_dot_water_cool_des");       //[kg/s]
 
-                // Also need lower and upper levels for the 3 independent variables...
-                pc->m_T_htf_low = as_double("ud_T_htf_low");            //[C]
-                pc->m_T_htf_high = as_double("ud_T_htf_high");          //[C]
-                pc->m_T_amb_low = as_double("ud_T_amb_low");            //[C]
-                pc->m_T_amb_high = as_double("ud_T_amb_high");          //[C]
-                pc->m_m_dot_htf_low = as_double("ud_m_dot_htf_low");    //[-]
-                pc->m_m_dot_htf_high = as_double("ud_m_dot_htf_high");  //[-]
-
                 // User-Defined Cycle Off-Design Tables 
-                pc->mc_T_htf_ind = as_matrix("ud_T_htf_ind_od");
-                pc->mc_T_amb_ind = as_matrix("ud_T_amb_ind_od");
-                pc->mc_m_dot_htf_ind = as_matrix("ud_m_dot_htf_ind_od");
                 pc->mc_combined_ind = as_matrix("ud_ind_od");
             }
 
