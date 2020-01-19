@@ -172,31 +172,9 @@ static var_info _cm_vtab_saleleaseback[] = {
 
 /* inputs in model not currently in SAM 11/15/10 */
 	{ SSC_INPUT,       SSC_NUMBER,      "total_installed_cost",          "Installed cost",                   "$",     "",					  "Sale Leaseback",			 "*",                         "",                             "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "reserves_interest",        "Interest on reserves",				"%",	 "",					  "Sale Leaseback",             "?=1.75",                     "MIN=0,MAX=100",      			"" },
-
-	/* replacement reserve on top of regular o and m */
-	{ SSC_INPUT, SSC_NUMBER, "equip1_reserve_cost", "Major equipment reserve 1 cost", "$/W", "", "Reserve Accounts", "?=0.25", "MIN=0", "" },
-	{ SSC_INPUT, SSC_NUMBER, "equip1_reserve_freq", "Major equipment reserve 1 frequency", "years", "", "Reserve Accounts", "?=12", "INTEGER,MIN=0", "" },
-	{ SSC_INPUT, SSC_NUMBER, "equip2_reserve_cost", "Major equipment reserve 2 cost", "$/W", "", "Reserve Accounts", "?=0", "MIN=0", "" },
-	{ SSC_INPUT, SSC_NUMBER, "equip2_reserve_freq", "Major equipment reserve 2 frequency", "years", "", "Reserve Accounts", "?=15", "INTEGER,MIN=0", "" },
-	{ SSC_INPUT, SSC_NUMBER, "equip3_reserve_cost", "Major equipment reserve 3 cost", "$/W", "", "Reserve Accounts", "?=0", "MIN=0", "" },
-	{ SSC_INPUT, SSC_NUMBER, "equip3_reserve_freq", "Major equipment reserve 3 frequency", "years", "", "Reserve Accounts", "?=20", "INTEGER,MIN=0", "" },
-
-/* major equipment depreciation schedules - can extend to three different schedules */
-	{ SSC_INPUT,        SSC_NUMBER,     "equip_reserve_depr_sta",   "Major equipment reserve state depreciation",	"",	 "0=5yr MACRS,1=15yr MACRS,2=5yr SL,3=15yr SL, 4=20yr SL,5=39yr SL,6=Custom",  "Sale Leaseback", "?=0",   "INTEGER,MIN=0,MAX=6",  "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "equip_reserve_depr_fed",   "Major equipment reserve federal depreciation",	"",	 "0=5yr MACRS,1=15yr MACRS,2=5yr SL,3=15yr SL, 4=20yr SL,5=39yr SL,6=Custom",  "Sale Leaseback", "?=0",   "INTEGER,MIN=0,MAX=6",  "" },
 
 /* salvage value */	
 	{ SSC_INPUT,        SSC_NUMBER,     "salvage_percentage",          "Net pre-tax cash salvage value",	"%",	 "",					  "Sale Leaseback",             "?=10",                     "MIN=0,MAX=100",      			"" },
-/* market specific inputs - leveraged partnership flip */
-	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_mode",            "PPA solution mode",                "0/1",   "0=solve ppa,1=specify ppa", "Sale Leaseback",         "?=0",                     "INTEGER,MIN=0,MAX=1",            "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_tolerance",            "PPA solution tolerance",                "",   "", "Sale Leaseback",         "?=1e-3",                     "",            "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_min",            "PPA solution minimum ppa",                "cents/kWh",   "", "Sale Leaseback",         "?=0",                     "",            "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_max",            "PPA solution maximum ppa",                "cents/kWh",   "", "Sale Leaseback",         "?=100",                     "",            "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_max_iterations",            "PPA solution maximum number of iterations",                "",   "", "Sale Leaseback",         "?=100",                     "INTEGER,MIN=1",            "" },
-
-	{ SSC_INPUT,        SSC_ARRAY,     "ppa_price_input",			"Initial year PPA price",			"$/kWh",	 "",			  "Sale Leaseback",			 "?=10",         "",      			"" },
-	{ SSC_INPUT,        SSC_NUMBER,     "ppa_escalation",           "PPA escalation",					"%",	 "",					  "Sale Leaseback",             "?=0",                     "",      			"" },
 /* construction period */
 	{ SSC_INPUT,       SSC_NUMBER,      "construction_financing_cost",	"Construction financing total",	"$",	 "",					  "Sale Leaseback",			 "*",                         "",                             "" },
 
@@ -212,49 +190,6 @@ static var_info _cm_vtab_saleleaseback[] = {
 	{ SSC_INPUT,        SSC_NUMBER,     "tax_investor_required_lease_reserve",		"Lessor Required Lease Payment Reserve",		"months",	 "",  "Sale Leaseback",             "?=6",					  "INTEGER",     			        "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "flip_target_percent",			"After-tax flip/return target",		"%",	 "",					  "Sale Leaseback",             "?=11",					  "MIN=0,MAX=100",     			        "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "flip_target_year",		"Return target year",				"",		 "",					  "Sale Leaseback",             "?=11",					  "MIN=1",     			        "" },
-/* depreciation allocation */
-	{ SSC_INPUT,        SSC_NUMBER,     "depr_alloc_macrs_5_percent",		"5-yr MACRS depreciation federal and state allocation",	"%", "",	  "Sale Leaseback",             "?=89",					  "MIN=0,MAX=100",     			        "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "depr_alloc_macrs_15_percent",		"15-yr MACRS depreciation federal and state allocation",	"%", "",  "Sale Leaseback",             "?=1.5",					  "MIN=0,MAX=100",     			        "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "depr_alloc_sl_5_percent",		"5-yr straight line depreciation federal and state allocation",	"%", "",  "Sale Leaseback",             "?=0",						  "MIN=0,MAX=100",     			        "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "depr_alloc_sl_15_percent",		"15-yr straight line depreciation federal and state allocation","%", "",  "Sale Leaseback",             "?=3",						  "MIN=0,MAX=100",     			        "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "depr_alloc_sl_20_percent",		"20-yr straight line depreciation federal and state allocation","%", "",  "Sale Leaseback",             "?=3",						  "MIN=0,MAX=100",     			        "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "depr_alloc_sl_39_percent",		"39-yr straight line depreciation federal and state allocation","%", "",  "Sale Leaseback",             "?=0.5",					  "MIN=0,MAX=100",     			        "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "depr_alloc_custom_percent",		"Custom depreciation federal and state allocation","%", "",  "Sale Leaseback",             "?=0",					  "MIN=0,MAX=100",     			        "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "depr_custom_schedule",		"Custom depreciation schedule",	"%",   "",                      "Sale Leaseback",             "*",						   "",                              "" },
-/* bonus depreciation */
-	{ SSC_INPUT,        SSC_NUMBER,     "depr_bonus_sta",			"State bonus depreciation",			"%",	 "",					  "Sale Leaseback",             "?=0",						  "MIN=0,MAX=100",     			        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_sta_macrs_5",   "State bonus depreciation 5-yr MACRS","0/1", "",                      "Sale Leaseback",			 "?=1",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_sta_macrs_15",   "State bonus depreciation 15-yr MACRS","0/1","",                     "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_sta_sl_5",   "State bonus depreciation 5-yr straight line","0/1","",                  "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_sta_sl_15",   "State bonus depreciation 15-yr straight line","0/1","",                  "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_sta_sl_20",   "State bonus depreciation 20-yr straight line","0/1","",                  "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_sta_sl_39",   "State bonus depreciation 39-yr straight line","0/1","",                  "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_sta_custom",   "State bonus depreciation custom","0/1","",                  "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
-
-	{ SSC_INPUT,        SSC_NUMBER,     "depr_bonus_fed",			"Federal bonus depreciation",			"%",	 "",					  "Sale Leaseback",             "?=0",						  "MIN=0,MAX=100",     			        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_fed_macrs_5",   "Federal bonus depreciation 5-yr MACRS","0/1", "",                      "Sale Leaseback",			 "?=1",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_fed_macrs_15",   "Federal bonus depreciation 15-yr MACRS","0/1","",                     "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_fed_sl_5",   "Federal bonus depreciation 5-yr straight line","0/1","",                  "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_fed_sl_15",   "Federal bonus depreciation 15-yr straight line","0/1","",                  "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_fed_sl_20",   "Federal bonus depreciation 20-yr straight line","0/1","",                  "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_fed_sl_39",   "Federal bonus depreciation 39-yr straight line","0/1","",                  "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_bonus_fed_custom",   "Federal bonus depreciation custom","0/1","",                  "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
-/* ITC depreciation */
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_sta_macrs_5",   "State itc depreciation 5-yr MACRS","0/1", "",                      "Sale Leaseback",			 "?=1",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_sta_macrs_15",   "State itc depreciation 15-yr MACRS","0/1","",                     "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_sta_sl_5",   "State itc depreciation 5-yr straight line","0/1","",                  "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_sta_sl_15",   "State itc depreciation 15-yr straight line","0/1","",                  "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_sta_sl_20",   "State itc depreciation 20-yr straight line","0/1","",                  "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_sta_sl_39",   "State itc depreciation 39-yr straight line","0/1","",                  "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_sta_custom",   "State itc depreciation custom","0/1","",                  "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
-
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_fed_macrs_5",   "Federal itc depreciation 5-yr MACRS","0/1", "",                      "Sale Leaseback",			 "?=1",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_fed_macrs_15",   "Federal itc depreciation 15-yr MACRS","0/1","",                     "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_fed_sl_5",   "Federal itc depreciation 5-yr straight line","0/1","",                  "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_fed_sl_15",   "Federal itc depreciation 15-yr straight line","0/1","",                  "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_fed_sl_20",   "Federal itc depreciation 20-yr straight line","0/1","",                  "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_fed_sl_39",   "Federal itc depreciation 39-yr straight line","0/1","",                  "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,		"depr_itc_fed_custom",   "Federal itc depreciation custom","0/1","",                  "Sale Leaseback",			 "?=0",                       "BOOLEAN",                        "" },
 
 /* intermediate outputs */
 	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_financing",   "Financing cost",          "$",   "",					  "Sale Leaseback",			 "*",                         "",                             "" },
@@ -668,36 +603,6 @@ static var_info _cm_vtab_saleleaseback[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_financing_activities",    "Investor (lessor) cash flow from financing activities",  "$", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_tax_investor_pretax_cashflow",    "Investor (lessor) pre-tax cash flow",  "$", "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
-
-	{ SSC_OUTPUT,        SSC_NUMBER,      "cbi_total_fed",             "Total federal CBI incentive",         "$",            "",                      "Sale Leaseback",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "cbi_total_sta",             "Total state CBI incentive",         "$",            "",                      "Sale Leaseback",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "cbi_total_oth",             "Total other CBI incentive",         "$",            "",                      "Sale Leaseback",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "cbi_total_uti",             "Total utility CBI incentive",         "$",            "",                      "Sale Leaseback",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "cbi_total",             "Total CBI incentive",         "$",            "",                      "Sale Leaseback",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "cbi_statax_total",             "Total state taxable CBI incentive",         "$",            "",                      "Sale Leaseback",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "cbi_fedtax_total",             "Total federal taxable CBI incentive",         "$",            "",                      "Sale Leaseback",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "ibi_total_fed",             "Total federal IBI incentive",         "$",            "",                      "Sale Leaseback",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "ibi_total_sta",             "Total state IBI incentive",         "$",            "",                      "Sale Leaseback",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "ibi_total_oth",             "Total other IBI incentive",         "$",            "",                      "Sale Leaseback",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "ibi_total_uti",             "Total utility IBI incentive",         "$",            "",                      "Sale Leaseback",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "ibi_total",             "Total IBI incentive",         "$",            "",                      "Sale Leaseback",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "ibi_statax_total",             "Total state taxable IBI incentive",         "$",            "",                      "Sale Leaseback",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "ibi_fedtax_total",             "Total federal taxable IBI incentive",         "$",            "",                      "Sale Leaseback",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "itc_total_fed",             "Total federal ITC ",         "$",            "",                      "Sale Leaseback",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "itc_total_sta",             "Total state ITC ",         "$",            "",                      "Sale Leaseback",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "itc_total",             "Total ITC ",         "$",            "",                      "Sale Leaseback",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pbi_total_fed",             "Total federal PBI incentive",         "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pbi_total_sta",             "Total state PBI incentive",         "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pbi_total_oth",             "Total other PBI incentive",         "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pbi_total_uti",             "Total utility PBI incentive",         "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pbi_total",             "Total PBI incentive",         "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pbi_statax_total",             "Total state taxable PBI incentive",         "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pbi_fedtax_total",             "Total federal taxable PBI incentive",         "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_ptc_fed",               "Federal PTC income",                 "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_ptc_sta",               "State PTC income",                   "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-
-
 /* state depreciation and tax */
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_stadepr_macrs_5",         "State depreciation from 5-yr MACRS",                   "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_stadepr_macrs_15",         "State depreciation from 15-yr MACRS",                   "$",            "",                      "Sale Leaseback",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -785,38 +690,6 @@ static var_info _cm_vtab_saleleaseback[] = {
 
 
 	// metrics table
-//	{ SSC_OUTPUT,        SSC_NUMBER,      "first_year_energy_net",    "Net Annual Energy",  "", "",                      "Sale Leaseback",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "debt_fraction",    "Debt percent",  "%", "",                      "Sale Leaseback",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "flip_target_year",    "IRR target year",  "Year", "",                      "Sale Leaseback",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "flip_target_irr",    "IRR target",  "%", "",                      "Sale Leaseback",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "flip_actual_year",    "IRR actual year",  "Year", "",                      "Sale Leaseback",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "flip_actual_irr",    "IRR in target year",  "%", "",                      "Sale Leaseback",      "*",                     "",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoe_real",                "Levelized cost (real)",                          "cents/kWh",    "",                      "Sale Leaseback",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoe_nom",                 "Levelized cost (nominal)",                       "cents/kWh",    "",                      "Sale Leaseback",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "lppa_real", "Levelized PPA price (real)", "cents/kWh", "", "Sale Leaseback", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "lppa_nom", "Levelized PPA price (nominal)", "cents/kWh", "", "Sale Leaseback", "*", "", "" },
-
-	{ SSC_OUTPUT, SSC_NUMBER, "ppa", "PPA price", "", "", "Sale Leaseback", "*", "", "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "ppa_escalation",                 "PPA price escalation",                       "%",    "",                      "Sale Leaseback",      "*",                       "",                                         "" },
-
-	{ SSC_OUTPUT,        SSC_NUMBER,     "npv_ppa_revenue",                "Present value of PPA revenue",                          "$",    "",                      "Sale Leaseback",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "npv_energy_nom",                "Present value of annual energy (nominal)",                          "kWh",    "",                      "Sale Leaseback",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "npv_energy_real",                "Present value of annual energy (real)",                          "kWh",    "",                      "Sale Leaseback",      "*",                       "",                                         "" },
-
-	
-	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_oandm",                      "Present value of operation and maintenance costs",				   "$",            "",                      "Sale Leaseback",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_oandm_nonfuel",              "Present value of non-fuel operation and maintenance costs",				   "$",            "",                      "Sale Leaseback",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_fuel",                      "Present value of fuel operation and maintenance costs",				   "$",            "",                      "Sale Leaseback",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_insandproptax",                      "Present value of insurance and property tax",				   "$",            "",                      "Sale Leaseback",      "*",                       "",                                         "" },
-
-	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoptc_fed_real",                "Levelized Federal PTC (real)",                          "cents/kWh",    "",                      "Sale Leaseback",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoptc_fed_nom",                 "Levelized Federal PTC (nominal)",                       "cents/kWh",    "",                      "Sale Leaseback",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoptc_sta_real",                "Levelized State PTC (real)",                          "cents/kWh",    "",                      "Sale Leaseback",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoptc_sta_nom",                 "Levelized State PTC (nominal)",                       "cents/kWh",    "",                      "Sale Leaseback",      "*",                       "",                                         "" },
-
-	{ SSC_OUTPUT,        SSC_NUMBER,     "wacc",                "Weighted Average Cost of Capital (WACC)",                          "",    "",                      "Sale Leaseback",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "effective_tax_rate",                 "Effective Tax Rate",                       "%",    "",                      "Sale Leaseback",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "analysis_period_irr",                "Analysis Period IRR",                          "%",    "",                      "Sale Leaseback",      "*",                       "",                                         "" },
 
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_annual_costs", "Annual costs", "$", "", "LCOE calculations", "*", "LENGTH_EQUAL=cf_length", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "npv_annual_costs", "Present value of annual costs", "$", "", "LCOE calculations", "*", "", "" },
@@ -826,11 +699,15 @@ static var_info _cm_vtab_saleleaseback[] = {
 var_info_invalid };
 
 extern var_info
+    vtab_ppa_inout[],
 	vtab_standard_financial[],
 	vtab_oandm[],
+	vtab_equip_reserve[],
 	vtab_tax_credits[],
+	vtab_depreciation_inputs[],
 	vtab_payment_incentives[],
-	vtab_battery_replacement_cost[];
+    vtab_financial_metrics[],
+    vtab_battery_replacement_cost[];
 
 enum {
 	CF_energy_net,
@@ -1032,10 +909,14 @@ private:
 public:
 	cm_saleleaseback()
 	{
-		add_var_info( vtab_standard_financial );
+        add_var_info(vtab_ppa_inout );
+        add_var_info( vtab_standard_financial );
 		add_var_info( vtab_oandm );
-		add_var_info( vtab_tax_credits );
-		add_var_info( vtab_payment_incentives );
+        add_var_info( vtab_equip_reserve );
+        add_var_info( vtab_tax_credits );
+		add_var_info( vtab_depreciation_inputs );
+        add_var_info( vtab_payment_incentives );
+        add_var_info( vtab_financial_metrics );
 //		add_var_info(vtab_advanced_financing_cost);
 		add_var_info(_cm_vtab_saleleaseback);
 		add_var_info(vtab_battery_replacement_cost);

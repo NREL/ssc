@@ -93,8 +93,8 @@ void Turbine_calculate_powercurve(ssc_data_t data)
 
 	if ( omegaT > omega_m ) {
 		sprintf( errmsg, "Turbine inputs are not valid, please adjust the inputs. omegaT: %f, omegaM: %f", omegaT, omega_m );
-		throw std::runtime_error(errmsg);
-	}
+        vt->assign( "error", std::string(errmsg ));
+    }
 
 	double step = 0.25;
 	size_t array_size = 1 + size_t(40 / step);
