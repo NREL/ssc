@@ -481,17 +481,23 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 	{	// Initialization calculations for User Defined power cycle model
         
         // Import the newer single combined UDPC table if it's populated, otherwise try using the older three separate tables
-        if (!ms_params.mc_combined_ind.is_single()) {
-            //try {
-                split_ind_tbl(ms_params.mc_combined_ind, ms_params.mc_T_htf_ind, ms_params.mc_m_dot_htf_ind, ms_params.mc_T_amb_ind);
-            //}
-            //catch (...) {
-            //    m_error_msg = "Cannot import the single UDPC table";
-            //    mc_csp_messages.add_message(C_csp_messages::WARNING, m_error_msg);
-            //    if (ms_params.mc_T_htf_ind.is_single() || ms_params.mc_T_amb_ind.is_single() || ms_params.mc_m_dot_htf_ind.is_single()) {
-            //        throw(C_csp_exception("UDPC tables are not set", "UDPC Table Importation"));
-            //    }
-            //}
+        if (!ms_params.mc_combined_ind.is_single())
+        {
+            ms_params.m_T_htf_hot_ref = ms_params.m_T_htf_low = ms_params.m_T_htf_high =
+                ms_params.m_T_amb_des = ms_params.m_T_amb_low = ms_params.m_T_amb_high =
+                ms_params.m_m_dot_htf_low = ms_params.m_m_dot_htf_high = std::numeric_limits<double>::quiet_NaN();
+
+            int n_T_htf_pars, n_T_amb_pars, n_m_dot_pars;
+            n_T_amb_pars = n_T_amb_pars = n_m_dot_pars = 0;
+
+            double m_dot_udpc_des = std::numeric_limits<double>::quiet_NaN();
+
+            split_ind_tbl(ms_params.mc_combined_ind, ms_params.mc_T_htf_ind, ms_params.mc_m_dot_htf_ind, ms_params.mc_T_amb_ind,
+                n_T_htf_pars, n_T_amb_pars, n_m_dot_pars,
+                ms_params.m_m_dot_htf_low, m_dot_udpc_des, ms_params.m_m_dot_htf_high,
+                ms_params.m_T_htf_low, ms_params.m_T_htf_hot_ref, ms_params.m_T_htf_high,
+                ms_params.m_T_amb_low, ms_params.m_T_amb_des, ms_params.m_T_amb_high);
+
         }
         else if ( ms_params.mc_T_htf_ind.is_single() || ms_params.mc_T_amb_ind.is_single() || ms_params.mc_m_dot_htf_ind.is_single() ) {
             throw(C_csp_exception("UDPC tables are not set", "UDPC Table Importation"));
