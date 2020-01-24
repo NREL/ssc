@@ -296,7 +296,7 @@ SSCEXPORT void Reopt_size_battery_params(ssc_data_t data) {
     // convert financial inputs and set variables not modeled by SAM to 0
     //
     map_input(vt, "analysis_period", &reopt_fin, "analysis_years");
-    map_input(vt, "rate_escalation", &reopt_fin, "escalation_pct");
+    map_input(vt, "rate_escalation", &reopt_fin, "escalation_pct", false, true);
     map_input(vt, "value_of_lost_load", &reopt_fin, "value_of_lost_load_us_dollars_per_kwh");
     reopt_fin.assign("microgrid_upgrade_cost_pct", 0);
 
