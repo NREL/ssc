@@ -11,7 +11,7 @@ static const char* Turbine_calculate_powercurve_doc =
     "Calculates the power produced by a wind turbine at windspeeds incremented by 0.25 m/s\\n"
     "Input: var_table with key-value pairs\\n"
     "     'turbine_size' - double [kW]\\n"
-    "     'rotor_diameter' - double [m]\\n"
+    "     'rotor_diameter' - int [m]\\n"
     "     'elevation' - double [m], required if using Weibull resource model, otherwise 0\\n"
     "     'max_cp' - double max Cp [-],\\n"
     "     'max_tip_speed' - double [m/s]\\n"

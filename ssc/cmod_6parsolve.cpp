@@ -36,24 +36,24 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static var_info _cm_vtab_6parsolve[] = {
 /*   VARTYPE           DATATYPE         NAME                           LABEL                                UNITS     META                      GROUP                      REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-	{ SSC_INPUT,         SSC_STRING,      "celltype",               "Cell technology type",           "monoSi,multiSi/polySi,cis,cigs,cdte,amorphous","","6 Parameter Solver",      "*",        "",      "" },
-	{ SSC_INPUT,         SSC_NUMBER,      "Vmp",                    "Maximum power point voltage",    "V",       "",                      "6 Parameter Solver",      "*",                       "",      "" },
-	{ SSC_INPUT,         SSC_NUMBER,      "Imp",                    "Maximum power point current",    "A",       "",                      "6 Parameter Solver",      "*",                       "",      "" },
-	{ SSC_INPUT,         SSC_NUMBER,      "Voc",                    "Open circuit voltage",           "V",       "",                      "6 Parameter Solver",      "*",                       "",      "" },
-	{ SSC_INPUT,         SSC_NUMBER,      "Isc",                    "Short circuit current",          "A",       "",                      "6 Parameter Solver",      "*",                       "",      "" },
-	{ SSC_INPUT,         SSC_NUMBER,      "alpha_isc",              "Temp coeff of current at SC",    "A/'C",    "",                      "6 Parameter Solver",      "*",                       "",      "" },
-	{ SSC_INPUT,         SSC_NUMBER,      "beta_voc",               "Temp coeff of voltage at OC",    "V/'C",    "",                      "6 Parameter Solver",      "*",                       "",      "" },
-	{ SSC_INPUT,         SSC_NUMBER,      "gamma_pmp",              "Temp coeff of power at MP",      "%/'C",    "",                      "6 Parameter Solver",      "*",                       "",      "" },
-	{ SSC_INPUT,         SSC_NUMBER,      "Nser",                   "Number of cells in series",      "",        "",                      "6 Parameter Solver",      "*",                       "INTEGER,POSITIVE",      "" },
-	{ SSC_INPUT,         SSC_NUMBER,      "Tref",                   "Reference cell temperature",     "'C",      "",                      "6 Parameter Solver",      "?",                       "",      "" },
+	{ SSC_INPUT,         SSC_STRING,      "celltype",               "Cell technology type",           "monoSi,multiSi/polySi,cis,cigs,cdte,amorphous","","Six Parameter Solver",      "*",        "",      "" },
+	{ SSC_INPUT,         SSC_NUMBER,      "Vmp",                    "Maximum power point voltage",    "V",       "",                      "Six Parameter Solver",      "*",                       "",      "" },
+	{ SSC_INPUT,         SSC_NUMBER,      "Imp",                    "Maximum power point current",    "A",       "",                      "Six Parameter Solver",      "*",                       "",      "" },
+	{ SSC_INPUT,         SSC_NUMBER,      "Voc",                    "Open circuit voltage",           "V",       "",                      "Six Parameter Solver",      "*",                       "",      "" },
+	{ SSC_INPUT,         SSC_NUMBER,      "Isc",                    "Short circuit current",          "A",       "",                      "Six Parameter Solver",      "*",                       "",      "" },
+	{ SSC_INPUT,         SSC_NUMBER,      "alpha_isc",              "Temp coeff of current at SC",    "A/'C",    "",                      "Six Parameter Solver",      "*",                       "",      "" },
+	{ SSC_INPUT,         SSC_NUMBER,      "beta_voc",               "Temp coeff of voltage at OC",    "V/'C",    "",                      "Six Parameter Solver",      "*",                       "",      "" },
+	{ SSC_INPUT,         SSC_NUMBER,      "gamma_pmp",              "Temp coeff of power at MP",      "%/'C",    "",                      "Six Parameter Solver",      "*",                       "",      "" },
+	{ SSC_INPUT,         SSC_NUMBER,      "Nser",                   "Number of cells in series",      "",        "",                      "Six Parameter Solver",      "*",                       "INTEGER,POSITIVE",      "" },
+	{ SSC_INPUT,         SSC_NUMBER,      "Tref",                   "Reference cell temperature",     "'C",      "",                      "Six Parameter Solver",      "?",                       "",      "" },
 	
 // outputs
-	{ SSC_OUTPUT,        SSC_NUMBER,      "a",                      "Modified nonideality factor",    "1/V",    "",                      "6 Parameter Solver",      "*",                        "",                      "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "Il",                     "Light current",                  "A",      "",                      "6 Parameter Solver",      "*",                        "",                      "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "Io",                     "Saturation current",             "A",      "",                      "6 Parameter Solver",      "*",                        "",                      "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "Rs",                     "Series resistance",              "ohm",    "",                      "6 Parameter Solver",      "*",                        "",                      "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "Rsh",                    "Shunt resistance",               "ohm",    "",                      "6 Parameter Solver",      "*",                        "",                      "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "Adj",                    "OC SC temp coeff adjustment",    "%",      "",                      "6 Parameter Solver",      "*",                        "",                      "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "a",                      "Modified nonideality factor",    "1/V",    "",                      "Six Parameter Solver",      "*",                        "",                      "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "Il",                     "Light current",                  "A",      "",                      "Six Parameter Solver",      "*",                        "",                      "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "Io",                     "Saturation current",             "A",      "",                      "Six Parameter Solver",      "*",                        "",                      "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "Rs",                     "Series resistance",              "ohm",    "",                      "Six Parameter Solver",      "*",                        "",                      "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "Rsh",                    "Shunt resistance",               "ohm",    "",                      "Six Parameter Solver",      "*",                        "",                      "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "Adj",                    "OC SC temp coeff adjustment",    "%",      "",                      "Six Parameter Solver",      "*",                        "",                      "" },
 	
 var_info_invalid };
 
