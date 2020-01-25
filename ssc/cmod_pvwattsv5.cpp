@@ -40,8 +40,8 @@ static var_info _cm_vtab_pvwattsv5_part1[] = {
         { SSC_INOUT,        SSC_NUMBER,      "system_use_lifetime_output",     "Run lifetime simulation",                    "0/1",        "",                       "Lifetime",            "?=0",                        "",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "analysis_period",                "Analysis period",                            "years",      "",                       "Lifetime",            "system_use_lifetime_output=1", "",                          "" },
         { SSC_INPUT,        SSC_ARRAY,       "dc_degradation",                 "Annual DC degradation for lifetime simulations","%/year",  "",                       "Lifetime",            "system_use_lifetime_output=1", "",                          "" },
-        { SSC_INPUT,        SSC_STRING,      "solar_resource_file",            "Weather file path",                           "",          "",                       "Location and Resource",     "?",                        "",                              "" },
-        { SSC_INPUT,        SSC_TABLE,       "solar_resource_data",            "Weather data",                                "",          "dn,df,tdry,wspd,lat,lon,tz", "Location and Resource", "?",                        "",                              "" },
+        { SSC_INPUT,        SSC_STRING,      "solar_resource_file",            "Weather file path",                           "",          "",                       "Solar Resource",     "?",                        "",                              "" },
+        { SSC_INPUT,        SSC_TABLE,       "solar_resource_data",            "Weather data",                                "",          "dn,df,tdry,wspd,lat,lon,tz", "Solar Resource", "?",                        "",                              "" },
 
 		var_info_invalid };
 

@@ -61,8 +61,8 @@ var_info_invalid };
 var_info vtab_financial_grid[] = {
 
 /*   VARTYPE           DATATYPE         NAME                                         LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS	*/
-{ SSC_INPUT,        SSC_ARRAY,      "grid_curtailment_price",                           "Curtailment price",                                  "$/kWh",  "",                      "Grid",      "?=0",                   "",          "" },
-{ SSC_INPUT,        SSC_NUMBER,      "grid_curtailment_price_esc",                           "Curtailment price escalation",                                  "%",  "",           "Grid",      "?=0",                   "",          "" },
+{ SSC_INPUT,        SSC_ARRAY,      "grid_curtailment_price",                           "Curtailment price",                                  "$/kWh",  "",                      "GridLimits",      "?=0",                   "",          "" },
+{ SSC_INPUT,        SSC_NUMBER,      "grid_curtailment_price_esc",                           "Curtailment price escalation",                                  "%",  "",           "GridLimits",      "?=0",                   "",          "" },
 { SSC_INPUT,        SSC_NUMBER,      "annual_energy_pre_curtailment_ac", "Annual Energy AC pre-curtailment (year 1)",                   "kWh",        "",                   "System Output",               "?=0",                     "",                              "" },
 
 var_info_invalid };
@@ -514,7 +514,7 @@ var_info_invalid };
 var_info vtab_grid_curtailment[] = {
 	/*   VARTYPE           DATATYPE         NAME                               LABEL                                       UNITS     META                                     GROUP                 REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 
-		{ SSC_INPUT,        SSC_ARRAY,       "grid_curtailment",              "Grid curtailment as energy delivery limit (first year)",              "MW",    "",                                     "Loss Adjustments",      "?",                     "",                "" },
+		{ SSC_INPUT,        SSC_ARRAY,       "grid_curtailment",              "Grid curtailment as energy delivery limit (first year)",              "MW",    "",                                     "GridLimits",      "?",                     "",                "" },
 	var_info_invalid };
 
 
