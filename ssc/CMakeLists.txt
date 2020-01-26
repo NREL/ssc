@@ -296,7 +296,7 @@ if(DEFINED ENV{PYSAMDIR})
 					$ENV{PYSAMDIR}/files/$<TARGET_FILE_BASE_NAME:ssc>.lib
 					$ENV{PYSAMDIR}/files/$<TARGET_FILE_BASE_NAME:ssc>.dll
 			)
-			set(SSC_LIB $<TARGET_FILE_DIR:SAM_api>/$<TARGET_FILE_BASE_NAME:ssc>.lib)
+			set(SSC_LIB $<TARGET_FILE_DIR:ssc>/$<TARGET_FILE_BASE_NAME:ssc>.lib)
 		endif()
 		add_custom_command(
 				TARGET ssc
