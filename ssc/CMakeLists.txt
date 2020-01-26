@@ -262,7 +262,7 @@ if (MSVC)
 
 	if (NOT skip_api)
 		if (${CMAKE_PROJECT_NAME} STREQUAL system_advisor_model)
-			set(APIGENDIR ${CMAKE_CURRENT_BINARY_DIR}/../../api/api_autogen/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
+			set(APIGENDIR ${CMAKE_CURRENT_BINARY_DIR}/../../sam/api/api_autogen/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
 			add_custom_command(
 				TARGET ssc
 				POST_BUILD
