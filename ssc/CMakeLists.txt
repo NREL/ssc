@@ -182,16 +182,18 @@ if(UNIX AND NOT SAMAPI_EXPORT)
 endif()
 
 # libssc for PySAM
-if(APPLE)
+if(UNIX)
 	if (SAMAPI_EXPORT)
 		set(CMAKE_MACOSX_RPATH 1)
 		set_property(TARGET ssc PROPERTY PREFIX "lib")
 		set(CMAKE_SHARED_LIBRARY_SUFFIX ".so")
-		add_custom_command(
-			TARGET ssc
-			POST_BUILD
-			COMMAND install_name_tool -id @rpath/libssc.so $<TARGET_FILE:ssc>
-		)
+		if (APPLE)
+			add_custom_command(
+				TARGET ssc
+				POST_BUILD
+				COMMAND install_name_tool -id @rpath/libssc.so $<TARGET_FILE:ssc>
+			)
+		endif()
 	endif()
 endif()
 
