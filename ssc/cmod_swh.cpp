@@ -21,6 +21,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <math.h>
+#include <ctime>
 
 #include "common.h"
 
@@ -354,8 +355,9 @@ public:
 		{
 			for( size_t jj=0;jj<step_per_hour;jj++)
 			{
-				if( !wfile.read( &wf ) )
-					throw exec_error( "swh", util::format("error reading from weather file at position %d", (int)idx ) );
+                if (!wfile.read(&wf)) {
+                    throw exec_error("swh", util::format("error reading from weather file at position %d", (int)idx));
+                }
 
 				Beam[idx] = (ssc_number_t)wf.dn;
 				Diffuse[idx] = (ssc_number_t)wf.df;
@@ -511,8 +513,9 @@ public:
 				tmain = ((tmain - 32) / 1.8); // convert to 'C
 
 				// load into mains temp array
-				for( size_t jj=0;jj<step_per_hour;jj++ )
-					T_mains[idx++] = (ssc_number_t)tmain;
+                for (size_t jj = 0; jj < step_per_hour; jj++) {
+                    T_mains[idx++] = (ssc_number_t)tmain;
+                }
 			}
 		}
 
@@ -523,13 +526,15 @@ public:
 		double T_set_array[8760];
 		if (use_custom_set == 0)
 		{
-			for (size_t i = 0; i < 8760; i++)
-				T_set_array[i] = T_set;
+            for (size_t i = 0; i < 8760; i++) {
+                T_set_array[i] = T_set;
+            }
 		}
 		else
 		{
-			for (size_t i = 0; i < 8760; i++)
-				T_set_array[i] = custom_set[i];
+            for (size_t i = 0; i < 8760; i++) {
+                T_set_array[i] = custom_set[i];
+            }
 		}
 
 		/* **********************************************************************
@@ -556,12 +561,13 @@ public:
 		idx = 0;
 		for (hour = 0; hour < 8760; hour++)
 		{
-#define NSTATUS_UPDATES 50  // set this to the number of times a progress update should be issued for the simulation
+            #define NSTATUS_UPDATES 50  // set this to the number of times a progress update should be issued for the simulation
 			if ( hour % (8760/NSTATUS_UPDATES) == 0 )
 			{
 				float percent = 100.0f * ((float)hour+1) / ((float)8760);
-				if ( !update( "", percent , (float)hour ) )
-					throw exec_error("swh", "simulation canceled at hour " + util::to_string(hour+1.0) );
+                if (!update("", percent, (float)hour)) {
+                    throw exec_error("swh", "simulation canceled at hour " + util::to_string(hour + 1.0));
+                }
 			}
 
 			for( size_t jj=0;jj<step_per_hour;jj++ )
@@ -595,6 +601,8 @@ public:
 				double FRta_use = FRta * r; // FRta_use = value for this time step
 				double FRUL_use = FRUL * r; // FRUL_use = value for this time step
 
+                // IT LOOKS LIKE THE PIPING LOSSES ARE DOUBLE COUNTED HERE.
+                // UA_pipe is for the whole system, while in these equations they should be split between inlet and outlet
 				/* Pipe loss adjustment (D&B pp 430) */
 				FRta_use = FRta_use / (1 + UA_pipe / mdotCp_use); // D&B eqn 10.3.9
 				FRUL_use = FRUL_use * ((1 - UA_pipe / mdotCp_use + 2 * UA_pipe / (area_total*FRUL_use)) / (1 + UA_pipe / mdotCp_use)); // D&B eqn 10.3.10
@@ -612,18 +620,19 @@ public:
 				else Q_useful = area_total*(FRta_use*I_transmitted[idx] - FRUL_use*(T_tank_prev - T_amb_use) );
 				// T_tank_prev is used, because use of T_cold_prev can cause the system to oscillate on and off 
 			
-				if ( I_incident_use < 0.0 )
-					Q_useful = 0;
+                if (I_incident_use < 0.0) {
+                    Q_useful = 0;
+                }
 
 				double dT_collector = Q_useful/mdotCp_use;
 
-	// Charging -- solar system operating			
+	            // Charging -- solar system operating			
 				if (Q_useful > 0.)
 				{
 					double V_hot_next = V_hot_prev + (ts_sec*mdot_total/rho_water);
 					if (V_hot_next < V_tank)
 					{
-		// Mode 1 Transition -- solar system operating
+		                // Mode 1 Transition -- solar system operating
 						mode = 1;
 						// Warm water from the collector loop into the top of the solar tank causes mixing with hot water below
 						T_tank = (T_tank_prev*m_tank*Cp_water + ts_sec*(Q_useful + UA_tank*T_room
@@ -641,7 +650,7 @@ public:
 					}
 					else
 					{
-		// Mode 2 Charging -- solar system operating
+		                // Mode 2 Charging -- solar system operating
 						mode = 2;
 						// Energy balance calculated based on average tank temperature (single node); tank top and bottom temperatures estimated based on collector dT
 						// Implicit Euler calculation
@@ -660,7 +669,7 @@ public:
 				}
 				else
 				{
-		// Mode 3 Discharging -- solar system not operating
+		            // Mode 3 Discharging -- solar system not operating
 					mode = 3;		
 					// 2-node plug flow
 					double hotLoss = 0.0; double coldLoss = 0.0;
@@ -672,9 +681,10 @@ public:
 						T_hot_prev = T_tank;
 					}
 					// Hot node calculations
-						V_hot = V_hot_prev - mdot_mix*ts_sec/rho_water;
-					if (V_hot < 0)
+					V_hot = V_hot_prev - mdot_mix*ts_sec/rho_water;
+					if (V_hot < 0) {
 						V_hot = 0;
+                    }
 
 					if (V_hot == 0)	// cold water drawn into the bottom of the tank in previous timesteps has completely flushed hot water from the tank
 					{
@@ -711,8 +721,12 @@ public:
 					T_bot = T_tank - 0.67*dT_collector;	
 					// T_top = T_hot
 					// T_bot = T_cold
-					if (V_hot > 0) T_deliv = T_hot;
-					else T_deliv = T_cold;
+                    if (V_hot > 0) {
+                        T_deliv = T_hot;
+                    }
+                    else {
+                        T_deliv = T_cold;
+                    }
 				}
 
 				// calculate pumping losses (pump size is user entered) -
@@ -723,12 +737,16 @@ public:
 
 				// amount of auxiliary energy needed to bring delivered water to set temperature
 				double Q_aux = mdot_mix * Cp_water * (T_set_use - T_deliv);
-				if (Q_aux < 0) Q_aux = 0.0;
+                if (Q_aux < 0) {
+                    Q_aux = 0.0;
+                }
 
 				// amount of energy needed to bring T_mains to set temperature (without SHW)
 				double Q_auxonly = mdot_mix * Cp_water * (T_set_use - T_mains_use);
 
-				if (Q_auxonly < 0) Q_auxonly = 0.0;
+                if (Q_auxonly < 0) {
+                    Q_auxonly = 0.0;
+                }
 
 				// Energy saved by SHW system is difference between aux only system and shw+aux system - the pump losses
 				double Q_saved = Q_auxonly - Q_aux - P_pump;
@@ -744,7 +762,9 @@ public:
 				T_bot_prev = T_bot;
 
 				// Zero out Q_useful if <0
-				if (Q_useful < 0) Q_useful = 0.0;
+                if (Q_useful < 0) {
+                    Q_useful = 0.0;
+                }
 
 				// save output variables - convert Q values to kWh 
 				out_Q_transmitted[idx] = (ssc_number_t)(I_transmitted[idx] * area_total * watt_to_kw);
@@ -808,5 +828,444 @@ public:
 	}
 
 };
+
+
+/***************** NEW *****************************************************/
+
+
+
+struct CollectorTestSpecifications
+{
+    double FRta;
+    double FRUL;
+    double iam;
+    double area_coll_test;
+    double heat_capacity_rate_test;
+};
+
+struct CollectorLocation
+{
+    double latitude;
+    double longitude;
+    double timezone;
+};
+
+struct CollectorOrientation
+{
+    double tilt;
+    double azimuth;
+};
+
+struct TimeAndPosition
+{
+    tm timestamp;
+    CollectorLocation collector_location;
+    CollectorOrientation collector_orientation;
+};
+
+struct Weather
+{
+    double dni;
+    double dhi;
+    double ghi;
+    double ambient_temp;
+    double wind_speed;
+    double wind_direction;
+};
+
+struct InletFluidFlow
+{
+    double temp;
+    double m_dot;           // [kg/s]
+    double specific_heat;   // [J/kg-K]
+};
+
+struct ExternalConditions
+{
+    Weather weather;
+    InletFluidFlow inlet_fluid_flow;
+    double albedo;
+};
+
+struct PoaIrradianceComponents
+{
+    std::vector<double> beam_with_aoi;
+    std::vector<double> sky_diffuse_with_aoi;
+    std::vector<double> ground_reflected_diffuse_with_aoi;
+};
+
+
+
+class FlatPlateCollector
+{
+public:
+    FlatPlateCollector(double area_coll, const CollectorTestSpecifications &collector_test_specifications);
+    const double UsefulEnergyGain(const TimeAndPosition &time_and_position, const ExternalConditions &external_conditions);
+    const double T_out(const TimeAndPosition &time_and_position, const ExternalConditions &external_conditions);
+    const double area_coll();
+    double area_coll(double collector_area);
+private:
+    double area_coll_;                  //collector area
+    double FRta_;                       //flow rate correction
+    double FRUL_;                       //flow rate correction
+    double iam_;                        //incidence angle modifier
+    double area_coll_test_;             //area of (single) collector that was tested
+    double heat_capacity_rate_test_;    //m_dot * c_p during ratings test
+    const static PoaIrradianceComponents IncidentIrradiance(const TimeAndPosition &time_and_position,
+        const Weather &weather,
+        double albedo);
+    const double TransmittedIrradiance(const CollectorOrientation &collector_orientation,
+        const PoaIrradianceComponents &poa_irradiance_components);
+    const double AbsorbedIrradiance(double transmitted_irradiance,
+        const InletFluidFlow &inlet_fluid_flow,
+        double T_amb);
+    const double ThermalLosses(const InletFluidFlow &inlet_fluid_flow,
+        double T_amb);
+};
+
+FlatPlateCollector::FlatPlateCollector(double area_coll, const CollectorTestSpecifications &collector_test_specifications)
+    :
+    area_coll_(area_coll),
+    FRta_(collector_test_specifications.FRta),
+    FRUL_(collector_test_specifications.FRUL),
+    iam_(collector_test_specifications.iam),
+    area_coll_test_(collector_test_specifications.area_coll_test),
+    heat_capacity_rate_test_(collector_test_specifications.heat_capacity_rate_test)
+{
+
+}
+
+const double FlatPlateCollector::UsefulEnergyGain(const TimeAndPosition &time_and_position, const ExternalConditions &external_conditions)
+{
+    Weather weather(external_conditions.weather);
+    double ambient_temp(external_conditions.weather.ambient_temp);
+    InletFluidFlow inlet_fluid_flow(external_conditions.inlet_fluid_flow);
+    double albedo(external_conditions.albedo);
+    
+    PoaIrradianceComponents poa_irradiance_components = IncidentIrradiance(time_and_position, weather, albedo);
+    double transmitted_irradiance = TransmittedIrradiance(time_and_position.collector_orientation, poa_irradiance_components);
+    double absorbed_irradiance = AbsorbedIrradiance(transmitted_irradiance, inlet_fluid_flow, ambient_temp);
+    double thermal_losses = ThermalLosses(inlet_fluid_flow, ambient_temp);
+    double useful_energy_gain = absorbed_irradiance - thermal_losses;
+
+    return useful_energy_gain;
+}
+
+const double FlatPlateCollector::T_out(const TimeAndPosition &time_and_position, const ExternalConditions &external_conditions)
+{
+    double useful_energy_gain = UsefulEnergyGain(time_and_position, external_conditions);
+
+    double m_dot = external_conditions.inlet_fluid_flow.m_dot;
+    double specific_heat = external_conditions.inlet_fluid_flow.specific_heat;
+    double mdotCp_use = m_dot * specific_heat; // mass flow rate (kg/s) * Cp_fluid (J/kg.K)
+    double dT_collector = useful_energy_gain / mdotCp_use;
+
+    double T_in = external_conditions.inlet_fluid_flow.temp;
+    return dT_collector + T_in;
+}
+
+const double FlatPlateCollector::area_coll()
+{
+    return area_coll_;
+}
+
+double FlatPlateCollector::area_coll(double collector_area)
+{
+    area_coll_ = collector_area;
+}
+
+const PoaIrradianceComponents FlatPlateCollector::IncidentIrradiance(const TimeAndPosition &time_and_position,
+    const Weather &weather,
+    double albedo)
+{
+    double dni = weather.dni;
+    double dhi = weather.dhi;
+    double ghi = weather.ghi;
+
+    int irrad_mode;
+    irrad tt;
+    if (std::isfinite(dni) && std::isfinite(dhi)) {
+        irrad_mode = 0;     // 0 = beam & diffuse
+        tt.set_beam_diffuse(dni, dhi);
+    }
+    else if (std::isfinite(ghi) && std::isfinite(dni)) {
+        irrad_mode = 1;     // 1 = total & beam
+        tt.set_global_beam(ghi, dni);
+    }
+    else if (std::isfinite(ghi) && std::isfinite(dhi)) {
+        irrad_mode = 2;     // 2 = total & diffuse
+        tt.set_global_diffuse(ghi, dhi);
+    }
+    else {
+        throw exec_error("FlatPlateCollector", "Two of the three irradiance components must be specified.");
+    }
+    
+    tt.set_location(time_and_position.collector_location.latitude,
+        time_and_position.collector_location.longitude,
+        time_and_position.collector_location.timezone);
+
+    //double ts_hour = 1.0 / step_per_hour;
+    //double delt = instantaneous ? IRRADPROC_NO_INTERPOLATE_SUNRISE_SUNSET : ts_hour;
+    double irradproc_no_interpolate_sunrise_sunset = -1.0;      // IRRADPROC_NO_INTERPOLATE_SUNRISE_SUNSET = -1.0;
+    double delt = irradproc_no_interpolate_sunrise_sunset;      // 
+    tt.set_time(time_and_position.timestamp.tm_year + 1900,     // years since 1900
+        time_and_position.timestamp.tm_mon + 1,                 // Jan. = 0
+        time_and_position.timestamp.tm_mday,
+        time_and_position.timestamp.tm_hour,
+        time_and_position.timestamp.tm_min,
+        delt);
+    int sky_model = 2;      // isotropic=0, hdkr=1, perez=2
+    tt.set_sky_model(sky_model , albedo);
+    double tilt = time_and_position.collector_orientation.tilt;
+    double azimuth = time_and_position.collector_orientation.azimuth;
+    tt.set_surface(0, tilt, azimuth, 0, 0, 0, false, 0.0);
+    tt.calc();
+
+    double poa_beam, poa_sky_diffuse, poa_ground_reflected_diffuse;
+    tt.get_poa(&poa_beam, &poa_sky_diffuse, &poa_ground_reflected_diffuse, 0, 0, 0);
+    //double I_incident = (ssc_number_t)(poa_beam + poa_sky_diffuse + poa_ground_reflected_diffuse); // total PoA on surface
+
+    //double solalt, solazi;
+    //tt.get_sun(&solazi, 0, &solalt, 0, 0, 0, 0, 0, 0, 0);
+
+    double poa_beam_aoi = 0;
+    tt.get_angles(&poa_beam_aoi, 0, 0, 0, 0); // note: angles returned in degrees
+
+    PoaIrradianceComponents poa_irradiance_components;
+    poa_irradiance_components.beam_with_aoi.at(0) = poa_beam;
+    poa_irradiance_components.beam_with_aoi.at(1) = poa_beam_aoi;
+    poa_irradiance_components.sky_diffuse_with_aoi.at(0) = poa_sky_diffuse;
+    poa_irradiance_components.sky_diffuse_with_aoi.at(1) = std::numeric_limits<double>::quiet_NaN();
+    poa_irradiance_components.ground_reflected_diffuse_with_aoi.at(0) = poa_ground_reflected_diffuse;
+    poa_irradiance_components.ground_reflected_diffuse_with_aoi.at(1) = std::numeric_limits<double>::quiet_NaN();
+
+    return poa_irradiance_components;
+};
+
+const double FlatPlateCollector::TransmittedIrradiance(const CollectorOrientation &collector_orientation,
+    const PoaIrradianceComponents &poa_irradiance_components)
+{   
+    // calculate transmittance through cover
+    double Kta_d = 0.0;
+    double Kta_b = 0.0;
+    double Kta_g = 0.0;
+
+    // incidence angle modifier (IAM) for beam (D&B eqn 6.17.10 pp 297)
+    double aoi_beam = poa_irradiance_components.beam_with_aoi.at(1);
+    if (aoi_beam <= 60.0) {
+        Kta_b = 1 - iam_ * (1 / cos(aoi_beam*M_PI / 180) - 1);
+    }
+    else if (aoi_beam > 60.0 && aoi_beam <= 90.0) {
+        Kta_b = (1 - iam_)*(aoi_beam - 90.0)*M_PI / 180;
+    }
+    if (Kta_b < 0) Kta_b = 0;
+
+    double tilt = collector_orientation.tilt;
+    // effective incidence angle for sky diffuse radiation (D&B eqn 5.4.2 pp 215)
+    double theta_eff_diffuse = 59.7*M_PI / 180 - 0.1388*tilt*M_PI / 180 + 0.001497*tilt*M_PI / 180 * tilt*M_PI / 180;
+    double cos_theta_eff_diffuse = cos(theta_eff_diffuse);
+
+    // incidence angle modifier (IAM) for diffuse (D&B eqn 6.17.10 pp 297)
+    if (theta_eff_diffuse <= M_PI / 3.) {
+        Kta_d = 1 - iam_ * (1 / cos_theta_eff_diffuse - 1);
+    }
+    else if (theta_eff_diffuse > M_PI / 3. && theta_eff_diffuse <= M_PI / .2) {
+        Kta_d = (1 - iam_)*(theta_eff_diffuse - M_PI / 2.);
+    }
+    if (Kta_d < 0) {
+        Kta_d = 0;
+    }
+
+    // effective incidence angle modifier for ground reflected radiation (D&B eqn 5.4.1 pp 215)
+    double theta_eff_ground = 90 * M_PI / 180 - 0.5788*tilt*M_PI / 180 + 0.002693*tilt*M_PI / 180 * tilt*M_PI / 180;
+    double cos_theta_eff_ground = cos(theta_eff_ground);
+
+    // incidence angle modifier (IAM) for ground reflected radiation (D&B eqn 6.17.10 pp 297)
+    if (theta_eff_ground <= M_PI / 3) {
+        Kta_g = 1 - iam_ * (1 / cos_theta_eff_ground - 1);
+    }
+    else if (theta_eff_ground > M_PI / 3 && theta_eff_ground <= M_PI / 2) {
+        Kta_g = (1 - iam_)*(theta_eff_ground - M_PI / 2.);
+    }
+    if (Kta_g < 0) {
+        Kta_g = 0;
+    }
+
+    double beam_shading_factor = 1.0;
+    double diffuse_shading_factor = 1.0;
+    // TODO - How are shading losses calculated? Why does their setup require a cmod argument? Shading currently ignored.
+    //if (shad.fbeam(hour, solalt, solazi, jj, step_per_hour)) {
+    //    beam_loss_factor = shad.beam_shade_factor();
+    //}
+    //diffuse_shading_factor = shad.fdiff();
+
+    // TODO - Why are shading loss factors applied here and not at the incidence irradiance calculation?
+    double poa_beam = poa_irradiance_components.beam_with_aoi.at(0);
+    double poa_sky_diffuse = poa_irradiance_components.sky_diffuse_with_aoi.at(0);
+    double poa_ground_reflected_diffuse = poa_irradiance_components.ground_reflected_diffuse_with_aoi.at(0);
+    double I_transmitted = (ssc_number_t)(
+        Kta_b * poa_beam * beam_shading_factor +
+        Kta_d * poa_sky_diffuse * diffuse_shading_factor +
+        Kta_g * poa_ground_reflected_diffuse);
+
+    return I_transmitted;
+}
+
+const double FlatPlateCollector::AbsorbedIrradiance(double transmitted_irradiance, const  InletFluidFlow &inlet_fluid_flow, double T_amb)
+{
+    double m_dot = inlet_fluid_flow.m_dot;
+    double specific_heat = inlet_fluid_flow.specific_heat;
+    double mdotCp_use = m_dot * specific_heat; // mass flow rate (kg/s) * Cp_fluid (J/kg.K)
+
+    /* Flow rate corrections to FRta, FRUL (D&B pp 307) */
+    double FprimeUL = -heat_capacity_rate_test_ / area_coll_ * ::log(1 - FRUL_ * area_coll_ / heat_capacity_rate_test_); // D&B eqn 6.20.4
+    double r = (mdotCp_use / area_coll_ * (1 - exp(-area_coll_ * FprimeUL / mdotCp_use))) / FRUL_; // D&B eqn 6.20.3
+    double FRta_use = FRta_ * r; // FRta_use = value for this time step 
+    
+    double Q_absorbed = area_coll_ * FRta_use*transmitted_irradiance; // from D&B eqn 6.8.1
+    return Q_absorbed;
+}
+
+const double FlatPlateCollector::ThermalLosses(const InletFluidFlow &inlet_fluid_flow, double T_amb)
+{
+    double T_in = inlet_fluid_flow.temp;
+    double m_dot = inlet_fluid_flow.m_dot;
+    double specific_heat = inlet_fluid_flow.specific_heat;
+    double mdotCp_use = m_dot * specific_heat; // mass flow rate (kg/s) * Cp_fluid (J/kg.K)
+
+    double FprimeUL = -heat_capacity_rate_test_ / area_coll_ * ::log(1 - FRUL_ * area_coll_ / heat_capacity_rate_test_); // D&B eqn 6.20.4
+    double r = (mdotCp_use / area_coll_ * (1 - exp(-area_coll_ * FprimeUL / mdotCp_use))) / FRUL_; // D&B eqn 6.20.3
+    
+    double FRUL_use = FRUL_ * r; // FRUL_use = value for this time step
+    double Q_losses = area_coll_ * FRUL_use * (T_in - T_amb); // from D&B eqn 6.8.1
+    return Q_losses;
+}
+
+
+
+class Pipe
+{
+public:
+    Pipe(double pipe_diam, double pipe_k, double pipe_insul, double pipe_length);
+    const double pipe_od();
+    const double T_out(double T_in, double T_amb, double specific_heat_capacity);
+private:
+    double pipe_diam_;
+    double pipe_k_;
+    double pipe_insul_;
+    double pipe_length_;        // in whole system
+    const double UA_pipe();
+    const double ThermalLoss(double T_in, double T_amb);
+};
+
+Pipe::Pipe(double pipe_diam, double pipe_k, double pipe_insul, double pipe_length)
+  : pipe_diam_(pipe_diam),
+    pipe_k_(pipe_k),
+    pipe_insul_(pipe_insul),
+    pipe_length_(pipe_length)
+{}
+
+const double Pipe::pipe_od()
+{
+    return pipe_diam_ + pipe_insul_ * 2;
+}
+
+const double Pipe::UA_pipe()
+{
+    double U_pipe = 2 * pipe_k_ / (pipe_od() * ::log(pipe_od() / pipe_diam_)); //  **TODO** CHECK whether should be pipe_diam*log(pipe_od/pipe_diam) in denominator
+    double UA_pipe = U_pipe * M_PI * pipe_od() * pipe_length_; // W/'C
+    return UA_pipe;
+}
+
+const double Pipe::ThermalLoss(double T_in, double T_amb)
+{
+    return UA_pipe()*(T_in - T_amb);
+}
+
+const double Pipe::T_out(double T_in, double T_amb, double specific_heat_capacity)
+{
+    double thermal_loss = ThermalLoss(T_in, T_amb);
+    double T_out = thermal_loss / specific_heat_capacity + T_in;
+    return T_out;
+}
+
+
+
+class FlatPlateArray
+{
+public:
+    FlatPlateArray(const FlatPlateCollector &flat_plate_collector, const CollectorLocation &collector_location,
+        const CollectorOrientation &collector_orientation, double num_collectors,
+        const Pipe &inlet_pipe, const Pipe &outlet_pipe);
+    FlatPlateArray(const CollectorTestSpecifications &collector_test_specifications, const CollectorLocation &collector_location,
+        const CollectorOrientation &collector_orientation, double num_collectors,
+        const Pipe &inlet_pipe, const Pipe &outlet_pipe);
+    const double UsefulEnergyGain(const TimeAndPosition &time_and_position, const ExternalConditions &external_conditions);
+    const double T_out(const TimeAndPosition &time_and_position, const ExternalConditions &external_conditions);
+private:
+    FlatPlateCollector flat_plate_collector_;        // just scale a single collector for now -> premature optimization??
+    double area_total_;
+    double ncoll_;                                   // only used to scale a single collector area
+    CollectorLocation collector_location_;
+    CollectorOrientation collector_orientation_;
+    Pipe inlet_pipe_;
+    Pipe outlet_pipe_;
+};
+
+FlatPlateArray::FlatPlateArray(const FlatPlateCollector &flat_plate_collector, const CollectorLocation &collector_location,
+    const CollectorOrientation &collector_orientation, double num_collectors,
+    const Pipe &inlet_pipe, const Pipe &outlet_pipe)
+    :
+    flat_plate_collector_(flat_plate_collector),
+    collector_location_(collector_location),
+    collector_orientation_(collector_orientation),
+    ncoll_(num_collectors),
+    inlet_pipe_(inlet_pipe),
+    outlet_pipe_(outlet_pipe)
+{
+    area_total_ = flat_plate_collector_.area_coll() * ncoll_;
+    flat_plate_collector_.area_coll(area_total_);
+}
+
+FlatPlateArray::FlatPlateArray(const CollectorTestSpecifications &collector_test_specifications, const CollectorLocation &collector_location,
+    const CollectorOrientation &collector_orientation, double num_collectors,
+    const Pipe &inlet_pipe, const Pipe &outlet_pipe)
+    :
+    flat_plate_collector_(collector_test_specifications.area_coll_test,
+        collector_test_specifications),
+    collector_location_(collector_location),
+    collector_orientation_(collector_orientation),
+    ncoll_(num_collectors),
+    inlet_pipe_(inlet_pipe),
+    outlet_pipe_(outlet_pipe)
+{
+    area_total_ = flat_plate_collector_.area_coll() * ncoll_;
+    flat_plate_collector_.area_coll(area_total_);
+}
+
+const double FlatPlateArray::UsefulEnergyGain(const TimeAndPosition &time_and_position, const ExternalConditions &external_conditions)
+{
+    return flat_plate_collector_.UsefulEnergyGain(time_and_position, external_conditions);
+}
+
+const double FlatPlateArray::T_out(const TimeAndPosition &time_and_position, const ExternalConditions &external_conditions)
+{
+    double T_in = external_conditions.inlet_fluid_flow.temp;
+    double T_amb = external_conditions.weather.ambient_temp;
+    double m_dot = external_conditions.inlet_fluid_flow.m_dot;
+    double specific_heat = external_conditions.inlet_fluid_flow.specific_heat;
+    double specific_heat_capacity = m_dot * specific_heat;
+
+    double T_out_inlet_pipe = inlet_pipe_.T_out(T_in, T_amb, specific_heat_capacity);
+
+    ExternalConditions external_conditions_to_collector(external_conditions);
+    external_conditions_to_collector.inlet_fluid_flow.temp = T_out_inlet_pipe;
+    double T_out_flat_plate = flat_plate_collector_.T_out(time_and_position, external_conditions_to_collector);
+
+    double T_out_outlet_pipe = outlet_pipe_.T_out(T_out_flat_plate, T_amb, specific_heat_capacity);
+    return T_out_outlet_pipe;
+}
+
+
 
 DEFINE_MODULE_ENTRY( swh, "Solar water heating model using multi-mode tank node model.", 10 )
