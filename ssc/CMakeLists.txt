@@ -63,6 +63,7 @@ set(SSC_SRC
 		cmod_pv6parmod.cpp
 		cmod_pv_get_shade_loss_mpp.cpp
 		cmod_pvsamv1.cpp
+        cmod_pvsamv1_eqns.cpp
 		cmod_pvsandiainv.cpp
 		cmod_pvwattsv0.cpp
 		cmod_pvwattsv1.cpp
@@ -119,10 +120,11 @@ set(SSC_SRC
 		common_financial.cpp
 		core.cpp
 		csp_common.cpp
+		python_handler.cpp
 		sscapi.cpp
 		tckernel.cpp
-        cmod_pvsamv1_eqns.cpp cmod_pvsamv1_eqns.h
-		vartab.cpp)
+		vartab.cpp
+		)
 
 
 #####################################################################################################################

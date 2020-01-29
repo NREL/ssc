@@ -461,3 +461,12 @@ TEST(windpower_turbine_powercurve, Case4){
     ASSERT_NEAR(ws[100], 25., 1e-2);
     ASSERT_NEAR(rated_wx, 11.21, 1e-2);
 }
+
+TEST(windpower_landbosse, Init){
+    var_table* vd = new var_table;
+    vd->assign("turbine_size", 1500);
+
+    Landbosse_calculate_bos_costs(vd);
+
+    double total_bos_cost = vd->lookup("total_installed_cost")->num;
+}

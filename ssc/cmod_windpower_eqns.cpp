@@ -7,6 +7,8 @@
 #include "../shared/lib_util.h"
 
 #include "cmod_windpower_eqns.h"
+#include "python_handler.h"
+
 #pragma warning(disable: 4297)  // ignore warning: 'function assumed not to throw an exception but does'
 
 void Turbine_calculate_powercurve(ssc_data_t data)
@@ -150,3 +152,14 @@ void Turbine_calculate_powercurve(ssc_data_t data)
 
 
 
+SSCEXPORT void Landbosse_calculate_bos_costs(ssc_data_t data){
+    auto vt = static_cast<var_table*>(data);
+    if (!vt){
+        throw std::runtime_error("ssc_data_t data invalid");
+    }
+
+    auto python = python_handler();
+    python.call_python_module("mod", vt);
+
+    vt->assign("total_installed_cost", 1);
+}
