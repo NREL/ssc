@@ -1736,7 +1736,9 @@ void cm_pvsamv1::exec( ) throw (general_error)
 								{
 									size_t wma_ti = 60 * wma_timestep_minutes * (wma_i); //number of seconds in the past 
 									ssc_number_t wma_weight = std::exp(0.0 - wma_P * (ssc_number_t)wma_ti);
-									size_t wma_ts_idx = idx;
+									size_t wma_ts_idx = (idx - iyear * Irradiance->numberOfWeatherFileRecords );
+									// limited to first year only
+
 									if (wma_ts_idx > wma_i)
 										wma_ts_idx -= wma_i;
 									else
