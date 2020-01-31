@@ -3,6 +3,64 @@
 
 #include <gtest/gtest.h>
 #include "../tcs/storage_hx.h"
+#include "../tcs/flat_plate_solar_collector.h"
+
+class FlatPlateCollectorTest : public ::testing::Test
+{
+public:
+    const double m_error_tolerance_lo = 0.001;    // 0.1%
+    const double m_error_tolerance_hi = 0.01;     // 1.0%
+
+    void SetUp();
+
+    void TearDown()
+    {
+        if (flat_plate_collector_) {
+            delete flat_plate_collector_;
+            flat_plate_collector_ = nullptr;
+        }
+    }
+protected:
+    FlatPlateCollector *flat_plate_collector_;
+
+    // inputs
+
+    // outputs
+
+    // parameters for initialization
+
+};
+
+class FlatPlateArrayTest : public ::testing::Test
+{
+public:
+    const double m_error_tolerance_lo = 0.001;    // 0.1%
+    const double m_error_tolerance_hi = 0.01;     // 1.0%
+
+    void SetUp();
+
+    void TearDown()
+    {
+        if (flat_plate_array_) {
+            delete flat_plate_array_;
+            flat_plate_array_ = nullptr;
+        }
+    }
+protected:
+    FlatPlateArray *flat_plate_array_;
+
+    // inputs
+
+    // outputs
+
+    // parameters for initialization
+    FlatPlateCollector *flat_plate_collector_;
+    CollectorLocation collector_location_;
+    CollectorOrientation collector_orientation_;
+    double num_collectors_;
+    Pipe *inlet_pipe_;
+    Pipe *outlet_pipe_;
+};
 
 class StorageTankTest : public ::testing::Test
 {

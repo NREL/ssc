@@ -2,6 +2,147 @@
 
 #include "lib_csp_test.h"
 
+const double default_area_coll = 2.98;
+
+CollectorTestSpecifications default_collector_test_specifications()
+{
+    CollectorTestSpecifications collector_test_specifications;
+    collector_test_specifications.area_coll_test = 2.98;
+    collector_test_specifications.FRta = 0.689;
+    collector_test_specifications.FRUL = 3.85;
+    double test_cp = 4.182;         // kJ/kg-K
+    double test_flow = 0.045528;    // kg/s
+    collector_test_specifications.heat_capacity_rate_test = test_cp * test_flow;
+    collector_test_specifications.iam = 0.2;
+
+    return collector_test_specifications;
+}
+
+FlatPlateCollector* default_flat_plate_collector()
+{
+    double area_coll = default_area_coll;
+    CollectorTestSpecifications collector_test_specifications = default_collector_test_specifications();
+
+    return new FlatPlateCollector(area_coll, collector_test_specifications);
+}
+
+tm default_time()
+{
+    tm time;
+    // TODO - The timestamp should be generated from a string so all attributes are valid
+    time.tm_year = 2012 - 1900;  // years since 1900
+    time.tm_mon = 1 - 1;         // months since Jan. (Jan. = 0)
+    time.tm_mday = 1;
+    time.tm_hour = 12;
+    time.tm_min = 30;
+    time.tm_sec = 0;
+
+    return time;
+}
+
+CollectorLocation default_location()
+{
+    CollectorLocation collector_location;
+    collector_location.latitude = 33.45000;
+    collector_location.longitude = -111.98000;
+    collector_location.timezone = -7;
+
+    return collector_location;
+}
+
+CollectorOrientation default_orientation()
+{
+    CollectorOrientation collector_orientation;
+    collector_orientation.tilt = 30.;
+    collector_orientation.azimuth = 180.;
+
+    return collector_orientation;
+}
+
+TimeAndPosition default_time_and_position()
+{
+    TimeAndPosition time_and_position;
+    time_and_position.timestamp = default_time();
+    time_and_position.collector_location = default_location();
+    time_and_position.collector_orientation = default_orientation();
+
+    return time_and_position;
+}
+
+ExternalConditions default_external_conditions()
+{
+    ExternalConditions external_conditions;
+    external_conditions.weather.ambient_temp = 25.;
+    external_conditions.weather.dni = 935.;
+    external_conditions.weather.dhi = 84.;
+    external_conditions.weather.ghi = std::numeric_limits<double>::quiet_NaN();
+    external_conditions.weather.wind_speed = std::numeric_limits<double>::quiet_NaN();
+    external_conditions.weather.wind_direction = std::numeric_limits<double>::quiet_NaN();
+    external_conditions.inlet_fluid_flow.m_dot = 0.091056;          // kg/s
+    external_conditions.inlet_fluid_flow.specific_heat = 4.182;     // kJ/kg-K
+    external_conditions.inlet_fluid_flow.temp = 45.9;               // from previous timestep
+    external_conditions.albedo = 0.2;
+
+    return external_conditions;
+}
+
+Pipe* default_pipe()
+{
+    double inner_diameter = 0.019;
+    double insulation_conductivity = 0.03;
+    double insulation_thickness = 0.006;
+    double length = 5;
+
+    return new Pipe(inner_diameter, insulation_conductivity, insulation_thickness, length);
+}
+
+void FlatPlateCollectorTest::SetUp()
+{    
+    // Too much in the Setup; can't change the configuration in the tests
+    flat_plate_collector_ = default_flat_plate_collector();
+}
+
+TEST_F(FlatPlateCollectorTest, TestFlatPlateCollectorNominalOperation)
+{
+    TimeAndPosition time_and_position = default_time_and_position();
+    ExternalConditions external_conditions = default_external_conditions();
+
+    double useful_power_gain = flat_plate_collector_->UsefulPowerGain(time_and_position, external_conditions);  // [W]
+    double T_out = flat_plate_collector_->T_out(time_and_position, external_conditions);                        // [C]
+
+    EXPECT_NEAR(useful_power_gain, 1.659e3, 1.659e3 * m_error_tolerance_hi);
+    EXPECT_NEAR(T_out, 50.26, 50.26 * m_error_tolerance_hi);
+}
+
+void FlatPlateArrayTest::SetUp()
+{
+    // Too much in the Setup; can't change the configuration in the tests
+    flat_plate_collector_ = default_flat_plate_collector();
+    collector_location_ = default_location();
+    collector_orientation_ = default_orientation();
+    num_collectors_ = 1;
+    inlet_pipe_ = default_pipe();
+    outlet_pipe_ = default_pipe();
+
+    flat_plate_array_ = new FlatPlateArray(*flat_plate_collector_, collector_location_,
+        collector_orientation_, num_collectors_, *inlet_pipe_, *outlet_pipe_);
+}
+
+TEST_F(FlatPlateArrayTest, TestFlatPlateArrayOfOneNominalOperation)
+{
+    TimeAndPosition time_and_position = default_time_and_position();
+    ExternalConditions external_conditions = default_external_conditions();
+    external_conditions.inlet_fluid_flow.temp = 44.86;
+
+    double useful_power_gain = flat_plate_array_->UsefulPowerGain(time_and_position, external_conditions);  // [W]
+    double T_out = flat_plate_array_->T_out(time_and_position, external_conditions);                        // [C]
+
+    EXPECT_NEAR(useful_power_gain, 1.587e3, 1.587e3 * m_error_tolerance_hi);
+    EXPECT_NEAR(T_out, 49.03, 49.03 * m_error_tolerance_hi);
+}
+
+
+
 void StorageTankTest::SetUp()
 {
     m_storage = new Storage_HX();

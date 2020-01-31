@@ -95,7 +95,7 @@ static var_info _cm_vtab_swh[] = {
 																									      									             		             
 	{ SSC_INPUT,        SSC_NUMBER,      "pipe_length",           "Length of piping in system",           "m",      "",                                  "SWH",              "*",                       "POSITIVE",                          "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "pipe_diam",             "Pipe diameter",                        "m",      "",                                  "SWH",              "*",                       "POSITIVE",                          "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "pipe_k",                "Pipe insulation conductivity",         "W/m2.C", "",                                  "SWH",              "*",                       "POSITIVE",                          "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "pipe_k",                "Pipe insulation conductivity",         "W/m-C", "",                                  "SWH",              "*",                       "POSITIVE",                          "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "pipe_insul",            "Pipe insulation thickness",            "m",      "",                                  "SWH",              "*",                       "POSITIVE",                          "" },
 																									      														             
 	{ SSC_INPUT,        SSC_NUMBER,      "tank_h2d_ratio",        "Solar tank height to diameter ratio",  "",       "",                                  "SWH",              "*",                       "POSITIVE",                          "" },
@@ -354,8 +354,9 @@ public:
 		{
 			for( size_t jj=0;jj<step_per_hour;jj++)
 			{
-				if( !wfile.read( &wf ) )
-					throw exec_error( "swh", util::format("error reading from weather file at position %d", (int)idx ) );
+                if (!wfile.read(&wf)) {
+                    throw exec_error("swh", util::format("error reading from weather file at position %d", (int)idx));
+                }
 
 				Beam[idx] = (ssc_number_t)wf.dn;
 				Diffuse[idx] = (ssc_number_t)wf.df;
@@ -438,10 +439,11 @@ public:
 
 
 				shading_loss[idx] = (ssc_number_t) (1-beam_loss_factor)*100;
+                double shade_loss_factor = shad.fdiff();
 
 				I_transmitted[idx] = (ssc_number_t)(
 					Kta_b*poa[0]*beam_loss_factor + 
-					Kta_d*poa[1]*shad.fdiff() + 
+					Kta_d*poa[1]*shade_loss_factor +
 					Kta_g*poa[2]);
 
 				idx++;
@@ -511,8 +513,9 @@ public:
 				tmain = ((tmain - 32) / 1.8); // convert to 'C
 
 				// load into mains temp array
-				for( size_t jj=0;jj<step_per_hour;jj++ )
-					T_mains[idx++] = (ssc_number_t)tmain;
+                for (size_t jj = 0; jj < step_per_hour; jj++) {
+                    T_mains[idx++] = (ssc_number_t)tmain;
+                }
 			}
 		}
 
@@ -523,13 +526,15 @@ public:
 		double T_set_array[8760];
 		if (use_custom_set == 0)
 		{
-			for (size_t i = 0; i < 8760; i++)
-				T_set_array[i] = T_set;
+            for (size_t i = 0; i < 8760; i++) {
+                T_set_array[i] = T_set;
+            }
 		}
 		else
 		{
-			for (size_t i = 0; i < 8760; i++)
-				T_set_array[i] = custom_set[i];
+            for (size_t i = 0; i < 8760; i++) {
+                T_set_array[i] = custom_set[i];
+            }
 		}
 
 		/* **********************************************************************
@@ -556,12 +561,13 @@ public:
 		idx = 0;
 		for (hour = 0; hour < 8760; hour++)
 		{
-#define NSTATUS_UPDATES 50  // set this to the number of times a progress update should be issued for the simulation
+            #define NSTATUS_UPDATES 50  // set this to the number of times a progress update should be issued for the simulation
 			if ( hour % (8760/NSTATUS_UPDATES) == 0 )
 			{
 				float percent = 100.0f * ((float)hour+1) / ((float)8760);
-				if ( !update( "", percent , (float)hour ) )
-					throw exec_error("swh", "simulation canceled at hour " + util::to_string(hour+1.0) );
+                if (!update("", percent, (float)hour)) {
+                    throw exec_error("swh", "simulation canceled at hour " + util::to_string(hour + 1.0));
+                }
 			}
 
 			for( size_t jj=0;jj<step_per_hour;jj++ )
@@ -595,6 +601,8 @@ public:
 				double FRta_use = FRta * r; // FRta_use = value for this time step
 				double FRUL_use = FRUL * r; // FRUL_use = value for this time step
 
+                // IT LOOKS LIKE THE PIPING LOSSES ARE DOUBLE COUNTED HERE.
+                // UA_pipe is for the whole system, while in these equations they should be split between inlet and outlet
 				/* Pipe loss adjustment (D&B pp 430) */
 				FRta_use = FRta_use / (1 + UA_pipe / mdotCp_use); // D&B eqn 10.3.9
 				FRUL_use = FRUL_use * ((1 - UA_pipe / mdotCp_use + 2 * UA_pipe / (area_total*FRUL_use)) / (1 + UA_pipe / mdotCp_use)); // D&B eqn 10.3.10
@@ -612,18 +620,19 @@ public:
 				else Q_useful = area_total*(FRta_use*I_transmitted[idx] - FRUL_use*(T_tank_prev - T_amb_use) );
 				// T_tank_prev is used, because use of T_cold_prev can cause the system to oscillate on and off 
 			
-				if ( I_incident_use < 0.0 )
-					Q_useful = 0;
+                if (I_incident_use < 0.0) {
+                    Q_useful = 0;
+                }
 
 				double dT_collector = Q_useful/mdotCp_use;
 
-	// Charging -- solar system operating			
+	            // Charging -- solar system operating			
 				if (Q_useful > 0.)
 				{
 					double V_hot_next = V_hot_prev + (ts_sec*mdot_total/rho_water);
 					if (V_hot_next < V_tank)
 					{
-		// Mode 1 Transition -- solar system operating
+		                // Mode 1 Transition -- solar system operating
 						mode = 1;
 						// Warm water from the collector loop into the top of the solar tank causes mixing with hot water below
 						T_tank = (T_tank_prev*m_tank*Cp_water + ts_sec*(Q_useful + UA_tank*T_room
@@ -641,7 +650,7 @@ public:
 					}
 					else
 					{
-		// Mode 2 Charging -- solar system operating
+		                // Mode 2 Charging -- solar system operating
 						mode = 2;
 						// Energy balance calculated based on average tank temperature (single node); tank top and bottom temperatures estimated based on collector dT
 						// Implicit Euler calculation
@@ -660,7 +669,7 @@ public:
 				}
 				else
 				{
-		// Mode 3 Discharging -- solar system not operating
+		            // Mode 3 Discharging -- solar system not operating
 					mode = 3;		
 					// 2-node plug flow
 					double hotLoss = 0.0; double coldLoss = 0.0;
@@ -672,9 +681,10 @@ public:
 						T_hot_prev = T_tank;
 					}
 					// Hot node calculations
-						V_hot = V_hot_prev - mdot_mix*ts_sec/rho_water;
-					if (V_hot < 0)
+					V_hot = V_hot_prev - mdot_mix*ts_sec/rho_water;
+					if (V_hot < 0) {
 						V_hot = 0;
+                    }
 
 					if (V_hot == 0)	// cold water drawn into the bottom of the tank in previous timesteps has completely flushed hot water from the tank
 					{
@@ -711,8 +721,12 @@ public:
 					T_bot = T_tank - 0.67*dT_collector;	
 					// T_top = T_hot
 					// T_bot = T_cold
-					if (V_hot > 0) T_deliv = T_hot;
-					else T_deliv = T_cold;
+                    if (V_hot > 0) {
+                        T_deliv = T_hot;
+                    }
+                    else {
+                        T_deliv = T_cold;
+                    }
 				}
 
 				// calculate pumping losses (pump size is user entered) -
@@ -723,12 +737,16 @@ public:
 
 				// amount of auxiliary energy needed to bring delivered water to set temperature
 				double Q_aux = mdot_mix * Cp_water * (T_set_use - T_deliv);
-				if (Q_aux < 0) Q_aux = 0.0;
+                if (Q_aux < 0) {
+                    Q_aux = 0.0;
+                }
 
 				// amount of energy needed to bring T_mains to set temperature (without SHW)
 				double Q_auxonly = mdot_mix * Cp_water * (T_set_use - T_mains_use);
 
-				if (Q_auxonly < 0) Q_auxonly = 0.0;
+                if (Q_auxonly < 0) {
+                    Q_auxonly = 0.0;
+                }
 
 				// Energy saved by SHW system is difference between aux only system and shw+aux system - the pump losses
 				double Q_saved = Q_auxonly - Q_aux - P_pump;
@@ -744,7 +762,9 @@ public:
 				T_bot_prev = T_bot;
 
 				// Zero out Q_useful if <0
-				if (Q_useful < 0) Q_useful = 0.0;
+                if (Q_useful < 0) {
+                    Q_useful = 0.0;
+                }
 
 				// save output variables - convert Q values to kWh 
 				out_Q_transmitted[idx] = (ssc_number_t)(I_transmitted[idx] * area_total * watt_to_kw);
@@ -808,5 +828,6 @@ public:
 	}
 
 };
+
 
 DEFINE_MODULE_ENTRY( swh, "Solar water heating model using multi-mode tank node model.", 10 )

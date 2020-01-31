@@ -41,6 +41,7 @@
     <ClCompile Include="..\tcs\datatest.cpp" />
     <ClCompile Include="..\tcs\direct_steam_receivers.cpp" />
     <ClCompile Include="..\tcs\CO2_properties.cpp" />
+    <ClCompile Include="..\tcs\flat_plate_solar_collector.cpp" />
     <ClCompile Include="..\tcs\heat_exchangers.cpp" />
     <ClCompile Include="..\tcs\interconnect.cpp" />
     <ClCompile Include="..\tcs\numeric_solvers.cpp" />
@@ -125,6 +126,7 @@
     <ClInclude Include="..\tcs\csp_system_costs.h" />
     <ClInclude Include="..\tcs\direct_steam_receivers.h" />
     <ClInclude Include="..\tcs\CO2_properties.h" />
+    <ClInclude Include="..\tcs\flat_plate_solar_collector.h" />
     <ClInclude Include="..\tcs\heat_exchangers.h" />
     <ClInclude Include="..\tcs\interconnect.h" />
     <ClInclude Include="..\tcs\numeric_solvers.h" />
