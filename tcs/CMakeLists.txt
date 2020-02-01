@@ -111,6 +111,7 @@ set(TCS_SRC
 		sumprod.cpp
 		thermocline_tes.cpp
 		tou_translator.cpp
+		flat_plate_solar_collector.cpp
 )
 
 
