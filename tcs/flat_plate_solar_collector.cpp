@@ -283,34 +283,42 @@ const double Pipe::T_out(double T_in /*C*/, double T_amb /*C*/, double heat_capa
 
 
 FlatPlateArray::FlatPlateArray(const FlatPlateCollector &flat_plate_collector, const CollectorLocation &collector_location,
-    const CollectorOrientation &collector_orientation, double num_collectors,
+    const CollectorOrientation &collector_orientation, const ArrayDimensions &array_dimensions,
     const Pipe &inlet_pipe, const Pipe &outlet_pipe)
     :
     flat_plate_collector_(flat_plate_collector),
     collector_location_(collector_location),
     collector_orientation_(collector_orientation),
-    ncoll_(num_collectors),
+    array_dimensions_(array_dimensions),
     inlet_pipe_(inlet_pipe),
     outlet_pipe_(outlet_pipe)
 {
-    area_total_ = flat_plate_collector_.area_coll() * ncoll_;
-    flat_plate_collector_.area_coll(area_total_);
+
 }
 
 FlatPlateArray::FlatPlateArray(const CollectorTestSpecifications &collector_test_specifications, const CollectorLocation &collector_location,
-    const CollectorOrientation &collector_orientation, double num_collectors,
+    const CollectorOrientation &collector_orientation, const ArrayDimensions &array_dimensions,
     const Pipe &inlet_pipe, const Pipe &outlet_pipe)
     :
     flat_plate_collector_(collector_test_specifications.area_coll_test,
         collector_test_specifications),
     collector_location_(collector_location),
     collector_orientation_(collector_orientation),
-    ncoll_(num_collectors),
+    array_dimensions_(array_dimensions),
     inlet_pipe_(inlet_pipe),
     outlet_pipe_(outlet_pipe)
 {
-    area_total_ = flat_plate_collector_.area_coll() * ncoll_;
-    flat_plate_collector_.area_coll(area_total_);
+
+}
+
+const int FlatPlateArray::ncoll()
+{
+    return array_dimensions_.num_in_series * array_dimensions_.num_in_parallel;
+}
+
+const double FlatPlateArray::area_total()
+{
+    return flat_plate_collector_.area_coll() * ncoll();
 }
 
 const double FlatPlateArray::UsefulPowerGain(const TimeAndPosition &time_and_position, const ExternalConditions &external_conditions)      // [W]
@@ -323,16 +331,26 @@ const double FlatPlateArray::UsefulPowerGain(const TimeAndPosition &time_and_pos
 
     double inlet_pipe_thermal_power_loss = inlet_pipe_.ThermalPowerLoss(T_in, T_amb);
     double T_out_inlet_pipe = inlet_pipe_.T_out(T_in, T_amb, specific_heat_capacity);
+    double T_array_in = T_out_inlet_pipe;
 
     ExternalConditions external_conditions_to_collector(external_conditions);
-    external_conditions_to_collector.inlet_fluid_flow.temp = T_out_inlet_pipe;
+    external_conditions_to_collector.inlet_fluid_flow.temp = T_array_in;
+    external_conditions_to_collector.inlet_fluid_flow.m_dot = m_dot / array_dimensions_.num_in_parallel;
 
-    double collector_thermal_power_gain = flat_plate_collector_.UsefulPowerGain(time_and_position, external_conditions_to_collector);
-    double T_collector_out = flat_plate_collector_.T_out(time_and_position, external_conditions_to_collector);
+    double series_string_thermal_power_gain = 0.;
+    double T_array_out = T_array_in;
+    for (std::size_t i = 0; i < array_dimensions_.num_in_series; i++) {
+        series_string_thermal_power_gain += flat_plate_collector_.UsefulPowerGain(time_and_position, external_conditions_to_collector);
+        double T_collector_out = flat_plate_collector_.T_out(time_and_position, external_conditions_to_collector);
+        external_conditions_to_collector.inlet_fluid_flow.temp = T_collector_out;   // to next collector in series
+        T_array_out = T_collector_out;
+    }
 
-    double outlet_pipe_thermal_power_loss = outlet_pipe_.ThermalPowerLoss(T_collector_out, T_amb);
+    double outlet_pipe_thermal_power_loss = outlet_pipe_.ThermalPowerLoss(T_array_out, T_amb);
 
-    double useful_power_gain = -inlet_pipe_thermal_power_loss + collector_thermal_power_gain - outlet_pipe_thermal_power_loss;
+    double useful_power_gain = -inlet_pipe_thermal_power_loss
+        + series_string_thermal_power_gain * array_dimensions_.num_in_parallel
+        - outlet_pipe_thermal_power_loss;
     return useful_power_gain;
 }
 
@@ -345,11 +363,19 @@ const double FlatPlateArray::T_out(const TimeAndPosition &time_and_position, con
     double specific_heat_capacity = m_dot * specific_heat;
 
     double T_out_inlet_pipe = inlet_pipe_.T_out(T_in, T_amb, specific_heat_capacity);
+    double T_array_in = T_out_inlet_pipe;
 
     ExternalConditions external_conditions_to_collector(external_conditions);
-    external_conditions_to_collector.inlet_fluid_flow.temp = T_out_inlet_pipe;
-    double T_out_flat_plate = flat_plate_collector_.T_out(time_and_position, external_conditions_to_collector);
+    external_conditions_to_collector.inlet_fluid_flow.temp = T_array_in;
+    external_conditions_to_collector.inlet_fluid_flow.m_dot = m_dot / array_dimensions_.num_in_parallel;
 
-    double T_out_outlet_pipe = outlet_pipe_.T_out(T_out_flat_plate, T_amb, specific_heat_capacity);
+    double T_array_out = T_array_in;
+    for (std::size_t i = 0; i < array_dimensions_.num_in_series; i++) {
+        double T_collector_out = flat_plate_collector_.T_out(time_and_position, external_conditions_to_collector);
+        external_conditions_to_collector.inlet_fluid_flow.temp = T_collector_out;   // to next collector in series
+        T_array_out = T_collector_out;
+    }
+
+    double T_out_outlet_pipe = outlet_pipe_.T_out(T_array_out, T_amb, specific_heat_capacity);
     return T_out_outlet_pipe;
 }

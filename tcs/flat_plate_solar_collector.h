@@ -48,6 +48,12 @@ struct CollectorOrientation
     double azimuth;                     // [deg] Clockwise from North
 };
 
+struct ArrayDimensions
+{
+    int num_in_series;
+    int num_in_parallel;
+};
+
 struct TimeAndPosition
 {
     tm timestamp;
@@ -145,19 +151,21 @@ class FlatPlateArray
 {
 public:
     FlatPlateArray(const FlatPlateCollector &flat_plate_collector, const CollectorLocation &collector_location,
-        const CollectorOrientation &collector_orientation, double num_collectors,
+        const CollectorOrientation &collector_orientation, const ArrayDimensions &array_dimensions,
         const Pipe &inlet_pipe, const Pipe &outlet_pipe);
     FlatPlateArray(const CollectorTestSpecifications &collector_test_specifications, const CollectorLocation &collector_location,
-        const CollectorOrientation &collector_orientation, double num_collectors,
+        const CollectorOrientation &collector_orientation, const ArrayDimensions &array_dimensions,
         const Pipe &inlet_pipe, const Pipe &outlet_pipe);
+    const int ncoll();
+    const double area_total();                             // [m2]
     const double UsefulPowerGain(const TimeAndPosition &time_and_position, const ExternalConditions &external_conditions);      // [W]
     const double T_out(const TimeAndPosition &time_and_position, const ExternalConditions &external_conditions);                // [C]
 private:
     FlatPlateCollector flat_plate_collector_;       // just scale a single collector for now -> premature optimization??
-    double area_total_;                             // [m2]
-    double ncoll_;                                  // only used to scale a single collector area
+    
     CollectorLocation collector_location_;
     CollectorOrientation collector_orientation_;
+    ArrayDimensions array_dimensions_;
     Pipe inlet_pipe_;
     Pipe outlet_pipe_;
 };

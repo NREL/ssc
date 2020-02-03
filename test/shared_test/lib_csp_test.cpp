@@ -59,6 +59,15 @@ CollectorOrientation default_orientation()
     return collector_orientation;
 }
 
+ArrayDimensions default_dimensions()
+{
+    ArrayDimensions array_dimensions;
+    array_dimensions.num_in_parallel = 1;
+    array_dimensions.num_in_series = 1;
+
+    return array_dimensions;
+}
+
 TimeAndPosition default_time_and_position()
 {
     TimeAndPosition time_and_position;
@@ -120,12 +129,13 @@ void FlatPlateArrayTest::SetUp()
     flat_plate_collector_ = default_flat_plate_collector();
     collector_location_ = default_location();
     collector_orientation_ = default_orientation();
-    num_collectors_ = 1;
+    array_dimensions_ = default_dimensions();
+
     inlet_pipe_ = default_pipe();
     outlet_pipe_ = default_pipe();
 
     flat_plate_array_ = new FlatPlateArray(*flat_plate_collector_, collector_location_,
-        collector_orientation_, num_collectors_, *inlet_pipe_, *outlet_pipe_);
+        collector_orientation_, array_dimensions_, *inlet_pipe_, *outlet_pipe_);
 }
 
 TEST_F(FlatPlateArrayTest, TestFlatPlateArrayOfOneNominalOperation)
