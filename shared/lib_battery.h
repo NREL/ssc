@@ -758,7 +758,7 @@ public:
 	void initialize(capacity_t *, voltage_t *, lifetime_t *, thermal_t *, losses_t *);
 
 	// Run all for single time step, updating all component model states and return the dispatched power [kW]
-	double run(size_t lifetimeIndex, double I);
+	double run(size_t lifetimeIndex, double &I);
 
 	double calculate_voltage_for_current(double I);
 

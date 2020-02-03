@@ -56,8 +56,9 @@ TEST_F(ResilienceTest_lib_resilience, DischargeBatteryModelHourly)
     auto cap = batt->battery_model->capacity_model();
     auto vol = batt->battery_model->voltage_model();
     cap->change_SOC_limits(0, 100);
+    double current = 1;
     while (cap->SOC() > 40)
-        batt->battery_model->run(0, 1);
+        batt->battery_model->run(0, current);
 
     battery_t initial_batt = battery_t(*batt->battery_model);
     auto battery = new battery_t(initial_batt);
@@ -73,7 +74,7 @@ TEST_F(ResilienceTest_lib_resilience, DischargeBatteryModelHourly)
         cap = battery->capacity_model();
         vol = battery->voltage_model();
 
-        double current = vol->calculate_current_for_target_w(desired_power, cap->q0(), cap->qmax(), 0);
+        current = vol->calculate_current_for_target_w(desired_power, cap->q0(), cap->qmax(), 0);
 
         battery->run(1, current);
 
@@ -100,8 +101,9 @@ TEST_F(ResilienceTest_lib_resilience, DischargeBatteryModelSubHourly)
     auto cap = batt->battery_model->capacity_model();
     auto vol = batt->battery_model->voltage_model();
     cap->change_SOC_limits(0, 100);
+    double current = 1;
     while (cap->SOC() > 40)
-        batt->battery_model->run(0, 1);
+        batt->battery_model->run(0, current);
 
     battery_t initial_batt = battery_t(*batt->battery_model);
     auto battery = new battery_t(initial_batt);
@@ -116,7 +118,7 @@ TEST_F(ResilienceTest_lib_resilience, DischargeBatteryModelSubHourly)
         cap = battery->capacity_model();
         vol = battery->voltage_model();
 
-        double current = vol->calculate_current_for_target_w(desired_power, cap->q0(), cap->qmax(), 0);
+        current = vol->calculate_current_for_target_w(desired_power, cap->q0(), cap->qmax(), 0);
 
         battery->run(1, current);
         double actual_power = cap->I() * vol->battery_voltage();
@@ -142,8 +144,9 @@ TEST_F(ResilienceTest_lib_resilience, ChargeBatteryModelHourly)
     auto cap = batt->battery_model->capacity_model();
     auto vol = batt->battery_model->voltage_model();
     cap->change_SOC_limits(0, 100);
+    double current = -1;
     while (cap->SOC() > 90)
-        batt->battery_model->run(0, -1);
+        batt->battery_model->run(0, current);
 
     battery_t initial_batt = battery_t(*batt->battery_model);
     auto battery = new battery_t(initial_batt);
@@ -155,7 +158,7 @@ TEST_F(ResilienceTest_lib_resilience, ChargeBatteryModelHourly)
         cap = battery->capacity_model();
         vol = battery->voltage_model();
 
-        double current = vol->calculate_current_for_target_w(-desired_power, cap->q0(), cap->qmax(), 0);
+        current = vol->calculate_current_for_target_w(-desired_power, cap->q0(), cap->qmax(), 0);
         battery->run(1, current);
 
         printf("%f\t target p, %f\t q0, %f\t soc, %f\t current, %f\t voltage, %f\t power, %f\t temp\n", desired_power, cap->q0(), cap->SOC(),
@@ -181,8 +184,9 @@ TEST_F(ResilienceTest_lib_resilience, ChargeBatteryModelSubhourly)
     auto cap = batt->battery_model->capacity_model();
     auto vol = batt->battery_model->voltage_model();
     cap->change_SOC_limits(0, 100);
+    double current = -1;
     while (cap->SOC() > 90)
-        batt->battery_model->run(0, -1);
+        batt->battery_model->run(0, current);
 
     battery_t initial_batt = battery_t(*batt->battery_model);
     auto battery = new battery_t(initial_batt);
@@ -194,7 +198,7 @@ TEST_F(ResilienceTest_lib_resilience, ChargeBatteryModelSubhourly)
         cap = battery->capacity_model();
         vol = battery->voltage_model();
 
-        double current = vol->calculate_current_for_target_w(-desired_power, cap->q0(), cap->qmax(), 0);
+        current = vol->calculate_current_for_target_w(-desired_power, cap->q0(), cap->qmax(), 0);
         battery->run(1, current);
 
         printf("%f\t target p, %f\t q0, %f\t soc, %f\t current, %f\t voltage, %f\t power, %f\t temp\n", desired_power, cap->q0(), cap->SOC(),
@@ -533,7 +537,11 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsACHourly_Discharge)
         resilience.run_surviving_batteries(load[i], 0, 0, 0, 0, 0);
         batt->advance(vartab, ac[i], voltage, load[i]);
         charge_total.emplace_back(batt->battery_model->battery_charge_total());
-        EXPECT_NEAR(batt->outBatteryPower[i], 1., 1e-3) << "timestep " << i;
+        if (i < 5)
+            EXPECT_NEAR(batt->outBatteryPower[i], 1., 1e-3) << "timestep " << i;
+        else
+            EXPECT_LT(batt->outBatteryPower[i], 1.) << "timestep " << i;
+
     }
     std::vector<double> correct_charge_total = {13.86, 11.96, 10.05, 8.10, 6.10, 4.57, 4.57, 4.57, 4.57, 4.57};
 
