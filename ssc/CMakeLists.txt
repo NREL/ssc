@@ -124,7 +124,7 @@ set(SSC_SRC
 		sscapi.cpp
 		tckernel.cpp
 		vartab.cpp
-		)
+		ssc_json.cpp ssc_json.h)
 
 
 #####################################################################################################################
@@ -212,6 +212,7 @@ set( DEPENDENCIES
 	shared
 	lpsolve
 	splinter
+	jsoncpp_lib
 	)
 foreach( name ${DEPENDENCIES} )
 	target_link_libraries(ssc ${name})
