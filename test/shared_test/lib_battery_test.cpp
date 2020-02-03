@@ -98,7 +98,8 @@ TEST_F(BatteryTest, AugmentCapacity)
 	for (size_t y = 0; y < replacement_schedule.size(); y++) {
 		for (size_t t = 0; t < 8760; t++) {
 			mult = fmod(t, 2) == 0 ? 1 : -1;
-			batteries[replaceCount]->run(i, mult*I);
+			double current = mult*I;
+			batteries[replaceCount]->run(i, current);
 		}
 		if (replacement_schedule[y] == 1) {
 			replaceCount++;

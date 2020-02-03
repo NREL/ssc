@@ -774,7 +774,6 @@ void dispatch_automatic_t::dispatch(size_t year,
 
 bool dispatch_automatic_t::check_constraints(double &I, size_t count)
 {
-    m_batteryPowerFlow->calculate();
     // check common constraints before checking manual dispatch specific ones
 	bool iterate = dispatch_t::check_constraints(I, count);
 
@@ -784,13 +783,13 @@ bool dispatch_automatic_t::check_constraints(double &I, size_t count)
 		double P_battery = I * _Battery->battery_voltage() * util::watt_to_kilowatt;
 		double P_target = m_batteryPower->powerBatteryTarget;
 
-		// Comomon to automated behind the meter and front of meter
+		// Common to automated behind the meter and front of meter
 		iterate = true;
-		
-		
+
+
 		// Don't respect target if bidirectional inverter efficiency is low while charging
-		if (m_batteryPower->connectionMode == dispatch_t::DC_CONNECTED && 
-			m_batteryPower->sharedInverter->efficiencyAC <= m_batteryPower->inverterEfficiencyCutoff && 
+		if (m_batteryPower->connectionMode == dispatch_t::DC_CONNECTED &&
+			m_batteryPower->sharedInverter->efficiencyAC <= m_batteryPower->inverterEfficiencyCutoff &&
 			P_target < 0)
 		{
 			iterate = false;
@@ -798,7 +797,7 @@ bool dispatch_automatic_t::check_constraints(double &I, size_t count)
 			//I += dP * util::kilowatt_to_watt / _Battery->battery_voltage();
 			//m_batteryPower->powerBatteryTarget += dP;
 		}
-		
+
 		// Try and force controller to meet target or custom dispatch
 		else if (P_battery > P_target + tolerance || P_battery < P_target - tolerance)
 		{
@@ -817,8 +816,8 @@ bool dispatch_automatic_t::check_constraints(double &I, size_t count)
 					iterate = false;
 				}
 				// Don't charge more if would violate current or power charge limits
-				if (I > m_batteryPower->currentChargeMax - tolerance || 
-					fabs(P_battery) > m_batteryPower->powerBatteryChargeMaxDC - tolerance || 
+				if (I > m_batteryPower->currentChargeMax - tolerance ||
+					fabs(P_battery) > m_batteryPower->powerBatteryChargeMaxDC - tolerance ||
 					fabs(m_batteryPower->powerBatteryAC) > m_batteryPower->powerBatteryChargeMaxAC - tolerance){
 					iterate = false;
 				}
@@ -836,7 +835,7 @@ bool dispatch_automatic_t::check_constraints(double &I, size_t count)
 					iterate = false;
 				}
 				// Don't discharge more if would violate current or power discharge limits
-				if (I > m_batteryPower->currentDischargeMax - tolerance || 
+				if (I > m_batteryPower->currentDischargeMax - tolerance ||
 					P_battery > m_batteryPower->powerBatteryDischargeMaxDC - tolerance ||
 					m_batteryPower->powerBatteryAC > m_batteryPower->powerBatteryDischargeMaxAC - tolerance) {
 					iterate = false;

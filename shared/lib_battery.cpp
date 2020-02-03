@@ -1564,6 +1564,7 @@ void thermal_t::updateTemperature(double I, double R, double dt, size_t lifetime
 		_T_battery = implicit_euler(I, dt*HR2SEC, lifetimeIndex);
 	else
 		_message.add("Computed battery temperature below zero or greater than max allowed, consider reducing C-rate");
+	_T_battery = fmax(_T_battery, _T_room[util::yearOneIndex(_dt_hour, lifetimeIndex)]);
 }
 
 double thermal_t::f(double T_battery, double I, size_t lifetimeindex)
@@ -1857,7 +1858,7 @@ double battery_t::calculate_max_discharge_kw(double *max_current_A) {
     return _voltage->calculate_max_discharge_w(q, qmax, _thermal->T_battery(), max_current_A) / 1000.;
 }
 
-double battery_t::run(size_t lifetimeIndex, double I)
+double battery_t::run(size_t lifetimeIndex, double &I)
 {
 	// Temperature affects capacity, but capacity model can reduce current, which reduces temperature, need to iterate
 	double I_initial = I;
