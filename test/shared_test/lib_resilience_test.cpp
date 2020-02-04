@@ -659,7 +659,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsDCHourly_Discharge)
         if (i < 5)
             EXPECT_NEAR(batt->outBatteryPower[i], 1. * inverter->efficiencyAC/100. * batt_vars->batt_dc_dc_bms_efficiency/100., 1e-3) << "timestep " << i << " battery discharging";
         else if (i == 5)
-            EXPECT_NEAR(batt->outBatteryPower[i], 0.947, 1e-3) << "timestep 5 battery SOC limits";
+            EXPECT_NEAR(batt->outBatteryPower[i], 0.92, 1e-3) << "timestep 5 battery SOC limits";
         else
             EXPECT_NEAR(batt->outBatteryPower[i], 0, 1e-3) << "timestep " << i << " battery at min SOC";
 

@@ -15,7 +15,7 @@ class sandia_inverter_t;
 class partload_inverter_t;
 class ond_inverter;
 
-class BatteryPowerFlowTest : public ::testing::Test
+class BatteryPowerFlowTest_lib_battery_powerflow : public ::testing::Test
 {
 protected:
 	BatteryPowerFlow * m_batteryPowerFlow;
