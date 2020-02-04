@@ -105,6 +105,7 @@ struct PoaIrradianceComponents
 class FlatPlateCollector
 {
 public:
+    FlatPlateCollector();
     FlatPlateCollector(const CollectorTestSpecifications &collector_test_specifications);
     const double RatedPowerGain();
     const double UsefulPowerGain(const TimeAndPosition &time_and_position, const ExternalConditions &external_conditions);  // [W]
@@ -136,6 +137,7 @@ private:
 class Pipe
 {
 public:
+    Pipe();
     Pipe(double pipe_diam /*m*/, double pipe_k /*W/m2-K*/, double pipe_insul /*m*/, double pipe_length /*m*/);
     const double pipe_od();             // [m]
     const double ThermalPowerLoss(double T_in /*C*/, double T_amb /*C*/);    // [W]
@@ -153,6 +155,7 @@ private:
 class FlatPlateArray
 {
 public:
+    FlatPlateArray();
     FlatPlateArray(const FlatPlateCollector &flat_plate_collector, const CollectorLocation &collector_location,
         const CollectorOrientation &collector_orientation, const ArrayDimensions &array_dimensions,
         const Pipe &inlet_pipe, const Pipe &outlet_pipe);
