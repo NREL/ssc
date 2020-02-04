@@ -27,6 +27,11 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 const double kPi = 3.1415926535897;
 
 
+FlatPlateCollector::FlatPlateCollector()
+{
+    FRta_ = FRUL_ = iam_ = area_coll_ = heat_capacity_rate_test_ = m_dot_test_ = std::numeric_limits<double>::quiet_NaN();
+}
+
 FlatPlateCollector::FlatPlateCollector(const CollectorTestSpecifications &collector_test_specifications)
     :
     FRta_(collector_test_specifications.FRta),
@@ -272,6 +277,11 @@ const double FlatPlateCollector::ThermalPowerLoss(const InletFluidFlow &inlet_fl
 
 
 
+Pipe::Pipe()
+{
+    pipe_diam_ = pipe_k_ = pipe_insul_ = pipe_length_ = std::numeric_limits<double>::quiet_NaN();
+}
+
 Pipe::Pipe(double pipe_diam /*m*/, double pipe_k /*W/m-K*/, double pipe_insul /*m*/, double pipe_length /*m*/)
     : pipe_diam_(pipe_diam),
     pipe_k_(pipe_k),
@@ -304,6 +314,15 @@ const double Pipe::T_out(double T_in /*C*/, double T_amb /*C*/, double heat_capa
 }
 
 
+
+FlatPlateArray::FlatPlateArray()
+{
+    flat_plate_collector_ = FlatPlateCollector();
+    collector_location_ = CollectorLocation();
+    collector_orientation_ = CollectorOrientation();
+    array_dimensions_ = ArrayDimensions();
+    inlet_pipe_ = outlet_pipe_ = Pipe();
+}
 
 FlatPlateArray::FlatPlateArray(const FlatPlateCollector &flat_plate_collector, const CollectorLocation &collector_location,
     const CollectorOrientation &collector_orientation, const ArrayDimensions &array_dimensions,
