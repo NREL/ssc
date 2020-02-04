@@ -2,28 +2,25 @@
 
 #include "lib_csp_test.h"
 
-const double default_area_coll = 2.98;
 
 CollectorTestSpecifications default_collector_test_specifications()
 {
     CollectorTestSpecifications collector_test_specifications;
-    collector_test_specifications.area_coll_test = 2.98;
     collector_test_specifications.FRta = 0.689;
     collector_test_specifications.FRUL = 3.85;
-    double test_cp = 4.182;         // kJ/kg-K
-    double test_flow = 0.045528;    // kg/s
-    collector_test_specifications.heat_capacity_rate_test = test_cp * test_flow;
     collector_test_specifications.iam = 0.2;
+    collector_test_specifications.area_coll = 2.98;
+    collector_test_specifications.m_dot = 0.045528;         // kg/s   
+    collector_test_specifications.heat_capacity = 4.182;    // kJ/kg-K
 
     return collector_test_specifications;
 }
 
 FlatPlateCollector* default_flat_plate_collector()
 {
-    double area_coll = default_area_coll;
     CollectorTestSpecifications collector_test_specifications = default_collector_test_specifications();
 
-    return new FlatPlateCollector(area_coll, collector_test_specifications);
+    return new FlatPlateCollector(collector_test_specifications);
 }
 
 tm default_time()

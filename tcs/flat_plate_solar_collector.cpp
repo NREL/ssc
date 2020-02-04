@@ -27,16 +27,26 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 const double kPi = 3.1415926535897;
 
 
-FlatPlateCollector::FlatPlateCollector(double area_coll /*m2*/, const CollectorTestSpecifications &collector_test_specifications)
+FlatPlateCollector::FlatPlateCollector(const CollectorTestSpecifications &collector_test_specifications)
     :
-    area_coll_(area_coll),
     FRta_(collector_test_specifications.FRta),
     FRUL_(collector_test_specifications.FRUL),
     iam_(collector_test_specifications.iam),
-    area_coll_test_(collector_test_specifications.area_coll_test),
-    heat_capacity_rate_test_(collector_test_specifications.heat_capacity_rate_test)
+    area_coll_(collector_test_specifications.area_coll),
+    heat_capacity_rate_test_(collector_test_specifications.heat_capacity * collector_test_specifications.m_dot),
+    m_dot_test_(collector_test_specifications.m_dot)
 {
 
+}
+
+const double FlatPlateCollector::RatedPowerGain()   // [W]
+{
+    // Calculation taken from UI equation
+
+    double G_T = 1.e3;                  // normal incident irradiance [W/m2]
+    double T_inlet_minus_T_amb = 30.;   // [K]
+
+    return area_coll_ * (FRta_*G_T - FRUL_*T_inlet_minus_T_amb);
 }
 
 const double FlatPlateCollector::UsefulPowerGain(const TimeAndPosition &time_and_position, const ExternalConditions &external_conditions)  // [W]
@@ -76,6 +86,19 @@ const double FlatPlateCollector::area_coll()    // [m2]
 void FlatPlateCollector::area_coll(double collector_area /*m2*/)
 {
     area_coll_ = collector_area;
+}
+
+const CollectorTestSpecifications FlatPlateCollector::TestSpecifications()
+{
+    CollectorTestSpecifications collector_test_specifications;
+    collector_test_specifications.FRta = FRta_;
+    collector_test_specifications.FRUL = FRUL_;
+    collector_test_specifications.iam = iam_;
+    collector_test_specifications.area_coll = area_coll_;
+    collector_test_specifications.m_dot = m_dot_test_;
+    collector_test_specifications.heat_capacity = heat_capacity_rate_test_ / m_dot_test_;
+
+    return collector_test_specifications;
 }
 
 const PoaIrradianceComponents FlatPlateCollector::IncidentIrradiance(const TimeAndPosition &time_and_position,
@@ -300,8 +323,7 @@ FlatPlateArray::FlatPlateArray(const CollectorTestSpecifications &collector_test
     const CollectorOrientation &collector_orientation, const ArrayDimensions &array_dimensions,
     const Pipe &inlet_pipe, const Pipe &outlet_pipe)
     :
-    flat_plate_collector_(collector_test_specifications.area_coll_test,
-        collector_test_specifications),
+    flat_plate_collector_(collector_test_specifications),
     collector_location_(collector_location),
     collector_orientation_(collector_orientation),
     array_dimensions_(array_dimensions),
@@ -319,6 +341,43 @@ const int FlatPlateArray::ncoll()
 const double FlatPlateArray::area_total()
 {
     return flat_plate_collector_.area_coll() * ncoll();
+}
+
+void FlatPlateArray::resize_array(ArrayDimensions array_dimensions)
+{
+    if (array_dimensions.num_in_series <= 0 || array_dimensions.num_in_parallel <= 0) return;
+
+    array_dimensions_ = array_dimensions;
+}
+
+void FlatPlateArray::resize_array(double m_dot_array_design /*kg/s*/, double specific_heat /*kJ/kg-K*/, double temp_rise_array_design /*K*/)
+{
+    if (!std::isnormal(m_dot_array_design) || !std::isnormal(specific_heat) || !std::isnormal(temp_rise_array_design)) return;
+    if (m_dot_array_design <= 0. || specific_heat <= 0. || temp_rise_array_design <= 0.) return;
+    
+    CollectorTestSpecifications collector_test_specifications = flat_plate_collector_.TestSpecifications();
+
+    // Number in parallel
+    double m_dot_design_single_collector = collector_test_specifications.m_dot;
+    double exact_fractional_collectors_in_parallel = m_dot_array_design / m_dot_design_single_collector;
+    if (exact_fractional_collectors_in_parallel < 1.) {
+        array_dimensions_.num_in_parallel = 1;
+    }
+    else {
+        array_dimensions_.num_in_parallel = static_cast<int>(std::round(exact_fractional_collectors_in_parallel));      // std::round() rounds up at halfway point
+    }
+    double m_dot_series_string = m_dot_array_design / array_dimensions_.num_in_parallel;      // [kg/s]
+
+    // Number in series
+    double collector_rated_power = flat_plate_collector_.RatedPowerGain();  // [W]
+    double collector_rated_temp_rise = collector_rated_power / (m_dot_series_string * specific_heat * 1.e3);
+    double exact_fractional_collectors_in_series = temp_rise_array_design / collector_rated_temp_rise;
+    if (exact_fractional_collectors_in_series < 1.) {
+        array_dimensions_.num_in_series = 1;
+    }
+    else {
+        array_dimensions_.num_in_series = static_cast<int>(std::round(exact_fractional_collectors_in_series));      // std::round() rounds up at halfway point
+    }
 }
 
 const double FlatPlateArray::UsefulPowerGain(const TimeAndPosition &time_and_position, const ExternalConditions &external_conditions)      // [W]

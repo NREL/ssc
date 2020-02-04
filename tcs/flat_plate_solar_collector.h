@@ -31,8 +31,9 @@ struct CollectorTestSpecifications
     double FRta;                        // [-]
     double FRUL;                        // [W/m2-K]
     double iam;                         // [-]
-    double area_coll_test;              // [m2]
-    double heat_capacity_rate_test;     // [kW/K]
+    double area_coll;                   // [m2]
+    double m_dot;                       // [kg/s]
+    double heat_capacity;               // [kJ/kg-K]
 };
 
 struct CollectorLocation
@@ -104,17 +105,19 @@ struct PoaIrradianceComponents
 class FlatPlateCollector
 {
 public:
-    FlatPlateCollector(double area_coll /*m2*/, const CollectorTestSpecifications &collector_test_specifications);
+    FlatPlateCollector(const CollectorTestSpecifications &collector_test_specifications);
+    const double RatedPowerGain();
     const double UsefulPowerGain(const TimeAndPosition &time_and_position, const ExternalConditions &external_conditions);  // [W]
     const double T_out(const TimeAndPosition &time_and_position, const ExternalConditions &external_conditions);            // [C]
     const double area_coll();           // [m2]
     void area_coll(double collector_area /*m2*/);
+    const CollectorTestSpecifications TestSpecifications();
 private:
-    double area_coll_;                  // [m2] collector area
     double FRta_;                       // [-] flow rate correction
     double FRUL_;                       // [W/m2-K] flow rate correction
     double iam_;                        // [-] incidence angle modifier
-    double area_coll_test_;             // [m2] area of (single) collector that was tested
+    double area_coll_;                  // [m2] collector area
+    double m_dot_test_;                 // [kg/s] mass flow through collector during test
     double heat_capacity_rate_test_;    // [kW/K] m_dot * c_p during ratings test
     const static PoaIrradianceComponents IncidentIrradiance(const TimeAndPosition &time_and_position,
         const Weather &weather,
@@ -158,6 +161,8 @@ public:
         const Pipe &inlet_pipe, const Pipe &outlet_pipe);
     const int ncoll();
     const double area_total();                             // [m2]
+    void resize_array(ArrayDimensions array_dimensions);
+    void resize_array(double m_dot_array_design /*kg/s*/, double specific_heat /*kJ/kg-K*/, double temp_rise_array_design /*K*/);
     const double UsefulPowerGain(const TimeAndPosition &time_and_position, const ExternalConditions &external_conditions);      // [W]
     const double T_out(const TimeAndPosition &time_and_position, const ExternalConditions &external_conditions);                // [C]
 private:
