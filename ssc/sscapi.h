@@ -272,7 +272,12 @@ SSCEXPORT ssc_var_t ssc_data_get_data_array(ssc_data_t p_data, const char *name,
 /** Returns the reference of a @a SSC_DATAMAT variable with the given name. */
 SSCEXPORT ssc_data_t ssc_data_get_data_matrix(ssc_data_t p_data, const char *name, int* nrows, int* ncols );
 
-/**@}*/ 
+/**@}*/
+
+SSCEXPORT const char* var_table_to_ssc_data(ssc_data_t p_data);
+
+/** Returns a new ssc_data with data from the json **/
+SSCEXPORT ssc_data_t json_to_ssc_data(const char* json_str);
 
 /** The opaque data structure that stores information about a compute module. */
 typedef void* ssc_entry_t;
@@ -414,6 +419,12 @@ SSCEXPORT const char *ssc_module_log( ssc_module_t p_mod, int index, int *item_t
 
 /** DO NOT CALL THIS FUNCTION: immediately causes a segmentation fault within the library. This is only useful for testing crash handling from an external application that is dynamically linked to the SSC library */
 SSCEXPORT void __ssc_segfault();
+
+/**
+ * Functions for calling python as an external process with python_handler
+ */
+
+SSCEXPORT void set_python_path(const char* abs_path);
 
 #ifndef __SSCLINKAGECPP__
 

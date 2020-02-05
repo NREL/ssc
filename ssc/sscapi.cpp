@@ -52,8 +52,11 @@
 #include <iostream>
 #include <vector>
 
+#include "lib_util.h"
 #include "core.h"
 #include "sscapi.h"
+
+#include <json/json.h>
 
 #pragma warning (disable : 4706 )
 
@@ -692,6 +695,75 @@ SSCEXPORT ssc_var_t ssc_data_get_data_matrix(ssc_data_t p_data, const char *name
     return dat;
 }
 
+SSCEXPORT const char* var_table_to_ssc_data(ssc_data_t p_data){
+    auto vt = static_cast<var_table*>(p_data);
+    if (!vt) return 0;
+
+
+
+}
+
+void json_to_ssc_var(const Json::Value& json_val, ssc_var_t ssc_val){
+    if (!ssc_val)
+        return;
+    auto vd = static_cast<var_data*>(ssc_val);
+    vd->clear();
+
+    using namespace Json;
+    Json::Value::Members members;
+    std::vector<var_data>* vd_arr;
+    var_table* vd_tab;
+    switch (json_val.type()){
+        default:
+        case ValueType::nullValue:
+            return;
+        case ValueType::intValue:
+        case ValueType::uintValue:
+        case ValueType::booleanValue:
+        case ValueType::realValue:
+            vd->num[0] = json_val.asDouble();
+            return;
+        case ValueType::stringValue:
+            vd->str = json_val.asString();
+            return;
+        case ValueType::arrayValue:
+            vd_arr = &vd->vec;
+            for ( int index = 0; index < json_val.size(); ++index ){
+                vd_arr->emplace_back(var_data());
+                auto entry = &vd_arr->back();
+                json_to_ssc_var(json_val[index], entry);
+            }
+            return;
+        case ValueType::objectValue:
+            vd_tab = &vd->table;
+            members = json_val.getMemberNames();
+            for (auto const &name : members) {
+                auto entry = vd_tab->assign(name, var_data());
+                json_to_ssc_var(json_val[name], entry);
+            }
+    }
+}
+
+SSCEXPORT ssc_data_t json_to_ssc_data(const char* json_str){
+    var_table* vt = new var_table;
+    const std::string rawJson(json_str);
+    const auto rawJsonLength = static_cast<int>(rawJson.length());
+    JSONCPP_STRING err;
+    Json::Value root;
+    Json::CharReaderBuilder builder;
+    const std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
+    if (!reader->parse(rawJson.c_str(), rawJson.c_str() + rawJsonLength, &root,
+                       &err)) {
+        vt->assign("error", err);
+        return dynamic_cast<ssc_data_t>(vt);
+    }
+
+
+
+    const std::string name = root["Name"].asString();
+    const int age = root["Age"].asInt();
+}
+
 SSCEXPORT ssc_entry_t ssc_module_entry( int index )
 {
 	int max=0;
@@ -976,4 +1048,15 @@ SSCEXPORT void __ssc_segfault()
 {
 	std::string *pstr = 0;
 	std::string mystr = *pstr;
+}
+
+std::string* python_path;
+
+SSCEXPORT void set_python_path(const char* abs_path){
+    if (util::dir_exists(abs_path)){
+        delete python_path;
+        python_path = new std::string(abs_path);
+    }
+    else
+        throw(std::runtime_error("set_python_path error. Python directory doesn't not exist: " + std::string(abs_path)));
 }

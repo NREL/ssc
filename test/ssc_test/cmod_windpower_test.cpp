@@ -1,10 +1,8 @@
 #include <gtest/gtest.h>
 #include <vector>
 
-#include "../ssc/core.h"
+#include "../ssc/sscapi.h"
 #include "vartab.h"
-#include "../ssc/common.h"
-#include "cmod_windpower.h"
 #include "cmod_windpower_test.h"
 
 /// Measurement heights are different from the turbine's hub height
@@ -465,6 +463,8 @@ TEST(windpower_turbine_powercurve, Case4){
 TEST(windpower_landbosse, Init){
     var_table* vd = new var_table;
     vd->assign("turbine_size", 1500);
+
+    set_python_path("/Users/dguittet/miniconda3/bin");
 
     Landbosse_calculate_bos_costs(vd);
 
