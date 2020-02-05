@@ -5381,8 +5381,9 @@ void C_csp_solver::solver_cr_to_pc_to_cr(int pc_mode, double field_control_in, d
 	
 	C_mono_eq_cr_to_pc_to_cr c_eq(this, pc_mode, m_P_cold_des, -1, field_control_in);
 	C_monotonic_eq_solver c_solver(c_eq);
+    double T_lower_bound = -273.;
 
-	c_solver.settings(tol, 50, std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(), false);
+	c_solver.settings(tol, 50, T_lower_bound, std::numeric_limits<double>::quiet_NaN(), false);
 
 	double T_htf_cold_guess_colder = m_T_htf_cold_des - 273.15;			//[C], convert from [K]
 	double T_htf_cold_guess_warmer = T_htf_cold_guess_colder + 10.0;	//[C]

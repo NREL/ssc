@@ -63,6 +63,8 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 	{C_csp_trough_collector_receiver::E_W_DOT_SCA_TRACK, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_csp_trough_collector_receiver::E_W_DOT_PUMP, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 
+    {C_csp_trough_collector_receiver::E_T_TROUGHS_IN, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+
 	csp_info_invalid
 };
 
@@ -421,6 +423,37 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
 
 	m_ncall = -1;
 
+
+    // Initialize flat plate collectors
+    CollectorTestSpecifications collector_test_specifications;
+    collector_test_specifications.FRta = 0.689;
+    collector_test_specifications.FRUL = 3.85;
+    collector_test_specifications.iam = 0.2;
+    collector_test_specifications.area_coll = 2.98;
+    collector_test_specifications.m_dot = 0.045528;         // kg/s   
+    collector_test_specifications.heat_capacity = 4.182;    // kJ/kg-K
+
+    CollectorLocation collector_location;
+    collector_location.latitude = init_inputs.m_latitude;
+    collector_location.longitude = init_inputs.m_longitude;
+    collector_location.timezone = init_inputs.m_tz;
+
+    CollectorOrientation collector_orientation;
+    collector_orientation.azimuth = 180.;
+    collector_orientation.tilt = init_inputs.m_latitude;
+
+    ArrayDimensions array_dimensions;
+    array_dimensions.num_in_series = 1;
+    array_dimensions.num_in_parallel = 1;
+
+    Pipe inlet_pipe(0.019, 0.03, 0.006, 5);
+    Pipe outlet_pipe(inlet_pipe);
+
+    flat_plate_array_ = FlatPlateArray(collector_test_specifications, collector_location,
+        collector_orientation, array_dimensions,
+        inlet_pipe, outlet_pipe);
+
+
 	// for test start
 	init_fieldgeom();
 	// for test end
@@ -431,7 +464,7 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	// Set solved parameters
 	solved_params.m_T_htf_cold_des = m_T_loop_in_des;	//[K]
 	solved_params.m_q_dot_rec_des = m_q_design/1.E6;	//[MWt]
-	solved_params.m_A_aper_total = m_Ap_tot;			//[m^2]
+	solved_params.m_A_aper_total = m_Ap_tot;			//[m^2]    
 
     // Calculate other design parameters
     if (m_calc_design_pipe_vals == true) {
@@ -458,6 +491,7 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
         weatherValues.m_hour = 12;
         weatherValues.m_minute = 0;
         weatherValues.m_beam = m_I_bn_des;
+        weatherValues.m_diffuse = 200.;
         weatherValues.m_tdry = 30;
         weatherValues.m_tdew = 30 - 10;
         weatherValues.m_wspd = 5;
@@ -469,7 +503,8 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
         //htfInletState.m_m_dot = m_m_dot_design;
         //htfInletState.m_pres = 101.3;
         //htfInletState.m_qual = 0;
-        htfInletState.m_temp = m_T_loop_in_des - 273.15;
+        //htfInletState.m_temp = m_T_loop_in_des - 273.15;
+        htfInletState.m_temp = 27.;
         double defocus = 1;
         C_csp_solver_sim_info troughInfo;
         troughInfo.ms_ts.m_time_start = 14817600.;
@@ -619,6 +654,11 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 		//mjw 1.16.2011 Convert the thermal inertia terms here
 		m_mc_bal_hot = m_mc_bal_hot_per_MW * 3.6 * m_q_design;    //[J/K]
 		m_mc_bal_cold = m_mc_bal_cold_per_MW * 3.6 * m_q_design;  //[J/K]
+        
+        // Size flat plate array
+        double unpressurized_temp_rise_flat_plate_array = 70. - 27.;
+        double pressurized_temp_rise_flat_plate_array = 90. - 27.;
+        flat_plate_array_.resize_array(m_m_dot_loop_des, m_c_htf_ave * 1.e-3, pressurized_temp_rise_flat_plate_array);
 
 		//need to provide fluid density
         double rho_cold = m_htfProps.dens(m_T_loop_in_des, 10.e5); //kg/m3
@@ -875,7 +915,9 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_end(const C_csp_wea
 	double T_htf_cold_in /*C*/, double m_dot_htf_loop /*kg/s*/,
 	const C_csp_solver_sim_info &sim_info)
 {
-	if( m_accept_loc == 1 )
+	//  THIS FUNCTION DOES NOT APPEAR TO BE USED
+    
+    if( m_accept_loc == 1 )
 		m_m_dot_htf_tot = m_dot_htf_loop*float(m_nLoops);
 	else
 		m_m_dot_htf_tot = m_dot_htf_loop;
@@ -1205,8 +1247,31 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 		m_T_sys_c_t_int = m_T_htf_in_t_int[0];		//[K]
 		m_T_sys_c_t_end = m_T_htf_in_t_int[0];		//[K]
 	}
+
+    // Run through flat plate array
+    tm timestamp;
+    timestamp.tm_year = weather.m_year - 1900;  // years since 1900
+    timestamp.tm_mon = weather.m_month - 1;     // months since Jan. (Jan. = 0)
+    timestamp.tm_mday = weather.m_day;
+    timestamp.tm_hour = weather.m_hour;
+    timestamp.tm_min = weather.m_minute;
+    timestamp.tm_sec = 0.;
+    ExternalConditions external_conditions;
+    external_conditions.weather.ambient_temp = weather.m_tdry;
+    external_conditions.weather.dni = weather.m_beam;
+    external_conditions.weather.dhi = weather.m_diffuse;
+    external_conditions.weather.ghi = weather.m_global;
+    external_conditions.weather.wind_speed = weather.m_wspd;
+    external_conditions.weather.wind_direction = weather.m_wdir;
+    external_conditions.inlet_fluid_flow.m_dot = m_dot_htf_loop;
+    external_conditions.inlet_fluid_flow.specific_heat = m_htfProps.Cp(m_T_loop_in);
+    external_conditions.inlet_fluid_flow.temp = m_T_loop_in - 273.15;
+    external_conditions.albedo = 0.2;
+    double T_flat_plate_out = flat_plate_array_.T_out(timestamp, external_conditions) + 273.15;
+    m_T_troughs_in = T_flat_plate_out;
+    
     double P_intc_in = m_P_field_in;
-    m_T_loop[0] = m_T_loop_in;
+    m_T_loop[0] = m_T_troughs_in;
     IntcOutputs intc_state = m_interconnects[0].State(m_dot_htf_loop * 2, m_T_loop[0], T_db, P_intc_in);
     m_T_loop[1] = intc_state.temp_out;
     intc_state = m_interconnects[1].State(m_dot_htf_loop, m_T_loop[1], T_db, intc_state.pressure_out);
@@ -2030,6 +2095,8 @@ void C_csp_trough_collector_receiver::set_output_value()
 
 	mc_reported_outputs.value(E_W_DOT_SCA_TRACK, m_W_dot_sca_tracking);		//[MWe]
 	mc_reported_outputs.value(E_W_DOT_PUMP, m_W_dot_pump);					//[MWe]
+
+    mc_reported_outputs.value(E_T_TROUGHS_IN, m_T_troughs_in - 273.15);					//[C]
 
 	return;
 }
@@ -2896,7 +2963,9 @@ void C_csp_trough_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 	//C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
 	const C_csp_solver_sim_info &sim_info)
 {
-	// Increase call-per-timestep counter
+	// THIS FUNCTION DOES NOT APPEAR TO BE USED
+    
+    // Increase call-per-timestep counter
 	// Converge() sets it to -1, so on first call this line will adjust it = 0
 	m_ncall++;
 

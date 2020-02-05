@@ -302,6 +302,7 @@ static var_info _cm_vtab_trough_physical_process_heat[] = {
 
 	{ SSC_OUTPUT,   SSC_ARRAY,   "W_dot_sca_track", "Field collector tracking power",         "MWe",     "",  "trough_field",        "*",        "",     "" },
 	{ SSC_OUTPUT,   SSC_ARRAY,   "W_dot_field_pump","Field htf pumping power",                "MWe",     "",  "trough_field",        "*",        "",     "" },
+    { SSC_OUTPUT,   SSC_ARRAY,   "T_troughs_in","Troughs inlet temperature after flat plate collectors",                "C",     "",  "trough_field",        "*",        "",     "" },
 	
 		// Heat Sink
     { SSC_OUTPUT,   SSC_ARRAY,   "q_dot_to_heat_sink", "Heat sink thermal power",             "MWt",     "",  "Heat_Sink",      "*",  "",  "" },
@@ -638,6 +639,7 @@ public:
 
 		c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_W_DOT_SCA_TRACK, allocate("W_dot_sca_track", n_steps_fixed), n_steps_fixed);		//[MWe]
 		c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_W_DOT_PUMP, allocate("W_dot_field_pump", n_steps_fixed), n_steps_fixed);			//[MWe]
+        c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_T_TROUGHS_IN, allocate("T_troughs_in", n_steps_fixed), n_steps_fixed);			//[C]
 
 		// ********************************
 		// ********************************
@@ -647,7 +649,8 @@ public:
 		// Heat Sink
 		C_pc_heat_sink c_heat_sink;
 		c_heat_sink.ms_params.m_T_htf_hot_des = as_double("T_loop_out");		//[C] FIELD design outlet temperature
-		c_heat_sink.ms_params.m_T_htf_cold_des = as_double("T_loop_in_des");	//[C] FIELD design inlet temperature
+		//c_heat_sink.ms_params.m_T_htf_cold_des = as_double("T_loop_in_des");	//[C] FIELD design inlet temperature
+        c_heat_sink.ms_params.m_T_htf_cold_des = 27.;
 		c_heat_sink.ms_params.m_q_dot_des = as_double("q_pb_design");			//[MWt] HEAT SINK design thermal power (could have field solar multiple...)
 			// 9.18.2016 twn: assume for now there's no pressure drop though heat sink
 		c_heat_sink.ms_params.m_htf_pump_coef = as_double("pb_pump_coef");		//[kWe/kg/s]

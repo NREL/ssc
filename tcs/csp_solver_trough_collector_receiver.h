@@ -37,6 +37,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iosfwd>
 #include <fstream>
 
+#include "flat_plate_solar_collector.h"
+
 class C_csp_trough_collector_receiver : public C_csp_collector_receiver
 {
 
@@ -74,12 +76,15 @@ public:
 		E_PRESSURE_DROP,	//[bar]
 
 		E_W_DOT_SCA_TRACK,	//[MWe]
-		E_W_DOT_PUMP		//[MWe]
+		E_W_DOT_PUMP,		//[MWe]
+        E_T_TROUGHS_IN      //[C]
 	};
 
 	C_csp_reported_outputs mc_reported_outputs;
 
 private:
+
+    FlatPlateArray flat_plate_array_;
 
 	// Member classes
 	HTFProperties m_htfProps, m_airProps;
@@ -191,6 +196,9 @@ private:
 
     double m_T_loop_in;
     double m_P_field_in;
+
+    double m_T_troughs_in;
+
 
 	// Classes that are defined as member data so are re-declared each time performance function is called
 	std::vector<double> m_DP_tube;	//[Pa] Pressure drops in each receiver
