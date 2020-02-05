@@ -355,8 +355,12 @@ void BatteryPowerFlow::calculateDCConnected()
 		}
 		P_pv_to_inverter_dc = P_pv_dc - P_pv_to_batt_dc;
 
-		// Any remaining charge comes from grid regardless of whether allowed or not.
+		// Any remaining charge comes from grid if allowed
 		P_grid_to_batt_dc = fabs(P_battery_dc) - P_pv_to_batt_dc;
+        if (!m_BatteryPower->canGridCharge && P_grid_to_batt_dc > tolerance){
+            m_BatteryPower->powerBatteryDC = -P_pv_to_batt_dc * m_BatteryPower->singlePointEfficiencyDCToDC;
+            return calculateDCConnected();
+        }
 		
 		// Assume inverter only "sees" the net flow in one direction, though practically
 		// there should never be case where P_pv_dc - P_pv_to_batt_dc > 0 and P_grid_to_batt_dc > 0 simultaneously
@@ -384,6 +388,10 @@ void BatteryPowerFlow::calculateDCConnected()
 		// Compute the AC quantities
 		P_gen_ac = m_BatteryPower->sharedInverter->powerAC_kW;
 		P_grid_to_batt_ac = P_grid_to_batt_dc / efficiencyDCAC;
+		if (std::isnan(P_gen_ac) && m_BatteryPower->sharedInverter->powerDC_kW == 0){
+		    P_gen_ac = 0;
+            P_grid_to_batt_ac = 0;
+		}
 		P_pv_ac = P_pv_to_inverter_dc * efficiencyDCAC;
 		P_pv_to_load_ac = P_load_ac;
 		if (P_pv_to_load_ac > P_pv_ac) {
@@ -444,15 +452,6 @@ void BatteryPowerFlow::calculateDCConnected()
 	// Error checking for power to load
 	if (P_pv_to_load_ac + P_grid_to_load_ac + P_batt_to_load_ac != P_load_ac)
 		P_grid_to_load_ac = P_load_ac - P_pv_to_load_ac - P_batt_to_load_ac;
-
-    // Error checking trying to charge from grid when not allowed
-    if (!m_BatteryPower->canGridCharge && P_battery_ac < -tolerance){
-        if (-P_grid_ac > P_grid_to_load_ac) {
-            P_battery_ac = P_pv_ac - P_pv_to_grid_ac - P_pv_to_load_ac;
-            m_BatteryPower->powerBatteryDC = -P_battery_ac * m_BatteryPower->singlePointEfficiencyACToDC;
-            return calculateACConnected();
-        }
-    }
 
 	// check tolerances
 	if (fabs(P_grid_to_load_ac) < m_BatteryPower->tolerance)

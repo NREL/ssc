@@ -29,7 +29,24 @@ protected:
 public:
 
 	void SetUp();
-	
+
+	double calc_dc_gen(){
+		return m_batteryPower->powerPVToLoad + m_batteryPower->powerPVToGrid + m_batteryPower->powerBatteryToLoad
+			   + m_batteryPower->powerBatteryToGrid - m_batteryPower->powerGridToBattery * m_batteryPower->sharedInverter->efficiencyAC/100;
+	}
+
+	double calc_met_load(){
+		return m_batteryPower->powerBatteryToLoad + m_batteryPower->powerGridToLoad + m_batteryPower->powerPVToLoad;
+	}
+
+	void check_net_flows(){
+	    // increased error due to efficiencies
+		double gen = calc_dc_gen();
+		EXPECT_NEAR(m_batteryPower->powerGeneratedBySystem, gen, 3);
+		double met_load = calc_met_load();
+		EXPECT_NEAR(met_load, m_batteryPower->powerLoad, 3);
+	}
+
 	void TearDown()
 	{
 		if (m_batteryPowerFlow) {
