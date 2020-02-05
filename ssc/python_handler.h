@@ -16,8 +16,6 @@
 
 extern std::string* python_path;
 
-bool ssc_set_python_path(const std::string& path);
-
 class python_handler {
 private:
 public:
@@ -54,10 +52,9 @@ public:
                 = std::chrono::system_clock::now() + std::chrono::seconds(60);
 
         if(std::future_status::ready == f_completes.wait_until(two_seconds_passed)){
-            std::cout << "f_completes: " << f_completes.get() << "\n"; }
+            std::cout << f_completes.get() << "\n"; }
         else{
-            std::cout << "f_completes did not complete!\n"; }
-
+            std::cout << "python handler error. Python process timed out.\n"; }
     }
 };
 
