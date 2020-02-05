@@ -399,22 +399,27 @@ void FlatPlateArray::resize_array(double m_dot_array_design /*kg/s*/, double spe
     }
 }
 
-const double FlatPlateArray::UsefulPowerGain(const TimeAndPosition &time_and_position, const ExternalConditions &external_conditions)      // [W]
+const double FlatPlateArray::UsefulPowerGain(const tm &timestamp, const ExternalConditions &external_conditions)      // [W]
 {
+    TimeAndPosition time_and_position;
+    time_and_position.collector_location = collector_location_;
+    time_and_position.collector_orientation = collector_orientation_;
+    time_and_position.timestamp = timestamp;
     double T_in = external_conditions.inlet_fluid_flow.temp;
     double T_amb = external_conditions.weather.ambient_temp;
     double m_dot = external_conditions.inlet_fluid_flow.m_dot;
     double specific_heat = external_conditions.inlet_fluid_flow.specific_heat;
     double specific_heat_capacity = m_dot * specific_heat;
 
+    // Inlet pipe
     double inlet_pipe_thermal_power_loss = inlet_pipe_.ThermalPowerLoss(T_in, T_amb);
     double T_out_inlet_pipe = inlet_pipe_.T_out(T_in, T_amb, specific_heat_capacity);
     double T_array_in = T_out_inlet_pipe;
 
+    // Collectors
     ExternalConditions external_conditions_to_collector(external_conditions);
     external_conditions_to_collector.inlet_fluid_flow.temp = T_array_in;
     external_conditions_to_collector.inlet_fluid_flow.m_dot = m_dot / array_dimensions_.num_in_parallel;
-
     double series_string_thermal_power_gain = 0.;
     double T_array_out = T_array_in;
     for (std::size_t i = 0; i < array_dimensions_.num_in_series; i++) {
@@ -424,6 +429,7 @@ const double FlatPlateArray::UsefulPowerGain(const TimeAndPosition &time_and_pos
         T_array_out = T_collector_out;
     }
 
+    // Outlet pipe
     double outlet_pipe_thermal_power_loss = outlet_pipe_.ThermalPowerLoss(T_array_out, T_amb);
 
     double useful_power_gain = -inlet_pipe_thermal_power_loss
@@ -432,21 +438,26 @@ const double FlatPlateArray::UsefulPowerGain(const TimeAndPosition &time_and_pos
     return useful_power_gain;
 }
 
-const double FlatPlateArray::T_out(const TimeAndPosition &time_and_position, const ExternalConditions &external_conditions)     // [C]
+const double FlatPlateArray::T_out(const tm &timestamp, const ExternalConditions &external_conditions)     // [C]
 {
+    TimeAndPosition time_and_position;
+    time_and_position.collector_location = collector_location_;
+    time_and_position.collector_orientation = collector_orientation_;
+    time_and_position.timestamp = timestamp;
     double T_in = external_conditions.inlet_fluid_flow.temp;
     double T_amb = external_conditions.weather.ambient_temp;
     double m_dot = external_conditions.inlet_fluid_flow.m_dot;
     double specific_heat = external_conditions.inlet_fluid_flow.specific_heat;
     double specific_heat_capacity = m_dot * specific_heat;
 
+    // Inlet pipe
     double T_out_inlet_pipe = inlet_pipe_.T_out(T_in, T_amb, specific_heat_capacity);
     double T_array_in = T_out_inlet_pipe;
 
+    // Collectors
     ExternalConditions external_conditions_to_collector(external_conditions);
     external_conditions_to_collector.inlet_fluid_flow.temp = T_array_in;
     external_conditions_to_collector.inlet_fluid_flow.m_dot = m_dot / array_dimensions_.num_in_parallel;
-
     double T_array_out = T_array_in;
     for (std::size_t i = 0; i < array_dimensions_.num_in_series; i++) {
         double T_collector_out = flat_plate_collector_.T_out(time_and_position, external_conditions_to_collector);
@@ -454,6 +465,7 @@ const double FlatPlateArray::T_out(const TimeAndPosition &time_and_position, con
         T_array_out = T_collector_out;
     }
 
+    // Outlet pipe
     double T_out_outlet_pipe = outlet_pipe_.T_out(T_array_out, T_amb, specific_heat_capacity);
     return T_out_outlet_pipe;
 }

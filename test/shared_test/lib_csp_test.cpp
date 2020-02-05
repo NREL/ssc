@@ -137,12 +137,12 @@ void FlatPlateArrayTest::SetUp()
 
 TEST_F(FlatPlateArrayTest, TestFlatPlateArrayOfOneNominalOperation)
 {
-    TimeAndPosition time_and_position = default_time_and_position();
+    tm timestamp = default_time();
     ExternalConditions external_conditions = default_external_conditions();
     external_conditions.inlet_fluid_flow.temp = 44.86;
 
-    double useful_power_gain = flat_plate_array_->UsefulPowerGain(time_and_position, external_conditions);  // [W]
-    double T_out = flat_plate_array_->T_out(time_and_position, external_conditions);                        // [C]
+    double useful_power_gain = flat_plate_array_->UsefulPowerGain(timestamp, external_conditions);  // [W]
+    double T_out = flat_plate_array_->T_out(timestamp, external_conditions);                        // [C]
 
     EXPECT_NEAR(useful_power_gain, 1.587e3, 1.587e3 * m_error_tolerance_hi);
     EXPECT_NEAR(T_out, 49.03, 49.03 * m_error_tolerance_hi);
