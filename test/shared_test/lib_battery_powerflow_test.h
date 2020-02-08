@@ -31,8 +31,9 @@ public:
 	void SetUp();
 
 	double calc_dc_gen(){
-		return m_batteryPower->powerPVToLoad + m_batteryPower->powerPVToGrid + m_batteryPower->powerBatteryToLoad
-			   + m_batteryPower->powerBatteryToGrid - m_batteryPower->powerGridToBattery * m_batteryPower->singlePointEfficiencyDCToDC;
+//		return m_batteryPower->powerPVToLoad + m_batteryPower->powerPVToGrid + m_batteryPower->powerBatteryToLoad
+//			   + m_batteryPower->powerBatteryToGrid - m_batteryPower->powerGridToBattery * m_batteryPower->singlePointEfficiencyDCToDC;
+	    return m_batteryPower->powerBatteryAC + m_batteryPower->powerPV;
 	}
 
 	double calc_met_load(){
@@ -40,11 +41,12 @@ public:
 	}
 
 	void check_net_flows(std::string id_string) {
-	    // increased error due to efficiencies
+	    // increased error due to PV dc to ac conversion
+	    double dc_error = 4;
 		double gen = calc_dc_gen();
-		EXPECT_NEAR(m_batteryPower->powerGeneratedBySystem, gen, 5) << id_string;
+		EXPECT_NEAR(m_batteryPower->powerGeneratedBySystem, gen, dc_error) << id_string;
 		double met_load = calc_met_load();
-		EXPECT_NEAR(met_load, m_batteryPower->powerLoad, 5) << id_string;
+		EXPECT_NEAR(met_load, m_batteryPower->powerLoad, dc_error) << id_string;
 	}
 
 	void TearDown()
