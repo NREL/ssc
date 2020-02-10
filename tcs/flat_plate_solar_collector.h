@@ -23,6 +23,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef __FLAT_PLATE_SOLAR_COLLECTOR__
 #define __FLAT_PLATE_SOLAR_COLLECTOR__
 
+#include <limits>
 #include <time.h>
 #include <vector>
 
