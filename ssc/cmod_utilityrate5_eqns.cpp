@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include "vartab.h"
 #include "cmod_utilityrate5_eqns.h"
 

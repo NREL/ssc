@@ -50,6 +50,7 @@
     <ClCompile Include="..\test\ssc_test\cmod_tcstrough_empirical_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_trough_physical_iph_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_trough_physical_test.cpp" />
+    <ClCompile Include="..\test\ssc_test\cmod_utilityrate5_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_windpower_test.cpp" />
     <ClCompile Include="..\test\tcs_test\csp_solver_core_test.cpp" />
     <ClCompile Include="..\test\tcs_test\lib_trough_test.cpp" />

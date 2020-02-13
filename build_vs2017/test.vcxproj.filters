@@ -128,6 +128,9 @@
     <ClCompile Include="..\test\shared_test\lib_resilience_test.cpp">
       <Filter>shared_test</Filter>
     </ClCompile>
+    <ClCompile Include="..\test\ssc_test\cmod_utilityrate5_test.cpp">
+      <Filter>ssc_test</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\test\input_cases\battery_common_data.h">
