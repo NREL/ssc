@@ -62,7 +62,7 @@ SSCEXPORT void Reopt_size_battery_params(ssc_data_t data) {
     // use existing pv system from SAM, not allowing additional PV
     map_input(vt, "system_capacity", &reopt_pv, "existing_kw");
     map_input(vt, "system_capacity", &reopt_pv, "max_kw");
-    map_input(vt, "degradation", &reopt_pv, "degradation_pct", false, true);
+    map_optional_input(vt, "degradation", &reopt_pv, "degradation_pct", 0.5, true);
 
     map_optional_input(vt, "module_type", &reopt_pv, "module_type", 1);
 
@@ -297,7 +297,7 @@ SSCEXPORT void Reopt_size_battery_params(ssc_data_t data) {
     //
     map_input(vt, "analysis_period", &reopt_fin, "analysis_years");
     map_input(vt, "rate_escalation", &reopt_fin, "escalation_pct", false, true);
-    map_input(vt, "value_of_lost_load", &reopt_fin, "value_of_lost_load_us_dollars_per_kwh");
+    map_optional_input(vt, "value_of_lost_load", &reopt_fin, "value_of_lost_load_us_dollars_per_kwh", 0);
     reopt_fin.assign("microgrid_upgrade_cost_pct", 0);
 
     vd = vt->lookup("federal_tax_rate");
@@ -307,7 +307,9 @@ SSCEXPORT void Reopt_size_battery_params(ssc_data_t data) {
     }
 
     vt_get_number(vt, "inflation_rate", &val1);
-    vt_get_number(vt, "real_discount_rate", &val2);
+    vd = vt->lookup("real_discount_rate");
+    if (vd) val2 = vd->num;
+    else val2 = 6.4;
     reopt_fin.assign("offtaker_discount_pct", (1 + val1/100.)*(1 + val2/100.) - 1);
 
     vd = vt->lookup("om_fixed_escal");
