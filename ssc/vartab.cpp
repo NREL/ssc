@@ -260,7 +260,7 @@ void var_table::unassign( const std::string &name )
 
 bool var_table::rename( const std::string &oldname, const std::string &newname )
 {
-	
+
 	var_hash::iterator it = m_hash.find( util::lower_case(oldname) );
 	if ( it != m_hash.end() )
 	{
@@ -288,7 +288,9 @@ bool var_table::rename( const std::string &oldname, const std::string &newname )
 
 var_data *var_table::lookup( const std::string &name )
 {
-	var_hash::iterator it = m_hash.find( util::lower_case(name) );
+    var_hash::iterator it = m_hash.find(name );
+    if (it == m_hash.end())
+        it = m_hash.find( util::lower_case(name) );
 	if ( it != m_hash.end() )
 		return (*it).second;
 	else

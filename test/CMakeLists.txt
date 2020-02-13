@@ -6,7 +6,7 @@
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 2.8)
 
 if(APPLE)
     set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
@@ -59,16 +59,16 @@ if(MSVC)
 	endforeach()
 else()
 	if(APPLE)
-		add_compile_options(-Wall -arch x86_64 -Wno-deprecated)
+		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -arch x86_64 -Wno-deprecated" )
 	else()
-		add_compile_options(-Wall -std=c++11 -Wno-strict-aliasing -Wno-deprecated-declarations -Wno-unknown-pragmas -Wno-reorder)
+		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11 -Wno-strict-aliasing -Wno-deprecated-declarations -Wno-unknown-pragmas -Wno-reorder" )
 	endif()
 	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-		add_compile_options(-D_DEBUG)
+		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -D_DEBUG")
 	else()
-		add_compile_options(-O3 -DNDEBUG)
+		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -D_NDEBUG" )
 	endif()
-	add_compile_options(-Wno-unused-function -Wno-unused-variable -Wno-unused-value)
+			SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-function -Wno-unused-variable -Wno-unused-value")
 endif(MSVC)
 
 
@@ -105,10 +105,16 @@ endif()
 #
 #####################################################################################################################
 
-unset(GTEST_LIB CACHE)
+if (UNIX AND NOT APPLE)
+	set(GTBUILDDIR ${GTDIR}/build_linux/lib)
+else()
+	set(GTBUILDDIR ${GTDIR}/build/lib)
+endif()
+
+	unset(GTEST_LIB CACHE)
 find_library( GTEST_LIB
 	NAMES libgtest.a gtest.lib
-	PATHS ${GTDIR}/build/lib ${GTDIR}/build/lib/Release)
+	PATHS ${GTBUILDDIR})
 target_link_libraries(Test optimized ${GTEST_LIB})
 	
 if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR MSVC)

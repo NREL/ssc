@@ -55,7 +55,6 @@ set(SSC_SRC
 		cmod_linear_fresnel_dsg_iph.cpp
 		cmod_merchantplant.cpp
 		cmod_merchantplant_eqns.cpp
-		cmod_mhk_eqns.cpp
 		cmod_mhk_costs.cpp
 		cmod_mhk_wave.cpp
 		cmod_mhk_tidal.cpp
@@ -173,7 +172,7 @@ set_target_properties(ssc
 
 
 # dltest executable for checking ssc library
-if(UNIX AND NOT system_advisor_model_EXPORT)
+if(UNIX AND NOT SAMAPI_EXPORT)
 	add_executable(dltest ../build_osx/dltest.c)
 	if (NOT APPLE)
 		target_link_libraries(dltest -ldl -Wl,--no-as-needed)
@@ -185,16 +184,18 @@ if(UNIX AND NOT system_advisor_model_EXPORT)
 endif()
 
 # libssc for PySAM
-if(APPLE)
-	if (system_advisor_model_EXPORT)
+if(UNIX)
+	if (SAMAPI_EXPORT)
 		set(CMAKE_MACOSX_RPATH 1)
 		set_property(TARGET ssc PROPERTY PREFIX "lib")
 		set(CMAKE_SHARED_LIBRARY_SUFFIX ".so")
-		add_custom_command(
-			TARGET ssc
-			POST_BUILD
-			COMMAND install_name_tool -id @rpath/libssc.so $<TARGET_FILE:ssc>
-		)
+		if (APPLE)
+			add_custom_command(
+				TARGET ssc
+				POST_BUILD
+				COMMAND install_name_tool -id @rpath/libssc.so $<TARGET_FILE:ssc>
+			)
+		endif()
 	endif()
 endif()
 
@@ -220,6 +221,13 @@ endforeach()
 if (UNIX)
 	target_link_libraries(ssc -lm -ldl -lstdc++)
 endif()
+
+
+#####################################################################################################################
+#
+# Target Installation
+#
+#####################################################################################################################
 
 if (MSVC)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:WINDOWS")
@@ -257,9 +265,8 @@ if (MSVC)
 	endif()
 
 	if (NOT skip_api)
-
 		if (${CMAKE_PROJECT_NAME} STREQUAL system_advisor_model)
-			set(APIGENDIR ${CMAKE_CURRENT_BINARY_DIR}/../../api/api_autogen/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
+			set(APIGENDIR ${CMAKE_CURRENT_BINARY_DIR}/../../sam/api/api_autogen/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
 			add_custom_command(
 				TARGET ssc
 				POST_BUILD
@@ -281,5 +288,26 @@ if (MSVC)
 		COMMAND ${CMAKE_COMMAND} -E make_directory ${TESTDIR} ${APIGENDIR})
 	add_dependencies(ssc build-time-make-directory)
 
+endif()
+
+if(DEFINED ENV{PYSAMDIR})
+	if (SAMAPI_EXPORT OR MSVC)
+		if (MSVC)
+			add_custom_command(
+					TARGET ssc
+					POST_BUILD
+					COMMAND ${CMAKE_COMMAND} -E remove
+					$ENV{PYSAMDIR}/files/$<TARGET_FILE_BASE_NAME:ssc>.lib
+					$ENV{PYSAMDIR}/files/$<TARGET_FILE_BASE_NAME:ssc>.dll
+			)
+			set(SSC_LIB $<TARGET_FILE_DIR:ssc>/$<TARGET_FILE_BASE_NAME:ssc>.lib)
+		endif()
+		add_custom_command(
+				TARGET ssc
+				POST_BUILD
+				COMMAND ${CMAKE_COMMAND}
+				ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} $ENV{PYSAMDIR}/files
+		)
+	endif()
 endif()
 
