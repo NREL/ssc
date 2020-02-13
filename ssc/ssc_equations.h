@@ -6,6 +6,7 @@
 #include "cmod_mhk_eqns.h"
 #include "cmod_merchantplant_eqns.h"
 #include "cmod_pvsamv1_eqns.h"
+#include "cmod_utilityrate5_eqns.h"
 
 
 typedef void (*ssc_equation_ptr)(ssc_data_t data);
@@ -28,6 +29,8 @@ static ssc_equation_entry ssc_equation_table [] = {
             "Pvwattsv5", Reopt_size_battery_params_doc},
         {"Turbine_calculate_powercurve", Turbine_calculate_powercurve,
             "Windpower", Turbine_calculate_powercurve_doc},
+        {"ElectricityRates_format_as_URDBv7", ElectricityRates_format_as_URDBv7,
+            "UtilityRate5", ElectricityRates_format_as_URDBv7_doc},
         {nullptr, nullptr, nullptr, nullptr}
 };
 
