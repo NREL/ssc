@@ -637,3 +637,41 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, TiltEqualsLat_cmod_pvsamv1) {
 		EXPECT_NEAR(subarray1SurfaceTilt, 33.4, 0.1) << "Subarray 1 tilt should be equal to latitude.";
 	}
 }
+
+/// Integration test for bifacial model in SAM
+TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, bifacial_cmod_pvsamv1) {
+
+	std::map<std::string, double> pairs;
+
+	//update bifacial inputs
+	pairs["cec_is_bifacial"] = 1;
+	pairs["cec_bifacial_transmission_factor"] = 0.013;
+	pairs["cec_bifaciality"] = 0.65;
+	pairs["cec_bifacial_ground_clearance_height"] = 1;
+
+	//these are the inputs that need to be updated from pvsaamv1_common_data to make inverter inputs match version 2018.11.11 defaults
+	pairs["cec_adjust"] = 4.86;
+	pairs["cec_i_o_ref"] = 3.9880000000000000e-12;
+	pairs["mppt_low_inverter"] = 100;
+	pairs["inv_snl_c0"] = -3.0810000000000000e-06;
+	pairs["inv_snl_c1"] = -4.8000000000000000e-05;
+	pairs["inv_snl_c2"] = 0.000123;
+	pairs["inv_snl_c3"] = -0.00163;
+	pairs["inv_snl_paco"] = 3850;
+	pairs["inv_snl_pdco"] = 3964.0;
+	pairs["inv_snl_pnt"] = 1.15;
+	pairs["inv_snl_pso"] = 17.9;
+	pairs["inv_snl_vdco"] = 400.0;
+	pairs["inv_snl_vdcmax"] = 480.0;
+
+	//run the test
+	int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+
+	EXPECT_FALSE(pvsam_errors);
+	if (!pvsam_errors)
+	{
+		ssc_number_t annualEnergy;
+		ssc_data_get_number(data, "annual_energy", &annualEnergy);
+		EXPECT_NEAR(annualEnergy, 9141, 1.0) << "Bifacial annual energy from SAM version 2018.11.11 using Phoenix TMY2";
+	}
+}
