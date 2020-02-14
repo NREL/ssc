@@ -21,6 +21,8 @@
     <ClCompile Include="..\ssc\cmod_cb_construction_financing.cpp" />
     <ClCompile Include="..\ssc\cmod_cb_empirical_hce_heat_loss.cpp" />
     <ClCompile Include="..\ssc\cmod_cb_mspt_system_costs.cpp" />
+    <ClCompile Include="..\ssc\cmod_csp_common_eqns.cpp" />
+    <ClCompile Include="..\ssc\cmod_csp_tower_eqns.cpp" />
     <ClCompile Include="..\ssc\cmod_fuelcell.cpp" />
     <ClCompile Include="..\ssc\cmod_generic_system-builder.cpp" />
     <ClCompile Include="..\ssc\cmod_geothermal_costs.cpp" />
@@ -115,6 +117,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\ssc\cmod_battery.h" />
+    <ClInclude Include="..\ssc\cmod_csp_common_eqns.h" />
+    <ClInclude Include="..\ssc\cmod_csp_tower_eqns.h" />
     <ClInclude Include="..\ssc\cmod_fuelcell.h" />
     <ClInclude Include="..\ssc\cmod_grid.h" />
     <ClInclude Include="..\ssc\cmod_merchantplant_eqns.h" />

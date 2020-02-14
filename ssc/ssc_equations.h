@@ -6,6 +6,7 @@
 #include "cmod_mhk_eqns.h"
 #include "cmod_merchantplant_eqns.h"
 #include "cmod_pvsamv1_eqns.h"
+#include "cmod_csp_tower_eqns.h"
 
 
 typedef void (*ssc_equation_ptr)(ssc_data_t data);
@@ -28,6 +29,10 @@ static ssc_equation_entry ssc_equation_table [] = {
             "Pvwattsv5", Reopt_size_battery_params_doc},
         {"Turbine_calculate_powercurve", Turbine_calculate_powercurve,
             "Windpower", Turbine_calculate_powercurve_doc},
+        {"MSPT_System_Design_Equations", MSPT_System_Design_Equations,
+            "Tcsmolten_salt", MSPT_System_Design_Equations_doc},
+        {"Tower_SolarPilot_Solar_Field_Equations", Tower_SolarPilot_Solar_Field_Equations,
+            "Tcsmolten_salt", Tower_SolarPilot_Solar_Field_Equations_doc},
         {nullptr, nullptr, nullptr, nullptr}
 };
 
