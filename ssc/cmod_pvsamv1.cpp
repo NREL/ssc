@@ -481,9 +481,9 @@ static var_info _cm_vtab_pvsamv1[] = {
     { SSC_INPUT, SSC_MATRIX,   "inv_tdc_plc",                          "Temperature derate curves for Part Load Curve",       "(Vdc, C, %/C)",    "",                                                                                                                                                                            "Inverter Part Load Curve",                              "inverter_model=2",                   "",                    "" },
 
     	// battery storage and dispatch
-    { SSC_INPUT, SSC_NUMBER,   "en_batt",                              "Enable battery storage model",                        "0/1",    "",                                                                                                                                                                                      "Battery",                                               "?=0",                                "",                    "" },
-    { SSC_INPUT, SSC_ARRAY,    "load",                                 "Electricity load (year 1)",                           "kW",     "",                                                                                                                                                                                      "Battery",                                               "?",                                  "",                    "" },
-    { SSC_INPUT, SSC_ARRAY,    "crit_load",                            "Critical Electricity load (year 1)",                  "kW",     "",                                                                                                                                                                                      "Battery",                                               "",                                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "en_batt",                              "Enable battery storage model",                        "0/1",    "",                                                                                                                                                                                      "BatterySystem",                                               "?=0",                                "",                    "" },
+    { SSC_INPUT, SSC_ARRAY,    "load",                                 "Electricity load (year 1)",                           "kW",     "",                                                                                                                                                                                      "Load",                                               "?",                                  "",                    "" },
+    { SSC_INPUT, SSC_ARRAY,    "crit_load",                            "Critical Electricity load (year 1)",                  "kW",     "",                                                                                                                                                                                      "Load",                                               "",                                   "",                    "" },
 
 	// NOTE:  other battery storage model inputs and outputs are defined in batt_common.h/batt_common.cpp
 
@@ -1636,7 +1636,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 								double V = stringV / (double)Subarrays[nn]->nModulesPerString; //voltage of an individual module on a string on this subarray
 
 								//initalize pvinput and pvoutput structures for the model
-								pvinput_t in(Subarrays[nn]->poa.poaBeamFront, Subarrays[nn]->poa.poaDiffuseFront, Subarrays[nn]->poa.poaGroundFront, Subarrays[nn]->poa.poaRear, Subarrays[nn]->poa.poaTotal,
+								pvinput_t in(Subarrays[nn]->poa.poaBeamFront, Subarrays[nn]->poa.poaDiffuseFront, Subarrays[nn]->poa.poaGroundFront, Subarrays[nn]->poa.poaRear * bifaciality, Subarrays[nn]->poa.poaTotal,
 									wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
 									solzen, Subarrays[nn]->poa.angleOfIncidenceDegrees, hdr.elev,
 									Subarrays[nn]->poa.surfaceTiltDegrees, Subarrays[nn]->poa.surfaceAzimuthDegrees,
@@ -1677,7 +1677,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 					{
 						int nn = SubarraysOnMpptInput[nSubarray]; //get the index of the subarray we're checking here
 						//initalize pvinput and pvoutput structures for the model
-						pvinput_t in_temp(Subarrays[nn]->poa.poaBeamFront, Subarrays[nn]->poa.poaDiffuseFront, Subarrays[nn]->poa.poaGroundFront, Subarrays[nn]->poa.poaRear, Subarrays[nn]->poa.poaTotal,
+						pvinput_t in_temp(Subarrays[nn]->poa.poaBeamFront, Subarrays[nn]->poa.poaDiffuseFront, Subarrays[nn]->poa.poaGroundFront, Subarrays[nn]->poa.poaRear * bifaciality, Subarrays[nn]->poa.poaTotal,
 							wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
 							solzen, Subarrays[nn]->poa.angleOfIncidenceDegrees, hdr.elev,
 							Subarrays[nn]->poa.surfaceTiltDegrees, Subarrays[nn]->poa.surfaceAzimuthDegrees,

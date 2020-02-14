@@ -81,7 +81,6 @@ TEST_F(BatteryDispatchTest_lib_battery_dispatch, DispatchFOMInput_lib_battery_di
 
 	dispatchAutoFOM->set_custom_dispatch(P_batt);
 	dispatchAutoFOM->dispatch(0, 0, 0);
-
 }
 
 TEST_F(BatteryDispatchTest_lib_battery_dispatch, DispatchFOM_DCAuto)
@@ -121,9 +120,7 @@ TEST_F(BatteryDispatchTest_lib_battery_dispatch, DispatchFOM_DCAuto)
 		batteryPower->powerPVClipped = clip[h];
 		dispatchAutoDC->dispatch(0, h, 0);
 		p_batterykW.push_back(batteryPower->powerBatteryAC);
-}
-
-
+    }
 
 	if (m_sharedInverter) {
 		delete m_sharedInverter;
@@ -141,8 +138,8 @@ TEST_F(BatteryDispatchTest_lib_battery_dispatch, DispatchFOM_DCAuto)
 		delete ond;
 		ond = nullptr;
 	}
-
 }
 
+TEST_F(BatteryDispatchTest_lib_battery_dispatch, checkConstraints_SOC){
 
-
+}
