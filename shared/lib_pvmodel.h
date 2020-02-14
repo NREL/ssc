@@ -41,7 +41,7 @@ public:
 	double Ibeam; // beam irradiance, W/m2
 	double Idiff; // sky diffuse irradiance, W/m2
 	double Ignd; // ground reflected irradiance, W/m2
-	double Irear; // rear side irradiance, W/m2
+	double Irear; // rear side irradiance, W/m2 **needs to be the amount actually usable by panel, so must be multiplied by bifaciality
 	double poaIrr; // plane of array irradiance, W/m2
 	double Tdry; // dry bulb temp, C
 	double Tdew; // dew point temp, C
