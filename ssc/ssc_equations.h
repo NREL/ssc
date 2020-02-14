@@ -31,6 +31,8 @@ static ssc_equation_entry ssc_equation_table [] = {
             "Windpower", Turbine_calculate_powercurve_doc},
         {"MSPT_System_Design_Equations", MSPT_System_Design_Equations,
             "Tcsmolten_salt", MSPT_System_Design_Equations_doc},
+        {"Tower_SolarPilot_Solar_Field_Equations", Tower_SolarPilot_Solar_Field_Equations,
+            "Tcsmolten_salt", Tower_SolarPilot_Solar_Field_Equations_doc},
         {nullptr, nullptr, nullptr, nullptr}
 };
 
