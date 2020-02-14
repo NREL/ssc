@@ -87,7 +87,7 @@ public:
     util::matrix_t<double> as_matrix_transpose(const std::string & name);
     bool get_matrix(const std::string &name, util::matrix_t<ssc_number_t> &mat);
 
-
+    unordered_map< std::string, var_data*>* get_hash() {return &m_hash;};
 private:
 	var_hash m_hash;
 	var_hash::iterator m_iterator;
