@@ -114,7 +114,7 @@ endif()
 	unset(GTEST_LIB CACHE)
 find_library( GTEST_LIB
 	NAMES libgtest.a gtest.lib
-	PATHS ${GTDIR}/build/lib ${GTDIR}/build/lib/Release)
+	PATHS ${GTBUILDDIR} ${GTDIR}/build/lib/Release)
 target_link_libraries(Test optimized ${GTEST_LIB})
 	
 if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR MSVC)
