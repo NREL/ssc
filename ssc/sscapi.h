@@ -274,10 +274,16 @@ SSCEXPORT ssc_var_t ssc_data_get_data_matrix(ssc_data_t p_data, const char *name
 
 /**@}*/
 
-SSCEXPORT const char* var_table_to_ssc_data(ssc_data_t p_data);
-
-/** Returns a new ssc_data with data from the json **/
+/** Json and ssc_data_t conversion functions
+ *
+ * Numerical json values (int, bool, real) map to SSC_NUMBER type.
+ * Json strings map to SSC_STRING type.
+ * Json arrays map to SSC_ARRAY, SSC_MATRIX, or SSC_DATARR type.
+ * Json objects map to SSC_TABLE type
+ */
 SSCEXPORT ssc_data_t json_to_ssc_data(const char* json_str);
+
+SSCEXPORT const char* ssc_data_to_json(ssc_data_t p_data);
 
 /** The opaque data structure that stores information about a compute module. */
 typedef void* ssc_entry_t;

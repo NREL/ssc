@@ -695,14 +695,6 @@ SSCEXPORT ssc_var_t ssc_data_get_data_matrix(ssc_data_t p_data, const char *name
     return dat;
 }
 
-SSCEXPORT const char* var_table_to_ssc_data(ssc_data_t p_data){
-    auto vt = static_cast<var_table*>(p_data);
-    if (!vt) return 0;
-
-
-
-}
-
 void json_to_ssc_var(const Json::Value& json_val, ssc_var_t ssc_val){
     if (!ssc_val)
         return;
@@ -711,8 +703,22 @@ void json_to_ssc_var(const Json::Value& json_val, ssc_var_t ssc_val){
 
     using namespace Json;
     Json::Value::Members members;
+    bool is_arr, is_mat;
+    std::vector<ssc_number_t> vec;
     std::vector<var_data>* vd_arr;
     var_table* vd_tab;
+
+    auto is_numerical = [](const Json::Value& json_val){
+        bool is_num = true;
+        for (const auto & value : json_val){
+            if (!value.isDouble() && !value.isBool()){
+                is_num = false;
+                break;
+            }
+        }
+        return is_num;
+    };
+
     switch (json_val.type()){
         default:
         case ValueType::nullValue:
@@ -727,11 +733,38 @@ void json_to_ssc_var(const Json::Value& json_val, ssc_var_t ssc_val){
             vd->str = json_val.asString();
             return;
         case ValueType::arrayValue:
+            // determine if SSC_ARRAY
+            is_arr = is_numerical(json_val);
+            if (is_arr){
+                for (const auto & row : json_val){
+                    vec.push_back(row.asDouble());
+                }
+                vd->num.assign(&vec[0], vec.size());
+                return;
+            }
+            // SSC_MATRIX
+            is_mat = true;
+            for (const auto & value : json_val){
+                if (value.type() != ValueType::arrayValue || !is_numerical(value)){
+                    is_mat = false;
+                    break;
+                }
+            }
+            if (is_mat){
+                for (const auto & row : json_val){
+                    for (const auto & value : row){
+                        vec.push_back(value.asDouble());
+                    }
+                }
+                vd->num.assign(&vec[0], vec.size());
+                return;
+            }
+            // SSC_DATARR
             vd_arr = &vd->vec;
-            for ( int index = 0; index < json_val.size(); ++index ){
+            for (const auto & value : json_val){
                 vd_arr->emplace_back(var_data());
                 auto entry = &vd_arr->back();
-                json_to_ssc_var(json_val[index], entry);
+                json_to_ssc_var(value, entry);
             }
             return;
         case ValueType::objectValue:
@@ -745,7 +778,7 @@ void json_to_ssc_var(const Json::Value& json_val, ssc_var_t ssc_val){
 }
 
 SSCEXPORT ssc_data_t json_to_ssc_data(const char* json_str){
-    var_table* vt = new var_table;
+    auto vt = new var_table;
     const std::string rawJson(json_str);
     const auto rawJsonLength = static_cast<int>(rawJson.length());
     JSONCPP_STRING err;
@@ -758,11 +791,68 @@ SSCEXPORT ssc_data_t json_to_ssc_data(const char* json_str){
         return dynamic_cast<ssc_data_t>(vt);
     }
 
-
-
-    const std::string name = root["Name"].asString();
-    const int age = root["Age"].asInt();
+    Json::Value::Members members = root.getMemberNames();
+    for (auto const &name : members) {
+        var_data ssc_val;
+        json_to_ssc_var(root[name], &ssc_val);
+        vt->assign(name, ssc_val);
+    }
+    return vt;
 }
+
+Json::Value ssc_var_to_json(var_data* vd){
+    Json::Value json_val;
+    switch (vd->type){
+        default:
+        case SSC_INVALID:
+            return json_val;
+        case SSC_NUMBER:
+            json_val = vd->num[0];
+            return json_val;
+        case SSC_STRING:
+            json_val = vd->str;
+            return json_val;
+        case SSC_ARRAY:
+            for (Json::ArrayIndex i = 0; i < vd->num.ncols(); i++){
+                json_val.append(Json::Value(vd->num[i]));
+            }
+            return json_val;
+        case SSC_MATRIX:
+            json_val.resize(vd->num.nrows());
+            for (Json::ArrayIndex i = 0; i < json_val.size(); i++){
+                for (Json::ArrayIndex j = 0; j < vd->num.ncols(); j++){
+                    json_val[i].append(vd->num.at(i, j));
+                }
+            }
+            return json_val;
+        case SSC_DATARR:
+            for (auto& dat : vd->vec){
+                json_val.append(ssc_var_to_json(&dat));
+            }
+            return json_val;
+        case SSC_TABLE:
+            for (auto const &it : *vd->table.get_hash()){
+                json_val[it.first] = ssc_var_to_json(it.second);
+            }
+            return json_val;
+    }
+}
+
+SSCEXPORT const char* ssc_data_to_json(ssc_data_t p_data){
+    auto vt = static_cast<var_table*>(p_data);
+    if (!vt) return nullptr;
+
+    Json::Value root;
+    for (auto const &it : *vt->get_hash()){
+        root[it.first] = ssc_var_to_json(it.second);
+    }
+    Json::StreamWriterBuilder builder;
+    const std::string json_file = Json::writeString(builder, root);
+    char *arr = (char*)malloc(strlen(json_file.c_str()) + 1);;
+    strcpy(arr, json_file.c_str());
+    return arr;
+}
+
 
 SSCEXPORT ssc_entry_t ssc_module_entry( int index )
 {
