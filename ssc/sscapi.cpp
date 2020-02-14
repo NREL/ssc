@@ -830,6 +830,14 @@ Json::Value ssc_var_to_json(var_data* vd){
                 json_val.append(ssc_var_to_json(&dat));
             }
             return json_val;
+        case SSC_DATMAT:
+            for (auto& row : vd->mat){
+                auto& json_row = json_val.append(Json::Value(Json::ValueType::arrayValue));
+                for (auto& dat : row){
+                    json_row.append(ssc_var_to_json(&dat));
+                }
+            }
+            return json_val;
         case SSC_TABLE:
             for (auto const &it : *vd->table.get_hash()){
                 json_val[it.first] = ssc_var_to_json(it.second);

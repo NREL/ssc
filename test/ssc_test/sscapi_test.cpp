@@ -94,11 +94,11 @@ TEST(sscapi_test, ssc_data_to_json){
     vt.clear();
     delete json_string;
 
-//    std::vector<std::vector<var_data>> vars_mat = {vars, std::vector<var_data>({3, 4})};
-//    vt.assign("datmat", vars_mat);
-//    json_string = ssc_data_to_json(&vt);
-//    EXPECT_STRCASEEQ(json_string, R"({"datmat": [["one", 2], [3, 4]]})");
-//    vt.clear();
+    std::vector<std::vector<var_data>> vars_mat = {vars, std::vector<var_data>({3, 4})};
+    vt.assign("datmat", vars_mat);
+    json_string = ssc_data_to_json(&vt);
+    EXPECT_STRCASEEQ(json_string, "{\n\t\"datmat\" : \n\t[\n\t\t[\n\t\t\t\"one\",\n\t\t\t2.0\n\t\t],\n\t\t[\n\t\t\t3.0,\n\t\t\t4.0\n\t\t]\n\t]\n}");
+    vt.clear();
 
     var_table tab;
     tab.assign("entry", 1);
