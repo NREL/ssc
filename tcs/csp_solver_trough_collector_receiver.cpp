@@ -426,11 +426,11 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
 
     // Initialize flat plate collectors
     CollectorTestSpecifications collector_test_specifications;
-    collector_test_specifications.FRta = 0.689;
-    collector_test_specifications.FRUL = 3.85;
-    collector_test_specifications.iam = 0.2;
-    collector_test_specifications.area_coll = 2.98;
-    collector_test_specifications.m_dot = 0.045528;         // kg/s   
+    collector_test_specifications.FRta = 0.733;
+    collector_test_specifications.FRUL = 3.41;
+    collector_test_specifications.iam = -0.06;
+    collector_test_specifications.area_coll = 3.73;
+    collector_test_specifications.m_dot = 0.0498;           // kg/s   
     collector_test_specifications.heat_capacity = 4.182;    // kJ/kg-K
 
     CollectorLocation collector_location;
