@@ -16,9 +16,9 @@ if (UNIX AND NOT CMAKE_C_COMPILER)
 endif()
 set(CMAKE_CXX_STANDARD 11)
 
-if (POLICY CMP0043) # CMAKE 2.8 compatibility
-  cmake_policy(SET CMP0043 OLD)
-endif (POLICY CMP0043)
+#if (POLICY CMP0043) # CMAKE 2.8 compatibility
+#  cmake_policy(SET CMP0043 OLD)
+#endif (POLICY CMP0043)
 
 #####################################################################################################################
 #

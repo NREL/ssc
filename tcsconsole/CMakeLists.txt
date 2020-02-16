@@ -4,9 +4,8 @@
 #
 #####################################################################################################################
 
-set(CMAKE_VERBOSE_MAKEFILE ON)
 
-cmake_minimum_required(VERSION 2.8)
+set(CMAKE_VERBOSE_MAKEFILE ON)
 
 if(APPLE)
     set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
@@ -34,6 +33,8 @@ set(TCSCONSOLE_SRC
 # Compile Options per Platform
 #
 #####################################################################################################################
+
+cmake_policy(SET CMP0043 NEW)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 

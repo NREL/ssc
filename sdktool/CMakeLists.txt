@@ -39,6 +39,8 @@ set(SDKTOOL_SRC
 #
 #####################################################################################################################
 
+cmake_policy(SET CMP0043 NEW)
+
 if(MSVC)
 	add_compile_options(/W3 /MP)
     add_compile_definitions( __64BIT__ LK_USE_WXWIDGETS _CRT_SECURE_NO_DEPRECATE=1 )

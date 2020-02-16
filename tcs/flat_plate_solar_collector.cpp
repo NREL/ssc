@@ -20,7 +20,7 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
+#include <stdexcept>
 #include "flat_plate_solar_collector.h"
 #include "lib_irradproc.h"
 
