@@ -5,6 +5,45 @@
 #pragma warning(disable: 4297)  // ignore warning: 'function assumed not to throw an exception but does'
 
 
+HTFProperties GetHtfProperties(int fluid_number, const util::matrix_t<double> &specified_fluid_properties) {       // [-]
+
+    HTFProperties htf_properties;
+
+    if (fluid_number != HTFProperties::User_defined)
+    {
+        if (!htf_properties.SetFluid(fluid_number))
+        {
+            throw("Fluid number is not recognized");
+        }
+    }
+    else if (fluid_number == HTFProperties::User_defined)
+    {
+        std::size_t n_rows = specified_fluid_properties.nrows();
+        std::size_t n_cols = specified_fluid_properties.ncols();
+        if (n_rows > 2 && n_cols == 7)
+        {
+            if (!htf_properties.SetUserDefinedFluid(specified_fluid_properties))
+            {
+                std::string error_msg = util::format(htf_properties.UserFluidErrMessage(), n_rows, n_cols);
+                throw(error_msg);
+            }
+        }
+        else
+        {
+            std::string error_msg = util::format("The user defined fluid properties table must contain at least 3 rows and exactly 7 columns. The current table contains %d row(s) and %d column(s)", n_rows, n_cols);
+            throw(error_msg);
+        }
+    }
+    else
+    {
+        throw("Fluid code is not recognized");
+    }
+
+    return htf_properties;
+}
+
+
+
 // Originally from 'MSPT System Design' UI form
 double Nameplate(double P_ref /*MWe*/, double gross_net_conversion_factor /*-*/) {      // MWe
     return P_ref * gross_net_conversion_factor;
@@ -67,7 +106,7 @@ double C_atm_info(const util::matrix_t<ssc_number_t> &helio_positions /*m*/,
     double c_atm_0 /*-*/, double c_atm_1 /*-*/, double c_atm_2 /*-*/, double c_atm_3 /*-*/, double h_tower /*m*/) {  // [%]
     
     double tht2 = h_tower * h_tower;
-    int n_hel = helio_positions.nrows();
+    std::size_t n_hel = helio_positions.nrows();
 
     double tot_att = 0.;
     for (std::size_t i = 0; i < n_hel; i++) {
@@ -125,4 +164,57 @@ int Opt_algorithm() {        // [-]
 
 double Opt_flux_penalty() {  // [-]
     return 0.25;
+}
+
+
+
+// Originally from 'MSPT Receiver' UI Form
+double Csp_pt_rec_cav_lip_height() {     // [m]
+    return 1.;
+}
+
+double Csp_pt_rec_cav_panel_height() {   // [m]
+    return 1.1;
+}
+
+double Csp_pt_rec_htf_t_avg(double T_htf_cold_des /*C*/, double T_htf_hot_des /*C*/) {       // [C]
+    return (T_htf_cold_des + T_htf_hot_des) / 2.;
+}
+
+double Csp_pt_rec_htf_c_avg(double csp_pt_rec_htf_t_avg /*C*/, int rec_htf /*-*/,
+    const util::matrix_t<ssc_number_t> &field_fl_props /*-*/) {      // [kJ/kg-K]
+    
+    HTFProperties htf_properties = GetHtfProperties(rec_htf, field_fl_props);
+    return htf_properties.Cp(csp_pt_rec_htf_t_avg + 273.15);
+}
+
+double Csp_pt_rec_max_flow_to_rec(double csp_pt_rec_max_oper_frac /*-*/, double Q_rec_des /*MWt*/,
+    double csp_pt_rec_htf_c_avg /*kJ/kg-K*/, double T_htf_hot_des /*C*/, double T_htf_cold_des /*C*/) {      // [kg/s]
+
+    return (csp_pt_rec_max_oper_frac * Q_rec_des * 1.e6) /
+        (csp_pt_rec_htf_c_avg * 1.e3 * (T_htf_hot_des - T_htf_cold_des));
+}
+
+double Csp_pt_rec_cav_ap_height(double rec_d_spec /*m*/, double csp_pt_rec_cav_ap_hw_ratio /*-*/) {      // [m]
+    return rec_d_spec * csp_pt_rec_cav_ap_hw_ratio;
+}
+
+double Rec_aspect(double D_rec /*m*/, double rec_height /*m*/) {     // [-]
+    double aspect;
+    if (D_rec != 0.) {
+        aspect = rec_height / D_rec;
+    }
+    else {
+        aspect = 1.;
+    }
+
+    return aspect;
+}
+
+double Piping_length(double h_tower /*m*/, double piping_length_mult /*-*/, double piping_length_const /*m*/) {      // [m]
+    return h_tower * piping_length_mult + piping_length_const;
+}
+
+double Piping_loss_tot(double piping_length /*m*/, double piping_loss /*Wt/m*/) {        // [kWt]
+    return piping_length * piping_loss / 1000.;
 }

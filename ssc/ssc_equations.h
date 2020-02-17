@@ -33,6 +33,8 @@ static ssc_equation_entry ssc_equation_table [] = {
             "Tcsmolten_salt", MSPT_System_Design_Equations_doc},
         {"Tower_SolarPilot_Solar_Field_Equations", Tower_SolarPilot_Solar_Field_Equations,
             "Tcsmolten_salt", Tower_SolarPilot_Solar_Field_Equations_doc},
+        {"MSPT_Receiver_Equations", MSPT_Receiver_Equations,
+            "Tcsmolten_salt", MSPT_Receiver_Equations_doc},
         {nullptr, nullptr, nullptr, nullptr}
 };
 
