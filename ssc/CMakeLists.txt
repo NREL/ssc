@@ -123,6 +123,9 @@ set(SSC_SRC
 		python_handler.cpp
 		sscapi.cpp
 		tckernel.cpp
+        cmod_pvsamv1_eqns.cpp 
+        cmod_csp_common_eqns.cpp
+        cmod_csp_tower_eqns.cpp
 		vartab.cpp
         cmod_wind_landbosse.cpp)
 
