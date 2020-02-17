@@ -27,10 +27,6 @@ static const char* Turbine_calculate_powercurve_doc =
 
 SSCEXPORT void Turbine_calculate_powercurve(ssc_data_t data);
 
-static const char* Landbosse_calculate_bos_costs_doc =
-    "Calls Landbosse python package to calculate total bos costs";
-
-SSCEXPORT void Landbosse_calculate_bos_costs(ssc_data_t data);
 
 #ifdef __cplusplus
 }
