@@ -153,3 +153,77 @@ void Tower_SolarPilot_Solar_Field_Equations(ssc_data_t data)
     opt_flux_penalty = Opt_flux_penalty();
     vt->assign("opt_flux_penalty", opt_flux_penalty);
 }
+
+void MSPT_Receiver_Equations(ssc_data_t data)
+{
+    auto vt = static_cast<var_table*>(data);
+    if (!vt) {
+        throw std::runtime_error("ssc_data_t data invalid");
+    }
+    double csp_pt_rec_max_oper_frac, q_rec_des, csp_pt_rec_htf_c_avg, t_htf_hot_des, t_htf_cold_des,
+        csp_pt_rec_max_flow_to_rec, csp_pt_rec_htf_t_avg, rec_d_spec, csp_pt_rec_cav_ap_hw_ratio, csp_pt_rec_cav_ap_height, d_rec, rec_height, rec_aspect,
+        h_tower, piping_length_mult, piping_length_const, piping_length, piping_loss, piping_loss_tot;
+
+    int rec_htf;
+
+    util::matrix_t<double> field_fl_props;
+
+    //  This one is not being read in the UI
+    // Csp_pt_rec_cav_lip_height
+    //double csp_pt_rec_cav_lip_height;
+    //csp_pt_rec_cav_lip_height = Csp_pt_rec_cav_lip_height();
+    //vt->assign("csp_pt_rec_cav_lip_height", csp_pt_rec_cav_lip_height);
+
+    //  This one is not being read in the UI
+    // csp_pt_rec_cav_panel_height
+    //double csp_pt_rec_cav_panel_height;
+    //csp_pt_rec_cav_panel_height = Csp_pt_rec_cav_panel_height();
+    //vt->assign("csp_pt_rec_cav_panel_height", csp_pt_rec_cav_panel_height);
+
+    // csp_pt_rec_htf_t_avg
+    vt_get_number(vt, "t_htf_cold_des", &t_htf_cold_des);
+    vt_get_number(vt, "t_htf_hot_des", &t_htf_hot_des);
+    csp_pt_rec_htf_t_avg = Csp_pt_rec_htf_t_avg(t_htf_cold_des, t_htf_hot_des);
+    vt->assign("csp_pt_rec_htf_t_avg", csp_pt_rec_htf_t_avg);
+
+    // csp_pt_rec_htf_c_avg
+    vt_get_number(vt, "csp_pt_rec_htf_t_avg", &csp_pt_rec_htf_t_avg);
+    vt_get_int(vt, "rec_htf", &rec_htf);
+    vt_get_matrix(vt, "field_fl_props", field_fl_props);
+    csp_pt_rec_htf_c_avg = Csp_pt_rec_htf_c_avg(csp_pt_rec_htf_t_avg, rec_htf, field_fl_props);
+    vt->assign("csp_pt_rec_htf_c_avg", csp_pt_rec_htf_c_avg);
+
+    // csp_pt_rec_max_flow_to_rec
+    vt_get_number(vt, "csp_pt_rec_max_oper_frac", &csp_pt_rec_max_oper_frac);
+    vt_get_number(vt, "q_rec_des", &q_rec_des);
+    vt_get_number(vt, "csp_pt_rec_htf_c_avg", &csp_pt_rec_htf_c_avg);
+    vt_get_number(vt, "t_htf_hot_des", &t_htf_hot_des);
+    vt_get_number(vt, "t_htf_cold_des", &t_htf_cold_des);
+    csp_pt_rec_max_flow_to_rec = Csp_pt_rec_max_flow_to_rec(csp_pt_rec_max_oper_frac, q_rec_des, csp_pt_rec_htf_c_avg, t_htf_hot_des, t_htf_cold_des);
+    vt->assign("csp_pt_rec_max_flow_to_rec", csp_pt_rec_max_flow_to_rec);
+
+    // csp_pt_rec_cav_ap_height
+    vt_get_number(vt, "rec_d_spec", &rec_d_spec);
+    vt_get_number(vt, "csp_pt_rec_cav_ap_hw_ratio", &csp_pt_rec_cav_ap_hw_ratio);
+    csp_pt_rec_cav_ap_height = Csp_pt_rec_cav_ap_height(rec_d_spec, csp_pt_rec_cav_ap_hw_ratio);
+    vt->assign("csp_pt_rec_cav_ap_height", csp_pt_rec_cav_ap_height);
+
+    // rec_aspect
+    vt_get_number(vt, "d_rec", &d_rec);
+    vt_get_number(vt, "rec_height", &rec_height);
+    rec_aspect = Rec_aspect(d_rec, rec_height);
+    vt->assign("rec_aspect", rec_aspect);
+
+    // piping_length
+    vt_get_number(vt, "h_tower", &h_tower);
+    vt_get_number(vt, "piping_length_mult", &piping_length_mult);
+    vt_get_number(vt, "piping_length_const", &piping_length_const);
+    piping_length = Piping_length(h_tower, piping_length_mult, piping_length_const);
+    vt->assign("piping_length", piping_length);
+
+    // piping_loss_tot
+    vt_get_number(vt, "piping_length", &piping_length);
+    vt_get_number(vt, "piping_loss", &piping_loss);
+    piping_loss_tot = Piping_loss_tot(piping_length, piping_loss);
+    vt->assign("piping_loss_tot", piping_loss_tot);
+}

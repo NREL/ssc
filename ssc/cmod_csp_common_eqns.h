@@ -3,6 +3,12 @@
 
 #include "sscapi.h"
 #include "../shared/lib_util.h"
+#include "htf_props.h"
+
+
+HTFProperties GetHtfProperties(int fluid_number, const util::matrix_t<double> &specified_fluid_properties = NULL);       // [-]
+
+
 
 // Originally from 'MSPT System Design' UI Form
 double Nameplate(double P_ref /*MWe*/, double gross_net_conversion_factor /*-*/);       // [MWe]
@@ -51,5 +57,29 @@ double Dni_des_calc(double dni_des /*W/m2*/);       // [W/m2]
 int Opt_algorithm();        // [-]
 
 double Opt_flux_penalty();  // [-]
+
+
+
+// Originally from 'MSPT Receiver' UI Form
+double Csp_pt_rec_cav_lip_height();     // [m?]
+
+double Csp_pt_rec_cav_panel_height();   // [m?]
+
+double Csp_pt_rec_max_flow_to_rec(double csp_pt_rec_max_oper_frac /*-*/, double Q_rec_des /*MWt*/,
+    double csp_pt_rec_htf_c_avg /*kJ/kg-K*/, double T_htf_hot_des /*C*/, double T_htf_cold_des /*C*/);      // [kg/s]
+
+double Csp_pt_rec_htf_t_avg(double T_htf_cold_des /*C*/, double T_htf_hot_des /*C*/);       // [C]
+
+double Csp_pt_rec_cav_ap_height(double rec_d_spec /*m*/, double csp_pt_rec_cav_ap_hw_ratio /*-*/);      // [m]
+
+double Csp_pt_rec_htf_c_avg(double csp_pt_rec_htf_t_avg /*C*/, int rec_htf /*-*/,
+    const util::matrix_t<ssc_number_t> &field_fl_props = NULL /*-*/);      // [kJ/kg-K]
+
+double Rec_aspect(double D_rec /*m*/, double rec_height /*m*/);     // [-]
+
+double Piping_length(double h_tower /*m*/, double piping_length_mult /*-*/, double piping_length_const /*m*/);      // [m]
+
+double Piping_loss_tot(double piping_length /*m*/, double piping_loss /*Wt/m*/);        // [kWt]
+
 
 #endif

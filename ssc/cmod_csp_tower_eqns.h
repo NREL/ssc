@@ -67,6 +67,37 @@ extern "C" {
 
     SSCEXPORT void Tower_SolarPilot_Solar_Field_Equations(ssc_data_t data);
 
+
+    static const char* MSPT_Receiver_Equations_doc =
+        "Sizes the receiver and tower piping, as used on the Tower and Receiver UI form\\n"
+        "Input: var_table with key-value pairs\\n"
+        "     'csp_pt_rec_cav_ap_hw_ratio' - double [-]\\n"
+        "     'csp_pt_rec_max_oper_frac' - double [-]\\n"
+        "     'd_rec' - double [m]\\n"
+        "     'field_fl_props' - double [-]\\n"
+        "     'h_tower' - double [m]\\n"
+        "     'piping_length_const' - double [m]\\n"
+        "     'piping_length_mult' - double [-]\\n"
+        "     'piping_loss' - double [Wt/m]\\n"
+        "     'q_rec_des' - double [MWt]\\n"
+        "     'rec_d_spec' - double [m]\\n"
+        "     'rec_height' - double [m]\\n"
+        "     'rec_htf' - int [-]\\n"
+        "     't_htf_cold_des' - double [C]\\n"
+        "     't_htf_hot_des' - double [C]\\n"
+        "Output: key-value pairs added to var_table\\n"
+        "     'csp_pt_rec_cav_ap_height' - double [m]\\n"
+        "     'csp_pt_rec_cav_lip_height' - double [m]\\n"
+        "     'csp_pt_rec_cav_panel_height' - double [m]\\n"
+        "     'csp_pt_rec_htf_c_avg' - double [kJ/kg-K]\\n"
+        "     'csp_pt_rec_htf_t_avg' - double [C]\\n"
+        "     'csp_pt_rec_max_flow_to_rec' - double [kg/s]\\n"
+        "     'piping_length' - double [m]\\n"
+        "     'piping_loss_tot' - double [kWt]\\n"
+        "     'rec_aspect' - double [-]\\n";
+
+    SSCEXPORT void MSPT_Receiver_Equations(ssc_data_t data);
+
 #ifdef __cplusplus
 }
 #endif
