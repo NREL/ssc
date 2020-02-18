@@ -174,7 +174,7 @@ set_target_properties(ssc
 
 # dltest executable for checking ssc library
 if(UNIX AND NOT SAMAPI_EXPORT)
-	add_executable(dltest ../build_osx/dltest.c)
+	add_executable(dltest ../build_resources/dltest.c)
 	if (NOT APPLE)
 		target_link_libraries(dltest -ldl -Wl,--no-as-needed)
 	endif()
