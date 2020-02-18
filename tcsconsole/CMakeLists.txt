@@ -86,12 +86,12 @@ include(${wxWidgets_USE_FILE})
 
 # Setup Application
 if (APPLE)
-	set(MACOSX_BUNDLE_ICON_FILE ${CMAKE_CURRENT_SOURCE_DIR}/../build_osx/TCSConsole.icns)
-	set(TCSCONSOLE_ICON ${CMAKE_CURRENT_SOURCE_DIR}/../build_osx/TCSConsole.icns)
+	set(MACOSX_BUNDLE_ICON_FILE ${CMAKE_CURRENT_SOURCE_DIR}/../build_resources/TCSConsole.icns)
+	set(TCSCONSOLE_ICON ${CMAKE_CURRENT_SOURCE_DIR}/../build_resources/TCSConsole.icns)
 	set_source_files_properties(${TCSCONSOLE_ICON} PROPERTIES
 		MACOSX_PACKAGE_LOCATION "Resources")
 elseif(WIN32)
-	#set(TCSCONSOLE_ICON ${CMAKE_CURRENT_SOURCE_DIR}/../build_vs2013/TCSConsole.rc)
+	#set(TCSCONSOLE_ICON ${CMAKE_CURRENT_SOURCE_DIR}/../build_resources/TCSConsole.rc)
 endif()
 
 add_executable(TCSConsole
@@ -107,7 +107,7 @@ set_target_properties(TCSConsole
 
 if (APPLE)
 	set_target_properties(TCSConsole PROPERTIES
-		MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/../build_osx/Info-TCSConsole.plist
+		MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/../build_resources/Info-TCSConsole.plist
 	)
 endif()
 
@@ -166,7 +166,7 @@ if (UNIX)
 elseif (MSVC)
 	find_library( CURL_LIB
 			NAMES libcurl.lib
-			PATHS $ENV{WEXDIR}/build_vs2017/libcurl_ssl_x64/lib)
+			PATHS $ENV{WEXDIR}/build_resources/libcurl_ssl_x64/lib)
 	target_link_libraries(TCSConsole ${CURL_LIB})
 	target_link_libraries(TCSConsole Winhttp)
 endif()
@@ -201,7 +201,7 @@ if(MSVC)
 		TARGET TCSConsole
 		POST_BUILD
 		COMMAND ${CMAKE_COMMAND}
-		ARGS -E copy $ENV{WEXDIR}/build_vs2017/libcurl_ssl_x64/bin/${file_i} ${TCSCONSOLE_DIR}
+		ARGS -E copy $ENV{WEXDIR}/build_resources/libcurl_ssl_x64/bin/${file_i} ${TCSCONSOLE_DIR}
 	)
 	endforeach( file_i )
 endif()
