@@ -55,7 +55,6 @@ set(SSC_SRC
 		cmod_host_developer.cpp
 		cmod_iec61853par.cpp
 		cmod_inv_cec_cg.cpp
-		cmod_iph_linear_fresnel_dsg.cpp
 		cmod_iph_to_lcoefcr.cpp
 		cmod_ippppa.cpp
 		cmod_irradproc.cpp
@@ -92,21 +91,17 @@ set(SSC_SRC
 		cmod_sco2_csp_ud_pc_tables.cpp
 		cmod_sco2_design_cycle.cpp
 		cmod_sco2_design_point.cpp
-		cmod_sco2_offdesign.cpp
 		cmod_singlediode.cpp
 		cmod_singleowner.cpp
 		cmod_snowmodel.cpp
 		cmod_solarpilot.cpp
-		cmod_sp_ty.cpp
 		cmod_swh.cpp
 		cmod_tcsdirect_steam.cpp
 		cmod_tcsdish.cpp
 		cmod_tcsgeneric_solar.cpp
 		cmod_tcsiscc.cpp
 		cmod_tcslinear_fresnel.cpp
-		cmod_tcslinear_fresnel_dsg_csp_solver.cpp
 		cmod_tcsmolten_salt.cpp
-		cmod_tcsmolten_salt_tcs_solver.cpp
 		cmod_tcsmslf.cpp
 		cmod_tcstrough_empirical.cpp
 		cmod_tcstrough_physical.cpp
@@ -152,8 +147,6 @@ set(SSC_SRC
 		tckernel.h
 		vartab.cpp
 		vartab.h
-		vbapi.cpp
-		vbapi.h
 		)
 
 
