@@ -219,3 +219,31 @@ double Piping_length(double h_tower /*m*/, double piping_length_mult /*-*/, doub
 double Piping_loss_tot(double piping_length /*m*/, double piping_loss /*Wt/m*/) {        // [kWt]
     return piping_length * piping_loss / 1000.;
 }
+
+
+
+// Originally from 'MSPT System Control'
+double Csp_pt_par_calc_bop(double bop_par /*MWe/MWcap*/, double bop_par_f /*-*/, double bop_par_0 /*-*/,
+    double bop_par_1 /*-*/, double bop_par_2 /*-*/, double p_ref /*MWe*/) {      // [MWe]
+
+    return bop_par * bop_par_f * ( bop_par_0 + bop_par_1 + bop_par_2 ) * p_ref;
+}
+
+double Csp_pt_par_calc_aux(double aux_par /*MWe/MWcap*/, double aux_par_f /*-*/, double aux_par_0 /*-*/,
+    double aux_par_1 /*-*/, double aux_par_2 /*-*/, double p_ref /*MWe*/) {      // [MWe]
+
+    return aux_par * aux_par_f * (aux_par_0 + aux_par_1 + aux_par_2) * p_ref;
+}
+
+double Disp_wlim_max(double disp_wlim_maxspec /**/, double constant /*%*/) {        // [MWe]
+    return disp_wlim_maxspec * (1. - constant / 100.);
+}
+
+util::matrix_t<double> Wlim_series(double disp_wlim_max /*MWe*/) {    // [kWe]
+    const int kHoursInYear = 8760;
+
+    double disp_wlim_max_kW = disp_wlim_max * 1000.;
+    util::matrix_t<double> wlim_series(1, kHoursInYear, disp_wlim_max_kW);
+
+    return wlim_series;
+}

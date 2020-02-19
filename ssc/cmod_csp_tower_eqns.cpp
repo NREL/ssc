@@ -227,3 +227,49 @@ void MSPT_Receiver_Equations(ssc_data_t data)
     piping_loss_tot = Piping_loss_tot(piping_length, piping_loss);
     vt->assign("piping_loss_tot", piping_loss_tot);
 }
+
+void MSPT_System_Control_Equations(ssc_data_t data)
+{
+    auto vt = static_cast<var_table*>(data);
+    if (!vt) {
+        throw std::runtime_error("ssc_data_t data invalid");
+    }
+    double bop_par, bop_par_f, bop_par_0, bop_par_1, bop_par_2, p_ref, csp_pt_par_calc_bop,
+        aux_par, aux_par_f, aux_par_0, aux_par_1, aux_par_2, csp_pt_par_calc_aux,
+        disp_wlim_maxspec, constant, disp_wlim_max;
+
+    //double* wlim_series;
+    util::matrix_t<double> wlim_series;
+
+    // csp_pt_par_calc_bop
+    vt_get_number(vt, "bop_par", &bop_par);
+    vt_get_number(vt, "bop_par_f", &bop_par_f);
+    vt_get_number(vt, "bop_par_0", &bop_par_0);
+    vt_get_number(vt, "bop_par_1", &bop_par_1);
+    vt_get_number(vt, "bop_par_2", &bop_par_2);
+    vt_get_number(vt, "p_ref", &p_ref);
+    csp_pt_par_calc_bop = Csp_pt_par_calc_bop(bop_par, bop_par_f, bop_par_0, bop_par_1, bop_par_2, p_ref);
+    vt->assign("csp_pt_par_calc_bop", csp_pt_par_calc_bop);
+
+    // csp_pt_par_calc_aux
+    vt_get_number(vt, "aux_par", &aux_par);
+    vt_get_number(vt, "aux_par_f", &aux_par_f);
+    vt_get_number(vt, "aux_par_0", &aux_par_0);
+    vt_get_number(vt, "aux_par_1", &aux_par_1);
+    vt_get_number(vt, "aux_par_2", &aux_par_2);
+    vt_get_number(vt, "p_ref", &p_ref);
+    csp_pt_par_calc_aux = Csp_pt_par_calc_aux(aux_par, aux_par_f, aux_par_0, aux_par_1, aux_par_2, p_ref);
+    vt->assign("csp_pt_par_calc_aux", csp_pt_par_calc_aux);
+
+    // disp_wlim_max
+    vt_get_number(vt, "disp_wlim_maxspec", &disp_wlim_maxspec);
+    vt_get_number(vt, "constant", &constant);
+    disp_wlim_max = Disp_wlim_max(disp_wlim_maxspec, constant);
+    vt->assign("disp_wlim_max", disp_wlim_max);
+
+    // wlim_series
+    vt_get_number(vt, "disp_wlim_max", &disp_wlim_max);
+    vt_get_number(vt, "constant", &constant);
+    wlim_series = Wlim_series(disp_wlim_max);
+    vt->assign("wlim_series", wlim_series);
+}

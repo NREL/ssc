@@ -98,6 +98,31 @@ extern "C" {
 
     SSCEXPORT void MSPT_Receiver_Equations(ssc_data_t data);
 
+
+    static const char* MSPT_System_Control_Equations_doc =
+        "Calculates plant parasitics and dispatch limits, as used on the System Control UI form\\n"
+        "Input: var_table with key-value pairs\\n"
+        "     'aux_par' - double [MWe/MWcap]\\n"
+        "     'aux_par_0' - double [-]\\n"
+        "     'aux_par_1' - double [-]\\n"
+        "     'aux_par_2' - double [-]\\n"
+        "     'aux_par_f' - double [-]\\n"
+        "     'bop_par' - double [MWe/MWcap]\\n"
+        "     'bop_par_0' - double [-]\\n"
+        "     'bop_par_1' - double [-]\\n"
+        "     'bop_par_2' - double [-]\\n"
+        "     'bop_par_f' - double [-]\\n"
+        "     'constant' - double [%]\\n"
+        "     'disp_wlim_maxspec' - double [-]\\n"
+        "     'p_ref' - double [MWe]\\n"
+        "Output: key-value pairs added to var_table\\n"
+        "     'csp_pt_par_calc_aux' - double [MWe]\\n"
+        "     'csp_pt_par_calc_bop' - double [MWe]\\n"
+        "     'disp_wlim_max' - double [MWe]\\n"
+        "     'wlim_series' - double [kWe]\\n";
+
+    SSCEXPORT void MSPT_System_Control_Equations(ssc_data_t data);
+
 #ifdef __cplusplus
 }
 #endif

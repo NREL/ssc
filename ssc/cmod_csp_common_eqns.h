@@ -82,4 +82,16 @@ double Piping_length(double h_tower /*m*/, double piping_length_mult /*-*/, doub
 double Piping_loss_tot(double piping_length /*m*/, double piping_loss /*Wt/m*/);        // [kWt]
 
 
+
+// Originally from 'MSPT System Control'
+double Csp_pt_par_calc_bop(double bop_par /*MWe/MWcap*/, double bop_par_f /*-*/, double bop_par_0 /*-*/,
+    double bop_par_1 /*-*/, double bop_par_2 /*-*/, double p_ref /*MWe*/);      // [MWe]
+
+double Csp_pt_par_calc_aux(double aux_par /*MWe/MWcap*/, double aux_par_f /*-*/, double aux_par_0 /*-*/,
+    double aux_par_1 /*-*/, double aux_par_2 /*-*/, double p_ref /*MWe*/);      // [MWe]
+
+double Disp_wlim_max(double disp_wlim_maxspec /**/, double constant /*%*/);        // [MWe]
+
+util::matrix_t<double> Wlim_series(double disp_wlim_max /*MWe*/);    // [kWe]
+
 #endif
