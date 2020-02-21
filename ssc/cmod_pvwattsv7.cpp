@@ -1004,7 +1004,7 @@ public:
 						}
 
 						// apply derate factors to diffuse
-						if (Fskydiff >= 0 && Fskydiff <= 1)
+						if (Fskydiff >= -0.00001 && Fskydiff <= 1.00001) //include tolerances due to double representation
 						{
 							if (y == 0) ld("poa_loss_self_diff_shade") += (1.0 - Fskydiff)*(iskydiff + irear)*wm2_to_wh; //irear is zero if not bifacial
 							iskydiff *= Fskydiff;
@@ -1012,7 +1012,7 @@ public:
 						}
 						else log(util::format("sky diffuse reduction factor invalid at time %lg: fskydiff=%lg, stilt=%lg", idx, Fskydiff, stilt), SSC_NOTICE, (float)idx);
 
-						if (Fgnddiff >= 0 && Fgnddiff <= 1)
+						if (Fgnddiff >= -0.00001 && Fgnddiff <= 1.00001) //include tolerances due to double representation
 						{
 							if (y == 0) ld("poa_loss_self_diff_shade") += (1.0 - Fgnddiff)*ignddiff*wm2_to_wh;
 							ignddiff *= Fgnddiff;
