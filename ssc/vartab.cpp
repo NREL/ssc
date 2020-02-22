@@ -360,7 +360,14 @@ void vt_get_array_vec(var_table* vt, std::string name, std::vector<double>& vec_
 
 void vt_get_matrix(var_table* vt, std::string name, util::matrix_t<double>& matrix) {
 	if (var_data* vd = vt->lookup(name)){
-        if (vd->type != SSC_MATRIX)
+        if (vd->type == SSC_ARRAY)
+        {
+            std::vector<double>& vec_double = vd->arr_vector();
+            matrix.resize(vec_double.size());
+            for (size_t i = 0; i < vec_double.size(); i++)
+                matrix.at(i) = vec_double[i];
+        }
+        else if (vd->type != SSC_MATRIX)
             throw std::runtime_error(std::string(name) + std::string(" must be matrix type."));
         matrix = vd->num;
     }
