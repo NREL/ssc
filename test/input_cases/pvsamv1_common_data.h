@@ -341,7 +341,8 @@ void pvsamv_nofinancial_default(ssc_data_t &data)
 void belpe_default(ssc_data_t &data)
 {
 	ssc_data_set_number(data, "en_belpe", 0);
-	set_array(data, "load", load_profile_path, 8760);
+    set_array(data, "load", load_profile_path, 8760);
+    set_array(data, "crit_load", load_profile_path, 8760);
 	ssc_data_set_string(data, "solar_resource_file", solar_resource_path);
 	ssc_data_set_number(data, "floor_area", 2000);
 	ssc_data_set_number(data, "Stories", 2);

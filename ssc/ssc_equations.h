@@ -7,6 +7,7 @@
 #include "cmod_merchantplant_eqns.h"
 #include "cmod_pvsamv1_eqns.h"
 #include "cmod_csp_tower_eqns.h"
+#include "cmod_utilityrate5_eqns.h"
 
 
 typedef void (*ssc_equation_ptr)(ssc_data_t data);
@@ -35,6 +36,9 @@ static ssc_equation_entry ssc_equation_table [] = {
             "Tcsmolten_salt", Tower_SolarPilot_Solar_Field_Equations_doc},
         {"MSPT_Receiver_Equations", MSPT_Receiver_Equations,
             "Tcsmolten_salt", MSPT_Receiver_Equations_doc},
+       {"ElectricityRates_format_as_URDBv7", ElectricityRates_format_as_URDBv7,
+            "UtilityRate5", ElectricityRates_format_as_URDBv7_doc},
+			
         {nullptr, nullptr, nullptr, nullptr}
 };
 

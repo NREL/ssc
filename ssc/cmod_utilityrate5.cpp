@@ -1394,10 +1394,10 @@ public:
 				size_t cnt;
 				ssc_number_t * ts_sr, *ts_br;
 				ts_sr = as_array("ur_ts_sell_rate", &cnt);
-				ts_br = as_array("ur_ts_buy_rate", &cnt);
 				size_t ts_step_per_hour = cnt / 8760;
 				if (ts_step_per_hour < 1 || ts_step_per_hour > 60 || ts_step_per_hour * 8760 != cnt)
 					throw exec_error("utilityrate5", util::format("invalid number of sell rate records (%d): must be an integer multiple of 8760", (int)cnt));
+				ts_br = as_array("ur_ts_buy_rate", &cnt);
 				if ((cnt != m_num_rec_yearly) && (cnt != 8760))
 					throw exec_error("utilityrate5", util::format("number of sell rate records (%d) must be equal to number of gen records (%d) or 8760 for each year", (int)cnt, (int)m_num_rec_yearly));
 

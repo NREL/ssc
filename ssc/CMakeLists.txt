@@ -121,6 +121,8 @@ set(SSC_SRC
 		cmod_utilityrate4.cpp
 		cmod_utilityrate5.cpp
 		cmod_wavefile.cpp
+		cmod_utilityrate5_eqns.cpp 
+		cmod_utilityrate5_eqns.h
 		cmod_wfcheck.cpp
 		cmod_wfcsv.cpp
 		cmod_wfreader.cpp
