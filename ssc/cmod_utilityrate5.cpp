@@ -1578,11 +1578,11 @@ public:
 					}
 					period = (*per_num);
 					int ndx = (int)(per_num - m_ec_periods.begin());
+					num_tiers = (int)m_ec_periods_tiers_init[ndx].size();
 					if (i == 0)
 					{
 						// redimension ec_ field of ur_month class
 						num_periods = (int)m_month[m].ec_periods.size();
-						num_tiers = (int)m_ec_periods_tiers_init[ndx].size();
 						m_month[m].ec_tou_ub.resize_fill(num_periods, num_tiers, (ssc_number_t)1e+38);
 						m_month[m].ec_tou_units.resize_fill(num_periods, num_tiers, 0); // kWh
 						m_month[m].ec_tou_br.resize_fill(num_periods, num_tiers, 0);
