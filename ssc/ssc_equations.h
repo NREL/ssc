@@ -37,6 +37,12 @@ static ssc_equation_entry ssc_equation_table [] = {
             "Tcsmolten_salt", MSPT_Receiver_Equations_doc},
         {"MSPT_System_Control_Equations", MSPT_System_Control_Equations,
             "Tcsmolten_salt", MSPT_System_Control_Equations_doc},
+        {"Tower_SolarPilot_Capital_Costs_MSPT_Equations", Tower_SolarPilot_Capital_Costs_MSPT_Equations,
+            "Tcsmolten_salt", Tower_SolarPilot_Capital_Costs_MSPT_Equations_doc},
+        {"Tower_SolarPilot_Capital_Costs_DSPT_Equations", Tower_SolarPilot_Capital_Costs_DSPT_Equations,
+            "Tcsdirect_steam", Tower_SolarPilot_Capital_Costs_DSPT_Equations_doc},
+        {"Tower_SolarPilot_Capital_Costs_ISCC_Equations", Tower_SolarPilot_Capital_Costs_ISCC_Equations,
+            "Tcsiscc", Tower_SolarPilot_Capital_Costs_ISCC_Equations_doc},
         {nullptr, nullptr, nullptr, nullptr}
 };
 
