@@ -1271,11 +1271,14 @@ void C_sco2_phx_air_cooler::solve_T_mc_in_for_cooler_constraint(double W_dot_mc_
         {
             return;
         }
-        if (W_dot_fan_err_code > C_monotonic_eq_solver::CONVERGED && fabs(W_dot_fan_tol_solved) < 0.1)
+        /*if (W_dot_fan_err_code > C_monotonic_eq_solver::CONVERGED && fabs(W_dot_fan_tol_solved) < 0.1)
         {
             return;
+        }*/
+        if (W_dot_fan_err_code < C_monotonic_eq_solver::CONVERGED)
+        {
+            throw(C_csp_exception("Iteration on main compressor inlet temp to achieve target fan power failed"));
         }
-        throw(C_csp_exception("Iteration on main compressor inlet temp to achieve target fan power failed"));
     }
 
 }
@@ -1436,11 +1439,15 @@ void C_sco2_phx_air_cooler::solve_nested_T_pc_in__T_mc_in_for_cooler_constrains(
         {
             return;
         }
-        if (W_dot_fan_err_code > C_monotonic_eq_solver::CONVERGED && fabs(W_dot_fan_tol_solved) < 0.1)
+        /*if (W_dot_fan_err_code > C_monotonic_eq_solver::CONVERGED && fabs(W_dot_fan_tol_solved) < 0.1)
         {
             return;
         }
-        throw(C_csp_exception("Iteration on compressor inlet temp to achieve target fan power failed"));
+        throw(C_csp_exception("Iteration on compressor inlet temp to achieve target fan power failed"));*/
+        if (W_dot_fan_err_code < C_monotonic_eq_solver::CONVERGED)
+        {
+            throw(C_csp_exception("Iteration on main compressor inlet temp to achieve target fan power failed"));
+        }
     }
 
     return;
