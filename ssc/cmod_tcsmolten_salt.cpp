@@ -1316,14 +1316,14 @@ public:
 
                     // Get user-defined power cycle parameters
                     // HTF temperature parametric
-                    double T_htf_hot_low = c_sco2_csp.get_design_par()->m_T_htf_hot_in - 273.15 - 20.0; //[C]
+                    double T_htf_hot_low = c_sco2_csp.get_design_par()->m_T_htf_hot_in - 273.15 - 30.0; //[C]
                     double T_htf_hot_high = c_sco2_csp.get_design_par()->m_T_htf_hot_in - 273.15 + 15.0;    //[C]
-                    int n_T_htf_hot_in = 5;             //[-]
+                    int n_T_htf_hot_in = 4;             //[-]
 
                     // Ambient temperature parametric
                     double T_amb_low = 0.0;             //[C]
                     double T_amb_high = std::max(sco2_rc_csp_par.m_T_amb_des - 273.15 + 5.0, 45.0);         //[C]
-                    int n_T_amb_in = 10;                //[-]
+                    int n_T_amb_in = std::round((T_amb_high - T_amb_low) / 2.0) + 1;     //[-]
 
                     // HTF mass flow rate parametric
                     double cycle_f_min = as_double("cycle_cutoff_frac");        //[-]

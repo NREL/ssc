@@ -1,4 +1,5 @@
 #include "cmod_pvsamv1_eqns.h"
+#include "cmod_utilityrate5_eqns.h"
 
 #include "vartab.h"
 
@@ -218,79 +219,9 @@ SSCEXPORT void Reopt_size_battery_params(ssc_data_t data) {
     //
     // convert required utilityrate5 inputs
     //
-    map_input(vt, "ur_monthly_fixed_charge", &reopt_utility, "fixedmonthlycharge");
-
-    // schedule matrices are numbered starting with 1 for sam but 0 for reopt
-    std::vector<std::string> sam_sched_names = {"ur_dc_sched_weekday", "ur_dc_sched_weekend", "ur_ec_sched_weekday",
-                                                "ur_ec_sched_weekend"};
-    std::vector<std::string> reopt_sched_names = {"demandweekdayschedule", "demandweekendschedule",
-                                                  "energyweekdayschedule", "energyweekendschedule"};
-	util::matrix_t<double> mat;
-    int demand_n_tiers = 0, energy_n_tiers = 0;
-    for (size_t n = 0; n < sam_sched_names.size(); n++){
-        vt_get_matrix(vt, sam_sched_names[n], mat);
-        for (size_t i = 0; i < mat.nrows(); i++){
-            for (size_t j = 0; j < mat.ncols(); j++ ) {
-                mat.at(i, j) -= 1;
-                if (n < 2)
-                    demand_n_tiers = mat.at(i, j) > demand_n_tiers ? (int)mat.at(i, j) : demand_n_tiers;
-                else
-                    energy_n_tiers = mat.at(i, j) > energy_n_tiers ? (int)mat.at(i, j) : energy_n_tiers;
-            }
-        }
-        reopt_utility.assign(reopt_sched_names[n], var_data(mat));
-    }
-
-    // rate structures in sam are 2d arrays but are list of list of tables in reopt
-    std::vector<std::vector<var_data>> vd_mat;
-	vt_get_matrix(vt, "ur_dc_tou_mat", mat);
-    if (mat.nrows() < (size_t)demand_n_tiers){
-        throw std::runtime_error("Demand rate structure should have " + std::to_string(demand_n_tiers) + " tiers to match the provided schedule.");
-    }
-    for (size_t i = 0; i < mat.nrows(); i++){
-        std::vector<var_data> vd_vec;
-        double rate = mat.row(i)[3];
-        var_data rate_data;
-        rate_data.type = SSC_TABLE;
-        rate_data.table.assign("rate", rate);
-        vd_vec.push_back(rate_data);
-        vd_mat.push_back(vd_vec);
-    }
-    reopt_utility.assign("demandratestructure", vd_mat);
-    vd_mat.clear();
-
-	vt_get_matrix(vt, "ur_ec_tou_mat", mat);
-    if (mat.nrows() < (size_t)energy_n_tiers){
-        throw std::runtime_error("Energy rate structure should have " + std::to_string(demand_n_tiers) + " tiers to match the provided schedule.");
-    }
-    for (size_t i = 0; i < mat.nrows(); i++) {
-        std::vector<var_data> vd_vec;
-        double rate = mat.row(i)[4];
-        var_data rate_data;
-        rate_data.type = SSC_TABLE;
-        rate_data.table.assign("rate", rate);
-        rate_data.table.assign("unit", var_data("kWh"));
-        vd_vec.push_back(rate_data);
-        vd_mat.push_back(vd_vec);
-    }
-    reopt_utility.assign("energyratestructure", vd_mat);
-    vd_mat.clear();
-
-    ssc_number_t flatdemandmonths[12] = {0};
-    reopt_utility.assign("flatdemandmonths", var_data(flatdemandmonths, 12));
-
-	vt_get_matrix(vt, "ur_dc_flat_mat", mat);
-    for (size_t i = 0; i < mat.nrows(); i++){
-        std::vector<var_data> vd_vec;
-        double rate = mat.row(i)[3];
-        var_data rate_data;
-        rate_data.type = SSC_TABLE;
-        rate_data.table.assign("rate", rate);
-        vd_vec.push_back(rate_data);
-        vd_mat.push_back(vd_vec);
-    }
-    reopt_utility.assign("flatdemandstructure", vd_mat);
-    vd_mat.clear();
+    ElectricityRates_format_as_URDBv7(vt);
+    auto urdb_data = vt->lookup("urdb_data");
+    reopt_utility = urdb_data->table;
 
     //
     // convert financial inputs and set variables not modeled by SAM to 0

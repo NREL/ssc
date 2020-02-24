@@ -7,6 +7,7 @@
 #include "cmod_merchantplant_eqns.h"
 #include "cmod_pvsamv1_eqns.h"
 #include "cmod_csp_tower_eqns.h"
+#include "cmod_utilityrate5_eqns.h"
 
 
 typedef void (*ssc_equation_ptr)(ssc_data_t data);
@@ -43,6 +44,8 @@ static ssc_equation_entry ssc_equation_table [] = {
             "Tcsdirect_steam", Tower_SolarPilot_Capital_Costs_DSPT_Equations_doc},
         {"Tower_SolarPilot_Capital_Costs_ISCC_Equations", Tower_SolarPilot_Capital_Costs_ISCC_Equations,
             "Tcsiscc", Tower_SolarPilot_Capital_Costs_ISCC_Equations_doc},
+        {"ElectricityRates_format_as_URDBv7", ElectricityRates_format_as_URDBv7,
+            "UtilityRate5", ElectricityRates_format_as_URDBv7_doc},
         {nullptr, nullptr, nullptr, nullptr}
 };
 
