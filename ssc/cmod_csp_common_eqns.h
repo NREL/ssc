@@ -6,6 +6,13 @@
 #include "htf_props.h"
 
 
+enum class TowerTypes {
+    kMoltenSalt,
+    kDirectSteam,
+    kIscc,
+};
+
+
 HTFProperties GetHtfProperties(int fluid_number, const util::matrix_t<double> &specified_fluid_properties = NULL);       // [-]
 
 
@@ -24,7 +31,7 @@ double Tshours_sf(double tshours /*hr*/, double solarm /*-*/);          // [hr]
 // Originally from 'Tower SolarPilot Solar Field' UI Form
 double Land_max_calc(double land_max /*-*/, double h_tower /*m*/);      // [m]
 
-double N_hel(const util::matrix_t<ssc_number_t> &helio_positions /*m*/);      // [-]
+int N_hel(const util::matrix_t<ssc_number_t> &helio_positions /*m*/);      // [-]
 
 double Csp_pt_sf_heliostat_area(double helio_height /*m*/, double helio_width /*m*/, double dens_mirror /*-*/);     // [m2]
 
@@ -81,5 +88,37 @@ double Piping_length(double h_tower /*m*/, double piping_length_mult /*-*/, doub
 
 double Piping_loss_tot(double piping_length /*m*/, double piping_loss /*Wt/m*/);        // [kWt]
 
+
+
+// Originally from 'MSPT System Control'
+double Csp_pt_par_calc_bop(double bop_par /*MWe/MWcap*/, double bop_par_f /*-*/, double bop_par_0 /*-*/,
+    double bop_par_1 /*-*/, double bop_par_2 /*-*/, double p_ref /*MWe*/);      // [MWe]
+
+double Csp_pt_par_calc_aux(double aux_par /*MWe/MWcap*/, double aux_par_f /*-*/, double aux_par_0 /*-*/,
+    double aux_par_1 /*-*/, double aux_par_2 /*-*/, double p_ref /*MWe*/);      // [MWe]
+
+double Disp_wlim_max(double disp_wlim_maxspec /**/, double constant /*%*/);        // [MWe]
+
+util::matrix_t<double> Wlim_series(double disp_wlim_max /*MWe*/);    // [kWe]
+
+
+
+// Originally from 'Tower SolarPilot Capital Costs'
+//double Ui_tower_height(TowerTypes tower_type, double height);
+
+double Csp_pt_cost_receiver_area(TowerTypes tower_type /*-*/, double d_rec /*m*/,
+    double rec_height = std::numeric_limits<double>::quiet_NaN() /*m*/,
+    int receiver_type = std::numeric_limits<int>::quiet_NaN() /*-*/,
+    double rec_d_spec = std::numeric_limits<double>::quiet_NaN() /*m*/,
+    double csp_pt_rec_cav_ap_height = std::numeric_limits<double>::quiet_NaN() /*m*/);        // [m2]
+
+double Csp_pt_cost_storage_mwht(TowerTypes tower_type /*-*/, double p_ref = std::numeric_limits<double>::quiet_NaN() /*MWe*/,
+    double design_eff = std::numeric_limits<double>::quiet_NaN() /*-*/,
+    double tshours = std::numeric_limits<double>::quiet_NaN() /*hr*/);      // [MWht]
+
+double Csp_pt_cost_power_block_mwe(TowerTypes tower_type /*-*/, double p_ref = std::numeric_limits<double>::quiet_NaN() /*MWe*/,
+    double demand_var = std::numeric_limits<double>::quiet_NaN()) /*MWe*/;      // [MWe]
+
+void Tower_SolarPilot_Capital_Costs_Equations(ssc_data_t data);
 
 #endif

@@ -2,8 +2,11 @@
 #include <math.h>
 #include "cmod_csp_common_eqns.h"
 #include "vartab.h"
+#include "csp_system_costs.h"
 
 #pragma warning(disable: 4297)  // ignore warning: 'function assumed not to throw an exception but does'
+
+
 
 
 HTFProperties GetHtfProperties(int fluid_number, const util::matrix_t<double> &specified_fluid_properties) {       // [-]
@@ -69,8 +72,8 @@ double Land_max_calc(double land_max /*-*/, double h_tower /*m*/) {      // [m]
     return land_max * h_tower;
 }
 
-double N_hel(const util::matrix_t<ssc_number_t> &helio_positions /*m*/) {      // [-]
-    return helio_positions.nrows();
+int N_hel(const util::matrix_t<ssc_number_t> &helio_positions /*m*/) {      // [-]
+    return static_cast<int>(helio_positions.nrows());
 }
 
 double Csp_pt_sf_heliostat_area(double helio_height /*m*/, double helio_width /*m*/, double dens_mirror /*-*/) {     // [m2]
@@ -218,4 +221,165 @@ double Piping_length(double h_tower /*m*/, double piping_length_mult /*-*/, doub
 
 double Piping_loss_tot(double piping_length /*m*/, double piping_loss /*Wt/m*/) {        // [kWt]
     return piping_length * piping_loss / 1000.;
+}
+
+
+
+// Originally from 'MSPT System Control'
+double Csp_pt_par_calc_bop(double bop_par /*MWe/MWcap*/, double bop_par_f /*-*/, double bop_par_0 /*-*/,
+    double bop_par_1 /*-*/, double bop_par_2 /*-*/, double p_ref /*MWe*/) {      // [MWe]
+
+    return bop_par * bop_par_f * ( bop_par_0 + bop_par_1 + bop_par_2 ) * p_ref;
+}
+
+double Csp_pt_par_calc_aux(double aux_par /*MWe/MWcap*/, double aux_par_f /*-*/, double aux_par_0 /*-*/,
+    double aux_par_1 /*-*/, double aux_par_2 /*-*/, double p_ref /*MWe*/) {      // [MWe]
+
+    return aux_par * aux_par_f * (aux_par_0 + aux_par_1 + aux_par_2) * p_ref;
+}
+
+double Disp_wlim_max(double disp_wlim_maxspec /**/, double constant /*%*/) {        // [MWe]
+    return disp_wlim_maxspec * (1. - constant / 100.);
+}
+
+util::matrix_t<double> Wlim_series(double disp_wlim_max /*MWe*/) {    // [kWe]
+    const int kHoursInYear = 8760;
+
+    double disp_wlim_max_kW = disp_wlim_max * 1000.;
+    util::matrix_t<double> wlim_series(1, kHoursInYear, disp_wlim_max_kW);
+
+    return wlim_series;
+}
+
+
+
+
+
+// Originally from 'Tower SolarPilot Capital Costs'
+//double Ui_tower_height(TowerTypes tower_type, double height) {
+//
+//}
+
+double Csp_pt_cost_receiver_area(TowerTypes tower_type /*-*/, double d_rec /*m*/, double rec_height /*m*/,
+    int receiver_type /*-*/, double rec_d_spec /*m*/, double csp_pt_rec_cav_ap_height /*m*/) {      // [m2]
+
+    double area = std::numeric_limits<double>::quiet_NaN();
+
+    if (tower_type == TowerTypes::kMoltenSalt || tower_type == TowerTypes::kIscc) {
+        switch (receiver_type) {
+        case 0:
+            area = rec_height * d_rec * M_PI;
+            break;
+        case 1:
+            area = rec_d_spec * csp_pt_rec_cav_ap_height;
+            break;
+        default:
+            throw std::runtime_error("Receiver type not supported.");
+        }
+    }
+    else if (tower_type == TowerTypes::kDirectSteam) {
+        area = d_rec * rec_height * M_PI;
+    }
+
+    return area;
+}
+
+double Csp_pt_cost_storage_mwht(TowerTypes tower_type /*-*/, double p_ref /*MWe*/, double design_eff /*-*/,
+    double tshours /*hr*/) {      // [MWht]
+
+    double nameplate = std::numeric_limits<double>::quiet_NaN();
+
+    if (tower_type == TowerTypes::kMoltenSalt) {
+        nameplate = p_ref / design_eff * tshours;
+    }
+    else {
+        nameplate = 0.;
+    }
+
+    return nameplate;
+}
+
+double Csp_pt_cost_power_block_mwe(TowerTypes tower_type /*-*/, double p_ref /*MWe*/, double demand_var /*MWe*/)       // [MWe]
+{
+    double pb = std::numeric_limits<double>::quiet_NaN();
+
+    if (tower_type == TowerTypes::kMoltenSalt) {
+        pb = p_ref;
+    }
+    else {
+        pb = demand_var;
+    }
+
+    return pb;
+}
+
+void Tower_SolarPilot_Capital_Costs_Equations(ssc_data_t data)
+{
+    auto vt = static_cast<var_table*>(data);
+    if (!vt) {
+        throw std::runtime_error("ssc_data_t data invalid");
+    }
+
+    C_mspt_system_costs sys_costs;
+
+    //sys_costs.ms_par.A_sf_refl = as_double("A_sf");
+    vt_get_number(vt, "a_sf_ui", &sys_costs.ms_par.A_sf_refl);
+    vt_get_number(vt, "site_spec_cost", &sys_costs.ms_par.site_improv_spec_cost);
+    vt_get_number(vt, "heliostat_spec_cost", &sys_costs.ms_par.heliostat_spec_cost);
+    vt_get_number(vt, "cost_sf_fixed", &sys_costs.ms_par.heliostat_fixed_cost);
+    vt_get_number(vt, "h_tower", &sys_costs.ms_par.h_tower);                            // set different for other techs
+    vt_get_number(vt, "rec_height", &sys_costs.ms_par.h_rec);
+    vt_get_number(vt, "helio_height", &sys_costs.ms_par.h_helio);
+    vt_get_number(vt, "tower_fixed_cost", &sys_costs.ms_par.tower_fixed_cost);
+    vt_get_number(vt, "tower_exp", &sys_costs.ms_par.tower_cost_scaling_exp);
+    vt_get_number(vt, "csp_pt_cost_receiver_area", &sys_costs.ms_par.A_rec);            // calculation specific to each tech
+    vt_get_number(vt, "rec_ref_cost", &sys_costs.ms_par.rec_ref_cost);
+    vt_get_number(vt, "rec_ref_area", &sys_costs.ms_par.A_rec_ref);
+    vt_get_number(vt, "rec_cost_exp", &sys_costs.ms_par.rec_cost_scaling_exp);
+    vt_get_number(vt, "csp_pt_cost_storage_mwht", &sys_costs.ms_par.Q_storage);         // calculation specific to each tech
+    vt_get_number(vt, "tes_spec_cost", &sys_costs.ms_par.tes_spec_cost);
+    vt_get_number(vt, "csp_pt_cost_power_block_mwe", &sys_costs.ms_par.W_dot_design);   // calculation specific to each tech
+    vt_get_number(vt, "plant_spec_cost", &sys_costs.ms_par.power_cycle_spec_cost);
+    vt_get_number(vt, "bop_spec_cost", &sys_costs.ms_par.bop_spec_cost);
+    vt_get_number(vt, "fossil_spec_cost", &sys_costs.ms_par.fossil_backup_spec_cost);
+    vt_get_number(vt, "contingency_rate", &sys_costs.ms_par.contingency_rate);
+    vt_get_number(vt, "csp_pt_sf_total_land_area", &sys_costs.ms_par.total_land_area);
+    vt_get_number(vt, "nameplate", &sys_costs.ms_par.plant_net_capacity);
+    vt_get_number(vt, "csp_pt_cost_epc_per_acre", &sys_costs.ms_par.EPC_land_spec_cost);
+    vt_get_number(vt, "csp_pt_cost_epc_percent", &sys_costs.ms_par.EPC_land_perc_direct_cost);
+    vt_get_number(vt, "csp_pt_cost_epc_per_watt", &sys_costs.ms_par.EPC_land_per_power_cost);
+    vt_get_number(vt, "csp_pt_cost_epc_fixed", &sys_costs.ms_par.EPC_land_fixed_cost);
+    vt_get_number(vt, "land_spec_cost", &sys_costs.ms_par.total_land_spec_cost);
+    vt_get_number(vt, "csp_pt_cost_plm_percent", &sys_costs.ms_par.total_land_perc_direct_cost);
+    vt_get_number(vt, "csp_pt_cost_plm_per_watt", &sys_costs.ms_par.total_land_per_power_cost);
+    vt_get_number(vt, "csp_pt_cost_plm_fixed", &sys_costs.ms_par.total_land_fixed_cost);
+    vt_get_number(vt, "sales_tax_frac", &sys_costs.ms_par.sales_tax_basis);
+    vt_get_number(vt, "sales_tax_rate", &sys_costs.ms_par.sales_tax_rate);
+
+    try
+    {
+        sys_costs.calculate_costs();
+    }
+    catch (...)
+    {
+        throw std::runtime_error("MSPT system costs. System cost calculations failed. Check that all inputs are properly defined");
+    }
+
+    vt->assign("csp_pt_cost_site_improvements", (ssc_number_t)sys_costs.ms_out.site_improvement_cost);
+    vt->assign("csp_pt_cost_heliostats", (ssc_number_t)sys_costs.ms_out.heliostat_cost);
+    vt->assign("csp_pt_cost_tower", (ssc_number_t)sys_costs.ms_out.tower_cost);
+    vt->assign("csp_pt_cost_receiver", (ssc_number_t)sys_costs.ms_out.receiver_cost);
+    vt->assign("csp_pt_cost_storage", (ssc_number_t)sys_costs.ms_out.tes_cost);
+    vt->assign("csp_pt_cost_power_block", (ssc_number_t)sys_costs.ms_out.power_cycle_cost);
+    vt->assign("csp_pt_cost_bop", (ssc_number_t)sys_costs.ms_out.bop_cost);
+    vt->assign("csp_pt_cost_fossil", (ssc_number_t)sys_costs.ms_out.fossil_backup_cost);
+    vt->assign("ui_direct_subtotal", (ssc_number_t)sys_costs.ms_out.direct_capital_precontingency_cost);
+    vt->assign("csp_pt_cost_contingency", (ssc_number_t)sys_costs.ms_out.contingency_cost);
+    vt->assign("total_direct_cost", (ssc_number_t)sys_costs.ms_out.total_direct_cost);
+    vt->assign("csp_pt_cost_epc_total", (ssc_number_t)sys_costs.ms_out.epc_and_owner_cost);
+    vt->assign("csp_pt_cost_plm_total", (ssc_number_t)sys_costs.ms_out.total_land_cost);
+    vt->assign("csp_pt_cost_sales_tax_total", (ssc_number_t)sys_costs.ms_out.sales_tax_cost);
+    vt->assign("total_indirect_cost", (ssc_number_t)sys_costs.ms_out.total_indirect_cost);
+    vt->assign("total_installed_cost", (ssc_number_t)sys_costs.ms_out.total_installed_cost);
+    vt->assign("csp_pt_cost_installed_per_capacity", (ssc_number_t)sys_costs.ms_out.estimated_installed_cost_per_cap);
 }
