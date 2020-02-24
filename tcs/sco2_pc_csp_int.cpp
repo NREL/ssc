@@ -1697,29 +1697,6 @@ int C_sco2_phx_air_cooler::optimize_off_design(C_sco2_phx_air_cooler::S_od_par o
             //}
             //T_comp_in_min = ms_cycle_od_par.m_T_mc_in;     //[K]
         }
-
-        if( opt_P_LP_err == -31 )
-        {
-            while (opt_P_LP_err == -31 && ms_cycle_od_par.m_f_mc_pc_bypass < 0.9)
-			{
-				ms_cycle_od_par.m_f_mc_pc_bypass += 0.01;
-                if (is_modified_P_mc_in_solver)
-                {
-                    opt_P_LP_err = solve_P_LP_in__target_W_dot();
-                }
-                else
-                {
-                    opt_P_LP_err = opt_P_LP_comp_in__fixed_N_turbo();
-                }
-
-				if (opt_P_LP_err != 0 && opt_P_LP_err != -31)
-				{
-					throw(C_csp_exception("2D nested optimization to maximize efficiency failed"));
-				}
-			}
-			if(opt_P_LP_err != 0)
-				throw(C_csp_exception("off design optimization, fixed shaft speed config, failed"));
-		}
 		else
 		{
             bool is_iterate_for_power_and_eta = true;
