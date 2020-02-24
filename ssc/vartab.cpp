@@ -362,7 +362,7 @@ void vt_get_matrix(var_table* vt, std::string name, util::matrix_t<double>& matr
 	if (var_data* vd = vt->lookup(name)){
         if (vd->type == SSC_ARRAY)
         {
-            std::vector<double>& vec_double = vd->arr_vector();
+            std::vector<double> vec_double = vd->arr_vector();
             matrix.resize(vec_double.size());
             for (size_t i = 0; i < vec_double.size(); i++)
                 matrix.at(i) = vec_double[i];
