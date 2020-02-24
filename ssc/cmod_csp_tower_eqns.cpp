@@ -153,3 +153,231 @@ void Tower_SolarPilot_Solar_Field_Equations(ssc_data_t data)
     opt_flux_penalty = Opt_flux_penalty();
     vt->assign("opt_flux_penalty", opt_flux_penalty);
 }
+
+void MSPT_Receiver_Equations(ssc_data_t data)
+{
+    auto vt = static_cast<var_table*>(data);
+    if (!vt) {
+        throw std::runtime_error("ssc_data_t data invalid");
+    }
+    double csp_pt_rec_max_oper_frac, q_rec_des, csp_pt_rec_htf_c_avg, t_htf_hot_des, t_htf_cold_des,
+        csp_pt_rec_max_flow_to_rec, csp_pt_rec_htf_t_avg, rec_d_spec, csp_pt_rec_cav_ap_hw_ratio, csp_pt_rec_cav_ap_height, d_rec, rec_height, rec_aspect,
+        h_tower, piping_length_mult, piping_length_const, piping_length, piping_loss, piping_loss_tot;
+
+    int rec_htf;
+
+    util::matrix_t<double> field_fl_props;
+
+    //  This one is not being read in the UI
+    // Csp_pt_rec_cav_lip_height
+    //double csp_pt_rec_cav_lip_height;
+    //csp_pt_rec_cav_lip_height = Csp_pt_rec_cav_lip_height();
+    //vt->assign("csp_pt_rec_cav_lip_height", csp_pt_rec_cav_lip_height);
+
+    //  This one is not being read in the UI
+    // csp_pt_rec_cav_panel_height
+    //double csp_pt_rec_cav_panel_height;
+    //csp_pt_rec_cav_panel_height = Csp_pt_rec_cav_panel_height();
+    //vt->assign("csp_pt_rec_cav_panel_height", csp_pt_rec_cav_panel_height);
+
+    // csp_pt_rec_htf_t_avg
+    vt_get_number(vt, "t_htf_cold_des", &t_htf_cold_des);
+    vt_get_number(vt, "t_htf_hot_des", &t_htf_hot_des);
+    csp_pt_rec_htf_t_avg = Csp_pt_rec_htf_t_avg(t_htf_cold_des, t_htf_hot_des);
+    vt->assign("csp_pt_rec_htf_t_avg", csp_pt_rec_htf_t_avg);
+
+    // csp_pt_rec_htf_c_avg
+    vt_get_number(vt, "csp_pt_rec_htf_t_avg", &csp_pt_rec_htf_t_avg);
+    vt_get_int(vt, "rec_htf", &rec_htf);
+    vt_get_matrix(vt, "field_fl_props", field_fl_props);
+    csp_pt_rec_htf_c_avg = Csp_pt_rec_htf_c_avg(csp_pt_rec_htf_t_avg, rec_htf, field_fl_props);
+    vt->assign("csp_pt_rec_htf_c_avg", csp_pt_rec_htf_c_avg);
+
+    // csp_pt_rec_max_flow_to_rec
+    vt_get_number(vt, "csp_pt_rec_max_oper_frac", &csp_pt_rec_max_oper_frac);
+    vt_get_number(vt, "q_rec_des", &q_rec_des);
+    vt_get_number(vt, "csp_pt_rec_htf_c_avg", &csp_pt_rec_htf_c_avg);
+    vt_get_number(vt, "t_htf_hot_des", &t_htf_hot_des);
+    vt_get_number(vt, "t_htf_cold_des", &t_htf_cold_des);
+    csp_pt_rec_max_flow_to_rec = Csp_pt_rec_max_flow_to_rec(csp_pt_rec_max_oper_frac, q_rec_des, csp_pt_rec_htf_c_avg, t_htf_hot_des, t_htf_cold_des);
+    vt->assign("csp_pt_rec_max_flow_to_rec", csp_pt_rec_max_flow_to_rec);
+
+    // csp_pt_rec_cav_ap_height
+    vt_get_number(vt, "rec_d_spec", &rec_d_spec);
+    vt_get_number(vt, "csp_pt_rec_cav_ap_hw_ratio", &csp_pt_rec_cav_ap_hw_ratio);
+    csp_pt_rec_cav_ap_height = Csp_pt_rec_cav_ap_height(rec_d_spec, csp_pt_rec_cav_ap_hw_ratio);
+    vt->assign("csp_pt_rec_cav_ap_height", csp_pt_rec_cav_ap_height);
+
+    // rec_aspect
+    vt_get_number(vt, "d_rec", &d_rec);
+    vt_get_number(vt, "rec_height", &rec_height);
+    rec_aspect = Rec_aspect(d_rec, rec_height);
+    vt->assign("rec_aspect", rec_aspect);
+
+    // piping_length
+    vt_get_number(vt, "h_tower", &h_tower);
+    vt_get_number(vt, "piping_length_mult", &piping_length_mult);
+    vt_get_number(vt, "piping_length_const", &piping_length_const);
+    piping_length = Piping_length(h_tower, piping_length_mult, piping_length_const);
+    vt->assign("piping_length", piping_length);
+
+    // piping_loss_tot
+    vt_get_number(vt, "piping_length", &piping_length);
+    vt_get_number(vt, "piping_loss", &piping_loss);
+    piping_loss_tot = Piping_loss_tot(piping_length, piping_loss);
+    vt->assign("piping_loss_tot", piping_loss_tot);
+}
+
+void MSPT_System_Control_Equations(ssc_data_t data)
+{
+    auto vt = static_cast<var_table*>(data);
+    if (!vt) {
+        throw std::runtime_error("ssc_data_t data invalid");
+    }
+    double bop_par, bop_par_f, bop_par_0, bop_par_1, bop_par_2, p_ref, csp_pt_par_calc_bop,
+        aux_par, aux_par_f, aux_par_0, aux_par_1, aux_par_2, csp_pt_par_calc_aux,
+        disp_wlim_maxspec, constant, disp_wlim_max;
+
+    //double* wlim_series;
+    util::matrix_t<double> wlim_series;
+
+    // csp_pt_par_calc_bop
+    vt_get_number(vt, "bop_par", &bop_par);
+    vt_get_number(vt, "bop_par_f", &bop_par_f);
+    vt_get_number(vt, "bop_par_0", &bop_par_0);
+    vt_get_number(vt, "bop_par_1", &bop_par_1);
+    vt_get_number(vt, "bop_par_2", &bop_par_2);
+    vt_get_number(vt, "p_ref", &p_ref);
+    csp_pt_par_calc_bop = Csp_pt_par_calc_bop(bop_par, bop_par_f, bop_par_0, bop_par_1, bop_par_2, p_ref);
+    vt->assign("csp_pt_par_calc_bop", csp_pt_par_calc_bop);
+
+    // csp_pt_par_calc_aux
+    vt_get_number(vt, "aux_par", &aux_par);
+    vt_get_number(vt, "aux_par_f", &aux_par_f);
+    vt_get_number(vt, "aux_par_0", &aux_par_0);
+    vt_get_number(vt, "aux_par_1", &aux_par_1);
+    vt_get_number(vt, "aux_par_2", &aux_par_2);
+    vt_get_number(vt, "p_ref", &p_ref);
+    csp_pt_par_calc_aux = Csp_pt_par_calc_aux(aux_par, aux_par_f, aux_par_0, aux_par_1, aux_par_2, p_ref);
+    vt->assign("csp_pt_par_calc_aux", csp_pt_par_calc_aux);
+
+    // disp_wlim_max
+    vt_get_number(vt, "disp_wlim_maxspec", &disp_wlim_maxspec);
+    vt_get_number(vt, "constant", &constant);
+    disp_wlim_max = Disp_wlim_max(disp_wlim_maxspec, constant);
+    vt->assign("disp_wlim_max", disp_wlim_max);
+
+    // wlim_series
+    vt_get_number(vt, "disp_wlim_max", &disp_wlim_max);
+    vt_get_number(vt, "constant", &constant);
+    wlim_series = Wlim_series(disp_wlim_max);
+    vt->assign("wlim_series", wlim_series);
+}
+
+void Tower_SolarPilot_Capital_Costs_MSPT_Equations(ssc_data_t data)
+{
+    auto vt = static_cast<var_table*>(data);
+    if (!vt) {
+        throw std::runtime_error("ssc_data_t data invalid");
+    }
+
+    double d_rec, rec_height, receiver_type, rec_d_spec, csp_pt_rec_cav_ap_height, csp_pt_cost_receiver_area,
+        p_ref, design_eff, tshours, csp_pt_cost_storage_mwht,
+        demand_var, csp_pt_cost_power_block_mwe;
+
+    TowerTypes tower_type = TowerTypes::kMoltenSalt;
+
+    ssc_data_get_number(data, "d_rec", &d_rec);
+    ssc_data_get_number(data, "rec_height", &rec_height);
+    ssc_data_get_number(data, "receiver_type", &receiver_type);
+    ssc_data_get_number(data, "rec_d_spec", &rec_d_spec);
+    ssc_data_get_number(data, "csp_pt_rec_cav_ap_height", &csp_pt_rec_cav_ap_height);
+    csp_pt_cost_receiver_area = Csp_pt_cost_receiver_area(tower_type, d_rec, rec_height,
+        static_cast<int>(receiver_type), rec_d_spec, csp_pt_rec_cav_ap_height);
+    ssc_data_set_number(data, "csp_pt_cost_receiver_area", csp_pt_cost_receiver_area);
+
+    ssc_data_get_number(data, "p_ref", &p_ref);
+    ssc_data_get_number(data, "design_eff", &design_eff);
+    ssc_data_get_number(data, "tshours", &tshours);
+    csp_pt_cost_storage_mwht = Csp_pt_cost_storage_mwht(tower_type, p_ref, design_eff, tshours);
+    ssc_data_set_number(data, "csp_pt_cost_storage_mwht", csp_pt_cost_storage_mwht);
+
+    ssc_data_get_number(data, "p_ref", &p_ref);
+    demand_var = NULL;
+    csp_pt_cost_power_block_mwe = Csp_pt_cost_power_block_mwe(tower_type, p_ref, demand_var);
+    ssc_data_set_number(data, "csp_pt_cost_power_block_mwe", csp_pt_cost_power_block_mwe);
+
+    Tower_SolarPilot_Capital_Costs_Equations(data);
+}
+
+void Tower_SolarPilot_Capital_Costs_DSPT_Equations(ssc_data_t data)
+{
+    auto vt = static_cast<var_table*>(data);
+    if (!vt) {
+        throw std::runtime_error("ssc_data_t data invalid");
+    }
+
+    double d_rec, rec_height, receiver_type, rec_d_spec, csp_pt_rec_cav_ap_height, csp_pt_cost_receiver_area,
+        p_ref, design_eff, tshours, csp_pt_cost_storage_mwht,
+        demand_var, csp_pt_cost_power_block_mwe;
+
+    TowerTypes tower_type = TowerTypes::kDirectSteam;
+
+    ssc_data_get_number(data, "d_rec", &d_rec);
+    ssc_data_get_number(data, "rec_height", &rec_height);
+    receiver_type = NULL;
+    rec_d_spec = NULL;
+    csp_pt_rec_cav_ap_height = NULL;
+    csp_pt_cost_receiver_area = Csp_pt_cost_receiver_area(tower_type, d_rec, rec_height,
+        static_cast<int>(receiver_type), rec_d_spec, csp_pt_rec_cav_ap_height);
+    ssc_data_set_number(data, "csp_pt_cost_receiver_area", csp_pt_cost_receiver_area);
+
+    p_ref = NULL;
+    design_eff = NULL;
+    tshours = NULL;
+    csp_pt_cost_storage_mwht = Csp_pt_cost_storage_mwht(tower_type, p_ref, design_eff, tshours);
+    ssc_data_set_number(data, "csp_pt_cost_storage_mwht", csp_pt_cost_storage_mwht);
+
+    p_ref = NULL;
+    ssc_data_get_number(data, "demand_var", &demand_var);
+    csp_pt_cost_power_block_mwe = Csp_pt_cost_power_block_mwe(tower_type, p_ref, demand_var);
+    ssc_data_set_number(data, "csp_pt_cost_power_block_mwe", csp_pt_cost_power_block_mwe);
+
+    Tower_SolarPilot_Capital_Costs_Equations(data);
+}
+
+void Tower_SolarPilot_Capital_Costs_ISCC_Equations(ssc_data_t data)
+{
+    auto vt = static_cast<var_table*>(data);
+    if (!vt) {
+        throw std::runtime_error("ssc_data_t data invalid");
+    }
+
+    double d_rec, rec_height, receiver_type, rec_d_spec, csp_pt_rec_cav_ap_height, csp_pt_cost_receiver_area,
+        p_ref, design_eff, tshours, csp_pt_cost_storage_mwht,
+        demand_var, csp_pt_cost_power_block_mwe;
+
+    TowerTypes tower_type = TowerTypes::kMoltenSalt;
+
+    ssc_data_get_number(data, "d_rec", &d_rec);
+    ssc_data_get_number(data, "rec_height", &rec_height);
+    ssc_data_get_number(data, "receiver_type", &receiver_type);
+    ssc_data_get_number(data, "rec_d_spec", &rec_d_spec);
+    ssc_data_get_number(data, "csp_pt_rec_cav_ap_height", &csp_pt_rec_cav_ap_height);
+    csp_pt_cost_receiver_area = Csp_pt_cost_receiver_area(tower_type, d_rec, rec_height,
+        static_cast<int>(receiver_type), rec_d_spec, csp_pt_rec_cav_ap_height);
+    ssc_data_set_number(data, "csp_pt_cost_receiver_area", csp_pt_cost_receiver_area);
+
+    p_ref = NULL;
+    design_eff = NULL;
+    tshours = NULL;
+    csp_pt_cost_storage_mwht = Csp_pt_cost_storage_mwht(tower_type, p_ref, design_eff, tshours);
+    ssc_data_set_number(data, "csp_pt_cost_storage_mwht", csp_pt_cost_storage_mwht);
+
+    p_ref = NULL;
+    demand_var = NULL;
+    csp_pt_cost_power_block_mwe = Csp_pt_cost_power_block_mwe(tower_type, p_ref, demand_var);
+    ssc_data_set_number(data, "csp_pt_cost_power_block_mwe", csp_pt_cost_power_block_mwe);
+
+    Tower_SolarPilot_Capital_Costs_Equations(data);
+}

@@ -7,6 +7,7 @@
 #include "cmod_merchantplant_eqns.h"
 #include "cmod_pvsamv1_eqns.h"
 #include "cmod_csp_tower_eqns.h"
+#include "cmod_utilityrate5_eqns.h"
 
 
 typedef void (*ssc_equation_ptr)(ssc_data_t data);
@@ -33,6 +34,18 @@ static ssc_equation_entry ssc_equation_table [] = {
             "Tcsmolten_salt", MSPT_System_Design_Equations_doc},
         {"Tower_SolarPilot_Solar_Field_Equations", Tower_SolarPilot_Solar_Field_Equations,
             "Tcsmolten_salt", Tower_SolarPilot_Solar_Field_Equations_doc},
+        {"MSPT_Receiver_Equations", MSPT_Receiver_Equations,
+            "Tcsmolten_salt", MSPT_Receiver_Equations_doc},
+        {"MSPT_System_Control_Equations", MSPT_System_Control_Equations,
+            "Tcsmolten_salt", MSPT_System_Control_Equations_doc},
+        {"Tower_SolarPilot_Capital_Costs_MSPT_Equations", Tower_SolarPilot_Capital_Costs_MSPT_Equations,
+            "Tcsmolten_salt", Tower_SolarPilot_Capital_Costs_MSPT_Equations_doc},
+        {"Tower_SolarPilot_Capital_Costs_DSPT_Equations", Tower_SolarPilot_Capital_Costs_DSPT_Equations,
+            "Tcsdirect_steam", Tower_SolarPilot_Capital_Costs_DSPT_Equations_doc},
+        {"Tower_SolarPilot_Capital_Costs_ISCC_Equations", Tower_SolarPilot_Capital_Costs_ISCC_Equations,
+            "Tcsiscc", Tower_SolarPilot_Capital_Costs_ISCC_Equations_doc},
+        {"ElectricityRates_format_as_URDBv7", ElectricityRates_format_as_URDBv7,
+            "UtilityRate5", ElectricityRates_format_as_URDBv7_doc},
         {nullptr, nullptr, nullptr, nullptr}
 };
 

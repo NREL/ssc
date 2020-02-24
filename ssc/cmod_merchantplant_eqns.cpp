@@ -59,6 +59,7 @@ void mp_ancillary_services(ssc_data_t data)
 		if (gen_is_assigned)
 		{
 			system_capacity = 0.0;
+			// these are arrays so VT_GET_INPUT replaced by vt_get_matrix fails for all in commit c461b9
             vt_get_matrix(vt, "gen", system_gen);
 			vt_get_matrix(vt, "degradation", degradation);
 		}

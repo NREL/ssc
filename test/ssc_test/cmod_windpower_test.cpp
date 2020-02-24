@@ -339,16 +339,16 @@ TEST_F(CMWindPowerIntegration, IcingAndLowTempCutoff_cmod_windpower) {
 }
 
 /// Testing Turbine powercurve calculation
-TEST(windpower_turbine_powercurve, NoData){
+TEST(Turbine_powercurve_cmod_windpower_eqns, NoData){
     ASSERT_THROW(Turbine_calculate_powercurve(nullptr), std::runtime_error);
 }
 
-TEST(windpower_turbine_powercurve, MissingVariables){
+TEST(Turbine_powercurve_cmod_windpower_eqns, MissingVariables){
     var_table* vd = new var_table;
     ASSERT_THROW(Turbine_calculate_powercurve(vd), std::runtime_error);
 }
 
-TEST(windpower_turbine_powercurve, Case1){
+TEST(Turbine_powercurve_cmod_windpower_eqns, Case1){
     var_table* vd = new var_table;
     vd->assign("turbine_size", 1500);
     vd->assign("wind_turbine_rotor_diameter", 75);
@@ -376,7 +376,7 @@ TEST(windpower_turbine_powercurve, Case1){
     ASSERT_NEAR(rated_wx, 11.204, 1e-2);
 }
 
-TEST(windpower_turbine_powercurve, Case2){
+TEST(Turbine_powercurve_cmod_windpower_eqns, Case2){
     var_table* vd = new var_table;
     vd->assign("turbine_size", 1500);
     vd->assign("wind_turbine_rotor_diameter", 75);
@@ -404,7 +404,7 @@ TEST(windpower_turbine_powercurve, Case2){
     ASSERT_NEAR(rated_wx, 11.27, 1e-2);
 }
 
-TEST(windpower_turbine_powercurve, Case3){
+TEST(Turbine_powercurve_cmod_windpower_eqns, Case3){
     var_table* vd = new var_table;
     vd->assign("turbine_size", 1500);
     vd->assign("wind_turbine_rotor_diameter", 75);
@@ -432,7 +432,7 @@ TEST(windpower_turbine_powercurve, Case3){
     ASSERT_NEAR(rated_wx, 11.30, 1e-2);
 }
 
-TEST(windpower_turbine_powercurve, Case4){
+TEST(Turbine_powercurve_cmod_windpower_eqns, Case4){
     var_table* vd = new var_table;
     vd->assign("turbine_size", 1500);
     vd->assign("wind_turbine_rotor_diameter", 75);
