@@ -2365,12 +2365,13 @@ int combine_ind_tbl(util::matrix_t<double>& combined, util::matrix_t<double>& T_
 
 	combined.resize_fill(total_rows, ncols, std::numeric_limits<double>::quiet_NaN());
 
-	for (int i = 0; i < n_T_htf_pars; i++)
+	for (int j = 0; j < v_m_dot_levels.size(); j++)
 	{
-		for (int j = 0; j < v_m_dot_levels.size(); j++)
+		for (int i = 0; i < n_T_htf_pars; i++)
 		{
-			int r_comb = i * v_m_dot_levels.size() + j;	
+			int r_comb = j * n_T_htf_pars + i;
 			double m_dot = v_m_dot_levels[j];
+
 			combined.set_value(T_htf_ind(i, 0), r_comb, C_pc_Rankine_indirect_224::E_COL_T_HTF);			// Independent variable
 			combined.set_value(m_dot, r_comb, C_pc_Rankine_indirect_224::E_COL_M_DOT);						// Level variable
 			combined.set_value(T_amb_des, r_comb, C_pc_Rankine_indirect_224::E_COL_T_AMB);					// Constant variable
@@ -2382,11 +2383,11 @@ int combine_ind_tbl(util::matrix_t<double>& combined, util::matrix_t<double>& T_
 		}
 	}
 
-	for (int i = 0; i < n_m_dot_pars; i++)
+	for (int j = 0; j < v_T_amb_levels.size(); j++)
 	{
-		for (int j = 0; j < v_T_amb_levels.size(); j++)
+		for (int i = 0; i < n_m_dot_pars; i++)
 		{
-			int r_comb = n_T_htf_pars*v_m_dot_levels.size() + i * v_T_amb_levels.size() + j;
+			int r_comb = n_T_htf_pars * v_m_dot_levels.size() + j * n_m_dot_pars + i;
 			double T_amb = v_T_amb_levels[j];
 
 			combined.set_value(m_dot_ind(i, 0), r_comb, C_pc_Rankine_indirect_224::E_COL_M_DOT);		// Independent variable
@@ -2400,11 +2401,11 @@ int combine_ind_tbl(util::matrix_t<double>& combined, util::matrix_t<double>& T_
 		}
 	}
 
-	for (int i = 0; i < n_T_amb_pars; i++)
+	for (int j = 0; j < v_T_htf_levels.size(); j++)
 	{
-		for (int j = 0; j < v_T_htf_levels.size(); j++)
+		for (int i = 0; i < n_T_amb_pars; i++)
 		{
-			int r_comb = n_T_htf_pars*v_m_dot_levels.size() + n_m_dot_pars*v_T_amb_levels.size() + i * v_T_htf_levels.size() + j;
+			int r_comb = n_T_htf_pars * v_m_dot_levels.size() + n_m_dot_pars * v_T_amb_levels.size() + j * n_T_amb_pars + i;
 			double T_htf = v_T_htf_levels[j];
 
 			combined.set_value(T_amb_ind(i, 0), r_comb, C_pc_Rankine_indirect_224::E_COL_T_AMB);		// Independent variable
@@ -2417,6 +2418,6 @@ int combine_ind_tbl(util::matrix_t<double>& combined, util::matrix_t<double>& T_
 			combined.set_value(T_amb_ind(i, 3 * C_ud_power_cycle::i_m_dot_water + 1 + j), r_comb, C_pc_Rankine_indirect_224::E_COL_M_H2O);
 		}
 	}
-	
+
 	return 0;
 }

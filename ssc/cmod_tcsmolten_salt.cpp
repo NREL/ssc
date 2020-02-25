@@ -564,7 +564,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_MATRIX, "ud_T_htf_ind_od_out",                "T_htf_hot cycle off design",                                                                                                              "",             "",                                  "",                                         "?=[[0,1,2,3,4,5,6,7,8,9,10,11,12][0,1,2,3,4,5,6,7,8,9,10,11,12]]", "",              "COL_LABEL=UDPC_T_HTF_HOT,ROW_LABEL=NO_ROW_LABEL"},
     { SSC_OUTPUT,    SSC_MATRIX, "ud_T_amb_ind_od_out",                "T_amb cycle off design",                                                                                                                  "",             "",                                  "",                                         "?=[[0,1,2,3,4,5,6,7,8,9,10,11,12][0,1,2,3,4,5,6,7,8,9,10,11,12]]", "",              "COL_LABEL=UDPC_T_AMB,ROW_LABEL=NO_ROW_LABEL"},
     { SSC_OUTPUT,    SSC_MATRIX, "ud_m_dot_htf_ind_od_out",            "M_dot_htf cycle off design",                                                                                                              "",             "",                                  "",                                         "?=[[0,1,2,3,4,5,6,7,8,9,10,11,12][0,1,2,3,4,5,6,7,8,9,10,11,12]]", "",              "COL_LABEL=UDPC_M_DOT_HTF,ROW_LABEL=NO_ROW_LABEL"},
-    { SSC_OUTPUT,    SSC_MATRIX, "sco2_preprocess_table_out",          "sCO2 cycle preprocessed data in UDPC format",                                                                                             "",             "",                                  "",                                         "?=[[0]]",                                                          "",              ""},
+    { SSC_OUTPUT,    SSC_MATRIX, "sco2_preprocess_table_out",          "sCO2 cycle preprocessed data in UDPC format",                                                                                             "",             "",                                  "",                                         "?=[[0]]",                                                          "",              "COL_LABEL=UDPC_SCO2_PREPROC,ROW_LABEL=NO_ROW_LABEL"},
 
     // Annual single-value outputs
     { SSC_OUTPUT,    SSC_NUMBER, "annual_energy",                      "Annual total electric power to grid",                                                                                                     "kWhe",         "",                                  "",                                         "*",                                                                "",              ""},
@@ -1184,8 +1184,8 @@ public:
 
                 combine_ind_tbl(cmbd_ind, pc->mc_T_htf_ind, pc->mc_m_dot_htf_ind, pc->mc_T_amb_ind,
                     pc->m_m_dot_htf_low, 1.0, pc->m_m_dot_htf_high,
-                    pc->m_T_amb_low, pc->m_T_amb_des, pc->m_T_amb_high,
-                    pc->m_T_htf_low, pc->m_T_htf_hot_ref, pc->m_T_htf_high);
+                    pc->m_T_htf_low, pc->m_T_htf_hot_ref, pc->m_T_htf_high,
+                    pc->m_T_amb_low, pc->m_T_amb_des, pc->m_T_amb_high);
 
                 size_t ncols_udpc = cmbd_ind.ncols();
                 size_t nrows_udpc = cmbd_ind.nrows();
@@ -1352,7 +1352,7 @@ public:
                     std::string cycle_type = "recompression";
                     if (!is_des_rc)
                     {
-                        sco2_f_min = 0.7;
+                        //sco2_f_min = 0.7;
                         cycle_type = "simple";
                     }
                     if (cycle_f_min < sco2_f_min)
@@ -1462,8 +1462,8 @@ public:
 
                     combine_ind_tbl(cmbd_ind, pc->mc_T_htf_ind, pc->mc_m_dot_htf_ind, pc->mc_T_amb_ind,
                         pc->m_m_dot_htf_low, 1.0, pc->m_m_dot_htf_high,
-                        pc->m_T_amb_low, pc->m_T_amb_des, pc->m_T_amb_high,
-                        pc->m_T_htf_low, pc->m_T_htf_hot_ref, pc->m_T_htf_high);
+                        pc->m_T_htf_low, pc->m_T_htf_hot_ref, pc->m_T_htf_high,
+                        pc->m_T_amb_low, pc->m_T_amb_des, pc->m_T_amb_high);
 
                     size_t ncols_udpc = cmbd_ind.ncols();
                     size_t nrows_udpc = cmbd_ind.nrows();
