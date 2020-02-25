@@ -1352,7 +1352,7 @@ public:
                     std::string cycle_type = "recompression";
                     if (!is_des_rc)
                     {
-                        sco2_f_min = 0.7;
+                        //sco2_f_min = 0.7;
                         cycle_type = "simple";
                     }
                     if (cycle_f_min < sco2_f_min)
