@@ -297,5 +297,11 @@ int split_ind_tbl(util::matrix_t<double> &combined, util::matrix_t<double> &T_ht
     double & T_htf_low, double & T_htf_des, double & T_htf_high,
     double & T_amb_low, double & T_amb_des, double & T_amb_high);
 
+int combine_ind_tbl(util::matrix_t<double>& combined, util::matrix_t<double>& T_htf_ind,
+	util::matrix_t<double>& m_dot_ind, util::matrix_t<double>& T_amb_ind,
+	double m_dot_low, double m_dot_des, double m_dot_high,
+	double T_htf_low, double T_htf_des, double T_htf_high,
+	double T_amb_low, double T_amb_des, double T_amb_high);
+
 
 #endif //__csp_solver_pc_Rankine_indirect_224_
