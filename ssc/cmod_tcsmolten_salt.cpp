@@ -1184,8 +1184,8 @@ public:
 
                 combine_ind_tbl(cmbd_ind, pc->mc_T_htf_ind, pc->mc_m_dot_htf_ind, pc->mc_T_amb_ind,
                     pc->m_m_dot_htf_low, 1.0, pc->m_m_dot_htf_high,
-                    pc->m_T_amb_low, pc->m_T_amb_des, pc->m_T_amb_high,
-                    pc->m_T_htf_low, pc->m_T_htf_hot_ref, pc->m_T_htf_high);
+                    pc->m_T_htf_low, pc->m_T_htf_hot_ref, pc->m_T_htf_high,
+                    pc->m_T_amb_low, pc->m_T_amb_des, pc->m_T_amb_high);
 
                 size_t ncols_udpc = cmbd_ind.ncols();
                 size_t nrows_udpc = cmbd_ind.nrows();
@@ -1462,8 +1462,8 @@ public:
 
                     combine_ind_tbl(cmbd_ind, pc->mc_T_htf_ind, pc->mc_m_dot_htf_ind, pc->mc_T_amb_ind,
                         pc->m_m_dot_htf_low, 1.0, pc->m_m_dot_htf_high,
-                        pc->m_T_amb_low, pc->m_T_amb_des, pc->m_T_amb_high,
-                        pc->m_T_htf_low, pc->m_T_htf_hot_ref, pc->m_T_htf_high);
+                        pc->m_T_htf_low, pc->m_T_htf_hot_ref, pc->m_T_htf_high,
+                        pc->m_T_amb_low, pc->m_T_amb_des, pc->m_T_amb_high);
 
                     size_t ncols_udpc = cmbd_ind.ncols();
                     size_t nrows_udpc = cmbd_ind.nrows();
