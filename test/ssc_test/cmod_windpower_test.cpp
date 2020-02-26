@@ -470,4 +470,3 @@ TEST(windpower_landbosse, Init){
 
     double total_bos_cost = vd->lookup("total_installed_cost")->num;
 }
-

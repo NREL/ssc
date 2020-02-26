@@ -6,15 +6,15 @@
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
-if (APPLE)
+if(APPLE)
     set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
-    set(CMAKE_MACOSX_RPATH 1)
-endif ()
+	set(CMAKE_MACOSX_RPATH 1)
+endif()
 
 
 #####################################################################################################################
 #
-# Project Settings
+# Project Settings 
 #
 #####################################################################################################################
 
@@ -162,69 +162,69 @@ set(SSC_SRC
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_CXX_STANDARD 11)
 
-if (MSVC)
-    add_compile_options(/MP /W4 /w44191 /w44242 /w44266 /w44302 /w44388 /w44826 /w44905 /w44906 /w44928)
-    add_compile_definitions(__DLL__ __64BIT__ __WINDOWS__ _CRT_SECURE_NO_WARNINGS __VISUALC__)
+if(MSVC)
+	add_compile_options(/MP /W4 /w44191 /w44242  /w44266 /w44302 /w44388 /w44826 /w44905 /w44906 /w44928)
+    add_compile_definitions( __DLL__ __64BIT__ __WINDOWS__ _CRT_SECURE_NO_WARNINGS __VISUALC__ )
     foreach (flag_var CMAKE_C_FLAGS_DEBUG CMAKE_CXX_FLAGS_DEBUG)
-        set(${flag_var} "${${flag_var}} /D_DEBUG" CACHE STRING "compile flags" FORCE)
-    endforeach ()
-else (MSVC)
-    if (APPLE)
-        add_compile_options(-arch x86_64 -fno-common)
-        add_definitions(-D__MACOSX__ -DWX_PRECOMP)
-    else ()
-        add_definitions(-D__UNIX__)
-    endif ()
-    add_definitions(-D__64BIT__)
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-unknown-pragmas -Wno-deprecated -std=c++11")
-    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-        add_compile_definitions(_DEBUG)
-    else ()
-        SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
-    endif ()
-endif (MSVC)
+		set(${flag_var} "${${flag_var}} /D_DEBUG" CACHE STRING "compile flags" FORCE)
+	endforeach()
+else(MSVC)
+	if (APPLE)
+		add_compile_options(-arch x86_64 -fno-common)
+		add_definitions(-D__MACOSX__ -DWX_PRECOMP)
+	else ()
+		add_definitions(-D__UNIX__)
+	endif()
+	add_definitions(-D__64BIT__)
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-unknown-pragmas -Wno-deprecated -std=c++11" )
+	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+		add_compile_definitions(_DEBUG)
+	else()
+		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3" )
+	endif()
+endif(MSVC)
 
 #####################################################################################################################
-#
+# 
 # CMake Targets
 #
 #####################################################################################################################
 
 add_library(ssc SHARED ${SSC_SRC})
 set_target_properties(ssc
-        PROPERTIES
-        PREFIX ""
-        DEBUG_POSTFIX "d"
-        )
+    PROPERTIES
+    PREFIX ""
+    DEBUG_POSTFIX "d"
+	)
 
 
 # dltest executable for checking ssc library
-if (UNIX AND NOT SAMAPI_EXPORT)
-    add_executable(dltest ../build_resources/dltest.c)
-    if (NOT APPLE)
-        target_link_libraries(dltest -ldl -Wl,--no-as-needed)
-    endif ()
-    add_custom_command(
-            TARGET ssc
-            POST_BUILD
-            COMMAND dltest $<TARGET_FILE:ssc>)
-endif ()
+if(UNIX AND NOT SAMAPI_EXPORT)
+	add_executable(dltest ../build_resources/dltest.c)
+	if (NOT APPLE)
+		target_link_libraries(dltest -ldl -Wl,--no-as-needed)
+	endif()
+	add_custom_command(
+		TARGET ssc
+		POST_BUILD 
+		COMMAND dltest $<TARGET_FILE:ssc>)
+endif()
 
 # libssc for PySAM
-if (UNIX)
-    if (SAMAPI_EXPORT)
-        set(CMAKE_MACOSX_RPATH 1)
-        set_property(TARGET ssc PROPERTY PREFIX "lib")
-        set(CMAKE_SHARED_LIBRARY_SUFFIX ".so")
-        if (APPLE)
-            add_custom_command(
-                    TARGET ssc
-                    POST_BUILD
-                    COMMAND install_name_tool -id @rpath/libssc.so $<TARGET_FILE:ssc>
-            )
-        endif ()
-    endif ()
-endif ()
+if(UNIX)
+	if (SAMAPI_EXPORT)
+		set(CMAKE_MACOSX_RPATH 1)
+		set_property(TARGET ssc PROPERTY PREFIX "lib")
+		set(CMAKE_SHARED_LIBRARY_SUFFIX ".so")
+		if (APPLE)
+			add_custom_command(
+				TARGET ssc
+				POST_BUILD
+				COMMAND install_name_tool -id @rpath/libssc.so $<TARGET_FILE:ssc>
+			)
+		endif()
+	endif()
+endif()
 
 
 #####################################################################################################################
@@ -247,8 +247,8 @@ foreach( name ${DEPENDENCIES} )
 endforeach()
 
 if (UNIX)
-    target_link_libraries(ssc -lm -ldl -lstdc++)
-endif ()
+	target_link_libraries(ssc -lm -ldl -lstdc++)
+endif()
 
 
 #####################################################################################################################
@@ -259,83 +259,83 @@ endif ()
 
 if (MSVC)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:WINDOWS")
-    set(SSC_LIB $<TARGET_FILE_DIR:ssc>/$<TARGET_FILE_BASE_NAME:ssc>.lib)
+	set(SSC_LIB $<TARGET_FILE_DIR:ssc>/$<TARGET_FILE_BASE_NAME:ssc>.lib)
 
-    set(TESTDIR ${CMAKE_CURRENT_BINARY_DIR}/../test/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
+	set(TESTDIR ${CMAKE_CURRENT_BINARY_DIR}/../test/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
 
-    add_custom_command(
-            TARGET ssc
-            POST_BUILD
-            COMMAND ${CMAKE_COMMAND}
-            ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} $ENV{SAMNTDIR}/deploy/x64
-            COMMAND ${CMAKE_COMMAND}
-            ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${TESTDIR}
-    )
+	add_custom_command(
+		TARGET ssc
+		POST_BUILD
+		COMMAND ${CMAKE_COMMAND}
+		ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} $ENV{SAMNTDIR}/deploy/x64
+		COMMAND ${CMAKE_COMMAND}
+		ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${TESTDIR}
+		)
 
-    set(SDKTOOLDIR ${CMAKE_CURRENT_BINARY_DIR}/../sdktool/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
-    if (EXISTS ${SDKTOOLDIR})
-        add_custom_command(
-                TARGET ssc
-                POST_BUILD
-                COMMAND ${CMAKE_COMMAND}
-                ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${SDKTOOLDIR}
-        )
-    endif ()
+	set (SDKTOOLDIR ${CMAKE_CURRENT_BINARY_DIR}/../sdktool/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
+	if (EXISTS ${SDKTOOLDIR})
+		add_custom_command(
+			TARGET ssc
+			POST_BUILD
+			COMMAND ${CMAKE_COMMAND}
+			ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${SDKTOOLDIR}
+			)
+	endif()
 
-    set(TCSCONSOLDEDIR ${CMAKE_CURRENT_BINARY_DIR}/../tcsconsole/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
-    if (EXISTS ${TCSCONSOLDEDIR})
-        add_custom_command(
-                TARGET ssc
-                POST_BUILD
-                COMMAND ${CMAKE_COMMAND}
-                ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${TCSCONSOLDEDIR}>
-        )
-    endif ()
+	set (TCSCONSOLDEDIR ${CMAKE_CURRENT_BINARY_DIR}/../tcsconsole/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
+	if (EXISTS ${TCSCONSOLDEDIR})
+		add_custom_command(
+			TARGET ssc
+			POST_BUILD
+			COMMAND ${CMAKE_COMMAND}
+			ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${TCSCONSOLDEDIR}>
+			)
+	endif()
 
-    if (NOT skip_api)
-        if (${CMAKE_PROJECT_NAME} STREQUAL system_advisor_model)
-            set(APIGENDIR ${CMAKE_CURRENT_BINARY_DIR}/../../sam/api/api_autogen/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
-            add_custom_command(
-                    TARGET ssc
-                    POST_BUILD
-                    COMMAND ${CMAKE_COMMAND}
-                    ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${APIGENDIR}
-            )
-        else ()
-            set(APIGENDIR $ENV{SAMNTDIR}/build_msvc/api/api_autogen/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
-            add_custom_command(
-                    TARGET ssc
-                    POST_BUILD
-                    COMMAND ${CMAKE_COMMAND}
-                    ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${APIGENDIR}
-            )
-        endif ()
-    endif ()
+	if (NOT skip_api)
+		if (${CMAKE_PROJECT_NAME} STREQUAL system_advisor_model)
+			set(APIGENDIR ${CMAKE_CURRENT_BINARY_DIR}/../../sam/api/api_autogen/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
+			add_custom_command(
+				TARGET ssc
+				POST_BUILD
+				COMMAND ${CMAKE_COMMAND}
+				ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${APIGENDIR}
+				)
+		else()
+			set(APIGENDIR $ENV{SAMNTDIR}/build_msvc/api/api_autogen/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
+			add_custom_command(
+				TARGET ssc
+				POST_BUILD
+				COMMAND ${CMAKE_COMMAND}
+				ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${APIGENDIR}
+				)
+		endif()
+	endif()
 
-    add_custom_target(build-time-make-directory ALL
-            COMMAND ${CMAKE_COMMAND} -E make_directory ${TESTDIR} ${APIGENDIR})
-    add_dependencies(ssc build-time-make-directory)
+	add_custom_target(build-time-make-directory ALL
+		COMMAND ${CMAKE_COMMAND} -E make_directory ${TESTDIR} ${APIGENDIR})
+	add_dependencies(ssc build-time-make-directory)
 
-endif ()
+endif()
 
-if (DEFINED ENV{PYSAMDIR})
-    if (SAMAPI_EXPORT OR MSVC)
-        if (MSVC)
-            add_custom_command(
-                    TARGET ssc
-                    POST_BUILD
-                    COMMAND ${CMAKE_COMMAND} -E remove
-                    $ENV{PYSAMDIR}/files/$<TARGET_FILE_BASE_NAME:ssc>.lib
-                    $ENV{PYSAMDIR}/files/$<TARGET_FILE_BASE_NAME:ssc>.dll
-            )
-            set(SSC_LIB $<TARGET_FILE_DIR:ssc>/$<TARGET_FILE_BASE_NAME:ssc>.lib)
-        endif ()
-        add_custom_command(
-                TARGET ssc
-                POST_BUILD
-                COMMAND ${CMAKE_COMMAND}
-                ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} $ENV{PYSAMDIR}/files
-        )
-    endif ()
-endif ()
+if(DEFINED ENV{PYSAMDIR})
+	if (SAMAPI_EXPORT OR MSVC)
+		if (MSVC)
+			add_custom_command(
+					TARGET ssc
+					POST_BUILD
+					COMMAND ${CMAKE_COMMAND} -E remove
+					$ENV{PYSAMDIR}/files/$<TARGET_FILE_BASE_NAME:ssc>.lib
+					$ENV{PYSAMDIR}/files/$<TARGET_FILE_BASE_NAME:ssc>.dll
+			)
+			set(SSC_LIB $<TARGET_FILE_DIR:ssc>/$<TARGET_FILE_BASE_NAME:ssc>.lib)
+		endif()
+		add_custom_command(
+				TARGET ssc
+				POST_BUILD
+				COMMAND ${CMAKE_COMMAND}
+				ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} $ENV{PYSAMDIR}/files
+		)
+	endif()
+endif()
 
