@@ -25,37 +25,38 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static var_info _cm_vtab_ui_udpc_checks[] = {
 
-        /*   VARTYPE   DATATYPE         NAME               LABEL                                            UNITS     META  GROUP REQUIRED_IF CONSTRAINTS         UI_HINTS*/
-        {SSC_INPUT, SSC_MATRIX, "ud_ind_od",
-         "Off design user-defined power cycle performance as function of T_htf, m_dot_htf [ND], and T_amb", "", "",
-         "User Defined Power Cycle", "?=[[0]]", "", ""},
+    /*   VARTYPE   DATATYPE         NAME               LABEL                                            UNITS     META  GROUP REQUIRED_IF CONSTRAINTS         UI_HINTS*/
+    { SSC_INPUT,   SSC_MATRIX, "ud_ind_od",        "Off design user-defined power cycle performance as function of T_htf, m_dot_htf [ND], and T_amb",                                         "",             "",                                  "User Defined Power Cycle",                 "?=[[0]]",                                                      "",              ""},
 
-        {SSC_OUTPUT, SSC_NUMBER, "n_T_htf_pars", "Number of HTF parametrics", "-", "", "", "*", "", ""},
-        {SSC_OUTPUT, SSC_NUMBER, "T_htf_low", "HTF low temperature", "C", "", "", "*", "", ""},
-        {SSC_OUTPUT, SSC_NUMBER, "T_htf_des", "HTF design temperature", "C", "", "", "*", "", ""},
-        {SSC_OUTPUT, SSC_NUMBER, "T_htf_high", "HTF high temperature", "C", "", "", "*", "", ""},
+    { SSC_OUTPUT,  SSC_NUMBER, "n_T_htf_pars",     "Number of HTF parametrics",   "-", "", "", "*", "", "" },
+    { SSC_OUTPUT,  SSC_NUMBER, "T_htf_low",        "HTF low temperature",         "C", "", "", "*", "", "" },
+    { SSC_OUTPUT,  SSC_NUMBER, "T_htf_des",        "HTF design temperature",      "C", "", "", "*", "", "" },
+    { SSC_OUTPUT,  SSC_NUMBER, "T_htf_high",       "HTF high temperature",        "C", "", "", "*", "", "" },
 
-        {SSC_OUTPUT, SSC_NUMBER, "n_T_amb_pars", "Number of ambient temperature parametrics", "-", "", "", "*", "", ""},
-        {SSC_OUTPUT, SSC_NUMBER, "T_amb_low", "Low ambient temperature", "C", "", "", "*", "", ""},
-        {SSC_OUTPUT, SSC_NUMBER, "T_amb_des", "Design ambient temperature", "C", "", "", "*", "", ""},
-        {SSC_OUTPUT, SSC_NUMBER, "T_amb_high", "High ambient temperature", "C", "", "", "*", "", ""},
+    { SSC_OUTPUT,  SSC_NUMBER, "n_T_amb_pars",     "Number of ambient temperature parametrics", "-", "", "", "*", "", "" },
+    { SSC_OUTPUT,  SSC_NUMBER, "T_amb_low",        "Low ambient temperature",         "C", "", "", "*", "", "" },
+    { SSC_OUTPUT,  SSC_NUMBER, "T_amb_des",        "Design ambient temperature",      "C", "", "", "*", "", "" },
+    { SSC_OUTPUT,  SSC_NUMBER, "T_amb_high",       "High ambient temperature",        "C", "", "", "*", "", "" },
 
-        {SSC_OUTPUT, SSC_NUMBER, "n_m_dot_pars", "Number of HTF mass flow parametrics", "-", "", "", "*", "", ""},
-        {SSC_OUTPUT, SSC_NUMBER, "m_dot_low", "Low ambient temperature", "C", "", "", "*", "", ""},
-        {SSC_OUTPUT, SSC_NUMBER, "m_dot_des", "Design ambient temperature", "C", "", "", "*", "", ""},
-        {SSC_OUTPUT, SSC_NUMBER, "m_dot_high", "High ambient temperature", "C", "", "", "*", "", ""},
+    { SSC_OUTPUT,  SSC_NUMBER, "n_m_dot_pars",     "Number of HTF mass flow parametrics", "-", "", "", "*", "", "" },
+    { SSC_OUTPUT,  SSC_NUMBER, "m_dot_low",        "Low ambient temperature",         "C", "", "", "*", "", "" },
+    { SSC_OUTPUT,  SSC_NUMBER, "m_dot_des",        "Design ambient temperature",      "C", "", "", "*", "", "" },
+    { SSC_OUTPUT,  SSC_NUMBER, "m_dot_high",       "High ambient temperature",        "C", "", "", "*", "", "" },
 
 
-        var_info_invalid};
+    var_info_invalid };
 
-class cm_ui_udpc_checks : public compute_module {
+class cm_ui_udpc_checks : public compute_module
+{
 public:
 
-    cm_ui_udpc_checks() {
+    cm_ui_udpc_checks()
+    {
         add_var_info(_cm_vtab_ui_udpc_checks);
     }
 
-    void exec() override {
+    void exec() override
+    {
         int n_T_htf_pars, n_T_amb_pars, n_m_dot_pars;
         n_T_htf_pars = n_T_amb_pars = n_m_dot_pars = -1;
         double m_dot_low, m_dot_des, m_dot_high, T_htf_low, T_htf_des, T_htf_high, T_amb_low, T_amb_des, T_amb_high;
@@ -64,32 +65,34 @@ public:
         util::matrix_t<double> cmbd_ind = as_matrix("ud_ind_od");
         util::matrix_t<double> T_htf_ind, m_dot_ind, T_amb_ind;
 
-        try {
+        try
+        {
             split_ind_tbl(cmbd_ind, T_htf_ind, m_dot_ind, T_amb_ind,
-                          n_T_htf_pars, n_T_amb_pars, n_m_dot_pars,
-                          m_dot_low, m_dot_des, m_dot_high,
-                          T_htf_low, T_htf_des, T_htf_high,
-                          T_amb_low, T_amb_des, T_amb_high);
+                n_T_htf_pars, n_T_amb_pars, n_m_dot_pars,
+                m_dot_low, m_dot_des, m_dot_high,
+                T_htf_low, T_htf_des, T_htf_high,
+                T_amb_low, T_amb_des, T_amb_high);
         }
-        catch (C_csp_exception &csp_exception) {
+        catch (C_csp_exception &csp_exception)
+        {
             n_T_htf_pars = n_T_amb_pars = n_m_dot_pars = -1;
             m_dot_low = m_dot_des = m_dot_high = T_htf_low = T_htf_des = T_htf_high = T_amb_low = T_amb_des = T_amb_high = std::numeric_limits<double>::quiet_NaN();
         }
 
-        assign("n_T_htf_pars", (ssc_number_t) n_T_htf_pars);
-        assign("T_htf_low", (ssc_number_t) T_htf_low);
-        assign("T_htf_des", (ssc_number_t) T_htf_des);
-        assign("T_htf_high", (ssc_number_t) T_htf_high);
+        assign("n_T_htf_pars", (ssc_number_t)n_T_htf_pars);
+        assign("T_htf_low", (ssc_number_t)T_htf_low);
+        assign("T_htf_des", (ssc_number_t)T_htf_des);
+        assign("T_htf_high", (ssc_number_t)T_htf_high);
 
-        assign("n_T_amb_pars", (ssc_number_t) n_T_amb_pars);
-        assign("T_amb_low", (ssc_number_t) T_amb_low);
-        assign("T_amb_des", (ssc_number_t) T_amb_des);
-        assign("T_amb_high", (ssc_number_t) T_amb_high);
+        assign("n_T_amb_pars", (ssc_number_t)n_T_amb_pars);
+        assign("T_amb_low", (ssc_number_t)T_amb_low);
+        assign("T_amb_des", (ssc_number_t)T_amb_des);
+        assign("T_amb_high", (ssc_number_t)T_amb_high);
 
-        assign("n_m_dot_pars", (ssc_number_t) n_m_dot_pars);
-        assign("m_dot_low", (ssc_number_t) m_dot_low);
-        assign("m_dot_des", (ssc_number_t) m_dot_des);
-        assign("m_dot_high", (ssc_number_t) m_dot_high);
+        assign("n_m_dot_pars", (ssc_number_t)n_m_dot_pars);
+        assign("m_dot_low", (ssc_number_t)m_dot_low);
+        assign("m_dot_des", (ssc_number_t)m_dot_des);
+        assign("m_dot_high", (ssc_number_t)m_dot_high);
 
         return;
     }

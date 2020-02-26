@@ -3,41 +3,41 @@
 #include "vartab.h"
 #include "cmod_utilityrate5_eqns.h"
 
-bool try_get_rate_schedule(var_table *vt, const std::string &ssc_name, util::matrix_t<double> &schedule_matrix) {
+bool try_get_rate_schedule(var_table* vt, const std::string& ssc_name, util::matrix_t<double>& schedule_matrix){
     schedule_matrix.clear();
     auto vd = vt->lookup(ssc_name);
     if (!vd) return false;
 
     auto mat = vd->num;
     schedule_matrix.copy(mat);
-    for (size_t i = 0; i < mat.nrows(); i++) {
-        for (size_t j = 0; j < mat.ncols(); j++) {
+    for (size_t i = 0; i < mat.nrows(); i++){
+        for (size_t j = 0; j < mat.ncols(); j++ ) {
             schedule_matrix.at(i, j) -= 1;
         }
     }
     return true;
 }
 
-bool try_get_rate_structure(var_table *vt, const std::string &ssc_name, bool power_units,
-                            std::vector<std::vector<var_data>> &rate_structure) {
+bool try_get_rate_structure(var_table* vt, const std::string& ssc_name, bool power_units,
+                            std::vector<std::vector<var_data>>& rate_structure) {
     rate_structure.clear();
     auto vd = vt->lookup(ssc_name);
     if (!vd) return false;
 
     std::vector<std::vector<double>> rate_matrix = vd->matrix_vector();
-    size_t n_periods = (size_t) (*(std::max_element(rate_matrix.begin(), rate_matrix.end(),
-                                                    [](const std::vector<double> &lhs, const std::vector<double> &rhs) {
-                                                        return lhs[0] < rhs[0];
-                                                    })))[0];
+    size_t n_periods = (size_t)(*(std::max_element(rate_matrix.begin(), rate_matrix.end(),
+                                                   [] (const std::vector<double>& lhs, const std::vector<double>& rhs) {
+                                                       return lhs[0] < rhs[0];
+                                                   })))[0];
     rate_structure.resize(n_periods);
 
     // sort by tiers then by period
     std::sort(rate_matrix.begin(), rate_matrix.end(),
-              [](const std::vector<double> &lhs, const std::vector<double> &rhs) {
+              [] (const std::vector<double>& lhs, const std::vector<double>& rhs) {
                   return lhs[1] < rhs[1];
               });
     std::sort(rate_matrix.begin(), rate_matrix.end(),
-              [](const std::vector<double> &lhs, const std::vector<double> &rhs) {
+              [] (const std::vector<double>& lhs, const std::vector<double>& rhs) {
                   return lhs[0] < rhs[0];
               });
 
@@ -45,13 +45,13 @@ bool try_get_rate_structure(var_table *vt, const std::string &ssc_name, bool pow
         vt->assign("demandrateunit", var_data("kW"));
     }
 
-    for (const auto &row : rate_matrix) {
+    for (const auto& row : rate_matrix) {
         int period = row[0];
         double max = row[2];
         double buy;
         var_data rate_data;
         rate_data.type = SSC_TABLE;
-        if (!power_units) {
+        if (!power_units){
             int unit_type = row[3];
             buy = row[4];
             double sell = row[5];
@@ -60,10 +60,10 @@ bool try_get_rate_structure(var_table *vt, const std::string &ssc_name, bool pow
             else if (unit_type == 2)
                 rate_data.table.assign("unit", var_data("kW daily"));
             else
-                throw (std::runtime_error(
-                        "ElectricityRates_format_as_URDBv7 error. Unit type in " + ssc_name + " not allowed."));
+                throw(std::runtime_error("ElectricityRates_format_as_URDBv7 error. Unit type in " + ssc_name + " not allowed."));
             rate_data.table.assign("sell", sell);
-        } else {
+        }
+        else{
             buy = row[3];
         }
         rate_data.table.assign("max", max);
@@ -75,8 +75,8 @@ bool try_get_rate_structure(var_table *vt, const std::string &ssc_name, bool pow
 }
 
 SSCEXPORT void ElectricityRates_format_as_URDBv7(ssc_data_t data) {
-    auto vt = static_cast<var_table *>(data);
-    if (!vt) {
+    auto vt = static_cast<var_table*>(data);
+    if (!vt){
         throw std::runtime_error("ssc_data_t data invalid");
     }
     auto urdb_data = var_table();
@@ -85,14 +85,13 @@ SSCEXPORT void ElectricityRates_format_as_URDBv7(ssc_data_t data) {
     int net_metering;
     vt_get_int(vt, "ur_metering_option", &net_metering);
     std::string dgrules;
-    switch (net_metering) {
+    switch(net_metering) {
         case 0:
             dgrules = "Net Metering";
             break;
         case 1:
         case 3:
-            throw (std::runtime_error(
-                    "ElectricityRates_format_as_URDBv7 error. ur_net_metering_option not available in URDBv7."));
+            throw(std::runtime_error("ElectricityRates_format_as_URDBv7 error. ur_net_metering_option not available in URDBv7."));
         case 2:
             dgrules = "Net Billing Hourly";
             break;
@@ -100,8 +99,7 @@ SSCEXPORT void ElectricityRates_format_as_URDBv7(ssc_data_t data) {
             dgrules = "Buy All Sell All";
             break;
         default:
-            throw (std::runtime_error(
-                    "ElectricityRates_format_as_URDBv7 error. ur_net_metering_option not recognized."));
+            throw(std::runtime_error("ElectricityRates_format_as_URDBv7 error. ur_net_metering_option not recognized."));
     }
     urdb_data.assign("dgrules", dgrules);
 
@@ -111,12 +109,12 @@ SSCEXPORT void ElectricityRates_format_as_URDBv7(ssc_data_t data) {
     vt_get_number(vt, "ur_monthly_min_charge", &monthly_min);
     urdb_data.assign("minmonthlycharge", monthly_min);
 
-    try {
+    try{
         double annual_min;
         vt_get_number(vt, "ur_annual_min_charge", &annual_min);
         urdb_data.assign("annualmincharge", annual_min);
     }
-    catch (std::exception &) {}
+    catch(std::exception&){}
 
     // energy rates
     util::matrix_t<double> sched_matrix;
@@ -131,10 +129,10 @@ SSCEXPORT void ElectricityRates_format_as_URDBv7(ssc_data_t data) {
 
     // flat demand
     sched_matrix.clear();
-    if (vt->is_assigned("ur_dc_flat_mat")) {
+    if (vt->is_assigned("ur_dc_flat_mat")){
         sched_matrix = vt->lookup("ur_dc_flat_mat")->num;
         if (sched_matrix.nrows() != 12)
-            throw (std::runtime_error("ElectricityRates_format_as_URDBv7 error. ur_dc_flat_mat must have 12 entries."));
+            throw(std::runtime_error("ElectricityRates_format_as_URDBv7 error. ur_dc_flat_mat must have 12 entries."));
 
         std::vector<double> dc_flat;
         dc_flat.resize(12);
