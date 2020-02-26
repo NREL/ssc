@@ -87,24 +87,24 @@ public:
 		double bVoc = as_double("beta_voc");
 		double aIsc = as_double("alpha_isc");
 		double gPmp = as_double("gamma_pmp");
-		int nser = as_integer("Nser");
+        int nser = as_integer("Nser");
 
-		double Tref = 25;
-		if ( is_assigned("Tref") )
-			Tref = as_double("Tref");
+        double Tref = 25;
+        if (is_assigned("Tref"))
+            Tref = as_double("Tref");
 
-		module6par m( tech_id, Vmp, Imp, Voc, Isc, bVoc, aIsc, gPmp, nser, Tref+273.15 );
-		int err = m.solve_with_sanity_and_heuristics<double>(300,1e-7);
-		if (err < 0)
-			throw general_error("could not solve, check inputs");
+        module6par m(tech_id, Vmp, Imp, Voc, Isc, bVoc, aIsc, gPmp, nser, Tref + 273.15);
+        int err = m.solve_with_sanity_and_heuristics<double>(300, 1e-7);
+        if (err < 0)
+            throw general_error("could not solve, check inputs");
 
-		assign("a", var_data( (ssc_number_t) m.a));
-		assign("Il", var_data( (ssc_number_t) m.Il));
-		assign("Io", var_data( (ssc_number_t) m.Io));
-		assign("Rs", var_data( (ssc_number_t) m.Rs));
-		assign("Rsh", var_data( (ssc_number_t) m.Rsh));
-		assign("Adj", var_data( (ssc_number_t) m.Adj));
-	}
+        assign("a", var_data((ssc_number_t) m.a));
+        assign("Il", var_data((ssc_number_t) m.Il));
+        assign("Io", var_data((ssc_number_t) m.Io));
+        assign("Rs", var_data((ssc_number_t) m.Rs));
+        assign("Rsh", var_data((ssc_number_t) m.Rsh));
+        assign("Adj", var_data((ssc_number_t) m.Adj));
+    }
 };
 
-DEFINE_MODULE_ENTRY( 6parsolve, "Solver for CEC/6 parameter PV module coefficients", 1 )
+DEFINE_MODULE_ENTRY(6parsolve, "Solver for CEC/6 parameter PV module coefficients", 1)
