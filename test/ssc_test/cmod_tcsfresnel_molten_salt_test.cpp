@@ -8,176 +8,204 @@
 /// Test tcsfresnel_molten_salt with all default configurations with respect to the No Finanical model
 TEST_F(CMTcsFresnelMoltenSalt, Rankine_Default_No_Financial_cmod_tcsfresnel_molten_salt) {
 
-	ssc_data_t data = ssc_data_create();
-	int test_errors = tcsfresnel_molten_salt_tucson_default(data);
+    ssc_data_t data = ssc_data_create();
+    int test_errors = tcsfresnel_molten_salt_tucson_default(data);
 
-	EXPECT_FALSE(test_errors);
-	if (!test_errors)
-	{
-		ssc_number_t annual_energy;
-		ssc_data_get_number(data, "annual_energy", &annual_energy);
-		EXPECT_NEAR(annual_energy, 337260930.158212, 337260930.158212 * m_error_tolerance_hi) << "Annual Energy";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+    EXPECT_FALSE(test_errors);
+    if (!test_errors) {
+        ssc_number_t annual_energy;
+        ssc_data_get_number(data, "annual_energy", &annual_energy);
+        EXPECT_NEAR(annual_energy, 337260930.158212, 337260930.158212 * m_error_tolerance_hi)
+                            << "Annual Energy";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
-		ssc_number_t annual_fuel_usage;
-		ssc_data_get_number(data, "annual_fuel_usage", &annual_fuel_usage);
-		EXPECT_NEAR(annual_fuel_usage, 0, 0 * m_error_tolerance_hi) << "Annual fuel usage";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+        ssc_number_t annual_fuel_usage;
+        ssc_data_get_number(data, "annual_fuel_usage", &annual_fuel_usage);
+        EXPECT_NEAR(annual_fuel_usage, 0, 0 * m_error_tolerance_hi)
+                            << "Annual fuel usage";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
-		ssc_number_t capacity_factor;
-		ssc_data_get_number(data, "capacity_factor", &capacity_factor);
-		EXPECT_NEAR(capacity_factor, 38.500145, 38.500145 * m_error_tolerance_hi) << "Capacity Factor";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+        ssc_number_t capacity_factor;
+        ssc_data_get_number(data, "capacity_factor", &capacity_factor);
+        EXPECT_NEAR(capacity_factor, 38.500145, 38.500145 * m_error_tolerance_hi)
+                            << "Capacity Factor";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
-		ssc_number_t annual_W_cycle_gross;
-		ssc_data_get_number(data, "annual_W_cycle_gross", &annual_W_cycle_gross);
-		EXPECT_NEAR(annual_W_cycle_gross, 372651034.745992, 372651034.745992 * m_error_tolerance_hi) << "Annual W_cycle Gross";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+        ssc_number_t annual_W_cycle_gross;
+        ssc_data_get_number(data, "annual_W_cycle_gross", &annual_W_cycle_gross);
+        EXPECT_NEAR(annual_W_cycle_gross, 372651034.745992, 372651034.745992 * m_error_tolerance_hi)
+                            << "Annual W_cycle Gross";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
-		ssc_number_t kwh_per_kw;
-		ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
-		EXPECT_NEAR(kwh_per_kw, 3372.612727, 3372.612727 * m_error_tolerance_hi) << "kwh per kw";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+        ssc_number_t kwh_per_kw;
+        ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
+        EXPECT_NEAR(kwh_per_kw, 3372.612727, 3372.612727 * m_error_tolerance_hi)
+                            << "kwh per kw";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
-		ssc_number_t conversion_factor;
-		ssc_data_get_number(data, "conversion_factor", &conversion_factor);
-		EXPECT_NEAR(conversion_factor, 94.274118, 94.274118 * m_error_tolerance_hi) << "Conversion Factor";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+        ssc_number_t conversion_factor;
+        ssc_data_get_number(data, "conversion_factor", &conversion_factor);
+        EXPECT_NEAR(conversion_factor, 94.274118, 94.274118 * m_error_tolerance_hi)
+                            << "Conversion Factor";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
-		ssc_number_t system_heat_rate;
-		ssc_data_get_number(data, "system_heat_rate", &system_heat_rate);
-		EXPECT_NEAR(system_heat_rate, 3.413000, 3.413000 * m_error_tolerance_hi) << "System heat rate";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+        ssc_number_t system_heat_rate;
+        ssc_data_get_number(data, "system_heat_rate", &system_heat_rate);
+        EXPECT_NEAR(system_heat_rate, 3.413000, 3.413000 * m_error_tolerance_hi)
+                            << "System heat rate";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
-		ssc_number_t annual_total_water_use;
-		ssc_data_get_number(data, "annual_total_water_use", &annual_total_water_use);
-		EXPECT_NEAR(annual_total_water_use, 30058.992530, 30058.992530 * m_error_tolerance_hi) << "Annual Total Water Use";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
-	}
+        ssc_number_t annual_total_water_use;
+        ssc_data_get_number(data, "annual_total_water_use", &annual_total_water_use);
+        EXPECT_NEAR(annual_total_water_use, 30058.992530, 30058.992530 * m_error_tolerance_hi)
+                            << "Annual Total Water Use";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+    }
 }
 
 /// Test tcsfresnel_molten_salt with alternative defocusing strategy: Sequenced
 /// Rest default configurations with respect to the No Financial model
 TEST_F(CMTcsFresnelMoltenSalt, Rankine_Defocusing_Strategy_No_Financial_cmod_tcsfresnel_molten_salt) {
 
-	ssc_data_t data = ssc_data_create();
-	int test_errors = tcsfresnel_molten_salt_tucson_defocusing_strategy(data);
+    ssc_data_t data = ssc_data_create();
+    int test_errors = tcsfresnel_molten_salt_tucson_defocusing_strategy(data);
 
-	EXPECT_FALSE(test_errors);
-	if (!test_errors)
-	{
-		ssc_number_t annual_energy;
-		ssc_data_get_number(data, "annual_energy", &annual_energy);
-		EXPECT_NEAR(annual_energy, 337260930.158212, 337260930.158212 * m_error_tolerance_hi) << "Annual Energy";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+    EXPECT_FALSE(test_errors);
+    if (!test_errors) {
+        ssc_number_t annual_energy;
+        ssc_data_get_number(data, "annual_energy", &annual_energy);
+        EXPECT_NEAR(annual_energy, 337260930.158212, 337260930.158212 * m_error_tolerance_hi)
+                            << "Annual Energy";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
-		ssc_number_t annual_fuel_usage;
-		ssc_data_get_number(data, "annual_fuel_usage", &annual_fuel_usage);
-		EXPECT_NEAR(annual_fuel_usage, 0, 0 * m_error_tolerance_hi) << "Annual fuel usage";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+        ssc_number_t annual_fuel_usage;
+        ssc_data_get_number(data, "annual_fuel_usage", &annual_fuel_usage);
+        EXPECT_NEAR(annual_fuel_usage, 0, 0 * m_error_tolerance_hi)
+                            << "Annual fuel usage";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
-		ssc_number_t capacity_factor;
-		ssc_data_get_number(data, "capacity_factor", &capacity_factor);
-		EXPECT_NEAR(capacity_factor, 38.500145, 38.500145 * m_error_tolerance_hi) << "Capacity Factor";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+        ssc_number_t capacity_factor;
+        ssc_data_get_number(data, "capacity_factor", &capacity_factor);
+        EXPECT_NEAR(capacity_factor, 38.500145, 38.500145 * m_error_tolerance_hi)
+                            << "Capacity Factor";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
-		ssc_number_t annual_W_cycle_gross;
-		ssc_data_get_number(data, "annual_W_cycle_gross", &annual_W_cycle_gross);
-		EXPECT_NEAR(annual_W_cycle_gross, 372651034.745992, 372651034.745992 * m_error_tolerance_hi) << "Annual W_cycle Gross";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+        ssc_number_t annual_W_cycle_gross;
+        ssc_data_get_number(data, "annual_W_cycle_gross", &annual_W_cycle_gross);
+        EXPECT_NEAR(annual_W_cycle_gross, 372651034.745992, 372651034.745992 * m_error_tolerance_hi)
+                            << "Annual W_cycle Gross";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
-		ssc_number_t kwh_per_kw;
-		ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
-		EXPECT_NEAR(kwh_per_kw, 3372.612727, 3372.612727 * m_error_tolerance_hi) << "kwh per kw";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+        ssc_number_t kwh_per_kw;
+        ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
+        EXPECT_NEAR(kwh_per_kw, 3372.612727, 3372.612727 * m_error_tolerance_hi)
+                            << "kwh per kw";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
-		ssc_number_t conversion_factor;
-		ssc_data_get_number(data, "conversion_factor", &conversion_factor);
-		EXPECT_NEAR(conversion_factor, 94.274118, 94.274118 * m_error_tolerance_hi) << "Conversion Factor";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+        ssc_number_t conversion_factor;
+        ssc_data_get_number(data, "conversion_factor", &conversion_factor);
+        EXPECT_NEAR(conversion_factor, 94.274118, 94.274118 * m_error_tolerance_hi)
+                            << "Conversion Factor";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
-		ssc_number_t system_heat_rate;
-		ssc_data_get_number(data, "system_heat_rate", &system_heat_rate);
-		EXPECT_NEAR(system_heat_rate, 3.413000, 3.413000 * m_error_tolerance_hi) << "System heat rate";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+        ssc_number_t system_heat_rate;
+        ssc_data_get_number(data, "system_heat_rate", &system_heat_rate);
+        EXPECT_NEAR(system_heat_rate, 3.413000, 3.413000 * m_error_tolerance_hi)
+                            << "System heat rate";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
-		ssc_number_t annual_total_water_use;
-		ssc_data_get_number(data, "annual_total_water_use", &annual_total_water_use);
-		EXPECT_NEAR(annual_total_water_use, 30058.992530, 30058.992530 * m_error_tolerance_hi) << "Annual Total Water Use";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
-	}
+        ssc_number_t annual_total_water_use;
+        ssc_data_get_number(data, "annual_total_water_use", &annual_total_water_use);
+        EXPECT_NEAR(annual_total_water_use, 30058.992530, 30058.992530 * m_error_tolerance_hi)
+                            << "Annual Total Water Use";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+    }
 }
 
 /// Test tcsfresnel_molten_salt with alternative Field HTF: Therminol VP-1
 /// Rest default configurations with respect to the No Financial model
 TEST_F(CMTcsFresnelMoltenSalt, Rankine_Field_HTF_No_Financial_cmod_tcsfresnel_molten_salt) {
 
-	ssc_data_t data = ssc_data_create();
-	int test_errors = tcsfresnel_molten_salt_tucson_field_HTF(data);
+    ssc_data_t data = ssc_data_create();
+    int test_errors = tcsfresnel_molten_salt_tucson_field_HTF(data);
 
-	EXPECT_FALSE(test_errors);
-	if (!test_errors)
-	{
-		ssc_number_t annual_energy;
-		ssc_data_get_number(data, "annual_energy", &annual_energy);
-		EXPECT_NEAR(annual_energy, 336220223.708381, 336220223.708381 * m_error_tolerance_hi) << "Annual Energy";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+    EXPECT_FALSE(test_errors);
+    if (!test_errors) {
+        ssc_number_t annual_energy;
+        ssc_data_get_number(data, "annual_energy", &annual_energy);
+        EXPECT_NEAR(annual_energy, 336220223.708381, 336220223.708381 * m_error_tolerance_hi)
+                            << "Annual Energy";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
-		ssc_number_t annual_fuel_usage;
-		ssc_data_get_number(data, "annual_fuel_usage", &annual_fuel_usage);
-		EXPECT_NEAR(annual_fuel_usage, 0, 0 * m_error_tolerance_hi) << "Annual fuel usage";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+        ssc_number_t annual_fuel_usage;
+        ssc_data_get_number(data, "annual_fuel_usage", &annual_fuel_usage);
+        EXPECT_NEAR(annual_fuel_usage, 0, 0 * m_error_tolerance_hi)
+                            << "Annual fuel usage";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
-		ssc_number_t capacity_factor;
-		ssc_data_get_number(data, "capacity_factor", &capacity_factor);
-		EXPECT_NEAR(capacity_factor, 38.381343, 38.381343 * m_error_tolerance_hi) << "Capacity Factor";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+        ssc_number_t capacity_factor;
+        ssc_data_get_number(data, "capacity_factor", &capacity_factor);
+        EXPECT_NEAR(capacity_factor, 38.381343, 38.381343 * m_error_tolerance_hi)
+                            << "Capacity Factor";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
-		ssc_number_t annual_W_cycle_gross;
-		ssc_data_get_number(data, "annual_W_cycle_gross", &annual_W_cycle_gross);
-		EXPECT_NEAR(annual_W_cycle_gross, 371358844.515444, 371358844.515444 * m_error_tolerance_hi) << "Annual W_cycle Gross";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+        ssc_number_t annual_W_cycle_gross;
+        ssc_data_get_number(data, "annual_W_cycle_gross", &annual_W_cycle_gross);
+        EXPECT_NEAR(annual_W_cycle_gross, 371358844.515444, 371358844.515444 * m_error_tolerance_hi)
+                            << "Annual W_cycle Gross";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
-		ssc_number_t kwh_per_kw;
-		ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
-		EXPECT_NEAR(kwh_per_kw, 3362.205652, 3362.205652 * m_error_tolerance_hi) << "kwh per kw";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+        ssc_number_t kwh_per_kw;
+        ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
+        EXPECT_NEAR(kwh_per_kw, 3362.205652, 3362.205652 * m_error_tolerance_hi)
+                            << "kwh per kw";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
-		ssc_number_t conversion_factor;
-		ssc_data_get_number(data, "conversion_factor", &conversion_factor);
-		EXPECT_NEAR(conversion_factor, 94.310237, 94.310237 * m_error_tolerance_hi) << "Conversion Factor";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+        ssc_number_t conversion_factor;
+        ssc_data_get_number(data, "conversion_factor", &conversion_factor);
+        EXPECT_NEAR(conversion_factor, 94.310237, 94.310237 * m_error_tolerance_hi)
+                            << "Conversion Factor";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
-		ssc_number_t system_heat_rate;
-		ssc_data_get_number(data, "system_heat_rate", &system_heat_rate);
-		EXPECT_NEAR(system_heat_rate, 3.413000, 3.413000 * m_error_tolerance_hi) << "System heat rate";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+        ssc_number_t system_heat_rate;
+        ssc_data_get_number(data, "system_heat_rate", &system_heat_rate);
+        EXPECT_NEAR(system_heat_rate, 3.413000, 3.413000 * m_error_tolerance_hi)
+                            << "System heat rate";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
-		ssc_number_t annual_total_water_use;
-		ssc_data_get_number(data, "annual_total_water_use", &annual_total_water_use);
-		EXPECT_NEAR(annual_total_water_use, 29948.205347, 29948.205347 * m_error_tolerance_hi) << "Annual Total Water Use";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
-	}
+        ssc_number_t annual_total_water_use;
+        ssc_data_get_number(data, "annual_total_water_use", &annual_total_water_use);
+        EXPECT_NEAR(annual_total_water_use, 29948.205347, 29948.205347 * m_error_tolerance_hi)
+                            << "Annual Total Water Use";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+    }
 }
 
 /// Test tcsfresnel_molten_salt with alternative optical characterization method: Solar position
 /// Rest default configurations with respect to the No Financial model
 TEST_F(CMTcsFresnelMoltenSalt, Rankine_Optical_Char_No_Financial_cmod_tcsfresnel_molten_salt) {
 
-	ssc_data_t data = ssc_data_create();
-	int test_errors = tcsfresnel_molten_salt_tucson_optical_char_solar(data);
+    ssc_data_t data = ssc_data_create();
+    int test_errors = tcsfresnel_molten_salt_tucson_optical_char_solar(data);
 
-	EXPECT_FALSE(test_errors);
-	if (!test_errors)
-	{
-		ssc_number_t annual_energy;
-		ssc_data_get_number(data, "annual_energy", &annual_energy);
-		EXPECT_NEAR(annual_energy, 228402762.335069, 228402762.335069 * m_error_tolerance_hi) << "Annual Energy";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+    EXPECT_FALSE(test_errors);
+    if (!test_errors) {
+        ssc_number_t annual_energy;
+        ssc_data_get_number(data, "annual_energy", &annual_energy);
+        EXPECT_NEAR(annual_energy, 228402762.335069, 228402762.335069 * m_error_tolerance_hi)
+                            << "Annual Energy";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
-		ssc_number_t annual_fuel_usage;
-		ssc_data_get_number(data, "annual_fuel_usage", &annual_fuel_usage);
-		EXPECT_NEAR(annual_fuel_usage, 0, 0 * m_error_tolerance_hi) << "Annual fuel usage";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+        ssc_number_t annual_fuel_usage;
+        ssc_data_get_number(data, "annual_fuel_usage", &annual_fuel_usage);
+        EXPECT_NEAR(annual_fuel_usage, 0, 0 * m_error_tolerance_hi)
+                            << "Annual fuel usage";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
-		ssc_number_t capacity_factor;
-		ssc_data_get_number(data, "capacity_factor", &capacity_factor);
-		EXPECT_NEAR(capacity_factor, 26.073401, 26.073401 * m_error_tolerance_hi) << "Capacity Factor";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+        ssc_number_t capacity_factor;
+        ssc_data_get_number(data, "capacity_factor", &capacity_factor);
+        EXPECT_NEAR(capacity_factor, 26.073401, 26.073401 * m_error_tolerance_hi)
+                            << "Capacity Factor";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
-		ssc_number_t annual_W_cycle_gross;
-		ssc_data_get_number(data, "annual_W_cycle_gross", &annual_W_cycle_gross);
-		EXPECT_NEAR(annual_W_cycle_gross, 255099173.098881, 255099173.098881 * m_error_tolerance_hi) << "Annual W_cycle Gross";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+        ssc_number_t annual_W_cycle_gross;
+        ssc_data_get_number(data, "annual_W_cycle_gross", &annual_W_cycle_gross);
+        EXPECT_NEAR(annual_W_cycle_gross, 255099173.098881, 255099173.098881 * m_error_tolerance_hi)
+                            << "Annual W_cycle Gross";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
-		ssc_number_t kwh_per_kw;
-		ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
-		EXPECT_NEAR(kwh_per_kw, 2284.029943, 2284.029943 * m_error_tolerance_hi) << "kwh per kw";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+        ssc_number_t kwh_per_kw;
+        ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
+        EXPECT_NEAR(kwh_per_kw, 2284.029943, 2284.029943 * m_error_tolerance_hi)
+                            << "kwh per kw";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
-		ssc_number_t conversion_factor;
-		ssc_data_get_number(data, "conversion_factor", &conversion_factor);
-		EXPECT_NEAR(conversion_factor, 93.265512, 93.265512 * m_error_tolerance_hi) << "Conversion Factor";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+        ssc_number_t conversion_factor;
+        ssc_data_get_number(data, "conversion_factor", &conversion_factor);
+        EXPECT_NEAR(conversion_factor, 93.265512, 93.265512 * m_error_tolerance_hi)
+                            << "Conversion Factor";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
-		ssc_number_t system_heat_rate;
-		ssc_data_get_number(data, "system_heat_rate", &system_heat_rate);
-		EXPECT_NEAR(system_heat_rate, 3.413000, 3.413000 * m_error_tolerance_hi) << "System heat rate";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+        ssc_number_t system_heat_rate;
+        ssc_data_get_number(data, "system_heat_rate", &system_heat_rate);
+        EXPECT_NEAR(system_heat_rate, 3.413000, 3.413000 * m_error_tolerance_hi)
+                            << "System heat rate";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
-		ssc_number_t annual_total_water_use;
-		ssc_data_get_number(data, "annual_total_water_use", &annual_total_water_use);
-		EXPECT_NEAR(annual_total_water_use, 21782.647609, 21782.647609 * m_error_tolerance_hi) << "Annual Total Water Use";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
-	}
+        ssc_number_t annual_total_water_use;
+        ssc_data_get_number(data, "annual_total_water_use", &annual_total_water_use);
+        EXPECT_NEAR(annual_total_water_use, 21782.647609, 21782.647609 * m_error_tolerance_hi)
+                            << "Annual Total Water Use";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+    }
 }
 
 /// Test tcsfresnel_molten_salt with alternative receiver model type: Polynomial Heat Loss model
@@ -312,7 +340,7 @@ TEST_F(CMTcsFresnelMoltenSalt, Rankine_Optical_Char_No_Financial_cmod_tcsfresnel
 //	}
 //}
 
-/// Test tcsfresnel_molten_salt with alternative turbine inlet pressure control: Sliding pressure 
+/// Test tcsfresnel_molten_salt with alternative turbine inlet pressure control: Sliding pressure
 /// Rest default configurations with respect to the No Financial model
 //TEST_F(CMTcsFresnelMoltenSalt, Rankine_Sliding_P_No_Financial_cmod_tcsfresnel_molten_salt) {
 //

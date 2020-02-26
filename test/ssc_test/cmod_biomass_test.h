@@ -12,21 +12,21 @@
 class CMBiomass : public ::testing::Test {
 
 public:
-	ssc_data_t data;
-	ssc_number_t calculated_value;
-	ssc_number_t * calculated_array;
+    ssc_data_t data;
+    ssc_number_t calculated_value;
+    ssc_number_t *calculated_array;
 
-	void SetUp() {
-		data = ssc_data_create();
-		biomass_commondata(data);
-	}
+    void SetUp() {
+        data = ssc_data_create();
+        biomass_commondata(data);
+    }
 
-	void TearDown() {
-		if (data) {
-			ssc_data_free(data);
-			data = nullptr;
-		}
-	}
+    void TearDown() {
+        if (data) {
+            ssc_data_free(data);
+            data = nullptr;
+        }
+    }
 
 };
 

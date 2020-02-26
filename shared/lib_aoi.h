@@ -3,15 +3,15 @@
 
 #include "lib_pv_io_manager.h"
 
-class AngleOfIncidenceModifier
-{
+class AngleOfIncidenceModifier {
 public:
 
-	/// Constructor for AngleOfIncidenceModifier model
-	AngleOfIncidenceModifier(PVIOManager * IOManager);
+    /// Constructor for AngleOfIncidenceModifier model
+    AngleOfIncidenceModifier(PVIOManager *IOManager);
 
-	/// Calculate the irradiance through the cover
-	calculateIrradianceThroughFrontCover(double angleOfIncidenceDegrees, double zenithAngleDegrees, double tiltDegrees, double poaBeam, double poaDiffuse, double poaGround);
+    /// Calculate the irradiance through the cover
+    calculateIrradianceThroughFrontCover(double angleOfIncidenceDegrees, double zenithAngleDegrees, double tiltDegrees,
+                                         double poaBeam, double poaDiffuse, double poaGround);
 };
 
 #endif

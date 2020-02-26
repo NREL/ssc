@@ -4,7 +4,7 @@
 #include "vartab.h"
 #include "cmod_battwatts_test.h"
 
-TEST_F(CMBattwatts_cmod_battwatts, ResilienceMetricsHalfLoad){
+TEST_F(CMBattwatts_cmod_battwatts, ResilienceMetricsHalfLoad) {
     CreateData(1);
 
     auto ssc_dat = static_cast<ssc_data_t>(&data);
@@ -32,7 +32,7 @@ TEST_F(CMBattwatts_cmod_battwatts, ResilienceMetricsHalfLoad){
 
 }
 
-TEST_F(CMBattwatts_cmod_battwatts, ResilienceMetricsHalfLoadLifetime){
+TEST_F(CMBattwatts_cmod_battwatts, ResilienceMetricsHalfLoadLifetime) {
     CreateData(2);
 
     auto ssc_dat = static_cast<ssc_data_t>(&data);
@@ -56,7 +56,7 @@ TEST_F(CMBattwatts_cmod_battwatts, ResilienceMetricsHalfLoadLifetime){
     EXPECT_EQ(resilience_hrs_max, 32);
     EXPECT_EQ(outage_durations[0], 16);
     EXPECT_EQ(outage_durations[16], 32);
-    EXPECT_NEAR(pdf_of_surviving[0], 0.00205/2, 1e-5);
-    EXPECT_NEAR(pdf_of_surviving[1], 0.00217/2, 1e-5);
+    EXPECT_NEAR(pdf_of_surviving[0], 0.00205 / 2, 1e-5);
+    EXPECT_NEAR(pdf_of_surviving[1], 0.00217 / 2, 1e-5);
 
 }

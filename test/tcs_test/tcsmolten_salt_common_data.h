@@ -14,24 +14,27 @@ char wlim_series_path[512];
 char helio_positions_path[512];
 
 
-int nmspt1 = sprintf(dispatch_factors_path, "%s/test/input_cases/moltensalt_data/dispatch_factors_ts.csv", std::getenv("SSCDIR"));
+int nmspt1 = sprintf(dispatch_factors_path, "%s/test/input_cases/moltensalt_data/dispatch_factors_ts.csv",
+                     std::getenv("SSCDIR"));
 int nmspt2 = sprintf(ud_ind_od_path, "%s/test/input_cases/moltensalt_data/ud_ind_od.csv", std::getenv("SSCDIR"));
 int nmspt3 = sprintf(wlim_series_path, "%s/test/input_cases/moltensalt_data/wlim_series.csv", std::getenv("SSCDIR"));
-int nmspt4 = sprintf(helio_positions_path, "%s/test/input_cases/moltensalt_data/helio_positions.csv", std::getenv("SSCDIR"));
+int nmspt4 = sprintf(helio_positions_path, "%s/test/input_cases/moltensalt_data/helio_positions.csv",
+                     std::getenv("SSCDIR"));
 
 /**
 *  Default data for tcsmolten_salt run that can be further modified
 */
-void tcsmolten_salt_default(ssc_data_t &data)
-{
-	char solar_resource_path[512];
+void tcsmolten_salt_default(ssc_data_t &data) {
+    char solar_resource_path[512];
     // This is a copy of the actual weather file used, which has been copied to the ssc repo so it can be found by Travis CI for its tests.
     //  The actual weather file used by SAM could change and thus change the UI output values (different input (i.e., weather file) -> different outputs)
-	int n1 = sprintf(solar_resource_path, "%s/test/input_cases/moltensalt_data/daggett_ca_34.865371_-116.783023_psmv3_60_tmy.csv", std::getenv("SSCDIR"));
+    int n1 = sprintf(solar_resource_path,
+                     "%s/test/input_cases/moltensalt_data/daggett_ca_34.865371_-116.783023_psmv3_60_tmy.csv",
+                     std::getenv("SSCDIR"));
 
-	ssc_data_set_string(data, "solar_resource_file", solar_resource_path);
-	ssc_data_set_number(data, "ppa_multiplier_model", 0);
-	set_array(data, "dispatch_factors_ts", dispatch_factors_path, 8760);
+    ssc_data_set_string(data, "solar_resource_file", solar_resource_path);
+    ssc_data_set_number(data, "ppa_multiplier_model", 0);
+    set_array(data, "dispatch_factors_ts", dispatch_factors_path, 8760);
     ssc_data_set_number(data, "field_model_type", 2);
     ssc_data_set_number(data, "gross_net_conversion_factor", 0.90000000000000002);
     ssc_data_set_number(data, "helio_width", 12.199999999999999);
@@ -105,7 +108,7 @@ void tcsmolten_salt_default(ssc_data_t &data)
     ssc_data_set_number(data, "th_tube", 1.25);
     ssc_data_set_number(data, "mat_tube", 2);
     ssc_data_set_number(data, "rec_htf", 17);
-    ssc_number_t p_field_fl_props[9] = { 1, 7, 0, 0, 0, 0, 0, 0, 0 };
+    ssc_number_t p_field_fl_props[9] = {1, 7, 0, 0, 0, 0, 0, 0, 0};
     ssc_data_set_matrix(data, "field_fl_props", p_field_fl_props, 1, 9);
     ssc_data_set_number(data, "Flow_type", 1);
     ssc_data_set_number(data, "epsilon", 0.88);
@@ -190,7 +193,7 @@ void tcsmolten_salt_default(ssc_data_t &data)
     ssc_data_set_number(data, "pb_bd_frac", 0.02);
     ssc_data_set_number(data, "P_cond_min", 2);
     ssc_data_set_number(data, "n_pl_inc", 8);
-    ssc_number_t p_F_wc[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+    ssc_number_t p_F_wc[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
     ssc_data_set_array(data, "F_wc", p_F_wc, 9);
     ssc_data_set_number(data, "tech_type", 1);
     ssc_data_set_number(data, "ud_T_amb_des", 43);
@@ -202,7 +205,7 @@ void tcsmolten_salt_default(ssc_data_t &data)
     ssc_data_set_number(data, "ud_T_amb_high", 55);
     ssc_data_set_number(data, "ud_m_dot_htf_low", 0.29999999999999999);
     ssc_data_set_number(data, "ud_m_dot_htf_high", 1.2);
-	set_matrix(data, "ud_ind_od", ud_ind_od_path, 180, 7);
+    set_matrix(data, "ud_ind_od", ud_ind_od_path, 180, 7);
     ssc_data_set_number(data, "sco2_cycle_config", 1);
     ssc_data_set_number(data, "eta_c", 0.89000000000000001);
     ssc_data_set_number(data, "eta_t", 0.90000000000000002);
@@ -220,11 +223,14 @@ void tcsmolten_salt_default(ssc_data_t &data)
     ssc_data_set_number(data, "sco2ud_T_amb_high", 0);
     ssc_data_set_number(data, "sco2ud_m_dot_htf_low", 0);
     ssc_data_set_number(data, "sco2ud_m_dot_htf_high", 0);
-    ssc_number_t p_sco2ud_T_htf_ind_od[39] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+    ssc_number_t p_sco2ud_T_htf_ind_od[39] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                                              1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
     ssc_data_set_matrix(data, "sco2ud_T_htf_ind_od", p_sco2ud_T_htf_ind_od, 3, 13);
-    ssc_number_t p_sco2ud_T_amb_ind_od[39] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+    ssc_number_t p_sco2ud_T_amb_ind_od[39] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                                              1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
     ssc_data_set_matrix(data, "sco2ud_T_amb_ind_od", p_sco2ud_T_amb_ind_od, 3, 13);
-    ssc_number_t p_sco2ud_m_dot_htf_ind_od[39] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+    ssc_number_t p_sco2ud_m_dot_htf_ind_od[39] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                                                  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
     ssc_data_set_matrix(data, "sco2ud_m_dot_htf_ind_od", p_sco2ud_m_dot_htf_ind_od, 3, 13);
     ssc_data_set_number(data, "_sco2_P_high_limit", 9.9999999999999998e+37);
     ssc_data_set_number(data, "_sco2_P_ref", 9.9999999999999998e+37);
@@ -249,11 +255,33 @@ void tcsmolten_salt_default(ssc_data_t &data)
     ssc_data_set_number(data, "bop_par_0", 0);
     ssc_data_set_number(data, "bop_par_1", 0.48299999999999998);
     ssc_data_set_number(data, "bop_par_2", 0);
-    ssc_number_t p_f_turb_tou_periods[9] = { 1.05, 1, 1, 1, 1, 1, 1, 1, 1 };
+    ssc_number_t p_f_turb_tou_periods[9] = {1.05, 1, 1, 1, 1, 1, 1, 1, 1};
     ssc_data_set_array(data, "f_turb_tou_periods", p_f_turb_tou_periods, 9);
-    ssc_number_t p_weekday_schedule[288] = { 6, 6, 6, 6, 6, 6, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 6, 6, 6, 6, 6, 6, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5 };
+    ssc_number_t p_weekday_schedule[288] = {6, 6, 6, 6, 6, 6, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 6,
+                                            6, 6, 6, 6, 6, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 6, 6,
+                                            6, 6, 6, 6, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 6, 6, 6,
+                                            6, 6, 6, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 6, 6, 6, 6,
+                                            6, 6, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 3, 3, 3, 3, 3,
+                                            3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+                                            3, 3, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+                                            3, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+                                            2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 6, 6, 6, 6, 6, 6, 5, 5, 4,
+                                            4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 4, 4,
+                                            4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 4, 4, 4,
+                                            4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5};
     ssc_data_set_matrix(data, "weekday_schedule", p_weekday_schedule, 12, 24);
-    ssc_number_t p_weekend_schedule[288] = { 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 };
+    ssc_number_t p_weekend_schedule[288] = {6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6,
+                                            6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6,
+                                            6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6,
+                                            6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6,
+                                            6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 3, 3, 3, 3, 3,
+                                            3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+                                            3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+                                            3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+                                            3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 6, 6, 6, 6, 6, 6, 5, 5, 5,
+                                            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 5, 5,
+                                            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5,
+                                            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5};
     ssc_data_set_matrix(data, "weekend_schedule", p_weekend_schedule, 12, 24);
     ssc_data_set_number(data, "is_dispatch", 0);
     ssc_data_set_number(data, "disp_horizon", 48);
@@ -266,10 +294,34 @@ void tcsmolten_salt_default(ssc_data_t &data)
     ssc_data_set_number(data, "disp_csu_cost", 10000);
     ssc_data_set_number(data, "disp_pen_delta_w", 0.10000000000000001);
     ssc_data_set_number(data, "is_wlim_series", 0);
-	set_array(data, "wlim_series", wlim_series_path, 8760);
-    ssc_number_t p_dispatch_sched_weekday[288] = { 6, 6, 6, 6, 6, 6, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 6, 6, 6, 6, 6, 6, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5 };
+    set_array(data, "wlim_series", wlim_series_path, 8760);
+    ssc_number_t p_dispatch_sched_weekday[288] = {6, 6, 6, 6, 6, 6, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5,
+                                                  5, 6, 6, 6, 6, 6, 6, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5,
+                                                  5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+                                                  5, 5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+                                                  4, 5, 5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+                                                  4, 4, 5, 5, 5, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1,
+                                                  2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1, 1,
+                                                  1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1,
+                                                  1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1,
+                                                  1, 1, 1, 2, 2, 2, 3, 3, 3, 6, 6, 6, 6, 6, 6, 5, 5, 4, 4, 4, 4, 4, 4,
+                                                  4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 4, 4, 4, 4, 4,
+                                                  4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 4, 4, 4, 4,
+                                                  4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5};
     ssc_data_set_matrix(data, "dispatch_sched_weekday", p_dispatch_sched_weekday, 12, 24);
-    ssc_number_t p_dispatch_sched_weekend[288] = { 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 };
+    ssc_number_t p_dispatch_sched_weekend[288] = {6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+                                                  5, 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+                                                  5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+                                                  5, 5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+                                                  5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+                                                  5, 5, 5, 5, 5, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+                                                  3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+                                                  3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+                                                  3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+                                                  3, 3, 3, 3, 3, 3, 3, 3, 3, 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5,
+                                                  5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5,
+                                                  5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5,
+                                                  5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5};
     ssc_data_set_matrix(data, "dispatch_sched_weekend", p_dispatch_sched_weekend, 12, 24);
     ssc_data_set_number(data, "dispatch_factor1", 2.0640000000000001);
     ssc_data_set_number(data, "dispatch_factor2", 1.2);
@@ -281,12 +333,12 @@ void tcsmolten_salt_default(ssc_data_t &data)
     ssc_data_set_number(data, "dispatch_factor8", 1);
     ssc_data_set_number(data, "dispatch_factor9", 1);
     ssc_data_set_number(data, "is_dispatch_series", 0);
-    ssc_number_t p_dispatch_series[1] = { 0 };
+    ssc_number_t p_dispatch_series[1] = {0};
     ssc_data_set_array(data, "dispatch_series", p_dispatch_series, 1);
     ssc_data_set_number(data, "rec_height", 21.602900000000002);
     ssc_data_set_number(data, "D_rec", 17.649999999999999);
     ssc_data_set_number(data, "h_tower", 193.458);
-	set_matrix(data, "helio_positions", helio_positions_path, 8790, 2);
+    set_matrix(data, "helio_positions", helio_positions_path, 8790, 2);
     ssc_data_set_number(data, "land_area_base", 1847.04);
     ssc_data_set_number(data, "const_per_interest_rate1", 4);
     ssc_data_set_number(data, "const_per_interest_rate2", 0);
@@ -316,12 +368,11 @@ void tcsmolten_salt_default(ssc_data_t &data)
 /**
 *  Default data for the PPA single owner (utility) run that can be further modified
 */
-void single_owner_default(ssc_data_t &data)
-{
+void single_owner_default(ssc_data_t &data) {
     ssc_data_set_number(data, "analysis_period", 25);
-    ssc_number_t p_federal_tax_rate[1] = { 21 };
+    ssc_number_t p_federal_tax_rate[1] = {21};
     ssc_data_set_array(data, "federal_tax_rate", p_federal_tax_rate, 1);
-    ssc_number_t p_state_tax_rate[1] = { 7 };
+    ssc_number_t p_state_tax_rate[1] = {7};
     ssc_data_set_array(data, "state_tax_rate", p_state_tax_rate, 1);
     ssc_data_set_number(data, "property_tax_rate", 0);
     ssc_data_set_number(data, "prop_tax_cost_assessed_percent", 100);
@@ -330,16 +381,16 @@ void single_owner_default(ssc_data_t &data)
     ssc_data_set_number(data, "inflation_rate", 2.5);
     ssc_data_set_number(data, "insurance_rate", 0.5);
     ssc_data_set_number(data, "system_capacity", 103500);
-    ssc_number_t p_om_fixed[1] = { 0 };
+    ssc_number_t p_om_fixed[1] = {0};
     ssc_data_set_array(data, "om_fixed", p_om_fixed, 1);
     ssc_data_set_number(data, "om_fixed_escal", 0);
-    ssc_number_t p_om_production[1] = { 3.5 };
+    ssc_number_t p_om_production[1] = {3.5};
     ssc_data_set_array(data, "om_production", p_om_production, 1);
     ssc_data_set_number(data, "om_production_escal", 0);
-    ssc_number_t p_om_capacity[1] = { 66 };
+    ssc_number_t p_om_capacity[1] = {66};
     ssc_data_set_array(data, "om_capacity", p_om_capacity, 1);
     ssc_data_set_number(data, "om_capacity_escal", 0);
-    ssc_number_t p_om_fuel_cost[1] = { 0 };
+    ssc_number_t p_om_fuel_cost[1] = {0};
     ssc_data_set_array(data, "om_fuel_cost", p_om_fuel_cost, 1);
     ssc_data_set_number(data, "om_fuel_cost_escal", 0);
     ssc_data_set_number(data, "itc_fed_amount", 0);
@@ -356,11 +407,11 @@ void single_owner_default(ssc_data_t &data)
     ssc_data_set_number(data, "itc_sta_percent_maxvalue", 10e+37);
     ssc_data_set_number(data, "itc_sta_percent_deprbas_fed", 0);
     ssc_data_set_number(data, "itc_sta_percent_deprbas_sta", 0);
-    ssc_number_t p_ptc_fed_amount[1] = { 0 };
+    ssc_number_t p_ptc_fed_amount[1] = {0};
     ssc_data_set_array(data, "ptc_fed_amount", p_ptc_fed_amount, 1);
     ssc_data_set_number(data, "ptc_fed_term", 10);
     ssc_data_set_number(data, "ptc_fed_escal", 0);
-    ssc_number_t p_ptc_sta_amount[1] = { 0 };
+    ssc_number_t p_ptc_sta_amount[1] = {0};
     ssc_data_set_array(data, "ptc_sta_amount", p_ptc_sta_amount, 1);
     ssc_data_set_number(data, "ptc_sta_term", 10);
     ssc_data_set_number(data, "ptc_sta_escal", 0);
@@ -432,33 +483,33 @@ void single_owner_default(ssc_data_t &data)
     ssc_data_set_number(data, "cbi_oth_tax_sta", 1);
     ssc_data_set_number(data, "cbi_oth_deprbas_fed", 0);
     ssc_data_set_number(data, "cbi_oth_deprbas_sta", 0);
-    ssc_number_t p_pbi_fed_amount[1] = { 0 };
+    ssc_number_t p_pbi_fed_amount[1] = {0};
     ssc_data_set_array(data, "pbi_fed_amount", p_pbi_fed_amount, 1);
     ssc_data_set_number(data, "pbi_fed_term", 0);
     ssc_data_set_number(data, "pbi_fed_escal", 0);
     ssc_data_set_number(data, "pbi_fed_tax_fed", 1);
     ssc_data_set_number(data, "pbi_fed_tax_sta", 1);
-    ssc_number_t p_pbi_sta_amount[1] = { 0 };
+    ssc_number_t p_pbi_sta_amount[1] = {0};
     ssc_data_set_array(data, "pbi_sta_amount", p_pbi_sta_amount, 1);
     ssc_data_set_number(data, "pbi_sta_term", 0);
     ssc_data_set_number(data, "pbi_sta_escal", 0);
     ssc_data_set_number(data, "pbi_sta_tax_fed", 1);
     ssc_data_set_number(data, "pbi_sta_tax_sta", 1);
-    ssc_number_t p_pbi_uti_amount[1] = { 0 };
+    ssc_number_t p_pbi_uti_amount[1] = {0};
     ssc_data_set_array(data, "pbi_uti_amount", p_pbi_uti_amount, 1);
     ssc_data_set_number(data, "pbi_uti_term", 0);
     ssc_data_set_number(data, "pbi_uti_escal", 0);
     ssc_data_set_number(data, "pbi_uti_tax_fed", 1);
     ssc_data_set_number(data, "pbi_uti_tax_sta", 1);
-    ssc_number_t p_pbi_oth_amount[1] = { 0 };
+    ssc_number_t p_pbi_oth_amount[1] = {0};
     ssc_data_set_array(data, "pbi_oth_amount", p_pbi_oth_amount, 1);
     ssc_data_set_number(data, "pbi_oth_term", 0);
     ssc_data_set_number(data, "pbi_oth_escal", 0);
     ssc_data_set_number(data, "pbi_oth_tax_fed", 1);
     ssc_data_set_number(data, "pbi_oth_tax_sta", 1);
-    ssc_number_t p_degradation[1] = { 0 };
+    ssc_number_t p_degradation[1] = {0};
     ssc_data_set_array(data, "degradation", p_degradation, 1);
-    ssc_number_t p_roe_input[1] = { 0 };
+    ssc_number_t p_roe_input[1] = {0};
     ssc_data_set_array(data, "roe_input", p_roe_input, 1);
     ssc_data_set_number(data, "loan_moratorium", 0);
     ssc_data_set_number(data, "system_use_recapitalization", 0);
@@ -475,15 +526,15 @@ void single_owner_default(ssc_data_t &data)
     ssc_data_set_number(data, "equip_reserve_depr_fed", 0);
     ssc_data_set_number(data, "salvage_percentage", 0);
     ssc_data_set_number(data, "ppa_soln_mode", 0);
-	ssc_number_t p_ppa_price_input[1] = { 0.13 };
-	ssc_data_set_array(data, "ppa_price_input", p_ppa_price_input, 1);
-	ssc_data_set_number(data, "cp_capacity_payment_esc", 0);
-	ssc_data_set_number(data, "cp_capacity_payment_type", 0);
-	ssc_data_set_number(data, "cp_system_nameplate", 0);
-	ssc_data_set_number(data, "cp_battery_nameplate", 0);
-	ssc_data_set_array(data, "cp_capacity_credit_percent", p_ppa_price_input, 1);
-	ssc_data_set_array(data, "cp_capacity_payment_amount", p_ppa_price_input, 1);
-	ssc_data_set_number(data, "ppa_escalation", 1);
+    ssc_number_t p_ppa_price_input[1] = {0.13};
+    ssc_data_set_array(data, "ppa_price_input", p_ppa_price_input, 1);
+    ssc_data_set_number(data, "cp_capacity_payment_esc", 0);
+    ssc_data_set_number(data, "cp_capacity_payment_type", 0);
+    ssc_data_set_number(data, "cp_system_nameplate", 0);
+    ssc_data_set_number(data, "cp_battery_nameplate", 0);
+    ssc_data_set_array(data, "cp_capacity_credit_percent", p_ppa_price_input, 1);
+    ssc_data_set_array(data, "cp_capacity_payment_amount", p_ppa_price_input, 1);
+    ssc_data_set_number(data, "ppa_escalation", 1);
     ssc_data_set_number(data, "construction_financing_cost", 33673276);
     ssc_data_set_number(data, "term_tenor", 18);
     ssc_data_set_number(data, "term_int_rate", 7);
@@ -506,7 +557,7 @@ void single_owner_default(ssc_data_t &data)
     ssc_data_set_number(data, "depr_alloc_sl_20_percent", 3);
     ssc_data_set_number(data, "depr_alloc_sl_39_percent", 0);
     ssc_data_set_number(data, "depr_alloc_custom_percent", 0);
-    ssc_number_t p_depr_custom_schedule[1] = { 0 };
+    ssc_number_t p_depr_custom_schedule[1] = {0};
     ssc_data_set_array(data, "depr_custom_schedule", p_depr_custom_schedule, 1);
     ssc_data_set_number(data, "depr_bonus_sta", 0);
     ssc_data_set_number(data, "depr_bonus_sta_macrs_5", 1);

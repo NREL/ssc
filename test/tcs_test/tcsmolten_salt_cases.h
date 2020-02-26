@@ -13,53 +13,51 @@
 */
 
 // Power Tower molten salt default congifuration
-int tcsmolten_salt_daggett_default(ssc_data_t &data)
-{
+int tcsmolten_salt_daggett_default(ssc_data_t &data) {
     tcsmolten_salt_default(data);
-	
-	int status = run_module(data, "tcsmolten_salt");
+
+    int status = run_module(data, "tcsmolten_salt");
 
     //single_owner_default(data);
     //status += run_module(data, "singleowner");
 
-	return status;
+    return status;
 }
 
 // Power Tower molten salt with alternative turbine inlet pressure control
 // Turbine inlet pressure control: Sliding pressure
 // Rest default configurations
-int tcsmolten_salt_daggett_sliding_pressure(ssc_data_t &data)
-{
-	tcsmolten_salt_default(data);
-	
-	ssc_data_set_number(data, "tech_type", 3);
-	
-	int status = run_module(data, "tcsmolten_salt");
-	
-	return status;
+int tcsmolten_salt_daggett_sliding_pressure(ssc_data_t &data) {
+    tcsmolten_salt_default(data);
+
+    ssc_data_set_number(data, "tech_type", 3);
+
+    int status = run_module(data, "tcsmolten_salt");
+
+    return status;
 }
 
 // Power tower molten salt with alternative condenser type
-// Condenser type: Evaporative 
-// Rest default configurations 
+// Condenser type: Evaporative
+// Rest default configurations
 //int tcsmolten_salt_daggett_evap_condenser(ssc_data_t &data)
 //{
 //	tcsmolten_salt_default(data);
-//	
+//
 //	ssc_data_set_number(data, "CT", 1);
 //
 //	int status = run_module(data, "tcsmolten_salt");
-//	
+//
 //	return status;
 //}
 
 // Power tower molten salt with alternative condenser type
 // Condenser type: Hybrid
-// Rest default configurations 
+// Rest default configurations
 //int tcsmolten_salt_daggett_hybrid_condenser(ssc_data_t &data)
 //{
 //	tcsmolten_salt_default(data);
-//	
+//
 //	ssc_data_set_number(data, "CT", 3);
 //
 //	int status = run_module(data, "tcsmolten_salt");
@@ -69,11 +67,11 @@ int tcsmolten_salt_daggett_sliding_pressure(ssc_data_t &data)
 
 // Power tower molten salt with alternative condenser type
 // Condenser type: Radiative
-// Rest default configurations 
+// Rest default configurations
 //int tcsmolten_salt_daggett_radiative_condenser(ssc_data_t &data)
 //{
 //	tcsmolten_salt_default(data);
-//	
+//
 //	// Start of radiative-cooling metrics
 //	ssc_data_set_number(data, "h_ctes_tank_min", 1);
 //	ssc_data_set_number(data, "ctes_tshours", 15);
@@ -116,26 +114,25 @@ int tcsmolten_salt_daggett_sliding_pressure(ssc_data_t &data)
 //}
 
 // Power Tower molten salt with alternative flow pattern
-// Flow pattern: 8 
+// Flow pattern: 8
 // Rest default configurations
-int tcsmolten_salt_daggett_flow_pattern(ssc_data_t &data)
-{
-	tcsmolten_salt_default(data);
-	
-	ssc_data_set_number(data, "Flow_type", 8);
+int tcsmolten_salt_daggett_flow_pattern(ssc_data_t &data) {
+    tcsmolten_salt_default(data);
 
-	int status = run_module(data, "tcsmolten_salt");
+    ssc_data_set_number(data, "Flow_type", 8);
 
-	return status;
+    int status = run_module(data, "tcsmolten_salt");
+
+    return status;
 }
 
 // Power Tower molten salt with alternative location
-// Location: Tucson, Arizona 
+// Location: Tucson, Arizona
 // Rest default configurations
 //int tcsmolten_salt_Tucson_AZ(ssc_data_t &data)
 //{
 //	tcsmolten_salt_default(data);
-//	
+//
 //	char solar_resource_path_tucson[512];
 //	int n = sprintf(solar_resource_path_tucson, "%s/test/input_cases/moltensalt_data/tucson_az_32.116521_-110.933042_psmv3_60_tmy.csv", std::getenv("SSCDIR"));
 //	ssc_data_set_string(data, "solar_resource_file", solar_resource_path_tucson);
@@ -150,7 +147,7 @@ int tcsmolten_salt_daggett_flow_pattern(ssc_data_t &data)
 //int tcsmolten_salt_daggett_UD_default(ssc_data_t &data)
 //{
 //	tcsmolten_salt_default(data);
-//	
+//
 //	set_matrix(data, "ud_ind_od", ud_ind_od_path, 180, 7);
 //	ssc_data_set_number(data, "pc_config", 1);
 //	ssc_data_set_number(data, "ud_m_dot_htf_low", 0.3);
@@ -207,7 +204,7 @@ int tcsmolten_salt_daggett_flow_pattern(ssc_data_t &data)
 //int tcsmolten_salt_daggett_SCO2_partial_cooling(ssc_data_t &data)
 //{
 //	tcsmolten_salt_default(data);
-//	
+//
 //	ssc_data_set_number(data, "pc_config", 2);
 //	ssc_data_set_number(data, "cycle_cutoff_frac", 0.5);
 //	// Start of super critical CO2 metrics
@@ -235,7 +232,7 @@ int tcsmolten_salt_daggett_flow_pattern(ssc_data_t &data)
 //	ssc_data_set_number(data, "_sco2_eta_t", 0.9);
 //	ssc_data_set_number(data, "_sco2_recup_eff_max", 0.96);
 //	//End of super critical CO2 metrics
-//	
+//
 //	int status = run_module(data, "tcsmolten_salt");
 //
 //	return status;
@@ -265,28 +262,28 @@ int tcsmolten_salt_daggett_flow_pattern(ssc_data_t &data)
 //	ssc_data_set_matrix(data, "sco2ud_T_amb_ind_od", p_sco2ud_T_amb_ind_od, 10, 13);
 //	ssc_number_t p_sco2ud_m_dot_htf_ind_od[130] = { 0.5, 0.50000238394483887, 0.50002030400496988, 0.5000072744279479, 0.49996830468452913, 0.54311461140321193, 0.58949291750771449, 0.0023965079935530688, 0.050651289208334289, 0.085268991630535099, 1, 1, 1, 0.56111111111111112, 0.56107350053341665, 0.56109752841228611, 0.56110469253490813, 0.55257347648896971, 0.59674948077268875, 0.64372698634700765, 0.0035623149303332731, 0.076089576895326735, 0.12158112224599875, 1, 1, 1, 0.62222222222222223, 0.62224697121064898, 0.62224996267725707, 0.62219761804463092, 0.60616131300962228, 0.65145619071565242, 0.69969734374588888, 0.0052256619247860641, 0.11370919032872756, 0.17234788816884622, 1, 1, 1, 0.68333333333333335, 0.68334763160686485, 0.68332772806833242, 0.68334268666386189, 0.66063755666452395, 0.70667012650879169, 0.75616720875118448, 0.0076071355040999147, 0.16722335929420953, 0.24228904960439612, 1, 1, 1, 0.74444444444444446, 0.74441099641078146, 0.74443754704645426, 0.73579757426674453, 0.7154614610083625, 0.76238207877819242, 0.80635338615523044, 0.010993657103543011, 0.24183918938496599, 0.28923568019902324, 1, 1, 1, 0.80555555555555558, 0.80548586203577432, 0.80556625128549619, 0.7607325689541361, 0.7709115279333274, 0.81874600280477805, 0.81846324371170665, 0.015863026451133713, 0.34650772248743805, 0.32712367869313513, 1, 1, 1, 0.8666666666666667, 0.86665068706416915, 0.86667726624963815, 0.77310372269008887, 0.82666048629288214, 0.87575544351530044, 0.82250334117333646, 0.022915833888653158, 0.49058181757621305, 0.32138671984149092, 1, 1, 1, 0.92777777777777781, 0.92781567340041837, 0.92781937609673271, 0.78228939831004085, 0.88241774237123771, 0.93313651551826904, 0.82559824503018264, 0.033028022568911568, 0.6869968410833619, 0.31804744512991351, 1, 1, 1, 0.98888888888888893, 0.98860321834099996, 0.98888850977399578, 0.78897052574490523, 0.93832104872570143, 0.99049121752897784, 0.82770087400040337, 0.049618846148749549, 0.94725737476210103, 0.31520682775233339, 1, 1, 1, 1.05, 1.0487348778724641, 1.0062218585376423, 0.79376542360284852, 1.0039295318936428, 1.0043865029637598, 0.82928412460314016, 0.049807927876335194, 0.99339517007581468, 0.31300940662606114, 1, 1, 1 };
 //	ssc_data_set_matrix(data, "sco2ud_m_dot_htf_ind_od", p_sco2ud_m_dot_htf_ind_od, 10, 13);
-//	
+//
 //	int status = run_module(data, "tcsmolten_salt");
 //
 //	return status;
 //}
 
-// Molten Salt power tower - Super-critical CO2 power cycle 
+// Molten Salt power tower - Super-critical CO2 power cycle
 // ACTS framework driven testing
 //int ACTS_sCO2_testing(ssc_data_t &data, int test_case)
 //{
 //	tcsmolten_salt_default(data);
 //
 //	//ssc_data_set_number(data, "T_htf_cold_des", 414.53549194335938);	// Different values each run ... But have no effect on outputs
-//	
+//
 //	ssc_data_set_number(data, "pc_config", 2);
-//	
+//
 //	ssc_data_set_number(data, "cycle_cutoff_frac", 0.5);
-//	
+//
 //	//ssc_data_set_number(data, "sco2ud_T_htf_cold_calc", 414.53549194335938);	// Different values each run ... But have no effect on outputs
 //	ssc_data_set_number(data, "sco2ud_T_htf_low", 554);
 //	ssc_data_set_number(data, "sco2ud_T_htf_high", 589);
-//	
+//
 //	ssc_data_set_number(data, "sco2ud_T_amb_high", 45);
 //	ssc_data_set_number(data, "sco2ud_m_dot_htf_low", 0.5);
 //	ssc_data_set_number(data, "sco2ud_m_dot_htf_high", 1.05);
@@ -307,7 +304,7 @@ int tcsmolten_salt_daggett_flow_pattern(ssc_data_t &data)
 //	ssc_data_set_number(data, "_sco2_eta_c", 0.89);
 //	ssc_data_set_number(data, "_sco2_eta_t", 0.9);
 //	ssc_data_set_number(data, "_sco2_recup_eff_max", 0.96);
-//	
+//
 //	// Testing level to vector index map
 //	std::unordered_map<int, int> idx =
 //	{
@@ -325,7 +322,7 @@ int tcsmolten_salt_daggett_flow_pattern(ssc_data_t &data)
 //	std::vector<double> fan_power_perc_net_vals{ 0.25, 1.5, 5 };	// Cooling fan electricity consumption			// SAM SSC - "fan_power_perc_net"
 //
 //	// Full ACTS sCO2 framework - 15 total tests, where 6/15 tests are actually able to simulate on the SAM UI
-//	
+//
 //	// Test case pass/fail summary                 1   2   3   4   5   6   7   8   9  10  11  12  13  14  15
 //	// P = Pass & F = Fail in SAM UI               F   P   F   P   P   F   P   F   F   F   F   P   F   F   P
 //	//      std::vector<int> sco2_T_amb_des_lvls{ -1, -1, -1,  0,  0,  0,  1,  1,  1, -1,  0,  1,  1, -1,  1 };
@@ -334,14 +331,14 @@ int tcsmolten_salt_daggett_flow_pattern(ssc_data_t &data)
 //	//               std::vector<int> eta_c_lvls{  0,  1, -1, -1,  0,  1,  1, -1,  0,  0,  1,  1, -1,  1,  1 };
 //	//               std::vector<int> eta_t_lvls{  0,  1, -1,  0,  1, -1,  0,  1, -1, -1, -1,  0,  0,  1,  1 };
 //	//  std::vector<int> fan_power_perc_net_lvls{  0,  1, -1,  1, -1,  0, -1,  0,  1, -1, -1 , 0,  0,  1,  1 };
-//					
+//
 //
 //	// Passing ACTS sco2 tests within the SAM UI
 //	// NOTE:
 //	// Certain tests are able to completely pass the unit tests
 //	// using high tolerances while some tests still are
 //	// unable to pass using the high tolerances when testing outputs
-//	
+//
 //	// Unit test case pass/fall summary            2   4   5   7  12  15
 //	// P = Pass & F = Fail for tested outputs      F   F   P   P   P   F
 //	//      std::vector<int> sco2_T_amb_des_lvls{ -1,  0,  0,  1,  1,  1 };
@@ -369,7 +366,7 @@ int tcsmolten_salt_daggett_flow_pattern(ssc_data_t &data)
 //	double eta_t_ACTS = eta_t_vals.at(idx.find(eta_t_lvls.at(test_case))->second);
 //	double fan_power_perc_net_ACTS = fan_power_perc_net_vals.at(idx.find(fan_power_perc_net_lvls.at(test_case))->second);
 //
-//	// Assigning values to variables 
+//	// Assigning values to variables
 //	ssc_data_set_number(data, "sco2_T_amb_des", sco2_T_amb_des_ACTS);
 //	ssc_data_set_number(data, "sco2_T_approach", sco2_T_approach_ACTS);
 //	ssc_data_set_number(data, "deltaT_PHX", deltaT_PHX_ACTS);

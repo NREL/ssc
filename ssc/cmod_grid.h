@@ -55,130 +55,126 @@
 #include "core.h"
 #include "lib_time.h"
 
-struct gridVariables
-{
+struct gridVariables {
 public:
 
 //	gridVariables() {/* nothing to do */ };
-	gridVariables(compute_module & cm) : 
-		enable_interconnection_limit(cm.as_boolean("enable_interconnection_limit")),
-		grid_interconnection_limit_kW(cm.as_double("grid_interconnection_limit_kwac"))
-		
-	{
+    gridVariables(compute_module &cm) :
+            enable_interconnection_limit(cm.as_boolean("enable_interconnection_limit")),
+            grid_interconnection_limit_kW(cm.as_double("grid_interconnection_limit_kwac")) {
 
 
-		// System generation output, which is lifetime (if system_lifetime_output == true);
-		systemGenerationLifetime_kW = cm.as_vector_double("gen");
-		std::vector<double> load_year_one;
-		size_t n_rec_lifetime = systemGenerationLifetime_kW.size();
-		size_t n_rec_single_year;
-		if (cm.is_assigned("load")) {
-			load_year_one = cm.as_vector_double("load");
-		}
+        // System generation output, which is lifetime (if system_lifetime_output == true);
+        systemGenerationLifetime_kW = cm.as_vector_double("gen");
+        std::vector<double> load_year_one;
+        size_t n_rec_lifetime = systemGenerationLifetime_kW.size();
+        size_t n_rec_single_year;
+        if (cm.is_assigned("load")) {
+            load_year_one = cm.as_vector_double("load");
+        }
 
-		size_t analysis_period = 1;
-		if (cm.is_assigned("analysis_period")) {
-			analysis_period = (size_t)cm.as_integer("analysis_period");
-		}
-		bool system_use_lifetime_output = false;
-		if (cm.is_assigned("system_use_lifetime_output")) {
-			system_use_lifetime_output = (bool)cm.as_integer("system_use_lifetime_output");
-		}
+        size_t analysis_period = 1;
+        if (cm.is_assigned("analysis_period")) {
+            analysis_period = (size_t) cm.as_integer("analysis_period");
+        }
+        bool system_use_lifetime_output = false;
+        if (cm.is_assigned("system_use_lifetime_output")) {
+            system_use_lifetime_output = (bool) cm.as_integer("system_use_lifetime_output");
+        }
 
-		single_year_to_lifetime_interpolated<double>(
-			system_use_lifetime_output,
-			analysis_period,
-			n_rec_lifetime,
-			load_year_one,
-			loadLifetime_kW,
-			n_rec_single_year,
-			dt_hour_gen);
+        single_year_to_lifetime_interpolated<double>(
+                system_use_lifetime_output,
+                analysis_period,
+                n_rec_lifetime,
+                load_year_one,
+                loadLifetime_kW,
+                n_rec_single_year,
+                dt_hour_gen);
 
-		std::vector<double> curtailment_year_one;
-		if (cm.is_assigned("grid_curtailment")) {
-			curtailment_year_one = cm.as_vector_double("grid_curtailment");
-		}
-		single_year_to_lifetime_interpolated<double>(
-			system_use_lifetime_output,
-			(size_t)analysis_period,
-			n_rec_lifetime,
-			curtailment_year_one,
-			gridCurtailmentLifetime_MW,
-			n_rec_single_year,
-			dt_hour_gen);
+        std::vector<double> curtailment_year_one;
+        if (cm.is_assigned("grid_curtailment")) {
+            curtailment_year_one = cm.as_vector_double("grid_curtailment");
+        }
+        single_year_to_lifetime_interpolated<double>(
+                system_use_lifetime_output,
+                (size_t) analysis_period,
+                n_rec_lifetime,
+                curtailment_year_one,
+                gridCurtailmentLifetime_MW,
+                n_rec_single_year,
+                dt_hour_gen);
 
 
+        numberOfLifetimeRecords = n_rec_lifetime;
+        numberOfSingleYearRecords = n_rec_single_year;
+        numberOfYears = n_rec_lifetime / n_rec_single_year;
 
-		numberOfLifetimeRecords = n_rec_lifetime;
-		numberOfSingleYearRecords = n_rec_single_year;
-		numberOfYears = n_rec_lifetime / n_rec_single_year;
+        grid_kW.reserve(numberOfLifetimeRecords);
+        grid_kW = systemGenerationLifetime_kW;
 
-		grid_kW.reserve(numberOfLifetimeRecords);
-		grid_kW = systemGenerationLifetime_kW;
 
-		
-	}
-	// curtailment MW input
-	std::vector<double> gridCurtailmentLifetime_MW;
+    }
 
-	// generation input with interconnection limit
-	std::vector<double> systemGenerationLifetime_kW;
+    // curtailment MW input
+    std::vector<double> gridCurtailmentLifetime_MW;
 
-	// pre-interconnected limited generation output
-	std::vector<double> systemGenerationPreInterconnect_kW;
+    // generation input with interconnection limit
+    std::vector<double> systemGenerationLifetime_kW;
 
-	// electric load input
-	std::vector<double> loadLifetime_kW;
+    // pre-interconnected limited generation output
+    std::vector<double> systemGenerationPreInterconnect_kW;
 
-	// grid power
-	std::vector<double> grid_kW;
+    // electric load input
+    std::vector<double> loadLifetime_kW;
 
-	// enable interconnection limit
-	bool enable_interconnection_limit;
+    // grid power
+    std::vector<double> grid_kW;
 
-	// interconnection limit
-	double grid_interconnection_limit_kW;
+    // enable interconnection limit
+    bool enable_interconnection_limit;
 
-	// Number of records
-	size_t numberOfLifetimeRecords;
-	size_t numberOfSingleYearRecords;
-	size_t numberOfYears;
-	double dt_hour_gen;
+    // interconnection limit
+    double grid_interconnection_limit_kW;
+
+    // Number of records
+    size_t numberOfLifetimeRecords;
+    size_t numberOfSingleYearRecords;
+    size_t numberOfYears;
+    double dt_hour_gen;
 };
 
 extern var_info vtab_grid_input[];
 extern var_info vtab_grid_output[];
 
-class cm_grid : public compute_module
-{
+class cm_grid : public compute_module {
 public:
 
-	/// Default constructor
-	cm_grid();
+    /// Default constructor
+    cm_grid();
 
-	/// Default destructor
-	~cm_grid() { /* nothing to do */ };
+    /// Default destructor
+    ~cm_grid() { /* nothing to do */ };
 
-	/// construct since compute_module framework is fundamentally broken
-	void construct();
+    /// construct since compute_module framework is fundamentally broken
+    void construct();
 
-	/// Main execution
-	void exec() throw(general_error);
+    /// Main execution
+    void exec() throw(general_error);
 
-	/// Allocate Outputs
-	void allocateOutputs();
+    /// Allocate Outputs
+    void allocateOutputs();
 
 protected:
 
-	// internally allocated
-	std::unique_ptr<gridVariables> gridVars;
+    // internally allocated
+    std::unique_ptr<gridVariables> gridVars;
 
-	// outputs
-	ssc_number_t * p_gen_kW;
-	ssc_number_t * p_genPreCurtailment_kW;
-	ssc_number_t * p_genPreInterconnect_kW;
+    // outputs
+    ssc_number_t *p_gen_kW;
+    ssc_number_t *p_genPreCurtailment_kW;
+    ssc_number_t *p_genPreInterconnect_kW;
 
-	
+
 };
 
 #endif

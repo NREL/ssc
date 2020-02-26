@@ -15,38 +15,38 @@
  * CMWindPower tests the cmod_windpower using wind resource files and data arrays. SetUp() creates default case,
  * which can be modified within each individual test before running compute() and tests.
  */
-class CMWindPowerIntegration : public ::testing::Test{
+class CMWindPowerIntegration : public ::testing::Test {
 protected:
-	ssc_data_t data;
-	double e = 1000;
+    ssc_data_t data;
+    double e = 1000;
 
-	bool compute(bool errorNotExpected = true);
-	void SetUp(){
-		data = ssc_data_create();
-		int errors = windpower_nofinancial_testfile(data);
-		EXPECT_FALSE(errors);
-	}
-	void TearDown(){
-		ssc_data_free(data);
-		data = nullptr;
-	}
+    bool compute(bool errorNotExpected = true);
+
+    void SetUp() {
+        data = ssc_data_create();
+        int errors = windpower_nofinancial_testfile(data);
+        EXPECT_FALSE(errors);
+    }
+
+    void TearDown() {
+        ssc_data_free(data);
+        data = nullptr;
+    }
 };
 
-bool CMWindPowerIntegration::compute(bool errorNotExpected){
-	ssc_module_t module = ssc_module_create("windpower");
-	if (NULL == module)
-	{
-		if (errorNotExpected) printf("error: could not create 'windpower' module.");
-		return false;
-	}
-	if (ssc_module_exec(module, data) == 0)
-	{
-		if (errorNotExpected) printf("error during simulation.");
-		ssc_module_free(module);
-		return false;
-	}
-	ssc_module_free(module);
-	return true;
+bool CMWindPowerIntegration::compute(bool errorNotExpected) {
+    ssc_module_t module = ssc_module_create("windpower");
+    if (NULL == module) {
+        if (errorNotExpected) printf("error: could not create 'windpower' module.");
+        return false;
+    }
+    if (ssc_module_exec(module, data) == 0) {
+        if (errorNotExpected) printf("error during simulation.");
+        ssc_module_free(module);
+        return false;
+    }
+    ssc_module_free(module);
+    return true;
 }
 
 
