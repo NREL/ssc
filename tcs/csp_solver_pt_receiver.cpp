@@ -2,7 +2,7 @@
 *  Copyright 2017 Alliance for Sustainable Energy, LLC
 *
 *  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  (ï¿½Allianceï¿½) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
 *  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
 *  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
 *  copies to the public, perform publicly and display publicly, and to permit others to do so.
@@ -26,8 +26,8 @@
 *  4. Redistribution of this software, without modification, must refer to the software by the same
 *  designation. Redistribution of a modified version of this software (i) may not refer to the modified
 *  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  the underlying software originally provided by Alliance as ï¿½System Advisor Modelï¿½ or ï¿½SAMï¿½. Except
+*  to comply with the foregoing, the terms ï¿½System Advisor Modelï¿½, ï¿½SAMï¿½, or any confusingly similar
 *  designation may not be used to refer to any modified version of this software or any modified
 *  version of the underlying software originally provided by Alliance without the prior written consent
 *  of Alliance.
@@ -50,43 +50,38 @@
 #include "csp_solver_pt_receiver.h"
 #include "csp_solver_core.h"
 
-C_pt_receiver::C_pt_receiver()
-{
-	m_h_tower = std::numeric_limits<double>::quiet_NaN();
+C_pt_receiver::C_pt_receiver() {
+    m_h_tower = std::numeric_limits<double>::quiet_NaN();
     m_epsilon = std::numeric_limits<double>::quiet_NaN();
-	m_T_htf_hot_des = std::numeric_limits<double>::quiet_NaN();
-	m_T_htf_cold_des = std::numeric_limits<double>::quiet_NaN();
-	m_f_rec_min = std::numeric_limits<double>::quiet_NaN();
-	m_q_rec_des = std::numeric_limits<double>::quiet_NaN();
-	m_rec_su_delay = std::numeric_limits<double>::quiet_NaN();
-	m_rec_qf_delay = std::numeric_limits<double>::quiet_NaN();
-	m_m_dot_htf_max_frac = std::numeric_limits<double>::quiet_NaN();
+    m_T_htf_hot_des = std::numeric_limits<double>::quiet_NaN();
+    m_T_htf_cold_des = std::numeric_limits<double>::quiet_NaN();
+    m_f_rec_min = std::numeric_limits<double>::quiet_NaN();
+    m_q_rec_des = std::numeric_limits<double>::quiet_NaN();
+    m_rec_su_delay = std::numeric_limits<double>::quiet_NaN();
+    m_rec_qf_delay = std::numeric_limits<double>::quiet_NaN();
+    m_m_dot_htf_max_frac = std::numeric_limits<double>::quiet_NaN();
 
     m_eta_pump = std::numeric_limits<double>::quiet_NaN();
-	m_night_recirc = -1;
+    m_night_recirc = -1;
 
-	error_msg = "";
-	m_m_dot_htf_des = std::numeric_limits<double>::quiet_NaN();
+    error_msg = "";
+    m_m_dot_htf_des = std::numeric_limits<double>::quiet_NaN();
     m_mode = -1;
     m_mode_prev = -1;
 }
 
-int C_pt_receiver::get_operating_state()
-{
+int C_pt_receiver::get_operating_state() {
     return m_mode_prev;
 }
 
-HTFProperties *C_pt_receiver::get_htf_property_object()
-{
+HTFProperties *C_pt_receiver::get_htf_property_object() {
     return &field_htfProps;
 }
 
-double C_pt_receiver::get_startup_time()
-{
+double C_pt_receiver::get_startup_time() {
     return m_rec_su_delay * 3600.; // sec
 }
 
-double C_pt_receiver::get_startup_energy()
-{
+double C_pt_receiver::get_startup_energy() {
     return m_rec_qf_delay * m_q_rec_des * 1.e-6;  // MWh
 }

@@ -10,36 +10,35 @@
 /// Test standalone battery compute modeule with a input lifetime generation and commercial load
 TEST_F(CMBattery_cmod_battery, CommercialLifetimePeakShaving) {
 
-	// Run with fixed output
-	ssc_number_t n_years;
-	ssc_data_get_number(data, "analysis_period", &n_years);
-	size_t n_lifetime = (size_t)(n_years) * 8760;
+    // Run with fixed output
+    ssc_number_t n_years;
+    ssc_data_get_number(data, "analysis_period", &n_years);
+    size_t n_lifetime = (size_t) (n_years) * 8760;
 
-	int errors = run_module(data, "battery");
-	EXPECT_FALSE(errors);
+    int errors = run_module(data, "battery");
+    EXPECT_FALSE(errors);
 
-	if (!errors)
-	{
-		// roundtrip efficiency test will ensure that the battery cycled
-		ssc_number_t roundtripEfficiency;
-		ssc_data_get_number(data, "average_battery_roundtrip_efficiency", &roundtripEfficiency);
-		EXPECT_NEAR(roundtripEfficiency, 94.42, 2);
+    if (!errors) {
+        // roundtrip efficiency test will ensure that the battery cycled
+        ssc_number_t roundtripEfficiency;
+        ssc_data_get_number(data, "average_battery_roundtrip_efficiency", &roundtripEfficiency);
+        EXPECT_NEAR(roundtripEfficiency, 94.42, 2);
 
-		// test that lifetime output is achieved
-		int n;
-		calculated_array = ssc_data_get_array(data, "gen", &n);
-		EXPECT_EQ(n_lifetime, (size_t)n);
+        // test that lifetime output is achieved
+        int n;
+        calculated_array = ssc_data_get_array(data, "gen", &n);
+        EXPECT_EQ(n_lifetime, (size_t) n);
 
-		// test that battery was replaced at some point
-		calculated_array = ssc_data_get_array(data, "batt_bank_replacement", &n);
-		int replacements = std::accumulate(calculated_array, calculated_array + n, 0);
-		
-		EXPECT_GT(replacements, 0);
-	}
+        // test that battery was replaced at some point
+        calculated_array = ssc_data_get_array(data, "batt_bank_replacement", &n);
+        int replacements = std::accumulate(calculated_array, calculated_array + n, 0);
+
+        EXPECT_GT(replacements, 0);
+    }
 }
 
-TEST_F(CMBattery_cmod_battery, ResilienceMetricsFullLoad){
-    auto data_vtab = static_cast<var_table*>(data);
+TEST_F(CMBattery_cmod_battery, ResilienceMetricsFullLoad) {
+    auto data_vtab = static_cast<var_table *>(data);
     data_vtab->assign("crit_load", data_vtab->as_vector_ssc_number_t("load"));
     data_vtab->assign("system_use_lifetime_output", 0);
     data_vtab->assign("analysis_period", 1);
@@ -73,7 +72,7 @@ TEST_F(CMBattery_cmod_battery, ResilienceMetricsFullLoad){
     EXPECT_NEAR(power_max, 166.02, 1e-2);
 
     std::vector<size_t> max_indices;
-    for (size_t i = 0; i < batt_power.size(); i++){
+    for (size_t i = 0; i < batt_power.size(); i++) {
         if (power_max - batt_power[i] < 0.1)
             max_indices.push_back(i);
     }
@@ -85,16 +84,16 @@ TEST_F(CMBattery_cmod_battery, ResilienceMetricsFullLoad){
     EXPECT_NEAR(cap_max, 11540.6, 1e-2);
 
     max_indices.clear();
-    for (size_t i = 0; i < batt_q0.size(); i++){
+    for (size_t i = 0; i < batt_q0.size(); i++) {
         if (cap_max - batt_q0[i] < 0.01)
             max_indices.push_back(i);
     }
     EXPECT_EQ(max_indices[0], 2);
 }
 
-TEST_F(CMBattery_cmod_battery, ResilienceMetricsFullLoadLifetime){
+TEST_F(CMBattery_cmod_battery, ResilienceMetricsFullLoadLifetime) {
     int nyears = 3;
-    auto data_vtab = static_cast<var_table*>(data);
+    auto data_vtab = static_cast<var_table *>(data);
     data_vtab->assign("crit_load", data_vtab->as_vector_ssc_number_t("load"));
     data_vtab->assign("system_use_lifetime_output", 1);
     data_vtab->assign("analysis_period", nyears);
@@ -129,7 +128,7 @@ TEST_F(CMBattery_cmod_battery, ResilienceMetricsFullLoadLifetime){
     EXPECT_NEAR(power_max, 166.02, 1e-2);
 
     std::vector<size_t> max_indices;
-    for (size_t i = 0; i < batt_power.size(); i++){
+    for (size_t i = 0; i < batt_power.size(); i++) {
         if (power_max - batt_power[i] < 0.1)
             max_indices.push_back(i);
     }
@@ -140,7 +139,7 @@ TEST_F(CMBattery_cmod_battery, ResilienceMetricsFullLoadLifetime){
     EXPECT_NEAR(cap_max, 11540.6, 1e-2);
 
     max_indices.clear();
-    for (size_t i = 0; i < batt_q0.size(); i++){
+    for (size_t i = 0; i < batt_q0.size(); i++) {
         if (cap_max - batt_q0[i] < 0.01)
             max_indices.push_back(i);
     }

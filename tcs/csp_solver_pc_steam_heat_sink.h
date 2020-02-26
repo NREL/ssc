@@ -1,22 +1,22 @@
 /**
 BSD-3-Clause
 Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
 that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
 and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
 and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
 or promote products derived from this software without specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
@@ -28,92 +28,94 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "water_properties.h"
 
-class C_pc_steam_heat_sink : public C_csp_power_cycle
-{
+class C_pc_steam_heat_sink : public C_csp_power_cycle {
 
 public:
 
-	enum
-	{
-		E_Q_DOT_HEAT_SINK,
-		E_W_DOT_PUMPING			//[MWe]
-	};
+    enum {
+        E_Q_DOT_HEAT_SINK,
+        E_W_DOT_PUMPING            //[MWe]
+    };
 
-	C_csp_reported_outputs mc_reported_outputs;
+    C_csp_reported_outputs mc_reported_outputs;
 
 private:
 
-	double m_max_frac;		//[-]
+    double m_max_frac;        //[-]
 
-	void check_double_params_are_set();
+    void check_double_params_are_set();
 
 public:
-	// Class to save messages for up stream classes
-	C_csp_messages mc_csp_messages;
+    // Class to save messages for up stream classes
+    C_csp_messages mc_csp_messages;
 
-	water_state mc_water_props;
+    water_state mc_water_props;
 
-	struct S_params
-	{
-		double m_x_hot_des;		//[-]
-		double m_T_hot_des;		//[C]
-		double m_P_hot_des;		//[kPa]
-		double m_T_cold_des;	//[C]
-		double m_dP_frac_des;	//[-]
-		double m_q_dot_des;		//[MWt]
-		double m_m_dot_max_frac;	//[-]
-	
-		double m_pump_eta_isen;	//[-] Isentropic efficiency of pump
+    struct S_params {
+        double m_x_hot_des;        //[-]
+        double m_T_hot_des;        //[C]
+        double m_P_hot_des;        //[kPa]
+        double m_T_cold_des;    //[C]
+        double m_dP_frac_des;    //[-]
+        double m_q_dot_des;        //[MWt]
+        double m_m_dot_max_frac;    //[-]
 
-		S_params()
-		{
-			m_T_hot_des = m_P_hot_des = m_T_cold_des = 
-				m_dP_frac_des = m_q_dot_des = m_m_dot_max_frac =
-				
-				m_pump_eta_isen = std::numeric_limits<double>::quiet_NaN();
-		}
-	};
+        double m_pump_eta_isen;    //[-] Isentropic efficiency of pump
 
-	S_params ms_params;
-	
-	C_pc_steam_heat_sink();
+        S_params() {
+            m_T_hot_des = m_P_hot_des = m_T_cold_des =
+            m_dP_frac_des = m_q_dot_des = m_m_dot_max_frac =
 
-	~C_pc_steam_heat_sink(){};
+            m_pump_eta_isen = std::numeric_limits<double>::quiet_NaN();
+        }
+    };
 
-	virtual void init(C_csp_power_cycle::S_solved_params &solved_params);
+    S_params ms_params;
 
-	virtual int get_operating_state();
+    C_pc_steam_heat_sink();
 
-	virtual double get_cold_startup_time();
-	virtual double get_warm_startup_time();
-	virtual double get_hot_startup_time();
-	virtual double get_standby_energy_requirement();    //[MW]
-	virtual double get_cold_startup_energy();    //[MWh]
-	virtual double get_warm_startup_energy();    //[MWh]
-	virtual double get_hot_startup_energy();    //[MWh]
-	virtual double get_max_thermal_power();     //MW
-	virtual double get_min_thermal_power();     //MW
-	virtual void get_max_power_output_operation_constraints(double T_amb /*C*/, double & m_dot_HTF_ND_max, double & W_dot_ND_max);	//[-] Normalized over design power
-	virtual double get_efficiency_at_TPH(double T_degC, double P_atm, double relhum_pct, double *w_dot_condenser = 0);
-	virtual double get_efficiency_at_load(double load_frac, double *w_dot_condenser=0);
-	virtual double get_htf_pumping_parasitic_coef();		//[kWe/kWt]
+    ~C_pc_steam_heat_sink() {};
 
-	// This can vary between timesteps for Type224, depending on remaining startup energy and time
-	virtual double get_max_q_pc_startup();		//[MWt]
+    virtual void init(C_csp_power_cycle::S_solved_params &solved_params);
 
-	virtual void call(const C_csp_weatherreader::S_outputs &weather,
-		C_csp_solver_htf_1state &htf_state_in,
-		const C_csp_power_cycle::S_control_inputs &inputs,
-		C_csp_power_cycle::S_csp_pc_out_solver &out_solver,
-		//C_csp_power_cycle::S_csp_pc_out_report &out_report,
-		const C_csp_solver_sim_info &sim_info);
+    virtual int get_operating_state();
 
-	virtual void converged();
+    virtual double get_cold_startup_time();
 
-	virtual void write_output_intervals(double report_time_start,
-		const std::vector<double> & v_temp_ts_time_end, double report_time_end);
+    virtual double get_warm_startup_time();
 
-	virtual void assign(int index, double *p_reporting_ts_array, size_t n_reporting_ts_array);
+    virtual double get_hot_startup_time();
+
+    virtual double get_standby_energy_requirement();    //[MW]
+    virtual double get_cold_startup_energy();    //[MWh]
+    virtual double get_warm_startup_energy();    //[MWh]
+    virtual double get_hot_startup_energy();    //[MWh]
+    virtual double get_max_thermal_power();     //MW
+    virtual double get_min_thermal_power();     //MW
+    virtual void get_max_power_output_operation_constraints(double T_amb /*C*/, double &m_dot_HTF_ND_max,
+                                                            double &W_dot_ND_max);    //[-] Normalized over design power
+    virtual double get_efficiency_at_TPH(double T_degC, double P_atm, double relhum_pct, double *w_dot_condenser = 0);
+
+    virtual double get_efficiency_at_load(double load_frac, double *w_dot_condenser = 0);
+
+    virtual double get_htf_pumping_parasitic_coef();        //[kWe/kWt]
+
+    // This can vary between timesteps for Type224, depending on remaining startup energy and time
+    virtual double get_max_q_pc_startup();        //[MWt]
+
+    virtual void call(const C_csp_weatherreader::S_outputs &weather,
+                      C_csp_solver_htf_1state &htf_state_in,
+                      const C_csp_power_cycle::S_control_inputs &inputs,
+                      C_csp_power_cycle::S_csp_pc_out_solver &out_solver,
+            //C_csp_power_cycle::S_csp_pc_out_report &out_report,
+                      const C_csp_solver_sim_info &sim_info);
+
+    virtual void converged();
+
+    virtual void write_output_intervals(double report_time_start,
+                                        const std::vector<double> &v_temp_ts_time_end, double report_time_end);
+
+    virtual void assign(int index, double *p_reporting_ts_array, size_t n_reporting_ts_array);
 };
 
 #endif // __csp_solver_pc_steam_heat_sink_

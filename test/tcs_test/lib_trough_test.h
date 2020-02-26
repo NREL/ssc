@@ -6,8 +6,7 @@
 
 #include "lib_trough_properties.h"
 
-class TroughTest : public TroughProperties
-{
+class TroughTest : public TroughProperties {
 protected:
     C_csp_trough_collector_receiver *troughModel;
     C_csp_collector_receiver::S_csp_cr_init_inputs troughInitInputs;            // for init()
@@ -156,31 +155,30 @@ public:
         troughModel->init(troughInitInputs, troughSolvedParams);
 
         // inputs, constant or unused
-        weatherValues.m_lat       = 32.13000107;
-        weatherValues.m_lon       = -110.9400024;
-        weatherValues.m_tz        = -7;
-        weatherValues.m_shift     = -5.940002441;
-        weatherValues.m_elev      = 773;
-        weatherValues.m_global    = std::numeric_limits<double>::quiet_NaN();
-        weatherValues.m_hor_beam  = std::numeric_limits<double>::quiet_NaN();    // 433.1
-        weatherValues.m_diffuse   = std::numeric_limits<double>::quiet_NaN();    // 282
-        weatherValues.m_twet      = std::numeric_limits<double>::quiet_NaN();
-        weatherValues.m_wdir      = std::numeric_limits<double>::quiet_NaN();    // 88
-        weatherValues.m_rhum      = std::numeric_limits<double>::quiet_NaN();
-        weatherValues.m_snow      = std::numeric_limits<double>::quiet_NaN();
-        weatherValues.m_albedo    = std::numeric_limits<double>::quiet_NaN();    // 0.213
-        weatherValues.m_aod       = std::numeric_limits<double>::quiet_NaN();
-        weatherValues.m_poa       = std::numeric_limits<double>::quiet_NaN();    // 715.1
+        weatherValues.m_lat = 32.13000107;
+        weatherValues.m_lon = -110.9400024;
+        weatherValues.m_tz = -7;
+        weatherValues.m_shift = -5.940002441;
+        weatherValues.m_elev = 773;
+        weatherValues.m_global = std::numeric_limits<double>::quiet_NaN();
+        weatherValues.m_hor_beam = std::numeric_limits<double>::quiet_NaN();    // 433.1
+        weatherValues.m_diffuse = std::numeric_limits<double>::quiet_NaN();    // 282
+        weatherValues.m_twet = std::numeric_limits<double>::quiet_NaN();
+        weatherValues.m_wdir = std::numeric_limits<double>::quiet_NaN();    // 88
+        weatherValues.m_rhum = std::numeric_limits<double>::quiet_NaN();
+        weatherValues.m_snow = std::numeric_limits<double>::quiet_NaN();
+        weatherValues.m_albedo = std::numeric_limits<double>::quiet_NaN();    // 0.213
+        weatherValues.m_aod = std::numeric_limits<double>::quiet_NaN();
+        weatherValues.m_poa = std::numeric_limits<double>::quiet_NaN();    // 715.1
         weatherValues.m_time_rise = std::numeric_limits<double>::quiet_NaN();    // 7.486443134
-        weatherValues.m_time_set  = std::numeric_limits<double>::quiet_NaN();    // 17.46109472
+        weatherValues.m_time_set = std::numeric_limits<double>::quiet_NaN();    // 17.46109472
 
-        htfInletState.m_pres      = std::numeric_limits<double>::quiet_NaN();
-        htfInletState.m_qual      = -1.;
-        htfInletState.m_m_dot     = std::numeric_limits<double>::quiet_NaN();
+        htfInletState.m_pres = std::numeric_limits<double>::quiet_NaN();
+        htfInletState.m_qual = -1.;
+        htfInletState.m_m_dot = std::numeric_limits<double>::quiet_NaN();
     }
 
-    void TearDown()
-    {
+    void TearDown() {
         TroughProperties::TearDown();
         if (troughModel) {
             delete troughModel;

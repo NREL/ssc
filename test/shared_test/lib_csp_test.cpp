@@ -3,28 +3,25 @@
 #include "lib_csp_test.h"
 
 
-CollectorTestSpecifications default_collector_test_specifications()
-{
+CollectorTestSpecifications default_collector_test_specifications() {
     CollectorTestSpecifications collector_test_specifications;
     collector_test_specifications.FRta = 0.689;
     collector_test_specifications.FRUL = 3.85;
     collector_test_specifications.iam = 0.2;
     collector_test_specifications.area_coll = 2.98;
-    collector_test_specifications.m_dot = 0.045528;         // kg/s   
+    collector_test_specifications.m_dot = 0.045528;         // kg/s
     collector_test_specifications.heat_capacity = 4.182;    // kJ/kg-K
 
     return collector_test_specifications;
 }
 
-FlatPlateCollector* default_flat_plate_collector()
-{
+FlatPlateCollector *default_flat_plate_collector() {
     CollectorTestSpecifications collector_test_specifications = default_collector_test_specifications();
 
     return new FlatPlateCollector(collector_test_specifications);
 }
 
-tm default_time()
-{
+tm default_time() {
     tm time;
     // TODO - The timestamp should be generated from a string so all attributes are valid
     time.tm_year = 2012 - 1900;  // years since 1900
@@ -37,8 +34,7 @@ tm default_time()
     return time;
 }
 
-CollectorLocation default_location()
-{
+CollectorLocation default_location() {
     CollectorLocation collector_location;
     collector_location.latitude = 33.45000;
     collector_location.longitude = -111.98000;
@@ -47,8 +43,7 @@ CollectorLocation default_location()
     return collector_location;
 }
 
-CollectorOrientation default_orientation()
-{
+CollectorOrientation default_orientation() {
     CollectorOrientation collector_orientation;
     collector_orientation.tilt = 30.;
     collector_orientation.azimuth = 180.;
@@ -56,8 +51,7 @@ CollectorOrientation default_orientation()
     return collector_orientation;
 }
 
-ArrayDimensions default_dimensions()
-{
+ArrayDimensions default_dimensions() {
     ArrayDimensions array_dimensions;
     array_dimensions.num_in_parallel = 1;
     array_dimensions.num_in_series = 1;
@@ -65,8 +59,7 @@ ArrayDimensions default_dimensions()
     return array_dimensions;
 }
 
-TimeAndPosition default_time_and_position()
-{
+TimeAndPosition default_time_and_position() {
     TimeAndPosition time_and_position;
     time_and_position.timestamp = default_time();
     time_and_position.collector_location = default_location();
@@ -75,8 +68,7 @@ TimeAndPosition default_time_and_position()
     return time_and_position;
 }
 
-ExternalConditions default_external_conditions()
-{
+ExternalConditions default_external_conditions() {
     ExternalConditions external_conditions;
     external_conditions.weather.ambient_temp = 25.;
     external_conditions.weather.dni = 935.;
@@ -92,8 +84,7 @@ ExternalConditions default_external_conditions()
     return external_conditions;
 }
 
-Pipe* default_pipe()
-{
+Pipe *default_pipe() {
     double inner_diameter = 0.019;
     double insulation_conductivity = 0.03;
     double insulation_thickness = 0.006;
@@ -102,14 +93,12 @@ Pipe* default_pipe()
     return new Pipe(inner_diameter, insulation_conductivity, insulation_thickness, length);
 }
 
-void FlatPlateCollectorTest::SetUp()
-{    
+void FlatPlateCollectorTest::SetUp() {
     // Too much in the Setup; can't change the configuration in the tests
     flat_plate_collector_ = default_flat_plate_collector();
 }
 
-TEST_F(FlatPlateCollectorTest, TestFlatPlateCollectorNominalOperation)
-{
+TEST_F(FlatPlateCollectorTest, TestFlatPlateCollectorNominalOperation) {
     TimeAndPosition time_and_position = default_time_and_position();
     ExternalConditions external_conditions = default_external_conditions();
 
@@ -120,8 +109,7 @@ TEST_F(FlatPlateCollectorTest, TestFlatPlateCollectorNominalOperation)
     EXPECT_NEAR(T_out, 50.26, 50.26 * m_error_tolerance_hi);
 }
 
-void FlatPlateArrayTest::SetUp()
-{
+void FlatPlateArrayTest::SetUp() {
     // Too much in the Setup; can't change the configuration in the tests
     flat_plate_collector_ = default_flat_plate_collector();
     collector_location_ = default_location();
@@ -132,11 +120,10 @@ void FlatPlateArrayTest::SetUp()
     outlet_pipe_ = default_pipe();
 
     flat_plate_array_ = new FlatPlateArray(*flat_plate_collector_, collector_location_,
-        collector_orientation_, array_dimensions_, *inlet_pipe_, *outlet_pipe_);
+                                           collector_orientation_, array_dimensions_, *inlet_pipe_, *outlet_pipe_);
 }
 
-TEST_F(FlatPlateArrayTest, TestFlatPlateArrayOfOneNominalOperation)
-{
+TEST_F(FlatPlateArrayTest, TestFlatPlateArrayOfOneNominalOperation) {
     tm timestamp = default_time();
     ExternalConditions external_conditions = default_external_conditions();
     external_conditions.inlet_fluid_flow.temp = 44.86;
@@ -149,9 +136,7 @@ TEST_F(FlatPlateArrayTest, TestFlatPlateArrayOfOneNominalOperation)
 }
 
 
-
-void StorageTankTest::SetUp()
-{
+void StorageTankTest::SetUp() {
     m_storage = new Storage_HX();
 
     m_field_fluid = 18;
@@ -178,13 +163,13 @@ void StorageTankTest::SetUp()
     m_fluid_store.SetFluid(m_store_fluid);
 
     m_storage->define_storage(m_fluid_field, m_fluid_store, m_is_direct,
-        m_config, m_duty_des, m_vol_des, m_h_des,
-        m_u_des, m_tank_pairs_des, m_hot_htr_set_point_des, m_cold_htr_set_point_des,
-        m_max_q_htr_cold, m_max_q_htr_hot, m_dt_hot_des, m_dt_cold_des, m_T_h_in_des, m_T_h_out_des);
+                              m_config, m_duty_des, m_vol_des, m_h_des,
+                              m_u_des, m_tank_pairs_des, m_hot_htr_set_point_des, m_cold_htr_set_point_des,
+                              m_max_q_htr_cold, m_max_q_htr_hot, m_dt_hot_des, m_dt_cold_des, m_T_h_in_des,
+                              m_T_h_out_des);
 }
 
-TEST_F(StorageTankTest, TestDrainingTank_storage_hx)
-{
+TEST_F(StorageTankTest, TestDrainingTank_storage_hx) {
     m_is_hot_tank = false;
     m_dt = 3600;
     m_m_prev = 3399727.;
@@ -193,9 +178,9 @@ TEST_F(StorageTankTest, TestDrainingTank_storage_hx)
     m_m_dot_out = 1239.16;      // this will more than drain the tank
     m_T_in = 566.15;
     m_T_amb = 296.15;
-    
+
     m_storage->mixed_tank(m_is_hot_tank, m_dt, m_m_prev, m_T_prev, m_m_dot_in, m_m_dot_out, m_T_in, m_T_amb,
-        m_T_ave, m_vol_ave, m_q_loss, m_T_fin, m_vol_fin, m_m_fin, m_q_heater);
+                          m_T_ave, m_vol_ave, m_q_loss, m_T_fin, m_vol_fin, m_m_fin, m_q_heater);
 
     EXPECT_NEAR(m_T_ave, 563.7, 563.7 * m_error_tolerance_lo);
     EXPECT_NEAR(m_vol_ave, 892.30, 892.30 * m_error_tolerance_lo);
@@ -206,8 +191,7 @@ TEST_F(StorageTankTest, TestDrainingTank_storage_hx)
     EXPECT_NEAR(m_q_heater, 0., 0. * m_error_tolerance_lo);
 }
 
-TEST_F(StorageTankTest, TestDrainedTank_storage_hx)
-{
+TEST_F(StorageTankTest, TestDrainedTank_storage_hx) {
     m_is_hot_tank = false;
     m_dt = 3600;
     m_m_prev = 0.;
@@ -218,7 +202,7 @@ TEST_F(StorageTankTest, TestDrainedTank_storage_hx)
     m_T_amb = 296.15;
 
     m_storage->mixed_tank(m_is_hot_tank, m_dt, m_m_prev, m_T_prev, m_m_dot_in, m_m_dot_out, m_T_in, m_T_amb,
-        m_T_ave, m_vol_ave, m_q_loss, m_T_fin, m_vol_fin, m_m_fin, m_q_heater);
+                          m_T_ave, m_vol_ave, m_q_loss, m_T_fin, m_vol_fin, m_m_fin, m_q_heater);
 
     EXPECT_NEAR(m_T_ave, 563.97, 563.97 * m_error_tolerance_lo);
     EXPECT_NEAR(m_vol_ave, 0., 0. * m_error_tolerance_lo);

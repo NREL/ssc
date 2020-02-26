@@ -8,8 +8,8 @@
 GTEST_API_ int main(int argc, char **argv) {
 
 
-	printf("Running main() from gtest_main.cc\n");
-	testing::InitGoogleTest(&argc, argv);
+    printf("Running main() from gtest_main.cc\n");
+    testing::InitGoogleTest(&argc, argv);
 //	  ::testing::GTEST_FLAG(filter) = "CMPvYieldTimo*";
 //	  ::testing::GTEST_FLAG(filter) = "splinterTests*";
 //	  ::testing::GTEST_FLAG(filter) = "SunsetCaseIrradProc*";
@@ -30,9 +30,9 @@ GTEST_API_ int main(int argc, char **argv) {
 //	::testing::GTEST_FLAG(filter) = "URDBv7*";
 
 
-	int status = RUN_ALL_TESTS();
+    int status = RUN_ALL_TESTS();
 
-	if (!status)
-		printf("Tests Pass!\n");
-	return status;
+    if (!status)
+        printf("Tests Pass!\n");
+    return status;
 }
