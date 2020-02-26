@@ -46,7 +46,9 @@ static ssc_equation_entry ssc_equation_table [] = {
         {"Tower_SolarPilot_Capital_Costs_ISCC_Equations", Tower_SolarPilot_Capital_Costs_ISCC_Equations,
             "Tcsiscc", Tower_SolarPilot_Capital_Costs_ISCC_Equations_doc},
         {"Financial_Construction_Financing_Equations", Financial_Construction_Financing_Equations,
-            "Singleowner", Financial_Construction_Financing_Equations_doc},            
+            "Singleowner", Financial_Construction_Financing_Equations_doc},
+        {"Financial_Capacity_Payments_Equations", Financial_Capacity_Payments_Equations,
+            "Singleowner", Financial_Capacity_Payments_Equations_doc},
         {"ElectricityRates_format_as_URDBv7", ElectricityRates_format_as_URDBv7,
             "UtilityRate5", ElectricityRates_format_as_URDBv7_doc},
         {nullptr, nullptr, nullptr, nullptr}

@@ -49,9 +49,19 @@ extern "C" {
         "     'const_per_principal_total' - double [$]\\n"
         "     'const_per_percent_total' - double [$]\\n"
         "     'construction_financing_cost' - double [$]\\n"
-        "     'const_per_interest_total' - double [$]";
+        "     'const_per_interest_total' - double [$]\\n";
 
     SSCEXPORT void Financial_Construction_Financing_Equations(ssc_data_t data);
+
+
+    static const char* Financial_Capacity_Payments_Equations_doc =
+        "Calculates system nameplate, as used on the Financial Capacity Payments UI form\\n"
+        "Input: var_table with key-value pairs\\n"
+        "     'system_capacity' - double [kW]\\n"
+        "Output: key-value pairs added to var_table\\n"
+        "     'cp_system_nameplate' - double [MW]\\n";
+
+    SSCEXPORT void Financial_Capacity_Payments_Equations(ssc_data_t data);
 
 #ifdef __cplusplus
 }

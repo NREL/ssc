@@ -100,3 +100,16 @@ void Financial_Construction_Financing_Equations(ssc_data_t data)
     vt->assign("construction_financing_cost", construction_financing_cost);
     vt->assign("const_per_interest_total", const_per_interest_total);
 };
+
+void Financial_Capacity_Payments_Equations(ssc_data_t data)
+{
+    auto vt = static_cast<var_table*>(data);
+    if (!vt) {
+        throw std::runtime_error("ssc_data_t data invalid");
+    }
+
+    double system_capacity, cp_system_nameplate;
+    vt_get_number(vt, "system_capacity", &system_capacity);
+    cp_system_nameplate = system_capacity / 1000.;
+    vt->assign("cp_system_nameplate", cp_system_nameplate);
+};
