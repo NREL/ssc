@@ -25,14 +25,14 @@ protected:
 
 
     std::shared_ptr<batt_variables> batt_vars = nullptr;
-    var_table *vartab = nullptr;
+    var_table* vartab = nullptr;
     std::shared_ptr<battstor> batt = nullptr;
-    dispatch_t *dispatch = nullptr;
-    SharedInverter *inverter = nullptr;
+    dispatch_t* dispatch = nullptr;
+    SharedInverter* inverter = nullptr;
 
-    class fakeInverter : public SharedInverter {
+    class fakeInverter : public SharedInverter{
     public:
-        fakeInverter() : SharedInverter(NONE, 1, nullptr, nullptr, nullptr) {
+        fakeInverter():SharedInverter(NONE, 1, nullptr, nullptr, nullptr){
             efficiencyAC = 96;
             powerAC_kW = 0.;
         }
@@ -49,8 +49,8 @@ protected:
         size_kw = 4.0;
         size_kwh = 16.0;
         inv_eff = 96.0;
-        double dt_hr = 1. / (double) steps_per_hour;
-        for (size_t i = 0; i < 8760 * steps_per_hour; i++) {
+        double dt_hr = 1. / (double)steps_per_hour;
+        for (size_t i = 0; i < 8760 * steps_per_hour; i++){
             ac.push_back(pv_ac);
             load.push_back(load_ac);
             dispatch_custom.push_back(batt_dc);
@@ -59,7 +59,7 @@ protected:
         batt_vars = battwatts_create(n_recs, 1, chem, pos, size_kwh, size_kw, inv_eff, dispatch_mode, dispatch_custom);
         if (ac_not_dc_connected)
             batt_vars->batt_topology = ChargeController::AC_CONNECTED;
-        else {
+        else{
             batt_vars->batt_topology = ChargeController::DC_CONNECTED;
             inverter = new fakeInverter;
         }

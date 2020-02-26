@@ -21,7 +21,7 @@ static const char *Reopt_size_battery_params_doc =
         "         'lat': double, latitude\\n"
         "     ++ PV inputs ++\\n"
         "         'array_type': double, 0=FixedGround,1=FixedRoof,2=1Axis,3=Backtracked,4=2Axis, can be replaced by (subarray1_track_mode, subarray1_backtrack)\\n"
-        "         'module_type': optional double, 0=Standard,1=Premium,2=Thin Film. Default is 1\\n"
+	    "         'module_type': optional double, 0=Standard,1=Premium,2=Thin Film. Default is 1\\n"
         "         'subarray1_track_mode': conditional double, 0=fixed,1=1axis,2=2axis,3=azi,4=monthly, replaces array_type\\n"
         "         'subarray1_backtrack': conditional double, 0=false, 1=true, replaces array_type\\n"
         "         'azimuth': double, can be replaced by subarray1_azimuth\\n"

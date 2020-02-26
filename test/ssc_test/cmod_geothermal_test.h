@@ -10,22 +10,23 @@
 #include "../input_cases/code_generator_utilities.h"
 
 
+
 class CMGeothermal : public ::testing::Test {
 
-public:
-    ssc_data_t data;
-    ssc_number_t calculated_value;
-    ssc_number_t *calculated_array;
+public: 
+	ssc_data_t data;
+	ssc_number_t calculated_value;
+	ssc_number_t * calculated_array;
 
-    void SetUp() {
-        data = ssc_data_create();
-        geothermal_singleowner_default(data);
-    }
+	void SetUp() {
+		data = ssc_data_create();
+		geothermal_singleowner_default(data);
+	}
 
-    void TearDown() {
-        if (data)
-            ssc_data_clear(data);
-    }
+	void TearDown() {
+		if (data)
+			ssc_data_clear(data);
+	}
 };
 
 

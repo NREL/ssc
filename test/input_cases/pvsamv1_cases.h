@@ -10,20 +10,21 @@
 *   matches expected results.  Data generated from code-generator (Shift+F5) within SAM UI.
 *   Test uses SSCAPI interfaces (similiar to SDK usage) to pass and receive data to PVSAMV1
 */
-int pvsam_residential_pheonix(ssc_data_t &data) {
-    belpe_default(data);
-    int status = run_module(data, "belpe");
+int pvsam_residential_pheonix(ssc_data_t &data)
+{
+	belpe_default(data);
+	int status = run_module(data, "belpe");
 
-    pvsamv1_with_residential_default(data);
-    status += run_module(data, "pvsamv1");
+	pvsamv1_with_residential_default(data);
+	status += run_module(data, "pvsamv1");
 
-    utility_rate5_default(data);
-    status += run_module(data, "utilityrate5");
+	utility_rate5_default(data);
+	status += run_module(data, "utilityrate5");
 
-    cashloan_default(data);
-    status += run_module(data, "cashloan");
+	cashloan_default(data);
+	status += run_module(data, "cashloan");
 
-    return status;
+	return status;
 }
 
 #endif

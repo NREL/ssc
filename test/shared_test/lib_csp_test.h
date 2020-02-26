@@ -5,20 +5,21 @@
 #include "../tcs/storage_hx.h"
 #include "../tcs/flat_plate_solar_collector.h"
 
-class FlatPlateCollectorTest : public ::testing::Test {
+class FlatPlateCollectorTest : public ::testing::Test
+{
 public:
     const double m_error_tolerance_lo = 0.001;    // 0.1%
     const double m_error_tolerance_hi = 0.01;     // 1.0%
 
     void SetUp();
 
-    void TearDown() {
+    void TearDown()
+    {
         if (flat_plate_collector_) {
             delete flat_plate_collector_;
             flat_plate_collector_ = nullptr;
         }
     }
-
 protected:
     FlatPlateCollector *flat_plate_collector_;
 
@@ -30,20 +31,21 @@ protected:
 
 };
 
-class FlatPlateArrayTest : public ::testing::Test {
+class FlatPlateArrayTest : public ::testing::Test
+{
 public:
     const double m_error_tolerance_lo = 0.001;    // 0.1%
     const double m_error_tolerance_hi = 0.01;     // 1.0%
 
     void SetUp();
 
-    void TearDown() {
+    void TearDown()
+    {
         if (flat_plate_array_) {
             delete flat_plate_array_;
             flat_plate_array_ = nullptr;
         }
     }
-
 protected:
     FlatPlateArray *flat_plate_array_;
 
@@ -60,7 +62,8 @@ protected:
     Pipe *outlet_pipe_;
 };
 
-class StorageTankTest : public ::testing::Test {
+class StorageTankTest : public ::testing::Test
+{
 protected:
     Storage_HX *m_storage;
 
@@ -110,7 +113,8 @@ public:
 
     void SetUp();
 
-    void TearDown() {
+    void TearDown()
+    {
         if (m_storage) {
             delete m_storage;
             m_storage = nullptr;

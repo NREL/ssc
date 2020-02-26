@@ -1,26 +1,26 @@
 /**
 BSD-3-Clause
 Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided
+Redistribution and use in source and binary forms, with or without modification, are permitted provided 
 that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
 and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
 and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
 or promote products derived from this software without specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/* PVWATTSV.C
+/* PVWATTSV.C 
     10/18/2010 This PVWatts version was received from Ray George,
 	 for integration into SSC.  Supports sub-hourly calculation.
 
@@ -79,154 +79,161 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 
-double transpoa(double poa, double dn, double inc, bool ar_glass) {
-    /* Calculates the irradiance transmitted thru a PV module cover. Uses King
-        polynomial coefficients for glass from 2nd World Conference Paper,
-        July 6-10, 1998.                         Bill Marion 12/8/1998 */
-    double b0 = 1.0,
-            b1 = -2.438e-3,
-            b2 = 3.103e-4,
-            b3 = -1.246e-5,
-            b4 = 2.112e-7,
-            b5 = -1.359e-9;
+double transpoa( double poa, double dn, double inc, bool ar_glass )
+{  
+	/* Calculates the irradiance transmitted thru a PV module cover. Uses King
+		polynomial coefficients for glass from 2nd World Conference Paper,
+		July 6-10, 1998.                         Bill Marion 12/8/1998 */
+	double b0=1.0,
+		b1=-2.438e-3,
+		b2=3.103e-4,
+		b3=-1.246e-5,
+		b4=2.112e-7,
+		b5=-1.359e-9;
 
-    if (ar_glass) {
-        // SNL parameters for SPR-E20-327, ar glass
-        // added december 2013:  NOTE! need to update based on analysis of what is a "typical" AR glass coating
-        b0 = 1.0002;
-        b1 = -0.000213;
-        b2 = 3.63416e-005;
-        b3 = -2.175e-006;
-        b4 = 5.2796e-008;
-        b5 = -4.4351e-010;
-    }
+	if ( ar_glass )
+	{
+		// SNL parameters for SPR-E20-327, ar glass
+		// added december 2013:  NOTE! need to update based on analysis of what is a "typical" AR glass coating
+		b0 = 1.0002;
+		b1 = -0.000213;
+		b2 = 3.63416e-005;
+		b3 = -2.175e-006;
+		b4 = 5.2796e-008;
+		b5 = -4.4351e-010;
+	}
 
-    inc = inc / 0.017453293;
-    if (inc > 50.0 && inc < 90.0) /* Adjust for relection between 50 and 90 degrees */
-    {
-        double x = b0 + b1 * inc + b2 * inc * inc + b3 * inc * inc * inc + b4 * inc * inc * inc * inc
-                   + b5 * inc * inc * inc * inc * inc;
-        poa = poa - (1.0 - x) * dn * cos(inc * 0.017453293);
-        if (poa < 0.0)
-            poa = 0.0;
-    }
-    return (poa);
+	inc = inc/0.017453293;
+	if( inc > 50.0 && inc < 90.0 ) /* Adjust for relection between 50 and 90 degrees */
+		{
+		double x = b0 + b1*inc + b2*inc*inc + b3*inc*inc*inc + b4*inc*inc*inc*inc
+			 + b5*inc*inc*inc*inc*inc;
+		poa = poa - ( 1.0 - x )*dn*cos(inc*0.017453293);
+		if( poa < 0.0 )
+			poa = 0.0;
+		}
+	return(poa);
+}
+pvwatts_celltemp::pvwatts_celltemp( double _inoct, double _height, double _dTimeHrs)
+{
+	/* constants */
+	boltz = 0.00000005669;
+	cap = 0;
+	capo = 11000.0;
+	convrt = 0;
+	absorb=0.83;
+	emmis=0.84;
+	tgrat=0;
+	tgrnd=0;
+	xlen=0.5;
+
+	/* configuration parameters */
+	inoct = _inoct;
+	height = _height;
+
+	/* initial values */
+	dtime=12.0;
+	suno=0.0;
+	tmodo=293.15;
+
+	/* convective coefficient at noct */
+	windmd=1.0;
+	tave=(inoct+293.15)/2.0;
+	denair=0.003484*101325.0/tave;
+	visair=0.24237e-6*pow(tave,0.76)/denair;
+	conair=2.1695e-4*pow(tave,0.84);
+	reynld=windmd*xlen/visair;
+	hforce=0.8600/pow(reynld,0.5)*denair*windmd*1007.0/pow(0.71,0.67);
+	grashf=9.8/tave*(inoct-293.15)*pow(xlen,3.0)/pow(visair,2.0)*0.5;
+	hfree=0.21*pow(grashf*0.71,0.32)*conair/xlen;
+	hconv=pow(pow(hfree,3.0)+pow(hforce,3.0),1.0/3.0);
+
+			/* Determine the ground temperature ratio and the ratio of
+				the total convection to the top side convection */
+	hgrnd=emmis*boltz*(pow(inoct,2.0)+pow(293.15,2.0))*(inoct+293.15);
+	backrt=( absorb*800.0-emmis*boltz*(pow(inoct,4.0)-pow(282.21,4.0))
+				-hconv*(inoct-293.15) )/((hgrnd+hconv)*(inoct-293.15));
+	tgrnd=pow(pow(inoct,4.0)-backrt*(pow(inoct,4.0)-pow(293.15,4.0)),0.25);
+	if( tgrnd > inoct)
+		tgrnd=inoct;
+	if( tgrnd < 293.15)
+		tgrnd=293.15;
+	tgrat=(tgrnd-293.15)/(inoct-293.15);
+	convrt=(absorb*800.0-emmis*boltz*(2.0*pow(inoct,4.0)-pow(282.21,4.0)
+				-pow(tgrnd,4.0)))/(hconv*(inoct-293.15));
+
+			/* Adjust the capacitance of the module based on the inoct */
+	cap=capo;
+	if( inoct > 321.15)
+		cap=cap*(1.0+(inoct-321.15)/12.0);
+
+	dtime = _dTimeHrs; /* set time step */
 }
 
-pvwatts_celltemp::pvwatts_celltemp(double _inoct, double _height, double _dTimeHrs) {
-    /* constants */
-    boltz = 0.00000005669;
-    cap = 0;
-    capo = 11000.0;
-    convrt = 0;
-    absorb = 0.83;
-    emmis = 0.84;
-    tgrat = 0;
-    tgrnd = 0;
-    xlen = 0.5;
+double pvwatts_celltemp::operator() ( double poa2, double ws2, double ambt2, double fhconv )
+{
+	double celltemp = ambt2;
+		
+	/* If poa is gt 0 then compute cell temp, else set to 999 */
+	if( poa2 > 0.0 )
+	{        /* Initialize local variables for insolation and temp */
+		tamb=ambt2+273.15;
+		suun=poa2*absorb;
+		tsky=0.68*(0.0552*pow(tamb,1.5))+0.32*tamb;  /* Estimate sky temperature */
 
-    /* configuration parameters */
-    inoct = _inoct;
-    height = _height;
+		/*  Estimate wind speed at module height - use technique developed by
+				menicucci and hall (sand84-2530) */
+		windmd=ws2*pow(height/9.144,0.2) + 0.0001;
+									/* Find overall convective coefficient */
+		tmod=tmodo;
+		for(j=0;j<=9;j++)
+		{
+			tave=(tmod+tamb)/2.0;
+			denair=0.003484*101325.0/tave;
+			visair=0.24237e-6*pow(tave,0.76)/denair;
+			conair=2.1695e-4*pow(tave,0.84);
+			reynld=windmd*xlen/visair;
+			hforce=0.8600/pow(reynld,0.5)*denair*windmd*1007.0/pow(0.71,0.67);
+			if(reynld > 1.2e5)
+				hforce=0.0282/pow(reynld,0.2)*denair*windmd*1007.0/pow(0.71,0.4);
+			grashf=9.8/tave*fabs(tmod-tamb)*pow(xlen,3.0)/pow(visair,2.0)*0.5;
+			hfree=0.21*pow(grashf*0.71,0.32)*conair/xlen;
+			hconv=fhconv*convrt*pow(pow(hfree,3.0)+pow(hforce,3.0),1.0/3.0);
+					/* Solve the heat transfer equation */
+			hsky=emmis*boltz*(pow(tmod,2.0)+pow(tsky,2.0))*(tmod+tsky);
+			tgrnd=tamb+tgrat*(tmod-tamb);
+			hgrnd=emmis*boltz*(tmod*tmod+tgrnd*tgrnd)*(tmod+tgrnd);
+			eigen=-(hconv+hsky+hgrnd)/cap*dtime*3600.0;
+			ex=0.0;
+			if(eigen > -10.0)
+				ex=exp(eigen);
+			tmod=tmodo*ex+((1.0-ex)*(hconv*tamb+hsky*tsky+hgrnd*tgrnd
+					+suno+(suun-suno)/eigen)+suun-suno)/(hconv+hsky+hgrnd);
+		}
+			
+		tmodo=tmod;  /* Save the new values as initial values for the next hour */
+		suno=suun;
+			
+		celltemp = tmod-273.15;  /* PV module temperature in degrees C */
+	}
+	else
+	{
+		/* sun down, save module temp = ambient, poa = 0  (apd 2/24/2012) */
+		tmodo = ambt2+273.15;
+		suno = 0;
+	}
 
-    /* initial values */
-    dtime = 12.0;
-    suno = 0.0;
-    tmodo = 293.15;
-
-    /* convective coefficient at noct */
-    windmd = 1.0;
-    tave = (inoct + 293.15) / 2.0;
-    denair = 0.003484 * 101325.0 / tave;
-    visair = 0.24237e-6 * pow(tave, 0.76) / denair;
-    conair = 2.1695e-4 * pow(tave, 0.84);
-    reynld = windmd * xlen / visair;
-    hforce = 0.8600 / pow(reynld, 0.5) * denair * windmd * 1007.0 / pow(0.71, 0.67);
-    grashf = 9.8 / tave * (inoct - 293.15) * pow(xlen, 3.0) / pow(visair, 2.0) * 0.5;
-    hfree = 0.21 * pow(grashf * 0.71, 0.32) * conair / xlen;
-    hconv = pow(pow(hfree, 3.0) + pow(hforce, 3.0), 1.0 / 3.0);
-
-    /* Determine the ground temperature ratio and the ratio of
-        the total convection to the top side convection */
-    hgrnd = emmis * boltz * (pow(inoct, 2.0) + pow(293.15, 2.0)) * (inoct + 293.15);
-    backrt = (absorb * 800.0 - emmis * boltz * (pow(inoct, 4.0) - pow(282.21, 4.0))
-              - hconv * (inoct - 293.15)) / ((hgrnd + hconv) * (inoct - 293.15));
-    tgrnd = pow(pow(inoct, 4.0) - backrt * (pow(inoct, 4.0) - pow(293.15, 4.0)), 0.25);
-    if (tgrnd > inoct)
-        tgrnd = inoct;
-    if (tgrnd < 293.15)
-        tgrnd = 293.15;
-    tgrat = (tgrnd - 293.15) / (inoct - 293.15);
-    convrt = (absorb * 800.0 - emmis * boltz * (2.0 * pow(inoct, 4.0) - pow(282.21, 4.0)
-                                                - pow(tgrnd, 4.0))) / (hconv * (inoct - 293.15));
-
-    /* Adjust the capacitance of the module based on the inoct */
-    cap = capo;
-    if (inoct > 321.15)
-        cap = cap * (1.0 + (inoct - 321.15) / 12.0);
-
-    dtime = _dTimeHrs; /* set time step */
+	return celltemp;
 }
 
-double pvwatts_celltemp::operator()(double poa2, double ws2, double ambt2, double fhconv) {
-    double celltemp = ambt2;
-
-    /* If poa is gt 0 then compute cell temp, else set to 999 */
-    if (poa2 > 0.0) {        /* Initialize local variables for insolation and temp */
-        tamb = ambt2 + 273.15;
-        suun = poa2 * absorb;
-        tsky = 0.68 * (0.0552 * pow(tamb, 1.5)) + 0.32 * tamb;  /* Estimate sky temperature */
-
-        /*  Estimate wind speed at module height - use technique developed by
-                menicucci and hall (sand84-2530) */
-        windmd = ws2 * pow(height / 9.144, 0.2) + 0.0001;
-        /* Find overall convective coefficient */
-        tmod = tmodo;
-        for (j = 0; j <= 9; j++) {
-            tave = (tmod + tamb) / 2.0;
-            denair = 0.003484 * 101325.0 / tave;
-            visair = 0.24237e-6 * pow(tave, 0.76) / denair;
-            conair = 2.1695e-4 * pow(tave, 0.84);
-            reynld = windmd * xlen / visair;
-            hforce = 0.8600 / pow(reynld, 0.5) * denair * windmd * 1007.0 / pow(0.71, 0.67);
-            if (reynld > 1.2e5)
-                hforce = 0.0282 / pow(reynld, 0.2) * denair * windmd * 1007.0 / pow(0.71, 0.4);
-            grashf = 9.8 / tave * fabs(tmod - tamb) * pow(xlen, 3.0) / pow(visair, 2.0) * 0.5;
-            hfree = 0.21 * pow(grashf * 0.71, 0.32) * conair / xlen;
-            hconv = fhconv * convrt * pow(pow(hfree, 3.0) + pow(hforce, 3.0), 1.0 / 3.0);
-            /* Solve the heat transfer equation */
-            hsky = emmis * boltz * (pow(tmod, 2.0) + pow(tsky, 2.0)) * (tmod + tsky);
-            tgrnd = tamb + tgrat * (tmod - tamb);
-            hgrnd = emmis * boltz * (tmod * tmod + tgrnd * tgrnd) * (tmod + tgrnd);
-            eigen = -(hconv + hsky + hgrnd) / cap * dtime * 3600.0;
-            ex = 0.0;
-            if (eigen > -10.0)
-                ex = exp(eigen);
-            tmod = tmodo * ex + ((1.0 - ex) * (hconv * tamb + hsky * tsky + hgrnd * tgrnd
-                                               + suno + (suun - suno) / eigen) + suun - suno) / (hconv + hsky + hgrnd);
-        }
-
-        tmodo = tmod;  /* Save the new values as initial values for the next hour */
-        suno = suun;
-
-        celltemp = tmod - 273.15;  /* PV module temperature in degrees C */
-    } else {
-        /* sun down, save module temp = ambient, poa = 0  (apd 2/24/2012) */
-        tmodo = ambt2 + 273.15;
-        suno = 0;
-    }
-
-    return celltemp;
+void pvwatts_celltemp::set_last_values( double Tc, double poa )
+{
+	tmodo = Tc+273.15;
+	suno = poa*absorb;
 }
-
-void pvwatts_celltemp::set_last_values(double Tc, double poa) {
-    tmodo = Tc + 273.15;
-    suno = poa * absorb;
-}
-
-/* Function to determine DC power */
-double dcpowr(double reftem, double refpwr, double pwrdgr, double tmloss, double poa, double pvt,
-              double iref) {        /* Modified 8/22/07 to pass non-array variables */
+										/* Function to determine DC power */
+double dcpowr(double reftem,double refpwr,double pwrdgr,double tmloss,double poa,double pvt, double iref)
+{        /* Modified 8/22/07 to pass non-array variables */
 /* This function was converted from a PVFORM version 3.3 subroutine but
 	uses reference array power ratings instead of reference array
 	efficiencies and array sizes to determine dc power.
@@ -268,21 +275,22 @@ double dcpowr(double reftem, double refpwr, double pwrdgr, double tmloss, double
 	local variables :
 		dcpwr1 = dc power(W) from array before mismatch losses      */
 
-    double dcpwr1, dc;
+	double dcpwr1,dc;
 
-    if (poa > 125.0)
-        dcpwr1 = refpwr * (1.0 + pwrdgr * (pvt - reftem)) * poa / iref;
-    else if (poa > 0.1)
-        dcpwr1 = refpwr * (1.0 + pwrdgr * (pvt - reftem)) * 0.008 * poa * poa / iref;
-    else
-        dcpwr1 = 0.0;
+	if( poa > 125.0 )
+		dcpwr1=refpwr*(1.0+pwrdgr*(pvt-reftem))*poa/iref;
+	else if( poa > 0.1 )
+		dcpwr1=refpwr*(1.0+pwrdgr*(pvt-reftem))*0.008*poa*poa/iref;
+	else
+		dcpwr1=0.0;
 
-    dc = dcpwr1 * (1.0 - tmloss);   /* adjust for mismatch and line loss */
-    return (dc);
+	dc = dcpwr1*(1.0-tmloss);   /* adjust for mismatch and line loss */
+	return(dc);
 
 }
 
-double dctoac(double pcrate, double efffp, double dc) {
+double dctoac(double pcrate,double efffp,double dc)
+{
 /* Revised 8/22/07 to work with single time stamp (non-array) data.
 	This function was converted from a PVFORM version 3.3 subroutine
 	this routine computes the ac energy from the inverter system.
@@ -307,42 +315,48 @@ double dctoac(double pcrate, double efffp, double dc) {
 		rateff = ratio of eff at full load / ref eff at full load
 	returned variable:
 		ac = ac power(W)  */
-    double dcrtng, effrf, percfl, rateff, ac;
+	double dcrtng,effrf,percfl,rateff,ac;
 
 /*   Compute the ratio of the effic at full load given by the user and
 	  the reference effic at full load. this will be used later to compute
 	  the pcu effic for the exact conditions specified by the user.  */
 
-    rateff = efffp / 0.91;
+	rateff=efffp/0.91;
 
 /*   The pc rating is an ac rating so convert it to dc by dividing it
 	  by the effic at 100% power. */
 
-    dcrtng = pcrate / efffp;
+	dcrtng=pcrate/efffp;
 
-    if (dc > 0.0) {        /* Determine the reference efficiency based on the
+	if( dc > 0.0 )
+		{        /* Determine the reference efficiency based on the
 						percentage of full load at input. */
-        percfl = dc / dcrtng;
-        if (percfl <= 1.0) {   /* if the percent of full power falls in the range of .1 to 1. then
+		percfl=dc/dcrtng;
+		if ( percfl <= 1.0 )
+			{   /* if the percent of full power falls in the range of .1 to 1. then
 					 use polynomial to estimate effic, else use linear equation. */
-            if (percfl >= 0.1) {
-                effrf = 0.774 + (0.663 * percfl) + (-0.952 * percfl * percfl) + (0.426 * percfl * percfl * percfl);
-                if (effrf > 0.925)
-                    effrf = 0.925;
-            } else       /* percent of full power less than 0.1 */
-            {
-                effrf = (8.46 * percfl) - 0.015;
-                if (effrf < 0.0)
-                    effrf = 0.0;
-            }
-            /* compute the actual effic of the pc by adjusting according
-                to the user input of effic at max power then compute power. */
-            effrf = effrf * rateff;
-            ac = dc * effrf;
-        } else
-            ac = pcrate;  /* On an overload condition set power to rated pc power */
-    } else         /* dc in equals 0 */
-        ac = 0.0;
+			if( percfl >= 0.1 )
+				{
+				effrf=0.774+(0.663*percfl)+(-0.952*percfl*percfl)+(0.426*percfl*percfl*percfl);
+				if(effrf > 0.925)
+					effrf=0.925;
+				}
+			else       /* percent of full power less than 0.1 */
+				{
+				effrf=(8.46*percfl)-0.015;
+				if(effrf < 0.0)
+					effrf=0.0;
+				}
+			/* compute the actual effic of the pc by adjusting according
+				to the user input of effic at max power then compute power. */
+			effrf=effrf*rateff;
+			ac=dc*effrf;
+			}
+		else
+			ac=pcrate;  /* On an overload condition set power to rated pc power */
+		}
+	else         /* dc in equals 0 */
+		ac = 0.0;
 
-    return (ac);
+	return(ac);
 }

@@ -20,9 +20,9 @@ public:
     double m_error_tolerance_lo = 0.1;
 
     void CreateData(size_t nyears) {
-        for (size_t i = 0; i < 8760 * nyears; i++) {
+        for (size_t i = 0; i < 8760 * nyears; i++){
             size_t hr = i % 24;
-            if (hr > 7 && hr < 18)
+            if (hr > 7 && hr < 18 )
                 ac.push_back(1.);
             else
                 ac.push_back(0.);
@@ -32,7 +32,7 @@ public:
 
 
         data.assign("system_use_lifetime_output", nyears > 1);
-        data.assign("analysis_period", (int) nyears);
+        data.assign("analysis_period", (int)nyears);
         data.assign("batt_simple_enable", 1);
         data.assign("batt_simple_kwh", 10);
         data.assign("batt_simple_kw", 5);
