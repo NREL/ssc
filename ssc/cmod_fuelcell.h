@@ -57,207 +57,204 @@
 #include "lib_fuel_cell_dispatch.h"
 #include "lib_util.h"
 
-struct fuelCellVariables
-{
+struct fuelCellVariables {
 public:
-	
-	fuelCellVariables() {/* nothing to do */ };
-	fuelCellVariables(compute_module & cm) :
-		systemUseLifetimeOutput(cm.as_boolean("system_use_lifetime_output")),
-		unitPowerMax_kW(cm.as_double("fuelcell_unit_max_power")),
-		unitPowerMin_kW(cm.as_double("fuelcell_unit_min_power")),
-		shutdown_hours(cm.as_double("fuelcell_shutdown_time")),
-		startup_hours(cm.as_double("fuelcell_startup_time")),
-		is_started(cm.as_double("fuelcell_is_started")),
-		dynamicResponseUp_kWperHour(cm.as_double("fuelcell_dynamic_response_up")),
-		dynamicResponseDown_kWperHour(cm.as_double("fuelcell_dynamic_response_down")),
-		degradation_kWperHour(cm.as_double("fuelcell_degradation")),
-		degradationRestart_kW(cm.as_double("fuelcell_degradation_restart")),
-		replacementOption(cm.as_unsigned_long("fuelcell_replacement_option")),
-		replacement_percent(cm.as_double("fuelcell_replacement_percent")),
-		replacementSchedule(cm.as_vector_unsigned_long("fuelcell_replacement_schedule")),
-		efficiencyTable(cm.as_matrix("fuelcell_efficiency")),
-		efficiencyChoice(cm.as_unsigned_long("fuelcell_efficiency_choice")),
-		shutdownTable(cm.as_matrix_unsigned_long("fuelcell_availability_schedule")),
-		lowerHeatingValue_BtuPerFt3(cm.as_double("fuelcell_lhv")),
-		higherHeatingValue_BtuPerFt3(cm.as_double("fuelcell_lhv")),
-		availableFuel_MCf(cm.as_double("fuelcell_fuel_available")),
-		shutdownOption(cm.as_integer("fuelcell_operation_options")),
-		numberOfUnits(cm.as_integer("fuelcell_number_of_units")),
-		dispatchOption(cm.as_integer("fuelcell_dispatch_choice")),
-		fixed_percent(cm.as_double("fuelcell_fixed_pct")),
-		dispatch_kW(cm.as_vector_double("fuelcell_dispatch")),
-		canCharge(cm.as_vector_bool("dispatch_manual_fuelcellcharge")),
-		canDischarge(cm.as_vector_bool("dispatch_manual_fuelcelldischarge")),
-		discharge_percent(cm.as_vector_double("dispatch_manual_percent_fc_discharge")),
-		discharge_units(cm.as_vector_unsigned_long("dispatch_manual_units_fc_discharge")),
-		scheduleWeekday(cm.as_matrix_unsigned_long("dispatch_manual_sched")),
-		scheduleWeekend(cm.as_matrix_unsigned_long("dispatch_manual_sched_weekend"))
-	{
-		numberOfYears = 1;
-		if (systemUseLifetimeOutput) {
-			numberOfYears = cm.as_unsigned_long("analysis_period");
-		}
 
-		// Load is always a non-lifetime input
-		if (cm.is_assigned("load")) {
-			electricLoad_kW = cm.as_vector_double("load");
-		}
-		
-		// Choose between gen and ac, user should only put in one, but will prefer 'gen' if input
-		if (cm.is_assigned("gen")) {
-			systemGeneration_kW = cm.as_vector_double("gen");
-			numberOfRecordsPerYear = systemGeneration_kW.size() / numberOfYears;
-		}
-		// It's okay if there is no input generation or load, initialize to zero
-		else {
-			numberOfRecordsPerYear = (size_t)std::fmax(electricLoad_kW.size(), 8760);
-			systemGeneration_kW.reserve(numberOfRecordsPerYear * numberOfYears);
-			for (size_t j = 0; j < numberOfRecordsPerYear * numberOfYears; j++) {
-				systemGeneration_kW.push_back(0.0);
-			}
-		}
+    fuelCellVariables() {/* nothing to do */ };
 
-		// Timesteps
-		numberOfLifetimeRecords = numberOfRecordsPerYear * numberOfYears;
-		stepsPerHour = numberOfRecordsPerYear / (size_t)8760;
-		dt_hour = (double)(1.0 / (double)stepsPerHour);
+    fuelCellVariables(compute_module &cm) :
+            systemUseLifetimeOutput(cm.as_boolean("system_use_lifetime_output")),
+            unitPowerMax_kW(cm.as_double("fuelcell_unit_max_power")),
+            unitPowerMin_kW(cm.as_double("fuelcell_unit_min_power")),
+            shutdown_hours(cm.as_double("fuelcell_shutdown_time")),
+            startup_hours(cm.as_double("fuelcell_startup_time")),
+            is_started(cm.as_double("fuelcell_is_started")),
+            dynamicResponseUp_kWperHour(cm.as_double("fuelcell_dynamic_response_up")),
+            dynamicResponseDown_kWperHour(cm.as_double("fuelcell_dynamic_response_down")),
+            degradation_kWperHour(cm.as_double("fuelcell_degradation")),
+            degradationRestart_kW(cm.as_double("fuelcell_degradation_restart")),
+            replacementOption(cm.as_unsigned_long("fuelcell_replacement_option")),
+            replacement_percent(cm.as_double("fuelcell_replacement_percent")),
+            replacementSchedule(cm.as_vector_unsigned_long("fuelcell_replacement_schedule")),
+            efficiencyTable(cm.as_matrix("fuelcell_efficiency")),
+            efficiencyChoice(cm.as_unsigned_long("fuelcell_efficiency_choice")),
+            shutdownTable(cm.as_matrix_unsigned_long("fuelcell_availability_schedule")),
+            lowerHeatingValue_BtuPerFt3(cm.as_double("fuelcell_lhv")),
+            higherHeatingValue_BtuPerFt3(cm.as_double("fuelcell_lhv")),
+            availableFuel_MCf(cm.as_double("fuelcell_fuel_available")),
+            shutdownOption(cm.as_integer("fuelcell_operation_options")),
+            numberOfUnits(cm.as_integer("fuelcell_number_of_units")),
+            dispatchOption(cm.as_integer("fuelcell_dispatch_choice")),
+            fixed_percent(cm.as_double("fuelcell_fixed_pct")),
+            dispatch_kW(cm.as_vector_double("fuelcell_dispatch")),
+            canCharge(cm.as_vector_bool("dispatch_manual_fuelcellcharge")),
+            canDischarge(cm.as_vector_bool("dispatch_manual_fuelcelldischarge")),
+            discharge_percent(cm.as_vector_double("dispatch_manual_percent_fc_discharge")),
+            discharge_units(cm.as_vector_unsigned_long("dispatch_manual_units_fc_discharge")),
+            scheduleWeekday(cm.as_matrix_unsigned_long("dispatch_manual_sched")),
+            scheduleWeekend(cm.as_matrix_unsigned_long("dispatch_manual_sched_weekend")) {
+        numberOfYears = 1;
+        if (systemUseLifetimeOutput) {
+            numberOfYears = cm.as_unsigned_long("analysis_period");
+        }
 
-		// Ensure load matches generation size
-		std::vector<double> load = electricLoad_kW;
-		electricLoad_kW.clear();
-		electricLoad_kW.reserve(numberOfLifetimeRecords);
+        // Load is always a non-lifetime input
+        if (cm.is_assigned("load")) {
+            electricLoad_kW = cm.as_vector_double("load");
+        }
 
-		// Front of meter
-		if (load.size() == 0) {
-			for (size_t k = 0; k < numberOfLifetimeRecords; k++) {
-				electricLoad_kW.push_back(0.0);
-			}
-		}
-		// Behind the meter, load = gen size
-		else if (load.size() == numberOfRecordsPerYear) {
-			for (size_t y = 0; y < numberOfYears; y++) {
-				for (size_t i = 0; i < numberOfRecordsPerYear; i++) {
-					electricLoad_kW.push_back(load[i]);
-				}
-			}
-		}
-		// Behind the meter, hourly load assumed constant 
-		else if (load.size() == 8760) {
-			for (size_t y = 0; y < numberOfYears; y++) {
-				for (size_t h = 0; h < 8760; h++) {
-					double loadHour = load[h];
-					for (size_t s = 0; s < stepsPerHour; s++) {
-						electricLoad_kW.push_back(loadHour);
-					}
-				}
-			}
-		}
-		else {
-			throw exec_error("fuelcell", "Electric load time steps must equal generation time step or 8760");
-		}
+        // Choose between gen and ac, user should only put in one, but will prefer 'gen' if input
+        if (cm.is_assigned("gen")) {
+            systemGeneration_kW = cm.as_vector_double("gen");
+            numberOfRecordsPerYear = systemGeneration_kW.size() / numberOfYears;
+        }
+            // It's okay if there is no input generation or load, initialize to zero
+        else {
+            numberOfRecordsPerYear = (size_t) std::fmax(electricLoad_kW.size(), 8760);
+            systemGeneration_kW.reserve(numberOfRecordsPerYear * numberOfYears);
+            for (size_t j = 0; j < numberOfRecordsPerYear * numberOfYears; j++) {
+                systemGeneration_kW.push_back(0.0);
+            }
+        }
 
-		size_t count = 0;
-		for (size_t p = 0; p < canDischarge.size(); p++) {
-			if (canDischarge[p]) {
-				discharge_percentByPeriod[p] = discharge_percent[count];
-				discharge_unitsByPeriod[p] = discharge_units[count];
-				count++;
-			}
-		}
-	}
+        // Timesteps
+        numberOfLifetimeRecords = numberOfRecordsPerYear * numberOfYears;
+        stepsPerHour = numberOfRecordsPerYear / (size_t) 8760;
+        dt_hour = (double) (1.0 / (double) stepsPerHour);
 
-	// simulation inputs
-	bool systemUseLifetimeOutput;
-	size_t numberOfYears;
-	size_t numberOfRecordsPerYear;
-	size_t numberOfLifetimeRecords;
-	size_t stepsPerHour;
+        // Ensure load matches generation size
+        std::vector<double> load = electricLoad_kW;
+        electricLoad_kW.clear();
+        electricLoad_kW.reserve(numberOfLifetimeRecords);
 
-	// generation input
-	std::vector<double> systemGeneration_kW;
+        // Front of meter
+        if (load.size() == 0) {
+            for (size_t k = 0; k < numberOfLifetimeRecords; k++) {
+                electricLoad_kW.push_back(0.0);
+            }
+        }
+            // Behind the meter, load = gen size
+        else if (load.size() == numberOfRecordsPerYear) {
+            for (size_t y = 0; y < numberOfYears; y++) {
+                for (size_t i = 0; i < numberOfRecordsPerYear; i++) {
+                    electricLoad_kW.push_back(load[i]);
+                }
+            }
+        }
+            // Behind the meter, hourly load assumed constant
+        else if (load.size() == 8760) {
+            for (size_t y = 0; y < numberOfYears; y++) {
+                for (size_t h = 0; h < 8760; h++) {
+                    double loadHour = load[h];
+                    for (size_t s = 0; s < stepsPerHour; s++) {
+                        electricLoad_kW.push_back(loadHour);
+                    }
+                }
+            }
+        } else {
+            throw exec_error("fuelcell", "Electric load time steps must equal generation time step or 8760");
+        }
 
-	// electric load input
-	std::vector<double> electricLoad_kW;
+        size_t count = 0;
+        for (size_t p = 0; p < canDischarge.size(); p++) {
+            if (canDischarge[p]) {
+                discharge_percentByPeriod[p] = discharge_percent[count];
+                discharge_unitsByPeriod[p] = discharge_units[count];
+                count++;
+            }
+        }
+    }
 
-	// fuel cell
-	double dt_hour;
-	double unitPowerMax_kW;
-	double unitPowerMin_kW;
-	double shutdown_hours;
-	double startup_hours;
-	bool is_started;
-	double dynamicResponseUp_kWperHour;
-	double dynamicResponseDown_kWperHour;
-	double degradation_kWperHour;
-	double degradationRestart_kW;
-	size_t replacementOption;
-	double replacement_percent;
-	std::vector<size_t> replacementSchedule;
-	size_t efficiencyChoice;
-	util::matrix_t<double> efficiencyTable;
-	util::matrix_t<size_t> shutdownTable;
-	double lowerHeatingValue_BtuPerFt3;
-	double higherHeatingValue_BtuPerFt3;
-	double availableFuel_MCf;
-	int shutdownOption;
+    // simulation inputs
+    bool systemUseLifetimeOutput;
+    size_t numberOfYears;
+    size_t numberOfRecordsPerYear;
+    size_t numberOfLifetimeRecords;
+    size_t stepsPerHour;
 
-	// dispatch
-	size_t numberOfUnits;
-	int dispatchOption;
-	double fixed_percent;
-	std::vector<double> dispatch_kW;
-	std::vector<bool> canCharge;
-	std::vector<bool> canDischarge;
-	std::vector<double> discharge_percent;
-	std::vector<size_t> discharge_units;
-	std::map<size_t, double> discharge_percentByPeriod;
-	std::map<size_t, size_t> discharge_unitsByPeriod;
-	util::matrix_t<size_t> scheduleWeekday;
-	util::matrix_t<size_t> scheduleWeekend;
+    // generation input
+    std::vector<double> systemGeneration_kW;
+
+    // electric load input
+    std::vector<double> electricLoad_kW;
+
+    // fuel cell
+    double dt_hour;
+    double unitPowerMax_kW;
+    double unitPowerMin_kW;
+    double shutdown_hours;
+    double startup_hours;
+    bool is_started;
+    double dynamicResponseUp_kWperHour;
+    double dynamicResponseDown_kWperHour;
+    double degradation_kWperHour;
+    double degradationRestart_kW;
+    size_t replacementOption;
+    double replacement_percent;
+    std::vector<size_t> replacementSchedule;
+    size_t efficiencyChoice;
+    util::matrix_t<double> efficiencyTable;
+    util::matrix_t<size_t> shutdownTable;
+    double lowerHeatingValue_BtuPerFt3;
+    double higherHeatingValue_BtuPerFt3;
+    double availableFuel_MCf;
+    int shutdownOption;
+
+    // dispatch
+    size_t numberOfUnits;
+    int dispatchOption;
+    double fixed_percent;
+    std::vector<double> dispatch_kW;
+    std::vector<bool> canCharge;
+    std::vector<bool> canDischarge;
+    std::vector<double> discharge_percent;
+    std::vector<size_t> discharge_units;
+    std::map<size_t, double> discharge_percentByPeriod;
+    std::map<size_t, size_t> discharge_unitsByPeriod;
+    util::matrix_t<size_t> scheduleWeekday;
+    util::matrix_t<size_t> scheduleWeekend;
 };
 
 extern var_info vtab_fuelcell_input[];
 extern var_info vtab_fuelcell_output[];
 
-class cm_fuelcell : public compute_module 
-{
-public: 
+class cm_fuelcell : public compute_module {
+public:
 
-	/// Default constructor
-	cm_fuelcell();
+    /// Default constructor
+    cm_fuelcell();
 
-	/// Default destructor
-	~cm_fuelcell();
+    /// Default destructor
+    ~cm_fuelcell();
 
-	/// construct since compute_module framework is fundamentally broken
-	void construct();
+    /// construct since compute_module framework is fundamentally broken
+    void construct();
 
-	/// Main execution
-	void exec() override;
+    /// Main execution
+    void exec() override;
 
-	/// Allocate Outputs
-	void allocateOutputs();
+    /// Allocate Outputs
+    void allocateOutputs();
 
 protected:
 
-	// internally allocated
-	std::unique_ptr<fuelCellVariables> fcVars;
-	std::unique_ptr<FuelCell> fuelCell;
-	std::unique_ptr<FuelCellDispatch> fuelCellDispatch;
+    // internally allocated
+    std::unique_ptr<fuelCellVariables> fcVars;
+    std::unique_ptr<FuelCell> fuelCell;
+    std::unique_ptr<FuelCellDispatch> fuelCellDispatch;
 
-	// outputs
-	ssc_number_t * p_gen_kW;
-	ssc_number_t * p_fuelCellPower_kW;
-	ssc_number_t * p_fuelCellPowerMaxAvailable_percent;
-	ssc_number_t * p_fuelCellLoad_percent;
-	ssc_number_t * p_fuelCellElectricalEfficiency_percent;
-	ssc_number_t * p_fuelCellPowerThermal_kW;
-	ssc_number_t * p_fuelCellConsumption_MCf;
-	ssc_number_t * p_fuelCellToGrid_kW;
-	ssc_number_t * p_fuelCellToLoad_kW;
-	ssc_number_t * p_fuelCellReplacements;
-	ssc_number_t * p_fuelCellConsumption_MCf_annual;
+    // outputs
+    ssc_number_t *p_gen_kW;
+    ssc_number_t *p_fuelCellPower_kW;
+    ssc_number_t *p_fuelCellPowerMaxAvailable_percent;
+    ssc_number_t *p_fuelCellLoad_percent;
+    ssc_number_t *p_fuelCellElectricalEfficiency_percent;
+    ssc_number_t *p_fuelCellPowerThermal_kW;
+    ssc_number_t *p_fuelCellConsumption_MCf;
+    ssc_number_t *p_fuelCellToGrid_kW;
+    ssc_number_t *p_fuelCellToLoad_kW;
+    ssc_number_t *p_fuelCellReplacements;
+    ssc_number_t *p_fuelCellConsumption_MCf_annual;
 };
 
 #endif
