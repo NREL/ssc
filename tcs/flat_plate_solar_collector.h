@@ -27,7 +27,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <time.h>
 #include <vector>
 
-struct CollectorTestSpecifications {
+struct CollectorTestSpecifications
+{
     double FRta;                        // [-]
     double FRUL;                        // [W/m2-K]
     double iam;                         // [-]
@@ -36,29 +37,34 @@ struct CollectorTestSpecifications {
     double heat_capacity;               // [kJ/kg-K]
 };
 
-struct CollectorLocation {
+struct CollectorLocation
+{
     double latitude;                    // [deg N]
     double longitude;                   // [deg E]
     int timezone;                       // [hr]
 };
 
-struct CollectorOrientation {
+struct CollectorOrientation
+{
     double tilt;                        // [deg]
     double azimuth;                     // [deg] Clockwise from North
 };
 
-struct ArrayDimensions {
+struct ArrayDimensions
+{
     int num_in_series;
     int num_in_parallel;
 };
 
-struct TimeAndPosition {
+struct TimeAndPosition
+{
     tm timestamp;
     CollectorLocation collector_location;
     CollectorOrientation collector_orientation;
 };
 
-struct Weather {
+struct Weather
+{
     double dni;                         // [W/m2]
     double dhi;                         // [W/m2]
     double ghi;                         // [W/m2]
@@ -67,24 +73,28 @@ struct Weather {
     double wind_direction;              // [deg] Clockwise from North
 };
 
-struct InletFluidFlow {
+struct InletFluidFlow
+{
     double temp;                        // [C]
     double m_dot;                       // [kg/s]
     double specific_heat;               // [kJ/kg-K]
 };
 
-struct ExternalConditions {
+struct ExternalConditions
+{
     Weather weather;
     InletFluidFlow inlet_fluid_flow;
     double albedo;                      // [-]
 };
 
-struct PoaIrradianceComponents {
+struct PoaIrradianceComponents
+{
     std::vector<double> beam_with_aoi;                          // {[W/m2], [deg]}
     std::vector<double> sky_diffuse_with_aoi;                   // {[W/m2], [deg]}
     std::vector<double> ground_reflected_diffuse_with_aoi;      // {[W/m2], [deg]}
 
-    PoaIrradianceComponents() {
+    PoaIrradianceComponents()
+    {
         beam_with_aoi.resize(2, std::numeric_limits<double>::quiet_NaN());
         sky_diffuse_with_aoi.resize(2, std::numeric_limits<double>::quiet_NaN());
         ground_reflected_diffuse_with_aoi.resize(2, std::numeric_limits<double>::quiet_NaN());
@@ -92,23 +102,18 @@ struct PoaIrradianceComponents {
 };
 
 
-class FlatPlateCollector {
+
+class FlatPlateCollector
+{
 public:
     FlatPlateCollector();
-
     FlatPlateCollector(const CollectorTestSpecifications &collector_test_specifications);
-
     const double RatedPowerGain();
-
-    const double
-    UsefulPowerGain(const TimeAndPosition &time_and_position, const ExternalConditions &external_conditions);  // [W]
-    const double
-    T_out(const TimeAndPosition &time_and_position, const ExternalConditions &external_conditions);            // [C]
+    const double UsefulPowerGain(const TimeAndPosition &time_and_position, const ExternalConditions &external_conditions);  // [W]
+    const double T_out(const TimeAndPosition &time_and_position, const ExternalConditions &external_conditions);            // [C]
     const double area_coll();           // [m2]
     void area_coll(double collector_area /*m2*/);
-
     const CollectorTestSpecifications TestSpecifications();
-
 private:
     double FRta_;                       // [-] flow rate correction
     double FRUL_;                       // [W/m2-K] flow rate correction
@@ -117,25 +122,24 @@ private:
     double m_dot_test_;                 // [kg/s] mass flow through collector during test
     double heat_capacity_rate_test_;    // [kW/K] m_dot * c_p during ratings test
     const static PoaIrradianceComponents IncidentIrradiance(const TimeAndPosition &time_and_position,
-                                                            const Weather &weather,
-                                                            double albedo /*-*/);
-
+        const Weather &weather,
+        double albedo /*-*/);
     const double TransmittedIrradiance(const CollectorOrientation &collector_orientation,
-                                       const PoaIrradianceComponents &poa_irradiance_components);      // [W/m2]
+        const PoaIrradianceComponents &poa_irradiance_components);      // [W/m2]
     const double AbsorbedRadiantPower(double transmitted_irradiance /*W/m2*/,
-                                      const InletFluidFlow &inlet_fluid_flow,
-                                      double T_amb /*C*/);    // [W]
+        const InletFluidFlow &inlet_fluid_flow,
+        double T_amb /*C*/);    // [W]
     const double ThermalPowerLoss(const InletFluidFlow &inlet_fluid_flow,
-                                  double T_amb /*C*/);    // [W]
+        double T_amb /*C*/);    // [W]
 };
 
 
-class Pipe {
+
+class Pipe
+{
 public:
     Pipe();
-
     Pipe(double pipe_diam /*m*/, double pipe_k /*W/m2-K*/, double pipe_insul /*m*/, double pipe_length /*m*/);
-
     const double pipe_od();             // [m]
     const double ThermalPowerLoss(double T_in /*C*/, double T_amb /*C*/);    // [W]
     const double T_out(double T_in /*C*/, double T_amb /*C*/, double heat_capacity_rate /*kW/K*/);  // [C]
@@ -148,38 +152,33 @@ private:
 };
 
 
-class FlatPlateArray {
+
+class FlatPlateArray
+{
 public:
     FlatPlateArray();
-
     FlatPlateArray(const FlatPlateCollector &flat_plate_collector, const CollectorLocation &collector_location,
-                   const CollectorOrientation &collector_orientation, const ArrayDimensions &array_dimensions,
-                   const Pipe &inlet_pipe, const Pipe &outlet_pipe);
-
-    FlatPlateArray(const CollectorTestSpecifications &collector_test_specifications,
-                   const CollectorLocation &collector_location,
-                   const CollectorOrientation &collector_orientation, const ArrayDimensions &array_dimensions,
-                   const Pipe &inlet_pipe, const Pipe &outlet_pipe);
-
+        const CollectorOrientation &collector_orientation, const ArrayDimensions &array_dimensions,
+        const Pipe &inlet_pipe, const Pipe &outlet_pipe);
+    FlatPlateArray(const CollectorTestSpecifications &collector_test_specifications, const CollectorLocation &collector_location,
+        const CollectorOrientation &collector_orientation, const ArrayDimensions &array_dimensions,
+        const Pipe &inlet_pipe, const Pipe &outlet_pipe);
     const int ncoll();
-
     const double area_total();                             // [m2]
     void resize_array(ArrayDimensions array_dimensions);
-
-    void resize_array(double m_dot_array_design /*kg/s*/, double specific_heat /*kJ/kg-K*/,
-                      double temp_rise_array_design /*K*/);
-
+    void resize_array(double m_dot_array_design /*kg/s*/, double specific_heat /*kJ/kg-K*/, double temp_rise_array_design /*K*/);
     const double UsefulPowerGain(const tm &timestamp, const ExternalConditions &external_conditions);      // [W]
     const double T_out(const tm &timestamp, const ExternalConditions &external_conditions);                // [C]
 private:
     FlatPlateCollector flat_plate_collector_;       // just scale a single collector for now -> premature optimization??
-
+    
     CollectorLocation collector_location_;
     CollectorOrientation collector_orientation_;
     ArrayDimensions array_dimensions_;
     Pipe inlet_pipe_;
     Pipe outlet_pipe_;
 };
+
 
 
 #endif // __FLAT_PLATE_SOLAR_COLLECTOR__

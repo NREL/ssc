@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 
 #define private public              // for setting private data members
-
 #include "lib_trough_test.h"
 /*
 TEST_F(TroughTest, DefocusTest_csp_solver_trough_collector_receiver)
@@ -107,7 +106,7 @@ TEST_F(TroughTest, SteadyStateTest_csp_solver_trough_collector_receiver)
     troughModel->m_accept_init = false;           // running at steady-state but keeping false to avoid side effects
     troughModel->m_accept_loc = 1;                // don't just model a single loop
     troughModel->m_is_using_input_gen = false;    // use parameter values set below instead
-
+    
     // at time 1476 (1477 end time listed in output)
     weatherValues.m_year = 2009;
     weatherValues.m_month = 6;

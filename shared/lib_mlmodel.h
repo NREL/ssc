@@ -4,7 +4,7 @@
 *  Copyright 2017 Alliance for Sustainable Energy, LLC
 *
 *  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (ï¿½Allianceï¿½) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
 *  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
 *  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
 *  copies to the public, perform publicly and display publicly, and to permit others to do so.
@@ -28,8 +28,8 @@
 *  4. Redistribution of this software, without modification, must refer to the software by the same
 *  designation. Redistribution of a modified version of this software (i) may not refer to the modified
 *  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as ï¿½System Advisor Modelï¿½ or ï¿½SAMï¿½. Except
-*  to comply with the foregoing, the terms ï¿½System Advisor Modelï¿½, ï¿½SAMï¿½, or any confusingly similar
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
 *  designation may not be used to refer to any modified version of this software or any modified
 *  version of the underlying software originally provided by Alliance without the prior written consent
 *  of Alliance.
@@ -59,85 +59,81 @@
 using namespace SPLINTER;
 
 
-class mlmodel_module_t : public pvmodule_t {
+class mlmodel_module_t : public pvmodule_t
+{
 public:
-    int N_series;
-    int N_parallel;
-    int N_diodes;
+	int N_series;
+	int N_parallel;
+	int N_diodes;
 
-    double Width;
-    double Length;
+	double Width;
+	double Length;
 
-    double V_mp_ref;
-    double I_mp_ref;
-    double V_oc_ref;
-    double I_sc_ref;
+	double V_mp_ref;
+	double I_mp_ref;
+	double V_oc_ref;
+	double I_sc_ref;
 
-    double S_ref;
-    double T_ref;
+	double S_ref;
+	double T_ref;
 
-    double R_shref;
-    double R_sh0;
-    double R_shexp;
-    double R_s;
-    double alpha_isc;
-    double beta_voc_spec;
-    double E_g;
-    double n_0;
-    double mu_n;
-    double D2MuTau;
+	double R_shref;
+	double R_sh0;
+	double R_shexp;
+	double R_s;
+	double alpha_isc;
+	double beta_voc_spec;
+	double E_g;
+	double n_0;
+	double mu_n;
+	double D2MuTau;
+	
+	int T_mode;
+	double T_c_no_tnoct;
+	int T_c_no_mounting;
+	int T_c_no_standoff;
+	double T_c_fa_alpha;
+	double T_c_fa_U0;
+	double T_c_fa_U1;
 
-    int T_mode;
-    double T_c_no_tnoct;
-    int T_c_no_mounting;
-    int T_c_no_standoff;
-    double T_c_fa_alpha;
-    double T_c_fa_U0;
-    double T_c_fa_U1;
+	int AM_mode;
+	double AM_c_sa[5];
+	double AM_c_lp[6];
 
-    int AM_mode;
-    double AM_c_sa[5];
-    double AM_c_lp[6];
+	int IAM_mode;
+	double IAM_c_as;
+	double IAM_c_sa[6];
+	int IAM_c_cs_elements;
+	double IAM_c_cs_incAngle[100];
+	double IAM_c_cs_iamValue[100];
 
-    int IAM_mode;
-    double IAM_c_as;
-    double IAM_c_sa[6];
-    int IAM_c_cs_elements;
-    double IAM_c_cs_incAngle[100];
-    double IAM_c_cs_iamValue[100];
+	double groundRelfectionFraction;
 
-    double groundRelfectionFraction;
+	mlmodel_module_t();
 
-    mlmodel_module_t();
-
-    virtual double AreaRef() { return (Width * Length); }
-
-    virtual double VmpRef() { return V_mp_ref; }
-
-    virtual double ImpRef() { return I_mp_ref; }
-
-    virtual double VocRef() { return V_oc_ref; }
-
-    virtual double IscRef() { return I_sc_ref; }
-
-    virtual bool operator()(pvinput_t &input, double TcellC, double opvoltage, pvoutput_t &output);
-
-    virtual void initializeManual();
+	virtual double AreaRef() { return (Width * Length); }
+	virtual double VmpRef() { return V_mp_ref; }
+	virtual double ImpRef() { return I_mp_ref; }
+	virtual double VocRef() { return V_oc_ref; }
+	virtual double IscRef() { return I_sc_ref; }
+	virtual bool operator() (pvinput_t &input, double TcellC, double opvoltage, pvoutput_t &output);
+	virtual void initializeManual();
 
 private:
-    bool isInitialized;
-    double nVT;
-    double I_0ref;
-    double I_Lref;
-    double Vbi;
+	bool isInitialized;
+	double nVT;
+	double I_0ref;
+	double I_Lref;
+	double Vbi;
 //	tk::spline iamSpline;
-    BSpline m_bspline3;
+	BSpline m_bspline3;
 
 };
 
-class mock_celltemp_t : public pvcelltemp_t {
+class mock_celltemp_t : public pvcelltemp_t
+{
 public:
-    virtual bool operator()(pvinput_t &input, pvmodule_t &module, double opvoltage, double &Tcell);
+	virtual bool operator() (pvinput_t &input, pvmodule_t &module, double opvoltage, double &Tcell);
 };
 
 #endif

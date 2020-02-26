@@ -95,11 +95,11 @@ struct poaDecompReq;
 * \param[out] sunn[7] true solar time (hrs)
 * \param[out] sunn[8] extraterrestrial solar irradiance on horizontal at particular time (W/m2)
 */
-void solarpos(int year, int month, int day, int hour, double minute, double lat, double lng, double tz, double sunn[9]);
+void solarpos(int year,int month,int day,int hour,double minute,double lat,double lng,double tz,double sunn[9]);
 
 /**
 * incidence function calculates the incident angle of direct beam radiation to a surface.
-* The calculation is done for a given sun position, latitude, and surface orientation.
+* The calculation is done for a given sun position, latitude, and surface orientation. 
 * The modes available are fixed tilt, 1-axis tracking, and 2-axis tracking.
 *
 * \param[in] mode 0 for fixed-tilt, 1 for 1-axis tracking, 2 for 2-axis tracking, 3 for azimuth-axis tracking, 4 for timeseries tilt tracking (in "set surface" function, this is set as mode 0)
@@ -119,17 +119,16 @@ void solarpos(int year, int month, int day, int hour, double minute, double lat,
 * \param[out] angle[3] tracking axis rotation angle in radians, measured from surface normal of unrotating axis (only for 1 axis trackers)
 * \param[out] angle[4] backtracking difference (rot - ideal_rot) will be zero except in case of backtracking for 1 axis tracking
 */
-void incidence(int mode, double tilt, double sazm, double rlim, double zen, double azm, bool en_backtrack, double gcr,
-               bool force_to_stow, double stow_angle_deg, double angle[5]);
+void incidence(int mode,double tilt,double sazm,double rlim,double zen,double azm, bool en_backtrack, double gcr, bool force_to_stow, double stow_angle_deg, double angle[5]);
 
 
 /**
-* Perez function for calculating values of diffuse + direct
+* Perez function for calculating values of diffuse + direct 
 * solar radiation + ground reflected radiation for a tilted surface and returns the total plane-of-array irradiance(poa),
 * see also isotropic(), hdkr().
 *
 * Function does not check all input for valid entries; consequently, this should be
-* done before calling the function.  (Reference: Perez et al, Solar Energy Vol. 44, No.5, pp.271-289,1990.)
+* done before calling the function.  (Reference: Perez et al, Solar Energy Vol. 44, No.5, pp.271-289,1990.) 
 *
 * \param[in] hextra extraterrestrial irradiance on horizontal surface (W/m2) (unused in perez model)
 * \param[in] dn direct normal radiation (W/m2)
@@ -147,8 +146,7 @@ void incidence(int mode, double tilt, double sazm, double rlim, double zen, doub
 * \param[out] diffc[1] circumsolar diffuse
 * \param[out] diffc[2] horizon brightening
 */
-void perez(double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3],
-           double diffc[3] /* can be NULL */ );
+void perez( double hextra, double dn,double df,double alb,double inc,double tilt,double zen, double poa[3], double diffc[3] /* can be NULL */ );
 
 /**
 * Isotropic sky model for diffuse irradiance on a tilted surface, see also perez(), hdkr().
@@ -169,8 +167,7 @@ void perez(double hextra, double dn, double df, double alb, double inc, double t
 * \param[out] diffc[1] circumsolar diffuse
 * \param[out] diffc[2] horizon brightening
 */
-void isotropic(double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3],
-               double diffc[3] /* can be NULL */ );
+void isotropic( double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] /* can be NULL */ );
 
 /**
 * HDKR (Hay, Davies, Klutcher, Reindl) model for diffuse irradiance on a tilted surface, see also perez(), isotropic().
@@ -191,8 +188,7 @@ void isotropic(double hextra, double dn, double df, double alb, double inc, doub
 * \param[out] diffc[1] circumsolar diffuse
 * \param[out] diffc[2] horizon brightening
 */
-void hdkr(double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3],
-          double diffc[3] /* can be NULL */ );
+void hdkr( double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] /* can be NULL */ );
 
 
 /**
@@ -208,27 +204,25 @@ void hdkr(double hextra, double dn, double df, double alb, double inc, double ti
 * \param[out] gh Global Horizontal Irradiance (W/m2)
 * \param[out] poa calculated plane-of-array irradiances (beam, sky diffuse, ground diffuse) (W/m2)
 * \param[out] diffc diffuse components (isotropic, circumsolar, horizon) (W/m2)
-*
+* 
 */
-int
-poaDecomp(double wfPOA, double angle[], double sun[], double alb, poaDecompReq *pA, double &dn, double &df, double &gh,
-          double poa[3], double diffc[3]);
+int poaDecomp( double wfPOA, double angle[], double sun[], double alb, poaDecompReq* pA, double &dn, double &df, double &gh, double poa[3], double diffc[3]);
 
 /**
 * ModifiedDISC calculates direct normal (beam) radiation from global horizontal radiation.
-*  This function uses a disc beam model to calculate the beam irradiance returned.
+*  This function uses a disc beam model to calculate the beam irradiance returned. 
 *  The argument g is an array of 3 values. The values are the global irradiance of the
 *  previous reading, the current reading ,and the next reading in that order. The argument
-*  z uses the same format, except the values are the respective solar zenith angles. If any
-*  of the g or z values are not available or the previous or next readings did not occur
-*  within 1.5 hours of the current reading then the appropriate value or values should be
-*  replaced with a -999.0. If the argument td is missing then the value -999.0 should be
+*  z uses the same format, except the values are the respective solar zenith angles. If any 
+*  of the g or z values are not available or the previous or next readings did not occur 
+*  within 1.5 hours of the current reading then the appropriate value or values should be 
+*  replaced with a -999.0. If the argument td is missing then the value -999.0 should be 
 *  used in place of the missing argument. The current global irradiance (g[1]) must have a
-*  value. If the dew point temperature (td) is missing then td is not used to find an index
-*  into the correction matrix (cm), instead a special column in the matrix is used. If the
-*  previous global irradiance (g[0]) or solar zenith angle (z[0]) and the next global
-*  irradiance (g[2]) or solar zenith angle (z[2]) are missing then delta kt' (dkt1) is not
-*  used to find an index into the correction matrix (cm), instead a special column in the
+*  value. If the dew point temperature (td) is missing then td is not used to find an index 
+*  into the correction matrix (cm), instead a special column in the matrix is used. If the 
+*  previous global irradiance (g[0]) or solar zenith angle (z[0]) and the next global 
+*  irradiance (g[2]) or solar zenith angle (z[2]) are missing then delta kt' (dkt1) is not 
+*  used to find an index into the correction matrix (cm), instead a special column in the 
 *  matrix is used.
 *
 * \param[in] g[3] global irradiance array (watts / sq. meter)
@@ -254,8 +248,7 @@ double ModifiedDISC(const double g[3], const double z[3], double td, double alt,
 * \param[in] doy julian day of year
 * \param[out] dn beam irradiance (watts / sq. meter) through call-by-reference
 */
-void ModifiedDISC(const double kt[3], const double kt1[3], const double g[3], const double z[3], double td, double alt,
-                  int doy, double &dn);
+void ModifiedDISC(const double kt[3], const double kt1[3], const double g[3], const double z[3], double td, double alt, int doy, double &dn);
 
 /**
 * shadeFraction1x calculates if the system is shaded based on the sun position and surface position
@@ -291,216 +284,190 @@ double backtrack(double solazi, double solzen, double tilt, double azimuth, doub
 *  The irrad class contains data and methods to calculate plane-of-array irradiance for the front and rear side of a module.
 *  The class contains supporting methods to compute the sun position, sun angles, and surface angles for tracked systems.
 */
-class irrad {
+class irrad
+{
 protected:
+	
+	// Position inputs
+	double latitudeDegrees;			///< latitude in degrees, north positive
+	double longitudeDegrees;		///< longitude in degrees, east positive
+	double timezone;				///< time zone, west longitudes negative
 
-    // Position inputs
-    double latitudeDegrees;            ///< latitude in degrees, north positive
-    double longitudeDegrees;        ///< longitude in degrees, east positive
-    double timezone;                ///< time zone, west longitudes negative
+	// Model settings
+	int skyModel;					///< sky model selection as defined in \link Irradiance_IO::SKYMODEL 
+	int radiationMode;				///< radiation input mode as defined in \link Irradiance_IO::RADMODE
+	int trackingMode;				///< the subarray tracking model as defined in \link Subarray_IO::tracking
+	bool enableBacktrack;			///< Boolean value for whether backtracking is enabled or not
+	bool forceToStow;				///< Boolean value for whether or not a single-axis tracker can be set to a stow angle
 
-    // Model settings
-    int skyModel;                    ///< sky model selection as defined in \link Irradiance_IO::SKYMODEL
-    int radiationMode;                ///< radiation input mode as defined in \link Irradiance_IO::RADMODE
-    int trackingMode;                ///< the subarray tracking model as defined in \link Subarray_IO::tracking
-    bool enableBacktrack;            ///< Boolean value for whether backtracking is enabled or not
-    bool forceToStow;                ///< Boolean value for whether or not a single-axis tracker can be set to a stow angle
+	// Time inputs
+	int year, month, day, hour;
+	double minute, delt;
 
-    // Time inputs
-    int year, month, day, hour;
-    double minute, delt;
+	// Subarray properties
+	double tiltDegrees;				///< Surface tilt of subarray in degrees
+	double surfaceAzimuthDegrees;	///< Surface azimuth of subarray in degrees
+	double rotationLimitDegrees;	///< Rotation limit for subarray in degrees
+	double stowAngleDegrees;		///< Optional stow angle for the subarray in degrees
+	double groundCoverageRatio;		///< Ground coverage ratio of subarray
+	poaDecompReq * poaAll;			///< Data required to decompose input plane-of-array irradiance
 
-    // Subarray properties
-    double tiltDegrees;                ///< Surface tilt of subarray in degrees
-    double surfaceAzimuthDegrees;    ///< Surface azimuth of subarray in degrees
-    double rotationLimitDegrees;    ///< Rotation limit for subarray in degrees
-    double stowAngleDegrees;        ///< Optional stow angle for the subarray in degrees
-    double groundCoverageRatio;        ///< Ground coverage ratio of subarray
-    poaDecompReq *poaAll;            ///< Data required to decompose input plane-of-array irradiance
+	// Input Front-Side Irradiation components 
+	double globalHorizontal;		///< Input global horizontal irradiance (W/m2)
+	double directNormal;			///< Input direct normal irradiance (W/m2)
+	double diffuseHorizontal;		///< Input diffuse horizontal irradiance (W/m2)
+	double weatherFilePOA;			///< Input plane-of-array irradiance (W/m2)
+	double albedo;					///< Ground albedo (0-1)
 
-    // Input Front-Side Irradiation components
-    double globalHorizontal;        ///< Input global horizontal irradiance (W/m2)
-    double directNormal;            ///< Input direct normal irradiance (W/m2)
-    double diffuseHorizontal;        ///< Input diffuse horizontal irradiance (W/m2)
-    double weatherFilePOA;            ///< Input plane-of-array irradiance (W/m2)
-    double albedo;                    ///< Ground albedo (0-1)
+	// Calculated Front-Side Irradiation components
+	double calculatedDirectNormal;		///< Calculated direct normal irradiance (W/m2)
+	double calculatedDiffuseHorizontal; ///< Calculated diffuse horizontal irradiance (W/m2)
 
-    // Calculated Front-Side Irradiation components
-    double calculatedDirectNormal;        ///< Calculated direct normal irradiance (W/m2)
-    double calculatedDiffuseHorizontal; ///< Calculated diffuse horizontal irradiance (W/m2)
-
-    // Outputs
-    double sunAnglesRadians[9];                ///< Sun angles in radians calculated from solarpos()
-    double surfaceAnglesRadians[5];            ///< Surface angles in radians calculated from incidence()
-    double planeOfArrayIrradianceFront[3];    ///< Front-side plane-of-array irradiance for beam, sky diffuse, ground diffuse (W/m2)
-    double planeOfArrayIrradianceRear[3];    ///< Rear-side plane-of-array irradiance for beam, sky diffuse, ground diffuse (W/m2)
-    double diffuseIrradianceFront[3];        ///< Front-side diffuse irradiance for isotropic, circumsolar, and horizon (W/m2)
-    double diffuseIrradianceRear[3];        ///< Rear-side diffuse irradiance for isotropic, circumsolar, and horizon (W/m2)
-    int timeStepSunPosition[3];                ///< [0] effective hour of day used for sun position, [1] effective minute of hour used for sun position, [2] is sun up?  (0=no, 1=midday, 2=sunup, 3=sundown)
-    double planeOfArrayIrradianceRearAverage; ///< Average rear side plane-of-array irradiance (W/m2)
+	// Outputs
+	double sunAnglesRadians[9];				///< Sun angles in radians calculated from solarpos()	
+	double surfaceAnglesRadians[5];			///< Surface angles in radians calculated from incidence()
+	double planeOfArrayIrradianceFront[3];	///< Front-side plane-of-array irradiance for beam, sky diffuse, ground diffuse (W/m2)
+	double planeOfArrayIrradianceRear[3];	///< Rear-side plane-of-array irradiance for beam, sky diffuse, ground diffuse (W/m2)
+	double diffuseIrradianceFront[3];		///< Front-side diffuse irradiance for isotropic, circumsolar, and horizon (W/m2)
+	double diffuseIrradianceRear[3];		///< Rear-side diffuse irradiance for isotropic, circumsolar, and horizon (W/m2)
+	int timeStepSunPosition[3];				///< [0] effective hour of day used for sun position, [1] effective minute of hour used for sun position, [2] is sun up?  (0=no, 1=midday, 2=sunup, 3=sundown)
+	double planeOfArrayIrradianceRearAverage; ///< Average rear side plane-of-array irradiance (W/m2)
 
 public:
 
-    /// Directive to indicate that if delt_hr is less than zero, do not interpolate sunrise and sunset hours
+	/// Directive to indicate that if delt_hr is less than zero, do not interpolate sunrise and sunset hours
 #define IRRADPROC_NO_INTERPOLATE_SUNRISE_SUNSET (-1.0)
 
-    /// Maximum irradiance allowed (W/m2)
-    static const int irradiationMax = 1500;
+	/// Maximum irradiance allowed (W/m2)
+	static const int irradiationMax = 1500;	
 
-    /// Default class constructor, calls setup()
-    irrad(weather_record wr, weather_header wh,
-          int skyModel, int radiationModeIn, int trackModeIn,
-          bool useWeatherFileAlbedo, bool instantaneousWeather, bool backtrackingEnabled, bool forceToStowIn,
-          double dtHour, double tiltDegrees, double azimuthDegrees, double trackerRotationLimitDegrees,
-          double stowAngleDegreesIn,
-          double groundCoverageRatio, std::vector<double> monthlyTiltDegrees, std::vector<double> userSpecifiedAlbedo,
-          poaDecompReq *poaAllIn);
+	/// Default class constructor, calls setup()
+	irrad(weather_record wr, weather_header wh,
+		int skyModel, int radiationModeIn, int trackModeIn,
+		bool useWeatherFileAlbedo, bool instantaneousWeather, bool backtrackingEnabled, bool forceToStowIn,
+		double dtHour, double tiltDegrees, double azimuthDegrees, double trackerRotationLimitDegrees, double stowAngleDegreesIn, 
+		double groundCoverageRatio, std::vector<double> monthlyTiltDegrees, std::vector<double> userSpecifiedAlbedo,
+		poaDecompReq * poaAllIn);
 
-    /// Construct the irrad class with an Irradiance_IO() object and Subarray_IO() object
-    irrad();
+	/// Construct the irrad class with an Irradiance_IO() object and Subarray_IO() object
+	irrad();
 
-    /// Initialize irrad member data
-    void setup();
+	/// Initialize irrad member data
+	void setup();
 
-    /// Validation method to verify member data is within acceptable ranges
-    int check();
+	/// Validation method to verify member data is within acceptable ranges
+	int check();
+	
+	/// Set the time for the irradiance processor
+	void set_time( int year, int month, int day, int hour, double minute, double delt_hr );
 
-    /// Set the time for the irradiance processor
-    void set_time(int year, int month, int day, int hour, double minute, double delt_hr);
+	/// Set the location for the irradiance processor
+	void set_location( double lat, double lon, double tz);
 
-    /// Set the location for the irradiance processor
-    void set_location(double lat, double lon, double tz);
+	/// Set the sky model for the irradiance processor, using \link Irradiance_IO::SKYMODEL 
+	void set_sky_model( int skymodel, double albedo );
 
-    /// Set the sky model for the irradiance processor, using \link Irradiance_IO::SKYMODEL
-    void set_sky_model(int skymodel, double albedo);
+	/// Set the surface orientation for the irradiance processor
+	void set_surface( int tracking, double tilt_deg, double azimuth_deg, double rotlim_deg, bool en_backtrack, double gcr, bool forceToStowFlag, double stowAngle);
 
-    /// Set the surface orientation for the irradiance processor
-    void
-    set_surface(int tracking, double tilt_deg, double azimuth_deg, double rotlim_deg, bool en_backtrack, double gcr,
-                bool forceToStowFlag, double stowAngle);
+	/// Set the direct normal and diffuse horizontal components of irradiation
+	void set_beam_diffuse( double beam, double diffuse );
 
-    /// Set the direct normal and diffuse horizontal components of irradiation
-    void set_beam_diffuse(double beam, double diffuse);
+	/// Set the global horizontal and direct normal components of irradiation
+	void set_global_beam( double global, double beam );
 
-    /// Set the global horizontal and direct normal components of irradiation
-    void set_global_beam(double global, double beam);
+	/// Set the global horizontal and diffuse horizontal components of irradiation
+	void set_global_diffuse(double global, double diffuse);
 
-    /// Set the global horizontal and diffuse horizontal components of irradiation
-    void set_global_diffuse(double global, double diffuse);
+	/// Set the plane-of-array irradiance from a reference cell
+	void set_poa_reference( double poa, poaDecompReq* );
 
-    /// Set the plane-of-array irradiance from a reference cell
-    void set_poa_reference(double poa, poaDecompReq *);
+	/// Set the plane-of-array irradiance from a pyronometer
+	void set_poa_pyranometer( double poa, poaDecompReq* );
 
-    /// Set the plane-of-array irradiance from a pyronometer
-    void set_poa_pyranometer(double poa, poaDecompReq *);
+	/// Function to overwrite internally calculated sun position values, primarily to enable testing against other libraries using different sun position calculations
+	void set_sun_component(size_t index, double value);
 
-    /// Function to overwrite internally calculated sun position values, primarily to enable testing against other libraries using different sun position calculations
-    void set_sun_component(size_t index, double value);
+	/// Run the irradiance processor and calculate the plane-of-array irradiance and diffuse components of irradiance
+	int calc();
 
-    /// Run the irradiance processor and calculate the plane-of-array irradiance and diffuse components of irradiance
-    int calc();
+	/// Run the irradiance processor for the rear-side of the surface to calculate rear-side plane-of-array irradiance
+	int calc_rear_side(double transmissionFactor, double groundClearanceHeight, double slopeLength);
+	
+	/// Return the calculated sun angles, some of which are converted to degrees
+	void get_sun( double *solazi,
+		double *solzen,
+		double *solelv,
+		double *soldec,
+		double *sunrise,
+		double *sunset,
+		int *sunup,
+		double *eccfac,
+		double *tst,
+		double *hextra );
 
-    /// Run the irradiance processor for the rear-side of the surface to calculate rear-side plane-of-array irradiance
-    int calc_rear_side(double transmissionFactor, double groundClearanceHeight, double slopeLength);
+	/// Return one component of the sun angles calculated in radians
+	double get_sun_component(size_t i) { return sunAnglesRadians[i]; }
 
-    /// Return the calculated sun angles, some of which are converted to degrees
-    void get_sun(double *solazi,
-                 double *solzen,
-                 double *solelv,
-                 double *soldec,
-                 double *sunrise,
-                 double *sunset,
-                 int *sunup,
-                 double *eccfac,
-                 double *tst,
-                 double *hextra);
+	/// Return the calculated surface angles in degrees
+	void get_angles( double *aoi,
+		double *surftilt,
+		double *surfazi,
+		double *axisrot,
+		double *btdiff );
 
-    /// Return one component of the sun angles calculated in radians
-    double get_sun_component(size_t i) { return sunAnglesRadians[i]; }
+	/// Return the front-side plane-of-array irradiance and diffuse components of irradiation
+	void get_poa( double *beam, double *skydiff, double *gnddiff,
+		double *isotrop, double *circum, double *horizon );
 
-    /// Return the calculated surface angles in degrees
-    void get_angles(double *aoi,
-                    double *surftilt,
-                    double *surfazi,
-                    double *axisrot,
-                    double *btdiff);
+	/// Return the rear-side average total plane-of-array irradiance
+	double get_poa_rear();
 
-    /// Return the front-side plane-of-array irradiance and diffuse components of irradiation
-    void get_poa(double *beam, double *skydiff, double *gnddiff,
-                 double *isotrop, double *circum, double *horizon);
+	/// Return the front-side irradiance components
+	void get_irrad (double *ghi, double *dni, double *dhi);
 
-    /// Return the rear-side average total plane-of-array irradiance
-    double get_poa_rear();
+	/// Return the effective hour and fraction used for the sun position calculation
+	double get_sunpos_calc_hour();
 
-    /// Return the front-side irradiance components
-    void get_irrad(double *ghi, double *dni, double *dhi);
+	/// Return the albedo used by the irradiance processor
+	double getAlbedo();
 
-    /// Return the effective hour and fraction used for the sun position calculation
-    double get_sunpos_calc_hour();
+	/// Return the sky configuration factors, used by \link calc_rear_side()
+	void getSkyConfigurationFactors(double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, std::vector<double> & rearSkyConfigFactors, std::vector<double> & frontSkyConfigFactors);
 
-    /// Return the albedo used by the irradiance processor
-    double getAlbedo();
+	/// Return the ground-shade factors, describing which segments of the ground are shaded by the array, used by \link calc_rear_side()
+	void getGroundShadeFactors(double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, double solarAzimuthRadians, double solarElevationRadians, std::vector<int> & rearGroundFactors, std::vector<int> & frontGroundFactors, double & maxShadow, double & pvBackShadeFraction, double & pvFrontShadeFraction);
 
-    /// Return the sky configuration factors, used by \link calc_rear_side()
-    void getSkyConfigurationFactors(double rowToRow, double verticalHeight, double clearanceGround,
-                                    double distanceBetweenRows, double horizontalLength,
-                                    std::vector<double> &rearSkyConfigFactors,
-                                    std::vector<double> &frontSkyConfigFactors);
+	/// Return the ground global-horizonal irradiance, used by \link calc_rear_side()
+	void getGroundGHI(double transmissionFactor, std::vector<double> rearSkyConfigFactors, std::vector<double> frontSkyConfigFactors, std::vector<int> rearGroundShadeFactors, std::vector<int> frontGroundShadeFactors, std::vector<double> & rearGroundGHI, std::vector<double> & frontGroundGHI);
 
-    /// Return the ground-shade factors, describing which segments of the ground are shaded by the array, used by \link calc_rear_side()
-    void
-    getGroundShadeFactors(double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows,
-                          double horizontalLength, double solarAzimuthRadians, double solarElevationRadians,
-                          std::vector<int> &rearGroundFactors, std::vector<int> &frontGroundFactors, double &maxShadow,
-                          double &pvBackShadeFraction, double &pvFrontShadeFraction);
+	/// Return the back surface irradiances, used by \link calc_rear_side()
+	void getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, std::vector<double> rearGroundGHI, std::vector<double> frontGroundGHI, std::vector<double> frontReflected, std::vector<double> & rearIrradiance, double & rearAverageIrradiance);
 
-    /// Return the ground global-horizonal irradiance, used by \link calc_rear_side()
-    void getGroundGHI(double transmissionFactor, std::vector<double> rearSkyConfigFactors,
-                      std::vector<double> frontSkyConfigFactors, std::vector<int> rearGroundShadeFactors,
-                      std::vector<int> frontGroundShadeFactors, std::vector<double> &rearGroundGHI,
-                      std::vector<double> &frontGroundGHI);
+	/// Return the front surface irradiances, used by \link calc_rear_side()
+	void getFrontSurfaceIrradiances(double pvBackShadeFraction, double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, std::vector<double> frontGroundGHI, std::vector<double> & frontIrradiance, double & frontAverageIrradiance, std::vector<double> & frontReflected);
 
-    /// Return the back surface irradiances, used by \link calc_rear_side()
-    void getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRow, double verticalHeight,
-                                   double clearanceGround, double distanceBetweenRows, double horizontalLength,
-                                   std::vector<double> rearGroundGHI, std::vector<double> frontGroundGHI,
-                                   std::vector<double> frontReflected, std::vector<double> &rearIrradiance,
-                                   double &rearAverageIrradiance);
-
-    /// Return the front surface irradiances, used by \link calc_rear_side()
-    void getFrontSurfaceIrradiances(double pvBackShadeFraction, double rowToRow, double verticalHeight,
-                                    double clearanceGround, double distanceBetweenRows, double horizontalLength,
-                                    std::vector<double> frontGroundGHI, std::vector<double> &frontIrradiance,
-                                    double &frontAverageIrradiance, std::vector<double> &frontReflected);
-
-    enum RADMODE {
-        DN_DF, DN_GH, GH_DF, POA_R, POA_P
-    };
-    enum SKYMODEL {
-        ISOTROPIC, HDKR, PEREZ
-    };
-    enum TRACKING {
-        FIXED_TILT, SINGLE_AXIS, TWO_AXIS, AZIMUTH_AXIS, SEASONAL_TILT
-    };
+	enum RADMODE { DN_DF, DN_GH, GH_DF, POA_R, POA_P };
+	enum SKYMODEL { ISOTROPIC, HDKR, PEREZ };
+	enum TRACKING { FIXED_TILT, SINGLE_AXIS, TWO_AXIS, AZIMUTH_AXIS, SEASONAL_TILT };
 
 };
 
 // allow for the poa decomp model to take all daily POA measurements into consideration
 struct poaDecompReq {
-    poaDecompReq() : i(0), dayStart(0), stepSize(1), stepScale('h'), doy(-1) {}
-
-    size_t i; // Current time index
-    size_t dayStart; // time index corresponding to the start of the current day
-    double stepSize;
-    char stepScale; // indicates whether time steps are hours (h) or minutes (m)
-    std::vector<double> POA; // Pointer to entire POA array (will have size 8760 if time step is 1 hour)
-    std::vector<double> inc; // Pointer to angle of incident array (same size as POA)
-    std::vector<double> tilt;
-    std::vector<double> zen;
-    std::vector<double> exTer;
-    double tDew;
-    int doy;
-    double elev;
+	poaDecompReq() : i(0), dayStart(0), stepSize(1), stepScale('h'), doy(-1) {}
+	size_t i; // Current time index
+	size_t dayStart; // time index corresponding to the start of the current day
+	double stepSize;
+	char stepScale; // indicates whether time steps are hours (h) or minutes (m)
+	std::vector<double> POA; // Pointer to entire POA array (will have size 8760 if time step is 1 hour)
+	std::vector<double> inc; // Pointer to angle of incident array (same size as POA)
+	std::vector<double> tilt;
+	std::vector<double> zen;
+	std::vector<double> exTer;
+	double tDew;
+	int doy;
+	double elev;
 };
 
 #endif

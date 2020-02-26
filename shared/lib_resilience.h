@@ -33,8 +33,8 @@ public:
     /// Construct from fully-initialized dispatch_t
     dispatch_resilience(const dispatch_t &orig, size_t start_index);
 
-    /// Delete battery and battery initial
-    ~dispatch_resilience();
+	/// Delete battery and battery initial
+	~dispatch_resilience();
 
     /// AC or DC connection
     const CONNECTION connection;
@@ -124,12 +124,12 @@ private:
 
 public:
     /// Construct from fully-initialized battstor with time interval information
-    explicit resilience_runner(const std::shared_ptr<battstor> &battery);
+    explicit resilience_runner(const std::shared_ptr<battstor>& battery);
 
-    std::vector<std::string> get_logs() { return logs; }
+    std::vector<std::string> get_logs() {return logs;}
 
     /// Adds a battery operating during an outage starting at given index for simulating hours of autonomy
-    void add_battery_at_outage_timestep(const dispatch_t &orig, size_t index);
+    void add_battery_at_outage_timestep(const dispatch_t& orig, size_t index);
 
     /// Given the crit load and PV production (and string voltage, clipped pv power and temperature for DC-connected),
     /// run another outage time step for all surviving batteries
@@ -137,9 +137,8 @@ public:
                                  double pv_clipped_kw = 0., double tdry_c = 0.);
 
     /// Critical load and temp are single year arrays; pv production, string voltage, clipped power are lifetime arrays
-    void run_surviving_batteries_by_looping(double *crit_loads_kwac, double *pv_kwac, double *pv_kwdc = nullptr,
-                                            double *V = nullptr, double *pv_clipped_kw = nullptr,
-                                            double *tdry_c = nullptr);
+    void run_surviving_batteries_by_looping(double* crit_loads_kwac, double* pv_kwac, double* pv_kwdc = nullptr,
+                                            double* V = nullptr, double* pv_clipped_kw = nullptr, double* tdry_c = nullptr);
 
     /// Return average hours survived
     double compute_metrics();

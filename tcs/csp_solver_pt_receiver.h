@@ -2,7 +2,7 @@
 *  Copyright 2017 Alliance for Sustainable Energy, LLC
 *
 *  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (ï¿½Allianceï¿½) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
 *  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
 *  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
 *  copies to the public, perform publicly and display publicly, and to permit others to do so.
@@ -26,8 +26,8 @@
 *  4. Redistribution of this software, without modification, must refer to the software by the same
 *  designation. Redistribution of a modified version of this software (i) may not refer to the modified
 *  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as ï¿½System Advisor Modelï¿½ or ï¿½SAMï¿½. Except
-*  to comply with the foregoing, the terms ï¿½System Advisor Modelï¿½, ï¿½SAMï¿½, or any confusingly similar
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
 *  designation may not be used to refer to any modified version of this software or any modified
 *  version of the underlying software originally provided by Alliance without the prior written consent
 *  of Alliance.
@@ -55,7 +55,8 @@
 #include "htf_props.h"
 #include "csp_solver_core.h"
 
-class C_pt_receiver {
+class C_pt_receiver
+{
 // The abstract parent class for all receivers, including the original steady-state and the transient receiver
 
 public:
@@ -63,55 +64,58 @@ public:
 
     C_csp_messages csp_messages;        // Class to save messages for upstream classes
 
-    double m_h_tower;                    //[m] height of the tower
-    double m_epsilon;                    //[-] emissivity of the receiver panels
-    double m_T_htf_hot_des;                //[C] hot outlet HTF temperature at design, converted to [K] in init()
-    double m_T_htf_cold_des;            //[C] cold inlet HTF temperature at design, converted to [K] in init()
-    double m_f_rec_min;                    //[-] minimum receiver thermal output as fraction of design
-    double m_q_rec_des;                    //[MW] design recever thermal output, converted to [W] in init()
-    double m_rec_su_delay;                //[hr] required startup time
-    double m_rec_qf_delay;                //[-] required startup energy as fraction of design thermal output
-    double m_m_dot_htf_max_frac;        //[-] maximum receiver HTF mass flow as fraction of design mass flow
+    double m_h_tower;				    //[m] height of the tower
+    double m_epsilon;				    //[-] emissivity of the receiver panels
+    double m_T_htf_hot_des;			    //[C] hot outlet HTF temperature at design, converted to [K] in init()
+    double m_T_htf_cold_des;		    //[C] cold inlet HTF temperature at design, converted to [K] in init()
+    double m_f_rec_min;				    //[-] minimum receiver thermal output as fraction of design
+    double m_q_rec_des;				    //[MW] design recever thermal output, converted to [W] in init()
+    double m_rec_su_delay;			    //[hr] required startup time
+    double m_rec_qf_delay;			    //[-] required startup energy as fraction of design thermal output
+    double m_m_dot_htf_max_frac;	    //[-] maximum receiver HTF mass flow as fraction of design mass flow
 
     double m_q_dot_inc_min;             //[Wt] minimum receiver thermal power
 
-    double m_eta_pump;                    //[-] HTF pump efficiency
-    int m_night_recirc;                    //[-] 1=receiver is circulating HTF at night, otherwise not
+    double m_eta_pump;					//[-] HTF pump efficiency
+    int m_night_recirc;					//[-] 1=receiver is circulating HTF at night, otherwise not
 
 
-    struct S_inputs {
-        double m_field_eff;                                    //[-] = (irradiance on receiver) / (I_bn * area of all heliostats)
-        int m_input_operation_mode;                            //[-] operating mode of collector receiver, corresponding to enum C_csp_collector_receiver::E_csp_cr_modes
-        const util::matrix_t<double> *m_flux_map_input;        //[-] flux values for each receiver surface node, as fraction of an evenly distributed irradiance
+    struct S_inputs
+    {
+        double m_field_eff;					                //[-] = (irradiance on receiver) / (I_bn * area of all heliostats)
+        int m_input_operation_mode;			                //[-] operating mode of collector receiver, corresponding to enum C_csp_collector_receiver::E_csp_cr_modes
+        const util::matrix_t<double> *m_flux_map_input;		//[-] flux values for each receiver surface node, as fraction of an evenly distributed irradiance
 
-        S_inputs() {
+        S_inputs()
+        {
             m_field_eff = std::numeric_limits<double>::quiet_NaN();
             m_input_operation_mode = -1;
         }
     };
 
-    struct S_outputs {
-        double m_m_dot_salt_tot;        //[kg/hr] HTF mass flow through receiver
-        double m_eta_therm;                //[-] receiver thermal efficiency
-        double m_W_dot_pump;            //[MW] HTF pumping power
-        double m_q_conv_sum;            //[MW] total receiver convection losses
-        double m_q_rad_sum;                //[MW] total receiver radiation losses
-        double m_Q_thermal;                //[MW] thermal power delivered to TES/PC: subtracts piping losses (q_dot_rec - q_dot_piping_losses)
-        double m_T_salt_hot;            //[C] HTF outlet temperature
-        double m_field_eff_adj;            //[-] heliostat field efficiency including component defocus
-        double m_component_defocus;        //[-] defocus applied by receiver to stay within mass flow or other constraints
-        double m_q_dot_rec_inc;            //[MWt] receiver incident thermal power (after reflection losses)
-        double m_q_startup;                //[MWt-hr] thermal energy used to start receiver
-        double m_dP_receiver;            //[bar] receiver pressure drop
-        double m_dP_total;                //[bar] total pressure drop
-        double m_vel_htf;                //[m/s] HTF flow velocity through receiver tubes
-        double m_T_salt_cold;            //[C] HTF inlet temperature
-        double m_m_dot_ss;                //[kg/hr] HTF mass flow during steady-state operation (e.g., not equal to m_m_dot_salt_tot during startup)
-        double m_q_dot_ss;                //[MW] thermal power delivered to TES/PC during steady-state operation (e.g., not equal to m_Q_thermal during startup)
-        double m_f_timestep;            //[-] fraction of nominal timestep the receiver is not starting up
-        double m_time_required_su;        //[s] time it took receiver to startup
-        double m_q_dot_piping_loss;        //[MWt] thermal power lost from piping to surroundings
-        double m_q_heattrace;            //[MWt-hr] Power required for heat tracing
+    struct S_outputs
+    {
+        double m_m_dot_salt_tot;		//[kg/hr] HTF mass flow through receiver
+        double m_eta_therm;				//[-] receiver thermal efficiency
+        double m_W_dot_pump;			//[MW] HTF pumping power
+        double m_q_conv_sum;			//[MW] total receiver convection losses
+        double m_q_rad_sum;				//[MW] total receiver radiation losses
+        double m_Q_thermal;				//[MW] thermal power delivered to TES/PC: subtracts piping losses (q_dot_rec - q_dot_piping_losses)
+        double m_T_salt_hot;			//[C] HTF outlet temperature
+        double m_field_eff_adj;			//[-] heliostat field efficiency including component defocus
+        double m_component_defocus;		//[-] defocus applied by receiver to stay within mass flow or other constraints
+        double m_q_dot_rec_inc;			//[MWt] receiver incident thermal power (after reflection losses)
+        double m_q_startup;				//[MWt-hr] thermal energy used to start receiver
+        double m_dP_receiver;			//[bar] receiver pressure drop
+        double m_dP_total;				//[bar] total pressure drop
+        double m_vel_htf;				//[m/s] HTF flow velocity through receiver tubes
+        double m_T_salt_cold;			//[C] HTF inlet temperature
+        double m_m_dot_ss;				//[kg/hr] HTF mass flow during steady-state operation (e.g., not equal to m_m_dot_salt_tot during startup)
+        double m_q_dot_ss;				//[MW] thermal power delivered to TES/PC during steady-state operation (e.g., not equal to m_Q_thermal during startup)
+        double m_f_timestep;			//[-] fraction of nominal timestep the receiver is not starting up
+        double m_time_required_su;		//[s] time it took receiver to startup
+        double m_q_dot_piping_loss;		//[MWt] thermal power lost from piping to surroundings
+        double m_q_heattrace;			//[MWt-hr] Power required for heat tracing
         double m_inst_T_salt_hot;
         double m_max_T_salt_hot;
         double m_min_T_salt_hot;
@@ -121,15 +125,17 @@ public:
         double m_Triser;
         double m_Tdownc;
 
-        S_outputs() {
+        S_outputs()
+        {
             clear();
         }
 
-        void clear() {
+        void clear()
+        {
             m_m_dot_salt_tot = m_eta_therm = m_W_dot_pump = m_q_conv_sum = m_q_rad_sum = m_Q_thermal =
-            m_T_salt_hot = m_field_eff_adj = m_component_defocus = m_q_dot_rec_inc = m_q_startup =
-            m_dP_receiver = m_dP_total = m_vel_htf = m_T_salt_cold = m_m_dot_ss = m_q_dot_ss = m_f_timestep =
-            m_time_required_su = m_q_dot_piping_loss = m_q_heattrace = std::numeric_limits<double>::quiet_NaN();
+                m_T_salt_hot = m_field_eff_adj = m_component_defocus = m_q_dot_rec_inc = m_q_startup =
+                m_dP_receiver = m_dP_total = m_vel_htf = m_T_salt_cold = m_m_dot_ss = m_q_dot_ss = m_f_timestep =
+                m_time_required_su = m_q_dot_piping_loss = m_q_heattrace = std::numeric_limits<double>::quiet_NaN();
         }
     };
 
@@ -140,13 +146,13 @@ public:
     int get_operating_state();
 
     virtual void call(const C_csp_weatherreader::S_outputs &weather,
-                      const C_csp_solver_htf_1state &htf_state_in,
-                      const C_pt_receiver::S_inputs &inputs,
-                      const C_csp_solver_sim_info &sim_info) = 0;
+        const C_csp_solver_htf_1state &htf_state_in,
+        const C_pt_receiver::S_inputs &inputs,
+        const C_csp_solver_sim_info &sim_info) = 0;
 
     virtual void off(const C_csp_weatherreader::S_outputs &weather,
-                     const C_csp_solver_htf_1state &htf_state_in,
-                     const C_csp_solver_sim_info &sim_info) = 0;
+        const C_csp_solver_htf_1state &htf_state_in,
+        const C_csp_solver_sim_info &sim_info) = 0;
 
     virtual void converged() = 0;
 
@@ -162,10 +168,9 @@ public:
 
 protected:
     C_pt_receiver();
-
     HTFProperties field_htfProps;       // heat transfer fluid properties
-    HTFProperties tube_material;        // receiver tube material
-    HTFProperties ambient_air;            // ambient air properties
+    HTFProperties tube_material;		// receiver tube material
+    HTFProperties ambient_air;			// ambient air properties
 
     double m_m_dot_htf_des;             //[kg/s] receiver HTF mass flow at design
     int m_mode;                         //[-] current operating mode of receiver
