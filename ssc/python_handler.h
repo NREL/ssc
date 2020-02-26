@@ -7,6 +7,7 @@
 #include <iostream>
 #include <string>
 
+#include "sscapi.h"
 #include "vartab.h"
 
 #ifdef _MSC_VER
@@ -14,21 +15,23 @@
 #define pclose _pclose
 #endif
 
-extern std::string* python_path;
-
 class python_handler {
 private:
+
+
 public:
 
     static bool call_python_module(std::string module, var_table* data){
         // check module exists in config
+
+        std::string python_path = get_python_path();
 
         std::promise<std::string> python_result;
         std::future<std::string> f_completes = python_result.get_future();
         std::thread([&](std::promise<std::string> python_result)
                     {
                         printf("thread %s %p\n", module.c_str(), (void*)data);
-                        std::string cmd = *python_path + "/" + "python -c "
+                        std::string cmd = python_path + "/" + "python -c "
                                                        "'from landbosse.landbosse_api import run; run.run_landbosse()'";
                         FILE *file_pipe = popen(cmd.c_str(), "r");
                         if (!file_pipe)

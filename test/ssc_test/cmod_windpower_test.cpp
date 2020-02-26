@@ -460,13 +460,13 @@ TEST(Turbine_powercurve_cmod_windpower_eqns, Case4){
     ASSERT_NEAR(rated_wx, 11.21, 1e-2);
 }
 
-TEST(windpower_landbosse, Init){
-    var_table* vd = new var_table;
+TEST(windpower_landbosse, Init) {
+    var_table *vd = new var_table;
     vd->assign("turbine_size", 1500);
 
     set_python_path("/Users/dguittet/miniconda3/bin");
 
-    Landbosse_calculate_bos_costs(vd);
+//    Landbosse_calculate_bos_costs(vd);
 
-    double total_bos_cost = vd->lookup("total_installed_cost")->num;
+    printf("%s", get_python_path());
 }
