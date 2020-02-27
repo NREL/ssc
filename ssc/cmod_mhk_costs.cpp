@@ -34,9 +34,11 @@ static var_info _cm_vtab_mhk_costs[] = {
 	{ SSC_INPUT,			SSC_NUMBER,			"device_rated_power",						"Rated capacity of device",								"kW",			"",								"MHKCosts",			"*",					"MIN=0",					"" },
 	{ SSC_INPUT,			SSC_NUMBER,			"system_capacity",							"System Nameplate Capacity",							"kW",			"",								"MHKCosts",			"*",					"MIN=0",					"" },
 	{ SSC_INPUT,			SSC_NUMBER,			"devices_per_row",							"Number of wave devices per row in array",				"",				"",								"MHKCosts",         "*",                    "INTEGER",			    	"" },
-	{ SSC_INPUT,			SSC_NUMBER,			"device_type",								"Device Type",											"0/1/2/3/4",		"0=Generic,1=RM3,2=RM5,3=RM6,4=RM1",	"MHKCosts",			"?=0",					"MIN=0,MAX=4",				"" },
+//	{ SSC_INPUT,			SSC_NUMBER,			"device_type",								"Device Type",											"0/1/2/3/4",		"0=Generic,1=RM3,2=RM5,3=RM6,4=RM1",	"MHKCosts",			"?=0",					"MIN=0,MAX=4",				"" },
 	{ SSC_INPUT,			SSC_NUMBER,			"marine_energy_tech",						"Marine energy technology",								"0/1",			"0=Wave,1=Tidal",				"MHKCosts",			"*",					"MIN=0,MAX=1",				"" },
-	
+	{ SSC_INPUT,			SSC_NUMBER,			"library_or_input_wec",						"Wave library or user input",								"",			"0=Library,1=User",				"MHKCosts",			"marine_energy_tech=0",					"",				"" },
+	{ SSC_INPUT,			SSC_STRING,			"lib_wave_device",							"Wave library name",								"",			"",				"MHKCosts",			"marine_energy_tech=0",					"",				"" },
+
 	{ SSC_INPUT,			SSC_NUMBER,			"inter_array_cable_length",					"Inter-array cable length",								"m",			"",								"MHKCosts",			"*",					"MIN=0",					"" },
 	{ SSC_INPUT,			SSC_NUMBER,			"riser_cable_length",						"Riser cable length",									"m",			"",								"MHKCosts",			"*",					"MIN=0",					"" },
 	{ SSC_INPUT,			SSC_NUMBER,			"export_cable_length",						"Export cable length",									"m",			"",								"MHKCosts",			"*",					"MIN=0",					"" },
@@ -118,12 +120,31 @@ public:
 		double device_rating = as_double("device_rated_power"); // kW
 		double system_capacity_kW = as_double("system_capacity"); // kW
 		double system_capacity_MW = system_capacity_kW / 1000.0; // MW
-		int device_type = as_integer("device_type");
+//		int device_type = as_integer("device_type");
 		int technology = as_integer("marine_energy_tech");
 		int devices_per_row = as_integer("devices_per_row");
 		double interarray_length = as_double("inter_array_cable_length");
 		double riser_length = as_double("riser_cable_length");
 		double export_length = as_double("export_cable_length");
+
+		int device_type = 4;
+		if (technology == WAVE)
+		{
+			if (as_integer("library_or_input_wec") == 1)
+				device_type = 0;
+			else
+			{
+				std::string wave_device = as_string("lib_wave_device");
+				if (wave_device == "RM3")
+					device_type = 1;
+				else if (wave_device == "RM5")
+					device_type = 2;
+				else if (wave_device == "RM6")
+					device_type = 3;
+				else
+					device_type = 0;
+			}
+		}
 
 		//define intermediate variables to store outputs
 		double structural_assembly, power_takeoff, mooring_found_substruc;

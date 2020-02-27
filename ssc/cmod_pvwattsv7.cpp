@@ -110,7 +110,7 @@ static var_info _cm_vtab_pvwattsv7[] = {
 		{ SSC_INPUT,        SSC_STRING,      "solar_resource_file",            "Weather file path",                          "",           "",                                             "Solar Resource",      "?",                       "",                              "" },
 		{ SSC_INPUT,        SSC_TABLE,       "solar_resource_data",            "Weather data",                               "",           "dn,df,tdry,wspd,lat,lon,tz",                   "Solar Resource",      "?",                       "",                              "" },
 		{ SSC_INPUT,        SSC_ARRAY,       "albedo",                         "Albedo",                                     "frac",       "if provided, will overwrite weather file albedo","Solar Resource",    "",                        "",                              "" },
-	
+
 		{ SSC_INOUT,        SSC_NUMBER,      "system_use_lifetime_output",     "Run lifetime simulation",                    "0/1",        "",                                             "Lifetime",            "?=0",                        "",                              "" },
 		{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                "Analysis period",                            "years",      "",                                             "Lifetime",            "system_use_lifetime_output=1", "",                          "" },
 		{ SSC_INPUT,        SSC_ARRAY,       "dc_degradation",                 "Annual DC degradation for lifetime simulations","%/year",  "",                                             "Lifetime",            "system_use_lifetime_output=1", "",                          "" },
@@ -125,9 +125,9 @@ static var_info _cm_vtab_pvwattsv7[] = {
 		{ SSC_INPUT,        SSC_NUMBER,      "array_type",                     "Array type",                                  "0/1/2/3/4", "Fixed Rack,Fixed Roof,1Axis,Backtracked,2Axis","System Design",      "*",                       "MIN=0,MAX=4,INTEGER",           "" },
 		{ SSC_INPUT,        SSC_NUMBER,      "tilt",                           "Tilt angle",                                  "deg",       "H=0,V=90",                                     "System Design",      "array_type<4",            "MIN=0,MAX=90",                  "" },
 		{ SSC_INPUT,        SSC_NUMBER,      "azimuth",                        "Azimuth angle",                               "deg",       "E=90,S=180,W=270",                             "System Design",      "array_type<4",            "MIN=0,MAX=360",                 "" },
-		{ SSC_INPUT,        SSC_NUMBER,      "gcr",                            "Ground coverage ratio",                       "0..1",      "",                                             "System Design",      "?=0.4",                   "MIN=0,MAX=1",                   "" },
+		{ SSC_INPUT,        SSC_NUMBER,      "gcr",                            "Ground coverage ratio",                       "0..1",      "",                                             "System Design",      "?=0.4",                   "MIN=0.01,MAX=0.99",             "" },
 		{ SSC_INPUT,        SSC_NUMBER,      "rotlim",                         "Tracker rotation angle limit",                "deg",       "",                                             "System Design",      "?=45.0",                  "",                              "" },
-		
+
 		{ SSC_INPUT,        SSC_ARRAY,       "soiling",                        "Soiling loss",                                "%",         "",                                             "System Design",      "?",                       "",                              "" },
 		{ SSC_INPUT,        SSC_NUMBER,      "losses",						   "Other DC losses",                             "%",         "Total system losses",                          "System Design",      "*",                       "MIN=-5,MAX=99",                 "" },
 
@@ -188,7 +188,7 @@ static var_info _cm_vtab_pvwattsv7[] = {
 		{ SSC_OUTPUT,       SSC_NUMBER,      "lon",                            "Longitude",                                   "deg",       "",                                             "Location",      "*",                       "",                          "" },
 		{ SSC_OUTPUT,       SSC_NUMBER,      "tz",                             "Time zone",                                   "hr",        "",                                             "Location",      "*",                       "",                          "" },
 		{ SSC_OUTPUT,       SSC_NUMBER,      "elev",                           "Site elevation",                              "m",         "",                                             "Location",      "*",                       "",                          "" },
-		
+
 		{ SSC_OUTPUT,       SSC_NUMBER,      "inverter_efficiency",            "Inverter efficiency at rated power",          "%",         "",                                             "PVWatts",      "",                        "",                              "" },
 		{ SSC_OUTPUT,       SSC_NUMBER,      "estimated_rows",				   "Estimated number of rows in the system",	  "",          "",                                             "PVWatts",      "",                        "",                              "" },
 
@@ -403,7 +403,7 @@ public:
 		// gust factor defined later because it depends on timestep
 
 		//hidden input variable (not in var_table): whether or not to use the mermoud lejeune single diode model as defined above (0 = don't use model, 1 = use model)
-		int en_sdm = is_assigned("en_sdm") ? as_integer("en_sdm") : 0; 
+		int en_sdm = is_assigned("en_sdm") ? as_integer("en_sdm") : 0;
 
 		module.type = (module_type)as_integer("module_type");
 		switch (module.type)
@@ -414,7 +414,7 @@ public:
 			module.ff = 0.778; //fill factors required for self-shading calculations
 			module.stc_eff = 0.19;
 
-			// for optional SDM module model: 
+			// for optional SDM module model:
 			// selected module from PVsyst PAN database: TSM-330DD14A(II)
 			// note that this is a DIFFERENT module than the four main factors listed above
 			sdm.Area = 1.940;
@@ -441,7 +441,7 @@ public:
 			module.ff = 0.780;
 			module.stc_eff = 0.21;
 
-			// for optional SDM module model: 
+			// for optional SDM module model:
 			// selected module from PVsyst PAN database: SPR-X20-327-COM
 			// note that this is a DIFFERENT module than the four main factors listed above
 			sdm.Area = 1.630;
@@ -468,7 +468,7 @@ public:
 			module.ff = 0.777;
 			module.stc_eff = 0.18;
 
-			// for optional SDM module model: 
+			// for optional SDM module model:
 			// selected module from PVsyst PAN database: FS-4112-3
 			// note that this is a DIFFERENT module than the four main factors listed above
 			sdm.Area = 0.72;
@@ -532,10 +532,10 @@ public:
 			if (pv.gcr < 0.01 || pv.gcr >= 1.0)
 				throw exec_error("pvwattsv7", "invalid gcr for fixed rack or one axis tracking system");
 
-			// reasonable estimates of system geometry: 
+			// reasonable estimates of system geometry:
 			// assume a perhaps a ''square'' system layout based on DC nameplate size
 
-			// modules per string: 7 modules of about 60 Vmp each 
+			// modules per string: 7 modules of about 60 Vmp each
 			// gives a nominal DC voltage of about 420 V DC which seems reasonable
 			pv.nmodperstr = 7;
 			pv.nmodules = ceil(pv.dc_nameplate / module.stc_watts); // estimate of # of modules in system
@@ -543,7 +543,7 @@ public:
 			assign("estimated_rows", var_data((ssc_number_t)pv.nrows));
 
 			// see note farther down in code about self-shading for small systems
-			// assume at least some reasonable number of rows.  
+			// assume at least some reasonable number of rows.
 			// otherwise self shading model may not really apply very well.
 			// in fact, should have some minimum system size
 			/*if (pv.nrows < 10)
@@ -553,10 +553,10 @@ public:
 			if (pv.type == ONE_AXIS)
 				pv.nmody = 1; // e.g. Nextracker or ArrayTechnologies single portrait
 			else
-				pv.nmody = 2; // typical fixed 2 up portrait	
+				pv.nmody = 2; // typical fixed 2 up portrait
 
-			// number of modules in a row...  
-			//   If 1 module per Y dimension, nmodx=nrows.  
+			// number of modules in a row...
+			//   If 1 module per Y dimension, nmodx=nrows.
 			//   If 2 module per Y, then nmodx=nrows/2.
 			pv.nmodx = pv.nrows / pv.nmody;
 			pv.row_spacing = module.length * pv.nmody / pv.gcr;
@@ -566,7 +566,7 @@ public:
 		bool en_snowloss = as_boolean("en_snowloss");
 		if (en_snowloss)
 		{
-			// if tracking mode is 1-axis tracking, 
+			// if tracking mode is 1-axis tracking,
 			// don't need to limit tilt angles
 			if (snowmodel.setup(pv.nmody,
 				(float)pv.tilt,
@@ -597,7 +597,7 @@ public:
 		if (wdprov->has_data_column(weather_data_provider::MINUTE))
 		{
 			// if we have an file with a minute column, then
-			// the starting time offset equals the time 
+			// the starting time offset equals the time
 			// of the first record (for correct plotting)
 			// this holds true even for hourly data with a minute column
 			weather_record rec;
@@ -649,7 +649,7 @@ public:
 		if (step_per_hour < 1 || step_per_hour > 60 || step_per_hour * 8760 != nrec)
 			throw exec_error("pvwattsv7", util::format("invalid number of data records (%d): must be an integer multiple of 8760", (int)nrec));
 		double ts_hour = 1.0 / step_per_hour; //timestep in fraction of hours (decimal)
-		
+
 		double wm2_to_wh = module_m2 * ts_hour; //conversion from watts per meter squared to watt hours- need to convert with ts_hour for subhourly data
 
 		double gustf = std::numeric_limits<double>::quiet_NaN(); // gust factor
@@ -738,7 +738,7 @@ public:
 					// start by defaulting albedo value to 0.2
 					double alb = 0.2;
 
-					// if the snow loss model is enabled, and there's valid snow > 0.5 cm depth, then increase the albedo.  
+					// if the snow loss model is enabled, and there's valid snow > 0.5 cm depth, then increase the albedo.
 					// however, if the snow loss model is disabled, do not artificially increase
 					// apparent production if snow covering the modules is not being accounted for
 					if (std::isfinite(wf.snow) && wf.snow > 0.5 && wf.snow < 999
@@ -793,7 +793,7 @@ public:
 
 					int code = irr.calc();
 
-					//create variables to store outputs 
+					//create variables to store outputs
 					double solazi, solzen, solalt, aoi, stilt, sazi, rot, btd;
 					int sunup;
 					double ibeam = 0.0, iskydiff = 0.0, ignddiff = 0.0, irear = 0.0;
@@ -855,8 +855,8 @@ public:
 									// two axis tracker stows at the horizontal position
 									// easiest way to do this in two dimensions is to set it as a flat fixed tilt system
 									// because the force to stow flag only fixes one rotation angle, not both
-									irr.set_surface(irrad::FIXED_TILT, // tracking 0=fixed 
-										0, 180, // tilt, azimuth 
+									irr.set_surface(irrad::FIXED_TILT, // tracking 0=fixed
+										0, 180, // tilt, azimuth
 										0, 0, 0.4, false, 0.0); // rotlim, bt, gcr, force to stow, stow angle
 								}
 								else
@@ -914,11 +914,11 @@ public:
 						double Fskydiff = 1.0; //shading factor for sky diffuse, 1 for no shading
 						double Fgnddiff = 1.0; //shading factor for ground-reflected diffuse, 1 for no shading
 
-						
+
 						if ( pv.type == FIXED_RACK || pv.type == ONE_AXIS || pv.type == ONE_AXIS_BACKTRACKING) //shading applies in each of these three cases- see reference implementation in pvsamv1
-							//&& (pv.nrows >= 10) // note that enabling self-shading for small systems might be suspicious 
+							//&& (pv.nrows >= 10) // note that enabling self-shading for small systems might be suspicious
 							// because the intent of the self-shading algorithms used here are to apply to large systems
-							// however, some testing of the self-shading algorithms for smaller systems doesn't reveal any wildly wrong behavior, 
+							// however, some testing of the self-shading algorithms for smaller systems doesn't reveal any wildly wrong behavior,
 							// so enabling it for all systems sizes to prevent confusion to users
 						{
 							// first calculate linear shading for one-axis trackers for use in self-shading algorithms
@@ -952,9 +952,9 @@ public:
 									wf.df, //Gdh (e.g. DHI)
 									ibeam*(1.0 - shad1xf), // Gb_poa
 									iskydiff, //poa_sky
-									ignddiff, // poa_gnd 
+									ignddiff, // poa_gnd
 									alb,
-									pv.type == ONE_AXIS, // is tracking system? 
+									pv.type == ONE_AXIS, // is tracking system?
 									module.type == THINFILM,  // is linear shading? (only with long cell thin films)
 									shad1xf,
 									ssout))
@@ -967,7 +967,7 @@ public:
 							// however, to be able to distinguish between irradiance and non-linear shading in loss diagram:
 							// we will apply it here, BUT, we will use an un-self-shaded irradiance in the power calculations later
 							// so that the loss isn't double counted.
-							if (pv.type == FIXED_RACK) 
+							if (pv.type == FIXED_RACK)
 							{
 								if (y == 0) ld("poa_loss_self_beam_shade") += ibeam * ssout.m_shade_frac_fixed*wm2_to_wh;
 								ibeam *= (1 - ssout.m_shade_frac_fixed);
@@ -990,7 +990,7 @@ public:
 							{
 								f_nonlinear = ssout.m_dc_derate;
 							}*/ //disconnecting non-linear shading for now due to possible bug in non-linear shading algorithm resulting in 9% loss in annual energy compared to linear case for large systems
-							
+
 							// for backtracked systems, there is no beam irradiance reduction or non-linear DC derate
 							// however, sky and ground-reflected diffuse are still blocked, so apply those to everything below
 
@@ -1056,7 +1056,7 @@ public:
 						{
 							/*double modifier = iam( aoi, module.ar_glass );
 							double tpoa = poa - ( 1.0 - modifier )*wf.dn*cosd(aoi); */ // previous PVWatts method, skips diffuse calc
-							
+
 							double tpoa = calculateIrradianceThroughCoverDeSoto(
 								aoi, solzen, stilt, ibeam, iskydiff, ignddiff, en_sdm == 0 && module.ar_glass);
 							if (tpoa < 0.0) tpoa = 0.0;
@@ -1116,7 +1116,7 @@ public:
 						if (y == 0) ld("dc_loss_snow") += dc_nom * (1.0 - f_snow) * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
 
 						// calculate actual DC power now with all the derates/losses
-						// remember, that for non-linear self-shading, we don't use derated ibeam for module power 
+						// remember, that for non-linear self-shading, we don't use derated ibeam for module power
 						// calculations because total loss is encapsulated in the DC derate
 						// but, we derated it earlier so we could break out the beam shading from the non-linear component.
 						// SO: if dcshadedderate < 1.0, then use ibeam_noselfshade
@@ -1135,7 +1135,7 @@ public:
 						}
 						else
 						{
-							// basic linear PVWatts model 
+							// basic linear PVWatts model
 							dc = pv.dc_nameplate * (poa_for_power / 1000) * f_temp;
 						}
 
