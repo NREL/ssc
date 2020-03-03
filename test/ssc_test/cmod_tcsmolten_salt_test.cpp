@@ -139,6 +139,180 @@ TEST_F(CMTcsMoltenSalt, Rankine_Sliding_P_SingleOwner_cmod_tcsmolten_salt) {
 	}
 }
 
+/// Test tcsmolten_salt with alternative flow pattern: Flow pattern 8
+/// Rest default configurations with respect to the single owner financial model
+TEST_F(CMTcsMoltenSalt, Rankine_Flow_Pattern_SingleOwner_cmod_tcsmolten_salt) {
+
+	ssc_data_t data = ssc_data_create();
+	int test_errors = tcsmolten_salt_daggett_flow_pattern(data);
+
+	EXPECT_FALSE(test_errors);
+	if (!test_errors)
+	{
+		ssc_number_t annual_energy;
+		ssc_data_get_number(data, "annual_energy", &annual_energy);
+		EXPECT_NEAR(annual_energy, 518055493.136035, 518055493.136035 * m_error_tolerance_hi) << "Annual Energy";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+
+		ssc_number_t land_area_base;
+		ssc_data_get_number(data, "land_area_base", &land_area_base);
+		EXPECT_NEAR(land_area_base, 1847.040000, 1847.040000 * m_error_tolerance_hi) << "Land Area Base";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+
+		ssc_number_t capacity_factor;
+		ssc_data_get_number(data, "capacity_factor", &capacity_factor);
+		EXPECT_NEAR(capacity_factor, 57.138894, 57.138894 * m_error_tolerance_hi) << "Capacity Factor";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+
+		ssc_number_t annual_W_cycle_gross;
+		ssc_data_get_number(data, "annual_W_cycle_gross", &annual_W_cycle_gross);
+		EXPECT_NEAR(annual_W_cycle_gross, 646287965.853696, 646287965.853696 * m_error_tolerance_hi) << "Annual W_cycle Gross";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+
+		ssc_number_t kwh_per_kw;
+		ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
+		EXPECT_NEAR(kwh_per_kw, 5005.367083, 5005.367083 * m_error_tolerance_hi) << "kwh per kw";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+
+		ssc_number_t conversion_factor;
+		ssc_data_get_number(data, "conversion_factor", &conversion_factor);
+		EXPECT_NEAR(conversion_factor, 80.158617, 80.158617 * m_error_tolerance_hi) << "Conversion Factor";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+
+		ssc_number_t N_hel;
+		ssc_data_get_number(data, "N_hel", &N_hel);
+		EXPECT_NEAR(N_hel, 8790, 8790 * m_error_tolerance_hi) << "Number of Heliostats";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+
+		ssc_number_t rec_height;
+		ssc_data_get_number(data, "rec_height", &rec_height);
+		EXPECT_NEAR(rec_height, 21.602900, 21.602900 * m_error_tolerance_hi) << "Rec Height";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+
+		ssc_number_t A_sf;
+		ssc_data_get_number(data, "A_sf", &A_sf);
+		EXPECT_NEAR(A_sf, 1269054.492000, 1269054.492000 * m_error_tolerance_hi) << "Solar Field Area";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+
+		ssc_number_t D_rec;
+		ssc_data_get_number(data, "D_rec", &D_rec);
+		EXPECT_NEAR(D_rec, 17.650000, 17.650000 * m_error_tolerance_hi) << "Receiver Outer Diameter";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+
+		ssc_number_t annual_total_water_use;
+		ssc_data_get_number(data, "annual_total_water_use", &annual_total_water_use);
+		EXPECT_NEAR(annual_total_water_use, 98470.230665, 98470.230665 * m_error_tolerance_hi) << "Annual Total Water Use";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+
+		ssc_number_t csp_pt_cost_total_land_area;
+		ssc_data_get_number(data, "csp.pt.cost.total_land_area", &csp_pt_cost_total_land_area);
+		EXPECT_NEAR(csp_pt_cost_total_land_area, 1892.040000, 1892.040000 * m_error_tolerance_hi) << "Total Land Area";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+
+		ssc_number_t h_tower;
+		ssc_data_get_number(data, "h_tower", &h_tower);
+		EXPECT_NEAR(h_tower, 193.458000, 193.458000 * m_error_tolerance_hi) << "Tower Height";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+
+		//ssc_number_t VARIABLE;
+		//ssc_data_get_number(data, "VARIABLE", &VARIABLE);
+		//EXPECT_NEAR(VARIABLE, EXP_VAL, EXP_VAL * m_error_tolerance_hi) << "DESCRIPTION";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+	}
+}
+
+/// Testing Molten Salt Power Tower UI Equations
+
+TEST(Mspt_cmod_csp_tower_eqns, NoData) {
+	ASSERT_THROW(MSPT_System_Design_Equations(nullptr), std::runtime_error);
+	ASSERT_THROW(Tower_SolarPilot_Solar_Field_Equations(nullptr), std::runtime_error);
+	//ASSERT_THROW(MSPT_Receiver_Equations(nullptr), std::runtime_error);
+	//ASSERT_THROW(MSPT_System_Control_Equations(nullptr), std::runtime_error);
+	//ASSERT_THROW(Tower_SolarPilot_Capital_Costs_MSPT_Equations(nullptr), std::runtime_error);
+	//ASSERT_THROW(Tower_SolarPilot_Capital_Costs_DSPT_Equations(nullptr), std::runtime_error);
+	//ASSERT_THROW(Tower_SolarPilot_Capital_Costs_ISCC_Equations(nullptr), std::runtime_error);
+}
+
+TEST(Mspt_cmod_csp_tower_eqns, MissingVariables) {
+	var_table* vd = new var_table;
+	ASSERT_THROW(MSPT_System_Design_Equations(vd), std::runtime_error);
+	ASSERT_THROW(Tower_SolarPilot_Solar_Field_Equations(vd), std::runtime_error);
+	//ASSERT_THROW(MSPT_Receiver_Equations(vd), std::runtime_error);
+	//ASSERT_THROW(MSPT_System_Control_Equations(vd), std::runtime_error);
+	//ASSERT_THROW(Tower_SolarPilot_Capital_Costs_MSPT_Equations(vd), std::runtime_error);
+	//ASSERT_THROW(Tower_SolarPilot_Capital_Costs_DSPT_Equations(vd), std::runtime_error);
+	//ASSERT_THROW(Tower_SolarPilot_Capital_Costs_ISCC_Equations(vd), std::runtime_error);
+}
+
+TEST(Mspt_cmod_csp_tower_eqns, Case1) {
+	double error_tolerance = 0.01;
+	var_table* vd = new var_table;
+	vd->assign("design_eff", 0.412);
+	vd->assign("gross_net_conversion_factor", 0.9);
+	vd->assign("P_ref", 115.);
+	vd->assign("solarm", 2.4);
+	vd->assign("tshours", 10.);
+
+	MSPT_System_Design_Equations(vd);
+
+	double nameplate = vd->lookup("nameplate")->num;
+	double q_pb_design = vd->lookup("q_pb_design")->num;
+	double q_rec_des = vd->lookup("q_rec_des")->num;
+	double tshours_sf = vd->lookup("tshours_sf")->num;
+	ASSERT_NEAR(nameplate, 103.5, 103.5 * error_tolerance);
+	ASSERT_NEAR(q_pb_design, 279., 279. * error_tolerance);
+	ASSERT_NEAR(q_rec_des, 670., 670. * error_tolerance);
+	ASSERT_NEAR(tshours_sf, 4.16667, 4.16667 * error_tolerance);
+}
+
+TEST(Mspt_cmod_csp_tower_eqns, Case2) {
+	double error_tolerance = 0.01;
+	var_table* vd = new var_table;
+	vd->assign("c_atm_0", 0.006789);
+	vd->assign("c_atm_1", 0.1046);
+	vd->assign("c_atm_2", -0.017);
+	vd->assign("c_atm_3", 0.002845);
+	vd->assign("csp_pt_sf_fixed_land_area", 45.);
+	vd->assign("csp_pt_sf_land_overhead_factor", 1.);
+	vd->assign("dens_mirror", 0.97);
+	vd->assign("dni_des", 950.);
+	vd->assign("h_tower", 193.458);
+	vd->assign("helio_height", 12.2);
+	vd->assign("helio_optical_error_mrad", 1.53);
+	util::matrix_t<double> helio_positions(8790, 2, 1.e3);
+	vd->assign("helio_positions", helio_positions);
+	vd->assign("helio_width", 12.2);
+	vd->assign("land_area_base", 1847.04);
+	vd->assign("land_max", 9.5);
+	vd->assign("land_min", 0.75);
+	vd->assign("override_layout", 0);
+	vd->assign("override_opt", 0);
+	vd->assign("q_rec_des", 670.);
+
+	Tower_SolarPilot_Solar_Field_Equations(vd);
+
+	double a_sf_ui = vd->lookup("a_sf_ui")->num;
+	double c_atm_info = vd->lookup("c_atm_info")->num;
+	double csp_pt_sf_heliostat_area = vd->lookup("csp_pt_sf_heliostat_area")->num;
+	double csp_pt_sf_total_land_area = vd->lookup("csp_pt_sf_total_land_area")->num;
+	//double csp_pt_sf_total_reflective_area = vd->lookup("csp_pt_sf_total_reflective_area")->num;	//  This one is not being read in the UI
+	double csp_pt_sf_tower_height = vd->lookup("csp_pt_sf_tower_height")->num;
+	double dni_des_calc = vd->lookup("dni_des_calc")->num;
+	double error_equiv = vd->lookup("error_equiv")->num;
+	double field_model_type = vd->lookup("field_model_type")->num;
+	double helio_area_tot = vd->lookup("helio_area_tot")->num;
+	double is_optimize = vd->lookup("is_optimize")->num;
+	double land_max_calc = vd->lookup("land_max_calc")->num;
+	double land_min_calc = vd->lookup("land_min_calc")->num;
+	double n_hel = vd->lookup("n_hel")->num;
+	double opt_algorithm = vd->lookup("opt_algorithm")->num;
+	double opt_flux_penalty = vd->lookup("opt_flux_penalty")->num;
+	double q_design = vd->lookup("q_design")->num;
+	ASSERT_NEAR(a_sf_ui, 1269055., 1269055. * error_tolerance);
+	ASSERT_NEAR(c_atm_info, 12.97, 12.97 * error_tolerance);
+	ASSERT_NEAR(csp_pt_sf_heliostat_area, 144.375, 144.375 * error_tolerance);
+	ASSERT_NEAR(csp_pt_sf_total_land_area, 1892., 1892. * error_tolerance);
+	//ASSERT_NEAR(csp_pt_sf_total_reflective_area, 1269056.25, 1269056.25 * error_tolerance);			//  This one is not being read in the UI
+	ASSERT_NEAR(csp_pt_sf_tower_height, 193.458, 193.458 * error_tolerance);
+	ASSERT_NEAR(dni_des_calc, 950., 950. * error_tolerance);
+	ASSERT_NEAR(error_equiv, 4.32749, 4.32749 * error_tolerance);
+	ASSERT_NEAR(field_model_type, 2., 2. * error_tolerance);
+	ASSERT_NEAR(helio_area_tot, 1269055., 1269055. * error_tolerance);
+	ASSERT_NEAR(is_optimize, 0., 0. * error_tolerance);
+	ASSERT_NEAR(land_max_calc, 1837.85, 1837.85 * error_tolerance);
+	ASSERT_NEAR(land_min_calc, 145.094, 145.094 * error_tolerance);
+	ASSERT_NEAR(n_hel, 8790., 8790. * error_tolerance);
+	ASSERT_NEAR(opt_algorithm, 1., 1. * error_tolerance);
+	ASSERT_NEAR(opt_flux_penalty, 0.25, 0.25 * error_tolerance);
+	ASSERT_NEAR(q_design, 670., 670. * error_tolerance);
+}
+
 /// Test tcsmolten_salt with alternative condenser type: Evaporative
 /// Rest default configurations with respect to the single owner financial model
 //TEST_F(CMTcsMoltenSalt, Rankine_Evap_Condenser_SingleOwner_cmod_tcsmolten_salt) {
@@ -342,74 +516,6 @@ TEST_F(CMTcsMoltenSalt, Rankine_Sliding_P_SingleOwner_cmod_tcsmolten_salt) {
 //		//EXPECT_NEAR(VARIABLE, EXP_VAL, EXP_VAL * m_error_tolerance_hi) << "DESCRIPTION";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 //	}
 //}
-
-/// Test tcsmolten_salt with alternative flow pattern: Flow pattern 8
-/// Rest default configurations with respect to the single owner financial model
-TEST_F(CMTcsMoltenSalt, Rankine_Flow_Pattern_SingleOwner_cmod_tcsmolten_salt) {
-
-	ssc_data_t data = ssc_data_create();
-	int test_errors = tcsmolten_salt_daggett_flow_pattern(data);
-
-	EXPECT_FALSE(test_errors);
-	if (!test_errors)
-	{
-		ssc_number_t annual_energy;
-		ssc_data_get_number(data, "annual_energy", &annual_energy);
-		EXPECT_NEAR(annual_energy, 518055493.136035, 518055493.136035 * m_error_tolerance_hi) << "Annual Energy";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
-
-		ssc_number_t land_area_base;
-		ssc_data_get_number(data, "land_area_base", &land_area_base);
-		EXPECT_NEAR(land_area_base, 1847.040000, 1847.040000 * m_error_tolerance_hi) << "Land Area Base";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
-
-		ssc_number_t capacity_factor;
-		ssc_data_get_number(data, "capacity_factor", &capacity_factor);
-		EXPECT_NEAR(capacity_factor, 57.138894, 57.138894 * m_error_tolerance_hi) << "Capacity Factor";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
-
-		ssc_number_t annual_W_cycle_gross;
-		ssc_data_get_number(data, "annual_W_cycle_gross", &annual_W_cycle_gross);
-		EXPECT_NEAR(annual_W_cycle_gross, 646287965.853696, 646287965.853696 * m_error_tolerance_hi) << "Annual W_cycle Gross";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
-
-		ssc_number_t kwh_per_kw;
-		ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
-		EXPECT_NEAR(kwh_per_kw, 5005.367083, 5005.367083 * m_error_tolerance_hi) << "kwh per kw";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
-
-		ssc_number_t conversion_factor;
-		ssc_data_get_number(data, "conversion_factor", &conversion_factor);
-		EXPECT_NEAR(conversion_factor, 80.158617, 80.158617 * m_error_tolerance_hi) << "Conversion Factor";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
-
-		ssc_number_t N_hel;
-		ssc_data_get_number(data, "N_hel", &N_hel);
-		EXPECT_NEAR(N_hel, 8790, 8790 * m_error_tolerance_hi) << "Number of Heliostats";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
-
-		ssc_number_t rec_height;
-		ssc_data_get_number(data, "rec_height", &rec_height);
-		EXPECT_NEAR(rec_height, 21.602900, 21.602900 * m_error_tolerance_hi) << "Rec Height";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
-
-		ssc_number_t A_sf;
-		ssc_data_get_number(data, "A_sf", &A_sf);
-		EXPECT_NEAR(A_sf, 1269054.492000, 1269054.492000 * m_error_tolerance_hi) << "Solar Field Area";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
-
-		ssc_number_t D_rec;
-		ssc_data_get_number(data, "D_rec", &D_rec);
-		EXPECT_NEAR(D_rec, 17.650000, 17.650000 * m_error_tolerance_hi) << "Receiver Outer Diameter";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
-
-		ssc_number_t annual_total_water_use;
-		ssc_data_get_number(data, "annual_total_water_use", &annual_total_water_use);
-		EXPECT_NEAR(annual_total_water_use, 98470.230665, 98470.230665 * m_error_tolerance_hi) << "Annual Total Water Use";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
-
-		ssc_number_t csp_pt_cost_total_land_area;
-		ssc_data_get_number(data, "csp.pt.cost.total_land_area", &csp_pt_cost_total_land_area);
-		EXPECT_NEAR(csp_pt_cost_total_land_area, 1892.040000, 1892.040000 * m_error_tolerance_hi) << "Total Land Area";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
-
-		ssc_number_t h_tower;
-		ssc_data_get_number(data, "h_tower", &h_tower);
-		EXPECT_NEAR(h_tower, 193.458000, 193.458000 * m_error_tolerance_hi) << "Tower Height";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
-
-		//ssc_number_t VARIABLE;
-		//ssc_data_get_number(data, "VARIABLE", &VARIABLE);
-		//EXPECT_NEAR(VARIABLE, EXP_VAL, EXP_VAL * m_error_tolerance_hi) << "DESCRIPTION";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
-	}
-}
 
 /// Test tcsmolten_salt with alternative Location: Tucson, Arizona
 /// Rest default configurations with respect to the single owner financial model
