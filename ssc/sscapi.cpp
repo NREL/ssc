@@ -729,9 +729,11 @@ void json_to_ssc_var(const Json::Value& json_val, ssc_var_t ssc_val){
         case ValueType::uintValue:
         case ValueType::booleanValue:
         case ValueType::realValue:
+            vd->type = SSC_NUMBER;
             vd->num[0] = json_val.asDouble();
             return;
         case ValueType::stringValue:
+            vd->type = SSC_STRING;
             vd->str = json_val.asString();
             return;
         case ValueType::arrayValue:
@@ -741,6 +743,7 @@ void json_to_ssc_var(const Json::Value& json_val, ssc_var_t ssc_val){
                 for (const auto & row : json_val){
                     vec.push_back(row.asDouble());
                 }
+                vd->type = SSC_ARRAY;
                 vd->num.assign(&vec[0], vec.size());
                 return;
             }
@@ -758,6 +761,7 @@ void json_to_ssc_var(const Json::Value& json_val, ssc_var_t ssc_val){
                         vec.push_back(value.asDouble());
                     }
                 }
+                vd->type = SSC_MATRIX;
                 vd->num.assign(&vec[0], vec.size());
                 return;
             }
@@ -768,6 +772,7 @@ void json_to_ssc_var(const Json::Value& json_val, ssc_var_t ssc_val){
                 auto entry = &vd_arr->back();
                 json_to_ssc_var(value, entry);
             }
+            vd->type = SSC_DATARR;
             return;
         case ValueType::objectValue:
             vd_tab = &vd->table;
@@ -776,6 +781,7 @@ void json_to_ssc_var(const Json::Value& json_val, ssc_var_t ssc_val){
                 auto entry = vd_tab->assign(name, var_data());
                 json_to_ssc_var(json_val[name], entry);
             }
+            vd->type = SSC_DATMAT;
     }
 }
 
@@ -857,6 +863,7 @@ SSCEXPORT const char* ssc_data_to_json(ssc_data_t p_data){
         root[it.first] = ssc_var_to_json(it.second);
     }
     Json::StreamWriterBuilder builder;
+    builder.settings_["indentation"] = "";
     const std::string json_file = Json::writeString(builder, root);
     char *arr = (char*)malloc(strlen(json_file.c_str()) + 1);;
     strcpy(arr, json_file.c_str());

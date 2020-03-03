@@ -461,12 +461,34 @@ TEST(Turbine_powercurve_cmod_windpower_eqns, Case4){
 }
 
 TEST(windpower_landbosse, Init) {
-    var_table *vd = new var_table;
-    vd->assign("turbine_size", 1500);
+    const char * SSCDIR = std::getenv("SSCDIR");
+    char file[256];
+    sprintf(file, "%s/test/input_docs/AR Northwestern-Flat Lands.srw", SSCDIR);
 
-    set_python_path("/Users/dguittet/miniconda3/bin");
+    auto *vd = new var_table;
+    vd->assign("wind_resource_filename", std::string(file));
+    vd->assign("turbine_rating_MW", 1.5);
+    vd->assign("wind_turbine_rotor_diameter", 45);
+    vd->assign("wind_turbine_hub_ht", 80);
+    vd->assign("num_turbines", 100);
+    vd->assign("wind_resource_shear", 0.2);
+    vd->assign("turbine_spacing_rotor_diameters", 4);
+    vd->assign("row_spacing_rotor_diameters", 10);
 
-//    Landbosse_calculate_bos_costs(vd);
+    vd->assign("interconnect_voltage_kV", 137);
+    vd->assign("distance_to_interconnect_mi", 10);
+    vd->assign("depth", 2.36);
+    vd->assign("rated_thrust_N", 589000);
+    vd->assign("labor_cost_multiplier", 1);
+    vd->assign("gust_velocity_m_per_s", 59.50);
 
-    printf("%s", get_python_path());
+
+    auto python_dir = std::string(std::getenv("SAMNTDIR")) + "/deploy/runtime/python/";
+
+    set_python_path(python_dir.c_str());
+
+    auto landbosse = ssc_module_create("wind_landbosse");
+
+    ssc_module_exec(landbosse, vd);
+
 }
