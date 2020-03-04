@@ -313,7 +313,6 @@ TEST(Mspt_cmod_csp_tower_eqns, Case2) {
 	ASSERT_NEAR(q_design, 670., 670. * error_tolerance);
 }
 
-
 TEST(Mspt_cmod_csp_tower_eqns, Case3) {
 	double error_tolerance = 0.01;
 	var_table* vd = new var_table;
@@ -334,7 +333,6 @@ TEST(Mspt_cmod_csp_tower_eqns, Case3) {
 	util::matrix_t<double> field_fl_props(1, 9, &field_fluid_properties);
 	vd->assign("field_fl_props", field_fl_props);
 
-
 	MSPT_Receiver_Equations(vd);
 
 	double csp_pt_rec_htf_t_avg = vd->lookup("csp_pt_rec_htf_t_avg")->num;
@@ -353,6 +351,41 @@ TEST(Mspt_cmod_csp_tower_eqns, Case3) {
 	ASSERT_NEAR(piping_loss_tot, 5130.51, 5130.51 * error_tolerance);
 }
 
+TEST(Mspt_cmod_csp_tower_eqns, Case4) {
+	double error_tolerance = 0.01;
+	ssc_data_t data = ssc_data_create();
+	auto data_vtab = static_cast<var_table*>(data);
+
+	data_vtab->assign("P_ref", 115.);
+	data_vtab->assign("design_eff", 0.412);
+	data_vtab->assign("tshours", 10.);
+	data_vtab->assign("T_htf_hot_des", 574.);
+	data_vtab->assign("T_htf_cold_des", 290.);
+	data_vtab->assign("rec_htf", 17);
+	std::vector<double> field_fluid_properties{ 1, 7, 0, 0, 0, 0, 0, 0, 0 };
+	util::matrix_t<double> field_fl_props(1, 9, &field_fluid_properties);
+	data_vtab->assign("field_fl_props", field_fl_props);
+	data_vtab->assign("h_tank_min", 1.);
+	data_vtab->assign("h_tank", 12.);
+	data_vtab->assign("tank_pairs", 1.);
+	data_vtab->assign("u_tank", 0.4);
+
+	int errors = run_module(data, "ui_tes_calcs");
+	EXPECT_FALSE(errors);
+
+	double q_tes = data_vtab->as_number("q_tes");
+	double tes_avail_vol = data_vtab->as_number("tes_avail_vol");
+	double vol_tank = data_vtab->as_number("vol_tank");
+	double csp_pt_tes_tank_diameter = data_vtab->as_number("csp_pt_tes_tank_diameter");
+	double q_dot_tes_est = data_vtab->as_number("q_dot_tes_est");
+	double csp_pt_tes_htf_density = data_vtab->as_number("csp_pt_tes_htf_density");
+	ASSERT_NEAR(q_tes, 2791.3, 2791.3 * error_tolerance);
+	ASSERT_NEAR(tes_avail_vol, 12986., 12986. * error_tolerance);
+	ASSERT_NEAR(vol_tank, 14166., 14166. * error_tolerance);
+	ASSERT_NEAR(csp_pt_tes_tank_diameter, 38.8, 38.8 * error_tolerance);
+	ASSERT_NEAR(q_dot_tes_est, 0.73, 0.73 * error_tolerance);
+	ASSERT_NEAR(csp_pt_tes_htf_density, 1808.48, 1808.48 * error_tolerance);
+}
 
 /// Test tcsmolten_salt with alternative condenser type: Evaporative
 /// Rest default configurations with respect to the single owner financial model
