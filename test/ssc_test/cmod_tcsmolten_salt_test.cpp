@@ -313,6 +313,47 @@ TEST(Mspt_cmod_csp_tower_eqns, Case2) {
 	ASSERT_NEAR(q_design, 670., 670. * error_tolerance);
 }
 
+
+TEST(Mspt_cmod_csp_tower_eqns, Case3) {
+	double error_tolerance = 0.01;
+	var_table* vd = new var_table;
+	vd->assign("t_htf_cold_des", 290.);
+	vd->assign("t_htf_hot_des", 574.);
+	vd->assign("rec_htf", 17);
+	vd->assign("csp_pt_rec_max_oper_frac", 1.2);
+	vd->assign("q_rec_des", 660.9);
+	vd->assign("rec_d_spec", 15.);
+	vd->assign("csp_pt_rec_cav_ap_hw_ratio", 1.2);
+	vd->assign("d_rec", 17.65);
+	vd->assign("rec_height", 23.8084);
+	vd->assign("h_tower", 193.458);
+	vd->assign("piping_length_mult", 2.6);
+	vd->assign("piping_length_const", 0.);
+	vd->assign("piping_loss", 10200.);
+	std::vector<double> field_fluid_properties{ 1, 7, 0, 0, 0, 0, 0, 0, 0 };
+	util::matrix_t<double> field_fl_props(1, 9, &field_fluid_properties);
+	vd->assign("field_fl_props", field_fl_props);
+
+
+	MSPT_Receiver_Equations(vd);
+
+	double csp_pt_rec_htf_t_avg = vd->lookup("csp_pt_rec_htf_t_avg")->num;
+	double csp_pt_rec_htf_c_avg = vd->lookup("csp_pt_rec_htf_c_avg")->num;
+	double csp_pt_rec_max_flow_to_rec = vd->lookup("csp_pt_rec_max_flow_to_rec")->num;
+	double csp_pt_rec_cav_ap_height = vd->lookup("csp_pt_rec_cav_ap_height")->num;
+	double rec_aspect = vd->lookup("rec_aspect")->num;
+	double piping_length = vd->lookup("piping_length")->num;
+	double piping_loss_tot = vd->lookup("piping_loss_tot")->num;
+	ASSERT_NEAR(csp_pt_rec_htf_t_avg, 432., 432. * error_tolerance);
+	ASSERT_NEAR(csp_pt_rec_htf_c_avg, 1.5066, 1.5066 * error_tolerance);
+	ASSERT_NEAR(csp_pt_rec_max_flow_to_rec, 1853.5, 1853.5 * error_tolerance);
+	ASSERT_NEAR(csp_pt_rec_cav_ap_height, 18., 18. * error_tolerance);
+	ASSERT_NEAR(rec_aspect, 1.349, 1.349 * error_tolerance);
+	ASSERT_NEAR(piping_length, 502.991, 502.991 * error_tolerance);
+	ASSERT_NEAR(piping_loss_tot, 5130.51, 5130.51 * error_tolerance);
+}
+
+
 /// Test tcsmolten_salt with alternative condenser type: Evaporative
 /// Rest default configurations with respect to the single owner financial model
 //TEST_F(CMTcsMoltenSalt, Rankine_Evap_Condenser_SingleOwner_cmod_tcsmolten_salt) {
