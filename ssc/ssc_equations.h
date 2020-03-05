@@ -7,6 +7,7 @@
 #include "cmod_merchantplant_eqns.h"
 #include "cmod_pvsamv1_eqns.h"
 #include "cmod_csp_tower_eqns.h"
+#include "cmod_financial_eqns.h"
 #include "cmod_utilityrate5_eqns.h"
 
 
@@ -44,6 +45,10 @@ static ssc_equation_entry ssc_equation_table [] = {
             "Tcsdirect_steam", Tower_SolarPilot_Capital_Costs_DSPT_Equations_doc},
         {"Tower_SolarPilot_Capital_Costs_ISCC_Equations", Tower_SolarPilot_Capital_Costs_ISCC_Equations,
             "Tcsiscc", Tower_SolarPilot_Capital_Costs_ISCC_Equations_doc},
+        {"Financial_Construction_Financing_Equations", Financial_Construction_Financing_Equations,
+            "Singleowner", Financial_Construction_Financing_Equations_doc},
+        {"Financial_Capacity_Payments_Equations", Financial_Capacity_Payments_Equations,
+            "Singleowner", Financial_Capacity_Payments_Equations_doc},
         {"ElectricityRates_format_as_URDBv7", ElectricityRates_format_as_URDBv7,
             "UtilityRate5", ElectricityRates_format_as_URDBv7_doc},
         {nullptr, nullptr, nullptr, nullptr}
