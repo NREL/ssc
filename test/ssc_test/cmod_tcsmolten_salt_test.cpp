@@ -417,6 +417,95 @@ TEST(Mspt_cmod_csp_tower_eqns, Case5) {
 	ASSERT_NEAR(wlim_series.at(0, 0), 960., 960. * error_tolerance);
 }
 
+TEST(Mspt_cmod_csp_tower_eqns, Case6) {
+	double error_tolerance = 0.01;
+	var_table* vd = new var_table;
+	vd->assign("d_rec", 17.65);
+	vd->assign("rec_height", 21.60);
+	vd->assign("receiver_type", 0);
+	vd->assign("rec_d_spec", 15.);
+	vd->assign("csp_pt_rec_cav_ap_height", 18.);
+	vd->assign("p_ref", 115.);
+	vd->assign("design_eff", 0.412);
+	vd->assign("tshours", 10.);
+	vd->assign("demand_var", NULL);
+	vd->assign("a_sf_ui", 1269055.);
+	vd->assign("site_spec_cost", 16.);
+	vd->assign("heliostat_spec_cost", 140.);
+	vd->assign("cost_sf_fixed", 0.);
+	vd->assign("h_tower", 193.458);
+	vd->assign("rec_height", 21.6029);
+	vd->assign("helio_height", 12.2);
+	vd->assign("tower_fixed_cost", 3000000.);
+	vd->assign("tower_exp", 0.0113);
+	vd->assign("csp_pt_cost_receiver_area", 1269055.);
+	vd->assign("rec_ref_cost", 103000000.);
+	vd->assign("rec_ref_area", 1571.);
+	vd->assign("rec_cost_exp", 0.7);
+	vd->assign("csp_pt_cost_storage_mwht", 2791.26);
+	vd->assign("tes_spec_cost", 22.);
+	vd->assign("csp_pt_cost_power_block_mwe", 115.);
+	vd->assign("plant_spec_cost", 1040.);
+	vd->assign("bop_spec_cost", 290.);
+	vd->assign("fossil_spec_cost", 0.);
+	vd->assign("contingency_rate", 7.);
+	vd->assign("csp_pt_sf_total_land_area", 1892.);
+	vd->assign("nameplate", 104.);
+	vd->assign("csp_pt_cost_epc_per_acre", 0.);
+	vd->assign("csp_pt_cost_epc_percent", 13.);
+	vd->assign("csp_pt_cost_epc_per_watt", 0.);
+	vd->assign("csp_pt_cost_epc_fixed", 0.);
+	vd->assign("land_spec_cost", 10000.);
+	vd->assign("csp_pt_cost_plm_percent", 0.);
+	vd->assign("csp_pt_cost_plm_per_watt", 0.);
+	vd->assign("csp_pt_cost_plm_fixed", 0.);
+	vd->assign("sales_tax_frac", 80.);
+	vd->assign("sales_tax_rate", 5.);
+
+	Tower_SolarPilot_Capital_Costs_MSPT_Equations(vd);
+
+	double csp_pt_cost_receiver_area = vd->lookup("csp_pt_cost_receiver_area")->num;
+	double csp_pt_cost_storage_mwht = vd->lookup("csp_pt_cost_storage_mwht")->num;
+	double csp_pt_cost_power_block_mwe = vd->lookup("csp_pt_cost_power_block_mwe")->num;
+	double csp_pt_cost_site_improvements = vd->lookup("csp_pt_cost_site_improvements")->num;
+	double csp_pt_cost_heliostats = vd->lookup("csp_pt_cost_heliostats")->num;
+	double csp_pt_cost_tower = vd->lookup("csp_pt_cost_tower")->num;
+	double csp_pt_cost_receiver = vd->lookup("csp_pt_cost_receiver")->num;
+	double csp_pt_cost_storage = vd->lookup("csp_pt_cost_storage")->num;
+	double csp_pt_cost_power_block = vd->lookup("csp_pt_cost_power_block")->num;
+	double csp_pt_cost_bop = vd->lookup("csp_pt_cost_bop")->num;
+	double csp_pt_cost_fossil = vd->lookup("csp_pt_cost_fossil")->num;
+	double ui_direct_subtotal = vd->lookup("ui_direct_subtotal")->num;
+	double csp_pt_cost_contingency = vd->lookup("csp_pt_cost_contingency")->num;
+	double total_direct_cost = vd->lookup("total_direct_cost")->num;
+	double csp_pt_cost_epc_total = vd->lookup("csp_pt_cost_epc_total")->num;
+	double csp_pt_cost_plm_total = vd->lookup("csp_pt_cost_plm_total")->num;
+	double csp_pt_cost_sales_tax_total = vd->lookup("csp_pt_cost_sales_tax_total")->num;
+	double total_indirect_cost = vd->lookup("total_indirect_cost")->num;
+	double total_installed_cost = vd->lookup("total_installed_cost")->num;
+	double csp_pt_cost_installed_per_capacity = vd->lookup("csp_pt_cost_installed_per_capacity")->num;
+	ASSERT_NEAR(csp_pt_cost_receiver_area, 1197.86, 1197.86 * error_tolerance);
+	ASSERT_NEAR(csp_pt_cost_storage_mwht, 2791.26, 2791.26 * error_tolerance);
+	ASSERT_NEAR(csp_pt_cost_power_block_mwe, 115., 115. * error_tolerance);
+	ASSERT_NEAR(csp_pt_cost_site_improvements, 20304872., 20304872. * error_tolerance);
+	ASSERT_NEAR(csp_pt_cost_heliostats, 177667632., 177667632. * error_tolerance);
+	ASSERT_NEAR(csp_pt_cost_tower, 25319156., 25319156. * error_tolerance);
+	ASSERT_NEAR(csp_pt_cost_receiver, 85191944., 85191944. * error_tolerance);
+	ASSERT_NEAR(csp_pt_cost_storage, 61407768., 61407768. * error_tolerance);
+	ASSERT_NEAR(csp_pt_cost_power_block, 119600000., 119600000. * error_tolerance);
+	ASSERT_NEAR(csp_pt_cost_bop, 33350000., 33350000. * error_tolerance);
+	ASSERT_NEAR(csp_pt_cost_fossil, 0., 0. * error_tolerance);
+	ASSERT_NEAR(ui_direct_subtotal, 522841376., 522841376. * error_tolerance);
+	ASSERT_NEAR(csp_pt_cost_contingency, 36598896., 36598896. * error_tolerance);
+	ASSERT_NEAR(total_direct_cost, 559440256., 559440256. * error_tolerance);
+	ASSERT_NEAR(csp_pt_cost_epc_total, 72727232., 72727232. * error_tolerance);
+	ASSERT_NEAR(csp_pt_cost_plm_total, 18920378., 18920378. * error_tolerance);
+	ASSERT_NEAR(csp_pt_cost_sales_tax_total, 22377610., 22377610. * error_tolerance);
+	ASSERT_NEAR(total_indirect_cost, 114025224., 114025224. * error_tolerance);
+	ASSERT_NEAR(total_installed_cost, 673465472., 673465472. * error_tolerance);
+	ASSERT_NEAR(csp_pt_cost_installed_per_capacity, 6506.91, 6506.91 * error_tolerance);
+}
+
 /// Test tcsmolten_salt with alternative condenser type: Evaporative
 /// Rest default configurations with respect to the single owner financial model
 //TEST_F(CMTcsMoltenSalt, Rankine_Evap_Condenser_SingleOwner_cmod_tcsmolten_salt) {
