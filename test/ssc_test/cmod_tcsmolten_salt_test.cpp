@@ -387,6 +387,36 @@ TEST(Mspt_cmod_csp_tower_eqns, Case4) {
 	ASSERT_NEAR(csp_pt_tes_htf_density, 1808.48, 1808.48 * error_tolerance);
 }
 
+TEST(Mspt_cmod_csp_tower_eqns, Case5) {
+	double error_tolerance = 0.01;
+	var_table* vd = new var_table;
+	vd->assign("bop_par", 0.);
+	vd->assign("bop_par_f", 1.);
+	vd->assign("bop_par_0", 0.);
+	vd->assign("bop_par_1", 0.483);
+	vd->assign("bop_par_2", 0.);
+	vd->assign("p_ref", 115.);
+	vd->assign("aux_par", 0.023);
+	vd->assign("aux_par_f", 1.);
+	vd->assign("aux_par_0", 0.483);
+	vd->assign("aux_par_1", 0.571);
+	vd->assign("aux_par_2", 0.);
+	vd->assign("disp_wlim_maxspec", 1.);
+	vd->assign("constant", 4.);
+
+	MSPT_System_Control_Equations(vd);
+
+	double csp_pt_par_calc_bop = vd->lookup("csp_pt_par_calc_bop")->num;
+	double csp_pt_par_calc_aux = vd->lookup("csp_pt_par_calc_aux")->num;
+	double disp_wlim_max = vd->lookup("disp_wlim_max")->num;
+	util::matrix_t<ssc_number_t> wlim_series = vd->lookup("wlim_series")->num;
+	ASSERT_NEAR(csp_pt_par_calc_bop, 0., 0. * error_tolerance);
+	ASSERT_NEAR(csp_pt_par_calc_aux, 2.78783, 2.78783 * error_tolerance);
+	ASSERT_NEAR(disp_wlim_max, 0.96, 0.96 * error_tolerance);
+	ASSERT_NEAR(wlim_series.ncells(), 8760, 0.);
+	ASSERT_NEAR(wlim_series.at(0, 0), 960., 960. * error_tolerance);
+}
+
 /// Test tcsmolten_salt with alternative condenser type: Evaporative
 /// Rest default configurations with respect to the single owner financial model
 //TEST_F(CMTcsMoltenSalt, Rankine_Evap_Condenser_SingleOwner_cmod_tcsmolten_salt) {
