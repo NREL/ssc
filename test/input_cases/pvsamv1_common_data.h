@@ -5,15 +5,13 @@
 
 #include "code_generator_utilities.h"
 
-const char * SSCDIR = std::getenv("SSCDIR");
-
-char solar_resource_path[100];
-char solar_resource_path_15_min[100];
-char load_profile_path[100];
-char target_power_path[100];
-char sell_rate_path[100];
-char subarray1_shading[100];
-char subarray2_shading[100];
+char solar_resource_path[256];
+char solar_resource_path_15_min[256];
+char load_profile_path[256];
+char target_power_path[256];
+char sell_rate_path[256];
+char subarray1_shading[256];
+char subarray2_shading[256];
 
 int n1 = sprintf(solar_resource_path, "%s/test/input_cases/pvsamv1_data/USA AZ Phoenix (TMY2).csv", SSCDIR);
 int n2 = sprintf(load_profile_path, "%s/test/input_cases/pvsamv1_data/pvsamv1_residential_load.csv", SSCDIR);
@@ -343,7 +341,8 @@ void pvsamv_nofinancial_default(ssc_data_t &data)
 void belpe_default(ssc_data_t &data)
 {
 	ssc_data_set_number(data, "en_belpe", 0);
-	set_array(data, "load", load_profile_path, 8760);
+    set_array(data, "load", load_profile_path, 8760);
+    set_array(data, "crit_load", load_profile_path, 8760);
 	ssc_data_set_string(data, "solar_resource_file", solar_resource_path);
 	ssc_data_set_number(data, "floor_area", 2000);
 	ssc_data_set_number(data, "Stories", 2);
@@ -695,10 +694,13 @@ void pvsamv1_with_residential_default(ssc_data_t &data)
 	ssc_data_set_number(data, "inv_snl_eff_cec", 96.636932373046875);
 	ssc_data_set_number(data, "inv_pd_eff", 95);
 	ssc_data_set_number(data, "inv_cec_cg_eff_cec", 96.636306762695313);
+	ssc_data_set_number(data, "batt_inverter_efficiency_cutoff", 90);
 	ssc_data_set_number(data, "batt_ac_or_dc", 1);
 	ssc_data_set_number(data, "batt_dc_dc_efficiency", 99);
 	ssc_data_set_number(data, "batt_dc_ac_efficiency", 96);
 	ssc_data_set_number(data, "batt_ac_dc_efficiency", 96);
+	ssc_data_set_number(data, "batt_inverter_efficiency_cutoff", 90);
+
 	ssc_data_set_number(data, "batt_meter_position", 0);
 	ssc_number_t p_batt_losses[1] = { 0 };
 	ssc_data_set_array(data, "batt_losses", p_batt_losses, 1);
@@ -715,8 +717,10 @@ void pvsamv1_with_residential_default(ssc_data_t &data)
 	ssc_data_set_number(data, "batt_computed_bank_capacity", 9.9791994094848633);
 	ssc_data_set_number(data, "batt_current_charge_max", 99);
 	ssc_data_set_number(data, "batt_current_discharge_max", 99);
-	ssc_data_set_number(data, "batt_power_charge_max", 4.9895997047424316);
-	ssc_data_set_number(data, "batt_power_discharge_max", 4.9895997047424316);
+	ssc_data_set_number(data, "batt_power_charge_max_kwdc", 4.9895997047424316);
+	ssc_data_set_number(data, "batt_power_discharge_max_kwdc", 4.9895997047424316);
+	ssc_data_set_number(data, "batt_power_charge_max_kwac", 4.9895997047424316);
+	ssc_data_set_number(data, "batt_power_discharge_max_kwac", 4.9895997047424316);
 	ssc_data_set_number(data, "batt_voltage_choice", 0);
 	ssc_data_set_number(data, "batt_Vfull", 4.0999999046325684);
 	ssc_data_set_number(data, "batt_Vexp", 4.0500001907348633);
@@ -958,8 +962,9 @@ void cashloan_default(ssc_data_t &data)
 	ssc_data_set_number(data, "pbi_oth_tax_fed", 1);
 	ssc_data_set_number(data, "pbi_oth_tax_sta", 1);
 	ssc_data_set_number(data, "battery_per_kWh", 500);
-	ssc_data_set_number(data, "batt_replacement_cost", 500);
-	ssc_data_set_number(data, "batt_replacement_cost_escal", 0);
+	ssc_number_t p_replacement_cost[1] = { 500 };
+	ssc_data_set_array(data, "om_replacement_cost1", p_replacement_cost, 1);
+	ssc_data_set_number(data, "om_replacement_cost_escal", 0);
 	ssc_data_set_number(data, "market", 0);
 	ssc_data_set_number(data, "mortgage", 1);
 	ssc_data_set_number(data, "total_installed_cost", 13758.3671875);

@@ -507,7 +507,7 @@ std::vector<double> BSpline::Builder::knotVectorBuckets(const std::vector<double
     // Compute window sizes
     unsigned int w = 0;
     if (ni > 0)
-        w = std::floor(unique.size()/ni);
+        w = (unsigned int)std::floor(unique.size()/ni);
 
     // Residual
     unsigned int res = unique.size() - w*ni;

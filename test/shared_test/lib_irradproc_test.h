@@ -11,6 +11,7 @@
 
 #include "lib_irradproc.h"
 #include "core.h"
+#include "../test/input_cases/code_generator_utilities.h"
 
 /**
 * \class IrradTest
@@ -27,7 +28,7 @@ protected:
 	double calc_sunrise, calc_sunset;
 	double e;
 
-	void SetUp() {
+	void SetUp() override {
 		// parameters
 		lat = 31.6340;
 		lon = 74.8723;
@@ -65,12 +66,12 @@ protected:
 		irr_hourly_night.set_location(lat, lon, tz);
 		irr_hourly_night.set_sky_model(skymodel, alb);
 		irr_hourly_night.set_beam_diffuse(0, 0);
-		irr_hourly_night.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr);
+		irr_hourly_night.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr, false, 0.0);
 		irr_15m_night.set_time(year, month, day, night_hr, 15, -1);
 		irr_15m_night.set_location(lat, lon, tz);
 		irr_15m_night.set_sky_model(skymodel, alb);
 		irr_15m_night.set_beam_diffuse(0, 0);
-		irr_15m_night.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr);
+		irr_15m_night.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr, false, 0.0);
 	}
 };
 
@@ -88,12 +89,12 @@ protected:
 		irr_hourly_sunrise.set_location(lat, lon, tz);
 		irr_hourly_sunrise.set_sky_model(skymodel, alb);
 		irr_hourly_sunrise.set_beam_diffuse(0, 1);
-		irr_hourly_sunrise.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr);
+		irr_hourly_sunrise.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr, false, 0.0);
 		irr_15m_sunrise.set_time(year, month, day, sr_hr, 30, 1);
 		irr_15m_sunrise.set_location(lat, lon, tz);
 		irr_15m_sunrise.set_sky_model(skymodel, alb);
 		irr_15m_sunrise.set_beam_diffuse(0, 1);
-		irr_15m_sunrise.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr);
+		irr_15m_sunrise.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr, false, 0.0);
 	}
 };
 
@@ -111,12 +112,12 @@ protected:
 		irr_hourly_day.set_location(lat, lon, tz);
 		irr_hourly_day.set_sky_model(skymodel, alb);
 		irr_hourly_day.set_beam_diffuse(2, 2);
-		irr_hourly_day.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr);
+		irr_hourly_day.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr, false, 0.0);
 		irr_15m_day.set_time(year, month, day, day_hr, 45, 1);
 		irr_15m_day.set_location(lat, lon, tz);
 		irr_15m_day.set_sky_model(skymodel, alb);
 		irr_15m_day.set_beam_diffuse(2, 2);
-		irr_15m_day.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr);
+		irr_15m_day.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr, false, 0.0);
 	}
 };
 
@@ -134,12 +135,12 @@ protected:
 		irr_hourly_sunset.set_location(lat, lon, tz);
 		irr_hourly_sunset.set_sky_model(skymodel, alb);
 		irr_hourly_sunset.set_beam_diffuse(0, 1);
-		irr_hourly_sunset.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr);
+		irr_hourly_sunset.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr, false, 0.0);
 		irr_15m_sunset.set_time(year, month, day, ss_hr, 30, 1);
 		irr_15m_sunset.set_location(lat, lon, tz);
 		irr_15m_sunset.set_sky_model(skymodel, alb);
 		irr_15m_sunset.set_beam_diffuse(0, 1);
-		irr_15m_sunset.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr);
+		irr_15m_sunset.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr, false, 0.0);
 	}
 };
 /**
@@ -222,21 +223,27 @@ protected:
 		lat = 37.517;
 		lon = -77.317;
 		tz = -5.0;
-
+		/*
+		char frontSkyConfigFactorsFile[256];
+		char resource_matrix[256];
+		int nb2 = sprintf(resource_matrix, "%s/test/input_cases/mhk/wave_resource_matrix.csv", SSCDIR);
+		int nb3 = sprintf(device_matrix, "%s/test/input_cases/mhk/wave_power_matrix.csv", SSCDIR);
+		*/
+		std::string sscdir(SSCDIR);
 		// Truth datasets for github.com/NREL/bifacialvf test case
-		frontSkyConfigFactorsFile = "test/input_cases/bifacialvf_data/expectedFrontSkyConfigFactors.txt";
-		rearSkyConfigFactorsFile = "test/input_cases/bifacialvf_data/expectedRearSkyConfigFactors.txt";
-		pvFrontSHFile = "test/input_cases/bifacialvf_data/expectedPVFrontSH.txt";
-		pvBackSHFile = "test/input_cases/bifacialvf_data/expectedPVBackSH.txt";
-		frontGroundShadeFile = "test/input_cases/bifacialvf_data/expectedFrontGroundShade.txt";
-		rearGroundShadeFile = "test/input_cases/bifacialvf_data/expectedRearGroundShade.txt";
-		frontGroundGHIFile = "test/input_cases/bifacialvf_data/expectedFrontGroundGHI.txt";
-		rearGroundGHIFile = "test/input_cases/bifacialvf_data/expectedRearGroundGHI.txt";
-		frontIrradianceFile = "test/input_cases/bifacialvf_data/expectedFrontIrradiance.txt";
-		rearIrradianceFile = "test/input_cases/bifacialvf_data/expectedRearIrradiance.txt";
-		frontReflectedFile = "test/input_cases/bifacialvf_data/expectedFrontReflected.txt";
-		weatherFile = "test/input_cases/bifacialvf_data/expectedWeather.txt";
-		averageIrradianceFile = "test/input_cases/bifacialvf_data/expectedAverageIrradiance.txt";
+		frontSkyConfigFactorsFile = sscdir + "/test/input_cases/bifacialvf_data/expectedFrontSkyConfigFactors.txt";
+		rearSkyConfigFactorsFile = sscdir + "/test/input_cases/bifacialvf_data/expectedRearSkyConfigFactors.txt";
+		pvFrontSHFile = sscdir + "/test/input_cases/bifacialvf_data/expectedPVFrontSH.txt";
+		pvBackSHFile = sscdir + "/test/input_cases/bifacialvf_data/expectedPVBackSH.txt";
+		frontGroundShadeFile = sscdir + "/test/input_cases/bifacialvf_data/expectedFrontGroundShade.txt";
+		rearGroundShadeFile = sscdir + "/test/input_cases/bifacialvf_data/expectedRearGroundShade.txt";
+		frontGroundGHIFile = sscdir + "/test/input_cases/bifacialvf_data/expectedFrontGroundGHI.txt";
+		rearGroundGHIFile = sscdir + "/test/input_cases/bifacialvf_data/expectedRearGroundGHI.txt";
+		frontIrradianceFile = sscdir + "/test/input_cases/bifacialvf_data/expectedFrontIrradiance.txt";
+		rearIrradianceFile = sscdir + "/test/input_cases/bifacialvf_data/expectedRearIrradiance.txt";
+		frontReflectedFile = sscdir + "/test/input_cases/bifacialvf_data/expectedFrontReflected.txt";
+		weatherFile = sscdir + "/test/input_cases/bifacialvf_data/expectedWeather.txt";
+		averageIrradianceFile = sscdir + "/test/input_cases/bifacialvf_data/expectedAverageIrradiance.txt";
 
 
 		readDataFromTextFile(pvBackSHFile, expectedPVRearShadeFraction);
@@ -245,8 +252,7 @@ protected:
 		readDataFromTextFile(rearSkyConfigFactorsFile, expectedRearSkyConfigFactors);
 
 		numberOfTimeSteps = expectedPVRearShadeFraction.size();
-		numberOfSamples = 100;
-		//samples.push_back(0);
+		numberOfSamples = 10;
 		createSamples();
 
 		// Initialize irradiation for first timestep
@@ -283,7 +289,7 @@ protected:
 		solarZenithRadians = expectedWeather[8];
 		solarElevationRadians = expectedWeather[9];
 		
-		irr->set_surface(tracking, tilt, azim, rotlim, backtrack, gcr);
+		irr->set_surface(tracking, tilt, azim, rotlim, backtrack, gcr, false, 0.0);
 		irr->set_beam_diffuse(beam, diffuse);
 		irr->set_time(year, month, day, hour, minute, 1);
 		irr->set_location(lat, lon, tz);

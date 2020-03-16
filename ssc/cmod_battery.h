@@ -1,60 +1,46 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (�Alliance�) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as �System Advisor Model� or �SAM�. Except
-*  to comply with the foregoing, the terms �System Advisor Model�, �SAM�, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #ifndef _CMOD_BATTERY_COMMON_
 #define _CMOD_BATTERY_COMMON_ 1
 
+#include <map>
+
 #include "core.h"
-#include "lib_power_electronics.h"
-#include "lib_sandia.h"
-#include "lib_pvinv.h"
-#include "lib_utility_rate.h"
+
+// forward declarations to speed up build
+class SharedInverter;
+class voltage_t;
+class lifetime_t;
+class lifetime_cycle_t;
+class lifetime_calendar_t;
+class thermal_t;
+class capacity_t;
+class battery_t;
+class battery_metrics_t;
+class dispatch_t;
+class losses_t;
+class ChargeController;
+class UtilityRate;
 
 extern var_info vtab_battery_inputs[];
 extern var_info vtab_battery_outputs[];
@@ -63,6 +49,7 @@ struct batt_variables
 {
 	bool system_use_lifetime_output;
 	bool en_batt;
+	bool en_fuelcell;
 	int analysis_period;
 	int batt_chem;
 	int batt_dispatch;
@@ -93,8 +80,14 @@ struct batt_variables
 	/*! Determines if the battery is allowed to charge from PV clipping using automated control*/
 	bool batt_dispatch_auto_can_clipcharge;
 
+	/*! Determines if the battery is allowed to charge from fuel cell using automated control*/
+	bool batt_dispatch_auto_can_fuelcellcharge;
+
 	/*! Vector of periods and if battery can charge from PV*/
 	std::vector<bool> batt_can_charge;
+
+	/*! Vector of periods if battery can charge from Fuel Cell*/
+	std::vector<bool> batt_can_fuelcellcharge;
 
 	/*! Vector of periods and if battery can discharge*/
 	std::vector<bool> batt_can_discharge;
@@ -160,7 +153,7 @@ struct batt_variables
 	double batt_height;
 	double batt_Cp;
 	double batt_h_to_ambient;
-	double T_room;
+	std::vector<double> T_room;
 
 	double LeadAcid_q20_computed;
 	double LeadAcid_tn;
@@ -172,8 +165,10 @@ struct batt_variables
 	double batt_minimum_SOC;
 	double batt_current_charge_max;
 	double batt_current_discharge_max;
-	double batt_power_charge_max;
-	double batt_power_discharge_max;
+	double batt_power_charge_max_kwdc;
+	double batt_power_discharge_max_kwdc;
+	double batt_power_charge_max_kwac;
+	double batt_power_discharge_max_kwac;
 	double batt_minimum_modetime;
 
 	int batt_topology;
@@ -186,6 +181,7 @@ struct batt_variables
 	double inverter_efficiency;
 	double inverter_paco;
 	size_t inverter_count;
+	double batt_inverter_efficiency_cutoff;
 
 	double batt_calendar_q0;
 	double batt_calendar_a;
@@ -195,50 +191,62 @@ struct batt_variables
 	/*! Battery costs */
 	double batt_cost_per_kwh;
 
-	/*! PPA Time-of-Delivery factors for periods 1-9 */
-	std::vector<double> ppa_factors;
-	util::matrix_t<size_t> ppa_weekday_schedule;
-	util::matrix_t<size_t> ppa_weekend_schedule;
+	/*! PPA price */
+	std::vector<double> forecast_price_series_dollar_per_kwh;
 
 	/*! Energy rates */
-	bool ec_rate_defined;
+	bool ec_rate_defined, ec_use_realtime;
 	util::matrix_t<size_t> ec_weekday_schedule;
 	util::matrix_t<size_t> ec_weekend_schedule;
 	util::matrix_t<double> ec_tou_matrix;
+	std::vector<double> ec_realtime_buy;
 
 	/* Battery replacement options */
 	int batt_replacement_option;
 	std::vector<int> batt_replacement_schedule;
+	std::vector<double> batt_replacement_schedule_percent;
 
 	/* Battery cycle costs */
 	int batt_cycle_cost_choice;
 	double batt_cycle_cost;
 };
 
+struct batt_time_settings
+{
+    int current_year;
+    int current_hr;
+    int current_step;
+
+};
 
 struct battstor
 {
+	/// Pass in the single-year number of records
+	battstor(var_table &vt, bool setup_model, size_t nrec, double dt_hr, const std::shared_ptr<batt_variables> batt_vars_in=0);
 
-	battstor( compute_module &cm, bool setup_model, size_t nrec, double dt_hr, batt_variables *batt_vars=0);
+    battstor(const battstor& orig);
+
 	void parse_configuration();
-	void initialize_automated_dispatch(std::vector<ssc_number_t> pv= std::vector<ssc_number_t>(), 
-									   std::vector<ssc_number_t> load= std::vector<ssc_number_t>(), 
+
+	/// Initialize automated dispatch with lifetime vectors
+	void initialize_automated_dispatch(std::vector<ssc_number_t> pv= std::vector<ssc_number_t>(),
+									   std::vector<ssc_number_t> load= std::vector<ssc_number_t>(),
 									   std::vector<ssc_number_t> cliploss= std::vector<ssc_number_t>());
 	~battstor();
+
 
 	void initialize_time(size_t year, size_t hour_of_year, size_t step);
 
 	/// Run the battery for the current timestep, given the PV power, load, and clipped power
-	void advance(compute_module &cm, double P_pv, double V_pv=0, double P_load=0, double P_pv_clipped=0);
+	void advance(var_table *vt, double P_gen, double V_gen=0, double P_load=0, double P_gen_clipped=0);
 
 	/// Given a DC connected battery, set the shared PV and battery invertr
 	void setSharedInverter(SharedInverter * sharedInverter);
 
-	void outputs_fixed(compute_module &cm);
-	void outputs_topology_dependent(compute_module &cm);
-	void metrics(compute_module &cm);
+	void outputs_fixed();
+	void outputs_topology_dependent();
+	void metrics();
 	void update_grid_power(compute_module &cm, double P_gen_ac, double P_load_ac, size_t index);
-	void process_messages(compute_module &cm);
 
 	/*! Manual dispatch*/
 	bool manual_dispatch = false;
@@ -259,7 +267,7 @@ struct battstor
 	bool input_custom_dispatch = false;
 
 	// for user schedule
-	void force_replacement();
+	void force_replacement(double replacement_percent);
 	void check_replacement_schedule();
 	void calculate_monthly_and_annual_outputs( compute_module &cm );
 
@@ -293,7 +301,7 @@ struct battstor
 	bool en;
 	int chem;
 
-	batt_variables * batt_vars;
+	std::shared_ptr<batt_variables> batt_vars;
 	bool make_vars;
 	
 	/*! Map of profile to discharge percent */
@@ -314,6 +322,9 @@ struct battstor
 	std::vector<double> cliploss_prediction;
 	int prediction_index;
 
+	/*! If fuel cell is attached */
+	std::vector<double> fuelcellPower;
+
 	// outputs
 	ssc_number_t
 		*outTotalCharge,
@@ -328,7 +339,10 @@ struct battstor
 		*outCellVoltage,
 		*outBatteryVoltage,
 		*outCapacityPercent,
+		*outCapacityPercentCycle,
+		*outCapacityPercentCalendar,
 		*outCycles,
+		*outDODCycleAverage,
 		*outBatteryBankReplacement,
 		*outBatteryTemperature,
 		*outCapacityThermalPercent,
@@ -339,12 +353,15 @@ struct battstor
 		*outPVToLoad,
 		*outBatteryToLoad,
 		*outGridToLoad,
+		*outFuelCellToLoad,
 		*outGridPowerTarget,
 		*outBattPowerTarget,
 		*outPVToBatt,
 		*outGridToBatt,
+		*outFuelCellToBatt,
 		*outPVToGrid,
 		*outBatteryToGrid,
+		*outFuelCellToGrid,
 		*outBatteryConversionPowerLoss,
 		*outBatterySystemLoss,
 		*outAnnualPVChargeEnergy,
@@ -355,12 +372,18 @@ struct battstor
 		*outAnnualGridExportEnergy,
 		*outAnnualEnergySystemLoss,
 		*outAnnualEnergyLoss,
-		*outCostToCycle;
+		*outMarketPrice,
+		*outCostToCycle,
+		*outBenefitCharge,
+		*outBenefitGridcharge,
+		*outBenefitClipcharge,
+		*outBenefitDischarge;
 
 	double outAverageCycleEfficiency;
 	double outAverageRoundtripEfficiency;
 	double outPVChargePercent;
 };
 
+void process_messages(std::shared_ptr<battstor> batt, compute_module* cm);
 
 #endif

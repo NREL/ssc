@@ -1,65 +1,40 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #ifndef __lib_vartab_h
 #define __lib_vartab_h
 
-#include "../shared/lib_util.h"
 #include <string>
-#include "sscapi.h"
-
+#include <vector>
 
 #include <unordered_map>
 using std::unordered_map;
 
+#include "../shared/lib_util.h"
+#include "sscapi.h"
+
 #ifdef _MSC_VER
 #pragma warning(disable: 4290)  // ignore warning: 'C++ exception specification ignored except to indicate a function is not __declspec(nothrow)'
+#pragma warning(disable: 4297)	// ignore warning: 'function assumed not to throw an exception but does'
 #endif
 
 class var_data;
@@ -71,16 +46,47 @@ class var_table
 public:
 	explicit var_table();
 	virtual ~var_table();
+	var_table &operator=( const var_table &rhs );
 
 	void clear();
-	var_data *assign( const std::string &name, const var_data &value );
-	void unassign( const std::string &name );
+    bool is_assigned( const std::string &name );
+    void unassign( const std::string &name );
 	bool rename( const std::string &oldname, const std::string &newname );
-	var_data *lookup( const std::string &name );
 	const char *first();
 	const char *next();
+	const char *key(int pos);
 	unsigned int size() { return (unsigned int)m_hash.size(); }
-	var_table &operator=( const var_table &rhs );
+
+    // setters
+    ssc_number_t *allocate( const std::string &name, size_t length );
+    ssc_number_t *allocate( const std::string &name, size_t nrows, size_t ncols );
+    util::matrix_t<ssc_number_t>& allocate_matrix( const std::string &name, size_t nrows, size_t ncols );
+	var_data *assign( const std::string &name, const var_data &value );
+    var_data *assign_match_case( const std::string &name, const var_data &value );
+
+	// getters
+	var_data *lookup( const std::string &name );
+	var_data *lookup_match_case( const std::string &name );
+    size_t as_unsigned_long(const std::string &name);
+    int as_integer( const std::string &name );
+    bool as_boolean( const std::string &name );
+    float as_float( const std::string &name );
+    ssc_number_t as_number( const std::string &name );
+    double as_double( const std::string &name );
+    const char *as_string( const std::string &name );
+    ssc_number_t *as_array( const std::string &name, size_t *count );
+    std::vector<int> as_vector_integer(const std::string &name);
+    std::vector<ssc_number_t> as_vector_ssc_number_t(const std::string &name);
+    std::vector<double> as_vector_double( const std::string &name );
+    std::vector<float> as_vector_float(const std::string &name);
+    std::vector<bool> as_vector_bool(const std::string &name);
+    std::vector<size_t> as_vector_unsigned_long(const std::string &name);
+    ssc_number_t *as_matrix( const std::string &name, size_t *rows, size_t *cols );
+    util::matrix_t<double> as_matrix(const std::string & name);
+    util::matrix_t<size_t> as_matrix_unsigned_long(const std::string & name);
+    util::matrix_t<double> as_matrix_transpose(const std::string & name);
+    bool get_matrix(const std::string &name, util::matrix_t<ssc_number_t> &mat);
+
 
 private:
 	var_hash m_hash;
@@ -93,27 +99,93 @@ class var_data
 public:
 	
 	var_data() : type(SSC_INVALID) { num=0.0; }
-	var_data( const var_data &cp ) : type(cp.type), num(cp.num), str(cp.str) {  }
-	var_data( const std::string &s ) : type(SSC_STRING), str(s) {  }
-	var_data( ssc_number_t n ) : type(SSC_NUMBER) { num = n; }
+	var_data( const var_data &cp ) { copy(cp); }
+    var_data( const std::string &s ) : type(SSC_STRING), str(s) {  }
+	var_data(ssc_number_t n) : type(SSC_NUMBER) { num = n; }
+	var_data(float n) : type(SSC_NUMBER) { num = n; }
+	var_data(int n) : type(SSC_NUMBER) { num = n; }
+    var_data(std::vector<double> arr) : type(SSC_ARRAY) { num.assign(&arr[0], arr.size()); }
 	var_data(const ssc_number_t *pvalues, int length) : type(SSC_ARRAY) { num.assign(pvalues, (size_t)length); }
 	var_data(const ssc_number_t *pvalues, size_t length) : type(SSC_ARRAY) { num.assign(pvalues, length); }
 	var_data(const ssc_number_t *pvalues, int nr, int nc) : type(SSC_MATRIX) { num.assign(pvalues, (size_t)nr, (size_t)nc); }
+    var_data(const util::matrix_t<ssc_number_t>& matrix): type(SSC_MATRIX) { num = matrix; }
+    var_data(const var_table& vt) : type(SSC_TABLE) {table = vt; }
+	var_data(const std::vector<var_data>& vd_vec): type(SSC_DATARR) { vec = vd_vec; }
+    var_data(const std::vector<std::vector<var_data>>& vd_mat): type(SSC_DATMAT) { mat = vd_mat; }
 
-	const char *type_name();
+
+    const char *type_name();
 	static std::string type_name(int type);
 
 	std::string to_string();
 	static std::string to_string( const var_data &value );
+
+	std::vector<double> arr_vector();
+	std::vector<std::vector<double>> matrix_vector();
+
 	static bool parse( unsigned char type, const std::string &buf, var_data &value );
 
 	var_data &operator=(const var_data &rhs) { copy(rhs); return *this; }
-	void copy( const var_data &rhs ) { type=rhs.type; num=rhs.num; str=rhs.str; table = rhs.table; }
-	
+	void copy( const var_data &rhs ) {
+	    type=rhs.type;
+	    num=rhs.num;
+	    str=rhs.str;
+	    table = rhs.table;
+	    for (const auto& i : rhs.vec){
+	        vec.push_back(i);
+	    }
+        for (const auto& i : rhs.mat){
+            std::vector<var_data> vt;
+            for (const auto& j : i){
+                vt.push_back(j);
+            }
+            mat.push_back(vt);
+        }
+	}
+
+	void clear(){
+	    type = SSC_INVALID;
+	    num.clear();
+	    str.clear();
+	    table.clear();
+	    vec.clear();
+	    mat.clear();
+	}
+
 	unsigned char type;
 	util::matrix_t<ssc_number_t> num;
 	std::string str;
 	var_table table;
+	std::vector<var_data> vec;
+    std::vector<std::vector<var_data>> mat;
+
 };
+
+class general_error : public std::exception
+{
+public:
+    explicit general_error(std::string s, float t=-1.0) : err_text(move(s)), time(t) { }
+    std::string err_text;
+    float time;
+};
+
+class cast_error : public general_error
+{
+public:
+    cast_error(const char *target_type, var_data &source, const std::string &name)
+            : general_error( "cast fail: <" + std::string(target_type) + "> from " + std::string(source.type_name()) + " for: " + name ) { }
+};
+
+void vt_get_int(var_table* vt, std::string name, int* lvalue);
+
+void vt_get_number(var_table* vt, std::string name, double* lvalue);
+
+void vt_get_array_vec(var_table* vt, std::string name, std::vector<double>& vec_double);
+
+void vt_get_matrix(var_table* vt, std::string name, util::matrix_t<double>& mat);
+
+#define VT_GET_MATRIX_VEC(vt, name, vec_vec_double) \
+if (var_data* vd = vt->lookup(name)) vec_vec_double = vd->matrix_vector(); \
+else throw std::runtime_error(std::string(name)+std::string(" must be assigned."));
 
 #endif

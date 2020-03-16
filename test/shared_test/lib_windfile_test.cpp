@@ -29,7 +29,7 @@ TEST_F(windDataProviderCalculatorTest, FindClosestUsingData_lib_windfile_test) {
 	var_data* windresourcedata = create_winddata_array(1,2);
 	windDataProvider = new winddata(windresourcedata);
 
-	// Case 1: hubheight: 85, can interpolate
+	//// Case 1: hubheight: 85, can interpolate
 	double pres, temp, spd, dir, heightOfClosestMeasuredSpd, heightOfClosestMeasuredDir;
 	windDataProvider->read(85, &spd, &dir, &temp, &pres, &heightOfClosestMeasuredSpd, &heightOfClosestMeasuredDir, true);
 	EXPECT_NEAR(pres, 0.975, e) << "case 1: hub height can be interpolated.";
@@ -38,7 +38,7 @@ TEST_F(windDataProviderCalculatorTest, FindClosestUsingData_lib_windfile_test) {
 	EXPECT_NEAR(dir, 190, e) << "case 1: hub height can be interpolated.";
 	EXPECT_NEAR(heightOfClosestMeasuredSpd, 85, e) << "case 1: hub height can be interpolated.";
 
-	// Case 2: hubheight: 95, cannot interpolate, gives closest
+	//// Case 2: hubheight: 95, cannot interpolate, gives closest
 	windDataProvider->read(95, &spd, &dir, &temp, &pres, &heightOfClosestMeasuredSpd, &heightOfClosestMeasuredDir, true);
 	EXPECT_NEAR(pres, 1.0, e) << "case 2";
 	EXPECT_NEAR(temp, 55, e) << "case 2";

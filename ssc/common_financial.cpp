@@ -1,51 +1,24 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #include "common_financial.h"
 #include "core.h"
@@ -1194,17 +1167,17 @@ bool dispatch_calculations::setup()
 	if (nrows != 12 || ncols != 24)
 	{
 		m_error = util::format("dispatch values weekday schedule must be 12x24, input is %dx%d", (int)nrows, (int)ncols);
-		throw compute_module::exec_error("dispatch_values", m_error);
+		throw exec_error("dispatch_values", m_error);
 	}
 	ssc_number_t *disp_weekend = m_cm->as_matrix("dispatch_sched_weekend", &nrows, &ncols);
 	if (nrows != 12 || ncols != 24)
 	{
 		m_error = util::format("dispatch values weekend schedule must be 12x24, input is %dx%d", (int)nrows, (int)ncols);
-		throw compute_module::exec_error("dispatch_values", m_error);
+		throw exec_error("dispatch_values", m_error);
 	}
-	util::matrix_t<float> schedwkday(12, 24);
+	util::matrix_t<double> schedwkday(12, 24);
 	schedwkday.assign(disp_weekday, nrows, ncols);
-	util::matrix_t<float> schedwkend(12, 24);
+	util::matrix_t<double> schedwkend(12, 24);
 	schedwkend.assign(disp_weekend, nrows, ncols);
 
 	int tod[8760];
@@ -1212,7 +1185,7 @@ bool dispatch_calculations::setup()
 	if (!util::translate_schedule(tod, schedwkday, schedwkend, 1, 9))
 	{
 		m_error = "could not translate weekday and weekend schedules for dispatch values";
-		throw compute_module::general_error(m_error);
+		throw general_error(m_error);
 	}
 
 	m_periods.resize(8760, 1);
@@ -1273,7 +1246,7 @@ bool dispatch_calculations::setup_ts()
 //	if (m_ngen != m_nmultipliers)
 //	{
 //		m_error = "issue with timestep dispatch multipliers";
-//		throw compute_module::general_error(m_error);
+//		throw general_error(m_error);
 //	}
 
 	ssc_number_t *ppa_multipliers = m_cm->allocate("ppa_multipliers", m_nmultipliers);
@@ -1545,7 +1518,7 @@ bool dispatch_calculations::process_dispatch_output()
 	int i = 0;
 	for (int m = 0; m<12; m++)
 	{
-		for (int d = 0; d<util::nday[m]; d++)
+		for (size_t d = 0; d<util::nday[m]; d++)
 		{
 			for (int h = 0; h<24 && i<8760 && m * 24 + h<288; h++)
 			{
@@ -2232,13 +2205,13 @@ bool dispatch_calculations::compute_dispatch_output_ts()
 	if (step_per_hour_gen < 1 || step_per_hour_gen > 60 || step_per_hour_gen * 8760 != nrec_gen_per_year)
 	{
 		m_error = util::format("invalid number of gen records (%d): must be an integer multiple of 8760", (int)nrec_gen_per_year);
-		throw compute_module::exec_error("dispatch_calculations", m_error);
+		throw exec_error("dispatch_calculations", m_error);
 		return false;
 	}
 	if (m_nmultipliers != nrec_gen_per_year)
 	{
 		m_error = util::format("invalid number of gen records per year (%d) must be equal to number of ppa multiplier records (%d)", (int)nrec_gen_per_year, (int)m_nmultipliers);
-		throw compute_module::exec_error("dispatch_calculations", m_error);
+		throw exec_error("dispatch_calculations", m_error);
 		return false;
 	}
 	ssc_number_t ts_hour_gen = 1.0f / step_per_hour_gen;
@@ -2273,7 +2246,7 @@ bool dispatch_calculations::compute_dispatch_output_ts()
 	int i = 0;
 	for (int m = 0; m<12; m++)
 	{
-		for (int d = 0; d<util::nday[m]; d++)
+		for (size_t d = 0; d<util::nday[m]; d++)
 		{
 			for (int h = 0; h<24 && i<(int)nrec_gen_per_year; h++)
 			{
@@ -2405,13 +2378,13 @@ bool dispatch_calculations::compute_lifetime_dispatch_output_ts()
 	if (step_per_hour_gen < 1 || step_per_hour_gen > 60 || step_per_hour_gen * 8760 != nrec_gen_per_year)
 	{
 		m_error = util::format("invalid number of gen records (%d): must be an integer multiple of 8760", (int)nrec_gen_per_year);
-		throw compute_module::exec_error("dispatch_calculations", m_error);
+		throw exec_error("dispatch_calculations", m_error);
 		return false;
 	}
 	if (m_nmultipliers != nrec_gen_per_year)
 	{
 		m_error = util::format("invalid number of gen records per year (%d) must be equal to number of ppa multiplier records (%d)", (int)nrec_gen_per_year, (int)m_nmultipliers);
-		throw compute_module::exec_error("dispatch_calculations", m_error);
+		throw exec_error("dispatch_calculations", m_error);
 		return false;
 	}
 	ssc_number_t ts_hour_gen = 1.0f / step_per_hour_gen;
@@ -2448,7 +2421,7 @@ bool dispatch_calculations::compute_lifetime_dispatch_output_ts()
 
 		for (int m = 0; m < 12; m++)
 		{
-			for (int d = 0; d < util::nday[m]; d++)
+			for (size_t d = 0; d < util::nday[m]; d++)
 			{
 				for (int h = 0; h < 24 && i < (int)nrec_gen_per_year; h++)
 				{
@@ -2744,7 +2717,7 @@ bool dispatch_calculations::process_lifetime_dispatch_output()
 		int i = 0;
 		for (int m = 0; m<12; m++)
 		{
-			for (int d = 0; d<util::nday[m]; d++)
+			for (size_t d = 0; d<util::nday[m]; d++)
 			{
 				for (int h = 0; h<24 && i<8760 && m * 24 + h<288; h++)
 				{
@@ -3205,25 +3178,36 @@ bool hourly_energy_calculation::calculate(compute_module *cm)
 
 
 	ssc_number_t *pgen;
-	size_t nrec_gen = 0, step_per_hour_gen = 1, i;
+	size_t nrec_gen = 0, step_per_hour_gen = 1;
 	pgen = m_cm->as_array("gen", &nrec_gen);
 
 	// in front of meter 
 	// update for battery in front of meter case
-	if ((cm->is_assigned("en_batt")) && (cm->as_number("en_batt") == 1) && (cm->is_assigned("batt_meter_position") ) && (cm->as_number("batt_meter_position") == 1) && cm->is_assigned("grid_to_batt"))
-	{ // add grid_batt to gen for ppa revenue
+	//In the case of no electricity rate, grid_to_batt is included in gen, and assuming buy=sell, this should be accounted for.
+	size_t i;
+	if ((cm->is_assigned("en_batt")) && (cm->as_number("en_batt") == 1) && 
+		(cm->is_assigned("batt_meter_position") ) && (cm->as_number("batt_meter_position") == 1) && 
+		cm->is_assigned("grid_to_batt") &&
+		cm->is_assigned("en_electricity_rates") && cm->as_number("en_electricity_rates") == 1)
+	{  
+		ssc_number_t *ppa_gen = cm->allocate("ppa_gen", nrec_gen);
+		 
+
+		// add grid_batt to gen for ppa revenue, since it is in 'gen' as a negative generation source, but should be valued at a different rate.
 		ssc_number_t *pgrid_batt;
 		size_t nrec_grid_batt = 0;
 		pgrid_batt = m_cm->as_array("grid_to_batt", &nrec_grid_batt);
 		if (nrec_gen != nrec_grid_batt)
 		{
-			throw compute_module::exec_error("hourly_energy_calculations", util::format("number of grid to battery records (%d) must be equal to number of gen records (%d)", (int)nrec_grid_batt, (int)nrec_gen));
+			throw exec_error("hourly_energy_calculations", util::format("number of grid to battery records (%d) must be equal to number of gen records (%d)", (int)nrec_grid_batt, (int)nrec_gen));
 			return false;
 		}
-		for (i = 0; i < nrec_gen; i++)
+		// we do this so that grid energy purchased through the electricity rate is not inadvertently double counted as lost revenue
+		for (i = 0; i < nrec_gen; i++) {
 			pgen[i] += pgrid_batt[i];
+			ppa_gen[i] = pgen[i];
+		}
 	}
-
 
 
 	// for lifetime analysis
@@ -3234,7 +3218,7 @@ bool hourly_energy_calculation::calculate(compute_module *cm)
 	if (step_per_hour_gen < 1 || step_per_hour_gen > 60 || step_per_hour_gen * 8760 != nrec_gen_per_year)
 	{
 		m_error = util::format("invalid number of gen records (%d): must be an integer multiple of 8760", (int)nrec_gen_per_year);
-		throw compute_module::exec_error("hourly_energy_calculation", m_error);
+		throw exec_error("hourly_energy_calculation", m_error);
 		return false;
 	}
 	ssc_number_t ts_hour_gen = 1.0f / step_per_hour_gen;
@@ -3246,7 +3230,7 @@ bool hourly_energy_calculation::calculate(compute_module *cm)
 	ssc_number_t ts_power = 0;
 	if (m_cm->as_integer("system_use_lifetime_output") == 1)
 	{   // availability, curtailment and degradation included in lifetime output
-		for (int y = 0; y < m_nyears; y++)
+		for (size_t y = 0; y < m_nyears; y++)
 		{
 			for (size_t i = 0; i < 8760; i++)
 			{
@@ -3264,7 +3248,7 @@ bool hourly_energy_calculation::calculate(compute_module *cm)
 		if (m_hourly_energy.size() != 8760*m_nyears)
 		{
 			m_error = util::format("invalid number of hourly energy records (%d): must be %d", (int)m_hourly_energy.size(), 8760*m_nyears);
-			throw compute_module::exec_error("hourly_energy_calculation", m_error);
+			throw exec_error("hourly_energy_calculation", m_error);
 			return false;
 		}
 	}
@@ -3285,7 +3269,7 @@ bool hourly_energy_calculation::calculate(compute_module *cm)
 		if (m_hourly_energy.size() != 8760)
 		{
 			m_error = util::format("invalid number of hourly energy records (%d): must be 8760", (int)m_hourly_energy.size());
-			throw compute_module::exec_error("hourly_energy_calculation", m_error);
+			throw exec_error("hourly_energy_calculation", m_error);
 			return false;
 		}
 	}

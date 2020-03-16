@@ -46,6 +46,23 @@ using namespace N_co2_props;
 //const double P_sat_min = 3203.3474;
 //const double D_form_switch = 280.0;
 
+
+void get_CO2_info(CO2_info * __restrict info)
+{
+	info->molar_mass = wmm;
+	info->T_critical = T_crit;
+	info->D_critical = D_crit;
+	info->P_critical = P_crit;
+	info->temp_lower_limit = T_lower_limit;
+	info->temp_upper_limit = T_upper_limit;
+	info->pres_lower_limit = P_lower_limit;
+	info->pres_upper_limit = P_upper_limit;
+	info->sat_temp_min = T_sat_min;
+	info->sat_pres_min = P_sat_min;
+}
+
+
+
 const char * CO2_error_message( const int error_code )
     {
     switch (error_code)
@@ -129,19 +146,6 @@ const char * CO2_error_message( const int error_code )
         }
     }
 
-void get_CO2_info( CO2_info * __restrict info )
-    {
-    info->molar_mass = wmm;
-    info->T_critical = T_crit;
-    info->D_critical = D_crit;
-    info->P_critical = P_crit;
-    info->temp_lower_limit = T_lower_limit;
-    info->temp_upper_limit = T_upper_limit;
-    info->pres_lower_limit = P_lower_limit;
-    info->pres_upper_limit = P_upper_limit;
-    info->sat_temp_min = T_sat_min;
-    info->sat_pres_min = P_sat_min;
-    }
 
 void N_co2_props::zero_state( CO2_state * __restrict state )
     {

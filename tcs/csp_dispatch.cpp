@@ -1,51 +1,24 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #include <fstream>
 #include <sstream>
@@ -141,6 +114,7 @@ csp_dispatch_opt::csp_dispatch_opt()
     params.q_rec_min = numeric_limits<double>::quiet_NaN();
     params.w_rec_pump = numeric_limits<double>::quiet_NaN();
     params.q_pb_des = numeric_limits<double>::quiet_NaN();
+    params.disp_inventory_incentive = numeric_limits<double>::quiet_NaN();
     params.siminfo = 0;   
     params.col_rec = 0;
 	params.mpc_pc = 0;
@@ -341,55 +315,28 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
         pars["M"] = 1.e6;
         pars["W_dot_cycle"] = optinst->params.q_pb_des * optinst->params.eta_cycle_ref;
 		
-		/*pars["wlim_min"] = 9.e99;
-		for (int t = 0; t < nt; t++)
-			pars["wlim_min"] = fmin(pars["wlim_min"], optinst->w_lim.at(t));*/
-
-        //calculate Z parameters
-        pars["Z_1"] = 0.;
-        pars["Z_2"] = 0.;
-        {
-            double fi = 0.;
-            double fhfi2 = 0.;
-            double fhfi = 0.;
-            double fhfi_2 = 0.;
-            vector<double> fiv;
-            int m = (int)optinst->params.eff_table_load.get_size();
-            for(int i=0; i<m; i++)
-            {
-                if( i==0 ) continue; // first data point is zero, so skip
-
-                double q, eta, f, fh;
-                optinst->params.eff_table_load.get_point(i, q, eta);
-                fh = optinst->params.eta_cycle_ref / eta;
-                f = q / optinst->params.q_pb_des;
-                fiv.push_back(f);
-
-                fi += f;
-                fhfi += fh*f;
-                fhfi2 += fh*f*f;
-                fhfi_2 += fh*fh*f*f;
-            }
-            m += -1;
-
-            double fi_fhfi = 0.;
-            for(int i=0; i<m; i++)
-                fi_fhfi += fiv[i]*fhfi;
-
-            pars["Z_1"] = (fhfi2 - 1./(double)m*fi_fhfi)/(fhfi_2 - 1./(double)m *fhfi * fhfi);
-
-            pars["Z_2"] = 1./(double)m * ( fi - pars["Z_1"] * fhfi );
-        }
-
-        pars["etap"] = pars["Z_1"]*optinst->params.eta_cycle_ref; //rate2
-
-        double limit1 = (-pars["Z_2"]*pars["W_dot_cycle"])/(pars["Z_1"]*optinst->params.eta_cycle_ref);  //q at point where power curve crosses x-axis
+        //linear power-heat fit requires that the efficiency table has 3 points.. 0->zero point, 1->min load point, 2->max load point. This is created in csp_solver_core::Ssimulate().
+        int m = optinst->params.eff_table_load.get_size()-1;
+        if (m != 2)
+            throw C_csp_exception("Model failure during dispatch optimization problem formulation. Ill-formed load table.");
+        //get the two points used to create the linear fit
+        double q[2], eta[2];
+        optinst->params.eff_table_load.get_point(1, q[0], eta[0]);
+        optinst->params.eff_table_load.get_point(2, q[1], eta[1]);
+        //calculate the rate of change in power output versus heat input
+        pars["etap"] = (q[1] * eta[1] - q[0] * eta[0]) / (q[1] - q[0]);
+        //calculate the y-intercept of the linear fit at 'b'
+        double b = q[1] * eta[1] - q[1] * pars["etap"];
+        //locate the heat input at which the linear fit crosses zero power
+        double limit1 = -b / pars["etap"];
 
         pars["Wdot0"] = 0.;
         if( pars["q0"] >= pars["Ql"] )
             pars["Wdot0"]= pars["etap"]*pars["q0"]*optinst->outputs.eta_pb_expected.at(0);
-
+        double wdot0 = pars["Wdot0"];
+        //maximum power based on linear fit
         pars["Wdotu"] = (pars["Qu"] - limit1) * pars["etap"];
+        // minimum power based on linear fit
         pars["Wdotl"] = (pars["Ql"] - limit1) * pars["etap"];
 
         // Adjust wlim if specified value is too low to permit cycle operation
@@ -561,8 +508,8 @@ bool csp_dispatch_opt::optimize()
         --------------------------------------------------------------------------------
         */
 		{
-            int *col = new int[12 * nt];
-            REAL *row = new REAL[12 * nt];
+            int *col = new int[12 * nt +1];
+            REAL *row = new REAL[12 * nt +1];
             double tadj = P["disp_time_weighting"];
             int i = 0;
 
@@ -580,22 +527,22 @@ bool csp_dispatch_opt::optimize()
                 row[ t + nt*(i++) ] = P["delta"] * price_signal.at(t)*tadj*(1.-outputs.w_condf_expected.at(t));
 
                 col[ t + nt*(i  ) ] = O.column("xr", t);
-                row[ t + nt*(i++) ] = -(P["delta"] * price_signal.at(t) * P["Lr"])+tadj*pmean;  // tadj added to prefer receiver production sooner (i.e. delay dumping)
+                row[ t + nt*(i++) ] = -(P["delta"] * price_signal.at(t)*tadj * P["Lr"]); // +tadj * pmean;  // tadj added to prefer receiver production sooner (i.e. delay dumping)
 
                 col[ t + nt*(i  ) ] = O.column("xrsu", t);
-                row[ t + nt*(i++) ] = -P["delta"] * price_signal.at(t) * P["Lr"];
+                row[ t + nt*(i++) ] = -P["delta"] * price_signal.at(t)*tadj * P["Lr"];
 
                 col[ t + nt*(i  ) ] = O.column("yrsu", t);
-                row[ t + nt*(i++) ] = -price_signal.at(t) * (params.w_rec_ht + params.w_stow);
+                row[ t + nt*(i++) ] = -price_signal.at(t)*tadj * (params.w_rec_ht + params.w_stow);
 
                 col[ t + nt*(i  ) ] = O.column("yr", t);
-                row[ t + nt*(i++) ] = -(P["delta"] * price_signal.at(t) * params.w_track) + tadj;	// tadj added to prefer receiver operation in nearer term to longer term
+                row[ t + nt*(i++) ] = -(P["delta"] * price_signal.at(t)*tadj * params.w_track); // +tadj;	// tadj added to prefer receiver operation in nearer term to longer term
 
                 col[ t + nt*(i  ) ] = O.column("x", t);
-                row[ t + nt*(i++) ] = -P["delta"] * price_signal.at(t) * params.w_cycle_pump;
+                row[ t + nt*(i++) ] = -P["delta"] * price_signal.at(t)*tadj * params.w_cycle_pump;
 
                 col[ t + nt*(i  ) ] = O.column("ycsb", t);
-                row[ t + nt*(i++) ] = -P["delta"] * price_signal.at(t) * params.w_cycle_standby;
+                row[ t + nt*(i++) ] = -P["delta"] * price_signal.at(t)*tadj * params.w_cycle_standby;
 
                 //xxcol[ t + nt*(i   ] = O.column("yrsb", t);
                 //xxrow[ t + nt*(i++) ] = -delta * price_signal.at(t) * (Lr * Qrl + (params.w_stow / delta));
@@ -624,7 +571,11 @@ bool csp_dispatch_opt::optimize()
                 tadj *= P["disp_time_weighting"];
             }
 
-            set_obj_fnex(lp, i*nt, row, col);
+
+            col[i * nt] = O.column("s", nt - 1);       //terminal inventory
+            row[i * nt] = P["delta"] * pmean*P["W_dot_cycle"] * nt / params.e_tes_max * params.disp_inventory_incentive;
+
+            set_obj_fnex(lp, i*nt+1, row, col);
 
             delete[] col;
             delete[] row;

@@ -31,7 +31,7 @@ public:
 
     std::vector<double> getX() const { return x; }
     double getY() const { return y; }
-    unsigned int getDimX() const { return x.size(); }
+    unsigned int getDimX() const { return (unsigned int)x.size(); }
 
 private:
     DataPoint();

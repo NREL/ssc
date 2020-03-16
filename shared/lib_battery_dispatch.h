@@ -1,60 +1,39 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #include <memory>
 
-#include "lib_battery_powerflow.h"
+
 #include "lib_battery.h"
-#include "lib_utility_rate.h"
+
 
 #ifndef __LIB_BATTERY_DISPATCH_H__
 #define __LIB_BATTERY_DISPATCH_H__
+
+// Forward declarations to speed up build
+struct BatteryPower;
+class BatteryPowerFlow;
+class UtilityRate;
+class UtilityRateCalculator;
 
 namespace battery_dispatch
 {
@@ -68,8 +47,8 @@ class dispatch_t
 {
 public:
 
-	enum FOM_MODES { FOM_LOOK_AHEAD, FOM_LOOK_BEHIND, FOM_FORECAST, FOM_CUSTOM_DISPATCH, FOM_MANUAL };
-	enum BTM_MODES { LOOK_AHEAD, LOOK_BEHIND, MAINTAIN_TARGET, CUSTOM_DISPATCH, MANUAL };
+	enum FOM_MODES { FOM_LOOK_AHEAD, FOM_LOOK_BEHIND, FOM_FORECAST, FOM_CUSTOM_DISPATCH, FOM_MANUAL, FOM_RESILIENCE };
+	enum BTM_MODES { LOOK_AHEAD, LOOK_BEHIND, MAINTAIN_TARGET, CUSTOM_DISPATCH, MANUAL, RESILIENCE };
 	enum METERING { BEHIND, FRONT };
 	enum PV_PRIORITY { MEET_LOAD, CHARGE_BATTERY };
 	enum CURRENT_CHOICE { RESTRICT_POWER, RESTRICT_CURRENT, RESTRICT_BOTH };
@@ -83,8 +62,10 @@ public:
 		int current_choice,
 		double Ic_max,
 		double Id_max,
-		double Pc_max,
-		double Pd_max,
+		double Pc_max_kwdc,
+		double Pd_max_kwdc,
+		double Pc_max_kwac,
+		double Pd_max_kwac,
 		double t_min,
 		int dispatch_mode,
 		int meter_position);
@@ -102,12 +83,7 @@ public:
 	/// Public API to run the battery dispatch model for the current timestep, given the system power, and optionally the electric load and amount of system clipping
 	virtual void dispatch(size_t year,
 		size_t hour_of_year,
-		size_t step,
-		double P_system,
-		double V_system,
-		double P_load_ac=0,
-		double P_system_clipped = 0
-		) = 0;
+		size_t step) = 0;
 
 	/// Method to check any operational constraints and modify the battery current if needed
 	virtual bool check_constraints(double &I, size_t count);
@@ -118,45 +94,41 @@ public:
 	battery_t * battery_model(){ return _Battery; }
 
 	// ac outputs
-	double power_tofrom_battery() { return m_batteryPower->powerBattery; }
-	double power_tofrom_grid() { return m_batteryPower->powerGrid; }
-	double power_gen() { return m_batteryPower->powerGeneratedBySystem; }
-	double power_pv_to_load() { return m_batteryPower->powerPVToLoad; }
-	double power_battery_to_load() { return m_batteryPower->powerBatteryToLoad; }
-	double power_grid_to_load() { return m_batteryPower->powerGridToLoad; }
-	double power_pv_to_batt() { return m_batteryPower->powerPVToBattery; }
-	double power_grid_to_batt() { return m_batteryPower->powerGridToBattery; }
-	double power_pv_to_grid() { return m_batteryPower->powerPVToGrid; }
-	double power_battery_to_grid() { return m_batteryPower->powerBatteryToGrid; }
-	double power_conversion_loss() { return m_batteryPower->powerConversionLoss; }
-	double power_system_loss() { return m_batteryPower->powerSystemLoss; }
+	double power_tofrom_battery();
+	double power_tofrom_grid();
+	double power_gen();
+	double power_pv_to_load();
+	double power_battery_to_load();
+	double power_grid_to_load();
+	double power_fuelcell_to_load();
+	double power_pv_to_batt();
+	double power_grid_to_batt();
+	double power_fuelcell_to_batt();
+	double power_pv_to_grid();
+	double power_battery_to_grid();
+	double power_fuelcell_to_grid();
+	double power_conversion_loss();
+	double power_system_loss();
 
 	virtual double power_grid_target(){	return 0;}
 	virtual double power_batt_target(){ return 0.;}
 	virtual double cost_to_cycle() { return 0.;}
 
 	// control settings
-	double battery_power_to_fill(){ return _Battery->battery_power_to_fill(m_batteryPower->stateOfChargeMax); }
+	double battery_power_to_fill();
 
 	message get_messages();
 
 	/// Return a pointer to the underlying calculated power quantities
-	BatteryPower * getBatteryPower() {
-		return m_batteryPower;
-	};
+	BatteryPower * getBatteryPower();
 
 	/// Return a pointer to the object which calculates the battery power flow
-	BatteryPowerFlow * getBatteryPowerFlow() {
-		return m_batteryPowerFlow.get();
-	};
+	BatteryPowerFlow * getBatteryPowerFlow();
 
 protected:
 
 	/// Helper function to run common dispatch tasks.  Requires that m_batteryPower->powerBattery is previously defined
 	virtual void runDispatch(size_t year, size_t hour, size_t step);
-
-	/// Helper function to internally set up the dispatch model
-	virtual void prepareDispatch(size_t hour_of_year, size_t step, double P_system, double V_system, double P_load_ac = 0, double P_pv_dc_clipped = 0);
 
 	// Initialization help
 	void init(battery_t * Battery,
@@ -168,7 +140,7 @@ protected:
 	// Controllers
 	virtual	void SOC_controller();
 	void switch_controller();
-	double current_controller(double battery_voltage);
+	double current_controller(double power_kw);
 	bool restrict_current(double &I);
 	bool restrict_power(double &I);
 
@@ -187,7 +159,7 @@ protected:
 	// allocated and managed internally
 	std::unique_ptr<BatteryPowerFlow> m_batteryPowerFlow;
 	
-	// managed elsewhere
+	// managed by BatteryPowerFlow
 	BatteryPower * m_batteryPower;
 
 	// Charge & current limits controllers
@@ -219,8 +191,10 @@ public:
 		int current_choice,
 		double Ic_max,
 		double Id_max,
-		double Pc_max,
-		double Pd_max,
+		double Pc_max_kwdc,
+		double Pd_max_kwdc,
+		double Pc_max_kwac,
+		double Pd_max_kwac,
 		double t_min,
 		int mode,
 		int meterPosition,
@@ -229,6 +203,7 @@ public:
 		std::vector<bool> can_charge,
 		std::vector<bool> can_discharge,
 		std::vector<bool> can_gridcharge,
+		std::vector<bool> can_fuelcellcharge,
 		std::map<size_t, double> dm_percent_discharge,
 		std::map<size_t, double> dm_percent_gridcharge);
 
@@ -236,24 +211,19 @@ public:
 	dispatch_manual_t(const dispatch_t& dispatch);
 
 	// copy members from dispatch to this
-	virtual void copy(const dispatch_t * dispatch);
+	void copy(const dispatch_t * dispatch) override;
 
 	virtual ~dispatch_manual_t(){};
 
 	/// Public API to run the battery dispatch model for the current timestep, given the system power, and optionally the electric load, amount of system clipping, or specified battery power
 	virtual void dispatch(size_t year,
 		size_t hour_of_year,
-		size_t step,
-		double P_system,
-		double V_system = 0,
-		double P_load_ac = 0,
-		double P_system_clipped = 0
-	);
+		size_t step) override;
 
 protected:
 
 	/// Helper function to internally set up the dispatch model
-	virtual void prepareDispatch(size_t hour_of_year, size_t step, double P_system, double V_system, double P_load_ac = 0, double P_pv_dc_clipped = 0);
+	virtual void prepareDispatch(size_t hour_of_year, size_t step);
 
 	// Initialization help
 	void init(util::matrix_t<float> dm_dynamic_sched,
@@ -267,11 +237,12 @@ protected:
 		std::vector<bool>,
 		std::vector<bool>,
 		std::vector<bool>,
+		std::vector<bool>,
 		std::map<size_t, double> dm_percent_discharge,
 		std::map<size_t, double> dm_percent_gridcharge);
 
-	void SOC_controller();
-	bool check_constraints(double &I, size_t count);
+	void SOC_controller() override;
+	bool check_constraints(double &I, size_t count) override;
 
 	util::matrix_t < size_t > _sched;
 	util::matrix_t < size_t > _sched_weekend;
@@ -279,12 +250,14 @@ protected:
 	std::vector<bool> _charge_array;
 	std::vector<bool> _discharge_array;
 	std::vector<bool> _gridcharge_array;
+	std::vector<bool> _fuelcellcharge_array;
 
 	double _percent_discharge;
 	double _percent_charge;
 
-	std::map<size_t, double>  _percent_discharge_array;
+	std::map<size_t, double> _percent_discharge_array;
 	std::map<size_t, double> _percent_charge_array;
+
 };
 
 /*! Class containing calculated grid power at a single time step */
@@ -295,16 +268,16 @@ class grid_point
 	grid_point = [grid_power, hour, step]
 	*/
 public:
-	grid_point(double grid = 0., int hour = 0, int step = 0) :
+	grid_point(double grid = 0., size_t hour = 0, size_t step = 0) :
 		_grid(grid), _hour(hour), _step(step){}
 	double Grid() const { return _grid; }
-	int Hour() const { return _hour; }
-	int Step() const { return _step; }
+	size_t Hour() const { return _hour; }
+	size_t Step() const { return _step; }
 
 private:
 	double _grid;
-	int _hour;
-	int _step;
+	size_t _hour;
+	size_t _step;
 };
 
 struct byGrid
@@ -334,8 +307,10 @@ public:
 		int current_choice,
 		double Ic_max,
 		double Id_max,
-		double Pc_max,
-		double Pd_max,
+		double Pc_max_kwdc,
+		double Pd_max_kwdc,
+		double Pc_max_kwac,
+		double Pd_max_kwac,
 		double t_min,
 		int dispatch_mode,
 		int pv_dispatch,
@@ -344,7 +319,8 @@ public:
 		double dispatch_update_frequency_hours,
 		bool can_charge,
 		bool can_clipcharge,
-		bool can_grid_charge
+		bool can_grid_charge,
+		bool can_fuelcell_charge
 		);
 
 	virtual ~dispatch_automatic_t(){};
@@ -358,11 +334,7 @@ public:
 	/// Public API to run the battery dispatch model for the current timestep, given the system power, and optionally the electric load, amount of system clipping, or specified battery power
 	virtual void dispatch(size_t year,
 		size_t hour_of_year,
-		size_t step,
-		double P_system,
-		double V_system,
-		double P_load_ac = 0,
-		double P_system_clipped = 0);
+		size_t step);
 
 	/*! Compute the updated power to send to the battery over the next N hours */
 	virtual void update_dispatch(size_t hour_of_year, size_t step, size_t idx)=0;
@@ -375,6 +347,9 @@ public:
 
 	/* Check constraints and re-dispatch if needed */
 	virtual bool check_constraints(double &I, size_t count);
+
+	/// Return the battery power target set by the controller
+	double power_batt_target();
 
 protected:
 
@@ -449,8 +424,10 @@ public:
 		int current_choice,
 		double Ic_max,
 		double Id_max,
-		double Pc_max,
-		double Pd_max,
+		double Pc_max_kwdc,
+		double Pd_max_kwdc,
+		double Pc_max_kwac,
+		double Pd_max_kwac,
 		double t_min,
 		int dispatch_mode,
 		int pv_dispatch,
@@ -459,10 +436,11 @@ public:
 		double dispatch_update_frequency_hours,
 		bool can_charge,
 		bool can_clipcharge,
-		bool can_grid_charge
+		bool can_grid_charge,
+		bool can_fuelcell_charge
 		);
 
-	virtual ~dispatch_automatic_behind_the_meter_t(){};
+	~dispatch_automatic_behind_the_meter_t() override {};
 
 	// deep copy constructor (new memory), from dispatch to this
 	dispatch_automatic_behind_the_meter_t(const dispatch_t& dispatch);
@@ -473,11 +451,7 @@ public:
 	/// Public API to run the battery dispatch model for the current timestep, given the system power, and optionally the electric load, amount of system clipping, or specified battery power
 	virtual void dispatch(size_t year,
 		size_t hour_of_year,
-		size_t step,
-		double P_system,
-		double V_system,
-		double P_load_ac = 0,
-		double P_system_clipped = 0);
+		size_t step);
 
 	/*! Compute the updated power to send to the battery over the next N hours */
 	void update_dispatch(size_t hour_of_year, size_t step, size_t idx);
@@ -488,9 +462,8 @@ public:
 	/*! Pass in the grid power target vector */
 	void set_target_power(std::vector<double> P_target);
 
-	/*! Target power outputs */
-	double power_grid_target(){ return _P_target_current; };
-	double power_batt_target() { return m_batteryPower->powerBattery; };
+	/*! Grid target power */
+	double power_grid_target();
 
 	enum BTM_TARGET_MODES {TARGET_SINGLE_MONTHLY, TARGET_TIME_SERIES};
 
@@ -527,6 +500,7 @@ protected:
 
 	/* Vector of length (24 hours * steps_per_hour) containing sorted grid calculation [P_grid, hour, step] */
 	grid_vec sorted_grid;
+
 };
 
 /*! Automated Front of Meter DC-connected battery dispatch */
@@ -549,8 +523,10 @@ public:
 		int current_choice,
 		double Ic_max,
 		double Id_max,
-		double Pc_max,
-		double Pd_max,
+		double Pc_max_kwdc,
+		double Pd_max_kwdc,
+		double Pc_max_kwac,
+		double Pd_max_kwac,
 		double t_min,
 		int dispatch_mode,
 		int pv_dispatch,
@@ -560,13 +536,12 @@ public:
 		bool can_charge,
 		bool can_clipcharge,
 		bool can_grid_charge,
+		bool can_fuelcell_charge,
 		double inverter_paco,
 		double battReplacementCostPerkWh,
 		int battCycleCostChoice,
 		double battCycleCost,
-		std::vector<double> ppa_factors,
-		util::matrix_t<size_t> ppa_weekday_schedule,
-		util::matrix_t<size_t> ppa_weekend_schedule,
+		std::vector<double> ppa_price_series_dollar_per_kwh,
 		UtilityRate * utilityRate,
 		double etaPVCharge,
 		double etaGridCharge,
@@ -584,17 +559,16 @@ public:
 	/// Public API to run the battery dispatch model for the current timestep, given the system power, and optionally the electric load, amount of system clipping, or specified battery power
 	virtual void dispatch(size_t year,
 		size_t hour_of_year,
-		size_t step,
-		double P_system,
-		double V_system,
-		double P_load_ac = 0,
-		double P_system_clipped = 0);
+		size_t step);
 
-	/*! Compute the updated power to send to the battery over the next N hours */
-	void update_dispatch(size_t hour_of_year, size_t step, size_t idx);
+	/// Compute the updated power to send to the battery over the next N hours
+	void update_dispatch(size_t hour_of_year, size_t step, size_t lifetimeIndex);
 
-	/// Update cliploss data
+	/// Update cliploss data [kW]
 	void update_cliploss_data(double_vec P_cliploss);
+
+	/// Pass in the PV power forecast [kW]
+	virtual void update_pv_data(std::vector<double> P_pv_dc);
 
 	/*! Calculate the cost to cycle */
 	void costToCycle();
@@ -602,23 +576,29 @@ public:
 	/*! Return the calculated cost to cycle ($/cycle)*/
 	double cost_to_cycle() { return m_cycleCost; }
 
+	/// Return benefit calculations
+	double benefit_charge(){ return revenueToPVCharge; }
+	double benefit_gridcharge() { return revenueToGridCharge; }
+	double benefit_clipcharge() { return revenueToClipCharge; }
+	double benefit_discharge() { return revenueToDischarge; }
+
+
 protected:
 	
 	void init_with_pointer(const dispatch_automatic_front_of_meter_t* tmp);
-	void setup_cost_vector(util::matrix_t<size_t> ppa_weekday_schedule, util::matrix_t<size_t> ppa_weekend_schedule);
+	void setup_cost_forecast_vector();
 
-	/*! Full clipping loss due to AC power limits vector */
+	/*! Full clipping loss due to AC power limits vector [kW] */
 	double_vec _P_cliploss_dc;
 
 	/*! Inverter AC power limit */
 	double _inverter_paco;
 
-	/*! PPA cost and time-of-delivery factors */
-	std::vector<double> _ppa_factors;
-	std::vector<double> _ppa_cost_vector;
+	/*! Market real time and forecast prices */
+	std::vector<double> _forecast_price_rt_series;
 
 	/*! Utility rate information */
-	std::unique_ptr<UtilityRateCalculator> m_utilityRateCalculator;
+	std::shared_ptr<UtilityRateCalculator> m_utilityRateCalculator;
 
 	/*! Cost to replace battery per kWh */
 	double m_battReplacementCostPerKWH;
@@ -631,6 +611,12 @@ protected:
 	double m_etaPVCharge;
 	double m_etaGridCharge;
 	double m_etaDischarge;
+
+	/* Computed benefits to charge, discharge, gridcharge, clipcharge */
+	double revenueToPVCharge;
+	double revenueToGridCharge;
+	double revenueToClipCharge;
+	double revenueToDischarge;
 };
 
 /*! Battery metrics class */

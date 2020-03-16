@@ -70,7 +70,7 @@ public:
 
 	void checkInit() const {
 		if (!init)
-			throw compute_module::exec_error("PV IO Manager", 
+			throw exec_error("PV IO Manager",
 				"Flag used without initialization.");
 	}
 
@@ -204,7 +204,7 @@ struct Irradiance_IO
 	ssc_number_t * p_weatherFileDNI;			/// The Direct Normal (Beam) Irradiance from the weather file [W/m2]
 	ssc_number_t * p_weatherFileDHI;			/// The Direct Normal (Beam) Irradiance from the weather file [W/m2]
 	std::vector<ssc_number_t *> p_weatherFilePOA; /// The Plane of Array Irradiance from the weather file [W/m2]
-	ssc_number_t * p_sunPositionTime;			/// <UNSURE>
+	ssc_number_t * p_sunPositionTime;			/// The hour at which the sun position is calculated [fractional hour 0-23]
 	ssc_number_t * p_weatherFileWindSpeed;		/// The Wind Speed from the weather file [m/s]
 	ssc_number_t * p_weatherFileAmbientTemp;	/// The ambient temperature from the weather file [C]
 	ssc_number_t * p_weatherFileAlbedo;			/// The ground albedo from the weather file
@@ -266,6 +266,8 @@ struct PVSystem_IO
 	flag enableMismatchVoltageCalc;		///< Whether or not to compute mismatch between multiple subarrays attached to the same mppt input
 
 	std::vector<double> dcDegradationFactor; 
+	std::vector<double> dcLifetimeLosses;
+	std::vector<double> acLifetimeLosses;
 	double acDerate;
 	double acLossPercent;
 	double transmissionDerate;
@@ -291,8 +293,9 @@ struct PVSystem_IO
 	std::vector<ssc_number_t *> p_poaRear; 
 	std::vector<ssc_number_t *> p_derateSoiling; 
 	std::vector<ssc_number_t *> p_beamShadingFactor; 
-	std::vector<ssc_number_t *> p_temperatureCell; 
-	std::vector<ssc_number_t *> p_moduleEfficiency; 
+	std::vector<ssc_number_t *> p_temperatureCell;
+	std::vector<ssc_number_t *> p_temperatureCellSS; // steady state cell temperature
+	std::vector<ssc_number_t *> p_moduleEfficiency;
 	std::vector<ssc_number_t *> p_dcStringVoltage; /// An output vector containing dc string voltage for each subarray [V]
 	std::vector<ssc_number_t *> p_voltageOpenCircuit; /// Open circuit voltage of a string in the subarray [V]
 	std::vector<ssc_number_t *> p_currentShortCircuit; 
@@ -322,8 +325,6 @@ struct PVSystem_IO
 
 	// Degradation
 	ssc_number_t *p_dcDegradationFactor;
-	ssc_number_t *p_dcLifetimeLosses;
-	ssc_number_t *p_acLifetimeLosses;
 
 	// transformer loss outputs (single array)
 	ssc_number_t *p_transformerNoLoadLoss;
@@ -502,7 +503,8 @@ public:
 	double voltageOpenCircuit;  /// The DC open circuit voltage of the module [V]
 	double currentShortCircuit; /// The DC short circuit current of the module [A]
 	double dcEfficiency;		/// The DC conversion efficiency of the module [%]
-	double temperatureCellCelcius; /// The average cell temperature of the module [C]
+	double temperatureCellCelcius; /// The weighted moving average  cell temperature of the module [C]
+	double temperatureCellCelciusSS; /// The SS average cell temperature of the module [C]
 	double angleOfIncidenceModifier; /// The angle of incidence modifier on the total poa front-side irradiance [0-1]
 	
 };
@@ -529,7 +531,7 @@ public:
 
 
 	int inverterType;		/// From inverterTypeList
-	int nMpptInputs;        /// Number of maximum power point tracking (MPPT) inputs on one inverter
+	size_t nMpptInputs;        /// Number of maximum power point tracking (MPPT) inputs on one inverter
 	double mpptLowVoltage;  /// Lower limit of inverter voltage range for maximum power point tracking (MPPT) per MPPT input
 	double mpptHiVoltage;   /// Upper limit of inverter voltage range for maximum power point tracking (MPPT) per MPPT input
 	double ratedACOutput;   /// Rated power for one inverter

@@ -1,58 +1,33 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  ("Alliance") under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as �System Advisor Model� or �SAM�. Except
-*  to comply with the foregoing, the terms �System Advisor Model�, �SAM�, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+or promote products derived from this software without specific prior written permission.
 
-#include <math.h>
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #include <cmath>
 #include <cfloat>
 #include <sstream>
 #include <algorithm>
+#include <numeric>
+#include <functional>
 
+#include "6par_newton.h"
 #include "lib_battery.h"
 
 
@@ -117,7 +92,7 @@ capacity_t::capacity_t(double q, double SOC_init, double SOC_max, double SOC_min
 	_SOC_init = SOC_init;
 	_SOC_max = SOC_max;
 	_SOC_min = SOC_min;
-	_DOD = 0;
+	_DOD = 100. - _SOC;
 	_DOD_prev = 0;
 
 	// Initialize charging states
@@ -170,8 +145,13 @@ void capacity_t::check_SOC()
 	double I_orig = _I;
 
 	// set capacity to upper thermal limit
-	if (q_upper > _qmax_thermal * _SOC_max * 0.01)
+	if (q_upper > _qmax_thermal * _SOC_max * 0.01) {
 		q_upper = _qmax_thermal * _SOC_max * 0.01;
+	}
+	// do this so battery can cycle full depth and we calculate correct SOC min
+	if (q_lower > _qmax_thermal * _SOC_min * 0.01) {
+		q_lower = _qmax_thermal * _SOC_min * 0.01;
+	}
 		
 	// check if overcharged
 	if (_q0 > q_upper )
@@ -247,7 +227,7 @@ capacity_t(q20, SOC_init, SOC_max, SOC_min)
 	_qmax0 = _qmax;
 
 	// initializes to full battery
-	replace_battery();
+	replace_battery(100);
 }
 capacity_kibam_t * capacity_kibam_t::clone(){ return new capacity_kibam_t(*this); }
 void capacity_kibam_t::copy(capacity_t * capacity)
@@ -270,13 +250,13 @@ void capacity_kibam_t::copy(capacity_t * capacity)
 	_I20 = tmp->_I20;
 }
 
-void capacity_kibam_t::replace_battery()
+void capacity_kibam_t::replace_battery(double replacement_percent)
 {
-	// Assume initial charge is max capacity
-	_q0 = _qmax0*_SOC_init*0.01;
+	_qmax += replacement_percent * 0.01* _qmax0;
+	_qmax = fmin(_qmax, _qmax0);
+	_q0 = _qmax*_SOC_init*0.01;
 	_q1_0 = _q0*_c;
 	_q2_0 = _q0 - _q1_0;
-	_qmax = _qmax0;
 	_SOC = _SOC_init;
 }
 
@@ -445,11 +425,12 @@ capacity_lithium_ion_t::capacity_lithium_ion_t(double q, double SOC_init, double
 capacity_lithium_ion_t * capacity_lithium_ion_t::clone(){ return new capacity_lithium_ion_t(*this); }
 void capacity_lithium_ion_t::copy(capacity_t * capacity){ capacity_t::copy(capacity);}
 
-void capacity_lithium_ion_t::replace_battery()
+void capacity_lithium_ion_t::replace_battery(double replacement_percent)
 {
-	_q0 = _qmax0 * _SOC_init * 0.01;
-	_qmax = _qmax0;
-	_qmax_thermal = _qmax0;
+	_qmax += _qmax0 * replacement_percent * 0.01;
+	_qmax = fmin(_qmax0, _qmax);
+	_q0 = _qmax * _SOC_init * 0.01;
+	_qmax_thermal = _qmax;
 	_SOC = _SOC_init;
 }
 void capacity_lithium_ion_t::updateCapacity(double &I, double dt)
@@ -498,7 +479,7 @@ double capacity_lithium_ion_t::q10(){return _qmax;}
 /*
 Define Voltage Model
 */
-voltage_t::voltage_t(int mode, int num_cells_series, int num_strings, double voltage, util::matrix_t<double> voltage_matrix)
+voltage_t::voltage_t(int mode, int num_cells_series, int num_strings, double voltage, double dt_hour)
 {
 	_mode = mode;
 	_num_cells_series = num_cells_series;
@@ -507,7 +488,9 @@ voltage_t::voltage_t(int mode, int num_cells_series, int num_strings, double vol
 	_cell_voltage_nominal = voltage;
 	_R = 0.004; // just a default, will get recalculated upon construction
 	_R_battery = _R * num_cells_series / num_strings;
-	_batt_voltage_matrix = voltage_matrix;
+    if (dt_hour < 1/60.)
+        throw std::runtime_error("Battery time step size must be greater than 1/60th of hour.");
+    dt_hr = dt_hour;
 }
 void voltage_t::copy(voltage_t * voltage)
 {
@@ -518,9 +501,9 @@ void voltage_t::copy(voltage_t * voltage)
 	_cell_voltage_nominal = voltage->_cell_voltage_nominal;
 	_R = voltage->_R;
 	_R_battery = voltage->_R_battery;
+    dt_hr = voltage->dt_hr;
 
-	// doesn't change;
-	//_batt_voltage_matrix = voltage->_batt_voltage_matrix;
+
 }
 double voltage_t::battery_voltage(){ return _num_cells_series*_cell_voltage; }
 double voltage_t::battery_voltage_nominal(){ return _num_cells_series * _cell_voltage_nominal; }
@@ -528,15 +511,37 @@ double voltage_t::cell_voltage(){ return _cell_voltage; }
 double voltage_t::R_battery(){ return _R_battery; }
 
 // Voltage Table 
-voltage_table_t::voltage_table_t(int num_cells_series, int num_strings, double voltage, util::matrix_t<double> &voltage_table, double R) :
-voltage_t(voltage_t::VOLTAGE_TABLE, num_cells_series, num_strings, voltage, voltage_table)
+voltage_table_t::voltage_table_t(int num_cells_series, int num_strings, double voltage, util::matrix_t<double> &voltage_table, double R, double dt_hour) :
+        voltage_t(voltage_t::VOLTAGE_TABLE, num_cells_series, num_strings, voltage, dt_hour)
 {
-	for (int r = 0; r != (int)_batt_voltage_matrix.nrows(); r++)
-		_voltage_table.push_back(table_point(_batt_voltage_matrix.at(r, 0), _batt_voltage_matrix.at(r, 1)));
-	
-	std::sort(_voltage_table.begin(), _voltage_table.end(), byDOD());
-
 	_R = R;
+
+    // extract and sort calendar life info from table
+	for (int r = 0; r != (int)voltage_table.nrows(); r++)
+		m_voltage_table.emplace_back(std::make_pair(voltage_table.at(r, 0), voltage_table.at(r, 1)));
+
+	std::sort(m_voltage_table.begin(), m_voltage_table.end(), [](std::pair<double, double> a, std::pair<double, double> b) {return a.second > b.second; });
+
+	// save slope and intercept for every set of points to interpolate between
+    for (size_t i = 0; i != m_voltage_table.size(); i++) {
+        double DOD = m_voltage_table[i].first;
+        double V = m_voltage_table[i].second;
+        double slope = 0;
+        double intercept = V;
+        if (i > 0){
+            double DOD0 = m_voltage_table[i-1].first;
+            double V0 = m_voltage_table[i-1].second;
+            slope = (V - V0)/(DOD - DOD0);
+            intercept = V0 - (slope * DOD0);
+        }
+        slopes.emplace_back(slope);
+        intercepts.emplace_back(intercept);
+    }
+
+    // for extrapolation beyond given points
+    slopes.emplace_back(slopes.back());
+    intercepts.emplace_back(intercepts.back());
+
 }
 
 voltage_table_t * voltage_table_t::clone(){ return new voltage_table_t(*this); }
@@ -551,72 +556,117 @@ void voltage_table_t::copy(voltage_t * voltage)
 	*/
 }
 
+double voltage_table_t::calculate_voltage(double DOD) {
+    DOD = fmax(0., DOD);
+    DOD = fmin(DOD, 100.);
+
+    size_t row = 0;
+    while (row < m_voltage_table.size() && DOD > m_voltage_table[row].first){
+        row++;
+    }
+
+    return fmax(slopes[row] * DOD + intercepts[row], 0);
+}
+
+double voltage_table_t::calculate_voltage_for_current(double I, double q, double qmax, double) {
+    double DOD = (q - I * dt_hr)/qmax * 100.;
+    return calculate_voltage(DOD) * _num_cells_series;
+}
+
 
 void voltage_table_t::updateVoltage(capacity_t * capacity, thermal_t * , double )
 {
-	double cell_voltage = _cell_voltage;
-	double DOD = capacity->DOD();
-	double I_string = capacity->I() / _num_strings;
-	double DOD_lo, DOD_hi, V_lo, V_hi;
-	bool voltage_found = exactVoltageFound(DOD, cell_voltage);
-	if (!voltage_found)
-	{
-		prepareInterpolation(DOD_lo, V_lo, DOD_hi, V_hi, DOD);
-		cell_voltage = util::interpolate(DOD_lo, V_lo, DOD_hi, V_hi, DOD) - I_string * _R;
-	}
-
-	// the cell voltage should not increase when the battery is discharging
-	if (I_string <= 0 || (I_string > 0 && cell_voltage <= _cell_voltage))
-		_cell_voltage = cell_voltage;
-	
+    _cell_voltage = calculate_voltage(capacity->DOD());
 }
 
-bool voltage_table_t::exactVoltageFound(double DOD, double & V)
-{
-	bool contained = false;
-	for (size_t r = 0; r != _voltage_table.size(); r++)
-	{
-		if (_voltage_table[r].DOD() == DOD)
-		{
-			V = _voltage_table[r].V();
-			contained = true;
-			break;
-		}
-	}
-	return contained;
+// helper fx to calculate depth of discharge from current and max capacities
+inline double calc_DOD(double q, double qmax) {return (1. - q/qmax) * 100.;}
+
+double voltage_table_t::calculate_max_charge_w(double q, double qmax, double, double *max_current) {
+    double DOD0 = calc_DOD(q, qmax);
+    double current = qmax*( (1.-DOD0/100.) - 1. );
+    if (max_current)
+        *max_current = current;
+    return calculate_voltage(0.) * current;
 }
 
-void voltage_table_t::prepareInterpolation(double & DOD_lo, double & V_lo, double & DOD_hi, double & V_hi, double DOD)
-{
-	size_t nrows = _voltage_table.size();
-	DOD_lo = _voltage_table[0].DOD();
-	DOD_hi = _voltage_table[nrows - 1].DOD();
-	V_lo = _voltage_table[0].V();
-	V_hi = _voltage_table[nrows - 1].V();
+double voltage_table_t::calculate_max_discharge_w(double q, double qmax, double, double *max_current) {
+    double DOD0 = calc_DOD(q, qmax);
+    double A = q - qmax;
+    double B = qmax/100.;
 
-	for (size_t r = 0; r != nrows; r++)
-	{
-		double DOD_r = _voltage_table[r].DOD();
-		double V_r = _voltage_table[r].V();
+    double max = 0;
+    for (size_t i = 0; i < slopes.size(); i++){
+        double dod = -(A*slopes[i] + B*intercepts[i])/(2*B*slopes[i]);
+        double current = qmax*( (1.-DOD0/100.) - (1.-dod/100.) );
+        double p = calculate_voltage(dod) * current;
+        if (p > max){
+            max = p;
+            if (max_current)
+                *max_current = current;
+        }
+    }
+    if (max < 0){
+        max = 0.;
+        if (max_current)
+            *max_current = 0.;
+    }
+    return max;
+}
 
-		if (DOD_r <= DOD)
-		{
-			DOD_lo = DOD_r;
-			V_lo = V_r;
-		}
+double voltage_table_t::calculate_current_for_target_w(double P_watts, double q, double qmax, double) {
+    double DOD = calc_DOD(q, qmax);
+    double max_p, current;
+    if (P_watts == 0)
+        return 0.;
+    else if (P_watts < 0)
+        max_p = calculate_max_charge_w(q, qmax, 0, &current);
+    else
+        max_p = calculate_max_discharge_w(q, qmax, 0, &current);
 
-		if (DOD_r >= DOD)
-		{
-			DOD_hi = DOD_r;
-			V_hi = V_r;
-			break;
-		}
-	}
+    if (fabs(max_p) < fabs(P_watts))
+        return current;
+
+    double multiplier = 1.;
+    if (P_watts < 0)
+        multiplier = -1.;
+
+    size_t row = 0;
+    while (row < m_voltage_table.size() && DOD > m_voltage_table[row].first){
+        row++;
+    }
+
+    double A = q - qmax;
+    double B = qmax/100.;
+
+    double DOD_new = 0.;
+    double incr = 0;
+    while (incr + row < slopes.size() && incr + row >= 0){
+        size_t i = row + (size_t)incr;
+
+        double a = B * slopes[i];
+        double b = A * slopes[i] + B * intercepts[i];
+        double c = A * intercepts[i] - P_watts;
+
+        DOD_new = fabs((-b + sqrt(b*b - 4*a*c))/(2*a));
+
+        auto upper = (size_t)fmin(i, m_voltage_table.size() - 1);
+        auto lower = (size_t)fmax(0, i-1);
+        if (DOD_new <= m_voltage_table[upper].first && DOD_new >= m_voltage_table[lower].first){
+            break;
+        }
+        incr += 1 * multiplier;
+    }
+    return qmax*((1.-DOD/100.) - (1.-DOD_new/100.));
 }
 
 // Dynamic voltage model
-voltage_dynamic_t::voltage_dynamic_t(int num_cells_series, int num_strings, double voltage, double Vfull, double Vexp, double Vnom, double Qfull, double Qexp, double Qnom, double C_rate, double R):
-voltage_t(voltage_t::VOLTAGE_MODEL, num_cells_series, num_strings, voltage, util::matrix_t<double>())
+typedef void (voltage_dynamic_t::*voltage_dynamic_fptr)(const double*, double*);
+
+voltage_dynamic_t::voltage_dynamic_t(int num_cells_series, int num_strings, double voltage, double Vfull,
+                                     double Vexp, double Vnom, double Qfull, double Qexp, double Qnom,
+                                     double C_rate, double R, double dt_hour) :
+        voltage_t(voltage_t::VOLTAGE_MODEL, num_cells_series, num_strings, voltage, dt_hour)
 {
 	_Vfull = Vfull;
 	_Vexp = Vexp;
@@ -632,7 +682,8 @@ voltage_t(voltage_t::VOLTAGE_MODEL, num_cells_series, num_strings, voltage, util
 	_cell_voltage = _Vfull;
 
 	parameter_compute();
-};
+}
+
 voltage_dynamic_t * voltage_dynamic_t::clone(){ return new voltage_dynamic_t(*this); }
 void voltage_dynamic_t::copy(voltage_t * voltage)
 {
@@ -651,6 +702,11 @@ void voltage_dynamic_t::copy(voltage_t * voltage)
 	_B0 = tmp->_B0;
 	_E0 = tmp->_E0;
 	_K = tmp->_K;
+
+	solver_power = tmp->solver_power;
+	solver_Q = tmp->solver_Q;
+	solver_q = tmp->solver_q;
+	solver_cutoff_voltage = tmp->solver_cutoff_voltage;
 }
 void voltage_dynamic_t::parameter_compute()
 {
@@ -663,50 +719,120 @@ void voltage_dynamic_t::parameter_compute()
 	_B0 = 3. / _Qexp;     // [1/Ah]
 	_K = ((_Vfull - _Vnom + _A*(std::exp(-_B0*_Qnom) - 1))*(_Qfull - _Qnom)) / (_Qnom); // [V] - polarization voltage
 	_E0 = _Vfull + _K + _R*I - _A;
+
+	if (_A < 0 || _B0 < 0 || _K < 0 || _E0 < 0){
+	    char err[254];
+	    std::sprintf(err, "Error during calculation of battery voltage model parameters: negative value(s) found.\n"
+                                  "A: %f, B: %f, K: %f, E0: %f", _A, _B0, _K, _E0);
+	    throw std::runtime_error(err);
+	}
 }
 
+// everything in here is on a per-cell basis
+double voltage_dynamic_t::voltage_model_tremblay_hybrid(double Q_cell, double I, double q0_cell)
+{
+    double it = Q_cell - q0_cell;
+    double E = _E0 - _K*(Q_cell / (Q_cell - it)) + _A * exp(-_B0 * it);
+    return E - _R*I;
+}
+
+double voltage_dynamic_t::calculate_voltage_for_current(double I, double q, double qmax, double)
+{
+    return _num_cells_series * fmax(voltage_model_tremblay_hybrid(qmax/_num_strings, I/_num_strings , q/_num_strings), 0);
+}
+
+// I, Q, q0 are on a per-string basis since adding cells in series does not change current or charge
 void voltage_dynamic_t::updateVoltage(capacity_t * capacity, thermal_t * , double )
 {
+	double Q = capacity->qmax() / _num_strings;
+	double I = capacity->I() / _num_strings;
+	double q0 = capacity->q0() / _num_strings;
 
-	double Q = capacity->qmax();
-	double I = capacity->I();
-	double q0 = capacity->q0();
-	
-	// is on a per-cell basis.
-	// I, Q, q0 are on a per-string basis since adding cells in series does not change current or charge
-	double cell_voltage = voltage_model_tremblay_hybrid(Q / _num_strings, I/_num_strings , q0 / _num_strings);
-
-	// the cell voltage should not increase when the battery is discharging
-	if (I <= 0 || (I > 0 && cell_voltage <= _cell_voltage) )
-		_cell_voltage = cell_voltage;
+	_cell_voltage = fmax(voltage_model_tremblay_hybrid(Q, I , q0), 0);
 }
 
-double voltage_dynamic_t::voltage_model_tremblay_hybrid(double Q, double I, double q0)
-{
-	// everything in here is on a per-cell basis
-	// Tremblay Dynamic Model
-	double it = Q - q0;
-	double E = _E0 - _K*(Q / (Q - it)) + _A*exp(-_B0*it);
-	double V = E - _R*I;
+double voltage_dynamic_t::calculate_max_charge_w(double q, double qmax, double, double *max_current) {
+    q /= _num_strings;
+    qmax /= _num_strings;
+    double current = qmax - q;
+    if (max_current)
+        *max_current = -current * _num_strings;
+    return -current * voltage_model_tremblay_hybrid(qmax, -current , q + current * dt_hr) * _num_strings * _num_cells_series;
+}
 
-	// Discharged lower than model can handle ( < 1% SOC)
-	if (V < 0 || !std::isfinite(V))
-		V = 0.5*_Vnom; 
-	else if (V > _Vfull*1.25)
-		V = _Vfull;
-	return V;
+using namespace std::placeholders;
+double voltage_dynamic_t::calculate_max_discharge_w(double q, double qmax, double, double *max_current) {
+    q /= _num_strings;
+    qmax /= _num_strings;
+
+    double current = 0., vol = 0;
+    double incr = q / 10;
+    double max_p = 0, max_I = 0;
+    while (current < q - tolerance && vol >= 0){
+        vol = voltage_model_tremblay_hybrid(qmax, current , q - current * dt_hr);
+        double p = current * vol;
+        if (p > max_p){
+            max_p = p;
+            max_I = current;
+        }
+        current += incr;
+    }
+    current = max_I;
+
+    if (max_current)
+        *max_current = current * _num_strings;
+
+    return max_p * _num_strings * _num_cells_series;
+}
+
+double voltage_dynamic_t::calculate_current_for_target_w(double P_watts, double q, double qmax, double) {
+    if (P_watts == 0) return 0.;
+
+    solver_power = fabs(P_watts) / (_num_cells_series * _num_strings);
+    solver_q = q /_num_strings;
+    solver_Q = qmax / _num_strings;
+
+    std::function<void(const double*, double*)> f;
+    double direction = 1.;
+    if (P_watts > 0)
+        f = std::bind(&voltage_dynamic_t::solve_current_for_discharge_power, this, _1, _2);
+    else{
+        f = std::bind(&voltage_dynamic_t::solve_current_for_charge_power, this, _1, _2);
+        direction = -1.;
+    }
+
+    double x[1], resid[1];
+    x[0] = solver_power / _cell_voltage;
+    bool check = false;
+
+    newton<double, std::function<void(const double*, double*)>, 1>( x, resid, check, f,
+                                                                                100, 1e-6, 1e-6, 0.7);
+    return x[0] * _num_strings * direction;
+}
+
+void voltage_dynamic_t::solve_current_for_charge_power(const double *x, double *f){
+    double I = x[0];
+    double V = _E0 - _K*solver_Q/(solver_q+I*dt_hr) + _A*exp(-_B0*(solver_Q-(solver_q+I*dt_hr))) + _R*I;
+    f[0] = I*V - solver_power;
+}
+
+void voltage_dynamic_t::solve_current_for_discharge_power(const double *x, double *f){
+    double I = x[0];
+    double V = _E0 - _K*solver_Q/(solver_q-I*dt_hr) + _A*exp(-_B0*(solver_Q-(solver_q-I*dt_hr))) - _R*I;
+    f[0] = I*V - solver_power;
 }
 
 // Vanadium redox flow model
-voltage_vanadium_redox_t::voltage_vanadium_redox_t(int num_cells_series, int num_strings, double V_ref_50,  double R):
-voltage_t(voltage_t::VOLTAGE_MODEL, num_cells_series, num_strings, V_ref_50, util::matrix_t<double>())
+voltage_vanadium_redox_t::voltage_vanadium_redox_t(int num_cells_series, int num_strings, double V_ref_50, double R,
+                                                   double dt_hour) :
+        voltage_t(voltage_t::VOLTAGE_MODEL, num_cells_series, num_strings, V_ref_50, dt_hour)
 {
-	_I = 0;
 	_V_ref_50 = V_ref_50;
 	_R = R;
-    _R_molar = 8.314;  // Molar gas constant [J/mol/K]^M
-    _F = 26.801 * 3600;// Faraday constant [As/mol]^M
-    _C0 = 1.38;                 // model correction factor^M	
+    m_RCF = 8.314 * 1.38 / (26.801 * 3600);
+    if (dt_hr < 1/60.)
+        throw std::runtime_error("Battery time step size must be greater than 1/60th of hour.");
+    dt_hr = dt_hr;
 }
 voltage_vanadium_redox_t * voltage_vanadium_redox_t::clone(){ return new voltage_vanadium_redox_t(*this); }
 void voltage_vanadium_redox_t::copy(voltage_t * voltage)
@@ -716,47 +842,105 @@ void voltage_vanadium_redox_t::copy(voltage_t * voltage)
 
 	_V_ref_50 = tmp->_V_ref_50;
 	_R = tmp->_R;
-	_I = tmp->_I;
-	_R_molar = tmp->_R_molar;
-	_F = tmp->_F;
-	_C0 = tmp->_C0;
+	m_RCF = tmp->m_RCF;
+	dt_hr = tmp->dt_hr;
+	solver_power = tmp->solver_power;
+	solver_T_k = tmp->solver_T_k;
+	solver_q = tmp->solver_q;
+	solver_Q = tmp->solver_Q;
 }
+
+double voltage_vanadium_redox_t::calculate_voltage_for_current(double I, double q, double qmax, double T_k)
+{
+    return voltage_model(q / _num_strings, qmax / _num_strings,
+                         I/ _num_strings, T_k) * _num_cells_series;
+}
+
 void voltage_vanadium_redox_t::updateVoltage(capacity_t * capacity, thermal_t * thermal, double )
 {
-
-	double Q = capacity->qmax();
-	_I = capacity->I();
-	double q0 = capacity->q0();
-
-	// Kelvin
-	double T = thermal->T_battery(); 
-
-	// is on a per-cell basis.
-	// I, Q, q0 are on a per-string basis since adding cells in series does not change current or charge
-	double cell_voltage = voltage_model(Q / _num_strings, q0 / _num_strings, _I/ _num_strings, T);
-
-	// the cell voltage should not increase when the battery is discharging
-	if (_I <= 0 || (_I > 0 && cell_voltage <= _cell_voltage))
-		_cell_voltage = cell_voltage;
+	_cell_voltage = voltage_model(capacity->q0() / _num_strings, capacity->qmax() / _num_strings,
+                                  capacity->I()/ _num_strings, thermal->T_battery());
 }
-double voltage_vanadium_redox_t::voltage_model(double qmax, double q0, double I_string, double T)
+
+double voltage_vanadium_redox_t::calculate_max_charge_w(double q, double qmax, double kelvin, double *max_current) {
+    qmax /= _num_strings;
+    q = qmax - tolerance;
+    double max_I = qmax - q;
+
+    if (max_current)
+        *max_current = -max_I;
+
+    return -voltage_model(q, qmax, max_I, kelvin) * max_I * _num_strings * _num_cells_series;
+}
+
+double voltage_vanadium_redox_t::calculate_max_discharge_w(double q, double qmax, double kelvin, double *max_current) {
+
+    solver_q = q /_num_strings;
+    solver_Q = qmax / _num_strings;
+    solver_T_k = kelvin;
+
+    std::function<void(const double*, double*)> f = std::bind(&voltage_vanadium_redox_t::solve_max_discharge_power, this, _1, _2);
+
+    double x[1], resid[1];
+    x[0] = solver_q - tolerance;
+    bool check = false;
+
+    newton<double, std::function<void(const double*, double*)>, 1>( x, resid, check, f,
+                                                                    100, 1e-6, 1e-6, 0.7);
+    double current = x[0];
+
+    double power = current * voltage_model(solver_q - current * dt_hr, solver_Q, current, kelvin) * _num_strings * _num_cells_series;
+
+    if (power < 0){
+        current = 0.;
+        power = 0.;
+    }
+    if (max_current)
+        *max_current = current;
+    return power;
+}
+
+double voltage_vanadium_redox_t::calculate_current_for_target_w(double P_watts, double q, double qmax, double kelvin) {
+    if (P_watts == 0) return 0.;
+
+    solver_power = P_watts / (_num_cells_series * _num_strings);
+    solver_q = q /_num_strings;
+    solver_Q = qmax / _num_strings;
+    solver_T_k = kelvin;
+
+    std::function<void(const double*, double*)> f = std::bind(&voltage_vanadium_redox_t::solve_current_for_power, this, _1, _2);
+
+    double x[1], resid[1];
+    x[0] = solver_power / _cell_voltage;
+    bool check = false;
+
+    newton<double, std::function<void(const double*, double*)>, 1>( x, resid, check, f,
+                                                                    100, 1e-6, 1e-6, 0.7);
+    return x[0] * _num_strings;
+}
+
+// I, Q, q0 are on a per-string basis since adding cells in series does not change current or charge
+double voltage_vanadium_redox_t::voltage_model(double q0, double qmax, double I_string, double T)
 {
-	double SOC = q0 / qmax;
-	double SOC_use = SOC;
-	if (SOC > 1 - tolerance)
-		SOC_use = 1 - tolerance;
+	double SOC_use = q0 / qmax;
+	if (SOC_use > 1. - tolerance)
+		SOC_use = 1. - tolerance;
 
 	double A = std::log(std::pow(SOC_use, 2) / std::pow(1 - SOC_use, 2));
 
-	
-	double V_cell = 0.;
+	return _V_ref_50 + m_RCF * T * A + I_string * _R;
+}
 
-	if (std::isfinite(A))
-	{
-		double V_stack_cell = _V_ref_50 + (_R_molar * T / _F) * A *_C0;
-		V_cell = V_stack_cell - I_string * _R;
-	}
-	return V_cell;
+void voltage_vanadium_redox_t::solve_current_for_power(const double *x, double *f){
+    double I = x[0];
+    double SOC = (solver_q - I*dt_hr) / solver_Q;
+    f[0] = I * (_V_ref_50 + m_RCF * solver_T_k * std::log(SOC*SOC/std::pow(1.-SOC, 2)) + I * _R) - solver_power;
+}
+
+void voltage_vanadium_redox_t::solve_max_discharge_power(const double *x, double *f){
+    double I = x[0];
+    double SOC = (solver_q - I*dt_hr) / solver_Q;
+    f[0] = _V_ref_50 + 2 * I * _R + m_RCF*solver_T_k*(std::log(SOC*SOC/pow(1.-SOC,2)) - 2*I/solver_Q*(1./SOC - 1./(1.-SOC)));
 }
 
 /*
@@ -769,6 +953,7 @@ lifetime_t::lifetime_t(lifetime_cycle_t * lifetime_cycle, lifetime_calendar_t * 
 
 	_replacement_option = replacement_option;
 	_replacement_capacity = replacement_capacity;
+	_replacement_percent = 100;
 
 	// issues as capacity approaches 0%
 	if (replacement_capacity == 0.) { _replacement_capacity = 2.; }
@@ -802,6 +987,9 @@ void lifetime_t::copy(lifetime_t * lifetime)
 	_q = lifetime->_q;
 }
 double lifetime_t::capacity_percent(){ return _q; }
+double lifetime_t::capacity_percent_cycle() { return _lifetime_cycle->capacity_percent(); }
+double lifetime_t::capacity_percent_calendar() { return _lifetime_calendar->capacity_percent(); }
+
 void lifetime_t::runLifetimeModels(size_t idx, capacity_t * capacity, double T_battery)
 {
 	double q_last = _q;
@@ -834,18 +1022,31 @@ bool lifetime_t::check_replaced()
 	if ((_replacement_option == 1 && (_q - tolerance) <= _replacement_capacity) || _replacement_scheduled)
 	{
 		_replacements++;
-		_q = 100.;
+	
+		_q += _replacement_percent;
+
+		// for now, only allow augmenting up to original installed capacity
+		_q = fmin(100., _q);
+
 		replaced = true;
 		_replacement_scheduled = false;
 
-		_lifetime_cycle->replaceBattery();
-		_lifetime_calendar->replaceBattery();
+		_lifetime_cycle->replaceBattery(_replacement_percent);
+		_lifetime_calendar->replaceBattery(_replacement_percent);
 	}
 	return replaced;
 }
 void lifetime_t::reset_replacements(){ _replacements = 0; }
-int lifetime_t::replacements(){ return _replacements; }
-void lifetime_t::force_replacement(){_replacement_scheduled = true;}
+int lifetime_t::get_replacements(){ return _replacements; }
+double lifetime_t::get_replacement_percent() {
+	return _replacement_percent;
+};
+
+void lifetime_t::set_replacement_option(int option) { _replacement_option = option; }
+void lifetime_t::force_replacement(double replacement_percent){
+	_replacement_scheduled = true;
+	_replacement_percent = replacement_percent;
+}
 
 lifetime_cycle_t::lifetime_cycle_t(const util::matrix_t<double> &batt_lifetime_matrix)
 {
@@ -891,11 +1092,14 @@ void lifetime_cycle_t::copy(lifetime_cycle_t * lifetime_cycle)
 	_Range = lifetime_cycle->_Range;
 	_average_range = lifetime_cycle->_average_range;
 }
-double lifetime_cycle_t::computeCycleDamageAtDOD(double DOD)
+double lifetime_cycle_t::estimateCycleDamage()
 {
-	if (DOD == 0)
+	// Initialize assuming 50% DOD
+	double DOD = 50;
+	if (_average_range > 0){
 		DOD = _average_range;
-	return(_q - bilinear(DOD, _nCycles + 1));
+	}
+	return(bilinear(DOD, _nCycles+1) - bilinear(DOD, _nCycles + 2));
 }
 double lifetime_cycle_t::runCycleLifetime(double DOD)
 {
@@ -980,8 +1184,9 @@ int lifetime_cycle_t::rainflow_compareRanges()
 		_nCycles++;
 
 		// the capacity percent cannot increase
-		if (bilinear(_average_range, _nCycles) <= _q)
-			_q = bilinear(_average_range, _nCycles);
+		double dq = bilinear(_average_range, _nCycles) - bilinear(_average_range, _nCycles + 1);
+		if (dq > 0)
+			_q -= dq;
 
 		if (_q < 0)
 			_q = 0.;
@@ -999,11 +1204,17 @@ int lifetime_cycle_t::rainflow_compareRanges()
 
 	return retCode;
 }
-void lifetime_cycle_t::replaceBattery()
+void lifetime_cycle_t::replaceBattery(double replacement_percent)
 {
-	_q = bilinear(0.,0);
-	_Dlt = 0.;
-	_nCycles = 0;
+	_q += replacement_percent;
+	_q = fmin(bilinear(0., 0), _q);
+	_Dlt = 0.; // seems unused
+
+	// More work to figure out degradation of multiple-aged battery units
+	if (replacement_percent == 100) {
+		_nCycles = 0;
+	}
+
 	_jlt = 0;
 	_Xlt = 0;
 	_Ylt = 0;
@@ -1013,7 +1224,8 @@ void lifetime_cycle_t::replaceBattery()
 
 int lifetime_cycle_t::cycles_elapsed(){ return _nCycles; }
 double lifetime_cycle_t::cycle_range(){ return _Range; }
-
+double lifetime_cycle_t::average_range() { return _average_range; }
+double lifetime_cycle_t::capacity_percent() { return _q; }
 
 double lifetime_cycle_t::bilinear(double DOD, int cycle_number)
 {
@@ -1174,7 +1386,7 @@ lifetime_calendar_t::lifetime_calendar_t(int calendar_choice, util::matrix_t<dou
 	_c = c;
 
 	// output based on percentage capacity (0 - 100%)
-	_q = _q0 * 100;
+	_q = _q0 * 100; 
 
 	// timestep
 	_dt_hour = dt_hour;
@@ -1212,6 +1424,7 @@ void lifetime_calendar_t::copy(lifetime_calendar_t * lifetime_calendar)
 	_b = lifetime_calendar->_b;
 	_c = lifetime_calendar->_c;
 }
+double lifetime_calendar_t::capacity_percent() { return _q; }
 double lifetime_calendar_t::runLifetimeCalendarModel(size_t idx, double T, double SOC)
 {
 	if (_calendar_choice != lifetime_calendar_t::NONE)
@@ -1280,10 +1493,11 @@ void lifetime_calendar_t::runTableModel()
 	_q = util::interpolate(day_lo, capacity_lo, day_hi, capacity_hi, _day_age_of_battery);
 }
 
-void lifetime_calendar_t::replaceBattery()
+void lifetime_calendar_t::replaceBattery(double replacement_percent)
 {
 	_day_age_of_battery = 0;
-	_q = _q0 * 100;
+	_q += replacement_percent;
+	_q = fmin(_q0 * 100, _q);
 	_dq_new = 0;
 	_dq_old = 0;
 }
@@ -1292,18 +1506,11 @@ void lifetime_calendar_t::replaceBattery()
 Define Thermal Model
 */
 thermal_t::thermal_t() { /* nothing to do */ }
-thermal_t::thermal_t(double mass, double length, double width, double height, 
-	double Cp,  double h, double T_room, 
-	const util::matrix_t<double> &c_vs_t )
+thermal_t::thermal_t(double dt_hour, double mass, double length, double width, double height, 
+	double Cp,  double h, std::vector<double> T_room, 
+	const util::matrix_t<double> &c_vs_t ) : _dt_hour(dt_hour), _mass(mass), _length(length), _width(width), _height(height),
+	_Cp(Cp), _h(h), _T_room(T_room), _cap_vs_temp(c_vs_t)
 {
-	_cap_vs_temp = c_vs_t;
-	_mass = mass;
-	_length = length;
-	_width = width;
-	_height = height;
-	_Cp = Cp;
-	_h = h;
-	_T_room = T_room;
 	_R = 0.004;
 	_capacity_percent = 100;
 
@@ -1311,7 +1518,7 @@ thermal_t::thermal_t(double mass, double length, double width, double height,
 	_A = 2 * (length*width + length*height + width*height);
 
 	// initialize to room temperature
-	_T_battery = T_room;
+	_T_battery = T_room[0];
 
 	//initialize maximum temperature
 	_T_max = 400.;
@@ -1332,64 +1539,63 @@ void thermal_t::copy(thermal_t * thermal)
 	_height = thermal->_height;
 	_Cp = thermal->_Cp;
 	_h = thermal->_h;
-	_T_room = thermal->_T_room;
+	// _T_room = thermal->_T_room;  // don't copy, super slow in subhourly simulations
 	_R = thermal->_R;
 	_A = thermal->_A;
 	_T_battery = thermal->_T_battery;
 	_capacity_percent = thermal->_capacity_percent;
 	_T_max = thermal->_T_max;
 }
-void thermal_t::replace_battery()
+void thermal_t::replace_battery(size_t lifetimeIndex)
 { 
-	_T_battery = _T_room; 
+	_T_battery = _T_room[util::yearOneIndex(_dt_hour, lifetimeIndex)];
 	_capacity_percent = 100.;
 }
 
 #define HR2SEC 3600.0
-
-
-void thermal_t::updateTemperature(double I, double R, double dt)
+void thermal_t::updateTemperature(double I, double R, double dt, size_t lifetimeIndex)
 {
 	_R = R;
-	if (trapezoidal(I, dt*HR2SEC) < _T_max && trapezoidal(I, dt*HR2SEC) > 0)
-		_T_battery = trapezoidal(I, dt*HR2SEC);
-	else if (rk4(I, dt*HR2SEC) < _T_max && rk4(I, dt*HR2SEC) > 0)
-		_T_battery = rk4(I, dt*HR2SEC);
-	else if (implicit_euler(I, dt*HR2SEC) < _T_max && implicit_euler(I, dt*HR2SEC) > 0)
-		_T_battery = implicit_euler(I, dt*HR2SEC);
+	if (trapezoidal(I, dt*HR2SEC, lifetimeIndex) < _T_max && trapezoidal(I, dt*HR2SEC, lifetimeIndex) > 0)
+		_T_battery = trapezoidal(I, dt*HR2SEC, lifetimeIndex);
+	else if (rk4(I, dt*HR2SEC, lifetimeIndex) < _T_max && rk4(I, dt*HR2SEC, lifetimeIndex) > 0)
+		_T_battery = rk4(I, dt*HR2SEC, lifetimeIndex);
+	else if (implicit_euler(I, dt*HR2SEC, lifetimeIndex) < _T_max && implicit_euler(I, dt*HR2SEC, lifetimeIndex) > 0)
+		_T_battery = implicit_euler(I, dt*HR2SEC, lifetimeIndex);
 	else
 		_message.add("Computed battery temperature below zero or greater than max allowed, consider reducing C-rate");
+	_T_battery = fmax(_T_battery, _T_room[util::yearOneIndex(_dt_hour, lifetimeIndex)]);
 }
 
-double thermal_t::f(double T_battery, double I)
+double thermal_t::f(double T_battery, double I, size_t lifetimeindex)
 {
-	return (1 / (_mass*_Cp)) * ((_h*(_T_room - T_battery)*_A) + pow(I, 2)*_R);
+	return (1 / (_mass*_Cp)) * ((_h*(_T_room[util::yearOneIndex(_dt_hour, lifetimeindex)]  - T_battery)*_A) + pow(I, 2)*_R);
 }
-double thermal_t::rk4( double I, double dt)
+double thermal_t::rk4( double I, double dt, size_t lifetimeindex)
 {
-	double k1 = dt*f(_T_battery, I);
-	double k2 = dt*f(_T_battery + k1 / 2, I);
-	double k3 = dt*f(_T_battery + k2 / 2, I);
-	double k4 = dt*f(_T_battery + k3, I);
+	double k1 = dt*f(_T_battery, I, lifetimeindex);
+	double k2 = dt*f(_T_battery + k1 / 2, I, lifetimeindex);
+	double k3 = dt*f(_T_battery + k2 / 2, I, lifetimeindex);
+	double k4 = dt*f(_T_battery + k3, I, lifetimeindex);
 	return (_T_battery + (1. / 6)*(k1 + k4) + (1. / 3.)*(k2 + k3));
 }
-double thermal_t::trapezoidal(double I, double dt)
+double thermal_t::trapezoidal(double I, double dt, size_t lifetimeindex)
 {
 	double B = 1 / (_mass*_Cp); // [K/J]
 	double C = _h*_A;			// [W/K]
 	double D = pow(I, 2)*_R;	// [Ohm A*A]
-	double T_prime = f(_T_battery, I);	// [K]
+	double T_prime = f(_T_battery, I, lifetimeindex);	// [K]
 
-	return (_T_battery + 0.5*dt*(T_prime + B*(C*_T_room + D))) / (1 + 0.5*dt*B*C);
+	return (_T_battery + 0.5*dt*(T_prime + B*(C*_T_room[util::yearOneIndex(_dt_hour, lifetimeindex)] + D))) / (1 + 0.5*dt*B*C);
 } 
-double thermal_t::implicit_euler(double I, double dt)
+double thermal_t::implicit_euler(double I, double dt, size_t lifetimeIndex)
 {
 	double B = 1 / (_mass*_Cp); // [K/J]
 	double C = _h*_A;			// [W/K]
 	double D = pow(I, 2)*_R;	// [Ohm A*A]
 //	double T_prime = f(_T_battery, I);	// [K]
 
-	return (_T_battery + dt*(B*C*_T_room + D)) / (1 + dt*B*C);
+	return (_T_battery + dt*(B*C*_T_room[util::yearOneIndex(_dt_hour, lifetimeIndex)] + D)) / (1 + dt*B*C);
 }
 double thermal_t::T_battery(){ return _T_battery; }
 double thermal_t::capacity_percent()
@@ -1407,54 +1613,108 @@ double thermal_t::capacity_percent()
 /*
 Define Losses
 */
-losses_t::losses_t(lifetime_t * lifetime, thermal_t * thermal, capacity_t* capacity, int loss_choice, double_vec charge_loss, double_vec discharge_loss, double_vec idle_loss, double_vec losses)
+losses_t::losses_t(double dtHour, lifetime_t * lifetime, thermal_t * thermal, capacity_t* capacity, int loss_choice, double_vec charge_loss, double_vec discharge_loss, double_vec idle_loss, double_vec losses):
+_loss_mode(loss_choice)
 {
+	_dtHour = dtHour;
 	_lifetime = lifetime;
 	_thermal = thermal;
 	_capacity = capacity;
-	_charge_loss = charge_loss;
-	_discharge_loss = discharge_loss;
-	_idle_loss = idle_loss;
-	_full_loss = losses;
-	_loss_mode = loss_choice;
-	_nCycle = 0;
+
+	// User can input vectors of size 1 or size 12
+	if (loss_choice == losses_t::MONTHLY)
+	{
+		if (charge_loss.size() == 1) {
+			for (size_t m = 0; m < 12; m++) {
+				_charge_loss.push_back(charge_loss[0]);
+			}
+		}
+		else if (charge_loss.size() == 0) {
+			for (size_t m = 0; m < 12; m++) {
+				_charge_loss.push_back(0);
+			}
+		}
+		else {
+			_charge_loss = charge_loss;
+		}
+		if (discharge_loss.size() == 1) {
+			
+			for (size_t m = 0; m < 12; m++) {
+				_discharge_loss.push_back(discharge_loss[0]);
+			}
+		}
+		else if (discharge_loss.size() == 0) {
+
+			for (size_t m = 0; m < 12; m++) {
+				_discharge_loss.push_back(0);
+			}
+		}
+		else {
+			_discharge_loss = discharge_loss;
+		}
+		if (idle_loss.size() == 1) {
+			for (size_t m = 0; m < 12; m++) {
+				_idle_loss.push_back(idle_loss[0]);
+			}
+		}
+		else if (idle_loss.size() == 0) {
+			for (size_t m = 0; m < 12; m++) {
+				_idle_loss.push_back(0);
+			}
+		}
+		else {
+			_idle_loss = idle_loss;
+		}
+		for (size_t i = 0; i < (size_t)(8760 / dtHour); i++) {
+			_full_loss.push_back(0);
+		}
+	}
+	// User can input vectors of size 1 or size nrec (first year)
+	else {
+		if (losses.size() == 1) {
+			for (size_t i = 0; i < (size_t)(8760 / dtHour); i++) {
+				_full_loss.push_back(losses[0]);
+			}
+		}
+		else {
+			_full_loss = losses;
+		}
+
+	}
 }
-losses_t * losses_t::clone(){ return new losses_t(*this); }
+void losses_t::set_models(lifetime_t * l, thermal_t * t, capacity_t* c){
+    _lifetime = l;
+    _thermal = t;
+    _capacity = c;
+}
 void losses_t::copy(losses_t * losses)
 {
-	_lifetime = losses->_lifetime;
-	_thermal = losses->_thermal;
-	_capacity = losses->_capacity;
 	_loss_mode = losses->_loss_mode;
-	_nCycle = losses->_nCycle;
-
-	// don't copy these, they don't change and are slow (need to re-design)
-	/*
 	_charge_loss = losses->_charge_loss;
 	_discharge_loss = losses->_discharge_loss;
 	_idle_loss = losses->_idle_loss;
-	_full_loss = losses->_full_loss;*/
+	_full_loss = losses->_full_loss;
 }
 
-void losses_t::replace_battery(){ _nCycle = 0; }
-void losses_t::run_losses(double dt_hour, size_t idx)
+double losses_t::getLoss(size_t indexFirstYear) { return _full_loss[indexFirstYear]; }
+void losses_t::run_losses(size_t lifetimeIndex)
 {	
 	_capacity->updateCapacityForLifetime(_lifetime->capacity_percent());
 
-	size_t stepsPerHour = (size_t)(1 / dt_hour);
-	size_t stepsPerYear = util::hours_per_year * stepsPerHour;
-	size_t index = idx % stepsPerYear;
+	size_t indexYearOne = util::yearOneIndex(_dtHour, lifetimeIndex);
+	size_t hourOfYear = (size_t)std::floor(indexYearOne * _dtHour);
+	size_t monthIndex = util::month_of((double)(hourOfYear)) - 1;
 
 	// update system losses depending on user input
-	if (_loss_mode == losses_t::MONTHLY)
-	{
+	if (_loss_mode == losses_t::MONTHLY) {
 		if (_capacity->charge_operation() == capacity_t::CHARGE)
-			_full_loss[index] = _charge_loss[index];
+			_full_loss[indexYearOne] = _charge_loss[monthIndex];
 		if (_capacity->charge_operation() == capacity_t::DISCHARGE)
-			_full_loss[index] = _discharge_loss[index];
+			_full_loss[indexYearOne] = _discharge_loss[monthIndex];
 		if (_capacity->charge_operation() == capacity_t::NO_CHARGE)
-			_full_loss[index] = _idle_loss[index];
+			_full_loss[indexYearOne] = _idle_loss[monthIndex];
 	}
+
 }
 /* 
 Define Battery 
@@ -1478,17 +1738,18 @@ battery_t::battery_t(double dt_hour, int battery_chemistry)
 
 battery_t::battery_t(const battery_t& battery)
 {
+	_battery_chemistry = battery._battery_chemistry;
+	_dt_hour = battery._dt_hour;
+	_dt_min = battery._dt_min;
+	_last_idx = battery._last_idx;
 	_capacity = battery.capacity_model()->clone();
 	_capacity_initial = battery.capacity_initial_model()->clone();
 	_voltage = battery.voltage_model()->clone();
 	_thermal = battery.thermal_model()->clone();
 	_thermal_initial = battery.thermal_initial_model()->clone();
 	_lifetime = battery.lifetime_model()->clone();
-	_losses = battery.losses_model()->clone();
-	_battery_chemistry = battery._battery_chemistry;
-	_dt_hour = battery._dt_hour;
-	_dt_min = battery._dt_min;
-	_last_idx = battery._last_idx;
+	_losses = new losses_t(_dt_hour, _lifetime, _thermal, _capacity, 0);
+	_losses->copy(battery.losses_model());
 }
 
 battery_t::~battery_t()
@@ -1508,7 +1769,7 @@ void battery_t::copy(const battery_t * battery)
 	_thermal_initial->copy(battery->thermal_initial_model());
 	_lifetime->copy(battery->lifetime_model());
 	_voltage->copy(battery->voltage_model());
-	_losses->copy(battery->losses_model());
+	_losses->set_models(_lifetime, _thermal, _capacity);
 
 	_battery_chemistry = battery->_battery_chemistry;
 	_dt_hour = battery->_dt_hour;
@@ -1540,9 +1801,65 @@ void battery_t::initialize(capacity_t *capacity, voltage_t * voltage, lifetime_t
 	_thermal_initial->copy(_thermal);
 }
 
-void battery_t::run(size_t idx, double I)
-{	
+double battery_t::calculate_current_for_power_kw(double &P_kw){
+    if (P_kw == 0.)
+        return 0.;
+    double current;
+    if (P_kw < 0){
+        double max_P = calculate_max_charge_kw(&current);
+        if (max_P > P_kw){
+            P_kw = max_P;
+            return current;
+        }
+    }
+    else{
+        double max_P = calculate_max_discharge_kw(&current);
+        if (max_P < P_kw){
+            P_kw = max_P;
+            return current;
+        }
+    }
+    return _voltage->calculate_current_for_target_w(P_kw * 1000., _capacity->q0(), fmin(_capacity->qmax(), _capacity->qmax_thermal()), _thermal->T_battery());
+}
 
+double battery_t::calculate_voltage_for_current(double I) {
+    // TODO: add looping when this function will actually be used... doesn't work that well atm
+    double qmax = fmin(_capacity->qmax(), _capacity->qmax_thermal());
+    return voltage_model()->calculate_voltage_for_current(I, battery_charge_total(), qmax, _thermal->T_battery());
+}
+
+double battery_t::calculate_max_charge_kw(double *max_current_A) {
+    double q = _capacity->q0();
+    double qmax = _capacity->qmax_thermal();
+    double power_W = 0;
+    double current = 0;
+    size_t its = 0;
+    while (fabs(power_W - _voltage->calculate_max_charge_w(q, qmax, _thermal->T_battery(), &current)) > tolerance
+           && its++ < 10){
+        power_W = _voltage->calculate_max_charge_w(q, qmax, _thermal->T_battery(), &current);
+        _thermal->updateTemperature(current, _voltage->R_battery(), _dt_hour, _last_idx + 1);
+        qmax = _capacity->qmax() * _thermal->capacity_percent() / 100.;
+    }
+    return _voltage->calculate_max_charge_w(q, qmax, _thermal->T_battery(), max_current_A) / 1000.;
+}
+
+double battery_t::calculate_max_discharge_kw(double *max_current_A) {
+    double q = _capacity->q0();
+    double qmax = _capacity->qmax_thermal();
+    double power_W = 0;
+    double current = 0;
+    size_t its = 0;
+    while (fabs(power_W - _voltage->calculate_max_discharge_w(q, qmax, _thermal->T_battery(), &current)) > tolerance
+        && its++ < 10){
+        power_W = _voltage->calculate_max_discharge_w(q, qmax, _thermal->T_battery(), &current);
+        _thermal->updateTemperature(current, _voltage->R_battery(), _dt_hour, _last_idx + 1);
+        qmax = _capacity->qmax() * _thermal->capacity_percent() / 100.;
+    }
+    return _voltage->calculate_max_discharge_w(q, qmax, _thermal->T_battery(), max_current_A) / 1000.;
+}
+
+double battery_t::run(size_t lifetimeIndex, double &I)
+{
 	// Temperature affects capacity, but capacity model can reduce current, which reduces temperature, need to iterate
 	double I_initial = I;
 	size_t iterate_count = 0;
@@ -1551,7 +1868,7 @@ void battery_t::run(size_t idx, double I)
 
 	while (iterate_count < 5)
 	{
-		runThermalModel(I);
+		runThermalModel(I, lifetimeIndex);
 		runCapacityModel(I);
 
 		if (fabs(I - I_initial)/fabs(I_initial) > tolerance)
@@ -1567,12 +1884,14 @@ void battery_t::run(size_t idx, double I)
 		
 	}
 	runVoltageModel();
-	runLifetimeModel(idx);
-	runLossesModel(idx);
+	runLifetimeModel(lifetimeIndex);
+	runLossesModel(lifetimeIndex);
+
+	return I * voltage_model()->battery_voltage() * util::watt_to_kilowatt;
 }
-void battery_t::runThermalModel(double I)
+void battery_t::runThermalModel(double I, size_t lifetimeIndex)
 {
-	_thermal->updateTemperature(I, _voltage->R_battery(), _dt_hour);
+	_thermal->updateTemperature(I, _voltage->R_battery(), _dt_hour, lifetimeIndex);
 }
 
 void battery_t::runCapacityModel(double &I)
@@ -1590,21 +1909,20 @@ void battery_t::runVoltageModel()
 	_voltage->updateVoltage(_capacity, _thermal, _dt_hour);
 }
 
-void battery_t::runLifetimeModel(size_t idx)
+void battery_t::runLifetimeModel(size_t lifetimeIndex)
 {
-	_lifetime->runLifetimeModels(idx, capacity_model(), thermal_model()->T_battery());
+	_lifetime->runLifetimeModels(lifetimeIndex, capacity_model(), thermal_model()->T_battery());
 	if (_lifetime->check_replaced())
 	{
-		_capacity->replace_battery();
-		_thermal->replace_battery();
-		_losses->replace_battery();
+		_capacity->replace_battery(_lifetime->get_replacement_percent());
+		_thermal->replace_battery(lifetimeIndex);
 	}
 }
 void battery_t::runLossesModel(size_t idx)
 {
 	if (idx > _last_idx || idx == 0)
 	{
-		_losses->run_losses(_dt_hour, idx);
+		_losses->run_losses(idx);
 		_last_idx = idx;
 	}
 }
@@ -1626,7 +1944,7 @@ double battery_t::battery_charge_needed(double SOC_max)
 }
 double battery_t::battery_energy_to_fill(double SOC_max)
 {
-	double battery_voltage = this->battery_voltage(); // [V] 
+	double battery_voltage = this->battery_voltage_nominal(); // [V] 
 	double charge_needed_to_fill = this->battery_charge_needed(SOC_max); // [Ah] - qmax - q0
 	return (charge_needed_to_fill * battery_voltage)*util::watt_to_kilowatt;  // [kWh]
 }

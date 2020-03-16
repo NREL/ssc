@@ -100,11 +100,11 @@ public:
 private:
     Builder();
 
-    std::vector<unsigned int> getBSplineDegrees(unsigned int numVariables, unsigned int degree)
+    std::vector<unsigned int> getBSplineDegrees(unsigned int numVars, unsigned int degree)
     {
         if (degree > 5)
             throw Exception("BSpline::Builder: Only degrees in range [0, 5] are supported.");
-        return std::vector<unsigned int>(numVariables, degree);
+        return std::vector<unsigned int>(numVars, degree);
     }
 
     // Control point computations

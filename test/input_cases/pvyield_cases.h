@@ -18,4 +18,20 @@ int pvyield_test(ssc_data_t &data)
 	return status;
 }
 
+int pvyield_test_user_support_80603_meteo(ssc_data_t &data)
+{
+	pvyield_user_support_80603_meteo(data);
+	int status = run_module(data, "pvsamv1");
+
+	return status;
+}
+
+int pvyield_test_user_support_80603_AZ(ssc_data_t &data)
+{
+	pvyield_user_support_80603_AZ(data);
+	int status = run_module(data, "pvsamv1");
+
+	return status;
+}
+
 #endif

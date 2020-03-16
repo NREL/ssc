@@ -1,51 +1,24 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #include <math.h>
 
@@ -54,6 +27,7 @@
 #include "core.h"
 #include "lib_weatherfile.h"
 #include "lib_irradproc.h"
+#include "lib_time.h"
 #include "lib_util.h"
 
 /* -------------------------------------
@@ -93,7 +67,8 @@ static var_info _cm_vtab_swh[] = {
 																									     		    						             				     
 	{ SSC_INPUT,        SSC_ARRAY,       "scaled_draw",           "Hot water draw",                      "kg/hr",   "",                                  "SWH",              "*",                      "LENGTH=8760",						 "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "system_capacity",       "Nameplate capacity",                  "kW",      "",                                  "SWH",              "*",                      "", "" },
-																									     		    						             				     
+	{ SSC_INPUT,        SSC_ARRAY,       "load",                  "Electricity load (year 1)",           "kW",      "",                                  "SWH",              "",                       "", "" },
+
 																									     		    						             				     
 	{ SSC_INPUT,        SSC_NUMBER,      "tilt",                  "Collector tilt",                      "deg",     "",                                  "SWH",              "*",                      "MIN=0,MAX=90",                       "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "azimuth",               "Collector azimuth",                   "deg",     "90=E,180=S",                        "SWH",              "*",                      "MIN=0,MAX=360",                      "" },
@@ -120,7 +95,7 @@ static var_info _cm_vtab_swh[] = {
 																									      									             		             
 	{ SSC_INPUT,        SSC_NUMBER,      "pipe_length",           "Length of piping in system",           "m",      "",                                  "SWH",              "*",                       "POSITIVE",                          "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "pipe_diam",             "Pipe diameter",                        "m",      "",                                  "SWH",              "*",                       "POSITIVE",                          "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "pipe_k",                "Pipe insulation conductivity",         "W/m2.C", "",                                  "SWH",              "*",                       "POSITIVE",                          "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "pipe_k",                "Pipe insulation conductivity",         "W/m-C", "",                                  "SWH",              "*",                       "POSITIVE",                          "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "pipe_insul",            "Pipe insulation thickness",            "m",      "",                                  "SWH",              "*",                       "POSITIVE",                          "" },
 																									      														             
 	{ SSC_INPUT,        SSC_NUMBER,      "tank_h2d_ratio",        "Solar tank height to diameter ratio",  "",       "",                                  "SWH",              "*",                       "POSITIVE",                          "" },
@@ -197,10 +172,9 @@ public:
 		add_var_info(vtab_technology_outputs);
 	}
 
-	void exec() throw(general_error)
+	void exec() override
 	{
 		const double watt_to_kw = 0.001f;
-
 		const char *file = as_string("solar_resource_file");
 
 		weatherfile wfile(file);
@@ -380,8 +354,9 @@ public:
 		{
 			for( size_t jj=0;jj<step_per_hour;jj++)
 			{
-				if( !wfile.read( &wf ) )
-					throw exec_error( "swh", util::format("error reading from weather file at position %d", (int)idx ) );
+                if (!wfile.read(&wf)) {
+                    throw exec_error("swh", util::format("error reading from weather file at position %d", (int)idx));
+                }
 
 				Beam[idx] = (ssc_number_t)wf.dn;
 				Diffuse[idx] = (ssc_number_t)wf.df;
@@ -412,7 +387,7 @@ public:
 				tt.set_time(wf.year, wf.month, wf.day, wf.hour, wf.minute, 
 					instantaneous ? IRRADPROC_NO_INTERPOLATE_SUNRISE_SUNSET : ts_hour );
 				tt.set_sky_model(sky_model /* isotropic=0, hdkr=1, perez=2 */, albedo );
-				tt.set_surface(0, tilt, azimuth, 0, 0, 0);
+				tt.set_surface(0, tilt, azimuth, 0, 0, 0, false, 0.0);
 				tt.calc();
 
 				double poa[3];
@@ -464,10 +439,11 @@ public:
 
 
 				shading_loss[idx] = (ssc_number_t) (1-beam_loss_factor)*100;
+                double shade_loss_factor = shad.fdiff();
 
 				I_transmitted[idx] = (ssc_number_t)(
 					Kta_b*poa[0]*beam_loss_factor + 
-					Kta_d*poa[1]*shad.fdiff() + 
+					Kta_d*poa[1]*shade_loss_factor +
 					Kta_g*poa[2]);
 
 				idx++;
@@ -537,8 +513,9 @@ public:
 				tmain = ((tmain - 32) / 1.8); // convert to 'C
 
 				// load into mains temp array
-				for( size_t jj=0;jj<step_per_hour;jj++ )
-					T_mains[idx++] = (ssc_number_t)tmain;
+                for (size_t jj = 0; jj < step_per_hour; jj++) {
+                    T_mains[idx++] = (ssc_number_t)tmain;
+                }
 			}
 		}
 
@@ -549,13 +526,15 @@ public:
 		double T_set_array[8760];
 		if (use_custom_set == 0)
 		{
-			for (size_t i = 0; i < 8760; i++)
-				T_set_array[i] = T_set;
+            for (size_t i = 0; i < 8760; i++) {
+                T_set_array[i] = T_set;
+            }
 		}
 		else
 		{
-			for (size_t i = 0; i < 8760; i++)
-				T_set_array[i] = custom_set[i];
+            for (size_t i = 0; i < 8760; i++) {
+                T_set_array[i] = custom_set[i];
+            }
 		}
 
 		/* **********************************************************************
@@ -582,12 +561,13 @@ public:
 		idx = 0;
 		for (hour = 0; hour < 8760; hour++)
 		{
-#define NSTATUS_UPDATES 50  // set this to the number of times a progress update should be issued for the simulation
+            #define NSTATUS_UPDATES 50  // set this to the number of times a progress update should be issued for the simulation
 			if ( hour % (8760/NSTATUS_UPDATES) == 0 )
 			{
 				float percent = 100.0f * ((float)hour+1) / ((float)8760);
-				if ( !update( "", percent , (float)hour ) )
-					throw exec_error("swh", "simulation canceled at hour " + util::to_string(hour+1.0) );
+                if (!update("", percent, (float)hour)) {
+                    throw exec_error("swh", "simulation canceled at hour " + util::to_string(hour + 1.0));
+                }
 			}
 
 			for( size_t jj=0;jj<step_per_hour;jj++ )
@@ -621,6 +601,8 @@ public:
 				double FRta_use = FRta * r; // FRta_use = value for this time step
 				double FRUL_use = FRUL * r; // FRUL_use = value for this time step
 
+                // IT LOOKS LIKE THE PIPING LOSSES ARE DOUBLE COUNTED HERE.
+                // UA_pipe is for the whole system, while in these equations they should be split between inlet and outlet
 				/* Pipe loss adjustment (D&B pp 430) */
 				FRta_use = FRta_use / (1 + UA_pipe / mdotCp_use); // D&B eqn 10.3.9
 				FRUL_use = FRUL_use * ((1 - UA_pipe / mdotCp_use + 2 * UA_pipe / (area_total*FRUL_use)) / (1 + UA_pipe / mdotCp_use)); // D&B eqn 10.3.10
@@ -638,18 +620,19 @@ public:
 				else Q_useful = area_total*(FRta_use*I_transmitted[idx] - FRUL_use*(T_tank_prev - T_amb_use) );
 				// T_tank_prev is used, because use of T_cold_prev can cause the system to oscillate on and off 
 			
-				if ( I_incident_use < 0.0 )
-					Q_useful = 0;
+                if (I_incident_use < 0.0) {
+                    Q_useful = 0;
+                }
 
 				double dT_collector = Q_useful/mdotCp_use;
 
-	// Charging -- solar system operating			
+	            // Charging -- solar system operating			
 				if (Q_useful > 0.)
 				{
 					double V_hot_next = V_hot_prev + (ts_sec*mdot_total/rho_water);
 					if (V_hot_next < V_tank)
 					{
-		// Mode 1 Transition -- solar system operating
+		                // Mode 1 Transition -- solar system operating
 						mode = 1;
 						// Warm water from the collector loop into the top of the solar tank causes mixing with hot water below
 						T_tank = (T_tank_prev*m_tank*Cp_water + ts_sec*(Q_useful + UA_tank*T_room
@@ -667,7 +650,7 @@ public:
 					}
 					else
 					{
-		// Mode 2 Charging -- solar system operating
+		                // Mode 2 Charging -- solar system operating
 						mode = 2;
 						// Energy balance calculated based on average tank temperature (single node); tank top and bottom temperatures estimated based on collector dT
 						// Implicit Euler calculation
@@ -686,7 +669,7 @@ public:
 				}
 				else
 				{
-		// Mode 3 Discharging -- solar system not operating
+		            // Mode 3 Discharging -- solar system not operating
 					mode = 3;		
 					// 2-node plug flow
 					double hotLoss = 0.0; double coldLoss = 0.0;
@@ -698,9 +681,10 @@ public:
 						T_hot_prev = T_tank;
 					}
 					// Hot node calculations
-						V_hot = V_hot_prev - mdot_mix*ts_sec/rho_water;
-					if (V_hot < 0)
+					V_hot = V_hot_prev - mdot_mix*ts_sec/rho_water;
+					if (V_hot < 0) {
 						V_hot = 0;
+                    }
 
 					if (V_hot == 0)	// cold water drawn into the bottom of the tank in previous timesteps has completely flushed hot water from the tank
 					{
@@ -737,24 +721,32 @@ public:
 					T_bot = T_tank - 0.67*dT_collector;	
 					// T_top = T_hot
 					// T_bot = T_cold
-					if (V_hot > 0) T_deliv = T_hot;
-					else T_deliv = T_cold;
+                    if (V_hot > 0) {
+                        T_deliv = T_hot;
+                    }
+                    else {
+                        T_deliv = T_cold;
+                    }
 				}
 
 				// calculate pumping losses (pump size is user entered) -
-				double P_pump = (Q_useful > 0 && I_incident_use >= 0.0) ? pump_watts*pump_eff : 0.0;
+				double P_pump = (Q_useful > 0 && I_incident_use >= 0.0) ? pump_watts / pump_eff : 0.0;
 
 				// compute energy delivered
 				double Q_deliv = mdot_mix* Cp_water *(T_deliv - T_mains_use);
 
 				// amount of auxiliary energy needed to bring delivered water to set temperature
 				double Q_aux = mdot_mix * Cp_water * (T_set_use - T_deliv);
-				if (Q_aux < 0) Q_aux = 0.0;
+                if (Q_aux < 0) {
+                    Q_aux = 0.0;
+                }
 
 				// amount of energy needed to bring T_mains to set temperature (without SHW)
 				double Q_auxonly = mdot_mix * Cp_water * (T_set_use - T_mains_use);
 
-				if (Q_auxonly < 0) Q_auxonly = 0.0;
+                if (Q_auxonly < 0) {
+                    Q_auxonly = 0.0;
+                }
 
 				// Energy saved by SHW system is difference between aux only system and shw+aux system - the pump losses
 				double Q_saved = Q_auxonly - Q_aux - P_pump;
@@ -770,7 +762,9 @@ public:
 				T_bot_prev = T_bot;
 
 				// Zero out Q_useful if <0
-				if (Q_useful < 0) Q_useful = 0.0;
+                if (Q_useful < 0) {
+                    Q_useful = 0.0;
+                }
 
 				// save output variables - convert Q values to kWh 
 				out_Q_transmitted[idx] = (ssc_number_t)(I_transmitted[idx] * area_total * watt_to_kw);
@@ -796,7 +790,23 @@ public:
 				idx++;
 			}
 		}
-				
+
+		// if an electric load exists, the amount of energy saved cannot exceed it, since can't export savings
+		if (is_assigned("load")) {
+			std::vector<ssc_number_t> load_year_one, load_lifetime;
+			load_year_one = as_vector_ssc_number_t("load");
+			size_t n_rec_single_year = 0;
+			double dt_hour_gen = 0.0;
+			single_year_to_lifetime_interpolated<ssc_number_t>(false, (size_t)1, (size_t)wfile.nrecords(),
+				load_year_one, load_lifetime, n_rec_single_year, dt_hour_gen);
+
+			for (size_t i = 0; i < load_lifetime.size(); i++) {
+				if (out_energy[i] > load_lifetime[i]) {
+					out_energy[i] = load_lifetime[i];
+				}
+			}
+		}
+	
 		accumulate_monthly( "Q_deliv", "monthly_Q_deliv", ts_hour );
 		accumulate_monthly( "Q_aux", "monthly_Q_aux", ts_hour );
 		accumulate_monthly( "Q_auxonly", "monthly_Q_auxonly", ts_hour );
@@ -818,5 +828,6 @@ public:
 	}
 
 };
+
 
 DEFINE_MODULE_ENTRY( swh, "Solar water heating model using multi-mode tank node model.", 10 )

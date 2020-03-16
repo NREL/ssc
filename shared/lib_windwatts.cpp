@@ -1,51 +1,26 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+#include <cstring>
 
 #include "lib_windwatts.h"
 #include "lib_physics.h"
@@ -140,11 +115,20 @@ void windPowerCalculator::coordtrans(double metersNorth, double metersEast, doub
 	*metersCrosswind = metersEast*sin(fWind_dir_radians) + (metersNorth * cos(fWind_dir_radians));
 }
 
-int windPowerCalculator::windPowerUsingResource(/*INPUTS */ double windSpeed, double windDirDeg, double airPressureAtm, double TdryC,
-	/*OUTPUTS*/ double *farmPower, double power[], double thrust[], double eff[], double adWindSpeed[], double TI[],
-	double distanceDownwind[], double distanceCrosswind[])
+int
+windPowerCalculator::windPowerUsingResource(double windSpeed, double windDirDeg, double airPressureAtm, double TdryC,
+                                            double *farmPower,
+                                            double *farmPowerGross, double power[], double thrust[], double eff[],
+                                            double adWindSpeed[],
+                                            double TI[], double distanceDownwind[], double distanceCrosswind[])
 {
-	if ((nTurbines > MAX_WIND_TURBINES) || (nTurbines < 1))
+    if (!wakeModel)
+    {
+        errDetails = "Wake model not initialized.";
+        return 0;
+    }
+
+    if ((nTurbines > MAX_WIND_TURBINES) || (nTurbines < 1))
 	{
 		errDetails = "The number of wind turbines was greater than the maximum allowed in the wake model.";
 		return 0;
@@ -161,12 +145,13 @@ int windPowerCalculator::windPowerUsingResource(/*INPUTS */ double windSpeed, do
 	double fAirDensity = (airPressureAtm * physics::Pa_PER_Atm) / (physics::R_GAS_DRY_AIR * physics::CelciusToKelvin(TdryC));   //!Air Density, kg/m^3
 
 	// calculate output power of a turbine
-	double fTurbine_output(0.0), fThrust_coeff(0.0);
-	windTurb->turbinePower(windSpeed, fAirDensity, &fTurbine_output, &fThrust_coeff);
+	double fTurbine_output(0.0), fThrust_coeff(0.0), fTurbine_gross(0.0);
+    windTurb->turbinePower(windSpeed, fAirDensity, &fTurbine_output, &fTurbine_gross, &fThrust_coeff);
 	if (windTurb->errDetails.length() > 0){
 		errDetails = windTurb->errDetails;
 		return 0;
 	}
+	*farmPowerGross = fTurbine_gross * nTurbines;
 
 	// initialize values before possible exit from the function
 	for (i = 0; i<nTurbines; i++)
@@ -190,6 +175,14 @@ int windPowerCalculator::windPowerUsingResource(/*INPUTS */ double windSpeed, do
 	{
 		*farmPower = 0.0;
 		return (int)nTurbines;
+	}
+
+	// if constant loss wake model, simply apply and exit
+	if (std::strcmp(wakeModel->getModelName().c_str(), "Constant") == 0)
+	{
+        wakeModel->wakeCalculations(fAirDensity, &distanceDownwind[0], &distanceCrosswind[0], power, eff, thrust, adWindSpeed, TI);
+        *farmPower = power[0] * nTurbines;
+        return (int)nTurbines;
 	}
 
 	// ok, let's calculate the farm output
@@ -266,8 +259,8 @@ int windPowerCalculator::windPowerUsingResource(/*INPUTS */ double windSpeed, do
 		*farmPower += power[i];
 
 	// Update down/cross wind distance units for turbine zero (convert from radii to meters)
-	distanceDownwind[0] *= windTurb->rotorDiameter / 2;
-	distanceCrosswind[0] *= windTurb->rotorDiameter / 2;
+	distanceDownwind[0] *= windTurb->rotorDiameter / 2.;
+	distanceCrosswind[0] *= windTurb->rotorDiameter / 2.;
 
 	// Re-sort output arrays by wind turbine ID (0..nwt-1)
 	// for consistent reporting
@@ -279,8 +272,8 @@ int windPowerCalculator::windPowerUsingResource(/*INPUTS */ double windSpeed, do
 		e = eff[j];
 		w = adWindSpeed[j];
 		b = TI[j];
-		dd = distanceDownwind[j] * windTurb->rotorDiameter / 2; // convert back to meters from radii
-		dc = distanceCrosswind[j] * windTurb->rotorDiameter / 2;
+		dd = distanceDownwind[j] * windTurb->rotorDiameter / 2.; // convert back to meters from radii
+		dc = distanceCrosswind[j] * windTurb->rotorDiameter / 2.;
 		wid = wt_id[j];
 
 		i = j;
@@ -353,4 +346,138 @@ double windPowerCalculator::windPowerUsingWeibull(double weibull_k, double avg_s
 
 	// calculate output accounting for losses
 	return total_energy_turbine;
+}
+
+bool windPowerCalculator::windPowerUsingDistribution(std::vector<std::vector<double>> &&wind_dist, double *farmPower,
+                                                     double *farmPowerGross)
+{
+    if (!wakeModel)
+    {
+        errDetails = "Wake model not initialized.";
+        return false;
+    }
+
+    if ((nTurbines > MAX_WIND_TURBINES) || (nTurbines < 1))
+    {
+        errDetails = "The number of wind turbines was greater than the maximum allowed in the wake model.";
+        return false;
+    }
+
+    size_t i, j;
+    //unsigned char wt_id[MAX_WIND_TURBINES], wid; // unsigned char has 256 limit
+    size_t wt_id[MAX_WIND_TURBINES], wid;
+
+    for (i = 0; i<nTurbines; i++)
+        wt_id[i] = i;
+
+
+    double freq_total = 0.0, farmpower = 0.0, farmgross = 0.0;
+    for (auto& row : wind_dist){
+        double& windSpeed = row[0];
+        double& windDirDeg = row[1];
+        freq_total += row[2];
+
+        // calculate output power of a turbine
+        double fTurbine_output(0.0), fThrust_coeff(0.0), fTurbine_gross(0.0);
+        windTurb->turbinePower(windSpeed, physics::AIR_DENSITY_SEA_LEVEL, &fTurbine_output, &fTurbine_gross, &fThrust_coeff);
+        if (windTurb->errDetails.length() > 0){
+            errDetails = windTurb->errDetails;
+            return false;
+        }
+
+        // if there is only one turbine, we're done
+        if (nTurbines < 2)
+        {
+            farmpower += fTurbine_output;
+            continue;
+        }
+
+        // if power output of first turbine is zero, then it will be for the rest: we're done
+        if (fTurbine_output <= 0.0)
+        {
+            continue;
+        }
+
+        // calculate the farm output
+        //!Convert to d (downwind - axial), c (crosswind - radial) coordinates
+        double d(0.0), c(0.0);
+        std::vector<double> distanceDownwind(nTurbines);	// downwind coordinate of each WT
+        std::vector<double> distanceCrosswind(nTurbines);	// crosswind coordinate of each WT
+        for (i = 0; i<nTurbines; i++)
+        {
+            coordtrans(YCoords[i], XCoords[i], windDirDeg, &d, &c);
+            distanceDownwind[i] = d;
+            distanceCrosswind[i] = c;
+        }
+
+        // Remove negative numbers from downwind, crosswind coordinates
+        double Dmin = distanceDownwind[0];
+        double Cmin = distanceCrosswind[0];
+
+        for (j = 1; j<nTurbines; j++)
+        {
+            Dmin = min_of(distanceDownwind[j], Dmin);
+            Cmin = min_of(distanceCrosswind[j], Cmin);
+        }
+        for (j = 0; j<nTurbines; j++)
+        {
+            distanceDownwind[j] = distanceDownwind[j] - Dmin; // Final downwind coordinates, meters
+            distanceCrosswind[j] = distanceCrosswind[j] - Cmin; // Final crosswind coordinates, meters
+        }
+
+        // Convert downwind, crosswind measurements from meters into wind turbine radii
+        for (i = 0; i<nTurbines; i++)
+        {
+            distanceDownwind[i] = 2.0*distanceDownwind[i] / windTurb->rotorDiameter;
+            distanceCrosswind[i] = 2.0*distanceCrosswind[i] / windTurb->rotorDiameter;
+        }
+
+        // Sort aDistanceDownwind, aDistanceCrosswind arrays by downwind distance, aDistanceDownwind[0] is smallest downwind distance, presumably zero
+        for (j = 1; j<nTurbines; j++)
+        {
+            d = distanceDownwind[j]; // pick out each element
+            c = distanceCrosswind[j];
+            wid = wt_id[j];
+
+            i = j;
+            while (i > 0 && distanceDownwind[i - 1] > d) // look for place to insert item
+            {
+                distanceDownwind[i] = distanceDownwind[i - 1];
+                distanceCrosswind[i] = distanceCrosswind[i - 1];
+                wt_id[i] = wt_id[i - 1];
+                i--;
+            }
+
+            distanceDownwind[i] = d; // insert it
+            distanceCrosswind[i] = c;
+            wt_id[i] = wid;
+        }
+
+        // calculate the power output of downwind turbines using wake model
+        std::vector<double> power(nTurbines, fTurbine_output), eff(nTurbines, 0.), thrust(nTurbines, 0.),
+                adWindSpeed(nTurbines, windSpeed), TI(nTurbines, turbulenceIntensity);
+        wakeModel->wakeCalculations(physics::AIR_DENSITY_SEA_LEVEL, &distanceDownwind[0], &distanceCrosswind[0], &power[0],
+                                    &eff[0], &thrust[0], &adWindSpeed[0], &TI[0]);
+        if (wakeModel->errDetails.length() > 0){
+            errDetails = wakeModel->errDetails;
+            return false;
+        }
+
+        // calculate total farm power
+        double freq = 8760.0 * row[2];
+        for (i = 0; i<nTurbines; i++){
+            farmpower += freq * power[i];
+        }
+        farmgross += freq * fTurbine_gross * nTurbines;
+    }
+
+
+    if (fabs(freq_total - 1.0) > 0.01){
+        errDetails = "Sum of wind resource distribution frequencies must be 1.";
+        return false;
+    }
+    *farmPower = farmpower;
+    *farmPowerGross = farmgross;
+
+    return true;
 }

@@ -1,51 +1,24 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #include "heat_exchangers.h"
 #include "csp_solver_util.h"
@@ -56,12 +29,15 @@
 double NS_HX_counterflow_eqs::calc_max_q_dot_enth(int hot_fl_code /*-*/, HTFProperties & hot_htf_class,
 	int cold_fl_code /*-*/, HTFProperties & cold_htf_class,
 	double h_h_in /*kJ/kg*/, double P_h_in /*kPa*/, double P_h_out /*kPa*/, double m_dot_h /*kg/s*/,
-	double h_c_in /*kJ/kg*/, double P_c_in /*kPa*/, double P_c_out /*kPa*/, double m_dot_c /*kg/s*/)
+	double h_c_in /*kJ/kg*/, double P_c_in /*kPa*/, double P_c_out /*kPa*/, double m_dot_c /*kg/s*/,
+    double & h_h_out /*kJ/kg*/, double & T_h_out /*K*/,
+    double & h_c_out /*kJ/kg*/, double & T_c_out /*K*/,
+    double & T_h_in /*K*/, double & T_c_in /*K*/)
 {
 	int prop_error_code = 0;
 
 	// Calculate the hot and cold temperatures at the node
-	double T_h_in = std::numeric_limits<double>::quiet_NaN();
+	T_h_in = std::numeric_limits<double>::quiet_NaN();
 	if (hot_fl_code == NS_HX_counterflow_eqs::CO2)
 	{
 		CO2_state ms_co2_props;
@@ -89,7 +65,7 @@ double NS_HX_counterflow_eqs::calc_max_q_dot_enth(int hot_fl_code /*-*/, HTFProp
 		T_h_in = hot_htf_class.temp_lookup(h_h_in); //[K]
 	}
 
-	double T_c_in = std::numeric_limits<double>::quiet_NaN();
+	T_c_in = std::numeric_limits<double>::quiet_NaN();
 	if (cold_fl_code == NS_HX_counterflow_eqs::CO2)
 	{
 		CO2_state ms_co2_props;
@@ -154,7 +130,6 @@ double NS_HX_counterflow_eqs::calc_max_q_dot_enth(int hot_fl_code /*-*/, HTFProp
 	}
 	else
 	{
-		double h_c_in = cold_htf_class.enth_lookup(T_c_in);		//[kJ/kg]
 		double h_c_out_max = cold_htf_class.enth_lookup(T_h_in);//[kJ/kg]
 		Q_dot_cold_max = m_dot_c*(h_c_out_max - h_c_in);	//[kWt]
 	}
@@ -194,18 +169,81 @@ double NS_HX_counterflow_eqs::calc_max_q_dot_enth(int hot_fl_code /*-*/, HTFProp
 	}
 	else
 	{
-		double h_h_in = hot_htf_class.enth_lookup(T_h_in);		//[kJ/kg]
 		double h_h_out_min = hot_htf_class.enth_lookup(T_c_in);	//[kJ/kg]
 		Q_dot_hot_max = m_dot_h*(h_h_in - h_h_out_min);		//[kWt]
 	}
 
-	return min(Q_dot_hot_max, Q_dot_cold_max);
+    double q_dot_max = min(Q_dot_hot_max, Q_dot_cold_max);  //[kWt]
+    h_h_out = h_h_in - q_dot_max / m_dot_h;
+    h_c_out = h_c_in + q_dot_max / m_dot_c;
+
+    // Hot outlet temperature
+    T_h_out = std::numeric_limits<double>::quiet_NaN();
+    if (hot_fl_code == NS_HX_counterflow_eqs::CO2)
+    {
+        CO2_state ms_co2_props;
+        prop_error_code = CO2_PH(P_h_out, h_h_out, &ms_co2_props);
+        if (prop_error_code != 0)
+        {
+            throw(C_csp_exception("C_HX_counterflow::calc_max_q_dot",
+                "Hot CO2 outlet temp from PH calcs failed", 12));
+        }
+        T_h_out = ms_co2_props.temp;        //[K]
+    }
+    else if (hot_fl_code == NS_HX_counterflow_eqs::WATER)
+    {
+        water_state ms_water_props;
+        prop_error_code = water_PH(P_h_out, h_h_out, &ms_water_props);
+        if (prop_error_code != 0)
+        {
+            throw(C_csp_exception("C_HX_counterflow::calc_max_q_dot_enth",
+                "Hot side water/stream outlet temp from PH calcs failed", 12));
+        }
+        T_h_out = ms_water_props.temp;      //[K]
+    }
+    else
+    {
+        T_h_out = hot_htf_class.temp_lookup(h_h_out);    //[K]
+    }
+
+    // Cold outlet temperature
+    T_c_out = std::numeric_limits<double>::quiet_NaN();
+    if (cold_fl_code == NS_HX_counterflow_eqs::CO2)
+    {
+        CO2_state ms_co2_props;
+        prop_error_code = CO2_PH(P_c_out, h_c_out, &ms_co2_props);
+        if (prop_error_code != 0)
+        {
+            throw(C_csp_exception("C_HX_counterflow::calc_max_q_dot",
+                "Cold CO2 outlet temp from PH calcs failed", 12));
+        }
+        T_c_out = ms_co2_props.temp;        //[K]
+    }
+    else if (cold_fl_code == NS_HX_counterflow_eqs::WATER)
+    {
+        water_state ms_water_props;
+        prop_error_code = water_PH(P_c_out, h_c_out, &ms_water_props);
+        if (prop_error_code != 0)
+        {
+            throw(C_csp_exception("C_HX_counterflow::calc_max_q_dot_enth",
+                "Cold side water/steam outlet temp from PH calcs failed", 12));
+        }
+        T_c_out = ms_water_props.temp;      //[K]
+    }
+    else
+    {
+        T_c_out = cold_htf_class.temp_lookup(h_c_out);  //[K]
+    }
+
+	return q_dot_max;
 }
 
 double NS_HX_counterflow_eqs::calc_max_q_dot(int hot_fl_code /*-*/, HTFProperties & hot_htf_class,
 	int cold_fl_code /*-*/, HTFProperties & cold_htf_class,
 	double T_h_in, double P_h_in, double P_h_out, double m_dot_h,
-	double T_c_in, double P_c_in, double P_c_out, double m_dot_c)
+	double T_c_in, double P_c_in, double P_c_out, double m_dot_c,
+    double & h_h_out /*kJ/kg*/, double & T_h_out /*K*/,
+    double & h_c_out /*kJ/kg*/, double & T_c_out /*K*/)
 {
 	int prop_error_code = 0;
 
@@ -265,10 +303,15 @@ double NS_HX_counterflow_eqs::calc_max_q_dot(int hot_fl_code /*-*/, HTFPropertie
 		h_h_in = hot_htf_class.enth_lookup(T_h_in);	//[kJ/kg]
 	}
 
+    double T_h_in_calc, T_c_in_calc;
+    T_h_in_calc = T_c_in_calc = std::numeric_limits<double>::quiet_NaN();
 	return NS_HX_counterflow_eqs::calc_max_q_dot_enth(hot_fl_code, hot_htf_class,
 											cold_fl_code, cold_htf_class,
 											h_h_in, P_h_in, P_h_out, m_dot_h,
-											h_c_in, P_c_in, P_c_out, m_dot_c);
+											h_c_in, P_c_in, P_c_out, m_dot_c,
+                                            h_h_out, T_h_out,
+                                            h_c_out, T_c_out,
+                                            T_h_in_calc, T_c_in_calc);
 }
 
 void NS_HX_counterflow_eqs::calc_req_UA(int hot_fl_code /*-*/, HTFProperties & hot_htf_class,
@@ -442,17 +485,21 @@ void NS_HX_counterflow_eqs::calc_req_UA_enth(int hot_fl_code /*-*/, HTFPropertie
 	int N_nodes = N_sub_hx + 1;
 	double h_h_prev = 0.0;
 	double T_h_prev = 0.0;
+    double P_h_prev = 0.0;
 	double h_c_prev = 0.0;
 	double T_c_prev = 0.0;
+    double P_c_prev = 0.0;
 	double T_c_in = std::numeric_limits<double>::quiet_NaN();	//[K]
 	double T_h_in = std::numeric_limits<double>::quiet_NaN();	//[K]
+
+    bool is_temp_violation = false;
 
 	// Loop through the sub-heat exchangers
 	UA = 0.0;
 	min_DT = T_h_in;
 	for (int i = 0; i < N_nodes; i++)
 	{
-		// Assume pressure varies linearly through heat exchanger
+        // Assume pressure varies linearly through heat exchanger
 		double P_c = P_c_out + i*(P_c_in - P_c_out) / (double)(N_nodes - 1);
 		double P_h = P_h_in - i*(P_h_in - P_h_out) / (double)(N_nodes - 1);
 
@@ -486,7 +533,7 @@ void NS_HX_counterflow_eqs::calc_req_UA_enth(int hot_fl_code /*-*/, HTFPropertie
 		else
 		{
 			T_h = hot_htf_class.temp_lookup(h_h);	//[K]
-		}
+		}        
 
 		double T_c = std::numeric_limits<double>::quiet_NaN();
 		if (cold_fl_code == NS_HX_counterflow_eqs::CO2)
@@ -497,7 +544,7 @@ void NS_HX_counterflow_eqs::calc_req_UA_enth(int hot_fl_code /*-*/, HTFPropertie
 				throw(C_csp_exception("C_HX_counterflow::design",
 					"Cold side inlet enthalpy calculations failed", 13));
 			}
-			T_c = ms_co2_props.temp;		//[K]
+			T_c = ms_co2_props.temp;	//[K]
 		}
 		else if (cold_fl_code == NS_HX_counterflow_eqs::WATER)
 		{
@@ -507,7 +554,7 @@ void NS_HX_counterflow_eqs::calc_req_UA_enth(int hot_fl_code /*-*/, HTFPropertie
 				throw(C_csp_exception("C_HX_counterflow::calc_req_UA_enth",
 					"Cold side water/steam inlet enthalpy calculations failed", 13));
 			}
-			T_c = ms_water_props.temp;		//[K]
+			T_c = ms_water_props.temp;  //[K]
 		}
 		else
 		{
@@ -532,8 +579,7 @@ void NS_HX_counterflow_eqs::calc_req_UA_enth(int hot_fl_code /*-*/, HTFPropertie
 		// Check that 2nd law is not violated
 		if (T_c >= T_h)
 		{
-			throw(C_csp_exception("C_HX_counterflow::design",
-				"Cold temperature is hotter than hot temperature.", 11));
+            is_temp_violation = true;            
 		}
 
 		// Track the minimum temperature difference in the heat exchanger
@@ -541,29 +587,92 @@ void NS_HX_counterflow_eqs::calc_req_UA_enth(int hot_fl_code /*-*/, HTFPropertie
 
 		// Perform effectiveness-NTU and UA calculations 
 		if (i > 0)
-		{
-			bool is_h_2phase = false;
-			if (fabs(T_h_prev - T_h) < 0.001)
-			{
-				is_h_2phase = true;
-			}
-			bool is_c_2phase = false;
-			if (fabs(T_c_prev - T_c) < 0.001)
-			{
-				is_c_2phase = true;
-			}
+		{			
+            bool is_h_2phase = false;
+            bool is_c_2phase = false;
+            
+            double h_h_avg = 0.5*(h_h_prev + h_h);
+            double P_h_avg = 0.5*(P_h_prev + P_h);
 
-			double C_dot_min, C_R;
+            double cp_h_avg = std::numeric_limits<double>::quiet_NaN();
+            if (hot_fl_code == NS_HX_counterflow_eqs::CO2)
+            {
+                prop_error_code = CO2_PH(P_h_avg, h_h_avg, &ms_co2_props);
+                if (prop_error_code != 0)
+                {
+                    throw(C_csp_exception("C_HX_counterflow::design",
+                        "Cold side inlet enthalpy calculations failed", 12));
+                }
+                cp_h_avg = ms_co2_props.cp;       //[kJ/kg-K]
+            }
+            else if (hot_fl_code == NS_HX_counterflow_eqs::WATER)
+            {
+                prop_error_code = water_PH(P_h_avg, h_h_avg, &ms_water_props);
+                if (prop_error_code != 0)
+                {
+                    throw(C_csp_exception("C_HX_counterflow::calc_req_UA_enth",
+                        "Cold side inlet enthalpy calculations failed", 12));
+                }
+                cp_h_avg = ms_water_props.cp;       //[kJ/kg-K]
+            }
+            else
+            {
+                double T_h_avg = hot_htf_class.temp_lookup(h_h_avg);	//[K]
+                cp_h_avg = hot_htf_class.Cp(T_h_avg);   //[kJ/kg-K]
+            }
+            // Check for 2 phase conditions
+            if (!(std::isfinite(cp_h_avg) && cp_h_avg > 0.0))
+            {
+                is_h_2phase = true;
+            }
+
+            double h_c_avg = 0.5*(h_c_prev + h_c);
+            double P_c_avg = 0.5*(P_c_prev + P_c);
+
+            double cp_c_avg = std::numeric_limits<double>::quiet_NaN();
+            if (cold_fl_code == NS_HX_counterflow_eqs::CO2)
+            {
+                prop_error_code = CO2_PH(P_c_avg, h_c_avg, &ms_co2_props);
+                if (prop_error_code != 0)
+                {
+                    throw(C_csp_exception("C_HX_counterflow::design",
+                        "Cold side inlet enthalpy calculations failed", 13));
+                }
+                cp_c_avg = ms_co2_props.cp;     //[kJ/kg-K]
+            }
+            else if (cold_fl_code == NS_HX_counterflow_eqs::WATER)
+            {
+                prop_error_code = water_PH(P_c_avg, h_c_avg, &ms_water_props);
+                if (prop_error_code != 0)
+                {
+                    throw(C_csp_exception("C_HX_counterflow::calc_req_UA_enth",
+                        "Cold side water/steam inlet enthalpy calculations failed", 13));
+                }
+                cp_c_avg = ms_water_props.cp;   //[kJ/kg-K]
+            }
+            else
+            {
+                double T_c_avg = cold_htf_class.temp_lookup(h_c_avg);	//[K]
+                cp_c_avg = cold_htf_class.Cp(T_c_avg);  //[K]
+            }
+            // Check for 2 phase conditions
+            if (!(std::isfinite(cp_c_avg) && cp_c_avg > 0.0))
+            {
+                is_c_2phase = true;
+            }
+
+
+            double C_dot_min, C_R;
 			C_dot_min = C_R = std::numeric_limits<double>::quiet_NaN();
 
 			if (is_h_2phase && !is_c_2phase)
 			{
-				C_dot_min = m_dot_c*(h_c_prev - h_c) / (T_c_prev - T_c);			// [kW/K] cold stream capacitance rate
+				C_dot_min = m_dot_c*cp_c_avg;			// [kW/K] cold stream capacitance rate
 				C_R = 0.0;
 			}
 			else if (!is_c_2phase && is_h_2phase)
 			{
-				C_dot_min = m_dot_h*(h_h_prev - h_h) / (T_h_prev - T_h);			// [kW/K] hot stream capacitance rate
+				C_dot_min = m_dot_h*cp_h_avg;			// [kW/K] hot stream capacitance rate
 				C_R = 0.0;
 			}
 			else if (is_c_2phase && is_h_2phase)
@@ -573,11 +682,11 @@ void NS_HX_counterflow_eqs::calc_req_UA_enth(int hot_fl_code /*-*/, HTFPropertie
 			}
 			else
 			{
-				double C_dot_h = m_dot_h*(h_h_prev - h_h) / (T_h_prev - T_h);			// [kW/K] hot stream capacitance rate
-				double C_dot_c = m_dot_c*(h_c_prev - h_c) / (T_c_prev - T_c);			// [kW/K] cold stream capacitance rate
-				C_dot_min = fmin(C_dot_h, C_dot_c);						// [kW/K] Minimum capacitance stream
-				double C_dot_max = fmax(C_dot_h, C_dot_c);				// [kW/K] Maximum capacitance stream
-				C_R = C_dot_min / C_dot_max;						// [-] Capacitance ratio of sub-heat exchanger
+				double C_dot_h = m_dot_h*cp_h_avg;			// [kW/K] hot stream capacitance rate
+				double C_dot_c = m_dot_c*cp_c_avg;			// [kW/K] cold stream capacitance rate
+				C_dot_min = fmin(C_dot_h, C_dot_c);			// [kW/K] Minimum capacitance stream
+				double C_dot_max = fmax(C_dot_h, C_dot_c);	// [kW/K] Maximum capacitance stream
+				C_R = C_dot_min / C_dot_max;				// [-] Capacitance ratio of sub-heat exchanger
 			}
 
 			double eff = min(0.99999, (q_dot / (double)N_sub_hx) / (C_dot_min*(T_h_prev - T_c)));	// [-] Effectiveness of each sub-heat exchanger
@@ -590,9 +699,17 @@ void NS_HX_counterflow_eqs::calc_req_UA_enth(int hot_fl_code /*-*/, HTFPropertie
 		}
 		h_h_prev = h_h;
 		T_h_prev = T_h;
+        P_h_prev = P_h;
 		h_c_prev = h_c;
 		T_c_prev = T_c;
+        P_c_prev = P_c;
 	}
+
+    if (is_temp_violation)
+    {
+        throw(C_csp_exception("C_HX_counterflow::design",
+            "Cold temperature is hotter than hot temperature.", 11));
+    }
 
 	// Check for NaNs in UA
 	if (UA != UA)
@@ -606,10 +723,15 @@ void NS_HX_counterflow_eqs::calc_req_UA_enth(int hot_fl_code /*-*/, HTFPropertie
 	// **************************************************************
 	// Calculate the HX effectiveness
 
+    double h_h_out_q_max, T_h_out_q_max, h_c_out_q_max, T_c_out_q_max, T_h_in_q_max, T_c_in_q_max;
+    h_h_out_q_max = T_h_out_q_max = h_c_out_q_max = T_c_out_q_max = T_h_in_q_max = T_c_in_q_max = std::numeric_limits<double>::quiet_NaN();
 	double q_dot_max = NS_HX_counterflow_eqs::calc_max_q_dot_enth(hot_fl_code, hot_htf_class,
 		cold_fl_code, cold_htf_class,
 		h_h_in, P_h_in, P_h_out, m_dot_h,
-		h_c_in, P_c_in, P_c_out, m_dot_c);
+		h_c_in, P_c_in, P_c_out, m_dot_c,
+        h_h_out_q_max, T_h_out_q_max,
+        h_c_out_q_max, T_c_out_q_max,
+        T_h_in_q_max, T_c_in_q_max);
 
 	eff = q_dot / q_dot_max;
 
@@ -656,6 +778,11 @@ void NS_HX_counterflow_eqs::calc_req_UA_enth(int hot_fl_code /*-*/, HTFPropertie
 	else
 		NTU = eff / std::max(1.E-6, (1.0 - eff));
 
+    if (NTU < 0.0 || !std::isfinite(NTU))
+    {
+        NTU = 0.0;
+    }
+
 	return;
 }
 
@@ -689,6 +816,370 @@ int NS_HX_counterflow_eqs::C_mono_eq_UA_v_q_enth::operator()(double q_dot /*kWt*
 	return 0;
 }
 
+int NS_HX_counterflow_eqs::C_MEQ__min_dT__q_dot::operator()(double q_dot /*kWt*/, double *min_dT /*C*/)
+{
+    double q_dot_calc = std::numeric_limits<double>::quiet_NaN();
+
+    try
+    {
+        NS_HX_counterflow_eqs::calc_req_UA_enth(m_hot_fl_code, mc_hot_htf_class,
+            m_cold_fl_code, mc_cold_htf_class,
+            m_N_sub_hx,
+            q_dot, m_m_dot_c, m_m_dot_h,
+            m_h_c_in, m_h_h_in, m_P_c_in, m_P_c_out, m_P_h_in, m_P_h_out,
+            m_h_h_out, m_T_h_out, m_h_c_out, m_T_c_out,
+            m_UA_calc, m_min_DT, m_eff, m_NTU, q_dot_calc);
+    }
+    catch (C_csp_exception &csp_except)
+    {
+        if (csp_except.m_error_code != 11)
+        {
+            // Reset solved OD parameters to NaN
+            m_T_c_out = m_T_h_out = std::numeric_limits<double>::quiet_NaN();
+
+            // reset 'UA_calc' to NaN
+            *min_dT = std::numeric_limits<double>::quiet_NaN();		//[kW/K]
+
+            return -1;
+        }
+    }
+
+    *min_dT = m_min_DT;		//[kW/K]
+
+    return 0;
+}
+
+void NS_HX_counterflow_eqs::solve_q_dot__fixed_eff__enth(int hot_fl_code /*-*/, HTFProperties & hot_htf_class,
+    int cold_fl_code /*-*/, HTFProperties & cold_htf_class,
+    int N_sub_hx /*-*/,
+    double h_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/, double P_c_out /*kPa*/,
+    double h_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/, double P_h_out /*kPa*/,
+    double eff_target /*-*/,
+    double & T_c_out  /*K*/, double & h_c_out /*kJ/kg*/,
+    double & T_h_out /*K*/, double & h_h_out /*kJ/kg*/,
+    double & q_dot /*kWt*/, double & eff_calc /*-*/, double & min_DT /*K*/, double & NTU /*-*/, double & UA_calc)
+{
+    // Check for feasible target effectiveness
+    if (eff_target > 1.0 || eff_target < 0.0)
+    {
+        throw(C_csp_exception("NS_HX_counterflow_eqs::solve_q_dot__fixed_eff__enth(...) was sent infeasible effectiveness target"));
+    }
+    
+    // Calculate maximum possible heat transfer assuming 0 approach temperature
+    double h_h_out_q_max, T_h_out_q_max, h_c_out_q_max, T_c_out_q_max, T_h_in, T_c_in;
+    h_h_out_q_max = T_h_out_q_max = h_c_out_q_max = T_c_out_q_max = std::numeric_limits<double>::quiet_NaN();
+    double q_dot_max = NS_HX_counterflow_eqs::calc_max_q_dot_enth(hot_fl_code, hot_htf_class,
+        cold_fl_code, cold_htf_class,
+        h_h_in, P_h_in, P_h_out, m_dot_h,
+        h_c_in, P_c_in, P_c_out, m_dot_c,
+        h_h_out_q_max, T_h_out_q_max,
+        h_c_out_q_max, T_c_out_q_max,
+        T_h_in, T_c_in);
+
+    // What does 'calc_max_q_dot_enth' return if cold stream is hotter than hot stream?
+    if (q_dot_max < 0.0)
+    {
+        throw(C_csp_exception("NS_HX_counterflow_eqs::solve_q_dot__fixed_eff__enth(...) was sent infeasible hx design conditions"));
+    }
+    else if (q_dot_max == 0.0)
+    {
+        T_c_out = T_c_out_q_max;    //[K]
+        h_c_out = h_c_out_q_max;    //[kJ/kg]
+        T_h_out = T_h_out_q_max;    //[K]
+        h_h_out = h_h_out_q_max;    //[kJ/kg]
+        q_dot = 0.0;        //[kWt]
+        eff_calc = 0.0;     //[-]
+        min_DT = T_h_out - T_c_out; //[K]
+        NTU = 0.0;          //[-]
+        UA_calc = 0.0;      //[kW/K]
+
+        return;
+    }
+
+    // Apply max effectiveness value (to account for cross flow in headers and/or axial conduction) to get q_dot upper limit
+    double q_dot_eff_target = eff_target * q_dot_max;     //[kWt]
+
+    // Set up class to find q_dot that achieves dT
+    NS_HX_counterflow_eqs::C_MEQ__min_dT__q_dot hx_min_dt_eq(hot_fl_code, hot_htf_class,
+        cold_fl_code, cold_htf_class,
+        N_sub_hx,
+        P_c_out, P_h_out,
+        h_c_in, P_c_in, m_dot_c,
+        h_h_in, P_h_in, m_dot_h);
+    C_monotonic_eq_solver hx_min_dt_solver(hx_min_dt_eq);
+    // ***********************************************************
+    
+    // Find min dT at q_dot_upper
+    double min_dT_eff_target = std::numeric_limits<double>::quiet_NaN(); //[K]
+    int min_dT_test_code = hx_min_dt_solver.test_member_function(q_dot_eff_target, &min_dT_eff_target);
+    if (min_dT_test_code != 0)
+    {
+        throw(C_csp_exception("NS_HX_counterflow_eqs::solve_q_dot__fixed_eff__enth(...) failed at q_dot_upper"));
+    }
+    // ********************************************************************************************
+
+    // If minimum temperature at target effectiveness solution, then that's solution, so get out
+    if (min_dT_eff_target > 0.0)
+    {
+        T_c_out = hx_min_dt_eq.m_T_c_out;	//[K]
+        h_c_out = hx_min_dt_eq.m_h_c_out;	//[kJ/kg]
+        T_h_out = hx_min_dt_eq.m_T_h_out;	//[K]
+        h_h_out = hx_min_dt_eq.m_h_h_out;	//[kJ/kg]
+
+        q_dot = q_dot_eff_target;           //[kWt]
+        eff_calc = hx_min_dt_eq.m_eff;		//[-]
+        min_DT = hx_min_dt_eq.m_min_DT;		//[K]
+        NTU = hx_min_dt_eq.m_NTU;			//[-]
+        UA_calc = hx_min_dt_eq.m_UA_calc;   //[kW/K]
+
+        return;
+    }
+
+    // Otherwise, need to iterate to find q_dot such that the minimum temperature difference is ~= 0.1
+    // Find min dT at another q_dot
+    double q_dot_guess = 0.95*q_dot_eff_target;      //[kWt]
+    double min_dT_q_dot_guess = std::numeric_limits<double>::quiet_NaN();   //[K]
+    min_dT_test_code = hx_min_dt_solver.test_member_function(q_dot_guess, &min_dT_q_dot_guess);
+    if (min_dT_test_code != 0)
+    {
+        throw(C_csp_exception("NS_HX_counterflow_eqs::solve_q_dot__fixed_eff__enth(...) failed at q_dot_guess"));
+    }
+    // ********************************************************************************************
+
+    // Complete solver settings
+    double tol = 0.1;           //[K] convergence tolerance
+    double min_dT_target = tol; //[K] 0 + tol so worst case convergence is still > 0 
+    double q_dot_lower = 1.E-10;	//[kWt]
+
+    // If min dT is within tolerance of tareget, then get out
+    if (fabs(min_dT_q_dot_guess - min_dT_target) < tol)
+    {
+        T_c_out = hx_min_dt_eq.m_T_c_out;	//[K]
+        h_c_out = hx_min_dt_eq.m_h_c_out;	//[kJ/kg]
+        T_h_out = hx_min_dt_eq.m_T_h_out;	//[K]
+        h_h_out = hx_min_dt_eq.m_h_h_out;	//[kJ/kg]
+
+        q_dot = q_dot_guess;                //[kWt]
+        eff_calc = hx_min_dt_eq.m_eff;		//[-]
+        min_DT = hx_min_dt_eq.m_min_DT;		//[K]
+        NTU = hx_min_dt_eq.m_NTU;			//[-]
+        UA_calc = hx_min_dt_eq.m_UA_calc;   //[kW/K]
+
+        return;
+    }
+
+    // Set solver settings - don't normalize error
+    hx_min_dt_solver.settings(tol, 1000, q_dot_lower, q_dot_eff_target, false);
+
+    // Set up solver to find q_dot that results in target min dT
+    C_monotonic_eq_solver::S_xy_pair xy1;
+    xy1.x = q_dot_eff_target;        //[kWt]
+    xy1.y = min_dT_eff_target;   //[K]
+
+    C_monotonic_eq_solver::S_xy_pair xy2;
+    xy2.x = q_dot_guess;        //[kWt]
+    xy2.y = min_dT_q_dot_guess; //[K]
+
+    // Solve
+    double tol_solved, q_dot_solved;
+    q_dot_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
+    int iter_solved = -1;
+
+    int hx_min_dT_solver_code = hx_min_dt_solver.solve(xy1, xy2, min_dT_target,
+        q_dot_solved, tol_solved, iter_solved);
+
+    if (hx_min_dT_solver_code != C_monotonic_eq_solver::CONVERGED)
+    {
+        if (!(hx_min_dT_solver_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) <= 1.0))
+        {
+            throw(C_csp_exception("NS_HX_counterflow_eqs::solve_q_dot__fixed_min_dT__enth(...) failed to converge"));
+        }
+    }
+
+    T_c_out = hx_min_dt_eq.m_T_c_out;	//[K]
+    h_c_out = hx_min_dt_eq.m_h_c_out;	//[kJ/kg]
+    T_h_out = hx_min_dt_eq.m_T_h_out;	//[K]
+    h_h_out = hx_min_dt_eq.m_h_h_out;	//[kJ/kg]
+
+    q_dot = q_dot_solved;               //[kWt]
+    eff_calc = hx_min_dt_eq.m_eff;		//[-]
+    min_DT = hx_min_dt_eq.m_min_DT;		//[K]
+    NTU = hx_min_dt_eq.m_NTU;			//[-]
+    UA_calc = hx_min_dt_eq.m_UA_calc;   //[kW/K]
+
+    return;
+}
+
+
+void NS_HX_counterflow_eqs::solve_q_dot__fixed_min_dT__enth(int hot_fl_code /*-*/, HTFProperties & hot_htf_class,
+    int cold_fl_code /*-*/, HTFProperties & cold_htf_class,
+    int N_sub_hx /*-*/,
+    double h_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/, double P_c_out /*kPa*/,
+    double h_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/, double P_h_out /*kPa*/,
+    double min_dT_target /*C*/, double eff_limit /*-*/,
+    double & T_c_out  /*K*/, double & h_c_out /*kJ/kg*/,
+    double & T_h_out /*K*/, double & h_h_out /*kJ/kg*/,
+    double & q_dot /*kWt*/, double & eff_calc /*-*/, double & min_DT /*K*/, double & NTU /*-*/, double & UA_calc /*kW/K*/)
+{
+    // Calculate maximum possible heat transfer assuming 0 approach temperature
+    double h_h_out_q_max, T_h_out_q_max, h_c_out_q_max, T_c_out_q_max, T_h_in, T_c_in;
+    h_h_out_q_max = T_h_out_q_max = h_c_out_q_max = T_c_out_q_max = std::numeric_limits<double>::quiet_NaN();
+    double q_dot_max = NS_HX_counterflow_eqs::calc_max_q_dot_enth(hot_fl_code, hot_htf_class,
+        cold_fl_code, cold_htf_class,
+        h_h_in, P_h_in, P_h_out, m_dot_h,
+        h_c_in, P_c_in, P_c_out, m_dot_c,
+        h_h_out_q_max, T_h_out_q_max,
+        h_c_out_q_max, T_c_out_q_max,
+        T_h_in, T_c_in);
+
+    // What does 'calc_max_q_dot_enth' return if cold stream is hotter than hot stream?
+    if (q_dot_max < 0.0)
+    {
+        throw(C_csp_exception("NS_HX_counterflow_eqs::solve_q_dot__fixed_min_dT__enth(...) was sent infeasible hx design conditions"));
+    }
+    else if (q_dot_max == 0.0)
+    {
+        T_c_out = T_c_out_q_max;    //[K]
+        h_c_out = h_c_out_q_max;    //[kJ/kg]
+        T_h_out = T_h_out_q_max;    //[K]
+        h_h_out = h_h_out_q_max;    //[kJ/kg]
+        q_dot = 0.0;        //[kWt]
+        eff_calc = 0.0;     //[-]
+        min_DT = T_h_out - T_c_out; //[K]
+        NTU = 0.0;          //[-]
+        UA_calc = 0.0;      //[kW/K]
+
+        return;
+    }
+
+    // Is the min dT possible given the inlet conditions?
+    if ((T_h_in - T_c_in) < min_dT_target)
+    {
+        T_c_out = T_c_in;    //[K]
+        h_c_out = h_c_in;    //[kJ/kg]
+        T_h_out = T_h_in;    //[K]
+        h_h_out = h_h_in;    //[kJ/kg]
+        q_dot = 0.0;        //[kWt]
+        eff_calc = 0.0;     //[-]
+        min_DT = T_h_out - T_c_out; //[K]
+        NTU = 0.0;          //[-]
+        UA_calc = 0.0;      //[kW/K]
+
+        return;
+    }
+
+    // Apply max effectiveness value (to account for cross flow in headers and/or axial conduction) to get q_dot upper limit
+    double q_dot_upper = eff_limit * q_dot_max;     //[kWt]
+
+    // Set up class to find q_dot that achieves dT
+    NS_HX_counterflow_eqs::C_MEQ__min_dT__q_dot hx_min_dt_eq(hot_fl_code, hot_htf_class,
+        cold_fl_code, cold_htf_class,
+        N_sub_hx,
+        P_c_out, P_h_out,
+        h_c_in, P_c_in, m_dot_c,
+        h_h_in, P_h_in, m_dot_h);
+    C_monotonic_eq_solver hx_min_dt_solver(hx_min_dt_eq);
+    // ***********************************************************
+
+    // Complete solver settings
+    double tol = 0.1;       //[K] convergence tolerance
+    double q_dot_lower = 1.E-10;	//[kWt]
+
+    // Set solver settings - don't normalize error
+    hx_min_dt_solver.settings(tol, 1000, q_dot_lower, q_dot_upper, false);
+
+    // Find min dT at q_dot_upper
+    double min_dT_eff_ideal = std::numeric_limits<double>::quiet_NaN(); //[K]
+    int min_dT_test_code = hx_min_dt_solver.test_member_function(q_dot_upper, &min_dT_eff_ideal);
+    if (min_dT_test_code != 0)
+    {
+        throw(C_csp_exception("NS_HX_counterflow_eqs::solve_q_dot__fixed_min_dT__enth(...) failed at q_dot_upper"));
+    }
+    // ********************************************************************************************
+
+    // If min dT is within tolerance of target, then get out
+    // Also, the max q dot will have the smallest dT, so if smallest dT larger than target then also get out
+    if (fabs(min_dT_eff_ideal - min_dT_target) < tol || min_dT_eff_ideal - min_dT_target > tol)
+    {
+        T_c_out = hx_min_dt_eq.m_T_c_out;	//[K]
+        h_c_out = hx_min_dt_eq.m_h_c_out;	//[kJ/kg]
+        T_h_out = hx_min_dt_eq.m_T_h_out;	//[K]
+        h_h_out = hx_min_dt_eq.m_h_h_out;	//[kJ/kg]
+
+        q_dot = q_dot_upper;                //[kWt]
+        eff_calc = hx_min_dt_eq.m_eff;		//[-]
+        min_DT = hx_min_dt_eq.m_min_DT;		//[K]
+        NTU = hx_min_dt_eq.m_NTU;			//[-]
+        UA_calc = hx_min_dt_eq.m_UA_calc;   //[kW/K]
+
+        return;
+    }
+
+    // Find min dT at another q_dot
+    double q_dot_guess = 0.95*q_dot_upper;      //[kWt]
+    double min_dT_q_dot_guess = std::numeric_limits<double>::quiet_NaN();   //[K]
+    min_dT_test_code = hx_min_dt_solver.test_member_function(q_dot_guess, &min_dT_q_dot_guess);
+    if (min_dT_test_code != 0)
+    {
+        throw(C_csp_exception("NS_HX_counterflow_eqs::solve_q_dot__fixed_min_dT__enth(...) failed at q_dot_guess"));
+    }
+    // ********************************************************************************************
+
+    // If min dT is within tolerance of tareget, then get out
+    if (fabs(min_dT_q_dot_guess - min_dT_target) < tol)
+    {
+        T_c_out = hx_min_dt_eq.m_T_c_out;	//[K]
+        h_c_out = hx_min_dt_eq.m_h_c_out;	//[kJ/kg]
+        T_h_out = hx_min_dt_eq.m_T_h_out;	//[K]
+        h_h_out = hx_min_dt_eq.m_h_h_out;	//[kJ/kg]
+
+        q_dot = q_dot_guess;                //[kWt]
+        eff_calc = hx_min_dt_eq.m_eff;		//[-]
+        min_DT = hx_min_dt_eq.m_min_DT;		//[K]
+        NTU = hx_min_dt_eq.m_NTU;			//[-]
+        UA_calc = hx_min_dt_eq.m_UA_calc;   //[kW/K]
+
+        return;
+    }
+
+    // Set up solver to find q_dot that results in target min dT
+    C_monotonic_eq_solver::S_xy_pair xy1;
+    xy1.x = q_dot_upper;        //[kWt]
+    xy1.y = min_dT_eff_ideal;   //[K]
+
+    C_monotonic_eq_solver::S_xy_pair xy2;
+    xy2.x = q_dot_guess;        //[kWt]
+    xy2.y = min_dT_q_dot_guess; //[K]
+
+    // Solve
+    double tol_solved, q_dot_solved;
+    q_dot_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
+    int iter_solved = -1;
+
+    int hx_min_dT_solver_code = hx_min_dt_solver.solve(xy1, xy2, min_dT_target,
+        q_dot_solved, tol_solved, iter_solved);
+
+    if (hx_min_dT_solver_code != C_monotonic_eq_solver::CONVERGED)
+    {
+        if (!(hx_min_dT_solver_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) <= 1.0))
+        {
+            throw(C_csp_exception("NS_HX_counterflow_eqs::solve_q_dot__fixed_min_dT__enth(...) failed to converge"));
+        }
+    }
+
+    T_c_out = hx_min_dt_eq.m_T_c_out;	//[K]
+    h_c_out = hx_min_dt_eq.m_h_c_out;	//[kJ/kg]
+    T_h_out = hx_min_dt_eq.m_T_h_out;	//[K]
+    h_h_out = hx_min_dt_eq.m_h_h_out;	//[kJ/kg]
+
+    q_dot = q_dot_solved;               //[kWt]
+    eff_calc = hx_min_dt_eq.m_eff;		//[-]
+    min_DT = hx_min_dt_eq.m_min_DT;		//[K]
+    NTU = hx_min_dt_eq.m_NTU;			//[-]
+    UA_calc = hx_min_dt_eq.m_UA_calc;   //[kW/K]
+}
+
+
 void NS_HX_counterflow_eqs::solve_q_dot_for_fixed_UA_enth(int hot_fl_code /*-*/, HTFProperties & hot_htf_class,
 	int cold_fl_code /*-*/, HTFProperties & cold_htf_class,
 	int N_sub_hx /*-*/,
@@ -699,7 +1190,7 @@ void NS_HX_counterflow_eqs::solve_q_dot_for_fixed_UA_enth(int hot_fl_code /*-*/,
 	double & T_h_out /*K*/, double & h_h_out /*kJ/kg*/,
 	double & q_dot /*kWt*/, double & eff_calc /*-*/, double & min_DT /*K*/, double & NTU /*-*/, double & UA_calc)
 {
-	if (UA_target < 1.E-10)
+    if (UA_target < 1.E-10)
 	{
 		q_dot = 0.0;
 
@@ -725,10 +1216,15 @@ void NS_HX_counterflow_eqs::solve_q_dot_for_fixed_UA_enth(int hot_fl_code /*-*/,
 		return;
 	}
 
+    double h_h_out_q_max, T_h_out_q_max, h_c_out_q_max, T_c_out_q_max, T_h_in_q_max, T_c_in_q_max;
+    h_h_out_q_max = T_h_out_q_max = h_c_out_q_max = T_c_out_q_max = std::numeric_limits<double>::quiet_NaN();
 	double q_dot_max = NS_HX_counterflow_eqs::calc_max_q_dot_enth(hot_fl_code, hot_htf_class,
 		cold_fl_code, cold_htf_class,
 		h_h_in, P_h_in, P_h_out, m_dot_h,
-		h_c_in, P_c_in, P_c_out, m_dot_c);
+		h_c_in, P_c_in, P_c_out, m_dot_c,
+        h_h_out_q_max, T_h_out_q_max,
+        h_c_out_q_max, T_c_out_q_max,
+        T_h_in_q_max, T_c_in_q_max);
 
 	double q_dot_upper = eff_limit*q_dot_max;
 
@@ -804,19 +1300,24 @@ void NS_HX_counterflow_eqs::solve_q_dot_for_fixed_UA_enth(int hot_fl_code /*-*/,
 	UA_calc = od_hx_eq.m_UA_calc;
 }
 
-void NS_HX_counterflow_eqs::solve_q_dot_for_fixed_UA(int hot_fl_code /*-*/, HTFProperties & hot_htf_class,
+void NS_HX_counterflow_eqs::solve_q_dot_for_fixed_UA(int hx_target_code /*-*/, 
+    int hot_fl_code /*-*/, HTFProperties & hot_htf_class,
 	int cold_fl_code /*-*/, HTFProperties & cold_htf_class,
 	int N_sub_hx /*-*/,
 	double T_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/, double P_c_out /*kPa*/,
 	double T_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/, double P_h_out /*kPa*/,
-	double UA_target /*kW/K*/, double eff_limit /*-*/, double eff_guess /*-*/,
+	double UA_target /*kW/K*/, double min_dT_target /*K*/, double eff_target /*-*/,
+    double eff_limit /*-*/, double eff_guess /*-*/,
 	double & q_dot /*kWt*/, double & T_c_out /*K*/, double & T_h_out /*K*/,
 	double & eff_calc /*-*/, double & min_DT /*K*/, double & NTU /*-*/, double & UA_calc)
 {
 	// Need to check if hot stream is actually hotter than the cold stream
 	// If not, just return the input temperatures for each stream
 	// Should maybe improve code to handle this case (i.e. check which input is hotter)...
-	if (T_h_in - T_c_in < 0.01)
+	if (T_h_in - T_c_in < 0.01  ||
+        (hx_target_code == NS_HX_counterflow_eqs::TARGET_UA && (UA_target <= 0.0 || !std::isfinite(UA_target) ) ) ||
+        (hx_target_code == NS_HX_counterflow_eqs::TARGET_MIN_DT && !std::isfinite(min_dT_target) ) ||
+        (hx_target_code == NS_HX_counterflow_eqs::TARGET_EFFECTIVENESS && (eff_target <= 0.0 || !std::isfinite(eff_target) ) ) )
 	{
 		q_dot = 0.0;
 		T_c_out = T_c_in;
@@ -890,15 +1391,56 @@ void NS_HX_counterflow_eqs::solve_q_dot_for_fixed_UA(int hot_fl_code /*-*/, HTFP
 
 	double h_c_out = std::numeric_limits<double>::quiet_NaN();
 	double h_h_out = std::numeric_limits<double>::quiet_NaN();
-	NS_HX_counterflow_eqs::solve_q_dot_for_fixed_UA_enth(hot_fl_code, hot_htf_class,
-		cold_fl_code, cold_htf_class,
-		N_sub_hx,
-		h_c_in, P_c_in, m_dot_c, P_c_out,
-		h_h_in, P_h_in, m_dot_h, P_h_out,
-		UA_target, eff_limit, eff_guess,
-		T_c_out, h_c_out,
-		T_h_out, h_h_out,
-		q_dot, eff_calc, min_DT, NTU, UA_calc);
+
+    switch (hx_target_code)
+    {
+    case NS_HX_counterflow_eqs::TARGET_UA:
+    case NS_HX_counterflow_eqs::OPTIMIZE_UA:
+        
+        NS_HX_counterflow_eqs::solve_q_dot_for_fixed_UA_enth(hot_fl_code, hot_htf_class,
+            cold_fl_code, cold_htf_class,
+            N_sub_hx,
+            h_c_in, P_c_in, m_dot_c, P_c_out,
+            h_h_in, P_h_in, m_dot_h, P_h_out,
+            UA_target, eff_limit, eff_guess,
+            T_c_out, h_c_out,
+            T_h_out, h_h_out,
+            q_dot, eff_calc, min_DT, NTU, UA_calc);
+
+        break;
+
+    case NS_HX_counterflow_eqs::TARGET_MIN_DT:
+
+        NS_HX_counterflow_eqs::solve_q_dot__fixed_min_dT__enth(hot_fl_code, hot_htf_class,
+            cold_fl_code, cold_htf_class,
+            N_sub_hx,
+            h_c_in, P_c_in, m_dot_c, P_c_out,
+            h_h_in, P_h_in, m_dot_h, P_h_out,
+            min_dT_target, eff_limit,
+            T_c_out, h_c_out,
+            T_h_out, h_h_out,
+            q_dot, eff_calc, min_DT, NTU, UA_calc);
+
+        break;
+
+    case NS_HX_counterflow_eqs::TARGET_EFFECTIVENESS:
+
+        NS_HX_counterflow_eqs::solve_q_dot__fixed_eff__enth(hot_fl_code, hot_htf_class,
+            cold_fl_code, cold_htf_class,
+            N_sub_hx,
+            h_c_in, P_c_in, m_dot_c, P_c_out,
+            h_h_in, P_h_in, m_dot_h, P_h_out,
+            eff_target,
+            T_c_out, h_c_out,
+            T_h_out, h_h_out,
+            q_dot, eff_calc, min_DT, NTU, UA_calc);
+
+        break;
+
+    default:
+        throw(C_csp_exception("NS_HX_counterflow_eqs::solve_q_dot_for_fixed_UA",
+            "hx target code not recognized", 10));
+    }
 
 	return;
 }
@@ -1020,10 +1562,15 @@ void C_HX_counterflow::calc_req_UA_enth(double q_dot /*kWt*/, double m_dot_c /*k
 double C_HX_counterflow::calc_max_q_dot_enth(double h_h_in /*kJ/kg*/, double P_h_in /*kPa*/, double P_h_out /*kPa*/, double m_dot_h /*kg/s*/,
 	double h_c_in /*kJ/kg*/, double P_c_in /*kPa*/, double P_c_out /*kPa*/, double m_dot_c /*kg/s*/)
 {
-	return NS_HX_counterflow_eqs::calc_max_q_dot_enth(ms_init_par.m_hot_fl, mc_hot_fl,
+    double h_h_out_q_max, T_h_out_q_max, h_c_out_q_max, T_c_out_q_max, T_h_in_q_max, T_c_in_q_max;
+    h_h_out_q_max = T_h_out_q_max = h_c_out_q_max = T_c_out_q_max = std::numeric_limits<double>::quiet_NaN();
+    return NS_HX_counterflow_eqs::calc_max_q_dot_enth(ms_init_par.m_hot_fl, mc_hot_fl,
 			ms_init_par.m_cold_fl, mc_cold_fl,
 			h_h_in, P_h_in, P_h_out, m_dot_h,
-			h_c_in, P_c_in, P_c_out, m_dot_c);
+			h_c_in, P_c_in, P_c_out, m_dot_c,
+            h_h_out_q_max, T_h_out_q_max,
+            h_c_out_q_max, T_c_out_q_max,
+            T_h_in_q_max, T_c_in_q_max);
 }
 
 double C_HX_counterflow::calculate_cost(double UA /*kWt/K*/,
@@ -1079,15 +1626,18 @@ void C_HX_counterflow::design_calc_UA(C_HX_counterflow::S_des_calc_UA_par des_pa
 			"Calculated design effectiveness, %lg [-] is greater than the specified maximum effectiveness, %lg [-]."));
 	}
 
+    ms_des_solved.m_UA_allocated = 0.0;     //[kW/K]
+    ms_des_solved.m_UA_calc_at_eff_max = UA_calc;   //[kW/K]
+
 	ms_des_solved.m_Q_dot_design = q_dot_design;	//[kWt]
-	ms_des_solved.m_UA_design_total = UA_calc;		//[kWt/K]
+	ms_des_solved.m_UA_design = UA_calc;		    //[kWt/K]
 	ms_des_solved.m_min_DT_design = min_DT_calc;
 	ms_des_solved.m_eff_design = eff_calc;
 	ms_des_solved.m_NTU_design = NTU_calc;
 	ms_des_solved.m_T_h_out = T_h_out_calc;
 	ms_des_solved.m_T_c_out = T_c_out_calc;
 
-	ms_des_solved.m_cost = calculate_cost(ms_des_solved.m_UA_design_total,
+	ms_des_solved.m_cost = calculate_cost(ms_des_solved.m_UA_design,
 		ms_des_calc_UA_par.m_T_h_in, ms_des_calc_UA_par.m_P_h_in, ms_des_calc_UA_par.m_m_dot_hot_des,
 		ms_des_calc_UA_par.m_T_c_in, ms_des_calc_UA_par.m_P_c_in, ms_des_calc_UA_par.m_m_dot_cold_des);
 
@@ -1112,22 +1662,27 @@ void C_HX_co2_to_htf::design_and_calc_m_dot_htf(C_HX_counterflow::S_des_calc_UA_
 	design_calc_UA(des_par, q_dot_design, des_solved);
 }
 
-void C_HX_counterflow::design_fix_UA_calc_outlet(double UA_target /*kW/K*/, double eff_target /*-*/, double T_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/, double P_c_out /*kPa*/,
+void C_HX_counterflow::design_for_target__calc_outlet(int hx_target_code /*-*/,
+    double UA_target /*kW/K*/, double min_dT_target /*K*/, double eff_target /*-*/,
+    double eff_max /*-*/, double T_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/, double P_c_out /*kPa*/,
 	double T_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/, double P_h_out /*kPa*/,
 	double & q_dot /*kWt*/, double & T_c_out /*K*/, double & T_h_out /*K*/)
 {
-	ms_des_solved.m_UA_design_total = ms_des_solved.m_min_DT_design = ms_des_solved.m_eff_design = ms_des_solved.m_NTU_design =
+    ms_des_solved.m_UA_allocated = ms_des_solved.m_UA_calc_at_eff_max =
+        ms_des_solved.m_Q_dot_design = ms_des_solved.m_UA_design = ms_des_solved.m_min_DT_design = ms_des_solved.m_eff_design = ms_des_solved.m_NTU_design =
 		ms_des_solved.m_T_h_out = ms_des_solved.m_T_c_out = ms_des_solved.m_DP_cold_des = ms_des_solved.m_DP_hot_des = std::numeric_limits<double>::quiet_NaN();
 
 	double eff_calc, min_DT, NTU, UA_calc;
 	eff_calc = min_DT = NTU = UA_calc = std::numeric_limits<double>::quiet_NaN();
-	
-	NS_HX_counterflow_eqs::solve_q_dot_for_fixed_UA(ms_init_par.m_hot_fl, mc_hot_fl,
+
+	NS_HX_counterflow_eqs::solve_q_dot_for_fixed_UA(hx_target_code,
+        ms_init_par.m_hot_fl, mc_hot_fl,
 		ms_init_par.m_cold_fl, mc_cold_fl,
 		ms_init_par.m_N_sub_hx,
 		T_c_in, P_c_in, m_dot_c, P_c_out, 
 		T_h_in, P_h_in, m_dot_h, P_h_out, 
-		UA_target, eff_target, ms_des_solved.m_eff_design,
+		UA_target, min_dT_target, eff_target,
+        eff_max, ms_des_solved.m_eff_design,
 		q_dot, T_c_out, T_h_out,
 		eff_calc, min_DT, NTU, UA_calc);
 
@@ -1139,11 +1694,22 @@ void C_HX_counterflow::design_fix_UA_calc_outlet(double UA_target /*kW/K*/, doub
 	ms_des_calc_UA_par.m_P_c_in = P_c_in;			//[kPa]
 	ms_des_calc_UA_par.m_P_c_out = P_c_out;			//[kPa]
 	ms_des_calc_UA_par.m_m_dot_cold_des = m_dot_c;	//[kg/s]
-	ms_des_calc_UA_par.m_eff_max = eff_target;		//[-]
+	ms_des_calc_UA_par.m_eff_max = eff_max;		    //[-]
 
 	ms_des_solved.m_Q_dot_design = q_dot;			//[kWt]
-	ms_des_solved.m_UA_design_total = UA_target;	//[kW/K]
-	ms_des_solved.m_UA_calc_at_eff_max = UA_calc;	//[kW/K]
+    ms_des_solved.m_UA_calc_at_eff_max = UA_calc;	//[kW/K]
+
+    if (hx_target_code == NS_HX_counterflow_eqs::TARGET_UA || hx_target_code == NS_HX_counterflow_eqs::OPTIMIZE_UA)
+    {
+        ms_des_solved.m_UA_allocated = UA_target;	//[kW/K] assigned UA - not necessarily = calculated
+        ms_des_solved.m_UA_design = UA_target;      //[kW/K] designing with "extra" UA - will use this value to scale at off-design so could still be useful
+    }
+    else
+    {
+        ms_des_solved.m_UA_allocated = 0.0;
+        ms_des_solved.m_UA_design = UA_calc;        //[kW/K] design with calculated UA
+    }
+	
 	ms_des_solved.m_min_DT_design = min_DT;			//[K]
 	ms_des_solved.m_eff_design = eff_calc;			//[-]
 	ms_des_solved.m_NTU_design = NTU;				//[-]
@@ -1152,7 +1718,7 @@ void C_HX_counterflow::design_fix_UA_calc_outlet(double UA_target /*kW/K*/, doub
 	ms_des_solved.m_DP_cold_des = P_c_in - P_c_out;		//[kPa]
 	ms_des_solved.m_DP_hot_des = P_h_in - P_h_out;		//[kPa]
 
-	ms_des_solved.m_cost = calculate_cost(ms_des_solved.m_UA_design_total,
+	ms_des_solved.m_cost = calculate_cost(ms_des_solved.m_UA_design,
 		T_h_in, P_h_in, m_dot_h,
 		T_c_in, P_c_in, m_dot_c);
 }
@@ -1172,12 +1738,17 @@ void C_HX_counterflow::off_design_solution(double T_c_in /*K*/, double P_c_in /*
 	double eff_calc, min_DT, NTU, UA_calc;
 	eff_calc = min_DT = NTU = UA_calc = std::numeric_limits<double>::quiet_NaN();
 	
-	NS_HX_counterflow_eqs::solve_q_dot_for_fixed_UA(ms_init_par.m_hot_fl, mc_hot_fl,
-		ms_init_par.m_cold_fl, mc_cold_fl,
-		ms_init_par.m_N_sub_hx,
-		T_c_in, P_c_in, m_dot_c, P_c_out,
-		T_h_in, P_h_in, m_dot_h, P_h_out,
-		UA_target, eff_target, ms_des_solved.m_eff_design,
+    // Off-design should always use UA as the performance target
+    // So set min_dT_target and eff_target parameters = nan
+    int hx_target_code = NS_HX_counterflow_eqs::TARGET_UA;
+    NS_HX_counterflow_eqs::solve_q_dot_for_fixed_UA(hx_target_code,
+        ms_init_par.m_hot_fl, mc_hot_fl,
+        ms_init_par.m_cold_fl, mc_cold_fl,
+        ms_init_par.m_N_sub_hx,
+        T_c_in, P_c_in, m_dot_c, P_c_out,
+        T_h_in, P_h_in, m_dot_h, P_h_out,
+        UA_target, std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(),
+        eff_target, ms_des_solved.m_eff_design,
 		q_dot, T_c_out, T_h_out,
 		eff_calc, min_DT, NTU, UA_calc);
 
@@ -1225,7 +1796,7 @@ double C_HX_counterflow::od_delta_p_hot(double m_dot_h /*kg/s*/)
 
 double C_HX_counterflow::od_UA(double m_dot_c /*kg/s*/, double m_dot_h /*kg/s*/)
 {
-	return ms_des_solved.m_UA_design_total*od_UA_frac(m_dot_c, m_dot_h);	//[kW/K]
+	return ms_des_solved.m_UA_design*od_UA_frac(m_dot_c, m_dot_h);	//[kW/K]
 }
 
 double C_HX_counterflow::od_UA_frac(double m_dot_c /*kg/s*/, double m_dot_h /*kg/s*/)
@@ -1413,9 +1984,9 @@ bool C_CO2_to_air_cooler::design_hx(S_des_par_ind des_par_ind, S_des_par_cycle_d
 
 	// Get Remaining Design Info: hardcode for now, but eventually will be inputs
 	// Air-Cooler Specs
-	ms_hx_des_sol.m_N_passes = 3;
-	m_N_nodes = 5;
-	m_eta_fan = 0.5;
+	ms_hx_des_sol.m_N_passes = 3;	    
+    m_N_nodes = 10;	    
+    m_eta_fan = 0.5;
 	ms_hx_des_sol.m_d_in = ms_hx_des_sol.m_d_out - 2.0*m_th;
 	m_roughness = 4.5E-5;					//[m] absolute roughness of material
 	m_A_cs = 0.25*CSP::pi*pow(ms_hx_des_sol.m_d_in, 2);	//[m2] flow cross-section area
@@ -1644,6 +2215,77 @@ int C_MEQ_target_W_dot_fan__m_dot_air::operator()(double m_dot_air /*kg/s*/, dou
 	return 0;
 }
 
+int C_CO2_to_air_cooler::C_MEQ_node_energy_balance__h_co2_out::operator()(double h_co2_hot_in /*kJ/kg*/, double *diff_h_co2_hot /*-*/)
+{
+    m_Q_dot_node = std::numeric_limits<double>::quiet_NaN();    //[W]
+    m_T_co2_hot_in = std::numeric_limits<double>::quiet_NaN();  //[K]
+
+    // First check that CO2 cold temperature exists and is hotter than cold air temperature
+    if (!std::isfinite(m_T_co2_cold_out) || m_T_co2_cold_out < m_T_air_cold_in)
+    {
+        return -1;
+    }
+
+    // CO2 properties at hot side
+    int co2_prop_error = CO2_PH(m_P_co2_ave, h_co2_hot_in, mpc_co2_props);
+    if (co2_prop_error != 0)
+    {
+        return -3;
+    }
+    m_T_co2_hot_in = mpc_co2_props->temp;      //[K]
+
+    // CO2 properties at node average
+    double h_co2_ave = 0.5*(h_co2_hot_in + m_h_co2_cold_out);   //[kJ/kg]
+    co2_prop_error = CO2_PH(m_P_co2_ave, h_co2_ave, mpc_co2_props);
+    if (co2_prop_error != 0)
+    {
+        return -2;
+    }
+    double cp_co2_ave = mpc_co2_props->cp*1000.0;       //[J/kg-K]
+
+    double C_dot_min, C_dot_max, CR;
+    C_dot_min = C_dot_max = CR = std::numeric_limits<double>::quiet_NaN();
+    // Check if 2-phase
+    if (!(std::isfinite(cp_co2_ave) && cp_co2_ave > 0.0))
+    {
+        C_dot_min = m_C_dot_air;        //[W/K]
+        CR = 0.0;                       //[-]
+    }
+    else
+    {
+        double C_dot_co2 = cp_co2_ave * m_m_dot_co2_tube;			//[W/K]
+        C_dot_min = fmin(m_C_dot_air, C_dot_co2);		//[W/K]
+        C_dot_max = fmax(m_C_dot_air, C_dot_co2);		//[W/K]
+        CR = C_dot_min / C_dot_max;			            //[-]
+    }
+
+    double Q_dot_max = C_dot_min * (m_T_co2_hot_in - m_T_air_cold_in);	//[W]
+    double NTU = m_UA_node / C_dot_min;
+
+    double epsilon = std::numeric_limits<double>::quiet_NaN();
+    if (CR > 0.0)
+    {
+        epsilon = 1 - exp(pow(NTU, 0.22) / CR * (exp(-CR * pow(NTU, 0.78)) - 1));   //[-]
+    }
+    else
+    {
+        epsilon = 1.0 - exp(-NTU);
+    }
+
+    m_Q_dot_node = epsilon * Q_dot_max * 1.E-3;     //[kW]
+
+    //double q_dot_co2_guessed = m_m_dot_co2_tube * (h_co2_hot_in - m_h_co2_cold_out);       //[kW]
+
+    //*diff_q_dot = (q_dot_co2_guessed - m_Q_dot_node) / std::max(q_dot_co2_guessed, 1.E-10); //[-]
+
+    double h_co2_cold_calc = h_co2_hot_in - m_Q_dot_node / m_m_dot_co2_tube;    //[kJ/kg]
+
+    *diff_h_co2_hot = (h_co2_cold_calc - m_h_co2_cold_out) / m_h_co2_cold_out;      //[-]
+
+    return 0;
+}
+
+
 int C_CO2_to_air_cooler::C_MEQ_node_energy_balance__T_co2_out::operator()(double T_co2_hot_in /*K*/, double *diff_T_co2_cold /*-*/)
 {
 	if (m_T_co2_cold_out <= m_T_air_cold_in)
@@ -1675,7 +2317,7 @@ int C_CO2_to_air_cooler::C_MEQ_node_energy_balance__T_co2_out::operator()(double
 	
 	double T_co2_cold_calc = T_co2_hot_in - m_Q_dot_node / C_dot_co2;
 	
-	*diff_T_co2_cold = (T_co2_cold_calc - m_T_co2_cold_out) / m_T_co2_cold_out;		//[K]
+	*diff_T_co2_cold = (T_co2_cold_calc - m_T_co2_cold_out) / m_T_co2_cold_out;		//[-]
 
 	return 0;
 }
@@ -1904,7 +2546,71 @@ int C_CO2_to_air_cooler::C_MEQ_target_CO2_dP__L_tube_pass::operator()(double L_t
 	c_m_dot_air_solver.settings(tol_m_dot, 50, 1.E-10, std::numeric_limits<double>::quiet_NaN(), true);
 
 	double m_dot_air_guess = mpc_ac->m_Q_dot_des / (5.0*m_cp_air);	//[kg/s] Guess assuming 5k temp rise
-	double m_dot_air_guess2 = 1.05*m_dot_air_guess;		//[kg/s] Another guess...
+    double W_dot_fan_test = std::numeric_limits<double>::quiet_NaN();   //[MWe]
+
+    c_m_dot_air_solver.test_member_function(m_dot_air_guess, &W_dot_fan_test);
+    if (!std::isfinite(W_dot_fan_test))
+    {
+        return -1;
+    }
+
+    // Want to make a rough bracket above and below target
+    C_monotonic_eq_solver::S_xy_pair xy_1;
+    int i_m_dot_guess = -1;         //[-]
+    if (W_dot_fan_test < mpc_ac->ms_des_par_cycle_dep.m_W_dot_fan_des)
+    {
+        // Increase mass flow rate to increase fan power
+        while (W_dot_fan_test < mpc_ac->ms_des_par_cycle_dep.m_W_dot_fan_des)
+        {
+            xy_1.x = m_dot_air_guess;   //[kg/s]
+            xy_1.y = W_dot_fan_test;    //[MWe]
+
+            i_m_dot_guess++;
+            
+            m_dot_air_guess *= 2.0;
+
+            if (i_m_dot_guess > 20)
+            {
+                return -2;
+            }
+
+            c_m_dot_air_solver.test_member_function(m_dot_air_guess, &W_dot_fan_test);
+
+            if (!std::isfinite(W_dot_fan_test))
+            {
+                return -3;
+            }
+        }
+    }
+    else
+    {
+        // Decrease mass flow rate to decrease fan power
+        while (W_dot_fan_test > mpc_ac->ms_des_par_cycle_dep.m_W_dot_fan_des)
+        {
+            xy_1.x = m_dot_air_guess;   //[kg/s]
+            xy_1.y = W_dot_fan_test;    //[MWe]
+            
+            i_m_dot_guess++;
+
+            m_dot_air_guess *= 0.5;
+
+            if (i_m_dot_guess > 20)
+            {
+                return -2;
+            }
+
+            c_m_dot_air_solver.test_member_function(m_dot_air_guess, &W_dot_fan_test);
+
+            if (!std::isfinite(W_dot_fan_test))
+            {
+                return -3;
+            }
+        }
+    }
+
+    C_monotonic_eq_solver::S_xy_pair xy_2;
+    xy_2.x = m_dot_air_guess;       //[kg/s]
+    xy_2.y = W_dot_fan_test;        //[MWe]
 
 	double m_dot_air_solved, m_dot_air_tol_solved;
 	m_dot_air_solved = m_dot_air_tol_solved = std::numeric_limits<double>::quiet_NaN();
@@ -1913,7 +2619,7 @@ int C_CO2_to_air_cooler::C_MEQ_target_CO2_dP__L_tube_pass::operator()(double L_t
 	int m_dot_air_solver_code = 0;
 	try
 	{
-		m_dot_air_solver_code = c_m_dot_air_solver.solve(m_dot_air_guess, m_dot_air_guess2,
+		m_dot_air_solver_code = c_m_dot_air_solver.solve(xy_1, xy_2,
 			mpc_ac->ms_des_par_cycle_dep.m_W_dot_fan_des, m_dot_air_solved, m_dot_air_tol_solved, m_dot_air_iter_solved);
 	}
 	catch (C_csp_exception)
@@ -1945,7 +2651,7 @@ int C_CO2_to_air_cooler::C_MEQ_target_CO2_dP__L_tube_pass::operator()(double L_t
 
 	double T_co2_in_calc = std::numeric_limits<double>::quiet_NaN();
 	// Solve air cooler performance with known geometry and inputs
-	int air_cooler_code = outlet_given_geom_and_air_m_dot(mpc_ac->ms_des_par_cycle_dep.m_T_hot_out_des, m_m_dot_tube,
+	int air_cooler_code = co2_outlet_given_geom_and_air_m_dot(mpc_ac->ms_des_par_cycle_dep.m_T_hot_out_des, m_m_dot_tube,
 		mpc_ac->ms_des_par_cycle_dep.m_delta_P_des, m_P_hot_ave, mpc_ac->ms_des_par_cycle_dep.m_P_hot_in_des,
 		mpc_ac->ms_des_par_ind.m_T_amb_des,
 		tol_T_in,
@@ -2080,165 +2786,345 @@ void C_CO2_to_air_cooler::calc_air_props(double T_amb /*K*/, double P_amb /*Pa*/
 	Pr_air = (cp_air*mu_air / k_air);			//[-] Prandtl number
 }
 
-int outlet_given_geom_and_air_m_dot(double T_co2_out /*K*/, double m_dot_co2_tube /*kg/s*/,
-	double delta_P_co2 /*kPa*/, double P_co2_ave /*kPa*/, double P_hot_in /*kPa*/,
-	double T_amb /*K*/,
-	double tol_T_in /*-*/,
-	C_csp_messages *mc_messages, CO2_state *co2_props,
-	double d_in_tube /*m*/, double A_cs_tube /*m2*/, double relrough /*-*/,
-	double L_node /*m*/, double V_node /*m3*/, int N_nodes /*-*/,
-	double N_par /*-*/, int N_passes /*-*/,
-	double alpha /*1/m*/, double cp_air /*J/kg-K*/,
-	double m_dot_air_total /*kg/s*/, double h_conv_air /*W/m2-K*/,
-	double & delta_P_co2_calc /*kPa*/, double & T_co2_in_calc /*K*/)
+int co2_outlet_given_geom_and_air_m_dot(double T_co2_cold_out /*K*/, double m_dot_co2_tube /*kg/s*/,
+    double delta_P_co2 /*kPa*/, double P_co2_ave /*kPa*/, double P_hot_in /*kPa*/,
+    double T_amb /*K*/,
+    double tol_h_in /*-*/,
+    C_csp_messages *mc_messages, CO2_state *co2_props,
+    double d_in_tube /*m*/, double A_cs_tube /*m2*/, double relrough /*-*/,
+    double L_node /*m*/, double V_node /*m3*/, int N_nodes /*-*/,
+    double N_par /*-*/, int N_passes /*-*/,
+    double alpha /*1/m*/, double cp_air /*J/kg-K*/,
+    double m_dot_air_total /*kg/s*/, double h_conv_air /*W/m2-K*/,
+    double & delta_P_co2_calc /*kPa*/, double & T_co2_in_calc /*K*/)
 {
-	double m_T_co2_hot_max = 700.0 + 273.15;	//[K]
+    double T_co2_hot_max = 700.0 + 273.15;      //[K]
 
-	double A_surf_node = V_node*alpha;			//[m2] Air-side surface area of node
-	double UA_node = A_surf_node*h_conv_air;	//[W/K] Conductance of node - assuming air convective heat transfer is governing resistance
+    int prop_err_code = CO2_TP(T_co2_hot_max, P_co2_ave, co2_props);
+    if (prop_err_code != 0)
+    {
+        return -1;
+    }
+    double h_co2_hot_max = co2_props->enth;     //[kJ/kg]
 
-	// Set known inlet conditions: iteration thru # of loops needs previous loop info
-	util::matrix_t<double> mt_T_co2(N_nodes + 2, N_passes + 1, std::numeric_limits<double>::quiet_NaN());	//[K]
-	util::matrix_t<double> mt_P_co2(N_nodes + 2, N_passes + 1, std::numeric_limits<double>::quiet_NaN());	//[kPa]
-	util::matrix_t<double> mt_T_air(N_nodes + 2, N_passes + 1, std::numeric_limits<double>::quiet_NaN());	//[K]
-	
-	mt_T_co2(1, 0) = T_co2_out;		//[K]
-	mt_P_co2(1, 0) = P_hot_in - delta_P_co2;	//[kPa]
-	for (int i = 1; i < N_nodes + 2; i++)
-		mt_T_air(i, 0) = T_amb;		//[K]
+    prop_err_code = CO2_TP(T_co2_cold_out, P_co2_ave, co2_props);
+    if (prop_err_code != 0)
+    {
+        return -2;
+    }
+    double h_co2_cold_out = co2_props->enth;    //[kJ/kg]
 
-	// Assuming constant air props, so can set those
-	double m_dot_air_tube = m_dot_air_total / (N_par*N_nodes);
-	double C_dot_air = cp_air*m_dot_air_tube;	//[W/K]
+    double A_surf_node = V_node * alpha;			//[m2] Air-side surface area of node
+    double UA_node = A_surf_node * h_conv_air;	//[W/K] Conductance of node - assuming air convective heat transfer is governing resistance
 
-	for (int j = 1; j < N_passes + 1; j++)
-	{
-		// Set up constants and multipliers to switch direction of flow
-		int mult_const = (j + 1) % 2;
-		int constant = N_nodes + 2;
-		int mult_index = 1 - 2*mult_const;
-		int out_const = mult_index;
+    // Set known inlet conditions: iteration thru # of loops needs previous loop info
+    util::matrix_t<double> mt_h_co2(N_nodes + 2, N_passes + 1, std::numeric_limits<double>::quiet_NaN());	//[K]
+    util::matrix_t<double> mt_T_co2(N_nodes + 2, N_passes + 1, std::numeric_limits<double>::quiet_NaN());	//[K]
+    util::matrix_t<double> mt_P_co2(N_nodes + 2, N_passes + 1, std::numeric_limits<double>::quiet_NaN());	//[kPa]
+    util::matrix_t<double> mt_T_air(N_nodes + 2, N_passes + 1, std::numeric_limits<double>::quiet_NaN());	//[K]
 
-		// Set inlet temperatures & pressures of current row
-		int mult_inlet = (j + 1) % 2;
-		int const_inlet = N_nodes;
-		int inlet = mult_inlet*const_inlet + 1;
+    mt_h_co2(1, 0) = h_co2_cold_out;        //[kJ/kg]
+    mt_T_co2(1, 0) = T_co2_cold_out;		//[K]
+    mt_P_co2(1, 0) = P_hot_in - delta_P_co2;	//[kPa]
+    for (int i = 1; i < N_nodes + 2; i++)
+        mt_T_air(i, 0) = T_amb;		//[K]
 
-		// Set loop inlet conditions
-		mt_T_co2((int)inlet, j) = mt_T_co2((int)inlet, j - 1);		//[K]
-		mt_P_co2((int)inlet, j) = mt_P_co2((int)inlet, j - 1);		//[kPa]
+    // Assuming constant air props, so can set those
+    double m_dot_air_tube = m_dot_air_total / (N_par*N_nodes);
+    double C_dot_air = cp_air * m_dot_air_tube;	//[W/K]
 
-		for (int i = 1; i < N_nodes + 1; i++)
-		{
-			int in = mult_const*constant + mult_index*i;
-			int out = in + out_const;
-			int air_in = fmin(in, out);
+    for (int j = 1; j < N_passes + 1; j++)
+    {
+        // Set up constants and multipliers to switch direction of flow
+        int mult_const = (j + 1) % 2;
+        int constant = N_nodes + 2;
+        int mult_index = 1 - 2 * mult_const;
+        int out_const = mult_index;
 
-			// Get CO2 and Air inlet temperatures to node
-			double T_co2_cold_local = mt_T_co2((size_t)in, j);			//[K]
-			double T_air_cold_in_local = mt_T_air((size_t)air_in, j - 1);	//[K]
+        // Set inlet temperatures & pressures of current row
+        int mult_inlet = (j + 1) % 2;
+        int const_inlet = N_nodes;
+        int inlet = mult_inlet * const_inlet + 1;
 
-			C_CO2_to_air_cooler::C_MEQ_node_energy_balance__T_co2_out c_node_bal_eq(co2_props,
-				T_co2_cold_local, P_co2_ave,
-				m_dot_co2_tube,
-				T_air_cold_in_local, C_dot_air,
-				UA_node);
-			C_monotonic_eq_solver c_node_bal_solver(c_node_bal_eq);
+        // Set loop inlet conditions
+        mt_h_co2((int)inlet, j) = mt_h_co2((int)inlet, j - 1);      //[kJ/kg]
+        mt_T_co2((int)inlet, j) = mt_T_co2((int)inlet, j - 1);		//[K]
+        mt_P_co2((int)inlet, j) = mt_P_co2((int)inlet, j - 1);		//[kPa]
 
-			c_node_bal_solver.settings(tol_T_in, 50, T_co2_cold_local, m_T_co2_hot_max, false);
+        for (int i = 1; i < N_nodes + 1; i++)
+        {
+            int in = mult_const * constant + mult_index * i;
+            int out = in + out_const;
+            int air_in = fmin(in, out);
 
-			double diff_T_co2_cold_calc = std::numeric_limits<double>::quiet_NaN();
-			int diff_T_co2_cold_calc_code = c_node_bal_solver.test_member_function(m_T_co2_hot_max, &diff_T_co2_cold_calc);
-			if (diff_T_co2_cold_calc_code != 0)
-			{
-				throw(C_csp_exception("Air cooler UA calculation failed at maximum CO2 temperature"));
-			}
+            // Get CO2 and Air inlet temperatures to node
+            double i_h_co2_cold = mt_h_co2((size_t)in, j);			//[K]
+            double T_air_cold_in_local = mt_T_air((size_t)air_in, j - 1);	//[K]
 
-			double T_co2_hot_solved = std::numeric_limits<double>::quiet_NaN();
-			if (diff_T_co2_cold_calc >= 0.0)
-			{	// Use monotonic equation solver to fine T_co2_hot
-				double T_co2_hot_local_guess = T_co2_cold_local + 0.02;			//[K]
-				double T_co2_hot_local_guess_2 = T_co2_hot_local_guess + 1.5;	//[K]
+            C_CO2_to_air_cooler::C_MEQ_node_energy_balance__h_co2_out c_node_e_bal_eq(co2_props,
+                i_h_co2_cold, P_co2_ave,
+                m_dot_co2_tube,
+                T_air_cold_in_local, C_dot_air,
+                UA_node);
+            C_monotonic_eq_solver c_node_e_bal_solver(c_node_e_bal_eq);
 
-				double T_co2_hot_tol_solved;
-				T_co2_hot_tol_solved = std::numeric_limits<double>::quiet_NaN();
-				int T_co2_hot_iter_solved = -1;
+            c_node_e_bal_solver.settings(tol_h_in, 50, i_h_co2_cold, h_co2_hot_max, false);
 
-				int T_co2_hot_solver_code = 0;
-				try
-				{
-					T_co2_hot_solver_code = c_node_bal_solver.solve(T_co2_hot_local_guess, T_co2_hot_local_guess_2, 0.0, T_co2_hot_solved, T_co2_hot_tol_solved, T_co2_hot_iter_solved);
-				}
-				catch (C_csp_exception)
-				{
-					throw(C_csp_exception("Air cooler calculation to find T_co2_hot that matched node UA returned an exception"));
-				}
+            double diff_h_co2_cold_calc = std::numeric_limits<double>::quiet_NaN();
 
-				if (T_co2_hot_solver_code != C_monotonic_eq_solver::CONVERGED)
-				{
-					if (T_co2_hot_solver_code > C_monotonic_eq_solver::CONVERGED && fabs(T_co2_hot_tol_solved) <= 0.1)
-					{
-						std::string error_msg = util::format("Air cooler iteration on nodal hot co2 temperature rate only reached a convergence "
-							"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
-							T_co2_hot_tol_solved);
-						mc_messages->add_message(C_csp_messages::WARNING, error_msg);
-					}
-					else
-					{
-						return -2;
-						//throw(C_csp_exception("Air cooler iteration on air mass flow rate did not converge"));
-					}
-				}
-			}
-			else
-			{	// CO2 is unrealistically hot. stop here before property routine gets weird
-				//    (although, generally, returning a unique value is useful...)
-				//    (which is why we let it get this hot instead of say using the target outlet temp)
-				T_co2_hot_solved = m_T_co2_hot_max;
-			}
+            int diff_h_co2_cold_calc_code = c_node_e_bal_solver.test_member_function(h_co2_hot_max, &diff_h_co2_cold_calc);
+            if (diff_h_co2_cold_calc_code != 0)
+            {
+                throw(C_csp_exception("Air cooler UA calculation failed at maximum CO2 enthalpy"));
+            }
 
-			double Q_dot_node = c_node_bal_eq.m_Q_dot_node;		//[W]
-			mt_T_co2((size_t)out, j) = T_co2_hot_solved;		//[K]
-			mt_T_air((size_t)air_in, j) = mt_T_air((size_t)air_in, j - 1) + Q_dot_node / C_dot_air;	//[K]
+            double h_co2_hot_solved = std::numeric_limits<double>::quiet_NaN();
 
-			// Add pressure drop calcs (co2_props is up-to-date)
-			// ** Could also move this to a function if also called to guess length
-			double visc_dyn_co2 = CO2_visc(co2_props->dens, co2_props->temp)*1.E-6;	//[Pa-s] convert from (uPa-s)
-			double Re_co2 = m_dot_co2_tube*d_in_tube / (A_cs_tube*visc_dyn_co2);		//[-]
+            if (diff_h_co2_cold_calc >= 0.0)
+            {
+                // Use monotonic equation solver to find T_co2_hot
+                double h_co2_hot_guess = i_h_co2_cold + 0.02;       //[K]
+                double h_co2_hot_guess2 = i_h_co2_cold + 1.5;       //[K]
 
-			double rho_co2 = co2_props->dens;				//[kg/s]
-			double visc_kin_co2 = visc_dyn_co2 / rho_co2;	//[m2/s]
-			double cond_co2 = CO2_cond(co2_props->dens, co2_props->temp);	//[W/m-K]
-			double specheat_co2 = co2_props->cp*1000.0;		//[J/kg-K] convert from kJ/kg-K
-			double alpha_co2 = cond_co2 / (specheat_co2*rho_co2);	//[m2/s]
-			double Pr_co2 = visc_kin_co2 / alpha_co2;		//[-]
+                double h_co2_hot_tol_solved = std::numeric_limits<double>::quiet_NaN();
+                int h_co2_hot_iter = -1;
+                int h_co2_hot_solve_code = 0;
 
-			double Nusselt_co2 = -999.9;	//[-]
-			double f_co2 = -999.9;			//[-]
+                try
+                {
+                    h_co2_hot_solve_code = c_node_e_bal_solver.solve(h_co2_hot_guess, h_co2_hot_guess2, 0.0, h_co2_hot_solved, h_co2_hot_tol_solved, h_co2_hot_iter);
+                }
+                catch (C_csp_exception)
+                {
+                    throw(C_csp_exception("Air cooler calculation to find h_co2_hot to solve node energy balance returned an exception"));
+                }
 
-			// Specifying the length over diameter = 1000 sets the problem as Fully Developed Flow
-			// CSP::PipeFlow(Re_co2, Pr_co2, 1000.0, m_relRough, Nusselt_co2, f_co2);
-			CSP::PipeFlow(Re_co2, Pr_co2, L_node / d_in_tube, relrough, Nusselt_co2, f_co2);
+                if (h_co2_hot_solve_code != C_monotonic_eq_solver::CONVERGED)
+                {
+                    if (h_co2_hot_solve_code > C_monotonic_eq_solver::CONVERGED && fabs(h_co2_hot_tol_solved) <= 0.1)
+                    {
+                        std::string error_msg = util::format("Air cooler iteration on nodal energy balance only reached a convergence "
+                            "= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
+                            h_co2_hot_tol_solved);
+                        mc_messages->add_message(C_csp_messages::WARNING, error_msg);
+                    }
+                    else
+                    {
+                        return -3;
+                    }
+                }
+            }
+            else
+            {
+                // CO2 is unrealistically hot. stop here before property routine gets weird
+                //    (although, generally, returning a unique value is useful...)
+                //    (which is why we let it get this hot instead of say using the target outlet temp)
+                h_co2_hot_solved = h_co2_hot_max;       //[kJ/kg]                
+            }
+            
+            double Q_dot_node = c_node_e_bal_eq.m_Q_dot_node;   //[W]
+            mt_h_co2((size_t)out, j) = h_co2_hot_solved;        //[kJ/kg]
+            mt_T_co2((size_t)out, j) = c_node_e_bal_eq.m_T_co2_hot_in;     //[K]
 
-			double u_m = m_dot_co2_tube / (rho_co2*A_cs_tube);		//[m/s]
+            mt_T_air((size_t)air_in, j) = mt_T_air((size_t)air_in, j - 1) + Q_dot_node / C_dot_air;	//[K]
 
-			mt_P_co2((size_t)out, j) = mt_P_co2((size_t)in, j) + f_co2*L_node*rho_co2*pow(u_m, 2) / (2.0*d_in_tube) / 1000.0;	//[kPa]
+            // Add pressure drop calcs (co2_props is up-to-date for h_ave, P_ave)
+            // ** Could also move this to a function if also called to guess length
+            double visc_dyn_co2 = CO2_visc(co2_props->dens, co2_props->temp)*1.E-6;	//[Pa-s] convert from (uPa-s)
+            double Re_co2 = m_dot_co2_tube * d_in_tube / (A_cs_tube*visc_dyn_co2);		//[-]
 
-			double deltaP_node = mt_P_co2((size_t)out, j) - mt_P_co2((size_t)in, j);	//[kPa]
+            double rho_co2 = co2_props->dens;				//[kg/s]
+            double visc_kin_co2 = visc_dyn_co2 / rho_co2;	//[m2/s]
+            double cond_co2 = CO2_cond(co2_props->dens, co2_props->temp);	//[W/m-K]
+            double specheat_co2 = co2_props->cp*1000.0;		//[J/kg-K] convert from kJ/kg-K
+            double alpha_co2 = cond_co2 / (specheat_co2*rho_co2);	//[m2/s]
+            double Pr_co2 = visc_kin_co2 / alpha_co2;		//[-]
 
-			mt_P_co2((size_t)out, j) = fmin(25000.0, fmax(1000.0, mt_P_co2((size_t)out, j)));
+            double Nusselt_co2 = -999.9;	//[-]
+            double f_co2 = -999.9;			//[-]
 
-		}
-	}
+            // Specifying the length over diameter = 1000 sets the problem as Fully Developed Flow
+            // CSP::PipeFlow(Re_co2, Pr_co2, 1000.0, m_relRough, Nusselt_co2, f_co2);
+            CSP::PipeFlow(Re_co2, Pr_co2, L_node / d_in_tube, relrough, Nusselt_co2, f_co2);
 
-	// index that gives outlet temperatur and pressure: depends on whether odd or even loops
-	int final_outlet_index = ((N_passes + 2) % 2)*N_nodes + 1;
+            double u_m = m_dot_co2_tube / (rho_co2*A_cs_tube);		//[m/s]
 
-	delta_P_co2_calc = mt_P_co2(final_outlet_index, N_passes) - mt_P_co2(1, 0);	//[kPa]
-	T_co2_in_calc = mt_T_co2(final_outlet_index, N_passes);						//[K]
+            mt_P_co2((size_t)out, j) = mt_P_co2((size_t)in, j) + f_co2 * L_node*rho_co2*pow(u_m, 2) / (2.0*d_in_tube) / 1000.0;	//[kPa]
 
-	return 0;
+            double deltaP_node = mt_P_co2((size_t)out, j) - mt_P_co2((size_t)in, j);	//[kPa]
+
+            mt_P_co2((size_t)out, j) = fmin(25000.0, fmax(1000.0, mt_P_co2((size_t)out, j)));
+        }
+    }
+
+    // index that gives outlet temperatur and pressure: depends on whether odd or even loops
+    int final_outlet_index = ((N_passes + 2) % 2)*N_nodes + 1;
+
+    delta_P_co2_calc = mt_P_co2(final_outlet_index, N_passes) - mt_P_co2(1, 0);	//[kPa]
+    T_co2_in_calc = mt_T_co2(final_outlet_index, N_passes);						//[K]
+
+    return 0;
 }
+
+//int outlet_given_geom_and_air_m_dot(double T_co2_out /*K*/, double m_dot_co2_tube /*kg/s*/,
+//	double delta_P_co2 /*kPa*/, double P_co2_ave /*kPa*/, double P_hot_in /*kPa*/,
+//	double T_amb /*K*/,
+//	double tol_T_in /*-*/,
+//	C_csp_messages *mc_messages, CO2_state *co2_props,
+//	double d_in_tube /*m*/, double A_cs_tube /*m2*/, double relrough /*-*/,
+//	double L_node /*m*/, double V_node /*m3*/, int N_nodes /*-*/,
+//	double N_par /*-*/, int N_passes /*-*/,
+//	double alpha /*1/m*/, double cp_air /*J/kg-K*/,
+//	double m_dot_air_total /*kg/s*/, double h_conv_air /*W/m2-K*/,
+//	double & delta_P_co2_calc /*kPa*/, double & T_co2_in_calc /*K*/)
+//{
+//	double m_T_co2_hot_max = 700.0 + 273.15;	//[K]
+//
+//	double A_surf_node = V_node*alpha;			//[m2] Air-side surface area of node
+//	double UA_node = A_surf_node*h_conv_air;	//[W/K] Conductance of node - assuming air convective heat transfer is governing resistance
+//
+//	// Set known inlet conditions: iteration thru # of loops needs previous loop info
+//	util::matrix_t<double> mt_T_co2(N_nodes + 2, N_passes + 1, std::numeric_limits<double>::quiet_NaN());	//[K]
+//	util::matrix_t<double> mt_P_co2(N_nodes + 2, N_passes + 1, std::numeric_limits<double>::quiet_NaN());	//[kPa]
+//	util::matrix_t<double> mt_T_air(N_nodes + 2, N_passes + 1, std::numeric_limits<double>::quiet_NaN());	//[K]
+//	
+//	mt_T_co2(1, 0) = T_co2_out;		//[K]
+//	mt_P_co2(1, 0) = P_hot_in - delta_P_co2;	//[kPa]
+//	for (int i = 1; i < N_nodes + 2; i++)
+//		mt_T_air(i, 0) = T_amb;		//[K]
+//
+//	// Assuming constant air props, so can set those
+//	double m_dot_air_tube = m_dot_air_total / (N_par*N_nodes);
+//	double C_dot_air = cp_air*m_dot_air_tube;	//[W/K]
+//
+//	for (int j = 1; j < N_passes + 1; j++)
+//	{
+//		// Set up constants and multipliers to switch direction of flow
+//		int mult_const = (j + 1) % 2;
+//		int constant = N_nodes + 2;
+//		int mult_index = 1 - 2*mult_const;
+//		int out_const = mult_index;
+//
+//		// Set inlet temperatures & pressures of current row
+//		int mult_inlet = (j + 1) % 2;
+//		int const_inlet = N_nodes;
+//		int inlet = mult_inlet*const_inlet + 1;
+//
+//		// Set loop inlet conditions
+//		mt_T_co2((int)inlet, j) = mt_T_co2((int)inlet, j - 1);		//[K]
+//		mt_P_co2((int)inlet, j) = mt_P_co2((int)inlet, j - 1);		//[kPa]
+//
+//		for (int i = 1; i < N_nodes + 1; i++)
+//		{
+//			int in = mult_const*constant + mult_index*i;
+//			int out = in + out_const;
+//			int air_in = fmin(in, out);
+//
+//			// Get CO2 and Air inlet temperatures to node
+//			double T_co2_cold_local = mt_T_co2((size_t)in, j);			//[K]
+//			double T_air_cold_in_local = mt_T_air((size_t)air_in, j - 1);	//[K]
+//
+//			C_CO2_to_air_cooler::C_MEQ_node_energy_balance__T_co2_out c_node_bal_eq(co2_props,
+//				T_co2_cold_local, P_co2_ave,
+//				m_dot_co2_tube,
+//				T_air_cold_in_local, C_dot_air,
+//				UA_node);
+//			C_monotonic_eq_solver c_node_bal_solver(c_node_bal_eq);
+//
+//			c_node_bal_solver.settings(tol_T_in, 50, T_co2_cold_local, m_T_co2_hot_max, false);
+//
+//			double diff_T_co2_cold_calc = std::numeric_limits<double>::quiet_NaN();
+//			int diff_T_co2_cold_calc_code = c_node_bal_solver.test_member_function(m_T_co2_hot_max, &diff_T_co2_cold_calc);
+//			if (diff_T_co2_cold_calc_code != 0)
+//			{
+//				throw(C_csp_exception("Air cooler UA calculation failed at maximum CO2 temperature"));
+//			}
+//
+//			double T_co2_hot_solved = std::numeric_limits<double>::quiet_NaN();
+//			if (diff_T_co2_cold_calc >= 0.0)
+//			{	// Use monotonic equation solver to find T_co2_hot
+//				double T_co2_hot_local_guess = T_co2_cold_local + 0.02;			//[K]
+//				double T_co2_hot_local_guess_2 = T_co2_hot_local_guess + 1.5;	//[K]
+//
+//				double T_co2_hot_tol_solved;
+//				T_co2_hot_tol_solved = std::numeric_limits<double>::quiet_NaN();
+//				int T_co2_hot_iter_solved = -1;
+//
+//				int T_co2_hot_solver_code = 0;
+//				try
+//				{
+//					T_co2_hot_solver_code = c_node_bal_solver.solve(T_co2_hot_local_guess, T_co2_hot_local_guess_2, 0.0, T_co2_hot_solved, T_co2_hot_tol_solved, T_co2_hot_iter_solved);
+//				}
+//				catch (C_csp_exception)
+//				{
+//					throw(C_csp_exception("Air cooler calculation to find T_co2_hot that matched node UA returned an exception"));
+//				}
+//
+//				if (T_co2_hot_solver_code != C_monotonic_eq_solver::CONVERGED)
+//				{
+//					if (T_co2_hot_solver_code > C_monotonic_eq_solver::CONVERGED && fabs(T_co2_hot_tol_solved) <= 0.1)
+//					{
+//						std::string error_msg = util::format("Air cooler iteration on nodal hot co2 temperature rate only reached a convergence "
+//							"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
+//							T_co2_hot_tol_solved);
+//						mc_messages->add_message(C_csp_messages::WARNING, error_msg);
+//					}
+//					else
+//					{
+//						return -2;
+//						//throw(C_csp_exception("Air cooler iteration on air mass flow rate did not converge"));
+//					}
+//				}
+//			}
+//			else
+//			{	// CO2 is unrealistically hot. stop here before property routine gets weird
+//				//    (although, generally, returning a unique value is useful...)
+//				//    (which is why we let it get this hot instead of say using the target outlet temp)
+//				T_co2_hot_solved = m_T_co2_hot_max;
+//			}
+//
+//			double Q_dot_node = c_node_bal_eq.m_Q_dot_node;		//[W]
+//			mt_T_co2((size_t)out, j) = T_co2_hot_solved;		//[K]
+//			mt_T_air((size_t)air_in, j) = mt_T_air((size_t)air_in, j - 1) + Q_dot_node / C_dot_air;	//[K]
+//
+//			// Add pressure drop calcs (co2_props is up-to-date)
+//			// ** Could also move this to a function if also called to guess length
+//			double visc_dyn_co2 = CO2_visc(co2_props->dens, co2_props->temp)*1.E-6;	//[Pa-s] convert from (uPa-s)
+//			double Re_co2 = m_dot_co2_tube*d_in_tube / (A_cs_tube*visc_dyn_co2);		//[-]
+//
+//			double rho_co2 = co2_props->dens;				//[kg/s]
+//			double visc_kin_co2 = visc_dyn_co2 / rho_co2;	//[m2/s]
+//			double cond_co2 = CO2_cond(co2_props->dens, co2_props->temp);	//[W/m-K]
+//			double specheat_co2 = co2_props->cp*1000.0;		//[J/kg-K] convert from kJ/kg-K
+//			double alpha_co2 = cond_co2 / (specheat_co2*rho_co2);	//[m2/s]
+//			double Pr_co2 = visc_kin_co2 / alpha_co2;		//[-]
+//
+//			double Nusselt_co2 = -999.9;	//[-]
+//			double f_co2 = -999.9;			//[-]
+//
+//			// Specifying the length over diameter = 1000 sets the problem as Fully Developed Flow
+//			// CSP::PipeFlow(Re_co2, Pr_co2, 1000.0, m_relRough, Nusselt_co2, f_co2);
+//			CSP::PipeFlow(Re_co2, Pr_co2, L_node / d_in_tube, relrough, Nusselt_co2, f_co2);
+//
+//			double u_m = m_dot_co2_tube / (rho_co2*A_cs_tube);		//[m/s]
+//
+//			mt_P_co2((size_t)out, j) = mt_P_co2((size_t)in, j) + f_co2*L_node*rho_co2*pow(u_m, 2) / (2.0*d_in_tube) / 1000.0;	//[kPa]
+//
+//			double deltaP_node = mt_P_co2((size_t)out, j) - mt_P_co2((size_t)in, j);	//[kPa]
+//
+//			mt_P_co2((size_t)out, j) = fmin(25000.0, fmax(1000.0, mt_P_co2((size_t)out, j)));
+//
+//		}
+//	}
+//
+//	// index that gives outlet temperatur and pressure: depends on whether odd or even loops
+//	int final_outlet_index = ((N_passes + 2) % 2)*N_nodes + 1;
+//
+//	delta_P_co2_calc = mt_P_co2(final_outlet_index, N_passes) - mt_P_co2(1, 0);	//[kPa]
+//	T_co2_in_calc = mt_T_co2(final_outlet_index, N_passes);						//[K]
+//
+//	return 0;
+//}
 
 int C_CO2_to_air_cooler::off_design_given_T_out(double T_amb /*K*/, double T_hot_in /*K*/, double P_hot_in /*kPa*/,
 	double m_dot_hot /*kg/s*/, double T_hot_out /*K*/, double & W_dot_fan /*MWe*/)
@@ -2278,7 +3164,34 @@ int C_CO2_to_air_cooler::off_design_given_T_out(double T_amb /*K*/, double T_hot
 
 	// Generate guess values
 	double m_dot_air_guess1 = m_dot_hot/ms_des_par_cycle_dep.m_m_dot_total*m_m_dot_air_des;		//[kg/s]
+	
+	double T_hot_in_calc1 = 1000.0;
+	int i_m_dot_guess = -1;
+
+    // As air mass flow rate increases, T_hot_in_calc increases
+	while (T_hot_in_calc1 >= 965.0 || !std::isfinite(T_hot_in_calc1))
+	{
+		i_m_dot_guess++;
+
+		if (i_m_dot_guess > 0)
+			m_dot_air_guess1 *= 0.75;
+
+		if (i_m_dot_guess > 10)
+			return -2;
+
+		int solver_code = c_m_dot_od_solver.test_member_function(m_dot_air_guess1, &T_hot_in_calc1);
+	}
+	
 	double m_dot_air_guess2 = 0.7*m_dot_air_guess1;	//[kg/s]
+    double T_hot_in_calc2 = std::numeric_limits<double>::quiet_NaN();
+    int solver_code = c_m_dot_od_solver.test_member_function(m_dot_air_guess2, &T_hot_in_calc2);
+
+    while (T_hot_in_calc2 == T_hot_in_calc1 || !std::isfinite(T_hot_in_calc2))
+    {
+        m_dot_air_guess2 *= 1.25;
+
+        int solver_code = c_m_dot_od_solver.test_member_function(m_dot_air_guess2, &T_hot_in_calc2);
+    }
 
 	c_m_dot_od_solver.settings(tol_m_dot, 50, m_dot_air_lower, m_dot_air_upper, true);
 
@@ -2331,7 +3244,7 @@ int C_CO2_to_air_cooler::C_MEQ_od_air_mdot__T_co2_out::operator()(double m_dot_a
 
 	double delta_P_co2 = std::numeric_limits<double>::quiet_NaN();
 	// Solve air cooler performance with known geometry and inputs
-	int air_cooler_code = outlet_given_geom_and_air_m_dot(m_T_hot_out, m_m_dot_hot_tube,
+	int air_cooler_code = co2_outlet_given_geom_and_air_m_dot(m_T_hot_out, m_m_dot_hot_tube,
 		m_deltaP_co2, m_P_eval, m_P_hot_in,
 		m_T_amb,
 		m_tol_op/2.0,

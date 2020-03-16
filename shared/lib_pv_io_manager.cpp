@@ -3,6 +3,8 @@
 
 #include "lib_pv_io_manager.h" 
 
+static const int __nday[12] = { 31,28,31,30,31,30,31,31,30,31,30,31 };
+
 PVIOManager::PVIOManager(compute_module*  cm, std::string cmName)
 {
 	std::unique_ptr<Irradiance_IO> ptr(new Irradiance_IO(cm, cmName));
@@ -50,12 +52,12 @@ void PVIOManager::allocateOutputs(compute_module* cm)
 	m_PVSystemIO->AllocateOutputs(cm);
 }
 
-Irradiance_IO * PVIOManager::getIrradianceIO()  { return m_IrradianceIO.get(); }
-compute_module * PVIOManager::getComputeModule()  { return m_computeModule; }
-Subarray_IO * PVIOManager::getSubarrayIO(size_t subarrayNumber)  { return m_SubarraysIO[subarrayNumber].get(); }
+Irradiance_IO * PVIOManager::getIrradianceIO() { return m_IrradianceIO.get(); }
+compute_module * PVIOManager::getComputeModule() { return m_computeModule; }
+Subarray_IO * PVIOManager::getSubarrayIO(size_t subarrayNumber) { return m_SubarraysIO[subarrayNumber].get(); }
 ShadeDB8_mpp * PVIOManager::getShadeDatabase() { return m_shadeDatabase.get(); }
 
-std::vector<Subarray_IO *> PVIOManager::getSubarrays() 
+std::vector<Subarray_IO *> PVIOManager::getSubarrays()
 {
 	std::vector<Subarray_IO*> subarrays;
 	for (size_t subarray = 0; subarray < m_SubarraysIO.size(); subarray++) {
@@ -64,9 +66,9 @@ std::vector<Subarray_IO *> PVIOManager::getSubarrays()
 	return subarrays;
 }
 
-PVSystem_IO * PVIOManager::getPVSystemIO()  { return m_PVSystemIO.get(); }
+PVSystem_IO * PVIOManager::getPVSystemIO() { return m_PVSystemIO.get(); }
 
-Simulation_IO * PVIOManager::getSimulationIO()  { return m_SimulationIO.get(); }
+Simulation_IO * PVIOManager::getSimulationIO() { return m_SimulationIO.get(); }
 
 
 Simulation_IO::Simulation_IO(compute_module* cm, Irradiance_IO & IrradianceIO)
@@ -93,7 +95,7 @@ Irradiance_IO::Irradiance_IO(compute_module* cm, std::string cmName)
 	if (cm->is_assigned("solar_resource_file")) {
 		weatherDataProvider = std::unique_ptr<weather_data_provider>(new weatherfile(cm->as_string("solar_resource_file")));
 		weatherfile *weatherFile = dynamic_cast<weatherfile*>(weatherDataProvider.get());
-		if (!weatherFile->ok()) throw compute_module::exec_error(cmName, weatherFile->message());
+		if (!weatherFile->ok()) throw exec_error(cmName, weatherFile->message());
 		if (weatherFile->has_message()) cm->log(weatherFile->message(), SSC_WARNING);
 	}
 	else if (cm->is_assigned("solar_resource_data")) {
@@ -101,7 +103,7 @@ Irradiance_IO::Irradiance_IO(compute_module* cm, std::string cmName)
 		if (weatherDataProvider->has_message()) cm->log(weatherDataProvider->message(), SSC_WARNING);
 	}
 	else {
-		throw compute_module::exec_error(cmName, "No weather data supplied");
+		throw exec_error(cmName, "No weather data supplied");
 	}
 
 	// assumes instantaneous values, unless hourly file with no minute column specified
@@ -127,7 +129,7 @@ Irradiance_IO::Irradiance_IO(compute_module* cm, std::string cmName)
 		tsShiftHours = 0.5;
 	}
 	else
-		throw compute_module::exec_error(cmName, "subhourly weather files must specify the minute for each record");
+		throw exec_error(cmName, "subhourly weather files must specify the minute for each record");
 
 	weatherDataProvider->header(&weatherHeader);
 
@@ -136,14 +138,14 @@ Irradiance_IO::Irradiance_IO(compute_module* cm, std::string cmName)
 	stepsPerHour = numberOfWeatherFileRecords / 8760;
 	dtHour = 1.0 / stepsPerHour;
 
-	if ( numberOfWeatherFileRecords % 8760 != 0 )
-		throw compute_module::exec_error(cmName, util::format("invalid number of data records (%zu): must be an integer multiple of 8760", numberOfWeatherFileRecords));
+	if (numberOfWeatherFileRecords % 8760 != 0)
+		throw exec_error(cmName, util::format("invalid number of data records (%zu): must be an integer multiple of 8760", numberOfWeatherFileRecords));
 	if (stepsPerHour < 1 || stepsPerHour > 60)
-		throw compute_module::exec_error(cmName, util::format("%d timesteps per hour found. Weather data should be single year.", stepsPerHour));
+		throw exec_error(cmName, util::format("%d timesteps per hour found. Weather data should be single year.", stepsPerHour));
 
 	useWeatherFileAlbedo = cm->as_boolean("use_wf_albedo");
 	userSpecifiedMonthlyAlbedo = cm->as_vector_double("albedo");
-	
+
 	checkWeatherFile(cm, cmName);
 }
 
@@ -152,7 +154,7 @@ void Irradiance_IO::checkWeatherFile(compute_module * cm, std::string cmName)
 	for (size_t idx = 0; idx < numberOfWeatherFileRecords; idx++)
 	{
 		if (!weatherDataProvider->read(&weatherRecord))
-			throw compute_module::exec_error(cmName, "could not read data line " + util::to_string((int)(idx + 1)) + " in weather file");
+			throw exec_error(cmName, "could not read data line " + util::to_string((int)(idx + 1)) + " in weather file");
 
 		// Check for missing data
 		if ((weatherRecord.gh != weatherRecord.gh) && (radiationMode == irrad::DN_GH || radiationMode == irrad::GH_DF)) {
@@ -211,16 +213,21 @@ void Irradiance_IO::checkWeatherFile(compute_module * cm, std::string cmName)
 				weatherRecord.poa, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour), SSC_WARNING, (float)idx);
 			weatherRecord.poa = 0;
 		}
+		//albedo is allowed to be missing in the weather file- will be filled in from user-entered monthly array.
+		//only throw an error if there's a value that isn't reasonable somewhere
 		int month_idx = weatherRecord.month - 1;
-		bool albedoError = false;
-		if (useWeatherFileAlbedo && (!std::isfinite(weatherRecord.alb) || weatherRecord.alb < 0 || weatherRecord.alb > 1)) {
-			albedoError = true;
+		bool albedoError = true;
+		if (useWeatherFileAlbedo && std::isfinite(weatherRecord.alb) && weatherRecord.alb > 0 && weatherRecord.alb < 1) {
+			albedoError = false;
 		}
-		else if ((month_idx >= 0 && month_idx < 12) && (userSpecifiedMonthlyAlbedo[month_idx] < 0 || userSpecifiedMonthlyAlbedo[month_idx] > 1)) {
-			albedoError = true;
+		else if (month_idx >= 0 && month_idx < 12) {
+			if (userSpecifiedMonthlyAlbedo[month_idx] > 0 && userSpecifiedMonthlyAlbedo[month_idx] < 1) {
+				albedoError = false;
+				weatherRecord.alb = userSpecifiedMonthlyAlbedo[month_idx];
+			}
 		}
 		if (albedoError) {
-			throw compute_module::exec_error(cmName,
+			throw exec_error(cmName,
 				util::format("Error retrieving albedo value: Invalid month in weather file or invalid albedo value in weather file"));
 		}
 	}
@@ -283,24 +290,24 @@ Subarray_IO::Subarray_IO(compute_module* cm, std::string cmName, size_t subarray
 		nModulesPerString = cm->as_integer(prefix + "modules_per_string");
 		mpptInput = cm->as_integer(prefix + "mppt_input");
 		trackMode = cm->as_integer(prefix + "track_mode");
-		tiltEqualLatitude = 0; 
+		tiltEqualLatitude = 0;
 		if (cm->is_assigned(prefix + "tilt_eq_lat")) tiltEqualLatitude = cm->as_boolean(prefix + "tilt_eq_lat");
 
 		//tilt required for fixed tilt, single axis, and azimuth axis- can't check for this in variable table so check here
 		tiltDegrees = std::numeric_limits<double>::quiet_NaN();
 		if (trackMode == irrad::FIXED_TILT || trackMode == irrad::SINGLE_AXIS || trackMode == irrad::AZIMUTH_AXIS)
 			if (!tiltEqualLatitude && !cm->is_assigned(prefix + "tilt"))
-				throw compute_module::exec_error(cmName, "Subarray " + util::to_string((int)subarrayNumber) + " tilt required but not assigned.");
+				throw exec_error(cmName, "Subarray " + util::to_string((int)subarrayNumber) + " tilt required but not assigned.");
 		if (cm->is_assigned(prefix + "tilt")) tiltDegrees = fabs(cm->as_double(prefix + "tilt"));
 		//monthly tilt required if seasonal tracking mode selected- can't check for this in variable table so check here
 		if (trackMode == irrad::SEASONAL_TILT && !cm->is_assigned(prefix + "monthly_tilt"))
-			throw compute_module::exec_error(cmName, "Subarray " + util::to_string((int)subarrayNumber) + " monthly tilt required but not assigned.");
+			throw exec_error(cmName, "Subarray " + util::to_string((int)subarrayNumber) + " monthly tilt required but not assigned.");
 		if (cm->is_assigned(prefix + "monthly_tilt")) monthlyTiltDegrees = cm->as_vector_double(prefix + "monthly_tilt");
 		//azimuth required for fixed tilt, single axis, and seasonal tilt- can't check for this in variable table so check here
 		azimuthDegrees = std::numeric_limits<double>::quiet_NaN();
 		if (trackMode == irrad::FIXED_TILT || trackMode == irrad::SINGLE_AXIS || trackMode == irrad::SEASONAL_TILT)
 			if (!cm->is_assigned(prefix + "azimuth"))
-				throw compute_module::exec_error(cmName, "Subarray " + util::to_string((int)subarrayNumber) + " azimuth required but not assigned.");
+				throw exec_error(cmName, "Subarray " + util::to_string((int)subarrayNumber) + " azimuth required but not assigned.");
 		if (cm->is_assigned(prefix + "azimuth")) azimuthDegrees = cm->as_double(prefix + "azimuth");
 
 		trackerRotationLimitDegrees = cm->as_double(prefix + "rotlim");
@@ -310,14 +317,14 @@ Subarray_IO::Subarray_IO(compute_module* cm, std::string cmName, size_t subarray
 		backtrackingEnabled = 0;
 		if (trackMode == irrad::SINGLE_AXIS)
 			if (!cm->is_assigned(prefix + "backtrack"))
-				throw compute_module::exec_error(cmName, "Subarray " + util::to_string((int)subarrayNumber) + " backtrack required but not assigned.");
+				throw exec_error(cmName, "Subarray " + util::to_string((int)subarrayNumber) + " backtrack required but not assigned.");
 		if (cm->is_assigned(prefix + "backtrack")) backtrackingEnabled = cm->as_boolean(prefix + "backtrack");
 		moduleAspectRatio = cm->as_double("module_aspect_ratio");
 		usePOAFromWeatherFile = false;
 
 		// losses
 		rearIrradianceLossPercent = cm->as_double(prefix + "rear_irradiance_loss") / 100;
-		dcOptimizerLossPercent = cm->as_double("dcoptimizer_loss")/100;
+		dcOptimizerLossPercent = cm->as_double("dcoptimizer_loss") / 100;
 		mismatchLossPercent = cm->as_double(prefix + "mismatch_loss") / 100;
 		diodesLossPercent = cm->as_double(prefix + "diodeconn_loss") / 100;
 		dcWiringLossPercent = cm->as_double(prefix + "dcwiring_loss") / 100;
@@ -325,19 +332,19 @@ Subarray_IO::Subarray_IO(compute_module* cm, std::string cmName, size_t subarray
 		nameplateLossPercent = cm->as_double(prefix + "nameplate_loss") / 100;
 
 		dcLossTotalPercent = 1 - (
-			(1 - dcOptimizerLossPercent) * 
-			(1 - mismatchLossPercent) * 
-			(1 - diodesLossPercent) * 
-			(1 - dcWiringLossPercent) * 
-			(1 - trackingLossPercent) * 
+			(1 - dcOptimizerLossPercent) *
+			(1 - mismatchLossPercent) *
+			(1 - diodesLossPercent) *
+			(1 - dcWiringLossPercent) *
+			(1 - trackingLossPercent) *
 			(1 - nameplateLossPercent));
 
 		if (groundCoverageRatio < 0.01)
-			throw compute_module::exec_error(cmName, "array ground coverage ratio must obey 0.01 < gcr");
+			throw exec_error(cmName, "array ground coverage ratio must obey 0.01 < gcr");
 
 
 		monthlySoiling = cm->as_vector_double(prefix + "soiling");
-		if (monthlySoiling.size() != 12) throw compute_module::exec_error(cmName, "soiling loss array must have 12 values: subarray " + util::to_string((int)(subarrayNumber)));
+		if (monthlySoiling.size() != 12) throw exec_error(cmName, "soiling loss array must have 12 values: subarray " + util::to_string((int)(subarrayNumber)));
 
 		//convert from % to derate
 		for (size_t m = 0; m < monthlySoiling.size(); m++)
@@ -346,9 +353,9 @@ Subarray_IO::Subarray_IO(compute_module* cm, std::string cmName, size_t subarray
 		// Shading database
 		enableSelfShadingOutputs = false;
 		if (!shadeCalculator.setup(cm, prefix)) {
-			throw compute_module::exec_error(cmName, prefix + "_shading: " + shadeCalculator.get_error());
+			throw exec_error(cmName, prefix + "_shading: " + shadeCalculator.get_error());
 		}
-		
+
 		shadeMode = cm->as_integer(prefix + "shade_mode");
 		selfShadingInputs.mod_orient = cm->as_integer(prefix + "mod_orient"); //although these inputs are stored in self-shading structure, they are also used for snow model and bifacial model, so required for all enabled subarrays
 		selfShadingInputs.nmody = cm->as_integer(prefix + "nmody"); //same as above
@@ -356,7 +363,7 @@ Subarray_IO::Subarray_IO(compute_module* cm, std::string cmName, size_t subarray
 		selfShadingInputs.nstrx = selfShadingInputs.nmodx / nModulesPerString;
 		poa.nonlinearDCShadingDerate = 1;
 
-		if (trackMode == irrad::FIXED_TILT || trackMode == irrad::SEASONAL_TILT || (trackMode == irrad::SINGLE_AXIS && !backtrackingEnabled))
+		if (trackMode == irrad::FIXED_TILT || trackMode == irrad::SEASONAL_TILT || (trackMode == irrad::SINGLE_AXIS))
 		{
 			if (shadeMode != NO_SHADING)
 			{
@@ -365,7 +372,7 @@ Subarray_IO::Subarray_IO(compute_module* cm, std::string cmName, size_t subarray
 
 				//if nrows comes out to be zero, this will cause a divide by zero error. Give an error in this case.
 				if (selfShadingInputs.nrows == 0 && nStrings != 0)
-					throw compute_module::exec_error(cmName, "Self shading: Number of rows calculated for subarray " + util::to_string(int(subarrayNumber)) + " was zero. Please check your inputs.");
+					throw exec_error(cmName, "Self shading: Number of rows calculated for subarray " + util::to_string(int(subarrayNumber)) + " was zero. Please check your inputs.");
 
 				// Otherwise, if self-shading configuration does not have equal number of modules as specified on system design page for that subarray,
 				// compute dc derate using the self-shading configuration and apply it to the whole subarray. Give warning.
@@ -385,9 +392,9 @@ Subarray_IO::Subarray_IO(compute_module* cm, std::string cmName, size_t subarray
 		if (subarrayEnableSnow)
 		{
 			if (trackMode == irrad::SEASONAL_TILT)
-				throw compute_module::exec_error(cmName, "Time-series tilt input may not be used with the snow model at this time: subarray " + util::to_string((int)(subarrayNumber)));
+				throw exec_error(cmName, "Time-series tilt input may not be used with the snow model at this time: subarray " + util::to_string((int)(subarrayNumber)));
 			// if tracking mode is 1-axis tracking, don't need to limit tilt angles
-			if (snowModel.setup(selfShadingInputs.nmody, (float)tiltDegrees, (trackMode !=  irrad::SINGLE_AXIS))) {
+			if (snowModel.setup(selfShadingInputs.nmody, (float)tiltDegrees, (trackMode != irrad::SINGLE_AXIS))) {
 				if (!snowModel.good) {
 					cm->log(snowModel.msg, SSC_ERROR);
 				}
@@ -395,11 +402,11 @@ Subarray_IO::Subarray_IO(compute_module* cm, std::string cmName, size_t subarray
 		}
 
 		if (nStrings < 0) {
-			throw compute_module::exec_error(cmName, "invalid string allocation between subarrays.  all subarrays must have zero or positive number of strings.");
+			throw exec_error(cmName, "invalid string allocation between subarrays.  all subarrays must have zero or positive number of strings.");
 		}
 
 		// Initialize module model
-		std::unique_ptr<Module_IO> tmp(new Module_IO(cm, cmName, 1- dcLossTotalPercent));
+		std::unique_ptr<Module_IO> tmp(new Module_IO(cm, cmName, 1 - dcLossTotalPercent));
 		Module = std::move(tmp);
 
 	}
@@ -456,7 +463,7 @@ void PVSystem_IO::SetupPOAInput()
 					size_t ii = h * Irradiance->stepsPerHour + m;
 
 					if (!wdprov->read(&wf)) {
-						throw compute_module::exec_error("pvsamv1", "could not read data line " + util::to_string((int)(ii + 1)) + " in weather file while loading POA data");
+						throw exec_error("pvsamv1", "could not read data line " + util::to_string((int)(ii + 1)) + " in weather file while loading POA data");
 					}
 					int month_idx = wf.month - 1;
 
@@ -481,10 +488,38 @@ void PVSystem_IO::SetupPOAInput()
 					double t_sunrise = sun[4];
 					double t_sunset = sun[5];
 
-					if (t_cur >= t_sunrise - ts_hour / 2.0
-						&& t_cur < t_sunrise + ts_hour / 2.0)
+					if (t_sunset > 24) //sunset is legitimately the next day, so recalculate sunset from the previous day
 					{
-						// time step encompasses the sunrise
+						double sunanglestemp[9];
+						if (wf.day > 1) //simply decrement day during month
+							solarpos(wf.year, wf.month, wf.day - 1, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sunanglestemp);
+						else if (wf.month > 1) //on the 1st of the month, need to switch to the last day of previous month
+							solarpos(wf.year, wf.month -1 , __nday[wf.month-2], 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sunanglestemp); //month is 1-indexed and __nday is 0 indexed
+						else //on the first day of the year, need to switch to Dec 31 of last year
+							solarpos(wf.year - 1, 12, 31, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sunanglestemp);
+						//if sunset from yesterday WASN'T today, then it's ok to leave sunset > 24, which will cause the sun to rise today and not set today
+						if (sunanglestemp[5] >= 24)
+							t_sunset = sunanglestemp[5] - 24.0;
+					}
+
+					if (t_sunrise < 0) //sunrise is legitimately the previous day, so recalculate for next day
+					{
+						double sunanglestemp[9];
+						if (wf.day < __nday[wf.month - 1]) //simply increment the day during the month, month is 1-indexed and __nday is 0-indexed
+							solarpos(wf.year, wf.month, wf.day + 1, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sunanglestemp);
+						else if (wf.month < 12) //on the last day of the month, need to switch to the first day of the next month
+							solarpos(wf.year, wf.month + 1, 1, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sunanglestemp);
+						else //on the last day of the year, need to switch to Jan 1 of the next year
+							solarpos(wf.year + 1, 1, 1, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sunanglestemp);
+						//if sunrise from tomorrow isn't today, then it's ok to leave sunrise < 0, which will cause the sun to set at the right time and not rise until tomorrow
+						if (sunanglestemp[4] < 0)
+							t_sunrise = sunanglestemp[4] + 24.0;
+
+					}
+
+					// time step encompasses the sunrise
+					if (t_cur >= t_sunrise - ts_hour / 2.0 && t_cur < t_sunrise + ts_hour / 2.0)
+					{
 						double t_calc = (t_sunrise + (t_cur + ts_hour / 2.0)) / 2.0; // midpoint of sunrise and end of timestep
 						int hr_calc = (int)t_calc;
 						double min_calc = (t_calc - hr_calc)*60.0;
@@ -496,10 +531,9 @@ void PVSystem_IO::SetupPOAInput()
 
 						tms[2] = 2;
 					}
-					else if (t_cur > t_sunset - ts_hour / 2.0
-						&& t_cur <= t_sunset + ts_hour / 2.0)
+					// timestep encompasses the sunset
+					else if (t_cur > t_sunset - ts_hour / 2.0 && t_cur <= t_sunset + ts_hour / 2.0)
 					{
-						// timestep encompasses the sunset
 						double t_calc = ((t_cur - ts_hour / 2.0) + t_sunset) / 2.0; // midpoint of beginning of timestep and sunset
 						int hr_calc = (int)t_calc;
 						double min_calc = (t_calc - hr_calc)*60.0;
@@ -511,7 +545,10 @@ void PVSystem_IO::SetupPOAInput()
 
 						tms[2] = 3;
 					}
-					else if (t_cur >= t_sunrise && t_cur <= t_sunset)
+
+					// timestep is not sunrise nor sunset, but sun is up  (calculate position at provided t_cur)
+					else if ((t_sunrise < t_sunset && t_cur >= t_sunrise && t_cur <= t_sunset) || //this captures normal daylight cases
+						(t_sunrise > t_sunset && (t_cur <= t_sunset || t_cur >= t_sunrise))) //this captures cases where sunset (from previous day) is 1:30AM, sunrise 2:30AM, in arctic circle
 					{
 						// timestep is not sunrise nor sunset, but sun is up  (calculate position at provided t_cur)
 						tms[0] = wf.hour;
@@ -522,17 +559,15 @@ void PVSystem_IO::SetupPOAInput()
 					else
 					{
 						// sun is down, assign sundown values
-						sun[0] = -999; //avoid returning a junk azimuth angle
-						sun[1] = -999; //avoid returning a junk zenith angle
-						sun[2] = -999; //avoid returning a junk elevation angle
-						tms[0] = -1;
-						tms[1] = -1;
+						solarpos(wf.year, wf.month, wf.day, wf.hour, wf.minute, hdr.lat, hdr.lon, hdr.tz, sun);
+						tms[0] = wf.hour;
+						tms[1] = (int)wf.minute;
 						tms[2] = 0;
 					}
 
 
 					if (tms[2] > 0) {
-						incidence(Subarrays[nn]->trackMode, Subarrays[nn]->tiltDegrees, Subarrays[nn]->azimuthDegrees, Subarrays[nn]->trackerRotationLimitDegrees, sun[1], sun[0], Subarrays[nn]->backtrackingEnabled, Subarrays[nn]->groundCoverageRatio, angle);
+						incidence(Subarrays[nn]->trackMode, Subarrays[nn]->tiltDegrees, Subarrays[nn]->azimuthDegrees, Subarrays[nn]->trackerRotationLimitDegrees, sun[1], sun[0], Subarrays[nn]->backtrackingEnabled, Subarrays[nn]->groundCoverageRatio, false, 0.0, angle);
 					}
 					else {
 						angle[0] = -999;
@@ -567,10 +602,10 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 	for (size_t s = 0; s < numberOfSubarrays; s++) {
 		stringsInParallel += static_cast<int>(Subarrays[s]->nStrings);
 	}
-	
+
 	numberOfInverters = cm->as_integer("inverter_count");
 	ratedACOutput = Inverter->ratedACOutput * numberOfInverters;
-	acDerate = 1 - cm->as_double("acwiring_loss") / 100;	
+	acDerate = 1 - cm->as_double("acwiring_loss") / 100;
 	acLossPercent = (1 - acDerate) * 100;
 	transmissionDerate = 1 - cm->as_double("transmission_loss") / 100;
 	transmissionLossPercent = (1 - transmissionDerate) * 100;
@@ -578,11 +613,11 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 	enableDCLifetimeLosses = cm->as_boolean("en_dc_lifetime_losses");
 	enableACLifetimeLosses = cm->as_boolean("en_ac_lifetime_losses");
 	enableSnowModel = cm->as_boolean("en_snow_model");
-	
+
 	// The shared inverter of the PV array and a tightly-coupled DC connected battery
 	std::unique_ptr<SharedInverter> tmpSharedInverter(new SharedInverter(Inverter->inverterType, numberOfInverters, &Inverter->sandiaInverter, &Inverter->partloadInverter, &Inverter->ondInverter));
 	m_sharedInverter = std::move(tmpSharedInverter);
-	
+
 	// Register shared inverter with inverter_IO
 	InverterIO->setupSharedInverter(cm, m_sharedInverter.get());
 
@@ -597,7 +632,7 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 
 		if (dc_degrad.size() == 1)
 		{
-			for (size_t i = 1; i < Simulation->numberOfYears ; i++)
+			for (size_t i = 1; i < Simulation->numberOfYears; i++)
 				dcDegradationFactor.push_back(pow((1.0 - dc_degrad[0] / 100.0), i));
 		}
 		else if (dc_degrad.size() > 0)
@@ -609,21 +644,20 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 		//read in optional DC and AC lifetime daily losses, error check length of arrays
 		if (enableDCLifetimeLosses)
 		{
-
-			std::vector<double> dc_lifetime_losses = cm->as_vector_double("dc_lifetime_losses");
-			if (dc_lifetime_losses.size() != Simulation->numberOfYears * 365)
-				throw compute_module::exec_error(cmName, "Length of the lifetime daily DC losses array must be equal to the analysis period * 365");
+			dcLifetimeLosses = cm->as_vector_double("dc_lifetime_losses");
+			if (dcLifetimeLosses.size() != Simulation->numberOfYears * 365);
+			throw exec_error(cmName, "Length of the lifetime daily DC losses array must be equal to the analysis period * 365 days/year");
 		}
 		if (enableACLifetimeLosses)
 		{
-			std::vector<double> ac_lifetime_losses = cm->as_vector_double("ac_lifetime_losses");
-			if (ac_lifetime_losses.size() != Simulation->numberOfYears * 365)
-				throw compute_module::exec_error(cmName, "Length of the lifetime daily AC losses array must be equal to the analysis period * 365");
+			acLifetimeLosses = cm->as_vector_double("ac_lifetime_losses");
+			if (acLifetimeLosses.size() != Simulation->numberOfYears * 365)
+				throw exec_error(cmName, "Length of the lifetime daily AC losses array must be equal to the analysis period * 365 days/year");
 		}
 	}
 
 	// Transformer losses
-	transformerLoadLossFraction = cm->as_number("transformer_load_loss") * (ssc_number_t)(util::percent_to_fraction);  
+	transformerLoadLossFraction = cm->as_number("transformer_load_loss") * (ssc_number_t)(util::percent_to_fraction);
 	transformerNoLoadLossFraction = cm->as_number("transformer_no_load_loss") *(ssc_number_t)(util::percent_to_fraction);
 
 	// Determine whether MPPT clipping should be enabled or not
@@ -650,10 +684,12 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 	}
 
 	// Check that system MPPT inputs align correctly
-	for (size_t n_subarray = 0; n_subarray < numberOfSubarrays; n_subarray++)
-		if (Subarrays[n_subarray]->enable)
-			if (Subarrays[n_subarray]->mpptInput > Inverter->nMpptInputs)
-				throw compute_module::exec_error(cmName, "Subarray " + util::to_string((int)n_subarray) + " MPPT input is greater than the number of inverter MPPT inputs.");
+	for (size_t n_subarray = 0; n_subarray < numberOfSubarrays; n_subarray++) {
+		if (Subarrays[n_subarray]->enable) {
+			if (Subarrays[n_subarray]->mpptInput > (int)Inverter->nMpptInputs)
+				throw exec_error(cmName, "Subarray " + util::to_string((int)n_subarray) + " MPPT input is greater than the number of inverter MPPT inputs.");
+		}
+	}
 	for (size_t mppt = 1; mppt <= (size_t)Inverter->nMpptInputs; mppt++) //indexed at 1 to match mppt input numbering convention
 	{
 		std::vector<int> mppt_n; //create a temporary vector to hold which subarrays are on this mppt input
@@ -661,15 +697,15 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 		for (size_t n_subarray = 0; n_subarray < Subarrays.size(); n_subarray++) //jmf update this so that all subarray markers are consistent, get rid of "enable" check
 			if (Subarrays[n_subarray]->enable)
 				if (Subarrays[n_subarray]->mpptInput == (int)mppt)
-					mppt_n.push_back(n_subarray);
+					mppt_n.push_back((int)n_subarray);
 		if (mppt_n.size() < 1)
-			throw compute_module::exec_error(cmName, "At least one subarray must be assigned to each inverter MPPT input.");
+			throw exec_error(cmName, "At least one subarray must be assigned to each inverter MPPT input.");
 		mpptMapping.push_back(mppt_n); //add the subarrays on this input to the total mppt mapping vector
 	}
 
 	// Only one multi-MPPT inverter is allowed at the moment
 	if (Inverter->nMpptInputs > 1 && numberOfInverters > 1)
-		throw compute_module::exec_error(cmName, "At this time, only one multiple-MPPT-input inverter may be modeled per system. See help for details.");
+		throw exec_error(cmName, "At this time, only one multiple-MPPT-input inverter may be modeled per system. See help for details.");
 
 	//Subarray mismatch calculations
 	enableMismatchVoltageCalc = cm->as_boolean("enable_mismatch_vmax_calc");
@@ -677,10 +713,10 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 		Subarrays[0]->Module->modulePowerModel != MODULE_CEC_DATABASE &&
 		Subarrays[0]->Module->modulePowerModel != MODULE_CEC_USER_INPUT &&
 		Subarrays[0]->Module->modulePowerModel != MODULE_IEC61853) {
-		throw compute_module::exec_error(cmName, "String level subarray mismatch can only be calculated using a single-diode based module model.");
+		throw exec_error(cmName, "String level subarray mismatch can only be calculated using a single-diode based module model.");
 	}
 	if (enableMismatchVoltageCalc && numberOfSubarrays <= 1)
-		throw compute_module::exec_error(cmName, "Subarray voltage mismatch calculation requires more than one subarray. Please check your inputs.");
+		throw exec_error(cmName, "Subarray voltage mismatch calculation requires more than one subarray. Please check your inputs.");
 
 	// Setup POA inputs if needed 
 	SetupPOAInput();
@@ -714,6 +750,7 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
 			p_derateSoiling.push_back(cm->allocate(prefix + "soiling_derate", numberOfWeatherFileRecords));
 			p_beamShadingFactor.push_back(cm->allocate(prefix + "beam_shading_factor", numberOfWeatherFileRecords));
 			p_temperatureCell.push_back(cm->allocate(prefix + "celltemp", numberOfWeatherFileRecords));
+			p_temperatureCellSS.push_back(cm->allocate(prefix + "celltempSS", numberOfWeatherFileRecords));
 			p_moduleEfficiency.push_back(cm->allocate(prefix + "modeff", numberOfWeatherFileRecords));
 			p_dcStringVoltage.push_back(cm->allocate(prefix + "dc_voltage", numberOfWeatherFileRecords));
 			p_voltageOpenCircuit.push_back(cm->allocate(prefix + "voc", numberOfWeatherFileRecords));
@@ -744,7 +781,7 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
 		}
 	}
 
-	for (int mppt_input = 0; mppt_input < Inverter->nMpptInputs; mppt_input++)
+	for (size_t mppt_input = 0; mppt_input < Inverter->nMpptInputs; mppt_input++)
 	{
 		p_mpptVoltage.push_back(cm->allocate("inverterMppt" + std::to_string(mppt_input + 1) + "_DCVoltage", numberOfLifetimeRecords));
 		p_dcPowerNetPerMppt.push_back(cm->allocate("inverterMppt" + std::to_string(mppt_input + 1) + "_NetDCPower", numberOfLifetimeRecords));
@@ -787,7 +824,7 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
 }
 void PVSystem_IO::AssignOutputs(compute_module* cm)
 {
-	cm->assign("ac_loss", var_data((ssc_number_t)acLossPercent));
+	cm->assign("ac_loss", var_data((ssc_number_t)(acLossPercent + transmissionLossPercent)));
 }
 
 Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
@@ -810,12 +847,12 @@ Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
 		bifaciality = cm->as_double("spe_bifaciality");
 		bifacialTransmissionFactor = cm->as_double("spe_bifacial_transmission_factor");
 		groundClearanceHeight = cm->as_double("spe_bifacial_ground_clearance_height");
-		for (int i = 0; i<5; i++)
+		for (int i = 0; i < 5; i++)
 		{
 			simpleEfficiencyModel.Rad[i] = cm->as_double(util::format("spe_rad%d", i));
 			simpleEfficiencyModel.Eff[i] = 0.01*cm->as_double(util::format("spe_eff%d", i));
 			if (i > 0 && simpleEfficiencyModel.Rad[i] <= simpleEfficiencyModel.Rad[i - 1])
-				throw compute_module::exec_error(cmName, "simpleEfficiencyModel model radiation levels must increase monotonically");
+				throw exec_error(cmName, "simpleEfficiencyModel model radiation levels must increase monotonically");
 		}
 
 		simpleEfficiencyModel.Gamma = cm->as_double("spe_temp_coeff");
@@ -854,7 +891,7 @@ Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
 			sandiaCellTemp.DT0 = cm->as_double("spe_dT");
 			break;
 		default:
-			throw compute_module::exec_error(cmName, "invalid simpleEfficiencyModel module structure and mounting");
+			throw exec_error(cmName, "invalid simpleEfficiencyModel module structure and mounting");
 		}
 
 		simpleEfficiencyModel.fd = cm->as_double("spe_fd");
@@ -898,7 +935,8 @@ Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
 			int standoff = cm->as_integer("cec_standoff");
 			nominalOperatingCellTemp.standoff_tnoct_adj = 0;
 			switch (standoff)
-			{
+
+			{ //source for standoff adjustment constants: https://prod-ng.sandia.gov/techlib-noauth/access-control.cgi/1985/850330.pdf page 12
 				case 2: nominalOperatingCellTemp.standoff_tnoct_adj = 2; break; // between 2.5 and 3.5 inches
 				case 3: nominalOperatingCellTemp.standoff_tnoct_adj = 6; break; // between 1.5 and 2.5 inches
 				case 4: nominalOperatingCellTemp.standoff_tnoct_adj = 11; break; // between 0.5 and 1.5 inches
@@ -924,7 +962,7 @@ Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
 			double Wgap;  // gap width spacing (m)
 			double TbackInteg; */
 
-			mountingSpecificCellTemp.DcDerate = dcLoss;  
+			mountingSpecificCellTemp.DcDerate = dcLoss;
 			mountingSpecificCellTemp.MC = cm->as_integer("cec_mounting_config") + 1;
 			mountingSpecificCellTemp.HTD = cm->as_integer("cec_heat_transfer") + 1;
 			mountingSpecificCellTemp.MSO = cm->as_integer("cec_mounting_orientation") + 1;
@@ -974,7 +1012,7 @@ Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
 		int err = m.solve_with_sanity_and_heuristics<double>(300, 1e-7);
 
 		if (err != 0)
-			throw compute_module::exec_error(cmName, "CEC 6 parameter model:  Could not solve for normalized coefficients.  Please check your inputs.");
+			throw exec_error(cmName, "CEC 6 parameter model:  Could not solve for normalized coefficients.  Please check your inputs.");
 
 		cecModel.Area = cm->as_double("6par_area");
 		referenceArea = cecModel.Area;
@@ -1096,7 +1134,7 @@ Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
 		moduleModel = &sandiaModel;
 		moduleWattsSTC = sandiaModel.Vmp0 * sandiaModel.Imp0;
 	}
-	else if (modulePowerModel == MODULE_IEC61853 )
+	else if (modulePowerModel == MODULE_IEC61853)
 	{
 		// IEC 61853 model
 		elevenParamSingleDiodeModel.NcellSer = cm->as_integer("sd11par_nser");
@@ -1199,7 +1237,7 @@ Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
 		{
 			if (elementCount1 != elementCount2)
 			{
-				throw compute_module::exec_error(cmName, "Spline IAM: Number of entries for incidence angle and IAM value different.");
+				throw exec_error(cmName, "Spline IAM: Number of entries for incidence angle and IAM value different.");
 			}
 			for (int i = 0; i <= mlModuleModel.IAM_c_cs_elements - 1; i = i + 1) {
 				mlModuleModel.IAM_c_cs_incAngle[i] = arrayIncAngle[i];
@@ -1207,14 +1245,14 @@ Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
 			}
 		}
 		if (mlModuleModel.T_mode == 1) {
-			setupNOCTModel(cm,"mlm_T_c_no");
+			setupNOCTModel(cm, "mlm_T_c_no");
 			cellTempModel = &nominalOperatingCellTemp;
 		}
 		else if (mlModuleModel.T_mode == 2) {
 			cellTempModel = &mockCellTemp;
 		}
 		else {
-			throw compute_module::exec_error(cmName, "invalid temperature model type");
+			throw exec_error(cmName, "invalid temperature model type");
 		}
 
 		mlModuleModel.initializeManual();
@@ -1229,7 +1267,7 @@ Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
 
 	}
 	else
-		throw compute_module::exec_error(cmName, "invalid pv module model type");
+		throw exec_error(cmName, "invalid pv module model type");
 }
 void Module_IO::setupNOCTModel(compute_module* cm, const std::string &prefix)
 {
@@ -1240,7 +1278,7 @@ void Module_IO::setupNOCTModel(compute_module* cm, const std::string &prefix)
 	int standoff = cm->as_integer(prefix + "_standoff"); // bipv,3.5in,2.5-3.5in,1.5-2.5in,0.5-1.5in,ground/rack
 	nominalOperatingCellTemp.standoff_tnoct_adj = 0;
 	switch (standoff)
-	{
+	{ //source for standoff adjustment constants: https://prod-ng.sandia.gov/techlib-noauth/access-control.cgi/1985/850330.pdf page 12
 	case 2: nominalOperatingCellTemp.standoff_tnoct_adj = 2; break; // between 2.5 and 3.5 inches
 	case 3: nominalOperatingCellTemp.standoff_tnoct_adj = 6; break; // between 1.5 and 2.5 inches
 	case 4: nominalOperatingCellTemp.standoff_tnoct_adj = 11; break; // between 0.5 and 1.5 inches
@@ -1260,8 +1298,8 @@ void Module_IO::AssignOutputs(compute_module* cm)
 
 Inverter_IO::Inverter_IO(compute_module *cm, std::string cmName)
 {
-	inverterType =  cm->as_integer("inverter_model");
-	nMpptInputs = cm->as_integer("inv_num_mppt");
+	inverterType = cm->as_integer("inverter_model");
+	nMpptInputs = cm->as_unsigned_long("inv_num_mppt");
 
 	if (inverterType == 4)
 	{
@@ -1273,7 +1311,7 @@ Inverter_IO::Inverter_IO(compute_module *cm, std::string cmName)
 		mpptLowVoltage = cm->as_double("mppt_low_inverter");
 		mpptHiVoltage = cm->as_double("mppt_hi_inverter");
 	}
-	
+
 	if (inverterType == 0) // cec database
 	{
 		sandiaInverter.Paco = cm->as_double("inv_snl_paco");
@@ -1395,7 +1433,7 @@ Inverter_IO::Inverter_IO(compute_module *cm, std::string cmName)
 	}
 	else
 	{
-		throw compute_module::exec_error("pvsamv1", "invalid inverter model type");
+		throw exec_error("pvsamv1", "invalid inverter model type");
 	}
 }
 
@@ -1432,7 +1470,7 @@ void Inverter_IO::setupSharedInverter(compute_module* cm, SharedInverter * a_sha
 		thermalDerateCurves.push_back(row);
 	}
 	int err = sharedInverter->setTempDerateCurves(thermalDerateCurves);
-	if ( err > 1) {
-		throw compute_module::exec_error("pvsamv1", "Inverter temperature derate curve " + util::to_string((int)( -err - 1)) + " is invalid.");
+	if (err > 1) {
+		throw exec_error("pvsamv1", "Inverter temperature derate curve " + util::to_string((int)(-err - 1)) + " is invalid.");
 	}
 }

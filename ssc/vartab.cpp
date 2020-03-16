@@ -1,51 +1,24 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #include "lib_util.h"
 #include "vartab.h"
@@ -113,6 +86,32 @@ std::string var_data::to_string( const var_data &value )
 	}
 
 	return "<invalid>";
+}
+
+std::vector<double> var_data::arr_vector()
+{
+    if (type != SSC_ARRAY)
+        throw std::runtime_error("arr_vector error: var_data type not SSC_ARRAY.");
+    std::vector<double> v;
+    for (unsigned int i = 0; i < num.length(); i++){
+        v.push_back(num[i]);
+    }
+    return v;
+}
+
+std::vector<std::vector<double>> var_data::matrix_vector()
+{
+    if (type != SSC_MATRIX)
+        throw std::runtime_error("arr_matrix error: var_data type not SSC_MATRIX.");
+    std::vector<std::vector<double>> v;
+    for (unsigned int i = 0; i < num.nrows(); i++){
+        std::vector<double> row;
+        for (unsigned int j = 0; j < num.ncols(); j++){
+            row.push_back(num.at(i, j));
+        }
+        v.push_back(row);
+    }
+    return v;
 }
 
 bool var_data::parse( unsigned char type, const std::string &buf, var_data &value )
@@ -203,7 +202,7 @@ var_table &var_table::operator=( const var_table &rhs )
 	for ( var_hash::const_iterator it = rhs.m_hash.begin();
 		it != rhs.m_hash.end();
 		++it )
-		assign( (*it).first, *((*it).second) );
+		assign_match_case( (*it).first, *((*it).second) );
 
 	return *this;
 }
@@ -213,10 +212,9 @@ void var_table::clear()
 	for (var_hash::iterator it = m_hash.begin(); it != m_hash.end(); ++it)
 	{
 		// debug heap corruption
-
 		delete it->second; // delete the var_data object
 	}
-	m_hash.clear();
+	if (!m_hash.empty()) m_hash.clear();
 }
 
 var_data *var_table::assign( const std::string &name, const var_data &val )
@@ -232,6 +230,24 @@ var_data *var_table::assign( const std::string &name, const var_data &val )
 	return v;
 }
 
+var_data *var_table::assign_match_case( const std::string &name, const var_data &val )
+{
+    var_data *v = lookup(name);
+    if (!v)
+    {
+        v = new var_data;
+        m_hash[ name ] = v;
+    }
+
+    v->copy(val);
+    return v;
+}
+
+bool var_table::is_assigned( const std::string &name )
+{
+    return (lookup(name) != 0);
+}
+
 void var_table::unassign( const std::string &name )
 {
 	var_hash::iterator it = m_hash.find( util::lower_case(name) );
@@ -244,7 +260,7 @@ void var_table::unassign( const std::string &name )
 
 bool var_table::rename( const std::string &oldname, const std::string &newname )
 {
-	
+
 	var_hash::iterator it = m_hash.find( util::lower_case(oldname) );
 	if ( it != m_hash.end() )
 	{
@@ -272,11 +288,22 @@ bool var_table::rename( const std::string &oldname, const std::string &newname )
 
 var_data *var_table::lookup( const std::string &name )
 {
-	var_hash::iterator it = m_hash.find( util::lower_case(name) );
+    var_hash::iterator it = m_hash.find(name );
+    if (it == m_hash.end())
+        it = m_hash.find( util::lower_case(name) );
 	if ( it != m_hash.end() )
 		return (*it).second;
 	else
 		return NULL;
+}
+
+var_data *var_table::lookup_match_case( const std::string &name )
+{
+    var_hash::iterator it = m_hash.find( name );
+    if ( it != m_hash.end() )
+        return (*it).second;
+    else
+        return NULL;
 }
 
 const char *var_table::first( )
@@ -286,6 +313,19 @@ const char *var_table::first( )
 		return m_iterator->first.c_str();
 	else
 		return NULL;
+}
+
+const char *var_table::key(int pos){
+    m_iterator = m_hash.begin();
+    if (m_iterator == m_hash.end()) return NULL;
+
+    int n = 0;
+    for (n = 0; n < pos; n++)
+        ++m_iterator;
+
+    if (m_iterator != m_hash.end())
+        return m_iterator->first.c_str();
+    return NULL;
 }
 
 const char *var_table::next()
@@ -299,3 +339,273 @@ const char *var_table::next()
 	return NULL;
 }
 
+void vt_get_int(var_table* vt, const std::string name, int* lvalue) {
+	if (var_data* vd = vt->lookup(name)) *lvalue = (int)vd->num;
+	else throw std::runtime_error(std::string(name) + std::string(" must be assigned."));
+}
+
+void vt_get_number(var_table* vt, std::string name, double* lvalue) {
+	if (var_data* vd = vt->lookup(name)) *lvalue = vd->num;
+	else throw std::runtime_error(std::string(name) + std::string(" must be assigned."));
+}
+
+void vt_get_array_vec(var_table* vt, std::string name, std::vector<double>& vec_double) {
+	if (var_data* vd = vt->lookup(name)){
+	    if (vd->type != SSC_ARRAY)
+            throw std::runtime_error(std::string(name) + std::string(" must be array type."));
+	    vec_double = vd->arr_vector();
+	}
+	else throw std::runtime_error(std::string(name) + std::string(" must be assigned."));
+}
+
+void vt_get_matrix(var_table* vt, std::string name, util::matrix_t<double>& matrix) {
+	if (var_data* vd = vt->lookup(name)){
+        if (vd->type == SSC_ARRAY)
+        {
+            std::vector<double> vec_double = vd->arr_vector();
+            matrix.resize(vec_double.size());
+            for (size_t i = 0; i < vec_double.size(); i++)
+                matrix.at(i) = vec_double[i];
+        }
+        else if (vd->type != SSC_MATRIX)
+            throw std::runtime_error(std::string(name) + std::string(" must be matrix type."));
+        matrix = vd->num;
+    }
+	else throw std::runtime_error(std::string(name) + std::string(" must be assigned."));
+}
+
+int var_table::as_integer( const std::string &name )
+{
+    var_data* x = lookup(name);
+    if (!x) throw general_error(name + " not assigned");
+    if (x->type != SSC_NUMBER) throw cast_error("integer", *x, name);
+    return static_cast<int>(x->num);
+}
+size_t var_table::as_unsigned_long(const std::string &name)
+{
+    var_data*x = lookup(name);
+    if (!x) throw general_error(name + " not assigned");
+    if (x->type != SSC_NUMBER) throw cast_error("unsigned long", *x, name);
+    return static_cast<size_t>(x->num);
+}
+
+bool var_table::as_boolean( const std::string &name )
+{
+    var_data* x = lookup(name);
+    if (!x) throw general_error(name + " not assigned");
+    if (x->type != SSC_NUMBER) throw cast_error("boolean", *x, name);
+    return static_cast<bool> ( (int)(x->num!=0) );
+}
+
+float var_table::as_float( const std::string &name )
+{
+    var_data* x = lookup(name);
+    if (!x) throw general_error(name + " not assigned");
+    if (x->type != SSC_NUMBER) throw cast_error("float", *x, name);
+    return static_cast<float>(x->num);
+}
+
+ssc_number_t var_table::as_number( const std::string &name )
+{
+    var_data* x = lookup(name);
+    if (!x) throw general_error(name + " not assigned");
+    if (x->type != SSC_NUMBER) throw cast_error("ssc_number_t", *x, name);
+    return x->num;
+}
+
+double var_table::as_double( const std::string &name )
+{
+    var_data* x = lookup(name);
+    if (!x) throw general_error(name + " not assigned");
+    if (x->type != SSC_NUMBER) throw cast_error("double", *x, name);
+    return static_cast<double>(x->num);
+}
+
+const char *var_table::as_string( const std::string &name )
+{
+    var_data* x = lookup(name);
+    if (!x) throw general_error(name + " not assigned");
+    if (x->type != SSC_STRING) throw cast_error("string", *x, name);
+    return x->str.c_str();
+}
+
+ssc_number_t *var_table::as_array( const std::string &name, size_t *count )
+{
+    var_data* x = lookup(name);
+    if (!x) throw general_error(name + " not assigned");
+    if (x->type != SSC_ARRAY) throw cast_error("array", *x, name);
+    if (count) *count = x->num.length();
+    return x->num.data();
+}
+
+std::vector<int> var_table::as_vector_integer(const std::string &name)
+{
+    var_data* x = lookup(name);
+    if (!x) throw general_error(name + " not assigned");
+    if (x->type != SSC_ARRAY) throw cast_error("array", *x, name);
+    size_t len = x->num.length();
+    std::vector<int> v(len);
+    ssc_number_t *p = x->num.data();
+    for (size_t k = 0; k<len; k++)
+        v[k] = static_cast<int>(p[k]);
+    return v;
+}
+
+std::vector<ssc_number_t> var_table::as_vector_ssc_number_t(const std::string &name)
+{
+    var_data* x = lookup(name);
+    if (!x) throw general_error(name + " not assigned");
+    if (x->type != SSC_ARRAY) throw cast_error("array", *x, name);
+    size_t len = x->num.length();
+    std::vector<ssc_number_t> v(len);
+    ssc_number_t *p = x->num.data();
+    for (size_t k = 0; k<len; k++)
+        v[k] = static_cast<ssc_number_t>(p[k]);
+    return v;
+}
+
+std::vector<double> var_table::as_vector_double(const std::string &name)
+{
+    var_data* x = lookup(name);
+    if (!x) throw general_error(name + " not assigned");
+    if (x->type != SSC_ARRAY) throw cast_error("array", *x, name);
+    size_t len = x->num.length();
+    std::vector<double> v(len);
+    ssc_number_t *p = x->num.data();
+    for (size_t k=0;k<len;k++)
+        v[k] = static_cast<double>(p[k]);
+    return v;
+}
+std::vector<float> var_table::as_vector_float(const std::string &name)
+{
+    var_data* x = lookup(name);
+    if (!x) throw general_error(name + " not assigned");
+    if (x->type != SSC_ARRAY) throw cast_error("array", *x, name);
+    size_t len = x->num.length();
+    std::vector<float> v(len);
+    ssc_number_t *p = x->num.data();
+    for (size_t k = 0; k<len; k++)
+        v[k] = static_cast<float>(p[k]);
+    return v;
+}
+std::vector<size_t> var_table::as_vector_unsigned_long(const std::string &name)
+{
+    var_data* x = lookup(name);
+    if (!x) throw general_error(name + " not assigned");
+    if (x->type != SSC_ARRAY) throw cast_error("array", *x, name);
+    size_t len = x->num.length();
+    std::vector<size_t> v(len);
+    ssc_number_t *p = x->num.data();
+    for (size_t k = 0; k<len; k++)
+        v[k] = static_cast<size_t>(p[k]);
+    return v;
+}
+std::vector<bool> var_table::as_vector_bool(const std::string &name)
+{
+    var_data* x = lookup(name);
+    if (!x) throw general_error(name + " not assigned");
+    if (x->type != SSC_ARRAY) throw cast_error("array", *x, name);
+    size_t len = x->num.length();
+    std::vector<bool> v(len);
+    ssc_number_t *p = x->num.data();
+    for (size_t k = 0; k<len; k++)
+        v[k] = p[k] != 0;
+    return v;
+}
+
+ssc_number_t *var_table::as_matrix( const std::string &name, size_t *rows, size_t *cols )
+{
+    var_data* x = lookup(name);
+    if (!x) throw general_error(name + " not assigned");
+    if (x->type != SSC_MATRIX) throw cast_error("matrix", *x, name);
+    if (rows) *rows = x->num.nrows();
+    if (cols) *cols = x->num.ncols();
+    return x->num.data();
+}
+
+util::matrix_t<double> var_table::as_matrix(const std::string &name)
+{
+    var_data* x = lookup(name);
+    if (!x) throw general_error(name + " not assigned");
+    if (x->type != SSC_MATRIX) throw cast_error("matrix", *x, name);
+
+    util::matrix_t<double> mat(x->num.nrows(), x->num.ncols(), 0.0);
+    for (size_t r = 0; r<x->num.nrows(); r++)
+        for (size_t c = 0; c<x->num.ncols(); c++)
+            mat.at(r, c) = static_cast<double>(x->num(r, c));
+
+    return mat;
+}
+
+util::matrix_t<size_t> var_table::as_matrix_unsigned_long(const std::string &name)
+{
+    var_data* x = lookup(name);
+    if (!x) throw general_error(name + " not assigned");
+    if (x->type != SSC_MATRIX) throw cast_error("matrix", *x, name);
+
+    util::matrix_t<size_t> mat(x->num.nrows(), x->num.ncols(), (size_t)0.0);
+    for (size_t r = 0; r<x->num.nrows(); r++)
+        for (size_t c = 0; c<x->num.ncols(); c++)
+            mat.at(r, c) = static_cast<size_t>(x->num(r, c));
+
+    return mat;
+}
+
+
+util::matrix_t<double> var_table::as_matrix_transpose(const std::string &name)
+{
+    var_data* x = lookup(name);
+    if (!x) throw general_error(name + " not assigned");
+    if (x->type != SSC_MATRIX) throw cast_error("matrix", *x, name);
+
+    util::matrix_t<double> mat(x->num.ncols(), x->num.nrows(), 0.0);
+    for (size_t r = 0; r<x->num.nrows(); r++)
+        for (size_t c = 0; c<x->num.ncols(); c++)
+            mat.at(c, r) = static_cast<double>(x->num(r, c));
+
+    return mat;
+}
+
+bool var_table::get_matrix(const std::string &name, util::matrix_t<ssc_number_t> &mat)
+{
+    var_data* x = lookup(name);
+    if (!x) throw general_error(name + " not assigned");
+    if (x->type != SSC_MATRIX) throw cast_error("matrix", *x, name);
+
+    size_t nrows, ncols;
+    ssc_number_t *arr = as_matrix(name, &nrows, &ncols);
+
+    if (nrows < 1 || ncols < 1)
+        return false;
+
+    mat.resize_fill(nrows, ncols, 1.0);
+    for (size_t r = 0; r<nrows; r++)
+        for (size_t c = 0; c<ncols; c++)
+            mat.at(r, c) = arr[r*ncols + c];
+
+    return true;
+}
+
+ssc_number_t *var_table::allocate( const std::string &name, size_t length )
+{
+    var_data *v = assign(name, var_data());
+    v->type = SSC_ARRAY;
+    v->num.resize_fill( length, 0.0 );
+    return v->num.data();
+}
+
+ssc_number_t *var_table::allocate( const std::string &name, size_t nrows, size_t ncols )
+{
+    var_data *v = assign(name, var_data());
+    v->type = SSC_MATRIX;
+    v->num.resize_fill(nrows, ncols, 0.0);
+    return v->num.data();
+}
+
+util::matrix_t<ssc_number_t>& var_table::allocate_matrix( const std::string &name, size_t nrows, size_t ncols )
+{
+    var_data *v = assign(name, var_data());
+    v->type = SSC_MATRIX;
+    v->num.resize_fill(nrows, ncols, 0.0);
+    return v->num;
+}

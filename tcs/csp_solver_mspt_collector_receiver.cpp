@@ -1,53 +1,27 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #include "csp_solver_mspt_collector_receiver.h"
+#include "sam_csp_util.h"
 #include <algorithm>
 
 static C_csp_reported_outputs::S_output_info S_output_info[] =
@@ -65,14 +39,23 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 	{C_csp_mspt_collector_receiver::E_T_HTF_OUT, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_csp_mspt_collector_receiver::E_Q_DOT_PIPE_LOSS, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_csp_mspt_collector_receiver::E_Q_DOT_LOSS, C_csp_reported_outputs::TS_WEIGHTED_AVE},
-	
+    // from transient model:
+	{ C_csp_mspt_collector_receiver::E_P_HEATTRACE, C_csp_reported_outputs::TS_WEIGHTED_AVE },
+	{ C_csp_mspt_collector_receiver::E_T_HTF_OUT_END, C_csp_reported_outputs::TS_LAST },
+	{ C_csp_mspt_collector_receiver::E_T_HTF_OUT_MAX, C_csp_reported_outputs::TS_WEIGHTED_AVE },
+	{ C_csp_mspt_collector_receiver::E_T_HTF_PANEL_OUT_MAX, C_csp_reported_outputs::TS_WEIGHTED_AVE },
+	{ C_csp_mspt_collector_receiver::E_T_WALL_INLET, C_csp_reported_outputs::TS_LAST },
+	{ C_csp_mspt_collector_receiver::E_T_WALL_OUTLET, C_csp_reported_outputs::TS_LAST },
+	{ C_csp_mspt_collector_receiver::E_T_RISER, C_csp_reported_outputs::TS_LAST },
+	{ C_csp_mspt_collector_receiver::E_T_DOWNC, C_csp_reported_outputs::TS_LAST },
+
 	csp_info_invalid	
 };
 
 C_csp_mspt_collector_receiver::C_csp_mspt_collector_receiver(C_pt_sf_perf_interp & pt_heliostatfield,
-	C_mspt_receiver_222 & mspt_receiver_222):
+	C_pt_receiver & pt_receiver):
 	mc_pt_heliostatfield(pt_heliostatfield),
-	mc_mspt_receiver_222(mspt_receiver_222)
+	mc_pt_receiver(pt_receiver)
 {
 	mc_reported_outputs.construct(S_output_info);
 }
@@ -84,67 +67,38 @@ void C_csp_mspt_collector_receiver::init(const C_csp_collector_receiver::S_csp_c
 				C_csp_collector_receiver::S_csp_cr_solved_params & solved_params)
 {
 	mc_pt_heliostatfield.init();
-	mc_mspt_receiver_222.init();
+	mc_pt_receiver.init();
 
-	solved_params.m_T_htf_cold_des = mc_mspt_receiver_222.m_T_htf_cold_des;			//[K]
-	solved_params.m_q_dot_rec_des = mc_mspt_receiver_222.m_q_rec_des / 1.E6;		//[MW]
-	solved_params.m_A_aper_total = mc_pt_heliostatfield.ms_params.m_A_sf;			//[m^2]
+	solved_params.m_T_htf_cold_des = mc_pt_receiver.m_T_htf_cold_des;       //[K]
+	solved_params.m_q_dot_rec_des = mc_pt_receiver.m_q_rec_des / 1.E6;		//[MW]
+	solved_params.m_A_aper_total = mc_pt_heliostatfield.ms_params.m_A_sf;	//[m^2]
 
 	return;
 }
 
 int C_csp_mspt_collector_receiver::get_operating_state()
 {
-	return mc_mspt_receiver_222.get_operating_state();
+	return mc_pt_receiver.get_operating_state();
 }
 
 double C_csp_mspt_collector_receiver::get_startup_time()
 {
-    return mc_mspt_receiver_222.m_rec_su_delay * 3600.; //sec   
+    return mc_pt_receiver.get_startup_time();   //[s]
 }
 
-double C_csp_mspt_collector_receiver::get_startup_energy() //MWh
+double C_csp_mspt_collector_receiver::get_startup_energy()
 {
-    return mc_mspt_receiver_222.m_rec_qf_delay * mc_mspt_receiver_222.m_q_rec_des*1.e-6;
+    return mc_pt_receiver.get_startup_energy(); //[MWh]
 }
 
 double C_csp_mspt_collector_receiver::get_pumping_parasitic_coef()  //MWe/MWt
 {
-    HTFProperties *htf = mc_mspt_receiver_222.get_htf_property_object();
-
-    C_mspt_receiver_222 *R = &mc_mspt_receiver_222;
-
-    double Tavg = (R->m_T_htf_cold_des + R->m_T_htf_hot_des)/2.;
-
-    double mu_coolant = htf->visc(Tavg);					//[kg/m-s] Absolute viscosity of the coolant
-	double k_coolant = htf->cond(Tavg);					//[W/m-K] Conductivity of the coolant
-	double rho_coolant = htf->dens(Tavg, 1.0);			//[kg/m^3] Density of the coolant
-    double c_p_coolant = htf->Cp(Tavg)*1e3;                 //[J/kg-K] Specific heat
-
-    double m_dot_salt = R->m_q_rec_des / (c_p_coolant * (R->m_T_htf_hot_des - R->m_T_htf_cold_des) );
-
-	double n_t = (int)(CSP::pi*R->m_d_rec / (R->m_od_tube*R->m_n_panels));	// The number of tubes per panel, as a function of the number of panels and the desired diameter of the receiver
-	double id_tube = R->m_od_tube - 2 * R->m_th_tube;			//[m] Inner diameter of receiver tube
-
-
-	double u_coolant = m_dot_salt / (n_t*rho_coolant*pow((id_tube / 2.0), 2)*CSP::pi);	//[m/s] Average velocity of the coolant through the receiver tubes
-	double Re_inner = rho_coolant*u_coolant*id_tube / mu_coolant;				//[-] Reynolds number of internal flow
-	double Pr_inner = c_p_coolant*mu_coolant / k_coolant;							//[-] Prandtl number of internal flow
-	double Nusselt_t, f;
-    double LoverD = R->m_h_rec / id_tube;
-	double RelRough = (4.5e-5) / id_tube;	//[-] Relative roughness of the tubes. http:www.efunda.com/formulae/fluids/roughness.cfm
-	CSP::PipeFlow(Re_inner, Pr_inner, LoverD, RelRough, Nusselt_t, f);
-
-    double deltap, wdot;
-    mc_mspt_receiver_222.calc_pump_performance(rho_coolant, m_dot_salt, f, deltap, wdot );
-
-    return wdot / R->m_q_rec_des;
-
+    return mc_pt_receiver.get_pumping_parasitic_coef();
 }
 
 double C_csp_mspt_collector_receiver::get_min_power_delivery()    //MWt
 {
-    return mc_mspt_receiver_222.m_f_rec_min * mc_mspt_receiver_222.m_q_rec_des*1.e-6;
+    return mc_pt_receiver.m_f_rec_min * mc_pt_receiver.m_q_rec_des*1.e-6;
 }
 
 
@@ -176,46 +130,58 @@ void C_csp_mspt_collector_receiver::call(const C_csp_weatherreader::S_outputs &w
 	mc_pt_heliostatfield.call(weather, heliostat_field_control, sim_info);
 
 	// Get heliostat field outputs and set corresponding receiver inputs
-	C_mspt_receiver_222::S_inputs receiver_inputs;
+	C_pt_receiver::S_inputs receiver_inputs;
 	receiver_inputs.m_field_eff = mc_pt_heliostatfield.ms_outputs.m_eta_field;
 	receiver_inputs.m_input_operation_mode = inputs.m_input_operation_mode;
 	receiver_inputs.m_flux_map_input = &mc_pt_heliostatfield.ms_outputs.m_flux_map_out;
-	mc_mspt_receiver_222.call(weather, htf_state_in, receiver_inputs, sim_info);
+	mc_pt_receiver.call(weather, htf_state_in, receiver_inputs, sim_info);
 		
 	// Set collector/receiver parent class outputs and return
 	//cr_out_report.m_eta_field = mc_pt_heliostatfield.ms_outputs.m_eta_field;				//[-]
     //cr_out_report.m_sf_adjust_out = mc_pt_heliostatfield.ms_outputs.m_sf_adjust_out;
 	//cr_out_report.m_q_dot_field_inc = mc_pt_heliostatfield.ms_outputs.m_q_dot_field_inc;	//[MWt]
 
-	//cr_out_report.m_q_dot_rec_inc = mc_mspt_receiver_222.ms_outputs.m_q_dot_rec_inc;		//[MWt]
-	//cr_out_report.m_eta_thermal = mc_mspt_receiver_222.ms_outputs.m_eta_therm;				//[-]
-	cr_out_solver.m_q_thermal = mc_mspt_receiver_222.ms_outputs.m_Q_thermal;				//[MW]
-	cr_out_solver.m_q_startup = mc_mspt_receiver_222.ms_outputs.m_q_startup;				//[MWt-hr]
-	//cr_out_report.m_q_dot_piping_loss = mc_mspt_receiver_222.ms_outputs.m_q_dot_piping_loss;	//[MWt]
-	cr_out_solver.m_m_dot_salt_tot = mc_mspt_receiver_222.ms_outputs.m_m_dot_salt_tot;		//[kg/hr]
-	cr_out_solver.m_T_salt_hot = mc_mspt_receiver_222.ms_outputs.m_T_salt_hot;				//[C]
+	//cr_out_report.m_q_dot_rec_inc = mc_pt_receiver.ms_outputs.m_q_dot_rec_inc;		//[MWt]
+	//cr_out_report.m_eta_thermal = mc_pt_receiver.ms_outputs.m_eta_therm;				//[-]
+	cr_out_solver.m_q_thermal = mc_pt_receiver.ms_outputs.m_Q_thermal;				//[MW]
+	cr_out_solver.m_q_startup = mc_pt_receiver.ms_outputs.m_q_startup;				//[MWt-hr]
+	//cr_out_report.m_q_dot_piping_loss = mc_pt_receiver.ms_outputs.m_q_dot_piping_loss;	//[MWt]
+	cr_out_solver.m_m_dot_salt_tot = mc_pt_receiver.ms_outputs.m_m_dot_salt_tot;		//[kg/hr]
+	cr_out_solver.m_T_salt_hot = mc_pt_receiver.ms_outputs.m_T_salt_hot;				//[C]
 	
-	cr_out_solver.m_component_defocus = mc_mspt_receiver_222.ms_outputs.m_component_defocus;	//[-]
+	cr_out_solver.m_component_defocus = mc_pt_receiver.ms_outputs.m_component_defocus;	//[-]
 	
-	cr_out_solver.m_W_dot_htf_pump = mc_mspt_receiver_222.ms_outputs.m_W_dot_pump;			//[MWe]
+	cr_out_solver.m_W_dot_htf_pump = mc_pt_receiver.ms_outputs.m_W_dot_pump;			//[MWe]
 	cr_out_solver.m_W_dot_col_tracking = mc_pt_heliostatfield.ms_outputs.m_pparasi;		//[MWe]
 
-	cr_out_solver.m_time_required_su = mc_mspt_receiver_222.ms_outputs.m_time_required_su;	//[s]
+	cr_out_solver.m_time_required_su = mc_pt_receiver.ms_outputs.m_time_required_su;	//[s]
+	cr_out_solver.m_q_rec_heattrace = mc_pt_receiver.ms_outputs.m_q_heattrace / (mc_pt_receiver.ms_outputs.m_time_required_su / 3600.0);		//[MWt])
+
 
 	mc_reported_outputs.value(E_FIELD_Q_DOT_INC, mc_pt_heliostatfield.ms_outputs.m_q_dot_field_inc);	//[MWt]
 	mc_reported_outputs.value(E_FIELD_ETA_OPT, mc_pt_heliostatfield.ms_outputs.m_eta_field);			//[-]
 	mc_reported_outputs.value(E_FIELD_ADJUST, mc_pt_heliostatfield.ms_outputs.m_sf_adjust_out);			//[-]
 
-	mc_reported_outputs.value(E_Q_DOT_INC, mc_mspt_receiver_222.ms_outputs.m_q_dot_rec_inc);	//[MWt]
-	mc_reported_outputs.value(E_ETA_THERMAL, mc_mspt_receiver_222.ms_outputs.m_eta_therm);		//[-]
-	mc_reported_outputs.value(E_Q_DOT_THERMAL, mc_mspt_receiver_222.ms_outputs.m_Q_thermal);	//[MWt]
-	mc_reported_outputs.value(E_M_DOT_HTF, mc_mspt_receiver_222.ms_outputs.m_m_dot_salt_tot);	//[kg/hr]
+	mc_reported_outputs.value(E_Q_DOT_INC, mc_pt_receiver.ms_outputs.m_q_dot_rec_inc);	//[MWt]
+	mc_reported_outputs.value(E_ETA_THERMAL, mc_pt_receiver.ms_outputs.m_eta_therm);		//[-]
+	mc_reported_outputs.value(E_Q_DOT_THERMAL, mc_pt_receiver.ms_outputs.m_Q_thermal);	//[MWt]
+	mc_reported_outputs.value(E_M_DOT_HTF, mc_pt_receiver.ms_outputs.m_m_dot_salt_tot);	//[kg/hr]
 		// If startup, then timestep may have changed (why not report this from 222 in MWt?)
-	mc_reported_outputs.value(E_Q_DOT_STARTUP, mc_mspt_receiver_222.ms_outputs.m_q_startup / (mc_mspt_receiver_222.ms_outputs.m_time_required_su / 3600.0));		//[MWt])
+	mc_reported_outputs.value(E_Q_DOT_STARTUP, mc_pt_receiver.ms_outputs.m_q_startup / (mc_pt_receiver.ms_outputs.m_time_required_su / 3600.0));		//[MWt])
 	mc_reported_outputs.value(E_T_HTF_IN, htf_state_in.m_temp);									//[C]
-	mc_reported_outputs.value(E_T_HTF_OUT, mc_mspt_receiver_222.ms_outputs.m_T_salt_hot);		//[C]
-	mc_reported_outputs.value(E_Q_DOT_PIPE_LOSS, mc_mspt_receiver_222.ms_outputs.m_q_dot_piping_loss);	//[MWt]
-    mc_reported_outputs.value(E_Q_DOT_LOSS, mc_mspt_receiver_222.ms_outputs.m_q_rad_sum + mc_mspt_receiver_222.ms_outputs.m_q_conv_sum ); //MWt
+	mc_reported_outputs.value(E_T_HTF_OUT, mc_pt_receiver.ms_outputs.m_T_salt_hot);		//[C]
+	mc_reported_outputs.value(E_Q_DOT_PIPE_LOSS, mc_pt_receiver.ms_outputs.m_q_dot_piping_loss);	//[MWt]
+    mc_reported_outputs.value(E_Q_DOT_LOSS, mc_pt_receiver.ms_outputs.m_q_rad_sum + mc_pt_receiver.ms_outputs.m_q_conv_sum ); //MWt
+    // from transient model:
+	mc_reported_outputs.value(E_P_HEATTRACE, mc_pt_receiver.ms_outputs.m_q_heattrace / (mc_pt_receiver.ms_outputs.m_time_required_su / 3600.0));		//[MWt])
+	mc_reported_outputs.value(E_T_HTF_OUT_END, mc_pt_receiver.ms_outputs.m_inst_T_salt_hot);	//[C]
+	mc_reported_outputs.value(E_T_HTF_OUT_MAX, mc_pt_receiver.ms_outputs.m_max_T_salt_hot);	//[C]
+	mc_reported_outputs.value(E_T_HTF_PANEL_OUT_MAX, mc_pt_receiver.ms_outputs.m_max_rec_tout);	//[C]
+	
+	mc_reported_outputs.value(E_T_WALL_INLET, mc_pt_receiver.ms_outputs.m_Twall_inlet);	//[C]
+	mc_reported_outputs.value(E_T_WALL_OUTLET, mc_pt_receiver.ms_outputs.m_Twall_outlet);	//[C]
+	mc_reported_outputs.value(E_T_RISER, mc_pt_receiver.ms_outputs.m_Triser);	//[C]
+	mc_reported_outputs.value(E_T_DOWNC, mc_pt_receiver.ms_outputs.m_Tdownc);	//[C]
 }
 
 void C_csp_mspt_collector_receiver::off(const C_csp_weatherreader::S_outputs &weather,
@@ -235,36 +201,47 @@ void C_csp_mspt_collector_receiver::off(const C_csp_weatherreader::S_outputs &we
 	cr_out_solver.m_W_dot_col_tracking = mc_pt_heliostatfield.ms_outputs.m_pparasi;			//[MWe]
 
 	// Now, call the tower-receiver model
-	mc_mspt_receiver_222.off(weather, htf_state_in, sim_info);
+	mc_pt_receiver.off(weather, htf_state_in, sim_info);
 
 	// Set collector/receiver parent class outputs from field model
-	//cr_out_report.m_q_dot_rec_inc = mc_mspt_receiver_222.ms_outputs.m_q_dot_rec_inc;		 //[MWt]
-	//cr_out_report.m_eta_thermal = mc_mspt_receiver_222.ms_outputs.m_eta_therm;				 //[-]
-	cr_out_solver.m_q_thermal = mc_mspt_receiver_222.ms_outputs.m_Q_thermal;				 //[MW]
-	cr_out_solver.m_q_startup = mc_mspt_receiver_222.ms_outputs.m_q_startup;				 //[MWt-hr]
-	//cr_out_report.m_q_dot_piping_loss = mc_mspt_receiver_222.ms_outputs.m_q_dot_piping_loss; //[MWt]
-	cr_out_solver.m_m_dot_salt_tot = mc_mspt_receiver_222.ms_outputs.m_m_dot_salt_tot;		 //[kg/hr]
-	cr_out_solver.m_T_salt_hot = mc_mspt_receiver_222.ms_outputs.m_T_salt_hot;				 //[C]
+	//cr_out_report.m_q_dot_rec_inc = mc_pt_receiver.ms_outputs.m_q_dot_rec_inc;		 //[MWt]
+	//cr_out_report.m_eta_thermal = mc_pt_receiver.ms_outputs.m_eta_therm;				 //[-]
+	cr_out_solver.m_q_thermal = mc_pt_receiver.ms_outputs.m_Q_thermal;				 //[MW]
+	cr_out_solver.m_q_startup = mc_pt_receiver.ms_outputs.m_q_startup;				 //[MWt-hr]
+	//cr_out_report.m_q_dot_piping_loss = mc_pt_receiver.ms_outputs.m_q_dot_piping_loss; //[MWt]
+	cr_out_solver.m_m_dot_salt_tot = mc_pt_receiver.ms_outputs.m_m_dot_salt_tot;		 //[kg/hr]
+	cr_out_solver.m_T_salt_hot = mc_pt_receiver.ms_outputs.m_T_salt_hot;				 //[C]
 	cr_out_solver.m_component_defocus = 1.0;	//[-]
-	cr_out_solver.m_W_dot_htf_pump = mc_mspt_receiver_222.ms_outputs.m_W_dot_pump;			 //[MWe]
+	cr_out_solver.m_W_dot_htf_pump = mc_pt_receiver.ms_outputs.m_W_dot_pump;			 //[MWe]
 		// Not sure that we want 'startup time required' calculated in 'off' call
-	cr_out_solver.m_time_required_su = mc_mspt_receiver_222.ms_outputs.m_time_required_su;	 //[s]
-	
+	cr_out_solver.m_time_required_su = mc_pt_receiver.ms_outputs.m_time_required_su;	 //[s]
+	cr_out_solver.m_q_rec_heattrace = mc_pt_receiver.ms_outputs.m_q_heattrace / (mc_pt_receiver.ms_outputs.m_time_required_su / 3600.0);		//[MWt])
+
 	mc_reported_outputs.value(E_FIELD_Q_DOT_INC, mc_pt_heliostatfield.ms_outputs.m_q_dot_field_inc);	//[MWt]
 	mc_reported_outputs.value(E_FIELD_ETA_OPT, mc_pt_heliostatfield.ms_outputs.m_eta_field);			//[-]
 	mc_reported_outputs.value(E_FIELD_ADJUST, mc_pt_heliostatfield.ms_outputs.m_sf_adjust_out);			//[-]
 
-	mc_reported_outputs.value(E_Q_DOT_INC, mc_mspt_receiver_222.ms_outputs.m_q_dot_rec_inc);	//[MWt]
-	mc_reported_outputs.value(E_ETA_THERMAL, mc_mspt_receiver_222.ms_outputs.m_eta_therm);		//[-]
-	mc_reported_outputs.value(E_Q_DOT_THERMAL, mc_mspt_receiver_222.ms_outputs.m_Q_thermal);	//[MWt]
-	mc_reported_outputs.value(E_M_DOT_HTF, mc_mspt_receiver_222.ms_outputs.m_m_dot_salt_tot);	//[kg/hr]
+	mc_reported_outputs.value(E_Q_DOT_INC, mc_pt_receiver.ms_outputs.m_q_dot_rec_inc);	//[MWt]
+	mc_reported_outputs.value(E_ETA_THERMAL, mc_pt_receiver.ms_outputs.m_eta_therm);		//[-]
+	mc_reported_outputs.value(E_Q_DOT_THERMAL, mc_pt_receiver.ms_outputs.m_Q_thermal);	//[MWt]
+	mc_reported_outputs.value(E_M_DOT_HTF, mc_pt_receiver.ms_outputs.m_m_dot_salt_tot);	//[kg/hr]
 		// Should not be startup energy in OFF, but timestep may be subhourly/nonuniform (why not report this from 222 in MWt?)
-	mc_reported_outputs.value(E_Q_DOT_STARTUP, mc_mspt_receiver_222.ms_outputs.m_q_startup / (mc_mspt_receiver_222.ms_outputs.m_time_required_su / 3600.0));		//[MWt])
+	mc_reported_outputs.value(E_Q_DOT_STARTUP, mc_pt_receiver.ms_outputs.m_q_startup / (mc_pt_receiver.ms_outputs.m_time_required_su / 3600.0));		//[MWt])
 	mc_reported_outputs.value(E_T_HTF_IN, htf_state_in.m_temp);									//[C]
-	mc_reported_outputs.value(E_T_HTF_OUT, mc_mspt_receiver_222.ms_outputs.m_T_salt_hot);		//[C]
-	mc_reported_outputs.value(E_Q_DOT_PIPE_LOSS, mc_mspt_receiver_222.ms_outputs.m_q_dot_piping_loss);	//[MWt]
-    mc_reported_outputs.value(E_Q_DOT_LOSS, mc_mspt_receiver_222.ms_outputs.m_q_rad_sum + mc_mspt_receiver_222.ms_outputs.m_q_conv_sum ); //MWt
-    
+	mc_reported_outputs.value(E_T_HTF_OUT, mc_pt_receiver.ms_outputs.m_T_salt_hot);		//[C]
+	mc_reported_outputs.value(E_Q_DOT_PIPE_LOSS, mc_pt_receiver.ms_outputs.m_q_dot_piping_loss);	//[MWt]
+    mc_reported_outputs.value(E_Q_DOT_LOSS, mc_pt_receiver.ms_outputs.m_q_rad_sum + mc_pt_receiver.ms_outputs.m_q_conv_sum ); //MWt
+    // from transient model:
+	mc_reported_outputs.value(E_P_HEATTRACE, mc_pt_receiver.ms_outputs.m_q_heattrace / (mc_pt_receiver.ms_outputs.m_time_required_su / 3600.0));		//[MWt])
+	mc_reported_outputs.value(E_T_HTF_OUT_END, mc_pt_receiver.ms_outputs.m_inst_T_salt_hot);	//[C]
+	mc_reported_outputs.value(E_T_HTF_OUT_MAX, mc_pt_receiver.ms_outputs.m_max_T_salt_hot);	//[C]
+	mc_reported_outputs.value(E_T_HTF_PANEL_OUT_MAX, mc_pt_receiver.ms_outputs.m_max_rec_tout);	//[C]
+
+	mc_reported_outputs.value(E_T_WALL_INLET, mc_pt_receiver.ms_outputs.m_Twall_inlet);	//[C]
+	mc_reported_outputs.value(E_T_WALL_OUTLET, mc_pt_receiver.ms_outputs.m_Twall_outlet);	//[C]
+	mc_reported_outputs.value(E_T_RISER, mc_pt_receiver.ms_outputs.m_Triser);	//[C]
+	mc_reported_outputs.value(E_T_DOWNC, mc_pt_receiver.ms_outputs.m_Tdownc);	//[C]
+
 	return;
 }
 
@@ -354,7 +331,8 @@ double C_csp_mspt_collector_receiver::get_collector_area()
 
     //return p->m_dens_mirror * p->m_helio_height * p->m_helio_width * (double)p->m_helio_positions.nrows();
 
-    return mc_mspt_receiver_222.m_A_sf;
+    //return mc_pt_receiver.m_A_sf;
+    return mc_pt_heliostatfield.ms_params.m_A_sf;
 }
 
 double C_csp_mspt_collector_receiver::calculate_thermal_efficiency_approx( const C_csp_weatherreader::S_outputs &weather, double q_inc )
@@ -363,7 +341,7 @@ double C_csp_mspt_collector_receiver::calculate_thermal_efficiency_approx( const
     A very approximate thermal efficiency used for quick optimization performance projections
     */
 
-    double T_eff = (mc_mspt_receiver_222.m_T_htf_cold_des + mc_mspt_receiver_222.m_T_htf_hot_des)*.55;
+    double T_eff = (mc_pt_receiver.m_T_htf_cold_des + mc_pt_receiver.m_T_htf_hot_des)*.55;
 
     double T_amb = weather.m_tdry + 273.15;
     double T_eff4 = T_eff * T_eff;
@@ -371,9 +349,9 @@ double C_csp_mspt_collector_receiver::calculate_thermal_efficiency_approx( const
     double T_amb4 = T_amb * T_amb;
     T_amb4 *= T_amb4;
 
-    double Arec = mc_mspt_receiver_222.m_d_rec * 3.1415 * mc_mspt_receiver_222.m_h_rec;
+    double Arec = mc_pt_receiver.area_proj();
 
-    double q_rad = 5.67e-8*mc_mspt_receiver_222.m_epsilon * Arec * (T_eff4 - T_amb4) * 1.e-6;   //MWt
+    double q_rad = 5.67e-8*mc_pt_receiver.m_epsilon * Arec * (T_eff4 - T_amb4) * 1.e-6;   //MWt
 
     double v = weather.m_wspd;
     double v2 = v*v;
@@ -389,10 +367,10 @@ double C_csp_mspt_collector_receiver::calculate_thermal_efficiency_approx( const
 void C_csp_mspt_collector_receiver::converged()
 {
 	mc_pt_heliostatfield.converged();
-	mc_mspt_receiver_222.converged();
+	mc_pt_receiver.converged();
 
 	// Hardcode to test...
-	//mc_reported_outputs.set_timestep_output(E_Q_DOT_THERMAL, mc_mspt_receiver_222.ms_outputs.m_Q_thermal);	//[MWt]
+	//mc_reported_outputs.set_timestep_output(E_Q_DOT_THERMAL, mc_pt_receiver.ms_outputs.m_Q_thermal);	//[MWt]
 	mc_reported_outputs.set_timestep_outputs();
 }
 

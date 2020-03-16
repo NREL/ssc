@@ -1,518 +1,489 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (�Alliance�) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as �System Advisor Model� or �SAM�. Except
-*  to comply with the foregoing, the terms �System Advisor Model�, �SAM�, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #include "cmod_pvsamv1.h"
 #include "lib_pv_io_manager.h"
+#include "lib_resilience.h"
 
 // comment following define if do not want shading database validation outputs
 //#define SHADE_DB_OUTPUTS
 
 static var_info _cm_vtab_pvsamv1[] = {
-/*   VARTYPE           DATATYPE         NAME                                            LABEL                                                   UNITS      META                             GROUP                  REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-	{ SSC_INPUT,        SSC_STRING,      "solar_resource_file",                         "Weather file in TMY2, TMY3, EPW, or SAM CSV.",         "",         "",                              "pvsamv1",              "?",                        "",                              "" },
-	{ SSC_INPUT,        SSC_TABLE,       "solar_resource_data",                         "Weather data",                                         "",         "lat,lon,tz,elev,year,month,hour,minute,gh,dn,df,poa,tdry,twet,tdew,rhum,pres,snow,alb,aod,wspd,wdir",    "pvsamv1",              "?",                        "",                              "" },
+/*   VARTYPE            DATATYPE         NAME                                            LABEL                                                   UNITS      META                             GROUP                  REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
+    {SSC_INPUT, SSC_STRING,   "solar_resource_file",                  "Weather file in TMY2, TMY3, EPW, or SAM CSV",         "",       "",                                                                                                                                                                                      "Solar Resource",                                        "?",                                  "",                    "" },
+    {SSC_INPUT, SSC_TABLE,    "solar_resource_data",                  "Weather data",                                        "",       "lat,lon,tz,elev,year,month,hour,minute,gh,dn,df,poa,tdry,twet,tdew,rhum,pres,Snow,alb,aod,wspd,wdir",                                                                                   "Solar Resource",                                        "?",                                  "",                    "" },
 
-	// transformer model percent of rated ac output
-	{ SSC_INPUT,		SSC_NUMBER,		 "transformer_no_load_loss",					"Power transformer no load loss",						"%",		"",								 "pvsamv1",				 "?=0",						 "",							 "" },
-	{ SSC_INPUT,		SSC_NUMBER,		 "transformer_load_loss",						"Power transformer load loss",							"%",		"",								 "pvsamv1",				 "?=0",						 "",							 "" },
+    	// transformer model percent of rated ac output
+    {SSC_INPUT, SSC_NUMBER,   "transformer_no_load_loss",             "Power transformer no load loss",                      "%",      "",                                                                                                                                                                                      "Losses",                                                "?=0",                                "",                    "" },
+    {SSC_INPUT, SSC_NUMBER,   "transformer_load_loss",                "Power transformer load loss",                         "%",      "",                                                                                                                                                                                      "Losses",                                                "?=0",                                "",                    "" },
 
-	// optional for lifetime analysis
-	{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",                  "PV lifetime simulation",                               "0/1",      "",                              "pvsamv1",             "?=0",                        "INTEGER,MIN=0,MAX=1",          "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                             "Lifetime analysis period",                             "years",    "",                              "pvsamv1",             "system_use_lifetime_output=1",   "",                             "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "dc_degradation",                              "Annual module degradation",                            "%/year",   "",                              "pvsamv1",             "system_use_lifetime_output=1",   "",                             "" },
-//	{ SSC_INPUT,        SSC_ARRAY,       "ac_degradation",                              "Annual AC degradation",                                "%/year",   "",                              "pvsamv1",             "system_use_lifetime_output=1",   "",                             "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "dc_degrade_factor",                           "Annual module degrade factor",                         "",         "",                              "Annual",             "system_use_lifetime_output=1",   "",                             "" },
-//	{ SSC_OUTPUT,       SSC_ARRAY,       "ac_degrade_factor",                           "Annual AC degrade factor",                             "",         "",                              "pvsamv1",             "system_use_lifetime_output=1",   "",                             "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "en_dc_lifetime_losses",                       "Enable lifetime daily DC losses",                      "0/1",      "",                              "pvsamv1",             "?=0",                        "INTEGER,MIN=0,MAX=1",          "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "dc_lifetime_losses",                          "Lifetime daily DC losses",                             "%",        "",                              "pvsamv1",             "en_dc_lifetime_losses=1",    "",                             "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "en_ac_lifetime_losses",                       "Enable lifetime daily AC losses",                      "0/1",      "",                              "pvsamv1",             "?=0",                        "INTEGER,MIN=0,MAX=1",          "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "ac_lifetime_losses",                          "Lifetime daily AC losses",                             "%",        "",                              "pvsamv1",             "en_ac_lifetime_losses=1",    "",                             "" },
+    	// optional for lifetime analysis
+    {SSC_INPUT, SSC_NUMBER,   "system_use_lifetime_output",           "PV lifetime simulation",                              "0/1",    "",                                                                                                                                                                                      "Lifetime",                                              "?=0",                                "INTEGER,MIN=0,MAX=1", "" },
+    {SSC_INPUT, SSC_NUMBER,   "analysis_period",                      "Lifetime analysis period",                            "years",  "",                                                                                                                                                                                      "Lifetime",                                              "system_use_lifetime_output=1",       "",                    "" },
+    {SSC_INPUT, SSC_ARRAY,    "dc_degradation",                       "Annual DC degradation",                           "%/year", "",                                                                                                                                                                                      "Lifetime",                                              "system_use_lifetime_output=1",       "",                    "" },
+    {SSC_OUTPUT,SSC_ARRAY,    "dc_degrade_factor",                    "Annual DC degradation factor",                        "",       "",                                                                                                                                                                                      "Lifetime",                                              "system_use_lifetime_output=1",       "",                    "" },
+    {SSC_INPUT, SSC_NUMBER,   "en_dc_lifetime_losses",                "Enable lifetime daily DC losses",                     "0/1",    "",                                                                                                                                                                                      "Lifetime",                                              "?=0",                                "INTEGER,MIN=0,MAX=1", "" },
+    {SSC_INPUT, SSC_ARRAY,    "dc_lifetime_losses",                   "Lifetime daily DC losses",                            "%",      "",                                                                                                                                                                                      "Lifetime",                                              "en_dc_lifetime_losses=1",            "",                    "" },
+    {SSC_INPUT, SSC_NUMBER,   "en_ac_lifetime_losses",                "Enable lifetime daily AC losses",                     "0/1",    "",                                                                                                                                                                                      "Lifetime",                                              "?=0",                                "INTEGER,MIN=0,MAX=1", "" },
+    {SSC_INPUT, SSC_ARRAY,    "ac_lifetime_losses",                   "Lifetime daily AC losses",                            "%",      "",                                                                                                                                                                                      "Lifetime",                                              "en_ac_lifetime_losses=1",            "",                    "" },
 
-	//SEV: Activating the snow model
-	{ SSC_INPUT,        SSC_NUMBER,      "en_snow_model",                               "Toggle snow loss estimation",                          "0/1",      "",                              "snowmodel",            "?=0",                       "BOOLEAN",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "system_capacity",                             "DC Nameplate capacity",                                "kWdc",       "",                            "pvsamv1",              "*",                         "",                             "" },
+	   // misc inputs
+    {SSC_INPUT, SSC_NUMBER,   "en_snow_model",                        "Toggle snow loss estimation",                         "0/1",    "",                                                                                                                                                                                      "Losses",                                                "?=0",                                "BOOLEAN",             "" },
+    {SSC_INPUT, SSC_NUMBER,   "system_capacity",                      "DC Nameplate capacity",                               "kWdc",   "",                                                                                                                                                                                      "System Design",                                         "*",                                  "",                    "" },
+    {SSC_INPUT, SSC_NUMBER,   "use_wf_albedo",                        "Use albedo in weather file if provided",              "0/1",    "0=user-specified,1=weatherfile",                                                                                                                                                        "Solar Resource",                                        "?=1",                                "BOOLEAN",             "" },
+    {SSC_INPUT, SSC_ARRAY,    "albedo",                               "User specified ground albedo",                        "0..1",   "",                                                                                                                                                                                      "Solar Resource",                                        "*",                                  "LENGTH=12",           "" },
+    {SSC_INPUT, SSC_NUMBER,   "irrad_mode",                           "Irradiance input translation mode",                   "",       "0=beam&diffuse,1=total&beam,2=total&diffuse,3=poa_reference,4=poa_pyranometer",                                                                                                         "Solar Resource",                                        "?=0",                                "INTEGER,MIN=0,MAX=4", "" },
+    {SSC_INPUT, SSC_NUMBER,   "sky_model",                            "Diffuse sky model",                                   "",       "0=isotropic,1=hkdr,2=perez",                                                                                                                                                            "Solar Resource",                                        "?=2",                                "INTEGER,MIN=0,MAX=2", "" },
+    {SSC_INPUT, SSC_NUMBER,   "inverter_count",                       "Number of inverters",                                 "",       "",                                                                                                                                                                                      "System Design",                                         "*",                                  "INTEGER,POSITIVE",    "" },
+    {SSC_INPUT, SSC_NUMBER,   "enable_mismatch_vmax_calc",            "Enable mismatched subarray Vmax calculation",         "",       "",                                                                                                                                                                                      "System Design",                                         "?=0",                                "BOOLEAN",             "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,      "use_wf_albedo",                               "Use albedo in weather file if provided",               "0/1",      "",                              "pvsamv1",              "?=1",                      "BOOLEAN",                       "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "albedo",                                      "User specified ground albedo",                         "0..1",     "",                              "pvsamv1",              "*",						  "LENGTH=12",					  "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "irrad_mode",                                  "Irradiance input translation mode",                     "",        "0=beam&diffuse,1=total&beam,2=total&diffuse,3=poa_reference,4=poa_pyranometer", "pvsamv1", "?=0", "INTEGER,MIN=0,MAX=4", "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "sky_model",                                   "Diffuse sky model",                                     "",        "0=isotropic,1=hkdr,2=perez",    "pvsamv1",              "?=2",                      "INTEGER,MIN=0,MAX=2",           "" },
+	  // subarray 1
+    {SSC_INPUT, SSC_NUMBER,   "subarray1_nstrings",                   "Sub-array 1 Number of parallel strings",              "",       "",                                                                                                                                                                                      "System Design",                                         "",                                   "INTEGER",             "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray1_modules_per_string",         "Sub-array 1 Modules per string",                      "",       "",                                                                                                                                                                                      "System Design",                                         "*",                                  "INTEGER,POSITIVE",    "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray1_mppt_input",                 "Sub-array 1 Inverter MPPT input number",              "",       "",                                                                                                                                                                                      "System Design",                                         "?=1",                                "INTEGER,POSITIVE",    "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray1_tilt",                       "Sub-array 1 Tilt",                                    "deg",    "0=horizontal,90=vertical",                                                                                                                                                              "System Design",                                         "",                                   "MIN=0,MAX=90",        "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray1_tilt_eq_lat",                "Sub-array 1 Tilt=latitude override",                  "0/1",    "0=false,1=override",                                                                                                                                                                    "System Design",                                         "",                                   "BOOLEAN",             "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray1_azimuth",                    "Sub-array 1 Azimuth",                                 "deg",    "0=N,90=E,180=S,270=W",                                                                                                                                                                  "System Design",                                         "",                                   "MIN=0,MAX=359.9",     "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray1_track_mode",                 "Sub-array 1 Tracking mode",                           "",       "0=fixed,1=1axis,2=2axis,3=azi,4=monthly",                                                                                                                                               "System Design",                                         "*",                                  "INTEGER,MIN=0,MAX=4", "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray1_rotlim",                     "Sub-array 1 Tracker rotation limit",                  "deg",    "",                                                                                                                                                                                      "System Design",                                         "?=45",                               "MIN=0,MAX=85",        "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray1_shade_mode",                 "Sub-array 1 shading mode (fixed tilt or 1x tracking)","0/1/2",  "0=none,1=standard(non-linear),2=thin film(linear)",                                                                                                                                     "Shading",                                               "*",                                  "INTEGER,MIN=0,MAX=2", "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray1_gcr",                        "Sub-array 1 Ground coverage ratio",                   "0..1",   "",                                                                                                                                                                                      "System Design",                                         "?=0.3",                              "MIN=0.01,MAX=0.99",   "" },
+    {SSC_INPUT, SSC_ARRAY,    "subarray1_monthly_tilt",               "Sub-array 1 monthly tilt input",                      "deg",    "",                                                                                                                                                                                      "System Design",                                         "subarray1_track_mode=4",             "LENGTH=12",           "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray1_shading:string_option",      "Sub-array 1 shading string option",                   "",       "0=shadingdb,1=shadingdb_notc,2=average,3=maximum,4=minimum",                                                                                                                            "Shading",                                               "?=-1",                               "INTEGER,MIN=-1,MAX=4","" },
+    {SSC_INPUT, SSC_MATRIX,   "subarray1_shading:timestep",           "Sub-array 1 timestep beam shading losses",            "%",      "",                                                                                                                                                                                      "Shading",                                               "?",                                  "",                    "" },
+    {SSC_INPUT, SSC_MATRIX,   "subarray1_shading:mxh",                "Sub-array 1 Month x Hour beam shading losses",        "%",      "",                                                                                                                                                                                      "Shading",                                               "?",                                  "",                    "" },
+    {SSC_INPUT, SSC_MATRIX,   "subarray1_shading:azal",               "Sub-array 1 Azimuth x altitude beam shading losses",  "%",      "",                                                                                                                                                                                      "Shading",                                               "?",                                  "",                    "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray1_shading:diff",               "Sub-array 1 Diffuse shading loss",                    "%",      "",                                                                                                                                                                                      "Shading",                                               "?",                                  "",                    "" },
+    {SSC_INPUT, SSC_ARRAY,    "subarray1_soiling",                    "Sub-array 1 Monthly soiling loss",                    "%",      "",                                                                                                                                                                                      "Losses",                                                "*",                                  "LENGTH=12",           "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,      "inverter_count",                              "Number of inverters",                                   "",        "",                              "pvsamv1",              "*",                        "INTEGER,POSITIVE",              "" },
+    	// loss diagram outputs, also used to calculate total dc derate
+    {SSC_INPUT, SSC_NUMBER,   "subarray1_rear_irradiance_loss",       "Sub-array 1 rear irradiance loss",                    "%",      "",                                                                                                                                                                                      "Losses",                                                "*",                                  "MIN=0,MAX=100",       "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray1_mismatch_loss",              "Sub-array 1 DC mismatch loss",                        "%",      "",                                                                                                                                                                                      "Losses",                                                "*",                                  "MIN=0,MAX=100",       "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray1_diodeconn_loss",             "Sub-array 1 DC diodes and connections loss",          "%",      "",                                                                                                                                                                                      "Losses",                                                "*",                                  "MIN=0,MAX=100",       "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray1_dcwiring_loss",              "Sub-array 1 DC wiring loss",                          "%",      "",                                                                                                                                                                                      "Losses",                                                "*",                                  "MIN=0,MAX=100",       "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray1_tracking_loss",              "Sub-array 1 DC tracking error loss",                  "%",      "",                                                                                                                                                                                      "Losses",                                                "*",                                  "MIN=0,MAX=100",       "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray1_nameplate_loss",             "Sub-array 1 DC nameplate loss",                       "%",      "",                                                                                                                                                                                      "Losses",                                                "*",                                  "MIN=-5,MAX=100",      "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,      "enable_mismatch_vmax_calc",                   "Enable mismatched subarray Vmax calculation",           "",        "",                              "pvsamv1",              "?=0",                      "BOOLEAN",                       "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray2_rear_irradiance_loss",       "Sub-array 2 rear irradiance loss",                    "%",      "",                                                                                                                                                                                      "Losses",                                                "subarray2_enable=1",                 "MIN=0,MAX=100",       "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray2_mismatch_loss",              "Sub-array 2 DC mismatch loss",                        "%",      "",                                                                                                                                                                                      "Losses",                                                "?",                                  "MIN=0,MAX=100",       "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray2_diodeconn_loss",             "Sub-array 2 DC diodes and connections loss",          "%",      "",                                                                                                                                                                                      "Losses",                                                "?",                                  "MIN=0,MAX=100",       "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray2_dcwiring_loss",              "Sub-array 2 DC wiring loss",                          "%",      "",                                                                                                                                                                                      "Losses",                                                "?",                                  "MIN=0,MAX=100",       "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray2_tracking_loss",              "Sub-array 2 DC tracking error loss",                  "%",      "",                                                                                                                                                                                      "Losses",                                                "?",                                  "MIN=0,MAX=100",       "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray2_nameplate_loss",             "Sub-array 2 DC nameplate loss",                       "%",      "",                                                                                                                                                                                      "Losses",                                                "?",                                  "MIN=-5,MAX=100",      "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_nstrings",                          "Sub-array 1 Number of parallel strings",                "",        "",                              "pvsamv1",              "",						 "INTEGER",                       "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_modules_per_string",                "Sub-array 1 Modules per string",                        "",        "",                              "pvsamv1",              "*",                        "INTEGER,POSITIVE",              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_mppt_input",                        "Sub-array 1 Inverter MPPT input number",                "",        "",                              "pvsamv1",              "?=1",                      "INTEGER,POSITIVE",              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_tilt",                              "Sub-array 1 Tilt",                                      "deg",     "0=horizontal,90=vertical",      "pvsamv1",              "",                         "MIN=0,MAX=90",                "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_tilt_eq_lat",                       "Sub-array 1 Tilt=latitude override",                    "0/1",     "",                              "pvsamv1",              "",                         "BOOLEAN",                     "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_azimuth",                           "Sub-array 1 Azimuth",                                   "deg",     "0=N,90=E,180=S,270=W",          "pvsamv1",              "",                         "MIN=0,MAX=359.9",               "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_track_mode",                        "Sub-array 1 Tracking mode",                             "",        "0=fixed,1=1axis,2=2axis,3=azi,4=monthly", "pvsamv1",    "*",                        "INTEGER,MIN=0,MAX=4",           "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_rotlim",                            "Sub-array 1 Tracker rotation limit",                    "deg",     "",                              "pvsamv1",              "?=45",                     "MIN=0,MAX=85",                  "" },
-	{ SSC_INPUT,		SSC_NUMBER,		 "subarray1_shade_mode",				     	"Sub-array 1 shading mode (fixed tilt or 1x tracking)",	 "0/1/2",   "0=none,1=standard(non-linear),2=thin film(linear)", "pvsamv1", "*",                 "INTEGER,MIN=0,MAX=2",		      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_gcr",                               "Sub-array 1 Ground coverage ratio",                     "0..1",    "",                              "pvsamv1",              "?=0.3",                    "MIN=0,MAX=3",               "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "subarray1_monthly_tilt",                      "Sub-array 1 monthly tilt input",                        "deg",     "",                              "pvsamv1",              "subarray1_track_mode=4",   "LENGTH=12",                     "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_shading:string_option",             "Sub-array 1 shading string option",                     "",        "0=shadingdb,1=shadingdb_notc,2=average,3=maximum,4=minimum", "pvsamv1", "?=-1",     "INTEGER,MIN=-1,MAX=4", "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "subarray1_shading:timestep",                  "Sub-array 1 timestep beam shading losses",              "%",       "",                              "pvsamv1",              "?",                        "", "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "subarray1_shading:mxh",                       "Sub-array 1 Month x Hour beam shading losses",          "%",       "",                              "pvsamv1",              "?",                        "", "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "subarray1_shading:azal",                      "Sub-array 1 Azimuth x altitude beam shading losses",    "%",       "",                              "pvsamv1",              "?",                        "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_shading:diff",                      "Sub-array 1 Diffuse shading loss",                      "%",       "",                              "pvsamv1",              "?",                        "",                              "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "subarray1_soiling",                           "Sub-array 1 Monthly soiling loss",                      "%",       "",                              "pvsamv1",              "*",                        "LENGTH=12",                      "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray3_rear_irradiance_loss",       "Sub-array 3 rear irradiance loss",                    "%",      "",                                                                                                                                                                                      "Losses",                                                "subarray3_enable=1",                 "MIN=0,MAX=100",       "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray3_mismatch_loss",              "Sub-array 3 DC mismatch loss",                        "%",      "",                                                                                                                                                                                      "Losses",                                                "?",                                  "MIN=0,MAX=100",       "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray3_diodeconn_loss",             "Sub-array 3 DC diodes and connections loss",          "%",      "",                                                                                                                                                                                      "Losses",                                                "?",                                  "MIN=0,MAX=100",       "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray3_dcwiring_loss",              "Sub-array 3 DC wiring loss",                          "%",      "",                                                                                                                                                                                      "Losses",                                                "?",                                  "MIN=0,MAX=100",       "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray3_tracking_loss",              "Sub-array 3 DC tracking error loss",                  "%",      "",                                                                                                                                                                                      "Losses",                                                "?",                                  "MIN=0,MAX=100",       "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray3_nameplate_loss",             "Sub-array 3 DC nameplate loss",                       "%",      "",                                                                                                                                                                                      "Losses",                                                "?",                                  "MIN=-5,MAX=100",      "" },
 
-	// loss diagram outputs, also used to calculate total dc derate
-	{ SSC_INPUT, SSC_NUMBER, "subarray1_rear_irradiance_loss", "Sub-array 1 rear irradiance loss", "%", "", "pvsamv1", "*", "MIN=0,MAX=100", "" },
-	{ SSC_INPUT, SSC_NUMBER, "subarray1_mismatch_loss", "Sub-array 1 DC mismatch loss", "%", "", "pvsamv1", "*", "MIN=0,MAX=100", "" },
-	{ SSC_INPUT, SSC_NUMBER, "subarray1_diodeconn_loss", "Sub-array 1 DC diodes and connections loss", "%", "", "pvsamv1", "*", "MIN=0,MAX=100", "" },
-	{ SSC_INPUT, SSC_NUMBER, "subarray1_dcwiring_loss", "Sub-array 1 DC wiring loss", "%", "", "pvsamv1", "*", "MIN=0,MAX=100", "" },
-	{ SSC_INPUT, SSC_NUMBER, "subarray1_tracking_loss", "Sub-array 1 DC tracking error loss", "%", "", "pvsamv1", "*", "MIN=0,MAX=100", "" },
-	{ SSC_INPUT, SSC_NUMBER, "subarray1_nameplate_loss", "Sub-array 1 DC nameplate loss", "%", "", "pvsamv1", "*", "MIN=-5,MAX=100", "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray4_rear_irradiance_loss",       "Sub-array 4 rear irradiance loss",                    "%",      "",                                                                                                                                                                                      "Losses",                                                "subarray4_enable=1",                 "MIN=0,MAX=100",       "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray4_mismatch_loss",              "Sub-array 4 DC mismatch loss",                        "%",      "",                                                                                                                                                                                      "Losses",                                                "?",                                  "MIN=0,MAX=100",       "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray4_diodeconn_loss",             "Sub-array 4 DC diodes and connections loss",          "%",      "?",                                                                                                                                                                                     "Losses",                                                "?",                                  "MIN=0,MAX=100",       "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray4_dcwiring_loss",              "Sub-array 4 DC wiring loss",                          "%",      "",                                                                                                                                                                                      "Losses",                                                "?",                                  "MIN=0,MAX=100",       "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray4_tracking_loss",              "Sub-array 4 DC tracking error loss",                  "%",      "",                                                                                                                                                                                      "Losses",                                                "?",                                  "MIN=0,MAX=100",       "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray4_nameplate_loss",             "Sub-array 4 DC nameplate loss",                       "%",      "",                                                                                                                                                                                      "Losses",                                                "?",                                  "MIN=-5,MAX=100",      "" },
 
-	{ SSC_INPUT, SSC_NUMBER, "subarray2_rear_irradiance_loss", "Sub-array 2 rear irradiance loss", "%", "", "pvsamv1", "subarray2_enable=1", "MIN=0,MAX=100", "" },
-	{ SSC_INPUT, SSC_NUMBER, "subarray2_mismatch_loss", "Sub-array 2 DC mismatch loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
-	{ SSC_INPUT, SSC_NUMBER, "subarray2_diodeconn_loss", "Sub-array 2 DC diodes and connections loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
-	{ SSC_INPUT, SSC_NUMBER, "subarray2_dcwiring_loss", "Sub-array 2 DC wiring loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
-	{ SSC_INPUT, SSC_NUMBER, "subarray2_tracking_loss", "Sub-array 2 DC tracking error loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
-	{ SSC_INPUT, SSC_NUMBER, "subarray2_nameplate_loss", "Sub-array 2 DC nameplate loss", "%", "", "pvsamv1", "?", "MIN=-5,MAX=100", "" },
+    	//losses that are applied uniformly to all subarrays
+    {SSC_INPUT, SSC_NUMBER,   "dcoptimizer_loss",                     "DC power optimizer loss",                             "%",      "",                                                                                                                                                                                      "Losses",                                                "*",                                  "MIN=0,MAX=100",       "" },
+    {SSC_INPUT, SSC_NUMBER,   "acwiring_loss",                        "AC wiring loss",                                      "%",      "",                                                                                                                                                                                      "Losses",                                                "*",                                  "MIN=0,MAX=100",       "" },
+    {SSC_INPUT, SSC_NUMBER,   "transmission_loss",                    "Transmission loss",                                   "%",      "",                                                                                                                                                                                      "Losses",                                                "*",                                  "MIN=0,MAX=100",       "" },
 
-	{ SSC_INPUT, SSC_NUMBER, "subarray3_rear_irradiance_loss", "Sub-array 3 rear irradiance loss", "%", "", "pvsamv1", "subarray3_enable=1", "MIN=0,MAX=100", "" },
-	{ SSC_INPUT, SSC_NUMBER, "subarray3_mismatch_loss", "Sub-array 3 DC mismatch loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
-	{ SSC_INPUT, SSC_NUMBER, "subarray3_diodeconn_loss", "Sub-array 3 DC diodes and connections loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
-	{ SSC_INPUT, SSC_NUMBER, "subarray3_dcwiring_loss", "Sub-array 3 DC wiring loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
-	{ SSC_INPUT, SSC_NUMBER, "subarray3_tracking_loss", "Sub-array 3 DC tracking error loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
-	{ SSC_INPUT, SSC_NUMBER, "subarray3_nameplate_loss", "Sub-array 3 DC nameplate loss", "%", "", "pvsamv1", "?", "MIN=-5,MAX=100", "" },
+    	//system design inputs
+    {SSC_INPUT, SSC_NUMBER,   "subarray1_mod_orient",                 "Sub-array 1 Module orientation",                      "0/1",    "0=portrait,1=landscape",                                                                                                                                                                "Layout",                                                "*",                                  "INTEGER,MIN=0,MAX=1", "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray1_nmodx",                      "Sub-array 1 Number of modules along bottom of row",   "",       "",                                                                                                                                                                                      "Layout",                                                "*",                                  "INTEGER,POSITIVE",    "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray1_nmody",                      "Sub-array 1 Number of modules along side of row",     "",       "",                                                                                                                                                                                      "Layout",                                                "*",                                  "INTEGER,POSITIVE",    "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray1_backtrack",                  "Sub-array 1 Backtracking enabled",                    "",       "0=no backtracking,1=backtrack",                                                                                                                                                         "System Design",                                         "subarray1_track_mode=1",             "BOOLEAN",             "" },
 
-	{ SSC_INPUT, SSC_NUMBER, "subarray4_rear_irradiance_loss", "Sub-array 4 rear irradiance loss", "%", "", "pvsamv1", "subarray4_enable=1", "MIN=0,MAX=100", "" },
-	{ SSC_INPUT, SSC_NUMBER, "subarray4_mismatch_loss", "Sub-array 4 DC mismatch loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
-	{ SSC_INPUT, SSC_NUMBER, "subarray4_diodeconn_loss", "Sub-array 4 DC diodes and connections loss", "%", "?", "pvsamv1", "?", "MIN=0,MAX=100", "" },
-	{ SSC_INPUT, SSC_NUMBER, "subarray4_dcwiring_loss", "Sub-array 4 DC wiring loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
-	{ SSC_INPUT, SSC_NUMBER, "subarray4_tracking_loss", "Sub-array 4 DC tracking error loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
-	{ SSC_INPUT, SSC_NUMBER, "subarray4_nameplate_loss", "Sub-array 4 DC nameplate loss", "%", "", "pvsamv1", "?", "MIN=-5,MAX=100", "" },
+	   // subarray 2
+    {SSC_INPUT, SSC_NUMBER,   "subarray2_enable",                     "Sub-array 2 Enable",                                  "0/1",    "0=disabled,1=enabled",                                                                                                                                                                  "System Design",                                         "?=0",                                "BOOLEAN",             "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray2_modules_per_string",         "Sub-array 2 Modules per string",                      "",       "",                                                                                                                                                                                      "System Design",                                         "subarray2_enable=1",                 "INTEGER,MIN=1",       "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray2_nstrings",                   "Sub-array 2 Number of parallel strings",              "",       "",                                                                                                                                                                                      "System Design",                                         "subarray2_enable=1",                 "INTEGER,MIN=1",       "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray2_mppt_input",                 "Sub-array 2 Inverter MPPT input number",              "",       "",                                                                                                                                                                                      "System Design",                                         "?=1",                                "INTEGER,POSITIVE",    "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray2_tilt",                       "Sub-array 2 Tilt",                                    "deg",    "0=horizontal,90=vertical",                                                                                                                                                              "System Design",                                         "",                                   "MIN=0,MAX=90",        "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray2_tilt_eq_lat",                "Sub-array 2 Tilt=latitude override",                  "0/1",    "0=false,1=override",                                                                                                                                                                    "System Design",                                         "",                                   "BOOLEAN",             "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray2_azimuth",                    "Sub-array 2 Azimuth",                                 "deg",    "0=N,90=E,180=S,270=W",                                                                                                                                                                  "System Design",                                         "",                                   "MIN=0,MAX=359.9",     "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray2_track_mode",                 "Sub-array 2 Tracking mode",                           "",       "0=fixed,1=1axis,2=2axis,3=azi,4=monthly",                                                                                                                                               "System Design",                                         "subarray2_enable=1",                 "INTEGER,MIN=0,MAX=4", "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray2_rotlim",                     "Sub-array 2 Tracker rotation limit",                  "deg",    "",                                                                                                                                                                                      "System Design",                                         "?=45",                               "MIN=0,MAX=85",        "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray2_shade_mode",                 "Sub-array 2 Shading mode (fixed tilt or 1x tracking)","0/1/2",  "0=none,1=standard(non-linear),2=thin film(linear)",                                                                                                                                     "Shading",                                               "subarray2_enable=1",                 "INTEGER,MIN=0,MAX=2", "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray2_gcr",                        "Sub-array 2 Ground coverage ratio",                   "0..1",   "",                                                                                                                                                                                      "System Design",                                         "?=0.3",                              "MIN=0.01,MAX=0.99",   "" },
+    {SSC_INPUT, SSC_ARRAY,    "subarray2_monthly_tilt",               "Sub-array 2 Monthly tilt input",                      "deg",    "",                                                                                                                                                                                      "System Design",                                         "",                                   "LENGTH=12",           "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray2_shading:string_option",      "Sub-array 2 Shading string option",                   "",       "0=shadingdb,1=shadingdb_notc,2=average,3=maximum,4=minimum",                                                                                                                            "Shading",                                               "?=-1",                               "INTEGER,MIN=-1,MAX=4","" },
+    {SSC_INPUT, SSC_MATRIX,   "subarray2_shading:timestep",           "Sub-array 2 Timestep beam shading losses",            "%",      "",                                                                                                                                                                                      "Shading",                                               "?",                                  "",                    "" },
+    {SSC_INPUT, SSC_MATRIX,   "subarray2_shading:mxh",                "Sub-array 2 Month x Hour beam shading losses",        "%",      "",                                                                                                                                                                                      "Shading",                                               "?",                                  "",                    "" },
+    {SSC_INPUT, SSC_MATRIX,   "subarray2_shading:azal",               "Sub-array 2 Azimuth x altitude beam shading losses",  "%",      "",                                                                                                                                                                                      "Shading",                                               "?",                                  "",                    "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray2_shading:diff",               "Sub-array 2 Diffuse shading loss",                    "%",      "",                                                                                                                                                                                      "Shading",                                               "?",                                  "",                    "" },
+    {SSC_INPUT, SSC_ARRAY,    "subarray2_soiling",                    "Sub-array 2 Monthly soiling loss",                    "%",      "",                                                                                                                                                                                      "Losses",                                                "subarray2_enable=1",                 "LENGTH=12",           "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray2_mod_orient",                 "Sub-array 2 Module orientation",                      "0/1",    "0=portrait,1=landscape",                                                                                                                                                                "Layout",                                                "subarray2_enable=1",                 "INTEGER,MIN=0,MAX=1", "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray2_nmodx",                      "Sub-array 2 Number of modules along bottom of row",   "",       "",                                                                                                                                                                                      "Layout",                                                "subarray2_enable=1",                 "INTEGER,POSITIVE",    "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray2_nmody",                      "Sub-array 2 Number of modules along side of row",     "",       "",                                                                                                                                                                                      "Layout",                                                "subarray2_enable=1",                 "INTEGER,POSITIVE",    "" },
+    {SSC_INPUT, SSC_NUMBER,   "subarray2_backtrack",                  "Sub-array 2 Backtracking enabled",                    "",       "0=no backtracking,1=backtrack",                                                                                                                                                         "System Design",                                         "",                                   "BOOLEAN",             "" },
 
-	//this is a DC loss that is applied uniformly to all subarrays
-	{ SSC_INPUT,		SSC_NUMBER,		"dcoptimizer_loss",								"DC power optimizer loss",		"%", "",	"pvsamv1", "*", "MIN=0,MAX=100", "" },
-	//AC losses are also applied uniformly to all subarrays
-	{ SSC_INPUT,		SSC_NUMBER,		"acwiring_loss",								"AC wiring loss",				"%", "",	"pvsamv1", "*", "MIN=0,MAX=100", "" },
-//	{ SSC_INPUT, SSC_NUMBER, "transformer_loss", "AC step-up transformer loss", "%", "", "pvsamv1", "*", "MIN=0,MAX=100", "" },
-	{ SSC_INPUT,		SSC_NUMBER,		"transmission_loss",							"Transmission loss",			"%", "",	"pvsamv1", "*", "MIN=0,MAX=100", "" },
+		// subarray 3
+    { SSC_INPUT, SSC_NUMBER,   "subarray3_enable",                     "Sub-array 3 Enable",                                  "0/1",    "0=disabled,1=enabled",                                                                                                                                                                  "System Design",                                         "?=0",                                "BOOLEAN",             "" },
+    { SSC_INPUT, SSC_NUMBER,   "subarray3_modules_per_string",         "Sub-array 3 Modules per string",                      "",       "",                                                                                                                                                                                      "System Design",                                         "subarray3_enable=1",                 "INTEGER,MIN=1",       "" },
+    { SSC_INPUT, SSC_NUMBER,   "subarray3_nstrings",                   "Sub-array 3 Number of parallel strings",              "",       "",                                                                                                                                                                                      "System Design",                                         "subarray3_enable=1",                 "INTEGER,MIN=1",       "" },
+    { SSC_INPUT, SSC_NUMBER,   "subarray3_mppt_input",                 "Sub-array 3 Inverter MPPT input number",              "",       "",                                                                                                                                                                                      "System Design",                                         "?=1",                                "INTEGER,POSITIVE",    "" },
+    { SSC_INPUT, SSC_NUMBER,   "subarray3_tilt",                       "Sub-array 3 Tilt",                                    "deg",    "0=horizontal,90=vertical",                                                                                                                                                              "System Design",                                         "",                                   "MIN=0,MAX=90",        "" },
+    { SSC_INPUT, SSC_NUMBER,   "subarray3_tilt_eq_lat",                "Sub-array 3 Tilt=latitude override",                  "0/1",    "0=false,1=override",                                                                                                                                                                    "System Design",                                         "",                                   "BOOLEAN",             "" },
+    { SSC_INPUT, SSC_NUMBER,   "subarray3_azimuth",                    "Sub-array 3 Azimuth",                                 "deg",    "0=N,90=E,180=S,270=W",                                                                                                                                                                  "System Design",                                         "",                                   "MIN=0,MAX=359.9",     "" },
+    { SSC_INPUT, SSC_NUMBER,   "subarray3_track_mode",                 "Sub-array 3 Tracking mode",                           "",       "0=fixed,1=1axis,2=2axis,3=azi,4=monthly",                                                                                                                                               "System Design",                                         "subarray3_enable=1",                 "INTEGER,MIN=0,MAX=4", "" },
+    { SSC_INPUT, SSC_NUMBER,   "subarray3_rotlim",                     "Sub-array 3 Tracker rotation limit",                  "deg",    "",                                                                                                                                                                                      "System Design",                                         "?=45",                               "MIN=0,MAX=85",        "" },
+    { SSC_INPUT, SSC_NUMBER,   "subarray3_shade_mode",                 "Sub-array 3 Shading mode (fixed tilt or 1x tracking)","0/1/2",  "0=none,1=standard(non-linear),2=thin film(linear)",                                                                                                                                     "Shading",                                               "subarray3_enable=1",                 "INTEGER,MIN=0,MAX=2", "" },
+    { SSC_INPUT, SSC_NUMBER,   "subarray3_gcr",                        "Sub-array 3 Ground coverage ratio",                   "0..1",   "",                                                                                                                                                                                      "System Design",                                         "?=0.3",                              "MIN=0.01,MAX=0.99",   "" },
+    { SSC_INPUT, SSC_ARRAY,    "subarray3_monthly_tilt",               "Sub-array 3 Monthly tilt input",                      "deg",    "",                                                                                                                                                                                      "System Design",                                         "",                                   "LENGTH=12",           "" },
+    { SSC_INPUT, SSC_NUMBER,   "subarray3_shading:string_option",      "Sub-array 3 Shading string option",                   "",       "0=shadingdb,1=shadingdb_notc,2=average,3=maximum,4=minimum",                                                                                                                            "Shading",                                               "?=-1",                               "INTEGER,MIN=-1,MAX=4","" },
+    { SSC_INPUT, SSC_MATRIX,   "subarray3_shading:timestep",           "Sub-array 3 Timestep beam shading losses",            "%",      "",                                                                                                                                                                                      "Shading",                                               "?",                                  "",                    "" },
+    { SSC_INPUT, SSC_MATRIX,   "subarray3_shading:mxh",                "Sub-array 3 Month x Hour beam shading losses",        "%",      "",                                                                                                                                                                                      "Shading",                                               "?",                                  "",                    "" },
+    { SSC_INPUT, SSC_MATRIX,   "subarray3_shading:azal",               "Sub-array 3 Azimuth x altitude beam shading losses",  "%",      "",                                                                                                                                                                                      "Shading",                                               "?",                                  "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "subarray3_shading:diff",               "Sub-array 3 Diffuse shading loss",                    "%",      "",                                                                                                                                                                                      "Shading",                                               "?",                                  "",                    "" },
+    { SSC_INPUT, SSC_ARRAY,    "subarray3_soiling",                    "Sub-array 3 Monthly soiling loss",                    "%",      "",                                                                                                                                                                                      "Losses",                                                "subarray3_enable=1",                 "LENGTH=12",           "" },
+    { SSC_INPUT, SSC_NUMBER,   "subarray3_mod_orient",                 "Sub-array 3 Module orientation",                      "0/1",    "0=portrait,1=landscape",                                                                                                                                                                "Layout",                                                "subarray3_enable=1",                 "INTEGER,MIN=0,MAX=1", "" },
+    { SSC_INPUT, SSC_NUMBER,   "subarray3_nmodx",                      "Sub-array 3 Number of modules along bottom of row",   "",       "",                                                                                                                                                                                      "Layout",                                                "subarray3_enable=1",                 "INTEGER,POSITIVE",    "" },
+    { SSC_INPUT, SSC_NUMBER,   "subarray3_nmody",                      "Sub-array 3 Number of modules along side of row",     "",       "",                                                                                                                                                                                      "Layout",                                                "subarray3_enable=1",                 "INTEGER,POSITIVE",    "" },
+    { SSC_INPUT, SSC_NUMBER,   "subarray3_backtrack",                  "Sub-array 3 Backtracking enabled",                    "",       "0=no backtracking,1=backtrack",                                                                                                                                                         "System Design",                                         "",                                   "BOOLEAN",             "" },
 
-	//
+		// subarray 4
+    { SSC_INPUT, SSC_NUMBER,   "subarray4_enable",                     "Sub-array 4 Enable",                                  "0/1",    "0=disabled,1=enabled",                                                                                                                                                                  "System Design",                                         "?=0",                                "BOOLEAN",             "" },
+    { SSC_INPUT, SSC_NUMBER,   "subarray4_modules_per_string",         "Sub-array 4 Modules per string",                      "",       "",                                                                                                                                                                                      "System Design",                                         "subarray4_enable=1",                 "INTEGER,MIN=1",       "" },
+    { SSC_INPUT, SSC_NUMBER,   "subarray4_nstrings",                   "Sub-array 4 Number of parallel strings",              "",       "",                                                                                                                                                                                      "System Design",                                         "subarray4_enable=1",                 "INTEGER,MIN=1",       "" },
+    { SSC_INPUT, SSC_NUMBER,   "subarray4_mppt_input",                 "Sub-array 4 Inverter MPPT input number",              "",       "",                                                                                                                                                                                      "System Design",                                         "?=1",                                "INTEGER,POSITIVE",    "" },
+    { SSC_INPUT, SSC_NUMBER,   "subarray4_tilt",                       "Sub-array 4 Tilt",                                    "deg",    "0=horizontal,90=vertical",                                                                                                                                                              "System Design",                                         "",                                   "MIN=0,MAX=90",        "" },
+    { SSC_INPUT, SSC_NUMBER,   "subarray4_tilt_eq_lat",                "Sub-array 4 Tilt=latitude override",                  "0/1",    "0=false,1=override",                                                                                                                                                                    "System Design",                                         "",                                   "BOOLEAN",             "" },
+    { SSC_INPUT, SSC_NUMBER,   "subarray4_azimuth",                    "Sub-array 4 Azimuth",                                 "deg",    "0=N,90=E,180=S,270=W",                                                                                                                                                                  "System Design",                                         "",                                   "MIN=0,MAX=359.9",     "" },
+    { SSC_INPUT, SSC_NUMBER,   "subarray4_track_mode",                 "Sub-array 4 Tracking mode",                           "",       "0=fixed,1=1axis,2=2axis,3=azi,4=monthly",                                                                                                                                               "System Design",                                         "subarray4_enable=1",                 "INTEGER,MIN=0,MAX=4", "" },
+    { SSC_INPUT, SSC_NUMBER,   "subarray4_rotlim",                     "Sub-array 4 Tracker rotation limit",                  "deg",    "",                                                                                                                                                                                      "System Design",                                         "?=45",                               "MIN=0,MAX=85",        "" },
+    { SSC_INPUT, SSC_NUMBER,   "subarray4_shade_mode",                 "Sub-array 4 shading mode (fixed tilt or 1x tracking)","0/1/2",  "0=none,1=standard(non-linear),2=thin film(linear)",                                                                                                                                     "Shading",                                               "subarray4_enable=1",                 "INTEGER,MIN=0,MAX=2", "" },
+    { SSC_INPUT, SSC_NUMBER,   "subarray4_gcr",                        "Sub-array 4 Ground coverage ratio",                   "0..1",   "",                                                                                                                                                                                      "System Design",                                         "?=0.3",                              "MIN=0.01,MAX=0.99",   "" },
+    { SSC_INPUT, SSC_ARRAY,    "subarray4_monthly_tilt",               "Sub-array 4 Monthly tilt input",                      "deg",    "",                                                                                                                                                                                      "System Design",                                         "",                                   "LENGTH=12",           "" },
+    { SSC_INPUT, SSC_NUMBER,   "subarray4_shading:string_option",      "Sub-array 4 Shading string option",                   "",       "0=shadingdb,1=shadingdb_notc,2=average,3=maximum,4=minimum",                                                                                                                            "Shading",                                               "?=-1",                               "INTEGER,MIN=-1,MAX=4","" },
+    { SSC_INPUT, SSC_MATRIX,   "subarray4_shading:timestep",           "Sub-array 4 Timestep beam shading losses",            "%",      "",                                                                                                                                                                                      "Shading",                                               "?",                                  "",                    "" },
+    { SSC_INPUT, SSC_MATRIX,   "subarray4_shading:mxh",                "Sub-array 4 Month x Hour beam shading losses",        "%",      "",                                                                                                                                                                                      "Shading",                                               "?",                                  "",                    "" },
+    { SSC_INPUT, SSC_MATRIX,   "subarray4_shading:azal",               "Sub-array 4 Azimuth x altitude beam shading losses",  "%",      "",                                                                                                                                                                                      "Shading",                                               "?",                                  "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "subarray4_shading:diff",               "Sub-array 4 Diffuse shading loss",                    "%",      "",                                                                                                                                                                                      "Shading",                                               "?",                                  "",                    "" },
+    { SSC_INPUT, SSC_ARRAY,    "subarray4_soiling",                    "Sub-array 4 Monthly soiling loss",                    "%",      "",                                                                                                                                                                                      "Losses",                                                "subarray4_enable=1",                 "LENGTH=12",           "" },
+    { SSC_INPUT, SSC_NUMBER,   "subarray4_mod_orient",                 "Sub-array 4 Module orientation",                      "0/1",    "0=portrait,1=landscape",                                                                                                                                                                "Layout",                                                "subarray4_enable=1",                 "INTEGER,MIN=0,MAX=1", "" },
+    { SSC_INPUT, SSC_NUMBER,   "subarray4_nmodx",                      "Sub-array 4 Number of modules along bottom of row",   "",       "",                                                                                                                                                                                      "Layout",                                                "subarray4_enable=1",                 "INTEGER,POSITIVE",    "" },
+    { SSC_INPUT, SSC_NUMBER,   "subarray4_nmody",                      "Sub-array 4 Number of modules along side of row",     "",       "",                                                                                                                                                                                      "Layout",                                                "subarray4_enable=1",                 "INTEGER,POSITIVE",    "" },
+    { SSC_INPUT, SSC_NUMBER,   "subarray4_backtrack",                  "Sub-array 4 Backtracking enabled",                    "",       "0=no backtracking,1=backtrack",                                                                                                                                                         "System Design",                                         "",                                   "BOOLEAN",             "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_mod_orient",                        "Sub-array 1 Module orientation",                          "0/1",    "0=portrait,1=landscape",        "pvsamv1",              "*",                        "INTEGER,MIN=0,MAX=1",           "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_nmodx",                             "Sub-array 1 no. of modules along bottom of row",          "",       "",                              "pvsamv1",              "*",                        "INTEGER,POSITIVE",              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_nmody",                             "Sub-array 1 no. of modules along side of row",            "",       "",                              "pvsamv1",              "*",                        "INTEGER,POSITIVE",              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_backtrack",                         "Sub-array 1 Backtracking enabled",                        "",       "0=no backtracking,1=backtrack", "pvsamv1",              "subarray1_track_mode=1",   "BOOLEAN",                       "" },
+		// module
+    { SSC_INPUT, SSC_NUMBER,   "module_model",                         "Photovoltaic module model specifier",                 "",       "0=spe,1=cec,2=6par_user,3=snl,4=sd11-iec61853,5=PVYield",                                                                                                                               "Module",                                                "*",                                  "INTEGER,MIN=0,MAX=5", "" },
+    { SSC_INPUT, SSC_NUMBER,   "module_aspect_ratio",                  "Module aspect ratio",                                 "",       "",                                                                                                                                                                                      "Layout",                                                "?=1.7",                              "POSITIVE",            "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_enable",                            "Sub-array 2 Enable",                                      "0/1",    "0=disabled,1=enabled",          "pvsamv1",              "?=0",                      "BOOLEAN",                       "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_modules_per_string",                "Sub-array 2 Modules per string",                          "",       "",                              "pvsamv1",              "subarray2_enable=1",                        "INTEGER,MIN=1",              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_nstrings",                          "Sub-array 2 Number of parallel strings",                  "",       "",                              "pvsamv1",              "subarray2_enable=1",       "INTEGER,MIN=1",                       "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_mppt_input",                        "Sub-array 2 Inverter MPPT input number",                  "",       "",                              "pvsamv1",              "?=1",                      "INTEGER,POSITIVE",              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_tilt",                              "Sub-array 2 Tilt",                                        "deg",    "0=horizontal,90=vertical",      "pvsamv1",              "",                         "MIN=0,MAX=90",                "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_tilt_eq_lat",                       "Sub-array 2 Tilt=latitude override",                      "0/1",    "",                              "pvsamv1",              "",                         "BOOLEAN",                     "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_azimuth",                           "Sub-array 2 Azimuth",                                     "deg",    "0=N,90=E,180=S,270=W",          "pvsamv1",              "",                         "MIN=0,MAX=359.9",               "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_track_mode",                        "Sub-array 2 Tracking mode",                               "",       "0=fixed,1=1axis,2=2axis,3=azi,4=monthly", "pvsamv1",    "subarray2_enable=1",       "INTEGER,MIN=0,MAX=4",           "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_rotlim",                            "Sub-array 2 Tracker rotation limit",                      "deg",    "",                              "pvsamv1",              "?=45",                     "MIN=0,MAX=85",                  "" },
-	{ SSC_INPUT,		SSC_NUMBER,		 "subarray2_shade_mode",				     	"Sub-array 2 shading mode (fixed tilt or 1x tracking)",	   "0/1/2",   "0=none,1=standard(non-linear),2=thin film(linear)", "pvsamv1", "subarray2_enable=1", "INTEGER,MIN=0,MAX=2",		   "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_gcr",                               "Sub-array 2 Ground coverage ratio",                       "0..1",   "",                              "pvsamv1",              "?=0.3",                    "MIN=0,MAX=3",               "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "subarray2_monthly_tilt",                      "Sub-array 2 monthly tilt input",                          "deg",    "",                              "pvsamv1",              "",                         "LENGTH=12",                     "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_shading:string_option",             "Sub-array 2 shading string option",                       "", "0=shadingdb,1=shadingdb_notc,2=average,3=maximum,4=minimum", "pvsamv1", "?=-1", "INTEGER,MIN=-1,MAX=4", "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "subarray2_shading:timestep",                  "Sub-array 2 timestep beam shading losses",                "%", "", "pvsamv1", "?", "", "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "subarray2_shading:mxh",                        "Sub-array 2 Month x Hour beam shading losses",           "%", "", "pvsamv1", "?", "", "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "subarray2_shading:azal",                      "Sub-array 2 Azimuth x altitude beam shading losses",      "%",      "",                              "pvsamv1",              "?",                        "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_shading:diff",                      "Sub-array 2 Diffuse shading loss",                        "%",      "",                              "pvsamv1",              "?",                        "",                              "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "subarray2_soiling",                           "Sub-array 2 Monthly soiling loss",                        "%",      "",                              "pvsamv1",              "subarray2_enable=1",       "LENGTH=12",                     "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_mod_orient",                        "Sub-array 2 Module orientation",                          "0/1",    "0=portrait,1=landscape",        "pvsamv1",              "subarray2_enable=1",       "INTEGER,MIN=0,MAX=1",           "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_nmodx",                             "Sub-array 2 no. of modules along bottom of row",          "",       "",                              "pvsamv1",              "subarray2_enable=1",       "INTEGER,POSITIVE",              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_nmody",                             "Sub-array 2 no. of modules along side of row",            "",       "",                              "pvsamv1",              "subarray2_enable=1",       "INTEGER,POSITIVE",              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_backtrack",                         "Sub-array 2 Backtracking enabled",                        "",       "0=no backtracking,1=backtrack", "pvsamv1",              "",                         "BOOLEAN",                       "" },
+		// spe model
+    { SSC_INPUT, SSC_NUMBER,   "spe_area",                             "Module area",                                         "m2",     "",                                                                                                                                                                                      "Simple Efficiency Module Model",                        "module_model=0",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "spe_rad0",                             "Irradiance level 0",                                  "W/m2",   "",                                                                                                                                                                                      "Simple Efficiency Module Model",                        "module_model=0",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "spe_rad1",                             "Irradiance level 1",                                  "W/m2",   "",                                                                                                                                                                                      "Simple Efficiency Module Model",                        "module_model=0",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "spe_rad2",                             "Irradiance level 2",                                  "W/m2",   "",                                                                                                                                                                                      "Simple Efficiency Module Model",                        "module_model=0",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "spe_rad3",                             "Irradiance level 3",                                  "W/m2",   "",                                                                                                                                                                                      "Simple Efficiency Module Model",                        "module_model=0",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "spe_rad4",                             "Irradiance level 4",                                  "W/m2",   "",                                                                                                                                                                                      "Simple Efficiency Module Model",                        "module_model=0",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "spe_eff0",                             "Efficiency at irradiance level 0",                    "%",      "",                                                                                                                                                                                      "Simple Efficiency Module Model",                        "module_model=0",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "spe_eff1",                             "Efficiency at irradiance level 1",                    "%",      "",                                                                                                                                                                                      "Simple Efficiency Module Model",                        "module_model=0",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "spe_eff2",                             "Efficiency at irradiance level 2",                    "%",      "",                                                                                                                                                                                      "Simple Efficiency Module Model",                        "module_model=0",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "spe_eff3",                             "Efficiency at irradiance level 3",                    "%",      "",                                                                                                                                                                                      "Simple Efficiency Module Model",                        "module_model=0",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "spe_eff4",                             "Efficiency at irradiance level 4",                    "%",      "",                                                                                                                                                                                      "Simple Efficiency Module Model",                        "module_model=0",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "spe_reference",                        "Reference irradiance level",                          "",       "",                                                                                                                                                                                      "Simple Efficiency Module Model",                        "module_model=0",                     "INTEGER,MIN=0,MAX=4", "" },
+    { SSC_INPUT, SSC_NUMBER,   "spe_module_structure",                 "Mounting and module structure",                       "",       "0=glass/cell/polymer sheet - open rack,1=glass/cell/glass - open rack,2=polymer/thin film/steel - open rack,3=Insulated back, building-integrated PV,4=close roof mount,5=user-defined","Simple Efficiency Module Model",                        "module_model=0",                     "INTEGER,MIN=0,MAX=5", "" },
+    { SSC_INPUT, SSC_NUMBER,   "spe_a",                                "Cell temp parameter a",                               "",       "",                                                                                                                                                                                      "Simple Efficiency Module Model",                        "module_model=0",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "spe_b",                                "Cell temp parameter b",                               "",       "",                                                                                                                                                                                      "Simple Efficiency Module Model",                        "module_model=0",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "spe_dT",                               "Cell temp parameter dT",                              "",       "",                                                                                                                                                                                      "Simple Efficiency Module Model",                        "module_model=0",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "spe_temp_coeff",                       "Temperature coefficient",                             "%/C",    "",                                                                                                                                                                                      "Simple Efficiency Module Model",                        "module_model=0",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "spe_fd",                               "Diffuse fraction",                                    "0..1",   "",                                                                                                                                                                                      "Simple Efficiency Module Model",                        "module_model=0",                     "MIN=0,MAX=1",         "" },
+    { SSC_INPUT, SSC_NUMBER,   "spe_vmp",                              "Nominal max power voltage",                           "V",      "",                                                                                                                                                                                      "Simple Efficiency Module Model",                        "module_model=0",                     "POSITIVE",            "" },
+    { SSC_INPUT, SSC_NUMBER,   "spe_voc",                              "Nominal open circuit voltage",                        "V",      "",                                                                                                                                                                                      "Simple Efficiency Module Model",                        "module_model=0",                     "POSITIVE",            "" },
+    { SSC_INPUT, SSC_NUMBER,   "spe_is_bifacial",                      "Modules are bifacial",                                "0/1",    "",                                                                                                                                                                                      "Simple Efficiency Module Model",                        "module_model=0",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "spe_bifacial_transmission_factor",     "Bifacial transmission factor",                        "0-1",    "",                                                                                                                                                                                      "Simple Efficiency Module Model",                        "module_model=0",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "spe_bifaciality",                      "Bifaciality factor",                                  "%",      "",                                                                                                                                                                                      "Simple Efficiency Module Model",                        "module_model=0",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "spe_bifacial_ground_clearance_height", "Module ground clearance height",                      "m",      "",                                                                                                                                                                                      "Simple Efficiency Module Model",                        "module_model=0",                     "",                    "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_enable",                            "Sub-array 3 Enable",                                      "0/1",    "0=disabled,1=enabled",          "pvsamv1",              "?=0",                      "BOOLEAN",                       "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_modules_per_string",                "Sub-array 3 Modules per string",                          "",       "",                              "pvsamv1",              "subarray3_enable=1",       "INTEGER,MIN=1",              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_nstrings",                          "Sub-array 3 Number of parallel strings",                  "",       "",                              "pvsamv1",              "subarray3_enable=1",       "INTEGER,MIN=1",                       "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_mppt_input",                        "Sub-array 3 Inverter MPPT input number",                  "",       "",                              "pvsamv1",              "?=1",                      "INTEGER,POSITIVE",              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_tilt",                              "Sub-array 3 Tilt",                                        "deg",    "0=horizontal,90=vertical",      "pvsamv1",              "",                         "MIN=0,MAX=90",                "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_tilt_eq_lat",                       "Sub-array 3 Tilt=latitude override",                      "0/1",    "",                              "pvsamv1",              "",                         "BOOLEAN",                     "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_azimuth",                           "Sub-array 3 Azimuth",                                     "deg",    "0=N,90=E,180=S,270=W",          "pvsamv1",              "",                         "MIN=0,MAX=359.9",               "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_track_mode",                        "Sub-array 3 Tracking mode",                               "",       "0=fixed,1=1axis,2=2axis,3=azi,4=monthly", "pvsamv1",    "subarray3_enable=1",       "INTEGER,MIN=0,MAX=4",           "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_rotlim",                            "Sub-array 3 Tracker rotation limit",                      "deg",    "",                              "pvsamv1",              "?=45",                     "MIN=0,MAX=85",                  "" },
-	{ SSC_INPUT,		SSC_NUMBER,		 "subarray3_shade_mode",				     	"Sub-array 3 shading mode (fixed tilt or 1x tracking)",	   "0/1/2",   "0=none,1=standard(non-linear),2=thin film(linear)", "pvsamv1", "subarray3_enable=1", "INTEGER,MIN=0,MAX=2",		   "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_gcr",                               "Sub-array 3 Ground coverage ratio",                       "0..1",   "",                              "pvsamv1",              "?=0.3",                    "MIN=0,MAX=3",               "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "subarray3_monthly_tilt",                      "Sub-array 3 monthly tilt input",                          "deg",    "",                              "pvsamv1",              "",                         "LENGTH=12",                     "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_shading:string_option",             "Sub-array 3 shading string option",                       "",       "0=shadingdb,1=shadingdb_notc,2=average,3=maximum,4=minimum", "pvsamv1", "?=-1",     "INTEGER,MIN=-1,MAX=4", "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "subarray3_shading:timestep",                  "Sub-array 3 timestep beam shading losses",                "%",      "",                              "pvsamv1",              "?",                        "", "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "subarray3_shading:mxh",                       "Sub-array 3 Month x Hour beam shading losses",            "%",      "",                              "pvsamv1",              "?",                        "", "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "subarray3_shading:azal",                      "Sub-array 3 Azimuth x altitude beam shading losses",      "%",      "",                              "pvsamv1",              "?",                        "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_shading:diff",                      "Sub-array 3 Diffuse shading loss",                        "%",      "",                              "pvsamv1",              "?",                        "",                              "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "subarray3_soiling",                           "Sub-array 3 Monthly soiling loss",                        "%",      "",                              "pvsamv1",              "subarray3_enable=1",       "LENGTH=12",                     "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_mod_orient",                        "Sub-array 3 Module orientation",                          "0/1",    "0=portrait,1=landscape",        "pvsamv1",              "subarray3_enable=1",       "INTEGER,MIN=0,MAX=1",           "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_nmodx",                             "Sub-array 3 no. of modules along bottom of row",          "",       "",                              "pvsamv1",              "subarray3_enable=1",       "INTEGER,POSITIVE",              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_nmody",                             "Sub-array 3 no. of modules along side of row",            "",       "",                              "pvsamv1",              "subarray3_enable=1",       "INTEGER,POSITIVE",              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_backtrack",                         "Sub-array 3 Backtracking enabled",                        "",       "0=no backtracking,1=backtrack", "pvsamv1",              "",                         "BOOLEAN",                       "" },
+		// cec model
+    { SSC_INPUT, SSC_NUMBER,   "cec_area",                             "Module area",                                         "m2",     "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "cec_a_ref",                            "Nonideality factor a",                                "",       "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "cec_adjust",                           "Temperature coefficient adjustment",                  "%",      "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "cec_alpha_sc",                         "Short circuit current temperature coefficient",       "A/C",    "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "cec_beta_oc",                          "Open circuit voltage temperature coefficient",        "V/C",    "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "cec_gamma_r",                          "Maximum power point temperature coefficient",         "%/C",    "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "cec_i_l_ref",                          "Light current",                                       "A",      "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "cec_i_mp_ref",                         "Maximum power point current",                         "A",      "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "cec_i_o_ref",                          "Saturation current",                                  "A",      "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "cec_i_sc_ref",                         "Short circuit current",                               "A",      "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "cec_n_s",                              "Number of cells in series",                           "",       "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "POSITIVE",            "" },
+    { SSC_INPUT, SSC_NUMBER,   "cec_r_s",                              "Series resistance",                                   "ohm",    "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "cec_r_sh_ref",                         "Shunt resistance",                                    "ohm",    "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "cec_t_noct",                           "Nominal operating cell temperature",                  "C",      "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "cec_v_mp_ref",                         "Maximum power point voltage",                         "V",      "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "cec_v_oc_ref",                         "Open circuit voltage",                                "V",      "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "cec_temp_corr_mode",                   "Cell temperature model selection",                    "",       "0=noct,1=mc",                                                                                                                                                                           "CEC Performance Model with Module Database",            "module_model=1",                     "INTEGER,MIN=0,MAX=1", "" },
+    { SSC_INPUT, SSC_NUMBER,   "cec_is_bifacial",                      "Modules are bifacial",                                "0/1",    "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "cec_bifacial_transmission_factor",     "Bifacial transmission factor",                        "0-1",    "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "cec_bifaciality",                      "Bifaciality factor",                                  "%",      "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "cec_bifacial_ground_clearance_height", "Module ground clearance height",                      "m",      "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "cec_standoff",                         "Standoff mode",                                       "",       "0=bipv,1=>3.5in,2=2.5-3.5in,3=1.5-2.5in,4=0.5-1.5in,5=<0.5in,6=ground/rack",                                                                                                            "CEC Performance Model with Module Database",            "module_model=1",                     "INTEGER,MIN=0,MAX=6", "" },
+    { SSC_INPUT, SSC_NUMBER,   "cec_height",                           "Array mounting height",                               "",       "0=one story,1=two story",                                                                                                                                                               "CEC Performance Model with Module Database",            "module_model=1",                     "INTEGER,MIN=0,MAX=1", "" },
+    { SSC_INPUT, SSC_NUMBER,   "cec_mounting_config",                  "Mounting configuration",                              "",       "0=rack,1=flush,2=integrated,3=gap",                                                                                                                                                     "CEC Performance Model with Module Database",            "module_model=1&cec_temp_corr_mode=1","INTEGER,MIN=0,MAX=3", "" },
+    { SSC_INPUT, SSC_NUMBER,   "cec_heat_transfer",                    "Heat transfer dimensions",                            "",       "0=module,1=array",                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1&cec_temp_corr_mode=1","INTEGER,MIN=0,MAX=1", "" },
+    { SSC_INPUT, SSC_NUMBER,   "cec_mounting_orientation",             "Mounting structure orientation",                      "",       "0=do not impede flow,1=vertical supports,2=horizontal supports",                                                                                                                        "CEC Performance Model with Module Database",            "module_model=1&cec_temp_corr_mode=1","INTEGER,MIN=0,MAX=2", "" },
+    { SSC_INPUT, SSC_NUMBER,   "cec_gap_spacing",                      "Gap spacing",                                         "m",      "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1&cec_temp_corr_mode=1","",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "cec_module_width",                     "Module width",                                        "m",      "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1&cec_temp_corr_mode=1","",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "cec_module_length",                    "Module height",                                       "m",      "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1&cec_temp_corr_mode=1","",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "cec_array_rows",                       "Rows of modules in array",                            "",       "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1&cec_temp_corr_mode=1","",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "cec_array_cols",                       "Columns of modules in array",                         "",       "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1&cec_temp_corr_mode=1","",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "cec_backside_temp",                    "Module backside temperature",                         "C",      "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1&cec_temp_corr_mode=1","POSITIVE",            "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_enable",                            "Sub-array 4 Enable",                                      "0/1",    "0=disabled,1=enabled",          "pvsamv1",              "?=0",                      "BOOLEAN",                       "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_modules_per_string",                "Sub-array 4 Modules per string",                          "",       "",                              "pvsamv1",              "subarray4_enable=1",       "INTEGER,MIN=1",              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_nstrings",                          "Sub-array 4 Number of parallel strings",                  "",       "",                              "pvsamv1",              "subarray4_enable=1",       "INTEGER,MIN=1",                       "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_mppt_input",                        "Sub-array 4 Inverter MPPT input number",                  "",       "",                              "pvsamv1",              "?=1",                       "INTEGER,POSITIVE",              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_tilt",                              "Sub-array 4 Tilt",                                        "deg",    "0=horizontal,90=vertical",      "pvsamv1",              "",                         "MIN=0,MAX=90",                "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_tilt_eq_lat",                       "Sub-array 4 Tilt=latitude override",                      "0/1",    "",                              "pvsamv1",              "",                         "BOOLEAN",                     "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_azimuth",                           "Sub-array 4 Azimuth",                                     "deg",    "0=N,90=E,180=S,270=W",          "pvsamv1",              "",                         "MIN=0,MAX=359.9",               "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_track_mode",                        "Sub-array 4 Tracking mode",                               "",       "0=fixed,1=1axis,2=2axis,3=azi,4=monthly", "pvsamv1",    "subarray4_enable=1",       "INTEGER,MIN=0,MAX=4",           "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_rotlim",                            "Sub-array 4 Tracker rotation limit",                      "deg",    "",                              "pvsamv1",              "?=45",                     "MIN=0,MAX=85",                  "" },
-	{ SSC_INPUT,		SSC_NUMBER,		 "subarray4_shade_mode",				     	"Sub-array 4 shading mode (fixed tilt or 1x tracking)",	   "0/1/2",  "0=none,1=standard(non-linear),2=thin film(linear)", "pvsamv1", "subarray4_enable=1", "INTEGER,MIN=0,MAX=2",		   "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_gcr",                               "Sub-array 4 Ground coverage ratio",                       "0..1",   "",                              "pvsamv1",              "?=0.3",                    "MIN=0,MAX=3",               "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "subarray4_monthly_tilt",                      "Sub-array 4 monthly tilt input",                          "deg",    "",                              "pvsamv1",              "",                         "LENGTH=12",                     "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_shading:string_option",             "Sub-array 4 shading string option",                       "",       "0=shadingdb,1=shadingdb_notc,2=average,3=maximum,4=minimum", "pvsamv1", "?=-1", "INTEGER,MIN=-1,MAX=4", "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "subarray4_shading:timestep",                  "Sub-array 4 timestep beam shading losses",                "%",      "",                              "pvsamv1",              "?",                        "", "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "subarray4_shading:mxh",                       "Sub-array 4 Month x Hour beam shading losses",            "%",      "",                              "pvsamv1",              "?",                        "", "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "subarray4_shading:azal",                      "Sub-array 4 Azimuth x altitude beam shading losses",      "%",      "",                              "pvsamv1",              "?",                        "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_shading:diff",                      "Sub-array 4 Diffuse shading loss",                        "%",      "",                              "pvsamv1",              "?",                        "",                              "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "subarray4_soiling",                           "Sub-array 4 Monthly soiling loss",                        "%",      "",                              "pvsamv1",              "subarray4_enable=1",       "LENGTH=12",                     "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_mod_orient",                        "Sub-array 4 Module orientation",                          "0/1",    "0=portrait,1=landscape",        "pvsamv1",              "subarray4_enable=1",       "INTEGER,MIN=0,MAX=1",           "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_nmodx",                             "Sub-array 4 no. of modules along bottom of row",          "",       "",                              "pvsamv1",              "subarray4_enable=1",       "INTEGER,POSITIVE",              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_nmody",                             "Sub-array 4 no. of modules along side of row",            "",       "",                              "pvsamv1",              "subarray4_enable=1",       "INTEGER,POSITIVE",              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_backtrack",                         "Sub-array 4 Backtracking enabled",                        "",       "0=no backtracking,1=backtrack", "pvsamv1",              "",                         "BOOLEAN",                       "" },
+		// 6 par model
+    { SSC_INPUT, SSC_NUMBER,   "6par_celltech",                        "Solar cell technology type",                          "",       "monoSi=0,multiSi=1,CdTe=2,CIS=3,CIGS=4,Amorphous=5",                                                                                                                                    "CEC Performance Model with User Entered Specifications","module_model=2",                     "INTEGER,MIN=0,MAX=5", "" },
+    { SSC_INPUT, SSC_NUMBER,   "6par_vmp",                             "Maximum power point voltage",                         "V",      "",                                                                                                                                                                                      "CEC Performance Model with User Entered Specifications","module_model=2",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "6par_imp",                             "Imp",                                                 "A",      "",                                                                                                                                                                                      "CEC Performance Model with User Entered Specifications","module_model=2",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "6par_voc",                             "Voc",                                                 "V",      "",                                                                                                                                                                                      "CEC Performance Model with User Entered Specifications","module_model=2",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "6par_isc",                             "Isc",                                                 "A",      "",                                                                                                                                                                                      "CEC Performance Model with User Entered Specifications","module_model=2",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "6par_bvoc",                            "Open circuit voltage temperature coefficient",        "V/C",    "",                                                                                                                                                                                      "CEC Performance Model with User Entered Specifications","module_model=2",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "6par_aisc",                            "Short circuit current temperature coefficient",       "A/C",    "",                                                                                                                                                                                      "CEC Performance Model with User Entered Specifications","module_model=2",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "6par_gpmp",                            "Maximum power point temperature coefficient",         "%/C",    "",                                                                                                                                                                                      "CEC Performance Model with User Entered Specifications","module_model=2",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "6par_nser",                            "Nseries",                                             "",       "",                                                                                                                                                                                      "CEC Performance Model with User Entered Specifications","module_model=2",                     "INTEGER,POSITIVE",    "" },
+    { SSC_INPUT, SSC_NUMBER,   "6par_area",                            "Module area",                                         "m2",     "",                                                                                                                                                                                      "CEC Performance Model with User Entered Specifications","module_model=2",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "6par_tnoct",                           "Nominal operating cell temperature",                  "C",      "",                                                                                                                                                                                      "CEC Performance Model with User Entered Specifications","module_model=2",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "6par_standoff",                        "Standoff mode",                                       "",       "0=bipv,1=>3.5in,2=2.5-3.5in,3=1.5-2.5in,4=0.5-1.5in,5=<0.5in,6=ground/rack",                                                                                                            "CEC Performance Model with User Entered Specifications","module_model=2",                     "INTEGER,MIN=0,MAX=6", "" },
+    { SSC_INPUT, SSC_NUMBER,   "6par_mounting",                        "Array mounting height",                               "",       "0=one story,1=two story",                                                                                                                                                               "CEC Performance Model with User Entered Specifications","module_model=2",                     "INTEGER,MIN=0,MAX=1", "" },
+    { SSC_INPUT, SSC_NUMBER,   "6par_is_bifacial",                     "Modules are bifacial",                                "0/1",    "",                                                                                                                                                                                      "CEC Performance Model with User Entered Specifications","module_model=2",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "6par_bifacial_transmission_factor",    "Bifacial transmission factor",                        "0-1",    "",                                                                                                                                                                                      "CEC Performance Model with User Entered Specifications","module_model=2",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "6par_bifaciality",                     "Bifaciality factor",                                  "%",      "",                                                                                                                                                                                      "CEC Performance Model with User Entered Specifications","module_model=2",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "6par_bifacial_ground_clearance_height","Module ground clearance height",                      "m",      "",                                                                                                                                                                                      "CEC Performance Model with User Entered Specifications","module_model=2",                     "",                    "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,      "module_model",                                "Photovoltaic module model specifier",                     "",       "0=spe,1=cec,2=6par_user,3=snl,4=sd11-iec61853,5=PVYield", "pvsamv1",              "*",                        "INTEGER,MIN=0,MAX=5",           "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "module_aspect_ratio",                         "Module aspect ratio",                                     "",       "",                              "pvsamv1",              "?=1.7",                    "",                              "POSITIVE" },
-	{ SSC_INPUT,        SSC_NUMBER,      "spe_area",                                    "Module area",                                             "m2",     "",                              "pvsamv1",              "module_model=0",           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "spe_rad0",                                    "Irradiance level 0",                                      "W/m2",   "",                              "pvsamv1",              "module_model=0",           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "spe_rad1",                                    "Irradiance level 1",                                      "W/m2",   "",                              "pvsamv1",              "module_model=0",           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "spe_rad2",                                    "Irradiance level 2",                                      "W/m2",   "",                              "pvsamv1",              "module_model=0",           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "spe_rad3",                                    "Irradiance level 3",                                      "W/m2",   "",                              "pvsamv1",              "module_model=0",           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "spe_rad4",                                    "Irradiance level 4",                                      "W/m2",   "",                              "pvsamv1",              "module_model=0",           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "spe_eff0",                                    "Efficiency at irradiance level 0",                        "%",      "",                              "pvsamv1",              "module_model=0",           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "spe_eff1",                                    "Efficiency at irradiance level 1",                        "%",      "",                              "pvsamv1",              "module_model=0",           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "spe_eff2",                                    "Efficiency at irradiance level 2",                        "%",      "",                              "pvsamv1",              "module_model=0",           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "spe_eff3",                                    "Efficiency at irradiance level 3",                        "%",      "",                              "pvsamv1",              "module_model=0",           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "spe_eff4",                                    "Efficiency at irradiance level 4",                        "%",      "",                              "pvsamv1",              "module_model=0",           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "spe_reference",                               "Reference irradiance level",                              "",       "",                              "pvsamv1",              "module_model=0",           "INTEGER,MIN=0,MAX=4",           "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "spe_module_structure",                        "Mounting and module structure",                           "",       "0=glass/cell/polymer sheet - open rack,1=glass/cell/glass - open rack,2=polymer/thin film/steel - open rack,3=Insulated back, building-integrated PV,4=close roof mount,5=user-defined",                      "pvsamv1",       "module_model=0",                    "INTEGER,MIN=0,MAX=5",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "spe_a",                                       "Cell temp parameter a",                                   "",       "",                              "pvsamv1",              "module_model=0",           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "spe_b",                                       "Cell temp parameter b",                                   "",       "",                              "pvsamv1",              "module_model=0",           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "spe_dT",                                      "Cell temp parameter dT",                                  "",       "",                              "pvsamv1",              "module_model=0",           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "spe_temp_coeff",                              "Temperature coefficient",                                 "%/C",    "",                              "pvsamv1",              "module_model=0",           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "spe_fd",                                      "Diffuse fraction",                                        "0..1",   "",                              "pvsamv1",              "module_model=0",           "MIN=0,MAX=1",                   "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "spe_vmp",                                     "Nominal max power voltage",                               "V",      "",                              "pvsamv1",              "module_model=0",           "POSITIVE",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "spe_voc",                                     "Nominal open circuit voltage",                            "V",      "",                              "pvsamv1",              "module_model=0",           "POSITIVE",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "spe_is_bifacial",                             "Modules are bifacial",                                     "0/1",     "",                            "pvsamv1",              "module_model=0",            "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "spe_bifacial_transmission_factor",            "Bifacial transmission factor",                             "0-1",     "",                            "pvsamv1",              "module_model=0",            "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "spe_bifaciality",                             "Bifaciality factor",                                       "%",       "",                            "pvsamv1",              "module_model=0",            "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "spe_bifacial_ground_clearance_height",        "Module ground clearance height",                           "m",       "",                            "pvsamv1",              "module_model=0",            "",                              "" },
+		// snl module model
+    { SSC_INPUT, SSC_NUMBER,   "snl_module_structure",                 "Module and mounting structure configuration",         "",       "0=Use Database Values,1=glass/cell/polymer sheet-open rack,2=glass/cell/glass-open rack,3=polymer/thin film/steel-open rack,4=Insulated back BIPV,5=close roof mount,6=user-defined",   "Sandia PV Array Performance Model with Module Database","module_model=3",                     "INTEGER,MIN=0,MAX=6", "" },
+    { SSC_INPUT, SSC_NUMBER,   "snl_a",                                "Temperature coefficient a",                           "",       "",                                                                                                                                                                                      "Sandia PV Array Performance Model with Module Database","module_model=3",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "snl_b",                                "Temperature coefficient b",                           "",       "",                                                                                                                                                                                      "Sandia PV Array Performance Model with Module Database","module_model=3",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "snl_dtc",                              "Temperature coefficient dT",                          "",       "",                                                                                                                                                                                      "Sandia PV Array Performance Model with Module Database","module_model=3",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "snl_ref_a",                            "User-specified a",                                    "",       "",                                                                                                                                                                                      "Sandia PV Array Performance Model with Module Database","module_model=3",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "snl_ref_b",                            "User-specified b",                                    "",       "",                                                                                                                                                                                      "Sandia PV Array Performance Model with Module Database","module_model=3",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "snl_ref_dT",                           "User-specified dT",                                   "",       "",                                                                                                                                                                                      "Sandia PV Array Performance Model with Module Database","module_model=3",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "snl_fd",                               "Diffuse fraction",                                    "",       "",                                                                                                                                                                                      "Sandia PV Array Performance Model with Module Database","module_model=3",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "snl_a0",                               "Air mass polynomial coeff 0",                         "",       "",                                                                                                                                                                                      "Sandia PV Array Performance Model with Module Database","module_model=3",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "snl_a1",                               "Air mass polynomial coeff 1",                         "",       "",                                                                                                                                                                                      "Sandia PV Array Performance Model with Module Database","module_model=3",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "snl_a2",                               "Air mass polynomial coeff 2",                         "",       "",                                                                                                                                                                                      "Sandia PV Array Performance Model with Module Database","module_model=3",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "snl_a3",                               "Air mass polynomial coeff 3",                         "",       "",                                                                                                                                                                                      "Sandia PV Array Performance Model with Module Database","module_model=3",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "snl_a4",                               "Air mass polynomial coeff 4",                         "",       "",                                                                                                                                                                                      "Sandia PV Array Performance Model with Module Database","module_model=3",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "snl_aimp",                             "Max power point current temperature coefficient",     "",       "",                                                                                                                                                                                      "Sandia PV Array Performance Model with Module Database","module_model=3",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "snl_aisc",                             "Short circuit current temperature coefficient",       "",       "",                                                                                                                                                                                      "Sandia PV Array Performance Model with Module Database","module_model=3",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "snl_area",                             "Module area",                                         "",       "",                                                                                                                                                                                      "Sandia PV Array Performance Model with Module Database","module_model=3",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "snl_b0",                               "Incidence angle modifier polynomial coeff 0",         "",       "",                                                                                                                                                                                      "Sandia PV Array Performance Model with Module Database","module_model=3",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "snl_b1",                               "Incidence angle modifier polynomial coeff 1",         "",       "",                                                                                                                                                                                      "Sandia PV Array Performance Model with Module Database","module_model=3",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "snl_b2",                               "Incidence angle modifier polynomial coeff 2",         "",       "",                                                                                                                                                                                      "Sandia PV Array Performance Model with Module Database","module_model=3",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "snl_b3",                               "Incidence angle modifier polynomial coeff 3",         "",       "",                                                                                                                                                                                      "Sandia PV Array Performance Model with Module Database","module_model=3",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "snl_b4",                               "Incidence angle modifier polynomial coeff 4",         "",       "",                                                                                                                                                                                      "Sandia PV Array Performance Model with Module Database","module_model=3",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "snl_b5",                               "Incidence angle modifier polynomial coeff 5",         "",       "",                                                                                                                                                                                      "Sandia PV Array Performance Model with Module Database","module_model=3",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "snl_bvmpo",                            "Max power point voltage temperature coefficient",     "",       "",                                                                                                                                                                                      "Sandia PV Array Performance Model with Module Database","module_model=3",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "snl_bvoco",                            "Open circuit voltage temperature coefficient",        "",       "",                                                                                                                                                                                      "Sandia PV Array Performance Model with Module Database","module_model=3",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "snl_c0",                               "C0",                                                  "",       "",                                                                                                                                                                                      "Sandia PV Array Performance Model with Module Database","module_model=3",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "snl_c1",                               "C1",                                                  "",       "",                                                                                                                                                                                      "Sandia PV Array Performance Model with Module Database","module_model=3",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "snl_c2",                               "C2",                                                  "",       "",                                                                                                                                                                                      "Sandia PV Array Performance Model with Module Database","module_model=3",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "snl_c3",                               "C3",                                                  "",       "",                                                                                                                                                                                      "Sandia PV Array Performance Model with Module Database","module_model=3",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "snl_c4",                               "C4",                                                  "",       "",                                                                                                                                                                                      "Sandia PV Array Performance Model with Module Database","module_model=3",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "snl_c5",                               "C5",                                                  "",       "",                                                                                                                                                                                      "Sandia PV Array Performance Model with Module Database","module_model=3",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "snl_c6",                               "C6",                                                  "",       "",                                                                                                                                                                                      "Sandia PV Array Performance Model with Module Database","module_model=3",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "snl_c7",                               "C7",                                                  "",       "",                                                                                                                                                                                      "Sandia PV Array Performance Model with Module Database","module_model=3",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "snl_impo",                             "Max power point current",                             "",       "",                                                                                                                                                                                      "Sandia PV Array Performance Model with Module Database","module_model=3",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "snl_isco",                             "Short circuit current",                               "",       "",                                                                                                                                                                                      "Sandia PV Array Performance Model with Module Database","module_model=3",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "snl_ixo",                              "Ix midpoint current",                                 "",       "",                                                                                                                                                                                      "Sandia PV Array Performance Model with Module Database","module_model=3",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "snl_ixxo",                             "Ixx midpoint current",                                "",       "",                                                                                                                                                                                      "Sandia PV Array Performance Model with Module Database","module_model=3",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "snl_mbvmp",                            "Irradiance dependence of Vmp temperature coefficient","",       "",                                                                                                                                                                                      "Sandia PV Array Performance Model with Module Database","module_model=3",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "snl_mbvoc",                            "Irradiance dependence of Voc temperature coefficient","",       "",                                                                                                                                                                                      "Sandia PV Array Performance Model with Module Database","module_model=3",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "snl_n",                                "Diode factor",                                        "",       "",                                                                                                                                                                                      "Sandia PV Array Performance Model with Module Database","module_model=3",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "snl_series_cells",                     "Number of cells in series",                           "",       "",                                                                                                                                                                                      "Sandia PV Array Performance Model with Module Database","module_model=3",                     "INTEGER",             "" },
+    { SSC_INPUT, SSC_NUMBER,   "snl_vmpo",                             "Max power point voltage",                             "",       "",                                                                                                                                                                                      "Sandia PV Array Performance Model with Module Database","module_model=3",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "snl_voco",                             "Open circuit voltage",                                "",       "",                                                                                                                                                                                      "Sandia PV Array Performance Model with Module Database","module_model=3",                     "",                    "" },
 
+		// 11 parameter model
+    { SSC_INPUT, SSC_NUMBER,   "sd11par_nser",                         "Nseries",                                             "",       "",                                                                                                                                                                                      "IEC61853 Single Diode Model",                           "module_model=4",                     "INTEGER,POSITIVE",    "" },
+    { SSC_INPUT, SSC_NUMBER,   "sd11par_area",                         "Module area",                                         "m2",     "",                                                                                                                                                                                      "IEC61853 Single Diode Model",                           "module_model=4",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "sd11par_AMa0",                         "Air mass modifier coeff 0",                           "",       "",                                                                                                                                                                                      "IEC61853 Single Diode Model",                           "module_model=4",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "sd11par_AMa1",                         "Air mass modifier coeff 1",                           "",       "",                                                                                                                                                                                      "IEC61853 Single Diode Model",                           "module_model=4",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "sd11par_AMa2",                         "Air mass modifier coeff 2",                           "",       "",                                                                                                                                                                                      "IEC61853 Single Diode Model",                           "module_model=4",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "sd11par_AMa3",                         "Air mass modifier coeff 3",                           "",       "",                                                                                                                                                                                      "IEC61853 Single Diode Model",                           "module_model=4",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "sd11par_AMa4",                         "Air mass modifier coeff 4",                           "",       "",                                                                                                                                                                                      "IEC61853 Single Diode Model",                           "module_model=4",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "sd11par_glass",                        "Module cover glass type",                             "",       "0=normal,1=AR glass",                                                                                                                                                                   "IEC61853 Single Diode Model",                           "module_model=4",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "sd11par_tnoct",                        "Nominal operating cell temperature",                  "C",      "",                                                                                                                                                                                      "IEC61853 Single Diode Model",                           "module_model=4",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "sd11par_standoff",                     "Standoff mode",                                       "",       "0=bipv,1=>3.5in,2=2.5-3.5in,3=1.5-2.5in,4=0.5-1.5in,5=<0.5in,6=ground/rack",                                                                                                            "IEC61853 Single Diode Model",                           "module_model=4",                     "INTEGER,MIN=0,MAX=6", "" },
+    { SSC_INPUT, SSC_NUMBER,   "sd11par_mounting",                     "Array mounting height",                               "",       "0=one story,1=two story",                                                                                                                                                               "IEC61853 Single Diode Model",                           "module_model=4",                     "INTEGER,MIN=0,MAX=1", "" },
+    { SSC_INPUT, SSC_NUMBER,   "sd11par_Vmp0",                         "Vmp (STC)",                                           "V",      "",                                                                                                                                                                                      "IEC61853 Single Diode Model",                           "module_model=4",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "sd11par_Imp0",                         "Imp (STC)",                                           "A",      "",                                                                                                                                                                                      "IEC61853 Single Diode Model",                           "module_model=4",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "sd11par_Voc0",                         "Voc (STC)",                                           "V",      "",                                                                                                                                                                                      "IEC61853 Single Diode Model",                           "module_model=4",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "sd11par_Isc0",                         "Isc (STC)",                                           "A",      "",                                                                                                                                                                                      "IEC61853 Single Diode Model",                           "module_model=4",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "sd11par_alphaIsc",                     "Short curcuit current temperature coefficient",       "A/C",    "",                                                                                                                                                                                      "IEC61853 Single Diode Model",                           "module_model=4",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "sd11par_n",                            "Diode nonideality factor",                            "",       "",                                                                                                                                                                                      "IEC61853 Single Diode Model",                           "module_model=4",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "sd11par_Il",                           "Light current",                                       "A",      "",                                                                                                                                                                                      "IEC61853 Single Diode Model",                           "module_model=4",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "sd11par_Io",                           "Saturation current",                                  "A",      "",                                                                                                                                                                                      "IEC61853 Single Diode Model",                           "module_model=4",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "sd11par_Egref",                        "Bandgap voltage",                                     "eV",     "",                                                                                                                                                                                      "IEC61853 Single Diode Model",                           "module_model=4",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "sd11par_d1",                           "Rs fit parameter 1",                                  "",       "",                                                                                                                                                                                      "IEC61853 Single Diode Model",                           "module_model=4",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "sd11par_d2",                           "Rs fit parameter 2",                                  "",       "",                                                                                                                                                                                      "IEC61853 Single Diode Model",                           "module_model=4",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "sd11par_d3",                           "Rs fit parameter 3",                                  "",       "",                                                                                                                                                                                      "IEC61853 Single Diode Model",                           "module_model=4",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "sd11par_c1",                           "Rsh fit parameter 1",                                 "",       "",                                                                                                                                                                                      "IEC61853 Single Diode Model",                           "module_model=4",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "sd11par_c2",                           "Rsh fit parameter 2",                                 "",       "",                                                                                                                                                                                      "IEC61853 Single Diode Model",                           "module_model=4",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "sd11par_c3",                           "Rsh fit parameter 3",                                 "",       "",                                                                                                                                                                                      "IEC61853 Single Diode Model",                           "module_model=4",                     "",                    "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,      "cec_area",                                    "Module area",                                             "m2",     "",                              "pvsamv1",              "module_model=1",           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cec_a_ref",                                   "Nonideality factor a",                                    "",       "",                              "pvsamv1",              "module_model=1",           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cec_adjust",                                  "Temperature coefficient adjustment",                      "%",      "",                              "pvsamv1",              "module_model=1",           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cec_alpha_sc",                                "Short circuit current temperature coefficient",           "A/C",    "",                              "pvsamv1",              "module_model=1",           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cec_beta_oc",                                 "Open circuit voltage temperature coefficient",            "V/C",    "",                              "pvsamv1",              "module_model=1",           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cec_gamma_r",                                 "Maximum power point temperature coefficient",             "%/C",    "",                              "pvsamv1",              "module_model=1",           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cec_i_l_ref",                                 "Light current",                                           "A",      "",                              "pvsamv1",              "module_model=1",           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cec_i_mp_ref",                                "Maximum power point current",                             "A",      "",                              "pvsamv1",              "module_model=1",           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cec_i_o_ref",                                 "Saturation current",                                      "A",      "",                              "pvsamv1",              "module_model=1",           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cec_i_sc_ref",                                "Short circuit current",                                   "A",      "",                              "pvsamv1",              "module_model=1",           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cec_n_s",                                     "Number of cells in series",                               "",       "",                              "pvsamv1",              "module_model=1",           "POSITIVE",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cec_r_s",                                     "Series resistance",                                       "ohm",    "",                              "pvsamv1",              "module_model=1",           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cec_r_sh_ref",                                "Shunt resistance",                                        "ohm",    "",                              "pvsamv1",              "module_model=1",           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cec_t_noct",                                  "Nominal operating cell temperature",                      "C",      "",                              "pvsamv1",              "module_model=1",           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cec_v_mp_ref",                                "Maximum power point voltage",                             "V",      "",                              "pvsamv1",              "module_model=1",           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cec_v_oc_ref",                                "Open circuit voltage",                                    "V",      "",                              "pvsamv1",              "module_model=1",           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cec_temp_corr_mode",                          "Cell temperature model selection",                        "",       "0=noct,1=mc",                   "pvsamv1",              "module_model=1",           "INTEGER,MIN=0,MAX=1",           "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cec_is_bifacial",                             "Modules are bifacial",                                     "0/1",     "",                            "pvsamv1",              "module_model=1",           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cec_bifacial_transmission_factor",            "Bifacial transmission factor",                             "0-1",     "",                            "pvsamv1",              "module_model=1",           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cec_bifaciality",                             "Bifaciality factor",                                       "%",       "",                            "pvsamv1",              "module_model=1",           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cec_bifacial_ground_clearance_height",        "Module ground clearance height",                           "m",       "",                            "pvsamv1",              "module_model=1",           "",                              "" },
+		// mlm model
+    { SSC_INPUT, SSC_NUMBER,   "mlm_N_series",                         "Number of cells in series",                           "-",      "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_N_parallel",                       "Number of cells in parallel",                         "-",      "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_N_diodes",                         "Number of diodes",                                    "-",      "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_Width",                            "Module width (short side)",                           "m",      "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_Length",                           "Module length (long side)",                           "m",      "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_V_mp_ref",                         "V_mp at STC",                                         "V",      "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_I_mp_ref",                         "I_mp at STC",                                         "A",      "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_V_oc_ref",                         "V_oc at STC",                                         "V",      "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_I_sc_ref",                         "I_sc at STC",                                         "A",      "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_S_ref",                            "Reference irradiance (Typically 1000W/m²)",          "W/m²",  "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_T_ref",                            "Reference temperature (Typically 25°C)",             "°C",    "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_R_shref",                          "Reference shunt resistance",                          "V/A",    "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_R_sh0",                            "Rsh,0",                                               "V/A",    "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_R_shexp",                          "Rsh exponential coefficient",                         "-",      "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_R_s",                              "Series resistance",                                   "V/A",    "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_alpha_isc",                        "Temperature coefficient for I_sc",                    "A/K",    "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_beta_voc_spec",                    "Temperature coefficient for V_oc",                    "V/K",    "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_E_g",                              "Reference bandgap energy",                            "eV",     "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_n_0",                              "Gamma",                                               "-",      "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_mu_n",                             "Temperature coefficient of gamma",                    "1/K",    "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_D2MuTau",                          "Coefficient for recombination losses",                "V",      "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_T_mode",                           "Cell temperature model mode",                         "-",      "1: NOCT",                                                                                                                                                                               "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_T_c_no_tnoct",                     "NOCT cell temperature",                               "°C",    "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_T_c_no_mounting",                  "NOCT Array mounting height",                          "-",      "0=one story,1=two story",                                                                                                                                                               "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_T_c_no_standoff",                  "NOCT standoff mode",                                  "-",      "0=bipv,1=>3.5in,2=2.5-3.5in,3=1.5-2.5in,4=0.5-1.5in,5=<0.5in,6=ground/rack",                                                                                                            "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_T_c_fa_alpha",                     "Extended Faiman model absorptivity",                  "-",      "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_T_c_fa_U0",                        "Extended Faiman model U_0",                           "W/m²K", "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_T_c_fa_U1",                        "Extended Faiman model U_1",                           "W/m³sK","",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_AM_mode",                          "Air-mass modifier mode",                              "-",      "1: Do not consider AM effects, 2: Use Sandia polynomial [corr=f(AM)], 3: Use standard coefficients from DeSoto model [corr=f(AM)], 4: Use First Solar polynomial [corr=f(AM, p_wat)]",  "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_AM_c_sa0",                         "Coefficient 0 for Sandia Air Mass Modifier",          "-",      "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_AM_c_sa1",                         "Coefficient 1 for Sandia Air Mass Modifier",          "-",      "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_AM_c_sa2",                         "Coefficient 2 for Sandia Air Mass Modifier",          "-",      "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_AM_c_sa3",                         "Coefficient 3 for Sandia Air Mass Modifier",          "-",      "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_AM_c_sa4",                         "Coefficient 4 for Sandia Air Mass Modifier",          "-",      "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_AM_c_lp0",                         "Coefficient 0 for Lee/Panchula Air Mass Modifier",    "-",      "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_AM_c_lp1",                         "Coefficient 1 for Lee/Panchula Air Mass Modifier",    "-",      "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_AM_c_lp2",                         "Coefficient 2 for Lee/Panchula Air Mass Modifier",    "-",      "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_AM_c_lp3",                         "Coefficient 3 for Lee/Panchula Air Mass Modifier",    "-",      "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_AM_c_lp4",                         "Coefficient 4 for Lee/Panchula Air Mass Modifier",    "-",      "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_AM_c_lp5",                         "Coefficient 5 for Lee/Panchula Air Mass Modifier",    "-",      "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_IAM_mode",                         "Incidence Angle Modifier mode",                       "-",      "1: Use ASHRAE formula, 2: Use Sandia polynomial, 3: Use cubic spline with user-supplied data",                                                                                          "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_IAM_c_as",                         "ASHRAE incidence modifier coefficient b_0",           "-",      "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_IAM_c_sa0",                        "Sandia IAM coefficient 0",                            "-",      "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_IAM_c_sa1",                        "Sandia IAM coefficient 1",                            "-",      "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_IAM_c_sa2",                        "Sandia IAM coefficient 2",                            "-",      "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_IAM_c_sa3",                        "Sandia IAM coefficient 3",                            "-",      "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_IAM_c_sa4",                        "Sandia IAM coefficient 4",                            "-",      "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_IAM_c_sa5",                        "Sandia IAM coefficient 5",                            "-",      "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_ARRAY,    "mlm_IAM_c_cs_incAngle",                "Spline IAM - Incidence angles",                       "deg",    "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_ARRAY,    "mlm_IAM_c_cs_iamValue",                "Spline IAM - IAM values",                             "-",      "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mlm_groundRelfectionFraction",         "Ground reflection fraction",                          "-",      "",                                                                                                                                                                                      "Mermoud Lejeune Single Diode Model",                    "module_model=5",                     "",                    "" },
 
+    // inverter model
+    { SSC_INPUT, SSC_NUMBER,   "inverter_model",                       "Inverter model specifier",                            "",       "0=cec,1=datasheet,2=partload,3=coefficientgenerator,4=PVYield",                                                                                                                         "Inverter",                                              "*",                                  "INTEGER,MIN=0,MAX=4", "" },
+    { SSC_INPUT, SSC_NUMBER,   "mppt_low_inverter",                    "Minimum inverter MPPT voltage window",                "Vdc",    "",                                                                                                                                                                                      "Inverter",                                              "?=0",                                "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "mppt_hi_inverter",                     "Maximum inverter MPPT voltage window",                "Vdc",    "",                                                                                                                                                                                      "Inverter",                                              "?=0",                                "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "inv_num_mppt",                         "Number of MPPT inputs",                               "",       "",                                                                                                                                                                                      "Inverter",                                              "?=1",                                "INTEGER,MIN=0,MAX=4", "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,      "cec_standoff",                                "Standoff mode",                                           "",       "0=bipv,1=>3.5in,2=2.5-3.5in,3=1.5-2.5in,4=0.5-1.5in,5=<0.5in,6=ground/rack",  "pvsamv1",       "module_model=1",                           "INTEGER,MIN=0,MAX=6",       "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cec_height",                                  "Array mounting height",                                   "",       "0=one story,1=two story",                                           "pvsamv1",       "module_model=1",                           "INTEGER,MIN=0,MAX=1",       "" },
+    { SSC_INPUT, SSC_NUMBER,   "inv_snl_c0",                           "Curvature between AC power and DC power at ref",      "1/W",    "",                                                                                                                                                                                      "Inverter CEC Database",                                 "inverter_model=0",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "inv_snl_c1",                           "Coefficient of Pdco variation with DC input voltage", "1/V",    "",                                                                                                                                                                                      "Inverter CEC Database",                                 "inverter_model=0",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "inv_snl_c2",                           "Coefficient of Pso variation with DC input voltage",  "1/V",    "",                                                                                                                                                                                      "Inverter CEC Database",                                 "inverter_model=0",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "inv_snl_c3",                           "Coefficient of Co variation with DC input voltage",   "1/V",    "",                                                                                                                                                                                      "Inverter CEC Database",                                 "inverter_model=0",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "inv_snl_paco",                         "AC maximum power rating",                             "Wac",    "",                                                                                                                                                                                      "Inverter CEC Database",                                 "inverter_model=0",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "inv_snl_pdco",                         "DC input power at which AC power rating is achieved", "Wdc",    "",                                                                                                                                                                                      "Inverter CEC Database",                                 "inverter_model=0",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "inv_snl_pnt",                          "AC power consumed by inverter at night",              "Wac",    "",                                                                                                                                                                                      "Inverter CEC Database",                                 "inverter_model=0",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "inv_snl_pso",                          "DC power required to enable the inversion process",   "Wdc",    "",                                                                                                                                                                                      "Inverter CEC Database",                                 "inverter_model=0",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "inv_snl_vdco",                         "DC input voltage for the rated AC power rating",      "Vdc",    "",                                                                                                                                                                                      "Inverter CEC Database",                                 "inverter_model=0",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "inv_snl_vdcmax",                       "Maximum DC input operating voltage",                  "Vdc",    "",                                                                                                                                                                                      "Inverter CEC Database",                                 "inverter_model=0",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "inv_cec_cg_c0",                        "Curvature between AC power and DC power at ref",      "1/W",    "",                                                                                                                                                                                      "Inverter CEC Coefficient Generator",                    "inverter_model=3",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "inv_cec_cg_c1",                        "Coefficient of Pdco variation with DC input voltage", "1/V",    "",                                                                                                                                                                                      "Inverter CEC Coefficient Generator",                    "inverter_model=3",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "inv_cec_cg_c2",                        "Coefficient of Pso variation with DC input voltage",  "1/V",    "",                                                                                                                                                                                      "Inverter CEC Coefficient Generator",                    "inverter_model=3",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "inv_cec_cg_c3",                        "Coefficient of Co variation with DC input voltage",   "1/V",    "",                                                                                                                                                                                      "Inverter CEC Coefficient Generator",                    "inverter_model=3",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "inv_cec_cg_paco",                      "AC maximum power rating",                             "Wac",    "",                                                                                                                                                                                      "Inverter CEC Coefficient Generator",                    "inverter_model=3",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "inv_cec_cg_pdco",                      "DC input power at which AC power rating is achieved", "Wdc",    "",                                                                                                                                                                                      "Inverter CEC Coefficient Generator",                    "inverter_model=3",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "inv_cec_cg_pnt",                       "AC power consumed by inverter at night",              "Wac",    "",                                                                                                                                                                                      "Inverter CEC Coefficient Generator",                    "inverter_model=3",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "inv_cec_cg_psco",                      "DC power required to enable the inversion process",   "Wdc",    "",                                                                                                                                                                                      "Inverter CEC Coefficient Generator",                    "inverter_model=3",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "inv_cec_cg_vdco",                      "DC input voltage for the rated AC power rating",      "Vdc",    "",                                                                                                                                                                                      "Inverter CEC Coefficient Generator",                    "inverter_model=3",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "inv_cec_cg_vdcmax",                    "Maximum DC input operating voltage",                  "Vdc",    "",                                                                                                                                                                                      "Inverter CEC Coefficient Generator",                    "inverter_model=3",                   "",                    "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,      "cec_mounting_config",                         "Mounting configuration",                                  "",       "0=rack,1=flush,2=integrated,3=gap",                                 "pvsamv1",       "module_model=1&cec_temp_corr_mode=1",      "INTEGER,MIN=0,MAX=3",       "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cec_heat_transfer",                           "Heat transfer dimensions",                                "",       "0=module,1=array",                                                  "pvsamv1",       "module_model=1&cec_temp_corr_mode=1",      "INTEGER,MIN=0,MAX=1",       "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cec_mounting_orientation",                    "Mounting structure orientation",                          "",       "0=do not impede flow,1=vertical supports,2=horizontal supports",    "pvsamv1",       "module_model=1&cec_temp_corr_mode=1",      "INTEGER,MIN=0,MAX=2",       "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cec_gap_spacing",                             "Gap spacing",                                             "m",      "",                                                                  "pvsamv1",       "module_model=1&cec_temp_corr_mode=1",      "",                          "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cec_module_width",                            "Module width",                                            "m",      "",                                                                  "pvsamv1",       "module_model=1&cec_temp_corr_mode=1",      "",                          "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cec_module_length",                           "Module height",                                           "m",      "",                                                                  "pvsamv1",       "module_model=1&cec_temp_corr_mode=1",      "",                          "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cec_array_rows",                              "Rows of modules in array",                                "",       "",                                                                  "pvsamv1",       "module_model=1&cec_temp_corr_mode=1",      "",                          "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cec_array_cols",                              "Columns of modules in array",                             "",       "",                                                                  "pvsamv1",       "module_model=1&cec_temp_corr_mode=1",      "",                          "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cec_backside_temp",                           "Module backside temperature",                             "C",      "",                                                                  "pvsamv1",       "module_model=1&cec_temp_corr_mode=1",      "POSITIVE",                  "" },
+	{ SSC_INPUT, SSC_NUMBER,   "inv_ds_paco",                          "AC maximum power rating",                             "Wac",    "",                                                                                                                                                                                      "Inverter Datasheet",                                    "inverter_model=1",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "inv_ds_eff",                           "Weighted or Peak or Nominal Efficiency",              "Wdc",    "",                                                                                                                                                                                      "Inverter Datasheet",                                    "inverter_model=1",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "inv_ds_pnt",                           "AC power consumed by inverter at night",              "Wac",    "",                                                                                                                                                                                      "Inverter Datasheet",                                    "inverter_model=1",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "inv_ds_pso",                           "DC power required to enable the inversion process",   "Wdc",    "",                                                                                                                                                                                      "Inverter Datasheet",                                    "inverter_model=1",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "inv_ds_vdco",                          "DC input voltage for the rated AC power rating",      "Vdc",    "",                                                                                                                                                                                      "Inverter Datasheet",                                    "inverter_model=1",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "inv_ds_vdcmax",                        "Maximum DC input operating voltage",                  "Vdc",    "",                                                                                                                                                                                      "Inverter Datasheet",                                    "inverter_model=1",                   "",                    "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,      "6par_celltech",                               "Solar cell technology type",                              "",       "monoSi=0,multiSi=1,CdTe=2,CIS=3,CIGS=4,Amorphous=5",                "pvsamv1",       "module_model=2",                           "INTEGER,MIN=0,MAX=5",       "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "6par_vmp",                                    "Maximum power point voltage",                             "V",      "",                                                                  "pvsamv1",       "module_model=2",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "6par_imp",                                    "Imp",                                                     "A",      "",                                                                  "pvsamv1",       "module_model=2",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "6par_voc",                                    "Voc",                                                     "V",      "",                                                                  "pvsamv1",       "module_model=2",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "6par_isc",                                    "Isc",                                                     "A",      "",                                                                  "pvsamv1",       "module_model=2",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "6par_bvoc",                                   "Open circuit voltage temperature coefficient",            "V/C",    "",                                                                  "pvsamv1",       "module_model=2",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "6par_aisc",                                   "Short circuit current temperature coefficient",           "A/C",    "",                                                                  "pvsamv1",       "module_model=2",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "6par_gpmp",                                   "Maximum power point temperature coefficient",             "%/C",    "",                                                                  "pvsamv1",       "module_model=2",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "6par_nser",                                   "Nseries",                                                 "",       "",                                                                  "pvsamv1",       "module_model=2",                           "INTEGER,POSITIVE",              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "6par_area",                                   "Module area",                                             "m2",     "",                                                                  "pvsamv1",       "module_model=2",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "6par_tnoct",                                  "Nominal operating cell temperature",                      "C",      "",                                                                  "pvsamv1",       "module_model=2",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "6par_standoff",                               "Standoff mode",                                           "",       "0=bipv,1=>3.5in,2=2.5-3.5in,3=1.5-2.5in,4=0.5-1.5in,5=<0.5in,6=ground/rack",  "pvsamv1",       "module_model=2",                           "INTEGER,MIN=0,MAX=6",           "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "6par_mounting",                               "Array mounting height",                                   "",       "0=one story,1=two story",                                           "pvsamv1",       "module_model=2",                           "INTEGER,MIN=0,MAX=1",           "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "6par_is_bifacial",                            "Modules are bifacial",                                     "0/1",     "",                                                                "pvsamv1",       "module_model=2",                          "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "6par_bifacial_transmission_factor",           "Bifacial transmission factor",                             "0-1",     "",                                                                "pvsamv1",       "module_model=2",                          "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "6par_bifaciality",                            "Bifaciality factor",                                       "%",       "",                                                                "pvsamv1",       "module_model=2",                          "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "6par_bifacial_ground_clearance_height",        "Module ground clearance height",                           "m",       "",                                                               "pvsamv1",       "module_model=2",                          "",                              "" },
+	{ SSC_INPUT, SSC_NUMBER,   "inv_pd_paco",                          "AC maximum power rating",                             "Wac",    "",                                                                                                                                                                                      "Inverter Part Load Curve",                              "inverter_model=2",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "inv_pd_pdco",                          "DC input power at which AC power rating is achieved", "Wdc",    "",                                                                                                                                                                                      "Inverter Part Load Curve",                              "inverter_model=2",                   "",                    "" },
+    { SSC_INPUT, SSC_ARRAY,    "inv_pd_partload",                      "Partload curve partload values",                      "%",      "",                                                                                                                                                                                      "Inverter Part Load Curve",                              "inverter_model=2",                   "",                    "" },
+    { SSC_INPUT, SSC_ARRAY,    "inv_pd_efficiency",                    "Partload curve efficiency values",                    "%",      "",                                                                                                                                                                                      "Inverter Part Load Curve",                              "inverter_model=2",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "inv_pd_pnt",                           "AC power consumed by inverter at night",              "Wac",    "",                                                                                                                                                                                      "Inverter Part Load Curve",                              "inverter_model=2",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "inv_pd_vdco",                          "DC input voltage for the rated AC power rating",      "Vdc",    "",                                                                                                                                                                                      "Inverter Part Load Curve",                              "inverter_model=2",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "inv_pd_vdcmax",                        "Maximum DC input operating voltage",                  "Vdc",    "",                                                                                                                                                                                      "Inverter Part Load Curve",                              "inverter_model=2",                   "",                    "" },
 
+	{ SSC_INPUT, SSC_NUMBER,   "ond_PNomConv",                         "",                                                    "W",      "",                                                                                                                                                                                      "Inverter Mermoud Lejeune Model",                        "inverter_model=4",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "ond_PMaxOUT",                          "",                                                    "W",      "",                                                                                                                                                                                      "Inverter Mermoud Lejeune Model",                        "inverter_model=4",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "ond_VOutConv",                         "",                                                    "W",      "",                                                                                                                                                                                      "Inverter Mermoud Lejeune Model",                        "inverter_model=4",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "ond_VMppMin",                          "",                                                    "V",      "",                                                                                                                                                                                      "Inverter Mermoud Lejeune Model",                        "inverter_model=4",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "ond_VMPPMax",                          "",                                                    "V",      "",                                                                                                                                                                                      "Inverter Mermoud Lejeune Model",                        "inverter_model=4",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "ond_VAbsMax",                          "",                                                    "V",      "",                                                                                                                                                                                      "Inverter Mermoud Lejeune Model",                        "inverter_model=4",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "ond_PSeuil",                           "",                                                    "W",      "",                                                                                                                                                                                      "Inverter Mermoud Lejeune Model",                        "inverter_model=4",                   "",                    "" },
+    { SSC_INPUT, SSC_STRING,   "ond_ModeOper",                         "",                                                    "-",      "",                                                                                                                                                                                      "Inverter Mermoud Lejeune Model",                        "inverter_model=4",                   "",                    "" },
+    { SSC_INPUT, SSC_STRING,   "ond_CompPMax",                         "",                                                    "-",      "",                                                                                                                                                                                      "Inverter Mermoud Lejeune Model",                        "inverter_model=4",                   "",                    "" },
+    { SSC_INPUT, SSC_STRING,   "ond_CompVMax",                         "",                                                    "-",      "",                                                                                                                                                                                      "Inverter Mermoud Lejeune Model",                        "inverter_model=4",                   "",                    "" },
+    { SSC_INPUT, SSC_STRING,   "ond_ModeAffEnum",                      "",                                                    "-",      "",                                                                                                                                                                                      "Inverter Mermoud Lejeune Model",                        "inverter_model=4",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "ond_PNomDC",                           "",                                                    "W",      "",                                                                                                                                                                                      "Inverter Mermoud Lejeune Model",                        "inverter_model=4",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "ond_PMaxDC",                           "",                                                    "W",      "",                                                                                                                                                                                      "Inverter Mermoud Lejeune Model",                        "inverter_model=4",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "ond_IMaxDC",                           "",                                                    "A",      "",                                                                                                                                                                                      "Inverter Mermoud Lejeune Model",                        "inverter_model=4",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "ond_INomDC",                           "",                                                    "A",      "",                                                                                                                                                                                      "Inverter Mermoud Lejeune Model",                        "inverter_model=4",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "ond_INomAC",                           "",                                                    "A",      "",                                                                                                                                                                                      "Inverter Mermoud Lejeune Model",                        "inverter_model=4",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "ond_IMaxAC",                           "",                                                    "A",      "",                                                                                                                                                                                      "Inverter Mermoud Lejeune Model",                        "inverter_model=4",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "ond_TPNom",                            "",                                                    "°C",    "",                                                                                                                                                                                      "Inverter Mermoud Lejeune Model",                        "inverter_model=4",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "ond_TPMax",                            "",                                                    "°C",    "",                                                                                                                                                                                      "Inverter Mermoud Lejeune Model",                        "inverter_model=4",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "ond_TPLim1",                           "",                                                    "°C",    "",                                                                                                                                                                                      "Inverter Mermoud Lejeune Model",                        "inverter_model=4",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "ond_TPLimAbs",                         "",                                                    "°C",    "",                                                                                                                                                                                      "Inverter Mermoud Lejeune Model",                        "inverter_model=4",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "ond_PLim1",                            "",                                                    "W",      "",                                                                                                                                                                                      "Inverter Mermoud Lejeune Model",                        "inverter_model=4",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "ond_PLimAbs",                          "",                                                    "W",      "",                                                                                                                                                                                      "Inverter Mermoud Lejeune Model",                        "inverter_model=4",                   "",                    "" },
+    { SSC_INPUT, SSC_ARRAY,    "ond_VNomEff",                          "",                                                    "V",      "",                                                                                                                                                                                      "Inverter Mermoud Lejeune Model",                        "inverter_model=4",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "ond_NbInputs",                         "",                                                    "-",      "",                                                                                                                                                                                      "Inverter Mermoud Lejeune Model",                        "inverter_model=4",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "ond_NbMPPT",                           "",                                                    "-",      "",                                                                                                                                                                                      "Inverter Mermoud Lejeune Model",                        "inverter_model=4",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "ond_Aux_Loss",                         "",                                                    "W",      "",                                                                                                                                                                                      "Inverter Mermoud Lejeune Model",                        "inverter_model=4",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "ond_Night_Loss",                       "",                                                    "W",      "",                                                                                                                                                                                      "Inverter Mermoud Lejeune Model",                        "inverter_model=4",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "ond_lossRDc",                          "",                                                    "V/A",    "",                                                                                                                                                                                      "Inverter Mermoud Lejeune Model",                        "inverter_model=4",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "ond_lossRAc",                          "",                                                    "A",      "",                                                                                                                                                                                      "Inverter Mermoud Lejeune Model",                        "inverter_model=4",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "ond_effCurve_elements",                "",                                                    "-",      "",                                                                                                                                                                                      "Inverter Mermoud Lejeune Model",                        "inverter_model=4",                   "",                    "" },
+    { SSC_INPUT, SSC_MATRIX,   "ond_effCurve_Pdc",                     "",                                                    "W",      "",                                                                                                                                                                                      "Inverter Mermoud Lejeune Model",                        "inverter_model=4",                   "",                    "" },
+    { SSC_INPUT, SSC_MATRIX,   "ond_effCurve_Pac",                     "",                                                    "W",      "",                                                                                                                                                                                      "Inverter Mermoud Lejeune Model",                        "inverter_model=4",                   "",                    "" },
+    { SSC_INPUT, SSC_MATRIX,   "ond_effCurve_eta",                     "",                                                    "-",      "",                                                                                                                                                                                      "Inverter Mermoud Lejeune Model",                        "inverter_model=4",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "ond_Aux_Loss",                         "",                                                    "W",      "",                                                                                                                                                                                      "Inverter Mermoud Lejeune Model",                        "inverter_model=4",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "ond_Aux_Loss",                         "",                                                    "W",      "",                                                                                                                                                                                      "Inverter Mermoud Lejeune Model",                        "inverter_model=4",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "ond_doAllowOverpower",                 "",                                                    "-",      "",                                                                                                                                                                                      "Inverter Mermoud Lejeune Model",                        "inverter_model=4",                   "",                    "" },
+    { SSC_INPUT, SSC_NUMBER,   "ond_doUseTemperatureLimit",            "",                                                    "-",      "",                                                                                                                                                                                      "Inverter Mermoud Lejeune Model",                        "inverter_model=4",                   "",                    "" },
+    { SSC_INPUT, SSC_MATRIX,   "inv_tdc_cec_db",                       "Temperature derate curves for CEC Database",          "(Vdc, C, %/C)",    "",                                                                                                                                                                            "Inverter CEC Database",                                 "inverter_model=0",                   "",                    "" },
+    { SSC_INPUT, SSC_MATRIX,   "inv_tdc_cec_cg",                       "Temperature derate curves for CEC Coef Gen",          "(Vdc, C, %/C)",    "",                                                                                                                                                                            "Inverter CEC Coefficient Generator",                    "inverter_model=3",                   "",                    "" },
+    { SSC_INPUT, SSC_MATRIX,   "inv_tdc_ds",                           "Temperature derate curves for Inv Datasheet",         "(Vdc, C, %/C)",    "",                                                                                                                                                                            "Inverter Datasheet",                                    "inverter_model=1",                   "",                    "" },
+    { SSC_INPUT, SSC_MATRIX,   "inv_tdc_plc",                          "Temperature derate curves for Part Load Curve",       "(Vdc, C, %/C)",    "",                                                                                                                                                                            "Inverter Part Load Curve",                              "inverter_model=2",                   "",                    "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,      "snl_module_structure",                        "Module and mounting structure configuration",             "",       "0=Use Database Values,1=glass/cell/polymer sheet - open rack,2=glass/cell/glass - open rack,3=polymer/thin film/steel - open rack,4=Insulated back building-integrated PV,5=close roof mount,6=user-defined",                      "pvsamv1",       "module_model=3",                    "INTEGER,MIN=0,MAX=6",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "snl_a",                                       "Temperature coefficient a",                               "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "snl_b",                                       "Temperature coefficient b",                               "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "snl_dtc",                                     "Temperature coefficient dT",                              "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "snl_ref_a",                                   "User-specified a",                                        "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "snl_ref_b",                                   "User-specified b",                                        "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "snl_ref_dT",                                  "User-specified dT",                                       "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "snl_fd",                                      "Diffuse fraction",                                        "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "snl_a0",                                      "Air mass polynomial coeff 0",                             "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "snl_a1",                                      "Air mass polynomial coeff 1",                             "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "snl_a2",                                      "Air mass polynomial coeff 2",                             "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "snl_a3",                                      "Air mass polynomial coeff 3",                             "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "snl_a4",                                      "Air mass polynomial coeff 4",                             "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "snl_aimp",                                    "Max power point current temperature coefficient",         "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "snl_aisc",                                    "Short circuit current temperature coefficient",           "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "snl_area",                                    "Module area",                                             "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "snl_b0",                                      "Incidence angle modifier polynomial coeff 0",             "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "snl_b1",                                      "Incidence angle modifier polynomial coeff 1",             "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "snl_b2",                                      "Incidence angle modifier polynomial coeff 2",             "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "snl_b3",                                      "Incidence angle modifier polynomial coeff 3",             "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "snl_b4",                                      "Incidence angle modifier polynomial coeff 4",             "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "snl_b5",                                      "Incidence angle modifier polynomial coeff 5",             "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "snl_bvmpo",                                   "Max power point voltage temperature coefficient",         "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "snl_bvoco",                                   "Open circuit voltage temperature coefficient",            "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "snl_c0",                                      "C0",                                                      "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "snl_c1",                                      "C1",                                                      "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "snl_c2",                                      "C2",                                                      "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "snl_c3",                                      "C3",                                                      "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "snl_c4",                                      "C4",                                                      "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "snl_c5",                                      "C5",                                                      "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "snl_c6",                                      "C6",                                                      "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "snl_c7",                                      "C7",                                                      "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "snl_impo",                                    "Max power point current",                                 "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "snl_isco",                                    "Short circuit current",                                   "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "snl_ixo",                                     "Ix midpoint current",                                     "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "snl_ixxo",                                    "Ixx midpoint current",                                    "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "snl_mbvmp",                                   "Irradiance dependence of Vmp temperature coefficient",    "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "snl_mbvoc",                                   "Irradiance dependence of Voc temperature coefficient",    "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "snl_n",                                       "Diode factor",                                            "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "snl_series_cells",                            "Number of cells in series",                               "",       "",                      "pvsamv1",       "module_model=3",                    "INTEGER",                       "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "snl_vmpo",                                    "Max power point voltage",                                 "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "snl_voco",                                    "Open circuit voltage",                                    "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
-	
-	//{ SSC_INPUT,        SSC_NUMBER,      "sd11par_type",                                "Cell technology type",                                    "",       "monoSi=0,multiSi=1,CdTe=2,CIS=3,CIGS=4,Amorphous=5",                "pvsamv1",       "module_model=4",                           "INTEGER,MIN=0,MAX=5",       "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_nser",                                "Nseries",                                                 "",       "",                                                                  "pvsamv1",       "module_model=4",                           "INTEGER,POSITIVE",              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_area",                                "Module area",                                             "m2",     "",                                                                  "pvsamv1",       "module_model=4",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_AMa0",                                "Air mass modifier coeff 0",                               "",       "",                                                                  "pvsamv1",       "module_model=4",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_AMa1",                                "Air mass modifier coeff 1",                               "",       "",                                                                  "pvsamv1",       "module_model=4",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_AMa2",                                "Air mass modifier coeff 2",                               "",       "",                                                                  "pvsamv1",       "module_model=4",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_AMa3",                                "Air mass modifier coeff 3",                               "",       "",                                                                  "pvsamv1",       "module_model=4",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_AMa4",                                "Air mass modifier coeff 4",                               "",       "",                                                                  "pvsamv1",       "module_model=4",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_glass",                               "Cover glass type",                                        "",       "0=normal,1=AR glass",                                               "pvsamv1",       "module_model=4",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_tnoct",                               "Nominal operating cell temperature",                      "C",      "",                                                                  "pvsamv1",       "module_model=4",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_standoff",                            "Standoff mode",                                           "",       "0=bipv,1=>3.5in,2=2.5-3.5in,3=1.5-2.5in,4=0.5-1.5in,5=<0.5in,6=ground/rack",  "pvsamv1",       "module_model=4",                 "INTEGER,MIN=0,MAX=6",           "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_mounting",                            "Array mounting height",                                   "",       "0=one story,1=two story",                                           "pvsamv1",       "module_model=4",                           "INTEGER,MIN=0,MAX=1",           "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_Vmp0",                                "Vmp (STC)",                                               "V",      "",                                                                  "pvsamv1",       "module_model=4",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_Imp0",                                "Imp (STC)",                                               "A",      "",                                                                  "pvsamv1",       "module_model=4",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_Voc0",                                "Voc (STC)",                                               "V",      "",                                                                  "pvsamv1",       "module_model=4",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_Isc0",                                "Isc (STC)",                                               "A",      "",                                                                  "pvsamv1",       "module_model=4",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_alphaIsc",                            "Short curcuit current temperature coefficient",            "A/C",    "",                                                                  "pvsamv1",       "module_model=4",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_n",                                   "Diode nonideality factor",                                "",       "",                                                                  "pvsamv1",       "module_model=4",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_Il",                                  "Light current",                                           "A",      "",                                                                  "pvsamv1",       "module_model=4",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_Io",                                  "Saturation current",                                      "A",      "",                                                                  "pvsamv1",       "module_model=4",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_Egref",                               "Bandgap voltage",                                         "eV",     "",                                                                  "pvsamv1",       "module_model=4",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_d1",                                  "Rs fit parameter 1",                                      "",       "",                                                                  "pvsamv1",       "module_model=4",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_d2",                                  "Rs fit parameter 2",                                      "",       "",                                                                  "pvsamv1",       "module_model=4",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_d3",                                  "Rs fit parameter 3",                                      "",       "",                                                                  "pvsamv1",       "module_model=4",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_c1",                                  "Rsh fit parameter 1",                                     "",       "",                                                                  "pvsamv1",       "module_model=4",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_c2",                                  "Rsh fit parameter 2",                                     "",       "",                                                                  "pvsamv1",       "module_model=4",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_c3",                                  "Rsh fit parameter 3",                                     "",       "",                                                                  "pvsamv1",       "module_model=4",                           "",                              "" },
-	
-
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_N_series",                                "Number of cells in series",                               "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_N_parallel",                              "Number of cells in parallel",						       "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_N_diodes",                                "Number of diodes",									       "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_Width",                                   "Module width (short side)",						       "m",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_Length",                                  "Module length (long side)",							   "m",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_V_mp_ref",                                "V_mp at STC",                                             "V",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_I_mp_ref",                                "I_mp at STC",                                             "A",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_V_oc_ref",                                "V_oc at STC",                                             "V",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_I_sc_ref",                                "I_sc at STC",                                             "A",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_S_ref",                                   "Reference irradiance (Typically 1000W/m²)",               "W/m²",    "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_T_ref",                                   "Reference temperature (Typically 25°C)",                  "°C",      "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_R_shref",                                 "Reference shunt resistance",                              "V/A",     "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_R_sh0",                                   "Rsh,0",                                                   "V/A",     "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_R_shexp",                                 "Rsh exponential coefficient",                             "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_R_s",                                     "Series resistance",                                       "V/A",     "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_alpha_isc",                               "Temperature coefficient for I_sc",                        "A/K",     "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_beta_voc_spec",                           "Temperature coefficient for V_oc",                        "V/K",     "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_E_g",                                     "Reference bandgap energy",                                "eV",      "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_n_0",                                     "Gamma",                                                   "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_mu_n",                                    "Temperature coefficient of gamma",                        "1/K",     "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_D2MuTau",                                 "Coefficient for recombination losses",                    "V",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_T_mode",                                  "Cell temperature model mode",                             "-",       "1: NOCT",                                                           "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_T_c_no_tnoct",                            "NOCT cell temperature",                                   "°C",      "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_T_c_no_mounting",                         "NOCT Array mounting height",                              "-",       "0=one story,1=two story",                                           "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_T_c_no_standoff",                         "NOCT standoff mode",                                      "-",       "0=bipv,1=>3.5in,2=2.5-3.5in,3=1.5-2.5in,4=0.5-1.5in,5=<0.5in,6=ground/rack",  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_T_c_fa_alpha",                            "Extended Faiman model absorptivity",                      "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_T_c_fa_U0",                               "Extended Faiman model U_0",                               "W/m²K",   "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_T_c_fa_U1",                               "Extended Faiman model U_1",                               "W/m³sK",  "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_AM_mode",                                 "Air-mass modifier mode",                                  "-",       "1: Do not consider AM effects, 2: Use Sandia polynomial [corr=f(AM)], 3: Use standard coefficients from DeSoto model [corr=f(AM)], 4: Use First Solar polynomial [corr=f(AM, p_wat)]",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_AM_c_sa0",                                "Coefficient 0 for Sandia Air Mass Modifier",              "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_AM_c_sa1",                                "Coefficient 1 for Sandia Air Mass Modifier",              "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_AM_c_sa2",                                "Coefficient 2 for Sandia Air Mass Modifier",              "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_AM_c_sa3",                                "Coefficient 3 for Sandia Air Mass Modifier",              "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_AM_c_sa4",                                "Coefficient 4 for Sandia Air Mass Modifier",              "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_AM_c_lp0",                                "Coefficient 0 for Lee/Panchula Air Mass Modifier",        "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_AM_c_lp1",                                "Coefficient 1 for Lee/Panchula Air Mass Modifier",        "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_AM_c_lp2",                                "Coefficient 2 for Lee/Panchula Air Mass Modifier",        "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_AM_c_lp3",                                "Coefficient 3 for Lee/Panchula Air Mass Modifier",        "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_AM_c_lp4",                                "Coefficient 4 for Lee/Panchula Air Mass Modifier",        "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_AM_c_lp5",                                "Coefficient 5 for Lee/Panchula Air Mass Modifier",        "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_IAM_mode",                                "Incidence Angle Modifier mode",                           "-",       "1: Use ASHRAE formula, 2: Use Sandia polynomial, 3: Use cubic spline with user-supplied data",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_IAM_c_as",                                "ASHRAE incidence modifier coefficient b_0",               "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_IAM_c_sa0",                               "Sandia IAM coefficient 0",                                "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_IAM_c_sa1",                               "Sandia IAM coefficient 1",                                "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_IAM_c_sa2",                               "Sandia IAM coefficient 2",                                "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_IAM_c_sa3",                               "Sandia IAM coefficient 3",                                "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_IAM_c_sa4",                               "Sandia IAM coefficient 4",                                "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_IAM_c_sa5",                               "Sandia IAM coefficient 5",                                "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "mlm_IAM_c_cs_incAngle",                       "Spline IAM - Incidence angles",                           "deg",     "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "mlm_IAM_c_cs_iamValue",                       "Spline IAM - IAM values",                                 "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mlm_groundRelfectionFraction",                "Ground reflection fraction",                              "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
-
-// inverter model
-	{ SSC_INPUT,        SSC_NUMBER,      "inverter_model",                              "Inverter model specifier",                                "",        "0=cec,1=datasheet,2=partload,3=coefficientgenerator,4=PVYield",        "pvsamv1",               "*",                         "INTEGER,MIN=0,MAX=4",           "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mppt_low_inverter",                           "Minimum inverter MPPT voltage window",                    "Vdc",     "",                     "pvsamv1",       "?=0",                                 "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mppt_hi_inverter",                            "Maximum inverter MPPT voltage window",                    "Vdc",     "",                     "pvsamv1",       "?=0",                                 "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_num_mppt",                                "Number of MPPT inputs",                                   "",        "",                     "pvsamv1",       "?=1",                                 "INTEGER,MIN=0,MAX=4",           "" },
-
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_c0",                                  "Curvature between AC power and DC power at ref",          "1/W",     "",                     "pvsamv1",       "inverter_model=0",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_c1",                                  "Coefficient of Pdco variation with DC input voltage",     "1/V",     "",                     "pvsamv1",       "inverter_model=0",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_c2",                                  "Coefficient of Pso variation with DC input voltage",      "1/V",     "",                     "pvsamv1",       "inverter_model=0",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_c3",                                  "Coefficient of Co variation with DC input voltage",       "1/V",     "",                     "pvsamv1",       "inverter_model=0",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_paco",                                "AC maximum power rating",                                 "Wac",     "",                     "pvsamv1",       "inverter_model=0",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_pdco",                                "DC input power at which AC power rating is achieved",     "Wdc",     "",                     "pvsamv1",       "inverter_model=0",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_pnt",                                 "AC power consumed by inverter at night",                  "Wac",     "",                     "pvsamv1",       "inverter_model=0",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_pso",                                 "DC power required to enable the inversion process",       "Wdc",     "",                     "pvsamv1",       "inverter_model=0",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_vdco",                                "DC input voltage for the rated AC power rating",          "Vdc",     "",                     "pvsamv1",       "inverter_model=0",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_vdcmax",                              "Maximum DC input operating voltage",                      "Vdc",     "",                     "pvsamv1",       "inverter_model=0",                    "",                              "" },
-
-	{ SSC_INPUT,		SSC_NUMBER,		 "inv_cec_cg_c0",								"Curvature between AC power and DC power at ref",		   "1/W",	  "",					  "pvsamv1",	   "inverter_model=3",					  "",                              "" },
-	{ SSC_INPUT,		SSC_NUMBER,		 "inv_cec_cg_c1",								"Coefficient of Pdco variation with DC input voltage",	   "1/V",	  "",					  "pvsamv1",	   "inverter_model=3",					  "",                              "" },
-	{ SSC_INPUT,		SSC_NUMBER,		 "inv_cec_cg_c2",								"Coefficient of Pso variation with DC input voltage",	   "1/V",	  "",					  "pvsamv1",	   "inverter_model=3",					  "",                              "" },
-	{ SSC_INPUT,		SSC_NUMBER,		 "inv_cec_cg_c3",								"Coefficient of Co variation with DC input voltage",	   "1/V",	  "",					  "pvsamv1",	   "inverter_model=3",					  "",                              "" },
-	{ SSC_INPUT,		SSC_NUMBER,		 "inv_cec_cg_paco",								"AC maximum power rating",								   "Wac",	  "",					  "pvsamv1",	   "inverter_model=3",					  "",                              "" },
-	{ SSC_INPUT,		SSC_NUMBER,		 "inv_cec_cg_pdco",								"DC input power at which AC power rating is achieved",	   "Wdc",	  "",					  "pvsamv1",	   "inverter_model=3",					  "",                              "" },
-	{ SSC_INPUT,		SSC_NUMBER,		 "inv_cec_cg_pnt",								"AC power consumed by inverter at night",				   "Wac",	  "",					  "pvsamv1",	   "inverter_model=3",					  "",                              "" },
-	{ SSC_INPUT,		SSC_NUMBER,		 "inv_cec_cg_psco",								"DC power required to enable the inversion process",	   "Wdc",	  "",					  "pvsamv1",	   "inverter_model=3",					  "",                              "" },
-	{ SSC_INPUT,		SSC_NUMBER,		 "inv_cec_cg_vdco",								"DC input voltage for the rated AC power rating",		   "Vdc",	  "",					  "pvsamv1",	   "inverter_model=3",					  "",                              "" },
-	{ SSC_INPUT,		SSC_NUMBER,		 "inv_cec_cg_vdcmax",							"Maximum DC input operating voltage",					   "Vdc",	  "",					  "pvsamv1",	   "inverter_model=3",					  "",                              "" },
-
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_ds_paco",                                 "AC maximum power rating",                                 "Wac",     "",                     "pvsamv1",       "inverter_model=1",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_ds_eff",                                  "Weighted or Peak or Nominal Efficiency",				   "Wdc",     "",                     "pvsamv1",       "inverter_model=1",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_ds_pnt",                                  "AC power consumed by inverter at night",                  "Wac",     "",                     "pvsamv1",       "inverter_model=1",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_ds_pso",                                  "DC power required to enable the inversion process",       "Wdc",     "",                     "pvsamv1",       "inverter_model=1",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_ds_vdco",                                 "DC input voltage for the rated AC power rating",          "Vdc",     "",                     "pvsamv1",       "inverter_model=1",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_ds_vdcmax",                               "Maximum DC input operating voltage",                      "Vdc",     "",                     "pvsamv1",       "inverter_model=1",                    "",                              "" },
-
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_paco",                                 "AC maximum power rating",                                 "Wac",     "",                     "pvsamv1",       "inverter_model=2",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_pdco",                                 "DC input power at which AC power rating is achieved",     "Wdc",     "",                     "pvsamv1",       "inverter_model=2",                    "",                              "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "inv_pd_partload",                             "Partload curve partload values",                          "%",       "",                     "pvsamv1",       "inverter_model=2",                    "",                              "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "inv_pd_efficiency",                           "Partload curve efficiency values",                        "%",       "",                     "pvsamv1",       "inverter_model=2",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_pnt",                                  "AC power consumed by inverter at night",                  "Wac",     "",                     "pvsamv1",       "inverter_model=2",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_vdco",                                 "DC input voltage for the rated AC power rating",          "Vdc",     "",                     "pvsamv1",       "inverter_model=2",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_vdcmax",                               "Maximum DC input operating voltage",                      "Vdc",     "",                     "pvsamv1",       "inverter_model=2",                    "",                              "" },
-
-	{ SSC_INPUT, SSC_NUMBER, "ond_PNomConv", "", "W", "", "pvsamv1", "inverter_model=4", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "ond_PMaxOUT", "", "W", "", "pvsamv1", "inverter_model=4", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "ond_VOutConv", "", "W", "", "pvsamv1", "inverter_model=4", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "ond_VMppMin", "", "V", "", "pvsamv1", "inverter_model=4", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "ond_VMPPMax", "", "V", "", "pvsamv1", "inverter_model=4", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "ond_VAbsMax", "", "V", "", "pvsamv1", "inverter_model=4", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "ond_PSeuil", "", "W", "", "pvsamv1", "inverter_model=4", "", "" },
-	{ SSC_INPUT, SSC_STRING, "ond_ModeOper", "", "-", "", "pvsamv1", "inverter_model=4", "", "" },
-	{ SSC_INPUT, SSC_STRING, "ond_CompPMax", "", "-", "", "pvsamv1", "inverter_model=4", "", "" },
-	{ SSC_INPUT, SSC_STRING, "ond_CompVMax", "", "-", "", "pvsamv1", "inverter_model=4", "", "" },
-	{ SSC_INPUT, SSC_STRING, "ond_ModeAffEnum", "", "-", "", "pvsamv1", "inverter_model=4", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "ond_PNomDC", "", "W", "", "pvsamv1", "inverter_model=4", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "ond_PMaxDC", "", "W", "", "pvsamv1", "inverter_model=4", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "ond_IMaxDC", "", "A", "", "pvsamv1", "inverter_model=4", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "ond_INomDC", "", "A", "", "pvsamv1", "inverter_model=4", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "ond_INomAC", "", "A", "", "pvsamv1", "inverter_model=4", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "ond_IMaxAC", "", "A", "", "pvsamv1", "inverter_model=4", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "ond_TPNom", "", "°C", "", "pvsamv1", "inverter_model=4", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "ond_TPMax", "", "°C", "", "pvsamv1", "inverter_model=4", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "ond_TPLim1", "", "°C", "", "pvsamv1", "inverter_model=4", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "ond_TPLimAbs", "", "°C", "", "pvsamv1", "inverter_model=4", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "ond_PLim1", "", "W", "", "pvsamv1", "inverter_model=4", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "ond_PLimAbs", "", "W", "", "pvsamv1", "inverter_model=4", "", "" },
-	{ SSC_INPUT, SSC_ARRAY,  "ond_VNomEff", "", "V", "", "pvsamv1", "inverter_model=4", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "ond_NbInputs", "", "-", "", "pvsamv1", "inverter_model=4", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "ond_NbMPPT", "", "-", "", "pvsamv1", "inverter_model=4", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "ond_Aux_Loss", "", "W", "", "pvsamv1", "inverter_model=4", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "ond_Night_Loss", "", "W", "", "pvsamv1", "inverter_model=4", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "ond_lossRDc", "", "V/A", "", "pvsamv1", "inverter_model=4", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "ond_lossRAc", "", "A", "", "pvsamv1", "inverter_model=4", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "ond_effCurve_elements", "", "-", "", "pvsamv1", "inverter_model=4", "", "" },
-	{ SSC_INPUT, SSC_MATRIX, "ond_effCurve_Pdc", "", "W", "", "pvsamv1", "inverter_model=4", "", "" },
-	{ SSC_INPUT, SSC_MATRIX, "ond_effCurve_Pac", "", "W", "", "pvsamv1", "inverter_model=4", "", "" },
-	{ SSC_INPUT, SSC_MATRIX, "ond_effCurve_eta", "", "-", "", "pvsamv1", "inverter_model=4", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "ond_Aux_Loss", "", "W", "", "pvsamv1", "inverter_model=4", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "ond_Aux_Loss", "", "W", "", "pvsamv1", "inverter_model=4", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "ond_doAllowOverpower", "", "-", "", "pvsamv1", "inverter_model=4", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "ond_doUseTemperatureLimit", "", "-", "", "pvsamv1", "inverter_model=4", "", "" },
-	{ SSC_INPUT,		SSC_MATRIX,		 "inv_tdc_cec_db",							   "Temperature derate curves for CEC Database",			   "Vdc",	  "",					  "pvsamv1",	   "inverter_model=0",					  "",							   "" },
-	{ SSC_INPUT,		SSC_MATRIX,		 "inv_tdc_cec_cg",							   "Temperature derate curves for CEC Coef Gen",			   "Vdc",	  "",					  "pvsamv1",	   "inverter_model=3",					  "",							   "" },
-	{ SSC_INPUT,		SSC_MATRIX,		 "inv_tdc_ds",								   "Temperature derate curves for Inv Datasheet",			   "Vdc",	  "",					  "pvsamv1",	   "inverter_model=1",					  "",							   "" },
-	{ SSC_INPUT,		SSC_MATRIX,		 "inv_tdc_plc",								   "Temperature derate curves for Part Load Curve",			   "C",		  "",					  "pvsamv1",	   "inverter_model=2",					  "",							   "" },
-
-	// battery storage and dispatch
-	{ SSC_INPUT,        SSC_NUMBER,      "en_batt",                                    "Enable battery storage model",                             "0/1",     "",                     "Battery",       "?=0",                                 "",                              "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "load",                                       "Electricity load (year 1)",                                "kW", "", "Battery", "?", "", "" },
+    	// battery storage and dispatch
+    { SSC_INPUT, SSC_NUMBER,   "en_batt",                              "Enable battery storage model",                        "0/1",    "",                                                                                                                                                                                      "BatterySystem",                                               "?=0",                                "",                    "" },
+    { SSC_INPUT, SSC_ARRAY,    "load",                                 "Electricity load (year 1)",                           "kW",     "",                                                                                                                                                                                      "Load",                                               "?",                                  "",                    "" },
+    { SSC_INPUT, SSC_ARRAY,    "crit_load",                            "Critical Electricity load (year 1)",                  "kW",     "",                                                                                                                                                                                      "Load",                                               "",                                   "",                    "" },
 
 	// NOTE:  other battery storage model inputs and outputs are defined in batt_common.h/batt_common.cpp
 
@@ -553,12 +524,12 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_idealrot",                   "Subarray 1 Axis rotation ideal for 1 axis trackers",                   "deg",    "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_eff_beam",               "Subarray 1 POA front beam irradiance after shading and soiling",       "W/m2",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_eff_diff",               "Subarray 1 POA front diffuse irradiance after shading and soiling",    "W/m2",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_nom",                    "Subarray 1 POA total front irradiance nominal",                        "W/m2",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_shaded",                 "Subarray 1 POA total front irradiance after shading only",             "W/m2",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_shaded_soiled",          "Subarray 1 POA total front irradiance after shading and soiling",      "W/m2",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_front",                  "Subarray 1 POA total front irradiance after module cover",              "W/m2",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_rear",                   "Subarray 1 POA total rear irradiance after module cover",              "W/m2",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_eff",                    "Subarray 1 POA total irradiance after module cover",                   "W/m2",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_nom",                    "Subarray 1 POA front total irradiance nominal",                        "W/m2",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_shaded",                 "Subarray 1 POA front total irradiance after shading only",             "W/m2",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_shaded_soiled",          "Subarray 1 POA front total irradiance after shading and soiling",      "W/m2",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_front",                  "Subarray 1 POA front total irradiance after reflection (IAM)",              "W/m2",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_rear",                   "Subarray 1 POA rear total irradiance after reflection (IAM)",              "W/m2",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_eff",                    "Subarray 1 POA total irradiance after reflection (IAM)",                   "W/m2",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_soiling_derate",             "Subarray 1 Soiling beam irradiance factor",                            "frac",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_beam_shading_factor",        "Subarray 1 External shading and soiling beam irradiance factor",       "frac",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_linear_derate",              "Subarray 1 Self-shading linear beam irradiance factor",                "frac",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
@@ -570,9 +541,11 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_snow_loss",                  "Subarray 1 Snow cover DC power loss",                                  "kW",     "", "Time Series (Subarray 1)",       "",                     "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_modeff",                     "Subarray 1 Module efficiency",                                         "%",      "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_celltemp",                   "Subarray 1 Cell temperature",                                          "C",      "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_dc_voltage",                 "Subarray 1 Operating voltage",                                         "V",      "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_voc",                        "Subarray 1 Open circuit voltage",                                      "V",      "", "Time Series (Subarray 1)",       "",                     "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_isc",                        "Subarray 1 Short circuit current",                                     "A",      "", "Time Series (Subarray 1)",       "",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_celltempSS",                 "Subarray 1 Cell temperature (steady state)",                           "C",      "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_dc_voltage",                 "Subarray 1 Operating DC voltage",                                         "V",      "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_dc_gross",                   "Subarray 1 DC power gross",                                             "kW",      "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_voc",                        "Subarray 1 Open circuit DC voltage",                                      "V",      "", "Time Series (Subarray 1)",       "",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_isc",                        "Subarray 1 Short circuit DC current",                                     "A",      "", "Time Series (Subarray 1)",       "",                     "",                              "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_surf_tilt",                  "Subarray 2 Surface tilt",                                              "deg",    "", "Time Series (Subarray 2)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_surf_azi",                   "Subarray 2 Surface azimuth",                                           "deg",    "", "Time Series (Subarray 2)",       "",                    "",                              "" },
@@ -582,12 +555,12 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_idealrot",                   "Subarray 2 Axis rotation ideal for 1 axis trackers",                   "deg",    "", "Time Series (Subarray 2)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_eff_beam",               "Subarray 2 POA front beam irradiance after shading and soiling",       "W/m2",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_eff_diff",               "Subarray 2 POA front diffuse irradiance after shading and soiling",    "W/m2",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_nom",                    "Subarray 2 POA total front irradiance nominal",                        "W/m2",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_shaded",                 "Subarray 2 POA total front irradiance after shading only",             "W/m2",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_shaded_soiled",          "Subarray 2 POA total front irradiance after shading and soiling",      "W/m2",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_front",                  "Subarray 2 POA total front irradiance after cover",                     "W/m2",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_rear",                   "Subarray 2 POA rear irradiance after cover",                            "W/m2",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_eff",                    "Subarray 2 POA total irradiance after module cover",                   "W/m2",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_nom",                    "Subarray 2 POA front total irradiance nominal",                        "W/m2",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_shaded",                 "Subarray 2 POA front total irradiance after shading only",             "W/m2",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_shaded_soiled",          "Subarray 2 POA front total irradiance after shading and soiling",      "W/m2",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_front",                  "Subarray 2 POA front total irradiance after reflection (IAM)",                     "W/m2",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_rear",                   "Subarray 2 POA rear irradiance after reflection (IAM)",                            "W/m2",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_eff",                    "Subarray 2 POA total irradiance after module reflection (IAM)",                   "W/m2",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_soiling_derate",             "Subarray 2 Soiling beam irradiance factor",                            "frac",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_beam_shading_factor",        "Subarray 2 External shading and soiling beam irradiance factor",       "frac",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_linear_derate",              "Subarray 2 Self-shading linear beam irradiance factor",                "frac",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
@@ -599,9 +572,11 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_snow_loss",					 "Subarray 2 Snow cover DC power loss",                                  "kW",     "", "Time Series (Subarray 2)",       "",                     "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_modeff",                     "Subarray 2 Module efficiency",                                         "%",      "", "Time Series (Subarray 2)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_celltemp",                   "Subarray 2 Cell temperature",                                          "C",      "", "Time Series (Subarray 2)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_dc_voltage",                 "Subarray 2 Operating voltage",                                         "V",      "", "Time Series (Subarray 2)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_voc",                        "Subarray 2 Open circuit voltage",                                      "V",      "", "Time Series (Subarray 2)",       "",                     "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_isc",                        "Subarray 2 Short circuit current",                                     "A",      "", "Time Series (Subarray 2)",       "",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_celltempSS",                 "Subarray 2 Cell temperature (steady state)",                           "C",      "", "Time Series (Subarray 2)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_dc_voltage",                 "Subarray 2 Operating DC voltage",                                         "V",      "", "Time Series (Subarray 2)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_dc_gross",                 "Subarray 2 DC power gross",                                         "kW",      "", "Time Series (Subarray 2)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_voc",                        "Subarray 2 Open circuit DC voltage",                                      "V",      "", "Time Series (Subarray 2)",       "",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_isc",                        "Subarray 2 Short circuit DC current",                                     "A",      "", "Time Series (Subarray 2)",       "",                     "",                              "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_surf_tilt",                  "Subarray 3 Surface tilt",                                              "deg",    "", "Time Series (Subarray 3)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_surf_azi",                   "Subarray 3 Surface azimuth",                                           "deg",    "", "Time Series (Subarray 3)",       "",                    "",                              "" },
@@ -611,12 +586,12 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_idealrot",                   "Subarray 3 Axis rotation ideal for 1 axis trackers",                   "deg",    "", "Time Series (Subarray 3)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_eff_beam",               "Subarray 3 POA front beam irradiance after shading and soiling",       "W/m2",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_eff_diff",               "Subarray 3 POA front diffuse irradiance after shading and soiling",    "W/m2",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_nom",                    "Subarray 3 POA total front irradiance nominal",                        "W/m2",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_shaded",                 "Subarray 3 POA total front irradiance after shading only",             "W/m2",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_shaded_soiled",          "Subarray 3 POA total front irradiance after shading and soiling",      "W/m2",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_front",                  "Subarray 3 POA total front irradiance after cover",					 "W/m2",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_rear",                   "Subarray 3 POA rear irradiance after cover",                            "W/m2",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_eff",                    "Subarray 3 POA total irradiance after cover",                          "W/m2",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_nom",                    "Subarray 3 POA font total irradiance nominal",                        "W/m2",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_shaded",                 "Subarray 3 POA front total irradiance after shading only",             "W/m2",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_shaded_soiled",          "Subarray 3 POA front total irradiance after shading and soiling",      "W/m2",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_front",                  "Subarray 3 POA front total irradiance after reflection (IAM)",					 "W/m2",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_rear",                   "Subarray 3 POA rear irradiance after reflection (IAM)",                            "W/m2",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_eff",                    "Subarray 3 POA total irradiance after reflection (IAM)",                          "W/m2",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_soiling_derate",             "Subarray 3 Soiling beam irradiance factor",                            "frac",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_beam_shading_factor",        "Subarray 3 External shading and soiling beam irradiance factor",       "frac",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_linear_derate",              "Subarray 3 Self-shading linear beam irradiance factor",                "frac",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
@@ -628,9 +603,11 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_snow_loss",					 "Subarray 3 Snow cover DC power loss",			                         "kW",     "", "Time Series (Subarray 3)",       "",                     "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_modeff",                     "Subarray 3 Module efficiency",                                         "%",      "", "Time Series (Subarray 3)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_celltemp",                   "Subarray 3 Cell temperature",                                          "C",      "", "Time Series (Subarray 3)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_dc_voltage",                 "Subarray 3 Operating voltage",                                         "V",      "", "Time Series (Subarray 3)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_voc",                        "Subarray 3 Open circuit voltage",                                      "V",      "", "Time Series (Subarray 3)",       "",                     "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_isc",                        "Subarray 3 Short circuit current",                                     "A",      "", "Time Series (Subarray 3)",       "",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_celltempSS",                 "Subarray 3 Cell temperature (steady state)",                           "C",      "", "Time Series (Subarray 3)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_dc_voltage",                 "Subarray 3 Operating DC voltage",                                         "V",      "", "Time Series (Subarray 3)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_dc_gross",                 "Subarray 3 DC power gross",                                         "kW",      "", "Time Series (Subarray 3)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_voc",                        "Subarray 3 Open circuit DC voltage",                                      "V",      "", "Time Series (Subarray 3)",       "",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_isc",                        "Subarray 3 Short circuit DC current",                                     "A",      "", "Time Series (Subarray 3)",       "",                     "",                              "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_surf_tilt",                  "Subarray 4 Surface tilt",                                              "deg",    "", "Time Series (Subarray 4)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_surf_azi",                   "Subarray 4 Surface azimuth",                                           "deg",    "", "Time Series (Subarray 4)",       "",                    "",                              "" },
@@ -640,12 +617,12 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_idealrot",                   "Subarray 4 Axis rotation ideal for 1 axis trackers",                   "deg",    "", "Time Series (Subarray 4)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_eff_beam",               "Subarray 4 POA front beam irradiance after shading and soiling",       "W/m2",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_eff_diff",               "Subarray 4 POA front diffuse irradiance after shading and soiling",    "W/m2",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_nom",                    "Subarray 4 POA total front irradiance nominal",                        "W/m2",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_shaded",                 "Subarray 4 POA total front irradiance after shading only",             "W/m2",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_shaded_soiled",          "Subarray 4 POA total front irradiance after shading and soiling",      "W/m2",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_front",                  "Subarray 4 POA total front irradiance after cover",                     "W/m2",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_rear",                   "Subarray 4 POA rear irradiance after cover",                            "W/m2",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_eff",                    "Subarray 4 POA total irradiance after cover",                          "W/m2",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_nom",                    "Subarray 4 POA front total irradiance nominal",                        "W/m2",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_shaded",                 "Subarray 4 POA front total irradiance after shading only",             "W/m2",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_shaded_soiled",          "Subarray 4 POA front total irradiance after shading and soiling",      "W/m2",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_front",                  "Subarray 4 POA front total irradiance after reflection (IAM)",                     "W/m2",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_rear",                   "Subarray 4 POA rear irradiance after reflection (IAM)",                            "W/m2",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_eff",                    "Subarray 4 POA total irradiance after reflection (IAM)",                          "W/m2",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_soiling_derate",             "Subarray 4 Soiling beam irradiance factor",                            "frac",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_beam_shading_factor",        "Subarray 4 External shading and soiling beam irradiance factor",       "frac",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_linear_derate",              "Subarray 4 Self-shading linear beam irradiance factor",                "frac",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
@@ -657,9 +634,11 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_snow_loss",					 "Subarray 4 Snow cover DC power loss",                                  "kW",     "", "Time Series (Subarray 4)",       "",                     "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_modeff",                     "Subarray 4 Module efficiency",                                         "%",      "", "Time Series (Subarray 4)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_celltemp",                   "Subarray 4 Cell temperature",                                          "C",      "", "Time Series (Subarray 4)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_dc_voltage",                 "Subarray 4 Operating voltage",                                         "V",      "", "Time Series (Subarray 4)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_voc",                        "Subarray 4 Open circuit voltage",                                      "V",      "", "Time Series (Subarray 4)",       "",                     "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_isc",                        "Subarray 4 Short circuit current",                                     "A",      "", "Time Series (Subarray 4)",       "",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_celltempSS",                 "Subarray 4 Cell temperature (steady state)",                           "C",      "", "Time Series (Subarray 4)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_dc_voltage",                 "Subarray 4 Operating DC voltage",                                         "V",      "", "Time Series (Subarray 4)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_dc_gross",                 "Subarray 4 DC power gross",                                         "kW",      "", "Time Series (Subarray 4)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_voc",                        "Subarray 4 Open circuit DC voltage",                                      "V",      "", "Time Series (Subarray 4)",       "",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_isc",                        "Subarray 4 Short circuit DC current",                                     "A",      "", "Time Series (Subarray 4)",       "",                     "",                              "" },
 
 /* aggregate array level outputs */
 	{ SSC_OUTPUT,        SSC_ARRAY,      "poa_nom",                              "Array POA front-side total radiation nominal",                    "kW",   "",  "Time Series (Array)",       "*",                    "",                              "" },
@@ -667,19 +646,19 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "poa_beam_eff",                         "Array POA beam radiation after shading and soiling",              "kW",   "",  "Time Series (Array)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "poa_shaded",                           "Array POA front-side total radiation after shading only",         "kW",   "",  "Time Series (Array)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "poa_shaded_soiled",                    "Array POA front-side total radiation after shading and soiling",  "kW",   "",  "Time Series (Array)",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "poa_front",                            "Array POA front-side total radiation after cover",                "kW",   "",  "Time Series (Array)",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "poa_rear",                             "Array POA rear-side total radiation after cover",                 "kW",   "",  "Time Series (Array)",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "poa_eff",                              "Array POA radiation total after cover",                           "kW",   "",  "Time Series (Array)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "poa_front",                            "Array POA front-side total radiation after reflection (IAM)",                "kW",   "",  "Time Series (Array)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "poa_rear",                             "Array POA rear-side total radiation after reflection (IAM)",                 "kW",   "",  "Time Series (Array)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "poa_eff",                              "Array POA radiation total after reflection (IAM)",                           "kW",   "",  "Time Series (Array)",       "*",                    "",                              "" },
 
-	//SEV: total dc snow loss time series (not a required output) 
+	//SEV: total dc snow loss time series (not a required output)
 	{ SSC_OUTPUT,        SSC_ARRAY,      "dc_snow_loss",                         "Array DC power loss due to snow",						 "kW",   "",   "Time Series (Array)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "dc_net",                               "Array DC power",                                       "kW",   "",   "Time Series (Array)",       "*",                    "",                              "" },
-	
+
 	//mppt outputs
-	{ SSC_OUTPUT,        SSC_ARRAY,      "inverterMPPT1_DCVoltage",              "Inverter DC input voltage at MPPT 1",                  "V",    "",  "Time Series (MPPT)",           "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "inverterMPPT2_DCVoltage",              "Inverter DC input voltage at MPPT 2",                  "V",    "",  "Time Series (MPPT)",           "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "inverterMPPT3_DCVoltage",              "Inverter DC input voltage at MPPT 3",                  "V",    "",  "Time Series (MPPT)",           "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "inverterMPPT4_DCVoltage",              "Inverter DC input voltage at MPPT 4",                  "V",    "",  "Time Series (MPPT)",           "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "inverterMPPT1_DCVoltage",              "Inverter MPPT 1 Nominal DC voltage",                  "V",    "",  "Time Series (MPPT)",           "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "inverterMPPT2_DCVoltage",              "Inverter MPPT 2 Nominal DC voltage",                  "V",    "",  "Time Series (MPPT)",           "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "inverterMPPT3_DCVoltage",              "Inverter MPPT 3 Nominal DC voltage",                  "V",    "",  "Time Series (MPPT)",           "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "inverterMPPT4_DCVoltage",              "Inverter MPPT 4 Nominal DC voltage",                  "V",    "",  "Time Series (MPPT)",           "",                    "",                              "" },
 
 	//inverter outputs
 	{ SSC_OUTPUT,        SSC_ARRAY,      "inv_eff",                              "Inverter efficiency",                                  "%",    "",  "Time Series (Inverter)",       "*",                    "",                              "" },
@@ -734,9 +713,9 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_beam_nom",                         "POA front-side irradiance beam nominal",                        "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_shaded",                           "POA front-side irradiance total after shading",                 "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_shaded_soiled",                    "POA front-side irradiance total after shading and soiling",     "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_front",                            "POA front-side irradiance total after cover",                   "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_rear",                             "POA rear-side irradiance total after cover",                    "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_eff",                              "POA irradiance total after cover",                              "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_front",                            "POA front-side irradiance total after reflection (IAM)",                   "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_rear",                             "POA rear-side irradiance total after reflection (IAM)",                    "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_eff",                              "POA irradiance total after reflection (IAM)",                              "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_beam_eff",                         "POA front-side irradiance beam after shading and soiling",      "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
 
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_dc_nominal",                           "Annual DC energy nominal",                           "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
@@ -748,33 +727,33 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_dc_loss_ond",                          "Annual DC loss OND model",                           "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_ac_loss_ond",                          "Annual AC loss OND model",                           "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
 
-	//SEV: total dc snow loss monthy array and annual value (not a required output) 
+	//SEV: total dc snow loss monthy array and annual value (not a required output)
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_snow_loss",                    "Snow DC energy loss",					       "kWh/mo",    "",                       "Monthly",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_snow_loss",                     "Snow DC energy loss",						   "kWh/yr",    "",                       "Annual (Year 1)",       "",                    "",                              "" },
 
 	// loss diagram - order applied
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray1_dc_gross", "Subarray 1 gross DC energy", "kWh", "", "Annual (Year 1)", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray1_dc_gross", "Subarray 1 Gross DC energy", "kWh", "", "Annual (Year 1)", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray1_dc_mismatch_loss", "Subarray 1 DC mismatch loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray1_dc_diodes_loss", "Subarray 1 DC diodes and connections loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray1_dc_wiring_loss", "Subarray 1 DC wiring loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray1_dc_tracking_loss", "Subarray 1 DC tracking loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray1_dc_nameplate_loss", "Subarray 1 DC nameplate loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
 
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray2_dc_gross", "Subarray 2 gross DC energy", "kWh", "", "Annual (Year 1)", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray2_dc_gross", "Subarray 2 Gross DC energy", "kWh", "", "Annual (Year 1)", "", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray2_dc_mismatch_loss", "Subarray 2 DC mismatch loss", "kWh", "", "Annual (Year 1)", "", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray2_dc_diodes_loss", "Subarray 2 DC diodes and connections loss", "kWh", "", "Annual (Year 1)", "", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray2_dc_wiring_loss", "Subarray 2 DC wiring loss", "kWh", "", "Annual (Year 1)", "", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray2_dc_tracking_loss", "Subarray 2 DC tracking loss", "kWh", "", "Annual (Year 1)", "", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray2_dc_nameplate_loss", "Subarray 2 DC nameplate loss", "kWh", "", "Annual (Year 1)", "", "", "" },
 
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray3_dc_gross", "Subarray 3 gross DC energy", "kWh", "", "Annual (Year 1)", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray3_dc_gross", "Subarray 3 Gross DC energy", "kWh", "", "Annual (Year 1)", "", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray3_dc_mismatch_loss", "Subarray 3 DC mismatch loss", "kWh", "", "Annual (Year 1)", "", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray3_dc_diodes_loss", "Subarray 3 DC diodes and connections loss", "kWh", "", "Annual (Year 1)", "", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray3_dc_wiring_loss", "Subarray 3 DC wiring loss", "kWh", "", "Annual (Year 1)", "", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray3_dc_tracking_loss", "Subarray 3 DC tracking loss", "kWh", "", "Annual (Year 1)", "", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray3_dc_nameplate_loss", "Subarray 3 DC nameplate loss", "kWh", "", "Annual (Year 1)", "", "", "" },
 
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray4_dc_gross", "Subarray 4 gross DC energy", "kWh", "", "Annual (Year 1)", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray4_dc_gross", "Subarray 4 Gross DC energy", "kWh", "", "Annual (Year 1)", "", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray4_dc_mismatch_loss", "Subarray 4 DC mismatch loss", "kWh", "", "Annual (Year 1)", "", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray4_dc_diodes_loss", "Subarray 4 DC diodes and connections loss", "kWh", "", "Annual (Year 1)", "", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray4_dc_wiring_loss", "Subarray 4 DC wiring loss", "kWh", "", "Annual (Year 1)", "", "", "" },
@@ -794,11 +773,11 @@ static var_info _cm_vtab_pvsamv1[] = {
 	// annual_poa_nom
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_poa_shading_loss_percent", "POA front-side shading loss", "%", "", "Loss", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_poa_soiling_loss_percent", "POA front-side soiling loss", "%", "", "Loss", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_poa_cover_loss_percent",   "POA front-side cover loss",   "%", "", "Loss", "*", "", "" }, 
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_poa_cover_loss_percent",   "POA front-side reflection (IAM) loss",   "%", "", "Loss", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_poa_rear_gain_percent",    "POA rear-side bifacial gain", "%", "", "Loss", "*", "", "" },
 
 	// annual_dc_nominal
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_module_loss_percent", "DC module modeled loss", "%", "", "Loss", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_module_loss_percent", "DC module deviation from STC", "%", "", "Loss", "*", "", "" },
 	// annual_dc_gross
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_snow_loss_percent", "DC snow loss", "%", "", "Loss", "*", "", "" },
 
@@ -849,7 +828,10 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_wiring_loss", "AC wiring loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_transmission_loss", "Transmission loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
 //	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_transformer_loss", "AC step-up transformer loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_optimizer_loss", "DC power optimizer loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
+    { SSC_OUTPUT, SSC_NUMBER, "annual_dc_optimizer_loss", "DC power optimizer loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
+
+    // total loss diagram losses for single year, does not include lifetime losses
+    { SSC_OUTPUT, SSC_NUMBER, "annual_total_loss_percent", "PV System Loss, from Nominal POA to Net AC", "kWh", "", "Annual (Year 1)", "*", "", "" },
 
 	/*
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_after_wiring_loss", "AC output after wiring loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
@@ -868,7 +850,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "performance_ratio",                           "Performance ratio",         "",       "",  "Annual (Year 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "capacity_factor",                             "Capacity factor",           "%",      "",  "Annual (Year 1)", "*", "", "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "capacity_factor_ac",                          "Capacity factor based on AC system capacity",           "%",      "",  "Annual (Year 1)", "*", "", "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "kwh_per_kw",                                  "First year kWh(AC)/kW(DC)", "kWh/kW", "",	"Annual (Year 1)", "*", "", "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "kwh_per_kw",                                  "Energy yield", "kWh/kW", "",	"Annual (Year 1)", "*", "", "" },
 
 	//miscellaneous outputs
 	{ SSC_OUTPUT,        SSC_NUMBER,     "ts_shift_hours",                            "Sun position time offset",   "hours",  "",  "Miscellaneous", "*",                       "",                          "" },
@@ -936,11 +918,13 @@ cm_pvsamv1::cm_pvsamv1()
 	add_var_info(vtab_dc_adjustment_factors);
 	add_var_info(vtab_technology_outputs);
 	add_var_info(vtab_battery_inputs);
+	add_var_info(vtab_forecast_price_signal);
 	add_var_info(vtab_battery_outputs);
+	add_var_info(vtab_resilience_outputs);
 }
 
-	
-void cm_pvsamv1::exec( ) throw (compute_module::general_error)
+
+void cm_pvsamv1::exec( ) throw (general_error)
 {
 
 	/// Underlying class which parses the compute module structure and sets up model inputs and outputs
@@ -950,7 +934,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	std::vector<Subarray_IO *> Subarrays = IOManager->getSubarrays();
 	PVSystem_IO * PVSystem = IOManager->getPVSystemIO();
 	ShadeDB8_mpp * shadeDatabase = IOManager->getShadeDatabase();
-	
+
 	size_t nrec = Simulation->numberOfWeatherFileRecords;
 	size_t nlifetime = Simulation->numberOfSteps;
 	size_t nyears = Simulation->numberOfYears;
@@ -962,6 +946,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	weather_header hdr = Irradiance->weatherHeader;
 	weather_data_provider * wdprov = Irradiance->weatherDataProvider.get();
 	int radmode = Irradiance->radiationMode;
+	double bifaciality = 0.0;
 
 	// Get System or Subarray Inputs
 	double aspect_ratio = Subarrays[0]->moduleAspectRatio;
@@ -971,8 +956,18 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	double module_watts_stc = Subarrays[0]->Module->moduleWattsSTC;
 	SharedInverter * sharedInverter = PVSystem->m_sharedInverter.get();
 
+	//overwrite tilt with latitude if flag is set- can't do this in PVIOManager because need latitude from weather file
+	//also check here for tilt > 0 for tracking systems, since this is a very uncommon configuration but an easy mistake to make
+	for (size_t nn = 0; nn < num_subarrays; nn++)
+	{
+		if (Subarrays[nn]->tiltEqualLatitude)
+			Subarrays[nn]->tiltDegrees = Irradiance->weatherHeader.lat;
+		if (Subarrays[nn]->trackMode == irrad::SINGLE_AXIS && Subarrays[nn]->tiltDegrees > 0)
+			log(util::format("A non-zero tilt was assigned for a single-axis tracking system in Subarray %d. This is a very uncommon configuration.", nn+1), SSC_WARNING);
+	}
+
 	double annual_snow_loss = 0;
-	
+
 	// SELF-SHADING MODULE INFORMATION
 	double width = sqrt((ref_area_m2 / aspect_ratio));
 	for (size_t nn = 0; nn < num_subarrays; nn++)
@@ -1013,17 +1008,9 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	if (!haf.setup())
 		throw exec_error("pvsamv1", "failed to setup adjustment factors: " + haf.error());
 
-	// setup battery model
-	bool en_batt = as_boolean("en_batt");
-	battstor batt(*this, en_batt, nrec, ts_hour);
-	batt.setSharedInverter(sharedInverter);
-	int batt_topology = (en_batt == true ? batt.batt_vars->batt_topology : 0);
+    // clipping losses for battery dispatch
 	std::vector<ssc_number_t> p_invcliploss_full;
 	p_invcliploss_full.reserve(nlifetime);
-
-	// Multiple MPPT inverters not enabled with DC-connected batteries
-	if (PVSystem->Inverter->nMpptInputs > 1 && en_batt && batt_topology == ChargeController::DC_CONNECTED)
-		throw exec_error("pvsamv1", "A DC-connected battery cannot be modeled with multiple MPPT inverters at this time.");
 
 	// Multiple MPPT inverters not enabled with PVyield inverter model
 	if (PVSystem->Inverter->nMpptInputs > 1 && PVSystem->Inverter->inverterType == INVERTER_PVYIELD)
@@ -1040,10 +1027,12 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 		p_pv_dc_forecast = as_vector_ssc_number_t("batt_pv_dc_forecast");
 	}
 
+
 	// electric load - lifetime load data?
 	double cur_load = 0.0;
 	size_t nload = 0;
 	std::vector<ssc_number_t> p_load_in;
+	std::vector<ssc_number_t> p_crit_load_in;
 	if ( is_assigned( "load" ) )
 	{
 		p_load_in = as_vector_ssc_number_t("load");
@@ -1051,6 +1040,38 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 		if ( nload != nrec && nload != 8760 )
 			throw exec_error("pvsamv1", "electric load profile must have same number of values as weather file, or 8760");
 	}
+	if (is_assigned("crit_load"))
+       {
+        p_crit_load_in = as_vector_ssc_number_t("crit_load");
+        nload = p_crit_load_in.size();
+        if (nload != nrec && nload != 8760 )
+            throw exec_error("pvsamv1", "critical electric load profile must have same number of values as weather file, or 8760");
+    }
+
+    // resilience metrics for battery
+    std::unique_ptr<resilience_runner> resilience = nullptr;
+
+    // setup battery model
+    std::shared_ptr<battstor> batt = nullptr;
+    bool en_batt = as_boolean("en_batt");
+    int batt_topology = 0;
+    if (en_batt){
+        batt = std::make_shared<battstor>(*m_vartab, en_batt, nrec, ts_hour);
+        batt->setSharedInverter(sharedInverter);
+        batt_topology = batt->batt_vars->batt_topology;
+
+        // Multiple MPPT inverters not enabled with DC-connected batteries
+        if (PVSystem->Inverter->nMpptInputs > 1 && en_batt && batt_topology == ChargeController::DC_CONNECTED)
+            throw exec_error("pvsamv1", "A DC-connected battery cannot be modeled with multiple MPPT inverters at this time.");
+
+        if (!p_crit_load_in.empty() && *std::max_element(p_crit_load_in.begin(), p_crit_load_in.end()) > 0){
+            resilience = std::unique_ptr<resilience_runner>(new resilience_runner(batt));
+            auto logs = resilience->get_logs();
+            if (!logs.empty()){
+                log(logs[0], SSC_WARNING);
+            }
+        }
+    }
 
 	// for reporting status updates
 	float percent_baseline = 0.;
@@ -1072,17 +1093,17 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	*********************************************************************************************** */
 	std::vector<double> dcPowerNetPerMppt_kW; //Vector of Net DC power in kW for each MPPT input on the system for THIS TIMESTEP ONLY
 	std::vector<double> dcPowerNetPerSubarray; //Net DC power in W for each subarray for THIS TIMESTEP ONLY
-	std::vector<double> dcVoltagePerMppt; //Voltage in V at each MPPT input on the system for THIS TIMESTEP ONLY	
+	std::vector<double> dcVoltagePerMppt; //Voltage in V at each MPPT input on the system for THIS TIMESTEP ONLY
 	std::vector<std::vector<double>> dcStringVoltage; // Voltage of string for each subarray
 	double dcPowerNetTotalSystem = 0; //Net DC power in W for the entire system (sum of all subarrays)
 
-	for (int mpptInput = 0; mpptInput < PVSystem->Inverter->nMpptInputs; mpptInput++)
+	for (size_t mpptInput = 0; mpptInput < PVSystem->Inverter->nMpptInputs; mpptInput++)
 	{
 		dcPowerNetPerMppt_kW.push_back(0);
 		dcVoltagePerMppt.push_back(0);
-		PVSystem->p_dcPowerNetPerMppt[mpptInput][idx] = 0;		
+		PVSystem->p_dcPowerNetPerMppt[mpptInput][idx] = 0;
 	}
-	for (int nn = 0; nn < PVSystem->numberOfSubarrays; nn++) {
+	for (size_t nn = 0; nn < PVSystem->numberOfSubarrays; nn++) {
 		dcPowerNetPerSubarray.push_back(0);
 		std::vector<double> tmp;
 		dcStringVoltage.push_back(tmp);
@@ -1091,7 +1112,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	{
 		for (hour = 0; hour < 8760; hour++)
 		{
-			// report progress updates to the caller	
+			// report progress updates to the caller
 			ireport++;
 			if (ireport - ireplast > irepfreq)
 			{
@@ -1110,7 +1131,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 			for (size_t jj = 0; jj < step_per_hour; jj++)
 			{
 				// Reset dcPower calculation for new timestep
-				dcPowerNetTotalSystem = 0; 
+				dcPowerNetTotalSystem = 0;
 
 				// electric load is subhourly
 				// if no load profile supplied, load = 0
@@ -1142,11 +1163,11 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 					}
 				}
-				
+
 				double solazi = 0, solzen = 0, solalt = 0;
 				int sunup = 0;
 
-				// accumulators for radiation power (W) over this 
+				// accumulators for radiation power (W) over this
 				// timestep from each subarray
 				double ts_accum_poa_front_nom = 0.0;
 				double ts_accum_poa_front_beam_nom = 0.0;
@@ -1163,7 +1184,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				double alb;
 				alb = 0;
 
-				for (int nn = 0; nn < num_subarrays; nn++)
+				for (size_t nn = 0; nn < num_subarrays; nn++)
 				{
 					ipoa_rear.push_back(0);
 					ipoa_rear_after_losses.push_back(0);
@@ -1176,11 +1197,11 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 					irrad irr(Irradiance->weatherRecord, Irradiance->weatherHeader,
 						Irradiance->skyModel, Irradiance->radiationMode, Subarrays[nn]->trackMode,
-						Irradiance->useWeatherFileAlbedo, Irradiance->instantaneous, Subarrays[nn]->backtrackingEnabled,
-						Irradiance->dtHour, Subarrays[nn]->tiltDegrees, Subarrays[nn]->azimuthDegrees, Subarrays[nn]->trackerRotationLimitDegrees, Subarrays[nn]->groundCoverageRatio,
+						Irradiance->useWeatherFileAlbedo, Irradiance->instantaneous, Subarrays[nn]->backtrackingEnabled, false,
+						Irradiance->dtHour, Subarrays[nn]->tiltDegrees, Subarrays[nn]->azimuthDegrees, Subarrays[nn]->trackerRotationLimitDegrees, 0.0, Subarrays[nn]->groundCoverageRatio,
 						Subarrays[nn]->monthlyTiltDegrees, Irradiance->userSpecifiedMonthlyAlbedo,
 						Subarrays[nn]->poa.poaAll.get());
-											
+
 					int code = irr.calc();
 
 					if (code < 0) //jmf updated 11/30/18 so that negative numbers are errors, positive numbers are warnings, 0 is everything correct. implemented in patch for POA model only, will be added to develop for other irrad models as well
@@ -1197,7 +1218,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					else if (code == 42)
 						log(util::format("SAM calculated negative global horizontal irradiance in the POA decomposition algorithm at time [y:%d m:%d d:%d h:%d], set to zero.",
 							wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
-									   					 
+
 					// p_irrad_calc is only weather file records long...
 					if (iyear == 0)
 					{
@@ -1213,7 +1234,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					double ibeam, iskydiff, ignddiff;
 					double aoi, stilt, sazi, rot, btd;
 
-					// Ensure that the usePOAFromWF flag is false unless a reference cell has been used. 
+					// Ensure that the usePOAFromWF flag is false unless a reference cell has been used.
 					//  This will later get forced to false if any shading has been applied (in any scenario)
 					//  also this will also be forced to false if using the cec mcsp thermal model OR if using the spe module model with a diffuse util. factor < 1.0
 					Subarrays[nn]->poa.usePOAFromWF = false;
@@ -1338,7 +1359,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						double shadedb_str_vmp_stc = Subarrays[nn]->nModulesPerString * Subarrays[nn]->Module->voltageMaxPower;
 						double shadedb_mppt_lo = PVSystem->Inverter->mpptLowVoltage;
 						double shadedb_mppt_hi = PVSystem->Inverter->mpptHiVoltage;
-						 
+
 						// shading database if necessary
 						if (!Subarrays[nn]->shadeCalculator.fbeam_shade_db(shadeDatabase, hour, solalt, solazi, jj, step_per_hour, shadedb_gpoa, shadedb_dpoa, tcell, Subarrays[nn]->nModulesPerString, shadedb_str_vmp_stc, shadedb_mppt_lo, shadedb_mppt_hi))
 						{
@@ -1358,7 +1379,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 #endif
 							// fraction shaded for comparison
 							PVSystem->p_shadeDBShadeFraction[nn][idx] = (ssc_number_t)(Subarrays[nn]->shadeCalculator.dc_shade_factor());
-						} 
+						}
 					}
 					else
 					{
@@ -1368,7 +1389,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						}
 					}
 
-					// apply hourly shading factors to beam (if none enabled, factors are 1.0) 
+					// apply hourly shading factors to beam (if none enabled, factors are 1.0)
 					// shj 3/21/16 - update to handle negative shading loss
 					if (Subarrays[nn]->shadeCalculator.beam_shade_factor() != 1.0){
 						//							if (sa[nn].shad.beam_shade_factor() < 1.0){
@@ -1403,7 +1424,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 					//self-shading calculations
 					if (((Subarrays[nn]->trackMode == 0 || Subarrays[nn]->trackMode == 4) && (Subarrays[nn]->shadeMode == 1 || Subarrays[nn]->shadeMode == 2)) //fixed tilt or timeseries tilt, self-shading (linear or non-linear) OR
-						|| (Subarrays[nn]->trackMode == 1 && (Subarrays[nn]->shadeMode == 1 || Subarrays[nn]->shadeMode == 2) && Subarrays[nn]->backtrackingEnabled == 0)) //one-axis tracking, self-shading, not backtracking
+						|| (Subarrays[nn]->trackMode == 1 && (Subarrays[nn]->shadeMode == 1 || Subarrays[nn]->shadeMode == 2))) //one-axis tracking (both backtracking and true tracking), self-shading (linear or non-linear)
 					{
 
 						if (radmode == irrad::POA_R || radmode == irrad::POA_P){
@@ -1417,46 +1438,78 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						bool linear = (Subarrays[nn]->shadeMode == 2); //0 for full self-shading, 1 for linear self-shading
 
 						//geometric fraction of the array that is shaded for one-axis trackers.
-						//USES A DIFFERENT FUNCTION THAN THE SELF-SHADING BECAUSE SS IS MEANT FOR FIXED ONLY. shadeFraction1x IS FOR ONE-AXIS TRACKERS ONLY.
+						//USES A DIFFERENT FUNCTION THAN THE SELF-SHADING BECAUSE SS IS MEANT FOR FIXED ONLY. shadeFraction1x IS FOR TRUE-TRACKING ONE-AXIS TRACKERS ONLY.
 						//used in the non-linear self-shading calculator for one-axis tracking only
-						double shad1xf = 0;
-						if (trackbool)
-							shad1xf = shadeFraction1x(solazi, solzen, Subarrays[nn]->tiltDegrees, Subarrays[nn]->azimuthDegrees, Subarrays[nn]->groundCoverageRatio, rot);
+						double shad1xf = 0.0;
+						if (trackbool && (Subarrays[nn]->backtrackingEnabled == false))
+						    shad1xf = shadeFraction1x(solazi, solzen, Subarrays[nn]->tiltDegrees, Subarrays[nn]->azimuthDegrees, Subarrays[nn]->groundCoverageRatio, rot);
 
 						//execute self-shading calculations
 						ssc_number_t beam_to_use; //some self-shading calculations require DNI, NOT ibeam (beam in POA). Need to know whether to use DNI from wf or calculated, depending on radmode
+						ssc_number_t dhi_to_use; //some self-shading calculations require DHI, NOT iskydiff (sky diff in POA). Need to know whether to use DHI from wf or calculated, depending on radmode
 						if (radmode == irrad::DN_DF || radmode == irrad::DN_GH) beam_to_use = (ssc_number_t)wf.dn;
 						else beam_to_use = Irradiance->p_IrradianceCalculated[2][hour * step_per_hour]; // top of hour in first year
+						if (radmode == irrad::DN_DF || radmode == irrad::GH_DF) dhi_to_use = (ssc_number_t)wf.df;
+						else dhi_to_use = Irradiance->p_IrradianceCalculated[1][hour * step_per_hour]; // top of hour in first year
 
-						if (linear && trackbool) //one-axis linear
+						if (ss_exec(Subarrays[nn]->selfShadingInputs, stilt, sazi, solzen, solazi, beam_to_use, dhi_to_use, ibeam, iskydiff, ignddiff, alb, trackbool, linear, shad1xf, Subarrays[nn]->selfShadingOutputs))
 						{
-							ibeam *= (1 - shad1xf); //derate beam irradiance linearly by the geometric shading fraction calculated above per Chris Deline 2/10/16
-							beam_shading_factor *= (1 - shad1xf);
-							if (iyear == 0)
-							{
-								PVSystem->p_derateSelfShading[nn][idx] = (ssc_number_t)1;
-								PVSystem->p_derateLinear[nn][idx] = (ssc_number_t)(1 - shad1xf);
-								PVSystem->p_derateSelfShadingDiffuse[nn][idx] = (ssc_number_t)1; //no diffuse derate for linear shading
-								PVSystem->p_derateSelfShadingReflected[nn][idx] = (ssc_number_t)1; //no reflected derate for linear shading
-							}
-						}
 
-						else if (ss_exec(Subarrays[nn]->selfShadingInputs, stilt, sazi, solzen, solazi, beam_to_use, ibeam, (iskydiff + ignddiff), alb, trackbool, linear, shad1xf, Subarrays[nn]->selfShadingOutputs))
-						{
-							if (linear) //fixed tilt linear
+						    if (linear && trackbool) //one-axis linear
+						    {
+                                ibeam *= (1 - shad1xf); //derate beam irradiance linearly by the geometric shading fraction calculated above per Chris Deline 2/10/16
+                                beam_shading_factor *= (1 - shad1xf);
+                                // Sky diffuse and ground-reflected diffuse are derated according to C. Deline's algorithm
+                                iskydiff *= Subarrays[nn]->selfShadingOutputs.m_diffuse_derate;
+                                ignddiff *= Subarrays[nn]->selfShadingOutputs.m_reflected_derate;
+
+                                if (iyear == 0)
+                                {
+                                    PVSystem->p_derateSelfShading[nn][idx] = (ssc_number_t)1;
+                                    PVSystem->p_derateLinear[nn][idx] = (ssc_number_t)(1 - shad1xf);
+                                    PVSystem->p_derateSelfShadingDiffuse[nn][idx] = (ssc_number_t)Subarrays[nn]->selfShadingOutputs.m_diffuse_derate;
+                                    PVSystem->p_derateSelfShadingReflected[nn][idx] = (ssc_number_t)Subarrays[nn]->selfShadingOutputs.m_reflected_derate;
+                                }
+                            }
+
+						    else if (linear) //fixed tilt linear
 							{
 								ibeam *= (1 - Subarrays[nn]->selfShadingOutputs.m_shade_frac_fixed);
 								beam_shading_factor *= (1 - Subarrays[nn]->selfShadingOutputs.m_shade_frac_fixed);
+								iskydiff *= Subarrays[nn]->selfShadingOutputs.m_diffuse_derate;
+                                ignddiff *= Subarrays[nn]->selfShadingOutputs.m_reflected_derate;
+
 								if (iyear == 0)
 								{
 									PVSystem->p_derateSelfShading[nn][idx] = (ssc_number_t)1;
 									PVSystem->p_derateLinear[nn][idx] = (ssc_number_t)(1 - Subarrays[nn]->selfShadingOutputs.m_shade_frac_fixed);
-									PVSystem->p_derateSelfShadingDiffuse[nn][idx] = (ssc_number_t)1; //no diffuse derate for linear shading
-									PVSystem->p_derateSelfShadingReflected[nn][idx] = (ssc_number_t)1; //no reflected derate for linear shading
+									PVSystem->p_derateSelfShadingDiffuse[nn][idx] = (ssc_number_t)Subarrays[nn]->selfShadingOutputs.m_diffuse_derate;
+								    PVSystem->p_derateSelfShadingReflected[nn][idx] = (ssc_number_t)Subarrays[nn]->selfShadingOutputs.m_reflected_derate;
 								}
 							}
-							else //non-linear: fixed tilt AND one-axis
+
+							else if (trackbool && (Subarrays[nn]->backtrackingEnabled == true)) //non-linear backtracking one-axis
 							{
+							    iskydiff *= Subarrays[nn]->selfShadingOutputs.m_diffuse_derate;
+								ignddiff *= Subarrays[nn]->selfShadingOutputs.m_reflected_derate;
+
+								if (iyear == 0)
+								{
+									PVSystem->p_derateSelfShading[nn][idx] = (ssc_number_t)1;
+                                    PVSystem->p_derateLinear[nn][idx] = (ssc_number_t)1;
+									PVSystem->p_derateSelfShadingDiffuse[nn][idx] = (ssc_number_t)Subarrays[nn]->selfShadingOutputs.m_diffuse_derate;
+									PVSystem->p_derateSelfShadingReflected[nn][idx] = (ssc_number_t)Subarrays[nn]->selfShadingOutputs.m_reflected_derate;
+								}
+							}
+
+							else //non-linear: fixed tilt AND one-axis true-tracking
+							{
+                                // Beam is not derated- all beam derate effects (linear and non-linear) are taken into account in the nonlinear_dc_shading_derate
+								Subarrays[nn]->poa.nonlinearDCShadingDerate = Subarrays[nn]->selfShadingOutputs.m_dc_derate;
+
+								iskydiff *= Subarrays[nn]->selfShadingOutputs.m_diffuse_derate;
+								ignddiff *= Subarrays[nn]->selfShadingOutputs.m_reflected_derate;
+
 								if (iyear == 0)
 								{
 									PVSystem->p_derateSelfShadingDiffuse[nn][idx] = (ssc_number_t)Subarrays[nn]->selfShadingOutputs.m_diffuse_derate;
@@ -1464,12 +1517,6 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 									PVSystem->p_derateSelfShading[nn][idx] = (ssc_number_t)Subarrays[nn]->selfShadingOutputs.m_dc_derate;
 									PVSystem->p_derateLinear[nn][idx] = (ssc_number_t)1;
 								}
-
-								// Sky diffuse and ground-reflected diffuse are derated according to C. Deline's algorithm
-								iskydiff *= Subarrays[nn]->selfShadingOutputs.m_diffuse_derate;
-								ignddiff *= Subarrays[nn]->selfShadingOutputs.m_reflected_derate;
-								// Beam is not derated- all beam derate effects (linear and non-linear) are taken into account in the nonlinear_dc_shading_derate
-								Subarrays[nn]->poa.nonlinearDCShadingDerate = Subarrays[nn]->selfShadingOutputs.m_dc_derate;
 							}
 						}
 						else
@@ -1501,15 +1548,16 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					// Calculate total front irradiation after soiling added to shading
 					ipoa_front[nn] = ibeam + iskydiff + ignddiff;
 					ts_accum_poa_front_shaded_soiled += ipoa_front[nn] * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
-					
+
 					// Calculate rear-side irradiance for bifacial modules
 					if (Subarrays[0]->Module->isBifacial)
 					{
+						bifaciality = Subarrays[0]->Module->bifaciality;
 						double slopeLength = Subarrays[nn]->selfShadingInputs.length * Subarrays[nn]->selfShadingInputs.nmody;
 						if (Subarrays[nn]->selfShadingInputs.mod_orient == 1) {
 							slopeLength = Subarrays[nn]->selfShadingInputs.width * Subarrays[nn]->selfShadingInputs.nmody;
 						}
-						irr.calc_rear_side(Subarrays[0]->Module->bifacialTransmissionFactor, Subarrays[0]->Module->bifaciality, Subarrays[0]->Module->groundClearanceHeight, slopeLength);
+						irr.calc_rear_side(Subarrays[0]->Module->bifacialTransmissionFactor, Subarrays[0]->Module->groundClearanceHeight, slopeLength);
 						ipoa_rear[nn] = irr.get_poa_rear();
 						ipoa_rear_after_losses[nn] = ipoa_rear[nn] * (1 - Subarrays[nn]->rearIrradianceLossPercent);
 					}
@@ -1517,9 +1565,9 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					ts_accum_poa_rear += ipoa_rear[nn] * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
 					ts_accum_poa_rear_after_losses = ts_accum_poa_rear * (1 - Subarrays[nn]->rearIrradianceLossPercent);
 
-					if (iyear == 0) 
+					if (iyear == 0)
 					{
-						// save sub-array level outputs			
+						// save sub-array level outputs
 						PVSystem->p_poaShadedFront[nn][idx] = (ssc_number_t)poashad;
 						PVSystem->p_poaShadedSoiledFront[nn][idx] = (ssc_number_t)ipoa_front[nn];
 						PVSystem->p_poaBeamFront[nn][idx] = (ssc_number_t)ibeam;
@@ -1542,7 +1590,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					Subarrays[nn]->poa.poaDiffuseFront = iskydiff;
 					Subarrays[nn]->poa.poaGroundFront = ignddiff;
 					Subarrays[nn]->poa.poaRear = ipoa_rear_after_losses[nn];
-					Subarrays[nn]->poa.poaTotal = (radmode == irrad::POA_R) ? ipoa[nn] :(ipoa_front[nn] + ipoa_rear_after_losses[nn]);
+					Subarrays[nn]->poa.poaTotal = (radmode == irrad::POA_R) ? ipoa[nn] :(ipoa_front[nn] + ipoa_rear_after_losses[nn] * bifaciality);
 					Subarrays[nn]->poa.angleOfIncidenceDegrees = aoi;
 					Subarrays[nn]->poa.sunUp = sunup;
 					Subarrays[nn]->poa.surfaceTiltDegrees = stilt;
@@ -1550,12 +1598,12 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				}
 
 				std::vector<double> mpptVoltageClipping; //a vector to store power that is clipped due to the inverter MPPT low & high voltage limits for each subarray
-				for (int nn = 0; nn < PVSystem->numberOfSubarrays; nn++) {
+				for (size_t nn = 0; nn < PVSystem->numberOfSubarrays; nn++) {
 					mpptVoltageClipping.push_back(0.0);
 				}
 
 				//Calculate power of each MPPT input
-				for (int mpptInput = 0; mpptInput < PVSystem->Inverter->nMpptInputs; mpptInput++) //remember that actual named mppt inputs are 1-indexed, and these are 0-indexed
+				for (size_t mpptInput = 0; mpptInput < PVSystem->Inverter->nMpptInputs; mpptInput++) //remember that actual named mppt inputs are 1-indexed, and these are 0-indexed
 				{
 					int nSubarraysOnMpptInput = (int)(PVSystem->mpptMapping[mpptInput].size()); //number of subarrays attached to this MPPT input
 					std::vector<int> SubarraysOnMpptInput = PVSystem->mpptMapping[mpptInput]; //vector of which subarrays are attached to this MPPT input
@@ -1568,7 +1616,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 					//mismatch calculations assume that the inverter MPPT operates all strings on that MPPT input at the same voltage.
 					//this algorithm sweeps across a range of string voltages, calculating total power for all strings on this MPPT input at each voltage.
-					//it finds the maximum total power of all string voltages swept, then uses that in subsequent power calculations for each subarray. 
+					//it finds the maximum total power of all string voltages swept, then uses that in subsequent power calculations for each subarray.
 					if (PVSystem->enableMismatchVoltageCalc)
 					{
 						double vmax = PVSystem->Inverter->mpptHiVoltage; //the upper MPPT range of the inverter is the high end for string voltages that it will control
@@ -1578,7 +1626,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						// sweep voltage, calculating current for each subarray, add all subarray currents together at each voltage
 						for (int i = 0; i < NP; i++)
 						{
-							double stringV = vmin + (vmax - vmin)*i / ((double)NP); //voltage of a string at this point in the voltage sweep							
+							double stringV = vmin + (vmax - vmin)*i / ((double)NP); //voltage of a string at this point in the voltage sweep
 
 							//if the voltage is ok, continue to calculate total power on this MPPT input at this voltage
 							double P = 0; //temporary variable to store the total power on this MPPT input at this voltage
@@ -1588,7 +1636,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 								double V = stringV / (double)Subarrays[nn]->nModulesPerString; //voltage of an individual module on a string on this subarray
 
 								//initalize pvinput and pvoutput structures for the model
-								pvinput_t in(Subarrays[nn]->poa.poaBeamFront, Subarrays[nn]->poa.poaDiffuseFront, Subarrays[nn]->poa.poaGroundFront, Subarrays[nn]->poa.poaRear, Subarrays[nn]->poa.poaTotal,
+								pvinput_t in(Subarrays[nn]->poa.poaBeamFront, Subarrays[nn]->poa.poaDiffuseFront, Subarrays[nn]->poa.poaGroundFront, Subarrays[nn]->poa.poaRear * bifaciality, Subarrays[nn]->poa.poaTotal,
 									wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
 									solzen, Subarrays[nn]->poa.angleOfIncidenceDegrees, hdr.elev,
 									Subarrays[nn]->poa.surfaceTiltDegrees, Subarrays[nn]->poa.surfaceAzimuthDegrees,
@@ -1623,11 +1671,13 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					std::vector<pvinput_t> in{ num_subarrays }; //create arrays for the pv input and output structures because we have to deal with them in multiple loops to check for MPPT clipping
 					std::vector<pvoutput_t> out{ num_subarrays };
 					double tcell = wf.tdry;
+					double tcellSS = wf.tdry;
+
 					for (int nSubarray = 0; nSubarray < nSubarraysOnMpptInput; nSubarray++) //sweep across all subarrays connected to this MPPT input
 					{
 						int nn = SubarraysOnMpptInput[nSubarray]; //get the index of the subarray we're checking here
 						//initalize pvinput and pvoutput structures for the model
-						pvinput_t in_temp(Subarrays[nn]->poa.poaBeamFront, Subarrays[nn]->poa.poaDiffuseFront, Subarrays[nn]->poa.poaGroundFront, Subarrays[nn]->poa.poaRear, Subarrays[nn]->poa.poaTotal,
+						pvinput_t in_temp(Subarrays[nn]->poa.poaBeamFront, Subarrays[nn]->poa.poaDiffuseFront, Subarrays[nn]->poa.poaGroundFront, Subarrays[nn]->poa.poaRear * bifaciality, Subarrays[nn]->poa.poaTotal,
 							wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
 							solzen, Subarrays[nn]->poa.angleOfIncidenceDegrees, hdr.elev,
 							Subarrays[nn]->poa.surfaceTiltDegrees, Subarrays[nn]->poa.surfaceAzimuthDegrees,
@@ -1635,24 +1685,79 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 							radmode, Subarrays[nn]->poa.usePOAFromWF);
 						pvoutput_t out_temp(0, 0, 0, 0, 0, 0, 0, 0);
 						in[nn] = in_temp;
-						out[nn] = out_temp;					
-						
+						out[nn] = out_temp;
+
 						if (Subarrays[nn]->poa.sunUp)
 						{
-							//module voltage value to be passed into module power function. 
-							//if -1 is passed in, power will be calculated at max power point. 
+							//module voltage value to be passed into module power function.
+							//if -1 is passed in, power will be calculated at max power point.
 							//if a voltage value is passed in, power will be calculated at the specified voltage for all single-diode module models
 							double module_voltage = -1;
 							if (stringVoltage != -1) module_voltage = stringVoltage / (double)Subarrays[nn]->nModulesPerString;
 							// calculate cell temperature using selected temperature model
 							// calculate module power output using conversion model previously specified
 							(*Subarrays[nn]->Module->cellTempModel)(in[nn], *Subarrays[nn]->Module->moduleModel, module_voltage, tcell);
+
+							// begin Transient Thermal model
+							// steady state cell temperature - confirm modification from module model to cell temp
+							tcellSS = tcell;
+							// calculate weighted moving average cell temperature base on "Transient Weighted Moving Average Model of Photovoltaic Module Back-Surface Temperature" Prilliman, et. al.
+							// wind speed corrected to 2m, assumed measured at 10m, equation 9 in reference
+							// ssc_number_t wma_z0 = 0.25;
+							// ssc_number_t wma_ws = wf.wspd * std::log(2.0/wma_z0) / std::log(10.0/wma_z0);
+							// precalculate to save execution time
+							ssc_number_t wma_ws = wf.wspd * 0.563705;
+							// module unit mass - Figure 2 in reference and size and weight from https://news.energysage.com/average-solar-panel-size-weight/
+							ssc_number_t wma_mu = 11.09186; // kg/m2
+							// weight function
+							ssc_number_t wma_a0 = 0.0046; // Table II in reference
+							ssc_number_t wma_a1 = 0.00046; // Table II in reference
+							ssc_number_t wma_a2 = -0.00023; // Table II in reference
+							ssc_number_t wma_a3 = -1.6e-5; // Table II in reference
+							ssc_number_t wma_P = wma_a0 + wma_a1 * wma_ws + wma_a2 * wma_mu + wma_a3 * wma_ws * wma_mu;
+							// 20 minute window of weighting values does not include current timestep SS value per refernce
+							int wma_window_minutes = 20;
+							// determine number of past timesteps to average
+							int wma_timestep_minutes = 60 / (int)step_per_hour;
+							if (wma_timestep_minutes <= 0)
+								throw exec_error("pvsamv1", "Transient thermal timestep minutes <= 0");
+
+							// if timestep minute >= window minute use steady state - reference...
+							if (wma_timestep_minutes >= wma_window_minutes)
+								tcell = tcellSS;  // redundant but for code clarification
+							else
+							{
+								int wma_num_prior_timesteps = (wma_window_minutes / wma_timestep_minutes);
+								if (wma_num_prior_timesteps <= 0)
+									throw exec_error("pvsamv1", "Transient thermal prior timesteps <= 0");
+								ssc_number_t wma_tcellMA_numerator = 0.0;
+								ssc_number_t wma_tcellMA_denominator = 0.0;
+								for (size_t wma_i = 1; wma_i <= (size_t)wma_num_prior_timesteps; wma_i++)
+								{
+									size_t wma_ti = 60 * wma_timestep_minutes * (wma_i); //number of seconds in the past
+									ssc_number_t wma_weight = std::exp(0.0 - wma_P * (ssc_number_t)wma_ti);
+									size_t wma_ts_idx = (idx - iyear * Irradiance->numberOfWeatherFileRecords );
+									// limited to first year only
+
+									if (wma_ts_idx > wma_i)
+										wma_ts_idx -= wma_i;
+									else
+										wma_ts_idx = 0;
+									wma_tcellMA_numerator += wma_weight * PVSystem->p_temperatureCellSS[nn][wma_ts_idx];
+									wma_tcellMA_denominator += wma_weight;
+								}
+								if (wma_tcellMA_denominator <= 0)
+									throw exec_error("pvsamv1", "Transient thermal weighting factor sum <= 0");
+								tcell =  wma_tcellMA_numerator / wma_tcellMA_denominator;
+							}
+							// end Transient Thermal model
+
 							(*Subarrays[nn]->Module->moduleModel)(in[nn], tcell, module_voltage, out[nn]);
 						}
 					}
 
 					//assign input voltage at this MPPT input
-					//if mismatch was enabled, the voltage already was clipped to the inverter MPPT range as needed and  
+					//if mismatch was enabled, the voltage already was clipped to the inverter MPPT range as needed and
 					//the string voltage is the same for all subarrays, so the voltage at the MPPT input is the same as the string voltage of any subarray
 					if (PVSystem->enableMismatchVoltageCalc) {
 						PVSystem->p_mpptVoltage[mpptInput][idx] = (ssc_number_t)out[SubarraysOnMpptInput[0]].Voltage * Subarrays[SubarraysOnMpptInput[0]]->nModulesPerString;
@@ -1671,13 +1776,12 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 							avgVoltage += out[nn].Voltage * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
 						}
 						avgVoltage /= nStrings;
-						PVSystem->p_mpptVoltage[mpptInput][idx] = (ssc_number_t)avgVoltage;
 
 						//check the weighted average string voltage against the inverter MPPT bounds
 						bool recalculatePower = false;
 						if (PVSystem->clipMpptWindow)
 						{
-							if (avgVoltage < PVSystem->Inverter->mpptLowVoltage)
+							if (avgVoltage < PVSystem->Inverter->mpptLowVoltage && sunup > 0) //check for sunup to avoid setting MPPT voltage at night
 							{
 								avgVoltage = PVSystem->Inverter->mpptLowVoltage;
 								recalculatePower = true;
@@ -1687,7 +1791,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 								avgVoltage = PVSystem->Inverter->mpptHiVoltage;
 								recalculatePower = true;
 							}
-							
+
 							//if MPPT clipping occurs, we need to recalculate the module power for each subarray
 							if (recalculatePower)
 							{
@@ -1706,9 +1810,12 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 								}
 							}
 						}
+
+						//assign final voltage at the MPPT input now that it has been checked against MPPT bounds
+						PVSystem->p_mpptVoltage[mpptInput][idx] = (ssc_number_t)avgVoltage;
 					}
 
-					//now that we have the correct power for all subarrays, subject to inverter MPPT clipping, save outputs 
+					//now that we have the correct power for all subarrays, subject to inverter MPPT clipping, save outputs
 					for (int nSubarray = 0; nSubarray < nSubarraysOnMpptInput; nSubarray++) //sweep across all subarrays connected to this MPPT input
 					{
 						int nn = SubarraysOnMpptInput[nSubarray]; //get the index of the subarray we're checking here
@@ -1733,22 +1840,23 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						Subarrays[nn]->Module->dcEfficiency = out[nn].Efficiency * 100;
 						Subarrays[nn]->Module->dcVoltage = out[nn].Voltage;
 						Subarrays[nn]->Module->temperatureCellCelcius = out[nn].CellTemp;
+						Subarrays[nn]->Module->temperatureCellCelciusSS = tcellSS;
 						Subarrays[nn]->Module->currentShortCircuit = out[nn].Isc_oper;
 						Subarrays[nn]->Module->voltageOpenCircuit = out[nn].Voc_oper;
 						Subarrays[nn]->Module->angleOfIncidenceModifier = out[nn].AOIModifier;
-						
+
 						// Lifetime dcStringVoltage
 						dcStringVoltage[nn].push_back(Subarrays[nn]->Module->dcVoltage * Subarrays[nn]->nModulesPerString);
 
-						// Output front-side irradiance after the cover- needs to be after the module model for now because cover effects are part of the module model
+						// Output front-side irradiance after the reflection (IAM) loss - needs to be after the module model for now because reflection effects are part of the module model
 						if (iyear == 0)
 						{
 							ipoa_front[nn] *= out[nn].AOIModifier;
 							PVSystem->p_poaFront[nn][idx] = (radmode == irrad::POA_R) ? (ssc_number_t)ipoa[nn] : (ssc_number_t)(ipoa_front[nn]);
-							PVSystem->p_poaTotal[nn][idx] = (radmode == irrad::POA_R) ? (ssc_number_t)ipoa[nn] : (ssc_number_t)(ipoa_front[nn] + ipoa_rear[nn]);
+							PVSystem->p_poaTotal[nn][idx] = (radmode == irrad::POA_R) ? (ssc_number_t)ipoa[nn] : (ssc_number_t)(ipoa_front[nn] + ipoa_rear_after_losses[nn] * bifaciality);
 
 							ts_accum_poa_front_total += ipoa_front[nn] * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
-							ts_accum_poa_total_eff += ((radmode == irrad::POA_R) ? ipoa[nn] : (ipoa_front[nn] + ipoa_rear_after_losses[nn])) * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
+							ts_accum_poa_total_eff += ((radmode == irrad::POA_R) ? ipoa[nn] : (ipoa_front[nn] + ipoa_rear_after_losses[nn] * bifaciality)) * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
 
 							//assign final string voltage output
 							PVSystem->p_dcStringVoltage[nn][idx] = (ssc_number_t)Subarrays[nn]->Module->dcVoltage * Subarrays[nn]->nModulesPerString;
@@ -1758,7 +1866,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 				// sum up all DC power from the whole array
 				PVSystem->p_systemDCPower[idx] = 0;
-				for (int nn = 0; nn < num_subarrays; nn++)
+				for (size_t nn = 0; nn < num_subarrays; nn++)
 				{
 					// DC derates for snow and shading must be applied first
 					// these can't be applied before the power calculation because they are POWER derates
@@ -1771,12 +1879,16 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					// shading loss applied to beam if not from shading database
 					Subarrays[nn]->Module->dcPowerW *= Subarrays[nn]->shadeCalculator.dc_shade_factor();
 
+					// scale power and mppt voltage clipping to subarray dimensions
+					Subarrays[nn]->dcPowerSubarray = Subarrays[nn]->Module->dcPowerW * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
+					if (iyear == 0) mpptVoltageClipping[nn] *= Subarrays[nn]->nModulesPerString* Subarrays[nn]->nStrings;
+
 					// Calculate and apply snow coverage losses if activated
 					if (PVSystem->enableSnowModel)
 					{
 						float smLoss = 0.0f;
 
-						if (Subarrays[nn]->snowModel.getLoss((float)(Subarrays[nn]->poa.poaBeamFront + Subarrays[nn]->poa.poaDiffuseFront + Subarrays[nn]->poa.poaGroundFront),
+						if (!Subarrays[nn]->snowModel.getLoss((float)(Subarrays[nn]->poa.poaBeamFront + Subarrays[nn]->poa.poaDiffuseFront + Subarrays[nn]->poa.poaGroundFront),
 							(float)Subarrays[nn]->poa.surfaceTiltDegrees, (float)wf.wspd, (float)wf.tdry, (float)wf.snow, sunup, 1.0f / step_per_hour, smLoss))
 						{
 							if (!Subarrays[nn]->snowModel.good)
@@ -1785,37 +1897,38 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 						if (iyear == 0)
 						{
-							PVSystem->p_snowLoss[nn][idx] = (ssc_number_t)(util::watt_to_kilowatt*Subarrays[nn]->Module->dcPowerW*smLoss);
-							PVSystem->p_snowLossTotal[idx] += (ssc_number_t)(util::watt_to_kilowatt*Subarrays[nn]->Module->dcPowerW*smLoss);
+							PVSystem->p_snowLoss[nn][idx] = (ssc_number_t)(util::watt_to_kilowatt*Subarrays[nn]->dcPowerSubarray*smLoss);
+							PVSystem->p_snowLossTotal[idx] += (ssc_number_t)(util::watt_to_kilowatt*Subarrays[nn]->dcPowerSubarray*smLoss);
 							PVSystem->p_snowCoverage[nn][idx] = (ssc_number_t)(Subarrays[nn]->snowModel.coverage);
-							annual_snow_loss += (ssc_number_t)(util::watt_to_kilowatt*Subarrays[nn]->Module->dcPowerW*smLoss);
+							annual_snow_loss += (ssc_number_t)(util::watt_to_kilowatt*Subarrays[nn]->dcPowerSubarray*smLoss);
+							Subarrays[nn]->dcPowerSubarray *= (1 - smLoss);
 						}
 
 						Subarrays[nn]->Module->dcPowerW *= (1 - smLoss);
 						if (iyear == 0) mpptVoltageClipping[nn] *= (1 - smLoss);
 					}
 
-					// scale power and mppt voltage clipping to subarray dimensions
-					Subarrays[nn]->dcPowerSubarray = Subarrays[nn]->Module->dcPowerW * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
-					if (iyear == 0) mpptVoltageClipping[nn] *= Subarrays[nn]->nModulesPerString* Subarrays[nn]->nStrings;
 
 					//assign gross outputs per subarray at this point
 					if (iyear == 0)
 					{
 						//Gross DC power
 						dc_gross[nn] += Subarrays[nn]->dcPowerSubarray*util::watt_to_kilowatt*ts_hour; //power W to	energy kWh
-						PVSystem->p_dcPowerGross[nn][idx] = (ssc_number_t)dc_gross[nn];
+						//PVSystem->p_dcPowerGross[nn][idx] = (ssc_number_t)dc_gross[nn]; // cumulative gross DC power per subarray
+						PVSystem->p_dcPowerGross[nn][idx] = Subarrays[nn]->dcPowerSubarray*util::watt_to_kilowatt; // time series gross DC power per subarray
 						//Add to annual MPPT clipping
 						annualMpptVoltageClipping += mpptVoltageClipping[nn]*util::watt_to_kilowatt*ts_hour; //power W to energy kWh
 						// save to SSC output arrays
+						PVSystem->p_temperatureCellSS[nn][idx] = (ssc_number_t)Subarrays[nn]->Module->temperatureCellCelciusSS;
+
 						PVSystem->p_temperatureCell[nn][idx] = (ssc_number_t)Subarrays[nn]->Module->temperatureCellCelcius;
-						PVSystem->p_moduleEfficiency[nn][idx] = (ssc_number_t)Subarrays[nn]->Module->dcEfficiency;					
+						PVSystem->p_moduleEfficiency[nn][idx] = (ssc_number_t)Subarrays[nn]->Module->dcEfficiency;
 						PVSystem->p_voltageOpenCircuit[nn][idx] = (ssc_number_t)(Subarrays[nn]->Module->voltageOpenCircuit * (double)Subarrays[nn]->nModulesPerString);
 						PVSystem->p_currentShortCircuit[nn][idx] = (ssc_number_t)Subarrays[nn]->Module->currentShortCircuit;
 						PVSystem->p_angleOfIncidenceModifier[nn][idx] = (ssc_number_t)(Subarrays[nn]->Module->angleOfIncidenceModifier);
 
 					}
-					
+
 					//calculate net power for each subarray
 
 					// apply pre-inverter power derate
@@ -1834,8 +1947,8 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					{
 						//current index of the lifetime daily DC losses is the number of years that have passed (iyear, because it is 0-indexed) * the number of days + the number of complete days that have passed
 						int dc_loss_index = (int)iyear * 365 + (int)floor(hour / 24); //in units of days
-						if (iyear == 0) annual_dc_lifetime_loss += dcPowerNetPerSubarray[nn] * (PVSystem->p_dcLifetimeLosses[dc_loss_index] / 100) * util::watt_to_kilowatt * ts_hour; //this loss is still in percent, only keep track of it for year 0, convert from power W to energy kWh
-						dcPowerNetPerSubarray[nn] *= (100 - PVSystem->p_dcLifetimeLosses[dc_loss_index]) / 100;
+						if (iyear == 0) annual_dc_lifetime_loss += dcPowerNetPerSubarray[nn] * (PVSystem->dcLifetimeLosses[dc_loss_index] / 100) * util::watt_to_kilowatt * ts_hour; //this loss is still in percent, only keep track of it for year 0, convert from power W to energy kWh
+						dcPowerNetPerSubarray[nn] *= (100 - PVSystem->dcLifetimeLosses[dc_loss_index]) / 100;
 					}
 
 					//assign net DC power output
@@ -1843,8 +1956,8 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 					//add this subarray's net DC power to the appropriate MPPT input and to the total system DC power
 					PVSystem->p_dcPowerNetPerMppt[Subarrays[nn]->mpptInput - 1][idx] += (ssc_number_t)(dcPowerNetPerSubarray[nn]); //need to subtract 1 from mppt input number because those are 1-indexed
-					dcPowerNetTotalSystem += dcPowerNetPerSubarray[nn];	
-				}								
+					dcPowerNetTotalSystem += dcPowerNetPerSubarray[nn];
+				}
 
 				// save other array-level environmental and irradiance outputs	- year 1 only outputs
 				if (iyear == 0)
@@ -1863,17 +1976,18 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					Irradiance->p_sunUpOverHorizon[idx] = (ssc_number_t)sunup;
 
 					// Sum of radiation power on each subarray for the current timestep [kW]
-					PVSystem->p_poaFrontNominalTotal[idx] = (ssc_number_t)(ts_accum_poa_front_nom * util::watt_to_kilowatt); 
-					PVSystem->p_poaFrontBeamNominalTotal[idx] = (ssc_number_t)(ts_accum_poa_front_beam_nom * util::watt_to_kilowatt); 
-					PVSystem->p_poaFrontShadedTotal[idx] = (ssc_number_t)(ts_accum_poa_front_shaded * util::watt_to_kilowatt); 
+					PVSystem->p_poaFrontNominalTotal[idx] = (ssc_number_t)(ts_accum_poa_front_nom * util::watt_to_kilowatt);
+					PVSystem->p_poaFrontBeamNominalTotal[idx] = (ssc_number_t)(ts_accum_poa_front_beam_nom * util::watt_to_kilowatt);
+					PVSystem->p_poaFrontShadedTotal[idx] = (ssc_number_t)(ts_accum_poa_front_shaded * util::watt_to_kilowatt);
 					PVSystem->p_poaFrontShadedSoiledTotal[idx] = (ssc_number_t)(ts_accum_poa_front_shaded_soiled * util::watt_to_kilowatt);
 					PVSystem->p_poaFrontTotal[idx] = (ssc_number_t)(ts_accum_poa_front_total * util::watt_to_kilowatt);
 					PVSystem->p_poaRearTotal[idx] = (ssc_number_t)(ts_accum_poa_rear_after_losses * util::watt_to_kilowatt);
-					PVSystem->p_poaTotalAllSubarrays[idx] = (ssc_number_t)(ts_accum_poa_total_eff * util::watt_to_kilowatt); 
+					PVSystem->p_poaTotalAllSubarrays[idx] = (ssc_number_t)(ts_accum_poa_total_eff * util::watt_to_kilowatt);
 					PVSystem->p_poaFrontBeamTotal[idx] = (ssc_number_t)(ts_accum_poa_front_beam_eff * util::watt_to_kilowatt);
 					PVSystem->p_inverterMPPTLoss[idx] = 0;
-					for (int nn = 0; nn < num_subarrays; nn++)
+					for (size_t nn = 0; nn < num_subarrays; nn++) {
 						PVSystem->p_inverterMPPTLoss[idx] = (ssc_number_t)(mpptVoltageClipping[nn] * util::watt_to_kilowatt);
+					}
 				}
 
 				// Predict clipping for DC battery controller
@@ -1907,13 +2021,13 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 		// Assign annual lifetime DC outputs
 		if (system_use_lifetime_output) {
-			PVSystem->p_dcDegradationFactor[iyear] = PVSystem->dcDegradationFactor[iyear];
+			PVSystem->p_dcDegradationFactor[iyear] = (ssc_number_t)(PVSystem->dcDegradationFactor[iyear]);
 		}
 	}
 
 	// Initialize DC battery predictive controller
-	if (en_batt && (batt_topology == ChargeController::DC_CONNECTED))
-		batt.initialize_automated_dispatch(util::array_to_vector<ssc_number_t>(PVSystem->p_systemDCPower, nlifetime), p_load_full, p_invcliploss_full);
+	if (en_batt && batt_topology == ChargeController::DC_CONNECTED)
+	    batt->initialize_automated_dispatch(util::array_to_vector<ssc_number_t>(PVSystem->p_systemDCPower, nlifetime), p_load_full, p_invcliploss_full);
 
 	/* *********************************************************************************************
 	PV AC calculation
@@ -1929,7 +2043,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	{
 		for (hour = 0; hour < 8760; hour++)
 		{
-			// report progress updates to the caller	
+			// report progress updates to the caller
 			ireport++;
 			if (ireport - ireplast > irepfreq)
 			{
@@ -1946,8 +2060,8 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				// Battery replacement
 				if (en_batt && (batt_topology == ChargeController::DC_CONNECTED))
 				{
-					batt.initialize_time(iyear, hour, jj);
-					batt.check_replacement_schedule();
+					batt->initialize_time(iyear, hour, jj);
+					batt->check_replacement_schedule();
 				}
 
 				double acpwr_gross = 0, ac_wiringloss = 0, transmissionloss = 0;
@@ -1956,7 +2070,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				weather_record wf = Irradiance->weatherRecord;
 
 				//set DC voltages for use in AC power calculation
-				for (int m = 0; m < PVSystem->Inverter->nMpptInputs; m++)
+				for (size_t m = 0; m < PVSystem->Inverter->nMpptInputs; m++)
 				{
 					dcVoltagePerMppt[m] = PVSystem->p_mpptVoltage[m][idx];
 					dcPowerNetPerMppt_kW[m] = PVSystem->p_dcPowerNetPerMppt[m][idx] * util::watt_to_kilowatt;
@@ -1968,9 +2082,15 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					// Compute PV clipping before adding battery
 					sharedInverter->calculateACPower(dcPower_kW, dcVoltagePerMppt[0], wf.tdry); //DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
 
-					// Run PV plus battery through sharedInverter, returns AC power
-					batt.advance(*this, dcPower_kW, dcVoltagePerMppt[0], cur_load, sharedInverter->powerClipLoss_kW);
-					acpwr_gross = batt.outGenPower[idx];
+                    if (resilience){
+                        resilience->add_battery_at_outage_timestep(*batt->dispatch_model, idx);
+                        resilience->run_surviving_batteries(p_crit_load_in[idx % nrec], sharedInverter->powerAC_kW, dcPower_kW,
+                                                            dcVoltagePerMppt[0], sharedInverter->powerClipLoss_kW, wf.tdry);
+                    }
+
+                    // Run PV plus battery through sharedInverter, returns AC power
+					batt->advance(m_vartab, dcPower_kW, dcVoltagePerMppt[0], cur_load, sharedInverter->powerClipLoss_kW);
+					acpwr_gross = batt->outGenPower[idx];
 				}
 				else if (PVSystem->Inverter->inverterType == INVERTER_PVYIELD) //PVyield inverter model not currently enabled for multiple MPPT
 				{
@@ -1983,14 +2103,14 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					// for capturing tare losses
 					sharedInverter->calculateACPower(dcPowerNetPerMppt_kW, dcVoltagePerMppt, wf.tdry);
 					acpwr_gross = sharedInverter->powerAC_kW;
-				}		
-				
+				}
+
 				ac_wiringloss = fabs(acpwr_gross) * PVSystem->acLossPercent * 0.01;
 				transmissionloss = fabs(acpwr_gross) * PVSystem->transmissionLossPercent * 0.01;
 
 				// accumulate first year annual energy
 				if (iyear == 0)
-				{ 
+				{
 					annual_ac_gross += acpwr_gross * ts_hour;
 
 					annual_dc_loss_ond += sharedInverter->dcWiringLoss_ond_kW * ts_hour; // (TR)
@@ -2019,12 +2139,17 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				{
 					if (PVSystem->p_systemACPower[idx] < transformerRatingkW)
 						xfmr_ll *= PVSystem->p_systemACPower[idx] * PVSystem->p_systemACPower[idx] / transformerRatingkW;
-					else 
+					else
 						xfmr_ll *= PVSystem->p_systemACPower[idx];
-				} 
+				}
 				// total load loss
 				ssc_number_t xfmr_loss = xfmr_ll + xfmr_nll;
 				PVSystem->p_systemACPower[idx] -= xfmr_loss;
+
+				// transmission loss if AC power is produced
+				if (PVSystem->p_systemACPower[idx] > 0){
+					PVSystem->p_systemACPower[idx] -= (ssc_number_t)(transmissionloss);
+				}
 
 				// accumulate first year annual energy
 				if (iyear == 0)
@@ -2041,7 +2166,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 			}
 		}
 
-		if (iyear == 0)
+        if (iyear == 0)
 		{
 			int year_idx = 0;
 			if (system_use_lifetime_output) {
@@ -2049,25 +2174,26 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 			}
 			// accumulate DC power after the battery
 			if (en_batt && (batt_topology == ChargeController::DC_CONNECTED)) {
-				annual_battery_loss = batt.outAnnualEnergyLoss[year_idx];
+				annual_battery_loss = batt->outAnnualEnergyLoss[year_idx];
 			}
 		}
 	}
+	process_messages(batt, this);
 
 	// Initialize AC connected battery predictive control
 	if (en_batt && batt_topology == ChargeController::AC_CONNECTED)
-		batt.initialize_automated_dispatch(util::array_to_vector<ssc_number_t>(PVSystem->p_systemACPower, nlifetime), p_load_full);
+		batt->initialize_automated_dispatch(util::array_to_vector<ssc_number_t>(PVSystem->p_systemACPower, nlifetime), p_load_full);
 
 	/* *********************************************************************************************
-	Post PV AC 
+	Post PV AC
 	*********************************************************************************************** */
 	idx = 0; ireport = 0; ireplast = 0; percent_baseline = percent_complete;
-	double annual_energy_pre_battery = 0.; 
+	double annual_energy_pre_battery = 0.;
 	for (size_t iyear = 0; iyear < nyears; iyear++)
 	{
 		for (hour = 0; hour < 8760; hour++)
 		{
-			// report progress updates to the caller	
+			// report progress updates to the caller
 			ireport++;
 			if (ireport - ireplast > irepfreq)
 			{
@@ -2084,16 +2210,22 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 				if (en_batt && batt_topology == ChargeController::AC_CONNECTED)
 				{
-					batt.initialize_time(iyear, hour, jj);
-					batt.check_replacement_schedule();
-					batt.advance(*this, PVSystem->p_systemACPower[idx], 0, p_load_full[idx]);
-					PVSystem->p_systemACPower[idx] = batt.outGenPower[idx];
+					batt->initialize_time(iyear, hour, jj);
+					batt->check_replacement_schedule();
+
+					if (resilience){
+                        resilience->add_battery_at_outage_timestep(*batt->dispatch_model, idx);
+                        resilience->run_surviving_batteries(p_crit_load_in[idx  % nrec], PVSystem->p_systemACPower[idx], 0, 0, 0, 0);
+					}
+
+					batt->advance(m_vartab, PVSystem->p_systemACPower[idx], 0, p_load_full[idx]);
+                    PVSystem->p_systemACPower[idx] = batt->outGenPower[idx];
 				}
 
 				// accumulate system generation before curtailment and availability
 				if (iyear == 0)
 					annual_ac_pre_avail += PVSystem->p_systemACPower[idx] * ts_hour;
-		
+
 
 				//apply availability and curtailment
 				PVSystem->p_systemACPower[idx] *= haf(hour);
@@ -2103,46 +2235,46 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				{
 					//current index of the lifetime daily AC losses is the number of years that have passed (iyear, because it is 0-indexed) * days in a year + the number of complete days that have passed
 					int ac_loss_index = (int)iyear * 365 + (int)floor(hour / 24); //in units of days
-					if (iyear == 0) annual_ac_lifetime_loss += PVSystem->p_systemACPower[idx] * (PVSystem->p_acLifetimeLosses[ac_loss_index] / 100) * util::watt_to_kilowatt * ts_hour; //this loss is still in percent, only keep track of it for year 0, convert from power W to energy kWh
-					PVSystem->p_systemACPower[idx] *= (100 - PVSystem->p_acLifetimeLosses[ac_loss_index]) / 100;
+					if (iyear == 0) annual_ac_lifetime_loss += PVSystem->p_systemACPower[idx] * (PVSystem->acLifetimeLosses[ac_loss_index] / 100) * util::watt_to_kilowatt * ts_hour; //this loss is still in percent, only keep track of it for year 0, convert from power W to energy kWh
+					PVSystem->p_systemACPower[idx] *= (100 - PVSystem->acLifetimeLosses[ac_loss_index]) / 100;
 				}
 				// Update battery with final gen to compute grid power
 				if (en_batt)
-					batt.update_grid_power(*this, PVSystem->p_systemACPower[idx], p_load_full[idx], idx);
+					batt->update_grid_power(*this, PVSystem->p_systemACPower[idx], p_load_full[idx], idx);
 
 				if (iyear == 0)
 					annual_energy += (ssc_number_t)(PVSystem->p_systemACPower[idx] * ts_hour);
 
 				idx++;
 			}
-		} 
-
-	} 
+		}
+	}
+	process_messages(batt, this);
 	// Check the snow models and if neccessary report a warning
-	//  *This only needs to be done for subarray1 since all of the activated subarrays should 
+	//  *This only needs to be done for subarray1 since all of the activated subarrays should
 	//   have the same number of bad values
-	//  *Also accumulate monthly and annual loss values 
+	//  *Also accumulate monthly and annual loss values
 
 	if (PVSystem->enableSnowModel){
 		if (Subarrays[0]->snowModel.badValues > 0){
 			log(util::format("The snow model has detected %d bad snow depth values (less than 0 or greater than 610 cm). These values have been set to zero.", Subarrays[0]->snowModel.badValues), SSC_WARNING);
 		}
-			
+
 		// scale by ts_hour to convert power -> energy
-		accumulate_monthly_for_year( "dc_snow_loss", "monthly_snow_loss", ts_hour , step_per_hour );			
+		accumulate_monthly_for_year( "dc_snow_loss", "monthly_snow_loss", ts_hour , step_per_hour );
 		accumulate_annual_for_year( "dc_snow_loss", "annual_snow_loss", ts_hour, step_per_hour);
 	}
-		 
+
 	if (hour != 8760)
 		throw exec_error("pvsamv1", "failed to simulate all 8760 hours, error in weather file ?");
 
 
 	accumulate_monthly_for_year("dc_net", "monthly_dc", ts_hour, step_per_hour);
 	accumulate_monthly_for_year("gen", "monthly_energy", ts_hour, step_per_hour);
-		
+
 	// scale by ts_hour to convert power -> energy
 	accumulate_annual_for_year("gh", "annual_gh", ts_hour, step_per_hour);
-		
+
 	// scale by ts_hour to convert power -> energy
 	double annual_poa_nom = accumulate_annual_for_year("poa_nom", "annual_poa_nom", ts_hour, step_per_hour);
 	double annual_poa_beam_nom = accumulate_annual_for_year("poa_beam_nom", "annual_poa_beam_nom", ts_hour, step_per_hour);
@@ -2152,7 +2284,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	double annual_poa_rear = accumulate_annual_for_year("poa_rear", "annual_poa_rear", ts_hour, step_per_hour);
 	double annual_poa_eff = accumulate_annual_for_year("poa_eff", "annual_poa_eff", ts_hour, step_per_hour);
 	double annual_poa_beam_eff = accumulate_annual_for_year("poa_beam_eff", "annual_poa_beam_eff", ts_hour, step_per_hour);
-		
+
 	accumulate_monthly_for_year( "poa_nom", "monthly_poa_nom", ts_hour, step_per_hour );
 	accumulate_monthly_for_year( "poa_beam_nom", "monthly_poa_beam_nom", ts_hour, step_per_hour );
 	accumulate_monthly_for_year("poa_front", "monthly_poa_front", ts_hour, step_per_hour);
@@ -2183,7 +2315,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	assign("performance_ratio", var_data((ssc_number_t)(ac_net / (nom_rad * mod_eff / 100.0))));
 
 	// accumulate annual and monthly battery model outputs
-	if ( en_batt ) batt.calculate_monthly_and_annual_outputs( *this );
+	if ( en_batt ) batt->calculate_monthly_and_annual_outputs( *this );
 	else assign( "average_battery_roundtrip_efficiency", var_data( 0.0f ) ); // if battery disabled, since it's shown in the metrics table
 
 	// calculate nominal dc input
@@ -2200,7 +2332,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 	double annual_mismatch_loss = 0, annual_diode_loss = 0, annual_wiring_loss = 0, annual_tracking_loss = 0, annual_nameplate_loss = 0, annual_dcopt_loss = 0;
 	double annual_dc_gross = 0;
-		
+
 	// loop over subarrays
 	for (size_t nn = 0; nn < num_subarrays; nn++)
 	{
@@ -2212,7 +2344,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 			// dc derate for each sub array
 			double dc_loss = dc_gross[nn] * Subarrays[nn]->dcLossTotalPercent;
 			annual_dc_gross += dc_gross[nn];
-			
+
 			if (Subarrays[nn]->dcLossTotalPercent != 0)
 			{
 				double total_percent = Subarrays[nn]->dcLossTotalPercent;
@@ -2229,7 +2361,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 			annual_tracking_loss += tracking_loss;
 			annual_nameplate_loss += nameplate_loss;
 			annual_dcopt_loss += dcopt_loss;
-			
+
 			assign("annual_" + prefix + "dc_gross", var_data((ssc_number_t)dc_gross[nn]));
 			assign("annual_" + prefix + "dc_mismatch_loss", var_data((ssc_number_t)mismatch_loss));
 			assign("annual_" + prefix + "dc_diodes_loss", var_data((ssc_number_t)diode_loss));
@@ -2329,7 +2461,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 	// annual_dc_nominal
 	percent = 0.;
-	// SEV: Apply Snow loss to loss diagram 
+	// SEV: Apply Snow loss to loss diagram
 	if (annual_dc_nominal > 0) percent = 100 * annual_snow_loss / annual_dc_nominal;
 	assign("annual_dc_snow_loss_percent", var_data((ssc_number_t)percent));
 
@@ -2459,7 +2591,24 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	assign("annual_ac_perf_adj_loss_percent", var_data((ssc_number_t)percent));
 	sys_output *= (1.0 - percent / 100.0);
 
-
+	// total loss diagram losses for single-year simulation (life time losses not included)
+	std::vector<std::string> loss_components = {"annual_poa_shading_loss_percent", "annual_poa_soiling_loss_percent",
+                                             "annual_poa_cover_loss_percent", "annual_poa_rear_gain_percent",
+                                             "annual_dc_snow_loss_percent", "annual_dc_module_loss_percent",
+                                             "annual_dc_mppt_clip_loss_percent", "annual_dc_mismatch_loss_percent",
+                                             "annual_dc_diodes_loss_percent", "annual_dc_wiring_loss_percent",
+                                             "annual_dc_tracking_loss_percent", "annual_dc_nameplate_loss_percent",
+                                             "annual_dc_optimizer_loss_percent", "annual_dc_perf_adj_loss_percent",
+                                             "annual_dc_battery_loss_percent", "annual_ac_battery_loss_percent",
+                                             "annual_ac_inv_clip_loss_percent", "annual_ac_inv_pso_loss_percent",
+                                             "annual_ac_inv_pnt_loss_percent","annual_ac_inv_eff_loss_percent",
+                                             "annual_ac_wiring_loss_percent", "annual_xfmr_loss_percent",
+                                             "annual_ac_perf_adj_loss_percent"};
+	percent = 1.;
+	for (size_t i = 0; i < loss_components.size(); i++){
+	    percent *= (1. - as_number(loss_components[i])/100.);
+	}
+    assign("annual_total_loss_percent", var_data((ssc_number_t)(1.-percent)*100.));
 	// annual_ac_net = system_output
 
 #ifdef WITH_CHECKS
@@ -2480,9 +2629,9 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 	// AC Capacity Factor
 	double kWhACperkWAC = 0.0;
-	double nameplate_ac = sharedInverter->getACNameplateCapacity();
-	if (nameplate_ac > 0) {
-		kWhACperkWAC = annual_energy / nameplate_ac;
+	double nameplate_ac_kW = sharedInverter->getACNameplateCapacitykW();
+	if (nameplate_ac_kW > 0) {
+		kWhACperkWAC = annual_energy / nameplate_ac_kW;
 	}
 	assign("capacity_factor_ac", var_data((ssc_number_t)(kWhACperkWAC / 87.6)));
 
@@ -2495,16 +2644,22 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	Irradiance->AssignOutputs(this);
 	Subarrays[0]->AssignOutputs(this);
 	PVSystem->AssignOutputs(this);
-	
+
 //	_CrtDumpMemoryLeaks();
 //	_CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_DEBUG);
 
+    // resiliency metrics
+    if (resilience){
+        resilience->run_surviving_batteries_by_looping(&p_crit_load_in[0], PVSystem->p_systemACPower, PVSystem->p_systemDCPower,
+                PVSystem->p_mpptVoltage[0], PVSystem->p_inverterClipLoss, Irradiance->p_weatherFileAmbientTemp);
+		calculate_resilience_outputs(this, resilience);
+    }
 }
-	
+
 double cm_pvsamv1::module_eff(int mod_type)
 {
 	double eff = -1;
-	
+
 	switch (mod_type)
 	{
 	case 0: // SPE
@@ -2603,7 +2758,7 @@ void cm_pvsamv1::inverter_vdcmax_check()
 			if (da[i] > vdcmax)
 			{
 				numVmpGTVdcmax++;
-				if (da[i] > maxVmp) 
+				if (da[i] > maxVmp)
 				{
 					maxVmp = da[i];
 					maxVmpHour = (int)i;
@@ -2612,7 +2767,7 @@ void cm_pvsamv1::inverter_vdcmax_check()
 		}
 	}
 
-	if (numVmpGTVdcmax > 0) 
+	if (numVmpGTVdcmax > 0)
 	{
 		log( util::format( "Module array voltage Vmp exceeds the Vdcmax (%.2lfV) of inverter %d times.\n"
 				"   The maximum Vmp value is %.2lfV at hour %d.\n"
@@ -2656,7 +2811,7 @@ void cm_pvsamv1::inverter_size_check()
 			ratedACOutput = as_double("inv_cec_cg_paco");
 			ratedDCOutput = as_double("inv_cec_cg_pdco");
 			break;
-		case 4: // ond inverter (PVYield) 
+		case 4: // ond inverter (PVYield)
 			ratedACOutput = as_double("ond_PMaxOUT");
 			ratedDCOutput = as_double("ond_PMaxDC");
 			break;
@@ -2679,17 +2834,17 @@ void cm_pvsamv1::inverter_size_check()
 		for (size_t i=0; i < acCount;i++)
 		{
 			if (dcPower[i] > ratedDCOutput) numHoursClipped++;
-			if (acPower[i] > maxACOutput) maxACOutput = acPower[i]; 
+			if (acPower[i] > maxACOutput) maxACOutput = acPower[i];
 		}
 	}
 	if (numHoursClipped >= 2190) //more than one quarter of the entire year (8760) is clipped
-		log( util::format("Inverter undersized: The array output exceeded the inverter rating %.2lf kWdc for %d hours.", 
-			ratedDCOutput, numHoursClipped), 
+		log( util::format("Inverter undersized: The array output exceeded the inverter rating %.2lf kWdc for %d hours.",
+			ratedDCOutput, numHoursClipped),
 			SSC_WARNING );
 
 	if ((maxACOutput < 0.75 * ratedACOutput) && (maxACOutput > 0))
-		log( util::format("Inverter oversized: The maximum inverter output was %.2lf%% of the rated value %lg kWac.", 
-			100 * maxACOutput / ratedACOutput, ratedACOutput), 
+		log( util::format("Inverter oversized: The maximum inverter output was %.2lf%% of the rated value %lg kWac.",
+			100 * maxACOutput / ratedACOutput, ratedACOutput),
 			SSC_WARNING);
 }
 
