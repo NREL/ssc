@@ -1149,7 +1149,7 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 					m_mode = C_csp_collector_receiver::ON;
 
 					double q_startup_energy_req = m_E_su_prev;	//[W-hr]
-					double q_startup_ramping_req = m_dot_salt_tot*c_p_coolant*(T_salt_hot_guess - T_salt_cold_in)*m_t_su;	//[W-hr]
+					double q_startup_ramping_req = m_dot_salt_tot*c_p_coolant*(T_salt_hot_guess - T_salt_cold_in)*m_t_su_prev;	//[W-hr]
 					q_startup = fmax(q_startup_energy_req, q_startup_ramping_req);
 				}
 
