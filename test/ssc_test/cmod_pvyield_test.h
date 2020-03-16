@@ -4,7 +4,7 @@
 #ifndef _CMOD_PVYIELD_TEST_H_
 #define _CMOD_PVYIELD_TEST_H_
 
-#include "../ssc/vartab.h"
+#include "vartab.h"
 #include "../ssc/common.h"
 #include "../input_cases/pvyield_cases.h"
 
@@ -26,7 +26,8 @@ public:
 	}
 	void TearDown() {
 		if (data) {
-			ssc_data_clear(data);
+			ssc_data_free(data);
+			data = nullptr;
 		}
 	}
 	void SetCalculated(std::string name)

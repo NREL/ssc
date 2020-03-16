@@ -1,52 +1,24 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #include "core.h"
 #include "lib_weatherfile.h"
@@ -62,9 +34,11 @@ static var_info _cm_vtab_geothermal[] = {
 																		       																														             
     // control input													       																														             
     { SSC_INPUT,        SSC_NUMBER,      "ui_calculations_only",               "If = 1, only run UI calculations",             "",               "",             "GeoHourly",        "*",                        "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",          "Geothermal lifetime simulation",              "0/1",     "0=SingleYearRepeated,1=RunEveryYear",     "GeoHourly",             "?=0",           "BOOLEAN",                        "" },
+
 
     // climate and resource inputs		 								       											   				     
-    { SSC_INPUT,        SSC_STRING,      "file_name",                          "local weather file path",                      "",               "",             "Weather",          "ui_calculations_only=0",   "LOCAL_FILE",      "" },
+    { SSC_INPUT,        SSC_STRING,      "file_name",                          "local weather file path",                      "",               "",             "GeoHourly",        "ui_calculations_only=0",   "LOCAL_FILE",      "" },
     { SSC_INPUT,        SSC_NUMBER,      "resource_potential",                 "Resource Potential",                           "MW",             "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "resource_type",                      "Type of Resource",                             "",               "",             "GeoHourly",        "*",                        "INTEGER",         "" },
     { SSC_INPUT,        SSC_NUMBER,      "resource_temp",                      "Resource Temperature",                         "C",              "",             "GeoHourly",        "*",                        "",                "" },
@@ -172,14 +146,14 @@ static var_info _cm_vtab_geothermal[] = {
     // User can specify whether the analysis should be done hourly or monthly.  With monthly analysis, there are only monthly results.																             
     // With hourly analysis, there are still monthly results, but there are hourly (over the whole lifetime of the project) results as well.														             
 //	{ SSC_OUTPUT, SSC_ARRAY, "annual_replacements", "Resource replacement? (1=yes)", "kWhac", "", "GeoHourly", "ui_calculations_only=0", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "system_lifetime_recapitalize", "Resource replacement? (1=yes)", "", "", "GeoHourly", "ui_calculations_only=0", "", "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "gen",                                "System power generated",                              "kW",                      "GeoHourly",        "",                         "",                "",                               "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "system_lifetime_recapitalize",       "Resource replacement? (1=yes)", "", "", "GeoHourly", "ui_calculations_only=0", "", "" },
 
     { SSC_OUTPUT,       SSC_ARRAY,      "monthly_resource_temperature",       "Monthly avg resource temperature",                    "C",       "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "monthly_power",                      "Monthly power",                                       "kW",      "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "monthly_energy",                     "Monthly energy before performance adjustments",       "kWh",     "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
 																																													   			                 
     { SSC_OUTPUT,       SSC_ARRAY,      "timestep_resource_temperature",      "Resource temperature in each time step",              "C",       "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
-    { SSC_OUTPUT,       SSC_ARRAY,      "timestep_power",                     "Power in each time step",                             "kW",      "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "timestep_test_values",               "Test output values in each time step",                "",        "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
 																																													   			                 
     { SSC_OUTPUT,       SSC_ARRAY,      "timestep_pressure",                  "Atmospheric pressure in each time step",              "atm",     "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
@@ -193,8 +167,9 @@ static var_info _cm_vtab_geothermal[] = {
 
 	{ SSC_OUTPUT,		SSC_NUMBER,		"capacity_factor",					  "Capacity factor",									"",			"",					 "",					"*",				"",					"" },
 	{ SSC_OUTPUT,		SSC_NUMBER,		 "kwh_per_kw",						  "First year kWh/kW",									 "",		"",					 "",					 "*",				"",					"" },
-	//Outputs Used in cmod_geothermal_costs:
-	{ SSC_OUTPUT,       SSC_NUMBER,		"eff_secondlaw",                        "Second Law Efficiency",								 "C",		"",             "GeoHourly",				 "",                 "",                "" },
+	
+		//Outputs Used in cmod_geothermal_costs:
+	{ SSC_OUTPUT,       SSC_NUMBER,		"eff_secondlaw",                        "Second Law Efficiency",							 "C",		"",             "GeoHourly",				 "",                 "",                "" },
 	{ SSC_OUTPUT,		SSC_NUMBER,		"qRejectTotal",							"Total Heat Rejection",								 "btu/h",	"",				"GeoHourly",				 "",				 "",				""},
 	{ SSC_OUTPUT,		SSC_NUMBER,		"qCondenser",							"Condenser Heat Rejected",							 "btu/h",	"",				"GeoHourly",				 "",				 "",				"" },
 	{ SSC_OUTPUT,		SSC_NUMBER,		"hp_flash_pressure",					"HP Flash Pressure",								 "psia",	"",				"GeoHourly",				 "",				 "",				"" },
@@ -243,7 +218,7 @@ public:
 //		add_var_info(vtab_technology_outputs);
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		int iControl = as_integer("ui_calculations_only");		 // 0=run full model, 1=just do UI calculations
 
@@ -330,8 +305,12 @@ public:
 
 		// calculate output array sizes
 		geo_inputs.mi_ModelChoice = as_integer("model_choice");		 // 0=GETEM, 1=Power Block monthly, 2=Power Block hourly
+		
 		// set geothermal inputs RE how analysis is done and for how long
-		geo_inputs.mi_ProjectLifeYears = as_integer("geothermal_analysis_period");
+		geo_inputs.mi_ProjectLifeYears = 1;
+		if (as_boolean("system_use_lifetime_output")) {
+			geo_inputs.mi_ProjectLifeYears = as_integer("geothermal_analysis_period");
+		}
 		if ( geo_inputs.mi_ProjectLifeYears == 0)
 			throw general_error("invalid analysis period specified in the geothermal hourly model");
 
@@ -460,9 +439,13 @@ public:
 			geo_outputs.maf_timestep_dry_bulb = allocate("timestep_dry_bulb", geo_inputs.mi_TotalMakeupCalculations);
 			geo_outputs.maf_timestep_wet_bulb = allocate("timestep_wet_bulb", geo_inputs.mi_TotalMakeupCalculations);
 
-			geo_outputs.maf_hourly_power = allocate("gen", geo_inputs.mi_ProjectLifeYears * 8760);
-//			ssc_number_t *pgen = allocate("gen", geo_inputs.mi_ProjectLifeYears * 8760);
-
+			size_t n_rec = 8760;
+			if (as_boolean("system_use_lifetime_output")){
+				n_rec *= geo_inputs.mi_ProjectLifeYears;
+			}
+	
+			geo_outputs.maf_hourly_power = allocate("tmp", n_rec);
+			ssc_number_t * p_gen = allocate("gen", n_rec);
 
 			// TODO - implement performance factors 
 			adjustment_factors haf(this, "adjust");
@@ -478,87 +461,82 @@ public:
 			//Assigning 2nd Law efficiency:
 			//double eff_secondlaw = var_data(static_cast<ssc_number_t>(geo_outputs.eff_secondlaw));
 			double eff_secondlaw = geo_outputs.eff_secondlaw;
-			assign("eff_secondlaw", eff_secondlaw);
+			assign("eff_secondlaw", (ssc_number_t)eff_secondlaw);
 
 			//Assigning Rejected Total Heat from Flash Plant:
 			double qRejectTotal = geo_outputs.qRejectedTotal;	//total heat rejected 
-			assign("qRejectTotal", qRejectTotal);
+			assign("qRejectTotal", (ssc_number_t)qRejectTotal);
 
 			//Assign qCondenser (Flash Plant Type):
 			double qCondenser = geo_outputs.condenser_q;
-			assign("qCondenser", qCondenser);
+			assign("qCondenser", (ssc_number_t)qCondenser);
 
 			//Assign HP & LP Flash Pressures: 
 			double hp_flash_pressure = geo_outputs.md_PressureHPFlashPSI;
-			assign("hp_flash_pressure", hp_flash_pressure);
+			assign("hp_flash_pressure", (ssc_number_t)hp_flash_pressure);
 			double lp_flash_pressure = geo_outputs.md_PressureLPFlashPSI;
-			assign("lp_flash_pressure", lp_flash_pressure);
+			assign("lp_flash_pressure", (ssc_number_t)lp_flash_pressure);
 
 			//Assign all 3 stages of vacuum pump powers:
 			double v_stage_1 = geo_outputs.v_stage_1;
-			assign("v_stage_1", v_stage_1);
+			assign("v_stage_1", (ssc_number_t)v_stage_1);
 			double v_stage_2 = geo_outputs.v_stage_2;
-			assign("v_stage_2", v_stage_2);
+			assign("v_stage_2", (ssc_number_t)v_stage_2);
 			double v_stage_3 = geo_outputs.v_stage_3;
-			assign("v_stage_3", v_stage_3);
-
-			
-			//DELETE	
-			double test = geo_outputs.test;
-
+			assign("v_stage_3", (ssc_number_t)v_stage_3);
 
 			//Assign total GF Flow Rate: 
 			double GF_flowrate = geo_outputs.GF_flowrate;
-			assign("GF_flowrate", GF_flowrate);
+			assign("GF_flowrate", (ssc_number_t)GF_flowrate);
 
 			//Assign NCG Condenser Heat Rejecting Stages:
 			double qRejectByStage_1 = geo_outputs.qRejectByStage_1;
-			assign("qRejectByStage_1", qRejectByStage_1);
+			assign("qRejectByStage_1", (ssc_number_t)qRejectByStage_1);
 			double qRejectByStage_2 = geo_outputs.qRejectByStage_2;
-			assign("qRejectByStage_2", qRejectByStage_2);
+			assign("qRejectByStage_2", (ssc_number_t)qRejectByStage_2);
 			double qRejectByStage_3 = geo_outputs.qRejectByStage_3;
-			assign("qRejectByStage_3", qRejectByStage_3);
+			assign("qRejectByStage_3", (ssc_number_t)qRejectByStage_3);
 
 			//Assign NCG Condensate Pump Work & CW Pump Work Value for Calculating NCG Pump Cost: 
 			double ncg_condensate_pump = geo_outputs.ncg_condensate_pump;
-			assign("ncg_condensate_pump", ncg_condensate_pump);
+			assign("ncg_condensate_pump", (ssc_number_t)ncg_condensate_pump);
 			double cw_pump_work = geo_outputs.cw_pump_work;
-			assign("cw_pump_work", cw_pump_work);
+			assign("cw_pump_work", (ssc_number_t)cw_pump_work);
 
 			//Assign steam suction ratio value for NCG Ejector Cost Calculation
 			double pressure_ratio_1 = geo_outputs.pressure_ratio_1;
-			assign("pressure_ratio_1", pressure_ratio_1);
+			assign("pressure_ratio_1", (ssc_number_t)pressure_ratio_1);
 			double pressure_ratio_2 = geo_outputs.pressure_ratio_2;
-			assign("pressure_ratio_2", pressure_ratio_2);
+			assign("pressure_ratio_2", (ssc_number_t)pressure_ratio_2);
 			double pressure_ratio_3 = geo_outputs.pressure_ratio_3;
-			assign("pressure_ratio_3", pressure_ratio_3);
+			assign("pressure_ratio_3", (ssc_number_t)pressure_ratio_3);
 
 			//Assigning Value of Condensate Pump for Pump Cost Calculation:
 			double condensate_pump_power = geo_outputs.condensate_pump_power;
-			assign("condensate_pump_power", condensate_pump_power);
+			assign("condensate_pump_power", (ssc_number_t)condensate_pump_power);
 
 			//Assign CW Flow and Head for Pump Cost Caclulation:
 			double cwflow = geo_outputs.cwflow;
-			assign("cwflow", cwflow);
+			assign("cwflow", (ssc_number_t)cwflow);
 			double cw_pump_head = geo_outputs.cw_pump_head;
-			assign("cw_pump_head", cw_pump_head);
+			assign("cw_pump_head", (ssc_number_t)cw_pump_head);
 
 			//Assign Specific Volume and Mass Fraction (x) for Flash Vessel Calculations:
 			double spec_vol = geo_outputs.spec_vol;	//HP Specific Volume
-			assign("spec_vol", spec_vol);
+			assign("spec_vol", (ssc_number_t)spec_vol);
 			double x_hp = geo_outputs.getX_hp;
-			assign("x_hp", x_hp);	
+			assign("x_hp", (ssc_number_t)x_hp);
 			double spec_vol_lp = geo_outputs.spec_vol_lp;	//LP Specific Volume
-			assign("spec_vol_lp", spec_vol_lp);
+			assign("spec_vol_lp", (ssc_number_t)spec_vol_lp);
 			double x_lp = geo_outputs.getX_lp;
-			assign("x_lp", x_lp);
+			assign("x_lp", (ssc_number_t)x_lp);
 
 
 			
 
 			//Assign Flash Count: 
 			double flash_count = geo_outputs.flash_count;
-			assign("flash_count", flash_count);
+			assign("flash_count", (ssc_number_t)flash_count);
 
 			// Summary calculations
 			ssc_number_t total_energy = 0;
@@ -578,11 +556,14 @@ public:
 			double kWhperkW = 0.0;
 			double nameplate = geo_inputs.md_DesiredSalesCapacityKW; // Was md_GrossPlantOutputMW*1000 -> now it is md_DesiredSalesCapacityKW
 			double annual_energy = 0.0;
-			for (size_t i = 0; i < geo_inputs.mi_ProjectLifeYears * 8760; i++)		//Loop calculates total energy generation over entire project lifetime (in kWh)
-			{
+
+			//Loop calculates total energy generation over entire project lifetime (in kWh) 
+			// Why?  Is the annual energy changing from year to year?
+			for (size_t i = 0; i <n_rec ; i++)	{
 				annual_energy += geo_outputs.maf_hourly_power[i];
-//				pgen[i] = geo_outputs.maf_hourly_power[i];
+				p_gen[i] = geo_outputs.maf_hourly_power[i];
 			}
+
 			if (nameplate > 0) kWhperkW = annual_energy / nameplate;
 			capacity_fac = total_energy / nameplate;
 			if (geo_inputs.mi_ProjectLifeYears > 0) kWhperkW = kWhperkW / geo_inputs.mi_ProjectLifeYears;
@@ -592,9 +573,6 @@ public:
 			assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
 			// 5/28/15 average provided for FCR market
 			assign("annual_energy", var_data((ssc_number_t)(annual_energy / geo_inputs.mi_ProjectLifeYears)));
-
-
-
 		}
 
 		// this assignment happens in UI calculations and model run

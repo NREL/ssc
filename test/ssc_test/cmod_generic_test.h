@@ -7,7 +7,7 @@
 #include "core.h"
 #include "sscapi.h"
 
-#include "../ssc/vartab.h"
+#include "vartab.h"
 #include "../ssc/common.h"
 #include "../input_cases/code_generator_utilities.h"
 #include "../input_cases/generic_common_data.h"
@@ -33,7 +33,8 @@ public:
 	}
 	void TearDown() {
 		if (data) {
-			ssc_data_clear(data);
+			ssc_data_free(data);
+			data = nullptr;
 		}
 	}
 	void SetCalculated(std::string name)

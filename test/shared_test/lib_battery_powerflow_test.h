@@ -3,10 +3,19 @@
 
 #include <gtest/gtest.h>
 #include "../shared/lib_battery_powerflow.h"
+
+#include <lib_ondinv.h>
 #include <lib_power_electronics.h>
+#include <lib_pvinv.h>
+#include <lib_sandia.h>
+#include <lib_shared_inverter.h>
 
+// forward declarations
+class sandia_inverter_t;
+class partload_inverter_t;
+class ond_inverter;
 
-class BatteryPowerFlowTest : public ::testing::Test
+class BatteryPowerFlowTest_lib_battery_powerflow : public ::testing::Test
 {
 protected:
 	BatteryPowerFlow * m_batteryPowerFlow;
@@ -19,51 +28,49 @@ protected:
 
 public:
 
-	void SetUp()
-	{
-		error = 0.02;
-		double dtHour = 1.0;
-		m_batteryPowerFlow = new BatteryPowerFlow(dtHour);
-		m_batteryPower = m_batteryPowerFlow->getBatteryPower();
-		m_batteryPower->canDischarge = false;
-		m_batteryPower->canPVCharge = false;
-		m_batteryPower->canGridCharge = false;
-		m_batteryPower->singlePointEfficiencyACToDC = 0.96;
-		m_batteryPower->singlePointEfficiencyDCToAC = 0.96;
-		m_batteryPower->singlePointEfficiencyDCToDC = 0.98;
-		m_batteryPower->powerBatteryChargeMax = 100;
-		m_batteryPower->powerBatteryDischargeMax = 50;
-		m_batteryPower->connectionMode = ChargeController::AC_CONNECTED;
+	void SetUp();
 
-		// setup Sandia inverter using SMA America: SB3800TL-US-22 (240V) [CEC 2013]
-		int numberOfInverters = 100;
-		sandia = new sandia_inverter_t();
-		partload = new partload_inverter_t();
-		ond = new ond_inverter();
-		sandia->C0 = -3.18e-6;
-		sandia->C1 = -5.12e-5;
-		sandia->C2 = 0.000984;
-		sandia->C3 = -0.00151;
-		sandia->Paco = 3800;
-		sandia->Pdco = 3928.11;
-		sandia->Vdco = 398.497;
-		sandia->Pso = 19.4516;
-		sandia->Pntare = 0.99;
-		m_sharedInverter = new SharedInverter(SharedInverter::SANDIA_INVERTER, numberOfInverters, sandia, partload, ond);
-		m_batteryPower->setSharedInverter(m_sharedInverter);
+	double calc_dc_gen(){
+//		return m_batteryPower->powerPVToLoad + m_batteryPower->powerPVToGrid + m_batteryPower->powerBatteryToLoad
+//			   + m_batteryPower->powerBatteryToGrid - m_batteryPower->powerGridToBattery * m_batteryPower->singlePointEfficiencyDCToDC;
+	    return m_batteryPower->powerBatteryAC + m_batteryPower->powerPV;
 	}
+
+	double calc_met_load(){
+		return m_batteryPower->powerBatteryToLoad + m_batteryPower->powerGridToLoad + m_batteryPower->powerPVToLoad;
+	}
+
+	void check_net_flows(std::string id_string) {
+	    // increased error due to PV dc to ac conversion
+	    double dc_error = 4;
+		double gen = calc_dc_gen();
+		EXPECT_NEAR(m_batteryPower->powerGeneratedBySystem, gen, dc_error) << id_string;
+		double met_load = calc_met_load();
+		EXPECT_NEAR(met_load, m_batteryPower->powerLoad, dc_error) << id_string;
+	}
+
 	void TearDown()
 	{
-		if (m_batteryPowerFlow)
+		if (m_batteryPowerFlow) {
 			delete m_batteryPowerFlow;
-		if (m_sharedInverter)
+			m_batteryPowerFlow = nullptr;
+		}
+		if (m_sharedInverter) {
 			delete m_sharedInverter;
-		if (sandia)
+			m_sharedInverter = nullptr;
+		}
+		if (sandia) {
 			delete sandia;
-		if (partload)
+			sandia = nullptr;
+		}
+		if (partload) {
 			delete partload;
-		if (ond)
+			partload = nullptr;
+		}
+		if (ond) {
 			delete ond;
+			ond = nullptr;
+		}
 	}
 
 };

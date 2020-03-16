@@ -25,16 +25,6 @@ double transmittance(double theta1_deg, /* incidence angle of incoming radiation
 ///Incidence angle modifier not normalized relative to normal incidence (used as a supporting function to normalized IAM function)
 double iam_nonorm(double theta, bool ar_glass)
 {
-	double n_air = 1.0;
-
-	double n_g = 1.526;
-	double k_g = 4;
-	double l_g = 0.002;
-
-	double n_arc = 1.3;
-	double k_arc = 4;
-	double l_arc = l_g * 0.01;  // assume 1/100th thickness of glass for AR coating
-
 	if (theta < AOI_MIN) theta = AOI_MIN;
 	if (theta > AOI_MAX) theta = AOI_MAX;
 
@@ -42,12 +32,12 @@ double iam_nonorm(double theta, bool ar_glass)
 	{
 		double theta2 = 1;
 		double tau_coating = transmittance(theta, n_arc, n_air, k_arc, l_arc, &theta2);
-		double tau_glass = transmittance(theta2, n_g, n_arc, k_g, l_g);
+		double tau_glass = transmittance(theta2, n_glass, n_arc, k_glass, l_glass);
 		return tau_coating * tau_glass;
 	}
 	else
 	{
-		return transmittance(theta, n_g, n_air, k_g, l_g);
+		return transmittance(theta, n_glass, n_air, k_glass, l_glass);
 	}
 }
 
@@ -86,7 +76,7 @@ double iamSjerpsKoomen(double n2, double incidenceAngleRadians)
 }
 
 ///DeSoto IAM model used by CEC model
-double calculateIrradianceThroughCoverDeSoto(double theta, double theta_z, double tilt, double G_beam, double G_sky, double G_gnd)
+double calculateIrradianceThroughCoverDeSoto(double theta, double theta_z, double tilt, double G_beam, double G_sky, double G_gnd, bool antiReflectiveGlass)
 {
 	// establish limits on incidence angle and zenith angle
 	if (theta < 1) theta = 1;
@@ -96,18 +86,25 @@ double calculateIrradianceThroughCoverDeSoto(double theta, double theta_z, doubl
 	if (theta_z < 0) theta_z = 0; 
 
 	// transmittance at angle normal to surface (0 deg), use 1 (deg) to avoid numerical probs.
-	double tau_norm = transmittance(1.0, n_cover, 1.0, k_trans, l_thick);
+	double tau_norm = transmittance(1.0, n_glass, 1.0, k_glass, l_glass);
 
 	// transmittance of beam radiation, at incidence angle
-	double tau_beam = transmittance(theta, n_cover, 1.0, k_trans, l_thick);
+	double theta_after_coating = theta;
+	double tau_beam = 1.0;
+	if (antiReflectiveGlass)
+	{
+		double tau_coating = transmittance(theta, n_arc, 1.0, k_arc, l_arc, &theta_after_coating);
+		tau_beam *= tau_coating;
+	}
+	tau_beam *= transmittance(theta_after_coating, n_glass, (antiReflectiveGlass ? n_arc : 1.0), k_glass, l_glass);
 
 	// transmittance of sky diffuse, at modified angle by (D&B Eqn 5.4.2)
 	double theta_sky = 59.7 - 0.1388*tilt + 0.001497*tilt*tilt;
-	double tau_sky = transmittance(theta_sky, n_cover, 1.0, k_trans, l_thick);
+	double tau_sky = transmittance(theta_sky, n_glass, 1.0, k_glass, l_glass);
 
 	// transmittance of ground diffuse, at modified angle by (D&B Eqn 5.4.1)
 	double theta_gnd = 90.0 - 0.5788*tilt + 0.002693*tilt*tilt;
-	double tau_gnd = transmittance(theta_gnd, n_cover, 1.0, k_trans, l_thick);
+	double tau_gnd = transmittance(theta_gnd, n_glass, 1.0, k_glass, l_glass);
 
 	// calculate component incidence angle modifiers, D&B Chap. 5 eqn 5.12.1, DeSoto'04
 	double Kta_beam = tau_beam / tau_norm;

@@ -20,7 +20,7 @@ public:
 		add_var_info(_cm_vtab_test_ud_power_cycle);
 	}
 
-	void exec() throw(general_error)
+	void exec() override
 	{
 		double a_ref = 12.0;
 		double b_ref = 13.0;

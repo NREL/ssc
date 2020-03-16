@@ -4,7 +4,7 @@
 #include <gtest/gtest.h>
 #include "core.h"
 #include "sscapi.h"
-#include "../ssc/vartab.h"
+#include "vartab.h"
 #include "../ssc/common.h"
 #include "../input_cases/biomass_common.h"
 #include "../input_cases/code_generator_utilities.h"
@@ -22,8 +22,10 @@ public:
 	}
 
 	void TearDown() {
-		if (data)
-			ssc_data_clear(data);
+		if (data) {
+			ssc_data_free(data);
+			data = nullptr;
+		}
 	}
 
 };

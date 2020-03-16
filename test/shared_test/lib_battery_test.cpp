@@ -1,168 +1,119 @@
+
+#include <math.h>
 #include <gtest/gtest.h>
+
 #include <lib_battery.h>
 
-class BatteryProperties : public ::testing::Test
+#include "lib_battery_test.h"
+
+/// Test  lithium ion battery capacity response
+TEST_F(BatteryTest, LithiumIonCapacityTest_lib_battery)
 {
-protected:
-	
-	// general capacity
-	double q;
-	double SOC_min;
-	double SOC_max;
-	double SOC_init;
+	q = 100;
+	SOC_init = 100;
+	SOC_min = 20;
+	SOC_max = 100;
 
-	void SetUp()
-	{
-		q = 100;
-		SOC_init = 100;
-		SOC_min = 20;
-		SOC_max = 100;
+	if (capacityModel) {
+		delete capacityModel;
 	}
-};
+	capacityModel = new capacity_lithium_ion_t(q, SOC_init, SOC_max, SOC_min);
 
-class LithiumIonBattery : public BatteryProperties
-{
-protected:
-	capacity_lithium_ion_t * capacity_model; 
-
-	void SetUp()
-	{
-		BatteryProperties::SetUp();
-		capacity_model = new capacity_lithium_ion_t(q, SOC_init, SOC_max, SOC_min);
-	}
-	void TearDown()
-	{
-		if (capacity_model)
-			delete capacity_model;
-	}
-};
-
-TEST_F(LithiumIonBattery, LithiumIonCapacityUnitTest_lib_battery)
-{
 	// Check that initial capacity is equal to max
-	EXPECT_EQ(capacity_model->SOC(), SOC_max);
+	EXPECT_EQ(capacityModel->SOC(), SOC_max);
 
 	// Check that discharge of battery results in correct capacity
 	double I = 10;
-	capacity_model->updateCapacity(I, 1);
-	EXPECT_EQ(capacity_model->SOC(), 90);
-	EXPECT_EQ(capacity_model->q0(), 90);
+	capacityModel->updateCapacity(I, 1);
+	EXPECT_EQ(capacityModel->SOC(), 90);
+	EXPECT_EQ(capacityModel->q0(), 90);
 
 	// check that charge of battery results in correct capacity
 	I = -10;
-	capacity_model->updateCapacity(I, 1);
-	EXPECT_EQ(capacity_model->SOC(), 100);
-	EXPECT_EQ(capacity_model->q0(), 100);
+	capacityModel->updateCapacity(I, 1);
+	EXPECT_EQ(capacityModel->SOC(), 100);
+	EXPECT_EQ(capacityModel->q0(), 100);
 
 	// check that updating thermal behavior changes capacity as expected
-	capacity_model->updateCapacityForThermal(95);
-	capacity_model->check_SOC();
-	EXPECT_EQ(capacity_model->q0(), 95);
-	EXPECT_EQ(capacity_model->qmax(), 100);
-	capacity_model->updateCapacityForThermal(100);
-	capacity_model->check_SOC();
+	capacityModel->updateCapacityForThermal(95);
+	capacityModel->check_SOC();
+	EXPECT_EQ(capacityModel->q0(), 95);
+	EXPECT_EQ(capacityModel->qmax(), 100);
+	capacityModel->updateCapacityForThermal(100);
+	capacityModel->check_SOC();
 
 	// check that updating lifetime degradation changes capacity
-	capacity_model->updateCapacityForLifetime(95);
-	EXPECT_EQ(capacity_model->q0(), 95);
-	EXPECT_EQ(capacity_model->qmax(), 95);
+	capacityModel->updateCapacityForLifetime(95);
+	EXPECT_EQ(capacityModel->q0(), 95);
+	EXPECT_EQ(capacityModel->qmax(), 95);
 
 	// check that battery replacement works
-	capacity_model->replace_battery();
-	EXPECT_EQ(capacity_model->SOC(), SOC_max);
-	EXPECT_EQ(capacity_model->q0(), 100);
-	EXPECT_EQ(capacity_model->qmax(), 100);
+	capacityModel->replace_battery(100);
+	EXPECT_EQ(capacityModel->SOC(), SOC_max);
+	EXPECT_EQ(capacityModel->q0(), 100);
+	EXPECT_EQ(capacityModel->qmax(), 100);
 
 	// check that model correctly detects overcharge, undercharge
-	capacity_model->updateCapacity(I, 1);
-	EXPECT_EQ(capacity_model->q0(), 100);
-	EXPECT_EQ(capacity_model->SOC(), SOC_max);
+	capacityModel->updateCapacity(I, 1);
+	EXPECT_EQ(capacityModel->q0(), 100);
+	EXPECT_EQ(capacityModel->SOC(), SOC_max);
 
 	I = 110;
-	capacity_model->updateCapacity(I, 1);
-	EXPECT_EQ(capacity_model->q0(), 20);
-	EXPECT_EQ(capacity_model->SOC(), SOC_min);
+	capacityModel->updateCapacity(I, 1);
+	EXPECT_EQ(capacityModel->q0(), 20);
+	EXPECT_EQ(capacityModel->SOC(), SOC_min);
 }
 
-class LeadAcidDC4006 : public BatteryProperties
+TEST_F(BatteryTest, LossesModel_lib_battery)
 {
-protected:
-	double q20;
-	double t1;
-	double q1;
-	double q10;
+	size_t idx = 1000;
 
-	void SetUp()
-	{
-		BatteryProperties::SetUp();
+	// Return loss for february
+	lossModel->run_losses(idx);
+	EXPECT_EQ(lossModel->getLoss(idx), 1);
 
-		q20 = 415;
-		q10 = 374;
-		q1 = 340;
-		t1 = 5;
-	}
-};
+}
 
-class LeadAcidBattery : public LeadAcidDC4006
+TEST_F(BatteryTest, AugmentCapacity)
 {
-protected:
-	capacity_kibam_t * capacity_model;
-
-	void SetUp()
-	{
-		LeadAcidDC4006::SetUp();
-		capacity_model = new capacity_kibam_t(q20, t1, q1, q10, SOC_init, SOC_max, SOC_min);
-	}
-	void TearDown()
-	{
-		if (capacity_model)
-			delete capacity_model;
-	}
-};
-
-TEST_F(LeadAcidBattery, LeadAcidCapacityUnitTest_lib_battery)
-{
-	// Check that initial capacity is equal to max
-	EXPECT_EQ(capacity_model->SOC(), SOC_max);
-
-	/*
-	// Check that discharge of battery results in correct capacity
-	capacity_model->updateCapacity(10, 1);
-	EXPECT_DOUBLE_EQ(capacity_model->SOC(), 97.959525493854386);
-	EXPECT_DOUBLE_EQ(capacity_model->q0(), 480.08208482298681);
-
-	// check that charge of battery results in correct capacity
-	capacity_model->updateCapacity(-10, 1);
-	EXPECT_DOUBLE_EQ(capacity_model->SOC(), 99.872284504899923);
-	EXPECT_DOUBLE_EQ(capacity_model->q0(), 489.45617406195834);
-
-	// check that updating thermal behavior changes capacity as expected
-	capacity_model->updateCapacityForThermal(95);
-	EXPECT_DOUBLE_EQ(capacity_model->q0(), 465.57798058183749);
-	EXPECT_DOUBLE_EQ(capacity_model->qmax(), 490.08208482298681);
-	capacity_model->updateCapacityForThermal(100);
-
-	// check that updating lifetime degradation changes capacity
-	capacity_model->updateCapacityForLifetime(95);
-	EXPECT_DOUBLE_EQ(capacity_model->q0(), 465.57798058183749);
-	EXPECT_DOUBLE_EQ(capacity_model->qmax(), 465.57798058183749);
-
-	// check that battery replacement works
-	capacity_model->replace_battery();
-	EXPECT_DOUBLE_EQ(capacity_model->SOC(), SOC_max); 
-
-	/*
-	EXPECT_DOUBLE_EQ(capacity_model->q0(), 465.57798058183749);
-	EXPECT_DOUBLE_EQ(capacity_model->qmax(), 490.08208482298681);
-
-	// check that model correctly detects overcharge, undercharge
-	capacity_model->updateCapacity(-100, 1);
-	EXPECT_EQ(capacity_model->q0(), 100);
-	EXPECT_EQ(capacity_model->SOC(), SOC_max);
-	capacity_model->updateCapacity(1000, 1);
-	EXPECT_EQ(capacity_model->q0(), 20);
-	EXPECT_EQ(capacity_model->SOC(), SOC_min);
-	*/
 	
+	std::vector<int> replacement_schedule = { 1, 1, 1 };
+	std::vector<double> augmentation_percent = { 50, 40 , 30 };
+	batteryModel->lifetime_model()->set_replacement_option(battery_t::REPLACE_BY_SCHEDULE);
+
+	// Correct future approach for augmenting batteries, by treating as seperate entities
+	std::vector<battery_t *> batteries;
+	batteries.push_back(batteryModel);
+	batteries.push_back(new battery_t(dtHour, chemistry));
+	batteries[1]->initialize(capacityModel, voltageModel, lifetimeModel, thermalModel, lossModel);
+	batteries[1]->lifetime_model()->set_replacement_option(battery_t::REPLACE_BY_SCHEDULE);
+	batteries.push_back(new battery_t(dtHour, chemistry));
+	batteries[2]->initialize(capacityModel, voltageModel, lifetimeModel, thermalModel, lossModel);
+	batteries[2]->lifetime_model()->set_replacement_option(battery_t::REPLACE_BY_SCHEDULE);
+
+	size_t i = 0;
+	double I = 100;
+	double mult = 1.0;
+	size_t replaceCount = 0;
+	for (size_t y = 0; y < replacement_schedule.size(); y++) {
+		for (size_t t = 0; t < 8760; t++) {
+			mult = fmod(t, 2) == 0 ? 1 : -1;
+			double current = mult*I;
+			batteries[replaceCount]->run(i, current);
+		}
+		if (replacement_schedule[y] == 1) {
+			replaceCount++;
+		}
+	}
+	
+	// Current, limited approach which only augments capacity in models, does not update lifetime degradation 
+	// trajectories or consider impacts on voltage and other aspects.
+	battery_t * battery = new battery_t(dtHour, chemistry);
+	battery->initialize(capacityModel, voltageModel, lifetimeModel, thermalModel, lossModel);
+	battery->lifetime_model()->set_replacement_option(battery_t::REPLACE_BY_SCHEDULE);
+
+
+
+
 
 }

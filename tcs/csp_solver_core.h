@@ -1,51 +1,24 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #ifndef __csp_solver_core_
 #define __csp_solver_core_
@@ -267,7 +240,6 @@ class C_csp_tou
 {
 
 public:
-
     struct S_csp_tou_params
     {
         bool m_isleapyear;
@@ -287,6 +259,7 @@ public:
         double m_csu_cost;
         double m_q_rec_standby;
         double m_pen_delta_w;
+        double m_disp_inventory_incentive;
 		double m_w_rec_ht;
 		std::vector<double> m_w_lim_full;
 
@@ -295,6 +268,8 @@ public:
         std::string m_ampl_data_dir;
         std::string m_ampl_exec_call;
 		
+        bool m_is_tod_pc_target_also_pc_max;
+
 		bool m_is_block_dispatch;
 
 		bool m_use_rule_1;
@@ -324,6 +299,7 @@ public:
             m_rsu_cost = 952.;
             m_csu_cost = 10000.;
             m_pen_delta_w = 0.1;
+            m_disp_inventory_incentive = 0.;
             m_q_rec_standby = 9.e99;
 			m_w_rec_ht = 0.0;
 			m_w_lim_full.resize(8760);
@@ -334,6 +310,8 @@ public:
             m_ampl_data_dir = "";               //directory where files should be written 
             m_ampl_exec_call = "";
 			
+            m_is_tod_pc_target_also_pc_max = false;
+
 			m_is_block_dispatch = true;			// Either this or m_dispatch_optimize must be true
 			
 			// Rule 1: if the sun sets (or does not rise) in m_standby_off_buffer [hours], then do not allow power cycle standby
@@ -417,11 +395,13 @@ public:
 	{
 		double m_latitude;		//[deg]
 		double m_longitude;		//[deg]
+        double m_tz;            //[hr]
 		double m_shift;			//[deg]
+        double m_elev;          //[m]
 
 		S_csp_cr_init_inputs()
 		{
-			m_latitude = m_longitude = m_shift = std::numeric_limits<double>::quiet_NaN();	
+			m_latitude = m_longitude = m_shift = m_tz = m_elev = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 	
@@ -430,13 +410,15 @@ public:
 		double m_T_htf_cold_des;		//[K]
 		double m_P_cold_des;			//[kPa]
 		double m_x_cold_des;			//[-]
+        double m_T_htf_hot_des;         //[K]
 		double m_q_dot_rec_des;			//[MW]
 		double m_A_aper_total;			//[m^2] Total solar field aperture area
+        double m_dP_sf;                 //[bar] Total field pressure drop
 
 		S_csp_cr_solved_params()
 		{
-			m_T_htf_cold_des = m_P_cold_des = m_x_cold_des =
-				m_q_dot_rec_des = m_A_aper_total = std::numeric_limits<double>::quiet_NaN();
+			m_T_htf_cold_des = m_P_cold_des = m_x_cold_des = m_T_htf_cold_des =
+				m_q_dot_rec_des = m_A_aper_total = m_dP_sf = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -467,11 +449,14 @@ public:
 		double m_q_thermal;				//[MWt] 'Available' receiver thermal output
 		double m_T_salt_hot;			//[C] Hot HTF from receiver
 		double m_component_defocus;		//[-] Defocus applied by component model to stay within mass flow or other constraints
+        bool m_is_recirculating;        //[-] Is field/receiver recirculating?
 			
 		// These are used for the parasitic class call(), so could be zero...
 		double m_E_fp_total;			//[MW] Solar field freeze protection power
 		double m_W_dot_col_tracking;	//[MWe] Collector tracking power
 		double m_W_dot_htf_pump;		//[MWe] HTF pumping power
+        double m_dP_sf;                 //[bar] Total field pressure drop
+		double m_q_rec_heattrace;		//[MW] Receiver heat trace parasitic power
 
 		// 07/08/2016, GZ: add new variables for DSG LF 
 		int m_standby_control;		//[-]
@@ -486,7 +471,11 @@ public:
 				m_W_dot_col_tracking = m_time_required_su = m_E_fp_total =
 				m_dP_sf_sh = m_h_htf_hot = m_xb_htf_hot = m_P_htf_hot = std::numeric_limits<double>::quiet_NaN();
 
+			m_q_rec_heattrace = 0.0;
+
 			m_component_defocus = 1.0;
+
+            m_is_recirculating = false;
 
 			m_standby_control = -1;
 		}
@@ -671,7 +660,7 @@ public:
 	virtual void write_output_intervals(double report_time_start,
 		const std::vector<double> & v_temp_ts_time_end, double report_time_end) = 0;
 
-	virtual void assign(int index, float *p_reporting_ts_array, int n_reporting_ts_array) = 0;
+	virtual void assign(int index, double *p_reporting_ts_array, size_t n_reporting_ts_array) = 0;
 
 };
 
@@ -682,27 +671,39 @@ public:
 	C_csp_tes(){};
 
 	~C_csp_tes(){};
+    struct S_csp_tes_init_inputs
+    {
+        double T_to_cr_at_des;		    //[K]
+        double T_from_cr_at_des;		//[K]
+        double P_to_cr_at_des;          //[bar]
+
+        S_csp_tes_init_inputs()
+        {
+            T_to_cr_at_des = T_from_cr_at_des = P_to_cr_at_des = std::numeric_limits<double>::quiet_NaN();
+        }
+    };
 
 	struct S_csp_tes_outputs
 	{
-		double m_q_heater;			//[MWe] Heating power required to keep tanks at a minimum temperature
-		double m_W_dot_rhtf_pump;	//[MWe] Pumping power for Receiver HTF thru storage
-		double m_q_dot_loss;		//[MWt] Storage thermal losses
-		double m_q_dot_dc_to_htf;	//[MWt] Thermal power to the HTF from storage
-		double m_q_dot_ch_from_htf;	//[MWt] Thermal power from the HTF to storage
-		double m_T_hot_ave;		//[K] Average hot tank temperature over timestep
-		double m_T_cold_ave;	//[K] Average cold tank temperature over timestep
-		double m_T_hot_final;	//[K] Hot temperature at end of timestep
-		double m_T_cold_final;	//[K] Cold temperature at end of timestep
+		double m_q_heater;			//[MWe]  Heating power required to keep tanks at a minimum temperature
+        double m_m_dot;             //[kg/s] Hot tank mass flow rate, valid for direct and indirect systems
+		double m_W_dot_rhtf_pump;	//[MWe]  Pumping power, just for tank-to-tank in indirect storage
+		double m_q_dot_loss;		//[MWt]  Storage thermal losses
+		double m_q_dot_dc_to_htf;	//[MWt]  Thermal power to the HTF from storage
+		double m_q_dot_ch_from_htf;	//[MWt]  Thermal power from the HTF to storage
+		double m_T_hot_ave;		    //[K]    Average hot tank temperature over timestep
+		double m_T_cold_ave;	    //[K]    Average cold tank temperature over timestep
+		double m_T_hot_final;	    //[K]    Hot tank temperature at end of timestep
+		double m_T_cold_final;	    //[K]    Cold tank temperature at end of timestep
 	
 		S_csp_tes_outputs()
 		{
-			m_q_heater = m_W_dot_rhtf_pump = m_q_dot_loss = m_q_dot_dc_to_htf = m_q_dot_ch_from_htf = m_T_hot_ave = 
-			m_T_cold_ave = m_T_hot_final = m_T_cold_final = std::numeric_limits<double>::quiet_NaN();
+			m_q_heater = m_m_dot = m_W_dot_rhtf_pump = m_q_dot_loss = m_q_dot_dc_to_htf = m_q_dot_ch_from_htf = 
+            m_T_hot_ave = m_T_cold_ave = m_T_hot_final = m_T_cold_final = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
-	virtual void init() = 0;
+	virtual void init(const C_csp_tes::S_csp_tes_init_inputs init_inputs) = 0;
 
 	virtual bool does_tes_exist() = 0;
 
@@ -733,6 +734,13 @@ public:
 	virtual void idle(double timestep, double T_amb, C_csp_tes::S_csp_tes_outputs &outputs) = 0;
 	
 	virtual void converged() = 0;
+
+    virtual int pressure_drops(double m_dot_sf, double m_dot_pb,
+        double T_sf_in, double T_sf_out, double T_pb_in, double T_pb_out, bool recirculating,
+        double &P_drop_col, double &P_drop_gen) = 0;
+
+    virtual double pumping_power(double m_dot_sf, double m_dot_pb, double m_dot_tank,
+        double T_sf_in, double T_sf_out, double T_pb_in, double T_pb_out, bool recirculating) = 0;
 };
 
 class C_csp_solver
@@ -994,6 +1002,7 @@ private:
 	bool m_is_tes;			//[-] True: plant has storage
 
 		// Reporting and Output Tracking
+    bool m_is_first_timestep;           //[-]
 	int m_i_reporting;					//[-]
 	double m_report_time_start;			//[s]
 	double m_report_time_end;			//[s]
@@ -1107,6 +1116,8 @@ public:
 		CR_DF__PC_SU__TES_OFF__AUX_OFF
 	};
 
+    static std::string tech_operating_modes_str[];
+    
 	C_csp_solver(C_csp_weatherreader &weather,
 		C_csp_collector_receiver &collector_receiver,
 		C_csp_power_cycle &power_cycle,

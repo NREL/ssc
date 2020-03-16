@@ -1,51 +1,24 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #define _TCSTYPEINTERFACE_
 #include "tcstype.h"
@@ -353,7 +326,7 @@ tcsvarinfo sam_mw_trough_type250_variables[] = {
 	{ TCS_PARAM,          TCS_MATRIX,               P_D_5,                 "D_5",                                                      "The outer glass envelope diameter ",            "m",             "",             "","[0.12,0.12,0.12,0.12][0.12,0.12,0.12,0.12][0.12,0.12,0.12,0.12][0.12,0.12,0.12,0.12]" },
 	{ TCS_PARAM,          TCS_MATRIX,               P_D_P,                 "D_p",                                      "The diameter of the absorber flow plug (optional) ",            "m",             "",             "","[0,0,0,0][0,0,0,0][0,0,0,0][0,0,0,0]" },
 	{ TCS_PARAM,          TCS_MATRIX,         P_FLOW_TYPE,           "Flow_type",                                                      "The flow type through the absorber",         "none",             "",             "","[1,1,1,1][1,1,1,1][1,1,1,1][1,1,1,1]" },
-	{ TCS_PARAM,          TCS_MATRIX,             P_ROUGH,               "Rough",                                                      "Roughness of the internal surface ",            "m",             "",             "","[4.50E-05,4.50E-05,4.50E-05,4.50E-05][4.50E-05,4.50E-05,4.50E-05,4.50E-05][4.50E-05,4.50E-05,4.50E-05,4.50E-05][4.50E-05,4.50E-05,4.50E-05,4.50E-05]" },
+	{ TCS_PARAM,          TCS_MATRIX,             P_ROUGH,               "Rough",                                         "Relative roughness of the internal HCE surface ",            "-",             "",             "","[4.50E-05,4.50E-05,4.50E-05,4.50E-05][4.50E-05,4.50E-05,4.50E-05,4.50E-05][4.50E-05,4.50E-05,4.50E-05,4.50E-05][4.50E-05,4.50E-05,4.50E-05,4.50E-05]" },
 	{ TCS_PARAM,          TCS_MATRIX,         P_ALPHA_ENV,           "alpha_env",                                                                   "Envelope absorptance ",         "none",             "",             "","[0.02,0.02,0,0][0.02,0.02,0,0][0.02,0.02,0,0][0.02,0.02,0,0]" },
 	{ TCS_PARAM,          TCS_MATRIX,      P_EPSILON_3_11,        "epsilon_3_11",                                       "Absorber emittance - HCE type 1 - HCE variation 1",         "none",             "",             "","[100,150,200,250,300,350,400,450,500][0.064,0.0665,0.07,0.0745,0.08,0.0865,0.094,0.1025,0.112]" },
 	{ TCS_PARAM,          TCS_MATRIX,      P_EPSILON_3_12,        "epsilon_3_12",                                       "Absorber emittance - HCE type 1 - HCE variation 2",         "none",             "",             "",        "0,.65" },
@@ -1369,11 +1342,12 @@ public:
         D_cpnt.assign(D_cpnt_in, nrow_D_cpnt, ncol_D_cpnt);
         L_cpnt.assign(L_cpnt_in, nrow_L_cpnt, ncol_L_cpnt);
         Type_cpnt.assign(Type_cpnt_in, nrow_Type_cpnt, ncol_Type_cpnt);
-        rough_cpnt.resize_fill(nrow_K_cpnt, ncol_K_cpnt, HDR_rough);
+        rough_cpnt.resize(nrow_K_cpnt, ncol_K_cpnt);
         u_cpnt.resize_fill(nrow_K_cpnt, ncol_K_cpnt, Pipe_hl_coef);
         mc_cpnt.resize(nrow_K_cpnt, ncol_K_cpnt);
         for (std::size_t i = 0; i < mc_cpnt.ncells(); i++) {
             mc_cpnt[i] = mc_bal_sca * 3.6e3 * L_cpnt[i];
+            rough_cpnt[i] = HDR_rough / D_cpnt[i];
         }
 
         interconnects.reserve(nrow_K_cpnt);  // nrow_K_cpnt = number of interconnects
@@ -1596,6 +1570,23 @@ public:
 			}
 			//the estimated mass flow rate at design
 			m_dot_design = (Ap_tot*I_bn_des*opteff_des - loss_tot*float(nLoops)) / (c_htf_ave*(T_loop_out - T_loop_in_des));  //tn 4.25.11 using Ap_tot instead of A_loop. Change location of opteff_des
+            double m_dot_max = m_dot_htfmax * nLoops;
+            double m_dot_min = m_dot_htfmin * nLoops;
+            if (m_dot_design > m_dot_max) {
+                const char *msg = "The calculated field design mass flow rate of %.2f kg/s is greater than the maximum defined by the max single loop flow rate and number of loops (%.2f kg/s). "
+                    "The design mass flow rate is reset to the latter.";
+                std::string error_msg = util::format(msg, m_dot_design, m_dot_max);
+                message(TCS_NOTICE, error_msg.c_str());
+                m_dot_design = m_dot_max;
+            }
+            else if (m_dot_design < m_dot_min) {
+                const char *msg = "The calculated field design mass flow rate of %.2f kg/s is less than the minimum defined by the min single loop flow rate and number of loops (%.2f kg/s). "
+                    "The design mass flow rate is reset to the latter.";
+                std::string error_msg = util::format(msg, m_dot_design, m_dot_min);
+                message(TCS_NOTICE, error_msg.c_str());
+                m_dot_design = m_dot_min;
+            }
+
 			//mjw 1.16.2011 Design field thermal power 
 			q_design = m_dot_design * c_htf_ave * (T_loop_out - T_loop_in_des); //[Wt]
 			//mjw 1.16.2011 Convert the thermal inertia terms here
@@ -1603,6 +1594,8 @@ public:
 			mc_bal_cold = mc_bal_cold * 3.6 * q_design;  //[J/K]
 
 			//need to provide fluid density
+            double rho_cold = htfProps.dens(T_loop_in_des, P_field_in / 2); //kg/m3
+            double rho_hot = htfProps.dens(T_loop_out, P_field_in / 2); //kg/m3
 			double rho_ave = htfProps.dens((T_loop_out + T_loop_in_des) / 2.0, P_field_in / 2); //kg/m3
 			//Calculate the header design
 			nrunsec = (int)floor(float(nfsec) / 4.0) + 1;  //The number of unique runner diameters
@@ -1647,7 +1640,7 @@ public:
             }
 
 			std::string summary;
-            rnr_and_hdr_design(nhdrsec, nfsec, nrunsec, rho_ave, V_hdr_cold_max, V_hdr_cold_min,
+            rnr_and_hdr_design(nhdrsec, nfsec, nrunsec, rho_cold, rho_hot, V_hdr_cold_max, V_hdr_cold_min,
                 V_hdr_hot_max, V_hdr_hot_min, N_max_hdr_diams, m_dot_design, D_hdr, D_runner,
                 m_dot_rnr_dsn, m_dot_hdr_dsn, V_rnr_dsn, V_hdr_dsn, &summary, custom_sf_pipe_sizes);
 
@@ -1836,7 +1829,7 @@ public:
             longitude = value(I_LONGITUDE);		// Site longitude read from weather file [deg]
             shift = value(I_SHIFT);			    // [deg]
 
-            call(43200, 0, 0);      // 43200 = noon
+            call(14817600, 0, 0);      // 14817600 = noon on the summer solstice
 
             // Restore parameters
             calc_design_pipe_vals = false;
@@ -2976,7 +2969,7 @@ calc_final_metrics_goto:
 				int CT = (int)SCAInfoArray(i,1)-1;    //Collector type    
 				int HT = (int)SCAInfoArray(i,0)-1;    //HCE type
         
-				DP_tube[i] = DP_tube[i] + PressureDrop(m_dot_htf,T_htf_ave[i],P_field_in - i*P_field_in/nSCA,D_h(HT,j),(Rough(HT,j)*D_h(HT,j)),
+				DP_tube[i] = DP_tube[i] + PressureDrop(m_dot_htf,T_htf_ave[i],P_field_in - i*P_field_in/nSCA,D_h(HT,j),Rough(HT,j)*D_h(HT, j),
 							 L_SCA[CT],0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0)*HCE_FieldFrac(HT,j);
 
 			}
@@ -3366,8 +3359,8 @@ set_outputs_and_return:
             }
 
             value(O_T_FIELD_IN_AT_DSN, T_rnr_des_out.at(0));
-            value(O_T_FIELD_OUT_AT_DSN, T_rnr_des_out.at(T_rnr_des_out.ncells() - 1));
-            value(O_P_FIELD_IN_AT_DSN, P_rnr_des_out.at(0));
+            value(O_T_FIELD_OUT_AT_DSN, T_rnr_des_out.at(T_rnr_des_out.ncells() - 1));  // need to still account for heat loss in this last pipe
+            value(O_P_FIELD_IN_AT_DSN, P_rnr_des_out.at(0));                            // need to still account for pressure loss in this last pipe
 
             // wait to output arrays until TES/PB sizing has finished so P can be adjusted
         }
@@ -5062,7 +5055,7 @@ lab_keep_guess:
 	 following document:
 
 	   Parabolic Trough Solar System Piping Model
-	   Final Report May 13, 2002 — December 31, 2004
+	   Final Report May 13, 2002 ï¿½ December 31, 2004
 
 	   B. Kelly
 	   Nexant, Inc. San Francisco, California
@@ -5094,9 +5087,9 @@ lab_keep_guess:
 	  3 | P            | Fluid pressure                        | Pa        | float
 	  4 | D            | Diameter of the contact surface       | m         | float
 	  5 | Rough        | Pipe roughness                        | m         | float
-	  6 | L_pipe       | Length of pipe for pressure drop      | m         | float
-	  7 | Nexp         | Number of expansions                  | none      | float
-	  8 | Ncon         | Number of contractions                | none      | float
+      6 | L_pipe       | Length of pipe for pressure drop      | m         | float
+      7 | Nexp         | Number of expansions                  | none      | float
+      8 | Ncon         | Number of contractions                | none      | float
 	  9 | Nels         | Number of standard elbows             | none      | float
 	 10 | Nelm         | Number of medium elbows               | none      | float
 	 11 | Nell         | Number of long elbows                 | none      | float
@@ -5273,7 +5266,7 @@ lab_keep_guess:
        * custom_diams - [-] Should the diameters be input instead of calculated? 
 	---------------------------------------------------------------------------------			*/
 
-	void rnr_and_hdr_design(unsigned nhsec, int nfsec, unsigned nrunsec, double rho, double V_cold_max, double V_cold_min,
+	void rnr_and_hdr_design(unsigned nhsec, int nfsec, unsigned nrunsec, double rho_cold, double rho_hot, double V_cold_max, double V_cold_min,
         double V_hot_max, double V_hot_min, int N_max_hdr_diams, double m_dot, util::matrix_t<double> &D_hdr, util::matrix_t<double> &D_runner,
         util::matrix_t<double> &m_dot_rnr, util::matrix_t<double> &m_dot_hdr, util::matrix_t<double> &V_rnr, util::matrix_t<double> &V_hdr,
         std::string *summary = NULL, bool custom_diams = false){
@@ -5293,6 +5286,8 @@ lab_keep_guess:
 		int nend, nd;
 		unsigned nst;
 		double m_dot_hdrs, m_dot_2loops;
+        double V_cold_avg = (V_cold_max + V_cold_min) / 2.;
+        double V_hot_avg = (V_hot_max + V_hot_min) / 2.;
 		
 		//Mass flow into 1 header
 		m_dot_hdrs = m_dot/float(nfsec);
@@ -5301,15 +5296,14 @@ lab_keep_guess:
 
 		//Runner diameters
 		//runner pipe needs some length to go from the power block to the headers
-        //assume symmetric hot and cold runners
 		m_dot_rnr[0] = m_dot/2.;   //mass flow through half-length runners is always half of total
         m_dot_rnr[2 * nrunsec - 1] = m_dot_rnr[0];
         if (!custom_diams) {
-		    D_runner.at(0) = CSP::pipe_sched(sqrt(4.*m_dot_rnr[0]/(rho*V_cold_max*pi)));
-            D_runner.at(2 * nrunsec - 1) = D_runner.at(0);
+		    D_runner.at(0) = CSP::pipe_sched(sqrt(4.*m_dot_rnr[0]/(rho_cold*V_cold_max*pi)));
+            D_runner.at(2 * nrunsec - 1) = CSP::pipe_sched(sqrt(4.*m_dot_rnr[2 * nrunsec - 1] / (rho_hot*V_hot_avg*CSP::pi)));
         }
-        V_rnr.at(0) = 4.*m_dot_rnr[0] / (rho*pow(D_runner.at(0), 2)*pi);
-        V_rnr.at(2 * nrunsec - 1) = V_rnr.at(0);
+        V_rnr.at(0) = 4.*m_dot_rnr[0] / (rho_cold*pow(D_runner.at(0), 2)*pi);
+        V_rnr.at(2 * nrunsec - 1) = 4.*m_dot_rnr[2 * nrunsec - 1] / (rho_hot*pow(D_runner.at(2 * nrunsec - 1), 2)*CSP::pi);
 		for (unsigned i=1; i<nrunsec; i++){
             if (i == 1) {
 		        m_dot_rnr[i] = m_dot_rnr[i-1]*(1.-float(nfsec%4)/float(nfsec));  //Adjust mass flow for first full-length runners when nfsec/2==odd
@@ -5319,11 +5313,11 @@ lab_keep_guess:
             }
             m_dot_rnr[2 * nrunsec - i - 1] = m_dot_rnr[i];
             if (!custom_diams) {
-			    D_runner[i] = CSP::pipe_sched(sqrt(4.*m_dot_rnr[i]/(rho*V_cold_max*pi)));
-                D_runner[2 * nrunsec - i - 1] = D_runner[i];
+			    D_runner[i] = CSP::pipe_sched(sqrt(4.*m_dot_rnr[i]/(rho_cold*V_cold_max*pi)));
+                D_runner[2 * nrunsec - i - 1] = CSP::pipe_sched(sqrt(4.*m_dot_rnr[2 * nrunsec - i - 1] / (rho_hot*V_hot_avg*CSP::pi)));
             }
-            V_rnr.at(i) = 4.*m_dot_rnr[i] / (rho*pow(D_runner.at(i), 2)*pi);
-            V_rnr.at(2 * nrunsec - i - 1) = V_rnr.at(i);
+            V_rnr.at(i) = 4.*m_dot_rnr[i] / (rho_cold*pow(D_runner.at(i), 2)*pi);
+            V_rnr.at(2 * nrunsec - i - 1) = 4.*m_dot_rnr[2 * nrunsec - i - 1] / (rho_hot*pow(D_runner.at(2 * nrunsec - i - 1), 2)*CSP::pi);
 		}
 
 		//Calculate each section in the cold header
@@ -5336,12 +5330,11 @@ lab_keep_guess:
             for (std::size_t i = 0; i < nhsec; i++) {
                 if (i == 0) {
                     m_dot_enter = m_dot_hdrs;
-                    V_enter = 4.*m_dot_enter / (rho*pi*D_hdr[i] * D_hdr[i]);
                 }
-                else if (nd < N_max_hdr_diams) {
+                else {
                     m_dot_enter -= m_dot_2loops;
-                    V_enter = 4.*m_dot_enter / (rho*pi*D_hdr[i - 1] * D_hdr[i - 1]);  // assuming no diameter change
                 }
+                V_enter = 4.*m_dot_enter / (rho_cold*pi*D_hdr[i] * D_hdr[i]);
                 m_dot_hdr[i] = m_dot_enter;
                 V_hdr[i] = V_enter;
             }
@@ -5352,11 +5345,11 @@ lab_keep_guess:
                     m_dot_enter = m_dot_hdrs;
                     // Size cold header diameter using V_max to allow for mass loss into loops
                     // Select actual pipe that is larger (param=true) than ideal pipe b/c if smaller it will definitely exceed V_max
-                    D_hdr[i] = CSP::pipe_sched(sqrt(4.*m_dot_enter / (rho*V_hdr_cold_max*pi)), true);
-                    V_enter = 4.*m_dot_enter / (rho*pi*D_hdr[i] * D_hdr[i]);
+                    D_hdr[i] = CSP::pipe_sched(sqrt(4.*m_dot_enter / (rho_cold*V_hdr_cold_max*pi)), true);
+                    V_enter = 4.*m_dot_enter / (rho_cold*pi*D_hdr[i] * D_hdr[i]);
                     if (V_enter < V_hdr_cold_min) {  // if the entering velocity will be below the minimum (it won't exceed V_max)
-                        D_hdr_next = CSP::pipe_sched(sqrt(4.*m_dot_enter / (rho*V_hdr_cold_max*pi)), false);   // size smaller this time, will definitely exceed V_max
-                        V_enter_next = 4.*m_dot_enter / (rho*pi*D_hdr_next*D_hdr_next);
+                        D_hdr_next = CSP::pipe_sched(sqrt(4.*m_dot_enter / (rho_cold*V_hdr_cold_max*pi)), false);   // size smaller this time, will definitely exceed V_max
+                        V_enter_next = 4.*m_dot_enter / (rho_cold*pi*D_hdr_next*D_hdr_next);
                         // Choose the smaller diameter (faster V) if it's closer to being in range
                         if (V_enter_next - V_hdr_cold_max <= V_hdr_cold_min - V_enter) {  // '<=' is so the smaller (faster) pipe is preferred in a tie
                             D_hdr[i] = D_hdr_next;
@@ -5366,14 +5359,14 @@ lab_keep_guess:
                 }
                 else if (nd < N_max_hdr_diams) {
                     m_dot_enter -= m_dot_2loops;
-                    V_enter = 4.*m_dot_enter / (rho*pi*D_hdr[i - 1] * D_hdr[i - 1]);  // assuming no diameter change
+                    V_enter = 4.*m_dot_enter / (rho_cold*pi*D_hdr[i - 1] * D_hdr[i - 1]);  // assuming no diameter change
                     if (V_enter < V_hdr_cold_min) {   // if the entering velocity will be below the minimum if there is no diameter change
-                        D_hdr_next = CSP::pipe_sched(sqrt(4.*m_dot_enter / (rho*V_hdr_cold_max*pi)), true);  // size larger than optimal so it won't exceed V_max
-                        V_enter_next = 4.*m_dot_enter / (rho*pi*D_hdr_next*D_hdr_next);
+                        D_hdr_next = CSP::pipe_sched(sqrt(4.*m_dot_enter / (rho_cold*V_hdr_cold_max*pi)), true);  // size larger than optimal so it won't exceed V_max
+                        V_enter_next = 4.*m_dot_enter / (rho_cold*pi*D_hdr_next*D_hdr_next);
                         if (V_enter_next < V_hdr_cold_min) {  // if the velocity is still below V_min (it won't exceed V_max)
                             // try smaller than the optimal this time and choose the one with the velocity closest to being in range
-                            D_hdr_next2 = CSP::pipe_sched(sqrt(4.*m_dot_enter / (rho*V_hdr_cold_max*pi)), false);  // size smaller this time (will exceed V_max)
-                            V_enter_next2 = 4.*m_dot_enter / (rho*pi*D_hdr_next2*D_hdr_next2);
+                            D_hdr_next2 = CSP::pipe_sched(sqrt(4.*m_dot_enter / (rho_cold*V_hdr_cold_max*pi)), false);  // size smaller this time (will exceed V_max)
+                            V_enter_next2 = 4.*m_dot_enter / (rho_cold*pi*D_hdr_next2*D_hdr_next2);
                             if (V_hdr_cold_min - V_enter_next < V_enter_next2 - V_hdr_cold_max) {   // '<' is so the smaller (faster) pipe is preferred in a tie
                                 D_hdr[i] = D_hdr_next;
                             }
@@ -5391,10 +5384,11 @@ lab_keep_guess:
                     }
                 }
                 else {
-                    D_hdr[i] = D_hdr[i - 1];
+                    m_dot_enter -= m_dot_2loops;
+                    D_hdr[i] = D_hdr[i - 1];        // no diameter change allowed
                 }
                 m_dot_hdr[i] = m_dot_enter;
-                V_hdr[i] = V_enter;
+                V_hdr[i] = 4.*m_dot_hdr[i] / (rho_cold*CSP::pi*D_hdr[i] * D_hdr[i]);
             }
         }
 
@@ -5407,14 +5401,8 @@ lab_keep_guess:
         nd = 0;
         if (custom_diams) {
             for (std::size_t i = nhsec; i < 2 * nhsec; i++) {
-                if (i == nhsec) {
-                    m_dot_leave = m_dot_2loops;
-                    V_leave = 4.*m_dot_leave / (rho*pi*D_hdr[i] * D_hdr[i]);
-                }
-                else if (nd < N_max_hdr_diams) {
-                    m_dot_leave += m_dot_2loops;
-                    V_leave = 4.*m_dot_leave / (rho*pi*D_hdr[i - 1] * D_hdr[i - 1]);  // assuming no diameter change
-                }
+                m_dot_leave += m_dot_2loops;
+                V_leave = 4.*m_dot_leave / (rho_hot*pi*D_hdr[i] * D_hdr[i]);
                 m_dot_hdr[i] = m_dot_leave;
                 V_hdr[i] = V_leave;
             }
@@ -5425,11 +5413,11 @@ lab_keep_guess:
                     m_dot_leave = m_dot_2loops;
                     // Size hot header diameter using V_min to allow for mass addition from downstream loops
                     // Select actual pipe that is smaller than ideal pipe b/c if sizing larger it will definitely deceed V_min
-                    D_hdr[i] = CSP::pipe_sched(sqrt(4.*m_dot_leave / (rho*V_hdr_hot_min*pi)), false);
-                    V_leave = 4.*m_dot_leave / (rho*pi*D_hdr[i] * D_hdr[i]);
+                    D_hdr[i] = CSP::pipe_sched(sqrt(4.*m_dot_leave / (rho_hot*V_hdr_hot_min*pi)), false);
+                    V_leave = 4.*m_dot_leave / (rho_hot*pi*D_hdr[i] * D_hdr[i]);
                     if (V_leave > V_hdr_hot_max) {   // if the leaving velocity will be above the maximum (it won't deceed V_min)
-                        D_hdr_next = CSP::pipe_sched(sqrt(4.*m_dot_leave / (rho*V_hdr_hot_min*pi)), true);   // size larger this time, will definitely be below V_min
-                        V_leave_next = 4.*m_dot_leave / (rho*pi*D_hdr_next*D_hdr_next);
+                        D_hdr_next = CSP::pipe_sched(sqrt(4.*m_dot_leave / (rho_hot*V_hdr_hot_min*pi)), true);   // size larger this time, will definitely be below V_min
+                        V_leave_next = 4.*m_dot_leave / (rho_hot*pi*D_hdr_next*D_hdr_next);
                             // Choose the larger diameter (slower V) if it's closer to being in range
                             if (V_hdr_hot_min - V_leave_next < V_leave - V_hdr_hot_max) {  // '<' is so the smaller (cheaper) pipe is preferred in a tie
                                 D_hdr[i] = D_hdr_next;
@@ -5439,14 +5427,14 @@ lab_keep_guess:
                 }
                 else if (nd < N_max_hdr_diams) {
                     m_dot_leave += m_dot_2loops;
-                    V_leave = 4.*m_dot_leave / (rho*pi*D_hdr[i - 1] * D_hdr[i - 1]);  // assuming no diameter change
+                    V_leave = 4.*m_dot_leave / (rho_hot*pi*D_hdr[i - 1] * D_hdr[i - 1]);  // assuming no diameter change
                     if (V_leave > V_hdr_hot_max) {   // if the leaving velocity will be above the maximum if there is no diameter change
-                        D_hdr_next = CSP::pipe_sched(sqrt(4.*m_dot_leave / (rho*V_hdr_hot_min*pi)), false);  // size smaller than optimal so it won't deceed V_min
-                        V_leave_next = 4.*m_dot_leave / (rho*pi*D_hdr_next*D_hdr_next);
+                        D_hdr_next = CSP::pipe_sched(sqrt(4.*m_dot_leave / (rho_hot*V_hdr_hot_min*pi)), false);  // size smaller than optimal so it won't deceed V_min
+                        V_leave_next = 4.*m_dot_leave / (rho_hot*pi*D_hdr_next*D_hdr_next);
                         if (V_leave_next > V_hdr_hot_max) {  // if the velocity is still above V_max (it won't be below V_min)
                             // try larger than the optimal this time and choose the one with the velocity closest to being in range
-                            D_hdr_next2 = CSP::pipe_sched(sqrt(4.*m_dot_leave / (rho*V_hdr_hot_min*pi)), true);  // size larger this time (will be below V_min)
-                            V_leave_next2 = 4.*m_dot_leave / (rho*pi*D_hdr_next2*D_hdr_next2);
+                            D_hdr_next2 = CSP::pipe_sched(sqrt(4.*m_dot_leave / (rho_hot*V_hdr_hot_min*pi)), true);  // size larger this time (will be below V_min)
+                            V_leave_next2 = 4.*m_dot_leave / (rho_hot*pi*D_hdr_next2*D_hdr_next2);
                             if (V_leave_next - V_hdr_hot_max <= V_hdr_hot_min - V_leave_next2) {   // '<=' is so the smaller (cheaper) pipe is preferred in a tie
                                 D_hdr[i] = D_hdr_next;
                             }
@@ -5464,10 +5452,11 @@ lab_keep_guess:
                     }
                 }
                 else {
-                    D_hdr[i] = D_hdr[i - 1];
+                    m_dot_leave += m_dot_2loops;
+                    D_hdr[i] = D_hdr[i - 1];        // no diameter change allowed
                 }
                 m_dot_hdr[i] = m_dot_leave;
-                V_hdr[i] = V_leave;
+                V_hdr[i] = 4.*m_dot_hdr[i] / (rho_hot*CSP::pi*D_hdr[i] * D_hdr[i]);
             }
         }
 		

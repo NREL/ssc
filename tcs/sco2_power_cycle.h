@@ -80,9 +80,9 @@ struct cycle_design_parameters
 	double m_P_high_limit;			//[kPa] Maximum allowable high-side pressure - only used if fixed_P_mc_out = false
 	double m_P_mc_out_guess;			//[kPa] Initial value for mc outlet pressure - only used if fixed_P_mc_out = false
 
-	bool m_fixed_PR_mc;				// Is the Pressure Ratio over the main compressor fixed or available for optimization
+	bool m_fixed_PR_HP_to_LP;				// Is the Pressure Ratio over the main compressor fixed or available for optimization
 	double m_PR_mc;					//[-] Pressure Ratio - only used if fixed_PR_mc = true
-	double m_PR_mc_guess;				//[-] Initial value for Pressure Ratio - only used if fixed_PR_mc = false
+	double m_PR_HP_to_LP_guess;				//[-] Initial value for Pressure Ratio - only used if fixed_PR_mc = false
 
 	bool m_fixed_recomp_frac;			// Is the recompressor fraction fixed or available for optimization?
 	double m_recomp_frac;				//[-] Recompression fraction - only used if fixed_recomp_frac = true
@@ -92,10 +92,10 @@ struct cycle_design_parameters
 	{
 		m_mc_type = m_rc_type = m_N_sub_hxrs - 1;
 		
-		m_fixed_LT_frac = m_fixed_P_mc_out = m_fixed_PR_mc = m_fixed_recomp_frac = false;
+		m_fixed_LT_frac = m_fixed_P_mc_out = m_fixed_PR_HP_to_LP = m_fixed_recomp_frac = false;
 		
 		m_W_dot_net = m_T_mc_in = m_T_t_in = m_N_t = m_eta_mc = m_eta_rc = m_eta_t = m_tol = m_opt_tol = m_UA_rec_total = m_LT_frac = m_LT_frac_guess = m_P_mc_out = 
-			m_P_high_limit = m_P_mc_out_guess = m_PR_mc = m_PR_mc_guess = m_recomp_frac = m_recomp_frac_guess = std::numeric_limits<double>::quiet_NaN();
+			m_P_high_limit = m_P_mc_out_guess = m_PR_mc = m_PR_HP_to_LP_guess = m_recomp_frac = m_recomp_frac_guess = std::numeric_limits<double>::quiet_NaN();
 		
 		m_DP_LT.resize(2);
 		std::fill(m_DP_LT.begin(), m_DP_LT.end(), std::numeric_limits<double>::quiet_NaN());

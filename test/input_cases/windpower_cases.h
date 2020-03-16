@@ -14,7 +14,7 @@ int windpower_nofinancial_testfile(ssc_data_t &data)
 		return -1;
 	}
 
-	char filepath[150];
+	char filepath[1024];
 	int n1 = sprintf(filepath, "%s/test/input_docs/wind.srw", std::getenv("SSCDIR"));
 
 	ssc_data_set_string(data, "wind_resource_filename", filepath);
@@ -52,7 +52,6 @@ int windpower_nofinancial_testfile(ssc_data_t &data)
 	ssc_data_set_number(data, "wind_turbine_max_cp", (ssc_number_t)0.450);
 	ssc_data_set_array(data, "wind_farm_xCoordinates", xcoord, 32);
 	ssc_data_set_array(data, "wind_farm_yCoordinates", ycoord, 32);
-	ssc_data_set_number(data, "wind_farm_losses_percent", 0);
 	ssc_data_set_number(data, "wind_farm_wake_model", 0);
 	ssc_data_set_number(data, "adjust:constant", 0);
 	

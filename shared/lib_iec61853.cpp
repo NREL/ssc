@@ -1,51 +1,24 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #include <string>
 #include <numeric>
@@ -279,8 +252,8 @@ bool iec61853_module_t::solve( double Voc, double Isc, double Vmp, double Imp, d
 			double *p_Il, double *p_Io, double *p_Rs, double *p_Rsh )
 {
 	// initial guesses must be passed in
-	double Il = *p_Il;
-	double Io = *p_Io;
+	Il = *p_Il;
+	Io = *p_Io;
 	double Rs = *p_Rs;
 	double Rsh = *p_Rsh;
 
@@ -602,9 +575,9 @@ bool iec61853_module_t::calculate( util::matrix_t<double> &input, int nseries, i
 		
 		// make a guess at the parameters
 		double a =  nseries*nfac[i]*k*TcK/q;
-		double Il = 0.95*Isc;
+		Il = 0.95*Isc;
 		double Rsh = Rsh_ref0 * 1000.0/Irr;
-		double Io = ( Il - Voc/Rsh )/( exp(Voc/a) - 1 );
+		Io = ( Il - Voc/Rsh )/( exp(Voc/a) - 1 );
 		double Rs = Rs_ref0;		
 		
 		if ( verbose )
@@ -885,27 +858,32 @@ bool iec61853_module_t::operator() ( pvinput_t &input, double TcellC, double opv
 	/* initialize output first */
 	out.Power = out.Voltage = out.Current = out.Efficiency = out.Voc_oper = out.Isc_oper = 0.0;
 	
-	double poa, tpoa, iamf;
-	iamf = 1;
+	double iamf_beam = 1;
+	double iamf_diff = 1;
+	double iamf_gnd = 1;
 
-	if( input.radmode != 3 ){ // Skip module cover effects if using POA reference cell data 
+	double AOIModifier = 1;
+
+	double poa, tpoa;
+	if( input.radmode != 3 ){ // Skip module cover effects if using POA reference cell data
 		// plane of array irradiance, W/m2
-		poa = input.Ibeam + input.Idiff + input.Ignd; 
+		poa = input.Ibeam + input.Idiff + input.Ignd;
 
-		// transmitted poa through module cover
-		tpoa = poa;
+		iamf_beam = iam( input.IncAng, GlassAR );
+		// Add consideration of sky diffuse and ground components to match both the cec and mlm module models - CZ 2019
+		double theta_diff = (59.7 - 0.1388 * input.Tilt + 0.001497 * pow(input.Tilt, 2)); // from [2], equation 5.4.2
+	    double theta_gnd = (90.0 - 0.5788 * input.Tilt + 0.002693 * pow(input.Tilt, 2)); // from [2], equation 5.4.1
+		iamf_diff = iam( theta_diff, GlassAR );
+		iamf_gnd = iam( theta_gnd, GlassAR );
 
-		if ( input.IncAng > AOI_MIN && input.IncAng < AOI_MAX )
-		{
-			iamf = iam( input.IncAng, GlassAR );
-			tpoa = poa - ( 1.0 - iamf )*input.Ibeam*cos(input.IncAng*3.1415926/180.0);
-			if( tpoa < 0.0 ) tpoa = 0.0;
-			if( tpoa > poa ) tpoa = poa;
-		}
+        tpoa = iamf_beam * input.Ibeam + iamf_diff * input.Idiff + iamf_gnd * input.Ignd;
+        if( tpoa < 0.0 ) tpoa = 0.0;
+        if( tpoa > poa ) tpoa = poa;
 	
 		// spectral effect via AM modifier
 		double ama = air_mass_modifier( input.Zenith, input.Elev, AMA );
 		tpoa *= ama;
+		AOIModifier = tpoa/poa;
 	} 
 	else if(input.usePOAFromWF){ // Check if decomposed POA is required, if not use weather file POA directly
 		tpoa = poa = input.poaIrr;
@@ -924,7 +902,7 @@ bool iec61853_module_t::operator() ( pvinput_t &input, double TcellC, double opv
 		double Ilop = tpoa/1000*(Il + alphaIsc*(Tc-298.15));
 		double Egop = (1-0.0002677*(Tc-298.15))*Egref;
 		double Ioop = Io*pow(Tc/298.15,3.0)*exp( 11600 * (Egref/298.15 - Egop/Tc));
-		double Rsop = D1 + D2*(Tc-298.15) + D3*( 1-tpoa/1000.0)*pow(1000.0/poa,2.0);
+		double Rsop = D1 + D2*(Tc-298.15) + D3*( 1-tpoa/1000.0)*pow(1000.0/tpoa,2.0);
 		double Rshop = C1 + C2*( pow(1000.0/tpoa,C3)-1 );
 					
 
@@ -960,7 +938,7 @@ bool iec61853_module_t::operator() ( pvinput_t &input, double TcellC, double opv
 		out.Voc_oper = V_oc;
 		out.Isc_oper = I_sc;
 		out.CellTemp = Tc - 273.15;
-		out.AOIModifier = iamf;
+		out.AOIModifier = AOIModifier;
 	}
 
 	return out.Power >= 0;

@@ -28,17 +28,22 @@ void single_year_to_lifetime_interpolated(
 {
 	// Parse lifetime properties
 	n_rec_single_year = n_rec_lifetime;
-	dt_hour = (double)(util::hours_per_year) / (double)(n_rec_lifetime);
 
 	if (is_lifetime) {
-		dt_hour = (double)(util::hours_per_year * n_years) / n_rec_lifetime;
 		n_rec_single_year = n_rec_lifetime / n_years;
 	}
 	else {
 		n_years = 1;
 	}
+	dt_hour = (double)(util::hours_per_year * n_years) / n_rec_lifetime;
 	size_t step_per_hour = (size_t)(1 / dt_hour);
 	lifetime_from_singleyear_vector.reserve(n_rec_lifetime);
+
+    if (singleyear_vector.empty() ) {
+        for (size_t i = 0; i < n_rec_lifetime; i++)
+            lifetime_from_singleyear_vector.emplace_back(0);
+        return;
+    }
 
 	// Parse single year properties
 	double dt_hour_singleyear_input = (double)(util::hours_per_year) / (double)(singleyear_vector.size());
@@ -46,7 +51,7 @@ void single_year_to_lifetime_interpolated(
 	T interpolation_factor = (T)step_per_hour / (T)step_per_hour_singleyear_input;
 
 	// Possible that there is no single year vector
-	if (singleyear_vector.size() > 0)
+	if (singleyear_vector.size() > 1)
 	{
 		// Interpolate single year vector to dt_hour
 		std::vector<T> singleyear_sampled;
@@ -80,11 +85,9 @@ void single_year_to_lifetime_interpolated(
 			}
 		}
 	}
-	// In the case of no single year vector, create lifetime vector of zeros
-	else {
-		for (size_t i = 0; i < n_rec_lifetime; i++) {
-			lifetime_from_singleyear_vector.push_back(0);
-		}
+	else if (singleyear_vector.size() == 1) {
+	    for (size_t i = 0; i < n_rec_lifetime; i++)
+	        lifetime_from_singleyear_vector.push_back(singleyear_vector[0]);
 	}
 }
 
@@ -104,7 +107,7 @@ template void single_year_to_lifetime_interpolated<float>(bool, size_t, size_t, 
 * \param[in] steps_per_hour - Number of time steps per hour
 * \param[in] period_values - the value assigned to each period number
 * \param[in] multiplier - a multiplier on the period value
-* \param[out] flat_vector - The 8760 values at each hour 
+* \param[out] flat_vector - The 8760*steps per hour values at each hour 
 */
 template <class T>
 std::vector<T> flatten_diurnal(util::matrix_t<size_t> weekday_schedule, util::matrix_t<size_t> weekend_schedule, size_t steps_per_hour, std::vector<T> period_values, T multiplier)
@@ -131,3 +134,51 @@ std::vector<T> flatten_diurnal(util::matrix_t<size_t> weekday_schedule, util::ma
 }
 
 template std::vector<double> flatten_diurnal(util::matrix_t<size_t> weekday_schedule, util::matrix_t<size_t> weekend_schedule, size_t steps_per_hour, std::vector<double> period_values, double multiplier);
+
+
+/**
+*  \function  extrapolate_timeseries
+*
+* Function takes in a timeseries vector (daily, weekly, monthly, hourly or subhourly), and the number of steps per hour desired, and an optional multiplier and returns
+* n output vector of the extrapolated values throughout the entire year
+*
+* \param[in] steps_per_hour - Number of time steps per hour
+* \param[in] input_values - the value assigned to each period number
+* \param[in] multiplier - a multiplier on the period value
+* \param[out] extrapolated_vector - The 8760*steps per hour values
+*/
+template <class T>
+std::vector<T> extrapolate_timeseries(std::vector<T> input_values, size_t steps_per_hour, T multiplier)
+{
+	std::vector<T> extrapolated_vector;
+	extrapolated_vector.reserve(8760 * steps_per_hour);
+	size_t month, week, day, hour, minute_step;
+	size_t input_size = input_values.size();
+	int input_steps_per_hour = input_size / 8760;
+	T extrapolated_value;
+
+	for (size_t hour_of_year = 0; hour_of_year != 8760; hour_of_year++)
+	{
+		month = util::month_of(hour_of_year);
+		if (month > 0) month--; // month_of is 1 based and all other time functions are 0 based.
+		week = util::week_of(hour_of_year);
+		day = util::day_of(hour_of_year);
+		hour = hour_of_year;
+		for (size_t s = 0; s < steps_per_hour; s++)
+		{
+			minute_step = (size_t)((T)s * (T)input_steps_per_hour / (T)steps_per_hour);
+			if (input_size == 12) extrapolated_value = input_values[month];
+			else if (input_size == 52) extrapolated_value = input_values[week];
+			else if (input_size == 365) extrapolated_value = input_values[day];
+			else if (input_size == 8760) extrapolated_value = input_values[hour];
+			else if (input_size > 8760 && (hour * input_steps_per_hour + minute_step) < input_size)
+				extrapolated_value = input_values[hour * input_steps_per_hour + minute_step];
+			else // throw?
+				extrapolated_value = 0.0;
+			extrapolated_vector.push_back(extrapolated_value * multiplier);
+		}
+	}
+	return extrapolated_vector;
+}
+
+template std::vector<double> extrapolate_timeseries(std::vector<double> input_values, size_t steps_per_hour, double multiplier);

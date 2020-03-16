@@ -3,7 +3,7 @@
 #include "cmod_generic_test.h"
 
 /// Test Generic System with Battery for SingleOwner PPA
-TEST_F(CMGeneric, SingleOwnerWithBattery) {
+TEST_F(CMGeneric, SingleOwnerWithBattery_cmod_generic) {
 
 	generic_singleowner_battery_60min(data);
 
@@ -21,6 +21,7 @@ TEST_F(CMGeneric, SingleOwnerWithBattery) {
 	// Run with subhourly data
 	set_array(data, "energy_output_array", generictest::gen_path_30min, 8760 * 2);
 	set_array(data, "batt_custom_dispatch", generictest::batt_dispatch_path_30min, 8760 * 2);
+	set_array(data, "batt_room_temperature_celsius", generictest::temperature_path_30min, 8760 * 2);
 	for (size_t i = 0; i < dispatch_options.size(); i++) {
 		ssc_data_set_number(data, "batt_dispatch_choice", (ssc_number_t)dispatch_options[i]);
 		EXPECT_FALSE(run_module(data, "generic_system"));
@@ -36,7 +37,7 @@ TEST_F(CMGeneric, SingleOwnerWithBattery) {
 }
 
 /// Test Generic System with Battery for various timesteps
-TEST_F(CMGeneric, CommercialWithBattery) {
+TEST_F(CMGeneric, CommercialWithBattery_cmod_generic) {
 
 	generic_commerical_battery_60min(data);
 	
@@ -58,6 +59,7 @@ TEST_F(CMGeneric, CommercialWithBattery) {
 	// Run with subhourly data
 	set_array(data, "energy_output_array", generictest::gen_path_30min, 8760 * 2);
 	set_array(data, "batt_custom_dispatch", generictest::batt_dispatch_path_30min, 8760 * 2);
+	set_array(data, "batt_room_temperature_celsius", generictest::temperature_path_30min, 8760 * 2);
 	set_array(data, "load", generictest::load_profile_path_30min, 8760 * 2);
 
 	// With and without lifetime
@@ -76,6 +78,7 @@ TEST_F(CMGeneric, CommercialWithBattery) {
 	ssc_data_set_number(data, "batt_dispatch_choice", 3);
 	set_array(data, "batt_custom_dispatch", generictest::batt_dispatch_path_30min, 8760 * 2);
 	set_array(data, "energy_output_array", generictest::gen_path_30min, 2*8760);
+	set_array(data, "batt_room_temperature_celsius", generictest::temperature_path_30min, 8760 * 2);
 	set_array(data, "load", generictest::load_profile_path_60min, 8760);
 	
 	for (size_t l = 0; l < 2; l++) {

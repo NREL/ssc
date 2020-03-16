@@ -1,51 +1,24 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #define _TCSTYPEINTERFACE_
 #include "tcstype.h"
@@ -2474,19 +2447,19 @@ public:
         const double P_lo = 1 / 1.e-5;                // atmospheric pressure [Pa]
 
         // P_10
-        ff = CSP::FrictionFactor(pipe_rough, field_htfProps.Re(SGS_T_des.at(10), P_lo, vel.at(10), diams.at(10)));
+        ff = CSP::FrictionFactor(pipe_rough / diams.at(10), field_htfProps.Re(SGS_T_des.at(10), P_lo, vel.at(10), diams.at(10)));
         SGS_P_des.at(10) = 0 +
             CSP::MajorPressureDrop(vel.at(10), rho_avg, ff, L.at(10), diams.at(10)) +
             CSP::MinorPressureDrop(vel.at(10), rho_avg, k_tes_loss_coeffs.at(10));
 
         // P_9
-        ff = CSP::FrictionFactor(pipe_rough, field_htfProps.Re(SGS_T_des.at(9), P_lo, vel.at(9), diams.at(9)));
+        ff = CSP::FrictionFactor(pipe_rough / diams.at(9), field_htfProps.Re(SGS_T_des.at(9), P_lo, vel.at(9), diams.at(9)));
         SGS_P_des.at(9) = SGS_P_des.at(10) +
             CSP::MajorPressureDrop(vel.at(9), rho_avg, ff, L.at(9), diams.at(9)) +
             CSP::MinorPressureDrop(vel.at(9), rho_avg, k_tes_loss_coeffs.at(9));
         
         // P_8
-        ff = CSP::FrictionFactor(pipe_rough, field_htfProps.Re(SGS_T_des.at(8), P_hi, vel.at(8), diams.at(8)));
+        ff = CSP::FrictionFactor(pipe_rough / diams.at(8), field_htfProps.Re(SGS_T_des.at(8), P_hi, vel.at(8), diams.at(8)));
         SGS_P_des.at(8) = SGS_P_des.at(9) + DP_SGS + 
             CSP::MajorPressureDrop(vel.at(8), rho_avg, ff, L.at(8), diams.at(8)) +
             CSP::MinorPressureDrop(vel.at(8), rho_avg, k_tes_loss_coeffs.at(8));
@@ -2498,13 +2471,13 @@ public:
         }
         else {
             // P_7
-            ff = CSP::FrictionFactor(pipe_rough, field_htfProps.Re(SGS_T_des.at(7), P_hi, vel.at(7), diams.at(7)));
+            ff = CSP::FrictionFactor(pipe_rough / diams.at(7), field_htfProps.Re(SGS_T_des.at(7), P_hi, vel.at(7), diams.at(7)));
             SGS_P_des.at(7) = SGS_P_des.at(8) +
                 CSP::MajorPressureDrop(vel.at(7), rho_avg, ff, L.at(7), diams.at(7)) +
                 CSP::MinorPressureDrop(vel.at(7), rho_avg, k_tes_loss_coeffs.at(7));
 
             // P_6
-            ff = CSP::FrictionFactor(pipe_rough, field_htfProps.Re(SGS_T_des.at(6), P_hi, vel.at(6), diams.at(6)));
+            ff = CSP::FrictionFactor(pipe_rough / diams.at(6), field_htfProps.Re(SGS_T_des.at(6), P_hi, vel.at(6), diams.at(6)));
             SGS_P_des.at(6) = SGS_P_des.at(7) +
                 CSP::MajorPressureDrop(vel.at(6), rho_avg, ff, L.at(6), diams.at(6)) +
                 CSP::MinorPressureDrop(vel.at(6), rho_avg, k_tes_loss_coeffs.at(6));
@@ -2514,7 +2487,7 @@ public:
         }
 
         // P_3
-        ff = CSP::FrictionFactor(pipe_rough, field_htfProps.Re(SGS_T_des.at(3), P_lo, vel.at(3), diams.at(3)));
+        ff = CSP::FrictionFactor(pipe_rough / diams.at(3), field_htfProps.Re(SGS_T_des.at(3), P_lo, vel.at(3), diams.at(3)));
         SGS_P_des.at(3) = 0 +
             CSP::MajorPressureDrop(vel.at(3), rho_avg, ff, L.at(3), diams.at(3)) +
             CSP::MinorPressureDrop(vel.at(3), rho_avg, k_tes_loss_coeffs.at(3));
@@ -2523,13 +2496,13 @@ public:
         SGS_P_des.at(4) = SGS_P_des.at(3);
 
         // P_2
-        ff = CSP::FrictionFactor(pipe_rough, field_htfProps.Re(SGS_T_des.at(2), P_hi, vel.at(2), diams.at(2)));
+        ff = CSP::FrictionFactor(pipe_rough / diams.at(2), field_htfProps.Re(SGS_T_des.at(2), P_hi, vel.at(2), diams.at(2)));
         SGS_P_des.at(2) = P_field_in +
             CSP::MajorPressureDrop(vel.at(2), rho_avg, ff, L.at(2), diams.at(2)) +
             CSP::MinorPressureDrop(vel.at(2), rho_avg, k_tes_loss_coeffs.at(2));
 
         // P_1
-        ff = CSP::FrictionFactor(pipe_rough, field_htfProps.Re(SGS_T_des.at(1), P_hi, vel.at(1), diams.at(1)));
+        ff = CSP::FrictionFactor(pipe_rough / diams.at(1), field_htfProps.Re(SGS_T_des.at(1), P_hi, vel.at(1), diams.at(1)));
         SGS_P_des.at(1) = SGS_P_des.at(2) +
             CSP::MajorPressureDrop(vel.at(1), rho_avg, ff, L.at(1), diams.at(1)) +
             CSP::MinorPressureDrop(vel.at(1), rho_avg, k_tes_loss_coeffs.at(1));
@@ -2579,7 +2552,7 @@ public:
                 if (i == gen_first_section + 5) T = T_pb_out;                                 // 10
                 i < gen_first_section ? v_dot_ref = v_dot_sf : v_dot_ref = v_dot_pb;
                 v_dot = v_dot_rel.at(i) * v_dot_ref;
-                Area = CSP::pi * pow(D, 2) / 4.;
+                Area = CSP::pi * pow(D.at(i), 2) / 4.;
                 vel = v_dot / Area;
                 rho = field_htfProps.dens(T, P);
                 Re = field_htfProps.Re(T, P, vel, D.at(i));

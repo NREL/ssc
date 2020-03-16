@@ -5,7 +5,6 @@
 #include "code_generator_utilities.h"
 
 namespace swhtest {
-	const char * SSCDIR = std::getenv("SSCDIR");
 	char solar_resource_file[256];
 	char scaled_draw[256];
 	char custom_mains[256];
@@ -13,12 +12,12 @@ namespace swhtest {
 	char load[256];
 	char ur_ts_sell_rate[256];
 
-	int n1 = sprintf(solar_resource_file, "%s/test/input_cases/swh_residential_data/fargo_nd_46.9_-96.8_mts1_60_tmy.csv", swhtest::SSCDIR);
-	int n2 = sprintf(scaled_draw, "%s/test/input_cases/swh_residential_data/scaled_draw.csv", swhtest::SSCDIR);
-	int n3 = sprintf(custom_mains, "%s/test/input_cases/swh_residential_data/custom_mains.csv", swhtest::SSCDIR);
-	int n4 = sprintf(custom_set, "%s/test/input_cases/swh_residential_data/custom_set.csv", swhtest::SSCDIR);
-	int n5 = sprintf(load, "%s/test/input_cases/swh_residential_data/load.csv", swhtest::SSCDIR);
-	int n6 = sprintf(ur_ts_sell_rate, "%s/test/input_cases/swh_residential_data/ur_ts_sell_rate", swhtest::SSCDIR);
+	int n1 = sprintf(solar_resource_file, "%s/test/input_cases/swh_residential_data/fargo_nd_46.9_-96.8_mts1_60_tmy.csv", SSCDIR);
+	int n2 = sprintf(scaled_draw, "%s/test/input_cases/swh_residential_data/scaled_draw.csv", SSCDIR);
+	int n3 = sprintf(custom_mains, "%s/test/input_cases/swh_residential_data/custom_mains.csv", SSCDIR);
+	int n4 = sprintf(custom_set, "%s/test/input_cases/swh_residential_data/custom_set.csv", SSCDIR);
+	int n5 = sprintf(load, "%s/test/input_cases/swh_residential_data/load.csv", SSCDIR);
+	int n6 = sprintf(ur_ts_sell_rate, "%s/test/input_cases/swh_residential_data/ur_ts_sell_rate.csv", SSCDIR);
 
 }
 

@@ -85,7 +85,7 @@ TEST_F(IrradTest, sunriseAndSunsetAtDifferentLocationsTest_lib_irradproc) {
 
 
 	double sun_results[9]; //vector to hold the results of solarpos function
-	for (int i = 0; i < latitudes.size(); i++)
+	for (size_t i = 0; i < latitudes.size(); i++)
 	{
 		//run the solarpos function and check sunrise and sunset for each location
 		solarpos(2010, month[i], day[i], 14, 30, latitudes[i], longitudes[i], time_zones[i], sun_results);
@@ -157,7 +157,7 @@ TEST_F(NightCaseIrradProc, incidenceTest_lib_irradproc){
 	/* Just before sunrise test case */
 	sun_azm = 0.95662;
 	sun_zen = 1.79457;
-	incidence(mode, tilt, azim, rotlim, sun_zen, sun_azm, backtrack_on, gcr, angle);
+	incidence(mode, tilt, azim, rotlim, sun_zen, sun_azm, backtrack_on, gcr, false, 0.0, angle);
 	solutions = { 1.89243, 0.174533, 3.14159, 0, 0 };
 	for (int i = 0; i < 5; i++){
 		EXPECT_NEAR(angle[i], solutions[i], e) << "before-sunrise case";
@@ -173,7 +173,7 @@ TEST_F(SunriseCaseIrradProc, incidenceTest_lib_irradproc){
 
 	sun_azm = 1.11047;
 	sun_zen = 1.6031;
-	incidence(mode, tilt, azim, rotlim, sun_zen, sun_azm, backtrack_on, gcr, angle);
+	incidence(mode, tilt, azim, rotlim, sun_zen, sun_azm, backtrack_on, gcr, false, 0.0, angle);
 	solution = 1.67992;
 	EXPECT_NEAR(angle[0], solution, e) << "sunrise case";
 }
@@ -187,7 +187,7 @@ TEST_F(DayCaseIrradProc, incidenceTest_lib_irradproc){
 
 	sun_azm = 0;
 	sun_zen = 0;
-	incidence(mode, tilt, azim, rotlim, sun_zen, sun_azm, backtrack_on, gcr, angle);
+	incidence(mode, tilt, azim, rotlim, sun_zen, sun_azm, backtrack_on, gcr, false, 0.0, angle);
 	solution = 0.174533;
 	EXPECT_NEAR(angle[0], solution, e) << "noon case";
 }
@@ -201,7 +201,7 @@ TEST_F(SunsetCaseIrradProc, incidenceTest_lib_irradproc){
 
 	sun_azm = 5.13947;
 	sun_zen = 1.55886;
-	incidence(mode, tilt, azim, rotlim, sun_zen, sun_azm, backtrack_on, gcr, angle);
+	incidence(mode, tilt, azim, rotlim, sun_zen, sun_azm, backtrack_on, gcr, false, 0.0, angle);
 	solution = 1.631;
 	EXPECT_NEAR(angle[0], solution, e) << "sunset case";
 }

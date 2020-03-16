@@ -1,57 +1,29 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  ("Alliance") under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as �System Advisor Model� or �SAM�. Except
-*  to comply with the foregoing, the terms �System Advisor Model�, �SAM�, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #ifndef battery_h
 #define battery_h
 
 #include "lib_util.h"
-#include "lsqfit.h"
 
 #include <vector>
 #include <map>
@@ -59,11 +31,10 @@
 #include <stdio.h>
 #include <algorithm>
 
+// Forward declarations to reduce imports
+
 const double low_tolerance = 0.01;
 const double tolerance = 0.001;
-
-typedef std::vector<double> double_vec;
-typedef std::vector<int> int_vec;
 
 // Messages
 class message
@@ -109,7 +80,12 @@ public:
 	virtual void updateCapacity(double &I, double dt) = 0;
 	virtual void updateCapacityForThermal(double capacity_percent)=0;
 	virtual void updateCapacityForLifetime(double capacity_percent)=0;
-	virtual void replace_battery()=0;
+	virtual void replace_battery(double replacement_percent)=0;
+
+	void change_SOC_limits(double min, double max){
+	    _SOC_min = min;
+	    _SOC_max = max;
+	}
 
 	virtual double q1() = 0; // available charge
 	virtual double q10() = 0; // capacity at 10 hour discharge rate
@@ -173,7 +149,7 @@ public:
 	void updateCapacity(double &I, double dt);
 	void updateCapacityForThermal(double capacity_percent);
 	void updateCapacityForLifetime(double capacity_percent);
-	void replace_battery();
+	void replace_battery(double replacement_percent);
 	double q1(); // Available charge
 	double q2(); // Bound charge
 	double q10(); // Capacity at 10 hour discharge rate
@@ -230,7 +206,7 @@ public:
 	void updateCapacity(double &I, double dt);
 	void updateCapacityForThermal(double capacity_percent);
 	void updateCapacityForLifetime(double capacity_percent);
-	void replace_battery();
+	void replace_battery(double replacement_percent);
 
 	double q1(); // Available charge
 	double q10(); // Capacity at 10 hour discharge rate
@@ -246,7 +222,7 @@ class thermal_t;
 class voltage_t
 {
 public:
-	voltage_t(int mode, int num_cells_series, int num_strings, double voltage, util::matrix_t<double> voltage_table);
+	voltage_t(int mode, int num_cells_series, int num_strings, double voltage, double dt_hour);
 
 	// deep copy
 	virtual voltage_t * clone()=0;
@@ -257,8 +233,21 @@ public:
 
 	virtual ~voltage_t(){};
 
-	virtual void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt)=0;
-	virtual double battery_voltage(); // voltage of one battery
+    // Returns estimated max charge power
+	virtual double calculate_max_charge_w(double q, double qmax, double kelvin, double *max_current) =0;
+
+	// Returns estimated max discharge power
+	virtual double calculate_max_discharge_w(double q, double qmax, double kelvin, double *max_current) =0;
+
+    // Returns current [A] required to dispatch input power [W], only valid if less than max possible
+    virtual double calculate_current_for_target_w(double P_watts, double q, double qmax, double kelvin) =0;
+
+    virtual double calculate_voltage_for_current(double I, double q, double qmax, double T_k) =0;
+
+    // runs calculate_voltage_for_current and changes the internal cell voltage
+    virtual void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt)=0;
+
+    virtual double battery_voltage(); // voltage of one battery
 
 	double battery_voltage_nominal(); // nominal voltage of battery
 	double cell_voltage(); // voltage of one cell
@@ -274,68 +263,71 @@ protected:
 	double _cell_voltage_nominal; // nominal cell voltage [V]
 	double _R;                    // internal cell resistance (Ohm)
 	double _R_battery;            // internal battery resistance (Ohm)
-	util::matrix_t<double> _batt_voltage_matrix;  // voltage vs depth-of-discharge
+	double dt_hr;
 };
-
-// A row in the table
-class table_point
-{
-public:
-	table_point(double DOD = 0., double V = 0.) :
-		_DOD(DOD), _V(V){}
-	double DOD() const{ return _DOD; }
-	double V() const{ return _V; }
-
-private:
-	double _DOD;
-	double _V;
-};
-
-struct byDOD
-{
-	bool operator()(table_point const &a, table_point const &b){ return a.DOD() < b.DOD(); }
-};
-
 
 class voltage_table_t : public voltage_t
 {
 public:
-	voltage_table_t(int num_cells_series, int num_strings, double voltage, util::matrix_t<double> &voltage_table, double R);
+	voltage_table_t(int num_cells_series, int num_strings, double voltage, util::matrix_t<double> &voltage_table, double R, double dt_hour);
 
 	// deep copy
-	voltage_table_t * clone();
+	voltage_table_t * clone() override;
 
 	// copy from voltage to this
-	void copy(voltage_t *);
+	void copy(voltage_t *) override;
 
-	void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt);
+    double calculate_max_charge_w(double q, double qmax, double kelvin, double *max_current) override;
+
+    double calculate_max_discharge_w(double q, double qmax, double kelvin, double *max_current) override;
+
+    // return current for targeted power, or 0 if unable
+    double calculate_current_for_target_w(double P_watts, double q, double qmax, double kelvin) override;
+
+    double calculate_voltage_for_current(double I, double q, double qmax, double T_k) override;
+
+    void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt) override ;
 
 protected:
 
-	bool exactVoltageFound(double DOD, double &V);
-	void prepareInterpolation(double & DOD_lo, double & V_lo, double & DOD_hi, double & V_hi, double DOD);
-
 private:
-	std::vector<table_point> _voltage_table;
+    //  depth-of-discharge [%] and cell voltage [V] pairs
+	std::vector<std::pair<double, double>> m_voltage_table;
+
+    std::vector<double> slopes;
+    std::vector<double> intercepts;
+
+    double calculate_voltage(double DOD);
 };
 
 // Shepard + Tremblay Model
 class voltage_dynamic_t : public voltage_t
 {
 public:
-	voltage_dynamic_t(int num_cells_series, int num_strings, double voltage, double Vfull, double Vexp, double Vnom, double Qfull, double Qexp, double Qnom, double C_rate, double R);
+	voltage_dynamic_t(int num_cells_series, int num_strings, double voltage, double Vfull,
+                      double Vexp, double Vnom, double Qfull, double Qexp, double Qnom,
+                      double C_rate, double R, double dt_hr=1.);
 
 	// deep copy
-	voltage_dynamic_t * clone();
+	voltage_dynamic_t * clone() override;
 
 	// copy from voltage to this
-	void copy(voltage_t *);
+	void copy(voltage_t *) override;
 
-	void parameter_compute();
-	void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt);
+    double calculate_max_charge_w(double q, double qmax, double kelvin, double *max_current) override;
+
+    double calculate_max_discharge_w(double q, double qmax, double kelvin, double *max_current) override;
+
+	// returns current for power (discharge > 0, charge < 0), use above functions to first check feasibility
+    double calculate_current_for_target_w(double P_watts, double q, double qmax, double kelvin) override;
+
+    double calculate_voltage_for_current(double I, double q, double qmax, double T_k) override;
+
+	void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt) override;
+
 
 protected:
-	double voltage_model_tremblay_hybrid(double capacity, double current, double q0);
+	double voltage_model_tremblay_hybrid(double Q_cell, double I, double q0_cell);
 
 private:
 	double _Vfull;
@@ -350,34 +342,63 @@ private:
 	double _E0;
 	double _K;
 
+	void parameter_compute();
+
+	// solver quantities
+	double solver_Q;
+	double solver_q;
+
+    double solver_cutoff_voltage;
+
+    double solver_power;
+    void solve_current_for_charge_power(const double *x, double *f);
+    void solve_current_for_discharge_power(const double *x, double *f);
 };
 
 // D'Agostino Vanadium Redox Flow Model
 class voltage_vanadium_redox_t : public voltage_t
 {
 public:
-	voltage_vanadium_redox_t(int num_cells_series, int num_strings, double V_ref_50, double R);
+	voltage_vanadium_redox_t(int num_cells_series, int num_strings, double V_ref_50, double R,
+                             double dt_hr=1.);
 
 	// deep copy
-	voltage_vanadium_redox_t * clone();
+	voltage_vanadium_redox_t * clone() override;
 
 	// copy from voltage to this
-	void copy(voltage_t *);
+	void copy(voltage_t *) override;
 
-	void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt);
+    double calculate_max_charge_w(double q, double qmax, double kelvin, double *max_current) override;
+
+    double calculate_max_discharge_w(double q, double qmax, double kelvin, double *max_current) override;
+
+    double calculate_current_for_target_w(double P_watts, double q, double qmax, double kelvin) override;
+
+    double calculate_voltage_for_current(double I, double q, double qmax, double T_k) override;
+
+    void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt) override;
 
 protected:
-	
-	// cell voltage model
-	double voltage_model(double q0, double qmax, double I_string, double T);
+
+	// cell voltage model is on a per-cell basis
+	double voltage_model(double q, double qmax, double I_string, double T);
 
 private:
-	double _V_ref_50;				// Reference voltage at 50% SOC
-	double _R;						// Internal resistance [Ohm]
-	double _I;						// Current level [A]
-	double _R_molar;
-	double _F;
-	double _C0;
+
+    // RC/F: R is Molar gas constant [J/mol/K]^M, R is Faraday constant [As/mol]^M, C is model correction factor^M
+    double m_RCF;
+
+    double _V_ref_50;				// Reference voltage at 50% SOC
+    // solver quantities
+
+    double solver_Q;
+    double solver_q;
+    double solver_T_k;              // temp in Kelvin
+
+    double solver_power;
+    void solve_current_for_power(const double *x, double *f);
+
+    void solve_max_discharge_power(const double *x, double *f);
 };
 
 
@@ -392,22 +413,34 @@ public:
 	lifetime_cycle_t(const util::matrix_t<double> &cyles_vs_DOD);
 	virtual ~lifetime_cycle_t();
 
-	// deep copy
+	/// deep copy
 	lifetime_cycle_t * clone();
 
-	// copy from lifetime_cycle to this
+	/// copy from lifetime_cycle to this
 	void copy(lifetime_cycle_t *);
 
-	// return q, the effective capacity percent
+	/// return q, the effective capacity percent
 	double runCycleLifetime(double DOD);
 
-	// return hypothetical dq the average cycle
+	/// return hypothetical dq the average cycle
 	double estimateCycleDamage();
 
+	/// Return the relative capacity percentage of nominal (%)
+	double capacity_percent();
+
+	/// Run the rainflow counting algorithm at the current depth-of-discharge to determine cycle
 	void rainflow(double DOD);
-	void replaceBattery();
+
+	/// Replace or partially replace a batteyr
+	void replaceBattery(double replacement_percent);
+
+	/// Return the total cycles elapse
 	int cycles_elapsed();
+
+	/// Return the range of the last cycle
 	double cycle_range();
+
+	/// Return the average cycle range
 	double average_range();
 
 protected:
@@ -415,6 +448,8 @@ protected:
 	void rainflow_ranges();
 	void rainflow_ranges_circular(int index);
 	int rainflow_compareRanges();
+
+	/// Bilinear interpolation, given the depth-of-discharge and cycle number, return the capacity percent
 	double bilinear(double DOD, int cycle_number);
 
 	util::matrix_t<double> _cycles_vs_DOD;
@@ -460,7 +495,11 @@ public:
 	/// Given the index of the simulation, the tempertature and SOC, return the effective capacity percent
 	double runLifetimeCalendarModel(size_t idx, double T, double SOC);
 
-	void replaceBattery();
+	/// Reset or augment the capacity
+	void replaceBattery(double replacement_percent);
+
+	/// Return the relative capacity percentage of nominal (%)
+	double capacity_percent();
 
 	enum CALENDAR_LOSS_OPTIONS {NONE, LITHIUM_ION_CALENDAR_MODEL, CALENDAR_LOSS_TABLE};
 
@@ -504,41 +543,76 @@ public:
 	lifetime_t(lifetime_cycle_t *, lifetime_calendar_t *, const int replacement_option, const double replacement_capacity);
 	virtual ~lifetime_t(){};
 
-	// deep copy
+	/// Deep copy
 	lifetime_t * clone();
 
-	// delete deep copy
+	/// Delete deep copy
 	void delete_clone();
 
-	// copy lifetime to this
+	/// Copy lifetime to this
 	void copy(lifetime_t *);
 
-	void runLifetimeModels(size_t idx, capacity_t *, double T_battery);
+	/// Execute the lifetime models given the current lifetime run index, capacity model, and temperature
+	void runLifetimeModels(size_t lifetimeIndex, capacity_t *, double T_battery);
 
+	/// Return the relative capacity percentage of nominal (%)
 	double capacity_percent();
 
-	// data access
+	/// Return the relative capacity percentage of nominal caused by cycle damage (%)
+	double capacity_percent_cycle();
+
+	/// Return the relative capacity percentage of nominal caused by calendar fade (%)
+	double capacity_percent_calendar();
+
+	/// Return pointer to underlying lifetime cycle model
 	lifetime_cycle_t * cycleModel() { return _lifetime_cycle; }
+
+	/// Return pointer to underlying lifetime capacity model
 	lifetime_calendar_t * calendarModel() { return _lifetime_calendar; }
 
-	// replacement methods
+	/// Check if the battery should be replaced based upon the replacement criteria
 	bool check_replaced();
+
+	/// Reset the number of replacements at the year end
 	void reset_replacements();
-	int replacements();
-	void force_replacement();
+
+	/// Return the number of total replacements in the year
+	int get_replacements();
+
+	/// Return the replacement percent
+	double get_replacement_percent();
+
+	/// Set the replacement option
+	void set_replacement_option(int option);
+
+	/// Replace the battery and reset the lifetime degradation
+	void force_replacement(double replacement_percent);
 
 protected:
 
+	/// Underlying lifetime cycle model
 	lifetime_cycle_t * _lifetime_cycle;
+
+	/// Underlying lifetime calendar model
 	lifetime_calendar_t * _lifetime_calendar;
 
-	// battery replacement
+	/// Replacement option, 0 = none, 1 = replace at capacity 2 = replace by schedule
 	int _replacement_option;
+
+	/// Maximum capacity relative to nameplate at which to replace battery
 	double _replacement_capacity;
+
+	/// Number of replacements this year
 	int _replacements;
+
+	/// Boolean describing if replacement has been scheduled
 	bool _replacement_scheduled;
 
-	double _q;      // battery relative capacity (0 - 100%)
+	/// Percentage of how much capacity to replace (0 - 100%)
+	double _replacement_percent;
+
+	/// battery relative capacity (0 - 100%)
+	double _q;      
 };
 
 
@@ -549,8 +623,9 @@ class thermal_t
 {
 public:
 	thermal_t();
-	thermal_t(double mass, double length, double width, double height,
-		double Cp, double h, double T_room,
+	thermal_t(double dtHour, double mass, double length, double width, double height,
+		double Cp, double h, 
+		std::vector<double> T_room,
 		const util::matrix_t<double> &cap_vs_temp);
 
 	// deep copy
@@ -559,8 +634,8 @@ public:
 	// copy thermal to this
 	void copy(thermal_t *);
 
-	void updateTemperature(double I, double R, double dt);
-	void replace_battery();
+	void updateTemperature(double I, double R, double dt, size_t lifetimeIndex);
+	void replace_battery(size_t lifetimeIndex);
 
 	// outputs
 	double T_battery();
@@ -568,22 +643,23 @@ public:
 	message get_messages(){ return _message; }
 
 protected:
-	double f(double T_battery, double I);
-	double rk4(double I, double dt);
-	double trapezoidal(double I, double dt);
-	double implicit_euler(double I, double dt);
+	double f(double T_battery, double I, size_t lifetimeIndex);
+	double rk4(double I, double dt, size_t lifetimeIndex);
+	double trapezoidal(double I, double dt, size_t lifetimeIndex);
+	double implicit_euler(double I, double dt, size_t lifetimeIndex);
 
 protected:
 
 	util::matrix_t<double> _cap_vs_temp;
 
+	double _dt_hour;    // [hr] - timestep
 	double _mass;		// [kg]
 	double _length;		// [m]
 	double _width;		// [m]
 	double _height;		// [m]
 	double _Cp;			// [J/KgK] - battery specific heat capacity
 	double _h;			// [Wm2K] - general heat transfer coefficient
-	double _T_room;		// [K] - storage room temperature
+	std::vector<double> _T_room; // [K] - storage room temperature
 	double _R;			// [Ohm] - internal resistance
 	double _A;			// [m2] - exposed surface area
 	double _T_battery;   // [K]
@@ -592,31 +668,61 @@ protected:
 	message _message;
 
 };
-/*
-Losses Base class
+/**
+* \class losses_t
+*
+* \brief
+*
+*  The Battery losses class takes generic losses which occur during charging, discharge, or idle operation modes:
+*  The model also accepts a time-series vector of losses defined for every time step of the first year of simulation
+*  which may be used in lieu of the losses for operational mode.  
 */
 class losses_t
 {
 public:
-	losses_t(lifetime_t *, thermal_t *, capacity_t*, int loss_mode, double_vec batt_loss_charge, double_vec batt_loss_discharge, double_vec batt_loss_idle, double_vec batt_loss);
 
-	// deep copy
-	losses_t * clone();
+	/**
+	* \function losses_t
+	*
+	* Construct the losses object
+	*
+	* \param[in] lifetime_t * pointer to lifetime class
+	* \param[in] thermal_t * pointer to thermal class (currently unused)
+	* \param[in] capacity_t * pointer to capacity class
+	* \param[in] loss_mode 0 for monthy input, 1 for input time series
+	* \param[in] batt_loss_charge_kw vector (size 1 for annual or 12 for monthly) containing battery system losses when charging (kW)
+	* \param[in] batt_loss_discharge_kw vector (size 1 for annual or 12 for monthly) containing battery system losses when discharge (kW)
+	* \param[in] batt_loss_idle_kw vector (size 1 for annual or 12 for monthly) containing battery system losses when idle (kW)
+	* \param[in] batt_loss_kw vector (size 1 for annual or 12 for monthly) containing battery system losses when idle (kW)
+	*/
+	losses_t(double dtHour,
+			lifetime_t *, 
+			thermal_t *, 
+			capacity_t*, 
+			const int loss_mode, 
+			const double_vec batt_loss_charge_kw = std::vector<double>(0), 
+			const double_vec batt_loss_discharge_kw = std::vector<double>(0), 
+			const double_vec batt_loss_idle_kw = std::vector<double>(0), 
+			const double_vec batt_loss_kw=std::vector<double>(0));
 
-	// copy losses to this
+	void set_models(lifetime_t *, thermal_t *, capacity_t*);
+
+	/// Copy input losses to this object
 	void copy(losses_t *);
 
-	// main APIs
-	void run_losses(double dt_hour, size_t index);
-	void replace_battery();
-	double battery_system_loss(int index){ return (_full_loss)[index]; }
+	/// Run the losses model at the present simulation index (for year 1 only)
+	void run_losses(size_t lifetimeIndex);
 
+	/// Get the loss at the specified simulation index (year 1)
+	double getLoss(size_t indexFirstYear);
+
+	/// Options for the loss inputs to use
 	enum { MONTHLY, TIMESERIES};
 
 protected:
-	
-	int _loss_mode;
-	int _nCycle;
+
+    int _loss_mode;
+	double _dtHour;
 	
 	lifetime_t * _lifetime;
 	thermal_t * _thermal;
@@ -651,15 +757,24 @@ public:
 
 	void initialize(capacity_t *, voltage_t *, lifetime_t *, thermal_t *, losses_t *);
 
-	// Run all
-	void run(size_t idx, double I);
+	// Run all for single time step, updating all component model states and return the dispatched power [kW]
+	double run(size_t lifetimeIndex, double &I);
 
-	// Run a component level model
+	double calculate_voltage_for_current(double I);
+
+	// Return the max charge or discharge power achievable in the next time step, and the required current [A]
+    double calculate_max_charge_kw(double *max_current_A = nullptr);
+    double calculate_max_discharge_kw(double *max_current_A = nullptr);
+
+	// Returns current [A] required to dispatch input power [kW], or the max power (to which P_kw is set)
+	double calculate_current_for_power_kw(double &P_kw);
+
+    // Run a component level model
 	void runCapacityModel(double &I);
 	void runVoltageModel();
-	void runThermalModel(double I);
-	void runLifetimeModel(size_t idx);
-	void runLossesModel(size_t idx);
+	void runThermalModel(double I, size_t lifetimeIndex);
+	void runLifetimeModel(size_t lifetimeIndex);
+	void runLossesModel(size_t lifetimeIndex);
 
 	capacity_t * capacity_model() const;
 	capacity_t * capacity_initial_model() const;

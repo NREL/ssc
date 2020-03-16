@@ -1,7 +1,7 @@
 #include "cmod_swh_test.h"
 #include "gtest/gtest.h"
 
-TEST_F(CM_SWH, ResidentialDefault) {
+TEST_F(CM_SWH, ResidentialDefault_cmod_swh) {
 	
 	int swh_errors = run_module(data, "swh");
 	ASSERT_EQ(swh_errors, 0);

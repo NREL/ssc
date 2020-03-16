@@ -2,6 +2,7 @@
 #define __SCO2_CYCLE_COMPONENTS_
 
 #include <vector>
+#include <memory>
 
 #include "numeric_solvers.h"
 #include "CO2_properties.h"
@@ -194,12 +195,13 @@ public:
 		double m_eta;						//[-] turbine efficiency
 		double m_w_tip_ratio;				//[-] ratio of the tip speed to the local (turbine inlet) speed of sound
 		double m_N;							//[rpm] off-design turbine shaft speed
+        double m_m_dot;                     //[kg/s] mass flow rate
 
 		double m_W_dot_out;			//[kW] Turbine power output, expected to be positive (cycle, not basis)
 
 		S_od_solved()
 		{
-			m_nu = m_eta = m_w_tip_ratio = m_N =
+			m_nu = m_eta = m_w_tip_ratio = m_N = m_m_dot =
 				m_W_dot_out = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
@@ -241,123 +243,162 @@ public:
 	void od_turbine_at_N_des(double T_in, double P_in, double P_out, int & error_code, double & m_dot, double & T_out);
 };
 
-class C_comp_single_stage
+class C_comp__psi_eta_vs_phi
 {
 public:
 
-	struct S_des_solved
-	{
-		// Compressor inlet conditions
-		double m_T_in;			//[K]
-		double m_P_in;			//[kPa]
-		double m_D_in;			//[kg/m^3]
-		double m_h_in;			//[kJ/kg]
-		double m_s_in;			//[kJ/kg-K]
-		// Compressor outlet conditions
-		double m_T_out;			//[K]
-		double m_P_out;			//[kPa]
-		double m_h_out;			//[kJ/kg]
-		double m_D_out;			//[kg/m^3]
-		// Mass flow
-		double m_m_dot;			//[kg/s]
+    enum E_comp_models 
+    {
+        E_snl_radial_via_Dyreby
+    };
 
-		// Geometry
-		double m_D_rotor;		//[m]
-		double m_N_design;		//[rpm]
-		double m_tip_ratio;		//[-]
-		double m_eta_design;	//[-]
+    struct S_des_solved
+    {
+        // Compressor inlet conditions
+        double m_T_in;			//[K]
+        double m_P_in;			//[kPa]
+        double m_D_in;			//[kg/m^3]
+        double m_h_in;			//[kJ/kg]
+        double m_s_in;			//[kJ/kg-K]
+        // Compressor outlet conditions
+        double m_T_out;			//[K]
+        double m_P_out;			//[kPa]
+        double m_h_out;			//[kJ/kg]
+        double m_D_out;			//[kg/m^3]
+        // Mass flow
+        double m_m_dot;			//[kg/s]
 
-		double m_phi_des;		//[-]
-		double m_phi_surge;		//[-]
-		double m_phi_max;		//[-]
+        // Geometry
+        double m_D_rotor;		//[m]
+        double m_N_design;		//[rpm]
+        double m_tip_ratio;		//[-]
+        double m_eta_design;	//[-]
 
-		S_des_solved()
-		{
-			m_T_in = m_P_in = m_D_in = m_h_in = m_s_in =
-				m_T_out = m_P_out = m_h_out = m_D_out =
-				m_m_dot = m_D_rotor = m_N_design = m_tip_ratio = m_eta_design =
-				m_phi_surge = m_phi_des = m_phi_max = std::numeric_limits<double>::quiet_NaN();
-		}
-	};
+        double m_phi_des;		//[-]
+        double m_phi_surge;		//[-]
+        double m_phi_max;		//[-]
 
-	struct S_od_solved
-	{
-		double m_P_in;			//[kPa] Inlet pressure
-		double m_h_in;			//[kJ/kg] Inlet enthalpy
-		double m_T_in;			//[K] Inlet temperature
-		double m_s_in;			//[kJ/kg-K] Inlet entropy
+        double m_psi_des;       //[-] Ideal head coefficient
+        double m_psi_max_at_N_des;  //[-] Max ideal head coefficient at design shaft speed
 
-		double m_P_out;			//[kPa] Outlet pressure
-		double m_h_out;			//[kPa] Outlet enthalpy
-		double m_T_out;			//[K] Outlet temperature
-		double m_s_out;			//[kJ/kg-K] Outlet entropy
+        S_des_solved()
+        {
+            m_T_in = m_P_in = m_D_in = m_h_in = m_s_in =
+                m_T_out = m_P_out = m_h_out = m_D_out =
+                m_m_dot = m_D_rotor = m_N_design = m_tip_ratio = m_eta_design =
+                m_phi_surge = m_phi_des = m_phi_max =
+                m_psi_des = m_psi_max_at_N_des = std::numeric_limits<double>::quiet_NaN();
+        }
+    };
+
+    struct S_od_solved
+    {
+        double m_P_in;			//[kPa] Inlet pressure
+        double m_h_in;			//[kJ/kg] Inlet enthalpy
+        double m_T_in;			//[K] Inlet temperature
+        double m_s_in;			//[kJ/kg-K] Inlet entropy
+
+        double m_P_out;			//[kPa] Outlet pressure
+        double m_h_out;			//[kPa] Outlet enthalpy
+        double m_T_out;			//[K] Outlet temperature
+        double m_s_out;			//[kJ/kg-K] Outlet entropy
 
 
-		bool m_surge;			//[-]
-		double m_eta;			//[-]
-		double m_phi;			//[-]
-		double m_w_tip_ratio;	//[-]
+        bool m_surge;			//[-]
+        double m_eta;			//[-]
+        double m_phi;			//[-]
+        double m_psi;           //[-]
+        double m_w_tip_ratio;	//[-]
 
-		double m_N;			//[rpm]
+        double m_N;			//[rpm]
 
-		double m_W_dot_in;		//[KWe] Power required by compressor, positive value expected
-		double m_surge_safety;	//[-] Flow coefficient / min flow coefficient
+        double m_W_dot_in;		//[KWe] Power required by compressor, positive value expected
+        double m_surge_safety;	//[-] Flow coefficient / min flow coefficient
 
-		S_od_solved()
-		{
-			m_P_in = m_h_in = m_T_in = m_s_in =
-				m_P_out = m_h_out = m_T_out = m_s_out = std::numeric_limits<double>::quiet_NaN();
-			m_surge = false;
-			m_eta = m_phi = m_w_tip_ratio = m_N =
-				m_W_dot_in = m_surge_safety = std::numeric_limits<double>::quiet_NaN();
-		}
-	};
+        S_od_solved()
+        {
+            m_P_in = m_h_in = m_T_in = m_s_in =
+                m_P_out = m_h_out = m_T_out = m_s_out = std::numeric_limits<double>::quiet_NaN();
+            m_surge = false;
+            m_eta = m_phi = m_psi = m_w_tip_ratio = m_N =
+                m_W_dot_in = m_surge_safety = std::numeric_limits<double>::quiet_NaN();
+        }
+    };          
 
-	S_des_solved ms_des_solved;
-	S_od_solved ms_od_solved;
+    C_comp__psi_eta_vs_phi(){}
 
-	~C_comp_single_stage(){};
+    S_des_solved ms_des_solved;
+    S_od_solved ms_od_solved;
 
-	C_comp_single_stage(){};
+    int design_given_shaft_speed(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
+        double N_rpm /*rpm*/, double eta_isen /*-*/, double & P_out /*kPa*/, double & T_out /*K*/, double & tip_ratio /*-*/);    
 
-	static const double m_snl_phi_design;		//[-] Design-point flow coef. for Sandia compressor (corresponds to max eta)
-	static const double m_snl_phi_min;				//[-] Approximate surge limit for SNL compressor
-	static const double m_snl_phi_max;				//[-] Approximate x-intercept for SNL compressor
+    int design_given_performance(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
+        double T_out /*K*/, double P_out /*K*/);
+    
+    int off_design_given_N(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/, double N_rpm /*rpm*/,
+        double & T_out /*K*/, double & P_out /*kPa*/);
 
-	const S_des_solved * get_design_solved()
-	{
-		return &ms_des_solved;
-	}
+    int calc_N_from_phi(double T_in /*K*/, double P_in /*kPa*/, 
+                        double m_dot /*kg/s*/, double phi_in /*-*/, double & N_rpm /*rpm*/);
 
-	double calc_psi_design(double phi_design /*-*/);
+    int calc_m_dot__phi_des(double T_in /*K*/, double P_in /*kPa*/, double N_rpm /*rpm*/, double & m_dot /*kg/s*/);
+    
+    static std::unique_ptr<C_comp__psi_eta_vs_phi> construct_derived_C_comp__psi_eta_vs_phi(int comp_model_code);
 
-	double calc_psi_off_design(double phi_od /*-*/, double N_rpm_od /*rpm*/);
+    virtual double calc_phi_min(double T_comp_in /*K*/, double P_comp_in /*kPa*/) = 0;
 
-	double calc_eta_off_design(double phi_od /*-*/, double N_rpm_od /*rpm*/);
+    virtual double calc_phi_design(double T_comp_in /*K*/, double P_comp_in /*kPa*/) = 0;
+    
+    virtual double calc_phi_max(double T_comp_in /*K*/, double P_comp_in /*kPa*/) = 0;
+    
+    virtual double calc_psi_isen_design(double T_comp_in /*K*/, double P_comp_in /*kPa*/) = 0;    //[-]
+    
+    virtual double calc_psi_isen(double phi /*-*/, double N_des_over_N_od /*-*/, double T_comp_in /*K*/, double P_comp_in /*kPa*/) = 0;
 
-	int design_given_shaft_speed(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
-		double N_rpm /*rpm*/, double eta_isen /*-*/, double & P_out /*kPa*/, double & T_out /*K*/, double & tip_ratio /*-*/);
+    virtual double calc_eta_normalized(double phi /*-*/, double N_des_over_N_od /*-*/, double T_comp_in /*K*/, double P_comp_in /*kPa*/) = 0;
+};
 
-	int design_single_stage_comp(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
-		double T_out /*K*/, double P_out /*K*/);
+class C_comp__snl_radial_via_Dyreby : public C_comp__psi_eta_vs_phi
+{
+public: 
 
-	int off_design_given_N(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/, double N_rpm /*rpm*/,
-		double & T_out /*K*/, double & P_out /*kPa*/);
+    double m_phi_design;            //[-]
+    double m_phi_min;               //[-]
+    double m_phi_max;               //[-]  
 
-	int calc_N_from_phi(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/, double phi_in /*-*/, double & N_rpm /*rpm*/);
+    C_comp__snl_radial_via_Dyreby()
+    {
+        m_phi_design = 0.02971;		//[-] Design-point flow coef. for Sandia compressor (corresponds to max eta)
+        m_phi_min = 0.0225;			//[-] Approximate surge limit for SNL compressor
+        m_phi_max = 0.05;			//[-] Approximate x-intercept for SNL compressor
+    }
 
-	int calc_m_dot__phi_des(double T_in /*K*/, double P_in /*kPa*/, double N_rpm /*rpm*/, double & m_dot /*kg/s*/);
+    double adjust_phi_for_N(double phi /*-*/, double N_des_over_N_od /*-*/);
+
+    virtual double calc_phi_min(double T_comp_in /*K*/, double P_comp_in /*kPa*/);
+
+    virtual double calc_phi_design(double T_comp_in /*K*/, double P_comp_in /*kPa*/);
+    
+    virtual double calc_phi_max(double T_comp_in /*K*/, double P_comp_in /*kPa*/);
+
+    virtual double calc_psi_isen_design(double T_comp_in /*K*/, double P_comp_in /*kPa*/);
+    
+    virtual double calc_psi_isen(double phi /*-*/, double N_des_over_N_od /*-*/, double T_comp_in /*K*/, double P_comp_in /*kPa*/);
+
+    virtual double calc_eta_normalized(double phi /*-*/, double N_des_over_N_od /*-*/, double T_comp_in /*K*/, double P_comp_in /*kPa*/);
 };
 
 class C_comp_multi_stage
 {
 public:
 
-	std::vector<C_comp_single_stage> mv_stages;
+    std::vector<std::unique_ptr<C_comp__psi_eta_vs_phi>> mv_c_stages;
 
 	double m_r_W_dot_scale;		//[-] W_dot_cycle / W_dot_comp_basis (10 MWe)
 
 	int m_cost_model;		//[-]
+    int m_compressor_model; //[-]
 
 	enum
 	{
@@ -381,6 +422,8 @@ public:
 		double m_h_out;			//[kJ/kg]
 		double m_D_out;			//[kg/m^3]
 		
+		double m_isen_spec_work;	//[kJ/kg]
+
 		double m_m_dot;			//[kg/s] (cycle not basis)
 		double m_W_dot;			//[kWe] power required by compressor
 
@@ -393,7 +436,10 @@ public:
 			// Metrics shared by all stages
 		double m_N_design;		//[rpm] Shaft speed
 		double m_phi_des;		//[-] Design flow coefficient
-		double m_phi_surge;		//[-] Flow coefficient at surge
+        double m_phi_surge;		//[-] Flow coefficient at surge
+
+        double m_psi_des;       //[-] Ideal head coefficient
+        double m_psi_max_at_N_des;  //[-] Max ideal head coefficient at design shaft speed
 			// Metrics that vary by stage
 		std::vector<double> mv_D;	//[m] Diameter
 		std::vector<double> mv_tip_speed_ratio;	//[-]
@@ -405,10 +451,12 @@ public:
 
 			m_T_in = m_P_in = m_D_in = m_h_in = m_s_in =
 				m_T_out = m_P_out = m_h_out = m_D_out =
+				m_isen_spec_work =
 				m_m_dot = m_W_dot =
 				m_cost =
 				m_tip_ratio_max = 
-				m_N_design = m_phi_des = m_phi_surge = std::numeric_limits<double>::quiet_NaN();
+				m_N_design = m_phi_des =
+                m_psi_des = m_phi_surge = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -421,6 +469,8 @@ public:
 		double m_T_out;			//[K] Outlet temperature
 
 		double m_m_dot;			//[kg/s] (cycle not basis)
+
+		double m_isen_spec_work;	//[kJ/kg]
 
 		bool m_surge;			//[-]
 		double m_eta;			//[-]
@@ -435,13 +485,15 @@ public:
 			// Metrics that vary by stage
 		std::vector<double> mv_tip_speed_ratio;	//[-]
 		std::vector<double> mv_phi;		//[-]
+        std::vector<double> mv_psi;     //[-]
 		std::vector<double> mv_eta;		//[-]
 
 		S_od_solved()
 		{
 			m_P_in = m_T_in =
 				m_P_out = m_T_out =
-				m_m_dot = std::numeric_limits<double>::quiet_NaN();
+				m_m_dot =
+				m_isen_spec_work = std::numeric_limits<double>::quiet_NaN();
 
 			m_surge = false;
 			m_eta = m_phi_min = m_tip_ratio_max = m_N =
@@ -458,6 +510,8 @@ public:
 	{
 		m_r_W_dot_scale = 1.0;
 		m_cost_model = E_CARLSON_17;
+
+        m_compressor_model = -1;
 	};
 
 	const S_des_solved * get_design_solved()
@@ -540,7 +594,7 @@ public:
 	double calculate_cost(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
 		double T_out /*K*/, double P_out /*kPa*/, double W_dot /*kWe*/);
 
-	int design_given_outlet_state(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
+	int design_given_outlet_state(int comp_model_code, double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
 		double T_out /*K*/, double P_out /*K*/);
 
 	void off_design_given_N(double T_in /*K*/, double P_in /*kPa*/, double m_dot_cycle /*kg/s*/, double N_rpm /*rpm*/,

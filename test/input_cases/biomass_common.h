@@ -5,10 +5,10 @@
 #include "code_generator_utilities.h"
 
 namespace biomass_test {
-
-	const char * SSCDIR = std::getenv("SSCDIR");
 	char file_name[256];
-	int n1 = sprintf(file_name, "%s/test/input_cases/swh_residential_data/fargo_nd_46.9_-96.8_mts1_60_tmy.csv", biomass_test::SSCDIR);
+	int n1 = sprintf(file_name, "%s/test/input_cases/swh_residential_data/fargo_nd_46.9_-96.8_mts1_60_tmy.csv", SSCDIR);
+	char dispatch_factors[256];
+    int n2 = sprintf(dispatch_factors, "%s/test/input_cases/generic_system_data/dispatch_factors_ts.csv", SSCDIR);
 
 }
 
@@ -267,7 +267,7 @@ void biomass_commondata(ssc_data_t &data) {
 	ssc_data_set_number(data, "system_use_recapitalization", 0);
 	ssc_data_set_number(data, "system_use_lifetime_output", 0);
 	ssc_data_set_number(data, "ppa_multiplier_model", 0);
-	set_array(data, "dispatch_factors_ts", "C:/Users/PBHASKAR/Desktop/dispatch_factors_ts.csv", 8760);
+	set_array(data, "dispatch_factors_ts", biomass_test::dispatch_factors, 8760);
 	ssc_data_set_number(data, "dispatch_factor1", 1);
 	ssc_data_set_number(data, "dispatch_factor2", 1);
 	ssc_data_set_number(data, "dispatch_factor3", 1);
@@ -293,7 +293,14 @@ void biomass_commondata(ssc_data_t &data) {
 	ssc_data_set_number(data, "equip_reserve_depr_fed", 0);
 	ssc_data_set_number(data, "salvage_percentage", 0);
 	ssc_data_set_number(data, "ppa_soln_mode", 0);
-	ssc_data_set_number(data, "ppa_price_input", 0.15999999642372131);
+	ssc_number_t p_ppa_price_input[1] = { 0 };
+	ssc_data_set_array(data, "ppa_price_input", p_ppa_price_input, 1);
+	ssc_data_set_number(data, "cp_capacity_payment_esc", 0);
+	ssc_data_set_number(data, "cp_capacity_payment_type", 0);
+	ssc_data_set_number(data, "cp_system_nameplate", 0);
+	ssc_data_set_number(data, "cp_battery_nameplate", 0);
+	ssc_data_set_array(data, "cp_capacity_credit_percent", p_ppa_price_input, 1);
+	ssc_data_set_array(data, "cp_capacity_payment_amount", p_ppa_price_input, 1);
 	ssc_data_set_number(data, "ppa_escalation", 1);
 	ssc_data_set_number(data, "construction_financing_cost", 3645702.5);
 	ssc_data_set_number(data, "term_tenor", 18);

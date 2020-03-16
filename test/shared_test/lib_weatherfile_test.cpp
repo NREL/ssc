@@ -5,7 +5,7 @@
 #include <gtest/gtest.h>
 #include "lib_weatherfile.h"
 #include "../ssc/common.h"
-#include "../ssc/vartab.h"
+#include "vartab.h"
 
 /**
 * \class weatherfileTest
@@ -25,7 +25,7 @@ class CSVCase_WeatherfileTest : public weatherfileTest{
 protected:
 	void SetUp(){
 		e = 0.001;
-		char filepath[150];
+		char filepath[1024];
 		int n1 = sprintf(filepath, "%s/test/input_docs/weather-noRHum.csv", std::getenv("SSCDIR"));
 		file = std::string(filepath);
 		ASSERT_TRUE(wf.open(file));
@@ -33,7 +33,7 @@ protected:
 };
 
 /// Test some init actions
-TEST_F(CSVCase_WeatherfileTest, initTest){
+TEST_F(CSVCase_WeatherfileTest, initTest_lib_weatherfile){
 
 	EXPECT_EQ(wf.header().location, "875760") << "CSV Case: Init test\n";
 	EXPECT_EQ(wf.header().city, "Buenos_Aires") << "CSV Case: Init test\n";
@@ -54,7 +54,7 @@ TEST_F(CSVCase_WeatherfileTest, normalizeCityTest_lib_weatherfile){
 }
 
 /// Test reading first, second and custom row
-TEST_F(CSVCase_WeatherfileTest, readTest){
+TEST_F(CSVCase_WeatherfileTest, readTest_lib_weatherfile){
 	weather_record r;
 	/* read first row */
 	wf.read(&r);
@@ -127,8 +127,8 @@ TEST_F(CSVCase_WeatherfileTest, readTest){
 	EXPECT_EQ(wf.get_counter_value(), 1);
 }
 
-TEST_F(weatherfileTest, EPWTest) {
-	char filepath[150];
+TEST_F(weatherfileTest, EPWTest_lib_weatherfile) {
+	char filepath[1024];
 	int n1 = sprintf(filepath, "%s/test/input_docs/weather_30m.epw", std::getenv("SSCDIR"));
 	file = std::string(filepath);
 	EXPECT_TRUE(wf.open(file));
@@ -137,8 +137,8 @@ TEST_F(weatherfileTest, EPWTest) {
 	EXPECT_TRUE(wf.nrecords() == 8760 * 2);
 }
 
-TEST_F(weatherfileTest, EPWNoLineEndingsTest) {
-	char filepath[150];
+TEST_F(weatherfileTest, EPWNoLineEndingsTest_lib_weatherfile) {
+	char filepath[1024];
 	int n1 = sprintf(filepath, "%s/test/input_docs/weather_noLineEnding.epw", std::getenv("SSCDIR"));
 	file = std::string(filepath);
 	EXPECT_TRUE(wf.open(file));
@@ -194,9 +194,9 @@ protected:
 	void SetUp(){
 		// set-up input var_table: vd contains only zeros and time will be 1, 2, 3 
 		vt = new var_table;
-		float empty[8760] = { 0 };
+		double empty[8760] = { 0 };
 		vd = var_data(empty, 8760);
-		float order[3] = { 1, 2, 3 };
+		double order[3] = { 1, 2, 3 };
 		time = var_data(order, 3);
 		weatherdataTest::SetUp();
 		
@@ -274,9 +274,9 @@ protected:
 	void SetUp(){
 		// set-up input var_table
 		vt = new var_table;
-		float empty[9999] = { 0 };
+		double empty[9999] = { 0 };
 		vd = var_data(empty, 9999);
-		float order[3] = { 1, 2, 3 };
+		double order[3] = { 1, 2, 3 };
 		time = var_data(order, 3);
 		weatherdataTest::SetUp();
 	}
@@ -299,7 +299,7 @@ TEST_F(Data9999CaseWeatherData, initTest2_lib_weatherfile){
 }
 
 TEST_F(Data9999CaseWeatherData, readTest2_lib_weatherfile){
-	float wrong_length[1000] = { 0 };
+	double wrong_length[1000] = { 0 };
 	var_data vd_err = var_data(wrong_length, 1000);
 	input->table.unassign("dn");
 	input->table.assign("dn", vd_err);

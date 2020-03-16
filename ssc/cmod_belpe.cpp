@@ -1,51 +1,24 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 
 #include <limits>
@@ -164,7 +137,7 @@ public:
 		for (int i = 0; i < 12; i++) //each month
 		{
 			monthly[i] = 0;
-			for (int d = 0; d<util::nday[i]; d++) // for each day in each month
+			for (size_t d = 0; d<util::nday[i]; d++) // for each day in each month
 				for (int h = 0; h < 24; h++) // for each hour in each day
 					monthly[i] += hourly[c++];
 		}
@@ -181,7 +154,7 @@ public:
 
 
 	//MAIN FUNCTION*******************************************************************************************************************************************************************************
-	void exec() throw(general_error)
+	void exec() override
 	{		
 		//This compute module is going to automatically be run in series between pvsamv1 and utilityrate3 for residential and commercial systems.
 		//However, the building load profile option will not be selected by default.
@@ -201,17 +174,17 @@ public:
 		
 		//8760 arrays of month, day, and hour neeeded for lots of calcs, initialize those here
 		int month[8760], day[8760], hour[8760];
-		int i = 0;
+		int index = 0;
 		for (int m = 0; m < 12; m++)
 		{
-			for (int d = 0; d < util::nday[m]; d++)
+			for (int d = 0; d < (int)util::nday[m]; d++)
 			{
 				for (int h = 0; h <= 23; h++)
 				{
-					month[i] = m;
-					day[i] = d;
-					hour[i] = h;
-					i++;
+					month[index] = m;
+					day[index] = d;
+					hour[index] = h;
+					index++;
 				}
 			}
 		}
@@ -273,22 +246,22 @@ public:
 			//variables to store irradiance info
 			double beam, sky, gnd;
 			//North wall
-			irr.set_surface(0, 90, 0, 0, 0, 0);
+			irr.set_surface(0, 90, 0, 0, 0, 0, false, 0.0);
 			irr.calc();
 			irr.get_poa(&beam, &sky, &gnd, 0, 0, 0);
 			RadWallN[i] = beam + sky + gnd;
 			//East wall
-			irr.set_surface(0, 90, 90, 0, 0, 0);
+			irr.set_surface(0, 90, 90, 0, 0, 0, false, 0.0);
 			irr.calc();
 			irr.get_poa(&beam, &sky, &gnd, 0, 0, 0);
 			RadWallE[i] = beam + sky + gnd;
 			//South wall
-			irr.set_surface(0, 90, 180, 0, 0, 0);
+			irr.set_surface(0, 90, 180, 0, 0, 0, false, 0.0);
 			irr.calc();
 			irr.get_poa(&beam, &sky, &gnd, 0, 0, 0);
 			RadWallS[i] = beam + sky + gnd;
 			//West wall
-			irr.set_surface(0, 90, 270, 0, 0, 0);
+			irr.set_surface(0, 90, 270, 0, 0, 0, false, 0.0);
 			irr.calc();
 			irr.get_poa(&beam, &sky, &gnd, 0, 0, 0);
 			RadWallW[i] = beam + sky + gnd;
@@ -735,7 +708,7 @@ public:
 		std::vector<double> QN(8760), QHV2(8760), Tdiff(8760);
 		
 		
-		std::vector<double> HourlyNonHVACLoad(8760);
+		//std::vector<double> HourlyNonHVACLoad(8760);
 
 		//MAIN 8760 LOOP STARTS HERE********************************************************************************************************************************************************************
 
@@ -1030,7 +1003,7 @@ public:
 		if (HrsHeat != 0)
 		{
 			AuxHeatPerHr = AuxHeat / HrsHeat / 1000; //This is Wh
-			for (i = 0; i < 8760; i++)
+			for (size_t i = 0; i < 8760; i++)
 			{
 				if (Heaton[i])
 				{
@@ -1058,7 +1031,7 @@ public:
 		}
 		int min_diff_month = 0; 
 		double min_diff = fabs(monthly_diff[0]);
-		for (i = 1; i < 12; i++)
+		for (int i = 1; i < 12; i++)
 		{
 			if (fabs(monthly_diff[i]) < min_diff)
 			{
