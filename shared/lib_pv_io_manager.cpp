@@ -725,6 +725,9 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 void PVSystem_IO::AllocateOutputs(compute_module* cm)
 {
 	size_t numberOfWeatherFileRecords = Irradiance->numberOfWeatherFileRecords;
+	if (Simulation->useLifetimeOutput == 1) {
+		numberOfWeatherFileRecords = Simulation->numberOfSteps;
+	}
 	size_t numberOfLifetimeRecords = Simulation->numberOfSteps;
 	size_t numberOfYears = Simulation->numberOfYears;
 
