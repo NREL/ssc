@@ -307,6 +307,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,     SSC_ARRAY,  "f_turb_tou_periods",                 "Dispatch logic for turbine load fraction",                                                                                                "",             "",                                  "System Control",                           "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_MATRIX, "weekday_schedule",                   "12x24 CSP operation Time-of-Use Weekday schedule",                                                                                        "",             "",                                  "System Control",                           "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_MATRIX, "weekend_schedule",                   "12x24 CSP operation Time-of-Use Weekend schedule",                                                                                        "",             "",                                  "System Control",                           "*",                                                                "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "is_tod_pc_target_also_pc_max",       "Is the TOD target cycle heat input also the max cycle heat input?",                                                                       "",             "",                                  "System Control",                           "?=0",                                                              "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "is_dispatch",                        "Allow dispatch optimization?",                                                                                                            "",             "",                                  "System Control",                           "?=0",                                                              "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "disp_horizon",                       "Time horizon for dispatch optimization",                                                                                                  "hour",         "",                                  "System Control",                           "is_dispatch=1",                                                    "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "disp_frequency",                     "Frequency for dispatch optimization calculations",                                                                                        "hour",         "",                                  "System Control",                           "is_dispatch=1",                                                    "",              ""},
@@ -560,9 +561,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 
     { SSC_OUTPUT,    SSC_ARRAY,  "gen",                                "Total electric power to grid with available derate",                                                                                      "kWe",          "",                                  "",                                         "*",                                                                "",              ""},
 
-    { SSC_OUTPUT,    SSC_MATRIX, "ud_T_htf_ind_od_out",                "T_htf_hot cycle off design",                                                                                                              "",             "",                                  "",                                         "?=[[0,1,2,3,4,5,6,7,8,9,10,11,12][0,1,2,3,4,5,6,7,8,9,10,11,12]]", "",              "COL_LABEL=UDPC_T_HTF_HOT,ROW_LABEL=NO_ROW_LABEL"},
-    { SSC_OUTPUT,    SSC_MATRIX, "ud_T_amb_ind_od_out",                "T_amb cycle off design",                                                                                                                  "",             "",                                  "",                                         "?=[[0,1,2,3,4,5,6,7,8,9,10,11,12][0,1,2,3,4,5,6,7,8,9,10,11,12]]", "",              "COL_LABEL=UDPC_T_AMB,ROW_LABEL=NO_ROW_LABEL"},
-    { SSC_OUTPUT,    SSC_MATRIX, "ud_m_dot_htf_ind_od_out",            "M_dot_htf cycle off design",                                                                                                              "",             "",                                  "",                                         "?=[[0,1,2,3,4,5,6,7,8,9,10,11,12][0,1,2,3,4,5,6,7,8,9,10,11,12]]", "",              "COL_LABEL=UDPC_M_DOT_HTF,ROW_LABEL=NO_ROW_LABEL"},
+    { SSC_OUTPUT,    SSC_MATRIX, "sco2_preprocess_table_out",          "sCO2 cycle preprocessed data in UDPC format",                                                                                             "",             "",                                  "",                                         "?=[[0]]",                                                          "",              "COL_LABEL=UDPC_SCO2_PREPROC,ROW_LABEL=NO_ROW_LABEL"},
 
     // Annual single-value outputs
     { SSC_OUTPUT,    SSC_NUMBER, "annual_energy",                      "Annual total electric power to grid",                                                                                                     "kWhe",         "",                                  "",                                         "*",                                                                "",              ""},
@@ -1178,6 +1177,25 @@ public:
                 pc->mc_T_amb_ind = as_matrix("sco2ud_T_amb_ind_od");
                 pc->mc_m_dot_htf_ind = as_matrix("sco2ud_m_dot_htf_ind_od");
 
+                util::matrix_t<double> cmbd_ind;
+
+                combine_ind_tbl(cmbd_ind, pc->mc_T_htf_ind, pc->mc_m_dot_htf_ind, pc->mc_T_amb_ind,
+                    pc->m_m_dot_htf_low, 1.0, pc->m_m_dot_htf_high,
+                    pc->m_T_htf_low, pc->m_T_htf_hot_ref, pc->m_T_htf_high,
+                    pc->m_T_amb_low, pc->m_T_amb_des, pc->m_T_amb_high);
+
+                size_t ncols_udpc = cmbd_ind.ncols();
+                size_t nrows_udpc = cmbd_ind.nrows();
+
+                util::matrix_t<ssc_number_t>& p_udpc_preproc = allocate_matrix("sco2_preprocess_table_out", nrows_udpc, ncols_udpc);
+                for (size_t i = 0; i < nrows_udpc; i++)
+                {
+                    for (size_t j = 0; j < ncols_udpc; j++)
+                    {
+                        p_udpc_preproc(i, j) = (ssc_number_t)cmbd_ind(i, j);
+                    }
+                }
+
                 p_csp_power_cycle = &rankine_pc;
             }
             else
@@ -1315,14 +1333,14 @@ public:
 
                     // Get user-defined power cycle parameters
                     // HTF temperature parametric
-                    double T_htf_hot_low = c_sco2_csp.get_design_par()->m_T_htf_hot_in - 273.15 - 20.0; //[C]
+                    double T_htf_hot_low = c_sco2_csp.get_design_par()->m_T_htf_hot_in - 273.15 - 30.0; //[C]
                     double T_htf_hot_high = c_sco2_csp.get_design_par()->m_T_htf_hot_in - 273.15 + 15.0;    //[C]
-                    int n_T_htf_hot_in = 5;             //[-]
+                    int n_T_htf_hot_in = 4;             //[-]
 
                     // Ambient temperature parametric
                     double T_amb_low = 0.0;             //[C]
                     double T_amb_high = std::max(sco2_rc_csp_par.m_T_amb_des - 273.15 + 5.0, 45.0);         //[C]
-                    int n_T_amb_in = 10;                //[-]
+                    int n_T_amb_in = std::round((T_amb_high - T_amb_low) / 2.0) + 1;     //[-]
 
                     // HTF mass flow rate parametric
                     double cycle_f_min = as_double("cycle_cutoff_frac");        //[-]
@@ -1331,7 +1349,7 @@ public:
                     std::string cycle_type = "recompression";
                     if (!is_des_rc)
                     {
-                        sco2_f_min = 0.7;
+                        //sco2_f_min = 0.7;
                         cycle_type = "simple";
                     }
                     if (cycle_f_min < sco2_f_min)
@@ -1368,33 +1386,6 @@ public:
                     }
 
                     size_t ncols = T_htf_parametrics.ncols();
-
-                    util::matrix_t<double> &p_udpc_T_htf_hot = allocate_matrix("ud_T_htf_ind_od_out", n_T_htf_hot_in, ncols);
-                    for (int i = 0; i < n_T_htf_hot_in; i++)
-                    {
-                        for (size_t j = 0; j < ncols; j++)
-                        {
-                            p_udpc_T_htf_hot(i, j) = (double)T_htf_parametrics(i, j);
-                        }
-                    }
-
-                    util::matrix_t<double> &p_udpc_T_amb = allocate_matrix("ud_T_amb_ind_od_out", n_T_amb_in, ncols);
-                    for (int i = 0; i < n_T_amb_in; i++)
-                    {
-                        for (size_t j = 0; j < ncols; j++)
-                        {
-                            p_udpc_T_amb(i, j) = (double)T_amb_parametrics(i, j);
-                        }
-                    }
-
-                    util::matrix_t<double> &p_udpc_m_dot_htf = allocate_matrix("ud_m_dot_htf_ind_od_out", n_m_dot_htf_ND_in, ncols);
-                    for (int i = 0; i < n_m_dot_htf_ND_in; i++)
-                    {
-                        for (size_t j = 0; j < ncols; j++)
-                        {
-                            p_udpc_m_dot_htf(i, j) = (double)m_dot_htf_ND_parametrics(i, j);
-                        }
-                    }
 
                     log("sCO2 off-design performance calculations for lookup tables complete.", SSC_WARNING);
                     update("sCO2 preprocess complete", 100.0);
@@ -1436,6 +1427,25 @@ public:
                     pc->mc_T_htf_ind = T_htf_parametrics;
                     pc->mc_T_amb_ind = T_amb_parametrics;
                     pc->mc_m_dot_htf_ind = m_dot_htf_ND_parametrics;
+
+                    util::matrix_t<double> cmbd_ind;
+
+                    combine_ind_tbl(cmbd_ind, pc->mc_T_htf_ind, pc->mc_m_dot_htf_ind, pc->mc_T_amb_ind,
+                        pc->m_m_dot_htf_low, 1.0, pc->m_m_dot_htf_high,
+                        pc->m_T_htf_low, pc->m_T_htf_hot_ref, pc->m_T_htf_high,
+                        pc->m_T_amb_low, pc->m_T_amb_des, pc->m_T_amb_high);
+
+                    size_t ncols_udpc = cmbd_ind.ncols();
+                    size_t nrows_udpc = cmbd_ind.nrows();
+
+                    util::matrix_t<ssc_number_t>& p_udpc_preproc = allocate_matrix("sco2_preprocess_table_out", nrows_udpc, ncols_udpc);
+                    for (size_t i = 0; i < nrows_udpc; i++)
+                    {
+                        for (size_t j = 0; j < ncols_udpc; j++)
+                        {
+                            p_udpc_preproc(i, j) = (ssc_number_t)cmbd_ind(i, j);
+                        }
+                    }
 
                     p_csp_power_cycle = &rankine_pc;
                 }
@@ -1770,6 +1780,7 @@ public:
 
     
         }
+        tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max = as_boolean("is_tod_pc_target_also_pc_max");
         tou.mc_dispatch_params.m_is_block_dispatch = ! tou.mc_dispatch_params.m_dispatch_optimize;      //mw
         tou.mc_dispatch_params.m_use_rule_1 = true;
         tou.mc_dispatch_params.m_standby_off_buffer = 2.0;

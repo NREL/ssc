@@ -88,5 +88,5 @@ TEST(URDBv7_cmod_utilityrate5_eqns, ElectricityRates_format_as_URDBv7){
     EXPECT_GT(period[1].table.lookup("max")->num[0], 9.99e+33);
     EXPECT_NEAR(period[1].table.lookup("rate")->num, 4.676, 1e-3);
 
-    delete data;
+//    delete data;
 }

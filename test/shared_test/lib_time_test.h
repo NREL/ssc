@@ -7,7 +7,7 @@
 #include <gtest/gtest.h>
 #include <vector>
 
-class libTimeTests : public ::testing::Test
+class libTimeTest_lib_time : public ::testing::Test
 {
 protected:
 
