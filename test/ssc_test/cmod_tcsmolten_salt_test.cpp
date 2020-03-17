@@ -428,7 +428,7 @@ TEST(Mspt_cmod_csp_tower_eqns, Case6) {
 	vd->assign("p_ref", 115.);
 	vd->assign("design_eff", 0.412);
 	vd->assign("tshours", 10.);
-	vd->assign("demand_var", NULL);
+	vd->assign("demand_var", 0);
 	vd->assign("a_sf_ui", 1269055.);
 	vd->assign("site_spec_cost", 16.);
 	vd->assign("heliostat_spec_cost", 140.);
@@ -882,31 +882,31 @@ TEST(Mspt_cmod_csp_tower_eqns, Case6) {
 //
 //		ssc_number_t N_hel;
 //		ssc_data_get_number(data, "N_hel", &N_hel);
-//		EXPECT_NEAR(N_hel, 8790, 8790 * m_error_tolerance_hi) << "Number of Heliostats"; 
+//		EXPECT_NEAR(N_hel, 8790, 8790 * m_error_tolerance_hi) << "Number of Heliostats";
 //
 //		ssc_number_t rec_height;
 //		ssc_data_get_number(data, "rec_height", &rec_height);
-//		EXPECT_NEAR(rec_height, 21.6029, 21.6029 * m_error_tolerance_hi) << "Rec Height";  
+//		EXPECT_NEAR(rec_height, 21.6029, 21.6029 * m_error_tolerance_hi) << "Rec Height";
 //
 //		ssc_number_t A_sf;
 //		ssc_data_get_number(data, "A_sf", &A_sf);
-//		EXPECT_NEAR(A_sf, 1.26905e6, 1.26905e6 * m_error_tolerance_hi) << "Solar Field Area";  
+//		EXPECT_NEAR(A_sf, 1.26905e6, 1.26905e6 * m_error_tolerance_hi) << "Solar Field Area";
 //
 //		ssc_number_t D_rec;
 //		ssc_data_get_number(data, "D_rec", &D_rec);
-//		EXPECT_NEAR(D_rec, 17.65, 17.65 * m_error_tolerance_hi) << "Receiver Outer Diameter";  
+//		EXPECT_NEAR(D_rec, 17.65, 17.65 * m_error_tolerance_hi) << "Receiver Outer Diameter";
 //
 //		ssc_number_t annual_total_water_use;
 //		ssc_data_get_number(data, "annual_total_water_use", &annual_total_water_use);
-//		EXPECT_NEAR(annual_total_water_use, 55965.3, 55965.3 * m_error_tolerance_hi) << "Annual Total Water Use";  
+//		EXPECT_NEAR(annual_total_water_use, 55965.3, 55965.3 * m_error_tolerance_hi) << "Annual Total Water Use";
 //
 //		ssc_number_t csp_pt_cost_total_land_area;
 //		ssc_data_get_number(data, "csp.pt.cost.total_land_area", &csp_pt_cost_total_land_area);
-//		EXPECT_NEAR(csp_pt_cost_total_land_area, 1892.04, 1892.04 * m_error_tolerance_hi) << "Total Land Area";  
+//		EXPECT_NEAR(csp_pt_cost_total_land_area, 1892.04, 1892.04 * m_error_tolerance_hi) << "Total Land Area";
 //
 //		ssc_number_t h_tower;
 //		ssc_data_get_number(data, "h_tower", &h_tower);
-//		EXPECT_NEAR(h_tower, 193.458, 193.458 * m_error_tolerance_hi) << "Tower Height";  
+//		EXPECT_NEAR(h_tower, 193.458, 193.458 * m_error_tolerance_hi) << "Tower Height";
 //	}
 //}
 
@@ -927,7 +927,7 @@ TEST(Mspt_cmod_csp_tower_eqns, Case6) {
 //
 //		ssc_number_t land_area_base;
 //		ssc_data_get_number(data, "land_area_base", &land_area_base);
-//		EXPECT_NEAR(land_area_base, 1847.04, 1847.04 * m_error_tolerance_hi) << "Land Area Base";  
+//		EXPECT_NEAR(land_area_base, 1847.04, 1847.04 * m_error_tolerance_hi) << "Land Area Base";
 //
 //		ssc_number_t capacity_factor;
 //		ssc_data_get_number(data, "capacity_factor", &capacity_factor);
@@ -947,31 +947,31 @@ TEST(Mspt_cmod_csp_tower_eqns, Case6) {
 //
 //		ssc_number_t N_hel;
 //		ssc_data_get_number(data, "N_hel", &N_hel);
-//		EXPECT_NEAR(N_hel, 8790, 8790 * m_error_tolerance_hi) << "Number of Heliostats";  
+//		EXPECT_NEAR(N_hel, 8790, 8790 * m_error_tolerance_hi) << "Number of Heliostats";
 //
 //		ssc_number_t rec_height;
 //		ssc_data_get_number(data, "rec_height", &rec_height);
-//		EXPECT_NEAR(rec_height, 21.6029, 21.6029 * m_error_tolerance_hi) << "Rec Height";  
+//		EXPECT_NEAR(rec_height, 21.6029, 21.6029 * m_error_tolerance_hi) << "Rec Height";
 //
 //		ssc_number_t A_sf;
 //		ssc_data_get_number(data, "A_sf", &A_sf);
-//		EXPECT_NEAR(A_sf, 1.26905e6, 1.26905e6 * m_error_tolerance_hi) << "Solar Field Area"; 
+//		EXPECT_NEAR(A_sf, 1.26905e6, 1.26905e6 * m_error_tolerance_hi) << "Solar Field Area";
 //
 //		ssc_number_t D_rec;
 //		ssc_data_get_number(data, "D_rec", &D_rec);
-//		EXPECT_NEAR(D_rec, 17.65, 17.65 * m_error_tolerance_hi) << "Receiver Outer Diameter";  
+//		EXPECT_NEAR(D_rec, 17.65, 17.65 * m_error_tolerance_hi) << "Receiver Outer Diameter";
 //
 //		ssc_number_t annual_total_water_use;
 //		ssc_data_get_number(data, "annual_total_water_use", &annual_total_water_use);
-//		EXPECT_NEAR(annual_total_water_use, 55965.3, 55965.3 * m_error_tolerance_hi) << "Annual Total Water Use";  
+//		EXPECT_NEAR(annual_total_water_use, 55965.3, 55965.3 * m_error_tolerance_hi) << "Annual Total Water Use";
 //
 //		ssc_number_t csp_pt_cost_total_land_area;
 //		ssc_data_get_number(data, "csp.pt.cost.total_land_area", &csp_pt_cost_total_land_area);
-//		EXPECT_NEAR(csp_pt_cost_total_land_area, 1892.04, 1892.04 * m_error_tolerance_hi) << "Total Land Area";  
+//		EXPECT_NEAR(csp_pt_cost_total_land_area, 1892.04, 1892.04 * m_error_tolerance_hi) << "Total Land Area";
 //
 //		ssc_number_t h_tower;
 //		ssc_data_get_number(data, "h_tower", &h_tower);
-//		EXPECT_NEAR(h_tower, 193.458, 193.458 * m_error_tolerance_hi) << "Tower Height";  
+//		EXPECT_NEAR(h_tower, 193.458, 193.458 * m_error_tolerance_hi) << "Tower Height";
 //	}
 //}
 
@@ -992,7 +992,7 @@ TEST(Mspt_cmod_csp_tower_eqns, Case6) {
 //
 //		ssc_number_t land_area_base;
 //		ssc_data_get_number(data, "land_area_base", &land_area_base);
-//		EXPECT_NEAR(land_area_base, 1847.04, 1847.04 * m_error_tolerance_hi) << "Land Area Base";  
+//		EXPECT_NEAR(land_area_base, 1847.04, 1847.04 * m_error_tolerance_hi) << "Land Area Base";
 //
 //		ssc_number_t capacity_factor;
 //		ssc_data_get_number(data, "capacity_factor", &capacity_factor);
@@ -1012,31 +1012,31 @@ TEST(Mspt_cmod_csp_tower_eqns, Case6) {
 //
 //		ssc_number_t N_hel;
 //		ssc_data_get_number(data, "N_hel", &N_hel);
-//		EXPECT_NEAR(N_hel, 8790, 8790 * m_error_tolerance_hi) << "Number of Heliostats";  
+//		EXPECT_NEAR(N_hel, 8790, 8790 * m_error_tolerance_hi) << "Number of Heliostats";
 //
 //		ssc_number_t rec_height;
 //		ssc_data_get_number(data, "rec_height", &rec_height);
-//		EXPECT_NEAR(rec_height, 21.6029, 21.6029 * m_error_tolerance_hi) << "Rec Height";  
+//		EXPECT_NEAR(rec_height, 21.6029, 21.6029 * m_error_tolerance_hi) << "Rec Height";
 //
 //		ssc_number_t A_sf;
 //		ssc_data_get_number(data, "A_sf", &A_sf);
-//		EXPECT_NEAR(A_sf, 1.26905e6, 1.26905e6 * m_error_tolerance_hi) << "Solar Field Area";  
+//		EXPECT_NEAR(A_sf, 1.26905e6, 1.26905e6 * m_error_tolerance_hi) << "Solar Field Area";
 //
 //		ssc_number_t D_rec;
 //		ssc_data_get_number(data, "D_rec", &D_rec);
-//		EXPECT_NEAR(D_rec, 17.65, 17.65 * m_error_tolerance_hi) << "Receiver Outer Diameter"; 
+//		EXPECT_NEAR(D_rec, 17.65, 17.65 * m_error_tolerance_hi) << "Receiver Outer Diameter";
 //
 //		ssc_number_t annual_total_water_use;
 //		ssc_data_get_number(data, "annual_total_water_use", &annual_total_water_use);
-//		EXPECT_NEAR(annual_total_water_use, 55965.3, 55965.3 * m_error_tolerance_hi) << "Annual Total Water Use";  
-//		
+//		EXPECT_NEAR(annual_total_water_use, 55965.3, 55965.3 * m_error_tolerance_hi) << "Annual Total Water Use";
+//
 //		ssc_number_t csp_pt_cost_total_land_area;
 //		ssc_data_get_number(data, "csp.pt.cost.total_land_area", &csp_pt_cost_total_land_area);
-//		EXPECT_NEAR(csp_pt_cost_total_land_area, 1892.04, 1892.04 * m_error_tolerance_hi) << "Total Land Area";  
+//		EXPECT_NEAR(csp_pt_cost_total_land_area, 1892.04, 1892.04 * m_error_tolerance_hi) << "Total Land Area";
 //
 //		ssc_number_t h_tower;
 //		ssc_data_get_number(data, "h_tower", &h_tower);
-//		EXPECT_NEAR(h_tower, 193.458, 193.458 * m_error_tolerance_hi) << "Tower Height"; 
+//		EXPECT_NEAR(h_tower, 193.458, 193.458 * m_error_tolerance_hi) << "Tower Height";
 //	}
 //}
 
@@ -1047,7 +1047,7 @@ TEST(Mspt_cmod_csp_tower_eqns, Case6) {
 //	// The other 9 test case scenarios were unable to simulate properly
 //	// on the SAM UI.
 //
-//	//  // ACTS pass/fail summary				F          F          P         P          P          F 
+//	//  // ACTS pass/fail summary				F          F          P         P          P          F
 //	//  // sCO2 ACTS Test Cases                 2          4          5         7         12         15
 //	//  std::vector<double> annual_energys{ 4.47253e8, 4.83719e8, 5.3984e8, 5.29801e8, 5.12115e8, 4.648e8 };
 //	//  std::vector<double> land_area_bases{ 1847.04, 1847.04, 1847.04, 1847.04, 1847.04, 1847.04 };
@@ -1062,9 +1062,9 @@ TEST(Mspt_cmod_csp_tower_eqns, Case6) {
 //	//  std::vector<double> annual_total_water_uses{ 55965.3, 55965.3, 55965.3, 55965.3, 55965.3, 55965.3 };
 //	//  std::vector<double> csp_pt_cost_total_land_areas{ 1892.04, 1892.04, 1892.04, 1892.04, 1892.04, 1892.04 };
 //	//  std::vector<double> h_towers{ 193.458, 193.458, 193.458, 193.458, 193.458, 193.458 };
-//	
-//	// Passing ACTS configurations 
-//	// sCO2 ACTS Test Cases                 5         7         12         
+//
+//	// Passing ACTS configurations
+//	// sCO2 ACTS Test Cases                 5         7         12
 //	std::vector<double> annual_energys{ 5.3984e8, 5.29801e8, 5.12115e8 };
 //	std::vector<double> land_area_bases{ 1847.04, 1847.04, 1847.04 };
 //	std::vector<double> capacity_factors{ 59.5417, 58.4344, 56.4837 };
