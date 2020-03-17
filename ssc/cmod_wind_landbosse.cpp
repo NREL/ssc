@@ -46,40 +46,40 @@ static var_info _cm_vtab_wind_landbosse[] = {
         { SSC_INPUT,        SSC_NUMBER, "labor_cost_multiplier",                 "Labor Cost Multiplier",                                   "",         "",                      "LandBOSSE",      "*",                       "MIN=0",                         "" },
         { SSC_INPUT,        SSC_NUMBER, "gust_velocity_m_per_s",                 "50 year Gust Velocity",                                   "m/s",      "",                      "LandBOSSE",      "*",                       "MIN=0",                         "" },
 
-        { SSC_OUTPUT, 		SSC_STRING, "errors",	            		        "Error message",			                                 "",  "", "LandBOSSE", "", "", "", } ,
-        { SSC_OUTPUT, 		SSC_NUMBER, "bonding_usd",			                "Management - Bonding Cost",		                       	 "$", "", "LandBOSSE", "", "", "", } ,
-        { SSC_OUTPUT, 		SSC_NUMBER, "collection_equipment_rental_usd",       "Collection - Equipment Rental Cost",		            	 "$", "", "LandBOSSE", "", "", "", } ,
-        { SSC_OUTPUT, 		SSC_NUMBER, "collection_labor_usd",			        "Collection - Labor Cost",			                     "$", "", "LandBOSSE", "", "", "", } ,
-        { SSC_OUTPUT, 		SSC_NUMBER, "collection_material_usd",	            "Collection - Materials Cost",		                 	 "$", "", "LandBOSSE", "", "", "", } ,
-        { SSC_OUTPUT, 		SSC_NUMBER, "collection_mobilization_usd",	        "Collection - Mobilization Cost",		                	 "$", "", "LandBOSSE", "", "", "", } ,
-        { SSC_OUTPUT, 		SSC_NUMBER, "construction_permitting_usd",	        "Management - Construction Permitting Cost",	    		 "$", "", "LandBOSSE", "", "", "", } ,
-        { SSC_OUTPUT, 		SSC_NUMBER, "development_labor_usd",			        "Development - Labor Cost",			                     "$", "", "LandBOSSE", "", "", "", } ,
-        { SSC_OUTPUT, 		SSC_NUMBER, "development_material_usd",		        "Development - Material Cost",			                 "$", "", "LandBOSSE", "", "", "", } ,
-        { SSC_OUTPUT, 		SSC_NUMBER, "development_mobilization_usd",	        "Development - Mobilization Cost",		            	 "$", "", "LandBOSSE", "", "", "", } ,
-        { SSC_OUTPUT, 		SSC_NUMBER, "engineering_usd",			            "Management - Engineering Cost",			                 "$", "", "LandBOSSE", "", "", "", } ,
-        { SSC_OUTPUT, 		SSC_NUMBER, "erection_equipment_rental_usd",	        "Erection - Equipment Rental Cost",		            	 "$", "", "LandBOSSE", "", "", "", } ,
-        { SSC_OUTPUT, 		SSC_NUMBER, "erection_fuel_usd",			            "Erection - Fuel Cost",			                         "$", "", "LandBOSSE", "", "", "", } ,
-        { SSC_OUTPUT, 		SSC_NUMBER, "erection_labor_usd",		      	    "Erection - Labor Cost",			                         "$", "", "LandBOSSE", "", "", "", } ,
-        { SSC_OUTPUT, 		SSC_NUMBER, "erection_material_usd",		            "Erection - Material Cost",			                     "$", "", "LandBOSSE", "", "", "", } ,
-        { SSC_OUTPUT, 		SSC_NUMBER, "erection_mobilization_usd",		        "Erection - Mobilization Cost",			                 "$", "", "LandBOSSE", "", "", "", } ,
-        { SSC_OUTPUT, 		SSC_NUMBER, "erection_other_usd",			        "Erection - Other Cost",			                         "$", "", "LandBOSSE", "", "", "", } ,
-        { SSC_OUTPUT, 		SSC_NUMBER, "foundation_equipment_rental_usd",       "Foundation - Equipment Rental Cost",		            	 "$", "", "LandBOSSE", "", "", "", } ,
-        { SSC_OUTPUT, 		SSC_NUMBER, "foundation_labor_usd",			        "Foundation - Labor Cost",			                     "$", "", "LandBOSSE", "", "", "", } ,
-        { SSC_OUTPUT, 		SSC_NUMBER, "foundation_material_usd",		        "Foundation - Material Cost",			                     "$", "", "LandBOSSE", "", "", "", } ,
-        { SSC_OUTPUT, 		SSC_NUMBER, "foundation_mobilization_usd",      	    "Foundation - Mobilization Cost",			                 "$", "", "LandBOSSE", "", "", "", } ,
-        { SSC_OUTPUT, 		SSC_NUMBER, "insurance_usd",			                "Management - Insurance Cost",			                 "$", "", "LandBOSSE", "", "", "", } ,
-        { SSC_OUTPUT, 		SSC_NUMBER, "markup_contingency_usd",	   	        "Management - Markup Contingency",			             "$", "", "LandBOSSE", "", "", "", } ,
-        { SSC_OUTPUT, 		SSC_NUMBER, "project_management_usd",		        "Management - Project Management Cost",			         "$", "", "LandBOSSE", "", "", "", } ,
-        { SSC_OUTPUT, 		SSC_NUMBER, "site_facility_usd",			            "Management - Site Facility Cost",			             "$", "", "LandBOSSE", "", "", "", } ,
-        { SSC_OUTPUT, 		SSC_NUMBER, "sitepreparation_equipment_rental_usd",  "Site Preparation - Equipment Rental Cost",		    	 "$", "", "LandBOSSE", "", "", "", } ,
-        { SSC_OUTPUT, 		SSC_NUMBER, "sitepreparation_labor_usd",			    "Site Preparation - Labor Cost",			                 "$", "", "LandBOSSE", "", "", "", } ,
-        { SSC_OUTPUT, 		SSC_NUMBER, "sitepreparation_material_usd",			"Site Preparation - Material Cost",			             "$", "", "LandBOSSE", "", "", "", } ,
-        { SSC_OUTPUT, 		SSC_NUMBER, "sitepreparation_mobilization_usd",	    "Site Preparation - Mobilization Cost",			         "$", "", "LandBOSSE", "", "", "", } ,
-        { SSC_OUTPUT, 		SSC_NUMBER, "total_collection_cost",			        "Total Collection Cost",			                         "$", "", "LandBOSSE", "", "", "", } ,
-        { SSC_OUTPUT, 		SSC_NUMBER, "total_development_cost",		        "Total Development Cost",			                         "$", "", "LandBOSSE", "", "", "", } ,
-        { SSC_OUTPUT, 		SSC_NUMBER, "total_erection_cost",			        "Total Erection Cost",			                         "$", "", "LandBOSSE", "", "", "", } ,
-        { SSC_OUTPUT, 		SSC_NUMBER, "total_foundation_cost",			        "Total Foundation Cost",			                         "$", "", "LandBOSSE", "", "", "", } ,
-        { SSC_OUTPUT, 		SSC_NUMBER, "total_gridconnection_cost",		   	    "Total Grid Connection Cost",			                     "$", "", "LandBOSSE", "", "", "", } ,
+        { SSC_OUTPUT, 		SSC_STRING, "errors",	            		        "Error message",			                                 "",  "", "LandBOSSE", "*", "", "", } ,
+        { SSC_OUTPUT, 		SSC_NUMBER, "bonding_usd",			                "Management - Bonding Cost",		                       	 "$", "", "LandBOSSE", "*", "", "", } ,
+        { SSC_OUTPUT, 		SSC_NUMBER, "collection_equipment_rental_usd",       "Collection - Equipment Rental Cost",		            	 "$", "", "LandBOSSE", "*", "", "", } ,
+        { SSC_OUTPUT, 		SSC_NUMBER, "collection_labor_usd",			        "Collection - Labor Cost",			                     "$", "", "LandBOSSE", "*", "", "", } ,
+        { SSC_OUTPUT, 		SSC_NUMBER, "collection_material_usd",	            "Collection - Materials Cost",		                 	 "$", "", "LandBOSSE", "*", "", "", } ,
+        { SSC_OUTPUT, 		SSC_NUMBER, "collection_mobilization_usd",	        "Collection - Mobilization Cost",		                	 "$", "", "LandBOSSE", "*", "", "", } ,
+        { SSC_OUTPUT, 		SSC_NUMBER, "construction_permitting_usd",	        "Management - Construction Permitting Cost",	    		 "$", "", "LandBOSSE", "*", "", "", } ,
+        { SSC_OUTPUT, 		SSC_NUMBER, "development_labor_usd",			        "Development - Labor Cost",			                     "$", "", "LandBOSSE", "*", "", "", } ,
+        { SSC_OUTPUT, 		SSC_NUMBER, "development_material_usd",		        "Development - Material Cost",			                 "$", "", "LandBOSSE", "*", "", "", } ,
+        { SSC_OUTPUT, 		SSC_NUMBER, "development_mobilization_usd",	        "Development - Mobilization Cost",		            	 "$", "", "LandBOSSE", "*", "", "", } ,
+        { SSC_OUTPUT, 		SSC_NUMBER, "engineering_usd",			            "Management - Engineering Cost",			                 "$", "", "LandBOSSE", "*", "", "", } ,
+        { SSC_OUTPUT, 		SSC_NUMBER, "erection_equipment_rental_usd",	        "Erection - Equipment Rental Cost",		            	 "$", "", "LandBOSSE", "*", "", "", } ,
+        { SSC_OUTPUT, 		SSC_NUMBER, "erection_fuel_usd",			            "Erection - Fuel Cost",			                         "$", "", "LandBOSSE", "*", "", "", } ,
+        { SSC_OUTPUT, 		SSC_NUMBER, "erection_labor_usd",		      	    "Erection - Labor Cost",			                         "$", "", "LandBOSSE", "*", "", "", } ,
+        { SSC_OUTPUT, 		SSC_NUMBER, "erection_material_usd",		            "Erection - Material Cost",			                     "$", "", "LandBOSSE", "*", "", "", } ,
+        { SSC_OUTPUT, 		SSC_NUMBER, "erection_mobilization_usd",		        "Erection - Mobilization Cost",			                 "$", "", "LandBOSSE", "*", "", "", } ,
+        { SSC_OUTPUT, 		SSC_NUMBER, "erection_other_usd",			        "Erection - Other Cost",			                         "$", "", "LandBOSSE", "*", "", "", } ,
+        { SSC_OUTPUT, 		SSC_NUMBER, "foundation_equipment_rental_usd",       "Foundation - Equipment Rental Cost",		            	 "$", "", "LandBOSSE", "*", "", "", } ,
+        { SSC_OUTPUT, 		SSC_NUMBER, "foundation_labor_usd",			        "Foundation - Labor Cost",			                     "$", "", "LandBOSSE", "*", "", "", } ,
+        { SSC_OUTPUT, 		SSC_NUMBER, "foundation_material_usd",		        "Foundation - Material Cost",			                     "$", "", "LandBOSSE", "*", "", "", } ,
+        { SSC_OUTPUT, 		SSC_NUMBER, "foundation_mobilization_usd",      	    "Foundation - Mobilization Cost",			                 "$", "", "LandBOSSE", "*", "", "", } ,
+        { SSC_OUTPUT, 		SSC_NUMBER, "insurance_usd",			                "Management - Insurance Cost",			                 "$", "", "LandBOSSE", "*", "", "", } ,
+        { SSC_OUTPUT, 		SSC_NUMBER, "markup_contingency_usd",	   	        "Management - Markup Contingency",			             "$", "", "LandBOSSE", "*", "", "", } ,
+        { SSC_OUTPUT, 		SSC_NUMBER, "project_management_usd",		        "Management - Project Management Cost",			         "$", "", "LandBOSSE", "*", "", "", } ,
+        { SSC_OUTPUT, 		SSC_NUMBER, "site_facility_usd",			            "Management - Site Facility Cost",			             "$", "", "LandBOSSE", "*", "", "", } ,
+        { SSC_OUTPUT, 		SSC_NUMBER, "sitepreparation_equipment_rental_usd",  "Site Preparation - Equipment Rental Cost",		    	 "$", "", "LandBOSSE", "*", "", "", } ,
+        { SSC_OUTPUT, 		SSC_NUMBER, "sitepreparation_labor_usd",			    "Site Preparation - Labor Cost",			                 "$", "", "LandBOSSE", "*", "", "", } ,
+        { SSC_OUTPUT, 		SSC_NUMBER, "sitepreparation_material_usd",			"Site Preparation - Material Cost",			             "$", "", "LandBOSSE", "*", "", "", } ,
+        { SSC_OUTPUT, 		SSC_NUMBER, "sitepreparation_mobilization_usd",	    "Site Preparation - Mobilization Cost",			         "$", "", "LandBOSSE", "*", "", "", } ,
+        { SSC_OUTPUT, 		SSC_NUMBER, "total_collection_cost",			        "Total Collection Cost",			                         "$", "", "LandBOSSE", "*", "", "", } ,
+        { SSC_OUTPUT, 		SSC_NUMBER, "total_development_cost",		        "Total Development Cost",			                         "$", "", "LandBOSSE", "*", "", "", } ,
+        { SSC_OUTPUT, 		SSC_NUMBER, "total_erection_cost",			        "Total Erection Cost",			                         "$", "", "LandBOSSE", "*", "", "", } ,
+        { SSC_OUTPUT, 		SSC_NUMBER, "total_foundation_cost",			        "Total Foundation Cost",			                         "$", "", "LandBOSSE", "*", "", "", } ,
+        { SSC_OUTPUT, 		SSC_NUMBER, "total_gridconnection_cost",		   	    "Total Grid Connection Cost",			                     "$", "", "LandBOSSE", "*", "", "", } ,
         { SSC_OUTPUT, 		SSC_NUMBER, "total_management_cost",			        "Total Management Cost",			                         "$", "", "LandBOSSE", "*", "", "", } ,
         { SSC_OUTPUT, 		SSC_NUMBER, "total_sitepreparation_cost",			"Total Site Preparation Cost",			                 "$", "", "LandBOSSE", "*", "", "", } ,
         { SSC_OUTPUT, 		SSC_NUMBER, "total_substation_cost",			        "Total Substation Cost",			                         "$", "", "LandBOSSE", "*", "", "", } ,
@@ -187,7 +187,7 @@ std::string cm_wind_landbosse::call_python_module(const std::string& input_json)
 void cm_wind_landbosse::exec() {
     m_vartab->rename_match_case("wind_resource_filename", "weather_file_path");
     m_vartab->rename_match_case("turbine_rating_mw", "turbine_rating_MW");
-    m_vartab->rename_match_case("wind_turbine_rotor_diameter", "rotor_diameter");
+    m_vartab->rename_match_case("wind_turbine_rotor_diameter", "rotor_diameter_m");
     m_vartab->rename_match_case("wind_turbine_hub_ht", "hub_height_meters");
     m_vartab->rename_match_case("wind_resource_shear", "wind_shear_exponent");
     m_vartab->rename_match_case("interconnect_voltage_kv", "interconnect_voltage_kV");
@@ -196,7 +196,14 @@ void cm_wind_landbosse::exec() {
     std::string input_json = ssc_data_to_json(m_vartab);
     std::string output_json = call_python_module(input_json);
     std::replace( output_json.begin(), output_json.end(), '\'', '\"');
-    m_vartab = static_cast<var_table*>(json_to_ssc_data(output_json.c_str()));
+    auto output_data = static_cast<var_table*>(json_to_ssc_data(output_json.c_str()));
+    m_vartab->merge(*output_data, false);
+
+    auto error_vd = m_vartab->lookup("errors");
+    if (error_vd && error_vd->type == SSC_ARRAY)
+        m_vartab->assign("errors", std::to_string(int(error_vd->num[0])));
+    if (error_vd && error_vd->type == SSC_DATARR)
+        m_vartab->assign("errors", error_vd->vec[0].str);
 }
 
 DEFINE_MODULE_ENTRY( wind_landbosse, "Land-based Balance-of-System Systems Engineering (LandBOSSE) cost model", 1 )

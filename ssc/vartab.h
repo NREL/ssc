@@ -64,6 +64,7 @@ public:
     util::matrix_t<ssc_number_t>& allocate_matrix( const std::string &name, size_t nrows, size_t ncols );
 	var_data *assign( const std::string &name, const var_data &value );
     var_data *assign_match_case( const std::string &name, const var_data &value );
+    void merge(const var_table &rhs, bool overwrite_existing);
 
 	// getters
 	var_data *lookup( const std::string &name );

@@ -243,6 +243,20 @@ var_data *var_table::assign_match_case( const std::string &name, const var_data 
     return v;
 }
 
+void var_table::merge(const var_table &rhs, bool overwrite_existing){
+    for ( var_hash::const_iterator it = rhs.m_hash.begin();
+          it != rhs.m_hash.end();
+          ++it ){
+        if (is_assigned(it->first)){
+            if (overwrite_existing)
+                assign_match_case( (*it).first, *((*it).second) );
+        }
+        else
+            assign_match_case( (*it).first, *((*it).second) );
+    }
+}
+
+
 bool var_table::is_assigned( const std::string &name )
 {
     return (lookup(name) != 0);
