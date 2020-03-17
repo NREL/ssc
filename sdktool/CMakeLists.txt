@@ -20,7 +20,7 @@ endif()
 Project(sdktool)
 
 if ( NOT APPLE)
-	set(CURL_DIR build_vs2017/libcurl_ssl_x64)
+	set(CURL_DIR build_resources/libcurl_ssl_x64)
 endif()
 
 include_directories(. $ENV{WEXDIR}/include $ENV{LKDIR}/include ../ssc ../shared ../splinter)
@@ -38,6 +38,8 @@ set(SDKTOOL_SRC
 # Compile Options per Platform
 #
 #####################################################################################################################
+
+cmake_policy(SET CMP0043 NEW)
 
 if(MSVC)
 	add_compile_options(/W3 /MP)
@@ -90,12 +92,12 @@ include(${wxWidgets_USE_FILE})
 
 # Setup Application
 if (APPLE)
-	set(MACOSX_BUNDLE_ICON_FILE ${CMAKE_CURRENT_SOURCE_DIR}/../build_osx/SDKTool.icns)
-	set(SDKTOOL_ICON ${CMAKE_CURRENT_SOURCE_DIR}/../build_osx/SDKTool.icns)
+	set(MACOSX_BUNDLE_ICON_FILE ${CMAKE_CURRENT_SOURCE_DIR}/../build_resources/SDKTool.icns)
+	set(SDKTOOL_ICON ${CMAKE_CURRENT_SOURCE_DIR}/../build_resources/SDKTool.icns)
 	set_source_files_properties(${SDKTOOL_ICON} PROPERTIES
 		MACOSX_PACKAGE_LOCATION "Resources")
 elseif(WIN32)
-	set(SDKTOOL_ICON ${CMAKE_CURRENT_SOURCE_DIR}/../build_vs2017/app.rc)
+	set(SDKTOOL_ICON ${CMAKE_CURRENT_SOURCE_DIR}/../build_resources/app.rc)
 endif()
 
 # Setup Target
@@ -112,7 +114,7 @@ set_target_properties(SDKtool
 
 if (APPLE)
 	set_target_properties(SDKtool PROPERTIES
-		MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/../build_osx/Info-SDKTool.plist
+		MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/../build_resources/Info-SDKTool.plist
 	)
 endif()
 
@@ -164,7 +166,7 @@ if (UNIX)
 elseif (MSVC)
 	find_library( CURL_LIB
 			NAMES libcurl.lib
-			PATHS $ENV{WEXDIR}/build_vs2017/libcurl_ssl_x64/lib)
+			PATHS $ENV{WEXDIR}/build_resources/libcurl_ssl_x64/lib)
 	target_link_libraries(SDKtool ${CURL_LIB})
 	target_link_libraries(SDKtool Winhttp)
 endif()
@@ -195,7 +197,7 @@ if (MSVC)
 		TARGET SDKtool
 		POST_BUILD
 		COMMAND ${CMAKE_COMMAND}
-		ARGS -E copy $ENV{WEXDIR}/build_vs2017/libcurl_ssl_x64/bin/${file_i} ${SDKTOOL_DIR}
+		ARGS -E copy $ENV{WEXDIR}/build_resources/libcurl_ssl_x64/bin/${file_i} ${SDKTOOL_DIR}
 	)
 	endforeach( file_i )
 endif()

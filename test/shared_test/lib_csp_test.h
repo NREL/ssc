@@ -57,7 +57,7 @@ protected:
     FlatPlateCollector *flat_plate_collector_;
     CollectorLocation collector_location_;
     CollectorOrientation collector_orientation_;
-    double num_collectors_;
+    ArrayDimensions array_dimensions_;
     Pipe *inlet_pipe_;
     Pipe *outlet_pipe_;
 };

@@ -23,6 +23,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef __FLAT_PLATE_SOLAR_COLLECTOR__
 #define __FLAT_PLATE_SOLAR_COLLECTOR__
 
+#include <limits>
 #include <time.h>
 #include <vector>
 
@@ -31,8 +32,9 @@ struct CollectorTestSpecifications
     double FRta;                        // [-]
     double FRUL;                        // [W/m2-K]
     double iam;                         // [-]
-    double area_coll_test;              // [m2]
-    double heat_capacity_rate_test;     // [kW/K]
+    double area_coll;                   // [m2]
+    double m_dot;                       // [kg/s]
+    double heat_capacity;               // [kJ/kg-K]
 };
 
 struct CollectorLocation
@@ -46,6 +48,12 @@ struct CollectorOrientation
 {
     double tilt;                        // [deg]
     double azimuth;                     // [deg] Clockwise from North
+};
+
+struct ArrayDimensions
+{
+    int num_in_series;
+    int num_in_parallel;
 };
 
 struct TimeAndPosition
@@ -98,17 +106,20 @@ struct PoaIrradianceComponents
 class FlatPlateCollector
 {
 public:
-    FlatPlateCollector(double area_coll /*m2*/, const CollectorTestSpecifications &collector_test_specifications);
+    FlatPlateCollector();
+    FlatPlateCollector(const CollectorTestSpecifications &collector_test_specifications);
+    const double RatedPowerGain();
     const double UsefulPowerGain(const TimeAndPosition &time_and_position, const ExternalConditions &external_conditions);  // [W]
     const double T_out(const TimeAndPosition &time_and_position, const ExternalConditions &external_conditions);            // [C]
     const double area_coll();           // [m2]
     void area_coll(double collector_area /*m2*/);
+    const CollectorTestSpecifications TestSpecifications();
 private:
-    double area_coll_;                  // [m2] collector area
     double FRta_;                       // [-] flow rate correction
     double FRUL_;                       // [W/m2-K] flow rate correction
     double iam_;                        // [-] incidence angle modifier
-    double area_coll_test_;             // [m2] area of (single) collector that was tested
+    double area_coll_;                  // [m2] collector area
+    double m_dot_test_;                 // [kg/s] mass flow through collector during test
     double heat_capacity_rate_test_;    // [kW/K] m_dot * c_p during ratings test
     const static PoaIrradianceComponents IncidentIrradiance(const TimeAndPosition &time_and_position,
         const Weather &weather,
@@ -127,6 +138,7 @@ private:
 class Pipe
 {
 public:
+    Pipe();
     Pipe(double pipe_diam /*m*/, double pipe_k /*W/m2-K*/, double pipe_insul /*m*/, double pipe_length /*m*/);
     const double pipe_od();             // [m]
     const double ThermalPowerLoss(double T_in /*C*/, double T_amb /*C*/);    // [W]
@@ -144,20 +156,25 @@ private:
 class FlatPlateArray
 {
 public:
+    FlatPlateArray();
     FlatPlateArray(const FlatPlateCollector &flat_plate_collector, const CollectorLocation &collector_location,
-        const CollectorOrientation &collector_orientation, double num_collectors,
+        const CollectorOrientation &collector_orientation, const ArrayDimensions &array_dimensions,
         const Pipe &inlet_pipe, const Pipe &outlet_pipe);
     FlatPlateArray(const CollectorTestSpecifications &collector_test_specifications, const CollectorLocation &collector_location,
-        const CollectorOrientation &collector_orientation, double num_collectors,
+        const CollectorOrientation &collector_orientation, const ArrayDimensions &array_dimensions,
         const Pipe &inlet_pipe, const Pipe &outlet_pipe);
-    const double UsefulPowerGain(const TimeAndPosition &time_and_position, const ExternalConditions &external_conditions);      // [W]
-    const double T_out(const TimeAndPosition &time_and_position, const ExternalConditions &external_conditions);                // [C]
+    const int ncoll();
+    const double area_total();                             // [m2]
+    void resize_array(ArrayDimensions array_dimensions);
+    void resize_array(double m_dot_array_design /*kg/s*/, double specific_heat /*kJ/kg-K*/, double temp_rise_array_design /*K*/);
+    const double UsefulPowerGain(const tm &timestamp, const ExternalConditions &external_conditions);      // [W]
+    const double T_out(const tm &timestamp, const ExternalConditions &external_conditions);                // [C]
 private:
     FlatPlateCollector flat_plate_collector_;       // just scale a single collector for now -> premature optimization??
-    double area_total_;                             // [m2]
-    double ncoll_;                                  // only used to scale a single collector area
+    
     CollectorLocation collector_location_;
     CollectorOrientation collector_orientation_;
+    ArrayDimensions array_dimensions_;
     Pipe inlet_pipe_;
     Pipe outlet_pipe_;
 };

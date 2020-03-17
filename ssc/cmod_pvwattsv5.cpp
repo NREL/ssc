@@ -40,8 +40,8 @@ static var_info _cm_vtab_pvwattsv5_part1[] = {
         { SSC_INOUT,        SSC_NUMBER,      "system_use_lifetime_output",     "Run lifetime simulation",                    "0/1",        "",                       "Lifetime",            "?=0",                        "",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "analysis_period",                "Analysis period",                            "years",      "",                       "Lifetime",            "system_use_lifetime_output=1", "",                          "" },
         { SSC_INPUT,        SSC_ARRAY,       "dc_degradation",                 "Annual DC degradation for lifetime simulations","%/year",  "",                       "Lifetime",            "system_use_lifetime_output=1", "",                          "" },
-        { SSC_INPUT,        SSC_STRING,      "solar_resource_file",            "Weather file path",                           "",          "",                       "Location and Resource",     "?",                        "",                              "" },
-        { SSC_INPUT,        SSC_TABLE,       "solar_resource_data",            "Weather data",                                "",          "dn,df,tdry,wspd,lat,lon,tz", "Location and Resource", "?",                        "",                              "" },
+        { SSC_INPUT,        SSC_STRING,      "solar_resource_file",            "Weather file path",                           "",          "",                       "Solar Resource",     "?",                        "",                              "" },
+        { SSC_INPUT,        SSC_TABLE,       "solar_resource_data",            "Weather data",                                "",          "dn,df,tdry,wspd,lat,lon,tz", "Solar Resource", "?",                        "",                              "" },
 
 		var_info_invalid };
 
@@ -55,7 +55,7 @@ static var_info _cm_vtab_pvwattsv5_common[] = {
         { SSC_INPUT,        SSC_NUMBER,      "array_type",                     "Array type",                                  "0/1/2/3/4", "Fixed OR,Fixed Roof,1Axis,Backtracked,2Axis",  "System Design",      "*",                       "MIN=0,MAX=4,INTEGER",                      "" },
         { SSC_INPUT,        SSC_NUMBER,      "tilt",                           "Tilt angle",                                  "deg",       "H=0,V=90",                                     "System Design",      "array_type<4",                       "MIN=0,MAX=90",                             "" },
         { SSC_INPUT,        SSC_NUMBER,      "azimuth",                        "Azimuth angle",                               "deg",       "E=90,S=180,W=270",                             "System Design",      "array_type<4",                       "MIN=0,MAX=360",                            "" },
-        { SSC_INPUT,        SSC_NUMBER,      "gcr",                            "Ground coverage ratio",                       "0..1",      "",                                             "System Design",      "?=0.4",                   "MIN=0,MAX=1",               "" },
+        { SSC_INPUT,        SSC_NUMBER,      "gcr",                            "Ground coverage ratio",                       "0..1",      "",                                             "System Design",      "?=0.4",                   "MIN=0.01,MAX=0.99",               "" },
 
         var_info_invalid };
 
@@ -188,7 +188,7 @@ public:
 		inoct = 45;
 		shade_mode_1x = 0; // self shaded
 
-		array_type = as_integer("array_type"); // 0, 1, 2, 3, 4		
+		array_type = as_integer("array_type"); // 0, 1, 2, 3, 4
 		switch (array_type)
 		{
 		case FIXED_OPEN_RACK: // fixed open rack
@@ -292,7 +292,7 @@ public:
 
 			double wspd_corr = wspd < 0 ? 0 : wspd;
 
-			// module cover			
+			// module cover
 			tpoa = poa;
 			if (aoi > AOI_MIN && aoi < AOI_MAX)
 			{
@@ -405,7 +405,7 @@ public:
 		if (wdprov->has_data_column(weather_data_provider::MINUTE))
 		{
 			// if we have an file with a minute column, then
-			// the starting time offset equals the time 
+			// the starting time offset equals the time
 			// of the first record (for correct plotting)
 			// this holds true even for hourly data with a minute column
 			weather_record rec;
@@ -511,7 +511,7 @@ public:
 					p_wspd[idx] = (ssc_number_t)wf.wspd;
 					p_tcell[idx] = (ssc_number_t)wf.tdry;
 
-					double alb = 0.2; // do not increase albedo if snow exists in TMY2			
+					double alb = 0.2; // do not increase albedo if snow exists in TMY2
 					if (std::isfinite(wf.alb) && wf.alb > 0 && wf.alb < 1)
 						alb = wf.alb;
 

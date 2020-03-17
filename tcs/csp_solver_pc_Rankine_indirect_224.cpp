@@ -2343,3 +2343,81 @@ int split_ind_tbl(util::matrix_t<double> &cmbd_ind, util::matrix_t<double> &T_ht
 
     return 0;
 }
+
+int combine_ind_tbl(util::matrix_t<double>& combined, util::matrix_t<double>& T_htf_ind,
+	util::matrix_t<double>& m_dot_ind, util::matrix_t<double>& T_amb_ind,
+	double m_dot_low, double m_dot_des, double m_dot_high,
+	double T_htf_low, double T_htf_des, double T_htf_high,
+	double T_amb_low, double T_amb_des, double T_amb_high)
+{
+	// Get number of rows in each table
+	int n_T_htf_pars = T_htf_ind.nrows();
+	int n_m_dot_pars = m_dot_ind.nrows();
+	int n_T_amb_pars = T_amb_ind.nrows();
+
+	// Put the low, design, and high ind values in vectors
+	std::vector<double> v_T_htf_levels = std::vector<double>{ T_htf_low, T_htf_des, T_htf_high };
+	std::vector<double> v_m_dot_levels = std::vector<double>{ m_dot_low, m_dot_des, m_dot_high };
+	std::vector<double> v_T_amb_levels = std::vector<double>{ T_amb_low, T_amb_des, T_amb_high };
+
+	size_t total_rows = 3 * (n_T_htf_pars + n_m_dot_pars + n_T_amb_pars);
+	const int ncols = 7;
+
+	combined.resize_fill(total_rows, ncols, std::numeric_limits<double>::quiet_NaN());
+
+	for (int j = 0; j < v_m_dot_levels.size(); j++)
+	{
+		for (int i = 0; i < n_T_htf_pars; i++)
+		{
+			int r_comb = j * n_T_htf_pars + i;
+			double m_dot = v_m_dot_levels[j];
+
+			combined.set_value(T_htf_ind(i, 0), r_comb, C_pc_Rankine_indirect_224::E_COL_T_HTF);			// Independent variable
+			combined.set_value(m_dot, r_comb, C_pc_Rankine_indirect_224::E_COL_M_DOT);						// Level variable
+			combined.set_value(T_amb_des, r_comb, C_pc_Rankine_indirect_224::E_COL_T_AMB);					// Constant variable
+
+			combined.set_value(T_htf_ind(i, 3 * C_ud_power_cycle::i_W_dot_gross + 1 + j), r_comb, C_pc_Rankine_indirect_224::E_COL_W_CYL);
+			combined.set_value(T_htf_ind(i, 3 * C_ud_power_cycle::i_Q_dot_HTF + 1 + j), r_comb, C_pc_Rankine_indirect_224::E_COL_Q_CYL);
+			combined.set_value(T_htf_ind(i, 3 * C_ud_power_cycle::i_W_dot_cooling + 1 + j), r_comb, C_pc_Rankine_indirect_224::E_COL_W_COOL);
+			combined.set_value(T_htf_ind(i, 3 * C_ud_power_cycle::i_m_dot_water + 1 + j), r_comb, C_pc_Rankine_indirect_224::E_COL_M_H2O);
+		}
+	}
+
+	for (int j = 0; j < v_T_amb_levels.size(); j++)
+	{
+		for (int i = 0; i < n_m_dot_pars; i++)
+		{
+			int r_comb = n_T_htf_pars * v_m_dot_levels.size() + j * n_m_dot_pars + i;
+			double T_amb = v_T_amb_levels[j];
+
+			combined.set_value(m_dot_ind(i, 0), r_comb, C_pc_Rankine_indirect_224::E_COL_M_DOT);		// Independent variable
+			combined.set_value(T_amb, r_comb, C_pc_Rankine_indirect_224::E_COL_T_AMB);					// Level variable
+			combined.set_value(T_htf_des, r_comb, C_pc_Rankine_indirect_224::E_COL_T_HTF);				// Constant variable
+
+			combined.set_value(m_dot_ind(i, 3 * C_ud_power_cycle::i_W_dot_gross + 1 + j), r_comb, C_pc_Rankine_indirect_224::E_COL_W_CYL);
+			combined.set_value(m_dot_ind(i, 3 * C_ud_power_cycle::i_Q_dot_HTF + 1 + j), r_comb, C_pc_Rankine_indirect_224::E_COL_Q_CYL);
+			combined.set_value(m_dot_ind(i, 3 * C_ud_power_cycle::i_W_dot_cooling + 1 + j), r_comb, C_pc_Rankine_indirect_224::E_COL_W_COOL);
+			combined.set_value(m_dot_ind(i, 3 * C_ud_power_cycle::i_m_dot_water + 1 + j), r_comb, C_pc_Rankine_indirect_224::E_COL_M_H2O);
+		}
+	}
+
+	for (int j = 0; j < v_T_htf_levels.size(); j++)
+	{
+		for (int i = 0; i < n_T_amb_pars; i++)
+		{
+			int r_comb = n_T_htf_pars * v_m_dot_levels.size() + n_m_dot_pars * v_T_amb_levels.size() + j * n_T_amb_pars + i;
+			double T_htf = v_T_htf_levels[j];
+
+			combined.set_value(T_amb_ind(i, 0), r_comb, C_pc_Rankine_indirect_224::E_COL_T_AMB);		// Independent variable
+			combined.set_value(T_htf, r_comb, C_pc_Rankine_indirect_224::E_COL_T_HTF);					// Level variable
+			combined.set_value(m_dot_des, r_comb, C_pc_Rankine_indirect_224::E_COL_M_DOT);				// Constant variable
+
+			combined.set_value(T_amb_ind(i, 3 * C_ud_power_cycle::i_W_dot_gross + 1 + j), r_comb, C_pc_Rankine_indirect_224::E_COL_W_CYL);
+			combined.set_value(T_amb_ind(i, 3 * C_ud_power_cycle::i_Q_dot_HTF + 1 + j), r_comb, C_pc_Rankine_indirect_224::E_COL_Q_CYL);
+			combined.set_value(T_amb_ind(i, 3 * C_ud_power_cycle::i_W_dot_cooling + 1 + j), r_comb, C_pc_Rankine_indirect_224::E_COL_W_COOL);
+			combined.set_value(T_amb_ind(i, 3 * C_ud_power_cycle::i_m_dot_water + 1 + j), r_comb, C_pc_Rankine_indirect_224::E_COL_M_H2O);
+		}
+	}
+
+	return 0;
+}

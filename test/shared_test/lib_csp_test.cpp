@@ -2,28 +2,25 @@
 
 #include "lib_csp_test.h"
 
-const double default_area_coll = 2.98;
 
 CollectorTestSpecifications default_collector_test_specifications()
 {
     CollectorTestSpecifications collector_test_specifications;
-    collector_test_specifications.area_coll_test = 2.98;
     collector_test_specifications.FRta = 0.689;
     collector_test_specifications.FRUL = 3.85;
-    double test_cp = 4.182;         // kJ/kg-K
-    double test_flow = 0.045528;    // kg/s
-    collector_test_specifications.heat_capacity_rate_test = test_cp * test_flow;
     collector_test_specifications.iam = 0.2;
+    collector_test_specifications.area_coll = 2.98;
+    collector_test_specifications.m_dot = 0.045528;         // kg/s   
+    collector_test_specifications.heat_capacity = 4.182;    // kJ/kg-K
 
     return collector_test_specifications;
 }
 
 FlatPlateCollector* default_flat_plate_collector()
 {
-    double area_coll = default_area_coll;
     CollectorTestSpecifications collector_test_specifications = default_collector_test_specifications();
 
-    return new FlatPlateCollector(area_coll, collector_test_specifications);
+    return new FlatPlateCollector(collector_test_specifications);
 }
 
 tm default_time()
@@ -57,6 +54,15 @@ CollectorOrientation default_orientation()
     collector_orientation.azimuth = 180.;
 
     return collector_orientation;
+}
+
+ArrayDimensions default_dimensions()
+{
+    ArrayDimensions array_dimensions;
+    array_dimensions.num_in_parallel = 1;
+    array_dimensions.num_in_series = 1;
+
+    return array_dimensions;
 }
 
 TimeAndPosition default_time_and_position()
@@ -120,22 +126,23 @@ void FlatPlateArrayTest::SetUp()
     flat_plate_collector_ = default_flat_plate_collector();
     collector_location_ = default_location();
     collector_orientation_ = default_orientation();
-    num_collectors_ = 1;
+    array_dimensions_ = default_dimensions();
+
     inlet_pipe_ = default_pipe();
     outlet_pipe_ = default_pipe();
 
     flat_plate_array_ = new FlatPlateArray(*flat_plate_collector_, collector_location_,
-        collector_orientation_, num_collectors_, *inlet_pipe_, *outlet_pipe_);
+        collector_orientation_, array_dimensions_, *inlet_pipe_, *outlet_pipe_);
 }
 
 TEST_F(FlatPlateArrayTest, TestFlatPlateArrayOfOneNominalOperation)
 {
-    TimeAndPosition time_and_position = default_time_and_position();
+    tm timestamp = default_time();
     ExternalConditions external_conditions = default_external_conditions();
     external_conditions.inlet_fluid_flow.temp = 44.86;
 
-    double useful_power_gain = flat_plate_array_->UsefulPowerGain(time_and_position, external_conditions);  // [W]
-    double T_out = flat_plate_array_->T_out(time_and_position, external_conditions);                        // [C]
+    double useful_power_gain = flat_plate_array_->UsefulPowerGain(timestamp, external_conditions);  // [W]
+    double T_out = flat_plate_array_->T_out(timestamp, external_conditions);                        // [C]
 
     EXPECT_NEAR(useful_power_gain, 1.587e3, 1.587e3 * m_error_tolerance_hi);
     EXPECT_NEAR(T_out, 49.03, 49.03 * m_error_tolerance_hi);
