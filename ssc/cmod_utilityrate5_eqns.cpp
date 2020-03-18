@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <set>
 
 #include "vartab.h"
 #include "cmod_utilityrate5_eqns.h"
@@ -127,18 +128,81 @@ SSCEXPORT void ElectricityRates_format_as_URDBv7(ssc_data_t data) {
     if (try_get_rate_structure(vt, "ur_ec_tou_mat", false, rate_structure))
         urdb_data.assign("energyratestructure", rate_structure);
 
-    // flat demand
+    // flat demand structure
     sched_matrix.clear();
     if (vt->is_assigned("ur_dc_flat_mat")){
         sched_matrix = vt->lookup("ur_dc_flat_mat")->num;
-        if (sched_matrix.nrows() != 12)
-            throw(std::runtime_error("ElectricityRates_format_as_URDBv7 error. ur_dc_flat_mat must have 12 entries."));
 
-        std::vector<double> dc_flat;
-        dc_flat.resize(12);
-        for (size_t i = 0; i < 12; i++)
-            dc_flat.insert(dc_flat.begin() + sched_matrix[0], sched_matrix[3]);
-        urdb_data.assign("flatdemandstructure", dc_flat);
+        size_t n_rows = sched_matrix.nrows();
+        std::vector<std::vector<double>> flatdemand;
+        for (size_t i = 0; i < n_rows; i++){
+            std::vector<double> row;
+            row.push_back(sched_matrix.at(i, 0));
+            row.push_back(sched_matrix.at(i, 1));
+            row.push_back(sched_matrix.at(i, 2));
+            row.push_back(sched_matrix.at(i, 3));
+            flatdemand.emplace_back(row);
+        }
+
+        std::vector<std::vector<var_data>> flat_demand_structure;
+        std::vector<double> flat_demand_months;
+        flat_demand_months.resize(12);
+
+        // pull out first tier of periods
+        for (size_t i = 0; i < n_rows; i++){
+            double tier = sched_matrix.at(i, 1);
+
+            if (tier != 1)
+                continue;
+
+            double month = sched_matrix.at(i, 0);
+            double max = sched_matrix.at(i, 2);
+            double charge = sched_matrix.at(i, 3);
+            std::vector<var_data> row;
+
+            // see if a period with a matching first tier exists
+            size_t period = -1;
+            for (size_t j = 0; j < flat_demand_structure.size(); j++){
+                double j_max = flat_demand_structure[j][0].table.lookup("max")->num[0];
+                double j_charge = flat_demand_structure[j][0].table.lookup("rate")->num[0];
+                if (abs(max - j_max) < 1e-3 && abs(charge - j_charge) < 1e-3){
+                    period = j;
+                    break;
+                }
+            }
+            // doesn't exist so add it
+            if (period == -1){
+                var_data rate_data;
+                rate_data.type = SSC_TABLE;
+                rate_data.table.assign("max", max);
+                rate_data.table.assign("rate", charge);
+                row.emplace_back(rate_data);
+                flat_demand_structure.emplace_back(row);
+                period = flat_demand_structure.size() - 1;
+            }
+            flat_demand_months[month] = period;
+        }
+        // do other tiers
+        for (size_t i = 0; i < n_rows; i++){
+            double tier = sched_matrix.at(i, 1);
+
+            if (tier == 1)
+                continue;
+
+            double month = sched_matrix.at(i, 0);
+            double max = sched_matrix.at(i, 2);
+            double charge = sched_matrix.at(i, 3);
+
+            // see if a period with a matching first tier exists
+            double period = flat_demand_months[month];
+            var_data rate_data;
+            rate_data.type = SSC_TABLE;
+            rate_data.table.assign("max", max);
+            rate_data.table.assign("rate", charge);
+            flat_demand_structure[period].emplace_back(rate_data);
+        }
+        urdb_data.assign("flatdemandstructure", flat_demand_structure);
+        urdb_data.assign("flatdemandmonths", flat_demand_months);
     }
 
     // tou
