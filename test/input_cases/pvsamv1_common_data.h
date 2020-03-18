@@ -12,6 +12,7 @@ char target_power_path[256];
 char sell_rate_path[256];
 char subarray1_shading[256];
 char subarray2_shading[256];
+char temperature_path[256];
 
 int n1 = sprintf(solar_resource_path, "%s/test/input_cases/pvsamv1_data/USA AZ Phoenix (TMY2).csv", SSCDIR);
 int n2 = sprintf(load_profile_path, "%s/test/input_cases/pvsamv1_data/pvsamv1_residential_load.csv", SSCDIR);
@@ -20,6 +21,7 @@ int n4 = sprintf(sell_rate_path, "%s/test/input_cases/pvsamv1_data/pvsamv1_ur_ts
 int n5 = sprintf(solar_resource_path_15_min, "%s/test/input_cases/pvsamv1_data/LosAngeles_WeatherFile_15min.csv", SSCDIR);
 int n6 = sprintf(subarray1_shading, "%s/test/input_cases/pvsamv1_data/subarray1_shading_timestep.csv", SSCDIR);
 int n7 = sprintf(subarray2_shading, "%s/test/input_cases/pvsamv1_data/subarray2_shading_timestep.csv", SSCDIR);
+int n8 = sprintf(temperature_path, "%s/test/input_cases/battery_data/batt_room_temperature_celsius_60min.csv", SSCDIR);
 
 
 /**
@@ -337,6 +339,7 @@ void pvsamv_nofinancial_default(ssc_data_t &data)
 
 /**
 *  Default data for belpe run that can be further modified
+*  Includes a critical load for resiliency. Will increase runtimes if used
 */
 void belpe_default(ssc_data_t &data)
 {
@@ -370,7 +373,111 @@ void belpe_default(ssc_data_t &data)
 }
 
 /**
+* Default battery data that can be further modified
+*/
+void battery_data_default(ssc_data_t& data) {
+	ssc_data_set_number(data, "en_batt", 0);
+	ssc_data_set_number(data, "batt_replacement_option", 0);
+	ssc_number_t p_batt_replacement_schedule[1] = { 0 };
+	ssc_data_set_array(data, "batt_replacement_schedule", p_batt_replacement_schedule, 1);
+	ssc_data_set_number(data, "adjust:constant", 0);
+	ssc_data_set_number(data, "dc_adjust:constant", 0);
+	ssc_data_set_number(data, "batt_chem", 1);
+	ssc_data_set_number(data, "inv_snl_eff_cec", 96.636932373046875);
+	ssc_data_set_number(data, "inv_pd_eff", 95);
+	ssc_data_set_number(data, "inv_cec_cg_eff_cec", 96.636306762695313);
+	ssc_data_set_number(data, "batt_inverter_efficiency_cutoff", 90);
+	ssc_data_set_number(data, "batt_ac_or_dc", 1);
+	ssc_data_set_number(data, "batt_dc_dc_efficiency", 99);
+	ssc_data_set_number(data, "batt_dc_ac_efficiency", 96);
+	ssc_data_set_number(data, "batt_ac_dc_efficiency", 96);
+	ssc_data_set_number(data, "batt_inverter_efficiency_cutoff", 90);
+	ssc_data_set_number(data, "batt_initial_SOC", 50);
+	set_array(data, "batt_room_temperature_celsius", temperature_path, 8760);
+
+	ssc_data_set_number(data, "batt_meter_position", 0);
+	ssc_number_t p_batt_losses[1] = { 0 };
+	ssc_data_set_array(data, "batt_losses", p_batt_losses, 1);
+	ssc_number_t p_batt_losses_charging[12] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+	ssc_data_set_array(data, "batt_losses_charging", p_batt_losses_charging, 12);
+	ssc_number_t p_batt_losses_discharging[12] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+	ssc_data_set_array(data, "batt_losses_discharging", p_batt_losses_discharging, 12);
+	ssc_number_t p_batt_losses_idle[12] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+	ssc_data_set_array(data, "batt_losses_idle", p_batt_losses_idle, 12);
+	ssc_data_set_number(data, "batt_loss_choice", 0);
+	ssc_data_set_number(data, "batt_current_choice", 0);
+	ssc_data_set_number(data, "batt_computed_strings", 88);
+	ssc_data_set_number(data, "batt_computed_series", 14);
+	ssc_data_set_number(data, "batt_computed_bank_capacity", 9.9791994094848633);
+	ssc_data_set_number(data, "batt_current_charge_max", 99);
+	ssc_data_set_number(data, "batt_current_discharge_max", 99);
+	ssc_data_set_number(data, "batt_power_charge_max_kwdc", 4.9895997047424316);
+	ssc_data_set_number(data, "batt_power_discharge_max_kwdc", 4.9895997047424316);
+	ssc_data_set_number(data, "batt_power_charge_max_kwac", 4.9895997047424316);
+	ssc_data_set_number(data, "batt_power_discharge_max_kwac", 4.9895997047424316);
+	ssc_data_set_number(data, "batt_voltage_choice", 0);
+	ssc_data_set_number(data, "batt_Vfull", 4.0999999046325684);
+	ssc_data_set_number(data, "batt_Vexp", 4.0500001907348633);
+	ssc_data_set_number(data, "batt_Vnom", 3.4000000953674316);
+	ssc_data_set_number(data, "batt_Vnom_default", 3.5999999046325684);
+	ssc_data_set_number(data, "batt_Qfull", 2.25);
+	ssc_data_set_number(data, "batt_Qfull_flow", 198);
+	ssc_data_set_number(data, "batt_Qexp", 0.040049999952316284);
+	ssc_data_set_number(data, "batt_Qnom", 2.0002501010894775);
+	ssc_data_set_number(data, "batt_C_rate", 0.20000000298023224);
+	ssc_data_set_number(data, "batt_resistance", 0.0010000000474974513);
+	ssc_number_t p_batt_voltage_matrix[2] = { 0, 0 };
+	ssc_data_set_matrix(data, "batt_voltage_matrix", p_batt_voltage_matrix, 1, 2);
+	ssc_data_set_number(data, "LeadAcid_q20_computed", 198);
+	ssc_data_set_number(data, "LeadAcid_q10_computed", 184.13999938964844);
+	ssc_data_set_number(data, "LeadAcid_qn_computed", 118.80000305175781);
+	ssc_data_set_number(data, "LeadAcid_tn", 1);
+	ssc_data_set_number(data, "batt_minimum_SOC", 15);
+	ssc_data_set_number(data, "batt_maximum_SOC", 95);
+	ssc_data_set_number(data, "batt_minimum_modetime", 10);
+	ssc_number_t p_batt_lifetime_matrix[18] = { 20, 0, 100, 20, 5000, 80, 20, 10000, 60, 80, 0, 100, 80, 1000, 80, 80, 2000, 60 };
+	ssc_data_set_matrix(data, "batt_lifetime_matrix", p_batt_lifetime_matrix, 6, 3);
+	ssc_data_set_number(data, "batt_replacement_capacity", 50);
+	ssc_data_set_number(data, "batt_calendar_choice", 1);
+	ssc_number_t p_batt_calendar_lifetime_matrix[6] = { 0, 100, 3650, 80, 7300, 50 };
+	ssc_data_set_matrix(data, "batt_calendar_lifetime_matrix", p_batt_calendar_lifetime_matrix, 3, 2);
+	ssc_data_set_number(data, "batt_calendar_q0", 1.0199999809265137);
+	ssc_data_set_number(data, "batt_calendar_a", 0.0026599999982863665);
+	ssc_data_set_number(data, "batt_calendar_b", -7280);
+	ssc_data_set_number(data, "batt_calendar_c", 930);
+	ssc_data_set_number(data, "batt_mass", 50.571121215820313);
+	ssc_data_set_number(data, "batt_length", 0.27102780342102051);
+	ssc_data_set_number(data, "batt_width", 0.27102780342102051);
+	ssc_data_set_number(data, "batt_height", 0.27102780342102051);
+	ssc_data_set_number(data, "batt_Cp", 1004);
+	ssc_data_set_number(data, "batt_h_to_ambient", 500);
+	ssc_data_set_number(data, "T_room", 20);
+	ssc_number_t p_cap_vs_temp[8] = { -10, 60, 0, 80, 25, 100, 40, 100 };
+	ssc_data_set_matrix(data, "cap_vs_temp", p_cap_vs_temp, 4, 2);
+	ssc_number_t p_dispatch_manual_charge[6] = { 1, 1, 1, 0, 0, 0 };
+	ssc_data_set_array(data, "dispatch_manual_charge", p_dispatch_manual_charge, 6);
+	ssc_number_t p_dispatch_manual_discharge[6] = { 0, 0, 1, 0, 0, 0 };
+	ssc_data_set_array(data, "dispatch_manual_discharge", p_dispatch_manual_discharge, 6);
+	ssc_number_t p_dispatch_manual_gridcharge[6] = { 0, 1, 0, 0, 0, 0 };
+	ssc_data_set_array(data, "dispatch_manual_gridcharge", p_dispatch_manual_gridcharge, 6);
+	ssc_number_t p_dispatch_manual_percent_discharge[2] = { 15, 0 };
+	ssc_data_set_array(data, "dispatch_manual_percent_discharge", p_dispatch_manual_percent_discharge, 2);
+	ssc_number_t p_dispatch_manual_percent_gridcharge[2] = { 25, 0 };
+	ssc_data_set_array(data, "dispatch_manual_percent_gridcharge", p_dispatch_manual_percent_gridcharge, 2);
+	ssc_number_t p_dispatch_manual_sched[288] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1 };
+	ssc_data_set_matrix(data, "dispatch_manual_sched", p_dispatch_manual_sched, 12, 24);
+	ssc_number_t p_dispatch_manual_sched_weekend[288] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+	ssc_data_set_matrix(data, "dispatch_manual_sched_weekend", p_dispatch_manual_sched_weekend, 12, 24);
+	set_array(data, "batt_target_power", target_power_path, 8760);
+	ssc_number_t p_batt_target_power_monthly[12] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+	ssc_data_set_array(data, "batt_target_power_monthly", p_batt_target_power_monthly, 12);
+	ssc_data_set_number(data, "batt_target_choice", 0);
+	ssc_data_set_number(data, "batt_dispatch_choice", 3);
+}
+
+/**
 *  Default data for pvsamv1 residential run that can be further modified
+*  Also runs battery_data_default
 */
 void pvsamv1_with_residential_default(ssc_data_t &data)
 {
@@ -684,103 +791,9 @@ void pvsamv1_with_residential_default(ssc_data_t &data)
 	ssc_data_set_matrix(data, "inv_tdc_cec_cg", matrix_inv_tdc, 1, 3);
 	ssc_data_set_matrix(data, "inv_tdc_plc", matrix_inv_tdc, 1, 3);
 	ssc_data_set_matrix(data, "inv_tdc_ds", matrix_inv_tdc, 1, 3);
-	ssc_data_set_number(data, "en_batt", 0);
-	ssc_data_set_number(data, "batt_replacement_option", 0);
-	ssc_number_t p_batt_replacement_schedule[1] = { 0 };
-	ssc_data_set_array(data, "batt_replacement_schedule", p_batt_replacement_schedule, 1);
-	ssc_data_set_number(data, "adjust:constant", 0);
-	ssc_data_set_number(data, "dc_adjust:constant", 0);
-	ssc_data_set_number(data, "batt_chem", 1);
-	ssc_data_set_number(data, "inv_snl_eff_cec", 96.636932373046875);
-	ssc_data_set_number(data, "inv_pd_eff", 95);
-	ssc_data_set_number(data, "inv_cec_cg_eff_cec", 96.636306762695313);
-	ssc_data_set_number(data, "batt_inverter_efficiency_cutoff", 90);
-	ssc_data_set_number(data, "batt_ac_or_dc", 1);
-	ssc_data_set_number(data, "batt_dc_dc_efficiency", 99);
-	ssc_data_set_number(data, "batt_dc_ac_efficiency", 96);
-	ssc_data_set_number(data, "batt_ac_dc_efficiency", 96);
-	ssc_data_set_number(data, "batt_inverter_efficiency_cutoff", 90);
 
-	ssc_data_set_number(data, "batt_meter_position", 0);
-	ssc_number_t p_batt_losses[1] = { 0 };
-	ssc_data_set_array(data, "batt_losses", p_batt_losses, 1);
-	ssc_number_t p_batt_losses_charging[12] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-	ssc_data_set_array(data, "batt_losses_charging", p_batt_losses_charging, 12);
-	ssc_number_t p_batt_losses_discharging[12] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-	ssc_data_set_array(data, "batt_losses_discharging", p_batt_losses_discharging, 12);
-	ssc_number_t p_batt_losses_idle[12] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-	ssc_data_set_array(data, "batt_losses_idle", p_batt_losses_idle, 12);
-	ssc_data_set_number(data, "batt_loss_choice", 0);
-	ssc_data_set_number(data, "batt_current_choice", 0);
-	ssc_data_set_number(data, "batt_computed_strings", 88);
-	ssc_data_set_number(data, "batt_computed_series", 14);
-	ssc_data_set_number(data, "batt_computed_bank_capacity", 9.9791994094848633);
-	ssc_data_set_number(data, "batt_current_charge_max", 99);
-	ssc_data_set_number(data, "batt_current_discharge_max", 99);
-	ssc_data_set_number(data, "batt_power_charge_max_kwdc", 4.9895997047424316);
-	ssc_data_set_number(data, "batt_power_discharge_max_kwdc", 4.9895997047424316);
-	ssc_data_set_number(data, "batt_power_charge_max_kwac", 4.9895997047424316);
-	ssc_data_set_number(data, "batt_power_discharge_max_kwac", 4.9895997047424316);
-	ssc_data_set_number(data, "batt_voltage_choice", 0);
-	ssc_data_set_number(data, "batt_Vfull", 4.0999999046325684);
-	ssc_data_set_number(data, "batt_Vexp", 4.0500001907348633);
-	ssc_data_set_number(data, "batt_Vnom", 3.4000000953674316);
-	ssc_data_set_number(data, "batt_Vnom_default", 3.5999999046325684);
-	ssc_data_set_number(data, "batt_Qfull", 2.25);
-	ssc_data_set_number(data, "batt_Qfull_flow", 198);
-	ssc_data_set_number(data, "batt_Qexp", 0.040049999952316284);
-	ssc_data_set_number(data, "batt_Qnom", 2.0002501010894775);
-	ssc_data_set_number(data, "batt_C_rate", 0.20000000298023224);
-	ssc_data_set_number(data, "batt_resistance", 0.0010000000474974513);
-	ssc_number_t p_batt_voltage_matrix[2] = { 0, 0 };
-	ssc_data_set_matrix(data, "batt_voltage_matrix", p_batt_voltage_matrix, 1, 2);
-	ssc_data_set_number(data, "LeadAcid_q20_computed", 198);
-	ssc_data_set_number(data, "LeadAcid_q10_computed", 184.13999938964844);
-	ssc_data_set_number(data, "LeadAcid_qn_computed", 118.80000305175781);
-	ssc_data_set_number(data, "LeadAcid_tn", 1);
-	ssc_data_set_number(data, "batt_minimum_SOC", 15);
-	ssc_data_set_number(data, "batt_maximum_SOC", 95);
-	ssc_data_set_number(data, "batt_minimum_modetime", 10);
-	ssc_number_t p_batt_lifetime_matrix[18] = { 20, 0, 100, 20, 5000, 80, 20, 10000, 60, 80, 0, 100, 80, 1000, 80, 80, 2000, 60 };
-	ssc_data_set_matrix(data, "batt_lifetime_matrix", p_batt_lifetime_matrix, 6, 3);
-	ssc_data_set_number(data, "batt_replacement_capacity", 50);
-	ssc_data_set_number(data, "batt_calendar_choice", 1);
-	ssc_number_t p_batt_calendar_lifetime_matrix[6] = { 0, 100, 3650, 80, 7300, 50 };
-	ssc_data_set_matrix(data, "batt_calendar_lifetime_matrix", p_batt_calendar_lifetime_matrix, 3, 2);
-	ssc_data_set_number(data, "batt_calendar_q0", 1.0199999809265137);
-	ssc_data_set_number(data, "batt_calendar_a", 0.0026599999982863665);
-	ssc_data_set_number(data, "batt_calendar_b", -7280);
-	ssc_data_set_number(data, "batt_calendar_c", 930);
-	ssc_data_set_number(data, "batt_mass", 50.571121215820313);
-	ssc_data_set_number(data, "batt_length", 0.27102780342102051);
-	ssc_data_set_number(data, "batt_width", 0.27102780342102051);
-	ssc_data_set_number(data, "batt_height", 0.27102780342102051);
-	ssc_data_set_number(data, "batt_Cp", 1004);
-	ssc_data_set_number(data, "batt_h_to_ambient", 500);
-	ssc_data_set_number(data, "T_room", 20);
-	ssc_number_t p_cap_vs_temp[8] = { -10, 60, 0, 80, 25, 100, 40, 100 };
-	ssc_data_set_matrix(data, "cap_vs_temp", p_cap_vs_temp, 4, 2);
-	ssc_number_t p_dispatch_manual_charge[6] = { 1, 1, 1, 0, 0, 0 };
-	ssc_data_set_array(data, "dispatch_manual_charge", p_dispatch_manual_charge, 6);
-	ssc_number_t p_dispatch_manual_discharge[6] = { 0, 0, 1, 0, 0, 0 };
-	ssc_data_set_array(data, "dispatch_manual_discharge", p_dispatch_manual_discharge, 6);
-	ssc_number_t p_dispatch_manual_gridcharge[6] = { 0, 1, 0, 0, 0, 0 };
-	ssc_data_set_array(data, "dispatch_manual_gridcharge", p_dispatch_manual_gridcharge, 6);
-	ssc_number_t p_dispatch_manual_percent_discharge[2] = { 15, 0 };
-	ssc_data_set_array(data, "dispatch_manual_percent_discharge", p_dispatch_manual_percent_discharge, 2);
-	ssc_number_t p_dispatch_manual_percent_gridcharge[2] = { 25, 0 };
-	ssc_data_set_array(data, "dispatch_manual_percent_gridcharge", p_dispatch_manual_percent_gridcharge, 2);
-	ssc_number_t p_dispatch_manual_sched[288] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1 };
-	ssc_data_set_matrix(data, "dispatch_manual_sched", p_dispatch_manual_sched, 12, 24);
-	ssc_number_t p_dispatch_manual_sched_weekend[288] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
-	ssc_data_set_matrix(data, "dispatch_manual_sched_weekend", p_dispatch_manual_sched_weekend, 12, 24);
-	set_array(data, "batt_target_power", target_power_path, 8760);
-	ssc_number_t p_batt_target_power_monthly[12] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
-	ssc_data_set_array(data, "batt_target_power_monthly", p_batt_target_power_monthly, 12);
-	ssc_data_set_number(data, "batt_target_choice", 0);
-	ssc_data_set_number(data, "batt_dispatch_choice", 3);
+	battery_data_default(data);
 }
-
 
 /**
 *  Default data for utility_rate5 run that can be further modified

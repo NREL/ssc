@@ -697,3 +697,65 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, reopt_sizing) {
     for (const auto& s : sections)
         ASSERT_TRUE(site->table.is_assigned(s));
 }
+
+/// Test PVSAMv1 with all defaults and battery enabled with 3 dispatch methods
+TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, ResidentialACBatteryModelIntegration)
+{
+	ssc_data_t data = ssc_data_create();
+	pvsamv_nofinancial_default(data);
+	battery_data_default(data);
+
+	std::map<std::string, double> pairs;
+	pairs["en_batt"] = 1;
+	pairs["batt_ac_or_dc"] = 1; //AC
+	pairs["analysis_period"] = 1;
+	set_array(data, "load", load_profile_path, 8760); // Load is required for peak shaving controllers
+
+	ssc_number_t expectedEnergy[5] = {8594, 8594, 8689};
+
+	// Test peak shaving look ahead, peak shaving look behind, and automated grid power target. Others require additional input data
+	for (int i = 0; i < 3; i++) {
+		pairs["batt_dispatch_choice"] = i;
+
+		int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+		EXPECT_FALSE(pvsam_errors);
+
+		if (!pvsam_errors)
+		{
+			ssc_number_t annual_energy;
+			ssc_data_get_number(data, "annual_energy", &annual_energy);
+			EXPECT_NEAR(annual_energy, expectedEnergy[i], m_error_tolerance_hi) << "Annual energy.";
+		}
+	}
+}
+
+/// Test PVSAMv1 with all defaults and battery enabled with 3 dispatch methods
+TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, ResidentialDCBatteryModelIntegration)
+{
+	ssc_data_t data = ssc_data_create();
+	pvsamv_nofinancial_default(data);
+	battery_data_default(data);
+
+	std::map<std::string, double> pairs;
+	pairs["en_batt"] = 1;
+	pairs["batt_ac_or_dc"] = 0; //DC
+	pairs["analysis_period"] = 1;
+	set_array(data, "load", load_profile_path, 8760); // Load is required for peak shaving controllers
+
+	ssc_number_t expectedEnergy[5] = { 8634, 8637, 8703 };
+
+	// Test peak shaving look ahead, peak shaving look behind, and automated grid power target. Others require additional input data
+	for (int i = 0; i < 3; i++) {
+		pairs["batt_dispatch_choice"] = i;
+
+		int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+		EXPECT_FALSE(pvsam_errors);
+
+		if (!pvsam_errors)
+		{
+			ssc_number_t annual_energy;
+			ssc_data_get_number(data, "annual_energy", &annual_energy);
+			EXPECT_NEAR(annual_energy, expectedEnergy[i], m_error_tolerance_hi) << "Annual energy.";
+		}
+	}
+}
