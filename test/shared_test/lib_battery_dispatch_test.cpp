@@ -20,9 +20,8 @@ size_t step_of_hour = 0;
 
 
 
-TEST_F(BatteryDispatchTest_lib_battery_dispatch, DispatchManual)
+TEST_F(ManualTest_lib_battery_dispatch, DispatchManual)
 {
-	
 	batteryPower = dispatchManual->getBatteryPower();
 	batteryPower->connectionMode = ChargeController::AC_CONNECTED;
 
@@ -35,10 +34,9 @@ TEST_F(BatteryDispatchTest_lib_battery_dispatch, DispatchManual)
 	batteryPower->powerPV = 0; batteryPower->voltageSystem = 600; batteryPower->powerLoad = 1000;
 	dispatchManual->dispatch(year, hour_of_year, step_of_hour);
 	EXPECT_NEAR(batteryPower->powerBatteryDC, powerDischargeMax, 2.0);
-
 }
 
-TEST_F(BatteryDispatchTest_lib_battery_dispatch, DispatchAutoBTM)
+TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTM)
 {
 	// Setup pv and load signal for peak shaving algorithm
 	for (size_t d = 0; d < 365; d++) {
@@ -67,7 +65,7 @@ TEST_F(BatteryDispatchTest_lib_battery_dispatch, DispatchAutoBTM)
 	EXPECT_LT(batteryPower->powerBatteryDC, 0);
 }
 
-TEST_F(BatteryDispatchTest_lib_battery_dispatch, DispatchFOMInput_lib_battery_dispatch)
+TEST_F(AutoFOMTest_lib_battery_dispatch, DispatchFOMInput_lib_battery_dispatch)
 {
 	std::vector<double> P_batt;
 	for (int i = 0; i < 8760 * 60; i++) {
@@ -81,10 +79,9 @@ TEST_F(BatteryDispatchTest_lib_battery_dispatch, DispatchFOMInput_lib_battery_di
 
 	dispatchAutoFOM->set_custom_dispatch(P_batt);
 	dispatchAutoFOM->dispatch(0, 0, 0);
-
 }
 
-TEST_F(BatteryDispatchTest_lib_battery_dispatch, DispatchFOM_DCAuto)
+TEST_F(AutoFOMDC_lib_battery_dispatch, DispatchFOM_DCAuto)
 {
 	// inverter
 	int numberOfInverters = 100;
@@ -121,9 +118,7 @@ TEST_F(BatteryDispatchTest_lib_battery_dispatch, DispatchFOM_DCAuto)
 		batteryPower->powerPVClipped = clip[h];
 		dispatchAutoDC->dispatch(0, h, 0);
 		p_batterykW.push_back(batteryPower->powerBatteryAC);
-}
-
-
+    }
 
 	if (m_sharedInverter) {
 		delete m_sharedInverter;
@@ -141,8 +136,5 @@ TEST_F(BatteryDispatchTest_lib_battery_dispatch, DispatchFOM_DCAuto)
 		delete ond;
 		ond = nullptr;
 	}
-
 }
-
-
 

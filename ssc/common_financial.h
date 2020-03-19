@@ -27,6 +27,15 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "core.h"
 
 
+double Const_per_principal(double const_per_percent /*%*/, double total_installed_cost /*$*/);		// [$]
+
+double Const_per_interest(double const_per_principal /*$*/, double const_per_interest_rate /*$*/,
+	double const_per_months /*months*/);		// [$]
+
+double Const_per_total(double const_per_interest /*$*/, double const_per_principal /*$*/,
+	double const_per_upfront_rate /*%*/);		// [$]
+
+
 void save_cf(compute_module *cm, util::matrix_t<double>& mat, int cf_line, int nyears, const std::string &name);
 
 

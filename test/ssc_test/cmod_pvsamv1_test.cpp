@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include "cmod_pvsamv1_eqns.h"
 #include "cmod_pvsamv1_test.h"
 #include "../input_cases/pvsamv1_cases.h"
 #include "../input_cases/weather_inputs.h"
@@ -608,7 +609,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, SnowModel)
 }
 
 /// Test PVSAMv1 with all defaults and no-financial model- look at MPPT input 1 voltage at night
-TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, InverterNighttime_cmod_pvsamv1) {
+TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, InverterNighttime) {
 
 	int pvsam_errors = run_module(data, "pvsamv1");
 
@@ -622,7 +623,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, InverterNighttime_cmod_pvsamv1) {
 }
 
 /// Test PVSAMv1 tilt equals latitude input
-TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, TiltEqualsLat_cmod_pvsamv1) {
+TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, TiltEqualsLat) {
 
 	std::map<std::string, double> pairs;
 
@@ -636,4 +637,63 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, TiltEqualsLat_cmod_pvsamv1) {
 		subarray1SurfaceTilt = ssc_data_get_array(data, "subarray1_surf_tilt", nullptr)[12];
 		EXPECT_NEAR(subarray1SurfaceTilt, 33.4, 0.1) << "Subarray 1 tilt should be equal to latitude.";
 	}
+}
+
+/// Integration test for bifacial model in SAM
+TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, bifacial) {
+
+	std::map<std::string, double> pairs;
+
+	//update bifacial inputs
+	pairs["cec_is_bifacial"] = 1;
+	pairs["cec_bifacial_transmission_factor"] = 0.013;
+	pairs["cec_bifaciality"] = 0.65;
+	pairs["cec_bifacial_ground_clearance_height"] = 1;
+
+	//these are the inputs that need to be updated from pvsaamv1_common_data to make inverter inputs match version 2018.11.11 defaults
+	pairs["cec_adjust"] = 4.86;
+	pairs["cec_i_o_ref"] = 3.9880000000000000e-12;
+	pairs["mppt_low_inverter"] = 100;
+	pairs["inv_snl_c0"] = -3.0810000000000000e-06;
+	pairs["inv_snl_c1"] = -4.8000000000000000e-05;
+	pairs["inv_snl_c2"] = 0.000123;
+	pairs["inv_snl_c3"] = -0.00163;
+	pairs["inv_snl_paco"] = 3850;
+	pairs["inv_snl_pdco"] = 3964.0;
+	pairs["inv_snl_pnt"] = 1.15;
+	pairs["inv_snl_pso"] = 17.9;
+	pairs["inv_snl_vdco"] = 400.0;
+	pairs["inv_snl_vdcmax"] = 480.0;
+
+	//run the test
+	int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+
+	EXPECT_FALSE(pvsam_errors);
+	if (!pvsam_errors)
+	{
+		ssc_number_t annualEnergy;
+		ssc_data_get_number(data, "annual_energy", &annualEnergy);
+		EXPECT_NEAR(annualEnergy, 9141, 1.0) << "Bifacial annual energy from SAM version 2018.11.11 using Phoenix TMY2";
+	}
+}
+
+TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, reopt_sizing) {
+    ssc_data_clear(data);
+    pvsamv1_with_residential_default(data);
+    utility_rate5_default(data);
+    belpe_default(data);
+    ssc_data_set_number(data, "lat", 30);
+    ssc_data_set_number(data, "lon", -30);
+    ssc_data_set_number(data, "losses", 15);
+
+    Reopt_size_battery_params(data);
+
+    auto vd = static_cast<var_table*>(data);
+    ASSERT_TRUE(vd->is_assigned("reopt_scenario"));
+    auto site = vd->lookup("reopt_scenario");
+    site = site->table.lookup("Scenario");
+    site = site->table.lookup("Site");
+    std::vector<std::string> sections = {"ElectricTariff", "LoadProfile", "Financial", "Storage", "Wind", "PV"};
+    for (const auto& s : sections)
+        ASSERT_TRUE(site->table.is_assigned(s));
 }

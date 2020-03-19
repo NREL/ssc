@@ -187,11 +187,11 @@ TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, LifetimeModeTest_cmod_pvwattsv7) {
 	}
 
 	// lastly, test degradation array with the wrong length, which should fail
-	double dc_degradation_fail[2];
+	double dc_degradation_fail[22];
 	for (size_t i = 0; i < 22; i++) {
 		dc_degradation_fail[i] = 0.5;
 	}
-	ssc_data_set_array(data, "dc_degradation", (ssc_number_t*)dc_degradation_fail, 2);
+	ssc_data_set_array(data, "dc_degradation", (ssc_number_t*)dc_degradation_fail, 22);
 	pvwatts_errors = modify_ssc_data_and_run_module(data, "pvwattsv7", pairs);
 	EXPECT_TRUE(pvwatts_errors);
 }

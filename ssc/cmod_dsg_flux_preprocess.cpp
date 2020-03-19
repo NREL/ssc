@@ -40,7 +40,7 @@ static var_info _cm_vtab_dsg_flux_preprocess[] = {
 	{ SSC_INPUT,  SSC_NUMBER,  "T_amb_des",       "Ambient (wb) temp at design",          "C",      "",     "",    "*",        "",          "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "T_ITD_des",       "T_cond - T_db",                        "C",      "",     "",    "*",        "",          "" },
 																					      
-	{ SSC_INPUT,  SSC_NUMBER,  "Q_rec_des",       "Receiver thermal power at des."        "MW",     "",     "",    "*",        "",          "" },
+	{ SSC_INPUT,  SSC_NUMBER,  "Q_rec_des",       "Receiver thermal power at des.",        "MW",     "",     "",    "*",        "",          "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "max_flux_b",      "Max allow. boiler flux",               "kW/m2",  "",     "",    "*",        "",          "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "max_flux_sh",     "Max allow. superheater flux",          "kW/m2",  "",     "",    "*",        "",          "" },  
 	{ SSC_INPUT,  SSC_NUMBER,  "max_flux_rh",     "Max allow. reheater flux",             "kW/m2",  "",     "",    "*",        "",          "" },

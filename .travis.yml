@@ -28,7 +28,7 @@ before_script:
   - user=$(echo $TRAVIS_REPO_SLUG | sed 's,/.*$,,')
   - (cd ../ && pwd)
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then git clone https://github.com/google/googletest /home/travis/build/$user/googletest; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export GTEST=/home/travis/build/$user/googletest; mkdir ${GTEST}/build; cd ${GTEST}/build; cmake ..; make;fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export GTEST=/home/travis/build/$user/googletest; mkdir ${GTEST}/build; cd ${GTEST}/build; cmake -DCMAKE_CXX_FLAGS=-std=c++11 ..; make;fi
  # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export LKDIR=/home/travis/build/$user/lk; fi
  # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export WEXDIR=/home/travis/build/$user/wex; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export SSCDIR=/home/travis/build/$user/ssc; fi
@@ -36,7 +36,7 @@ before_script:
  # - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export LKDIR=/Users/travis/build/$user/lk; fi
  # - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export WEXDIR=/Users/travis/build/$user/wex; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then git clone https://github.com/google/googletest /Users/travis/build/$user/googletest; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export GTEST=/Users/travis/build/$user/googletest; mkdir ${GTEST}/build; cd ${GTEST}/build; cmake ..; make;fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export GTEST=/Users/travis/build/$user/googletest; mkdir ${GTEST}/build; cd ${GTEST}/build; cmake -DCMAKE_CXX_FLAGS=-std=c++11 ..; make;fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export SSCDIR=/Users/travis/build/$user/ssc; fi
   # - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then git clone https://github.com/google/googletest /Users/travis/build/$user/googletest; fi
  # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then git clone https://github.com/$user/lk $LKDIR; fi

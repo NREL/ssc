@@ -260,7 +260,7 @@ void var_table::unassign( const std::string &name )
 
 bool var_table::rename( const std::string &oldname, const std::string &newname )
 {
-	
+
 	var_hash::iterator it = m_hash.find( util::lower_case(oldname) );
 	if ( it != m_hash.end() )
 	{
@@ -288,7 +288,9 @@ bool var_table::rename( const std::string &oldname, const std::string &newname )
 
 var_data *var_table::lookup( const std::string &name )
 {
-	var_hash::iterator it = m_hash.find( util::lower_case(name) );
+    var_hash::iterator it = m_hash.find(name );
+    if (it == m_hash.end())
+        it = m_hash.find( util::lower_case(name) );
 	if ( it != m_hash.end() )
 		return (*it).second;
 	else
@@ -348,12 +350,27 @@ void vt_get_number(var_table* vt, std::string name, double* lvalue) {
 }
 
 void vt_get_array_vec(var_table* vt, std::string name, std::vector<double>& vec_double) {
-	if (var_data* vd = vt->lookup(name)) vec_double = vd->arr_vector();
+	if (var_data* vd = vt->lookup(name)){
+	    if (vd->type != SSC_ARRAY)
+            throw std::runtime_error(std::string(name) + std::string(" must be array type."));
+	    vec_double = vd->arr_vector();
+	}
 	else throw std::runtime_error(std::string(name) + std::string(" must be assigned."));
 }
 
 void vt_get_matrix(var_table* vt, std::string name, util::matrix_t<double>& matrix) {
-	if (var_data* vd = vt->lookup(name)) matrix = vd->num; \
+	if (var_data* vd = vt->lookup(name)){
+        if (vd->type == SSC_ARRAY)
+        {
+            std::vector<double> vec_double = vd->arr_vector();
+            matrix.resize(vec_double.size());
+            for (size_t i = 0; i < vec_double.size(); i++)
+                matrix.at(i) = vec_double[i];
+        }
+        else if (vd->type != SSC_MATRIX)
+            throw std::runtime_error(std::string(name) + std::string(" must be matrix type."));
+        matrix = vd->num;
+    }
 	else throw std::runtime_error(std::string(name) + std::string(" must be assigned."));
 }
 

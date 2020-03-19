@@ -783,6 +783,11 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 		q_pc_target = f_turbine_tou * m_cycle_q_dot_des;	//[MW]
 
+        if (mc_tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max)
+        {
+            q_pc_max = q_pc_target;     //[MW]
+        }
+
 
 		double m_dot_htf_ND_max = std::numeric_limits<double>::quiet_NaN();
 		double W_dot_ND_max = std::numeric_limits<double>::quiet_NaN();

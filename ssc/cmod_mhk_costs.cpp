@@ -34,9 +34,11 @@ static var_info _cm_vtab_mhk_costs[] = {
 	{ SSC_INPUT,			SSC_NUMBER,			"device_rated_power",						"Rated capacity of device",								"kW",			"",								"MHKCosts",			"*",					"MIN=0",					"" },
 	{ SSC_INPUT,			SSC_NUMBER,			"system_capacity",							"System Nameplate Capacity",							"kW",			"",								"MHKCosts",			"*",					"MIN=0",					"" },
 	{ SSC_INPUT,			SSC_NUMBER,			"devices_per_row",							"Number of wave devices per row in array",				"",				"",								"MHKCosts",         "*",                    "INTEGER",			    	"" },
-	{ SSC_INPUT,			SSC_NUMBER,			"device_type",								"Device Type",											"0/1/2/3/4",		"0=Generic,1=RM3,2=RM5,3=RM6,4=RM1",	"MHKCosts",			"?=0",					"MIN=0,MAX=4",				"" },
+//	{ SSC_INPUT,			SSC_NUMBER,			"device_type",								"Device Type",											"0/1/2/3/4",		"0=Generic,1=RM3,2=RM5,3=RM6,4=RM1",	"MHKCosts",			"?=0",					"MIN=0,MAX=4",				"" },
 	{ SSC_INPUT,			SSC_NUMBER,			"marine_energy_tech",						"Marine energy technology",								"0/1",			"0=Wave,1=Tidal",				"MHKCosts",			"*",					"MIN=0,MAX=1",				"" },
-	
+	{ SSC_INPUT,			SSC_NUMBER,			"library_or_input_wec",						"Wave library or user input",								"",			"0=Library,1=User",				"MHKCosts",			"marine_energy_tech=0",					"",				"" },
+	{ SSC_INPUT,			SSC_STRING,			"lib_wave_device",							"Wave library name",								"",			"",				"MHKCosts",			"marine_energy_tech=0",					"",				"" },
+
 	{ SSC_INPUT,			SSC_NUMBER,			"inter_array_cable_length",					"Inter-array cable length",								"m",			"",								"MHKCosts",			"*",					"MIN=0",					"" },
 	{ SSC_INPUT,			SSC_NUMBER,			"riser_cable_length",						"Riser cable length",									"m",			"",								"MHKCosts",			"*",					"MIN=0",					"" },
 	{ SSC_INPUT,			SSC_NUMBER,			"export_cable_length",						"Export cable length",									"m",			"",								"MHKCosts",			"*",					"MIN=0",					"" },
@@ -118,37 +120,40 @@ public:
 		double device_rating = as_double("device_rated_power"); // kW
 		double system_capacity_kW = as_double("system_capacity"); // kW
 		double system_capacity_MW = system_capacity_kW / 1000.0; // MW
-		int device_type = as_integer("device_type");
+//		int device_type = as_integer("device_type");
 		int technology = as_integer("marine_energy_tech");
 		int devices_per_row = as_integer("devices_per_row");
 		double interarray_length = as_double("inter_array_cable_length");
 		double riser_length = as_double("riser_cable_length");
 		double export_length = as_double("export_cable_length");
 
-		//define intermediate variables to store outputs
+		int device_type = 4;
+		if (technology == WAVE)
+		{
+			if (as_integer("library_or_input_wec") == 1)
+				device_type = 0;
+			else
+			{
+				std::string wave_device = as_string("lib_wave_device");
+				if (wave_device == "RM3")
+					device_type = 1;
+				else if (wave_device == "RM5")
+					device_type = 2;
+				else if (wave_device == "RM6")
+					device_type = 3;
+				else
+					device_type = 0;
+			}
+		}
+
+		//define intermediate variables to store calculated outputs
 		double structural_assembly, power_takeoff, mooring_found_substruc;
 		double development, eng_and_mgmt, plant_commissioning, site_access_port_staging, assembly_and_install, other_infrastructure;
 		double array_cable_system, export_cable_system, onshore_substation, offshore_substation, other_elec_infra;
 		double project_contingency, insurance_during_construction, reserve_accounts;
 		double operations_cost, maintenance_cost;
 
-		// user input CapEx values
-		int structural_assembly_cost_method = as_integer("structural_assembly_cost_method");
-		int power_takeoff_system_cost_method = as_integer("power_takeoff_system_cost_method");
-		int mooring_found_substruc_cost_method = as_integer("mooring_found_substruc_cost_method");
-
-		int development_cost_method = as_integer("development_cost_method");
-		int eng_and_mgmt_cost_method = as_integer("eng_and_mgmt_cost_method");
-		int assembly_and_install_cost_method = as_integer("assembly_and_install_cost_method");
-		int other_infrastructure_cost_method = as_integer("other_infrastructure_cost_method");
-
-		int array_cable_system_cost_method = as_integer("array_cable_system_cost_method");
-		int export_cable_system_cost_method = as_integer("export_cable_system_cost_method");
-		int onshore_substation_cost_method = as_integer("onshore_substation_cost_method");
-		int offshore_substation_cost_method = as_integer("offshore_substation_cost_method");
-		int other_elec_infra_cost_method = as_integer("other_elec_infra_cost_method");
-
-		//CapEx costs depend on technology
+		//Most CapEx costs depend on technology
 		if (technology == TIDAL)
 		{ // device = RM1
 			structural_assembly = 284245.0 * system_capacity_MW + 785137.0;
@@ -201,10 +206,7 @@ public:
 			}
 		}
 
-
-//		double capex = structural_assembly + power_takeoff + mooring_found_substruc;
-
-		// REmaining BOS costs that are not CapEx dependent
+		// REmaining BOS costs that are not CapEx dependent and not technology dependent
 		assembly_and_install = 2805302.0 * pow(system_capacity_MW, 0.66);
 		other_infrastructure = 0;
 
@@ -215,6 +217,48 @@ public:
 		onshore_substation = 75000.0 * system_capacity_MW;
 		offshore_substation = 100000.0 * system_capacity_MW;
 		other_elec_infra = 47966.16 * system_capacity_MW + 665841.0;
+
+		// operations cost
+		operations_cost = 31250.0 * system_capacity_MW + 879282.0;
+
+		// maintenance cost
+		maintenance_cost = 116803.0 * system_capacity_MW + 317719.0;
+
+		//at this point, we need to assign the "independent" modeled outputs- 
+		//i.e., we want the modeled value to be reported prior to overwriting with a user input
+		//for all variables that are NOT dependent on CapEx
+		assign("structural_assembly_cost_modeled", var_data(static_cast<ssc_number_t>(structural_assembly)));
+		assign("power_takeoff_system_cost_modeled", var_data(static_cast<ssc_number_t>(power_takeoff)));
+		assign("mooring_found_substruc_cost_modeled", var_data(static_cast<ssc_number_t>(mooring_found_substruc)));
+		assign("development_cost_modeled", var_data(static_cast<ssc_number_t>(development)));
+		assign("eng_and_mgmt_cost_modeled", var_data(static_cast<ssc_number_t>(eng_and_mgmt)));
+		assign("assembly_and_install_cost_modeled", var_data(static_cast<ssc_number_t>(assembly_and_install)));
+		assign("other_infrastructure_cost_modeled", var_data(static_cast<ssc_number_t>(other_infrastructure)));
+		assign("array_cable_system_cost_modeled", var_data(static_cast<ssc_number_t>(array_cable_system)));
+		assign("export_cable_system_cost_modeled", var_data(static_cast<ssc_number_t>(export_cable_system)));
+		assign("onshore_substation_cost_modeled", var_data(static_cast<ssc_number_t>(onshore_substation)));
+		assign("offshore_substation_cost_modeled", var_data(static_cast<ssc_number_t>(offshore_substation)));
+		assign("other_elec_infra_cost_modeled", var_data(static_cast<ssc_number_t>(other_elec_infra)));
+		assign("operations_cost", var_data(static_cast<ssc_number_t>(operations_cost)));
+		assign("maintenance_cost", var_data(static_cast<ssc_number_t>(maintenance_cost)));
+
+		// there are five cost values that are a percentage of total CapEx
+		// we want those modeled values to reflect user-input values that are overwriting the modeled values
+		// therefore, here, we replace modeled values calculated above with those input by the user, if that's selected in the UI
+		int structural_assembly_cost_method = as_integer("structural_assembly_cost_method");
+		int power_takeoff_system_cost_method = as_integer("power_takeoff_system_cost_method");
+		int mooring_found_substruc_cost_method = as_integer("mooring_found_substruc_cost_method");
+
+		int development_cost_method = as_integer("development_cost_method");
+		int eng_and_mgmt_cost_method = as_integer("eng_and_mgmt_cost_method");
+		int assembly_and_install_cost_method = as_integer("assembly_and_install_cost_method");
+		int other_infrastructure_cost_method = as_integer("other_infrastructure_cost_method");
+
+		int array_cable_system_cost_method = as_integer("array_cable_system_cost_method");
+		int export_cable_system_cost_method = as_integer("export_cable_system_cost_method");
+		int onshore_substation_cost_method = as_integer("onshore_substation_cost_method");
+		int offshore_substation_cost_method = as_integer("offshore_substation_cost_method");
+		int other_elec_infra_cost_method = as_integer("other_elec_infra_cost_method");
 
 		// check for user entered values
 		if (structural_assembly_cost_method == 0)
@@ -269,52 +313,29 @@ public:
 			other_elec_infra = as_double("other_elec_infra_cost_input");
 
 
-		// CapEx to include all device costs and BOS costs that are not CapEx dependent
+		// Now, we calculated the CapEx using whatever combination of modeled values and user-entered values
+		// that we have at this point.
+		// CapEx is defined to include all device costs and BOS costs that are not CapEx dependent
 		double capex = structural_assembly + power_takeoff + mooring_found_substruc
 			+ development + eng_and_mgmt + assembly_and_install + other_infrastructure
 			+ array_cable_system + export_cable_system + onshore_substation + offshore_substation + other_elec_infra;
 
-
-		// CapEx dependent BOS costs
+		// Calculate the CapEx dependent BOS costs
 		plant_commissioning = 0.016 * capex;
 		site_access_port_staging = 0.011 * capex;
 
-
-		//financial costs are the same regardless of technology
+		// Calculate the CapEx-dependent financial costs
 		project_contingency = 0.05 * capex;
 		insurance_during_construction = 0.01 * capex;
 		reserve_accounts = 0.03 * capex;
 
-		// operations cost
-		operations_cost = 31250.0 * system_capacity_MW + 879282.0;
-
-		// maintenance cost
-		maintenance_cost = 116803.0 * system_capacity_MW + 317719.0;
-
-		//assign all outputs
-		assign("structural_assembly_cost_modeled", var_data(static_cast<ssc_number_t>(structural_assembly)));
-		assign("power_takeoff_system_cost_modeled", var_data(static_cast<ssc_number_t>(power_takeoff)));
-		assign("mooring_found_substruc_cost_modeled", var_data(static_cast<ssc_number_t>(mooring_found_substruc)));
-
-		assign("development_cost_modeled", var_data(static_cast<ssc_number_t>(development)));
-		assign("eng_and_mgmt_cost_modeled", var_data(static_cast<ssc_number_t>(eng_and_mgmt)));
+		// Assign the CapEx-dependent outputs
 		assign("plant_commissioning_cost_modeled", var_data(static_cast<ssc_number_t>(plant_commissioning)));
 		assign("site_access_port_staging_cost_modeled", var_data(static_cast<ssc_number_t>(site_access_port_staging)));
-		assign("assembly_and_install_cost_modeled", var_data(static_cast<ssc_number_t>(assembly_and_install)));
-		assign("other_infrastructure_cost_modeled", var_data(static_cast<ssc_number_t>(other_infrastructure)));
-
-		assign("array_cable_system_cost_modeled", var_data(static_cast<ssc_number_t>(array_cable_system)));
-		assign("export_cable_system_cost_modeled", var_data(static_cast<ssc_number_t>(export_cable_system)));
-		assign("onshore_substation_cost_modeled", var_data(static_cast<ssc_number_t>(onshore_substation)));
-		assign("offshore_substation_cost_modeled", var_data(static_cast<ssc_number_t>(offshore_substation)));
-		assign("other_elec_infra_cost_modeled", var_data(static_cast<ssc_number_t>(other_elec_infra)));
-
 		assign("project_contingency", var_data(static_cast<ssc_number_t>(project_contingency)));
 		assign("insurance_during_construction", var_data(static_cast<ssc_number_t>(insurance_during_construction)));
 		assign("reserve_accounts", var_data(static_cast<ssc_number_t>(reserve_accounts)));
 
-		assign("operations_cost", var_data(static_cast<ssc_number_t>(operations_cost)));
-		assign("maintenance_cost", var_data(static_cast<ssc_number_t>(maintenance_cost)));
 	}
 
 };

@@ -59,7 +59,7 @@
 
 SSCEXPORT int ssc_version()
 {
-	return 233;
+	return 237;
 }
  
 SSCEXPORT const char *ssc_build_info()
@@ -286,7 +286,7 @@ SSCEXPORT void ssc_module_free( ssc_module_t p_mod )
 
 
 SSCEXPORT ssc_var_t ssc_var_create(){
-    return static_cast<ssc_data_t >( new var_data );
+    return static_cast<ssc_var_t >( new var_data );
 }
 
 SSCEXPORT void ssc_var_free( ssc_var_t p_var )
