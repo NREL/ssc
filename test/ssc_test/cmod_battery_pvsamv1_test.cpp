@@ -3,6 +3,7 @@
 #include "cmod_battery_pvsamv1_test.h"
 
 #include "../input_cases/weather_inputs.h"
+#include "../input_cases/pvsam1_battery_common_data.h"
 
 /// Test PVSAMv1 with all defaults and battery enabled with 3 dispatch methods
 TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACBatteryModelIntegration)
