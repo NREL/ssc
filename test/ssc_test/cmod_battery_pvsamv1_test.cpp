@@ -66,3 +66,30 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelIntegr
 		}
 	}
 }
+
+/// Test PVSAMv1 with all defaults and battery enabled with 3 dispatch methods
+TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_ACBatteryModelIntegration)
+{
+	ssc_data_t data = ssc_data_create();
+	pvsamv1_pv_defaults(data);
+	pvsamv1_battery_defaults(data);
+	grid_and_rate_defaults(data);
+	singleowner_defaults(data);
+
+	ssc_number_t expectedEnergy[5] = { 29960, 43942, 36677 };
+
+	// Test peak shaving look ahead, peak shaving look behind, and automated grid power target. Others require additional input data
+	for (int i = 0; i < 3; i++) {
+		ssc_data_set_number(data, "batt_dispatch_choice", i);
+
+		int pvsam_errors = run_pvsam1_battery_ppa(data);
+		EXPECT_FALSE(pvsam_errors);
+
+		if (!pvsam_errors)
+		{
+			ssc_number_t annual_energy;
+			ssc_data_get_number(data, "annual_energy", &annual_energy);
+			EXPECT_NEAR(annual_energy, expectedEnergy[i], m_error_tolerance_hi) << "Annual energy.";
+		}
+	}
+}
