@@ -1169,5 +1169,8 @@ SSCEXPORT void set_python_path(const char* abs_path){
 }
 
 SSCEXPORT const char *get_python_path(){
-    return s_python_path->c_str();
+    if (s_python_path)
+        return s_python_path->c_str();
+    else
+        throw(std::runtime_error("get_python_path error. Path does not exist. Set with 'set_python_path' first."));
 }

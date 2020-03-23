@@ -32,19 +32,20 @@ static var_info _cm_vtab_wind_landbosse[] = {
      /*   VARTYPE           DATATYPE         NAME                              LABEL                                                      UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
         // Inputs
         { SSC_INPUT,        SSC_STRING, "wind_resource_filename",                "Local hourly wind data file path",                        "",         "",                      "LandBOSSE",      "*",                       "",                              "" },
-        { SSC_INPUT,        SSC_NUMBER, "turbine_rating_MW",                     "Turbine Rating",                                          "kW",       "",                      "LandBOSSE",      "*",                       "MIN=0",                         "" },
-        { SSC_INPUT,        SSC_NUMBER, "wind_turbine_rotor_diameter",           "Rotor Diameter",                                          "m",        "",                      "LandBOSSE",      "*",                       "MIN=0",                         "" },
-        { SSC_INPUT,        SSC_NUMBER, "wind_turbine_hub_ht",                   "Hub Height",                                              "m",        "",                      "LandBOSSE",      "*",                       "MIN=0",                         "" },
-        { SSC_INPUT,        SSC_NUMBER, "num_turbines",                          "Number of Turbines",                                      "",         "",                      "LandBOSSE",      "*",                       "INTEGER,MIN=0",                 "" },
-        { SSC_INPUT,        SSC_NUMBER, "wind_resource_shear",                   "Wind Shear Exponent",                                     "",         "",                      "LandBOSSE",      "*",                       "MIN=0",                         "" },
-        { SSC_INPUT,        SSC_NUMBER, "turbine_spacing_rotor_diameters",       "Turbine Spacing",                                         "diameters","",                      "LandBOSSE",      "*",                       "INTEGER,MIN=0",                 "" },
-        { SSC_INPUT,        SSC_NUMBER, "row_spacing_rotor_diameters",           "Row Spacing",                                             "diameters","",                      "LandBOSSE",      "*",                       "INTEGER,MIN=0",                 "" },
-        { SSC_INPUT,        SSC_NUMBER, "interconnect_voltage_kV",               "Interconnect Voltage",                                    "kV",       "",                      "LandBOSSE",      "*",                       "MIN=0",                         "" },
         { SSC_INPUT,        SSC_NUMBER, "distance_to_interconnect_mi",           "Distance to Interconnect",                                "miles",    "",                      "LandBOSSE",      "*",                       "MIN=0",                         "" },
+        { SSC_INPUT,        SSC_NUMBER, "interconnect_voltage_kV",               "Interconnect Voltage",                                    "kV",       "",                      "LandBOSSE",      "*",                       "MIN=0",                         "" },
         { SSC_INPUT,        SSC_NUMBER, "depth",                                 "Foundation Depth",                                        "m",        "",                      "LandBOSSE",      "*",                       "MIN=0",                         "" },
         { SSC_INPUT,        SSC_NUMBER, "rated_thrust_N",                        "Rated Thrust",                                            "N",        "",                      "LandBOSSE",      "*",                       "MIN=0",                         "" },
         { SSC_INPUT,        SSC_NUMBER, "labor_cost_multiplier",                 "Labor Cost Multiplier",                                   "",         "",                      "LandBOSSE",      "*",                       "MIN=0",                         "" },
         { SSC_INPUT,        SSC_NUMBER, "gust_velocity_m_per_s",                 "50 year Gust Velocity",                                   "m/s",      "",                      "LandBOSSE",      "*",                       "MIN=0",                         "" },
+        { SSC_INPUT,        SSC_NUMBER, "wind_resource_shear",                   "Wind Shear Exponent",                                     "",         "",                      "LandBOSSE",      "*",                       "MIN=0",                         "" },
+
+        { SSC_INPUT,        SSC_NUMBER, "num_turbines",                          "Number of Turbines",                                      "",         "",                      "LandBOSSE",      "*",                       "INTEGER,MIN=0",                 "" },
+        { SSC_INPUT,        SSC_NUMBER, "turbine_spacing_rotor_diameters",       "Turbine Spacing",                                         "diameters","",                      "LandBOSSE",      "*",                       "INTEGER,MIN=0",                 "" },
+        { SSC_INPUT,        SSC_NUMBER, "row_spacing_rotor_diameters",           "Row Spacing",                                             "diameters","",                      "LandBOSSE",      "*",                       "INTEGER,MIN=0",                 "" },
+        { SSC_INPUT,        SSC_NUMBER, "turbine_rating_MW",                     "Turbine Rating",                                          "kW",       "",                      "LandBOSSE",      "*",                       "MIN=0",                         "" },
+        { SSC_INPUT,        SSC_NUMBER, "wind_turbine_hub_ht",                   "Hub Height",                                              "m",        "",                      "LandBOSSE",      "*",                       "MIN=0",                         "" },
+        { SSC_INPUT,        SSC_NUMBER, "wind_turbine_rotor_diameter",           "Rotor Diameter",                                          "m",        "",                      "LandBOSSE",      "*",                       "MIN=0",                         "" },
 
         { SSC_OUTPUT, 		SSC_STRING, "errors",	            		        "Error message",			                                 "",  "", "LandBOSSE", "*", "", "", } ,
         { SSC_OUTPUT, 		SSC_NUMBER, "bonding_usd",			                "Management - Bonding Cost",		                       	 "$", "", "LandBOSSE", "*", "", "", } ,
@@ -153,7 +154,7 @@ std::string cm_wind_landbosse::call_python_module(const std::string& input_json)
     std::future<std::string> f_completes = python_result.get_future();
     std::thread([&](std::promise<std::string> python_result)
                 {
-                    std::string cmd = python_exec_path + " -c '" + python_run_cmd + "'";
+                    std::string cmd = "cd " + std::string(get_python_path()) + " && " + python_exec_path + " -c '" + python_run_cmd + "'";
                     size_t pos = cmd.find("<input>");
                     cmd.replace(pos, 7, input_json);
 
@@ -197,6 +198,11 @@ void cm_wind_landbosse::exec() {
     std::string output_json = call_python_module(input_json);
     std::replace( output_json.begin(), output_json.end(), '\'', '\"');
     auto output_data = static_cast<var_table*>(json_to_ssc_data(output_json.c_str()));
+    if (output_data->is_assigned("error")){
+        m_vartab->assign("errors", output_json);
+        return;
+    }
+
     m_vartab->merge(*output_data, false);
 
     auto error_vd = m_vartab->lookup("errors");
