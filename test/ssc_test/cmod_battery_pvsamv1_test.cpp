@@ -19,6 +19,8 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACBatteryModelIntegr
 	set_array(data, "load", load_profile_path, 8760); // Load is required for peak shaving controllers
 
 	ssc_number_t expectedEnergy[3] = { 8594, 8594, 8689 };
+	ssc_number_t expectedBatteryChargeEnergy[3] = { 1442, 1443, 258 };
+	ssc_number_t expectedBatteryDischargeEnergy[3] = { 1321, 1323, 233 };
 
 	// Test peak shaving look ahead, peak shaving look behind, and automated grid power target. Others require additional input data
 	for (int i = 0; i < 3; i++) {
@@ -32,6 +34,13 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACBatteryModelIntegr
 			ssc_number_t annual_energy;
 			ssc_data_get_number(data, "annual_energy", &annual_energy);
 			EXPECT_NEAR(annual_energy, expectedEnergy[i], m_error_tolerance_hi) << "Annual energy.";
+
+			auto data_vtab = static_cast<var_table*>(data);
+			auto annualChargeEnergy = data_vtab->as_vector_ssc_number_t("batt_annual_charge_energy");
+			EXPECT_NEAR(annualChargeEnergy[0], expectedBatteryChargeEnergy[i], m_error_tolerance_hi) << "Battery annual charge energy.";
+			
+			auto annualDischargeEnergy = data_vtab->as_vector_ssc_number_t("batt_annual_discharge_energy");
+			EXPECT_NEAR(annualDischargeEnergy[0], expectedBatteryDischargeEnergy[i], m_error_tolerance_hi) << "Battery annual discharge energy.";
 		}
 	}
 }
@@ -52,6 +61,8 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACDCBatteryModelInte
 	set_array(data, "batt_custom_dispatch", custom_dispatch_residential_schedule, 8760);
 
 	ssc_number_t expectedEnergy[2] = { 8710, 8717 };
+	ssc_number_t expectedBatteryChargeEnergy[2] = { 4.6, 4.7};
+	ssc_number_t expectedBatteryDischargeEnergy[2] = { 0.76, 7.6};
 
 	// Test both AC and DC using the same dispatch model
 	for (int i = 0; i < 2; i++) {
@@ -65,6 +76,14 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACDCBatteryModelInte
 			ssc_number_t annual_energy;
 			ssc_data_get_number(data, "annual_energy", &annual_energy);
 			EXPECT_NEAR(annual_energy, expectedEnergy[i], m_error_tolerance_hi) << "Annual energy.";
+
+			auto data_vtab = static_cast<var_table*>(data);
+			auto annualChargeEnergy = data_vtab->as_vector_ssc_number_t("batt_annual_charge_energy");
+			EXPECT_NEAR(annualChargeEnergy[0], expectedBatteryChargeEnergy[i], m_error_tolerance_hi) << "Battery annual charge energy.";
+
+			auto annualDischargeEnergy = data_vtab->as_vector_ssc_number_t("batt_annual_discharge_energy");
+			EXPECT_NEAR(annualDischargeEnergy[0], expectedBatteryDischargeEnergy[i], m_error_tolerance_hi) << "Battery annual discharge energy.";
+
 		}
 	}
 }
@@ -84,6 +103,8 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACDCBatteryModelInte
 	pairs["batt_dispatch_choice"] = 4;
 
 	ssc_number_t expectedEnergy[2] = { 8701, 8684 };
+	ssc_number_t expectedBatteryChargeEnergy[2] = { 468, 477 };
+	ssc_number_t expectedBatteryDischargeEnergy[2] = { 437, 446 };
 
 	// Test both AC and DC using the same dispatch model
 	for (int i = 0; i < 2; i++) {
@@ -97,6 +118,13 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACDCBatteryModelInte
 			ssc_number_t annual_energy;
 			ssc_data_get_number(data, "annual_energy", &annual_energy);
 			EXPECT_NEAR(annual_energy, expectedEnergy[i], m_error_tolerance_hi) << "Annual energy.";
+
+			auto data_vtab = static_cast<var_table*>(data);
+			auto annualChargeEnergy = data_vtab->as_vector_ssc_number_t("batt_annual_charge_energy");
+			EXPECT_NEAR(annualChargeEnergy[0], expectedBatteryChargeEnergy[i], m_error_tolerance_hi) << "Battery annual charge energy.";
+
+			auto annualDischargeEnergy = data_vtab->as_vector_ssc_number_t("batt_annual_discharge_energy");
+			EXPECT_NEAR(annualDischargeEnergy[0], expectedBatteryDischargeEnergy[i], m_error_tolerance_hi) << "Battery annual discharge energy.";
 		}
 	}
 }
@@ -115,6 +143,8 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelIntegr
 	set_array(data, "load", load_profile_path, 8760); // Load is required for peak shaving controllers
 
 	ssc_number_t expectedEnergy[3] = { 8634, 8637, 8703 };
+	ssc_number_t expectedBatteryChargeEnergy[3] = { 1373, 1377, 245 };
+	ssc_number_t expectedBatteryDischargeEnergy[3] = { 1245, 1249, 219 };
 
 	// Test peak shaving look ahead, peak shaving look behind, and automated grid power target. Others require additional input data
 	for (int i = 0; i < 3; i++) {
@@ -128,6 +158,13 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelIntegr
 			ssc_number_t annual_energy;
 			ssc_data_get_number(data, "annual_energy", &annual_energy);
 			EXPECT_NEAR(annual_energy, expectedEnergy[i], m_error_tolerance_hi) << "Annual energy.";
+
+			auto data_vtab = static_cast<var_table*>(data);
+			auto annualChargeEnergy = data_vtab->as_vector_ssc_number_t("batt_annual_charge_energy");
+			EXPECT_NEAR(annualChargeEnergy[0], expectedBatteryChargeEnergy[i], m_error_tolerance_hi) << "Battery annual charge energy.";
+
+			auto annualDischargeEnergy = data_vtab->as_vector_ssc_number_t("batt_annual_discharge_energy");
+			EXPECT_NEAR(annualDischargeEnergy[0], expectedBatteryDischargeEnergy[i], m_error_tolerance_hi) << "Battery annual discharge energy.";
 		}
 	}
 }
@@ -142,6 +179,8 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_ACBatteryModelIntegration)
 	singleowner_defaults(data);
 
 	ssc_number_t expectedEnergy[3] = { 37322265, 37320217, 37321282 };
+	ssc_number_t expectedBatteryChargeEnergy[3] = { 0, 0, 0 };
+	ssc_number_t expectedBatteryDischargeEnergy[3] = { 0, 0, 0 };
 
 	// Test peak shaving look ahead, peak shaving look behind, and automated grid power target. Others require additional input data
 	for (int i = 0; i < 3; i++) {
@@ -155,6 +194,13 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_ACBatteryModelIntegration)
 			ssc_number_t annual_energy;
 			ssc_data_get_number(data, "annual_energy", &annual_energy);
 			EXPECT_NEAR(annual_energy, expectedEnergy[i], m_error_tolerance_hi) << "Annual energy.";
+
+			auto data_vtab = static_cast<var_table*>(data);
+			auto annualChargeEnergy = data_vtab->as_vector_ssc_number_t("batt_annual_charge_energy");
+			EXPECT_NEAR(annualChargeEnergy[0], expectedBatteryChargeEnergy[i], m_error_tolerance_hi) << "Battery annual charge energy.";
+
+			auto annualDischargeEnergy = data_vtab->as_vector_ssc_number_t("batt_annual_discharge_energy");
+			EXPECT_NEAR(annualDischargeEnergy[0], expectedBatteryDischargeEnergy[i], m_error_tolerance_hi) << "Battery annual discharge energy.";
 		}
 	}
 }
@@ -169,6 +215,8 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_CustomDispatchBatteryModelI
 	singleowner_defaults(data);
 
 	ssc_number_t expectedEnergy = 37322006;
+	ssc_number_t expectedBatteryChargeEnergy = 0;
+	ssc_number_t expectedBatteryDischargeEnergy = 0;
 
 	ssc_data_set_number(data, "batt_dispatch_choice", 3);
 	set_array(data, "batt_custom_dispatch", custom_dispatch_singleowner_schedule, 8760);
@@ -181,6 +229,13 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_CustomDispatchBatteryModelI
 		ssc_number_t annual_energy;
 		ssc_data_get_number(data, "annual_energy", &annual_energy);
 		EXPECT_NEAR(annual_energy, expectedEnergy, m_error_tolerance_hi) << "Annual energy.";
+
+		auto data_vtab = static_cast<var_table*>(data);
+		auto annualChargeEnergy = data_vtab->as_vector_ssc_number_t("batt_annual_charge_energy");
+		EXPECT_NEAR(annualChargeEnergy[0], expectedBatteryChargeEnergy, m_error_tolerance_hi) << "Battery annual charge energy.";
+
+		auto annualDischargeEnergy = data_vtab->as_vector_ssc_number_t("batt_annual_discharge_energy");
+		EXPECT_NEAR(annualDischargeEnergy[0], expectedBatteryDischargeEnergy, m_error_tolerance_hi) << "Battery annual discharge energy.";
 	}
 	
 }
@@ -195,6 +250,8 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_ManualDispatchBatteryModelI
 	singleowner_defaults(data);
 
 	ssc_number_t expectedEnergy = 37145455;
+	ssc_number_t expectedBatteryChargeEnergy = 0;
+	ssc_number_t expectedBatteryDischargeEnergy = 0;
 
 	ssc_data_set_number(data, "batt_dispatch_choice", 4);
 
@@ -206,6 +263,13 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_ManualDispatchBatteryModelI
 		ssc_number_t annual_energy;
 		ssc_data_get_number(data, "annual_energy", &annual_energy);
 		EXPECT_NEAR(annual_energy, expectedEnergy, m_error_tolerance_hi) << "Annual energy.";
+
+		auto data_vtab = static_cast<var_table*>(data);
+		auto annualChargeEnergy = data_vtab->as_vector_ssc_number_t("batt_annual_charge_energy");
+		EXPECT_NEAR(annualChargeEnergy[0], expectedBatteryChargeEnergy, m_error_tolerance_hi) << "Battery annual charge energy.";
+
+		auto annualDischargeEnergy = data_vtab->as_vector_ssc_number_t("batt_annual_discharge_energy");
+		EXPECT_NEAR(annualDischargeEnergy[0], expectedBatteryDischargeEnergy, m_error_tolerance_hi) << "Battery annual discharge energy.";
 	}
 
 }
