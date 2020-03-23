@@ -1,5 +1,7 @@
 #include <math.h>
 #include <gtest/gtest.h>
+#include <functional>   // std::greater
+#include <algorithm>    // std::sort
 
 #include "lib_battery_dispatch_test.h"
 
@@ -79,6 +81,10 @@ TEST_F(AutoFOMTest_lib_battery_dispatch, DispatchFOMInput_lib_battery_dispatch)
 
 	dispatchAutoFOM->set_custom_dispatch(P_batt);
 	dispatchAutoFOM->dispatch(0, 0, 0);
+
+	EXPECT_NEAR(batteryPower->powerBatteryDC, -216.8, 0.1);
+	EXPECT_NEAR(batteryPower->powerBatteryAC, -225.8, 0.1);
+	EXPECT_NEAR(batteryPower->powerGridToBattery, 0, 0.1);
 }
 
 TEST_F(AutoFOMDC_lib_battery_dispatch, DispatchFOM_DCAuto)
@@ -119,6 +125,10 @@ TEST_F(AutoFOMDC_lib_battery_dispatch, DispatchFOM_DCAuto)
 		dispatchAutoDC->dispatch(0, h, 0);
 		p_batterykW.push_back(batteryPower->powerBatteryAC);
     }
+	std::sort(p_batterykW.begin(), p_batterykW.end(), std::greater<double>());
+
+	EXPECT_NEAR(p_batterykW[0], 3046.1, 0.1);
+	EXPECT_NEAR(p_batterykW[23], -29403.5, 0.1);
 
 	if (m_sharedInverter) {
 		delete m_sharedInverter;
