@@ -186,15 +186,24 @@ std::string cm_wind_landbosse::call_python_module(const std::string& input_json)
 }
 
 void cm_wind_landbosse::exec() {
-    m_vartab->rename_match_case("wind_resource_filename", "weather_file_path");
-    m_vartab->rename_match_case("turbine_rating_mw", "turbine_rating_MW");
-    m_vartab->rename_match_case("wind_turbine_rotor_diameter", "rotor_diameter_m");
-    m_vartab->rename_match_case("wind_turbine_hub_ht", "hub_height_meters");
-    m_vartab->rename_match_case("wind_resource_shear", "wind_shear_exponent");
-    m_vartab->rename_match_case("interconnect_voltage_kv", "interconnect_voltage_kV");
-    m_vartab->rename_match_case("rated_thrust_n", "rated_thrust_N");
+    // limit the input json through the process pip to only landbosse-required inputs
+    var_table input_data;
+    input_data.assign_match_case("weather_file_path", *m_vartab->lookup("wind_resource_filename"));
+    input_data.assign_match_case("distance_to_interconnect_mi", *m_vartab->lookup("distance_to_interconnect_mi"));
+    input_data.assign_match_case("interconnect_voltage_kV", *m_vartab->lookup("interconnect_voltage_kv"));
+    input_data.assign_match_case("depth", *m_vartab->lookup("depth"));
+    input_data.assign_match_case("rated_thrust_N", *m_vartab->lookup("rated_thrust_n"));
+    input_data.assign_match_case("labor_cost_multiplier", *m_vartab->lookup("labor_cost_multiplier"));
+    input_data.assign_match_case("gust_velocity_m_per_s", *m_vartab->lookup("gust_velocity_m_per_s"));
+    input_data.assign_match_case("wind_shear_exponent", *m_vartab->lookup("wind_resource_shear"));
+    input_data.assign_match_case("num_turbines", *m_vartab->lookup("num_turbines"));
+    input_data.assign_match_case("turbine_spacing_rotor_diameters", *m_vartab->lookup("turbine_spacing_rotor_diameters"));
+    input_data.assign_match_case("row_spacing_rotor_diameters", *m_vartab->lookup("row_spacing_rotor_diameters"));
+    input_data.assign_match_case("turbine_rating_MW", *m_vartab->lookup("turbine_rating_mw"));
+    input_data.assign_match_case("hub_height_meters", *m_vartab->lookup("wind_turbine_hub_ht"));
+    input_data.assign_match_case("rotor_diameter_m", *m_vartab->lookup("wind_turbine_rotor_diameter"));
 
-    std::string input_json = ssc_data_to_json(m_vartab);
+    std::string input_json = ssc_data_to_json(&input_data);
     std::string output_json = call_python_module(input_json);
     std::replace( output_json.begin(), output_json.end(), '\'', '\"');
     auto output_data = static_cast<var_table*>(json_to_ssc_data(output_json.c_str()));
