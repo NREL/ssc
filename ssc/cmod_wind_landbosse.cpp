@@ -152,11 +152,15 @@ void cm_wind_landbosse::load_config(){
 std::string cm_wind_landbosse::call_python_module(const std::string& input_json){
     std::promise<std::string> python_result;
     std::future<std::string> f_completes = python_result.get_future();
-    std::thread([&](std::promise<std::string> python_result)
+    std::thread([&]
                 {
-                    std::string cmd = "cd " + std::string(get_python_path()) + " && " + python_exec_path + " -c '" + python_run_cmd + "'";
+					std::string input_dict_as_text = input_json;
+					std::replace(input_dict_as_text.begin(), input_dict_as_text.end(), '\"', '\'');
+                    std::string cmd = "cd " + std::string(get_python_path()) + " && " + python_exec_path + " -c \"" + python_run_cmd + "\"";
                     size_t pos = cmd.find("<input>");
-                    cmd.replace(pos, 7, input_json);
+                    cmd.replace(pos, 7, input_dict_as_text);
+
+					std::cout << cmd << "\n";
 
                     FILE *file_pipe = popen(cmd.c_str(), "r");
                     if (!file_pipe)
@@ -172,8 +176,7 @@ std::string cm_wind_landbosse::call_python_module(const std::string& input_json)
                         python_result.set_value_at_thread_exit("LandBOSSE error. Function did not return a response.");
                     else
                         python_result.set_value_at_thread_exit(mod_response);
-                },
-                std::move(python_result)
+                }
     ).detach();
 
     std::chrono::system_clock::time_point time_passed
@@ -216,7 +219,7 @@ void cm_wind_landbosse::exec() {
 
     auto error_vd = m_vartab->lookup("errors");
     if (error_vd && error_vd->type == SSC_ARRAY)
-        m_vartab->assign("errors", std::to_string(int(error_vd->num[0])));
+        m_vartab->assign("errors", std::to_string(int(0)));
     if (error_vd && error_vd->type == SSC_DATARR)
         m_vartab->assign("errors", error_vd->vec[0].str);
 }

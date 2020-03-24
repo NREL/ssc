@@ -1,6 +1,9 @@
+
+#include <fstream>
 #include <gtest/gtest.h>
 #include <vector>
 
+#include <json/json.h>
 #include "../ssc/sscapi.h"
 #include "vartab.h"
 #include "cmod_windpower_test.h"
@@ -462,12 +465,47 @@ TEST(Turbine_powercurve_cmod_windpower_eqns, Case4) {
 
 void setup_python(){
 #ifdef __WINDOWS__
-    auto python_dir = std::string(std::getenv("CMAKEBUILDDIR")) + "/sam/deploy/runtime/python/";
+    auto python_dir = std::string(std::getenv("SAMNTDIR")) + "\\deploy\\runtime\\python\\";
 #else
     auto python_dir = std::string(std::getenv("CMAKEBUILDDIR")) + "/sam/SAM.app/Contents/runtime/python/";
 #endif
 
     set_python_path(python_dir.c_str());
+}
+
+TEST(windpower_landbosse, SetupPython) {
+	// load python configuration
+	setup_python();
+	Json::Value python_config_root;
+	std::string configPath = std::string(get_python_path()) + "python_config.json";
+
+	std::ifstream python_config_doc(configPath);
+	if (python_config_doc.fail())
+		throw std::runtime_error("Could not open " + configPath);
+
+	python_config_doc >> python_config_root;
+
+	if (!python_config_root.isMember("miniconda_version"))
+		throw std::runtime_error("Missing key 'miniconda_version' in " + configPath);
+	if (!python_config_root.isMember("python_version"))
+		throw std::runtime_error("Missing key 'python_version' in " + configPath);
+	if (!python_config_root.isMember("exec_path"))
+		throw std::runtime_error("Missing key 'exec_path' in " + configPath);
+	if (!python_config_root.isMember("pip_path"))
+		throw std::runtime_error("Missing key 'pip_path' in " + configPath);
+	if (!python_config_root.isMember("packages"))
+		throw std::runtime_error("Missing key 'packages' in " + configPath);
+
+	std::vector<std::string> packages;
+	for (auto &i : python_config_root["packages"])
+		packages.push_back(i.asString());
+
+	std::vector<std::string> config = { python_config_root["python_version"].asString(),
+						   python_config_root["miniconda_version"].asString(),
+						   python_config_root["exec_path"].asString(),
+						   python_config_root["pip_path"].asString()
+						    };
+
 }
 
 TEST(windpower_landbosse, RunSuccess) {

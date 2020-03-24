@@ -740,10 +740,12 @@ void json_to_ssc_var(const Json::Value& json_val, ssc_var_t ssc_val){
             // determine if SSC_ARRAY
             is_arr = is_numerical(json_val);
             if (is_arr){
+                vd->type = SSC_ARRAY;
+				if (json_val.empty())
+					return;
                 for (const auto & row : json_val){
                     vec.push_back(row.asDouble());
                 }
-                vd->type = SSC_ARRAY;
                 vd->num.assign(&vec[0], vec.size());
                 return;
             }
@@ -756,12 +758,14 @@ void json_to_ssc_var(const Json::Value& json_val, ssc_var_t ssc_val){
                 }
             }
             if (is_mat){
+                vd->type = SSC_MATRIX;
+				if (json_val.empty())
+					return;
                 for (const auto & row : json_val){
                     for (const auto & value : row){
                         vec.push_back(value.asDouble());
                     }
                 }
-                vd->type = SSC_MATRIX;
                 vd->num.assign(&vec[0], vec.size());
                 return;
             }
@@ -826,7 +830,7 @@ Json::Value ssc_var_to_json(var_data* vd){
             }
             return json_val;
         case SSC_MATRIX:
-            json_val.resize(vd->num.nrows());
+            json_val.resize((Json::ArrayIndex)vd->num.nrows());
             for (Json::ArrayIndex i = 0; i < json_val.size(); i++){
                 for (Json::ArrayIndex j = 0; j < vd->num.ncols(); j++){
                     json_val[i].append(vd->num.at(i, j));
