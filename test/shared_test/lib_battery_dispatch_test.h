@@ -49,14 +49,14 @@ struct DispatchProperties
 	{
 
 		// dispatch
-		dispatchChoice = 4;
-		currentChoice = 0;
+		dispatchChoice = 4; // custom dispatch
+		currentChoice = dispatch_t::CURRENT_CHOICE::RESTRICT_POWER;
 		currentChargeMax = 100;
 		currentDischargeMax = 100;
 		powerChargeMax = 50;
 		powerDischargeMax = 50;
 		minimumModeTime = 0.1;
-		meterPosition = 0;
+		meterPosition = dispatch_t::METERING::BEHIND;
 
 		schedWeekday = new size_t[24 * 12];
 

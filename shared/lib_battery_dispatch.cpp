@@ -774,7 +774,7 @@ void dispatch_automatic_t::dispatch(size_t year,
 
 bool dispatch_automatic_t::check_constraints(double &I, size_t count)
 {
-    // check common constraints before checking manual dispatch specific ones
+    // check common constraints before checking automatic dispatch specific ones
 	bool iterate = dispatch_t::check_constraints(I, count);
 
 	if (!iterate)
