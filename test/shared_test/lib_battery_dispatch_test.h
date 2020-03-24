@@ -5,7 +5,11 @@
 #include <lib_util.h>
 #include <lib_battery_dispatch.h>
 #include <lib_battery_powerflow.h>
+#include <lib_ondinv.h>
 #include <lib_power_electronics.h>
+#include <lib_pvinv.h>
+#include <lib_sandia.h>
+#include <lib_shared_inverter.h>
 
 #include "lib_battery_properties.h"
 
@@ -34,6 +38,11 @@ struct DispatchProperties
 	// Front of meter auto dispatch
 	std::vector<double> ppaRate;
 	UtilityRate * ur{nullptr};
+
+    sandia_inverter_t* sandia;
+    partload_inverter_t* partload;
+    ond_inverter* ond;
+    SharedInverter* m_sharedInverter;
 
 	/// Constructor for dispatch properties
 	DispatchProperties()
@@ -74,12 +83,45 @@ struct DispatchProperties
 		for (size_t i = 0; i < 8760; i++) {
 			ppaRate.push_back(1.0);
 		}
+
+        // inverter
+        int numberOfInverters = 100;
+        sandia = new sandia_inverter_t();
+        partload = new partload_inverter_t();
+        ond = new ond_inverter();
+        sandia->C0 = -2.445577e-8;
+        sandia->C1 = 1.2e-5;
+        sandia->C2 = 0.001461;
+        sandia->C3 = -0.00151;
+        sandia->Paco = 77000;
+        sandia->Pdco = 791706.4375;
+        sandia->Vdco = 614;
+        sandia->Pso = 2859.5;
+        sandia->Pntare = 0.99;
+        m_sharedInverter = new SharedInverter(SharedInverter::SANDIA_INVERTER, numberOfInverters, sandia, partload, ond);
+
 	}
 	/// Destructor
 	~DispatchProperties() {
 		if (schedWeekday) {
 			delete schedWeekday;
 		}
+        if (m_sharedInverter) {
+            delete m_sharedInverter;
+            m_sharedInverter = nullptr;
+        }
+        if (sandia) {
+            delete sandia;
+            sandia = nullptr;
+        }
+        if (partload) {
+            delete partload;
+            partload = nullptr;
+        }
+        if (ond) {
+            delete ond;
+            ond = nullptr;
+        }
 	}
 };
 
@@ -131,8 +173,6 @@ public:
 		lossModel = new losses_t(dtHour, lifetimeModel, thermalModel, capacityModel, lossChoice, monthlyLosses, monthlyLosses, monthlyLosses, fullLosses);
 		batteryModel = new battery_t(dtHour, chemistry);
 		batteryModel->initialize(capacityModel, voltageModel, lifetimeModel, thermalModel, lossModel);
-		dispatchManual = new dispatch_manual_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice, currentChargeMax, currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax, powerDischargeMax, minimumModeTime,
-			dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge, canDischarge, canGridcharge, canGridcharge, percentDischarge, percentGridcharge);
 
 				P_pv = P_load = V_pv = P_clipped = 0;
 	}
