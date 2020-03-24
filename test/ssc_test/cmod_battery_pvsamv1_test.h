@@ -8,6 +8,16 @@
 #include "../ssc/common.h"
 #include "../input_cases/pvsamv1_common_data.h"
 
+struct daily_battery_stats {
+	daily_battery_stats(std::vector<ssc_number_t> batt_power_data) { compute(batt_power_data); }
+	void compute(std::vector<ssc_number_t> batt_power_data);
+
+	ssc_number_t peakKwCharge;
+	ssc_number_t peakKwDischarge;
+	ssc_number_t peakCycles;
+	ssc_number_t avgCycles;
+};
+
 /**
  * Test the battery dispatch controllers when integrated with various PV systems
  */
