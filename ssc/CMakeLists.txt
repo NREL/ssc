@@ -41,6 +41,8 @@ set(SSC_SRC
 		cmod_csp_tower_eqns.h
 		cmod_dsg_flux_preprocess.cpp
 		cmod_equpartflip.cpp
+		cmod_financial_eqns.cpp
+		cmod_financial_eqns.h
 		cmod_fossilgen.cpp
 		cmod_fuelcell.cpp
 		cmod_fuelcell.h
