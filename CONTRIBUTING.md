@@ -9,7 +9,7 @@ In the effort to make SAM easy to contribute to, the contribution process is com
 
 1. To get started, <a href="https://www.clahub.com/agreements/NREL/ssc">sign the Contributor License Agreement</a>.
 2. [Fork](https://help.github.com/articles/fork-a-repo/) the relevant SAM [repositories](https://github.com/NREL/SAM/wiki/Software-Dependencies). 
-3. Make your modifications.  For large new features, we suggest that you [email us](nicholas.diorio@nrel.gov) before you start working so that we coordinate your contribution (see more info for large contributions below!).
+3. Make your modifications.  For large new features, we suggest that you email us at <sam.support@nrel.gov> before you start working so that we coordinate your contribution (see more info for large contributions below!).
 4. Create a [pull request](https://help.github.com/articles/about-pull-requests/).
 
 ### Additional contribution help
@@ -36,10 +36,7 @@ Proper documentation is crucial for our users; without it users will not know ho
 
 <details><summary>For further assistance</summary>
 <p>
-Nicholas DiOrio  
-SAM Software Engineering  
-nicholas.diorio@nrel.gov  
-303.384.7359
+Please contact sam.support@nrel.gov for further assistance.
 </p>
 </details>
 

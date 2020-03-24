@@ -134,12 +134,12 @@ endif()
 if(MSVC)
     set(TEST_DIR ${CMAKE_CURRENT_BINARY_DIR}/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
 
-    foreach( file_i ${LIBCURL_FILES})
-        add_custom_command(
-                TARGET Test
-                POST_BUILD
-                COMMAND ${CMAKE_COMMAND}
-                ARGS -E copy $ENV{WEXDIR}/build_vs2017/libcurl_ssl_x64/bin/${file_i} ${TEST_DIR}
-        )
-    endforeach( file_i )
+	foreach( file_i ${LIBCURL_FILES})
+		add_custom_command(
+		TARGET Test
+		POST_BUILD
+		COMMAND ${CMAKE_COMMAND}
+		ARGS -E copy $ENV{WEXDIR}/build_resources/libcurl_ssl_x64/bin/${file_i} ${TEST_DIR}
+	)
+	endforeach( file_i )
 endif()
