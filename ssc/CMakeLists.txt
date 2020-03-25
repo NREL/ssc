@@ -248,7 +248,7 @@ foreach( name ${DEPENDENCIES} )
 endforeach()
 
 if (UNIX)
-	target_link_libraries(ssc -lm -ldl -lstdc++)
+	target_link_libraries(ssc -lpthread -lm -ldl -lstdc++)
 endif()
 
 
