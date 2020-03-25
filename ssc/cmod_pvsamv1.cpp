@@ -1986,7 +1986,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 					PVSystem->p_poaFrontBeamTotal[idx] = (ssc_number_t)(ts_accum_poa_front_beam_eff * util::watt_to_kilowatt);
 					PVSystem->p_inverterMPPTLoss[idx] = 0;
 					for (size_t nn = 0; nn < num_subarrays; nn++) {
-						PVSystem->p_inverterMPPTLoss[idx] = (ssc_number_t)(mpptVoltageClipping[nn] * util::watt_to_kilowatt);
+						PVSystem->p_inverterMPPTLoss[idx] += (ssc_number_t)(mpptVoltageClipping[nn] * util::watt_to_kilowatt);
 					}
 				}
 
