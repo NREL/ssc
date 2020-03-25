@@ -22,6 +22,14 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <fstream>
 #include <future>
 
+#ifdef __WINDOWS__
+#include <Windows.h>
+#include <stdio.h>
+#include <tchar.h>
+#include "AtlBase.h"
+#include "AtlConv.h"
+#endif
+
 #include <json/json.h>
 
 #include "sscapi.h"
@@ -149,13 +157,13 @@ void cm_wind_landbosse::load_config(){
     }
 }
 
-std::string cm_wind_landbosse::call_python_module(const std::string& input_json){
+const size_t BUFSIZE = 2048;
+
+std::string cm_wind_landbosse::call_python_module(const std::string& input_dict_as_text){
     std::promise<std::string> python_result;
     std::future<std::string> f_completes = python_result.get_future();
     std::thread([&]
                 {
-					std::string input_dict_as_text = input_json;
-					std::replace(input_dict_as_text.begin(), input_dict_as_text.end(), '\"', '\'');
                     std::string cmd = "cd " + std::string(get_python_path()) + " && " + python_exec_path + " -c \"" + python_run_cmd + "\"";
                     size_t pos = cmd.find("<input>");
                     cmd.replace(pos, 7, input_dict_as_text);
@@ -167,7 +175,7 @@ std::string cm_wind_landbosse::call_python_module(const std::string& input_json)
                         python_result.set_value_at_thread_exit("wind_landbosse error. Could not call python with cmd:\n" + cmd);
 
                     std::string mod_response;
-                    char buffer[1024];
+                    char buffer[BUFSIZE];
                     while (fgets(buffer, sizeof(buffer), file_pipe)){
                         mod_response += buffer;
                     }
@@ -188,6 +196,96 @@ std::string cm_wind_landbosse::call_python_module(const std::string& input_json)
         throw exec_error("wind_landbosse", "python handler error. Python process timed out.");
 }
 
+#ifdef __WINDOWS__
+std::string cm_wind_landbosse::call_python_module_windows(const std::string& input_dict_as_text) {
+	STARTUPINFO si;
+	SECURITY_ATTRIBUTES sa;
+	PROCESS_INFORMATION pi;
+	HANDLE g_hChildStd_IN_Rd, g_hChildStd_OUT_Wr, g_hChildStd_OUT_Rd, g_hChildStd_IN_Wr;  //pipe handles
+	char buf[BUFSIZE];           //i/o buffer
+
+	std::string pythonpath = std::string(get_python_path()) + "\\" + python_exec_path;
+	CA2T programpath( pythonpath.c_str());
+	std::string pythonarg = " -c \"" + python_run_cmd + "\"";
+	size_t pos = pythonarg.find("<input>");
+	pythonarg.replace(pos, 7, input_dict_as_text);
+	CA2T programargs(pythonarg.c_str());
+
+	sa.nLength = sizeof(SECURITY_ATTRIBUTES);
+	sa.bInheritHandle = TRUE;
+	sa.lpSecurityDescriptor = NULL;
+
+	std::string output;
+	if (CreatePipe(&g_hChildStd_IN_Rd, &g_hChildStd_IN_Wr, &sa, 0))   //create stdin pipe
+	{
+		if (CreatePipe(&g_hChildStd_OUT_Rd, &g_hChildStd_OUT_Wr, &sa, 0))  //create stdout pipe
+		{
+
+			//set startupinfo for the spawned process
+			/*The dwFlags member tells CreateProcess how to make the process.
+			STARTF_USESTDHANDLES: validates the hStd* members.
+			STARTF_USESHOWWINDOW: validates the wShowWindow member*/
+			GetStartupInfo(&si);
+
+			si.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
+			si.wShowWindow = SW_HIDE;
+			//set the new handles for the child process
+			si.hStdOutput = g_hChildStd_OUT_Wr;
+			si.hStdError = g_hChildStd_OUT_Wr;
+			si.hStdInput = g_hChildStd_IN_Rd;
+
+			//spawn the child process
+			if (CreateProcess(programpath, programargs, NULL, NULL, TRUE, CREATE_NO_WINDOW,
+				NULL, NULL, &si, &pi))
+			{
+				unsigned long bread;   //bytes read
+				unsigned long bread_last = 0;
+				unsigned long avail;   //bytes available
+				memset(buf, 0, sizeof(buf));
+
+				for (;;)
+				{
+					PeekNamedPipe(g_hChildStd_OUT_Rd, buf, BUFSIZE - 1, &bread, &avail, NULL);
+					//check to see if there is any data to read from stdout
+					if (bread != 0)
+					{
+						if (ReadFile(g_hChildStd_OUT_Rd, buf, BUFSIZE - 1, &bread, NULL))
+						{
+							output += std::string(buf);
+							bread_last = bread;
+						}
+					}
+					else
+						if (bread_last > 0)
+							break;
+				}
+
+				//clean up all handles
+				CloseHandle(pi.hThread);
+				CloseHandle(pi.hProcess);
+				CloseHandle(g_hChildStd_IN_Rd);
+				CloseHandle(g_hChildStd_OUT_Wr);
+				CloseHandle(g_hChildStd_OUT_Rd);
+				CloseHandle(g_hChildStd_IN_Wr);
+			}
+			else
+			{
+				CloseHandle(g_hChildStd_IN_Rd);
+				CloseHandle(g_hChildStd_OUT_Wr);
+				CloseHandle(g_hChildStd_OUT_Rd);
+				CloseHandle(g_hChildStd_IN_Wr);
+			}
+		}
+		else
+		{
+			CloseHandle(g_hChildStd_IN_Rd);
+			CloseHandle(g_hChildStd_IN_Wr);
+		}
+	}
+	return buf;
+}
+#endif
+
 void cm_wind_landbosse::exec() {
     // limit the input json through the process pip to only landbosse-required inputs
     var_table input_data;
@@ -207,8 +305,17 @@ void cm_wind_landbosse::exec() {
     input_data.assign_match_case("rotor_diameter_m", *m_vartab->lookup("wind_turbine_rotor_diameter"));
 
     std::string input_json = ssc_data_to_json(&input_data);
-    std::string output_json = call_python_module(input_json);
+	std::string input_dict_as_text = input_json;
+	std::replace(input_dict_as_text.begin(), input_dict_as_text.end(), '\"', '\'');
+
+#ifdef __WINDOWS__
+	std::string output_json = call_python_module_windows(input_dict_as_text);
+#else
+    std::string output_json = call_python_module(input_dict_as_text);
+#endif
+
     std::replace( output_json.begin(), output_json.end(), '\'', '\"');
+	std::cout << output_json << "\n";
     auto output_data = static_cast<var_table*>(json_to_ssc_data(output_json.c_str()));
     if (output_data->is_assigned("error")){
         m_vartab->assign("errors", output_json);

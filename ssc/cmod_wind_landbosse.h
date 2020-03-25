@@ -30,6 +30,10 @@ public:
 
     std::string call_python_module(const std::string& input_json);
 
+#ifdef __WINDOWS__
+	std::string call_python_module_windows(const std::string& input_json);
+#endif
+
     void exec() override;
 };
 
