@@ -117,6 +117,9 @@ public:
 	// control settings
 	double battery_power_to_fill();
 
+	// test data
+	double battery_soc();
+
 	message get_messages();
 
 	/// Return a pointer to the underlying calculated power quantities

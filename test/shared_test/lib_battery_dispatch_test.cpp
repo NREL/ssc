@@ -21,19 +21,23 @@ TEST_F(ManualTest_lib_battery_dispatch, PowerLimitsDispatchManualAC)
 	dispatchManual = new dispatch_manual_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice, currentChargeMax, currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax, powerDischargeMax, minimumModeTime,
 		dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge, canDischarge, canGridcharge, canGridcharge, percentDischarge, percentGridcharge);
 
-
 	batteryPower = dispatchManual->getBatteryPower();
 	batteryPower->connectionMode = ChargeController::AC_CONNECTED;
+	double powerToFill = dispatchManual->battery_power_to_fill();
+	EXPECT_NEAR(dispatchManual->battery_soc(), 50, 0.1);
 
 	// Test max charge power constraint
 	batteryPower->powerPV = 1000; batteryPower->voltageSystem = 600;
 	dispatchManual->dispatch(year, hour_of_year, step_of_hour);
 	EXPECT_NEAR(batteryPower->powerBatteryDC, -powerChargeMax, 2.0);
+	EXPECT_LT(dispatchManual->battery_power_to_fill(), powerToFill); // Confirm battery power moves in the expected direction
 
+	powerToFill = dispatchManual->battery_power_to_fill();
 	// Test max discharge power constraint
 	batteryPower->powerPV = 0; batteryPower->voltageSystem = 600; batteryPower->powerLoad = 1000;
 	dispatchManual->dispatch(year, hour_of_year, step_of_hour);
 	EXPECT_NEAR(batteryPower->powerBatteryDC, powerDischargeMax, 2.0);
+	EXPECT_GT(dispatchManual->battery_power_to_fill(), powerToFill);
 }
 
 TEST_F(ManualTest_lib_battery_dispatch, PowerLimitsDispatchManualDC)
@@ -227,6 +231,46 @@ TEST_F(ManualTest_lib_battery_dispatch, DispatchChangeFrequency)
 	EXPECT_NEAR(batteryPower->powerBatteryDC, powerChargeMax, 2.0);
 }
 
+TEST_F(ManualTest_lib_battery_dispatch, SOCLimitsOnDispatch)
+{
+	dispatchManual = new dispatch_manual_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice, currentChargeMax, currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax, powerDischargeMax, minimumModeTime,
+		dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge, canDischarge, canGridcharge, canGridcharge, percentDischarge, percentGridcharge);
+
+	batteryPower = dispatchManual->getBatteryPower();
+	batteryPower->connectionMode = ChargeController::AC_CONNECTED;
+	double soc = dispatchManual->battery_soc();
+	EXPECT_NEAR(dispatchManual->battery_soc(), 50, 0.1);
+
+	// Test dispatch iterations to fully charge
+	batteryPower->powerPV = 1000; batteryPower->voltageSystem = 600;
+	while (soc < SOC_max && hour_of_year < 100) {
+		dispatchManual->dispatch(year, hour_of_year, step_of_hour);
+		hour_of_year += 1;
+		soc = dispatchManual->battery_soc();
+	}
+	EXPECT_NEAR(SOC_max, dispatchManual->battery_soc(), 0.1);
+	EXPECT_NEAR(5, hour_of_year, 0.1);
+	
+	// Attempt dispatch one more time, should not charge
+	hour_of_year += 1;
+	dispatchManual->dispatch(year, hour_of_year, step_of_hour);
+	EXPECT_NEAR(batteryPower->powerBatteryDC, 0.0, 0.1);
+
+	// Cut off PV and provide load
+	batteryPower->powerPV = 0; batteryPower->voltageSystem = 600; batteryPower->powerLoad = 1000;
+	while (soc > SOC_min && hour_of_year < 100) {
+		dispatchManual->dispatch(year, hour_of_year, step_of_hour);
+		hour_of_year += 1;
+		soc = dispatchManual->battery_soc();
+	}
+	EXPECT_NEAR(SOC_min, dispatchManual->battery_soc(), 0.1);
+	EXPECT_NEAR(16, hour_of_year, 0.1);
+
+	// Attempt dispatch one more time, should not discharge
+	hour_of_year += 1;
+	dispatchManual->dispatch(year, hour_of_year, step_of_hour);
+	EXPECT_NEAR(batteryPower->powerBatteryDC, 0.0, 0.1);
+}
 TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTM)
 {
 	// Setup pv and load signal for peak shaving algorithm
