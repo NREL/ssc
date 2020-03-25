@@ -193,7 +193,7 @@ TEST_F(ManualTest_lib_battery_dispatch, BothLimitsDispatchManualDC)
 TEST_F(ManualTest_lib_battery_dispatch, DispatchChangeFrequency)
 {
 	double testTimestep = 1.0 / 60.0; // Minute timesteps
-	double testMinTime = 3.0; // Only allow dispatch to change every 3 mins
+	double testMinTime = 4.0; // Only allow dispatch to change every 3 mins
 	dispatchManual = new dispatch_manual_t(batteryModel, testTimestep, SOC_min, SOC_max, currentChoice, currentChargeMax, currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax, powerDischargeMax, testMinTime,
 		dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge, canDischarge, canGridcharge, canGridcharge, percentDischarge, percentGridcharge);
 
@@ -205,12 +205,26 @@ TEST_F(ManualTest_lib_battery_dispatch, DispatchChangeFrequency)
 	dispatchManual->dispatch(year, hour_of_year, step_of_hour);
 	EXPECT_NEAR(batteryPower->powerBatteryDC, -powerChargeMax, 2.0);
 
-
-	// Abruptly cut off the PV. Power should go to zero (1 minute)
+	// Abruptly cut off the PV and increase the load. Power should go to zero (1 minute)
 	step_of_hour += 1;
 	batteryPower->powerPV = 0; batteryPower->voltageSystem = 600; batteryPower->powerLoad = 1000;
 	dispatchManual->dispatch(year, hour_of_year, step_of_hour);
 	EXPECT_NEAR(batteryPower->powerBatteryDC, 0.0, 0.1);
+
+	// Same status (2nd minute)
+	step_of_hour += 1;
+	dispatchManual->dispatch(year, hour_of_year, step_of_hour);
+	EXPECT_NEAR(batteryPower->powerBatteryDC, 0.0, 0.1);
+
+	// Same status (3rd minute)
+	step_of_hour += 1;
+	dispatchManual->dispatch(year, hour_of_year, step_of_hour);
+	EXPECT_NEAR(batteryPower->powerBatteryDC, 0.0, 0.1);
+
+	// Should dispatch to load now (4th minute)
+	step_of_hour += 1;
+	dispatchManual->dispatch(year, hour_of_year, step_of_hour);
+	EXPECT_NEAR(batteryPower->powerBatteryDC, powerChargeMax, 2.0);
 }
 
 TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTM)
