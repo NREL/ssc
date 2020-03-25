@@ -92,7 +92,7 @@ TEST_F(ManualTest_lib_battery_dispatch, CurrentLimitsDispatchManualDC)
 	batteryPower->connectionMode = ChargeController::DC_CONNECTED;
 	batteryPower->setSharedInverter(m_sharedInverter);
 
-	// Test max charge current constraint
+	// Test max charge constraints
 	batteryPower->powerPV = 1000; batteryPower->voltageSystem = 600;
 	dispatchManual->dispatch(year, hour_of_year, step_of_hour);
 	double current = batteryPower->powerBatteryDC * util::kilowatt_to_watt / batteryPower->voltageSystem;
@@ -103,6 +103,91 @@ TEST_F(ManualTest_lib_battery_dispatch, CurrentLimitsDispatchManualDC)
 	dispatchManual->dispatch(year, hour_of_year, step_of_hour);
 	current = batteryPower->powerBatteryDC * util::kilowatt_to_watt / batteryPower->voltageSystem;
 	EXPECT_NEAR(current, testDischargeMax, 2.0);
+}
+
+TEST_F(ManualTest_lib_battery_dispatch, BothLimitsDispatchManualAC)
+{
+	dispatch_t::CURRENT_CHOICE testChoice = dispatch_t::CURRENT_CHOICE::RESTRICT_BOTH;
+	double testChargeMax = 20;
+	double testDischargeMax = 20;
+	double testDischargeMaxPower = 11; // kW
+	double testChargeMaxPower = 12; // kW
+	dispatchManual = new dispatch_manual_t(batteryModel, dtHour, SOC_min, SOC_max, testChoice, testChargeMax, testDischargeMax, testChargeMaxPower, testDischargeMaxPower, testChargeMaxPower, testDischargeMaxPower, minimumModeTime,
+		dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge, canDischarge, canGridcharge, canGridcharge, percentDischarge, percentGridcharge);
+
+	batteryPower = dispatchManual->getBatteryPower();
+	batteryPower->connectionMode = ChargeController::AC_CONNECTED;
+
+	// Test max charge current constraint
+	batteryPower->powerPV = 1000; batteryPower->voltageSystem = 600;
+	dispatchManual->dispatch(year, hour_of_year, step_of_hour);
+	double current = batteryPower->powerBatteryDC * util::kilowatt_to_watt / batteryPower->voltageSystem;
+	EXPECT_NEAR(current, -testChargeMax, 2.0);
+
+	hour_of_year += 1;
+
+	// Test max charge power constraint
+	batteryPower->powerPV = 1000; batteryPower->voltageSystem = 1200;
+	dispatchManual->dispatch(year, hour_of_year, step_of_hour);
+	EXPECT_NEAR(batteryPower->powerBatteryAC, -testChargeMaxPower, 2.0);
+
+	hour_of_year += 1;
+
+	// Test max discharge constraints
+	batteryPower->powerPV = 0; batteryPower->voltageSystem = 600; batteryPower->powerLoad = 1000;
+	dispatchManual->dispatch(year, hour_of_year, step_of_hour);
+	current = batteryPower->powerBatteryDC * util::kilowatt_to_watt / batteryPower->voltageSystem;
+	EXPECT_NEAR(current, testDischargeMax, 2.0);
+
+	hour_of_year += 1;
+
+	// Test max discharge power constraint
+	batteryPower->powerPV = 0; batteryPower->voltageSystem = 1200; batteryPower->powerLoad = 1000;
+	dispatchManual->dispatch(year, hour_of_year, step_of_hour);
+	EXPECT_NEAR(batteryPower->powerBatteryAC, testDischargeMaxPower, 2.0);
+}
+
+TEST_F(ManualTest_lib_battery_dispatch, BothLimitsDispatchManualDC)
+{
+	dispatch_t::CURRENT_CHOICE testChoice = dispatch_t::CURRENT_CHOICE::RESTRICT_BOTH;
+	double testChargeMax = 20; // Amps
+	double testDischargeMax = 20; // Amps
+	double testDischargeMaxPower = 11; // kW
+	double testChargeMaxPower = 11; // kW
+	dispatchManual = new dispatch_manual_t(batteryModel, dtHour, SOC_min, SOC_max, testChoice, testChargeMax, testDischargeMax, testChargeMaxPower, testDischargeMaxPower, powerChargeMax, powerDischargeMax, minimumModeTime,
+		dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge, canDischarge, canGridcharge, canGridcharge, percentDischarge, percentGridcharge);
+
+	batteryPower = dispatchManual->getBatteryPower();
+	batteryPower->connectionMode = ChargeController::DC_CONNECTED;
+	batteryPower->setSharedInverter(m_sharedInverter);
+
+	// Test max charge current constraint
+	batteryPower->powerPV = 1000; batteryPower->voltageSystem = 600;
+	dispatchManual->dispatch(year, hour_of_year, step_of_hour);
+	double current = batteryPower->powerBatteryDC * util::kilowatt_to_watt / batteryPower->voltageSystem;
+	EXPECT_NEAR(current, -testChargeMax, 2.0);
+
+	hour_of_year += 1;
+
+	// Test max discharge current constraint
+	batteryPower->powerPV = 0; batteryPower->voltageSystem = 600; batteryPower->powerLoad = 1000;
+	dispatchManual->dispatch(year, hour_of_year, step_of_hour);
+	current = batteryPower->powerBatteryDC * util::kilowatt_to_watt / batteryPower->voltageSystem;
+	EXPECT_NEAR(current, testDischargeMax, 2.0);
+
+	hour_of_year += 1;
+
+	// Test max charge power constraint
+	batteryPower->powerPV = 1000; batteryPower->voltageSystem = 1200; batteryPower->powerLoad = 0;
+	dispatchManual->dispatch(year, hour_of_year, step_of_hour);
+	EXPECT_NEAR(batteryPower->powerBatteryDC, -testChargeMaxPower, 2.0);
+
+	hour_of_year += 1;
+
+	// Test max discharge power constraint
+	batteryPower->powerPV = 0; batteryPower->voltageSystem = 1200; batteryPower->powerLoad = 1000;
+	dispatchManual->dispatch(year, hour_of_year, step_of_hour);
+	EXPECT_NEAR(batteryPower->powerBatteryDC, testDischargeMaxPower, 2.0);
 }
 
 TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTM)
