@@ -190,6 +190,29 @@ TEST_F(ManualTest_lib_battery_dispatch, BothLimitsDispatchManualDC)
 	EXPECT_NEAR(batteryPower->powerBatteryDC, testDischargeMaxPower, 2.0);
 }
 
+TEST_F(ManualTest_lib_battery_dispatch, DispatchChangeFrequency)
+{
+	double testTimestep = 1.0 / 60.0; // Minute timesteps
+	double testMinTime = 3.0; // Only allow dispatch to change every 3 mins
+	dispatchManual = new dispatch_manual_t(batteryModel, testTimestep, SOC_min, SOC_max, currentChoice, currentChargeMax, currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax, powerDischargeMax, testMinTime,
+		dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge, canDischarge, canGridcharge, canGridcharge, percentDischarge, percentGridcharge);
+
+	batteryPower = dispatchManual->getBatteryPower();
+	batteryPower->connectionMode = ChargeController::AC_CONNECTED;
+
+	// Start by charging (0 minutes)
+	batteryPower->powerPV = 1000; batteryPower->voltageSystem = 600;
+	dispatchManual->dispatch(year, hour_of_year, step_of_hour);
+	EXPECT_NEAR(batteryPower->powerBatteryDC, -powerChargeMax, 2.0);
+
+
+	// Abruptly cut off the PV. Power should go to zero (1 minute)
+	step_of_hour += 1;
+	batteryPower->powerPV = 0; batteryPower->voltageSystem = 600; batteryPower->powerLoad = 1000;
+	dispatchManual->dispatch(year, hour_of_year, step_of_hour);
+	EXPECT_NEAR(batteryPower->powerBatteryDC, 0.0, 0.1);
+}
+
 TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTM)
 {
 	// Setup pv and load signal for peak shaving algorithm
