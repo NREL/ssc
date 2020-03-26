@@ -15,14 +15,19 @@ char grid_curtailment[256] = {};
 char ur_ts_sell_rate[256] = {};
 char custom_dispatch_singleowner_schedule[256] = {};
 char custom_dispatch_residential_schedule[256] = {};
+char custom_dispatch_singleowner_hourly_schedule[256] = {};
+char custom_dispatch_residential_hourly_schedule[256] = {};
 
 // pvsamv1_common_data uses n1-8
 int x1 = sprintf(dc_adjust_hourly, "%s/test/input_cases/pvsamv1_battery_data/dc_adjust_hourly.csv", SSCDIR);
 int x2 = sprintf(dispatch_factors, "%s/test/input_cases/pvsamv1_battery_data/dispatch_factors_ts.csv", SSCDIR);
 int x3 = sprintf(grid_curtailment, "%s/test/input_cases/pvsamv1_battery_data/grid_curtailment.csv", SSCDIR);
 int x4 = sprintf(ur_ts_sell_rate, "%s/test/input_cases/pvsamv1_battery_data/ur_ts_sell_rate.csv", SSCDIR);
-int x5 = sprintf(custom_dispatch_singleowner_schedule, "%s/test/input_cases/pvsamv1_battery_data/custom_dispatch_singleowner_hourly.csv", SSCDIR);
-int x6 = sprintf(custom_dispatch_residential_schedule, "%s/test/input_cases/pvsamv1_battery_data/custom_dispatch_residential_hourly.csv", SSCDIR);
+int x5 = sprintf(custom_dispatch_singleowner_schedule, "%s/test/input_cases/pvsamv1_battery_data/custom_dispatch_singleowner_once_per_year.csv", SSCDIR);
+int x6 = sprintf(custom_dispatch_residential_schedule, "%s/test/input_cases/pvsamv1_battery_data/custom_dispatch_residential_once_per_year.csv", SSCDIR);
+int x7 = sprintf(custom_dispatch_singleowner_hourly_schedule, "%s/test/input_cases/pvsamv1_battery_data/custom_dispatch_singleowner_hourly.csv", SSCDIR);
+int x8 = sprintf(custom_dispatch_residential_hourly_schedule, "%s/test/input_cases/pvsamv1_battery_data/custom_dispatch_residential_hourly.csv", SSCDIR);
+
 
 void pvsamv1_pv_defaults(ssc_data_t& data) {
 	ssc_data_set_string(data, "solar_resource_file", solar_resource_path);
