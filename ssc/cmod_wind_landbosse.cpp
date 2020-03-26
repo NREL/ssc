@@ -164,7 +164,7 @@ std::string cm_wind_landbosse::call_python_module(const std::string& input_dict_
     std::future<std::string> f_completes = python_result.get_future();
     std::thread([&]
                 {
-                    std::string cmd = "cd " + std::string(get_python_path()) + " && " + python_exec_path + " -c \"" + python_run_cmd + "\"";
+                    std::string cmd = std::string(get_python_path()) + "/" + python_exec_path + " -c \"" + python_run_cmd + "\"";
                     size_t pos = cmd.find("<input>");
                     cmd.replace(pos, 7, input_dict_as_text);
 
