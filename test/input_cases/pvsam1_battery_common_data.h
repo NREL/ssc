@@ -466,7 +466,7 @@ void pvsamv1_battery_defaults(ssc_data_t& data) {
 	ssc_data_set_matrix(data, "ur_ec_tou_mat", p_ur_ec_tou_mat, 1, 6);
 	ssc_number_t p_ppa_price_input[1] = { 0.089999999999999997 };
 	ssc_data_set_array(data, "ppa_price_input", p_ppa_price_input, 1);
-	ssc_data_set_number(data, "ppa_multiplier_model", 0);
+	ssc_data_set_number(data, "ppa_multiplier_model", 1);
 	set_array(data, "dispatch_factors_ts", dispatch_factors, 8760);
 	ssc_number_t p_dispatch_tod_factors[9] = { 1, 1.5, 1, 1, 1, 1, 1, 1, 1 };
 	ssc_data_set_array(data, "dispatch_tod_factors", p_dispatch_tod_factors, 9);
