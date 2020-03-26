@@ -171,8 +171,10 @@ std::string cm_wind_landbosse::call_python_module(const std::string& input_dict_
 					std::cout << cmd << "\n";
 
                     FILE *file_pipe = popen(cmd.c_str(), "r");
-                    if (!file_pipe)
-                        python_result.set_value_at_thread_exit("wind_landbosse error. Could not call python with cmd:\n" + cmd);
+                    if (!file_pipe){
+                        python_result.set_value("wind_landbosse error. Could not call python with cmd:\n" + cmd);
+                        return;
+                    }
 
                     std::string mod_response;
                     char buffer[BUFSIZE];
@@ -181,9 +183,9 @@ std::string cm_wind_landbosse::call_python_module(const std::string& input_dict_
                     }
                     pclose(file_pipe);
                     if (mod_response.empty())
-                        python_result.set_value_at_thread_exit("LandBOSSE error. Function did not return a response.");
+                        python_result.set_value("LandBOSSE error. Function did not return a response.");
                     else
-                        python_result.set_value_at_thread_exit(mod_response);
+                        python_result.set_value(mod_response);
                 }
     ).detach();
 
