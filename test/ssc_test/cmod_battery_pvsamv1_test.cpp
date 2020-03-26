@@ -232,7 +232,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACDCBatteryModelInte
 			EXPECT_NEAR(batt_stats.peakKwCharge, peakKwCharge[i], m_error_tolerance_lo);
 			EXPECT_NEAR(batt_stats.peakKwDischarge, peakKwDischarge[i], m_error_tolerance_lo);
 			EXPECT_NEAR(batt_stats.peakCycles, peakCycles[i], m_error_tolerance_lo);
-			EXPECT_NEAR(batt_stats.avgCycles, avgCycles[i], 0.0001); // Runs once per year
+			EXPECT_NEAR(batt_stats.avgCycles, avgCycles[i], 0.0001);
 		}
 	}
 }
@@ -540,7 +540,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_CustomDispatchBatteryModelD
 		EXPECT_NEAR(batt_stats.peakKwCharge, peakKwCharge, m_error_tolerance_lo);
 		EXPECT_NEAR(batt_stats.peakKwDischarge, peakKwDischarge, m_error_tolerance_lo);
 		EXPECT_NEAR(batt_stats.peakCycles, peakCycles, m_error_tolerance_lo);
-		EXPECT_NEAR(batt_stats.avgCycles, avgCycles, 0.0001); // Runs once per year
+		EXPECT_NEAR(batt_stats.avgCycles, avgCycles, 0.0001);
 	}
 
 }
