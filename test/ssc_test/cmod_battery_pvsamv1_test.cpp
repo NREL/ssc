@@ -7,8 +7,6 @@
 
 void daily_battery_stats::compute(std::vector<ssc_number_t> batt_power_data) {
 	// Initialize default values
-	peakKwCharge = 0.0;
-	peakKwDischarge = 0.0;
 	peakCycles = 0;
 	avgCycles = 0;
 
@@ -24,9 +22,6 @@ void daily_battery_stats::compute(std::vector<ssc_number_t> batt_power_data) {
 			ssc_number_t currentPower = batt_power_data[index];
 
 			if (currentPower < 0) {
-				if (currentPower < peakKwCharge) {
-					peakKwCharge = currentPower;
-				}
 				if (cycleState != -1) {
 					if (halfCycle) {
 						cycles++;
@@ -40,9 +35,6 @@ void daily_battery_stats::compute(std::vector<ssc_number_t> batt_power_data) {
 			}
 
 			if (currentPower > 0) {
-				if (currentPower > peakKwDischarge) {
-					peakKwDischarge = currentPower;
-				}
 				if (cycleState != 1) {
 					if (halfCycle) {
 						cycles++;
@@ -65,6 +57,8 @@ void daily_battery_stats::compute(std::vector<ssc_number_t> batt_power_data) {
 	}
 	ssc_number_t days = n / 24.0;
 	avgCycles = avgCycles / days;
+	peakKwDischarge = *std::max_element(batt_power_data.begin(), batt_power_data.end());
+	peakKwCharge = *std::min_element(batt_power_data.begin(), batt_power_data.end());
 }
 
 TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, TestDailyBatteryStats)
@@ -128,7 +122,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACBatteryModelIntegr
 			EXPECT_NEAR(batt_stats.peakKwCharge, peakKwCharge[i], m_error_tolerance_lo);
 			EXPECT_NEAR(batt_stats.peakKwDischarge, peakKwDischarge[i], m_error_tolerance_lo);
 			EXPECT_NEAR(batt_stats.peakCycles, peakCycles[i], m_error_tolerance_lo);
-			EXPECT_NEAR(batt_stats.avgCycles, avgCycles[i], 0.0001); // Runs once per year
+			EXPECT_NEAR(batt_stats.avgCycles, avgCycles[i], 0.0001);
 		}
 	}
 }
@@ -237,7 +231,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACDCBatteryModelInte
 			EXPECT_NEAR(batt_stats.peakKwCharge, peakKwCharge[i], m_error_tolerance_lo);
 			EXPECT_NEAR(batt_stats.peakKwDischarge, peakKwDischarge[i], m_error_tolerance_lo);
 			EXPECT_NEAR(batt_stats.peakCycles, peakCycles[i], m_error_tolerance_lo);
-			EXPECT_NEAR(batt_stats.avgCycles, avgCycles[i], 0.0001); // Runs once per year
+			EXPECT_NEAR(batt_stats.avgCycles, avgCycles[i], 0.0001);
 		}
 	}
 }
@@ -290,7 +284,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelIntegr
 			EXPECT_NEAR(batt_stats.peakKwCharge, peakKwCharge[i], m_error_tolerance_lo);
 			EXPECT_NEAR(batt_stats.peakKwDischarge, peakKwDischarge[i], m_error_tolerance_lo);
 			EXPECT_NEAR(batt_stats.peakCycles, peakCycles[i], m_error_tolerance_lo);
-			EXPECT_NEAR(batt_stats.avgCycles, avgCycles[i], 0.0001); // Runs once per year
+			EXPECT_NEAR(batt_stats.avgCycles, avgCycles[i], 0.0001);
 		}
 	}
 }
@@ -339,7 +333,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_ACBatteryModelIntegration)
 			EXPECT_NEAR(batt_stats.peakKwCharge, peakKwCharge[i], m_error_tolerance_lo);
 			EXPECT_NEAR(batt_stats.peakKwDischarge, peakKwDischarge[i], m_error_tolerance_lo);
 			EXPECT_NEAR(batt_stats.peakCycles, peakCycles[i], m_error_tolerance_lo);
-			EXPECT_NEAR(batt_stats.avgCycles, avgCycles[i], 0.0001); // Runs once per year
+			EXPECT_NEAR(batt_stats.avgCycles, avgCycles[i], 0.0001);
 		}
 	}
 }
@@ -394,7 +388,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_ManualDispatchBatteryModelI
 		EXPECT_NEAR(batt_stats.peakKwCharge, peakKwCharge, m_error_tolerance_lo);
 		EXPECT_NEAR(batt_stats.peakKwDischarge, peakKwDischarge, m_error_tolerance_lo);
 		EXPECT_NEAR(batt_stats.peakCycles, peakCycles, m_error_tolerance_lo);
-		EXPECT_NEAR(batt_stats.avgCycles, avgCycles, 0.0001); // Runs once per year
+		EXPECT_NEAR(batt_stats.avgCycles, avgCycles, 0.0001);
 	}
 }
 
