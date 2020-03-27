@@ -785,7 +785,7 @@ void json_to_ssc_var(const Json::Value& json_val, ssc_var_t ssc_val){
                 auto entry = vd_tab->assign(name, var_data());
                 json_to_ssc_var(json_val[name], entry);
             }
-            vd->type = SSC_DATMAT;
+            vd->type = SSC_TABLE;
     }
 }
 
