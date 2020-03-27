@@ -51,13 +51,22 @@ static var_info _cm_vtab_trough_physical_process_heat[] = {
 	// System Design
     { SSC_INPUT,        SSC_NUMBER,      "I_bn_des",                  "Solar irradiation at design",                                                      "C",            "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "solar_mult",                "Solar multiple",                                                                   "none",         "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_loop_in_des",             "Design loop inlet temperature",                                                    "C",            "",               "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "T_loop_in_des",             "Design loop inlet temperature into flat plate collectors (FPCs)",                  "C",            "",               "solar_field",    "*",                       "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "T_PTC_in_des",              "Design inlet temperature to parabolic trough collectors (PTCs)",                   "C",            "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_loop_out",                "Target loop outlet temperature",                                                   "C",            "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "q_pb_design",               "Design heat input to power block",                               "MWt",          "",             "controller",     "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "tshours",                   "Equivalent full-load thermal storage hours",                        "hr",           "",            "system_design",  "*",                       "",                      "" },
 
 
-
+	// Flat Plate Collectors
+	{ SSC_INPUT,        SSC_NUMBER,      "flat_plate_tested_frta",    "FRta from certification testing",                                                  "none",         "",               "solar_field",    "?=0.733",                 "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "flat_plate_tested_frul",    "FRUL from certification testing",                                                  "W/m2-K",       "",               "solar_field",    "?=3.41",                  "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "flat_plate_tested_iam",     "IAM from certification testing",                                                   "none",         "",               "solar_field",    "?=-0.06",                 "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "flat_plate_tested_area_coll", "Area of collector used for certification testing",                               "m2",           "",               "solar_field",    "?=3.73",                  "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "flat_plate_tested_m_dot",   "Mass flow used during certification testing",                                      "kg/s",         "",               "solar_field",    "?=0.0498",                "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "flat_plate_tested_heat_capacity", "Heat capacity of fluid used for certification testing",                      "kJ/kg-K",      "",               "solar_field",    "?=4.182",                 "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "flat_plate_azimuth",        "Azimuth of flat plate collectors, clockwise from North",                           "deg",          "",               "solar_field",    "?=180",                   "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "flat_plate_tilt",           "Tilt of flat plate collectors",                                                    "deg",          "",               "solar_field",    "*",                       "",                      "" },
 
 //   solar field (type 250) inputs	
 //   VARTYPE            DATATYPE          NAME                        LABEL                                                                               UNITS           META              GROUP             REQUIRED_IF                CONSTRAINTS              UI_HINTS
@@ -305,6 +314,9 @@ static var_info _cm_vtab_trough_physical_process_heat[] = {
 	{ SSC_OUTPUT,   SSC_ARRAY,   "W_dot_sca_track", "Field collector tracking power",         "MWe",     "",  "trough_field",        "*",        "",     "" },
 	{ SSC_OUTPUT,   SSC_ARRAY,   "W_dot_field_pump","Field htf pumping power",                "MWe",     "",  "trough_field",        "*",        "",     "" },
     { SSC_OUTPUT,   SSC_ARRAY,   "T_troughs_in","Troughs inlet temperature after flat plate collectors",                "C",     "",  "trough_field",        "*",        "",     "" },
+
+	{ SSC_OUTPUT,   SSC_NUMBER,  "flat_plates_in_series",   "Number of flat plate collectors in series",   "", "",        "trough_field",        "*",        "",     "" },
+	{ SSC_OUTPUT,   SSC_NUMBER,  "flat_plates_in_parallel", "Number of flat plate collectors in parallel", "", "",        "trough_field",        "*",        "",     "" },
 	
 		// Heat Sink
     { SSC_OUTPUT,   SSC_ARRAY,   "q_dot_to_heat_sink", "Heat sink thermal power",             "MWt",     "",  "Heat_Sink",      "*",  "",  "" },
@@ -403,6 +415,16 @@ public:
 
 		C_csp_trough_collector_receiver c_trough;
 
+		c_trough.flat_plate_tested_frta = as_double("flat_plate_tested_frta");
+		c_trough.flat_plate_tested_frul = as_double("flat_plate_tested_frul");
+		c_trough.flat_plate_tested_iam = as_double("flat_plate_tested_iam");
+		c_trough.flat_plate_tested_area_coll = as_double("flat_plate_tested_area_coll");
+		c_trough.flat_plate_tested_m_dot = as_double("flat_plate_tested_m_dot");
+		c_trough.flat_plate_tested_heat_capacity = as_double("flat_plate_tested_heat_capacity");
+		c_trough.flat_plate_azimuth = as_double("flat_plate_azimuth");
+		c_trough.flat_plate_tilt = as_double("flat_plate_tilt");
+
+
 		c_trough.m_nSCA = as_integer("nSCA");						//[-] Number of SCA's in a loop
 		c_trough.m_nHCEt = as_integer("nHCEt");						//[-] Number of HCE types
 		c_trough.m_nColt = as_integer("nColt");						//[-] Number of collector types
@@ -421,6 +443,7 @@ public:
 		c_trough.m_theta_dep = as_double("theta_dep");				//[deg] deploy angle
 		c_trough.m_Row_Distance = as_double("Row_Distance");		//[m] Spacing between rows (centerline to centerline)
 		
+		c_trough.m_T_PTC_in_des = as_double("T_PTC_in_des");	    //[C] Design PTC inlet temperature, converted to K in init
 		double T_loop_in_des = as_double("T_loop_in_des");		    //[C] Design loop inlet temperature, converted to K in init
         c_trough.m_T_loop_in_des = T_loop_in_des;                   //[C] Design loop inlet temperature, converted to K in init
 		double T_loop_out_des = as_double("T_loop_out");		    //[C] Target loop outlet temperature, converted to K in init
@@ -661,8 +684,7 @@ public:
 		// Heat Sink
 		C_pc_heat_sink c_heat_sink;
 		c_heat_sink.ms_params.m_T_htf_hot_des = as_double("T_loop_out");		//[C] FIELD design outlet temperature
-		//c_heat_sink.ms_params.m_T_htf_cold_des = as_double("T_loop_in_des");	//[C] FIELD design inlet temperature
-        c_heat_sink.ms_params.m_T_htf_cold_des = 27.;
+		c_heat_sink.ms_params.m_T_htf_cold_des = as_double("T_loop_in_des");	//[C] FIELD design inlet temperature
 		c_heat_sink.ms_params.m_q_dot_des = as_double("q_pb_design");			//[MWt] HEAT SINK design thermal power (could have field solar multiple...)
 			// 9.18.2016 twn: assume for now there's no pressure drop though heat sink
 		c_heat_sink.ms_params.m_htf_pump_coef = as_double("pb_pump_coef");		//[kWe/kg/s]
@@ -961,6 +983,9 @@ public:
 			p_m_dot_tes_dc[i] = (ssc_number_t)(p_m_dot_tes_dc[i] / 3600.0);		//[kg/s] convert from kg/hr
 			p_m_dot_tes_ch[i] = (ssc_number_t)(p_m_dot_tes_ch[i] / 3600.0);		//[kg/s] convert from kg/hr
 		}
+
+		assign("flat_plates_in_series", (ssc_number_t)c_trough.flat_plates_in_series_);
+		assign("flat_plates_in_parallel", (ssc_number_t)c_trough.flat_plates_in_parallel_);
 
 		// Monthly outputs
 

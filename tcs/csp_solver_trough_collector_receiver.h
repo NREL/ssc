@@ -314,6 +314,17 @@ public:
 	// C_csp_messages mc_csp_messages;
 
 	//parameters and inputs
+	
+	//flat plate parameters
+	double flat_plate_tested_frta;
+	double flat_plate_tested_frul;
+	double flat_plate_tested_iam;
+	double flat_plate_tested_area_coll;
+	double flat_plate_tested_m_dot;				// [kg/s]
+	double flat_plate_tested_heat_capacity;		// [kJ/kg-K]
+	double flat_plate_azimuth;
+	double flat_plate_tilt;
+
 	int m_nSCA;				//[-] Number of SCA's in a loop
 	int m_nHCEt;			//[-] Number of HCE types
 	int m_nColt;			//[-] Number of collector types
@@ -331,8 +342,11 @@ public:
 	double m_m_dot_htfmin;	//[kg/s] Minimum loop HTF flow rate
 	double m_m_dot_htfmax;	//[kg/s] Maximum loop HTF flow rate
 	double m_T_loop_in_des;	//[C] Design loop inlet temperature, converted to K in init
+	double m_T_PTC_in_des;	//[C] Design PTC inlet temperature, converted to K in init
 	double m_T_loop_out_des;//[C] Target loop outlet temperature, converted to K in init
 	int m_Fluid;			//[-] Field HTF fluid number
+	int flat_plates_in_series_;
+	int flat_plates_in_parallel_;
 	
 	double m_T_fp;			//[C] Freeze protection temperature (heat trace activation temperature), convert to K in init
 	double m_I_bn_des;		//[W/m^2] Solar irradiation at design

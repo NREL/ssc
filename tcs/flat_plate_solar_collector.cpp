@@ -399,6 +399,11 @@ void FlatPlateArray::resize_array(double m_dot_array_design /*kg/s*/, double spe
     }
 }
 
+ArrayDimensions FlatPlateArray::array_size() const
+{
+    return array_dimensions_;
+}
+
 const double FlatPlateArray::UsefulPowerGain(const tm &timestamp, const ExternalConditions &external_conditions)      // [W]
 {
     TimeAndPosition time_and_position;

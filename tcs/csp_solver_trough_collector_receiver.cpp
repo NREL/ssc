@@ -102,6 +102,7 @@ C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 	m_m_dot_htfmin = std::numeric_limits<double>::quiet_NaN();
 	m_m_dot_htfmax = std::numeric_limits<double>::quiet_NaN();
 	m_T_loop_in_des = std::numeric_limits<double>::quiet_NaN();
+	m_T_PTC_in_des = std::numeric_limits<double>::quiet_NaN();
 	m_T_loop_out_des = std::numeric_limits<double>::quiet_NaN();
 	m_Fluid = -1;
 
@@ -349,6 +350,7 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	m_theta_dep = max(m_theta_dep, 1.e-6);
 	m_T_startup += 273.15;			//[K] convert from C
 	m_T_loop_in_des += 273.15;		//[K] convert from C
+	m_T_PTC_in_des += 273.15;		//[K] convert from C
 	m_T_loop_out_des += 273.15;			//[K] convert from C
 	m_T_fp += 273.15;				//[K] convert from C
 	m_mc_bal_sca *= 3.6e3;			//[Wht/K-m] -> [J/K-m]
@@ -426,12 +428,12 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
 
     // Initialize flat plate collectors
     CollectorTestSpecifications collector_test_specifications;
-    collector_test_specifications.FRta = 0.733;
-    collector_test_specifications.FRUL = 3.41;
-    collector_test_specifications.iam = -0.06;
-    collector_test_specifications.area_coll = 3.73;
-    collector_test_specifications.m_dot = 0.0498;           // kg/s   
-    collector_test_specifications.heat_capacity = 4.182;    // kJ/kg-K
+    collector_test_specifications.FRta = flat_plate_tested_frta;
+    collector_test_specifications.FRUL = flat_plate_tested_frul;
+    collector_test_specifications.iam = flat_plate_tested_iam;
+    collector_test_specifications.area_coll = flat_plate_tested_area_coll;
+    collector_test_specifications.m_dot = flat_plate_tested_m_dot;           // kg/s   
+    collector_test_specifications.heat_capacity = flat_plate_tested_heat_capacity;    // kJ/kg-K
 
     CollectorLocation collector_location;
     collector_location.latitude = init_inputs.m_latitude;
@@ -439,14 +441,16 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
     collector_location.timezone = init_inputs.m_tz;
 
     CollectorOrientation collector_orientation;
-    collector_orientation.azimuth = 180.;
-    collector_orientation.tilt = init_inputs.m_latitude;
+	//collector_orientation.azimuth = 180.;
+    //collector_orientation.tilt = init_inputs.m_latitude;
+	collector_orientation.azimuth = flat_plate_azimuth;
+	collector_orientation.tilt = flat_plate_tilt;
 
     ArrayDimensions array_dimensions;
     array_dimensions.num_in_series = 1;
     array_dimensions.num_in_parallel = 1;
 
-    Pipe inlet_pipe(0.019, 0.03, 0.006, 5);
+    Pipe inlet_pipe(0.019, 0.03, 0.006, 5);		// these are the 'loop' pipe values
     Pipe outlet_pipe(inlet_pipe);
 
     flat_plate_array_ = FlatPlateArray(collector_test_specifications, collector_location,
@@ -602,7 +606,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 		m_nhdrsec = (int)ceil(float(m_nLoops) / float(m_nfsec * 2));
 
 		//We need to determine design information about the field for purposes of header sizing ONLY
-		m_c_htf_ave = m_htfProps.Cp((m_T_loop_out_des + m_T_loop_in_des) / 2.0)*1000.;    //[J/kg-K] Specific heat
+		m_c_htf_ave = m_htfProps.Cp((m_T_loop_out_des + m_T_PTC_in_des) / 2.0)*1000.;    //[J/kg-K] Specific heat
 
 		//Need to loop through to calculate the weighted average optical efficiency at design
 		//Start by initializing sensitive variables
@@ -630,7 +634,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 			}
 		}
 		//the estimated mass flow rate at design
-		m_m_dot_design = (m_Ap_tot*m_I_bn_des*m_opteff_des - loss_tot*float(m_nLoops)) / (m_c_htf_ave*(m_T_loop_out_des - m_T_loop_in_des));  //tn 4.25.11 using m_Ap_tot instead of A_loop. Change location of m_opteff_des
+		m_m_dot_design = (m_Ap_tot*m_I_bn_des*m_opteff_des - loss_tot*float(m_nLoops)) / (m_c_htf_ave*(m_T_loop_out_des - m_T_PTC_in_des));  //tn 4.25.11 using m_Ap_tot instead of A_loop. Change location of m_opteff_des
         double m_dot_max = m_m_dot_htfmax * m_nLoops;
         double m_dot_min = m_m_dot_htfmin * m_nLoops;
         if (m_m_dot_design > m_dot_max) {
@@ -650,20 +654,22 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 
 		m_m_dot_loop_des = m_m_dot_design/(double)m_nLoops;	//[kg/s]
 		//mjw 1.16.2011 Design field thermal power 
-		m_q_design = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); //[Wt]
+		m_q_design = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_PTC_in_des); //[Wt]
 		//mjw 1.16.2011 Convert the thermal inertia terms here
 		m_mc_bal_hot = m_mc_bal_hot_per_MW * 3.6 * m_q_design;    //[J/K]
 		m_mc_bal_cold = m_mc_bal_cold_per_MW * 3.6 * m_q_design;  //[J/K]
         
         // Size flat plate array
-        double unpressurized_temp_rise_flat_plate_array = 70. - 27.;
-        double pressurized_temp_rise_flat_plate_array = 90. - 27.;
-        flat_plate_array_.resize_array(m_m_dot_loop_des, m_c_htf_ave * 1.e-3, pressurized_temp_rise_flat_plate_array);
+		double design_temp_rise_flat_plate_array = m_T_PTC_in_des - m_T_loop_in_des;
+        flat_plate_array_.resize_array(m_m_dot_loop_des, m_c_htf_ave * 1.e-3, design_temp_rise_flat_plate_array);
+		ArrayDimensions array_dimensions = flat_plate_array_.array_size();
+		flat_plates_in_series_ = array_dimensions.num_in_series;
+		flat_plates_in_parallel_ = array_dimensions.num_in_parallel;
 
 		//need to provide fluid density
-        double rho_cold = m_htfProps.dens(m_T_loop_in_des, 10.e5); //kg/m3
+        double rho_cold = m_htfProps.dens(m_T_PTC_in_des, 10.e5); //kg/m3
         double rho_hot = m_htfProps.dens(m_T_loop_out_des, 10.e5); //kg/m3
-		double rho_ave = m_htfProps.dens((m_T_loop_out_des + m_T_loop_in_des) / 2.0, 10.e5); //kg/m3
+		double rho_ave = m_htfProps.dens((m_T_loop_out_des + m_T_PTC_in_des) / 2.0, 10.e5); //kg/m3
         //Calculate the header design
         m_nrunsec = (int)floor(float(m_nfsec) / 4.0) + 1;  //The number of unique runner diameters
         m_D_runner.resize(2 * m_nrunsec);
@@ -824,7 +830,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 	}
 
 	/* ----- Set initial storage values ------ */
-	double T_field_ini = 0.5*(m_T_fp + m_T_loop_in_des);	//[K]
+	double T_field_ini = 0.5*(m_T_fp + m_T_PTC_in_des);	//[K]
 
 		// TCS Temperature Tracking
 	m_TCS_T_sys_c_converged = m_TCS_T_sys_c_last = T_field_ini;		//[K]
@@ -872,14 +878,14 @@ double C_csp_trough_collector_receiver::get_startup_energy()
 double C_csp_trough_collector_receiver::get_pumping_parasitic_coef()
 {
     double T_amb_des = 42. + 273.15;
-    double T_avg = (m_T_loop_in_des + m_T_loop_out_des) / 2.;
+    double T_avg = (m_T_PTC_in_des + m_T_loop_out_des) / 2.;
     double P_field_in = m_P_rnr_dsn[1];
-    double dT_avg_SCA = (m_T_loop_out_des - m_T_loop_in_des) / m_nSCA;
+    double dT_avg_SCA = (m_T_loop_out_des - m_T_PTC_in_des) / m_nSCA;
     std::vector<double> T_in_SCA, T_out_SCA;
 
     for (size_t i = 0; i < m_nSCA; i++) {
-        T_in_SCA.push_back(m_T_loop_in_des + dT_avg_SCA * i);
-        T_out_SCA.push_back(m_T_loop_in_des + dT_avg_SCA * (i + 1));
+        T_in_SCA.push_back(m_T_PTC_in_des + dT_avg_SCA * i);
+        T_out_SCA.push_back(m_T_PTC_in_des + dT_avg_SCA * (i + 1));
     }
 
     double dP_field = field_pressure_drop(T_amb_des, m_m_dot_design, P_field_in, T_in_SCA, T_out_SCA);
@@ -889,8 +895,8 @@ double C_csp_trough_collector_receiver::get_pumping_parasitic_coef()
 }
 double C_csp_trough_collector_receiver::get_min_power_delivery()
 {
-    double c_htf_ave = m_htfProps.Cp((m_T_startup + m_T_loop_in_des) / 2.0)*1000.;    //[J/kg-K] Specific heat
-    return m_m_dot_htfmin * m_nLoops * c_htf_ave * (m_T_startup - m_T_loop_in_des) * 1.e-6;     // [MWt]
+    double c_htf_ave = m_htfProps.Cp((m_T_startup + m_T_PTC_in_des) / 2.0)*1000.;    //[J/kg-K] Specific heat
+    return m_m_dot_htfmin * m_nLoops * c_htf_ave * (m_T_startup - m_T_PTC_in_des) * 1.e-6;     // [MWt]
 }
 
 double C_csp_trough_collector_receiver::get_tracking_power()
@@ -2563,7 +2569,7 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 			double defocus_lower = 0.0;		//[-]
 
 			// Set guess values... can be smarter about this...
-			double defocus_guess_upper = min(1.0, (m_T_loop_out_des - m_T_loop_in_des)/(m_T_htf_out_t_end[m_nSCA - 1] - m_T_loop_in_des));
+			double defocus_guess_upper = min(1.0, (m_T_loop_out_des - m_T_PTC_in_des)/(m_T_htf_out_t_end[m_nSCA - 1] - m_T_PTC_in_des));
 			double defocus_guess_lower = 0.9*defocus_guess_upper;	//[-]
 
 			// Set solver settings - relative error on T_htf_out
@@ -3167,7 +3173,7 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 				cr_out_solver.m_time_required_su = 0.0;		//[s]
 				cr_out_solver.m_m_dot_salt_tot = 0.0;		//[kg/hr]
 				cr_out_solver.m_q_thermal = 0.0;			//[MWt]
-				cr_out_solver.m_T_salt_hot = m_T_loop_in_des - 273.15;	//[C] Reset to loop inlet temperature, I guess?
+				cr_out_solver.m_T_salt_hot = m_T_PTC_in_des - 273.15;	//[C] Reset to loop inlet temperature, I guess?
 
 				cr_out_solver.m_E_fp_total = 0.0;
 				cr_out_solver.m_W_dot_col_tracking = 0.0;
@@ -3543,7 +3549,7 @@ post_convergence_flag: //11 continue
 		for (int i = 0; i<m_nSCA; i++){ qsum += m_q_abs_SCAtot[i]; }
 		double q_check = max(qsum, 0.0); //limit to positive
 		//mjw 11.4.2010: the max Q amount is based on the m_defocus control    
-		if( dfcount == 1 ) q_abs_maxOT = min(q_check*m_defocus, m_c_htf_ave*m_m_dot_htfmax*(m_T_loop_out_des - m_T_loop_in_des));  //mjw 11.30.2010
+		if( dfcount == 1 ) q_abs_maxOT = min(q_check*m_defocus, m_c_htf_ave*m_m_dot_htfmax*(m_T_loop_out_des - m_T_PTC_in_des));  //mjw 11.30.2010
 
 		//Select the method of defocusing used for this system
 		if (m_fthrctrl == 0)
@@ -4095,7 +4101,7 @@ double C_csp_trough_collector_receiver::calculate_thermal_efficiency_approx(cons
     double HLWind = std::abs(weather.m_wspd);
     double Insol_Beam_Normal = weather.m_beam;
     double SfTo = m_T_loop_out_des - 273.15;                 // [C] (converted from [C] to [K] in init and now back to [C])
-    double SfTi = m_T_loop_in_des - 273.15;                  // [C] (converted from [C] in [K] in init and now back to [C])
+    double SfTi = m_T_PTC_in_des - 273.15;                  // [C] (converted from [C] in [K] in init and now back to [C])
 
     // Borrowed from empirical model for 2008 Schott PTR70 (vacuum) receiver
     double HCE_A0 = 4.05;

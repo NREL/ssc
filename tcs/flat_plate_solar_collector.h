@@ -167,6 +167,7 @@ public:
     const double area_total();                             // [m2]
     void resize_array(ArrayDimensions array_dimensions);
     void resize_array(double m_dot_array_design /*kg/s*/, double specific_heat /*kJ/kg-K*/, double temp_rise_array_design /*K*/);
+    ArrayDimensions array_size() const;
     const double UsefulPowerGain(const tm &timestamp, const ExternalConditions &external_conditions);      // [W]
     const double T_out(const tm &timestamp, const ExternalConditions &external_conditions);                // [C]
 private:
