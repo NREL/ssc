@@ -85,21 +85,20 @@ struct DispatchProperties
 		}
 
         // inverter
-        int numberOfInverters = 40; // Match the inverter AC capacity to the battery capacity in the FOM tests. May want a different inverter for BTM
+        
         sandia = new sandia_inverter_t();
         partload = new partload_inverter_t();
         ond = new ond_inverter();
+
         sandia->C0 = -2.445577e-8;
         sandia->C1 = 1.2e-5;
         sandia->C2 = 0.001461;
         sandia->C3 = -0.00151;
-        sandia->Paco = 77000;
+        sandia->Paco = 770000;
         sandia->Pdco = 791706.4375;
         sandia->Vdco = 614;
         sandia->Pso = 2859.5;
         sandia->Pntare = 0.99;
-        m_sharedInverter = new SharedInverter(SharedInverter::SANDIA_INVERTER, numberOfInverters, sandia, partload, ond);
-
 	}
 	/// Destructor
 	~DispatchProperties() {
@@ -174,7 +173,10 @@ public:
 		batteryModel = new battery_t(dtHour, chemistry);
 		batteryModel->initialize(capacityModel, voltageModel, lifetimeModel, thermalModel, lossModel);
 
-				P_pv = P_load = V_pv = P_clipped = 0;
+		P_pv = P_load = V_pv = P_clipped = 0;
+
+        int numberOfInverters = 1;
+        m_sharedInverter = new SharedInverter(SharedInverter::SANDIA_INVERTER, numberOfInverters, sandia, partload, ond);
 	}
 	void TearDown()
 	{
@@ -244,6 +246,9 @@ public:
                                                                     currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax, powerDischargeMax, 0, 0, 0, 1, 24, 1, true, true, false, false);
 
         P_pv = P_load = V_pv = P_clipped = 0;
+
+        int numberOfInverters = 40;
+        m_sharedInverter = new SharedInverter(SharedInverter::SANDIA_INVERTER, numberOfInverters, sandia, partload, ond);
     }
     void TearDown()
     {
@@ -315,6 +320,9 @@ public:
         dispatchAutoFOM = new dispatch_automatic_front_of_meter_t(batteryModelFOM, dtHourFOM, 15, 95, 1, 999, 999, 500, 500, 500, 500, 1, 3, 0, 1, 24, 1, true, true, false, true, 0, 0, 0, 0, ppaRate, ur, 98, 98, 98);
 
         P_pv = P_load = V_pv = P_clipped = 0;
+
+        int numberOfInverters = 40;
+        m_sharedInverter = new SharedInverter(SharedInverter::SANDIA_INVERTER, numberOfInverters, sandia, partload, ond);
     }
     void TearDown()
     {
@@ -388,6 +396,9 @@ public:
         batteryModelDC->initialize(capacityModelDC, voltageModelDC, lifetimeModel, thermalModel, lossModelDC);
 
         P_pv = P_load = V_pv = P_clipped = 0;
+
+        int numberOfInverters = 40;
+        m_sharedInverter = new SharedInverter(SharedInverter::SANDIA_INVERTER, numberOfInverters, sandia, partload, ond);
     }
     void TearDown()
     {

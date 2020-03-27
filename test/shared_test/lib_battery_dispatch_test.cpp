@@ -249,7 +249,7 @@ TEST_F(ManualTest_lib_battery_dispatch, SOCLimitsOnDispatch)
 		soc = dispatchManual->battery_soc();
 	}
 	EXPECT_NEAR(SOC_max, dispatchManual->battery_soc(), 0.1);
-	EXPECT_NEAR(5, hour_of_year, 0.1);
+	EXPECT_NEAR(11, hour_of_year, 0.1);
 	
 	// Attempt dispatch one more time, should not charge
 	hour_of_year += 1;
@@ -264,7 +264,7 @@ TEST_F(ManualTest_lib_battery_dispatch, SOCLimitsOnDispatch)
 		soc = dispatchManual->battery_soc();
 	}
 	EXPECT_NEAR(SOC_min, dispatchManual->battery_soc(), 0.1);
-	EXPECT_NEAR(16, hour_of_year, 0.1);
+	EXPECT_NEAR(22, hour_of_year, 0.1);
 
 	// Attempt dispatch one more time, should not discharge
 	hour_of_year += 1;
@@ -329,6 +329,73 @@ TEST_F(ManualTest_lib_battery_dispatch, NoGridChargingWhilePVIsOnTest)
 	dispatchManual->dispatch(year, hour_of_year, step_of_hour);
 	EXPECT_NEAR(batteryPower->powerBatteryDC, -powerChargeMax, 1.0);
 	EXPECT_NEAR(batteryPower->powerGridToBattery, 0.0, 2.0);
+}
+
+TEST_F(ManualTest_lib_battery_dispatch, EfficiencyLimitsDispatchManualDC)
+{
+	dispatchManual = new dispatch_manual_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice, currentChargeMax, currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax, powerDischargeMax, minimumModeTime,
+		dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge, canDischarge, canGridcharge, canGridcharge, percentDischarge, percentGridcharge);
+
+	batteryPower = dispatchManual->getBatteryPower();
+	batteryPower->connectionMode = ChargeController::DC_CONNECTED;
+	batteryPower->setSharedInverter(m_sharedInverter);
+
+	// Test max charge power constraint
+	batteryPower->powerPV = 1000; batteryPower->voltageSystem = 600;
+	dispatchManual->dispatch(year, hour_of_year, step_of_hour);
+	EXPECT_NEAR(batteryPower->powerBatteryDC, -powerChargeMax, 2.0);
+
+	// Test max discharge power constraint
+	batteryPower->powerPV = 0; batteryPower->voltageSystem = 600; batteryPower->powerLoad = 1000;
+	dispatchManual->dispatch(year, hour_of_year, step_of_hour);
+	EXPECT_NEAR(batteryPower->powerBatteryDC, powerDischargeMax, 2.0);
+}
+
+TEST_F(ManualTest_lib_battery_dispatch, InverterEfficiencyCutoffDC)
+{
+	std::vector<bool> testCanGridcharge;
+	std::map<size_t, double> testPercentGridCharge;
+	for (int p = 0; p < 6; p++) {
+		testCanGridcharge.push_back(1);
+		testPercentGridCharge[p] = 1;
+	}
+	testPercentGridCharge[1] = 1;
+	testPercentGridCharge[3] = 100;
+	dispatchManual = new dispatch_manual_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice, currentChargeMax, currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax, powerDischargeMax, minimumModeTime,
+		dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge, canDischarge, testCanGridcharge, canGridcharge, testPercentGridCharge, testPercentGridCharge);
+
+	batteryPower = dispatchManual->getBatteryPower();
+	batteryPower->connectionMode = ChargeController::DC_CONNECTED;
+	batteryPower->setSharedInverter(m_sharedInverter);
+	batteryPower->inverterEfficiencyCutoff = 80;
+	batteryPower->canGridCharge = true;
+
+	// Test inverter efficiency cutoff on grid charging
+	batteryPower->powerPV = 0; batteryPower->voltageSystem = 600; batteryPower->powerGridToBattery = 7;
+	dispatchManual->dispatch(year, 0, step_of_hour);
+	EXPECT_NEAR(batteryPower->sharedInverter->efficiencyAC, 0.0, 0.1); // Efficiency is 0 when system is not running
+	EXPECT_NEAR(batteryPower->powerBatteryDC, 0.0, 0.1);
+
+	batteryPower->powerPV = 0; batteryPower->voltageSystem = 600; batteryPower->powerGridToBattery = 1000;
+	dispatchManual->dispatch(year, 12, step_of_hour);
+	EXPECT_NEAR(batteryPower->sharedInverter->efficiencyAC, 93.7, 0.1);
+	EXPECT_NEAR(batteryPower->powerBatteryDC, -47.8, 0.1);
+
+	// Test discharge constraints. First constraint does not hit backoff
+	batteryPower->powerPV = 0; batteryPower->voltageSystem = 600; batteryPower->powerGridToBattery = 0; batteryPower->powerLoad = 7;
+	dispatchManual->dispatch(year, 0, step_of_hour);
+	EXPECT_NEAR(batteryPower->sharedInverter->efficiencyAC, 37.69, 0.1); // Not enforced becasue no PV
+	EXPECT_NEAR(batteryPower->powerBatteryDC, 4.55, 0.1);
+
+	batteryPower->powerPV = 770; batteryPower->voltageSystem = 600; batteryPower->powerGridToBattery = 0; batteryPower->powerLoad = 1000;
+	dispatchManual->dispatch(year, 12, step_of_hour);
+	EXPECT_NEAR(batteryPower->sharedInverter->efficiencyAC, 93.9, 0.1);
+	EXPECT_NEAR(batteryPower->powerBatteryDC, 49.9, 0.1); // Dispatch both battery and PV
+
+	batteryPower->powerPV = 1000; batteryPower->voltageSystem = 600; batteryPower->powerGridToBattery = 0; batteryPower->powerLoad = 1100;
+	dispatchManual->dispatch(year, 12, step_of_hour);
+	EXPECT_NEAR(batteryPower->sharedInverter->efficiencyAC, 77, 0.1);
+	EXPECT_NEAR(batteryPower->powerBatteryDC, 0.0, 2.0); // Overwhelm inverter with PV, back off battery
 }
 TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTM)
 {
@@ -453,7 +520,7 @@ TEST_F(AutoFOMDC_lib_battery_dispatch, DispatchFOM_DCAuto)
 	}
 	std::sort(p_batterykW.begin(), p_batterykW.end(), std::greater<double>());
 
-	EXPECT_NEAR(p_batterykW[0], 2781.8, 0.1);
+	EXPECT_NEAR(p_batterykW[0], 27133.0, 0.1);
 	EXPECT_NEAR(p_batterykW[23], -29403.5, 0.1);
 }
 
