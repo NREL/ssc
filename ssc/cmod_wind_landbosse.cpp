@@ -100,7 +100,6 @@ static var_info _cm_vtab_wind_landbosse[] = {
 
 cm_wind_landbosse::cm_wind_landbosse() {
     add_var_info(_cm_vtab_wind_landbosse);
-    load_config();
 }
 
 void cm_wind_landbosse::load_config(){
@@ -117,6 +116,16 @@ void cm_wind_landbosse::load_config(){
         throw exec_error("wind_landbosse", "Could not open 'python_config.json'. "
                                            "Use 'set_python_path' function in sscapi.h to point to the folder containing the file.");
 
+#ifdef __WINDOWS__
+    // check for byte-order mark indicating UTF-8 and skip if it exists since it's not JSON-compatible
+    char a,b,c;
+    a = python_config_doc.get();
+    b = python_config_doc.get();
+    c = python_config_doc.get();
+    if (a != (char)0xEF || b != (char)0xBB || c != (char)0xBF) {
+        python_config_doc.seekg(0);
+    }
+#endif
     python_config_doc >> python_config_root;
 
     if (!python_config_root.isMember("exec_path"))
@@ -309,6 +318,7 @@ void cm_wind_landbosse::exec() {
 	std::string input_dict_as_text = input_json;
 	std::replace(input_dict_as_text.begin(), input_dict_as_text.end(), '\"', '\'');
 
+    load_config();
 #ifdef __WINDOWS__
 	std::string output_json = call_python_module_windows(input_dict_as_text);
 #else
