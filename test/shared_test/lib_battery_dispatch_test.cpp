@@ -305,7 +305,7 @@ TEST_F(ManualTest_lib_battery_dispatch, SOCLimitsOnDispatch) {
 	}
 	EXPECT_NEAR(SOC_max, dispatchManual->battery_soc(), 0.1);
 	EXPECT_NEAR(11, hour_of_year, 0.1);
-	
+
 	// Attempt dispatch one more time, should not charge
 	hour_of_year += 1;
 	dispatchManual->dispatch(year, hour_of_year, step_of_hour);
