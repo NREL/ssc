@@ -706,10 +706,8 @@ dispatch_automatic_t::dispatch_automatic_t(
 
 	_dt_hour = dt_hour;
 	_dt_hour_update = dispatch_update_frequency_hours;
-	_d_index_update = size_t(std::ceil(_dt_hour_update / _dt_hour));
 
 	_hour_last_updated = SIZE_MAX;
-	_index_last_updated = 0;
 
 	_look_ahead_hours = look_ahead_hours;
 	_steps_per_hour = (size_t)(1. / dt_hour);
@@ -742,8 +740,6 @@ void dispatch_automatic_t::init_with_pointer(const dispatch_automatic_t * tmp)
 	_mode = tmp->_mode;
 	_safety_factor = tmp->_safety_factor;
 	_look_ahead_hours = tmp->_look_ahead_hours;
-	_d_index_update = tmp->_d_index_update;
-	_index_last_updated = tmp->_index_last_updated;
 }
 
 // deep copy from dispatch to this
@@ -1449,14 +1445,8 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 		// Power to charge (<0) or discharge (>0)
 		double powerBattery = 0;
 
-		if (lifetimeIndex == _index_last_updated + _d_index_update || lifetimeIndex == 0)
-		{
-			if (lifetimeIndex > 0) {
-				_index_last_updated += _d_index_update;
-			}
-
-			/*! Cost to cycle the battery at all, using maximum DOD or user input */
-			costToCycle();
+        /*! Cost to cycle the battery at all, using maximum DOD or user input */
+        costToCycle();
 
 			// Compute forecast variables which don't change from year to year
 			size_t idx_year1 = hour_of_year * _steps_per_hour;
@@ -1599,10 +1589,9 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 					powerBattery = _inverter_paco - m_batteryPower->powerPV;
 				}
 				else {
-					powerBattery = _inverter_paco;
-				}
-			}
-		}
+                powerBattery = _inverter_paco;
+            }
+        }
 		// save for extraction
 		m_batteryPower->powerBatteryTarget = powerBattery;
 	}

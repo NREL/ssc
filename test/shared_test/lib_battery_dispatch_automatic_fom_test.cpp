@@ -5,7 +5,7 @@ TEST_F(AutoFOMTest_lib_battery_dispatch, DispatchFOMInput) {
     double dtHourFOM = 1.0;
     CreateBattery(dtHourFOM);
     dispatchAutoFOM = new dispatch_automatic_front_of_meter_t(batteryModelFOM, dtHourFOM, 15, 95, 1, 999, 999, 500, 500,
-                                                              500, 500, 1, 3, 0, 1, 24, 1, true, true, false, true, 0,
+                                                              500, 500, 1, dispatch_t::FOM_CUSTOM_DISPATCH, dispatch_t::FRONT, 1, 24, 1, true, true, false, true, 0,
                                                               0, 0, 0, ppaRate, ur, 98, 98, 98);
 
     std::vector<double> P_batt = {-336.062, 336.062};
@@ -41,7 +41,7 @@ TEST_F(AutoFOMTest_lib_battery_dispatch, DispatchFOMInputSubhourly) {
     double dtHourFOM = 0.5;
     CreateBattery(dtHourFOM);
     dispatchAutoFOM = new dispatch_automatic_front_of_meter_t(batteryModelFOM, dtHourFOM, 15, 95, 1, 999, 999, 500, 500,
-                                                              500, 500, 1, 3, 0, 1, 24, 1, true, true, false, true, 0,
+                                                              500, 500, 1, dispatch_t::FOM_CUSTOM_DISPATCH, dispatch_t::FRONT, 1, 24, 1, true, true, false, true, 0,
                                                               0, 0, 0, ppaRate, ur, 98, 98, 98);
 
     std::vector<double> P_batt = {-336.062, 336.062};
@@ -76,9 +76,8 @@ TEST_F(AutoFOMTest_lib_battery_dispatch, DispatchFOMInputSubhourly) {
 TEST_F(AutoFOMDC_lib_battery_dispatch, DispatchFOM_DCCustomCharge) {
     double dtHour = 1;
     CreateBattery(dtHour);
-    dispatchChoice = dispatch_t::FOM_CUSTOM_DISPATCH;
     dispatchAutoDC = new dispatch_automatic_front_of_meter_t(batteryModelDC, dtHour, 10, 100, 1, 49960, 49960, 25000,
-                                                             25000, 25000, 25000, 1, dispatchChoice, 0, 1, 18, 1, true,
+                                                             25000, 25000, 25000, 1, dispatch_t::FOM_CUSTOM_DISPATCH, dispatch_t::FRONT, 1, 18, 1, true,
                                                              true, true, false, 77000, 0, 1, 0.005, ppaRate, ur, 98, 98,
                                                              98);
 
@@ -129,9 +128,8 @@ TEST_F(AutoFOMDC_lib_battery_dispatch, DispatchFOM_DCCustomCharge) {
 TEST_F(AutoFOMDC_lib_battery_dispatch, DispatchFOM_DCCustomChargeSubhourly) {
     double dtHour = 0.5;
     CreateBattery(dtHour);
-    dispatchChoice = dispatch_t::FOM_CUSTOM_DISPATCH;
     dispatchAutoDC = new dispatch_automatic_front_of_meter_t(batteryModelDC, dtHour, 10, 100, 1, 49960, 49960, 25000,
-                                                             25000, 25000, 25000, 1, dispatchChoice, 0, 1, 18, 1, true,
+                                                             25000, 25000, 25000, 1, dispatch_t::FOM_CUSTOM_DISPATCH, dispatch_t::FRONT, 1, 18, 1, true,
                                                              true, true, false, 77000, 0, 1, 0.005, ppaRate, ur, 98, 98,
                                                              98);
 
@@ -186,7 +184,7 @@ TEST_F(AutoFOMDC_lib_battery_dispatch, DispatchFOM_DCAuto) {
     double dtHour = 1;
     CreateBattery(dtHour);
     dispatchAutoDC = new dispatch_automatic_front_of_meter_t(batteryModelDC, dtHour, 10, 100, 1, 49960, 49960, 25000,
-                                                             25000, 25000, 25000, 1, 0, 0, 1, 18, 1, true, true, false,
+                                                             25000, 25000, 25000, 1, dispatch_t::FOM_LOOK_AHEAD, dispatch_t::FRONT, 1, 18, 1, true, true, false,
                                                              false, 77000, 0, 1, 0.005, ppaRate, ur, 98, 98, 98);
 
     // battery setup
@@ -197,8 +195,8 @@ TEST_F(AutoFOMDC_lib_battery_dispatch, DispatchFOM_DCAuto) {
     batteryPower->voltageSystem = 600;
     batteryPower->setSharedInverter(m_sharedInverter);
 
-    std::vector<double> targetkW = {-9767.18, -10052.40, -9202.19, -7205.42, -1854.60, 0.00};
-    std::vector<double> SOC;
+    std::vector<double> targetkW = {-9767.18, -10052.40, -9202.19, -7205.42, -1854.60, 0.};
+    std::vector<double> SOC = {55.72, 61.58, 66.93, 71.12, 72.21, 72.21};
     std::vector<double> p_batterykW;
     for (size_t h = 0; h < 6; h++) {
         batteryPower->powerGeneratedBySystem = pv[h];
@@ -206,29 +204,57 @@ TEST_F(AutoFOMDC_lib_battery_dispatch, DispatchFOM_DCAuto) {
         batteryPower->powerPVClipped = clip[h];
 
         dispatchAutoDC->update_dispatch(h, 0, h);
-        EXPECT_NEAR(batteryPower->powerBatteryTarget, targetkW[h], 1e-2);
+        EXPECT_NEAR(batteryPower->powerBatteryTarget, targetkW[h], 0.1) << "error in expected target at hour " << h;
 
         dispatchAutoDC->dispatch(0, h, 0);
         SOC.push_back(dispatchAutoDC->battery_soc());
         EXPECT_NEAR(batteryPower->powerBatteryDC, targetkW[h], 0.1) << "error in dispatched power at hour " << h;
         p_batterykW.push_back(batteryPower->powerBatteryAC);
     }
-    std::sort(p_batterykW.begin(), p_batterykW.end(), std::greater<double>());
+}
 
-    EXPECT_NEAR(p_batterykW[0], 3046.1, 0.1);
-    EXPECT_NEAR(p_batterykW[5], -29403.5, 0.1);
+TEST_F(AutoFOMDC_lib_battery_dispatch, DispatchFOM_DCAutoSubhourly) {
+    double dtHour = 0.5;
+    CreateBattery(dtHour);
+    dispatchAutoDC = new dispatch_automatic_front_of_meter_t(batteryModelDC, dtHour, 10, 100, 1, 49960, 49960, 25000,
+                                                             25000, 25000, 25000, 1, dispatch_t::FOM_LOOK_AHEAD, dispatch_t::FRONT, 1, 18, 1, true, true, false,
+                                                             false, 77000, 0, 1, 0.005, ppaRate, ur, 98, 98, 98);
 
-    for (auto i: SOC)
-        printf("%.2f, ", i);
+    // battery setup
+    dispatchAutoDC->update_pv_data(pv);
+    dispatchAutoDC->update_cliploss_data(clip);
+    batteryPower = dispatchAutoDC->getBatteryPower();
+    batteryPower->connectionMode = ChargeController::DC_CONNECTED;
+    batteryPower->voltageSystem = 600;
+    batteryPower->setSharedInverter(m_sharedInverter);
+
+    std::vector<double> targetkW = {-9767.18, -10052.40, -9202.19, -7205.42, -1854.60, 0.};
+    std::vector<double> SOC = {55.72, 61.58, 66.93, 71.12, 72.21, 72.21};
+    std::vector<double> p_batterykW;
+    for (size_t h = 0; h < 6; h++) {
+        size_t hour_of_year = hour_of_year_from_index(h, dtHour);
+        size_t step = step_from_index(h, dtHour);
+
+        batteryPower->powerGeneratedBySystem = pv[h];
+        batteryPower->powerPV = pv[h];
+        batteryPower->powerPVClipped = clip[h];
+
+        dispatchAutoDC->update_dispatch(hour_of_year, step, h);
+        EXPECT_NEAR(batteryPower->powerBatteryTarget, targetkW[h], 0.1) << "error in expected target at hour " << h;
+
+        dispatchAutoDC->dispatch(0, hour_of_year, step);
+        SOC.push_back(dispatchAutoDC->battery_soc());
+        EXPECT_NEAR(batteryPower->powerBatteryDC, targetkW[h], 0.1) << "error in dispatched power at hour " << h;
+        p_batterykW.push_back(batteryPower->powerBatteryAC);
+    }
 }
 
 
 TEST_F(AutoFOMTest_lib_battery_dispatch, DispatchFOM_ACCustomCharge) {
     double dtHour = 1;
     CreateBattery(dtHour);
-    dispatchChoice = dispatch_t::FOM_CUSTOM_DISPATCH;
     dispatchAutoFOM = new dispatch_automatic_front_of_meter_t(batteryModelFOM, dtHour, 10, 100, 1, 49960, 49960, 25000,
-                                                              25000, 25000, 25000, 1, dispatchChoice, 0, 1, 18, 1, true,
+                                                              25000, 25000, 25000, 1, dispatch_t::FOM_CUSTOM_DISPATCH, dispatch_t::FRONT, 1, 18, 1, true,
                                                               true, true, false, 77000, 0, 1, 0.005, ppaRate, ur, 98,
                                                               98, 98);
 
@@ -274,7 +300,7 @@ TEST_F(AutoFOMTest_lib_battery_dispatch, DispatchFOM_ACAuto) {
     double dtHour = 1;
     CreateBattery(dtHour);
     dispatchAutoFOM = new dispatch_automatic_front_of_meter_t(batteryModelFOM, dtHour, 10, 100, 1, 49960, 49960, 25000,
-                                                              25000, 25000, 25000, 1, 0, 0, 1, 18, 1, true, true, false,
+                                                              25000, 25000, 25000, 1, dispatch_t::FOM_LOOK_AHEAD, dispatch_t::FRONT, 1, 18, 1, true, true, false,
                                                               false, 77000, 0, 1, 0.005, ppaRate, ur, 98, 98, 98);
 
     // battery setup
