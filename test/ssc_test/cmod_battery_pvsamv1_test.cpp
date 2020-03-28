@@ -53,7 +53,7 @@ void daily_battery_stats::compute(std::vector<ssc_number_t> batt_power_data) {
 			peakCycles = cycles;
 		}
 		avgCycles += cycles;
-		
+
 	}
 	ssc_number_t days = n / 24.0;
 	avgCycles = avgCycles / days;
@@ -94,7 +94,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACBatteryModelIntegr
 	ssc_number_t peakKwCharge[3] = { -2.81, -2.87, -2.25 };
 	ssc_number_t peakKwDischarge[3] = { 1.39, 1.30, 0.97 };
 	ssc_number_t peakCycles[3] = { 2, 2, 1 };
-	ssc_number_t avgCycles[3] = { 1.1945, 1.1014, 0.4904 };
+	ssc_number_t avgCycles[3] = { 1.1945, 1.099, 0.4904 };
 
 	// Test peak shaving look ahead, peak shaving look behind, and automated grid power target. Others require additional input data
 	for (int i = 0; i < 3; i++) {
@@ -112,7 +112,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACBatteryModelIntegr
 			auto data_vtab = static_cast<var_table*>(data);
 			auto annualChargeEnergy = data_vtab->as_vector_ssc_number_t("batt_annual_charge_energy");
 			EXPECT_NEAR(annualChargeEnergy[0], expectedBatteryChargeEnergy[i], m_error_tolerance_hi) << "Battery annual charge energy.";
-			
+
 			auto annualDischargeEnergy = data_vtab->as_vector_ssc_number_t("batt_annual_discharge_energy");
 			EXPECT_NEAR(annualDischargeEnergy[0], expectedBatteryDischargeEnergy[i], m_error_tolerance_hi) << "Battery annual discharge energy.";
 
