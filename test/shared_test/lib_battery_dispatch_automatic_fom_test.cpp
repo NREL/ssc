@@ -59,14 +59,14 @@ TEST_F(AutoFOMTest_lib_battery_dispatch, DispatchFOMInputSubhourly) {
     EXPECT_NEAR(batteryPower->powerBatteryTarget, -322.6, 0.1);
     dispatchAutoFOM->dispatch(0, 0, 0);
 
-    EXPECT_NEAR(batteryPower->powerBatteryDC, -188.0, 0.1);
-    EXPECT_NEAR(batteryPower->powerBatteryAC, -195.9, 0.1);
+    EXPECT_NEAR(batteryPower->powerBatteryDC, -322.6, 0.1);
+    EXPECT_NEAR(batteryPower->powerBatteryAC, -336.1, 0.1);
     EXPECT_NEAR(batteryPower->powerGridToBattery, 0, 0.1);
-    EXPECT_NEAR(dispatchAutoFOM->battery_model()->capacity_model()->SOC(), 95, 1e-2);
+    EXPECT_NEAR(dispatchAutoFOM->battery_model()->capacity_model()->SOC(), 89.9, 0.1);
 
     dispatchAutoFOM->update_dispatch(0, 0, 1);
     EXPECT_NEAR(batteryPower->powerBatteryTarget, 350.0, 0.1);
-    dispatchAutoFOM->dispatch(0, 1, 0);
+    dispatchAutoFOM->dispatch(0, 0, 1);
 
     EXPECT_NEAR(batteryPower->powerBatteryDC, 350, 0.1);
     EXPECT_NEAR(batteryPower->powerBatteryAC, 336, 0.1);
