@@ -41,12 +41,9 @@ SharedInverter::SharedInverter(const SharedInverter& orig){
     m_nameplateAC_kW = orig.m_nameplateAC_kW;
     m_tempEnabled = orig.m_tempEnabled;
     m_thermalDerateCurves = orig.m_thermalDerateCurves;
-    if (orig.m_sandiaInverter)
-        *m_sandiaInverter = sandia_inverter_t(*orig.m_sandiaInverter);
-    if (orig.m_partloadInverter)
-        *m_partloadInverter = partload_inverter_t(*orig.m_partloadInverter);
-    if (orig.m_ondInverter)
-        *m_ondInverter = ond_inverter(*orig.m_ondInverter);
+    m_sandiaInverter = orig.m_sandiaInverter;
+    m_partloadInverter = orig.m_partloadInverter;
+    m_ondInverter = orig.m_ondInverter;
     efficiencyAC = orig.efficiencyAC;
 }
 
@@ -265,20 +262,16 @@ void SharedInverter::solve_kwdc_for_kwac(const double *x, double *f){
 
 using namespace std::placeholders;
 double SharedInverter::calculateRequiredDCPower(const double kwAC, const double DCStringV, double tempC){
-    bool negativePower = kwAC > 0 ? false : true;
 
-    // save original state values
-    double orig[12] = {powerDC_kW, powerAC_kW, efficiencyAC, powerClipLoss_kW, powerConsumptionLoss_kW,
-                       powerNightLoss_kW, powerTempLoss_kW, powerLossTotal_kW, dcWiringLoss_ond_kW, acWiringLoss_ond_kW,
-                       Tdry_C, StringV};
+    SharedInverter clone = SharedInverter(*this);
 
     // set up solver values
-    StringV = DCStringV;
-    Tdry_C = tempC;
-    solver_AC = kwAC;
+    clone.StringV = DCStringV;
+    clone.Tdry_C = tempC;
+    clone.solver_AC = kwAC;
 
     std::function<void(const double*, double*)> f;
-    f = std::bind(&SharedInverter::solve_kwdc_for_kwac, this, _1, _2);
+    f = std::bind(&SharedInverter::solve_kwdc_for_kwac, &clone, _1, _2);
 
     double x[1], resid[1];
     x[0] = kwAC * 1.04;
@@ -290,23 +283,6 @@ double SharedInverter::calculateRequiredDCPower(const double kwAC, const double 
     // if efficiency is too low, the required DC power becomes infinite
     if (!isfinite(x[0]))
         x[0] = kwAC;
-
-    powerDC_kW = fabs(orig[0]);
-    powerAC_kW = fabs(orig[1]);
-    if (negativePower){
-        powerDC_kW *= -1;
-        powerAC_kW *= -1;
-    }
-    efficiencyAC = orig[2];
-    powerClipLoss_kW = orig[3];
-    powerConsumptionLoss_kW = orig[4];
-    powerNightLoss_kW = orig[5];
-    powerTempLoss_kW = orig[6];
-    powerLossTotal_kW = orig[7];
-    dcWiringLoss_ond_kW = orig[8];
-    acWiringLoss_ond_kW = orig[9];
-    Tdry_C = orig[10];
-    StringV = orig[11];
 
     return x[0];
 }

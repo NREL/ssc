@@ -183,16 +183,18 @@ bool dispatch_t::check_constraints(double &I, size_t count)
     // Error checking for battery charging
     double power_to_batt = m_batteryPower->powerBatteryDC;
 	if (m_batteryPower->connectionMode == dispatch_t::DC_CONNECTED){
-	    double grid_charge_ac = m_batteryPower->sharedInverter->calculateRequiredDCPower(m_batteryPower->powerGridToBattery,
-	            m_batteryPower->sharedInverter->StringV, m_batteryPower->sharedInverter->Tdry_C);
-	    power_to_batt = -(m_batteryPower->powerPVToBattery + grid_charge_ac + m_batteryPower->powerFuelCellToBattery);
+	    power_to_batt = -(m_batteryPower->powerPVToBattery + m_batteryPower->powerFuelCellToBattery);
+	    if (m_batteryPower->sharedInverter->powerDC_kW < 0)
+	        power_to_batt += m_batteryPower->sharedInverter->powerDC_kW;    // charging from grid
 	    power_to_batt *= m_batteryPower->singlePointEfficiencyDCToDC;
+	    // if error is from from numerical solution, may not need to adjust battery
 	}
 	else {
 	    power_to_batt = -(m_batteryPower->powerPVToBattery + m_batteryPower->powerGridToBattery + m_batteryPower->powerFuelCellToBattery);
 	    power_to_batt *= m_batteryPower->singlePointEfficiencyACToDC;
     }
-    if (m_batteryPower->powerBatteryTarget < 0 && abs(power_to_batt - m_batteryPower->powerBatteryTarget) > tolerance) {
+
+    if (m_batteryPower->powerBatteryTarget < 0 && abs(power_to_batt - m_batteryPower->powerBatteryTarget) > tolerance * fabs(power_to_batt)) {
         m_batteryPower->powerBatteryTarget = power_to_batt;
         m_batteryPower->powerBatteryDC = m_batteryPower->powerBatteryTarget;
         I = _Battery_initial->calculate_current_for_power_kw(m_batteryPower->powerBatteryTarget);
