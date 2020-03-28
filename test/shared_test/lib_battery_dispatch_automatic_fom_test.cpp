@@ -2,14 +2,13 @@
 
 
 TEST_F(AutoFOMTest_lib_battery_dispatch, DispatchFOMInput) {
-    double dtHourFOM = 1.0 / 60.0;
+    double dtHourFOM = 1.0;
     CreateBattery(dtHourFOM);
-    dispatchAutoFOM = new dispatch_automatic_front_of_meter_t(batteryModelFOM, dtHourFOM, 15, 95, 1, 999, 999, 500, 500, 500, 500, 1, 3, 0, 1, 24, 1, true, true, false, true, 0, 0, 0, 0, ppaRate, ur, 98, 98, 98);
+    dispatchAutoFOM = new dispatch_automatic_front_of_meter_t(batteryModelFOM, dtHourFOM, 15, 95, 1, 999, 999, 500, 500,
+                                                              500, 500, 1, 3, 0, 1, 24, 1, true, true, false, true, 0,
+                                                              0, 0, 0, ppaRate, ur, 98, 98, 98);
 
-    std::vector<double> P_batt;
-    for (int i = 0; i < 8760 * 60; i++) {
-        P_batt.push_back(-336.062);
-    }
+    std::vector<double> P_batt = {-336.062, 336.062};
 
     batteryPower = dispatchAutoFOM->getBatteryPower();
     batteryPower->connectionMode = ChargeController::AC_CONNECTED;
@@ -17,10 +16,60 @@ TEST_F(AutoFOMTest_lib_battery_dispatch, DispatchFOMInput) {
     batteryPower->powerFuelCell = 300;
 
     dispatchAutoFOM->set_custom_dispatch(P_batt);
+
+    // battery charging from PV to full SOC_max
+    EXPECT_FALSE(batteryPower->canGridCharge);
+    dispatchAutoFOM->update_dispatch(0, 0, 0);
+    EXPECT_NEAR(batteryPower->powerBatteryTarget, -322.6, 0.1);
     dispatchAutoFOM->dispatch(0, 0, 0);
 
-    EXPECT_NEAR(batteryPower->powerBatteryDC, -216.8, 0.1);
-    EXPECT_NEAR(batteryPower->powerBatteryAC, -225.8, 0.1);
+    EXPECT_NEAR(batteryPower->powerBatteryDC, -188.0, 0.1);
+    EXPECT_NEAR(batteryPower->powerBatteryAC, -195.9, 0.1);
+    EXPECT_NEAR(batteryPower->powerGridToBattery, 0, 0.1);
+    EXPECT_NEAR(dispatchAutoFOM->battery_model()->capacity_model()->SOC(), 95, 1e-2);
+
+    dispatchAutoFOM->update_dispatch(0, 0, 1);
+    EXPECT_NEAR(batteryPower->powerBatteryTarget, 350.0, 0.1);
+    dispatchAutoFOM->dispatch(0, 1, 0);
+
+    EXPECT_NEAR(batteryPower->powerBatteryDC, 350, 0.1);
+    EXPECT_NEAR(batteryPower->powerBatteryAC, 336, 0.1);
+    EXPECT_NEAR(batteryPower->powerGridToBattery, 0, 0.1);
+}
+
+TEST_F(AutoFOMTest_lib_battery_dispatch, DispatchFOMInputSubhourly) {
+    double dtHourFOM = 0.5;
+    CreateBattery(dtHourFOM);
+    dispatchAutoFOM = new dispatch_automatic_front_of_meter_t(batteryModelFOM, dtHourFOM, 15, 95, 1, 999, 999, 500, 500,
+                                                              500, 500, 1, 3, 0, 1, 24, 1, true, true, false, true, 0,
+                                                              0, 0, 0, ppaRate, ur, 98, 98, 98);
+
+    std::vector<double> P_batt = {-336.062, 336.062};
+
+    batteryPower = dispatchAutoFOM->getBatteryPower();
+    batteryPower->connectionMode = ChargeController::AC_CONNECTED;
+    batteryPower->powerPV = 750;
+    batteryPower->powerFuelCell = 300;
+
+    dispatchAutoFOM->set_custom_dispatch(P_batt);
+
+    // battery charging from PV to full SOC_max
+    EXPECT_FALSE(batteryPower->canGridCharge);
+    dispatchAutoFOM->update_dispatch(0, 0, 0);
+    EXPECT_NEAR(batteryPower->powerBatteryTarget, -322.6, 0.1);
+    dispatchAutoFOM->dispatch(0, 0, 0);
+
+    EXPECT_NEAR(batteryPower->powerBatteryDC, -188.0, 0.1);
+    EXPECT_NEAR(batteryPower->powerBatteryAC, -195.9, 0.1);
+    EXPECT_NEAR(batteryPower->powerGridToBattery, 0, 0.1);
+    EXPECT_NEAR(dispatchAutoFOM->battery_model()->capacity_model()->SOC(), 95, 1e-2);
+
+    dispatchAutoFOM->update_dispatch(0, 0, 1);
+    EXPECT_NEAR(batteryPower->powerBatteryTarget, 350.0, 0.1);
+    dispatchAutoFOM->dispatch(0, 1, 0);
+
+    EXPECT_NEAR(batteryPower->powerBatteryDC, 350, 0.1);
+    EXPECT_NEAR(batteryPower->powerBatteryAC, 336, 0.1);
     EXPECT_NEAR(batteryPower->powerGridToBattery, 0, 0.1);
 }
 
@@ -131,7 +180,7 @@ TEST_F(AutoFOMTest_lib_battery_dispatch, DispatchFOM_ACCustomCharge) {
         double current;
         double power = dispatchAutoFOM->battery_model()->calculate_max_charge_kw(&current);
         printf("max power%f\n", power);
-        while ( current > -1000){
+        while (current > -1000) {
             printf("soc %f, current %f\n", dispatchAutoFOM->battery_model()->battery_soc(), current);
             power = dispatchAutoFOM->battery_model()->run(0, current);
             printf("soc %f, power %f\n", dispatchAutoFOM->battery_model()->battery_soc(), power);

@@ -56,8 +56,8 @@ TEST_F(voltage_dynamic_lib_battery_voltage_test, calculateMaxChargeHourly){
     // start at half SOC
     double max_current;
     double power = model->calculate_max_charge_w(cap->q0(), cap->qmax(), 0, &max_current);
-    EXPECT_NEAR(power, 2989, 1);
-    double max_current_calc = model->calculate_current_for_target_w(-power, cap->q0(), cap->qmax(), 0);
+    EXPECT_NEAR(power, -2989, 1);
+    double max_current_calc = model->calculate_current_for_target_w(power, cap->q0(), cap->qmax(), 0);
     EXPECT_NEAR(max_current_calc, max_current, 1e-3);
     // max current reduced to enforce SOC
     cap->updateCapacity(max_current, dt_hour);
@@ -66,8 +66,8 @@ TEST_F(voltage_dynamic_lib_battery_voltage_test, calculateMaxChargeHourly){
 
     // start at full SOC
     power = model->calculate_max_charge_w(cap->q0(), cap->qmax(), 0, &max_current);
-    EXPECT_NEAR(power, 292, 1);
-    max_current_calc = model->calculate_current_for_target_w(-power, cap->q0(), cap->qmax(), 0);
+    EXPECT_NEAR(power, -292, 1);
+    max_current_calc = model->calculate_current_for_target_w(power, cap->q0(), cap->qmax(), 0);
     EXPECT_NEAR(max_current_calc, max_current, 1e-3);
     // max current reduced to enforce SOC
     cap->updateCapacity(max_current, dt_hour);
@@ -79,8 +79,8 @@ TEST_F(voltage_dynamic_lib_battery_voltage_test, calculateMaxChargeHourly){
     while (cap->SOC() > 5)
         cap->updateCapacity(I, dt_hour);
     power = model->calculate_max_charge_w(cap->q0(), cap->qmax(), 0, &max_current);
-    EXPECT_NEAR(power, 5811, 1);
-    max_current_calc = model->calculate_current_for_target_w(-power, cap->q0(), cap->qmax(), 0);
+    EXPECT_NEAR(power, -5811, 1);
+    max_current_calc = model->calculate_current_for_target_w(power, cap->q0(), cap->qmax(), 0);
     EXPECT_NEAR(max_current_calc, max_current, 1e-3);
     // max current reduced to enforce SOC
     cap->updateCapacity(max_current, dt_hour);
@@ -94,8 +94,8 @@ TEST_F(voltage_dynamic_lib_battery_voltage_test, calculateMaxChargeSubHourly){
     // start at half SOC
     double max_current;
     double power = model->calculate_max_charge_w(cap->q0(), cap->qmax(), 0, &max_current);
-    EXPECT_NEAR(power, 6132, 1);
-    double max_current_calc = model->calculate_current_for_target_w(-power, cap->q0(), cap->qmax(), 0);
+    EXPECT_NEAR(power, -6132, 1);
+    double max_current_calc = model->calculate_current_for_target_w(power, cap->q0(), cap->qmax(), 0);
     EXPECT_NEAR(max_current_calc, max_current, 1e-3);
     // max current reduced to enforce SOC
     cap->updateCapacity(max_current, dt_hour);
@@ -103,8 +103,8 @@ TEST_F(voltage_dynamic_lib_battery_voltage_test, calculateMaxChargeSubHourly){
 
     // start at full SOC
     power = model->calculate_max_charge_w(cap->q0(), cap->qmax(), 0, &max_current);
-    EXPECT_NEAR(power, 585, 1);
-    max_current_calc = model->calculate_current_for_target_w(-power, cap->q0(), cap->qmax(), 0);
+    EXPECT_NEAR(power, -585, 1);
+    max_current_calc = model->calculate_current_for_target_w(power, cap->q0(), cap->qmax(), 0);
     EXPECT_NEAR(max_current_calc, max_current, 1e-3);
     // max current reduced to enforce SOC
     cap->updateCapacity(max_current, dt_hour);
@@ -116,8 +116,8 @@ TEST_F(voltage_dynamic_lib_battery_voltage_test, calculateMaxChargeSubHourly){
     while (cap->SOC() > 5)
         cap->updateCapacity(I, dt_hour);
     power = model->calculate_max_charge_w(cap->q0(), cap->qmax(), 0, &max_current);
-    EXPECT_NEAR(power, 12180, 1);
-    max_current_calc = model->calculate_current_for_target_w(-power, cap->q0(), cap->qmax(), 0);
+    EXPECT_NEAR(power, -12180, 1);
+    max_current_calc = model->calculate_current_for_target_w(power, cap->q0(), cap->qmax(), 0);
     EXPECT_NEAR(max_current_calc, max_current, 1e-3);
     // max current reduced to enforce SOC
     cap->updateCapacity(max_current, dt_hour);

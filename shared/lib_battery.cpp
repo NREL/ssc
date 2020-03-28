@@ -757,7 +757,7 @@ double voltage_dynamic_t::calculate_max_charge_w(double q, double qmax, double, 
     double current = (q - qmax) / dt_hr;
     if (max_current)
         *max_current = current * _num_strings;
-    return -current * voltage_model_tremblay_hybrid(qmax, current , qmax) * _num_strings * _num_cells_series;
+    return current * voltage_model_tremblay_hybrid(qmax, current , qmax) * _num_strings * _num_cells_series;
 }
 
 using namespace std::placeholders;

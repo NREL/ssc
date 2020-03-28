@@ -233,7 +233,7 @@ public:
 
 	virtual ~voltage_t(){};
 
-    // Returns estimated max charge power over the next timestep
+    // Returns estimated max charge power over the next timestep (negative)
 	virtual double calculate_max_charge_w(double q, double qmax, double kelvin, double *max_current) =0;
 
 	// Returns estimated max discharge power over the next timestep
