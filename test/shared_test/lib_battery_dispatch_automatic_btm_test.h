@@ -38,7 +38,7 @@ protected:
 
 public:
 
-    void SetUp()
+    void CreateBattery(double dtHour)
     {
         // For Manual Dispatch Test
         BatteryProperties::SetUp();

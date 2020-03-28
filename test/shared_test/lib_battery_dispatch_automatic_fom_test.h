@@ -99,8 +99,6 @@ protected:
     double P_load;
     double P_clipped;
 
-    double dtHourDC;
-
     /*! Variables to store forecast data */
     std::vector<double> pv_prediction;
     std::vector<double> load_prediction;
@@ -108,20 +106,19 @@ protected:
 
 public:
 
-    void SetUp()
+    void CreateBattery(double dtHour)
     {
         // For testing Automated Front-of-meter DC-coupled
         BatteryProperties::SetUp();
 
-        dtHourDC = 1.0;
         capacityModelDC = new capacity_lithium_ion_t(2.25 * 133227, 50, 100, 10);
-        voltageModelDC = new voltage_dynamic_t(139, 133227, 3.6, 4.10, 4.05, 3.4, 2.25, 0.04, 2.00, 0.2, 0.2, dtHourDC);
+        voltageModelDC = new voltage_dynamic_t(139, 133227, 3.6, 4.10, 4.05, 3.4, 2.25, 0.04, 2.00, 0.2, 0.2, dtHour);
         cycleModel = new lifetime_cycle_t(cycleLifeMatrix);
         calendarModel = new lifetime_calendar_t(calendarChoice, calendarLifeMatrix, dtHour);
         lifetimeModel = new lifetime_t(cycleModel, calendarModel, replacementOption, replacementCapacity);
         thermalModel = new thermal_t(1.0, mass, length, width, height, Cp, h, T_room, capacityVsTemperature);
-        lossModelDC = new losses_t(dtHourDC, lifetimeModel, thermalModel, capacityModelDC, lossChoice);
-        batteryModelDC = new battery_t(dtHourDC, chemistry);
+        lossModelDC = new losses_t(dtHour, lifetimeModel, thermalModel, capacityModelDC, lossChoice);
+        batteryModelDC = new battery_t(dtHour, chemistry);
         batteryModelDC->initialize(capacityModelDC, voltageModelDC, lifetimeModel, thermalModel, lossModelDC);
 
         P_pv = P_load = V_pv = P_clipped = 0;

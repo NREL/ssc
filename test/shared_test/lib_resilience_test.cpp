@@ -773,7 +773,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsACHourly_Charge)
         resilience.run_surviving_batteries(load[i], ac[i], 0, 0, 0, 0);
         batt->advance(vartab, ac[i], voltage, load[i]);
         charge_total.emplace_back(batt->battery_model->battery_charge_total());
-        EXPECT_NEAR(batt->outBatteryPower[i], -0.5, 1e-3) << "timestep " << i;
+        EXPECT_NEAR(batt->outBatteryPower[i], -0.5, 0.005) << "timestep " << i;
     }
     std::vector<double> correct_charge_total = {16.61, 17.46, 18.32, 19.17, 20.02};
 

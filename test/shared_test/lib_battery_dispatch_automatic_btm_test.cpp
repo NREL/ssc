@@ -1,6 +1,9 @@
 #include "lib_battery_dispatch_automatic_btm_test.h"
 
 TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTM) {
+    double dtHour = 1;
+    CreateBattery(dtHour);
+
     // Setup pv and load signal for peak shaving algorithm
     pv_prediction = {500, 400, 300, 200};
     load_prediction = {600, 600, 600, 600};

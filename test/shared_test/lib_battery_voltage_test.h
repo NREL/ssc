@@ -49,14 +49,4 @@ protected:
     }
 };
 
-class voltage_vanadium_redox_lib_battery_voltage_test : public lib_battery_voltage_test
-{
-protected:
-    void SetUp(){
-        cap = std::unique_ptr<capacity_lithium_ion_t>(new capacity_lithium_ion_t(10, 50, 95, 5));
-
-        model = std::unique_ptr<voltage_t>(new voltage_vanadium_redox_t(n_cells_series, n_strings, voltage_nom, R));
-    }
-};
-
 #endif //SAM_SIMULATION_CORE_LIB_BATTERY_VOLTAGE_TEST_H
