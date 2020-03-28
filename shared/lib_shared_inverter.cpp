@@ -72,7 +72,7 @@ int SharedInverter::setTempDerateCurves(std::vector<std::vector<double>> derateC
 
 	// Sort by DC voltage
 	std::sort(m_thermalDerateCurves.begin(), m_thermalDerateCurves.end(), sortByVoltage);
-	
+
 	if (m_thermalDerateCurves.size() > 0 ) m_tempEnabled = true;
 	return 0;
 }
@@ -171,7 +171,7 @@ void SharedInverter::calculateTempDerate(double V, double tempC, double& pAC, do
 	eff += deltaT* slopeInterpolated;
 	if (eff < 0) eff = 0.;
 	loss = pAC - (pDC * eff);
-	pAC = pDC * eff;	
+	pAC = pDC * eff;
 }
 
 //function that calculates AC power and inverter losses for a single inverter with one MPPT input
@@ -265,6 +265,8 @@ void SharedInverter::solve_kwdc_for_kwac(const double *x, double *f){
 
 using namespace std::placeholders;
 double SharedInverter::calculateRequiredDCPower(const double kwAC, const double DCStringV, double tempC){
+    bool negativePower = kwAC > 0 ? false : true;
+
     // save original state values
     double orig[12] = {powerDC_kW, powerAC_kW, efficiencyAC, powerClipLoss_kW, powerConsumptionLoss_kW,
                        powerNightLoss_kW, powerTempLoss_kW, powerLossTotal_kW, dcWiringLoss_ond_kW, acWiringLoss_ond_kW,
@@ -289,8 +291,12 @@ double SharedInverter::calculateRequiredDCPower(const double kwAC, const double 
     if (!isfinite(x[0]))
         x[0] = kwAC;
 
-    powerDC_kW = orig[0];
-    powerAC_kW = orig[1];
+    powerDC_kW = fabs(orig[0]);
+    powerAC_kW = fabs(orig[1]);
+    if (negativePower){
+        powerDC_kW *= -1;
+        powerAC_kW *= -1;
+    }
     efficiencyAC = orig[2];
     powerClipLoss_kW = orig[3];
     powerConsumptionLoss_kW = orig[4];
