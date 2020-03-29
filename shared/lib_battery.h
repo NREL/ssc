@@ -1,22 +1,22 @@
 /**
 BSD-3-Clause
 Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
 that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
 and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
 and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
 or promote products derived from this software without specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
@@ -63,7 +63,7 @@ class voltage_t;
 class capacity_t
 {
 public:
-	
+
 	capacity_t();
 	capacity_t(double q, double SOC_init, double SOC_max, double SOC_min);
 
@@ -75,7 +75,7 @@ public:
 
 	// virtual destructor
 	virtual ~capacity_t(){};
-	
+
 	// pure virtual functions (abstract) which need to be defined in derived classes
 	virtual void updateCapacity(double &I, double dt) = 0;
 	virtual void updateCapacityForThermal(double capacity_percent)=0;
@@ -90,7 +90,7 @@ public:
 	virtual double q1() = 0; // available charge
 	virtual double q10() = 0; // capacity at 10 hour discharge rate
 
-	void check_charge_change(); 
+	void check_charge_change();
 	void check_SOC();
 	void update_SOC();
 
@@ -100,7 +100,7 @@ public:
 	double DOD();
 	double prev_DOD();
 	double q0();
-	double qmax(); 
+	double qmax();
 	double qmax_thermal();
 	double I();
 	bool chargeChanged();
@@ -110,7 +110,7 @@ public:
 	enum { CHARGE, NO_CHARGE, DISCHARGE };
 
 protected:
-	double _q0;  // [Ah] - Total capacity at timestep 
+	double _q0;  // [Ah] - Total capacity at timestep
 	double _qmax; // [Ah] - maximum possible capacity
 	double _qmax_thermal; // [Ah] - maximum capacity adjusted for temperature affects
 	double _qmax0; // [Ah] - original maximum capacity
@@ -135,12 +135,12 @@ class capacity_kibam_t : public capacity_t
 {
 public:
 
-	// Public APIs 
+	// Public APIs
 	capacity_kibam_t();
 	capacity_kibam_t(double q20, double t1, double q1, double q10, double SOC_init, double SOC_max, double SOC_min);
 	~capacity_kibam_t(){}
 
-	// deep copy 
+	// deep copy
 	capacity_kibam_t * clone();
 
 	// copy from capacity to this
@@ -165,7 +165,7 @@ protected:
 	double qmax_compute();
 	double qmax_of_i_compute(double T);
 	void parameter_compute();
-	
+
 	// parameters for finding c, k, qmax
 	double _t1;  // [h] - discharge rate for capacity at _q1
 	double _t2;  // [h] - discharge rate for capacity at _q2
@@ -215,7 +215,7 @@ protected:
 };
 
 /*
-Voltage Base class.  
+Voltage Base class.
 All voltage models are based on one-cell, but return the voltage for one battery
 */
 class thermal_t;
@@ -233,10 +233,10 @@ public:
 
 	virtual ~voltage_t(){};
 
-    // Returns estimated max charge power
+    // Returns estimated max charge power over the next timestep (negative)
 	virtual double calculate_max_charge_w(double q, double qmax, double kelvin, double *max_current) =0;
 
-	// Returns estimated max discharge power
+	// Returns estimated max discharge power over the next timestep
 	virtual double calculate_max_discharge_w(double q, double qmax, double kelvin, double *max_current) =0;
 
     // Returns current [A] required to dispatch input power [W], only valid if less than max possible
@@ -403,7 +403,7 @@ private:
 
 
 /*
-Lifetime cycling class.  
+Lifetime cycling class.
 */
 
 class lifetime_cycle_t
@@ -444,7 +444,7 @@ public:
 	double average_range();
 
 protected:
-	
+
 	void rainflow_ranges();
 	void rainflow_ranges_circular(int index);
 	int rainflow_compareRanges();
@@ -479,10 +479,10 @@ protected:
 /*
 Lifetime calendar model
 */
-class lifetime_calendar_t 
+class lifetime_calendar_t
 {
 public:
-	lifetime_calendar_t(int calendar_choice, util::matrix_t<double> calendar_matrix, double dt_hour, 
+	lifetime_calendar_t(int calendar_choice, util::matrix_t<double> calendar_matrix, double dt_hour,
 		float q0=1.02, float a=2.66e-3, float b=7280, float c=930);
 	virtual ~lifetime_calendar_t(){/* Nothing to do */};
 
@@ -512,15 +512,15 @@ private:
 	int _calendar_choice;
 	std::vector<int> _calendar_days;
 	std::vector<double> _calendar_capacity;
-	
+
 	int _day_age_of_battery;
 
 	double _dt_hour; // timestep in hours
-	double _dt_day; // timestep in terms of days 
+	double _dt_day; // timestep in terms of days
 
 
 	// the last index of the simulation
-	size_t _last_idx; 
+	size_t _last_idx;
 
 	// relative capacity (0 - 1)
 	double _q;
@@ -612,7 +612,7 @@ protected:
 	double _replacement_percent;
 
 	/// battery relative capacity (0 - 100%)
-	double _q;      
+	double _q;
 };
 
 
@@ -624,7 +624,7 @@ class thermal_t
 public:
 	thermal_t();
 	thermal_t(double dtHour, double mass, double length, double width, double height,
-		double Cp, double h, 
+		double Cp, double h,
 		std::vector<double> T_room,
 		const util::matrix_t<double> &cap_vs_temp);
 
@@ -675,7 +675,7 @@ protected:
 *
 *  The Battery losses class takes generic losses which occur during charging, discharge, or idle operation modes:
 *  The model also accepts a time-series vector of losses defined for every time step of the first year of simulation
-*  which may be used in lieu of the losses for operational mode.  
+*  which may be used in lieu of the losses for operational mode.
 */
 class losses_t
 {
@@ -696,13 +696,13 @@ public:
 	* \param[in] batt_loss_kw vector (size 1 for annual or 12 for monthly) containing battery system losses when idle (kW)
 	*/
 	losses_t(double dtHour,
-			lifetime_t *, 
-			thermal_t *, 
-			capacity_t*, 
-			const int loss_mode, 
-			const double_vec batt_loss_charge_kw = std::vector<double>(0), 
-			const double_vec batt_loss_discharge_kw = std::vector<double>(0), 
-			const double_vec batt_loss_idle_kw = std::vector<double>(0), 
+			lifetime_t *,
+			thermal_t *,
+			capacity_t*,
+			const int loss_mode,
+			const double_vec batt_loss_charge_kw = std::vector<double>(0),
+			const double_vec batt_loss_discharge_kw = std::vector<double>(0),
+			const double_vec batt_loss_idle_kw = std::vector<double>(0),
 			const double_vec batt_loss_kw=std::vector<double>(0));
 
 	void set_models(lifetime_t *, thermal_t *, capacity_t*);
@@ -723,7 +723,7 @@ protected:
 
     int _loss_mode;
 	double _dtHour;
-	
+
 	lifetime_t * _lifetime;
 	thermal_t * _thermal;
 	capacity_t * _capacity;

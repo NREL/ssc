@@ -37,7 +37,7 @@ public:
 	/// Given the combined PV plus battery DC power (kW), voltage and ambient T, compute the AC power (kW) for a single inverter with multiple MPPT inputs
 	void calculateACPower(const std::vector<double> powerDC_kW, const std::vector<double> DCStringVoltage, double tempC);
 
-	/// Given a target AC power production, calculate the required DC power if possible, otherwise if eff is too low return kwAC.
+	/// Given a target AC power production, calculate the required DC power if possible, otherwise if eff is too low return kwAC. Does not modify state
 	double calculateRequiredDCPower(const double kwAC, const double DCStringV, double tempC);
 
 	/// Return the nominal DC voltage input
