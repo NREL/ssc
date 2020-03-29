@@ -505,14 +505,15 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_CustomDispatchBatteryModelD
 	grid_and_rate_defaults(data);
 	singleowner_defaults(data);
 
-	ssc_number_t expectedEnergy = 37316816;
-	ssc_number_t expectedBatteryChargeEnergy = 16868; // Bug? This shouldn't be an order of magnitude higher than discharge energy
-	ssc_number_t expectedBatteryDischargeEnergy = 10519;
+	ssc_number_t expectedEnergy = 37252473;
+	ssc_number_t expectedBatteryChargeEnergy = 430570;
+	ssc_number_t expectedBatteryDischargeEnergy = 349127;
+	ssc_number_t roundtripEfficiency = 80.6;
 
-	ssc_number_t peakKwCharge = -77.5;
-	ssc_number_t peakKwDischarge = 67.8;
+	ssc_number_t peakKwCharge = -948.6;
+	ssc_number_t peakKwDischarge = 651.7;
 	ssc_number_t peakCycles = 3;
-	ssc_number_t avgCycles = 0.6986;
+	ssc_number_t avgCycles = 1.1829;
 
 	ssc_data_set_number(data, "batt_dispatch_choice", 3);
 	ssc_data_set_number(data, "batt_ac_or_dc", 0);
@@ -534,7 +535,9 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_CustomDispatchBatteryModelD
 		auto annualDischargeEnergy = data_vtab->as_vector_ssc_number_t("batt_annual_discharge_energy");
 		EXPECT_NEAR(annualDischargeEnergy[1], expectedBatteryDischargeEnergy, m_error_tolerance_hi) << "Battery annual discharge energy.";
 
-		auto batt_power = data_vtab->as_vector_ssc_number_t("batt_power");
+        EXPECT_NEAR(data_vtab->lookup("average_battery_roundtrip_efficiency")->num[0], roundtripEfficiency, m_error_tolerance_hi) << "Battery roundtrip efficiency.";
+
+        auto batt_power = data_vtab->as_vector_ssc_number_t("batt_power");
 		daily_battery_stats batt_stats = daily_battery_stats(batt_power);
 
 		EXPECT_NEAR(batt_stats.peakKwCharge, peakKwCharge, m_error_tolerance_lo);

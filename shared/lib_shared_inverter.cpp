@@ -212,7 +212,7 @@ void SharedInverter::calculateACPower(const double powerDC_kW_in, const double D
 
 	// In event shared inverter is charging a battery only, need to re-convert to negative power
 	if (negativePower) {
-		powerAC_kW *= -1.0;
+		powerAC_kW = -1.0 * fabs(powerAC_kW);
 	}
 }
 
