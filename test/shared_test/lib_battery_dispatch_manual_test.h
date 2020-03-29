@@ -37,6 +37,8 @@ protected:
     std::vector<double> load_prediction;
     std::vector<double> cliploss_prediction;
 
+    double dtHour = 1;
+
 public:
 
     void SetUp()

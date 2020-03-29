@@ -56,7 +56,6 @@ public:
 
 	// battery
 	int chemistry;
-	double dtHour;
 
 	void SetUp() override
 	{
@@ -114,7 +113,6 @@ public:
 
 		// battery
 		chemistry = 1;
-		dtHour = 1.0;
 	}
 
 	// nothing to do

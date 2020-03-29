@@ -183,16 +183,18 @@ bool dispatch_t::check_constraints(double &I, size_t count)
     // Error checking for battery charging
     double power_to_batt = m_batteryPower->powerBatteryDC;
 	if (m_batteryPower->connectionMode == dispatch_t::DC_CONNECTED){
-	    double grid_charge_ac = m_batteryPower->sharedInverter->calculateRequiredDCPower(m_batteryPower->powerGridToBattery,
-	            m_batteryPower->sharedInverter->StringV, m_batteryPower->sharedInverter->Tdry_C);
-	    power_to_batt = -(m_batteryPower->powerPVToBattery + grid_charge_ac + m_batteryPower->powerFuelCellToBattery);
+	    power_to_batt = -(m_batteryPower->powerPVToBattery + m_batteryPower->powerFuelCellToBattery);
+	    if (m_batteryPower->sharedInverter->powerDC_kW < 0)
+	        power_to_batt += m_batteryPower->sharedInverter->powerDC_kW;    // charging from grid
 	    power_to_batt *= m_batteryPower->singlePointEfficiencyDCToDC;
+	    // if error is from from numerical solution, may not need to adjust battery
 	}
 	else {
 	    power_to_batt = -(m_batteryPower->powerPVToBattery + m_batteryPower->powerGridToBattery + m_batteryPower->powerFuelCellToBattery);
 	    power_to_batt *= m_batteryPower->singlePointEfficiencyACToDC;
     }
-    if (m_batteryPower->powerBatteryTarget < 0 && abs(power_to_batt - m_batteryPower->powerBatteryTarget) > tolerance) {
+
+    if (m_batteryPower->powerBatteryTarget < 0 && abs(power_to_batt - m_batteryPower->powerBatteryTarget) > tolerance * fabs(power_to_batt)) {
         m_batteryPower->powerBatteryTarget = power_to_batt;
         m_batteryPower->powerBatteryDC = m_batteryPower->powerBatteryTarget;
         I = _Battery_initial->calculate_current_for_power_kw(m_batteryPower->powerBatteryTarget);
@@ -704,10 +706,8 @@ dispatch_automatic_t::dispatch_automatic_t(
 
 	_dt_hour = dt_hour;
 	_dt_hour_update = dispatch_update_frequency_hours;
-	_d_index_update = size_t(std::ceil(_dt_hour_update / _dt_hour));
 
 	_hour_last_updated = SIZE_MAX;
-	_index_last_updated = 0;
 
 	_look_ahead_hours = look_ahead_hours;
 	_steps_per_hour = (size_t)(1. / dt_hour);
@@ -740,8 +740,6 @@ void dispatch_automatic_t::init_with_pointer(const dispatch_automatic_t * tmp)
 	_mode = tmp->_mode;
 	_safety_factor = tmp->_safety_factor;
 	_look_ahead_hours = tmp->_look_ahead_hours;
-	_d_index_update = tmp->_d_index_update;
-	_index_last_updated = tmp->_index_last_updated;
 }
 
 // deep copy from dispatch to this
@@ -1447,14 +1445,8 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 		// Power to charge (<0) or discharge (>0)
 		double powerBattery = 0;
 
-		if (lifetimeIndex == _index_last_updated + _d_index_update || lifetimeIndex == 0)
-		{
-			if (lifetimeIndex > 0) {
-				_index_last_updated += _d_index_update;
-			}
-
-			/*! Cost to cycle the battery at all, using maximum DOD or user input */
-			costToCycle();
+        /*! Cost to cycle the battery at all, using maximum DOD or user input */
+        costToCycle();
 
 			// Compute forecast variables which don't change from year to year
 			size_t idx_year1 = hour_of_year * _steps_per_hour;
@@ -1597,10 +1589,9 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 					powerBattery = _inverter_paco - m_batteryPower->powerPV;
 				}
 				else {
-					powerBattery = _inverter_paco;
-				}
-			}
-		}
+                powerBattery = _inverter_paco;
+            }
+        }
 		// save for extraction
 		m_batteryPower->powerBatteryTarget = powerBattery;
 	}
