@@ -912,7 +912,7 @@ bool csp_dispatch_opt::optimize()
 
                 i = 0;
                 col[ t + nt*(i  ) ] = O.column("wdot", t);
-                row[ t + nt*(i++) ] = P["gammac"] * P["delta"] * price_t*tadj*(1.-outputs.w_condf_expected.at(t,0));
+                row[ t + nt*(i++) ] = P["delta"] * price_t*tadj*(1.-outputs.w_condf_expected.at(t,0));
 
                 col[ t + nt*(i  ) ] = O.column("xr", t);
                 row[ t + nt*(i++) ] = -(P["delta"] * price_t*tadj * P["Lr"]); // +tadj * pmean;  // tadj added to prefer receiver production sooner (i.e. delay dumping)

@@ -1004,6 +1004,17 @@ public:
             pc->m_pc_fl = as_integer("rec_htf");                            // power cycle HTF is same as receiver HTF
             pc->m_pc_fl_props = as_matrix("field_fl_props");
 
+			pc->m_mode_initial = C_csp_power_cycle::OFF;
+			if (as_boolean("is_pc_on_initial"))
+				pc->m_mode_initial = C_csp_power_cycle::ON;
+			else if (as_boolean("is_pc_standby_initial"))
+				pc->m_mode_initial = C_csp_power_cycle::STANDBY;
+			else if (as_boolean("is_pc_startup_initial"))
+			{
+				pc->m_mode_initial = C_csp_power_cycle::STARTUP_CONTROLLED;
+				pc->m_startup_energy_accum_init = as_double("pc_startup_energy_initial");
+			}
+
             if (pb_tech_type == 0)
             {
                 pc->m_dT_cw_ref = as_double("dT_cw_ref");
@@ -1123,6 +1134,9 @@ public:
         else if (pb_tech_type == 2)
         {
             int is_sco2_preprocess = as_integer("is_sco2_preprocess");
+
+			if (as_boolean("is_pc_on_initial") || as_boolean("is_pc_standby_initial") || as_boolean("is_pc_standby_initial"))
+				throw exec_error("tcsmolten_salt", "User-defined cycle initial state not currently enabled for sCO2 cycle.");
 
             if (is_sco2_preprocess == 1)
             {
