@@ -167,7 +167,7 @@ void cm_wind_landbosse::load_config(){
     }
 }
 
-const size_t BUFSIZE = 2048;
+const size_t BUFSIZE = 4096;
 
 std::string cm_wind_landbosse::call_python_module(const std::string& input_dict_as_text){
     std::promise<std::string> python_result;
