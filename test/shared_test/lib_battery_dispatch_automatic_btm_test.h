@@ -53,9 +53,6 @@ public:
         batteryModel = new battery_t(dtHour, chemistry);
         batteryModel->initialize(capacityModel, voltageModel, lifetimeModel, thermalModel, lossModel);
 
-        dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice, currentChargeMax,
-                                                                    currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax, powerDischargeMax, 0, 0, 0, 1, 24, 1, true, true, false, false);
-
         P_pv = P_load = V_pv = P_clipped = 0;
 
         int numberOfInverters = 40;

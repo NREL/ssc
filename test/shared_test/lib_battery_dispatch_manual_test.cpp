@@ -370,6 +370,28 @@ TEST_F(ManualTest_lib_battery_dispatch, ManualGridChargingOnTest)
     EXPECT_NEAR(batteryPower->powerGridToBattery, powerChargeMax, 2.0);
 }
 
+TEST_F(ManualTest_lib_battery_dispatch, ManualGridChargingOnDCConnectedTest)
+{
+    std::vector<bool> testCanGridcharge;
+    std::map<size_t, double> testPercentGridCharge;
+    for (int p = 0; p < 6; p++) {
+        testCanGridcharge.push_back(1);
+        testPercentGridCharge[p] = 100;
+    }
+    dispatchManual = new dispatch_manual_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice, currentChargeMax, currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax, powerDischargeMax, minimumModeTime,
+        dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge, canDischarge, testCanGridcharge, canGridcharge, percentDischarge, testPercentGridCharge);
+
+    batteryPower = dispatchManual->getBatteryPower();
+    batteryPower->connectionMode = ChargeController::DC_CONNECTED;
+    batteryPower->setSharedInverter(m_sharedInverter);
+
+    // Test grid charging. AC to DC losses come into play
+    batteryPower->powerPV = 0; batteryPower->voltageSystem = 600; batteryPower->powerGridToBattery = 1000;
+    dispatchManual->dispatch(year, hour_of_year, step_of_hour);
+    EXPECT_NEAR(batteryPower->powerBatteryDC, -powerChargeMax * batteryPower->singlePointEfficiencyACToDC, 1.0);
+    EXPECT_NEAR(batteryPower->powerGridToBattery, powerChargeMax, 2.0);
+}
+
 TEST_F(ManualTest_lib_battery_dispatch, NoGridChargingWhilePVIsOnTest)
 {
     std::vector<bool> testCanGridcharge;
