@@ -292,7 +292,6 @@ void dispatch_t::switch_controller()
 		{
 			m_batteryPower->powerBatteryDC = 0.;
 			_charging = _prev_charging;
-			_t_at_mode += (int)(round(_dt_hour * util::hour_to_min));
 		}
 		else
 			_t_at_mode = 0;
