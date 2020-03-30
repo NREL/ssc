@@ -5,8 +5,16 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTM) {
     CreateBattery(dtHour);
 
     // Setup pv and load signal for peak shaving algorithm
-    pv_prediction = {500, 400, 300, 200};
-    load_prediction = {600, 600, 600, 600};
+    for (size_t d = 0; d < 365; d++) {
+        for (size_t h = 0; h < 24; h++) {
+            if (h > 6 && h < 18) {
+                pv_prediction.push_back(fabs(12 - h) * 100);
+            }
+            load_prediction.push_back(600);
+        }
+    }
+
+    pv_prediction[0] = 500; pv_prediction[1] = 400; pv_prediction[2] = 300; pv_prediction[3] = 200;
     dispatchAutoBTM->update_load_data(load_prediction);
     dispatchAutoBTM->update_pv_data(pv_prediction);
 
