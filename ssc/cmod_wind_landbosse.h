@@ -34,6 +34,8 @@ public:
 	std::string call_python_module_windows(const std::string& input_json);
 #endif
 
+	void cleanOutputString(std::string& output_json);
+
     void exec() override;
 };
 

@@ -296,6 +296,13 @@ std::string cm_wind_landbosse::call_python_module_windows(const std::string& inp
 }
 #endif
 
+void cm_wind_landbosse::cleanOutputString(std::string& output_json) {
+	size_t pos = output_json.find("{");
+	if (pos != std::string::npos)
+		output_json = output_json.substr(pos);
+	std::replace(output_json.begin(), output_json.end(), '\'', '\"');
+}
+
 void cm_wind_landbosse::exec() {
     // limit the input json through the process pip to only landbosse-required inputs
     var_table input_data;
@@ -325,7 +332,7 @@ void cm_wind_landbosse::exec() {
     std::string output_json = call_python_module(input_dict_as_text);
 #endif
 
-    std::replace( output_json.begin(), output_json.end(), '\'', '\"');
+	cleanOutputString(output_json);
     auto output_data = static_cast<var_table*>(json_to_ssc_data(output_json.c_str()));
     if (output_data->is_assigned("error")){
         m_vartab->assign("errors", output_json);
