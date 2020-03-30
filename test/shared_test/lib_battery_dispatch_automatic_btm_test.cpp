@@ -1,6 +1,6 @@
 #include "lib_battery_dispatch_automatic_btm_test.h"
 
-TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTM) {
+TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMGridCharging) {
     double dtHour = 1;
     CreateBattery(dtHour);
 
@@ -41,4 +41,39 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTM) {
     dispatchAutoBTM->dispatch(0, 0, 0);
     EXPECT_NEAR(batteryPower->powerGridToBattery, 50, 1);
     EXPECT_NEAR(batteryPower->powerBatteryDC, -48, 1);
+}
+
+TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMPVCharging) {
+    double dtHour = 1;
+    CreateBattery(dtHour);
+
+    dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice, currentChargeMax,
+        currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax, powerDischargeMax, 0, dispatch_t::BTM_MODES::LOOK_AHEAD, 0, 1, 24, 1, true, true, false, false);
+
+    // Setup pv and load signal for peak shaving algorithm
+    for (size_t h = 0; h < 24; h++) {
+        if (h > 6 && h < 18) {
+            pv_prediction.push_back(700);
+        }
+        else {
+            pv_prediction.push_back(0);
+        }
+        load_prediction.push_back(500);
+    }
+
+    dispatchAutoBTM->update_load_data(load_prediction);
+    dispatchAutoBTM->update_pv_data(pv_prediction);
+
+    batteryPower = dispatchAutoBTM->getBatteryPower();
+    batteryPower->connectionMode = ChargeController::AC_CONNECTED;
+
+    // Strange behavior, shouldn't this discharge at night?
+    std::vector<double> expectedPower = { 0, 0, 0, 0, 0, 0, 0, -50, -50, -50, -50, -50, -18, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+    for (size_t h = 0; h < 24; h++) {
+        if (h > 6 && h < 18) {
+            batteryPower->powerPV = 700; // Match the predicted PV
+        }
+        dispatchAutoBTM->dispatch(0, h, 0);  
+        EXPECT_NEAR(batteryPower->powerBatteryDC, expectedPower[h], 0.2) << " error in expected at hour " << h;
+    }
 }
