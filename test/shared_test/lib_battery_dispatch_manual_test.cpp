@@ -263,13 +263,19 @@ TEST_F(ManualTest_lib_battery_dispatch, DispatchChangeFrequency) {
     dispatchManual->dispatch(year, hour_of_year, step_of_hour);
     EXPECT_NEAR(batteryPower->powerBatteryDC, 0.0, 0.1);
 
-    // Should dispatch to load now (4th minute)
+    // Same status (4th minute)
+    step_of_hour += 1;
+    dispatchManual->dispatch(year, hour_of_year, step_of_hour);
+    EXPECT_NEAR(batteryPower->powerBatteryDC, 0.0, 2.0);
+
+    // Should dispatch to load now (5th minute)
     step_of_hour += 1;
     dispatchManual->dispatch(year, hour_of_year, step_of_hour);
     EXPECT_NEAR(batteryPower->powerBatteryDC, powerChargeMax, 2.0);
 }
 
 TEST_F(ManualTest_lib_battery_dispatch, SOCLimitsOnDispatch) {
+    hour_of_year = 0; step_of_hour = 0;
     dispatchManual = new dispatch_manual_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice, currentChargeMax,
                                            currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax,
                                            powerDischargeMax, minimumModeTime,
@@ -287,6 +293,7 @@ TEST_F(ManualTest_lib_battery_dispatch, SOCLimitsOnDispatch) {
     while (soc < SOC_max && hour_of_year < 100) {
         dispatchManual->dispatch(year, hour_of_year, step_of_hour);
         hour_of_year += 1;
+        EXPECT_GT(dispatchManual->battery_soc(), soc);
         soc = dispatchManual->battery_soc();
     }
     EXPECT_NEAR(SOC_max, dispatchManual->battery_soc(), 0.1);
