@@ -290,7 +290,7 @@ TEST_F(ManualTest_lib_battery_dispatch, SOCLimitsOnDispatch) {
         soc = dispatchManual->battery_soc();
     }
     EXPECT_NEAR(SOC_max, dispatchManual->battery_soc(), 0.1);
-    EXPECT_NEAR(11, hour_of_year, 0.1);
+    EXPECT_NEAR(6, hour_of_year, 0.1);
 
     // Attempt dispatch one more time, should not charge
     hour_of_year += 1;
@@ -305,7 +305,7 @@ TEST_F(ManualTest_lib_battery_dispatch, SOCLimitsOnDispatch) {
         soc = dispatchManual->battery_soc();
     }
     EXPECT_NEAR(SOC_min, dispatchManual->battery_soc(), 0.1);
-    EXPECT_NEAR(22, hour_of_year, 0.1);
+    EXPECT_NEAR(16, hour_of_year, 0.1);
 
     // Cut off PV and provide load
     batteryPower->powerPV = 0;
