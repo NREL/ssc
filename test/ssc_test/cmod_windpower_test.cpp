@@ -514,6 +514,7 @@ TEST(windpower_landbosse, RunSuccess) {
     sprintf(file, "%s/test/input_docs/AR Northwestern-Flat Lands.srw", SSCDIR);
 
     auto *vd = new var_table;
+    vd->assign("en_landbosse", 1);
     vd->assign("wind_resource_filename", std::string(file));
     vd->assign("turbine_rating_MW", 1.5);
     vd->assign("wind_turbine_rotor_diameter", 45);
@@ -572,6 +573,7 @@ TEST(windpower_landbosse, SubhourlyFail) {
     sprintf(file, "%s/test/input_docs/AR Northwestern-Flat Lands-15min.srw", SSCDIR);
 
     auto *vd = new var_table;
+    vd->assign("en_landbosse", 1);
     vd->assign("wind_resource_filename", std::string(file));
     vd->assign("turbine_rating_MW", 1.5);
     vd->assign("wind_turbine_rotor_diameter", 45);
@@ -598,5 +600,41 @@ TEST(windpower_landbosse, SubhourlyFail) {
 
     auto err = vd->lookup("errors")->str;
     EXPECT_EQ(err, "Error in Weather_Data: Length of values does not match length of index");
+
+}
+
+TEST(windpower_landbosse, NegativeInputFail) {
+    const char *SSCDIR = std::getenv("SSCDIR");
+    char file[256];
+    sprintf(file, "%s/test/input_docs/AR Northwestern-Flat Lands.srw", SSCDIR);
+
+    auto *vd = new var_table;
+    vd->assign("en_landbosse", 1);
+    vd->assign("wind_resource_filename", std::string(file));
+    vd->assign("turbine_rating_MW", 1.5);
+    vd->assign("wind_turbine_rotor_diameter", 45);
+    vd->assign("wind_turbine_hub_ht", 80);
+    vd->assign("num_turbines", 100);
+    vd->assign("wind_resource_shear", 0.2);
+    vd->assign("turbine_spacing_rotor_diameters", 4);
+    vd->assign("row_spacing_rotor_diameters", 10);
+
+    vd->assign("interconnect_voltage_kV", 137);
+    vd->assign("distance_to_interconnect_mi", 10);
+    vd->assign("depth", -2.36);
+    vd->assign("rated_thrust_N", 589000);
+    vd->assign("labor_cost_multiplier", 1);
+    vd->assign("gust_velocity_m_per_s", 59.50);
+
+    setup_python();
+
+    auto landbosse = ssc_module_create("wind_landbosse");
+
+    bool success = ssc_module_exec(landbosse, vd);
+
+    EXPECT_FALSE(success);
+
+    auto err = vd->lookup("errors")->str;
+    EXPECT_EQ(err, "Error in NegativeInputError: User entered a negative value for depth. This is an invalid entry");
 
 }
