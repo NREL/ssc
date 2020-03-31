@@ -157,6 +157,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMPVChargeAndDischargeSubh
                 expectedPower.push_back(-50);
             }
             else if (h == 12) {
+                // Total of 18 kWh (as in hourly test), just dispatched towards the front of the hour
                 if (step == 0) {
                     expectedPower.push_back(-50);
                 }
@@ -199,5 +200,53 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMPVChargeAndDischargeSubh
             EXPECT_NEAR(batteryPower->powerBatteryDC, expectedPower[index], 0.2) << " error in expected at step " << index;
             index++;
         }
+    }
+}
+
+TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMDCClipCharge) {
+    double dtHour = 1;
+    CreateBattery(dtHour);
+
+    // Only charge from clipped power
+    dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice, currentChargeMax,
+        currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax, powerDischargeMax, 0, dispatch_t::BTM_MODES::LOOK_AHEAD, 0, 1, 24, 1, false , true, false, false);
+
+    // Setup pv and load signal for peak shaving algorithm
+    for (size_t h = 0; h < 24; h++) {
+        if (h > 6 && h < 18) {
+            pv_prediction.push_back(700);
+        }
+        else {
+            pv_prediction.push_back(0);
+        }
+
+        if (h > 18) {
+            load_prediction.push_back(600);
+        }
+        else {
+            load_prediction.push_back(500);
+        }
+    }
+
+    dispatchAutoBTM->update_load_data(load_prediction);
+    dispatchAutoBTM->update_pv_data(pv_prediction);
+
+    batteryPower = dispatchAutoBTM->getBatteryPower();
+    batteryPower->connectionMode = ChargeController::DC_CONNECTED;
+    batteryPower->setSharedInverter(m_sharedInverter);
+
+    // Battery will charge when PV is available, then discharge when load increases at 7 pm
+    std::vector<double> expectedPower = { 0, 0, 0, 0, 0, 0, 0, -41.1, -42.7, -44.3, -46.1, -48.0, -45.6, 0, 0, 0, 0, 0, 0, 50, 50, 50, 50, 50, 50, 50, 50 };
+    for (size_t h = 0; h < 24; h++) {
+        batteryPower->powerLoad = 500;
+        batteryPower->powerPV = 0;
+        if (h > 6 && h < 18) {
+            batteryPower->powerPV = 700; // Match the predicted PV
+        }
+        else if (h > 18) {
+            batteryPower->powerLoad = 600; // Match the predicted load
+        }
+        dispatchAutoBTM->dispatch(0, h, 0);
+        EXPECT_NEAR(batteryPower->powerBatteryDC, expectedPower[h], 0.2) << " error in expected at hour " << h;
     }
 }
