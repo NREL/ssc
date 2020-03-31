@@ -211,8 +211,14 @@ std::string cm_wind_landbosse::call_python_module_windows(const std::string& inp
 	STARTUPINFO si;
 	SECURITY_ATTRIBUTES sa;
 	PROCESS_INFORMATION pi;
-	HANDLE g_hChildStd_IN_Rd, g_hChildStd_OUT_Wr, g_hChildStd_OUT_Rd, g_hChildStd_IN_Wr;  //pipe handles
+    HANDLE g_hChildStd_IN_Rd = NULL;
+    HANDLE g_hChildStd_OUT_Wr = NULL;
+    HANDLE g_hChildStd_OUT_Rd = NULL;
+    HANDLE g_hChildStd_IN_Wr = NULL;
+    HANDLE stderr_rd = NULL;
+    HANDLE stderr_wr = NULL;  //pipe handles
 	char buf[BUFSIZE];           //i/o buffer
+	memset(buf, 0, sizeof(buf));
 
 	std::string pythonpath = std::string(get_python_path()) + "\\" + python_exec_path;
 	CA2T programpath( pythonpath.c_str());
@@ -226,72 +232,65 @@ std::string cm_wind_landbosse::call_python_module_windows(const std::string& inp
 	sa.lpSecurityDescriptor = NULL;
 
 	std::string output;
-	if (CreatePipe(&g_hChildStd_IN_Rd, &g_hChildStd_IN_Wr, &sa, 0))   //create stdin pipe
-	{
-		if (CreatePipe(&g_hChildStd_OUT_Rd, &g_hChildStd_OUT_Wr, &sa, 0))  //create stdout pipe
-		{
+    if (!CreatePipe(&g_hChildStd_IN_Rd, &g_hChildStd_IN_Wr, &sa, 0)) {
+        goto error;
+    }
+    if (!CreatePipe(&g_hChildStd_OUT_Rd, &g_hChildStd_OUT_Wr, &sa, 0)) {
+        goto error;
+    }
+    if (!CreatePipe(&stderr_rd, &stderr_wr, &sa, 0)) {
+        goto error;
+    }
+            
+    //set startupinfo for the spawned process
+    /*The dwFlags member tells CreateProcess how to make the process.
+    STARTF_USESTDHANDLES: validates the hStd* members.
+    STARTF_USESHOWWINDOW: validates the wShowWindow member*/
+    GetStartupInfo(&si);
 
-			//set startupinfo for the spawned process
-			/*The dwFlags member tells CreateProcess how to make the process.
-			STARTF_USESTDHANDLES: validates the hStd* members.
-			STARTF_USESHOWWINDOW: validates the wShowWindow member*/
-			GetStartupInfo(&si);
+    si.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
+    si.wShowWindow = SW_HIDE;
+    //set the new handles for the child process
+    si.hStdOutput = g_hChildStd_OUT_Wr;
+    si.hStdError = stderr_wr;
+    si.hStdInput = g_hChildStd_IN_Rd;
 
-			si.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
-			si.wShowWindow = SW_HIDE;
-			//set the new handles for the child process
-			si.hStdOutput = g_hChildStd_OUT_Wr;
-			si.hStdError = g_hChildStd_OUT_Wr;
-			si.hStdInput = g_hChildStd_IN_Rd;
+    //spawn the child process
+    if (CreateProcess(programpath, programargs, NULL, NULL, TRUE, CREATE_NO_WINDOW,
+        NULL, NULL, &si, &pi))
+    {
+        unsigned long bread;   //bytes read
+        unsigned long bread_last = 0;
+        unsigned long avail;   //bytes available
 
-			//spawn the child process
-			if (CreateProcess(programpath, programargs, NULL, NULL, TRUE, CREATE_NO_WINDOW,
-				NULL, NULL, &si, &pi))
-			{
-				unsigned long bread;   //bytes read
-				unsigned long bread_last = 0;
-				unsigned long avail;   //bytes available
-				memset(buf, 0, sizeof(buf));
+        for (;;)
+        {
+            PeekNamedPipe(g_hChildStd_OUT_Rd, buf, BUFSIZE - 1, &bread, &avail, NULL);
+            //check to see if there is any data to read from stdout
+            if (bread != 0)
+            {
+                if (ReadFile(g_hChildStd_OUT_Rd, buf, BUFSIZE - 1, &bread, NULL))
+                {
+                    output += std::string(buf);
+                    bread_last = bread;
+                }
+            }
+            else if (bread_last > 0)
+            {
+                break;
+            }
+        }
 
-				for (;;)
-				{
-					PeekNamedPipe(g_hChildStd_OUT_Rd, buf, BUFSIZE - 1, &bread, &avail, NULL);
-					//check to see if there is any data to read from stdout
-					if (bread != 0)
-					{
-						if (ReadFile(g_hChildStd_OUT_Rd, buf, BUFSIZE - 1, &bread, NULL))
-						{
-							output += std::string(buf);
-							bread_last = bread;
-						}
-					}
-					else
-						if (bread_last > 0)
-							break;
-				}
-
-				//clean up all handles
-				CloseHandle(pi.hThread);
-				CloseHandle(pi.hProcess);
-				CloseHandle(g_hChildStd_IN_Rd);
-				CloseHandle(g_hChildStd_OUT_Wr);
-				CloseHandle(g_hChildStd_OUT_Rd);
-				CloseHandle(g_hChildStd_IN_Wr);
-			}
-			else
-			{
-				CloseHandle(g_hChildStd_IN_Rd);
-				CloseHandle(g_hChildStd_OUT_Wr);
-				CloseHandle(g_hChildStd_OUT_Rd);
-				CloseHandle(g_hChildStd_IN_Wr);
-			}
-		}
-		else
-		{
-			CloseHandle(g_hChildStd_IN_Rd);
-			CloseHandle(g_hChildStd_IN_Wr);
-		}
-	}
+        CloseHandle(pi.hThread);
+        CloseHandle(pi.hProcess);
+    }
+   error:
+    std::vector<HANDLE> handles = {g_hChildStd_IN_Rd, g_hChildStd_IN_Wr, g_hChildStd_OUT_Rd, g_hChildStd_OUT_Wr, stderr_rd, stderr_wr};
+    for (HANDLE handle : handles) {
+        if (handle && handle != INVALID_HANDLE_VALUE) {
+            CloseHandle(handle);
+        }
+    }
 	return buf;
 }
 #endif
