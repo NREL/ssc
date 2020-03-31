@@ -93,7 +93,7 @@ static var_info _cm_vtab_wind_landbosse[] = {
         { SSC_OUTPUT, 		SSC_NUMBER, "total_management_cost",			        "BOS - Total Management Cost",			                         "$", "", "LandBOSSE", "*", "", "", } ,
         { SSC_OUTPUT, 		SSC_NUMBER, "total_sitepreparation_cost",			"BOS - Total Site Preparation Cost",			                 "$", "", "LandBOSSE", "*", "", "", } ,
         { SSC_OUTPUT, 		SSC_NUMBER, "total_substation_cost",			        "BOS - Total Substation Cost",			                         "$", "", "LandBOSSE", "*", "", "", } ,
-        { SSC_OUTPUT, 		SSC_NUMBER, "total_project_cost",			        "BOS - Total BOS Cost",			                             "$", "", "LandBOSSE", "*", "", "", } ,
+        { SSC_OUTPUT, 		SSC_NUMBER, "total_bos_cost",			            "BOS - Total BOS Cost",			                             "$", "", "LandBOSSE", "*", "", "", } ,
 
         var_info_invalid
 };

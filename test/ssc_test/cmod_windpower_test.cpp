@@ -545,7 +545,7 @@ TEST(windpower_landbosse, RunSuccess) {
     EXPECT_NEAR(vd->lookup("total_foundation_cost")->num[0], 7.40657e+07, 1e2);
     EXPECT_NEAR(vd->lookup("total_gridconnection_cost")->num[0], 5.61774e+06, 1e2);
     EXPECT_NEAR(vd->lookup("total_management_cost")->num[0], 3.88024e+07, 1e2);
-    EXPECT_NEAR(vd->lookup("total_project_cost")->num[0], 217494897, 1e2);
+    EXPECT_NEAR(vd->lookup("total_bos_cost")->num[0], 217494897, 1e2);
     EXPECT_NEAR(vd->lookup("total_sitepreparation_cost")->num[0], 4.07318e+07, 1e2);
     EXPECT_NEAR(vd->lookup("total_substation_cost")->num[0], 4.35472e+06, 1e2);
 
