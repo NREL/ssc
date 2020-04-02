@@ -250,7 +250,7 @@ std::string cm_wind_landbosse::call_python_module_windows(const std::string& inp
 	if (!SetHandleInformation(stderr_rd, HANDLE_FLAG_INHERIT, 0)) {
 		goto done;
 	}
-            
+
     //set startupinfo for the spawned process
     /*The dwFlags member tells CreateProcess how to make the process.
     STARTF_USESTDHANDLES: validates the hStd* members.
@@ -295,6 +295,8 @@ std::string cm_wind_landbosse::call_python_module_windows(const std::string& inp
             CloseHandle(handle);
         }
     }
+    if (buf[0] == '\0')
+        throw exec_error("wind_landbosse", "LandBOSSE error. Function did not return a response.");
 	return buf;
 }
 #endif

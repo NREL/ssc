@@ -509,7 +509,6 @@ TEST(windpower_landbosse, SetupPython) {
 }
 
 TEST(windpower_landbosse, RunSuccess) {
-    const char *SSCDIR = std::getenv("SSCDIR");
     char file[256];
     sprintf(file, "%s/test/input_docs/AR Northwestern-Flat Lands.srw", SSCDIR);
 
@@ -539,15 +538,15 @@ TEST(windpower_landbosse, RunSuccess) {
     ssc_module_exec(landbosse, vd);
 
     EXPECT_EQ(vd->lookup("errors")->str, "0");
-    EXPECT_NEAR(vd->lookup("total_collection_cost")->num[0], 9.00042e+07, 1e2);
-    EXPECT_NEAR(vd->lookup("total_development_cost")->num[0], 99, 1e2);
-    EXPECT_NEAR(vd->lookup("total_erection_cost")->num[0], 2.72059e+06, 1e2);
-    EXPECT_NEAR(vd->lookup("total_foundation_cost")->num[0], 7.40657e+07, 1e2);
+    EXPECT_NEAR(vd->lookup("total_collection_cost")->num[0], 4202342, 1e2);
+    EXPECT_NEAR(vd->lookup("total_development_cost")->num[0], 150000, 1e2);
+    EXPECT_NEAR(vd->lookup("total_erection_cost")->num[0], 5132656, 1e2);
+    EXPECT_NEAR(vd->lookup("total_foundation_cost")->num[0], 10411261, 1e2);
     EXPECT_NEAR(vd->lookup("total_gridconnection_cost")->num[0], 5.61774e+06, 1e2);
-    EXPECT_NEAR(vd->lookup("total_management_cost")->num[0], 3.88024e+07, 1e2);
-    EXPECT_NEAR(vd->lookup("total_bos_cost")->num[0], 217494897, 1e2);
-    EXPECT_NEAR(vd->lookup("total_sitepreparation_cost")->num[0], 4.07318e+07, 1e2);
-    EXPECT_NEAR(vd->lookup("total_substation_cost")->num[0], 4.35472e+06, 1e2);
+    EXPECT_NEAR(vd->lookup("total_management_cost")->num[0], 10426434, 1e2);
+    EXPECT_NEAR(vd->lookup("total_bos_cost")->num[0], 43186861, 1e2);
+    EXPECT_NEAR(vd->lookup("total_sitepreparation_cost")->num[0], 2688634, 1e2);
+    EXPECT_NEAR(vd->lookup("total_substation_cost")->num[0], 4940746, 1e2);
 
     std::vector<std::string> all_outputs = {"bonding_usd", "collection_equipment_rental_usd", "collection_labor_usd",
                                             "collection_material_usd", "collection_mobilization_usd",
@@ -568,7 +567,6 @@ TEST(windpower_landbosse, RunSuccess) {
 }
 
 TEST(windpower_landbosse, SubhourlyFail) {
-    const char *SSCDIR = std::getenv("SSCDIR");
     char file[256];
     sprintf(file, "%s/test/input_docs/AR Northwestern-Flat Lands-15min.srw", SSCDIR);
 
@@ -604,7 +602,6 @@ TEST(windpower_landbosse, SubhourlyFail) {
 }
 
 TEST(windpower_landbosse, NegativeInputFail) {
-    const char *SSCDIR = std::getenv("SSCDIR");
     char file[256];
     sprintf(file, "%s/test/input_docs/AR Northwestern-Flat Lands.srw", SSCDIR);
 
