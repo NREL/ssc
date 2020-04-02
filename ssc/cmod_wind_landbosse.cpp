@@ -26,6 +26,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Windows.h>
 #include <stdio.h>
 #include <tchar.h>
+#pragma warning(disable: 4191)
 #include "AtlBase.h"
 #include "AtlConv.h"
 #endif
@@ -119,9 +120,9 @@ void cm_wind_landbosse::load_config(){
 #ifdef __WINDOWS__
     // check for byte-order mark indicating UTF-8 and skip if it exists since it's not JSON-compatible
     char a,b,c;
-    a = python_config_doc.get();
-    b = python_config_doc.get();
-    c = python_config_doc.get();
+    a = (char)python_config_doc.get();
+    b = (char)python_config_doc.get();
+    c = (char)python_config_doc.get();
     if (a != (char)0xEF || b != (char)0xBB || c != (char)0xBF) {
         python_config_doc.seekg(0);
     }
@@ -211,10 +212,10 @@ std::string cm_wind_landbosse::call_python_module_windows(const std::string& inp
 	STARTUPINFO si;
 	SECURITY_ATTRIBUTES sa;
 	PROCESS_INFORMATION pi;
-    HANDLE g_hChildStd_IN_Rd = NULL;
-    HANDLE g_hChildStd_OUT_Wr = NULL;
-    HANDLE g_hChildStd_OUT_Rd = NULL;
-    HANDLE g_hChildStd_IN_Wr = NULL;
+    HANDLE stdin_rd = NULL;
+    HANDLE stdout_wr = NULL;
+    HANDLE stdout_rd = NULL;
+    HANDLE stdin_wr = NULL;
     HANDLE stderr_rd = NULL;
     HANDLE stderr_wr = NULL;  //pipe handles
 	char buf[BUFSIZE];           //i/o buffer
@@ -231,16 +232,24 @@ std::string cm_wind_landbosse::call_python_module_windows(const std::string& inp
 	sa.bInheritHandle = TRUE;
 	sa.lpSecurityDescriptor = NULL;
 
-	std::string output;
-    if (!CreatePipe(&g_hChildStd_IN_Rd, &g_hChildStd_IN_Wr, &sa, 0)) {
-        goto error;
+    if (!CreatePipe(&stdin_rd, &stdin_wr, &sa, 0)) {
+        goto done;
     }
-    if (!CreatePipe(&g_hChildStd_OUT_Rd, &g_hChildStd_OUT_Wr, &sa, 0)) {
-        goto error;
+	if (!SetHandleInformation(stdin_wr, HANDLE_FLAG_INHERIT, 0)) {
+		goto done;
+	}
+    if (!CreatePipe(&stdout_rd, &stdout_wr, &sa, 0)) {
+        goto done;
     }
+	if (!SetHandleInformation(stdout_rd, HANDLE_FLAG_INHERIT, 0)) {
+		goto done;
+	}
     if (!CreatePipe(&stderr_rd, &stderr_wr, &sa, 0)) {
-        goto error;
+        goto done;
     }
+	if (!SetHandleInformation(stderr_rd, HANDLE_FLAG_INHERIT, 0)) {
+		goto done;
+	}
             
     //set startupinfo for the spawned process
     /*The dwFlags member tells CreateProcess how to make the process.
@@ -251,27 +260,22 @@ std::string cm_wind_landbosse::call_python_module_windows(const std::string& inp
     si.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
     si.wShowWindow = SW_HIDE;
     //set the new handles for the child process
-    si.hStdOutput = g_hChildStd_OUT_Wr;
+    si.hStdOutput = stdout_wr;
     si.hStdError = stderr_wr;
-    si.hStdInput = g_hChildStd_IN_Rd;
+    si.hStdInput = stdin_rd;
 
     //spawn the child process
     if (CreateProcess(programpath, programargs, NULL, NULL, TRUE, CREATE_NO_WINDOW,
-        NULL, NULL, &si, &pi))
-    {
+        NULL, NULL, &si, &pi)) {
         unsigned long bread;   //bytes read
         unsigned long bread_last = 0;
         unsigned long avail;   //bytes available
 
-        for (;;)
-        {
-            PeekNamedPipe(g_hChildStd_OUT_Rd, buf, BUFSIZE - 1, &bread, &avail, NULL);
+        for (;;) {
+            PeekNamedPipe(stdout_rd, buf, BUFSIZE - 1, &bread, &avail, NULL);
             //check to see if there is any data to read from stdout
-            if (bread != 0)
-            {
-                if (ReadFile(g_hChildStd_OUT_Rd, buf, BUFSIZE - 1, &bread, NULL))
-                {
-                    output += std::string(buf);
+            if (bread != 0) {
+                if (ReadFile(stdout_rd, buf, BUFSIZE - 1, &bread, NULL)) {
                     bread_last = bread;
                 }
             }
@@ -284,8 +288,8 @@ std::string cm_wind_landbosse::call_python_module_windows(const std::string& inp
         CloseHandle(pi.hThread);
         CloseHandle(pi.hProcess);
     }
-   error:
-    std::vector<HANDLE> handles = {g_hChildStd_IN_Rd, g_hChildStd_IN_Wr, g_hChildStd_OUT_Rd, g_hChildStd_OUT_Wr, stderr_rd, stderr_wr};
+    done:
+    std::vector<HANDLE> handles = {stdin_rd, stdin_wr, stdout_rd, stdout_wr, stderr_rd, stderr_wr};
     for (HANDLE handle : handles) {
         if (handle && handle != INVALID_HANDLE_VALUE) {
             CloseHandle(handle);
