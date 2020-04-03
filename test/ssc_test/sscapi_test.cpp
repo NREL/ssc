@@ -64,47 +64,47 @@ TEST(sscapi_test, ssc_data_to_json){
     var_table vt;
     vt.assign("num", 1);
     auto json_string = ssc_data_to_json(&vt);
-    EXPECT_STRCASEEQ(json_string, "{\n\t\"num\" : 1.0\n}");
+    EXPECT_STRCASEEQ(json_string, "{\"num\":1.0}");
     vt.clear();
     delete json_string;
 
     vt.assign("str", var_data("string"));
     json_string = ssc_data_to_json(&vt);
-    EXPECT_STRCASEEQ(json_string, "{\n\t\"str\" : \"string\"\n}");
+    EXPECT_STRCASEEQ(json_string, "{\"str\":\"string\"}");
     vt.clear();
     delete json_string;
 
     vt.assign("arr", std::vector<double>({1, 2}));
     json_string = ssc_data_to_json(&vt);
-    EXPECT_STRCASEEQ(json_string, "{\n\t\"arr\" : \n\t[\n\t\t1.0,\n\t\t2.0\n\t]\n}");
+    EXPECT_STRCASEEQ(json_string, "{\"arr\":[1.0,2.0]}");
     vt.clear();
     delete json_string;
 
     double vals[4] = {1, 2, 3, 4};
     vt.assign("mat", var_data(vals, 2, 2));
     json_string = ssc_data_to_json(&vt);
-    EXPECT_STRCASEEQ(json_string, "{\n\t\"mat\" : \n\t[\n\t\t[\n\t\t\t1.0,\n\t\t\t2.0\n\t\t],\n\t\t[\n\t\t\t3.0,\n\t\t\t4.0\n\t\t]\n\t]\n}");
+    EXPECT_STRCASEEQ(json_string, "{\"mat\":[[1.0,2.0],[3.0,4.0]]}");
     vt.clear();
     delete json_string;
 
     std::vector<var_data> vars = {var_data("one"), 2};
     vt.assign("datarr", vars);
     json_string = ssc_data_to_json(&vt);
-    EXPECT_STRCASEEQ(json_string, "{\n\t\"datarr\" : \n\t[\n\t\t\"one\",\n\t\t2.0\n\t]\n}");
+    EXPECT_STRCASEEQ(json_string, "{\"datarr\":[\"one\",2.0]}");
     vt.clear();
     delete json_string;
 
     std::vector<std::vector<var_data>> vars_mat = {vars, std::vector<var_data>({3, 4})};
     vt.assign("datmat", vars_mat);
     json_string = ssc_data_to_json(&vt);
-    EXPECT_STRCASEEQ(json_string, "{\n\t\"datmat\" : \n\t[\n\t\t[\n\t\t\t\"one\",\n\t\t\t2.0\n\t\t],\n\t\t[\n\t\t\t3.0,\n\t\t\t4.0\n\t\t]\n\t]\n}");
+    EXPECT_STRCASEEQ(json_string, "{\"datmat\":[[\"one\",2.0],[3.0,4.0]]}");
     vt.clear();
 
     var_table tab;
     tab.assign("entry", 1);
     vt.assign("table", tab);
     json_string = ssc_data_to_json(&vt);
-    EXPECT_STRCASEEQ(json_string, "{\n\t\"table\" : \n\t{\n\t\t\"entry\" : 1.0\n\t}\n}");
+    EXPECT_STRCASEEQ(json_string, "{\"table\":{\"entry\":1.0}}");
     vt.clear();
     delete json_string;
 

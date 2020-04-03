@@ -1448,16 +1448,21 @@ double C_csp_two_tank_tes::pumping_power(double m_dot_sf, double m_dot_pb, doubl
         }
     }
     else {    // original methods
-        if (this->ms_params.m_is_hx) {
-            htf_pump_power = (tes_pump_coef*m_dot_tank + pb_pump_coef * (fabs(m_dot_pb - m_dot_sf) + m_dot_pb)) / 1000.0;	//[MW]
+        if (this->ms_params.m_is_hx) 
+		{
+            // Also going to be tanks_in_parallel = true if there's a hx between field and TES HTF
+			htf_pump_power = (tes_pump_coef * m_dot_tank + tes_pump_coef * fabs(m_dot_pb - m_dot_sf)) / 1000.0;		//[MWe]
+			//htf_pump_power = (tes_pump_coef*m_dot_tank + pb_pump_coef * (fabs(m_dot_pb - m_dot_sf) + m_dot_pb)) / 1000.0;	//[MW]
         }
-        else {
-            if (this->ms_params.tanks_in_parallel) {
-                htf_pump_power = pb_pump_coef * (fabs(m_dot_pb - m_dot_sf) + m_dot_pb) / 1000.0;	//[MW]
-            }
-            else {
-                htf_pump_power = pb_pump_coef * m_dot_pb / 1000.0;	//[MW]
-            }
+        else 
+		{
+			htf_pump_power = 0.0;	//[MWe]
+			//if (this->ms_params.tanks_in_parallel) {
+            //    htf_pump_power = pb_pump_coef * (fabs(m_dot_pb - m_dot_sf) + m_dot_pb) / 1000.0;	//[MW]
+            //}
+            //else {
+            //    htf_pump_power = pb_pump_coef * m_dot_pb / 1000.0;	//[MW]
+            //}
         }
     }
 
