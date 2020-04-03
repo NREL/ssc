@@ -714,7 +714,9 @@ public:
 #define NSTATUS_UPDATES 50  // set this to the number of times a progress update should be issued for the simulation
 				if (hour % (8760 / NSTATUS_UPDATES) == 0)
 				{
-					float percent = 100.0f * ((float)idx_life + 1) / ((float)nlifetime / 3.0f); //3 is the number of technologies we're assuming for this output (pvwatts + fuel cell + battery)
+					float percent = 100.0f * ((float)idx_life + 1) / ((float)nlifetime ); //3 is the number of technologies we're assuming for this output (pvwatts + fuel cell + battery)
+					// check percentage
+					if (percent > 100.0f) percent = 99.0f;
 					if (!update("", percent, (float)hour))
 						throw exec_error("pvwattsv7", "simulation canceled at hour " + util::to_string(hour + 1.0));
 				}
