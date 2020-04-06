@@ -3361,7 +3361,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 bool is_defocus = false;
 
                 double q_dot_pc_fixed = std::numeric_limits<double>::quiet_NaN();        //[MWt]
-                op_mode_str = "CR_SU__PC_RM_HI__TES_FULL__AUX_OFF";
+                op_mode_str = "CR_ON__PC_RM_HI__TES_FULL__AUX_OFF";
 
                 double defocus_solved = std::numeric_limits<double>::quiet_NaN();
 
@@ -3383,9 +3383,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				}
 				else if( mc_pc_out_solver.m_q_dot_htf < q_pc_target )
 				{
-					error_msg = util::format("At time = %lg CR_ON__PC_RM_HI__TES_FULL__AUX_OFF method converged to a power cycle"
+					error_msg = util::format("At time = %lg %s method converged to a power cycle"
 						" thermal input less than the target.",
-						mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0);
+						mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str);
 					mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 				}
 
