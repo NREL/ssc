@@ -340,8 +340,10 @@ static var_info _cm_vtab_trough_physical_process_heat[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_thermal_consumption",      "Annual thermal freeze protection required",                  "kWt-hr",  "",  "Post-process",    "*",   "",   "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_electricity_consumption",  "Annual electricity consumption w/ avail derate",             "kWe-hr",  "",  "Post-process",    "*",   "",   "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_total_water_use",          "Total Annual Water Usage",                                   "m^3",     "",  "Post-process",    "*",   "",   "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_field_freeze_protection",  "Annual thermal power for field freeze protection",     "kWt-hr",  "",  "Post-process",    "*",   "",   "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_tes_freeze_protection",    "Annual thermal power for TES freeze protection",     "kWt-hr",  "",  "Post-process",    "*",   "",   "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_field_freeze_protection",  "Annual thermal power for field freeze protection",			  "kWt-hr",  "",  "Post-process",    "*",   "",   "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_tes_freeze_protection",    "Annual thermal power for TES freeze protection",			  "kWt-hr",  "",  "Post-process",    "*",   "",   "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "capacity_factor",					"Capacity factor",											  "%",       "",  "Post-process",    "*",   "",   "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "kwh_per_kw",						"First year kWh/kW",										  "kWht/kWt", "", "Post-process",    "*",   "",   "" },
 
 
 	var_info_invalid };
@@ -978,6 +980,11 @@ public:
 		double V_water_mirrors = as_double("water_usage_per_wash")/1000.0*A_aper_tot*as_double("washing_frequency");
 		assign("annual_total_water_use", (ssc_number_t)V_water_mirrors);		//[m3]
 
+		ssc_number_t ae = as_number("annual_energy");			//[kWt-hr]
+		double nameplate = as_double("q_pb_design") * 1.e3;		//[kWt]
+		double kWh_per_kW = ae / nameplate;
+		assign("capacity_factor", (ssc_number_t)(kWh_per_kW / 8760. * 100.));
+		assign("kwh_per_kw", (ssc_number_t)kWh_per_kW);
 	}
 	
 };
