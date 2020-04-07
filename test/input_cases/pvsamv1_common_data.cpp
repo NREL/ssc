@@ -421,7 +421,7 @@ void battery_data_default(ssc_data_t& data) {
 	ssc_data_set_number(data, "batt_Qexp", 0.040049999952316284);
 	ssc_data_set_number(data, "batt_Qnom", 2.0002501010894775);
 	ssc_data_set_number(data, "batt_C_rate", 0.20000000298023224);
-	ssc_data_set_number(data, "batt_resistance", 0.0010000000474974513);
+	ssc_data_set_number(data, "batt_resistance", 0.0002);
 	ssc_number_t p_batt_voltage_matrix[2] = { 0, 0 };
 	ssc_data_set_matrix(data, "batt_voltage_matrix", p_batt_voltage_matrix, 1, 2);
 	ssc_data_set_number(data, "LeadAcid_q20_computed", 198);
@@ -446,7 +446,7 @@ void battery_data_default(ssc_data_t& data) {
 	ssc_data_set_number(data, "batt_width", 0.27102780342102051);
 	ssc_data_set_number(data, "batt_height", 0.27102780342102051);
 	ssc_data_set_number(data, "batt_Cp", 1004);
-	ssc_data_set_number(data, "batt_h_to_ambient", 500);
+	ssc_data_set_number(data, "batt_h_to_ambient", 20);
 	ssc_data_set_number(data, "T_room", 20);
 	ssc_number_t p_cap_vs_temp[8] = { -10, 60, 0, 80, 25, 100, 40, 100 };
 	ssc_data_set_matrix(data, "cap_vs_temp", p_cap_vs_temp, 4, 2);

@@ -256,7 +256,7 @@ TEST_F(ResilienceTest_lib_resilience, VoltageTable)
     std::vector<double> vals = {99, 0, 50, 2, 0, 3};
     util::matrix_t<double> table(3, 2, &vals);
     auto volt = voltage_table_t(1, 1, 3, table, 0.1, 1);
-    auto cap = capacity_lithium_ion_t(2.25, 50, 100, 0);
+    auto cap = capacity_lithium_ion_t(2.25, 50, 100, 0, 1);
 
     volt.updateVoltage(&cap, nullptr, 0.);
     EXPECT_NEAR(cap.DOD(), 50, 1e-3);
@@ -292,7 +292,7 @@ TEST_F(ResilienceTest_lib_resilience, DischargeVoltageTable){
     std::vector<double> vals = {99, 0, 50, 2, 0, 3};
     util::matrix_t<double> table(3, 2, &vals);
     auto volt = voltage_table_t(1, 1, 3, table, 0.1, 1);
-    auto cap = capacity_lithium_ion_t(2.25, 50, 100, 0);
+    auto cap = capacity_lithium_ion_t(2.25, 50, 100, 0, 1);
 
     // test discharging
     double req_cur = volt.calculate_current_for_target_w(2.2386, 2.25, 2.25, 0);
@@ -311,14 +311,14 @@ TEST_F(ResilienceTest_lib_resilience, DischargeVoltageTable){
     EXPECT_NEAR(req_cur * v, 0.5, 1e-2);
 
     // test max discharge
-    cap = capacity_lithium_ion_t(2.25, 50, 100, 0);
+    cap = capacity_lithium_ion_t(2.25, 50, 100, 0, 1);
     double max_p = volt.calculate_max_discharge_w(cap.q0(), cap.qmax(), 0, &req_cur);
     cap.updateCapacity(req_cur, 1);
     volt.updateVoltage(&cap, nullptr, 1);
     EXPECT_NEAR(max_p, cap.I() * volt.cell_voltage(), 1e-3);
 
     // test over max discharge
-    cap = capacity_lithium_ion_t(2.25, 50, 100, 0);
+    cap = capacity_lithium_ion_t(2.25, 50, 100, 0, 1);
     req_cur *= 1.5;
     cap.updateCapacity(req_cur, 1);
     volt.updateVoltage(&cap, nullptr, 1);
@@ -326,7 +326,7 @@ TEST_F(ResilienceTest_lib_resilience, DischargeVoltageTable){
 
 
     double overmax_I = volt.calculate_current_for_target_w(max_p * 1.1, cap.q0(), cap.qmax(), 0);
-    cap = capacity_lithium_ion_t(2.25, 50, 100, 0);
+    cap = capacity_lithium_ion_t(2.25, 50, 100, 0, 1);
     cap.updateCapacity(overmax_I, 1);
     volt.updateVoltage(&cap, nullptr, 1);
     EXPECT_GT(max_p, cap.I() * volt.cell_voltage()) << "resulting power should be less than max";
@@ -336,7 +336,7 @@ TEST_F(ResilienceTest_lib_resilience, ChargeVoltageTable){
     std::vector<double> vals = {99, 0, 50, 2, 0, 3};
     util::matrix_t<double> table(3, 2, &vals);
     auto volt = voltage_table_t(1, 1, 3, table, 0.1, 1);
-    auto cap = capacity_lithium_ion_t(2.25, 50, 100, 0);
+    auto cap = capacity_lithium_ion_t(2.25, 50, 100, 0, 1);
 
     // test charging
     double current = 10;
@@ -364,13 +364,13 @@ TEST_F(ResilienceTest_lib_resilience, ChargeVoltageTable){
 
 class thermal_test : public thermal_t{
 public:
-    thermal_test(){_T_battery = 33 + 273.15;};
+    thermal_test(){T_batt_avg = 33 + 273.15;};
     ~thermal_test(){};
 };
 
 TEST_F(ResilienceTest_lib_resilience, VoltageVanadium){
     auto volt = voltage_vanadium_redox_t(1, 1, 1.41, 0.001, 1);
-    auto cap = capacity_lithium_ion_t(11, 30, 100, 0);
+    auto cap = capacity_lithium_ion_t(11, 30, 100, 0, 1);
     auto temp = thermal_test();
 
     volt.updateVoltage(&cap, &temp, 1);

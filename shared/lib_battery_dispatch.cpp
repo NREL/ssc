@@ -70,7 +70,7 @@ void dispatch_t::init(battery_t * Battery, double dt_hour, int current_choice, d
 	_t_at_mode = 1000;
 	_prev_charging = false;
 	_charging = false;
-	_e_max = Battery->battery_voltage()*Battery->battery_charge_maximum()*util::watt_to_kilowatt*0.01*(m_batteryPower->stateOfChargeMax - m_batteryPower->stateOfChargeMin);
+	_e_max = Battery->battery_voltage() * Battery->battery_charge_maximum_lifetime() * util::watt_to_kilowatt * 0.01 * (m_batteryPower->stateOfChargeMax - m_batteryPower->stateOfChargeMin);
 	_grid_recharge = false;
 
 	// initialize powerflow model
@@ -154,16 +154,12 @@ bool dispatch_t::check_constraints(double &I, size_t count)
 	// decrease the current draw if took too much
 	if (I > 0 && _Battery->battery_soc() < m_batteryPower->stateOfChargeMin - tolerance)
 	{
-		double dQ = 0.01 * (m_batteryPower->stateOfChargeMin - _Battery->battery_soc()) * _Battery->battery_charge_maximum_thermal();
-		I -= dQ / _dt_hour;
-		m_batteryPower->powerBatteryTarget = _Battery->calculate_voltage_for_current(I) * I * util::watt_to_kilowatt;
+		m_batteryPower->powerBatteryTarget = _Battery_initial->calculate_max_discharge_kw(&I);
 	}
 	// decrease the current charging if charged too much
 	else if (I < 0 &&_Battery->battery_soc() > m_batteryPower->stateOfChargeMax + tolerance)
 	{
-		double dQ = 0.01 * (_Battery->battery_soc() - m_batteryPower->stateOfChargeMax) * _Battery->battery_charge_maximum_thermal();
-		I += dQ / _dt_hour;
-        m_batteryPower->powerBatteryTarget = _Battery->calculate_voltage_for_current(I) * I * util::watt_to_kilowatt;
+        m_batteryPower->powerBatteryTarget = _Battery_initial->calculate_max_charge_kw(&I);
     }
 	// Don't allow grid charging unless explicitly allowed (reduce charging)
 	if (!m_batteryPower->canGridCharge && I < 0 && m_batteryPower->powerGridToBattery > tolerance)
@@ -194,7 +190,7 @@ bool dispatch_t::check_constraints(double &I, size_t count)
 	    power_to_batt *= m_batteryPower->singlePointEfficiencyACToDC;
     }
 
-    if (m_batteryPower->powerBatteryTarget < 0 && abs(power_to_batt - m_batteryPower->powerBatteryTarget) > tolerance * fabs(power_to_batt)) {
+    if (m_batteryPower->powerBatteryTarget < 0 && abs(power_to_batt - m_batteryPower->powerBatteryTarget) > 0.005 * fabs(power_to_batt)) {
         m_batteryPower->powerBatteryTarget = power_to_batt;
         m_batteryPower->powerBatteryDC = m_batteryPower->powerBatteryTarget;
         I = _Battery_initial->calculate_current_for_power_kw(m_batteryPower->powerBatteryTarget);
@@ -579,7 +575,8 @@ bool dispatch_manual_t::check_constraints(double &I, size_t count)
 				dI = (m_batteryPower->powerPVToGrid  / fabs(m_batteryPower->powerBatteryAC)) *fabs(I);
 
 			// Main problem will be that this tends to overcharge battery maximum SOC, so check
-			double dQ = 0.01 * (m_batteryPower->stateOfChargeMax - _Battery->battery_soc()) * _Battery->battery_charge_maximum();
+			double dQ = 0.01 * (m_batteryPower->stateOfChargeMax - _Battery->battery_soc()) *
+                    _Battery->battery_charge_maximum_lifetime();
 
 			I -= fmin(dI, dQ / _dt_hour);
 		}
@@ -847,19 +844,19 @@ bool dispatch_automatic_t::check_constraints(double &I, size_t count)
 			}
 			// Otherwise safe, (decreasing charging, decreasing discharging)
 			double dQ = dP * _dt_hour * util::kilowatt_to_watt / _Battery->battery_voltage();
-			double dSOC = 100 * dQ / _Battery->battery_charge_maximum();
+			double dSOC = 100 * dQ / _Battery->battery_charge_maximum_lifetime();
 
 			if (iterate) {
 
 				double dI = dP * util::kilowatt_to_watt / _Battery->battery_voltage();
 				if (SOC + dSOC > m_batteryPower->stateOfChargeMax + tolerance) {
 					double dSOC_use = (m_batteryPower->stateOfChargeMax - SOC);
-					double dQ_use = dSOC_use * 0.01 * _Battery->battery_charge_maximum();
+					double dQ_use = dSOC_use * 0.01 * _Battery->battery_charge_maximum_lifetime();
 					dI = dQ_use / _dt_hour;
 				}
 				else if (SOC + dSOC < m_batteryPower->stateOfChargeMin - tolerance) {
 					double dSOC_use = (m_batteryPower->stateOfChargeMin - SOC);
-					double dQ_use = dSOC_use * 0.01 * _Battery->battery_charge_maximum();
+					double dQ_use = dSOC_use * 0.01 * _Battery->battery_charge_maximum_lifetime();
 					dI = dQ_use / _dt_hour;
 				}
 				I -= dI;
@@ -1136,7 +1133,7 @@ void dispatch_automatic_behind_the_meter_t::sort_grid(FILE *p, bool debug, size_
 void dispatch_automatic_behind_the_meter_t::compute_energy(FILE *p, bool debug, double & E_max)
 {
 
-	E_max = _Battery->battery_voltage() *_Battery->battery_charge_maximum()*(m_batteryPower->stateOfChargeMax - m_batteryPower->stateOfChargeMin) *0.01 *util::watt_to_kilowatt;
+	E_max = _Battery->battery_voltage() * _Battery->battery_charge_maximum_lifetime() * (m_batteryPower->stateOfChargeMax - m_batteryPower->stateOfChargeMin) * 0.01 * util::watt_to_kilowatt;
 
 	if (debug)
 	{

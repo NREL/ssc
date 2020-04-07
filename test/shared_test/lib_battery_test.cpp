@@ -17,7 +17,7 @@ TEST_F(BatteryTest, LithiumIonCapacityTest_lib_battery)
 	if (capacityModel) {
 		delete capacityModel;
 	}
-	capacityModel = new capacity_lithium_ion_t(q, SOC_init, SOC_max, SOC_min);
+	capacityModel = new capacity_lithium_ion_t(q, SOC_init, SOC_max, SOC_min, 1);
 
 	// Check that initial capacity is equal to max
 	EXPECT_EQ(capacityModel->SOC(), SOC_max);

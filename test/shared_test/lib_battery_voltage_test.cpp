@@ -14,7 +14,7 @@ TEST_F(voltage_dynamic_lib_battery_voltage_test, NickelMetalHydrideFromPaperTest
     CreateModel(1);
 
     // Figure 3 from A Generic Battery Model for the Dynamic Simulation of Hybrid Electric Vehicles
-    cap = std::unique_ptr<capacity_lithium_ion_t>(new capacity_lithium_ion_t(6.5, 100, 100, 0));
+    cap = std::unique_ptr<capacity_lithium_ion_t>(new capacity_lithium_ion_t(6.5, 100, 100, 0, 1));
 
     model = std::unique_ptr<voltage_t>(new voltage_dynamic_t(1, 1,1.2, 1.4,
             1.25, 1.2, 6.5, 1.3, 5.2, 0.2, 0.0046));

@@ -19,8 +19,6 @@ public:
 	double SOC_init;
 
 	// voltage
-	int n_series;
-	int n_strings;
 	double Vnom_default;
 	double Vfull;
 	double Vexp;
@@ -36,13 +34,10 @@ public:
 	util::matrix_t<double> calendarLifeMatrix;
 	int calendarChoice;
 	int replacementOption;
-	double replacementCapacity;
+	double replacementCapacity = 0;
 
 	// thermal
 	double mass;
-	double length;
-	double width;
-	double height;
 	double Cp;
 	double h;
 	std::vector<double> T_room;
@@ -59,15 +54,13 @@ public:
 
 	void SetUp() override
 	{
-		// capacity
-		q = 1000;
+		// cell capacity
+		q = 2.25;
 		SOC_init = 50;
 		SOC_min = 15;
 		SOC_max = 95;
 
 		// voltage
-		n_series = 139;
-		n_strings = 89;
 		Vnom_default = 3.6;
 		Vfull = 4.1;
 		Vexp = 4.05;
@@ -76,7 +69,7 @@ public:
 		Qexp = 0.04;
 		Qnom = 2.0;
 		C_rate = 0.2;
-		resistance = 0.2;
+		resistance = 0.0002;
 
 		// lifetime
 		double vals[] = { 20, 0, 100, 20, 5000, 80, 20, 10000, 60, 80, 0, 100, 80, 1000, 80, 80, 2000, 60 };
@@ -88,11 +81,8 @@ public:
 
 		// thermal
 		mass = 507;
-		length = 0.58;
-		width = 0.58;
-		height = 0.58;
 		Cp = 1004;
-		h = 500;
+		h = 20;
 		for (size_t i = 0; i < 8760; i++) {
 			T_room.push_back(20 + 273.15);
 		}

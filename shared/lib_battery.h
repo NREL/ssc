@@ -33,8 +33,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Forward declarations to reduce imports
 
-const double low_tolerance = 0.01;
-const double tolerance = 0.001;
+static const double low_tolerance = 0.01;
+static const double tolerance = 0.001;
 
 // Messages
 class message
@@ -64,21 +64,21 @@ class capacity_t
 {
 public:
 
-	capacity_t();
-	capacity_t(double q, double SOC_init, double SOC_max, double SOC_min);
+    capacity_t();
+    capacity_t(double q, double SOC_init, double SOC_max, double SOC_min);
 
-	// deep copy
-	virtual capacity_t * clone() = 0;
+    // deep copy
+    virtual capacity_t * clone() = 0;
 
-	// shallow copy from capacity to this
-	virtual void copy(capacity_t *);
+    // shallow copy from capacity to this
+    virtual void copy(capacity_t *);
 
-	// virtual destructor
-	virtual ~capacity_t(){};
+    // virtual destructor
+    virtual ~capacity_t(){};
 
-	// pure virtual functions (abstract) which need to be defined in derived classes
-	virtual void updateCapacity(double &I, double dt) = 0;
-	virtual void updateCapacityForThermal(double capacity_percent)=0;
+    // pure virtual functions (abstract) which need to be defined in derived classes
+    virtual void updateCapacity(double &I, double dt) = 0;
+    virtual void updateCapacityForThermal(double capacity_percent)=0;
 	virtual void updateCapacityForLifetime(double capacity_percent)=0;
 	virtual void replace_battery(double replacement_percent)=0;
 
@@ -90,42 +90,44 @@ public:
 	virtual double q1() = 0; // available charge
 	virtual double q10() = 0; // capacity at 10 hour discharge rate
 
-	void check_charge_change();
-	void check_SOC();
-	void update_SOC();
+    void check_charge_change();
+    void check_SOC();
+    void update_SOC();
 
-	// common outputs
-	double SOC();
-	double DOD_max();
-	double DOD();
-	double prev_DOD();
-	double q0();
-	double qmax();
-	double qmax_thermal();
-	double I();
-	bool chargeChanged();
-	double I_loss();
-	int charge_operation();
+    // common outputs
+    double SOC_min();
+    double SOC_max();
+    double SOC();
+    double DOD_max();
+    double DOD();
+    double prev_DOD();
+    double q0();
+    double qmax();
+    double qmax_thermal();
+    double I();
+    bool chargeChanged();
+    double I_loss();
+    int charge_operation();
 
-	enum { CHARGE, NO_CHARGE, DISCHARGE };
+    enum { CHARGE, NO_CHARGE, DISCHARGE };
 
 protected:
-	double _q0;  // [Ah] - Total capacity at timestep
-	double _qmax; // [Ah] - maximum possible capacity
-	double _qmax_thermal; // [Ah] - maximum capacity adjusted for temperature affects
-	double _qmax0; // [Ah] - original maximum capacity
-	double _I;   // [A]  - Current draw during last step
-	double _I_loss; // [A] - Lifetime and thermal losses
-	double _SOC; // [%] - State of Charge
-	double _SOC_init; // [%] - Initial SOC
-	double _SOC_max; // [%] - Maximum SOC
-	double _SOC_min; // [%] - Minimum SOC
-	double _DOD; // [%] - Depth of Discharge
-	double _DOD_prev; // [%] - Depth of Discharge of previous step
-	double _dt_hour; // [hr] - Timestep in hours
-	bool _chargeChange; // [true/false] - indicates if charging state has changed since last step
-	int _prev_charge; // {CHARGE, NO_CHARGE, DISCHARGE}
-	int _charge; // {CHARGE, NO_CHARGE, DISCHARGE}
+    double _q0;  // [Ah] - Total capacity at timestep
+    double _qmax; // [Ah] - maximum possible capacity
+    double _qmax_thermal; // [Ah] - maximum capacity adjusted for temperature affects
+    double _qmax0; // [Ah] - original maximum capacity
+    double _I;   // [A]  - Current draw during last step
+    double _I_loss; // [A] - Lifetime and thermal losses
+    double _SOC; // [%] - State of Charge
+    double _SOC_init; // [%] - Initial SOC
+    double _SOC_max; // [%] - Maximum SOC
+    double _SOC_min; // [%] - Minimum SOC
+    double _DOD; // [%] - Depth of Discharge
+    double _DOD_prev; // [%] - Depth of Discharge of previous step
+    double _dt_hour; // [hr] - Timestep in hours
+    bool _chargeChange; // [true/false] - indicates if charging state has changed since last step
+    int _prev_charge; // {CHARGE, NO_CHARGE, DISCHARGE}
+    int _charge; // {CHARGE, NO_CHARGE, DISCHARGE}
 };
 
 /*
@@ -135,55 +137,55 @@ class capacity_kibam_t : public capacity_t
 {
 public:
 
-	// Public APIs
-	capacity_kibam_t();
-	capacity_kibam_t(double q20, double t1, double q1, double q10, double SOC_init, double SOC_max, double SOC_min);
-	~capacity_kibam_t(){}
+    // Public APIs
+    capacity_kibam_t();
+    capacity_kibam_t(double q20, double t1, double q1, double q10, double SOC_init, double SOC_max, double SOC_min, double dt_hr);
+    ~capacity_kibam_t(){}
 
-	// deep copy
-	capacity_kibam_t * clone();
+    // deep copy
+    capacity_kibam_t * clone();
 
-	// copy from capacity to this
-	void copy(capacity_t *);
+    // copy from capacity to this
+    void copy(capacity_t *);
 
-	void updateCapacity(double &I, double dt);
-	void updateCapacityForThermal(double capacity_percent);
-	void updateCapacityForLifetime(double capacity_percent);
-	void replace_battery(double replacement_percent);
-	double q1(); // Available charge
-	double q2(); // Bound charge
-	double q10(); // Capacity at 10 hour discharge rate
-	double q20(); // Capacity at 20 hour discharge rate
+    void updateCapacity(double &I, double dt);
+    void updateCapacityForThermal(double capacity_percent);
+    void updateCapacityForLifetime(double capacity_percent);
+    void replace_battery(double replacement_percent);
+    double q1(); // Available charge
+    double q2(); // Bound charge
+    double q10(); // Capacity at 10 hour discharge rate
+    double q20(); // Capacity at 20 hour discharge rate
 
 protected:
-	// unique to kibam
-	double c_compute(double F, double t1, double t2, double k_guess);
-	double q1_compute(double q10, double q0, double dt, double I); // may remove some inputs, use class variables
-	double q2_compute(double q20, double q0, double dt, double I); // may remove some inputs, use class variables
-	double Icmax_compute(double q10, double q0, double dt);
-	double Idmax_compute(double q10, double q0, double dt);
-	double qmax_compute();
-	double qmax_of_i_compute(double T);
-	void parameter_compute();
+    // unique to kibam
+    double c_compute(double F, double t1, double t2, double k_guess);
+    double q1_compute(double q10, double q0, double dt, double I); // may remove some inputs, use class variables
+    double q2_compute(double q20, double q0, double dt, double I); // may remove some inputs, use class variables
+    double Icmax_compute(double q10, double q0, double dt);
+    double Idmax_compute(double q10, double q0, double dt);
+    double qmax_compute();
+    double qmax_of_i_compute(double T);
+    void parameter_compute();
 
-	// parameters for finding c, k, qmax
-	double _t1;  // [h] - discharge rate for capacity at _q1
-	double _t2;  // [h] - discharge rate for capacity at _q2
-	double _q1;  // [Ah]- capacity at discharge rate t1
-	double _q2;  // [Ah] - capacity at discharge rate t2
-	double _F1;  // [unitless] - internal ratio computation
-	double _F2;  // [unitless] - internal ratio computation
+    // parameters for finding c, k, qmax
+    double _t1;  // [h] - discharge rate for capacity at _q1
+    double _t2;  // [h] - discharge rate for capacity at _q2
+    double _q1;  // [Ah]- capacity at discharge rate t1
+    double _q2;  // [Ah] - capacity at discharge rate t2
+    double _F1;  // [unitless] - internal ratio computation
+    double _F2;  // [unitless] - internal ratio computation
 
-	// model parameters
-	double _c;  // [0-1] - capacity fraction
-	double _k;  // [1/hour] - rate constant
+    // model parameters
+    double _c;  // [0-1] - capacity fraction
+    double _k;  // [1/hour] - rate constant
 
-	// charge which changes with time
-	double _q1_0; // [Ah] - charge available
-	double _q2_0; // [Ah] - charge bound
-	double _q10; //  [Ah] - Capacity at 10 hour discharge rate
-	double _q20; // [Ah] - Capacity at 20 hour discharge rate
-	double _I20; // [A]  - Current at 20 hour discharge rate
+    // charge which changes with time
+    double _q1_0; // [Ah] - charge available
+    double _q2_0; // [Ah] - charge bound
+    double _q10; //  [Ah] - Capacity at 10 hour discharge rate
+    double _q20; // [Ah] - Capacity at 20 hour discharge rate
+    double _I20; // [A]  - Current at 20 hour discharge rate
 };
 
 /*
@@ -192,24 +194,24 @@ Lithium Ion specific capacity model
 class capacity_lithium_ion_t : public capacity_t
 {
 public:
-	capacity_lithium_ion_t();
-	capacity_lithium_ion_t(double q, double SOC_init, double SOC_max, double SOC_min);
-	~capacity_lithium_ion_t(){};
+    capacity_lithium_ion_t();
+    capacity_lithium_ion_t(double q, double SOC_init, double SOC_max, double SOC_min, double dt_hr);
+    ~capacity_lithium_ion_t(){};
 
-	// deep copy
-	capacity_lithium_ion_t * clone();
+    // deep copy
+    capacity_lithium_ion_t * clone();
 
-	// copy from capacity to this
-	void copy(capacity_t *);
+    // copy from capacity to this
+    void copy(capacity_t *);
 
-	// override public api
-	void updateCapacity(double &I, double dt);
-	void updateCapacityForThermal(double capacity_percent);
-	void updateCapacityForLifetime(double capacity_percent);
-	void replace_battery(double replacement_percent);
+    // override public api
+    void updateCapacity(double &I, double dt);
+    void updateCapacityForThermal(double capacity_percent);
+    void updateCapacityForLifetime(double capacity_percent);
+    void replace_battery(double replacement_percent);
 
-	double q1(); // Available charge
-	double q10(); // Capacity at 10 hour discharge rate
+    double q1(); // Available charge
+    double q10(); // Capacity at 10 hour discharge rate
 
 protected:
 };
@@ -622,50 +624,54 @@ Thermal classes
 class thermal_t
 {
 public:
-	thermal_t();
-	thermal_t(double dtHour, double mass, double length, double width, double height,
-		double Cp, double h,
-		std::vector<double> T_room,
-		const util::matrix_t<double> &cap_vs_temp);
+    thermal_t();
+    thermal_t(double dt_hour, double mass, double length, double width, double height, double R, double Cp,
+              double h, std::vector<double> T_room_K, const util::matrix_t<double> &c_vs_t);
 
-	// deep copy
-	thermal_t * clone();
+    thermal_t(const thermal_t& thermal);
 
-	// copy thermal to this
-	void copy(thermal_t *);
 
-	void updateTemperature(double I, double R, double dt, size_t lifetimeIndex);
-	void replace_battery(size_t lifetimeIndex);
+    // deep copy
+    thermal_t * clone();
 
-	// outputs
-	double T_battery();
-	double capacity_percent();
-	message get_messages(){ return _message; }
+    // copy thermal to this
+    void copy(thermal_t *);
 
-protected:
-	double f(double T_battery, double I, size_t lifetimeIndex);
-	double rk4(double I, double dt, size_t lifetimeIndex);
-	double trapezoidal(double I, double dt, size_t lifetimeIndex);
-	double implicit_euler(double I, double dt, size_t lifetimeIndex);
+    void calcCapacity();
+    void calcTemperature(double I, size_t lifetimeIndex);
+    void updateTemperature(double I, size_t lifetimeIndex);
+    void replace_battery(size_t lifetimeIndex);
+
+    // outputs
+    double T_battery();
+    double capacity_percent();
+    message get_messages(){ return _message; }
 
 protected:
 
-	util::matrix_t<double> _cap_vs_temp;
+    util::matrix_t<double> _cap_vs_temp;
 
-	double _dt_hour;    // [hr] - timestep
-	double _mass;		// [kg]
-	double _length;		// [m]
-	double _width;		// [m]
-	double _height;		// [m]
-	double _Cp;			// [J/KgK] - battery specific heat capacity
-	double _h;			// [Wm2K] - general heat transfer coefficient
-	std::vector<double> _T_room; // [K] - storage room temperature
-	double _R;			// [Ohm] - internal resistance
-	double _A;			// [m2] - exposed surface area
-	double _T_battery;   // [K]
-	double _capacity_percent; //[%]
-	double _T_max;		 // [K]
-	message _message;
+    double dt_sec;     // [sec] - timestep
+    double _mass;		// [kg]
+    double _length;		// [m]
+    double _width;		// [m]
+    double _height;		// [m]
+    double _Cp;			// [J/KgK] - battery specific heat capacity
+    double _h;			// [Wm2K] - general heat transfer coefficient
+    double _R;			// [Ohm] - internal resistance
+    double _A;			// [m2] - exposed surface area
+    std::vector<double> T_room_K;   // can be year one hourly data or a single value constant throughout year
+    double T_room_init;   // [K]
+    double T_batt_init;
+    double T_batt_avg;
+    double _capacity_percent; //[%]
+    double _T_max;		 // [K]
+
+    // calc constants for heat transfer
+    double next_time_at_current_T_room;
+    double t_threshold;     // time_at_current_T_room after which diffusion term < tolerance
+
+    message _message;
 
 };
 /**
@@ -788,6 +794,7 @@ public:
 	double battery_charge_needed(double SOC_max);
 	double battery_charge_total();
 	double battery_charge_maximum();
+	double battery_charge_maximum_lifetime();
 	double battery_charge_maximum_thermal();
 	double battery_energy_nominal();
 	double battery_energy_to_fill(double SOC_max);
