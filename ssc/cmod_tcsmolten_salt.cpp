@@ -894,9 +894,6 @@ public:
         //int n_steps_fixed = (int)( (sim_setup.m_sim_time_end - sim_setup.m_sim_time_start) * steps_per_hour / 3600. ) ; 
         sim_setup.m_report_step = 3600.0 / (double)steps_per_hour;  //[s]
 
-
-
-
         // ***********************************************
         // ***********************************************
         // Power cycle
