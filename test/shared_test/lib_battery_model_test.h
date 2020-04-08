@@ -134,7 +134,7 @@ static void compareState(std::unique_ptr<battery_t>&model, const battery_state& 
     auto cap = model->capacity_model();
     compareState(cap, state.capacity, msg);
 
-    EXPECT_NEAR(model->battery_voltage(), state.batt_voltage, 0.01);
+    EXPECT_NEAR(model->battery_voltage(), state.batt_voltage, 0.01) << msg;
 
     auto l = model->lifetime_model();
     compareState(l, state.lifetime, msg);
