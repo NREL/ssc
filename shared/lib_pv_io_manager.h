@@ -227,6 +227,7 @@ struct Simulation_IO
 	size_t stepsPerHour;
 	double dtHour;
 	flag useLifetimeOutput;
+	flag saveLifetimeVars;
 };
 
 /***

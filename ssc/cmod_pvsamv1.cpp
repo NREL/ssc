@@ -45,6 +45,7 @@ static var_info _cm_vtab_pvsamv1[] = {
     {SSC_INPUT, SSC_ARRAY,    "dc_lifetime_losses",                   "Lifetime daily DC losses",                            "%",      "",                                                                                                                                                                                      "Lifetime",                                              "en_dc_lifetime_losses=1",            "",                    "" },
     {SSC_INPUT, SSC_NUMBER,   "en_ac_lifetime_losses",                "Enable lifetime daily AC losses",                     "0/1",    "",                                                                                                                                                                                      "Lifetime",                                              "?=0",                                "INTEGER,MIN=0,MAX=1", "" },
     {SSC_INPUT, SSC_ARRAY,    "ac_lifetime_losses",                   "Lifetime daily AC losses",                            "%",      "",                                                                                                                                                                                      "Lifetime",                                              "en_ac_lifetime_losses=1",            "",                    "" },
+	{SSC_INPUT, SSC_NUMBER,   "save_full_lifetime_variables",         "Save and display vars for full lifetime",             "0/1",    "",                                                                                                                                                                                      "Lifetime",                                              "system_use_lifetime_output=1",       "INTEGER,MIN=0,MAX=1", "" },
 
 	   // misc inputs
     {SSC_INPUT, SSC_NUMBER,   "en_snow_model",                        "Toggle snow loss estimation",                         "0/1",    "",                                                                                                                                                                                      "Losses",                                                "?=0",                                "BOOLEAN",             "" },
@@ -941,6 +942,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 	double ts_hour = Simulation->dtHour;
 	size_t step_per_hour = Simulation->stepsPerHour;
 	bool system_use_lifetime_output = Simulation->useLifetimeOutput;
+	bool save_full_lifetime_variables = Simulation->saveLifetimeVars;
 
 	// Get Irradiance Inputs for now (eventually models can use these directly)
 	weather_header hdr = Irradiance->weatherHeader;
@@ -1318,7 +1320,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 					}
 
 					// record sub-array plane of array output before computing shading and soiling
-					if (iyear == 0 || system_use_lifetime_output == 1)
+					if (iyear == 0 || save_full_lifetime_variables == 1)
 					{
 						if (radmode != irrad::POA_R)
 							PVSystem->p_poaNominalFront[nn][idx] = (ssc_number_t)((ibeam + iskydiff + ignddiff));
@@ -1365,7 +1367,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 						{
 							throw exec_error("pvsamv1", util::format("Error calculating shading factor for subarray %d", nn));
 						}
-						if (iyear == 0 || system_use_lifetime_output == 1)
+						if (iyear == 0 || save_full_lifetime_variables == 1)
 						{
 #ifdef SHADE_DB_OUTPUTS
 							p_shadedb_gpoa[nn][idx] = (ssc_number_t)shadedb_gpoa;
@@ -1463,7 +1465,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
                                 iskydiff *= Subarrays[nn]->selfShadingOutputs.m_diffuse_derate;
                                 ignddiff *= Subarrays[nn]->selfShadingOutputs.m_reflected_derate;
 
-                                if (iyear == 0 || system_use_lifetime_output == 1)
+                                if (iyear == 0 || save_full_lifetime_variables == 1)
                                 {
                                     PVSystem->p_derateSelfShading[nn][idx] = (ssc_number_t)1;
                                     PVSystem->p_derateLinear[nn][idx] = (ssc_number_t)(1 - shad1xf);
@@ -1479,7 +1481,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 								iskydiff *= Subarrays[nn]->selfShadingOutputs.m_diffuse_derate;
                                 ignddiff *= Subarrays[nn]->selfShadingOutputs.m_reflected_derate;
 
-								if (iyear == 0 || system_use_lifetime_output == 1)
+								if (iyear == 0 || save_full_lifetime_variables == 1)
 								{
 									PVSystem->p_derateSelfShading[nn][idx] = (ssc_number_t)1;
 									PVSystem->p_derateLinear[nn][idx] = (ssc_number_t)(1 - Subarrays[nn]->selfShadingOutputs.m_shade_frac_fixed);
@@ -1493,7 +1495,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 							    iskydiff *= Subarrays[nn]->selfShadingOutputs.m_diffuse_derate;
 								ignddiff *= Subarrays[nn]->selfShadingOutputs.m_reflected_derate;
 
-								if (iyear == 0 || system_use_lifetime_output == 1)
+								if (iyear == 0 || save_full_lifetime_variables == 1)
 								{
 									PVSystem->p_derateSelfShading[nn][idx] = (ssc_number_t)1;
                                     PVSystem->p_derateLinear[nn][idx] = (ssc_number_t)1;
@@ -1510,7 +1512,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 								iskydiff *= Subarrays[nn]->selfShadingOutputs.m_diffuse_derate;
 								ignddiff *= Subarrays[nn]->selfShadingOutputs.m_reflected_derate;
 
-								if (iyear == 0 || system_use_lifetime_output == 1)
+								if (iyear == 0 || save_full_lifetime_variables == 1)
 								{
 									PVSystem->p_derateSelfShadingDiffuse[nn][idx] = (ssc_number_t)Subarrays[nn]->selfShadingOutputs.m_diffuse_derate;
 									PVSystem->p_derateSelfShadingReflected[nn][idx] = (ssc_number_t)Subarrays[nn]->selfShadingOutputs.m_reflected_derate;
@@ -1565,7 +1567,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 					ts_accum_poa_rear += ipoa_rear[nn] * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
 					ts_accum_poa_rear_after_losses = ts_accum_poa_rear * (1 - Subarrays[nn]->rearIrradianceLossPercent);
 
-					if (iyear == 0 || system_use_lifetime_output == 1)
+					if (iyear == 0 || save_full_lifetime_variables == 1)
 					{
 						// save sub-array level outputs
 						PVSystem->p_poaShadedFront[nn][idx] = (ssc_number_t)poashad;
@@ -1799,14 +1801,14 @@ void cm_pvsamv1::exec( ) throw (general_error)
 								{
 									int nn = SubarraysOnMpptInput[nSubarray]; //get the index of the subarray we're checking here
 
-									if (iyear == 0 || system_use_lifetime_output == 1) mpptVoltageClipping[nn] = out[nn].Power; //initialize the voltage clipping loss with the power at module MPP, subtract from this later for the actual MPPT clipping loss
+									if (iyear == 0 || save_full_lifetime_variables == 1) mpptVoltageClipping[nn] = out[nn].Power; //initialize the voltage clipping loss with the power at module MPP, subtract from this later for the actual MPPT clipping loss
 
 									//recalculate power at the correct voltage
 									double module_voltage = avgVoltage / (double)Subarrays[nn]->nModulesPerString;
 									(*Subarrays[nn]->Module->cellTempModel)(in[nn], *Subarrays[nn]->Module->moduleModel, module_voltage, tcell);
 									(*Subarrays[nn]->Module->moduleModel)(in[nn], tcell, module_voltage, out[nn]);
 
-									if (iyear == 0 || system_use_lifetime_output == 1)	mpptVoltageClipping[nn] -= out[nn].Power; //subtract the power that remains after voltage clipping in order to get the total loss. if no power was lost, all the power will be subtracted away again.
+									if (iyear == 0 || save_full_lifetime_variables == 1)	mpptVoltageClipping[nn] -= out[nn].Power; //subtract the power that remains after voltage clipping in order to get the total loss. if no power was lost, all the power will be subtracted away again.
 								}
 							}
 						}
@@ -1849,7 +1851,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 						dcStringVoltage[nn].push_back(Subarrays[nn]->Module->dcVoltage * Subarrays[nn]->nModulesPerString);
 
 						// Output front-side irradiance after the reflection (IAM) loss - needs to be after the module model for now because reflection effects are part of the module model
-						if (iyear == 0 || system_use_lifetime_output == 1)
+						if (iyear == 0 || save_full_lifetime_variables == 1)
 						{
 							ipoa_front[nn] *= out[nn].AOIModifier;
 							PVSystem->p_poaFront[nn][idx] = (radmode == irrad::POA_R) ? (ssc_number_t)ipoa[nn] : (ssc_number_t)(ipoa_front[nn]);
@@ -1873,7 +1875,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 
 					// self-shading derate (by default it is 1.0 if disbled)
 					Subarrays[nn]->Module->dcPowerW *= Subarrays[nn]->poa.nonlinearDCShadingDerate;
-					if (iyear == 0 || system_use_lifetime_output == 1) mpptVoltageClipping[nn] *= Subarrays[nn]->poa.nonlinearDCShadingDerate;
+					if (iyear == 0 || save_full_lifetime_variables == 1) mpptVoltageClipping[nn] *= Subarrays[nn]->poa.nonlinearDCShadingDerate;
 
 					// Sara 1/25/16 - shading database derate applied to dc only
 					// shading loss applied to beam if not from shading database
@@ -1881,7 +1883,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 
 					// scale power and mppt voltage clipping to subarray dimensions
 					Subarrays[nn]->dcPowerSubarray = Subarrays[nn]->Module->dcPowerW * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
-					if (iyear == 0 || system_use_lifetime_output == 1) mpptVoltageClipping[nn] *= Subarrays[nn]->nModulesPerString* Subarrays[nn]->nStrings;
+					if (iyear == 0 || save_full_lifetime_variables == 1) mpptVoltageClipping[nn] *= Subarrays[nn]->nModulesPerString* Subarrays[nn]->nStrings;
 
 					// Calculate and apply snow coverage losses if activated
 					if (PVSystem->enableSnowModel)
@@ -1895,7 +1897,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 								throw exec_error("pvsamv1", Subarrays[nn]->snowModel.msg);
 						}
 
-						if (iyear == 0 || system_use_lifetime_output == 1)
+						if (iyear == 0 || save_full_lifetime_variables == 1)
 						{
 							PVSystem->p_snowLoss[nn][idx] = (ssc_number_t)(util::watt_to_kilowatt*Subarrays[nn]->dcPowerSubarray*smLoss);
 							PVSystem->p_snowLossTotal[idx] += (ssc_number_t)(util::watt_to_kilowatt*Subarrays[nn]->dcPowerSubarray*smLoss);
@@ -1905,12 +1907,12 @@ void cm_pvsamv1::exec( ) throw (general_error)
 						}
 
 						Subarrays[nn]->Module->dcPowerW *= (1 - smLoss);
-						if (iyear == 0 || system_use_lifetime_output == 1) mpptVoltageClipping[nn] *= (1 - smLoss);
+						if (iyear == 0 || save_full_lifetime_variables == 1) mpptVoltageClipping[nn] *= (1 - smLoss);
 					}
 
 
 					//assign gross outputs per subarray at this point
-					if (iyear == 0 || system_use_lifetime_output == 1)
+					if (iyear == 0 || save_full_lifetime_variables == 1)
 					{
 						//Gross DC power
 						dc_gross[nn] += Subarrays[nn]->dcPowerSubarray*util::watt_to_kilowatt*ts_hour; //power W to	energy kWh
@@ -1935,7 +1937,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 					dcPowerNetPerSubarray[nn] = Subarrays[nn]->dcPowerSubarray * (1 - Subarrays[nn]->dcLossTotalPercent);
 
 					//module degradation and lifetime DC losses apply to all subarrays
-					if (system_use_lifetime_output == 1)
+					if (save_full_lifetime_variables == 1)
 						dcPowerNetPerSubarray[nn] *= PVSystem->dcDegradationFactor[iyear + 1];
 
 					//dc adjustment factors apply to all subarrays
@@ -1943,7 +1945,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 					dcPowerNetPerSubarray[nn] *= dc_haf(hour);
 
 					//lifetime daily DC losses apply to all subarrays and should be applied last. Only applied if they are enabled.
-					if (system_use_lifetime_output == 1 && PVSystem->enableDCLifetimeLosses)
+					if (save_full_lifetime_variables == 1 && PVSystem->enableDCLifetimeLosses)
 					{
 						//current index of the lifetime daily DC losses is the number of years that have passed (iyear, because it is 0-indexed) * the number of days + the number of complete days that have passed
 						int dc_loss_index = (int)iyear * 365 + (int)floor(hour / 24); //in units of days
@@ -1976,7 +1978,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 					Irradiance->p_sunUpOverHorizon[idx] = (ssc_number_t)sunup;
 				}
 
-				if (iyear == 0 || system_use_lifetime_output == 1)
+				if (iyear == 0 || save_full_lifetime_variables == 1)
 				{
 					// Sum of radiation power on each subarray for the current timestep [kW]
 					PVSystem->p_poaFrontNominalTotal[idx] = (ssc_number_t)(ts_accum_poa_front_nom * util::watt_to_kilowatt);
@@ -2120,7 +2122,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 					annual_ac_loss_ond += sharedInverter->dcWiringLoss_ond_kW * ts_hour; // (TR)
 				}
 
-				if (iyear == 0 || system_use_lifetime_output == 1)
+				if (iyear == 0 || save_full_lifetime_variables == 1)
 				{
 					PVSystem->p_inverterEfficiency[idx] = (ssc_number_t)(sharedInverter->efficiencyAC);
 					PVSystem->p_inverterClipLoss[idx] = (ssc_number_t)(sharedInverter->powerClipLoss_kW);
@@ -2165,7 +2167,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 					annual_xfmr_loss += xfmr_loss;
 				}
 
-				if (iyear == 0 || system_use_lifetime_output == 1)
+				if (iyear == 0 || save_full_lifetime_variables == 1)
 				{
 					PVSystem->p_transformerNoLoadLoss[idx] = PVSystem->transformerNoLoadLossFraction;
 					PVSystem->p_transformerLoadLoss[idx] = xfmr_ll;
