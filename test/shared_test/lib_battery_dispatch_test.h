@@ -133,6 +133,7 @@ struct DispatchProperties {
         delete sandia;
         delete partload;
         delete ond;
+        delete ur;
     }
 };
 
