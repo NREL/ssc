@@ -2132,8 +2132,8 @@ void cm_pvsamv1::exec( ) throw (general_error)
 
 				// Apply transformer loss
 				ssc_number_t transformerRatingkW = static_cast<ssc_number_t>(PVSystem->ratedACOutput * util::watt_to_kilowatt);
-				ssc_number_t xfmr_ll = PVSystem->transformerLoadLossFraction;
-				ssc_number_t xfmr_nll = PVSystem->transformerNoLoadLossFraction * static_cast<ssc_number_t>(ts_hour * transformerRatingkW);
+				ssc_number_t xfmr_ll = PVSystem->transformerLoadLossFraction / step_per_hour;
+				ssc_number_t xfmr_nll = PVSystem->transformerNoLoadLossFraction * static_cast<ssc_number_t>(ts_hour /step_per_hour * transformerRatingkW);
 
 				if (PVSystem->transformerLoadLossFraction != 0 && transformerRatingkW != 0)
 				{
