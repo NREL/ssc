@@ -22,7 +22,7 @@ capacity_t()
     params->qmax_init = q;
     state.I = 0.;
     state.I_loss = 0.;
-    params->dt_hour = dt_hour;
+    params->dt_hr = dt_hour;
 
     // Initialize SOC, DOD
     state.SOC = SOC_init;
@@ -88,7 +88,7 @@ void capacity_t::check_SOC()
     {
         if (fabs(state.I) > tolerance)
         {
-            state.I += (state.q0 - q_upper) / params->dt_hour;
+            state.I += (state.q0 - q_upper) / params->dt_hr;
             if (state.I / I_orig < 0)
                 state.I = 0;
         }
@@ -99,7 +99,7 @@ void capacity_t::check_SOC()
     {
         if (fabs(state.I) > tolerance)
         {
-            state.I += (state.q0 - q_lower) / params->dt_hour;
+            state.I += (state.q0 - q_lower) / params->dt_hr;
             if (state.I / I_orig < 0)
                 state.I = 0;
         }
@@ -285,7 +285,7 @@ void capacity_kibam_t::updateCapacity(double &I, double dt_hour)
     state.DOD_prev = state.DOD;
     state.I_loss = 0.;
     state.I = I;
-    params->dt_hour = dt_hour;
+    params->dt_hr = dt_hour;
 
     double Idmax = 0.;
     double Icmax = 0.;
@@ -348,7 +348,7 @@ void capacity_kibam_t::updateCapacityForThermal(double capacity_percent)
         state.q0 *= p;
         state.leadacid.q1 *= p;
         state.leadacid.q2 *= p;
-        state.I_loss += (q0_orig - state.q0) / params->dt_hour;
+        state.I_loss += (q0_orig - state.q0) / params->dt_hr;
     }
     update_SOC();
 }
@@ -367,7 +367,7 @@ void capacity_kibam_t::updateCapacityForLifetime(double capacity_percent)
         state.q0 *= p;
         state.leadacid.q1 *= p;
         state.leadacid.q2 *= p;
-        state.I_loss += (q0_orig - state.q0) / params->dt_hour;
+        state.I_loss += (q0_orig - state.q0) / params->dt_hr;
     }
     update_SOC();
 }
@@ -415,7 +415,7 @@ void capacity_lithium_ion_t::updateCapacity(double &I, double dt)
 {
     state.DOD_prev = state.DOD;
     state.I_loss = 0.;
-    params->dt_hour = dt;
+    params->dt_hr = dt;
     state.I = I;
 
     // compute charge change ( I > 0 discharging, I < 0 charging)
@@ -439,7 +439,7 @@ void capacity_lithium_ion_t::updateCapacityForThermal(double capacity_percent)
     state.qmax_thermal = state.qmax_lifetime*capacity_percent*0.01;
     if (state.q0 > state.qmax_thermal)
     {
-        state.I_loss += (state.q0 - state.qmax_thermal) / params->dt_hour;
+        state.I_loss += (state.q0 - state.qmax_thermal) / params->dt_hr;
         state.q0 = state.qmax_thermal;
     }
     update_SOC();
@@ -453,7 +453,7 @@ void capacity_lithium_ion_t::updateCapacityForLifetime(double capacity_percent)
 
     if (state.q0 > state.qmax_lifetime)
     {
-        state.I_loss += (state.q0 - state.qmax_lifetime) / params->dt_hour;
+        state.I_loss += (state.q0 - state.qmax_lifetime) / params->dt_hr;
         state.q0 = state.qmax_lifetime;
     }
 

@@ -525,7 +525,8 @@ void battery_t::runVoltageModel()
 
 void battery_t::runLifetimeModel(size_t lifetimeIndex)
 {
-    _lifetime->runLifetimeModels(lifetimeIndex, false, 0, 0, thermal_model()->T_battery());
+    _lifetime->runLifetimeModels(lifetimeIndex,
+            _capacity->chargeChanged(), _capacity->prev_DOD(), _capacity->DOD(), thermal_model()->T_battery());
 	if (_lifetime->check_replaced())
 	{
 		_capacity->replace_battery(_lifetime->get_replacement_percent());

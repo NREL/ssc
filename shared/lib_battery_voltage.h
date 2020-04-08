@@ -1,6 +1,7 @@
 #ifndef SAM_SIMULATION_CORE_LIB_BATTERY_VOLTAGE_H
 #define SAM_SIMULATION_CORE_LIB_BATTERY_VOLTAGE_H
 
+#include <ostream>
 #include <vector>
 
 #include "lib_util.h"
@@ -28,10 +29,14 @@ struct voltage_params {
 
     //  depth-of-discharge [%] and cell voltage [V] pairs
     std::vector<std::pair<double, double>> m_voltage_table;
+
+    friend std::ostream& operator<<(std::ostream& os , const voltage_params& p);
 };
 
 struct voltage_state {
     double cell_voltage;         // closed circuit voltage per cell [V]
+
+    friend std::ostream& operator<<(std::ostream& os , const voltage_state& p);
 };
 
 /*
@@ -73,6 +78,7 @@ public:
 
     enum VOLTAGE_CHOICE{VOLTAGE_MODEL, VOLTAGE_TABLE};
 
+    voltage_state get_state() {return state;}
 protected:
 
     std::shared_ptr<voltage_params> params;
@@ -85,7 +91,7 @@ class voltage_table_t : public voltage_t
 public:
     voltage_table_t(int num_cells_series, int num_strings, double voltage, util::matrix_t<double> &voltage_table, double R, double dt_hour);
     voltage_table_t(const voltage_table_t& rhs);
-    voltage_table_t & operator=(const voltage_t& rhs);
+    voltage_table_t & operator=(const voltage_t& rhs) override;
 
     voltage_t* clone() override;
 
@@ -121,7 +127,7 @@ public:
 
     voltage_dynamic_t(const voltage_dynamic_t & rhs);
 
-    voltage_dynamic_t & operator=(const voltage_t& rhs);
+    voltage_dynamic_t & operator=(const voltage_t& rhs) override;
 
     voltage_t* clone() override;
 
@@ -170,7 +176,7 @@ public:
 
     voltage_vanadium_redox_t(const voltage_vanadium_redox_t &rhs);
 
-    voltage_vanadium_redox_t & operator=(const voltage_t& rhs);
+    voltage_vanadium_redox_t & operator=(const voltage_t& rhs) override;
 
     voltage_t* clone() override;
 

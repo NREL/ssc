@@ -162,7 +162,7 @@ TEST_F(lib_battery_test, runTestCycleAt1C){
     compareState(batteryModel, s, "runTestCycleAt1C: 3");
 
     EXPECT_NEAR(capacity_passed, 361257, 1000) << "Current passing through cell";
-    double qmax = fmax(s.capacity.qmax, s.capacity.qmax_thermal);
+    double qmax = fmax(s.capacity.qmax_lifetime, s.capacity.qmax_thermal);
     EXPECT_NEAR(qmax/q, .93, 0.01) << "capacity relative to max capacity";
 }
 
@@ -222,6 +222,22 @@ TEST_F(lib_battery_test, runTestCycleAt3C){
 
 
     EXPECT_NEAR(capacity_passed, 360643, 100) << "Current passing through cell";
-    double qmax = fmax(s.capacity.qmax, s.capacity.qmax_thermal);
+    double qmax = fmax(s.capacity.qmax_lifetime, s.capacity.qmax_thermal);
     EXPECT_NEAR(qmax/q, 0.9209, 0.01) << "capacity relative to max capacity";
+}
+
+TEST_F(lib_battery_test, runDuplicates) {
+    auto cap_state = batteryModel->capacity_model()->state;
+    auto volt_state = batteryModel->voltage_model()->get_state();
+
+    auto Battery = new battery_t(*batteryModel);
+
+    double I = 10;
+    Battery->run(0, I);
+
+    auto cap_state2 = batteryModel->capacity_model()->state;
+    auto volt_state2 = batteryModel->voltage_model()->get_state();
+
+    auto cap_state3 = Battery->capacity_model()->state;
+    auto volt_state3 = Battery->voltage_model()->get_state();
 }

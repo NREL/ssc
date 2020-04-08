@@ -25,6 +25,8 @@ struct capacity_state{
         double q1;  // [Ah]- capacity at discharge rate t1
         double q2;  // [Ah] - capacity at discharge rate t2
     } leadacid;
+
+    friend std::ostream& operator<<(std::ostream& os , const capacity_state& p);
 };
 
 struct capacity_params{
@@ -32,7 +34,7 @@ struct capacity_params{
     double SOC_init; // [%] - Initial SOC
     double SOC_max; // [%] - Maximum SOC
     double SOC_min; // [%] - Minimum SOC
-    double dt_hour; // [hr] - Timestep in hours
+    double dt_hr; // [hr] - Timestep in hours
 
     struct {
         // parameters for finding c, k, qmax
@@ -45,6 +47,8 @@ struct capacity_params{
         double q20; // [Ah] - Capacity at 20 hour discharge rate
         double I20; // [A]  - Current at 20 hour discharge rate
     } leadacid;
+
+    friend std::ostream& operator<<(std::ostream& os , const capacity_params& p);
 };
 
 /*
