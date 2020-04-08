@@ -13,7 +13,7 @@ endif()
 
 #####################################################################################################################
 #
-# Project Settings 
+# Project Settings
 #
 #####################################################################################################################
 
@@ -34,10 +34,16 @@ set(SHARED_SRC
 		lib_aoi.h
 		lib_battery.cpp
 		lib_battery.h
+        lib_battery_capacity.cpp
+        lib_battery_capacity.h
 		lib_battery_dispatch.cpp
 		lib_battery_dispatch.h
+        lib_battery_lifetime.cpp
+        lib_battery_lifetime.h
 		lib_battery_powerflow.cpp
 		lib_battery_powerflow.h
+        lib_battery_voltage.cpp
+        lib_battery_voltage.h
 		lib_cec6par.cpp
 		lib_cec6par.h
 		lib_financial.cpp
@@ -135,9 +141,9 @@ else(MSVC)
 		add_definitions(-D__64BIT__)
 	endif()
   	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11" )
-	set_source_files_properties(${SHARED_SRC} PROPERTIES 
+	set_source_files_properties(${SHARED_SRC} PROPERTIES
 		COMPILE_FLAGS "-Wall -Wno-strict-aliasing -Wno-deprecated-declarations -Wno-unknown-pragmas -Wno-reorder")
-	set_source_files_properties(${SHARED_SRC} PROPERTIES 
+	set_source_files_properties(${SHARED_SRC} PROPERTIES
 		COMPILE_FLAGS "-Wno-ignored-attributes -Wno-deprecated")
 	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 		add_compile_definitions(_DEBUG)
@@ -148,7 +154,7 @@ endif(MSVC)
 
 
 #####################################################################################################################
-# 
+#
 # CMake Targets
 #
 #####################################################################################################################

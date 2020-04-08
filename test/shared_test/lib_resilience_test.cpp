@@ -258,32 +258,32 @@ TEST_F(ResilienceTest_lib_resilience, VoltageTable)
     auto volt = voltage_table_t(1, 1, 3, table, 0.1, 1);
     auto cap = capacity_lithium_ion_t(2.25, 50, 100, 0, 1);
 
-    volt.updateVoltage(&cap, nullptr, 0.);
+    volt.updateVoltage(&cap, 0, 0.);
     EXPECT_NEAR(cap.DOD(), 50, 1e-3);
     EXPECT_NEAR(volt.cell_voltage(), 2, 1e-3);
 
 
     double current = -2.;
     cap.updateCapacity(current, 1);
-    volt.updateVoltage(&cap, nullptr, 0.);
+    volt.updateVoltage(&cap, 0, 0.);
     EXPECT_NEAR(cap.DOD(), 0, 1e-3);
     EXPECT_NEAR(volt.cell_voltage(), 3, 1e-3);
 
     current = 4.;
     cap.updateCapacity(current, 1);
-    volt.updateVoltage(&cap, nullptr, 0.);
+    volt.updateVoltage(&cap, 0, 0.);
     EXPECT_NEAR(cap.DOD(), 100, 1e-3);
     EXPECT_NEAR(volt.cell_voltage(), 0, 1e-3);
 
     current = -1;
     cap.updateCapacity(current, 1);
-    volt.updateVoltage(&cap, nullptr, 0.);
+    volt.updateVoltage(&cap, 0, 0.);
     EXPECT_NEAR(cap.DOD(), 55.555, 1e-3);
     EXPECT_NEAR(volt.cell_voltage(), 1.773, 1e-3);
 
     current = -1;
     cap.updateCapacity(current, 1);
-    volt.updateVoltage(&cap, nullptr, 0.);
+    volt.updateVoltage(&cap, 0, 0.);
     EXPECT_NEAR(cap.DOD(), 11.111, 1e-3);
     EXPECT_NEAR(volt.cell_voltage(), 2.777, 1e-3);
 }
@@ -306,7 +306,7 @@ TEST_F(ResilienceTest_lib_resilience, DischargeVoltageTable){
 
     req_cur = volt.calculate_current_for_target_w(0.5, cap.q0(), cap.qmax(), 0);
     cap.updateCapacity(req_cur, 1);
-    volt.updateVoltage(&cap, nullptr, 1);
+    volt.updateVoltage(&cap, 0, 1);
     double v = volt.cell_voltage();
     EXPECT_NEAR(req_cur * v, 0.5, 1e-2);
 
@@ -314,21 +314,21 @@ TEST_F(ResilienceTest_lib_resilience, DischargeVoltageTable){
     cap = capacity_lithium_ion_t(2.25, 50, 100, 0, 1);
     double max_p = volt.calculate_max_discharge_w(cap.q0(), cap.qmax(), 0, &req_cur);
     cap.updateCapacity(req_cur, 1);
-    volt.updateVoltage(&cap, nullptr, 1);
+    volt.updateVoltage(&cap, 0, 1);
     EXPECT_NEAR(max_p, cap.I() * volt.cell_voltage(), 1e-3);
 
     // test over max discharge
     cap = capacity_lithium_ion_t(2.25, 50, 100, 0, 1);
     req_cur *= 1.5;
     cap.updateCapacity(req_cur, 1);
-    volt.updateVoltage(&cap, nullptr, 1);
+    volt.updateVoltage(&cap, 0, 1);
     EXPECT_GT(max_p, cap.I() * volt.cell_voltage()) << "resulting power should be less than max";
 
 
     double overmax_I = volt.calculate_current_for_target_w(max_p * 1.1, cap.q0(), cap.qmax(), 0);
     cap = capacity_lithium_ion_t(2.25, 50, 100, 0, 1);
     cap.updateCapacity(overmax_I, 1);
-    volt.updateVoltage(&cap, nullptr, 1);
+    volt.updateVoltage(&cap, 0, 1);
     EXPECT_GT(max_p, cap.I() * volt.cell_voltage()) << "resulting power should be less than max";
 }
 
@@ -343,14 +343,14 @@ TEST_F(ResilienceTest_lib_resilience, ChargeVoltageTable){
     cap.updateCapacity(current, 1);
     double req_cur = volt.calculate_current_for_target_w(-1.5, cap.q0(), cap.qmax(), 0);
     cap.updateCapacity(req_cur, 1);
-    volt.updateVoltage(&cap, nullptr, 1);
+    volt.updateVoltage(&cap, 0, 1);
     double v = volt.cell_voltage();
     EXPECT_NEAR(req_cur * v, -1.5, 1e-2);
 
     // test max charge
     double max_p = volt.calculate_max_charge_w(cap.q0(), cap.qmax(), 0, &current);
     cap.updateCapacity(current, 1);
-    volt.updateVoltage(&cap, nullptr, 1);
+    volt.updateVoltage(&cap, 0, 1);
     EXPECT_NEAR(max_p, cap.I() * volt.cell_voltage(), 1e-3);
 
     // test over max charge
@@ -358,7 +358,7 @@ TEST_F(ResilienceTest_lib_resilience, ChargeVoltageTable){
     cap.updateCapacity(current, 1);
     current *= -1.5;
     cap.updateCapacity(current, 1);
-    volt.updateVoltage(&cap, nullptr, 1);
+    volt.updateVoltage(&cap, 0, 1);
     EXPECT_NEAR(max_p, cap.I() * volt.cell_voltage(), 1e-3);
 }
 
@@ -373,30 +373,30 @@ TEST_F(ResilienceTest_lib_resilience, VoltageVanadium){
     auto cap = capacity_lithium_ion_t(11, 30, 100, 0, 1);
     auto temp = thermal_test();
 
-    volt.updateVoltage(&cap, &temp, 1);
+    volt.updateVoltage(&cap, temp.T_battery(), 1);
     double v = volt.cell_voltage();
 
 
     double req_cur = volt.calculate_current_for_target_w(1.5, 3.3, 11, temp.T_battery());
     cap.updateCapacity(req_cur, 1);
-    volt.updateVoltage(&cap, &temp, 1);
+    volt.updateVoltage(&cap, temp.T_battery(), 1);
     v = volt.cell_voltage();
     EXPECT_NEAR(req_cur * v, 1.5, 1e-2);
 
     req_cur = volt.calculate_current_for_target_w(-1.5, cap.q0(), cap.qmax(), temp.T_battery());
     cap.updateCapacity(req_cur, 1);
-    volt.updateVoltage(&cap, &temp, 1);
+    volt.updateVoltage(&cap, temp.T_battery(), 1);
     v = volt.cell_voltage();
     EXPECT_NEAR(req_cur * v, -1.5, 1e-2);
 
     double max_p = volt.calculate_max_charge_w(cap.q0(), cap.qmax(), temp.T_battery(), &req_cur);
     cap.updateCapacity(req_cur, 1);
-    volt.updateVoltage(&cap, &temp, 1);
+    volt.updateVoltage(&cap, temp.T_battery(), 1);
     EXPECT_NEAR(max_p, cap.I() * volt.cell_voltage(), 1e-3);
 
     max_p = volt.calculate_max_discharge_w(cap.q0(), cap.qmax(), temp.T_battery(), &req_cur);
     cap.updateCapacity(req_cur, 1);
-    volt.updateVoltage(&cap, &temp, 1);
+    volt.updateVoltage(&cap, temp.T_battery(), 1);
     EXPECT_NEAR(max_p, cap.I() * volt.cell_voltage(), 1e-3);
 }
 
@@ -422,7 +422,7 @@ TEST_F(ResilienceTest_lib_resilience, RoundtripEffModel){
         while(cap->SOC() < 100 ){
             double input_current = current;
             cap->updateCapacity(input_current, 1);
-            vol->updateVoltage(cap, nullptr, 1);
+            vol->updateVoltage(cap, 0, 1);
             input_power += cap->I() * vol->battery_voltage();
             n_t += 1;
 
@@ -433,7 +433,7 @@ TEST_F(ResilienceTest_lib_resilience, RoundtripEffModel){
         while(vol->calculate_max_discharge_w(cap->q0(), cap->qmax(), 0, nullptr) > 0 ){
             double output_current = current;
             cap->updateCapacity(output_current, 1);
-            vol->updateVoltage(cap, nullptr, 1);
+            vol->updateVoltage(cap, 0, 1);
             output_power += cap->I() * vol->battery_voltage();
             n_t += 1;
 
@@ -471,7 +471,7 @@ TEST_F(ResilienceTest_lib_resilience, RoundtripEffTable){
         while(cap->SOC() < 100 ){
             double input_current = current;
             cap->updateCapacity(input_current, 1);
-            vol->updateVoltage(cap, nullptr, 1);
+            vol->updateVoltage(cap, 0, 1);
             input_power += cap->I() * vol->battery_voltage();
             n_t += 1;
         }
@@ -481,7 +481,7 @@ TEST_F(ResilienceTest_lib_resilience, RoundtripEffTable){
         while(vol->calculate_max_discharge_w(cap->q0(), cap->qmax(), 0, nullptr) > 0 ){
             double output_current = current;
             cap->updateCapacity(output_current, 1);
-            vol->updateVoltage(cap, nullptr, 1);
+            vol->updateVoltage(cap, 0, 1);
             output_power += cap->I() * vol->battery_voltage();
             n_t += 1;
         }
@@ -512,12 +512,12 @@ TEST_F(ResilienceTest_lib_resilience, HourlyVsSubHourly)
     while (cap_hourly->SOC() > 16){
         double I_hourly = volt_hourly->calculate_current_for_target_w(discharge_watts, cap_hourly->q0(), cap_hourly->qmax(), 0);
         cap_hourly->updateCapacity(I_hourly, 1);
-        volt_hourly->updateVoltage(cap_hourly, nullptr, 1);
+        volt_hourly->updateVoltage(cap_hourly, 0, 1);
         EXPECT_NEAR(cap_hourly->I() * volt_hourly->battery_voltage(), discharge_watts, 0.1);
 
         double I_subhourly = volt_subhourly->calculate_current_for_target_w(discharge_watts, cap_subhourly->q0(), cap_subhourly->qmax(), 0);
         cap_subhourly->updateCapacity(I_subhourly, 0.5);
-        volt_subhourly->updateVoltage(cap_subhourly, nullptr, 0.5);
+        volt_subhourly->updateVoltage(cap_subhourly, 0, 0.5);
         EXPECT_NEAR(cap_subhourly->I() * volt_subhourly->battery_voltage(), discharge_watts, 0.1);
 
     }
