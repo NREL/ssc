@@ -81,14 +81,14 @@ TEST_F(BatteryTest, AugmentCapacity)
 	std::vector<double> augmentation_percent = { 50, 40 , 30 };
 	batteryModel->lifetime_model()->set_replacement_option(battery_t::REPLACE_BY_SCHEDULE);
 
-	// Correct future approach for augmenting batteries, by treating as seperate entities
+	// Correct future approach for augmenting batteries, by treating as separate entities
 	std::vector<battery_t *> batteries;
-	batteries.push_back(batteryModel);
-	batteries.push_back(new battery_t(dtHour, chemistry));
-	batteries[1]->initialize(capacityModel, voltageModel, lifetimeModel, thermalModel, lossModel);
+    batteries.push_back(new battery_t(*batteryModel));
+
+	batteries.push_back(new battery_t(*batteryModel));
 	batteries[1]->lifetime_model()->set_replacement_option(battery_t::REPLACE_BY_SCHEDULE);
-	batteries.push_back(new battery_t(dtHour, chemistry));
-	batteries[2]->initialize(capacityModel, voltageModel, lifetimeModel, thermalModel, lossModel);
+
+	batteries.push_back(new battery_t(*batteryModel));
 	batteries[2]->lifetime_model()->set_replacement_option(battery_t::REPLACE_BY_SCHEDULE);
 
 	size_t i = 0;
@@ -106,10 +106,12 @@ TEST_F(BatteryTest, AugmentCapacity)
 		}
 	}
 
+	for (auto i : batteries)
+	    delete i;
 	// Current, limited approach which only augments capacity in models, does not update lifetime degradation
 	// trajectories or consider impacts on voltage and other aspects.
-	battery_t * battery = new battery_t(dtHour, chemistry);
-	battery->initialize(capacityModel, voltageModel, lifetimeModel, thermalModel, lossModel);
-	battery->lifetime_model()->set_replacement_option(battery_t::REPLACE_BY_SCHEDULE);
+//	battery_t * battery = new battery_t(dtHour, chemistry);
+//	battery->initialize(capacityModel, voltageModel, lifetimeModel, thermalModel, lossModel);
+//	battery->lifetime_model()->set_replacement_option(battery_t::REPLACE_BY_SCHEDULE);
 
 }
