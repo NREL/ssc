@@ -36,7 +36,7 @@ void C_csp_solver::reset_time(double step /*s*/)
         mc_kernel.mc_sim_info.ms_ts.m_step;		//[s]
 }
 
-int C_csp_solver::solve_operating_mode(int cr_mode, int pc_mode, int solver_mode, int step_target_mode,
+int C_csp_solver::solve_operating_mode(int cr_mode, int pc_mode, C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode, C_MEQ__timestep::E_timestep_target_modes step_target_mode,
     double q_dot_pc_target /*MWt*/, bool is_defocus,
     std::string op_mode_str, double & defocus_solved)
 {
@@ -216,7 +216,7 @@ int C_csp_solver::solve_operating_mode(int cr_mode, int pc_mode, int solver_mode
         }
         else if (defocus_solved == 1.0)
         {
-            int solver_mode_df1 = C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT_LESS_TES_FULL;
+            C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode_df1 = C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT_LESS_TES_FULL;
 
             if (pc_mode == C_csp_power_cycle::STARTUP_CONTROLLED)
             {

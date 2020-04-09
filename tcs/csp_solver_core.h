@@ -1140,16 +1140,185 @@ public:
 	// *****************************
 	// Solvers
 
-    int solve_operating_mode(int cr_mode, int pc_mode, int solver_mode, int step_target_mode,
-        double q_dot_pc_target /*MWt*/, bool is_defocus,
-        std::string op_mode_str, double & defocus_solved);
+	class C_MEQ__m_dot_tes : public C_monotonic_equation
+	{
+	public:
+		enum E_m_dot_solver_modes
+		{
+			// Syntax: E + __ + "m dot hot from field to TES node" + __ + 
+			//                   "m dot from TES node to pc"
+			E__PC_MAX_PLUS_TES_FULL__PC_MAX,
+			E__CR_OUT__CR_OUT_PLUS_TES_EMPTY,
+			E__TO_PC_PLUS_TES_FULL__ITER_M_DOT_SU,
+			E__CR_OUT__0,
+			E__CR_OUT__ITER_M_DOT_SU,
+			E__CR_OUT__ITER_Q_DOT_TARGET,
+			E__CR_OUT__CR_OUT,
+			E__CR_OUT__CR_OUT_LESS_TES_FULL,
+			E__TO_PC__PC_MAX,
+			E__TO_PC__ITER_M_DOT_SU,
+			E__TES_FULL__0
+		};
+
+	private:
+		E_m_dot_solver_modes m_solver_mode;  //[-] see enum: solver_modes
+
+		C_csp_solver* mpc_csp_solver;
+
+		int m_pc_mode;      //[-]
+		int m_cr_mode;      //[-]
+
+		double m_q_dot_pc_target;   //[MWt]
+
+		double m_defocus;   //[-]
+		double m_t_ts_in;      //[s]
+		double m_P_field_in;    //[kPa]
+		double m_x_field_in;    //[-]
+
+		double m_T_field_cold_guess;    //[C]
+
+	public:
+		
+
+		double m_T_field_cold_calc; //[C]
+		double m_t_ts_calc;         //[s]
+		double m_m_dot_pc;
+
+		C_MEQ__m_dot_tes(E_m_dot_solver_modes solver_mode, C_csp_solver* pc_csp_solver,
+			int pc_mode, int cr_mode,
+			double q_dot_pc_target /*MWt*/,
+			double defocus /*-*/, double t_ts /*s*/,
+			double P_field_in /*kPa*/, double x_field_in /*-*/,
+			double T_field_cold_guess /*C*/)
+		{
+			m_solver_mode = solver_mode;    //[-]
+
+			mpc_csp_solver = pc_csp_solver;
+			m_pc_mode = pc_mode;    //[-]
+			m_cr_mode = cr_mode;    //[-]
+			m_q_dot_pc_target = q_dot_pc_target;    //[MWt]
+			m_defocus = defocus;    //[-]
+			m_t_ts_in = t_ts;          //[s]
+			m_P_field_in = P_field_in;  //[kPa]
+			m_x_field_in = x_field_in;  //[-]
+
+			m_T_field_cold_guess = T_field_cold_guess;    //[C]
+
+			init_calc_member_vars();
+		}
+
+		void init_calc_member_vars();
+
+		virtual int operator()(double m_dot_tes_guess /*kg/hr + = charge - = discharge*/, double* diff_target /*-*/);
+	};
+
+	class C_MEQ__T_field_cold : public C_monotonic_equation
+	{
+	private:
+		C_MEQ__m_dot_tes::E_m_dot_solver_modes m_solver_mode;
+
+		C_csp_solver* mpc_csp_solver;
+
+		double m_q_dot_pc_target;   //[MWt]
+
+		int m_pc_mode;      //[-]
+		int m_cr_mode;      //[-]
+
+		double m_defocus;   //[-]
+		double m_t_ts_in;      //[s]
+
+		double m_P_field_in;	//[kPa]
+		double m_x_field_in;	//[-]
+
+	public:
+		double m_t_ts_calc; //[s]
+
+		C_MEQ__T_field_cold(C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode, C_csp_solver* pc_csp_solver,
+			double q_dot_pc_target /*MWt*/,
+			int pc_mode, int cr_mode,
+			double defocus /*-*/, double t_ts /*s*/,
+			double P_field_in /*kPa*/, double x_field_in /*-*/)
+		{
+			m_solver_mode = solver_mode;
+
+			mpc_csp_solver = pc_csp_solver;
+
+			m_q_dot_pc_target = q_dot_pc_target;    //[MWt]
+
+			m_pc_mode = pc_mode;
+			m_cr_mode = cr_mode;
+			m_defocus = defocus;
+			m_t_ts_in = t_ts;  //[s]
+
+			m_P_field_in = P_field_in;  //[kPa]
+			m_x_field_in = x_field_in;  //[-]
+
+			init_calc_member_vars();
+		}
+
+		void init_calc_member_vars();
+
+		virtual int operator()(double T_field_cold /*C*/, double* diff_T_field_cold /*-*/);
+	};
+
+	class C_MEQ__timestep : public C_monotonic_equation
+	{
+	public:
+		enum E_timestep_target_modes
+		{
+			E_STEP_FROM_COMPONENT,
+			E_STEP_Q_DOT_PC,
+			E_STEP_FIXED
+		};
+
+	private:
+		C_MEQ__m_dot_tes::E_m_dot_solver_modes m_solver_mode;
+		E_timestep_target_modes m_step_target_mode;
+
+		C_csp_solver* mpc_csp_solver;
+
+		double m_q_dot_pc_target;   //[MWt]
+
+		int m_pc_mode;      //[-]
+		int m_cr_mode;      //[-]
+
+		double m_defocus;   //[-]
+
+	public:
+		C_MEQ__timestep(C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode, C_MEQ__timestep::E_timestep_target_modes step_target_mode,
+			C_csp_solver* pc_csp_solver,
+			double q_dot_pc_target /*MWt*/,
+			int pc_mode, int cr_mode,
+			double defocus /*-*/)
+		{
+			m_solver_mode = solver_mode;
+			m_step_target_mode = step_target_mode;
+
+			mpc_csp_solver = pc_csp_solver;
+
+			m_q_dot_pc_target = q_dot_pc_target;    //[MWt]
+
+			m_pc_mode = pc_mode;
+			m_cr_mode = cr_mode;
+			m_defocus = defocus;
+		}
+
+		virtual int operator()(double t_ts_guess /*s*/, double* diff_t_ts_guess /*s*/);
+	};
 
     class C_MEQ__defocus : public C_monotonic_equation
     {
+	public:
+		enum E_defocus_target_modes
+		{
+			E_M_DOT_BAL,
+			E_Q_DOT_PC
+		};
+
     private:
-        int m_solver_mode;  //[-]
-        int m_df_target_mode;   //[-]
-        int m_ts_target_mode;   //[-]
+		C_MEQ__m_dot_tes::E_m_dot_solver_modes m_solver_mode;  //[-]
+		E_defocus_target_modes m_df_target_mode;   //[-]
+        C_MEQ__timestep::E_timestep_target_modes m_ts_target_mode;   //[-]
 
         C_csp_solver *mpc_csp_solver;
 
@@ -1161,13 +1330,9 @@ public:
         double m_t_ts_initial;  //[s]
     
     public:
-        enum target_modes
-        {
-            E_M_DOT_BAL,
-            E_Q_DOT_PC
-        };
 
-        C_MEQ__defocus(int solver_mode, int df_target_mode, int ts_target_mode,
+        C_MEQ__defocus(C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode, 
+			E_defocus_target_modes df_target_mode, C_MEQ__timestep::E_timestep_target_modes ts_target_mode,
             C_csp_solver *pc_csp_solver, 
 			double q_dot_pc_target /*MWt*/,
             int pc_mode, int cr_mode,
@@ -1179,7 +1344,6 @@ public:
 
             mpc_csp_solver = pc_csp_solver;
 
-            //m_m_dot_tes = m_dot_tes;
             m_q_dot_pc_target = q_dot_pc_target;    //[MWt]
 
             m_pc_mode = pc_mode;
@@ -1193,167 +1357,11 @@ public:
         double calc_meq_target();
     };
 
-    class C_MEQ__timestep : public C_monotonic_equation
-    {
-    private:
-        int m_solver_mode;
-        int m_step_target_mode;
-        
-        C_csp_solver *mpc_csp_solver;
+	int solve_operating_mode(int cr_mode, int pc_mode, C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode, C_MEQ__timestep::E_timestep_target_modes step_target_mode,
+		double q_dot_pc_target /*MWt*/, bool is_defocus,
+		std::string op_mode_str, double& defocus_solved);
 
-        double m_q_dot_pc_target;   //[MWt]
-
-        int m_pc_mode;      //[-]
-        int m_cr_mode;      //[-]
-
-        double m_defocus;   //[-]
-
-    public:
-        enum E_timestep_target_modes
-        {
-            E_STEP_FROM_COMPONENT,
-            E_STEP_Q_DOT_PC,
-            E_STEP_FIXED
-        };
-
-        C_MEQ__timestep(int solver_mode, int step_target_mode, 
-            C_csp_solver *pc_csp_solver,
-			double q_dot_pc_target /*MWt*/,
-            int pc_mode, int cr_mode,
-            double defocus /*-*/)
-        {
-            m_solver_mode = solver_mode;
-            m_step_target_mode = step_target_mode;
-
-            mpc_csp_solver = pc_csp_solver;
-
-            m_q_dot_pc_target = q_dot_pc_target;    //[MWt]
-
-            m_pc_mode = pc_mode;
-            m_cr_mode = cr_mode;
-            m_defocus = defocus;
-        }
-
-        virtual int operator()(double t_ts_guess /*s*/, double *diff_t_ts_guess /*s*/);
-    };
-
-    class C_MEQ__m_dot_tes : public C_monotonic_equation
-    {
-    private:
-        int m_solver_mode;  //[-] see enum: solver_modes
-
-        C_csp_solver *mpc_csp_solver;
-
-        int m_pc_mode;      //[-]
-        int m_cr_mode;      //[-]
-
-        double m_q_dot_pc_target;   //[MWt]
-
-        double m_defocus;   //[-]
-        double m_t_ts_in;      //[s]
-        double m_P_field_in;    //[kPa]
-        double m_x_field_in;    //[-]
-
-        double m_T_field_cold_guess;    //[C]
-
-    public:
-        enum E_m_dot_solver_modes
-        {
-			// Syntax: E + __ + "m dot hot from field to TES node" + __ + 
-			//                   "m dot from TES node to pc"
-			E__PC_MAX_PLUS_TES_FULL__PC_MAX,
-            E__CR_OUT__CR_OUT_PLUS_TES_EMPTY,
-			E__TO_PC_PLUS_TES_FULL__ITER_M_DOT_SU,
-			E__CR_OUT__0,
-			E__CR_OUT__ITER_M_DOT_SU,
-			E__CR_OUT__ITER_Q_DOT_TARGET,
-			E__CR_OUT__CR_OUT,
-			E__CR_OUT__CR_OUT_LESS_TES_FULL,
-			E__TO_PC__PC_MAX,
-			E__TO_PC__ITER_M_DOT_SU,
-			E__TES_FULL__0
-        };
-
-        double m_T_field_cold_calc; //[C]
-        double m_t_ts_calc;         //[s]
-        double m_m_dot_pc;
-        
-        C_MEQ__m_dot_tes(int solver_mode, C_csp_solver *pc_csp_solver,
-            int pc_mode, int cr_mode,
-            double q_dot_pc_target /*MWt*/,
-            double defocus /*-*/, double t_ts /*s*/,
-            double P_field_in /*kPa*/, double x_field_in /*-*/,
-            double T_field_cold_guess /*C*/)
-        {
-            m_solver_mode = solver_mode;    //[-]
-            
-            mpc_csp_solver = pc_csp_solver;
-            m_pc_mode = pc_mode;    //[-]
-            m_cr_mode = cr_mode;    //[-]
-            m_q_dot_pc_target = q_dot_pc_target;    //[MWt]
-            m_defocus = defocus;    //[-]
-            m_t_ts_in = t_ts;          //[s]
-            m_P_field_in = P_field_in;  //[kPa]
-            m_x_field_in = x_field_in;  //[-]
-
-            m_T_field_cold_guess = T_field_cold_guess;    //[C]
-
-            init_calc_member_vars();
-        }
-
-        void init_calc_member_vars();
-
-        virtual int operator()(double m_dot_tes_guess /*kg/hr + = charge - = discharge*/, double *diff_target /*-*/);
-    };
-
-    class C_MEQ__T_field_cold : public C_monotonic_equation
-    {
-    private:
-        int m_solver_mode;
-        
-        C_csp_solver *mpc_csp_solver;
-
-        double m_q_dot_pc_target;   //[MWt]
-        
-        int m_pc_mode;      //[-]
-        int m_cr_mode;      //[-]
-
-        double m_defocus;   //[-]
-        double m_t_ts_in;      //[s]
-
-        double m_P_field_in;	//[kPa]
-        double m_x_field_in;	//[-]
-
-    public:
-        double m_t_ts_calc; //[s]
-
-        C_MEQ__T_field_cold(int solver_mode, C_csp_solver *pc_csp_solver,
-			double q_dot_pc_target /*MWt*/,
-            int pc_mode, int cr_mode,
-            double defocus /*-*/, double t_ts /*s*/,
-            double P_field_in /*kPa*/, double x_field_in /*-*/)
-        {
-            m_solver_mode = solver_mode;
-            
-            mpc_csp_solver = pc_csp_solver;
-
-            m_q_dot_pc_target = q_dot_pc_target;    //[MWt]
-
-            m_pc_mode = pc_mode;
-            m_cr_mode = cr_mode;
-            m_defocus = defocus;
-            m_t_ts_in = t_ts;  //[s]
-
-            m_P_field_in = P_field_in;  //[kPa]
-            m_x_field_in = x_field_in;  //[-]
-
-            init_calc_member_vars();
-        }
-
-        void init_calc_member_vars();
-
-        virtual int operator()(double T_field_cold /*C*/, double *diff_T_field_cold /*-*/);
-    };
+    
 
 };
 
