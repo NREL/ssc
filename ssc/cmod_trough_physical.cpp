@@ -903,7 +903,6 @@ public:
         tes->eta_pump             = as_double("eta_pump");                  //[-]
         
         tes->tanks_in_parallel    = as_boolean("tanks_in_parallel");        //[-]
-        
         tes->has_hot_tank_bypass  = as_boolean("has_hot_tank_bypass");      //[-]
         tes->T_tank_hot_inlet_min = as_double("T_tank_hot_inlet_min");      //[C]
         tes->V_tes_des            = as_double("V_tes_des");                 //[m/s]
