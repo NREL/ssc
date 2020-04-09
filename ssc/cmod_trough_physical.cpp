@@ -901,7 +901,6 @@ public:
         tes->m_htf_pump_coef      = as_double("pb_pump_coef");              //[kWe/kg/s]
         tes->m_tes_pump_coef      = as_double("tes_pump_coef");             //[kWe/kg/s]
         tes->eta_pump             = as_double("eta_pump");                  //[-]
-        
         tes->tanks_in_parallel    = as_boolean("tanks_in_parallel");        //[-]
         tes->has_hot_tank_bypass  = as_boolean("has_hot_tank_bypass");      //[-]
         tes->T_tank_hot_inlet_min = as_double("T_tank_hot_inlet_min");      //[C]
