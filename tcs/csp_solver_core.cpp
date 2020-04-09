@@ -3385,7 +3385,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				{
 					error_msg = util::format("At time = %lg %s method converged to a power cycle"
 						" thermal input less than the target.",
-						mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str);
+						mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str());
 					mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 				}
 
