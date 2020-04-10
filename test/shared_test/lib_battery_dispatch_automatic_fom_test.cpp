@@ -92,6 +92,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_DCCustomCharge) {
     batteryPower->voltageSystem = 600;
     batteryPower->canGridCharge = true;
     batteryPower->setSharedInverter(m_sharedInverter);
+    batteryPower->inverterEfficiencyCutoff = 0;
 
     batteryPower->powerGeneratedBySystem = 0;
     batteryPower->powerPV = 0;
@@ -143,6 +144,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_DCCustomChargeSubhourly) {
     batteryPower->voltageSystem = 600;
     batteryPower->canGridCharge = true;
     batteryPower->setSharedInverter(m_sharedInverter);
+    batteryPower->inverterEfficiencyCutoff = 0;
 
     batteryPower->powerGeneratedBySystem = 0;
     batteryPower->powerPV = 0;

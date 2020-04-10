@@ -362,6 +362,7 @@ TEST_F(ManualTest_lib_battery_dispatch, ManualGridChargingOnTest)
 
     batteryPower = dispatchManual->getBatteryPower();
     batteryPower->connectionMode = ChargeController::AC_CONNECTED;
+    batteryPower->inverterEfficiencyCutoff = 0;
 
     // Test grid charging. AC to DC losses come into play
     batteryPower->powerPV = 0; batteryPower->voltageSystem = 600; batteryPower->powerGridToBattery = 1000;
@@ -384,6 +385,7 @@ TEST_F(ManualTest_lib_battery_dispatch, ManualGridChargingOnDCConnectedTest)
     batteryPower = dispatchManual->getBatteryPower();
     batteryPower->connectionMode = ChargeController::DC_CONNECTED;
     batteryPower->setSharedInverter(m_sharedInverter);
+    batteryPower->inverterEfficiencyCutoff = 0;
 
     // Test grid charging. AC to DC losses come into play
     batteryPower->powerPV = 0; batteryPower->voltageSystem = 600; batteryPower->powerGridToBattery = 1000;
