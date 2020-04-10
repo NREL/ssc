@@ -142,9 +142,9 @@ public:
 	
 	// Instantiate two fully mixed tanks class for cold storage AND three node model
 	C_csp_cold_tes mc_two_tank_ctes;
-	C_csp_cold_tes::S_csp_tes_outputs mc_two_tank_ctes_outputs;	// for outputs
+	C_csp_cold_tes::S_csp_cold_tes_outputs mc_two_tank_ctes_outputs;	// for outputs
 	C_csp_stratified_tes mc_stratified_ctes;
-	C_csp_stratified_tes::S_csp_tes_outputs mc_stratified_ctes_outputs;
+	C_csp_stratified_tes::S_csp_strat_tes_outputs mc_stratified_ctes_outputs;
 
 	double m_dot_cold_avail;
 	double m_dot_warm_avail;
