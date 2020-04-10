@@ -1,25 +1,8 @@
 #####################################################################################################################
 #
-# CMake and System Settings
-#
-#####################################################################################################################
-
-set(CMAKE_VERBOSE_MAKEFILE ON)
-
-cmake_minimum_required(VERSION 2.8)
-
-if(APPLE)
-    set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
-endif()
-
-
-#####################################################################################################################
-#
 # Project Settings
 #
 #####################################################################################################################
-
-Project(ssc_test)
 
 if (DEFINED ENV{GTDIR})
     set(GTDIR $ENV{GTDIR})
@@ -49,27 +32,12 @@ set(SRC_TO_TEST
 #
 #####################################################################################################################
 
-set(CMAKE_CXX_STANDARD 11)
+set_default_compile_options()
 
 if(MSVC)
     add_compile_options(/MP /W3 /wd4244)
-    add_compile_definitions( __64BIT__ __WINDOWS__ _CRT_SECURE_NO_WARNINGS _MBCS )
-    foreach (flag_var CMAKE_C_FLAGS_DEBUG CMAKE_CXX_FLAGS_DEBUG)
-        set(${flag_var} "${${flag_var}} /D_DEBUG" CACHE STRING "compile flags" FORCE)
-    endforeach()
-else()
-    if(APPLE)
-        SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -arch x86_64 -Wno-deprecated" )
-    else()
-        SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11 -Wno-strict-aliasing -Wno-deprecated-declarations -Wno-unknown-pragmas -Wno-reorder" )
-    endif()
-    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-        SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_DEBUG")
-    else()
-        SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -D_NDEBUG" )
-    endif()
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-function -Wno-unused-variable -Wno-unused-value")
-endif(MSVC)
+    add_compile_definitions(_MBCS)
+endif()
 
 
 #####################################################################################################################
