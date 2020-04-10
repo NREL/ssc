@@ -44,9 +44,9 @@ set(LPSOLVE_SRC
 #####################################################################################################################
 
 set_default_compile_options()
+set_no_warnings()
 
 if(MSVC)
-	add_compile_options(/W4)
     add_compile_definitions( _CONSOLE MSDOS CHECK_SOLUTION _SCL_SECURE_NO_DEPRECATE)
 	add_compile_definitions( YY_NEVER_INTERACTIVE PARSER_LP INVERSE_ACTIVE=INVERSE_LUSOL )
 	add_compile_definitions( RoleIsExternalInvEngine _CRT_SECURE_NO_DEPRECATE _CRT_NONSTDC_NO_DEPRECATE )

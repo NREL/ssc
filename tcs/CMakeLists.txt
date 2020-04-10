@@ -165,7 +165,9 @@ set(TCS_SRC
 
 set_default_compile_options()
 set_no_warnings()
-set_disabled_warnings()
+if (MSVC)
+    add_compile_options(/bigobj)
+endif ()
 
 
 #####################################################################################################################

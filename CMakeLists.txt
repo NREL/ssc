@@ -42,6 +42,8 @@ set(CMAKE_CXX_STANDARD 11)
 function(set_no_warnings)
     if(MSVC)
         add_compile_options(/W0)
+    else()
+        add_compile_options(-w)
     endif()
 endfunction()
 

@@ -64,9 +64,8 @@ endif()
 #####################################################################################################################
 
 set_default_compile_options()
-
+set_no_warnings()
 if(MSVC)
-	add_compile_options(/W4)
     add_compile_definitions( __WXMSW__ _MBCS )
 else(MSVC)
 	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-deprecated-declarations")
