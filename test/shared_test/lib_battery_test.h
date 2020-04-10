@@ -21,6 +21,8 @@ public:
 	losses_t * lossModel;
 	battery_t * batteryModel;
 
+	double dtHour = 1;
+
 	void SetUp()
 	{
 		BatteryProperties::SetUp();

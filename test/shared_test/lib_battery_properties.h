@@ -56,7 +56,6 @@ public:
 
 	// battery
 	int chemistry;
-	double dtHour;
 
 	void SetUp() override
 	{
@@ -97,7 +96,7 @@ public:
 		for (size_t i = 0; i < 8760; i++) {
 			T_room.push_back(20 + 273.15);
 		}
-		double vals3[] = { -10, 60, 0, 80, 25, 100, 40, 100 };
+		double vals3[] = { 0, 60, 01, 100, 25, 100, 40, 100 };
 		capacityVsTemperature.assign(vals3, 4, 2);
 
 		// losses
@@ -114,7 +113,6 @@ public:
 
 		// battery
 		chemistry = 1;
-		dtHour = 1.0;
 	}
 
 	// nothing to do

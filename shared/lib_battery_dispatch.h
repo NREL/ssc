@@ -154,8 +154,8 @@ protected:
 
 	/** 
 	The dispatch mode. 
-	For behind-the-meter dispatch: 0 = LOOK_AHEAD, 1 = LOOK_BEHIND, 2 = MAINTAIN_TARGET, 3 = MANUAL
-	For front-of-meter dispatch: 0 = LOOK_AHEAD, 1 = LOOK_BEHIND, 2 = INPUT FORECAST, 3 = MANUAL
+	For behind-the-meter dispatch: 0 = LOOK_AHEAD, 1 = LOOK_BEHIND, 2 = MAINTAIN_TARGET, 3 = CUSTOM, 4 = MANUAL, 5 = RESILIENCE
+	For front-of-meter dispatch: 0 = LOOK_AHEAD, 1 = LOOK_BEHIND, 2 = INPUT FORECAST, 3 = CUSTOM, 4 = MANUAL, 5 = RESILIENCE
 	*/
 	int _mode; 
 
