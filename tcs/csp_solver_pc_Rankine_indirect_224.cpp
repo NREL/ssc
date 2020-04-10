@@ -591,7 +591,7 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 
 			mc_two_tank_ctes.ms_params.m_dot_cw_cold = (mc_two_tank_ctes.ms_params.m_dot_cw_rad*mc_two_tank_ctes.ms_params.m_ts_hours) / rad->m_night_hrs;//Set the flow rate on the storage system between tank and HX to radiative field to fill the tank in the shortest night of year (9 hours in Las Vegas Nevada).
 			//Initialize cold storage
-            C_csp_tes::S_csp_tes_init_inputs init_inputs;
+            C_csp_cold_tes::S_csp_cold_tes_init_inputs init_inputs;
 			mc_two_tank_ctes.init(init_inputs);
 		}
 		//If three-node stratified cold storage 
@@ -952,6 +952,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 	double q_dot_htf = std::numeric_limits<double>::quiet_NaN();	//[MWt]
 
 	double time_required_su = 0.0;
+	double time_required_max = 0.0;
 
 	m_standby_control_calc = standby_control;
 
@@ -968,7 +969,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 			double time_required_su_energy = m_startup_energy_remain_prev / (m_dot_htf*c_htf*(T_htf_hot - ms_params.m_T_htf_cold_ref)/3600);	//[hr]
 			double time_required_su_ramping = m_startup_time_remain_prev;	//[hr]
 
-			double time_required_max = fmax(time_required_su_energy, time_required_su_ramping);
+			time_required_max = fmax(time_required_su_energy, time_required_su_ramping);	//[hr]
 
 			double time_step_hrs = step_sec / 3600.0;	//[hr]
 
@@ -1379,6 +1380,8 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		double time_required_su_energy = m_startup_energy_remain_prev / q_dot_to_pc_max;		//[hr]
 		double time_required_su_ramping = m_startup_time_remain_prev;		//[hr]
 
+		time_required_max = fmax(time_required_su_energy, time_required_su_ramping);	//[hr]
+
 		double q_dot_to_pc = std::numeric_limits<double>::quiet_NaN();
 
 		if( time_required_su_energy > time_required_su_ramping )	// Meeting energy requirements (at design thermal input) will require more time than time requirements
@@ -1595,6 +1598,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 	mc_reported_outputs.value(E_Q_DOT_STARTUP, q_dot_startup);	//[MWt] Startup thermal power
 
 	out_solver.m_time_required_su = time_required_su*3600.0;	//[s]
+	out_solver.m_time_required_max = time_required_max*3600.0;	//[s]
 	
 	out_solver.m_q_dot_htf = q_dot_htf;					//[MWt] Thermal power from HTF (= thermal power into cycle)
 	mc_reported_outputs.value(E_Q_DOT_HTF, q_dot_htf);	//[MWt] Thermal power from HTF (= thermal power into cycle)
