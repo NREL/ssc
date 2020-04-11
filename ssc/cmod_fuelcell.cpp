@@ -154,7 +154,7 @@ void cm_fuelcell::exec()
 		fcVars->numberOfYears > 1 ? annual_index = y + 1 : annual_index = 0;
 
 		for (size_t h = 0; h < 8760; h++){
-
+/*
 			// status bar
 			if (h % (8760 / nStatusUpdates) == 0)
 			{
@@ -165,7 +165,7 @@ void cm_fuelcell::exec()
 					throw exec_error("fuelcell", "simulation canceled at hour " + util::to_string(h + 1.0));
 				}
 			}
-
+*/
 			for (size_t s = 0; s < fcVars->stepsPerHour; s++) {
 				fuelCellDispatch->runSingleTimeStep(h, idx_year, fcVars->systemGeneration_kW[idx], fcVars->electricLoad_kW[idx]);
 				p_fuelCellPower_kW[idx] = (ssc_number_t)fuelCellDispatch->getPower();

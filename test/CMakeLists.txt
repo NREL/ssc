@@ -64,7 +64,7 @@ else()
         SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11 -Wno-strict-aliasing -Wno-deprecated-declarations -Wno-unknown-pragmas -Wno-reorder" )
     endif()
     if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-        SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -D_DEBUG")
+        SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_DEBUG")
     else()
         SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -D_NDEBUG" )
     endif()
@@ -106,17 +106,20 @@ endif()
 #####################################################################################################################
 
 unset(GTEST_LIB CACHE)
-find_library( GTEST_LIB
-        NAMES libgtest.a gtest.lib
-        PATHS ${GTDIR}/build/lib ${GTDIR}/build/lib/Release)
-target_link_libraries(Test optimized ${GTEST_LIB})
+unset(GTESTD_LIB CACHE)
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR MSVC)
-    unset(GTESTD_LIB CACHE)
-    find_library( GTESTD_LIB
-            NAMES libgtestd.a gtestd.lib
-            PATHS ${GTDIR}/build/lib ${GTDIR}/build/lib/Debug)
-    target_link_libraries(Test debug ${GTESTD_LIB})
+find_library( GTESTD_LIB
+        NAMES libgtestd.a gtestd.lib
+        PATHS ${GTDIR}/build/lib ${GTDIR}/build/lib/Debug)
+target_link_libraries(Test debug ${GTESTD_LIB})
+endif()
+
+if (CMAKE_BUILD_TYPE STREQUAL "Release" OR MSVC)
+    find_library( GTEST_LIB
+            NAMES libgtest.a gtest.lib
+            PATHS ${GTDIR}/build/lib ${GTDIR}/build/lib/Release)
+    target_link_libraries(Test optimized ${GTEST_LIB})
 endif()
 target_link_libraries(Test ssc splinter)
 
@@ -134,12 +137,12 @@ endif()
 if(MSVC)
     set(TEST_DIR ${CMAKE_CURRENT_BINARY_DIR}/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
 
-    foreach( file_i ${LIBCURL_FILES})
-        add_custom_command(
-                TARGET Test
-                POST_BUILD
-                COMMAND ${CMAKE_COMMAND}
-                ARGS -E copy $ENV{WEXDIR}/build_vs2017/libcurl_ssl_x64/bin/${file_i} ${TEST_DIR}
-        )
-    endforeach( file_i )
+	foreach( file_i ${LIBCURL_FILES})
+		add_custom_command(
+		TARGET Test
+		POST_BUILD
+		COMMAND ${CMAKE_COMMAND}
+		ARGS -E copy $ENV{WEXDIR}/build_resources/libcurl_ssl_x64/bin/${file_i} ${TEST_DIR}
+	)
+	endforeach( file_i )
 endif()

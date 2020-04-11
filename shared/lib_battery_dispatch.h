@@ -117,6 +117,9 @@ public:
 	// control settings
 	double battery_power_to_fill();
 
+	// test data
+	double battery_soc();
+
 	message get_messages();
 
 	/// Return a pointer to the underlying calculated power quantities
@@ -376,12 +379,6 @@ protected:
 
 	/*! The index of year the dispatch was last updated */
 	size_t _hour_last_updated;
-
-	/*! The index of year the dispatch was last updated */
-	size_t _index_last_updated;
-
-	/*! The amount of indices to wait before updating */
-	size_t _d_index_update;
 
 	/*! The timestep in hours (hourly = 1, half_hourly = 0.5, etc) */
 	double _dt_hour;
