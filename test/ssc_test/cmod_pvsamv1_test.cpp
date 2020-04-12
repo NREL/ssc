@@ -2,7 +2,7 @@
 
 #include "cmod_pvsamv1_eqns.h"
 #include "cmod_pvsamv1_test.h"
-#include "../input_cases/pvsamv1_cases.h"
+
 #include "../input_cases/weather_inputs.h"
 
 /// Test PVSAMv1 with all defaults and no-financial model

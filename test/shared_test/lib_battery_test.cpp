@@ -76,7 +76,7 @@ TEST_F(BatteryTest, LossesModel_lib_battery)
 
 TEST_F(BatteryTest, AugmentCapacity)
 {
-	
+
 	std::vector<int> replacement_schedule = { 1, 1, 1 };
 	std::vector<double> augmentation_percent = { 50, 40 , 30 };
 	batteryModel->lifetime_model()->set_replacement_option(battery_t::REPLACE_BY_SCHEDULE);
@@ -105,15 +105,11 @@ TEST_F(BatteryTest, AugmentCapacity)
 			replaceCount++;
 		}
 	}
-	
-	// Current, limited approach which only augments capacity in models, does not update lifetime degradation 
+
+	// Current, limited approach which only augments capacity in models, does not update lifetime degradation
 	// trajectories or consider impacts on voltage and other aspects.
 	battery_t * battery = new battery_t(dtHour, chemistry);
 	battery->initialize(capacityModel, voltageModel, lifetimeModel, thermalModel, lossModel);
 	battery->lifetime_model()->set_replacement_option(battery_t::REPLACE_BY_SCHEDULE);
-
-
-
-
 
 }
