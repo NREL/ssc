@@ -36,6 +36,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, DefaultLifetimeNoFinancialModel) 
 
 	std::map<std::string, double> pairs;
 	pairs["system_use_lifetime_output"] = 1;
+	pairs["save_full_lifetime_variables"] = 1;
 	pairs["analysis_period"] = 25;
 
 	double dc_degradation[25];
