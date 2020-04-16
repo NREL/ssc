@@ -1735,6 +1735,15 @@ public:
             trans_receiver->m_hel_stow_deploy = as_double("hel_stow_deploy");
             trans_receiver->m_is_iscc = false;    // Set parameters that were set with TCS defaults
 
+			trans_receiver->m_mode_initial = C_csp_collector_receiver::OFF;
+			if (as_boolean("is_rec_on_initial"))
+				trans_receiver->m_mode_initial = C_csp_collector_receiver::ON;
+			if (as_boolean("is_rec_startup_initial"))
+			{
+				trans_receiver->m_mode_initial = C_csp_collector_receiver::STARTUP;
+				trans_receiver->m_E_su_accum_init = as_double("rec_startup_energy_initial");
+			}
+
             // Inputs for transient receiver model
             trans_receiver->m_is_transient = as_boolean("is_rec_model_trans");
             trans_receiver->m_is_startup_transient = as_boolean("is_rec_startup_trans");
