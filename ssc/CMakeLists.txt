@@ -14,7 +14,7 @@ endif()
 
 #####################################################################################################################
 #
-# Project Settings 
+# Project Settings
 #
 #####################################################################################################################
 
@@ -123,7 +123,7 @@ set(SSC_SRC
 		cmod_utilityrate4.cpp
 		cmod_utilityrate5.cpp
 		cmod_wavefile.cpp
-		cmod_utilityrate5_eqns.cpp 
+		cmod_utilityrate5_eqns.cpp
 		cmod_utilityrate5_eqns.h
 		cmod_wfcheck.cpp
 		cmod_wfcsv.cpp
@@ -145,13 +145,13 @@ set(SSC_SRC
 		csp_common.cpp
 		csp_common.h
 		ssc_equations.h
-		sscapi.cpp
+        sscapi.cpp
 		sscapi.h
 		tckernel.cpp
 		tckernel.h
 		vartab.cpp
 		vartab.h
-		)
+        cmod_wind_landbosse.cpp cmod_wind_landbosse.h)
 
 
 #####################################################################################################################
@@ -186,7 +186,7 @@ else(MSVC)
 endif(MSVC)
 
 #####################################################################################################################
-# 
+#
 # CMake Targets
 #
 #####################################################################################################################
@@ -207,7 +207,7 @@ if(UNIX AND NOT SAMAPI_EXPORT)
 	endif()
 	add_custom_command(
 		TARGET ssc
-		POST_BUILD 
+		POST_BUILD
 		COMMAND dltest $<TARGET_FILE:ssc>)
 endif()
 
@@ -241,13 +241,14 @@ set( DEPENDENCIES
 	shared
 	lpsolve
 	splinter
+	jsoncpp_lib
 	)
 foreach( name ${DEPENDENCIES} )
 	target_link_libraries(ssc ${name})
 endforeach()
 
 if (UNIX)
-	target_link_libraries(ssc -lm -ldl -lstdc++)
+	target_link_libraries(ssc -lpthread -lm -ldl -lstdc++)
 endif()
 
 
