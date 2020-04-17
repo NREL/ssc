@@ -107,6 +107,9 @@ endfunction()
 #
 #####################################################################################################################
 
+set(JSONCPP_WITH_EXAMPLE 0)
+set(JSONCPP_WITH_TESTS 0)
+add_subdirectory(jsoncpp)
 add_subdirectory(splinter)
 add_subdirectory(shared)
 add_subdirectory(nlopt)

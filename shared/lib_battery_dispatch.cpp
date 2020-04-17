@@ -1209,6 +1209,7 @@ void dispatch_automatic_behind_the_meter_t::target_power(FILE*p, bool debug, dou
 		if (debug)
 			fprintf(p, "Step\tTarget_Power\tEnergy_Sum\tEnergy_charged\n");
 
+		// Iterate over sorted load to determine target power
 		for (size_t ii = 0; ii != _num_steps - 1; ii++)
 		{
 			// don't look at negative grid power

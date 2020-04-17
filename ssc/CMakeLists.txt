@@ -131,13 +131,13 @@ set(SSC_SRC
 		csp_common.cpp
 		csp_common.h
 		ssc_equations.h
-		sscapi.cpp
+        sscapi.cpp
 		sscapi.h
 		tckernel.cpp
 		tckernel.h
 		vartab.cpp
 		vartab.h
-		)
+        cmod_wind_landbosse.cpp cmod_wind_landbosse.h)
 
 
 #####################################################################################################################
@@ -210,13 +210,14 @@ set( DEPENDENCIES
 	shared
 	lpsolve
 	splinter
+	jsoncpp_lib
 	)
 foreach( name ${DEPENDENCIES} )
 	target_link_libraries(ssc ${name})
 endforeach()
 
 if (UNIX)
-	target_link_libraries(ssc -lm -ldl -lstdc++)
+	target_link_libraries(ssc -lpthread -lm -ldl -lstdc++)
 endif()
 
 

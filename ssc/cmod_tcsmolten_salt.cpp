@@ -190,6 +190,8 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,     SSC_NUMBER, "h_tank_min",                         "Minimum allowable HTF height in storage tank",                                                                                            "m",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "hot_tank_Thtr",                      "Minimum allowable hot tank HTF temperature",                                                                                              "C",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "hot_tank_max_heat",                  "Rated heater capacity for hot tank heating",                                                                                              "MW",           "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "tanks_in_parallel",                  "Tanks are in parallel, not in series, with solar field",                                                                                  "-",            "",                                  "Thermal Storage",                          "*",                                                                "",              "" },
+
 
         //RADIATIVE COOLING WITH COLD STORAGE
     { SSC_INPUT,     SSC_NUMBER, "h_ctes_tank_min",                    "Minimum allowable water height in storage tank",                                                                                          "m",            "",                                  "RADCOOL",                                  "?=0",                                                              "",              ""},
@@ -492,15 +494,23 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 
 
         // Thermal energy storage outputs
-    { SSC_OUTPUT,    SSC_ARRAY,  "tank_losses",                        "TES thermal losses",                                                                                                                      "MWt",          "",                                  "",                                         "*",                                                                "",              ""},
-    { SSC_OUTPUT,    SSC_ARRAY,  "q_heater",                           "TES freeze protection power",                                                                                                             "MWe",          "",                                  "",                                         "*",                                                                "",              ""},
-    { SSC_OUTPUT,    SSC_ARRAY,  "T_tes_hot",                          "TES hot temperature",                                                                                                                     "C",            "",                                  "",                                         "*",                                                                "",              ""},
-    { SSC_OUTPUT,    SSC_ARRAY,  "T_tes_cold",                         "TES cold temperature",                                                                                                                    "C",            "",                                  "",                                         "*",                                                                "",              ""},
-    { SSC_OUTPUT,    SSC_ARRAY,  "q_dc_tes",                           "TES discharge thermal power",                                                                                                             "MWt",          "",                                  "",                                         "*",                                                                "",              ""},
-    { SSC_OUTPUT,    SSC_ARRAY,  "q_ch_tes",                           "TES charge thermal power",                                                                                                                "MWt",          "",                                  "",                                         "*",                                                                "",              ""},
-    { SSC_OUTPUT,    SSC_ARRAY,  "e_ch_tes",                           "TES charge state",                                                                                                                        "MWht",         "",                                  "",                                         "*",                                                                "",              ""},
-    { SSC_OUTPUT,    SSC_ARRAY,  "m_dot_tes_dc",                       "TES discharge mass flow rate",                                                                                                            "kg/s",         "",                                  "",                                         "*",                                                                "",              ""},
-    { SSC_OUTPUT,    SSC_ARRAY,  "m_dot_tes_ch",                       "TES charge mass flow rate",                                                                                                               "kg/s",         "",                                  "",                                         "*",                                                                "",              ""},
+    { SSC_OUTPUT,    SSC_ARRAY,  "tank_losses",                        "TES thermal losses",                  "MWt",          "",                                  "",            "*",  "",  "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "q_heater",                           "TES freeze protection power",         "MWe",          "",                                  "",            "*",  "",  "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "T_tes_hot",                          "TES hot temperature",                 "C",            "",                                  "",            "*",  "",  "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "T_tes_cold",                         "TES cold temperature",                "C",            "",                                  "",            "*",  "",  "" },
+    { SSC_OUTPUT,   SSC_ARRAY,   "mass_tes_cold",                      "TES cold tank mass (end)",            "kg",           "",                                  "",            "*",  "",  "" },
+    { SSC_OUTPUT,   SSC_ARRAY,   "mass_tes_hot",                       "TES hot tank mass (end)",             "kg",           "",                                  "",            "*",  "",  "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "q_dc_tes",                           "TES discharge thermal power",         "MWt",          "",                                  "",            "*",  "",  "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "q_ch_tes",                           "TES charge thermal power",            "MWt",          "",                                  "",            "*",  "",  "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "e_ch_tes",                           "TES charge state",                    "MWht",         "",                                  "",            "*",  "",  "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "m_dot_cr_to_tes_hot",                "Mass flow: field to hot TES",         "kg/s",         "",                                  "",            "*",  "",  "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "m_dot_tes_hot_out",                  "Mass flow: TES hot out",              "kg/s",         "",                                  "",            "*",  "",  "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "m_dot_pc_to_tes_cold",               "Mass flow: cycle to cold TES",        "kg/s",         "",                                  "",            "*",  "",  "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "m_dot_tes_cold_out",                 "Mass flow: TES cold out",             "kg/s",         "",                                  "",            "*",  "",  "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "m_dot_field_to_cycle",               "Mass flow: field to cycle",           "kg/s",         "",                                  "",            "*",  "",  "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "m_dot_cycle_to_field",               "Mass flow: cycle to field",           "kg/s",         "",                                  "",            "*",  "",  "" },
+    //{ SSC_OUTPUT,    SSC_ARRAY,  "m_dot_tes_dc",                       "TES discharge mass flow rate",        "kg/s",         "",                                  "",          "*",  "",  "" },
+    //{ SSC_OUTPUT,    SSC_ARRAY,  "m_dot_tes_ch",                       "TES charge mass flow rate",           "kg/s",         "",                                  "",          "*",  "",  "" },
 
         // Parasitics outputs
     { SSC_OUTPUT,    SSC_ARRAY,  "pparasi",                            "Parasitic power heliostat drives",                                                                                                        "MWe",          "",                                  "",                                         "*",                                                                "",              ""},
@@ -561,7 +571,9 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 
     { SSC_OUTPUT,    SSC_ARRAY,  "gen",                                "Total electric power to grid with available derate",                                                                                      "kWe",          "",                                  "",                                         "*",                                                                "",              ""},
 
-    { SSC_OUTPUT,    SSC_MATRIX, "sco2_preprocess_table_out",          "sCO2 cycle preprocessed data in UDPC format",                                                                                             "",             "",                                  "",                                         "?=[[0]]",                                                          "",              "COL_LABEL=UDPC_SCO2_PREPROC,ROW_LABEL=NO_ROW_LABEL"},
+    { SSC_OUTPUT,    SSC_MATRIX, "ud_T_htf_ind_od_out",                "T_htf_hot cycle off design",                                                                                                              "",             "",                                  "",                                         "?=[[0,1,2,3,4,5,6,7,8,9,10,11,12][0,1,2,3,4,5,6,7,8,9,10,11,12]]", "",              "COL_LABEL=UDPC_T_HTF_HOT,ROW_LABEL=NO_ROW_LABEL"},
+    { SSC_OUTPUT,    SSC_MATRIX, "ud_T_amb_ind_od_out",                "T_amb cycle off design",                                                                                                                  "",             "",                                  "",                                         "?=[[0,1,2,3,4,5,6,7,8,9,10,11,12][0,1,2,3,4,5,6,7,8,9,10,11,12]]", "",              "COL_LABEL=UDPC_T_AMB,ROW_LABEL=NO_ROW_LABEL"},
+    { SSC_OUTPUT,    SSC_MATRIX, "ud_m_dot_htf_ind_od_out",            "M_dot_htf cycle off design",                                                                                                              "",             "",                                  "",                                         "?=[[0,1,2,3,4,5,6,7,8,9,10,11,12][0,1,2,3,4,5,6,7,8,9,10,11,12]]", "",              "COL_LABEL=UDPC_M_DOT_HTF,ROW_LABEL=NO_ROW_LABEL"},
 
     // Annual single-value outputs
     { SSC_OUTPUT,    SSC_NUMBER, "annual_energy",                      "Annual total electric power to grid",                                                                                                     "kWhe",         "",                                  "",                                         "*",                                                                "",              ""},
@@ -1174,25 +1186,6 @@ public:
                 pc->mc_T_amb_ind = as_matrix("sco2ud_T_amb_ind_od");
                 pc->mc_m_dot_htf_ind = as_matrix("sco2ud_m_dot_htf_ind_od");
 
-                util::matrix_t<double> cmbd_ind;
-
-                combine_ind_tbl(cmbd_ind, pc->mc_T_htf_ind, pc->mc_m_dot_htf_ind, pc->mc_T_amb_ind,
-                    pc->m_m_dot_htf_low, 1.0, pc->m_m_dot_htf_high,
-                    pc->m_T_htf_low, pc->m_T_htf_hot_ref, pc->m_T_htf_high,
-                    pc->m_T_amb_low, pc->m_T_amb_des, pc->m_T_amb_high);
-
-                size_t ncols_udpc = cmbd_ind.ncols();
-                size_t nrows_udpc = cmbd_ind.nrows();
-
-                util::matrix_t<ssc_number_t>& p_udpc_preproc = allocate_matrix("sco2_preprocess_table_out", nrows_udpc, ncols_udpc);
-                for (size_t i = 0; i < nrows_udpc; i++)
-                {
-                    for (size_t j = 0; j < ncols_udpc; j++)
-                    {
-                        p_udpc_preproc(i, j) = (ssc_number_t)cmbd_ind(i, j);
-                    }
-                }
-
                 p_csp_power_cycle = &rankine_pc;
             }
             else
@@ -1346,7 +1339,7 @@ public:
                     std::string cycle_type = "recompression";
                     if (!is_des_rc)
                     {
-                        //sco2_f_min = 0.7;
+                        sco2_f_min = 0.7;
                         cycle_type = "simple";
                     }
                     if (cycle_f_min < sco2_f_min)
@@ -1383,6 +1376,33 @@ public:
                     }
 
                     size_t ncols = T_htf_parametrics.ncols();
+
+                    util::matrix_t<double> &p_udpc_T_htf_hot = allocate_matrix("ud_T_htf_ind_od_out", n_T_htf_hot_in, ncols);
+                    for (int i = 0; i < n_T_htf_hot_in; i++)
+                    {
+                        for (size_t j = 0; j < ncols; j++)
+                        {
+                            p_udpc_T_htf_hot(i, j) = (double)T_htf_parametrics(i, j);
+                        }
+                    }
+
+                    util::matrix_t<double> &p_udpc_T_amb = allocate_matrix("ud_T_amb_ind_od_out", n_T_amb_in, ncols);
+                    for (int i = 0; i < n_T_amb_in; i++)
+                    {
+                        for (size_t j = 0; j < ncols; j++)
+                        {
+                            p_udpc_T_amb(i, j) = (double)T_amb_parametrics(i, j);
+                        }
+                    }
+
+                    util::matrix_t<double> &p_udpc_m_dot_htf = allocate_matrix("ud_m_dot_htf_ind_od_out", n_m_dot_htf_ND_in, ncols);
+                    for (int i = 0; i < n_m_dot_htf_ND_in; i++)
+                    {
+                        for (size_t j = 0; j < ncols; j++)
+                        {
+                            p_udpc_m_dot_htf(i, j) = (double)m_dot_htf_ND_parametrics(i, j);
+                        }
+                    }
 
                     log("sCO2 off-design performance calculations for lookup tables complete.", SSC_WARNING);
                     update("sCO2 preprocess complete", 100.0);
@@ -1424,25 +1444,6 @@ public:
                     pc->mc_T_htf_ind = T_htf_parametrics;
                     pc->mc_T_amb_ind = T_amb_parametrics;
                     pc->mc_m_dot_htf_ind = m_dot_htf_ND_parametrics;
-
-                    util::matrix_t<double> cmbd_ind;
-
-                    combine_ind_tbl(cmbd_ind, pc->mc_T_htf_ind, pc->mc_m_dot_htf_ind, pc->mc_T_amb_ind,
-                        pc->m_m_dot_htf_low, 1.0, pc->m_m_dot_htf_high,
-                        pc->m_T_htf_low, pc->m_T_htf_hot_ref, pc->m_T_htf_high,
-                        pc->m_T_amb_low, pc->m_T_amb_des, pc->m_T_amb_high);
-
-                    size_t ncols_udpc = cmbd_ind.ncols();
-                    size_t nrows_udpc = cmbd_ind.nrows();
-
-                    util::matrix_t<ssc_number_t>& p_udpc_preproc = allocate_matrix("sco2_preprocess_table_out", nrows_udpc, ncols_udpc);
-                    for (size_t i = 0; i < nrows_udpc; i++)
-                    {
-                        for (size_t j = 0; j < ncols_udpc; j++)
-                        {
-                            p_udpc_preproc(i, j) = (ssc_number_t)cmbd_ind(i, j);
-                        }
-                    }
 
                     p_csp_power_cycle = &rankine_pc;
                 }
@@ -1730,6 +1731,23 @@ public:
         tes->m_htf_pump_coef = as_double("pb_pump_coef");
 
 
+        tes->tanks_in_parallel = as_boolean("tanks_in_parallel");        //[-]
+        //tes->tanks_in_parallel = false; // true;      //[-] False: Field HTF always goes to TES. PC HTF always comes from TES
+        
+        tes->V_tes_des = 1.85;  //[m/s]
+        tes->calc_design_pipe_vals = false; // for now, to get 'tanks_in_parallel' to work
+        
+        
+        // Set storage outputs
+        storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_Q_DOT_LOSS, allocate("tank_losses", n_steps_fixed), n_steps_fixed);
+        storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_W_DOT_HEATER, allocate("q_heater", n_steps_fixed), n_steps_fixed);
+        storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_TES_T_HOT, allocate("T_tes_hot", n_steps_fixed), n_steps_fixed);
+        storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_TES_T_COLD, allocate("T_tes_cold", n_steps_fixed), n_steps_fixed);
+        storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_MASS_COLD_TANK, allocate("mass_tes_cold", n_steps_fixed), n_steps_fixed);
+        storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_MASS_HOT_TANK, allocate("mass_tes_hot", n_steps_fixed), n_steps_fixed);
+
+
+
         // TOU parameters
         C_csp_tou_block_schedules tou;
         C_csp_tou_block_schedules::S_params *tou_params = &tou.ms_params;
@@ -1891,15 +1909,19 @@ public:
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::WSPD, allocate("wspd", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::CR_DEFOCUS, allocate("defocus", n_steps_fixed), n_steps_fixed);
 
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TES_Q_DOT_LOSS, allocate("tank_losses", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TES_W_DOT_HEATER, allocate("q_heater", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TES_T_HOT, allocate("T_tes_hot", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TES_T_COLD, allocate("T_tes_cold", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TES_Q_DOT_DC, allocate("q_dc_tes", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TES_Q_DOT_CH, allocate("q_ch_tes", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TES_E_CH_STATE, allocate("e_ch_tes", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TES_M_DOT_DC, allocate("m_dot_tes_dc", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TES_M_DOT_CH, allocate("m_dot_tes_ch", n_steps_fixed), n_steps_fixed);
+        
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::M_DOT_CR_TO_TES_HOT, allocate("m_dot_cr_to_tes_hot", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::M_DOT_TES_HOT_OUT, allocate("m_dot_tes_hot_out", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::M_DOT_PC_TO_TES_COLD, allocate("m_dot_pc_to_tes_cold", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::M_DOT_TES_COLD_OUT, allocate("m_dot_tes_cold_out", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::M_DOT_FIELD_TO_CYCLE, allocate("m_dot_field_to_cycle", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::M_DOT_CYCLE_TO_FIELD, allocate("m_dot_cycle_to_field", n_steps_fixed), n_steps_fixed);
+
+        //csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TES_M_DOT_DC, allocate("m_dot_tes_dc", n_steps_fixed), n_steps_fixed);
+        //csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TES_M_DOT_CH, allocate("m_dot_tes_ch", n_steps_fixed), n_steps_fixed);
 
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::COL_W_DOT_TRACK, allocate("pparasi", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::CR_W_DOT_PUMP, allocate("P_tower_pump", n_steps_fixed), n_steps_fixed);
@@ -2167,15 +2189,15 @@ public:
         }
 
         // Convert mass flow rates from [kg/hr] to [kg/s]
-        size_t count_m_dot_pc, count_m_dot_rec, count_m_dot_water_pc, count_m_dot_tes_dc, count_m_dot_tes_ch;
-        count_m_dot_pc = count_m_dot_rec = count_m_dot_water_pc = count_m_dot_tes_dc = count_m_dot_tes_ch = 0;
+        size_t count_m_dot_pc, count_m_dot_rec, count_m_dot_water_pc; // , count_m_dot_tes_dc, count_m_dot_tes_ch;
+        count_m_dot_pc = count_m_dot_rec = count_m_dot_water_pc = 0;    // = count_m_dot_tes_dc = count_m_dot_tes_ch = 0;
         ssc_number_t *p_m_dot_rec = as_array("m_dot_rec", &count_m_dot_rec);
         ssc_number_t *p_m_dot_pc = as_array("m_dot_pc", &count_m_dot_pc);
         ssc_number_t *p_m_dot_water_pc = as_array("m_dot_water_pc", &count_m_dot_water_pc);
-        ssc_number_t *p_m_dot_tes_dc = as_array("m_dot_tes_dc", &count_m_dot_tes_dc);
-        ssc_number_t *p_m_dot_tes_ch = as_array("m_dot_tes_ch", &count_m_dot_tes_ch);
-        if (count_m_dot_rec != n_steps_fixed || count_m_dot_pc != n_steps_fixed || count_m_dot_water_pc != n_steps_fixed
-            || count_m_dot_tes_dc != n_steps_fixed || count_m_dot_tes_ch != n_steps_fixed)
+        //ssc_number_t *p_m_dot_tes_dc = as_array("m_dot_tes_dc", &count_m_dot_tes_dc);
+        //ssc_number_t *p_m_dot_tes_ch = as_array("m_dot_tes_ch", &count_m_dot_tes_ch);
+        if (count_m_dot_rec != n_steps_fixed || count_m_dot_pc != n_steps_fixed || count_m_dot_water_pc != n_steps_fixed)
+            //|| count_m_dot_tes_dc != n_steps_fixed || count_m_dot_tes_ch != n_steps_fixed)
         {
             log("At least one m_dot array is a different length than 'n_steps_fixed'.", SSC_WARNING);
             return;
@@ -2185,8 +2207,8 @@ public:
             p_m_dot_rec[i] = (ssc_number_t)(p_m_dot_rec[i] / 3600.0);   //[kg/s] convert from kg/hr
             p_m_dot_pc[i] = (ssc_number_t)(p_m_dot_pc[i] / 3600.0);     //[kg/s] convert from kg/hr
             p_m_dot_water_pc[i] = (ssc_number_t)(p_m_dot_water_pc[i] / 3600.0); //[kg/s] convert from kg/hr
-            p_m_dot_tes_dc[i] = (ssc_number_t)(p_m_dot_tes_dc[i] / 3600.0);     //[kg/s] convert from kg/hr
-            p_m_dot_tes_ch[i] = (ssc_number_t)(p_m_dot_tes_ch[i] / 3600.0);     //[kg/s] convert from kg/hr
+            //p_m_dot_tes_dc[i] = (ssc_number_t)(p_m_dot_tes_dc[i] / 3600.0);     //[kg/s] convert from kg/hr
+            //p_m_dot_tes_ch[i] = (ssc_number_t)(p_m_dot_tes_ch[i] / 3600.0);     //[kg/s] convert from kg/hr
         }       
 
         // Set output data from heliostat class
