@@ -84,15 +84,7 @@ endif()
 #
 #####################################################################################################################
 
-set( DEPENDENCIES
-		tcs
-		nlopt
-		solarpilot
-		shared
-		splinter)
-foreach( name ${DEPENDENCIES} )
-	target_link_libraries(TCSConsole ${name})
-endforeach()
+target_link_libraries(TCSConsole ssc)
 
 if (${CMAKE_PROJECT_NAME} STREQUAL system_advisor_model)
 	target_link_libraries(TCSConsole wex lk)
@@ -102,10 +94,10 @@ else()
         unset(LK_LIB CACHE)
         find_library( WEX_LIB
                 NAMES wex.a wex.lib
-                PATHS $ENV{WEX_LIB} $ENV{WEXDIR}/build $ENV{WEXDIR}/build/Release)
+                PATHS $ENV{WEX_LIB} $ENV{WEXDIR}/build $ENV{WEXDIR}/build/Release $ENV{CMAKEBUILDDIR}/wex/Release)
         find_library( LK_LIB
                 NAMES lk.a lk.lib
-                PATHS $ENV{LK_LIB} $ENV{LKDIR}/build $ENV{LKDIR}/build/Release)
+                PATHS $ENV{LK_LIB} $ENV{LKDIR}/build $ENV{LKDIR}/build/Release $ENV{CMAKEBUILDDIR}/lk/Release)
         target_link_libraries(TCSConsole optimized ${WEX_LIB} optimized ${LK_LIB})
     endif()
 
@@ -114,10 +106,10 @@ else()
 		unset(WEXD_LIB CACHE)
 		find_library( WEXD_LIB
 				NAMES wexd.a wexd.lib
-				PATHS $ENV{WEXD_LIB} $ENV{WEXDIR}/build $ENV{WEXDIR}/build/Debug)
+				PATHS $ENV{WEXD_LIB} $ENV{WEXDIR}/build $ENV{WEXDIR}/build/Debug $ENV{CMAKEBUILDDIR}/wex/Debug)
 		find_library( LKD_LIB
 				NAMES lkd.a lkd.lib
-				PATHS $ENV{LKD_LIB} $ENV{LKDIR}/build $ENV{LKDIR}/build/Debug)
+				PATHS $ENV{LKD_LIB} $ENV{LKDIR}/build $ENV{LKDIR}/build/Debug $ENV{CMAKEBUILDDIR}/lk/Debug)
 		target_link_libraries(TCSConsole debug ${WEXD_LIB} debug ${LKD_LIB})
 	endif()
 endif()
