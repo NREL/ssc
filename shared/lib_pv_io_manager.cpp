@@ -80,8 +80,10 @@ Simulation_IO::Simulation_IO(compute_module* cm, Irradiance_IO & IrradianceIO)
 	useLifetimeOutput = false;
 	if (cm->is_assigned("system_use_lifetime_output")) useLifetimeOutput = cm->as_integer("system_use_lifetime_output");
 	numberOfYears = 1;
+	saveLifetimeVars = 0;
 	if (useLifetimeOutput) {
 		numberOfYears = cm->as_integer("analysis_period");
+		saveLifetimeVars = cm->as_integer("save_full_lifetime_variables");
 	}
 	numberOfSteps = numberOfYears * numberOfWeatherFileRecords;
 }
@@ -725,6 +727,9 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 void PVSystem_IO::AllocateOutputs(compute_module* cm)
 {
 	size_t numberOfWeatherFileRecords = Irradiance->numberOfWeatherFileRecords;
+	if (Simulation->saveLifetimeVars == 1) {
+		numberOfWeatherFileRecords = Simulation->numberOfSteps;
+	}
 	size_t numberOfLifetimeRecords = Simulation->numberOfSteps;
 	size_t numberOfYears = Simulation->numberOfYears;
 
