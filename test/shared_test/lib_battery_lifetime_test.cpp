@@ -146,35 +146,35 @@ TEST_F(lib_battery_lifetime_calendar_model_test, replaceBatteryTest) {
     compareState(cal_model, s, "runCalendarModelTest: 2");
 }
 
-//TEST_F(lib_battery_lifetime_test, ReplaceByCapacityTest){
-//    model = std::unique_ptr<lifetime_t>(new lifetime_t(cycle_model.get(), cal_model.get(), 1, 60));
-//
-//    size_t idx = 0;
-//    while (idx < 876){
-//        model->runLifetimeModels(idx, 5, true, 293);
-//        model->runLifetimeModels(idx, 95, true, 293);
-//        idx ++;
-//    }
-//    auto s = lifetime_state({{82.5, 90, 90, 90, 90, 875, 2, std::vector<double>()},
-//                                 {36, 101.937, 875, 0.000632, 0.000632}, 82.5, 0});
-//    compareState(model, s, "ReplaceByCapacityTest: 1");
-//
-//    while (idx < 2101){
-//        model->runLifetimeModels(idx, 25, true, 293);
-//        model->runLifetimeModels(idx, 75, true, 293);
-//        idx ++;
-//    }
-//    s = lifetime_state({{59.998, 50, 70, 50, 66.682, 2099, 4, std::vector<double>()},
-//                                 {87, 101.845, 2099, 0.00155, 0.00155}, 60.015, 0});
-//
-//    compareState(model, s, "ReplaceByCapacityTest: 2");
-//
-//    bool rep = model->check_replaced();
-//    EXPECT_TRUE(rep);
-//
-//    s = lifetime_state({{100, 0, 0, 0, 66.682, 0, 0, std::vector<double>()},
-//                        {0, 102, 0, 0, 0}, 100, 1});
-//
-//    compareState(model, s, "ReplaceByCapacityTest: 3");
-//
-//}
+TEST_F(lib_battery_lifetime_test, ReplaceByCapacityTest){
+    model = std::unique_ptr<lifetime_t>(new lifetime_t(cycle_model.get(), cal_model.get(), 1, 60));
+
+    size_t idx = 0;
+    while (idx < 876){
+        model->runLifetimeModels(idx, true, 5,95, 293);
+        model->runLifetimeModels(idx, true, 95, 5, 293);
+        idx ++;
+    }
+    auto s = lifetime_state({{82.5, 90, 90, 90, 90, 875, 2, std::vector<double>()},
+                                 {36, 101.937, 875, 0.000632, 0.000632}, 82.5, 0});
+    compareState(model, s, "ReplaceByCapacityTest: 1");
+
+    while (idx < 2101){
+        model->runLifetimeModels(idx, true, 25, 75, 293);
+        model->runLifetimeModels(idx, true, 75, 25, 293);
+        idx ++;
+    }
+    s = lifetime_state({{59.998, 50, 70, 50, 66.682, 2099, 4, std::vector<double>()},
+                                 {87, 101.845, 2099, 0.00155, 0.00155}, 60.015, 0});
+
+    compareState(model, s, "ReplaceByCapacityTest: 2");
+
+    bool rep = model->check_replaced();
+    EXPECT_TRUE(rep);
+
+    s = lifetime_state({{100, 0, 0, 0, 66.682, 0, 0, std::vector<double>()},
+                        {0, 102, 0, 0, 0}, 100, 1});
+
+    compareState(model, s, "ReplaceByCapacityTest: 3");
+
+}

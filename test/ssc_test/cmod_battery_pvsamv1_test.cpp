@@ -53,7 +53,7 @@ void daily_battery_stats::compute(std::vector<ssc_number_t> batt_power_data) {
 		avgCycles += cycles;
 
 	}
-	ssc_number_t days = n / 24.0;
+	ssc_number_t days = n / 24.0 / steps_per_hour;
 	avgCycles = avgCycles / days;
 	peakKwDischarge = *std::max_element(batt_power_data.begin(), batt_power_data.end());
 	peakKwCharge = *std::min_element(batt_power_data.begin(), batt_power_data.end());
@@ -631,7 +631,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_CustomDispatchBatteryModelD
 
 	if (!pvsam_errors)
 	{
-	    double tol = 1e-3;
+	    double tol = .05;
 		ssc_number_t annual_energy;
 		ssc_data_get_number(data, "annual_energy", &annual_energy);
 		EXPECT_NEAR(annual_energy, expectedEnergy, expectedEnergy * tol) << "Annual energy.";
@@ -646,12 +646,12 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_CustomDispatchBatteryModelD
 		EXPECT_NEAR(data_vtab->lookup("average_battery_roundtrip_efficiency")->num[0], roundtripEfficiency, m_error_tolerance_hi) << "Battery roundtrip efficiency.";
 
 		auto batt_power = data_vtab->as_vector_ssc_number_t("batt_power");
-		daily_battery_stats batt_stats = daily_battery_stats(batt_power);
+		daily_battery_stats batt_stats = daily_battery_stats(batt_power, 4);
 
-		EXPECT_NEAR(batt_stats.peakKwCharge, peakKwCharge, m_error_tolerance_lo);
-		EXPECT_NEAR(batt_stats.peakKwDischarge, peakKwDischarge, m_error_tolerance_lo);
+		EXPECT_NEAR(batt_stats.peakKwCharge, peakKwCharge, abs(peakKwCharge * 0.01));
+		EXPECT_NEAR(batt_stats.peakKwDischarge, peakKwDischarge, peakKwDischarge * 0.01);
 		EXPECT_NEAR(batt_stats.peakCycles, peakCycles, m_error_tolerance_lo);
-		EXPECT_NEAR(batt_stats.avgCycles, avgCycles, 0.0001);
+		EXPECT_NEAR(batt_stats.avgCycles, avgCycles, 0.05);
 	}
 
 }
