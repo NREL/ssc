@@ -603,3 +603,58 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, CommercialMultipleSubarrayBatte
 	}
 
 }
+
+/// Test PVSAMv1 with all defaults and DC battery enabled with custom dispatch and PPA financial model
+TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_CustomDispatchBatteryModelDCIntegrationFullSubhourly)
+{
+	ssc_data_t data = ssc_data_create();
+	pvsamv1_pv_defaults(data);
+	pvsamv1_battery_defaults(data);
+	grid_and_rate_defaults(data);
+	singleowner_defaults(data);
+
+	ssc_number_t expectedEnergy = 37252473;
+	ssc_number_t expectedBatteryChargeEnergy = 430570;
+	ssc_number_t expectedBatteryDischargeEnergy = 349127;
+	ssc_number_t roundtripEfficiency = 80.6;
+
+	ssc_number_t peakKwCharge = -948.6;
+	ssc_number_t peakKwDischarge = 651.7;
+	ssc_number_t peakCycles = 3;
+	ssc_number_t avgCycles = 1.1829;
+
+	ssc_data_set_number(data, "batt_dispatch_choice", 3);
+	ssc_data_set_number(data, "batt_ac_or_dc", 0);
+	set_array(data, "batt_custom_dispatch", custom_dispatch_singleowner_subhourly_schedule, 8760 * 4);
+	set_array(data, "batt_room_temperature_celsius", subhourly_batt_temps, 8760 * 4);
+	set_array(data, "dispatch_factors_ts", subhourly_dispatch_factors, 8760 * 4);
+	ssc_data_set_string(data, "solar_resource_file", subhourly_weather_file);
+
+	int pvsam_errors = run_pvsam1_battery_ppa(data);
+	EXPECT_FALSE(pvsam_errors);
+
+	if (!pvsam_errors)
+	{
+		ssc_number_t annual_energy;
+		ssc_data_get_number(data, "annual_energy", &annual_energy);
+		EXPECT_NEAR(annual_energy, expectedEnergy, m_error_tolerance_hi) << "Annual energy.";
+
+		auto data_vtab = static_cast<var_table*>(data);
+		auto annualChargeEnergy = data_vtab->as_vector_ssc_number_t("batt_annual_charge_energy");
+		EXPECT_NEAR(annualChargeEnergy[1], expectedBatteryChargeEnergy, m_error_tolerance_hi) << "Battery annual charge energy.";
+
+		auto annualDischargeEnergy = data_vtab->as_vector_ssc_number_t("batt_annual_discharge_energy");
+		EXPECT_NEAR(annualDischargeEnergy[1], expectedBatteryDischargeEnergy, m_error_tolerance_hi) << "Battery annual discharge energy.";
+
+		EXPECT_NEAR(data_vtab->lookup("average_battery_roundtrip_efficiency")->num[0], roundtripEfficiency, m_error_tolerance_hi) << "Battery roundtrip efficiency.";
+
+		auto batt_power = data_vtab->as_vector_ssc_number_t("batt_power");
+		daily_battery_stats batt_stats = daily_battery_stats(batt_power);
+
+		EXPECT_NEAR(batt_stats.peakKwCharge, peakKwCharge, m_error_tolerance_lo);
+		EXPECT_NEAR(batt_stats.peakKwDischarge, peakKwDischarge, m_error_tolerance_lo);
+		EXPECT_NEAR(batt_stats.peakCycles, peakCycles, m_error_tolerance_lo);
+		EXPECT_NEAR(batt_stats.avgCycles, avgCycles, 0.0001);
+	}
+
+}

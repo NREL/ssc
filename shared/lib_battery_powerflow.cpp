@@ -46,7 +46,8 @@ BatteryPower::BatteryPower(double dtHour) :
 		stateOfChargeMax(1),
 		stateOfChargeMin(0),
 		depthOfDischargeMax(1),
-		tolerance(0.001){}
+		tolerance(0.001),
+        inverterEfficiencyCutoff(0){}
 
 BatteryPower::BatteryPower(const BatteryPower& orig) {
     sharedInverter = orig.sharedInverter;

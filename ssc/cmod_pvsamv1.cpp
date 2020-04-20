@@ -2132,7 +2132,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 
 				// Apply transformer loss
 				ssc_number_t transformerRatingkW = static_cast<ssc_number_t>(PVSystem->ratedACOutput * util::watt_to_kilowatt);
-				ssc_number_t xfmr_ll = PVSystem->transformerLoadLossFraction;
+				ssc_number_t xfmr_ll = PVSystem->transformerLoadLossFraction / step_per_hour;
 				ssc_number_t xfmr_nll = PVSystem->transformerNoLoadLossFraction * static_cast<ssc_number_t>(ts_hour * transformerRatingkW);
 
 				if (PVSystem->transformerLoadLossFraction != 0 && transformerRatingkW != 0)
@@ -2143,8 +2143,8 @@ void cm_pvsamv1::exec( ) throw (general_error)
 						xfmr_ll *= PVSystem->p_systemACPower[idx];
 				}
 				// total load loss
-				ssc_number_t xfmr_loss = xfmr_ll + xfmr_nll;
-				PVSystem->p_systemACPower[idx] -= xfmr_loss;
+				ssc_number_t xfmr_loss = xfmr_ll + xfmr_nll; // kWh
+				PVSystem->p_systemACPower[idx] -= xfmr_loss/ts_hour; // kW
 
 				// transmission loss if AC power is produced
 				if (PVSystem->p_systemACPower[idx] > 0){
@@ -2154,10 +2154,10 @@ void cm_pvsamv1::exec( ) throw (general_error)
 				// accumulate first year annual energy
 				if (iyear == 0)
 				{
-					annual_xfmr_nll += PVSystem->transformerNoLoadLossFraction;
+					annual_xfmr_nll += xfmr_nll;
 					annual_xfmr_ll += xfmr_ll;
 					annual_xfmr_loss += xfmr_loss;
-					PVSystem->p_transformerNoLoadLoss[idx] = PVSystem->transformerNoLoadLossFraction;
+					PVSystem->p_transformerNoLoadLoss[idx] = xfmr_nll;
 					PVSystem->p_transformerLoadLoss[idx] = xfmr_ll;
 					PVSystem->p_transformerLoss[idx] = xfmr_loss;
 				}
