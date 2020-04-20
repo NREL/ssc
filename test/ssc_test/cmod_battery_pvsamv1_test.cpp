@@ -6,17 +6,13 @@
 #include "../input_cases/pvsam1_battery_common_data.h"
 
 void daily_battery_stats::compute(std::vector<ssc_number_t> batt_power_data) {
-	// Initialize default values
-	peakCycles = 0;
-	avgCycles = 0;
-
 	size_t index = 0;
 	size_t n = batt_power_data.size();
 	int cycleState = 0; // -1 for charging, 1 for discharging;
 	bool halfCycle = false;
 	while (index < n) {
 		int cycles = 0;
-		for (int hour = 0; hour < 24; hour++) {
+		for (size_t hour = 0; hour < 24 * steps_per_hour; hour++) {
 			ssc_number_t currentPower = batt_power_data[index];
 
 			if (fabs(currentPower -0) < 1e-7){
@@ -635,16 +631,17 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_CustomDispatchBatteryModelD
 
 	if (!pvsam_errors)
 	{
+	    double tol = 1e-3;
 		ssc_number_t annual_energy;
 		ssc_data_get_number(data, "annual_energy", &annual_energy);
-		EXPECT_NEAR(annual_energy, expectedEnergy, m_error_tolerance_hi) << "Annual energy.";
+		EXPECT_NEAR(annual_energy, expectedEnergy, expectedEnergy * tol) << "Annual energy.";
 
 		auto data_vtab = static_cast<var_table*>(data);
 		auto annualChargeEnergy = data_vtab->as_vector_ssc_number_t("batt_annual_charge_energy");
-		EXPECT_NEAR(annualChargeEnergy[1], expectedBatteryChargeEnergy, m_error_tolerance_hi) << "Battery annual charge energy.";
+		EXPECT_NEAR(annualChargeEnergy[1], expectedBatteryChargeEnergy, expectedBatteryChargeEnergy * tol) << "Battery annual charge energy.";
 
 		auto annualDischargeEnergy = data_vtab->as_vector_ssc_number_t("batt_annual_discharge_energy");
-		EXPECT_NEAR(annualDischargeEnergy[1], expectedBatteryDischargeEnergy, m_error_tolerance_hi) << "Battery annual discharge energy.";
+		EXPECT_NEAR(annualDischargeEnergy[1], expectedBatteryDischargeEnergy, expectedBatteryDischargeEnergy * tol) << "Battery annual discharge energy.";
 
 		EXPECT_NEAR(data_vtab->lookup("average_battery_roundtrip_efficiency")->num[0], roundtripEfficiency, m_error_tolerance_hi) << "Battery roundtrip efficiency.";
 

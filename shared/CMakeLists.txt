@@ -111,10 +111,10 @@ set(SHARED_SRC
 		lib_windwakemodel.h
 		lib_windwatts.cpp
 		lib_windwatts.h
-		lsqfit.cpp
+        logger.cpp logger.h
+        lsqfit.cpp
 		lsqfit.h
-		wind_obos.lk
-        logger.cpp logger.h)
+        )
 
 
 #####################################################################################################################
