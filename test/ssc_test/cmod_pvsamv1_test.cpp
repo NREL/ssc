@@ -2,7 +2,7 @@
 
 #include "cmod_pvsamv1_eqns.h"
 #include "cmod_pvsamv1_test.h"
-#include "../input_cases/pvsamv1_cases.h"
+
 #include "../input_cases/weather_inputs.h"
 
 /// Test PVSAMv1 with all defaults and no-financial model
@@ -36,6 +36,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, DefaultLifetimeNoFinancialModel) 
 
 	std::map<std::string, double> pairs;
 	pairs["system_use_lifetime_output"] = 1;
+	pairs["save_full_lifetime_variables"] = 1;
 	pairs["analysis_period"] = 25;
 
 	double dc_degradation[25];

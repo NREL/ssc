@@ -1,22 +1,22 @@
 /**
 BSD-3-Clause
 Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
 that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
 and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
 and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
 or promote products derived from this software without specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
@@ -64,7 +64,7 @@ bool compute_module::compute( handler_interface *handler, var_table *data )
 		log("no variables defined for computation engine", SSC_ERROR);
 		return false;
 	}
-	
+
 	try { // catch any 'general_error' that can be thrown during precheck, exec, and postcheck
 
 		if (!verify("precheck input", SSC_INPUT)) return false;
@@ -75,7 +75,7 @@ bool compute_module::compute( handler_interface *handler, var_table *data )
 		log( e.err_text, SSC_ERROR, e.time );
 		return false;
 	}
-	
+
 	return true;
 }
 
@@ -95,7 +95,7 @@ bool compute_module::verify(const std::string &phase, int check_var_type)
 				var_data *dat = lookup( vi->name );
 				if (!dat)
 				{
-					log(phase + ": variable '" + std::string(vi->name) + "' required but not assigned");
+					log(phase + ": variable '" + std::string(vi->name) + "' (" + std::string(vi->label) + ") required but not assigned");
 					return false;
 				}
 				else if (dat->type != vi->data_type)
@@ -145,7 +145,7 @@ void compute_module::build_info_map()
 	if (m_infomap) delete m_infomap;
 
 	m_infomap = new unordered_map<std::string, var_info*>;
-	
+
 	std::vector<var_info*>::iterator it;
 	for (it = m_varlist.begin(); it != m_varlist.end(); ++it)
 		(*m_infomap)[ (*it)->name ] = *it;
@@ -185,10 +185,10 @@ compute_module::log_item *compute_module::log(int index)
 {
 	if (index >= 0 && index < (int)m_loglist.size())
 		return &m_loglist[index];
-	else 
+	else
 		return NULL;
 }
-	
+
 var_info *compute_module::info(int index)
 {
 	if (index >= 0 && index < (int)m_varlist.size())
@@ -340,9 +340,9 @@ ssc_number_t *compute_module::as_array( const std::string &name, size_t *count )
     if (m_vartab) return m_vartab->as_array(name, count);
     else throw general_error("compute_module error: var_table does not exist.");
 }
-/** 
-The obvious improvement would be to made this a template, but ran into trouble with 
-"error: Access violation - no RTTI data!" 
+/**
+The obvious improvement would be to made this a template, but ran into trouble with
+"error: Access violation - no RTTI data!"
 */
 std::vector<int> compute_module::as_vector_integer(const std::string &name)
 {
@@ -411,7 +411,7 @@ bool compute_module::get_matrix(const std::string &name, util::matrix_t<ssc_numb
 
 
 ssc_number_t compute_module::get_operand_value( const std::string &input, const std::string &cur_var_name)
-{	
+{
 	if (input.length() < 1) throw check_error(cur_var_name, "input is null to get_operand_value", input);
 
 	if (isalpha(input[0]))
@@ -467,7 +467,7 @@ bool compute_module::check_required( const std::string &name )
 		// run tests
 		std::string::size_type pos = std::string::npos;
 		std::vector< std::string > expr_list = util::split(util::lower_case(reqexpr), "&|", true, true );
-		
+
 		int cur_result = -1;
 		char cur_cond_oper = 0;
 		for ( std::vector< std::string >::iterator it = expr_list.begin(); it != expr_list.end(); ++it )
@@ -503,7 +503,7 @@ bool compute_module::check_required( const std::string &name )
 
 				std::string lhs = expr.substr(0, pos);
 				std::string rhs = expr.substr(pos+1);
-				
+
 				if (lhs.length() < 1 || rhs.length() < 1) throw check_error(name, "null lhs or rhs in subexpr", expr);
 
 				if (op == ':')
@@ -582,7 +582,7 @@ bool compute_module::check_required( const std::string &name )
 
 		return cur_result != 0 ? true : false;
 	}
-	
+
 	return false;
 }
 
@@ -595,7 +595,7 @@ bool compute_module::check_constraints( const std::string &name, std::string &fa
 	if (inf.constraints == NULL) return true; // pass if no constraints defined
 
 	var_data &dat = value(name);
-	
+
 	std::vector< std::string > exprlist = util::split( inf.constraints, "," );
 	for ( std::vector<std::string>::iterator it=exprlist.begin(); it!=exprlist.end(); ++it )
 	{
@@ -628,9 +628,9 @@ bool compute_module::check_constraints( const std::string &name, std::string &fa
 
 			if (dat.str.length() != 288)
 				fail_constraint( "288 characters required (24x12) but " + util::to_string((int)dat.str.length()) + " found" );
-			
+
 			for ( std::string::size_type i=0;i<dat.str.length(); i++)
-				if ( dat.str[i] < '0' || dat.str[i] > '9' ) 
+				if ( dat.str[i] < '0' || dat.str[i] > '9' )
 					fail_constraint( util::format("invalid character %c at %d", (char)dat.str[i], (int)i) );
 		}
 		else if (expr == "boolean")
@@ -799,16 +799,16 @@ size_t compute_module::check_timestep_seconds( double t_start, double t_end, dou
 	size_t steps = (size_t)(ceil(duration / t_step));
 
 	/* time step notes:
-	  
+
 	  The start and end times represent the time at the beginning of an hour.  For example:
 
 	    0 represents 12am on January 1st
 		8759 represents 11pm on December 31st
 		8760 represents 12am on January 1st of the next year
 
-		As a result, suppose you are simulating only the first twelve hours of January, at 1/2 hour steps.  
+		As a result, suppose you are simulating only the first twelve hours of January, at 1/2 hour steps.
 		The 'time'  will take values of
-	
+
 		DataIndex: 0     1     2     3     4     5     6     7     8     9     10    11    12    13    14    15    16    17    18    19    20    21    22    23
 		Time:      0     0.5   1     1.5   2     2.5   3     3.5   4     4.5   5     5.5   6     6.5   7     7.5   8     8.5   9     9.5   10    10.5  11    11.5
 
@@ -824,7 +824,7 @@ size_t compute_module::check_timestep_seconds( double t_start, double t_end, dou
 		time = t_start
 		while ( time < t_end )
 		{
-			// do calculations for current time // 
+			// do calculations for current time //
 			time = time + t_step
 		}
 	*/
@@ -832,7 +832,7 @@ size_t compute_module::check_timestep_seconds( double t_start, double t_end, dou
 	size_t max0 = (size_t)( steps*t_step );
 	size_t max1 = (size_t)( duration );
 
-	if ( max0 != max1 ) throw timestep_error(t_start, t_end, t_step, 
+	if ( max0 != max1 ) throw timestep_error(t_start, t_end, t_step,
 		util::format("invalid time step, must represent an integer number of minutes steps(%u != %u)", max0, max1).c_str());
 
 	return steps;
@@ -840,16 +840,16 @@ size_t compute_module::check_timestep_seconds( double t_start, double t_end, dou
 
 ssc_number_t *compute_module::accumulate_monthly(const std::string &ts_var, const std::string &monthly_var, double scale)
 {
-		
+
 	size_t count = 0;
 	ssc_number_t *ts = as_array(ts_var, &count);
 
 	size_t step_per_hour = count/8760;
-	
+
 	if (!ts || step_per_hour < 1 || step_per_hour > 60 || step_per_hour*8760 != count)
 		throw exec_error("generic", "Failed to accumulate time series (hourly or subhourly): " + ts_var + " to monthly: " + monthly_var);
 
-	
+
 	ssc_number_t *monthly = allocate( monthly_var, 12 );
 
 	size_t c = 0;
@@ -905,7 +905,7 @@ ssc_number_t compute_module::accumulate_annual(const std::string &ts_var, const 
 
 	if (!ts || step_per_hour < 1 || step_per_hour > 60 || step_per_hour*8760 != count)
 		throw exec_error("generic", "Failed to accumulate time series (hourly or subhourly): " + ts_var + " to annual: " + annual_var);
-		
+
 	double annual = 0;
 	for ( size_t i=0;i<count;i++ )
 		annual += ts[i];
@@ -915,24 +915,24 @@ ssc_number_t compute_module::accumulate_annual(const std::string &ts_var, const 
 	return (ssc_number_t)(annual*scale);
 }
 
-ssc_number_t compute_module::accumulate_annual_for_year( const std::string &ts_var, 
-	const std::string &annual_var, 
+ssc_number_t compute_module::accumulate_annual_for_year( const std::string &ts_var,
+	const std::string &annual_var,
 	double scale,
-	size_t step_per_hour, 
-	size_t year, 
+	size_t step_per_hour,
+	size_t year,
     size_t steps)
 {
 	size_t count = 0;
 	ssc_number_t *ts = as_array(ts_var, &count);
 
-	size_t annual_values = step_per_hour * steps;	
+	size_t annual_values = step_per_hour * steps;
 
 	if (!ts || step_per_hour < 1 || step_per_hour > 60 || year*step_per_hour * steps > count)
 		throw exec_error("generic", "Failed to accumulate time series (hourly or subhourly): " + ts_var + " to annual: " + annual_var);
 
 	size_t istart = (year-1)*annual_values;
 	size_t iend  = year*annual_values;
-	
+
 	double sum = 0;
 	for (size_t i = istart; i < iend; i++)
 		sum += ts[i];
