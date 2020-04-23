@@ -182,6 +182,29 @@ protected:
 Class which encapsulates a battery and all its models
 */
 
+struct replacement_state {
+    int n_replacements;                                 // number of replacements this year
+    std::vector<size_t> indices_replaced;               // lifetime indices at which replacements occurred
+
+    friend std::ostream &operator<<(std::ostream &os, const replacement_state &p);
+};
+
+struct replacement_params {
+    enum OPTIONS {
+        NONE, CAPACITY_PERCENT, SCHEDULE
+    };
+    int option;
+
+    /// Maximum capacity relative to nameplate at which to replace battery back to 100%
+    double capacity_percent;
+
+    std::vector<int> schedule;
+    std::vector<double> schedule_percent_to_replace;    // (0 - 100%)
+
+    friend std::ostream &operator<<(std::ostream &os, const replacement_params &p);
+};
+
+
 class battery_t
 {
 public:
@@ -202,7 +225,17 @@ public:
 
 	void initialize(capacity_t *, voltage_t *, lifetime_t *, thermal_t *, losses_t *);
 
-	// Run all for single time step, updating all component model states and return the dispatched power [kW]
+	// replace by capacity
+	void setupReplacements(double capacity);
+
+	// replace by schedule
+    void setupReplacements(std::vector<int> schedule, std::vector<double> replacement_percents);
+
+	void runReplacement(size_t year, size_t hour, size_t step);
+	void resetReplacement();
+	double getNumReplacementYear();
+
+    // Run all for single time step, updating all component model states and return the dispatched power [kW]
 	double run(size_t lifetimeIndex, double &I);
 
 	double calculate_voltage_for_current(double I);
@@ -220,6 +253,7 @@ public:
 	void runThermalModel(double I, size_t lifetimeIndex);
 	void runLifetimeModel(size_t lifetimeIndex);
 	void runLossesModel(size_t lifetimeIndex);
+
 
 	capacity_t * capacity_model() const;
 	capacity_t * capacity_initial_model() const;
@@ -261,6 +295,10 @@ private:
 	double _dt_hour;			// [hr] - timestep
 	double _dt_min;				// [min] - timestep
 	size_t _last_idx;
+
+    replacement_state replacement_state;
+    std::shared_ptr<replacement_params> params;
+
 };
 
 #endif

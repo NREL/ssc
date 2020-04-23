@@ -79,17 +79,17 @@ TEST_F(BatteryTest, AugmentCapacity)
 
 	std::vector<int> replacement_schedule = { 1, 1, 1 };
 	std::vector<double> augmentation_percent = { 50, 40 , 30 };
-	batteryModel->lifetime_model()->set_replacement_option(battery_t::REPLACE_BY_SCHEDULE);
+	batteryModel->setupReplacements(replacement_schedule, augmentation_percent);
 
 	// Correct future approach for augmenting batteries, by treating as separate entities
 	std::vector<battery_t *> batteries;
     batteries.push_back(new battery_t(*batteryModel));
 
 	batteries.push_back(new battery_t(*batteryModel));
-	batteries[1]->lifetime_model()->set_replacement_option(battery_t::REPLACE_BY_SCHEDULE);
+	batteries[1]->setupReplacements(replacement_schedule, augmentation_percent);
 
 	batteries.push_back(new battery_t(*batteryModel));
-	batteries[2]->lifetime_model()->set_replacement_option(battery_t::REPLACE_BY_SCHEDULE);
+	batteries[2]->setupReplacements(replacement_schedule, augmentation_percent);
 
 	size_t i = 0;
 	double I = 100;

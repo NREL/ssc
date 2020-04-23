@@ -15,8 +15,6 @@ class AutoFOM_lib_battery_dispatch : public BatteryProperties , public DispatchP
 {
 protected:
     thermal_t * thermalModel;
-    lifetime_calendar_t * calendarModel;
-    lifetime_cycle_t * cycleModel;
     lifetime_t * lifetimeModel;
     BatteryPower * batteryPower;
 
@@ -44,9 +42,7 @@ public:
 
         capacityModel = new capacity_lithium_ion_t(2.25 * 133227, 50, 100, 10, dtHour);
         voltageModel = new voltage_dynamic_t(139, 133227, 3.6, 4.10, 4.05, 3.4, 2.25, 0.04, 2.00, 0.2, 0.2, dtHour);
-        cycleModel = new lifetime_cycle_t(cycleLifeMatrix);
-        calendarModel = new lifetime_calendar_t(calendarChoice, calendarLifeMatrix, dtHour);
-        lifetimeModel = new lifetime_t(cycleModel, calendarModel, replacementOption, replacementCapacity);
+        lifetimeModel = new lifetime_t(cycleLifeMatrix, dtHour, calendar_q0, calendar_a, calendar_b, calendar_c);
         thermalModel = new thermal_t(1.0, mass, dim_m, dim_m, dim_m, resistance, Cp, h, T_room, capacityVsTemperature);
         lossModel = new losses_t(dtHour, lifetimeModel, thermalModel, capacityModel, lossChoice);
         batteryModel = new battery_t(dtHour, chemistry);
@@ -60,8 +56,6 @@ public:
         BatteryProperties::TearDown();
         delete capacityModel;
         delete voltageModel;
-        delete cycleModel;
-        delete calendarModel;
         delete lifetimeModel;
         delete thermalModel;
         delete lossModel;

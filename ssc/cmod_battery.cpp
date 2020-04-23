@@ -117,9 +117,9 @@ var_info vtab_battery_inputs[] = {
 
 	// replacement inputs
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_replacement_capacity",                   "Capacity degradation at which to replace battery",       "%",        "",                     "BatterySystem",       "",                           "",                             "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "batt_replacement_option",                     "Enable battery replacement?",                             "0=none,1=capacity based,2=user schedule", "", "BatterySystem", "?=0",                  "INTEGER,MIN=0,MAX=2",          "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "batt_replacement_schedule",                   "Battery bank replacements per year (user specified)",     "number/year","",                  "BatterySystem",      "batt_replacement_option=2",   "",                             "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "batt_replacement_schedule_percent",           "Percentage of battery capacity to replace in year",      "%","",                  "BatterySystem",      "batt_replacement_option=2",   "",                             "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "batt_replacement_option",                     "Enable battery replacement?",                            "0=none,1=capacity based,2=user schedule", "", "BatterySystem", "?=0",                  "INTEGER,MIN=0,MAX=2",          "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "batt_replacement_schedule",                   "Battery bank number of replacements in each year",       "number/year","length <= analysis_period",                  "BatterySystem",      "batt_replacement_option=2",   "",                             "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "batt_replacement_schedule_percent",           "Percentage of battery capacity to replace in each year", "%","length <= analysis_period",                  "BatterySystem",      "batt_replacement_option=2",   "",                             "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "om_replacement_cost1",                        "Cost to replace battery per kWh",                        "$/kWh",    "",                     "BatterySystem",       "",                           "",                             "" },
 
 	// thermal inputs
@@ -264,7 +264,7 @@ var_info vtab_battery_outputs[] = {
 
 var_info_invalid };
 
-battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, const std::shared_ptr<batt_variables> batt_vars_in)
+battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, const std::shared_ptr<batt_variables>& batt_vars_in)
 {
 	make_vars = false;
 
@@ -611,8 +611,6 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 	// component models
 	voltage_model = 0;
 	lifetime_model = 0;
-	lifetime_cycle_model = 0;
-	lifetime_calendar_model = 0;
 	thermal_model = 0;
 	battery_model = 0;
 	capacity_model = 0;
@@ -690,7 +688,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 		throw exec_error("battery", "Battery lifetime matrix must have three columns and at least three rows");
 
 	util::matrix_t<double>  batt_calendar_lifetime_matrix = batt_vars->batt_calendar_lifetime_matrix;
-	if (batt_vars->batt_calendar_choice == lifetime_calendar_t::CALENDAR_LOSS_TABLE && (batt_calendar_lifetime_matrix.nrows() < 2 || batt_calendar_lifetime_matrix.ncols() != 2))
+	if (batt_vars->batt_calendar_choice == lifetime_params::CALENDAR_CHOICE::TABLE && (batt_calendar_lifetime_matrix.nrows() < 2 || batt_calendar_lifetime_matrix.ncols() != 2))
 		throw exec_error("battery", "Battery calendar lifetime matrix must have 2 columns and at least 2 rows");
 
 	/* **********************************************************************
@@ -800,10 +798,16 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 		voltage_model = new voltage_table_t(batt_vars->batt_computed_series, batt_vars->batt_computed_strings, batt_vars->batt_Vnom_default,
 		        batt_vars->batt_voltage_matrix, batt_vars->batt_resistance, dt_hr);
 
-	lifetime_cycle_model = new  lifetime_cycle_t(batt_lifetime_matrix);
-	lifetime_calendar_model = new lifetime_calendar_t(batt_vars->batt_calendar_choice, batt_calendar_lifetime_matrix, _dt_hour,
-		(float)batt_vars->batt_calendar_q0, (float)batt_vars->batt_calendar_a, (float)batt_vars->batt_calendar_b, (float)batt_vars->batt_calendar_c);
-	lifetime_model = new lifetime_t(lifetime_cycle_model, lifetime_calendar_model, batt_vars->batt_replacement_option, batt_vars->batt_replacement_capacity);
+	if (batt_vars->batt_calendar_choice == lifetime_params::CALENDAR_CHOICE::MODEL) {
+        lifetime_model = new lifetime_t(batt_lifetime_matrix, dt_hr,
+                batt_vars->batt_calendar_q0, batt_vars->batt_calendar_a, batt_vars->batt_calendar_b, batt_vars->batt_calendar_c);
+    }
+	else if (batt_vars->batt_calendar_choice == lifetime_params::CALENDAR_CHOICE::TABLE) {
+        lifetime_model = new lifetime_t(batt_lifetime_matrix, dt_hr, batt_calendar_lifetime_matrix);
+    }
+	else {
+        lifetime_model = new lifetime_t(batt_lifetime_matrix, dt_hr);
+    }
 
 	if (batt_vars->cap_vs_temp.nrows() < 2 || batt_vars->cap_vs_temp.ncols() != 2) {
 		throw exec_error("battery", "capacity vs temperature matrix must have two columns and at least two rows");
@@ -872,6 +876,14 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 		batt_vars->batt_losses_charging,batt_vars->batt_losses_discharging, batt_vars->batt_losses_idle, batt_vars->batt_losses);
 
 	battery_model->initialize(capacity_model, voltage_model, lifetime_model, thermal_model, losses_model);
+
+	if (batt_vars->batt_replacement_option == replacement_params::SCHEDULE) {
+	    battery_model->setupReplacements(batt_vars->batt_replacement_schedule, batt_vars->batt_replacement_schedule_percent);
+	}
+	else if (batt_vars->batt_replacement_option == replacement_params::CAPACITY_PERCENT) {
+        battery_model->setupReplacements(batt_vars->batt_replacement_capacity);
+    }
+
 	battery_metrics = new battery_metrics_t(dt_hr);
 
 	/*! Process the dispatch options and create the appropriate model */
@@ -1157,8 +1169,6 @@ battstor::~battstor()
 {
 	delete voltage_model;
 	delete lifetime_model;
-	delete lifetime_cycle_model;
-	delete lifetime_calendar_model;
 	delete thermal_model;
 	delete capacity_model;
 	delete battery_model;
@@ -1284,8 +1294,6 @@ battstor::battstor(const battstor& orig){
         capacity_model = battery_model->capacity_model();
         voltage_model = battery_model->voltage_model();
         lifetime_model = battery_model->lifetime_model();
-        lifetime_cycle_model = battery_model->lifetime_model()->cycleModel();
-        lifetime_calendar_model = battery_model->lifetime_model()->calendarModel();
         thermal_model = battery_model->thermal_model();
         losses_model = battery_model->losses_model();
     }
@@ -1308,8 +1316,6 @@ battstor::battstor(const battstor& orig){
             capacity_model = battery_model->capacity_model();
             voltage_model = battery_model->voltage_model();
             lifetime_model = battery_model->lifetime_model();
-            lifetime_cycle_model = battery_model->lifetime_model()->cycleModel();
-            lifetime_calendar_model = battery_model->lifetime_model()->calendarModel();
             thermal_model = battery_model->thermal_model();
             losses_model = battery_model->losses_model();
         }
@@ -1325,13 +1331,9 @@ battstor::battstor(const battstor& orig){
                 capacity_model = nullptr;
             if( orig.lifetime_model ) {
                 lifetime_model = orig.lifetime_model->clone();
-                lifetime_cycle_model = lifetime_model->cycleModel();
-                lifetime_calendar_model = lifetime_model->calendarModel();
             }
             else {
                 lifetime_model = nullptr;
-                lifetime_cycle_model = nullptr;
-                lifetime_calendar_model = nullptr;
             }
             if( orig.thermal_model )
                 thermal_model = orig.thermal_model->clone();
@@ -1350,36 +1352,9 @@ battstor::battstor(const battstor& orig){
 
 void battstor::check_replacement_schedule()
 {
-	if (batt_vars->batt_replacement_option == battery_t::REPLACE_BY_SCHEDULE)
-	{
-		// don't allow replacement on first hour of first year
-		if (hour == 0 && year == 0)
-			return;
+    battery_model->runReplacement(year, hour, step);
+}
 
-		bool replace = false;
-		if (year < batt_vars->batt_replacement_schedule.size())
-		{
-			size_t num_repl = (size_t)batt_vars->batt_replacement_schedule[year];
-			for (size_t j_repl = 0; j_repl < num_repl; j_repl++)
-			{
-				if ((hour == (j_repl * 8760 / num_repl)) && step == 0)
-				{
-					replace = true;
-					break;
-				}
-			}
-		}
-		if (replace) {
-			double replacement_percent = batt_vars->batt_replacement_schedule_percent[year];
-			force_replacement(replacement_percent);
-	}
-}
-}
-void battstor::force_replacement(double replacement_percent)
-{
-	lifetime_model->force_replacement(replacement_percent);
-	battery_model->runLifetimeModel(0);
-}
 
 void battstor::initialize_time(size_t year_in, size_t hour_of_year, size_t step_of_hour)
 {
@@ -1440,10 +1415,11 @@ void battstor::outputs_fixed()
 	outCurrent[index] = (ssc_number_t)(capacity_model->I());
 	outBatteryVoltage[index] = (ssc_number_t)(voltage_model->battery_voltage());
 
-	outCycles[index] = (ssc_number_t)(lifetime_cycle_model->cycles_elapsed());
+	auto state = lifetime_model->get_state();
+	outCycles[index] = (ssc_number_t)(state.cycle->n_cycles);
 	outSOC[index] = (ssc_number_t)(capacity_model->SOC());
-	outDOD[index] = (ssc_number_t)(lifetime_cycle_model->cycle_range());
-	outDODCycleAverage[index] = (ssc_number_t)(lifetime_cycle_model->average_range());
+	outDOD[index] = (ssc_number_t)(state.cycle->range);
+	outDODCycleAverage[index] = (ssc_number_t)(state.cycle->average_range);
 	outCapacityPercent[index] = (ssc_number_t)(lifetime_model->capacity_percent());
 	outCapacityPercentCycle[index] = (ssc_number_t)(lifetime_model->capacity_percent_cycle());
 	outCapacityPercentCalendar[index] = (ssc_number_t)(lifetime_model->capacity_percent_calendar());
@@ -1502,11 +1478,11 @@ void battstor::metrics()
 {
 	size_t annual_index;
 	nyears > 1 ? annual_index = year + 1 : annual_index = 0;
-	outBatteryBankReplacement[annual_index] = (ssc_number_t)(lifetime_model->get_replacements());
+	outBatteryBankReplacement[annual_index] = (ssc_number_t) battery_model->getNumReplacementYear();
 
 	if ((hour == 8759) && (step == step_per_hour - 1))
 	{
-		lifetime_model->reset_replacements();
+		battery_model->resetReplacement();
 		outAnnualGridImportEnergy[annual_index] = (ssc_number_t)(battery_metrics->energy_grid_import_annual());
 		outAnnualGridExportEnergy[annual_index] = (ssc_number_t)(battery_metrics->energy_grid_export_annual());
 		outAnnualPVChargeEnergy[annual_index] = (ssc_number_t)(battery_metrics->energy_pv_charge_annual());

@@ -98,7 +98,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_DCCustomCharge) {
     batteryPower->powerPV = 0;
     batteryPower->powerPVClipped = 0;
 
-    std::vector<double> SOC = {64.42, 78.77, 94.09, 100., 100., 100.};
+    std::vector<double> SOC = {64.42, 78.77, 93.28, 100., 100., 100.};
     for (size_t h = 0; h < 6; h++) {
         dispatchAuto->update_dispatch(0, h, 0);
         EXPECT_NEAR(batteryPower->powerBatteryTarget, -25000, 0.1) << "error in expected target at hour " << h;
@@ -113,8 +113,8 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_DCCustomCharge) {
             EXPECT_NEAR(batteryPower->sharedInverter->efficiencyAC, 97.6, 0.1);
         }
         else if (h == 3){
-            EXPECT_NEAR(batteryPower->powerBatteryDC, -10259, 1) << "error in dispatched power at hour " << h;
-            EXPECT_NEAR(batteryPower->powerGridToBattery, 10586, 1) << "hour " << h;
+            EXPECT_NEAR(batteryPower->powerBatteryDC, -11866, 1) << "error in dispatched power at hour " << h;
+            EXPECT_NEAR(batteryPower->powerGridToBattery, 12238, 1) << "hour " << h;
             EXPECT_NEAR(batteryPower->sharedInverter->efficiencyAC, 97.9, 0.1);
         }
         else{
@@ -150,7 +150,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_DCCustomChargeSubhourly) {
     batteryPower->powerPV = 0;
     batteryPower->powerPVClipped = 0;
 
-    std::vector<double> SOC = {57.24, 64.45, 71.64, 78.81, 86.20, 93.87, 100.00, 100.00, 100.00, 100.00, 100.00, 100.00};
+    std::vector<double> SOC = {57.24, 64.45, 71.64, 78.81, 85.97, 93.12, 100.00, 100.00, 100.00, 100.00, 100.00, 100.00};
     for (size_t h = 0; h < 12; h++) {
         size_t hour_of_year = hour_of_year_from_index(h, dtHour);
         size_t step = step_from_index(h, dtHour);
@@ -168,9 +168,9 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_DCCustomChargeSubhourly) {
             EXPECT_NEAR(batteryPower->sharedInverter->efficiencyAC, 97.6, 0.1);
         }
         else if (h == 6){
-            EXPECT_NEAR(batteryPower->powerBatteryDC, -21499, 1) << "error in dispatched power at hour " << h;
-            EXPECT_NEAR(batteryPower->powerGridToBattery, 22213, 1) << "hour " << h;
-            EXPECT_NEAR(batteryPower->sharedInverter->efficiencyAC, 97.76, 0.1);
+            EXPECT_NEAR(batteryPower->powerBatteryDC, -24392, 1) << "error in dispatched power at hour " << h;
+            EXPECT_NEAR(batteryPower->powerGridToBattery, 25233, 1) << "hour " << h;
+            EXPECT_NEAR(batteryPower->sharedInverter->efficiencyAC, 97.64, 0.1);
         }
         else{
             EXPECT_NEAR(batteryPower->powerBatteryDC, 0, 1e-3) << "error in dispatched power at hour " << h;
@@ -271,7 +271,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_ACCustomCharge) {
     batteryPower->powerPV = 0;
     batteryPower->powerPVClipped = 0;
 
-    std::vector<double> SOC = {63.86, 77.64, 91.63, 100.00, 100.00, 100.00};
+    std::vector<double> SOC = {63.86, 77.64, 91.37, 100.00, 100.00, 100.00};
     for (size_t h = 0; h < 6; h++) {
         dispatchAuto->update_dispatch(0, h, 0);
         EXPECT_NEAR(batteryPower->powerBatteryTarget, -24000, 0.1) << "error in expected target at hour " << h;
@@ -286,8 +286,8 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_ACCustomCharge) {
             EXPECT_NEAR(batteryPower->sharedInverter->efficiencyAC, 96, 0.1);
         }
         else if (h == 3){
-            EXPECT_NEAR(batteryPower->powerBatteryDC, -14684, 1) << "error in dispatched power at hour " << h;
-            EXPECT_NEAR(batteryPower->powerGridToBattery, 15296, 1) << "hour " << h;
+            EXPECT_NEAR(batteryPower->powerBatteryDC, -15195, 1) << "error in dispatched power at hour " << h;
+            EXPECT_NEAR(batteryPower->powerGridToBattery, 15828., 1) << "hour " << h;
             EXPECT_NEAR(batteryPower->sharedInverter->efficiencyAC, 96, 0.1);
         }
         else{
@@ -322,7 +322,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_ACCustomChargeSubhourly) {
     batteryPower->powerPV = 0;
     batteryPower->powerPVClipped = 0;
 
-    std::vector<double> SOC = {56.95, 63.88, 70.79, 77.68, 84.56, 91.43, 98.79, 100.00, 100.00, 100.00, 100.00, 100.00};
+    std::vector<double> SOC = {56.95, 63.88, 70.79, 77.68, 84.56, 91.43, 98.28, 100.00, 100.00, 100.00, 100.00, 100.00};
     for (size_t h = 0; h < 12; h++) {
         size_t hour_of_year = hour_of_year_from_index(h, dtHour);
         size_t step = step_from_index(h, dtHour);
@@ -340,8 +340,8 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_ACCustomChargeSubhourly) {
             EXPECT_NEAR(batteryPower->sharedInverter->efficiencyAC, 96, 0.1);
         }
         else if (h == 7){
-            EXPECT_NEAR(batteryPower->powerBatteryDC, -4210, 1) << "error in dispatched power at hour " << h;
-            EXPECT_NEAR(batteryPower->powerGridToBattery, 4386, 1) << "hour " << h;
+            EXPECT_NEAR(batteryPower->powerBatteryDC, -6022, 1) << "error in dispatched power at hour " << h;
+            EXPECT_NEAR(batteryPower->powerGridToBattery, 6273, 1) << "hour " << h;
             EXPECT_NEAR(batteryPower->sharedInverter->efficiencyAC, 96, 0.1);
         }
         else{

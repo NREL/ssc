@@ -17,8 +17,6 @@ protected:
     capacity_lithium_ion_t * capacityModel;
     voltage_dynamic_t * voltageModel;
     thermal_t * thermalModel;
-    lifetime_calendar_t * calendarModel;
-    lifetime_cycle_t * cycleModel;
     lifetime_t * lifetimeModel;
     losses_t * lossModel;
     battery_t * batteryModel;
@@ -48,9 +46,7 @@ public:
         capacityModel = new capacity_lithium_ion_t(q * n_strings, SOC_init, SOC_max, SOC_min, dtHour);
         voltageModel = new voltage_dynamic_t(n_series, n_strings, Vnom_default, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom,
                                              C_rate, resistance, dtHour);
-        cycleModel = new lifetime_cycle_t(cycleLifeMatrix);
-        calendarModel = new lifetime_calendar_t(calendarChoice, calendarLifeMatrix, dtHour);
-        lifetimeModel = new lifetime_t(cycleModel, calendarModel, replacementOption, replacementCapacity);
+        lifetimeModel = new lifetime_t(cycleLifeMatrix, dtHour, calendar_q0, calendar_a, calendar_b, calendar_c);
         thermalModel = new thermal_t(1.0, mass, dim_m, dim_m, dim_m, resistance, Cp, h, T_room, capacityVsTemperature);
         lossModel = new losses_t(dtHour, lifetimeModel, thermalModel, capacityModel, lossChoice, monthlyLosses, monthlyLosses, monthlyLosses, fullLosses);
         batteryModel = new battery_t(dtHour, chemistry);
@@ -64,8 +60,6 @@ public:
         BatteryProperties::TearDown();
         delete capacityModel;
         delete voltageModel;
-        delete cycleModel;
-        delete calendarModel;
         delete lifetimeModel;
         delete thermalModel;
         delete lossModel;

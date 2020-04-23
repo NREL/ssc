@@ -124,23 +124,37 @@ public:
 struct battery_state{
     capacity_state capacity;
     double batt_voltage;
-    lifetime_state lifetime;
+    double q_lifetime;
+    cycle_state cycle;
+    calendar_state cal;
     thermal_state thermal;
 
     size_t last_idx;
 };
 
-static void compareState(std::unique_ptr<battery_t>&model, const battery_state& state, const std::string& msg){
+static void compareState(std::unique_ptr<battery_t>&model, const battery_state& expected_state, const std::string& msg){
     auto cap = model->capacity_model();
-    compareState(cap, state.capacity, msg);
+    compareState(cap, expected_state.capacity, msg);
 
-    EXPECT_NEAR(model->battery_voltage(), state.batt_voltage, 0.01) << msg;
+    EXPECT_NEAR(model->battery_voltage(), expected_state.batt_voltage, 0.01) << msg;
 
-    auto l = model->lifetime_model();
-    compareState(l, state.lifetime, msg);
+    double tol = 0.01;
+    auto tested_state = model->lifetime_model()->get_state();
+    EXPECT_NEAR(tested_state.calendar->day_age_of_battery, expected_state.cal.day_age_of_battery, tol) << msg;
+    EXPECT_NEAR(tested_state.calendar->q_relative_calendar, expected_state.cal.q_relative_calendar, tol) << msg;
+    EXPECT_NEAR(tested_state.calendar->last_idx, expected_state.cal.last_idx, tol) << msg;
+    EXPECT_NEAR(tested_state.calendar->dq_relative_calendar_old, expected_state.cal.dq_relative_calendar_old, tol) << msg;
+
+    EXPECT_NEAR(tested_state.cycle->q_relative_cycle, expected_state.cycle.q_relative_cycle, tol) << msg;
+    EXPECT_NEAR(tested_state.cycle->rainflow_Xlt, expected_state.cycle.rainflow_Xlt, tol) << msg;
+    EXPECT_NEAR(tested_state.cycle->rainflow_Ylt, expected_state.cycle.rainflow_Ylt, tol) << msg;
+    EXPECT_NEAR(tested_state.cycle->range, expected_state.cycle.range, tol) << msg;
+    EXPECT_NEAR(tested_state.cycle->average_range, expected_state.cycle.average_range, tol) << msg;
+    EXPECT_NEAR(tested_state.cycle->n_cycles, expected_state.cycle.n_cycles, tol) << msg;
+    EXPECT_NEAR(tested_state.cycle->rainflow_jlt, expected_state.cycle.rainflow_jlt, tol) << msg;
 
     auto t = model->thermal_model();
-    compareState(t, state.thermal, msg);
+    compareState(t, expected_state.thermal, msg);
 
 }
 
@@ -201,8 +215,6 @@ public:
     capacity_lithium_ion_t * capacityModel;
     voltage_dynamic_t * voltageModel;
     thermal_t * thermalModel;
-    lifetime_calendar_t * calendarModel;
-    lifetime_cycle_t * cycleModel;
     lifetime_t * lifetimeModel;
     losses_t * lossModel;
     std::unique_ptr<battery_t> batteryModel;
@@ -232,7 +244,7 @@ public:
         double vals[] = { 20, 0, 100, 20, 5000, 80, 20, 10000, 60, 80, 0, 100, 80, 1000, 80, 80, 2000, 60 };
         cycleLifeMatrix.assign(vals, 6, 3);
         double vals2[] = { 0, 100, 3650, 80, 7300, 50 };
-        calendarLifeMatrix.assign(vals, 3, 2);
+        calendarLifeMatrix.assign(vals2, 3, 2);
         calendarChoice = 1;
         replacementOption = 0;
 
@@ -266,9 +278,7 @@ public:
 
         capacityModel = new capacity_lithium_ion_t(q, SOC_init, SOC_max, SOC_min, dtHour);
         voltageModel = new voltage_dynamic_t(n_series, n_strings, Vnom_default, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom, C_rate, resistance);
-        cycleModel = new lifetime_cycle_t(cycleLifeMatrix);
-        calendarModel = new lifetime_calendar_t(calendarChoice, calendarLifeMatrix, dtHour);
-        lifetimeModel = new lifetime_t(cycleModel, calendarModel, replacementOption, replacementCapacity);
+        lifetimeModel = new lifetime_t(cycleLifeMatrix, dtHour, 1.02, 2.66e-3, -7280, 930);
         thermalModel = new thermal_t(1.0, mass, length, width, height, resistance, Cp, h, T_room,
                                      capacityVsTemperature);
         lossModel = new losses_t(dtHour, lifetimeModel, thermalModel, capacityModel, lossChoice, monthlyLosses, monthlyLosses, monthlyLosses, fullLosses);
@@ -279,8 +289,6 @@ public:
     void TearDown(){
         delete capacityModel;
         delete voltageModel;
-        delete cycleModel;
-        delete calendarModel;
         delete lifetimeModel;
         delete thermalModel;
         delete lossModel;

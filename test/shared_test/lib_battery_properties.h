@@ -33,8 +33,12 @@ public:
 	util::matrix_t<double> cycleLifeMatrix;
 	util::matrix_t<double> calendarLifeMatrix;
 	int calendarChoice;
-	int replacementOption;
+	int replacementOption = 0;
 	double replacementCapacity = 0;
+	double calendar_q0 = 1.02;
+	double calendar_a = 2.66e-3;
+	double calendar_b = -7280;
+	double calendar_c = 930;
 
 	// thermal
 	double mass;
@@ -76,8 +80,8 @@ public:
 		cycleLifeMatrix.assign(vals, 6, 3);
 		double vals2[] = { 0, 100, 3650, 80, 7300, 50 };
 		calendarLifeMatrix.assign(vals2, 3, 2);
-		calendarChoice = 1;
-		replacementOption = 0;
+
+		calendarChoice = lifetime_params::CALENDAR_CHOICE::MODEL;
 
 		// thermal
 		mass = 507;

@@ -34,7 +34,7 @@ TEST_F(CMBattery_cmod_battery, CommercialLifetimePeakShaving) {
 		calculated_array = ssc_data_get_array(data, "batt_bank_replacement", &n);
 		int replacements = std::accumulate(calculated_array, calculated_array + n, 0);
 
-		EXPECT_GT(replacements, 0);
+		EXPECT_EQ(replacements, 1);
 	}
 }
 
@@ -59,7 +59,7 @@ TEST_F(CMBattery_cmod_battery, ResilienceMetricsFullLoad){
 
     EXPECT_EQ(resilience_hours[0], 0);
     EXPECT_EQ(resilience_hours[1], 1);
-    EXPECT_NEAR(avg_critical_load,  987.34, 0.1);
+    EXPECT_NEAR(avg_critical_load,  987.61, 0.1);
     EXPECT_NEAR(resilience_hrs_avg, 1.35, 0.01);
     EXPECT_EQ(resilience_hrs_min, 0);
     EXPECT_EQ(outage_durations[0], 0);
@@ -115,13 +115,13 @@ TEST_F(CMBattery_cmod_battery, ResilienceMetricsFullLoadLifetime){
 
     EXPECT_EQ(resilience_hours[0], 0);
     EXPECT_EQ(resilience_hours[1], 1);
-    EXPECT_NEAR(avg_critical_load, 975.22, 0.1);
+    EXPECT_NEAR(avg_critical_load, 978.60, 0.1);
     EXPECT_NEAR(resilience_hrs_avg, 1.330, 0.01);
     EXPECT_EQ(resilience_hrs_min, 0);
     EXPECT_EQ(outage_durations[0], 0);
     EXPECT_EQ(resilience_hrs_max, 24);
     EXPECT_EQ(outage_durations[17], 17);
-    EXPECT_NEAR(pdf_of_surviving[0], 0.631, 1e-3);
+    EXPECT_NEAR(pdf_of_surviving[0], 0.629, 1e-3);
     EXPECT_NEAR(pdf_of_surviving[1], 0.117, 1e-3);
 
     auto batt_power = data_vtab->as_vector_ssc_number_t("batt_power");

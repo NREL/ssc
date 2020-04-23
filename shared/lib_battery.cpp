@@ -381,7 +381,7 @@ void battery_t::copy(const battery_t * battery)
 	*_capacity_initial = *battery->capacity_initial_model();
 	_thermal->copy(battery->thermal_model());
 	_thermal_initial->copy(battery->thermal_initial_model());
-	_lifetime->copy(battery->lifetime_model());
+	*_lifetime = *battery->lifetime_model();
 	*_voltage = *battery->voltage_model();
 	_losses->set_models(_lifetime, _thermal, _capacity);
 
@@ -393,15 +393,11 @@ void battery_t::copy(const battery_t * battery)
 
 void battery_t::delete_clone()
 {
-	if (_capacity) delete _capacity;
-	if (_voltage) delete _voltage;
-	if (_thermal) delete _thermal;
-	if (_lifetime)
-	{
-		_lifetime->delete_clone();
-		delete _lifetime;
-	}
-	if (_losses) delete _losses;
+	delete _capacity;
+	delete _voltage;
+	delete _thermal;
+	delete _lifetime;
+	delete _losses;
 }
 void battery_t::initialize(capacity_t *capacity, voltage_t * voltage, lifetime_t * lifetime, thermal_t * thermal, losses_t * losses)
 {
@@ -413,6 +409,22 @@ void battery_t::initialize(capacity_t *capacity, voltage_t * voltage, lifetime_t
 
     *_capacity_initial = *_capacity;
 	_thermal_initial->copy(_thermal);
+
+    params = std::make_shared<replacement_params>();
+    params->option = replacement_params::NONE;
+}
+
+void battery_t::setupReplacements(double capacity) {
+    params = std::make_shared<replacement_params>();
+    params->option = replacement_params::CAPACITY_PERCENT;
+    params->capacity_percent = capacity;
+}
+
+void battery_t::setupReplacements(std::vector<int> schedule, std::vector<double> replacement_percents) {
+    params = std::make_shared<replacement_params>();
+    params->option = replacement_params::SCHEDULE;
+    params->schedule = std::move(schedule);
+    params->schedule_percent_to_replace = std::move(replacement_percents);
 }
 
 double battery_t::calculate_current_for_power_kw(double &P_kw){
@@ -527,12 +539,8 @@ void battery_t::runLifetimeModel(size_t lifetimeIndex)
 {
     _lifetime->runLifetimeModels(lifetimeIndex,
             _capacity->chargeChanged(), _capacity->prev_DOD(), _capacity->DOD(), thermal_model()->T_battery());
-	if (_lifetime->check_replaced())
-	{
-		_capacity->replace_battery(_lifetime->get_replacement_percent());
-		_thermal->replace_battery(lifetimeIndex);
-	}
 }
+
 void battery_t::runLossesModel(size_t idx)
 {
 	if (idx > _last_idx || idx == 0)
@@ -541,6 +549,58 @@ void battery_t::runLossesModel(size_t idx)
 		_last_idx = idx;
 	}
 }
+
+void battery_t::runReplacement(size_t year, size_t hour, size_t step) {
+    if (year == 0 && hour == 0)
+        return;
+
+    if (params->option == replacement_params::OPTIONS::NONE)
+        return;
+
+    bool replace = false;
+    double percent = 0;
+    if (params->option == replacement_params::OPTIONS::SCHEDULE)
+    {
+        if (year < params->schedule.size())
+        {
+            auto num_repl = (size_t)params->schedule[year];
+            for (size_t j_repl = 0; j_repl < num_repl; j_repl++)
+            {
+                if ((hour == (j_repl * 8760 / num_repl)) && step == 0)
+                {
+                    replace = true;
+                    break;
+                }
+            }
+        }
+        if (replace) {
+            percent = params->schedule_percent_to_replace[year];
+        }
+    }
+    else if (params->option == replacement_params::OPTIONS::CAPACITY_PERCENT) {
+        if ((lifetime_model()->capacity_percent() - tolerance) <= params->capacity_percent) {
+            replace = true;
+            percent = 100.;
+        }
+    }
+
+    if (replace) {
+        replacement_state.n_replacements++;
+        replacement_state.indices_replaced.push_back(util::lifetimeIndex(year, hour, step, (size_t)(1 / _dt_hour)));
+        _lifetime->replaceBattery(percent);
+        _capacity->replace_battery(percent);
+        _thermal->replace_battery(year);
+    }
+}
+
+void battery_t::resetReplacement() {
+    replacement_state.n_replacements = 0;
+}
+
+double battery_t::getNumReplacementYear() {
+    return replacement_state.n_replacements;
+}
+
 capacity_t * battery_t::capacity_model() const { return _capacity; }
 capacity_t * battery_t::capacity_initial_model() const { return _capacity_initial; }
 voltage_t * battery_t::voltage_model() const { return _voltage; }

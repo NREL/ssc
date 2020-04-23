@@ -6,8 +6,7 @@
 /*
 Define Voltage Model
 */
-voltage_t::voltage_t(int mode, int num_cells_series, int num_strings, double voltage, double dt_hour)
-{
+voltage_t::voltage_t(int mode, int num_cells_series, int num_strings, double voltage, double dt_hour) {
     params = std::make_shared<voltage_params>();
 
     params->mode = static_cast<voltage_params::MODE>(mode);
@@ -16,36 +15,43 @@ voltage_t::voltage_t(int mode, int num_cells_series, int num_strings, double vol
     state.cell_voltage = voltage;
     params->cell_voltage_nominal = voltage;
     params->R = 0.004; // just a default, will get recalculated upon construction
-    if (dt_hour < 1/60.)
+    if (dt_hour < 1 / 60.)
         throw std::runtime_error("Battery time step size must be greater than 1/60th of hour.");
     params->dt_hr = dt_hour;
 }
 
-voltage_t::voltage_t(const voltage_t& rhs):
-params(rhs.params),
-state(rhs.state){}
+voltage_t::voltage_t(const voltage_t &rhs) :
+        params(rhs.params),
+        state(rhs.state) {}
 
-voltage_t & voltage_t::operator=(const voltage_t& rhs){
+voltage_t &voltage_t::operator=(const voltage_t &rhs) {
     params = rhs.params;
     state = rhs.state;
     return *this;
 }
 
-double voltage_t::battery_voltage(){ return params->num_cells_series*state.cell_voltage; }
-double voltage_t::battery_voltage_nominal(){ return params->num_cells_series * params->cell_voltage_nominal; }
-double voltage_t::cell_voltage(){ return state.cell_voltage; }
+double voltage_t::battery_voltage() { return params->num_cells_series * state.cell_voltage; }
+
+double voltage_t::battery_voltage_nominal() { return params->num_cells_series * params->cell_voltage_nominal; }
+
+double voltage_t::cell_voltage() { return state.cell_voltage; }
+
+voltage_params voltage_t::get_params() { return *params; }
+
+voltage_state voltage_t::get_state() { return state; }
 
 // Voltage Table
-voltage_table_t::voltage_table_t(int num_cells_series, int num_strings, double voltage, util::matrix_t<double> &voltage_table, double R, double dt_hour) :
-        voltage_t(voltage_t::VOLTAGE_TABLE, num_cells_series, num_strings, voltage, dt_hour)
-{
+voltage_table_t::voltage_table_t(int num_cells_series, int num_strings, double voltage,
+                                 util::matrix_t<double> &voltage_table, double R, double dt_hour) :
+        voltage_t(voltage_t::VOLTAGE_TABLE, num_cells_series, num_strings, voltage, dt_hour) {
     params->R = R;
 
     // extract and sort calendar life info from table
-    for (int r = 0; r != (int)voltage_table.nrows(); r++)
+    for (int r = 0; r != (int) voltage_table.nrows(); r++)
         params->m_voltage_table.emplace_back(std::make_pair(voltage_table.at(r, 0), voltage_table.at(r, 1)));
 
-    std::sort(params->m_voltage_table.begin(), params->m_voltage_table.end(), [](std::pair<double, double> a, std::pair<double, double> b) {return a.second > b.second; });
+    std::sort(params->m_voltage_table.begin(), params->m_voltage_table.end(),
+              [](std::pair<double, double> a, std::pair<double, double> b) { return a.second > b.second; });
 
     // save slope and intercept for every set of points to interpolate between
     for (size_t i = 0; i != params->m_voltage_table.size(); i++) {
@@ -53,10 +59,10 @@ voltage_table_t::voltage_table_t(int num_cells_series, int num_strings, double v
         double V = params->m_voltage_table[i].second;
         double slope = 0;
         double intercept = V;
-        if (i > 0){
-            double DOD0 = params->m_voltage_table[i-1].first;
-            double V0 = params->m_voltage_table[i-1].second;
-            slope = (V - V0)/(DOD - DOD0);
+        if (i > 0) {
+            double DOD0 = params->m_voltage_table[i - 1].first;
+            double V0 = params->m_voltage_table[i - 1].second;
+            slope = (V - V0) / (DOD - DOD0);
             intercept = V0 - (slope * DOD0);
         }
         slopes.emplace_back(slope);
@@ -69,22 +75,20 @@ voltage_table_t::voltage_table_t(int num_cells_series, int num_strings, double v
 
 }
 
-voltage_table_t & voltage_table_t::operator=(const voltage_t &rhs)
-{
+voltage_table_t &voltage_table_t::operator=(const voltage_t &rhs) {
     voltage_t::operator=(rhs);
-    auto rhs_p = dynamic_cast<voltage_table_t*>(const_cast<voltage_t*>(&rhs));
+    auto rhs_p = dynamic_cast<voltage_table_t *>(const_cast<voltage_t *>(&rhs));
     slopes = rhs_p->slopes;
     intercepts = rhs_p->intercepts;
     return *this;
 }
 
-voltage_table_t::voltage_table_t(const voltage_table_t& rhs):
-voltage_t(rhs){
+voltage_table_t::voltage_table_t(const voltage_table_t &rhs) :
+        voltage_t(rhs) {
     operator=(rhs);
 }
 
-voltage_t* voltage_table_t::clone()
-{
+voltage_t *voltage_table_t::clone() {
     return new voltage_table_t(*this);
 }
 
@@ -93,7 +97,7 @@ double voltage_table_t::calculate_voltage(double DOD) {
     DOD = fmin(DOD, 100.);
 
     size_t row = 0;
-    while (row < params->m_voltage_table.size() && DOD > params->m_voltage_table[row].first){
+    while (row < params->m_voltage_table.size() && DOD > params->m_voltage_table[row].first) {
         row++;
     }
 
@@ -101,22 +105,21 @@ double voltage_table_t::calculate_voltage(double DOD) {
 }
 
 double voltage_table_t::calculate_voltage_for_current(double I, double q, double qmax, double) {
-    double DOD = (q - I * params->dt_hr)/qmax * 100.;
+    double DOD = (q - I * params->dt_hr) / qmax * 100.;
     return calculate_voltage(DOD) * params->num_cells_series;
 }
 
 
-void voltage_table_t::updateVoltage(capacity_t * capacity, const double, double )
-{
+void voltage_table_t::updateVoltage(capacity_t *capacity, const double, double) {
     state.cell_voltage = calculate_voltage(capacity->DOD());
 }
 
 // helper fx to calculate depth of discharge from current and max capacities
-inline double calc_DOD(double q, double qmax) {return (1. - q/qmax) * 100.;}
+inline double calc_DOD(double q, double qmax) { return (1. - q / qmax) * 100.; }
 
 double voltage_table_t::calculate_max_charge_w(double q, double qmax, double, double *max_current) {
     double DOD0 = calc_DOD(q, qmax);
-    double current = qmax*( (1.-DOD0/100.) - 1. );
+    double current = qmax * ((1. - DOD0 / 100.) - 1.);
     if (max_current)
         *max_current = current;
     return calculate_voltage(0.) * current;
@@ -125,20 +128,20 @@ double voltage_table_t::calculate_max_charge_w(double q, double qmax, double, do
 double voltage_table_t::calculate_max_discharge_w(double q, double qmax, double, double *max_current) {
     double DOD0 = calc_DOD(q, qmax);
     double A = q - qmax;
-    double B = qmax/100.;
+    double B = qmax / 100.;
 
     double max = 0;
-    for (size_t i = 0; i < slopes.size(); i++){
-        double dod = -(A*slopes[i] + B*intercepts[i])/(2*B*slopes[i]);
-        double current = qmax*( (1.-DOD0/100.) - (1.-dod/100.) );
+    for (size_t i = 0; i < slopes.size(); i++) {
+        double dod = -(A * slopes[i] + B * intercepts[i]) / (2 * B * slopes[i]);
+        double current = qmax * ((1. - DOD0 / 100.) - (1. - dod / 100.));
         double p = calculate_voltage(dod) * current;
-        if (p > max){
+        if (p > max) {
             max = p;
             if (max_current)
                 *max_current = current;
         }
     }
-    if (max < 0){
+    if (max < 0) {
         max = 0.;
         if (max_current)
             *max_current = 0.;
@@ -164,42 +167,41 @@ double voltage_table_t::calculate_current_for_target_w(double P_watts, double q,
         multiplier = -1.;
 
     size_t row = 0;
-    while (row < params->m_voltage_table.size() && DOD > params->m_voltage_table[row].first){
+    while (row < params->m_voltage_table.size() && DOD > params->m_voltage_table[row].first) {
         row++;
     }
 
     double A = q - qmax;
-    double B = qmax/100.;
+    double B = qmax / 100.;
 
     double DOD_new = 0.;
     double incr = 0;
-    while (incr + row < slopes.size() && incr + row >= 0){
-        size_t i = row + (size_t)incr;
+    while (incr + row < slopes.size() && incr + row >= 0) {
+        size_t i = row + (size_t) incr;
 
         double a = B * slopes[i];
         double b = A * slopes[i] + B * intercepts[i];
         double c = A * intercepts[i] - P_watts;
 
-        DOD_new = fabs((-b + sqrt(b*b - 4*a*c))/(2*a));
+        DOD_new = fabs((-b + sqrt(b * b - 4 * a * c)) / (2 * a));
 
-        auto upper = (size_t)fmin(i, params->m_voltage_table.size() - 1);
-        auto lower = (size_t)fmax(0, i-1);
-        if (DOD_new <= params->m_voltage_table[upper].first && DOD_new >= params->m_voltage_table[lower].first){
+        auto upper = (size_t) fmin(i, params->m_voltage_table.size() - 1);
+        auto lower = (size_t) fmax(0, i - 1);
+        if (DOD_new <= params->m_voltage_table[upper].first && DOD_new >= params->m_voltage_table[lower].first) {
             break;
         }
         incr += 1 * multiplier;
     }
-    return qmax*((1.-DOD/100.) - (1.-DOD_new/100.));
+    return qmax * ((1. - DOD / 100.) - (1. - DOD_new / 100.));
 }
 
 // Dynamic voltage model
-typedef void (voltage_dynamic_t::*voltage_dynamic_fptr)(const double*, double*);
+typedef void (voltage_dynamic_t::*voltage_dynamic_fptr)(const double *, double *);
 
 voltage_dynamic_t::voltage_dynamic_t(int num_cells_series, int num_strings, double voltage, double Vfull,
                                      double Vexp, double Vnom, double Qfull, double Qexp, double Qnom,
                                      double C_rate, double R, double dt_hour) :
-        voltage_t(voltage_t::VOLTAGE_MODEL, num_cells_series, num_strings, voltage, dt_hour)
-{
+        voltage_t(voltage_t::VOLTAGE_MODEL, num_cells_series, num_strings, voltage, dt_hour) {
     params->dynamic.Vfull = Vfull;
     params->dynamic.Vexp = Vexp;
     params->dynamic.Vnom = Vnom;
@@ -215,10 +217,10 @@ voltage_dynamic_t::voltage_dynamic_t(int num_cells_series, int num_strings, doub
     parameter_compute();
 }
 
-voltage_dynamic_t & voltage_dynamic_t::operator=(const voltage_t& rhs) {
+voltage_dynamic_t &voltage_dynamic_t::operator=(const voltage_t &rhs) {
     voltage_t::operator=(rhs);
 
-    auto rhs_p = dynamic_cast<voltage_dynamic_t*>(const_cast<voltage_t*>(&rhs));
+    auto rhs_p = dynamic_cast<voltage_dynamic_t *>(const_cast<voltage_t *>(&rhs));
     _A = rhs_p->_A;
     _B0 = rhs_p->_B0;
     _E0 = rhs_p->_E0;
@@ -231,30 +233,28 @@ voltage_dynamic_t & voltage_dynamic_t::operator=(const voltage_t& rhs) {
     return *this;
 }
 
-voltage_dynamic_t::voltage_dynamic_t(const voltage_dynamic_t &rhs):
-        voltage_t(rhs)
-{
+voltage_dynamic_t::voltage_dynamic_t(const voltage_dynamic_t &rhs) :
+        voltage_t(rhs) {
     operator=(rhs);
 }
 
-voltage_t* voltage_dynamic_t::clone()
-{
+voltage_t *voltage_dynamic_t::clone() {
     return new voltage_dynamic_t(*this);
 }
 
-void voltage_dynamic_t::parameter_compute()
-{
+void voltage_dynamic_t::parameter_compute() {
     // Determines parameters according to page 2 of:
     // Tremblay 2009 "A Generic Bettery Model for the Dynamic Simulation of Hybrid Electric Vehicles"
 //	double eta = 0.995;
-    double I = params->dynamic.Qfull*params->dynamic.C_rate; // [A]
+    double I = params->dynamic.Qfull * params->dynamic.C_rate; // [A]
     //_R = params->dynamic.Vnom*(1. - eta) / (params->dynamic.C_rate*params->dynamic.Qnom); // [Ohm]
     _A = params->dynamic.Vfull - params->dynamic.Vexp; // [V]
     _B0 = 3. / params->dynamic.Qexp;     // [1/Ah]
-    _K = ((params->dynamic.Vfull - params->dynamic.Vnom + _A*(std::exp(-_B0*params->dynamic.Qnom) - 1))*(params->dynamic.Qfull - params->dynamic.Qnom)) / (params->dynamic.Qnom); // [V] - polarization voltage
-    _E0 = params->dynamic.Vfull + _K + params->R*I - _A;
+    _K = ((params->dynamic.Vfull - params->dynamic.Vnom + _A * (std::exp(-_B0 * params->dynamic.Qnom) - 1)) *
+          (params->dynamic.Qfull - params->dynamic.Qnom)) / (params->dynamic.Qnom); // [V] - polarization voltage
+    _E0 = params->dynamic.Vfull + _K + params->R * I - _A;
 
-    if (_A < 0 || _B0 < 0 || _K < 0 || _E0 < 0){
+    if (_A < 0 || _B0 < 0 || _K < 0 || _E0 < 0) {
         char err[254];
         std::sprintf(err, "Error during calculation of battery voltage model parameters: negative value(s) found.\n"
                           "A: %f, B: %f, K: %f, E0: %f", _A, _B0, _K, _E0);
@@ -263,26 +263,25 @@ void voltage_dynamic_t::parameter_compute()
 }
 
 // everything in here is on a per-cell basis
-double voltage_dynamic_t::voltage_model_tremblay_hybrid(double Q_cell, double I, double q0_cell)
-{
+double voltage_dynamic_t::voltage_model_tremblay_hybrid(double Q_cell, double I, double q0_cell) {
     double it = Q_cell - q0_cell;
-    double E = _E0 - _K*(Q_cell / (Q_cell - it)) + _A * exp(-_B0 * it);
-    return E - params->R*I;
+    double E = _E0 - _K * (Q_cell / (Q_cell - it)) + _A * exp(-_B0 * it);
+    return E - params->R * I;
 }
 
-double voltage_dynamic_t::calculate_voltage_for_current(double I, double q, double qmax, double)
-{
-    return params->num_cells_series * fmax(voltage_model_tremblay_hybrid(qmax/params->num_strings, I/params->num_strings , q/params->num_strings), 0);
+double voltage_dynamic_t::calculate_voltage_for_current(double I, double q, double qmax, double) {
+    return params->num_cells_series *
+           fmax(voltage_model_tremblay_hybrid(qmax / params->num_strings, I / params->num_strings,
+                                              q / params->num_strings), 0);
 }
 
 // I, Q, q0 are on a per-string basis since adding cells in series does not change current or charge
-void voltage_dynamic_t::updateVoltage(capacity_t * capacity, const double, double )
-{
+void voltage_dynamic_t::updateVoltage(capacity_t *capacity, const double, double) {
     double Q = capacity->qmax() / params->num_strings;
     double I = capacity->I() / params->num_strings;
     double q0 = capacity->q0() / params->num_strings;
 
-    state.cell_voltage = fmax(voltage_model_tremblay_hybrid(Q, I , q0), 0);
+    state.cell_voltage = fmax(voltage_model_tremblay_hybrid(Q, I, q0), 0);
 }
 
 double voltage_dynamic_t::calculate_max_charge_w(double q, double qmax, double, double *max_current) {
@@ -291,10 +290,12 @@ double voltage_dynamic_t::calculate_max_charge_w(double q, double qmax, double, 
     double current = (q - qmax) / params->dt_hr;
     if (max_current)
         *max_current = current * params->num_strings;
-    return current * voltage_model_tremblay_hybrid(qmax, current , qmax) * params->num_strings * params->num_cells_series;
+    return current * voltage_model_tremblay_hybrid(qmax, current, qmax) * params->num_strings *
+           params->num_cells_series;
 }
 
 using namespace std::placeholders;
+
 double voltage_dynamic_t::calculate_max_discharge_w(double q, double qmax, double, double *max_current) {
     q /= params->num_strings;
     qmax /= params->num_strings;
@@ -302,10 +303,10 @@ double voltage_dynamic_t::calculate_max_discharge_w(double q, double qmax, doubl
     double current = 0., vol = 0;
     double incr = q / 10;
     double max_p = 0, max_I = 0;
-    while (current * params->dt_hr < q - tolerance && vol >= 0){
-        vol = voltage_model_tremblay_hybrid(qmax, current , q - current * params->dt_hr);
+    while (current * params->dt_hr < q - tolerance && vol >= 0) {
+        vol = voltage_model_tremblay_hybrid(qmax, current, q - current * params->dt_hr);
         double p = current * vol;
-        if (p > max_p){
+        if (p > max_p) {
             max_p = p;
             max_I = current;
         }
@@ -323,14 +324,14 @@ double voltage_dynamic_t::calculate_current_for_target_w(double P_watts, double 
     if (P_watts == 0) return 0.;
 
     solver_power = fabs(P_watts) / (params->num_cells_series * params->num_strings);
-    solver_q = q /params->num_strings;
+    solver_q = q / params->num_strings;
     solver_Q = qmax / params->num_strings;
 
-    std::function<void(const double*, double*)> f;
+    std::function<void(const double *, double *)> f;
     double direction = 1.;
     if (P_watts > 0)
         f = std::bind(&voltage_dynamic_t::solve_current_for_discharge_power, this, _1, _2);
-    else{
+    else {
         f = std::bind(&voltage_dynamic_t::solve_current_for_charge_power, this, _1, _2);
         direction = -1.;
     }
@@ -339,40 +340,41 @@ double voltage_dynamic_t::calculate_current_for_target_w(double P_watts, double 
     x[0] = solver_power / state.cell_voltage;
     bool check = false;
 
-    newton<double, std::function<void(const double*, double*)>, 1>( x, resid, check, f,
-                                                                    100, 1e-6, 1e-6, 0.7);
+    newton<double, std::function<void(const double *, double *)>, 1>(x, resid, check, f,
+                                                                     100, 1e-6, 1e-6, 0.7);
     return x[0] * params->num_strings * direction;
 }
 
-void voltage_dynamic_t::solve_current_for_charge_power(const double *x, double *f){
+void voltage_dynamic_t::solve_current_for_charge_power(const double *x, double *f) {
     double I = x[0];
-    double V = _E0 - _K*solver_Q/(solver_q+I*params->dt_hr) + _A*exp(-_B0*(solver_Q-(solver_q+I*params->dt_hr))) + params->R*I;
-    f[0] = I*V - solver_power;
+    double V = _E0 - _K * solver_Q / (solver_q + I * params->dt_hr) +
+               _A * exp(-_B0 * (solver_Q - (solver_q + I * params->dt_hr))) + params->R * I;
+    f[0] = I * V - solver_power;
 }
 
-void voltage_dynamic_t::solve_current_for_discharge_power(const double *x, double *f){
+void voltage_dynamic_t::solve_current_for_discharge_power(const double *x, double *f) {
     double I = x[0];
-    double V = _E0 - _K*solver_Q/(solver_q-I*params->dt_hr) + _A*exp(-_B0*(solver_Q-(solver_q-I*params->dt_hr))) - params->R*I;
-    f[0] = I*V - solver_power;
+    double V = _E0 - _K * solver_Q / (solver_q - I * params->dt_hr) +
+               _A * exp(-_B0 * (solver_Q - (solver_q - I * params->dt_hr))) - params->R * I;
+    f[0] = I * V - solver_power;
 }
 
 // Vanadium redox flow model
 voltage_vanadium_redox_t::voltage_vanadium_redox_t(int num_cells_series, int num_strings, double Vnom_default, double R,
                                                    double dt_hour) :
-        voltage_t(voltage_t::VOLTAGE_MODEL, num_cells_series, num_strings, Vnom_default, dt_hour)
-{
+        voltage_t(voltage_t::VOLTAGE_MODEL, num_cells_series, num_strings, Vnom_default, dt_hour) {
     params->cell_voltage_nominal = Vnom_default;
     params->R = R;
     m_RCF = 8.314 * 1.38 / (26.801 * 3600);
-    if (params->dt_hr < 1/60.)
+    if (params->dt_hr < 1 / 60.)
         throw std::runtime_error("Battery time step size must be greater than 1/60th of hour.");
     params->dt_hr = params->dt_hr;
 }
 
-voltage_vanadium_redox_t & voltage_vanadium_redox_t::operator=(const voltage_t& rhs){
+voltage_vanadium_redox_t &voltage_vanadium_redox_t::operator=(const voltage_t &rhs) {
     voltage_t::operator=(rhs);
 
-    auto rhs_p = dynamic_cast<voltage_vanadium_redox_t*>(const_cast<voltage_t*>(&rhs));
+    auto rhs_p = dynamic_cast<voltage_vanadium_redox_t *>(const_cast<voltage_t *>(&rhs));
     m_RCF = rhs_p->m_RCF;
     solver_power = rhs_p->solver_power;
     solver_T_k = rhs_p->solver_T_k;
@@ -381,27 +383,23 @@ voltage_vanadium_redox_t & voltage_vanadium_redox_t::operator=(const voltage_t& 
     return *this;
 }
 
-voltage_vanadium_redox_t::voltage_vanadium_redox_t(const voltage_vanadium_redox_t &rhs):
-voltage_t(rhs)
-{
+voltage_vanadium_redox_t::voltage_vanadium_redox_t(const voltage_vanadium_redox_t &rhs) :
+        voltage_t(rhs) {
     operator=(rhs);
 }
 
-voltage_t* voltage_vanadium_redox_t::clone()
-{
+voltage_t *voltage_vanadium_redox_t::clone() {
     return new voltage_vanadium_redox_t(*this);
 }
 
-double voltage_vanadium_redox_t::calculate_voltage_for_current(double I, double q, double qmax, double T_k)
-{
+double voltage_vanadium_redox_t::calculate_voltage_for_current(double I, double q, double qmax, double T_k) {
     return voltage_model(q / params->num_strings, qmax / params->num_strings,
-                         I/ params->num_strings, T_k) * params->num_cells_series;
+                         I / params->num_strings, T_k) * params->num_cells_series;
 }
 
-void voltage_vanadium_redox_t::updateVoltage(capacity_t * capacity, const double temp, double )
-{
+void voltage_vanadium_redox_t::updateVoltage(capacity_t *capacity, const double temp, double) {
     state.cell_voltage = voltage_model(capacity->q0() / params->num_strings, capacity->qmax() / params->num_strings,
-                                  capacity->I()/ params->num_strings, temp);
+                                       capacity->I() / params->num_strings, temp);
 }
 
 double voltage_vanadium_redox_t::calculate_max_charge_w(double q, double qmax, double kelvin, double *max_current) {
@@ -417,23 +415,25 @@ double voltage_vanadium_redox_t::calculate_max_charge_w(double q, double qmax, d
 
 double voltage_vanadium_redox_t::calculate_max_discharge_w(double q, double qmax, double kelvin, double *max_current) {
 
-    solver_q = q /params->num_strings;
+    solver_q = q / params->num_strings;
     solver_Q = qmax / params->num_strings;
     solver_T_k = kelvin;
 
-    std::function<void(const double*, double*)> f = std::bind(&voltage_vanadium_redox_t::solve_max_discharge_power, this, _1, _2);
+    std::function<void(const double *, double *)> f = std::bind(&voltage_vanadium_redox_t::solve_max_discharge_power,
+                                                                this, _1, _2);
 
     double x[1], resid[1];
     x[0] = solver_q - tolerance;
     bool check = false;
 
-    newton<double, std::function<void(const double*, double*)>, 1>( x, resid, check, f,
-                                                                    100, 1e-6, 1e-6, 0.7);
+    newton<double, std::function<void(const double *, double *)>, 1>(x, resid, check, f,
+                                                                     100, 1e-6, 1e-6, 0.7);
     double current = x[0];
 
-    double power = current * voltage_model(solver_q - current * params->dt_hr, solver_Q, current, kelvin) * params->num_strings * params->num_cells_series;
+    double power = current * voltage_model(solver_q - current * params->dt_hr, solver_Q, current, kelvin) *
+                   params->num_strings * params->num_cells_series;
 
-    if (power < 0){
+    if (power < 0) {
         current = 0.;
         power = 0.;
     }
@@ -446,24 +446,24 @@ double voltage_vanadium_redox_t::calculate_current_for_target_w(double P_watts, 
     if (P_watts == 0) return 0.;
 
     solver_power = P_watts / (params->num_cells_series * params->num_strings);
-    solver_q = q /params->num_strings;
+    solver_q = q / params->num_strings;
     solver_Q = qmax / params->num_strings;
     solver_T_k = kelvin;
 
-    std::function<void(const double*, double*)> f = std::bind(&voltage_vanadium_redox_t::solve_current_for_power, this, _1, _2);
+    std::function<void(const double *, double *)> f = std::bind(&voltage_vanadium_redox_t::solve_current_for_power,
+                                                                this, _1, _2);
 
     double x[1], resid[1];
     x[0] = solver_power / state.cell_voltage;
     bool check = false;
 
-    newton<double, std::function<void(const double*, double*)>, 1>( x, resid, check, f,
-                                                                    100, 1e-6, 1e-6, 0.7);
+    newton<double, std::function<void(const double *, double *)>, 1>(x, resid, check, f,
+                                                                     100, 1e-6, 1e-6, 0.7);
     return x[0] * params->num_strings;
 }
 
 // I, Q, q0 are on a per-string basis since adding cells in series does not change current or charge
-double voltage_vanadium_redox_t::voltage_model(double q0, double qmax, double I_string, double T)
-{
+double voltage_vanadium_redox_t::voltage_model(double q0, double qmax, double I_string, double T) {
     double SOC_use = q0 / qmax;
     if (SOC_use > 1. - tolerance)
         SOC_use = 1. - tolerance;
@@ -473,14 +473,17 @@ double voltage_vanadium_redox_t::voltage_model(double q0, double qmax, double I_
     return params->cell_voltage_nominal + m_RCF * T * A + I_string * params->R;
 }
 
-void voltage_vanadium_redox_t::solve_current_for_power(const double *x, double *f){
+void voltage_vanadium_redox_t::solve_current_for_power(const double *x, double *f) {
     double I = x[0];
-    double SOC = (solver_q - I*params->dt_hr) / solver_Q;
-    f[0] = I * (params->cell_voltage_nominal + m_RCF * solver_T_k * std::log(SOC*SOC/std::pow(1.-SOC, 2)) + I * params->R) - solver_power;
+    double SOC = (solver_q - I * params->dt_hr) / solver_Q;
+    f[0] = I * (params->cell_voltage_nominal + m_RCF * solver_T_k * std::log(SOC * SOC / std::pow(1. - SOC, 2)) +
+                I * params->R) - solver_power;
 }
 
-void voltage_vanadium_redox_t::solve_max_discharge_power(const double *x, double *f){
+void voltage_vanadium_redox_t::solve_max_discharge_power(const double *x, double *f) {
     double I = x[0];
-    double SOC = (solver_q - I*params->dt_hr) / solver_Q;
-    f[0] = params->cell_voltage_nominal + 2 * I * params->R + m_RCF*solver_T_k*(std::log(SOC*SOC/pow(1.-SOC,2)) - 2*I/solver_Q*(1./SOC - 1./(1.-SOC)));
+    double SOC = (solver_q - I * params->dt_hr) / solver_Q;
+    f[0] = params->cell_voltage_nominal + 2 * I * params->R + m_RCF * solver_T_k *
+                                                              (std::log(SOC * SOC / pow(1. - SOC, 2)) -
+                                                               2 * I / solver_Q * (1. / SOC - 1. / (1. - SOC)));
 }
