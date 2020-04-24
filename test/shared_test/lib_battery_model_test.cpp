@@ -1,52 +1,51 @@
-#include <iostream>
-
 #include <gtest/gtest.h>
 
+#include "logger.h"
 #include "lib_battery_model_test.h"
 
 TEST_F(lib_battery_thermal_test, SetUpTest){
     CreateModel(Cp);
-    EXPECT_NEAR(model->T_battery(), 290, tol);
+    EXPECT_NEAR(model->T_battery(), 16.85, tol);
     EXPECT_NEAR(model->capacity_percent(), 100, tol);
 }
 
 TEST_F(lib_battery_thermal_test, updateTemperatureTest) {
     CreateModel(Cp);
-    // battery which adjusts quickly to temp {290,290,295,295,290,270,270};
+    // battery which adjusts quickly to temp {16.85, 16.85, 21.85, 21.85, 16.85, -3.15, -3.15};
     double I = 50;
     size_t idx = 0;
     model->updateTemperature(I, idx++);
-    auto s = thermal_state({93.49, 290.0, 290});
+    auto s = thermal_state({93.49, 16.86, 16.85});
     compareState(model, s, "updateTemperatureTest: 1");
 
     I = -50;
     model->updateTemperature(I, idx++);
-    s = thermal_state({93.49, 290.0, 290});
+    s = thermal_state({93.49, 16.87, 16.85});
     compareState(model, s, "updateTemperatureTest: 2");
 
     I = 50;
     model->updateTemperature(I, idx++);
-    s = thermal_state({94.02, 290.67, 295});
+    s = thermal_state({94.02, 17.53, 21.85});
     compareState(model, s, "updateTemperatureTest: 3");
 
     I = 10;
     model->updateTemperature(I, idx++);
-    s = thermal_state({95.23, 292.2, 295});
+    s = thermal_state({94.88, 18.61, 21.85});
     compareState(model, s, "updateTemperatureTest: 4");
 
     I = 10;
     model->updateTemperature(I, idx++);
-    s = thermal_state({95, 291.9, 290});
+    s = thermal_state({95.00, 18.76, 16.85});
     compareState(model, s, "updateTemperatureTest: 5");
 
     I = 10;
     model->updateTemperature(I, idx++);
-    s = thermal_state({92.72, 289.05, 270});
+    s = thermal_state({92.55, 15.69, -3.15});
     compareState(model, s, "updateTemperatureTest: 6");
 
     I = 100;
     model->updateTemperature(I, idx++);
-    s = thermal_state({87.4, 282.42, 270});
+    s = thermal_state({88.85, 11.06, -3.15});
     compareState(model, s, "updateTemperatureTest: 7");
 }
 
@@ -117,11 +116,11 @@ TEST_F(lib_battery_test, runTestCycleAt1C){
     capacity_passed += batteryModel->capacity_model()->I() * batteryModel->voltage_model()->battery_voltage() / 1000.;
 //    std::cerr << "\n" << idx << ": " << capacity_passed << "\n";
 
-    auto s = battery_state({{479.75, 1000, 960.65, 20.25, 0, 49.94, 50.059, 47.95, 2}, // cap
-                            500.66, // voltage
+    auto s = battery_state({{479.75, 1000, 960.01, 20.25, 0, 49.97, 50.02, 47.91, 2}, // cap
+                            550.65, // voltage
                            100, {100, 0, 0, 0, 0, 0, 1, std::vector<double>()}, // cycle
                             {102, 0, 0}, // calendar
-                           {96.065, 293.23}, // thermal
+                           {96.00, 20.00, 20}, // thermal
                            0});
     compareState(batteryModel, s, "runTestCycleAt1C: 1");
 
@@ -131,11 +130,11 @@ TEST_F(lib_battery_test, runTestCycleAt1C){
     }
 //    std::cerr <<  idx << ": soc " << batteryModel->capacity_model()->SOC() << ", cap " << capacity_passed << "\n";
     // the SOC isn't at 5 so it means the controller is not able to calculate a current/voltage at which to discharge to 5
-    s = battery_state({{54.5, 1000, 960.65, 20.25, 0, 5.67, 94.32, 92.21, 2}, // cap
-                       316.979, // voltage
+    s = battery_state({{54.5, 1000, 960.07, 20.25, 0, 5.67, 94.32, 92.21, 2}, // cap
+                       366.96, // voltage
                        100, {100, 0, 0, 0, 0, 0, 1, std::vector<double>()}, // cycle
                         {101.976, 0, 21}, // calendar
-                       {96.06, 293.23}, // thermal
+                       {96.01, 20.01, 20}, // thermal
                        0});
     compareState(batteryModel, s, "runTestCycleAt1C: 2");
 
@@ -155,15 +154,15 @@ TEST_F(lib_battery_test, runTestCycleAt1C){
     }
 //    std::cerr <<  idx << ": soc " << batteryModel->capacity_model()->SOC() << ", cap " << capacity_passed << "\n";
     // the SOC isn't at 5 so it means the controller is not able to calculate a current/voltage at which to discharge to 5
-    s = battery_state({{50.55, 920.55, 883.85, 8.95, 0, 5.71, 94.28, 93.267, 2}, // cap
-                       353.44, // voltage
-                       93.08, {92.05, 398, 89.09, 88.99, 89.163, 89.32, 5, std::vector<double>()}, // cycle
-                        {98.035, 2693, 64635, 0.039}, // calendar
-                       {96.03, 293.166, 118774800}, // thermal
+    s = battery_state({{47.36, 920.55, 883.74, 8.93, 0, 5.35, 94.64, 93.62, 2}, // cap
+                       354.71, // voltage
+                       93.08, {92.05, 398, 88.94, 89.05, 88.97, 89.65, 5, std::vector<double>()}, // cycle
+                        {98.01, 2754, 66099, 0.039}, // calendar
+                       {96.0, 20.00, 20}, // thermal
                        32991});
     compareState(batteryModel, s, "runTestCycleAt1C: 3");
 
-    EXPECT_NEAR(capacity_passed, 361257, 1000) << "Current passing through cell";
+    EXPECT_NEAR(capacity_passed, 352736, 1000) << "Current passing through cell";
     double qmax = fmax(s.capacity.qmax_lifetime, s.capacity.qmax_thermal);
     EXPECT_NEAR(qmax/q, .93, 0.01) << "capacity relative to max capacity";
 }
@@ -176,11 +175,11 @@ TEST_F(lib_battery_test, runTestCycleAt3C){
     capacity_passed += batteryModel->capacity_model()->I() * batteryModel->voltage_model()->battery_voltage() / 1000.;
 //    std::cerr << "\n" << idx << ": " << capacity_passed << "\n";
 
-    auto s = battery_state({{439.25, 1000, 965.85, 60.75, 0, 45.47, 54.52, 48.23, 2}, // cap
-                            373.39, // voltage
+    auto s = battery_state({{439.25, 1000, 960.15, 60.75, 0, 45.74, 54.25, 47.92, 2}, // cap
+                            548.35, // voltage
                             100, {100, 0, 0, 0, 0, 0, 1, std::vector<double>()}, // cycle
                              {102, 0}, // calendar
-                            {96.58, 293.88}, // thermal
+                            {96.01, 20.01, 20}, // thermal
                             0});
     compareState(batteryModel, s, "runTest: 1");
 
@@ -190,11 +189,11 @@ TEST_F(lib_battery_test, runTestCycleAt3C){
     }
 //    std::cerr <<  idx << ": soc " << batteryModel->capacity_model()->SOC() << ", cap " << capacity_passed << "\n";
     // the SOC isn't at 5 so it means the controller is not able to calculate a current/voltage at which to discharge to 5
-    s = battery_state({{48.29, 1000, 961.10, 26.45, 0, 5.02, 94.97, 92.22, 2}, // cap
-                       271.17, // voltage
+    s = battery_state({{48.03, 1000, 960.47, 26.72, 0, 5.00, 95, 92.22, 2}, // cap
+                       339.03, // voltage
                        101.98, {100, 0, 0, 0, 0, 0, 1, std::vector<double>()}, // cycle
                         {101.98, 0, 7}, // calendar
-                       {96.11, 293.288}, // thermal
+                       {96.06, 20.07, 20}, // thermal
                        0});
     compareState(batteryModel, s, "runTest: 2");
 
@@ -214,16 +213,16 @@ TEST_F(lib_battery_test, runTestCycleAt3C){
     }
 //    std::cerr <<  idx << ": soc " << batteryModel->capacity_model()->SOC() << ", cap " << capacity_passed << "\n";
     // the SOC isn't at 5 so it means the controller is not able to calculate a current/voltage at which to discharge to 5
-    s = battery_state({{50.05, 920.97, 884.25, 8.96, 0, 5.66, 94.33, 93.328, 2}, // cap
-                       351.25, // voltage
-                       93.08, {92.09, 396, 89.17, 88.78, 89.24, 89.39, 9, std::vector<double>()}, // cycle
-                        {97.87, 2913, 69927, 0.041}, // calendar
-                       {96.01, 293.16, 118774800}, // thermal
+    s = battery_state({{48.84, 920.77, 883.95, 9.00, 0, 5.52, 94.47, 93.45, 2}, // cap
+                       361.33, // voltage
+                       93.08, {92.07, 397, 88.62, 88.80, 88.65, 89.48, 7, std::vector<double>()}, // cycle
+                        {98.06, 2655, 63732, 0.041}, // calendar
+                       {96.01, 20, 20}, // thermal
                        32991});
     compareState(batteryModel, s, "runTest: 3");
 
 
-    EXPECT_NEAR(capacity_passed, 360643, 100) << "Current passing through cell";
+    EXPECT_NEAR(capacity_passed, 352421, 100) << "Current passing through cell";
     double qmax = fmax(s.capacity.qmax_lifetime, s.capacity.qmax_thermal);
     EXPECT_NEAR(qmax/q, 0.9209, 0.01) << "capacity relative to max capacity";
 }
@@ -245,12 +244,17 @@ TEST_F(lib_battery_test, runDuplicates) {
 }
 
 TEST_F(lib_battery_test,logging) {
-    std::cout << batteryModel->capacity_model()->get_state() << "\n";
-    std::cout << batteryModel->capacity_model()->get_params() << "\n\n";
+    logger log;
 
-    std::cout << batteryModel->voltage_model()->get_state() << "\n";
-    std::cout << batteryModel->voltage_model()->get_params() << "\n\n";
+    log << batteryModel->capacity_model()->get_state() << "\n";
+    log << batteryModel->capacity_model()->get_params() << "\n\n";
 
-    std::cout << batteryModel->lifetime_model()->get_state() << "\n";
-    std::cout << batteryModel->lifetime_model()->get_params() << "\n\n";
+    log << batteryModel->voltage_model()->get_state() << "\n";
+    log << batteryModel->voltage_model()->get_params() << "\n\n";
+
+    log << batteryModel->lifetime_model()->get_state() << "\n";
+    log << batteryModel->lifetime_model()->get_params() << "\n\n";
+
+    log << batteryModel->thermal_model()->get_state() << "\n";
+    log << batteryModel->thermal_model()->get_params() << "\n\n";
 }

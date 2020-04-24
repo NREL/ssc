@@ -25,7 +25,7 @@ protected:
 
     dispatch_manual_t * dispatchManual{nullptr};
 
-    double dim_m = 1.2;
+    double surface_area = 1.2 * 1.2 * 6;
     int n_series = 139;
     int n_strings = 89;
 
@@ -53,7 +53,7 @@ public:
         voltageModel = new voltage_dynamic_t(n_series, n_strings, Vnom_default, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom,
                                              C_rate, resistance, dtHour);
         lifetimeModel = new lifetime_t(cycleLifeMatrix, dtHour, calendar_q0, calendar_a, calendar_b, calendar_c);
-        thermalModel = new thermal_t(1.0, mass, dim_m, dim_m, dim_m, resistance, Cp, h, T_room, capacityVsTemperature);
+        thermalModel = new thermal_t(1.0, mass, surface_area, resistance, Cp, h, capacityVsTemperature, T_room);
         lossModel = new losses_t(dtHour, lifetimeModel, thermalModel, capacityModel, lossChoice, monthlyLosses, monthlyLosses, monthlyLosses, fullLosses);
         batteryModel = new battery_t(dtHour, chemistry);
         batteryModel->initialize(capacityModel, voltageModel, lifetimeModel, thermalModel, lossModel);

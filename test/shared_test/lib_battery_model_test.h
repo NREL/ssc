@@ -32,19 +32,12 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_battery_capacity_test.h"
 #include "lib_battery_lifetime_test.h"
 
-struct thermal_state{
-    double capacity_percent; //[%]
-    double T_avg;       // avg during timestep [K]
-    double time_at_current_T_room;
-    double T_room_init;
-    double T_batt_init;
-};
-
-static void compareState(thermal_t* model, const thermal_state& state, const std::string& msg){
+static void compareState(thermal_t* model, const thermal_state& expected_state, const std::string& msg){
     double tol = 0.02;
-    EXPECT_NEAR(model->T_battery(), state.T_avg, tol) << msg;
-//    EXPECT_NEAR(model->capacity_percent(), state.T_avg, tol) << msg;
-    EXPECT_NEAR(model->capacity_percent(), state.capacity_percent, tol) << msg;
+    auto tested_state = model->get_state();
+    EXPECT_NEAR(tested_state.T_batt_avg, expected_state.T_batt_avg, tol) << msg;
+    EXPECT_NEAR(tested_state.T_room, expected_state.T_room, tol) << msg;
+    EXPECT_NEAR(tested_state.q_relative_thermal, expected_state.q_relative_thermal, tol) << msg;
 }
 
 static void compareState(std::unique_ptr<thermal_t>& model, const thermal_state& state, const std::string& msg) {
@@ -63,13 +56,11 @@ protected:
     double error;
 
     double mass = 507;
-    double length = 0.58;
-    double width = 0.58;
-    double height = 0.58;
+    double surface_area = 0.58 * 0.58 * 6;
     double batt_R = 0.0002;
     double Cp = 1004;
     double h = 20;
-    std::vector<double> T_room = {290,290,295,295,290,270,270};
+    std::vector<double> T_room = {16.85, 16.85, 21.85, 21.85, 16.85, -3.15, -3.15};
     util::matrix_t<double> capacityVsTemperature;
 
     double dt_hour = 1;
@@ -82,8 +73,7 @@ public:
         capacityVsTemperature.assign(vals3, 4, 2);
     }
     void CreateModel(double Cp){
-        model = std::unique_ptr<thermal_t>(new thermal_t(dt_hour, mass, length, width,
-                                                         height, batt_R, Cp, h, T_room, capacityVsTemperature));
+        model = std::unique_ptr<thermal_t>(new thermal_t(dt_hour, mass, surface_area, batt_R, Cp, h, capacityVsTemperature, T_room));
     }
 };
 
@@ -191,9 +181,7 @@ public:
 
     // thermal
     double mass;
-    double length;
-    double width;
-    double height;
+    double surface_area;
     double Cp;
     double h;
     std::vector<double> T_room;
@@ -238,7 +226,7 @@ public:
         Qexp = 0.04;
         Qnom = 2.0;
         C_rate = 0.2;
-        resistance = 0.2;
+        resistance = 0.0002;
 
         // lifetime
         double vals[] = { 20, 0, 100, 20, 5000, 80, 20, 10000, 60, 80, 0, 100, 80, 1000, 80, 80, 2000, 60 };
@@ -250,12 +238,10 @@ public:
 
         // thermal
         mass = 507;
-        length = 0.58;
-        width = 0.58;
-        height = 0.58;
+        surface_area = 0.58 * 0.58 * 6;
         Cp = 1004;
-        h = 500;
-        T_room.emplace_back(293.15);
+        h = 20;
+        T_room.emplace_back(20);
 
         double vals3[] = { -10, 60, 0, 80, 25, 100, 40, 100 };
         capacityVsTemperature.assign(vals3, 4, 2);
@@ -279,8 +265,7 @@ public:
         capacityModel = new capacity_lithium_ion_t(q, SOC_init, SOC_max, SOC_min, dtHour);
         voltageModel = new voltage_dynamic_t(n_series, n_strings, Vnom_default, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom, C_rate, resistance);
         lifetimeModel = new lifetime_t(cycleLifeMatrix, dtHour, 1.02, 2.66e-3, -7280, 930);
-        thermalModel = new thermal_t(1.0, mass, length, width, height, resistance, Cp, h, T_room,
-                                     capacityVsTemperature);
+        thermalModel = new thermal_t(1.0, mass, surface_area, resistance, Cp, h, capacityVsTemperature, T_room);
         lossModel = new losses_t(dtHour, lifetimeModel, thermalModel, capacityModel, lossChoice, monthlyLosses, monthlyLosses, monthlyLosses, fullLosses);
         batteryModel = std::unique_ptr<battery_t>(new battery_t(dtHour, chemistry));
         batteryModel->initialize(capacityModel, voltageModel, lifetimeModel, thermalModel, lossModel);

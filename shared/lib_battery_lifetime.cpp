@@ -365,7 +365,7 @@ double lifetime_calendar_t::runLifetimeCalendarModel(size_t idx, double T, doubl
             state->day_age_of_battery++;
 
         if (params->calendar_choice == lifetime_params::CALENDAR_CHOICE::MODEL)
-            runLithiumIonModel(T, SOC * 0.01);
+            runLithiumIonModel(T, SOC);
         else if (params->calendar_choice == lifetime_params::CALENDAR_CHOICE::TABLE)
             runTableModel();
 
@@ -374,9 +374,11 @@ double lifetime_calendar_t::runLifetimeCalendarModel(size_t idx, double T, doubl
     return state->q_relative_calendar;
 }
 
-void lifetime_calendar_t::runLithiumIonModel(double T, double SOC) {
-    double k_cal = params->calendar_model_a * exp(params->calendar_model_b * (1. / T - 1. / 296))
-                   * exp(params->calendar_model_c * (SOC / T - 1. / 296));
+void lifetime_calendar_t::runLithiumIonModel(double temp, double SOC) {
+    temp += 273.15;
+    SOC *= 0.01;
+    double k_cal = params->calendar_model_a * exp(params->calendar_model_b * (1. / temp - 1. / 296))
+                   * exp(params->calendar_model_c * (SOC / temp - 1. / 296));
     double dq_new;
     if (state->dq_relative_calendar_old == 0)
         dq_new = k_cal * sqrt(dt_day);
@@ -384,7 +386,6 @@ void lifetime_calendar_t::runLithiumIonModel(double T, double SOC) {
         dq_new = (0.5 * pow(k_cal, 2) / state->dq_relative_calendar_old) * dt_day + state->dq_relative_calendar_old;
     state->dq_relative_calendar_old = dq_new;
     state->q_relative_calendar = (params->calendar_model_q0 - (dq_new)) * 100;
-
 }
 
 void lifetime_calendar_t::runTableModel() {
@@ -448,7 +449,6 @@ lifetime_state &lifetime_state::operator=(const lifetime_state &rhs) {
 }
 
 void lifetime_t::initialize() {
-
     cycle_model = std::unique_ptr<lifetime_cycle_t>(new lifetime_cycle_t(params));
     calendar_model = std::unique_ptr<lifetime_calendar_t>(new lifetime_calendar_t(params));
     state = std::make_shared<lifetime_state>();

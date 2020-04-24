@@ -399,7 +399,7 @@ double voltage_vanadium_redox_t::calculate_voltage_for_current(double I, double 
 
 void voltage_vanadium_redox_t::updateVoltage(capacity_t *capacity, const double temp, double) {
     state.cell_voltage = voltage_model(capacity->q0() / params->num_strings, capacity->qmax() / params->num_strings,
-                                       capacity->I() / params->num_strings, temp);
+                                       capacity->I() / params->num_strings, temp + 273.15);
 }
 
 double voltage_vanadium_redox_t::calculate_max_charge_w(double q, double qmax, double kelvin, double *max_current) {

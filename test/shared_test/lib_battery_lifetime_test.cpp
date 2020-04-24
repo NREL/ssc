@@ -124,7 +124,7 @@ TEST_F(lib_battery_lifetime_calendar_matrix_test, runCalendarMatrixTest) {
 }
 
 TEST_F(lib_battery_lifetime_calendar_matrix_test, replaceBatteryTest) {
-    double T = 278, SOC = 20;
+    double T = 4.85, SOC = 20;
     int idx = 0;
     while (idx < 200000){
         if (idx % 2 != 0){
@@ -153,7 +153,7 @@ TEST_F(lib_battery_lifetime_calendar_model_test, SetUpTest) {
 }
 
 TEST_F(lib_battery_lifetime_calendar_model_test, runCalendarModelTest) {
-    double T = 278, SOC = 20;       // not used but required for function
+    double T = 4.85, SOC = 20;       // not used but required for function
     int idx = 0;
     while (idx < 500){
         if (idx % 2 != 0){
@@ -183,7 +183,7 @@ TEST_F(lib_battery_lifetime_calendar_model_test, runCalendarModelTest) {
 }
 
 TEST_F(lib_battery_lifetime_calendar_model_test, replaceBatteryTest) {
-    double T = 278, SOC = 20;
+    double T = 4.85, SOC = 20;
     int idx = 0;
     while (idx < 200000){
         if (idx % 2 != 0){

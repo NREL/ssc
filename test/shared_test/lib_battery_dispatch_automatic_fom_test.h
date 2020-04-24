@@ -26,7 +26,7 @@ protected:
     dispatch_automatic_front_of_meter_t * dispatchAuto{nullptr };
 
     double max_power = 25000;
-    double dim_m = 6.7;
+    double surface_area = 686;
 
     /*! Variables to store forecast data */
     std::vector<double> pv_prediction;
@@ -43,7 +43,7 @@ public:
         capacityModel = new capacity_lithium_ion_t(2.25 * 133227, 50, 100, 10, dtHour);
         voltageModel = new voltage_dynamic_t(139, 133227, 3.6, 4.10, 4.05, 3.4, 2.25, 0.04, 2.00, 0.2, 0.2, dtHour);
         lifetimeModel = new lifetime_t(cycleLifeMatrix, dtHour, calendar_q0, calendar_a, calendar_b, calendar_c);
-        thermalModel = new thermal_t(1.0, mass, dim_m, dim_m, dim_m, resistance, Cp, h, T_room, capacityVsTemperature);
+        thermalModel = new thermal_t(1.0, mass, surface_area, resistance, Cp, h, capacityVsTemperature, T_room);
         lossModel = new losses_t(dtHour, lifetimeModel, thermalModel, capacityModel, lossChoice);
         batteryModel = new battery_t(dtHour, chemistry);
         batteryModel->initialize(capacityModel, voltageModel, lifetimeModel, thermalModel, lossModel);

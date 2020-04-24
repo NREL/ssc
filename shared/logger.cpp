@@ -138,3 +138,24 @@ std::ostream &operator<<(std::ostream &os, const replacement_params &p) {
     os << " }";
     return os;
 }
+
+std::ostream &operator<<(std::ostream &os, const thermal_state &p) {
+    char buf[256];
+    sprintf(buf, R"(thermal_state: { "q_relative_thermal": %.3f, "T_batt_avg": %.3f, "T_room": %.3f, "T_batt_prev": %.3f })",
+            p.q_relative_thermal, p.T_batt_avg, p.T_room, p.T_batt_prev);
+    os << buf;
+    return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const thermal_params &p) {
+    char buf[1024];
+    sprintf(buf, "\"thermal_params\": { \"dt_hour\": %.3f, \"mass\": %.3f, \"surface_area\": %.3f, "
+                 "\"Cp\": %.3f, \"h\": %.3f, \"R\": %.3f, \"cap_vs_temp\": ",
+                 p.dt_hour, p.mass, p.surface_area,
+                 p.Cp, p.h, p.R);
+    os << buf << p.cap_vs_temp;
+    os.precision(3);
+    os << R"(, "option": )" << p.option;
+    os << R"(, "T_room_schedule": )" << p.T_room_schedule << " }";
+    return os;
+}

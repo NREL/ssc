@@ -561,10 +561,6 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 			batt_vars->batt_h_to_ambient = vt.as_double("batt_h_to_ambient");
 			batt_vars->T_room = vt.as_vector_double("batt_room_temperature_celsius");
 
-			for (size_t T = 0; T < batt_vars->T_room.size(); T++) {
-				batt_vars->T_room[T] += 273.15; // convert C to K
-			}
-
 			// Inverter settings
             batt_vars->inverter_model = vt.as_integer("inverter_model");
             if (batt_vars->inverter_model < 4) //user has assigned an actual inverter model
@@ -695,24 +691,22 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 	Initialize outputs
 	********************************************************************** */
 
-	// non-lifetime outputs
-	if (nyears <= 1)
-	{
-		// only allocate if lead-acid
-		if (chem == 0)
-		{
-			outAvailableCharge = vt.allocate("batt_q1", nrec*nyears);
-			outBoundCharge = vt.allocate("batt_q2", nrec*nyears);
-		}
-		outCellVoltage = vt.allocate("batt_voltage_cell", nrec*nyears);
-		outMaxCharge = vt.allocate("batt_qmax", nrec*nyears);
-		outMaxChargeThermal = vt.allocate("batt_qmax_thermal", nrec*nyears);
-		outBatteryTemperature = vt.allocate("batt_temperature", nrec*nyears);
-		outCapacityThermalPercent = vt.allocate("batt_capacity_thermal_percent", nrec*nyears);
-	}
+    // only allocate if lead-acid
+    if (chem == 0)
+    {
+        outAvailableCharge = vt.allocate("batt_q1", nrec*nyears);
+        outBoundCharge = vt.allocate("batt_q2", nrec*nyears);
+    }
+    // non-lifetime outputs
+    outCellVoltage = vt.allocate("batt_voltage_cell", nrec);
+    outMaxCharge = vt.allocate("batt_qmax", nrec);
+    outMaxChargeThermal = vt.allocate("batt_qmax_thermal", nrec);
+    outBatteryTemperature = vt.allocate("batt_temperature", nrec);
+    outCapacityThermalPercent = vt.allocate("batt_capacity_thermal_percent", nrec);
+
 	outCurrent = vt.allocate("batt_I", nrec*nyears);
 	outBatteryVoltage = vt.allocate("batt_voltage", nrec*nyears);
-	outTotalCharge = vt.allocate("batt_q0", nrec*nyears);
+    outTotalCharge = vt.allocate("batt_q0", nrec*nyears);
 	outCycles = vt.allocate("batt_cycles", nrec*nyears);
 	outSOC = vt.allocate("batt_SOC", nrec*nyears);
 	outDOD = vt.allocate("batt_DOD", nrec*nyears);
@@ -817,17 +811,17 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 		throw exec_error("battery", "Environment temperature input length must equal number of weather file records");
 	}
 
+	double surface_area = batt_vars->batt_length * batt_vars->batt_length * 6;
 	thermal_model = new thermal_t(
-		dt_hr,
-		batt_vars->batt_mass, // [kg]
-		batt_vars->batt_length, // [m]
-		batt_vars->batt_width, // [m]
-		batt_vars->batt_height, // [m]
-		batt_vars->batt_resistance,
-		batt_vars->batt_Cp, // [J/kgK]
-		batt_vars->batt_h_to_ambient, // W/m2K
-		batt_vars->T_room, // K
-		batt_vars->cap_vs_temp);
+            dt_hr,
+            batt_vars->batt_mass, // [kg]
+            surface_area, // [m]
+            batt_vars->batt_resistance, // [J/kgK]
+            batt_vars->batt_Cp,
+            batt_vars->batt_h_to_ambient,
+            batt_vars->cap_vs_temp,
+            batt_vars->T_room
+            );
 
 
 	battery_model = new battery_t(
@@ -1394,7 +1388,7 @@ void battstor::setSharedInverter(SharedInverter * sharedInverter)
 void battstor::outputs_fixed()
 {
 	// non-lifetime outputs
-	if (nyears <= 1)
+	if (year < 1)
 	{
 		// Capacity Output with Losses Applied
 		if (capacity_kibam_t * kibam = dynamic_cast<capacity_kibam_t*>(capacity_model))
@@ -1406,7 +1400,7 @@ void battstor::outputs_fixed()
 		outMaxCharge[index] = (ssc_number_t)(capacity_model->qmax());
 		outMaxChargeThermal[index] = (ssc_number_t)(capacity_model->qmax_thermal());
 
-		outBatteryTemperature[index] = (ssc_number_t)(thermal_model->T_battery() - 273.15);
+		outBatteryTemperature[index] = (ssc_number_t)thermal_model->T_battery();
 		outCapacityThermalPercent[index] = (ssc_number_t)(thermal_model->capacity_percent());
 	}
 
@@ -1570,13 +1564,13 @@ void process_messages(shared_ptr<battstor> batt, compute_module* cm)
 {
     if (!batt)
         return;
-    message dispatch_messages = batt->dispatch_model->get_messages();
-    message thermal_messages = batt->thermal_model->get_messages();
+//    message dispatch_messages = batt->dispatch_model->get_messages();
+//    message thermal_messages = batt->thermal_model->get_messages();
 
-    for (int i = 0; i != (int)dispatch_messages.total_message_count(); i++)
-        cm->log(dispatch_messages.construct_log_count_string(i), SSC_NOTICE);
-    for (int i = 0; i != (int)thermal_messages.total_message_count(); i++)
-        cm->log(thermal_messages.construct_log_count_string(i), SSC_NOTICE);
+//    for (int i = 0; i != (int)dispatch_messages.total_message_count(); i++)
+//        cm->log(dispatch_messages.construct_log_count_string(i), SSC_NOTICE);
+//    for (int i = 0; i != (int)thermal_messages.total_message_count(); i++)
+//        cm->log(thermal_messages.construct_log_count_string(i), SSC_NOTICE);
 }
 
 class cm_battery : public compute_module

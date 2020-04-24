@@ -88,9 +88,9 @@ public:
 		Cp = 1004;
 		h = 20;
 		for (size_t i = 0; i < 8760; i++) {
-			T_room.push_back(20 + 273.15);
+			T_room.push_back(20);
 		}
-		double vals3[] = { 0, 60, 01, 100, 25, 100, 40, 100 };
+		double vals3[] = { 0, 60, 1, 100, 25, 100, 40, 100 };
 		capacityVsTemperature.assign(vals3, 4, 2);
 
 		// losses

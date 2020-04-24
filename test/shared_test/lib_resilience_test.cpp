@@ -67,7 +67,7 @@ TEST_F(ResilienceTest_lib_resilience, DischargeBatteryModelHourly)
     double max_power = vol->calculate_max_discharge_w(cap->q0(), cap->qmax_thermal(), 0, &current1);
 
     // this is the estimated max power, but the actual limit is 3981.12
-    EXPECT_NEAR(max_power, 3991.3, 0.1);
+    EXPECT_NEAR(max_power, 3947, 5);
 
     double desired_power = 0.;
     while (desired_power < max_power * 1.2){
@@ -111,7 +111,7 @@ TEST_F(ResilienceTest_lib_resilience, DischargeBatteryModelSubHourly)
     double max_current;
     double max_power = vol->calculate_max_discharge_w(cap->q0(), cap->qmax(), 0, &max_current);
 
-    EXPECT_NEAR(max_power, 7790.5, 0.1);
+    EXPECT_NEAR(max_power, 8199, 5);
 
     double desired_power = 0.;
     while (desired_power < max_power * 1.2){
@@ -364,7 +364,7 @@ TEST_F(ResilienceTest_lib_resilience, ChargeVoltageTable){
 
 class thermal_test : public thermal_t{
 public:
-    thermal_test(){T_batt_avg = 33 + 273.15;};
+    thermal_test(): thermal_t(1, 0, 0, 0, 0, 0, util::matrix_t<double>(), 0){state.T_batt_avg = 33 + 273.15;};
     ~thermal_test(){};
 };
 

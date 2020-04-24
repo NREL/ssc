@@ -98,7 +98,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_DCCustomCharge) {
     batteryPower->powerPV = 0;
     batteryPower->powerPVClipped = 0;
 
-    std::vector<double> SOC = {64.42, 78.77, 93.28, 100., 100., 100.};
+    std::vector<double> SOC = {64.42, 78.77, 93.06, 100., 100., 100.};
     for (size_t h = 0; h < 6; h++) {
         dispatchAuto->update_dispatch(0, h, 0);
         EXPECT_NEAR(batteryPower->powerBatteryTarget, -25000, 0.1) << "error in expected target at hour " << h;
@@ -108,13 +108,13 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_DCCustomCharge) {
         EXPECT_NEAR(dispatchAuto->battery_soc(), SOC[h], 0.1);
 
         if (h < 3){
-            EXPECT_NEAR(batteryPower->powerBatteryDC, -25000, 1) << "error in dispatched power at hour " << h;
-            EXPECT_NEAR(batteryPower->powerGridToBattery, 25868, 1) << "hour " << h;
+            EXPECT_NEAR(batteryPower->powerBatteryDC, -25000, 100) << "error in dispatched power at hour " << h;
+            EXPECT_NEAR(batteryPower->powerGridToBattery, 25868, 100) << "hour " << h;
             EXPECT_NEAR(batteryPower->sharedInverter->efficiencyAC, 97.6, 0.1);
         }
         else if (h == 3){
-            EXPECT_NEAR(batteryPower->powerBatteryDC, -11866, 1) << "error in dispatched power at hour " << h;
-            EXPECT_NEAR(batteryPower->powerGridToBattery, 12238, 1) << "hour " << h;
+            EXPECT_NEAR(batteryPower->powerBatteryDC, -12207, 100) << "error in dispatched power at hour " << h;
+            EXPECT_NEAR(batteryPower->powerGridToBattery, 12589, 100) << "hour " << h;
             EXPECT_NEAR(batteryPower->sharedInverter->efficiencyAC, 97.9, 0.1);
         }
         else{

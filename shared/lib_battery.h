@@ -34,28 +34,32 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_battery_voltage.h"
 #include "lib_battery_lifetime.h"
 
-// Forward declarations to reduce imports
+struct thermal_state {
+    double q_relative_thermal;      //[%]
+    double T_batt_avg;              // C
+    double T_room;
+    double T_batt_prev;
 
-// Messages
-class message
-{
-public:
-	message(){};
-	virtual ~message(){};
-
-
-	void add(std::string message);
-	size_t total_message_count();
-	size_t message_count(int index);
-	std::string get_message(int index);
-	std::string construct_log_count_string(int index);
-
-protected:
-	std::vector<std::string> messages;
-	std::vector<int> count;
+    friend std::ostream &operator<<(std::ostream &os, const thermal_state &p);
 };
 
+struct thermal_params {
+    double dt_hour;
+    double mass;		        // [kg]
+    double surface_area;		// [m2] - exposed surface area
+    double Cp;			        // [J/KgK] - battery specific heat capacity
+    double h;			        // [Wm2K] - general heat transfer coefficient
+    double R;			        // [Ohm] - internal resistance
+    util::matrix_t<double> cap_vs_temp;
 
+    enum OPTIONS {
+        VALUE, SCHEDULE
+    };
+    int option;
+    std::vector<double> T_room_schedule;   // can be year one hourly data or a single value constant throughout year
+
+    friend std::ostream &operator<<(std::ostream &os, const thermal_params &p);
+};
 
 /*
 Thermal classes
@@ -63,55 +67,37 @@ Thermal classes
 class thermal_t
 {
 public:
-    thermal_t();
-    thermal_t(double dt_hour, double mass, double length, double width, double height, double R, double Cp,
-              double h, std::vector<double> T_room_K, const util::matrix_t<double> &c_vs_t);
+    thermal_t(double dt_hour, double mass, double surface_area, double R, double Cp, double h,
+              const util::matrix_t<double> &c_vs_t, std::vector<double> T_room_C);
 
-    thermal_t(const thermal_t& thermal);
+    thermal_t(double dt_hour, double mass, double surface_area, double R, double Cp, double h,
+              const util::matrix_t<double> &c_vs_t, double T_room_C);
 
+    thermal_t(const thermal_t& rhs);
 
-    // deep copy
+    thermal_t &operator=(const thermal_t &rhs);
+
     thermal_t * clone();
 
-    // copy thermal to this
-    void copy(thermal_t *);
-
-    void calcCapacity();
-    void calcTemperature(double I, size_t lifetimeIndex);
     void updateTemperature(double I, size_t lifetimeIndex);
     void replace_battery(size_t lifetimeIndex);
 
     // outputs
     double T_battery();
     double capacity_percent();
-    message get_messages(){ return _message; }
+
+    thermal_state get_state();
+    thermal_params get_params();
 
 protected:
+    double dt_sec;              // [sec] - timestep
+    void calc_capacity();
 
-    util::matrix_t<double> _cap_vs_temp;
+    std::shared_ptr<thermal_params> params;
+    thermal_state state;
 
-    double dt_sec;     // [sec] - timestep
-    double _mass;		// [kg]
-    double _length;		// [m]
-    double _width;		// [m]
-    double _height;		// [m]
-    double _Cp;			// [J/KgK] - battery specific heat capacity
-    double _h;			// [Wm2K] - general heat transfer coefficient
-    double _R;			// [Ohm] - internal resistance
-    double _A;			// [m2] - exposed surface area
-    std::vector<double> T_room_K;   // can be year one hourly data or a single value constant throughout year
-    double T_room_init;   // [K]
-    double T_batt_init;
-    double T_batt_avg;
-    double _capacity_percent; //[%]
-    double _T_max;		 // [K]
-
-    // calc constants for heat transfer
-    double next_time_at_current_T_room;
-    double t_threshold;     // time_at_current_T_room after which diffusion term < tolerance
-
-    message _message;
-
+private:
+    void initialize();
 };
 /**
 * \class losses_t

@@ -252,7 +252,6 @@ bool dispatch_t::check_constraints(double &I, size_t count)
 
 	return iterate;
 }
-message dispatch_t::get_messages() { return _message; };
 void dispatch_t::SOC_controller()
 {
 	_charging = _prev_charging;
@@ -1445,148 +1444,148 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
         /*! Cost to cycle the battery at all, using maximum DOD or user input */
         costToCycle();
 
-			// Compute forecast variables which don't change from year to year
-			size_t idx_year1 = hour_of_year * _steps_per_hour;
-			size_t idx_lookahead = _look_ahead_hours * _steps_per_hour;
-			auto max_ppa_cost = std::max_element(_forecast_price_rt_series.begin() + idx_year1, _forecast_price_rt_series.begin() + idx_year1 + idx_lookahead);
-			auto min_ppa_cost = std::min_element(_forecast_price_rt_series.begin() + idx_year1, _forecast_price_rt_series.begin() + idx_year1 + idx_lookahead);
-			double ppa_cost = _forecast_price_rt_series[idx_year1];
+        // Compute forecast variables which don't change from year to year
+        size_t idx_year1 = hour_of_year * _steps_per_hour;
+        size_t idx_lookahead = _look_ahead_hours * _steps_per_hour;
+        auto max_ppa_cost = std::max_element(_forecast_price_rt_series.begin() + idx_year1, _forecast_price_rt_series.begin() + idx_year1 + idx_lookahead);
+        auto min_ppa_cost = std::min_element(_forecast_price_rt_series.begin() + idx_year1, _forecast_price_rt_series.begin() + idx_year1 + idx_lookahead);
+        double ppa_cost = _forecast_price_rt_series[idx_year1];
 
-			/*! Cost to purchase electricity from the utility */
-			double usage_cost = ppa_cost;
-			std::vector<double> usage_cost_forecast;
-			if (m_utilityRateCalculator) {
-				usage_cost = m_utilityRateCalculator->getEnergyRate(hour_of_year);
-				for (size_t i = hour_of_year; i < hour_of_year + _look_ahead_hours; i++)
-				{
-					for (size_t s = 0; s < _steps_per_hour; s++) {
-						usage_cost_forecast.push_back(m_utilityRateCalculator->getEnergyRate(i % 8760));
-					}
-				}
-			}
+        /*! Cost to purchase electricity from the utility */
+        double usage_cost = ppa_cost;
+        std::vector<double> usage_cost_forecast;
+        if (m_utilityRateCalculator) {
+            usage_cost = m_utilityRateCalculator->getEnergyRate(hour_of_year);
+            for (size_t i = hour_of_year; i < hour_of_year + _look_ahead_hours; i++)
+            {
+                for (size_t s = 0; s < _steps_per_hour; s++) {
+                    usage_cost_forecast.push_back(m_utilityRateCalculator->getEnergyRate(i % 8760));
+                }
+            }
+        }
 
-			// Compute forecast variables which potentially do change from year to year
-			double energyToStoreClipped = 0;
-			if (_P_cliploss_dc.size() > lifetimeIndex + _look_ahead_hours) {
-				energyToStoreClipped = std::accumulate(_P_cliploss_dc.begin() + lifetimeIndex, _P_cliploss_dc.begin() + lifetimeIndex + _look_ahead_hours * _steps_per_hour, 0.0) * _dt_hour;
-			}
+        // Compute forecast variables which potentially do change from year to year
+        double energyToStoreClipped = 0;
+        if (_P_cliploss_dc.size() > lifetimeIndex + _look_ahead_hours) {
+            energyToStoreClipped = std::accumulate(_P_cliploss_dc.begin() + lifetimeIndex, _P_cliploss_dc.begin() + lifetimeIndex + _look_ahead_hours * _steps_per_hour, 0.0) * _dt_hour;
+        }
 
-			/*! Economic benefit of charging from the grid in current time step to discharge sometime in next X hours ($/kWh)*/
-			revenueToGridCharge = *max_ppa_cost * m_etaDischarge - usage_cost / m_etaGridCharge - m_cycleCost;
+        /*! Economic benefit of charging from the grid in current time step to discharge sometime in next X hours ($/kWh)*/
+        revenueToGridCharge = *max_ppa_cost * m_etaDischarge - usage_cost / m_etaGridCharge - m_cycleCost;
 
-			/*! Computed revenue to charge from Grid in each of next X hours ($/kWh)*/
-			double revenueToGridChargeMax = 0;
-			if (m_batteryPower->canGridCharge) {
-				std::vector<double> revenueToGridChargeForecast;
-				size_t j = 0;
-				for (size_t i = idx_year1; i < idx_year1 + idx_lookahead; i++) {
-					if (m_utilityRateCalculator) {
-						revenueToGridChargeForecast.push_back(*max_ppa_cost * m_etaDischarge - usage_cost_forecast[j] / m_etaGridCharge - m_cycleCost);
-					}
-					else {
-						revenueToGridChargeForecast.push_back(*max_ppa_cost * m_etaDischarge - _forecast_price_rt_series[i] / m_etaGridCharge - m_cycleCost);
-					}
-					j++;
-				}
-				revenueToGridChargeMax = *std::max_element(std::begin(revenueToGridChargeForecast), std::end(revenueToGridChargeForecast));
-			}
+        /*! Computed revenue to charge from Grid in each of next X hours ($/kWh)*/
+        double revenueToGridChargeMax = 0;
+        if (m_batteryPower->canGridCharge) {
+            std::vector<double> revenueToGridChargeForecast;
+            size_t j = 0;
+            for (size_t i = idx_year1; i < idx_year1 + idx_lookahead; i++) {
+                if (m_utilityRateCalculator) {
+                    revenueToGridChargeForecast.push_back(*max_ppa_cost * m_etaDischarge - usage_cost_forecast[j] / m_etaGridCharge - m_cycleCost);
+                }
+                else {
+                    revenueToGridChargeForecast.push_back(*max_ppa_cost * m_etaDischarge - _forecast_price_rt_series[i] / m_etaGridCharge - m_cycleCost);
+                }
+                j++;
+            }
+            revenueToGridChargeMax = *std::max_element(std::begin(revenueToGridChargeForecast), std::end(revenueToGridChargeForecast));
+        }
 
-			/*! Economic benefit of charging from regular PV in current time step to discharge sometime in next X hours ($/kWh)*/
-			revenueToPVCharge = _P_pv_dc[idx_year1] > 0 ? *max_ppa_cost * m_etaDischarge - ppa_cost / m_etaPVCharge - m_cycleCost : 0;
+        /*! Economic benefit of charging from regular PV in current time step to discharge sometime in next X hours ($/kWh)*/
+        revenueToPVCharge = _P_pv_dc[idx_year1] > 0 ? *max_ppa_cost * m_etaDischarge - ppa_cost / m_etaPVCharge - m_cycleCost : 0;
 
-			/*! Computed revenue to charge from PV in each of next X hours ($/kWh)*/
-			size_t t_duration = static_cast<size_t>(ceilf(_Battery->battery_energy_nominal() / m_batteryPower->powerBatteryChargeMaxDC));
-			size_t pv_hours_on;
-			double revenueToPVChargeMax = 0;
-			if (m_batteryPower->canPVCharge) {
-				std::vector<double> revenueToPVChargeForecast;
-				for (size_t i = idx_year1; i < idx_year1 + idx_lookahead; i++) {
-					// when considering grid charging, require PV output to exceed battery input capacity before accepting as a better option
-					bool system_on = _P_pv_dc[i] >= m_batteryPower->powerBatteryChargeMaxDC ? 1 : 0;
-					if (system_on) {
-						revenueToPVChargeForecast.push_back(system_on * (*max_ppa_cost * m_etaDischarge - _forecast_price_rt_series[i] / m_etaPVCharge - m_cycleCost));
-					}
-				}
-				pv_hours_on = revenueToPVChargeForecast.size() / _steps_per_hour;
-				revenueToPVChargeMax = pv_hours_on >= t_duration ? *std::max_element(std::begin(revenueToPVChargeForecast), std::end(revenueToPVChargeForecast)): 0;
-			}
+        /*! Computed revenue to charge from PV in each of next X hours ($/kWh)*/
+        size_t t_duration = static_cast<size_t>(ceilf(_Battery->battery_energy_nominal() / m_batteryPower->powerBatteryChargeMaxDC));
+        size_t pv_hours_on;
+        double revenueToPVChargeMax = 0;
+        if (m_batteryPower->canPVCharge) {
+            std::vector<double> revenueToPVChargeForecast;
+            for (size_t i = idx_year1; i < idx_year1 + idx_lookahead; i++) {
+                // when considering grid charging, require PV output to exceed battery input capacity before accepting as a better option
+                bool system_on = _P_pv_dc[i] >= m_batteryPower->powerBatteryChargeMaxDC ? 1 : 0;
+                if (system_on) {
+                    revenueToPVChargeForecast.push_back(system_on * (*max_ppa_cost * m_etaDischarge - _forecast_price_rt_series[i] / m_etaPVCharge - m_cycleCost));
+                }
+            }
+            pv_hours_on = revenueToPVChargeForecast.size() / _steps_per_hour;
+            revenueToPVChargeMax = pv_hours_on >= t_duration ? *std::max_element(std::begin(revenueToPVChargeForecast), std::end(revenueToPVChargeForecast)): 0;
+        }
 
-			/*! Economic benefit of charging from clipped PV in current time step to discharge sometime in the next X hours (clipped PV is free) ($/kWh) */
-			revenueToClipCharge = *max_ppa_cost * m_etaDischarge - m_cycleCost;
+        /*! Economic benefit of charging from clipped PV in current time step to discharge sometime in the next X hours (clipped PV is free) ($/kWh) */
+        revenueToClipCharge = *max_ppa_cost * m_etaDischarge - m_cycleCost;
 
-			/*! Economic benefit of discharging in current time step ($/kWh) */
-			revenueToDischarge = ppa_cost * m_etaDischarge - m_cycleCost;
+        /*! Economic benefit of discharging in current time step ($/kWh) */
+        revenueToDischarge = ppa_cost * m_etaDischarge - m_cycleCost;
 
-			/*! Energy need to charge the battery (kWh) */
-			double energyNeededToFillBattery = _Battery->battery_energy_to_fill(m_batteryPower->stateOfChargeMax);
+        /*! Energy need to charge the battery (kWh) */
+        double energyNeededToFillBattery = _Battery->battery_energy_to_fill(m_batteryPower->stateOfChargeMax);
 
-			/* Booleans to assist decisions */
-			bool highDischargeValuePeriod = ppa_cost == *max_ppa_cost;
-			bool highChargeValuePeriod = ppa_cost == *min_ppa_cost;
-			bool excessAcCapacity = _inverter_paco > m_batteryPower->powerPVThroughSharedInverter;
-			bool batteryHasDischargeCapacity = _Battery->battery_soc() >= m_batteryPower->stateOfChargeMin + 1.0;
+        /* Booleans to assist decisions */
+        bool highDischargeValuePeriod = ppa_cost == *max_ppa_cost;
+        bool highChargeValuePeriod = ppa_cost == *min_ppa_cost;
+        bool excessAcCapacity = _inverter_paco > m_batteryPower->powerPVThroughSharedInverter;
+        bool batteryHasDischargeCapacity = _Battery->battery_soc() >= m_batteryPower->stateOfChargeMin + 1.0;
 
-			// Always Charge if PV is clipping
-			if (m_batteryPower->canClipCharge && m_batteryPower->powerPVClipped > 0 && revenueToClipCharge > 0)
-			{
-				powerBattery = -m_batteryPower->powerPVClipped;
-			}
+        // Always Charge if PV is clipping
+        if (m_batteryPower->canClipCharge && m_batteryPower->powerPVClipped > 0 && revenueToClipCharge > 0)
+        {
+            powerBattery = -m_batteryPower->powerPVClipped;
+        }
 
-			// Increase charge from PV if it is more valuable later than selling now
-			if (m_batteryPower->canPVCharge &&
-				//revenueToPVCharge >= revenueToGridChargeMax &&
-				revenueToPVCharge > 0 &&
-				highChargeValuePeriod &&
-				m_batteryPower->powerPV > 0)
-			{
-				// leave EnergyToStoreClipped capacity in battery
-				if (m_batteryPower->canClipCharge)
-				{
-					if (energyToStoreClipped < energyNeededToFillBattery)
-					{
-						double energyCanCharge = (energyNeededToFillBattery - energyToStoreClipped);
-						if (energyCanCharge <= m_batteryPower->powerPV * _dt_hour)
-							powerBattery = -std::fmax(energyCanCharge / _dt_hour, m_batteryPower->powerPVClipped);
-						else
-							powerBattery = -std::fmax(m_batteryPower->powerPV, m_batteryPower->powerPVClipped);
+        // Increase charge from PV if it is more valuable later than selling now
+        if (m_batteryPower->canPVCharge &&
+            //revenueToPVCharge >= revenueToGridChargeMax &&
+            revenueToPVCharge > 0 &&
+            highChargeValuePeriod &&
+            m_batteryPower->powerPV > 0)
+        {
+            // leave EnergyToStoreClipped capacity in battery
+            if (m_batteryPower->canClipCharge)
+            {
+                if (energyToStoreClipped < energyNeededToFillBattery)
+                {
+                    double energyCanCharge = (energyNeededToFillBattery - energyToStoreClipped);
+                    if (energyCanCharge <= m_batteryPower->powerPV * _dt_hour)
+                        powerBattery = -std::fmax(energyCanCharge / _dt_hour, m_batteryPower->powerPVClipped);
+                    else
+                        powerBattery = -std::fmax(m_batteryPower->powerPV, m_batteryPower->powerPVClipped);
 
-						energyNeededToFillBattery = std::fmax(0, energyNeededToFillBattery + (powerBattery * _dt_hour));
-					}
+                    energyNeededToFillBattery = std::fmax(0, energyNeededToFillBattery + (powerBattery * _dt_hour));
+                }
 
-				}
-				// otherwise, don't reserve capacity for clipping
-				else {
-					powerBattery = -m_batteryPower->powerPV;
-				}
-			}
+            }
+            // otherwise, don't reserve capacity for clipping
+            else {
+                powerBattery = -m_batteryPower->powerPV;
+            }
+        }
 
-			// Also charge from grid if it is valuable to do so, still leaving EnergyToStoreClipped capacity in battery
-			if (m_batteryPower->canGridCharge &&
-				revenueToGridCharge >= revenueToPVChargeMax &&
-				revenueToGridCharge > 0 &&
-				highChargeValuePeriod &&
-				energyNeededToFillBattery > 0)
-			{
-				// leave EnergyToStoreClipped capacity in battery
-				if (m_batteryPower->canClipCharge)
-				{
-					if (energyToStoreClipped < energyNeededToFillBattery)
-					{
-						double energyCanCharge = (energyNeededToFillBattery - energyToStoreClipped);
-						powerBattery -= energyCanCharge / _dt_hour;
-					}
-				}
-				else
-					powerBattery = -energyNeededToFillBattery / _dt_hour;
-			}
+        // Also charge from grid if it is valuable to do so, still leaving EnergyToStoreClipped capacity in battery
+        if (m_batteryPower->canGridCharge &&
+            revenueToGridCharge >= revenueToPVChargeMax &&
+            revenueToGridCharge > 0 &&
+            highChargeValuePeriod &&
+            energyNeededToFillBattery > 0)
+        {
+            // leave EnergyToStoreClipped capacity in battery
+            if (m_batteryPower->canClipCharge)
+            {
+                if (energyToStoreClipped < energyNeededToFillBattery)
+                {
+                    double energyCanCharge = (energyNeededToFillBattery - energyToStoreClipped);
+                    powerBattery -= energyCanCharge / _dt_hour;
+                }
+            }
+            else
+                powerBattery = -energyNeededToFillBattery / _dt_hour;
+        }
 
-			// Discharge if we are in a high-price period and have battery and inverter capacity
-			if (highDischargeValuePeriod && revenueToDischarge > 0 && excessAcCapacity && batteryHasDischargeCapacity) {
-				if (m_batteryPower->connectionMode == BatteryPower::DC_CONNECTED) {
-					powerBattery = _inverter_paco - m_batteryPower->powerPV;
-				}
-				else {
-                powerBattery = _inverter_paco;
+        // Discharge if we are in a high-price period and have battery and inverter capacity
+        if (highDischargeValuePeriod && revenueToDischarge > 0 && excessAcCapacity && batteryHasDischargeCapacity) {
+            if (m_batteryPower->connectionMode == BatteryPower::DC_CONNECTED) {
+                powerBattery = _inverter_paco - m_batteryPower->powerPV;
+            }
+            else {
+            powerBattery = _inverter_paco;
             }
         }
 		// save for extraction

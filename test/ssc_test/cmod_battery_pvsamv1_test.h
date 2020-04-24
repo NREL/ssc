@@ -36,7 +36,7 @@ public:
 	ssc_data_t data;
 	ssc_number_t calculated_value;
 	ssc_number_t* calculated_array;
-	double m_error_tolerance_hi = 3.0;
+	double m_error_tolerance_hi = 100;
 	double m_error_tolerance_lo = 0.1;
 
 	void SetUp()

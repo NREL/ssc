@@ -8,11 +8,9 @@ class logger {
 private:
     std::ostream& _out_stream;
 
-    //Constructor: User provides custom output stream, or uses default (std::cout).
 public:
     explicit logger(std::ostream& stream = std::cout): _out_stream(stream) {}
 
-    //Implicit conversion to std::ostream
     explicit operator std::ostream& () {
         return _out_stream;
     }
@@ -21,6 +19,7 @@ public:
     logger& operator<< (const T& data)
     {
         _out_stream << data;
+        return *this;
     }
 };
 

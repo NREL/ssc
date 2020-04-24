@@ -29,201 +29,98 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "lib_battery.h"
 
-
-
-/*
-Message class
-*/
-void message::add(std::string message)
-{
-	std::vector<std::string>::iterator it;
-	it = std::find(messages.begin(), messages.end(), message);
-	if (it == messages.end())
-	{
-		messages.push_back(message);
-		count.push_back(1);
-	}
-	else
-		count[it - messages.begin()]++;
-
-}
-size_t message::total_message_count(){ return messages.size(); }
-size_t message::message_count(int index)
-{
-	if (index < (int)messages.size())
-		return count[index];
-	else
-		return 0;
-}
-std::string message::get_message(int index)
-{
-	if (index < (int)messages.size())
-		return messages[index];
-	else
-		return NULL;
-}
-std::string message::construct_log_count_string(int index)
-{
-	std::ostringstream oss;
-	oss << count[index];
-
-	std::string message_count = oss.str();
-	std::string log = messages[index] + " - warning occurred: " + message_count + " times";
-	return log;
-}
-
-
-
 /*
 Define Thermal Model
 */
-thermal_t::thermal_t() { /* nothing to do */ }
-thermal_t::thermal_t(double dt_hour, double mass, double length, double width, double height, double R, double Cp,
-                     double h, std::vector<double> T_room_K, const util::matrix_t<double> &c_vs_t)
-        : dt_sec(dt_hour * 3600), _mass(mass), _length(length), _width(width), _height(height),
-          _Cp(Cp), _h(h), T_room_K(T_room_K), _cap_vs_temp(c_vs_t)
-{
-    _R = R;
-    _capacity_percent = 100;
 
-    // assume all surfaces are exposed
-    _A = 2 * (length*width + length*height + width*height);
-
-    T_room_init = T_room_K[0];
-    T_batt_init = T_room_init;
-    T_batt_avg = T_room_init;
-
-    //initialize maximum temperature
-    _T_max = 400.;
-
-    next_time_at_current_T_room = dt_sec;
-
-    // exp(-A*h*t/m/Cp) < tol
-    t_threshold = -_mass * _Cp / _A / _h * log(tolerance) + dt_sec;
-
-    // curve fit
-    size_t n = _cap_vs_temp.nrows();
+void thermal_t::initialize() {
+    size_t n = params->cap_vs_temp.nrows();
     for (int i = 0; i < (int)n; i++)
     {
-        _cap_vs_temp(i,0) += 273.15; // convert C to K
+        params->cap_vs_temp(i,0);
     }
+    state.T_batt_avg = state.T_room;
+    state.T_batt_prev = state.T_room;
+    state.q_relative_thermal = 100;
+    dt_sec = params->dt_hour * 3600;
 }
 
-thermal_t::thermal_t(const thermal_t& thermal){
-    dt_sec = thermal.dt_sec;
-    next_time_at_current_T_room = thermal.next_time_at_current_T_room;
-    t_threshold = thermal.t_threshold;
-    _mass = thermal._mass;
-    _length = thermal._length;
-    _width = thermal._width;
-    _height = thermal._height;
-    _Cp = thermal._Cp;
-    _h = thermal._h;
-    // _T_room = thermal._T_room;  // don't copy, super slow in subhourly simulations
-    _R = thermal._R;
-    _A = thermal._A;
-    T_room_init = thermal.T_room_init;
-    T_batt_init = thermal.T_batt_init;
-    T_batt_avg = thermal.T_batt_avg;
-    T_room_K = thermal.T_room_K;
-    _capacity_percent = thermal._capacity_percent;
-    _T_max = thermal._T_max;
-    _cap_vs_temp = thermal._cap_vs_temp;
+thermal_t::thermal_t(double dt_hour, double mass, double surface_area, double R, double Cp, double h,
+                     const util::matrix_t<double> &c_vs_t, std::vector<double> T_room_C) {
+    params = std::shared_ptr<thermal_params>(new thermal_params({dt_hour, mass, surface_area, Cp, h, R, c_vs_t}));
+    params->option = thermal_params::SCHEDULE;
+    params->T_room_schedule = std::move(T_room_C);
+    state.T_room = params->T_room_schedule[0];
+    initialize();
 }
-thermal_t * thermal_t::clone(){ return new thermal_t(*this); }
-void thermal_t::copy(thermal_t * thermal)
-{
-    dt_sec = thermal->dt_sec;
-    next_time_at_current_T_room = thermal->next_time_at_current_T_room;
-    t_threshold = thermal->t_threshold;
-    _mass = thermal->_mass;
-    _length = thermal->_length;
-    _width = thermal->_width;
-    _height = thermal->_height;
-    _Cp = thermal->_Cp;
-    _h = thermal->_h;
-    // _T_room = thermal->_T_room;  // don't copy, super slow in subhourly simulations
-    _R = thermal->_R;
-    _A = thermal->_A;
-    T_room_init = thermal->T_room_init;
-    T_batt_init = thermal->T_batt_init;
-    T_batt_avg = thermal->T_batt_avg;
-    T_room_K = thermal->T_room_K;
-    _capacity_percent = thermal->_capacity_percent;
-    _T_max = thermal->_T_max;
-    _cap_vs_temp = thermal->_cap_vs_temp;
+
+thermal_t::thermal_t(double dt_hour, double mass, double surface_area, double R, double Cp, double h,
+                     const util::matrix_t<double> &c_vs_t, double T_room_C) {
+    params = std::shared_ptr<thermal_params>(new thermal_params({dt_hour, mass, surface_area, Cp, h, R, c_vs_t}));
+    params->option = thermal_params::VALUE;
+    state.T_room = T_room_C;
+    initialize();
 }
+
+thermal_t::thermal_t(const thermal_t& rhs):
+        state(rhs.state){
+    params = std::make_shared<thermal_params>();
+    operator=(rhs);
+}
+
+thermal_t &thermal_t::operator=(const thermal_t &rhs) {
+    *params = *rhs.params;
+    dt_sec = rhs.dt_sec;
+    state = rhs.state;
+    return *this;
+}
+
+thermal_t * thermal_t::clone() { return new thermal_t(*this); }
+
 void thermal_t::replace_battery(size_t lifetimeIndex)
 {
-    T_room_init = T_room_K[T_room_K[lifetimeIndex % T_room_K.size()]];
-    T_batt_init = T_room_init;
-    T_batt_avg = T_room_init;
-    _capacity_percent = 100.;
+    if (params->option == thermal_params::VALUE)
+        state.T_batt_avg = params->T_room_schedule[lifetimeIndex % params->T_room_schedule.size()];
+    else
+        state.T_batt_avg = state.T_room;
+    state.T_batt_prev = state.T_room;
+    state.q_relative_thermal = 100.;
 }
 
-void thermal_t::calcCapacity() {
-    double percent = util::linterp_col(_cap_vs_temp, 0, T_batt_avg, 1);
+void thermal_t::calc_capacity() {
+    double percent = util::linterp_col(params->cap_vs_temp, 0, state.T_batt_avg, 1);
 
     if (std::isnan(percent) || percent < 0 || percent > 100)
     {
         percent = 100;
-        _message.add("Unable to determine capacity adjustment for temperature, ignoring");
+//        log.add("Unable to determine capacity adjustment for temperature, ignoring");
     }
-    _capacity_percent = percent;
-}
-
-void thermal_t::calcTemperature(double I, size_t lifetimeIndex)
-{
-    double T_room = T_room_K[lifetimeIndex % T_room_K.size()];
-    double source = pow(I,2) * _R/_A/_h + T_room;
-
-    // if initial temp of batt will change, old initial conditions are invalid and need new T(t) piece
-    if (abs(T_room - T_room_init) > tolerance){
-        T_room_init = T_room;
-        T_batt_init = T_batt_avg;
-
-        // then the battery temp is the average temp over that step
-        double diffusion = exp(-_A * _h * next_time_at_current_T_room / _mass / _Cp);
-        double coeff_avg = _mass * _Cp / _A / _h / next_time_at_current_T_room;
-        T_batt_avg = (T_batt_init - T_room_init) * coeff_avg * (1 - diffusion) + source;
-    }
-        // if initial temp of batt will not be changed, then continue with previous T(t) piece
-    else  {
-        // otherwise, given enough time, the diffusion term is negligible so the temp comes from source only
-        if (next_time_at_current_T_room > t_threshold){
-            T_batt_avg = source;
-        }
-            // battery temp is still adjusting to room
-        else{
-            double diffusion = exp(-_A * _h * next_time_at_current_T_room / _mass / _Cp);
-            T_batt_avg = (T_batt_init - T_room_init) * diffusion + source;
-        }
-    }
-
-    calcCapacity();
+    state.q_relative_thermal = percent;
 }
 
 // battery temperature is the average temp during the time step
 void thermal_t::updateTemperature(double I, size_t lifetimeIndex)
 {
-    if (lifetimeIndex >= 60808)
-        int x = 0;
+    if (params->option == thermal_params::SCHEDULE) {
+        state.T_room = params->T_room_schedule[lifetimeIndex % params->T_room_schedule.size()];
+    }
 
-    double T_room = T_room_K[lifetimeIndex % T_room_K.size()];
+    // the battery temp is the average temp over that step, starting with temp from end of last timestep
+    double source = I * I * params->R / (params->surface_area * params->h) + state.T_room;
+    double diffusion = exp(-params->surface_area * params->h * dt_sec / params->mass / params->Cp);
+    double coeff_avg = params->mass * params->Cp / params->surface_area / params->h / dt_sec;
+    state.T_batt_avg = (state.T_batt_prev - state.T_room) * coeff_avg * (1 - diffusion) + source;
 
-    if (abs(T_room - T_room_init) > tolerance)
-        next_time_at_current_T_room = dt_sec;
+    // update temp for use in next timestep
+    state.T_batt_prev = (state.T_batt_prev - state.T_room) * diffusion + source;
 
-    calcTemperature(I, lifetimeIndex);
-
-    next_time_at_current_T_room += dt_sec;
-
-    calcCapacity();
+    calc_capacity();
 }
 
-double thermal_t::capacity_percent(){ return _capacity_percent; }
-double thermal_t::T_battery(){ return T_batt_avg; }
-
+double thermal_t::capacity_percent(){ return state.q_relative_thermal; }
+double thermal_t::T_battery(){ return state.T_batt_avg; }
+thermal_state thermal_t::get_state() { return state; }
+thermal_params thermal_t::get_params() { return *params; }
 /*
 Define Losses
 */
@@ -347,7 +244,6 @@ battery_t::battery_t(double dt_hour, int battery_chemistry)
 	else {
 		_capacity_initial = new capacity_kibam_t();
 	}
-	_thermal_initial = new thermal_t();
 }
 
 battery_t::battery_t(const battery_t& battery)
@@ -379,8 +275,8 @@ void battery_t::copy(const battery_t * battery)
 {
 	*_capacity = *battery->capacity_model();
 	*_capacity_initial = *battery->capacity_initial_model();
-	_thermal->copy(battery->thermal_model());
-	_thermal_initial->copy(battery->thermal_initial_model());
+	*_thermal = *battery->thermal_model();
+	*_thermal_initial = *battery->thermal_initial_model();
 	*_lifetime = *battery->lifetime_model();
 	*_voltage = *battery->voltage_model();
 	_losses->set_models(_lifetime, _thermal, _capacity);
@@ -408,7 +304,7 @@ void battery_t::initialize(capacity_t *capacity, voltage_t * voltage, lifetime_t
 	_losses = losses;
 
     *_capacity_initial = *_capacity;
-	_thermal_initial->copy(_thermal);
+	_thermal_initial = new thermal_t(*thermal);
 
     params = std::make_shared<replacement_params>();
     params->option = replacement_params::NONE;
@@ -463,7 +359,7 @@ double battery_t::calculate_max_charge_kw(double *max_current_A) {
     while (fabs(power_W - _voltage->calculate_max_charge_w(q, qmax, _thermal->T_battery(), &current)) > tolerance
            && its++ < 10){
         power_W = _voltage->calculate_max_charge_w(q, qmax, _thermal->T_battery(), &current);
-        _thermal->calcTemperature(current, _last_idx + 1);
+        _thermal->updateTemperature(current, _last_idx + 1);
         qmax = _capacity->qmax() * _thermal->capacity_percent() / 100.;
     }
     return _voltage->calculate_max_charge_w(q, qmax, _thermal->T_battery(), max_current_A) / 1000.;
@@ -478,7 +374,7 @@ double battery_t::calculate_max_discharge_kw(double *max_current_A) {
     while (fabs(power_W - _voltage->calculate_max_discharge_w(q, qmax, _thermal->T_battery(), &current)) > tolerance
         && its++ < 10){
         power_W = _voltage->calculate_max_discharge_w(q, qmax, _thermal->T_battery(), &current);
-        _thermal->calcTemperature(current, _last_idx + 1);
+        _thermal->updateTemperature(current, _last_idx + 1);
         qmax = _capacity->qmax() * _thermal->capacity_percent() / 100.;
     }
     return _voltage->calculate_max_discharge_w(q, qmax, _thermal->T_battery(), max_current_A) / 1000.;
@@ -490,7 +386,7 @@ double battery_t::run(size_t lifetimeIndex, double &I)
 	double I_initial = I;
 	size_t iterate_count = 0;
 	*_capacity_initial = *_capacity;
-	_thermal_initial->copy(_thermal);
+	*_thermal_initial = *_thermal;
 
 	while (iterate_count < 5)
 	{
@@ -499,7 +395,7 @@ double battery_t::run(size_t lifetimeIndex, double &I)
 
 		if (fabs(I - I_initial)/fabs(I_initial) > tolerance)
 		{
-			_thermal->copy(_thermal_initial);
+			*_thermal = *_thermal_initial;
 			*_capacity = *_capacity_initial;
 			I_initial = I;
 			iterate_count++;

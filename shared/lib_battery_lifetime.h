@@ -153,7 +153,7 @@ public:
     calendar_state get_state();
 
 protected:
-    void runLithiumIonModel(double T, double SOC);
+    void runLithiumIonModel(double temp_C, double SOC);
 
     void runTableModel();
 
