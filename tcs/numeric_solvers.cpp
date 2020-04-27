@@ -960,7 +960,7 @@ bool C_monotonic_eq_solver::is_last_x_best(double & x_at_lowest, double y_target
             y_err = y_err / fabs(y_target);
 
         double min_abs_diff = fabs(y_err);
-        if (min_abs_diff < m_y_err || !std::isfinite(m_y_err))
+        if (min_abs_diff < std::fabs(m_y_err) || !std::isfinite(m_y_err))
         {
             x_at_lowest = s_eq_chars_min_abs_diff.x;
 
