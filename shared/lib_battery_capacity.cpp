@@ -32,8 +32,8 @@ capacity_t::capacity_t(double q, double SOC_init, double SOC_max, double SOC_min
     state.DOD_prev = 0;
 
     // Initialize charging states
-    state.prev_charge = DISCHARGE;
-    state.charge_mode = DISCHARGE;
+    state.prev_charge = capacity_state::DISCHARGE;
+    state.charge_mode = capacity_state::DISCHARGE;
     state.chargeChange = false;
 }
 
@@ -43,24 +43,26 @@ capacity_t::capacity_t(const capacity_t &rhs) :
 }
 
 capacity_t &capacity_t::operator=(const capacity_t &rhs) {
-    params = rhs.params;
-    state = rhs.state;
+    if (this != &rhs) {
+        params = rhs.params;
+        state = rhs.state;
+    }
     return *this;
 }
 
 void capacity_t::check_charge_change() {
-    state.charge_mode = NO_CHARGE;
+    state.charge_mode = capacity_state::NO_CHARGE;
 
     // charge state
     if (state.I < 0)
-        state.charge_mode = CHARGE;
+        state.charge_mode = capacity_state::CHARGE;
     else if (state.I > 0)
-        state.charge_mode = DISCHARGE;
+        state.charge_mode = capacity_state::DISCHARGE;
 
     // Check if charge changed
     state.chargeChange = false;
-    if ((state.charge_mode != state.prev_charge) && (state.charge_mode != NO_CHARGE) &&
-        (state.prev_charge != NO_CHARGE)) {
+    if ((state.charge_mode != state.prev_charge) && (state.charge_mode != capacity_state::NO_CHARGE) &&
+        (state.prev_charge != capacity_state::NO_CHARGE)) {
         state.chargeChange = true;
         state.prev_charge = state.charge_mode;
     }
@@ -186,10 +188,12 @@ capacity_kibam_t::capacity_kibam_t(double q20, double t1, double q1, double q10,
 }
 
 capacity_kibam_t &capacity_kibam_t::operator=(const capacity_t &rhs) {
-    capacity_t::operator=(rhs);
-    auto rhs_p = dynamic_cast<capacity_kibam_t *>(const_cast<capacity_t *>(&rhs));
-    c = rhs_p->c;
-    k = rhs_p->k;
+    if (this != &rhs) {
+        capacity_t::operator=(rhs);
+        auto rhs_p = dynamic_cast<capacity_kibam_t *>(const_cast<capacity_t *>(&rhs));
+        c = rhs_p->c;
+        k = rhs_p->k;
+    }
     return *this;
 }
 
@@ -391,7 +395,8 @@ capacity_lithium_ion_t::capacity_lithium_ion_t(const capacity_lithium_ion_t &rhs
         capacity_t(rhs) {}
 
 capacity_lithium_ion_t &capacity_lithium_ion_t::operator=(const capacity_t &rhs) {
-    capacity_t::operator=(rhs);
+    if (this != &rhs)
+        capacity_t::operator=(rhs);
     return *this;
 }
 

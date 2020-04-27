@@ -853,23 +853,30 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 	}
 
 	// Check loss inputs
-	if (batt_vars->batt_loss_choice == losses_t::MONTHLY && !(batt_vars->batt_losses_charging.size() == 1 || batt_vars->batt_losses_charging.size() == 12)) {
+	if (batt_vars->batt_loss_choice == losses_params::MONTHLY && !(batt_vars->batt_losses_charging.size() == 1 || batt_vars->batt_losses_charging.size() == 12)) {
 		throw exec_error("battery", "charging loss length must be 1 or 12 for monthly input mode");
 	}
-	if (batt_vars->batt_loss_choice == losses_t::MONTHLY && !(batt_vars->batt_losses_discharging.size() == 1 || batt_vars->batt_losses_discharging.size() == 12)) {
+	if (batt_vars->batt_loss_choice == losses_params::MONTHLY && !(batt_vars->batt_losses_discharging.size() == 1 || batt_vars->batt_losses_discharging.size() == 12)) {
 		throw exec_error("battery", "discharging loss length must be 1 or 12 for monthly input mode");
 	}
-	if (batt_vars->batt_loss_choice == losses_t::MONTHLY && !(batt_vars->batt_losses_idle.size() == 1 || batt_vars->batt_losses_idle.size() == 12)) {
+	if (batt_vars->batt_loss_choice == losses_params::MONTHLY && !(batt_vars->batt_losses_idle.size() == 1 || batt_vars->batt_losses_idle.size() == 12)) {
 		throw exec_error("battery", "discharging loss length must be 1 or 12 for monthly input mode");
 	}
-	if (batt_vars->batt_loss_choice == losses_t::TIMESERIES && !(batt_vars->batt_losses.size() == 1 || batt_vars->batt_losses.size() == nrec)) {
+	if (batt_vars->batt_loss_choice == losses_params::SCHEDULE && !(batt_vars->batt_losses.size() == 1 || batt_vars->batt_losses.size() == nrec)) {
 		throw exec_error("battery", "system loss input length must be 1 or equal to weather file length for time series input mode");
 	}
 
-	losses_model = new losses_t(dt_hr, lifetime_model, thermal_model, capacity_model, batt_vars->batt_loss_choice,
-		batt_vars->batt_losses_charging,batt_vars->batt_losses_discharging, batt_vars->batt_losses_idle, batt_vars->batt_losses);
+	if (batt_vars->batt_loss_choice == losses_params::MONTHLY) {
+        losses_model = new losses_t(batt_vars->batt_losses_charging,batt_vars->batt_losses_discharging, batt_vars->batt_losses_idle);
+	}
+    else if (batt_vars->batt_loss_choice == losses_params::SCHEDULE) {
+        losses_model = new losses_t(batt_vars->batt_losses);
+    }
+    else {
+        losses_model = new losses_t();
+    }
 
-	battery_model->initialize(capacity_model, voltage_model, lifetime_model, thermal_model, losses_model);
+    battery_model->initialize(capacity_model, voltage_model, lifetime_model, thermal_model, losses_model);
 
 	if (batt_vars->batt_replacement_option == replacement_params::SCHEDULE) {
 	    battery_model->setupReplacements(batt_vars->batt_replacement_schedule, batt_vars->batt_replacement_schedule_percent);
@@ -1334,8 +1341,7 @@ battstor::battstor(const battstor& orig){
             else
                 thermal_model = nullptr;
             if (orig.losses_model){
-                losses_model = new losses_t(_dt_hour, lifetime_model, thermal_model, capacity_model, 0);
-                losses_model->copy(orig.losses_model);
+                losses_model = new losses_t(*orig.losses_model);
             }
             else
                 losses_model = nullptr;

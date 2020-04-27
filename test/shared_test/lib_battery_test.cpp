@@ -69,8 +69,8 @@ TEST_F(BatteryTest, LossesModel_lib_battery)
 	size_t idx = 1000;
 
 	// Return loss for february
-	lossModel->run_losses(idx);
-	EXPECT_EQ(lossModel->getLoss(idx), 1);
+	lossModel->run_losses(idx, dtHour, capacityModel->charge_operation());
+	EXPECT_EQ(lossModel->getLoss(), 1);
 
 }
 

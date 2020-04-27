@@ -149,7 +149,7 @@ std::ostream &operator<<(std::ostream &os, const thermal_state &p) {
 
 std::ostream &operator<<(std::ostream &os, const thermal_params &p) {
     char buf[1024];
-    sprintf(buf, "\"thermal_params\": { \"dt_hour\": %.3f, \"mass\": %.3f, \"surface_area\": %.3f, "
+    sprintf(buf, "thermal_params: { \"dt_hour\": %.3f, \"mass\": %.3f, \"surface_area\": %.3f, "
                  "\"Cp\": %.3f, \"h\": %.3f, \"R\": %.3f, \"cap_vs_temp\": ",
                  p.dt_hour, p.mass, p.surface_area,
                  p.Cp, p.h, p.R);
@@ -157,5 +157,22 @@ std::ostream &operator<<(std::ostream &os, const thermal_params &p) {
     os.precision(3);
     os << R"(, "option": )" << p.option;
     os << R"(, "T_room_schedule": )" << p.T_room_schedule << " }";
+    return os;
+}
+
+std::ostream &operator<<(std::ostream& os, const losses_state &p) {
+    char buf[256];
+    sprintf(buf, R"(losses_state: { "loss_percent": %.3f })", p.loss_percent);
+    os << buf;
+    return os;
+}
+
+std::ostream &operator<<(std::ostream& os, const losses_params &p) {
+    os.precision(3);
+    os << R"(losses_params: { "option": )" << p.option << ", ";
+    os << R"("charge_loss": )" << p.charge_loss << ", ";
+    os << R"("discharge_loss": )" << p.discharge_loss << ", ";
+    os << R"("idle_loss": )" << p.idle_loss << ", ";
+    os << R"("full_loss": )" << p.full_loss << " }";
     return os;
 }

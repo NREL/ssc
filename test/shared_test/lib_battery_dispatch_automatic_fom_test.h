@@ -44,7 +44,7 @@ public:
         voltageModel = new voltage_dynamic_t(139, 133227, 3.6, 4.10, 4.05, 3.4, 2.25, 0.04, 2.00, 0.2, 0.2, dtHour);
         lifetimeModel = new lifetime_t(cycleLifeMatrix, dtHour, calendar_q0, calendar_a, calendar_b, calendar_c);
         thermalModel = new thermal_t(1.0, mass, surface_area, resistance, Cp, h, capacityVsTemperature, T_room);
-        lossModel = new losses_t(dtHour, lifetimeModel, thermalModel, capacityModel, lossChoice);
+        lossModel = new losses_t();
         batteryModel = new battery_t(dtHour, chemistry);
         batteryModel->initialize(capacityModel, voltageModel, lifetimeModel, thermalModel, lossModel);
 

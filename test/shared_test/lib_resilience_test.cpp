@@ -228,20 +228,19 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsSetUp)
 //    auto vol = batt->battery_model->voltage_model();
     cap->change_SOC_limits(0, 100);
 
-    batt_vars->batt_loss_choice = losses_t::TIMESERIES;
+    batt_vars->batt_loss_choice = losses_params::SCHEDULE;
     for (size_t n = 1; n < 8760; n++)
         batt_vars->batt_losses_charging.emplace_back(n*5);
     batt_vars->batt_losses_discharging.emplace_back(0);
     batt_vars->batt_losses_idle.emplace_back(0);
-    auto losses = losses_t(1, batt->lifetime_model, batt->thermal_model, batt->capacity_model, batt_vars->batt_loss_choice,
-            batt_vars->batt_losses_charging, batt_vars->batt_losses_discharging, batt_vars->batt_losses_idle, batt_vars->batt_losses_charging);
+    auto losses = losses_t(batt_vars->batt_losses_charging);
 
     batt->battery_model->initialize(batt->capacity_model, batt->voltage_model, batt->lifetime_model, batt->thermal_model, &losses);
 
 //    auto power_model = batt->dispatch_model->getBatteryPowerFlow()->getBatteryPower();
 
     size_t count = 0;
-    while (batt->battery_model->losses_model()->getLoss(count) < 100.){
+    while (count < 100.){
         batt->advance(vartab, ac[count], 500);
 
 //        printf("%f\t current, %f\t voltage, %f\t losses, %f\t power\n",

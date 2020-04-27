@@ -34,6 +34,14 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_battery_voltage.h"
 #include "lib_battery_lifetime.h"
 
+/**
+* \class thermal_t
+*
+* \brief
+*
+*  The Thermal class
+*/
+
 struct thermal_state {
     double q_relative_thermal;      //[%]
     double T_batt_avg;              // C
@@ -45,11 +53,11 @@ struct thermal_state {
 
 struct thermal_params {
     double dt_hour;
-    double mass;		        // [kg]
-    double surface_area;		// [m2] - exposed surface area
-    double Cp;			        // [J/KgK] - battery specific heat capacity
-    double h;			        // [Wm2K] - general heat transfer coefficient
-    double R;			        // [Ohm] - internal resistance
+    double mass;                // [kg]
+    double surface_area;        // [m2] - exposed surface area
+    double Cp;                    // [J/KgK] - battery specific heat capacity
+    double h;                    // [Wm2K] - general heat transfer coefficient
+    double R;                    // [Ohm] - internal resistance
     util::matrix_t<double> cap_vs_temp;
 
     enum OPTIONS {
@@ -61,11 +69,7 @@ struct thermal_params {
     friend std::ostream &operator<<(std::ostream &os, const thermal_params &p);
 };
 
-/*
-Thermal classes
-*/
-class thermal_t
-{
+class thermal_t {
 public:
     thermal_t(double dt_hour, double mass, double surface_area, double R, double Cp, double h,
               const util::matrix_t<double> &c_vs_t, std::vector<double> T_room_C);
@@ -73,20 +77,23 @@ public:
     thermal_t(double dt_hour, double mass, double surface_area, double R, double Cp, double h,
               const util::matrix_t<double> &c_vs_t, double T_room_C);
 
-    thermal_t(const thermal_t& rhs);
+    thermal_t(const thermal_t &rhs);
 
     thermal_t &operator=(const thermal_t &rhs);
 
-    thermal_t * clone();
+    thermal_t *clone();
 
     void updateTemperature(double I, size_t lifetimeIndex);
+
     void replace_battery(size_t lifetimeIndex);
 
     // outputs
     double T_battery();
+
     double capacity_percent();
 
     thermal_state get_state();
+
     thermal_params get_params();
 
 protected:
@@ -99,6 +106,8 @@ protected:
 private:
     void initialize();
 };
+
+
 /**
 * \class losses_t
 *
@@ -108,60 +117,68 @@ private:
 *  The model also accepts a time-series vector of losses defined for every time step of the first year of simulation
 *  which may be used in lieu of the losses for operational mode.
 */
-class losses_t
-{
+
+struct losses_state {
+    double loss_percent;
+
+    friend std::ostream &operator<<(std::ostream &os, const losses_state &p);
+};
+
+struct losses_params {
+    enum OPTIONS {
+        MONTHLY, SCHEDULE, VALUE
+    };
+    int option;
+
+    std::vector<double> charge_loss;
+    std::vector<double> discharge_loss;
+    std::vector<double> idle_loss;
+    std::vector<double> full_loss;
+
+    friend std::ostream &operator<<(std::ostream &os, const losses_params &p);
+};
+
+class losses_t {
 public:
 
-	/**
-	* \function losses_t
-	*
-	* Construct the losses object
-	*
-	* \param[in] lifetime_t * pointer to lifetime class
-	* \param[in] thermal_t * pointer to thermal class (currently unused)
-	* \param[in] capacity_t * pointer to capacity class
-	* \param[in] loss_mode 0 for monthy input, 1 for input time series
-	* \param[in] batt_loss_charge_kw vector (size 1 for annual or 12 for monthly) containing battery system losses when charging (kW)
-	* \param[in] batt_loss_discharge_kw vector (size 1 for annual or 12 for monthly) containing battery system losses when discharge (kW)
-	* \param[in] batt_loss_idle_kw vector (size 1 for annual or 12 for monthly) containing battery system losses when idle (kW)
-	* \param[in] batt_loss_kw vector (size 1 for annual or 12 for monthly) containing battery system losses when idle (kW)
-	*/
-	losses_t(double dtHour,
-			lifetime_t *,
-			thermal_t *,
-			capacity_t*,
-			const int loss_mode,
-			const double_vec batt_loss_charge_kw = std::vector<double>(0),
-			const double_vec batt_loss_discharge_kw = std::vector<double>(0),
-			const double_vec batt_loss_idle_kw = std::vector<double>(0),
-			const double_vec batt_loss_kw=std::vector<double>(0));
+    /**
+    * \function losses_t
+    *
+    * Construct the losses object for monthly losses
+    *
+    * \param[in] monthly_charge vector (size 1 for annual or 12 for monthly) containing battery system losses when charging (kW)
+    * \param[in] monthly_discharge vector (size 1 for annual or 12 for monthly) containing battery system losses when discharge (kW)
+    * \param[in] monthly_idle vector (size 1 for annual or 12 for monthly) containing battery system losses when idle (kW)
+    */
+    losses_t(const std::vector<double>& monthly_charge, const std::vector<double>& monthly_discharge, const std::vector<double>& monthly_idle);
 
-	void set_models(lifetime_t *, thermal_t *, capacity_t*);
+    /**
+    * \function losses_t
+    *
+    * Construct the losses object for schedule of timeseries losses
+    *
+    * \param[in] schedule_loss vector (size 0 for constant or per timestep) containing battery system losses
+    */
+    explicit losses_t(const std::vector<double>& schedule_loss = std::vector<double>(1, 0));
 
-	/// Copy input losses to this object
-	void copy(losses_t *);
+    losses_t(const losses_t& rhs);
 
-	/// Run the losses model at the present simulation index (for year 1 only)
-	void run_losses(size_t lifetimeIndex);
+    losses_t &operator=(const losses_t& rhs);
 
-	/// Get the loss at the specified simulation index (year 1)
-	double getLoss(size_t indexFirstYear);
+    /// Run the losses model at the present simulation index (for year 1 only)
+    void run_losses(size_t lifetimeIndex, double dt_hour, double charge_operation);
 
-	/// Options for the loss inputs to use
-	enum { MONTHLY, TIMESERIES};
+    /// Get the loss at the specified simulation index (year 1)
+    double getLoss();
+
+    losses_state get_state();
+
+    losses_params get_params();
 
 protected:
+    losses_state state;
+    std::shared_ptr<losses_params> params;
 
-    int _loss_mode;
-	double _dtHour;
-
-	lifetime_t * _lifetime;
-	thermal_t * _thermal;
-	capacity_t * _capacity;
-	double_vec  _charge_loss;
-	double_vec  _discharge_loss;
-	double_vec  _idle_loss;
-	double_vec  _full_loss;
 };
 
 /*
@@ -191,96 +208,122 @@ struct replacement_params {
 };
 
 
-class battery_t
-{
+class battery_t {
 public:
-	battery_t();
-	battery_t(double dt, int battery_chemistry);
+    battery_t();
 
-	// deep copy constructor (new memory), from battery to this
-	battery_t(const battery_t& battery);
+    battery_t(double dt, int battery_chemistry);
 
-	// copy members from battery to this
-	void copy(const battery_t * battery);
+    // deep copy constructor (new memory), from battery to this
+    battery_t(const battery_t &battery);
 
-	// virtual destructor, does nothing as no memory allocated in constructor
-	virtual ~battery_t();
+    // copy members from battery to this
+    void copy(const battery_t *battery);
 
-	// delete the new submodels that have been allocated
-	void delete_clone();
+    // virtual destructor, does nothing as no memory allocated in constructor
+    virtual ~battery_t();
 
-	void initialize(capacity_t *, voltage_t *, lifetime_t *, thermal_t *, losses_t *);
+    // delete the new submodels that have been allocated
+    void delete_clone();
 
-	// replace by capacity
-	void setupReplacements(double capacity);
+    void initialize(capacity_t *, voltage_t *, lifetime_t *, thermal_t *, losses_t *);
 
-	// replace by schedule
+    // replace by capacity
+    void setupReplacements(double capacity);
+
+    // replace by schedule
     void setupReplacements(std::vector<int> schedule, std::vector<double> replacement_percents);
 
-	void runReplacement(size_t year, size_t hour, size_t step);
-	void resetReplacement();
-	double getNumReplacementYear();
+    void runReplacement(size_t year, size_t hour, size_t step);
+
+    void resetReplacement();
+
+    double getNumReplacementYear();
 
     // Run all for single time step, updating all component model states and return the dispatched power [kW]
-	double run(size_t lifetimeIndex, double &I);
+    double run(size_t lifetimeIndex, double &I);
 
-	double calculate_voltage_for_current(double I);
+    double calculate_voltage_for_current(double I);
 
-	// Return the max charge or discharge power achievable in the next time step, and the required current [A]
+    // Return the max charge or discharge power achievable in the next time step, and the required current [A]
     double calculate_max_charge_kw(double *max_current_A = nullptr);
+
     double calculate_max_discharge_kw(double *max_current_A = nullptr);
 
-	// Returns current [A] required to dispatch input power [kW], or the max power (to which P_kw is set)
-	double calculate_current_for_power_kw(double &P_kw);
+    // Returns current [A] required to dispatch input power [kW], or the max power (to which P_kw is set)
+    double calculate_current_for_power_kw(double &P_kw);
 
     // Run a component level model
-	void runCapacityModel(double &I);
-	void runVoltageModel();
-	void runThermalModel(double I, size_t lifetimeIndex);
-	void runLifetimeModel(size_t lifetimeIndex);
-	void runLossesModel(size_t lifetimeIndex);
+    void runCapacityModel(double &I);
+
+    void runVoltageModel();
+
+    void runThermalModel(double I, size_t lifetimeIndex);
+
+    void runLifetimeModel(size_t lifetimeIndex);
+
+    void runLossesModel(size_t lifetimeIndex);
 
 
-	capacity_t * capacity_model() const;
-	capacity_t * capacity_initial_model() const;
-	voltage_t * voltage_model() const;
-	lifetime_t * lifetime_model() const;
-	thermal_t * thermal_model() const;
-	thermal_t * thermal_initial_model() const;
-	losses_t * losses_model() const;
+    capacity_t *capacity_model() const;
 
-	// Get capacity quantities
-	double battery_charge_needed(double SOC_max);
-	double battery_charge_total();
-	double battery_charge_maximum();
-	double battery_charge_maximum_lifetime();
-	double battery_charge_maximum_thermal();
-	double battery_energy_nominal();
-	double battery_energy_to_fill(double SOC_max);
-	double battery_power_to_fill(double SOC_max);
-	double battery_soc();
+    capacity_t *capacity_initial_model() const;
 
-	// Get Voltage
-	double cell_voltage();
-	double battery_voltage(); // the actual battery voltage
-	double battery_voltage_nominal(); // the nominal battery voltage
+    voltage_t *voltage_model() const;
 
-	enum CHEMS{ LEAD_ACID, LITHIUM_ION, VANADIUM_REDOX, IRON_FLOW};
-	enum REPLACE{ NO_REPLACEMENTS, REPLACE_BY_CAPACITY, REPLACE_BY_SCHEDULE};
+    lifetime_t *lifetime_model() const;
+
+    thermal_t *thermal_model() const;
+
+    thermal_t *thermal_initial_model() const;
+
+    losses_t *losses_model() const;
+
+    // Get capacity quantities
+    double battery_charge_needed(double SOC_max);
+
+    double battery_charge_total();
+
+    double battery_charge_maximum();
+
+    double battery_charge_maximum_lifetime();
+
+    double battery_charge_maximum_thermal();
+
+    double battery_energy_nominal();
+
+    double battery_energy_to_fill(double SOC_max);
+
+    double battery_power_to_fill(double SOC_max);
+
+    double battery_soc();
+
+    // Get Voltage
+    double cell_voltage();
+
+    double battery_voltage(); // the actual battery voltage
+    double battery_voltage_nominal(); // the nominal battery voltage
+
+    enum CHEMS {
+        LEAD_ACID, LITHIUM_ION, VANADIUM_REDOX, IRON_FLOW
+    };
+    enum REPLACE {
+        NO_REPLACEMENTS, REPLACE_BY_CAPACITY, REPLACE_BY_SCHEDULE
+    };
 
 
 private:
-	capacity_t * _capacity;
-	capacity_t * _capacity_initial;
-	thermal_t * _thermal;
-	thermal_t * _thermal_initial;
-	lifetime_t * _lifetime;
-	voltage_t * _voltage;
-	losses_t * _losses;
-	int _battery_chemistry;
-	double _dt_hour;			// [hr] - timestep
-	double _dt_min;				// [min] - timestep
-	size_t _last_idx;
+    capacity_t *_capacity;
+    capacity_t *_capacity_initial;
+    thermal_t *_thermal;
+    thermal_t *_thermal_initial;
+    lifetime_t *_lifetime;
+    voltage_t *_voltage;
+    losses_t *_losses;
+    int _battery_chemistry;
+    double _dt_hour;            // [hr] - timestep
+    double _dt_min;                // [min] - timestep
+    size_t _last_idx;
 
     replacement_state replacement_state;
     std::shared_ptr<replacement_params> params;

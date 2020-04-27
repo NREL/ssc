@@ -31,8 +31,10 @@ lifetime_cycle_t::lifetime_cycle_t(const lifetime_cycle_t &rhs) {
 }
 
 lifetime_cycle_t &lifetime_cycle_t::operator=(const lifetime_cycle_t &rhs) {
-    *state = *rhs.state;
-    params = rhs.params;
+    if (this != &rhs) {
+        *state = *rhs.state;
+        params = rhs.params;
+    }
     return *this;
 }
 
@@ -343,9 +345,11 @@ lifetime_calendar_t::lifetime_calendar_t(const lifetime_calendar_t &rhs) {
 }
 
 lifetime_calendar_t &lifetime_calendar_t::operator=(const lifetime_calendar_t &rhs) {
-    params = rhs.params;
-    *state = *rhs.state;
-    dt_day = rhs.dt_day;
+    if (this != &rhs) {
+        params = rhs.params;
+        *state = *rhs.state;
+        dt_day = rhs.dt_day;
+    }
     return *this;
 }
 
@@ -442,9 +446,11 @@ lifetime_state::lifetime_state(){
 
 
 lifetime_state &lifetime_state::operator=(const lifetime_state &rhs) {
-    q_relative = rhs.q_relative;
-    *cycle = *rhs.cycle;
-    *calendar = *rhs.calendar;
+    if (this != &rhs) {
+        q_relative = rhs.q_relative;
+        *cycle = *rhs.cycle;
+        *calendar = *rhs.calendar;
+    }
     return *this;
 }
 
@@ -503,10 +509,12 @@ lifetime_t::lifetime_t(const lifetime_t& rhs) {
 }
 
 lifetime_t& lifetime_t::operator=(const lifetime_t& rhs) {
-    params = rhs.params;
-    *state = *rhs.state;
-    calendar_model = std::unique_ptr<lifetime_calendar_t>(new lifetime_calendar_t(params));
-    cycle_model = std::unique_ptr<lifetime_cycle_t>(new lifetime_cycle_t(*rhs.cycle_model));
+    if (this != &rhs) {
+        params = rhs.params;
+        *state = *rhs.state;
+        calendar_model = std::unique_ptr<lifetime_calendar_t>(new lifetime_calendar_t(params));
+        cycle_model = std::unique_ptr<lifetime_cycle_t>(new lifetime_cycle_t(*rhs.cycle_model));
+    }
     return *this;
 }
 

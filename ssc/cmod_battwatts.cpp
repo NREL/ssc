@@ -239,7 +239,7 @@ battwatts_create(size_t n_recs, size_t n_years, int chem, int meter_pos, double 
     batt_vars->batt_height = std::pow(batt_volume, 1. / 3.);
 
     // Losses
-    batt_vars->batt_loss_choice = losses_t::MONTHLY;
+    batt_vars->batt_loss_choice = losses_params::MONTHLY;
     batt_vars->batt_losses_charging.emplace_back(0);
     batt_vars->batt_losses_discharging.emplace_back(0);
     batt_vars->batt_losses_idle.emplace_back(0);

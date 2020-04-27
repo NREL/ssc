@@ -25,8 +25,10 @@ voltage_t::voltage_t(const voltage_t &rhs) :
         state(rhs.state) {}
 
 voltage_t &voltage_t::operator=(const voltage_t &rhs) {
-    params = rhs.params;
-    state = rhs.state;
+    if (this != &rhs) {
+        params = rhs.params;
+        state = rhs.state;
+    }
     return *this;
 }
 
@@ -76,10 +78,12 @@ voltage_table_t::voltage_table_t(int num_cells_series, int num_strings, double v
 }
 
 voltage_table_t &voltage_table_t::operator=(const voltage_t &rhs) {
-    voltage_t::operator=(rhs);
-    auto rhs_p = dynamic_cast<voltage_table_t *>(const_cast<voltage_t *>(&rhs));
-    slopes = rhs_p->slopes;
-    intercepts = rhs_p->intercepts;
+    if (this != &rhs) {
+        voltage_t::operator=(rhs);
+        auto rhs_p = dynamic_cast<voltage_table_t *>(const_cast<voltage_t *>(&rhs));
+        slopes = rhs_p->slopes;
+        intercepts = rhs_p->intercepts;
+    }
     return *this;
 }
 
@@ -218,18 +222,20 @@ voltage_dynamic_t::voltage_dynamic_t(int num_cells_series, int num_strings, doub
 }
 
 voltage_dynamic_t &voltage_dynamic_t::operator=(const voltage_t &rhs) {
-    voltage_t::operator=(rhs);
+    if (this != &rhs) {
+        voltage_t::operator=(rhs);
 
-    auto rhs_p = dynamic_cast<voltage_dynamic_t *>(const_cast<voltage_t *>(&rhs));
-    _A = rhs_p->_A;
-    _B0 = rhs_p->_B0;
-    _E0 = rhs_p->_E0;
-    _K = rhs_p->_K;
+        auto rhs_p = dynamic_cast<voltage_dynamic_t *>(const_cast<voltage_t *>(&rhs));
+        _A = rhs_p->_A;
+        _B0 = rhs_p->_B0;
+        _E0 = rhs_p->_E0;
+        _K = rhs_p->_K;
 
-    solver_power = rhs_p->solver_power;
-    solver_Q = rhs_p->solver_Q;
-    solver_q = rhs_p->solver_q;
-    solver_cutoff_voltage = rhs_p->solver_cutoff_voltage;
+        solver_power = rhs_p->solver_power;
+        solver_Q = rhs_p->solver_Q;
+        solver_q = rhs_p->solver_q;
+        solver_cutoff_voltage = rhs_p->solver_cutoff_voltage;
+    }
     return *this;
 }
 
@@ -372,14 +378,16 @@ voltage_vanadium_redox_t::voltage_vanadium_redox_t(int num_cells_series, int num
 }
 
 voltage_vanadium_redox_t &voltage_vanadium_redox_t::operator=(const voltage_t &rhs) {
-    voltage_t::operator=(rhs);
+    if (this != &rhs) {
+        voltage_t::operator=(rhs);
 
-    auto rhs_p = dynamic_cast<voltage_vanadium_redox_t *>(const_cast<voltage_t *>(&rhs));
-    m_RCF = rhs_p->m_RCF;
-    solver_power = rhs_p->solver_power;
-    solver_T_k = rhs_p->solver_T_k;
-    solver_q = rhs_p->solver_q;
-    solver_Q = rhs_p->solver_Q;
+        auto rhs_p = dynamic_cast<voltage_vanadium_redox_t *>(const_cast<voltage_t *>(&rhs));
+        m_RCF = rhs_p->m_RCF;
+        solver_power = rhs_p->solver_power;
+        solver_T_k = rhs_p->solver_T_k;
+        solver_q = rhs_p->solver_q;
+        solver_Q = rhs_p->solver_Q;
+    }
     return *this;
 }
 

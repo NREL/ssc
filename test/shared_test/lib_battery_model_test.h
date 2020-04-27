@@ -106,7 +106,7 @@ public:
             dischargingLosses.push_back((double)m + 1.);
         }
         for (size_t i = 0; i < 8760; i++) {
-            fullLosses.push_back(i);
+            fullLosses.push_back((double)i/8760);
         }
     }
 };
@@ -266,7 +266,7 @@ public:
         voltageModel = new voltage_dynamic_t(n_series, n_strings, Vnom_default, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom, C_rate, resistance);
         lifetimeModel = new lifetime_t(cycleLifeMatrix, dtHour, 1.02, 2.66e-3, -7280, 930);
         thermalModel = new thermal_t(1.0, mass, surface_area, resistance, Cp, h, capacityVsTemperature, T_room);
-        lossModel = new losses_t(dtHour, lifetimeModel, thermalModel, capacityModel, lossChoice, monthlyLosses, monthlyLosses, monthlyLosses, fullLosses);
+        lossModel = new losses_t(monthlyLosses, monthlyLosses, monthlyLosses);
         batteryModel = std::unique_ptr<battery_t>(new battery_t(dtHour, chemistry));
         batteryModel->initialize(capacityModel, voltageModel, lifetimeModel, thermalModel, lossModel);
     }

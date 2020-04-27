@@ -15,6 +15,10 @@ struct capacity_state {
     double SOC; // [%] - State of Charge
     double DOD; // [%] - Depth of Discharge
     double DOD_prev; // [%] - Depth of Discharge of previous step
+
+    enum {
+        CHARGE, NO_CHARGE, DISCHARGE
+    };
     int charge_mode; // {CHARGE, NO_CHARGE, DISCHARGE}
     int prev_charge; // {CHARGE, NO_CHARGE, DISCHARGE}
     bool chargeChange; // [true/false] - indicates if charging state has changed since last step
@@ -119,10 +123,6 @@ public:
     double I_loss();
 
     int charge_operation();
-
-    enum {
-        CHARGE, NO_CHARGE, DISCHARGE
-    };
 
     capacity_params get_params();
 

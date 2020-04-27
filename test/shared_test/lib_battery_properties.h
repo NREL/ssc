@@ -103,7 +103,7 @@ public:
 		for (size_t i = 0; i < 8760 * 60; i++) {
 			fullLossesMinute.push_back(0);
 		}
-		lossChoice = 0;
+		lossChoice = losses_params::MONTHLY;
 
 		// battery
 		chemistry = 1;
