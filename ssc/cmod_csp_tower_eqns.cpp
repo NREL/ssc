@@ -4,37 +4,121 @@
 
 #pragma warning(disable: 4297)  // ignore warning: 'function assumed not to throw an exception but does'
 
+//var_data* var_table::assign(const std::string& name, const var_data& val)
+//{
+//    var_data* v = lookup(name);
+//    if (!v)
+//    {
+//        v = new var_data;
+//        m_hash[util::lower_case(name)] = v;
+//    }
+//
+//    v->copy(val);
+//    return v;
+//}
+
+//SSCEXPORT ssc_bool_t ssc_data_get_number(ssc_data_t p_data, const char* name, ssc_number_t* value)
+//{
+//    if (!value) return 0;
+//    var_table* vt = static_cast<var_table*>(p_data);
+//    if (!vt) return 0;
+//    var_data* dat = vt->lookup(name);
+//    if (!dat || dat->type != SSC_NUMBER) return 0;
+//    *value = dat->num;
+//    return 1;
+//}
+
+//void vt_get_matrix(var_table* vt, std::string name, util::matrix_t<double>& matrix) {
+//    if (var_data* vd = vt->lookup(name)) {
+//        if (vd->type == SSC_ARRAY)
+//        {
+//            std::vector<double> vec_double = vd->arr_vector();
+//            matrix.resize(vec_double.size());
+//            for (size_t i = 0; i < vec_double.size(); i++)
+//                matrix.at(i) = vec_double[i];
+//        }
+//        else if (vd->type != SSC_MATRIX)
+//            throw std::runtime_error(std::string(name) + std::string(" must be matrix type."));
+//        matrix = vd->num;
+//    }
+//    else throw std::runtime_error(std::string(name) + std::string(" must be assigned."));
+//}
+
+
+SSCEXPORT ssc_bool_t ssc_data_t_get_number(ssc_data_t p_data, const char* name, ssc_number_t* value)
+{
+    bool success = ssc_data_get_number(p_data, name, value);
+    if (!success) {
+        // replace any periods in the name with underscores in order to read variables set by the UI
+        std::string str_name(name);
+        size_t n_replaced = util::replace(str_name, ".", "_");
+        if (n_replaced > 0) {
+            success = ssc_data_get_number(p_data, str_name.c_str(), value);
+        }
+    }
+
+    return success;
+}
+
+void ssc_data_t_get_matrix(var_table* vt, std::string name, util::matrix_t<double>& matrix) {
+    try
+    {
+        vt_get_matrix(vt, name, matrix);
+    }
+    catch (std::exception& e) {
+    }
+
+    // replace any periods in the name with underscores in order to read variables set by the UI
+    std::string str_name(name);
+    size_t n_replaced = util::replace(str_name, ".", "_");
+    if (n_replaced > 0) {
+        vt_get_matrix(vt, name, matrix);        // allow exceptions to be uncaught
+    }
+}
+
+SSCEXPORT void ssc_data_t_set_number(ssc_data_t p_data, const char* name, ssc_number_t value)
+{
+    ssc_data_set_number(p_data, name, value);
+
+    // replace any periods in the name with underscores so UI equations can read value
+    std::string str_name(name);
+    size_t n_replaced = util::replace(str_name, ".", "_");
+    if (n_replaced > 0) {
+        ssc_data_set_number(p_data, str_name.c_str(), value);
+    }
+}
+
 void MSPT_System_Design_Equations(ssc_data_t data)
 {
-    auto vt = static_cast<var_table*>(data);
-    if (!vt) {
-        throw std::runtime_error("ssc_data_t data invalid");
-    }
+    //auto vt = static_cast<var_table*>(data);
+    //if (!vt) {
+    //    throw std::runtime_error("ssc_data_t data invalid");
+    //}
     double P_ref, gross_net_conversion_factor, nameplate, design_eff, solarm, q_pb_design, q_rec_des, tshours, tshours_sf;
 
     // nameplate
-    vt_get_number(vt, "P_ref", &P_ref);
-    vt_get_number(vt, "gross_net_conversion_factor", &gross_net_conversion_factor);
+    ssc_data_t_get_number(data, "P_ref", &P_ref);
+    ssc_data_t_get_number(data, "gross_net_conversion_factor", &gross_net_conversion_factor);
     nameplate = Nameplate(P_ref, gross_net_conversion_factor);
-    vt->assign("nameplate", nameplate);
+    ssc_data_t_set_number(data, "nameplate", nameplate);
 
     // q_pb_design
-    vt_get_number(vt, "P_ref", &P_ref);                         // repeat assessors because the values may have changed
-    vt_get_number(vt, "design_eff", &design_eff);
+    ssc_data_t_get_number(data, "P_ref", &P_ref);                         // repeat assessors because the values may have changed
+    ssc_data_t_get_number(data, "design_eff", &design_eff);
     q_pb_design = Q_pb_design(P_ref, design_eff);
-    vt->assign("q_pb_design", q_pb_design);
+    ssc_data_t_set_number(data, "q_pb_design", q_pb_design);
 
     // q_rec_des
-    vt_get_number(vt, "solarm", &solarm);
-    vt_get_number(vt, "q_pb_design", &q_pb_design);
+    ssc_data_t_get_number(data, "solarm", &solarm);
+    ssc_data_t_get_number(data, "q_pb_design", &q_pb_design);
     q_rec_des = Q_rec_des(solarm, q_pb_design);
-    vt->assign("q_rec_des", q_rec_des);
+    ssc_data_t_set_number(data, "q_rec_des", q_rec_des);
 
     // tshours_sf
-    vt_get_number(vt, "tshours", &tshours);
-    vt_get_number(vt, "solarm", &solarm);
+    ssc_data_t_get_number(data, "tshours", &tshours);
+    ssc_data_t_get_number(data, "solarm", &solarm);
     tshours_sf = Tshours_sf(tshours, solarm);
-    vt->assign("tshours_sf", tshours_sf);
+    ssc_data_t_set_number(data, "tshours_sf", tshours_sf);
 }
 
 void Tower_SolarPilot_Solar_Field_Equations(ssc_data_t data)
@@ -47,111 +131,111 @@ void Tower_SolarPilot_Solar_Field_Equations(ssc_data_t data)
         land_min, land_min_calc, csp_pt_sf_fixed_land_area, land_area_base,
         csp_pt_sf_land_overhead_factor, csp_pt_sf_total_land_area, a_sf_ui, helio_area_tot, csp_pt_sf_tower_height,
         c_atm_0, c_atm_1, c_atm_2, c_atm_3, c_atm_info, helio_optical_error_mrad, error_equiv, field_model_type,
-        q_rec_des, q_design, dni_des, dni_des_calc, opt_flux_penalty;
-    int n_hel, override_opt, is_optimize, override_layout, opt_algorithm;
+        q_rec_des, q_design, dni_des, dni_des_calc, opt_flux_penalty,
+        n_hel, override_opt, is_optimize, override_layout, opt_algorithm;
 
     util::matrix_t<double> helio_positions;
 
     // land_max_calc
-    vt_get_number(vt, "land_max", &land_max);
-    vt_get_number(vt, "h_tower", &h_tower);
+    ssc_data_t_get_number(data, "land_max", &land_max);
+    ssc_data_t_get_number(data, "h_tower", &h_tower);
     land_max_calc = Land_max_calc(land_max, h_tower);
-    vt->assign("land_max_calc", land_max_calc);
+    ssc_data_t_set_number(data, "land_max_calc", land_max_calc);
 
     // n_hel
-    vt_get_matrix(vt, "helio_positions", helio_positions);
+    ssc_data_t_get_matrix(vt, "helio_positions", helio_positions);
     n_hel = N_hel(helio_positions);
     vt->assign("n_hel", n_hel);
 
     // csp_pt_sf_heliostat_area
-    vt_get_number(vt, "helio_height", &helio_height);
-    vt_get_number(vt, "helio_width", &helio_width);
-    vt_get_number(vt, "dens_mirror", &dens_mirror);
+    ssc_data_t_get_number(data, "helio_height", &helio_height);
+    ssc_data_t_get_number(data, "helio_width", &helio_width);
+    ssc_data_t_get_number(data, "dens_mirror", &dens_mirror);
     csp_pt_sf_heliostat_area = Csp_pt_sf_heliostat_area(helio_height, helio_width, dens_mirror);
-    vt->assign("csp_pt_sf_heliostat_area", csp_pt_sf_heliostat_area);
+    ssc_data_t_set_number(data, "csp.pt.sf.heliostat_area", csp_pt_sf_heliostat_area);
     
     //  This one is not being read in the UI
     //// csp_pt_sf_total_reflective_area
     //double csp_pt_sf_total_reflective_area;
-    //vt_get_int(vt, "n_hel", &n_hel);
-    //vt_get_number(vt, "csp_pt_sf_heliostat_area", &csp_pt_sf_heliostat_area);
+    //ssc_data_t_get_number(data, "n_hel", &n_hel);
+    //ssc_data_t_get_number(data, "csp_pt_sf_heliostat_area", &csp_pt_sf_heliostat_area);
     //csp_pt_sf_total_reflective_area = Csp_pt_sf_total_reflective_area(n_hel, csp_pt_sf_heliostat_area);
-    //vt->assign("csp_pt_sf_total_reflective_area", csp_pt_sf_total_reflective_area);
+    //ssc_data_t_set_number(data, "csp_pt_sf_total_reflective_area", csp_pt_sf_total_reflective_area);
 
     // land_min_calc
-    vt_get_number(vt, "land_min", &land_min);
-    vt_get_number(vt, "h_tower", &h_tower);
+    ssc_data_t_get_number(data, "land_min", &land_min);
+    ssc_data_t_get_number(data, "h_tower", &h_tower);
     land_min_calc = Land_min_calc(land_min, h_tower);
-    vt->assign("land_min_calc", land_min_calc);
+    ssc_data_t_set_number(data, "land_min_calc", land_min_calc);
 
     // csp_pt_sf_total_land_area
-    vt_get_number(vt, "csp_pt_sf_fixed_land_area", &csp_pt_sf_fixed_land_area);
-    vt_get_number(vt, "land_area_base", &land_area_base);
-    vt_get_number(vt, "csp_pt_sf_land_overhead_factor", &csp_pt_sf_land_overhead_factor);
+    ssc_data_t_get_number(data, "csp.pt.sf.fixed_land_area", &csp_pt_sf_fixed_land_area);
+    ssc_data_t_get_number(data, "land_area_base", &land_area_base);
+    ssc_data_t_get_number(data, "csp.pt.sf.land_overhead_factor", &csp_pt_sf_land_overhead_factor);
     csp_pt_sf_total_land_area = Csp_pt_sf_total_land_area(csp_pt_sf_fixed_land_area, land_area_base, csp_pt_sf_land_overhead_factor);
-    vt->assign("csp_pt_sf_total_land_area", csp_pt_sf_total_land_area);
+    ssc_data_t_set_number(data, "csp.pt.sf.total_land_area", csp_pt_sf_total_land_area);
 
     // a_sf_ui
-    vt_get_number(vt, "helio_width", &helio_width);
-    vt_get_number(vt, "helio_height", &helio_height);
-    vt_get_number(vt, "dens_mirror", &dens_mirror);
-    vt_get_int(vt, "n_hel", &n_hel);
+    ssc_data_t_get_number(data, "helio_width", &helio_width);
+    ssc_data_t_get_number(data, "helio_height", &helio_height);
+    ssc_data_t_get_number(data, "dens_mirror", &dens_mirror);
+    ssc_data_t_get_number(data, "n_hel", &n_hel);
     a_sf_ui = A_sf_UI(helio_width, helio_height, dens_mirror, n_hel);
-    vt->assign("a_sf_ui", a_sf_ui);
+    ssc_data_t_set_number(data, "a_sf_ui", a_sf_ui);
 
     // helio_area_tot
-    vt_get_number(vt, "a_sf_ui", &a_sf_ui);
+    ssc_data_t_get_number(data, "a_sf_ui", &a_sf_ui);
     helio_area_tot = Helio_area_tot(a_sf_ui);
-    vt->assign("helio_area_tot", helio_area_tot);
+    ssc_data_t_set_number(data, "helio_area_tot", helio_area_tot);
     
     // csp_pt_sf_tower_height
-    vt_get_number(vt, "h_tower", &h_tower);
+    ssc_data_t_get_number(data, "h_tower", &h_tower);
     csp_pt_sf_tower_height = Csp_pt_sf_tower_height(h_tower);
-    vt->assign("csp_pt_sf_tower_height", csp_pt_sf_tower_height);
+    ssc_data_t_set_number(data, "csp.pt.sf.tower_height", csp_pt_sf_tower_height);
 
     // c_atm_info
-    //vt_get_matrix(vt, "helio_positions", helio_positions);        // THIS IS A PROBLEM: (getting the same ssc_data_t matrix data must also be changing it)
-    vt_get_number(vt, "c_atm_0", &c_atm_0);
-    vt_get_number(vt, "c_atm_1", &c_atm_1);
-    vt_get_number(vt, "c_atm_2", &c_atm_2);
-    vt_get_number(vt, "c_atm_3", &c_atm_3);
-    vt_get_number(vt, "h_tower", &h_tower);
+    //ssc_data_t_get_matrix(vt, "helio_positions", helio_positions);        // THIS IS A PROBLEM: (getting the same ssc_data_t matrix data must also be changing it)
+    ssc_data_t_get_number(data, "c_atm_0", &c_atm_0);
+    ssc_data_t_get_number(data, "c_atm_1", &c_atm_1);
+    ssc_data_t_get_number(data, "c_atm_2", &c_atm_2);
+    ssc_data_t_get_number(data, "c_atm_3", &c_atm_3);
+    ssc_data_t_get_number(data, "h_tower", &h_tower);
     c_atm_info = C_atm_info(helio_positions, c_atm_0, c_atm_1, c_atm_2, c_atm_3, h_tower);
-    vt->assign("c_atm_info", c_atm_info);
+    ssc_data_t_set_number(data, "c_atm_info", c_atm_info);
 
     // error_equiv
-    vt_get_number(vt, "helio_optical_error_mrad", &helio_optical_error_mrad);
+    ssc_data_t_get_number(data, "helio_optical_error_mrad", &helio_optical_error_mrad);
     error_equiv = Error_equiv(helio_optical_error_mrad);
-    vt->assign("error_equiv", error_equiv);
+    ssc_data_t_set_number(data, "error_equiv", error_equiv);
 
     // is_optimize
-    vt_get_int(vt, "override_opt", &override_opt);
+    ssc_data_t_get_number(data, "override_opt", &override_opt);
     is_optimize = Is_optimize(override_opt);
-    vt->assign("is_optimize", is_optimize);
+    ssc_data_t_set_number(data, "is_optimize", is_optimize);
 
     // field_model_type
-    vt_get_int(vt, "is_optimize", &is_optimize);
-    vt_get_int(vt, "override_layout", &override_layout);
+    ssc_data_t_get_number(data, "is_optimize", &is_optimize);
+    ssc_data_t_get_number(data, "override_layout", &override_layout);
     field_model_type = Field_model_type(is_optimize, override_layout);
-    vt->assign("field_model_type", field_model_type);
+    ssc_data_t_set_number(data, "field_model_type", field_model_type);
 
     // q_design
-    vt_get_number(vt, "q_rec_des", &q_rec_des);
+    ssc_data_t_get_number(data, "q_rec_des", &q_rec_des);
     q_design = Q_design(q_rec_des);
-    vt->assign("q_design", q_design);
+    ssc_data_t_set_number(data, "q_design", q_design);
 
     // dni_des_calc
-    vt_get_number(vt, "dni_des", &dni_des);
+    ssc_data_t_get_number(data, "dni_des", &dni_des);
     dni_des_calc = Dni_des_calc(dni_des);
-    vt->assign("dni_des_calc", dni_des_calc);
+    ssc_data_t_set_number(data, "dni_des_calc", dni_des_calc);
 
     // opt_algorithm
     opt_algorithm = Opt_algorithm();
-    vt->assign("opt_algorithm", opt_algorithm);
+    ssc_data_t_set_number(data, "opt_algorithm", opt_algorithm);
 
     // opt_flux_penalty
     opt_flux_penalty = Opt_flux_penalty();
-    vt->assign("opt_flux_penalty", opt_flux_penalty);
+    ssc_data_t_set_number(data, "opt_flux_penalty", opt_flux_penalty);
 }
 
 void MSPT_Receiver_Equations(ssc_data_t data)

@@ -313,6 +313,69 @@ TEST(Mspt_cmod_csp_tower_eqns, Case2) {
 	ASSERT_NEAR(q_design, 670., 670. * error_tolerance);
 }
 
+TEST(Mspt_cmod_csp_tower_eqns, Case2b) {
+    // Testing period use in variable names
+    double error_tolerance = 0.01;
+    var_table* vd = new var_table;
+    vd->assign("c_atm_0", 0.006789);
+    vd->assign("c_atm_1", 0.1046);
+    vd->assign("c_atm_2", -0.017);
+    vd->assign("c_atm_3", 0.002845);
+    vd->assign("csp.pt.sf.fixed_land_area", 45.);
+    vd->assign("csp.pt.sf.land_overhead_factor", 1.);
+    vd->assign("dens_mirror", 0.97);
+    vd->assign("dni_des", 950.);
+    vd->assign("h_tower", 193.458);
+    vd->assign("helio_height", 12.2);
+    vd->assign("helio_optical_error_mrad", 1.53);
+    util::matrix_t<double> helio_positions(8790, 2, 1.e3);
+    vd->assign("helio_positions", helio_positions);
+    vd->assign("helio_width", 12.2);
+    vd->assign("land_area_base", 1847.04);
+    vd->assign("land_max", 9.5);
+    vd->assign("land_min", 0.75);
+    vd->assign("override_layout", 0);
+    vd->assign("override_opt", 0);
+    vd->assign("q_rec_des", 670.);
+
+    Tower_SolarPilot_Solar_Field_Equations(vd);
+
+    double a_sf_ui = vd->lookup("a_sf_ui")->num;
+    double c_atm_info = vd->lookup("c_atm_info")->num;
+    double csp_pt_sf_heliostat_area = vd->lookup("csp.pt.sf.heliostat_area")->num;
+    double csp_pt_sf_total_land_area = vd->lookup("csp.pt.sf.total_land_area")->num;
+    //double csp_pt_sf_total_reflective_area = vd->lookup("csp.pt.sf.total_reflective_area")->num;	//  This one is not being read in the UI
+    double csp_pt_sf_tower_height = vd->lookup("csp.pt.sf_tower_height")->num;
+    double dni_des_calc = vd->lookup("dni_des_calc")->num;
+    double error_equiv = vd->lookup("error_equiv")->num;
+    double field_model_type = vd->lookup("field_model_type")->num;
+    double helio_area_tot = vd->lookup("helio_area_tot")->num;
+    double is_optimize = vd->lookup("is_optimize")->num;
+    double land_max_calc = vd->lookup("land_max_calc")->num;
+    double land_min_calc = vd->lookup("land_min_calc")->num;
+    double n_hel = vd->lookup("n_hel")->num;
+    double opt_algorithm = vd->lookup("opt_algorithm")->num;
+    double opt_flux_penalty = vd->lookup("opt_flux_penalty")->num;
+    double q_design = vd->lookup("q_design")->num;
+    ASSERT_NEAR(a_sf_ui, 1269055., 1269055. * error_tolerance);
+    ASSERT_NEAR(c_atm_info, 12.97, 12.97 * error_tolerance);
+    ASSERT_NEAR(csp_pt_sf_heliostat_area, 144.375, 144.375 * error_tolerance);
+    ASSERT_NEAR(csp_pt_sf_total_land_area, 1892., 1892. * error_tolerance);
+    //ASSERT_NEAR(csp_pt_sf_total_reflective_area, 1269056.25, 1269056.25 * error_tolerance);			//  This one is not being read in the UI
+    ASSERT_NEAR(csp_pt_sf_tower_height, 193.458, 193.458 * error_tolerance);
+    ASSERT_NEAR(dni_des_calc, 950., 950. * error_tolerance);
+    ASSERT_NEAR(error_equiv, 4.32749, 4.32749 * error_tolerance);
+    ASSERT_NEAR(field_model_type, 2., 2. * error_tolerance);
+    ASSERT_NEAR(helio_area_tot, 1269055., 1269055. * error_tolerance);
+    ASSERT_NEAR(is_optimize, 0., 0. * error_tolerance);
+    ASSERT_NEAR(land_max_calc, 1837.85, 1837.85 * error_tolerance);
+    ASSERT_NEAR(land_min_calc, 145.094, 145.094 * error_tolerance);
+    ASSERT_NEAR(n_hel, 8790., 8790. * error_tolerance);
+    ASSERT_NEAR(opt_algorithm, 1., 1. * error_tolerance);
+    ASSERT_NEAR(opt_flux_penalty, 0.25, 0.25 * error_tolerance);
+    ASSERT_NEAR(q_design, 670., 670. * error_tolerance);
+}
+
 TEST(Mspt_cmod_csp_tower_eqns, Case3) {
 	double error_tolerance = 0.01;
 	var_table* vd = new var_table;
