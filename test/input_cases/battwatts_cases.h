@@ -4,21 +4,18 @@
 #include <stdio.h>
 #include <string>
 #include "code_generator_utilities.h"
+#include "pvsamv1_common_data.h"
 
 /**
 * Default data from 2020.2.29 R1, pvwatts-battery residential
 */
 
-char weather_resource_path[256];
-char load_path[256];
 char ac_power_path[256];
 
-int v1 = sprintf(weather_resource_path, "%s/test/input_cases/battwatts_data/USA AZ Phoenix (TMY2).csv", SSCDIR);
-int v2 = sprintf(load_path, "%s/test/input_cases/battwatts_data/load.csv", SSCDIR);
-int v3 = sprintf(ac_power_path, "%s/test/input_cases/battwatts_data/ac_power.csv", SSCDIR); // Normally output by PVWatts
+int v1 = sprintf(ac_power_path, "%s/test/input_cases/battwatts_data/ac_power.csv", SSCDIR); // Normally output by PVWatts
 
 void pvwatts_pv_defaults(ssc_data_t& data) {
-	ssc_data_set_string(data, "solar_resource_file", weather_resource_path);
+	ssc_data_set_string(data, "solar_resource_file", solar_resource_path);
 	ssc_data_set_number(data, "system_use_lifetime_output", 0);
 	ssc_data_set_number(data, "analysis_period", 25);
 	ssc_data_set_number(data, "system_capacity", 4.6928700000000001);
@@ -36,7 +33,7 @@ void pvwatts_pv_defaults(ssc_data_t& data) {
 }
 
 void simple_battery_data(ssc_data_t& data) {
-	set_array(data, "load", load_path, 8760);
+	set_array(data, "load", load_profile_path, 8760);
 	set_array(data, "ac", ac_power_path, 8760);
 	ssc_data_set_number(data, "batt_simple_kwh", 10);
 	ssc_data_set_number(data, "batt_simple_kw", 5);
