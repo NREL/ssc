@@ -99,6 +99,7 @@ C_csp_lf_dsg_collector_receiver::C_csp_lf_dsg_collector_receiver()
 	m_opt_eta_des = std::numeric_limits<double>::quiet_NaN();	//[-]
 		// Energy and mass balance calcs
 	m_q_dot_abs_tot_des = std::numeric_limits<double>::quiet_NaN();	//[kWt]
+    m_q_dot_loss_tot_des = std::numeric_limits<double>::quiet_NaN();//[kWt]
 	m_m_dot_min = std::numeric_limits<double>::quiet_NaN();			//[kg/s]
 	m_m_dot_max = std::numeric_limits<double>::quiet_NaN();			//[kg/s]
 	m_m_dot_b_max = std::numeric_limits<double>::quiet_NaN();		//[kg/s]
@@ -817,10 +818,10 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	}
 	double q_inc_tot_des = q_inc_tot_loop*(double)m_nLoops;
 	double m_q_rec_tot_des = q_rec_tot_loop*(double)m_nLoops;			//[kWt] SYSTEM total design incident thermal power after *optical* losses
-	double q_loss_tot_des = q_loss_tot_loop*(double)m_nLoops + q_loss_piping;
-	m_q_dot_abs_tot_des = m_q_rec_tot_des - q_loss_tot_des;			//[kWt]
+	m_q_dot_loss_tot_des = q_loss_tot_loop*(double)m_nLoops + q_loss_piping;
+	m_q_dot_abs_tot_des = m_q_rec_tot_des - m_q_dot_loss_tot_des;			//[kWt]
 
-	double eta_therm_sf_des = 1.0 - q_loss_tot_des / m_q_rec_tot_des;		//[-] Design solar field efficiency
+	double eta_therm_sf_des = 1.0 - m_q_dot_loss_tot_des / m_q_rec_tot_des;		//[-] Design solar field efficiency
 
 	double eta_tot_sf_des = 0.0;
 	m_opt_eta_des = 0.0;
@@ -1067,9 +1068,10 @@ int C_csp_lf_dsg_collector_receiver::C_mono_eq_freeze_prot_E_bal::operator()(dou
 	m_Q_fp = m_m_dot_loop*(double)mpc_dsg_lf->m_nLoops*(mpc_dsg_lf->mc_sys_cold_in_t_int.m_enth-mpc_dsg_lf->mc_sys_hot_out_t_int.m_enth)/1.E3*ms_sim_info.ms_ts.m_step;	//[MJ]
 
 	// Set the normalized difference between the Field Energy Loss and Freeze Protection Energy
-	*E_loss_balance = (m_Q_fp - mpc_dsg_lf->m_Q_field_losses_total) / mpc_dsg_lf->m_Q_field_losses_total;		//[-]
+    double Q_field_loss_rel = std::max(0.01 * mpc_dsg_lf->m_q_dot_loss_tot_des / 1.E3 * ms_sim_info.ms_ts.m_step, mpc_dsg_lf->m_Q_field_losses_total);
+    *E_loss_balance = (m_Q_fp - mpc_dsg_lf->m_Q_field_losses_total) / Q_field_loss_rel;     // mpc_dsg_lf->m_Q_field_losses_total;		//[-]
 
-	return 0;
+    return 0;
 }
 
 double C_csp_lf_dsg_collector_receiver::od_pressure(double m_dot_loop /*kg/s*/)
@@ -1164,10 +1166,10 @@ int C_csp_lf_dsg_collector_receiver::freeze_protection(const C_csp_weatherreader
 		throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::off - freeze protection failed"));
 	}
 
-	if( fp_code != C_monotonic_eq_solver::CONVERGED )
-	{
-		throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::off - freeze protection failed to converge"));
-	}
+    if (!(fp_code >= C_monotonic_eq_solver::CONVERGED && std::fabs(tol_solved) < 10.0))
+    {
+        throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::off - freeze protection failed to converge"));	        throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::off - freeze protection failed to converge"));
+    }
 
 	Q_fp = c_freeze_protection_eq.m_Q_fp;		//[MJ]
 
