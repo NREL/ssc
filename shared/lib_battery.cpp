@@ -1432,8 +1432,8 @@ double lifetime_calendar_t::runLifetimeCalendarModel(size_t idx, double T, doubl
 		// only run once per iteration (need to make the last iteration)
 		if (idx > _last_idx)
 		{
-
-			if (idx % util::hours_per_day / _dt_hour == 0)
+			int steps_per_day = (int) std::round(util::hours_per_day / _dt_hour);
+			if (idx % steps_per_day == 0)
 				_day_age_of_battery++;
 
 			if (_calendar_choice == lifetime_calendar_t::LITHIUM_ION_CALENDAR_MODEL)
