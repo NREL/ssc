@@ -40,7 +40,7 @@ static var_info _cm_vtab_generic_system[] = {
 	// optional for lifetime analysis
 	{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",                  "Generic lifetime simulation",                               "0/1",      "",                              "Lifetime",             "?=0",                        "INTEGER,MIN=0,MAX=1",          "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                             "Lifetime analysis period",                             "years",    "",                              "Lifetime",             "system_use_lifetime_output=1",   "",                             "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "generic_degradation",                              "Annual module degradation",                            "%/year",   "",                              "Lifetime",             "system_use_lifetime_output=1",   "",                             "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "generic_degradation",                              "Annual AC degradation",                            "%/year",   "",                              "Lifetime",             "system_use_lifetime_output=1",   "",                             "" },
 
 
 //    OUTPUTS ----------------------------------------------------------------------------								      														   

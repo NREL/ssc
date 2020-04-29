@@ -113,7 +113,8 @@ private:
 	double m_opt_eta_des;		//[-] Design point optical efficiency (theta = 0) from the solar field
 		// Energy and mass balance calcs
 	double m_q_dot_abs_tot_des;	//[kWt] SYSTEM total thermal power absorbed by steam at design
-	double m_m_dot_min;			//[kg/s] LOOP min mass flow rate - max of field & PC bases
+    double m_q_dot_loss_tot_des;//[kWt]
+    double m_m_dot_min;			//[kg/s] LOOP min mass flow rate - max of field & PC bases
 	double m_m_dot_max;			//[kg/s] LOOP max mass flow rate - min of field & PC bases
 	double m_m_dot_b_max;		//[kg/s] LOOP max mass flow rate through boiler (m_m_dot_max/x_b_des)
 	double m_m_dot_b_des;		//[kg/s] SYSTEM mass flow rate at power cycle design
