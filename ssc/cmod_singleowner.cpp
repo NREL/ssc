@@ -1175,7 +1175,8 @@ public:
 				cf.at(CF_energy_curtailed, y) = 0.0;
 				for (size_t h = 0; h < num_rec_pre_curtailment_kwac_per_year; h++)
 				{
-					cf.at(CF_energy_curtailed, y) += system_pre_curtailment_kwac[h + (y - 1)*num_rec_pre_curtailment_kwac_per_year];
+					// add steps per hour
+					cf.at(CF_energy_curtailed, y) += system_pre_curtailment_kwac[h + (y - 1)*num_rec_pre_curtailment_kwac_per_year]*(8760/num_rec_pre_curtailment_kwac_per_year);
 				}
 				cf.at(CF_energy_curtailed, y) -= cf.at(CF_energy_net, y);
 			}
@@ -1188,6 +1189,8 @@ public:
 
 		for (size_t y = 1; y <= (size_t)nyears; y++)
 		{
+			// for fom calculations - gen is reduced by batt from grid in compute module but updated in hourly_energy_calcs.calculate(this); above
+			if (cf.at(CF_energy_curtailed, y) < 0) cf.at(CF_energy_curtailed, y) = 0; // TODO - address upstream possibly
 			if (count_curtailment_price == 1)
 				cf.at(CF_curtailment_value, y) = cf.at(CF_energy_curtailed, y) * grid_curtailment_price[0] * pow(1 + grid_curtailment_price_esc, y - 1);
 			else if (y <= count_curtailment_price)// schedule
