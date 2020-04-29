@@ -115,3 +115,27 @@ TEST_F(BatteryTest, AugmentCapacity)
 //	battery->lifetime_model()->set_replacement_option(battery_t::REPLACE_BY_SCHEDULE);
 
 }
+
+TEST_F(BatteryTest, TestLifetimeDegradation) {
+	double vals[] = { 0, 100, 365, 50 };
+	util::matrix_t<double> lifetime_matrix;
+	lifetime_matrix.assign(vals, 2, 2);
+
+	double dt_hour = 1;
+	lifetime_calendar_t hourly_lifetime(dt_hour, lifetime_matrix);
+
+	for (int idx = 0; idx < 8760; idx++) {
+		hourly_lifetime.runLifetimeCalendarModel(idx, 20, 80);
+	}
+
+	EXPECT_NEAR(hourly_lifetime.capacity_percent(), 50, 1);
+
+	dt_hour = 1.0 / 12.0; // Every 5 mins
+	lifetime_calendar_t subhourly_lifetime(dt_hour, lifetime_matrix);
+
+	for (int idx = 0; idx < 8760 * 12; idx++) {
+		subhourly_lifetime.runLifetimeCalendarModel(idx, 20, 80);
+	}
+
+	EXPECT_NEAR(subhourly_lifetime.capacity_percent(), 50, 1);
+}

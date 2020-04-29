@@ -2232,7 +2232,7 @@ int split_ind_tbl(util::matrix_t<double> &cmbd_ind, util::matrix_t<double> &T_ht
     }
     for (int i = 0; i < v_it_erase.size(); i++)
     {
-        T_amb_pars.erase(v_it_erase[v_it_erase.size()-1-i]);
+        T_amb_pars.erase(v_it_erase[v_it_erase.size() - 1 - i]);
     }
 
     v_it_erase.resize(0);
@@ -2248,7 +2248,7 @@ int split_ind_tbl(util::matrix_t<double> &cmbd_ind, util::matrix_t<double> &T_ht
     }
     for (int i = 0; i < v_it_erase.size(); i++)
     {
-        T_htf_pars.erase(v_it_erase[v_it_erase.size()-1-i]);
+        T_htf_pars.erase(v_it_erase[v_it_erase.size() - 1 - i]);
     }
 
     v_it_erase.resize(0);
@@ -2264,7 +2264,7 @@ int split_ind_tbl(util::matrix_t<double> &cmbd_ind, util::matrix_t<double> &T_ht
     }
     for (int i = 0; i < v_it_erase.size(); i++)
     {
-        m_dot_pars.erase(v_it_erase[v_it_erase.size()-1-i]);
+        m_dot_pars.erase(v_it_erase[v_it_erase.size() - 1 - i]);
     }
 
     int total_row_check = 3 * (m_dot_pars.size() + T_amb_pars.size() + T_htf_pars.size());
