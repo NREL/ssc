@@ -431,9 +431,7 @@ void pvsamv1_battery_defaults(ssc_data_t& data) {
 	ssc_number_t p_om_replacement_cost1[1] = { 500 };
 	ssc_data_set_array(data, "om_replacement_cost1", p_om_replacement_cost1, 1);
 	ssc_data_set_number(data, "batt_mass", 95);
-	ssc_data_set_number(data, "batt_length", 9.15);
-	ssc_data_set_number(data, "batt_width", 9.15);
-	ssc_data_set_number(data, "batt_height", 9.15);
+	ssc_data_set_number(data, "batt_surface_area", 502.3);
 	ssc_data_set_number(data, "batt_Cp", 1004);
 	ssc_data_set_number(data, "batt_h_to_ambient", 20);
 	set_array(data, "batt_room_temperature_celsius", temperature_path, 8760);
@@ -1148,9 +1146,7 @@ void commercial_multiarray_default(ssc_data_t& data) {
 	ssc_number_t p_om_replacement_cost1[1] = { 300 };
 	ssc_data_set_array(data, "om_replacement_cost1", p_om_replacement_cost1, 1);
 	ssc_data_set_number(data, "batt_mass", 102.70206451416016);
-	ssc_data_set_number(data, "batt_length", 0.34322008490562439);
-	ssc_data_set_number(data, "batt_width", 0.34322008490562439);
-	ssc_data_set_number(data, "batt_height", 0.34322008490562439);
+	ssc_data_set_number(data, "batt_surface_area", 0.7);
 	ssc_data_set_number(data, "batt_Cp", 1004);
 	ssc_data_set_number(data, "batt_h_to_ambient", 20);
 	set_array(data, "batt_room_temperature_celsius", temperature_path, 8760);

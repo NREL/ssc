@@ -70,7 +70,7 @@ void dispatch_t::init(battery_t * Battery, double dt_hour, int current_choice, d
 	_t_at_mode = 1000;
 	_prev_charging = false;
 	_charging = false;
-	_e_max = Battery->battery_voltage() * Battery->battery_charge_maximum_lifetime() * util::watt_to_kilowatt * 0.01 * (m_batteryPower->stateOfChargeMax - m_batteryPower->stateOfChargeMin);
+	_e_max = Battery->V() * Battery->charge_maximum_lifetime() * util::watt_to_kilowatt * 0.01 * (m_batteryPower->stateOfChargeMax - m_batteryPower->stateOfChargeMin);
 	_grid_recharge = false;
 
 	// initialize powerflow model
@@ -95,8 +95,8 @@ dispatch_t::dispatch_t(const dispatch_t& dispatch)
 // shallow copy from dispatch to this
 void dispatch_t::copy(const dispatch_t * dispatch)
 {
-	_Battery->copy(dispatch->_Battery);
-	_Battery_initial->copy(dispatch->_Battery_initial);
+	*_Battery = *dispatch->_Battery;
+	*_Battery_initial = *dispatch->_Battery_initial;
 	init(_Battery, dispatch->_dt_hour,  dispatch->_current_choice, dispatch->_t_min, dispatch->_mode);
 
 	// can't create shallow copy of unique ptr
@@ -108,11 +108,9 @@ void dispatch_t::delete_clone()
 {
 	// need to delete both, since allocated memory for both in deep copy
 	if (_Battery){
-        _Battery->delete_clone();
         delete _Battery;
 	}
 	if (_Battery_initial){
-        _Battery_initial->delete_clone();
 	    delete _Battery_initial;
 	    _Battery_initial = nullptr;
 	}
@@ -120,12 +118,11 @@ void dispatch_t::delete_clone()
 dispatch_t::~dispatch_t()
 {
 	// original _Battery doesn't need deleted, since was a pointer passed in
-	if (_Battery_initial) _Battery_initial->delete_clone();
 	delete _Battery_initial;
 }
 void dispatch_t::finalize(size_t idx, double &I)
 {
-	_Battery->copy(_Battery_initial);
+	*_Battery = *_Battery_initial;
 	m_batteryPower->powerBatteryDC = 0;
 	m_batteryPower->powerBatteryAC = 0;
 	m_batteryPower->powerGridToBattery = 0;
@@ -152,12 +149,12 @@ bool dispatch_t::check_constraints(double &I, size_t count)
 		power_iterate = true;
 	}
 	// decrease the current draw if took too much
-	if (I > 0 && _Battery->battery_soc() < m_batteryPower->stateOfChargeMin - tolerance)
+	if (I > 0 && _Battery->SOC() < m_batteryPower->stateOfChargeMin - tolerance)
 	{
 		m_batteryPower->powerBatteryTarget = _Battery_initial->calculate_max_discharge_kw(&I);
 	}
 	// decrease the current charging if charged too much
-	else if (I < 0 &&_Battery->battery_soc() > m_batteryPower->stateOfChargeMax + tolerance)
+	else if (I < 0 && _Battery->SOC() > m_batteryPower->stateOfChargeMax + tolerance)
 	{
         m_batteryPower->powerBatteryTarget = _Battery_initial->calculate_max_charge_kw(&I);
     }
@@ -200,7 +197,7 @@ bool dispatch_t::check_constraints(double &I, size_t count)
 	if (m_batteryPower->connectionMode == dispatch_t::DC_CONNECTED && m_batteryPower->sharedInverter->efficiencyAC < m_batteryPower->inverterEfficiencyCutoff)
 	{
 		// The requested DC power
-		double powerBatterykWdc = _Battery->capacity_model()->I() * _Battery->battery_voltage() * util::watt_to_kilowatt;
+		double powerBatterykWdc = _Battery->I() * _Battery->V() * util::watt_to_kilowatt;
 
 		// if battery discharging, see if can back off to get higher efficiency
 		if (m_batteryPower->powerBatteryDC > 0) {
@@ -246,7 +243,7 @@ bool dispatch_t::check_constraints(double &I, size_t count)
     // reset
 	if (iterate)
 	{
-		_Battery->copy(_Battery_initial);
+		*_Battery = *_Battery_initial;
         m_batteryPowerFlow->calculate();
     }
 
@@ -259,7 +256,7 @@ void dispatch_t::SOC_controller()
 	// Implement minimum SOC cut-off
 	if (m_batteryPower->powerBatteryDC > 0)
 	{
-		if (_Battery->battery_soc() <= m_batteryPower->stateOfChargeMin + tolerance) {
+		if (_Battery->SOC() <= m_batteryPower->stateOfChargeMin + tolerance) {
 			m_batteryPower->powerBatteryDC = 0;
 		}
 		else {
@@ -269,7 +266,7 @@ void dispatch_t::SOC_controller()
 	// Maximum SOC cut-off
 	else if (m_batteryPower->powerBatteryDC < 0)
 	{
-		if (_Battery->battery_soc() >= m_batteryPower->stateOfChargeMax - tolerance) {
+		if (_Battery->SOC() >= m_batteryPower->stateOfChargeMax - tolerance) {
 			m_batteryPower->powerBatteryDC = 0;
 		}
 		else {
@@ -328,7 +325,7 @@ bool dispatch_t::restrict_power(double &I)
 	bool iterate = false;
 	if (_current_choice == RESTRICT_POWER || _current_choice == RESTRICT_BOTH)
 	{
-		double powerBattery = I * _Battery->battery_voltage() * util::watt_to_kilowatt;
+		double powerBattery = I * _Battery->V() * util::watt_to_kilowatt;
 		double powerBatteryAC = powerBattery;
         if (powerBattery < 0)
             powerBatteryAC = powerBattery / m_batteryPower->singlePointEfficiencyACToDC;
@@ -403,7 +400,8 @@ void dispatch_t::runDispatch(size_t year, size_t hour_of_year, size_t step)
 	double I = current_controller(m_batteryPower->powerBatteryDC);
 
 	// Setup battery iteration
-	_Battery_initial->copy(_Battery);
+    *_Battery_initial = *_Battery;
+
 	bool iterate = true;
 	size_t count = 0;
 	size_t lifetimeIndex = util::lifetimeIndex(year, hour_of_year, step, static_cast<size_t>(1 / _dt_hour));
@@ -423,7 +421,7 @@ void dispatch_t::runDispatch(size_t year, size_t hour_of_year, size_t step)
 		}
 
 		// Recalculate the DC battery power
-		m_batteryPower->powerBatteryDC = I * _Battery->battery_voltage() * util::watt_to_kilowatt;
+		m_batteryPower->powerBatteryDC = I * _Battery->V() * util::watt_to_kilowatt;
 		count++;
 
 	} while (iterate);
@@ -448,8 +446,8 @@ double dispatch_t::power_battery_to_grid() { return m_batteryPower->powerBattery
 double dispatch_t::power_fuelcell_to_grid() {return m_batteryPower->powerFuelCellToGrid;}
 double dispatch_t::power_conversion_loss() { return m_batteryPower->powerConversionLoss; }
 double dispatch_t::power_system_loss() { return m_batteryPower->powerSystemLoss; }
-double dispatch_t::battery_power_to_fill() { return _Battery->battery_power_to_fill(m_batteryPower->stateOfChargeMax); }
-double dispatch_t::battery_soc() { return _Battery->battery_soc(); }
+double dispatch_t::battery_power_to_fill() { return _Battery->power_to_fill(m_batteryPower->stateOfChargeMax); }
+double dispatch_t::battery_soc() { return _Battery->SOC(); }
 BatteryPowerFlow * dispatch_t::getBatteryPowerFlow() { return m_batteryPowerFlow.get(); }
 BatteryPower * dispatch_t::getBatteryPower() { return m_batteryPower; }
 /*
@@ -542,7 +540,7 @@ void dispatch_manual_t::dispatch(size_t year,
 	prepareDispatch(hour_of_year, step);
 
 	// Initialize power flow model by calculating the battery power to dispatch
-	m_batteryPowerFlow->initialize(_Battery->capacity_model()->SOC());
+	m_batteryPowerFlow->initialize(_Battery->SOC());
 
 	// Run the dispatch
 	runDispatch(year, hour_of_year, step);
@@ -561,21 +559,21 @@ bool dispatch_manual_t::check_constraints(double &I, size_t count)
 
 		// Don't let PV export to grid if can still charge battery (increase charging)
 		if (m_batteryPower->powerPVToGrid > low_tolerance &&
-			m_batteryPower->canPVCharge &&					// only do if battery is allowed to charge
-			_Battery->battery_soc() < m_batteryPower->stateOfChargeMax - 1.0 &&		// and battery SOC is less than max
+            m_batteryPower->canPVCharge &&					// only do if battery is allowed to charge
+                                                              _Battery->SOC() < m_batteryPower->stateOfChargeMax - 1.0 &&		// and battery SOC is less than max
 			fabs(I) < fabs(m_batteryPower->currentChargeMax) &&						// and battery current is less than max charge current
 			fabs(m_batteryPower->powerBatteryDC) < (m_batteryPower->powerBatteryChargeMaxDC - 1.0) &&// and battery power is less than max charge power
 			I <= 0)											// and battery was not discharging
 		{
 			double dI = 0;
 			if (fabs(m_batteryPower->powerBatteryDC) < tolerance)
-				dI = (m_batteryPower->powerPVToGrid  * util::kilowatt_to_watt / _Battery->battery_voltage());
+				dI = (m_batteryPower->powerPVToGrid  * util::kilowatt_to_watt / _Battery->V());
 			else
 				dI = (m_batteryPower->powerPVToGrid  / fabs(m_batteryPower->powerBatteryAC)) *fabs(I);
 
 			// Main problem will be that this tends to overcharge battery maximum SOC, so check
-			double dQ = 0.01 * (m_batteryPower->stateOfChargeMax - _Battery->battery_soc()) *
-                    _Battery->battery_charge_maximum_lifetime();
+			double dQ = 0.01 * (m_batteryPower->stateOfChargeMax - _Battery->SOC()) *
+                    _Battery->charge_maximum_lifetime();
 
 			I -= fmin(dI, dQ / _dt_hour);
 		}
@@ -590,7 +588,7 @@ bool dispatch_manual_t::check_constraints(double &I, size_t count)
 
 			double dI = 0;
 			if (dP < tolerance)
-				dI = dP / _Battery->battery_voltage();
+				dI = dP / _Battery->V();
 			else
 				dI = (dP / fabs(m_batteryPower->powerBatteryAC)) *fabs(I);
 
@@ -600,7 +598,7 @@ bool dispatch_manual_t::check_constraints(double &I, size_t count)
 		else if (m_batteryPower->meterPosition == dispatch_t::BEHIND && I > 0 && m_batteryPower->powerBatteryToGrid > tolerance)
 		{
 			if (fabs(m_batteryPower->powerBatteryAC) < tolerance)
-				I -= (m_batteryPower->powerBatteryToGrid * util::kilowatt_to_watt / _Battery->battery_voltage());
+				I -= (m_batteryPower->powerBatteryToGrid * util::kilowatt_to_watt / _Battery->V());
 			else
 				I -= (m_batteryPower->powerBatteryToGrid / fabs(m_batteryPower->powerBatteryAC)) * fabs(I);
 		}
@@ -628,7 +626,7 @@ bool dispatch_manual_t::check_constraints(double &I, size_t count)
 		// reset
 		if (iterate)
 		{
-			_Battery->copy(_Battery_initial);
+            *_Battery = *_Battery_initial;
 			m_batteryPower->powerBatteryAC = 0;
 			m_batteryPower->powerGridToBattery = 0;
 			m_batteryPower->powerBatteryToGrid = 0;
@@ -774,7 +772,7 @@ bool dispatch_automatic_t::check_constraints(double &I, size_t count)
 	if (!iterate)
 	{
 		double I_initial = I;
-		double P_battery = I * _Battery->battery_voltage() * util::watt_to_kilowatt;
+		double P_battery = I * _Battery->V() * util::watt_to_kilowatt;
 		double P_target = m_batteryPower->powerBatteryTarget;
 
 		// Common to automated behind the meter and front of meter
@@ -788,7 +786,7 @@ bool dispatch_automatic_t::check_constraints(double &I, size_t count)
 		{
 			iterate = false;
 			//double dP = fabs(P_battery) - m_batteryPower->powerPVToBattery;
-			//I += dP * util::kilowatt_to_watt / _Battery->battery_voltage();
+			//I += dP * util::kilowatt_to_watt / _Battery->V();
 			//m_batteryPower->powerBatteryTarget += dP;
 		}
 
@@ -797,7 +795,7 @@ bool dispatch_automatic_t::check_constraints(double &I, size_t count)
 		{
 			// Difference between the dispatch and the desired dispatch
 			double dP = P_battery - m_batteryPower->powerBatteryTarget;
-			double SOC = _Battery->battery_soc();
+			double SOC = _Battery->SOC();
 
 			// Case 1: Charging, need to increase charging to meet target (P_battery < 0, dP > 0)
 			if (P_battery <= 0 && dP > 0) {
@@ -842,20 +840,20 @@ bool dispatch_automatic_t::check_constraints(double &I, size_t count)
 				}
 			}
 			// Otherwise safe, (decreasing charging, decreasing discharging)
-			double dQ = dP * _dt_hour * util::kilowatt_to_watt / _Battery->battery_voltage();
-			double dSOC = 100 * dQ / _Battery->battery_charge_maximum_lifetime();
+			double dQ = dP * _dt_hour * util::kilowatt_to_watt / _Battery->V();
+			double dSOC = 100 * dQ / _Battery->charge_maximum_lifetime();
 
 			if (iterate) {
 
-				double dI = dP * util::kilowatt_to_watt / _Battery->battery_voltage();
+				double dI = dP * util::kilowatt_to_watt / _Battery->V();
 				if (SOC + dSOC > m_batteryPower->stateOfChargeMax + tolerance) {
 					double dSOC_use = (m_batteryPower->stateOfChargeMax - SOC);
-					double dQ_use = dSOC_use * 0.01 * _Battery->battery_charge_maximum_lifetime();
+					double dQ_use = dSOC_use * 0.01 * _Battery->charge_maximum_lifetime();
 					dI = dQ_use / _dt_hour;
 				}
 				else if (SOC + dSOC < m_batteryPower->stateOfChargeMin - tolerance) {
 					double dSOC_use = (m_batteryPower->stateOfChargeMin - SOC);
-					double dQ_use = dSOC_use * 0.01 * _Battery->battery_charge_maximum_lifetime();
+					double dQ_use = dSOC_use * 0.01 * _Battery->charge_maximum_lifetime();
 					dI = dQ_use / _dt_hour;
 				}
 				I -= dI;
@@ -865,10 +863,11 @@ bool dispatch_automatic_t::check_constraints(double &I, size_t count)
 		else if (m_batteryPower->meterPosition == dispatch_t::BEHIND)
 		{
 			// Don't let PV export to grid if can still charge battery (increase charging) (unless following custom dispatch)
-			if (_mode != dispatch_t::CUSTOM_DISPATCH && m_batteryPower->powerPVToGrid  > tolerance && m_batteryPower->canPVCharge && _Battery->battery_soc() < m_batteryPower->stateOfChargeMax - tolerance && fabs(I) < fabs(m_batteryPower->currentChargeMax))
+			if (_mode != dispatch_t::CUSTOM_DISPATCH && m_batteryPower->powerPVToGrid  > tolerance && m_batteryPower->canPVCharge &&
+                    _Battery->SOC() < m_batteryPower->stateOfChargeMax - tolerance && fabs(I) < fabs(m_batteryPower->currentChargeMax))
 			{
 				if (fabs(m_batteryPower->powerBatteryAC) < tolerance)
-					I -= (m_batteryPower->powerPVToGrid  * util::kilowatt_to_watt / _Battery->battery_voltage());
+					I -= (m_batteryPower->powerPVToGrid  * util::kilowatt_to_watt / _Battery->V());
 				else
 					I -= (m_batteryPower->powerPVToGrid  / fabs(m_batteryPower->powerBatteryAC)) *fabs(I);
 			}
@@ -876,7 +875,7 @@ bool dispatch_automatic_t::check_constraints(double &I, size_t count)
 			else if (m_batteryPower->powerBatteryToGrid > tolerance)
 			{
 				if (fabs(m_batteryPower->powerBatteryAC) < tolerance)
-					I -= (m_batteryPower->powerBatteryToGrid * util::kilowatt_to_watt / _Battery->battery_voltage());
+					I -= (m_batteryPower->powerBatteryToGrid * util::kilowatt_to_watt / _Battery->V());
 				else
 					I -= (m_batteryPower->powerBatteryToGrid / fabs(m_batteryPower->powerBatteryAC)) * fabs(I);
 			}
@@ -907,7 +906,7 @@ bool dispatch_automatic_t::check_constraints(double &I, size_t count)
 		// reset
 		if (iterate)
 		{
-			_Battery->copy(_Battery_initial);
+            *_Battery = *_Battery_initial;
 //			m_batteryPower->powerBatteryAC = 0;
 //			m_batteryPower->powerGridToBattery = 0;
 //			m_batteryPower->powerBatteryToGrid = 0;
@@ -1132,12 +1131,12 @@ void dispatch_automatic_behind_the_meter_t::sort_grid(FILE *p, bool debug, size_
 void dispatch_automatic_behind_the_meter_t::compute_energy(FILE *p, bool debug, double & E_max)
 {
 
-	E_max = _Battery->battery_voltage() * _Battery->battery_charge_maximum_lifetime() * (m_batteryPower->stateOfChargeMax - m_batteryPower->stateOfChargeMin) * 0.01 * util::watt_to_kilowatt;
+	E_max = _Battery->V() * _Battery->charge_maximum_lifetime() * (m_batteryPower->stateOfChargeMax - m_batteryPower->stateOfChargeMin) * 0.01 * util::watt_to_kilowatt;
 
 	if (debug)
 	{
 		fprintf(p, "Energy Max: %.3f\t", E_max);
-		fprintf(p, "Battery Voltage: %.3f\n", _Battery->battery_voltage());
+		fprintf(p, "Battery Voltage: %.3f\n", _Battery->V());
 	}
 }
 
@@ -1494,7 +1493,8 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
         revenueToPVCharge = _P_pv_dc[idx_year1] > 0 ? *max_ppa_cost * m_etaDischarge - ppa_cost / m_etaPVCharge - m_cycleCost : 0;
 
         /*! Computed revenue to charge from PV in each of next X hours ($/kWh)*/
-        size_t t_duration = static_cast<size_t>(ceilf(_Battery->battery_energy_nominal() / m_batteryPower->powerBatteryChargeMaxDC));
+        size_t t_duration = static_cast<size_t>(ceilf(
+                _Battery->energy_nominal() / m_batteryPower->powerBatteryChargeMaxDC));
         size_t pv_hours_on;
         double revenueToPVChargeMax = 0;
         if (m_batteryPower->canPVCharge) {
@@ -1517,13 +1517,13 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
         revenueToDischarge = ppa_cost * m_etaDischarge - m_cycleCost;
 
         /*! Energy need to charge the battery (kWh) */
-        double energyNeededToFillBattery = _Battery->battery_energy_to_fill(m_batteryPower->stateOfChargeMax);
+        double energyNeededToFillBattery = _Battery->energy_to_fill(m_batteryPower->stateOfChargeMax);
 
         /* Booleans to assist decisions */
         bool highDischargeValuePeriod = ppa_cost == *max_ppa_cost;
         bool highChargeValuePeriod = ppa_cost == *min_ppa_cost;
         bool excessAcCapacity = _inverter_paco > m_batteryPower->powerPVThroughSharedInverter;
-        bool batteryHasDischargeCapacity = _Battery->battery_soc() >= m_batteryPower->stateOfChargeMin + 1.0;
+        bool batteryHasDischargeCapacity = _Battery->SOC() >= m_batteryPower->stateOfChargeMin + 1.0;
 
         // Always Charge if PV is clipping
         if (m_batteryPower->canClipCharge && m_batteryPower->powerPVClipped > 0 && revenueToClipCharge > 0)
@@ -1629,7 +1629,7 @@ void dispatch_automatic_front_of_meter_t::costToCycle()
 	// Calculate assuming maximum depth of discharge (most conservative assumption)
 	if (m_battCycleCostChoice == dispatch_t::MODEL_CYCLE_COST)
 	{
-		double capacityPercentDamagePerCycle = _Battery->lifetime_model()->estimateCycleDamage();
+		double capacityPercentDamagePerCycle = _Battery->estimateCycleDamage();
 		m_cycleCost = 0.01 * capacityPercentDamagePerCycle * m_battReplacementCostPerKWH;
 	}
 }

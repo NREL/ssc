@@ -9,7 +9,7 @@
 
 struct voltage_params {
     enum MODE {
-        DYNAMIC, TABLE, FLOW
+        MODEL, TABLE
     };      // voltage model (0), voltage table (1)
 
     MODE mode;
@@ -30,13 +30,14 @@ struct voltage_params {
     } dynamic;
 
     //  depth-of-discharge [%] and cell voltage [V] pairs
-    std::vector<std::pair<double, double>> m_voltage_table;
+    std::vector<std::vector<double>> voltage_table;
 
     friend std::ostream &operator<<(std::ostream &os, const voltage_params &p);
 };
 
 struct voltage_state {
     double cell_voltage;         // closed circuit voltage per cell [V]
+    double battery_voltage;
 
     friend std::ostream &operator<<(std::ostream &os, const voltage_state &p);
 };
@@ -45,11 +46,12 @@ struct voltage_state {
 Voltage Base class.
 All voltage models are based on one-cell, but return the voltage for one battery
 */
-class thermal_t;
 
 class voltage_t {
 public:
     voltage_t(int mode, int num_cells_series, int num_strings, double voltage, double dt_hour);
+
+    explicit voltage_t(std::shared_ptr<voltage_params> p);
 
     voltage_t(const voltage_t &rhs);
 
@@ -71,16 +73,12 @@ public:
     virtual double calculate_voltage_for_current(double I, double q, double qmax, double T_k) = 0;
 
     // runs calculate_voltage_for_current and changes the internal cell voltage
-    virtual void updateVoltage(capacity_t *capacity, double temp, double dt) = 0;
+    virtual void updateVoltage(double q, double qmax, double I, double temp, double dt) = 0;
 
     virtual double battery_voltage(); // voltage of one battery
 
     double battery_voltage_nominal(); // nominal voltage of battery
     double cell_voltage(); // voltage of one cell
-
-    enum VOLTAGE_CHOICE {
-        VOLTAGE_MODEL, VOLTAGE_TABLE
-    };
 
     voltage_params get_params();
 
@@ -88,13 +86,20 @@ public:
 
 protected:
     std::shared_ptr<voltage_params> params;
-    voltage_state state;
+    std::shared_ptr<voltage_state> state;
+
+private:
+    void initialize();
+
+    friend class battery_t;
 };
 
 class voltage_table_t : public voltage_t {
 public:
     voltage_table_t(int num_cells_series, int num_strings, double voltage, util::matrix_t<double> &voltage_table,
                     double R, double dt_hour);
+
+    voltage_table_t(std::shared_ptr<voltage_params> p);
 
     voltage_table_t(const voltage_table_t &rhs);
 
@@ -113,15 +118,17 @@ public:
 
     double calculate_voltage_for_current(double I, double q, double qmax, double T_k) override;
 
-    void updateVoltage(capacity_t *capacity, double temp, double dt) override;
+    void updateVoltage(double q, double qmax, double I, double temp, double dt) override;
 
 protected:
-
-private:
     std::vector<double> slopes;
     std::vector<double> intercepts;
 
     double calculate_voltage(double DOD);
+
+private:
+    void initialize();
+
 };
 
 // Shepard + Tremblay Model
@@ -129,7 +136,9 @@ class voltage_dynamic_t : public voltage_t {
 public:
     voltage_dynamic_t(int num_cells_series, int num_strings, double voltage, double Vfull,
                       double Vexp, double Vnom, double Qfull, double Qexp, double Qnom,
-                      double C_rate, double R, double dt_hr = 1.);
+                      double C_rate, double R, double dt_hr);
+
+    voltage_dynamic_t(std::shared_ptr<voltage_params> p);
 
     voltage_dynamic_t(const voltage_dynamic_t &rhs);
 
@@ -148,13 +157,10 @@ public:
 
     double calculate_voltage_for_current(double I, double q, double qmax, double T_k) override;
 
-    void updateVoltage(capacity_t *capacity, double temp, double dt) override;
+    void updateVoltage(double q, double qmax, double I, double temp, double dt) override;
 
 
 protected:
-    double voltage_model_tremblay_hybrid(double Q_cell, double I, double q0_cell);
-
-private:
     double _A;
     double _B0;
     double _E0;
@@ -162,17 +168,21 @@ private:
 
     void parameter_compute();
 
+    double voltage_model_tremblay_hybrid(double Q_cell, double I, double q0_cell);
+
     // solver quantities
     double solver_Q;
     double solver_q;
-
     double solver_cutoff_voltage;
-
     double solver_power;
 
     void solve_current_for_charge_power(const double *x, double *f);
 
     void solve_current_for_discharge_power(const double *x, double *f);
+
+private:
+    void initialize();
+
 };
 
 // D'Agostino Vanadium Redox Flow Model
@@ -180,6 +190,8 @@ class voltage_vanadium_redox_t : public voltage_t {
 public:
     voltage_vanadium_redox_t(int num_cells_series, int num_strings, double Vnom_default, double R,
                              double dt_hour = 1.);
+
+    voltage_vanadium_redox_t(std::shared_ptr<voltage_params> p);
 
     voltage_vanadium_redox_t(const voltage_vanadium_redox_t &rhs);
 
@@ -197,20 +209,17 @@ public:
 
     double calculate_voltage_for_current(double I, double q, double qmax, double T_k) override;
 
-    void updateVoltage(capacity_t *capacity, double temp, double dt) override;
+    void updateVoltage(double q, double qmax, double I, double temp, double dt) override;
 
 protected:
 
     // cell voltage model is on a per-cell basis
     double voltage_model(double q, double qmax, double I_string, double T);
 
-private:
-
     // RC/F: R is Molar gas constant [J/mol/K]^M, R is Faraday constant [As/mol]^M, C is model correction factor^M
     double m_RCF;
 
     // solver quantities
-
     double solver_Q;
     double solver_q;
     double solver_T_k;              // temp in Kelvin
@@ -220,6 +229,10 @@ private:
     void solve_current_for_power(const double *x, double *f);
 
     void solve_max_discharge_power(const double *x, double *f);
+
+private:
+    void initialize();
+
 };
 
 

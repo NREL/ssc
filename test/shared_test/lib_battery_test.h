@@ -35,34 +35,11 @@ public:
         lifetimeModel = new lifetime_t(cycleLifeMatrix, dtHour, calendarLifeMatrix);
         thermalModel = new thermal_t(1.0, mass, surface_area, resistance, Cp, h, capacityVsTemperature, T_room);
 		lossModel = new losses_t(monthlyLosses, monthlyLosses, monthlyLosses);
-		batteryModel = new battery_t(dtHour, chemistry);
-		batteryModel->initialize(capacityModel, voltageModel, lifetimeModel, thermalModel, lossModel);
+		batteryModel = new battery_t(dtHour, chemistry, capacityModel, voltageModel, lifetimeModel, thermalModel, lossModel);
 	}
 	void TearDown() {
-		if (capacityModel) {
-			delete capacityModel;
-			capacityModel = nullptr;
-		}
-		if (voltageModel) {
-			delete voltageModel;
-			voltageModel = nullptr;
-		}
-		if (lifetimeModel) {
-			delete lifetimeModel;
-			lifetimeModel = nullptr;
-		}
-		if (thermalModel) {
-			delete thermalModel;
-			thermalModel = nullptr;
-		}
-		if (lossModel) {
-			delete lossModel;
-			lossModel = nullptr;
-		}
-		if (batteryModel) {
-			delete batteryModel;
-			batteryModel = nullptr;
-		}
+	    // battery_t takes ownership of component models
+        delete batteryModel;
 	}
 };
 

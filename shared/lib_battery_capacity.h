@@ -47,6 +47,7 @@ struct capacity_params {
         double F1;  // [unitless] - internal ratio computation
         double F2;  // [unitless] - internal ratio computation
 
+        double q1;  //  [Ah] - Capacity at t1 hour discharge rate
         double q10; //  [Ah] - Capacity at 10 hour discharge rate
         double q20; // [Ah] - Capacity at 20 hour discharge rate
         double I20; // [A]  - Current at 20 hour discharge rate
@@ -65,6 +66,8 @@ public:
     capacity_t();
 
     capacity_t(double q, double SOC_init, double SOC_max, double SOC_min, double dt_hour);
+
+    explicit capacity_t(std::shared_ptr<capacity_params> p);
 
     capacity_t(const capacity_t &rhs);
 
@@ -130,7 +133,13 @@ public:
 
 protected:
     std::shared_ptr<capacity_params> params;
-    capacity_state state;
+    std::shared_ptr<capacity_state> state;
+
+private:
+    void initialize();
+
+    friend class battery_t;
+
 };
 
 /*
@@ -139,11 +148,10 @@ KiBaM specific capacity model
 class capacity_kibam_t : public capacity_t {
 public:
 
-    // Public APIs
-    capacity_kibam_t();
-
     capacity_kibam_t(double q20, double t1, double q1, double q10, double SOC_init, double SOC_max, double SOC_min,
                      double dt_hr);
+
+    capacity_kibam_t(std::shared_ptr<capacity_params> p);
 
     capacity_kibam_t(const capacity_kibam_t &rhs);
 
@@ -185,6 +193,10 @@ protected:
     // model parameters
     double c;  // [0-1] - capacity fraction
     double k;  // [1/hour] - rate constant
+
+private:
+    void initialize();
+
 };
 
 /*
@@ -192,9 +204,9 @@ Lithium Ion specific capacity model
 */
 class capacity_lithium_ion_t : public capacity_t {
 public:
-    capacity_lithium_ion_t();
-
     capacity_lithium_ion_t(double q, double SOC_init, double SOC_max, double SOC_min, double dt_hr);
+
+    capacity_lithium_ion_t(std::shared_ptr<capacity_params> p);
 
     capacity_lithium_ion_t(const capacity_lithium_ion_t &rhs);
 

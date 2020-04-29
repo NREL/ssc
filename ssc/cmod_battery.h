@@ -26,19 +26,12 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <map>
 
 #include "core.h"
+#include "lib_battery.h"
 
 // forward declarations to speed up build
 class SharedInverter;
-class voltage_t;
-class lifetime_t;
-class lifetime_cycle_t;
-class lifetime_calendar_t;
-class thermal_t;
-class capacity_t;
-class battery_t;
 class battery_metrics_t;
 class dispatch_t;
-class losses_t;
 class ChargeController;
 class UtilityRate;
 
@@ -148,9 +141,7 @@ struct batt_variables
 	double batt_replacement_capacity;
 	util::matrix_t<double> cap_vs_temp;
 	double batt_mass;
-	double batt_length;
-	double batt_width;
-	double batt_height;
+	double batt_surface_area;
 	double batt_Cp;
 	double batt_h_to_ambient;
 	std::vector<double> T_room;
@@ -284,14 +275,9 @@ struct battstor
 	size_t year_index; // index for one year (0- steps_per_hour * 8760)
 
 	// member data
-	voltage_t *voltage_model;
-	lifetime_t * lifetime_model;
-	thermal_t *thermal_model;
-	capacity_t *capacity_model;
 	battery_t *battery_model;
 	battery_metrics_t *battery_metrics;
 	dispatch_t *dispatch_model;
-	losses_t *losses_model;
 	ChargeController *charge_control;
 	UtilityRate * utilityRate;
 
@@ -382,5 +368,7 @@ struct battstor
 };
 
 void process_messages(std::shared_ptr<battstor> batt, compute_module* cm);
+
+std::shared_ptr<battery_params> create_battery_params(var_table *vt, double dt_hr);
 
 #endif

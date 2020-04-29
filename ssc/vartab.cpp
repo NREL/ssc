@@ -363,12 +363,12 @@ void vt_get_int(var_table* vt, const std::string name, int* lvalue) {
 	else throw std::runtime_error(std::string(name) + std::string(" must be assigned."));
 }
 
-void vt_get_number(var_table* vt, std::string name, double* lvalue) {
+void vt_get_number(var_table* vt, const std::string& name, double* lvalue) {
 	if (var_data* vd = vt->lookup(name)) *lvalue = vd->num;
 	else throw std::runtime_error(std::string(name) + std::string(" must be assigned."));
 }
 
-void vt_get_array_vec(var_table* vt, std::string name, std::vector<double>& vec_double) {
+void vt_get_array_vec(var_table* vt, const std::string& name, std::vector<double>& vec_double) {
 	if (var_data* vd = vt->lookup(name)){
 	    if (vd->type != SSC_ARRAY)
             throw std::runtime_error(std::string(name) + std::string(" must be array type."));
@@ -377,7 +377,19 @@ void vt_get_array_vec(var_table* vt, std::string name, std::vector<double>& vec_
 	else throw std::runtime_error(std::string(name) + std::string(" must be assigned."));
 }
 
-void vt_get_matrix(var_table* vt, std::string name, util::matrix_t<double>& matrix) {
+void vt_get_array_vec(var_table* vt, const std::string& name, std::vector<int>& vec_int) {
+    if (var_data* vd = vt->lookup(name)){
+        if (vd->type != SSC_ARRAY)
+            throw std::runtime_error(std::string(name) + std::string(" must be array type."));
+        vec_int.clear();
+        for (auto &i : vd->arr_vector()) {
+            vec_int.push_back((int)i);
+        }
+    }
+    else throw std::runtime_error(std::string(name) + std::string(" must be assigned."));
+}
+
+void vt_get_matrix(var_table* vt, const std::string& name, util::matrix_t<double>& matrix) {
 	if (var_data* vd = vt->lookup(name)){
         if (vd->type == SSC_ARRAY)
         {
@@ -391,6 +403,12 @@ void vt_get_matrix(var_table* vt, std::string name, util::matrix_t<double>& matr
         matrix = vd->num;
     }
 	else throw std::runtime_error(std::string(name) + std::string(" must be assigned."));
+}
+
+void vt_get_matrix_vec(var_table* vt, const std::string& name, std::vector<std::vector<double>>& mat) {
+    if (var_data* vd = vt->lookup(name))
+        mat = vd->matrix_vector();
+    else throw std::runtime_error(std::string(name)+std::string(" must be assigned."));
 }
 
 int var_table::as_integer( const std::string &name )

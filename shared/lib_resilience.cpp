@@ -16,7 +16,7 @@ dispatch_resilience::dispatch_resilience(const dispatch_t &orig, size_t start_in
     m_batteryPower->canDischarge = true;
 
     // change SOC limits
-    _Battery->capacity_model()->change_SOC_limits(0., 100.);
+    _Battery->changeSOCLimits(0., 100.);
 }
 
 dispatch_resilience::~dispatch_resilience() {
@@ -57,12 +57,11 @@ bool dispatch_resilience::run_outage_step_ac(double crit_load_kwac, double pv_kw
                     if (battery_dispatched_kwdc - required_kwdc > tolerance)
                         break;
                     discharge_kwdc *= 1.01;
-                    _Battery->copy(Battery_initial);
+                    *_Battery = *_Battery_initial;
                     battery_dispatched_kwdc = dispatch_kw(discharge_kwdc);
                 }
             }
             battery_dispatched_kwac = battery_dispatched_kwdc * m_batteryPower->singlePointEfficiencyDCToAC;
-			Battery_initial->delete_clone();
 			delete Battery_initial;
         }
         else
@@ -121,13 +120,12 @@ bool dispatch_resilience::run_outage_step_dc(double crit_load_kwac, double pv_kw
                     if (battery_dispatched_kwac - required_kwac > tolerance)
                         break;
                     discharge_kwdc *= 1.01;
-                    _Battery->copy(Battery_initial);
+                    *_Battery = *_Battery_initial;
                     battery_dispatched_kwdc = dispatch_kw(discharge_kwdc);
                     inverter->calculateACPower(battery_dispatched_kwdc * dc_dc_eff, V_pv, tdry);
                     battery_dispatched_kwac = inverter->powerAC_kW;
                 }
             }
-			Battery_initial->delete_clone();
             delete Battery_initial;
         }
         else{

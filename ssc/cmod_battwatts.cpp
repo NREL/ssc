@@ -73,7 +73,7 @@ battwatts_create(size_t n_recs, size_t n_years, int chem, int meter_pos, double 
     double voltage_guess = 0;
 
     // lithium ion NMC
-    if (batt_vars->batt_chem == battery_t::LITHIUM_ION)
+    if (batt_vars->batt_chem == battery_params::LITHIUM_ION)
     {
         // Voltage properties
         voltage_guess = 500;
@@ -117,7 +117,7 @@ battwatts_create(size_t n_recs, size_t n_years, int chem, int meter_pos, double 
         batt_specific_energy_per_volume = 501.25; // Wh/L
     }
         // Lead acid AGM defaults
-    else if (batt_vars->batt_chem == battery_t::LEAD_ACID)
+    else if (batt_vars->batt_chem == battery_params::LEAD_ACID)
     {
 
         // Voltage properties
@@ -168,7 +168,7 @@ battwatts_create(size_t n_recs, size_t n_years, int chem, int meter_pos, double 
     batt_vars->batt_computed_strings = (int)std::ceil((batt_vars->batt_kwh * 1000.) / (batt_vars->batt_Qfull * batt_vars->batt_computed_series * batt_vars->batt_Vnom_default)) - 1;
     batt_vars->batt_kwh = batt_vars->batt_computed_strings * batt_vars->batt_Qfull * batt_vars->batt_computed_series * batt_vars->batt_Vnom_default / 1000.;
 
-    if (batt_vars->batt_chem == battery_t::LEAD_ACID){
+    if (batt_vars->batt_chem == battery_params::LEAD_ACID){
         // Capacity properties
         double LeadAcid_q20 = 100;
         double LeadAcid_q10 = 93.2;
@@ -182,7 +182,7 @@ battwatts_create(size_t n_recs, size_t n_years, int chem, int meter_pos, double 
     }
 
     // Common Voltage properties
-    batt_vars->batt_voltage_choice = voltage_t::VOLTAGE_MODEL;
+    batt_vars->batt_voltage_choice = voltage_params::MODEL;
     batt_vars->batt_voltage_matrix = util::matrix_t<double>();
 
     // Current and Capacity
@@ -234,9 +234,7 @@ battwatts_create(size_t n_recs, size_t n_years, int chem, int meter_pos, double 
     // Common Thermal behavior
     batt_vars->batt_mass = batt_vars->batt_kwh * 1000 / batt_specific_energy_per_mass;
     double batt_volume = batt_vars->batt_kwh / batt_specific_energy_per_volume;
-    batt_vars->batt_length = std::pow(batt_volume, 1. / 3.);
-    batt_vars->batt_width = std::pow(batt_volume, 1. / 3.);
-    batt_vars->batt_height = std::pow(batt_volume, 1. / 3.);
+    batt_vars->batt_surface_area = std::pow(batt_volume, 2. / 3.) * 6;
 
     // Losses
     batt_vars->batt_loss_choice = losses_params::MONTHLY;

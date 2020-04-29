@@ -40,7 +40,7 @@ std::ostream& operator<<(std::ostream& s, util::matrix_t<T> t) {
 
 std::ostream &operator<<(std::ostream &os, const voltage_params &p) {
     char buf[256];
-    sprintf(buf, "voltage_params: { \"mode\": %d, \"num_cell_series\": %d, \"num_strings\": %d, "
+    sprintf(buf, "\"voltage_params\": { \"mode\": %d, \"num_cell_series\": %d, \"num_strings\": %d, "
                  "\"cell_voltage_nominal\": %.3f, \"R\": %.3f, \"dt_hr\": %.3f, "
                  "\"dynamic\": { \"Vfull\": %.3f, \"Vexp\": %.3f, \"Vnom\": %.3f, "
                  "\"Qfull\": %.3f, \"Qexp\": %.3f, \"Qnom\": %.3f, \"C_rate\": %.3f } }", p.mode, p.num_cells_series,
@@ -54,14 +54,15 @@ std::ostream &operator<<(std::ostream &os, const voltage_params &p) {
 
 std::ostream &operator<<(std::ostream &os, const voltage_state &p) {
     char buf[128];
-    sprintf(buf, "voltage_state: { \"cell_voltage\": %.3f }", p.cell_voltage);
+    sprintf(buf, R"("voltage_state": { "cell_voltage": %.3f, "battery_voltage": %.3f })",
+            p.cell_voltage, p.battery_voltage);
     os << buf;
     return os;
 }
 
 std::ostream &operator<<(std::ostream &os, const capacity_state &p) {
     char buf[1024];
-    sprintf(buf, "capacity_state: { \"q0\": %.3f, \"qmax_lifetime\": %.3f, \"qmax_thermal\": %.3f, \"I\": %.3f, "
+    sprintf(buf, "\"capacity_state\": { \"q0\": %.3f, \"qmax_lifetime\": %.3f, \"qmax_thermal\": %.3f, \"I\": %.3f, "
                  "\"I_loss\": %.3f, \"SOC\": %.3f, \"DOD\": %.3f, \"DOD_prev\": %.3f, "
                  "\"charge_mode\": %d, \"prev_charge\": %d, \"chargeChange\": %d, "
                  "\"leadacid\": { \"q1_0\": %.3f, \"q2_0\": %.3f, \"q1\": %.3f, \"q2\": %.3f } }",
@@ -75,7 +76,7 @@ std::ostream &operator<<(std::ostream &os, const capacity_state &p) {
 
 std::ostream &operator<<(std::ostream &os, const capacity_params &p) {
     char buf[1024];
-    sprintf(buf, "capacity_params: { \"qmax_init\": %.3f, \"SOC_init\": %.3f, \"SOC_max\": %.3f, "
+    sprintf(buf, "\"capacity_params\": { \"qmax_init\": %.3f, \"SOC_init\": %.3f, \"SOC_max\": %.3f, "
                  "\"SOC_min\": %.3f, \"dt_hr\": %.3f, "
                  "\"leadacid\": { \"t1\": %.3f, \"t2\": %.3f, \"F1\": %.3f, \"F2\": %.3f, "
                  "\"q10\": %.3f, \"q20\": %.3f, \"I20\": %.3f} }", p.qmax_init, p.SOC_init, p.SOC_max,
@@ -87,7 +88,7 @@ std::ostream &operator<<(std::ostream &os, const capacity_params &p) {
 
 std::ostream &operator<<(std::ostream &os, const cycle_state &p) {
     char buf[1024];
-    sprintf(buf, "cycle_state: { \"q_relative_cycle\": %.3f, \"n_cycles\": %d, \"range\": %.3f, \"average_range\": %.3f, "
+    sprintf(buf, "\"cycle_state\": { \"q_relative_cycle\": %.3f, \"n_cycles\": %d, \"range\": %.3f, \"average_range\": %.3f, "
                  "\"rainflow_Xlt\": %.3f, \"rainflow_Ylt\": %.3f, \"rainflow_jlt\": %d, \"peaks\": ",
             p.q_relative_cycle, p.n_cycles, p.range, p.average_range,
             p.rainflow_Xlt, p.rainflow_Ylt, p.rainflow_jlt);
@@ -97,7 +98,7 @@ std::ostream &operator<<(std::ostream &os, const cycle_state &p) {
 
 std::ostream &operator<<(std::ostream &os, const calendar_state &p) {
     char buf[1024];
-    sprintf(buf, "calendar_state: { \"q_relative_calendar\": %.3f, \"day_age_of_battery\": %d, \"last_idx\": %zd, "
+    sprintf(buf, "\"calendar_state\": { \"q_relative_calendar\": %.3f, \"day_age_of_battery\": %d, \"last_idx\": %zd, "
                  "\"dq_relative_calendar_old\": %.3f }",
             p.q_relative_calendar, p.day_age_of_battery, p.last_idx, p.dq_relative_calendar_old);
     os << buf;
@@ -106,12 +107,12 @@ std::ostream &operator<<(std::ostream &os, const calendar_state &p) {
 
 std::ostream &operator<<(std::ostream &os, const lifetime_state &p) {
     os.precision(3);
-    os << R"(lifetime_state : { "q_relative": )" << p.q_relative << ", " << *p.cycle << ", " << *p.calendar << " }";
+    os << R"("lifetime_state" : { "q_relative": )" << p.q_relative << ", " << *p.cycle << ", " << *p.calendar << " }";
     return os;
 }
 
 std::ostream &operator<<(std::ostream &os, const lifetime_params &p) {
-    os << R"(lifetime_params: { "cycling_matrix": )" << p.cycling_matrix;
+    os << R"("lifetime_params": { "cycling_matrix": )" << p.cycling_matrix;
 
     char buf[1024];
     sprintf(buf, ", \"calendar_choice\": %d, \"dt_hour\": %.3f, \"calendar_model_q0\": %.3f, "
@@ -125,23 +126,23 @@ std::ostream &operator<<(std::ostream &os, const lifetime_params &p) {
 
 std::ostream &operator<<(std::ostream &os, const replacement_state &p) {
     char buf[256];
-    sprintf(buf, R"(replacement_state: { "n_replacements": %d, "indices_replaced": )", p.n_replacements);
+    sprintf(buf, R"("replacement_state": { "n_replacements": %d, "indices_replaced": )", p.n_replacements);
     os << buf << p.indices_replaced << " }";
     return os;
 }
 
 std::ostream &operator<<(std::ostream &os, const replacement_params &p) {
     char buf[256];
-    sprintf(buf, R"(replacement_params: {"option": %d, "capacity_percent": %.3f, )", p.option, p.capacity_percent);
+    sprintf(buf, R"("replacement_params": {"option": %d, "capacity_percent": %.3f, )", p.option, p.capacity_percent);
     os << buf;
-    os << R"("schedule": )" << p.schedule << R"(", "schedule_percent_to_replace": )" << p.schedule_percent_to_replace;
+    os << R"("schedule": )" << p.schedule << R"(, "schedule_percent_to_replace": )" << p.schedule_percent_to_replace;
     os << " }";
     return os;
 }
 
 std::ostream &operator<<(std::ostream &os, const thermal_state &p) {
     char buf[256];
-    sprintf(buf, R"(thermal_state: { "q_relative_thermal": %.3f, "T_batt_avg": %.3f, "T_room": %.3f, "T_batt_prev": %.3f })",
+    sprintf(buf, R"("thermal_state": { "q_relative_thermal": %.3f, "T_batt_avg": %.3f, "T_room": %.3f, "T_batt_prev": %.3f })",
             p.q_relative_thermal, p.T_batt_avg, p.T_room, p.T_batt_prev);
     os << buf;
     return os;
@@ -149,7 +150,7 @@ std::ostream &operator<<(std::ostream &os, const thermal_state &p) {
 
 std::ostream &operator<<(std::ostream &os, const thermal_params &p) {
     char buf[1024];
-    sprintf(buf, "thermal_params: { \"dt_hour\": %.3f, \"mass\": %.3f, \"surface_area\": %.3f, "
+    sprintf(buf, "\"thermal_params\": { \"dt_hour\": %.3f, \"mass\": %.3f, \"surface_area\": %.3f, "
                  "\"Cp\": %.3f, \"h\": %.3f, \"R\": %.3f, \"cap_vs_temp\": ",
                  p.dt_hour, p.mass, p.surface_area,
                  p.Cp, p.h, p.R);
@@ -162,17 +163,37 @@ std::ostream &operator<<(std::ostream &os, const thermal_params &p) {
 
 std::ostream &operator<<(std::ostream& os, const losses_state &p) {
     char buf[256];
-    sprintf(buf, R"(losses_state: { "loss_percent": %.3f })", p.loss_percent);
+    sprintf(buf, R"("losses_state": { "loss_percent": %.3f })", p.loss_percent);
     os << buf;
     return os;
 }
 
 std::ostream &operator<<(std::ostream& os, const losses_params &p) {
     os.precision(3);
-    os << R"(losses_params: { "option": )" << p.option << ", ";
-    os << R"("charge_loss": )" << p.charge_loss << ", ";
-    os << R"("discharge_loss": )" << p.discharge_loss << ", ";
-    os << R"("idle_loss": )" << p.idle_loss << ", ";
-    os << R"("full_loss": )" << p.full_loss << " }";
+    os << R"("losses_params": { "option": )" << p.option << ", ";
+    os << R"("monthly_charge_loss": )" << p.monthly_charge_loss << ", ";
+    os << R"("monthly_discharge_loss": )" << p.monthly_discharge_loss << ", ";
+    os << R"("monthly_idle_loss": )" << p.monthly_idle_loss << ", ";
+    os << R"("schedule_loss": )" << p.schedule_loss << " }";
+    return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const battery_state &p) {
+    os << "\"battery_state\": { " << *p.capacity << ", ";
+    os << *p.voltage << ", ";
+    os << *p.thermal << ", ";
+    os << *p.lifetime << ", ";
+    os << *p.losses << ", ";
+    os << *p.replacement << " }";
+    return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const battery_params &p) {
+    os << "\"battery_params\": { " << *p.capacity << ", ";
+    os << *p.voltage << ", ";
+    os << *p.thermal << ", ";
+    os << *p.lifetime << ", ";
+    os << *p.losses << ", ";
+    os << *p.replacement << " }";
     return os;
 }

@@ -111,9 +111,7 @@ void generic_singleowner_battery_60min(ssc_data_t &data)
 	ssc_number_t p_replacement_cost[1] = { 600 };
 	ssc_data_set_array(data, "om_replacement_cost1", p_replacement_cost, 1);
 	ssc_data_set_number( data, "batt_mass", 21489202 );
-	ssc_data_set_number( data, "batt_length", 21.196117401123047 );
-	ssc_data_set_number( data, "batt_width", 21.196117401123047 );
-	ssc_data_set_number( data, "batt_height", 21.196117401123047 );
+	ssc_data_set_number( data, "batt_surface_area", 2694 );
 	ssc_data_set_number( data, "batt_Cp", 1004 );
 	ssc_data_set_number( data, "batt_h_to_ambient", 20 );
 	set_array(data, "batt_room_temperature_celsius", generictest::temperature_path, 8760);
@@ -482,9 +480,7 @@ void generic_commerical_battery_60min(ssc_data_t &data)
 	ssc_number_t p_replacement_cost[1] = { 600 };
 	ssc_data_set_array(data, "om_replacement_cost1", p_replacement_cost, 1);
 	ssc_data_set_number(data, "batt_mass", 507.8046875);
-	ssc_data_set_number(data, "batt_length", 0.58471626043319702);
-	ssc_data_set_number(data, "batt_width", 0.58471626043319702);
-	ssc_data_set_number(data, "batt_height", 0.58471626043319702);
+	ssc_data_set_number(data, "batt_surface_area", 2.05);
 	ssc_data_set_number(data, "batt_Cp", 1000);
 	ssc_data_set_number(data, "batt_h_to_ambient", 20);
 	set_array(data, "batt_room_temperature_celsius", generictest::temperature_path, 8760);

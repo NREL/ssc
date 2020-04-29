@@ -442,9 +442,7 @@ void battery_data_default(ssc_data_t& data) {
 	ssc_data_set_number(data, "batt_calendar_b", -7280);
 	ssc_data_set_number(data, "batt_calendar_c", 930);
 	ssc_data_set_number(data, "batt_mass", 50.571121215820313);
-	ssc_data_set_number(data, "batt_length", 0.27102780342102051);
-	ssc_data_set_number(data, "batt_width", 0.27102780342102051);
-	ssc_data_set_number(data, "batt_height", 0.27102780342102051);
+	ssc_data_set_number(data, "batt_surface_area", 0.4374);
 	ssc_data_set_number(data, "batt_Cp", 1004);
 	ssc_data_set_number(data, "batt_h_to_ambient", 20);
 	ssc_data_set_number(data, "T_room", 20);

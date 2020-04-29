@@ -198,7 +198,7 @@ public:
     /// Cycle with no Calendar
     lifetime_t(const util::matrix_t<double> &batt_lifetime_matrix, double dt_hour);
 
-    lifetime_t(std::shared_ptr<lifetime_params> params_ptr);
+    explicit lifetime_t(std::shared_ptr<lifetime_params> params_ptr);
 
     lifetime_t(const lifetime_t& rhs);
 
@@ -238,6 +238,8 @@ protected:
 
 private:
     void initialize();
+
+    friend class battery_t;
 };
 
 

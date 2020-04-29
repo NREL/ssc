@@ -4,12 +4,26 @@
 #include <ostream>
 #include <iostream>
 
+class nullstream : public std::ostream {
+public:
+    nullstream() : std::ostream(nullptr) {}
+    nullstream(const nullstream &) : std::ostream(nullptr) {}
+};
+
+template <class T>
+const nullstream &operator<<(nullstream &&os, const T &value) {
+    return os;
+}
+
+static nullstream ns;
+
 class logger {
 private:
     std::ostream& _out_stream;
 
 public:
-    explicit logger(std::ostream& stream = std::cout): _out_stream(stream) {}
+    logger(): _out_stream(ns) {}
+    explicit logger(std::ostream& stream): _out_stream(stream) {}
 
     explicit operator std::ostream& () {
         return _out_stream;

@@ -4,6 +4,8 @@ extern double tolerance;
 extern double low_tolerance;
 
 void lifetime_cycle_t::initialize() {
+    if (params->cycling_matrix.nrows() < 3 || params->cycling_matrix.ncols() != 3)
+        throw std::runtime_error("lifetime_cycle_t error: Battery lifetime matrix must have three columns and at least three rows");
     state = std::make_shared<cycle_state>();
     state->n_cycles = 0;
     state->q_relative_cycle = bilinear(0., 0);
@@ -309,6 +311,10 @@ void lifetime_calendar_t::initialize() {
     if (params->calendar_choice == lifetime_params::CALENDAR_CHOICE::MODEL) {
         dt_day = params->dt_hour / util::hours_per_day;
         state->q_relative_calendar = params->calendar_model_q0 * 100;
+    }
+    else if (params->calendar_choice == lifetime_params::CALENDAR_CHOICE::TABLE) {
+        if (params->calendar_matrix.nrows() < 2 || params->calendar_matrix.ncols() != 2)
+            throw std::runtime_error("lifetime_calendar_t error: Battery calendar lifetime matrix must have 2 columns and at least 2 rows");
     }
 }
 

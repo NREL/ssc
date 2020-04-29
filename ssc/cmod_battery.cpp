@@ -124,9 +124,7 @@ var_info vtab_battery_inputs[] = {
 
 	// thermal inputs
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_mass",                                   "Battery mass",                                           "kg",       "",                     "BatterySystem",       "",                           "",                             "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "batt_length",                                 "Battery length",                                         "m",        "",                     "BatterySystem",       "",                           "",                             "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "batt_width",                                  "Battery width",                                          "m",        "",                     "BatterySystem",       "",                           "",                             "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "batt_height",                                 "Battery height",                                         "m",        "",                     "BatterySystem",       "",                           "",                             "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "batt_surface_area",                           "Battery surface area",                                   "m^2",      "",                     "BatterySystem",       "",                           "",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_Cp",                                     "Battery specific heat capacity",                         "J/KgK",    "",                     "BatteryCell",       "",                           "",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_h_to_ambient",                           "Heat transfer between battery and environment",          "W/m2K",    "",                     "BatteryCell",       "",                           "",                             "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "batt_room_temperature_celsius",               "Temperature of storage room",                            "C",        "",                     "BatteryCell",       "",                           "",                             "" },
@@ -311,7 +309,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 			batt_vars->batt_chem = vt.as_integer("batt_chem");
 
 			// Lead acid settings
-			if (batt_vars->batt_chem == battery_t::LEAD_ACID)
+			if (batt_vars->batt_chem == battery_params::LEAD_ACID)
 			{
 				batt_vars->LeadAcid_q10_computed = vt.as_double("LeadAcid_q10_computed");
 				batt_vars->LeadAcid_q20_computed = vt.as_double("LeadAcid_q20_computed");
@@ -536,7 +534,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             batt_vars->batt_replacement_option = vt.as_integer("batt_replacement_option");
 			batt_vars->batt_replacement_capacity = vt.as_double("batt_replacement_capacity");
 
-			if (batt_vars->batt_replacement_option == battery_t::REPLACE_BY_SCHEDULE) {
+			if (batt_vars->batt_replacement_option == replacement_params::SCHEDULE) {
 				batt_vars->batt_replacement_schedule = vt.as_vector_integer("batt_replacement_schedule");
 				batt_vars->batt_replacement_schedule_percent = vt.as_vector_double("batt_replacement_schedule_percent");
 			}
@@ -554,9 +552,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 			// Thermal behavior
 			batt_vars->cap_vs_temp = vt.as_matrix("cap_vs_temp");
 			batt_vars->batt_mass = vt.as_double("batt_mass");
-			batt_vars->batt_length = vt.as_double("batt_length");
-			batt_vars->batt_width = vt.as_double("batt_width");
-			batt_vars->batt_height = vt.as_double("batt_height");
+			batt_vars->batt_surface_area = vt.as_double("batt_surface_area");
 			batt_vars->batt_Cp = vt.as_double("batt_Cp");
 			batt_vars->batt_h_to_ambient = vt.as_double("batt_h_to_ambient");
 			batt_vars->T_room = vt.as_vector_double("batt_room_temperature_celsius");
@@ -605,13 +601,8 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 	}
 
 	// component models
-	voltage_model = 0;
-	lifetime_model = 0;
-	thermal_model = 0;
 	battery_model = 0;
-	capacity_model = 0;
 	dispatch_model = 0;
-	losses_model = 0;
 	charge_control = 0;
 	battery_metrics = 0;
 
@@ -673,19 +664,6 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 	total_steps = nyears * 8760 * step_per_hour;
 	chem = batt_vars->batt_chem;
 
-	util::matrix_t<double>  batt_voltage_matrix = batt_vars->batt_voltage_matrix;
-	if (batt_vars->batt_voltage_choice == voltage_t::VOLTAGE_TABLE)
-	{
-		if (batt_voltage_matrix.nrows() < 2 || batt_voltage_matrix.ncols() != 2)
-			throw exec_error("battery", "Battery lifetime matrix must have 2 columns and at least 2 rows");
-	}
-	util::matrix_t<double>  batt_lifetime_matrix = batt_vars->batt_lifetime_matrix;
-	if (batt_lifetime_matrix.nrows() < 3 || batt_lifetime_matrix.ncols() != 3)
-		throw exec_error("battery", "Battery lifetime matrix must have three columns and at least three rows");
-
-	util::matrix_t<double>  batt_calendar_lifetime_matrix = batt_vars->batt_calendar_lifetime_matrix;
-	if (batt_vars->batt_calendar_choice == lifetime_params::CALENDAR_CHOICE::TABLE && (batt_calendar_lifetime_matrix.nrows() < 2 || batt_calendar_lifetime_matrix.ncols() != 2))
-		throw exec_error("battery", "Battery calendar lifetime matrix must have 2 columns and at least 2 rows");
 
 	/* **********************************************************************
 	Initialize outputs
@@ -779,13 +757,19 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 	outAnnualEnergyLoss[0] = 0;
 
 	// model initialization
-	if ((chem == battery_t::LEAD_ACID || chem == battery_t::LITHIUM_ION) &&  batt_vars->batt_voltage_choice == voltage_t::VOLTAGE_MODEL)
+    voltage_t* voltage_model = 0;
+    lifetime_t* lifetime_model = 0;
+    thermal_t* thermal_model = 0;
+    capacity_t* capacity_model = 0;
+    losses_t* losses_model = 0;
+
+	if ((chem == battery_params::LEAD_ACID || chem == battery_params::LITHIUM_ION) && batt_vars->batt_voltage_choice == voltage_params::MODEL)
 		voltage_model = new voltage_dynamic_t(batt_vars->batt_computed_series, batt_vars->batt_computed_strings,
                                               batt_vars->batt_Vnom_default, batt_vars->batt_Vfull, batt_vars->batt_Vexp,
                                               batt_vars->batt_Vnom, batt_vars->batt_Qfull, batt_vars->batt_Qexp,
                                               batt_vars->batt_Qnom, batt_vars->batt_C_rate, batt_vars->batt_resistance,
                                               dt_hr);
-	else if ((chem == battery_t::VANADIUM_REDOX) && batt_vars->batt_voltage_choice == voltage_t::VOLTAGE_MODEL)
+	else if ((chem == battery_params::VANADIUM_REDOX) && batt_vars->batt_voltage_choice == voltage_params::MODEL)
 		voltage_model = new voltage_vanadium_redox_t(batt_vars->batt_computed_series, batt_vars->batt_computed_strings,
                                                      batt_vars->batt_Vnom_default, batt_vars->batt_resistance, dt_hr);
 	else
@@ -793,29 +777,24 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 		        batt_vars->batt_voltage_matrix, batt_vars->batt_resistance, dt_hr);
 
 	if (batt_vars->batt_calendar_choice == lifetime_params::CALENDAR_CHOICE::MODEL) {
-        lifetime_model = new lifetime_t(batt_lifetime_matrix, dt_hr,
+        lifetime_model = new lifetime_t(batt_vars->batt_lifetime_matrix, dt_hr,
                 batt_vars->batt_calendar_q0, batt_vars->batt_calendar_a, batt_vars->batt_calendar_b, batt_vars->batt_calendar_c);
     }
 	else if (batt_vars->batt_calendar_choice == lifetime_params::CALENDAR_CHOICE::TABLE) {
-        lifetime_model = new lifetime_t(batt_lifetime_matrix, dt_hr, batt_calendar_lifetime_matrix);
+        lifetime_model = new lifetime_t(batt_vars->batt_lifetime_matrix, dt_hr, batt_vars->batt_calendar_lifetime_matrix);
     }
 	else {
-        lifetime_model = new lifetime_t(batt_lifetime_matrix, dt_hr);
+        lifetime_model = new lifetime_t(batt_vars->batt_lifetime_matrix, dt_hr);
     }
-
-	if (batt_vars->cap_vs_temp.nrows() < 2 || batt_vars->cap_vs_temp.ncols() != 2) {
-		throw exec_error("battery", "capacity vs temperature matrix must have two columns and at least two rows");
-	}
 
 	if (batt_vars->T_room.size() != nrec) {
 		throw exec_error("battery", "Environment temperature input length must equal number of weather file records");
 	}
 
-	double surface_area = batt_vars->batt_length * batt_vars->batt_length * 6;
 	thermal_model = new thermal_t(
             dt_hr,
             batt_vars->batt_mass, // [kg]
-            surface_area, // [m]
+            batt_vars->batt_surface_area, // [m]
             batt_vars->batt_resistance, // [J/kgK]
             batt_vars->batt_Cp,
             batt_vars->batt_h_to_ambient,
@@ -823,12 +802,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             batt_vars->T_room
             );
 
-
-	battery_model = new battery_t(
-		dt_hr,
-		chem);
-
-	if (chem == battery_t::LEAD_ACID)
+	if (chem == battery_params::LEAD_ACID)
 	{
 		capacity_model = new capacity_kibam_t(
 			batt_vars->LeadAcid_q20_computed,
@@ -840,45 +814,34 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 			batt_vars->batt_minimum_SOC,
             dt_hr);
 	}
-	else if (chem == battery_t::LITHIUM_ION)
+	else if (chem == battery_params::LITHIUM_ION)
 	{
 		capacity_model = new capacity_lithium_ion_t(
 			batt_vars->batt_Qfull*batt_vars->batt_computed_strings, batt_vars->batt_initial_SOC, batt_vars->batt_maximum_SOC, batt_vars->batt_minimum_SOC, dt_hr);
 	}
 	// for now assume Flow Batteries responds quickly, like Lithium-ion, but with an independent capacity/power
-	else if (chem == battery_t::VANADIUM_REDOX || chem == battery_t::IRON_FLOW)
+	else if (chem == battery_params::VANADIUM_REDOX || chem == battery_params::IRON_FLOW)
 	{
 		capacity_model = new capacity_lithium_ion_t(
 			batt_vars->batt_Qfull_flow, batt_vars->batt_initial_SOC, batt_vars->batt_maximum_SOC, batt_vars->batt_minimum_SOC, dt_hr);
-	}
-
-	// Check loss inputs
-	if (batt_vars->batt_loss_choice == losses_params::MONTHLY && !(batt_vars->batt_losses_charging.size() == 1 || batt_vars->batt_losses_charging.size() == 12)) {
-		throw exec_error("battery", "charging loss length must be 1 or 12 for monthly input mode");
-	}
-	if (batt_vars->batt_loss_choice == losses_params::MONTHLY && !(batt_vars->batt_losses_discharging.size() == 1 || batt_vars->batt_losses_discharging.size() == 12)) {
-		throw exec_error("battery", "discharging loss length must be 1 or 12 for monthly input mode");
-	}
-	if (batt_vars->batt_loss_choice == losses_params::MONTHLY && !(batt_vars->batt_losses_idle.size() == 1 || batt_vars->batt_losses_idle.size() == 12)) {
-		throw exec_error("battery", "discharging loss length must be 1 or 12 for monthly input mode");
-	}
-	if (batt_vars->batt_loss_choice == losses_params::SCHEDULE && !(batt_vars->batt_losses.size() == 1 || batt_vars->batt_losses.size() == nrec)) {
-		throw exec_error("battery", "system loss input length must be 1 or equal to weather file length for time series input mode");
 	}
 
 	if (batt_vars->batt_loss_choice == losses_params::MONTHLY) {
         losses_model = new losses_t(batt_vars->batt_losses_charging,batt_vars->batt_losses_discharging, batt_vars->batt_losses_idle);
 	}
     else if (batt_vars->batt_loss_choice == losses_params::SCHEDULE) {
+        if (!(batt_vars->batt_losses.size() == 1 || batt_vars->batt_losses.size() == nrec)) {
+            throw exec_error("battery", "system loss input length must be 1 or equal to weather file length for time series input mode");
+        }
         losses_model = new losses_t(batt_vars->batt_losses);
     }
     else {
         losses_model = new losses_t();
     }
 
-    battery_model->initialize(capacity_model, voltage_model, lifetime_model, thermal_model, losses_model);
+    battery_model = new battery_t( dt_hr, chem,capacity_model, voltage_model, lifetime_model, thermal_model, losses_model);
 
-	if (batt_vars->batt_replacement_option == replacement_params::SCHEDULE) {
+    if (batt_vars->batt_replacement_option == replacement_params::SCHEDULE) {
 	    battery_model->setupReplacements(batt_vars->batt_replacement_schedule, batt_vars->batt_replacement_schedule_percent);
 	}
 	else if (batt_vars->batt_replacement_option == replacement_params::CAPACITY_PERCENT) {
@@ -1168,14 +1131,9 @@ void battstor::initialize_automated_dispatch(std::vector<ssc_number_t> pv, std::
 }
 battstor::~battstor()
 {
-	delete voltage_model;
-	delete lifetime_model;
-	delete thermal_model;
-	delete capacity_model;
 	delete battery_model;
 	delete battery_metrics;
 	delete dispatch_model;
-	delete losses_model;
 	delete charge_control;
 }
 
@@ -1292,11 +1250,6 @@ battstor::battstor(const battstor& orig){
             throw general_error("dispatch_model in battstor is not of recognized type.");
 
         battery_model = dispatch_model->battery_model();
-        capacity_model = battery_model->capacity_model();
-        voltage_model = battery_model->voltage_model();
-        lifetime_model = battery_model->lifetime_model();
-        thermal_model = battery_model->thermal_model();
-        losses_model = battery_model->losses_model();
     }
     else{
         dispatch_model = nullptr;
@@ -1314,37 +1267,9 @@ battstor::battstor(const battstor& orig){
         charge_control = nullptr;
         if( orig.battery_model ){
             battery_model = new battery_t(*orig.battery_model);
-            capacity_model = battery_model->capacity_model();
-            voltage_model = battery_model->voltage_model();
-            lifetime_model = battery_model->lifetime_model();
-            thermal_model = battery_model->thermal_model();
-            losses_model = battery_model->losses_model();
         }
         else {
             battery_model = nullptr;
-            if( orig.voltage_model )
-                voltage_model = orig.voltage_model->clone();
-            else
-                voltage_model = nullptr;
-            if( orig.capacity_model )
-                capacity_model = battery_model->capacity_model();
-            else
-                capacity_model = nullptr;
-            if( orig.lifetime_model ) {
-                lifetime_model = orig.lifetime_model->clone();
-            }
-            else {
-                lifetime_model = nullptr;
-            }
-            if( orig.thermal_model )
-                thermal_model = orig.thermal_model->clone();
-            else
-                thermal_model = nullptr;
-            if (orig.losses_model){
-                losses_model = new losses_t(*orig.losses_model);
-            }
-            else
-                losses_model = nullptr;
         }
     }
 }
@@ -1393,36 +1318,36 @@ void battstor::setSharedInverter(SharedInverter * sharedInverter)
 }
 void battstor::outputs_fixed()
 {
+    auto state = battery_model->get_state();
 	// non-lifetime outputs
 	if (year < 1)
 	{
 		// Capacity Output with Losses Applied
-		if (capacity_kibam_t * kibam = dynamic_cast<capacity_kibam_t*>(capacity_model))
+		if (chem == battery_params::LEAD_ACID)
 		{
-			outAvailableCharge[index] = (ssc_number_t)(kibam->q1());
-			outBoundCharge[index] = (ssc_number_t)(kibam->q2());
+			outAvailableCharge[index] = (ssc_number_t)(state.capacity->leadacid.q1);
+			outBoundCharge[index] = (ssc_number_t)(state.capacity->leadacid.q2);
 		}
-		outCellVoltage[index] = (ssc_number_t)(voltage_model->cell_voltage());
-		outMaxCharge[index] = (ssc_number_t)(capacity_model->qmax());
-		outMaxChargeThermal[index] = (ssc_number_t)(capacity_model->qmax_thermal());
+		outCellVoltage[index] = (ssc_number_t)(state.voltage->cell_voltage);
+		outMaxCharge[index] = (ssc_number_t)(state.capacity->qmax_lifetime);
+		outMaxChargeThermal[index] = (ssc_number_t)(state.capacity->qmax_thermal);
 
-		outBatteryTemperature[index] = (ssc_number_t)thermal_model->T_battery();
-		outCapacityThermalPercent[index] = (ssc_number_t)(thermal_model->capacity_percent());
+		outBatteryTemperature[index] = (ssc_number_t)state.thermal->T_batt_avg;
+		outCapacityThermalPercent[index] = (ssc_number_t)(state.thermal->q_relative_thermal);
 	}
 
 	// Lifetime outputs
-	outTotalCharge[index] = (ssc_number_t)(capacity_model->q0());
-	outCurrent[index] = (ssc_number_t)(capacity_model->I());
-	outBatteryVoltage[index] = (ssc_number_t)(voltage_model->battery_voltage());
+	outTotalCharge[index] = (ssc_number_t)(state.capacity->q0);
+	outCurrent[index] = (ssc_number_t)(state.capacity->I);
+	outBatteryVoltage[index] = (ssc_number_t)(battery_model->V());
 
-	auto state = lifetime_model->get_state();
-	outCycles[index] = (ssc_number_t)(state.cycle->n_cycles);
-	outSOC[index] = (ssc_number_t)(capacity_model->SOC());
-	outDOD[index] = (ssc_number_t)(state.cycle->range);
-	outDODCycleAverage[index] = (ssc_number_t)(state.cycle->average_range);
-	outCapacityPercent[index] = (ssc_number_t)(lifetime_model->capacity_percent());
-	outCapacityPercentCycle[index] = (ssc_number_t)(lifetime_model->capacity_percent_cycle());
-	outCapacityPercentCalendar[index] = (ssc_number_t)(lifetime_model->capacity_percent_calendar());
+	outCycles[index] = (ssc_number_t)(state.lifetime->cycle->n_cycles);
+	outSOC[index] = (ssc_number_t)(state.capacity->SOC);
+	outDOD[index] = (ssc_number_t)(state.lifetime->cycle->range);
+	outDODCycleAverage[index] = (ssc_number_t)(state.lifetime->cycle->average_range);
+	outCapacityPercent[index] = (ssc_number_t)(state.lifetime->q_relative);
+	outCapacityPercentCycle[index] = (ssc_number_t)(state.lifetime->cycle->q_relative_cycle);
+	outCapacityPercentCalendar[index] = (ssc_number_t)(state.lifetime->calendar->q_relative_calendar);
 
 }
 
@@ -1577,6 +1502,116 @@ void process_messages(shared_ptr<battstor> batt, compute_module* cm)
 //        cm->log(dispatch_messages.construct_log_count_string(i), SSC_NOTICE);
 //    for (int i = 0; i != (int)thermal_messages.total_message_count(); i++)
 //        cm->log(thermal_messages.construct_log_count_string(i), SSC_NOTICE);
+}
+
+std::shared_ptr<battery_params> create_battery_params(var_table *vt, double dt_hr) {
+    auto params = std::make_shared<battery_params>();
+    int chem;
+    vt_get_int(vt, "batt_chem", &chem);
+    params->chem = static_cast<battery_params::CHEM>(chem);
+
+    // voltage
+    auto voltage = params->voltage;
+    int choice;
+    vt_get_int(vt, "batt_voltage_choice", &choice);
+    voltage->mode = static_cast<voltage_params::MODE>(choice);
+    voltage->dt_hr = dt_hr;
+    vt_get_int(vt, "batt_computed_series", &voltage->num_cells_series);
+    vt_get_int(vt, "batt_computed_strings", &voltage->num_strings);
+    vt_get_number(vt, "batt_Vnom_default", &voltage->cell_voltage_nominal);
+    vt_get_number(vt, "batt_resistance", &voltage->R);
+
+    if (voltage->mode == voltage_params::TABLE || params->chem == battery_params::IRON_FLOW) {
+        vt_get_matrix_vec(vt, "batt_voltage_matrix", voltage->voltage_table);
+    }
+    else {
+        if (params->chem == battery_params::LEAD_ACID  || params->chem == battery_params::LITHIUM_ION) {
+            vt_get_number(vt, "batt_Vfull", &voltage->dynamic.Vfull);
+            vt_get_number(vt, "batt_Vexp", &voltage->dynamic.Vexp);
+            vt_get_number(vt, "batt_Qfull", &voltage->dynamic.Qfull);
+            vt_get_number(vt, "batt_Qexp", &voltage->dynamic.Qexp);
+            vt_get_number(vt, "batt_Qnom", &voltage->dynamic.Qnom);
+            vt_get_number(vt, "batt_C_rate", &voltage->dynamic.C_rate);
+        }
+    }
+
+    // capacity
+    auto capacity = params->capacity;
+    vt_get_number(vt, "batt_initial_SOC", &capacity->SOC_init);
+    vt_get_number(vt, "batt_maximum_soc", &capacity->SOC_max);
+    vt_get_number(vt, "batt_minimum_soc", &capacity->SOC_min);
+    params->dt_hour = dt_hr;
+    if (params->chem == battery_params::LEAD_ACID) {
+        vt_get_number(vt, "LeadAcid_q20_computed", &capacity->leadacid.q20);
+        vt_get_number(vt, "LeadAcid_tn", &capacity->leadacid.t1);
+        vt_get_number(vt, "LeadAcid_qn_computed", &capacity->leadacid.q1);
+        vt_get_number(vt, "LeadAcid_q10_computed", &capacity->leadacid.q10);
+        vt_get_number(vt, "LeadAcid_q20_computed", &capacity->leadacid.q20);
+        vt_get_number(vt, "LeadAcid_q20_computed", &capacity->leadacid.q20);
+    }
+    else if (chem == battery_params::LITHIUM_ION)
+    {
+        capacity->qmax_init = voltage->dynamic.Qfull * voltage->num_strings;
+    }
+    else if (chem == battery_params::VANADIUM_REDOX || chem == battery_params::IRON_FLOW)
+    {
+        capacity->qmax_init = voltage->dynamic.Qfull;
+    }
+
+    // lifetime
+    auto lifetime = params->lifetime;
+    vt_get_int(vt, "batt_calendar_choice", &choice);
+    lifetime->calendar_choice = static_cast<lifetime_params::CALENDAR_CHOICE>(choice);
+    lifetime->dt_hour = dt_hr;
+    vt_get_matrix(vt, "batt_lifetime_matrix", lifetime->cycling_matrix);
+    if (lifetime->calendar_choice == lifetime_params::CALENDAR_CHOICE::MODEL) {
+        vt_get_number(vt, "batt_calendar_q0", &lifetime->calendar_model_q0);
+        vt_get_number(vt, "batt_calendar_a", &lifetime->calendar_model_a);
+        vt_get_number(vt, "batt_calendar_b", &lifetime->calendar_model_b);
+        vt_get_number(vt, "batt_calendar_c", &lifetime->calendar_model_c);
+    }
+    else if (lifetime->calendar_choice == lifetime_params::CALENDAR_CHOICE::TABLE) {
+        vt_get_matrix(vt, "batt_calendar_lifetime_matrix", lifetime->calendar_matrix);
+    }
+
+    // thermal
+    auto thermal = params->thermal;
+    thermal->dt_hour = dt_hr;
+    thermal->option = thermal_params::SCHEDULE;
+    thermal->R = params->voltage->R;
+    vt_get_number(vt, "batt_mass", &thermal->mass);
+    vt_get_number(vt, "batt_surface_area", &thermal->surface_area);
+    vt_get_number(vt, "batt_Cp", &thermal->Cp);
+    vt_get_number(vt, "batt_h_to_ambient", &thermal->h);
+    vt_get_array_vec(vt, "batt_room_temperature_celsius", thermal->T_room_schedule);
+    vt_get_matrix(vt, "cap_vs_temp", thermal->cap_vs_temp);
+
+    // losses
+    auto losses = params->losses;
+    vt_get_int(vt, "batt_loss_choice", &choice);
+    losses->option = static_cast<losses_params::OPTIONS>(choice);
+    if (losses->option == losses_params::MONTHLY) {
+        vt_get_array_vec(vt, "batt_losses_charging", losses->monthly_charge_loss);
+        vt_get_array_vec(vt, "batt_losses_discharging", losses->monthly_discharge_loss);
+        vt_get_array_vec(vt, "batt_losses_idle", losses->monthly_idle_loss);
+    }
+    else if (losses->option == losses_params::SCHEDULE) {
+        vt_get_array_vec(vt, "batt_losses", losses->schedule_loss);
+    }
+
+    // replacements
+    auto replacements = params->replacement;
+    vt_get_int(vt, "batt_replacement_option", &choice);
+    replacements->option = static_cast<replacement_params::OPTIONS>(choice);
+    if (replacements->option == replacement_params::SCHEDULE) {
+        vt_get_array_vec(vt, "batt_replacement_schedule", replacements->schedule);
+        vt_get_array_vec(vt, "batt_replacement_schedule_percent", replacements->schedule_percent_to_replace);
+    }
+    else if (replacements->option == replacement_params::CAPACITY_PERCENT) {
+        vt_get_number(vt, "batt_replacement_capacity", &replacements->capacity_percent);
+    }
+
+    return params;
 }
 
 class cm_battery : public compute_module

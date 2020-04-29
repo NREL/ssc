@@ -55,8 +55,7 @@ public:
         lifetimeModel = new lifetime_t(cycleLifeMatrix, dtHour, calendar_q0, calendar_a, calendar_b, calendar_c);
         thermalModel = new thermal_t(1.0, mass, surface_area, resistance, Cp, h, capacityVsTemperature, T_room);
         lossModel = new losses_t();
-        batteryModel = new battery_t(dtHour, chemistry);
-        batteryModel->initialize(capacityModel, voltageModel, lifetimeModel, thermalModel, lossModel);
+        batteryModel = new battery_t(dtHour, chemistry, capacityModel, voltageModel, lifetimeModel, thermalModel, lossModel);
 
         int numberOfInverters = 1;
         m_sharedInverter = new SharedInverter(SharedInverter::SANDIA_INVERTER, numberOfInverters, sandia, partload, ond);
@@ -64,11 +63,6 @@ public:
     void TearDown()
     {
         BatteryProperties::TearDown();
-        delete capacityModel;
-        delete voltageModel;
-        delete lifetimeModel;
-        delete thermalModel;
-        delete lossModel;
         delete batteryModel;
         delete dispatchManual;
     }

@@ -90,9 +90,7 @@ namespace {
 		ssc_number_t p_replacement_cost[1] = { 68 };
 		ssc_data_set_array(data, "om_replacement_cost1", p_replacement_cost, 1);
 		ssc_data_set_number(data, "batt_mass", 15);
-		ssc_data_set_number(data, "batt_length", 1.41);
-		ssc_data_set_number(data, "batt_width", 1.41);
-		ssc_data_set_number(data, "batt_height", 1.41);
+		ssc_data_set_number(data, "batt_surface_area", 11.92);
 		ssc_data_set_number(data, "batt_Cp", 1004);
 		ssc_data_set_number(data, "batt_h_to_ambient", 20);
 		set_array(data, "batt_room_temperature_celsius", temperature_path, 8760);
