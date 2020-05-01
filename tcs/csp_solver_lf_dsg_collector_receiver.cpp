@@ -1741,7 +1741,7 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 
 			if( defocus_code != C_monotonic_eq_solver::CONVERGED )
 			{
-				if( defocus_tol_solved == defocus_tol_solved && defocus_tol_solved < 0.1 )
+				if( defocus_tol_solved == defocus_tol_solved && defocus_tol_solved < 0.3 )
 				{
 					double blah = 1.23;
 				}
@@ -1790,7 +1790,7 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 
 			if( m_dot_code != C_monotonic_eq_solver::CONVERGED )
 			{
-                if (m_dot_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) <= 0.1)
+                if (m_dot_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) <= 0.3)
                 {
                     std::string error_msg = util::format("At time = %lg the iteration to find the steam mass flow rate resulting in the target outlet enthalpy only reached a convergence "
                         "= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
