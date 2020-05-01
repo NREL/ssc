@@ -107,20 +107,13 @@ bool compute_module::evaluate()
 
     if (table_indices.size() < 1) return true;      // no equations relevant to cmod
 
-    // Cycle through calling all relevant ssc_equations until convergence
-    const size_t kMaxIterations = 100;
-    const double kMaxConvergenceTol = 0.001;    //RMS
-    size_t iteration = 0;
-    double convergence_error = std::numeric_limits<double>::quiet_NaN();
-    var_table var_table_prev_iter = *m_vartab;
-    do {
-        iteration++;
-
-        // Call all equations
+    // For calling all relevant ssc_equations
+    auto CallSscEquations = [this](std::vector<size_t> table_indices)
+    {
         for (std::vector<size_t>::iterator it = table_indices.begin(); it != table_indices.end(); ++it) {
             std::size_t table_row = *it;
             ssc_equation_ptr ssc_equation = ssc_equation_table[table_row].func;
-            ssc_data_t var_table_data = static_cast<ssc_data_t>(m_vartab);
+            ssc_data_t var_table_data = static_cast<ssc_data_t>(this->m_vartab);
 
             try
             {
@@ -132,6 +125,20 @@ bool compute_module::evaluate()
                 return false;
             }
         }
+    };
+
+    CallSscEquations(table_indices);            //initial call populating outputs
+
+    // Call all equations until convergence
+    const size_t kMaxIterations = 100;
+    const double kMaxConvergenceTol = 0.001;    //RMS
+    size_t iteration = 0;
+    double convergence_error = std::numeric_limits<double>::quiet_NaN();
+    var_table var_table_prev_iter = *m_vartab;
+    do {
+        iteration++;
+
+        CallSscEquations(table_indices);
 
         // Calculate convergence_error by comparing var_table values with previous
         convergence_error = 0.;
@@ -217,7 +224,7 @@ bool compute_module::evaluate()
             default:
             {
                 float time = -1.;
-                log("SSC data type not supported for ssc_equations", SSC_ERROR, time);      // TODO - add data type as string to error message
+                log(var_data::type_name(variable_data->type) + " data types not supported for ssc_equations", SSC_ERROR, time);
                 return false;
                 //break;
             }
@@ -225,7 +232,10 @@ bool compute_module::evaluate()
         }
         convergence_error = sqrt(squared_error/static_cast<double>(n_differences));
 
-        var_table_prev_iter = *m_vartab;
+        // the copy assignment operator seems to have issues
+        //var_table_prev_iter = *m_vartab;
+        bool overwrite_existing = true;
+        var_table_prev_iter.merge(*m_vartab, overwrite_existing);
     } while (convergence_error > kMaxConvergenceTol && iteration < kMaxIterations);
 
     if (convergence_error > kMaxConvergenceTol) {
