@@ -107,7 +107,6 @@ TEST_F(CMBattery_cmod_battery, ResilienceMetricsFullLoadLifetime){
     data_vtab->assign("gen", var_data(data_vtab->as_array("gen", nullptr), 8760 * nyears));
     data_vtab->assign("batt_replacement_option", 0);
 
-
     int errors = run_module(data, "battery");
     EXPECT_FALSE(errors);
 

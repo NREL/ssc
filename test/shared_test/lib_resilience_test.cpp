@@ -329,32 +329,31 @@ public:
 TEST_F(ResilienceTest_lib_resilience, VoltageVanadium){
     auto volt = voltage_vanadium_redox_t(1, 1, 1.41, 0.001, 1);
     auto cap = capacity_lithium_ion_t(11, 30, 100, 0, 1);
-    auto temp = thermal_test();
 
-    volt.updateVoltage(cap.q0(), cap.qmax(), cap.I(), temp.T_battery(), 1);
+    volt.updateVoltage(cap.q0(), cap.qmax(), cap.I(), 33, 1);
     double v = volt.cell_voltage();
 
 
-    double req_cur = volt.calculate_current_for_target_w(1.5, 3.3, 11, temp.T_battery());
+    double req_cur = volt.calculate_current_for_target_w(1.5, 3.3, 11, 306.25);
     cap.updateCapacity(req_cur, 1);
-    volt.updateVoltage(cap.q0(), cap.qmax(), cap.I(), temp.T_battery(), 1);
+    volt.updateVoltage(cap.q0(), cap.qmax(), cap.I(), 33, 1);
     v = volt.cell_voltage();
     EXPECT_NEAR(req_cur * v, 1.5, 1e-2);
 
-    req_cur = volt.calculate_current_for_target_w(-1.5, cap.q0(), cap.qmax(), temp.T_battery());
+    req_cur = volt.calculate_current_for_target_w(-1.5, cap.q0(), cap.qmax(), 306.25);
     cap.updateCapacity(req_cur, 1);
-    volt.updateVoltage(cap.q0(), cap.qmax(), cap.I(), temp.T_battery(), 1);
+    volt.updateVoltage(cap.q0(), cap.qmax(), cap.I(), 33, 1);
     v = volt.cell_voltage();
     EXPECT_NEAR(req_cur * v, -1.5, 1e-2);
 
-    double max_p = volt.calculate_max_charge_w(cap.q0(), cap.qmax(), temp.T_battery(), &req_cur);
+    double max_p = volt.calculate_max_charge_w(cap.q0(), cap.qmax(), 306.15, &req_cur);
     cap.updateCapacity(req_cur, 1);
-    volt.updateVoltage(cap.q0(), cap.qmax(), cap.I(), temp.T_battery(), 1);
+    volt.updateVoltage(cap.q0(), cap.qmax(), cap.I(), 33, 1);
     EXPECT_NEAR(max_p, cap.I() * volt.cell_voltage(), 1e-3);
 
-    max_p = volt.calculate_max_discharge_w(cap.q0(), cap.qmax(), temp.T_battery(), &req_cur);
+    max_p = volt.calculate_max_discharge_w(cap.q0(), cap.qmax(), 306.15, &req_cur);
     cap.updateCapacity(req_cur, 1);
-    volt.updateVoltage(cap.q0(), cap.qmax(), cap.I(), temp.T_battery(), 1);
+    volt.updateVoltage(cap.q0(), cap.qmax(), cap.I(), 33, 1);
     EXPECT_NEAR(max_p, cap.I() * volt.cell_voltage(), 1e-3);
 }
 
@@ -381,7 +380,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsACHourly_Discharge)
     std::vector<double> correct_charge_total = {13.86, 11.96, 10.05, 8.10, 6.10, 4.57, 4.57, 4.57, 4.57, 4.57};
 
     for (size_t i = 0; i < correct_charge_total.size(); i++){
-        EXPECT_NEAR(charge_total[i], correct_charge_total[i], 0.1);
+        EXPECT_NEAR(charge_total[i], correct_charge_total[i], 0.1) << i;
     }
 
     resilience.run_surviving_batteries_by_looping(&load[0], &ac[0]);

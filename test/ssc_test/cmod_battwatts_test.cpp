@@ -23,11 +23,11 @@ TEST_F(CMBattwatts_cmod_battwatts, ResilienceMetricsHalfLoad){
 
     EXPECT_EQ(resilience_hours[0], 16);
     EXPECT_EQ(resilience_hours[1], 16);
-    EXPECT_NEAR(avg_critical_load, 8.06, 0.1);
-    EXPECT_NEAR(resilience_hrs_avg, 31.71, 0.01);
+    EXPECT_NEAR(avg_critical_load, 8.35, 0.1);
+    EXPECT_NEAR(resilience_hrs_avg, 32.68, 0.01);
     EXPECT_EQ(resilience_hrs_min, 16);
     EXPECT_EQ(outage_durations[0], 16);
-    EXPECT_EQ(resilience_hrs_max, 32);
+    EXPECT_EQ(resilience_hrs_max, 33);
     EXPECT_EQ(outage_durations[16], 32);
     EXPECT_NEAR(pdf_of_surviving[0], 0.00205, 1e-3);
     EXPECT_NEAR(pdf_of_surviving[1], 0.00217, 1e-3);
@@ -52,10 +52,10 @@ TEST_F(CMBattwatts_cmod_battwatts, ResilienceMetricsHalfLoadLifetime){
 
     EXPECT_EQ(resilience_hours[0], 16);
     EXPECT_EQ(resilience_hours[1], 16);
-    EXPECT_NEAR(avg_critical_load, 8.07, 0.1);
-    EXPECT_NEAR(resilience_hrs_avg, 31.86, 0.01);
+    EXPECT_NEAR(avg_critical_load, 8.39, 0.1);
+    EXPECT_NEAR(resilience_hrs_avg, 32.84, 0.01);
     EXPECT_EQ(resilience_hrs_min, 16);
-    EXPECT_EQ(resilience_hrs_max, 32);
+    EXPECT_EQ(resilience_hrs_max, 33);
     EXPECT_EQ(outage_durations[0], 16);
     EXPECT_EQ(outage_durations[16], 32);
     EXPECT_NEAR(pdf_of_surviving[0], 0.00205/2, 1e-5);
@@ -72,7 +72,7 @@ TEST_F(CMBattwatts_cmod_battwatts, ResidentialDefaults) {
     EXPECT_FALSE(errors);
 
     double charge_percent = data.as_number("batt_pv_charge_percent");
-    EXPECT_NEAR(charge_percent, 71.7, 0.1);
+    EXPECT_NEAR(charge_percent, 70.8, 0.1);
 
     auto batt_power_data = data.as_vector_ssc_number_t("batt_power");
     ssc_number_t peakKwDischarge = *std::max_element(batt_power_data.begin(), batt_power_data.end());
@@ -83,7 +83,7 @@ TEST_F(CMBattwatts_cmod_battwatts, ResidentialDefaults) {
 
     auto batt_voltage = data.as_vector_ssc_number_t("batt_voltage");
     ssc_number_t peakVoltage = *std::max_element(batt_voltage.begin(), batt_voltage.end());
-    EXPECT_NEAR(peakVoltage, 577.6, 0.1);
+    EXPECT_NEAR(peakVoltage, 578.9, 0.1);
 
     auto cycles = data.as_vector_ssc_number_t("batt_cycles");
     ssc_number_t maxCycles = *std::max_element(cycles.begin(), cycles.end());
@@ -102,7 +102,7 @@ TEST_F(CMBattwatts_cmod_battwatts, ResidentialDefaultsLeadAcid) {
     EXPECT_FALSE(errors);
 
     double charge_percent = data.as_number("batt_pv_charge_percent");
-    EXPECT_NEAR(charge_percent, 75.9, 0.1);
+    EXPECT_NEAR(charge_percent, 76.7, 0.1);
 
     auto batt_power_data = data.as_vector_ssc_number_t("batt_power");
     ssc_number_t peakKwDischarge = *std::max_element(batt_power_data.begin(), batt_power_data.end());
@@ -113,7 +113,7 @@ TEST_F(CMBattwatts_cmod_battwatts, ResidentialDefaultsLeadAcid) {
 
     auto batt_voltage = data.as_vector_ssc_number_t("batt_voltage");
     ssc_number_t peakVoltage = *std::max_element(batt_voltage.begin(), batt_voltage.end());
-    EXPECT_NEAR(peakVoltage, 62.0, 0.1);
+    EXPECT_NEAR(peakVoltage, 61.8, 0.1);
 
     auto cycles = data.as_vector_ssc_number_t("batt_cycles");
     ssc_number_t maxCycles = *std::max_element(cycles.begin(), cycles.end());
@@ -143,7 +143,7 @@ TEST_F(CMBattwatts_cmod_battwatts, NoPV) {
 
     auto batt_voltage = data.as_vector_ssc_number_t("batt_voltage");
     ssc_number_t peakVoltage = *std::max_element(batt_voltage.begin(), batt_voltage.end());
-    EXPECT_NEAR(peakVoltage, 571.9, 0.1);
+    EXPECT_NEAR(peakVoltage, 573.5, 0.1);
 
     auto cycles = data.as_vector_ssc_number_t("batt_cycles");
     ssc_number_t maxCycles = *std::max_element(cycles.begin(), cycles.end());

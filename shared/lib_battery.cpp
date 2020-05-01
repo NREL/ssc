@@ -434,7 +434,7 @@ double battery_t::calculate_max_charge_kw(double *max_current_A) {
 
 double battery_t::calculate_max_discharge_kw(double *max_current_A) {
     double q = capacity->q0();
-    double qmax = charge_maximum();
+    double qmax = charge_maximum() * ( 1. - params->capacity->SOC_min / 100.);
     double power_W = 0;
     double current = 0;
     size_t its = 0;

@@ -476,7 +476,7 @@ double voltage_vanadium_redox_t::calculate_max_charge_w(double q, double qmax, d
     if (max_current)
         *max_current = max_I * params->num_strings;
 
-    return voltage_model(q, qmax, max_I, kelvin) * max_I * params->num_strings * params->num_cells_series;
+    return voltage_model(qmax, qmax, max_I, kelvin) * max_I * params->num_strings * params->num_cells_series;
 }
 
 double voltage_vanadium_redox_t::calculate_max_discharge_w(double q, double qmax, double kelvin, double *max_current) {
