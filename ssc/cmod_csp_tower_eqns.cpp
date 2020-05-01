@@ -202,6 +202,7 @@ void MSPT_Receiver_Equations(ssc_data_t data)
     csp_pt_rec_max_flow_to_rec = Csp_pt_rec_max_flow_to_rec(csp_pt_rec_max_oper_frac, q_rec_des, csp_pt_rec_htf_c_avg, t_htf_hot_des, t_htf_cold_des);
     ssc_data_t_set_number(data, "csp.pt.rec.max_flow_to_rec", csp_pt_rec_max_flow_to_rec);
 
+    // This one doesn't seem to be used
     // csp_pt_rec_cav_ap_height
     ssc_data_t_get_number(data, "rec_d_spec", &rec_d_spec);
     ssc_data_t_get_number(data, "csp.pt.rec.cav_ap_hw_ratio", &csp_pt_rec_cav_ap_hw_ratio);
@@ -262,8 +263,17 @@ void MSPT_System_Control_Equations(ssc_data_t data)
     ssc_data_t_set_number(data, "csp.pt.par.calc.aux", csp_pt_par_calc_aux);
 
     // disp_wlim_max
-    ssc_data_t_get_number(data, "disp_wlim_maxspec", &disp_wlim_maxspec);
-    ssc_data_t_get_number(data, "constant", &constant);
+    disp_wlim_maxspec = constant = std::numeric_limits<double>::quiet_NaN();
+    ssc_data_t_get_number(data, "disp_wlim_maxspec", &disp_wlim_maxspec);       // if coming from UI
+    if (std::isnan(disp_wlim_maxspec)) {
+        disp_wlim_maxspec = 1.;                                                 // not passed to LK script
+    }
+
+    ssc_data_t_get_number(data, "constant", &constant);                         // if coming from UI
+    if (std::isnan(constant)) {
+        ssc_data_t_get_number(data, "adjust:constant", &constant);              // if coming from LK script
+    }
+
     disp_wlim_max = Disp_wlim_max(disp_wlim_maxspec, constant);
     ssc_data_t_set_number(data, "disp_wlim_max", disp_wlim_max);
 
@@ -281,15 +291,23 @@ void Tower_SolarPilot_Capital_Costs_MSPT_Equations(ssc_data_t data)
         throw std::runtime_error("ssc_data_t data invalid");
     }
 
-    double d_rec, rec_height, receiver_type, rec_d_spec, csp_pt_rec_cav_ap_height, csp_pt_cost_receiver_area,
+    double d_rec, rec_height, receiver_type_double, rec_d_spec, csp_pt_rec_cav_ap_height, csp_pt_cost_receiver_area,
         p_ref, design_eff, tshours, csp_pt_cost_storage_mwht,
         demand_var, csp_pt_cost_power_block_mwe;
+    int receiver_type;
 
     TowerTypes tower_type = TowerTypes::kMoltenSalt;
 
+    receiver_type_double = std::numeric_limits<double>::quiet_NaN();
     ssc_data_t_get_number(data, "d_rec", &d_rec);
     ssc_data_t_get_number(data, "rec_height", &rec_height);
-    ssc_data_t_get_number(data, "receiver_type", &receiver_type);
+    ssc_data_t_get_number(data, "receiver_type", &receiver_type_double);
+    if (std::isnan(receiver_type_double)) {
+        receiver_type = 0;                                                 // not passed to LK script, assume a external, non-cavity receiver
+    }
+    else {
+        receiver_type = static_cast<int>(receiver_type_double);
+    }
     ssc_data_t_get_number(data, "rec_d_spec", &rec_d_spec);
     ssc_data_t_get_number(data, "csp.pt.rec.cav_ap_height", &csp_pt_rec_cav_ap_height);
     csp_pt_cost_receiver_area = Csp_pt_cost_receiver_area(tower_type, d_rec, rec_height,
