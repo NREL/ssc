@@ -106,7 +106,6 @@ TEST_F(lib_battery_lifetime_calendar_matrix_test, runCalendarMatrixTest) {
     calendar_state s = cal_model->get_state();
     EXPECT_NEAR(s.day_age_of_battery, 20, tol);
     EXPECT_NEAR(s.q_relative_calendar, 99.89, tol);
-    EXPECT_NEAR(s.last_idx, 499, tol);
     EXPECT_NEAR(s.dq_relative_calendar_old, 0, tol);
 
     while (idx < 1000){
@@ -119,7 +118,6 @@ TEST_F(lib_battery_lifetime_calendar_matrix_test, runCalendarMatrixTest) {
     s = cal_model->get_state();
     EXPECT_NEAR(s.day_age_of_battery, 41, tol);
     EXPECT_NEAR(s.q_relative_calendar, 99.775, tol);
-    EXPECT_NEAR(s.last_idx, 999, tol);
     EXPECT_NEAR(s.dq_relative_calendar_old, 0, tol);
 }
 
@@ -136,7 +134,6 @@ TEST_F(lib_battery_lifetime_calendar_matrix_test, replaceBatteryTest) {
     calendar_state s = cal_model->get_state();
     EXPECT_NEAR(s.day_age_of_battery, 8333, tol);
     EXPECT_NEAR(s.q_relative_calendar, 41.51, tol);
-    EXPECT_NEAR(s.last_idx, 199999, tol);
     EXPECT_NEAR(s.dq_relative_calendar_old, 0, tol);
 
     cal_model->replaceBattery(5);
@@ -144,7 +141,6 @@ TEST_F(lib_battery_lifetime_calendar_matrix_test, replaceBatteryTest) {
     s = cal_model->get_state();
     EXPECT_NEAR(s.day_age_of_battery, 0, tol);
     EXPECT_NEAR(s.q_relative_calendar, 46.51, tol);
-    EXPECT_NEAR(s.last_idx, 199999, tol);
     EXPECT_NEAR(s.dq_relative_calendar_old, 0, tol);
 }
 
@@ -165,7 +161,6 @@ TEST_F(lib_battery_lifetime_calendar_model_test, runCalendarModelTest) {
     calendar_state s = cal_model->get_state();
     EXPECT_NEAR(s.day_age_of_battery, 20, tol);
     EXPECT_NEAR(s.q_relative_calendar, 101.78, tol);
-    EXPECT_NEAR(s.last_idx, 499, tol);
     EXPECT_NEAR(s.dq_relative_calendar_old, 0.00217, tol);
 
     while (idx < 1000){
@@ -178,7 +173,6 @@ TEST_F(lib_battery_lifetime_calendar_model_test, runCalendarModelTest) {
     s = cal_model->get_state();
     EXPECT_NEAR(s.day_age_of_battery, 41, tol);
     EXPECT_NEAR(s.q_relative_calendar, 101.69, tol);
-    EXPECT_NEAR(s.last_idx, 999, tol);
     EXPECT_NEAR(s.dq_relative_calendar_old, 0.00306, tol);
 }
 
@@ -195,7 +189,6 @@ TEST_F(lib_battery_lifetime_calendar_model_test, replaceBatteryTest) {
     calendar_state s = cal_model->get_state();
     EXPECT_NEAR(s.day_age_of_battery, 8333, tol);
     EXPECT_NEAR(s.q_relative_calendar, 97.67, tol);
-    EXPECT_NEAR(s.last_idx, 199999, tol);
     EXPECT_NEAR(s.dq_relative_calendar_old, 0.043, tol);
 
     cal_model->replaceBattery(5);
@@ -203,9 +196,52 @@ TEST_F(lib_battery_lifetime_calendar_model_test, replaceBatteryTest) {
     s = cal_model->get_state();
     EXPECT_NEAR(s.day_age_of_battery, 0, tol);
     EXPECT_NEAR(s.q_relative_calendar, 102, tol);
-    EXPECT_NEAR(s.last_idx, 199999, tol);
     EXPECT_NEAR(s.dq_relative_calendar_old, 0.0, tol);
 }
+
+TEST_F(lib_battery_lifetime_calendar_matrix_test, TestLifetimeDegradation) {
+    double vals[] = { 0, 100, 365, 50 };
+    util::matrix_t<double> lifetime_matrix;
+    lifetime_matrix.assign(vals, 2, 2);
+
+    double dt_hour = 1;
+    lifetime_calendar_t hourly_lifetime(dt_hour, lifetime_matrix);
+
+    for (int idx = 0; idx < 8760; idx++) {
+        hourly_lifetime.runLifetimeCalendarModel(idx, 20, 80);
+    }
+
+    EXPECT_NEAR(hourly_lifetime.capacity_percent(), 50, 1);
+
+    dt_hour = 1.0 / 12.0; // Every 5 mins
+    lifetime_calendar_t subhourly_lifetime(dt_hour, lifetime_matrix);
+
+    for (int idx = 0; idx < 8760 * 12; idx++) {
+        subhourly_lifetime.runLifetimeCalendarModel(idx, 20, 80);
+    }
+
+    EXPECT_NEAR(subhourly_lifetime.capacity_percent(), 50, 1);
+}
+
+
+TEST_F(lib_battery_lifetime_calendar_model_test, TestLifetimeDegradation) {
+
+    for (int idx = 0; idx < 8760; idx++) {
+        cal_model->runLifetimeCalendarModel(idx, 20, 80);
+    }
+
+    EXPECT_NEAR(cal_model->capacity_percent(), 99.812, 1);
+
+    dt_hour = 1.0 / 12.0; // Every 5 mins
+    lifetime_calendar_t subhourly_lifetime(dt_hour);
+
+    for (int idx = 0; idx < 8760 * 12; idx++) {
+        subhourly_lifetime.runLifetimeCalendarModel(idx, 20, 80);
+    }
+
+    EXPECT_NEAR(subhourly_lifetime.capacity_percent(), 99.812, 1);
+}
+
 //
 //TEST_F(lib_battery_lifetime_test, ReplaceByCapacityTest){
 //    model = std::unique_ptr<lifetime_t>(new lifetime_t(cycle_model.get(), cal_model.get(), 1, 60));
