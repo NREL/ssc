@@ -259,6 +259,8 @@ struct battery_params {
     };
     int chem;
     double dt_hour;
+    size_t nominal_energy;
+    size_t nominal_voltage;
     std::shared_ptr<capacity_params> capacity;
     std::shared_ptr<voltage_params> voltage;
     std::shared_ptr<thermal_params> thermal;

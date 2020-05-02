@@ -34,8 +34,11 @@ var_info vtab_battery_stateful_inputs[] = {
         { SSC_INPUT,        SSC_NUMBER,      "input_power",                                "Power at which to run battery",                           "kW",      "",   "Controls",       "control_mode=1",              "",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "run_sequentially",                           "True turns off reading state from data at start of step", "0/1",     "",   "Controls",       "?=0",                         "",                              "" },
 
-        // capacity
         { SSC_INPUT,        SSC_NUMBER,      "chem",                                       "Lead Acid (0), Li Ion (1), Vanadium Redox (2), Iron Flow (3)","0/1/2/3","",   "BatteryCell",       "*",                           "",                              "" },
+        { SSC_INOUT,        SSC_NUMBER,      "nominal_energy",                             "Nominal installed energy",                                "kWh",     "",                     "BatterySystem",       "*",                           "",                              "" },
+        { SSC_INOUT,        SSC_NUMBER,      "nominal_voltage",                            "Nominal DC voltage",                                      "V",       "",                     "BatterySystem",       "*",                           "",                              "" },
+
+        // capacity
         { SSC_INPUT,        SSC_NUMBER,      "initial_SOC",		                          "Initial state-of-charge",                                 "%",       "",                     "BatteryCell",       "*",                           "",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "minimum_SOC",		                          "Minimum allowed state-of-charge",                         "%",       "",                     "BatteryCell",       "*",                           "",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "maximum_SOC",                                "Maximum allowed state-of-charge",                         "%",       "",                     "BatteryCell",       "*",                           "",                              "" },
@@ -43,8 +46,6 @@ var_info vtab_battery_stateful_inputs[] = {
         { SSC_INPUT,		SSC_NUMBER,		 "leadacid_q10",	                              "Capacity at 10-hour discharge rate",                      "Ah",       "",                     "BatteryCell",       "chem=0",                           "",                             "" },
         { SSC_INPUT,		SSC_NUMBER,		 "leadacid_qn",	                              "Capacity at discharge rate for n-hour rate",              "Ah",       "",                     "BatteryCell",       "chem=0",                           "",                             "" },
         { SSC_INPUT,		SSC_NUMBER,		 "leadacid_tn",	                              "Hours to discharge for qn rate",                          "h",        "",                     "BatteryCell",       "chem=0",                           "",                             "" },
-        { SSC_INPUT,        SSC_NUMBER,      "num_strings",                                "Number of strings of cells",                              "",        "",                     "BatterySystem",       "*",                           "",                              "" },
-        { SSC_INPUT,        SSC_NUMBER,      "num_cells_series",                           "Number of cells in series",                               "",        "",                     "BatterySystem",       "*",                           "",                              "" },
 
         // Voltage discharge curve
         { SSC_INPUT,        SSC_NUMBER,      "voltage_choice",                             "Battery voltage input option",                            "0/1",     "0=Model,1=Table",      "BatteryCell",       "?=0",                        "",                             "" },
@@ -274,10 +275,17 @@ std::shared_ptr<battery_params> create_battery_params(var_table *vt, double dt_h
     vt_get_int(vt, "voltage_choice", &choice);
     voltage->voltage_choice = static_cast<voltage_params::MODE>(choice);
     voltage->dt_hr = dt_hr;
-    vt_get_int(vt, "num_cells_series", &voltage->num_cells_series);
-    vt_get_int(vt, "num_strings", &voltage->num_strings);
     vt_get_number(vt, "Vnom_default", &voltage->Vnom_default);
+    vt_get_number(vt, "Qfull", &voltage->dynamic.Qfull);
     vt_get_number(vt, "resistance", &voltage->resistance);
+
+    double nominal_e, nominal_v;
+    vt_get_number(vt, "nominal_energy", &nominal_e);
+    vt_get_number(vt, "nominal_voltage", &nominal_v);
+    voltage->num_cells_series = (int)std::ceil(nominal_v / voltage->Vnom_default);
+    voltage->num_strings = (int)std::round((nominal_e * 1000.) / (voltage->dynamic.Qfull * voltage->num_cells_series * voltage->Vnom_default));
+    params->nominal_voltage = voltage->Vnom_default * voltage->num_cells_series;
+    params->nominal_energy = params->nominal_voltage * voltage->num_strings * voltage->dynamic.Qfull * 1e-3;
 
     if (voltage->voltage_choice == voltage_params::TABLE || params->chem == battery_params::IRON_FLOW) {
         vt_get_matrix_vec(vt, "voltage_matrix", voltage->voltage_table);
@@ -286,7 +294,6 @@ std::shared_ptr<battery_params> create_battery_params(var_table *vt, double dt_h
         if (params->chem == battery_params::LEAD_ACID  || params->chem == battery_params::LITHIUM_ION) {
             vt_get_number(vt, "Vfull", &voltage->dynamic.Vfull);
             vt_get_number(vt, "Vexp", &voltage->dynamic.Vexp);
-            vt_get_number(vt, "Qfull", &voltage->dynamic.Qfull);
             vt_get_number(vt, "Qexp", &voltage->dynamic.Qexp);
             vt_get_number(vt, "Qnom", &voltage->dynamic.Qnom);
             vt_get_number(vt, "C_rate", &voltage->dynamic.C_rate);

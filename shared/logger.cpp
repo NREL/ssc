@@ -198,8 +198,8 @@ std::ostream &operator<<(std::ostream &os, const battery_state &p) {
 
 std::ostream &operator<<(std::ostream &os, const battery_params &p) {
     char buf[1024];
-    sprintf(buf, R"("battery_params": { "chem": %u, "dt_hour": %.3f, )",
-            p.chem, p.dt_hour);
+    sprintf(buf, R"("battery_params": { "chem": %u, "dt_hour": %.3f, "nominal_voltage": %zu, "nominal_energy": %zu)",
+            p.chem, p.dt_hour, p.nominal_voltage, p.nominal_energy);
     os << buf << ", ";
     os << *p.capacity << ", ";
     os << *p.voltage << ", ";
