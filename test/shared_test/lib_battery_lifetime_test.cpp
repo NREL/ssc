@@ -242,7 +242,22 @@ TEST_F(lib_battery_lifetime_calendar_model_test, TestLifetimeDegradation) {
     EXPECT_NEAR(subhourly_lifetime.capacity_percent(), 99.812, 1);
 }
 
-//
+TEST_F(lib_battery_lifetime_test, updateCapacityTest) {
+    size_t idx = 0;
+    while (idx < 876){
+        model->runLifetimeModels(idx, true, 5,95, 25);
+        model->runLifetimeModels(idx, true, 95, 5, 25);
+
+        auto state = model->get_state();
+        EXPECT_EQ(state.cycle->q_relative_cycle, model->capacity_percent_cycle());
+        EXPECT_EQ(state.calendar->q_relative_calendar, model->capacity_percent_calendar());
+
+        idx ++;
+    }
+
+}
+
+
 //TEST_F(lib_battery_lifetime_test, ReplaceByCapacityTest){
 //    model = std::unique_ptr<lifetime_t>(new lifetime_t(cycle_model.get(), cal_model.get(), 1, 60));
 //
@@ -275,3 +290,4 @@ TEST_F(lib_battery_lifetime_calendar_model_test, TestLifetimeDegradation) {
 //    compareState(model, s, "ReplaceByCapacityTest: 3");
 //
 //}
+

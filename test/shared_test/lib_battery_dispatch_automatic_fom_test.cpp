@@ -53,7 +53,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOMInputSubhourly) {
 
     dispatchAuto->set_custom_dispatch(P_batt);
 
-    // battery charging from PV to full SOC_max
+    // battery charging from PV to full maximum_SOC
     EXPECT_FALSE(batteryPower->canGridCharge);
     dispatchAuto->update_dispatch(0, 0, 0);
     EXPECT_NEAR(batteryPower->powerBatteryTarget, -322.6, 0.1);

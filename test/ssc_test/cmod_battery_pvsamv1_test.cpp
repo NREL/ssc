@@ -516,7 +516,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_CustomDispatchBatteryModelD
 	ssc_number_t peakKwCharge = -948.6;
 	ssc_number_t peakKwDischarge = 651.7;
 	ssc_number_t peakCycles = 3;
-	ssc_number_t avgCycles = 1.1943;
+	ssc_number_t avgCycles = 1.1944;
 
 	ssc_data_set_number(data, "batt_dispatch_choice", 3);
 	ssc_data_set_number(data, "batt_ac_or_dc", 0);

@@ -86,18 +86,15 @@ public:
 class lib_battery_lifetime_test : public ::testing::Test{
 protected:
     std::unique_ptr<lifetime_t> model;
-    std::unique_ptr<lifetime_calendar_t> cal_model;
-    std::unique_ptr<lifetime_cycle_t> cycle_model;
 
     util::matrix_t<double> cycles_vs_DOD;
 
     double dt_hour = 1;
 public:
     void SetUp() override {
-        cal_model = std::unique_ptr<lifetime_calendar_t>(new lifetime_calendar_t(dt_hour));
         double table_vals[18] = {20, 0, 100, 20, 5000, 80, 20, 10000, 60, 80, 0, 100, 80, 1000, 80, 80, 2000, 60};
         cycles_vs_DOD.assign(table_vals, 6, 3);
-        cycle_model = std::unique_ptr<lifetime_cycle_t>(new lifetime_cycle_t(cycles_vs_DOD));
+        model = std::unique_ptr<lifetime_t>(new lifetime_t(cycles_vs_DOD, dt_hour,1.02, 2.66e-3, -7280, 930));
     }
 };
 #endif //SAM_SIMULATION_CORE_LIB_BATTERY_LIFETIME_TEST_H

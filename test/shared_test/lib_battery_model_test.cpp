@@ -133,7 +133,7 @@ TEST_F(lib_battery_test, runTestCycleAt1C){
     s = battery_state_test({{54.5, 1000, 960.07, 20.25, 0, 5.67, 94.32, 92.21, 2}, // cap
                        366.96, // voltage
                        100, {100, 0, 0, 0, 0, 0, 1, std::vector<double>()}, // cycle
-                        {101.976, 0, 21}, // calendar
+                        {101.976, 0, 0.0002}, // calendar
                        {96.01, 20.01, 20}, // thermal
                        0});
     compareState(batteryModel, s, "runTestCycleAt1C: 2");
@@ -157,7 +157,7 @@ TEST_F(lib_battery_test, runTestCycleAt1C){
     s = battery_state_test({{47.36, 920.55, 883.74, 8.93, 0, 5.35, 94.64, 93.62, 2}, // cap
                        354.71, // voltage
                        93.08, {92.05, 398, 88.94, 89.05, 88.97, 89.65, 5, std::vector<double>()}, // cycle
-                        {98.01, 2754, 66099, 0.039}, // calendar
+                        {98.01, 2754, 0.039}, // calendar
                        {96.0, 20.00, 20}, // thermal
                        32991});
     compareState(batteryModel, s, "runTestCycleAt1C: 3");
@@ -192,7 +192,7 @@ TEST_F(lib_battery_test, runTestCycleAt3C){
     s = battery_state_test({{48.03, 1000, 960.47, 26.72, 0, 5.00, 95, 92.22, 2}, // cap
                        339.03, // voltage
                        101.98, {100, 0, 0, 0, 0, 0, 1, std::vector<double>()}, // cycle
-                        {101.98, 0, 7}, // calendar
+                        {101.98, 0}, // calendar
                        {96.06, 20.07, 20}, // thermal
                        0});
     compareState(batteryModel, s, "runTest: 2");
@@ -216,7 +216,7 @@ TEST_F(lib_battery_test, runTestCycleAt3C){
     s = battery_state_test({{48.84, 920.77, 883.95, 9.00, 0, 5.52, 94.47, 93.45, 2}, // cap
                        361.33, // voltage
                        93.08, {92.07, 397, 88.62, 88.80, 88.65, 89.48, 7, std::vector<double>()}, // cycle
-                        {98.06, 2655, 63732, 0.041}, // calendar
+                        {98.06, 2655, 0.0393}, // calendar
                        {96.01, 20, 20}, // thermal
                        32991});
     compareState(batteryModel, s, "runTest: 3");
@@ -244,6 +244,21 @@ TEST_F(lib_battery_test, runDuplicates) {
     state = Battery->get_state();
     auto cap_state3 = state.capacity;
     auto volt_state3 = state.voltage;
+}
+
+TEST_F(lib_battery_test, createFromParams) {
+    auto params = std::make_shared<battery_params>(batteryModel->get_params());
+    auto bat = battery_t(params);
+
+    double current = 10;
+    batteryModel->run(0, current);
+    current = 10;
+    bat.run(0, current);
+
+    logger log(std::cout);
+    log << *params << "\n" << bat.get_params() << "\n\n";
+    log << batteryModel->get_state() << "\n" << bat.get_state() << "\n";
+
 }
 
 TEST_F(lib_battery_test,logging) {

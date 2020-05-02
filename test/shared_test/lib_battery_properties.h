@@ -108,10 +108,6 @@ public:
 		// battery
 		chemistry = 1;
 	}
-
-	// nothing to do
-	void TearDown(){}
-
 };
 
 #endif

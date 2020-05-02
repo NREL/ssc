@@ -537,7 +537,7 @@ TEST(windpower_landbosse, RunSuccess) {
 
     ssc_module_exec(landbosse, vd);
 
-    EXPECT_EQ(vd->lookup("errors")->str, "0");
+    ASSERT_EQ(vd->lookup("errors")->str, "0");
     EXPECT_NEAR(vd->lookup("total_collection_cost")->num[0], 4202342, 1e2);
     EXPECT_NEAR(vd->lookup("total_development_cost")->num[0], 150000, 1e2);
     EXPECT_NEAR(vd->lookup("total_erection_cost")->num[0], 5132656, 1e2);

@@ -1,21 +1,43 @@
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #include <cmath>
 
 #include "lib_battery_capacity.h"
 
 double low_tolerance = 0.01;
-double tolerance = 0.001;
+double tolerance = 0.002;
 
 /*
 Define Capacity Model
 */
 void capacity_t::initialize() {
     state = std::make_shared<capacity_state>();
-    state->q0 = 0.01 * params->SOC_init * params->qmax_init;
+    state->q0 = 0.01 * params->initial_SOC * params->qmax_init;
     state->qmax_lifetime = params->qmax_init;
     state->qmax_thermal = params->qmax_init;
-    state->I = 0.;
+    state->cell_current = 0.;
     state->I_loss = 0.;
-    state->SOC = params->SOC_init;
+    state->SOC = params->initial_SOC;
     state->DOD = 100. - state->SOC;
     state->DOD_prev = 0;
 
@@ -34,30 +56,30 @@ capacity_t::capacity_t(double q, double SOC_init, double SOC_max, double SOC_min
         capacity_t() {
     params->qmax_init = q;
     params->dt_hr = dt_hour;
-    params->SOC_init = SOC_init;
-    params->SOC_max = SOC_max;
-    params->SOC_min = SOC_min;
+    params->initial_SOC = SOC_init;
+    params->maximum_SOC = SOC_max;
+    params->minimum_SOC = SOC_min;
     initialize();
 }
 
 capacity_t::capacity_t(std::shared_ptr<capacity_params> p) {
     params = std::move(p);
-    if ((params->SOC_init < 0 || params->SOC_init > 100) ||
-        (params->SOC_max < 0 || params->SOC_max > 100) ||
-        (params->SOC_min < 0 || params->SOC_min > 100)) {
+    if ((params->initial_SOC < 0 || params->initial_SOC > 100) ||
+        (params->maximum_SOC < 0 || params->maximum_SOC > 100) ||
+        (params->minimum_SOC < 0 || params->minimum_SOC > 100)) {
         throw std::runtime_error("Initial, Max and Min state-of-charge % must be [0, 100]");
     }
     initialize();
 }
 
 capacity_t::capacity_t(const capacity_t &rhs) {
-    state = std::make_shared<capacity_state>();
-    capacity_t::operator=(rhs);
+    state = std::make_shared<capacity_state>(*rhs.state);
+    params = std::make_shared<capacity_params>(*rhs.params);
 }
 
 capacity_t &capacity_t::operator=(const capacity_t &rhs) {
     if (this != &rhs) {
-        params = rhs.params;
+        *params = *rhs.params;
         *state = *rhs.state;
     }
     return *this;
@@ -67,9 +89,9 @@ void capacity_t::check_charge_change() {
     state->charge_mode = capacity_state::NO_CHARGE;
 
     // charge state
-    if (state->I < 0)
+    if (state->cell_current < 0)
         state->charge_mode = capacity_state::CHARGE;
-    else if (state->I > 0)
+    else if (state->cell_current > 0)
         state->charge_mode = capacity_state::DISCHARGE;
 
     // Check if charge changed
@@ -88,34 +110,34 @@ capacity_params capacity_t::get_params() { return *params; }
 capacity_state capacity_t::get_state() { return *state; }
 
 void capacity_t::check_SOC() {
-    double q_upper = state->qmax_lifetime * params->SOC_max * 0.01;
-    double q_lower = state->qmax_lifetime * params->SOC_min * 0.01;
-    double I_orig = state->I;
+    double q_upper = state->qmax_lifetime * params->maximum_SOC * 0.01;
+    double q_lower = state->qmax_lifetime * params->minimum_SOC * 0.01;
+    double I_orig = state->cell_current;
 
     // set capacity to upper thermal limit
-    if (q_upper > state->qmax_thermal * params->SOC_max * 0.01) {
-        q_upper = state->qmax_thermal * params->SOC_max * 0.01;
+    if (q_upper > state->qmax_thermal * params->maximum_SOC * 0.01) {
+        q_upper = state->qmax_thermal * params->maximum_SOC * 0.01;
     }
     // do this so battery can cycle full depth and we calculate correct SOC min
-    if (q_lower > state->qmax_thermal * params->SOC_min * 0.01) {
-        q_lower = state->qmax_thermal * params->SOC_min * 0.01;
+    if (q_lower > state->qmax_thermal * params->minimum_SOC * 0.01) {
+        q_lower = state->qmax_thermal * params->minimum_SOC * 0.01;
     }
 
     // check if overcharged
     if (state->q0 > q_upper) {
-        if (fabs(state->I) > tolerance) {
-            state->I += (state->q0 - q_upper) / params->dt_hr;
-            if (state->I / I_orig < 0)
-                state->I = 0;
+        if (fabs(state->cell_current) > tolerance) {
+            state->cell_current += (state->q0 - q_upper) / params->dt_hr;
+            if (state->cell_current / I_orig < 0)
+                state->cell_current = 0;
         }
         state->q0 = q_upper;
     }
         // check if undercharged
     else if (state->q0 < q_lower) {
-        if (fabs(state->I) > tolerance) {
-            state->I += (state->q0 - q_lower) / params->dt_hr;
-            if (state->I / I_orig < 0)
-                state->I = 0;
+        if (fabs(state->cell_current) > tolerance) {
+            state->cell_current += (state->q0 - q_lower) / params->dt_hr;
+            if (state->cell_current / I_orig < 0)
+                state->cell_current = 0;
         }
         state->q0 = q_lower;
     }
@@ -147,15 +169,15 @@ void capacity_t::update_SOC() {
 
 bool capacity_t::chargeChanged() { return state->chargeChange; }
 
-double capacity_t::SOC_max() { return params->SOC_max; }
+double capacity_t::SOC_max() { return params->maximum_SOC; }
 
-double capacity_t::SOC_min() { return params->SOC_min; }
+double capacity_t::SOC_min() { return params->minimum_SOC; }
 
 double capacity_t::SOC() { return state->SOC; }
 
 double capacity_t::DOD() { return state->DOD; }
 
-double capacity_t::DOD_max() { return params->SOC_max - params->SOC_min; }
+double capacity_t::DOD_max() { return params->maximum_SOC - params->minimum_SOC; }
 
 double capacity_t::prev_DOD() { return state->DOD_prev; }
 
@@ -165,7 +187,7 @@ double capacity_t::qmax() { return state->qmax_lifetime; }
 
 double capacity_t::qmax_thermal() { return state->qmax_thermal; }
 
-double capacity_t::I() { return state->I; }
+double capacity_t::I() { return state->cell_current; }
 
 double capacity_t::I_loss() { return state->I_loss; }
 
@@ -174,17 +196,17 @@ Define KiBam Capacity Model
 */
 void capacity_kibam_t::initialize() {
     params->leadacid.t2 = 10.;
-    params->leadacid.F1 = params->leadacid.q1 / params->leadacid.q20; // use t1, 20
-    params->leadacid.F2 = params->leadacid.q1 / params->leadacid.q10;  // use t1, 10
+    params->leadacid.F1 = params->leadacid.qn / params->leadacid.q20; // use t1, 20
+    params->leadacid.F2 = params->leadacid.qn / params->leadacid.q10;  // use t1, 10
     params->leadacid.I20 = params->leadacid.q20 / 20.;
-    state->leadacid.q1 = params->leadacid.q1;
+    state->leadacid.q1 = params->leadacid.qn;
     state->leadacid.q2 = params->leadacid.q10;
 
     // compute the parameters
     parameter_compute();
     state->qmax_thermal = state->qmax_lifetime;
     params->qmax_init = state->qmax_lifetime;
-    state->q0 = params->qmax_init * params->SOC_init * 0.01;
+    state->q0 = params->qmax_init * params->initial_SOC * 0.01;
 
     // initializes to full battery
     capacity_kibam_t::replace_battery(100);
@@ -193,8 +215,8 @@ void capacity_kibam_t::initialize() {
 capacity_kibam_t::capacity_kibam_t(double q20, double t1, double q1, double q10, double SOC_init, double SOC_max,
                                    double SOC_min, double dt_hr) :
         capacity_t(q20, SOC_init, SOC_max, SOC_min, dt_hr) {
-    params->leadacid.t1 = t1;
-    params->leadacid.q1 = q1;
+    params->leadacid.tn = t1;
+    params->leadacid.qn = q1;
     params->leadacid.q10 = q10;
     params->leadacid.q20 = q20;
     initialize();
@@ -230,10 +252,10 @@ void capacity_kibam_t::replace_battery(double replacement_percent) {
     state->qmax_lifetime += replacement_percent * 0.01 * params->qmax_init;
     state->qmax_lifetime = fmin(state->qmax_lifetime, params->qmax_init);
     state->qmax_thermal = state->qmax_lifetime;
-    state->q0 += (state->qmax_lifetime - qmax_old) * params->SOC_init * 0.01;
+    state->q0 += (state->qmax_lifetime - qmax_old) * params->initial_SOC * 0.01;
     state->leadacid.q1_0 = state->q0 * c;
     state->leadacid.q2_0 = state->q0 - state->leadacid.q1_0;
-    state->SOC = params->SOC_init;
+    state->SOC = params->initial_SOC;
     state->DOD_prev = 50;
     update_SOC();
 }
@@ -289,8 +311,8 @@ void capacity_kibam_t::parameter_compute() {
 
     for (int i = 0; i < 5000; i++) {
         k_guess = i * 0.001;
-        c1 = c_compute(params->leadacid.F1, params->leadacid.t1, 20, k_guess);
-        c2 = c_compute(params->leadacid.F2, params->leadacid.t1, params->leadacid.t2, k_guess);
+        c1 = c_compute(params->leadacid.F1, params->leadacid.tn, 20, k_guess);
+        c2 = c_compute(params->leadacid.F2, params->leadacid.tn, params->leadacid.t2, k_guess);
 
         if (fabs(c1 - c2) < minRes) {
             minRes = fabs(c1 - c2);
@@ -307,7 +329,7 @@ void capacity_kibam_t::updateCapacity(double &I, double dt_hour) {
 
     state->DOD_prev = state->DOD;
     state->I_loss = 0.;
-    state->I = I;
+    state->cell_current = I;
     params->dt_hr = dt_hour;
 
     double Idmax = 0.;
@@ -317,19 +339,19 @@ void capacity_kibam_t::updateCapacity(double &I, double dt_hour) {
     double q1 = 0.;
     double q2 = 0.;
 
-    if (state->I > 0) {
+    if (state->cell_current > 0) {
         Idmax = Idmax_compute(state->leadacid.q1_0, state->q0, dt_hour);
-        Id = fmin(state->I, Idmax);
-        state->I = Id;
-    } else if (state->I < 0) {
+        Id = fmin(state->cell_current, Idmax);
+        state->cell_current = Id;
+    } else if (state->cell_current < 0) {
         Icmax = Icmax_compute(state->leadacid.q1_0, state->q0, dt_hour);
-        Ic = -fmin(fabs(state->I), fabs(Icmax));
-        state->I = Ic;
+        Ic = -fmin(fabs(state->cell_current), fabs(Icmax));
+        state->cell_current = Ic;
     }
 
     // new charge levels
-    q1 = q1_compute(state->leadacid.q1_0, state->q0, dt_hour, state->I);
-    q2 = q2_compute(state->leadacid.q2_0, state->q0, dt_hour, state->I);
+    q1 = q1_compute(state->leadacid.q1_0, state->q0, dt_hour, state->cell_current);
+    q2 = q2_compute(state->leadacid.q2_0, state->q0, dt_hour, state->cell_current);
 
     // Check for thermal effects
     if (q1 + q2 > state->qmax_thermal) {
@@ -350,7 +372,7 @@ void capacity_kibam_t::updateCapacity(double &I, double dt_hour) {
     check_charge_change();
 
     // Pass current out
-    I = state->I;
+    I = state->cell_current;
 }
 
 void capacity_kibam_t::updateCapacityForThermal(double capacity_percent) {
@@ -430,8 +452,8 @@ void capacity_lithium_ion_t::replace_battery(double replacement_percent) {
     state->qmax_lifetime += params->qmax_init * replacement_percent * 0.01;
     state->qmax_lifetime = fmin(params->qmax_init, state->qmax_lifetime);
     state->qmax_thermal = state->qmax_lifetime;
-    state->q0 += (state->qmax_lifetime - qmax_old) * params->SOC_init * 0.01;
-    state->SOC = params->SOC_init;
+    state->q0 += (state->qmax_lifetime - qmax_old) * params->initial_SOC * 0.01;
+    state->SOC = params->initial_SOC;
     state->DOD_prev = 50;
     update_SOC();
 }
@@ -440,10 +462,10 @@ void capacity_lithium_ion_t::updateCapacity(double &I, double dt) {
     state->DOD_prev = state->DOD;
     state->I_loss = 0.;
     params->dt_hr = dt;
-    state->I = I;
+    state->cell_current = I;
 
     // compute charge change ( I > 0 discharging, I < 0 charging)
-    state->q0 -= state->I * dt;
+    state->q0 -= state->cell_current * dt;
 
     // check if SOC constraints violated, update q0, I if so
     check_SOC();
@@ -453,7 +475,7 @@ void capacity_lithium_ion_t::updateCapacity(double &I, double dt) {
     check_charge_change();
 
     // Pass current out
-    I = state->I;
+    I = state->cell_current;
 }
 
 void capacity_lithium_ion_t::updateCapacityForThermal(double capacity_percent) {

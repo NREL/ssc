@@ -1,3 +1,26 @@
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+
 #include "lib_battery_lifetime.h"
 
 extern double tolerance;
@@ -28,14 +51,14 @@ lifetime_cycle_t::lifetime_cycle_t(std::shared_ptr<lifetime_params> params_ptr) 
 }
 
 lifetime_cycle_t::lifetime_cycle_t(const lifetime_cycle_t &rhs) {
-    state = std::make_shared<cycle_state>();
+    state = std::make_shared<cycle_state>(*rhs.state);
     operator=(rhs);
 }
 
 lifetime_cycle_t &lifetime_cycle_t::operator=(const lifetime_cycle_t &rhs) {
     if (this != &rhs) {
         *state = *rhs.state;
-        params = rhs.params;
+        *params = *rhs.params;
     }
     return *this;
 }
@@ -65,7 +88,7 @@ void lifetime_cycle_t::rainflow(double DOD) {
     int retCode = cycle_state::LT_GET_DATA;
 
     // Begin algorithm
-    state->peaks.push_back(DOD);
+    state->rainflow_peaks.push_back(DOD);
     bool atStepTwo = true;
 
     // Loop until break
@@ -92,18 +115,18 @@ void lifetime_cycle_t::rainflow(double DOD) {
 }
 
 void lifetime_cycle_t::rainflow_ranges() {
-    state->rainflow_Ylt = fabs(state->peaks[state->rainflow_jlt - 1] - state->peaks[state->rainflow_jlt - 2]);
-    state->rainflow_Xlt = fabs(state->peaks[state->rainflow_jlt] - state->peaks[state->rainflow_jlt - 1]);
+    state->rainflow_Ylt = fabs(state->rainflow_peaks[state->rainflow_jlt - 1] - state->rainflow_peaks[state->rainflow_jlt - 2]);
+    state->rainflow_Xlt = fabs(state->rainflow_peaks[state->rainflow_jlt] - state->rainflow_peaks[state->rainflow_jlt - 1]);
 }
 
 void lifetime_cycle_t::rainflow_ranges_circular(int index) {
-    size_t end = state->peaks.size() - 1;
+    size_t end = state->rainflow_peaks.size() - 1;
     if (index == 0) {
-        state->rainflow_Xlt = fabs(state->peaks[0] - state->peaks[end]);
-        state->rainflow_Ylt = fabs(state->peaks[end] - state->peaks[end - 1]);
+        state->rainflow_Xlt = fabs(state->rainflow_peaks[0] - state->rainflow_peaks[end]);
+        state->rainflow_Ylt = fabs(state->rainflow_peaks[end] - state->rainflow_peaks[end - 1]);
     } else if (index == 1) {
-        state->rainflow_Xlt = fabs(state->peaks[1] - state->peaks[0]);
-        state->rainflow_Ylt = fabs(state->peaks[0] - state->peaks[end]);
+        state->rainflow_Xlt = fabs(state->rainflow_peaks[1] - state->rainflow_peaks[0]);
+        state->rainflow_Ylt = fabs(state->rainflow_peaks[0] - state->rainflow_peaks[end]);
     } else
         rainflow_ranges();
 }
@@ -134,11 +157,11 @@ int lifetime_cycle_t::rainflow_compareRanges() {
             state->q_relative_cycle = 0.;
 
         // discard peak & valley of Y
-        double save = state->peaks[state->rainflow_jlt];
-        state->peaks.pop_back();
-        state->peaks.pop_back();
-        state->peaks.pop_back();
-        state->peaks.push_back(save);
+        double save = state->rainflow_peaks[state->rainflow_jlt];
+        state->rainflow_peaks.pop_back();
+        state->rainflow_peaks.pop_back();
+        state->rainflow_peaks.pop_back();
+        state->rainflow_peaks.push_back(save);
         state->rainflow_jlt -= 2;
         // stay in while loop
         retCode = cycle_state::LT_RERANGE;
@@ -160,7 +183,7 @@ void lifetime_cycle_t::replaceBattery(double replacement_percent) {
     state->rainflow_Xlt = 0;
     state->rainflow_Ylt = 0;
     state->range = 0;
-    state->peaks.clear();
+    state->rainflow_peaks.clear();
 }
 
 int lifetime_cycle_t::cycles_elapsed() { return state->n_cycles; }
@@ -305,12 +328,11 @@ Lifetime Calendar Model
 void lifetime_calendar_t::initialize() {
     state = std::make_shared<calendar_state>();
     state->day_age_of_battery = 0;
-    state->last_idx = 0;
     state->q_relative_calendar = 100;
     state->dq_relative_calendar_old = 0;
     if (params->calendar_choice == lifetime_params::CALENDAR_CHOICE::MODEL) {
         dt_day = params->dt_hour / util::hours_per_day;
-        state->q_relative_calendar = params->calendar_model_q0 * 100;
+        state->q_relative_calendar = params->calendar_q0 * 100;
     }
     else if (params->calendar_choice == lifetime_params::CALENDAR_CHOICE::TABLE) {
         if (params->calendar_matrix.nrows() < 2 || params->calendar_matrix.ncols() != 2)
@@ -332,10 +354,10 @@ lifetime_calendar_t::lifetime_calendar_t(double dt_hour, double q0, double a, do
     params = std::make_shared<lifetime_params>();
     params->dt_hour = dt_hour;
     params->calendar_choice = lifetime_params::CALENDAR_CHOICE::MODEL;
-    params->calendar_model_q0 = q0;
-    params->calendar_model_a = a;
-    params->calendar_model_b = b;
-    params->calendar_model_c = c;
+    params->calendar_q0 = q0;
+    params->calendar_a = a;
+    params->calendar_b = b;
+    params->calendar_c = c;
 
     initialize();
 }
@@ -346,13 +368,14 @@ lifetime_calendar_t::lifetime_calendar_t(std::shared_ptr<lifetime_params> params
 }
 
 lifetime_calendar_t::lifetime_calendar_t(const lifetime_calendar_t &rhs) {
-    state = std::make_shared<calendar_state>();
-    operator=(rhs);
+    state = std::make_shared<calendar_state>(*rhs.state);
+    params = std::make_shared<lifetime_params>(*rhs.params);
+    dt_day = rhs.dt_day;
 }
 
 lifetime_calendar_t &lifetime_calendar_t::operator=(const lifetime_calendar_t &rhs) {
     if (this != &rhs) {
-        params = rhs.params;
+        *params = *rhs.params;
         *state = *rhs.state;
         dt_day = rhs.dt_day;
     }
@@ -367,35 +390,29 @@ double lifetime_calendar_t::capacity_percent() { return state->q_relative_calend
 
 calendar_state lifetime_calendar_t::get_state() { return *state; }
 
-double lifetime_calendar_t::runLifetimeCalendarModel(size_t idx, double T, double SOC) {
+double lifetime_calendar_t::runLifetimeCalendarModel(size_t lifetimeIndex, double T, double SOC) {
+    state->day_age_of_battery = (size_t)(lifetimeIndex / (util::hours_per_day / params->dt_hour));
 
-    // only run once per iteration (need to make the last iteration)
-    if (idx > state->last_idx) {
-        if (idx % (size_t) (util::hours_per_day / params->dt_hour) == 0)
-            state->day_age_of_battery++;
+    if (params->calendar_choice == lifetime_params::CALENDAR_CHOICE::MODEL)
+        runLithiumIonModel(T, SOC);
+    else if (params->calendar_choice == lifetime_params::CALENDAR_CHOICE::TABLE)
+        runTableModel();
 
-        if (params->calendar_choice == lifetime_params::CALENDAR_CHOICE::MODEL)
-            runLithiumIonModel(T, SOC);
-        else if (params->calendar_choice == lifetime_params::CALENDAR_CHOICE::TABLE)
-            runTableModel();
-
-        state->last_idx = idx;
-    }
     return state->q_relative_calendar;
 }
 
 void lifetime_calendar_t::runLithiumIonModel(double temp, double SOC) {
     temp += 273.15;
     SOC *= 0.01;
-    double k_cal = params->calendar_model_a * exp(params->calendar_model_b * (1. / temp - 1. / 296))
-                   * exp(params->calendar_model_c * (SOC / temp - 1. / 296));
+    double k_cal = params->calendar_a * exp(params->calendar_b * (1. / temp - 1. / 296))
+                   * exp(params->calendar_c * (SOC / temp - 1. / 296));
     double dq_new;
     if (state->dq_relative_calendar_old == 0)
         dq_new = k_cal * sqrt(dt_day);
     else
         dq_new = (0.5 * pow(k_cal, 2) / state->dq_relative_calendar_old) * dt_day + state->dq_relative_calendar_old;
     state->dq_relative_calendar_old = dq_new;
-    state->q_relative_calendar = (params->calendar_model_q0 - (dq_new)) * 100;
+    state->q_relative_calendar = (params->calendar_q0 - (dq_new)) * 100;
 }
 
 void lifetime_calendar_t::runTableModel() {
@@ -435,7 +452,7 @@ void lifetime_calendar_t::replaceBattery(double replacement_percent) {
     state->dq_relative_calendar_old = 0;
     state->q_relative_calendar += replacement_percent;
     if (params->calendar_choice == lifetime_params::CALENDAR_CHOICE::MODEL)
-        state->q_relative_calendar = fmin(params->calendar_model_q0 * 100, state->q_relative_calendar);
+        state->q_relative_calendar = fmin(params->calendar_q0 * 100, state->q_relative_calendar);
     if (params->calendar_choice == lifetime_params::CALENDAR_CHOICE::TABLE)
         state->q_relative_calendar = fmin(100, state->q_relative_calendar);
 }
@@ -450,6 +467,11 @@ lifetime_state::lifetime_state(){
     calendar = std::make_shared<calendar_state>();
 }
 
+lifetime_state::lifetime_state(const std::shared_ptr<cycle_state>& cyc, const std::shared_ptr<calendar_state>& cal) {
+    cycle = cyc;
+    calendar = cal;
+    q_relative = fmin(cycle->q_relative_cycle, calendar->q_relative_calendar);
+}
 
 lifetime_state &lifetime_state::operator=(const lifetime_state &rhs) {
     if (this != &rhs) {
@@ -463,11 +485,8 @@ lifetime_state &lifetime_state::operator=(const lifetime_state &rhs) {
 void lifetime_t::initialize() {
     cycle_model = std::unique_ptr<lifetime_cycle_t>(new lifetime_cycle_t(params));
     calendar_model = std::unique_ptr<lifetime_calendar_t>(new lifetime_calendar_t(params));
-    state = std::make_shared<lifetime_state>();
-    state->q_relative = 100;
-    state->cycle = cycle_model->state;
-    state->calendar = calendar_model->state;
-    state->q_relative = fmin(cycle_model->capacity_percent(), calendar_model->capacity_percent());
+    state = std::make_shared<lifetime_state>(cycle_model->state, calendar_model->state);
+    state->q_relative = fmin(state->cycle->q_relative_cycle, state->calendar->q_relative_calendar);
 }
 
 lifetime_t::lifetime_t(const util::matrix_t<double> &batt_lifetime_matrix, double dt_hour,
@@ -487,10 +506,10 @@ lifetime_t::lifetime_t(const util::matrix_t<double> &batt_lifetime_matrix, doubl
     params->dt_hour = dt_hour;
     params->cycling_matrix = batt_lifetime_matrix;
     params->calendar_choice = lifetime_params::CALENDAR_CHOICE::MODEL;
-    params->calendar_model_q0 = q0;
-    params->calendar_model_a = a;
-    params->calendar_model_b = b;
-    params->calendar_model_c = c;
+    params->calendar_q0 = q0;
+    params->calendar_a = a;
+    params->calendar_b = b;
+    params->calendar_c = c;
 
     initialize();
 }
@@ -511,15 +530,18 @@ lifetime_t::lifetime_t(std::shared_ptr<lifetime_params> params_ptr):
 
 lifetime_t::lifetime_t(const lifetime_t& rhs) {
     state = std::make_shared<lifetime_state>();
+    params = std::make_shared<lifetime_params>();
     operator=(rhs);
 }
 
 lifetime_t& lifetime_t::operator=(const lifetime_t& rhs) {
     if (this != &rhs) {
-        params = rhs.params;
-        *state = *rhs.state;
+        *params = *rhs.params;
         calendar_model = std::unique_ptr<lifetime_calendar_t>(new lifetime_calendar_t(params));
-        cycle_model = std::unique_ptr<lifetime_cycle_t>(new lifetime_cycle_t(*rhs.cycle_model));
+        cycle_model = std::unique_ptr<lifetime_cycle_t>(new lifetime_cycle_t(params));
+        state->q_relative = rhs.state->q_relative;
+        state->calendar = calendar_model->state;
+        state->cycle = cycle_model->state;
     }
     return *this;
 }
@@ -534,19 +556,19 @@ double lifetime_t::capacity_percent_cycle() { return cycle_model->capacity_perce
 
 double lifetime_t::capacity_percent_calendar() { return calendar_model->capacity_percent(); }
 
-void lifetime_t::runLifetimeModels(size_t idx, bool charge_changed, double prev_DOD, double DOD, double T_battery) {
+void lifetime_t::runLifetimeModels(size_t lifetimeIndex, bool charge_changed, double prev_DOD, double DOD, double T_battery) {
     double q_last = state->q_relative;
 
     if (q_last > 0) {
         double q_cycle = cycle_model->capacity_percent();
-        double q_calendar = calendar_model->capacity_percent();
+        double q_calendar;
 
         if (charge_changed)
             q_cycle = cycle_model->runCycleLifetime(prev_DOD);
-        else if (idx == 0)
+        else if (lifetimeIndex == 0)
             q_cycle = cycle_model->runCycleLifetime(DOD);
 
-        q_calendar = calendar_model->runLifetimeCalendarModel(idx, T_battery, 100. - DOD);
+        q_calendar = calendar_model->runLifetimeCalendarModel(lifetimeIndex, T_battery, 100. - DOD);
 
         // total capacity is min of cycle (Q_neg) and calendar (Q_li) capacity
         state->q_relative = fmin(q_cycle, q_calendar);

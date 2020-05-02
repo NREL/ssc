@@ -32,6 +32,13 @@ static const char *var_data_types[] =
 	"<table>",   // SSC_TABLE
 	NULL };
 
+var_data::var_data(std::vector<int> arr) : type(SSC_ARRAY) {
+    num.resize(arr.size());
+    for (size_t i = 0; i < arr.size(); i++) {
+        num[i] = (ssc_number_t)arr[i];
+    }
+}
+
 const char *var_data::type_name()
 {
 	if (type < 6) return var_data_types[ (int)type ];
@@ -358,9 +365,19 @@ const char *var_table::next()
 	return NULL;
 }
 
-void vt_get_int(var_table* vt, const std::string name, int* lvalue) {
+void vt_get_int(var_table* vt, const std::string& name, int* lvalue) {
 	if (var_data* vd = vt->lookup(name)) *lvalue = (int)vd->num;
 	else throw std::runtime_error(std::string(name) + std::string(" must be assigned."));
+}
+
+void vt_get_uint(var_table* vt, const std::string& name, size_t* lvalue) {
+    if (var_data* vd = vt->lookup(name)) *lvalue = (size_t)vd->num;
+    else throw std::runtime_error(std::string(name) + std::string(" must be assigned."));
+}
+
+void vt_get_bool(var_table* vt, const std::string& name, bool* lvalue) {
+    if (var_data* vd = vt->lookup(name)) *lvalue = (bool)vd->num;
+    else throw std::runtime_error(std::string(name) + std::string(" must be assigned."));
 }
 
 void vt_get_number(var_table* vt, const std::string& name, double* lvalue) {

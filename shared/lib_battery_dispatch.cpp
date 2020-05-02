@@ -122,7 +122,7 @@ dispatch_t::~dispatch_t()
 }
 void dispatch_t::finalize(size_t idx, double &I)
 {
-	*_Battery = *_Battery_initial;
+	_Battery->set_state(_Battery_initial->get_state());
 	m_batteryPower->powerBatteryDC = 0;
 	m_batteryPower->powerBatteryAC = 0;
 	m_batteryPower->powerGridToBattery = 0;
@@ -243,7 +243,7 @@ bool dispatch_t::check_constraints(double &I, size_t count)
     // reset
 	if (iterate)
 	{
-		*_Battery = *_Battery_initial;
+		_Battery->set_state(_Battery_initial->get_state());
         m_batteryPowerFlow->calculate();
     }
 
@@ -400,7 +400,7 @@ void dispatch_t::runDispatch(size_t year, size_t hour_of_year, size_t step)
 	double I = current_controller(m_batteryPower->powerBatteryDC);
 
 	// Setup battery iteration
-    *_Battery_initial = *_Battery;
+    _Battery_initial->set_state(_Battery->get_state());
 
 	bool iterate = true;
 	size_t count = 0;
@@ -418,10 +418,11 @@ void dispatch_t::runDispatch(size_t year, size_t hour_of_year, size_t step)
 		// If current changed during last iteration of constraints checker, recalculate internal battery state
 		if (!iterate) {
 			finalize(lifetimeIndex, I);
+		    m_batteryPower->powerBatteryDC = I * _Battery->V() * util::watt_to_kilowatt;
 		}
-
-		// Recalculate the DC battery power
-		m_batteryPower->powerBatteryDC = I * _Battery->V() * util::watt_to_kilowatt;
+		else {
+		    _Battery->set_state(_Battery_initial->get_state());
+		}
 		count++;
 
 	} while (iterate);
@@ -626,7 +627,7 @@ bool dispatch_manual_t::check_constraints(double &I, size_t count)
 		// reset
 		if (iterate)
 		{
-            *_Battery = *_Battery_initial;
+            _Battery->set_state(_Battery_initial->get_state());
 			m_batteryPower->powerBatteryAC = 0;
 			m_batteryPower->powerGridToBattery = 0;
 			m_batteryPower->powerBatteryToGrid = 0;
@@ -906,7 +907,7 @@ bool dispatch_automatic_t::check_constraints(double &I, size_t count)
 		// reset
 		if (iterate)
 		{
-            *_Battery = *_Battery_initial;
+            _Battery->set_state(_Battery_initial->get_state());
 //			m_batteryPower->powerBatteryAC = 0;
 //			m_batteryPower->powerGridToBattery = 0;
 //			m_batteryPower->powerBatteryToGrid = 0;

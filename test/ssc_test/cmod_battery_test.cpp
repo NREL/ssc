@@ -40,7 +40,7 @@ TEST_F(CMBattery_cmod_battery, CommercialLifetimePeakShaving) {
 		double* arr = ssc_data_get_array(data, "batt_temperature", &n);
 		auto temp_array = std::vector<double>(arr, arr + n);
 		double max_temp = *std::max_element(temp_array.begin(), temp_array.end());
-		EXPECT_NEAR(max_temp, 34, 1);
+		EXPECT_NEAR(max_temp, 33, 1);
 	}
 }
 
@@ -65,18 +65,18 @@ TEST_F(CMBattery_cmod_battery, ResilienceMetricsFullLoad){
 
     EXPECT_EQ(resilience_hours[0], 0);
     EXPECT_EQ(resilience_hours[1], 1);
-    EXPECT_NEAR(avg_critical_load,  1020.53, 0.1);
-    EXPECT_NEAR(resilience_hrs_avg, 1.40, 0.01);
+    EXPECT_NEAR(avg_critical_load,  979.55, 0.1);
+    EXPECT_NEAR(resilience_hrs_avg, 1.34, 0.01);
     EXPECT_EQ(resilience_hrs_min, 0);
     EXPECT_EQ(outage_durations[0], 0);
-    EXPECT_EQ(resilience_hrs_max, 24);
+    EXPECT_EQ(resilience_hrs_max, 23);
     EXPECT_EQ(outage_durations[17], 17);
-    EXPECT_NEAR(pdf_of_surviving[0], 0.6101, 1e-3);
-    EXPECT_NEAR(pdf_of_surviving[1], 0.1324, 1e-3);
+    EXPECT_NEAR(pdf_of_surviving[0], 0.629, 1e-3);
+    EXPECT_NEAR(pdf_of_surviving[1], 0.118, 1e-3);
 
     auto batt_power = data_vtab->as_vector_ssc_number_t("batt_power");
     auto power_max = *std::max_element(batt_power.begin(), batt_power.end());
-    EXPECT_NEAR(power_max, 167.62, 1e-2);
+    EXPECT_NEAR(power_max, 167.28, 1e-2);
 
     std::vector<size_t> max_indices;
     for (size_t i = 0; i < batt_power.size(); i++){
@@ -88,7 +88,7 @@ TEST_F(CMBattery_cmod_battery, ResilienceMetricsFullLoad){
 
     auto batt_q0 = data_vtab->as_vector_ssc_number_t("batt_q0");
     auto cap_max = *std::max_element(batt_q0.begin(), batt_q0.end());
-    EXPECT_NEAR(cap_max, 12142, 10);
+    EXPECT_NEAR(cap_max, 11540, 10) << "Cap max should be 95% SOC";
 
     max_indices.clear();
     for (size_t i = 0; i < batt_q0.size(); i++){
@@ -120,18 +120,18 @@ TEST_F(CMBattery_cmod_battery, ResilienceMetricsFullLoadLifetime){
 
     EXPECT_EQ(resilience_hours[0], 0);
     EXPECT_EQ(resilience_hours[1], 1);
-    EXPECT_NEAR(avg_critical_load, 1013.36, 0.1);
-    EXPECT_NEAR(resilience_hrs_avg, 1.398, 0.01);
+    EXPECT_NEAR(avg_critical_load, 963.6, 0.1);
+    EXPECT_NEAR(resilience_hrs_avg, 1.313, 0.01);
     EXPECT_EQ(resilience_hrs_min, 0);
     EXPECT_EQ(outage_durations[0], 0);
-    EXPECT_EQ(resilience_hrs_max, 24);
+    EXPECT_EQ(resilience_hrs_max, 23);
     EXPECT_EQ(outage_durations[17], 17);
-    EXPECT_NEAR(pdf_of_surviving[0], 0.615, 1e-3);
-    EXPECT_NEAR(pdf_of_surviving[1], 0.127, 1e-3);
+    EXPECT_NEAR(pdf_of_surviving[0], 0.636, 1e-3);
+    EXPECT_NEAR(pdf_of_surviving[1], 0.112, 1e-3);
 
     auto batt_power = data_vtab->as_vector_ssc_number_t("batt_power");
     auto power_max = *std::max_element(batt_power.begin(), batt_power.end());
-    EXPECT_NEAR(power_max, 167.62, 1e-2);
+    EXPECT_NEAR(power_max, 167.28, 1e-2);
 
     std::vector<size_t> max_indices;
     for (size_t i = 0; i < batt_power.size(); i++){
@@ -142,7 +142,7 @@ TEST_F(CMBattery_cmod_battery, ResilienceMetricsFullLoadLifetime){
 
     auto batt_q0 = data_vtab->as_vector_ssc_number_t("batt_q0");
     auto cap_max = *std::max_element(batt_q0.begin(), batt_q0.end());
-    EXPECT_NEAR(cap_max, 12148, 1e-2);
+    EXPECT_NEAR(cap_max, 11540, 10) << "Cap max should be 95% SOC";
 
     max_indices.clear();
     for (size_t i = 0; i < batt_q0.size(); i++){

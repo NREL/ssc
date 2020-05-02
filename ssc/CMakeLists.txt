@@ -153,7 +153,7 @@ set(SSC_SRC
 		tckernel.h
 		vartab.cpp
 		vartab.h
-        )
+        cmod_battery_stateful.cpp cmod_battery_stateful.h)
 
 
 #####################################################################################################################

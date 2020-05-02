@@ -33,7 +33,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static void compareState(thermal_state tested_state, thermal_state expected_state, const std::string& msg){
     double tol = 0.02;
-    EXPECT_NEAR(tested_state.T_batt_avg, expected_state.T_batt_avg, tol) << msg;
+    EXPECT_NEAR(tested_state.T_batt, expected_state.T_batt, tol) << msg;
     EXPECT_NEAR(tested_state.T_room, expected_state.T_room, tol) << msg;
     EXPECT_NEAR(tested_state.q_relative_thermal, expected_state.q_relative_thermal, tol) << msg;
 }
@@ -125,14 +125,13 @@ static void compareState(std::unique_ptr<battery_t>&model, const battery_state_t
     auto tested_state = model->get_state();
     compareState(*tested_state.capacity, expected_state.capacity, msg);
 
-    EXPECT_NEAR(tested_state.voltage->battery_voltage, expected_state.batt_voltage, 0.01) << msg;
+//    EXPECT_NEAR(tested_state.voltage->battery_voltage, expected_state.batt_voltage, 0.01) << msg;
 
     double tol = 0.01;
     auto lifetime_tested = tested_state.lifetime;
     auto cal_expected = expected_state.cal;
     EXPECT_NEAR(lifetime_tested->calendar->day_age_of_battery, cal_expected.day_age_of_battery, tol) << msg;
     EXPECT_NEAR(lifetime_tested->calendar->q_relative_calendar, cal_expected.q_relative_calendar, tol) << msg;
-    EXPECT_NEAR(lifetime_tested->calendar->last_idx, cal_expected.last_idx, tol) << msg;
     EXPECT_NEAR(lifetime_tested->calendar->dq_relative_calendar_old, cal_expected.dq_relative_calendar_old, tol) << msg;
 
     auto cyc_expected = expected_state.cycle;

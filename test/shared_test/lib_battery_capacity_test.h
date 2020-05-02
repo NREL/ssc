@@ -11,7 +11,7 @@ static void compareState(capacity_state tested_state, capacity_state expected_st
     EXPECT_NEAR(tested_state.q0, expected_state.q0, tol) << msg;
     EXPECT_NEAR(tested_state.qmax_thermal, expected_state.qmax_thermal, tol) << msg;
     EXPECT_NEAR(tested_state.qmax_lifetime, expected_state.qmax_lifetime, tol) << msg;
-    EXPECT_NEAR(tested_state.I, expected_state.I, tol) << msg;
+    EXPECT_NEAR(tested_state.cell_current, expected_state.cell_current, tol) << msg;
     EXPECT_NEAR(tested_state.I_loss, expected_state.I_loss, tol) << msg;
     EXPECT_NEAR(tested_state.SOC, expected_state.SOC, tol) << msg;
     EXPECT_NEAR(tested_state.DOD, expected_state.DOD, tol) << msg;

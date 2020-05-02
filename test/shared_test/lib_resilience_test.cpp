@@ -320,12 +320,6 @@ TEST_F(ResilienceTest_lib_resilience, ChargeVoltageTable){
     EXPECT_NEAR(max_p, cap.I() * volt.cell_voltage(), 1e-3);
 }
 
-class thermal_test : public thermal_t{
-public:
-    thermal_test(): thermal_t(1, 0, 0, 0, 0, 0, util::matrix_t<double>(), 0){state->T_batt_avg = 33 + 273.15;};
-    ~thermal_test(){};
-};
-
 TEST_F(ResilienceTest_lib_resilience, VoltageVanadium){
     auto volt = voltage_vanadium_redox_t(1, 1, 1.41, 0.001, 1);
     auto cap = capacity_lithium_ion_t(11, 30, 100, 0, 1);
@@ -377,7 +371,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsACHourly_Discharge)
             EXPECT_LT(batt->outBatteryPower[i], 1.) << "timestep " << i;
 
     }
-    std::vector<double> correct_charge_total = {13.86, 11.96, 10.05, 8.10, 6.10, 4.57, 4.57, 4.57, 4.57, 4.57};
+    std::vector<double> correct_charge_total = {13.86, 11.96, 10.05, 8.10, 6.10, 4.72, 4.72, 4.72, 4.72, 4.72};
 
     for (size_t i = 0; i < correct_charge_total.size(); i++){
         EXPECT_NEAR(charge_total[i], correct_charge_total[i], 0.1) << i;
@@ -413,7 +407,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsACHourly_Discharge)
     EXPECT_NEAR(probs[4], 0.000114, 1e-6);
 
     double avg_load = resilience.get_avg_crit_load_kwh();
-    EXPECT_NEAR(avg_load, 0.003504, 1e-5);
+    EXPECT_NEAR(avg_load, 0.003504, 1e-4);
 }
 
 TEST_F(ResilienceTest_lib_resilience, PVWattsACHalfHourly_Discharge)
@@ -434,7 +428,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsACHalfHourly_Discharge)
         }
         charge_total.emplace_back(batt->battery_model->charge_total());
     }
-    std::vector<double> correct_charge_total = {13.86, 11.96, 10.05, 8.10, 6.10, 4.57, 4.57, 4.57, 4.57, 4.57};
+    std::vector<double> correct_charge_total = {13.86, 11.96, 10.05, 8.10, 6.10, 4.72, 4.72, 4.72, 4.72, 4.72};
 
     for (size_t i = 0; i < correct_charge_total.size(); i++){
         EXPECT_NEAR(charge_total[i], correct_charge_total[i], 0.1);
@@ -469,7 +463,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsACHalfHourly_Discharge)
     EXPECT_NEAR(probs[3], 0.0000571, 1e-6);
 
     double avg_load = resilience.get_avg_crit_load_kwh();
-    EXPECT_NEAR(avg_load, 0.00348, 1e-5);
+    EXPECT_NEAR(avg_load, 0.00348, 1e-4);
 }
 
 
@@ -493,12 +487,12 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsDCHourly_Discharge)
         if (i < 5)
             EXPECT_NEAR(batt->outBatteryPower[i], 1. * inverter->efficiencyAC/100. * batt_vars->batt_dc_dc_bms_efficiency/100., 1e-3) << "timestep " << i << " battery discharging";
         else if (i == 5)
-            EXPECT_NEAR(batt->outBatteryPower[i], 0.92, 1e-3) << "timestep 5 battery SOC limits";
+            EXPECT_NEAR(batt->outBatteryPower[i], 0.855, 1e-3) << "timestep 5 battery SOC limits";
         else
             EXPECT_NEAR(batt->outBatteryPower[i], 0, 1e-3) << "timestep " << i << " battery at min SOC";
 
     }
-    std::vector<double> correct_charge_total = {13.94, 12.12, 10.28, 8.42, 6.51, 4.57, 4.57, 4.57, 4.57, 4.57};
+    std::vector<double> correct_charge_total = {13.94, 12.12, 10.28, 8.42, 6.51, 4.72, 4.72, 4.72, 4.72, 4.72};
 
     for (size_t i = 0; i < correct_charge_total.size(); i++){
         EXPECT_NEAR(charge_total[i], correct_charge_total[i], 0.1);
@@ -534,7 +528,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsDCHourly_Discharge)
     EXPECT_NEAR(probs[4], 0.000114, 1e-6);
 
     double avg_load = resilience.get_avg_crit_load_kwh();
-    EXPECT_NEAR(avg_load, 0.00352, 1e-5);
+    EXPECT_NEAR(avg_load, 0.00352, 1e-4);
 }
 
 TEST_F(ResilienceTest_lib_resilience, PVWattsDCHalfHourly_Discharge)
@@ -555,7 +549,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsDCHalfHourly_Discharge)
         }
         charge_total.emplace_back(batt->battery_model->charge_total());
     }
-    std::vector<double> correct_charge_total = {13.94, 12.12, 10.28, 8.42, 6.51, 4.57, 4.57, 4.57, 4.57, 4.57};
+    std::vector<double> correct_charge_total = {13.94, 12.12, 10.28, 8.42, 6.51, 4.72, 4.72, 4.72, 4.72, 4.72};
 
     for (size_t i = 0; i < correct_charge_total.size(); i++){
         EXPECT_NEAR(charge_total[i], correct_charge_total[i], 0.1);
@@ -571,7 +565,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsDCHalfHourly_Discharge)
     EXPECT_EQ(survived_hours[2], 5.5);
     EXPECT_EQ(survived_hours[3], 5);
     EXPECT_EQ(survived_hours[4], 4.5);
-    EXPECT_EQ(survived_hours[5], 4);
+    EXPECT_EQ(survived_hours[5], 4.5);
     EXPECT_EQ(survived_hours[6], 4);
     EXPECT_EQ(survived_hours[7], 3.5);
     EXPECT_EQ(survived_hours[11], 1.5);
@@ -590,7 +584,7 @@ TEST_F(ResilienceTest_lib_resilience, PVWattsDCHalfHourly_Discharge)
     EXPECT_NEAR(probs[3], 0.0000571, 1e-6);
 
     double avg_load = resilience.get_avg_crit_load_kwh();
-    EXPECT_NEAR(avg_load, 0.00355, 1e-5);
+    EXPECT_NEAR(avg_load, 0.00355, 1e-4);
 }
 
 TEST_F(ResilienceTest_lib_resilience, PVWattsACHourly_Charge)

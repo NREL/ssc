@@ -1,3 +1,25 @@
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #ifndef SYSTEM_ADVISOR_MODEL_LIB_STORAGE_CAPACITY_H
 #define SYSTEM_ADVISOR_MODEL_LIB_STORAGE_CAPACITY_H
 
@@ -10,7 +32,7 @@ struct capacity_state {
     double q0;  // [Ah] - Total capacity at timestep
     double qmax_lifetime; // [Ah] - maximum possible capacity
     double qmax_thermal; // [Ah] - maximum capacity adjusted for temperature affects
-    double I;   // [A]  - Current draw during last step
+    double cell_current;   // [A]  - Current draw during last step
     double I_loss; // [A] - Lifetime and thermal losses
     double SOC; // [%] - State of Charge
     double DOD; // [%] - Depth of Discharge
@@ -35,19 +57,19 @@ struct capacity_state {
 
 struct capacity_params {
     double qmax_init; // [Ah] - original maximum capacity
-    double SOC_init; // [%] - Initial SOC
-    double SOC_max; // [%] - Maximum SOC
-    double SOC_min; // [%] - Minimum SOC
+    double initial_SOC; // [%] - Initial SOC
+    double maximum_SOC; // [%] - Maximum SOC
+    double minimum_SOC; // [%] - Minimum SOC
     double dt_hr; // [hr] - Timestep in hours
 
     struct {
         // parameters for finding c, k, qmax
-        double t1;  // [h] - discharge rate for capacity at _q1
-        double t2;  // [h] - discharge rate for capacity at _q2
+        double tn;  // [h] - discharge rate for capacity at qn
+        double t2;  // [h] - discharge rate for capacity at q2
         double F1;  // [unitless] - internal ratio computation
         double F2;  // [unitless] - internal ratio computation
 
-        double q1;  //  [Ah] - Capacity at t1 hour discharge rate
+        double qn;  //  [Ah] - Capacity at tn hour discharge rate
         double q10; //  [Ah] - Capacity at 10 hour discharge rate
         double q20; // [Ah] - Capacity at 20 hour discharge rate
         double I20; // [A]  - Current at 20 hour discharge rate
@@ -87,8 +109,8 @@ public:
     virtual void replace_battery(double replacement_percent) = 0;
 
     void change_SOC_limits(double min, double max) {
-        params->SOC_min = min;
-        params->SOC_max = max;
+        params->minimum_SOC = min;
+        params->maximum_SOC = max;
     }
 
     virtual double q1() = 0; // available charge
@@ -151,7 +173,7 @@ public:
     capacity_kibam_t(double q20, double t1, double q1, double q10, double SOC_init, double SOC_max, double SOC_min,
                      double dt_hr);
 
-    capacity_kibam_t(std::shared_ptr<capacity_params> p);
+    explicit capacity_kibam_t(std::shared_ptr<capacity_params> p);
 
     capacity_kibam_t(const capacity_kibam_t &rhs);
 
@@ -206,7 +228,7 @@ class capacity_lithium_ion_t : public capacity_t {
 public:
     capacity_lithium_ion_t(double q, double SOC_init, double SOC_max, double SOC_min, double dt_hr);
 
-    capacity_lithium_ion_t(std::shared_ptr<capacity_params> p);
+    explicit capacity_lithium_ion_t(std::shared_ptr<capacity_params> p);
 
     capacity_lithium_ion_t(const capacity_lithium_ion_t &rhs);
 

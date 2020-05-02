@@ -202,14 +202,6 @@ struct batt_variables
 	double batt_cycle_cost;
 };
 
-struct batt_time_settings
-{
-    int current_year;
-    int current_hr;
-    int current_step;
-
-};
-
 struct battstor
 {
 	/// Pass in the single-year number of records
@@ -368,7 +360,5 @@ struct battstor
 };
 
 void process_messages(std::shared_ptr<battstor> batt, compute_module* cm);
-
-std::shared_ptr<battery_params> create_battery_params(var_table *vt, double dt_hr);
 
 #endif

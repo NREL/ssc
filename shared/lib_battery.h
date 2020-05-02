@@ -44,7 +44,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 struct thermal_state {
     double q_relative_thermal;      //[%]
-    double T_batt_avg;              // C
+    double T_batt;              // C
     double T_room;
     double T_batt_prev;
 
@@ -57,13 +57,14 @@ struct thermal_params {
     double surface_area;         // [m2] - exposed surface area
     double Cp;                   // [J/KgK] - battery specific heat capacity
     double h;                    // [W/m2/K] - general heat transfer coefficient
-    double R;                    // [Ohm] - internal resistance
+    double resistance;                    // [Ohm] - internal resistance
     util::matrix_t<double> cap_vs_temp;
 
     enum OPTIONS {
         VALUE, SCHEDULE
     };
     int option;
+    double T_room_init;                    // starting temperature C
     std::vector<double> T_room_schedule;   // can be year one hourly data or a single value constant throughout year
 
     friend std::ostream &operator<<(std::ostream &os, const thermal_params &p);
@@ -77,7 +78,7 @@ public:
     thermal_t(double dt_hour, double mass, double surface_area, double R, double Cp, double h,
               const util::matrix_t<double> &c_vs_t, double T_room_C);
 
-    thermal_t(std::shared_ptr<thermal_params> p);
+    explicit thermal_t(std::shared_ptr<thermal_params> p);
 
     thermal_t(const thermal_t &rhs);
 
@@ -132,7 +133,7 @@ struct losses_params {
     enum OPTIONS {
         MONTHLY, SCHEDULE, VALUE
     };
-    int option;
+    int loss_choice;
 
     std::vector<double> monthly_charge_loss;
     std::vector<double> monthly_discharge_loss;
@@ -165,7 +166,7 @@ public:
     */
     explicit losses_t(const std::vector<double>& schedule_loss = std::vector<double>(1, 0));
 
-    losses_t(std::shared_ptr<losses_params> p);
+    explicit losses_t(std::shared_ptr<losses_params> p);
 
     losses_t(const losses_t& rhs);
 
@@ -197,7 +198,7 @@ Class which encapsulates a battery and all its models
 
 struct replacement_state {
     int n_replacements;                                 // number of replacements this year
-    std::vector<size_t> indices_replaced;               // lifetime indices at which replacements occurred
+    std::vector<int> indices_replaced;               // lifetime indices at which replacements occurred
 
     friend std::ostream &operator<<(std::ostream &os, const replacement_state &p);
 };
@@ -206,13 +207,13 @@ struct replacement_params {
     enum OPTIONS {
         NONE, CAPACITY_PERCENT, SCHEDULE
     };
-    int option;
+    int replacement_option;
 
     /// Maximum capacity relative to nameplate at which to replace battery back to 100%
-    double capacity_percent;
+    double replacement_capacity;
 
-    std::vector<int> schedule;
-    std::vector<double> schedule_percent_to_replace;    // (0 - 100%)
+    std::vector<int> replacement_schedule;
+    std::vector<double> replacement_schedule_percent;    // (0 - 100%)
 
     friend std::ostream &operator<<(std::ostream &os, const replacement_params &p);
 };
@@ -220,6 +221,18 @@ struct replacement_params {
 struct battery_state {
     size_t last_idx;
 
+    // Values for battery as a whole
+    double V;
+    double Q;
+    double Q_max;
+    double I;
+    double I_dischargeable;
+    double I_chargeable;
+    double P;
+    double P_dischargeable;
+    double P_chargeable;
+
+    // Values for battery cell
     std::shared_ptr<capacity_state> capacity;
     std::shared_ptr<voltage_state> voltage;
     std::shared_ptr<thermal_state> thermal;
@@ -232,6 +245,8 @@ struct battery_state {
     battery_state(const std::shared_ptr<capacity_state> &cap, const std::shared_ptr<voltage_state> &vol,
                   const std::shared_ptr<thermal_state> &therm, const std::shared_ptr<lifetime_state> &life,
                   const std::shared_ptr<losses_state> &loss);
+
+    battery_state(const battery_state& rhs);
 
     battery_state &operator=(const battery_state &rhs);
 
@@ -252,6 +267,12 @@ struct battery_params {
     std::shared_ptr<replacement_params> replacement;
 
     battery_params();
+
+    battery_params(const std::shared_ptr<capacity_params> &cap, const std::shared_ptr<voltage_params> &vol,
+                  const std::shared_ptr<thermal_params> &therm, const std::shared_ptr<lifetime_params> &life,
+                  const std::shared_ptr<losses_params> &loss);
+
+    battery_params(const battery_params& rhs);
 
     battery_params &operator=(const battery_params &rhs);
 
@@ -287,6 +308,12 @@ public:
 
     // Run all for single time step, updating all component model states and return the dispatched power [kW]
     double run(size_t lifetimeIndex, double &I);
+
+    // Run for a single time step, using a control current A and the time step found in battery state
+    double runCurrent( double I);
+
+    // Run for a single time step, using a control power kW and the time step found in battery state
+    double runPower( double P);
 
     double calculate_voltage_for_current(double I);
 
@@ -342,15 +369,14 @@ public:
 
     battery_params get_params();
 
+    void set_state(const battery_state& state);
+
 private:
     std::unique_ptr<capacity_t> capacity;
     std::unique_ptr<thermal_t> thermal;
     std::unique_ptr<lifetime_t> lifetime;
     std::unique_ptr<voltage_t> voltage;
     std::unique_ptr<losses_t> losses;
-
-    std::unique_ptr<capacity_t> capacity_initial;
-    std::unique_ptr<thermal_t> thermal_initial;
 
     std::shared_ptr<battery_state> state;
     std::shared_ptr<battery_params> params;
