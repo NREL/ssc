@@ -762,6 +762,53 @@ TEST(Mspt_cmod_csp_tower_eqns, Case6b) {
     ASSERT_NEAR(csp_pt_cost_installed_per_capacity, 6506.91, 6506.91 * error_tolerance);
 }
 
+var_table CopyVarTableAndGetValue(var_table* vartab, std::string var_name, double* var_value) {
+    var_table vartab_copy = *vartab;                // this copy assignment operator causes the problem
+    *var_value = vartab->as_double(var_name);
+    return vartab_copy;
+}
+
+TEST(Mspt_cmod_csp_tower_eqns, VarTableCopyAssignmentOperator) {
+    // Get an ssc_data_t with default input values for the molten salt tower model
+    ssc_data_t data = ssc_data_create();
+    tcsmolten_salt_default(data);
+
+    // Verify var_tables can be copied by first converting the ssc_data_t to a var_table
+    // *** I'M NOT SURE THIS WORKS, as the call to CopyVarTableAndGetValue below shouldn't fail but it does ***
+    var_table *vartab = static_cast<var_table*>(data);
+
+    std::string test_variable_name = "tower_exp";
+    double test_value = vartab->as_double(test_variable_name);
+    double test_value_from_orig_table_after_copied;
+
+    // m_vartab is corrupted AFTER this call, but not while in it.
+    // If the copying is not in a function like this, there wouldn't be a problem until after the test exits.
+    var_table var_table_copy = CopyVarTableAndGetValue(vartab, test_variable_name, &test_value_from_orig_table_after_copied);
+
+    double test_value_from_copied_table;
+    try
+    {
+        test_value_from_copied_table = var_table_copy.as_double(test_variable_name);     // throws error
+    }
+    catch (std::exception& e) {
+        test_value_from_copied_table = std::numeric_limits<double>::quiet_NaN();
+    }
+
+    double test_value_from_orig_table_after_copied_and_fun_returned;
+    try
+    {
+        test_value_from_orig_table_after_copied_and_fun_returned = vartab->as_double(test_variable_name);       // throws error
+     
+    }
+    catch (std::exception& e) {
+        test_value_from_orig_table_after_copied_and_fun_returned = std::numeric_limits<double>::quiet_NaN();
+    }
+
+    ASSERT_DOUBLE_EQ(test_value, test_value_from_orig_table_after_copied);
+    ASSERT_DOUBLE_EQ(test_value, test_value_from_copied_table);
+    ASSERT_DOUBLE_EQ(test_value, test_value_from_orig_table_after_copied_and_fun_returned);
+}
+
 /// Test tcsmolten_salt with alternative condenser type: Evaporative
 /// Rest default configurations with respect to the single owner financial model
 //TEST_F(CMTcsMoltenSalt, Rankine_Evap_Condenser_SingleOwner_cmod_tcsmolten_salt) {
