@@ -312,13 +312,13 @@ public:
     double getNumReplacementYear();
 
     // Run all for single time step, updating all component model states and return the dispatched power [kW]
-    double run(size_t lifetimeIndex, double &I);
+    double run(size_t lifetimeIndex, double &I, bool stateful = false);
 
     // Run for a single time step, using a control current A and the time step found in battery state
-    double runCurrent( double I);
+    void runCurrent(double I);
 
     // Run for a single time step, using a control power kW and the time step found in battery state
-    double runPower( double P);
+    void runPower(double P);
 
     double calculate_voltage_for_current(double I);
 
