@@ -560,10 +560,10 @@ double battery_t::run(size_t lifetimeIndex, double &I, bool stateful) {
         state->Q = capacity->q0();
         state->Q_max = capacity->qmax();
         state->V = voltage->battery_voltage();
-        state->P = I * voltage->battery_voltage() * util::watt_to_kilowatt;
         state->P_dischargeable = calculate_max_discharge_kw(&state->I_dischargeable);
         state->P_chargeable = calculate_max_charge_kw(&state->I_chargeable);
     }
+    state->P = I * voltage->battery_voltage() * util::watt_to_kilowatt;
     return state->P;
 }
 

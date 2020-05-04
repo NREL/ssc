@@ -124,9 +124,7 @@ var_info vtab_battery_inputs[] = {
 
         // thermal inputs
         { SSC_INPUT,        SSC_NUMBER,     "batt_mass",                                   "Battery mass",                                           "kg",       "",                     "BatterySystem",       "",                           "",                             "" },
-        { SSC_INPUT,        SSC_NUMBER,     "batt_length",                                 "Battery length",                                         "m",        "",                     "BatterySystem",       "",                           "",                             "" },
-        { SSC_INPUT,        SSC_NUMBER,     "batt_width",                                  "Battery width",                                          "m",        "",                     "BatterySystem",       "",                           "",                             "" },
-        { SSC_INPUT,        SSC_NUMBER,     "batt_height",                                 "Battery height",                                         "m",        "",                     "BatterySystem",       "",                           "",                             "" },
+        { SSC_INPUT,        SSC_NUMBER,     "batt_surface_area",                            "Battery surface area",                                   "m^2",      "",                     "BatterySystem",       "",                           "",                             "" },
         { SSC_INPUT,        SSC_NUMBER,     "batt_Cp",                                     "Battery specific heat capacity",                         "J/KgK",    "",                     "BatteryCell",       "",                           "",                             "" },
         { SSC_INPUT,        SSC_NUMBER,     "batt_h_to_ambient",                           "Heat transfer between battery and environment",          "W/m2K",    "",                     "BatteryCell",       "",                           "",                             "" },
         { SSC_INPUT,        SSC_ARRAY,      "batt_room_temperature_celsius",               "Temperature of storage room",                            "C",        "",                     "BatteryCell",       "",                           "",                             "" },
@@ -552,10 +550,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             batt_vars->batt_calendar_c = vt.as_double("batt_calendar_c");
 
             // Thermal behavior
-            double height = vt.as_double("batt_height");
-            double width = vt.as_double("batt_width");
-            double length = vt.as_double("batt_length");
-            batt_vars->batt_surface_area = 2 * ((height * width) + (width * length) + (length * height));
+            batt_vars->batt_surface_area = vt.as_double("batt_surface_area");
             batt_vars->cap_vs_temp = vt.as_matrix("cap_vs_temp");
             batt_vars->batt_mass = vt.as_double("batt_mass");
             batt_vars->batt_Cp = vt.as_double("batt_Cp");
