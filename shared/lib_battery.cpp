@@ -44,7 +44,9 @@ void thermal_t::initialize() {
     else
         state->T_room = params->T_room_init;
     state->T_batt = state->T_room;
+
     state->T_batt_prev = state->T_room;
+    state->heat_dissipated = 0;
     state->q_relative_thermal = 100;
     dt_sec = params->dt_hour * 3600;
 }
@@ -93,6 +95,7 @@ void thermal_t::replace_battery(size_t lifetimeIndex) {
         state->T_batt = params->T_room_schedule[lifetimeIndex % params->T_room_schedule.size()];
     else
         state->T_batt = state->T_room;
+    state->heat_dissipated = 0;
     state->T_batt_prev = state->T_room;
     state->q_relative_thermal = 100.;
 }
@@ -118,6 +121,7 @@ void thermal_t::updateTemperature(double I, size_t lifetimeIndex) {
     double diffusion = exp(-params->surface_area * params->h * dt_sec / params->mass / params->Cp);
     double coeff_avg = params->mass * params->Cp / params->surface_area / params->h / dt_sec;
     state->T_batt = (state->T_batt_prev - state->T_room) * coeff_avg * (1 - diffusion) + source;
+    state->heat_dissipated = (state->T_batt - state->T_room) * params->mass * params->Cp;
 
     // update temp for use in next timestep
     state->T_batt_prev = (state->T_batt_prev - state->T_room) * diffusion + source;
@@ -313,6 +317,8 @@ battery_params::battery_params(const std::shared_ptr<capacity_params> &cap, cons
                                const std::shared_ptr<losses_params> &loss) {
     chem = -1;
     dt_hour = 0.;
+    nominal_energy = 0;
+    nominal_voltage = 0;
     capacity = cap;
     voltage = vol;
     thermal = therm;
@@ -357,6 +363,8 @@ battery_t::battery_t(double dt_hr, int chem, capacity_t *capacity_model, voltage
     params = std::make_shared<battery_params>(capacity->params, voltage->params, thermal->params, lifetime->params, losses->params);
     params->dt_hour = dt_hr;
     params->chem = chem;
+    params->nominal_voltage = params->voltage->Vnom_default * params->voltage->num_cells_series;
+    params->nominal_energy = params->nominal_voltage * params->voltage->num_strings * params->voltage->dynamic.Qfull * 1e-3;
 }
 
 battery_t::battery_t(std::shared_ptr<battery_params> p):
@@ -580,7 +588,7 @@ void battery_t::runVoltageModel() {
 
 void battery_t::runLifetimeModel(size_t lifetimeIndex) {
     lifetime->runLifetimeModels(lifetimeIndex,
-                                capacity->chargeChanged(), capacity->prev_DOD(), capacity->DOD(),
+                                capacity->chargeChanged(), 100. - capacity->SOC_prev(), 100. - capacity->SOC(),
                                 thermal->T_battery());
     capacity->updateCapacityForLifetime(lifetime->capacity_percent());
 }

@@ -35,8 +35,7 @@ struct capacity_state {
     double cell_current;   // [A]  - Current draw during last step
     double I_loss; // [A] - Lifetime and thermal losses
     double SOC; // [%] - State of Charge
-    double DOD; // [%] - Depth of Discharge
-    double DOD_prev; // [%] - Depth of Discharge of previous step
+    double SOC_prev; // [%] - previous step
 
     enum {
         CHARGE, NO_CHARGE, DISCHARGE
@@ -129,11 +128,7 @@ public:
 
     double SOC();
 
-    double DOD_max();
-
-    double DOD();
-
-    double prev_DOD();
+    double SOC_prev();
 
     double q0();
 

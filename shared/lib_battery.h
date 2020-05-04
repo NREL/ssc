@@ -43,9 +43,10 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 struct thermal_state {
-    double q_relative_thermal;      //[%]
-    double T_batt;              // C
+    double q_relative_thermal;   //[%]
+    double T_batt;               // C
     double T_room;
+    double heat_dissipated;      // J
     double T_batt_prev;
 
     friend std::ostream &operator<<(std::ostream &os, const thermal_state &p);
@@ -100,7 +101,7 @@ public:
     thermal_params get_params();
 
 protected:
-    double dt_sec{};              // [sec] - timestep
+    double dt_sec;              // [sec] - timestep
     void calc_capacity();
 
     std::shared_ptr<thermal_params> params;
@@ -240,8 +241,10 @@ struct battery_state {
     std::shared_ptr<losses_state> losses;
     std::shared_ptr<replacement_state> replacement;
 
+    // create with new subclass states
     battery_state();
 
+    // create with given subclass states
     battery_state(const std::shared_ptr<capacity_state> &cap, const std::shared_ptr<voltage_state> &vol,
                   const std::shared_ptr<thermal_state> &therm, const std::shared_ptr<lifetime_state> &life,
                   const std::shared_ptr<losses_state> &loss);
@@ -259,8 +262,8 @@ struct battery_params {
     };
     int chem;
     double dt_hour;
-    size_t nominal_energy;
-    size_t nominal_voltage;
+    double nominal_energy;
+    double nominal_voltage;
     std::shared_ptr<capacity_params> capacity;
     std::shared_ptr<voltage_params> voltage;
     std::shared_ptr<thermal_params> thermal;

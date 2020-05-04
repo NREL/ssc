@@ -34,128 +34,132 @@ var_info vtab_battery_stateful_inputs[] = {
         { SSC_INPUT,        SSC_NUMBER,      "input_power",                                "Power at which to run battery",                           "kW",      "",   "Controls",       "control_mode=1",              "",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "run_sequentially",                           "True turns off reading state from data at start of step", "0/1",     "",   "Controls",       "?=0",                         "",                              "" },
 
-        { SSC_INPUT,        SSC_NUMBER,      "chem",                                       "Lead Acid (0), Li Ion (1), Vanadium Redox (2), Iron Flow (3)","0/1/2/3","",   "BatteryCell",       "*",                           "",                              "" },
-        { SSC_INOUT,        SSC_NUMBER,      "nominal_energy",                             "Nominal installed energy",                                "kWh",     "",                     "BatterySystem",       "*",                           "",                              "" },
-        { SSC_INOUT,        SSC_NUMBER,      "nominal_voltage",                            "Nominal DC voltage",                                      "V",       "",                     "BatterySystem",       "*",                           "",                              "" },
+        { SSC_INPUT,        SSC_NUMBER,      "chem",                                       "Lead Acid (0), Li Ion (1), Vanadium Redox (2), Iron Flow (3)","0/1/2/3","",   "ParamsCell",       "*",                           "",                              "" },
+        { SSC_INOUT,        SSC_NUMBER,      "nominal_energy",                             "Nominal installed energy",                                "kWh",     "",                     "ParamsPack",       "*",                           "",                              "" },
+        { SSC_INOUT,        SSC_NUMBER,      "nominal_voltage",                            "Nominal DC voltage",                                      "V",       "",                     "ParamsPack",       "*",                           "",                              "" },
 
         // capacity
-        { SSC_INPUT,        SSC_NUMBER,      "initial_SOC",		                          "Initial state-of-charge",                                 "%",       "",                     "BatteryCell",       "*",                           "",                              "" },
-        { SSC_INPUT,        SSC_NUMBER,      "minimum_SOC",		                          "Minimum allowed state-of-charge",                         "%",       "",                     "BatteryCell",       "*",                           "",                              "" },
-        { SSC_INPUT,        SSC_NUMBER,      "maximum_SOC",                                "Maximum allowed state-of-charge",                         "%",       "",                     "BatteryCell",       "*",                           "",                              "" },
-        { SSC_INPUT,		SSC_NUMBER,		 "leadacid_q20",	                              "Capacity at 20-hour discharge rate",                      "Ah",       "",                     "BatteryCell",       "chem=0",                           "",                             "" },
-        { SSC_INPUT,		SSC_NUMBER,		 "leadacid_q10",	                              "Capacity at 10-hour discharge rate",                      "Ah",       "",                     "BatteryCell",       "chem=0",                           "",                             "" },
-        { SSC_INPUT,		SSC_NUMBER,		 "leadacid_qn",	                              "Capacity at discharge rate for n-hour rate",              "Ah",       "",                     "BatteryCell",       "chem=0",                           "",                             "" },
-        { SSC_INPUT,		SSC_NUMBER,		 "leadacid_tn",	                              "Hours to discharge for qn rate",                          "h",        "",                     "BatteryCell",       "chem=0",                           "",                             "" },
+        { SSC_INPUT,        SSC_NUMBER,      "initial_SOC",		                          "Initial state-of-charge",                                 "%",       "",                     "ParamsCell",       "*",                           "",                              "" },
+        { SSC_INPUT,        SSC_NUMBER,      "minimum_SOC",		                          "Minimum allowed state-of-charge",                         "%",       "",                     "ParamsCell",       "*",                           "",                              "" },
+        { SSC_INPUT,        SSC_NUMBER,      "maximum_SOC",                                "Maximum allowed state-of-charge",                         "%",       "",                     "ParamsCell",       "*",                           "",                              "" },
+        { SSC_INPUT,		SSC_NUMBER,		 "leadacid_q20",	                              "Capacity at 20-hour discharge rate",                      "Ah",       "",                     "ParamsCell",       "chem=0",                           "",                             "" },
+        { SSC_INPUT,		SSC_NUMBER,		 "leadacid_q10",	                              "Capacity at 10-hour discharge rate",                      "Ah",       "",                     "ParamsCell",       "chem=0",                           "",                             "" },
+        { SSC_INPUT,		SSC_NUMBER,		 "leadacid_qn",	                              "Capacity at discharge rate for n-hour rate",              "Ah",       "",                     "ParamsCell",       "chem=0",                           "",                             "" },
+        { SSC_INPUT,		SSC_NUMBER,		 "leadacid_tn",	                              "Hours to discharge for qn rate",                          "h",        "",                     "ParamsCell",       "chem=0",                           "",                             "" },
 
         // Voltage discharge curve
-        { SSC_INPUT,        SSC_NUMBER,      "voltage_choice",                             "Battery voltage input option",                            "0/1",     "0=Model,1=Table",      "BatteryCell",       "?=0",                        "",                             "" },
-        { SSC_INPUT,		SSC_MATRIX,      "voltage_matrix",                             "Table with depth-of-discharge % and Voltage as columns",  "[[%, V]]","",                     "BatteryCell",       "voltage_choice=1",      "",                             "" },
-        { SSC_INPUT,        SSC_NUMBER,      "Vnom_default",                               "Default nominal cell voltage",                            "V",       "",                     "BatteryCell",       "*",                          "",                              "" },
-        { SSC_INPUT,        SSC_NUMBER,      "resistance",                                 "Internal resistance",                                     "Ohm",     "",                     "BatteryCell",       "*",                           "",                              "" },
-        { SSC_INPUT,        SSC_NUMBER,      "Vfull",                                      "Fully charged cell voltage",                              "V",       "",                     "BatteryCell",       "voltage_choice=0&chem~2", "",                              "" },
-        { SSC_INPUT,        SSC_NUMBER,      "Vexp",                                       "Cell voltage at end of exponential zone",                 "V",       "",                     "BatteryCell",       "voltage_choice=0&chem~2",  "",                              "" },
-        { SSC_INPUT,        SSC_NUMBER,      "Vnom",                                       "Cell voltage at end of nominal zone",                     "V",       "",                     "BatteryCell",       "voltage_choice=0&chem~2", "",                              "" },
-        { SSC_INPUT,        SSC_NUMBER,      "Qfull",                                      "Fully charged cell capacity",                             "Ah",      "",                     "BatteryCell",       "voltage_choice=0&chem~2", "",                              "" },
-        { SSC_INPUT,        SSC_NUMBER,      "Qexp",                                       "Cell capacity at end of exponential zone",                "Ah",      "",                     "BatteryCell",       "voltage_choice=0&chem~2", "",                              "" },
-        { SSC_INPUT,        SSC_NUMBER,      "Qnom",                                       "Cell capacity at end of nominal zone",                    "Ah",      "",                     "BatteryCell",       "voltage_choice=0&chem~2", "",                              "" },
-        { SSC_INPUT,        SSC_NUMBER,      "C_rate",                                     "Rate at which voltage vs. capacity curve input",          "",        "",                     "BatteryCell",       "voltage_choice=0&chem~2", "",                              "" },
-        { SSC_INPUT,        SSC_NUMBER,      "Qfull_flow",                                 "Fully charged flow battery capacity",                     "Ah",      "",                     "BatteryCell",       "voltage_choice=0&chem=3", "",                              "" },
+        { SSC_INPUT,        SSC_NUMBER,      "voltage_choice",                             "Battery voltage input option",                            "0/1",     "0=Model,1=Table",      "ParamsCell",       "?=0",                        "",                             "" },
+        { SSC_INPUT,		SSC_MATRIX,      "voltage_matrix",                             "Table with depth-of-discharge % and Voltage as columns",  "[[%, V]]","",                     "ParamsCell",       "voltage_choice=1",      "",                             "" },
+        { SSC_INPUT,        SSC_NUMBER,      "Vnom_default",                               "Default nominal cell voltage",                            "V",       "",                     "ParamsCell",       "*",                          "",                              "" },
+        { SSC_INPUT,        SSC_NUMBER,      "resistance",                                 "Internal resistance",                                     "Ohm",     "",                     "ParamsCell",       "*",                           "",                              "" },
+        { SSC_INPUT,        SSC_NUMBER,      "Vfull",                                      "Fully charged cell voltage",                              "V",       "",                     "ParamsCell",       "voltage_choice=0&chem~2", "",                              "" },
+        { SSC_INPUT,        SSC_NUMBER,      "Vexp",                                       "Cell voltage at end of exponential zone",                 "V",       "",                     "ParamsCell",       "voltage_choice=0&chem~2",  "",                              "" },
+        { SSC_INPUT,        SSC_NUMBER,      "Vnom",                                       "Cell voltage at end of nominal zone",                     "V",       "",                     "ParamsCell",       "voltage_choice=0&chem~2", "",                              "" },
+        { SSC_INPUT,        SSC_NUMBER,      "Qfull",                                      "Fully charged cell capacity",                             "Ah",      "",                     "ParamsCell",       "voltage_choice=0&chem~2", "",                              "" },
+        { SSC_INPUT,        SSC_NUMBER,      "Qexp",                                       "Cell capacity at end of exponential zone",                "Ah",      "",                     "ParamsCell",       "voltage_choice=0&chem~2", "",                              "" },
+        { SSC_INPUT,        SSC_NUMBER,      "Qnom",                                       "Cell capacity at end of nominal zone",                    "Ah",      "",                     "ParamsCell",       "voltage_choice=0&chem~2", "",                              "" },
+        { SSC_INPUT,        SSC_NUMBER,      "C_rate",                                     "Rate at which voltage vs. capacity curve input",          "",        "",                     "ParamsCell",       "voltage_choice=0&chem~2", "",                              "" },
+        { SSC_INPUT,        SSC_NUMBER,      "Qfull_flow",                                 "Fully charged flow battery capacity",                     "Ah",      "",                     "ParamsCell",       "voltage_choice=0&chem=3", "",                              "" },
 
         // thermal inputs
-        { SSC_INPUT,        SSC_NUMBER,      "mass",                                       "Battery mass",                                            "kg",       "",                     "BatterySystem",       "*",                           "",                             "" },
-        { SSC_INPUT,        SSC_NUMBER,      "surface_area",                               "Battery surface area",                                    "m^2",      "",                     "BatterySystem",       "*",                           "",                             "" },
-        { SSC_INPUT,        SSC_NUMBER,      "Cp",                                         "Battery specific heat capacity",                          "J/KgK",    "",                     "BatteryCell",       "*",                           "",                             "" },
-        { SSC_INPUT,        SSC_NUMBER,      "h",                                          "Heat transfer between battery and environment",           "W/m2K",    "",                     "BatteryCell",       "*",                           "",                             "" },
-        { SSC_INPUT,        SSC_NUMBER,      "T_room_init",                                "Temperature of storage room",                             "C",        "",                     "BatteryCell",       "*",                           "",                             "" },
-        { SSC_INPUT,        SSC_MATRIX,      "cap_vs_temp",                                "Table with Temperature and Capacity % as columns",        "[[C,%]]",  "",                     "BatteryCell",       "*",                           "",                             "" },
+        { SSC_INPUT,        SSC_NUMBER,      "mass",                                       "Battery mass",                                            "kg",       "",                     "ParamsPack",       "*",                           "",                             "" },
+        { SSC_INPUT,        SSC_NUMBER,      "surface_area",                               "Battery surface area",                                    "m^2",      "",                     "ParamsPack",       "*",                           "",                             "" },
+        { SSC_INPUT,        SSC_NUMBER,      "Cp",                                         "Battery specific heat capacity",                          "J/KgK",    "",                     "ParamsPack",       "*",                           "",                             "" },
+        { SSC_INPUT,        SSC_NUMBER,      "h",                                          "Heat transfer between battery and environment",           "W/m2K",    "",                     "ParamsPack",       "*",                           "",                             "" },
+        { SSC_INPUT,        SSC_NUMBER,      "T_room_init",                                "Temperature of storage room",                             "C",        "",                     "ParamsPack",       "*",                           "",                             "" },
+        { SSC_INPUT,        SSC_MATRIX,      "cap_vs_temp",                                "Table with Temperature and Capacity % as columns",        "[[C,%]]",  "",                     "ParamsPack",       "*",                           "",                             "" },
 
         // lifetime inputs
-        { SSC_INPUT,		SSC_MATRIX,      "cycling_matrix",                             "Table with DOD %, Cycle #, and Capacity % columns",       "[[%, #, %]]","",                     "BatteryCell",       "*",                           "",                             "" },
-        { SSC_INPUT,        SSC_NUMBER,      "calendar_choice",                            "Calendar life degradation input option",                  "0/1/2",    "0=None,1=LithiomIonModel,2=InputLossTable",  "BatteryCell",       "*",       "",                             "" },
-        { SSC_INPUT,        SSC_MATRIX,      "calendar_matrix",                            "Table with Day # and Capacity % columns",                 "[[#, %]]", "",                     "BatteryCell",       "calendar_choice=2",        "",                             "" },
-        { SSC_INPUT,        SSC_NUMBER,      "calendar_q0",                                "Calendar life model initial capacity cofficient",         "",         "",                     "BatteryCell",       "calendar_choice=1",        "",                             "" },
-        { SSC_INPUT,        SSC_NUMBER,      "calendar_a",                                 "Calendar life model coefficient",                         "1/sqrt(day)","",                   "BatteryCell",       "calendar_choice=1",        "",                             "" },
-        { SSC_INPUT,        SSC_NUMBER,      "calendar_b",                                 "Calendar life model coefficient",                         "K",        "",                     "BatteryCell",       "calendar_choice=1",        "",                             "" },
-        { SSC_INPUT,        SSC_NUMBER,      "calendar_c",                                 "Calendar life model coefficient",                         "K",        "",                     "BatteryCell",       "calendar_choice=1",        "",                             "" },
+        { SSC_INPUT,		SSC_MATRIX,      "cycling_matrix",                             "Table with DOD %, Cycle #, and Capacity % columns",       "[[%, #, %]]","",                     "ParamsCell",       "*",                           "",                             "" },
+        { SSC_INPUT,        SSC_NUMBER,      "calendar_choice",                            "Calendar life degradation input option",                  "0/1/2",    "0=None,1=LithiomIonModel,2=InputLossTable",  "ParamsCell",       "*",       "",                             "" },
+        { SSC_INPUT,        SSC_MATRIX,      "calendar_matrix",                            "Table with Day # and Capacity % columns",                 "[[#, %]]", "",                     "ParamsCell",       "calendar_choice=2",        "",                             "" },
+        { SSC_INPUT,        SSC_NUMBER,      "calendar_q0",                                "Calendar life model initial capacity cofficient",         "",         "",                     "ParamsCell",       "calendar_choice=1",        "",                             "" },
+        { SSC_INPUT,        SSC_NUMBER,      "calendar_a",                                 "Calendar life model coefficient",                         "1/sqrt(day)","",                   "ParamsCell",       "calendar_choice=1",        "",                             "" },
+        { SSC_INPUT,        SSC_NUMBER,      "calendar_b",                                 "Calendar life model coefficient",                         "K",        "",                     "ParamsCell",       "calendar_choice=1",        "",                             "" },
+        { SSC_INPUT,        SSC_NUMBER,      "calendar_c",                                 "Calendar life model coefficient",                         "K",        "",                     "ParamsCell",       "calendar_choice=1",        "",                             "" },
 
         // losses
-        { SSC_INPUT,        SSC_NUMBER,      "loss_choice",                                "Loss power input option",                                 "0/1",        "0=Monthly,1=TimeSeries", "BatterySystem",       "?=0",                        "",                             "" },
-        { SSC_INPUT,        SSC_ARRAY,       "monthly_charge_loss",                        "Battery system losses when charging",                     "[kW]",       "",                     "BatterySystem",       "?=0",                        "",                             "" },
-        { SSC_INPUT,        SSC_ARRAY,       "monthly_discharge_loss",                     "Battery system losses when discharging",                  "[kW]",       "",                     "BatterySystem",       "?=0",                        "",                             "" },
-        { SSC_INPUT,        SSC_ARRAY,       "monthly_idle_loss",                          "Battery system losses when idle",                         "[kW]",       "",                     "BatterySystem",       "?=0",                        "",                             "" },
-        { SSC_INPUT,        SSC_ARRAY,       "schedule_loss",                              "Battery system losses at each timestep",                  "[kW]",       "",                     "BatterySystem",       "?=0",                        "",                             "" },
+        { SSC_INPUT,        SSC_NUMBER,      "loss_choice",                                "Loss power input option",                                 "0/1",        "0=Monthly,1=TimeSeries", "ParamsPack",       "?=0",                        "",                             "" },
+        { SSC_INPUT,        SSC_ARRAY,       "monthly_charge_loss",                        "Battery system losses when charging",                     "[kW]",       "",                     "ParamsPack",       "?=0",                        "",                             "" },
+        { SSC_INPUT,        SSC_ARRAY,       "monthly_discharge_loss",                     "Battery system losses when discharging",                  "[kW]",       "",                     "ParamsPack",       "?=0",                        "",                             "" },
+        { SSC_INPUT,        SSC_ARRAY,       "monthly_idle_loss",                          "Battery system losses when idle",                         "[kW]",       "",                     "ParamsPack",       "?=0",                        "",                             "" },
+        { SSC_INPUT,        SSC_ARRAY,       "schedule_loss",                              "Battery system losses at each timestep",                  "[kW]",       "",                     "ParamsPack",       "?=0",                        "",                             "" },
 
         // replacement inputs
-        { SSC_INPUT,        SSC_NUMBER,      "replacement_option",                         "Replacements: none (1), by capacity (1), or schedule (2)", "0=none,1=capacity limit,2=yearly schedule", "", "BatterySystem", "?=0",                  "INTEGER,MIN=0,MAX=2",          "" },
-        { SSC_INPUT,        SSC_NUMBER,      "replacement_capacity",                       "Capacity degradation at which to replace battery",       "%",        "",                     "BatterySystem",       "replacement_option=1",                           "",                             "" },
-        { SSC_INPUT,        SSC_ARRAY,       "replacement_schedule",                       "Battery bank number of replacements in each year",       "[number/year]","length <= analysis_period",                  "BatterySystem",      "replacement_option=2",   "",                             "" },
-        { SSC_INPUT,        SSC_ARRAY,       "replacement_schedule_percent",               "Percentage of battery capacity to replace in each year", "[%/year]","length <= analysis_period",                  "BatterySystem",      "replacement_option=2",   "",                             "" },
+        { SSC_INPUT,        SSC_NUMBER,      "replacement_option",                         "Replacements: none (1), by capacity (1), or schedule (2)", "0=none,1=capacity limit,2=yearly schedule", "", "ParamsPack", "?=0",                  "INTEGER,MIN=0,MAX=2",          "" },
+        { SSC_INPUT,        SSC_NUMBER,      "replacement_capacity",                       "Capacity degradation at which to replace battery",       "%",        "",                     "ParamsPack",       "replacement_option=1",                           "",                             "" },
+        { SSC_INPUT,        SSC_ARRAY,       "replacement_schedule",                       "Battery bank number of replacements in each year",       "[number/year]","length <= analysis_period",                  "ParamsPack",      "replacement_option=2",   "",                             "" },
+        { SSC_INPUT,        SSC_ARRAY,       "replacement_schedule_percent",               "Percentage of battery capacity to replace in each year", "[%/year]","length <= analysis_period",                  "ParamsPack",      "replacement_option=2",   "",                             "" },
         var_info_invalid
 };
 
 var_info vtab_battery_state[] = {
         // battery pack
-        { SSC_INOUT,        SSC_NUMBER,     "last_idx",                  "Last index (lifetime)",                                    "",          "",                     "BatteryState",       "",                           "",                               ""  },
-        { SSC_INOUT,        SSC_NUMBER,     "I",                         "Current",                                                  "A",         "",                     "BatteryState",       "",                           "",                               ""  },
-        { SSC_INOUT,        SSC_NUMBER,     "V",                         "Voltage",                                                  "V",         "",                     "BatteryState",       "",                           "",                               ""  },
-        { SSC_INOUT,        SSC_NUMBER,     "P",                         "Power",                                                    "kW",        "",                     "BatteryState",       "",                           "",                               ""  },
-        { SSC_INOUT,        SSC_NUMBER,     "Q",                         "Capacity",                                                 "Ah",        "",                     "BatteryState",       "",                           "",                               ""  },
-        { SSC_INOUT,        SSC_NUMBER,     "Q_max",                     "Max Capacity",                                             "Ah",        "",                     "BatteryState",       "",                           "",                               ""  },
-        { SSC_INOUT,        SSC_NUMBER,     "P_dischargeable",           "Estimated max dischargeable power",                        "kW",        "",                     "BatteryState",       "",                           "",                               ""  },
-        { SSC_INOUT,        SSC_NUMBER,     "P_chargeable",              "Estimated max chargeable power ",                          "kW",        "",                     "BatteryState",       "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "last_idx",                  "Last index (lifetime)",                                    "",          "",                     "StatePack",       "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "V",                         "Voltage",                                                  "V",         "",                     "StatePack",       "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "P",                         "Power",                                                    "kW",        "",                     "StatePack",       "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "Q",                         "Capacity",                                                 "Ah",        "",                     "StatePack",       "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "Q_max",                     "Max Capacity",                                             "Ah",        "",                     "StatePack",       "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "I",                         "Current",                                                  "A",         "",                     "StatePack",       "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "I_dischargeable",           "Estimated max dischargeable current",                      "A",         "",                     "StatePack",       "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "I_chargeable",              "Estimated max chargeable current",                         "A",         "",                     "StatePack",       "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "P_dischargeable",           "Estimated max dischargeable power",                        "kW",        "",                     "StatePack",       "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "P_chargeable",              "Estimated max chargeable power ",                          "kW",        "",                     "StatePack",       "",                           "",                               ""  },
 
         // capacity
-        { SSC_INOUT,        SSC_NUMBER,     "q0",                        "Cell capacity at timestep",                                "Ah",        "",                     "CapacityState",       "",                           "",                               ""  },
-        { SSC_INOUT,        SSC_NUMBER,     "qmax_lifetime",             "Maximum possible cell capacity",                           "Ah",        "",                     "CapacityState",       "",                           "",                               ""  },
-        { SSC_INOUT,        SSC_NUMBER,     "qmax_thermal",              "Maximum cell capacity adjusted for temperature effects",   "Ah",        "",                     "CapacityState",       "",                           "",                               ""  },
-        { SSC_INOUT,        SSC_NUMBER,     "cell_current",              "Cell current",                                             "A",         "",                     "CapacityState",       "",                           "",                               ""  },
-        { SSC_INOUT,        SSC_NUMBER,     "I_loss",                    "Lifetime and thermal losses",                              "A",         "",                     "CapacityState",       "",                           "",                               ""  },
-        { SSC_INOUT,        SSC_NUMBER,     "SOC",                       "State of Charge",                                          "%",         "",                     "CapacityState",       "",                           "",                               ""  },
-        { SSC_INOUT,        SSC_NUMBER,     "DOD",                       "Depth of Discharge percent",                               "%",         "",                     "CapacityState",       "",                           "",                               ""  },
-        { SSC_INOUT,        SSC_NUMBER,     "DOD_prev",                  "Depth of Discharge percent of last time step",             "%",         "",                     "CapacityState",       "",                           "",                               ""  },
-        { SSC_INOUT,        SSC_NUMBER,     "charge_mode",               "Charge (0), Idle (1), Discharge (2)",                      "0/1/2",     "",                     "CapacityState",       "",                           "",                               ""  },
-        { SSC_INOUT,        SSC_NUMBER,     "prev_charge",               "Charge mode of last time step",                            "0/1/2",     "",                     "CapacityState",       "",                           "",                               ""  },
-        { SSC_INOUT,        SSC_NUMBER,     "chargeChange",              "Whether Charge mode changed since last step",              "0/1",       "",                     "CapacityState",       "",                           "",                               ""  },
-        { SSC_INOUT,        SSC_NUMBER,     "q1_0",                      "Lead acid - Cell charge available",                        "Ah",        "",                     "CapacityState",       "",                           "",                               ""  },
-        { SSC_INOUT,        SSC_NUMBER,     "q2_0",                      "Lead acid - Cell charge bound",                            "Ah",        "",                     "CapacityState",       "",                           "",                               ""  },
-        { SSC_INOUT,        SSC_NUMBER,     "qn",                        "Lead acid - Cell capacity at n-hr discharge rate",         "Ah",        "",                     "CapacityState",       "",                           "",                               ""  },
-        { SSC_INOUT,        SSC_NUMBER,     "q2",                        "Lead acid - Cell capacity at 10-hr discharge rate",        "Ah",        "",                     "CapacityState",       "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "SOC",                       "State of Charge",                                          "%",         "",                     "StatePack",       "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "q0",                        "Cell capacity at timestep",                                "Ah",        "",                     "StateCell",       "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "qmax_lifetime",             "Maximum possible cell capacity",                           "Ah",        "",                     "StateCell",       "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "qmax_thermal",              "Maximum cell capacity adjusted for temperature effects",   "Ah",        "",                     "StateCell",       "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "cell_current",              "Cell current",                                             "A",         "",                     "StateCell",       "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "I_loss",                    "Lifetime and thermal losses",                              "A",         "",                     "StateCell",       "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "charge_mode",               "Charge (0), Idle (1), Discharge (2)",                      "0/1/2",     "",                     "StateCell",       "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "SOC_prev",                  "State of Charge of last time step",                        "%",         "",                     "StateCell",       "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "prev_charge",               "Charge mode of last time step",                            "0/1/2",     "",                     "StateCell",       "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "chargeChange",              "Whether Charge mode changed since last step",              "0/1",       "",                     "StateCell",       "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "q1_0",                      "Lead acid - Cell charge available",                        "Ah",        "",                     "StateCell",       "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "q2_0",                      "Lead acid - Cell charge bound",                            "Ah",        "",                     "StateCell",       "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "qn",                        "Lead acid - Cell capacity at n-hr discharge rate",         "Ah",        "",                     "StateCell",       "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "q2",                        "Lead acid - Cell capacity at 10-hr discharge rate",        "Ah",        "",                     "StateCell",       "",                           "",                               ""  },
 
         // voltage
-        { SSC_INOUT,        SSC_NUMBER,     "cell_voltage",              "Cell voltage",                                             "V",         "",                     "VoltageState",        "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "cell_voltage",              "Cell voltage",                                             "V",         "",                     "StateCell",        "",                           "",                               ""  },
 
         // thermal
-        { SSC_INOUT,        SSC_NUMBER,     "q_relative_thermal",        "Relative capacity due to thermal effects",                 "Ah",        "",                     "ThermalState",        "",                           "",                               ""  },
-        { SSC_INOUT,        SSC_NUMBER,     "T_batt",                    "Battery temperature averaged over time step",              "C",         "",                     "ThermalState",        "",                           "",                               ""  },
-        { SSC_INOUT,        SSC_NUMBER,     "T_room",                    "Room temperature",                                         "C",         "",                     "ThermalState",        "",                           "",                               ""  },
-        { SSC_INOUT,        SSC_NUMBER,     "T_batt_prev",               "Battery temperature at end of last time step",             "C",         "",                     "ThermalState",        "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "q_relative_thermal",        "Relative capacity due to thermal effects",                 "Ah",        "",                     "StateCell",        "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "T_batt",                    "Battery temperature averaged over time step",              "C",         "",                     "StatePack",        "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "T_room",                    "Room temperature",                                         "C",         "",                     "StatePack",        "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "heat_dissipated",           "Heat dissipated due to flux and resistance",               "J",         "",                     "StatePack",        "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "T_batt_prev",               "Battery temperature at end of last time step",             "C",         "",                     "StateCell",        "",                           "",                               ""  },
 
         // lifetime
-        { SSC_INOUT,        SSC_NUMBER,     "q_relative",                "Overall relative capacity due to lifetime effects",        "Ah",        "",                     "LifetimeState",        "",                           "",                               ""  },
-        { SSC_INOUT,        SSC_NUMBER,     "q_relative_cycle",          "Relative capacity due to cycling effects",                 "%",         "",                     "LifetimeState",        "",                           "",                               ""  },
-        { SSC_INOUT,        SSC_NUMBER,     "n_cycles",                  "Number of cycles",                                         "",          "",                     "LifetimeState",        "",                           "",                               ""  },
-        { SSC_INOUT,        SSC_NUMBER,     "range",                     "Cycle range",                                              "%",         "",                     "LifetimeState",        "",                           "",                               ""  },
-        { SSC_INOUT,        SSC_NUMBER,     "average_range",             "Average cycle range",                                      "%",         "",                     "LifetimeState",        "",                           "",                               ""  },
-        { SSC_INOUT,        SSC_NUMBER,     "rainflow_Xlt",              "Rainflow range of second to last half cycle",              "%",         "",                     "LifetimeState",        "",                           "",                               ""  },
-        { SSC_INOUT,        SSC_NUMBER,     "rainflow_Ylt",              "Rainflow range of last half cycle",                        "%",         "",                     "LifetimeState",        "",                           "",                               ""  },
-        { SSC_INOUT,        SSC_NUMBER,     "rainflow_jlt",              "Rainflow number of turning points",                        "",          "",                     "LifetimeState",        "",                           "",                               ""  },
-        { SSC_INOUT,        SSC_ARRAY,      "rainflow_peaks",            "Rainflow peaks of DOD",                                    "[%]",       "",                     "LifetimeState",        "",                           "",                               ""  },
-        { SSC_INOUT,        SSC_NUMBER,     "q_relative_calendar",       "Relative capacity due to calendar effects",                "%",         "",                     "LifetimeState",        "",                           "",                               ""  },
-        { SSC_INOUT,        SSC_NUMBER,     "day_age_of_battery",        "Day age of battery",                                       "day",       "",                     "LifetimeState",        "",                           "",                               ""  },
-        { SSC_INOUT,        SSC_NUMBER,     "dq_relative_calendar_old",  "Change in capacity of last time step",                     "%",         "",                     "LifetimeState",        "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "q_relative",                "Overall relative capacity due to lifetime effects",        "Ah",        "",                     "StateCell",        "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "q_relative_cycle",          "Relative capacity due to cycling effects",                 "%",         "",                     "StateCell",        "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "n_cycles",                  "Number of cycles",                                         "",          "",                     "StateCell",        "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "range",                     "Cycle range",                                              "%",         "",                     "StateCell",        "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "average_range",             "Average cycle range",                                      "%",         "",                     "StateCell",        "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "rainflow_Xlt",              "Rainflow range of second to last half cycle",              "%",         "",                     "StateCell",        "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "rainflow_Ylt",              "Rainflow range of last half cycle",                        "%",         "",                     "StateCell",        "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "rainflow_jlt",              "Rainflow number of turning points",                        "",          "",                     "StateCell",        "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_ARRAY,      "rainflow_peaks",            "Rainflow peaks of DOD",                                    "[%]",       "",                     "StateCell",        "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "q_relative_calendar",       "Relative capacity due to calendar effects",                "%",         "",                     "StateCell",        "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "day_age_of_battery",        "Day age of battery",                                       "day",       "",                     "StateCell",        "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "dq_relative_calendar_old",  "Change in capacity of last time step",                     "%",         "",                     "StateCell",        "",                           "",                               ""  },
 
         // losses
-        { SSC_INOUT,        SSC_NUMBER,     "loss_percent",              "Power loss percent",                                       "%",         "",                     "LossesState",          "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "loss_percent",              "Power loss percent",                                       "%",         "",                     "StatePack",          "",                           "",                               ""  },
 
         // replacements
-        { SSC_INOUT,        SSC_NUMBER,     "n_replacements",            "Number of replacements at current year",                   "",         "",                      "ReplacementState",     "",                           "",                               ""  },
-        { SSC_INOUT,        SSC_ARRAY,      "indices_replaced",          "Lifetime indices of replacement occurrences",              "",         "",                      "ReplacementState",     "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "n_replacements",            "Number of replacements at current year",                   "",         "",                      "StatePack",     "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_ARRAY,      "indices_replaced",          "Lifetime indices of replacement occurrences",              "",         "",                      "StatePack",     "",                           "",                               ""  },
 
         var_info_invalid };
 
 void write_battery_state(const battery_state& state, var_table* vt) {
     vt->assign_match_case("last_idx", (int)state.last_idx);
     vt->assign_match_case("I", state.I);
+    vt->assign_match_case("I_dischargeable", state.I_dischargeable);
+    vt->assign_match_case("I_chargeable", state.I_chargeable);
     vt->assign_match_case("V", state.V);
     vt->assign_match_case("P", state.P);
     vt->assign_match_case("Q", state.Q);
@@ -170,8 +174,7 @@ void write_battery_state(const battery_state& state, var_table* vt) {
     vt->assign_match_case("cell_current", cap->cell_current);
     vt->assign_match_case("I_loss", cap->I_loss);
     vt->assign_match_case("SOC", cap->SOC);
-    vt->assign_match_case("DOD", cap->DOD);
-    vt->assign_match_case("DOD_prev", cap->DOD_prev);
+    vt->assign_match_case("SOC_prev", cap->SOC_prev);
     vt->assign_match_case("charge_mode", cap->charge_mode);
     vt->assign_match_case("prev_charge", cap->prev_charge);
     vt->assign_match_case("chargeChange", cap->chargeChange);
@@ -186,6 +189,7 @@ void write_battery_state(const battery_state& state, var_table* vt) {
     vt->assign_match_case("q_relative_thermal", thermal->q_relative_thermal);
     vt->assign_match_case("T_batt", thermal->T_batt);
     vt->assign_match_case("T_room", thermal->T_room);
+    vt->assign_match_case("heat_dissipated", thermal->T_room);
     vt->assign_match_case("T_batt_prev", thermal->T_batt_prev);
 
     auto lifetime = state.lifetime;
@@ -211,6 +215,8 @@ void write_battery_state(const battery_state& state, var_table* vt) {
 void read_battery_state(battery_state& state, var_table* vt) {
     vt_get_uint(vt, "last_idx", &state.last_idx);
     vt_get_number(vt, "I", &state.I);
+    vt_get_number(vt, "I_dischargeable", &state.I_dischargeable);
+    vt_get_number(vt, "I_chargeable", &state.I_chargeable);
     vt_get_number(vt, "V", &state.V);
     vt_get_number(vt, "P", &state.P);
     vt_get_number(vt, "Q", &state.Q);
@@ -225,8 +231,7 @@ void read_battery_state(battery_state& state, var_table* vt) {
     vt_get_number(vt, "cell_current", &cap->cell_current);
     vt_get_number(vt, "I_loss", &cap->I_loss);
     vt_get_number(vt, "SOC", &cap->SOC);
-    vt_get_number(vt, "DOD", &cap->DOD);
-    vt_get_number(vt, "DOD_prev", &cap->DOD_prev);
+    vt_get_number(vt, "SOC_prev", &cap->SOC_prev);
     vt_get_int(vt, "charge_mode", &cap->charge_mode);
     vt_get_int(vt, "prev_charge", &cap->prev_charge);
     vt_get_bool(vt, "chargeChange", &cap->chargeChange);
@@ -241,6 +246,7 @@ void read_battery_state(battery_state& state, var_table* vt) {
     vt_get_number(vt, "q_relative_thermal", &thermal->q_relative_thermal);
     vt_get_number(vt, "T_batt", &thermal->T_batt);
     vt_get_number(vt, "T_room", &thermal->T_room);
+    vt_get_number(vt, "heat_dissipated", &thermal->heat_dissipated);
     vt_get_number(vt, "T_batt_prev", &thermal->T_batt_prev);
 
     auto lifetime = state.lifetime;

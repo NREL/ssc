@@ -74,19 +74,18 @@ bool dispatch_resilience::run_outage_step_ac(double crit_load_kwac, double pv_kw
             double discharge_kwdc = required_kwdc;
 
             // iterate in case the dispatched power is slightly less (by tolerance) than required
-            auto Battery_initial = new battery_t(*_Battery);
+            auto Battery_initial = _Battery->get_state();
             double battery_dispatched_kwdc = dispatch_kw(discharge_kwdc);
             if (fabs(battery_dispatched_kwdc - required_kwdc) > tolerance) {
                 while (discharge_kwdc < max_discharge_kwdc) {
                     if (battery_dispatched_kwdc - required_kwdc > tolerance)
                         break;
                     discharge_kwdc *= 1.01;
-                    *_Battery = *_Battery_initial;
+                    _Battery->set_state(Battery_initial);
                     battery_dispatched_kwdc = dispatch_kw(discharge_kwdc);
                 }
             }
             battery_dispatched_kwac = battery_dispatched_kwdc * m_batteryPower->singlePointEfficiencyDCToAC;
-			delete Battery_initial;
         }
         else
             battery_dispatched_kwac = dispatch_kw(max_discharge_kwdc) * m_batteryPower->singlePointEfficiencyDCToAC;
@@ -134,23 +133,22 @@ bool dispatch_resilience::run_outage_step_dc(double crit_load_kwac, double pv_kw
 
             // iterate in case the dispatched power is slightly less (by tolerance) than required
             double discharge_kwdc = required_kwdc;
-            auto Battery_initial = new battery_t(*_Battery);
+            auto Battery_initial = _Battery->get_state();
+
             battery_dispatched_kwdc = dispatch_kw(discharge_kwdc);
             inverter->calculateACPower(battery_dispatched_kwdc * dc_dc_eff, V_pv, tdry);
             battery_dispatched_kwac = inverter->powerAC_kW;
-
             if (fabs(battery_dispatched_kwac - required_kwac) > tolerance){
                 while (discharge_kwdc < max_discharge_kwdc){
                     if (battery_dispatched_kwac - required_kwac > tolerance)
                         break;
                     discharge_kwdc *= 1.01;
-                    *_Battery = *_Battery_initial;
+                    _Battery->set_state(Battery_initial);
                     battery_dispatched_kwdc = dispatch_kw(discharge_kwdc);
                     inverter->calculateACPower(battery_dispatched_kwdc * dc_dc_eff, V_pv, tdry);
                     battery_dispatched_kwac = inverter->powerAC_kW;
                 }
             }
-            delete Battery_initial;
         }
         else{
             battery_dispatched_kwdc = dispatch_kw(max_discharge_kwdc);

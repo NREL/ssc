@@ -14,8 +14,7 @@ static void compareState(capacity_state tested_state, capacity_state expected_st
     EXPECT_NEAR(tested_state.cell_current, expected_state.cell_current, tol) << msg;
     EXPECT_NEAR(tested_state.I_loss, expected_state.I_loss, tol) << msg;
     EXPECT_NEAR(tested_state.SOC, expected_state.SOC, tol) << msg;
-    EXPECT_NEAR(tested_state.DOD, expected_state.DOD, tol) << msg;
-    EXPECT_NEAR(tested_state.DOD_prev, expected_state.DOD_prev, tol) << msg;
+    EXPECT_NEAR(tested_state.SOC_prev, expected_state.SOC_prev, tol) << msg;
     EXPECT_NEAR(tested_state.charge_mode, expected_state.charge_mode, tol) << msg;
 }
 

@@ -38,8 +38,7 @@ void capacity_t::initialize() {
     state->cell_current = 0.;
     state->I_loss = 0.;
     state->SOC = params->initial_SOC;
-    state->DOD = 100. - state->SOC;
-    state->DOD_prev = 0;
+    state->SOC_prev = 0;
 
     // Initialize charging states
     state->prev_charge = capacity_state::DISCHARGE;
@@ -148,7 +147,6 @@ void capacity_t::update_SOC() {
     if (max == 0) {
         state->q0 = 0;
         state->SOC = 0;
-        state->DOD = 100;
         return;
     }
     if (state->q0 > max)
@@ -164,7 +162,6 @@ void capacity_t::update_SOC() {
     else if (state->SOC < 0.)
         state->SOC = 0.;
 
-    state->DOD = 100. - state->SOC;
 }
 
 bool capacity_t::chargeChanged() { return state->chargeChange; }
@@ -175,11 +172,7 @@ double capacity_t::SOC_min() { return params->minimum_SOC; }
 
 double capacity_t::SOC() { return state->SOC; }
 
-double capacity_t::DOD() { return state->DOD; }
-
-double capacity_t::DOD_max() { return params->maximum_SOC - params->minimum_SOC; }
-
-double capacity_t::prev_DOD() { return state->DOD_prev; }
+double capacity_t::SOC_prev() { return state->SOC_prev; }
 
 double capacity_t::q0() { return state->q0; }
 
@@ -256,7 +249,7 @@ void capacity_kibam_t::replace_battery(double replacement_percent) {
     state->leadacid.q1_0 = state->q0 * c;
     state->leadacid.q2_0 = state->q0 - state->leadacid.q1_0;
     state->SOC = params->initial_SOC;
-    state->DOD_prev = 50;
+    state->SOC_prev = 50;
     update_SOC();
 }
 
@@ -327,7 +320,7 @@ void capacity_kibam_t::updateCapacity(double &I, double dt_hour) {
     if (fabs(I) < low_tolerance)
         I = 0;
 
-    state->DOD_prev = state->DOD;
+    state->SOC_prev = state->SOC;
     state->I_loss = 0.;
     state->cell_current = I;
     params->dt_hr = dt_hour;
@@ -454,12 +447,12 @@ void capacity_lithium_ion_t::replace_battery(double replacement_percent) {
     state->qmax_thermal = state->qmax_lifetime;
     state->q0 += (state->qmax_lifetime - qmax_old) * params->initial_SOC * 0.01;
     state->SOC = params->initial_SOC;
-    state->DOD_prev = 50;
+    state->SOC_prev = 50;
     update_SOC();
 }
 
 void capacity_lithium_ion_t::updateCapacity(double &I, double dt) {
-    state->DOD_prev = state->DOD;
+    state->SOC_prev = state->SOC;
     state->I_loss = 0.;
     params->dt_hr = dt;
     state->cell_current = I;

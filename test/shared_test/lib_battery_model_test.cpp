@@ -116,7 +116,7 @@ TEST_F(lib_battery_test, runTestCycleAt1C){
     capacity_passed += batteryModel->I() * batteryModel->V() / 1000.;
 //    std::cerr << "\n" << idx << ": " << capacity_passed << "\n";
 
-    auto s = battery_state_test({{479.75, 1000, 960.01, 20.25, 0, 49.97, 50.02, 47.91, 2}, // cap
+    auto s = battery_state_test({{479.75, 1000, 960.01, 20.25, 0, 49.97, 52.09, 2}, // cap
                             550.65, // voltage
                            100, {100, 0, 0, 0, 0, 0, 1, std::vector<double>()}, // cycle
                             {102, 0, 0}, // calendar
@@ -130,7 +130,7 @@ TEST_F(lib_battery_test, runTestCycleAt1C){
     }
 //    std::cerr <<  idx << ": soc " << batteryModel->SOC() << ", cap " << capacity_passed << "\n";
     // the SOC isn't at 5 so it means the controller is not able to calculate a current/voltage at which to discharge to 5
-    s = battery_state_test({{54.5, 1000, 960.07, 20.25, 0, 5.67, 94.32, 92.21, 2}, // cap
+    s = battery_state_test({{54.5, 1000, 960.07, 20.25, 0, 5.67, 7.79, 2}, // cap
                        366.96, // voltage
                        100, {100, 0, 0, 0, 0, 0, 1, std::vector<double>()}, // cycle
                         {101.976, 0, 0.0002}, // calendar
@@ -154,7 +154,7 @@ TEST_F(lib_battery_test, runTestCycleAt1C){
     }
 //    std::cerr <<  idx << ": soc " << batteryModel->SOC() << ", cap " << capacity_passed << "\n";
     // the SOC isn't at 5 so it means the controller is not able to calculate a current/voltage at which to discharge to 5
-    s = battery_state_test({{47.36, 920.55, 883.74, 8.93, 0, 5.35, 94.64, 93.62, 2}, // cap
+    s = battery_state_test({{47.36, 920.55, 883.74, 8.93, 0, 5.35, 6.38, 2}, // cap
                        354.71, // voltage
                        93.08, {92.05, 398, 88.94, 89.05, 88.97, 89.65, 5, std::vector<double>()}, // cycle
                         {98.01, 2754, 0.039}, // calendar
@@ -175,7 +175,7 @@ TEST_F(lib_battery_test, runTestCycleAt3C){
     capacity_passed += batteryModel->I() * batteryModel->V() / 1000.;
 //    std::cerr << "\n" << idx << ": " << capacity_passed << "\n";
 
-    auto s = battery_state_test({{439.25, 1000, 960.15, 60.75, 0, 45.74, 54.25, 47.92, 2}, // cap
+    auto s = battery_state_test({{439.25, 1000, 960.15, 60.75, 0, 45.74, 52.08, 2}, // cap
                             548.35, // voltage
                             100, {100, 0, 0, 0, 0, 0, 1, std::vector<double>()}, // cycle
                              {102, 0}, // calendar
@@ -189,7 +189,7 @@ TEST_F(lib_battery_test, runTestCycleAt3C){
     }
 //    std::cerr <<  idx << ": soc " << batteryModel->SOC() << ", cap " << capacity_passed << "\n";
     // the SOC isn't at 5 so it means the controller is not able to calculate a current/voltage at which to discharge to 5
-    s = battery_state_test({{48.03, 1000, 960.47, 26.72, 0, 5.00, 95, 92.22, 2}, // cap
+    s = battery_state_test({{48.03, 1000, 960.47, 26.72, 0, 5.00, 7.78, 2}, // cap
                        339.03, // voltage
                        101.98, {100, 0, 0, 0, 0, 0, 1, std::vector<double>()}, // cycle
                         {101.98, 0}, // calendar
@@ -213,7 +213,7 @@ TEST_F(lib_battery_test, runTestCycleAt3C){
     }
 //    std::cerr <<  idx << ": soc " << batteryModel->SOC() << ", cap " << capacity_passed << "\n";
     // the SOC isn't at 5 so it means the controller is not able to calculate a current/voltage at which to discharge to 5
-    s = battery_state_test({{48.84, 920.77, 883.95, 9.00, 0, 5.52, 94.47, 93.45, 2}, // cap
+    s = battery_state_test({{48.84, 920.77, 883.95, 9.00, 0, 5.52, 6.55, 2}, // cap
                        361.33, // voltage
                        93.08, {92.07, 397, 88.62, 88.80, 88.65, 89.48, 7, std::vector<double>()}, // cycle
                         {98.06, 2655, 0.0393}, // calendar

@@ -95,8 +95,8 @@ dispatch_t::dispatch_t(const dispatch_t& dispatch)
 // shallow copy from dispatch to this
 void dispatch_t::copy(const dispatch_t * dispatch)
 {
-	*_Battery = *dispatch->_Battery;
-	*_Battery_initial = *dispatch->_Battery_initial;
+	_Battery->set_state(dispatch->_Battery->get_state());
+	_Battery_initial->set_state(dispatch->_Battery_initial->get_state());
 	init(_Battery, dispatch->_dt_hour,  dispatch->_current_choice, dispatch->_t_min, dispatch->_mode);
 
 	// can't create shallow copy of unique ptr

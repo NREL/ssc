@@ -217,32 +217,32 @@ TEST_F(ResilienceTest_lib_resilience, VoltageTable)
     auto cap = capacity_lithium_ion_t(2.25, 50, 100, 0, 1);
 
     volt.updateVoltage(cap.q0(), cap.qmax(), cap.I(), 0, 0.);
-    EXPECT_NEAR(cap.DOD(), 50, 1e-3);
+    EXPECT_NEAR(cap.SOC(), 50, 1e-3);
     EXPECT_NEAR(volt.cell_voltage(), 2, 1e-3);
 
 
     double current = -2.;
     cap.updateCapacity(current, 1);
     volt.updateVoltage(cap.q0(), cap.qmax(), cap.I(), 0, 0.);
-    EXPECT_NEAR(cap.DOD(), 0, 1e-3);
+    EXPECT_NEAR(cap.SOC(), 100, 1e-3);
     EXPECT_NEAR(volt.cell_voltage(), 3, 1e-3);
 
     current = 4.;
     cap.updateCapacity(current, 1);
     volt.updateVoltage(cap.q0(), cap.qmax(), cap.I(), 0, 0.);
-    EXPECT_NEAR(cap.DOD(), 100, 1e-3);
+    EXPECT_NEAR(cap.SOC(), 0, 1e-3);
     EXPECT_NEAR(volt.cell_voltage(), 0, 1e-3);
 
     current = -1;
     cap.updateCapacity(current, 1);
     volt.updateVoltage(cap.q0(), cap.qmax(), cap.I(), 0, 0.);
-    EXPECT_NEAR(cap.DOD(), 55.555, 1e-3);
+    EXPECT_NEAR(cap.SOC(), 44.445, 1e-3);
     EXPECT_NEAR(volt.cell_voltage(), 1.773, 1e-3);
 
     current = -1;
     cap.updateCapacity(current, 1);
     volt.updateVoltage(cap.q0(), cap.qmax(), cap.I(), 0, 0.);
-    EXPECT_NEAR(cap.DOD(), 11.111, 1e-3);
+    EXPECT_NEAR(cap.SOC(), 88.889, 1e-3);
     EXPECT_NEAR(volt.cell_voltage(), 2.777, 1e-3);
 }
 

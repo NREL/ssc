@@ -63,11 +63,11 @@ std::ostream &operator<<(std::ostream &os, const voltage_state &p) {
 std::ostream &operator<<(std::ostream &os, const capacity_state &p) {
     char buf[1024];
     sprintf(buf, "\"capacity_state\": { \"q0\": %.3f, \"qmax_lifetime\": %.3f, \"qmax_thermal\": %.3f, \"cell_current\": %.3f, "
-                 "\"I_loss\": %.3f, \"SOC\": %.3f, \"DOD\": %.3f, \"DOD_prev\": %.3f, "
+                 "\"I_loss\": %.3f, \"SOC\": %.3f, \"SOC_prev\": %.3f, "
                  "\"charge_mode\": %d, \"prev_charge\": %d, \"chargeChange\": %d, "
                  "\"leadacid\": { \"q1_0\": %.3f, \"q2_0\": %.3f, \"qn\": %.3f, \"q2\": %.3f } }",
             p.q0, p.qmax_lifetime, p.qmax_thermal, p.cell_current,
-            p.I_loss, p.SOC, p.DOD, p.DOD_prev,
+            p.I_loss, p.SOC, p.SOC_prev,
             p.charge_mode, p.prev_charge, p.chargeChange,
             p.leadacid.q1_0, p.leadacid.q2_0, p.leadacid.q1, p.leadacid.q2);
     os << buf;
@@ -142,8 +142,8 @@ std::ostream &operator<<(std::ostream &os, const replacement_params &p) {
 
 std::ostream &operator<<(std::ostream &os, const thermal_state &p) {
     char buf[256];
-    sprintf(buf, R"("thermal_state": { "q_relative_thermal": %.3f, "T_batt": %.3f, "T_room": %.3f, "T_batt_prev": %.3f })",
-            p.q_relative_thermal, p.T_batt, p.T_room, p.T_batt_prev);
+    sprintf(buf, R"("thermal_state": { "q_relative_thermal": %.3f, "T_batt": %.3f, "T_room": %.3f, "heat_dissipated": %.3f, "T_batt_prev": %.3f })",
+            p.q_relative_thermal, p.T_batt, p.T_room, p.heat_dissipated, p.T_batt_prev);
     os << buf;
     return os;
 }
@@ -198,7 +198,7 @@ std::ostream &operator<<(std::ostream &os, const battery_state &p) {
 
 std::ostream &operator<<(std::ostream &os, const battery_params &p) {
     char buf[1024];
-    sprintf(buf, R"("battery_params": { "chem": %u, "dt_hour": %.3f, "nominal_voltage": %zu, "nominal_energy": %zu)",
+    sprintf(buf, R"("battery_params": { "chem": %u, "dt_hour": %.3f, "nominal_voltage": %.3f, "nominal_energy": %.3f)",
             p.chem, p.dt_hour, p.nominal_voltage, p.nominal_energy);
     os << buf << ", ";
     os << *p.capacity << ", ";
