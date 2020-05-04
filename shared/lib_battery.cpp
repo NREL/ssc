@@ -235,32 +235,25 @@ losses_params losses_t::get_params() {return *params; }
 /*
 Define Battery
 */
-battery_state::battery_state() {
-    last_idx = 0;
-    I = 0;
-    V = 0;
-    P = 0;
-    Q = 0;
-    Q_max = 0;
-    P_dischargeable = 0;
-    P_chargeable = 0;
-    capacity = std::make_shared<capacity_state>();
-    voltage = std::make_shared<voltage_state>();
-    thermal = std::make_shared<thermal_state>();
-    lifetime = std::make_shared<lifetime_state>();
-    losses = std::make_shared<losses_state>();
-    replacement = std::make_shared<replacement_state>();
+battery_state::battery_state():
+        battery_state(std::make_shared<capacity_state>(),
+                      std::make_shared<voltage_state>(),
+                      std::make_shared<thermal_state>(),
+                      std::make_shared<lifetime_state>(),
+                      std::make_shared<losses_state>()) {
 }
 
 battery_state::battery_state(const std::shared_ptr<capacity_state> &cap, const std::shared_ptr<voltage_state> &vol,
                              const std::shared_ptr<thermal_state> &therm, const std::shared_ptr<lifetime_state> &life,
                              const std::shared_ptr<losses_state> &loss) {
     last_idx = 0;
-    I = 0;
     V = 0;
     P = 0;
     Q = 0;
     Q_max = 0;
+    I = 0;
+    I_dischargeable = 0;
+    I_chargeable = 0;
     P_dischargeable = 0;
     P_chargeable = 0;
     capacity = cap;
@@ -272,43 +265,55 @@ battery_state::battery_state(const std::shared_ptr<capacity_state> &cap, const s
 }
 
 battery_state::battery_state(const battery_state& rhs) {
-    last_idx = rhs.last_idx;
-    I = rhs.I;
-    V = rhs.V;
-    P = rhs.P;
-    Q = rhs.Q;
-    Q_max = rhs.Q_max;
-    P_dischargeable = rhs.P_dischargeable;
-    P_chargeable = rhs.P_chargeable;
-    capacity = std::make_shared<capacity_state>(*rhs.capacity);
-    voltage = std::make_shared<voltage_state>(*rhs.voltage);
-    thermal = std::make_shared<thermal_state>(*rhs.thermal);
-    lifetime = std::make_shared<lifetime_state>(*rhs.lifetime);
-    losses = std::make_shared<losses_state>(*rhs.losses);
-    replacement = std::make_shared<replacement_state>(*rhs.replacement);
+    operator=(rhs);
 }
 
 battery_state &battery_state::operator=(const battery_state &rhs) {
     if (this != &rhs) {
-        *capacity = *rhs.capacity;
-        *voltage = *rhs.voltage;
-        *thermal = *rhs.thermal;
-        *lifetime = *rhs.lifetime;
-        *losses = *rhs.losses;
-        *replacement = *rhs.replacement;
+        last_idx = rhs.last_idx;
+        V = rhs.V;
+        P = rhs.P;
+        Q = rhs.Q;
+        Q_max = rhs.Q_max;
+        I = rhs.I;
+        I_dischargeable = rhs.I_dischargeable;
+        I_chargeable = rhs.I_chargeable;
+        P_dischargeable = rhs.P_dischargeable;
+        P_chargeable = rhs.P_chargeable;
+        if (capacity)
+            *capacity = *rhs.capacity;
+        else
+            capacity = std::make_shared<capacity_state>(*rhs.capacity);
+        if (voltage)
+            *voltage = *rhs.voltage;
+        else
+            voltage = std::make_shared<voltage_state>(*rhs.voltage);
+        if (thermal)
+            *thermal = *rhs.thermal;
+        else
+            thermal = std::make_shared<thermal_state>(*rhs.thermal);
+        if (lifetime)
+            *lifetime = *rhs.lifetime;
+        else
+            lifetime = std::make_shared<lifetime_state>(*rhs.lifetime);
+        if (losses)
+            *losses = *rhs.losses;
+        else
+            losses = std::make_shared<losses_state>(*rhs.losses);
+        if (replacement)
+            *replacement = *rhs.replacement;
+        else
+            replacement = std::make_shared<replacement_state>(*rhs.replacement);
     }
     return *this;
 }
 
-battery_params::battery_params() {
-    chem = -1;
-    dt_hour = 0.;
-    capacity = std::make_shared<capacity_params>();
-    voltage = std::make_shared<voltage_params>();
-    thermal = std::make_shared<thermal_params>();
-    lifetime = std::make_shared<lifetime_params>();
-    losses = std::make_shared<losses_params>();
-    replacement = std::make_shared<replacement_params>();
+battery_params::battery_params():
+        battery_params(std::make_shared<capacity_params>(),
+                       std::make_shared<voltage_params>(),
+                       std::make_shared<thermal_params>(),
+                       std::make_shared<lifetime_params>(),
+                       std::make_shared<losses_params>()) {
 }
 
 battery_params::battery_params(const std::shared_ptr<capacity_params> &cap, const std::shared_ptr<voltage_params> &vol,
@@ -328,25 +333,39 @@ battery_params::battery_params(const std::shared_ptr<capacity_params> &cap, cons
 }
 
 battery_params::battery_params(const battery_params& rhs) {
-    chem = rhs.chem;
-    dt_hour = rhs.dt_hour;
-    capacity = std::make_shared<capacity_params>(*rhs.capacity);
-    voltage = std::make_shared<voltage_params>(*rhs.voltage);
-    thermal = std::make_shared<thermal_params>(*rhs.thermal);
-    lifetime = std::make_shared<lifetime_params>(*rhs.lifetime);
-    losses = std::make_shared<losses_params>(*rhs.losses);
-    replacement = std::make_shared<replacement_params>(*rhs.replacement);
+    operator=(rhs);
 }
 
 battery_params &battery_params::operator=(const battery_params &rhs) {
     if (this != &rhs) {
         chem = rhs.chem;
-        *capacity = *rhs.capacity;
-        *voltage = *rhs.voltage;
-        *thermal = *rhs.thermal;
-        *lifetime = *rhs.lifetime;
-        *losses = *rhs.losses;
-        *replacement = *rhs.replacement;
+        dt_hour = rhs.dt_hour;
+        nominal_voltage = rhs.nominal_voltage;
+        nominal_energy = rhs.nominal_energy;
+        if (capacity)
+            *capacity = *rhs.capacity;
+        else
+            capacity = std::make_shared<capacity_params>(*rhs.capacity);
+        if (voltage)
+            *voltage = *rhs.voltage;
+        else
+            voltage = std::make_shared<voltage_params>(*rhs.voltage);
+        if (thermal)
+            *thermal = *rhs.thermal;
+        else
+            thermal = std::make_shared<thermal_params>(*rhs.thermal);
+        if (lifetime)
+            *lifetime = *rhs.lifetime;
+        else
+            lifetime = std::make_shared<lifetime_params>(*rhs.lifetime);
+        if (losses)
+            *losses = *rhs.losses;
+        else
+            losses = std::make_shared<losses_params>(*rhs.losses);
+        if (replacement)
+            *replacement = *rhs.replacement;
+        else
+            replacement = std::make_shared<replacement_params>(*rhs.replacement);
     }
     return *this;
 }
@@ -423,7 +442,7 @@ battery_t::battery_t(const battery_t &rhs) {
 
 battery_t &battery_t::operator=(const battery_t& rhs) {
     if (this != &rhs) {
-        params = rhs.params;
+        *params = *rhs.params;
         *capacity = *rhs.capacity;
         *voltage = *rhs.voltage;
         *thermal = *rhs.thermal;
