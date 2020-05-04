@@ -46,7 +46,7 @@ struct thermal_state {
     double q_relative_thermal;   //[%]
     double T_batt;               // C
     double T_room;
-    double heat_dissipated;      // J
+    double heat_dissipated;      // W
     double T_batt_prev;
 
     friend std::ostream &operator<<(std::ostream &os, const thermal_state &p);

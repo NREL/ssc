@@ -129,7 +129,7 @@ var_info vtab_battery_state[] = {
         { SSC_INOUT,        SSC_NUMBER,     "q_relative_thermal",        "Relative capacity due to thermal effects",                 "Ah",        "",                     "StateCell",        "",                           "",                               ""  },
         { SSC_INOUT,        SSC_NUMBER,     "T_batt",                    "Battery temperature averaged over time step",              "C",         "",                     "StatePack",        "",                           "",                               ""  },
         { SSC_INOUT,        SSC_NUMBER,     "T_room",                    "Room temperature",                                         "C",         "",                     "StatePack",        "",                           "",                               ""  },
-        { SSC_INOUT,        SSC_NUMBER,     "heat_dissipated",           "Heat dissipated due to flux and resistance",               "J",         "",                     "StatePack",        "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "heat_dissipated",           "Heat dissipated due to flux",                              "W",         "",                     "StatePack",        "",                           "",                               ""  },
         { SSC_INOUT,        SSC_NUMBER,     "T_batt_prev",               "Battery temperature at end of last time step",             "C",         "",                     "StateCell",        "",                           "",                               ""  },
 
         // lifetime
