@@ -370,24 +370,7 @@ battery_params &battery_params::operator=(const battery_params &rhs) {
     return *this;
 }
 
-battery_t::battery_t(double dt_hr, int chem, capacity_t *capacity_model, voltage_t *voltage_model,
-                     lifetime_t *lifetime_model, thermal_t *thermal_model, losses_t *losses_model) {
-    capacity = std::unique_ptr<capacity_t>(capacity_model);
-    voltage = std::unique_ptr<voltage_t>(voltage_model);
-    lifetime = std::unique_ptr<lifetime_t>(lifetime_model);
-    thermal = std::unique_ptr<thermal_t>(thermal_model);
-    losses = std::unique_ptr<losses_t>(losses_model);
-
-    state = std::make_shared<battery_state>(capacity->state, voltage->state, thermal->state, lifetime->state, losses->state);
-    params = std::make_shared<battery_params>(capacity->params, voltage->params, thermal->params, lifetime->params, losses->params);
-    params->dt_hour = dt_hr;
-    params->chem = chem;
-    params->nominal_voltage = params->voltage->Vnom_default * params->voltage->num_cells_series;
-    params->nominal_energy = params->nominal_voltage * params->voltage->num_strings * params->voltage->dynamic.Qfull * 1e-3;
-}
-
-battery_t::battery_t(std::shared_ptr<battery_params> p):
-        params(std::move(p)) {
+void battery_t::initialize() {
     // capacity
     if (params->chem == battery_params::LEAD_ACID) {
         capacity = std::unique_ptr<capacity_t>(new capacity_kibam_t(params->capacity));
@@ -418,42 +401,50 @@ battery_t::battery_t(std::shared_ptr<battery_params> p):
     state = std::make_shared<battery_state>(capacity->state, voltage->state, thermal->state, lifetime->state, losses->state);
 }
 
-battery_t::battery_t(const battery_t &rhs) {
-    capacity = std::unique_ptr<capacity_t>(rhs.capacity->clone());
-    voltage = std::unique_ptr<voltage_t>(rhs.voltage->clone());
-    thermal = std::unique_ptr<thermal_t>(new thermal_t(*rhs.thermal));
-    lifetime = std::unique_ptr<lifetime_t>(new lifetime_t(*rhs.lifetime));
-    losses = std::unique_ptr<losses_t>(new losses_t(*rhs.losses));
+battery_t::battery_t(double dt_hr, int chem, capacity_t *capacity_model, voltage_t *voltage_model,
+                     lifetime_t *lifetime_model, thermal_t *thermal_model, losses_t *losses_model) {
+    capacity = std::unique_ptr<capacity_t>(capacity_model);
+    voltage = std::unique_ptr<voltage_t>(voltage_model);
+    lifetime = std::unique_ptr<lifetime_t>(lifetime_model);
+    thermal = std::unique_ptr<thermal_t>(thermal_model);
+    losses = std::unique_ptr<losses_t>(losses_model);
+
     state = std::make_shared<battery_state>(capacity->state, voltage->state, thermal->state, lifetime->state, losses->state);
-    state->replacement = std::make_shared<replacement_state>(*rhs.state->replacement);
-    state->last_idx = rhs.state->last_idx;
-    state->Q = rhs.state->Q;
-    state->Q_max = rhs.state->Q_max;
-    state->I = rhs.state->I;
-    state->P = rhs.state->P;
-    state->P_chargeable = rhs.state->P_chargeable;
-    state->P_dischargeable = rhs.state->P_dischargeable;
-    state->V = rhs.state->V;
     params = std::make_shared<battery_params>(capacity->params, voltage->params, thermal->params, lifetime->params, losses->params);
-    params->replacement = std::make_shared<replacement_params>(*rhs.params->replacement);
-    params->chem = rhs.params->chem;
-    params->dt_hour = rhs.params->dt_hour;
+    params->dt_hour = dt_hr;
+    params->chem = chem;
+    params->nominal_voltage = params->voltage->Vnom_default * params->voltage->num_cells_series;
+    params->nominal_energy = params->nominal_voltage * params->voltage->num_strings * params->voltage->dynamic.Qfull * 1e-3;
+}
+
+battery_t::battery_t(std::shared_ptr<battery_params> p):
+        params(std::move(p)) {
+    initialize();
+}
+
+battery_t::battery_t(const battery_t &rhs) {
+    params = std::make_shared<battery_params>();
+    operator=(rhs);
 }
 
 battery_t &battery_t::operator=(const battery_t& rhs) {
     if (this != &rhs) {
         *params = *rhs.params;
-        *capacity = *rhs.capacity;
-        *voltage = *rhs.voltage;
-        *thermal = *rhs.thermal;
-        *lifetime = *rhs.lifetime;
-        *losses = *rhs.losses;
-        state->capacity = capacity->state;
-        state->voltage = voltage->state;
-        state->thermal = thermal->state;
-        state->lifetime = lifetime->state;
-        state->losses = losses->state;
+        capacity = std::unique_ptr<capacity_t>(rhs.capacity->clone());
+        voltage = std::unique_ptr<voltage_t>(rhs.voltage->clone());
+        thermal = std::unique_ptr<thermal_t>(new thermal_t(*rhs.thermal));
+        lifetime = std::unique_ptr<lifetime_t>(new lifetime_t(*rhs.lifetime));
+        losses = std::unique_ptr<losses_t>(new losses_t(*rhs.losses));
+        state = std::make_shared<battery_state>(capacity->state, voltage->state, thermal->state, lifetime->state, losses->state);
         *state->replacement = *rhs.state->replacement;
+        state->last_idx = rhs.state->last_idx;
+        state->Q = rhs.state->Q;
+        state->Q_max = rhs.state->Q_max;
+        state->I = rhs.state->I;
+        state->P = rhs.state->P;
+        state->P_chargeable = rhs.state->P_chargeable;
+        state->P_dischargeable = rhs.state->P_dischargeable;
+        state->V = rhs.state->V;
     }
     return *this;
 }

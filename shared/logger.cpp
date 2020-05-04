@@ -151,7 +151,7 @@ std::ostream &operator<<(std::ostream &os, const thermal_state &p) {
 std::ostream &operator<<(std::ostream &os, const thermal_params &p) {
     char buf[1024];
     sprintf(buf, "\"thermal_params\": { \"dt_hour\": %.3f, \"mass\": %.3f, \"surface_area\": %.3f, "
-                 "\"Cp\": %.3f, \"h\": %.3f, \"resistance\": %.3f, \"cap_vs_temp\": ",
+                 "\"Cp\": %.3f, \"h\": %.3f, \"resistance\": %.3e, \"cap_vs_temp\": ",
                  p.dt_hour, p.mass, p.surface_area,
                  p.Cp, p.h, p.resistance);
     os << buf << p.cap_vs_temp;
