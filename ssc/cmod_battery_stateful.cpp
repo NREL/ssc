@@ -189,7 +189,7 @@ void write_battery_state(const battery_state& state, var_table* vt) {
     vt->assign_match_case("q_relative_thermal", thermal->q_relative_thermal);
     vt->assign_match_case("T_batt", thermal->T_batt);
     vt->assign_match_case("T_room", thermal->T_room);
-    vt->assign_match_case("heat_dissipated", thermal->T_room);
+    vt->assign_match_case("heat_dissipated", thermal->heat_dissipated);
     vt->assign_match_case("T_batt_prev", thermal->T_batt_prev);
 
     auto lifetime = state.lifetime;

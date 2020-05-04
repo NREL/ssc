@@ -121,7 +121,7 @@ void thermal_t::updateTemperature(double I, size_t lifetimeIndex) {
     double diffusion = exp(-params->surface_area * params->h * dt_sec / params->mass / params->Cp);
     double coeff_avg = params->mass * params->Cp / params->surface_area / params->h / dt_sec;
     state->T_batt = (state->T_batt_prev - state->T_room) * coeff_avg * (1 - diffusion) + source;
-    state->heat_dissipated = (state->T_batt - state->T_room) * params->mass * params->Cp;
+    state->heat_dissipated = (state->T_batt - state->T_room) * params->surface_area * params->h;
 
     // update temp for use in next timestep
     state->T_batt_prev = (state->T_batt_prev - state->T_room) * diffusion + source;
