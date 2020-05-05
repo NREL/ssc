@@ -25,6 +25,9 @@ set(CMAKE_CXX_STANDARD 11)
 
 Project(sam_simulation_core)
 
+set(JSONCPP_WITH_EXAMPLE 0)
+set(JSONCPP_WITH_TESTS 0)
+add_subdirectory(jsoncpp)
 add_subdirectory(splinter)
 add_subdirectory(shared)
 add_subdirectory(nlopt)
