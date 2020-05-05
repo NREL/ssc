@@ -81,12 +81,6 @@ bool compute_module::compute( handler_interface *handler, var_table *data )
 	return true;
 }
 
-//var_table CopyVarTableAndGetValue(var_table* vartab, std::string var_name, double* var_value) {
-//    var_table vartab_copy = *vartab;                // this copy assignment operator causes the problem
-//    *var_value = vartab->as_double(var_name);
-//    return vartab_copy;
-//}
-
 bool compute_module::evaluate()
 {
     // Get compute module name (e.g., cm_tcsmolten_salt)
@@ -133,24 +127,16 @@ bool compute_module::evaluate()
         }
     };
 
-    CallSscEquations(table_indices);            //initial call populating outputs
+    CallSscEquations(table_indices);            // initial call populating outputs
 
     // Call all equations until convergence
     const size_t kMaxIterations = 100;
-    const double kMaxConvergenceTol = 0.001;    //RMS
+    const double kMaxConvergenceTol = 0.001;    // RMS
     size_t iteration = 0;
     double convergence_error = std::numeric_limits<double>::quiet_NaN();
 
-    //// For unit test
-    //std::string test_variable_name = "tower_exp";
-    //double test_value = m_vartab->as_double(test_variable_name);
-    //double test_value_from_orig_table_after_copied;
-    //var_table var_table_copy = CopyVarTableAndGetValue(m_vartab, test_variable_name, &test_value_from_orig_table_after_copied);     // m_vartab is corrupted AFTER this call, but not while in it
-    //double test_value_from_copied_table = var_table_copy.as_double(test_variable_name);                              // throws error
-    //double test_value_from_orig_table_after_copied_and_fun_returned = m_vartab->as_double(test_variable_name);       // throws error
-
-    var_table var_table_prev_iter = *m_vartab;      // this is the problem
-    //return true;
+    var_table var_table_prev_iter;              // don't initial here or it will use the (bad) default copy constructor
+    var_table_prev_iter = *m_vartab;            // instead using explicity implemented copy assignment operator which does a deep copy
 
     do {
         iteration++;
@@ -158,7 +144,6 @@ bool compute_module::evaluate()
         CallSscEquations(table_indices);
 
         // Calculate convergence_error by comparing var_table values with previous
-        convergence_error = 0.;
         double squared_error = 0.;
         int n_differences = 0;
         const char* it;
@@ -247,12 +232,15 @@ bool compute_module::evaluate()
             }
             }
         }
-        convergence_error = sqrt(squared_error/static_cast<double>(n_differences));
 
-        // the copy assignment operator seems to have issues
-        //var_table_prev_iter = *m_vartab;
-        bool overwrite_existing = true;
-        var_table_prev_iter.merge(*m_vartab, overwrite_existing);
+        if (n_differences == 0) {
+            convergence_error = 0.;
+        }
+        else {
+            convergence_error = sqrt(squared_error / static_cast<double>(n_differences));
+        }
+
+        var_table_prev_iter = *m_vartab;        // using copy assignment operator instead of merge()
     } while (convergence_error > kMaxConvergenceTol && iteration < kMaxIterations);
 
     if (convergence_error > kMaxConvergenceTol) {
