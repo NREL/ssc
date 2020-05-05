@@ -196,6 +196,25 @@ TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, LifetimeModeTest_cmod_pvwattsv7) {
 	EXPECT_TRUE(pvwatts_errors);
 }
 
+/// Test PVWattsV7 bifacial functionality
+TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, BifacialTest_cmod_pvwattsv7) {
+
+	// set bifacial inputs
+	std::map<std::string, double> pairs;
+	pairs["bifaciality"] = 0.65;
+
+	int pvwatts_errors = modify_ssc_data_and_run_module(data, "pvwattsv7", pairs);
+	EXPECT_FALSE(pvwatts_errors);
+	if (!pvwatts_errors)
+	{
+		ssc_number_t annual_energy;
+		ssc_data_get_number(data, "annual_energy", &annual_energy);
+		EXPECT_NEAR(annual_energy, 7033.87, 0.1) << "System with bifaciality";
+	}
+
+
+}
+
 /* this test isn't passing currently even though it's working in the UI, so commenting out for now
 /// Test PVWattsV7 with snow model
 TEST_F(CMPvwattsV7Integration, SnowModelTest_cmod_pvwattsv7) {
