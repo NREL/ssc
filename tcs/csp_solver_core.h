@@ -701,6 +701,8 @@ public:
 
 	virtual double get_cold_temp() = 0;
 
+	virtual double get_hot_tank_vol_frac() = 0;
+
     virtual double get_initial_charge_energy() = 0; //MWh
 
     virtual double get_min_charge_energy() = 0; //MWh
