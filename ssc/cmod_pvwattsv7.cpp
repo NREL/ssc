@@ -808,7 +808,7 @@ public:
 					if (module.bifaciality > 0)
 					{
 						irr.calc_rear_side(0.013, 1, module.length * pv.nmody);
-						irear = irr.get_poa_rear();
+						irear = irr.get_poa_rear() * module.bifaciality; //total rear irradiance is returned, so must multiply module bifaciality
 					}
 
 					if (-1 == code)
@@ -882,7 +882,7 @@ public:
 								if (module.bifaciality > 0)
 								{
 									irr.calc_rear_side(bifacialTransmissionFactor, 1, module.length * pv.nmody);
-									irear_stow = irr.get_poa_rear();
+									irear_stow = irr.get_poa_rear() * module.bifaciality; //total rear irradiance is returned, so must multiply module bifaciality
 								}
 
 								irr.get_angles(&aoi, &stilt, &sazi, &rot, &btd);

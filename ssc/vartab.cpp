@@ -190,6 +190,10 @@ var_table::var_table() : m_iterator(m_hash.begin())
 	/* nothing to do here */
 }
 
+var_table::var_table(const var_table &rhs) : var_table() {
+    operator=(rhs);
+}
+
 var_table::~var_table()
 {
 	clear();

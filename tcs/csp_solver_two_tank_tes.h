@@ -100,6 +100,8 @@ public:
 
 	double get_m_m_calc();
 
+	double get_vol_frac();
+
 	void init(HTFProperties htf_class_in, double V_tank /*m3*/, 
 		double h_tank /*m*/, double h_min /*m*/, double u_tank /*W/m2-K*/, 
 		double tank_pairs /*-*/, double T_htr /*K*/, double max_q_htr /*MWt*/, 
@@ -267,6 +269,8 @@ public:
 	virtual double get_hot_temp();
 
 	virtual double get_cold_temp();
+
+	virtual double get_hot_tank_vol_frac();
 
     virtual double get_initial_charge_energy(); //MWh
 

@@ -255,6 +255,7 @@ battwatts_create(size_t n_recs, size_t n_years, int chem, int meter_pos, double 
     return batt_vars;
 }
 
+// Set up SSC_OUTPUT variables using cmod_battery's tables
 cm_battwatts::cm_battwatts()
 {
     add_var_info(vtab_battwatts);

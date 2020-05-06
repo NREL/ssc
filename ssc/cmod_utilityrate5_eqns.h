@@ -18,7 +18,7 @@ static const char *ElectricityRates_format_as_URDBv7_doc =
         "     'ur_annual_min_charge': optional double [$], Annual minimum charge\\n"
         "     'ur_ec_sched_weekday': optional matrix [period], Energy charge weekday schedule, count starts at 1, 12mx24hr\\n"
         "     'ur_ec_sched_weekend': optional matrix [period], Energy charge weekend schedule, count starts at 1, 12mx24hr\\n"
-        "     'ur_ec_tou_mat': optional matrix [[period, tier, kw, $], Demand rates (TOU), each row: (period, tier, max usage, units=='kWh', buy rate, sell rate)\\n"
+        "     'ur_ec_tou_mat': optional matrix [[period, tier, kwh, $], Demand rates (TOU), each row: (period, tier, max usage, units=='kWh', buy rate, sell rate)\\n"
         "     'ur_dc_flat_mat' optional matrix [[month, tier, kW, $]] - Demand rates (flat), each row: (month, tier, peak demand, buy rate) \\n"
         "     'ur_dc_sched_weekday': optional matrix [period], Demand charge weekday schedule, count starts at 1, 12mx24hr\\n"
         "     'ur_dc_sched_weekend': optional matrix [period], Demand charge weekend schedule, count starts at 1, 12mx24hr\\n"
