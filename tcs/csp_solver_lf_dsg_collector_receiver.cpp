@@ -4045,4 +4045,3 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 
 
 }
-
