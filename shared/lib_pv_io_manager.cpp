@@ -647,8 +647,8 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 		if (enableDCLifetimeLosses)
 		{
 			dcLifetimeLosses = cm->as_vector_double("dc_lifetime_losses");
-			if (dcLifetimeLosses.size() != Simulation->numberOfYears * 365);
-			throw exec_error(cmName, "Length of the lifetime daily DC losses array must be equal to the analysis period * 365 days/year");
+			if (dcLifetimeLosses.size() != Simulation->numberOfYears * 365)
+				throw exec_error(cmName, "Length of the lifetime daily DC losses array must be equal to the analysis period * 365 days/year");
 		}
 		if (enableACLifetimeLosses)
 		{
