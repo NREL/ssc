@@ -6,8 +6,8 @@
 #include "code_generator_utilities.h"
 
 /**
-*   Data for high-level integration test that verifies whether results for a no-financials
-*	PVWatts case matches expected results.
+*   Data for high-level integration test that verifies whether results for a no-financials 
+*	PVWatts case matches expected results.  
 *	Data generated from code-generator (Shift+F5) within SAM UI.
 *   Test uses SSCAPI interfaces (similiar to SDK usage) to pass and receive data to PVWattsV7
 */
@@ -31,20 +31,20 @@ int pvwattsv7_nofinancial_testfile(ssc_data_t &data)
 
 	//set the variables for the PVWatts default case
 	ssc_data_set_number(data, "system_use_lifetime_output", 0);
-	ssc_data_set_number(data, "analysis_period", 1);
+	ssc_data_set_number(data, "analysis_period", 25);
 	ssc_data_set_string(data, "solar_resource_file", hourly); //file set above
-	ssc_data_set_number(data, "system_capacity", 4.692);
-	ssc_data_set_number(data, "module_type", 1);
+	ssc_data_set_number(data, "system_capacity", 4);
+	ssc_data_set_number(data, "module_type", 0);
 	ssc_data_set_number(data, "dc_ac_ratio", 1.2000000476837158);
 	ssc_data_set_number(data, "bifaciality", 0);
 
 	ssc_data_set_number(data, "array_type", 0);
 	ssc_data_set_number(data, "tilt", 20);
 	ssc_data_set_number(data, "azimuth", 180);
-	ssc_data_set_number(data, "gcr", 0.3);
+	ssc_data_set_number(data, "gcr", 0.40000000596046448);
 
 	ssc_data_set_number(data, "losses", 14.075660705566406);
-	ssc_data_set_number(data, "enable_wind_stow", 0);
+	//ssc_data_set_number(data, "enable_wind_stow", 0);
 	ssc_data_set_number(data, "inv_eff", 96);
 
 	ssc_data_set_number(data, "adjust:constant", 0);

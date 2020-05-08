@@ -209,7 +209,7 @@ TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, BifacialTest_cmod_pvwattsv7) {
 	if (!pvwatts_errors)
 	{
 		ssc_data_get_number(data, "annual_energy", &annual_energy_mono);
-		EXPECT_NEAR(annual_energy_mono, 8265, 1) << "System with bifaciality";
+		EXPECT_NEAR(annual_energy_mono, 7003, 1) << "System with bifaciality";
 	}
 
     pairs["bifaciality"] = 0.65;
