@@ -426,8 +426,10 @@ public:
 			// This value is also reported as a modeled timestep output
 		double m_q_startup;				//[MWt-hr] 
 		double m_time_required_su;		//[s] Time required for receiver to startup
+		double m_m_dot_salt_loop;		//[kg/hr] Loop mass flow
 		double m_m_dot_salt_tot;		//[kg/hr] Molten salt mass flow rate
 		double m_q_thermal;				//[MWt] 'Available' receiver thermal output
+		double m_T_salt_warm;			//[C] Intermediate temperature (after flat plate pre-heaters)
 		double m_T_salt_hot;			//[C] Hot HTF from receiver
 		double m_component_defocus;		//[-] Defocus applied by component model to stay within mass flow or other constraints
         bool m_is_recirculating;        //[-] Is field/receiver recirculating?
@@ -448,9 +450,9 @@ public:
 			
 		S_csp_cr_out_solver()
 		{
-			m_q_thermal = m_q_startup = m_m_dot_salt_tot = m_T_salt_hot = m_W_dot_htf_pump =
+			m_q_thermal = m_q_startup = m_m_dot_salt_loop = m_m_dot_salt_tot = m_T_salt_warm = m_T_salt_hot = m_W_dot_htf_pump =
 				m_W_dot_col_tracking = m_time_required_su = m_E_fp_total =
-				m_dP_sf_sh = m_h_htf_hot = m_xb_htf_hot = m_P_htf_hot = std::numeric_limits<double>::quiet_NaN();
+				m_dP_sf_sh = m_h_htf_hot = m_xb_htf_hot = m_P_htf_hot = m_dP_sf = std::numeric_limits<double>::quiet_NaN();
 
 			m_q_rec_heattrace = 0.0;
 

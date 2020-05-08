@@ -3745,7 +3745,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				throw(C_csp_exception("Operation mode not recognized",""));
 
 			}	// End switch() on receiver operating modes
-		
+			int just_for_tracepoint = -1;
 		}	
         
         /* 
