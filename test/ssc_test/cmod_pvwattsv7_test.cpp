@@ -19,9 +19,9 @@ TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, DefaultNoFinancialModel_cmod_pvwat
 
 	for (size_t i = 0; i < 12; i++)
 		tmp += (double)monthly_energy[i];
-	//v5 is 6909.79, decrease of 2.4%: decreases due to shading, module cover losses, and spectral losses 
+	//v5 is 6909.79, decrease of 2.4%: decreases due to shading, module cover losses, and spectral losses
 	//v7 prior to module coeff changes is 6750.4236, increase of 3.7% due to improved tempco for standard module
-	EXPECT_NEAR(tmp, 7003.1477, error_tolerance) << "Annual energy."; 
+	EXPECT_NEAR(tmp, 7003.1477, error_tolerance) << "Annual energy.";
 
 
 	EXPECT_NEAR((double)monthly_energy[0], 439.755, error_tolerance) << "Monthly energy of January";
@@ -75,7 +75,7 @@ TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, DifferentTechnologyInputs_cmod_pvw
 
 	// Array types: Fixed open rack, fixed roof mount, 1-axis tracking, 1-axis backtracking, 2-axis tracking
 	for (int array_type = 0; array_type < 5; array_type++)
-	{		
+	{
 		pairs["array_type"] = array_type;
 		int pvwatts_errors = modify_ssc_data_and_run_module(data, "pvwattsv7", pairs);
 		EXPECT_FALSE(pvwatts_errors);
@@ -123,7 +123,7 @@ TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, LargeSystem_cmod_pvwattsv7)
 	}
 }
 
-/// Test pvwattsv7 with default inputs and a 15-minute weather file 
+/// Test pvwattsv7 with default inputs and a 15-minute weather file
 TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, SubhourlyWeather_cmod_pvwattsv7) {
 
 	char subhourly[256];
@@ -194,6 +194,33 @@ TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, LifetimeModeTest_cmod_pvwattsv7) {
 	ssc_data_set_array(data, "dc_degradation", (ssc_number_t*)dc_degradation_fail, 22);
 	pvwatts_errors = modify_ssc_data_and_run_module(data, "pvwattsv7", pairs);
 	EXPECT_TRUE(pvwatts_errors);
+}
+
+/// Test PVWattsV7 bifacial functionality
+TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, BifacialTest_cmod_pvwattsv7) {
+
+	// set bifacial inputs
+	std::map<std::string, double> pairs;
+	pairs["bifaciality"] = 0.0;
+    ssc_number_t annual_energy_mono = 0, annual_energy_bi = 0;
+
+	int pvwatts_errors = modify_ssc_data_and_run_module(data, "pvwattsv7", pairs);
+	EXPECT_FALSE(pvwatts_errors);
+	if (!pvwatts_errors)
+	{
+		ssc_data_get_number(data, "annual_energy", &annual_energy_mono);
+		EXPECT_NEAR(annual_energy_mono, 7003, 1) << "System with bifaciality";
+	}
+
+    pairs["bifaciality"] = 0.65;
+    pvwatts_errors = modify_ssc_data_and_run_module(data, "pvwattsv7", pairs);
+    EXPECT_FALSE(pvwatts_errors);
+    if (!pvwatts_errors)
+    {
+        ssc_data_get_number(data, "annual_energy", &annual_energy_bi);
+    }
+
+    EXPECT_GT(annual_energy_bi/annual_energy_mono, 1.04);
 }
 
 /* this test isn't passing currently even though it's working in the UI, so commenting out for now

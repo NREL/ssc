@@ -57,9 +57,9 @@ bool try_get_rate_structure(var_table* vt, const std::string& ssc_name, bool pow
             buy = row[4];
             double sell = row[5];
             if (unit_type == 0)
-                rate_data.table.assign("unit", var_data("kW"));
+                rate_data.table.assign("unit", var_data("kWh"));
             else if (unit_type == 2)
-                rate_data.table.assign("unit", var_data("kW daily"));
+                rate_data.table.assign("unit", var_data("kWh daily"));
             else
                 throw(std::runtime_error("ElectricityRates_format_as_URDBv7 error. Unit type in " + ssc_name + " not allowed."));
             rate_data.table.assign("sell", sell);
