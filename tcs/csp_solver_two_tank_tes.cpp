@@ -437,6 +437,11 @@ double C_storage_tank::get_m_m_calc() //ARD new getter for current mass
 	return m_m_calc;
 }
 
+double C_storage_tank::get_vol_frac()
+{
+	return (m_V_prev - m_V_inactive) / m_V_active;
+}
+
 double C_storage_tank::m_dot_available(double f_unavail, double timestep)
 {
 	//double rho = mc_htf.dens(m_T_prev, 1.0);		//[kg/m^3]
@@ -914,6 +919,11 @@ double C_csp_two_tank_tes::get_hot_temp()
 double C_csp_two_tank_tes::get_cold_temp()
 {
 	return mc_cold_tank.get_m_T_prev();	//[K]
+}
+
+double C_csp_two_tank_tes::get_hot_tank_vol_frac()
+{
+	return mc_hot_tank.get_vol_frac();
 }
 
 

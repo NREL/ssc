@@ -695,6 +695,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 	double progress_msg_interval_frac = 0.02;
 	double progress_msg_frac_current = progress_msg_interval_frac;
+	double V_hot_tank_frac_initial;
 
     /* 
     ************************** MAIN TIME-SERIES LOOP **************************
@@ -771,6 +772,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 		// Get weather at this timestep. Should only be called once per timestep. (Except converged() function)
 		mc_weather.timestep_call(mc_kernel.mc_sim_info);
+
+		// Get volume of hot hot tank, for debugging
+		V_hot_tank_frac_initial = mc_tes.get_hot_tank_vol_frac();
 
 		// Get or set decision variables
 		bool is_rec_su_allowed = true;

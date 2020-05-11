@@ -1232,18 +1232,30 @@ void C_csp_lf_dsg_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 
 			// Set inlet temperature to previous timestep outlet temperature
 			double T_cold_in = mc_sys_hot_out_t_end_last.m_temp;	//[K]
+            double T_cold_in_base = mc_sys_hot_out_t_end_last.m_temp;	//[K]
 
 			// Recirculating, so the target enthalpy is roughly the outlet enthalpy
-			int wp_code = water_TP(T_cold_in, P_field_out*100.0, &wp);
-			if( wp_code != 0 )
-			{
-				throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::off", "water_TP error", wp_code));
-			}
+            int wp_code = 0;
+            do {
+                water_TP(T_cold_in, P_field_out * 100.0, &wp);
+                if (wp_code != 0)
+                {
+                    throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::off", "water_TP error", wp_code));
+                }
+                if (wp.qual > 0.0){
+                    T_cold_in -= 1.0;
+                }
+                else{
+                    break;
+                }
+            } while (T_cold_in > T_cold_in_base - 5.0);
+
 			if( wp.qual > 0.0 )
 			{
 				throw(C_csp_exception("The inlet to the once thru loop off mode, pre-pump, is 2-phase, this is not good"));
 			}
 			double h_target = wp.enth;	//[kJ/kg]
+
 
 			// Call energy balance with updated timestep and temperature info
 			once_thru_loop_energy_balance_T_t_int(weather, T_cold_in, P_field_out, m_dot_loop, h_target, sim_info_temp);
@@ -1417,17 +1429,29 @@ void C_csp_lf_dsg_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 			// Set inlet temperature to previous timestep outlet temperature
 			double T_cold_in = mc_sys_hot_out_t_end_last.m_temp;	//[K]
 
-			// Recirculating, so the target enthalpy is roughly the outlet enthalpy
-			int wp_code = water_TP(T_cold_in, P_field_out*100.0, &wp);
-			if( wp_code != 0 )
-			{
-				throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::off", "water_TP error", wp_code));
-			}
-			if( wp.qual > 0.0 )
-			{
-				throw(C_csp_exception("The inlet to the once thru loop off mode, pre-pump, is 2-phase, this is not good"));
-			}
-			double h_target = wp.enth;	//[kJ/kg]
+            double T_cold_in_base = mc_sys_hot_out_t_end_last.m_temp;	//[K]
+
+            // Recirculating, so the target enthalpy is roughly the outlet enthalpy
+            int wp_code = 0;
+            do {
+                water_TP(T_cold_in, P_field_out * 100.0, &wp);
+                if (wp_code != 0)
+                {
+                    throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::off", "water_TP error", wp_code));
+                }
+                if (wp.qual > 0.0) {
+                    T_cold_in -= 1.0;
+                }
+                else {
+                    break;
+                }
+            } while (T_cold_in > T_cold_in_base - 5.0);
+
+            if (wp.qual > 0.0)
+            {
+                throw(C_csp_exception("The inlet to the once thru loop off mode, pre-pump, is 2-phase, this is not good"));
+            }
+            double h_target = wp.enth;	//[kJ/kg]
 
 			// Call energy balance with updated timestep and temperature info
 			once_thru_loop_energy_balance_T_t_int(weather, T_cold_in, P_field_out, m_dot_loop, h_target, sim_info_temp);

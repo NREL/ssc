@@ -21,7 +21,9 @@
  */
 
 #include "nlopt-util.h"
-
+#ifdef ANDROID
+#include <linux/time.h>
+#endif
 #if TIME_WITH_SYS_TIME
 #ifdef __WXMSW__
 	#include "sys/time.h"

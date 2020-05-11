@@ -807,8 +807,8 @@ public:
 
 					if (module.bifaciality > 0)
 					{
-						irr.calc_rear_side(0.013, 1, module.length * pv.nmody);
-						irear = irr.get_poa_rear();
+						irr.calc_rear_side(bifacialTransmissionFactor, 1, module.length * pv.nmody);
+						irear = irr.get_poa_rear() * module.bifaciality; //total rear irradiance is returned, so must multiply module bifaciality
 					}
 
 					if (-1 == code)
@@ -882,7 +882,7 @@ public:
 								if (module.bifaciality > 0)
 								{
 									irr.calc_rear_side(bifacialTransmissionFactor, 1, module.length * pv.nmody);
-									irear_stow = irr.get_poa_rear();
+									irear_stow = irr.get_poa_rear() * module.bifaciality; //total rear irradiance is returned, so must multiply module bifaciality
 								}
 
 								irr.get_angles(&aoi, &stilt, &sazi, &rot, &btd);
@@ -1046,7 +1046,8 @@ public:
 							if (y == 0) ld("poa_loss_soiling") = 0;
 
 						// now add up total effective POA, accounting for external and self shading
-						poa = ibeam + iskydiff + ignddiff + irear; //irear is zero if not bifacial
+						double poa_front = ibeam + iskydiff + ignddiff;
+						poa = poa_front + irear; //irear is zero if not bifacial
 
 						// dc power nominal before any losses
 						double dc_nom = pv.dc_nameplate*poa / 1000; // Watts_DC * (POA W/m2 / 1000 W/m2 STC value );
@@ -1054,17 +1055,17 @@ public:
 
 						// module cover module to handle transmitted POA
 						double f_cover = 1.0;
-						if (aoi > AOI_MIN && aoi < AOI_MAX && poa > 0)
+						if (aoi > AOI_MIN && aoi < AOI_MAX && poa_front > 0)
 						{
 							/*double modifier = iam( aoi, module.ar_glass );
 							double tpoa = poa - ( 1.0 - modifier )*wf.dn*cosd(aoi); */ // previous PVWatts method, skips diffuse calc
 
-							double tpoa = calculateIrradianceThroughCoverDeSoto(
+							tpoa = calculateIrradianceThroughCoverDeSoto(
 								aoi, solzen, stilt, ibeam, iskydiff, ignddiff, en_sdm == 0 && module.ar_glass);
 							if (tpoa < 0.0) tpoa = 0.0;
-							if (tpoa > poa) tpoa = poa;
+							if (tpoa > poa) tpoa = poa_front;
 
-							f_cover = tpoa / poa;
+							f_cover = tpoa / poa_front;
 						}
 
 						if (y == 0) ld("dc_loss_cover") += (1 - f_cover)*dc_nom * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data

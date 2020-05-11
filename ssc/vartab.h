@@ -45,7 +45,8 @@ class var_table
 {
 public:
 	explicit var_table();
-	virtual ~var_table();
+    var_table(const var_table &rhs);
+    virtual ~var_table();
 	var_table &operator=( const var_table &rhs );
 
 	void clear();
