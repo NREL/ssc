@@ -2,6 +2,7 @@
 #define SAM_SIMULATION_CORE_LIB_BATTERY_DISPATCH_AUTOMATIC_BTM_TEST_H
 
 #include <gtest/gtest.h>
+#include <lib_battery_dispatch_automatic_btm.h>
 #include "lib_battery_dispatch_test.h"
 
 /**
