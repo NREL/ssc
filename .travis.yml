@@ -51,7 +51,7 @@ script:
   - mkdir ${SSCDIR}/build && cd ${SSCDIR}/build
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cmake .. -DCMAKE_BUILD_TYPE=Release -Dskip_tools=1  && make; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then cmake .. -DCMAKE_BUILD_TYPE=Release -Dskip_tools=1  && make; fi
-  - test/Test
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then test/Test; fi
 
 
 install:
