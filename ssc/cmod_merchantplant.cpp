@@ -1171,7 +1171,7 @@ public:
 				cf.at(CF_energy_curtailed, y) = 0.0;
 				for (size_t h = 0; h < num_rec_pre_curtailment_kwac_per_year; h++)
 				{
-					cf.at(CF_energy_curtailed, y) += system_pre_curtailment_kwac[h + (y-1)*num_rec_pre_curtailment_kwac_per_year] * (8760 / num_rec_pre_curtailment_kwac_per_year);
+					cf.at(CF_energy_curtailed, y) += system_pre_curtailment_kwac[h + (y-1)*num_rec_pre_curtailment_kwac_per_year] * (8760.0 / (ssc_number_t)num_rec_pre_curtailment_kwac_per_year);
 				}
 				cf.at(CF_energy_curtailed, y) -= cf.at(CF_energy_net, y);
 			}
