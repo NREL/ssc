@@ -59,8 +59,8 @@ script:
 install:
   #- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y libgtk2.0-dev libgl1-mesa-dev mesa-common-dev freeglut3-dev libcurl4-openssl-dev libc6; fi
   #- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install ccache; fi
-  #- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH="/usr/local/opt/ccache/libexec:$PATH"; fi 
-  
+  #- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH="/usr/local/opt/ccache/libexec:$PATH"; fi
+
 branches:
   only:
   - release

@@ -1233,17 +1233,29 @@ void C_csp_lf_dsg_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 			// Set inlet temperature to previous timestep outlet temperature
 			double T_cold_in = mc_sys_hot_out_t_end_last.m_temp;	//[K]
 
-			// Recirculating, so the target enthalpy is roughly the outlet enthalpy
-			int wp_code = water_TP(T_cold_in, P_field_out*100.0, &wp);
-			if( wp_code != 0 )
-			{
-				throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::off", "water_TP error", wp_code));
-			}
-			if( wp.qual > 0.0 )
-			{
-				throw(C_csp_exception("The inlet to the once thru loop off mode, pre-pump, is 2-phase, this is not good"));
-			}
-			double h_target = wp.enth;	//[kJ/kg]
+            double T_cold_in_base = mc_sys_hot_out_t_end_last.m_temp;	//[K]
+
+            // Recirculating, so the target enthalpy is roughly the outlet enthalpy
+            int wp_code = 0;
+            do {
+                water_TP(T_cold_in, P_field_out * 100.0, &wp);
+                if (wp_code != 0)
+                {
+                    throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::off", "water_TP error", wp_code));
+                }
+                if (wp.qual > 0.0) {
+                    T_cold_in -= 1.0;
+                }
+                else {
+                    break;
+                }
+            } while (T_cold_in > T_cold_in_base - 5.0);
+
+            if (wp.qual > 0.0)
+            {
+                throw(C_csp_exception("The inlet to the once thru loop off mode, pre-pump, is 2-phase, this is not good"));
+            }
+            double h_target = wp.enth;	//[kJ/kg]
 
 			// Call energy balance with updated timestep and temperature info
 			once_thru_loop_energy_balance_T_t_int(weather, T_cold_in, P_field_out, m_dot_loop, h_target, sim_info_temp);
@@ -1379,17 +1391,15 @@ void C_csp_lf_dsg_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 
 	// Define a copy of the sim_info structure
 	double time_start = sim_info.ms_ts.m_time - sim_info.ms_ts.m_step;	//[s] Time at start of step
-	double step_local = sim_info.ms_ts.m_step / (double)n_steps_recirc;	//[s] Recirculation time step
+    double time_end = sim_info.ms_ts.m_time;    //[s]
 
 	// Create local sim_info structure to handle recirculation timesteps
 	C_csp_solver_sim_info sim_info_temp = sim_info;
-	sim_info_temp.ms_ts.m_step = step_local;		//[s]
 
 	bool is_T_startup_achieved = false;
 
 	// This code finds the first "Recirculation Step" when the outlet temperature is greater than the Startup Temperature
 	double time_required_su = sim_info.ms_ts.m_step;		//[s]
-	int i_step = 0;		//[-]
 
 	double Q_fp_sum = 0.0;						//[MJ]
 
@@ -1405,9 +1415,12 @@ void C_csp_lf_dsg_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 		m_q_dot_to_sink_fullts =
 		0.0;
 
-	for( i_step = 0; i_step < n_steps_recirc; i_step++ )
+    sim_info_temp.ms_ts.m_time = time_start;    //[s]
+    while (sim_info_temp.ms_ts.m_time < time_end)
 	{
-		sim_info_temp.ms_ts.m_time = time_start + step_local*(i_step + 1);
+        sim_info_temp.ms_ts.m_time_start = sim_info_temp.ms_ts.m_time;      //[s]
+        sim_info_temp.ms_ts.m_time = std::min(sim_info_temp.ms_ts.m_time_start + m_step_recirc, time_end);  //[s]
+        sim_info_temp.ms_ts.m_step = sim_info_temp.ms_ts.m_time - sim_info_temp.ms_ts.m_time_start;     //[s]
 
 		// Could iterate here for each step such that T_cold_in = mc_sys_hot_out_t_int.m_temp
 		//    This would significantly slow the code
@@ -1415,17 +1428,29 @@ void C_csp_lf_dsg_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 			// Set inlet temperature to previous timestep outlet temperature
 			double T_cold_in = mc_sys_hot_out_t_end_last.m_temp;	//[K]
 
-			// Recirculating, so the target enthalpy is roughly the outlet enthalpy
-			int wp_code = water_TP(T_cold_in, P_field_out*100.0, &wp);
-			if( wp_code != 0 )
-			{
-				throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::off", "water_TP error", wp_code));
-			}
-			if( wp.qual > 0.0 )
-			{
-				throw(C_csp_exception("The inlet to the once thru loop off mode, pre-pump, is 2-phase, this is not good"));
-			}
-			double h_target = wp.enth;	//[kJ/kg]
+            double T_cold_in_base = mc_sys_hot_out_t_end_last.m_temp;	//[K]
+
+            // Recirculating, so the target enthalpy is roughly the outlet enthalpy
+            int wp_code = 0;
+            do {
+                water_TP(T_cold_in, P_field_out * 100.0, &wp);
+                if (wp_code != 0)
+                {
+                    throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::off", "water_TP error", wp_code));
+                }
+                if (wp.qual > 0.0) {
+                    T_cold_in -= 1.0;
+                }
+                else {
+                    break;
+                }
+            } while (T_cold_in > T_cold_in_base - 5.0);
+
+            if (wp.qual > 0.0)
+            {
+                throw(C_csp_exception("The inlet to the once thru loop off mode, pre-pump, is 2-phase, this is not good"));
+            }
+            double h_target = wp.enth;	//[kJ/kg]
 
 			// Call energy balance with updated timestep and temperature info
 			once_thru_loop_energy_balance_T_t_int(weather, T_cold_in, P_field_out, m_dot_loop, h_target, sim_info_temp);
@@ -1445,25 +1470,25 @@ void C_csp_lf_dsg_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 		}
 
 		// Add subtimestep calcs
-		m_h_sys_c_in_t_int_fullts += mc_sys_cold_in_t_int.m_enth;		//[kJ/kg]
-		m_P_sys_c_in_t_int_fullts += mc_sys_cold_in_t_int.m_pres;		//[bar]
+		m_h_sys_c_in_t_int_fullts += mc_sys_cold_in_t_int.m_enth*sim_info_temp.ms_ts.m_step;		//[kJ/kg]
+		m_P_sys_c_in_t_int_fullts += mc_sys_cold_in_t_int.m_pres*sim_info_temp.ms_ts.m_step;		//[bar]
 
-		m_h_c_rec_in_t_int_fullts += mc_sca_in_t_int[0].m_enth;			//[kJ/kg]
-		m_P_c_rec_in_t_int_fullts += mc_sca_in_t_int[0].m_pres;			//[bar]
+		m_h_c_rec_in_t_int_fullts += mc_sca_in_t_int[0].m_enth*sim_info_temp.ms_ts.m_step;			//[kJ/kg]
+		m_P_c_rec_in_t_int_fullts += mc_sca_in_t_int[0].m_pres*sim_info_temp.ms_ts.m_step;			//[bar]
 
-		m_h_h_rec_out_t_int_fullts += mc_sca_out_t_int[m_nModTot - 1].m_enth;	//[kJ/kg]
-		m_P_h_rec_out_t_int_fullts += mc_sca_out_t_int[m_nModTot - 1].m_pres;	//[bar]
+		m_h_h_rec_out_t_int_fullts += mc_sca_out_t_int[m_nModTot - 1].m_enth*sim_info_temp.ms_ts.m_step;	//[kJ/kg]
+		m_P_h_rec_out_t_int_fullts += mc_sca_out_t_int[m_nModTot - 1].m_pres*sim_info_temp.ms_ts.m_step;	//[bar]
 
-		m_h_sys_h_out_t_int_fullts += mc_sys_hot_out_t_int.m_enth;		//[kJ/kg]
-		m_P_sys_h_out_t_int_fullts += mc_sys_hot_out_t_int.m_pres;		//[bar]
+		m_h_sys_h_out_t_int_fullts += mc_sys_hot_out_t_int.m_enth*sim_info_temp.ms_ts.m_step;		//[kJ/kg]
+		m_P_sys_h_out_t_int_fullts += mc_sys_hot_out_t_int.m_pres*sim_info_temp.ms_ts.m_step;		//[bar]
 
-		m_q_dot_sca_loss_summed_fullts += m_q_dot_sca_loss_summed_subts;	//[MWt]
-		m_q_dot_sca_abs_summed_fullts += m_q_dot_sca_abs_summed_subts;		//[MWt]
-		m_q_dot_HR_cold_loss_fullts += m_q_dot_HR_cold_loss_subts;			//[MWt]
-		m_q_dot_HR_hot_loss_fullts += m_q_dot_HR_hot_loss_subts;			//[MWt]
-		m_E_dot_sca_summed_fullts += m_E_dot_sca_summed_subts;				//[MWt]
+		m_q_dot_sca_loss_summed_fullts += m_q_dot_sca_loss_summed_subts*sim_info_temp.ms_ts.m_step;	//[MWt]
+		m_q_dot_sca_abs_summed_fullts += m_q_dot_sca_abs_summed_subts*sim_info_temp.ms_ts.m_step;		//[MWt]
+		m_q_dot_HR_cold_loss_fullts += m_q_dot_HR_cold_loss_subts*sim_info_temp.ms_ts.m_step;			//[MWt]
+		m_q_dot_HR_hot_loss_fullts += m_q_dot_HR_hot_loss_subts*sim_info_temp.ms_ts.m_step;			//[MWt]
+		m_E_dot_sca_summed_fullts += m_E_dot_sca_summed_subts*sim_info_temp.ms_ts.m_step;				//[MWt]
 
-		m_q_dot_to_sink_fullts += m_q_dot_to_sink_subts;		//[MWt]
+		m_q_dot_to_sink_fullts += m_q_dot_to_sink_subts*sim_info_temp.ms_ts.m_step;		//[MWt]
 
 		// If the *outlet temperature at the end of the timestep* is greater than the startup temperature
 		if( mc_sys_hot_out_t_end.m_temp > m_T_startup )
@@ -1476,33 +1501,38 @@ void C_csp_lf_dsg_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 
 		update_last_temps();
 	}
-	
-	double nd_steps_recirc = min((double)n_steps_recirc, (double)(i_step + 1));
 
-	m_h_sys_c_in_t_int_fullts /= nd_steps_recirc;		//[kJ/kg]
-	m_P_sys_c_in_t_int_fullts /= nd_steps_recirc;		//[bar]
+    // Check if startup is achieved in current controller/kernel timestep
+    if (!is_T_startup_achieved)
+    {
+        time_required_su = sim_info.ms_ts.m_step;		//[s]
+        m_operating_mode = C_csp_collector_receiver::STARTUP;	//[-]
+    }
 
-	m_h_c_rec_in_t_int_fullts /= nd_steps_recirc;		//[kJ/kg]
-	m_P_c_rec_in_t_int_fullts /= nd_steps_recirc;		//[bar]
+	m_h_sys_c_in_t_int_fullts /= time_required_su;		//[kJ/kg]
+	m_P_sys_c_in_t_int_fullts /= time_required_su;		//[bar]
 
-	m_h_h_rec_out_t_int_fullts /= nd_steps_recirc;		//[kJ/kg]
-	m_P_h_rec_out_t_int_fullts /= nd_steps_recirc;		//[bar]
+	m_h_c_rec_in_t_int_fullts /= time_required_su;		//[kJ/kg]
+	m_P_c_rec_in_t_int_fullts /= time_required_su;		//[bar]
 
-	m_h_sys_h_out_t_int_fullts /= nd_steps_recirc;		//[kJ/kg]
-	m_P_sys_h_out_t_int_fullts /= nd_steps_recirc;		//[bar]
+	m_h_h_rec_out_t_int_fullts /= time_required_su;		//[kJ/kg]
+	m_P_h_rec_out_t_int_fullts /= time_required_su;		//[bar]
 
-	m_q_dot_sca_loss_summed_fullts /= nd_steps_recirc;		//[MWt]
-	m_q_dot_sca_abs_summed_fullts /= nd_steps_recirc;		//[MWt]
-	m_q_dot_HR_cold_loss_fullts /= nd_steps_recirc;			//[MWt]
-	m_q_dot_HR_hot_loss_fullts /= nd_steps_recirc;			//[MWt]
-	m_E_dot_sca_summed_fullts /= nd_steps_recirc;			//[MWt]
+	m_h_sys_h_out_t_int_fullts /= time_required_su;		//[kJ/kg]
+	m_P_sys_h_out_t_int_fullts /= time_required_su;		//[bar]
 
-	m_q_dot_to_sink_fullts /= nd_steps_recirc;
+	m_q_dot_sca_loss_summed_fullts /= time_required_su;		//[MWt]
+	m_q_dot_sca_abs_summed_fullts /= time_required_su;		//[MWt]
+	m_q_dot_HR_cold_loss_fullts /= time_required_su;			//[MWt]
+	m_q_dot_HR_hot_loss_fullts /= time_required_su;			//[MWt]
+	m_E_dot_sca_summed_fullts /= time_required_su;			//[MWt]
+
+	m_q_dot_to_sink_fullts /= time_required_su;
 
 	//double E_bal_check = m_q_dot_sca_abs_summed_fullts - m_q_dot_HR_cold_loss_fullts - m_q_dot_HR_hot_loss_fullts -
 	//	m_q_dot_to_sink_fullts - m_E_dot_sca_summed_fullts;
 
-	m_q_dot_freeze_protection = Q_fp_sum / sim_info.ms_ts.m_step;	//[MWt]
+	m_q_dot_freeze_protection = Q_fp_sum / time_required_su;	//[MWt]
 
 	int wp_code = water_PH(P_field_out*100.0, m_h_sys_h_out_t_int_fullts, &wp);
 	if( wp_code != 0 )
@@ -1510,13 +1540,6 @@ void C_csp_lf_dsg_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 		throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::startup::recirculation", "water_PH error", wp_code));
 	}
 	double T_sys_hot_out_t_int_ts_ave = wp.temp;	//[K]
-
-	// Check if startup is achieved in current controller/kernel timestep
-	if( !is_T_startup_achieved )
-	{
-		time_required_su = sim_info.ms_ts.m_step;		//[s]
-		m_operating_mode = C_csp_collector_receiver::STARTUP;	//[-]
-	}
 
 		// For now, set startup > 0.0 so that the controller knows that startup was successful
 	cr_out_solver.m_q_startup = 1.0;			//[MWt-hr] Receiver thermal output used to warm up the receiver	
@@ -1538,6 +1561,7 @@ void C_csp_lf_dsg_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	cr_out_solver.m_dP_sf_sh = 0.0;
 	cr_out_solver.m_h_htf_hot = m_h_sys_h_out_t_int_fullts;		//[kJ/kg]
 	cr_out_solver.m_xb_htf_hot = wp.qual;						//[-]
+    cr_out_solver.m_P_htf_hot = m_P_sys_h_out_t_int_fullts * 100.0; //[kPa] convert from bar
 
 	set_output_values();
 
@@ -4021,4 +4045,3 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 
 
 }
-
