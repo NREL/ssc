@@ -634,7 +634,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 			}
 		}
 		//the estimated mass flow rate at design
-		m_m_dot_design = (m_Ap_tot*m_I_bn_des*m_opteff_des - loss_tot*float(m_nLoops)) / (m_c_htf_ave*(m_T_loop_out_des - m_T_PTC_in_des));  //tn 4.25.11 using m_Ap_tot instead of A_loop. Change location of m_opteff_des
+		m_m_dot_design = (m_Ap_tot*m_I_bn_des*m_opteff_des - loss_tot*float(m_nLoops)) / (m_c_htf_ave*(m_T_loop_out_des - m_T_PTC_in_des));
         double m_dot_max = m_m_dot_htfmax * m_nLoops;
         double m_dot_min = m_m_dot_htfmin * m_nLoops;
         if (m_m_dot_design > m_dot_max) {

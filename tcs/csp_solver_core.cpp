@@ -1212,8 +1212,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				}
 			}	// End logic for CR_state == OFF or STARTUP    AND     PC_state == OFF or STARTUP
 
-			else if( cr_operating_state == C_csp_collector_receiver::ON &&
-				(pc_operating_state == C_csp_power_cycle::OFF || pc_operating_state == C_csp_power_cycle::STARTUP) )
+			else if( cr_operating_state == C_csp_collector_receiver::ON	&& (pc_operating_state == C_csp_power_cycle::OFF || pc_operating_state == C_csp_power_cycle::STARTUP) )
 			{
 				if( q_dot_cr_on > 0.0 && is_rec_su_allowed )
 				{	// Receiver is allowed to remain on, and it can produce useful energy. Now, need to find a home for it
@@ -1286,9 +1285,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 					operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
 				}
 			}
-
-			else if( (cr_operating_state == C_csp_collector_receiver::OFF || cr_operating_state == C_csp_collector_receiver::STARTUP) &&
-				(pc_operating_state == C_csp_power_cycle::ON || pc_operating_state == C_csp_power_cycle::STANDBY) )
+			else if( (cr_operating_state == C_csp_collector_receiver::OFF || cr_operating_state == C_csp_collector_receiver::STARTUP) && (pc_operating_state == C_csp_power_cycle::ON || pc_operating_state == C_csp_power_cycle::STANDBY) )
 			{
 				if( q_dot_cr_startup > 0.0 && is_rec_su_allowed )
 				{	// Receiver startup is allowed and possible (will generate net energy) - determine if power cycle can remain on
@@ -1395,8 +1392,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				}
 			}
 
-			else if( cr_operating_state == C_csp_collector_receiver::ON &&
-				(pc_operating_state == C_csp_power_cycle::ON || pc_operating_state == C_csp_power_cycle::STANDBY) )
+			else if( cr_operating_state == C_csp_collector_receiver::ON && (pc_operating_state == C_csp_power_cycle::ON || pc_operating_state == C_csp_power_cycle::STANDBY) )
 			{
 				if( q_dot_cr_on > 0.0 && is_rec_su_allowed )
 				{	// Receiver operation is allowed and possible - find a home for output
@@ -1439,6 +1435,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 									
 									operating_mode = CR_DF__PC_MAX__TES_FULL__AUX_OFF;
 								}
+								else if ( m_is_CR_OFF__PC_TARGET__TES_DC__AUX_OFF_avail )
+								{
+									operating_mode = CR_OFF__PC_TARGET__TES_DC__AUX_OFF;
+								}
 								else
 								{
 									operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;;
@@ -1458,6 +1458,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 								else if( m_is_CR_DF__PC_MAX__TES_OFF__AUX_OFF_avail )
 								{
 									operating_mode = CR_DF__PC_MAX__TES_OFF__AUX_OFF;
+								}
+								else if (m_is_CR_OFF__PC_TARGET__TES_DC__AUX_OFF_avail)
+								{
+									operating_mode = CR_OFF__PC_TARGET__TES_DC__AUX_OFF;
 								}
 								else
 								{
