@@ -533,19 +533,19 @@ static var_info _cm_vtab_merchantplant[] = {
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_capacity_payment", "Capacity payment revenue", "$", "", "", "*", "LENGTH_EQUAL=cf_length", "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,     "mp_enable_energy_market_revenue",		      "Enable energy market revenue",   "0/1",   "",    "Revenue",  "*",	"INTEGER,MIN=0,MAX=1",      "" },
-	{ SSC_INPUT, SSC_MATRIX, "mp_energy_market_revenue", "Energy market revenue input", "", "","Market", "*", "", ""},
+	{ SSC_INPUT, SSC_MATRIX, "mp_energy_market_revenue", "Energy market revenue input", "", "Lifetime x 2[Cleared Capacity(MW),Price($/MWh)]","Revenue", "*", "", ""},
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_market_revenue", "Energy market revenue", "$", "", "Revenue", "*", "LENGTH_EQUAL=cf_length", "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv1",		      "Enable ancillary services 1 revenue",   "0/1",   "",    "Revenue",  "*",	"INTEGER,MIN=0,MAX=1",      "" },
-	{ SSC_INPUT, SSC_MATRIX, "mp_ancserv1_revenue", "Ancillary services 1 revenue input", "", "","Revenue", "*", "", "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv1",		      "Enable ancillary services 1 Revenue",   "0/1",   "",    "Revenue",  "*",	"INTEGER,MIN=0,MAX=1",      "" },
+	{ SSC_INPUT, SSC_MATRIX, "mp_ancserv1_revenue", "Ancillary services 1 revenue input", "", "Lifetime x 2[Cleared Capacity(MW),Price($/MWh)]","Revenue", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_ancillary_services_1_revenue", "Ancillary services 1 revenue", "$", "", "Revenue", "*", "LENGTH_EQUAL=cf_length", "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv2",		      "Enable ancillary services 2 revenue",   "0/1",   "",    "Revenue",  "*",	"INTEGER,MIN=0,MAX=1",      "" },
-	{ SSC_INPUT, SSC_MATRIX, "mp_ancserv2_revenue", "Ancillary services 2 revenue input", "", "","Revenue", "*", "", "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv2",		      "Enable ancillary services 2 Revenue",   "0/1",   "",    "Revenue",  "*",	"INTEGER,MIN=0,MAX=1",      "" },
+	{ SSC_INPUT, SSC_MATRIX, "mp_ancserv2_revenue", "Ancillary services 2 revenue input", "", "Lifetime x 2[Cleared Capacity(MW),Price($/MWh)]","Revenue", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_ancillary_services_2_revenue", "Ancillary services 2 revenue", "$", "", "Revenue", "*", "LENGTH_EQUAL=cf_length", "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv3",		      "Enable ancillary services 3 revenue",   "0/1",   "",    "Revenue",  "*",	"INTEGER,MIN=0,MAX=1",      "" },
-	{ SSC_INPUT, SSC_MATRIX, "mp_ancserv3_revenue", "Ancillary services 3 revenue input", "", "","Revenue", "*", "", "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv3",		      "Enable ancillary services 3 Revenue",   "0/1",   "",    "Revenue",  "*",	"INTEGER,MIN=0,MAX=1",      "" },
+	{ SSC_INPUT, SSC_MATRIX, "mp_ancserv3_revenue", "Ancillary services 3 revenue input", "", "Lifetime x 2 [Cleared Capacity(MW),Price($/MWh)]","Revenue", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_ancillary_services_3_revenue", "Ancillary services 3 revenue", "$", "", "Revenue", "*", "LENGTH_EQUAL=cf_length", "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv4",		      "Enable ancillary services 4 revenue",   "0/1",   "",    "Revenue",  "*",	"INTEGER,MIN=0,MAX=1",      "" },
-	{ SSC_INPUT, SSC_MATRIX, "mp_ancserv4_revenue", "Ancillary services 4 revenue input", "", "","Market", "*", "", "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv4",		      "Enable ancillary services 4 Revenue",   "0/1",   "",    "Revenue",  "*",	"INTEGER,MIN=0,MAX=1",      "" },
+	{ SSC_INPUT, SSC_MATRIX, "mp_ancserv4_revenue", "Ancillary services 4 revenue input", "", "Lifetime x 2 [Cleared Capacity(MW),Price($/MWh)]","Revenue", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_ancillary_services_4_revenue", "Ancillary services 4 revenue", "$", "", "Revenue", "*", "LENGTH_EQUAL=cf_length", "" },
 
 
@@ -1171,7 +1171,7 @@ public:
 				cf.at(CF_energy_curtailed, y) = 0.0;
 				for (size_t h = 0; h < num_rec_pre_curtailment_kwac_per_year; h++)
 				{
-					cf.at(CF_energy_curtailed, y) += system_pre_curtailment_kwac[h + (y-1)*num_rec_pre_curtailment_kwac_per_year] * (8760 / num_rec_pre_curtailment_kwac_per_year);
+					cf.at(CF_energy_curtailed, y) += system_pre_curtailment_kwac[h + (y-1)*num_rec_pre_curtailment_kwac_per_year] * (8760.0 / (ssc_number_t)num_rec_pre_curtailment_kwac_per_year);
 				}
 				cf.at(CF_energy_curtailed, y) -= cf.at(CF_energy_net, y);
 			}

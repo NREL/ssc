@@ -480,8 +480,10 @@ TEST(windpower_landbosse, SetupPython) {
 	std::string configPath = std::string(get_python_path()) + "python_config.json";
 
 	std::ifstream python_config_doc(configPath);
-	if (python_config_doc.fail())
-		throw std::runtime_error("Could not open " + configPath);
+	if (python_config_doc.fail()) {
+	    printf("Could not open %s", configPath.c_str());
+	    return;
+	}
 
 	python_config_doc >> python_config_root;
 
@@ -532,6 +534,12 @@ TEST(windpower_landbosse, RunSuccess) {
 
 
     setup_python();
+    std::string configPath = std::string(get_python_path()) + "python_config.json";
+    std::ifstream python_config_doc(configPath);
+    if (python_config_doc.fail()) {
+        printf("Could not open %s", configPath.c_str());
+        return;
+    }
 
     auto landbosse = ssc_module_create("wind_landbosse");
 
@@ -589,6 +597,12 @@ TEST(windpower_landbosse, SubhourlyFail) {
     vd->assign("gust_velocity_m_per_s", 59.50);
 
     setup_python();
+    std::string configPath = std::string(get_python_path()) + "python_config.json";
+    std::ifstream python_config_doc(configPath);
+    if (python_config_doc.fail()) {
+        printf("Could not open %s", configPath.c_str());
+        return;
+    }
 
     auto landbosse = ssc_module_create("wind_landbosse");
 
@@ -624,6 +638,12 @@ TEST(windpower_landbosse, NegativeInputFail) {
     vd->assign("gust_velocity_m_per_s", 59.50);
 
     setup_python();
+    std::string configPath = std::string(get_python_path()) + "python_config.json";
+    std::ifstream python_config_doc(configPath);
+    if (python_config_doc.fail()) {
+        printf("Could not open %s", configPath.c_str());
+        return;
+    }
 
     auto landbosse = ssc_module_create("wind_landbosse");
 
