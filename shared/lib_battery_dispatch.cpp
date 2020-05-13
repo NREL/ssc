@@ -565,9 +565,7 @@ bool dispatch_automatic_t::check_constraints(double &I, size_t count)
 			P_target < 0)
 		{
 			iterate = false;
-			//double dP = fabs(P_battery) - m_batteryPower->powerPVToBattery;
-			//I += dP * util::kilowatt_to_watt / _Battery->V();
-			//m_batteryPower->powerBatteryTarget += dP;
+			// Power adjustments were handled in dispatch_t::check_constraints, don't iterate, move along
 		}
 
 		// Try and force controller to meet target or custom dispatch

@@ -291,6 +291,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 		// save for extraction
 		m_batteryPower->powerBatteryTarget = powerBattery;
 	}
+    // Custom dispatch
 	else
 	{
 		// extract input power by modifying lifetime index to year 1
