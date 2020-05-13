@@ -468,7 +468,8 @@ bool setup_python() {
 #ifdef __WINDOWS__
     auto python_dir = std::string(std::getenv("SAMNTDIR")) + "\\deploy\\runtime\\python\\";
 #else
-    auto python_dir = std::string(std::getenv("CMAKEBUILDDIR")) + "/sam/SAM.app/Contents/runtime/python/";
+    if (!std::getenv("CMAKEBLDDIR")) return false;
+    auto python_dir = std::string(std::getenv("CMAKEBULDDIR")) + "/sam/SAM.app/Contents/runtime/python/";
     if (!util::file_exists(python_dir.c_str())){
         std::cerr << "Python not configured.";
         return false;
