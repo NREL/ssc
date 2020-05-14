@@ -27,6 +27,18 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 extern double tolerance;
 extern double low_tolerance;
 
+bool cycle_state::operator==(const cycle_state &p) {
+    bool equal = (q_relative_cycle == p.q_relative_cycle);
+    equal &= (n_cycles == p.n_cycles);
+    equal &= (range == p.range);
+    equal &= (average_range == p.average_range);
+    equal &= (rainflow_Xlt == p.rainflow_Xlt);
+    equal &= (rainflow_Ylt == p.rainflow_Ylt);
+    equal &= (rainflow_jlt == p.rainflow_jlt);
+    equal &= (rainflow_peaks == p.rainflow_peaks);
+    return equal;
+}
+
 void lifetime_cycle_t::initialize() {
     if (params->cycling_matrix.nrows() < 3 || params->cycling_matrix.ncols() != 3)
         throw std::runtime_error("lifetime_cycle_t error: Battery lifetime matrix must have three columns and at least three rows");
@@ -325,6 +337,13 @@ double lifetime_cycle_t::bilinear(double DOD, int cycle_number) {
 /*
 Lifetime Calendar Model
 */
+
+bool calendar_state::operator==(const calendar_state &p) {
+    bool equal = (q_relative_calendar == p.q_relative_calendar);
+    equal &= (day_age_of_battery == p.day_age_of_battery);
+    equal &= (dq_relative_calendar_old == p.dq_relative_calendar_old);
+    return equal;
+}
 
 void lifetime_calendar_t::initialize() {
     state = std::make_shared<calendar_state>();

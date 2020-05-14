@@ -52,6 +52,8 @@ struct capacity_state {
     } leadacid;
 
     friend std::ostream &operator<<(std::ostream &os, const capacity_state &p);
+
+    bool operator==(const capacity_state &p);
 };
 
 struct capacity_params {

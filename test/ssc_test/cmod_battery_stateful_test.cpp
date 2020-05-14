@@ -59,9 +59,7 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, compareSequential) {
     for (size_t i = 0; i < 10000; i++) {
         ssc_module_exec(mod, data);
     }
-    std::cout << "Time for run_sequential == 0: "
-              << std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - t1).count()
-              << " nanoseconds" << std::endl;
+    auto time_read = std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - t1).count();
 
     // without reading state
     ssc_data_set_number(copy, "run_sequentially", 0);
@@ -69,7 +67,7 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, compareSequential) {
     for (size_t i = 0; i < 10000; i++) {
         ssc_module_exec(mod, copy);
     }
-    std::cout << "Time for run_sequential == 1: "
-              << std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - t1).count()
-              << " nanoseconds" << std::endl;
+    auto time_pass = std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - t1).count();
+
+    EXPECT_GT(time_read, time_pass);
 }

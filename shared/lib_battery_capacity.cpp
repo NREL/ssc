@@ -31,6 +31,25 @@ double tolerance = 0.002;
 /*
 Define Capacity Model
 */
+
+bool capacity_state::operator==(const capacity_state &p) {
+    bool equal = (q0 == p.q0);
+    equal &= (qmax_lifetime == p.qmax_lifetime);
+    equal &= (qmax_thermal == p.qmax_thermal);
+    equal &= (cell_current == p.cell_current);
+    equal &= (I_loss == p.I_loss);
+    equal &= (SOC == p.SOC);
+    equal &= (SOC_prev == p.SOC_prev);
+    equal &= (charge_mode == p.charge_mode);
+    equal &= (prev_charge == p.prev_charge);
+    equal &= (chargeChange == p.chargeChange);
+    equal &= (leadacid.q1_0 == p.leadacid.q1_0);
+    equal &= (leadacid.q2_0 == p.leadacid.q2_0);
+    equal &= (leadacid.q1 == p.leadacid.q1);
+    equal &= (leadacid.q2 == p.leadacid.q2);
+    return equal;
+}
+
 void capacity_t::initialize() {
     state = std::make_shared<capacity_state>();
     state->q0 = 0.01 * params->initial_SOC * params->qmax_init;

@@ -74,6 +74,8 @@ struct cycle_state {
     std::vector<double> rainflow_peaks;
 
     friend std::ostream &operator<<(std::ostream &os, const cycle_state &p);
+
+    bool operator==(const cycle_state &p);
 };
 
 class lifetime_cycle_t {
@@ -147,6 +149,8 @@ struct calendar_state {
     double dq_relative_calendar_old;       // (0 - 1)
 
     friend std::ostream &operator<<(std::ostream &os, const calendar_state &p);
+
+    bool operator==(const calendar_state &p);
 };
 
 class lifetime_calendar_t {
