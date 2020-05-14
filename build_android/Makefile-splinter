@@ -1,6 +1,6 @@
 # ARCH argument like armeabi-v7a, x86, (x86_64 > android-20), arm64-v8a
 
-VPATH = ../shared
+VPATH = ../splinter
 
 # OS building
 MYARCH=darwin-x86_64
@@ -38,36 +38,19 @@ CFLAGS = --sysroot=${NDK}/platforms/${PLATFORMVER}/${ARCHPREFIX} -fPIC -g -DANDR
 CXXFLAGS = $(CFLAGS) -std=c++11 
 
 OBJECTS = \
-	lsqfit.o \
-	lib_snowmodel.o \
-	lib_iec61853.o \
-	lib_cec6par.o \
-	lib_financial.o \
-	lib_geothermal.o \
-	lib_irradproc.o \
-	lib_physics.o \
-	lib_powerblock.o \
-	lib_power_electronics.o \
-	lib_pvinv.o \
-	lib_pvmodel.o \
-	lib_pvshade.o \
-	lib_pvwatts.o \
-	lib_sandia.o \
-	lib_util.o \
-	lib_weatherfile.o \
-	lib_windfile.o \
-	lib_wind_obos.o \
-	lib_wind_obos_cable_vessel.o \
-	lib_wind_obos_defaults.o \
-	lib_windwakemodel.o \
-	lib_windwatts.o \
-	lib_battery.o \
-	lib_battery_dispatch.o \
-	lib_miniz.o \
-	lib_pv_shade_loss_mpp.o
+	bspline.o \
+	bsplinebasis.o \
+	bsplinebasis1d.o \
+	bsplinebuilder.o \
+	datapoint.o \
+	datatable.o \
+	function.o \
+	knots.o \
+	mykroneckerproduct.o \
+	serializer.o \
+	utilities.o 
 
-
-TARGET=shared_${ARCH}.a
+TARGET=splinter_${ARCH}.a
 
 $(TARGET):$(OBJECTS)
 	$(AR) rs $(TARGET) $(OBJECTS)
