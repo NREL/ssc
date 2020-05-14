@@ -411,7 +411,7 @@ void cm_battery_stateful::exec() {
     if (!battery)
         throw exec_error("battery_stateful", "Battery model must be initialized first.");
 
-    if (as_boolean("run_sequentially")) {
+    if (!as_boolean("run_sequentially")) {
         battery_state state;
         try {
             read_battery_state(state, m_vartab);

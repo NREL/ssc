@@ -76,8 +76,6 @@ public:
     void SetUp() override {
         old_cap = std::make_shared<capacity_kibam_t>(q20, t1, q1, q10,SOC_init,
                 SOC_max, SOC_min, dt_hour);
-//        double I = 1e-7;
-//        old_cap->updateCapacity(I, 1);
     }
 };
 #endif //SAM_SIMULATION_CORE_LIB_BATTERY_CAPACITY_TEST_H

@@ -359,6 +359,4 @@ struct battstor
 	double outPVChargePercent;
 };
 
-void process_messages(std::shared_ptr<battstor> batt, compute_module* cm);
-
 #endif

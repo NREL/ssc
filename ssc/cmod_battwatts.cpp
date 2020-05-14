@@ -360,7 +360,6 @@ void cm_battwatts::exec()
                 }
             }
         }
-        process_messages(batt, this);
         batt->calculate_monthly_and_annual_outputs(*this);
 
         if (resilience) {
