@@ -51,26 +51,14 @@ script:
   - mkdir ${SSCDIR}/build && cd ${SSCDIR}/build
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cmake .. -DCMAKE_BUILD_TYPE=Release -Dskip_tools=1  && make; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then cmake .. -DCMAKE_BUILD_TYPE=Release -Dskip_tools=1  && make; fi
-  - echo $TRAVIS_COMMIT_RANGE
-  - cd ${SSCDIR}
-  - IFS=$'\n' && read -ra array <<< $(git diff --name-only $TRAVIS_COMMIT_RANGE) && echo ${array}
-  - IFS=$' ' && read -ra array <<< ${array[0]}
-  - |
-    for (( i=0; i<${#array[@]}; i++ ))
-    do
-        a=${array[$i]}
-        xbase=${a##*/}
-        xpref=${xbase%.*}
-        var="--gtest_filter=*${xpref}*"
-        build/test/Test ${var}
-    done
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then test/Test; fi
 
 
 install:
   #- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y libgtk2.0-dev libgl1-mesa-dev mesa-common-dev freeglut3-dev libcurl4-openssl-dev libc6; fi
   #- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install ccache; fi
-  #- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH="/usr/local/opt/ccache/libexec:$PATH"; fi 
-  
+  #- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH="/usr/local/opt/ccache/libexec:$PATH"; fi
+
 branches:
   only:
   - release
@@ -78,4 +66,4 @@ branches:
   - patch
   - PySAM
   - wind_pruf
-  
+
