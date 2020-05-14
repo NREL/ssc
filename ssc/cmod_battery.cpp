@@ -1494,19 +1494,6 @@ static var_info _cm_vtab_battery[] = {
 
 extern var_info vtab_fuelcell_output[];
 
-void process_messages(shared_ptr<battstor> batt, compute_module* cm)
-{
-    if (!batt)
-        return;
-//    message dispatch_messages = batt->dispatch_model->get_messages();
-//    message thermal_messages = batt->thermal_model->get_messages();
-
-//    for (int i = 0; i != (int)dispatch_messages.total_message_count(); i++)
-//        cm->log(dispatch_messages.construct_log_count_string(i), SSC_NOTICE);
-//    for (int i = 0; i != (int)thermal_messages.total_message_count(); i++)
-//        cm->log(thermal_messages.construct_log_count_string(i), SSC_NOTICE);
-}
-
 class cm_battery : public compute_module
 {
 public:
@@ -1633,7 +1620,6 @@ public:
                     }
                 }
             }
-            process_messages(batt, this);
             batt->calculate_monthly_and_annual_outputs(*this);
 
             // update capacity factor and annual energy

@@ -28,7 +28,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 var_info vtab_battery_stateful_inputs[] = {
         /*   VARTYPE           DATATYPE         NAME                                            LABEL                                                   UNITS      META                   GROUP           REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-        { SSC_INPUT,        SSC_NUMBER,      "control_mode",                               "Control using current (0) or power (1)",                  "hr",      "",   "Controls",       "*",                           "",                              "" },
+        { SSC_INPUT,        SSC_NUMBER,      "control_mode",                               "Control using current (0) or power (1)",                  "0/1",      "",   "Controls",       "*",                           "",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "dt_hr",                                      "Time step in hours",                                      "hr",      "",   "Controls",       "*",                           "",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "input_current",                              "Current at which to run battery",                         "A",       "",   "Controls",       "control_mode=0",              "",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "input_power",                                "Power at which to run battery",                           "kW",      "",   "Controls",       "control_mode=1",              "",                              "" },
@@ -411,7 +411,7 @@ void cm_battery_stateful::exec() {
     if (!battery)
         throw exec_error("battery_stateful", "Battery model must be initialized first.");
 
-    if (as_boolean("run_sequentially")) {
+    if (!as_boolean("run_sequentially")) {
         battery_state state;
         try {
             read_battery_state(state, m_vartab);

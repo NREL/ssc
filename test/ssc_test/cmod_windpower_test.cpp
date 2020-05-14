@@ -4,6 +4,7 @@
 #include <vector>
 
 #include <json/json.h>
+#include <lib_util.h>
 #include "../ssc/sscapi.h"
 #include "vartab.h"
 #include "cmod_windpower_test.h"
@@ -463,19 +464,27 @@ TEST(Turbine_powercurve_cmod_windpower_eqns, Case4) {
     ASSERT_NEAR(rated_wx, 11.21, 1e-2);
 }
 
-void setup_python(){
+bool setup_python() {
 #ifdef __WINDOWS__
     auto python_dir = std::string(std::getenv("SAMNTDIR")) + "\\deploy\\runtime\\python\\";
 #else
-    auto python_dir = std::string(std::getenv("CMAKEBUILDDIR")) + "/sam/SAM.app/Contents/runtime/python/";
+    if (!std::getenv("CMAKEBLDDIR")) return false;
+    auto python_dir = std::string(std::getenv("CMAKEBULDDIR")) + "/sam/SAM.app/Contents/runtime/python/";
+    if (!util::file_exists(python_dir.c_str())){
+        std::cerr << "Python not configured.";
+        return false;
+    }
 #endif
 
     set_python_path(python_dir.c_str());
+    return true;
 }
 
 TEST(windpower_landbosse, SetupPython) {
 	// load python configuration
-	setup_python();
+	if (!setup_python())
+	    return;
+
 	Json::Value python_config_root;
 	std::string configPath = std::string(get_python_path()) + "python_config.json";
 
@@ -510,7 +519,26 @@ TEST(windpower_landbosse, SetupPython) {
 
 }
 
+bool check_Python_setup() {
+    if (!setup_python())  {
+        std::cerr << "Python not configured.";
+        return false;
+    }
+    std::string configPath = std::string(get_python_path()) + "python_config.json";
+    std::ifstream python_config_doc(configPath);
+    Json::Value python_config_root;
+    python_config_doc >> python_config_root;
+    if (python_config_root["exec_path"].asString().empty()) {
+        std::cerr << "Python not configured.";
+        return false;
+    }
+    return true;
+}
+
 TEST(windpower_landbosse, RunSuccess) {
+    if (!check_Python_setup())
+        return;
+
     char file[256];
     sprintf(file, "%s/test/input_docs/AR Northwestern-Flat Lands.srw", SSCDIR);
 
@@ -531,15 +559,6 @@ TEST(windpower_landbosse, RunSuccess) {
     vd->assign("rated_thrust_N", 589000);
     vd->assign("labor_cost_multiplier", 1);
     vd->assign("gust_velocity_m_per_s", 59.50);
-
-
-    setup_python();
-    std::string configPath = std::string(get_python_path()) + "python_config.json";
-    std::ifstream python_config_doc(configPath);
-    if (python_config_doc.fail()) {
-        printf("Could not open %s", configPath.c_str());
-        return;
-    }
 
     auto landbosse = ssc_module_create("wind_landbosse");
 
@@ -575,6 +594,9 @@ TEST(windpower_landbosse, RunSuccess) {
 }
 
 TEST(windpower_landbosse, SubhourlyFail) {
+    if (!check_Python_setup())
+        return;
+
     char file[256];
     sprintf(file, "%s/test/input_docs/AR Northwestern-Flat Lands-15min.srw", SSCDIR);
 
@@ -596,14 +618,6 @@ TEST(windpower_landbosse, SubhourlyFail) {
     vd->assign("labor_cost_multiplier", 1);
     vd->assign("gust_velocity_m_per_s", 59.50);
 
-    setup_python();
-    std::string configPath = std::string(get_python_path()) + "python_config.json";
-    std::ifstream python_config_doc(configPath);
-    if (python_config_doc.fail()) {
-        printf("Could not open %s", configPath.c_str());
-        return;
-    }
-
     auto landbosse = ssc_module_create("wind_landbosse");
 
     bool success = ssc_module_exec(landbosse, vd);
@@ -616,6 +630,9 @@ TEST(windpower_landbosse, SubhourlyFail) {
 }
 
 TEST(windpower_landbosse, NegativeInputFail) {
+    if (!check_Python_setup())
+        return;
+
     char file[256];
     sprintf(file, "%s/test/input_docs/AR Northwestern-Flat Lands.srw", SSCDIR);
 
@@ -636,14 +653,6 @@ TEST(windpower_landbosse, NegativeInputFail) {
     vd->assign("rated_thrust_N", 589000);
     vd->assign("labor_cost_multiplier", 1);
     vd->assign("gust_velocity_m_per_s", 59.50);
-
-    setup_python();
-    std::string configPath = std::string(get_python_path()) + "python_config.json";
-    std::ifstream python_config_doc(configPath);
-    if (python_config_doc.fail()) {
-        printf("Could not open %s", configPath.c_str());
-        return;
-    }
 
     auto landbosse = ssc_module_create("wind_landbosse");
 

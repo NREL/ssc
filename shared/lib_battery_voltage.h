@@ -62,6 +62,8 @@ struct voltage_state {
     double cell_voltage;         // closed circuit voltage per cell [V]
 
     friend std::ostream &operator<<(std::ostream &os, const voltage_state &p);
+
+    bool operator==(const voltage_state &p);
 };
 
 /*
