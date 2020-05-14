@@ -27,6 +27,8 @@ set(SSC_SRC
 		cmod_annualoutput.cpp
 		cmod_battery.cpp
 		cmod_battery.h
+        cmod_battery_stateful.cpp
+        cmod_battery_stateful.h
 		cmod_battwatts.cpp
 		cmod_battwatts.h
 		cmod_belpe.cpp
@@ -153,7 +155,7 @@ set(SSC_SRC
 		tckernel.h
 		vartab.cpp
 		vartab.h
-        cmod_battery_stateful.cpp cmod_battery_stateful.h)
+        )
 
 
 #####################################################################################################################
