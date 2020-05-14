@@ -434,6 +434,12 @@ SSCEXPORT void set_python_path(const char* abs_path);
 
 SSCEXPORT const char *get_python_path();
 
+/**
+ * Functions for calling stateful compute modules
+ */
+
+SSCEXPORT ssc_module_t ssc_stateful_module_create(const char *name, ssc_data_t p_data);
+
 #ifndef __SSCLINKAGECPP__
 
 #ifdef __cplusplus
