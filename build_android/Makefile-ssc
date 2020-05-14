@@ -138,12 +138,13 @@ OBJECTS = \
 		cmod_windfile.o \
 		cmod_windpower.o \
 		cmod_windpower_eqns.o \
+		common.o \
 		common_financial.o \
 		core.o \
 		csp_common.o \
 		sscapi.o \
 		tckernel.o \
-		vartab.o
+		vartab.o 
 
 $(TARGET):$(OBJECTS)
 	$(AR) rs $(TARGET) $(OBJECTS)
