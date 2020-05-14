@@ -21,7 +21,7 @@ TEST_F(ManualTest_lib_battery_dispatch, PowerLimitsDispatchManualAC) {
     batteryPower->powerPV = 1000;
     batteryPower->voltageSystem = 600;
     dispatchManual->dispatch(year, hour_of_year, step_of_hour);
-    EXPECT_NEAR(batteryPower->powerBatteryAC, -powerChargeMax, 2.0);
+    EXPECT_NEAR(batteryPower->powerBatteryDC, -powerChargeMax, 2.0);
     EXPECT_LT(dispatchManual->battery_power_to_fill(),
               powerToFill); // Confirm battery power moves in the expected direction
 
@@ -51,7 +51,7 @@ TEST_F(ManualTest_lib_battery_dispatch, PowerLimitsDispatchManualDC) {
     batteryPower->powerPV = 1000;
     batteryPower->voltageSystem = 600;
     dispatchManual->dispatch(year, hour_of_year, step_of_hour);
-    EXPECT_NEAR(batteryPower->powerBatteryAC, -powerChargeMax, 2.0);
+    EXPECT_NEAR(batteryPower->powerBatteryDC, -powerChargeMax, 2.0);
 
     // Test max discharge power constraint
     batteryPower->powerPV = 0;
@@ -243,7 +243,7 @@ TEST_F(ManualTest_lib_battery_dispatch, DispatchChangeFrequency) {
     batteryPower->powerPV = 1000;
     batteryPower->voltageSystem = 600;
     dispatchManual->dispatch(year, hour_of_year, step_of_hour);
-    EXPECT_NEAR(batteryPower->powerBatteryAC, -powerChargeMax, 2.0);
+    EXPECT_NEAR(batteryPower->powerBatteryDC, -powerChargeMax, 2.0);
 
     // Abruptly cut off the PV and increase the load. Power should go to zero (1 minute)
     step_of_hour += 1;
@@ -306,7 +306,7 @@ TEST_F(ManualTest_lib_battery_dispatch, SOCLimitsOnDispatch) {
 
     // Cut off PV and provide load
     batteryPower->powerPV = 0; batteryPower->voltageSystem = 600; batteryPower->powerLoad = 1000;
-    while (soc > SOC_min + tolerance && hour_of_year < 100) {
+    while (soc > SOC_min && hour_of_year < 100) {
         dispatchManual->dispatch(year, hour_of_year, step_of_hour);
         hour_of_year += 1;
         soc = dispatchManual->battery_soc();
@@ -318,7 +318,7 @@ TEST_F(ManualTest_lib_battery_dispatch, SOCLimitsOnDispatch) {
     batteryPower->powerPV = 0;
     batteryPower->voltageSystem = 600;
     batteryPower->powerLoad = 1000;
-    while (soc > SOC_min + tolerance && hour_of_year < 100) {
+    while (soc > SOC_min && hour_of_year < 100) {
         dispatchManual->dispatch(year, hour_of_year, step_of_hour);
         hour_of_year += 1;
         soc = dispatchManual->battery_soc();
@@ -411,7 +411,7 @@ TEST_F(ManualTest_lib_battery_dispatch, NoGridChargingWhilePVIsOnTest)
     // Test no grid charging while PV is on
     batteryPower->powerPV = 1000; batteryPower->voltageSystem = 600; batteryPower->powerGridToBattery = 1000;
     dispatchManual->dispatch(year, hour_of_year, step_of_hour);
-    EXPECT_NEAR(batteryPower->powerBatteryAC, -powerChargeMax, 1.0);
+    EXPECT_NEAR(batteryPower->powerBatteryDC, -powerChargeMax, 1.0);
     EXPECT_NEAR(batteryPower->powerGridToBattery, 0.0, 2.0);
 }
 
@@ -427,7 +427,7 @@ TEST_F(ManualTest_lib_battery_dispatch, EfficiencyLimitsDispatchManualDC)
     // Test max charge power constraint
     batteryPower->powerPV = 1000; batteryPower->voltageSystem = 600;
     dispatchManual->dispatch(year, hour_of_year, step_of_hour);
-    EXPECT_NEAR(batteryPower->powerBatteryAC, -powerChargeMax, 2.0);
+    EXPECT_NEAR(batteryPower->powerBatteryDC, -powerChargeMax, 2.0);
 
     // Test max discharge power constraint
     batteryPower->powerPV = 0; batteryPower->voltageSystem = 600; batteryPower->powerLoad = 1000;
@@ -463,7 +463,7 @@ TEST_F(ManualTest_lib_battery_dispatch, InverterEfficiencyCutoffDC)
     batteryPower->powerPV = 0; batteryPower->voltageSystem = 600; batteryPower->powerGridToBattery = 1000;
     dispatchManual->dispatch(year, 12, step_of_hour);
     EXPECT_NEAR(batteryPower->sharedInverter->efficiencyAC, 93.7, 0.1);
-    EXPECT_NEAR(batteryPower->powerBatteryDC, -47.9, 0.1);
+    EXPECT_NEAR(batteryPower->powerBatteryDC, -47.8, 0.1);
 
     // Test discharge constraints. First constraint does not hit backoff
     batteryPower->powerPV = 0; batteryPower->voltageSystem = 600; batteryPower->powerGridToBattery = 0; batteryPower->powerLoad = 7;

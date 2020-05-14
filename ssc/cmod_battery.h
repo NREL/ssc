@@ -26,12 +26,19 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <map>
 
 #include "core.h"
-#include "lib_battery.h"
 
 // forward declarations to speed up build
 class SharedInverter;
+class voltage_t;
+class lifetime_t;
+class lifetime_cycle_t;
+class lifetime_calendar_t;
+class thermal_t;
+class capacity_t;
+class battery_t;
 class battery_metrics_t;
 class dispatch_t;
+class losses_t;
 class ChargeController;
 class UtilityRate;
 
@@ -141,7 +148,9 @@ struct batt_variables
 	double batt_replacement_capacity;
 	util::matrix_t<double> cap_vs_temp;
 	double batt_mass;
-	double batt_surface_area;
+	double batt_length;
+	double batt_width;
+	double batt_height;
 	double batt_Cp;
 	double batt_h_to_ambient;
 	std::vector<double> T_room;
@@ -202,10 +211,18 @@ struct batt_variables
 	double batt_cycle_cost;
 };
 
+struct batt_time_settings
+{
+    int current_year;
+    int current_hr;
+    int current_step;
+
+};
+
 struct battstor
 {
 	/// Pass in the single-year number of records
-	battstor(var_table &vt, bool setup_model, size_t nrec, double dt_hr, const std::shared_ptr<batt_variables>& batt_vars_in=0);
+	battstor(var_table &vt, bool setup_model, size_t nrec, double dt_hr, const std::shared_ptr<batt_variables> batt_vars_in=0);
 
     battstor(const battstor& orig);
 
@@ -250,6 +267,7 @@ struct battstor
 	bool input_custom_dispatch = false;
 
 	// for user schedule
+	void force_replacement(double replacement_percent);
 	void check_replacement_schedule();
 	void calculate_monthly_and_annual_outputs( compute_module &cm );
 
@@ -267,27 +285,34 @@ struct battstor
 	size_t year_index; // index for one year (0- steps_per_hour * 8760)
 
 	// member data
+	voltage_t *voltage_model;
+	lifetime_t * lifetime_model;
+	lifetime_cycle_t *lifetime_cycle_model;
+	lifetime_calendar_t *lifetime_calendar_model;
+	thermal_t *thermal_model;
+	capacity_t *capacity_model;
 	battery_t *battery_model;
 	battery_metrics_t *battery_metrics;
 	dispatch_t *dispatch_model;
+	losses_t *losses_model;
 	ChargeController *charge_control;
 	UtilityRate * utilityRate;
-
+	
 	bool en;
 	int chem;
 
 	std::shared_ptr<batt_variables> batt_vars;
 	bool make_vars;
-
+	
 	/*! Map of profile to discharge percent */
-	std::map<size_t, double> dm_percent_discharge;
+	std::map<size_t, double> dm_percent_discharge; 
 
 	/*! Map of profile to gridcharge percent*/
-	std::map<size_t, double> dm_percent_gridcharge;
+	std::map<size_t, double> dm_percent_gridcharge; 
 
 	std::vector<double> target_power;
 	std::vector<double> target_power_monthly;
-
+	
 	double e_charge;
 	double e_discharge;
 
@@ -358,5 +383,7 @@ struct battstor
 	double outAverageRoundtripEfficiency;
 	double outPVChargePercent;
 };
+
+void process_messages(std::shared_ptr<battstor> batt, compute_module* cm);
 
 #endif

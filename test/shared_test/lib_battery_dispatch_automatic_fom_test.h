@@ -15,6 +15,8 @@ class AutoFOM_lib_battery_dispatch : public BatteryProperties , public DispatchP
 {
 protected:
     thermal_t * thermalModel;
+    lifetime_calendar_t * calendarModel;
+    lifetime_cycle_t * cycleModel;
     lifetime_t * lifetimeModel;
     BatteryPower * batteryPower;
 
@@ -25,8 +27,10 @@ protected:
 
     dispatch_automatic_front_of_meter_t * dispatchAuto{nullptr };
 
-    double max_power = 25000;
-    double surface_area = 686;
+    double P_pv;
+    double V_pv;
+    double P_load;
+    double P_clipped;
 
     /*! Variables to store forecast data */
     std::vector<double> pv_prediction;
@@ -40,12 +44,17 @@ public:
         // For testing Automated Front-of-meter DC-coupled
         BatteryProperties::SetUp();
 
-        capacityModel = new capacity_lithium_ion_t(2.25 * 133227, 50, 100, 10, dtHour);
+        capacityModel = new capacity_lithium_ion_t(2.25 * 133227, 50, 100, 10);
         voltageModel = new voltage_dynamic_t(139, 133227, 3.6, 4.10, 4.05, 3.4, 2.25, 0.04, 2.00, 0.2, 0.2, dtHour);
-        lifetimeModel = new lifetime_t(cycleLifeMatrix, dtHour, calendar_q0, calendar_a, calendar_b, calendar_c);
-        thermalModel = new thermal_t(1.0, mass, surface_area, resistance, Cp, h, capacityVsTemperature, T_room);
-        lossModel = new losses_t();
-        batteryModel = new battery_t(dtHour, chemistry, capacityModel, voltageModel, lifetimeModel, thermalModel, lossModel);
+        cycleModel = new lifetime_cycle_t(cycleLifeMatrix);
+        calendarModel = new lifetime_calendar_t(calendarChoice, calendarLifeMatrix, dtHour);
+        lifetimeModel = new lifetime_t(cycleModel, calendarModel, replacementOption, replacementCapacity);
+        thermalModel = new thermal_t(1.0, mass, length, width, height, Cp, h, T_room, capacityVsTemperature);
+        lossModel = new losses_t(dtHour, lifetimeModel, thermalModel, capacityModel, lossChoice);
+        batteryModel = new battery_t(dtHour, chemistry);
+        batteryModel->initialize(capacityModel, voltageModel, lifetimeModel, thermalModel, lossModel);
+
+        P_pv = P_load = V_pv = P_clipped = 0;
 
         int numberOfInverters = 40;
         m_sharedInverter = new SharedInverter(SharedInverter::SANDIA_INVERTER, numberOfInverters, sandia, partload, ond);
@@ -53,6 +62,13 @@ public:
     void TearDown()
     {
         BatteryProperties::TearDown();
+        delete capacityModel;
+        delete voltageModel;
+        delete cycleModel;
+        delete calendarModel;
+        delete lifetimeModel;
+        delete thermalModel;
+        delete lossModel;
         delete batteryModel;
         delete dispatchAuto;
     }

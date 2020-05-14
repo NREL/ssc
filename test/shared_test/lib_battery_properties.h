@@ -19,6 +19,8 @@ public:
 	double SOC_init;
 
 	// voltage
+	int n_series;
+	int n_strings;
 	double Vnom_default;
 	double Vfull;
 	double Vexp;
@@ -33,15 +35,14 @@ public:
 	util::matrix_t<double> cycleLifeMatrix;
 	util::matrix_t<double> calendarLifeMatrix;
 	int calendarChoice;
-	int replacementOption = 0;
-	double replacementCapacity = 0;
-	double calendar_q0 = 1.02;
-	double calendar_a = 2.66e-3;
-	double calendar_b = -7280;
-	double calendar_c = 930;
+	int replacementOption;
+	double replacementCapacity;
 
 	// thermal
 	double mass;
+	double length;
+	double width;
+	double height;
 	double Cp;
 	double h;
 	std::vector<double> T_room;
@@ -58,13 +59,15 @@ public:
 
 	void SetUp() override
 	{
-		// cell capacity
-		q = 2.25;
+		// capacity
+		q = 1000;
 		SOC_init = 50;
 		SOC_min = 15;
 		SOC_max = 95;
 
 		// voltage
+		n_series = 139;
+		n_strings = 89;
 		Vnom_default = 3.6;
 		Vfull = 4.1;
 		Vexp = 4.05;
@@ -73,24 +76,27 @@ public:
 		Qexp = 0.04;
 		Qnom = 2.0;
 		C_rate = 0.2;
-		resistance = 0.0002;
+		resistance = 0.2;
 
 		// lifetime
 		double vals[] = { 20, 0, 100, 20, 5000, 80, 20, 10000, 60, 80, 0, 100, 80, 1000, 80, 80, 2000, 60 };
 		cycleLifeMatrix.assign(vals, 6, 3);
 		double vals2[] = { 0, 100, 3650, 80, 7300, 50 };
 		calendarLifeMatrix.assign(vals2, 3, 2);
-
-		calendarChoice = lifetime_params::CALENDAR_CHOICE::MODEL;
+		calendarChoice = 1;
+		replacementOption = 0;
 
 		// thermal
 		mass = 507;
+		length = 0.58;
+		width = 0.58;
+		height = 0.58;
 		Cp = 1004;
-		h = 20;
+		h = 500;
 		for (size_t i = 0; i < 8760; i++) {
-			T_room.push_back(20);
+			T_room.push_back(20 + 273.15);
 		}
-		double vals3[] = { 0, 60, 1, 100, 25, 100, 40, 100 };
+		double vals3[] = { 0, 60, 01, 100, 25, 100, 40, 100 };
 		capacityVsTemperature.assign(vals3, 4, 2);
 
 		// losses
@@ -103,11 +109,15 @@ public:
 		for (size_t i = 0; i < 8760 * 60; i++) {
 			fullLossesMinute.push_back(0);
 		}
-		lossChoice = losses_params::MONTHLY;
+		lossChoice = 0;
 
 		// battery
 		chemistry = 1;
 	}
+
+	// nothing to do
+	void TearDown(){}
+
 };
 
 #endif

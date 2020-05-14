@@ -27,6 +27,10 @@ struct DispatchProperties {
     // Generic dispatch
     int dispatchChoice;
     int currentChoice;
+    double currentChargeMax;
+    double currentDischargeMax;
+    double powerChargeMax;
+    double powerDischargeMax;
     double minimumModeTime;
     int meterPosition;
     size_t *schedWeekday;
@@ -57,6 +61,10 @@ struct DispatchProperties {
         // dispatch
         dispatchChoice = 4; // custom dispatch
         currentChoice = dispatch_t::CURRENT_CHOICE::RESTRICT_POWER;
+        currentChargeMax = 100;
+        currentDischargeMax = 100;
+        powerChargeMax = 50;
+        powerDischargeMax = 50;
         minimumModeTime = 0.1;
         meterPosition = dispatch_t::METERING::BEHIND;
 

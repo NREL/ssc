@@ -2190,6 +2190,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 			}
 		}
 	}
+	process_messages(batt, this);
 
 	// Initialize AC connected battery predictive control
 	if (en_batt && batt_topology == ChargeController::AC_CONNECTED)
@@ -2260,6 +2261,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 			}
 		}
 	}
+	process_messages(batt, this);
 	// Check the snow models and if neccessary report a warning
 	//  *This only needs to be done for subarray1 since all of the activated subarrays should
 	//   have the same number of bad values

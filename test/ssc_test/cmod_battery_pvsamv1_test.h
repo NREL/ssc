@@ -9,17 +9,9 @@
 #include "../input_cases/pvsamv1_common_data.h"
 
 struct daily_battery_stats {
-	daily_battery_stats(std::vector<ssc_number_t> batt_power_data, size_t steps_per_hr=1) {
-	    steps_per_hour = steps_per_hr;
-	    peakKwDischarge = 0;
-	    peakCycles = 0;
-	    peakKwCharge = 0;
-	    avgCycles = 0;
-	    compute(std::move(batt_power_data));
-	}
+	daily_battery_stats(std::vector<ssc_number_t> batt_power_data) { compute(batt_power_data); }
 	void compute(std::vector<ssc_number_t> batt_power_data);
 
-	size_t steps_per_hour;
 	ssc_number_t peakKwCharge;
 	ssc_number_t peakKwDischarge;
 	ssc_number_t peakCycles;
@@ -36,7 +28,7 @@ public:
 	ssc_data_t data;
 	ssc_number_t calculated_value;
 	ssc_number_t* calculated_array;
-	double m_error_tolerance_hi = 100;
+	double m_error_tolerance_hi = 3.0;
 	double m_error_tolerance_lo = 0.1;
 
 	void SetUp()

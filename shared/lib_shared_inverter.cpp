@@ -32,6 +32,7 @@ SharedInverter::SharedInverter(int inverterType, size_t numberOfInverters,
     powerLossTotal_kW = 0.;
     dcWiringLoss_ond_kW = 0.;
     acWiringLoss_ond_kW = 0.;
+
 }
 
 SharedInverter::SharedInverter(const SharedInverter& orig){
