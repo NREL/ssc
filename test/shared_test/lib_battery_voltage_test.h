@@ -42,10 +42,38 @@ protected:
     double C_rate = 0.2;
 
     void CreateModel(double dt_hr){
-        cap = std::unique_ptr<capacity_lithium_ion_t>(new capacity_lithium_ion_t(10, 50, 95, 5));
+        cap = std::unique_ptr<capacity_lithium_ion_t>(new capacity_lithium_ion_t(10, 50, 95, 5, dt_hr));
 
         model = std::unique_ptr<voltage_t>(new voltage_dynamic_t(n_cells_series, n_strings,
                 voltage_nom, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom, C_rate, R, dt_hr));
+    }
+};
+
+class voltage_table_lib_battery_voltage_test : public lib_battery_voltage_test
+{
+protected:
+    double Vfull = 4.1;
+    double Vexp = 4.05;
+    double Vnom = 3.4;
+    std::vector<double> vals;
+    util::matrix_t<double> table;
+
+    void CreateModel(double dt_hr){
+        vals = std::vector<double>({0, Vfull, 1.78, Vexp,
+                                    88.9, Vnom, 99, 0});
+        table = util::matrix_t<double>(4, 2, &vals);
+
+        cap = std::unique_ptr<capacity_lithium_ion_t>(new capacity_lithium_ion_t(10, 50, 95, 5, dt_hr));
+        model = std::unique_ptr<voltage_t>(new voltage_table_t(n_cells_series, n_strings, voltage_nom, table, R, dt_hr));
+    }
+};
+
+class voltage_vanadium_lib_battery_voltage_test : public lib_battery_voltage_test
+{
+protected:
+    void CreateModel(double dt_hr){
+        cap = std::unique_ptr<capacity_lithium_ion_t>(new capacity_lithium_ion_t(10, 50, 95, 5, dt_hr));
+        model = std::unique_ptr<voltage_t>(new voltage_vanadium_redox_t(n_cells_series, n_strings, voltage_nom, R, dt_hr));
     }
 };
 

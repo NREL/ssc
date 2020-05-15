@@ -168,7 +168,9 @@ extern module_entry_info
 	cm_entry_mhk_wave,
 	cm_entry_mhk_costs,
 	cm_entry_wave_file_reader,
-	cm_entry_grid;
+	cm_entry_grid,
+	cm_entry_battery_stateful
+	;
 
 /* official module table */
 static module_entry_info *module_table[] = {
@@ -263,6 +265,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_mhk_costs,
 	&cm_entry_wave_file_reader,
 	&cm_entry_grid,
+	&cm_entry_battery_stateful,
 	0 };
 
 SSCEXPORT ssc_module_t ssc_module_create( const char *name )
@@ -766,7 +769,7 @@ void json_to_ssc_var(const Json::Value& json_val, ssc_var_t ssc_val){
                         vec.push_back(value.asDouble());
                     }
                 }
-                vd->num.assign(&vec[0], vec.size());
+                vd->num.assign(&vec[0], json_val.size(), json_val[0].size());
                 return;
             }
             // SSC_DATARR
@@ -1163,7 +1166,7 @@ SSCEXPORT void __ssc_segfault()
 
 static std::string* s_python_path;
 
-SSCEXPORT void set_python_path(const char* abs_path){
+SSCEXPORT void set_python_path(const char* abs_path) {
     if (util::dir_exists(abs_path)){
         delete s_python_path;
         s_python_path = new std::string(abs_path);
@@ -1172,9 +1175,27 @@ SSCEXPORT void set_python_path(const char* abs_path){
         throw(std::runtime_error("set_python_path error. Python directory doesn't not exist: " + std::string(abs_path)));
 }
 
-SSCEXPORT const char *get_python_path(){
+SSCEXPORT const char *get_python_path() {
     if (s_python_path)
         return s_python_path->c_str();
     else
         throw(std::runtime_error("get_python_path error. Path does not exist. Set with 'set_python_path' first."));
+}
+
+SSCEXPORT ssc_module_t ssc_stateful_module_create( const char *name, ssc_data_t p_data) {
+    auto vt = static_cast<var_table*>(p_data);
+    if (!vt) throw std::runtime_error("p_data invalid.");
+
+    std::string lname = util::lower_case( name );
+    int i = 0;
+    while ( module_table[i] != nullptr && module_table[i]->f_create != nullptr ) {
+        if ( lname == util::lower_case( module_table[i]->name ) ) {
+            if (module_table[i]->f_create_stateful)
+                return (*(module_table[i]->f_create_stateful))(vt);
+            else
+                throw std::runtime_error("stateful module by that name does not exist.");
+        }
+        i++;
+    }
+    throw std::runtime_error("stateful module by that name does not exist.");
 }
