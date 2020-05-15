@@ -698,3 +698,27 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, reopt_sizing) {
     for (const auto& s : sections)
         ASSERT_TRUE(site->table.is_assigned(s));
 }
+
+
+/// Integration test for lifetime vs year 1 outputs in SAM
+TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, lifetime_outputs)
+{
+	ssc_data_clear(data);
+	pvsamv1_with_residential_default(data);
+	ssc_data_set_number(data, "system_use_lifetime_output", 1);
+	ssc_data_set_number(data, "save_full_lifetime_variables", 1);
+	std::map<std::string, std::string> pairs;
+	pairs["solar_resource_file"] = solar_resource_path;
+
+	//run the test
+	int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+
+	EXPECT_FALSE(pvsam_errors);
+	if (!pvsam_errors)
+	{
+		ssc_number_t annual_dc_module_loss_percent;
+		ssc_data_get_number(data, "annual_dc_module_loss_percent", &annual_dc_module_loss_percent);
+		EXPECT_NEAR(annual_dc_module_loss_percent, 6.381, 0.1) << "Module loss should reflect only year 1 DC gross energy";
+	}
+
+}
