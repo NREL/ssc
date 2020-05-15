@@ -108,7 +108,8 @@ public:
 	var_data(float n) : type(SSC_NUMBER) { num = n; }
 	var_data(int n) : type(SSC_NUMBER) { num = n; }
     var_data(std::vector<double> arr) : type(SSC_ARRAY) { num.assign(&arr[0], arr.size()); }
-	var_data(const ssc_number_t *pvalues, int length) : type(SSC_ARRAY) { num.assign(pvalues, (size_t)length); }
+    var_data(std::vector<int> arr);
+    var_data(const ssc_number_t *pvalues, int length) : type(SSC_ARRAY) { num.assign(pvalues, (size_t)length); }
 	var_data(const ssc_number_t *pvalues, size_t length) : type(SSC_ARRAY) { num.assign(pvalues, length); }
 	var_data(const ssc_number_t *pvalues, int nr, int nc) : type(SSC_MATRIX) { num.assign(pvalues, (size_t)nr, (size_t)nc); }
     var_data(const util::matrix_t<ssc_number_t>& matrix): type(SSC_MATRIX) { num = matrix; }
@@ -179,16 +180,21 @@ public:
             : general_error( "cast fail: <" + std::string(target_type) + "> from " + std::string(source.type_name()) + " for: " + name ) { }
 };
 
-void vt_get_int(var_table* vt, std::string name, int* lvalue);
+void vt_get_int(var_table* vt, const std::string& name, int* lvalue);
 
-void vt_get_number(var_table* vt, std::string name, double* lvalue);
+void vt_get_uint(var_table* vt, const std::string& name, size_t* lvalue);
 
-void vt_get_array_vec(var_table* vt, std::string name, std::vector<double>& vec_double);
+void vt_get_bool(var_table* vt, const std::string& name, bool* lvalue);
 
-void vt_get_matrix(var_table* vt, std::string name, util::matrix_t<double>& mat);
+void vt_get_number(var_table* vt, const std::string& name, double* lvalue);
 
-#define VT_GET_MATRIX_VEC(vt, name, vec_vec_double) \
-if (var_data* vd = vt->lookup(name)) vec_vec_double = vd->matrix_vector(); \
-else throw std::runtime_error(std::string(name)+std::string(" must be assigned."));
+void vt_get_array_vec(var_table* vt, const std::string& name, std::vector<double>& vec_double);
+
+void vt_get_array_vec(var_table* vt, const std::string& name, std::vector<int>& vec_int);
+
+void vt_get_matrix(var_table* vt, const std::string& name, util::matrix_t<double>& mat);
+
+void vt_get_matrix_vec(var_table* vt, const std::string& name, std::vector<std::vector<double>>& mat);
+
 
 #endif

@@ -4,8 +4,11 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMGridCharging) {
     double dtHour = 1;
     CreateBattery(dtHour);
 
-    dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice, currentChargeMax,
-        currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax, powerDischargeMax, 0, dispatch_t::BTM_MODES::LOOK_AHEAD, 0, 1, 24, 1, true, true, false, false);
+    dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice,
+                                                                max_current,
+                                                                max_current, max_power, max_power, max_power, max_power,
+                                                                0, dispatch_t::BTM_MODES::LOOK_AHEAD, 0, 1, 24, 1, true,
+                                                                true, false, false);
 
     // Setup pv and load signal for peak shaving algorithm
     for (size_t h = 0; h < 24; h++) {
@@ -17,9 +20,12 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMGridCharging) {
             load_prediction.push_back(0);
         }
     }
-    
+
     // Set detailed PV
-    pv_prediction[0] = 500; pv_prediction[1] = 400; pv_prediction[2] = 300; pv_prediction[3] = 200;
+    pv_prediction[0] = 500;
+    pv_prediction[1] = 400;
+    pv_prediction[2] = 300;
+    pv_prediction[3] = 200;
     dispatchAutoBTM->update_load_data(load_prediction);
     dispatchAutoBTM->update_pv_data(pv_prediction);
 
@@ -47,8 +53,11 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMPVCharging) {
     double dtHour = 1;
     CreateBattery(dtHour);
 
-    dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice, currentChargeMax,
-        currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax, powerDischargeMax, 0, dispatch_t::BTM_MODES::LOOK_AHEAD, 0, 1, 24, 1, true, true, false, false);
+    dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice,
+                                                                max_current,
+                                                                max_current, max_power, max_power, max_power, max_power,
+                                                                0, dispatch_t::BTM_MODES::LOOK_AHEAD, 0, 1, 24, 1, true,
+                                                                true, false, false);
 
     // Setup pv and load signal for peak shaving algorithm
     for (size_t h = 0; h < 24; h++) {
@@ -68,7 +77,8 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMPVCharging) {
     batteryPower->connectionMode = ChargeController::AC_CONNECTED;
 
     // Load never peaks above average load, so battery never discharges
-    std::vector<double> expectedPower = { 0, 0, 0, 0, 0, 0, 0, -50, -50, -50, -50, -50, -18, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+    std::vector<double> expectedPower = {0, 0, 0, 0, 0, 0, 0, -50, -50, -50, -50, -50, -1.63, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                         0, 0, 0, 0, 0};
     for (size_t h = 0; h < 24; h++) {
         if (h > 6 && h < 18) {
             batteryPower->powerPV = 700; // Match the predicted PV
@@ -77,7 +87,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMPVCharging) {
             batteryPower->powerPV = 0;
         }
         batteryPower->powerLoad = 500; // Match the predicted load
-        dispatchAutoBTM->dispatch(0, h, 0);  
+        dispatchAutoBTM->dispatch(0, h, 0);
         EXPECT_NEAR(batteryPower->powerBatteryDC, expectedPower[h], 0.2) << " error in expected at hour " << h;
     }
 }
@@ -86,8 +96,11 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMPVChargeAndDischarge) {
     double dtHour = 1;
     CreateBattery(dtHour);
 
-    dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice, currentChargeMax,
-        currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax, powerDischargeMax, 0, dispatch_t::BTM_MODES::LOOK_AHEAD, 0, 1, 24, 1, true, true, false, false);
+    dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice,
+                                                                max_current,
+                                                                max_current, max_power, max_power, max_power, max_power,
+                                                                0, dispatch_t::BTM_MODES::LOOK_AHEAD, 0, 1, 24, 1, true,
+                                                                true, false, false);
 
     // Setup pv and load signal for peak shaving algorithm
     for (size_t h = 0; h < 24; h++) {
@@ -113,7 +126,8 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMPVChargeAndDischarge) {
     batteryPower->connectionMode = ChargeController::AC_CONNECTED;
 
     // Battery will charge when PV is available, then discharge when load increases at 7 pm
-    std::vector<double> expectedPower = { 0, 0, 0, 0, 0, 0, 0, -50, -50, -50, -50, -50, -18, 0, 0, 0, 0, 0, 0, 50, 50, 50, 50, 50, 50, 50, 50 };
+    std::vector<double> expectedPower = {0, 0, 0, 0, 0, 0, 0, -50, -50, -50, -50, -50, -1.63, 0, 0, 0, 0, 0, 0, 50, 50,
+                                         50, 50, 50, 50, 50, 50};
     for (size_t h = 0; h < 24; h++) {
         batteryPower->powerLoad = 500;
         batteryPower->powerPV = 0;
@@ -124,7 +138,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMPVChargeAndDischarge) {
             batteryPower->powerLoad = 600; // Match the predicted load
         }
         dispatchAutoBTM->dispatch(0, h, 0);
-        EXPECT_NEAR(batteryPower->powerBatteryDC, expectedPower[h], 0.2) << " error in expected at hour " << h;
+        EXPECT_NEAR(batteryPower->powerBatteryDC, expectedPower[h], 0.5) << " error in expected at hour " << h;
     }
 }
 
@@ -132,10 +146,12 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMPVChargeAndDischargeSubh
     double dtHour = 0.25;
     CreateBattery(dtHour);
 
-    dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice, currentChargeMax,
-        currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax, powerDischargeMax, 0, dispatch_t::BTM_MODES::LOOK_AHEAD, 0, 1, 24, 1, true, true, false, false);
-    
-    std::vector<double> expectedPower;
+    dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice,
+                                                                max_current,
+                                                                max_current, max_power, max_power, max_power, max_power,
+                                                                0, dispatch_t::BTM_MODES::LOOK_AHEAD, 0, 1, 24, 1, true,
+                                                                true, false, false);
+
     // Setup pv and load signal for peak shaving algorithm
     for (size_t h = 0; h < 24; h++) {
         for (size_t step = 0; step < 4; step++) {
@@ -152,31 +168,22 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMPVChargeAndDischargeSubh
             else {
                 load_prediction.push_back(500);
             }
-
-            if (h > 6 && h < 12) {
-                expectedPower.push_back(-50);
-            }
-            else if (h == 12) {
-                // Total of 18 kWh (as in hourly test), just dispatched towards the front of the hour
-                if (step == 0) {
-                    expectedPower.push_back(-50);
-                }
-                else if (step == 1) {
-                    expectedPower.push_back(-22.3);
-                }
-                else {
-                    expectedPower.push_back(0);
-                }
-            }
-            else if (h > 18) {
-                expectedPower.push_back(50);
-            }
-            else {
-                expectedPower.push_back(0);
-            }
-            
         }
     }
+
+    std::vector<double> expectedPower = {0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00,
+                                         0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00,
+                                         0.00, 0.00, -50.00, -50.00, -50.00, -50.00, -50.00, -50.00, -50.00, -50.00,
+                                         -50.00, -50.00, -50.00, -50.00, -50.00, -50.00, -50.00, -50.00, -50.00, -50.00,
+                                         -50.00, -50.00, -5.19, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00,
+                                         0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00,
+                                         0.00, 0.00, 0.00, 0.00, 0.00, 50.00, 50.00, 50.00, 50.00, 50.00, 50.00, 50.00,
+                                         50.00, 50.00, 50.00, 50.00, 50.00, 50.00, 50.00, 50.00, 50.00, 50.00, 50.00,
+                                         50.00, 50.00, 50.00, 50.00, 50.00, 50.00, 50.00, 50.00, 50.00, 50.00, 50.00,
+                                         50.00, 50.00, 50.00, 50.00, 50.00, 50.00, 50.00, 50.00, 50.00, 50.00, 50.00,
+                                         50.00, 50.00, 50.00, 50.00, 50.00, 50.00, 50.00, 50.00, 52.26, 54.52, 56.77,
+                                         59.03, 61.27, 63.52, 65.76, 68.01, 70.25, 72.48, 74.72, 76.95, 79.18, 81.41,
+                                         83.64, 85.87, 88.10, 90.32, 92.55, 94.77, 95.00};
 
     dispatchAutoBTM->update_load_data(load_prediction);
     dispatchAutoBTM->update_pv_data(pv_prediction);
@@ -208,8 +215,11 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMDCClipCharge) {
     CreateBattery(dtHour);
 
     // Only charge from clipped power
-    dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice, currentChargeMax,
-        currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax, powerDischargeMax, 0, dispatch_t::BTM_MODES::LOOK_AHEAD, 0, 1, 24, 1, false , true, false, false);
+    dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice,
+                                                                max_current,
+                                                                max_current, max_power, max_power, max_power, max_power,
+                                                                0, dispatch_t::BTM_MODES::LOOK_AHEAD, 0, 1, 24, 1,
+                                                                false, true, false, false);
 
     // Setup pv and load signal for peak shaving algorithm
     for (size_t h = 0; h < 24; h++) {
@@ -236,7 +246,8 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMDCClipCharge) {
     batteryPower->setSharedInverter(m_sharedInverter);
 
     // Battery will charge when PV is available, then discharge when load increases at 7 pm
-    std::vector<double> expectedPower = { 0, 0, 0, 0, 0, 0, 0, -41.1, -42.7, -44.3, -46.1, -48.0, -45.6, 0, 0, 0, 0, 0, 0, 50, 50, 50, 50, 50, 50, 50, 50 };
+    std::vector<double> expectedPower = {0, 0, 0, 0, 0, 0, 0, -47.93, -47.92, -47.92, -47.91, -48.0, -11.99,
+                                         0, 0, 0, 0, 0, 0, 50, 50, 50, 50, 50.25};
     for (size_t h = 0; h < 24; h++) {
         batteryPower->powerLoad = 500;
         batteryPower->powerPV = 0;
