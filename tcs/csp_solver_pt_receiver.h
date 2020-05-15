@@ -78,7 +78,9 @@ public:
 
     double m_eta_pump;					//[-] HTF pump efficiency
     int m_night_recirc;					//[-] 1=receiver is circulating HTF at night, otherwise not
-
+	
+	int m_clearsky_model;
+	std::vector<double> m_clearsky_data;
 
     struct S_inputs
     {
@@ -116,14 +118,18 @@ public:
         double m_time_required_su;		//[s] time it took receiver to startup
         double m_q_dot_piping_loss;		//[MWt] thermal power lost from piping to surroundings
         double m_q_heattrace;			//[MWt-hr] Power required for heat tracing
-        double m_inst_T_salt_hot;
-        double m_max_T_salt_hot;
-        double m_min_T_salt_hot;
-        double m_max_rec_tout;
-        double m_Twall_inlet;
-        double m_Twall_outlet;
-        double m_Triser;
-        double m_Tdownc;
+        double m_inst_T_salt_hot;		//[C] Instantaneous HTF outlet T at the end of the time step
+        double m_max_T_salt_hot;		//[C] Maximum HTF outlet T during the time step
+        double m_min_T_salt_hot;		//[C] Minimum HTF outlet T during the time step
+        double m_max_rec_tout;			//[C] Maximum HTF T (at the receiver outlet before downcomer piping loss) during the time step
+        double m_Twall_inlet;			//[C] Average receiver wall temperature at inlet
+        double m_Twall_outlet;			//[C] Average receiver wall temperature at receiver outlet
+        double m_Triser;				//[C] Average riser wall temperature at inlet
+        double m_Tdownc;				//[C] Average downcomer wall temperature at outlet
+
+		double m_clearsky;				//[W/m2] Clear-sky DNI used in receiver flow control 
+		double m_Q_thermal_csky_ss;		//[MWt]  Steady-state thermal power delivered to TES/PC if DNI is equal to clear-sky DNI 
+		double m_Q_thermal_ss;			//[MWt] Steady-state thermal power delivered to TES/PC 
 
         S_outputs()
         {
@@ -136,6 +142,9 @@ public:
                 m_T_salt_hot = m_field_eff_adj = m_component_defocus = m_q_dot_rec_inc = m_q_startup =
                 m_dP_receiver = m_dP_total = m_vel_htf = m_T_salt_cold = m_m_dot_ss = m_q_dot_ss = m_f_timestep =
                 m_time_required_su = m_q_dot_piping_loss = m_q_heattrace = std::numeric_limits<double>::quiet_NaN();
+
+			m_inst_T_salt_hot = m_max_T_salt_hot = m_min_T_salt_hot = m_max_rec_tout = m_Twall_inlet = m_Twall_outlet = 
+				m_Triser = m_Tdownc = m_clearsky = m_Q_thermal_csky_ss = m_Q_thermal_ss = std::numeric_limits<double>::quiet_NaN();
         }
     };
 
@@ -177,6 +186,8 @@ protected:
     int m_mode_prev;                    //[-] operating mode of receiver at end of last converged timestep
 
     std::string error_msg;              // member string for exception messages
+	
+	virtual double get_clearsky(const C_csp_weatherreader::S_outputs &weather, double hour);
 
 };
 
