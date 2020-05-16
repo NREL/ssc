@@ -167,7 +167,8 @@ static var_info _cm_vtab_pvwattsv7[] = {
 		{ SSC_OUTPUT,       SSC_ARRAY,       "dcsnowderate",                   "Array DC power loss due to snow",            "%",         "",                                             "Time Series",      "*",                       "",                          "" },
 
 		{ SSC_OUTPUT,       SSC_ARRAY,       "dc",                             "DC array power",                              "W",         "",                                             "Time Series",      "*",                       "",                          "" },
-		{ SSC_OUTPUT,       SSC_ARRAY,       "ac",                             "AC inverter power",                           "W",         "",                                             "Time Series",      "*",                       "",                          "" },
+        { SSC_OUTPUT,       SSC_ARRAY,       "ac",                             "AC inverter power",                           "W",         "",                                             "Time Series",      "*",                       "",                          "" },
+        { SSC_OUTPUT,       SSC_ARRAY,       "gen",                            "AC system power (lifetime)",                  "kWh",       "",                                             "Time Series",      "*",                       "",                          "" },
 
 		{ SSC_OUTPUT,       SSC_ARRAY,       "poa_monthly",                    "Plane of array irradiance",                   "kWh/m2",    "",                                             "Monthly",          "*",                       "LENGTH=12",                          "" },
 		{ SSC_OUTPUT,       SSC_ARRAY,       "solrad_monthly",                 "Daily average solar irradiance",              "kWh/m2/day","",                                             "Monthly",          "*",                       "LENGTH=12",                          "" },
