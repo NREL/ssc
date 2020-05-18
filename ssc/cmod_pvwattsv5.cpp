@@ -85,7 +85,7 @@ static var_info _cm_vtab_pvwattsv5_part2[] = {
 
         { SSC_OUTPUT,       SSC_ARRAY,       "dc",                             "DC array power",                              "W",     "",                         "Time Series",      "*",                       "",                          "" },
         { SSC_OUTPUT,       SSC_ARRAY,       "ac",                             "AC inverter power",                           "W",     "",                         "Time Series",      "*",                       "",                          "" },
-
+        { SSC_OUTPUT,       SSC_ARRAY,       "gen",                            "AC system power (lifetime)",                  "kWh",       "",                                             "Time Series",      "*",                       "",                          "" },
 
         { SSC_OUTPUT,       SSC_ARRAY,       "poa_monthly",                    "Plane of array irradiance",                   "kWh/m2",    "",                     "Monthly",          "*",                       "LENGTH=12",                          "" },
         { SSC_OUTPUT,       SSC_ARRAY,       "solrad_monthly",                 "Daily average solar irradiance",              "kWh/m2/day","",                     "Monthly",          "*",                       "LENGTH=12",                          "" },
@@ -357,15 +357,12 @@ public:
 		add_var_info(_cm_vtab_pvwattsv5_common);
 		add_var_info(_cm_vtab_pvwattsv5_part2);
 		add_var_info(vtab_adjustment_factors);
+        add_var_info(vtab_technology_outputs);
 	}
 
 
 	void exec() throw(general_error)
 	{
-
-		// don't add "gen" output if battery enabled, gets added later
-		if (!as_boolean("batt_simple_enable"))
-			add_var_info(vtab_technology_outputs);
 
 		std::unique_ptr<weather_data_provider> wdprov;
 

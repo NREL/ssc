@@ -167,7 +167,7 @@ static var_info _cm_vtab_pvwattsv7[] = {
 		{ SSC_OUTPUT,       SSC_ARRAY,       "dcsnowderate",                   "Array DC power loss due to snow",            "%",         "",                                             "Time Series",      "*",                       "",                          "" },
 
 		{ SSC_OUTPUT,       SSC_ARRAY,       "dc",                             "DC array power",                              "W",         "",                                             "Time Series",      "*",                       "",                          "" },
-		{ SSC_OUTPUT,       SSC_ARRAY,       "ac",                             "AC inverter power",                           "W",         "",                                             "Time Series",      "*",                       "",                          "" },
+        { SSC_OUTPUT,       SSC_ARRAY,       "ac",                             "AC inverter power",                           "W",         "",                                             "Time Series",      "*",                       "",                          "" },
 
 		{ SSC_OUTPUT,       SSC_ARRAY,       "poa_monthly",                    "Plane of array irradiance",                   "kWh/m2",    "",                                             "Monthly",          "*",                       "LENGTH=12",                          "" },
 		{ SSC_OUTPUT,       SSC_ARRAY,       "solrad_monthly",                 "Daily average solar irradiance",              "kWh/m2/day","",                                             "Monthly",          "*",                       "LENGTH=12",                          "" },
@@ -274,8 +274,10 @@ protected:
 public:
 	cm_pvwattsv7()
 	{
+        add_var_info(vtab_technology_outputs);
 		add_var_info(_cm_vtab_pvwattsv7);
 		add_var_info(vtab_adjustment_factors);
+        add_var_info(vtab_technology_outputs);
 
 
 		ld.add("poa_nominal", true);
@@ -341,10 +343,6 @@ public:
 
 	void exec() throw(general_error)
 	{
-		// don't add "gen" output if battery enabled, gets added later
-		if (!as_boolean("batt_simple_enable"))
-			add_var_info(vtab_technology_outputs);
-
 		std::unique_ptr<weather_data_provider> wdprov;
 
 		if (is_assigned("solar_resource_file"))

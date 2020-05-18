@@ -217,9 +217,4 @@ TEST_F(libTimeTest_lib_time, TestDiurnalToFlat)
 
 
     EXPECT_EQ(flat.size(), util::hours_per_year);
-    for (size_t h = 0; h < flat.size(); h++) {
-        printf("%f, ", flat[h]);
-    }
-    printf("\n");
-
 }
