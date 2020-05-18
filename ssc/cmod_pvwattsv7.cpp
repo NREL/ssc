@@ -277,6 +277,7 @@ public:
         add_var_info(vtab_technology_outputs);
 		add_var_info(_cm_vtab_pvwattsv7);
 		add_var_info(vtab_adjustment_factors);
+        add_var_info(vtab_technology_outputs);
 
 
 		ld.add("poa_nominal", true);

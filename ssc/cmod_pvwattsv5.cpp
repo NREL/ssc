@@ -357,15 +357,12 @@ public:
 		add_var_info(_cm_vtab_pvwattsv5_common);
 		add_var_info(_cm_vtab_pvwattsv5_part2);
 		add_var_info(vtab_adjustment_factors);
+        add_var_info(vtab_technology_outputs);
 	}
 
 
 	void exec() throw(general_error)
 	{
-
-		// don't add "gen" output if battery enabled, gets added later
-		if (!as_boolean("batt_simple_enable"))
-			add_var_info(vtab_technology_outputs);
 
 		std::unique_ptr<weather_data_provider> wdprov;
 
