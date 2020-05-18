@@ -1,6 +1,7 @@
 #include <exception>
 #include <algorithm>
 #include <math.h>
+#include <stdexcept>
 
 #include "vartab.h"
 #include "../shared/lib_util.h"

@@ -27,6 +27,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <limits>
 #include <numeric>
 #include <algorithm>
+#include <stdexcept>
 
 #ifdef _WIN32
 #include <direct.h>

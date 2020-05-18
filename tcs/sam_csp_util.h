@@ -26,6 +26,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cmath>
 #include <algorithm>
 #include <limits>
+#include <stdexcept>
 #include "../shared/lib_util.h"
 #include "htf_props.h"
 

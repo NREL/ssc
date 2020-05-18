@@ -3,7 +3,7 @@
 
 #include "SolarField.h"
 #include "MultiRecOptimize.h"
-#include <lp_lib.h>
+#include <../lpsolve/lp_lib.h>
 
 //void __WINAPI mrec_opt_logfunction(lprec *, void *handler, char *buf)
 //{
