@@ -276,6 +276,7 @@ public:
 	{
 		add_var_info(_cm_vtab_pvwattsv7);
 		add_var_info(vtab_adjustment_factors);
+        add_var_info(vtab_technology_outputs);
 
 
 		ld.add("poa_nominal", true);
@@ -341,10 +342,6 @@ public:
 
 	void exec() throw(general_error)
 	{
-		// don't add "gen" output if battery enabled, gets added later
-		if (!as_boolean("batt_simple_enable"))
-			add_var_info(vtab_technology_outputs);
-
 		std::unique_ptr<weather_data_provider> wdprov;
 
 		if (is_assigned("solar_resource_file"))
