@@ -35,11 +35,6 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_pv_incidence_modifier.h"
 #include "lib_cec6par.h"
 
-/*
- A simplified pv model with fewer inputs than pvsamv1. 
- Does not do detailed degradation or loss modeling. If those are important, please use pvsamv1
- */
-
 class lossdiagram
 {
 	unordered_map< std::string, double > m_map;
@@ -116,7 +111,7 @@ static var_info _cm_vtab_pvwattsv7[] = {
 		{ SSC_INPUT,        SSC_TABLE,       "solar_resource_data",            "Weather data",                               "",           "dn,df,tdry,wspd,lat,lon,tz",                   "Solar Resource",      "?",                       "",                              "" },
 		{ SSC_INPUT,        SSC_ARRAY,       "albedo",                         "Albedo",                                     "frac",       "if provided, will overwrite weather file albedo","Solar Resource",    "",                        "",                              "" },
 
-		{ SSC_INOUT,        SSC_NUMBER,      "system_use_lifetime_output",     "Run lifetime simulation (apply dc_degradation to scaled year 1 output)",                    "0/1",        "",                                             "Lifetime",            "?=0",                        "",                              "" },
+		{ SSC_INOUT,        SSC_NUMBER,      "system_use_lifetime_output",     "Run lifetime simulation",                    "0/1",        "",                                             "Lifetime",            "?=0",                        "",                              "" },
 		{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                "Analysis period",                            "years",      "",                                             "Lifetime",            "system_use_lifetime_output=1", "",                          "" },
 		{ SSC_INPUT,        SSC_ARRAY,       "dc_degradation",                 "Annual DC degradation for lifetime simulations","%/year",  "",                                             "Lifetime",            "system_use_lifetime_output=1", "",                          "" },
 
@@ -171,8 +166,8 @@ static var_info _cm_vtab_pvwattsv7[] = {
 		{ SSC_OUTPUT,       SSC_ARRAY,       "tcell",                          "Module temperature",                          "C",         "",                                             "Time Series",      "*",                       "",                          "" },
 		{ SSC_OUTPUT,       SSC_ARRAY,       "dcsnowderate",                   "Array DC power loss due to snow",            "%",         "",                                             "Time Series",      "*",                       "",                          "" },
 
-		{ SSC_OUTPUT,       SSC_ARRAY,       "dc",                             "DC array power. Length 8760",                              "W",         "",                                             "Time Series",      "*",                       "",                          "" },
-		{ SSC_OUTPUT,       SSC_ARRAY,       "ac",                             "AC inverter power. Length 8760",                           "W",         "",                                             "Time Series",      "*",                       "",                          "" },
+		{ SSC_OUTPUT,       SSC_ARRAY,       "dc",                             "DC array power",                              "W",         "",                                             "Time Series",      "*",                       "",                          "" },
+		{ SSC_OUTPUT,       SSC_ARRAY,       "ac",                             "AC inverter power",                           "W",         "",                                             "Time Series",      "*",                       "",                          "" },
 
 		{ SSC_OUTPUT,       SSC_ARRAY,       "poa_monthly",                    "Plane of array irradiance",                   "kWh/m2",    "",                                             "Monthly",          "*",                       "LENGTH=12",                          "" },
 		{ SSC_OUTPUT,       SSC_ARRAY,       "solrad_monthly",                 "Daily average solar irradiance",              "kWh/m2/day","",                                             "Monthly",          "*",                       "LENGTH=12",                          "" },
