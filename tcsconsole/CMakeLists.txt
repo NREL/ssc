@@ -165,7 +165,7 @@ if (UNIX)
 elseif (MSVC)
 	find_library( CURL_LIB
 			NAMES libcurl.lib
-			PATHS $ENV{WEXDIR}/build_vs2017/libcurl_ssl_x64/lib)
+			PATHS $ENV{WEXDIR}/build_resources/libcurl_ssl_x64/lib)
 	target_link_libraries(TCSConsole ${CURL_LIB})
 	target_link_libraries(TCSConsole Winhttp)
 endif()
@@ -200,7 +200,7 @@ if(MSVC)
 		TARGET TCSConsole
 		POST_BUILD
 		COMMAND ${CMAKE_COMMAND}
-		ARGS -E copy $ENV{WEXDIR}/build_vs2017/libcurl_ssl_x64/bin/${file_i} ${TCSCONSOLE_DIR}
+		ARGS -E copy $ENV{WEXDIR}/build_resources/libcurl_ssl_x64/bin/${file_i} ${TCSCONSOLE_DIR}
 	)
 	endforeach( file_i )
 endif()

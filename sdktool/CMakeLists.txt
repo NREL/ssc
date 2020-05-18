@@ -20,7 +20,7 @@ endif()
 Project(sdktool)
 
 if ( NOT APPLE)
-	set(CURL_DIR build_vs2017/libcurl_ssl_x64)
+	set(CURL_DIR build_resources/libcurl_ssl_x64)
 endif()
 
 include_directories(. $ENV{WEXDIR}/include $ENV{LKDIR}/include ../ssc ../shared ../splinter)
@@ -164,7 +164,7 @@ if (UNIX)
 elseif (MSVC)
 	find_library( CURL_LIB
 			NAMES libcurl.lib
-			PATHS $ENV{WEXDIR}/build_vs2017/libcurl_ssl_x64/lib)
+			PATHS $ENV{WEXDIR}/build_resources/libcurl_ssl_x64/lib)
 	target_link_libraries(SDKtool ${CURL_LIB})
 	target_link_libraries(SDKtool Winhttp)
 endif()
@@ -195,7 +195,7 @@ if (MSVC)
 		TARGET SDKtool
 		POST_BUILD
 		COMMAND ${CMAKE_COMMAND}
-		ARGS -E copy $ENV{WEXDIR}/build_vs2017/libcurl_ssl_x64/bin/${file_i} ${SDKTOOL_DIR}
+		ARGS -E copy $ENV{WEXDIR}/build_resources/libcurl_ssl_x64/bin/${file_i} ${SDKTOOL_DIR}
 	)
 	endforeach( file_i )
 endif()

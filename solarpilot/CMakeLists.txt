@@ -44,7 +44,8 @@ set(SOLARPILOT_SRC
 	mod_base.cpp
 	optimize.cpp
 	solpos.cpp
-	string_util.cpp)
+	string_util.cpp
+	MultiRecOptimize.cpp)
 
 
 

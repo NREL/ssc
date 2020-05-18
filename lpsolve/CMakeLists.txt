@@ -26,6 +26,8 @@ set(LPSOLVE_SRC
 	commonlib.c
 	fortify.c
 	ini.c
+#	lp_BFP1.c
+#	lp_BFP2.c
 	lp_crash.c
 	lp_Hash.c
 	lp_lib.c
@@ -47,6 +49,13 @@ set(LPSOLVE_SRC
 	lp_utils.c
 	lp_wlp.c
 	lusol.c
+#	lusol1.c
+#	lusol2.c
+#	lusol6a.c
+#	lusol6l0.c
+#	lusol6u.c
+#	lusol7a.c
+#	lusol8a.c
 	mmio.c
 	myblas.c
 	yacc_read.c)
