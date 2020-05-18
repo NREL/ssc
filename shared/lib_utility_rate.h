@@ -40,6 +40,31 @@ protected:
 	bool m_useRealTimePrices;
 };
 
+class UtilityRateWithPeakLoad : protected UtilityRate {
+
+public:
+
+	UtilityRateWithPeakLoad(bool useRealTimePrices,
+		util::matrix_t<size_t> ecWeekday,
+		util::matrix_t<size_t> ecWeekend,
+		util::matrix_t<double> ecRatesMatrix,
+		std::vector<double> ecRealTimeBuy,
+		util::matrix_t<double> dc_schedule_weekday,
+		util::matrix_t<double> dc_schedule_weekend,
+		util::matrix_t<double> dc_time_of_use,
+		util::matrix_t<double> dc_flat);
+
+	UtilityRateWithPeakLoad(const UtilityRateWithPeakLoad& tmp);
+
+	virtual ~UtilityRateWithPeakLoad() {/* nothing to do */ };
+
+protected:
+	util::matrix_t<double> demand_charge_schedule_weekday;
+	util::matrix_t<double> demand_charge_schedule_weekend;
+	util::matrix_t<double> demand_charge_time_of_use;
+	util::matrix_t<double> demand_charge_flat;
+};
+
 class UtilityRateCalculator : protected UtilityRate
 {
 public:
@@ -85,6 +110,37 @@ protected:
 };
 
 
+class UtilityRateForecast : protected UtilityRateWithPeakLoad
+{
+public:
+	UtilityRateForecast(UtilityRateWithPeakLoad* rate, size_t stepsPerHour);
 
+	UtilityRateForecast(UtilityRateForecast& tmp);
+
+	~UtilityRateForecast() {/* Nothing to do */ };
+
+	double forecastCost(std::vector<double> predicted_loads);
+
+	void updateWithLoad(double load);
+
+protected:
+
+	// Net metering carryover should be <= 0, units kWh
+	void restartMonth(double carryOver);
+
+	size_t steps_per_hour;
+
+	size_t last_step;
+
+	double peak_power_to_date; // For flat demand charges
+
+	std::vector<double> peak_power_by_time;
+
+	double total_energy_to_date;
+
+	double current_energy_tier;
+
+	double current_demand_tier; // Rare, but can be input via the GUI
+};
 
 #endif // !_LIB_UTILITY_RATE_H_

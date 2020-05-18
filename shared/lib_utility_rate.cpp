@@ -28,6 +28,39 @@ UtilityRate::UtilityRate(const UtilityRate& tmp){
 }
 
 
+UtilityRateWithPeakLoad::UtilityRateWithPeakLoad(bool useRealTimePrices,
+	util::matrix_t<size_t> ecWeekday,
+	util::matrix_t<size_t> ecWeekend,
+	util::matrix_t<double> ecRatesMatrix,
+	std::vector<double> ecRealTimeBuy,
+	util::matrix_t<double> dc_schedule_weekday,
+	util::matrix_t<double> dc_schedule_weekend,
+	util::matrix_t<double> dc_time_of_use,
+	util::matrix_t<double> dc_flat) :
+	UtilityRate(useRealTimePrices, ecWeekday, ecWeekend, ecRatesMatrix, ecRealTimeBuy)
+{
+	demand_charge_schedule_weekday = dc_schedule_weekday;
+	demand_charge_schedule_weekend = dc_schedule_weekend;
+	demand_charge_time_of_use = dc_time_of_use;
+	demand_charge_flat = dc_flat;
+}
+
+UtilityRateWithPeakLoad::UtilityRateWithPeakLoad(const UtilityRateWithPeakLoad& tmp)
+{
+	m_useRealTimePrices = tmp.m_useRealTimePrices;
+	m_ecWeekday = tmp.m_ecWeekday;
+	m_ecWeekend = tmp.m_ecWeekend;
+	m_ecRatesMatrix = tmp.m_ecRatesMatrix;
+	for (auto& kv : tmp.m_energyTiersPerPeriod) {
+		m_energyTiersPerPeriod[kv.first] = kv.second;
+	}
+	m_ecRealTimeBuy = tmp.m_ecRealTimeBuy;
+	demand_charge_schedule_weekday = tmp.demand_charge_schedule_weekday;
+	demand_charge_schedule_weekend = tmp.demand_charge_schedule_weekend;
+	demand_charge_time_of_use = tmp.demand_charge_time_of_use;
+	demand_charge_flat = tmp.demand_charge_flat;
+}
+
 UtilityRateCalculator::UtilityRateCalculator(UtilityRate * rate, size_t stepsPerHour) :
 	UtilityRate(*rate)
 {
@@ -127,4 +160,48 @@ size_t UtilityRateCalculator::getEnergyPeriod(size_t hourOfYear)
 		}
 	}
 	return period;
+}
+
+UtilityRateForecast::UtilityRateForecast(UtilityRateWithPeakLoad* rate, size_t stepsPerHour) :
+	UtilityRateWithPeakLoad(*rate),
+	peak_power_by_time()
+{
+	steps_per_hour = stepsPerHour;
+	last_step = 0;
+	restartMonth(0); // Just starting out, so no net metering carryover
+}
+
+UtilityRateForecast::UtilityRateForecast(UtilityRateForecast& tmp) :
+	UtilityRateWithPeakLoad(tmp)
+{
+	steps_per_hour = tmp.steps_per_hour;
+	last_step = tmp.last_step;
+	peak_power_to_date = tmp.peak_power_to_date;
+	peak_power_by_time = tmp.peak_power_by_time;
+	total_energy_to_date = tmp.total_energy_to_date;
+	current_energy_tier = tmp.current_energy_tier;
+	current_demand_tier = tmp.current_demand_tier;
+}
+
+double UtilityRateForecast::forecastCost(std::vector<double> predicted_loads)
+{
+	double cost = 0;
+	size_t n = predicted_loads.size();
+	for (int i = 0; i < n; i++) {
+
+	}
+	return cost;
+}
+
+void UtilityRateForecast::restartMonth(double carryOver)
+{
+	peak_power_to_date = 0;
+	peak_power_by_time.clear();
+	// TODO: does this work, or do we need to handle periods * tiers?
+	for (int i = 0; i < demand_charge_time_of_use.nrows(); i++) {
+		peak_power_by_time.push_back(0);
+	}
+	total_energy_to_date = carryOver;
+	current_energy_tier = 0; // TODO: check this
+	current_demand_tier = 0;
 }
