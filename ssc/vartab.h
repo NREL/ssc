@@ -44,7 +44,7 @@ typedef unordered_map< std::string, var_data* > var_hash;
 class var_table
 {
 public:
-	explicit var_table();
+	var_table();
     var_table(const var_table &rhs);
     virtual ~var_table();
 	var_table &operator=( const var_table &rhs );
