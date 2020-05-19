@@ -39,6 +39,8 @@ static var_info _cm_vtab_linear_fresnel_dsg_iph[] = {
     
 	// Weather File
 	{ SSC_INPUT,        SSC_STRING,      "file_name",         "local weather file path",                                                             "",              "",            "Weather",        "*",                       "LOCAL_FILE",            "" },
+    { SSC_INPUT,        SSC_TABLE,       "solar_resource_data", "Weather resource data in memory",                                                   "",              "",            "Weather",        "?",                       "",                      "" },
+
 
 	// System Design
     { SSC_INPUT,        SSC_NUMBER,      "I_bn_des",          "Design point irradiation value",                                                      "W/m2",          "",            "solarfield",     "*",                       "",                      "" },
@@ -179,6 +181,9 @@ static var_info _cm_vtab_linear_fresnel_dsg_iph[] = {
 	{ SSC_OUTPUT,   SSC_NUMBER,  "annual_thermal_consumption",      "Annual thermal freeze protection required",                "kWt-hr",   "",   "Post-process",     "*",       "",   "" },
 	{ SSC_OUTPUT,   SSC_NUMBER,  "annual_electricity_consumption",  "Annual electricity consumptoin w/ avail derate",           "kWe-hr",   "",   "Post-process",     "*",       "",   "" },
 	{ SSC_OUTPUT,   SSC_NUMBER,  "annual_total_water_use",          "Total Annual Water Usage",                                 "m^3",      "",   "Post-process",     "*",       "",   "" },
+	{ SSC_OUTPUT,   SSC_NUMBER,  "capacity_factor",					"Capacity factor",											"%",        "",   "Post-process",     "*",       "",   "" },
+	{ SSC_OUTPUT,   SSC_NUMBER,  "kwh_per_kw",						"First year kWh/kW",										"kWht/kWt", "",   "Post-process",     "*",       "",   "" },
+
 
 	var_info_invalid };
 
@@ -197,7 +202,15 @@ public:
 	{
 		// Weather reader
 		C_csp_weatherreader weather_reader;
-		weather_reader.m_weather_data_provider = std::make_shared<weatherfile>(as_string("file_name"));
+        if (is_assigned("file_name")) {
+            weather_reader.m_weather_data_provider = make_shared<weatherfile>(as_string("file_name"));
+            if (weather_reader.m_weather_data_provider->has_message()) log(weather_reader.m_weather_data_provider->message(), SSC_WARNING);
+        }
+        if (is_assigned("solar_resource_data")) {
+            weather_reader.m_weather_data_provider = make_shared<weatherdata>(lookup("solar_resource_data"));
+            if (weather_reader.m_weather_data_provider->has_message()) log(weather_reader.m_weather_data_provider->message(), SSC_WARNING);
+        }
+
 		weather_reader.m_trackmode = 0;
 		weather_reader.m_tilt = 0.0;
 		weather_reader.m_azimuth = 0.0;
@@ -545,6 +558,11 @@ public:
 		double V_water_mirrors = as_double("csp.lf.sf.water_per_wash") / 1000.0*A_aper_tot*as_double("csp.lf.sf.washes_per_year");
 		assign("annual_total_water_use", (ssc_number_t)V_water_mirrors);		//[m3]
 
+		ssc_number_t ae = as_number("annual_energy");			//[kWt-hr]
+		double nameplate = as_double("q_pb_des") * 1.e3;		//[kWt]
+		double kWh_per_kW = ae / nameplate;
+		assign("capacity_factor", (ssc_number_t)(kWh_per_kW / 8760. * 100.));
+		assign("kwh_per_kw", (ssc_number_t)kWh_per_kW);
 	}
 
 };

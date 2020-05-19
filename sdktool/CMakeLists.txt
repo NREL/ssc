@@ -39,6 +39,8 @@ set(SDKTOOL_SRC
 #
 #####################################################################################################################
 
+cmake_policy(SET CMP0043 NEW)
+
 if(MSVC)
 	add_compile_options(/W3 /MP)
     add_compile_definitions( __64BIT__ LK_USE_WXWIDGETS _CRT_SECURE_NO_DEPRECATE=1 )
@@ -90,12 +92,12 @@ include(${wxWidgets_USE_FILE})
 
 # Setup Application
 if (APPLE)
-	set(MACOSX_BUNDLE_ICON_FILE ${CMAKE_CURRENT_SOURCE_DIR}/../build_osx/SDKTool.icns)
-	set(SDKTOOL_ICON ${CMAKE_CURRENT_SOURCE_DIR}/../build_osx/SDKTool.icns)
+	set(MACOSX_BUNDLE_ICON_FILE ${CMAKE_CURRENT_SOURCE_DIR}/../build_resources/SDKTool.icns)
+	set(SDKTOOL_ICON ${CMAKE_CURRENT_SOURCE_DIR}/../build_resources/SDKTool.icns)
 	set_source_files_properties(${SDKTOOL_ICON} PROPERTIES
 		MACOSX_PACKAGE_LOCATION "Resources")
 elseif(WIN32)
-	set(SDKTOOL_ICON ${CMAKE_CURRENT_SOURCE_DIR}/../build_vs2017/app.rc)
+	set(SDKTOOL_ICON ${CMAKE_CURRENT_SOURCE_DIR}/../build_resources/app.rc)
 endif()
 
 # Setup Target
@@ -112,7 +114,7 @@ set_target_properties(SDKtool
 
 if (APPLE)
 	set_target_properties(SDKtool PROPERTIES
-		MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/../build_osx/Info-SDKTool.plist
+		MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/../build_resources/Info-SDKTool.plist
 	)
 endif()
 

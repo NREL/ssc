@@ -27,8 +27,10 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include <vector>
 #include <cassert>
+#include <stdexcept>
 
 #include <unordered_map>
+
 using std::unordered_map;
 
 #ifdef _MSC_VER
@@ -68,9 +70,12 @@ Define _DEBUG if compile with debugging
 #define RTOD 57.295779513082320876798154814105
 #endif
 
-
+#ifndef MAX
 #define MAX(a,b) ( (a)>(b) ? (a) : (b) )
+#endif
+#ifndef MIN
 #define MIN(a,b) ( (a)<(b) ? (a) : (b) )
+#endif
 
 #define sind(x) sin( DTOR*(x) )
 #define cosd(x) cos( DTOR*(x) )
@@ -436,6 +441,16 @@ namespace util
 		{
 			resize_fill( 1, len, val );
 		}
+
+        void resize_preserve(size_t nr, size_t nc, const T &val){
+            matrix_t<T> old( *this );
+            resize(nr, nc);
+            fill(val);
+            for (size_t r=0; r<nr && r<old.nrows(); r++)
+                for (size_t c=0; c<nc && c<old.ncols(); c++)
+                    at(r,c) = old(r,c);
+        }
+
 		void set_value(const T &val, size_t r, size_t c)
 		{
 			t_array[n_cols*r + c] = val;

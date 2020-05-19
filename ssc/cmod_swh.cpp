@@ -1,22 +1,22 @@
 /**
 BSD-3-Clause
 Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
 that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
 and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
 and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
 or promote products derived from this software without specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
@@ -32,7 +32,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /* -------------------------------------
 
-v10a 
+v10a
 - deleted commented out code
 - moved some comments
 
@@ -62,60 +62,61 @@ Still outputs hourly quantities
 
 static var_info _cm_vtab_swh[] = {
 	/*   VARTYPE           DATATYPE         NAME                      LABEL                              UNITS     META                                  GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-	
-	{ SSC_INPUT,        SSC_STRING,      "solar_resource_file",   "local weather file path",             "",        "",                                  "Weather",          "*",                      "LOCAL_FILE",                         "" },
-																									     		    						             				     
+
+	{ SSC_INPUT,        SSC_STRING,      "solar_resource_file",   "local weather file path",             "",        "",                                  "Solar Resource",   "?",                      "LOCAL_FILE",                         "" },
+    { SSC_INPUT,        SSC_TABLE,       "solar_resource_data",   "Weather data",                        "",        "dn,df,tdry,wspd,lat,lon,tz",        "Solar Resource",   "?",                       "",                              "" },
+
 	{ SSC_INPUT,        SSC_ARRAY,       "scaled_draw",           "Hot water draw",                      "kg/hr",   "",                                  "SWH",              "*",                      "LENGTH=8760",						 "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "system_capacity",       "Nameplate capacity",                  "kW",      "",                                  "SWH",              "*",                      "", "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "load",                  "Electricity load (year 1)",           "kW",      "",                                  "SWH",              "",                       "", "" },
 
-																									     		    						             				     
+
 	{ SSC_INPUT,        SSC_NUMBER,      "tilt",                  "Collector tilt",                      "deg",     "",                                  "SWH",              "*",                      "MIN=0,MAX=90",                       "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "azimuth",               "Collector azimuth",                   "deg",     "90=E,180=S",                        "SWH",              "*",                      "MIN=0,MAX=360",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "albedo",                "Ground reflectance factor",           "0..1",    "",                                  "SWH",              "*",                      "FACTOR",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "irrad_mode",            "Irradiance input mode",               "0/1/2",   "Beam+Diff,Global+Beam,Global+Diff", "SWH",              "?=0",                    "INTEGER,MIN=0,MAX=2",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "sky_model",             "Tilted surface irradiance model",     "0/1/2",   "Isotropic,HDKR,Perez",  "SWH",      "?=1",                                        "INTEGER,MIN=0,MAX=2",                "" },
-																																								             
+
 	{ SSC_INPUT,        SSC_MATRIX,      "shading:timestep",      "Time step beam shading loss",          "%",      "",                                  "SWH",              "?",                       "",                                  "" },
 	{ SSC_INPUT,        SSC_MATRIX,      "shading:mxh",           "Month x Hour beam shading loss",       "%",      "",                                  "SWH",              "?",                       "",                                  "" },
 	{ SSC_INPUT,        SSC_MATRIX,      "shading:azal",          "Azimuth x altitude beam shading loss", "%",      "",                                  "SWH",              "?",                       "",                                  "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "shading:diff",          "Diffuse shading loss",                 "%",      "",                                  "SWH",              "?",                       "",                                  "" },
-																																								             
-																																								             
+
+
 	{ SSC_INPUT,        SSC_NUMBER,      "mdot",                  "Total system mass flow rate",          "kg/s",   "",                                  "SWH",              "*",                       "POSITIVE",                          "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "ncoll",                 "Number of collectors",                 "",       "",                                  "SWH",              "*",                       "POSITIVE,INTEGER",                  "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fluid",			      "Working fluid in system",              "",       "Water,Glycol",                      "SWH",              "*",                       "INTEGER,MIN=0,MAX=1",               "" },
-																									      									             		             
+
 	{ SSC_INPUT,        SSC_NUMBER,      "area_coll",             "Single collector area",                "m2",     "",                                  "SWH",              "*",                       "POSITIVE",                          "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "FRta",                  "FRta",                                 "",       "",                                  "SWH",              "*",                       "",                                  "" }, 
+	{ SSC_INPUT,        SSC_NUMBER,      "FRta",                  "FRta",                                 "",       "",                                  "SWH",              "*",                       "",                                  "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "FRUL",                  "FRUL",                                 "",       "",                                  "SWH",              "*",                       "",                                  "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "iam",                   "Incidence angle modifier",             "",       "",                                  "SWH",              "*",                       "",                                  "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "test_fluid",            "Fluid used in collector test",         "",       "Water,Glycol",                      "SWH",              "*",                       "INTEGER,MIN=0,MAX=1",               "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "test_flow",             "Flow rate used in collector test",     "kg/s",   "",                                  "SWH",              "*",                       "POSITIVE",                          "" },
-																									      									             		             
+
 	{ SSC_INPUT,        SSC_NUMBER,      "pipe_length",           "Length of piping in system",           "m",      "",                                  "SWH",              "*",                       "POSITIVE",                          "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "pipe_diam",             "Pipe diameter",                        "m",      "",                                  "SWH",              "*",                       "POSITIVE",                          "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "pipe_k",                "Pipe insulation conductivity",         "W/m2.C", "",                                  "SWH",              "*",                       "POSITIVE",                          "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "pipe_k",                "Pipe insulation conductivity",         "W/m-C", "",                                  "SWH",              "*",                       "POSITIVE",                          "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "pipe_insul",            "Pipe insulation thickness",            "m",      "",                                  "SWH",              "*",                       "POSITIVE",                          "" },
-																									      														             
+
 	{ SSC_INPUT,        SSC_NUMBER,      "tank_h2d_ratio",        "Solar tank height to diameter ratio",  "",       "",                                  "SWH",              "*",                       "POSITIVE",                          "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "U_tank",                "Solar tank heat loss coefficient",     "W/m2K",  "",                                  "SWH",              "*",                       "POSITIVE",                          "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "V_tank",                "Solar tank volume",                    "m3",     "",                                  "SWH",              "*",                       "POSITIVE",                          "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "hx_eff",                "Heat exchanger effectiveness",         "0..1",   "",                                  "SWH",              "*",                       "POSITIVE",                          "" },
-																																			             		             
+
 	{ SSC_INPUT,        SSC_NUMBER,      "T_room",                "Temperature around solar tank",        "C",      "",                                  "SWH",              "*",                       "POSITIVE",                          "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "T_tank_max",            "Max temperature in solar tank",        "C",      "",                                  "SWH",              "*",                       "POSITIVE",                          "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "T_set",                 "Set temperature",                      "C",      "",                                  "SWH",              "*",                       "POSITIVE",                          "" },
-																																			             		             
+
 	{ SSC_INPUT,        SSC_NUMBER,      "pump_power",            "Pump power",                           "W",      "",                                  "SWH",              "*",                       "POSITIVE",                          "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "pump_eff",              "Pumping efficiency",                   "%",      "",                                  "SWH",              "*",                       "PERCENT",                           "" },
-																																			             		             
+
 	{ SSC_INPUT,        SSC_NUMBER,      "use_custom_mains",      "Use custom mains",                     "%",      "",                                  "SWH",              "*",                       "INTEGER,MIN=0,MAX=1",               "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "custom_mains",          "Custom mains",						  "C",      "",                                  "SWH",              "*",                       "LENGTH=8760",                       "" },
-																									      									             		             
+
 	{ SSC_INPUT,        SSC_NUMBER,      "use_custom_set",		  "Use custom set points",                "%",      "",                                  "SWH",              "*",                       "INTEGER,MIN=0,MAX=1",               "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "custom_set",            "Custom set points",					  "C",      "",                                  "SWH",              "*",                       "LENGTH=8760",                       "" },
-																																			             
+
 
 
 	{ SSC_OUTPUT,       SSC_ARRAY,       "beam",                  "Irradiance - Beam",                    "W/m2",   "",                                  "Time Series",      "*",                        "",                                 "" },
@@ -123,7 +124,7 @@ static var_info _cm_vtab_swh[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "I_incident",            "Irradiance - Incident",                "W/m2",   "",                                  "Time Series",      "*",                        "",                                 "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "I_transmitted",         "Irradiance - Transmitted",             "W/m2",   "",                                  "Time Series",      "*",                        "",                                 "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "shading_loss",          "Shading losses",                       "%",      "",                                  "Time Series",      "*",                        "",                                 "" },
-																										  
+
 
 	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_transmitted",         "Q transmitted",                        "kW",      "",                                  "Time Series",      "*",                        "",                                 "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_useful",              "Q useful",                             "kW",      "",                                  "Time Series",      "*",                        "",                                 "" },
@@ -131,7 +132,7 @@ static var_info _cm_vtab_swh[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_loss",                "Q loss",                               "kW",      "",                                  "Time Series",      "*",                        "",                                 "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_aux",                 "Q auxiliary",                          "kW",      "",                                  "Time Series",      "*",                        "",                                 "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_auxonly",             "Q auxiliary only",                     "kW",      "",                                  "Time Series",      "*",                        "",                                 "" },
-																									      		    					                 																		             
+
 	{ SSC_OUTPUT,       SSC_ARRAY,       "P_pump",                "P pump",                               "kW",      "",                                 "Time Series",      "*",                        "",                                 "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "T_amb",                 "T ambient",						      "C",		"",                                  "Time Series",      "*",                        "",                                 "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "T_cold",                "T cold",                               "C",      "",                                  "Time Series",      "*",                        "",                                 "" },
@@ -143,12 +144,12 @@ static var_info _cm_vtab_swh[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "V_cold",                "V cold",                               "m3",     "",                                  "Time Series",      "*",                        "",                                 "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "draw",                  "Hot water draw",                       "kg/hr",  "",                                  "Time Series",      "*",                        "",                                 "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "mode",                  "Operation mode",                       "",       "1,2,3,4",                           "Time Series",      "*",                        "",                                 "" },
-																									      								                 																		            																																			             																		            
+
 	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_Q_deliv",		  "Q delivered",                         "kWh",     "",                                  "Monthly",          "*",                        "LENGTH=12",                        "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_Q_aux",		  "Q auxiliary",                         "kWh",     "",                                  "Monthly",          "*",                        "LENGTH=12",                        "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_Q_auxonly",	  "Q auxiliary only",                    "kWh",     "",                                  "Monthly",          "*",                        "LENGTH=12",                        "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",		  "System energy",                       "kWh",     "",                                  "Monthly",          "*",                        "LENGTH=12",                        "" },
-																												    						             			        
+
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_Q_deliv",		  "Q delivered",                         "kWh",     "",                                  "Annual",           "*",                        "",                                 "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_Q_aux",		  "Q auxiliary",                         "kWh",     "",                                  "Annual",           "*",                        "",                                 "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_Q_auxonly",	  "Q auxiliary only",                    "kWh",     "",                                  "Annual",           "*",                        "",                                 "" },
@@ -175,32 +176,45 @@ public:
 	void exec() override
 	{
 		const double watt_to_kw = 0.001f;
-		const char *file = as_string("solar_resource_file");
 
-		weatherfile wfile(file);
-		if (!wfile.ok()) throw exec_error("swh", wfile.message());
-		if( wfile.has_message() ) log( wfile.message(), SSC_WARNING);
-		
+        std::unique_ptr<weather_data_provider> wdprov;
+        if (is_assigned("solar_resource_file"))
+        {
+            const char *file = as_string("solar_resource_file");
+            wdprov = std::unique_ptr<weather_data_provider>(new weatherfile(file));
+
+            auto *wfile = dynamic_cast<weatherfile*>(wdprov.get());
+            if (!wfile->ok()) throw exec_error("swh", wfile->message());
+            if (wfile->has_message()) log(wfile->message(), SSC_WARNING);
+        }
+        else if (is_assigned("solar_resource_data"))
+        {
+            wdprov = std::unique_ptr<weather_data_provider>(new weatherdata(lookup("solar_resource_data")));
+        }
+        else
+            throw exec_error("swh", "no weather data supplied");
+
+
 		/* **********************************************************************
 		Read user specified system parameters from compute engine
 		********************************************************************** */
-														
+
 		// assumes instantaneous values, unless hourly file with no minute column specified
 		double ts_shift_hours = 0.0;
 		bool instantaneous = true;
-		if ( wfile.has_data_column( weather_data_provider::MINUTE ) )
+		if ( wdprov->has_data_column( weather_data_provider::MINUTE ) )
 		{
 			// if we have an file with a minute column, then
-			// the starting time offset equals the time 
+			// the starting time offset equals the time
 			// of the first record (for correct plotting)
 			// this holds true even for hourly data with a minute column
 			weather_record rec;
-			if ( wfile.read( &rec ) )
+			if ( wdprov->read( &rec ) )
 				ts_shift_hours = rec.minute/60.0;
 
-			wfile.rewind();
+			wdprov->rewind();
 		}
-		else if ( wfile.nrecords() == 8760 )
+		else if ( wdprov->nrecords() == 8760 )
 		{
 			// hourly file with no minute data column.  assume
 			// integrated/averaged values and use mid point convention for interpreting results
@@ -211,11 +225,11 @@ public:
 			throw exec_error("swh", "subhourly weather files must specify the minute for each record" );
 
 		assign( "ts_shift_hours", var_data( (ssc_number_t)ts_shift_hours ) );
-	
+
 		adjustment_factors haf( this, "adjust" );
 		if ( !haf.setup() )
 			throw exec_error("swh", "failed to setup adjustment factors: " + haf.error() );
-	
+
 
 		shading_factor_calculator shad;
 		if ( !shad.setup( this, "" ) )
@@ -225,7 +239,7 @@ public:
 		double Cp_water = 4182.; // Cp_water@40'C (J/kg.K)
 		double rho_water = 1000.; // 992.2; // density of water, kg/m3 @ 40'C
 		double Cp_glycol = 3400; // 3705; // Cp_glycol
-		
+
 		/* sky model properties */
 		double albedo = as_double("albedo"); // ground reflectance fraction
 		double tilt = as_double("tilt"); // collector tilt in degrees
@@ -277,7 +291,7 @@ public:
 		double UA_tank = tank_area * U_tank;
 		double tank_cross_section = M_PI*tank_radius*tank_radius;
 		double m_tank = rho_water*V_tank;
-		
+
 		/* pipe, and heat exchange properties */
 		double Eff_hx = as_double("hx_eff"); // heat exchanger effectiveness (0..1)
 		double pump_watts = as_double("pump_power"); // pump size in Watts
@@ -299,15 +313,15 @@ public:
 		********************************************************************** */
 
 		weather_header hdr;
-		wfile.header( &hdr );
+		wdprov->header( &hdr );
 
 		weather_record wf;
 
-		size_t nrec = wfile.nrecords();
+		size_t nrec = wdprov->nrecords();
 		size_t step_per_hour = nrec/8760;
 		if ( step_per_hour < 1 || step_per_hour > 60 || step_per_hour*8760 != nrec )
 			throw exec_error( "swh", util::format("invalid number of data records (%d): must be an integer multiple of 8760", (int)nrec ) );
-	
+
 		double ts_hour = 1.0/step_per_hour;
 		double ts_sec = 3600.0/step_per_hour;
 
@@ -329,7 +343,7 @@ public:
 		ssc_number_t *out_P_pump = allocate("P_pump", nrec);
 		ssc_number_t *out_Q_aux = allocate("Q_aux", nrec);
 		ssc_number_t *out_Q_auxonly = allocate("Q_auxonly", nrec);
-		
+
 		ssc_number_t *out_V_hot = allocate("V_hot", nrec);
 		ssc_number_t *out_V_cold = allocate("V_cold", nrec);
 		ssc_number_t *out_T_hot = allocate("T_hot", nrec);
@@ -354,8 +368,9 @@ public:
 		{
 			for( size_t jj=0;jj<step_per_hour;jj++)
 			{
-				if( !wfile.read( &wf ) )
-					throw exec_error( "swh", util::format("error reading from weather file at position %d", (int)idx ) );
+                if (!wdprov->read(&wf)) {
+                    throw exec_error("swh", util::format("error reading from weather file at position %d", (int)idx));
+                }
 
 				Beam[idx] = (ssc_number_t)wf.dn;
 				Diffuse[idx] = (ssc_number_t)wf.df;
@@ -375,15 +390,15 @@ public:
 				/* **********************************************************************
 				Process radiation (Isotropic model), calculate Incident[i] through cover
 				********************************************************************** */
-				
-				
+
+
 
 				irrad tt;
 				if (irrad_mode == 0) tt.set_beam_diffuse(wf.dn, wf.df);
 				else if (irrad_mode == 2) tt.set_global_diffuse(wf.gh, wf.df);
 				else tt.set_global_beam(wf.gh, wf.dn);
 				tt.set_location(hdr.lat, hdr.lon, hdr.tz);
-				tt.set_time(wf.year, wf.month, wf.day, wf.hour, wf.minute, 
+				tt.set_time(wf.year, wf.month, wf.day, wf.hour, wf.minute,
 					instantaneous ? IRRADPROC_NO_INTERPOLATE_SUNRISE_SUNSET : ts_hour );
 				tt.set_sky_model(sky_model /* isotropic=0, hdkr=1, perez=2 */, albedo );
 				tt.set_surface(0, tilt, azimuth, 0, 0, 0, false, 0.0);
@@ -392,7 +407,7 @@ public:
 				double poa[3];
 				tt.get_poa(&poa[0], &poa[1], &poa[2], 0, 0, 0);
 				I_incident[idx] = (ssc_number_t)(poa[0] + poa[1] + poa[2]); // total PoA on surface
-			
+
 				double solalt = 0;
 				double solazi = 0;
 				tt.get_sun( &solazi, 0, &solalt, 0, 0, 0, 0, 0, 0, 0 );
@@ -438,10 +453,11 @@ public:
 
 
 				shading_loss[idx] = (ssc_number_t) (1-beam_loss_factor)*100;
+                double shade_loss_factor = shad.fdiff();
 
 				I_transmitted[idx] = (ssc_number_t)(
-					Kta_b*poa[0]*beam_loss_factor + 
-					Kta_d*poa[1]*shad.fdiff() + 
+					Kta_b*poa[0]*beam_loss_factor +
+					Kta_d*poa[1]*shade_loss_factor +
 					Kta_g*poa[2]);
 
 				idx++;
@@ -460,7 +476,7 @@ public:
 		else
 		{
 
-			// Algorithm for calculating mains water temperature from paper 
+			// Algorithm for calculating mains water temperature from paper
 			// ASES 2007 (J.Burch & C.Christensen)
 			// "Towards Development of an Algorithm for Mains Water Temperature"
 			// Verified against code in TRNSYS Type 15 Weather Reader
@@ -490,15 +506,15 @@ public:
 				// calculate hour of day  ( goes 1..24 )
 				// and julian day  ( goes 1..365 )
 
-				// (Julian day is used in the Julian date (JD) system of time measurement for scientific use by 
-				// the astronomy community, presenting the interval of time in days and fractions of a day since 
+				// (Julian day is used in the Julian date (JD) system of time measurement for scientific use by
+				// the astronomy community, presenting the interval of time in days and fractions of a day since
 				// January 1, 4713 BC Greenwich noon - WIKIPEDIA)
 				int julian_day = (int)(((double)(i + 1)) / 24);
 				if ((double)julian_day != (((double)(i + 1)) / 24.0))
 				{
 					julian_day++;
 				}
-				if (wfile.lat() > 0.)
+				if (wdprov->lat() > 0.)
 				{
 					tmain = (annual_avg_temp + 6. + mains_ratio * ((avg_temp_high_f - avg_temp_low_f) / 2.)
 						* sin(M_PI / 180 * (0.986*(julian_day - 15 - lag) - 90.)));
@@ -511,8 +527,9 @@ public:
 				tmain = ((tmain - 32) / 1.8); // convert to 'C
 
 				// load into mains temp array
-				for( size_t jj=0;jj<step_per_hour;jj++ )
-					T_mains[idx++] = (ssc_number_t)tmain;
+                for (size_t jj = 0; jj < step_per_hour; jj++) {
+                    T_mains[idx++] = (ssc_number_t)tmain;
+                }
 			}
 		}
 
@@ -523,13 +540,15 @@ public:
 		double T_set_array[8760];
 		if (use_custom_set == 0)
 		{
-			for (size_t i = 0; i < 8760; i++)
-				T_set_array[i] = T_set;
+            for (size_t i = 0; i < 8760; i++) {
+                T_set_array[i] = T_set;
+            }
 		}
 		else
 		{
-			for (size_t i = 0; i < 8760; i++)
-				T_set_array[i] = custom_set[i];
+            for (size_t i = 0; i < 8760; i++) {
+                T_set_array[i] = custom_set[i];
+            }
 		}
 
 		/* **********************************************************************
@@ -556,12 +575,13 @@ public:
 		idx = 0;
 		for (hour = 0; hour < 8760; hour++)
 		{
-#define NSTATUS_UPDATES 50  // set this to the number of times a progress update should be issued for the simulation
+            #define NSTATUS_UPDATES 50  // set this to the number of times a progress update should be issued for the simulation
 			if ( hour % (8760/NSTATUS_UPDATES) == 0 )
 			{
 				float percent = 100.0f * ((float)hour+1) / ((float)8760);
-				if ( !update( "", percent , (float)hour ) )
-					throw exec_error("swh", "simulation canceled at hour " + util::to_string(hour+1.0) );
+                if (!update("", percent, (float)hour)) {
+                    throw exec_error("swh", "simulation canceled at hour " + util::to_string(hour + 1.0));
+                }
 			}
 
 			for( size_t jj=0;jj<step_per_hour;jj++ )
@@ -595,6 +615,8 @@ public:
 				double FRta_use = FRta * r; // FRta_use = value for this time step
 				double FRUL_use = FRUL * r; // FRUL_use = value for this time step
 
+                // IT LOOKS LIKE THE PIPING LOSSES ARE DOUBLE COUNTED HERE.
+                // UA_pipe is for the whole system, while in these equations they should be split between inlet and outlet
 				/* Pipe loss adjustment (D&B pp 430) */
 				FRta_use = FRta_use / (1 + UA_pipe / mdotCp_use); // D&B eqn 10.3.9
 				FRUL_use = FRUL_use * ((1 - UA_pipe / mdotCp_use + 2 * UA_pipe / (area_total*FRUL_use)) / (1 + UA_pipe / mdotCp_use)); // D&B eqn 10.3.10
@@ -610,27 +632,28 @@ public:
 					Q_useful = area_total*( FRta_use*I_transmitted[idx] - FRUL_use*(T_bot - T_amb_use)); // D&B eqn 6.8.1
 				}
 				else Q_useful = area_total*(FRta_use*I_transmitted[idx] - FRUL_use*(T_tank_prev - T_amb_use) );
-				// T_tank_prev is used, because use of T_cold_prev can cause the system to oscillate on and off 
-			
-				if ( I_incident_use < 0.0 )
-					Q_useful = 0;
+				// T_tank_prev is used, because use of T_cold_prev can cause the system to oscillate on and off
+
+                if (I_incident_use < 0.0) {
+                    Q_useful = 0;
+                }
 
 				double dT_collector = Q_useful/mdotCp_use;
 
-	// Charging -- solar system operating			
+	            // Charging -- solar system operating
 				if (Q_useful > 0.)
 				{
 					double V_hot_next = V_hot_prev + (ts_sec*mdot_total/rho_water);
 					if (V_hot_next < V_tank)
 					{
-		// Mode 1 Transition -- solar system operating
+		                // Mode 1 Transition -- solar system operating
 						mode = 1;
 						// Warm water from the collector loop into the top of the solar tank causes mixing with hot water below
 						T_tank = (T_tank_prev*m_tank*Cp_water + ts_sec*(Q_useful + UA_tank*T_room
 							+ mdot_mix*Cp_water*(T_mains_use-0.33*dT_collector)))/(m_tank*Cp_water + ts_sec*(UA_tank + mdot_mix*Cp_water));
 						if (T_tank > T_tank_max) T_tank = T_tank_max;
 						Q_tankloss = UA_tank * (T_tank - T_room);
-						// uses UA_tank; ignores difference between losses from V_hot and V_cold during this transition period			
+						// uses UA_tank; ignores difference between losses from V_hot and V_cold during this transition period
 						V_hot = V_hot_prev + ts_sec*mdot_total/rho_water;
 						V_cold = V_tank - V_hot;
 						T_hot = (T_hot_prev*V_hot_prev + ts_sec*(mdot_total/rho_water)*(T_cold_prev + dT_collector))/V_hot;
@@ -641,7 +664,7 @@ public:
 					}
 					else
 					{
-		// Mode 2 Charging -- solar system operating
+		                // Mode 2 Charging -- solar system operating
 						mode = 2;
 						// Energy balance calculated based on average tank temperature (single node); tank top and bottom temperatures estimated based on collector dT
 						// Implicit Euler calculation
@@ -649,7 +672,7 @@ public:
 							+ mdot_mix*Cp_water*(T_mains_use-0.33*dT_collector)))/(m_tank*Cp_water + ts_sec*(UA_tank + mdot_mix*Cp_water));
 						if (T_tank > T_tank_max) T_tank = T_tank_max;
 						Q_tankloss = UA_tank * (T_tank - T_room);
-						// Based on typical TRNSYS 100-node tank simulation results, the temperature difference asymmetry of Tbot and Ttop from Ttank (0.67 and 0.33 rather than 0.5 and 0.5)  
+						// Based on typical TRNSYS 100-node tank simulation results, the temperature difference asymmetry of Tbot and Ttop from Ttank (0.67 and 0.33 rather than 0.5 and 0.5)
 						// accounts for the extra low temperature of the bottom node caused by incoming mains water
 						T_top = T_tank + 0.33*dT_collector;
 						T_bot = T_tank - 0.67*dT_collector;
@@ -660,8 +683,8 @@ public:
 				}
 				else
 				{
-		// Mode 3 Discharging -- solar system not operating
-					mode = 3;		
+		            // Mode 3 Discharging -- solar system not operating
+					mode = 3;
 					// 2-node plug flow
 					double hotLoss = 0.0; double coldLoss = 0.0;
 					double A_cold = 0.0; double A_hot = 0.0;
@@ -672,18 +695,19 @@ public:
 						T_hot_prev = T_tank;
 					}
 					// Hot node calculations
-						V_hot = V_hot_prev - mdot_mix*ts_sec/rho_water;
-					if (V_hot < 0)
+					V_hot = V_hot_prev - mdot_mix*ts_sec/rho_water;
+					if (V_hot < 0) {
 						V_hot = 0;
+                    }
 
 					if (V_hot == 0)	// cold water drawn into the bottom of the tank in previous timesteps has completely flushed hot water from the tank
 					{
 						T_hot = T_hot_prev;
 					}
-					else 
+					else
 					{
 						double h_hot = V_hot_prev/tank_cross_section;
-						A_hot = tank_cross_section + 2*M_PI*tank_radius*h_hot;				
+						A_hot = tank_cross_section + 2*M_PI*tank_radius*h_hot;
 						double m_hot = V_hot_prev*rho_water;
 						T_hot = ((T_hot_prev * Cp_water * m_hot) + (ts_sec*U_tank*A_hot * T_room))/((m_hot*Cp_water) + (ts_sec*U_tank*A_hot)); // IMPLICIT NON-STEADY (Euler)
 					}
@@ -706,13 +730,17 @@ public:
 					coldLoss = U_tank*A_cold*(T_cold - T_room);
 
 					Q_tankloss = hotLoss + coldLoss;
-					T_tank = (V_hot / V_tank) * T_hot + (V_cold / V_tank) * T_cold;	
+					T_tank = (V_hot / V_tank) * T_hot + (V_cold / V_tank) * T_cold;
 					T_top = T_tank + 0.33*dT_collector;
-					T_bot = T_tank - 0.67*dT_collector;	
+					T_bot = T_tank - 0.67*dT_collector;
 					// T_top = T_hot
 					// T_bot = T_cold
-					if (V_hot > 0) T_deliv = T_hot;
-					else T_deliv = T_cold;
+                    if (V_hot > 0) {
+                        T_deliv = T_hot;
+                    }
+                    else {
+                        T_deliv = T_cold;
+                    }
 				}
 
 				// calculate pumping losses (pump size is user entered) -
@@ -723,12 +751,16 @@ public:
 
 				// amount of auxiliary energy needed to bring delivered water to set temperature
 				double Q_aux = mdot_mix * Cp_water * (T_set_use - T_deliv);
-				if (Q_aux < 0) Q_aux = 0.0;
+                if (Q_aux < 0) {
+                    Q_aux = 0.0;
+                }
 
 				// amount of energy needed to bring T_mains to set temperature (without SHW)
 				double Q_auxonly = mdot_mix * Cp_water * (T_set_use - T_mains_use);
 
-				if (Q_auxonly < 0) Q_auxonly = 0.0;
+                if (Q_auxonly < 0) {
+                    Q_auxonly = 0.0;
+                }
 
 				// Energy saved by SHW system is difference between aux only system and shw+aux system - the pump losses
 				double Q_saved = Q_auxonly - Q_aux - P_pump;
@@ -744,9 +776,11 @@ public:
 				T_bot_prev = T_bot;
 
 				// Zero out Q_useful if <0
-				if (Q_useful < 0) Q_useful = 0.0;
+                if (Q_useful < 0) {
+                    Q_useful = 0.0;
+                }
 
-				// save output variables - convert Q values to kWh 
+				// save output variables - convert Q values to kWh
 				out_Q_transmitted[idx] = (ssc_number_t)(I_transmitted[idx] * area_total * watt_to_kw);
 				out_Q_useful[idx] = (ssc_number_t)(Q_useful* watt_to_kw);
 				out_Q_deliv[idx] = (ssc_number_t)(Q_deliv* watt_to_kw); //this is currently being output from a financial model as "Hourly Energy Delivered", they are equivalent
@@ -777,7 +811,7 @@ public:
 			load_year_one = as_vector_ssc_number_t("load");
 			size_t n_rec_single_year = 0;
 			double dt_hour_gen = 0.0;
-			single_year_to_lifetime_interpolated<ssc_number_t>(false, (size_t)1, (size_t)wfile.nrecords(),
+			single_year_to_lifetime_interpolated<ssc_number_t>(false, (size_t)1, (size_t)wdprov->nrecords(),
 				load_year_one, load_lifetime, n_rec_single_year, dt_hour_gen);
 
 			for (size_t i = 0; i < load_lifetime.size(); i++) {
@@ -786,7 +820,7 @@ public:
 				}
 			}
 		}
-	
+
 		accumulate_monthly( "Q_deliv", "monthly_Q_deliv", ts_hour );
 		accumulate_monthly( "Q_aux", "monthly_Q_aux", ts_hour );
 		accumulate_monthly( "Q_auxonly", "monthly_Q_auxonly", ts_hour );
@@ -808,5 +842,6 @@ public:
 	}
 
 };
+
 
 DEFINE_MODULE_ENTRY( swh, "Solar water heating model using multi-mode tank node model.", 10 )

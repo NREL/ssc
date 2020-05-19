@@ -225,8 +225,8 @@ bool solarpilot_invoke::run(std::shared_ptr<weather_data_provider> wdata)
 	if (wdata == nullptr){
 		const char *wffile = m_cmod->as_string("solar_resource_file" );
 		wdata = make_shared<weatherfile>( wffile );
-		if ( !wdata ) throw compute_module::exec_error( "solarpilot", "no weather file specified" );
-		if ( !wdata->ok() || wdata->has_message() ) throw compute_module::exec_error("solarpilot", wdata->message());
+		if ( !wdata ) throw exec_error( "solarpilot", "no weather file specified" );
+		if ( !wdata->ok() || wdata->has_message() ) throw exec_error("solarpilot", wdata->message());
 	}
 
 	weather_header hdr;
@@ -253,7 +253,7 @@ bool solarpilot_invoke::run(std::shared_ptr<weather_data_provider> wdata)
 	    for( int i=0;i<8760;i++ )
 	    {
 			if (!wdata->read(&wf))
-			    throw compute_module::exec_error("solarpilot", "could not read data line " + util::to_string(i+1) + " of 8760 in weather data");
+			    throw exec_error("solarpilot", "could not read data line " + util::to_string(i+1) + " of 8760 in weather data");
 
 		    mysnprintf(buf, 1023, "%d,%d,%d,%.2lf,%.1lf,%.1lf,%.1lf", wf.day, wf.hour, wf.month, wf.dn, wf.tdry, wf.pres/1000., wf.wspd);
 		    wfdata.push_back( std::string(buf) );
@@ -372,12 +372,12 @@ bool solarpilot_invoke::run(std::shared_ptr<weather_data_provider> wdata)
 		//collect the optical efficiency data and sun positions
 		if ( fluxtab.zeniths.size() == 0 || fluxtab.azimuths.size() == 0
 			|| fluxtab.efficiency.size() == 0 )
-			throw compute_module::exec_error("solarpilot", "failed to calculate a correct optical efficiency table");
+			throw exec_error("solarpilot", "failed to calculate a correct optical efficiency table");
 		
 		//collect the flux map data
 		block_t<double> *flux_data = &fluxtab.flux_surfaces.front().flux_data;  //there should be only one flux stack for SAM
 		if( flux_data->ncols() == 0 || flux_data->nlayers() == 0 )
-			throw compute_module::exec_error("solarpilot", "failed to calculate a correct flux map table");
+			throw exec_error("solarpilot", "failed to calculate a correct flux map table");
 	}
 
     //check if max flux check is desired
@@ -1060,7 +1060,7 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
 			cm->log("\n");
 		}
 
-		throw compute_module::exec_error("sco2_csp_system", csp_exception.m_error_message);
+		throw exec_error("sco2_csp_system", csp_exception.m_error_message);
 	}
 	// If all calls were successful, log to SSC any messages from sco2_recomp_csp
 	while (c_sco2_cycle.mc_messages.get_message(&out_type, &out_msg))
@@ -1093,7 +1093,7 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
 		h_pc);
 
 	if (ph_err_code != 0)
-		throw compute_module::exec_error("sco2_csp_system", "cycle plot data routine failed");
+		throw exec_error("sco2_csp_system", "cycle plot data routine failed");
 
 	size_t n_v = P_t.size();
 	ssc_number_t *p_P_t_data = cm->allocate("P_t_data", n_v);
@@ -1165,7 +1165,7 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
 		s_pre_cooler);
 
 	if (plot_data_err_code != 0)
-		throw compute_module::exec_error("sco2_csp_system", "cycle plot data routine failed");
+		throw exec_error("sco2_csp_system", "cycle plot data routine failed");
 
 	n_v = T_LTR_HP.size();
 	ssc_number_t *p_T_LTR_HP_data = cm->allocate("T_LTR_HP_data", n_v);

@@ -142,9 +142,9 @@ public:
 	
 	// Instantiate two fully mixed tanks class for cold storage AND three node model
 	C_csp_cold_tes mc_two_tank_ctes;
-	C_csp_cold_tes::S_csp_tes_outputs mc_two_tank_ctes_outputs;	// for outputs
+	C_csp_cold_tes::S_csp_cold_tes_outputs mc_two_tank_ctes_outputs;	// for outputs
 	C_csp_stratified_tes mc_stratified_ctes;
-	C_csp_stratified_tes::S_csp_tes_outputs mc_stratified_ctes_outputs;
+	C_csp_stratified_tes::S_csp_strat_tes_outputs mc_stratified_ctes_outputs;
 
 	double m_dot_cold_avail;
 	double m_dot_warm_avail;
@@ -304,6 +304,12 @@ int split_ind_tbl(util::matrix_t<double> &combined, util::matrix_t<double> &T_ht
     double & m_dot_low, double & m_dot_des, double & m_dot_high,
     double & T_htf_low, double & T_htf_des, double & T_htf_high,
     double & T_amb_low, double & T_amb_des, double & T_amb_high);
+
+int combine_ind_tbl(util::matrix_t<double>& combined, util::matrix_t<double>& T_htf_ind,
+	util::matrix_t<double>& m_dot_ind, util::matrix_t<double>& T_amb_ind,
+	double m_dot_low, double m_dot_des, double m_dot_high,
+	double T_htf_low, double T_htf_des, double T_htf_high,
+	double T_amb_low, double T_amb_des, double T_amb_high);
 
 
 #endif //__csp_solver_pc_Rankine_indirect_224_

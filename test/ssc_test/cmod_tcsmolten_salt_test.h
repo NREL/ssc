@@ -4,9 +4,10 @@
 #ifndef _CMOD_TCSMOLTEN_SALT_TEST_H_
 #define _CMOD_TCSMOLTEN_SALT_TEST_H_
 
-#include "../ssc/vartab.h"
+#include "vartab.h"
 #include "../ssc/common.h"
 #include "../tcs_test/tcsmolten_salt_cases.h"
+#include "cmod_csp_tower_eqns.h"
 
 /**
  * CMtcsMoltenSalt tests the cmod_tcsmolten_salt using the SAM code generator to generate data

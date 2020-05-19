@@ -73,8 +73,6 @@ public:
 			return;
 
 		double sco2_f_min = 0.5;
-		if (!c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_is_rc)
-			sco2_f_min = 0.7;
 
 		double m_dot_htf_ND_low = sco2_f_min;;
 		if (is_assigned("m_dot_htf_ND_low"))
@@ -94,7 +92,7 @@ public:
 		}
 
 		// Get or calculate user-defined power cycle parameters
-		double T_htf_hot_low = c_sco2_cycle.get_design_par()->m_T_htf_hot_in - 273.15 - 20.0;		//[C]
+		double T_htf_hot_low = c_sco2_cycle.get_design_par()->m_T_htf_hot_in - 273.15 - 30.0;		//[C]
 		if (is_assigned("T_htf_hot_low"))
 		{
 			T_htf_hot_low = as_double("T_htf_hot_low");		//[C]
@@ -108,7 +106,7 @@ public:
 		}
 		assign("T_htf_hot_high", T_htf_hot_high);
 
-		int n_T_htf_hot_in = 5;
+		int n_T_htf_hot_in = 4;
 		if (is_assigned("n_T_htf_hot"))
 		{
 			n_T_htf_hot_in = as_integer("n_T_htf_hot");			//[-]
@@ -129,7 +127,7 @@ public:
 		}
 		assign("T_amb_high", T_amb_high);
 
-		int n_T_amb_in = 10;
+		int n_T_amb_in = std::round((T_amb_high - T_amb_low) / 2.0) + 1;     //[-]
 		if (is_assigned("n_T_amb"))
 		{
 			n_T_amb_in = as_integer("n_T_amb");					//[-]

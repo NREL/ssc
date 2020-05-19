@@ -16,9 +16,6 @@ if (UNIX AND NOT CMAKE_C_COMPILER)
 endif()
 set(CMAKE_CXX_STANDARD 11)
 
-if (POLICY CMP0043) # CMAKE 2.8 compatibility
-  cmake_policy(SET CMP0043 OLD)
-endif (POLICY CMP0043)
 
 #####################################################################################################################
 #
@@ -27,6 +24,16 @@ endif (POLICY CMP0043)
 #####################################################################################################################
 
 Project(sam_simulation_core)
+
+# turn off examples, tests and install for jsoncpp
+set(JSONCPP_WITH_EXAMPLE 0)
+set(JSONCPP_WITH_TESTS 0)
+macro (install)
+endmacro ()
+add_subdirectory(jsoncpp)
+macro (install)
+  _install(${ARGV})
+endmacro(install)
 
 add_subdirectory(splinter)
 add_subdirectory(shared)

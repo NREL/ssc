@@ -4,7 +4,7 @@
 #include <gtest/gtest.h>
 #include "core.h"
 #include "sscapi.h"
-#include "../ssc/vartab.h"
+#include "vartab.h"
 #include "../ssc/common.h"
 #include "../input_cases/singleowner_common.h"
 #include "../input_cases/code_generator_utilities.h"

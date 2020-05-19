@@ -1,22 +1,22 @@
 /**
 BSD-3-Clause
 Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
 that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
 and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
 and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
 or promote products derived from this software without specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
@@ -47,8 +47,8 @@ class dispatch_t
 {
 public:
 
-	enum FOM_MODES { FOM_LOOK_AHEAD, FOM_LOOK_BEHIND, FOM_FORECAST, FOM_CUSTOM_DISPATCH, FOM_MANUAL };
-	enum BTM_MODES { LOOK_AHEAD, LOOK_BEHIND, MAINTAIN_TARGET, CUSTOM_DISPATCH, MANUAL };
+	enum FOM_MODES { FOM_LOOK_AHEAD, FOM_LOOK_BEHIND, FOM_FORECAST, FOM_CUSTOM_DISPATCH, FOM_MANUAL, FOM_RESILIENCE };
+	enum BTM_MODES { LOOK_AHEAD, LOOK_BEHIND, MAINTAIN_TARGET, CUSTOM_DISPATCH, MANUAL, RESILIENCE };
 	enum METERING { BEHIND, FRONT };
 	enum PV_PRIORITY { MEET_LOAD, CHARGE_BATTERY };
 	enum CURRENT_CHOICE { RESTRICT_POWER, RESTRICT_CURRENT, RESTRICT_BOTH };
@@ -117,7 +117,8 @@ public:
 	// control settings
 	double battery_power_to_fill();
 
-	message get_messages();
+	// test data
+	double battery_soc();
 
 	/// Return a pointer to the underlying calculated power quantities
 	BatteryPower * getBatteryPower();
@@ -140,7 +141,7 @@ protected:
 	// Controllers
 	virtual	void SOC_controller();
 	void switch_controller();
-	double current_controller(double battery_voltage);
+	double current_controller(double power_kw);
 	bool restrict_current(double &I);
 	bool restrict_power(double &I);
 
@@ -149,16 +150,16 @@ protected:
 
 	double _dt_hour;
 
-	/** 
-	The dispatch mode. 
-	For behind-the-meter dispatch: 0 = LOOK_AHEAD, 1 = LOOK_BEHIND, 2 = MAINTAIN_TARGET, 3 = MANUAL
-	For front-of-meter dispatch: 0 = LOOK_AHEAD, 1 = LOOK_BEHIND, 2 = INPUT FORECAST, 3 = MANUAL
+	/**
+	The dispatch mode.
+	For behind-the-meter dispatch: 0 = LOOK_AHEAD, 1 = LOOK_BEHIND, 2 = MAINTAIN_TARGET, 3 = CUSTOM, 4 = MANUAL, 5 = RESILIENCE
+	For front-of-meter dispatch: 0 = LOOK_AHEAD, 1 = LOOK_BEHIND, 2 = INPUT FORECAST, 3 = CUSTOM, 4 = MANUAL, 5 = RESILIENCE
 	*/
-	int _mode; 
+	int _mode;
 
 	// allocated and managed internally
 	std::unique_ptr<BatteryPowerFlow> m_batteryPowerFlow;
-	
+
 	// managed by BatteryPowerFlow
 	BatteryPower * m_batteryPower;
 
@@ -174,8 +175,6 @@ protected:
 	bool _prev_charging;
 	bool _grid_recharge;
 
-	// messages
-	message _message;
 };
 
 /*
@@ -211,14 +210,14 @@ public:
 	dispatch_manual_t(const dispatch_t& dispatch);
 
 	// copy members from dispatch to this
-	virtual void copy(const dispatch_t * dispatch);
+	void copy(const dispatch_t * dispatch) override;
 
 	virtual ~dispatch_manual_t(){};
 
 	/// Public API to run the battery dispatch model for the current timestep, given the system power, and optionally the electric load, amount of system clipping, or specified battery power
 	virtual void dispatch(size_t year,
 		size_t hour_of_year,
-		size_t step);
+		size_t step) override;
 
 protected:
 
@@ -241,8 +240,8 @@ protected:
 		std::map<size_t, double> dm_percent_discharge,
 		std::map<size_t, double> dm_percent_gridcharge);
 
-	void SOC_controller();
-	bool check_constraints(double &I, size_t count);
+	void SOC_controller() override;
+	bool check_constraints(double &I, size_t count) override;
 
 	util::matrix_t < size_t > _sched;
 	util::matrix_t < size_t > _sched_weekend;
@@ -255,8 +254,9 @@ protected:
 	double _percent_discharge;
 	double _percent_charge;
 
-	std::map<size_t, double>  _percent_discharge_array;
+	std::map<size_t, double> _percent_discharge_array;
 	std::map<size_t, double> _percent_charge_array;
+
 };
 
 /*! Class containing calculated grid power at a single time step */
@@ -359,10 +359,10 @@ protected:
 	int get_mode();
 
 	/*! Full time-series of PV production [kW] */
-	double_vec _P_pv_dc;		
-	
+	double_vec _P_pv_dc;
+
 	/*! The index of the current day (hour * steps_per_hour + step) */
-	size_t _day_index;				
+	size_t _day_index;
 
 	/*! The index of the current month (0-11) */
 	size_t _month;
@@ -375,12 +375,6 @@ protected:
 
 	/*! The index of year the dispatch was last updated */
 	size_t _hour_last_updated;
-
-	/*! The index of year the dispatch was last updated */
-	size_t _index_last_updated;
-
-	/*! The amount of indices to wait before updating */
-	size_t _d_index_update;
 
 	/*! The timestep in hours (hourly = 1, half_hourly = 0.5, etc) */
 	double _dt_hour;
@@ -439,7 +433,7 @@ public:
 		bool can_fuelcell_charge
 		);
 
-	virtual ~dispatch_automatic_behind_the_meter_t(){};
+	~dispatch_automatic_behind_the_meter_t() override {};
 
 	// deep copy constructor (new memory), from dispatch to this
 	dispatch_automatic_behind_the_meter_t(const dispatch_t& dispatch);
@@ -467,7 +461,7 @@ public:
 	enum BTM_TARGET_MODES {TARGET_SINGLE_MONTHLY, TARGET_TIME_SERIES};
 
 protected:
-	
+
 	/*! Initialize with a pointer*/
 	void init_with_pointer(const dispatch_automatic_behind_the_meter_t * tmp);
 
@@ -483,22 +477,23 @@ protected:
 	double_vec _P_load_dc;
 
 	/*! Full time-series of target power [kW] */
-	double_vec _P_target_input; 
+	double_vec _P_target_input;
 
 	/*! Time series of length (24 hours * steps_per_hour) of target powers [kW] */
 	double_vec _P_target_use;
 
 	/*! The target grid power for the month [kW] */
-	double _P_target_month; 
+	double _P_target_month;
 
 	/*! The grid power target at the current time [kW] */
 	double _P_target_current;
 
 	/* Vector of length (24 hours * steps_per_hour) containing grid calculation [P_grid, hour, step] */
-	grid_vec grid; 
+	grid_vec grid;
 
 	/* Vector of length (24 hours * steps_per_hour) containing sorted grid calculation [P_grid, hour, step] */
 	grid_vec sorted_grid;
+
 };
 
 /*! Automated Front of Meter DC-connected battery dispatch */
@@ -582,7 +577,7 @@ public:
 
 
 protected:
-	
+
 	void init_with_pointer(const dispatch_automatic_front_of_meter_t* tmp);
 	void setup_cost_forecast_vector();
 
@@ -596,7 +591,7 @@ protected:
 	std::vector<double> _forecast_price_rt_series;
 
 	/*! Utility rate information */
-	std::unique_ptr<UtilityRateCalculator> m_utilityRateCalculator;
+	std::shared_ptr<UtilityRateCalculator> m_utilityRateCalculator;
 
 	/*! Cost to replace battery per kWh */
 	double m_battReplacementCostPerKWH;

@@ -30,13 +30,20 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../shared/lib_util.h"
 #include "../shared/lib_weatherfile.h"
 #include "../shared/lib_pv_shade_loss_mpp.h"
+#include "../shared/lib_resilience.h"
 
 extern var_info vtab_standard_financial[];
 extern var_info vtab_standard_loan[];
 extern var_info vtab_oandm[];
+extern var_info vtab_equip_reserve[];
 extern var_info vtab_depreciation[];
+extern var_info vtab_depreciation_inputs[];
+extern var_info vtab_depreciation_outputs[];
 extern var_info vtab_tax_credits[];
 extern var_info vtab_payment_incentives[];
+extern var_info vtab_debt[];
+extern var_info vtab_ppa_inout[];
+extern var_info vtab_financial_metrics[];
 
 extern var_info vtab_adjustment_factors[];
 extern var_info vtab_dc_adjustment_factors[];
@@ -45,8 +52,11 @@ extern var_info vtab_technology_outputs[];
 extern var_info vtab_grid_curtailment[];
 extern var_info vtab_p50p90[];
 extern var_info vtab_forecast_price_signal[];
+extern var_info vtab_resilience_outputs[];
 
 bool calculate_p50p90(compute_module *cm);
+
+void calculate_resilience_outputs(compute_module *cm, std::unique_ptr<resilience_runner> &resilience);
 
 class adjustment_factors
 {
@@ -63,11 +73,11 @@ public:
 
 class forecast_price_signal
 {
-	compute_module *m_cm;
+	var_table *vartab;
 	std::vector<ssc_number_t> m_forecast_price;
 	std::string m_error;
 public:
-	forecast_price_signal(compute_module *cm);
+	forecast_price_signal(var_table *vt);
 	bool setup(size_t nsteps = 8760);
 	std::vector<ssc_number_t> forecast_price() { return m_forecast_price; }
 	ssc_number_t operator()(size_t time);

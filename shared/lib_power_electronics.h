@@ -24,6 +24,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _power_electronics_h_
 
 // Required due to need for complete type in std::unique_ptr<>
+#include "lib_shared_inverter.h"
 #include "lib_battery_dispatch.h"
 
 class BatteryBidirectionalInverter
@@ -101,7 +102,7 @@ protected:
 *  runs the dispatch model and returns to the calling function.  While the ChargeController may seem to be an unnecessary
 *  step in the calculation, it provides a location to store the initial dispatch in a timestep, and iterate upon that dispatch
 *  if necessary.  It also houses the framework of battery power electronics components, which currently have single-point
-*  efficiences, but could be expanded to have more detailed models.
+*  efficiencies, but could be expanded to have more detailed models.
 */
 class ChargeController
 {
@@ -118,10 +119,9 @@ public:
 	/// The supported configurations of a battery system
 	enum CONNECTION{ DC_CONNECTED, AC_CONNECTED };
 
-protected:
+	dispatch_t* dispatch_model() {return m_dispatch;}
 
-	// allocated and managed internally
-	std::unique_ptr<dispatch_t> m_dispatchInitial;	/// An internally managed copy of the initial dispatch of the timestep
+protected:
 
 	// memory managed elsewhere
 	BatteryPower * m_batteryPower;

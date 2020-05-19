@@ -4,9 +4,8 @@
 #
 #####################################################################################################################
 
-set(CMAKE_VERBOSE_MAKEFILE ON)
 
-cmake_minimum_required(VERSION 2.8)
+set(CMAKE_VERBOSE_MAKEFILE ON)
 
 if(APPLE)
     set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
@@ -34,6 +33,8 @@ set(TCSCONSOLE_SRC
 # Compile Options per Platform
 #
 #####################################################################################################################
+
+cmake_policy(SET CMP0043 NEW)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
@@ -85,12 +86,12 @@ include(${wxWidgets_USE_FILE})
 
 # Setup Application
 if (APPLE)
-	set(MACOSX_BUNDLE_ICON_FILE ${CMAKE_CURRENT_SOURCE_DIR}/../build_osx/TCSConsole.icns)
-	set(TCSCONSOLE_ICON ${CMAKE_CURRENT_SOURCE_DIR}/../build_osx/TCSConsole.icns)
+	set(MACOSX_BUNDLE_ICON_FILE ${CMAKE_CURRENT_SOURCE_DIR}/../build_resources/TCSConsole.icns)
+	set(TCSCONSOLE_ICON ${CMAKE_CURRENT_SOURCE_DIR}/../build_resources/TCSConsole.icns)
 	set_source_files_properties(${TCSCONSOLE_ICON} PROPERTIES
 		MACOSX_PACKAGE_LOCATION "Resources")
 elseif(WIN32)
-	#set(TCSCONSOLE_ICON ${CMAKE_CURRENT_SOURCE_DIR}/../build_vs2013/TCSConsole.rc)
+	#set(TCSCONSOLE_ICON ${CMAKE_CURRENT_SOURCE_DIR}/../build_resources/TCSConsole.rc)
 endif()
 
 add_executable(TCSConsole
@@ -106,7 +107,7 @@ set_target_properties(TCSConsole
 
 if (APPLE)
 	set_target_properties(TCSConsole PROPERTIES
-		MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/../build_osx/Info-TCSConsole.plist
+		MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/../build_resources/Info-TCSConsole.plist
 	)
 endif()
 

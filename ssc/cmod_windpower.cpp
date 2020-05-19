@@ -30,7 +30,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static var_info _cm_vtab_windpower[] = {
 	// VARTYPE     DATATYPE     NAME                                    LABEL                                        UNITS     META    GROUP                                REQUIRED_IF                       CONSTRAINTS                                          UI_HINTS
-	{ SSC_INPUT  , SSC_NUMBER , "wind_resource_model_choice"         , "Hourly, Weibull or Distribution model"    , "0/1/2"   ,""                                  , "Resource"                             , "*"                                               , "INTEGER"                                         , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "wind_resource_model_choice"         , "Hourly, Weibull or Distribution model"    , "0/1/2"   ,""                                    , "Resource"                             , "*"                                               , "INTEGER"                                         , "" } ,
 	{ SSC_INPUT  , SSC_STRING , "wind_resource_filename"             , "Local wind data file path"                , ""        ,""                                    , "Resource"                             , "?"                                               , "LOCAL_FILE"                                      , "" } ,
 	{ SSC_INPUT  , SSC_TABLE  , "wind_resource_data"                 , "Wind resouce data in memory"              , ""        ,""                                    , "Resource"                             , "?"                                               , ""                                                , "" } ,
 	{ SSC_INPUT  , SSC_MATRIX , "wind_resource_distribution"         , "Wind Speed x Dir Distribution as 2-D PDF" , "m/s,deg" ,""                                    , "Resource"                             , "wind_resource_model_choice=2"                    , ""                                                , "" } ,
@@ -63,7 +63,7 @@ static var_info _cm_vtab_windpower[] = {
 	{ SSC_INPUT  , SSC_NUMBER , "avail_grid_loss"                    , "Grid availability loss"                   , "%"       ,""                                    , "Losses"                               , "?=0"                                             , "MIN=0,MAX=100"                                   , "" } ,
 	{ SSC_INPUT  , SSC_NUMBER , "avail_turb_loss"                    , "Turbine availabaility loss"               , "%"       ,""                                    , "Losses"                               , "?=0"                                             , "MIN=0,MAX=100"                                   , "" } ,
 	{ SSC_INPUT  , SSC_NUMBER , "elec_eff_loss"                      , "Electrical efficiency loss"               , "%"       ,""                                    , "Losses"                               , "?=0"                                             , "MIN=0,MAX=100"                                   , "" } ,
-	{ SSC_INPUT  , SSC_NUMBER , "elec_parasitic_loss"                      , "Electrical parasitic consumption loss"    , "%"       ,""                                    , "Losses"                               , "?=0"                                             , "MIN=0,MAX=100"                                   , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "elec_parasitic_loss"                , "Electrical parasitic consumption loss"    , "%"       ,""                                    , "Losses"                               , "?=0"                                             , "MIN=0,MAX=100"                                   , "" } ,
 	{ SSC_INPUT  , SSC_NUMBER , "env_degrad_loss"                    , "Environmental Degradation loss"           , "%"       ,""                                    , "Losses"                               , "?=0"                                             , "MIN=0,MAX=100"                                   , "" } ,
 	{ SSC_INPUT  , SSC_NUMBER , "env_exposure_loss"                  , "Environmental Exposure loss"              , "%"       ,""                                    , "Losses"                               , "?=0"                                             , "MIN=0,MAX=100"                                   , "" } ,
 	{ SSC_INPUT  , SSC_NUMBER , "env_env_loss"                       , "Environmental External Conditions loss"   , "%"       ,""                                    , "Losses"                               , "?=0"                                             , "MIN=0,MAX=100"                                   , "" } ,
@@ -605,8 +605,8 @@ void cm_windpower::exec()
 	assign("annual_gross_energy", annual_gross);
 
     double wsp_avg = 0.;
-    for (size_t i = 0; i < nstep; i++)
-        wsp_avg += wspd[i];
+    for (size_t n = 0; n < nstep; n++)
+        wsp_avg += wspd[n];
     wsp_avg /= nstep;
     assign("wind_speed_average", wsp_avg);
 
