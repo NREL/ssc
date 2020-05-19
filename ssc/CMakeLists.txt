@@ -260,6 +260,7 @@ endif()
 if (MSVC)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:WINDOWS")
 	set(SSC_LIB $<TARGET_FILE_DIR:ssc>/$<TARGET_FILE_BASE_NAME:ssc>.lib)
+	set(SSC_H ${CMAKE_CURRENT_LIST_DIR}/sscapi.h)
 
 	set(TESTDIR ${CMAKE_CURRENT_BINARY_DIR}/../test/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
 
@@ -267,7 +268,7 @@ if (MSVC)
 		TARGET ssc
 		POST_BUILD
 		COMMAND ${CMAKE_COMMAND}
-		ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} $ENV{SAMNTDIR}/deploy/x64
+		ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${SSC_H} $ENV{SAMNTDIR}/deploy/x64
 		COMMAND ${CMAKE_COMMAND}
 		ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${TESTDIR}
 		)
