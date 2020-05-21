@@ -105,6 +105,8 @@ set(SHARED_SRC
         lib_util.h
         lib_utility_rate.cpp
         lib_utility_rate.h
+		lib_utility_rate_equations.cpp
+        lib_utility_rate_equations.h
         lib_weatherfile.cpp
         lib_weatherfile.h
         lib_wind_obos.cpp
