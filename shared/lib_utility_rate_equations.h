@@ -96,7 +96,10 @@ public:
 	std::vector<std::vector<int> >  m_dc_flat_tiers; // tier numbers for each month of flat demand charge
 	size_t m_num_rec_yearly;
 
-	void rate_data::init_energy_rates(bool gen_only);
+	void init_energy_rates(bool gen_only);
+	void setup(bool dc_enabled, bool en_ts_sell_rate, size_t cnt, ssc_number_t* ts_sr, ssc_number_t* ts_br,
+		ssc_number_t* ec_weekday, ssc_number_t* ec_weekend, size_t tou_rows, ssc_number_t* ec_tou_in, bool sell_eq_buy, 
+		ssc_number_t* dc_weekday, ssc_number_t* dc_weekend, size_t dc_tou_rows, ssc_number_t* dc_tou_in, size_t dc_flat_rows, ssc_number_t* dc_flat_in);
 };
 
 #endif // _LIB_UTILITY_RATE_EQUATIONS_H_
