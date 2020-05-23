@@ -151,6 +151,8 @@ set(SSC_SRC
 		tckernel.h
 		vartab.cpp
 		vartab.h
+		vbapi.cpp
+		vbapi.h
 		)
 
 
