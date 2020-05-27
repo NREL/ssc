@@ -44,7 +44,7 @@ void generic_singleowner_battery_60min(ssc_data_t &data)
 	ssc_number_t p_generic_degradation[1] ={ 0 };
 	ssc_data_set_array( data, "generic_degradation", p_generic_degradation, 1 );
 	ssc_data_set_number( data, "adjust:constant", 0 );
-	
+
 	ssc_data_set_number( data, "en_batt", 1 );
 	ssc_data_set_number( data, "batt_replacement_option", 0 );
 	ssc_data_set_number( data, "batt_chem", 1 );
@@ -111,9 +111,7 @@ void generic_singleowner_battery_60min(ssc_data_t &data)
 	ssc_number_t p_replacement_cost[1] = { 600 };
 	ssc_data_set_array(data, "om_replacement_cost1", p_replacement_cost, 1);
 	ssc_data_set_number( data, "batt_mass", 21489202 );
-	ssc_data_set_number( data, "batt_length", 21.196117401123047 );
-	ssc_data_set_number( data, "batt_width", 21.196117401123047 );
-	ssc_data_set_number( data, "batt_height", 21.196117401123047 );
+	ssc_data_set_number( data, "batt_surface_area", 2694 );
 	ssc_data_set_number( data, "batt_Cp", 1004 );
 	ssc_data_set_number( data, "batt_h_to_ambient", 5 );
 	set_array(data, "batt_room_temperature_celsius", generictest::temperature_path, 8760);
@@ -171,7 +169,7 @@ void generic_singleowner_battery_60min(ssc_data_t &data)
 	ssc_data_set_matrix( data, "dispatch_sched_weekday", p_dispatch_sched_weekday, 12, 24 );
 	ssc_number_t p_dispatch_sched_weekend[288] ={ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
 	ssc_data_set_matrix( data, "dispatch_sched_weekend", p_dispatch_sched_weekend, 12, 24 );
-	
+
 	ssc_number_t p_federal_tax_rate[1] ={ 21 };
 	ssc_data_set_array( data, "federal_tax_rate", p_federal_tax_rate, 1 );
 	ssc_number_t p_state_tax_rate[1] ={ 0 };
@@ -416,7 +414,7 @@ void generic_commerical_battery_60min(ssc_data_t &data)
 	ssc_number_t p_generic_degradation[1] = { 0 };
 	ssc_data_set_array(data, "generic_degradation", p_generic_degradation, 1);
 	ssc_data_set_number(data, "adjust:constant", 0);
-	
+
 	ssc_data_set_number(data, "en_batt", 1);
 	set_array(data, "load", generictest::load_profile_path_60min, 8760);
 	ssc_data_set_number(data, "batt_replacement_option", 0);
@@ -482,9 +480,7 @@ void generic_commerical_battery_60min(ssc_data_t &data)
 	ssc_number_t p_replacement_cost[1] = { 600 };
 	ssc_data_set_array(data, "om_replacement_cost1", p_replacement_cost, 1);
 	ssc_data_set_number(data, "batt_mass", 507.8046875);
-	ssc_data_set_number(data, "batt_length", 0.58471626043319702);
-	ssc_data_set_number(data, "batt_width", 0.58471626043319702);
-	ssc_data_set_number(data, "batt_height", 0.58471626043319702);
+	ssc_data_set_number(data, "batt_surface_area", 2.05);
 	ssc_data_set_number(data, "batt_Cp", 4183);
 	ssc_data_set_number(data, "batt_h_to_ambient", 5);
 	set_array(data, "batt_room_temperature_celsius", generictest::temperature_path, 8760);
@@ -519,7 +515,7 @@ void generic_commerical_battery_60min(ssc_data_t &data)
 	ssc_data_set_matrix(data, "ur_ec_sched_weekend", p_ur_ec_sched_weekend, 12, 24);
 	ssc_number_t p_ur_ec_tou_mat[30] = { 1, 1, 9.9999996802856925e+37, 0, 0.094169996678829193, 0, 2, 1, 400, 0, 0.096869997680187225, 0, 2, 2, 800, 0, 0.13817000389099121, 0, 2, 3, 3000, 0, 0.16166999936103821, 0, 2, 4, 9.9999996802856925e+37, 0, 0.17257000505924225, 0 };
 	ssc_data_set_matrix(data, "ur_ec_tou_mat", p_ur_ec_tou_mat, 5, 6);
-	
+
 	ssc_data_set_number(data, "inflation_rate", 2.5);
 	ssc_number_t p_degradation[1] = { 0 };
 	ssc_data_set_array(data, "degradation", p_degradation, 1);
@@ -543,7 +539,7 @@ void generic_commerical_battery_60min(ssc_data_t &data)
 	ssc_data_set_matrix(data, "ur_dc_tou_mat", p_ur_dc_tou_mat, 1, 4);
 	ssc_number_t p_ur_dc_flat_mat[48] = { 0, 1, 0, 0, 1, 1, 0, 0, 2, 1, 0, 0, 3, 1, 0, 0, 4, 1, 0, 0, 5, 1, 0, 0, 6, 1, 0, 0, 7, 1, 0, 0, 8, 1, 0, 0, 9, 1, 0, 0, 10, 1, 0, 0, 11, 1, 0, 0 };
 	ssc_data_set_matrix(data, "ur_dc_flat_mat", p_ur_dc_flat_mat, 12, 4);
-	
+
 	ssc_number_t p_federal_tax_rate[1] = { 21 };
 	ssc_data_set_array(data, "federal_tax_rate", p_federal_tax_rate, 1);
 	ssc_number_t p_state_tax_rate[1] = { 7 };
