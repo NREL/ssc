@@ -963,7 +963,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 	for (size_t nn = 0; nn < num_subarrays; nn++)
 	{
 		if (Subarrays[nn]->tiltEqualLatitude)
-			Subarrays[nn]->tiltDegrees = Irradiance->weatherHeader.lat;
+			Subarrays[nn]->tiltDegrees = fabs(Irradiance->weatherHeader.lat);
 		if (Subarrays[nn]->trackMode == irrad::SINGLE_AXIS && Subarrays[nn]->tiltDegrees > 0)
 			log(util::format("A non-zero tilt was assigned for a single-axis tracking system in Subarray %d. This is a very uncommon configuration.", nn+1), SSC_WARNING);
 	}

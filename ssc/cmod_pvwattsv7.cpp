@@ -1218,11 +1218,10 @@ public:
 			}
 
 			wdprov->rewind();
-			if (y == 0) {
-				accumulate_monthly("gen", "monthly_energy", ts_hour);
-				accumulate_annual("gen", "annual_energy", ts_hour);
-			}
 		}
+
+		accumulate_monthly_for_year("gen", "monthly_energy", ts_hour, step_per_hour);
+		accumulate_annual_for_year("gen", "annual_energy", ts_hour, step_per_hour);
 
 		accumulate_monthly("dc", "dc_monthly", 0.001*ts_hour);
 		accumulate_monthly("ac", "ac_monthly", 0.001*ts_hour);
