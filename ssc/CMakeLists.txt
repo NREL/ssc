@@ -155,9 +155,15 @@ set(SSC_SRC
 		tckernel.h
 		vartab.cpp
 		vartab.h
+		)
+
+if(MSVC)	
+	set	(SSC_SRC 
+		${SSC_SRC}
 		vbapi.cpp
 		vbapi.h
 		)
+endif(MSVC)		
 
 
 #####################################################################################################################
