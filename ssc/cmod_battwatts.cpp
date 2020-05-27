@@ -37,7 +37,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 var_info vtab_battwatts[] = {
 	/*   VARTYPE           DATATYPE         NAME                               LABEL                                    UNITS      META                   GROUP                  REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-	{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",        "PV lifetime simulation",                 "0/1",     "0=SingleYearRepeated,1=RunEveryYear",                     "Lifetime",             "?=0",                        "BOOLEAN",                        "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",        "Enable lifetime simulation",                 "0/1",     "0=SingleYearRepeated,1=RunEveryYear",                     "Lifetime",             "?=0",                        "BOOLEAN",                        "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                   "Lifetime analysis period",               "years",   "The number of years in the simulation",                   "Lifetime",             "system_use_lifetime_output=1",   "",                               "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_simple_enable",                "Enable Battery",                         "0/1",     "",                 "Battery",                  "?=0",                        "BOOLEAN",                       "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_simple_kwh",                   "Battery Capacity",                       "kWh",     "",                 "Battery",                  "?=0",                        "",                              "" },
