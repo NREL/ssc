@@ -108,7 +108,7 @@ static var_info _cm_vtab_pvwattsv7[] = {
 
 	/*   VARTYPE           DATATYPE          NAME                              LABEL                                          UNITS        META                                            GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 		{ SSC_INPUT,        SSC_STRING,      "solar_resource_file",            "Weather file path",                          "",           "",                                             "Solar Resource",      "?",                       "",                              "" },
-		{ SSC_INPUT,        SSC_TABLE,       "solar_resource_data",            "Weather data",                               "",           "dn,df,tdry,wspd,lat,lon,tz",                   "Solar Resource",      "?",                       "",                              "" },
+		{ SSC_INPUT,        SSC_TABLE,       "solar_resource_data",            "Weather data",                               "",           "dn,df,tdry,wspd,lat,lon,tz,elev",              "Solar Resource",      "?",                       "",                              "" },
 		{ SSC_INPUT,        SSC_ARRAY,       "albedo",                         "Albedo",                                     "frac",       "if provided, will overwrite weather file albedo","Solar Resource",    "",                        "",                              "" },
 
 		{ SSC_INOUT,        SSC_NUMBER,      "system_use_lifetime_output",     "Run lifetime simulation",                    "0/1",        "",                                             "Lifetime",            "?=0",                        "",                              "" },
@@ -1218,11 +1218,10 @@ public:
 			}
 
 			wdprov->rewind();
-			if (y == 0) {
-				accumulate_monthly("gen", "monthly_energy", ts_hour);
-				accumulate_annual("gen", "annual_energy", ts_hour);
-			}
 		}
+
+		accumulate_monthly_for_year("gen", "monthly_energy", ts_hour, step_per_hour);
+		accumulate_annual_for_year("gen", "annual_energy", ts_hour, step_per_hour);
 
 		accumulate_monthly("dc", "dc_monthly", 0.001*ts_hour);
 		accumulate_monthly("ac", "ac_monthly", 0.001*ts_hour);

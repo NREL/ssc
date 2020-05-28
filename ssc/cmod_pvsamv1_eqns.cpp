@@ -257,20 +257,20 @@ SSCEXPORT void Reopt_size_battery_params(ssc_data_t data) {
 
     // convert load profile inputs, which are not net loads
     vt_get_array_vec(vt, "load", vec);
-    if (vec.size() != 8760){
-        throw std::runtime_error("Load profile must have 8760 entries.");
+    if (vec.size() != 8760 && vec.size() != 8760 * 2 && vec.size() != 8760 * 4){
+        throw std::runtime_error("Load profile must be hourly, 30 min or 15 min data for a single year.");
     }
-    reopt_load.assign("loads_kw", var_data(&vec[0], 8760));
+    reopt_load.assign("loads_kw", var_data(&vec[0], vec.size()));
     reopt_load.assign("loads_kw_is_net", false);
 
 	vt_get_array_vec(vt, "crit_load", vec);
-    if (vec.size() != 8760){
-        throw std::runtime_error("Critical load profile must have 8760 entries.");
+    if (vec.size() != 8760 && vec.size() != 8760 * 2 && vec.size() != 8760 * 4){
+        throw std::runtime_error("Critical load profile must be hourly, 30 min or 15 min data for a single year.");
     }
     else{
         reopt_load.assign("critical_load_pct", 0.0);
     }
-    reopt_load.assign("critical_loads_kw", var_data(&vec[0], 8760));
+    reopt_load.assign("critical_loads_kw", var_data(&vec[0], vec.size()));
 
     // assign the reopt parameter table and log messages
     reopt_electric.assign_match_case("urdb_response", reopt_utility);
