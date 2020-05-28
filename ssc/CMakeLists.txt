@@ -155,7 +155,15 @@ set(SSC_SRC
 		tckernel.h
 		vartab.cpp
 		vartab.h
-        )
+		)
+
+if(MSVC)	
+	set	(SSC_SRC 
+		${SSC_SRC}
+		vbapi.cpp
+		vbapi.h
+		)
+endif(MSVC)		
 
 
 #####################################################################################################################
@@ -265,6 +273,7 @@ endif()
 if (MSVC)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:WINDOWS")
 	set(SSC_LIB $<TARGET_FILE_DIR:ssc>/$<TARGET_FILE_BASE_NAME:ssc>.lib)
+	set(SSC_H ${CMAKE_CURRENT_LIST_DIR}/sscapi.h)
 
 	set(TESTDIR ${CMAKE_CURRENT_BINARY_DIR}/../test/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
 
@@ -274,7 +283,7 @@ if (MSVC)
 		COMMAND ${CMAKE_COMMAND}
 		ARGS -E make_directory $ENV{SAMNTDIR}/deploy/x64
 		COMMAND ${CMAKE_COMMAND}
-		ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} $ENV{SAMNTDIR}/deploy/x64
+		ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${SSC_H} $ENV{SAMNTDIR}/deploy/x64
 		COMMAND ${CMAKE_COMMAND}
 		ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${TESTDIR}
 		)

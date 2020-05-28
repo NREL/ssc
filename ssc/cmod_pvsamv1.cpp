@@ -963,7 +963,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 	for (size_t nn = 0; nn < num_subarrays; nn++)
 	{
 		if (Subarrays[nn]->tiltEqualLatitude)
-			Subarrays[nn]->tiltDegrees = Irradiance->weatherHeader.lat;
+			Subarrays[nn]->tiltDegrees = fabs(Irradiance->weatherHeader.lat);
 		if (Subarrays[nn]->trackMode == irrad::SINGLE_AXIS && Subarrays[nn]->tiltDegrees > 0)
 			log(util::format("A non-zero tilt was assigned for a single-axis tracking system in Subarray %d. This is a very uncommon configuration.", nn+1), SSC_WARNING);
 	}
@@ -1915,7 +1915,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 					if (iyear == 0 || save_full_lifetime_variables == 1)
 					{
 						//Gross DC power
-						dc_gross[nn] += Subarrays[nn]->dcPowerSubarray*util::watt_to_kilowatt*ts_hour; //power W to	energy kWh
+						if (iyear == 0) dc_gross[nn] += Subarrays[nn]->dcPowerSubarray*util::watt_to_kilowatt*ts_hour; //power W to	energy kWh
 						//PVSystem->p_dcPowerGross[nn][idx] = (ssc_number_t)dc_gross[nn]; // cumulative gross DC power per subarray
 						PVSystem->p_dcPowerGross[nn][idx] = Subarrays[nn]->dcPowerSubarray*util::watt_to_kilowatt; // time series gross DC power per subarray
 						//Add to annual MPPT clipping
