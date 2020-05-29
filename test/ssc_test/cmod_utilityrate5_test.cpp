@@ -181,6 +181,11 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates) {
     ssc_number_t cost_with_system;
     ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
     EXPECT_NEAR(-11.9, cost_with_system, 0.1);
+
+    int length;
+    ssc_number_t* excess_dollars = ssc_data_get_array(data, "year1_excess_dollars_earned", &length);
+    float dec_dollars = excess_dollars[length - 1];
+    EXPECT_NEAR(75.9, dec_dollars, 0.1);
 }
 
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_subhourly_gen) {
