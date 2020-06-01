@@ -203,7 +203,7 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_subhourly_gen) {
 
     ssc_number_t cost_with_system;
     ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
-    EXPECT_NEAR(47.3, cost_with_system, 0.1); // Gen is lower in this system, due to more accurate clipping loss simulation at a smaller timestep, so a higher bill is expected
+    EXPECT_NEAR(-27.94, cost_with_system, 0.1);
 }
 
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_subhourly_gen_and_load) {
@@ -226,7 +226,7 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_subhourly_gen_and_load) 
 
     ssc_number_t cost_with_system;
     ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
-    EXPECT_NEAR(47.3, cost_with_system, 0.1); // Gen is lower in this system, due to more accurate clipping loss simulation at a smaller timestep, so a higher bill is expected
+    EXPECT_NEAR(-27.94, cost_with_system, 0.1);
 }
 
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_metering_credits) {
