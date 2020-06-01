@@ -54,7 +54,9 @@ static var_info vtab_utility_rate5[] = {
 	{ SSC_INPUT, SSC_NUMBER, "ur_metering_option", "Metering options", "0=net energy metering,1=net energy metering with $ credits,2=net billing,3=net billing with carryover to next month,4=buy all - sell all", "Net metering monthly excess", "Electricity Rates", "?=0", "INTEGER,MIN=0,MAX=4", "" },
 
 
-	{ SSC_INPUT, SSC_NUMBER, "ur_nm_yearend_sell_rate", "Year end sell rate", "$/kWh", "", "Electricity Rates", "?=0.0", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ur_nm_yearend_sell_rate", "Net metering credit sell rate", "$/kWh", "", "Electricity Rates", "?=0.0", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ur_nm_credit_month", "Month of rollover credits", "$/kWh", "", "Electricity Rates", "?=11", "INTEGER,MIN=0,MAX=11", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ur_nm_credit_rollover", "Roll over credits to next year", "0/1", "", "Electricity Rates", "?=0", "INTEGER,MIN=0,MAX=1", "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_monthly_fixed_charge",  "Monthly fixed charge",            "$",      "",                      "Electricity Rates",             "?=0.0",                     "",                              "" },
 
 
@@ -2557,6 +2559,8 @@ public:
 		ssc_number_t ann_min_charge = as_number("ur_annual_min_charge")*rate_esc;
 		ssc_number_t mon_min_charge = as_number("ur_monthly_min_charge")*rate_esc;
 		ssc_number_t mon_fixed = as_number("ur_monthly_fixed_charge")*rate_esc;
+		int net_metering_credit_month = (int) as_number("ur_nm_credit_month");
+		bool rollover_credit = as_boolean("ur_nm_credit_rollover");
 
 		// process one month at a time
 		for (m = 0; m < 12; m++)
@@ -2587,7 +2591,7 @@ public:
 								}
 							}
 							ann_bill += mon_bill;
-							if (m == 11)
+							if (m == net_metering_credit_month)
 							{
 								// apply annual minimum
 								if (include_min)
@@ -2602,17 +2606,17 @@ public:
 								if (enable_nm)
 								{
 									// monthly rollover with year end sell at reduced rate
-									if (!excess_monthly_dollars && (monthly_cumulative_excess_energy[11] > 0))
+									if (!excess_monthly_dollars && (monthly_cumulative_excess_energy[m] > 0))
 									{
-										ssc_number_t year_end_dollars = monthly_cumulative_excess_energy[11] * as_number("ur_nm_yearend_sell_rate")*rate_esc;
+										ssc_number_t year_end_dollars = monthly_cumulative_excess_energy[m] * as_number("ur_nm_yearend_sell_rate")*rate_esc;
 										income[c] += year_end_dollars;
-										monthly_cumulative_excess_dollars[11] = year_end_dollars;
-										excess_dollars_earned[11] += year_end_dollars;
-										excess_dollars_applied[11] += year_end_dollars;
+										monthly_cumulative_excess_dollars[m] = year_end_dollars;
+										excess_dollars_earned[m] += year_end_dollars;
+										excess_dollars_applied[m] += year_end_dollars;
 									}
-									else if (excess_monthly_dollars && (monthly_cumulative_excess_dollars[11] > 0))
+									else if (excess_monthly_dollars && (monthly_cumulative_excess_dollars[m] > 0))
 									{
-										income[c] += monthly_cumulative_excess_dollars[11];
+										income[c] += monthly_cumulative_excess_dollars[m];
 										// ? net metering energy?
 									}
 								}
@@ -3167,6 +3171,9 @@ public:
 		ssc_number_t mon_min_charge = as_number("ur_monthly_min_charge")*rate_esc;
 		ssc_number_t mon_fixed = as_number("ur_monthly_fixed_charge")*rate_esc;
 
+		ssc_number_t net_metering_credit_month = as_number("ur_nm_credit_month");
+		bool rollover_credit = as_boolean("ur_nm_credit_rollover");
+
 		// process one month at a time
 		for (m = 0; m < 12; m++)
 		{
@@ -3196,7 +3203,7 @@ public:
 								}
 							}
 							ann_bill += mon_bill;
-							if (m == 11)
+							if (m == net_metering_credit_month)
 							{
 								// apply annual minimum
 								if (include_min)

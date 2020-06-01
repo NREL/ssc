@@ -188,6 +188,36 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates) {
     EXPECT_NEAR(75.9, dec_dollars, 0.1);
 }
 
+TEST(cmod_utilityrate5_eqns, Test_Residential_net_metering_credits_in_may) {
+    ssc_data_t data = new var_table;
+
+    setup_residential_rates(data);
+
+    int analysis_period = 25;
+    int credit_month = 4; // May - months index from 0
+    ssc_data_set_number(data, "system_use_lifetime_output", 1);
+    ssc_data_set_number(data, "ur_nm_credit_month", credit_month);
+    ssc_data_set_number(data, "analysis_period", analysis_period);
+    set_array(data, "load", load_profile_path, 8760);
+    set_array(data, "gen", gen_path, 8760 * analysis_period);
+
+    int status = run_module(data, "utilityrate5");
+    EXPECT_FALSE(status);
+
+    ssc_number_t cost_without_system;
+    ssc_data_get_number(data, "elec_cost_without_system_year1", &cost_without_system);
+    EXPECT_NEAR(771.8, cost_without_system, 0.1);
+
+    ssc_number_t cost_with_system;
+    ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
+    EXPECT_NEAR(13.75, cost_with_system, 0.1);
+
+    int length;
+    ssc_number_t* excess_dollars = ssc_data_get_array(data, "year1_excess_dollars_earned", &length);
+    float may_dollars = excess_dollars[credit_month];
+    EXPECT_NEAR(50.28, may_dollars, 0.1);
+}
+
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_subhourly_gen) {
     ssc_data_t data = new var_table;
 
