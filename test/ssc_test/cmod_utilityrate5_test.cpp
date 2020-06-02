@@ -365,6 +365,55 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_buyall_sellall) {
     ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
     EXPECT_NEAR(-157.0, cost_with_system, 0.1);
 }
+
+TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_no_credit) {
+    ssc_data_t data = new var_table;
+
+    setup_residential_rates(data);
+
+    int analysis_period = 25;
+    ssc_data_set_number(data, "ur_nm_yearend_sell_rate", 0.0);
+    ssc_data_set_number(data, "system_use_lifetime_output", 1);
+    ssc_data_set_number(data, "analysis_period", analysis_period);
+    set_array(data, "load", load_profile_path, 8760);
+    set_array(data, "gen", gen_path, 8760 * analysis_period);
+
+    int status = run_module(data, "utilityrate5");
+    EXPECT_FALSE(status);
+
+    ssc_number_t cost_without_system;
+    ssc_data_get_number(data, "elec_cost_without_system_year1", &cost_without_system);
+    EXPECT_NEAR(771.8, cost_without_system, 0.1);
+
+    ssc_number_t cost_with_system;
+    ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
+    EXPECT_NEAR(64.03, cost_with_system, 0.1);
+}
+
+TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_annual_minimum) {
+    ssc_data_t data = new var_table;
+
+    setup_residential_rates(data);
+
+    int analysis_period = 25;
+    ssc_data_set_number(data, "ur_nm_yearend_sell_rate", 0.0);
+    ssc_data_set_number(data, "ur_annual_min_charge", 100);
+    ssc_data_set_number(data, "system_use_lifetime_output", 1);
+    ssc_data_set_number(data, "analysis_period", analysis_period);
+    set_array(data, "load", load_profile_path, 8760);
+    set_array(data, "gen", gen_path, 8760 * analysis_period);
+
+    int status = run_module(data, "utilityrate5");
+    EXPECT_FALSE(status);
+
+    ssc_number_t cost_without_system;
+    ssc_data_get_number(data, "elec_cost_without_system_year1", &cost_without_system);
+    EXPECT_NEAR(771.8, cost_without_system, 0.1);
+
+    ssc_number_t cost_with_system;
+    ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
+    EXPECT_NEAR(100.0, cost_with_system, 0.1);
+}
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_w_tiers) {
     ssc_data_t data = new var_table;
 
