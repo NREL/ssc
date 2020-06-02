@@ -53,7 +53,9 @@ static var_info vtab_utility_rate5[] = {
 	{ SSC_INPUT, SSC_NUMBER, "ur_metering_option", "Metering options", "0=net energy metering,1=net energy metering with $ credits,2=net billing,3=net billing with carryover to next month,4=buy all - sell all", "Net metering monthly excess", "Electricity Rates", "?=0", "INTEGER,MIN=0,MAX=4", "" },
 
 
-	{ SSC_INPUT, SSC_NUMBER, "ur_nm_yearend_sell_rate", "Year end sell rate", "$/kWh", "", "Electricity Rates", "?=0.0", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ur_nm_yearend_sell_rate", "Net metering credit sell rate", "$/kWh", "", "Electricity Rates", "?=0.0", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ur_nm_credit_month", "Month of rollover credits", "$/kWh", "", "Electricity Rates", "?=11", "INTEGER,MIN=0,MAX=11", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ur_nm_credit_rollover", "Roll over credits to next year", "0/1", "", "Electricity Rates", "?=0", "INTEGER,MIN=0,MAX=1", "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_monthly_fixed_charge",  "Monthly fixed charge",            "$",      "",                      "Electricity Rates",             "?=0.0",                     "",                              "" },
 
 
@@ -701,10 +703,18 @@ public:
 		bool two_meter = (metering_option == 4 );
 		bool timestep_reconciliation = (metering_option == 2 || metering_option == 3 || metering_option == 4);
 
-
+		ur_month last_month;
+		ssc_number_t last_excess_energy = 0;
+		ssc_number_t last_excess_dollars = 0;
+		
 		idx = 0;
 		for (i=0;i<nyears;i++)
 		{
+			if (i > 0) {
+				last_month = rate_data.m_month[11];
+				last_excess_energy = monthly_cumulative_excess_energy[11];
+				last_excess_dollars = monthly_cumulative_excess_dollars[11];
+			}
 			for (j = 0; j<m_num_rec_yearly; j++)
 			{
 				/* for future implementation for lifetime loads
@@ -776,7 +786,9 @@ public:
 					&monthly_excess_dollars_applied[0],
 					&monthly_excess_kwhs_earned[0],
 					&monthly_excess_kwhs_applied[0],
-					&dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_scale[i]);
+					&dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], 
+					&monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_scale[i], i + 1,
+					last_excess_dollars);
 			}
 			else
 			{
@@ -790,7 +802,9 @@ public:
 					&monthly_excess_dollars_applied[0],
 					&monthly_excess_kwhs_earned[0],
 					&monthly_excess_kwhs_applied[0],
-					&dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_scale[i], i + 1);
+					&dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], 
+					&monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_scale[i], i + 1,
+					&last_month, last_excess_energy, last_excess_dollars);
 			}
 
 			for (j = 0; j < 12; j++)
@@ -925,7 +939,8 @@ public:
 						&monthly_excess_dollars_applied[0],
 						&monthly_excess_kwhs_earned[0],
 						&monthly_excess_kwhs_applied[0],
-						&dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_scale[i], false, false, true);
+						&dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_scale[i],
+						i + 1, last_excess_dollars, false, false, true);
 				}
 				else
 				{
@@ -940,7 +955,8 @@ public:
 						&monthly_excess_dollars_applied[0],
 						&monthly_excess_kwhs_earned[0],
 						&monthly_excess_kwhs_applied[0],
-						&dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_scale[i]);
+						&dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0],
+						&monthly_bill[0], rate_scale[i], i + 1, last_excess_dollars);
 				}
 			}
 			else // monthly reconciliation per 2015.6.30 release
@@ -959,7 +975,8 @@ public:
 						&monthly_excess_dollars_applied[0],
 						&monthly_excess_kwhs_earned[0],
 						&monthly_excess_kwhs_applied[0],
-						&dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_scale[i], i + 1, false, false, true);
+						&dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_scale[i], 
+						i + 1, &last_month, last_excess_energy, last_excess_dollars, false, false, true);
 				}
 				else
 				{
@@ -975,7 +992,9 @@ public:
 						&monthly_excess_dollars_applied[0],
 						&monthly_excess_kwhs_earned[0],
 						&monthly_excess_kwhs_applied[0],
-						&dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_scale[i], i + 1);
+						&dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0],
+						&monthly_bill[0], rate_scale[i], i + 1,
+						&last_month, last_excess_energy, last_excess_dollars);
 				}
 			}
 			if (two_meter)
@@ -1427,7 +1446,7 @@ public:
 		ssc_number_t excess_kwhs_applied[12],
 		ssc_number_t *dc_hourly_peak, ssc_number_t monthly_cumulative_excess_energy[12],
 		ssc_number_t monthly_cumulative_excess_dollars[12], ssc_number_t monthly_bill[12],
-		ssc_number_t rate_esc, size_t year, bool include_fixed=true, bool include_min=true, bool gen_only=false)
+		ssc_number_t rate_esc, size_t year, ur_month* prev_dec, ssc_number_t prev_excess_energy, ssc_number_t prev_excess_dollars, bool include_fixed=true, bool include_min=true, bool gen_only=false)
 
 	{
 		int i;
@@ -1469,6 +1488,8 @@ public:
 
 		bool tou_demand_single_peak = (as_integer("TOU_demand_single_peak") == 1);
 
+		int net_metering_credit_month = (int)as_number("ur_nm_credit_month");
+		bool rollover_credit = as_boolean("ur_nm_credit_rollover");
 
 		size_t steps_per_hour = m_num_rec_yearly / 8760;
 		// calculate the monthly net energy and monthly hours
@@ -1510,8 +1531,17 @@ public:
 			ssc_number_t prev_value = 0;
 			for (m = 0; m < 12; m++)
 			{
-				prev_value = (m > 0) ? monthly_cumulative_excess_energy[m - 1] : 0;
-				monthly_cumulative_excess_energy[m] = ((prev_value + rate_data.m_month[m].energy_net) > 0) ? (prev_value + rate_data.m_month[m].energy_net) : 0;
+				ur_month& curr_month = rate_data.m_month[m];
+				if (m == net_metering_credit_month + 1) {
+					monthly_cumulative_excess_energy[m] = ((curr_month.energy_net) > 0) ? (curr_month.energy_net) : 0;
+				}
+				else if (m == 0 && year > 1 && net_metering_credit_month != 11) {
+					monthly_cumulative_excess_energy[m] = prev_excess_energy;
+				}
+				else {
+					prev_value = (m > 0) ? monthly_cumulative_excess_energy[m - 1] : 0;
+					monthly_cumulative_excess_energy[m] = ((prev_value + curr_month.energy_net) > 0) ? (prev_value + curr_month.energy_net) : 0;
+				}
 			}
 		}
 
@@ -1526,9 +1556,15 @@ public:
 		// adjust net energy if net metering with monthly rollover
 		if (enable_nm && !excess_monthly_dollars)
 		{
+			if (net_metering_credit_month != 11 && year > 1) {
+				if (prev_excess_energy < 0) {
+					rate_data.m_month[0].energy_net += prev_excess_energy;
+					excess_kwhs_applied[0] = prev_excess_energy;
+				}
+			}
 			for (m = 1; m < (int)rate_data.m_month.size(); m++)
 			{
-				if (rate_data.m_month[m].energy_net < 0)
+				if (rate_data.m_month[m].energy_net < 0 && m != net_metering_credit_month + 1)
 				{
 					rate_data.m_month[m].energy_net += monthly_cumulative_excess_energy[m - 1];
 					excess_kwhs_applied[m] = monthly_cumulative_excess_energy[m - 1];
@@ -1544,16 +1580,21 @@ public:
 			c = 0;
 			for (m = 0; m < (int)rate_data.m_month.size(); m++)
 			{
+				ur_month& curr_month = rate_data.m_month[m];
 				// accumulate energy per period - place all in tier 0 initially and then
 				// break up according to tier boundaries and number of periods
 
 				/*  hour by hour accumulation - changed to monthly per meeting with Paul 2/29/16 */
 				// monthly accumulation of energy
 				ssc_number_t mon_e_net = 0;
-				ur_month& curr_month = rate_data.m_month[m];
-				if (m>0 && enable_nm && !excess_monthly_dollars)
-				{
-					mon_e_net = monthly_cumulative_excess_energy[m - 1]; // rollover
+				if (enable_nm && !excess_monthly_dollars) {
+					if (m > 0 && m != net_metering_credit_month + 1)
+					{
+						mon_e_net = monthly_cumulative_excess_energy[m - 1]; // rollover
+					}
+					else if (m == 0 && net_metering_credit_month != 11 && year > 1) {
+						mon_e_net = prev_excess_energy;
+					}
 				}
 
 				for (d = 0; d < util::nday[m]; d++)
@@ -1611,18 +1652,21 @@ public:
 				}
 				*/
 
+				bool skip_rollover = (m == 0 && year == 1) || (m == net_metering_credit_month + 1) || (m == 0 && net_metering_credit_month == 11);
+				
 				// rollover energy from correct period - matching time of day - currently four values considered 12a, 6a, 12p, 6p set in loop above.
-				if (m > 0 && enable_nm && !excess_monthly_dollars)
+				if (!skip_rollover && enable_nm && !excess_monthly_dollars)
 				{
+					ur_month& prev_month = (m == 0) ? *prev_dec : rate_data.m_month[m - 1];
 					// check for surplus in previous month for same period
-					for (size_t ir = 0; ir < rate_data.m_month[m - 1].ec_energy_surplus.nrows(); ir++)
+					for (size_t ir = 0; ir < prev_month.ec_energy_surplus.nrows(); ir++)
 					{
-						if (rate_data.m_month[m - 1].ec_energy_surplus.at(ir, 0) > 0) // surplus - check period
+						if (prev_month.ec_energy_surplus.at(ir, 0) > 0) // surplus - check period
 						{
-							int toup_source = rate_data.m_month[m - 1].ec_periods[ir]; // number of rows of previous month - and period with surplus
+							int toup_source = prev_month.ec_periods[ir]; // number of rows of previous month - and period with surplus
 							// find source period in rollover map for previous month
-							std::vector<int>::iterator source_per_num = std::find(rate_data.m_month[m-1].ec_rollover_periods.begin(), rate_data.m_month[m-1].ec_rollover_periods.end(), toup_source);
-							if (source_per_num == rate_data.m_month[m-1].ec_rollover_periods.end())
+							std::vector<int>::iterator source_per_num = std::find(prev_month.ec_rollover_periods.begin(), prev_month.ec_rollover_periods.end(), toup_source);
+							if (source_per_num == prev_month.ec_rollover_periods.end())
 							{
 								std::ostringstream ss;
 								ss << "year:" << year << " utilityrate5: Unable to determine period for energy charge rollover: Period " << toup_source << " does not exist for 12 am, 6 am, 12 pm or 6 pm in the previous month, which is Month " << util::schedule_int_to_month(m-1) << ".";
@@ -1632,7 +1676,7 @@ public:
 							{
 								// find corresponding target period for same time of day
 								ssc_number_t extra = 0;
-								int rollover_index = (int)(source_per_num - rate_data.m_month[m-1].ec_rollover_periods.begin());
+								int rollover_index = (int)(source_per_num - prev_month.ec_rollover_periods.begin());
 								if (rollover_index < (int)curr_month.ec_rollover_periods.size())
 								{
 									int toup_target = curr_month.ec_rollover_periods[rollover_index];
@@ -1644,8 +1688,8 @@ public:
 										log(ss.str(), SSC_NOTICE);
 									}
 									int target_row = (int)(target_per_num - curr_month.ec_periods.begin());
-									for (size_t ic = 0; ic < rate_data.m_month[m - 1].ec_energy_surplus.ncols(); ic++)
-										extra += rate_data.m_month[m - 1].ec_energy_surplus.at(ir, ic);
+									for (size_t ic = 0; ic < prev_month.ec_energy_surplus.ncols(); ic++)
+										extra += prev_month.ec_energy_surplus.at(ir, ic);
 
 									curr_month.ec_energy_use(target_row, 0) += extra;
 								}
@@ -1966,13 +2010,19 @@ public:
 			if (enable_nm)
 			{
 				// apply previous month rollover kwhs
-				if (m > 0)
+				if (m > 0 && (m != (net_metering_credit_month + 1) || rollover_credit))
 				{
 //					monthly_bill[m] -= monthly_cumulative_excess_dollars[m - 1];
 					payment[c - 1] -= monthly_cumulative_excess_dollars[m-1];
 					monthly_ec_charges[m] -= monthly_cumulative_excess_dollars[m - 1];
 					dollars_applied += monthly_cumulative_excess_dollars[m - 1];
 				}
+				else if (m == 0 && year > 1 && (net_metering_credit_month != 11 || rollover_credit)) {
+					payment[c - 1] -= prev_excess_dollars;
+					monthly_ec_charges[m] -= prev_excess_dollars;
+					dollars_applied += prev_excess_dollars;
+				}
+
 //				if (monthly_bill[m] < 0)
 				if (monthly_ec_charges[m] < 0)
 				{
@@ -2057,7 +2107,7 @@ public:
 								}
 							}
 							ann_bill += mon_bill;
-							if (m == 11)
+							if (m == 11) // Example: PG&E assesses monthly bills 12 months after interconnection, so this assumes the system comes online Jan 1st
 							{
 								// apply annual minimum
 								if (include_min)
@@ -2068,21 +2118,32 @@ public:
 										payment[c] += ann_min_charge - ann_bill;
 									}
 								}
+							}
+
+							if (m == net_metering_credit_month)
+							{
 								// apply annual rollovers AFTER minimum calculations
 								if (enable_nm)
 								{
 									// monthly rollover with year end sell at reduced rate
-									if (!excess_monthly_dollars && (monthly_cumulative_excess_energy[11] > 0))
+									if (!excess_monthly_dollars && (monthly_cumulative_excess_energy[m] > 0))
 									{
-										ssc_number_t year_end_dollars = monthly_cumulative_excess_energy[11] * as_number("ur_nm_yearend_sell_rate")*rate_esc;
-										income[c] += year_end_dollars;
-										monthly_cumulative_excess_dollars[11] = year_end_dollars;
-										excess_dollars_earned[11] += year_end_dollars;
-										excess_dollars_applied[11] += year_end_dollars;
+										ssc_number_t year_end_dollars = monthly_cumulative_excess_energy[m] * as_number("ur_nm_yearend_sell_rate")*rate_esc;
+										monthly_cumulative_excess_dollars[m] = year_end_dollars;
+										excess_dollars_earned[m] += year_end_dollars;
+										if (!rollover_credit) {
+											excess_dollars_applied[m] += year_end_dollars;
+											income[c] += year_end_dollars;
+										}
+										else if (m < 11) {
+											excess_dollars_applied[m + 1] += year_end_dollars;
+											int future_income = c + util::nday[m + 1] * 24 * steps_per_hour; // Apply income to next month
+											income[future_income] += year_end_dollars;
+										}
 									}
-									else if (excess_monthly_dollars && (monthly_cumulative_excess_dollars[11] > 0))
+									else if (excess_monthly_dollars && (monthly_cumulative_excess_dollars[m] > 0))
 									{
-										income[c] += monthly_cumulative_excess_dollars[11];
+										income[c] += monthly_cumulative_excess_dollars[m];
 										// ? net metering energy?
 									}
 								}
@@ -2112,7 +2173,7 @@ public:
 		ssc_number_t excess_kwhs_applied[12],
 		ssc_number_t *dc_hourly_peak, ssc_number_t monthly_cumulative_excess_energy[12],
 		ssc_number_t monthly_cumulative_excess_dollars[12], ssc_number_t monthly_bill[12],
-		ssc_number_t rate_esc, bool include_fixed = true, bool include_min = true, bool gen_only = false)
+		ssc_number_t rate_esc, size_t year, ssc_number_t prev_excess_dollars, bool include_fixed = true, bool include_min = true, bool gen_only = false)
 
 	{
 		int i;
@@ -2156,6 +2217,8 @@ public:
 		*/
 		//int metering_option = as_integer("ur_metering_option");
 		bool excess_monthly_dollars = (as_integer("ur_metering_option") == 3);
+		int excess_dollars_credit_month = (int)as_number("ur_nm_credit_month");
+		bool rollover_credit = as_boolean("ur_nm_credit_rollover");
 
 		bool tou_demand_single_peak = (as_integer("TOU_demand_single_peak") == 1);
 
@@ -2476,7 +2539,12 @@ public:
 			// apply previous month rollover kwhs
 			if (excess_monthly_dollars)
 			{
-				if (m > 0)
+				if (year > 1 && m == 0 && excess_dollars_credit_month != 11) {
+					monthly_ec_charges[m] -= prev_excess_dollars;
+					payment[c - 1] -= prev_excess_dollars;
+					dollars_applied += prev_excess_dollars;
+				}
+				else if (m > 0 && m != excess_dollars_credit_month + 1)
 				{
 					monthly_ec_charges[m] -= monthly_cumulative_excess_dollars[m - 1];
 					payment[c - 1] -= monthly_cumulative_excess_dollars[m - 1];
@@ -2579,7 +2647,7 @@ public:
 								}
 							}
 							ann_bill += mon_bill;
-							if (m == 11)
+							if (m == 11) // Example: PG&E assesses monthly bills 12 months after interconnection, so this assumes the system comes online Jan 1st
 							{
 								// apply annual minimum
 								if (include_min)
@@ -2590,6 +2658,10 @@ public:
 										payment[c] += ann_min_charge - ann_bill;
 									}
 								}
+							} 
+
+							if (m == excess_dollars_credit_month)
+							{
 								// apply annual rollovers AFTER minimum calculations
 								if (excess_monthly_dollars && (monthly_cumulative_excess_dollars[m] > 0))
 								{
