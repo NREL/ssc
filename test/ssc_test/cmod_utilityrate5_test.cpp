@@ -210,7 +210,7 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_net_metering_credits_in_may) {
 
     ssc_number_t cost_with_system;
     ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
-    EXPECT_NEAR(13.75, cost_with_system, 0.1);
+    EXPECT_NEAR(36.6, cost_with_system, 0.1);
 
     int length;
     ssc_number_t* excess_dollars = ssc_data_get_array(data, "year1_excess_dollars_earned", &length);
