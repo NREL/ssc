@@ -1584,26 +1584,12 @@ public:
 				// accumulate energy per period - place all in tier 0 initially and then
 				// break up according to tier boundaries and number of periods
 
-				/*  hour by hour accumulation - changed to monthly per meeting with Paul 2/29/16 */
-				// monthly accumulation of energy
-				ssc_number_t mon_e_net = 0;
-				if (enable_nm && !excess_monthly_dollars) {
-					if (m > 0 && m != net_metering_credit_month + 1)
-					{
-						mon_e_net = monthly_cumulative_excess_energy[m - 1]; // rollover
-					}
-					else if (m == 0 && net_metering_credit_month != 11 && year > 1) {
-						mon_e_net = prev_excess_energy;
-					}
-				}
-
 				for (d = 0; d < util::nday[m]; d++)
 				{
 					for (h = 0; h < 24; h++)
 					{
 						for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
 						{
-							mon_e_net += e_in[c];
 							int toup = rate_data.m_ec_tou_sched[c];
 							std::vector<int>::iterator per_num = std::find(curr_month.ec_periods.begin(), curr_month.ec_periods.end(), toup);
 							if (per_num == curr_month.ec_periods.end())
