@@ -21,11 +21,11 @@ TOOLCHAIN=${NDK}/toolchains/llvm/prebuilt/darwin-x86_64
 
 # select prefixes based on arm or x86
 ifeq (${ARCH},x86_64)
-	ASM=i686-linux-android
+	ASM=x86_64-linux-android
 	ARCHPREFIX=arch-x86_64
 	GCCPREFIX=${ASM}${TARGET_API}
 else ifeq (${ARCH},x86)
-	ASM=x86_64-linux-android
+	ASM=i686-linux-android
 	ARCHPREFIX=arch-x86
 	GCCPREFIX=${ASM}${TARGET_API}
 else ifeq (${ARCH},arm64-v8a)
