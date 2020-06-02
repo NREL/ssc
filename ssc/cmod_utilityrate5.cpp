@@ -2075,14 +2075,14 @@ public:
 									if (!excess_monthly_dollars && (monthly_cumulative_excess_energy[11] > 0))
 									{
 										ssc_number_t year_end_dollars = monthly_cumulative_excess_energy[11] * as_number("ur_nm_yearend_sell_rate")*rate_esc;
-										income[8759] += year_end_dollars;
+										income[c] += year_end_dollars;
 										monthly_cumulative_excess_dollars[11] = year_end_dollars;
 										excess_dollars_earned[11] += year_end_dollars;
 										excess_dollars_applied[11] += year_end_dollars;
 									}
 									else if (excess_monthly_dollars && (monthly_cumulative_excess_dollars[11] > 0))
 									{
-										income[8759] += monthly_cumulative_excess_dollars[11];
+										income[c] += monthly_cumulative_excess_dollars[11];
 										// ? net metering energy?
 									}
 								}
@@ -2593,7 +2593,7 @@ public:
 								// apply annual rollovers AFTER minimum calculations
 								if (excess_monthly_dollars && (monthly_cumulative_excess_dollars[m] > 0))
 								{
-									income[8759] += monthly_cumulative_excess_dollars[m];
+									income[c] += monthly_cumulative_excess_dollars[m];
 									monthly_bill[m] -= monthly_cumulative_excess_dollars[m];
 								}
 							}
