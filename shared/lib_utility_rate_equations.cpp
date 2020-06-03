@@ -2,6 +2,19 @@
 
 #include <sstream>
 
+void ur_month::update_net_and_peak(double energy, double power, int step) {
+	// net energy use per month
+	energy_net += energy; // -load and +gen
+	// hours per period per month
+	hours_per_month++;
+	// peak
+	if (power < 0 && power < -dc_flat_peak)
+	{
+		dc_flat_peak = -power;
+		dc_flat_peak_hour = step;
+	}
+}
+
 void rate_data::init_energy_rates(bool gen_only) {
 	// calculate the monthly net energy per tier and period based on units
 	int c = 0;
@@ -545,4 +558,40 @@ void rate_data::setup(bool dc_enabled, bool en_ts_sell_rate, size_t cnt, ssc_num
 
 	}
 
+}
+
+void rate_data::sort_energy_to_periods(int month, double energy, int step) {
+	// accumulate energy per period - place all in tier 0 initially and then
+	// break up according to tier boundaries and number of periods
+	ur_month& curr_month = m_month[month];
+	int toup = m_ec_tou_sched[step];
+	std::vector<int>::iterator per_num = std::find(curr_month.ec_periods.begin(), curr_month.ec_periods.end(), toup);
+	if (per_num == curr_month.ec_periods.end())
+	{
+		std::ostringstream ss;
+		ss << "Energy rate TOU Period " << toup << " not found for Month " << util::schedule_int_to_month(month) << ".";
+		throw exec_error("utilityrate5", ss.str());
+	}
+	int row = (int)(per_num - curr_month.ec_periods.begin());
+	// place all in tier 0 initially and then update appropriately
+	// net energy per period per month
+	curr_month.ec_energy_use(row, 0) += energy;
+}
+
+void rate_data::find_dc_tou_peak(int month, double power, int step) {
+	ur_month& curr_month = m_month[month];
+	int todp = m_dc_tou_sched[step];
+	std::vector<int>::iterator per_num = std::find(curr_month.dc_periods.begin(), curr_month.dc_periods.end(), todp);
+	if (per_num == curr_month.dc_periods.end())
+	{
+		std::ostringstream ss;
+		ss << "Demand charge Period " << todp << " not found for Month " << month << ".";
+		throw exec_error("lib_utility_rate_equations", ss.str());
+	}
+	int row = (int)(per_num - curr_month.dc_periods.begin());
+	if (power < 0 && power < -curr_month.dc_tou_peak[row])
+	{
+		curr_month.dc_tou_peak[row] = -power;
+		curr_month.dc_tou_peak_hour[row] = step;
+	}
 }

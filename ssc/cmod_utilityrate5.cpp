@@ -1509,16 +1509,7 @@ public:
 				{
 					for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
 					{
-						// net energy use per month
-						curr_month.energy_net += e_in[c]; // -load and +gen
-						// hours per period per month
-						curr_month.hours_per_month++;
-						// peak
-						if (p_in[c] < 0 && p_in[c] < -curr_month.dc_flat_peak)
-						{
-							curr_month.dc_flat_peak = -p_in[c];
-							curr_month.dc_flat_peak_hour = c;
-						}
+						curr_month.update_net_and_peak(e_in[c], p_in[c], c);
 						c++;
 					}
 				}
@@ -1581,27 +1572,13 @@ public:
 			for (m = 0; m < (int)rate_data.m_month.size(); m++)
 			{
 				ur_month& curr_month = rate_data.m_month[m];
-				// accumulate energy per period - place all in tier 0 initially and then
-				// break up according to tier boundaries and number of periods
-
 				for (d = 0; d < util::nday[m]; d++)
 				{
 					for (h = 0; h < 24; h++)
 					{
 						for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
 						{
-							int toup = rate_data.m_ec_tou_sched[c];
-							std::vector<int>::iterator per_num = std::find(curr_month.ec_periods.begin(), curr_month.ec_periods.end(), toup);
-							if (per_num == curr_month.ec_periods.end())
-							{
-								std::ostringstream ss;
-								ss << "Energy rate TOU Period " << toup << " not found for Month " << util::schedule_int_to_month(m) << ".";
-								throw exec_error("utilityrate5", ss.str());
-							}
-							int row = (int)(per_num - curr_month.ec_periods.begin());
-							// place all in tier 0 initially and then update appropriately
-							// net energy per period per month
-							curr_month.ec_energy_use(row, 0) += e_in[c];
+							rate_data.sort_energy_to_periods(m, e_in[c], c);
 							c++;
 						}
 					}
@@ -1789,20 +1766,7 @@ public:
 					{
 						for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
 						{
-							int todp = rate_data.m_dc_tou_sched[c];
-							std::vector<int>::iterator per_num = std::find(curr_month.dc_periods.begin(), curr_month.dc_periods.end(), todp);
-							if (per_num == curr_month.dc_periods.end())
-							{
-								std::ostringstream ss;
-								ss << "Demand rate Period " << todp << " not found for Month " << m << ".";
-								throw exec_error("utilityrate5", ss.str());
-							}
-							int row = (int)(per_num - curr_month.dc_periods.begin());
-							if (p_in[c] < 0 && p_in[c] < -curr_month.dc_tou_peak[row])
-							{
-								curr_month.dc_tou_peak[row] = -p_in[c];
-								curr_month.dc_tou_peak_hour[row] = c;
-							}
+							rate_data.find_dc_tou_peak(m, p_in[c], c);
 							c++;
 						}
 					}
@@ -2229,16 +2193,7 @@ public:
 				{
 					for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
 					{
-						// net energy use per month
-						curr_month.energy_net += e_in[c]; // -load and +gen
-						// hours per period per month
-						curr_month.hours_per_month++;
-						// peak
-						if (p_in[c] < 0 && p_in[c] < -curr_month.dc_flat_peak)
-						{
-							curr_month.dc_flat_peak = -p_in[c];
-							curr_month.dc_flat_peak_hour = (int)c;
-						}
+						curr_month.update_net_and_peak(e_in[c], p_in[c], c);
 						c++;
 					}
 				}
@@ -2281,20 +2236,7 @@ public:
 					{
 						for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
 						{
-							int todp = rate_data.m_dc_tou_sched[c];
-							std::vector<int>::iterator per_num = std::find(curr_month.dc_periods.begin(), curr_month.dc_periods.end(), todp);
-							if (per_num == curr_month.dc_periods.end())
-							{
-								std::ostringstream ss;
-								ss << "Demand charge Period " << todp << " not found for Month " << m << ".";
-								throw exec_error("utilityrate5", ss.str());
-							}
-							int row = (int)(per_num - curr_month.dc_periods.begin());
-							if (p_in[c] < 0 && p_in[c] < -curr_month.dc_tou_peak[row])
-							{
-								curr_month.dc_tou_peak[row] = -p_in[c];
-								curr_month.dc_tou_peak_hour[row] = (int)c;
-							}
+							rate_data.find_dc_tou_peak(m, p_in[c], c);
 							c++;
 						}
 					}
