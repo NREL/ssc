@@ -1342,6 +1342,8 @@ public:
 		size_t cnt = 0; size_t nrows, ncols;
 		ssc_number_t* ts_sr = NULL; ssc_number_t* ts_br = NULL;
 
+		rate_data.init();
+
 		if (en_ts_sell_rate) {
 			if (!is_assigned("ur_ts_sell_rate"))
 			{
@@ -1358,6 +1360,8 @@ public:
 				if ((cnt != m_num_rec_yearly) && (cnt != 8760))
 					throw exec_error("utilityrate5", util::format("number of sell rate records (%d) must be equal to number of gen records (%d) or 8760 for each year", (int)cnt, (int)m_num_rec_yearly));
 			}
+
+			rate_data.setup_time_series(cnt, ts_sr, ts_br);
 		}
 
 		// Energy charges are always enabled
@@ -1387,6 +1391,8 @@ public:
 		size_t tou_rows = nrows;
 
 		bool sell_eq_buy = as_boolean("ur_sell_eq_buy");
+
+		rate_data.setup_energy_rates(ec_weekday, ec_weekend, tou_rows, ec_tou_in, sell_eq_buy);
 
 		ssc_number_t* dc_weekday = NULL; ssc_number_t* dc_weekend = NULL; ssc_number_t* dc_tou_in = NULL; ssc_number_t* dc_flat_in = NULL;
 		size_t dc_tier_rows = 0; size_t dc_flat_rows = 0;
@@ -1426,11 +1432,8 @@ public:
 				throw exec_error("utilityrate5", ss.str());
 			}
 			dc_flat_rows = nrows;
+			rate_data.setup_demand_charges(dc_weekday, dc_weekend, dc_tier_rows, dc_tou_in, dc_flat_rows, dc_flat_in);
 		}
-
-		rate_data.setup(dc_enabled, en_ts_sell_rate, cnt, ts_sr, ts_br,
-			ec_weekday, ec_weekend, tou_rows, ec_tou_in, sell_eq_buy,
-			dc_weekday, dc_weekend, dc_tier_rows, dc_tou_in, dc_flat_rows, dc_flat_in);
 	};
 
 	void ur_calc( ssc_number_t *e_in, ssc_number_t *p_in,

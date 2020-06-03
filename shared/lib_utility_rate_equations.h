@@ -98,10 +98,11 @@ public:
 	size_t m_num_rec_yearly;
 
 	void init_energy_rates(bool gen_only);
-	// TODO: split this up
-	void setup(bool dc_enabled, bool en_ts_sell_rate, size_t cnt, ssc_number_t* ts_sr, ssc_number_t* ts_br,
-		ssc_number_t* ec_weekday, ssc_number_t* ec_weekend, size_t tou_rows, ssc_number_t* ec_tou_in, bool sell_eq_buy, 
-		ssc_number_t* dc_weekday, ssc_number_t* dc_weekend, size_t dc_tou_rows, ssc_number_t* dc_tou_in, size_t dc_flat_rows, ssc_number_t* dc_flat_in);
+
+	void init();
+	void setup_time_series(size_t cnt, ssc_number_t* ts_sr, ssc_number_t* ts_br);
+	void setup_energy_rates(ssc_number_t* ec_weekday, ssc_number_t* ec_weekend, size_t ec_tou_rows, ssc_number_t* ec_tou_in, bool sell_eq_buy);
+	void setup_demand_charges(ssc_number_t* dc_weekday, ssc_number_t* dc_weekend, size_t dc_tou_rows, ssc_number_t* dc_tou_in, size_t dc_flat_rows, ssc_number_t* dc_flat_in);
 
 	// Runs each step
 	void sort_energy_to_periods(int month, double energy, int step); // Net metering only
