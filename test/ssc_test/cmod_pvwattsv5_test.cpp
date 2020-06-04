@@ -123,3 +123,39 @@ TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, LargeSystem_cmod_pvwattsv5)
 		count++;
 	}
 }
+
+
+TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, singleTS) {
+    auto data = ssc_data_create();
+    ssc_data_set_number(data, "alb", .2);
+    ssc_data_set_number(data, "beam", 0.612);
+    ssc_data_set_number(data, "day", 6);
+    ssc_data_set_number(data, "diffuse", 162.91);
+    ssc_data_set_number(data, "hour", 13);
+    ssc_data_set_number(data, "lat", 39.744);
+    ssc_data_set_number(data, "lon", -105.1778);
+    ssc_data_set_number(data, "minute", 20);
+    ssc_data_set_number(data, "month", 1);
+    ssc_data_set_number(data, "tamb", 10.79);
+    ssc_data_set_number(data, "tz", -7);
+    ssc_data_set_number(data, "wspd", 1.4500);
+    ssc_data_set_number(data, "year", 2019);
+    ssc_data_set_number(data, "tcell", 30);
+    ssc_data_set_number(data, "poa", 10);
+
+    ssc_data_set_number(data, "array_type", 2);
+    ssc_data_set_number(data, "azimuth", 180);
+    ssc_data_set_number(data, "dc_ac_ratio", 1.2);
+    ssc_data_set_number(data, "gcr", 0.4);
+    ssc_data_set_number(data, "inv_eff", 96);
+    ssc_data_set_number(data, "losses", 0);
+    ssc_data_set_number(data, "module_type", 0);
+    ssc_data_set_number(data, "system_capacity", 720);
+    ssc_data_set_number(data, "tilt", 0);
+
+
+    auto mod = ssc_module_create("pvwattsv5_1ts");
+    EXPECT_TRUE(ssc_module_exec(mod, data));
+
+
+}
