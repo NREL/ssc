@@ -627,8 +627,8 @@ DEFINE_MODULE_ENTRY(pvwattsv5, "PVWatts V5 - integrated hourly weather reader an
 
 static var_info _cm_vtab_pvwattsv5_1ts_outputs[] = {
 	/* input/output variable: tcell & poa from previous time must be given */
-	{ SSC_INOUT,        SSC_NUMBER,      "tcell",                    "Module temperature",                          "C",      "",                        "PVWatts",      "*",                       "",                          "" },
-	{ SSC_INOUT,        SSC_NUMBER,      "poa",                      "Plane of array irradiance",                   "W/m2",   "",                        "PVWatts",      "*",                       "",                          "" },
+	{ SSC_INOUT,        SSC_NUMBER,      "tcell",                    "Module temperature",                          "C",      "",                        "PVWatts",      "",                       "",                          "" },
+	{ SSC_INOUT,        SSC_NUMBER,      "poa",                      "Plane of array irradiance",                   "W/m2",   "",                        "PVWatts",      "",                       "",                          "" },
 
 	/* outputs */
 	{ SSC_OUTPUT,       SSC_NUMBER,      "dc",                      "DC array output",                             "Wdc",    "",                        "PVWatts",      "*",                       "",                          "" },
@@ -649,6 +649,8 @@ public:
 
 	void exec()
 	{
+        setup_system_inputs();
+        initialize_cell_temp(as_number("time_step"));
 		int year = as_integer("year");
 		int month = as_integer("month");
 		int day = as_integer("day");
@@ -662,7 +664,6 @@ public:
 		double tamb = as_double("tamb");
 		double wspd = as_double("wspd");
 		double alb = as_double("alb");
-		//double time_step = as_double("time_step");
 
 		//double last_tcell = as_double("tcell");
 		//double last_poa = as_double("poa");
