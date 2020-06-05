@@ -31,3 +31,7 @@ Please see the contribution guidelines in the main [SAM project readme](https://
 # License
 
 SSC is licensed with BSD-3-Clause terms, found [here](https://github.com/NREL/SAM/blob/develop/LICENSE).
+
+# Citing this package
+
+System Advisor Model Version 2020.2.29 (2020.2.29). SSC source code. National Renewable Energy Laboratory. Golden, CO. Accessed May 27, 2020. https://github.com/NREL/ssc

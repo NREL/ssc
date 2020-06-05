@@ -32,6 +32,13 @@ static const char *var_data_types[] =
 	"<table>",   // SSC_TABLE
 	NULL };
 
+var_data::var_data(std::vector<int> arr) : type(SSC_ARRAY) {
+    num.resize(arr.size());
+    for (size_t i = 0; i < arr.size(); i++) {
+        num[i] = (ssc_number_t)arr[i];
+    }
+}
+
 const char *var_data::type_name()
 {
 	if (type < 6) return var_data_types[ (int)type ];
@@ -188,6 +195,10 @@ bool var_data::parse( unsigned char type, const std::string &buf, var_data &valu
 var_table::var_table() : m_iterator(m_hash.begin())
 {
 	/* nothing to do here */
+}
+
+var_table::var_table(const var_table &rhs) : var_table() {
+    operator=(rhs);
 }
 
 var_table::~var_table()
@@ -358,17 +369,27 @@ const char *var_table::next()
 	return NULL;
 }
 
-void vt_get_int(var_table* vt, const std::string name, int* lvalue) {
+void vt_get_int(var_table* vt, const std::string& name, int* lvalue) {
 	if (var_data* vd = vt->lookup(name)) *lvalue = (int)vd->num;
 	else throw std::runtime_error(std::string(name) + std::string(" must be assigned."));
 }
 
-void vt_get_number(var_table* vt, std::string name, double* lvalue) {
+void vt_get_uint(var_table* vt, const std::string& name, size_t* lvalue) {
+    if (var_data* vd = vt->lookup(name)) *lvalue = (size_t)vd->num;
+    else throw std::runtime_error(std::string(name) + std::string(" must be assigned."));
+}
+
+void vt_get_bool(var_table* vt, const std::string& name, bool* lvalue) {
+    if (var_data* vd = vt->lookup(name)) *lvalue = (bool)vd->num;
+    else throw std::runtime_error(std::string(name) + std::string(" must be assigned."));
+}
+
+void vt_get_number(var_table* vt, const std::string& name, double* lvalue) {
 	if (var_data* vd = vt->lookup(name)) *lvalue = vd->num;
 	else throw std::runtime_error(std::string(name) + std::string(" must be assigned."));
 }
 
-void vt_get_array_vec(var_table* vt, std::string name, std::vector<double>& vec_double) {
+void vt_get_array_vec(var_table* vt, const std::string& name, std::vector<double>& vec_double) {
 	if (var_data* vd = vt->lookup(name)){
 	    if (vd->type != SSC_ARRAY)
             throw std::runtime_error(std::string(name) + std::string(" must be array type."));
@@ -377,7 +398,19 @@ void vt_get_array_vec(var_table* vt, std::string name, std::vector<double>& vec_
 	else throw std::runtime_error(std::string(name) + std::string(" must be assigned."));
 }
 
-void vt_get_matrix(var_table* vt, std::string name, util::matrix_t<double>& matrix) {
+void vt_get_array_vec(var_table* vt, const std::string& name, std::vector<int>& vec_int) {
+    if (var_data* vd = vt->lookup(name)){
+        if (vd->type != SSC_ARRAY)
+            throw std::runtime_error(std::string(name) + std::string(" must be array type."));
+        vec_int.clear();
+        for (auto &i : vd->arr_vector()) {
+            vec_int.push_back((int)i);
+        }
+    }
+    else throw std::runtime_error(std::string(name) + std::string(" must be assigned."));
+}
+
+void vt_get_matrix(var_table* vt, const std::string& name, util::matrix_t<double>& matrix) {
 	if (var_data* vd = vt->lookup(name)){
         if (vd->type == SSC_ARRAY)
         {
@@ -391,6 +424,12 @@ void vt_get_matrix(var_table* vt, std::string name, util::matrix_t<double>& matr
         matrix = vd->num;
     }
 	else throw std::runtime_error(std::string(name) + std::string(" must be assigned."));
+}
+
+void vt_get_matrix_vec(var_table* vt, const std::string& name, std::vector<std::vector<double>>& mat) {
+    if (var_data* vd = vt->lookup(name))
+        mat = vd->matrix_vector();
+    else throw std::runtime_error(std::string(name)+std::string(" must be assigned."));
 }
 
 int var_table::as_integer( const std::string &name )

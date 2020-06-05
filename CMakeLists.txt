@@ -107,9 +107,16 @@ endfunction()
 #
 #####################################################################################################################
 
+# turn off examples, tests and install for jsoncpp
 set(JSONCPP_WITH_EXAMPLE 0)
 set(JSONCPP_WITH_TESTS 0)
+macro (install)
+endmacro ()
 add_subdirectory(jsoncpp)
+macro (install)
+  _install(${ARGV})
+endmacro(install)
+
 add_subdirectory(splinter)
 add_subdirectory(shared)
 add_subdirectory(nlopt)

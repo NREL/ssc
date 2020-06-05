@@ -701,6 +701,8 @@ public:
 
 	virtual double get_cold_temp() = 0;
 
+	virtual double get_hot_tank_vol_frac() = 0;
+
     virtual double get_initial_charge_energy() = 0; //MWh
 
     virtual double get_min_charge_energy() = 0; //MWh
@@ -1151,8 +1153,10 @@ public:
 			E__CR_OUT__CR_OUT_PLUS_TES_EMPTY,
 			E__TO_PC_PLUS_TES_FULL__ITER_M_DOT_SU,
 			E__CR_OUT__0,
-			E__CR_OUT__ITER_M_DOT_SU,
-			E__CR_OUT__ITER_Q_DOT_TARGET,
+			E__CR_OUT__ITER_M_DOT_SU_CH_ONLY,
+            E__CR_OUT__ITER_M_DOT_SU_DC_ONLY,
+			E__CR_OUT__ITER_Q_DOT_TARGET_DC_ONLY,
+            E__CR_OUT__ITER_Q_DOT_TARGET_CH_ONLY,
 			E__CR_OUT__CR_OUT,
 			E__CR_OUT__CR_OUT_LESS_TES_FULL,
 			E__TO_PC__PC_MAX,

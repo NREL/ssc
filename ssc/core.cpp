@@ -417,7 +417,8 @@ ssc_number_t compute_module::get_operand_value( const std::string &input, const 
 	if (isalpha(input[0]))
 	{
 		var_data *v = lookup(input);
-		if (!v) throw check_error(cur_var_name, "unassigned referenced",  input );
+		if (!v)
+		    throw check_error(cur_var_name, "unassigned referenced",  input );
 		if (v->type != SSC_NUMBER) throw check_error(cur_var_name, "number type required", input );
 		return v->num;
 	}

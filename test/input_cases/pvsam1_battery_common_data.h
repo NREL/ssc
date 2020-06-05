@@ -16,8 +16,12 @@ char ur_ts_sell_rate[256] = {};
 char custom_dispatch_singleowner_schedule[256] = {};
 char custom_dispatch_residential_schedule[256] = {};
 char custom_dispatch_singleowner_hourly_schedule[256] = {};
+char custom_dispatch_singleowner_subhourly_schedule[256] = {};
 char custom_dispatch_residential_hourly_schedule[256] = {};
 char battery_target_power[256] = {};
+char subhourly_weather_file[256] = {};
+char subhourly_batt_temps[256] = {};
+char subhourly_dispatch_factors[256] = {};
 
 // pvsamv1_common_data uses n1-8
 int x1 = sprintf(dc_adjust_hourly, "%s/test/input_cases/pvsamv1_battery_data/dc_adjust_hourly.csv", SSCDIR);
@@ -29,7 +33,10 @@ int x6 = sprintf(custom_dispatch_residential_schedule, "%s/test/input_cases/pvsa
 int x7 = sprintf(custom_dispatch_singleowner_hourly_schedule, "%s/test/input_cases/pvsamv1_battery_data/custom_dispatch_singleowner_hourly.csv", SSCDIR);
 int x8 = sprintf(custom_dispatch_residential_hourly_schedule, "%s/test/input_cases/pvsamv1_battery_data/custom_dispatch_residential_hourly.csv", SSCDIR);
 int x9 = sprintf(battery_target_power, "%s/test/input_cases/pvsamv1_battery_data/batt_target_power.csv", SSCDIR);
-
+int x10 = sprintf(custom_dispatch_singleowner_subhourly_schedule, "%s/test/input_cases/pvsamv1_battery_data/custom_dispatch_singleowner_subhourly.csv", SSCDIR);
+int x11 = sprintf(subhourly_weather_file, "%s/test/input_cases/pvsamv1_battery_data/USA AZ Phoenix (TMY2)_15mInterpolated.csv", SSCDIR);
+int x12 = sprintf(subhourly_batt_temps, "%s/test/input_cases/pvsamv1_battery_data/batt_room_temperature_celsius_15min.csv", SSCDIR);
+int x13 = sprintf(subhourly_dispatch_factors, "%s/test/input_cases/pvsamv1_battery_data/dispatch_factors_ts_15min.csv", SSCDIR);
 
 void pvsamv1_pv_defaults(ssc_data_t& data) {
 	ssc_data_set_string(data, "solar_resource_file", solar_resource_path);
@@ -395,7 +402,7 @@ void pvsamv1_battery_defaults(ssc_data_t& data) {
 	ssc_data_set_number(data, "batt_Qexp", 0.040049999952316284);
 	ssc_data_set_number(data, "batt_Qnom", 2.0002501010894775);
 	ssc_data_set_number(data, "batt_C_rate", 0.20000000000000001);
-	ssc_data_set_number(data, "batt_resistance", 0.20000000000000001);
+	ssc_data_set_number(data, "batt_resistance", 0.0002);
 	ssc_number_t p_batt_voltage_matrix[2] = { 0, 0 };
 	ssc_data_set_matrix(data, "batt_voltage_matrix", p_batt_voltage_matrix, 1, 2);
 	ssc_data_set_number(data, "LeadAcid_q20_computed", 7994.25);
@@ -423,12 +430,10 @@ void pvsamv1_battery_defaults(ssc_data_t& data) {
 	ssc_data_set_array(data, "batt_replacement_schedule_percent", p_batt_replacement_schedule_percent, 25);
 	ssc_number_t p_om_replacement_cost1[1] = { 500 };
 	ssc_data_set_array(data, "om_replacement_cost1", p_om_replacement_cost1, 1);
-	ssc_data_set_number(data, "batt_mass", 20272.248046875);
-	ssc_data_set_number(data, "batt_length", 1.998389720916748);
-	ssc_data_set_number(data, "batt_width", 1.998389720916748);
-	ssc_data_set_number(data, "batt_height", 1.998389720916748);
+	ssc_data_set_number(data, "batt_mass", 95);
+	ssc_data_set_number(data, "batt_surface_area", 502.3);
 	ssc_data_set_number(data, "batt_Cp", 1004);
-	ssc_data_set_number(data, "batt_h_to_ambient", 500);
+	ssc_data_set_number(data, "batt_h_to_ambient", 20);
 	set_array(data, "batt_room_temperature_celsius", temperature_path, 8760);
 	ssc_number_t p_cap_vs_temp[8] = { -10, 60, 0, 80, 25, 100, 40, 100 };
 	ssc_data_set_matrix(data, "cap_vs_temp", p_cap_vs_temp, 4, 2);
@@ -1112,7 +1117,7 @@ void commercial_multiarray_default(ssc_data_t& data) {
 	ssc_data_set_number(data, "batt_Qexp", 0.040049999952316284);
 	ssc_data_set_number(data, "batt_Qnom", 2.0002501010894775);
 	ssc_data_set_number(data, "batt_C_rate", 0.20000000000000001);
-	ssc_data_set_number(data, "batt_resistance", 0.20000000000000001);
+	ssc_data_set_number(data, "batt_resistance", 0.0002);
 	ssc_number_t p_batt_voltage_matrix[2] = { 0, 0 };
 	ssc_data_set_matrix(data, "batt_voltage_matrix", p_batt_voltage_matrix, 1, 2);
 	ssc_data_set_number(data, "LeadAcid_q20_computed", 40.5);
@@ -1141,11 +1146,9 @@ void commercial_multiarray_default(ssc_data_t& data) {
 	ssc_number_t p_om_replacement_cost1[1] = { 300 };
 	ssc_data_set_array(data, "om_replacement_cost1", p_om_replacement_cost1, 1);
 	ssc_data_set_number(data, "batt_mass", 102.70206451416016);
-	ssc_data_set_number(data, "batt_length", 0.34322008490562439);
-	ssc_data_set_number(data, "batt_width", 0.34322008490562439);
-	ssc_data_set_number(data, "batt_height", 0.34322008490562439);
+	ssc_data_set_number(data, "batt_surface_area", 0.7);
 	ssc_data_set_number(data, "batt_Cp", 1004);
-	ssc_data_set_number(data, "batt_h_to_ambient", 5);
+	ssc_data_set_number(data, "batt_h_to_ambient", 20);
 	set_array(data, "batt_room_temperature_celsius", temperature_path, 8760);
 	ssc_number_t p_cap_vs_temp[8] = { -10, 60, 0, 80, 25, 100, 40, 100 };
 	ssc_data_set_matrix(data, "cap_vs_temp", p_cap_vs_temp, 4, 2);

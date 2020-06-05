@@ -220,7 +220,7 @@ int C_csp_solver::solve_operating_mode(int cr_mode, int pc_mode, C_MEQ__m_dot_te
 
             if (pc_mode == C_csp_power_cycle::STARTUP_CONTROLLED)
             {
-                solver_mode_df1 = C_MEQ__m_dot_tes::E__CR_OUT__ITER_M_DOT_SU;
+                solver_mode_df1 = C_MEQ__m_dot_tes::E__CR_OUT__ITER_M_DOT_SU_CH_ONLY;
             }
 
             // Need to make sure mass flow isn't unbalanced by sending too much to the power cycle
@@ -675,9 +675,10 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double m_dot_tes_guess /*kg/s + =
     // based on solver strategy
     double m_dot_hot_to_tes = std::numeric_limits<double>::quiet_NaN();
     if ( m_solver_mode == E__CR_OUT__CR_OUT_PLUS_TES_EMPTY
-        || m_solver_mode == E__CR_OUT__0 || m_solver_mode == E__CR_OUT__ITER_M_DOT_SU
-        || m_solver_mode == E__CR_OUT__ITER_Q_DOT_TARGET || m_solver_mode == E__CR_OUT__CR_OUT
-        || m_solver_mode == E__CR_OUT__CR_OUT_LESS_TES_FULL)
+        || m_solver_mode == E__CR_OUT__0
+        || m_solver_mode == E__CR_OUT__ITER_M_DOT_SU_CH_ONLY || m_solver_mode == E__CR_OUT__ITER_M_DOT_SU_DC_ONLY
+        || m_solver_mode == E__CR_OUT__ITER_Q_DOT_TARGET_DC_ONLY || m_solver_mode == E__CR_OUT__ITER_Q_DOT_TARGET_CH_ONLY
+        || m_solver_mode == E__CR_OUT__CR_OUT || m_solver_mode == E__CR_OUT__CR_OUT_LESS_TES_FULL)
     {
         if (m_solver_mode == E__CR_OUT__CR_OUT_PLUS_TES_EMPTY)
         {
@@ -691,15 +692,30 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double m_dot_tes_guess /*kg/s + =
         {
             m_m_dot_pc = 0.0;
         }
-        else if (m_solver_mode == E__CR_OUT__ITER_M_DOT_SU || m_solver_mode == E__CR_OUT__ITER_Q_DOT_TARGET)
+        else if (m_solver_mode == E__CR_OUT__ITER_M_DOT_SU_DC_ONLY || m_solver_mode == E__CR_OUT__ITER_Q_DOT_TARGET_DC_ONLY)
         {
             double q_dot_dc_est, m_dot_tes_dc, T_tes_dc_est;
             q_dot_dc_est = m_dot_tes_dc = T_tes_dc_est = std::numeric_limits<double>::quiet_NaN();
             mpc_csp_solver->mc_tes.discharge_avail_est(m_T_field_cold_guess, mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step, q_dot_dc_est, m_dot_tes_dc, T_tes_dc_est);
             m_dot_tes_dc *= 3600.0;     //[kg/hr] convert from kg/s
-            
-            m_dot_tes_guess = fmin(m_dot_tes_guess, m_dot_tes_dc + m_dot_field_out);
+
+            // max: not allowing TES CH, so all field m_dot must go to pc
+            // min: can't send more to pc than field + dc
+            m_dot_tes_guess = std::fmax(m_dot_field_out, fmin(m_dot_tes_guess, m_dot_tes_dc + m_dot_field_out));
             m_m_dot_pc = m_dot_tes_guess;       //[kg/hr]
+        }
+        else if (m_solver_mode == E__CR_OUT__ITER_M_DOT_SU_CH_ONLY || m_solver_mode == E__CR_OUT__ITER_Q_DOT_TARGET_CH_ONLY)
+        {
+            double q_dot_ch_est, m_dot_hot_to_tes_est, T_cold_field_est;
+            q_dot_ch_est = m_dot_hot_to_tes_est = T_cold_field_est = std::numeric_limits<double>::quiet_NaN();
+            mpc_csp_solver->mc_tes.charge_avail_est(mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot + 273.15, mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
+                q_dot_ch_est, m_dot_hot_to_tes_est, T_cold_field_est);
+            m_dot_hot_to_tes_est *= 3600;       //[kg/hr] convert from kg/s
+
+            // min: not allowing TES DC, so max m_dot to pc is field m_dot
+            // max: need to send enough mass flow to pc so TES doesn't overcharge
+            m_dot_tes_guess = std::fmax(m_dot_field_out - m_dot_hot_to_tes_est, std::fmin(m_dot_tes_guess, m_dot_field_out));
+            m_m_dot_pc = m_dot_tes_guess;   //[kg/hr]
         }
         else if (m_solver_mode == E__CR_OUT__CR_OUT)
         {
@@ -872,12 +888,13 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double m_dot_tes_guess /*kg/s + =
         m_t_ts_calc = t_ts_pc_su;       //[s]
     }
     
-    if (m_solver_mode == E__TO_PC_PLUS_TES_FULL__ITER_M_DOT_SU || m_solver_mode == E__CR_OUT__ITER_M_DOT_SU
+    if (m_solver_mode == E__TO_PC_PLUS_TES_FULL__ITER_M_DOT_SU
+        || m_solver_mode == E__CR_OUT__ITER_M_DOT_SU_CH_ONLY || m_solver_mode == E__CR_OUT__ITER_M_DOT_SU_DC_ONLY
         || m_solver_mode == E__TO_PC__ITER_M_DOT_SU)
     {
         *diff_target = (m_dot_tes_guess - mpc_csp_solver->mc_pc_out_solver.m_m_dot_htf) / mpc_csp_solver->mc_pc_out_solver.m_m_dot_htf;
     }
-    else if (m_solver_mode == E__CR_OUT__ITER_Q_DOT_TARGET)
+    else if (m_solver_mode == E__CR_OUT__ITER_Q_DOT_TARGET_DC_ONLY || m_solver_mode == E__CR_OUT__ITER_Q_DOT_TARGET_CH_ONLY)
     {
         *diff_target = (mpc_csp_solver->mc_pc_out_solver.m_q_dot_htf - m_q_dot_pc_target) / m_q_dot_pc_target;
     }
@@ -903,9 +920,10 @@ int C_csp_solver::C_MEQ__T_field_cold::operator()(double T_field_cold /*C*/, dou
     C_monotonic_eq_solver c_solver(c_eq);
 
     if (m_solver_mode == C_MEQ__m_dot_tes::E__TO_PC_PLUS_TES_FULL__ITER_M_DOT_SU ||
-        m_solver_mode == C_MEQ__m_dot_tes::E__CR_OUT__ITER_M_DOT_SU ||
+        m_solver_mode == C_MEQ__m_dot_tes::E__CR_OUT__ITER_M_DOT_SU_CH_ONLY || m_solver_mode == C_MEQ__m_dot_tes::E__CR_OUT__ITER_M_DOT_SU_DC_ONLY ||
         m_solver_mode == C_MEQ__m_dot_tes::E__TO_PC__ITER_M_DOT_SU ||
-        m_solver_mode == C_MEQ__m_dot_tes::E__CR_OUT__ITER_Q_DOT_TARGET)
+        m_solver_mode == C_MEQ__m_dot_tes::E__CR_OUT__ITER_Q_DOT_TARGET_CH_ONLY ||
+        m_solver_mode == C_MEQ__m_dot_tes::E__CR_OUT__ITER_Q_DOT_TARGET_DC_ONLY)
     {
         double diff_m_dot = std::numeric_limits<double>::quiet_NaN();
         double m_dot_guess1 = mpc_csp_solver->m_m_dot_pc_max;
@@ -917,7 +935,8 @@ int C_csp_solver::C_MEQ__T_field_cold::operator()(double T_field_cold /*C*/, dou
 
         // Can't hit target thermal power with max mass flow rate
         // But mode 'E_PC_OUT_TARGET__TES_CONTINUOUS' should balance mass and energy
-        if (m_solver_mode == C_MEQ__m_dot_tes::E__CR_OUT__ITER_Q_DOT_TARGET && diff_m_dot < 0.0)
+        if ((m_solver_mode == C_MEQ__m_dot_tes::E__CR_OUT__ITER_Q_DOT_TARGET_CH_ONLY || m_solver_mode == C_MEQ__m_dot_tes::E__CR_OUT__ITER_Q_DOT_TARGET_DC_ONLY)
+                && diff_m_dot < 0.0)
         {
             m_t_ts_calc = c_eq.m_t_ts_calc;
 

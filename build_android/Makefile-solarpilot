@@ -1,4 +1,4 @@
-# ARCH argument like armeabi, armeabi-v7a, x86 (x86_64 > android-20)
+# ARCH argument like armeabi-v7a, x86, (x86_64 > android-20), arm64-v8a
 
 VPATH = ../solarpilot
 
@@ -6,31 +6,47 @@ VPATH = ../solarpilot
 MYARCH=darwin-x86_64
 
 # Default NDK installation location for Android Studio 2.3
-NDK = /Users/imacuser/Library/Android/sdk/ndk-bundle
+NDK = /Users/imacuser/Library/Android/sdk/ndk/21.0.6113669
 
-#include files still available for rand, atof, etc.
-PLATFORMVER=android-13
-GCCVER=4.9
+#target sdk version 
+PLATFORMVER=android-28
+
+TARGET_API=28
+#min sdk version
+API=16 
+
+#
+TOOLCHAIN=${NDK}/toolchains/llvm/prebuilt/darwin-x86_64
+
 
 # select prefixes based on arm or x86
-ifeq (${ARCH},x86)
-	TOOLCHAINPREFIX=x86
-	GCCPREFIX=i686-linux-android
+ifeq (${ARCH},x86_64)
+	ASM=x86_64-linux-android
+	ARCHPREFIX=arch-x86_64
+	GCCPREFIX=${ASM}${TARGET_API}
+else ifeq (${ARCH},x86)
+	ASM=i686-linux-android
 	ARCHPREFIX=arch-x86
-else
-	TOOLCHAINPREFIX=arm-linux-androideabi
-	GCCPREFIX=arm-linux-androideabi
+	GCCPREFIX=${ASM}${TARGET_API}
+else ifeq (${ARCH},arm64-v8a)
+	ASM=aarch64-linux-android
+	ARCHPREFIX=arch-arm64
+	GCCPREFIX=${ASM}${TARGET_API}
+else ifeq (${ARCH},armeabi-v7a)
+	ASM=arm-linux-androideabi
 	ARCHPREFIX=arch-arm
+	GCCPREFIX=armv7a-linux-androideabi${TARGET_API}
 endif	
 
-CC=${NDK}/toolchains/${TOOLCHAINPREFIX}-${GCCVER}/prebuilt/${MYARCH}/bin/${GCCPREFIX}-gcc
-CXX=${NDK}/toolchains/${TOOLCHAINPREFIX}-${GCCVER}/prebuilt/${MYARCH}/bin/${GCCPREFIX}-g++
-RANLIB=${NDK}/toolchains/${TOOLCHAINPREFIX}-${GCCVER}/prebuilt/${MYARCH}/bin/${GCCPREFIX}-ranlib
-AR=${NDK}/toolchains/${TOOLCHAINPREFIX}-${GCCVER}/prebuilt/${MYARCH}/bin/${GCCPREFIX}-ar
+	
 
-CFLAGS = -I../ -I../nlopt  -DWX_PRECOMP --sysroot=${NDK}/platforms/${PLATFORMVER}/${ARCHPREFIX} -fPIC -g -DANDROID -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -Wa,--noexecstack -Wformat -Werror=format-security   -std=gnu++11 -O2  -Wl,--build-id -Wl,--warn-shared-textrel -Wl,--fatal-warnings -Wl,--fix-cortex-a8 -Wl,--no-undefined -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now -Wl,--build-id -Wl,--warn-shared-textrel -Wl,--fatal-warnings -Wl,--fix-cortex-a8 -Wl,--no-undefined -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now -isystem${NDK}/platforms/${PLATFORMVER}/${ARCHPREFIX}/usr/include -isystem${NDK}/sources/cxx-stl/gnu-libstdc++/${GCCVER}/include -isystem${NDK}/sources/cxx-stl/gnu-libstdc++/${GCCVER}/libs/${ARCH}/include
+CC=${TOOLCHAIN}/bin/${GCCPREFIX}-clang
+CXX=${TOOLCHAIN}/bin/${GCCPREFIX}-clang++
+RANLIB=${TOOLCHAIN}/bin/${ASM}-ranlib
+AR=${TOOLCHAIN}/bin/${ASM}-ar
 
-CXXFLAGS = $(CFLAGS) -std=gnu++11 
+CFLAGS = -I../ -I../nlopt  -DWX_PRECOMP --sysroot=${NDK}/platforms/${PLATFORMVER}/${ARCHPREFIX} -fPIC -g -DANDROID -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -Wa,--noexecstack -Wformat -Werror=format-security   -std=gnu++11 -O2  -Wl,--build-id -Wl,--warn-shared-textrel -Wl,--fatal-warnings -Wl,--fix-cortex-a8 -Wl,--no-undefined -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now -Wl,--build-id -Wl,--warn-shared-textrel -Wl,--fatal-warnings -Wl,--fix-cortex-a8 -Wl,--no-undefined -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now -isystem${NDK}/sources/cxx-stl/llvm-libc++/include -isystem${NDK}/sysroot/usr/include/${ASM} -isystem${NDK}/sysroot/usr/include 
+CXXFLAGS = $(CFLAGS) -std=c++11  
 
 OBJECTS = \
 	fluxsim.o \
