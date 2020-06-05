@@ -114,6 +114,17 @@ struct ssinputs
 	ssinputs() : nstrx(0), nmodx(0), nmody(0), nrows(0), length(0), width(0), mod_orient(0), str_orient(0), row_space(0), ndiode(0), Vmp(0), mask_angle_calc_method(0), FF0(0) {}
 };
 
+struct ssoutputs	// self-shading outputs
+{
+	double m_dc_derate;
+	double m_reduced_diffuse;
+	double m_reduced_reflected;
+	double m_diffuse_derate;
+	double m_reflected_derate;
+	double m_shade_frac_fixed;
+};
+
+// look up table for calculating the diffuse reduction due to gcr and tilt of the panels
 class ssSkyDiff
 {
     std::unordered_map<std::string, double> SkyDiffTable;
@@ -124,59 +135,9 @@ public:
 
     void init(double tilt, double groundCoverageRatio) { gcr = groundCoverageRatio; compute(tilt); }
 
-    double lookup(double tilt) {
-        char buf[124];
-        sprintf(buf, "%.3f", tilt);
-        if (SkyDiffTable.find(buf) != SkyDiffTable.end())
-            return SkyDiffTable[buf];
-        return compute(tilt);
-    }
+    double lookup(double tilt);
 
-    double compute(double tilt) {
-        if (!gcr)
-            throw std::runtime_error("ssSkyDiff::compute error: gcr required in initialization");
-        // sky diffuse reduction
-        double step = 1.0 / 1000.0;
-        double skydiff = 0.0;
-        double tand_stilt = tand(tilt);
-        double sind_stilt = sind(tilt);
-        double Asky = M_PI + M_PI / pow((1 + pow(tand_stilt, 2)), 0.5);
-        double arg[1000];
-        double gamma[1000];
-        double tan_tilt_gamma[1000];
-        double Asky_shade[1000];
-        for (int n = 0; n < 1000; n++)
-        {
-            arg[n] = (1 / tand_stilt) - (1 / (gcr * sind_stilt * (1 - n * step)));
-            gamma[n] = (-M_PI / 2) + atan(arg[n]);
-            tan_tilt_gamma[n] = tan(tilt * DTOR + gamma[n]);
-            Asky_shade[n] = M_PI + M_PI / pow((1 + tan_tilt_gamma[n] * tan_tilt_gamma[n]), 0.5);
-            if (isnan(Asky_shade[n]))
-            {
-                Asky_shade[n] = Asky;
-            }
-            else if ((tilt * DTOR + gamma[n]) > (M_PI / 2))
-            {
-                Asky_shade[n] = 2 * M_PI - Asky_shade[n];
-            }
-            else {}
-            skydiff += (Asky_shade[n] / Asky) * step;
-        }
-        char buf[124];
-        sprintf(buf, "%.3f", tilt);
-        SkyDiffTable[buf] = skydiff;
-        return skydiff;
-    }
-};
-
-struct ssoutputs	// self-shading outputs
-{
-	double m_dc_derate;
-	double m_reduced_diffuse;
-	double m_reduced_reflected;
-	double m_diffuse_derate;
-	double m_reflected_derate;
-	double m_shade_frac_fixed;
+    double compute(double tilt);
 };
 
 //performs shading calculation and returns outputs
