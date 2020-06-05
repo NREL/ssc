@@ -128,7 +128,7 @@ protected:
 	int shade_mode_1x;
 	int array_type;
 	double gcr;
-
+    ssSkyDiff skydiff;
 
 	double ibeam, iskydiff, ignddiff;
 	double solazi, solzen, solalt, aoi, stilt, sazi, rot, btd;
@@ -211,6 +211,8 @@ public:
 
 		gcr = 0.4;
 		if (track_mode == 1 && is_assigned("gcr")) gcr = as_double("gcr");
+
+        skydiff.init(tilt, gcr);
 	}
 
 	void initialize_cell_temp(double ts_hour, double last_tcell = -9999, double last_poa = -9999)
@@ -267,7 +269,7 @@ public:
 					// based on view factor reductions from self-shading
 					diffuse_reduce(solzen, stilt,
 						dni, dhi, iskydiff, ignddiff,
-						gcr, alb, 1000,
+						gcr, alb, 1000, skydiff.lookup(stilt),
 
 						// outputs (pass by reference)
 						reduced_skydiff, Fskydiff,

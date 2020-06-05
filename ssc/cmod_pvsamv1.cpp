@@ -984,6 +984,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 		else
 			b = Subarrays[nn]->selfShadingInputs.nmody * Subarrays[nn]->selfShadingInputs.width;
 		Subarrays[nn]->selfShadingInputs.row_space = b / Subarrays[nn]->groundCoverageRatio;
+		Subarrays[nn]->selfShadingSkyDiff.init(Subarrays[nn]->tiltDegrees, Subarrays[nn]->groundCoverageRatio);
 	}
 
 	double nameplate_kw = 0;
@@ -1454,7 +1455,10 @@ void cm_pvsamv1::exec( ) throw (general_error)
 						if (radmode == irrad::DN_DF || radmode == irrad::GH_DF) dhi_to_use = (ssc_number_t)wf.df;
 						else dhi_to_use = Irradiance->p_IrradianceCalculated[1][hour * step_per_hour]; // top of hour in first year
 
-						if (ss_exec(Subarrays[nn]->selfShadingInputs, stilt, sazi, solzen, solazi, beam_to_use, dhi_to_use, ibeam, iskydiff, ignddiff, alb, trackbool, linear, shad1xf, Subarrays[nn]->selfShadingOutputs))
+						if (ss_exec(Subarrays[nn]->selfShadingInputs,
+						        stilt, sazi, solzen, solazi, beam_to_use, dhi_to_use, ibeam, iskydiff, ignddiff, alb, trackbool, linear, shad1xf,
+						        Subarrays[nn]->selfShadingSkyDiff,
+						        Subarrays[nn]->selfShadingOutputs))
 						{
 
 						    if (linear && trackbool) //one-axis linear

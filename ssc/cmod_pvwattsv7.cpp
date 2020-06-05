@@ -521,7 +521,7 @@ public:
 
 		pv.gcr = as_double("gcr");
 
-
+        ssSkyDiff ssval;
 		if (FIXED_RACK == pv.type
 			|| ONE_AXIS == pv.type
 			|| ONE_AXIS_BACKTRACKING == pv.type)
@@ -557,6 +557,7 @@ public:
 			//   If 2 module per Y, then nmodx=nrows/2.
 			pv.nmodx = pv.nrows / pv.nmody;
 			pv.row_spacing = module.length * pv.nmody / pv.gcr;
+			ssval.init(pv.tilt, pv.gcr);
 		}
 
 		pvsnowmodel snowmodel;
@@ -956,6 +957,7 @@ public:
 									pv.type == ONE_AXIS, // is tracking system?
 									module.type == THINFILM,  // is linear shading? (only with long cell thin films)
 									shad1xf,
+									ssval,
 									ssout))
 							{
 								throw exec_error("pvwattsv7", util::format("Self-shading calculation failed at %d", (int)idx_life));
