@@ -337,7 +337,9 @@ private:
 	size_t m_num_rec_yearly;
 
 public:
-	cm_utilityrate5()
+	cm_utilityrate5() :
+		rate_data(),
+		m_num_rec_yearly(8760) // will be overwritten
 	{
 		add_var_info( vtab_utility_rate5 );
 	}

@@ -73,6 +73,9 @@ public:
 	std::vector<double>  dc_tou_charge;
 	ssc_number_t dc_flat_charge;
 
+	ur_month();
+	ur_month(const ur_month& tmp);
+
 	// Runs each step
 	void update_net_and_peak(double energy, double power, int step);
 };
@@ -97,9 +100,12 @@ public:
 	std::vector<std::vector<int> >  m_dc_flat_tiers; // tier numbers for each month of flat demand charge
 	size_t m_num_rec_yearly;
 
+	rate_data();
+	rate_data(const rate_data& tmp);
+
 	void init_energy_rates(bool gen_only);
 
-	void init();
+	void init(); // Need to run this after m_num_rec_yearly is set
 	void setup_time_series(size_t cnt, ssc_number_t* ts_sr, ssc_number_t* ts_br);
 	void setup_energy_rates(ssc_number_t* ec_weekday, ssc_number_t* ec_weekend, size_t ec_tou_rows, ssc_number_t* ec_tou_in, bool sell_eq_buy);
 	void setup_demand_charges(ssc_number_t* dc_weekday, ssc_number_t* dc_weekend, size_t dc_tou_rows, ssc_number_t* dc_tou_in, size_t dc_flat_rows, ssc_number_t* dc_flat_in);

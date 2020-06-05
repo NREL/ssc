@@ -2,6 +2,64 @@
 
 #include <sstream>
 
+ur_month::ur_month() :
+	ec_periods(),
+	dc_periods(),
+	ec_rollover_periods(),
+	energy_net(),
+	hours_per_month(),
+	ec_energy_use(),
+	ec_periods_tiers(),
+	ec_energy_surplus(),
+	dc_tou_peak(),
+	dc_tou_peak_hour(),
+	dc_flat_peak(),
+	dc_flat_peak_hour(),
+	ec_tou_ub_init(),
+	ec_tou_br_init(),
+	ec_tou_sr_init(),
+	ec_tou_ub(),
+	ec_tou_br(),
+	ec_tou_sr(),
+	ec_tou_units(),
+	ec_charge(),
+	dc_tou_ub(),
+	dc_tou_ch(),
+	dc_flat_ub(),
+	dc_flat_ch(),
+	dc_tou_charge(),
+	dc_flat_charge()
+{}
+
+ur_month::ur_month(const ur_month& tmp) :
+	ec_periods(tmp.ec_periods),
+	dc_periods(tmp.dc_periods),
+	ec_rollover_periods(tmp.ec_rollover_periods),
+	energy_net(tmp.energy_net),
+	hours_per_month(tmp.hours_per_month),
+	ec_energy_use(tmp.ec_energy_use),
+	ec_periods_tiers(tmp.ec_periods_tiers),
+	ec_energy_surplus(tmp.ec_energy_surplus),
+	dc_tou_peak(tmp.dc_tou_peak),
+	dc_tou_peak_hour(tmp.dc_tou_peak_hour),
+	dc_flat_peak(tmp.dc_flat_peak),
+	dc_flat_peak_hour(tmp.dc_flat_peak_hour),
+	ec_tou_ub_init(tmp.ec_tou_ub_init),
+	ec_tou_br_init(tmp.ec_tou_br_init),
+	ec_tou_sr_init(tmp.ec_tou_sr_init),
+	ec_tou_ub(tmp.ec_tou_ub),
+	ec_tou_br(tmp.ec_tou_br),
+	ec_tou_sr(tmp.ec_tou_sr),
+	ec_tou_units(tmp.ec_tou_units),
+	ec_charge(tmp.ec_charge),
+	dc_tou_ub(tmp.dc_tou_ub),
+	dc_tou_ch(tmp.dc_tou_ch),
+	dc_flat_ub(tmp.dc_flat_ub),
+	dc_flat_ch(tmp.dc_flat_ch),
+	dc_tou_charge(tmp.dc_tou_charge),
+	dc_flat_charge(tmp.dc_flat_charge)
+{}
+
 void ur_month::update_net_and_peak(double energy, double power, int step) {
 	// net energy use per month
 	energy_net += energy; // -load and +gen
@@ -12,6 +70,66 @@ void ur_month::update_net_and_peak(double energy, double power, int step) {
 	{
 		dc_flat_peak = -power;
 		dc_flat_peak_hour = step;
+	}
+}
+
+rate_data::rate_data() :
+	m_ec_tou_sched(),
+	m_dc_tou_sched(),
+	m_month(),
+	m_ec_periods(),
+	m_ec_ts_sell_rate(),
+	m_ec_ts_buy_rate(),
+	m_ec_periods_tiers_init(),
+	m_dc_tou_periods(),
+	m_dc_tou_periods_tiers(),
+	m_dc_flat_tiers(),
+	m_num_rec_yearly()
+{}
+
+rate_data::rate_data(const rate_data& tmp) :
+	m_ec_tou_sched(tmp.m_ec_tou_sched),
+	m_dc_tou_sched(tmp.m_dc_tou_sched),
+	m_month(tmp.m_month),
+	m_ec_periods(tmp.m_ec_periods),
+	m_ec_ts_sell_rate(tmp.m_ec_ts_sell_rate),
+	m_ec_ts_buy_rate(tmp.m_ec_ts_buy_rate),
+	m_ec_periods_tiers_init(tmp.m_ec_periods_tiers_init),
+	m_dc_tou_periods(tmp.m_dc_tou_periods),
+	m_dc_tou_periods_tiers(tmp.m_dc_tou_periods_tiers),
+	m_dc_flat_tiers(tmp.m_dc_flat_tiers),
+	m_num_rec_yearly(tmp.m_num_rec_yearly)
+{}
+
+void rate_data::init() {
+	size_t i, m;
+
+	for (i = 0; i < m_ec_periods_tiers_init.size(); i++)
+		m_ec_periods_tiers_init[i].clear();
+	m_ec_periods.clear();
+
+	for (i = 0; i < m_dc_tou_periods_tiers.size(); i++)
+		m_dc_tou_periods_tiers[i].clear();
+	m_dc_tou_periods.clear();
+
+	for (i = 0; i < m_dc_flat_tiers.size(); i++)
+		m_dc_flat_tiers[i].clear();
+
+	m_month.clear();
+	for (m = 0; m < 12; m++)
+	{
+		ur_month urm;
+		m_month.push_back(urm);
+	}
+
+	m_ec_ts_sell_rate.clear();
+	m_ec_ts_buy_rate.clear();
+
+	// for reporting purposes
+	for (i = 0; i < m_num_rec_yearly; i++)
+	{
+		m_ec_tou_sched.push_back(1);
+		m_dc_tou_sched.push_back(1);
 	}
 }
 
@@ -108,38 +226,6 @@ void rate_data::init_energy_rates(bool gen_only) {
 
 	}
 
-}
-
-void rate_data::init() {
-	size_t i, m;
-
-	for (i = 0; i < m_ec_periods_tiers_init.size(); i++)
-		m_ec_periods_tiers_init[i].clear();
-	m_ec_periods.clear();
-
-	for (i = 0; i < m_dc_tou_periods_tiers.size(); i++)
-		m_dc_tou_periods_tiers[i].clear();
-	m_dc_tou_periods.clear();
-
-	for (i = 0; i < m_dc_flat_tiers.size(); i++)
-		m_dc_flat_tiers[i].clear();
-
-	m_month.clear();
-	for (m = 0; m < 12; m++)
-	{
-		ur_month urm;
-		m_month.push_back(urm);
-	}
-
-	m_ec_ts_sell_rate.clear();
-	m_ec_ts_buy_rate.clear();
-
-	// for reporting purposes
-	for (i = 0; i < m_num_rec_yearly; i++)
-	{
-		m_ec_tou_sched.push_back(1);
-		m_dc_tou_sched.push_back(1);
-	}
 }
 
 void rate_data::setup_time_series(size_t cnt, ssc_number_t* ts_sr, ssc_number_t* ts_br)
