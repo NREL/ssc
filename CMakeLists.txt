@@ -4,7 +4,7 @@
 #
 #####################################################################################################################
 
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.11)
 
 option(skip_tools "Skips the sdktool and tcsconsole builds" OFF)
 
@@ -27,7 +27,7 @@ if ( NOT APPLE)
     set(CURL_DIR build_resources/libcurl_ssl_x64)
 endif()
 
-Project(sam_simulation_core)
+Project(sam_simulation_core VERSION 1.0.0)
 
 
 #####################################################################################################################

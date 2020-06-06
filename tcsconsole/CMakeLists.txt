@@ -18,8 +18,6 @@ set(TCSCONSOLE_SRC
 #
 #####################################################################################################################
 
-cmake_policy(SET CMP0043 NEW)
-
 set_default_compile_options()
 set_tools_compile_options()
 

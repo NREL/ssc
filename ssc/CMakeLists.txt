@@ -4,8 +4,6 @@
 #
 #####################################################################################################################
 
-cmake_policy(SET CMP0042 OLD)
-
 include_directories(. ../splinter ../shared ../nlopt ../lpsolve ../solarpilot ../tcs ../ssc)
 
 set(SSC_SRC
@@ -143,13 +141,13 @@ set(SSC_SRC
 		vartab.h
 		)
 
-if(MSVC)	
-	set	(SSC_SRC 
+if(MSVC)
+	set	(SSC_SRC
 		${SSC_SRC}
 		vbapi.cpp
 		vbapi.h
 		)
-endif(MSVC)		
+endif(MSVC)
 
 
 #####################################################################################################################
