@@ -232,7 +232,7 @@ void UtilityRateForecast::compute_next_composite_tou(int month, int year)
 					prev_tier = curr_month.ec_tou_ub.at(ir, ic - 1);
 				}
 
-				if (expected_load > ub_tier)
+				if (expected_gen > ub_tier)
 				{
 					periodSellRate += (ub_tier - prev_tier) / expected_gen * curr_month.ec_tou_sr.at(ir, ic) * rate_esc;
 				}

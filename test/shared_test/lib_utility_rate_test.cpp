@@ -126,5 +126,5 @@ TEST(lib_utility_rate_test, test_tiered_sell_rates)
 	ASSERT_EQ(2, rate_forecast.next_sell_rates.size());
 
 	EXPECT_NEAR(0.02, rate_forecast.next_sell_rates[0], 0.0001);
-	EXPECT_NEAR(0.03, rate_forecast.next_sell_rates[1], 0.0001);
+	EXPECT_NEAR(0.0266, rate_forecast.next_sell_rates[1], 0.0001);
 }
