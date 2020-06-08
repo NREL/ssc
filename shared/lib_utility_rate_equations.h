@@ -100,6 +100,8 @@ public:
 	std::vector<std::vector<int> >  m_dc_flat_tiers; // tier numbers for each month of flat demand charge
 	size_t m_num_rec_yearly;
 
+	std::vector<ssc_number_t> rate_scale;
+
 	rate_data();
 	rate_data(const rate_data& tmp);
 

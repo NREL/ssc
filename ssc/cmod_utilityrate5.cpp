@@ -415,6 +415,7 @@ public:
 			for (i=0;i<nyears;i++)
 				rate_scale[i] = (ssc_number_t)(1 + parr[i]*0.01);
 		}
+		rate_data.rate_scale = rate_scale; // TODO: is this needed? Might only use this in the battery code.
 
 		/* Update all e_sys and e_load values based on new inputs
 		grid = gen -load where gen = sys + batt

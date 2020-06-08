@@ -2,6 +2,7 @@
 #define _LIB_UTILITY_RATE_H_
 
 #include "lib_util.h"
+#include "lib_utility_rate_equations.h"
 #include <map>
 
 class UtilityRate
@@ -38,31 +39,6 @@ protected:
 
 	/// Use real time prices or not
 	bool m_useRealTimePrices;
-};
-
-class UtilityRateWithPeakLoad : protected UtilityRate {
-
-public:
-
-	UtilityRateWithPeakLoad(bool useRealTimePrices,
-		util::matrix_t<size_t> ecWeekday,
-		util::matrix_t<size_t> ecWeekend,
-		util::matrix_t<double> ecRatesMatrix,
-		std::vector<double> ecRealTimeBuy,
-		util::matrix_t<double> dc_schedule_weekday,
-		util::matrix_t<double> dc_schedule_weekend,
-		util::matrix_t<double> dc_time_of_use,
-		util::matrix_t<double> dc_flat);
-
-	UtilityRateWithPeakLoad(const UtilityRateWithPeakLoad& tmp);
-
-	virtual ~UtilityRateWithPeakLoad() {/* nothing to do */ };
-
-protected:
-	util::matrix_t<double> demand_charge_schedule_weekday;
-	util::matrix_t<double> demand_charge_schedule_weekend;
-	util::matrix_t<double> demand_charge_time_of_use;
-	util::matrix_t<double> demand_charge_flat;
 };
 
 class UtilityRateCalculator : protected UtilityRate
@@ -110,37 +86,41 @@ protected:
 };
 
 
-class UtilityRateForecast : protected UtilityRateWithPeakLoad
+class UtilityRateForecast
 {
 public:
-	UtilityRateForecast(UtilityRateWithPeakLoad* rate, size_t stepsPerHour);
+	UtilityRateForecast(rate_data* util_rate, size_t stepsPerHour, std::vector<double> monthly_load_forecast, std::vector<double> monthly_gen_forecast, std::vector<double> monthly_peak_forecast);
 
 	UtilityRateForecast(UtilityRateForecast& tmp);
 
-	~UtilityRateForecast() {/* Nothing to do */ };
+	~UtilityRateForecast();
 
 	double forecastCost(std::vector<double> predicted_loads);
 
 	void updateWithLoad(double load);
 
+	// Public for testing
+	void compute_next_composite_tou(int month, int year);
+
+	std::vector<double> current_sell_rates;
+	std::vector<double> current_buy_rates;
+	std::vector<double> next_sell_rates;
+	std::vector<double> next_buy_rates;
 protected:
 
-	// Net metering carryover should be <= 0, units kWh
-	void restartMonth(double carryOver);
+	void restartMonth();
+
+	rate_data* rate;
 
 	size_t steps_per_hour;
 
 	size_t last_step;
 
-	double peak_power_to_date; // For flat demand charges
+	std::vector<double> m_monthly_load_forecast; // Length is 12 * analysis period
+	std::vector<double> m_monthly_gen_forecast; // Length is 12 * analysis period
+	std::vector<double> m_monthly_peak_forecast; // Length is 12 * analysis period
 
-	std::vector<double> peak_power_by_time;
 
-	double total_energy_to_date;
-
-	double current_energy_tier;
-
-	double current_demand_tier; // Rare, but can be input via the GUI
 };
 
 #endif // !_LIB_UTILITY_RATE_H_

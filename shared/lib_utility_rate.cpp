@@ -1,6 +1,6 @@
 #include <cmath>
 #include "lib_utility_rate.h"
-
+#include "lib_utility_rate_equations.h"
 
 UtilityRate::UtilityRate(
 	bool useRealTimePrices,
@@ -25,40 +25,6 @@ UtilityRate::UtilityRate(const UtilityRate& tmp){
         m_energyTiersPerPeriod[kv.first] = kv.second;
     }
     m_ecRealTimeBuy = tmp.m_ecRealTimeBuy;
-}
-
-
-UtilityRateWithPeakLoad::UtilityRateWithPeakLoad(bool useRealTimePrices,
-	util::matrix_t<size_t> ecWeekday,
-	util::matrix_t<size_t> ecWeekend,
-	util::matrix_t<double> ecRatesMatrix,
-	std::vector<double> ecRealTimeBuy,
-	util::matrix_t<double> dc_schedule_weekday,
-	util::matrix_t<double> dc_schedule_weekend,
-	util::matrix_t<double> dc_time_of_use,
-	util::matrix_t<double> dc_flat) :
-	UtilityRate(useRealTimePrices, ecWeekday, ecWeekend, ecRatesMatrix, ecRealTimeBuy)
-{
-	demand_charge_schedule_weekday = dc_schedule_weekday;
-	demand_charge_schedule_weekend = dc_schedule_weekend;
-	demand_charge_time_of_use = dc_time_of_use;
-	demand_charge_flat = dc_flat;
-}
-
-UtilityRateWithPeakLoad::UtilityRateWithPeakLoad(const UtilityRateWithPeakLoad& tmp)
-{
-	m_useRealTimePrices = tmp.m_useRealTimePrices;
-	m_ecWeekday = tmp.m_ecWeekday;
-	m_ecWeekend = tmp.m_ecWeekend;
-	m_ecRatesMatrix = tmp.m_ecRatesMatrix;
-	for (auto& kv : tmp.m_energyTiersPerPeriod) {
-		m_energyTiersPerPeriod[kv.first] = kv.second;
-	}
-	m_ecRealTimeBuy = tmp.m_ecRealTimeBuy;
-	demand_charge_schedule_weekday = tmp.demand_charge_schedule_weekday;
-	demand_charge_schedule_weekend = tmp.demand_charge_schedule_weekend;
-	demand_charge_time_of_use = tmp.demand_charge_time_of_use;
-	demand_charge_flat = tmp.demand_charge_flat;
 }
 
 UtilityRateCalculator::UtilityRateCalculator(UtilityRate * rate, size_t stepsPerHour) :
@@ -162,25 +128,30 @@ size_t UtilityRateCalculator::getEnergyPeriod(size_t hourOfYear)
 	return period;
 }
 
-UtilityRateForecast::UtilityRateForecast(UtilityRateWithPeakLoad* rate, size_t stepsPerHour) :
-	UtilityRateWithPeakLoad(*rate),
-	peak_power_by_time()
+UtilityRateForecast::UtilityRateForecast(rate_data* util_rate, size_t stepsPerHour, std::vector<double> monthly_load_forecast, std::vector<double> monthly_gen_forecast, std::vector<double> monthly_peak_forecast)
 {
 	steps_per_hour = stepsPerHour;
 	last_step = 0;
-	restartMonth(0); // Just starting out, so no net metering carryover
+	rate = util_rate;
+	m_monthly_load_forecast = monthly_load_forecast;
+	m_monthly_gen_forecast = monthly_gen_forecast;
+	m_monthly_peak_forecast = monthly_peak_forecast;
+	restartMonth(); // Just starting out, so no net metering carryover
 }
 
 UtilityRateForecast::UtilityRateForecast(UtilityRateForecast& tmp) :
-	UtilityRateWithPeakLoad(tmp)
+	steps_per_hour(tmp.steps_per_hour),
+	last_step(tmp.last_step),
+	m_monthly_load_forecast(tmp.m_monthly_load_forecast),
+	m_monthly_gen_forecast(tmp.m_monthly_gen_forecast),
+	m_monthly_peak_forecast(tmp.m_monthly_peak_forecast)
 {
-	steps_per_hour = tmp.steps_per_hour;
-	last_step = tmp.last_step;
-	peak_power_to_date = tmp.peak_power_to_date;
-	peak_power_by_time = tmp.peak_power_by_time;
-	total_energy_to_date = tmp.total_energy_to_date;
-	current_energy_tier = tmp.current_energy_tier;
-	current_demand_tier = tmp.current_demand_tier;
+	rate = new rate_data(*tmp.rate);
+}
+
+UtilityRateForecast::~UtilityRateForecast()
+{
+	// TODO: either take ownership of the pointer, or figure out what to do with copies
 }
 
 double UtilityRateForecast::forecastCost(std::vector<double> predicted_loads)
@@ -193,15 +164,98 @@ double UtilityRateForecast::forecastCost(std::vector<double> predicted_loads)
 	return cost;
 }
 
-void UtilityRateForecast::restartMonth(double carryOver)
+// TODO - does year index from 0 or 1?
+void UtilityRateForecast::compute_next_composite_tou(int month, int year)
 {
-	peak_power_to_date = 0;
-	peak_power_by_time.clear();
-	// TODO: does this work, or do we need to handle periods * tiers?
-	for (int i = 0; i < demand_charge_time_of_use.nrows(); i++) {
-		peak_power_by_time.push_back(0);
+	ur_month& curr_month = rate->m_month[month];
+	double expected_load = m_monthly_load_forecast[year * 12 + month];
+	ssc_number_t rate_esc = rate->rate_scale[year];
+	next_buy_rates.clear();
+
+	ssc_number_t num_per = (ssc_number_t)curr_month.ec_tou_br.nrows();
+	if (expected_load > 0)
+	{
+		for (size_t ir = 0; ir < num_per; ir++)
+		{
+			bool done = false;
+			double periodCost = 0;
+			for (size_t ic = 0; ic < curr_month.ec_tou_ub.ncols() && !done; ic++)
+			{
+				ssc_number_t ub_tier = curr_month.ec_tou_ub.at(ir, ic);
+				ssc_number_t prev_tier = 0;
+				if (ic > 0)
+				{
+					prev_tier = curr_month.ec_tou_ub.at(ir, ic - 1);
+				}
+
+				if (expected_load > ub_tier)
+				{
+					periodCost += (ub_tier - prev_tier) / expected_load * curr_month.ec_tou_br.at(ir, ic) * rate_esc;
+				}
+				else
+				{
+					periodCost += (expected_load - prev_tier) / expected_load * curr_month.ec_tou_br.at(ir, ic) * rate_esc;
+					done = true;
+				}
+				
+			}
+			next_buy_rates.push_back(periodCost);
+		}
 	}
-	total_energy_to_date = carryOver;
-	current_energy_tier = 0; // TODO: check this
-	current_demand_tier = 0;
+	else
+	{
+		for (size_t ir = 0; ir < num_per; ir++)
+		{
+			double periodBuyRate = curr_month.ec_tou_br.at(ir, 0) * rate_esc;
+			next_buy_rates.push_back(periodBuyRate);
+		}
+	}
+
+	// repeat for surplus
+	// TODO: need to incorperate data about rate schedule here. Net metering will be the year end sell rate in all tiers, whereas others have explicit sell rates
+	double expected_gen = m_monthly_gen_forecast[year * 12 + month];
+	next_sell_rates.clear();
+	num_per = (ssc_number_t)curr_month.ec_tou_sr.nrows();
+
+	if (expected_gen > 0)
+	{
+		for (size_t ir = 0; ir < num_per; ir++)
+		{
+			bool done = false;
+			double periodSellRate = 0;
+			for (size_t ic = 0; ic < curr_month.ec_tou_ub.ncols() && !done; ic++)
+			{
+				ssc_number_t ub_tier = curr_month.ec_tou_ub.at(ir, ic);
+				ssc_number_t prev_tier = 0;
+				if (ic > 0)
+				{
+					prev_tier = curr_month.ec_tou_ub.at(ir, ic - 1);
+				}
+
+				if (expected_load > ub_tier)
+				{
+					periodSellRate += (ub_tier - prev_tier) / expected_gen * curr_month.ec_tou_sr.at(ir, ic) * rate_esc;
+				}
+				else
+				{
+					periodSellRate += (expected_gen - prev_tier) / expected_gen * curr_month.ec_tou_sr.at(ir, ic) * rate_esc;
+					done = true;
+				}
+			}
+			next_sell_rates.push_back(periodSellRate);
+		}
+	}
+	else
+	{
+		for (size_t ir = 0; ir < num_per; ir++)
+		{
+			double periodSellRate = curr_month.ec_tou_sr.at(ir, 0) * rate_esc;
+			next_sell_rates.push_back(periodSellRate);
+		}
+	}
+}
+
+void UtilityRateForecast::restartMonth()
+{
+	
 }
