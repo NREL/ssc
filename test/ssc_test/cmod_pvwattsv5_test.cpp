@@ -140,8 +140,6 @@ TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, singleTS) {
     ssc_data_set_number(data, "tz", -7);
     ssc_data_set_number(data, "wspd", 1.4500);
     ssc_data_set_number(data, "year", 2019);
-//    ssc_data_set_number(data, "tcell", 30);
-//    ssc_data_set_number(data, "poa", 10);
 
     ssc_data_set_number(data, "array_type", 2);
     ssc_data_set_number(data, "azimuth", 180);
@@ -153,15 +151,31 @@ TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, singleTS) {
     ssc_data_set_number(data, "system_capacity", 720);
     ssc_data_set_number(data, "tilt", 0);
 
-
     auto mod = ssc_module_create("pvwattsv5_1ts");
+
+    // without previous tcell & poa
     EXPECT_TRUE(ssc_module_exec(mod, data));
 
     double val;
     ssc_data_get_number(data, "poa", &val);
-    EXPECT_NEAR(val, 140.21, 1);
+    EXPECT_NEAR(val, 140.21, .1);
     ssc_data_get_number(data, "tcell", &val);
-    EXPECT_NEAR(val, 12.77, 1);
+    EXPECT_NEAR(val, 12.77, .1);
+    ssc_data_get_number(data, "dc", &val);
+    EXPECT_NEAR(val, 106739, 1);
     ssc_data_get_number(data, "ac", &val);
-    EXPECT_NEAR(val, 100851.88, 1);
+    EXPECT_NEAR(val, 100851, 1);
+
+    EXPECT_TRUE(ssc_module_exec(mod, data));
+
+    // tcell & poa are assigned from above exec call
+    val;
+    ssc_data_get_number(data, "poa", &val);
+    EXPECT_NEAR(val, 140.21, .1);
+    ssc_data_get_number(data, "tcell", &val);
+    EXPECT_NEAR(val, 13.36, .1);
+    ssc_data_get_number(data, "dc", &val);
+    EXPECT_NEAR(val, 106459, 1);
+    ssc_data_get_number(data, "ac", &val);
+    EXPECT_NEAR(val, 100579, 1);
 }
