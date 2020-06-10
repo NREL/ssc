@@ -341,7 +341,7 @@ public:
 			return 0.0;
 	}
 
-	void exec() throw(general_error)
+	void exec()
 	{
 		std::unique_ptr<weather_data_provider> wdprov;
 

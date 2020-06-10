@@ -81,7 +81,7 @@ void cm_grid::construct()
 	allocateOutputs();
 }
 
-void cm_grid::exec() throw (general_error)
+void cm_grid::exec()
 {
 	construct();
 
