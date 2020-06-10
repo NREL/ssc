@@ -318,13 +318,13 @@ bool var_table::rename_match_case( const std::string &oldname, const std::string
 
 var_data *var_table::lookup( const std::string &name )
 {
-    var_hash::iterator it = m_hash.find(name );
+    var_hash::iterator it = m_hash.find(name);
     if (it == m_hash.end())
-        it = m_hash.find( util::lower_case(name) );
-	if ( it != m_hash.end() )
-		return (*it).second;
-	else
-		return NULL;
+      it = m_hash.find( util::lower_case(name));
+    if ( it != m_hash.end() )
+      return (*it).second;
+    else
+      return NULL;
 }
 
 var_data *var_table::lookup_match_case( const std::string &name )
