@@ -69,7 +69,7 @@ TEST(lib_utility_rate_test, test_tiered_tou_cost_estimates)
 
 	UtilityRateForecast rate_forecast(&data, steps_per_hour, monthly_load_forecast, monthly_gen_forecast, monthly_peak_forecast);
 
-	rate_forecast.compute_next_composite_tou(0, 0);
+	rate_forecast.compute_next_composite_tou(0, 1);
 
 	ASSERT_EQ(3, rate_forecast.next_buy_rates.size());
 
@@ -116,7 +116,7 @@ TEST(lib_utility_rate_test, test_tiered_sell_rates)
 
 	UtilityRateForecast rate_forecast(&data, steps_per_hour, monthly_load_forecast, monthly_gen_forecast, monthly_peak_forecast);
 
-	rate_forecast.compute_next_composite_tou(0, 0);
+	rate_forecast.compute_next_composite_tou(0, 1);
 
 	ASSERT_EQ(2, rate_forecast.next_buy_rates.size());
 

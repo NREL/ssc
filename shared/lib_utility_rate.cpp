@@ -154,19 +154,47 @@ UtilityRateForecast::~UtilityRateForecast()
 	// TODO: either take ownership of the pointer, or figure out what to do with copies
 }
 
-double UtilityRateForecast::forecastCost(std::vector<double> predicted_loads)
+double UtilityRateForecast::forecastCost(std::vector<double> predicted_loads, size_t year, size_t hour_of_year, size_t step)
 {
 	double cost = 0;
+	int month = util::month_of(hour_of_year);
+
 	size_t n = predicted_loads.size();
+
+	// Determine if this forecast crosses a month
+	size_t hour_at_end = hour_of_year + (step + n) / steps_per_hour;
+	int month_at_end = util::month_of(hour_at_end);
+
+	bool crossing_month = month != month_at_end;
+	int year_at_end = year;
+	if (month_at_end < month) {
+		year_at_end++;
+	}
+
+	// Get previous peak cost - may need to run two months
+	double previousPeak = rate->get_demand_charge(month, year);
+	if (crossing_month)
+	{
+		// TODO: initalize new month
+		previousPeak += rate->get_demand_charge(month_at_end, year_at_end);
+	}
+
 	for (int i = 0; i < n; i++) {
+		// Determine if this new step crosses a month
+
 
 	}
+
+	// Compute new peak cost - may need to run two months
+
 	return cost;
 }
 
-// TODO - does year index from 0 or 1?
+// Year indexes from 1
 void UtilityRateForecast::compute_next_composite_tou(int month, int year)
 {
+	// Adjust year to be consistent with rate data's peaking functions
+	year -= 1;
 	ur_month& curr_month = rate->m_month[month];
 	double expected_load = m_monthly_load_forecast[year * 12 + month];
 	ssc_number_t rate_esc = rate->rate_scale[year];
@@ -255,7 +283,29 @@ void UtilityRateForecast::compute_next_composite_tou(int month, int year)
 	}
 }
 
+void UtilityRateForecast::initializeMonth(int month, int year)
+{
+	if (next_buy_rates.size() == 0 || next_buy_rates == current_buy_rates)
+	{
+		compute_next_composite_tou(month, year);
+
+		double avg_load = m_monthly_load_forecast[month] / util::hours_in_month(month);
+
+		ur_month& curr_month = rate->m_month[month];
+		curr_month.dc_flat_peak = avg_load;
+		for (int period = 0; period < (int)curr_month.dc_tou_ub.nrows(); period++)
+		{
+			curr_month.dc_tou_peak[period] = avg_load;
+		}
+	}
+}
+
 void UtilityRateForecast::restartMonth()
 {
 	
+}
+
+double UtilityRateForecast::getPreviousDemandCharge(int month)
+{
+	return rate->monthly_dc_fixed[month] + rate->monthly_dc_tou[month];
 }

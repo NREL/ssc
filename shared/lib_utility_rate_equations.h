@@ -101,6 +101,11 @@ public:
 	size_t m_num_rec_yearly;
 
 	std::vector<ssc_number_t> rate_scale;
+	std::vector<ssc_number_t> dc_hourly_peak;
+	std::vector<ssc_number_t> monthly_dc_fixed;
+	std::vector<ssc_number_t> monthly_dc_tou;
+
+	bool tou_demand_single_peak;
 
 	rate_data();
 	rate_data(const rate_data& tmp);
@@ -115,6 +120,10 @@ public:
 	// Runs each step
 	void sort_energy_to_periods(int month, double energy, int step); // Net metering only
 	void find_dc_tou_peak(int month, double power, int step);
+
+	// Runs each month
+	void init_dc_peak_vectors(int month);
+	ssc_number_t get_demand_charge(int month, int year); // TODO - should tou_demand_single_peak be a member variable or not?
 };
 
 #endif // _LIB_UTILITY_RATE_EQUATIONS_H_

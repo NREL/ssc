@@ -84,7 +84,11 @@ rate_data::rate_data() :
 	m_dc_tou_periods(),
 	m_dc_tou_periods_tiers(),
 	m_dc_flat_tiers(),
-	m_num_rec_yearly()
+	m_num_rec_yearly(),
+	dc_hourly_peak(),
+	monthly_dc_fixed(12),
+	monthly_dc_tou(12),
+	tou_demand_single_peak(false)
 {}
 
 rate_data::rate_data(const rate_data& tmp) :
@@ -98,7 +102,11 @@ rate_data::rate_data(const rate_data& tmp) :
 	m_dc_tou_periods(tmp.m_dc_tou_periods),
 	m_dc_tou_periods_tiers(tmp.m_dc_tou_periods_tiers),
 	m_dc_flat_tiers(tmp.m_dc_flat_tiers),
-	m_num_rec_yearly(tmp.m_num_rec_yearly)
+	m_num_rec_yearly(tmp.m_num_rec_yearly),
+	dc_hourly_peak(tmp.dc_hourly_peak),
+	monthly_dc_fixed(tmp.monthly_dc_fixed),
+	monthly_dc_tou(tmp.monthly_dc_tou),
+	tou_demand_single_peak(tmp.tou_demand_single_peak)
 {}
 
 void rate_data::init() {
@@ -130,6 +138,7 @@ void rate_data::init() {
 	{
 		m_ec_tou_sched.push_back(1);
 		m_dc_tou_sched.push_back(1);
+		dc_hourly_peak.push_back(0);
 	}
 }
 
@@ -662,6 +671,18 @@ void rate_data::sort_energy_to_periods(int month, double energy, int step) {
 	curr_month.ec_energy_use(row, 0) += energy;
 }
 
+void rate_data::init_dc_peak_vectors(int month)
+{
+	ur_month& curr_month = m_month[month];
+	curr_month.dc_tou_peak.clear();
+	curr_month.dc_tou_peak_hour.clear();
+	for (int i = 0; i < (int)curr_month.dc_periods.size(); i++)
+	{
+		curr_month.dc_tou_peak.push_back(0);
+		curr_month.dc_tou_peak_hour.push_back(0);
+	}
+}
+
 void rate_data::find_dc_tou_peak(int month, double power, int step) {
 	ur_month& curr_month = m_month[month];
 	int todp = m_dc_tou_sched[step];
@@ -678,4 +699,81 @@ void rate_data::find_dc_tou_peak(int month, double power, int step) {
 		curr_month.dc_tou_peak[row] = -power;
 		curr_month.dc_tou_peak_hour[row] = step;
 	}
+}
+
+ssc_number_t rate_data::get_demand_charge(int month, int year)
+{
+	size_t tier, period;
+	ur_month& curr_month = m_month[month];
+	double rate_esc = rate_scale[year - 1];
+
+	// fixed demand charge
+	// compute charge based on tier structure for the month
+	ssc_number_t charge = 0;
+	ssc_number_t d_lower = 0;
+	ssc_number_t total_charge = 0;
+	ssc_number_t demand = curr_month.dc_flat_peak;
+	bool found = false;
+	for (tier = 0; tier < (int)curr_month.dc_flat_ub.size() && !found; tier++)
+	{
+		if (demand < curr_month.dc_flat_ub[tier])
+		{
+			found = true;
+			charge += (demand - d_lower) *
+				curr_month.dc_flat_ch[tier] * rate_esc;
+			curr_month.dc_flat_charge = charge;
+		}
+		else
+		{
+			charge += (curr_month.dc_flat_ub[tier] - d_lower) *
+				curr_month.dc_flat_ch[tier] * rate_esc;
+			d_lower = curr_month.dc_flat_ub[tier];
+		}
+	}
+
+	dc_hourly_peak[curr_month.dc_flat_peak_hour] = curr_month.dc_flat_peak;
+	monthly_dc_fixed[month] = charge; // redundant...
+	total_charge += charge;
+
+	// TOU demand charge for each period find correct tier
+	demand = 0;
+	d_lower = 0;
+	int peak_hour = 0;
+	curr_month.dc_tou_charge.clear();
+	for (period = 0; period < (int)curr_month.dc_tou_ub.nrows(); period++)
+	{
+		charge = 0;
+		d_lower = 0;
+		if (tou_demand_single_peak)
+		{
+			demand = curr_month.dc_flat_peak;
+			if (curr_month.dc_flat_peak_hour != curr_month.dc_tou_peak_hour[period]) continue; // only one peak per month.
+		}
+		else
+			demand = curr_month.dc_tou_peak[period];
+		// find tier corresponding to peak demand
+		found = false;
+		for (tier = 0; tier < (int)curr_month.dc_tou_ub.ncols() && !found; tier++)
+		{
+			if (demand < curr_month.dc_tou_ub.at(period, tier))
+			{
+				found = true;
+				charge += (demand - d_lower) *
+					curr_month.dc_tou_ch.at(period, tier) * rate_esc;
+				curr_month.dc_tou_charge.push_back(charge);
+			}
+			else
+			{
+				charge += (curr_month.dc_tou_ub.at(period, tier) - d_lower) * curr_month.dc_tou_ch.at(period, tier) * rate_esc;
+				d_lower = curr_month.dc_tou_ub.at(period, tier);
+			}
+		}
+
+		dc_hourly_peak[peak_hour] = demand;
+		// add to payments
+		monthly_dc_tou[month] += charge;
+		total_charge += charge;
+	}
+
+	return total_charge;
 }
