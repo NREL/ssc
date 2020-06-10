@@ -34,6 +34,34 @@ SSCEXPORT void ssc_data_t_set_number(ssc_data_t p_data, const char* name, ssc_nu
     }
 }
 
+SSCEXPORT ssc_number_t *ssc_data_t_get_array(ssc_data_t p_data, const char* name, int* length)
+{
+    ssc_number_t* data;
+    data = ssc_data_get_array(p_data, name, length);
+    if (data == 0) {
+        // replace any periods in the name with underscores in order to read variables set by the UI
+        std::string str_name(name);
+        size_t n_replaced = util::replace(str_name, ".", "_");
+        if (n_replaced > 0) {
+            data = ssc_data_get_array(p_data, str_name.c_str(), length);
+        }
+    }
+
+    return data;
+}
+
+SSCEXPORT void ssc_data_t_set_array(ssc_data_t p_data, const char* name, ssc_number_t* pvalues, int length)
+{
+    ssc_data_set_array(p_data, name, pvalues, length);
+
+    // replace any periods in the name with underscores so UI equations can read value
+    std::string str_name(name);
+    size_t n_replaced = util::replace(str_name, ".", "_");
+    if (n_replaced > 0) {
+        ssc_data_set_array(p_data, str_name.c_str(), pvalues, length);
+    }
+}
+
 SSCEXPORT void ssc_data_t_get_matrix(var_table* vt, std::string name, util::matrix_t<double>& matrix)
 {
     try
@@ -193,21 +221,24 @@ double Error_equiv(double helio_optical_error_mrad /*mrad*/) {       // [mrad]
     return std::sqrt(2. * helio_optical_error_mrad * 2. * helio_optical_error_mrad * 2.);
 }
 
-int Is_optimize(int override_opt /*-*/) {      // [-]
-    if (override_opt == 1) {
-        return 1;
+bool Is_optimize(bool override_opt /*-*/) {      // [-]
+    if (override_opt) {
+        return true;
     }
     else {
-        return 0;
+        return false;
     }
 }
 
-double Field_model_type(int is_optimize /*-*/, int override_layout /*-*/) {      // [-]
-    if (is_optimize == 1) {
+int Field_model_type(bool is_optimize /*-*/, bool override_layout /*-*/, int assigned_field_model_type /*-*/) {      // [-]
+    if (is_optimize) {
         return 0;
     }
     else if (override_layout) {
         return 1;
+    }
+    else if (assigned_field_model_type >= 0) {       // if valid
+        return assigned_field_model_type;
     }
     else {
         return 2;

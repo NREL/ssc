@@ -52,6 +52,7 @@ void Tower_SolarPilot_Solar_Field_Equations(ssc_data_t data)
         n_hel, override_opt, is_optimize, override_layout, opt_algorithm;
 
     util::matrix_t<double> helio_positions;
+    bool success;
 
     // land_max_calc
     ssc_data_t_get_number(data, "land_max", &land_max);
@@ -126,14 +127,20 @@ void Tower_SolarPilot_Solar_Field_Equations(ssc_data_t data)
     ssc_data_t_set_number(data, "error_equiv", error_equiv);
 
     // is_optimize
-    ssc_data_t_get_number(data, "override_opt", &override_opt);
+    success = ssc_data_t_get_number(data, "override_opt", &override_opt);
+    if (!success) { override_opt = 0.; }
     is_optimize = Is_optimize(override_opt);
     ssc_data_t_set_number(data, "is_optimize", is_optimize);
 
     // field_model_type
-    ssc_data_t_get_number(data, "is_optimize", &is_optimize);
-    ssc_data_t_get_number(data, "override_layout", &override_layout);
-    field_model_type = Field_model_type(is_optimize, override_layout);
+    success = ssc_data_t_get_number(data, "is_optimize", &is_optimize);
+    if (!success) { is_optimize = 0.; }
+    success = ssc_data_t_get_number(data, "override_layout", &override_layout);
+    if (!success) { override_layout = 0.; }
+    double assigned_field_model_type;
+    success = ssc_data_t_get_number(data, "field_model_type", &assigned_field_model_type);
+    if (!success) { assigned_field_model_type = -1.; }
+    field_model_type = Field_model_type(is_optimize, override_layout, static_cast<int>(assigned_field_model_type));
     ssc_data_t_set_number(data, "field_model_type", field_model_type);
 
     // q_design
@@ -278,10 +285,12 @@ void MSPT_System_Control_Equations(ssc_data_t data)
     ssc_data_t_set_number(data, "disp_wlim_max", disp_wlim_max);
 
     // wlim_series
-    ssc_data_t_get_number(data, "disp_wlim_max", &disp_wlim_max);
-    ssc_data_t_get_number(data, "constant", &constant);
-    wlim_series = Wlim_series(disp_wlim_max);
-    ssc_data_t_set_matrix(data, "wlim_series", wlim_series);
+    if (!vt->is_assigned("wlim_series")) {
+        ssc_data_t_get_number(data, "disp_wlim_max", &disp_wlim_max);
+        ssc_data_t_get_number(data, "constant", &constant);
+        wlim_series = Wlim_series(disp_wlim_max);
+        ssc_data_t_set_array(data, "wlim_series", wlim_series.data(), wlim_series.ncells());
+    }
 }
 
 void Tower_SolarPilot_Capital_Costs_MSPT_Equations(ssc_data_t data)
