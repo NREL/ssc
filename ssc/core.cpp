@@ -226,8 +226,8 @@ bool compute_module::evaluate()
             default:
             {
                 float time = -1.;
-                log(var_data::type_name(variable_data->type) + " data types not supported for ssc_equations", SSC_ERROR, time);
-                return false;
+                //log(variable_name + " of data type " + var_data::type_name(variable_data->type) + " is not supported for ssc_equations", SSC_ERROR, time);
+                //return false;
                 //break;
             }
             }
