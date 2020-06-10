@@ -126,13 +126,15 @@ public:
 	std::string get_error(size_t i = 0);
 
 	size_t get_row_index_for_input(size_t hour, size_t hour_step, size_t steps_per_hour);
+	size_t get_row_index_for_input(size_t month, size_t day, size_t hour, size_t minute);
 	bool use_shade_db();
 
 	// beam and diffuse loss factors (0: full loss, 1: no loss )
-	bool fbeam(size_t hour, double solalt, double solazi, size_t hour_step = 0, size_t steps_per_hour = 1);
+	//bool fbeam(size_t hour, double solalt, double solazi, size_t hour_step = 0, size_t steps_per_hour = 1);
+	bool fbeam(double solalt, double solazi, size_t month, size_t day, size_t hour, size_t minute);
 	// shading database instantiated once outside of shading factor calculator
-	bool fbeam_shade_db(ShadeDB8_mpp * p_shadedb, size_t hour, double solalt, double solazi, size_t hour_step = 0, size_t steps_per_hour = 1, double gpoa = 0.0, double dpoa = 0.0, double pv_cell_temp = 0.0, int mods_per_str = 0, double str_vmp_stc = 0.0, double mppt_lo = 0.0, double mppt_hi = 0.0);
-
+	//bool fbeam_shade_db(ShadeDB8_mpp * p_shadedb, size_t hour, double solalt, double solazi, size_t hour_step = 0, size_t steps_per_hour = 1, double gpoa = 0.0, double dpoa = 0.0, double pv_cell_temp = 0.0, int mods_per_str = 0, double str_vmp_stc = 0.0, double mppt_lo = 0.0, double mppt_hi = 0.0);
+	bool fbeam_shade_db(ShadeDB8_mpp* p_shadedb, double solalt, double solazi, size_t month, size_t day, size_t hour, size_t minute, double gpoa = 0.0, double dpoa = 0.0, double pv_cell_temp = 0.0, int mods_per_str = 0, double str_vmp_stc = 0.0, double mppt_lo = 0.0, double mppt_hi = 0.0);
 	double fdiff();
 
 	double beam_shade_factor();
@@ -166,6 +168,7 @@ public:
 	bool read(weather_record *r); // reads one more record	
 	bool read_average(weather_record *r, std::vector<int> &cols, size_t &num_timesteps); // reads one more record	
 	bool has_data_column(size_t id);
+	bool check_continuous_single_year(bool leapyear);
 };
 
 bool ssc_cmod_update(std::string &log_msg, std::string &progress_msg, void *data, double progress, int out_type);

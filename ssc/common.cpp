@@ -25,6 +25,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_weatherfile.h"
 #include "lib_time.h"
 #include "lib_resilience.h"
+#include "lib_util.h"
 
 var_info vtab_standard_financial[] = {
 { SSC_INPUT,SSC_NUMBER  , "analysis_period"                      , "Analyis period"                                                 , "years"                                  , ""                                      , "Financial Parameters" , "?=30"           , "INTEGER,MIN=0,MAX=50"  , ""},
@@ -1080,16 +1081,37 @@ bool shading_factor_calculator::use_shade_db()
 size_t shading_factor_calculator::get_row_index_for_input(size_t hour, size_t hour_step, size_t steps_per_hour)
 {
 	// handle different simulation timesteps and shading input timesteps
-	size_t ndx = hour * m_steps_per_hour; // m_beam row index for input hour
+	size_t ndx = hour * (size_t)m_steps_per_hour; // m_beam row index for input hour
 	int hr_step = 0;
 	if (steps_per_hour > 0)
 		hr_step = (int)((int)m_steps_per_hour*(int)hour_step/ (int)steps_per_hour);
 	if (hr_step >= m_steps_per_hour) hr_step = m_steps_per_hour - 1;
 	if (hr_step < 0) hr_step = 0;
-	ndx += hr_step;
+	ndx += (size_t)hr_step;
 	return ndx;
 }
 
+size_t shading_factor_calculator::get_row_index_for_input(size_t month, size_t day, size_t hour, size_t minute)
+{
+	// assume weather file timestamp m,d,h,m
+	// translate to fbeam user input with 8760 * m_steps_per_hour
+	int day_of_year = (int)day;
+	for (int i = 0; i < (int)month && i < 12; i++)
+		day_of_year += util::days_in_month(i);
+	if (day_of_year < 0) day_of_year = 0;
+	if (day_of_year > 364) day_of_year = 364; // leap year has 366 days, we consider only 365 days for 8760 hours total
+	int hour_of_year = day_of_year * 24 + (int)hour;
+	if (hour_of_year < 0) hour_of_year = 0;
+	if (hour_of_year > 8760) hour_of_year = 8760;
+	size_t ndx = hour * (size_t)m_steps_per_hour; // m_beam row index for input hour
+	int hr_step = (int)(m_steps_per_hour * (int)minute / 60);
+	if (hr_step >= m_steps_per_hour) hr_step = m_steps_per_hour - 1;
+	if (hr_step < 0) hr_step = 0;
+	ndx += (size_t)hr_step;
+	return ndx;
+}
+
+/*
 bool shading_factor_calculator::fbeam(size_t hour, double solalt, double solazi, size_t hour_step, size_t steps_per_hour)
 {
 	bool ok = false;
@@ -1111,8 +1133,32 @@ bool shading_factor_calculator::fbeam(size_t hour, double solalt, double solazi,
 	}
 	return ok;
 }
+*/
+
+bool shading_factor_calculator::fbeam(double solalt, double solazi, size_t month, size_t day, size_t hour, size_t minute)
+{
+	bool ok = false;
+	double factor = 1.0;
+	size_t irow = get_row_index_for_input(month, day, hour, minute);
+	if (irow < m_beamFactors.nrows())
+	{
+		factor = m_beamFactors.at(irow, 0);
+		// apply mxh factor
+		if (m_enMxH && (irow < m_mxhFactors.nrows()))
+			factor *= m_mxhFactors(irow, 0);
+		// apply azi alt shading factor
+		if (m_enAzAlt)
+			factor *= util::bilinear(solalt, solazi, m_azaltvals);
 
 
+		m_beam_shade_factor = factor;
+
+
+		ok = true;
+	}
+	return ok;
+}
+/*
 bool shading_factor_calculator::fbeam_shade_db(ShadeDB8_mpp * p_shadedb, size_t hour, double solalt, double solazi, size_t hour_step, size_t steps_per_hour, double gpoa, double dpoa, double pv_cell_temp, int mods_per_str, double str_vmp_stc, double mppt_lo, double mppt_hi)
 {
 	bool ok = false;
@@ -1139,7 +1185,34 @@ bool shading_factor_calculator::fbeam_shade_db(ShadeDB8_mpp * p_shadedb, size_t 
 	}
 	return ok;
 }
+*/
 
+bool shading_factor_calculator::fbeam_shade_db(ShadeDB8_mpp* p_shadedb, double solalt, double solazi, size_t month, size_t day, size_t hour, size_t minute, double gpoa, double dpoa, double pv_cell_temp, int mods_per_str, double str_vmp_stc, double mppt_lo, double mppt_hi)
+{
+	bool ok = false;
+	double dc_factor = 1.0;
+	double beam_factor = 1.0;
+	size_t irow = get_row_index_for_input(month, day, hour, minute);
+	if (irow < m_beamFactors.nrows())
+	{
+		std::vector<double> shad_fracs;
+		for (size_t icol = 0; icol < m_beamFactors.ncols(); icol++)
+			shad_fracs.push_back(m_beamFactors.at(irow, icol));
+		dc_factor = 1.0 - p_shadedb->get_shade_loss(gpoa, dpoa, shad_fracs, true, pv_cell_temp, mods_per_str, str_vmp_stc, mppt_lo, mppt_hi);
+		// apply mxh factor
+		if (m_enMxH && (irow < m_mxhFactors.nrows()))
+			beam_factor *= m_mxhFactors(irow, 0);
+		// apply azi alt shading factor
+		if (m_enAzAlt)
+			beam_factor *= util::bilinear(solalt, solazi, m_azaltvals);
+
+		m_dc_shade_factor = dc_factor;
+		m_beam_shade_factor = beam_factor;
+
+		ok = true;
+	}
+	return ok;
+}
 
 double shading_factor_calculator::fdiff()
 {
@@ -1161,6 +1234,38 @@ double shading_factor_calculator::dc_shade_factor()
 	// Sara 1/25/16 - shading database derate applied to dc only
 	// shading loss applied to beam if not from shading database
 	return (m_dc_shade_factor);
+}
+
+//this function checks the weather data to make sure that it is a single, continuous year with an even timestep starting jan 1 and ending dec 31
+//HOWEVER, the year value may vary (i.e., TMY) so only checking month, day, hour, minute timesteps, not actual year vector
+bool weatherdata::check_continuous_single_year(bool leapyear)
+{
+	int ts_per_hour = 0; //determine the number of timesteps in each hour
+	if (leapyear)
+		ts_per_hour = (int)(m_nRecords % 8784);
+	else
+		ts_per_hour = (int)(m_nRecords % 8760);
+	double ts_min = 60 / ts_per_hour; //determine the number of minutes of each timestep
+	int idx = 0; //index to keep track of where we are in the timestamp vectors
+	//now, check that the month, hour, day, and minute vectors are consistent with a single, continuous year with an even timestep that starts on jan 1 and ends dec 31
+	for (int m = 1; m <= 12; m++)
+	{
+		int daymax = util::days_in_month(m - 1);
+		if (m == 2 && leapyear) daymax = 29; //make sure to account for leap day in Feb
+		for (int d = 1; d < daymax; d++)
+		{
+			for (int h = 0; h < 23; h++)
+			{
+				for (double min = 0; min < 60; min += ts_min)
+				{
+					//if any of the month, day, hour, or minute don't line up with what we've calculated, then it doesn't fit our criteria for a continuous year
+					if (this->m_data[idx]->month != m || this->m_data[idx]->day != d || this->m_data[idx]->hour != h || this->m_data[idx]->minute != min) return false;
+					else idx++;
+				}
+			}
+		}
+	}
+	return true;
 }
 
 weatherdata::weatherdata( var_data *data_table )
@@ -1224,12 +1329,12 @@ weatherdata::weatherdata( var_data *data_table )
 		}
 	}
 
-	// check that all vectors are of same length as irradiance vectors
-	vec year = get_vector( data_table, "year");
-	vec month = get_vector( data_table, "month");
-	vec day = get_vector( data_table, "day");
-	vec hour = get_vector( data_table, "hour");
-	vec minute = get_vector( data_table, "minute");
+	// check that all vectors are of same length as irradiance vectors (which were used to set nrec)
+	vec year = get_vector( data_table, "year", &nrec);
+	vec month = get_vector( data_table, "month", &nrec);
+	vec day = get_vector( data_table, "day", &nrec);
+	vec hour = get_vector( data_table, "hour", &nrec);
+	vec minute = get_vector( data_table, "minute", &nrec);
 	vec gh = get_vector( data_table, "gh", &nrec );
 	vec dn = get_vector( data_table, "dn", &nrec );
 	vec df = get_vector( data_table, "df", &nrec );
@@ -1245,36 +1350,12 @@ weatherdata::weatherdata( var_data *data_table )
 	vec alb = get_vector( data_table, "alb", &nrec ); 
 	vec aod = get_vector( data_table, "aod", &nrec ); 
 	if (m_ok == false){
-		return;
+		return; //m_message is set in get_vector function, so doesn't need to be set here
 	}
 
 	m_nRecords = nrec;
 
-	// estimate time step
-	size_t nmult = 0;
-	if ( m_nRecords%8760 == 0 )
-	{
-		nmult = nrec / 8760;
-		m_stepSec = 3600 / nmult;
-		m_startSec = m_stepSec / 2;
-	}
-	else if ( m_nRecords%8784==0 )
-	{ 
-		// Check if the weather file contains a leap day
-		// if so, correct the number of nrecords 
-		m_nRecords = m_nRecords/8784*8760;
-		nmult = m_nRecords/8760;
-		m_stepSec = 3600 / nmult;
-		m_startSec = m_stepSec / 2;
-	}
-	else
-	{
-		m_message = "could not determine timestep in weatherdata";
-		m_ok = false;
-		return;
-	}
-
-	if ( nrec > 0 && nmult >= 1 )
+	if ( nrec > 0)
 	{
 		m_data.resize( nrec );
 		for( size_t i=0;i<nrec;i++ )
@@ -1282,28 +1363,10 @@ weatherdata::weatherdata( var_data *data_table )
 			weather_record *r = new weather_record;
 
 			if ( i < year.len ) r->year = (int)year.p[i]; 
-			else r->year = 2000;
-
 			if ( i < month.len ) r->month = (int)month.p[i];
-			else if ( m_stepSec == 3600 && m_nRecords == 8760 ) {
-				r->month = util::month_of((double)i);
-			}
-
 			if ( i < day.len ) r->day = (int)day.p[i];
-			else if ( m_stepSec == 3600 && m_nRecords == 8760 ) {
-				int month = util::month_of( (double)i );
-				r->day = util::day_of_month( month, (double)i );
-			}
-
 			if ( i < hour.len ) r->hour = (int)hour.p[i];
-			else if ( m_stepSec == 3600 && m_nRecords == 8760 ) {
-				size_t day = i / 24;
-				size_t start_of_day = day * 24;
-				r->hour = (int)(i - start_of_day);
-			}
-
 			if ( i < minute.len ) r->minute = minute.p[i];
-			else r->minute = (double)((m_stepSec / 2) / 60);
 
 			r->gh = r->dn = r->df = r->poa = r->wspd = r->wdir = r->tdry = r->twet = r->tdew 
 				= r->rhum = r->pres = r->snow = r->alb = r->aod = std::numeric_limits<double>::quiet_NaN();
@@ -1340,6 +1403,32 @@ weatherdata::weatherdata( var_data *data_table )
 
 			m_data[i] = r;
 		}
+	}
+
+	// estimate time step and check for continuous year
+	size_t nmult = 0;
+	bool is_leap_year = false;
+	// Check if the weather file contains a leap day
+	// if so, correct the number of nrecords
+	if (m_nRecords % 8784 == 0)
+	{
+		m_nRecords = m_nRecords / 8784 * 8760;
+		is_leap_year = true;
+	}
+	if (m_nRecords % 8760 == 0)
+	{
+		if (check_continuous_single_year(is_leap_year))
+		{
+			nmult = nrec / 8760;
+			m_stepSec = 3600 / nmult;
+			m_startSec = m_stepSec / 2;
+		}
+		else
+			m_continuousYear = false;
+	}
+	else
+	{
+		m_continuousYear = false;
 	}
 }
 

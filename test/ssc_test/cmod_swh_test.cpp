@@ -16,7 +16,7 @@ TEST_F(CM_SWH, ResidentialDefault_cmod_swh) {
 }
 
 TEST_F(CM_SWH, ResidentialDefaultUsingData_cmod_swh) {
-    auto weather_data = create_weatherdata_array();
+    auto weather_data = create_weatherdata_array(8760);
     ssc_data_unassign(data, "solar_resource_file");
     ssc_data_set_table(data, "solar_resource_data", &weather_data->table);
 
