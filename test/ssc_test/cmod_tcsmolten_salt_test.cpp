@@ -219,16 +219,16 @@ TEST(Mspt_cmod_csp_tower_eqns, NoData) {
 	//ASSERT_THROW(Tower_SolarPilot_Capital_Costs_ISCC_Equations(nullptr), std::runtime_error);
 }
 
-TEST(Mspt_cmod_csp_tower_eqns, MissingVariables) {
-	var_table* vd = new var_table;
-	ASSERT_THROW(MSPT_System_Design_Equations(vd), std::runtime_error);
-	ASSERT_THROW(Tower_SolarPilot_Solar_Field_Equations(vd), std::runtime_error);
-	//ASSERT_THROW(MSPT_Receiver_Equations(vd), std::runtime_error);
-	//ASSERT_THROW(MSPT_System_Control_Equations(vd), std::runtime_error);
-	//ASSERT_THROW(Tower_SolarPilot_Capital_Costs_MSPT_Equations(vd), std::runtime_error);
-	//ASSERT_THROW(Tower_SolarPilot_Capital_Costs_DSPT_Equations(vd), std::runtime_error);
-	//ASSERT_THROW(Tower_SolarPilot_Capital_Costs_ISCC_Equations(vd), std::runtime_error);
-}
+//TEST(Mspt_cmod_csp_tower_eqns, MissingVariables) {
+//	var_table* vd = new var_table;
+//	ASSERT_THROW(MSPT_System_Design_Equations(vd), std::runtime_error);
+//	ASSERT_THROW(Tower_SolarPilot_Solar_Field_Equations(vd), std::runtime_error);
+//	//ASSERT_THROW(MSPT_Receiver_Equations(vd), std::runtime_error);
+//	//ASSERT_THROW(MSPT_System_Control_Equations(vd), std::runtime_error);
+//	//ASSERT_THROW(Tower_SolarPilot_Capital_Costs_MSPT_Equations(vd), std::runtime_error);
+//	//ASSERT_THROW(Tower_SolarPilot_Capital_Costs_DSPT_Equations(vd), std::runtime_error);
+//	//ASSERT_THROW(Tower_SolarPilot_Capital_Costs_ISCC_Equations(vd), std::runtime_error);
+//}
 
 TEST(Mspt_cmod_csp_tower_eqns, Case1) {
 	double error_tolerance = 0.01;
