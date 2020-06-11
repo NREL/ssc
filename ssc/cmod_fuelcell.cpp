@@ -137,13 +137,15 @@ void cm_fuelcell::exec()
 {
 	double annual_energy = 0.0;
 	double annual_fuel = 0.0;
-	float percent_complete = 0.0;
+	// float percent_complete = 0.0;
 	float percent = 0.0;
 	size_t nStatusUpdates = 50;
 
+/*
 	if (is_assigned("percent_complete")) {
 		percent_complete = as_float("percent_complete");
 	}
+*/
 
 	construct();
 	size_t idx = 0;
