@@ -8,10 +8,10 @@
 
 void MSPT_System_Design_Equations(ssc_data_t data)
 {
-    //auto vt = static_cast<var_table*>(data);
-    //if (!vt) {
-    //    throw std::runtime_error("ssc_data_t data invalid");
-    //}
+    auto vt = static_cast<var_table*>(data);
+    if (!vt) {
+        throw std::runtime_error("ssc_data_t data invalid");
+    }
     double P_ref, gross_net_conversion_factor, nameplate, design_eff, solarm, q_pb_design, q_rec_des, tshours, tshours_sf;
 
     // nameplate
