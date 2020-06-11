@@ -26,6 +26,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <algorithm>
 
 #include "core.h"
+#include "ssc_equations.h"
 
 const var_info var_info_invalid = {	0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 
@@ -67,7 +68,8 @@ bool compute_module::compute( handler_interface *handler, var_table *data )
 
 	try { // catch any 'general_error' that can be thrown during precheck, exec, and postcheck
 
-		if (!verify("precheck input", SSC_INPUT)) return false;
+        //if (!evaluate()) return false;    // This can be enabled when we want automatic updating of interdependent-inputs
+        if (!verify("precheck input", SSC_INPUT)) return false;
 		exec();
 		if (!verify("postcheck output", SSC_OUTPUT)) return false;
 
@@ -77,6 +79,178 @@ bool compute_module::compute( handler_interface *handler, var_table *data )
 	}
 
 	return true;
+}
+
+bool compute_module::evaluate()
+{
+    // Get compute module name (e.g., cm_tcsmolten_salt)
+    const std::string kTypeIdClassPrefix("class ");
+    std::string compute_module_name(typeid(*this).name());
+    std::size_t prefix_position = compute_module_name.find(kTypeIdClassPrefix);
+    if (prefix_position != std::string::npos) {
+        compute_module_name.erase(prefix_position, kTypeIdClassPrefix.length());
+    }
+
+    // Find ssc_equations relevant to compute module
+    std::vector<size_t> table_indices;
+    compute_module_name = util::lower_case(compute_module_name);    // make lowercase for later matching
+    std::size_t table_length = sizeof(ssc_equation_table)/sizeof(*ssc_equation_table);
+    for (std::size_t i = 0; i < table_length; i++) {
+        if (ssc_equation_table[i].cmod == nullptr) continue;
+        std::string row_compute_module_name = util::lower_case(ssc_equation_table[i].cmod);
+        std::size_t match = compute_module_name.find(row_compute_module_name);
+
+        if (match != std::string::npos) {
+            table_indices.push_back(i);
+        }
+    }
+
+    if (table_indices.size() < 1) return true;      // no equations relevant to cmod
+
+    // For calling all relevant ssc_equations
+    auto CallSscEquations = [this](std::vector<size_t> table_indices)
+    {
+        for (std::vector<size_t>::iterator it = table_indices.begin(); it != table_indices.end(); ++it) {
+            std::size_t table_row = *it;
+            ssc_equation_ptr ssc_equation = ssc_equation_table[table_row].func;
+            ssc_data_t var_table_data = static_cast<ssc_data_t>(this->m_vartab);
+
+            try
+            {
+                (*ssc_equation)(var_table_data);
+            }
+            catch (std::exception& e) {
+                float time = -1.;
+                log(e.what(), SSC_ERROR, time);
+                return false;
+            }
+        }
+    };
+
+    CallSscEquations(table_indices);            // initial call populating outputs
+
+    // Call all equations until convergence
+    const size_t kMaxIterations = 100;
+    const double kMaxConvergenceTol = 0.001;    // RMS
+    size_t iteration = 0;
+    double convergence_error = std::numeric_limits<double>::quiet_NaN();
+
+    var_table var_table_prev_iter;              // don't initial here or it will use the (bad) default copy constructor
+    var_table_prev_iter = *m_vartab;            // instead using explicity implemented copy assignment operator which does a deep copy
+
+    do {
+        iteration++;
+
+        CallSscEquations(table_indices);
+
+        // Calculate convergence_error by comparing var_table values with previous
+        double squared_error = 0.;
+        int n_differences = 0;
+        const char* it;
+        for (it = m_vartab->first(); it != NULL; it = m_vartab->next()) {
+            auto AreSame = [](double a, double b) -> bool
+                {
+                constexpr double kEpsilon = std::numeric_limits<double>::epsilon();
+                return fabs(a - b) < kEpsilon;
+                };
+
+            std::string variable_name(it);
+            var_data* variable_data = m_vartab->lookup(variable_name);
+
+            switch (variable_data->type) {
+            case SSC_STRING:
+            {
+                // if the strings change, throw an error
+                std::string string_cur = m_vartab->as_string(variable_name);
+                std::string string_prev = var_table_prev_iter.as_string(variable_name);
+                if (string_cur.compare(string_prev) != 0) {
+                    float time = -1.;
+                    log("Changing string variables in ssc_equations is not allowed.", SSC_ERROR, time);         // probably could add later
+                    return false;
+                }
+
+                break;
+            }
+            case SSC_NUMBER:
+            {
+                double number_cur = m_vartab->as_double(variable_name);
+                double number_prev = var_table_prev_iter.as_double(variable_name);
+                if (!AreSame(number_cur, number_prev)) {
+                    squared_error += pow(number_cur - number_prev, 2);
+                    n_differences++;
+                }
+
+                break;
+            }
+            case SSC_ARRAY:
+            {
+                size_t n_elements_cur, n_elements_prev;
+                ssc_number_t *array_cur = m_vartab->as_array(variable_name, &n_elements_cur);
+                ssc_number_t* array_prev = var_table_prev_iter.as_array(variable_name, &n_elements_prev);
+
+                if (n_elements_cur != n_elements_prev) {
+                    float time = -1.;
+                    log("Changing array variable length in ssc_equations is not allowed.", SSC_ERROR, time);       // probably could add later
+                    return false;
+                }
+
+                for (size_t i = 0; i < n_elements_cur; i++) {
+                    if (!AreSame(array_cur[i], array_prev[i])) {
+                        squared_error += pow(array_cur[i] - array_prev[i], 2);
+                        n_differences++;
+                    }
+                }
+
+                break;
+            }
+            case SSC_MATRIX:
+            {
+                util::matrix_t<double> matrix_cur = m_vartab->as_matrix(variable_name);
+                util::matrix_t<double> matrix_prev = var_table_prev_iter.as_matrix(variable_name);
+
+                if (matrix_cur.nrows() != matrix_prev.nrows() || matrix_cur.ncols() != matrix_prev.ncols()) {
+                    float time = -1.;
+                    log("Changing matrix variable dimensions in ssc_equations is not allowed.", SSC_ERROR, time);       // probably could add later
+                    return false;
+                }
+
+                for (size_t i = 0; i < matrix_cur.ncells(); i++) {
+                    if (!AreSame(matrix_cur.at(i), matrix_prev.at(i))) {
+                        squared_error += pow(matrix_cur.at(i) - matrix_prev.at(i), 2);
+                        n_differences++;
+                    }
+                }
+
+                break;
+            }
+            default:
+            {
+                float time = -1.;
+                //log(variable_name + " of data type " + var_data::type_name(variable_data->type) + " is not supported for ssc_equations", SSC_ERROR, time);
+                //return false;
+                //break;
+            }
+            }
+        }
+
+        if (n_differences == 0) {
+            convergence_error = 0.;
+        }
+        else {
+            convergence_error = sqrt(squared_error / static_cast<double>(n_differences));
+        }
+
+        var_table_prev_iter = *m_vartab;        // using copy assignment operator instead of merge()
+    } while (convergence_error > kMaxConvergenceTol && iteration < kMaxIterations);
+
+    if (convergence_error > kMaxConvergenceTol) {
+        std::string err_text = "Inputs did not converge per their relational equations.";
+        float time = -1.;
+        log(err_text, SSC_ERROR, time);
+        return false;
+    }
+
+    return true;
 }
 
 bool compute_module::verify(const std::string &phase, int check_var_type)
@@ -90,7 +264,7 @@ bool compute_module::verify(const std::string &phase, int check_var_type)
 		{
 			if ( check_required( vi->name ) )
 			{
-				// if the variable is required, make sure it exists
+				// if the variable is required, make sure it exists (in the var_table)
 				// and that it is of the correct data type
 				var_data *dat = lookup( vi->name );
 				if (!dat)
