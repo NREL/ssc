@@ -2747,7 +2747,6 @@ public:
 		//int metering_option = as_integer("ur_metering_option");
 		bool excess_monthly_dollars = (as_integer("ur_metering_option") == 3);
 		int excess_dollars_credit_month = (int)as_number("ur_nm_credit_month");
-		bool rollover_credit = as_boolean("ur_nm_credit_rollover");
 
 		bool tou_demand_single_peak = (as_integer("TOU_demand_single_peak") == 1);
 
