@@ -1,6 +1,7 @@
 #include "cmod_csp_tower_eqns.h"
 #include "cmod_csp_common_eqns.h"
 #include "vartab.h"
+#include <cmath>
 
 #pragma warning(disable: 4297)  // ignore warning: 'function assumed not to throw an exception but does'
 
