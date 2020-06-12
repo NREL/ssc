@@ -27,7 +27,7 @@ SSCEXPORT void ssc_data_t_get_matrix(var_table* vt, std::string name, util::matr
 SSCEXPORT void ssc_data_t_set_matrix(ssc_data_t data, const std::string& name, const var_data& val);
 
 
-HTFProperties GetHtfProperties(int fluid_number, const util::matrix_t<double> &specified_fluid_properties = NULL);       // [-]
+HTFProperties GetHtfProperties(int fluid_number, const util::matrix_t<double> &specified_fluid_properties);       // [-]
 
 
 
@@ -94,7 +94,7 @@ double Csp_pt_rec_htf_t_avg(double T_htf_cold_des /*C*/, double T_htf_hot_des /*
 double Csp_pt_rec_cav_ap_height(double rec_d_spec /*m*/, double csp_pt_rec_cav_ap_hw_ratio /*-*/);      // [m]
 
 double Csp_pt_rec_htf_c_avg(double csp_pt_rec_htf_t_avg /*C*/, int rec_htf /*-*/,
-    const util::matrix_t<ssc_number_t> &field_fl_props = NULL /*-*/);      // [kJ/kg-K]
+    const util::matrix_t<ssc_number_t> &field_fl_props /*-*/);      // [kJ/kg-K]
 
 double Rec_aspect(double D_rec /*m*/, double rec_height /*m*/);     // [-]
 
