@@ -74,7 +74,7 @@ static ssc_equation_entry ssc_equation_table [] = {
 
         // Single owner
         {"Financial_Construction_Financing_Equations", Financial_Construction_Financing_Equations,
-            "Singleowner", Financial_Construction_Financing_Equations_doc, false},
+            "Tcsmolten_salt", Financial_Construction_Financing_Equations_doc, false},
         {"Financial_Capacity_Payments_Equations", Financial_Capacity_Payments_Equations,
             "Singleowner", Financial_Capacity_Payments_Equations_doc, false},
 
