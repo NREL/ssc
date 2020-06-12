@@ -255,6 +255,7 @@ public:
 
 protected:
 	// called by 'compute' as necessary for precheck and postcheck
+    bool evaluate();
 	bool verify(const std::string &phase, int var_types);
 
 private:
