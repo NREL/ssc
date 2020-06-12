@@ -310,30 +310,18 @@ public:
 
 	struct S_des_solved
 	{
-	  	double m_UA_allocated =		    	//[kW/K] Allocated design-point conductance
-		  std::numeric_limits<double>::quiet_NaN();
-        	double m_UA_calc_at_eff_max =		//[kW/K] May be less than design total if eff_max < 1
-		  std::numeric_limits<double>::quiet_NaN();
-        	double m_Q_dot_design = 		//[kWt] Design-point heat transfer
-		  std::numeric_limits<double>::quiet_NaN();
-        	double m_UA_design =         		//[kW/K] Design UA. used in cost model; off-design model scales 'm_UA_design_total'
-		  std::numeric_limits<double>::quiet_NaN();
-		double m_min_DT_design = 		//[K] Minimum temperature difference in heat exchanger
-		  std::numeric_limits<double>::quiet_NaN();
-		double m_eff_design =			//[-] Effectiveness at design
-		  std::numeric_limits<double>::quiet_NaN();
-		double m_NTU_design =			//[-] NTU at design
-		  std::numeric_limits<double>::quiet_NaN();
-		double m_T_h_out =			//[K] Design-point hot outlet temperature
-		  std::numeric_limits<double>::quiet_NaN();
-		double m_T_c_out =			//[K] Design-point cold outlet temperature
-		  std::numeric_limits<double>::quiet_NaN();
-		double m_DP_cold_des =			//[kPa] cold fluid design pressure drop
-		  std::numeric_limits<double>::quiet_NaN();
-		double m_DP_hot_des =			//[kPa] hot fluid design pressure drop
-		  std::numeric_limits<double>::quiet_NaN();
-		double m_cost =				//[M$]
-		  std::numeric_limits<double>::quiet_NaN();
+	  	double m_UA_allocated = -1;	    	//[kW/K] Allocated design-point conductance
+	  	double m_UA_calc_at_eff_max = -1;	//[kW/K] May be less than design total if eff_max < 1
+	  	double m_Q_dot_design = -1; 		//[kWt] Design-point heat transfer
+	  	double m_UA_design = -1;       		//[kW/K] Design UA. used in cost model; off-design model scales 'm_UA_design_total'
+	  	double m_min_DT_design = -1;		//[K] Minimum temperature difference in heat exchanger
+	  	double m_eff_design = -1;		//[-] Effectiveness at design
+	  	double m_NTU_design = -1;		//[-] NTU at design
+	  	double m_T_h_out = -1;			//[K] Design-point hot outlet temperature
+	  	double m_T_c_out = -1;			//[K] Design-point cold outlet temperature
+	  	double m_DP_cold_des = -1;		//[kPa] cold fluid design pressure drop
+	  	double m_DP_hot_des = -1;		//[kPa] hot fluid design pressure drop
+	  	double m_cost = -1;			//[M$]
 	};
 
 	struct S_od_par
