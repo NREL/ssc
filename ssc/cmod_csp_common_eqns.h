@@ -4,6 +4,7 @@
 #include "sscapi.h"
 #include "../shared/lib_util.h"
 #include "htf_props.h"
+#include "vartab.h"
 
 
 enum class TowerTypes {
@@ -11,6 +12,19 @@ enum class TowerTypes {
     kDirectSteam,
     kIscc,
 };
+
+
+SSCEXPORT ssc_bool_t ssc_data_t_get_number(ssc_data_t p_data, const char* name, ssc_number_t* value);
+
+SSCEXPORT void ssc_data_t_set_number(ssc_data_t p_data, const char* name, ssc_number_t value);
+
+SSCEXPORT ssc_number_t* ssc_data_t_get_array(ssc_data_t p_data, const char* name, int* length);
+
+SSCEXPORT void ssc_data_t_set_array(ssc_data_t p_data, const char* name, ssc_number_t* pvalues, int length);
+
+SSCEXPORT void ssc_data_t_get_matrix(var_table* vt, std::string name, util::matrix_t<double>& matrix);
+
+SSCEXPORT void ssc_data_t_set_matrix(ssc_data_t data, const std::string& name, const var_data& val);
 
 
 HTFProperties GetHtfProperties(int fluid_number, const util::matrix_t<double> &specified_fluid_properties = NULL);       // [-]
@@ -53,9 +67,9 @@ double C_atm_info(const util::matrix_t<ssc_number_t> &helio_positions /*m*/,
 
 double Error_equiv(double helio_optical_error_mrad /*mrad*/);       // [mrad]
 
-int Is_optimize(int override_opt /*-*/);      // [-]
+bool Is_optimize(bool override_opt /*-*/);      // [-]
 
-double Field_model_type(int is_optimize /*-*/, int override_layout /*-*/);      // [-]
+int Field_model_type(bool is_optimize /*-*/, bool override_layout /*-*/, int assigned_field_model_type /*-*/);      // [-]
 
 double Q_design(double Q_rec_des /*MWt*/);      // [MWt]
 
