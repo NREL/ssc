@@ -285,13 +285,15 @@ if (MSVC)
 				ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${APIGENDIR}
 				)
 		else()
-			set(APIGENDIR $ENV{SAMNTDIR}/build_msvc/api/api_autogen/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
-			add_custom_command(
-				TARGET ssc
-				POST_BUILD
-				COMMAND ${CMAKE_COMMAND}
-				ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${APIGENDIR}
-				)
+			set(APIGENDIR $ENV{SAMNTDIR}/build/api/api_autogen/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
+            if (EXISTS ${APIGENDIR})
+			    add_custom_command(
+				    TARGET ssc
+				    POST_BUILD
+				    COMMAND ${CMAKE_COMMAND}
+				    ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${APIGENDIR}
+				    )
+               endif()
 		endif()
 	endif()
 
