@@ -2176,17 +2176,7 @@ public:
 						// energy charge
 						if (ec_enabled)
 						{
-							period = rate_data.m_ec_tou_sched[c];
-							// find corresponding monthly period
-							// check for valid period
-							std::vector<int>::iterator per_num = std::find(curr_month.ec_periods.begin(), curr_month.ec_periods.end(), period);
-							if (per_num == curr_month.ec_periods.end())
-							{
-								std::ostringstream ss;
-								ss << "Energy rate Period " << period << " not found for Month " << m << ".";
-								throw exec_error("utilityrate5", ss.str());
-							}
-							int row = (int)(per_num - curr_month.ec_periods.begin());
+							int row = rate_data.get_tou_row(c, m);
 
 							if (e_in[c] >= 0.0)
 							{ // calculate income or credit

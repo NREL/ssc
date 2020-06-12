@@ -777,3 +777,19 @@ ssc_number_t rate_data::get_demand_charge(int month, int year)
 
 	return total_charge;
 }
+
+int rate_data::get_tou_row(int year_one_index, int month)
+{
+	int period = m_ec_tou_sched[year_one_index];
+	ur_month& curr_month = m_month[month];
+	// find corresponding monthly period
+	// check for valid period
+	std::vector<int>::iterator per_num = std::find(curr_month.ec_periods.begin(), curr_month.ec_periods.end(), period);
+	if (per_num == curr_month.ec_periods.end())
+	{
+		std::ostringstream ss;
+		ss << "Energy rate Period " << period << " not found for Month " << month << ".";
+		throw exec_error("lib_utility_rate_equations", ss.str());
+	}
+	return (int)(per_num - curr_month.ec_periods.begin());
+}

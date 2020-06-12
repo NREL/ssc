@@ -120,6 +120,7 @@ public:
 	// Runs each step
 	void sort_energy_to_periods(int month, double energy, int step); // Net metering only
 	void find_dc_tou_peak(int month, double power, int step);
+	int get_tou_row(int year_one_index, int month);
 
 	// Runs each month
 	void init_dc_peak_vectors(int month);

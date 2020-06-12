@@ -95,8 +95,11 @@ public:
 
 	~UtilityRateForecast();
 
-	// TODO: either initalize first month prior to this function, or add it if year, hour_of_year, and step all equal 0 (year may equal 1)
+	// TODO: initialize new month (if needed) prior to calling this function
 	double forecastCost(std::vector<double> predicted_loads, size_t year, size_t hour_of_year, size_t step);
+
+	void copyTOUForecast();
+	void initializeMonth(int month, int year);
 
 	// Public for testing
 	void compute_next_composite_tou(int month, int year);
@@ -107,7 +110,7 @@ public:
 	std::vector<double> next_buy_rates;
 protected:
 
-	void initializeMonth(int month, int year);
+	
 	void restartMonth();
 
 	double getPreviousDemandCharge(int month);
@@ -115,6 +118,7 @@ protected:
 	rate_data* rate;
 
 	size_t steps_per_hour;
+	float dt_hour;
 
 	size_t last_step;
 
