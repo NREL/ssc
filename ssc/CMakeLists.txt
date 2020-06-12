@@ -1,24 +1,8 @@
 #####################################################################################################################
 #
-# CMake and System Settings
-#
-#####################################################################################################################
-
-set(CMAKE_VERBOSE_MAKEFILE ON)
-
-if(APPLE)
-    set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
-	set(CMAKE_MACOSX_RPATH 1)
-endif()
-
-
-#####################################################################################################################
-#
 # Project Settings
 #
 #####################################################################################################################
-
-Project(ssc)
 
 include_directories(. ../splinter ../shared ../nlopt ../lpsolve ../solarpilot ../tcs ../ssc)
 
@@ -157,13 +141,13 @@ set(SSC_SRC
 		vartab.h
 		)
 
-if(MSVC)	
-	set	(SSC_SRC 
+if(MSVC)
+	set	(SSC_SRC
 		${SSC_SRC}
 		vbapi.cpp
 		vbapi.h
 		)
-endif(MSVC)		
+endif(MSVC)
 
 
 #####################################################################################################################
@@ -172,30 +156,13 @@ endif(MSVC)
 #
 #####################################################################################################################
 
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-set(CMAKE_CXX_STANDARD 11)
+set_disabled_warnings()
+set_default_compile_options()
 
 if(MSVC)
-	add_compile_options(/MP /W4 /w44191 /w44242  /w44266 /w44302 /w44388 /w44826 /w44905 /w44906 /w44928)
-    add_compile_definitions( __DLL__ __64BIT__ __WINDOWS__ _CRT_SECURE_NO_WARNINGS __VISUALC__ )
-    foreach (flag_var CMAKE_C_FLAGS_DEBUG CMAKE_CXX_FLAGS_DEBUG)
-		set(${flag_var} "${${flag_var}} /D_DEBUG" CACHE STRING "compile flags" FORCE)
-	endforeach()
-else(MSVC)
-	if (APPLE)
-		add_compile_options(-arch x86_64 -fno-common)
-		add_definitions(-D__MACOSX__ -DWX_PRECOMP)
-	else ()
-		add_definitions(-D__UNIX__)
-	endif()
-	add_definitions(-D__64BIT__)
-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-unknown-pragmas -Wno-deprecated -std=c++11" )
-	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-		add_compile_definitions(_DEBUG)
-	else()
-		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3" )
-	endif()
-endif(MSVC)
+    add_compile_definitions( __DLL__ __VISUALC__ )
+endif()
+
 
 #####################################################################################################################
 #
@@ -318,13 +285,15 @@ if (MSVC)
 				ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${APIGENDIR}
 				)
 		else()
-			set(APIGENDIR $ENV{SAMNTDIR}/build_msvc/api/api_autogen/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
-			add_custom_command(
-				TARGET ssc
-				POST_BUILD
-				COMMAND ${CMAKE_COMMAND}
-				ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${APIGENDIR}
-				)
+			set(APIGENDIR $ENV{SAMNTDIR}/build/api/api_autogen/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
+            if (EXISTS ${APIGENDIR})
+			    add_custom_command(
+				    TARGET ssc
+				    POST_BUILD
+				    COMMAND ${CMAKE_COMMAND}
+				    ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${APIGENDIR}
+				    )
+               endif()
 		endif()
 	endif()
 
