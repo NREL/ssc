@@ -124,7 +124,7 @@ Irradiance_IO::Irradiance_IO(compute_module* cm, std::string cmName)
 
 		weatherDataProvider->rewind();
 	}
-	else if (weatherDataProvider->nrecords() == 8760)
+	else if (weatherDataProvider->annualSimulation() && weatherDataProvider->nrecords() == 8760)
 	{
 		// hourly file with no minute data column.  assume
 		// integrated/averaged values and use mid point convention for interpreting results
@@ -138,10 +138,14 @@ Irradiance_IO::Irradiance_IO(compute_module* cm, std::string cmName)
 
 	//total number of records in the weather file (i.e. 8760 * timestep)
 	numberOfWeatherFileRecords = weatherDataProvider->nrecords();
-	stepsPerHour = numberOfWeatherFileRecords / 8760;
-	dtHour = 1.0;
-	if (stepsPerHour > 0)
-		dtHour /= stepsPerHour;
+	dtHour = 1.0; //initialize these values to 1 for non-annual simulations
+	stepsPerHour = 1.0;
+	if (weatherDataProvider->annualSimulation())
+	{
+		stepsPerHour = numberOfWeatherFileRecords / 8760;
+		if (stepsPerHour > 0)
+			dtHour /= stepsPerHour;
+	}
 
 	if (weatherDataProvider->annualSimulation() && numberOfWeatherFileRecords % 8760 != 0)
 		throw exec_error(cmName, util::format("invalid number of data records (%zu): must be an integer multiple of 8760", numberOfWeatherFileRecords));

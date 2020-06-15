@@ -968,6 +968,10 @@ void cm_pvsamv1::exec( ) throw (general_error)
 			log(util::format("A non-zero tilt was assigned for a single-axis tracking system in Subarray %d. This is a very uncommon configuration.", nn+1), SSC_WARNING);
 	}
 
+	// check for snow model with non-annual simulations: because snow model coefficients need to know the timestep, and we don't know timestep if non-annual
+	if (Simulation->annualSimulation && PVSystem->enableSnowModel)
+		log("Using the snow model with non-annual data may result in over-estimation of snow losses because an hour-long timestep will be assumed.", SSC_WARNING);
+
 	double annual_snow_loss = 0;
 
 	// SELF-SHADING MODULE INFORMATION
@@ -1058,6 +1062,11 @@ void cm_pvsamv1::exec( ) throw (general_error)
     bool en_batt = as_boolean("en_batt");
     int batt_topology = 0;
     if (en_batt){
+
+		// Single timestep or non-annual simulations are not enabled with batteries
+		if (!Simulation->annualSimulation)
+			throw exec_error("pvsamv1", "Non-annual simulations are not currently enabled for PV+Battery systems.");
+
         batt = std::make_shared<battstor>(*m_vartab, en_batt, nrec, ts_hour);
         batt->setSharedInverter(sharedInverter);
         batt_topology = batt->batt_vars->batt_topology;
@@ -1719,7 +1728,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 						// 20 minute window of weighting values does not include current timestep SS value per refernce
 						int wma_window_minutes = 20;
 						// determine number of past timesteps to average
-						int wma_timestep_minutes = 60 / (int)step_per_hour;
+						int wma_timestep_minutes = 60 / (int)step_per_hour; //steps per hour is set to 1 for non-annual simulations, so this won't trigger transient thermal model
 						if (wma_timestep_minutes <= 0)
 							throw exec_error("pvsamv1", "Transient thermal timestep minutes <= 0");
 
@@ -2066,14 +2075,16 @@ void cm_pvsamv1::exec( ) throw (general_error)
 			// Battery replacement
 			if (en_batt && (batt_topology == ChargeController::DC_CONNECTED))
 			{
+				// calculate timestep in hour for battery models- this will work for annual simulations
+				// and non-annual simulations are not allowed for battery models, so this should work
+				size_t jj = nrec_idx % iyear;
+				jj = jj % hour;
 				batt->initialize_time(iyear, hour, jj);
 				batt->check_replacement_schedule();
 			}
 
 			double acpwr_gross = 0, ac_wiringloss = 0, transmissionloss = 0;
 			cur_load = p_load_full[idx];
-			wdprov->read(&Irradiance->weatherRecord);
-			weather_record wf = Irradiance->weatherRecord;
 
 			//set DC voltages for use in AC power calculation
 			for (size_t m = 0; m < PVSystem->Inverter->nMpptInputs; m++)
@@ -2086,12 +2097,12 @@ void cm_pvsamv1::exec( ) throw (general_error)
 			if (en_batt && (batt_topology == ChargeController::DC_CONNECTED)) // DC-connected battery
 			{
 				// Compute PV clipping before adding battery
-				sharedInverter->calculateACPower(dcPower_kW, dcVoltagePerMppt[0], wf.tdry); //DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
+				sharedInverter->calculateACPower(dcPower_kW, dcVoltagePerMppt[0], Irradiance->weatherRecord.tdry); //DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
 
                 if (resilience){
                     resilience->add_battery_at_outage_timestep(*batt->dispatch_model, idx);
                     resilience->run_surviving_batteries(p_crit_load_in[idx % nrec], sharedInverter->powerAC_kW, dcPower_kW,
-                                                        dcVoltagePerMppt[0], sharedInverter->powerClipLoss_kW, wf.tdry);
+                                                        dcVoltagePerMppt[0], sharedInverter->powerClipLoss_kW, Irradiance->weatherRecord.tdry);
                 }
 
                 // Run PV plus battery through sharedInverter, returns AC power
@@ -2100,14 +2111,14 @@ void cm_pvsamv1::exec( ) throw (general_error)
 			}
 			else if (PVSystem->Inverter->inverterType == INVERTER_PVYIELD) //PVyield inverter model not currently enabled for multiple MPPT
 			{
-				sharedInverter->calculateACPower(dcPower_kW, dcVoltagePerMppt[0], wf.tdry);
+				sharedInverter->calculateACPower(dcPower_kW, dcVoltagePerMppt[0], Irradiance->weatherRecord.tdry);
 				acpwr_gross = sharedInverter->powerAC_kW;
 			}
 			else
 			{
 				// inverter: runs at all hours of the day, even if no DC power.  important
 				// for capturing tare losses
-				sharedInverter->calculateACPower(dcPowerNetPerMppt_kW, dcVoltagePerMppt, wf.tdry);
+				sharedInverter->calculateACPower(dcPowerNetPerMppt_kW, dcVoltagePerMppt, Irradiance->weatherRecord.tdry);
 				acpwr_gross = sharedInverter->powerAC_kW;
 			}
 
@@ -2225,7 +2236,11 @@ void cm_pvsamv1::exec( ) throw (general_error)
 				annual_energy_pre_battery += PVSystem->p_systemACPower[idx] * ts_hour;
 
 			if (en_batt && batt_topology == ChargeController::AC_CONNECTED)
-			{
+			{	
+				// calculate timestep in hour for battery models- this will work for annual simulations
+				// and non-annual simulations are not allowed for battery models, so this should work
+				size_t jj = nrec_idx % iyear;
+				jj = jj % hour;
 				batt->initialize_time(iyear, hour, jj);
 				batt->check_replacement_schedule();
 
