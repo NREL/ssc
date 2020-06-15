@@ -110,10 +110,10 @@ public:
 	std::vector<double> next_buy_rates;
 protected:
 
-	
-	void restartMonth();
+	void restartMonth(int prevMonth, int currentMonth, int year);
 
-	double getPreviousDemandCharge(int month);
+    double getEnergyChargeNetMetering(int month, std::vector<double> buy_rates, std::vector<double> sell_rates, bool crossing_month);
+    double getEnergyChargeNetBilling(double energy, int year_one_index, int current_month, bool use_next_month);
 
 	rate_data* rate;
 

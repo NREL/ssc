@@ -88,7 +88,11 @@ rate_data::rate_data() :
 	dc_hourly_peak(),
 	monthly_dc_fixed(12),
 	monthly_dc_tou(12),
-	tou_demand_single_peak(false)
+	tou_demand_single_peak(false),
+    enable_nm(false),
+    nm_credits_w_rollover(false),
+    net_metering_credit_month(11),
+    nm_credit_sell_rate(0.0)
 {}
 
 rate_data::rate_data(const rate_data& tmp) :
@@ -106,7 +110,11 @@ rate_data::rate_data(const rate_data& tmp) :
 	dc_hourly_peak(tmp.dc_hourly_peak),
 	monthly_dc_fixed(tmp.monthly_dc_fixed),
 	monthly_dc_tou(tmp.monthly_dc_tou),
-	tou_demand_single_peak(tmp.tou_demand_single_peak)
+	tou_demand_single_peak(tmp.tou_demand_single_peak),
+    enable_nm(tmp.enable_nm),
+    nm_credits_w_rollover(tmp.nm_credits_w_rollover),
+    net_metering_credit_month(tmp.net_metering_credit_month),
+    nm_credit_sell_rate(tmp.nm_credit_sell_rate)
 {}
 
 void rate_data::init() {
@@ -792,4 +800,59 @@ int rate_data::get_tou_row(int year_one_index, int month)
 		throw exec_error("lib_utility_rate_equations", ss.str());
 	}
 	return (int)(per_num - curr_month.ec_periods.begin());
+}
+
+int rate_data::transfer_surplus(ur_month& curr_month, ur_month& prev_month)
+{
+    int returnValue = 0;
+    // check for surplus in previous month for same period
+    for (size_t ir = 0; ir < prev_month.ec_energy_surplus.nrows(); ir++)
+    {
+        if (prev_month.ec_energy_surplus.at(ir, 0) > 0) // surplus - check period
+        {
+            int toup_source = prev_month.ec_periods[ir]; // number of rows of previous month - and period with surplus
+            // find source period in rollover map for previous month
+            std::vector<int>::iterator source_per_num = std::find(prev_month.ec_rollover_periods.begin(), prev_month.ec_rollover_periods.end(), toup_source);
+            if (source_per_num == prev_month.ec_rollover_periods.end())
+            {
+                returnValue = 100 + toup_source;
+            }
+            else
+            {
+                // find corresponding target period for same time of day
+                ssc_number_t extra = 0;
+                int rollover_index = (int)(source_per_num - prev_month.ec_rollover_periods.begin());
+                if (rollover_index < (int)curr_month.ec_rollover_periods.size())
+                {
+                    int toup_target = curr_month.ec_rollover_periods[rollover_index];
+                    std::vector<int>::iterator target_per_num = std::find(curr_month.ec_periods.begin(), curr_month.ec_periods.end(), toup_target);
+                    if (target_per_num == curr_month.ec_periods.end())
+                    {
+                        returnValue = 200 + toup_target;
+                    }
+                    int target_row = (int)(target_per_num - curr_month.ec_periods.begin());
+                    for (size_t ic = 0; ic < prev_month.ec_energy_surplus.ncols(); ic++)
+                        extra += prev_month.ec_energy_surplus.at(ir, ic);
+
+                    curr_month.ec_energy_use(target_row, 0) += extra;
+                }
+            }
+        }
+    }
+    return returnValue;
+}
+
+void rate_data::compute_surplus(ur_month& curr_month)
+{
+    // set surplus or use
+    for (size_t ir = 0; ir < curr_month.ec_energy_use.nrows(); ir++)
+    {
+        if (curr_month.ec_energy_use.at(ir, 0) > 0)
+        {
+            curr_month.ec_energy_surplus.at(ir, 0) = curr_month.ec_energy_use.at(ir, 0);
+            curr_month.ec_energy_use.at(ir, 0) = 0;
+        }
+        else
+            curr_month.ec_energy_use.at(ir, 0) = -curr_month.ec_energy_use.at(ir, 0);
+    }
 }

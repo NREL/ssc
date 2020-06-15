@@ -1583,94 +1583,27 @@ public:
 					}
 				}
 
-				/*
-				// rollover energy from correct period - based on matching period number
-				if (m > 0 && enable_nm && !excess_monthly_kwhs)
-				{
-					// check for surplus in previous month for same period
-					for (size_t ir = 0; ir < m_month[m - 1].ec_energy_surplus.nrows(); ir++)
-					{
-						if (m_month[m - 1].ec_energy_surplus.at(ir, 0) > 0) // surplus - check period
-						{
-							int toup = m_month[m - 1].ec_periods[ir]; // number of rows of previous month
-							std::vector<int>::iterator per_num = std::find(m_month[m].ec_periods.begin(), m_month[m].ec_periods.end(), toup);
-							if (per_num == m_month[m].ec_periods.end())
-							{
-								std::ostringstream ss;
-								ss << "utilityrate5: energy charge rollover for period " << toup << " not found for month " << m;
-								log(ss.str(), SSC_NOTICE);
-							}
-							else
-							{
-								ssc_number_t extra = 0;
-								int row = (int)(per_num - m_month[m].ec_periods.begin());
-								for (size_t ic = 0; ic < m_month[m - 1].ec_energy_surplus.ncols(); ic++)
-									extra += m_month[m - 1].ec_energy_surplus.at(ir, ic);
-
-								m_month[m].ec_energy_use(row, 0) += extra;
-							}
-						}
-					}
-				}
-				*/
-
 				bool skip_rollover = (m == 0 && year == 1) || (m == net_metering_credit_month + 1) || (m == 0 && net_metering_credit_month == 11);
 				
-				// rollover energy from correct period - matching time of day - currently four values considered 12a, 6a, 12p, 6p set in loop above.
+				// rollover energy from correct period - matching time of day 
 				if (!skip_rollover && enable_nm && !excess_monthly_dollars)
 				{
 					ur_month& prev_month = (m == 0) ? *prev_dec : rate_data.m_month[m - 1];
-					// check for surplus in previous month for same period
-					for (size_t ir = 0; ir < prev_month.ec_energy_surplus.nrows(); ir++)
-					{
-						if (prev_month.ec_energy_surplus.at(ir, 0) > 0) // surplus - check period
-						{
-							int toup_source = prev_month.ec_periods[ir]; // number of rows of previous month - and period with surplus
-							// find source period in rollover map for previous month
-							std::vector<int>::iterator source_per_num = std::find(prev_month.ec_rollover_periods.begin(), prev_month.ec_rollover_periods.end(), toup_source);
-							if (source_per_num == prev_month.ec_rollover_periods.end())
-							{
-								std::ostringstream ss;
-								ss << "year:" << year << " utilityrate5: Unable to determine period for energy charge rollover: Period " << toup_source << " does not exist for 12 am, 6 am, 12 pm or 6 pm in the previous month, which is Month " << util::schedule_int_to_month(m-1) << ".";
-								log(ss.str(), SSC_NOTICE);
-							}
-							else
-							{
-								// find corresponding target period for same time of day
-								ssc_number_t extra = 0;
-								int rollover_index = (int)(source_per_num - prev_month.ec_rollover_periods.begin());
-								if (rollover_index < (int)curr_month.ec_rollover_periods.size())
-								{
-									int toup_target = curr_month.ec_rollover_periods[rollover_index];
-									std::vector<int>::iterator target_per_num = std::find(curr_month.ec_periods.begin(), curr_month.ec_periods.end(), toup_target);
-									if (target_per_num == curr_month.ec_periods.end())
-									{
-										std::ostringstream ss;
-										ss << "year:" << year << "utilityrate5: Unable to determine period for energy charge rollover: Period " << toup_target << " does not exist for 12 am, 6 am, 12 pm or 6 pm in the current month, which is " << util::schedule_int_to_month(m) << ".";
-										log(ss.str(), SSC_NOTICE);
-									}
-									int target_row = (int)(target_per_num - curr_month.ec_periods.begin());
-									for (size_t ic = 0; ic < prev_month.ec_energy_surplus.ncols(); ic++)
-										extra += prev_month.ec_energy_surplus.at(ir, ic);
-
-									curr_month.ec_energy_use(target_row, 0) += extra;
-								}
-							}
-						}
-					}
+                    int errorCode = rate_data.transfer_surplus(curr_month, prev_month);
+                    if (errorCode > 0)
+                    {
+                        int errorMonth = m;
+                        if (errorCode > 200)
+                        {
+                            errorMonth = m - 1;
+                        }
+                        std::ostringstream ss;
+                        ss << "year:" << year << "utilityrate5: Unable to determine period for energy charge rollover: Period " << errorCode % 100 << " does not exist for 12 am, 6 am, 12 pm or 6 pm in the current month, which is " << util::schedule_int_to_month(errorMonth) << ".";
+                        log(ss.str(), SSC_NOTICE);
+                    }
 				}
 
-				// set surplus or use
-				for (size_t ir = 0; ir < curr_month.ec_energy_use.nrows(); ir++)
-				{
-					if (curr_month.ec_energy_use.at(ir, 0) > 0)
-					{
-						curr_month.ec_energy_surplus.at(ir, 0) = curr_month.ec_energy_use.at(ir, 0);
-						curr_month.ec_energy_use.at(ir, 0) = 0;
-					}
-					else
-						curr_month.ec_energy_use.at(ir, 0) = -curr_month.ec_energy_use.at(ir, 0);
-				}
+                rate_data.compute_surplus(curr_month);
 
 				// now ditribute across tier boundaries - upper bounds equally across periods
 				// 3/5/16 prorate based on total net per period / total net

@@ -137,7 +137,6 @@ UtilityRateForecast::UtilityRateForecast(rate_data* util_rate, size_t stepsPerHo
 	m_monthly_load_forecast = monthly_load_forecast;
 	m_monthly_gen_forecast = monthly_gen_forecast;
 	m_monthly_peak_forecast = monthly_peak_forecast;
-	restartMonth(); // Just starting out, so no net metering carryover
 }
 
 UtilityRateForecast::UtilityRateForecast(UtilityRateForecast& tmp) :
@@ -176,22 +175,36 @@ double UtilityRateForecast::forecastCost(std::vector<double> predicted_loads, si
 
 	// Get previous peak cost - may need to run two months
 	double previousPeak = rate->get_demand_charge(month, year);
+    double previousEnergyCharge = 0;
+    if (rate->enable_nm)
+    {
+        previousEnergyCharge = getEnergyChargeNetMetering(month, current_buy_rates, current_sell_rates, false);
+    }
 	if (crossing_month)
 	{
+        initializeMonth(month_at_end, year_at_end);
 		previousPeak += rate->get_demand_charge(month_at_end, year_at_end);
 	}
 
+    double newEnergyCharge = 0;
+    bool use_next_month = false;
 	for (int i = 0; i < n; i++) {
 		// Determine if this new step crosses a month
 		size_t year_one_index = util::yearOneIndex(dt_hour, lifeTimeIndex);
 		int current_month = util::month_of(hour_of_year) - 1;
-		bool use_next_month = false;
-		if (current_month != month)
+		
+		if (current_month != month && !use_next_month)
 		{
 			use_next_month = true;
-			// This will handle net metering carryover and similar in the future
-			restartMonth();
+            if (rate->enable_nm)
+            {
+                // restartMonth will change the sign of energyUse from what getEnergyCharge expects, so compute that first
+                newEnergyCharge += getEnergyChargeNetMetering(month, current_buy_rates, current_sell_rates, true);
+            }
+			// This handles net metering carryover
+			restartMonth(month, current_month, year_at_end);
 		}
+        ur_month& curr_month = rate->m_month[current_month];
 
 		double power = predicted_loads.at(i);
 		double energy = predicted_loads.at(i) * dt_hour;
@@ -199,31 +212,11 @@ double UtilityRateForecast::forecastCost(std::vector<double> predicted_loads, si
 		rate->sort_energy_to_periods(current_month, energy, year_one_index);
 		rate->find_dc_tou_peak(current_month, power, year_one_index);
 
-		// TODO: use (sub)hourly buy/sell rates if appropriate
-		int tou_period = rate->get_tou_row(year_one_index, current_month);
-		if (energy < 0)
-		{
-			if (use_next_month)
-			{
-				cost += next_buy_rates[tou_period] * -energy; // rate esclation is handled in compute_next_composite_tou
-			}
-			else
-			{
-				cost += current_buy_rates[tou_period] * -energy;
-			}
-		}
-		else
-		{
-			// TODO: sell rate might change based on net metering credit status
-			if (use_next_month)
-			{
-				cost += next_sell_rates[tou_period] * -energy;
-			}
-			else
-			{
-				cost += current_sell_rates[tou_period] * -energy;
-			}
-		}
+        // Net billing (rates 2 and 3)
+        if (!rate->enable_nm)
+        {
+            cost += getEnergyChargeNetBilling(energy, year_one_index, current_month, use_next_month);
+        }
 
 		step++;
 		lifeTimeIndex++;
@@ -242,9 +235,17 @@ double UtilityRateForecast::forecastCost(std::vector<double> predicted_loads, si
 	if (crossing_month)
 	{
 		newPeak += rate->get_demand_charge(month_at_end, year_at_end);
+        if (rate->enable_nm)
+        {
+            newEnergyCharge += getEnergyChargeNetMetering(month_at_end, next_buy_rates, next_sell_rates, false);
+        }
 	}
+    else if(rate->enable_nm)
+    {
+        newEnergyCharge += getEnergyChargeNetMetering(month, current_buy_rates, current_sell_rates, false);
+    }
 
-	cost += newPeak - previousPeak;
+	cost += newPeak + newEnergyCharge - previousPeak - previousEnergyCharge;
 
 	return cost;
 }
@@ -308,25 +309,32 @@ void UtilityRateForecast::compute_next_composite_tou(int month, int year)
 		{
 			bool done = false;
 			double periodSellRate = 0;
-			for (size_t ic = 0; ic < curr_month.ec_tou_ub.ncols() && !done; ic++)
-			{
-				ssc_number_t ub_tier = curr_month.ec_tou_ub.at(ir, ic);
-				ssc_number_t prev_tier = 0;
-				if (ic > 0)
-				{
-					prev_tier = curr_month.ec_tou_ub.at(ir, ic - 1);
-				}
+            if (rate->nm_credits_w_rollover)
+            {
+                periodSellRate = rate->nm_credit_sell_rate * rate_esc;
+            }
+            else
+            {
+                for (size_t ic = 0; ic < curr_month.ec_tou_ub.ncols() && !done; ic++)
+                {
+                    ssc_number_t ub_tier = curr_month.ec_tou_ub.at(ir, ic);
+                    ssc_number_t prev_tier = 0;
+                    if (ic > 0)
+                    {
+                        prev_tier = curr_month.ec_tou_ub.at(ir, ic - 1);
+                    }
 
-				if (expected_gen > ub_tier)
-				{
-					periodSellRate += (ub_tier - prev_tier) / expected_gen * curr_month.ec_tou_sr.at(ir, ic) * rate_esc;
-				}
-				else
-				{
-					periodSellRate += (expected_gen - prev_tier) / expected_gen * curr_month.ec_tou_sr.at(ir, ic) * rate_esc;
-					done = true;
-				}
-			}
+                    if (expected_gen > ub_tier)
+                    {
+                        periodSellRate += (ub_tier - prev_tier) / expected_gen * curr_month.ec_tou_sr.at(ir, ic) * rate_esc;
+                    }
+                    else
+                    {
+                        periodSellRate += (expected_gen - prev_tier) / expected_gen * curr_month.ec_tou_sr.at(ir, ic) * rate_esc;
+                        done = true;
+                    }
+                }
+            }
 			next_sell_rates.push_back(periodSellRate);
 		}
 	}
@@ -334,7 +342,15 @@ void UtilityRateForecast::compute_next_composite_tou(int month, int year)
 	{
 		for (size_t ir = 0; ir < num_per; ir++)
 		{
-			double periodSellRate = curr_month.ec_tou_sr.at(ir, 0) * rate_esc;
+            double periodSellRate = 0; 
+            if (rate->nm_credits_w_rollover)
+            {
+                periodSellRate = rate->nm_credit_sell_rate * rate_esc;
+            }
+            else
+            {
+                periodSellRate = curr_month.ec_tou_sr.at(ir, 0)* rate_esc;
+            }
 			next_sell_rates.push_back(periodSellRate);
 		}
 	}
@@ -366,12 +382,70 @@ void UtilityRateForecast::copyTOUForecast()
 	std::copy(next_sell_rates.begin(), next_sell_rates.end(), std::back_inserter(current_sell_rates));
 }
 
-void UtilityRateForecast::restartMonth()
+void UtilityRateForecast::restartMonth(int prevMonth, int currentMonth, int year)
 {
-	
+    ur_month& prev_month = rate->m_month[prevMonth];
+    ur_month& curr_month = rate->m_month[currentMonth];
+    rate->compute_surplus(prev_month);
+
+    bool skip_rollover = (currentMonth == 0 && year == 1) || (currentMonth == rate->net_metering_credit_month + 1) || (currentMonth == 0 && rate->net_metering_credit_month == 11);
+    if (!skip_rollover && rate->nm_credits_w_rollover)
+    {
+        rate->transfer_surplus(curr_month, prev_month);
+    }
 }
 
-double UtilityRateForecast::getPreviousDemandCharge(int month)
+double UtilityRateForecast::getEnergyChargeNetMetering(int month, std::vector<double> buy_rates, std::vector<double> sell_rates, bool crossing_month)
 {
-	return rate->monthly_dc_fixed[month] + rate->monthly_dc_tou[month];
+    double cost = 0;
+    ur_month& curr_month = rate->m_month[month];
+    ssc_number_t num_per = (ssc_number_t)curr_month.ec_energy_use.nrows();
+    for (size_t ir = 0; ir < num_per; ir++)
+    {
+        ssc_number_t per_energy = curr_month.ec_energy_use.at(ir, 0);
+        if (per_energy < 0)
+        {
+            cost += buy_rates[ir] * -per_energy;
+        }
+        else
+        {
+            // kWh credits will be applied if we cross a month during the forecast period
+            if (!(crossing_month && rate->nm_credits_w_rollover && month != rate->net_metering_credit_month))
+            {
+                cost -= sell_rates[ir] * per_energy;
+            }
+        }
+    }
+
+	return cost;
+}
+
+double UtilityRateForecast::getEnergyChargeNetBilling(double energy, int year_one_index, int current_month, bool use_next_month)
+{
+    double cost = 0;
+    // TODO: use (sub)hourly buy/sell rates if appropriate
+    int tou_period = rate->get_tou_row(year_one_index, current_month);
+    if (energy < 0)
+    {
+        if (use_next_month)
+        {
+            cost += next_buy_rates[tou_period] * -energy; // rate esclation is handled in compute_next_composite_tou
+        }
+        else
+        {
+            cost += current_buy_rates[tou_period] * -energy;
+        }
+    }
+    else
+    {
+        if (use_next_month)
+        {
+            cost += next_sell_rates[tou_period] * -energy;
+        }
+        else
+        {
+            cost += current_sell_rates[tou_period] * -energy;
+        }
+    }
+    return cost;
 }

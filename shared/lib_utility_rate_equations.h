@@ -107,6 +107,11 @@ public:
 
 	bool tou_demand_single_peak;
 
+    bool enable_nm; // 0 or 1
+    bool nm_credits_w_rollover; // rate option 0 only
+    int net_metering_credit_month;
+    double nm_credit_sell_rate;
+
 	rate_data();
 	rate_data(const rate_data& tmp);
 
@@ -125,6 +130,9 @@ public:
 	// Runs each month
 	void init_dc_peak_vectors(int month);
 	ssc_number_t get_demand_charge(int month, int year); // TODO - should tou_demand_single_peak be a member variable or not?
+    // Returns error codes so compute module can print errors. 0: no error, 10x: error in previous month, 20x: error in current month. x is the period where the error occured
+    int transfer_surplus(ur_month& curr_month, ur_month& prev_month);
+    void compute_surplus(ur_month& curr_month);
 };
 
 #endif // _LIB_UTILITY_RATE_EQUATIONS_H_
