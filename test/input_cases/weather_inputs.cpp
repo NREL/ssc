@@ -75,6 +75,7 @@ var_data* create_weatherdata_array(int length){
 	double* month = new double[length];
 	double* day = new double[length];
 	double* hour = new double[length];
+	double* minute = new double[length];
 	double* beam = new double[length];
 	double* diffuse = new double[length];
 	double* tdry = new double[length];
@@ -106,6 +107,7 @@ var_data* create_weatherdata_array(int length){
 		month[i] = (double)month_values[i];
 		day[i] = (double)day_values[i];
 		hour[i] = (double)(i % 24);
+		minute[i] = 30.f;
 		beam[i] = (double)beam_values[i];
 		diffuse[i] = (double)diffuse_values[i];
 		tdry[i] = (double)tdry_values[i];
@@ -123,6 +125,7 @@ var_data* create_weatherdata_array(int length){
 	var_data month_vd = var_data(month, length);
 	var_data day_vd = var_data(day, length);
 	var_data hour_vd = var_data(hour, length);
+	var_data minute_vd = var_data(minute, length);
 	var_data beam_vd = var_data(beam, length);
 	var_data diffuse_vd = var_data(diffuse, length);
 	var_data tdry_vd = var_data(tdry, length);
@@ -144,6 +147,7 @@ var_data* create_weatherdata_array(int length){
 	vt->assign("month", month_vd);
 	vt->assign("day", day_vd);
 	vt->assign("hour", hour_vd);
+	vt->assign("minute", minute_vd);
 	vt->assign("dn", beam_vd);
 	vt->assign("df", diffuse_vd);
 	vt->assign("tdry", tdry_vd);

@@ -1242,9 +1242,9 @@ bool weatherdata::check_continuous_single_year(bool leapyear)
 {
 	int ts_per_hour = 0; //determine the number of timesteps in each hour
 	if (leapyear)
-		ts_per_hour = (int)(m_nRecords % 8784);
+		ts_per_hour = (int)(m_nRecords / 8784);
 	else
-		ts_per_hour = (int)(m_nRecords % 8760);
+		ts_per_hour = (int)(m_nRecords / 8760);
 	double ts_min = 60 / ts_per_hour; //determine the number of minutes of each timestep
 	int idx = 0; //index to keep track of where we are in the timestamp vectors
 	//now, check that the month, hour, day, and minute vectors are consistent with a single, continuous year with an even timestep that starts on jan 1 and ends dec 31
@@ -1351,6 +1351,14 @@ weatherdata::weatherdata( var_data *data_table )
 	vec aod = get_vector( data_table, "aod", &nrec ); 
 	if (m_ok == false){
 		return; //m_message is set in get_vector function, so doesn't need to be set here
+	}
+
+	// new: minute column required for weather data
+	if (!has_data_column(weather_data_provider::MINUTE))
+	{
+		m_message = "minute column required for weather data input";
+		m_ok = false;
+		return;
 	}
 
 	m_nRecords = nrec;

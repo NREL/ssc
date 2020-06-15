@@ -724,30 +724,21 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, lifetime_outputs)
 }
 
 
-TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, SingleTimestep)
+TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NonAnnual)
 {
 	//set up a weather data array and unassign the solar resource file
-	var_data* weatherData = create_weatherdata_array(1);
+
+	auto weather_data = create_weatherdata_array(24);
 	ssc_data_unassign(data, "solar_resource_file");
-
-	//add a minute column
-	double* minute = new double[1];
-	minute[0] = 1;
-	var_data minute_vd = var_data(minute, 1);
-	weatherData->table.assign("minute", minute_vd);
-
-	//re-assign the weather data array
-	var_table* vt = static_cast<var_table*>(data);
-	vt->assign("solar_resource_data", *weatherData);
+	ssc_data_set_table(data, "solar_resource_data", &weather_data->table);
 
 	//run the tests
 	EXPECT_FALSE(run_module(data, "pvsamv1"));
 
 	ssc_number_t dc_net, gen;
+	dc_net = ssc_data_get_array(data, "dc_net", nullptr)[12];
+	EXPECT_NEAR(dc_net, 3.186, 0.01) << "DC Net Energy at noon";
 
-	ssc_data_get_number(data, "dc_net", &dc_net);
-	EXPECT_NEAR(dc_net, 3540, 1) << "DC Net Energy";
-
-	ssc_data_get_number(data, "gen", &gen);
-	EXPECT_NEAR(gen, 3540, 1) << "Gen";
+	gen = ssc_data_get_array(data, "gen", nullptr)[12];
+	EXPECT_NEAR(gen, 3.0525, 0.01) << "Gen at noon";
 }

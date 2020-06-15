@@ -284,9 +284,9 @@ protected:
 
 TEST_F(Data9999CaseWeatherData, initTest_lib_weatherfile){
 	weatherdata wd(input);
-	EXPECT_EQ(wd.nrecords(), 9999);
-	std::string error = "could not determine timestep in weatherdata";
-	EXPECT_EQ(error, wd.message()) << "Timestep should be invalid";
+	EXPECT_EQ(wd.nrecords(), 0);
+	std::string error = "hour number of entries doesn't match with other fields";
+	EXPECT_EQ(error, wd.message()) << "Should get error that fields aren't the same length";
 }
 
 TEST_F(Data9999CaseWeatherData, initTest2_lib_weatherfile){
