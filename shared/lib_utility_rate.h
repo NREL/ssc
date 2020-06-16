@@ -95,7 +95,7 @@ public:
 
 	~UtilityRateForecast();
 
-	// TODO: initialize new month (if needed) prior to calling this function
+	// initialize first month prior to calling this function
 	double forecastCost(std::vector<double> predicted_loads, size_t year, size_t hour_of_year, size_t step);
 
 	void copyTOUForecast();
