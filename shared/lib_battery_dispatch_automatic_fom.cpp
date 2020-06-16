@@ -307,15 +307,6 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 	m_batteryPower->powerBatteryDC = m_batteryPower->powerBatteryTarget;
 }
 
-void dispatch_automatic_front_of_meter_t::update_cliploss_data(double_vec P_cliploss)
-{
-	_P_cliploss_dc = P_cliploss;
-
-	// append to end to allow for look-ahead
-	for (size_t i = 0; i != _look_ahead_hours * _steps_per_hour; i++)
-		_P_cliploss_dc.push_back(P_cliploss[i]);
-}
-
 void dispatch_automatic_front_of_meter_t::update_pv_data(double_vec P_pv_dc)
 {
 	_P_pv_dc = P_pv_dc;

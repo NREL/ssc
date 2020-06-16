@@ -944,6 +944,10 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
         /*! Behind-the-meter automated dispatch for peak shaving */
     else
     {
+        util_rate_data = NULL;
+        if (batt_vars->ec_rate_defined) {
+            // TODO - populate rate data
+        }
         dispatch_model = new dispatch_automatic_behind_the_meter_t(battery_model, dt_hr, batt_vars->batt_minimum_SOC, batt_vars->batt_maximum_SOC,
                                                                    batt_vars->batt_current_choice, batt_vars->batt_current_charge_max, batt_vars->batt_current_discharge_max,
                                                                    batt_vars->batt_power_charge_max_kwdc, batt_vars->batt_power_discharge_max_kwdc,
@@ -951,7 +955,8 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                                                                    batt_vars->batt_minimum_modetime,
                                                                    batt_vars->batt_dispatch, batt_vars->batt_meter_position, nyears,
                                                                    batt_vars->batt_look_ahead_hours, batt_vars->batt_dispatch_update_frequency_hours,
-                                                                   batt_vars->batt_dispatch_auto_can_charge, batt_vars->batt_dispatch_auto_can_clipcharge, batt_vars->batt_dispatch_auto_can_gridcharge, batt_vars->batt_dispatch_auto_can_fuelcellcharge
+                                                                   batt_vars->batt_dispatch_auto_can_charge, batt_vars->batt_dispatch_auto_can_clipcharge, batt_vars->batt_dispatch_auto_can_gridcharge, batt_vars->batt_dispatch_auto_can_fuelcellcharge,
+                                                                   util_rate_data
         );
         if (batt_vars->batt_dispatch == dispatch_t::CUSTOM_DISPATCH)
         {
@@ -1119,9 +1124,12 @@ void battstor::initialize_automated_dispatch(std::vector<ssc_number_t> pv, std::
             {
                 automatic_dispatch_btm->update_pv_data(pv_prediction);
                 automatic_dispatch_btm->update_load_data(load_prediction);
+                automatic_dispatch_btm->update_cliploss_data(cliploss_prediction);
 
                 if (input_target)
                     automatic_dispatch_btm->set_target_power(target_power);
+
+                automatic_dispatch_btm->setup_rate_forecast();
             }
             else if (dispatch_automatic_front_of_meter_t * automatic_dispatch_fom = dynamic_cast<dispatch_automatic_front_of_meter_t*>(dispatch_model))
             {

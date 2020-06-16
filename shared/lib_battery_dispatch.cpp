@@ -532,6 +532,15 @@ void dispatch_automatic_t::copy(const dispatch_t * dispatch)
 }
 
 void dispatch_automatic_t::update_pv_data(std::vector<double> P_pv_dc){ _P_pv_dc = P_pv_dc;}
+
+void dispatch_automatic_t::update_cliploss_data(double_vec P_cliploss)
+{
+    _P_cliploss_dc = P_cliploss;
+
+    // append to end to allow for look-ahead
+    for (size_t i = 0; i != _look_ahead_hours * _steps_per_hour; i++)
+        _P_cliploss_dc.push_back(P_cliploss[i]);
+}
 void dispatch_automatic_t::set_custom_dispatch(std::vector<double> P_batt_dc) { _P_battery_use = P_batt_dc; }
 int dispatch_automatic_t::get_mode(){ return _mode; }
 double dispatch_automatic_t::power_batt_target() { return m_batteryPower->powerBatteryTarget; }

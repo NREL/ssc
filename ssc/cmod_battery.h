@@ -27,6 +27,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "core.h"
 #include "lib_battery.h"
+#include "lib_utility_rate.h"
 
 // forward declarations to speed up build
 class SharedInverter;
@@ -272,6 +273,7 @@ struct battstor
 	dispatch_t *dispatch_model;
 	ChargeController *charge_control;
 	UtilityRate * utilityRate;
+    rate_data* util_rate_data;
 
 	bool en;
 	int chem;

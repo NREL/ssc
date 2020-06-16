@@ -177,21 +177,23 @@ protected:
 /*! Class containing calculated grid power at a single time step */
 class grid_point
 {
-	/**
-	Class for behind-the-meter dispatch which encapsulates the required grid power, hour, and step:
-	grid_point = [grid_power, hour, step]
-	*/
+    /**
+    Class for behind-the-meter dispatch which encapsulates the required grid power, cost, hour, and step:
+    grid_point = [grid_power, hour, step, cost]
+    */
 public:
-	grid_point(double grid = 0., size_t hour = 0, size_t step = 0) :
-		_grid(grid), _hour(hour), _step(step){}
-	double Grid() const { return _grid; }
-	size_t Hour() const { return _hour; }
-	size_t Step() const { return _step; }
+    grid_point(double grid = 0., size_t hour = 0, size_t step = 0, double cost = 0.) :
+        _grid(grid), _hour(hour), _step(step), _cost(cost) {}
+    double Grid() const { return _grid; }
+    size_t Hour() const { return _hour; }
+    size_t Step() const { return _step; }
+    double Cost() const { return _cost; }
 
 private:
 	double _grid;
 	size_t _hour;
 	size_t _step;
+    double _cost;
 };
 
 struct byGrid
@@ -202,6 +204,18 @@ struct byGrid
 	}
 };
 typedef std::vector<grid_point> grid_vec;
+
+struct byCost
+{
+    bool operator() (grid_point const& a, grid_point const& b)
+    {
+        if (a.Cost() == b.Cost())
+        {
+            return a.Grid() > b.Grid();
+        }
+        return a.Cost() > b.Cost();
+    }
+};
 
 /*! Automated dispatch base class */
 class dispatch_automatic_t : public dispatch_t
@@ -256,6 +270,9 @@ public:
 	/*! Pass in the PV power forecast */
 	virtual void update_pv_data(std::vector<double> P_pv_dc);
 
+    /// Update cliploss data [kW]
+    void update_cliploss_data(double_vec P_cliploss);
+
 	/*! Pass in the user-defined dispatch power vector */
 	virtual void set_custom_dispatch(std::vector<double> P_batt_dc);
 
@@ -274,7 +291,10 @@ protected:
 	int get_mode();
 
 	/*! Full time-series of PV production [kW] */
-	double_vec _P_pv_dc;
+	double_vec _P_pv_dc; // TODO fix var name, might not be DC
+
+    /*! Full clipping loss due to AC power limits vector [kW] */
+    double_vec _P_cliploss_dc;
 
 	/*! The index of the current day (hour * steps_per_hour + step) */
 	size_t _day_index;

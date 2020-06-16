@@ -44,7 +44,8 @@ dispatch_automatic_behind_the_meter_t::dispatch_automatic_behind_the_meter_t(
 	bool can_charge,
 	bool can_clip_charge,
 	bool can_grid_charge,
-	bool can_fuelcell_charge
+	bool can_fuelcell_charge,
+    rate_data* util_rate
 	) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max_kwdc, Pd_max_kwdc, Pc_max_kwac, Pd_max_kwac,
 		t_min, dispatch_mode, pv_dispatch, nyears, look_ahead_hours, dispatch_update_frequency_hours, can_charge, can_clip_charge, can_grid_charge, can_fuelcell_charge)
 {
@@ -61,6 +62,8 @@ dispatch_automatic_behind_the_meter_t::dispatch_automatic_behind_the_meter_t(
 		grid.push_back(grid_point(0., 0, 0));
 		sorted_grid.push_back(grid[ii]);
 	}
+
+    rate = util_rate;
 }
 
 void dispatch_automatic_behind_the_meter_t::init_with_pointer(const dispatch_automatic_behind_the_meter_t* tmp)
@@ -74,9 +77,13 @@ void dispatch_automatic_behind_the_meter_t::init_with_pointer(const dispatch_aut
 	_P_load_dc = tmp->_P_load_dc;
 	_P_target_use = tmp->_P_target_use;
 	sorted_grid = tmp->sorted_grid;
+
+    rate = tmp->rate;
+    rate_forecast = tmp->rate_forecast;
 }
 
 // deep copy from dispatch to this
+// TODO rate and rate_forecast are not deep copy (neither are some time series data)
 dispatch_automatic_behind_the_meter_t::dispatch_automatic_behind_the_meter_t(const dispatch_t & dispatch) :
 dispatch_automatic_t(dispatch)
 {
@@ -106,6 +113,65 @@ void dispatch_automatic_behind_the_meter_t::dispatch(size_t year,
 void dispatch_automatic_behind_the_meter_t::update_load_data(std::vector<double> P_load_dc){ _P_load_dc = P_load_dc; }
 void dispatch_automatic_behind_the_meter_t::set_target_power(std::vector<double> P_target){ _P_target_input = P_target; }
 double dispatch_automatic_behind_the_meter_t::power_grid_target() { return _P_target_current; };
+
+void dispatch_automatic_behind_the_meter_t::setup_rate_forecast()
+{
+    if (rate != NULL)
+    {
+        // Process load and pv forecasts to get _monthly_ expected gen, load, and peak
+        // Do we need new member variables, or can these just be passed off to UtilityRateForecast?
+        std::vector<double> monthly_peaks;
+        std::vector<double> monthly_gen;
+        std::vector<double> monthly_load;
+
+        // Load here is every step for the full analysis period. Load escalation has already been applied (TODO in compute modules)
+        size_t num_recs = util::hours_per_year * _steps_per_hour * _nyears;
+        size_t step = 0; size_t hour_of_year = 0;
+        size_t curr_month = 1;
+        double load_during_month = 0.0; double gen_during_month = 0.0; double peak_during_month = 0.0;
+        for (size_t idx = 0; idx < num_recs; idx++)
+        {
+            double grid_power = _P_pv_dc[idx] - _P_load_dc[idx];
+            if (grid_power < peak_during_month)
+            {
+                peak_during_month = grid_power;
+            }
+
+            if (grid_power < 0)
+            {
+                load_during_month += grid_power;
+            }
+            else
+            {
+                gen_during_month += grid_power;
+            }
+
+            step++;
+            if (step == _steps_per_hour)
+            {
+                step = 0;
+                hour_of_year++;
+                if (hour_of_year >= 8760) {
+                    hour_of_year = 0;
+                }
+            }
+            if (util::month_of(hour_of_year) != curr_month)
+            {
+                // Push back vectors
+                // Note: this is a net-billing approach. To be accurate for net metering, we'd have to invote tou periods here, this overestimates costs for NM
+                monthly_peaks.push_back(-1.0 * peak_during_month);
+                monthly_load.push_back(-1.0 * load_during_month);
+                monthly_gen.push_back(gen_during_month);
+
+                peak_during_month = 0.0; load_during_month = 0.0; gen_during_month = 0.0;
+                curr_month < 12 ? curr_month++ : curr_month = 1;
+            }
+        }
+
+        rate_forecast = new UtilityRateForecast(rate, _steps_per_hour, monthly_load, monthly_gen, monthly_peaks);
+    }
+}
+
 void dispatch_automatic_behind_the_meter_t::update_dispatch(size_t hour_of_year, size_t step, size_t idx)
 {
 	bool debug = false;

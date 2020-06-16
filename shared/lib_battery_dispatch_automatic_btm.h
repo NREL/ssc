@@ -23,6 +23,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define __LIB_BATTERY_DISPATCH_AUTOMATIC_BTM_H__
 
 #include "lib_battery_dispatch.h"
+#include "lib_utility_rate.h"
 
 /*! Automated dispatch class for behind-the-meter connections */
 class dispatch_automatic_behind_the_meter_t : public dispatch_automatic_t
@@ -56,10 +57,15 @@ public:
 		bool can_charge,
 		bool can_clipcharge,
 		bool can_grid_charge,
-		bool can_fuelcell_charge
+		bool can_fuelcell_charge,
+        rate_data* util_rate
 		);
 
-	~dispatch_automatic_behind_the_meter_t() override {};
+	~dispatch_automatic_behind_the_meter_t() override
+    {
+        // TODO: who owns rate?
+        delete rate_forecast;
+    };
 
 	// deep copy constructor (new memory), from dispatch to this
 	dispatch_automatic_behind_the_meter_t(const dispatch_t& dispatch);
@@ -80,6 +86,9 @@ public:
 
 	/*! Pass in the grid power target vector */
 	void set_target_power(std::vector<double> P_target);
+
+    /* Call after pv, load, and cliploss forecasts have been set*/
+    void setup_rate_forecast();
 
 	/*! Grid target power */
 	double power_grid_target();
@@ -119,6 +128,12 @@ protected:
 
 	/* Vector of length (24 hours * steps_per_hour) containing sorted grid calculation [P_grid, hour, step] */
 	grid_vec sorted_grid;
+
+    /* Utility rate data structure for cost aware dispatch algorithms */
+    rate_data* rate;
+
+    /* Forecasting class cost aware dispatch algorithms. Dispatch will make many copies of this. */
+    UtilityRateForecast* rate_forecast;
 
 };
 

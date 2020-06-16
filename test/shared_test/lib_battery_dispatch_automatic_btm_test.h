@@ -23,6 +23,7 @@ protected:
     battery_t * batteryModel;
     BatteryPower * batteryPower;
 
+    rate_data* util_rate{ nullptr };
     dispatch_automatic_behind_the_meter_t * dispatchAutoBTM{nullptr};
 
     double max_power = 50;
