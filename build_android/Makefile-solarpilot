@@ -6,14 +6,14 @@ VPATH = ../solarpilot
 MYARCH=darwin-x86_64
 
 # Default NDK installation location for Android Studio 2.3
-NDK = /Users/imacuser/Library/Android/sdk/ndk/21.0.6113669
+NDK = /Users/imacuser/Library/Android/sdk/ndk/21.3.6528147
 
 #target sdk version 
-PLATFORMVER=android-28
+PLATFORMVER=android-23
 
-TARGET_API=28
+TARGET_API=23
 #min sdk version
-API=16 
+
 
 #
 TOOLCHAIN=${NDK}/toolchains/llvm/prebuilt/darwin-x86_64
@@ -21,11 +21,11 @@ TOOLCHAIN=${NDK}/toolchains/llvm/prebuilt/darwin-x86_64
 
 # select prefixes based on arm or x86
 ifeq (${ARCH},x86_64)
-	ASM=i686-linux-android
+	ASM=x86_64-linux-android
 	ARCHPREFIX=arch-x86_64
 	GCCPREFIX=${ASM}${TARGET_API}
 else ifeq (${ARCH},x86)
-	ASM=x86_64-linux-android
+	ASM=i686-linux-android
 	ARCHPREFIX=arch-x86
 	GCCPREFIX=${ASM}${TARGET_API}
 else ifeq (${ARCH},arm64-v8a)
