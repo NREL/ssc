@@ -864,39 +864,41 @@ void voltage_vanadium_redox_t::updateVoltage(capacity_t * capacity, thermal_t * 
 
 double voltage_vanadium_redox_t::calculate_max_charge_w(double q, double qmax, double kelvin, double *max_current) {
     qmax /= _num_strings;
-    q = qmax - tolerance;
-    double max_I = qmax - q;
+    q /= _num_strings;
+    double max_I = (q - qmax) / dt_hr;
 
     if (max_current)
         *max_current = -max_I;
 
-    return -voltage_model(q, qmax, max_I, kelvin) * max_I * _num_strings * _num_cells_series;
+    return voltage_model(qmax, qmax, max_I, kelvin) * max_I * _num_strings * _num_cells_series;
 }
 
 double voltage_vanadium_redox_t::calculate_max_discharge_w(double q, double qmax, double kelvin, double *max_current) {
 
-    solver_q = q /_num_strings;
+    solver_q = q / _num_strings;
     solver_Q = qmax / _num_strings;
     solver_T_k = kelvin;
 
-    std::function<void(const double*, double*)> f = std::bind(&voltage_vanadium_redox_t::solve_max_discharge_power, this, _1, _2);
+    std::function<void(const double *, double *)> f = std::bind(&voltage_vanadium_redox_t::solve_max_discharge_power,
+                                                                this, _1, _2);
 
     double x[1], resid[1];
     x[0] = solver_q - tolerance;
     bool check = false;
 
-    newton<double, std::function<void(const double*, double*)>, 1>( x, resid, check, f,
-                                                                    100, 1e-6, 1e-6, 0.7);
+    newton<double, std::function<void(const double *, double *)>, 1>(x, resid, check, f,
+                                                                     100, 1e-6, 1e-6, 0.7);
     double current = x[0];
 
-    double power = current * voltage_model(solver_q - current * dt_hr, solver_Q, current, kelvin) * _num_strings * _num_cells_series;
+    double power = current * voltage_model(solver_q - current * dt_hr, solver_Q, current, kelvin) *
+                   _num_strings * _num_cells_series;
 
-    if (power < 0){
+    if (power < 0) {
         current = 0.;
         power = 0.;
     }
     if (max_current)
-        *max_current = current;
+        *max_current = current * _num_strings;
     return power;
 }
 
@@ -904,18 +906,19 @@ double voltage_vanadium_redox_t::calculate_current_for_target_w(double P_watts, 
     if (P_watts == 0) return 0.;
 
     solver_power = P_watts / (_num_cells_series * _num_strings);
-    solver_q = q /_num_strings;
+    solver_q = q / _num_strings;
     solver_Q = qmax / _num_strings;
     solver_T_k = kelvin;
 
-    std::function<void(const double*, double*)> f = std::bind(&voltage_vanadium_redox_t::solve_current_for_power, this, _1, _2);
+    std::function<void(const double *, double *)> f = std::bind(&voltage_vanadium_redox_t::solve_current_for_power,
+                                                                this, _1, _2);
 
     double x[1], resid[1];
     x[0] = solver_power / _cell_voltage;
     bool check = false;
 
-    newton<double, std::function<void(const double*, double*)>, 1>( x, resid, check, f,
-                                                                    100, 1e-6, 1e-6, 0.7);
+    newton<double, std::function<void(const double *, double *)>, 1>(x, resid, check, f,
+                                                                     100, 1e-6, 1e-6, 0.7);
     return x[0] * _num_strings;
 }
 
@@ -925,6 +928,8 @@ double voltage_vanadium_redox_t::voltage_model(double q0, double qmax, double I_
 	double SOC_use = q0 / qmax;
 	if (SOC_use > 1. - tolerance)
 		SOC_use = 1. - tolerance;
+	if (SOC_use == 0)
+	    SOC_use = 1e-3;
 
 	double A = std::log(std::pow(SOC_use, 2) / std::pow(1 - SOC_use, 2));
 
@@ -933,14 +938,16 @@ double voltage_vanadium_redox_t::voltage_model(double q0, double qmax, double I_
 
 void voltage_vanadium_redox_t::solve_current_for_power(const double *x, double *f){
     double I = x[0];
-    double SOC = (solver_q - I*dt_hr) / solver_Q;
-    f[0] = I * (_V_ref_50 + m_RCF * solver_T_k * std::log(SOC*SOC/std::pow(1.-SOC, 2)) + I * _R) - solver_power;
+    double SOC = (solver_q - I * dt_hr) / solver_Q;
+    f[0] = I * (_V_ref_50 + m_RCF * solver_T_k * std::log(SOC * SOC / std::pow(1. - SOC, 2)) +
+                I * _R) - solver_power;
 }
 
 void voltage_vanadium_redox_t::solve_max_discharge_power(const double *x, double *f){
-    double I = x[0];
-    double SOC = (solver_q - I*dt_hr) / solver_Q;
-    f[0] = _V_ref_50 + 2 * I * _R + m_RCF*solver_T_k*(std::log(SOC*SOC/pow(1.-SOC,2)) - 2*I/solver_Q*(1./SOC - 1./(1.-SOC)));
+    double I = fabs(x[0]);
+    double SOC = (solver_q - I * dt_hr) / solver_Q;
+    f[0] = _V_ref_50 + 2 * I * _R + m_RCF * solver_T_k * (std::log(SOC * SOC / pow(1. - SOC, 2)) -
+                                                                2 * I * (1. / SOC - 1. / (1. - SOC)));
 }
 
 /*
