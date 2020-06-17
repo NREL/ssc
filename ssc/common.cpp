@@ -782,7 +782,7 @@ adjustment_factors::adjustment_factors( compute_module *cm, const std::string &p
 }
 
 //adjustment factors changed from derates to percentages jmf 1/9/15
-bool adjustment_factors::setup(int nsteps)
+bool adjustment_factors::setup(int nsteps) //nsteps is set to 8760 in this declaration function in common.h
 {
 	float f = (float)m_cm->as_number( m_prefix + ":constant" );
 	f = 1 - f / 100; //convert from percentage to factor

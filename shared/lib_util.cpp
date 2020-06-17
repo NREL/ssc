@@ -896,6 +896,18 @@ size_t util::hour_of_day(size_t hour_of_year)
 	return (hour_of_year) % 24;
 }
 
+//returns the hour index in the year (0-8759) of a given month, day, and time in hours
+size_t util::hour_of_year(size_t month, size_t day, size_t hour)
+{
+	size_t h = 0;
+	std::vector<size_t> days_in_months = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+	for (int m = 0; m < (month - 1); m++)
+		h += days_in_months[m] * 24;
+	h += (day - 1) * 24;
+	h += hour;
+	return h;
+}
+
 bool util::weekday(size_t hour_of_year)
 {
 	int day_of_year = (int)(floor((float)(hour_of_year) / 24));

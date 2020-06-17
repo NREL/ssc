@@ -1092,8 +1092,6 @@ void cm_pvsamv1::exec( ) throw (general_error)
 	size_t insteps = 3 * nyears * nrec; //there are 3 loops through time (DC, AC, post AC)
 	size_t irepfreq = insteps/(50 * nyears); //report status updates 50 times per year
 
-	size_t idx = 0;
-
 	// variables used to calculate loss diagram
 	double annual_energy = 0, annual_ac_gross = 0, annual_ac_pre_avail = 0, dc_gross[4] = { 0, 0, 0, 0 }, annualMpptVoltageClipping = 0, annual_dc_adjust_loss = 0, annual_dc_lifetime_loss = 0, annual_ac_lifetime_loss = 0, annual_ac_battery_loss = 0, annual_xfmr_nll = 0, annual_xfmr_ll = 0, annual_xfmr_loss = 0;
 
@@ -1110,7 +1108,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 	{
 		dcPowerNetPerMppt_kW.push_back(0);
 		dcVoltagePerMppt.push_back(0);
-		PVSystem->p_dcPowerNetPerMppt[mpptInput][idx] = 0;
+		PVSystem->p_dcPowerNetPerMppt[mpptInput][0] = 0;
 	}
 	for (size_t nn = 0; nn < PVSystem->numberOfSubarrays; nn++) {
 		dcPowerNetPerSubarray.push_back(0);
@@ -1122,21 +1120,23 @@ void cm_pvsamv1::exec( ) throw (general_error)
 	//so iyear will always be 0, meaning that timeseries outputs will be output for the entire length of nrec
 	for (size_t iyear = 0; iyear < nyears; iyear++)
 	{
-		for (int nrec_idx = 0; nrec_idx < (int)nrec; nrec_idx++)
+		//idx is the current array index in the (possibly subhourly) year of weather data or the non-annual array
+		for (size_t idx = 0; idx < nrec; idx++)
 		{
 			if (!wdprov->read(&Irradiance->weatherRecord))
 				throw exec_error("pvsamv1", "could not read data line " + util::to_string((int)(idx + 1)) + " in weather file");
 		
 			weather_record wf = Irradiance->weatherRecord;
-			size_t hour = wf.hour;
+			size_t hour = wf.hour; //this is the current timestamp hour from 0-24 from the weather file
+			size_t hour_of_year = util::hour_of_year(wf.month, wf.day, wf.hour); //this is the index of the hour in the year (0-8759) given the weather file date & timestamp			
 
 			// report progress updates to the caller
 			ireport++;
 			if (ireport - ireplast > irepfreq)
 			{
-				percent_complete = percent_baseline + 100.0f *(float)(nrec_idx + iyear * nrec) / (float)(insteps);
+				percent_complete = percent_baseline + 100.0f *(float)(idx + iyear * nrec) / (float)(insteps);
 				if (!update("", percent_complete))
-					throw exec_error("pvsamv1", "simulation canceled at hour " + util::to_string(hour + 1.0) + " in year " + util::to_string((int)iyear + 1) + "in dc loop");
+					throw exec_error("pvsamv1", "simulation canceled at hour " + util::to_string(hour_of_year + 1.0) + " in year " + util::to_string((int)iyear + 1) + "in dc loop");
 				ireplast = ireport;
 			}
 
@@ -1147,12 +1147,12 @@ void cm_pvsamv1::exec( ) throw (general_error)
 			// if PV simulation is subhourly.  load is assumed constant over the hour.
 			// if no load profile supplied, load = 0
 			if (nload == 8760)
-			cur_load = p_load_in[hour];
+			cur_load = p_load_in[hour_of_year];
 
 			// electric load is subhourly
 			// if no load profile supplied, load = 0
 			if (nload == nrec)
-				cur_load = p_load_in[nrec_idx];
+				cur_load = p_load_in[idx];
 
 			// log cur_load to check both hourly and sub hourly load data
 			// load data over entrie lifetime period not currently supported.
@@ -1167,7 +1167,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 
 					Subarrays[nn]->poa.poaAll->tDew = wf.tdew;
 					Subarrays[nn]->poa.poaAll->i = idx;
-					if (nrec_idx == 0) {
+					if (idx == 0) {
 						Subarrays[nn]->poa.poaAll->dayStart = idx;
 						Subarrays[nn]->poa.poaAll->doy += 1;
 					}
@@ -1385,7 +1385,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 						p_shadedb_str_vmp_stc[nn][idx] = (ssc_number_t)shadedb_str_vmp_stc;
 						p_shadedb_mppt_lo[nn][idx] = (ssc_number_t)shadedb_mppt_lo;
 						p_shadedb_mppt_hi[nn][idx] = (ssc_number_t)shadedb_mppt_hi;
-						log("shade db hour " + util::to_string((int)hour) +"\n" + shadeCalculator->get_warning());
+						log("shade db hour " + util::to_string((int)hour_of_year) +"\n" + shadeCalculator->get_warning());
 #endif
 						// fraction shaded for comparison
 						PVSystem->p_shadeDBShadeFraction[nn][idx] = (ssc_number_t)(Subarrays[nn]->shadeCalculator.dc_shade_factor());
@@ -1949,14 +1949,14 @@ void cm_pvsamv1::exec( ) throw (general_error)
 					dcPowerNetPerSubarray[nn] *= PVSystem->dcDegradationFactor[iyear + 1];
 
 				//dc adjustment factors apply to all subarrays
-				if (iyear == 0) annual_dc_adjust_loss += dcPowerNetPerSubarray[nn] * (1 - dc_haf(hour)) * util::watt_to_kilowatt * ts_hour; //only keep track of this loss for year 0, convert from power W to energy kWh
-				dcPowerNetPerSubarray[nn] *= dc_haf(hour);
+				if (iyear == 0) annual_dc_adjust_loss += dcPowerNetPerSubarray[nn] * (1 - dc_haf(hour_of_year)) * util::watt_to_kilowatt * ts_hour; //only keep track of this loss for year 0, convert from power W to energy kWh
+				dcPowerNetPerSubarray[nn] *= dc_haf(hour_of_year);
 
 				//lifetime daily DC losses apply to all subarrays and should be applied last. Only applied if they are enabled.
 				if (save_full_lifetime_variables == 1 && PVSystem->enableDCLifetimeLosses)
 				{
 					//current index of the lifetime daily DC losses is the number of years that have passed (iyear, because it is 0-indexed) * the number of days + the number of complete days that have passed
-					int dc_loss_index = (int)iyear * 365 + (int)floor(hour / 24); //in units of days
+					int dc_loss_index = (int)iyear * 365 + (int)floor(hour_of_year / 24); //in units of days
 					if (iyear == 0) annual_dc_lifetime_loss += dcPowerNetPerSubarray[nn] * (PVSystem->dcLifetimeLosses[dc_loss_index] / 100) * util::watt_to_kilowatt * ts_hour; //this loss is still in percent, only keep track of it for year 0, convert from power W to energy kWh
 					dcPowerNetPerSubarray[nn] *= (100 - PVSystem->dcLifetimeLosses[dc_loss_index]) / 100;
 				}
@@ -2025,8 +2025,6 @@ void cm_pvsamv1::exec( ) throw (general_error)
 
 				p_invcliploss_full.push_back(static_cast<ssc_number_t>(cliploss));
 			}
-
-			idx++;
 		}
 		// using single weather file initially - so rewind to use for next year
 		wdprov->rewind();
@@ -2044,7 +2042,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 	/* *********************************************************************************************
 	PV AC calculation
 	*********************************************************************************************** */
-	idx = 0; ireport = 0; ireplast = 0; percent_baseline = percent_complete;
+	ireport = 0; ireplast = 0; percent_baseline = percent_complete;
 	double annual_battery_loss = 0;
 	wdprov->rewind();
 
@@ -2053,20 +2051,22 @@ void cm_pvsamv1::exec( ) throw (general_error)
 
 	for (size_t iyear = 0; iyear < nyears; iyear++)
 	{
-		for (int nrec_idx = 0; nrec_idx < (int)nrec; nrec_idx++)
+		//idx is the current array index in the (possibly subhourly) year of weather data or the non-annual array
+		for (size_t idx = 0; idx < nrec; idx++)
 		{
 			if (!wdprov->read(&Irradiance->weatherRecord))
 				throw exec_error("pvsamv1", "could not read data line " + util::to_string((int)(idx + 1)) + " in weather file");
 
-			size_t hour = Irradiance->weatherRecord.hour;
+			size_t hour = Irradiance->weatherRecord.hour; //this is the current timestamp hour from 0-24 from the weather file
+			size_t hour_of_year = util::hour_of_year(Irradiance->weatherRecord.month, Irradiance->weatherRecord.day, Irradiance->weatherRecord.hour); //this is the index of the hour in the year (0-8759) given the weather file date & timestamp	
 
 			// report progress updates to the caller
 			ireport++;
 			if (ireport - ireplast > irepfreq)
 			{
-				percent_complete = percent_baseline + 100.0f *(float)(nrec_idx + iyear * nrec) / (float)(insteps);
+				percent_complete = percent_baseline + 100.0f *(float)(idx + iyear * nrec) / (float)(insteps);
 				if (!update("", percent_complete))
-					throw exec_error("pvsamv1", "simulation canceled at hour " + util::to_string(hour + 1.0) + " in year " + util::to_string((int)iyear + 1) + "in ac loop");
+					throw exec_error("pvsamv1", "simulation canceled at hour " + util::to_string(hour_of_year + 1.0) + " in year " + util::to_string((int)iyear + 1) + "in ac loop");
 				ireplast = ireport;
 			}
 
@@ -2077,9 +2077,8 @@ void cm_pvsamv1::exec( ) throw (general_error)
 			{
 				// calculate timestep in hour for battery models- this will work for annual simulations
 				// and non-annual simulations are not allowed for battery models, so this should work
-				size_t jj = nrec_idx % iyear;
-				jj = jj % hour;
-				batt->initialize_time(iyear, hour, jj);
+				size_t jj = idx % hour_of_year;
+				batt->initialize_time(iyear, hour_of_year, jj);
 				batt->check_replacement_schedule();
 			}
 
@@ -2185,8 +2184,6 @@ void cm_pvsamv1::exec( ) throw (general_error)
 				PVSystem->p_transformerLoadLoss[idx] = xfmr_ll;
 				PVSystem->p_transformerLoss[idx] = xfmr_loss;
 			}
-
-			idx++;
 		}
 
         if (iyear == 0)
@@ -2211,24 +2208,26 @@ void cm_pvsamv1::exec( ) throw (general_error)
 	/* *********************************************************************************************
 	Post PV AC
 	*********************************************************************************************** */
-	idx = 0; ireport = 0; ireplast = 0; percent_baseline = percent_complete;
+	ireport = 0; ireplast = 0; percent_baseline = percent_complete;
 	double annual_energy_pre_battery = 0.;
 	for (size_t iyear = 0; iyear < nyears; iyear++)
 	{
-		for (int nrec_idx = 0; nrec_idx < (int)nrec; nrec_idx++)
+		//idx is the current array index in the (possibly subhourly) year of weather data or the non-annual array
+		for (size_t idx = 0; idx < nrec; idx++)
 		{
 			if (!wdprov->read(&Irradiance->weatherRecord))
 				throw exec_error("pvsamv1", "could not read data line " + util::to_string((int)(idx + 1)) + " in weather file");
 
-			size_t hour = Irradiance->weatherRecord.hour;
+			size_t hour = Irradiance->weatherRecord.hour; //this is the current timestamp hour from 0-24 from the weather file
+			size_t hour_of_year = util::hour_of_year(Irradiance->weatherRecord.month, Irradiance->weatherRecord.day, Irradiance->weatherRecord.hour); //this is the index of the hour in the year (0-8759) given the weather file date & timestamp
 
 			// report progress updates to the caller
 			ireport++;
 			if (ireport - ireplast > irepfreq)
 			{
-				percent_complete = percent_baseline + 100.0f *(float)(nrec_idx + iyear * nrec) / (float)(insteps);
+				percent_complete = percent_baseline + 100.0f *(float)(idx + iyear * nrec) / (float)(insteps);
 				if (!update("", percent_complete))
-					throw exec_error("pvsamv1", "simulation canceled at hour " + util::to_string(hour + 1.0) + " in year " + util::to_string((int)iyear + 1) + "in post ac loop");
+					throw exec_error("pvsamv1", "simulation canceled at hour " + util::to_string(hour_of_year + 1.0) + " in year " + util::to_string((int)iyear + 1) + "in post ac loop");
 				ireplast = ireport;
 			}
 
@@ -2239,9 +2238,8 @@ void cm_pvsamv1::exec( ) throw (general_error)
 			{	
 				// calculate timestep in hour for battery models- this will work for annual simulations
 				// and non-annual simulations are not allowed for battery models, so this should work
-				size_t jj = nrec_idx % iyear;
-				jj = jj % hour;
-				batt->initialize_time(iyear, hour, jj);
+				size_t jj = idx % hour_of_year;
+				batt->initialize_time(iyear, hour_of_year, jj);
 				batt->check_replacement_schedule();
 
 				if (resilience){
@@ -2259,13 +2257,13 @@ void cm_pvsamv1::exec( ) throw (general_error)
 
 
 			//apply availability and curtailment
-			PVSystem->p_systemACPower[idx] *= haf(hour);
+			PVSystem->p_systemACPower[idx] *= haf(hour_of_year);
 
 			//apply lifetime daily AC losses only if they are enabled
 			if (system_use_lifetime_output && PVSystem->enableACLifetimeLosses)
 			{
 				//current index of the lifetime daily AC losses is the number of years that have passed (iyear, because it is 0-indexed) * days in a year + the number of complete days that have passed
-				int ac_loss_index = (int)iyear * 365 + (int)floor(hour / 24); //in units of days
+				int ac_loss_index = (int)iyear * 365 + (int)floor(hour_of_year / 24); //in units of days
 				if (iyear == 0) annual_ac_lifetime_loss += PVSystem->p_systemACPower[idx] * (PVSystem->acLifetimeLosses[ac_loss_index] / 100) * util::watt_to_kilowatt * ts_hour; //this loss is still in percent, only keep track of it for year 0, convert from power W to energy kWh
 				PVSystem->p_systemACPower[idx] *= (100 - PVSystem->acLifetimeLosses[ac_loss_index]) / 100;
 			}
@@ -2275,8 +2273,6 @@ void cm_pvsamv1::exec( ) throw (general_error)
 
 			if (iyear == 0)
 				annual_energy += (ssc_number_t)(PVSystem->p_systemACPower[idx] * ts_hour);
-
-			idx++;
 		}
 		wdprov->rewind();
 	}
