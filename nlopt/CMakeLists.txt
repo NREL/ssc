@@ -68,7 +68,7 @@ set_no_warnings()
 if(MSVC)
     add_compile_definitions( __WXMSW__ _MBCS )
 else(MSVC)
-    add_compile_options(-Wall -Wno-deprecated-declarations)
+    add_compile_options(-Wall)
 endif(MSVC)
 
 
