@@ -161,6 +161,18 @@ set_default_compile_options()
 
 if(MSVC)
     add_compile_definitions( __DLL__ __VISUALC__ )
+else()
+    set(SRC_UNUSED_VARS
+      cmod_mhk_eqns.cpp
+      cmod_csp_tower_eqns.cpp
+      cmod_merchantplant.cpp
+      cmod_merchantplant_eqns.cpp
+      cmod_pvsamv1_eqns.cpp
+      cmod_csp_common_eqns.cpp
+      cmod_financial_eqns.cpp
+      cmod_windpower_eqns.cpp
+      cmod_utilityrate5_eqns.cpp)
+    set_source_files_properties(${SRC_UNUSED_VARS} PROPERTIES COMPILE_FLAGS -Wno-unused-variable)
 endif()
 
 
