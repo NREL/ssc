@@ -1252,15 +1252,22 @@ bool weatherdata::check_continuous_single_year(bool leapyear)
 	{
 		int daymax = util::days_in_month(m - 1);
 		if (m == 2 && leapyear) daymax = 29; //make sure to account for leap day in Feb
-		for (int d = 1; d < daymax; d++)
+//		for (int d = 1; d < daymax; d++) Why was this < daymax?
+		for (int d = 1; d <= daymax; d++)
 		{
-			for (int h = 0; h < 23; h++)
+//			for (int h = 0; h < 23; h++) Why was this 23?
+			for (int h = 0; h < 24; h++)
 			{
-				for (double min = 0; min < 60; min += ts_min)
+//				for (double min = 0; min < 60; min += ts_min) check does not allow for timestamp at time other than zero to pass
+				double min = this->m_data[idx]->minute;
+				for (int tsph = 0; tsph < ts_per_hour; tsph++)
 				{
+					min += tsph * ts_min;
 					//if any of the month, day, hour, or minute don't line up with what we've calculated, then it doesn't fit our criteria for a continuous year
-					if (this->m_data[idx]->month != m || this->m_data[idx]->day != d || this->m_data[idx]->hour != h || this->m_data[idx]->minute != min) return false;
-					else idx++;
+					if (this->m_data[idx]->month != m || this->m_data[idx]->day != d || this->m_data[idx]->hour != h || this->m_data[idx]->minute != min) 
+						return false;
+					else 
+						idx++;
 				}
 			}
 		}
