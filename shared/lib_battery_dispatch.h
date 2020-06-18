@@ -45,7 +45,7 @@ class dispatch_t
 public:
 
 	enum FOM_MODES { FOM_LOOK_AHEAD, FOM_LOOK_BEHIND, FOM_FORECAST, FOM_CUSTOM_DISPATCH, FOM_MANUAL, FOM_RESILIENCE };
-	enum BTM_MODES { LOOK_AHEAD, LOOK_BEHIND, MAINTAIN_TARGET, CUSTOM_DISPATCH, MANUAL, RESILIENCE };
+	enum BTM_MODES { LOOK_AHEAD, LOOK_BEHIND, MAINTAIN_TARGET, CUSTOM_DISPATCH, MANUAL, RESILIENCE, FORECAST };
 	enum METERING { BEHIND, FRONT };
 	enum PV_PRIORITY { MEET_LOAD, CHARGE_BATTERY };
 	enum CURRENT_CHOICE { RESTRICT_POWER, RESTRICT_CURRENT, RESTRICT_BOTH };
@@ -217,6 +217,21 @@ struct byCost
     }
 };
 
+// Sorts low to high
+struct byLowestMarginalCost
+{
+    bool operator() (grid_point const& a, grid_point const& b)
+    {
+        if (a.Grid() == 0.0 || b.Grid() == 0)
+        {
+            // If we'd get a divide by zero error, return based on lower energy use
+            return a.Grid() < b.Grid();
+        }
+
+        return (a.Cost() / a.Grid()) < (b.Cost() / b.Grid());
+    }
+};
+
 /*! Automated dispatch base class */
 class dispatch_automatic_t : public dispatch_t
 {
@@ -265,7 +280,7 @@ public:
 		size_t step);
 
 	/*! Compute the updated power to send to the battery over the next N hours */
-	virtual void update_dispatch(size_t hour_of_year, size_t step, size_t idx)=0;
+	virtual void update_dispatch(size_t year, size_t hour_of_year, size_t step, size_t idx)=0;
 
 	/*! Pass in the PV power forecast */
 	virtual void update_pv_data(std::vector<double> P_pv_dc);

@@ -1,5 +1,8 @@
 #include "lib_battery_dispatch_automatic_btm_test.h"
+#include "code_generator_utilities.h"
 
+char load[256];
+int load_int = sprintf(load, "%s/test/input_cases/utility_rate_data/load_commercial.csv", SSCDIR);
 TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMGridCharging) {
     double dtHour = 1;
     CreateBattery(dtHour);
@@ -35,7 +38,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMGridCharging) {
     EXPECT_EQ(batteryPower->powerBatteryChargeMaxAC, 50);
 
     // TEST 1: Verify no grid charging since disallowed  (_P_battery_use target is ~ -50)
-    dispatchAutoBTM->update_dispatch(0, 0, 0);
+    dispatchAutoBTM->update_dispatch(0, 0, 0, 0);
 
     dispatchAutoBTM->dispatch(0, 0, 0);     // original target for battery power is
     EXPECT_EQ(batteryPower->powerGridToBattery, 0);
@@ -43,7 +46,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMGridCharging) {
 
     // TEST 2: Now, allow grid charging, should charge up to Max Charge Power (enforced by restrict_power)
     batteryPower->canGridCharge = true;
-    dispatchAutoBTM->update_dispatch(0, 0, 0);
+    dispatchAutoBTM->update_dispatch(0, 0, 0, 0);
     dispatchAutoBTM->dispatch(0, 0, 0);
     EXPECT_NEAR(batteryPower->powerGridToBattery, 50, 1);
     EXPECT_NEAR(batteryPower->powerBatteryDC, -48, 1);

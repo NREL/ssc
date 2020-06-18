@@ -83,7 +83,7 @@ public:
 		size_t step);
 
 	/// Compute the updated power to send to the battery over the next N hours
-	void update_dispatch(size_t hour_of_year, size_t step, size_t lifetimeIndex);
+	void update_dispatch(size_t year, size_t hour_of_year, size_t step, size_t lifetimeIndex);
 
 	/// Pass in the PV power forecast [kW]
 	virtual void update_pv_data(std::vector<double> P_pv_dc);

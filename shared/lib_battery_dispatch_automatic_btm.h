@@ -61,11 +61,7 @@ public:
         rate_data* util_rate
 		);
 
-	~dispatch_automatic_behind_the_meter_t() override
-    {
-        // TODO: who owns rate?
-        delete rate_forecast;
-    };
+	~dispatch_automatic_behind_the_meter_t() override {};
 
 	// deep copy constructor (new memory), from dispatch to this
 	dispatch_automatic_behind_the_meter_t(const dispatch_t& dispatch);
@@ -79,7 +75,7 @@ public:
 		size_t step);
 
 	/*! Compute the updated power to send to the battery over the next N hours */
-	void update_dispatch(size_t hour_of_year, size_t step, size_t idx);
+	void update_dispatch(size_t year, size_t hour_of_year, size_t step, size_t idx);
 
 	/*! Pass in the load forecast */
 	void update_load_data(std::vector<double> P_load_dc);
@@ -100,13 +96,17 @@ protected:
 	/*! Initialize with a pointer*/
 	void init_with_pointer(const dispatch_automatic_behind_the_meter_t * tmp);
 
-	void initialize(size_t hour_of_year);
+	void initialize(size_t hour_of_year, size_t lifetimeIndex);
 	void check_debug(FILE *&p, bool & debug, size_t hour_of_year, size_t idx);
 	void sort_grid(FILE *p, bool debug, size_t idx);
 	void compute_energy(FILE *p, bool debug, double & E_max);
+    double compute_available_energy(FILE* p, bool debug);
+    double compute_costs(FILE* p, bool debug, size_t idx, size_t year, size_t hour_of_year);
 	void target_power(FILE*p, bool debug, double E_max, size_t idx);
+    void cost_based_target_power(FILE* p, bool debug, size_t idx, size_t year, size_t hour_of_year, double no_dispatch_cost, double E_max);
+    void check_power_restrictions(double& power);
 	void set_battery_power(FILE *p, bool debug);
-	void check_new_month(size_t hour_of_year, size_t step);
+	bool check_new_month(size_t hour_of_year, size_t step);
 
 	/*! Full time-series of loads [kW] */
 	double_vec _P_load_dc;
@@ -130,10 +130,10 @@ protected:
 	grid_vec sorted_grid;
 
     /* Utility rate data structure for cost aware dispatch algorithms */
-    rate_data* rate;
+    std::shared_ptr<rate_data> rate;
 
     /* Forecasting class cost aware dispatch algorithms. Dispatch will make many copies of this. */
-    UtilityRateForecast* rate_forecast;
+    std::shared_ptr <UtilityRateForecast> rate_forecast;
 
 };
 

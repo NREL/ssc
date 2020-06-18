@@ -115,7 +115,7 @@ protected:
     double getEnergyChargeNetMetering(int month, std::vector<double> buy_rates, std::vector<double> sell_rates, bool crossing_month);
     double getEnergyChargeNetBilling(double energy, int year_one_index, int current_month, bool use_next_month);
 
-	rate_data* rate;
+	std::shared_ptr<rate_data> rate;
 
 	size_t steps_per_hour;
 	float dt_hour;

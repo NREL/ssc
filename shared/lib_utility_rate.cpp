@@ -133,7 +133,7 @@ UtilityRateForecast::UtilityRateForecast(rate_data* util_rate, size_t stepsPerHo
 	steps_per_hour = stepsPerHour;
 	dt_hour = 1.0f / stepsPerHour;
 	last_step = 0;
-	rate = util_rate;
+	rate = std::shared_ptr<rate_data>(new rate_data(*util_rate));
 	m_monthly_load_forecast = monthly_load_forecast;
 	m_monthly_gen_forecast = monthly_gen_forecast;
 	m_monthly_peak_forecast = monthly_peak_forecast;
@@ -147,13 +147,10 @@ UtilityRateForecast::UtilityRateForecast(UtilityRateForecast& tmp) :
 	m_monthly_gen_forecast(tmp.m_monthly_gen_forecast),
 	m_monthly_peak_forecast(tmp.m_monthly_peak_forecast)
 {
-	rate = new rate_data(*tmp.rate);
+    rate = std::shared_ptr<rate_data>(new rate_data(*tmp.rate));
 }
 
-UtilityRateForecast::~UtilityRateForecast()
-{
-	// TODO: either take ownership of the pointer, or figure out what to do with copies
-}
+UtilityRateForecast::~UtilityRateForecast() {}
 
 double UtilityRateForecast::forecastCost(std::vector<double> predicted_loads, size_t year, size_t hour_of_year, size_t step)
 {
