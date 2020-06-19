@@ -537,8 +537,7 @@ TEST_F(ResilienceTest_lib_resilience, RoundtripEffVanadiumFlow){
 //        for (size_t i = 0; i < inputs.size(); i++) {
 //            printf("%f, %f\n", inputs[i], outputs[i]);
 //        }
-
-        printf("current %f, eff %f, n %zd\n", current, -output_power/input_power, n_t);
+//        printf("current %f, eff %f, n %zd\n", current, -output_power/input_power, n_t);
 
         current += fabs(max_current) / 100.;
     }
