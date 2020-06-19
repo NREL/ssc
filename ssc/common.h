@@ -1,22 +1,22 @@
 /**
 BSD-3-Clause
 Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
 that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
 and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
 and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
 or promote products derived from this software without specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
@@ -126,15 +126,12 @@ public:
 	std::string get_error(size_t i = 0);
 
 	size_t get_row_index_for_input(size_t hour, size_t hour_step, size_t steps_per_hour);
-//	size_t get_row_index_for_input(size_t month, size_t day, size_t hour, size_t minute);
 	bool use_shade_db();
 
 	// beam and diffuse loss factors (0: full loss, 1: no loss )
 	bool fbeam(size_t hour, double solalt, double solazi, size_t hour_step = 0, size_t steps_per_hour = 1);
-//	bool fbeam(double solalt, double solazi, size_t month, size_t day, size_t hour, size_t minute);
 	// shading database instantiated once outside of shading factor calculator
 	bool fbeam_shade_db(ShadeDB8_mpp * p_shadedb, size_t hour, double solalt, double solazi, size_t hour_step = 0, size_t steps_per_hour = 1, double gpoa = 0.0, double dpoa = 0.0, double pv_cell_temp = 0.0, int mods_per_str = 0, double str_vmp_stc = 0.0, double mppt_lo = 0.0, double mppt_hi = 0.0);
-//	bool fbeam_shade_db(ShadeDB8_mpp* p_shadedb, double solalt, double solazi, size_t month, size_t day, size_t hour, size_t minute, double gpoa = 0.0, double dpoa = 0.0, double pv_cell_temp = 0.0, int mods_per_str = 0, double str_vmp_stc = 0.0, double mppt_lo = 0.0, double mppt_hi = 0.0);
 	double fdiff();
 
 	double beam_shade_factor();
@@ -165,8 +162,8 @@ public:
 	virtual ~weatherdata();
 
 	void set_counter_to(size_t cur_index);
-	bool read(weather_record *r); // reads one more record	
-	bool read_average(weather_record *r, std::vector<int> &cols, size_t &num_timesteps); // reads one more record	
+	bool read(weather_record *r); // reads one more record
+	bool read_average(weather_record *r, std::vector<int> &cols, size_t &num_timesteps); // reads one more record
 	bool has_data_column(size_t id);
 	bool check_continuous_single_year(bool leapyear);
 };
