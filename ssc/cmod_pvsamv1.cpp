@@ -1115,16 +1115,18 @@ void cm_pvsamv1::exec( ) throw (general_error)
 		std::vector<double> tmp;
 		dcStringVoltage.push_back(tmp);
 	}
-
+	size_t idx = 0;
 	//for normal annual simulations, this works as expected. for non-annual weather data inputs, nyears is 1,
 	//so iyear will always be 0, meaning that timeseries outputs will be output for the entire length of nrec
 	for (size_t iyear = 0; iyear < nyears; iyear++)
 	{
 		//idx is the current array index in the (possibly subhourly) year of weather data or the non-annual array
-		for (size_t idx = 0; idx < nrec; idx++)
+		//for (size_t idx = 0; idx < nrec; idx++)
+		for (size_t inrec = 0; inrec < nrec; inrec++)
 		{
+			idx = inrec + iyear * nrec;
 			if (!wdprov->read(&Irradiance->weatherRecord))
-				throw exec_error("pvsamv1", "could not read data line " + util::to_string((int)(idx + 1)) + " in weather file");
+				throw exec_error("pvsamv1", "could not read data line " + util::to_string((int)(inrec + 1)) + " in weather file");
 		
 			weather_record wf = Irradiance->weatherRecord;
 			size_t hour = wf.hour; //this is the current timestamp hour from 0-24 from the weather file
@@ -1134,7 +1136,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 			ireport++;
 			if (ireport - ireplast > irepfreq)
 			{
-				percent_complete = percent_baseline + 100.0f *(float)(idx + iyear * nrec) / (float)(insteps);
+				percent_complete = percent_baseline + 100.0f *(float)(inrec + iyear * nrec) / (float)(insteps);
 				if (!update("", percent_complete))
 					throw exec_error("pvsamv1", "simulation canceled at hour " + util::to_string(hour_of_year + 1.0) + " in year " + util::to_string((int)iyear + 1) + "in dc loop");
 				ireplast = ireport;
@@ -2052,10 +2054,11 @@ void cm_pvsamv1::exec( ) throw (general_error)
 	for (size_t iyear = 0; iyear < nyears; iyear++)
 	{
 		//idx is the current array index in the (possibly subhourly) year of weather data or the non-annual array
-		for (size_t idx = 0; idx < nrec; idx++)
+		for (size_t inrec = 0; inrec < nrec; inrec++)
 		{
+			idx = inrec + iyear * nrec;
 			if (!wdprov->read(&Irradiance->weatherRecord))
-				throw exec_error("pvsamv1", "could not read data line " + util::to_string((int)(idx + 1)) + " in weather file");
+				throw exec_error("pvsamv1", "could not read data line " + util::to_string((int)(inrec + 1)) + " in weather file");
 
 			size_t hour = Irradiance->weatherRecord.hour; //this is the current timestamp hour from 0-24 from the weather file
 			size_t hour_of_year = util::hour_of_year(Irradiance->weatherRecord.month, Irradiance->weatherRecord.day, Irradiance->weatherRecord.hour); //this is the index of the hour in the year (0-8759) given the weather file date & timestamp	
@@ -2064,7 +2067,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 			ireport++;
 			if (ireport - ireplast > irepfreq)
 			{
-				percent_complete = percent_baseline + 100.0f *(float)(idx + iyear * nrec) / (float)(insteps);
+				percent_complete = percent_baseline + 100.0f *(float)(inrec + iyear * nrec) / (float)(insteps);
 				if (!update("", percent_complete))
 					throw exec_error("pvsamv1", "simulation canceled at hour " + util::to_string(hour_of_year + 1.0) + " in year " + util::to_string((int)iyear + 1) + "in ac loop");
 				ireplast = ireport;
@@ -2213,10 +2216,11 @@ void cm_pvsamv1::exec( ) throw (general_error)
 	for (size_t iyear = 0; iyear < nyears; iyear++)
 	{
 		//idx is the current array index in the (possibly subhourly) year of weather data or the non-annual array
-		for (size_t idx = 0; idx < nrec; idx++)
+		for (size_t inrec = 0; inrec < nrec; inrec++)
 		{
+			idx = inrec + iyear * nrec;
 			if (!wdprov->read(&Irradiance->weatherRecord))
-				throw exec_error("pvsamv1", "could not read data line " + util::to_string((int)(idx + 1)) + " in weather file");
+				throw exec_error("pvsamv1", "could not read data line " + util::to_string((int)(inrec + 1)) + " in weather file");
 
 			size_t hour = Irradiance->weatherRecord.hour; //this is the current timestamp hour from 0-24 from the weather file
 			size_t hour_of_year = util::hour_of_year(Irradiance->weatherRecord.month, Irradiance->weatherRecord.day, Irradiance->weatherRecord.hour); //this is the index of the hour in the year (0-8759) given the weather file date & timestamp
@@ -2225,7 +2229,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 			ireport++;
 			if (ireport - ireplast > irepfreq)
 			{
-				percent_complete = percent_baseline + 100.0f *(float)(idx + iyear * nrec) / (float)(insteps);
+				percent_complete = percent_baseline + 100.0f *(float)(inrec + iyear * nrec) / (float)(insteps);
 				if (!update("", percent_complete))
 					throw exec_error("pvsamv1", "simulation canceled at hour " + util::to_string(hour_of_year + 1.0) + " in year " + util::to_string((int)iyear + 1) + "in post ac loop");
 				ireplast = ireport;
