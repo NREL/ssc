@@ -868,7 +868,7 @@ double voltage_vanadium_redox_t::calculate_max_charge_w(double q, double qmax, d
     double max_I = (q - qmax) / dt_hr;
 
     if (max_current)
-        *max_current = -max_I;
+        *max_current = max_I;
 
     return voltage_model(qmax, qmax, max_I, kelvin) * max_I * _num_strings * _num_cells_series;
 }
@@ -932,15 +932,14 @@ double voltage_vanadium_redox_t::voltage_model(double q0, double qmax, double I_
 	    SOC_use = 1e-3;
 
 	double A = std::log(std::pow(SOC_use, 2) / std::pow(1 - SOC_use, 2));
-
-	return _V_ref_50 + m_RCF * T * A + I_string * _R;
+	return _V_ref_50 + m_RCF * T * A + fabs(I_string) * _R;
 }
 
 void voltage_vanadium_redox_t::solve_current_for_power(const double *x, double *f){
     double I = x[0];
     double SOC = (solver_q - I * dt_hr) / solver_Q;
     f[0] = I * (_V_ref_50 + m_RCF * solver_T_k * std::log(SOC * SOC / std::pow(1. - SOC, 2)) +
-                I * _R) - solver_power;
+                fabs(I) * _R) - solver_power;
 }
 
 void voltage_vanadium_redox_t::solve_max_discharge_power(const double *x, double *f){
