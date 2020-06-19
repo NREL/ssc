@@ -300,7 +300,6 @@ void UtilityRateForecast::compute_next_composite_tou(int month, int year)
 	}
 
 	// repeat for surplus
-	// TODO: need to incorperate data about rate schedule here. Net metering will be the year end sell rate in all tiers, whereas others have explicit sell rates
 	double expected_gen = m_monthly_gen_forecast[year * 12 + month];
 	next_sell_rates.clear();
 	num_per = (ssc_number_t)curr_month.ec_tou_sr.nrows();

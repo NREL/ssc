@@ -23,6 +23,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <math.h>
 
 #include "cmod_battery.h"
+#include "cmod_battery.h"
 #include "common.h"
 #include "core.h"
 #include "lib_battery.h"
@@ -163,13 +164,46 @@ var_info vtab_battery_inputs[] = {
 
         // Utility rate inputs
         { SSC_INOUT,        SSC_NUMBER,     "en_electricity_rates",                        "Enable Electricity Rates",                                "0/1",     "0=EnableElectricityRates,1=NoRates",    "Electricity Rates",   "",                                   "",                             "" },
-        { SSC_INPUT,        SSC_NUMBER,     "ur_en_ts_sell_rate",                          "Enable time step sell rates",                             "0/1",     "",                       "Electricity Rates",              "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2",  "BOOLEAN",                           "" },
-        //{ SSC_INPUT,        SSC_ARRAY,      "ur_ts_sell_rate",                             "Time step sell rates",                                    "0/1",     "",                       "Electricity Rates",              "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2",  "",                                  "" },
-        { SSC_INPUT,        SSC_ARRAY,      "ur_ts_buy_rate",                              "Time step buy rates",                                     "0/1",     "",                       "Electricity Rates",              "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2",  "",                                  "" },
-        { SSC_INPUT,        SSC_MATRIX,     "ur_ec_sched_weekday",                         "Energy charge weekday schedule",                          "",        "12 x 24 matrix",         "Electricity Rates",              "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2",  "",          "" },
-        { SSC_INPUT,        SSC_MATRIX,     "ur_ec_sched_weekend",                         "Energy charge weekend schedule",                          "",        "12 x 24 matrix",         "Electricity Rates",              "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2",  "",          "" },
-        { SSC_INPUT,        SSC_MATRIX,     "ur_ec_tou_mat",                               "Energy rates table",                                      "",        "",                       "Electricity Rates",              "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2",  "",          "" },
+        { SSC_INPUT, SSC_NUMBER, "inflation_rate", "Inflation rate", "%", "", "Lifetime", "*", "MIN=-99", "" },
 
+        { SSC_INPUT, SSC_ARRAY, "load_escalation", "Annual load escalation", "%/year", "", "Load", "?=0", "", "" },
+        { SSC_INPUT,        SSC_ARRAY,      "rate_escalation",          "Annual electricity rate escalation",  "%/year", "",                      "Electricity Rates",             "?=0",                       "",                              "" },
+        { SSC_INPUT, SSC_NUMBER, "ur_metering_option", "Metering options", "0=net energy metering,1=net energy metering with $ credits,2=net billing,3=net billing with carryover to next month,4=buy all - sell all", "Net metering monthly excess", "Electricity Rates", "?=0", "INTEGER,MIN=0,MAX=4", "" },
+
+        { SSC_INPUT, SSC_NUMBER, "ur_nm_yearend_sell_rate", "Net metering credit sell rate", "$/kWh", "", "Electricity Rates", "?=0.0", "", "" },
+        { SSC_INPUT, SSC_NUMBER, "ur_nm_credit_month", "Month of rollover credits", "$/kWh", "", "Electricity Rates", "?=11", "INTEGER,MIN=0,MAX=11", "" },
+        { SSC_INPUT, SSC_NUMBER, "ur_nm_credit_rollover", "Roll over credits to next year", "0/1", "", "Electricity Rates", "?=0", "INTEGER,MIN=0,MAX=1", "" },
+
+        // optional input that allows sell rates to be overridden with buy rates - defaults to not override
+        { SSC_INPUT, SSC_NUMBER, "ur_sell_eq_buy", "Set sell rate equal to buy rate", "0/1", "Optional override", "Electricity Rates", "?=0", "BOOLEAN", "" },
+
+        // time step rates
+        { SSC_INPUT, SSC_NUMBER, "ur_en_ts_sell_rate", "Enable time step sell rates", "0/1", "", "Electricity Rates", "?=0", "BOOLEAN", "" },
+        { SSC_INPUT, SSC_ARRAY, "ur_ts_sell_rate", "Time step sell rates", "0/1", "", "Electricity Rates", "", "", "" },
+        { SSC_INPUT, SSC_ARRAY, "ur_ts_buy_rate", "Time step buy rates", "0/1", "", "Electricity Rates", "", "", "" },
+
+        // Energy Charge Inputs
+        { SSC_INPUT, SSC_MATRIX, "ur_ec_sched_weekday", "Energy charge weekday schedule", "", "12x24", "Electricity Rates", "*", "", "" },
+        { SSC_INPUT, SSC_MATRIX, "ur_ec_sched_weekend", "Energy charge weekend schedule", "", "12x24", "Electricity Rates", "*", "", "" },
+
+        // ur_ec_tou_mat has 6 columns period, tier, max usage, max usage units, buy rate, sell rate
+        // replaces 12(P)*6(T)*(max usage+buy+sell) = 216 single inputs
+        { SSC_INPUT, SSC_MATRIX, "ur_ec_tou_mat", "Energy rates table", "", "", "Electricity Rates", "*", "", "" },
+
+       // Demand Charge Inputs
+        { SSC_INPUT,        SSC_NUMBER,     "ur_dc_enable",            "Enable demand charge",        "0/1",    "",                      "Electricity Rates",             "?=0",                       "BOOLEAN",                       "" },
+        // TOU demand charge
+        { SSC_INPUT, SSC_MATRIX, "ur_dc_sched_weekday", "Demand charge weekday schedule", "", "12x24", "Electricity Rates", "", "", "" },
+        { SSC_INPUT, SSC_MATRIX, "ur_dc_sched_weekend", "Demand charge weekend schedule", "", "12x24", "Electricity Rates", "", "", "" },
+
+        // ur_dc_tou_mat has 4 columns period, tier, peak demand (kW), demand charge
+        // replaces 12(P)*6(T)*(peak+charge) = 144 single inputs
+        { SSC_INPUT, SSC_MATRIX, "ur_dc_tou_mat", "Demand rates (TOU) table", "", "", "Electricity Rates", "ur_dc_enable=1", "", "" },
+
+        // flat demand charge
+        // ur_dc_tou_flat has 4 columns month, tier, peak demand (kW), demand charge
+        // replaces 12(P)*6(T)*(peak+charge) = 144 single inputs
+        { SSC_INPUT, SSC_MATRIX, "ur_dc_flat_mat", "Demand rates (flat) table", "", "", "Electricity Rates", "ur_dc_enable=1", "", "" },
 
 /*
 	// PPA financial inputs
@@ -946,7 +980,8 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     {
         util_rate_data = NULL;
         if (batt_vars->ec_rate_defined) {
-            // TODO - populate rate data
+            util_rate_data = new rate_data();
+            rate_setup::setup(&vt, step_per_year, batt_vars->analysis_period, *util_rate_data, "cmod_batery");
         }
         dispatch_model = new dispatch_automatic_behind_the_meter_t(battery_model, dt_hr, batt_vars->batt_minimum_SOC, batt_vars->batt_maximum_SOC,
                                                                    batt_vars->batt_current_choice, batt_vars->batt_current_charge_max, batt_vars->batt_current_discharge_max,

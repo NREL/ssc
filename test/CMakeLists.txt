@@ -21,6 +21,7 @@ set(SSC_SRC ../ssc/core.cpp ../ssc/common.cpp ../ssc/vartab.cpp)
 # add files which need to be compiled with Test in order to be tested on Windows
 set(SRC_TO_TEST
         ../ssc/cmod_windpower.cpp
+		../ssc/cmod_utilityrate5.cpp
         ../ssc/cmod_battery.cpp
         ../ssc/cmod_battwatts.cpp
         ../ssc/cmod_fuelcell.cpp)

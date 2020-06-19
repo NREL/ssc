@@ -17,7 +17,7 @@ TEST(lib_utility_rate_test, test_copy)
 	bool sell_eq_buy = false;
 
 	rate_data data;
-	data.init();
+	data.init(8760);
 	data.setup_energy_rates(&p_ur_ec_sched_weekday[0], &p_ur_ec_sched_weekend[0], tou_rows, &p_ur_ec_tou_mat[0], sell_eq_buy);
 
 	int steps_per_hour = 1;
@@ -56,8 +56,7 @@ TEST(lib_utility_rate_test, test_tiered_tou_cost_estimates)
 	bool sell_eq_buy = false;
 
 	rate_data data;
-	data.m_num_rec_yearly = 8760;
-	data.init();
+	data.init(8760);
 	data.setup_energy_rates(&p_ur_ec_sched_weekday[0], &p_ur_ec_sched_weekend[0], tou_rows, &p_ur_ec_tou_mat[0], sell_eq_buy);
 	data.rate_scale.push_back(1.0);
 
@@ -102,8 +101,7 @@ TEST(lib_utility_rate_test, test_tiered_sell_rates)
 	bool sell_eq_buy = false;
 
 	rate_data data;
-	data.m_num_rec_yearly = 8760;
-	data.init();
+	data.init(8760);
 	data.setup_energy_rates(&p_ur_ec_sched_weekday[0], &p_ur_ec_sched_weekend[0], tou_rows, &p_ur_ec_tou_mat[0], sell_eq_buy);
 	data.rate_scale.push_back(1.0);
 
@@ -238,9 +236,8 @@ TEST(lib_utility_rate_test, test_sell_rates)
                                         11, 1, 9.9999999999999998e+37, 0 };
     size_t dc_flat_rows = 12;
 
-    data.m_num_rec_yearly = 8760;
     data.rate_scale = { 1, 1.025 };
-    data.init();
+    data.init(8760);
     data.setup_demand_charges(&p_ur_dc_sched_weekday[0], &p_ur_dc_sched_weekend[0], tou_rows, &p_ur_dc_tou_mat[0], dc_flat_rows, &p_ur_dc_flat_mat[0]);
     data.setup_energy_rates(&p_ur_ec_sched_weekday[0], &p_ur_ec_sched_weekend[0], tou_rows, &p_ur_ec_tou_mat[0], sell_eq_buy);
     data.init_energy_rates(false);

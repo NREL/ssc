@@ -20,6 +20,8 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include "cmod_utilityrate5.h"
+
 #include "core.h"
 #include "lib_utility_rate_equations.h"
 #include <algorithm>
@@ -329,6 +331,131 @@ static var_info vtab_utility_rate5[] = {
 
 	var_info_invalid };
 
+void rate_setup::setup(var_table* vt, int num_recs_yearly, int nyears, rate_data& rate, std::string cm_name) {
+    bool dc_enabled = vt->as_boolean("ur_dc_enable");
+    bool en_ts_sell_rate = vt->as_boolean("ur_en_ts_sell_rate");
+
+    size_t cnt = 0; size_t nrows, ncols, i;
+    ssc_number_t* parr = 0;
+    ssc_number_t* ts_sr = NULL; ssc_number_t* ts_br = NULL;
+
+    rate.init(num_recs_yearly);
+
+    double inflation_rate = vt->as_double("inflation_rate") * 0.01;
+
+    // compute utility rate out-years escalation multipliers
+    std::vector<ssc_number_t> rate_scale(nyears);
+    parr = vt->as_array("rate_escalation", &cnt);
+    if (cnt == 1)
+    {
+        for (i = 0; i < nyears; i++)
+            rate_scale[i] = (ssc_number_t)pow((double)(inflation_rate + 1 + parr[0] * 0.01), (double)i);
+    }
+    else
+    {
+        for (i = 0; i < nyears; i++)
+            rate_scale[i] = (ssc_number_t)(1 + parr[i] * 0.01);
+    }
+    rate.rate_scale = rate_scale; 
+
+    if (en_ts_sell_rate) {
+        if (!vt->is_assigned("ur_ts_sell_rate"))
+        {
+            throw exec_error(cm_name, util::format("Time step sell rate enabled but no time step sell rates specified."));
+        }
+        else
+        { // hourly or sub hourly loads for single year
+
+            ts_sr = vt->as_array("ur_ts_sell_rate", &cnt);
+            size_t ts_step_per_hour = cnt / 8760;
+            if (ts_step_per_hour < 1 || ts_step_per_hour > 60 || ts_step_per_hour * 8760 != cnt)
+                throw exec_error(cm_name, util::format("invalid number of sell rate records (%d): must be an integer multiple of 8760", (int)cnt));
+            ts_br = vt->as_array("ur_ts_buy_rate", &cnt);
+            if ((cnt != num_recs_yearly) && (cnt != 8760))
+                throw exec_error(cm_name, util::format("number of sell rate records (%d) must be equal to number of gen records (%d) or 8760 for each year", (int)cnt, num_recs_yearly));
+        }
+
+        rate.setup_time_series(cnt, ts_sr, ts_br);
+    }
+
+    // Energy charges are always enabled
+    ssc_number_t* ec_weekday = vt->as_matrix("ur_ec_sched_weekday", &nrows, &ncols);
+    if (nrows != 12 || ncols != 24)
+    {
+        std::ostringstream ss;
+        ss << "The weekday TOU matrix for energy rates should have 12 rows and 24 columns. Instead it has " << nrows << " rows and " << ncols << " columns.";
+        throw exec_error(cm_name, ss.str());
+    }
+    ssc_number_t* ec_weekend = vt->as_matrix("ur_ec_sched_weekend", &nrows, &ncols);
+    if (nrows != 12 || ncols != 24)
+    {
+        std::ostringstream ss;
+        ss << "The weekend TOU matrix for energy rates should have 12 rows and 24 columns. Instead it has " << nrows << " rows and " << ncols << " columns.";
+        throw exec_error(cm_name, ss.str());
+    }
+
+    // 6 columns period, tier, max usage, max usage units, buy, sell
+    ssc_number_t* ec_tou_in = vt->as_matrix("ur_ec_tou_mat", &nrows, &ncols);
+    if (ncols != 6)
+    {
+        std::ostringstream ss;
+        ss << "The energy rate table must have 6 columns. Instead it has " << ncols << " columns.";
+        throw exec_error(cm_name, ss.str());
+    }
+    size_t tou_rows = nrows;
+
+    bool sell_eq_buy = vt->as_boolean("ur_sell_eq_buy");
+
+    rate.setup_energy_rates(ec_weekday, ec_weekend, tou_rows, ec_tou_in, sell_eq_buy);
+
+    ssc_number_t* dc_weekday = NULL; ssc_number_t* dc_weekend = NULL; ssc_number_t* dc_tou_in = NULL; ssc_number_t* dc_flat_in = NULL;
+    size_t dc_tier_rows = 0; size_t dc_flat_rows = 0;
+
+    if (dc_enabled)
+    {
+        dc_weekday = vt->as_matrix("ur_dc_sched_weekday", &nrows, &ncols);
+        if (nrows != 12 || ncols != 24)
+        {
+            std::ostringstream ss;
+            ss << "The weekday TOU matrix for demand rates should have 12 rows and 24 columns. Instead it has " << nrows << " rows and " << ncols << " columns.";
+            throw exec_error(cm_name, ss.str());
+        }
+        dc_weekend = vt->as_matrix("ur_dc_sched_weekend", &nrows, &ncols);
+        if (nrows != 12 || ncols != 24)
+        {
+            std::ostringstream ss;
+            ss << "The weekend TOU matrix for demand rates should have 12 rows and 24 columns. Instead it has " << nrows << " rows and " << ncols << " columns.";
+            throw exec_error(cm_name, ss.str());
+        }
+
+        dc_tou_in = vt->as_matrix("ur_dc_tou_mat", &nrows, &ncols);
+        if (ncols != 4)
+        {
+            std::ostringstream ss;
+            ss << "The demand rate table for TOU periods, 'ur_dc_tou_mat', must have 4 columns. Instead, it has " << ncols << "columns.";
+            throw exec_error(cm_name, ss.str());
+        }
+        dc_tier_rows = nrows;
+
+        // 4 columns month, tier, max usage, charge
+        dc_flat_in = vt->as_matrix("ur_dc_flat_mat", &nrows, &ncols);
+        if (ncols != 4)
+        {
+            std::ostringstream ss;
+            ss << "The demand rate table, 'ur_dc_flat_mat', by month must have 4 columns. Instead it has " << ncols << " columns";
+            throw exec_error(cm_name, ss.str());
+        }
+        dc_flat_rows = nrows;
+        rate.setup_demand_charges(dc_weekday, dc_weekend, dc_tier_rows, dc_tou_in, dc_flat_rows, dc_flat_in);
+    }
+
+    int metering_option = vt->as_integer("ur_metering_option");
+    rate.enable_nm = (metering_option == 0 || metering_option == 1);
+    rate.nm_credits_w_rollover = (vt->as_integer("ur_metering_option") == 0);
+    rate.net_metering_credit_month = (int)vt->as_number("ur_nm_credit_month");
+    rate.nm_credit_sell_rate = vt->as_number("ur_nm_yearend_sell_rate");
+};
+
 class cm_utilityrate5 : public compute_module
 {
 private:
@@ -358,7 +485,6 @@ public:
 		size_t count, i, j;
 
 		size_t nyears = (size_t)as_integer("analysis_period");
-		double inflation_rate = as_double("inflation_rate")*0.01;
 
 		// compute annual system output degradation multipliers
 		std::vector<ssc_number_t> sys_scale(nyears);
@@ -402,21 +528,6 @@ public:
 				load_scale[i] = (ssc_number_t)(1 + parr[i]*0.01);
 		}
 
-		// compute utility rate out-years escalation multipliers
-		std::vector<ssc_number_t> rate_scale(nyears);
-		parr = as_array("rate_escalation", &count);
-		if (count == 1)
-		{
-			for (i=0;i<nyears;i++)
-				rate_scale[i] = (ssc_number_t)pow( (double)(inflation_rate+1+parr[0]*0.01), (double)i );
-		}
-		else
-		{
-			for (i=0;i<nyears;i++)
-				rate_scale[i] = (ssc_number_t)(1 + parr[i]*0.01);
-		}
-		rate_data.rate_scale = rate_scale; // Used in peak demand function
-
 		/* Update all e_sys and e_load values based on new inputs
 		grid = gen -load where gen = sys + batt
 		1. scale load and system value to hourly values as necessary
@@ -438,7 +549,6 @@ public:
 		if (step_per_hour_gen < 1 || step_per_hour_gen > 60 || step_per_hour_gen * 8760 != nrec_gen_per_year)
 			throw exec_error("utilityrate5", util::format("invalid number of gen records (%d): must be an integer multiple of 8760", (int)nrec_gen_per_year));
 		ssc_number_t ts_hour_gen = 1.0f / step_per_hour_gen;
-		rate_data.m_num_rec_yearly = nrec_gen_per_year;
 		m_num_rec_yearly = nrec_gen_per_year;;
 
 		if (is_assigned("load"))
@@ -571,7 +681,7 @@ public:
 		// reverse to tiers columns and periods are rows based on IRENA desired output.
 		// tiers and periods determined by input matrices
 
-		setup();
+		rate_setup::setup(m_vartab, m_num_rec_yearly, nyears, rate_data, "utilityrate5");
 
 		size_t jan_rows = rate_data.m_month[0].ec_charge.nrows() + 2;
 		size_t jan_cols = rate_data.m_month[0].ec_charge.ncols() + 2;
@@ -789,7 +899,7 @@ public:
 					&monthly_excess_kwhs_earned[0],
 					&monthly_excess_kwhs_applied[0],
 					&rate_data.dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], 
-					&monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_scale[i], i,
+					&monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_data.rate_scale[i], i,
 					last_excess_dollars);
 			}
 			else
@@ -804,7 +914,7 @@ public:
 					&monthly_excess_kwhs_earned[0],
 					&monthly_excess_kwhs_applied[0],
 					&rate_data.dc_hourly_peak[0], &monthly_cumulative_excess_energy[0],
-					&monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_scale[i], i,
+					&monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_data.rate_scale[i], i,
 					&last_month, last_excess_energy, last_excess_dollars);
 			}
 
@@ -939,7 +1049,7 @@ public:
 						&monthly_excess_dollars_applied[0],
 						&monthly_excess_kwhs_earned[0],
 						&monthly_excess_kwhs_applied[0],
-						&rate_data.dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_scale[i],
+						&rate_data.dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_data.rate_scale[i],
 						i, last_excess_dollars, false, false, true);
 				}
 				else
@@ -955,7 +1065,7 @@ public:
 						&monthly_excess_kwhs_earned[0],
 						&monthly_excess_kwhs_applied[0],
 						&rate_data.dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0],
-						&monthly_bill[0], rate_scale[i], i + 1, last_excess_dollars);
+						&monthly_bill[0], rate_data.rate_scale[i], i, last_excess_dollars);
 				}
 			}
 			else // monthly reconciliation per 2015.6.30 release
@@ -973,7 +1083,7 @@ public:
 						&monthly_excess_dollars_applied[0],
 						&monthly_excess_kwhs_earned[0],
 						&monthly_excess_kwhs_applied[0],
-						&rate_data.dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_scale[i],
+						&rate_data.dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_data.rate_scale[i],
 						i, &last_month, last_excess_energy, last_excess_dollars, false, false, true);
 				}
 				else
@@ -990,7 +1100,7 @@ public:
 						&monthly_excess_kwhs_earned[0],
 						&monthly_excess_kwhs_applied[0],
 						&rate_data.dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0],
-						&monthly_bill[0], rate_scale[i], i,
+						&monthly_bill[0], rate_data.rate_scale[i], i,
 						&last_month, last_excess_energy, last_excess_dollars);
 				}
 			}
@@ -1331,107 +1441,6 @@ public:
 				monthly_elec_needed_from_grid[m]=0;
 		}
 	}
-
-	void setup() {
-		bool dc_enabled = as_boolean("ur_dc_enable");
-		bool en_ts_sell_rate = as_boolean("ur_en_ts_sell_rate");
-
-		size_t cnt = 0; size_t nrows, ncols;
-		ssc_number_t* ts_sr = NULL; ssc_number_t* ts_br = NULL;
-
-		rate_data.init();
-
-		if (en_ts_sell_rate) {
-			if (!is_assigned("ur_ts_sell_rate"))
-			{
-				throw exec_error("utilityrate5", util::format("Time step sell rate enabled but no time step sell rates specified."));
-			}
-			else
-			{ // hourly or sub hourly loads for single year
-
-				ts_sr = as_array("ur_ts_sell_rate", &cnt);
-				size_t ts_step_per_hour = cnt / 8760;
-				if (ts_step_per_hour < 1 || ts_step_per_hour > 60 || ts_step_per_hour * 8760 != cnt)
-					throw exec_error("utilityrate5", util::format("invalid number of sell rate records (%d): must be an integer multiple of 8760", (int)cnt));
-				ts_br = as_array("ur_ts_buy_rate", &cnt);
-				if ((cnt != m_num_rec_yearly) && (cnt != 8760))
-					throw exec_error("utilityrate5", util::format("number of sell rate records (%d) must be equal to number of gen records (%d) or 8760 for each year", (int)cnt, (int)m_num_rec_yearly));
-			}
-
-			rate_data.setup_time_series(cnt, ts_sr, ts_br);
-		}
-
-		// Energy charges are always enabled
-		ssc_number_t* ec_weekday = as_matrix("ur_ec_sched_weekday", &nrows, &ncols);
-		if (nrows != 12 || ncols != 24)
-		{
-			std::ostringstream ss;
-			ss << "The weekday TOU matrix for energy rates should have 12 rows and 24 columns. Instead it has " << nrows << " rows and " << ncols << " columns.";
-			throw exec_error("utilityrate5", ss.str());
-		}
-		ssc_number_t* ec_weekend = as_matrix("ur_ec_sched_weekend", &nrows, &ncols);
-		if (nrows != 12 || ncols != 24)
-		{
-			std::ostringstream ss;
-			ss << "The weekend TOU matrix for energy rates should have 12 rows and 24 columns. Instead it has " << nrows << " rows and " << ncols << " columns.";
-			throw exec_error("utilityrate5", ss.str());
-		}
-
-		// 6 columns period, tier, max usage, max usage units, buy, sell
-		ssc_number_t* ec_tou_in = as_matrix("ur_ec_tou_mat", &nrows, &ncols);
-		if (ncols != 6)
-		{
-			std::ostringstream ss;
-			ss << "The energy rate table must have 6 columns. Instead it has " << ncols << " columns.";
-			throw exec_error("utilityrate5", ss.str());
-		}
-		size_t tou_rows = nrows;
-
-		bool sell_eq_buy = as_boolean("ur_sell_eq_buy");
-
-		rate_data.setup_energy_rates(ec_weekday, ec_weekend, tou_rows, ec_tou_in, sell_eq_buy);
-
-		ssc_number_t* dc_weekday = NULL; ssc_number_t* dc_weekend = NULL; ssc_number_t* dc_tou_in = NULL; ssc_number_t* dc_flat_in = NULL;
-		size_t dc_tier_rows = 0; size_t dc_flat_rows = 0;
-
-		if (dc_enabled) 
-		{
-			dc_weekday = as_matrix("ur_dc_sched_weekday", &nrows, &ncols);
-			if (nrows != 12 || ncols != 24)
-			{
-				std::ostringstream ss;
-				ss << "The weekday TOU matrix for demand rates should have 12 rows and 24 columns. Instead it has " << nrows << " rows and " << ncols << " columns.";
-				throw exec_error("utilityrate5", ss.str());
-			}
-			dc_weekend = as_matrix("ur_dc_sched_weekend", &nrows, &ncols);
-			if (nrows != 12 || ncols != 24)
-			{
-				std::ostringstream ss;
-				ss << "The weekend TOU matrix for demand rates should have 12 rows and 24 columns. Instead it has " << nrows << " rows and " << ncols << " columns.";
-				throw exec_error("utilityrate5", ss.str());
-			}
-
-			dc_tou_in = as_matrix("ur_dc_tou_mat", &nrows, &ncols);
-			if (ncols != 4)
-			{
-				std::ostringstream ss;
-				ss << "The demand rate table for TOU periods, 'ur_dc_tou_mat', must have 4 columns. Instead, it has " << ncols << "columns.";
-				throw exec_error("utilityrate5", ss.str());
-			}
-			dc_tier_rows = nrows;
-
-			// 4 columns month, tier, max usage, charge
-			dc_flat_in = as_matrix("ur_dc_flat_mat", &nrows, &ncols);
-			if (ncols != 4)
-			{
-				std::ostringstream ss;
-				ss << "The demand rate table, 'ur_dc_flat_mat', by month must have 4 columns. Instead it has " << ncols << " columns";
-				throw exec_error("utilityrate5", ss.str());
-			}
-			dc_flat_rows = nrows;
-			rate_data.setup_demand_charges(dc_weekday, dc_weekend, dc_tier_rows, dc_tou_in, dc_flat_rows, dc_flat_in);
-		}
-	};
 
 	void ur_calc( ssc_number_t *e_in, ssc_number_t *p_in,
 		ssc_number_t *revenue, ssc_number_t *payment, ssc_number_t *income,

@@ -28,6 +28,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "core.h"
 #include "lib_battery.h"
 #include "lib_utility_rate.h"
+#include "cmod_utilityrate5.h"
 
 // forward declarations to speed up build
 class SharedInverter;

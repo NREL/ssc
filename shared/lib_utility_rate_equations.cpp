@@ -119,8 +119,10 @@ rate_data::rate_data(const rate_data& tmp) :
     rate_scale(tmp.rate_scale)
 {}
 
-void rate_data::init() {
+void rate_data::init(int num_rec_yearly) {
 	size_t i, m;
+
+    m_num_rec_yearly = num_rec_yearly;
 
 	for (i = 0; i < m_ec_periods_tiers_init.size(); i++)
 		m_ec_periods_tiers_init[i].clear();

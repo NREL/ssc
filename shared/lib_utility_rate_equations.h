@@ -117,7 +117,7 @@ public:
 
 	void init_energy_rates(bool gen_only);
 
-	void init(); // Need to run this after m_num_rec_yearly is set
+	void init(int num_rec_yearly);
 	void setup_time_series(size_t cnt, ssc_number_t* ts_sr, ssc_number_t* ts_br);
 	void setup_energy_rates(ssc_number_t* ec_weekday, ssc_number_t* ec_weekend, size_t ec_tou_rows, ssc_number_t* ec_tou_in, bool sell_eq_buy);
 	void setup_demand_charges(ssc_number_t* dc_weekday, ssc_number_t* dc_weekend, size_t dc_tou_rows, ssc_number_t* dc_tou_in, size_t dc_flat_rows, ssc_number_t* dc_flat_in);
@@ -129,7 +129,7 @@ public:
 
 	// Runs each month
 	void init_dc_peak_vectors(int month);
-	ssc_number_t get_demand_charge(int month, int year); // TODO - should tou_demand_single_peak be a member variable or not?
+	ssc_number_t get_demand_charge(int month, int year); 
     // Returns error codes so compute module can print errors. 0: no error, 10x: error in previous month, 20x: error in current month. x is the period where the error occured
     int transfer_surplus(ur_month& curr_month, ur_month& prev_month);
     void compute_surplus(ur_month& curr_month);
