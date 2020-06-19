@@ -92,7 +92,8 @@ rate_data::rate_data() :
     enable_nm(false),
     nm_credits_w_rollover(false),
     net_metering_credit_month(11),
-    nm_credit_sell_rate(0.0)
+    nm_credit_sell_rate(0.0),
+    rate_scale()
 {}
 
 rate_data::rate_data(const rate_data& tmp) :
@@ -114,7 +115,8 @@ rate_data::rate_data(const rate_data& tmp) :
     enable_nm(tmp.enable_nm),
     nm_credits_w_rollover(tmp.nm_credits_w_rollover),
     net_metering_credit_month(tmp.net_metering_credit_month),
-    nm_credit_sell_rate(tmp.nm_credit_sell_rate)
+    nm_credit_sell_rate(tmp.nm_credit_sell_rate),
+    rate_scale(tmp.rate_scale)
 {}
 
 void rate_data::init() {
@@ -713,7 +715,7 @@ ssc_number_t rate_data::get_demand_charge(int month, int year)
 {
 	size_t tier, period;
 	ur_month& curr_month = m_month[month];
-	double rate_esc = rate_scale[year - 1];
+	double rate_esc = rate_scale[year];
 
 	// fixed demand charge
 	// compute charge based on tier structure for the month

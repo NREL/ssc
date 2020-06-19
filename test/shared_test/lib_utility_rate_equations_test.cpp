@@ -85,8 +85,8 @@ TEST(lib_utility_rate_equations_test, test_demand_charges)
         data.find_dc_tou_peak(month, day_one_power.at(step), step);
     }
 
-    ASSERT_NEAR(200.0, data.get_demand_charge(0, 1), 0.1);
+    ASSERT_NEAR(200.0, data.get_demand_charge(0, 0), 0.1);
 
     // Check whether or not it's safe to call this function twice on the same data
-    ASSERT_NEAR(200.0, data.get_demand_charge(0, 1), 0.1);
+    ASSERT_NEAR(200.0, data.get_demand_charge(0, 0), 0.1);
 }

@@ -115,7 +115,8 @@ void dispatch_automatic_behind_the_meter_t::dispatch(size_t year,
 	dispatch_automatic_t::dispatch(year, hour_of_year, step);
     if (rate_forecast != nullptr)
     {
-        // TODO: update rate forecast based on actual dispatch
+        std::vector<double> actual_dispatch = { m_batteryPower->powerGrid };
+        rate_forecast->forecastCost(actual_dispatch, year, hour_of_year, step);
     }
 }
 
@@ -138,7 +139,8 @@ void dispatch_automatic_behind_the_meter_t::setup_rate_forecast()
         size_t step = 0; size_t hour_of_year = 0;
         size_t curr_month = 1;
         double load_during_month = 0.0; double gen_during_month = 0.0; double peak_during_month = 0.0;
-        for (size_t idx = 0; idx < num_recs; idx++)
+        size_t array_size = std::min(_P_pv_dc.size(), _P_load_dc.size()); // Cover smaller arrays to make testing easier
+        for (size_t idx = 0; idx < num_recs && idx < array_size; idx++)
         {
             double grid_power = _P_pv_dc[idx] - _P_load_dc[idx];
             if (grid_power < peak_during_month)
@@ -164,7 +166,7 @@ void dispatch_automatic_behind_the_meter_t::setup_rate_forecast()
                     hour_of_year = 0;
                 }
             }
-            if (util::month_of(hour_of_year) != curr_month)
+            if (util::month_of(hour_of_year) != curr_month || (idx == array_size - 1))
             {
                 // Push back vectors
                 // Note: this is a net-billing approach. To be accurate for net metering, we'd have to invote tou periods here, this overestimates costs for NM
@@ -178,7 +180,8 @@ void dispatch_automatic_behind_the_meter_t::setup_rate_forecast()
         }
 
         rate_forecast = std::shared_ptr<UtilityRateForecast>(new UtilityRateForecast(rate.get(), _steps_per_hour, monthly_load, monthly_gen, monthly_peaks));
-        rate_forecast->initializeMonth(0, 1);
+        rate_forecast->initializeMonth(0, 0);
+        rate_forecast->copyTOUForecast();
     }
 }
 
@@ -207,6 +210,7 @@ void dispatch_automatic_behind_the_meter_t::update_dispatch(size_t year, size_t 
 
             double no_dispatch_cost = compute_costs(p, debug, idx, year, hour_of_year);
 
+            compute_energy(p, debug, E_max);
             cost_based_target_power(p, debug, idx, year, hour_of_year, no_dispatch_cost, E_max);
 
             // Set battery power profile
@@ -323,6 +327,7 @@ void dispatch_automatic_behind_the_meter_t::sort_grid(FILE *p, bool debug, size_
 	{
 		for (size_t step = 0; step != _steps_per_hour; step++)
 		{
+            // + is load, - is gen
 			grid[count] = grid_point(_P_load_dc[idx] - _P_pv_dc[idx], hour, step);
 			sorted_grid[count] = grid[count];
 
@@ -378,8 +383,8 @@ double dispatch_automatic_behind_the_meter_t::compute_costs(FILE* p, bool debug,
         {
             double power = _P_load_dc[idx] - _P_pv_dc[idx];
             // One at a time so we can sort grid points by no-dispatch cost
-            std::vector<double> forecast_power = { power };
-            double step_cost = noDispatchForecast->forecastCost(forecast_power, year, hour_of_year, step);
+            std::vector<double> forecast_power = { -power }; // Correct sign convention for cost forecast
+            double step_cost = noDispatchForecast->forecastCost(forecast_power, year, hour_of_year + hour, step);
             no_dispatch_cost += step_cost;
 
             grid[count] = grid_point(power, hour, step, step_cost);
@@ -563,10 +568,10 @@ void dispatch_automatic_behind_the_meter_t::cost_based_target_power(FILE* p, boo
 
             // Re-apportion based on actual energy used
             remainingEnergy -= desiredPower * _dt_hour;
-            costDuringDispatchHours - costAtStep;
+            costDuringDispatchHours -= costAtStep;
 
             // Add to dispatch plan
-            int index = (sorted_grid[i].Hour() - hour_of_year) * _steps_per_hour + sorted_grid[i].Step(); // Assumes we're always running this function on the hour
+            int index = sorted_grid[i].Hour()  * _steps_per_hour + sorted_grid[i].Step(); // Assumes we're always running this function on the hour
             plannedDispatch[index] = desiredPower;
         }
     }
@@ -601,7 +606,7 @@ void dispatch_automatic_behind_the_meter_t::cost_based_target_power(FILE* p, boo
     i = 0;
     while (requiredEnergy > 0 && i < _num_steps)
     {
-        int index = (sorted_grid[i].Hour() - hour_of_year) * _steps_per_hour + sorted_grid[i].Step();
+        int index = sorted_grid[i].Hour() * _steps_per_hour + sorted_grid[i].Step();
         // Don't plan to charge if we were already planning to discharge
         if (plannedDispatch[index] <= 0.0)
         {
@@ -650,11 +655,11 @@ void dispatch_automatic_behind_the_meter_t::cost_based_target_power(FILE* p, boo
         }
         else if (projectedEnergy > E_max)
         {
-            plannedDispatch[i] = (E_max - energy) / _dt_hour;
+            plannedDispatch[i] = (energy - E_max) / _dt_hour;
         }
         energy -= plannedDispatch[i] * _dt_hour;
 
-        double projectedGrid = grid[i].Grid() - plannedDispatch[i];
+        double projectedGrid = -grid[i].Grid() + plannedDispatch[i];
         // Remove clip loss charging from projected grid use
         if (_P_cliploss_dc.size() > 0 && plannedDispatch[i] <= 0)
         {
@@ -683,10 +688,10 @@ void dispatch_automatic_behind_the_meter_t::cost_based_target_power(FILE* p, boo
 
 void dispatch_automatic_behind_the_meter_t::check_power_restrictions(double& power)
 {
-    double desiredCurrent = power / _Battery->V();
-    desiredCurrent = restrict_current(desiredCurrent);
-    desiredCurrent = restrict_power(desiredCurrent);
-    power = desiredCurrent * _Battery->V();
+    double desiredCurrent = power * util::kilowatt_to_watt / _Battery->V();
+    restrict_current(desiredCurrent);
+    restrict_power(desiredCurrent);
+    power = desiredCurrent * _Battery->V() * util::watt_to_kilowatt;
 }
 
 void dispatch_automatic_behind_the_meter_t::set_battery_power(FILE *p, bool debug)

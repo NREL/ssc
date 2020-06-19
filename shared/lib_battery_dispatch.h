@@ -185,7 +185,7 @@ public:
     grid_point(double grid = 0., size_t hour = 0, size_t step = 0, double cost = 0.) :
         _grid(grid), _hour(hour), _step(step), _cost(cost) {}
     double Grid() const { return _grid; }
-    size_t Hour() const { return _hour; }
+    size_t Hour() const { return _hour; } // Hours from time of forecast
     size_t Step() const { return _step; }
     double Cost() const { return _cost; }
 

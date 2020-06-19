@@ -145,7 +145,11 @@ UtilityRateForecast::UtilityRateForecast(UtilityRateForecast& tmp) :
 	last_step(tmp.last_step),
 	m_monthly_load_forecast(tmp.m_monthly_load_forecast),
 	m_monthly_gen_forecast(tmp.m_monthly_gen_forecast),
-	m_monthly_peak_forecast(tmp.m_monthly_peak_forecast)
+	m_monthly_peak_forecast(tmp.m_monthly_peak_forecast),
+    current_buy_rates(tmp.current_buy_rates),
+    current_sell_rates(tmp.current_sell_rates),
+    next_buy_rates(tmp.next_buy_rates),
+    next_sell_rates(tmp.next_sell_rates)
 {
     rate = std::shared_ptr<rate_data>(new rate_data(*tmp.rate));
 }
@@ -156,7 +160,7 @@ double UtilityRateForecast::forecastCost(std::vector<double> predicted_loads, si
 {
 	double cost = 0;
 	int month = util::month_of(hour_of_year) - 1;
-	size_t lifeTimeIndex = util::lifetimeIndex(year - 1, hour_of_year, step, steps_per_hour);
+	size_t lifeTimeIndex = util::lifetimeIndex(year, hour_of_year, step, steps_per_hour);
 
 	size_t n = predicted_loads.size();
 
@@ -206,6 +210,7 @@ double UtilityRateForecast::forecastCost(std::vector<double> predicted_loads, si
 		double power = predicted_loads.at(i);
 		double energy = predicted_loads.at(i) * dt_hour;
 
+        curr_month.update_net_and_peak(energy, power, year_one_index);
 		rate->sort_energy_to_periods(current_month, energy, year_one_index);
 		rate->find_dc_tou_peak(current_month, power, year_one_index);
 
@@ -357,8 +362,6 @@ void UtilityRateForecast::initializeMonth(int month, int year)
 {
 	if (next_buy_rates.size() == 0 || next_buy_rates == current_buy_rates)
 	{
-		// Adjust year to be consistent with rate data's peaking functions
-		year -= 1;
 		rate->init_dc_peak_vectors(month);
 		compute_next_composite_tou(month, year);
 
@@ -385,7 +388,7 @@ void UtilityRateForecast::restartMonth(int prevMonth, int currentMonth, int year
     ur_month& curr_month = rate->m_month[currentMonth];
     rate->compute_surplus(prev_month);
 
-    bool skip_rollover = (currentMonth == 0 && year == 1) || (currentMonth == rate->net_metering_credit_month + 1) || (currentMonth == 0 && rate->net_metering_credit_month == 11);
+    bool skip_rollover = (currentMonth == 0 && year == 0) || (currentMonth == rate->net_metering_credit_month + 1) || (currentMonth == 0 && rate->net_metering_credit_month == 11);
     if (!skip_rollover && rate->nm_credits_w_rollover)
     {
         rate->transfer_surplus(curr_month, prev_month);

@@ -1,8 +1,8 @@
 #include "lib_battery_dispatch_automatic_btm_test.h"
 #include "code_generator_utilities.h"
 
-char load[256];
-int load_int = sprintf(load, "%s/test/input_cases/utility_rate_data/load_commercial.csv", SSCDIR);
+#include "shared_rate_data.h"
+
 TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMGridCharging) {
     double dtHour = 1;
     CreateBattery(dtHour);
@@ -262,5 +262,58 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMDCClipCharge) {
         }
         dispatchAutoBTM->dispatch(0, h, 0);
         EXPECT_NEAR(batteryPower->powerBatteryDC, expectedPower[h], 0.2) << " error in expected at hour " << h;
+    }
+}
+
+TEST_F(AutoBTMTest_lib_battery_dispatch, TestBasicForecast) {
+    double dtHour = 1;
+    CreateBattery(dtHour);
+    util_rate = new rate_data();
+    set_up_default_commercial_rate_data(*util_rate);
+
+    dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice,
+        max_current,
+        max_current, max_power, max_power, max_power, max_power,
+        0, dispatch_t::BTM_MODES::FORECAST, 0, 1, 24, 1, true,
+        true, false, false, util_rate);
+
+    // Setup pv and load signal for peak shaving algorithm
+    for (size_t h = 0; h < 48; h++) {
+        if (h % 24 > 6 && h % 24 < 18) {
+            pv_prediction.push_back(700);
+        }
+        else {
+            pv_prediction.push_back(0);
+        }
+
+        if (h % 24 > 18) {
+            load_prediction.push_back(600);
+        }
+        else {
+            load_prediction.push_back(500);
+        }
+    }
+
+    dispatchAutoBTM->update_load_data(load_prediction);
+    dispatchAutoBTM->update_pv_data(pv_prediction);
+    dispatchAutoBTM->setup_rate_forecast();
+
+    batteryPower = dispatchAutoBTM->getBatteryPower();
+    batteryPower->connectionMode = ChargeController::AC_CONNECTED;
+
+    // Discharge first 4 hours to avoid peak demand charges. Charge while there's solar, then discharge again at 6 pm since this is a high TOU rate
+    std::vector<double> expectedPower = { 50, 50, 50, 34.79, 0, 0, 0, -47.84, -47.84, -47.84, -47.84, -47.84, -47.84, -47.84, -47.84, -47.91, -10.0, 0, 50, 50, 50,
+                                         50, 50, 50, 50, 50, 50 };
+    for (size_t h = 0; h < 24; h++) {
+        batteryPower->powerLoad = 500;
+        batteryPower->powerPV = 0;
+        if (h > 6 && h < 18) {
+            batteryPower->powerPV = 700; // Match the predicted PV
+        }
+        else if (h > 18) {
+            batteryPower->powerLoad = 600; // Match the predicted load
+        }
+        dispatchAutoBTM->dispatch(0, h, 0);
+        EXPECT_NEAR(batteryPower->powerBatteryDC, expectedPower[h], 0.5) << " error in expected at hour " << h;
     }
 }

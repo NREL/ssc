@@ -789,7 +789,7 @@ public:
 					&monthly_excess_kwhs_earned[0],
 					&monthly_excess_kwhs_applied[0],
 					&rate_data.dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], 
-					&monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_scale[i], i + 1,
+					&monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_scale[i], i,
 					last_excess_dollars);
 			}
 			else
@@ -804,7 +804,7 @@ public:
 					&monthly_excess_kwhs_earned[0],
 					&monthly_excess_kwhs_applied[0],
 					&rate_data.dc_hourly_peak[0], &monthly_cumulative_excess_energy[0],
-					&monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_scale[i], i + 1,
+					&monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_scale[i], i,
 					&last_month, last_excess_energy, last_excess_dollars);
 			}
 
@@ -940,7 +940,7 @@ public:
 						&monthly_excess_kwhs_earned[0],
 						&monthly_excess_kwhs_applied[0],
 						&rate_data.dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_scale[i],
-						i + 1, last_excess_dollars, false, false, true);
+						i, last_excess_dollars, false, false, true);
 				}
 				else
 				{
@@ -974,7 +974,7 @@ public:
 						&monthly_excess_kwhs_earned[0],
 						&monthly_excess_kwhs_applied[0],
 						&rate_data.dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_scale[i],
-						i + 1, &last_month, last_excess_energy, last_excess_dollars, false, false, true);
+						i, &last_month, last_excess_energy, last_excess_dollars, false, false, true);
 				}
 				else
 				{
@@ -990,7 +990,7 @@ public:
 						&monthly_excess_kwhs_earned[0],
 						&monthly_excess_kwhs_applied[0],
 						&rate_data.dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0],
-						&monthly_bill[0], rate_scale[i], i + 1,
+						&monthly_bill[0], rate_scale[i], i,
 						&last_month, last_excess_energy, last_excess_dollars);
 				}
 			}
@@ -1525,7 +1525,7 @@ public:
 				if (m == net_metering_credit_month + 1) {
 					monthly_cumulative_excess_energy[m] = ((curr_month.energy_net) > 0) ? (curr_month.energy_net) : 0;
 				}
-				else if (m == 0 && year > 1 && net_metering_credit_month != 11) {
+				else if (m == 0 && year > 0 && net_metering_credit_month != 11) {
 					monthly_cumulative_excess_energy[m] = prev_excess_energy;
 				}
 				else {
@@ -1546,7 +1546,7 @@ public:
 		// adjust net energy if net metering with monthly rollover
 		if (enable_nm && !excess_monthly_dollars)
 		{
-			if (net_metering_credit_month != 11 && year > 1) {
+			if (net_metering_credit_month != 11 && year > 0) {
 				if (prev_excess_energy < 0) {
 					rate_data.m_month[0].energy_net += prev_excess_energy;
 					excess_kwhs_applied[0] = prev_excess_energy;
@@ -1583,7 +1583,7 @@ public:
 					}
 				}
 
-				bool skip_rollover = (m == 0 && year == 1) || (m == net_metering_credit_month + 1) || (m == 0 && net_metering_credit_month == 11);
+				bool skip_rollover = (m == 0 && year == 0) || (m == net_metering_credit_month + 1) || (m == 0 && net_metering_credit_month == 11);
 				
 				// rollover energy from correct period - matching time of day 
 				if (!skip_rollover && enable_nm && !excess_monthly_dollars)
@@ -1823,7 +1823,7 @@ public:
 					monthly_ec_charges[m] -= monthly_cumulative_excess_dollars[m - 1];
 					dollars_applied += monthly_cumulative_excess_dollars[m - 1];
 				}
-				else if (m == 0 && year > 1 && (net_metering_credit_month != 11 || rollover_credit)) {
+				else if (m == 0 && year > 0 && (net_metering_credit_month != 11 || rollover_credit)) {
 					payment[c - 1] -= prev_excess_dollars;
 					monthly_ec_charges[m] -= prev_excess_dollars;
 					dollars_applied += prev_excess_dollars;
@@ -2232,7 +2232,7 @@ public:
 			// apply previous month rollover kwhs
 			if (excess_monthly_dollars)
 			{
-				if (year > 1 && m == 0 && excess_dollars_credit_month != 11) {
+				if (year > 0 && m == 0 && excess_dollars_credit_month != 11) {
 					monthly_ec_charges[m] -= prev_excess_dollars;
 					payment[c - 1] -= prev_excess_dollars;
 					dollars_applied += prev_excess_dollars;
