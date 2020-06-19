@@ -868,7 +868,7 @@ double voltage_vanadium_redox_t::calculate_max_charge_w(double q, double qmax, d
     double max_I = (q - qmax) / dt_hr;
 
     if (max_current)
-        *max_current = max_I;
+        *max_current = max_I * _num_strings;
 
     return voltage_model(qmax, qmax, max_I, kelvin) * max_I * _num_strings * _num_cells_series;
 }
