@@ -1373,7 +1373,8 @@ void cm_pvsamv1::exec( ) throw (general_error)
 					double shadedb_mppt_hi = PVSystem->Inverter->mpptHiVoltage;
 
 					// shading database if necessary
-					if (!Subarrays[nn]->shadeCalculator.fbeam_shade_db(shadeDatabase, solalt, solazi, wf.month, wf.day, wf.hour, wf.minute, shadedb_gpoa, shadedb_dpoa, tcell, Subarrays[nn]->nModulesPerString, shadedb_str_vmp_stc, shadedb_mppt_lo, shadedb_mppt_hi))
+					//if (!Subarrays[nn]->shadeCalculator.fbeam_shade_db(shadeDatabase, solalt, solazi, wf.month, wf.day, wf.hour, wf.minute, shadedb_gpoa, shadedb_dpoa, tcell, Subarrays[nn]->nModulesPerString, shadedb_str_vmp_stc, shadedb_mppt_lo, shadedb_mppt_hi))
+					if (!Subarrays[nn]->shadeCalculator.fbeam_shade_db(shadeDatabase, hour_of_year, solalt, solazi, idx % step_per_hour, step_per_hour, shadedb_gpoa, shadedb_dpoa, tcell, Subarrays[nn]->nModulesPerString, shadedb_str_vmp_stc, shadedb_mppt_lo, shadedb_mppt_hi))
 					{
 						throw exec_error("pvsamv1", util::format("Error calculating shading factor for subarray %d", nn));
 					}
@@ -2061,7 +2062,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 			if (!wdprov->read(&Irradiance->weatherRecord))
 				throw exec_error("pvsamv1", "could not read data line " + util::to_string((int)(inrec + 1)) + " in weather file");
 
-			size_t hour = Irradiance->weatherRecord.hour; //this is the current timestamp hour from 0-24 from the weather file
+			//size_t hour = Irradiance->weatherRecord.hour; //this is the current timestamp hour from 0-24 from the weather file
 			size_t hour_of_year = util::hour_of_year(Irradiance->weatherRecord.month, Irradiance->weatherRecord.day, Irradiance->weatherRecord.hour); //this is the index of the hour in the year (0-8759) given the weather file date & timestamp	
 
 			// report progress updates to the caller
@@ -2223,7 +2224,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 			if (!wdprov->read(&Irradiance->weatherRecord))
 				throw exec_error("pvsamv1", "could not read data line " + util::to_string((int)(inrec + 1)) + " in weather file");
 
-			size_t hour = Irradiance->weatherRecord.hour; //this is the current timestamp hour from 0-24 from the weather file
+//			size_t hour = Irradiance->weatherRecord.hour; //this is the current timestamp hour from 0-24 from the weather file
 			size_t hour_of_year = util::hour_of_year(Irradiance->weatherRecord.month, Irradiance->weatherRecord.day, Irradiance->weatherRecord.hour); //this is the index of the hour in the year (0-8759) given the weather file date & timestamp
 
 			// report progress updates to the caller

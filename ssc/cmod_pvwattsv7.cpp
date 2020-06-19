@@ -395,7 +395,7 @@ public:
 		bool enable_wind_stow = as_boolean("enable_wind_stow");
 		double wstow = std::numeric_limits<double>::quiet_NaN();
 		if (is_assigned("stow_wspd")) wstow = as_double("stow_wspd"); // wind stow speed, m/s.
-		double wind_stow_angle_deg; // default is to assume stowing at 30 degrees (set in var_table) for better dynamic torsional stability, despite higher static loading on piles
+		double wind_stow_angle_deg=30; // default is to assume stowing at 30 degrees (set in var_table) for better dynamic torsional stability, despite higher static loading on piles
 		if (is_assigned("wind_stow_angle")) wind_stow_angle_deg = as_double("wind_stow_angle");
 		// gust factor defined later because it depends on timestep
 
@@ -711,7 +711,7 @@ public:
 #define NSTATUS_UPDATES 50  // set this to the number of times a progress update should be issued for the simulation
 				if (hour % (8760 / NSTATUS_UPDATES) == 0)
 				{
-					float percent = 100.0f * ((float)idx_life + 1) / ((float)nlifetime ); //3 is the number of technologies we're assuming for this output (pvwatts + fuel cell + battery)
+					percent = 100.0f * ((float)idx_life + 1) / ((float)nlifetime ); //3 is the number of technologies we're assuming for this output (pvwatts + fuel cell + battery)
 					// check percentage
 					if (percent > 100.0f) percent = 99.0f;
 					if (!update("", percent, (float)hour))
@@ -822,7 +822,8 @@ public:
 					p_aoi[idx] = (ssc_number_t)aoi;
 
 					double shad_beam = 1.0;
-					if (shad.fbeam(solalt, solazi, wf.month, wf.day, wf.hour, wf.minute))
+//					if (shad.fbeam(solalt, solazi, wf.month, wf.day, wf.hour, wf.minute))
+					if (shad.fbeam(hour, solalt, solazi, jj, step_per_hour))
 						shad_beam = shad.beam_shade_factor();
 
 					p_shad_beam[idx] = (ssc_number_t)shad_beam;

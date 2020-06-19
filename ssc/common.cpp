@@ -784,8 +784,8 @@ adjustment_factors::adjustment_factors( compute_module *cm, const std::string &p
 //adjustment factors changed from derates to percentages jmf 1/9/15
 bool adjustment_factors::setup(int nsteps) //nsteps is set to 8760 in this declaration function in common.h
 {
-	float f = (float)m_cm->as_number( m_prefix + ":constant" );
-	f = 1 - f / 100; //convert from percentage to factor
+	ssc_number_t f = m_cm->as_number( m_prefix + ":constant" );
+	f = 1.0 - f / 100.0; //convert from percentage to factor
 	m_factors.resize( nsteps, f );
 
 	if ( m_cm->is_assigned(m_prefix + ":hourly") )
@@ -795,7 +795,7 @@ bool adjustment_factors::setup(int nsteps) //nsteps is set to 8760 in this decla
 		if ( p != 0 && n == (size_t)nsteps )
 		{
 			for( int i=0;i<nsteps;i++ )
-				m_factors[i] *= (1 - p[i]/100); //convert from percentages to factors
+				m_factors[i] *= (1.0 - p[i]/100.0); //convert from percentages to factors
 		}
 	}
 
@@ -809,7 +809,7 @@ bool adjustment_factors::setup(int nsteps) //nsteps is set to 8760 in this decla
 			{
 				int start = (int) mat[ nc*r ];
 				int end = (int) mat[ nc*r + 1 ];
-				float factor = (float) mat[ nc*r + 2 ];
+				ssc_number_t factor =  mat[ nc*r + 2 ];
 				
 				if ( start < 0 || start >= nsteps || end < start )
 				{
@@ -820,7 +820,7 @@ bool adjustment_factors::setup(int nsteps) //nsteps is set to 8760 in this decla
 				if ( end >= nsteps ) end = nsteps-1;
 
 				for( int i=start;i<=end;i++ )
-					m_factors[i] *= (1 - factor/100); //convert from percentages to factors
+					m_factors[i] *= (1.0 - factor/100.0); //convert from percentages to factors
 			}
 		}
 	}
@@ -828,7 +828,7 @@ bool adjustment_factors::setup(int nsteps) //nsteps is set to 8760 in this decla
 	return m_error.length() == 0;
 }
 
-float adjustment_factors::operator()( size_t time )
+ssc_number_t adjustment_factors::operator()( size_t time )
 {
 	if ( time < m_factors.size() ) return m_factors[time];
 	else return 0.0;
@@ -841,8 +841,8 @@ sf_adjustment_factors::sf_adjustment_factors(compute_module *cm)
 
 bool sf_adjustment_factors::setup(int nsteps)
 {
-	float f = (float)m_cm->as_number("sf_adjust:constant");
-	f = 1 - f / 100; //convert from percentage to factor
+	ssc_number_t f = m_cm->as_number("sf_adjust:constant");
+	f = 1.0 - f / 100.0; //convert from percentage to factor
 	m_factors.resize(nsteps, f);
 
 	if (m_cm->is_assigned("sf_adjust:hourly"))
@@ -852,7 +852,7 @@ bool sf_adjustment_factors::setup(int nsteps)
 		if (p != 0 && n == (size_t)nsteps)
 		{
 			for (int i = 0; i < nsteps; i++)
-				m_factors[i] *= (1 - p[i] / 100); //convert from percentages to factors
+				m_factors[i] *= (1.0 - p[i] / 100.0); //convert from percentages to factors
 		}
 		if (n!=(size_t)nsteps)
 			m_error = util::format("array length (%d) must match number of yearly simulation time steps (%d).", n, nsteps);
@@ -887,7 +887,7 @@ bool sf_adjustment_factors::setup(int nsteps)
 	return m_error.length() == 0;
 }
 
-float sf_adjustment_factors::operator()(size_t time)
+ssc_number_t sf_adjustment_factors::operator()(size_t time)
 {
 	if (time < m_factors.size()) return m_factors[time];
 	else return 0.0;
@@ -1090,13 +1090,13 @@ size_t shading_factor_calculator::get_row_index_for_input(size_t hour, size_t ho
 	ndx += (size_t)hr_step;
 	return ndx;
 }
-
+/* month from weather file is 1-12 and day starts at 1 (usually) - seems less reliable than using indices from weather file 
 size_t shading_factor_calculator::get_row_index_for_input(size_t month, size_t day, size_t hour, size_t minute)
 {
 	// assume weather file timestamp m,d,h,m
 	// translate to fbeam user input with 8760 * m_steps_per_hour
-	int day_of_year = (int)day;
-	for (int i = 0; i < (int)month && i < 12; i++)
+	int day_of_year = (int)day - 1;
+	for (int i = 0; i < (int)month - 1 && i < 12; i++)
 		day_of_year += util::days_in_month(i);
 	if (day_of_year < 0) day_of_year = 0;
 	if (day_of_year > 364) day_of_year = 364; // leap year has 366 days, we consider only 365 days for 8760 hours total
@@ -1110,7 +1110,7 @@ size_t shading_factor_calculator::get_row_index_for_input(size_t month, size_t d
 	ndx += (size_t)hr_step;
 	return ndx;
 }
-
+*/
 
 bool shading_factor_calculator::fbeam(size_t hour, double solalt, double solazi, size_t hour_step, size_t steps_per_hour)
 {
@@ -1134,7 +1134,7 @@ bool shading_factor_calculator::fbeam(size_t hour, double solalt, double solazi,
 	return ok;
 }
 
-
+/*
 bool shading_factor_calculator::fbeam(double solalt, double solazi, size_t month, size_t day, size_t hour, size_t minute)
 {
 	bool ok = false;
@@ -1158,7 +1158,8 @@ bool shading_factor_calculator::fbeam(double solalt, double solazi, size_t month
 	}
 	return ok;
 }
-/*
+*/
+
 bool shading_factor_calculator::fbeam_shade_db(ShadeDB8_mpp * p_shadedb, size_t hour, double solalt, double solazi, size_t hour_step, size_t steps_per_hour, double gpoa, double dpoa, double pv_cell_temp, int mods_per_str, double str_vmp_stc, double mppt_lo, double mppt_hi)
 {
 	bool ok = false;
@@ -1185,8 +1186,8 @@ bool shading_factor_calculator::fbeam_shade_db(ShadeDB8_mpp * p_shadedb, size_t 
 	}
 	return ok;
 }
-*/
 
+/*
 bool shading_factor_calculator::fbeam_shade_db(ShadeDB8_mpp* p_shadedb, double solalt, double solazi, size_t month, size_t day, size_t hour, size_t minute, double gpoa, double dpoa, double pv_cell_temp, int mods_per_str, double str_vmp_stc, double mppt_lo, double mppt_hi)
 {
 	bool ok = false;
@@ -1213,7 +1214,7 @@ bool shading_factor_calculator::fbeam_shade_db(ShadeDB8_mpp* p_shadedb, double s
 	}
 	return ok;
 }
-
+*/
 double shading_factor_calculator::fdiff()
 {
 	return m_diffFactor;
