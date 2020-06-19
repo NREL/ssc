@@ -1446,6 +1446,8 @@ weatherdata::weatherdata( var_data *data_table )
 	{
 		m_continuousYear = false;
 	}
+
+    start_hours_at_0();
 }
 
 weatherdata::~weatherdata()
@@ -1518,6 +1520,18 @@ ssc_number_t weatherdata::get_number( var_data *v, const char *name )
 	}
 
 	return std::numeric_limits<ssc_number_t>::quiet_NaN();
+}
+
+void weatherdata::start_hours_at_0() {
+    std::vector<int> hours;
+    for (weather_record *i : m_data)
+        hours.push_back(i->hour);
+    double max_hr = *std::max_element(hours.begin(), hours.end());
+    double min_hr = *std::min_element(hours.begin(), hours.end());
+    if (max_hr - min_hr != 23)
+        m_message = "Weather data range was not (0-23) or (1-24)";
+    else if (max_hr == 24)
+        for (weather_record *i : m_data) i->hour -= 1;
 }
 
 void weatherdata::set_counter_to(size_t cur_index){

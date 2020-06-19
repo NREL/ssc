@@ -155,15 +155,15 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelCustomWeatherFile
 	{
 		ssc_number_t annual_energy;
 		ssc_data_get_number(data, "annual_energy", &annual_energy);
-		EXPECT_NEAR(annual_energy, 7591, m_error_tolerance_hi) << "Annual energy.";
+		EXPECT_NEAR(annual_energy, 8049, m_error_tolerance_hi) << "Annual energy.";
 
 		ssc_number_t capacity_factor;
 		ssc_data_get_number(data, "capacity_factor", &capacity_factor);
-		EXPECT_NEAR(capacity_factor, 18.5, m_error_tolerance_lo) << "Capacity factor";
+		EXPECT_NEAR(capacity_factor, 19.5, m_error_tolerance_lo) << "Capacity factor";
 
 		ssc_number_t kwh_per_kw;
 		ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
-		EXPECT_NEAR(kwh_per_kw, 1617, m_error_tolerance_hi) << "Energy yield";
+		EXPECT_NEAR(kwh_per_kw, 1715, m_error_tolerance_hi) << "Energy yield";
 
 		ssc_number_t performance_ratio;
 		ssc_data_get_number(data, "performance_ratio", &performance_ratio);

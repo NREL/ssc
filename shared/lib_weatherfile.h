@@ -24,7 +24,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define __lib_weatherfile_h
 
 #include <string>
-#include <vector>  // needed to compile in typelib_vc2012
+#include <vector>
+#include <algorithm>
 #include <cmath>
 
 
@@ -217,6 +218,8 @@ private:
 		std::vector<float> data;
 	};
 	column m_columns[_MAXCOL_];
+
+    void start_hours_at_0();
 
 public:
 	weatherfile();

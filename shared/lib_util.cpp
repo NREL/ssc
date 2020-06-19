@@ -905,7 +905,6 @@ size_t util::hour_of_year(size_t month, size_t day, size_t hour)
 		h += days_in_months[m] * 24;
 	h += (day - 1) * 24;
 	h += hour;
-	if (h > 8759) h = 8759;
 	return h;
 }
 
