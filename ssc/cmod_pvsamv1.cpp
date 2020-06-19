@@ -1169,7 +1169,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 
 					Subarrays[nn]->poa.poaAll->tDew = wf.tdew;
 					Subarrays[nn]->poa.poaAll->i = idx;
-					if (idx == 0) {
+					if (wf.hour == 0 && (idx % step_per_hour == 0)) {
 						Subarrays[nn]->poa.poaAll->dayStart = idx;
 						Subarrays[nn]->poa.poaAll->doy += 1;
 					}
