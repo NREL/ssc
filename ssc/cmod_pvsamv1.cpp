@@ -1008,7 +1008,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 	// hourly adjustment factors
 	adjustment_factors haf(this, "adjust");
 	if (!haf.setup())
-		throw exec_error("pvsamv1", "failed to setup adjustment factors: " + haf.error());
+		throw exec_error("pvsamv1", "failed to setup AC adjustment factors: " + haf.error());
 
     // clipping losses for battery dispatch
 	std::vector<ssc_number_t> p_invcliploss_full;
