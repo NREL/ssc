@@ -696,21 +696,24 @@ void rate_data::init_dc_peak_vectors(int month)
 }
 
 void rate_data::find_dc_tou_peak(int month, double power, int step) {
-	ur_month& curr_month = m_month[month];
-	int todp = m_dc_tou_sched[step];
-	std::vector<int>::iterator per_num = std::find(curr_month.dc_periods.begin(), curr_month.dc_periods.end(), todp);
-	if (per_num == curr_month.dc_periods.end())
-	{
-		std::ostringstream ss;
-		ss << "Demand charge Period " << todp << " not found for Month " << month << ".";
-		throw exec_error("lib_utility_rate_equations", ss.str());
-	}
-	int row = (int)(per_num - curr_month.dc_periods.begin());
-	if (power < 0 && power < -curr_month.dc_tou_peak[row])
-	{
-		curr_month.dc_tou_peak[row] = -power;
-		curr_month.dc_tou_peak_hour[row] = step;
-	}
+    ur_month& curr_month = m_month[month];
+    if (curr_month.dc_periods.size() > 0)
+    {
+        int todp = m_dc_tou_sched[step];
+        std::vector<int>::iterator per_num = std::find(curr_month.dc_periods.begin(), curr_month.dc_periods.end(), todp);
+        if (per_num == curr_month.dc_periods.end())
+        {
+            std::ostringstream ss;
+            ss << "Demand charge Period " << todp << " not found for Month " << month << ".";
+            throw exec_error("lib_utility_rate_equations", ss.str());
+        }
+        int row = (int)(per_num - curr_month.dc_periods.begin());
+        if (power < 0 && power < -curr_month.dc_tou_peak[row])
+        {
+            curr_month.dc_tou_peak[row] = -power;
+            curr_month.dc_tou_peak_hour[row] = step;
+        }
+    }
 }
 
 ssc_number_t rate_data::get_demand_charge(int month, int year)
@@ -761,7 +764,7 @@ ssc_number_t rate_data::get_demand_charge(int month, int year)
 			demand = curr_month.dc_flat_peak;
 			if (curr_month.dc_flat_peak_hour != curr_month.dc_tou_peak_hour[period]) continue; // only one peak per month.
 		}
-		else
+		else if (period < curr_month.dc_periods.size())
 			demand = curr_month.dc_tou_peak[period];
 		// find tier corresponding to peak demand
 		found = false;
@@ -774,7 +777,7 @@ ssc_number_t rate_data::get_demand_charge(int month, int year)
 					curr_month.dc_tou_ch.at(period, tier) * rate_esc;
 				curr_month.dc_tou_charge.push_back(charge);
 			}
-			else
+			else if (period < curr_month.dc_periods.size())
 			{
 				charge += (curr_month.dc_tou_ub.at(period, tier) - d_lower) * curr_month.dc_tou_ch.at(period, tier) * rate_esc;
 				d_lower = curr_month.dc_tou_ub.at(period, tier);

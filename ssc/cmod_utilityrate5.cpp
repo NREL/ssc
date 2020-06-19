@@ -454,6 +454,8 @@ void rate_setup::setup(var_table* vt, int num_recs_yearly, int nyears, rate_data
     rate.nm_credits_w_rollover = (vt->as_integer("ur_metering_option") == 0);
     rate.net_metering_credit_month = (int)vt->as_number("ur_nm_credit_month");
     rate.nm_credit_sell_rate = vt->as_number("ur_nm_yearend_sell_rate");
+
+    rate.init_energy_rates(false); // TODO: update if rate forecast needs to support two meter
 };
 
 class cm_utilityrate5 : public compute_module

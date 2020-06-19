@@ -147,7 +147,7 @@ var_info vtab_battery_inputs[] = {
         { SSC_INPUT,        SSC_ARRAY,      "batt_target_power_monthly",                   "Grid target power on monthly basis",                     "kW",       "",                     "BatteryDispatch",       "en_batt=1&batt_meter_position=0&batt_dispatch_choice=2",                        "",                             "" },
         { SSC_INPUT,        SSC_NUMBER,     "batt_target_choice",                          "Target power input option",                              "0/1",      "0=InputMonthlyTarget,1=InputFullTimeSeries", "BatteryDispatch", "en_batt=1&batt_meter_position=0&batt_dispatch_choice=2",                        "",                             "" },
         { SSC_INPUT,        SSC_ARRAY,      "batt_custom_dispatch",                        "Custom battery power for every time step",               "kW",       "kWAC if AC-connected, else kWDC", "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=3","",                         "" },
-        { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_choice",                        "Battery dispatch algorithm",                             "0/1/2/3/4", "If behind the meter: 0=PeakShavingLookAhead,1=PeakShavingLookBehind,2=InputGridTarget,3=InputBatteryPower,4=ManualDispatch, if front of meter: 0=AutomatedLookAhead,1=AutomatedLookBehind,2=AutomatedInputForecast,3=InputBatteryPower,4=ManualDispatch",                    "BatteryDispatch",       "en_batt=1",                        "",                             "" },
+        { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_choice",                        "Battery dispatch algorithm",                             "0/1/2/3/4/5", "If behind the meter: 0=PeakShavingLookAhead,1=PeakShavingLookBehind,2=InputGridTarget,3=InputBatteryPower,4=ManualDispatch,5=PriceSignalForecast if front of meter: 0=AutomatedLookAhead,1=AutomatedLookBehind,2=AutomatedInputForecast,3=InputBatteryPower,4=ManualDispatch",                    "BatteryDispatch",       "en_batt=1",                        "",                             "" },
         { SSC_INPUT,        SSC_ARRAY,      "batt_pv_clipping_forecast",                   "Power clipping forecast",                                   "kW",       "",                     "BatteryDispatch",       "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2",  "",          "" },
         { SSC_INPUT,        SSC_ARRAY,      "batt_pv_dc_forecast",                         "DC power forecast",                                   "kW",       "",                     "BatteryDispatch",       "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2",  "",          "" },
         { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_auto_can_fuelcellcharge",       "Charging from fuel cell allowed for automated dispatch?",          "kW",       "",                     "BatteryDispatch",       "",                           "",                             "" },
@@ -488,6 +488,9 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                 // Automated behind-the-meter
             else
             {
+                // For automated behind the meter with electricity rates
+                batt_vars->ec_rate_defined = true; // BTM will always have a rate, right?
+
                 if (batt_vars->batt_dispatch == dispatch_t::MAINTAIN_TARGET)
                 {
                     batt_vars->batt_target_choice = vt.as_integer("batt_target_choice");

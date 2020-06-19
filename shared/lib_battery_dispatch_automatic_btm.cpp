@@ -179,7 +179,7 @@ void dispatch_automatic_behind_the_meter_t::setup_rate_forecast()
             }
         }
 
-        rate_forecast = std::shared_ptr<UtilityRateForecast>(new UtilityRateForecast(rate.get(), _steps_per_hour, monthly_load, monthly_gen, monthly_peaks));
+        rate_forecast = std::shared_ptr<UtilityRateForecast>(new UtilityRateForecast(rate.get(), _steps_per_hour, monthly_load, monthly_gen, monthly_peaks, _nyears));
         rate_forecast->initializeMonth(0, 0);
         rate_forecast->copyTOUForecast();
     }
@@ -384,7 +384,7 @@ double dispatch_automatic_behind_the_meter_t::compute_costs(FILE* p, bool debug,
             double power = _P_load_dc[idx] - _P_pv_dc[idx];
             // One at a time so we can sort grid points by no-dispatch cost
             std::vector<double> forecast_power = { -power }; // Correct sign convention for cost forecast
-            double step_cost = noDispatchForecast->forecastCost(forecast_power, year, hour_of_year + hour, step);
+            double step_cost = noDispatchForecast->forecastCost(forecast_power, year, (hour_of_year + hour) % 8760, step);
             no_dispatch_cost += step_cost;
 
             grid[count] = grid_point(power, hour, step, step_cost);
@@ -661,7 +661,7 @@ void dispatch_automatic_behind_the_meter_t::cost_based_target_power(FILE* p, boo
 
         double projectedGrid = -grid[i].Grid() + plannedDispatch[i];
         // Remove clip loss charging from projected grid use
-        if (_P_cliploss_dc.size() > 0 && plannedDispatch[i] <= 0)
+        if (i + idx < _P_cliploss_dc.size() && plannedDispatch[i] <= 0)
         {
             double clipLoss = -_P_cliploss_dc[i + idx];
             if (plannedDispatch[i] <= clipLoss)

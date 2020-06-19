@@ -25,7 +25,7 @@ TEST(lib_utility_rate_test, test_copy)
 	std::vector<double> monthly_load_forecast;
 	std::vector<double> monthly_gen_forecast;
 	std::vector<double> monthly_peak_forecast;
-	UtilityRateForecast rate_forecast_1(&data, steps_per_hour, monthly_load_forecast, monthly_gen_forecast, monthly_peak_forecast);
+	UtilityRateForecast rate_forecast_1(&data, steps_per_hour, monthly_load_forecast, monthly_gen_forecast, monthly_peak_forecast, 2);
 
 
 
@@ -68,7 +68,7 @@ TEST(lib_utility_rate_test, test_tiered_tou_cost_estimates)
 	std::vector<double> monthly_peak_forecast;
 	monthly_peak_forecast.push_back(7);
 
-	UtilityRateForecast rate_forecast(&data, steps_per_hour, monthly_load_forecast, monthly_gen_forecast, monthly_peak_forecast);
+	UtilityRateForecast rate_forecast(&data, steps_per_hour, monthly_load_forecast, monthly_gen_forecast, monthly_peak_forecast, 2);
 
 	rate_forecast.compute_next_composite_tou(0, 0);
 
@@ -113,7 +113,7 @@ TEST(lib_utility_rate_test, test_tiered_sell_rates)
 	std::vector<double> monthly_peak_forecast;
 	monthly_peak_forecast.push_back(7);
 
-	UtilityRateForecast rate_forecast(&data, steps_per_hour, monthly_load_forecast, monthly_gen_forecast, monthly_peak_forecast);
+	UtilityRateForecast rate_forecast(&data, steps_per_hour, monthly_load_forecast, monthly_gen_forecast, monthly_peak_forecast, 2);
 
 	rate_forecast.compute_next_composite_tou(0, 0);
 
@@ -138,7 +138,7 @@ TEST(lib_utility_rate_test, test_demand_charges_crossing_months)
 	std::vector<double> monthly_gen_forecast = { 0, 0 };
 	std::vector<double> monthly_peak_forecast = { 100, 50 };
 
-	UtilityRateForecast rate_forecast(&data, steps_per_hour, monthly_load_forecast, monthly_gen_forecast, monthly_peak_forecast);
+	UtilityRateForecast rate_forecast(&data, steps_per_hour, monthly_load_forecast, monthly_gen_forecast, monthly_peak_forecast, 2);
 
 	// - is load
 	std::vector<double> forecast = {-100, -50, -50, -25};
@@ -162,7 +162,7 @@ TEST(lib_utility_rate_test, test_changing_rates_crossing_months)
 	std::vector<double> monthly_gen_forecast = { 0, 0, 0, 0, 0 };
 	std::vector<double> monthly_peak_forecast = { 0, 0, 0, 100, 50 };
 
-	UtilityRateForecast rate_forecast(&data, steps_per_hour, monthly_load_forecast, monthly_gen_forecast, monthly_peak_forecast);
+	UtilityRateForecast rate_forecast(&data, steps_per_hour, monthly_load_forecast, monthly_gen_forecast, monthly_peak_forecast, 2);
 
 	// - is load
 	std::vector<double> forecast = { -100, -50, -50, -25 };
@@ -186,7 +186,7 @@ TEST(lib_utility_rate_test, test_demand_charges_crossing_year)
 	std::vector<double> monthly_gen_forecast = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 	std::vector<double> monthly_peak_forecast = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100, 50 };
 
-	UtilityRateForecast rate_forecast(&data, steps_per_hour, monthly_load_forecast, monthly_gen_forecast, monthly_peak_forecast);
+	UtilityRateForecast rate_forecast(&data, steps_per_hour, monthly_load_forecast, monthly_gen_forecast, monthly_peak_forecast, 2);
 
 	// - is load
 	std::vector<double> forecast = { -100, -50, -50, -25 };
@@ -247,7 +247,7 @@ TEST(lib_utility_rate_test, test_sell_rates)
     std::vector<double> monthly_gen_forecast = { 0, 100 };
     std::vector<double> monthly_peak_forecast = { 100, 50 };
 
-    UtilityRateForecast rate_forecast(&data, steps_per_hour, monthly_load_forecast, monthly_gen_forecast, monthly_peak_forecast);
+    UtilityRateForecast rate_forecast(&data, steps_per_hour, monthly_load_forecast, monthly_gen_forecast, monthly_peak_forecast, 2);
 
     // - is load
     std::vector<double> forecast = { -100, -50, -50, -25, 25, 50, 25 };
@@ -271,7 +271,7 @@ TEST(lib_utility_rate_test, test_net_metering_one_tou_period)
     std::vector<double> monthly_gen_forecast = { 0, 0 };
     std::vector<double> monthly_peak_forecast = { 100, 50 };
 
-    UtilityRateForecast rate_forecast(&data, steps_per_hour, monthly_load_forecast, monthly_gen_forecast, monthly_peak_forecast);
+    UtilityRateForecast rate_forecast(&data, steps_per_hour, monthly_load_forecast, monthly_gen_forecast, monthly_peak_forecast, 2);
 
     // - is load
     std::vector<double> forecast = { -100, -50, 50, 100 }; // Net zero load
@@ -301,7 +301,7 @@ TEST(lib_utility_rate_test, test_net_metering_multiple_tou_periods)
     std::vector<double> monthly_gen_forecast = { 0, 0 }; // Test unexpected generation as well
     std::vector<double> monthly_peak_forecast = { 100, 50 };
 
-    UtilityRateForecast rate_forecast(&data, steps_per_hour, monthly_load_forecast, monthly_gen_forecast, monthly_peak_forecast);
+    UtilityRateForecast rate_forecast(&data, steps_per_hour, monthly_load_forecast, monthly_gen_forecast, monthly_peak_forecast, 2);
 
     // - is load
     std::vector<double> forecast = { -100, -50, 50, 100 }; // Net zero load
@@ -331,7 +331,7 @@ TEST(lib_utility_rate_test, test_net_metering_end_of_month_carryover)
     std::vector<double> monthly_gen_forecast = { 150, 0 };
     std::vector<double> monthly_peak_forecast = { 0, 100 };
 
-    UtilityRateForecast rate_forecast(&data, steps_per_hour, monthly_load_forecast, monthly_gen_forecast, monthly_peak_forecast);
+    UtilityRateForecast rate_forecast(&data, steps_per_hour, monthly_load_forecast, monthly_gen_forecast, monthly_peak_forecast, 2);
 
     // - is load
     std::vector<double> forecast = { 100, 50, -50, -100 }; // Net zero load
@@ -355,7 +355,7 @@ TEST(lib_utility_rate_test, test_net_metering_end_of_month_cashout)
     std::vector<double> monthly_gen_forecast = { 150, 0 };
     std::vector<double> monthly_peak_forecast = { 0, 100 };
 
-    UtilityRateForecast rate_forecast(&data, steps_per_hour, monthly_load_forecast, monthly_gen_forecast, monthly_peak_forecast);
+    UtilityRateForecast rate_forecast(&data, steps_per_hour, monthly_load_forecast, monthly_gen_forecast, monthly_peak_forecast, 2);
 
     // - is load
     std::vector<double> forecast = { 100, 50, -50, -100 }; // Net zero load
@@ -378,7 +378,7 @@ TEST(lib_utility_rate_test, test_net_metering_end_of_month_charges)
     std::vector<double> monthly_gen_forecast = { 0, 150 };
     std::vector<double> monthly_peak_forecast = { 100, 0 };
 
-    UtilityRateForecast rate_forecast(&data, steps_per_hour, monthly_load_forecast, monthly_gen_forecast, monthly_peak_forecast);
+    UtilityRateForecast rate_forecast(&data, steps_per_hour, monthly_load_forecast, monthly_gen_forecast, monthly_peak_forecast, 2);
 
     // - is load
     std::vector<double> forecast = { -100, -50, 50, 100 }; // Net zero load, but charged at end of Jan
@@ -401,7 +401,7 @@ TEST(lib_utility_rate_test, test_net_metering_charges_crossing_year)
     std::vector<double> monthly_gen_forecast = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 75, 0 };
     std::vector<double> monthly_peak_forecast = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 50, 50 };
 
-    UtilityRateForecast rate_forecast(&data, steps_per_hour, monthly_load_forecast, monthly_gen_forecast, monthly_peak_forecast);
+    UtilityRateForecast rate_forecast(&data, steps_per_hour, monthly_load_forecast, monthly_gen_forecast, monthly_peak_forecast, 2);
 
     // - is load
     std::vector<double> forecast = { -25, 25, 50, -25, -25 }; // Cash out credits at end of year, get charged for Jan at escalated rate (inflation)
@@ -425,7 +425,7 @@ TEST(lib_utility_rate_test, test_net_metering_charges_crossing_year_other_cash_o
     std::vector<double> monthly_gen_forecast = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 75, 0 };
     std::vector<double> monthly_peak_forecast = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 50, 50 };
 
-    UtilityRateForecast rate_forecast(&data, steps_per_hour, monthly_load_forecast, monthly_gen_forecast, monthly_peak_forecast);
+    UtilityRateForecast rate_forecast(&data, steps_per_hour, monthly_load_forecast, monthly_gen_forecast, monthly_peak_forecast, 2);
 
     // - is load
     std::vector<double> forecast = { -25, 25, 50, -25, -25 };
@@ -448,7 +448,7 @@ TEST(lib_utility_rate_test, test_multiple_forecast_calls)
     std::vector<double> monthly_gen_forecast = { 175, 0 };
     std::vector<double> monthly_peak_forecast = { 100, 50 };
 
-    UtilityRateForecast rate_forecast(&data, steps_per_hour, monthly_load_forecast, monthly_gen_forecast, monthly_peak_forecast);
+    UtilityRateForecast rate_forecast(&data, steps_per_hour, monthly_load_forecast, monthly_gen_forecast, monthly_peak_forecast, 2);
 
     // - is load
     std::vector<double> forecast = { 25, 25, 25, 25 };
@@ -478,7 +478,7 @@ TEST(lib_utility_rate_test, test_one_at_a_time_vs_full_vector)
     std::vector<double> monthly_gen_forecast = { 50, 175 };
     std::vector<double> monthly_peak_forecast = { 100, 50 };
 
-    UtilityRateForecast rate_forecast(&data, steps_per_hour, monthly_load_forecast, monthly_gen_forecast, monthly_peak_forecast);
+    UtilityRateForecast rate_forecast(&data, steps_per_hour, monthly_load_forecast, monthly_gen_forecast, monthly_peak_forecast, 2);
 
     // - is load
     std::vector<double> forecast = { 50, -100, -50, -50, -25, 25, 50, 100 };
@@ -501,4 +501,29 @@ TEST(lib_utility_rate_test, test_one_at_a_time_vs_full_vector)
     }
 
     ASSERT_NEAR(1508.11, cost, 0.02);
+}
+
+TEST(lib_utility_rate_test, test_end_of_analyis_period)
+{
+    rate_data data;
+    set_up_pge_residential_rate_data(data);
+    data.net_metering_credit_month = 4;
+    data.rate_scale = { 1 };
+
+    int steps_per_hour = 1;
+    std::vector<double> monthly_load_forecast = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 25 };
+    std::vector<double> monthly_gen_forecast = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 75 };
+    std::vector<double> monthly_peak_forecast = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 50 };
+
+    UtilityRateForecast rate_forecast(&data, steps_per_hour, monthly_load_forecast, monthly_gen_forecast, monthly_peak_forecast, 1);
+
+    // - is load
+    std::vector<double> forecast = { -25, -25, 50 };
+    rate_forecast.initializeMonth(11, 0);
+    rate_forecast.copyTOUForecast();
+
+    int hour_of_year = 8757; // 9 pm on Dec 31st
+    double cost = rate_forecast.forecastCost(forecast, 0, hour_of_year, 0);
+
+    ASSERT_NEAR(0, cost, 0.01);
 }

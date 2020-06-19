@@ -89,7 +89,7 @@ protected:
 class UtilityRateForecast
 {
 public:
-	UtilityRateForecast(rate_data* util_rate, size_t stepsPerHour, std::vector<double> monthly_load_forecast, std::vector<double> monthly_gen_forecast, std::vector<double> monthly_peak_forecast);
+	UtilityRateForecast(rate_data* util_rate, size_t stepsPerHour, std::vector<double> monthly_load_forecast, std::vector<double> monthly_gen_forecast, std::vector<double> monthly_peak_forecast, size_t analysis_period);
 
 	UtilityRateForecast(UtilityRateForecast& tmp);
 
@@ -121,6 +121,8 @@ protected:
 	float dt_hour;
 
 	size_t last_step;
+    int last_month_init;
+    size_t nyears;
 
 	std::vector<double> m_monthly_load_forecast; // Length is 12 * analysis period
 	std::vector<double> m_monthly_gen_forecast; // Length is 12 * analysis period
