@@ -328,7 +328,7 @@ TEST_F(DataSingleTimestepWeatherData, initAndReadTest_lib_weatherfile) {
 
 	weather_record r;
 	EXPECT_TRUE(wd.read(&r));
-	EXPECT_EQ(r.year, 2000) << "SingleTimestep Case: 1st row\n";
+	EXPECT_EQ(r.year, 0) << "SingleTimestep Case: 1st row\n";
 	EXPECT_EQ(r.month, 1) << "SingleTimestep Case: 1st row\n";
 	EXPECT_EQ(r.day, 1) << "SingleTimestep Case: 1st row\n";
 	EXPECT_EQ(r.hour, 1) << "SingleTimestep Case: 1st row\n";
