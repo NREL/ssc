@@ -1395,7 +1395,8 @@ void cm_pvsamv1::exec( ) throw (general_error)
 				}
 				else
 				{
-					if (!Subarrays[nn]->shadeCalculator.fbeam(solalt, solazi, wf.month, wf.day, wf.hour, wf.minute))
+					//if (!Subarrays[nn]->shadeCalculator.fbeam(solalt, solazi, wf.month, wf.day, wf.hour, wf.minute))
+					if (!Subarrays[nn]->shadeCalculator.fbeam(hour_of_year, solalt, solazi, idx % step_per_hour ,step_per_hour))
 					{
 						throw exec_error("pvsamv1", util::format("Error calculating shading factor for subarray %d", nn));
 					}

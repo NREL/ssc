@@ -1111,7 +1111,7 @@ size_t shading_factor_calculator::get_row_index_for_input(size_t month, size_t d
 	return ndx;
 }
 
-/*
+
 bool shading_factor_calculator::fbeam(size_t hour, double solalt, double solazi, size_t hour_step, size_t steps_per_hour)
 {
 	bool ok = false;
@@ -1133,7 +1133,7 @@ bool shading_factor_calculator::fbeam(size_t hour, double solalt, double solazi,
 	}
 	return ok;
 }
-*/
+
 
 bool shading_factor_calculator::fbeam(double solalt, double solazi, size_t month, size_t day, size_t hour, size_t minute)
 {
