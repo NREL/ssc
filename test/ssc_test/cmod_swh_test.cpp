@@ -27,4 +27,5 @@ TEST_F(CM_SWH, ResidentialDefaultUsingData_cmod_swh) {
     ssc_data_get_number(data, "annual_energy", &annual_energy);
     EXPECT_NEAR(annual_energy, 1229, 1);
 
+    free_weatherdata_array(weather_data);
 }
