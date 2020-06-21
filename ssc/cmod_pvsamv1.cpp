@@ -2169,9 +2169,9 @@ void cm_pvsamv1::exec( ) throw (general_error)
 
 				if (iyear == 0 || save_full_lifetime_variables == 1)
 				{
-					PVSystem->p_transformerNoLoadLoss[idx] = xfmr_nll;
-					PVSystem->p_transformerLoadLoss[idx] = xfmr_ll;
-					PVSystem->p_transformerLoss[idx] = xfmr_loss;
+					PVSystem->p_transformerNoLoadLoss[idx] = xfmr_nll/ts_hour;
+					PVSystem->p_transformerLoadLoss[idx] = xfmr_ll/ts_hour;
+					PVSystem->p_transformerLoss[idx] = xfmr_loss/ts_hour;
 				}
 
 				idx++;
