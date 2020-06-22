@@ -271,8 +271,6 @@ protected:
 
 	lossdiagram ld;
 
-    sssky_diffuse_table ssSkyDiffuseTable;
-
 public:
 	cm_pvwattsv7()
 	{
@@ -523,9 +521,9 @@ public:
 
 		pv.gcr = as_double("gcr");
 
-		if (FIXED_RACK == pv.type
-			|| ONE_AXIS == pv.type
-			|| ONE_AXIS_BACKTRACKING == pv.type)
+		bool en_self_shading = (pv.type == FIXED_RACK || pv.type == ONE_AXIS || pv.type == ONE_AXIS_BACKTRACKING);
+
+		if (en_self_shading)
 		{
 			if (pv.gcr < 0.01 || pv.gcr >= 1.0)
 				throw exec_error("pvwattsv7", "invalid gcr for fixed rack or one axis tracking system");
@@ -558,7 +556,6 @@ public:
 			//   If 2 module per Y, then nmodx=nrows/2.
 			pv.nmodx = pv.nrows / pv.nmody;
 			pv.row_spacing = module.length * pv.nmody / pv.gcr;
-			ssSkyDiffuseTable.init(pv.tilt, pv.gcr);
 		}
 
 		pvsnowmodel snowmodel;
@@ -586,6 +583,11 @@ public:
 		shading_factor_calculator shad;
 		if (!shad.setup(this, ""))
 			throw exec_error("pvwattsv7", shad.get_error());
+
+		// self-shading initialization
+        sssky_diffuse_table ssSkyDiffuseTable;
+        if (en_self_shading)
+            ssSkyDiffuseTable.init(pv.tilt, pv.gcr);
 
 		weather_header hdr;
 		wdprov->header(&hdr);
@@ -916,7 +918,7 @@ public:
 						double Fgnddiff = 1.0; //shading factor for ground-reflected diffuse, 1 for no shading
 
 
-						if ( pv.type == FIXED_RACK || pv.type == ONE_AXIS || pv.type == ONE_AXIS_BACKTRACKING) //shading applies in each of these three cases- see reference implementation in pvsamv1
+						if (en_self_shading) //shading applies in each of these three cases- see reference implementation in pvsamv1
 							//&& (pv.nrows >= 10) // note that enabling self-shading for small systems might be suspicious
 							// because the intent of the self-shading algorithms used here are to apply to large systems
 							// however, some testing of the self-shading algorithms for smaller systems doesn't reveal any wildly wrong behavior,
