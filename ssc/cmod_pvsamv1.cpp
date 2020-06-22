@@ -984,7 +984,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 		else
 			b = Subarrays[nn]->selfShadingInputs.nmody * Subarrays[nn]->selfShadingInputs.width;
 		Subarrays[nn]->selfShadingInputs.row_space = b / Subarrays[nn]->groundCoverageRatio;
-		Subarrays[nn]->selfShadingSkyDiff.init(Subarrays[nn]->tiltDegrees, Subarrays[nn]->groundCoverageRatio);
+		Subarrays[nn]->selfShadingSkyDiffTable.init(Subarrays[nn]->tiltDegrees, Subarrays[nn]->groundCoverageRatio);
 	}
 
 	double nameplate_kw = 0;
@@ -1457,7 +1457,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 
 						if (ss_exec(Subarrays[nn]->selfShadingInputs,
 						        stilt, sazi, solzen, solazi, beam_to_use, dhi_to_use, ibeam, iskydiff, ignddiff, alb, trackbool, linear, shad1xf,
-						        Subarrays[nn]->selfShadingSkyDiff,
+						        Subarrays[nn]->selfShadingSkyDiffTable,
 						        Subarrays[nn]->selfShadingOutputs))
 						{
 

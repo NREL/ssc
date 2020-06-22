@@ -278,17 +278,17 @@ void selfshade_xs_horstr(bool landscape,
 	}
 }
 
-double ssSkyDiff::lookup(double tilt) {
+double sssky_diffuse_table::lookup(double tilt) {
     char buf[124];
     sprintf(buf, "%.3f", tilt);
-    if (SkyDiffTable.find(buf) != SkyDiffTable.end())
-        return SkyDiffTable[buf];
+    if (derates_table.find(buf) != derates_table.end())
+        return derates_table[buf];
     return compute(tilt);
 }
 
-double ssSkyDiff::compute(double tilt) {
+double sssky_diffuse_table::compute(double tilt) {
     if (gcr == 0)
-        throw std::runtime_error("ssSkyDiff::compute error: gcr required in initialization");
+        throw std::runtime_error("sssky_diffuse_table::compute error: gcr required in initialization");
     // sky diffuse reduction
     double step = 1.0 / 1000.0;
     double skydiff = 0.0;
@@ -318,7 +318,7 @@ double ssSkyDiff::compute(double tilt) {
     }
     char buf[124];
     sprintf(buf, "%.3f", tilt);
-    SkyDiffTable[buf] = skydiff;
+    derates_table[buf] = skydiff;
     return skydiff;
 }
 
@@ -367,8 +367,8 @@ bool ss_exec(
 	bool linear,		// 0 for non-linear shading (C. Deline's full algorithm), 1 to stop at linear shading
 	double shade_frac_1x,	// geometric calculation of the fraction of one-axis row that is shaded (0-1), not used if fixed tilt
 
-	ssSkyDiff &skydiffs,
-	ssoutputs &outputs)
+	sssky_diffuse_table &skydiffs,
+        ssoutputs &outputs)
 {
 
 	// ***********************************

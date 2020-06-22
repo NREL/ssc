@@ -418,16 +418,16 @@ public:
 	double nameplateLossPercent;
 	double dcLossTotalPercent;			/// The DC loss due to mismatch, diodes, wiring, tracking, optimizers [%]
 
-	// Shading and snow
-	flag enableSelfShadingOutputs;		// Choose whether additional self-shading outputs are displayed
-	int shadeMode;						// The shading mode of the subarray [0 = none, 1 = standard (non-linear), 2 = thin film (linear)]
-	flag usePOAFromWeatherFile;			// Flag for whether or not a shading model has been selected that means POA can't be used directly for that subarray
-	ssinputs selfShadingInputs;			// Inputs and calculation methods for self-shading of the subarray
-	ssSkyDiff selfShadingSkyDiff;         // Intermediate variables for self-shading
-	ssoutputs selfShadingOutputs;		// Outputs for the self-shading of the subarray
-	shading_factor_calculator shadeCalculator; // The shading calculator model for self-shading
-	flag subarrayEnableSnow;            //a copy of the enableSnowModel flag has to exist in each subarray for setting up snow model inputs specific to each subarray
-	pvsnowmodel snowModel;				// A structure to store the geometry inputs for the snow model for this subarray- even though the snow model is system wide, its effect is subarray-dependent
+    // Shading and snow
+    flag enableSelfShadingOutputs;                    // Choose whether additional self-shading outputs are displayed
+    int shadeMode;                                    // The shading mode of the subarray [0 = none, 1 = standard (non-linear), 2 = thin film (linear)]
+    flag usePOAFromWeatherFile;                       // Flag for whether or not a shading model has been selected that means POA can't be used directly for that subarray
+    sssky_diffuse_table selfShadingSkyDiffTable;        // Calculates and stores in a lookup table the self-shading sky diffuse derates
+    ssinputs selfShadingInputs;                       // Inputs and calculation methods for self-shading of the subarray
+    ssoutputs selfShadingOutputs;                     // Outputs for the self-shading of the subarray
+    shading_factor_calculator shadeCalculator;        // The shading calculator model for self-shading
+    flag subarrayEnableSnow;                          //a copy of the enableSnowModel flag has to exist in each subarray for setting up snow model inputs specific to each subarray
+    pvsnowmodel snowModel;                            // A structure to store the geometry inputs for the snow model for this subarray- even though the snow model is system wide, its effect is subarray-dependent
 
 	/// Calculated plane-of-array (POA) irradiace for the subarray and related geometry
 	struct {

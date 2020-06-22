@@ -229,8 +229,8 @@ public:
 		if ( !shad.setup( this, "" ) )
 			throw exec_error( "pvwattsv1", shad.get_error() );
 
-		ssSkyDiff skydiff;
-		skydiff.init(tilt, gcr);
+		sssky_diffuse_table skydiff_table;
+		skydiff_table.init(tilt, gcr);
 
 		adjustment_factors haf( this, "adjust" );
 		if ( !haf.setup() )
@@ -328,13 +328,13 @@ public:
 
 						// calculate sky and gnd diffuse derate factors
 						// based on view factor reductions from self-shading
-						diffuse_reduce( solzen, stilt,
-							wf.dn, wf.df, iskydiff, ignddiff,
-							gcr, alb, 1000, skydiff.lookup(stilt),
+						diffuse_reduce(solzen, stilt,
+                                       wf.dn, wf.df, iskydiff, ignddiff,
+                                       gcr, alb, 1000, skydiff_table.lookup(stilt),
 
 							// outputs (pass by reference)
 							reduced_skydiff, Fskydiff,
-							reduced_gnddiff, Fgnddiff );
+                                       reduced_gnddiff, Fgnddiff );
 
 						if ( Fskydiff >= 0 && Fskydiff <= 1 ) iskydiff *= Fskydiff;
 						else log( util::format("sky diffuse reduction factor invalid at hour %d: fskydiff=%lg, stilt=%lg", i, Fskydiff, stilt), SSC_NOTICE, (float)i );

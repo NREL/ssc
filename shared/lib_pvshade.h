@@ -124,20 +124,23 @@ struct ssoutputs	// self-shading outputs
 	double m_shade_frac_fixed;
 };
 
-// look up table for calculating the diffuse reduction due to gcr and tilt of the panels
-class ssSkyDiff
+// look up table for calculating the diffuse reduction due to gcr and tilt of the panels for self-shading
+// added to removing duplicate computations for speed up (https://github.com/NREL/ssc/issues/384)
+class sssky_diffuse_table
 {
-    std::unordered_map<std::string, double> SkyDiffTable;
-    double gcr;
-
-public:
-    ssSkyDiff(): gcr(0) {}
-
-    void init(double tilt, double groundCoverageRatio) { gcr = groundCoverageRatio; compute(tilt); }
-
-    double lookup(double tilt);
+    std::unordered_map<std::string, double> derates_table;      // stores pairs of tilt and derates
+    double gcr;                                                 // 0.01 - 0.99
 
     double compute(double tilt);
+
+public:
+    sssky_diffuse_table(): gcr(0) {}
+
+    // initialize with the ground coverage ratio (fixed per PV simulation) and the starting tilt
+    void init(double tilt, double groundCoverageRatio) { gcr = groundCoverageRatio; compute(tilt); }
+
+    // return the sky diffuse derate for the panel at given tilt
+    double lookup(double tilt);
 };
 
 //performs shading calculation and returns outputs
@@ -157,7 +160,7 @@ bool ss_exec(
 	bool trackmode,		// 0 for fixed tilt, 1 for one-axis tracking
 	bool linear,		// 0 for non-linear shading (C. Deline's full algorithm), 1 to stop at linear shading
 	double shade_frac_1x,	// geometric calculation of the fraction of one-axis row that is shaded (0-1), not used if fixed tilt
-    ssSkyDiff &skydiffs,
-    ssoutputs &outputs);
+    sssky_diffuse_table &skydiffs,
+        ssoutputs &outputs);
 
 #endif
