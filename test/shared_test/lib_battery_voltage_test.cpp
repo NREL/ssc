@@ -494,7 +494,7 @@ TEST_F(voltage_vanadium_lib_battery_voltage_test, updateCapacityTest){
     I = -2;
     cap->updateCapacity(I, dt_hour); // qmx = 10, q0 = 5
     model->updateVoltage(cap->q0(), cap->qmax(), cap->I(), 293, dt_hour);
-    EXPECT_NEAR(model->cell_voltage(), 3.55, tol);
+    EXPECT_NEAR(model->cell_voltage(), 3.64, tol);
 
     I = 5;
     cap->updateCapacity(I, dt_hour); // qmx = 10, I = 4.5, q0 = 0.5
@@ -509,9 +509,9 @@ TEST_F(voltage_vanadium_lib_battery_voltage_test, calculateMaxChargeHourly){
     // start at half SOC
     double max_current;
     double power = model->calculate_max_charge_w(cap->q0(), cap->qmax(), 0, &max_current);
-    EXPECT_NEAR(power, -2424, 1);
+    EXPECT_NEAR(power, -2579, 1);
     double max_current_calc = model->calculate_current_for_target_w(power, cap->q0(), cap->qmax(), 293);
-    EXPECT_NEAR(max_current_calc, -4.67, 1e-2);
+    EXPECT_NEAR(max_current_calc, -4.70, 1e-2);
     // max current reduced to enforce SOC
     cap->updateCapacity(max_current, dt_hour);
     EXPECT_NEAR(cap->SOC(), 95, 1e-2);
@@ -519,7 +519,7 @@ TEST_F(voltage_vanadium_lib_battery_voltage_test, calculateMaxChargeHourly){
 
     // start at full SOC
     power = model->calculate_max_charge_w(cap->q0(), cap->qmax(), 0, &max_current);
-    EXPECT_NEAR(power, -249, 1);
+    EXPECT_NEAR(power, -251, 1);
     max_current_calc = model->calculate_current_for_target_w(power, cap->q0(), cap->qmax(), 293);
     EXPECT_NEAR(max_current_calc, -0.45, 1e-2);
     // max current reduced to enforce SOC
@@ -532,9 +532,9 @@ TEST_F(voltage_vanadium_lib_battery_voltage_test, calculateMaxChargeHourly){
     while (cap->SOC() > 5)
         cap->updateCapacity(I, dt_hour);
     power = model->calculate_max_charge_w(cap->q0(), cap->qmax(), 0, &max_current);
-    EXPECT_NEAR(power, -4475, 1);
+    EXPECT_NEAR(power, -5032, 1);
     max_current_calc = model->calculate_current_for_target_w(power, cap->q0(), cap->qmax(), 293);
-    EXPECT_NEAR(max_current_calc, -8.94, 1e-2);
+    EXPECT_NEAR(max_current_calc, -9.02, 1e-2);
     // max current reduced to enforce SOC
     cap->updateCapacity(max_current, dt_hour);
     EXPECT_NEAR(cap->SOC(), 95, 1e-2);
@@ -547,9 +547,9 @@ TEST_F(voltage_vanadium_lib_battery_voltage_test, calculateMaxChargeSubHourly){
     // start at half SOC
     double max_current;
     double power = model->calculate_max_charge_w(cap->q0(), cap->qmax(), 0, &max_current);
-    EXPECT_NEAR(power, -4695, 1);
+    EXPECT_NEAR(power, -5312, 1);
     double max_current_calc = model->calculate_current_for_target_w(power, cap->q0(), cap->qmax(), 293);
-    EXPECT_NEAR(max_current_calc, -9.316, 1e-3);
+    EXPECT_NEAR(max_current_calc, -9.426, 1e-3);
     // max current reduced to enforce SOC
     cap->updateCapacity(max_current, dt_hour);
     EXPECT_NEAR(cap->SOC(), 95, 1e-3);
@@ -557,9 +557,9 @@ TEST_F(voltage_vanadium_lib_battery_voltage_test, calculateMaxChargeSubHourly){
 
     // start at full SOC
     power = model->calculate_max_charge_w(cap->q0(), cap->qmax(), 0, &max_current);
-    EXPECT_NEAR(power, -497, 1);
+    EXPECT_NEAR(power, -503, 1);
     max_current_calc = model->calculate_current_for_target_w(power, cap->q0(), cap->qmax(), 293);
-    EXPECT_NEAR(max_current_calc, -0.905, 1e-3);
+    EXPECT_NEAR(max_current_calc, -0.907, 1e-3);
     // max current reduced to enforce SOC
     cap->updateCapacity(max_current, dt_hour);
     EXPECT_NEAR(cap->SOC(), 95, 1e-3);
@@ -570,9 +570,9 @@ TEST_F(voltage_vanadium_lib_battery_voltage_test, calculateMaxChargeSubHourly){
     while (cap->SOC() > 5)
         cap->updateCapacity(I, dt_hour);
     power = model->calculate_max_charge_w(cap->q0(), cap->qmax(), 0, &max_current);
-    EXPECT_NEAR(power, -8392, 1);
+    EXPECT_NEAR(power, -10622, 1);
     max_current_calc = model->calculate_current_for_target_w(power, cap->q0(), cap->qmax(), 293);
-    EXPECT_NEAR(max_current_calc, -17.78, 1e-2);
+    EXPECT_NEAR(max_current_calc, -18.12, 1e-2);
     // max current reduced to enforce SOC
     cap->updateCapacity(max_current, dt_hour);
     EXPECT_NEAR(cap->SOC(), 95, 1e-3);
