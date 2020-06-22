@@ -330,7 +330,7 @@ public:
 						// based on view factor reductions from self-shading
 						diffuse_reduce(solzen, stilt,
                                        wf.dn, wf.df, iskydiff, ignddiff,
-                                       gcr, alb, 1000, skydiff_table.lookup(stilt),
+                                       gcr, alb, 1000, skydiff_table,
 
 							// outputs (pass by reference)
 							reduced_skydiff, Fskydiff,

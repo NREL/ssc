@@ -30,6 +30,54 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //   Porting of sam_shading_type241.f90 to new orientation
 
+//  SUPPORTING STRUCTURES
+
+// static self-shading inputs- these do not change with timestep. dynamic inputs are inputs to the ss_exec function
+struct ssinputs
+{
+    int nstrx, nmodx, nmody, nrows;
+    double length, width;
+    int mod_orient, str_orient;
+    double row_space;
+    int ndiode;
+    double Vmp;
+    int mask_angle_calc_method;
+    double FF0;						// Fill Factor at STC = Pmp0 / Voc0 / Isc0;
+
+    //constructor for ssarrdat structure- set all values to zero
+    ssinputs() : nstrx(0), nmodx(0), nmody(0), nrows(0), length(0), width(0), mod_orient(0), str_orient(0), row_space(0), ndiode(0), Vmp(0), mask_angle_calc_method(0), FF0(0) {}
+};
+
+struct ssoutputs	// self-shading outputs
+{
+    double m_dc_derate;
+    double m_reduced_diffuse;
+    double m_reduced_reflected;
+    double m_diffuse_derate;
+    double m_reflected_derate;
+    double m_shade_frac_fixed;
+};
+
+// look up table for calculating the diffuse reduction due to gcr and tilt of the panels for self-shading
+// added to removing duplicate computations for speed up (https://github.com/NREL/ssc/issues/384)
+class sssky_diffuse_table
+{
+    std::unordered_map<std::string, double> derates_table;      // stores pairs of tilt and derates
+    double gcr;                                                 // 0.01 - 0.99
+
+    double compute(double tilt);
+
+public:
+    sssky_diffuse_table(): gcr(0) {}
+
+    // initialize with the ground coverage ratio (fixed per PV simulation) and the starting tilt
+    void init(double tilt, double groundCoverageRatio) { gcr = groundCoverageRatio; compute(tilt); }
+
+    // return the sky diffuse derate for the panel at given tilt
+    double lookup(double tilt);
+};
+
+
 //	SUPPORTING FUNCTIONS
 
 bool selfshade_simple(
@@ -58,21 +106,21 @@ bool selfshade_simple(
 void diffuse_reduce(
 	// inputs (angles in degrees)
 	double solzen,
-	double stilt,
-	double Gb_nor,
-	double Gdh,
-	double poa_sky,
-	double poa_gnd,
-	double gcr,
+    double stilt,
+    double Gb_nor,
+    double Gdh,
+    double poa_sky,
+    double poa_gnd,
+    double gcr,
 //	double phi0, // mask angle
 	double alb,
-	double nrows,
-	double skydiff0,
+    double nrows,
+    sssky_diffuse_table &skydiffderates,
 	// outputs
 	double &reduced_skydiff,
-	double &Fskydiff,  // derate factor on sky diffuse
+    double &Fskydiff,  // derate factor on sky diffuse
 	double &reduced_gnddiff,
-	double &Fgnddiff); // derate factor on ground diffuse
+    double &Fgnddiff); // derate factor on ground diffuse
 
 
 
@@ -96,52 +144,7 @@ void selfshade_xs_horstr( bool landscape, // modules oriented in landscape/portr
 						   // outputs
 						   double &X, double &S);
 
-//	SELF-SHADING INPUT AND OUTPUT STRUCTURES AND CALCULATION FUNCTION
-
-// static self-shading inputs- these do not change with timestep. dynamic inputs are inputs to the ss_exec function
-struct ssinputs
-{
-	int nstrx, nmodx, nmody, nrows;
-	double length, width;
-	int mod_orient, str_orient;
-	double row_space;
-	int ndiode;
-	double Vmp;
-	int mask_angle_calc_method;
-	double FF0;						// Fill Factor at STC = Pmp0 / Voc0 / Isc0;
-
-	//constructor for ssarrdat structure- set all values to zero
-	ssinputs() : nstrx(0), nmodx(0), nmody(0), nrows(0), length(0), width(0), mod_orient(0), str_orient(0), row_space(0), ndiode(0), Vmp(0), mask_angle_calc_method(0), FF0(0) {}
-};
-
-struct ssoutputs	// self-shading outputs
-{
-	double m_dc_derate;
-	double m_reduced_diffuse;
-	double m_reduced_reflected;
-	double m_diffuse_derate;
-	double m_reflected_derate;
-	double m_shade_frac_fixed;
-};
-
-// look up table for calculating the diffuse reduction due to gcr and tilt of the panels for self-shading
-// added to removing duplicate computations for speed up (https://github.com/NREL/ssc/issues/384)
-class sssky_diffuse_table
-{
-    std::unordered_map<std::string, double> derates_table;      // stores pairs of tilt and derates
-    double gcr;                                                 // 0.01 - 0.99
-
-    double compute(double tilt);
-
-public:
-    sssky_diffuse_table(): gcr(0) {}
-
-    // initialize with the ground coverage ratio (fixed per PV simulation) and the starting tilt
-    void init(double tilt, double groundCoverageRatio) { gcr = groundCoverageRatio; compute(tilt); }
-
-    // return the sky diffuse derate for the panel at given tilt
-    double lookup(double tilt);
-};
+//	SELF-SHADING CALCULATION FUNCTION
 
 // performs shading calculation and returns outputs
 bool ss_exec(

@@ -167,7 +167,7 @@ void diffuse_reduce(
 //	double phi0, // mask angle
 	double alb,
     double nrows,
-    double skydiff0,
+    sssky_diffuse_table &skydiffderates,
 	// outputs
 	double &reduced_skydiff,
     double &Fskydiff,  // derate factor on sky diffuse
@@ -189,8 +189,8 @@ void diffuse_reduce(
 	double R = B / gcr;
 
     // sky diffuse reduction
-    Fskydiff = skydiff0;
-    reduced_skydiff = skydiff0 * poa_sky;
+    Fskydiff = skydiffderates.lookup(stilt);
+    reduced_skydiff = Fskydiff * poa_sky;
 
 	double solalt = 90 - solzen;
 
@@ -494,7 +494,7 @@ bool ss_exec(
 	if (linear)
 	{
 		//determine reduction of diffuse incident on shaded sections due to self-shading (beam is not derated because that shading is taken into account in dc derate)
-		diffuse_reduce(solzen, tilt, Gb_nor, Gdh, poa_sky, poa_gnd, m_B / m_R, albedo, m_r, skydiffs.lookup(tilt),
+		diffuse_reduce(solzen, tilt, Gb_nor, Gdh, poa_sky, poa_gnd, m_B / m_R, albedo, m_r, skydiffs,
 			// outputs
 			outputs.m_reduced_diffuse, outputs.m_diffuse_derate, outputs.m_reduced_reflected, outputs.m_reflected_derate);
 
@@ -550,7 +550,7 @@ bool ss_exec(
 	//Chris Deline's self-shading algorithm
 
 	// 1. determine reduction of diffuse incident on shaded sections due to self-shading (beam is not derated because that shading is taken into account in dc derate)
-	diffuse_reduce(solzen, tilt, Gb_nor, Gdh, poa_sky, poa_gnd, m_B/m_R, albedo, m_r, skydiffs.lookup(tilt),
+	diffuse_reduce(solzen, tilt, Gb_nor, Gdh, poa_sky, poa_gnd, m_B/m_R, albedo, m_r, skydiffs,
 		// outputs
 		outputs.m_reduced_diffuse, outputs.m_diffuse_derate, outputs.m_reduced_reflected, outputs.m_reflected_derate );
 
