@@ -385,7 +385,7 @@ protected:
 
 private:
 
-    // RC/F: R is Molar gas constant [J/mol/K]^M, R is Faraday constant [As/mol]^M, C is model correction factor^M
+    // RC/F: R is Molar gas constant [J/mol/K]^M, R is Faraday constant [As/mol]^M, C is model correction factor^M 1.38
     double m_RCF;
 
     double _V_ref_50;				// Reference voltage at 50% SOC

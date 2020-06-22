@@ -377,17 +377,17 @@ TEST_F(ResilienceTest_lib_resilience, VoltageVanadium){
     double v = volt.cell_voltage();
 
 
-    double req_cur = volt.calculate_current_for_target_w(1.5, 3.3, 11, temp.T_battery());
+    double req_cur = volt.calculate_current_for_target_w(-5, 3.3, 11, temp.T_battery());
     cap.updateCapacity(req_cur, 1);
     volt.updateVoltage(&cap, &temp, 1);
     v = volt.cell_voltage();
-    EXPECT_NEAR(req_cur * v, 1.5, 1e-2);
+    EXPECT_NEAR(req_cur * v, -5, 1e-2);
 
-    req_cur = volt.calculate_current_for_target_w(-1.5, cap.q0(), cap.qmax(), temp.T_battery());
+    req_cur = volt.calculate_current_for_target_w(5, cap.q0(), cap.qmax(), temp.T_battery());
     cap.updateCapacity(req_cur, 1);
     volt.updateVoltage(&cap, &temp, 1);
     v = volt.cell_voltage();
-    EXPECT_NEAR(req_cur * v, -1.5, 1e-2);
+    EXPECT_NEAR(req_cur * v, 5, 1e-2);
 
     double max_p = volt.calculate_max_charge_w(cap.q0(), cap.qmax(), temp.T_battery(), &req_cur);
     cap.updateCapacity(req_cur, 1);
@@ -487,6 +487,57 @@ TEST_F(ResilienceTest_lib_resilience, RoundtripEffTable){
         }
 
 //        printf("current %f, eff %f, n %d\n", current, -output_power/input_power, n_t);
+
+        current += fabs(max_current) / 100.;
+    }
+}
+
+TEST_F(ResilienceTest_lib_resilience, RoundtripEffVanadiumFlow){
+   auto vol = new voltage_vanadium_redox_t(1, 1, 1.41, 0.001, 1);
+    auto cap = new capacity_lithium_ion_t(11, 30, 100, 0);
+    auto temp = thermal_test();
+
+    cap->change_SOC_limits(0, 100);
+
+
+    double full_current = 1000;
+    double max_current;
+    vol->calculate_max_charge_w(cap->q0(), cap->qmax(), temp.T_battery(), &max_current);
+
+    double current = fabs(max_current) * 0.01;
+    while (current < fabs(max_current)){
+        cap->updateCapacity(full_current, 1);   //discharge to empty
+
+        std::vector<double> inputs, outputs;
+
+        size_t n_t = 0;
+        current *= -1;
+        double input_power = 0.;
+        while(cap->SOC() < 100 ){
+            double input_current = current;
+            cap->updateCapacity(input_current, 1);
+            vol->updateVoltage(cap, &temp, 1);
+            input_power += cap->I() * vol->battery_voltage();
+            n_t += 1;
+            inputs.push_back(vol->battery_voltage());
+        }
+
+        current *= -1;
+        double output_power = 0.;
+        while(vol->calculate_max_discharge_w(cap->q0(), cap->qmax(), temp.T_battery(), nullptr) > 0 ){
+            double output_current = current;
+            cap->updateCapacity(output_current, 1);
+            vol->updateVoltage(cap, &temp, 1);
+            output_power += cap->I() * vol->battery_voltage();
+            n_t += 1;
+            outputs.push_back(vol->battery_voltage());
+        }
+
+//        std::reverse(outputs.begin(), outputs.end());
+//        for (size_t i = 0; i < inputs.size(); i++) {
+//            printf("%f, %f\n", inputs[i], outputs[i]);
+//        }
+//        printf("current %f, eff %f, n %zd\n", current, -output_power/input_power, n_t);
 
         current += fabs(max_current) / 100.;
     }
