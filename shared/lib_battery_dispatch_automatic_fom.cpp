@@ -27,7 +27,7 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 	bool can_grid_charge,
 	bool can_fuelcell_charge,
 	double inverter_paco,
-	double batt_cost_per_kwh,
+	double battReplacementCostPerkWh,
 	int battCycleCostChoice,
 	double battCycleCost,
 	std::vector<double> forecast_price_series_dollar_per_kwh,
@@ -35,7 +35,8 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 	double etaPVCharge,
 	double etaGridCharge,
 	double etaDischarge) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max_kwdc, Pd_max_kwdc, Pc_max_kwac, Pd_max_kwac,
-		t_min, dispatch_mode, pv_dispatch, nyears, look_ahead_hours, dispatch_update_frequency_hours, can_charge, can_clip_charge, can_grid_charge, can_fuelcell_charge)
+		t_min, dispatch_mode, pv_dispatch, nyears, look_ahead_hours, dispatch_update_frequency_hours, can_charge, can_clip_charge, can_grid_charge, can_fuelcell_charge,
+        battReplacementCostPerkWh, battCycleCostChoice, battCycleCost)
 {
 	// if look behind, only allow 24 hours
 	if (_mode == dispatch_t::FOM_LOOK_BEHIND)
@@ -50,16 +51,9 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 		m_utilityRateCalculator = std::move(tmp);
 	}
 
-	m_battReplacementCostPerKWH = batt_cost_per_kwh;
 	m_etaPVCharge = etaPVCharge * 0.01;
 	m_etaGridCharge = etaGridCharge * 0.01;
 	m_etaDischarge = etaDischarge * 0.01;
-
-	m_battCycleCostChoice = battCycleCostChoice;
-	m_cycleCost = 0.05;
-	if (battCycleCostChoice == dispatch_t::INPUT_CYCLE_COST) {
-		m_cycleCost = battCycleCost;
-	}
 
 	revenueToClipCharge = revenueToDischarge = revenueToGridCharge = revenueToPVCharge = 0;
 
@@ -72,7 +66,6 @@ void dispatch_automatic_front_of_meter_t::init_with_pointer(const dispatch_autom
 	_inverter_paco = tmp->_inverter_paco;
 	_forecast_price_rt_series = tmp->_forecast_price_rt_series;
 
-	m_battReplacementCostPerKWH = tmp->m_battReplacementCostPerKWH;
 	m_etaPVCharge = tmp->m_etaPVCharge;
 	m_etaGridCharge = tmp->m_etaGridCharge;
 	m_etaDischarge = tmp->m_etaDischarge;
@@ -314,14 +307,4 @@ void dispatch_automatic_front_of_meter_t::update_pv_data(double_vec P_pv_dc)
 	// append to end to allow for look-ahead
 	for (size_t i = 0; i != _look_ahead_hours * _steps_per_hour; i++)
 		_P_pv_dc.push_back(P_pv_dc[i]);
-}
-
-void dispatch_automatic_front_of_meter_t::costToCycle()
-{
-	// Calculate assuming maximum depth of discharge (most conservative assumption)
-	if (m_battCycleCostChoice == dispatch_t::MODEL_CYCLE_COST)
-	{
-		double capacityPercentDamagePerCycle = _Battery->estimateCycleDamage();
-		m_cycleCost = 0.01 * capacityPercentDamagePerCycle * m_battReplacementCostPerKWH;
-	}
 }

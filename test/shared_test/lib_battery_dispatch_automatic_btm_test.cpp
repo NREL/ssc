@@ -11,7 +11,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMGridCharging) {
                                                                 max_current,
                                                                 max_current, max_power, max_power, max_power, max_power,
                                                                 0, dispatch_t::BTM_MODES::LOOK_AHEAD, 0, 1, 24, 1, true,
-                                                                true, false, false, util_rate);
+                                                                true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost);
 
     // Setup pv and load signal for peak shaving algorithm
     for (size_t h = 0; h < 24; h++) {
@@ -60,7 +60,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMPVCharging) {
                                                                 max_current,
                                                                 max_current, max_power, max_power, max_power, max_power,
                                                                 0, dispatch_t::BTM_MODES::LOOK_AHEAD, 0, 1, 24, 1, true,
-                                                                true, false, false, util_rate);
+                                                                true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost);
 
     // Setup pv and load signal for peak shaving algorithm
     for (size_t h = 0; h < 24; h++) {
@@ -103,7 +103,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMPVChargeAndDischarge) {
                                                                 max_current,
                                                                 max_current, max_power, max_power, max_power, max_power,
                                                                 0, dispatch_t::BTM_MODES::LOOK_AHEAD, 0, 1, 24, 1, true,
-                                                                true, false, false, util_rate);
+                                                                true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost);
 
     // Setup pv and load signal for peak shaving algorithm
     for (size_t h = 0; h < 24; h++) {
@@ -153,7 +153,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMPVChargeAndDischargeSubh
                                                                 max_current,
                                                                 max_current, max_power, max_power, max_power, max_power,
                                                                 0, dispatch_t::BTM_MODES::LOOK_AHEAD, 0, 1, 24, 1, true,
-                                                                true, false, false, util_rate);
+                                                                true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost);
 
     // Setup pv and load signal for peak shaving algorithm
     for (size_t h = 0; h < 24; h++) {
@@ -222,7 +222,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMDCClipCharge) {
                                                                 max_current,
                                                                 max_current, max_power, max_power, max_power, max_power,
                                                                 0, dispatch_t::BTM_MODES::LOOK_AHEAD, 0, 1, 24, 1,
-                                                                false, true, false, false, util_rate);
+                                                                false, true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost);
 
     // Setup pv and load signal for peak shaving algorithm
     for (size_t h = 0; h < 24; h++) {
@@ -275,7 +275,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, TestBasicForecast) {
         max_current,
         max_current, max_power, max_power, max_power, max_power,
         0, dispatch_t::BTM_MODES::FORECAST, 0, 1, 24, 1, true,
-        true, false, false, util_rate);
+        true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost);
 
     // Setup pv and load signal for peak shaving algorithm
     for (size_t h = 0; h < 48; h++) {

@@ -263,7 +263,10 @@ public:
 		bool can_charge,
 		bool can_clipcharge,
 		bool can_grid_charge,
-		bool can_fuelcell_charge
+		bool can_fuelcell_charge,
+        double battReplacementCostPerkWh,
+        int battCycleCostChoice,
+        double battCycleCost
 		);
 
 	virtual ~dispatch_automatic_t(){};
@@ -304,6 +307,12 @@ protected:
 
 	/*! Return the dispatch mode */
 	int get_mode();
+
+    /*! Calculate the cost to cycle */
+    void costToCycle();
+
+    /*! Return the calculated cost to cycle ($/cycle)*/
+    double cost_to_cycle() { return m_cycleCost; }
 
 	/*! Full time-series of PV production [kW] */
 	double_vec _P_pv_dc; // TODO fix var name, might not be DC
@@ -346,6 +355,13 @@ protected:
 
 	/*! The hours to look ahead in the simulation [hour] */
 	size_t _look_ahead_hours;
+
+    /*! Cost to replace battery per kWh */
+    double m_battReplacementCostPerKWH;
+
+    /*! Cycling cost inputs */
+    int m_battCycleCostChoice;
+    double m_cycleCost;
 };
 
 /*! Battery metrics class */

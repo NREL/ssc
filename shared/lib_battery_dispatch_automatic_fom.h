@@ -88,12 +88,6 @@ public:
 	/// Pass in the PV power forecast [kW]
 	virtual void update_pv_data(std::vector<double> P_pv_dc);
 
-	/*! Calculate the cost to cycle */
-	void costToCycle();
-
-	/*! Return the calculated cost to cycle ($/cycle)*/
-	double cost_to_cycle() { return m_cycleCost; }
-
 	/// Return benefit calculations
 	double benefit_charge(){ return revenueToPVCharge; }
 	double benefit_gridcharge() { return revenueToGridCharge; }
@@ -113,14 +107,7 @@ protected:
 	std::vector<double> _forecast_price_rt_series;
 
 	/*! Utility rate information */
-	std::shared_ptr<UtilityRateCalculator> m_utilityRateCalculator;
-
-	/*! Cost to replace battery per kWh */
-	double m_battReplacementCostPerKWH;
-
-	/*! Cycling cost inputs */
-	int m_battCycleCostChoice;
-	double m_cycleCost;
+    std::shared_ptr<UtilityRateCalculator> m_utilityRateCalculator;
 
 	/*! Efficiencies of the charge and discharge of the battery*/
 	double m_etaPVCharge;

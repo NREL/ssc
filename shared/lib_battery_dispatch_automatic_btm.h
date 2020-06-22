@@ -58,7 +58,10 @@ public:
 		bool can_clipcharge,
 		bool can_grid_charge,
 		bool can_fuelcell_charge,
-        rate_data* util_rate
+        rate_data* util_rate,
+        double battReplacementCostPerkWh,
+        int battCycleCostChoice,
+        double battCycleCost
 		);
 
 	~dispatch_automatic_behind_the_meter_t() override {};

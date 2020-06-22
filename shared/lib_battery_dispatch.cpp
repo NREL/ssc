@@ -471,7 +471,10 @@ dispatch_automatic_t::dispatch_automatic_t(
 	bool can_charge,
 	bool can_clip_charge,
 	bool can_grid_charge,
-	bool can_fuelcell_charge
+	bool can_fuelcell_charge,
+    double battReplacementCostPerkWh,
+    int battCycleCostChoice,
+    double battCycleCost
 	) : dispatch_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max_kwdc, Pd_max_kwdc, Pc_max_kwac, Pd_max_kwac,
 
 	t_min, dispatch_mode, pv_dispatch)
@@ -498,6 +501,15 @@ dispatch_automatic_t::dispatch_automatic_t(
 	m_batteryPower->canGridCharge = can_grid_charge;
 	m_batteryPower->canFuelCellCharge = can_fuelcell_charge;
 	m_batteryPower->canDischarge = true;
+    m_battReplacementCostPerKWH = battReplacementCostPerkWh;
+    m_battCycleCostChoice = battCycleCostChoice;
+    if (battCycleCostChoice == dispatch_t::INPUT_CYCLE_COST) {
+        m_cycleCost = battCycleCost;
+    }
+    else
+    {
+        costToCycle();
+    }
 }
 
 void dispatch_automatic_t::init_with_pointer(const dispatch_automatic_t * tmp)
@@ -513,6 +525,9 @@ void dispatch_automatic_t::init_with_pointer(const dispatch_automatic_t * tmp)
 	_mode = tmp->_mode;
 	_safety_factor = tmp->_safety_factor;
 	_look_ahead_hours = tmp->_look_ahead_hours;
+    m_battReplacementCostPerKWH = tmp->m_battReplacementCostPerKWH;
+    m_battCycleCostChoice = tmp->m_battCycleCostChoice;
+    m_cycleCost = tmp->m_cycleCost;
 }
 
 // deep copy from dispatch to this
@@ -701,6 +716,16 @@ bool dispatch_automatic_t::check_constraints(double &I, size_t count)
 		}
 	}
 	return iterate;
+}
+
+void dispatch_automatic_t::costToCycle()
+{
+    // Calculate assuming maximum depth of discharge (most conservative assumption)
+    if (m_battCycleCostChoice == dispatch_t::MODEL_CYCLE_COST)
+    {
+        double capacityPercentDamagePerCycle = _Battery->estimateCycleDamage();
+        m_cycleCost = 0.01 * capacityPercentDamagePerCycle * m_battReplacementCostPerKWH;
+    }
 }
 
 battery_metrics_t::battery_metrics_t(double dt_hour)

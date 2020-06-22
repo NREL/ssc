@@ -412,6 +412,10 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             batt_vars->batt_dispatch = vt.as_integer("batt_dispatch_choice");
             batt_vars->batt_meter_position = vt.as_integer("batt_meter_position");
 
+            // Cycle cost calculations
+            batt_vars->batt_cycle_cost_choice = vt.as_integer("batt_cycle_cost_choice");
+            batt_vars->batt_cycle_cost = vt.as_double("batt_cycle_cost");
+
             // Front of meter
             if (batt_vars->batt_meter_position == dispatch_t::FRONT)
             {
@@ -469,9 +473,6 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                         batt_vars->ec_rate_defined = true;
                     }
                 }
-
-                batt_vars->batt_cycle_cost_choice = vt.as_integer("batt_cycle_cost_choice");
-                batt_vars->batt_cycle_cost = vt.as_double("batt_cycle_cost");
 
                 if (batt_vars->batt_dispatch == dispatch_t::FOM_LOOK_AHEAD ||
                     batt_vars->batt_dispatch == dispatch_t::FOM_FORECAST ||
@@ -994,7 +995,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                                                                    batt_vars->batt_dispatch, batt_vars->batt_meter_position, nyears,
                                                                    batt_vars->batt_look_ahead_hours, batt_vars->batt_dispatch_update_frequency_hours,
                                                                    batt_vars->batt_dispatch_auto_can_charge, batt_vars->batt_dispatch_auto_can_clipcharge, batt_vars->batt_dispatch_auto_can_gridcharge, batt_vars->batt_dispatch_auto_can_fuelcellcharge,
-                                                                   util_rate_data
+                                                                   util_rate_data, batt_vars->batt_cost_per_kwh, batt_vars->batt_cycle_cost_choice, batt_vars->batt_cycle_cost
         );
         if (batt_vars->batt_dispatch == dispatch_t::CUSTOM_DISPATCH)
         {
