@@ -278,8 +278,9 @@ void selfshade_xs_horstr(bool landscape,
 	}
 }
 
+// Accessor for sky diffuse derates for the given tilt. If the value doesn't exist in the table, it is computed.
 double sssky_diffuse_table::lookup(double tilt) {
-    char buf[124];
+    char buf[8];
     sprintf(buf, "%.3f", tilt);
     if (derates_table.find(buf) != derates_table.end())
         return derates_table[buf];
