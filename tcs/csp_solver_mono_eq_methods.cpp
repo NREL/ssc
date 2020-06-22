@@ -533,7 +533,7 @@ int C_csp_solver::C_MEQ__timestep::operator()(double t_ts_guess /*s*/, double *t
     C_monotonic_eq_solver c_solver(c_eq);
 
     // Set up solver
-    c_solver.settings(1.E-3, 50, std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(), false);
+    c_solver.settings(1.E-3, 50, mpc_csp_solver->m_T_field_cold_limit, std::numeric_limits<double>::quiet_NaN(), false);
 
     // Solve for cold temperature
     double T_field_cold_guess_low = mpc_csp_solver->m_T_htf_cold_des - 273.15;    //[C], convert from [K]
