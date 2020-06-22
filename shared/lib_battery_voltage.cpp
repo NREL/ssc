@@ -551,6 +551,8 @@ double voltage_vanadium_redox_t::calculate_current_for_target_w(double P_watts, 
 }
 
 // I, Q, q0 are on a per-string basis since adding cells in series does not change current or charge
+// In constrast to the V_stack + I_stack * R_specific in the paper which follows the convention of negative voltages,
+// here the abs(I_stack) is used to allow both terms to move in same direction (https://github.com/NREL/ssc/issues/404)
 double voltage_vanadium_redox_t::voltage_model(double q0, double qmax, double I_string, double T) {
     double SOC_use = q0 / qmax;
     if (SOC_use > 1. - tolerance)
