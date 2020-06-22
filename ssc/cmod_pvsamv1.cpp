@@ -1008,7 +1008,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 	// hourly adjustment factors
 	adjustment_factors haf(this, "adjust");
 	if (!haf.setup())
-		throw exec_error("pvsamv1", "failed to setup adjustment factors: " + haf.error());
+		throw exec_error("pvsamv1", "failed to setup AC adjustment factors: " + haf.error());
 
     // clipping losses for battery dispatch
 	std::vector<ssc_number_t> p_invcliploss_full;
@@ -2169,9 +2169,9 @@ void cm_pvsamv1::exec( ) throw (general_error)
 
 				if (iyear == 0 || save_full_lifetime_variables == 1)
 				{
-					PVSystem->p_transformerNoLoadLoss[idx] = xfmr_nll;
-					PVSystem->p_transformerLoadLoss[idx] = xfmr_ll;
-					PVSystem->p_transformerLoss[idx] = xfmr_loss;
+					PVSystem->p_transformerNoLoadLoss[idx] = xfmr_nll/ts_hour;
+					PVSystem->p_transformerLoadLoss[idx] = xfmr_ll/ts_hour;
+					PVSystem->p_transformerLoss[idx] = xfmr_loss/ts_hour;
 				}
 
 				idx++;
