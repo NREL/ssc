@@ -535,7 +535,7 @@ public:
         c_trough.m_T_loop_in_des = T_loop_in_des;                   //[C] Design loop inlet temperature, converted to K in init
         double T_loop_out_des = as_double("T_loop_out");            //[C] Target loop outlet temperature, converted to K in init
         c_trough.m_T_loop_out_des = T_loop_out_des;                 //[C] Target loop outlet temperature, converted to K in init
-        double T_startup = 0.67*T_loop_in_des + 0.33*T_loop_out_des; //[C]
+        double T_startup = std::max(T_loop_out_des - 80.0, 0.67*T_loop_in_des + 0.33*T_loop_out_des); //[C]
         c_trough.m_T_startup = T_startup;                           //[C] The required temperature (converted to K in init) of the system before the power block can be switched on
 
         c_trough.m_m_dot_htfmin = as_double("m_dot_htfmin");        //[kg/s] Minimum loop HTF flow rate
