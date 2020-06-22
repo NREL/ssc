@@ -613,7 +613,6 @@ public:
 			e_tofromgrid(m_num_rec_yearly), p_tofromgrid(m_num_rec_yearly), salespurchases(m_num_rec_yearly);
 		std::vector<ssc_number_t> monthly_revenue_w_sys(12), monthly_revenue_wo_sys(12),
 			monthly_fixed_charges(12), monthly_minimum_charges(12),
-			monthly_dc_fixed(12), monthly_dc_tou(12),
 			monthly_ec_charges(12),
 			monthly_ec_charges_gross(12),
 			monthly_excess_dollars_applied(12),
@@ -1122,8 +1121,8 @@ public:
 
 				for (j = 0; j < 12; j++)
 				{
-					monthly_dc_fixed[j] += ch_wo_sys_dc_fixed_ym[(i + 1) * 12 + j];
-					monthly_dc_tou[j] += ch_wo_sys_dc_tou_ym[(i + 1) * 12 + j];
+					rate_data.monthly_dc_fixed[j] += ch_wo_sys_dc_fixed_ym[(i + 1) * 12 + j];
+                    rate_data.monthly_dc_tou[j] += ch_wo_sys_dc_tou_ym[(i + 1) * 12 + j];
 					monthly_ec_charges[j] += ch_wo_sys_ec_ym[(i + 1) * 12 + j];
 					monthly_ec_charges_gross[j] += ch_wo_sys_ec_ym[(i + 1) * 12 + j];
 					monthly_fixed_charges[j] += ch_wo_sys_fixed_ym[(i + 1) * 12 + j];
@@ -1325,8 +1324,8 @@ public:
 
 				assign("year1_monthly_fixed_with_system", var_data(&monthly_fixed_charges[0], 12));
 				assign("year1_monthly_minimum_with_system", var_data(&monthly_minimum_charges[0], 12));
-				assign("year1_monthly_dc_fixed_with_system", var_data(&monthly_dc_fixed[0], 12));
-				assign("year1_monthly_dc_tou_with_system", var_data(&monthly_dc_tou[0], 12));
+				assign("year1_monthly_dc_fixed_with_system", var_data(&rate_data.monthly_dc_fixed[0], 12));
+				assign("year1_monthly_dc_tou_with_system", var_data(&rate_data.monthly_dc_tou[0], 12));
 				assign("year1_monthly_ec_charge_with_system", var_data(&monthly_ec_charges[0], 12));
 				assign("year1_monthly_ec_charge_gross_with_system", var_data(&monthly_ec_charges_gross[0], 12));
 				assign("year1_excess_dollars_applied", var_data(&monthly_excess_dollars_applied[0], 12));
@@ -1369,8 +1368,8 @@ public:
 			for (j = 0; j < 12; j++)
 			{
 				utility_bill_w_sys_ym[(i+1)*12 + j] = monthly_bill[j];
-				ch_w_sys_dc_fixed_ym[(i + 1) * 12 + j] = monthly_dc_fixed[j];
-				ch_w_sys_dc_tou_ym[(i + 1) * 12 + j] = monthly_dc_tou[j];
+				ch_w_sys_dc_fixed_ym[(i + 1) * 12 + j] = rate_data.monthly_dc_fixed[j];
+				ch_w_sys_dc_tou_ym[(i + 1) * 12 + j] = rate_data.monthly_dc_tou[j];
 				ch_w_sys_ec_ym[(i + 1) * 12 + j] = monthly_ec_charges[j];
 
 				ch_w_sys_ec_gross_ym[(i + 1) * 12 + j] = monthly_ec_charges_gross[j];
@@ -1383,8 +1382,8 @@ public:
 				ch_w_sys_minimum_ym[(i + 1) * 12 + j] = monthly_minimum_charges[j];
 
 				utility_bill_w_sys[i + 1] += monthly_bill[j];
-				ch_w_sys_dc_fixed[i + 1] += monthly_dc_fixed[j];
-				ch_w_sys_dc_tou[i + 1] += monthly_dc_tou[j];
+				ch_w_sys_dc_fixed[i + 1] += rate_data.monthly_dc_fixed[j];
+				ch_w_sys_dc_tou[i + 1] += rate_data.monthly_dc_tou[j];
 				ch_w_sys_ec[i + 1] += monthly_ec_charges[j];
 				ch_w_sys_fixed[i + 1] += monthly_fixed_charges[j];
 				ch_w_sys_minimum[i + 1] += monthly_minimum_charges[j];
