@@ -984,7 +984,6 @@ void cm_pvsamv1::exec( ) throw (general_error)
 		else
 			b = Subarrays[nn]->selfShadingInputs.nmody * Subarrays[nn]->selfShadingInputs.width;
 		Subarrays[nn]->selfShadingInputs.row_space = b / Subarrays[nn]->groundCoverageRatio;
-		Subarrays[nn]->selfShadingSkyDiffTable.init(Subarrays[nn]->tiltDegrees, Subarrays[nn]->groundCoverageRatio);
 	}
 
 	double nameplate_kw = 0;
