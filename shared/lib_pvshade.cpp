@@ -278,23 +278,23 @@ void selfshade_xs_horstr(bool landscape,
 	}
 }
 
-// Accessor for sky diffuse derates for the given tilt. If the value doesn't exist in the table, it is computed.
-double sssky_diffuse_table::lookup(double tilt) {
+// Accessor for sky diffuse derates for the given surface_tilt. If the value doesn't exist in the table, it is computed.
+double sssky_diffuse_table::lookup(double surface_tilt) {
     char buf[8];
-    sprintf(buf, "%.3f", tilt);
+    sprintf(buf, "%.3f", surface_tilt);
     if (derates_table.find(buf) != derates_table.end())
         return derates_table[buf];
-    return compute(tilt);
+    return compute(surface_tilt);
 }
 
-double sssky_diffuse_table::compute(double tilt) {
+double sssky_diffuse_table::compute(double surface_tilt) {
     if (gcr == 0)
         throw std::runtime_error("sssky_diffuse_table::compute error: gcr required in initialization");
     // sky diffuse reduction
     double step = 1.0 / 1000.0;
     double skydiff = 0.0;
-    double tand_stilt = tand(tilt);
-    double sind_stilt = sind(tilt);
+    double tand_stilt = tand(surface_tilt);
+    double sind_stilt = sind(surface_tilt);
     double Asky = M_PI + M_PI / pow((1 + pow(tand_stilt, 2)), 0.5);
     double arg[1000];
     double gamma[1000];
@@ -304,21 +304,21 @@ double sssky_diffuse_table::compute(double tilt) {
     {
         arg[n] = (1 / tand_stilt) - (1 / (gcr * sind_stilt * (1 - n * step)));
         gamma[n] = (-M_PI / 2) + atan(arg[n]);
-        tan_tilt_gamma[n] = tan(tilt * DTOR + gamma[n]);
+        tan_tilt_gamma[n] = tan(surface_tilt * DTOR + gamma[n]);
         Asky_shade[n] = M_PI + M_PI / pow((1 + tan_tilt_gamma[n] * tan_tilt_gamma[n]), 0.5);
         if (isnan(Asky_shade[n]))
         {
             Asky_shade[n] = Asky;
         }
-        else if ((tilt * DTOR + gamma[n]) > (M_PI / 2))
+        else if ((surface_tilt * DTOR + gamma[n]) > (M_PI / 2))
         {
             Asky_shade[n] = 2 * M_PI - Asky_shade[n];
         }
         else {}
         skydiff += (Asky_shade[n] / Asky) * step;
     }
-    char buf[124];
-    sprintf(buf, "%.3f", tilt);
+    char buf[8];
+    sprintf(buf, "%.3f", surface_tilt);
     derates_table[buf] = skydiff;
     return skydiff;
 }

@@ -62,19 +62,19 @@ struct ssoutputs	// self-shading outputs
 // added to removing duplicate computations for speed up (https://github.com/NREL/ssc/issues/384)
 class sssky_diffuse_table
 {
-    std::unordered_map<std::string, double> derates_table;      // stores pairs of tilt and derates
+    std::unordered_map<std::string, double> derates_table;      // stores pairs of surface tilts and derates
     double gcr;                                                 // 0.01 - 0.99
 
-    double compute(double tilt);
+    double compute(double surface_tilt);
 
 public:
     sssky_diffuse_table(): gcr(0) {}
 
     // initialize with the ground coverage ratio (fixed per PV simulation) and the starting tilt
-    void init(double tilt, double groundCoverageRatio) { gcr = groundCoverageRatio; compute(tilt); }
+    void init(double surface_tilt, double groundCoverageRatio) { gcr = groundCoverageRatio; compute(surface_tilt); }
 
-    // return the sky diffuse derate for the panel at given tilt
-    double lookup(double tilt);
+    // return the sky diffuse derate for the panel at given surface_tilt
+    double lookup(double surface_tilt);
 };
 
 
