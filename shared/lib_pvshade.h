@@ -143,24 +143,25 @@ public:
     double lookup(double tilt);
 };
 
-//performs shading calculation and returns outputs
+// performs shading calculation and returns outputs
 bool ss_exec(
-        const ssinputs &inputs,
+    const ssinputs &inputs,
 
-        double tilt,		// module tilt (constant for fixed tilt, varies for one-axis)
-	double azimuth,		// module azimuth (constant for fixed tilt, varies for one-axis)
-	double solzen,		// solar zenith (deg)
-	double solazi,		// solar azimuth (deg)
-	double Gb_nor,		// beam normal irradiance (W/m2)
-	double Gdh,         // diffuse horizontal irradiance (W/m2)
-	double Gb_poa,		// POA beam irradiance (W/m2)
-	double poa_sky,		// POA diffuse sky irradiance (W/m2)
-	double poa_gnd,     // POA diffuse gnd irradiance (W/m2)
-	double albedo,		// used to calculate reduced relected irradiance
-	bool trackmode,		// 0 for fixed tilt, 1 for one-axis tracking
-	bool linear,		// 0 for non-linear shading (C. Deline's full algorithm), 1 to stop at linear shading
-	double shade_frac_1x,	// geometric calculation of the fraction of one-axis row that is shaded (0-1), not used if fixed tilt
-    sssky_diffuse_table &skydiffs,
-        ssoutputs &outputs);
+    double tilt,		            // module tilt (constant for fixed tilt, varies for one-axis)
+	double azimuth,		            // module azimuth (constant for fixed tilt, varies for one-axis)
+	double solzen,		            // solar zenith (deg)
+	double solazi,		            // solar azimuth (deg)
+	double Gb_nor,		            // beam normal irradiance (W/m2)
+	double Gdh,                     // diffuse horizontal irradiance (W/m2)
+	double Gb_poa,		            // POA beam irradiance (W/m2)
+	double poa_sky,		            // POA diffuse sky irradiance (W/m2)
+	double poa_gnd,                 // POA diffuse gnd irradiance (W/m2)
+	double albedo,		            // used to calculate reduced relected irradiance
+	bool trackmode,		            // 0 for fixed tilt, 1 for one-axis tracking
+	bool linear,		            // 0 for non-linear shading (C. Deline's full algorithm), 1 to stop at linear shading
+	double shade_frac_1x,	        // geometric calculation of the fraction of one-axis row that is shaded (0-1), not used if fixed tilt
+    sssky_diffuse_table &skydiffs,  // lookup table for sky diffuse derates
+
+    ssoutputs &outputs);
 
 #endif
