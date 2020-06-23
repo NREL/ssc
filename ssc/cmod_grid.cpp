@@ -85,6 +85,41 @@ void cm_grid::exec() throw (general_error)
 {
 	construct();
 
+    size_t analysis_period = 1;
+    if (is_assigned("analysis_period")) {
+        analysis_period = (size_t) as_integer("analysis_period");
+    }
+
+    bool system_use_lifetime_output = false;
+    if (is_assigned("system_use_lifetime_output")) {
+        system_use_lifetime_output = (bool) as_integer("system_use_lifetime_output");
+    }
+
+    std::vector<double> load_year_one;
+    size_t n_rec_lifetime = gridVars->systemGenerationLifetime_kW.size();
+    size_t n_rec_single_year;
+    if (is_assigned("load")) {
+        load_year_one = as_vector_double("load");
+    }
+
+    scalefactors scale_calculator(m_vartab);
+
+    // compute load (electric demand) annual escalation multipliers
+    std::vector<ssc_number_t> load_scale;
+    if (is_assigned("load_escalation")) {
+        load_scale = scale_calculator.get_factors("load_escalation");
+    }
+
+    single_year_to_lifetime_interpolated<double>(
+        system_use_lifetime_output,
+        analysis_period,
+        n_rec_lifetime,
+        load_year_one,
+        load_scale,
+        gridVars->loadLifetime_kW,
+        n_rec_single_year,
+        gridVars->dt_hour_gen);
+
 	// interconnection  calculations
 	double capacity_factor_interconnect, annual_energy_pre_curtailment, annual_energy_pre_interconnect, annual_energy, capacity_factor_curtailment;
 	capacity_factor_interconnect = annual_energy_pre_curtailment = annual_energy_pre_interconnect = annual_energy = capacity_factor_curtailment = 0;

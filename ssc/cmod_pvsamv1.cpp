@@ -485,7 +485,7 @@ static var_info _cm_vtab_pvsamv1[] = {
     { SSC_INPUT, SSC_NUMBER,   "en_batt",                              "Enable battery storage model",                        "0/1",    "",                                                                                                                                                                                      "BatterySystem",                                               "?=0",                                "",                    "" },
     { SSC_INPUT, SSC_ARRAY,    "load",                                 "Electricity load (year 1)",                           "kW",     "",                                                                                                                                                                                      "Load",                                               "?",                                  "",                    "" },
     { SSC_INPUT, SSC_ARRAY,    "crit_load",                            "Critical Electricity load (year 1)",                  "kW",     "",                                                                                                                                                                                      "Load",                                               "",                                   "",                    "" },
-
+    { SSC_INPUT, SSC_ARRAY,    "load_escalation",                      "Annual load escalation",                              "%/year", "",                                                                                                                                                                                      "Load",                                               "?=0",                                "",                    "" },
 	// NOTE:  other battery storage model inputs and outputs are defined in batt_common.h/batt_common.cpp
 
 	// outputs
@@ -1099,6 +1099,10 @@ void cm_pvsamv1::exec( ) throw (general_error)
 	std::vector<std::vector<double>> dcStringVoltage; // Voltage of string for each subarray
 	double dcPowerNetTotalSystem = 0; //Net DC power in W for the entire system (sum of all subarrays)
 
+    scalefactors scale_calculator(m_vartab);
+    // compute load (electric demand) annual escalation multipliers
+    std::vector<ssc_number_t> load_scale = scale_calculator.get_factors("load_escalation");
+
 	for (size_t mpptInput = 0; mpptInput < PVSystem->Inverter->nMpptInputs; mpptInput++)
 	{
 		dcPowerNetPerMppt_kW.push_back(0);
@@ -1128,7 +1132,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 			// if PV simulation is subhourly.  load is assumed constant over the hour.
 			// if no load profile supplied, load = 0
 			if (nload == 8760)
-				cur_load = p_load_in[hour];
+				cur_load = p_load_in[hour] * load_scale[iyear];
 
 			for (size_t jj = 0; jj < step_per_hour; jj++)
 			{
@@ -1138,7 +1142,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 				// electric load is subhourly
 				// if no load profile supplied, load = 0
 				if (nload == nrec)
-					cur_load = p_load_in[hour*step_per_hour + jj];
+					cur_load = p_load_in[hour*step_per_hour + jj] * load_scale[iyear];
 
 				// log cur_load to check both hourly and sub hourly load data
 				// load data over entrie lifetime period not currently supported.

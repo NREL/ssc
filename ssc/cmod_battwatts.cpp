@@ -50,7 +50,8 @@ var_info vtab_battwatts[] = {
 	{ SSC_INPUT,        SSC_ARRAY,       "ac",							     "AC inverter power",                      "W",       "",                 "Battery",                           "",                           "",                              "" },
     { SSC_INPUT,		SSC_ARRAY,	     "load",			                     "Electricity load (year 1)",              "kW",	   "",		           "Battery",                           "",	                         "",	                          "" },
     { SSC_INPUT,		SSC_ARRAY,	     "crit_load",			             "Critical electricity load (year 1)",     "kW",	   "",		           "Battery",                           "",	                         "",	                          "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inverter_efficiency",               "Inverter Efficiency",                     "%",      "",                  "Battery",                          "",                           "MIN=0,MAX=100",                               "" },
+    { SSC_INPUT,        SSC_ARRAY,       "load_escalation",                  "Annual load escalation",                 "%/year",   "",                 "Load",                              "?=0",                       "",                              "" },
+    { SSC_INPUT,        SSC_NUMBER,      "inverter_efficiency",               "Inverter Efficiency",                     "%",      "",                  "Battery",                          "",                           "MIN=0,MAX=100",                               "" },
 
 var_info_invalid  };
 
@@ -303,14 +304,21 @@ void cm_battwatts::exec()
         std::shared_ptr<batt_variables> batt_vars = setup_variables(p_ac.size());
         size_t n_rec_lifetime = p_ac.size();
 
+        size_t analysis_period = (size_t)as_integer("analysis_period");
+
+        scalefactors scale_calculator(m_vartab);
+        // compute load (electric demand) annual escalation multipliers
+        std::vector<ssc_number_t> load_scale = scale_calculator.get_factors("load_escalation");
+
         std::vector<ssc_number_t> load_lifetime;
         size_t n_rec_single_year;
         double dt_hour_gen;
         single_year_to_lifetime_interpolated<ssc_number_t>(
                 (bool)as_integer("system_use_lifetime_output"),
-                (size_t)as_integer("analysis_period"),
+                analysis_period,
                 n_rec_lifetime,
                 p_load,
+                load_scale,
                 load_lifetime,
                 n_rec_single_year,
                 dt_hour_gen);
