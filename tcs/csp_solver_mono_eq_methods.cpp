@@ -1015,67 +1015,6 @@ int C_csp_solver::C_MEQ__T_field_cold::operator()(double T_field_cold /*C*/, dou
             }
         }
     }
-    else if ( false )
-    {
-        double diff_m_dot = std::numeric_limits<double>::quiet_NaN();
-        double m_dot_guess1 = mpc_csp_solver->m_m_dot_pc_max;
-        int m_dot_code = c_solver.test_member_function(m_dot_guess1, &diff_m_dot);
-        if (m_dot_code != 0)
-        {
-            return -1;
-        }
-
-        // Can't hit target thermal power with max mass flow rate
-        // But mode 'E_PC_OUT_TARGET__TES_CONTINUOUS' should balance mass and energy
-        if ((m_solver_mode == C_MEQ__m_dot_tes::E__CR_OUT__ITER_Q_DOT_TARGET_CH_ONLY || m_solver_mode == C_MEQ__m_dot_tes::E__CR_OUT__ITER_Q_DOT_TARGET_DC_ONLY)
-                && diff_m_dot < 0.0)
-        {
-            m_t_ts_calc = c_eq.m_t_ts_calc;
-
-            double T_field_cold_calc = c_eq.m_T_field_cold_calc;        //[C]
-            *diff_T_field_cold = (T_field_cold_calc - T_field_cold) / T_field_cold; //[-]
-
-            return 0;
-        }
-
-        C_monotonic_eq_solver::S_xy_pair xy1;
-        xy1.x = mpc_csp_solver->m_m_dot_pc_max;
-        xy1.y = diff_m_dot;
-
-        double m_dot_guess2 = c_eq.m_m_dot_pc / (diff_m_dot + 1.0);
-
-        c_solver.settings(1.E-3, 50, mpc_csp_solver->m_m_dot_pc_min, mpc_csp_solver->m_m_dot_pc_max, false);
-
-        double m_dot_pc_solved, tol_solved;
-        m_dot_pc_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
-        int iter_solved = -1;
-        m_dot_code = -1;
-
-        try
-        {
-            m_dot_code = c_solver.solve(xy1, m_dot_guess2, 0.0, m_dot_pc_solved, tol_solved, iter_solved);
-        }
-        catch (C_csp_exception)
-        {
-            return -2;
-        }
-
-        if (m_dot_code != C_monotonic_eq_solver::CONVERGED)
-        {
-            if (m_dot_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) < 0.1)
-            {
-                std::string msg = util::format("At time = %lg power cycle mass flow for startup "
-                    "iteration to find a defocus resulting in the maximum power cycle mass flow rate only reached a convergence "
-                    "= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
-                    mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
-                mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::NOTICE, msg);
-            }
-            else
-            {
-                return -3;
-            }
-        }
-    }
     else
     {
         double m_dot_tes = std::numeric_limits<double>::quiet_NaN();
