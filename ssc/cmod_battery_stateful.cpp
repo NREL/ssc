@@ -32,7 +32,6 @@ var_info vtab_battery_stateful_inputs[] = {
         { SSC_INPUT,        SSC_NUMBER,      "dt_hr",                                      "Time step in hours",                                      "hr",      "",   "Controls",       "*",                           "",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "input_current",                              "Current at which to run battery",                         "A",       "",   "Controls",       "control_mode=0",              "",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "input_power",                                "Power at which to run battery",                           "kW",      "",   "Controls",       "control_mode=1",              "",                              "" },
-        { SSC_INPUT,        SSC_NUMBER,      "run_sequentially",                           "True turns off reading state from data at start of step", "0/1",     "",   "Controls",       "?=0",                         "",                              "" },
 
         { SSC_INPUT,        SSC_NUMBER,      "chem",                                       "Lead Acid (0), Li Ion (1), Vanadium Redox (2), Iron Flow (3)","0/1/2/3","",   "ParamsCell",       "*",                           "",                              "" },
         { SSC_INOUT,        SSC_NUMBER,      "nominal_energy",                             "Nominal installed energy",                                "kWh",     "",                     "ParamsPack",       "*",                           "",                              "" },
@@ -411,17 +410,15 @@ void cm_battery_stateful::exec() {
     if (!battery)
         throw exec_error("battery_stateful", "Battery model must be initialized first.");
 
-    if (!as_boolean("run_sequentially")) {
-        battery_state state;
-        try {
-            read_battery_state(state, m_vartab);
-            battery->set_state(state);
-        }
-        catch (std::exception& e) {
-            std::string err = "battery_stateful error: Could not read state. ";
-            err += e.what();
-            throw runtime_error(err);
-        }
+    battery_state state;
+    try {
+        read_battery_state(state, m_vartab);
+        battery->set_state(state);
+    }
+    catch (std::exception& e) {
+        std::string err = "battery_stateful error: Could not read state. ";
+        err += e.what();
+        throw runtime_error(err);
     }
 
     if (static_cast<MODE>(as_integer("control_mode")) == MODE::CURRENT) {
