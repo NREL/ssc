@@ -1189,7 +1189,7 @@ public:
 
 		double m_T_field_cold_calc; //[C]
 		double m_t_ts_calc;         //[s]
-		double m_m_dot_pc;          //[kg/hr]
+		double m_m_dot_pc_in;       //[kg/hr]
 
 		C_MEQ__m_dot_tes(E_m_dot_solver_modes solver_mode, C_csp_solver* pc_csp_solver,
 			int pc_mode, int cr_mode,
@@ -1216,7 +1216,7 @@ public:
 
 		void init_calc_member_vars();
 
-		virtual int operator()(double m_dot_tes_guess /*kg/hr + = charge - = discharge*/, double* diff_target /*-*/);
+		virtual int operator()(double f_m_dot_tes /*-*/, double* diff_target /*-*/);
 	};
 
 	class C_MEQ__T_field_cold : public C_monotonic_equation
