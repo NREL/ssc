@@ -1282,7 +1282,7 @@ public:
 
 		double m_T_field_cold_calc; //[C]
 		double m_t_ts_calc;         //[s]
-		double m_m_dot_pc;
+		double m_m_dot_pc;          //[kg/hr]
 
 		C_MEQ__m_dot_tes(E_m_dot_solver_modes solver_mode, C_csp_solver* pc_csp_solver,
             C_csp_power_cycle::E_csp_power_cycle_modes pc_mode, int cr_mode,
