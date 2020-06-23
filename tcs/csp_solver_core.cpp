@@ -1684,7 +1684,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
 					}
 				}
-				else if( q_dot_tes_dc && is_pc_su_allowed &&
+				else if( q_dot_tes_dc > 0.0 && is_pc_su_allowed &&
 					m_is_CR_OFF__PC_SU__TES_DC__AUX_OFF_avail )
 				{	// Can power cycle startup using TES?
 
