@@ -531,43 +531,77 @@ int C_csp_solver::C_MEQ__timestep::operator()(double t_ts_guess /*s*/, double *t
         m_defocus, t_ts_guess, 
         mpc_csp_solver->m_P_cold_des, mpc_csp_solver->m_x_cold_des);
     C_monotonic_eq_solver c_solver(c_eq);
-
-    // Set up solver
-    c_solver.settings(1.E-3, 50, mpc_csp_solver->m_T_field_cold_limit, std::numeric_limits<double>::quiet_NaN(), false);
-
+    
     // Solve for cold temperature
-    double T_field_cold_guess_low = mpc_csp_solver->m_T_htf_cold_des - 273.15;    //[C], convert from [K]
-    double T_field_cold_guess_high = T_field_cold_guess_low + 10.0;		//[C]
+    double T_field_cold_guess_1 = mpc_csp_solver->m_T_htf_cold_des - 273.15;    //[C], convert from [K]
 
-    double T_field_cold_solved, tol_solved;
-    T_field_cold_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
-    int iter_solved = -1;
+    double diff_T_field_cold = std::numeric_limits<double>::quiet_NaN();
+    int T_field_cold_code = -1;
 
-    int T_field_cold_code = 0;
     try
     {
-        T_field_cold_code = c_solver.solve(T_field_cold_guess_low, T_field_cold_guess_high, 0.0, T_field_cold_solved, tol_solved, iter_solved);
+        T_field_cold_code = c_solver.test_member_function(T_field_cold_guess_1, &diff_T_field_cold);
     }
     catch (C_csp_exception)
     {
-        throw(C_csp_exception(util::format("At time = %lg, C_MEQ__timestep failed", mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time), ""));
+        return -2;
     }
 
-    if (T_field_cold_code != C_monotonic_eq_solver::CONVERGED)
+    if (T_field_cold_code != 0)
     {
-        if (T_field_cold_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) < 0.1)
+        return -3;
+    }
+
+    // Check if iteration is required
+    if (fabs(diff_T_field_cold) > 1.E-3)
+    {
+        // Set up solver
+        c_solver.settings(1.E-3, 50, mpc_csp_solver->m_T_field_cold_limit, std::numeric_limits<double>::quiet_NaN(), false);
+
+        C_monotonic_eq_solver::S_xy_pair xy1;
+        xy1.x = T_field_cold_guess_1;        //[C]
+        xy1.y = diff_T_field_cold;           //[-]
+
+        double T_field_cold_guess_2 = std::numeric_limits<double>::quiet_NaN();
+        if (diff_T_field_cold > 0.0)
         {
-            double abc = 1.23;
-            //std::string msg = util::format("At time = %lg C_csp_solver:::solver_pc_fixed__tes_dc failed "
-            //    "iteration to find the cold HTF temperature to balance energy between the TES and PC only reached a convergence "
-            //    "= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
-            //    mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
-            //mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::NOTICE, msg);
+            T_field_cold_guess_2 = T_field_cold_guess_1 + 10.0;		//[C]
         }
         else
         {
-            *target = std::numeric_limits<double>::quiet_NaN();
-            return -1;
+            T_field_cold_guess_2 = T_field_cold_guess_1 - 10.0;        //[C]
+        }
+
+        double T_field_cold_solved, tol_solved;
+        T_field_cold_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
+        int iter_solved = -1;
+
+        T_field_cold_code = 0;
+        try
+        {
+            T_field_cold_code = c_solver.solve(xy1, T_field_cold_guess_2, 0.0, T_field_cold_solved, tol_solved, iter_solved);
+        }
+        catch (C_csp_exception)
+        {
+            throw(C_csp_exception(util::format("At time = %lg, C_MEQ__timestep failed", mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time), ""));
+        }
+
+        if (T_field_cold_code != C_monotonic_eq_solver::CONVERGED)
+        {
+            if (T_field_cold_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) < 0.1)
+            {
+                double abc = 1.23;
+                //std::string msg = util::format("At time = %lg C_csp_solver:::solver_pc_fixed__tes_dc failed "
+                //    "iteration to find the cold HTF temperature to balance energy between the TES and PC only reached a convergence "
+                //    "= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
+                //    mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
+                //mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::NOTICE, msg);
+            }
+            else
+            {
+                *target = std::numeric_limits<double>::quiet_NaN();
+                return -1;
+            }
         }
     }
 
@@ -952,6 +986,10 @@ int C_csp_solver::C_MEQ__T_field_cold::operator()(double T_field_cold /*C*/, dou
             *diff_T_field_cold = (T_field_cold_calc - T_field_cold) / T_field_cold; //[-]
 
             return 0;
+        }
+        else if(diff_m_dot < -1.E-3)
+        {
+            return -4;
         }
 
         C_monotonic_eq_solver::S_xy_pair xy1;
