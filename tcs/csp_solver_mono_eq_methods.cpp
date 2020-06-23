@@ -992,42 +992,45 @@ int C_csp_solver::C_MEQ__T_field_cold::operator()(double T_field_cold /*C*/, dou
             return -4;
         }
 
-        C_monotonic_eq_solver::S_xy_pair xy1;
-        xy1.x = f_m_dot_guess_1;        //[-]
-        xy1.y = diff_m_dot;             //[-]
-
-        // Use difference from guess 1 to generate a new guess
-        double f_m_dot_guess_2 = 1.0 / (1.0 + diff_m_dot);      //[-]
-
-        c_solver.settings(1.E-3, 50, 0.0, 1.0, false);
-
-        double f_m_dot_solved, tol_solved;
-        f_m_dot_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
-        int iter_solved = -1;
-        f_m_dot_code = -1;
-
-        try
+        if (fabs(diff_m_dot) > 1.E-3)
         {
-            f_m_dot_code = c_solver.solve(xy1, f_m_dot_guess_2, 0.0, f_m_dot_solved, tol_solved, iter_solved);
-        }
-        catch (C_csp_exception)
-        {
-            return -2;
-        }
+            C_monotonic_eq_solver::S_xy_pair xy1;
+            xy1.x = f_m_dot_guess_1;        //[-]
+            xy1.y = diff_m_dot;             //[-]
 
-        if (f_m_dot_code != C_monotonic_eq_solver::CONVERGED)
-        {
-            if (f_m_dot_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) < 0.1)
+            // Use difference from guess 1 to generate a new guess
+            double f_m_dot_guess_2 = 1.0 / (1.0 + diff_m_dot);      //[-]
+
+            c_solver.settings(1.E-3, 50, 0.0, 1.0, false);
+
+            double f_m_dot_solved, tol_solved;
+            f_m_dot_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
+            int iter_solved = -1;
+            f_m_dot_code = -1;
+
+            try
             {
-                std::string msg = util::format("At time = %lg power cycle mass flow for startup "
-                    "iteration to find a defocus resulting in the maximum power cycle mass flow rate only reached a convergence "
-                    "= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
-                    mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
-                mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::NOTICE, msg);
+                f_m_dot_code = c_solver.solve(xy1, f_m_dot_guess_2, 0.0, f_m_dot_solved, tol_solved, iter_solved);
             }
-            else
+            catch (C_csp_exception)
             {
-                return -3;
+                return -2;
+            }
+
+            if (f_m_dot_code != C_monotonic_eq_solver::CONVERGED)
+            {
+                if (f_m_dot_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) < 0.1)
+                {
+                    std::string msg = util::format("At time = %lg power cycle mass flow for startup "
+                        "iteration to find a defocus resulting in the maximum power cycle mass flow rate only reached a convergence "
+                        "= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
+                        mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
+                    mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::NOTICE, msg);
+                }
+                else
+                {
+                    return -3;
+                }
             }
         }
     }
