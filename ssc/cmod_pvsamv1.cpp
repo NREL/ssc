@@ -2032,7 +2032,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 
 	// Initialize DC battery predictive controller
 	if (en_batt && batt_topology == ChargeController::DC_CONNECTED)
-	    batt->initialize_automated_dispatch(util::array_to_vector<ssc_number_t>(PVSystem->p_systemDCPower, nlifetime), p_load_full, p_invcliploss_full);
+	    batt->initialize_automated_dispatch(util::array_to_vector<ssc_number_t>(PVSystem->p_systemACPower, nlifetime), p_load_full, p_invcliploss_full);
 
 	/* *********************************************************************************************
 	PV AC calculation

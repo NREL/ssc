@@ -547,7 +547,7 @@ void dispatch_automatic_t::copy(const dispatch_t * dispatch)
 	init_with_pointer(tmp);
 }
 
-void dispatch_automatic_t::update_pv_data(std::vector<double> P_pv_dc){ _P_pv_dc = P_pv_dc;}
+void dispatch_automatic_t::update_pv_data(std::vector<double> P_pv_ac){ _P_pv_ac = P_pv_ac;}
 
 void dispatch_automatic_t::update_cliploss_data(double_vec P_cliploss)
 {

@@ -286,7 +286,7 @@ public:
 	virtual void update_dispatch(size_t year, size_t hour_of_year, size_t step, size_t idx)=0;
 
 	/*! Pass in the PV power forecast */
-	virtual void update_pv_data(std::vector<double> P_pv_dc);
+	virtual void update_pv_data(std::vector<double> P_pv_ac);
 
     /// Update cliploss data [kW]
     void update_cliploss_data(double_vec P_cliploss);
@@ -315,7 +315,7 @@ protected:
     double cost_to_cycle() { return m_cycleCost; }
 
 	/*! Full time-series of PV production [kW] */
-	double_vec _P_pv_dc; // TODO fix var name, might not be DC
+	double_vec _P_pv_ac;
 
     /*! Full clipping loss due to AC power limits vector [kW] */
     double_vec _P_cliploss_dc;
