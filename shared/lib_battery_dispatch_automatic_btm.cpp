@@ -636,11 +636,11 @@ void dispatch_automatic_behind_the_meter_t::cost_based_target_power(FILE* p, boo
             }
 
             // Add to existing clipped energy
-            requiredPower += _P_battery_use[index];
+            requiredPower += plannedDispatch[index];
             check_power_restrictions(requiredPower);
 
             // Clipped energy was already counted once, so subtract that off incase requiredPower + clipped hit a current restriction
-            requiredEnergy += (requiredPower - _P_battery_use[index]) * _dt_hour;
+            requiredEnergy += (requiredPower - plannedDispatch[index]) * _dt_hour;
 
             plannedDispatch[index] = requiredPower;
             
@@ -683,7 +683,7 @@ void dispatch_automatic_behind_the_meter_t::cost_based_target_power(FILE* p, boo
 
     for (i = 0; i < plannedDispatch.size(); i++)
     {
-        // Copy from best dispatch plan to _P_battery_use. TODO incorperate cycling costs
+        // Copy from best dispatch plan to _P_battery_use.
         if (no_dispatch_cost > costOfDispatch)
             _P_battery_use[i] = plannedDispatch[i];
         else

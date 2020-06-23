@@ -358,6 +358,7 @@ protected:
 
     /*! Cost to replace battery per kWh */
     double m_battReplacementCostPerKWH;
+    double m_battOriginalKWH;
 
     /*! Cycling cost inputs */
     int m_battCycleCostChoice;

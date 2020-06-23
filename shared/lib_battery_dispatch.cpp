@@ -508,6 +508,7 @@ dispatch_automatic_t::dispatch_automatic_t(
     }
     else
     {
+        m_battOriginalKWH = _Battery->charge_maximum_lifetime() * _Battery->V_nominal() * util::watt_to_kilowatt;
         costToCycle();
     }
 }
@@ -724,7 +725,7 @@ void dispatch_automatic_t::costToCycle()
     if (m_battCycleCostChoice == dispatch_t::MODEL_CYCLE_COST)
     {
         double capacityPercentDamagePerCycle = _Battery->estimateCycleDamage();
-        m_cycleCost = 0.01 * capacityPercentDamagePerCycle * m_battReplacementCostPerKWH;
+        m_cycleCost = 0.01 * capacityPercentDamagePerCycle * m_battReplacementCostPerKWH * m_battOriginalKWH;
     }
 }
 
