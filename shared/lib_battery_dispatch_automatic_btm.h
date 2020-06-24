@@ -25,6 +25,15 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_battery_dispatch.h"
 #include "lib_utility_rate.h"
 
+struct dispatch_plan
+{
+    std::vector<double> plannedDispatch;
+    std::vector<double> plannedGridUse;
+    double cost;
+    int dispatch_hours;
+    int num_cycles;
+};
+
 /*! Automated dispatch class for behind-the-meter connections */
 class dispatch_automatic_behind_the_meter_t : public dispatch_automatic_t
 {
@@ -107,6 +116,7 @@ protected:
     double compute_costs(FILE* p, bool debug, size_t idx, size_t year, size_t hour_of_year);
 	void target_power(FILE*p, bool debug, double E_max, size_t idx);
     void cost_based_target_power(FILE* p, bool debug, size_t idx, size_t year, size_t hour_of_year, double no_dispatch_cost, double E_max);
+    void plan_dispatch_for_cost(FILE* p, bool debug, dispatch_plan& plan, size_t idx, double E_max, double startingEnergy);
     void check_power_restrictions(double& power);
 	void set_battery_power(FILE *p, bool debug);
 	bool check_new_month(size_t hour_of_year, size_t step);

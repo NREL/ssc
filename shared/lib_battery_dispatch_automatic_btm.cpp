@@ -540,18 +540,63 @@ void dispatch_automatic_behind_the_meter_t::target_power(FILE*p, bool debug, dou
 void dispatch_automatic_behind_the_meter_t::cost_based_target_power(FILE* p, bool debug, size_t idx, size_t year, size_t hour_of_year, double no_dispatch_cost, double E_max)
 {
     double startingEnergy = compute_available_energy(p, debug);
+    std::vector<dispatch_plan> plans(3);
+    
+    plans[0].dispatch_hours = 0;
+    plans[0].plannedDispatch.resize(_num_steps);
+    plans[0].cost = no_dispatch_cost;
 
+    plans[2].dispatch_hours = 12;
+    plans[2].plannedDispatch.resize(_num_steps);
+    plan_dispatch_for_cost(p, debug, plans[2], idx, E_max, startingEnergy);
+    // Apply dispatch plan to new grid object, calculate cost
+    UtilityRateForecast fullDispatchForecast(*rate_forecast);
+    plans[2].cost = fullDispatchForecast.forecastCost(plans[2].plannedGridUse, year, hour_of_year, 0) + cost_to_cycle() * plans[2].num_cycles;
+
+    int lowest_endpoint = plans[0].cost < plans[2].cost ? 0 : 2;
+
+    plans[1].dispatch_hours = 6;
+    plans[1].plannedDispatch.resize(_num_steps);
+    bool hours_remaining = true;
+    while (hours_remaining)
+    {
+        plans[1].plannedGridUse.clear();
+        for (int i = 0; i < plans[1].plannedDispatch.size(); i++)
+        {
+            plans[1].plannedDispatch[i] = 0;
+        }
+        plans[1].num_cycles = 0;
+        plan_dispatch_for_cost(p, debug, plans[1], idx, E_max, startingEnergy);
+        UtilityRateForecast midDispatchForecast(*rate_forecast);
+        plans[1].cost = midDispatchForecast.forecastCost(plans[1].plannedGridUse, year, hour_of_year, 0) + cost_to_cycle() * plans[1].num_cycles;
+
+        int update_point = lowest_endpoint == 0 ? 2 : 0;
+        plans[update_point] = plans[1];
+
+        lowest_endpoint = plans[0].cost < plans[2].cost ? 0 : 2;
+        plans[1].dispatch_hours = (plans[0].dispatch_hours + plans[2].dispatch_hours) / 2; // Rounds down by definition. Is this ok?
+        hours_remaining = !(plans[1].dispatch_hours == plans[0].dispatch_hours || plans[1].dispatch_hours == plans[2].dispatch_hours);
+    }
+    size_t i = 0;
+
+    for (i = 0; i < plans[lowest_endpoint].plannedDispatch.size(); i++)
+    {
+        // Copy from best dispatch plan to _P_battery_use.
+        _P_battery_use[i] = plans[lowest_endpoint].plannedDispatch[i];
+    }
+}
+
+void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(FILE* p, bool debug, dispatch_plan& plan, size_t idx, double E_max, double startingEnergy)
+{
     size_t i = 0;
 
     // Optimizing loop will start here... //
     std::sort(sorted_grid.begin(), sorted_grid.end(), byCost());
-    std::vector<double> plannedDispatch(_num_steps);
-    int dispatch_hours = 4;
     // Iterating over sorted grid
     double costDuringDispatchHours = 0.0;
     double costAtStep = 0.0;
     // Sum no-dispatch cost of top n grid points (dispatch hours * steps per hour. start w/ 4 hrs). Units: % of cost -> don't need to record this, can re-compute after iteration
-    for (int i = 0; i < dispatch_hours * _steps_per_hour && i < sorted_grid.size(); i++)
+    for (int i = 0; (i < plan.dispatch_hours * _steps_per_hour) && (i < sorted_grid.size()); i++)
     {
         costAtStep = sorted_grid[i].Cost();
         // In case forecast is testing hours that include negative cost, don't dispatch during those
@@ -561,7 +606,7 @@ void dispatch_automatic_behind_the_meter_t::cost_based_target_power(FILE* p, boo
         }
     }
     double remainingEnergy = E_max;
-    for (i = 0; i < dispatch_hours * _steps_per_hour && i < sorted_grid.size(); i++)
+    for (i = 0; i < (plan.dispatch_hours * _steps_per_hour) && (i < sorted_grid.size()); i++)
     {
         costAtStep = sorted_grid[i].Cost();
         if (costAtStep > 0)
@@ -576,8 +621,8 @@ void dispatch_automatic_behind_the_meter_t::cost_based_target_power(FILE* p, boo
             costDuringDispatchHours -= costAtStep;
 
             // Add to dispatch plan
-            int index = sorted_grid[i].Hour()  * _steps_per_hour + sorted_grid[i].Step(); // Assumes we're always running this function on the hour
-            plannedDispatch[index] = desiredPower;
+            int index = sorted_grid[i].Hour() * _steps_per_hour + sorted_grid[i].Step(); // Assumes we're always running this function on the hour
+            plan.plannedDispatch[index] = desiredPower;
         }
     }
 
@@ -596,7 +641,7 @@ void dispatch_automatic_behind_the_meter_t::cost_based_target_power(FILE* p, boo
                 // Convert to charging sign convention
                 clippedPower *= -1.0;
                 check_power_restrictions(clippedPower);
-                plannedDispatch[i] = clippedPower; // Could overwrite discharge. Not going to be able to use the DC connected battery if we're already clipping
+                plan.plannedDispatch[i] = clippedPower; // Could overwrite discharge. Not going to be able to use the DC connected battery if we're already clipping
                 requiredEnergy += clippedPower;
             }
         }
@@ -613,7 +658,7 @@ void dispatch_automatic_behind_the_meter_t::cost_based_target_power(FILE* p, boo
     {
         int index = sorted_grid[i].Hour() * _steps_per_hour + sorted_grid[i].Step();
         // Don't plan to charge if we were already planning to discharge
-        if (plannedDispatch[index] <= 0.0)
+        if (plan.plannedDispatch[index] <= 0.0)
         {
             double requiredPower = 0.0;
             // If can grid charge, plan to take as much energy as needed
@@ -636,58 +681,84 @@ void dispatch_automatic_behind_the_meter_t::cost_based_target_power(FILE* p, boo
             }
 
             // Add to existing clipped energy
-            requiredPower += plannedDispatch[index];
+            requiredPower += plan.plannedDispatch[index];
             check_power_restrictions(requiredPower);
 
             // Clipped energy was already counted once, so subtract that off incase requiredPower + clipped hit a current restriction
-            requiredEnergy += (requiredPower - plannedDispatch[index]) * _dt_hour;
+            requiredEnergy += (requiredPower - plan.plannedDispatch[index]) * _dt_hour;
 
-            plannedDispatch[index] = requiredPower;
-            
+            plan.plannedDispatch[index] = requiredPower;
+
         }
         i++;
     }
 
     double energy = startingEnergy;
-    std::vector<double> plannedGridUse;
+
+    int cycleState = 0;
+    bool halfCycle = false;
     // Curtail planned dispatch if not enough energy or capacity is available
-    for (i = 0; i < plannedDispatch.size(); i++)
+    for (i = 0; i < plan.plannedDispatch.size(); i++)
     {
-        double projectedEnergy = energy - plannedDispatch[i] * _dt_hour;
+        double projectedEnergy = energy - plan.plannedDispatch[i] * _dt_hour;
         if (projectedEnergy < 0)
         {
-            plannedDispatch[i] = energy / _dt_hour;
+            plan.plannedDispatch[i] = energy / _dt_hour;
         }
         else if (projectedEnergy > E_max)
         {
-            plannedDispatch[i] = (energy - E_max) / _dt_hour;
+            plan.plannedDispatch[i] = (energy - E_max) / _dt_hour;
         }
-        energy -= plannedDispatch[i] * _dt_hour;
+        energy -= plan.plannedDispatch[i] * _dt_hour;
 
-        double projectedGrid = -grid[i].Grid() + plannedDispatch[i];
+        if (fabs(plan.plannedDispatch[i] - 0) < 1e-7) {
+            plan.plannedDispatch[i] = 0;
+        }
+
+        if (plan.plannedDispatch[i] < 0)
+        {
+            if (cycleState != -1) {
+                if (halfCycle) {
+                    plan.num_cycles++;
+                    halfCycle = false;
+                }
+                else {
+                    halfCycle = true;
+                }
+            }
+            cycleState = -1;
+        }
+
+        if (plan.plannedDispatch[i] > 0) {
+            if (cycleState != 1) {
+                if (halfCycle) {
+                    plan.num_cycles++;
+                    halfCycle = false;
+                }
+                else {
+                    halfCycle = true;
+                }
+            }
+            cycleState = 1;
+        }
+
+        // Round up a single half cycles to be conservative with the dispatch
+        if (halfCycle && plan.num_cycles == 0)
+        {
+            plan.num_cycles++;
+        }
+
+        double projectedGrid = -grid[i].Grid() + plan.plannedDispatch[i];
         // Remove clip loss charging from projected grid use
-        if (i + idx < _P_cliploss_dc.size() && plannedDispatch[i] <= 0)
+        if (i + idx < _P_cliploss_dc.size() && plan.plannedDispatch[i] <= 0)
         {
             double clipLoss = -_P_cliploss_dc[i + idx];
-            if (plannedDispatch[i] <= clipLoss)
+            if (plan.plannedDispatch[i] <= clipLoss)
                 projectedGrid -= clipLoss;
             else
-                projectedGrid -= plannedDispatch[i];
+                projectedGrid -= plan.plannedDispatch[i];
         }
-        plannedGridUse.push_back(projectedGrid);
-    }
-
-    // Apply dispatch plan to new grid object, calculate cost
-    UtilityRateForecast dispatchForecast(*rate_forecast);
-    double costOfDispatch = dispatchForecast.forecastCost(plannedGridUse, year, hour_of_year, 0) + cost_to_cycle();
-
-    for (i = 0; i < plannedDispatch.size(); i++)
-    {
-        // Copy from best dispatch plan to _P_battery_use.
-        if (no_dispatch_cost > costOfDispatch)
-            _P_battery_use[i] = plannedDispatch[i];
-        else
-            _P_battery_use[i] = 0.0;
+        plan.plannedGridUse.push_back(projectedGrid);
     }
 }
 
