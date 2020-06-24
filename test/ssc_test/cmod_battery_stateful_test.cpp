@@ -48,26 +48,3 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, TestStep) {
     EXPECT_NEAR(V, 457.93, 1e-2);
     EXPECT_NEAR(SOC, 41.79, 1e-2);
 }
-
-TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, compareSequential) {
-    // make a copy
-    std::string js = ssc_data_to_json(data);
-    auto copy = json_to_ssc_data(js.c_str());
-
-    // without reading state
-    auto t1 = Clock::now();
-    for (size_t i = 0; i < 10000; i++) {
-        ssc_module_exec(mod, data);
-    }
-    auto time_pass = std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - t1).count();
-
-    // run with reading state each step
-    ssc_data_set_number(copy, "run_sequentially", 0);
-    t1 = Clock::now();
-    for (size_t i = 0; i < 10000; i++) {
-        ssc_module_exec(mod, copy);
-    }
-    auto time_read = std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - t1).count();
-
-    EXPECT_GT(time_read, time_pass);
-}
