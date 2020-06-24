@@ -1078,46 +1078,25 @@ bool shading_factor_calculator::use_shade_db()
 	return (m_enTimestep && (m_string_option == 0)); // determine which fbeam function to call
 }
 
-size_t shading_factor_calculator::get_row_index_for_input(size_t hour, size_t hour_step, size_t steps_per_hour)
+size_t shading_factor_calculator::get_row_index_for_input(size_t hour_of_year, size_t minute)
 {
-	// handle different simulation timesteps and shading input timesteps
-	size_t ndx = hour * (size_t)m_steps_per_hour; // m_beam row index for input hour
-	int hr_step = 0;
-	if (steps_per_hour > 0)
-		hr_step = (int)((int)m_steps_per_hour*(int)hour_step/ (int)steps_per_hour);
-	if (hr_step >= m_steps_per_hour) hr_step = m_steps_per_hour - 1;
-	if (hr_step < 0) hr_step = 0;
-	ndx += (size_t)hr_step;
-	return ndx;
-}
-/* month from weather file is 1-12 and day starts at 1 (usually) - seems less reliable than using indices from weather file
-size_t shading_factor_calculator::get_row_index_for_input(size_t month, size_t day, size_t hour, size_t minute)
-{
-	// assume weather file timestamp m,d,h,m
-	// translate to fbeam user input with 8760 * m_steps_per_hour
-	int day_of_year = (int)day - 1;
-	for (int i = 0; i < (int)month - 1 && i < 12; i++)
-		day_of_year += util::days_in_month(i);
-	if (day_of_year < 0) day_of_year = 0;
-	if (day_of_year > 364) day_of_year = 364; // leap year has 366 days, we consider only 365 days for 8760 hours total
-	int hour_of_year = day_of_year * 24 + (int)hour;
-	if (hour_of_year < 0) hour_of_year = 0;
-	if (hour_of_year > 8760) hour_of_year = 8760;
-	size_t ndx = hour * (size_t)m_steps_per_hour; // m_beam row index for input hour
-	int hr_step = (int)(m_steps_per_hour * (int)minute / 60);
-	if (hr_step >= m_steps_per_hour) hr_step = m_steps_per_hour - 1;
-	if (hr_step < 0) hr_step = 0;
-	ndx += (size_t)hr_step;
-	return ndx;
-}
-*/
+	// this function needs to handle different simulation timesteps and timeseries shading input timesteps
+	// therefore, start the row index by multiplying the hour of the year by the number of timesteps per hour in the timeseries shading input
+	size_t ndx = hour_of_year * (size_t)m_steps_per_hour;
 
-bool shading_factor_calculator::fbeam(size_t hour, double solalt, double solazi, size_t hour_step, size_t steps_per_hour)
+	// then figure out how many row indices to add for the subhourly timeseries entries based on the minute stamp
+	ndx += floor((int)minute / (60 / (m_steps_per_hour)));
+
+	return ndx;
+}
+
+
+bool shading_factor_calculator::fbeam(size_t hour_of_year, size_t minute, double solalt, double solazi)
 {
 	bool ok = false;
 	double factor = 1.0;
-	size_t irow = get_row_index_for_input(hour,hour_step,steps_per_hour);
-	if (irow < m_beamFactors.nrows())
+	size_t irow = get_row_index_for_input(hour_of_year, minute);
+	if (irow < m_beamFactors.nrows() && irow >= 0)
 	{
 		factor = m_beamFactors.at(irow, 0);
 		// apply mxh factor
@@ -1135,12 +1114,12 @@ bool shading_factor_calculator::fbeam(size_t hour, double solalt, double solazi,
 }
 
 
-bool shading_factor_calculator::fbeam_shade_db(ShadeDB8_mpp * p_shadedb, size_t hour, double solalt, double solazi, size_t hour_step, size_t steps_per_hour, double gpoa, double dpoa, double pv_cell_temp, int mods_per_str, double str_vmp_stc, double mppt_lo, double mppt_hi)
+bool shading_factor_calculator::fbeam_shade_db(ShadeDB8_mpp * p_shadedb, size_t hour, size_t minute, double solalt, double solazi, double gpoa, double dpoa, double pv_cell_temp, int mods_per_str, double str_vmp_stc, double mppt_lo, double mppt_hi)
 {
 	bool ok = false;
 	double dc_factor = 1.0;
 	double beam_factor = 1.0;
-	size_t irow = get_row_index_for_input(hour, hour_step, steps_per_hour);
+	size_t irow = get_row_index_for_input(hour, minute);
 	if (irow < m_beamFactors.nrows())
 	{
 		std::vector<double> shad_fracs;
@@ -1162,34 +1141,7 @@ bool shading_factor_calculator::fbeam_shade_db(ShadeDB8_mpp * p_shadedb, size_t 
 	return ok;
 }
 
-/*
-bool shading_factor_calculator::fbeam_shade_db(ShadeDB8_mpp* p_shadedb, double solalt, double solazi, size_t month, size_t day, size_t hour, size_t minute, double gpoa, double dpoa, double pv_cell_temp, int mods_per_str, double str_vmp_stc, double mppt_lo, double mppt_hi)
-{
-	bool ok = false;
-	double dc_factor = 1.0;
-	double beam_factor = 1.0;
-	size_t irow = get_row_index_for_input(month, day, hour, minute);
-	if (irow < m_beamFactors.nrows())
-	{
-		std::vector<double> shad_fracs;
-		for (size_t icol = 0; icol < m_beamFactors.ncols(); icol++)
-			shad_fracs.push_back(m_beamFactors.at(irow, icol));
-		dc_factor = 1.0 - p_shadedb->get_shade_loss(gpoa, dpoa, shad_fracs, true, pv_cell_temp, mods_per_str, str_vmp_stc, mppt_lo, mppt_hi);
-		// apply mxh factor
-		if (m_enMxH && (irow < m_mxhFactors.nrows()))
-			beam_factor *= m_mxhFactors(irow, 0);
-		// apply azi alt shading factor
-		if (m_enAzAlt)
-			beam_factor *= util::bilinear(solalt, solazi, m_azaltvals);
 
-		m_dc_shade_factor = dc_factor;
-		m_beam_shade_factor = beam_factor;
-
-		ok = true;
-	}
-	return ok;
-}
-*/
 double shading_factor_calculator::fdiff()
 {
 	return m_diffFactor;

@@ -580,12 +580,14 @@ public:
 			}
 		}
 
-
 		adjustment_factors haf(this, "adjust");
 		if (!haf.setup())
 			throw exec_error("pvwattsv7", "failed to setup adjustment factors: " + haf.error());
 
 		// read all the shading input data and calculate the hourly factors for use subsequently
+		// timeseries beam shading factors cannot be used with non-annual data
+		if (is_assigned("shading:timestep") && !wdprov->annualSimulation())
+			throw exec_error("pvwattsv7", "Timeseries beam shading inputs cannot be used with non-annual simulations.");
 		shading_factor_calculator shad;
 		if (!shad.setup(this, ""))
 			throw exec_error("pvwattsv7", shad.get_error());
@@ -625,6 +627,8 @@ public:
 		size_t nyears = 1;
 		std::vector<double> degradationFactor;
 		if (as_boolean("system_use_lifetime_output")) {
+			if (!wdprov->annualSimulation())
+				throw exec_error("pvwattsv7", "Non-annual simulations cannot be run in lifetime mode. Please set system_use_lifetime_output to 0.");
 			nyears = as_unsigned_long("analysis_period");
 			std::vector<double> dc_degradation = as_vector_double("dc_degradation");
 			if (dc_degradation.size() == 1) {
@@ -826,7 +830,7 @@ public:
 				p_aoi[idx] = (ssc_number_t)aoi;
 
 				double shad_beam = 1.0;
-				if (shad.fbeam(hour_of_year, solalt, solazi, jj, step_per_hour))
+				if (shad.fbeam(hour_of_year, wf.minute, solalt, solazi))
 					shad_beam = shad.beam_shade_factor();
 
 				p_shad_beam[idx] = (ssc_number_t)shad_beam;

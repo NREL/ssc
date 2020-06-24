@@ -448,7 +448,7 @@ public:
 
 				// sub hourly update
 				double beam_loss_factor = 1.0;
-				if (shad.fbeam(hour, solalt, solazi, jj, step_per_hour))
+				if (shad.fbeam(hour, wf.minute, solalt, solazi))
 					beam_loss_factor = shad.beam_shade_factor();
 
 
