@@ -239,10 +239,10 @@ int C_csp_solver::solve_operating_mode(int cr_mode, int pc_mode, C_MEQ__m_dot_te
             if (q_dot_bal_code != 0)
             {
                 // Weird that controller chose Defocus operating mode, so report message and shut down CR and PC
-                error_msg = util::format("At time = %lg the controller chose %s operating mode, but the code"
+                /*error_msg = util::format("At time = %lg the controller chose %s operating mode, but the code"
                     " failed to solve. Controller will shut-down CR and PC",
                     mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str());
-                mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
+                mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);*/
 
                 reset_time(t_ts_initial);
                 return -8;
