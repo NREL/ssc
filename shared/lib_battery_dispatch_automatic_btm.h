@@ -81,7 +81,7 @@ public:
 	void update_dispatch(size_t year, size_t hour_of_year, size_t step, size_t idx);
 
 	/*! Pass in the load forecast */
-	void update_load_data(std::vector<double> P_load_dc);
+	void update_load_data(std::vector<double> P_load_ac);
 
 	/*! Pass in the grid power target vector */
 	void set_target_power(std::vector<double> P_target);
@@ -112,7 +112,7 @@ protected:
 	bool check_new_month(size_t hour_of_year, size_t step);
 
 	/*! Full time-series of loads [kW] */
-	double_vec _P_load_dc;
+	double_vec _P_load_ac;
 
 	/*! Full time-series of target power [kW] */
 	double_vec _P_target_input;

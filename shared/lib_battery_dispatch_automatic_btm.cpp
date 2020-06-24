@@ -81,7 +81,7 @@ void dispatch_automatic_behind_the_meter_t::init_with_pointer(const dispatch_aut
 	grid = tmp->grid;
 
 	// time series data which could be slow to copy. Since this doesn't change, should probably make const and have copy point to common memory
-	_P_load_dc = tmp->_P_load_dc;
+	_P_load_ac = tmp->_P_load_ac;
 	_P_target_use = tmp->_P_target_use;
 	sorted_grid = tmp->sorted_grid;
 
@@ -124,7 +124,7 @@ void dispatch_automatic_behind_the_meter_t::dispatch(size_t year,
     }
 }
 
-void dispatch_automatic_behind_the_meter_t::update_load_data(std::vector<double> P_load_dc){ _P_load_dc = P_load_dc; }
+void dispatch_automatic_behind_the_meter_t::update_load_data(std::vector<double> P_load_ac){ _P_load_ac = P_load_ac; }
 void dispatch_automatic_behind_the_meter_t::set_target_power(std::vector<double> P_target){ _P_target_input = P_target; }
 double dispatch_automatic_behind_the_meter_t::power_grid_target() { return _P_target_current; };
 
@@ -143,10 +143,10 @@ void dispatch_automatic_behind_the_meter_t::setup_rate_forecast()
         size_t step = 0; size_t hour_of_year = 0;
         size_t curr_month = 1;
         double load_during_month = 0.0; double gen_during_month = 0.0; double peak_during_month = 0.0;
-        size_t array_size = std::min(_P_pv_dc.size(), _P_load_dc.size()); // Cover smaller arrays to make testing easier
+        size_t array_size = std::min(_P_pv_ac.size(), _P_load_ac.size()); // Cover smaller arrays to make testing easier
         for (size_t idx = 0; idx < num_recs && idx < array_size; idx++)
         {
-            double grid_power = _P_pv_dc[idx] - _P_load_dc[idx];
+            double grid_power = _P_pv_ac[idx] - _P_load_ac[idx];
             if (grid_power < peak_during_month)
             {
                 peak_during_month = grid_power;
@@ -273,7 +273,7 @@ void dispatch_automatic_behind_the_meter_t::initialize(size_t hour_of_year, size
 	m_batteryPower->powerBatteryTarget = 0;
 
 	// clean up vectors
-    size_t lifetimeMax = _P_pv_dc.size();
+    size_t lifetimeMax = _P_pv_ac.size();
 	for (size_t ii = 0; ii != _num_steps && lifetimeIndex < lifetimeMax; ii++)
 	{
 		grid[ii] = grid_point(0., 0, 0);
@@ -333,11 +333,11 @@ void dispatch_automatic_behind_the_meter_t::sort_grid(FILE *p, bool debug, size_
 		for (size_t step = 0; step != _steps_per_hour; step++)
 		{
             // + is load, - is gen
-			grid[count] = grid_point(_P_load_dc[idx] - _P_pv_dc[idx], hour, step);
+			grid[count] = grid_point(_P_load_ac[idx] - _P_pv_ac[idx], hour, step);
 			sorted_grid[count] = grid[count];
 
 			if (debug)
-				fprintf(p, "%zu\t %.1f\t %.1f\t %.1f\n", count, _P_load_dc[idx], _P_pv_dc[idx], _P_load_dc[idx] - _P_pv_dc[idx]);
+				fprintf(p, "%zu\t %.1f\t %.1f\t %.1f\n", count, _P_load_ac[idx], _P_pv_ac[idx], _P_load_ac[idx] - _P_pv_ac[idx]);
 
 			idx++;
 			count++;
@@ -384,9 +384,9 @@ double dispatch_automatic_behind_the_meter_t::compute_costs(FILE* p, bool debug,
     size_t count = 0;
     for (size_t hour = 0; hour != 24; hour++)
     {
-        for (size_t step = 0; step != _steps_per_hour && idx < _P_load_dc.size(); step++)
+        for (size_t step = 0; step != _steps_per_hour && idx < _P_load_ac.size(); step++)
         {
-            double power = _P_load_dc[idx] - _P_pv_dc[idx];
+            double power = _P_load_ac[idx] - _P_pv_ac[idx];
             // One at a time so we can sort grid points by no-dispatch cost
             std::vector<double> forecast_power = { -power }; // Correct sign convention for cost forecast
             double step_cost = noDispatchForecast->forecastCost(forecast_power, year, (hour_of_year + hour) % 8760, step);
@@ -396,7 +396,7 @@ double dispatch_automatic_behind_the_meter_t::compute_costs(FILE* p, bool debug,
             sorted_grid[count] = grid[count];
 
             if (debug)
-                fprintf(p, "%zu\t %.1f\t %.1f\t %.1f\n", count, _P_load_dc[idx], _P_pv_dc[idx], _P_load_dc[idx] - _P_pv_dc[idx]);
+                fprintf(p, "%zu\t %.1f\t %.1f\t %.1f\n", count, _P_load_ac[idx], _P_pv_ac[idx], _P_load_ac[idx] - _P_pv_ac[idx]);
 
             idx++;
             count++;
@@ -622,9 +622,9 @@ void dispatch_automatic_behind_the_meter_t::cost_based_target_power(FILE* p, boo
                 requiredPower = -requiredEnergy / _dt_hour;
             }
             // If can't grid charge, charge up to maximum PV
-            else if (m_batteryPower->canPVCharge && _P_pv_dc[idx + index] > 0)
+            else if (m_batteryPower->canPVCharge && _P_pv_ac[idx + index] > 0)
             {
-                requiredPower = -_P_pv_dc[idx + index];
+                requiredPower = -_P_pv_ac[idx + index];
             }
 
             check_power_restrictions(requiredPower);
