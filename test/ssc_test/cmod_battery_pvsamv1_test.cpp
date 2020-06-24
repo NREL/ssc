@@ -303,13 +303,13 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelIntegr
 	set_array(data, "load", load_profile_path, 8760); // Load is required for peak shaving controllers
 
 	ssc_number_t expectedEnergy[3] = { 8634, 8637, 8703 };
-	ssc_number_t expectedBatteryChargeEnergy[3] = { 838.3, 807.2, 528.65 };
-	ssc_number_t expectedBatteryDischargeEnergy[3] = { 764.4, 735.4, 484.5 };
+	ssc_number_t expectedBatteryChargeEnergy[3] = { 1412.75, 1414.89, 253.2 };
+	ssc_number_t expectedBatteryDischargeEnergy[3] = { 1283.8, 1285.88, 226.3 };
 
-	ssc_number_t peakKwCharge[3] = { -2.66, -2.66, -2.918 };
-	ssc_number_t peakKwDischarge[3] = { 0.95, 0.952, 1.069 };
-	ssc_number_t peakCycles[3] = { 2, 2, 2 };
-	ssc_number_t avgCycles[3] = { 1.0712, 0.9835, 0.5096 };
+	ssc_number_t peakKwCharge[3] = { -3.21, -2.96, -2.69 };
+	ssc_number_t peakKwDischarge[3] = { 1.40, 1.31, 1.069 };
+	ssc_number_t peakCycles[3] = { 2, 2, 1 };
+	ssc_number_t avgCycles[3] = { 1.0109, 1.0054, 0.4794 };
 
 	// Test peak shaving look ahead, peak shaving look behind, and automated grid power target. Others require additional input data
 	for (int i = 0; i < 3; i++) {

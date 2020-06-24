@@ -2013,6 +2013,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 						//DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
 						sharedInverter->calculateACPower(dcpwr_kw, PVSystem->p_mpptVoltage[0][idx], 0.0);
 						cliploss = sharedInverter->powerClipLoss_kW;
+                        PVSystem->p_systemACPower[idx] = sharedInverter->powerAC_kW;
 					}
 
 					p_invcliploss_full.push_back(static_cast<ssc_number_t>(cliploss));
@@ -2031,8 +2032,10 @@ void cm_pvsamv1::exec( ) throw (general_error)
 	}
 
 	// Initialize DC battery predictive controller
-	if (en_batt && batt_topology == ChargeController::DC_CONNECTED)
-	    batt->initialize_automated_dispatch(util::array_to_vector<ssc_number_t>(PVSystem->p_systemACPower, nlifetime), p_load_full, p_invcliploss_full);
+    if (en_batt && batt_topology == ChargeController::DC_CONNECTED)
+    {
+        batt->initialize_automated_dispatch(util::array_to_vector<ssc_number_t>(PVSystem->p_systemACPower, nlifetime), p_load_full, p_invcliploss_full);
+    }
 
 	/* *********************************************************************************************
 	PV AC calculation
