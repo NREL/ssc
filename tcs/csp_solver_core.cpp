@@ -3963,6 +3963,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 if (mode_code != 0)
                 {
                     m_is_CR_DF__PC_MAX__TES_FULL__AUX_OFF_avail = false;
+                    is_rec_su_allowed = false;
                     are_models_converged = false;
                     break;
                 }
