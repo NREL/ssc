@@ -1022,7 +1022,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 	// hourly adjustment factors
 	adjustment_factors haf(this, "adjust");
 	if (!haf.setup())
-		throw exec_error("pvsamv1", "failed to setup adjustment factors: " + haf.error());
+		throw exec_error("pvsamv1", "failed to setup AC adjustment factors: " + haf.error());
 
     // clipping losses for battery dispatch
 	std::vector<ssc_number_t> p_invcliploss_full;
@@ -1474,7 +1474,10 @@ void cm_pvsamv1::exec( ) throw (general_error)
 					if (radmode == irrad::DN_DF || radmode == irrad::GH_DF) dhi_to_use = (ssc_number_t)wf.df;
 					else dhi_to_use = Irradiance->p_IrradianceCalculated[1][hour * step_per_hour]; // top of hour in first year
 
-					if (ss_exec(Subarrays[nn]->selfShadingInputs, stilt, sazi, solzen, solazi, beam_to_use, dhi_to_use, ibeam, iskydiff, ignddiff, alb, trackbool, linear, shad1xf, Subarrays[nn]->selfShadingOutputs))
+						if (ss_exec(Subarrays[nn]->selfShadingInputs,
+						        stilt, sazi, solzen, solazi, beam_to_use, dhi_to_use, ibeam, iskydiff, ignddiff, alb, trackbool, linear, shad1xf,
+						        Subarrays[nn]->selfShadingSkyDiffTable,
+						        Subarrays[nn]->selfShadingOutputs))
 					{
 
 						if (linear && trackbool) //one-axis linear
@@ -2192,9 +2195,10 @@ void cm_pvsamv1::exec( ) throw (general_error)
 
 			if (iyear == 0 || save_full_lifetime_variables == 1)
 			{
-				PVSystem->p_transformerNoLoadLoss[idx] = xfmr_nll;
-				PVSystem->p_transformerLoadLoss[idx] = xfmr_ll;
-				PVSystem->p_transformerLoss[idx] = xfmr_loss;
+					PVSystem->p_transformerNoLoadLoss[idx] = xfmr_nll/ts_hour;
+					PVSystem->p_transformerLoadLoss[idx] = xfmr_ll/ts_hour;
+					PVSystem->p_transformerLoss[idx] = xfmr_loss/ts_hour;
+				}
 			}
 		}
 

@@ -397,7 +397,7 @@ public:
 			log("Using the wind stow model with non-annual data may result in over-estimation of stow losses because an hour-long timestep will be assumed.", SSC_WARNING);
 		double wstow = std::numeric_limits<double>::quiet_NaN();
 		if (is_assigned("stow_wspd")) wstow = as_double("stow_wspd"); // wind stow speed, m/s.
-		double wind_stow_angle_deg=30; // default is to assume stowing at 30 degrees (set in var_table) for better dynamic torsional stability, despite higher static loading on piles
+		double wind_stow_angle_deg; // default is to assume stowing at 30 degrees (set in var_table) for better dynamic torsional stability, despite higher static loading on piles
 		if (is_assigned("wind_stow_angle")) wind_stow_angle_deg = as_double("wind_stow_angle");
 		// gust factor defined later because it depends on timestep
 
@@ -523,10 +523,9 @@ public:
 
 		pv.gcr = as_double("gcr");
 
+		bool en_self_shading = (pv.type == FIXED_RACK || pv.type == ONE_AXIS || pv.type == ONE_AXIS_BACKTRACKING);
 
-		if (FIXED_RACK == pv.type
-			|| ONE_AXIS == pv.type
-			|| ONE_AXIS_BACKTRACKING == pv.type)
+		if (en_self_shading)
 		{
 			if (pv.gcr < 0.01 || pv.gcr >= 1.0)
 				throw exec_error("pvwattsv7", "invalid gcr for fixed rack or one axis tracking system");
@@ -591,6 +590,10 @@ public:
 		shading_factor_calculator shad;
 		if (!shad.setup(this, ""))
 			throw exec_error("pvwattsv7", shad.get_error());
+		// self-shading initialization
+        sssky_diffuse_table ssSkyDiffuseTable;
+        if (en_self_shading)
+            ssSkyDiffuseTable.init(pv.tilt, pv.gcr);
 
 		weather_header hdr;
 		wdprov->header(&hdr);
@@ -922,7 +925,7 @@ public:
 					double Fgnddiff = 1.0; //shading factor for ground-reflected diffuse, 1 for no shading
 
 
-					if ( pv.type == FIXED_RACK || pv.type == ONE_AXIS || pv.type == ONE_AXIS_BACKTRACKING) //shading applies in each of these three cases- see reference implementation in pvsamv1
+					if (en_self_shading) //shading applies in each of these three cases- see reference implementation in pvsamv1
 						//&& (pv.nrows >= 10) // note that enabling self-shading for small systems might be suspicious
 						// because the intent of the self-shading algorithms used here are to apply to large systems
 						// however, some testing of the self-shading algorithms for smaller systems doesn't reveal any wildly wrong behavior,
@@ -964,6 +967,7 @@ public:
 								pv.type == ONE_AXIS, // is tracking system?
 								module.type == THINFILM,  // is linear shading? (only with long cell thin films)
 								shad1xf,
+                                ssSkyDiffuseTable,
 								ssout))
 						{
 							throw exec_error("pvwattsv7", util::format("Self-shading calculation failed at %d", (int)idx_life));

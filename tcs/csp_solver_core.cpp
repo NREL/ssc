@@ -4070,7 +4070,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				C_MEQ_cr_on__pc_target__tes_empty__T_htf_cold c_eq(this, m_defocus, q_pc_min);
 				C_monotonic_eq_solver c_solver(c_eq);
 
-				c_solver.settings(1.E-3, 50, std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(), false);
+				c_solver.settings(1.E-3, 50, 0.0, std::numeric_limits<double>::quiet_NaN(), false);
 
 				double T_htf_cold_guess_colder = m_T_htf_pc_cold_est;				//[C]
 				double T_htf_cold_guess_warmer = T_htf_cold_guess_colder + 10.0;	//[C]
