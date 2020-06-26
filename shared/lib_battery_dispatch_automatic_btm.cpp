@@ -600,7 +600,7 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(FILE* p, bool
     {
         costAtStep = sorted_grid[i].Cost();
         // In case forecast is testing hours that include negative cost, don't dispatch during those
-        if (costAtStep > 0)
+        if (costAtStep > 1e-7)
         {
             costDuringDispatchHours += sorted_grid[i].Cost();
         }
@@ -609,7 +609,7 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(FILE* p, bool
     for (i = 0; i < (plan.dispatch_hours * _steps_per_hour) && (i < sorted_grid.size()); i++)
     {
         costAtStep = sorted_grid[i].Cost();
-        if (costAtStep > 0)
+        if (costAtStep > 1e-7)
         {
             double costPercent = costAtStep / costDuringDispatchHours;
             double desiredPower = remainingEnergy * costPercent / _dt_hour;
