@@ -22,6 +22,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <string>
 #include "common.h"
+#include "vartab.h"
 #include "lib_weatherfile.h"
 #include "lib_time.h"
 #include "lib_resilience.h"
@@ -1462,4 +1463,29 @@ bool ssc_cmod_update(std::string &log_msg, std::string &progress_msg, void *data
 		cm->log(log_msg, log_type);
 	
 	return cm->update(progress_msg, (float)progress);
+}
+
+scalefactors::scalefactors(var_table* v)
+{
+    vt = v;
+}
+
+std::vector<double> scalefactors::get_factors(const char* name)
+{
+    size_t nyears = vt->as_integer("analysis_period");
+    size_t count, i;
+    std::vector<double> scale_factors(nyears); // TODO analysis period
+    ssc_number_t* parr = vt->as_array(name, &count);
+    if (count == 1)
+    {
+        for (i = 0; i < nyears; i++)
+            scale_factors[i] = (ssc_number_t)pow((double)(1 + parr[0] * 0.01), (double)i);
+    }
+    else
+    {
+        for (i = 0; i < nyears; i++)
+            scale_factors[i] = (ssc_number_t)(1 + parr[i] * 0.01);
+    }
+
+    return scale_factors;
 }

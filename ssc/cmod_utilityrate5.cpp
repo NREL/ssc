@@ -24,6 +24,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "core.h"
 #include "lib_utility_rate_equations.h"
+#include "common.h"
 #include <algorithm>
 #include <sstream>
 
@@ -488,6 +489,8 @@ public:
 
 		size_t nyears = (size_t)as_integer("analysis_period");
 
+        scalefactors scale_calculator(m_vartab);
+
 		// compute annual system output degradation multipliers
 		std::vector<ssc_number_t> sys_scale(nyears);
 
@@ -517,18 +520,7 @@ public:
 
 
 		// compute load (electric demand) annual escalation multipliers
-		std::vector<ssc_number_t> load_scale(nyears);
-		parr = as_array("load_escalation", &count);
-		if (count == 1)
-		{
-			for (i=0;i<nyears;i++)
-				load_scale[i] = (ssc_number_t)pow( (double)(1+parr[0]*0.01), (double)i );
-		}
-		else
-		{
-			for (i=0;i<nyears;i++)
-				load_scale[i] = (ssc_number_t)(1 + parr[i]*0.01);
-		}
+        std::vector<ssc_number_t> load_scale = scale_calculator.get_factors("load_escalation");
 
 		/* Update all e_sys and e_load values based on new inputs
 		grid = gen -load where gen = sys + batt
