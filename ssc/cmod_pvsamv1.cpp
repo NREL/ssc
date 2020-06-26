@@ -23,6 +23,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "cmod_pvsamv1.h"
 #include "lib_pv_io_manager.h"
 #include "lib_resilience.h"
+#include "lib_time.h"
 
 // comment following define if do not want shading database validation outputs
 //#define SHADE_DB_OUTPUTS
@@ -485,7 +486,7 @@ static var_info _cm_vtab_pvsamv1[] = {
     { SSC_INPUT, SSC_NUMBER,   "en_batt",                              "Enable battery storage model",                        "0/1",    "",                                                                                                                                                                                      "BatterySystem",                                               "?=0",                                "",                    "" },
     { SSC_INPUT, SSC_ARRAY,    "load",                                 "Electricity load (year 1)",                           "kW",     "",                                                                                                                                                                                      "Load",                                               "?",                                  "",                    "" },
     { SSC_INPUT, SSC_ARRAY,    "crit_load",                            "Critical Electricity load (year 1)",                  "kW",     "",                                                                                                                                                                                      "Load",                                               "",                                   "",                    "" },
-
+    { SSC_INPUT, SSC_ARRAY,    "load_escalation",                      "Annual load escalation",                              "%/year", "",                                                                                                                                                                                      "Load",                                               "?=0",                                "",                    "" },
 	// NOTE:  other battery storage model inputs and outputs are defined in batt_common.h/batt_common.cpp
 
 	// outputs
@@ -1099,6 +1100,20 @@ void cm_pvsamv1::exec( ) throw (general_error)
 	std::vector<std::vector<double>> dcStringVoltage; // Voltage of string for each subarray
 	double dcPowerNetTotalSystem = 0; //Net DC power in W for the entire system (sum of all subarrays)
 
+    scalefactors scale_calculator(m_vartab);
+    // compute load (electric demand) annual escalation multipliers
+    std::vector<ssc_number_t> load_scale = scale_calculator.get_factors("load_escalation");
+
+    single_year_to_lifetime_interpolated<ssc_number_t>(
+        (bool)as_integer("system_use_lifetime_output"),
+        nyears,
+        nlifetime,
+        p_load_in,
+        load_scale,
+        p_load_full,
+        nrec,
+        ts_hour);
+
 	for (size_t mpptInput = 0; mpptInput < PVSystem->Inverter->nMpptInputs; mpptInput++)
 	{
 		dcPowerNetPerMppt_kW.push_back(0);
@@ -1124,27 +1139,10 @@ void cm_pvsamv1::exec( ) throw (general_error)
 				ireplast = ireport;
 			}
 
-			// only hourly electric load, even
-			// if PV simulation is subhourly.  load is assumed constant over the hour.
-			// if no load profile supplied, load = 0
-			if (nload == 8760)
-				cur_load = p_load_in[hour];
-
 			for (size_t jj = 0; jj < step_per_hour; jj++)
 			{
 				// Reset dcPower calculation for new timestep
 				dcPowerNetTotalSystem = 0;
-
-				// electric load is subhourly
-				// if no load profile supplied, load = 0
-				if (nload == nrec)
-					cur_load = p_load_in[hour*step_per_hour + jj];
-
-				// log cur_load to check both hourly and sub hourly load data
-				// load data over entrie lifetime period not currently supported.
-				//					log(util::format("year=%d, hour=%d, step per hour=%d, load=%g",
-				//						iyear, hour, jj, cur_load), SSC_WARNING, (float)idx);
-				p_load_full.push_back((ssc_number_t)cur_load);
 
 				if (!wdprov->read(&Irradiance->weatherRecord))
 					throw exec_error("pvsamv1", "could not read data line " + util::to_string((int)(idx + 1)) + " in weather file");
