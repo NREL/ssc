@@ -681,8 +681,13 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(FILE* p, bool
         if (plan.plannedDispatch[index] <= 0.0)
         {
             double requiredPower = 0.0;
-            
-            if (m_batteryPower->canPVCharge && _P_pv_ac[idx + index] > 0)
+
+            if (m_batteryPower->canGridCharge)
+            {
+                // If can grid charge, plan to take as much energy as needed
+                requiredPower = -requiredEnergy / _dt_hour;
+            }
+            else if (m_batteryPower->canPVCharge && _P_pv_ac[idx + index] > 0)
             {
                 if (use_peak_pv)
                 {
@@ -692,17 +697,8 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(FILE* p, bool
                 {
                     requiredPower = sorted_grid[i].Grid();
                 }
-                // Don't plan to take more energy than needed
-                if (requiredPower < -requiredEnergy / _dt_hour)
-                {
-                    requiredPower = -requiredEnergy / _dt_hour;
-                }
             }
-            else if (m_batteryPower->canGridCharge)
-            {
-                // If can grid charge, plan to take as much energy as needed
-                requiredPower = -requiredEnergy / _dt_hour;
-            }
+            
 
             if (requiredPower < 0)
             {

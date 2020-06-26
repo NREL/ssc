@@ -222,15 +222,9 @@ struct byLowestMarginalCost
 {
     bool operator() (grid_point const& a, grid_point const& b)
     {
-        if (a.Grid() == 0.0 || b.Grid() == 0)
+        if (fabs(a.Grid()) < 1e-7 || fabs(b.Grid()) < 1e-7)
         {
             // If we'd get a divide by zero error, return based on lower energy use
-            return a.Grid() < b.Grid();
-        }
-
-        // If both costs are zero, sort by amount of PV available
-        if (a.Cost() < 1e-7 && b.Cost() < 1e-7)
-        {
             return a.Grid() < b.Grid();
         }
 
