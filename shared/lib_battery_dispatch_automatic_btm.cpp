@@ -579,7 +579,7 @@ void dispatch_automatic_behind_the_meter_t::cost_based_target_power(FILE* p, boo
     }
     size_t i = 0;
 
-    for (i = 0; i < plans[lowest_endpoint].plannedDispatch.size(); i++)
+    for (i = 0; i < _P_battery_use.size(); i++)
     {
         // Copy from best dispatch plan to _P_battery_use.
         _P_battery_use[i] = plans[lowest_endpoint].plannedDispatch[i];
@@ -613,6 +613,10 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(FILE* p, bool
         {
             double costPercent = costAtStep / costDuringDispatchHours;
             double desiredPower = remainingEnergy * costPercent / _dt_hour;
+            if (desiredPower > sorted_grid[i].Grid())
+            {
+                desiredPower = sorted_grid[i].Grid();
+            }
             // Account for discharging constraints assuming voltage is constant over forecast period
             check_power_restrictions(desiredPower);
 
@@ -649,6 +653,22 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(FILE* p, bool
     // Get peak grid use
     std::sort(sorted_grid.begin(), sorted_grid.end(), byGrid());
     double peakDesiredGridUse = sorted_grid[0].Grid() * 0.9;
+    bool use_peak_pv = true;
+    if (!m_batteryPower->canGridCharge)
+    {
+        double pvOnlyEnergy = 0.0;
+        for (i = 0; i < _num_steps; i++)
+        {
+            if (grid[i].Grid() < 0)
+            {
+                pvOnlyEnergy += grid[i].Grid();
+            }
+        }
+        if (requiredEnergy < -pvOnlyEnergy)
+        {
+            use_peak_pv = false;
+        }
+    }
 
     // Iterating over sorted grid
     std::sort(sorted_grid.begin(), sorted_grid.end(), byLowestMarginalCost());
@@ -657,35 +677,50 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(FILE* p, bool
     while (requiredEnergy > 0 && i < _num_steps)
     {
         int index = sorted_grid[i].Hour() * _steps_per_hour + sorted_grid[i].Step();
-        // Don't plan to charge if we were already planning to discharge
+        // Don't plan to charge if we were already planning to discharge. 0 is no plan, negative is clipped energy
         if (plan.plannedDispatch[index] <= 0.0)
         {
             double requiredPower = 0.0;
-            // If can grid charge, plan to take as much energy as needed
-            if (m_batteryPower->canGridCharge)
+            
+            if (m_batteryPower->canPVCharge && _P_pv_ac[idx + index] > 0)
             {
+                if (use_peak_pv)
+                {
+                    requiredPower = -_P_pv_ac[idx + index];
+                }
+                else if (sorted_grid[i].Grid() < 0)
+                {
+                    requiredPower = sorted_grid[i].Grid();
+                }
+                // Don't plan to take more energy than needed
+                if (requiredPower < -requiredEnergy / _dt_hour)
+                {
+                    requiredPower = -requiredEnergy / _dt_hour;
+                }
+            }
+            else if (m_batteryPower->canGridCharge)
+            {
+                // If can grid charge, plan to take as much energy as needed
                 requiredPower = -requiredEnergy / _dt_hour;
             }
-            // If can't grid charge, charge up to maximum PV
-            else if (m_batteryPower->canPVCharge && _P_pv_ac[idx + index] > 0)
+
+            if (requiredPower < 0)
             {
-                requiredPower = -_P_pv_ac[idx + index];
+                check_power_restrictions(requiredPower);
+                // Restrict to up to 90% of peak grid use to avoid creating new peaks
+                double projectedGrid = sorted_grid[i].Grid() - requiredPower;
+                if (projectedGrid > peakDesiredGridUse)
+                {
+                    requiredPower = -(peakDesiredGridUse - sorted_grid[i].Grid());
+                }
+
+                // Add to existing clipped energy
+                requiredPower += plan.plannedDispatch[index];
+                check_power_restrictions(requiredPower);
+
+                // Clipped energy was already counted once, so subtract that off incase requiredPower + clipped hit a current restriction
+                requiredEnergy += (requiredPower - plan.plannedDispatch[index]) * _dt_hour;
             }
-
-            check_power_restrictions(requiredPower);
-            // Restrict to up to 90% of peak grid use to avoid creating new peaks
-            double projectedGrid = sorted_grid[i].Grid() - requiredPower;
-            if (projectedGrid > peakDesiredGridUse)
-            {
-                requiredPower = -(peakDesiredGridUse - sorted_grid[i].Grid());
-            }
-
-            // Add to existing clipped energy
-            requiredPower += plan.plannedDispatch[index];
-            check_power_restrictions(requiredPower);
-
-            // Clipped energy was already counted once, so subtract that off incase requiredPower + clipped hit a current restriction
-            requiredEnergy += (requiredPower - plan.plannedDispatch[index]) * _dt_hour;
 
             plan.plannedDispatch[index] = requiredPower;
 
@@ -742,12 +777,7 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(FILE* p, bool
             cycleState = 1;
         }
 
-        // Round up a single half cycles to be conservative with the dispatch
-        if (halfCycle && plan.num_cycles == 0)
-        {
-            plan.num_cycles++;
-        }
-
+        // - is load, + is gen for utility rate code
         double projectedGrid = -grid[i].Grid() + plan.plannedDispatch[i];
         // Remove clip loss charging from projected grid use
         if (i + idx < _P_cliploss_dc.size() && plan.plannedDispatch[i] <= 0)

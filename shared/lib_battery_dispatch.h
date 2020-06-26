@@ -228,6 +228,12 @@ struct byLowestMarginalCost
             return a.Grid() < b.Grid();
         }
 
+        // If both costs are zero, sort by amount of PV available
+        if (a.Cost() < 1e-7 && b.Cost() < 1e-7)
+        {
+            return a.Grid() < b.Grid();
+        }
+
         return (a.Cost() / a.Grid()) < (b.Cost() / b.Grid());
     }
 };
