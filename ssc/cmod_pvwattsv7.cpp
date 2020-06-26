@@ -535,6 +535,8 @@ public:
 			// gives a nominal DC voltage of about 420 V DC which seems reasonable
 			pv.nmodperstr = 7;
 			pv.nmodules = ceil(pv.dc_nameplate / module.stc_watts); // estimate of # of modules in system
+			// fails for pv.modules < 1 that is id dc_nameplate < stc_watts
+			if (pv.nmodules < 1) pv.nmodules = 1;
 			pv.nrows = (int)ceil(sqrt(pv.nmodules)); // estimate of # rows, assuming 1 module in each row
 			assign("estimated_rows", var_data((ssc_number_t)pv.nrows));
 
@@ -555,6 +557,8 @@ public:
 			//   If 1 module per Y dimension, nmodx=nrows.
 			//   If 2 module per Y, then nmodx=nrows/2.
 			pv.nmodx = pv.nrows / pv.nmody;
+			// shading calculation fails for pv.nmodx < 1
+			if (pv.nmodx < 1) pv.nmodx = 1;
 			pv.row_spacing = module.length * pv.nmody / pv.gcr;
 		}
 
