@@ -423,6 +423,8 @@ weatherfile::weatherfile(const std::string &file, bool header_only)
 {
 	reset();
 	m_ok = open(file, header_only);
+	if (m_ok)
+        start_hours_at_0();
 }
 
 weatherfile::~weatherfile()
@@ -1604,7 +1606,15 @@ bool weatherfile::read_average(weather_record *r, std::vector<int> &cols, size_t
 
 }
 
-
+void weatherfile::start_hours_at_0() {
+    auto& hours =  m_columns[HOUR].data;
+    auto max_hr = *std::max_element(hours.begin(), hours.end());
+    auto min_hr = *std::min_element(hours.begin(), hours.end());
+    if (max_hr - min_hr != 23)
+        m_message = "Weather file range was not (0-23) or (1-24)";
+    else if (max_hr == 24)
+        for (auto &i : hours) i -= 1.;
+}
 
 bool weatherfile::read( weather_record *r )
 {

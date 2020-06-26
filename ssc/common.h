@@ -153,6 +153,8 @@ class weatherdata : public weather_data_provider
 
 	int name_to_id(const char *name);
 
+    void start_hours_at_0();
+
 public:
 	/* Detects file format, read header information, detects which data columns are available and at what index
 	and read weather record information.

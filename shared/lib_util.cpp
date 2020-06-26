@@ -905,7 +905,8 @@ size_t util::hour_of_year(size_t month, size_t day, size_t hour)
 		h += days_in_months[m] * 24;
 	h += (day - 1) * 24;
 	h += hour;
-	if (h > 8759) h = 8759;
+	if (hour > 8759)
+	    throw std::runtime_error("hour_of_year range is (0-8759) but calculated hour is > 8759.");
 	return h;
 }
 
