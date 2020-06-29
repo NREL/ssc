@@ -2198,7 +2198,6 @@ void cm_pvsamv1::exec( ) throw (general_error)
 					PVSystem->p_transformerNoLoadLoss[idx] = xfmr_nll/ts_hour;
 					PVSystem->p_transformerLoadLoss[idx] = xfmr_ll/ts_hour;
 					PVSystem->p_transformerLoss[idx] = xfmr_loss/ts_hour;
-				}
 			}
 		}
 
@@ -2213,6 +2212,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 				annual_battery_loss = batt->outAnnualEnergyLoss[year_idx];
 			}
 		}
+
 		wdprov->rewind();
 	}
 	process_messages(batt, this);
