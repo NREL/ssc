@@ -168,6 +168,17 @@ public:
 	bool has_data_column(size_t id);
 };
 
+class scalefactors
+{
+public:
+    scalefactors(var_table* v);
+
+    std::vector<double> get_factors(const char* name);
+
+protected:
+    var_table* vt;
+};
+
 bool ssc_cmod_update(std::string &log_msg, std::string &progress_msg, void *data, double progress, int out_type);
 
 #endif
