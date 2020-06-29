@@ -83,14 +83,14 @@ void single_year_to_lifetime_interpolated(
 		// Scale single year interpolated vector to lifetime
 		for (size_t y = 0; y < n_years; y++) {
 			for (size_t i = 0; i < n_rec_single_year; i++) {
-				lifetime_from_singleyear_vector.push_back(singleyear_sampled[i] * scale_factor[y]);
+				lifetime_from_singleyear_vector.push_back(singleyear_sampled[i] * (scale_factor.size() > y ?  scale_factor[y] : 1.0));
 			}
 		}
 	}
 	else if (singleyear_vector.size() == 1) {
         for (size_t y = 0; y < n_years; y++) {
             for (size_t i = 0; i < n_rec_single_year; i++) {
-	            lifetime_from_singleyear_vector.push_back(singleyear_vector[0] * scale_factor[y]);
+	            lifetime_from_singleyear_vector.push_back(singleyear_vector[0] * (scale_factor.size() > y ? scale_factor[y] : 1.0));
             }
         }
 	}
