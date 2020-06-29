@@ -1091,7 +1091,7 @@ size_t shading_factor_calculator::get_row_index_for_input(size_t hour_of_year, s
 }
 
 
-bool shading_factor_calculator::fbeam(size_t hour_of_year, size_t minute, double solalt, double solazi)
+bool shading_factor_calculator::fbeam(size_t hour_of_year, double minute, double solalt, double solazi)
 {
 	bool ok = false;
 	double factor = 1.0;
@@ -1114,7 +1114,7 @@ bool shading_factor_calculator::fbeam(size_t hour_of_year, size_t minute, double
 }
 
 
-bool shading_factor_calculator::fbeam_shade_db(ShadeDB8_mpp * p_shadedb, size_t hour, size_t minute, double solalt, double solazi, double gpoa, double dpoa, double pv_cell_temp, int mods_per_str, double str_vmp_stc, double mppt_lo, double mppt_hi)
+bool shading_factor_calculator::fbeam_shade_db(ShadeDB8_mpp * p_shadedb, size_t hour, double minute, double solalt, double solazi, double gpoa, double dpoa, double pv_cell_temp, int mods_per_str, double str_vmp_stc, double mppt_lo, double mppt_hi)
 {
 	bool ok = false;
 	double dc_factor = 1.0;
@@ -1309,6 +1309,14 @@ weatherdata::weatherdata( var_data *data_table )
 			if ( i < day.len ) r->day = (int)day.p[i];
 			if ( i < hour.len ) r->hour = (int)hour.p[i];
 			if ( i < minute.len ) r->minute = minute.p[i];
+
+			// minute column must go from 0-59, NOT 1-60!
+			if (minute.p[i] > 60)
+			{
+				m_message = "minute column must contain integers from 0-59";
+				m_ok = false;
+				return;
+			}
 
 			r->gh = r->dn = r->df = r->poa = r->wspd = r->wdir = r->tdry = r->twet = r->tdew
 				= r->rhum = r->pres = r->snow = r->alb = r->aod = std::numeric_limits<double>::quiet_NaN();

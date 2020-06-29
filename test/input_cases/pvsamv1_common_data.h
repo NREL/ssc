@@ -12,6 +12,7 @@ char target_power_path[256];
 char sell_rate_path[256];
 char subarray1_shading[256];
 char subarray2_shading[256];
+char solar_resource_path_15min_fail[256];
 
 int n1 = sprintf(solar_resource_path, "%s/test/input_cases/pvsamv1_data/USA AZ Phoenix (TMY2).csv", SSCDIR);
 int n2 = sprintf(load_profile_path, "%s/test/input_cases/pvsamv1_data/pvsamv1_residential_load.csv", SSCDIR);
@@ -20,6 +21,7 @@ int n4 = sprintf(sell_rate_path, "%s/test/input_cases/pvsamv1_data/pvsamv1_ur_ts
 int n5 = sprintf(solar_resource_path_15_min, "%s/test/input_cases/pvsamv1_data/LosAngeles_WeatherFile_15min.csv", SSCDIR);
 int n6 = sprintf(subarray1_shading, "%s/test/input_cases/pvsamv1_data/subarray1_shading_timestep.csv", SSCDIR);
 int n7 = sprintf(subarray2_shading, "%s/test/input_cases/pvsamv1_data/subarray2_shading_timestep.csv", SSCDIR);
+int n8 = sprintf(solar_resource_path_15min_fail, "%s/test/input_cases/pvsamv1_data/LosAngeles_WeatherFile_15min_timestamp_fail.csv", SSCDIR);
 
 
 /**

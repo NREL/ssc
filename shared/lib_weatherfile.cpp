@@ -1364,6 +1364,13 @@ bool weatherfile::open(const std::string &file, bool header_only)
 					n_leap_data_removed++;
 					continue;
 				}
+
+				if (m_columns[MINUTE].data[i] > 59)
+				{
+					m_message = "minute column must contain integers from 0-59";
+					return false;
+				}
+
 				else
 					break;
 			}
@@ -1611,7 +1618,7 @@ void weatherfile::start_hours_at_0() {
     auto max_hr = *std::max_element(hours.begin(), hours.end());
     auto min_hr = *std::min_element(hours.begin(), hours.end());
     if (max_hr - min_hr != 23)
-        m_message = "Weather file range was not (0-23) or (1-24)";
+        m_message = "Weather file hour range was not (0-23) or (1-24)";
     else if (max_hr == 24)
         for (auto &i : hours) i -= 1.;
 }

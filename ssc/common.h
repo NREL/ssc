@@ -129,9 +129,9 @@ public:
 	bool use_shade_db();
 
 	// beam and diffuse loss factors (0: full loss, 1: no loss )
-	bool fbeam(size_t hour_of_year, size_t minute, double solalt, double solazi);
+	bool fbeam(size_t hour_of_year, double minute, double solalt, double solazi);
 	// shading database instantiated once outside of shading factor calculator
-	bool fbeam_shade_db(ShadeDB8_mpp * p_shadedb, size_t hour, size_t minute, double solalt, double solazi, double gpoa = 0.0, double dpoa = 0.0, double pv_cell_temp = 0.0, int mods_per_str = 0, double str_vmp_stc = 0.0, double mppt_lo = 0.0, double mppt_hi = 0.0);
+	bool fbeam_shade_db(ShadeDB8_mpp * p_shadedb, size_t hour, double minute, double solalt, double solazi, double gpoa = 0.0, double dpoa = 0.0, double pv_cell_temp = 0.0, int mods_per_str = 0, double str_vmp_stc = 0.0, double mppt_lo = 0.0, double mppt_hi = 0.0);
 	double fdiff();
 
 	double beam_shade_factor();
