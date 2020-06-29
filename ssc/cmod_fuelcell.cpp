@@ -31,7 +31,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 var_info vtab_fuelcell_input[] = {
 	/*   VARTYPE           DATATYPE         NAME                               LABEL                                    UNITS      META                   GROUP                  REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	// simulation inputs
-	{ SSC_INOUT,        SSC_NUMBER,      "percent_complete",                  "Estimated simulation status",           "%",       "",                                      "",        "",                      "",                                 "" },
+	// { SSC_INOUT,        SSC_NUMBER,      "percent_complete",                  "Estimated simulation status",           "%",       "",                                      "",        "",                      "",                                 "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",        "Lifetime simulation",                   "0/1",     "0=SingleYearRepeated,1=RunEveryYear",   "Lifetime",        "?=0",                   "BOOLEAN",                          "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                   "Lifetime analysis period",              "years",   "The number of years in the simulation", "Lifetime",        "system_use_lifetime_output=1","",                           "" },
 
@@ -210,7 +210,7 @@ void cm_fuelcell::exec()
 	double nameplate = nameplate_in + (fcVars->unitPowerMax_kW * fcVars->numberOfUnits);
 	assign("capacity_factor", var_data(static_cast<ssc_number_t>(annual_energy * util::fraction_to_percent / (nameplate * 8760.))));
 	assign("annual_energy", var_data(static_cast<ssc_number_t>(annual_energy)));
-	assign("percent_complete", var_data((ssc_number_t)percent));
+	// assign("percent_complete", var_data((ssc_number_t)percent));
 
 	// Ratio of MMBtu to MWh to get cash flow calculation correct (fuel costs in $/MMBtu)
 	assign("system_heat_rate", var_data((ssc_number_t)BTU_PER_KWH / 1000));
