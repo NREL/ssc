@@ -128,6 +128,8 @@ void cm_grid::exec() throw (general_error)
         load_year_one = as_vector_double("load");
     }
 
+
+    /* Does nothing since "load_escalation" not an input to this compute module
     scalefactors scale_calculator(m_vartab);
 
     // compute load (electric demand) annual escalation multipliers
@@ -135,13 +137,13 @@ void cm_grid::exec() throw (general_error)
     if (is_assigned("load_escalation")) {
         load_scale = scale_calculator.get_factors("load_escalation");
     }
-
+    */
     single_year_to_lifetime_interpolated<double>(
         system_use_lifetime_output,
         analysis_period,
         n_rec_lifetime,
         load_year_one,
-        load_scale,
+        scaleFactors,
         gridVars->loadLifetime_kW,
         n_rec_single_year,
         gridVars->dt_hour_gen);
