@@ -1020,13 +1020,13 @@ void cm_pvsamv1::exec( ) throw (general_error)
 
 	std::vector<ssc_number_t> p_pv_clipping_forecast;
 	std::vector<ssc_number_t> p_pv_dc_forecast;
-	std::vector<ssc_number_t> p_pv_dc_use;
+	std::vector<ssc_number_t> p_pv_ac_use;
 
 	if (is_assigned("batt_pv_clipping_forecast")) {
 		p_pv_clipping_forecast = as_vector_ssc_number_t("batt_pv_clipping_forecast");
 	}
-	if (is_assigned("batt_pv_dc_forecast")) {
-		p_pv_dc_forecast = as_vector_ssc_number_t("batt_pv_dc_forecast");
+	if (is_assigned("batt_pv_ac_forecast")) {
+		p_pv_dc_forecast = as_vector_ssc_number_t("batt_pv_ac_forecast");
 	}
 
 
@@ -2001,19 +2001,21 @@ void cm_pvsamv1::exec( ) throw (general_error)
 					double cliploss = 0;
 					double dcpwr_kw = PVSystem->p_systemDCPower[idx];
 
+                    //DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
+                    sharedInverter->calculateACPower(dcpwr_kw, PVSystem->p_mpptVoltage[0][idx], 0.0);
+                    PVSystem->p_systemACPower[idx] = sharedInverter->powerAC_kW;
+
+                    double pv_ac_kw = sharedInverter->powerAC_kW;
 					if (p_pv_dc_forecast.size() > 1 && p_pv_dc_forecast.size() > idx % (8760 * step_per_hour)) {
-						dcpwr_kw = p_pv_dc_forecast[idx % (8760 * step_per_hour)];
+                        pv_ac_kw = p_pv_dc_forecast[idx % (8760 * step_per_hour)];
 					}
-					p_pv_dc_use.push_back(static_cast<ssc_number_t>(dcpwr_kw));
+					p_pv_ac_use.push_back(static_cast<ssc_number_t>(pv_ac_kw));
 
 					if (p_pv_clipping_forecast.size() > 1 && p_pv_clipping_forecast.size() > idx % (8760 * step_per_hour)) {
 						cliploss = p_pv_clipping_forecast[idx % (8760 * step_per_hour)] * util::kilowatt_to_watt;
 					}
 					else {
-						//DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
-						sharedInverter->calculateACPower(dcpwr_kw, PVSystem->p_mpptVoltage[0][idx], 0.0);
 						cliploss = sharedInverter->powerClipLoss_kW;
-                        PVSystem->p_systemACPower[idx] = sharedInverter->powerAC_kW;
 					}
 
 					p_invcliploss_full.push_back(static_cast<ssc_number_t>(cliploss));
@@ -2034,7 +2036,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 	// Initialize DC battery predictive controller
     if (en_batt && batt_topology == ChargeController::DC_CONNECTED)
     {
-        batt->initialize_automated_dispatch(util::array_to_vector<ssc_number_t>(PVSystem->p_systemACPower, nlifetime), p_load_full, p_invcliploss_full);
+        batt->initialize_automated_dispatch(p_pv_ac_use, p_load_full, p_invcliploss_full);
     }
 
 	/* *********************************************************************************************
