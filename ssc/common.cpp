@@ -1470,19 +1470,35 @@ scalefactors::scalefactors(var_table* v)
     vt = v;
 }
 
+// TODO: add a boolean for factoring in inflation when adding new financial models
 std::vector<double> scalefactors::get_factors(const char* name)
 {
-    size_t nyears = vt->as_integer("analysis_period");
+    size_t nyears = 1;
+    if (vt->is_assigned("analysis_period"))
+    {
+        nyears = vt->as_integer("analysis_period");
+    }
     size_t count, i;
-    std::vector<double> scale_factors(nyears); // TODO analysis period
+    std::vector<double> scale_factors(nyears);
     ssc_number_t* parr = vt->as_array(name, &count);
-    if (count == 1)
+    if (count < 1)
+    {
+        for (i = 0; i < nyears; i++)
+            scale_factors[i] = (ssc_number_t)1.0;
+    }
+    else if (count < 2)
     {
         for (i = 0; i < nyears; i++)
             scale_factors[i] = (ssc_number_t)pow((double)(1 + parr[0] * 0.01), (double)i);
     }
     else
     {
+        if (count != nyears)
+        {
+            std::ostringstream ss;
+            ss << "Expected length of " << name << " to be " << nyears << " found " << count << " entries";
+            throw general_error(ss.str());
+        }
         for (i = 0; i < nyears; i++)
             scale_factors[i] = (ssc_number_t)(1 + parr[i] * 0.01);
     }
