@@ -631,10 +631,6 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(FILE* p, bool
     }
 
     double requiredEnergy = E_max - remainingEnergy;
-    if (requiredEnergy + startingEnergy < E_max / 2.0)
-    {
-        requiredEnergy = E_max / 2.0;
-    }
 
     // Iterating over hours
     // Apply clipped energy first, if available
@@ -686,12 +682,7 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(FILE* p, bool
         {
             double requiredPower = 0.0;
 
-            if (m_batteryPower->canGridCharge)
-            {
-                // If can grid charge, plan to take as much energy as needed
-                requiredPower = -requiredEnergy / _dt_hour;
-            }
-            else if (m_batteryPower->canPVCharge && _P_pv_ac[idx + index] > 0)
+            if (m_batteryPower->canPVCharge && _P_pv_ac[idx + index] > 0)
             {
                 if (use_peak_pv)
                 {
@@ -701,6 +692,12 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(FILE* p, bool
                 {
                     requiredPower = sorted_grid[i].Grid();
                 }
+            }
+            // Taking more energy than the PV has available can mess with the cost estimates
+            else if (m_batteryPower->canGridCharge)
+            {
+                // If can grid charge, plan to take as much energy as needed
+                requiredPower = -requiredEnergy / _dt_hour;
             }
             
 
