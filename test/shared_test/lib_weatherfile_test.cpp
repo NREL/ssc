@@ -205,7 +205,7 @@ protected:
 
 TEST_F(Data8760CaseWeatherData, initTest_lib_weatherfile){
 	weatherdata wd(input);
-	EXPECT_FALSE(wd.has_message()) << "Error message was found:" << wd.message();
+	EXPECT_TRUE(wd.has_message()) << "Error message was found:" << wd.message(); //should return message about hour range being incorrect
 	EXPECT_EQ(wd.header().lat, 1) << "Latitude?";
 	EXPECT_EQ(wd.header().lon, 2) << "Longitude?";
 	EXPECT_EQ(wd.get_counter_value(), 0) << "Counter at beginning";
