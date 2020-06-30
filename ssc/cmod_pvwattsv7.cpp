@@ -725,13 +725,16 @@ public:
 				size_t hour_of_year = util::hour_of_year(wf.month, wf.day, wf.hour);
 
 #define NSTATUS_UPDATES 50  // set this to the number of times a progress update should be issued for the simulation
-				if (idx % (nrec / NSTATUS_UPDATES) == 0)
+				if (nrec > 50) //avoid divide by zero problems in the following if statement- probably don't need a lot of updates otherwise
 				{
-					percent = 100.0f * ((float)idx_life + 1) / ((float)nlifetime ); //3 is the number of technologies we're assuming for this output (pvwatts + fuel cell + battery)
-					// check percentage
-					if (percent > 100.0f) percent = 99.0f;
-					if (!update("", percent, (float)hour_of_year))
-						throw exec_error("pvwattsv7", "simulation canceled at hour " + util::to_string(hour_of_year + 1.0));
+					if (idx % (nrec / NSTATUS_UPDATES) == 0)
+					{
+						percent = 100.0f * ((float)idx_life + 1) / ((float)nlifetime); //3 is the number of technologies we're assuming for this output (pvwatts + fuel cell + battery)
+						// check percentage
+						if (percent > 100.0f) percent = 99.0f;
+						if (!update("", percent, (float)hour_of_year))
+							throw exec_error("pvwattsv7", "simulation canceled at hour " + util::to_string(hour_of_year + 1.0));
+					}
 				}
 
 				bool tracker_stowing = false;
