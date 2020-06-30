@@ -228,6 +228,11 @@ struct byLowestMarginalCost
             return a.Grid() < b.Grid();
         }
 
+        if (fabs(a.Cost()) < 1e-7 && fabs(b.Cost() < 1e-7))
+        {
+            return a.Grid() < b.Grid();
+        }
+
         return (a.Cost() / a.Grid()) < (b.Cost() / b.Grid());
     }
 };

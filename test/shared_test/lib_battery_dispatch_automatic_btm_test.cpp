@@ -353,3 +353,46 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, TestSummerPeak) {
         EXPECT_NEAR(batteryPower->powerBatteryDC, expectedPower[h], 0.5) << " error in expected at hour " << h;
     }
 }
+
+TEST_F(AutoBTMTest_lib_battery_dispatch, TestCommercialPeakForecasting) {
+    double dtHour = 1;
+    CreateBattery(dtHour);
+    util_rate = new rate_data();
+    set_up_default_commercial_rate_data(*util_rate);
+
+    dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice,
+        max_current,
+        max_current, max_power, max_power, max_power, max_power,
+        0, dispatch_t::BTM_MODES::FORECAST, 0, 1, 24, 1, true,
+        true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost);
+
+    load_prediction = { 49.9898, 42.4037, 42.1935, 43.3778, 39.4545, 59.3723, 84.6907, 180.423, 180.836, 186.225, 197.275, 205.302, 231.362,
+                        240.712, 249.681, 263.722, 249.91, 188.621, 173.452, 134.803, 121.631, 56.1207, 57.5053, 50.6343, 49.1768, 44.4999, 44.3999, 
+                        44.3927, 42.8778, 61.4139, 86.7599, 186.891, 190.837, 198.747, 207.645, 211.838, 241.774, 262.163, 268.742, 274.231, 262.211,
+                        199.747, 178.862, 145.017, 122.382, 55.8128, 58.1977, 51.3724, 48.2751, 42.5604, 39.8775, 38.8493, 38.2728, 62.2958, 66.9385,
+                        99.3759, 111.364, 120.912, 129.247, 133.878, 135.635, 106.555, 114.328, 119.437, 104.461, 50.5622, 47.9985, 60.8511, 54.6621,
+                        49.8308, 46.5466, 46.981  };
+
+    pv_prediction = { -0.0544127, -0.0544127, -0.0544127, -0.0544127, -0.0544127, -0.0544127, 0.660882, 12.559, 49.7136,  91.8535, 127.144, 152.689,
+                    169.057, 173.287, 166.498, 149.011, 121.686, 85.1714, 44.2784, 11.3531, -0.0544127, -0.0544127, -0.0544127, -0.0544127, -0.0544127,
+                -0.0544127, -0.0544127, -0.0544127, -0.0544127, -0.0544127, 0.684759, 12.9444, 49.138, 90.4215, 123.972, 146.219, 159.256, 165.567,
+                161.568, 149.301, 123.484, 87.7486, 45.423, 9.46763, -0.0544127, -0.0544127, -0.0544127, -0.0544127, -0.0544127, -0.0544127, -0.0544127,
+                -0.0544127, -0.0544127, -0.0544127, 0.775864, 12.2175, 50.052, 90.8638, 123.436, 147.375, 145.671, 168.646, 164.069, 148.132, 121.686,
+                85.7045, 44.54, 10.726, -0.0544127, -0.0544127, -0.0544127, -0.0544127 };
+
+    dispatchAutoBTM->update_load_data(load_prediction);
+    dispatchAutoBTM->update_pv_data(pv_prediction);
+    dispatchAutoBTM->setup_rate_forecast();
+
+    batteryPower = dispatchAutoBTM->getBatteryPower();
+    batteryPower->connectionMode = ChargeController::AC_CONNECTED;
+
+    std::vector<double> expectedPower = { 1.50, 0, 0, 0, 0, 0, 1.6397, 0, 0, 0, 0, -0.058, -0.0054, 0, 0, 0.884, 1.5645, 2.3757, 3.3688,
+                                         4.122, 3.366, 0, 0, 0, 0 };
+    for (size_t h = 0; h < 24; h++) {
+        batteryPower->powerPV = pv_prediction[h]; // Match the predicted PV
+        batteryPower->powerLoad = load_prediction[h]; // Match the predicted load
+        dispatchAutoBTM->dispatch(0, h, 0);
+        EXPECT_NEAR(batteryPower->powerBatteryDC, expectedPower[h], 0.5) << " error in expected at hour " << h;
+    }
+}

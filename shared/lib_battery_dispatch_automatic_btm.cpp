@@ -652,23 +652,7 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(FILE* p, bool
     }
     // Get peak grid use
     std::sort(sorted_grid.begin(), sorted_grid.end(), byGrid());
-    double peakDesiredGridUse = sorted_grid[0].Grid() * 0.9;
-    bool use_peak_pv = true;
-    if (!m_batteryPower->canGridCharge)
-    {
-        double pvOnlyEnergy = 0.0;
-        for (i = 0; i < _num_steps; i++)
-        {
-            if (grid[i].Grid() < 0)
-            {
-                pvOnlyEnergy += grid[i].Grid();
-            }
-        }
-        if (requiredEnergy < -pvOnlyEnergy)
-        {
-            use_peak_pv = false;
-        }
-    }
+    double peakDesiredGridUse = sorted_grid[_num_steps / 4].Grid();
 
     // Iterating over sorted grid
     std::sort(sorted_grid.begin(), sorted_grid.end(), byLowestMarginalCost());
@@ -684,7 +668,8 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(FILE* p, bool
 
             if (m_batteryPower->canPVCharge && _P_pv_ac[idx + index] > 0)
             {
-                if (use_peak_pv)
+                // Taking more energy than the PV has available can mess with the cost estimates
+                if (m_batteryPower->canGridCharge)
                 {
                     requiredPower = -_P_pv_ac[idx + index];
                 }
@@ -693,7 +678,6 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(FILE* p, bool
                     requiredPower = sorted_grid[i].Grid();
                 }
             }
-            // Taking more energy than the PV has available can mess with the cost estimates
             else if (m_batteryPower->canGridCharge)
             {
                 // If can grid charge, plan to take as much energy as needed
