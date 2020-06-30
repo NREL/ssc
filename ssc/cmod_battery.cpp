@@ -1483,6 +1483,7 @@ static var_info _cm_vtab_battery[] = {
         { SSC_INOUT,        SSC_ARRAY,       "gen",										  "System power generated",                                  "kW",         "",                     "System Output",                             "",                       "",                               "" },
         { SSC_INPUT,		SSC_ARRAY,	     "load",			                              "Electricity load (year 1)",                               "kW",	        "",				        "Load",                             "",	                      "",	                            "" },
         { SSC_INPUT,		SSC_ARRAY,	     "crit_load",			                      "Critical electricity load (year 1)",                      "kW",	        "",				        "Load",                             "",	                      "",	                            "" },
+        { SSC_INPUT,        SSC_ARRAY,       "load_escalation",                            "Annual load escalation",                                  "%/year",     "",                     "Load",                             "?=0",                    "",                               "" },
         { SSC_INOUT,        SSC_NUMBER,      "capacity_factor",                            "Capacity factor",                                         "%",          "",                     "System Output",                             "?=0",                    "",                               "" },
         { SSC_INOUT,        SSC_NUMBER,      "annual_energy",                              "Annual Energy",                                           "kWh",        "",                     "System Output",                      "?=0",                    "",                               "" },
 
@@ -1518,11 +1519,18 @@ public:
                 load_year_one = as_vector_ssc_number_t("load");
             }
 
+            size_t analysis_period = (size_t)as_integer("analysis_period");
+
+            scalefactors scale_calculator(m_vartab);
+            // compute load (electric demand) annual escalation multipliers
+            std::vector<ssc_number_t> load_scale = scale_calculator.get_factors("load_escalation");
+
             single_year_to_lifetime_interpolated<ssc_number_t>(
                     (bool)as_integer("system_use_lifetime_output"),
-                    (size_t)as_integer("analysis_period"),
+                    analysis_period,
                     n_rec_lifetime,
                     load_year_one,
+                    load_scale,
                     load_lifetime,
                     n_rec_single_year,
                     dt_hour_gen);

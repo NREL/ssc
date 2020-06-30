@@ -517,7 +517,9 @@ void C_csp_solver::init()
 
     m_is_cr_config_recirc = true;
 
-
+    // Value helps solver get out of T_field_htf_cold iteration when weird conditions cause the solution to be a very cold value
+    // Should update with technology-specific htf freeze protection values
+    m_T_field_cold_limit = -100.0;      //[C]
 
 
 	if( mc_collector_receiver.m_is_sensible_htf != mc_power_cycle.m_is_sensible_htf )
@@ -842,7 +844,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			T_htf_hot_cr_on = m_cycle_T_htf_hot_des - 273.15;	//[C]
 
 		// Get TES operating state info at end of last time step
-		double q_dot_tes_dc, q_dot_tes_ch;
+		double q_dot_tes_dc, q_dot_tes_ch;      //[MWt]
 		q_dot_tes_dc = q_dot_tes_ch = std::numeric_limits<double>::quiet_NaN();
 		double m_dot_tes_dc_est, m_dot_tes_ch_est;
 		if (m_is_tes)
@@ -863,6 +865,15 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			q_dot_tes_dc = q_dot_tes_ch = 0.0;
 			m_dot_tes_dc_est = m_dot_tes_ch_est = 0.0;
 		}
+
+        // Check that there is enough discharge energy to operate cycle for a 'reasonable' fraction of the timestep
+        double t_q_dot_min = fmax(0.05*mc_kernel.mc_sim_info.ms_ts.m_step, m_step_tolerance);   //[s]
+        if (q_dot_tes_dc * mc_kernel.mc_sim_info.ms_ts.m_step < m_cycle_q_dot_des * t_q_dot_min)
+        {
+            q_dot_tes_dc = 0.0;     //[s
+        }
+
+
 
 		// Can add the following code to simulate with no storage charge/discharge, but IDLE calcs
 		//q_dot_tes_dc = q_dot_tes_ch = 0.0;
@@ -1297,7 +1308,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
 					}
 				}
-				else if( q_dot_tes_dc && is_pc_su_allowed &&
+				else if( q_dot_tes_dc > 0.0 && is_pc_su_allowed &&
 					m_is_CR_OFF__PC_SU__TES_DC__AUX_OFF_avail )
 				{	// Can power cycle startup using TES?
 
@@ -3567,6 +3578,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 if (mode_code != 0)
                 {
                     m_is_CR_DF__PC_MAX__TES_FULL__AUX_OFF_avail = false;
+                    is_rec_su_allowed = false;
                     are_models_converged = false;
                     break;
                 }

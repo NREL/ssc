@@ -6,14 +6,14 @@ VPATH = ../ssc
 MYARCH=darwin-x86_64
 
 # Default NDK installation location for Android Studio 2.3
-NDK = /Users/imacuser/Library/Android/sdk/ndk/21.0.6113669
+NDK = /Users/imacuser/Library/Android/sdk/ndk/21.3.6528147
 
 #target sdk version 
-PLATFORMVER=android-28
+PLATFORMVER=android-23
 
-TARGET_API=28
+TARGET_API=23
 #min sdk version
-API=16 
+
 
 #
 TOOLCHAIN=${NDK}/toolchains/llvm/prebuilt/darwin-x86_64
