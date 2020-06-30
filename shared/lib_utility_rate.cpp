@@ -390,6 +390,8 @@ void UtilityRateForecast::initializeMonth(int month, int year)
 
 void UtilityRateForecast::copyTOUForecast()
 {
+    current_buy_rates.clear();
+    current_sell_rates.clear();
 	std::copy(next_buy_rates.begin(), next_buy_rates.end(), std::back_inserter(current_buy_rates));
 	std::copy(next_sell_rates.begin(), next_sell_rates.end(), std::back_inserter(current_sell_rates));
 }

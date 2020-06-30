@@ -60,6 +60,16 @@ public:
         int numberOfInverters = 40;
         m_sharedInverter = new SharedInverter(SharedInverter::SANDIA_INVERTER, numberOfInverters, sandia, partload, ond);
     }
+
+    void CreateResidentialBattery(double dtHour)
+    {
+        n_strings = 9;
+        CreateBattery(dtHour);
+        delete m_sharedInverter;
+        int numberOfInverters = 1;
+        m_sharedInverter = new SharedInverter(SharedInverter::SANDIA_INVERTER, numberOfInverters, sandia, partload, ond);
+    }
+
     void TearDown()
     {
         BatteryProperties::TearDown();
