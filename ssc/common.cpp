@@ -1471,6 +1471,7 @@ scalefactors::scalefactors(var_table* v)
 }
 
 // TODO: add a boolean for factoring in inflation when adding new financial models
+// Assumes "name" is an input array of percentages with length that may be zero (invalid), 1 (value), >1 (schedule that may or may not be the same length of analysis period)
 std::vector<double> scalefactors::get_factors(const char* name)
 {
     size_t nyears = 1;
@@ -1478,30 +1479,22 @@ std::vector<double> scalefactors::get_factors(const char* name)
     {
         nyears = vt->as_integer("analysis_period");
     }
-    size_t count, i;
-    std::vector<double> scale_factors(nyears);
-    ssc_number_t* parr = vt->as_array(name, &count);
-    if (count < 1)
-    {
-        for (i = 0; i < nyears; i++)
-            scale_factors[i] = (ssc_number_t)1.0;
-    }
-    else if (count < 2)
-    {
-        for (i = 0; i < nyears; i++)
-            scale_factors[i] = (ssc_number_t)pow((double)(1 + parr[0] * 0.01), (double)i);
-    }
-    else
-    {
-        if (count != nyears)
-        {
-            std::ostringstream ss;
-            ss << "Expected length of " << name << " to be " << nyears << " found " << count << " entries";
-            throw general_error(ss.str());
+    std::vector<double> scale_factors(nyears,1.0);
+    if (vt->is_assigned(name)) {
+        size_t count, i;
+        ssc_number_t* parr = vt->as_array(name, &count);
+        if (count < 1) {
+            for (i = 0; i < nyears; i++)
+                scale_factors[i] = (ssc_number_t)1.0;
         }
-        for (i = 0; i < nyears; i++)
-            scale_factors[i] = (ssc_number_t)(1 + parr[i] * 0.01);
+        else if (count < 2) {
+            for (i = 0; i < nyears; i++)
+                scale_factors[i] = (ssc_number_t)pow((double)(1 + parr[0] * 0.01), (double)i);
+        }
+        else {
+            for (i = 0; i < nyears && i < count; i++)
+                scale_factors[i] = (ssc_number_t)(1 + parr[i] * 0.01);
+        }
     }
-
     return scale_factors;
 }
