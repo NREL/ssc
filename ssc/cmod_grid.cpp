@@ -40,6 +40,7 @@ var_info vtab_grid_input[] = {
 	// external compute module inputs
 	{ SSC_INOUT,        SSC_ARRAY,       "gen",								  "System power generated",                "kW",        "Lifetime system generation",          "System Output",                  "",                        "",                              "" },
 	{ SSC_INPUT,		SSC_ARRAY,	     "load",			                  "Electricity load (year 1)",             "kW",	    "",                                    "Load",	                       "",	                      "",	                           "" },
+    { SSC_INPUT,        SSC_ARRAY,       "load_escalation",                   "Annual load escalation",                "%/year",    "",                                    "Load",                        "?=0",                      "",                            "" },
 
 var_info_invalid };
 
@@ -131,7 +132,7 @@ void cm_grid::exec() throw (general_error)
     scalefactors scale_calculator(m_vartab);
 
     // compute load (electric demand) annual escalation multipliers
-    std::vector<ssc_number_t> load_scale;
+    std::vector<ssc_number_t> load_scale(analysis_period, 1.0);
     if (is_assigned("load_escalation")) {
         load_scale = scale_calculator.get_factors("load_escalation");
     }
