@@ -1178,6 +1178,8 @@ void commercial_multiarray_default(ssc_data_t& data) {
 	ssc_data_set_number(data, "batt_dispatch_auto_can_fuelcellcharge", 0);
 	ssc_data_set_number(data, "batt_dispatch_auto_can_gridcharge", 0);
 	ssc_data_set_number(data, "batt_dispatch_auto_can_charge", 1);
+    ssc_data_set_number(data, "batt_cycle_cost_choice", 0);
+    ssc_data_set_number(data, "batt_cycle_cost", 0.10000000000000001);
 }
 
 // Run pvsam1 with battery enabled and a PPA agreement. Set up data elsewhere to allow adjustment of dispatch mode and similar

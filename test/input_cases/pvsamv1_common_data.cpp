@@ -470,6 +470,8 @@ void battery_data_default(ssc_data_t& data) {
 	ssc_data_set_array(data, "batt_target_power_monthly", p_batt_target_power_monthly, 12);
 	ssc_data_set_number(data, "batt_target_choice", 0);
 	ssc_data_set_number(data, "batt_dispatch_choice", 3);
+    ssc_data_set_number(data, "batt_cycle_cost_choice", 0);
+    ssc_data_set_number(data, "batt_cycle_cost", 0.10000000000000001);
 }
 
 /**

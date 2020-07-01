@@ -166,7 +166,7 @@ var_info vtab_battery_inputs[] = {
 
         // Utility rate inputs
         { SSC_INOUT,        SSC_NUMBER,     "en_electricity_rates",                        "Enable Electricity Rates",                                "0/1",     "0=EnableElectricityRates,1=NoRates",    "Electricity Rates",   "",                                   "",                             "" },
-        { SSC_INPUT, SSC_NUMBER, "inflation_rate", "Inflation rate", "%", "", "Lifetime", "*", "MIN=-99", "" },
+        { SSC_INPUT, SSC_NUMBER, "inflation_rate", "Inflation rate", "%", "", "Lifetime", "?=0", "MIN=-99", "" },
 
         { SSC_INPUT, SSC_ARRAY, "load_escalation", "Annual load escalation", "%/year", "", "Load", "?=0", "", "" },
         { SSC_INPUT,        SSC_ARRAY,      "rate_escalation",          "Annual electricity rate escalation",  "%/year", "",                      "Electricity Rates",             "?=0",                       "",                              "" },
@@ -185,12 +185,12 @@ var_info vtab_battery_inputs[] = {
         { SSC_INPUT, SSC_ARRAY, "ur_ts_buy_rate", "Time step buy rates", "0/1", "", "Electricity Rates", "", "", "" },
 
         // Energy Charge Inputs
-        { SSC_INPUT, SSC_MATRIX, "ur_ec_sched_weekday", "Energy charge weekday schedule", "", "12x24", "Electricity Rates", "*", "", "" },
-        { SSC_INPUT, SSC_MATRIX, "ur_ec_sched_weekend", "Energy charge weekend schedule", "", "12x24", "Electricity Rates", "*", "", "" },
+        { SSC_INPUT, SSC_MATRIX, "ur_ec_sched_weekday", "Energy charge weekday schedule", "", "12x24", "Electricity Rates", "en_batt=1&batt_meter_position=0&batt_dispatch_choice=5", "", "" },
+        { SSC_INPUT, SSC_MATRIX, "ur_ec_sched_weekend", "Energy charge weekend schedule", "", "12x24", "Electricity Rates", "en_batt=1&batt_meter_position=0&batt_dispatch_choice=5", "", "" },
 
         // ur_ec_tou_mat has 6 columns period, tier, max usage, max usage units, buy rate, sell rate
         // replaces 12(P)*6(T)*(max usage+buy+sell) = 216 single inputs
-        { SSC_INPUT, SSC_MATRIX, "ur_ec_tou_mat", "Energy rates table", "", "", "Electricity Rates", "*", "", "" },
+        { SSC_INPUT, SSC_MATRIX, "ur_ec_tou_mat", "Energy rates table", "", "", "Electricity Rates", "en_batt=1&batt_meter_position=0&batt_dispatch_choice=5", "", "" },
 
        // Demand Charge Inputs
         { SSC_INPUT,        SSC_NUMBER,     "ur_dc_enable",            "Enable demand charge",        "0/1",    "",                      "Electricity Rates",             "?=0",                       "BOOLEAN",                       "" },
