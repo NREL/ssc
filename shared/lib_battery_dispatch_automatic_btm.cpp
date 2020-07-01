@@ -666,24 +666,21 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(FILE* p, bool
         {
             double requiredPower = 0.0;
 
-            if (m_batteryPower->canPVCharge && _P_pv_ac[idx + index] > 0)
+            if (m_batteryPower->canGridCharge)
             {
-                // Taking more energy than the PV has available can mess with the cost estimates
-                if (m_batteryPower->canGridCharge)
+                // If can grid charge, plan to take as much energy as needed
+                if (_P_pv_ac[idx + index] > 0)
                 {
                     requiredPower = -_P_pv_ac[idx + index];
                 }
-                else if (sorted_grid[i].Grid() < 0)
-                {
-                    requiredPower = sorted_grid[i].Grid();
+                else {
+                    requiredPower = -requiredEnergy / _dt_hour;
                 }
             }
-            else if (m_batteryPower->canGridCharge)
+            else if (m_batteryPower->canPVCharge && sorted_grid[i].Grid() < 0)
             {
-                // If can grid charge, plan to take as much energy as needed
-                requiredPower = -requiredEnergy / _dt_hour;
+                requiredPower = sorted_grid[i].Grid();
             }
-            
 
             if (requiredPower < 0)
             {
