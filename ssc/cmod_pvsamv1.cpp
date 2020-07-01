@@ -1020,14 +1020,14 @@ void cm_pvsamv1::exec( ) throw (general_error)
 		throw exec_error("pvsamv1", "The PVYield inverter model does not currently accept multiple MPPT inputs.");
 
 	std::vector<ssc_number_t> p_pv_clipping_forecast;
-	std::vector<ssc_number_t> p_pv_dc_forecast;
+	std::vector<ssc_number_t> p_pv_ac_forecast;
 	std::vector<ssc_number_t> p_pv_ac_use;
 
 	if (is_assigned("batt_pv_clipping_forecast")) {
 		p_pv_clipping_forecast = as_vector_ssc_number_t("batt_pv_clipping_forecast");
 	}
 	if (is_assigned("batt_pv_ac_forecast")) {
-		p_pv_dc_forecast = as_vector_ssc_number_t("batt_pv_ac_forecast");
+		p_pv_ac_forecast = as_vector_ssc_number_t("batt_pv_ac_forecast");
 	}
 
 
@@ -2004,8 +2004,8 @@ void cm_pvsamv1::exec( ) throw (general_error)
                     PVSystem->p_systemACPower[idx] = sharedInverter->powerAC_kW;
 
                     double pv_ac_kw = sharedInverter->powerAC_kW;
-					if (p_pv_dc_forecast.size() > 1 && p_pv_dc_forecast.size() > idx % (8760 * step_per_hour)) {
-                        pv_ac_kw = p_pv_dc_forecast[idx % (8760 * step_per_hour)];
+					if (p_pv_ac_forecast.size() > 1 && p_pv_ac_forecast.size() > idx % (8760 * step_per_hour)) {
+                        pv_ac_kw = p_pv_ac_forecast[idx % (8760 * step_per_hour)];
 					}
 					p_pv_ac_use.push_back(static_cast<ssc_number_t>(pv_ac_kw));
 
