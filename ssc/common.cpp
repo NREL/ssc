@@ -1492,7 +1492,13 @@ std::vector<double> scalefactors::get_factors(const char* name)
                 scale_factors[i] = (ssc_number_t)pow((double)(1 + parr[0] * 0.01), (double)i);
         }
         else {
-            for (i = 0; i < nyears && i < count; i++)
+            if (count < nyears)
+            {
+                std::ostringstream ss;
+                ss << "Expected length of " << name << " to be " << nyears << " found " << count << " entries";
+                throw general_error(ss.str());
+            }
+            for (i = 0; i < nyears; i++)
                 scale_factors[i] = (ssc_number_t)(1 + parr[i] * 0.01);
         }
     }
