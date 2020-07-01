@@ -657,6 +657,16 @@ double battery_t::getNumReplacementYear() {
     return state->replacement->n_replacements;
 }
 
+double battery_t::getReplacementPercent()
+{
+    if (params->replacement->replacement_option == params->replacement->CAPACITY_PERCENT)
+    {
+        return (params->replacement->replacement_capacity / 100.0);
+    }
+
+    return 0.0;
+}
+
 void battery_t::changeSOCLimits(double min, double max) {
     capacity->change_SOC_limits(min, max);
 }

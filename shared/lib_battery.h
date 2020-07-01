@@ -312,6 +312,9 @@ public:
 
     double getNumReplacementYear();
 
+    // Returns the % replacement if on a capacity schedule. Returns 0 for "none" or "calendar"
+    double getReplacementPercent();
+
     // Run all for single time step, updating all component model states and return the dispatched power [kW]
     double run(size_t lifetimeIndex, double &I, bool stateful = false);
 

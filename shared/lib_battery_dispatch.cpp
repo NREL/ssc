@@ -725,7 +725,8 @@ void dispatch_automatic_t::costToCycle()
     if (m_battCycleCostChoice == dispatch_t::MODEL_CYCLE_COST)
     {
         double capacityPercentDamagePerCycle = _Battery->estimateCycleDamage();
-        m_cycleCost = 0.01 * capacityPercentDamagePerCycle * m_battReplacementCostPerKWH * m_battOriginalKWH;
+        double replacementPercent = (1 - _Battery->getReplacementPercent());
+        m_cycleCost = 0.01 * capacityPercentDamagePerCycle * m_battReplacementCostPerKWH * m_battOriginalKWH / replacementPercent;
     }
 }
 

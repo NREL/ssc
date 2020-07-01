@@ -540,49 +540,41 @@ void dispatch_automatic_behind_the_meter_t::target_power(FILE*p, bool debug, dou
 void dispatch_automatic_behind_the_meter_t::cost_based_target_power(FILE* p, bool debug, size_t idx, size_t year, size_t hour_of_year, double no_dispatch_cost, double E_max)
 {
     double startingEnergy = compute_available_energy(p, debug);
-    std::vector<dispatch_plan> plans(3);
+    std::vector<dispatch_plan> plans(_num_steps / _steps_per_hour / 2);
     
     plans[0].dispatch_hours = 0;
     plans[0].plannedDispatch.resize(_num_steps);
     plans[0].cost = no_dispatch_cost;
 
-    plans[2].dispatch_hours = 12;
-    plans[2].plannedDispatch.resize(_num_steps);
-    plan_dispatch_for_cost(p, debug, plans[2], idx, E_max, startingEnergy);
-    // Apply dispatch plan to new grid object, calculate cost
-    UtilityRateForecast fullDispatchForecast(*rate_forecast);
-    plans[2].cost = fullDispatchForecast.forecastCost(plans[2].plannedGridUse, year, hour_of_year, 0) + cost_to_cycle() * plans[2].num_cycles;
+    double lowest_cost = no_dispatch_cost;
+    int lowest_index = 0;
 
-    int lowest_endpoint = plans[0].cost < plans[2].cost ? 0 : 2;
-
-    plans[1].dispatch_hours = 6;
-    plans[1].plannedDispatch.resize(_num_steps);
-    bool hours_remaining = true;
-    while (hours_remaining)
+    for (int i = 1; i < plans.size(); i++)
     {
-        plans[1].plannedGridUse.clear();
-        for (int i = 0; i < plans[1].plannedDispatch.size(); i++)
+        plans[i].dispatch_hours = i;
+        plans[i].plannedDispatch.resize(_num_steps);
+        plans[i].plannedGridUse.clear();
+        for (int j = 0; j < plans[i].plannedDispatch.size(); j++)
         {
-            plans[1].plannedDispatch[i] = 0;
+            plans[i].plannedDispatch[j] = 0;
         }
-        plans[1].num_cycles = 0;
-        plan_dispatch_for_cost(p, debug, plans[1], idx, E_max, startingEnergy);
+        plans[i].num_cycles = 0;
+        plan_dispatch_for_cost(p, debug, plans[i], idx, E_max, startingEnergy);
         UtilityRateForecast midDispatchForecast(*rate_forecast);
-        plans[1].cost = midDispatchForecast.forecastCost(plans[1].plannedGridUse, year, hour_of_year, 0) + cost_to_cycle() * plans[1].num_cycles;
+        plans[i].cost = midDispatchForecast.forecastCost(plans[i].plannedGridUse, year, hour_of_year, 0) + cost_to_cycle() * plans[i].num_cycles;
 
-        int update_point = lowest_endpoint == 0 ? 2 : 0;
-        plans[update_point] = plans[1];
-
-        lowest_endpoint = plans[0].cost < plans[2].cost ? 0 : 2;
-        plans[1].dispatch_hours = (plans[0].dispatch_hours + plans[2].dispatch_hours) / 2; // Rounds down by definition. Is this ok?
-        hours_remaining = !(plans[1].dispatch_hours == plans[0].dispatch_hours || plans[1].dispatch_hours == plans[2].dispatch_hours);
+        if (plans[i].cost < lowest_cost)
+        {
+            lowest_index = i;
+            lowest_cost = plans[i].cost;
+        }
     }
     size_t i = 0;
 
     for (i = 0; i < _P_battery_use.size(); i++)
     {
         // Copy from best dispatch plan to _P_battery_use.
-        _P_battery_use[i] = plans[lowest_endpoint].plannedDispatch[i];
+        _P_battery_use[i] = plans[lowest_index].plannedDispatch[i];
     }
 }
 
