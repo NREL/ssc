@@ -164,7 +164,7 @@ UtilityRateForecast::UtilityRateForecast(UtilityRateForecast& tmp) :
 
 UtilityRateForecast::~UtilityRateForecast() {}
 
-double UtilityRateForecast::forecastCost(std::vector<double> predicted_loads, size_t year, size_t hour_of_year, size_t step)
+double UtilityRateForecast::forecastCost(std::vector<double>& predicted_loads, size_t year, size_t hour_of_year, size_t step)
 {
 	double cost = 0;
 	int month = util::month_of(hour_of_year) - 1;
@@ -409,7 +409,7 @@ void UtilityRateForecast::restartMonth(int prevMonth, int currentMonth, int year
     }
 }
 
-double UtilityRateForecast::getEnergyChargeNetMetering(int month, std::vector<double> buy_rates, std::vector<double> sell_rates, bool crossing_month)
+double UtilityRateForecast::getEnergyChargeNetMetering(int month, std::vector<double>& buy_rates, std::vector<double>& sell_rates, bool crossing_month)
 {
     double cost = 0;
     ur_month& curr_month = rate->m_month[month];

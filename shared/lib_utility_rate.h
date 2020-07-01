@@ -96,7 +96,7 @@ public:
 	~UtilityRateForecast();
 
 	// initialize first month prior to calling this function
-	double forecastCost(std::vector<double> predicted_loads, size_t year, size_t hour_of_year, size_t step);
+	double forecastCost(std::vector<double>& predicted_loads, size_t year, size_t hour_of_year, size_t step);
 
 	void copyTOUForecast();
 	void initializeMonth(int month, int year);
@@ -112,7 +112,7 @@ protected:
 
 	void restartMonth(int prevMonth, int currentMonth, int year);
 
-    double getEnergyChargeNetMetering(int month, std::vector<double> buy_rates, std::vector<double> sell_rates, bool crossing_month);
+    double getEnergyChargeNetMetering(int month, std::vector<double>& buy_rates, std::vector<double>& sell_rates, bool crossing_month);
     double getEnergyChargeNetBilling(double energy, int year_one_index, int current_month, bool use_next_month);
 
 	std::shared_ptr<rate_data> rate;
