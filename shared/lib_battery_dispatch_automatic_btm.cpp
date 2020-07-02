@@ -642,9 +642,9 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(FILE* p, bool
             }
         }
     }
-    // Get peak grid use
+    // Get 25th percential grid use
     std::sort(sorted_grid.begin(), sorted_grid.end(), byGrid());
-    double peakDesiredGridUse = sorted_grid[_num_steps / 4].Grid();
+    double peakDesiredGridUse = sorted_grid[_num_steps / 4].Grid() > 0 ? sorted_grid[_num_steps / 2].Grid() : 0.0;
 
     // Iterating over sorted grid
     std::sort(sorted_grid.begin(), sorted_grid.end(), byLowestMarginalCost());
@@ -677,11 +677,12 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(FILE* p, bool
             if (requiredPower < 0)
             {
                 check_power_restrictions(requiredPower);
-                // Restrict to up to 90% of peak grid use to avoid creating new peaks
+                // Restrict to up to 25th percentile grid use to avoid creating new peaks
                 double projectedGrid = sorted_grid[i].Grid() - requiredPower;
                 if (projectedGrid > peakDesiredGridUse)
                 {
                     requiredPower = -(peakDesiredGridUse - sorted_grid[i].Grid());
+                    requiredPower = requiredPower < 0.0 ? requiredPower : 0.0;
                 }
 
                 // Add to existing clipped energy

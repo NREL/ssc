@@ -196,7 +196,10 @@ double UtilityRateForecast::forecastCost(std::vector<double>& predicted_loads, s
 	if (crossing_month)
 	{
         initializeMonth(month_at_end, year_at_end);
-		previousPeak += rate->get_demand_charge(month_at_end, year_at_end);
+        if (n > 1)
+        {
+            previousPeak += rate->get_demand_charge(month_at_end, year_at_end);
+        }
 	}
 
     double newEnergyCharge = 0;
@@ -246,7 +249,7 @@ double UtilityRateForecast::forecastCost(std::vector<double>& predicted_loads, s
 
 	// Compute new peak cost - may need to run two months
 	double newPeak = rate->get_demand_charge(month, year);
-	if (crossing_month)
+	if (crossing_month && n > 1)
 	{
 		newPeak += rate->get_demand_charge(month_at_end, year_at_end);
         if (rate->enable_nm)
@@ -257,6 +260,13 @@ double UtilityRateForecast::forecastCost(std::vector<double>& predicted_loads, s
     else if(rate->enable_nm)
     {
         newEnergyCharge += getEnergyChargeNetMetering(month, current_buy_rates, current_sell_rates, false);
+    }
+
+    // If forecast length is 1, restartMonth won't be triggered on the next forecast. Trigger it now
+    if (crossing_month && n == 1)
+    {
+        restartMonth(month, month_at_end, year_at_end);
+        copyTOUForecast();
     }
 
 	cost += newPeak + newEnergyCharge - previousPeak - previousEnergyCharge;
