@@ -327,14 +327,13 @@ TEST_F(ResilienceTest_lib_resilience, VoltageVanadium){
     volt.updateVoltage(cap.q0(), cap.qmax(), cap.I(), 33, 1);
     double v = volt.cell_voltage();
 
-
-    double req_cur = volt.calculate_current_for_target_w(-5, 3.3, 11, temp.T_battery());
+    double req_cur = volt.calculate_current_for_target_w(-5, 3.3, 11, 306.25);
     cap.updateCapacity(req_cur, 1);
     volt.updateVoltage(cap.q0(), cap.qmax(), cap.I(), 33, 1);
     v = volt.cell_voltage();
     EXPECT_NEAR(req_cur * v, -5, 1e-2);
 
-    req_cur = volt.calculate_current_for_target_w(5, cap.q0(), cap.qmax(), temp.T_battery());
+    req_cur = volt.calculate_current_for_target_w(5, cap.q0(), cap.qmax(), 306.25);
     cap.updateCapacity(req_cur, 1);
     volt.updateVoltage(cap.q0(), cap.qmax(), cap.I(), 33, 1);
     v = volt.cell_voltage();
