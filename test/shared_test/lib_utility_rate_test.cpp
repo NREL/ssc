@@ -311,7 +311,7 @@ TEST(lib_utility_rate_test, test_net_metering_multiple_tou_periods)
     int hour_of_year = 10; // 10 am on Jan 1st, tou rates kick over at noon
     double cost = rate_forecast.forecastCost(forecast, 0, hour_of_year, 0);
 
-    ASSERT_NEAR(13.55, cost, 0.01);
+    ASSERT_NEAR(17.75, cost, 0.01);
 
     hour_of_year += 4;
 
@@ -365,7 +365,7 @@ TEST(lib_utility_rate_test, test_net_metering_end_of_month_cashout)
     int hour_of_year = 742; // 10 pm on Jan 31st
     double cost = rate_forecast.forecastCost(forecast, 0, hour_of_year, 0);
 
-    ASSERT_NEAR(13.55, cost, 0.01);
+    ASSERT_NEAR(17.75, cost, 0.01);
 }
 
 TEST(lib_utility_rate_test, test_net_metering_end_of_month_charges)
@@ -388,7 +388,7 @@ TEST(lib_utility_rate_test, test_net_metering_end_of_month_charges)
     int hour_of_year = 742; // 10 pm on Jan 31st
     double cost = rate_forecast.forecastCost(forecast, 0, hour_of_year, 0);
 
-    ASSERT_NEAR(13.55, cost, 0.01);
+    ASSERT_NEAR(17.75, cost, 0.01);
 }
 
 TEST(lib_utility_rate_test, test_net_metering_charges_crossing_year)
@@ -404,14 +404,14 @@ TEST(lib_utility_rate_test, test_net_metering_charges_crossing_year)
     UtilityRateForecast rate_forecast(&data, steps_per_hour, monthly_load_forecast, monthly_gen_forecast, monthly_peak_forecast, 2);
 
     // - is load
-    std::vector<double> forecast = { -25, 25, 50, -25, -25 }; // Cash out credits at end of year, get charged for Jan at escalated rate (inflation)
+    std::vector<double> forecast = { -25, 25, 50, -25, -25 }; // Get charged for Jan at escalated rate (inflation)
     rate_forecast.initializeMonth(11, 0);
     rate_forecast.copyTOUForecast();
 
     int hour_of_year = 8757; // 9 pm on Dec 31st
     double cost = rate_forecast.forecastCost(forecast, 0, hour_of_year, 0);
 
-    ASSERT_NEAR(4.66, cost, 0.01);
+    ASSERT_NEAR(6.06, cost, 0.01);
 }
 
 TEST(lib_utility_rate_test, test_net_metering_charges_crossing_year_other_cash_out_month)
@@ -458,14 +458,14 @@ TEST(lib_utility_rate_test, test_multiple_forecast_calls)
     int hour_of_year = 1; // 1 am on Jan 1st
     double cost = rate_forecast.forecastCost(forecast, 0, hour_of_year, 0);
 
-    ASSERT_NEAR(-2.8, cost, 0.001);
+    ASSERT_NEAR(0.0, cost, 0.001);
 
     hour_of_year += 4;
 
     std::vector<double> second_forecast = { -100, 25, 25, 25 };
     cost = rate_forecast.forecastCost(second_forecast, 0, hour_of_year, 0);
 
-    ASSERT_NEAR(0.7, cost, 0.001); // Accounts for using up credits from previous period. Buy rate is not used due to net generation
+    ASSERT_NEAR(0.0, cost, 0.001); // Buy rate is not used due to net generation
 }
 
 TEST(lib_utility_rate_test, test_one_at_a_time_vs_full_vector)
@@ -525,7 +525,7 @@ TEST(lib_utility_rate_test, test_one_at_a_time_vs_full_vector_nm_credits)
     int hour_of_year = 741; // 9 pm on Jan 31st
     double cost = rate_forecast.forecastCost(forecast, 0, hour_of_year, 0);
 
-    ASSERT_NEAR(9.04, cost, 0.02);
+    ASSERT_NEAR(11.83, cost, 0.02);
 
     cost = 0;
     for (int i = 0; i < forecast.size(); i++)
@@ -534,7 +534,7 @@ TEST(lib_utility_rate_test, test_one_at_a_time_vs_full_vector_nm_credits)
         cost += forecast_copy.forecastCost(single_forecast, 0, hour_of_year + i, 0);
     }
 
-    ASSERT_NEAR(9.04, cost, 0.02);
+    ASSERT_NEAR(11.83, cost, 0.02);
 }
 
 TEST(lib_utility_rate_test, test_end_of_analyis_period)

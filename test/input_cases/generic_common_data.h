@@ -479,6 +479,8 @@ void generic_commerical_battery_60min(ssc_data_t &data)
 	ssc_data_set_array(data, "batt_replacement_schedule", p_batt_replacement_schedule, 1);
 	ssc_number_t p_replacement_cost[1] = { 600 };
 	ssc_data_set_array(data, "om_replacement_cost1", p_replacement_cost, 1);
+    ssc_data_set_number(data, "batt_cycle_cost_choice", 0);
+    ssc_data_set_number(data, "batt_cycle_cost", 0.10000000000000001);
 	ssc_data_set_number(data, "batt_mass", 507.8046875);
 	ssc_data_set_number(data, "batt_surface_area", 2.05);
 	ssc_data_set_number(data, "batt_Cp", 1000);

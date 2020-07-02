@@ -174,7 +174,7 @@ double UtilityRateForecast::forecastCost(std::vector<double>& predicted_loads, s
 
 	// Determine if this forecast crosses a month
 	size_t index_at_end = util::yearOneIndex(dt_hour, lifeTimeIndex + n);
-	int month_at_end = util::month_of(index_at_end) - 1;
+	int month_at_end = util::month_of(index_at_end / steps_per_hour) - 1;
 
 	bool crossing_month = month != month_at_end;
 	int year_at_end = year;
@@ -332,7 +332,7 @@ void UtilityRateForecast::compute_next_composite_tou(int month, int year)
 		{
 			bool done = false;
 			double periodSellRate = 0;
-            // Including the NM credits in the cost function can skew the price signals, causing periods to appear to have higher cost than they actually do
+            // Including the NM credits in the cost function can skew the price signals, causing periods to appear to have higher cost than they actually do. Assume $0 sell rate for NM
             if (!rate->nm_credits_w_rollover)
             {
                 for (size_t ic = 0; ic < curr_month.ec_tou_ub.ncols() && !done; ic++)
@@ -363,7 +363,7 @@ void UtilityRateForecast::compute_next_composite_tou(int month, int year)
 		for (size_t ir = 0; ir < num_per; ir++)
 		{
             double periodSellRate = 0; 
-            // Including the NM credits in the cost function can skew the price signals, causing periods to appear to have higher cost than they actually do
+            // Including the NM credits in the cost function can skew the price signals, causing periods to appear to have higher cost than they actually do. Assume $0 sell rate for NM
             if (!rate->nm_credits_w_rollover)
             {
                 periodSellRate = curr_month.ec_tou_sr.at(ir, 0)* rate_esc;

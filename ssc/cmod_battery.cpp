@@ -421,26 +421,6 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             // Front of meter
             if (batt_vars->batt_meter_position == dispatch_t::FRONT)
             {
-//
-//				size_t count_ppa_price_input;
-//				ssc_number_t* ppa_price = cm.as_array("ppa_price_input", &count_ppa_price_input);
-//
-////				double ppa_price = cm.as_double("ppa_price_input");
-//				int ppa_multiplier_mode = cm.as_integer("ppa_multiplier_model");
-//
-//				if (ppa_multiplier_mode == 0) {
-//					batt_vars->forecast_price_series_dollar_per_kwh = flatten_diurnal(
-//						cm.as_matrix_unsigned_long("dispatch_sched_weekday"),
-//						cm.as_matrix_unsigned_long("dispatch_sched_weekend"),
-//						step_per_hour,
-//						cm.as_vector_double("dispatch_tod_factors"), ppa_price[0]);
-//				}
-//				else {
-//					batt_vars->forecast_price_series_dollar_per_kwh = cm.as_vector_double("dispatch_factors_ts");
-//					for (size_t i = 0; i < batt_vars->forecast_price_series_dollar_per_kwh.size(); i++) {
-//						batt_vars->forecast_price_series_dollar_per_kwh[i] *= ppa_price[0];
-//					}
-//				}
                 forecast_price_signal fps(&vt);
                 fps.setup(8760 * step_per_hour);
                 batt_vars->forecast_price_series_dollar_per_kwh = fps.forecast_price();
@@ -489,7 +469,12 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             else
             {
                 // For automated behind the meter with electricity rates
-                batt_vars->ec_rate_defined = true; // BTM will always have a rate, right?
+                batt_vars->ec_rate_defined = false;
+                if (vt.is_assigned("ur_ec_tou_mat")) // Some tests don't have this assigned, ensure it is before setting up forecast rate
+                {
+                    batt_vars->ec_rate_defined = true;
+                }
+                    
 
                 if (batt_vars->batt_dispatch == dispatch_t::MAINTAIN_TARGET)
                 {
