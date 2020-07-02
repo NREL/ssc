@@ -332,11 +332,8 @@ void UtilityRateForecast::compute_next_composite_tou(int month, int year)
 		{
 			bool done = false;
 			double periodSellRate = 0;
-            if (rate->nm_credits_w_rollover)
-            {
-                periodSellRate = rate->nm_credit_sell_rate * rate_esc;
-            }
-            else
+            // Including the NM credits in the cost function can skew the price signals, causing periods to appear to have higher cost than they actually do
+            if (!rate->nm_credits_w_rollover)
             {
                 for (size_t ic = 0; ic < curr_month.ec_tou_ub.ncols() && !done; ic++)
                 {
@@ -366,11 +363,8 @@ void UtilityRateForecast::compute_next_composite_tou(int month, int year)
 		for (size_t ir = 0; ir < num_per; ir++)
 		{
             double periodSellRate = 0; 
-            if (rate->nm_credits_w_rollover)
-            {
-                periodSellRate = rate->nm_credit_sell_rate * rate_esc;
-            }
-            else
+            // Including the NM credits in the cost function can skew the price signals, causing periods to appear to have higher cost than they actually do
+            if (!rate->nm_credits_w_rollover)
             {
                 periodSellRate = curr_month.ec_tou_sr.at(ir, 0)* rate_esc;
             }
