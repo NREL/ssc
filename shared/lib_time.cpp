@@ -12,6 +12,7 @@
 * \param[in] n_years (1 - 100)
 * \param[in] n_lifetime (length of desired lifetime vector)
 * \param[in] singleyear_vector (the single year vector to scale to lifetime and interpolate)
+* \param[in] scale_factor (scaling factors for years 2 through n, must be length n prior to calling this function)
 * \param[out] lifetime_from_singleyear_vector (the lifetime, interpolated vector)
 * \param[out] n_rec_single_year (the length of a single year vector, interpolated at the lifetime vector timescale)
 * \param[out] dt_hour (the time step in hours)
@@ -22,6 +23,7 @@ void single_year_to_lifetime_interpolated(
 	size_t n_years,
 	size_t n_rec_lifetime,
 	std::vector<T> singleyear_vector,
+	std::vector<T> scale_factor,
 	std::vector<T> &lifetime_from_singleyear_vector,
 	size_t &n_rec_single_year,
 	double &dt_hour)
@@ -81,18 +83,21 @@ void single_year_to_lifetime_interpolated(
 		// Scale single year interpolated vector to lifetime
 		for (size_t y = 0; y < n_years; y++) {
 			for (size_t i = 0; i < n_rec_single_year; i++) {
-				lifetime_from_singleyear_vector.push_back(singleyear_sampled[i]);
+				lifetime_from_singleyear_vector.push_back(singleyear_sampled[i] * scale_factor[y]);
 			}
 		}
 	}
 	else if (singleyear_vector.size() == 1) {
-	    for (size_t i = 0; i < n_rec_lifetime; i++)
-	        lifetime_from_singleyear_vector.push_back(singleyear_vector[0]);
+        for (size_t y = 0; y < n_years; y++) {
+            for (size_t i = 0; i < n_rec_single_year; i++) {
+	            lifetime_from_singleyear_vector.push_back(singleyear_vector[0] * scale_factor[y]);
+            }
+        }
 	}
 }
 
-template void single_year_to_lifetime_interpolated<double>(bool, size_t, size_t,std::vector<double>, std::vector<double> &, size_t &, double &);
-template void single_year_to_lifetime_interpolated<float>(bool, size_t, size_t, std::vector<float>, std::vector<float> &, size_t &, double &);
+template void single_year_to_lifetime_interpolated<double>(bool, size_t, size_t,std::vector<double>, std::vector<double>, std::vector<double> &, size_t &, double &);
+template void single_year_to_lifetime_interpolated<float>(bool, size_t, size_t, std::vector<float>, std::vector<float>, std::vector<float> &, size_t &, double &);
 
 
 

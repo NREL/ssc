@@ -144,8 +144,6 @@ var_info vtab_battery_inputs[] = {
         { SSC_INPUT,        SSC_NUMBER,     "batt_target_choice",                          "Target power input option",                              "0/1",      "0=InputMonthlyTarget,1=InputFullTimeSeries", "BatteryDispatch", "en_batt=1&batt_meter_position=0&batt_dispatch_choice=2",                        "",                             "" },
         { SSC_INPUT,        SSC_ARRAY,      "batt_custom_dispatch",                        "Custom battery power for every time step",               "kW",       "kWAC if AC-connected, else kWDC", "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=3","",                         "" },
         { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_choice",                        "Battery dispatch algorithm",                             "0/1/2/3/4", "If behind the meter: 0=PeakShavingLookAhead,1=PeakShavingLookBehind,2=InputGridTarget,3=InputBatteryPower,4=ManualDispatch, if front of meter: 0=AutomatedLookAhead,1=AutomatedLookBehind,2=AutomatedInputForecast,3=InputBatteryPower,4=ManualDispatch",                    "BatteryDispatch",       "en_batt=1",                        "",                             "" },
-        { SSC_INPUT,        SSC_ARRAY,      "batt_pv_clipping_forecast",                   "Power clipping forecast",                                   "kW",       "",                     "BatteryDispatch",       "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2",  "",          "" },
-        { SSC_INPUT,        SSC_ARRAY,      "batt_pv_dc_forecast",                         "DC power forecast",                                   "kW",       "",                     "BatteryDispatch",       "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2",  "",          "" },
         { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_auto_can_fuelcellcharge",       "Charging from fuel cell allowed for automated dispatch?",          "kW",       "",                     "BatteryDispatch",       "",                           "",                             "" },
         { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_auto_can_gridcharge",           "Grid charging allowed for automated dispatch?",          "kW",       "",                     "BatteryDispatch",       "",                           "",                             "" },
         { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_auto_can_charge",               "System charging allowed for automated dispatch?",            "kW",       "",                     "BatteryDispatch",       "",                           "",                             "" },
@@ -153,6 +151,10 @@ var_info vtab_battery_inputs[] = {
         { SSC_INPUT,        SSC_NUMBER,     "batt_auto_gridcharge_max_daily",              "Allowed grid charging percent per day for automated dispatch","kW",  "",                     "BatteryDispatch",       "",                           "",                             "" },
         { SSC_INPUT,        SSC_NUMBER,     "batt_look_ahead_hours",                       "Hours to look ahead in automated dispatch",              "hours",    "",                     "BatteryDispatch",       "",                           "",                             "" },
         { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_update_frequency_hours",        "Frequency to update the look-ahead dispatch",            "hours",    "",                     "BatteryDispatch",       "",                           "",                             "" },
+
+        // Dispatch forecast - optional parameters used in cmod_pvsamv1
+        { SSC_INPUT,        SSC_ARRAY,      "batt_pv_clipping_forecast",                   "PV clipping forecast",                                   "kW",       "",                     "Battery",       "",  "",          "" },
+        { SSC_INPUT,        SSC_ARRAY,      "batt_pv_ac_forecast",                         "PV ac power forecast",                                   "kW",       "",                     "Battery",       "",  "",          "" },
 
         //  cycle cost inputs
         { SSC_INPUT,        SSC_NUMBER,     "batt_cycle_cost_choice",                      "Use SAM model for cycle costs or input custom",           "0/1",     "0=UseCostModel,1=InputCost", "BatterySystem", "",                           "",                             "" },
@@ -378,9 +380,6 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             // Front of meter
             if (batt_vars->batt_meter_position == dispatch_t::FRONT)
             {
-
-                batt_vars->pv_clipping_forecast = vt.as_vector_double("batt_pv_clipping_forecast");
-                batt_vars->pv_dc_power_forecast = vt.as_vector_double("batt_pv_dc_forecast");
 //
 //				size_t count_ppa_price_input;
 //				ssc_number_t* ppa_price = cm.as_array("ppa_price_input", &count_ppa_price_input);
@@ -1483,6 +1482,7 @@ static var_info _cm_vtab_battery[] = {
         { SSC_INOUT,        SSC_ARRAY,       "gen",										  "System power generated",                                  "kW",         "",                     "System Output",                             "",                       "",                               "" },
         { SSC_INPUT,		SSC_ARRAY,	     "load",			                              "Electricity load (year 1)",                               "kW",	        "",				        "Load",                             "",	                      "",	                            "" },
         { SSC_INPUT,		SSC_ARRAY,	     "crit_load",			                      "Critical electricity load (year 1)",                      "kW",	        "",				        "Load",                             "",	                      "",	                            "" },
+        { SSC_INPUT,        SSC_ARRAY,       "load_escalation",                            "Annual load escalation",                                  "%/year",     "",                     "Load",                             "?=0",                    "",                               "" },
         { SSC_INOUT,        SSC_NUMBER,      "capacity_factor",                            "Capacity factor",                                         "%",          "",                     "System Output",                             "?=0",                    "",                               "" },
         { SSC_INOUT,        SSC_NUMBER,      "annual_energy",                              "Annual Energy",                                           "kWh",        "",                     "System Output",                      "?=0",                    "",                               "" },
 
@@ -1518,11 +1518,18 @@ public:
                 load_year_one = as_vector_ssc_number_t("load");
             }
 
+            size_t analysis_period = (size_t)as_integer("analysis_period");
+
+            scalefactors scale_calculator(m_vartab);
+            // compute load (electric demand) annual escalation multipliers
+            std::vector<ssc_number_t> load_scale = scale_calculator.get_factors("load_escalation");
+
             single_year_to_lifetime_interpolated<ssc_number_t>(
                     (bool)as_integer("system_use_lifetime_output"),
-                    (size_t)as_integer("analysis_period"),
+                    analysis_period,
                     n_rec_lifetime,
                     load_year_one,
+                    load_scale,
                     load_lifetime,
                     n_rec_single_year,
                     dt_hour_gen);

@@ -1,7 +1,7 @@
 #include <memory>
 #include <vector>
 
-#include "lib_pv_io_manager.h" 
+#include "lib_pv_io_manager.h"
 
 static const int __nday[12] = { 31,28,31,30,31,30,31,31,30,31,30,31 };
 
@@ -114,7 +114,7 @@ Irradiance_IO::Irradiance_IO(compute_module* cm, std::string cmName)
 	if (weatherDataProvider->has_data_column(weather_data_provider::MINUTE))
 	{
 		// if we have an file with a minute column, then
-		// the starting time offset equals the time 
+		// the starting time offset equals the time
 		// of the first record (for correct plotting)
 		// this holds true even for hourly data with a minute column
 		weather_record rec;
@@ -364,8 +364,9 @@ Subarray_IO::Subarray_IO(compute_module* cm, std::string cmName, size_t subarray
 		selfShadingInputs.nmodx = cm->as_integer(prefix + "nmodx"); //same as above
 		selfShadingInputs.nstrx = selfShadingInputs.nmodx / nModulesPerString;
 		poa.nonlinearDCShadingDerate = 1;
+        selfShadingSkyDiffTable.init(tiltDegrees, groundCoverageRatio);
 
-		if (trackMode == irrad::FIXED_TILT || trackMode == irrad::SEASONAL_TILT || (trackMode == irrad::SINGLE_AXIS))
+        if (trackMode == irrad::FIXED_TILT || trackMode == irrad::SEASONAL_TILT || (trackMode == irrad::SINGLE_AXIS))
 		{
 			if (shadeMode != NO_SHADING)
 			{
@@ -720,7 +721,7 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 	if (enableMismatchVoltageCalc && numberOfSubarrays <= 1)
 		throw exec_error(cmName, "Subarray voltage mismatch calculation requires more than one subarray. Please check your inputs.");
 
-	// Setup POA inputs if needed 
+	// Setup POA inputs if needed
 	SetupPOAInput();
 }
 
@@ -945,7 +946,7 @@ Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
 				case 2: nominalOperatingCellTemp.standoff_tnoct_adj = 2; break; // between 2.5 and 3.5 inches
 				case 3: nominalOperatingCellTemp.standoff_tnoct_adj = 6; break; // between 1.5 and 2.5 inches
 				case 4: nominalOperatingCellTemp.standoff_tnoct_adj = 11; break; // between 0.5 and 1.5 inches
-				case 5: nominalOperatingCellTemp.standoff_tnoct_adj = 18; break; // less than 0.5 inches											
+				case 5: nominalOperatingCellTemp.standoff_tnoct_adj = 18; break; // less than 0.5 inches
 																// note: all others, standoff_tnoct_adj = 0;
 			}
 

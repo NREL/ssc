@@ -22,6 +22,7 @@ char battery_target_power[256] = {};
 char subhourly_weather_file[256] = {};
 char subhourly_batt_temps[256] = {};
 char subhourly_dispatch_factors[256] = {};
+char clipping_forecast[256] = {};
 
 // pvsamv1_common_data uses n1-8
 int x1 = sprintf(dc_adjust_hourly, "%s/test/input_cases/pvsamv1_battery_data/dc_adjust_hourly.csv", SSCDIR);
@@ -37,6 +38,7 @@ int x10 = sprintf(custom_dispatch_singleowner_subhourly_schedule, "%s/test/input
 int x11 = sprintf(subhourly_weather_file, "%s/test/input_cases/pvsamv1_battery_data/USA AZ Phoenix (TMY2)_15mInterpolated.csv", SSCDIR);
 int x12 = sprintf(subhourly_batt_temps, "%s/test/input_cases/pvsamv1_battery_data/batt_room_temperature_celsius_15min.csv", SSCDIR);
 int x13 = sprintf(subhourly_dispatch_factors, "%s/test/input_cases/pvsamv1_battery_data/dispatch_factors_ts_15min.csv", SSCDIR);
+int x14 = sprintf(clipping_forecast, "%s/test/input_cases/pvsamv1_battery_data/clipping_forecast.csv", SSCDIR);
 
 void pvsamv1_pv_defaults(ssc_data_t& data) {
 	ssc_data_set_string(data, "solar_resource_file", solar_resource_path);
