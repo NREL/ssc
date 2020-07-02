@@ -433,11 +433,7 @@ double UtilityRateForecast::getEnergyChargeNetMetering(int month, std::vector<do
         }
         else
         {
-            // kWh credits will be applied if we cross a month during the forecast period
-            if (!(crossing_month && rate->nm_credits_w_rollover && month != rate->net_metering_credit_month))
-            {
-                cost -= sell_rates[ir] * per_energy;
-            }
+            cost -= sell_rates[ir] * per_energy;
         }
     }
 
