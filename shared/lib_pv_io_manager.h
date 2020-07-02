@@ -175,7 +175,7 @@ struct Irradiance_IO
 	/// Allocate the Irradiance_IO outputs
 	void AllocateOutputs(compute_module* cm);
 
-	/// Assign outputs from member data after the IrradianceModel has run 
+	/// Assign outputs from member data after the IrradianceModel has run
 	void AssignOutputs(compute_module* cm);
 
 	// Constants
@@ -198,7 +198,7 @@ struct Irradiance_IO
 	int skyModel;												  /// Specify which sky diffuse model should be used: 0=isotropic, 1=hdkr, 2=perez
 	flag useWeatherFileAlbedo;									  /// Specify whether to use the weather file albedo
 	std::vector<double> userSpecifiedMonthlyAlbedo;				  /// User can provide monthly ground albedo values (0-1)
-	
+
 	// Irradiance data Outputs (p_ is just a convention to organize all pointer outputs)
 	ssc_number_t * p_weatherFileGHI;			/// The Global Horizonal Irradiance from the weather file [W/m2]
 	ssc_number_t * p_weatherFileDNI;			/// The Direct Normal (Beam) Irradiance from the weather file [W/m2]
@@ -266,7 +266,7 @@ struct PVSystem_IO
 	std::vector<std::vector<int> > mpptMapping;	///< vector to hold the mapping between subarrays and mppt inputs
 	flag enableMismatchVoltageCalc;		///< Whether or not to compute mismatch between multiple subarrays attached to the same mppt input
 
-	std::vector<double> dcDegradationFactor; 
+	std::vector<double> dcDegradationFactor;
 	std::vector<double> dcLifetimeLosses;
 	std::vector<double> acLifetimeLosses;
 	double acDerate;
@@ -280,36 +280,36 @@ struct PVSystem_IO
 	// Timeseries Subarray Level Outputs
 	std::vector<ssc_number_t *> p_angleOfIncidence; /// The angle of incidence of the subarray [degrees]
 	std::vector<ssc_number_t *> p_angleOfIncidenceModifier; /// The weighted angle of incidence modifier for total poa irradiation on subarrray
-	std::vector<ssc_number_t *> p_surfaceTilt; ///The tilt of the surface [degrees]   
-	std::vector<ssc_number_t *> p_surfaceAzimuth; ///The azimuth of the surface [degrees]   
-	std::vector<ssc_number_t *> p_axisRotation;     
-	std::vector<ssc_number_t *> p_idealRotation; 
-	std::vector<ssc_number_t *> p_poaNominalFront;     
-	std::vector<ssc_number_t *> p_poaShadedFront;		
-	std::vector<ssc_number_t *> p_poaShadedSoiledFront;  
-	std::vector<ssc_number_t *> p_poaBeamFront; 
-	std::vector<ssc_number_t *> p_poaDiffuseFront; 
-	std::vector<ssc_number_t *> p_poaFront; 
-	std::vector<ssc_number_t *> p_poaTotal; 
-	std::vector<ssc_number_t *> p_poaRear; 
-	std::vector<ssc_number_t *> p_derateSoiling; 
-	std::vector<ssc_number_t *> p_beamShadingFactor; 
+	std::vector<ssc_number_t *> p_surfaceTilt; ///The tilt of the surface [degrees]
+	std::vector<ssc_number_t *> p_surfaceAzimuth; ///The azimuth of the surface [degrees]
+	std::vector<ssc_number_t *> p_axisRotation;
+	std::vector<ssc_number_t *> p_idealRotation;
+	std::vector<ssc_number_t *> p_poaNominalFront;
+	std::vector<ssc_number_t *> p_poaShadedFront;
+	std::vector<ssc_number_t *> p_poaShadedSoiledFront;
+	std::vector<ssc_number_t *> p_poaBeamFront;
+	std::vector<ssc_number_t *> p_poaDiffuseFront;
+	std::vector<ssc_number_t *> p_poaFront;
+	std::vector<ssc_number_t *> p_poaTotal;
+	std::vector<ssc_number_t *> p_poaRear;
+	std::vector<ssc_number_t *> p_derateSoiling;
+	std::vector<ssc_number_t *> p_beamShadingFactor;
 	std::vector<ssc_number_t *> p_temperatureCell;
 	std::vector<ssc_number_t *> p_temperatureCellSS; // steady state cell temperature
 	std::vector<ssc_number_t *> p_moduleEfficiency;
 	std::vector<ssc_number_t *> p_dcStringVoltage; /// An output vector containing dc string voltage for each subarray [V]
 	std::vector<ssc_number_t *> p_voltageOpenCircuit; /// Open circuit voltage of a string in the subarray [V]
-	std::vector<ssc_number_t *> p_currentShortCircuit; 
-	std::vector<ssc_number_t *> p_dcPowerGross; 
-	std::vector<ssc_number_t *> p_derateLinear; 
-	std::vector<ssc_number_t *> p_derateSelfShading; 
+	std::vector<ssc_number_t *> p_currentShortCircuit;
+	std::vector<ssc_number_t *> p_dcPowerGross;
+	std::vector<ssc_number_t *> p_derateLinear;
+	std::vector<ssc_number_t *> p_derateSelfShading;
 	std::vector<ssc_number_t *> p_derateSelfShadingDiffuse;
-	std::vector<ssc_number_t *> p_derateSelfShadingReflected; 
-	std::vector<ssc_number_t *> p_shadeDBShadeFraction; 
+	std::vector<ssc_number_t *> p_derateSelfShadingReflected;
+	std::vector<ssc_number_t *> p_shadeDBShadeFraction;
 
 	// MPPT level outputs
 	std::vector<ssc_number_t *> p_mpptVoltage; /// An output vector containing input DC voltage in V to each mppt input
-	std::vector<ssc_number_t *> p_dcPowerNetPerMppt; /// An output vector containing Net DC Power in W for each mppt input 
+	std::vector<ssc_number_t *> p_dcPowerNetPerMppt; /// An output vector containing Net DC Power in W for each mppt input
 
 	// Snow Model outputs
 	std::vector<ssc_number_t *> p_snowLoss; /// The angle of incidence of the subarray [degrees]
@@ -371,13 +371,13 @@ struct Subarray_IO
 {
 public:
 
-	/// Construct the Subarray_IO structure from the compute module input. 
+	/// Construct the Subarray_IO structure from the compute module input.
 	Subarray_IO(compute_module* cm, std::string cmName, size_t subarrayNumber);
 
 	/// Allocate the Subarray_IO outputs
 	void AllocateOutputs(compute_module* cm);
 
-	/// Assign outputs from member data after the PV Model has run 
+	/// Assign outputs from member data after the PV Model has run
 	void AssignOutputs(compute_module* cm);
 
 	std::string prefix;					/// Prefix for extracting variable names
@@ -397,7 +397,7 @@ public:
 
 	// Physical characteristics
 	double groundCoverageRatio;			// The ground coverage ratio [0 - 1]
-	double tiltDegrees;					// The surface tilt [degrees]						
+	double tiltDegrees;					// The surface tilt [degrees]
 	double azimuthDegrees;				// The surface azimuth [degrees]
 	int trackMode;						// The tracking mode [0 = fixed, 1 = single-axis tracking, 2 = two-axis tracking, 3 = azimuth-axis tracking, 4 = seasonal-tilt
 	double trackerRotationLimitDegrees; // The rotational limit of the tracker [degrees]
@@ -418,26 +418,27 @@ public:
 	double nameplateLossPercent;
 	double dcLossTotalPercent;			/// The DC loss due to mismatch, diodes, wiring, tracking, optimizers [%]
 
-	// Shading and snow	
-	flag enableSelfShadingOutputs;		// Choose whether additional self-shading outputs are displayed
-	int shadeMode;						// The shading mode of the subarray [0 = none, 1 = standard (non-linear), 2 = thin film (linear)]
-	flag usePOAFromWeatherFile;			// Flag for whether or not a shading model has been selected that means POA can't be used directly for that subarray
-	ssinputs selfShadingInputs;			// Inputs and calculation methods for self-shading of the subarray
-	ssoutputs selfShadingOutputs;		// Outputs for the self-shading of the subarray
-	shading_factor_calculator shadeCalculator; // The shading calculator model for self-shading
-	flag subarrayEnableSnow;            //a copy of the enableSnowModel flag has to exist in each subarray for setting up snow model inputs specific to each subarray
-	pvsnowmodel snowModel;				// A structure to store the geometry inputs for the snow model for this subarray- even though the snow model is system wide, its effect is subarray-dependent
+    // Shading and snow
+    flag enableSelfShadingOutputs;                    // Choose whether additional self-shading outputs are displayed
+    int shadeMode;                                    // The shading mode of the subarray [0 = none, 1 = standard (non-linear), 2 = thin film (linear)]
+    flag usePOAFromWeatherFile;                       // Flag for whether or not a shading model has been selected that means POA can't be used directly for that subarray
+    sssky_diffuse_table selfShadingSkyDiffTable;        // Calculates and stores in a lookup table the self-shading sky diffuse derates
+    ssinputs selfShadingInputs;                       // Inputs and calculation methods for self-shading of the subarray
+    ssoutputs selfShadingOutputs;                     // Outputs for the self-shading of the subarray
+    shading_factor_calculator shadeCalculator;        // The shading calculator model for self-shading
+    flag subarrayEnableSnow;                          //a copy of the enableSnowModel flag has to exist in each subarray for setting up snow model inputs specific to each subarray
+    pvsnowmodel snowModel;                            // A structure to store the geometry inputs for the snow model for this subarray- even though the snow model is system wide, its effect is subarray-dependent
 
 	/// Calculated plane-of-array (POA) irradiace for the subarray and related geometry
 	struct {
-		double poaBeamFront;	/// POA due to beam irradiance on the front of the subarray [W/m2]	
+		double poaBeamFront;	/// POA due to beam irradiance on the front of the subarray [W/m2]
 		double poaDiffuseFront; /// POA due to diffuse irradiance on the front of the subarray [W/m2]
 		double poaGroundFront;  /// POA due to ground reflection on the front of the subarray [W/m2]
 		double poaRear;			/// POA total irradiance on the back of the subarray if bifacial modules [W/m2]
 		double poaTotal;		/// POA total of front and rear side of array [W/m2]
 		bool sunUp;				/// Flag indicating whether the sun is up or not
 		double angleOfIncidenceDegrees; /// The solar angle of incidence relative to the surface [degrees]
-		double surfaceTiltDegrees;  /// The tilt of the subarray after tracking [degrees] 
+		double surfaceTiltDegrees;  /// The tilt of the subarray after tracking [degrees]
 		double surfaceAzimuthDegrees; /// The azimuth of the subarray after tracking [degrees]
 		double nonlinearDCShadingDerate; /// The DC loss due to non-linear shading [%]
 		bool usePOAFromWF;     /// Flag indicating whether or not to use POA input from the weatherfile
@@ -460,13 +461,13 @@ public:
 struct Module_IO
 {
 public:
-	/// Construct the Module_IO structure from the compute module input. 
+	/// Construct the Module_IO structure from the compute module input.
 	Module_IO(compute_module* cm, std::string cmName, double dcLoss);
 
 	/// Setup the Nominal Operating Cell Temperature (NOCT) model
 	void setupNOCTModel(compute_module* cm, const std::string &prefix);
 
-	/// Assign outputs from member data after the PV Model has run 
+	/// Assign outputs from member data after the PV Model has run
 	void AssignOutputs(compute_module* cm);
 
 	enum mountingSpecificConfigurationList {NONE, RACK_MOUNTING, FLUSH_MOUNTING, INTEGRATED_MOUNTING, GAP_MOUNTING};
@@ -493,7 +494,7 @@ public:
 	mock_celltemp_t mockCellTemp;
 	sandia_module_t sandiaModel;
 	sandia_celltemp_t sandiaCellTemp;
-	iec61853_module_t elevenParamSingleDiodeModel; 
+	iec61853_module_t elevenParamSingleDiodeModel;
 	mlmodel_module_t mlModuleModel;
 	pvcelltemp_t *cellTempModel;
 	pvmodule_t *moduleModel;
@@ -507,7 +508,7 @@ public:
 	double temperatureCellCelcius; /// The weighted moving average  cell temperature of the module [C]
 	double temperatureCellCelciusSS; /// The SS average cell temperature of the module [C]
 	double angleOfIncidenceModifier; /// The angle of incidence modifier on the total poa front-side irradiance [0-1]
-	
+
 };
 
 
@@ -521,13 +522,13 @@ public:
 struct Inverter_IO
 {
 public:
-	/// Construct the Inverter_IO structure from the compute module input. 
+	/// Construct the Inverter_IO structure from the compute module input.
 	Inverter_IO(compute_module* cm, std::string cmName);
 
 	/// Setup shared inverter properties
 	void setupSharedInverter(compute_module* cm, SharedInverter * a_sharedInverter);
 
-	/// Assign outputs from member data after the PV Model has run 
+	/// Assign outputs from member data after the PV Model has run
 	void AssignOutputs(compute_module* cm);
 
 
