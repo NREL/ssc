@@ -926,7 +926,7 @@ cm_pvsamv1::cm_pvsamv1()
 }
 
 
-void cm_pvsamv1::exec( ) throw (general_error)
+void cm_pvsamv1::exec( )
 {
 
 	/// Underlying class which parses the compute module structure and sets up model inputs and outputs
