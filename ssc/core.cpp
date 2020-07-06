@@ -83,22 +83,13 @@ bool compute_module::compute( handler_interface *handler, var_table *data )
 
 bool compute_module::evaluate()
 {
-    // Get compute module name (e.g., cm_tcsmolten_salt)
-    const std::string kTypeIdClassPrefix("class ");
-    std::string compute_module_name(typeid(*this).name());
-    std::size_t prefix_position = compute_module_name.find(kTypeIdClassPrefix);
-    if (prefix_position != std::string::npos) {
-        compute_module_name.erase(prefix_position, kTypeIdClassPrefix.length());
-    }
-
     // Find ssc_equations relevant to compute module
     std::vector<size_t> table_indices;
-    compute_module_name = util::lower_case(compute_module_name);    // make lowercase for later matching
     std::size_t table_length = sizeof(ssc_equation_table)/sizeof(*ssc_equation_table);
     for (std::size_t i = 0; i < table_length; i++) {
         if (ssc_equation_table[i].cmod == nullptr) continue;
         std::string row_compute_module_name = util::lower_case(ssc_equation_table[i].cmod);
-        std::size_t match = compute_module_name.find(row_compute_module_name);
+        std::size_t match = name.find(row_compute_module_name);
 
         if (match != std::string::npos) {
             table_indices.push_back(i);
