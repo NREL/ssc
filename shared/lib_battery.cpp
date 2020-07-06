@@ -555,6 +555,9 @@ double battery_t::run(size_t lifetimeIndex, double &I, bool stateful) {
     runLifetimeModel(lifetimeIndex);
     runLossesModel(lifetimeIndex);
 
+    if (voltage->battery_voltage() == 0.)
+        throw std::runtime_error("battery_t error: voltage was 0.");
+
     if (stateful) {
         state->I = I;
         state->Q = capacity->q0();
