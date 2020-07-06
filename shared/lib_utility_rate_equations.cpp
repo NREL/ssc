@@ -73,6 +73,23 @@ void ur_month::update_net_and_peak(double energy, double power, int step) {
 	}
 }
 
+void ur_month::reset()
+{
+    energy_net = 0;
+    hours_per_month = 0;
+    dc_flat_peak = 0;
+    dc_flat_peak_hour = 0;
+
+    int start_tier = 0;
+    int end_tier = ec_tou_ub.ncols() - 1;
+    int num_periods = ec_tou_ub.nrows();
+    int num_tiers = end_tier - start_tier + 1;
+
+    ec_energy_surplus.resize_fill(num_periods, num_tiers, 0);
+    ec_energy_use.resize_fill(num_periods, num_tiers, 0);
+    ec_charge.resize_fill(num_periods, num_tiers, 0);
+}
+
 rate_data::rate_data() :
 	m_ec_tou_sched(),
 	m_dc_tou_sched(),

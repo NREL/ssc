@@ -404,6 +404,7 @@ void UtilityRateForecast::restartMonth(int prevMonth, int currentMonth, int year
 {
     ur_month& prev_month = rate->m_month[prevMonth];
     ur_month& curr_month = rate->m_month[currentMonth];
+    curr_month.reset();
     rate->compute_surplus(prev_month);
 
     bool skip_rollover = (currentMonth == 0 && year == 0) || (currentMonth == rate->net_metering_credit_month + 1) || (currentMonth == 0 && rate->net_metering_credit_month == 11);

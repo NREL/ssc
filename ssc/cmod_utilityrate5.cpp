@@ -1500,10 +1500,7 @@ public:
 		for (m = 0; m < (int)rate_data.m_month.size(); m++)
 		{
 			ur_month& curr_month = rate_data.m_month[m];
-			curr_month.energy_net = 0;
-			curr_month.hours_per_month = 0;
-			curr_month.dc_flat_peak = 0;
-			curr_month.dc_flat_peak_hour = 0;
+            curr_month.reset();
 			for (d = 0; d < util::nday[m]; d++)
 			{
 				for (h = 0; h < 24; h++)

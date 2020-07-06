@@ -154,11 +154,11 @@ void dispatch_automatic_behind_the_meter_t::setup_rate_forecast()
 
             if (grid_power < 0)
             {
-                load_during_month += grid_power;
+                load_during_month += grid_power * _dt_hour;
             }
             else
             {
-                gen_during_month += grid_power;
+                gen_during_month += grid_power * _dt_hour;
             }
 
             step++;
@@ -587,7 +587,7 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(FILE* p, bool
     // Iterating over sorted grid
     double costDuringDispatchHours = 0.0;
     double costAtStep = 0.0;
-    // Sum no-dispatch cost of top n grid points (dispatch hours * steps per hour. start w/ 4 hrs). Units: % of cost -> don't need to record this, can re-compute after iteration
+    // Sum no-dispatch cost of top n grid points (dispatch hours * steps per hour). Units: % of cost -> don't need to record this, can re-compute after iteration
     for (int i = 0; (i < plan.dispatch_hours * _steps_per_hour) && (i < sorted_grid.size()); i++)
     {
         costAtStep = sorted_grid[i].Cost();

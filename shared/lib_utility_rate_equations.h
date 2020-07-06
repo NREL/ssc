@@ -78,6 +78,9 @@ public:
 
 	// Runs each step
 	void update_net_and_peak(double energy, double power, int step);
+
+    // Re-zeroes relevant vectors
+    void reset();
 };
 
 class rate_data {
