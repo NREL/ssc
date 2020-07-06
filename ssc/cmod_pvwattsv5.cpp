@@ -128,7 +128,7 @@ protected:
 	int shade_mode_1x;
 	int array_type;
 	double gcr;
-
+    sssky_diffuse_table skydiff_table;
 
 	double ibeam, iskydiff, ignddiff;
 	double solazi, solzen, solalt, aoi, stilt, sazi, rot, btd;
@@ -211,6 +211,8 @@ public:
 
 		gcr = 0.4;
 		if (track_mode == 1 && is_assigned("gcr")) gcr = as_double("gcr");
+
+        skydiff_table.init(tilt, gcr);
 	}
 
 	void initialize_cell_temp(double ts_hour, double last_tcell = -9999, double last_poa = -9999)
@@ -266,12 +268,12 @@ public:
 					// calculate sky and gnd diffuse derate factors
 					// based on view factor reductions from self-shading
 					diffuse_reduce(solzen, stilt,
-						dni, dhi, iskydiff, ignddiff,
-						gcr, alb, 1000,
+                                   dni, dhi, iskydiff, ignddiff,
+                                   gcr, alb, 1000, skydiff_table,
 
 						// outputs (pass by reference)
 						reduced_skydiff, Fskydiff,
-						reduced_gnddiff, Fgnddiff);
+                                   reduced_gnddiff, Fgnddiff);
 
 					if (Fskydiff >= 0 && Fskydiff <= 1) iskydiff *= Fskydiff;
 					else log(util::format("sky diffuse reduction factor invalid at time %lg: fskydiff=%lg, stilt=%lg", time, Fskydiff, stilt), SSC_NOTICE, (float)time);
@@ -361,7 +363,7 @@ public:
 	}
 
 
-	void exec() throw(general_error)
+	void exec()
 	{
 
 		std::unique_ptr<weather_data_provider> wdprov;

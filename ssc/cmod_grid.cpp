@@ -81,7 +81,7 @@ void cm_grid::construct()
 	gridVars = std::move(tmp);
 }
 
-void cm_grid::exec() throw (general_error)
+void cm_grid::exec()
 {
     construct();
     // System generation output, which is lifetime (if system_lifetime_output == true);
