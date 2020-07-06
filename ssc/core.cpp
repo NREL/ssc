@@ -91,20 +91,19 @@ bool compute_module::evaluate()
         std::string row_compute_module_name = util::lower_case(ssc_equation_table[i].cmod);
         std::size_t match = name.find(row_compute_module_name);
 
-        if (match != std::string::npos) {
+        if (match != std::string::npos && ssc_equation_table[i].auto_eval) {
             table_indices.push_back(i);
         }
     }
 
-    if (table_indices.size() < 1) return true;      // no equations relevant to cmod
+    if (table_indices.empty()) return true;      // no equations relevant to cmod
 
     // For calling all relevant ssc_equations
-    auto CallSscEquations = [this](std::vector<size_t> table_indices)
+    auto CallSscEquations = [this](const std::vector<size_t>& table_indices)
     {
-        for (std::vector<size_t>::iterator it = table_indices.begin(); it != table_indices.end(); ++it) {
-            std::size_t table_row = *it;
+        for (size_t table_row : table_indices) {
             ssc_equation_ptr ssc_equation = ssc_equation_table[table_row].func;
-            ssc_data_t var_table_data = static_cast<ssc_data_t>(this->m_vartab);
+            auto var_table_data = static_cast<ssc_data_t>(this->m_vartab);
 
             try
             {
@@ -116,6 +115,7 @@ bool compute_module::evaluate()
                 return false;
             }
         }
+        return true;
     };
 
     CallSscEquations(table_indices);            // initial call populating outputs
@@ -138,7 +138,7 @@ bool compute_module::evaluate()
         double squared_error = 0.;
         int n_differences = 0;
         const char* it;
-        for (it = m_vartab->first(); it != NULL; it = m_vartab->next()) {
+        for (it = m_vartab->first(); it != nullptr; it = m_vartab->next()) {
             auto AreSame = [](double a, double b) -> bool
                 {
                 constexpr double kEpsilon = std::numeric_limits<double>::epsilon();
@@ -154,7 +154,7 @@ bool compute_module::evaluate()
                 // if the strings change, throw an error
                 std::string string_cur = m_vartab->as_string(variable_name);
                 std::string string_prev = var_table_prev_iter.as_string(variable_name);
-                if (string_cur.compare(string_prev) != 0) {
+                if (string_cur != string_prev) {
                     float time = -1.;
                     log("Changing string variables in ssc_equations is not allowed.", SSC_ERROR, time);         // probably could add later
                     return false;
@@ -216,7 +216,7 @@ bool compute_module::evaluate()
             }
             default:
             {
-                float time = -1.;
+//                float time = -1.;
                 //log(variable_name + " of data type " + var_data::type_name(variable_data->type) + " is not supported for ssc_equations", SSC_ERROR, time);
                 //return false;
                 //break;
