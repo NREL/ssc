@@ -940,7 +940,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 	size_t nlifetime = Simulation->numberOfSteps;
 	size_t nyears = Simulation->numberOfYears;
 	double ts_hour = Simulation->dtHour; //simulation timestep in fraction of an hour (e.g. 15-min data would be 0.25)
-	size_t step_per_hour = Simulation->stepsPerHour;
+	size_t step_per_hour = Simulation->stepsPerHour; //number of timesteps in one hour. hourly data will be 1, 15-min data will be 4, etc.
 	bool system_use_lifetime_output = Simulation->useLifetimeOutput;
 	bool save_full_lifetime_variables = Simulation->saveLifetimeVars;
 
@@ -2090,9 +2090,13 @@ void cm_pvsamv1::exec( ) throw (general_error)
 			// Battery replacement
 			if (en_batt && (batt_topology == ChargeController::DC_CONNECTED))
 			{
-				// calculate timestep in hour for battery models- this will work for annual simulations
-				// and non-annual simulations are not allowed for battery models, so this should work
-				size_t jj = idx % hour_of_year;
+				// calculate timestep in hour for battery models
+				// jj represents which timestep within the hour you're on, 0-indexed
+				// i.e. if idx is 7 in a 15-minute weather file (time 1:45), hour_of_year will be 1, so jj = 7 - (1*4) = 3 (which is correct for 0-indexed jj)
+				// and non-annual simulations are not allowed for battery models, so this code won't be encountered in that case
+				size_t jj = 0;
+				if (hour_of_year == 0) jj = idx;
+				else jj = idx - (hour_of_year * step_per_hour);
 				batt->initialize_time(iyear, hour_of_year, jj);
 				batt->check_replacement_schedule();
 			}
@@ -2252,9 +2256,13 @@ void cm_pvsamv1::exec( ) throw (general_error)
 
 			if (en_batt && batt_topology == ChargeController::AC_CONNECTED)
 			{
-				// calculate timestep in hour for battery models- this will work for annual simulations
-				// and non-annual simulations are not allowed for battery models, so this should work
-				size_t jj = idx % hour_of_year;
+				// calculate timestep in hour for battery models
+				// jj represents which timestep within the hour you're on, 0-indexed
+				// i.e. if idx is 7 in a 15-minute weather file (time 1:45), hour_of_year will be 1, so jj = 7 - (1*4) = 3 (which is correct for 0-indexed jj)
+				// and non-annual simulations are not allowed for battery models, so this code won't be encountered in that case
+				size_t jj = 0;
+				if (hour_of_year == 0) jj = idx;
+				else jj = idx - (hour_of_year * step_per_hour);
 				batt->initialize_time(iyear, hour_of_year, jj);
 				batt->check_replacement_schedule();
 
