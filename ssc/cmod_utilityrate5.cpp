@@ -75,6 +75,8 @@ static var_info vtab_utility_rate5[] = {
 	// time step rates
 	{ SSC_INPUT, SSC_NUMBER, "ur_en_ts_sell_rate", "Enable time step sell rates", "0/1", "", "Electricity Rates", "?=0", "BOOLEAN", "" },
 	{ SSC_INPUT, SSC_ARRAY, "ur_ts_sell_rate", "Time step sell rates", "0/1", "", "Electricity Rates", "", "", "" },
+	// add separately to UI
+	{ SSC_INPUT, SSC_NUMBER, "ur_en_ts_buy_rate", "Enable time step buy rates", "0/1", "", "Electricity Rates", "?=0", "BOOLEAN", "" },
 	{ SSC_INPUT, SSC_ARRAY, "ur_ts_buy_rate", "Time step buy rates", "0/1", "", "Electricity Rates", "", "", "" },
 
 
@@ -2136,8 +2138,11 @@ public:
 								ssc_number_t tier_energy = energy_surplus;
 								ssc_number_t sr = curr_month.ec_tou_sr.at(row, tier);
 								// time step sell rates
-								if (c< rate_data.m_ec_ts_sell_rate.size())
-									sr = rate_data.m_ec_ts_sell_rate[c];
+								if (as_boolean("ur_en_ts_sell_rate")) {
+									if (c < m_ec_ts_sell_rate.size()) {
+										sr = m_ec_ts_sell_rate[c];
+									}
+								}
 								ssc_number_t tier_credit = tier_energy * sr * rate_esc;
 
 								credit_amt = tier_credit;
@@ -2185,8 +2190,11 @@ public:
 								double tier_charge = tier_energy * curr_month.ec_tou_br.at(row, tier) * rate_esc;
 
 								// time step buy rates
-								if (c < rate_data.m_ec_ts_buy_rate.size())
-									tier_charge = rate_data.m_ec_ts_buy_rate[c] * tier_energy;
+								if (as_boolean("ur_en_ts_buy_rate")) {
+									if (c < m_ec_ts_buy_rate.size()) {
+										tier_charge = m_ec_ts_buy_rate[c] * tier_energy;
+									}
+								}
 
 								charge_amt = tier_charge;
 								curr_month.ec_energy_use.at(row, tier) += (ssc_number_t)tier_energy;
@@ -2416,15 +2424,15 @@ public:
 				energy.at(ir + 1, 0) = (float)curr_month.ec_periods[ir];
 				surplus.at(ir + 1, 0) = (float)curr_month.ec_periods[ir];
 			}
-			float c_total = 0;
-			float e_total = 0;
-			float s_total = 0;
-			for (int ir = 0; ir < (int)curr_month.ec_charge.nrows(); ir++)
+			ssc_number_t c_total = 0;
+			ssc_number_t e_total = 0;
+			ssc_number_t s_total = 0;
+			for (int ir = 0; ir < (int)m_month[month].ec_charge.nrows(); ir++)
 			{
-				float c_row_total = 0;
-				float e_row_total = 0;
-				float s_row_total = 0;
-				for (int ic = 0; ic <(int)curr_month.ec_charge.ncols(); ic++)
+				ssc_number_t c_row_total = 0;
+				ssc_number_t e_row_total = 0;
+				ssc_number_t s_row_total = 0;
+				for (int ic = 0; ic <(int)m_month[month].ec_charge.ncols(); ic++)
 				{
 					charge.at(ir + 1, ic + 1) = curr_month.ec_charge.at(ir, ic);
 					c_row_total += curr_month.ec_charge.at(ir, ic);
@@ -2442,10 +2450,10 @@ public:
 			}
 			for (int ic = 0; ic < (int)curr_month.ec_charge.ncols(); ic++)
 			{
-				float c_col_total = 0;
-				float e_col_total = 0;
-				float s_col_total = 0;
-				for (int ir = 0; ir < (int)curr_month.ec_charge.nrows(); ir++)
+				ssc_number_t c_col_total = 0;
+				ssc_number_t e_col_total = 0;
+				ssc_number_t s_col_total = 0;
+				for (int ir = 0; ir < (int)m_month[month].ec_charge.nrows(); ir++)
 				{
 					c_col_total += curr_month.ec_charge.at(ir, ic);
 					e_col_total += curr_month.ec_energy_use.at(ir, ic);
