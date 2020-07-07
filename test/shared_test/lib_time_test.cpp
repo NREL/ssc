@@ -20,7 +20,7 @@ TEST_F(libTimeTest_lib_time, single_year_to_lifetime_interpolated_Lifetime)
 	for (size_t y = 0; y < n_years; y++) {
 		size_t idx = y * singleyear60min.size();
 		for (size_t i = 0; i < singleyear60min.size(); i+=increment) {
-			EXPECT_EQ(lifetime_from_single[idx*2], singleyear60min[i]/2);
+			EXPECT_EQ(lifetime_from_single[idx*2], singleyear60min[i]);
 			idx += increment;
 		}
 	}
@@ -158,7 +158,7 @@ TEST_F(libTimeTest_lib_time, single_year_to_lifetime_interpolated_DownsampleLife
 	for (size_t y = 0; y < n_years; y++) {
 		size_t idx = y * singleyear60min.size();
 		for (size_t i = 0; i < n_rec_singleyear; i += increment) {
-			EXPECT_EQ(lifetime_from_single[idx], singleyear30min[i*2] * 2);
+			EXPECT_EQ(lifetime_from_single[idx], singleyear30min[i*2]);
 			idx += increment;
 		}
 	}
@@ -181,7 +181,7 @@ TEST_F(libTimeTest_lib_time, single_year_to_lifetime_interpolated_DownsampleSing
 	EXPECT_EQ(lifetime_from_single.size(), n_rec_lifetime);
 
 	for (size_t i = 0; i < n_rec_singleyear; i+=increment) {
-		EXPECT_EQ(lifetime_from_single[i], singleyear30min[i*2]*2);
+		EXPECT_EQ(lifetime_from_single[i], singleyear30min[i*2]);
 	}
 }
 
