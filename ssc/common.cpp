@@ -1085,6 +1085,7 @@ size_t shading_factor_calculator::get_row_index_for_input(size_t hour_of_year, s
 	size_t ndx = hour_of_year * (size_t)m_steps_per_hour;
 
 	// then figure out how many row indices to add for the subhourly timeseries entries based on the minute stamp
+	// for example, minute 30 in a half-hour weather file will calculate: floor(30 / (60/2)) = 1 and will add one to the row index, which is correct
 	ndx += floor((int)minute / (60 / (m_steps_per_hour)));
 
 	return ndx;
