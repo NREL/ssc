@@ -926,7 +926,7 @@ cm_pvsamv1::cm_pvsamv1()
 }
 
 
-void cm_pvsamv1::exec( ) throw (general_error)
+void cm_pvsamv1::exec( )
 {
 
 	/// Underlying class which parses the compute module structure and sets up model inputs and outputs
@@ -1020,14 +1020,14 @@ void cm_pvsamv1::exec( ) throw (general_error)
 		throw exec_error("pvsamv1", "The PVYield inverter model does not currently accept multiple MPPT inputs.");
 
 	std::vector<ssc_number_t> p_pv_clipping_forecast;
-	std::vector<ssc_number_t> p_pv_dc_forecast;
-	std::vector<ssc_number_t> p_pv_dc_use;
+	std::vector<ssc_number_t> p_pv_ac_forecast;
+	std::vector<ssc_number_t> p_pv_ac_use;
 
 	if (is_assigned("batt_pv_clipping_forecast")) {
 		p_pv_clipping_forecast = as_vector_ssc_number_t("batt_pv_clipping_forecast");
 	}
-	if (is_assigned("batt_pv_dc_forecast")) {
-		p_pv_dc_forecast = as_vector_ssc_number_t("batt_pv_dc_forecast");
+	if (is_assigned("batt_pv_ac_forecast")) {
+		p_pv_ac_forecast = as_vector_ssc_number_t("batt_pv_ac_forecast");
 	}
 
 
@@ -1452,7 +1452,10 @@ void cm_pvsamv1::exec( ) throw (general_error)
 						if (radmode == irrad::DN_DF || radmode == irrad::GH_DF) dhi_to_use = (ssc_number_t)wf.df;
 						else dhi_to_use = Irradiance->p_IrradianceCalculated[1][hour * step_per_hour]; // top of hour in first year
 
-						if (ss_exec(Subarrays[nn]->selfShadingInputs, stilt, sazi, solzen, solazi, beam_to_use, dhi_to_use, ibeam, iskydiff, ignddiff, alb, trackbool, linear, shad1xf, Subarrays[nn]->selfShadingOutputs))
+						if (ss_exec(Subarrays[nn]->selfShadingInputs,
+						        stilt, sazi, solzen, solazi, beam_to_use, dhi_to_use, ibeam, iskydiff, ignddiff, alb, trackbool, linear, shad1xf,
+						        Subarrays[nn]->selfShadingSkyDiffTable,
+						        Subarrays[nn]->selfShadingOutputs))
 						{
 
 						    if (linear && trackbool) //one-axis linear
@@ -1999,17 +2002,20 @@ void cm_pvsamv1::exec( ) throw (general_error)
 					double cliploss = 0;
 					double dcpwr_kw = PVSystem->p_systemDCPower[idx];
 
-					if (p_pv_dc_forecast.size() > 1 && p_pv_dc_forecast.size() > idx % (8760 * step_per_hour)) {
-						dcpwr_kw = p_pv_dc_forecast[idx % (8760 * step_per_hour)];
+                    //DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
+                    sharedInverter->calculateACPower(dcpwr_kw, PVSystem->p_mpptVoltage[0][idx], 0.0);
+                    PVSystem->p_systemACPower[idx] = sharedInverter->powerAC_kW;
+
+                    double pv_ac_kw = sharedInverter->powerAC_kW;
+					if (p_pv_ac_forecast.size() > 1 && p_pv_ac_forecast.size() > idx % (8760 * step_per_hour)) {
+                        pv_ac_kw = p_pv_ac_forecast[idx % (8760 * step_per_hour)];
 					}
-					p_pv_dc_use.push_back(static_cast<ssc_number_t>(dcpwr_kw));
+					p_pv_ac_use.push_back(static_cast<ssc_number_t>(pv_ac_kw));
 
 					if (p_pv_clipping_forecast.size() > 1 && p_pv_clipping_forecast.size() > idx % (8760 * step_per_hour)) {
 						cliploss = p_pv_clipping_forecast[idx % (8760 * step_per_hour)] * util::kilowatt_to_watt;
 					}
 					else {
-						//DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
-						sharedInverter->calculateACPower(dcpwr_kw, PVSystem->p_mpptVoltage[0][idx], 0.0);
 						cliploss = sharedInverter->powerClipLoss_kW;
 					}
 
@@ -2029,8 +2035,10 @@ void cm_pvsamv1::exec( ) throw (general_error)
 	}
 
 	// Initialize DC battery predictive controller
-	if (en_batt && batt_topology == ChargeController::DC_CONNECTED)
-	    batt->initialize_automated_dispatch(util::array_to_vector<ssc_number_t>(PVSystem->p_systemDCPower, nlifetime), p_load_full, p_invcliploss_full);
+    if (en_batt && batt_topology == ChargeController::DC_CONNECTED)
+    {
+        batt->initialize_automated_dispatch(p_pv_ac_use, p_load_full, p_invcliploss_full);
+    }
 
 	/* *********************************************************************************************
 	PV AC calculation

@@ -339,7 +339,7 @@ public:
 	virtual void update_dispatch(size_t hour_of_year, size_t step, size_t idx)=0;
 
 	/*! Pass in the PV power forecast */
-	virtual void update_pv_data(std::vector<double> P_pv_dc);
+	virtual void update_pv_data(std::vector<double> P_pv_ac);
 
 	/*! Pass in the user-defined dispatch power vector */
 	virtual void set_custom_dispatch(std::vector<double> P_batt_dc);
@@ -358,8 +358,8 @@ protected:
 	/*! Return the dispatch mode */
 	int get_mode();
 
-	/*! Full time-series of PV production [kW] */
-	double_vec _P_pv_dc;
+	/*! Full time-series of PV production [kW-ac] */
+	double_vec _P_pv_ac;
 
 	/*! The index of the current day (hour * steps_per_hour + step) */
 	size_t _day_index;
@@ -473,8 +473,8 @@ protected:
 	void set_battery_power(FILE *p, bool debug);
 	void check_new_month(size_t hour_of_year, size_t step);
 
-	/*! Full time-series of loads [kW] */
-	double_vec _P_load_dc;
+	/*! Full time-series of loads [ac kW] */
+	double_vec _P_load_ac;
 
 	/*! Full time-series of target power [kW] */
 	double_vec _P_target_input;
@@ -561,7 +561,7 @@ public:
 	void update_cliploss_data(double_vec P_cliploss);
 
 	/// Pass in the PV power forecast [kW]
-	virtual void update_pv_data(std::vector<double> P_pv_dc);
+	virtual void update_pv_data(std::vector<double> P_pv_ac);
 
 	/*! Calculate the cost to cycle */
 	void costToCycle();

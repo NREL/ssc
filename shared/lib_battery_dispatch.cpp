@@ -752,7 +752,7 @@ void dispatch_automatic_t::copy(const dispatch_t * dispatch)
 	init_with_pointer(tmp);
 }
 
-void dispatch_automatic_t::update_pv_data(std::vector<double> P_pv_dc){ _P_pv_dc = P_pv_dc;}
+void dispatch_automatic_t::update_pv_data(std::vector<double> P_pv_ac){ _P_pv_ac = P_pv_ac;}
 void dispatch_automatic_t::set_custom_dispatch(std::vector<double> P_batt_dc) { _P_battery_use = P_batt_dc; }
 int dispatch_automatic_t::get_mode(){ return _mode; }
 double dispatch_automatic_t::power_batt_target() { return m_batteryPower->powerBatteryTarget; }
@@ -965,7 +965,7 @@ void dispatch_automatic_behind_the_meter_t::init_with_pointer(const dispatch_aut
 	grid = tmp->grid;
 
 	// time series data which could be slow to copy. Since this doesn't change, should probably make const and have copy point to common memory
-	_P_load_dc = tmp->_P_load_dc;
+	_P_load_ac = tmp->_P_load_ac;
 	_P_target_use = tmp->_P_target_use;
 	sorted_grid = tmp->sorted_grid;
 }
@@ -997,7 +997,7 @@ void dispatch_automatic_behind_the_meter_t::dispatch(size_t year,
 	dispatch_automatic_t::dispatch(year, hour_of_year, step);
 }
 
-void dispatch_automatic_behind_the_meter_t::update_load_data(std::vector<double> P_load_dc){ _P_load_dc = P_load_dc; }
+void dispatch_automatic_behind_the_meter_t::update_load_data(std::vector<double> P_load_ac){ _P_load_ac = P_load_ac; }
 void dispatch_automatic_behind_the_meter_t::set_target_power(std::vector<double> P_target){ _P_target_input = P_target; }
 double dispatch_automatic_behind_the_meter_t::power_grid_target() { return _P_target_current; };
 void dispatch_automatic_behind_the_meter_t::update_dispatch(size_t hour_of_year, size_t step, size_t idx)
@@ -1116,11 +1116,11 @@ void dispatch_automatic_behind_the_meter_t::sort_grid(FILE *p, bool debug, size_
 	{
 		for (size_t step = 0; step != _steps_per_hour; step++)
 		{
-			grid[count] = grid_point(_P_load_dc[idx] - _P_pv_dc[idx], hour, step);
+			grid[count] = grid_point(_P_load_ac[idx] - _P_pv_ac[idx], hour, step);
 			sorted_grid[count] = grid[count];
 
 			if (debug)
-				fprintf(p, "%zu\t %.1f\t %.1f\t %.1f\n", count, _P_load_dc[idx], _P_pv_dc[idx], _P_load_dc[idx] - _P_pv_dc[idx]);
+				fprintf(p, "%zu\t %.1f\t %.1f\t %.1f\n", count, _P_load_ac[idx], _P_pv_ac[idx], _P_load_ac[idx] - _P_pv_ac[idx]);
 
 			idx++;
 			count++;
@@ -1286,14 +1286,20 @@ void dispatch_automatic_behind_the_meter_t::set_battery_power(FILE *p, bool debu
 				_P_battery_use[i] *= m_batteryPower->singlePointEfficiencyACToDC;
 			}
 		}
-		// DC-connected is harder to convert to AC, must make assumptions about inverter efficiency and charge shource
+		// DC-connected is harder to convert from AC, must make assumptions about inverter efficiency and charge shource
 		else {
 			if (_P_battery_use[i] > 0) {
 				_P_battery_use[i] /= (m_batteryPower->singlePointEfficiencyDCToDC * m_batteryPower->singlePointEfficiencyACToDC);
-			}
-			// Assuming just charging from PV not grid
+                
+            }
+			// Need to bring ac load and charging values to DC side. Assume current inverter efficiency continues through dispatch forecast
 			else {
-				_P_battery_use[i] *= m_batteryPower->singlePointEfficiencyDCToDC;
+                double ac_to_dc_eff = m_batteryPower->singlePointEfficiencyACToDC;
+                if (m_batteryPower->sharedInverter->efficiencyAC > 5) // 5% is the cutoff in lib_battery_powerflow
+                {
+                    ac_to_dc_eff = m_batteryPower->sharedInverter->efficiencyAC * 0.01;
+                }
+                _P_battery_use[i] *= m_batteryPower->singlePointEfficiencyDCToDC / ac_to_dc_eff;
 			}
 		}
 	}
@@ -1491,7 +1497,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
         }
 
         /*! Economic benefit of charging from regular PV in current time step to discharge sometime in next X hours ($/kWh)*/
-        revenueToPVCharge = _P_pv_dc[idx_year1] > 0 ? *max_ppa_cost * m_etaDischarge - ppa_cost / m_etaPVCharge - m_cycleCost : 0;
+        revenueToPVCharge = _P_pv_ac[idx_year1] > 0 ? *max_ppa_cost * m_etaDischarge - ppa_cost / m_etaPVCharge - m_cycleCost : 0;
 
         /*! Computed revenue to charge from PV in each of next X hours ($/kWh)*/
         size_t t_duration = static_cast<size_t>(ceilf(
@@ -1502,7 +1508,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
             std::vector<double> revenueToPVChargeForecast;
             for (size_t i = idx_year1; i < idx_year1 + idx_lookahead; i++) {
                 // when considering grid charging, require PV output to exceed battery input capacity before accepting as a better option
-                bool system_on = _P_pv_dc[i] >= m_batteryPower->powerBatteryChargeMaxDC ? 1 : 0;
+                bool system_on = _P_pv_ac[i] >= m_batteryPower->powerBatteryChargeMaxDC ? 1 : 0;
                 if (system_on) {
                     revenueToPVChargeForecast.push_back(system_on * (*max_ppa_cost * m_etaDischarge - _forecast_price_rt_series[i] / m_etaPVCharge - m_cycleCost));
                 }
@@ -1616,13 +1622,13 @@ void dispatch_automatic_front_of_meter_t::update_cliploss_data(double_vec P_clip
 		_P_cliploss_dc.push_back(P_cliploss[i]);
 }
 
-void dispatch_automatic_front_of_meter_t::update_pv_data(double_vec P_pv_dc)
+void dispatch_automatic_front_of_meter_t::update_pv_data(double_vec P_pv_ac)
 {
-	_P_pv_dc = P_pv_dc;
+	_P_pv_ac = P_pv_ac;
 
 	// append to end to allow for look-ahead
 	for (size_t i = 0; i != _look_ahead_hours * _steps_per_hour; i++)
-		_P_pv_dc.push_back(P_pv_dc[i]);
+		_P_pv_ac.push_back(P_pv_ac[i]);
 }
 
 void dispatch_automatic_front_of_meter_t::costToCycle()
