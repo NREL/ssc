@@ -63,6 +63,20 @@ TEST_F(SunriseCaseIrradProc, solarposTest_lib_irradproc){
 	}
 }
 
+TEST_F(SunriseCaseIrradProc, solarpos_spa_Test_lib_irradproc) {
+	double sun[9];
+	vector<double> sunrise_times;
+	vector<double> sunset_times;
+
+	solarpos_spa(year, month, day, 5, 30, 0, lat, lon, tz, 0, 1013.25, 15, sun);
+	vector<double> solution = { 1.11047, 1.6031, -0.0323028, 0.363806, 5.70924, 19.5179, 0.968281, 4.88641, 0 };
+	sunrise_times.push_back(solution[4]);
+	sunset_times.push_back(solution[5]);
+	for (int i = 0; i < 9; i++) {
+		EXPECT_NEAR((double)sun[i], solution[i], e) << "sunrise case, parameter " << i << " fail\n";
+	}
+}
+
 TEST_F(IrradTest, sunriseAndSunsetAtDifferentLocationsTest_lib_irradproc) {
 	/*locations to test:
 	western hemisphere: Golden CO

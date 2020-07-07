@@ -98,6 +98,800 @@ struct poaDecompReq;
 void solarpos(int year,int month,int day,int hour,double minute,double lat,double lng,double tz,double sunn[9]);
 
 /**
+*   limit_degrees function calculates the degree value of a parameter within 0-360°
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008. 
+*
+* \param[in] degrees unconstrained angle in degrees
+* \param[out] limited degree value of angle constrained to 360 degrees
+*/
+double limit_degrees(double degrees);
+
+/**
+*   limit_minutes function calculates the Equation of Time minutes value of a parameter within 0-20 minutes
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] minutes unconstrained EoT value in minutes
+* \param[out] limited minutes value within 20 minutes
+*/
+double limit_minutes(double minutes);
+
+/**
+*   limit_degrees180 function calculates the degree value of a parameter within 0-180°
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] degrees unconstrained angle in degrees
+* \param[out] limited degree value of angle constrained to 180 degrees
+*/
+double limit_degrees180(double degrees);
+
+/**
+*   limit_zero2one function constrains the value of a parameter within 0-1
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] value unconstrained parameter value
+* \param[out] limited value of angle constrained to range 0-1
+*/
+double limitzero2one(double value);
+
+/**
+*   limit_degrees180pm function constrains the value of a parameter within 0-1
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] degrees unconstrained degree values
+* \param[out] limited value of angle constrained to range 0-180°
+*/
+double limit_degrees180pm(double degrees);
+
+/**
+*   third_order_polynomial function calculates the 3rd order polynomial for given coefficients
+*   This function is used to calculate the X values of the Solar Position Algorithm
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] a coefficient for x^3 term
+* \param[in] b coefficient for x^2 term
+* \param[in] c coefficient for x term
+* \param[in] d coefficient to x^0 term
+* \param[in] x julian ephemeris century value used as the dependent variable in the polynomial
+* \param[out] result resulting value of the third order polynomial
+*/
+double third_order_polynomial(double a, double b, double c, double d, double x);
+
+/**
+*	dayfrac_to_local_hour function calculates the local hour time from the day fraction parameter
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] dayfrac parameter in fraction of days
+* \param[in] timezone timezone for the location in question
+* \param[out] parameter in local hour time
+*/
+double dayfrac_to_local_hr(double dayfrac, double timezone);
+
+/**
+*   julian_day function calculates the julian day based on time parameter inputs
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] year year value of time stamp
+* \param[in] month month value of time stamp
+* \param[in] day day value of time stamp
+* \param[in] hour hour value of time stamp
+* \param[in] minute minute value of time stamp
+* \param[in] second minute of time stamp
+* \param[in] dut1 delta time value (fillin)
+* \param[in tz time zone of time stamp
+* \param[out] jd Julian day value of time stamp
+*/
+double julian_day(int year, int month, int day, int hour, int minute, double second, double dut1, double tz);
+
+/**
+*   julian_century function calculates the julian century value for the time stamp
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] jd julian day for the given time stamp found using julian_day
+* \param[out] jc julian century value for given time stamp
+*/
+double julian_century(double jd);
+
+/**
+*   julian_ephemeris_day function calculates the julian ephemeris day value for the time stamp
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] jd julian day for the given time stamp found using julian_day
+* \param[in] delta_t difference between earth time and terrestrial time (fillin)
+* \param[out] jde julian ephemeris day value for given time stamp
+*/
+double julian_ephemeris_day(double jd, double delta_t);
+
+/**
+*   julian_ephemeris_century function calculates the julian ephemeris century value for the time stamp
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] jde julian ephemeris day
+* \param[out] jce julian ephemeris century
+*/
+
+/**
+*   julian_ephemeris_millennium function calculates the julian ephemeris millennium value for the time stamp
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] jce julian ephemeris century
+* \param[out] jme julian ephemeris millennium
+*/
+double julian_ephemeris_millennium(double jce);
+
+/**
+*   earth_periodic_term_summation function calculates the sum of the earth heliocentric longitude (L), latitude (B), and radius vector (R) terms (L0, L1, etc.)
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] terms[][3] matrix of L, B, and R terms with number of rows depending on parameter
+* \param[in] count number of rows for given parameter set (Letter, Number)
+* \param[in] jme juliam ephemeris millennium
+* \param[out] sum summation of the calculations for the given parameter inputs
+*/
+double earth_periodic_term_summation(const double terms[][3], int count, double jme);
+
+/**
+*   earth_values function calculates the earth heliocentric longitude (L), latitude (B), and radius vector (R)
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] term_sum[] matrix containing all terms of parameter (L0-L5, R0, etc)
+* \param[in] count number of parameters for given variable (example: L0-L5 count = 6)
+* \param[in] jme juliam ephemeris millennium
+* \param[out] sum summation of the calculations resulting in L, R, and B (depending on inputs)
+*/
+double earth_values(double term_sum[], int count, double jme);
+
+/**
+*   earth_heliocentric_longitude function calculates the earth heliocentric longitude (L) using earth_periodic_term_summation and earth_values
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] jme juliam ephemeris millennium
+* \param[out] earth_helio_longitude earth heliocentric longitude constrained to 0-360°
+*/
+double earth_heliocentric_longitude(double jme);
+
+/**
+*   earth_heliocentric_latitude function calculates the earth heliocentric latitude (B) using earth_periodic_term_summation and earth_values
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] jme juliam ephemeris millennium
+* \param[out] earth_helio_latitude earth heliocentric latitude in unconstrained degrees
+*/
+double earth_heliocentric_latitude(double jme);
+
+/**
+*   earth_radius vector function calculates the earth radius vector (R) using earth_periodic_term_summation and earth_values
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] jme juliam ephemeris millennium
+* \param[out] earth_rad_vector earth radius vector in astronomical units (AU)
+*/
+double earth_radius_vector(double jme);
+
+/**
+*   geocentric_longitude function calculates the geocentric longitude based on the heliocentric longitude (L)
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] l heliocentric longitude
+* \param[out] theta geocentric longitude constrained to 0-360°
+*/
+double geocentric_longitude(double l);
+
+/**
+*   geocentric_latitude function calculates the geocentric latitude based on the heliocentric latitude
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] b heliocentric latitude
+* \param[out] -b geocentric latitude is the negative of the heliocentric latitude in degrees
+*/
+double geocentric_latitude(double b);
+
+/**
+*   mean_elongation_moon_sun function calculates the mean elongation of the moon from the sun (X_0)
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] jce julian ephemeris century
+* \param[out] mean_elong_moon_sun mean elongation from moon to sun in degrees
+*/
+double mean_elongation_moon_sun(double jce);
+
+/**
+*   mean_anomaly_sun function calculates the mean anomaly of the sun (X_1)
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] jce julian ephemeris century
+* \param[out] mean_anom_sun mean anomaly of the sun in degrees
+*/
+double mean_anomaly_moon(double jce);
+
+/**
+*   mean_anomaly_sun function calculates the mean anomaly of the moon (X_2)
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] jce julian ephemeris century
+* \param[out] mean_anom_moon mean anomaly of the moon in degrees
+*/
+double mean_anomaly_moon(double jce);
+
+/**
+*   argument_latitude_moon function calculates the moon's argument of latitude (X_3)
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] jce julian ephemeris century
+* \param[out] argument_lat_moon moon's argument of latitude in degrees
+*/
+double argument_latitude_moon(double jce);
+
+/**
+*   ascending_latitude_moon function  Calculates the longitude of the ascending node of the moon’s mean orbit on the
+*	ecliptic, measured from the mean equinox of the date, (X_4) (in degrees), 
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] jce julian ephemeris century
+* \param[out] ascending_long_moon longitude of the ascending node of the moon's mean orbit on the ecliptic in degrees
+*/
+double ascending_longitude_moon(double jce);
+
+/**
+*   xy_term_summation function calculates the summation of the X_i and Y_i components in the nutation calculations
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] i integer used to specify row of Y terms from report table
+* \param[in] x[5] matrix containing X terms (X_0-X_4) used in summation
+* \param[out] sum summation of X and Y terms for the given Y row
+*/
+double xy_term_summation(int i, double x[5]);
+
+/**
+*   nutation_longitude_and_obliquity function calculates the nutation longitude and obliquity by using xy_term_summation to sum the results for each row of Y
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] jce julian ephemeris century
+* \param[in] x[5] matrix containing X terms (X_0-X_4) used in summation
+* \param[out] delta_values[0] nutation of longitude in degrees
+* \param[out] delta_values[1] nutation of obliquity in degrees
+*/
+void nutation_longitude_and_obliquity(double jce, double x[5], double delta_values[2]);
+
+/**
+*   ecliptic_mean_obliquity function calculates the mean obliquity of the ecliptic in arc seconds
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] jme julian ephemeris millennium
+* \param[out] eclip_mean_obliquity mean obliquity of the ecliptic in arc seconds
+*/
+double ecliptic_mean_obliquity(double jme);
+
+/**
+*   ecliptic_true_obliquity function calculates the true obliquity of the ecliptic in degrees
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] delta_epsilon nutation of the longitude in degrees
+* \param[in] epsilon0 elciptic mean obliquity in arc seconds
+* \param[out] eclip_true_obliquity true obliquity of the ecliptic in degrees
+*/
+double ecliptic_true_obliquity(double delta_epsilon, double epsilon0);
+
+/**
+*   aberration_correction function calculates the aberration correction (delta_Tau) in degrees
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] r heliocentric radius vector R
+* \param[out] delta_tau aberration correction in degrees
+*/
+double aberration_correction(double r);
+
+/**
+*   apparent_sun_longitude function calculates the apparent sun longitude (lambda) in degrees
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] theta geocentric longitude in degrees
+* \param[in] delta_psi nutation in longitude in degrees
+* \param[in] delta_epsilon aberration correction in degrees
+* \param[out] lambda apparent sun longitude in degrees
+*/
+double apparent_sun_longitude(double theta, double delta_psi, double delta_tau);
+
+/**
+*   greenwhich_mean_sidereal_time function calculates the mean sidereal time at Greenwich at any given time (nu0) in degrees
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] jd julian day
+* \param[in] jc julian century
+* \param[out] nu0 apparent sidereal time at Greenwich at any given time in degrees
+*/
+double greenwich_mean_sidereal_time(double jd, double jc);
+
+/**
+*   greenwhich_sidereal_time function calculates the apparent sidereal time at Greenwich at any given time (v) in degrees
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] nu0 mean sidereal time at Greenwich at any given time in degrees
+* \param[in] delta_psi nutation in longitude in degrees
+* \param[in] epsilon true obliquity of the ecliptic in degrees
+* \param[out] nu apparent sidereal time at Greenwhich at any given time in degrees
+*/
+double greenwich_sidereal_time(double nu0, double delta_psi, double epsilon);
+
+/**
+*   geocentric_right_ascension function calculates the geocentric sun right ascension (alpha) in degrees
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] lamda apparent sun longitude in degrees
+* \param[in] epsilon true obliquity of the ecliptic in degrees
+* \param[in] beta geocentric latitude in degrees
+* \param[out] alpha geocentric sun right ascension in degrees
+*/
+double geocentric_right_ascension(double lamda, double epsilon, double beta);
+
+/**
+*   geocentric_declination function calculates the geocentric sun declination (delta) in degrees
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] beta geocentric latitude in degrees
+* \param[in] epsilon true obliquity of the ecliptic in degrees
+* \param[in] lamda apparent sun longitude in degrees
+* \param[out] delta geocentric sun declination in degrees
+*/
+double geocentric_declination(double beta, double epsilon, double lamda);
+
+/**
+*   observer_hour_angle function calculates the observer local hour angle (H) in degrees
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] nu apparent sidereal time in Greenwich in degrees
+* \param[in] longitude observer geographical longitude in degrees (positive for east of Greenwich)
+* \param[in] alpha_deg geocentric sun right ascension in degrees
+* \param[out] H observer local hour angle in degrees (constrained to 0-360°)
+*/
+double observer_hour_angle(double nu, double longitude, double alpha_deg);
+
+/**
+*   sun_equatorial_horizontal_parallax function calculates the equatorial horizontal parallax to the sun (zeta) in degrees
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] r earth radius vector in degrees
+* \param[out] xi sun equatorial horizontal parallax in degrees
+*/
+double sun_equatorial_horizontal_parallax(double r);
+
+/**
+*   right_ascension_parallax_and_topocentric_dec function calculates the parallax in the sun right ascension and 
+*   the topocentric sun declination both in degrees
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] latitude observer geographical latitude in degrees
+* \param[in] elevation observer geographical elevation in meters
+* \param[in] xi sun equatorial horizontal parallax in degrees
+* \param[in] h observer local hour angle in degrees
+* \param[in] delta geocentric sun declination in degrees
+* \param[out] delta_alpha parallax in the sun right ascension in degrees
+* \param[out] delta_prime topocentric sun declination in degrees
+*/
+void right_ascension_parallax_and_topocentric_dec(double latitude, double elevation,
+	double xi, double h, double delta, double delta_alpha_prime[2]);
+
+/**
+*   topocentric_right_ascension function calculates the topocentric sun right ascension (alpha_prime) in degrees
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] alpha_deg sun right ascension in degrees
+* \param[in] delta_alpha parallax in the sun right ascension in degrees
+* \param[out] alpha_prime topocentric sun right ascension in degrees
+*/
+double topocentric_right_ascension(double alpha_deg, double delta_alpha);
+
+/**
+*   topocentric_local_hour_angle function calculates the topocentric local hour angle (H_prime) in degrees
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] h observer local hour angle in degrees (H)
+* \param[in] delta_alpha parallax in the sun right ascension in degrees
+* \param[out] h_prime topocentric local hour angle in degrees
+*/
+double topocentric_local_hour_angle(double h, double delta_alpha);
+
+/**
+*   topocentric_elevation_angle function calculates the topocentric elevation angle without atmospheric refraction (e0) in degrees
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] latitude observer geographical latitude in degrees
+* \param[in] delta_prime topocentric sun declination in degrees
+* \param[in] h_prime topocentric local hour angle in degrees
+* \param[out] e0 topocentric elevation angle in degrees
+*/
+double topocentric_elevation_angle(double latitude, double delta_prime, double h_prime);
+
+/**
+*   atmospheric_refraction_correction function calculates the atmospheric refraction correction (delta_e) in degrees
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] pressure annual average local pressure (millibar)
+* \param[in] temperature annual average local temperature (°C)
+* \param[in] atmos_refract (fillin)
+* \param[in] e0 topocentric elevation angle without refraction correction in degrees
+* \param[out] del_e atmospheric refraction correction in degrees
+*/
+double atmospheric_refraction_correction(double pressure, double temperature,
+	double atmos_refract, double e0);
+
+/**
+*   topocentric_elevation_angle_corrected function calculates the refraction corrected topocentric elevation angle (e) in degrees
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] e0 topocentric elevation angle without refraction correction in degrees
+* \param[in] delta_e refraction correction in degrees
+* \param[out] e topocentric elevation angle in degrees
+*/
+double topocentric_elevation_angle_corrected(double e0, double delta_e);
+
+/**
+*   topocentric_zenith_angle function calculates the topocentric zenith angle (theta) in degrees
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] e topocentric elevation angle
+* \param[out] theta topocentric zenith angle in degrees
+*/
+double topocentric_zenith_angle(double e);
+
+/**
+*   topocentric_azimuth_angle_astro function calculates the topocentric astronomers azimuth angle in degrees
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] h_prime topocentric local hour angle in degrees
+* \param[in] latitude observer's geographical latitude in degrees
+* \param[in]  delta_prime topocentric sun declination in degrees
+* \param[out] azimuth_astro topocentric azimuth angle for astronomers in degrees (west of south)
+*/
+double topocentric_azimuth_angle_astro(double h_prime, double latitude, double delta_prime);
+
+/**
+*   topocentric_azimuth_angle function calculates the topocentric azimuth angle in degrees
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] azimuth_astro topocentric azimuth angle for astronomers (west of south) in degrees
+* \param[out] azimuth topocentric azimuth angle for solar radiation (east of north) in degrees (constrained 0-360°)
+*/
+double topocentric_azimuth_angle(double azimuth_astro);
+
+/**
+*   surface_incidence_angle function calculates the incidence angle for a surface oriented in any direction (degrees)
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] zenith topocentric zenith angle (theta) in degrees
+* \param[in] azimuth_astro topocentric azimuth angle for astronomers (west of south) in degrees
+* \param[in] azm_rotation surface azimuth rotation angle (array azimuth) in degrees (positive for west of south)
+* \param[in] slope  tilt angle of surface in degrees
+* \param[out] azimuth topocentric azimuth angle for solar radiation (east of north) in degrees (constrained 0-360°)
+*/
+double surface_incidence_angle(double zenith, double azimuth_astro, double azm_rotation, double slope);
+
+/**
+*   sun_mean_longitude function calculates the sun's mean longitude in degrees
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] jme julian ephemeris millenium
+* \param[out] M sun's mean longitude in degrees
+*/
+double sun_mean_longitude(double jme);
+
+/**
+*   eot function calculates the Equation of Time in degrees
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] m Sun's mean longitude in degrees 
+* \param[in] alpha geocentric sun right ascension in degrees
+* \param[in] del_psi nutation of longitude in degrees
+* \param[in]  epsilon true obliquity of the ecliptic in degrees
+* \param[out] E equation of time in degrees 
+*/
+double eot(double m, double alpha, double del_psi, double epsilon);
+
+/**
+*   approx_sun_transit_time function calculates the approximate sun transit time (m0) in fraction of day
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] alpha_zero geocentric right ascension at the time in question degrees
+* \param[in] longitude observer's geographical longitude in degrees
+* \param[in] nu apparent sidereal time at Greenwhich at any given time in  
+* \param[out] m0 approximate sun transit time in fraction of day
+*/
+double approx_sun_transit_time(double alpha_zero, double longitude, double nu);
+
+/**
+*   sun_hour_angle_at_rise_set function calculates the local hour angle corresponding to the sun elevation equal -0.833°
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] latitude observer's geographical latitude in degrees
+* \param[in] delta_zero geocentric sun declination in degrees
+* \param[in] h0_prime sun elevation equal -0.833° 
+* \param[out] H0 local hour angle at sunrise and sunset in degrees
+*/
+double sun_hour_angle_at_rise_set(double latitude, double delta_zero, double h0_prime);
+
+/**
+*   approx_sun_rise_and_set function calculates the approximate sunrise and sunset in fraction of day
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] h0 local hour angle at sunrise and sunet in degrees
+* \param[out] m_rts[0] sunrise in fraction of day (constrained 0-1)
+* \param[out] m_rts[1] sunset in fraction of day (constrained 0-1)
+* \param[out] m_rts[2] sun transit in fraction of day (constrained 0-1)
+*/
+void approx_sun_rise_and_set(double* m_rts, double h0);
+
+/**
+*   rts_alpha_delta_prime function calculates the alpha and delta prime for the sunrise and sunset calculations (fillin)
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] n terms n_i for sunrise and sunset calculations
+* \param[in] ad[0] JD_MINUS
+* \param[in] ad[1] JD_ZERO
+* \param[in] ad[2] JD_PLUS
+* \param[out] rts_alpha_delta_prime alpha prime or delta prime depending on inputs
+*/
+double rts_alpha_delta_prime(double* ad, double n);
+
+/**
+*   rts_sun_altitude function calculates the sun altitude for the sunrise, sunset, and sun transit
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] latitude observer's geographical latitude in degrees
+* \param[in] delta_prime delta prime from sunrise and sunset calculations
+* \param[in] h_prime local hour angle for sunrise, sunset, or sun transit
+* \param[out] rts_sun_altitude sun altitude for the sunrise, sunset, and sun transit in degrees
+*/
+double rts_sun_altitude(double latitude, double delta_prime, double h_prime);
+
+/**
+*   sun_rise_and_set function calculates the sun altitude for the sunrise, sunset, and sun transit
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] m_rts[]
+* \param[in] h_rts[]
+* \param[in] delta_prime[]
+* \param[in] latitude observer's geographical latitude in degrees
+* \param[in] h_prime[]
+* \param[in] h0_prime
+* \param[in] sun
+* \param[out] sun_rise_and_set sunrise or sunset depending on inputs
+*/
+double sun_rise_and_set(double* m_rts, double* h_rts, double* delta_prime, double latitude,
+	double* h_prime, double h0_prime, int sun);
+
+/**
+*   calculate_spa function combines numerous functions to calculate the Solar Position Algorithm parameters
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] jd julian day calculated outside of function for compatibility with sunrise sunset calcs
+* \param[in] lat observer's geograpical latitude in degrees
+* \param[in] lng observer's geographical longitude in degrees
+* \param[in] alt observer's geographical elevation in meters
+* \param[in] pressure average annual air pressure of the site in millibars
+* \param[in] temp average annual air temperature in degrees Celsius
+* \param[in] delta_t difference between earth rotation time and Terrestrial Time (TT) in seconds (reported annually in Astronomical Almanac)
+* \param[in] tilt tilt angle of the surface for angle of incidence calculation (degrees)
+* \param[in] azm_rotation azimuth rotation of solar array (measured west of south?) (degrees)
+* \param[out] ascension_and_declination stores right ascension and declination values to be passed to sunrise sunset calculations
+* \param[out] ascension_and_declination[0] right ascension value in degrees
+* \param[out] ascension_and_declination[1] declination value in degrees
+* \param[out] needed_values values to pass outside of the function to other function, output of solarpos function (sunn)
+* \param[out] needed_values[0] 
+* \param[out] needed_values[1]
+* \param[out] needed_values[2]
+* \param[out] needed_values[3]
+* \param[out] needed_values[4]
+* \param[out] needed_values[5]
+* \param[out] needed_values[6]
+* \param[out] needed_values[7]
+* \param[out] needed_values[8]
+* \param[out] needed_values[9]
+* \param[out] needed_values[10]
+* \param[out] needed_values[11]
+* \param[out] needed_values[12]
+*/
+void calculate_spa(double jd, double lat, double lng, double alt, double pressure, double temp, 
+	double delta_t, double tilt, double azm_rotation, double ascension_and_declination[2], double needed_values[13]);
+
+/**
+*
+*	calculate_eot_and_sun_rise_transit_set function calculates Equation of Time (EoT) and sunrise and 
+*	sunset times based on the Solar Position Algorithm equations in Appendix A
+*   This function is based on the C code implementation of the Solar Position Algorithm
+*   based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008.
+*
+* \param[in] jme julian ephemeris millennium 
+* \param[in] tz time zone
+* \param[in] alpha right ascension from calculate spa output (needed_values[])
+* \param[in] del_psi nutation in longitude from calculate_spa output (needed_values[1])
+* \param[in] epsilon true obliquity of the ecliptic from calculate_spa output (needed_values[2])
+* \param[in] jd julian day 
+* \param[in] year year integer of time stamp
+* \param[in] month month integer of time time stamp
+* \param[in] day day integer of time stamp
+* \param[in] lat observer's geographical latitude in degrees
+* \param[in] lng observer's geographical longitude in degrees
+* \param[in] alt observer's geographical elevation (altitude) in meters
+* \param[in] pressure average annual air pressure in millibars
+* \param[in] temp average annual air temperature in degrees Celsius
+* \param[in] tilt tilt angle of surface for angle of incidence (AOI) calculation (degrees)
+* \param[in] delta_t difference in earth rotation time and Terrestrial Time (TT) in seconds (reported annualy in Astronomical Almanac)
+* \param[in] azm_rotation azimuth rotation of array in degrees (measured west of south?)
+* \param[in] nu apparent sidereal time in Greenwich (degrees) from calculate_spa output
+* \param[out] needed_values values needed to be taken out of function to pass as outputs to calculate_spa function
+* \param[out] needed_values[0]
+* \param[out] needed_values[1]
+* \param[out] needed_values[2]
+* \param[out] needed_values[3]
+* \param[out] needed_values[4]
+* \param[out] needed_values[5]
+* \param[out] needed_values[6]
+* \param[out] needed_values[7]
+* \param[out] needed_values[8]
+* \param[out] needed_values[9]
+* \param[out] needed_values[10]
+* \param[out] needed_values[11]
+* \param[out] needed_values[12]
+*/
+void calculate_eot_and_sun_rise_transit_set(double jme, double tz, double alpha, double del_psi, double epsilon, double jd, int year, 
+	int month, int day, double lat, double lng, double alt, double pressure, double temp, double tilt, double delta_t, double azm_rotation, 
+	double nu, double needed_values[13]);
+
+/**
+*   solarpos_spa function calculates the sun position given the local standard time and location.
+*   This function is based on a paper by Reda and Andreas published in NREL/TP-
+*	560-34302, 2008. It calculates solar position for the
+*	time and location passed to the function based on the Astronomical
+*	Almanac's Algorithm for the period -2000-6000. For data averaged over an
+*	interval, the appropriate time passed is the midpoint of the interval.
+*	(Example: For hourly data averaged from 10 to 11, the time passed to the
+*	function should be 10 hours and 30 minutes). The exception is when the time
+*	interval includes a sunrise or sunset. For these intervals, the appropriate
+*	time should be the midpoint of the portion of the interval when the sun is
+*	above the horizon. (Example: For hourly data averaged from 7 to 8 with a
+*	sunrise time of 7:30, the time passed to the function should be 7 hours and
+*	and 45 minutes).
+*
+* \param[in] year (e.g. 1986)
+* \param[in] month (1-12)
+* \param[in] day day of month
+* \param[in] hour hour of day local standard time (1-24)
+* \param[in] minute minutes past the hour, local standard time (1-24)
+* \param[in] second seconds past the minute, local standard time (0-59)
+* \param[in] lat latitude in degrees, north positive
+* \param[in] lng longitude in degrees, east positive
+* \param[in] tz time zone, west longitudes negative
+* \param[in] dut1 difference between earth rotation time and Terrestrial Time (reported yearly in Astronomical Almanac)
+* \param[in] alt altitude in meters
+* \param[in] pressure pressure in millibars
+* \param[in] temp temperature in degrees C
+* \param[in] tilt tilt angle of surface for angle of incidence calculation (degrees)
+* \param[in] azm_rotation azimuth rotation of surface (surface azimuth measured from south?)
+* \param[out] sunn array of elements to return sun parameters to calling function
+* \param[out] sunn[0] sun azimuth in radians, measured east from north, 0 to 2*pi
+* \param[out] sunn[1] sun zenith in radians, 0 to pi
+* \param[out] sunn[2] sun elevation in radians, -pi/2 to pi/2
+* \param[out] sunn[3] sun declination in radians
+* \param[out] sunn[4] sunrise in local standard time (hrs), not corrected for refraction
+* \param[out] sunn[5] sunset in local standard time (hrs), not corrected for refraction
+* \param[out] sunn[6] eccentricity correction factor
+* \param[out] sunn[7] true solar time (hrs)
+* \param[out] sunn[8] extraterrestrial solar irradiance on horizontal at particular time (W/m2)
+* \param[out] needed_values values needed to be passed from one function to another
+*/
+void solarpos_spa(int year, int month, int day, int hour, double minute, double second, double lat, double lng, double tz, double dut1, double alt, double pressure, double temp, double tilt, double azm_rotation, double sunn[9], double needed_values[10]);
+
+/**
 * incidence function calculates the incident angle of direct beam radiation to a surface.
 * The calculation is done for a given sun position, latitude, and surface orientation. 
 * The modes available are fixed tilt, 1-axis tracking, and 2-axis tracking.
