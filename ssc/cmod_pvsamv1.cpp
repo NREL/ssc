@@ -1126,7 +1126,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 		dcStringVoltage.push_back(tmp);
 	}
 
-    //idx is the current array index in the (possibly subhourly) year of weather data or the non-annual array
+	//idx is the LIFETIME index in the (possibly subhourly) year of weather data, or the normal index in a non-annual array (lifetime is 1)
 	size_t idx = 0;
 	//for normal annual simulations, this works as expected. for non-annual weather data inputs, nyears is 1,
 	//so iyear will always be 0, meaning that timeseries outputs will be output for the entire length of nrec
