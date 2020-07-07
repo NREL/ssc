@@ -1355,7 +1355,9 @@ weatherdata::weatherdata( var_data *data_table )
 
 			m_data[i] = r;
 		}
-	}
+
+        start_hours_at_0();
+    }
 
 	// estimate time step and check for continuous year
 	size_t nmult = 0;
@@ -1382,8 +1384,6 @@ weatherdata::weatherdata( var_data *data_table )
 	{
 		m_continuousYear = false;
 	}
-
-    start_hours_at_0();
 }
 
 weatherdata::~weatherdata()
