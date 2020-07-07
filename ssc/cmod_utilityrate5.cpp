@@ -1399,7 +1399,7 @@ public:
 					throw exec_error("utilityrate5", util::format("invalid number of sell rate records (%d): must be an integer multiple of 8760", (int)cnt));
 				ts_br = as_array("ur_ts_buy_rate", &cnt);
 				if ((cnt != m_num_rec_yearly) && (cnt != 8760))
-					throw exec_error("utilityrate5", util::format("number of sell rate records (%d) must be equal to number of gen records (%d) or 8760 for each year", (int)cnt, (int)m_num_rec_yearly));
+					throw exec_error("utilityrate5", util::format("number of buy rate records (%d) must be equal to number of gen records (%d) or 8760 for each year", (int)cnt, (int)m_num_rec_yearly));
 
 				// assign timestep values for utility rate calculations
 				size_t idx = 0;
