@@ -2094,10 +2094,8 @@ void cm_pvsamv1::exec( ) throw (general_error)
 				// jj represents which timestep within the hour you're on, 0-indexed
 				// i.e. if idx is 7 in a 15-minute weather file (time 1:45), hour_of_year will be 1, so jj = 7 - (1*4) = 3 (which is correct for 0-indexed jj)
 				// and non-annual simulations are not allowed for battery models, so this code won't be encountered in that case
-				size_t jj = 0;
-				if (hour_of_year == 0) jj = idx;
-				else jj = idx - (hour_of_year * step_per_hour);
-				batt->initialize_time(iyear, hour_of_year, jj);
+				size_t jj = (idx % nrec) - hour_of_year * step_per_hour;
+                batt->initialize_time(iyear, hour_of_year, jj);
 				batt->check_replacement_schedule();
 			}
 
@@ -2260,10 +2258,8 @@ void cm_pvsamv1::exec( ) throw (general_error)
 				// jj represents which timestep within the hour you're on, 0-indexed
 				// i.e. if idx is 7 in a 15-minute weather file (time 1:45), hour_of_year will be 1, so jj = 7 - (1*4) = 3 (which is correct for 0-indexed jj)
 				// and non-annual simulations are not allowed for battery models, so this code won't be encountered in that case
-				size_t jj = 0;
-				if (hour_of_year == 0) jj = idx;
-				else jj = idx - (hour_of_year * step_per_hour);
-				batt->initialize_time(iyear, hour_of_year, jj);
+                size_t jj = (idx % nrec) - hour_of_year * step_per_hour;
+                batt->initialize_time(iyear, hour_of_year, jj);
 				batt->check_replacement_schedule();
 
 				if (resilience){
