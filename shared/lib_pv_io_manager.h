@@ -193,7 +193,7 @@ struct Irradiance_IO
 	size_t numberOfWeatherFileRecords;							  /// The number of records in the weather file
 	size_t stepsPerHour;										  /// The number of steps per hour
 	size_t numberOfSubarrays;									  /// The number of subarrays (needed if reading POA data from weather file)
-	double dtHour;											      /// The timestep in hours
+	double dtHour;											      /// The timestep in fraction of an hour (e.g. for 15-minute data, dtHour would be 0.25)
 	int radiationMode;											  /// Specify which components of radiance should be used: 0=B&D, 1=G&B, 2=G&D, 3=POA-Ref, 4=POA-Pyra
 	int skyModel;												  /// Specify which sky diffuse model should be used: 0=isotropic, 1=hdkr, 2=perez
 	flag useWeatherFileAlbedo;									  /// Specify whether to use the weather file albedo
@@ -228,6 +228,7 @@ struct Simulation_IO
 	double dtHour;
 	flag useLifetimeOutput;
 	flag saveLifetimeVars;
+	flag annualSimulation; //flag to determine if the simulation is a normal, annual simulation with a single continuous year, or a non-annual/single timestep simulation
 };
 
 /***

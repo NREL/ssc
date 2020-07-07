@@ -7,7 +7,7 @@
  * Creates resources as var_data, as opposed to resources from files, for testing use through SDK
  */
 
-var_data* create_weatherdata_array();
+var_data* create_weatherdata_array(int length);
 
 void free_weatherdata_array(var_data* data);
 

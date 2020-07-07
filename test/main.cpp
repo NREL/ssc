@@ -28,6 +28,12 @@ GTEST_API_ int main(int argc, char **argv) {
 //	::testing::GTEST_FLAG(filter) = "CMPvsamv1PowerIntegration_cmod_pvsamv1.DefaultNoFinancialModel";
 //	::testing::GTEST_FLAG(filter) = "CMPvsamv1PowerIntegration_cmod_pvsamv1.NoFinancialModelCustomWeatherFile";
 //	::testing::GTEST_FLAG(filter) = "URDBv7*";
+//	::testing::GTEST_FLAG(filter) = "UsingDataCaseWeatherReader.IntegrationTest_csp_solver_core";
+//	::testing::GTEST_FLAG(filter) = "CMPvsamv1PowerIntegration_cmod_pvsamv1*";
+//	::testing::GTEST_FLAG(filter) = "CMPvsamv1PowerIntegration_cmod_pvsamv1.DefaultLifetimeNoFinancialModel";
+//	::testing::GTEST_FLAG(filter) = "CMPvsamv1PowerIntegration_cmod_pvsamv1.NoFinancialModelSkyDiffuseAndIrradModels";
+//	::testing::GTEST_FLAG(filter) = "CMPvsamv1PowerIntegration_cmod_pvsamv1.NoFinancialModelShading";
+
 
 
 	int status = RUN_ALL_TESTS();

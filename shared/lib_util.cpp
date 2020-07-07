@@ -1,22 +1,22 @@
 /**
 BSD-3-Clause
 Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
 that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
 and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
 and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
 or promote products derived from this software without specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
@@ -63,7 +63,7 @@ std::vector< std::string > util::split( const std::string &str, const std::strin
 	char cur_delim[2] = {0,0};
 	std::string::size_type m_pos = 0;
 	std::string token;
-	
+
 	while (m_pos < str.length())
 	{
 		std::string::size_type pos = str.find_first_of(delim, m_pos);
@@ -76,20 +76,20 @@ std::vector< std::string > util::split( const std::string &str, const std::strin
 		else
 		{
 			cur_delim[0] = str[pos];
-			std::string::size_type len = pos - m_pos;			
+			std::string::size_type len = pos - m_pos;
 			token.assign(str, m_pos, len);
 			m_pos = pos + 1;
 		}
-		
+
 		if (token.empty() && !ret_empty)
 			continue;
 
 		list.push_back( token );
-		
+
 		if ( ret_delim && cur_delim[0] != 0 && m_pos < str.length() )
 			list.push_back( std::string( cur_delim ) );
 	}
-	
+
 	return list;
 }
 
@@ -102,7 +102,7 @@ std::string util::join( const std::vector< std::string > &list, const std::strin
 		if (i < list.size()-1)
 			str += delim;
 	}
-	return str;		
+	return str;
 }
 
 size_t util::replace( std::string &s, const std::string &old_text, const std::string &new_text)
@@ -136,7 +136,7 @@ bool util::to_integer(const std::string &str, int *x)
 {
 	const char *startp = str.c_str();
 	char *endp = NULL;
-	*x = ::strtol( startp, &endp, 10 );	
+	*x = ::strtol( startp, &endp, 10 );
 	return !*endp && (endp!=startp);
 }
 
@@ -152,7 +152,7 @@ bool util::to_double(const std::string &str, double *x)
 {
 	const char *startp = str.c_str();
 	char *endp = NULL;
-	*x = ::strtod( startp, &endp );	
+	*x = ::strtod( startp, &endp );
 	return !*endp && (endp!=startp);
 }
 
@@ -189,7 +189,7 @@ std::string util::upper_case( const std::string &in )
 bool util::file_exists( const char *file )
 {
 #ifdef _WIN32
-	// from wxWidgets: must use GetFileAttributes instead of ansi C 
+	// from wxWidgets: must use GetFileAttributes instead of ansi C
 	// b/c can cope with network (unc) paths
 	DWORD ret = ::GetFileAttributesA( file );
 	return (ret != (DWORD)-1) && !(ret & FILE_ATTRIBUTE_DIRECTORY);
@@ -245,18 +245,18 @@ bool util::mkdir( const char *path, bool make_full )
 	if (make_full)
 	{
 		std::vector<std::string> parts = split( path, "/\\" );
-	
+
 		if (parts.size() < 1) return false;
-		
+
 		std::string cur_path = parts[0] + path_separator();
-		
+
 		for (size_t i=1;i<parts.size();i++)
 		{
 			cur_path += parts[i];
 
 			if ( !dir_exists(cur_path.c_str()) )
 				if (0 != make_dir( cur_path.c_str() ) ) return false;
-						
+
 			cur_path += path_separator();
 		}
 
@@ -286,7 +286,7 @@ std::string util::ext_only( const std::string &path )
 	if (pos==std::string::npos) return path;
 	else return path.substr(pos+1);
 }
-	
+
 char util::path_separator()
 {
 #ifdef _WIN32
@@ -384,11 +384,11 @@ int util::sync_piped_process::spawn(const std::string &command, const std::strin
 	HANDLE hStdoutReadEnd, hStdoutWriteEnd;
 
 	hStdoutReadEnd = hStdoutWriteEnd = INVALID_HANDLE_VALUE;
-	
+
 
 	if (!CreatePipe( &hStdoutReadEnd, &hStdoutWriteEnd, &sa, 0 ))
 		return -90;
-	
+
 	// prep and launch redirected child here
 	PROCESS_INFORMATION pi;
 	STARTUPINFOA si;
@@ -457,33 +457,33 @@ int util::sync_piped_process::spawn(const std::string &command, const std::strin
 
 				// make sure somehow the process didn't end a while ago
 				// and we're still in this loop for some reason
-				if (WaitForSingleObject( pi.hProcess, 1 ) != WAIT_TIMEOUT 
+				if (WaitForSingleObject( pi.hProcess, 1 ) != WAIT_TIMEOUT
 					|| npeek++ > 500 )
 				{
 					CloseHandle( hStdoutReadEnd );
 					hStdoutReadEnd = INVALID_HANDLE_VALUE;
 					break;
 				}
-				
+
 				::Sleep( 5 );
 			}
-		
+
 			if ( hStdoutReadEnd == INVALID_HANDLE_VALUE
 				|| !ReadFile(hStdoutReadEnd,lpBuffer, 1, &nBytesRead,NULL)
 				|| nBytesRead == 0)
 			{
 					CloseHandle( hStdoutReadEnd );
 					hStdoutReadEnd = INVALID_HANDLE_VALUE;
-					break; // pipe done 
+					break; // pipe done
 			}
-			
+
 			if (lpBuffer[0] != 0 && lpBuffer[0] != '\r' && lpBuffer[0] != '\n')
 				line += lpBuffer[0];
 
 			if (lpBuffer[0] == '\n' || lpBuffer[0] == 0)
 				break; // line finished
 		}
-		
+
 		on_stdout( line );
 
 	}
@@ -491,17 +491,17 @@ int util::sync_piped_process::spawn(const std::string &command, const std::strin
 	// make sure process ended
 	if (pi.hProcess!=INVALID_HANDLE_VALUE)
 		WaitForSingleObject( pi.hProcess, INFINITE );
-			
+
 	DWORD exitcode = 0;
 	GetExitCodeProcess(pi.hProcess, &exitcode);
-	if (result >= 0) 
+	if (result >= 0)
 		result = exitcode;
 
 	if (pi.hProcess!=INVALID_HANDLE_VALUE) CloseHandle( pi.hProcess );
 	if (pi.hThread!=INVALID_HANDLE_VALUE) CloseHandle( pi.hThread );
 
 	if (hStdoutReadEnd!=INVALID_HANDLE_VALUE) CloseHandle( hStdoutReadEnd );
-	
+
 	if ( !lastwd.empty() )
 		util::set_cwd( lastwd );
 
@@ -569,13 +569,13 @@ std::string util::format(const char *fmt, ...)
 		if (!buffer)
 			return "";
 	}
-			
+
 	va_end(arglist);
 
 	std::string s(buffer);
 	if (buffer)
 		delete [] buffer;
-		
+
 	return s;
 }
 
@@ -584,13 +584,13 @@ size_t util::format_vn(char *buffer, int maxlen, const char *fmt, va_list arglis
 	char *p = (char*)fmt, *bp = buffer, *tp;
 	char *bpmax = buffer+maxlen-1;
 	int i;
-	
+
 	char arg_char;
 	char *arg_str;
 	int arg_int;
 	unsigned int arg_uint;
 	double arg_double;
-	
+
 #define TEMPLEN 256
 	char temp[TEMPLEN];
 	char tempfmt[TEMPLEN];
@@ -599,19 +599,19 @@ size_t util::format_vn(char *buffer, int maxlen, const char *fmt, va_list arglis
 	int with_precision;
 	char *with_comma;
 	char prev;
-	
+
 	if (!p)
 	{
 		*bp = 0;
 		return 0;
 	}
-	
+
 	while( *p && bp<bpmax )
 	{
 		if (*p != '%')	*bp++ = *p++;
 		else
 		{
-			p++;			
+			p++;
 			switch (*p)
 			{
 			case 'd':
@@ -622,9 +622,9 @@ size_t util::format_vn(char *buffer, int maxlen, const char *fmt, va_list arglis
 				sprintf(temp, "%d", arg_int);
 				tp = temp;
 				while (*tp && bp<bpmax)
-					*bp++ = *tp++;					
-				break;					
-			
+					*bp++ = *tp++;
+				break;
+
 			case 'u':
 			case 'U':
 			/* handle simple unsigned integer format */
@@ -633,9 +633,9 @@ size_t util::format_vn(char *buffer, int maxlen, const char *fmt, va_list arglis
 				sprintf(temp, "%u", arg_uint);
 				tp = temp;
 				while (*tp && bp<bpmax)
-					*bp++ = *tp++;	
+					*bp++ = *tp++;
 				break;
-				
+
 			case 'x':
 			case 'X':
 			/* handle hexadecimal unsigned integer format */
@@ -644,9 +644,9 @@ size_t util::format_vn(char *buffer, int maxlen, const char *fmt, va_list arglis
 				sprintf(temp, "%x", arg_uint);
 				tp = temp;
 				while (*tp && bp<bpmax)
-					*bp++ = *tp++;	
+					*bp++ = *tp++;
 				break;
-			
+
 			case 'c':
 			case 'C':
 			/* handle simple char format */
@@ -654,7 +654,7 @@ size_t util::format_vn(char *buffer, int maxlen, const char *fmt, va_list arglis
 				if ( bp+1<bpmax ) *bp++ = arg_char;
 				p++;
 				break;
-			
+
 			case 's':
 			case 'S':
 			/* handle simple string format */
@@ -664,12 +664,12 @@ size_t util::format_vn(char *buffer, int maxlen, const char *fmt, va_list arglis
 				while (*tp && bp<bpmax)
 					*bp++ = *tp++;
 				break;
-			
+
 			case '%':
 				if (bp+1<bpmax)	*bp++ = *p++;
 				break;
-								
-			
+
+
 			case 'l':
 			case 'L':
 			case 'f':
@@ -679,10 +679,10 @@ size_t util::format_vn(char *buffer, int maxlen, const char *fmt, va_list arglis
 			case '.':
 				with_precision = 0;
 				with_comma = 0;
-				tp = tempfmt;			
+				tp = tempfmt;
 				*tp++ = '%';
 				if (*p == '.')
-				{ /* accumulate the precision */	
+				{ /* accumulate the precision */
 					with_precision = 1;
 					*tp++ = *p++;
 					if (*p == '0') with_precision = 2;
@@ -701,9 +701,9 @@ size_t util::format_vn(char *buffer, int maxlen, const char *fmt, va_list arglis
 
 				*tp = '\0'; // end format string
 				arg_double = va_arg(arglist, double);
-				
+
 				sprintf(temp, tempfmt, (double)arg_double);
-				
+
 				i=0;
 				if (with_comma)
 				{
@@ -713,7 +713,7 @@ size_t util::format_vn(char *buffer, int maxlen, const char *fmt, va_list arglis
 					i=0-ndigit%3;
 				}
 
-				if ((!with_precision || with_comma!=NULL) && 
+				if ((!with_precision || with_comma!=NULL) &&
 					!strchr(tempfmt,'g') &&
 					!strchr(tempfmt,'G') &&
 					(!(with_precision == 2)) )
@@ -722,9 +722,9 @@ size_t util::format_vn(char *buffer, int maxlen, const char *fmt, va_list arglis
 					while (tp > temp && *tp == '0')
 						*tp-- = 0;
 					if (*tp == '.')
-						*tp-- = 0;					
+						*tp-- = 0;
 				}
-				
+
 				tp = temp; decpt = 0; prev = 0;
 				while (*tp && bp<bpmax)
 				{
@@ -734,9 +734,9 @@ size_t util::format_vn(char *buffer, int maxlen, const char *fmt, va_list arglis
 					if (bp<bpmax) *bp++ = *tp++;
 					i++;
 				}
-				
-				break;			
-			
+
+				break;
+
 			/* handle comma or money format (double precision) */
 			case 'm':
 			case 'M':
@@ -748,24 +748,24 @@ size_t util::format_vn(char *buffer, int maxlen, const char *fmt, va_list arglis
 					if (strchr(temp,'e')!=NULL) sprintf(temp, "%d", (int)arg_double);
 				}
 				else sprintf(temp, "%.2lf",  arg_double);
-				
+
 				decpt = strchr(temp, '.');
 				if (!decpt) ndigit = strlen(temp);
-				else ndigit = (int)(decpt-temp);	
-							
+				else ndigit = (int)(decpt-temp);
+
 				if (*p == ',')
 				{
 					tp = temp+strlen(temp)-1;
 					while (tp > temp && *tp == '0') *tp-- = 0;
-						
+
 					if (*tp == '.') *tp-- = 0;
-				}					
-				
+				}
+
 				i=0-(ndigit%3); tp = temp; decpt = 0; prev = 0;
 				while (*tp)
 				{
 					if (*tp == '.')	decpt = (char*)1;
-					if ( isdigit(prev) && i%3==0 && !decpt && bp<bpmax) *bp++ = ',';	
+					if ( isdigit(prev) && i%3==0 && !decpt && bp<bpmax) *bp++ = ',';
 					prev = *tp;
 					if (bp<bpmax) *bp++ = *tp;
 					tp++; i++;
@@ -773,9 +773,9 @@ size_t util::format_vn(char *buffer, int maxlen, const char *fmt, va_list arglis
 				p++;
 				break;
 			}
-			
+
 		}
-		
+
 	}
 
 	*bp = 0;
@@ -804,7 +804,7 @@ double util::percent_of_year(int month, int hours)
 
 int util::day_of(double time)
 {
-	/* returns day number 0..6 (Monday..Sunday) given 
+	/* returns day number 0..6 (Monday..Sunday) given
 	   time: hour index in year 0..8759 */
 	int daynum = (((int)(time / 24.0)));   // day goes 0-364
 	return (daynum % 7);
@@ -820,8 +820,8 @@ int util::week_of(double time)
 
 
 int util::month_of(double time)
-{ 
-	/* returns month number 1..12 given 
+{
+	/* returns month number 1..12 given
 	   time: hour index in year 0..8759 */
 	if (time < 0) return 0;
 	if (time < 744) return 1;
@@ -861,7 +861,7 @@ int util::day_of_month(int month, double time)
 	case 9: return  daynum-31-28-31-30-31-30-31-31;
 	case 10: return daynum-31-28-31-30-31-30-31-31-30;
 	case 11: return daynum-31-28-31-30-31-30-31-31-30-31;
-	case 12: return daynum-31-28-31-30-31-30-31-31-30-31-30; 
+	case 12: return daynum-31-28-31-30-31-30-31-31-30-31-30;
 	default: break;
 	}
 	return daynum;
@@ -896,6 +896,31 @@ size_t util::hour_of_day(size_t hour_of_year)
 	return (hour_of_year) % 24;
 }
 
+//returns the hour index in the year (0-8759) of a given month, day, and time in hours
+size_t util::hour_of_year(size_t month, size_t day, size_t hour)
+{
+	size_t h = 0;
+	bool ok = true;
+	std::vector<size_t> days_in_months = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+	if (month >= 1 && month <= 12)
+	{
+		for (int m = 0; m < (month - 1); m++)
+			h += days_in_months[m] * 24;
+	}
+	else ok = false;
+	if (day >= 1 && day <= days_in_months[month - 1])
+		h += (day - 1) * 24;
+	else ok = false;
+	if (hour >= 0 && hour <= 23)
+		h += hour;
+	else ok = false;
+	if (hour > 8759)
+	    throw std::runtime_error("hour_of_year range is (0-8759) but calculated hour is > 8759.");
+	if (!ok)
+		throw std::runtime_error("hour_of_year input month, day, or hour out of correct range");
+	return h;
+}
+
 bool util::weekday(size_t hour_of_year)
 {
 	int day_of_year = (int)(floor((float)(hour_of_year) / 24));
@@ -904,10 +929,7 @@ bool util::weekday(size_t hour_of_year)
 	if (day_of_week > 6)
 		day_of_week = day_of_year % 7;
 
-	if (day_of_week < 5)
-		return true;
-	else
-		return false;
+    return day_of_week < 5;
 }
 
 int util::schedule_char_to_int( char c )
@@ -1058,11 +1080,11 @@ double util::bilinear( double rowval, double colval, const matrix_t<double> &mat
 {
 	if (mat.nrows() < 3 || mat.ncols() < 3)
 		return std::numeric_limits<double>::quiet_NaN();
-	
+
 	int ridx=2; // find row position
 	while( ridx < (int)mat.nrows() && rowval > mat.at(ridx, 0) )
 		ridx++;
-	
+
 	int cidx=2; // find col position
 	while( cidx < (int)mat.ncols() && colval > mat.at(0, cidx) )
 		cidx++;
@@ -1071,7 +1093,7 @@ double util::bilinear( double rowval, double colval, const matrix_t<double> &mat
 	if ( cidx == (int)mat.ncols() ) cidx--;
 
 	double r1,c1,r2,c2;
-	
+
 	r1 = mat.at(ridx-1, 0);
 	r2 = mat.at(ridx, 0);
 
@@ -1105,8 +1127,8 @@ double util::linterp_col( const util::matrix_t<double> &mat, size_t ixcol, doubl
 	size_t n = mat.nrows();
 
 	// basic checks
-	if ( ixcol >= mat.ncols() 
-		|| iycol >= mat.ncols() 
+	if ( ixcol >= mat.ncols()
+		|| iycol >= mat.ncols()
 		|| n < 2 )
 		return std::numeric_limits<double>::quiet_NaN();
 
@@ -1117,8 +1139,8 @@ double util::linterp_col( const util::matrix_t<double> &mat, size_t ixcol, doubl
 	{
 		double x = mat( i, ixcol );
 		// check that values in ixcol are in increasing sorted order
-		if ( x < last ) 
-			return std::numeric_limits<double>::quiet_NaN(); 
+		if ( x < last )
+			return std::numeric_limits<double>::quiet_NaN();
 
 		if ( x > xval )
 			break;
@@ -1131,13 +1153,13 @@ double util::linterp_col( const util::matrix_t<double> &mat, size_t ixcol, doubl
 	// with X value just greater than interpolation value
 
 	// if at the end of the list, interpolate with last two values
-	if ( i == n ) 
+	if ( i == n )
 		i--;
 
 	// now do linear interpolation between current row value
 	// and previous row value.  xval is between these row X values.
-	return util::interpolate( 
-			mat( i-1, ixcol ), mat( i-1, iycol ), 
+	return util::interpolate(
+			mat( i-1, ixcol ), mat( i-1, iycol ),
 			mat( i,   ixcol ), mat( i,   iycol ),
 			xval );
 }

@@ -120,6 +120,7 @@ namespace util
 	
 	size_t hours_in_month(size_t month); /* returns the number of hours in a month, as used in month_of() */
 	size_t hour_of_day(size_t hour_of_year); /* return the hour of day (0 - 23) given the hour of year (0 - 8759) */
+	size_t hour_of_year(size_t month, size_t day, size_t hour); /* returns the hour of the year (0-8759) given the current month, date, and time */
 	double percent_of_year(int month, int hours); /* returns the fraction of a year, based on months and hours */
 	int month_of(double time); /* hour: 0 = jan 1st 12am-1am, returns 1-12 */
 	int day_of(double time); /* hour: 0 = jan 1st Monday 12am-1am, returns 0-6 */

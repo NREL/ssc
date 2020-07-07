@@ -24,7 +24,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define __lib_weatherfile_h
 
 #include <string>
-#include <vector>  // needed to compile in typelib_vc2012
+#include <vector>
+#include <algorithm>
 #include <cmath>
 
 
@@ -149,6 +150,8 @@ protected:
 	size_t m_nRecords;
 	size_t m_index;
 	bool m_hasLeapYear = false;
+	bool m_continuousYear = true; //boolean to identify if the provided weather data is a complete, continuous, single year with an even timestep- 
+									//OR- if it's non-annual or single timestep
 	
 	weather_header m_hdr;
 	bool m_hdrInitialized;
@@ -166,7 +169,8 @@ public:
 	bool ok(){ return m_ok; }
 	size_t start_sec(){ return m_startSec; } // start time in seconds, 0 = jan 1st midnight
 	size_t step_sec(){ return m_stepSec; } // step time in seconds
-	size_t nrecords(){ return m_nRecords; } // number of data records in file	
+	size_t nrecords(){ return m_nRecords; } // number of data records in file
+	bool annualSimulation() { return m_continuousYear; } //whether the weather data is a complete, continuous, single year with an even timestep, OR, if it's non-annual/single timestep
 	int get_counter_value(){ return (int)m_index; }
 	void rewind(){ m_index = 0; }
 
@@ -214,6 +218,8 @@ private:
 		std::vector<float> data;
 	};
 	column m_columns[_MAXCOL_];
+
+    void start_hours_at_0();
 
 public:
 	weatherfile();

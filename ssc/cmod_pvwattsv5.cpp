@@ -532,7 +532,7 @@ public:
 					p_aoi[idx] = (ssc_number_t)aoi;
 
 					double shad_beam = 1.0;
-					if (shad.fbeam(hour, solalt, solazi, jj, step_per_hour))
+					if (shad.fbeam(hour, wf.minute, solalt, solazi))
 						shad_beam = shad.beam_shade_factor();
 
 					p_shad_beam[idx] = (ssc_number_t)shad_beam;
