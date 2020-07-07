@@ -283,18 +283,33 @@ void rate_data::setup_time_series(size_t cnt, ssc_number_t* ts_sr, ssc_number_t*
 	// 2. if time step rate  has 8760 and gen has more records
 	// 3. if number records same for time step rate  and gen
 	idx = 0;
-	for (i = 0; i < 8760; i++)
-	{
-		for (size_t ii = 0; ii < step_per_hour; ii++)
-		{
-			//						size_t ndx = i*step_per_hour + ii;
-			sr = (idx < cnt) ? ts_sr[idx] : 0;
-			br = (idx < cnt) ? ts_br[idx] : 0;
-			m_ec_ts_sell_rate.push_back(sr);
-			m_ec_ts_buy_rate.push_back(br);
-			if (ii < ts_step_per_hour) idx++;
-		}
-	}
+
+    if (ts_br != NULL)
+    {
+        for (i = 0; i < 8760; i++)
+        {
+            for (size_t ii = 0; ii < step_per_hour; ii++)
+            {
+                br = (idx < cnt) ? ts_br[idx] : 0;
+                m_ec_ts_buy_rate.push_back(br);
+                if (ii < ts_step_per_hour) idx++;
+            }
+        }
+    }
+
+    idx = 0;
+    if (ts_sr != NULL)
+    {
+        for (i = 0; i < 8760; i++)
+        {
+            for (size_t ii = 0; ii < step_per_hour; ii++)
+            {
+                sr = (idx < cnt) ? ts_sr[idx] : 0;
+                m_ec_ts_sell_rate.push_back(sr);
+                if (ii < ts_step_per_hour) idx++;
+            }
+        }
+    }
 		
 }
 

@@ -336,6 +336,7 @@ static var_info vtab_utility_rate5[] = {
 
 void rate_setup::setup(var_table* vt, int num_recs_yearly, int nyears, rate_data& rate, std::string cm_name) {
     bool dc_enabled = vt->as_boolean("ur_dc_enable");
+    bool en_ts_buy_rate = vt->as_boolean("ur_en_ts_buy_rate");
     bool en_ts_sell_rate = vt->as_boolean("ur_en_ts_sell_rate");
 
     size_t cnt = 0; size_t nrows, ncols, i;
@@ -361,6 +362,23 @@ void rate_setup::setup(var_table* vt, int num_recs_yearly, int nyears, rate_data
     }
     rate.rate_scale = rate_scale; 
 
+    if (en_ts_buy_rate)
+    {
+        if (!vt->is_assigned("ur_ts_buy_rate"))
+        {
+            throw exec_error("utilityrate5", util::format("Time step buy rate enabled but no time step buy rates specified."));
+        }
+        else
+        { // hourly or sub hourly loads for single year
+            size_t cnt;
+            ssc_number_t* ts_br;
+            ts_br = vt->as_array("ur_ts_buy_rate", &cnt);
+            size_t ts_step_per_hour = cnt / 8760;
+            if (ts_step_per_hour < 1 || ts_step_per_hour > 60 || ts_step_per_hour * 8760 != cnt)
+                throw exec_error("utilityrate5", util::format("number of buy rate records (%d) must be equal to number of gen records (%d) or 8760 for each year", (int)cnt, (int)rate.m_num_rec_yearly));
+        }
+    }
+
     if (en_ts_sell_rate) {
         if (!vt->is_assigned("ur_ts_sell_rate"))
         {
@@ -373,13 +391,10 @@ void rate_setup::setup(var_table* vt, int num_recs_yearly, int nyears, rate_data
             size_t ts_step_per_hour = cnt / 8760;
             if (ts_step_per_hour < 1 || ts_step_per_hour > 60 || ts_step_per_hour * 8760 != cnt)
                 throw exec_error(cm_name, util::format("invalid number of sell rate records (%d): must be an integer multiple of 8760", (int)cnt));
-            ts_br = vt->as_array("ur_ts_buy_rate", &cnt);
-            if ((cnt != num_recs_yearly) && (cnt != 8760))
-                throw exec_error(cm_name, util::format("number of sell rate records (%d) must be equal to number of gen records (%d) or 8760 for each year", (int)cnt, num_recs_yearly));
         }
-
-        rate.setup_time_series(cnt, ts_sr, ts_br);
     }
+
+    rate.setup_time_series(cnt, ts_sr, ts_br);
 
     // Energy charges are always enabled
     ssc_number_t* ec_weekday = vt->as_matrix("ur_ec_sched_weekday", &nrows, &ncols);
@@ -2139,8 +2154,8 @@ public:
 								ssc_number_t sr = curr_month.ec_tou_sr.at(row, tier);
 								// time step sell rates
 								if (as_boolean("ur_en_ts_sell_rate")) {
-									if (c < m_ec_ts_sell_rate.size()) {
-										sr = m_ec_ts_sell_rate[c];
+									if (c < rate_data.m_ec_ts_sell_rate.size()) {
+										sr = rate_data.m_ec_ts_sell_rate[c];
 									}
 								}
 								ssc_number_t tier_credit = tier_energy * sr * rate_esc;
@@ -2191,8 +2206,8 @@ public:
 
 								// time step buy rates
 								if (as_boolean("ur_en_ts_buy_rate")) {
-									if (c < m_ec_ts_buy_rate.size()) {
-										tier_charge = m_ec_ts_buy_rate[c] * tier_energy;
+									if (c < rate_data.m_ec_ts_buy_rate.size()) {
+										tier_charge = rate_data.m_ec_ts_buy_rate[c] * tier_energy;
 									}
 								}
 
@@ -2427,12 +2442,12 @@ public:
 			ssc_number_t c_total = 0;
 			ssc_number_t e_total = 0;
 			ssc_number_t s_total = 0;
-			for (int ir = 0; ir < (int)m_month[month].ec_charge.nrows(); ir++)
+			for (int ir = 0; ir < (int)curr_month.ec_charge.nrows(); ir++)
 			{
 				ssc_number_t c_row_total = 0;
 				ssc_number_t e_row_total = 0;
 				ssc_number_t s_row_total = 0;
-				for (int ic = 0; ic <(int)m_month[month].ec_charge.ncols(); ic++)
+				for (int ic = 0; ic <(int)curr_month.ec_charge.ncols(); ic++)
 				{
 					charge.at(ir + 1, ic + 1) = curr_month.ec_charge.at(ir, ic);
 					c_row_total += curr_month.ec_charge.at(ir, ic);
@@ -2453,7 +2468,7 @@ public:
 				ssc_number_t c_col_total = 0;
 				ssc_number_t e_col_total = 0;
 				ssc_number_t s_col_total = 0;
-				for (int ir = 0; ir < (int)m_month[month].ec_charge.nrows(); ir++)
+				for (int ir = 0; ir < (int)curr_month.ec_charge.nrows(); ir++)
 				{
 					c_col_total += curr_month.ec_charge.at(ir, ic);
 					e_col_total += curr_month.ec_energy_use.at(ir, ic);
@@ -2473,6 +2488,4 @@ public:
 
 };
 
-DEFINE_MODULE_ENTRY( utilityrate5, "Complex utility rate structure net revenue calculator OpenEI Version 4 with net billing", 1 );
-
-
+DEFINE_MODULE_ENTRY(utilityrate5, "Complex utility rate structure net revenue calculator OpenEI Version 4 with net billing", 1);
