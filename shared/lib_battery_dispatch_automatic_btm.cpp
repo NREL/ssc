@@ -661,7 +661,7 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(FILE* p, bool
             if (m_batteryPower->canGridCharge)
             {
                 // If can grid charge, plan to take as much energy as needed
-                if (_P_pv_ac[idx + index] > 0)
+                if (idx + index < _P_pv_ac.size() && _P_pv_ac[idx + index] > 0)
                 {
                     requiredPower = -_P_pv_ac[idx + index];
                 }
