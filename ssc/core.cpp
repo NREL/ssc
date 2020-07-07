@@ -115,6 +115,7 @@ bool compute_module::evaluate()
                 return false;
             }
         }
+
         return true;
     };
 
