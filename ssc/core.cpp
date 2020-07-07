@@ -125,6 +125,7 @@ bool compute_module::evaluate()
                 return false;
             }
         }
+	return true;
     };
 
     CallSscEquations(table_indices);            // initial call populating outputs
