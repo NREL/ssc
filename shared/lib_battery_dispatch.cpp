@@ -154,16 +154,12 @@ bool dispatch_t::check_constraints(double &I, size_t count)
 	// decrease the current draw if took too much
 	if (I > 0 && _Battery->battery_soc() < m_batteryPower->stateOfChargeMin - tolerance)
 	{
-		double dQ = 0.01 * (m_batteryPower->stateOfChargeMin - _Battery->battery_soc()) * _Battery->battery_charge_maximum_thermal();
-		I -= dQ / _dt_hour;
-		m_batteryPower->powerBatteryTarget = _Battery->calculate_voltage_for_current(I) * I * util::watt_to_kilowatt;
+		m_batteryPower->powerBatteryTarget = _Battery_initial->calculate_max_discharge_kw(&I);
 	}
 	// decrease the current charging if charged too much
 	else if (I < 0 &&_Battery->battery_soc() > m_batteryPower->stateOfChargeMax + tolerance)
 	{
-		double dQ = 0.01 * (_Battery->battery_soc() - m_batteryPower->stateOfChargeMax) * _Battery->battery_charge_maximum_thermal();
-		I += dQ / _dt_hour;
-        m_batteryPower->powerBatteryTarget = _Battery->calculate_voltage_for_current(I) * I * util::watt_to_kilowatt;
+		m_batteryPower->powerBatteryTarget = _Battery_initial->calculate_max_charge_kw(&I);
     }
 	// Don't allow grid charging unless explicitly allowed (reduce charging)
 	if (!m_batteryPower->canGridCharge && I < 0 && m_batteryPower->powerGridToBattery > tolerance)
@@ -425,10 +421,12 @@ void dispatch_t::runDispatch(size_t year, size_t hour_of_year, size_t step)
 		// If current changed during last iteration of constraints checker, recalculate internal battery state
 		if (!iterate) {
 			finalize(lifetimeIndex, I);
+			m_batteryPower->powerBatteryDC = I * _Battery->battery_voltage() * util::watt_to_kilowatt;
 		}
-
-		// Recalculate the DC battery power
-		m_batteryPower->powerBatteryDC = I * _Battery->battery_voltage() * util::watt_to_kilowatt;
+		else {
+			_Battery->copy(_Battery_initial);
+		}
+		
 		count++;
 
 	} while (iterate);
