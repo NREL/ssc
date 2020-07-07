@@ -31,7 +31,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 const var_info var_info_invalid = {	0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 
 compute_module::compute_module( )
-	:  m_infomap(NULL), m_handler(NULL), m_vartab(NULL)
+	:  m_handler(NULL), m_vartab(NULL), m_infomap(NULL)
 {
 	/* nothing to do */
 }

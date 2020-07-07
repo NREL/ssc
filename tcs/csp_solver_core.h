@@ -388,34 +388,29 @@ public:
 	
 	struct S_csp_cr_solved_params
 	{
-		double m_T_htf_cold_des;		//[K]
-		double m_P_cold_des;			//[kPa]
-		double m_x_cold_des;			//[-]
-        double m_T_htf_hot_des;         //[K]
-		double m_q_dot_rec_des;			//[MW]
-		double m_A_aper_total;			//[m^2] Total solar field aperture area
-        double m_dP_sf;                 //[bar] Total field pressure drop
-
-		S_csp_cr_solved_params()
-		{
-			m_T_htf_cold_des = m_P_cold_des = m_x_cold_des = m_T_htf_cold_des =
-				m_q_dot_rec_des = m_A_aper_total = m_dP_sf = std::numeric_limits<double>::quiet_NaN();
-		}
+	  	double m_T_htf_cold_des =		//[K]
+		  std::numeric_limits<double>::quiet_NaN();
+	  	double m_P_cold_des =		//[kPa]
+		  std::numeric_limits<double>::quiet_NaN();
+	  	double m_x_cold_des =		//[-]
+		  std::numeric_limits<double>::quiet_NaN();
+	  	double m_T_htf_hot_des =         	//[K]
+		  std::numeric_limits<double>::quiet_NaN();
+	  	double m_q_dot_rec_des =		//[MW]
+		  std::numeric_limits<double>::quiet_NaN();
+	  	double m_A_aper_total =		//[m^2] Total solar field aperture area
+		  std::numeric_limits<double>::quiet_NaN();
+	  	double m_dP_sf =                 	//[bar] Total field pressure drop
+		  std::numeric_limits<double>::quiet_NaN();
 	};
 
 	struct S_csp_cr_inputs
 	{	
-		double m_field_control;			//[-] Defocus signal from controller (can PC and TES accept all receiver output?)
-		int m_input_operation_mode;		//[-]
-        double m_adjust;                //[-] Field availability / adjustment factor
-
-		S_csp_cr_inputs()
-		{
-			m_field_control = std::numeric_limits<double>::quiet_NaN();
-			m_adjust = std::numeric_limits<double>::quiet_NaN();
-
-			m_input_operation_mode = -1;
-		}
+	  	double m_field_control =		//[-] Defocus signal from controller (can PC and TES accept all receiver output?)
+		  std::numeric_limits<double>::quiet_NaN();
+	  	int m_input_operation_mode = -1;	//[-]
+	  	double m_adjust = 			//[-] Field availability / adjustment factor
+		  std::numeric_limits<double>::quiet_NaN();
 	};
 	
 	struct S_csp_cr_out_solver
@@ -670,27 +665,29 @@ public:
 
 	struct S_csp_tes_outputs
 	{
-		double m_q_heater;			//[MWe]  Heating power required to keep tanks at a minimum temperature
-		double m_q_dot_dc_to_htf;	//[MWt]  Thermal power to the HTF from storage
-		double m_q_dot_ch_from_htf;	//[MWt]  Thermal power from the HTF to storage
-		
-		double m_m_dot_cr_to_tes_hot;	//[kg/s]
-		double m_m_dot_tes_hot_out;	//[kg/s]
-		double m_m_dot_pc_to_tes_cold;	//[kg/s]
-		double m_m_dot_tes_cold_out;		//[kg/s]
-		double m_m_dot_field_to_cycle;	//[kg/s]
-		double m_m_dot_cycle_to_field;	//[kg/s]
+		double m_q_heater =				//[MWe]  Heating power required to keep tanks at a minimum temperature
+		  std::numeric_limits<double>::quiet_NaN();
+		double m_q_dot_dc_to_htf =			//[MWt]  Thermal power to the HTF from storage
+		  std::numeric_limits<double>::quiet_NaN();
+		double m_q_dot_ch_from_htf =			//[MWt]  Thermal power from the HTF to storage
+		  std::numeric_limits<double>::quiet_NaN();
 
-		// Mass flow rate from one tank directly to another. = 0 for direct systems
-		double m_m_dot_cold_tank_to_hot_tank;	//[kg/s] 
+		double m_m_dot_cr_to_tes_hot =  		//[kg/s]
+		  std::numeric_limits<double>::quiet_NaN();
+		double m_m_dot_tes_hot_out =			//[kg/s]
+		  std::numeric_limits<double>::quiet_NaN();
+		double m_m_dot_pc_to_tes_cold = 		//[kg/s]
+		  std::numeric_limits<double>::quiet_NaN();
+		double m_m_dot_tes_cold_out = 			//[kg/s]
+		  std::numeric_limits<double>::quiet_NaN();
+		double m_m_dot_field_to_cycle =			//[kg/s]
+		  std::numeric_limits<double>::quiet_NaN();
+	  	double m_m_dot_cycle_to_field =			//[kg/s]
+		  std::numeric_limits<double>::quiet_NaN();
 
-		S_csp_tes_outputs()
-		{
-			m_q_heater =  m_q_dot_dc_to_htf = m_q_dot_ch_from_htf = 
-			m_m_dot_cr_to_tes_hot = m_m_dot_pc_to_tes_cold = m_m_dot_pc_to_tes_cold =
-			m_m_dot_tes_cold_out = m_m_dot_field_to_cycle = m_m_dot_cycle_to_field =
-            m_m_dot_cold_tank_to_hot_tank = std::numeric_limits<double>::quiet_NaN();
-		}
+		// Mass flow rate from one tank directly to another. = -1; 0 for direct systems
+		double m_m_dot_cold_tank_to_hot_tank =		//[kg/s]
+		  std::numeric_limits<double>::quiet_NaN();
 	};
 
 	virtual void init(const C_csp_tes::S_csp_tes_init_inputs init_inputs) = 0;
@@ -1005,6 +1002,9 @@ private:
 	bool m_is_tes;			    //[-] True: plant has storage
     bool m_is_cr_config_recirc; //[-] True: Receiver "off" and "startup" are recirculated from outlet to inlet
 
+        // Field-side HTF
+    bool m_T_field_cold_limit;  //[C]
+
 		// Reporting and Output Tracking
     bool m_is_first_timestep;           //[-]
 	int m_i_reporting;					//[-]
@@ -1186,7 +1186,7 @@ public:
 
 		double m_T_field_cold_calc; //[C]
 		double m_t_ts_calc;         //[s]
-		double m_m_dot_pc;
+		double m_m_dot_pc_in;       //[kg/hr]
 
 		C_MEQ__m_dot_tes(E_m_dot_solver_modes solver_mode, C_csp_solver* pc_csp_solver,
 			int pc_mode, int cr_mode,
@@ -1213,7 +1213,7 @@ public:
 
 		void init_calc_member_vars();
 
-		virtual int operator()(double m_dot_tes_guess /*kg/hr + = charge - = discharge*/, double* diff_target /*-*/);
+		virtual int operator()(double f_m_dot_tes /*-*/, double* diff_target /*-*/);
 	};
 
 	class C_MEQ__T_field_cold : public C_monotonic_equation

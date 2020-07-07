@@ -101,9 +101,6 @@ public:
 				}
 			}
 		}
-
-		double blah = 1.2345;
-
 	}
 
 	double three_var_eqn(double a, double b, double c)

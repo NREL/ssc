@@ -331,7 +331,7 @@ void Tower_SolarPilot_Capital_Costs_MSPT_Equations(ssc_data_t data)
     ssc_data_t_set_number(data, "csp.pt.cost.storage_mwht", csp_pt_cost_storage_mwht);
 
     ssc_data_t_get_number(data, "p_ref", &p_ref);
-    demand_var = NULL;
+    demand_var = std::numeric_limits<double>::quiet_NaN();
     csp_pt_cost_power_block_mwe = Csp_pt_cost_power_block_mwe(tower_type, p_ref, demand_var);
     ssc_data_t_set_number(data, "csp.pt.cost.power_block_mwe", csp_pt_cost_power_block_mwe);
 
@@ -353,20 +353,20 @@ void Tower_SolarPilot_Capital_Costs_DSPT_Equations(ssc_data_t data)
 
     ssc_data_t_get_number(data, "d_rec", &d_rec);
     ssc_data_t_get_number(data, "rec_height", &rec_height);
-    receiver_type = NULL;
-    rec_d_spec = NULL;
-    csp_pt_rec_cav_ap_height = NULL;
+    receiver_type = std::numeric_limits<double>::quiet_NaN();
+    rec_d_spec = std::numeric_limits<double>::quiet_NaN();
+    csp_pt_rec_cav_ap_height = std::numeric_limits<double>::quiet_NaN();
     csp_pt_cost_receiver_area = Csp_pt_cost_receiver_area(tower_type, d_rec, rec_height,
         static_cast<int>(receiver_type), rec_d_spec, csp_pt_rec_cav_ap_height);
     ssc_data_t_set_number(data, "csp.pt.cost.receiver_area", csp_pt_cost_receiver_area);
 
-    p_ref = NULL;
-    design_eff = NULL;
-    tshours = NULL;
+    p_ref = std::numeric_limits<double>::quiet_NaN();
+    design_eff = std::numeric_limits<double>::quiet_NaN();
+    tshours = std::numeric_limits<double>::quiet_NaN();
     csp_pt_cost_storage_mwht = Csp_pt_cost_storage_mwht(tower_type, p_ref, design_eff, tshours);
     ssc_data_t_set_number(data, "csp.pt.cost.storage_mwht", csp_pt_cost_storage_mwht);
 
-    p_ref = NULL;
+    p_ref = std::numeric_limits<double>::quiet_NaN();
     ssc_data_t_get_number(data, "demand_var", &demand_var);
     csp_pt_cost_power_block_mwe = Csp_pt_cost_power_block_mwe(tower_type, p_ref, demand_var);
     ssc_data_t_set_number(data, "csp.pt.cost.power_block_mwe", csp_pt_cost_power_block_mwe);
@@ -396,14 +396,14 @@ void Tower_SolarPilot_Capital_Costs_ISCC_Equations(ssc_data_t data)
         static_cast<int>(receiver_type), rec_d_spec, csp_pt_rec_cav_ap_height);
     ssc_data_t_set_number(data, "csp.pt.cost.receiver_area", csp_pt_cost_receiver_area);
 
-    p_ref = NULL;
-    design_eff = NULL;
-    tshours = NULL;
+    p_ref = std::numeric_limits<double>::quiet_NaN();
+    design_eff = std::numeric_limits<double>::quiet_NaN();
+    tshours = std::numeric_limits<double>::quiet_NaN();
     csp_pt_cost_storage_mwht = Csp_pt_cost_storage_mwht(tower_type, p_ref, design_eff, tshours);
     ssc_data_t_set_number(data, "csp.pt.cost.storage_mwht", csp_pt_cost_storage_mwht);
 
-    p_ref = NULL;
-    demand_var = NULL;
+    p_ref = std::numeric_limits<double>::quiet_NaN();
+    demand_var = std::numeric_limits<double>::quiet_NaN();
     csp_pt_cost_power_block_mwe = Csp_pt_cost_power_block_mwe(tower_type, p_ref, demand_var);
     ssc_data_t_set_number(data, "csp.pt.cost.power_block_mwe", csp_pt_cost_power_block_mwe);
 

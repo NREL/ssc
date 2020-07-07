@@ -37,6 +37,8 @@ set_default_compile_options()
 if(MSVC)
     add_compile_options(/MP /W3 /wd4244)
     add_compile_definitions(_MBCS)
+else()
+    add_compile_options(-Wno-ignored-attributes -Wno-deprecated-declarations)
 endif()
 
 

@@ -21,6 +21,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "core.h"
+#include "common.h"
 #include <algorithm>
 #include <sstream>
 
@@ -421,6 +422,8 @@ public:
 		size_t nyears = (size_t)as_integer("analysis_period");
 		double inflation_rate = as_double("inflation_rate")*0.01;
 
+        scalefactors scale_calculator(m_vartab);
+
 		// compute annual system output degradation multipliers
 		std::vector<ssc_number_t> sys_scale(nyears);
 
@@ -450,18 +453,7 @@ public:
 
 
 		// compute load (electric demand) annual escalation multipliers
-		std::vector<ssc_number_t> load_scale(nyears);
-		parr = as_array("load_escalation", &count);
-		if (count == 1)
-		{
-			for (i=0;i<nyears;i++)
-				load_scale[i] = (ssc_number_t)pow( (double)(1+parr[0]*0.01), (double)i );
-		}
-		else
-		{
-			for (i=0;i<nyears;i++)
-				load_scale[i] = (ssc_number_t)(1 + parr[i]*0.01);
-		}
+        std::vector<ssc_number_t> load_scale = scale_calculator.get_factors("load_escalation");
 
 		// compute utility rate out-years escalation multipliers
 		std::vector<ssc_number_t> rate_scale(nyears);
@@ -1418,7 +1410,7 @@ public:
 					throw exec_error("utilityrate5", util::format("invalid number of sell rate records (%d): must be an integer multiple of 8760", (int)cnt));
 				ts_br = as_array("ur_ts_buy_rate", &cnt);
 				if ((cnt != m_num_rec_yearly) && (cnt != 8760))
-					throw exec_error("utilityrate5", util::format("number of sell rate records (%d) must be equal to number of gen records (%d) or 8760 for each year", (int)cnt, (int)m_num_rec_yearly));
+					throw exec_error("utilityrate5", util::format("number of buy rate records (%d) must be equal to number of gen records (%d) or 8760 for each year", (int)cnt, (int)m_num_rec_yearly));
 
 				// assign timestep values for utility rate calculations
 				size_t idx = 0;
@@ -2747,7 +2739,6 @@ public:
 		//int metering_option = as_integer("ur_metering_option");
 		bool excess_monthly_dollars = (as_integer("ur_metering_option") == 3);
 		int excess_dollars_credit_month = (int)as_number("ur_nm_credit_month");
-		bool rollover_credit = as_boolean("ur_nm_credit_rollover");
 
 		bool tou_demand_single_peak = (as_integer("TOU_demand_single_peak") == 1);
 

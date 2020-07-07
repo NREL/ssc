@@ -1,22 +1,22 @@
 /**
 BSD-3-Clause
 Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
 that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
 and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
 and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
 or promote products derived from this software without specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
@@ -25,7 +25,6 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <math.h>
 #include <limits>
-#include <sstream>
 #include <vector>
 
 
@@ -72,11 +71,11 @@ double trapzd(double (*func)(double,double,double,double), double a, double b, d
 	double x,tnm,sum,del;
 	static double s;
 	int it,j;
-	if (n == 1) 
+	if (n == 1)
 	{
 		return (s=0.5*(b-a)*(FUNC(a,R,B,tilt)+FUNC(b,R,B,tilt)));
-	} 
-	else 
+	}
+	else
 	{
 		for (it=1,j=1;j<n-1;j++) it <<= 1;
 		tnm=it;
@@ -95,14 +94,14 @@ void polint(double xa[], double ya[], int n, double x, double *y, double *dy)
 //	double *c,*d;
 //	c=vector(1,n);
 //	d=vector(1,n);
-	size_t size = n+1;	
+	size_t size = n+1;
 	std::vector<double> c(size);
 	std::vector<double> d(size);
 	dif=fabs(x-xa[1]);
 
-	for (i=1;i<=n;i++) 
+	for (i=1;i<=n;i++)
 	{
-		if ( (dift=fabs(x-xa[i])) < dif) 
+		if ( (dift=fabs(x-xa[i])) < dif)
 		{
 			ns=i;
 			dif=dift;
@@ -111,9 +110,9 @@ void polint(double xa[], double ya[], int n, double x, double *y, double *dy)
 		d[i]=ya[i];
 	}
 	*y=ya[ns--];
-	for (m=1;m<n;m++) 
+	for (m=1;m<n;m++)
 	{
-		for (i=1;i<=n-m;i++) 
+		for (i=1;i<=n-m;i++)
 		{
 			ho=xa[i]-x;
 			hp=xa[i+m]-x;
@@ -139,10 +138,10 @@ double qromb(double (*func)(double,double,double,double), double a, double b, do
 	double s[JMAXP],h[JMAXP+1];
 	int j;
 	h[1]=1.0;
-	for (j=1;j<=JMAX;j++) 
+	for (j=1;j<=JMAX;j++)
 	{
 		s[j]=trapzd(func,a,b,R,B,tilt,j);
-		if (j >= K) 
+		if (j >= K)
 		{
 			polint(&h[j-K],&s[j-K],K,0.0,&ss,&dss);
 			if (fabs(dss) <= EPS*fabs(ss)) return ss;
@@ -159,21 +158,21 @@ double qromb(double (*func)(double,double,double,double), double a, double b, do
 void diffuse_reduce(
 	// inputs (angles in degrees)
 	double solzen,
-	double stilt,
-	double Gb_nor,
-	double Gdh,
-	double poa_sky,
-	double poa_gnd,
-	double gcr,
+    double stilt,
+    double Gb_nor,
+    double Gdh,
+    double poa_sky,
+    double poa_gnd,
+    double gcr,
 //	double phi0, // mask angle
 	double alb,
-	double nrows,
-
+    double nrows,
+    sssky_diffuse_table &skydiffderates,
 	// outputs
 	double &reduced_skydiff,
-	double &Fskydiff,  // derate factor on sky diffuse
+    double &Fskydiff,  // derate factor on sky diffuse
 	double &reduced_gnddiff,
-	double &Fgnddiff) // derate factor on ground diffuse
+    double &Fgnddiff) // derate factor on ground diffuse
 {
 	double Gd_poa = poa_sky + poa_gnd;
 	if (Gd_poa < 0.1)
@@ -189,33 +188,13 @@ void diffuse_reduce(
 	double B = 1.0;
 	double R = B / gcr;
 
-	// sky diffuse reduction
-	double step = 1.0 / 1000.0;
-	double g = 0.0;
-	Fskydiff = 0.0;
-	for (int n = 0; n < 1000; n++)
-	{
-        g = n * step;
-        double arg = (1 / tand(stilt)) - (1 / (gcr * sind(stilt) * (1 - g)));
-        double gamma = (-M_PI / 2) + atan(arg);
-        double Asky_shade = M_PI + M_PI / pow((1 + pow(tan(stilt * DTOR + gamma), 2)), 0.5);
-        double Asky = M_PI + M_PI / pow((1 + pow(tan(stilt * DTOR), 2)), 0.5);
-        if (isnan(Asky_shade))
-        {
-            Asky_shade = Asky;
-        }
-        else if ((stilt * DTOR + gamma) > (M_PI / 2))
-        {
-            Asky_shade = 2 * M_PI - Asky_shade;
-        }
-        else {}
-        Fskydiff += (Asky_shade / Asky) * step;
-	}
-	reduced_skydiff = Fskydiff * poa_sky;
+    // sky diffuse reduction
+    Fskydiff = skydiffderates.lookup(stilt);
+    reduced_skydiff = Fskydiff * poa_sky;
 
 	double solalt = 90 - solzen;
 
-	// ground reflected reduction 
+	// ground reflected reduction
 	double F1 = alb * pow(sind(stilt / 2.0), 2);
 	double Y1 = R - B * sind(180.0 - solalt - stilt) / sind(solalt);
 	Y1 = fmax(0.00001, Y1); // constraint per Chris 4/23/12
@@ -299,6 +278,51 @@ void selfshade_xs_horstr(bool landscape,
 	}
 }
 
+// Accessor for sky diffuse derates for the given surface_tilt. If the value doesn't exist in the table, it is computed.
+double sssky_diffuse_table::lookup(double surface_tilt) {
+    char buf[8];
+    sprintf(buf, "%.3f", surface_tilt);
+    if (derates_table.find(buf) != derates_table.end())
+        return derates_table[buf];
+    return compute(surface_tilt);
+}
+
+double sssky_diffuse_table::compute(double surface_tilt) {
+    if (gcr == 0)
+        throw std::runtime_error("sssky_diffuse_table::compute error: gcr required in initialization");
+    // sky diffuse reduction
+    double step = 1.0 / 1000.0;
+    double skydiff = 0.0;
+    double tand_stilt = tand(surface_tilt);
+    double sind_stilt = sind(surface_tilt);
+    double Asky = M_PI + M_PI / pow((1 + pow(tand_stilt, 2)), 0.5);
+    double arg[1000];
+    double gamma[1000];
+    double tan_tilt_gamma[1000];
+    double Asky_shade[1000];
+    for (int n = 0; n < 1000; n++)
+    {
+        arg[n] = (1 / tand_stilt) - (1 / (gcr * sind_stilt * (1 - n * step)));
+        gamma[n] = (-M_PI / 2) + atan(arg[n]);
+        tan_tilt_gamma[n] = tan(surface_tilt * DTOR + gamma[n]);
+        Asky_shade[n] = M_PI + M_PI / pow((1 + tan_tilt_gamma[n] * tan_tilt_gamma[n]), 0.5);
+        if (isnan(Asky_shade[n]))
+        {
+            Asky_shade[n] = Asky;
+        }
+        else if ((surface_tilt * DTOR + gamma[n]) > (M_PI / 2))
+        {
+            Asky_shade[n] = 2 * M_PI - Asky_shade[n];
+        }
+        else {}
+        skydiff += (Asky_shade[n] / Asky) * step;
+    }
+    char buf[8];
+    sprintf(buf, "%.3f", surface_tilt);
+    derates_table[buf] = skydiff;
+    return skydiff;
+}
+
 // self-shading calculation function
 /*
 
@@ -327,10 +351,10 @@ phi_bar: average masking angle
 
 */
 bool ss_exec(
-	
-	const ssinputs &inputs,
 
-	double tilt,		// module tilt (constant for fixed tilt, varies for one-axis)
+        const ssinputs &inputs,
+
+        double tilt,		// module tilt (constant for fixed tilt, varies for one-axis)
 	double azimuth,		// module azimuth (constant for fixed tilt, varies for one-axis)
 	double solzen,		// solar zenith (deg)
 	double solazi,		// solar azimuth (deg)
@@ -342,9 +366,10 @@ bool ss_exec(
 	double albedo,		// used to calculate reduced relected irradiance
 	bool trackmode,		// 0 for fixed tilt, 1 for one-axis tracking
 	bool linear,		// 0 for non-linear shading (C. Deline's full algorithm), 1 to stop at linear shading
-	double shade_frac_1x,	// geometric calculation of the fraction of one-axis row that is shaded (0-1), not used if fixed tilt 
+	double shade_frac_1x,	// geometric calculation of the fraction of one-axis row that is shaded (0-1), not used if fixed tilt
 
-	ssoutputs &outputs)
+	sssky_diffuse_table &skydiffs,
+        ssoutputs &outputs)
 {
 
 	// ***********************************
@@ -414,7 +439,7 @@ bool ss_exec(
 
 	// if no effective tilt, or sun is down, then no array self-shading
 	if ((solzen < 90.0) && (tilt != 0) && (fabs(az_eff) < 90.0) )
-	{ 
+	{
 		// Appelbaum eqn (12)
 		py = m_A * (cosd(tilt) + ( cosd(az_eff) * sind(tilt) /tand(90.0-solzen) ) );
 		// Appelbaum eqn (11)
@@ -462,15 +487,15 @@ bool ss_exec(
 	//calculate the relative shaded area, Applebaum equation A15
 	//this would only apply to linearly shaded systems, but we'll report it as an output
 	//in order to be able to distinguish the linear beam shading component from the non-linear dc effect
-	//in loss diagrams and such. 
+	//in loss diagrams and such.
 	double relative_shaded_area = Hs * (m_row_length - g) / (m_A * m_row_length); //numerator is shadow area, denom is row area
 	outputs.m_shade_frac_fixed = relative_shaded_area;
-	
+
 	//now we'll apply the diffuse reduction and return because we're done for linearly shaded systems
 	if (linear)
 	{
 		//determine reduction of diffuse incident on shaded sections due to self-shading (beam is not derated because that shading is taken into account in dc derate)
-		diffuse_reduce(solzen, tilt, Gb_nor, Gdh, poa_sky, poa_gnd, m_B / m_R, albedo, m_r,
+		diffuse_reduce(solzen, tilt, Gb_nor, Gdh, poa_sky, poa_gnd, m_B / m_R, albedo, m_r, skydiffs,
 			// outputs
 			outputs.m_reduced_diffuse, outputs.m_diffuse_derate, outputs.m_reduced_reflected, outputs.m_reflected_derate);
 
@@ -522,11 +547,11 @@ bool ss_exec(
 	{
 		S = 1;
 	}
-	
+
 	//Chris Deline's self-shading algorithm
 
 	// 1. determine reduction of diffuse incident on shaded sections due to self-shading (beam is not derated because that shading is taken into account in dc derate)
-	diffuse_reduce( solzen, tilt, Gb_nor, Gdh, poa_sky, poa_gnd, m_B/m_R, albedo, m_r,
+	diffuse_reduce(solzen, tilt, Gb_nor, Gdh, poa_sky, poa_gnd, m_B/m_R, albedo, m_r, skydiffs,
 		// outputs
 		outputs.m_reduced_diffuse, outputs.m_diffuse_derate, outputs.m_reduced_reflected, outputs.m_reflected_derate );
 

@@ -23,6 +23,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "cmod_pvsamv1.h"
 #include "lib_pv_io_manager.h"
 #include "lib_resilience.h"
+#include "lib_time.h"
 
 // comment following define if do not want shading database validation outputs
 //#define SHADE_DB_OUTPUTS
@@ -485,7 +486,7 @@ static var_info _cm_vtab_pvsamv1[] = {
     { SSC_INPUT, SSC_NUMBER,   "en_batt",                              "Enable battery storage model",                        "0/1",    "",                                                                                                                                                                                      "BatterySystem",                                               "?=0",                                "",                    "" },
     { SSC_INPUT, SSC_ARRAY,    "load",                                 "Electricity load (year 1)",                           "kW",     "",                                                                                                                                                                                      "Load",                                               "?",                                  "",                    "" },
     { SSC_INPUT, SSC_ARRAY,    "crit_load",                            "Critical Electricity load (year 1)",                  "kW",     "",                                                                                                                                                                                      "Load",                                               "",                                   "",                    "" },
-
+    { SSC_INPUT, SSC_ARRAY,    "load_escalation",                      "Annual load escalation",                              "%/year", "",                                                                                                                                                                                      "Load",                                               "?=0",                                "",                    "" },
 	// NOTE:  other battery storage model inputs and outputs are defined in batt_common.h/batt_common.cpp
 
 	// outputs
@@ -925,7 +926,7 @@ cm_pvsamv1::cm_pvsamv1()
 }
 
 
-void cm_pvsamv1::exec( ) throw (general_error)
+void cm_pvsamv1::exec( )
 {
 
 	/// Underlying class which parses the compute module structure and sets up model inputs and outputs
@@ -1008,7 +1009,7 @@ void cm_pvsamv1::exec( ) throw (general_error)
 	// hourly adjustment factors
 	adjustment_factors haf(this, "adjust");
 	if (!haf.setup())
-		throw exec_error("pvsamv1", "failed to setup adjustment factors: " + haf.error());
+		throw exec_error("pvsamv1", "failed to setup AC adjustment factors: " + haf.error());
 
     // clipping losses for battery dispatch
 	std::vector<ssc_number_t> p_invcliploss_full;
@@ -1019,14 +1020,14 @@ void cm_pvsamv1::exec( ) throw (general_error)
 		throw exec_error("pvsamv1", "The PVYield inverter model does not currently accept multiple MPPT inputs.");
 
 	std::vector<ssc_number_t> p_pv_clipping_forecast;
-	std::vector<ssc_number_t> p_pv_dc_forecast;
-	std::vector<ssc_number_t> p_pv_dc_use;
+	std::vector<ssc_number_t> p_pv_ac_forecast;
+	std::vector<ssc_number_t> p_pv_ac_use;
 
 	if (is_assigned("batt_pv_clipping_forecast")) {
 		p_pv_clipping_forecast = as_vector_ssc_number_t("batt_pv_clipping_forecast");
 	}
-	if (is_assigned("batt_pv_dc_forecast")) {
-		p_pv_dc_forecast = as_vector_ssc_number_t("batt_pv_dc_forecast");
+	if (is_assigned("batt_pv_ac_forecast")) {
+		p_pv_ac_forecast = as_vector_ssc_number_t("batt_pv_ac_forecast");
 	}
 
 
@@ -1099,6 +1100,20 @@ void cm_pvsamv1::exec( ) throw (general_error)
 	std::vector<std::vector<double>> dcStringVoltage; // Voltage of string for each subarray
 	double dcPowerNetTotalSystem = 0; //Net DC power in W for the entire system (sum of all subarrays)
 
+    scalefactors scale_calculator(m_vartab);
+    // compute load (electric demand) annual escalation multipliers
+    std::vector<ssc_number_t> load_scale = scale_calculator.get_factors("load_escalation");
+
+    single_year_to_lifetime_interpolated<ssc_number_t>(
+        (bool)as_integer("system_use_lifetime_output"),
+        nyears,
+        nlifetime,
+        p_load_in,
+        load_scale,
+        p_load_full,
+        nrec,
+        ts_hour);
+
 	for (size_t mpptInput = 0; mpptInput < PVSystem->Inverter->nMpptInputs; mpptInput++)
 	{
 		dcPowerNetPerMppt_kW.push_back(0);
@@ -1124,27 +1139,10 @@ void cm_pvsamv1::exec( ) throw (general_error)
 				ireplast = ireport;
 			}
 
-			// only hourly electric load, even
-			// if PV simulation is subhourly.  load is assumed constant over the hour.
-			// if no load profile supplied, load = 0
-			if (nload == 8760)
-				cur_load = p_load_in[hour];
-
 			for (size_t jj = 0; jj < step_per_hour; jj++)
 			{
 				// Reset dcPower calculation for new timestep
 				dcPowerNetTotalSystem = 0;
-
-				// electric load is subhourly
-				// if no load profile supplied, load = 0
-				if (nload == nrec)
-					cur_load = p_load_in[hour*step_per_hour + jj];
-
-				// log cur_load to check both hourly and sub hourly load data
-				// load data over entrie lifetime period not currently supported.
-				//					log(util::format("year=%d, hour=%d, step per hour=%d, load=%g",
-				//						iyear, hour, jj, cur_load), SSC_WARNING, (float)idx);
-				p_load_full.push_back((ssc_number_t)cur_load);
 
 				if (!wdprov->read(&Irradiance->weatherRecord))
 					throw exec_error("pvsamv1", "could not read data line " + util::to_string((int)(idx + 1)) + " in weather file");
@@ -1454,7 +1452,10 @@ void cm_pvsamv1::exec( ) throw (general_error)
 						if (radmode == irrad::DN_DF || radmode == irrad::GH_DF) dhi_to_use = (ssc_number_t)wf.df;
 						else dhi_to_use = Irradiance->p_IrradianceCalculated[1][hour * step_per_hour]; // top of hour in first year
 
-						if (ss_exec(Subarrays[nn]->selfShadingInputs, stilt, sazi, solzen, solazi, beam_to_use, dhi_to_use, ibeam, iskydiff, ignddiff, alb, trackbool, linear, shad1xf, Subarrays[nn]->selfShadingOutputs))
+						if (ss_exec(Subarrays[nn]->selfShadingInputs,
+						        stilt, sazi, solzen, solazi, beam_to_use, dhi_to_use, ibeam, iskydiff, ignddiff, alb, trackbool, linear, shad1xf,
+						        Subarrays[nn]->selfShadingSkyDiffTable,
+						        Subarrays[nn]->selfShadingOutputs))
 						{
 
 						    if (linear && trackbool) //one-axis linear
@@ -2001,17 +2002,20 @@ void cm_pvsamv1::exec( ) throw (general_error)
 					double cliploss = 0;
 					double dcpwr_kw = PVSystem->p_systemDCPower[idx];
 
-					if (p_pv_dc_forecast.size() > 1 && p_pv_dc_forecast.size() > idx % (8760 * step_per_hour)) {
-						dcpwr_kw = p_pv_dc_forecast[idx % (8760 * step_per_hour)];
+                    //DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
+                    sharedInverter->calculateACPower(dcpwr_kw, PVSystem->p_mpptVoltage[0][idx], 0.0);
+                    PVSystem->p_systemACPower[idx] = sharedInverter->powerAC_kW;
+
+                    double pv_ac_kw = sharedInverter->powerAC_kW;
+					if (p_pv_ac_forecast.size() > 1 && p_pv_ac_forecast.size() > idx % (8760 * step_per_hour)) {
+                        pv_ac_kw = p_pv_ac_forecast[idx % (8760 * step_per_hour)];
 					}
-					p_pv_dc_use.push_back(static_cast<ssc_number_t>(dcpwr_kw));
+					p_pv_ac_use.push_back(static_cast<ssc_number_t>(pv_ac_kw));
 
 					if (p_pv_clipping_forecast.size() > 1 && p_pv_clipping_forecast.size() > idx % (8760 * step_per_hour)) {
 						cliploss = p_pv_clipping_forecast[idx % (8760 * step_per_hour)] * util::kilowatt_to_watt;
 					}
 					else {
-						//DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
-						sharedInverter->calculateACPower(dcpwr_kw, PVSystem->p_mpptVoltage[0][idx], 0.0);
 						cliploss = sharedInverter->powerClipLoss_kW;
 					}
 
@@ -2031,8 +2035,10 @@ void cm_pvsamv1::exec( ) throw (general_error)
 	}
 
 	// Initialize DC battery predictive controller
-	if (en_batt && batt_topology == ChargeController::DC_CONNECTED)
-	    batt->initialize_automated_dispatch(util::array_to_vector<ssc_number_t>(PVSystem->p_systemDCPower, nlifetime), p_load_full, p_invcliploss_full);
+    if (en_batt && batt_topology == ChargeController::DC_CONNECTED)
+    {
+        batt->initialize_automated_dispatch(p_pv_ac_use, p_load_full, p_invcliploss_full);
+    }
 
 	/* *********************************************************************************************
 	PV AC calculation
@@ -2169,9 +2175,9 @@ void cm_pvsamv1::exec( ) throw (general_error)
 
 				if (iyear == 0 || save_full_lifetime_variables == 1)
 				{
-					PVSystem->p_transformerNoLoadLoss[idx] = xfmr_nll;
-					PVSystem->p_transformerLoadLoss[idx] = xfmr_ll;
-					PVSystem->p_transformerLoss[idx] = xfmr_loss;
+					PVSystem->p_transformerNoLoadLoss[idx] = xfmr_nll/ts_hour;
+					PVSystem->p_transformerLoadLoss[idx] = xfmr_ll/ts_hour;
+					PVSystem->p_transformerLoss[idx] = xfmr_loss/ts_hour;
 				}
 
 				idx++;

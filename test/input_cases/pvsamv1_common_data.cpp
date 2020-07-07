@@ -25,6 +25,7 @@ int n8 = sprintf(temperature_path, "%s/test/input_cases/battery_data/batt_room_t
 */
 void pvsamv_nofinancial_default(ssc_data_t& data)
 {
+    ssc_data_set_number(data, "analysis_period", 1);
 	ssc_data_set_string(data, "solar_resource_file", solar_resource_path);
 	ssc_data_set_number(data, "transformer_no_load_loss", 0);
 	ssc_data_set_number(data, "transformer_load_loss", 0);
@@ -341,6 +342,8 @@ void belpe_default(ssc_data_t& data)
 {
 	ssc_data_set_number(data, "en_belpe", 0);
 	set_array(data, "load", load_profile_path, 8760);
+    ssc_number_t p_load_escalation[1] = { 0 };
+    ssc_data_set_array(data, "load_escalation", p_load_escalation, 1);
 	set_array(data, "crit_load", load_profile_path, 8760);
 	ssc_data_set_string(data, "solar_resource_file", solar_resource_path);
 	ssc_data_set_number(data, "floor_area", 2000);
