@@ -240,7 +240,7 @@ protected:
     // cell voltage model is on a per-cell basis
     double voltage_model(double q, double qmax, double I_string, double T);
 
-    // RC/F: R is Molar gas constant [J/mol/K]^M, R is Faraday constant [As/mol]^M, C is model correction factor^M
+    // RC/F: R is Molar gas constant [J/mol/K]^M, R is Faraday constant [As/mol]^M, C is model correction factor^M 1.38
     double m_RCF;
 
     // solver quantities
