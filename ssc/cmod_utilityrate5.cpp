@@ -74,6 +74,8 @@ static var_info vtab_utility_rate5[] = {
 	// time step rates
 	{ SSC_INPUT, SSC_NUMBER, "ur_en_ts_sell_rate", "Enable time step sell rates", "0/1", "", "Electricity Rates", "?=0", "BOOLEAN", "" },
 	{ SSC_INPUT, SSC_ARRAY, "ur_ts_sell_rate", "Time step sell rates", "0/1", "", "Electricity Rates", "", "", "" },
+	// add separately to UI
+	{ SSC_INPUT, SSC_NUMBER, "ur_en_ts_buy_rate", "Enable time step buy rates", "0/1", "", "Electricity Rates", "?=0", "BOOLEAN", "" },
 	{ SSC_INPUT, SSC_ARRAY, "ur_ts_buy_rate", "Time step buy rates", "0/1", "", "Electricity Rates", "", "", "" },
 
 
@@ -1392,6 +1394,47 @@ public:
 
 		bool ec_enabled = true; // per 2/25/16 meeting
 		bool dc_enabled = as_boolean("ur_dc_enable");
+		
+		// should be separate input
+		bool en_ts_buy_rate = as_boolean("ur_en_ts_buy_rate");
+
+		if (en_ts_buy_rate)
+		{
+			if (!is_assigned("ur_ts_buy_rate"))
+			{
+				throw exec_error("utilityrate5", util::format("Time step buy rate enabled but no time step buy rates specified."));
+			}
+			else
+			{ // hourly or sub hourly loads for single year
+				size_t cnt;
+				ssc_number_t* ts_br;
+				ts_br = as_array("ur_ts_buy_rate", &cnt);
+				size_t ts_step_per_hour = cnt / 8760;
+				if (ts_step_per_hour < 1 || ts_step_per_hour > 60 || ts_step_per_hour * 8760 != cnt)
+					throw exec_error("utilityrate5", util::format("number of buy rate records (%d) must be equal to number of gen records (%d) or 8760 for each year", (int)cnt, (int)m_num_rec_yearly));
+
+				// assign timestep values for utility rate calculations
+				size_t idx = 0;
+				ssc_number_t br;
+				br = 0;
+				size_t step_per_hour = m_num_rec_yearly / 8760;
+				//time step rates - fill out to number of generation records per year
+				// handle cases
+				// 1. if no time step rate  s
+				// 2. if time step rate  has 8760 and gen has more records
+				// 3. if number records same for time step rate  and gen
+				idx = 0;
+				for (i = 0; i < 8760; i++)	{
+					for (size_t ii = 0; ii < step_per_hour; ii++)	{
+						br = (idx < cnt) ? ts_br[idx] : 0;
+						m_ec_ts_buy_rate.push_back(br);
+						if (ii < ts_step_per_hour) idx++;
+					}
+				}
+			}
+		}
+
+
 		bool en_ts_sell_rate = as_boolean("ur_en_ts_sell_rate");
 
 		if (en_ts_sell_rate)
@@ -1403,19 +1446,16 @@ public:
 			else
 			{ // hourly or sub hourly loads for single year
 				size_t cnt;
-				ssc_number_t * ts_sr, *ts_br;
+				ssc_number_t * ts_sr;
 				ts_sr = as_array("ur_ts_sell_rate", &cnt);
 				size_t ts_step_per_hour = cnt / 8760;
 				if (ts_step_per_hour < 1 || ts_step_per_hour > 60 || ts_step_per_hour * 8760 != cnt)
 					throw exec_error("utilityrate5", util::format("invalid number of sell rate records (%d): must be an integer multiple of 8760", (int)cnt));
-				ts_br = as_array("ur_ts_buy_rate", &cnt);
-				if ((cnt != m_num_rec_yearly) && (cnt != 8760))
-					throw exec_error("utilityrate5", util::format("number of buy rate records (%d) must be equal to number of gen records (%d) or 8760 for each year", (int)cnt, (int)m_num_rec_yearly));
 
 				// assign timestep values for utility rate calculations
 				size_t idx = 0;
-				ssc_number_t sr, br;
-				sr = br = 0;
+				ssc_number_t sr;
+				sr = 0;
 				size_t step_per_hour = m_num_rec_yearly / 8760;
 				//time step rates - fill out to number of generation records per year
 				// handle cases
@@ -1427,11 +1467,8 @@ public:
 				{
 					for (size_t ii = 0; ii < step_per_hour; ii++)
 					{
-//						size_t ndx = i*step_per_hour + ii;
 						sr = (idx < cnt) ? ts_sr[idx] : 0;
-						br = (idx < cnt) ? ts_br[idx] : 0;
 						m_ec_ts_sell_rate.push_back(sr);
-						m_ec_ts_buy_rate.push_back(br);
 						if (ii < ts_step_per_hour) idx++;
 					}
 				}
@@ -2072,9 +2109,9 @@ public:
 						num_tiers = end_tier - start_tier + 1;
 						// resize everytime to handle load and energy changes
 						// resize sr, br and ub for use in energy charge calculations below
-						util::matrix_t<float> br(num_periods, num_tiers);
-						util::matrix_t<float> sr(num_periods, num_tiers);
-						util::matrix_t<float> ub(num_periods, num_tiers);
+						util::matrix_t<ssc_number_t> br(num_periods, num_tiers);
+						util::matrix_t<ssc_number_t> sr(num_periods, num_tiers);
+						util::matrix_t<ssc_number_t> ub(num_periods, num_tiers);
 						// assign appropriate values.
 						for (period = 0; period < num_periods; period++)
 						{
@@ -2851,9 +2888,9 @@ public:
 						num_tiers = end_tier - start_tier + 1;
 						// resize everytime to handle load and energy changes
 						// resize sr, br and ub for use in energy charge calculations below
-						util::matrix_t<float> br(num_periods, num_tiers);
-						util::matrix_t<float> sr(num_periods, num_tiers);
-						util::matrix_t<float> ub(num_periods, num_tiers);
+						util::matrix_t<ssc_number_t> br(num_periods, num_tiers);
+						util::matrix_t<ssc_number_t> sr(num_periods, num_tiers);
+						util::matrix_t<ssc_number_t> ub(num_periods, num_tiers);
 						// assign appropriate values.
 						for (period = 0; period < num_periods; period++)
 						{
@@ -2982,8 +3019,11 @@ public:
 								ssc_number_t tier_energy = energy_surplus;
 								ssc_number_t sr = m_month[m].ec_tou_sr.at(row, tier);
 								// time step sell rates
-								if (c< m_ec_ts_sell_rate.size())
-									sr = m_ec_ts_sell_rate[c];
+								if (as_boolean("ur_en_ts_sell_rate")) {
+									if (c < m_ec_ts_sell_rate.size()) {
+										sr = m_ec_ts_sell_rate[c];
+									}
+								}
 								ssc_number_t tier_credit = tier_energy * sr * rate_esc;
 
 								credit_amt = tier_credit;
@@ -3031,8 +3071,11 @@ public:
 								double tier_charge = tier_energy * m_month[m].ec_tou_br.at(row, tier) * rate_esc;
 
 								// time step buy rates
-								if (c < m_ec_ts_buy_rate.size())
-									tier_charge = m_ec_ts_buy_rate[c] * tier_energy;
+								if (as_boolean("ur_en_ts_buy_rate")) {
+									if (c < m_ec_ts_buy_rate.size()) {
+										tier_charge = m_ec_ts_buy_rate[c] * tier_energy;
+									}
+								}
 
 								charge_amt = tier_charge;
 								m_month[m].ec_energy_use.at(row, tier) += (ssc_number_t)tier_energy;
@@ -3331,14 +3374,14 @@ public:
 				energy.at(ir + 1, 0) = (float)m_month[month].ec_periods[ir];
 				surplus.at(ir + 1, 0) = (float)m_month[month].ec_periods[ir];
 			}
-			float c_total = 0;
-			float e_total = 0;
-			float s_total = 0;
+			ssc_number_t c_total = 0;
+			ssc_number_t e_total = 0;
+			ssc_number_t s_total = 0;
 			for (int ir = 0; ir < (int)m_month[month].ec_charge.nrows(); ir++)
 			{
-				float c_row_total = 0;
-				float e_row_total = 0;
-				float s_row_total = 0;
+				ssc_number_t c_row_total = 0;
+				ssc_number_t e_row_total = 0;
+				ssc_number_t s_row_total = 0;
 				for (int ic = 0; ic <(int)m_month[month].ec_charge.ncols(); ic++)
 				{
 					charge.at(ir + 1, ic + 1) = m_month[month].ec_charge.at(ir, ic);
@@ -3357,9 +3400,9 @@ public:
 			}
 			for (int ic = 0; ic < (int)m_month[month].ec_charge.ncols(); ic++)
 			{
-				float c_col_total = 0;
-				float e_col_total = 0;
-				float s_col_total = 0;
+				ssc_number_t c_col_total = 0;
+				ssc_number_t e_col_total = 0;
+				ssc_number_t s_col_total = 0;
 				for (int ir = 0; ir < (int)m_month[month].ec_charge.nrows(); ir++)
 				{
 					c_col_total += m_month[month].ec_charge.at(ir, ic);
