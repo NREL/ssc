@@ -814,8 +814,9 @@ public:
             std::vector<double> scaleFactors(analysis_period, 1.0);
 			size_t n_rec_single_year = 0;
 			double dt_hour_gen = 0.0;
+            double interpolation_factor = 1.0;
 			single_year_to_lifetime_interpolated<ssc_number_t>(false, analysis_period, (size_t)wdprov->nrecords(),
-				load_year_one, scaleFactors, load_lifetime, n_rec_single_year, dt_hour_gen);
+				load_year_one, scaleFactors, interpolation_factor, load_lifetime, n_rec_single_year, dt_hour_gen);
 
 			for (size_t i = 0; i < load_lifetime.size(); i++) {
 				if (out_energy[i] > load_lifetime[i]) {

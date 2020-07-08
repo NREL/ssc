@@ -1104,12 +1104,14 @@ void cm_pvsamv1::exec( )
     // compute load (electric demand) annual escalation multipliers
     std::vector<ssc_number_t> load_scale = scale_calculator.get_factors("load_escalation");
 
+    double interpolation_factor = 1.0;
     single_year_to_lifetime_interpolated<ssc_number_t>(
         (bool)as_integer("system_use_lifetime_output"),
         nyears,
         nlifetime,
         p_load_in,
         load_scale,
+        interpolation_factor,
         p_load_full,
         nrec,
         ts_hour);

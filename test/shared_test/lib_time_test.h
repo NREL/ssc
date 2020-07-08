@@ -24,6 +24,7 @@ protected:
 	util::matrix_t<size_t> schedule;
 	std::vector<double> sched_values = { 0.1, 0.0, 0.3 };
 	double multiplier = 2.0;
+    double interpolation_factor = 1.0;
 
 
 	void SetUp()

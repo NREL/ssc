@@ -10,7 +10,7 @@ TEST_F(libTimeTest_lib_time, single_year_to_lifetime_interpolated_Lifetime)
 	size_t n_rec_singleyear;
 	double dt_hour;
 	single_year_to_lifetime_interpolated<float>(is_lifetime, n_years, n_rec_lifetime,
-		singleyear60min, scaleFactors, lifetime_from_single, n_rec_singleyear, dt_hour);
+		singleyear60min, scaleFactors, interpolation_factor, lifetime_from_single, n_rec_singleyear, dt_hour);
 
 	EXPECT_EQ(n_rec_lifetime, util::hours_per_year * 2 * n_years);
 	EXPECT_EQ(n_rec_singleyear, util::hours_per_year * 2);
@@ -34,7 +34,7 @@ TEST_F(libTimeTest_lib_time, single_year_to_lifetime_interpolated_SingleYear)
 	size_t n_rec_singleyear;
 	double dt_hour;
 	single_year_to_lifetime_interpolated<float>(is_lifetime, n_years, n_rec_lifetime,
-		singleyear60min, scaleFactors, lifetime_from_single, n_rec_singleyear, dt_hour);
+		singleyear60min, scaleFactors, interpolation_factor, lifetime_from_single, n_rec_singleyear, dt_hour);
 
 	EXPECT_EQ(n_rec_lifetime, util::hours_per_year);
 	EXPECT_EQ(n_rec_singleyear, util::hours_per_year);
@@ -60,7 +60,7 @@ TEST_F(libTimeTest_lib_time, single_year_to_lifetime_with_escalation)
     }
     double dt_hour;
     single_year_to_lifetime_interpolated<float>(is_lifetime, n_years, n_rec_lifetime,
-        singleyear60min, load_scale, lifetime_from_single, n_rec_singleyear, dt_hour);
+        singleyear60min, load_scale, interpolation_factor, lifetime_from_single, n_rec_singleyear, dt_hour);
 
     EXPECT_EQ(n_rec_lifetime, util::hours_per_year * n_years);
     EXPECT_EQ(n_rec_singleyear, util::hours_per_year);
@@ -82,7 +82,7 @@ TEST_F(libTimeTest_lib_time, single_year_to_lifetime_interpolated_SingleValue)
     std::vector<float> single_val = {1.};
     double dt_hour;
     single_year_to_lifetime_interpolated<float>(is_lifetime, n_years, n_rec_lifetime,
-                                                single_val, scaleFactors, lifetime_from_single, n_rec_singleyear, dt_hour);
+                                                single_val, scaleFactors, interpolation_factor, lifetime_from_single, n_rec_singleyear, dt_hour);
 
     EXPECT_EQ(n_rec_lifetime, util::hours_per_year);
     EXPECT_EQ(n_rec_singleyear, util::hours_per_year);
@@ -103,7 +103,7 @@ TEST_F(libTimeTest_lib_time, single_year_to_lifetime_interpolated_SingleYearSubh
 	size_t n_rec_singleyear;
 	double dt_hour;
 	single_year_to_lifetime_interpolated<float>(is_lifetime, n_years, n_rec_lifetime,
-		singleyear30min, scaleFactors, lifetime_from_single, n_rec_singleyear, dt_hour);
+		singleyear30min, scaleFactors, interpolation_factor, lifetime_from_single, n_rec_singleyear, dt_hour);
 
 	EXPECT_EQ(n_rec_lifetime, util::hours_per_year * 2);
 	EXPECT_EQ(n_rec_singleyear, util::hours_per_year * 2);
@@ -123,7 +123,7 @@ TEST_F(libTimeTest_lib_time, single_year_to_lifetime_interpolated_LifetimeSubhou
 	size_t n_rec_singleyear;
 	double dt_hour;
 	single_year_to_lifetime_interpolated<float>(is_lifetime, n_years, n_rec_lifetime,
-		singleyear30min, scaleFactors, lifetime_from_single, n_rec_singleyear, dt_hour);
+		singleyear30min, scaleFactors, interpolation_factor, lifetime_from_single, n_rec_singleyear, dt_hour);
 
 	EXPECT_EQ(n_rec_lifetime, util::hours_per_year * 2 * n_years);
 	EXPECT_EQ(n_rec_singleyear, util::hours_per_year * 2);
@@ -148,7 +148,7 @@ TEST_F(libTimeTest_lib_time, single_year_to_lifetime_interpolated_DownsampleLife
 	size_t n_rec_singleyear;
 	double dt_hour;
 	single_year_to_lifetime_interpolated<float>(is_lifetime, n_years, n_rec_lifetime,
-		singleyear30min, scaleFactors, lifetime_from_single, n_rec_singleyear, dt_hour);
+		singleyear30min, scaleFactors, interpolation_factor, lifetime_from_single, n_rec_singleyear, dt_hour);
 
 	EXPECT_EQ(n_rec_lifetime, util::hours_per_year * n_years);
 	EXPECT_EQ(n_rec_singleyear, util::hours_per_year);
@@ -165,6 +165,32 @@ TEST_F(libTimeTest_lib_time, single_year_to_lifetime_interpolated_DownsampleLife
 }
 
 // Test downsample
+TEST_F(libTimeTest_lib_time, single_year_to_lifetime_interpolated_DownsampleLifetime_w_interpolation)
+{
+    is_lifetime = true;
+    std::vector<float> lifetime_from_single;
+    size_t n_rec_lifetime = lifetime60min.size();
+    size_t n_rec_singleyear;
+    double dt_hour;
+    interpolation_factor = 2.0;
+    single_year_to_lifetime_interpolated<float>(is_lifetime, n_years, n_rec_lifetime,
+        singleyear30min, scaleFactors, interpolation_factor, lifetime_from_single, n_rec_singleyear, dt_hour);
+
+    EXPECT_EQ(n_rec_lifetime, util::hours_per_year * n_years);
+    EXPECT_EQ(n_rec_singleyear, util::hours_per_year);
+    EXPECT_EQ(dt_hour, 1.0);
+    EXPECT_EQ(lifetime_from_single.size(), n_rec_lifetime);
+
+    for (size_t y = 0; y < n_years; y++) {
+        size_t idx = y * singleyear60min.size();
+        for (size_t i = 0; i < n_rec_singleyear; i += increment) {
+            EXPECT_EQ(lifetime_from_single[idx], singleyear30min[i * 2] / interpolation_factor);
+            idx += increment;
+        }
+    }
+}
+
+// Test downsample
 TEST_F(libTimeTest_lib_time, single_year_to_lifetime_interpolated_DownsampleSingleYear)
 {
 	is_lifetime = false;
@@ -173,7 +199,7 @@ TEST_F(libTimeTest_lib_time, single_year_to_lifetime_interpolated_DownsampleSing
 	size_t n_rec_singleyear;
 	double dt_hour;
 	single_year_to_lifetime_interpolated<float>(is_lifetime, n_years, n_rec_lifetime,
-		singleyear30min, scaleFactors, lifetime_from_single, n_rec_singleyear, dt_hour);
+		singleyear30min, scaleFactors, interpolation_factor, lifetime_from_single, n_rec_singleyear, dt_hour);
 
 	EXPECT_EQ(n_rec_lifetime, util::hours_per_year);
 	EXPECT_EQ(n_rec_singleyear, util::hours_per_year);
