@@ -1170,26 +1170,6 @@ void cm_pvsamv1::exec( )
 			// Reset dcPower calculation for new timestep
 			dcPowerNetTotalSystem = 0;
 
-			// only hourly electric load, even
-			// if PV simulation is subhourly.  load is assumed constant over the hour.
-			// if no load profile supplied, load = 0
-			if (nload == 8760)
-			{
-				cur_load = p_load_in[hour_of_year];
-			}
-			// electric load is subhourly
-			// if no load profile supplied, load = 0
-			else if (nload == nrec)
-			{
-				size_t yr_one_idx = util::yearOneIndex(ts_hour, idx);
-				cur_load = p_load_in[yr_one_idx];
-			}
-			// log cur_load to check both hourly and sub hourly load data
-			// load data over entrie lifetime period not currently supported.
-			//					log(util::format("year=%d, hour=%d, step per hour=%d, load=%g",
-			//						iyear, hour, jj, cur_load), SSC_WARNING, (float)idx);
-			p_load_full.push_back((ssc_number_t)cur_load);
-
 			//update POA data structure indicies if radmode is POA model is enabled
 			if (radmode == irrad::POA_R || radmode == irrad::POA_P){
 				for (size_t nn = 0; nn < num_subarrays; nn++){
