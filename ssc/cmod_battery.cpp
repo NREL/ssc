@@ -182,6 +182,7 @@ var_info vtab_battery_inputs[] = {
         // time step rates
         { SSC_INPUT, SSC_NUMBER, "ur_en_ts_sell_rate", "Enable time step sell rates", "0/1", "", "Electricity Rates", "?=0", "BOOLEAN", "" },
         { SSC_INPUT, SSC_ARRAY, "ur_ts_sell_rate", "Time step sell rates", "0/1", "", "Electricity Rates", "", "", "" },
+        { SSC_INPUT, SSC_NUMBER, "ur_en_ts_buy_rate", "Enable time step buy rates", "0/1", "", "Electricity Rates", "?=0", "BOOLEAN", "" },
         { SSC_INPUT, SSC_ARRAY, "ur_ts_buy_rate", "Time step buy rates", "0/1", "", "Electricity Rates", "", "", "" },
 
         // Energy Charge Inputs
