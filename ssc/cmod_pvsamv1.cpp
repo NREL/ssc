@@ -1159,13 +1159,16 @@ void cm_pvsamv1::exec( ) throw (general_error)
 			// if PV simulation is subhourly.  load is assumed constant over the hour.
 			// if no load profile supplied, load = 0
 			if (nload == 8760)
-			cur_load = p_load_in[hour_of_year];
-
+			{
+				cur_load = p_load_in[hour_of_year];
+			}
 			// electric load is subhourly
 			// if no load profile supplied, load = 0
-			if (nload == nrec)
-				cur_load = p_load_in[idx];
-
+			else if (nload == nrec)
+			{
+				size_t yr_one_idx = util::yearOneIndex(ts_hour, idx);
+				cur_load = p_load_in[yr_one_idx];
+			}
 			// log cur_load to check both hourly and sub hourly load data
 			// load data over entrie lifetime period not currently supported.
 			//					log(util::format("year=%d, hour=%d, step per hour=%d, load=%g",
