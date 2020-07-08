@@ -3,7 +3,7 @@
 #include "cmod_battery_pvsamv1_test.h"
 
 #include "../input_cases/weather_inputs.h"
-#include "../input_cases/pvsam1_battery_common_data.h"
+#include "../input_cases/pvsamv1_battery_common_data.h"
 
 void daily_battery_stats::compute(std::vector<ssc_number_t> batt_power_data) {
 	size_t index = 0;

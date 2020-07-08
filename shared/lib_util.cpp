@@ -896,6 +896,31 @@ size_t util::hour_of_day(size_t hour_of_year)
 	return (hour_of_year) % 24;
 }
 
+//returns the hour index in the year (0-8759) of a given month, day, and time in hours
+size_t util::hour_of_year(size_t month, size_t day, size_t hour)
+{
+	size_t h = 0;
+	bool ok = true;
+	std::vector<size_t> days_in_months = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+	if (month >= 1 && month <= 12)
+	{
+		for (int m = 0; m < (month - 1); m++)
+			h += days_in_months[m] * 24;
+	}
+	else ok = false;
+	if (day >= 1 && day <= days_in_months[month - 1])
+		h += (day - 1) * 24;
+	else ok = false;
+	if (hour >= 0 && hour <= 23)
+		h += hour;
+	else ok = false;
+	if (hour > 8759)
+	    throw std::runtime_error("hour_of_year range is (0-8759) but calculated hour is > 8759.");
+	if (!ok)
+		throw std::runtime_error("hour_of_year input month, day, or hour out of correct range");
+	return h;
+}
+
 bool util::weekday(size_t hour_of_year)
 {
 	int day_of_year = (int)(floor((float)(hour_of_year) / 24));
@@ -904,10 +929,7 @@ bool util::weekday(size_t hour_of_year)
 	if (day_of_week > 6)
 		day_of_week = day_of_year % 7;
 
-	if (day_of_week < 5)
-		return true;
-	else
-		return false;
+    return day_of_week < 5;
 }
 
 int util::schedule_char_to_int( char c )
@@ -1109,7 +1131,8 @@ double util::linterp_col( const util::matrix_t<double> &mat, size_t ixcol, doubl
 
 	// basic checks
 	if ( ixcol >= mat.ncols()
-		|| iycol >= mat.ncols())
+		|| iycol >= mat.ncols()
+		|| n < 2 )
 		return std::numeric_limits<double>::quiet_NaN();
 
 

@@ -449,7 +449,7 @@ public:
 
 				// sub hourly update
 				double beam_loss_factor = 1.0;
-				if ( shad.fbeam(hour, solalt, solazi, jj, step_per_hour) )
+				if (shad.fbeam(hour, wf.minute, solalt, solazi))
 					beam_loss_factor = shad.beam_shade_factor();
 
 
@@ -469,10 +469,10 @@ public:
 		int use_custom_mains = as_integer("use_custom_mains");
 		if (use_custom_mains)
 		{
-			size_t idx=0;
+			size_t iidx=0;
 			for (size_t hr = 0; hr < 8760; hr++)
 				for( size_t jj=0;jj<step_per_hour;jj++ )
-					T_mains[idx++] = (ssc_number_t)(custom_mains[hr]);
+					T_mains[iidx++] = (ssc_number_t)(custom_mains[hr]);
 		}
 		else
 		{
@@ -500,7 +500,7 @@ public:
 			/* **********************************************************************
 			Calculate hourly mains water temperature
 			********************************************************************** */
-			size_t idx=0;
+			size_t iidx=0;
 			double tmain = 0;
 			for ( size_t i=0; i<8760; i++)
 			{
@@ -529,7 +529,7 @@ public:
 
 				// load into mains temp array
                 for (size_t jj = 0; jj < step_per_hour; jj++) {
-                    T_mains[idx++] = (ssc_number_t)tmain;
+                    T_mains[iidx++] = (ssc_number_t)tmain;
                 }
 			}
 		}

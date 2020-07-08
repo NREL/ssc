@@ -42,15 +42,17 @@ TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, DefaultNoFinancialModel){
 }
 
 TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, UsingData){
-    auto weather_data = create_weatherdata_array();
+    auto weather_data = create_weatherdata_array(8760);
     ssc_data_unassign(data, "solar_resource_file");
     ssc_data_set_table(data, "solar_resource_data", &weather_data->table);
     compute();
-    delete weather_data;
+    //delete weather_data;
 
     ssc_number_t capacity_factor;
     ssc_data_get_number(data, "capacity_factor", &capacity_factor);
     EXPECT_NEAR(capacity_factor, 11.7368, error_tolerance) << "Capacity factor";
+
+    free_weatherdata_array(weather_data);
 }
 
 /// PVWattsV5 using different technology input options
