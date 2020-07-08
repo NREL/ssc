@@ -1141,7 +1141,7 @@ void cm_pvsamv1::exec( )
 		dcStringVoltage.push_back(tmp);
 	}
 
-    //idx is the current array index in the (possibly subhourly) year of weather data or the non-annual array
+	//idx is the LIFETIME index in the (possibly subhourly) year of weather data, or the normal index in a non-annual array (lifetime is 1)
 	size_t idx = 0;
 	//for normal annual simulations, this works as expected. for non-annual weather data inputs, nyears is 1,
 	//so iyear will always be 0, meaning that timeseries outputs will be output for the entire length of nrec
@@ -1174,13 +1174,16 @@ void cm_pvsamv1::exec( )
 			// if PV simulation is subhourly.  load is assumed constant over the hour.
 			// if no load profile supplied, load = 0
 			if (nload == 8760)
-			cur_load = p_load_in[hour_of_year];
-
+			{
+				cur_load = p_load_in[hour_of_year];
+			}
 			// electric load is subhourly
 			// if no load profile supplied, load = 0
-			if (nload == nrec)
-				cur_load = p_load_in[idx];
-
+			else if (nload == nrec)
+			{
+				size_t yr_one_idx = util::yearOneIndex(ts_hour, idx);
+				cur_load = p_load_in[yr_one_idx];
+			}
 			// log cur_load to check both hourly and sub hourly load data
 			// load data over entrie lifetime period not currently supported.
 			//					log(util::format("year=%d, hour=%d, step per hour=%d, load=%g",
