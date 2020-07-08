@@ -172,7 +172,7 @@ TEST_F(libTimeTest_lib_time, single_year_to_lifetime_interpolated_DownsampleLife
     size_t n_rec_lifetime = lifetime60min.size();
     size_t n_rec_singleyear;
     double dt_hour;
-    interpolation_factor = 2.0;
+    interpolation_factor = 1.0 / 2.0;
     single_year_to_lifetime_interpolated<float>(is_lifetime, n_years, n_rec_lifetime,
         singleyear30min, scaleFactors, interpolation_factor, lifetime_from_single, n_rec_singleyear, dt_hour);
 

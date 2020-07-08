@@ -76,7 +76,7 @@ void single_year_to_lifetime_interpolated(
 			for (size_t h = 0; h < util::hours_per_year; h++) {
 				for (size_t sy = 0; sy < step_per_hour; sy++) {
 					// eventually add more sophisticated downsampling, ignoring information
-					singleyear_sampled.push_back(singleyear_vector[(size_t)(sy_idx/step_factor) / interpolation_factor]);
+					singleyear_sampled.push_back(singleyear_vector[(size_t)(sy_idx/step_factor)] / interpolation_factor);
 					sy_idx++;
 				}
 			}
