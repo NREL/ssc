@@ -754,11 +754,12 @@ double earth_values(double term_sum[], int count, double jme)
 
 double earth_heliocentric_longitude(double jme)
 {
+	const int L_COUNT = 6;
 	const int l_subcount[6] = { 64,34,20,7,3,1 };
 	double sum[6];
 	int i;
 
-	for (i = 0; i < 64; i++)
+	for (i = 0; i < L_COUNT; i++)
 		sum[i] = earth_periodic_term_summation(L_TERMS[i], l_subcount[i], jme);
 
 	double earth_helio_longitude = limit_degrees(RTOD * (earth_values(sum, 6, jme)));
@@ -1058,16 +1059,16 @@ double sun_hour_angle_at_rise_set(double latitude, double delta_zero, double h0_
 	return h0;
 }
 
-void approx_sun_rise_and_set(double* m_rts, double h0)
+void approx_sun_rise_and_set(double h0, double m_rts[3])
 {
 	double h0_dfrac = h0 / 360.0;
-
-	m_rts[0] = limit_zero2one(m_rts[2] - h0_dfrac);
-	m_rts[1] = limit_zero2one(m_rts[2] + h0_dfrac);
-	m_rts[2] = limit_zero2one(m_rts[2]);
+	double m0_calc = m_rts[0];
+	m_rts[0] = limit_zero2one(m0_calc); //m0 sun transit time (fraction of day)
+	m_rts[1] = limit_zero2one(m0_calc - h0_dfrac); //approximate sunrise time in fraction of day
+	m_rts[2] = limit_zero2one(m0_calc + h0_dfrac); // approximate sunset time in fraction of day
 }
 
-double rts_alpha_delta_prime(double* ad, double n)
+double rts_alpha_delta_prime(double n, double ad[3])
 {
 	double a = ad[1] - ad[0];
 	double b = ad[2] - ad[1];
@@ -1098,156 +1099,175 @@ void calculate_spa(double jd, double lat, double lng, double alt, double pressur
 {
 	//Calculate the Julian and Julian Ephemeris, Day, Century, and Millennium (3.1)
 	//double jd = julian_day(year, month, day, hour, minute, second, delta_t, tz);
-	double jc = julian_century(jd);
-	double jde = julian_ephemeris_day(jd, delta_t);
-	double jce = julian_ephemeris_century(jde);
-	double jme = julian_ephemeris_millennium(jce);
+	double jc = julian_century(jd); // for 2000 standard epoch
+	double jde = julian_ephemeris_day(jd, delta_t); //Adjusted for difference between Earth rotation time and the Terrestrial Time (TT) (derived from observation, reported yearly in Astronomical Almanac)
+	double jce = julian_ephemeris_century(jde); //for 2000 standard epoch
+	double jme = julian_ephemeris_millennium(jce); // jce/10 (for 2000 standard epoch)
 	needed_values[0] = jme;
 
 	//Calculate the Earth heliocentric longitude latitude, and radius vector (L, B, and R) (3.2)
-	double l = earth_heliocentric_longitude(jme);
-	double b = earth_heliocentric_latitude(jme);
-	double r = earth_radius_vector(jme);
-	needed_values[10] = 1 / (r * r);
+	// Heliocentric - Earth position is calculated with respect to the center of the sun
+	double l = earth_heliocentric_longitude(jme); //L0-L5 values listed beginning line ?, L limited to 0-360°
+	double b = earth_heliocentric_latitude(jme); // B0-B1 values listed beginning line ?, B limited to 0-360°
+	double r = earth_radius_vector(jme); // R0-R4 valeus listed beginning line ?,  R in Astronomical Units (AU)
+	needed_values[10] = 1 / (r * r); //
 
 	//Calculate the geocentric longitude and latitude (theta and beta) (3.3)
-	double theta = geocentric_longitude(l);
-	double beta = geocentric_latitude(b);
+	// Geocentric - sun position calculated with respect to the Earth center
+	double theta = geocentric_longitude(l); // Limited to 0-360°
+	double beta = geocentric_latitude(b); // Limited to 0-360°
 
 	//Calculate the nutation in longitude and obliquity (del_psi and del_eps) (3.4)
 	double x[5];
-	x[0] = mean_elongation_moon_sun(jce);
-	x[1] = mean_anomaly_sun(jce);
-	x[2] = mean_anomaly_moon(jce);
-	x[3] = argument_latitude_moon(jce);
-	x[4] = ascending_longitude_moon(jce);
+	x[0] = mean_elongation_moon_sun(jce); // degrees
+	x[1] = mean_anomaly_sun(jce); // degrees
+	x[2] = mean_anomaly_moon(jce); // degrees
+	x[3] = argument_latitude_moon(jce); // degrees
+	x[4] = ascending_longitude_moon(jce); // degrees
 
-	double delta_values[2];
+	double delta_values[2]; // allocate storage for nutation in longitude (del_psi) and nutation in obliquity (del_epsilon)
 	nutation_longitude_and_obliquity(jce, x, delta_values);
-	double del_psi = delta_values[0];
-	needed_values[1] = del_psi;
-	double del_epsilon = delta_values[1];
+	double del_psi = delta_values[0]; //store value for use in further spa calculations
+	needed_values[1] = del_psi; //pass del_psi value to sunrise sunset calculations
+	double del_epsilon = delta_values[1]; //store value for use in further spa calculations
 
 	//Calculate the true obliquity of the ecliptic, epsilon (3.5)
-	double epsilon0 = ecliptic_mean_obliquity(jme);
-	double epsilon = ecliptic_true_obliquity(del_epsilon, epsilon0);
+	double epsilon0 = ecliptic_mean_obliquity(jme); //mean obliquity of the ecliptic (arc seconds)
+	double epsilon = ecliptic_true_obliquity(del_epsilon, epsilon0); //true obliquity of the ecliptic (degrees)
 	needed_values[2] = epsilon;
 
 	//Calculate the aberration correction (3.6)
-	double del_tau = aberration_correction(r);
+	double del_tau = aberration_correction(r); // degrees
 
 	//Calculate the apparent sun longitude (3.7)
-	double lamda = apparent_sun_longitude(theta, del_psi, del_tau);
+	double lamda = apparent_sun_longitude(theta, del_psi, del_tau); // degrees
 	
 	//Calculate the apparent sidereal time at Greenwich at any given time (3.8) 
-	double nu0 = greenwich_mean_sidereal_time(jd, jc);
-	double nu = greenwich_sidereal_time(nu0, del_psi, epsilon);
-	needed_values[3] = nu;
+	double nu0 = greenwich_mean_sidereal_time(jd, jc); //degrees 
+	double nu = greenwich_sidereal_time(nu0, del_psi, epsilon); // degrees
+	needed_values[3] = nu; 
 
 	//Calculate the geocentric sun right ascension (degrees) (3.9)
-	double alpha = geocentric_right_ascension(lamda, epsilon, beta);
-	ascension_and_declination[1] = alpha;
+	double alpha = geocentric_right_ascension(lamda, epsilon, beta); // degrees, limited to 0-360°
+	ascension_and_declination[0] = alpha; 
 	
 	//Calculate the geocentric sun declination (degrees) (3.10)
-	double delta = geocentric_declination(beta, epsilon, lamda);
-	ascension_and_declination[2] = delta;
+	double delta = geocentric_declination(beta, epsilon, lamda); // degrees
+	ascension_and_declination[1] = delta;
 	
 	//Calculate local hour angle (3.11)
-	double H = observer_hour_angle(nu, lng, alpha);
+	double H = observer_hour_angle(nu, lng, alpha); // positive for east of Greenwich, limited to 0-360°
 
 	//Calculate the topocentric sun right ascension (3.12)
-	double xi = sun_equatorial_horizontal_parallax(r);
-	double delta_alpha_prime[2];
-	right_ascension_parallax_and_topocentric_dec(lat, alt, xi, H, delta, delta_alpha_prime);
-	double delta_alpha = delta_alpha_prime[0];
-	double delta_prime = delta_alpha_prime[1];
-	needed_values[7] = delta_prime;
-	double alpha_prime = topocentric_right_ascension(alpha, delta_alpha);
+	// Topocentric - sun position is calculated with respect to the observer local position at the Earth surface
+	double xi = sun_equatorial_horizontal_parallax(r); // degrees
+	double delta_alpha_prime[2]; //storage for parallax in the sun right ascension, topocentric sun declination
+	right_ascension_parallax_and_topocentric_dec(lat, alt, xi, H, delta, delta_alpha_prime); //outputs parallax in the sun right ascension (delta_alpha) and sun right ascension (delta_prime)
+	double delta_alpha = delta_alpha_prime[1]; // topocentric sun parallax in the sun right ascension (degrees)
+	double delta_prime = delta_alpha_prime[0]; // topocentric declination (degrees)
+	needed_values[7] = delta_prime; // pass declination as output of calculate_spa
+	double alpha_prime = topocentric_right_ascension(alpha, delta_alpha); // topocentric sun right ascenion (degrees)
 
 	//Calculate topocentric local hour angle (3.13)
-	double H_prime = topocentric_local_hour_angle(H, delta_alpha);
+	double H_prime = topocentric_local_hour_angle(H, delta_alpha); // degrees
 
 	//Calculate the topocentric zenith angle (3.14)
-	double e0 = topocentric_elevation_angle(lat, delta_prime, H_prime);
-	double atmos_refract = 0;
-	double del_e = atmospheric_refraction_correction(pressure, temp, atmos_refract, e0);
-	double e = topocentric_elevation_angle_corrected(e0, del_e);
-	needed_values[6] = e;
-	double zenith = topocentric_zenith_angle(e);
-	needed_values[5] = zenith;
+	double e0 = topocentric_elevation_angle(lat, delta_prime, H_prime); // without atmospheric refraction (degrees)
+	double atmos_refract = 0.5667; // atmospheric refraction for check if sun is below horizon
+	double del_e = atmospheric_refraction_correction(pressure, temp, atmos_refract, e0); // atmospheric refraction correction in degrees, returns 0 if sun is below horizon
+	double e = topocentric_elevation_angle_corrected(e0, del_e); // Topocentric elevation angle corrected for refraction (degrees)
+	needed_values[6] = e; // Pass topocentric elevation angle as an output of solarpos_spa (degrees)
+	double zenith = topocentric_zenith_angle(e); // Topocentric zenith angle (degrees) (90 - e)
+	needed_values[5] = zenith; // Pass topocentric zenith angle as an output of solarpos_spa (degrees)
 
 	//Calculate the topocentric azimuth angle (3.15)
-	double azimuth_astro = topocentric_azimuth_angle_astro(H_prime, lat, delta_prime);
-	double azimuth = topocentric_azimuth_angle(azimuth_astro);
+	double azimuth_astro = topocentric_azimuth_angle_astro(H_prime, lat, delta_prime); //topocentric astronomers azimuth angle (degrees) (measured westward from south)
+	double azimuth = topocentric_azimuth_angle(azimuth_astro); // topocentric azimuth angle (degrees) (measured eastward from north)
 	needed_values[4] = azimuth;
 
 	//Calculate the incidence angle for a selected surface (3.16)
-	double aoi = surface_incidence_angle(zenith, azimuth_astro, azm_rotation, tilt);
+	double aoi = surface_incidence_angle(zenith, azimuth_astro, azm_rotation, tilt); //incidence angle for a surface oriented in any direction (degrees)
 }
 
 
 
 
-void calculate_eot_and_sun_rise_transit_set(double jme, double tz, double alpha, double del_psi, double epsilon, double jd, int year, int month, int day, double lat, double lng, double alt, double pressure, double temp, double tilt, double delta_t, double azm_rotation, double nu, double needed_values[13])
+void calculate_eot_and_sun_rise_transit_set(double jme, double tz, double alpha, double del_psi, double epsilon, double jd, int year, int month, int day, double lat, double lng, double alt, double pressure, double temp, double tilt, double delta_t, double azm_rotation, double needed_values[13])
 {
 	// Equation of Time (A.1)
-	double M = sun_mean_longitude(jme);
-	double E = eot(M, alpha, del_psi, epsilon);
-	needed_values[11] = E;
+	double M = sun_mean_longitude(jme); // degrees
+	double E = eot(M, alpha, del_psi, epsilon); //Equation of Time (degrees)
+	needed_values[11] = E; // Pass Equation of Time to solarpos_spa level
+	double needed_values_nu[13]; //create storage for iterating calculate_spa section
 
 	// Sunrise, Sunset, and Sun Transit (A.2)
-	int i;
-	double sun_declination_and_ascension[2];
-	//double needed_values2[10];
-	double alpha_array[3];
-	double delta_array[3];
-	double jd_array[3] = { jd--, jd, jd++ };
-	for (i = 0; i < 3; i++) {
-		calculate_spa(jd_array[i], lat, lng, alt, pressure, temp, 0, tilt, azm_rotation, sun_declination_and_ascension, needed_values);
-		alpha_array[i] = sun_declination_and_ascension[0];
-		delta_array[i] = sun_declination_and_ascension[1];
+	int i; //initialize iterator
+	double sun_declination_and_ascension[2]; // storage for iterating sun declination and ascension results
+	double needed_values2[13]; //where is this used?
+	double alpha_array[3]; //storage for alphas in iteration
+	double delta_array[3]; //storage for deltas in iteration
+	
+	//double nu = needed_values[3];
+	double jd_array[3];
+	jd_array[1] = julian_day(year, month, day, 0, 0, 0, 0, 0); //initialize Julian array with day in question (0 UT (0h0mm0s0tz)
+	//run calculate_spa to obtain apparent sidereal time at Greenwich at 0 UT (v, degrees)
+	calculate_spa(jd_array[1], lat, lng, alt, pressure, temp, 64.797, tilt, azm_rotation, sun_declination_and_ascension, needed_values_nu); 
+	double nu = needed_values_nu[3]; //store apparent sidereal time at Greenwich
+	jd_array[0] = jd_array[1] - 1; //Julian day for the day prior to the day in question
+	jd_array[2] = jd_array[1] + 1; //Julian day for the day following the day in question
+	for (i = 0; i < 3; i++) { // iterate through day behind (0), day in question (1), and day following (2)
+		//Calculate the spa for each day at 0 TT by setting the delta_T difference between UT and TT to 0
+		calculate_spa(jd_array[i], lat, lng, alt, pressure, temp, 0, tilt, azm_rotation, sun_declination_and_ascension, needed_values2);
+		alpha_array[i] = sun_declination_and_ascension[0]; //store geocentric right ascension for each iteration (degrees)
+		delta_array[i] = sun_declination_and_ascension[1]; //store geocentric declination for each iteration (degrees)
 	}
-	double m0 = approx_sun_transit_time(alpha, lng, nu);
-	double atmos_refract = 0; //fillin
-	double h0_prime = -1 * (0.2667 + atmos_refract);
-	double h0 = sun_hour_angle_at_rise_set(lat, delta_array[0], h0_prime);
+	
+	double m0 = approx_sun_transit_time(alpha_array[1], lng, nu); //approximate sun transit time (fraction of day)
+	//double atmos_refract = 0.5667; //fillin
+	double h0_prime = -0.8333; //sun elevation for sunrise and sunset
+	//double h0_prime = -1 * (0.26667 + atmos_refract);
+	double h0 = sun_hour_angle_at_rise_set(lat, delta_array[1], h0_prime); //sun hour angle correpsonding to sun elevation at sunrise/sunset (degrees) limited to 0-180°
 
-	double approx_times_array[3];
-	double nu_array[3];
-	double n;
-	double alpha_prime_array[3];
-	double delta_prime_array[3];
-	double h_prime_array[3];
-	double h_rts_array[3];
-	if (h0 > 0) {
-		approx_sun_rise_and_set(approx_times_array, h0);
-		needed_values[8] = approx_times_array[1];
-		needed_values[9] = approx_times_array[2];
+	double approx_times_array[3]; //store approximate sun transit (solar noon) (m0), sunrise (m1), and sunset (m2) times
+	approx_times_array[0] = m0; //approximate sun transit time
+	double nu_i_array[3]; //storage array for sidreal times at Greenwich for time i (0-transit, 1-sunrise, 2-sunset)
+	double n; //term n shifting time by delta_T
+	double alpha_prime_array[3]; //storage array for alpha__prime terms
+	double delta_prime_array[3]; //storage array for delta_prime terms
+	double h_prime_array[3]; //local hour angle storage for 
+	double h_rts_array[3]; //sun altitude storage array for time i (0-transit, 1-sunrise, 2-sunset)
+	if (h0 > 0) { //check for valid values of local hour angle h0
+		approx_sun_rise_and_set(h0, approx_times_array); //calculate the approximate sun transit, sunrise, sunset (each limited between 0-1)
+		needed_values[0] = dayfrac_to_local_hr(approx_times_array[1],tz); //pass approximate sunrise time to the solarpos_spa outputs 
+		needed_values[1] = dayfrac_to_local_hr(approx_times_array[2],tz); //pass approximate sunset time to the solarpos_spa outputs
 
 		for (i = 0; i < 3; i++) {
 
-			nu_array[i] = nu + 360.985647 * approx_times_array[i];
+			nu_i_array[i] = nu + 360.985647 * approx_times_array[i]; //sidereal time at Greenwich for time i (0-transit,1-sunrise,2-sunset)
 
-			n = approx_times_array[i] + delta_t / 86400;
+			n = approx_times_array[i] + delta_t / 86400; //n_i term at given time (degrees)
 
-			alpha_prime_array[i] = rts_alpha_delta_prime(alpha_array, n);
-			delta_prime_array[i] = rts_alpha_delta_prime(delta_array, n);
+			alpha_prime_array[i] = rts_alpha_delta_prime(n, alpha_array); // alpha_prime_i term at time i (degrees)
+			delta_prime_array[i] = rts_alpha_delta_prime(n, delta_array); // delta_prime_i term at time i (degrees)
 
-			h_prime_array[i] = limit_degrees180pm(nu_array[i] + lng - alpha_prime_array[i]);
+			h_prime_array[i] = limit_degrees180pm(nu + lng - alpha_prime_array[i]); // local hour angle at time i (0-transit,1-sunrise,2-sunset) (degrees)
 
-			h_rts_array[i] = rts_sun_altitude(lat, delta_prime_array[i], h_prime_array[i]);
+			h_rts_array[i] = rts_sun_altitude(lat, delta_prime_array[i], h_prime_array[i]); //sun altitude at time i (0-transit,1-sunrise,2-sunset) (degrees)
 		}
 
-		double srha = h_prime_array[1];
-		double ssha = h_prime_array[2];
-		double h_rts = h_rts_array[0];
+		double srha = h_prime_array[1]; //sunrise hour angle (degrees)
+		double ssha = h_prime_array[2]; //sunset hour angle (degrees)
+		double h_rts = h_rts_array[0]; //sun altitude for sun transit (degrees)
 
-		double suntransit = dayfrac_to_local_hr(m0 - h_prime_array[0] / 360, tz);
-		double sunrise = dayfrac_to_local_hr(sun_rise_and_set(approx_times_array, h_rts_array, delta_prime_array, lat, h_prime_array, h0_prime, 1), tz);
-		double sunset = dayfrac_to_local_hr(sun_rise_and_set(approx_times_array, h_rts_array, delta_prime_array, lat, h_prime_array, h0_prime, 2), tz);
+		double suntransit = dayfrac_to_local_hr(m0 - h_prime_array[0] / 360, tz); //sun transit (fraction of day)
+		double sunrise = dayfrac_to_local_hr(sun_rise_and_set(approx_times_array, h_rts_array, delta_prime_array, lat, h_prime_array, h0_prime, 1), tz); //sunrise (fraction of day)
+		//needed_values[0] = sunrise;
+		double sunset = dayfrac_to_local_hr(sun_rise_and_set(approx_times_array, h_rts_array, delta_prime_array, lat, h_prime_array, h0_prime, 2), tz); //sunset (fraction of day)
+		//needed_values[1] = sunset;
+
 	}
 	else {
-		double srha = -99999;
+		double srha = -99999; // if h0 is outside of expected values, sunrise calculations do not occur
 		double ssha = -99999;
 		double sta = -99999;
 		double suntransit = -99999;
@@ -1256,36 +1276,36 @@ void calculate_eot_and_sun_rise_transit_set(double jme, double tz, double alpha,
 	}
 }
 
-void solarpos_spa(int year, int month, int day, int hour, double minute, double second, double lat, double lng, double tz, double dut1, double alt, double pressure, double temp, double tilt, double azm_rotation, double sunn[9], double needed_values[10])
+void solarpos_spa(int year, int month, int day, int hour, double minute, double second, double lat, double lng, double tz, double dut1, double delta_t, double alt, double pressure, double temp, double tilt, double azm_rotation, double sunn[9], double needed_values[13])
 {
 	
-	double jd = julian_day(year, month, day, hour, minute, second, dut1, tz);
-	double ascension_and_declination[2];
-	double needed_values2[10];
-	calculate_geocentric_sun_right_ascension_and_declination(jd, lat, lng, alt, pressure, temp, dut1, tilt, azm_rotation, ascension_and_declination, needed_values);
-	calculate_eot_and_sun_ris_transit_set(needed_values[0], tz, ascension_and_declination[0], needed_values[1], needed_values[2], jd, year, month, day, lat, lng, alt, pressure, temp, tilt, dut1, azm_rotation, needed_values[3], needed_values2);
+	double jd = julian_day(year, month, day, hour, minute, second, dut1, tz); //julian day 
+	double ascension_and_declination[2]; //preallocate storage for sun right ascension and declination (both degrees)
+	double needed_values2[13]; //preallocate storage for output from calculate_spa
+	calculate_spa(jd, lat, lng, alt, pressure, temp, delta_t, tilt, azm_rotation, ascension_and_declination, needed_values); //calculate solar position algorithm values
+	calculate_eot_and_sun_rise_transit_set(needed_values[0], tz, ascension_and_declination[0], needed_values[1], needed_values[2], jd, year, month, day, lat, lng, alt, pressure, temp, tilt, delta_t, azm_rotation, needed_values2); //calculate Equation of Time and sunrise/sunset values
 
-	double tst = hour + minute / 60.0 + (lng / 15.0 - tz) + needed_values[11];
+	double tst = hour + minute / 60.0 + (lng / 15.0 - tz) + needed_values2[11]/60; //true solar time (output of function)
 
-	double zen = 0.5 * M_PI - needed_values[6];
+	double zen = DTOR * needed_values[5];
 	double Gon = 1367 * (1 + 0.033 * cos(360.0 / 365.0 * day_of_year(month, day) * M_PI / 180)); /* D&B eq 1.4.1a, using solar constant=1367 W/m2 */
-	double hextra;
-	if (zen > 0 && zen < M_PI / 2) /* if sun is up */
+	double hextra = Gon*cos(DTOR*(needed_values[5])); //preallocate extra_terrestrial irradiance on horizontal (W/m2)
+	if (zen > 0 &&  zen < M_PI / 2) /* if sun is up */
 		double hextra = Gon * cos(zen); /* elevation is incidence angle (zen=90-elv) with horizontal */
 	else if (zen == 0)
 		double hextra = Gon;
 	else
 		double hextra = 0.0;
 
-	sunn[0] = needed_values[4];                       /* Variables returned in array sunn[] */
-	sunn[1] = needed_values[5];               /*  Zenith */
-	sunn[2] = needed_values[6];
-	sunn[3] = needed_values[7];
-	sunn[4] = needed_values[8];
-	sunn[5] = needed_values[9];
-	sunn[6] = needed_values[10];
-	sunn[7] = tst;
-	sunn[8] = hextra;
+	sunn[0] = DTOR*needed_values[4]; //sun azimuth in radians, measured east from north, 0 to 2*pi                  /* Variables returned in array sunn[] */
+	sunn[1] = zen; //sun zenith in radians           /*  Zenith */
+	sunn[2] = DTOR*needed_values[6]; // sun elevation in radians
+	sunn[3] = DTOR*needed_values[7]; // sun declination in radians
+	sunn[4] = needed_values2[0]; //sunrise in local standard time (hrs), not corrected for refraction
+	sunn[5] = needed_values2[1]; //sunset in local standard time (hrs), not corrected for refraction
+	sunn[6] = needed_values[10]; //eccentricity correction factor
+	sunn[7] = tst; //true solar time (hrs)
+	sunn[8] = hextra; //extraterrestrial solar irradaince on horizontal at particular time (W/m2)
 }
 
 void incidence(int mode,double tilt,double sazm,double rlim,double zen,double azm, bool en_backtrack, double gcr, bool force_to_stow, double stow_angle_deg, double angle[5])

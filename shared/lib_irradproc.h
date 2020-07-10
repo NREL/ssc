@@ -719,7 +719,7 @@ double sun_hour_angle_at_rise_set(double latitude, double delta_zero, double h0_
 * \param[out] m_rts[1] sunset in fraction of day (constrained 0-1)
 * \param[out] m_rts[2] sun transit in fraction of day (constrained 0-1)
 */
-void approx_sun_rise_and_set(double* m_rts, double h0);
+void approx_sun_rise_and_set(double h_0, double m_rts[3]);
 
 /**
 *   rts_alpha_delta_prime function calculates the alpha and delta prime for the sunrise and sunset calculations (fillin)
@@ -733,7 +733,7 @@ void approx_sun_rise_and_set(double* m_rts, double h0);
 * \param[in] ad[2] JD_PLUS
 * \param[out] rts_alpha_delta_prime alpha prime or delta prime depending on inputs
 */
-double rts_alpha_delta_prime(double* ad, double n);
+double rts_alpha_delta_prime(double n, double ad[3]);
 
 /**
 *   rts_sun_altitude function calculates the sun altitude for the sunrise, sunset, and sun transit
@@ -845,7 +845,7 @@ void calculate_spa(double jd, double lat, double lng, double alt, double pressur
 */
 void calculate_eot_and_sun_rise_transit_set(double jme, double tz, double alpha, double del_psi, double epsilon, double jd, int year, 
 	int month, int day, double lat, double lng, double alt, double pressure, double temp, double tilt, double delta_t, double azm_rotation, 
-	double nu, double needed_values[13]);
+	double needed_values[13]);
 
 /**
 *   solarpos_spa function calculates the sun position given the local standard time and location.
@@ -889,7 +889,7 @@ void calculate_eot_and_sun_rise_transit_set(double jme, double tz, double alpha,
 * \param[out] sunn[8] extraterrestrial solar irradiance on horizontal at particular time (W/m2)
 * \param[out] needed_values values needed to be passed from one function to another
 */
-void solarpos_spa(int year, int month, int day, int hour, double minute, double second, double lat, double lng, double tz, double dut1, double alt, double pressure, double temp, double tilt, double azm_rotation, double sunn[9], double needed_values[10]);
+void solarpos_spa(int year, int month, int day, int hour, double minute, double second, double lat, double lng, double tz, double dut1, double delta_t, double alt, double pressure, double temp, double tilt, double azm_rotation, double sunn[9], double needed_values[13]);
 
 /**
 * incidence function calculates the incident angle of direct beam radiation to a surface.
