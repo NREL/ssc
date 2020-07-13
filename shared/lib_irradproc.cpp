@@ -1289,13 +1289,14 @@ void solarpos_spa(int year, int month, int day, int hour, double minute, double 
 
 	double zen = DTOR * needed_values[5];
 	double Gon = 1367 * (1 + 0.033 * cos(360.0 / 365.0 * day_of_year(month, day) * M_PI / 180)); /* D&B eq 1.4.1a, using solar constant=1367 W/m2 */
-	double hextra = Gon*cos(DTOR*(needed_values[5])); //preallocate extra_terrestrial irradiance on horizontal (W/m2)
+	//double hextra = Gon*cos(zen); //preallocate extra_terrestrial irradiance on horizontal (W/m2)
+	double hextra;
 	if (zen > 0 &&  zen < M_PI / 2) /* if sun is up */
-		double hextra = Gon * cos(zen); /* elevation is incidence angle (zen=90-elv) with horizontal */
+		hextra = Gon * cos(zen); /* elevation is incidence angle (zen=90-elv) with horizontal */
 	else if (zen == 0)
-		double hextra = Gon;
+		hextra = Gon;
 	else
-		double hextra = 0.0;
+		hextra = 0.0;
 
 	sunn[0] = DTOR*needed_values[4]; //sun azimuth in radians, measured east from north, 0 to 2*pi                  /* Variables returned in array sunn[] */
 	sunn[1] = zen; //sun zenith in radians           /*  Zenith */
