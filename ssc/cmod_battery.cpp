@@ -1524,12 +1524,14 @@ public:
             // compute load (electric demand) annual escalation multipliers
             std::vector<ssc_number_t> load_scale = scale_calculator.get_factors("load_escalation");
 
+            double interpolation_factor = 1.0;
             single_year_to_lifetime_interpolated<ssc_number_t>(
                     (bool)as_integer("system_use_lifetime_output"),
                     analysis_period,
                     n_rec_lifetime,
                     load_year_one,
                     load_scale,
+                    interpolation_factor,
                     load_lifetime,
                     n_rec_single_year,
                     dt_hour_gen);

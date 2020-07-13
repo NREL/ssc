@@ -105,12 +105,14 @@ void cm_grid::exec()
     if (is_assigned("grid_curtailment")) {
         curtailment_year_one = as_vector_double("grid_curtailment");
     }
+    double interpolation_factor = 1.0;
     single_year_to_lifetime_interpolated<double>(
         system_use_lifetime_output,
         (size_t)analysis_period,
         n_rec_lifetime,
         curtailment_year_one,
         scaleFactors,
+        interpolation_factor,
         gridVars->gridCurtailmentLifetime_MW,
         n_rec_single_year,
         gridVars->dt_hour_gen);
@@ -137,12 +139,14 @@ void cm_grid::exec()
         load_scale = scale_calculator.get_factors("load_escalation");
     }
 
+    interpolation_factor = 1.0;
     single_year_to_lifetime_interpolated<double>(
         system_use_lifetime_output,
         analysis_period,
         n_rec_lifetime,
         load_year_one,
         load_scale,
+        interpolation_factor,
         gridVars->loadLifetime_kW,
         n_rec_single_year,
         gridVars->dt_hour_gen);

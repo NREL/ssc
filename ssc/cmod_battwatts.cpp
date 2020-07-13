@@ -313,12 +313,14 @@ void cm_battwatts::exec()
         std::vector<ssc_number_t> load_lifetime;
         size_t n_rec_single_year;
         double dt_hour_gen;
+        double interpolation_factor = 1.0;
         single_year_to_lifetime_interpolated<ssc_number_t>(
                 (bool)as_integer("system_use_lifetime_output"),
                 analysis_period,
                 n_rec_lifetime,
                 p_load,
                 load_scale,
+                interpolation_factor,
                 load_lifetime,
                 n_rec_single_year,
                 dt_hour_gen);
