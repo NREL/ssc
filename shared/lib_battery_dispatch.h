@@ -182,18 +182,20 @@ class grid_point
     grid_point = [grid_power, hour, step, cost]
     */
 public:
-    grid_point(double grid = 0., size_t hour = 0, size_t step = 0, double cost = 0.) :
-        _grid(grid), _hour(hour), _step(step), _cost(cost) {}
+    grid_point(double grid = 0., size_t hour = 0, size_t step = 0, double cost = 0., double marginal_cost = 0.) :
+        _grid(grid), _hour(hour), _step(step), _cost(cost), _marginal_cost(marginal_cost) {}
     double Grid() const { return _grid; }
     size_t Hour() const { return _hour; } // Hours from time of forecast
     size_t Step() const { return _step; }
     double Cost() const { return _cost; }
+    double MarginalCost() const { return _marginal_cost; }
 
 private:
 	double _grid;
 	size_t _hour;
 	size_t _step;
     double _cost;
+    double _marginal_cost;
 };
 
 struct byGrid
@@ -222,16 +224,26 @@ struct byLowestMarginalCost
 {
     bool operator() (grid_point const& a, grid_point const& b)
     {
+        // Deal with potential divide by zero error
         if (fabs(a.Grid()) < 1e-7 || fabs(b.Grid()) < 1e-7)
         {
-            // If we'd get a divide by zero error, return based on lower energy use
-            return a.Grid() < b.Grid();
+            if (fabs(a.MarginalCost() == b.MarginalCost()) < 1e-7)
+            {
+                // If we'd get a divide by zero error, return based on lower energy use
+                return a.Grid() < b.Grid();
+            }
+            return a.MarginalCost() < b.MarginalCost();
         }
 
         if (fabs((a.Cost() / a.Grid()) - (b.Cost() / b.Grid())) < 1e-7)
         {
-            return a.Grid() < b.Grid();
-        }    
+            if (fabs(a.MarginalCost() == b.MarginalCost()) < 1e-7)
+            {
+                // If we'd get a divide by zero error, return based on lower energy use
+                return a.Grid() < b.Grid();
+            }
+            return a.MarginalCost() < b.MarginalCost();
+        }
 
         return (a.Cost() / a.Grid()) < (b.Cost() / b.Grid());
     }

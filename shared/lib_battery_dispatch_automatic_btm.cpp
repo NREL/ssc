@@ -378,6 +378,7 @@ double dispatch_automatic_behind_the_meter_t::compute_costs(FILE* p, bool debug,
 
     // Copy utility rate calculator to do "no dispatch" forecast
     std::unique_ptr<UtilityRateForecast> noDispatchForecast = std::unique_ptr<UtilityRateForecast>(new UtilityRateForecast(*rate_forecast.get()));
+    std::unique_ptr<UtilityRateForecast> marginalForecast = std::unique_ptr<UtilityRateForecast>(new UtilityRateForecast(*rate_forecast.get()));
     double no_dispatch_cost = 0;
 
     // compute grid net from pv and load (no battery)
@@ -392,7 +393,10 @@ double dispatch_automatic_behind_the_meter_t::compute_costs(FILE* p, bool debug,
             double step_cost = noDispatchForecast->forecastCost(forecast_power, year, (hour_of_year + hour) % 8760, step);
             no_dispatch_cost += step_cost;
 
-            grid[count] = grid_point(power, hour, step, step_cost);
+            std::vector<double> marginal_power = { -1.0 };
+            double marginal_cost = marginalForecast->forecastCost(marginal_power, year, (hour_of_year + hour) % 8760, step);
+
+            grid[count] = grid_point(power, hour, step, step_cost, marginal_cost);
             sorted_grid[count] = grid[count];
 
             if (debug)
