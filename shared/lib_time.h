@@ -17,6 +17,7 @@ void single_year_to_lifetime_interpolated(
 	size_t n_lifetime,
 	std::vector<T> singleyear_vector,
     std::vector<T> scale_factor,
+    double interpolation_factor,
 	std::vector<T> &lifetime_from_singleyear_vector,
 	size_t &n_rec_single_year,
 	double &dt_hour);
