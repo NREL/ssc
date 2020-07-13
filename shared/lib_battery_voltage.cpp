@@ -228,7 +228,7 @@ double voltage_table_t::calculate_current_for_target_w(double P_watts, double q,
 
     double DOD_new = 0.;
     double incr = 0;
-    double DOD_best = 0;
+    double DOD_best = DOD_best = multiplier == -1. ? 0 : 100;
     double P_best = 0;
     while (incr + row < slopes.size() && incr + row >= 0) {
         size_t i = row + (size_t) incr;
