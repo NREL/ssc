@@ -642,9 +642,28 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(FILE* p, bool
             }
         }
     }
-    // Get 25th percential grid use
+    // Get max grid use during charging. Choose highest percentile < 25% where we aren't planning on discharging
     std::sort(sorted_grid.begin(), sorted_grid.end(), byGrid());
-    double peakDesiredGridUse = sorted_grid[_num_steps / 4].Grid() > 0 ? sorted_grid[_num_steps / 2].Grid() : 0.0;
+    bool lookingForGridUse = true;
+    double peakDesiredGridUse = 0.0;
+    i = _num_steps / 4;
+    while (lookingForGridUse && i < _num_steps)
+    {
+        size_t index = sorted_grid[i].Hour() * _steps_per_hour + sorted_grid[i].Step();
+        if (plan.plannedDispatch[index] < 0)
+        {
+            i++;
+        }
+        else {
+            peakDesiredGridUse = sorted_grid[i].Grid() > 0 ? sorted_grid[i].Grid() : 0.0;
+            lookingForGridUse = false;
+        }
+
+        if (lookingForGridUse && sorted_grid[i].Grid() <= 0)
+        {
+            lookingForGridUse = false;
+        }
+    }
 
     // Iterating over sorted grid
     std::sort(sorted_grid.begin(), sorted_grid.end(), byLowestMarginalCost());
