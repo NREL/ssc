@@ -740,6 +740,9 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NonAnnual)
 	ssc_data_unassign(data, "solar_resource_file");
 	ssc_data_set_table(data, "solar_resource_data", &weather_data->table);
 
+	std::vector<double> load(24, 1);
+	ssc_data_set_array(data, "load", &load[0], (int)load.size());
+
 	//run the tests
 	EXPECT_FALSE(run_module(data, "pvsamv1"));
 
