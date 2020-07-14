@@ -837,3 +837,37 @@ void battery_metrics_t::new_year()
 	_e_grid_export_annual = 0.;
 	_e_loss_system_annual = 0.;
 }
+
+bool byGrid:: operator()(grid_point const& a, grid_point const& b)
+{
+    return a.Grid() > b.Grid();
+}
+
+bool byCost::operator() (grid_point const& a, grid_point const& b)
+{
+    if (a.Cost() == b.Cost())
+    {
+        return a.Grid() > b.Grid();
+    }
+    return a.Cost() > b.Cost();
+}
+
+bool byLowestMarginalCost::operator() (grid_point const& a, grid_point const& b)
+{
+   
+    if (fabs(a.MarginalCost() - b.MarginalCost()) < 1e-7)
+    {
+        if (fabs(a.Grid()) < 1e-7 || fabs(b.Grid()) < 1e-7)
+        {
+            return a.Grid() < b.Grid();
+        }
+        else if (fabs((a.Cost() / a.Grid()) - (b.Cost() / b.Grid())) < 1e-7)
+        {
+            return a.Grid() < b.Grid();
+        }
+        return (a.Cost() / a.Grid()) < (b.Cost() / b.Grid());
+    }
+
+    return a.MarginalCost() < b.MarginalCost();
+    
+}

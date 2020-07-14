@@ -200,53 +200,19 @@ private:
 
 struct byGrid
 {
-	bool operator()(grid_point const  &a, grid_point const &b)
-	{
-		return a.Grid() > b.Grid();
-	}
+    bool operator()(grid_point const& a, grid_point const& b);
 };
 typedef std::vector<grid_point> grid_vec;
 
 struct byCost
 {
-    bool operator() (grid_point const& a, grid_point const& b)
-    {
-        if (a.Cost() == b.Cost())
-        {
-            return a.Grid() > b.Grid();
-        }
-        return a.Cost() > b.Cost();
-    }
+    bool operator() (grid_point const& a, grid_point const& b);
 };
 
 // Sorts low to high
 struct byLowestMarginalCost
 {
-    bool operator() (grid_point const& a, grid_point const& b)
-    {
-        // Deal with potential divide by zero error
-        if (fabs(a.Grid()) < 1e-7 || fabs(b.Grid()) < 1e-7)
-        {
-            if (fabs(a.MarginalCost() == b.MarginalCost()) < 1e-7)
-            {
-                // If we'd get a divide by zero error, return based on lower energy use
-                return a.Grid() < b.Grid();
-            }
-            return a.MarginalCost() < b.MarginalCost();
-        }
-
-        if (fabs((a.Cost() / a.Grid()) - (b.Cost() / b.Grid())) < 1e-7)
-        {
-            if (fabs(a.MarginalCost() == b.MarginalCost()) < 1e-7)
-            {
-                // If we'd get a divide by zero error, return based on lower energy use
-                return a.Grid() < b.Grid();
-            }
-            return a.MarginalCost() < b.MarginalCost();
-        }
-
-        return (a.Cost() / a.Grid()) < (b.Cost() / b.Grid());
-    }
+    bool operator() (grid_point const& a, grid_point const& b);
 };
 
 /*! Automated dispatch base class */
