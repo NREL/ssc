@@ -155,7 +155,7 @@ TEST_F(NightCaseIrradProc, solarpos_spaTest_lib_irradproc) {
 	vector<double> sunset_times;
 
 	/* Just before sunrise test case */
-	solarpos_spa(year, month, day, 4, 30, 0, lat, lon, tz, 0, 64.797, 0, 1013.25, 15, lat, 180, sun, needed);
+	solarpos_spa(year, month, day, 4, 30, 0, lat, lon, tz, 0, 64.797, 0, 1013.25, 15, lat, 180, sun);
 	//vector<double> solution = { 0.95662, 1.79457, -0.223771, 0.363938, 5.70882, 19.5183, 0.968276, 3.88646, 0 };
 	vector<double> solution = { 0.95668, 1.80432, -0.233522, 0.363905, 5.636811, 19.58947, 0.968276, 3.88691, 0 };
 	sunrise_times.push_back(solution[4]);
@@ -163,7 +163,7 @@ TEST_F(NightCaseIrradProc, solarpos_spaTest_lib_irradproc) {
 	for (int i = 0; i < 9; i++) {
 		EXPECT_NEAR((double)sun[i], solution[i], e) << "hourly before-sunrise case, parameter " << i << " fail\n";
 	}
-	solarpos_spa(year, month, day, 5, 15, 0, lat, lon, tz, 0, 64.797, 0, 1013.25, 15, lat, 180, sun, needed);
+	solarpos_spa(year, month, day, 5, 15, 0, lat, lon, tz, 0, 64.797, 0, 1013.25, 15, lat, 180, sun);
 	solution = { 1.0744, 1.6623, -0.091497, 0.363809, 5.636811, 19.58947, 0.96828, 4.63687, 0 };
 	sunrise_times.push_back(solution[4]);
 	sunset_times.push_back(solution[5]);
@@ -172,14 +172,14 @@ TEST_F(NightCaseIrradProc, solarpos_spaTest_lib_irradproc) {
 	}
 
 	/* Just after sunset test case */
-	solarpos_spa(year, month, day, 20, 30, 0, lat, lon, tz, 0, 64.797, 234, 1013.25, 15, lat, 180, sun, needed);
+	solarpos_spa(year, month, day, 20, 30, 0, lat, lon, tz, 0, 64.797, 234, 1013.25, 15, lat, 180, sun);
 	solution = { 5.28754, 1.76380, -0.19300, 0.361775, 5.636811, 19.58947, 0.968361, 19.88618, 0 };
 	sunrise_times.push_back(solution[4]);
 	sunset_times.push_back(solution[5]);
 	for (int i = 0; i < 9; i++) {
 		EXPECT_NEAR((double)sun[i], solution[i], e) << "hourly after-sunset case, parameter " << i << " fail\n";
 	}
-	solarpos_spa(year, month, day, 19, 45, 0, lat, lon, tz, 0, 64.797, 234, 1013.25, 15, lat, 180, sun, needed);
+	solarpos_spa(year, month, day, 19, 45, 0, lat, lon, tz, 0, 64.797, 234, 1013.25, 15, lat, 180, sun);
 	solution = { 5.17436, 1.618526, -0.047730, 0.361878, 5.636811, 19.58947, 0.968357, 19.13621, 0 };
 	sunrise_times.push_back(solution[4]);
 	sunset_times.push_back(solution[5]);
@@ -194,7 +194,7 @@ TEST_F(SunriseCaseIrradProc, solarpos_spaTest_lib_irradproc) {
 	vector<double> sunrise_times;
 	vector<double> sunset_times;
 
-	solarpos_spa(year, month, day, 5, 30, 0, lat, lon, tz, 0, 64.797, 234, 1013.25, 15, lat, 180, sun, needed);
+	solarpos_spa(year, month, day, 5, 30, 0, lat, lon, tz, 0, 64.797, 234, 1013.25, 15, lat, 180, sun);
 	vector<double> solution = { 1.11053, 1.61284, -0.0420474, 0.363777, 5.636811, 19.58947, 0.968281, 4.88686, 0 };
 	sunrise_times.push_back(solution[4]);
 	sunset_times.push_back(solution[5]);
@@ -210,14 +210,14 @@ TEST_F(DayCaseIrradProc, solarpos_spaTest_lib_irradproc) {
 	vector<double> sunset_times;
 
 	/* Just before sunset test case */
-	solarpos_spa(year, month, day, 18, 30, 0, lat, lon, tz, 0, 64.797, 234, 1013.25, 15, lat, 180, sun, needed);
+	solarpos_spa(year, month, day, 18, 30, 0, lat, lon, tz, 0, 64.797, 234, 1013.25, 15, lat, 180, sun);
 	vector<double>solution = { 5.01026, 1.35848, 0.212317, 0.36205, 5.636811, 19.589472, 0.96835, 17.88626, 278.9843 };
 	sunrise_times.push_back(solution[4]);
 	sunset_times.push_back(solution[5]);
 	for (int i = 0; i < 9; i++) {
 		EXPECT_NEAR((double)sun[i], solution[i], e) << "hourly before-sunset case, parameter " << i << " fail\n";
 	}
-	solarpos_spa(year, month, day, 19, 15, 0, lat, lon, tz, 0, 64.797, 234, 1013.25, 15, lat, 180, sun, needed);
+	solarpos_spa(year, month, day, 19, 15, 0, lat, lon, tz, 0, 67, 234, 1013.25, 15, lat, 180, sun);
 	//solution = { 5.10579, 1.51295, 0.0578472, 0.361975, 5.71492, 19.5135, 0.968354, 18.6358, 76.5423 };
 	solution = { 5.10583, 1.51323, 0.0575698, 0.361947, 5.636811, 19.589472, 0.968358, 18.6362, 76.1758 };
 	sunrise_times.push_back(solution[4]);
@@ -227,7 +227,7 @@ TEST_F(DayCaseIrradProc, solarpos_spaTest_lib_irradproc) {
 	}
 
 	/* Sunset time test case */
-	solarpos_spa(year, month, day, 19, 30, 0, lat, lon, tz, 0, 64.797, 234, 1013.25, 15, lat, 180, sun, needed);
+	solarpos_spa(year, month, day, 19, 30, 0, lat, lon, tz, 0, 64.797, 234, 1013.25, 15, lat, 180, sun);
 	//solution = { 5.13951, 1.56025, 0.010544, 0.361913, 5.636919, 19.5849, 0.968356, 18.8858, 15.8044 };
 	solution = { 5.13951, 1.56025, 0.010544, 0.361913, 5.636811, 19.58947, 0.968356, 18.88622, 13.9596 };
 	sunrise_times.push_back(solution[4]);
@@ -243,7 +243,7 @@ TEST_F(SunsetCaseIrradProc, solarpos_spaTest_lib_irradproc) {
 	vector<double> sunrise_times;
 	vector<double> sunset_times;
 
-	solarpos_spa(year, month, day, 19, 30, 0, lat, lon, tz, 0, 64.797, 234, 1013.25, 15, lat, 180, sun, needed);
+	solarpos_spa(year, month, day, 19, 30, 0, lat, lon, tz, 0, 64.797, 234, 1013.25, 15, lat, 180, sun);
 	//solution = { 5.13951, 1.56025, 0.010544, 0.361913, 5.636919, 19.5849, 0.968356, 18.8858, 15.8044 };
 	vector<double> solution = { 5.13951, 1.56025, 0.010544, 0.361913, 5.636811, 19.58947, 0.968356, 18.88622, 13.9596 };
 	sunrise_times.push_back(solution[4]);

@@ -22,7 +22,7 @@
 
 class IrradTest : public ::testing::Test {
 protected:
-	double lat, lon, tz, alb, tilt, azim, rotlim, gcr;
+	double lat, lon, tz, alb, tilt, azim, rotlim, gcr, elev, pres, tdry;
 	int year, month, day, skymodel, tracking;
 	bool backtrack_on;
 	double calc_sunrise, calc_sunset;
@@ -45,6 +45,9 @@ protected:
 		backtrack_on = false;
 		gcr = 0;
 		e = 0.0001;
+		pres = 1013.25;
+		elev = 234;
+		tdry = 15;
 
 		// correct sunrise and sunset times
 		calc_sunrise = 5.70924; // 5:43 am
@@ -64,11 +67,13 @@ protected:
 		int night_hr(1);
 		irr_hourly_night.set_time(year, month, day, night_hr, 30, 1);
 		irr_hourly_night.set_location(lat, lon, tz);
+		irr_hourly_night.set_optional(elev, pres, tdry);
 		irr_hourly_night.set_sky_model(skymodel, alb);
 		irr_hourly_night.set_beam_diffuse(0, 0);
 		irr_hourly_night.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr, false, 0.0);
 		irr_15m_night.set_time(year, month, day, night_hr, 15, -1);
 		irr_15m_night.set_location(lat, lon, tz);
+		irr_15m_night.set_optional(elev, pres, tdry);
 		irr_15m_night.set_sky_model(skymodel, alb);
 		irr_15m_night.set_beam_diffuse(0, 0);
 		irr_15m_night.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr, false, 0.0);
@@ -87,11 +92,13 @@ protected:
 		int sr_hr(5);
 		irr_hourly_sunrise.set_time(year, month, day, sr_hr, 30, 1);
 		irr_hourly_sunrise.set_location(lat, lon, tz);
+		irr_hourly_sunrise.set_optional(elev, pres, tdry);
 		irr_hourly_sunrise.set_sky_model(skymodel, alb);
 		irr_hourly_sunrise.set_beam_diffuse(0, 1);
 		irr_hourly_sunrise.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr, false, 0.0);
 		irr_15m_sunrise.set_time(year, month, day, sr_hr, 30, 1);
 		irr_15m_sunrise.set_location(lat, lon, tz);
+		irr_15m_sunrise.set_optional(elev, pres, tdry);
 		irr_15m_sunrise.set_sky_model(skymodel, alb);
 		irr_15m_sunrise.set_beam_diffuse(0, 1);
 		irr_15m_sunrise.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr, false, 0.0);
@@ -110,11 +117,13 @@ protected:
 		int day_hr(12);
 		irr_hourly_day.set_time(year, month, day, day_hr, 30, 1);
 		irr_hourly_day.set_location(lat, lon, tz);
+		irr_hourly_day.set_optional(elev, pres, tdry);
 		irr_hourly_day.set_sky_model(skymodel, alb);
 		irr_hourly_day.set_beam_diffuse(2, 2);
 		irr_hourly_day.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr, false, 0.0);
 		irr_15m_day.set_time(year, month, day, day_hr, 45, 1);
 		irr_15m_day.set_location(lat, lon, tz);
+		irr_15m_day.set_optional(elev, pres, tdry);
 		irr_15m_day.set_sky_model(skymodel, alb);
 		irr_15m_day.set_beam_diffuse(2, 2);
 		irr_15m_day.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr, false, 0.0);
@@ -133,11 +142,13 @@ protected:
 		int ss_hr(19);
 		irr_hourly_sunset.set_time(year, month, day, ss_hr, 30, 1);
 		irr_hourly_sunset.set_location(lat, lon, tz);
+		irr_hourly_sunset.set_optional(elev, pres, tdry);
 		irr_hourly_sunset.set_sky_model(skymodel, alb);
 		irr_hourly_sunset.set_beam_diffuse(0, 1);
 		irr_hourly_sunset.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr, false, 0.0);
 		irr_15m_sunset.set_time(year, month, day, ss_hr, 30, 1);
 		irr_15m_sunset.set_location(lat, lon, tz);
+		irr_15m_sunset.set_optional(elev, pres, tdry);
 		irr_15m_sunset.set_sky_model(skymodel, alb);
 		irr_15m_sunset.set_beam_diffuse(0, 1);
 		irr_15m_sunset.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr, false, 0.0);
@@ -293,6 +304,7 @@ protected:
 		irr->set_beam_diffuse(beam, diffuse);
 		irr->set_time(year, month, day, hour, minute, 1);
 		irr->set_location(lat, lon, tz);
+		//irr->set_optional(elev, pres, tdry);
 		irr->set_sky_model(skyModel, albedo);
 		irr->calc();
 

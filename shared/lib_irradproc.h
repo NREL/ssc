@@ -784,23 +784,19 @@ double sun_rise_and_set(double* m_rts, double* h_rts, double* delta_prime, doubl
 * \param[out] ascension_and_declination stores right ascension and declination values to be passed to sunrise sunset calculations
 * \param[out] ascension_and_declination[0] right ascension value in degrees
 * \param[out] ascension_and_declination[1] declination value in degrees
-* \param[out] needed_values values to pass outside of the function to other function, output of solarpos function (sunn)
-* \param[out] needed_values[0] 
-* \param[out] needed_values[1]
-* \param[out] needed_values[2]
-* \param[out] needed_values[3]
-* \param[out] needed_values[4]
-* \param[out] needed_values[5]
-* \param[out] needed_values[6]
-* \param[out] needed_values[7]
-* \param[out] needed_values[8]
-* \param[out] needed_values[9]
-* \param[out] needed_values[10]
-* \param[out] needed_values[11]
-* \param[out] needed_values[12]
+* \param[out] needed_values values needed to be taken out of function to pass as outputs to calculate_spa function
+* \param[out] needed_values[0] jme julian ephemeris millenium
+* \param[out] needed_values[1] eccentricity correction factor
+* \param[out] needed_values[2] del_psi nutation in longitude (degrees)
+* \param[out] needed_values[3] epsilon true obliquity of the ecliptic (degrees)
+* \param[out] needed_values[4] nu apparent sidereal time at Greenwich (degrees)
+* \param[out] needed_values[5] delta_prime topocentric declination (degrees)
+* \param[out] needed_values[6] e topocentric elevation angle corrected for atmospheric refraction (degrees)
+* \param[out] needed_values[7] zenith topocentric zenith angle (degrees)
+* \param[out] needed_values[8] azimuth topocentric azimuth angle (degrees)
 */
 void calculate_spa(double jd, double lat, double lng, double alt, double pressure, double temp, 
-	double delta_t, double tilt, double azm_rotation, double ascension_and_declination[2], double needed_values[13]);
+	double delta_t, double tilt, double azm_rotation, double ascension_and_declination[2], double needed_values[9]);
 
 /**
 *
@@ -829,23 +825,13 @@ void calculate_spa(double jd, double lat, double lng, double alt, double pressur
 * \param[in] azm_rotation azimuth rotation of array in degrees (measured west of south?)
 * \param[in] nu apparent sidereal time in Greenwich (degrees) from calculate_spa output
 * \param[out] needed_values values needed to be taken out of function to pass as outputs to calculate_spa function
-* \param[out] needed_values[0]
-* \param[out] needed_values[1]
-* \param[out] needed_values[2]
-* \param[out] needed_values[3]
-* \param[out] needed_values[4]
-* \param[out] needed_values[5]
-* \param[out] needed_values[6]
-* \param[out] needed_values[7]
-* \param[out] needed_values[8]
-* \param[out] needed_values[9]
-* \param[out] needed_values[10]
-* \param[out] needed_values[11]
-* \param[out] needed_values[12]
+* \param[out] needed_values[0] E Equation of Time (degrees)
+* \param[out] needed_values[1] approximate sunrise time (hr)
+* \param[out] needed_values[2] approximate sunset time (hr)
 */
 void calculate_eot_and_sun_rise_transit_set(double jme, double tz, double alpha, double del_psi, double epsilon, double jd, int year, 
 	int month, int day, double lat, double lng, double alt, double pressure, double temp, double tilt, double delta_t, double azm_rotation, 
-	double needed_values[13]);
+	double needed_values[3]);
 
 /**
 *   solarpos_spa function calculates the sun position given the local standard time and location.
@@ -887,9 +873,8 @@ void calculate_eot_and_sun_rise_transit_set(double jme, double tz, double alpha,
 * \param[out] sunn[6] eccentricity correction factor
 * \param[out] sunn[7] true solar time (hrs)
 * \param[out] sunn[8] extraterrestrial solar irradiance on horizontal at particular time (W/m2)
-* \param[out] needed_values values needed to be passed from one function to another
 */
-void solarpos_spa(int year, int month, int day, int hour, double minute, double second, double lat, double lng, double tz, double dut1, double delta_t, double alt, double pressure, double temp, double tilt, double azm_rotation, double sunn[9], double needed_values[13]);
+void solarpos_spa(int year, int month, int day, int hour, double minute, double second, double lat, double lng, double tz, double dut1, double delta_t, double alt, double pressure, double temp, double tilt, double azm_rotation, double sunn[9]);
 
 /**
 * incidence function calculates the incident angle of direct beam radiation to a surface.
@@ -1086,6 +1071,9 @@ protected:
 	double latitudeDegrees;			///< latitude in degrees, north positive
 	double longitudeDegrees;		///< longitude in degrees, east positive
 	double timezone;				///< time zone, west longitudes negative
+	double elevation;               // site elevation (meters)
+	double pressure;
+	double temp;
 
 	// Model settings
 	int skyModel;					///< sky model selection as defined in \link Irradiance_IO::SKYMODEL 
@@ -1156,7 +1144,10 @@ public:
 	void set_time( int year, int month, int day, int hour, double minute, double delt_hr );
 
 	/// Set the location for the irradiance processor
-	void set_location( double lat, double lon, double tz);
+	void set_location(double lat, double lon, double tz);
+
+	// Set optional parameters for solarpos_spa calculation
+	void set_optional(double elev, double pres, double tdry);
 
 	/// Set the sky model for the irradiance processor, using \link Irradiance_IO::SKYMODEL 
 	void set_sky_model( int skymodel, double albedo );

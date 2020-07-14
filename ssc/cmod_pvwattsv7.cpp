@@ -765,6 +765,7 @@ public:
 					irr.set_time(wf.year, wf.month, wf.day, wf.hour, wf.minute,
 						instantaneous ? IRRADPROC_NO_INTERPOLATE_SUNRISE_SUNSET : ts_hour);
 					irr.set_location(hdr.lat, hdr.lon, hdr.tz);
+					irr.set_optional(hdr.elev, wf.pres, wf.tdry);
 					irr.set_sky_model(2, alb);
 					irr.set_beam_diffuse(wf.dn, wf.df);
 

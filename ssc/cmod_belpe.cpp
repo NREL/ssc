@@ -239,7 +239,9 @@ public:
 
 			//calculate irradiances on four walls of building, needed later
 			irrad irr;
+			//irr.set_location(hdr.lat, hdr.lon, hdr.tz);
 			irr.set_location(hdr.lat, hdr.lon, hdr.tz);
+			irr.set_optional(hdr.elev, wf.pres, wf.tdry);
 			irr.set_time(wf.year, wf.month, wf.day, wf.hour, wf.minute, (double)(wfile.step_sec() / 3600.0) );
 			irr.set_global_beam(wf.gh, wf.dn);	//CHANGE THIS WHEN OPTION TO USE GLOBAL AND DIFFUSE IS INTRODUCED
 			irr.set_sky_model(1, 0.2); //using HDKR model and default albedo

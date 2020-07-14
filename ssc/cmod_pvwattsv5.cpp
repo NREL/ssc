@@ -227,6 +227,7 @@ public:
 		irrad irr;
 		irr.set_time(year, month, day, hour, minute, ts_hour);
 		irr.set_location(lat, lon, tz);
+		//irr.set_optional(elev, pres, tdry);
 		irr.set_sky_model(2, alb);
 		irr.set_beam_diffuse(dn, df);
 		irr.set_surface(track_mode, tilt, azimuth, 45.0,
