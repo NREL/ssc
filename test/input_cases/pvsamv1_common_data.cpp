@@ -8,6 +8,7 @@ char sell_rate_path[256] = {};
 char subarray1_shading[256] = {};
 char subarray2_shading[256] = {};
 char temperature_path[256] = {};
+char solar_resource_path_15min_fail[256] = {};
 
 int n1 = sprintf(solar_resource_path, "%s/test/input_cases/pvsamv1_data/USA AZ Phoenix (TMY2).csv", SSCDIR);
 int n2 = sprintf(load_profile_path, "%s/test/input_cases/pvsamv1_data/pvsamv1_residential_load.csv", SSCDIR);
@@ -17,7 +18,7 @@ int n5 = sprintf(solar_resource_path_15_min, "%s/test/input_cases/pvsamv1_data/L
 int n6 = sprintf(subarray1_shading, "%s/test/input_cases/pvsamv1_data/subarray1_shading_timestep.csv", SSCDIR);
 int n7 = sprintf(subarray2_shading, "%s/test/input_cases/pvsamv1_data/subarray2_shading_timestep.csv", SSCDIR);
 int n8 = sprintf(temperature_path, "%s/test/input_cases/battery_data/batt_room_temperature_celsius_60min.csv", SSCDIR);
-
+int n9 = sprintf(solar_resource_path_15min_fail, "%s/test/input_cases/pvsamv1_data/LosAngeles_WeatherFile_15min_timestamp_fail.csv", SSCDIR);
 
 
 /**
@@ -25,6 +26,7 @@ int n8 = sprintf(temperature_path, "%s/test/input_cases/battery_data/batt_room_t
 */
 void pvsamv_nofinancial_default(ssc_data_t& data)
 {
+    ssc_data_set_number(data, "analysis_period", 1);
 	ssc_data_set_string(data, "solar_resource_file", solar_resource_path);
 	ssc_data_set_number(data, "transformer_no_load_loss", 0);
 	ssc_data_set_number(data, "transformer_load_loss", 0);
@@ -341,6 +343,8 @@ void belpe_default(ssc_data_t& data)
 {
 	ssc_data_set_number(data, "en_belpe", 0);
 	set_array(data, "load", load_profile_path, 8760);
+    ssc_number_t p_load_escalation[1] = { 0 };
+    ssc_data_set_array(data, "load_escalation", p_load_escalation, 1);
 	set_array(data, "crit_load", load_profile_path, 8760);
 	ssc_data_set_string(data, "solar_resource_file", solar_resource_path);
 	ssc_data_set_number(data, "floor_area", 2000);

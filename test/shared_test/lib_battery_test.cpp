@@ -1,3 +1,4 @@
+#include <cmath>
 #include <gtest/gtest.h>
 
 #include "logger.h"
@@ -393,6 +394,56 @@ TEST_F(lib_battery_test, RoundtripEffTable){
                                         0.73, 0.69, 0.66, 0.62, 0.59, 0.55, 0.51, 0.47};
     for (size_t i = 0; i < eff_expected.size(); i++)
         EXPECT_NEAR(eff_vs_current[i], eff_expected[i], .01);
+}
+
+TEST_F(lib_battery_test, RoundtripEffVanadiumFlow){
+    auto vol = new voltage_vanadium_redox_t(1, 1, 1.41, 0.001, dtHour);
+    auto cap = new capacity_lithium_ion_t(11, 30, 100, 0, dtHour);
+
+    cap->change_SOC_limits(0, 100);
+
+
+    double full_current = 1000;
+    double max_current;
+    vol->calculate_max_charge_w(cap->q0(), cap->qmax(), 300, &max_current);
+
+    double current = fabs(max_current) * 0.01;
+    while (current < fabs(max_current)){
+        cap->updateCapacity(full_current, 1);   //discharge to empty
+
+        std::vector<double> inputs, outputs;
+
+        size_t n_t = 0;
+        current *= -1;
+        double input_power = 0.;
+        while(cap->SOC() < 100 ){
+            double input_current = current;
+            cap->updateCapacity(input_current, 1);
+            vol->updateVoltage(cap->q0(), cap->qmax(), cap->I(), 300, 1);
+            input_power += cap->I() * vol->battery_voltage();
+            n_t += 1;
+            inputs.push_back(vol->battery_voltage());
+        }
+
+        current *= -1;
+        double output_power = 0.;
+        while(vol->calculate_max_discharge_w(cap->q0(), cap->qmax(), 300, nullptr) > 0 ){
+            double output_current = current;
+            cap->updateCapacity(output_current, 1);
+            vol->updateVoltage(cap->q0(), cap->qmax(), cap->I(), 300, 1);
+            output_power += cap->I() * vol->battery_voltage();
+            n_t += 1;
+            outputs.push_back(vol->battery_voltage());
+        }
+
+//        std::reverse(outputs.begin(), outputs.end());
+//        for (size_t i = 0; i < inputs.size(); i++) {
+//            printf("%f, %f\n", inputs[i], outputs[i]);
+//        }
+//        printf("current %f, eff %f, n %zd\n", current, -output_power/input_power, n_t);
+
+        current += fabs(max_current) / 100.;
+    }
 }
 
 TEST_F(lib_battery_test, HourlyVsSubHourly)
