@@ -128,7 +128,7 @@ protected:
 	int shade_mode_1x;
 	int array_type;
 	double gcr;
-
+    sssky_diffuse_table skydiff_table;
 
 	double ibeam, iskydiff, ignddiff;
 	double solazi, solzen, solalt, aoi, stilt, sazi, rot, btd;
@@ -211,6 +211,8 @@ public:
 
 		gcr = 0.4;
 		if (track_mode == 1 && is_assigned("gcr")) gcr = as_double("gcr");
+
+        skydiff_table.init(tilt, gcr);
 	}
 
 	void initialize_cell_temp(double ts_hour, double last_tcell = -9999, double last_poa = -9999)
@@ -266,12 +268,12 @@ public:
 					// calculate sky and gnd diffuse derate factors
 					// based on view factor reductions from self-shading
 					diffuse_reduce(solzen, stilt,
-						dni, dhi, iskydiff, ignddiff,
-						gcr, alb, 1000,
+                                   dni, dhi, iskydiff, ignddiff,
+                                   gcr, alb, 1000, skydiff_table,
 
 						// outputs (pass by reference)
 						reduced_skydiff, Fskydiff,
-						reduced_gnddiff, Fgnddiff);
+                                   reduced_gnddiff, Fgnddiff);
 
 					if (Fskydiff >= 0 && Fskydiff <= 1) iskydiff *= Fskydiff;
 					else log(util::format("sky diffuse reduction factor invalid at time %lg: fskydiff=%lg, stilt=%lg", time, Fskydiff, stilt), SSC_NOTICE, (float)time);
@@ -361,7 +363,7 @@ public:
 	}
 
 
-	void exec() throw(general_error)
+	void exec()
 	{
 
 		std::unique_ptr<weather_data_provider> wdprov;
@@ -530,7 +532,7 @@ public:
 					p_aoi[idx] = (ssc_number_t)aoi;
 
 					double shad_beam = 1.0;
-					if (shad.fbeam(hour, solalt, solazi, jj, step_per_hour))
+					if (shad.fbeam(hour, wf.minute, solalt, solazi))
 						shad_beam = shad.beam_shade_factor();
 
 					p_shad_beam[idx] = (ssc_number_t)shad_beam;
@@ -626,9 +628,9 @@ DEFINE_MODULE_ENTRY(pvwattsv5, "PVWatts V5 - integrated hourly weather reader an
 		var_info_invalid };
 
 static var_info _cm_vtab_pvwattsv5_1ts_outputs[] = {
-	/* input/output variable: tcell & poa from previous time must be given */
-	{ SSC_INOUT,        SSC_NUMBER,      "tcell",                    "Module temperature",                          "C",      "",                        "PVWatts",      "*",                       "",                          "" },
-	{ SSC_INOUT,        SSC_NUMBER,      "poa",                      "Plane of array irradiance",                   "W/m2",   "",                        "PVWatts",      "*",                       "",                          "" },
+	/* input/output variable: tcell & poa from previous time may be given */
+	{ SSC_INOUT,        SSC_NUMBER,      "tcell",                    "Module temperature",                         "C",      "Output from last time step may be used as input",                        "PVWatts",      "",                       "",                          "" },
+	{ SSC_INOUT,        SSC_NUMBER,      "poa",                      "Plane of array irradiance",                  "W/m2",   "Output from last time step may be used as input",                        "PVWatts",      "",                       "",                          "" },
 
 	/* outputs */
 	{ SSC_OUTPUT,       SSC_NUMBER,      "dc",                      "DC array output",                             "Wdc",    "",                        "PVWatts",      "*",                       "",                          "" },
@@ -649,6 +651,12 @@ public:
 
 	void exec()
 	{
+        setup_system_inputs();
+        double ts = as_number("time_step");
+        if (is_assigned("tcell") && is_assigned("poa"))
+            initialize_cell_temp(ts, as_double("tcell"), as_double("poa"));
+        else
+            initialize_cell_temp(ts);
 		int year = as_integer("year");
 		int month = as_integer("month");
 		int day = as_integer("day");
@@ -662,10 +670,6 @@ public:
 		double tamb = as_double("tamb");
 		double wspd = as_double("wspd");
 		double alb = as_double("alb");
-		//double time_step = as_double("time_step");
-
-		//double last_tcell = as_double("tcell");
-		//double last_poa = as_double("poa");
 
 		double shad_beam = 1.0;
 		powerout(0, 1.0, shad_beam, 1.0, beam, diff, alb, wspd, tamb);

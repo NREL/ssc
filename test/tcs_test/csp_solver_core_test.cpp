@@ -59,30 +59,11 @@ protected:
 		CspWeatherReaderTest::SetUp();
 		sim_info.ms_ts.m_step = 3600;
 		sim_info.ms_ts.m_time_start = 0;
-		data = create_weatherdata_array(); // allocates memory for weatherdata
+		data = create_weatherdata_array(8760); // allocates memory for weatherdata
 		wr.m_weather_data_provider = make_shared<weatherdata>(data);
 	}
 	void TearDown(){
-		/// free memory of weatherdata
-		data->table.unassign("lat");
-		data->table.unassign("lon");
-		data->table.unassign("tz");
-		data->table.unassign("elev");
-		data->table.unassign("year");
-		data->table.unassign("month");
-		data->table.unassign("day");
-		data->table.unassign("hour");
-		data->table.unassign("dn");
-		data->table.unassign("df");
-		data->table.unassign("tdry");
-		data->table.unassign("tdew");
-		data->table.unassign("rhum");
-		data->table.unassign("pres");
-		data->table.unassign("wdir");
-		data->table.unassign("wspd");
-		data->table.unassign("aod");
-		data->table.unassign("pwp");
-		data->table.unassign("alb");
+        free_weatherdata_array(data);
 	}
 };
 
@@ -102,7 +83,7 @@ TEST_F(UsingFileCaseWeatherReader, IntegrationTest_csp_solver_core){
 	EXPECT_NEAR(wr.m_weather_data_provider->elev(), 20, e) << "Values in weather file's m_hdr\n";
 	EXPECT_EQ(wr.m_weather_data_provider->step_sec(), 3600) << "Values in weather file's m_hdr\n";
 	EXPECT_EQ(wr.m_weather_data_provider->nrecords(), 8760) << "Values in weather file's m_hdr\n";
-	
+
 	// check reading first timestep
 	sim_info.ms_ts.m_time = 3600;
 	wr.timestep_call(sim_info);
@@ -117,7 +98,7 @@ TEST_F(UsingFileCaseWeatherReader, IntegrationTest_csp_solver_core){
 	EXPECT_NEAR(wr.ms_solved_params.m_shift, -13.530000, e) << "Members specific to CSP weather\n";
 	EXPECT_FALSE(wr.ms_solved_params.m_leapyear) << "Members specific to CSP weather\n";
 
-	// check read_time_step at hour ending at 10 
+	// check read_time_step at hour ending at 10
 	wr.read_time_step(10, sim_info);
 	EXPECT_EQ(wr.ms_outputs.m_month, 1);
 	EXPECT_EQ(wr.ms_outputs.m_day, 1);
@@ -188,9 +169,9 @@ TEST_F(UsingDataCaseWeatherReader, IntegrationTest_csp_solver_core){
 	EXPECT_NEAR(wr.ms_outputs.m_solzen, 121.190887, e) << "1st time step: Members specific to CSP weather\n";
 	EXPECT_NEAR(wr.ms_solved_params.m_shift, -13.530000, e) << "1st time step: Members specific to CSP weather\n";
 	EXPECT_FALSE(wr.ms_solved_params.m_leapyear) << "1st time step: Members specific to CSP weather\n";
-	
 
-	// check read_time_step at hour ending at 10 
+
+	// check read_time_step at hour ending at 10
 	wr.read_time_step(10, sim_info);
 	EXPECT_EQ(wr.ms_outputs.m_month, 1);
 	EXPECT_EQ(wr.ms_outputs.m_day, 1);
@@ -273,7 +254,7 @@ void set_heliostatfield(C_pt_sf_perf_interp& heliostatfield, string case_type){
 
 class DefaultCaseCspSolverCore : public CspSolverCoreTest{
 protected:
-	
+
 	void SetUp(){
 		CspSolverCoreTest::SetUp();
 		// adjust heliostatfield parameters
