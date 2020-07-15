@@ -74,6 +74,7 @@ static var_info _cm_vtab_mhk_costs[] = {
 		{ SSC_INPUT,			SSC_NUMBER,			"offshore_substation_cost_input",								"Offshore substation cost",											"$",		"",	"MHKCosts",			"*",					"",				"" },
 		{ SSC_INPUT,			SSC_NUMBER,			"other_elec_infra_cost_method",								"Other electrical infrastructure cost method",											"0/1/2",		"0=Enter in $/kW,1=Enter in $,2=Use modeled value",	"MHKCosts",			"*",					"MIN=0,MAX=3",				"" },
 		{ SSC_INPUT,			SSC_NUMBER,			"other_elec_infra_cost_input",								"Other electrical infrastructure cost",											"$",		"",	"MHKCosts",			"*",					"",				"" },
+		{ SSC_INPUT,			SSC_NUMBER,			"annual_energy",											"Annual energy production",												"kWh",	"",		"MHKCosts",					"*",					"",				"" },
 
 
 	//CapEx costs
@@ -105,6 +106,17 @@ static var_info _cm_vtab_mhk_costs[] = {
 	{ SSC_OUTPUT,			SSC_NUMBER,			"operations_cost",							"Operations cost",										"$",			"",								"MHKCosts",			"",						"",							"" },
 	{ SSC_OUTPUT,			SSC_NUMBER,			"maintenance_cost",							"Maintenance cost",										"$",			"",								"MHKCosts",			"",						"",							"" },
 
+	{ SSC_OUTPUT,			SSC_NUMBER,			"total_capital_cost_per_kwh",				"Total capital costs per kWh",							"$/kWh",		"",								"MHKCosts",			"",						"",							"" },
+	{ SSC_OUTPUT,			SSC_NUMBER,			"total_device_cost_per_kwh",				"Total device costs per kWh",							"$/kWh",		"",								"MHKCosts",			"",						"",							"" },
+	{ SSC_OUTPUT,			SSC_NUMBER,			"total_bos_cost_per_kwh",					"Total bos costs per kWh",								"$/kWh",		"",								"MHKCosts",			"",						"",							"" },
+	{ SSC_OUTPUT,			SSC_NUMBER,			"total_financial_cost_per_kwh",				"Total financial costs per kWh",							"$/kWh",		"",								"MHKCosts",			"",						"",							"" },
+	{ SSC_OUTPUT,			SSC_NUMBER,			"total_operations_cost_per_kwh",			"Total operations costs per kWh",							"$/kWh",		"",								"MHKCosts",			"",						"",							"" },
+	{ SSC_OUTPUT,			SSC_NUMBER,			"total_capital_cost_percent",				"Total capital costs as percent of total cost",							"$/kWh",		"",								"MHKCosts",			"",						"",							"" },
+	{ SSC_OUTPUT,			SSC_NUMBER,			"total_device_cost_percent",				"Total device costs as percent of total cost",							"$/kWh",		"",								"MHKCosts",			"",						"",							"" },
+	{ SSC_OUTPUT,			SSC_NUMBER,			"total_bos_cost_percent",					"Total bos costs as percent of total cost",								"$/kWh",		"",								"MHKCosts",			"",						"",							"" },
+	{ SSC_OUTPUT,			SSC_NUMBER,			"total_financial_cost_percent",				"Total financial costs as percent of total cost",							"$/kWh",		"",								"MHKCosts",			"",						"",							"" },
+	{ SSC_OUTPUT,			SSC_NUMBER,			"total_operations_cost_percent",			"Total operations costs as percent of total cost",							"$/kWh",		"",								"MHKCosts",			"",						"",							"" },
+
 	var_info_invalid };
 
 
@@ -129,6 +141,8 @@ public:
 		double interarray_length = as_double("inter_array_cable_length");
 		double riser_length = as_double("riser_cable_length");
 		double export_length = as_double("export_cable_length");
+
+		double annual_energy = as_double("annual_energy");
 
 		int device_type = 4;
 		if (technology == WAVE)
@@ -155,6 +169,8 @@ public:
 		double array_cable_system, export_cable_system, onshore_substation, offshore_substation, other_elec_infra;
 		double project_contingency, insurance_during_construction, reserve_accounts;
 		double operations_cost, maintenance_cost;
+		double total_capital_cost_per_kwh, total_device_cost_per_kwh, total_bos_cost_per_kwh, total_financial_cost_per_kwh, total_operations_cost_per_kwh;
+		double total_capital_cost_percent, total_device_cost_percent, total_bos_cost_percent, total_financial_cost_percent, total_operations_cost_percent;
 
 		//Most CapEx costs depend on technology
 		if (technology == TIDAL)
@@ -344,6 +360,30 @@ public:
 		assign("project_contingency", var_data(static_cast<ssc_number_t>(project_contingency)));
 		assign("insurance_during_construction", var_data(static_cast<ssc_number_t>(insurance_during_construction)));
 		assign("reserve_accounts", var_data(static_cast<ssc_number_t>(reserve_accounts)));
+
+		total_capital_cost_per_kwh = capex / annual_energy;
+		total_device_cost_per_kwh = (structural_assembly + power_takeoff + mooring_found_substruc) / annual_energy;
+		total_bos_cost_per_kwh = (development + eng_and_mgmt + assembly_and_install + other_infrastructure + array_cable_system + export_cable_system + onshore_substation + offshore_substation + other_elec_infra + plant_commissioning + site_access_port_staging) / annual_energy;
+		total_financial_cost_per_kwh = (project_contingency + insurance_during_construction + reserve_accounts) / annual_energy;
+		total_operations_cost_per_kwh = (operations_cost + maintenance_cost) / annual_energy;
+
+		assign("total_capital_cost_per_kwh", var_data(static_cast<ssc_number_t>(total_capital_cost_per_kwh)));
+		assign("total_device_cost_per_kwh", var_data(static_cast<ssc_number_t>(total_device_cost_per_kwh)));
+		assign("total_bos_cost_per_kwh", var_data(static_cast<ssc_number_t>(total_bos_cost_per_kwh)));
+		assign("total_financial_cost_per_kwh", var_data(static_cast<ssc_number_t>(total_financial_cost_per_kwh)));
+		assign("total_operations_cost_per_kwh", var_data(static_cast<ssc_number_t>(total_operations_cost_per_kwh)));
+
+		total_capital_cost_percent = capex / (capex + operations_cost + maintenance_cost);
+		total_device_cost_percent = (structural_assembly + power_takeoff + mooring_found_substruc) / (capex + operations_cost + maintenance_cost);
+		total_bos_cost_percent = (development + eng_and_mgmt + assembly_and_install + other_infrastructure + array_cable_system + export_cable_system + onshore_substation + offshore_substation + other_elec_infra + plant_commissioning + site_access_port_staging) / (capex + operations_cost + maintenance_cost);
+		total_financial_cost_percent = (project_contingency + insurance_during_construction + reserve_accounts) / (capex + operations_cost + maintenance_cost);
+		total_operations_cost_percent = (operations_cost + maintenance_cost) / (capex + operations_cost + maintenance_cost);
+
+		assign("total_capital_cost_percent", var_data(static_cast<ssc_number_t>(total_capital_cost_percent)));
+		assign("total_device_cost_percent", var_data(static_cast<ssc_number_t>(total_device_cost_percent)));
+		assign("total_bos_cost_percent", var_data(static_cast<ssc_number_t>(total_bos_cost_percent)));
+		assign("total_financial_cost_percent", var_data(static_cast<ssc_number_t>(total_financial_cost_percent)));
+		assign("total_operations_cost_percent", var_data(static_cast<ssc_number_t>(total_operations_cost_percent)));
 
 	}
 
