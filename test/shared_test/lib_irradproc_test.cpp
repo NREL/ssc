@@ -94,6 +94,53 @@ TEST_F(IrradTest, sunriseAndSunsetAtDifferentLocationsTest_lib_irradproc) {
 	}
 }
 
+TEST_F(IrradTest, sunriseAndSunsetAtDifferentLocationsTest_spa_lib_irradproc) {
+	/*locations to test:
+	western hemisphere: Golden CO
+	eastern hemisphere: Berlin Germany
+	southern hemisphere: Lima Peru
+	location near Greenwich meridian with negative longitude and positive time zone: Madrid Spain
+	location near the international dateline with positive longitude and negative time zone: Lomaji, Fiji
+	arctic circle: Kotzebue, Alaska
+	arctic circle #2: Point Hope, Alaska
+	arctic circle #3: Kotzebue, Alaska on the first day of continuous days
+	*/
+	e = 0.001;
+	vector<double> latitudes = { 39.77, 52.5, -12.03, 40.43, -17.75, 66.9, 68.35, 66.9 };
+	vector<double> longitudes = { -105.22, 13.3, -77.06, -3.72, -179.3, -162.6, -166.8, -162.6 };
+	vector<double> time_zones = { -7, 1, -5, 1, 12, -9, -9, -9 };
+	vector<double> sunrise_times = { 4.636, 3.849, 6.521, 5.833, 6.513, -100.0, 2.552, -100.0 };
+	vector<double> sunset_times = { 19.455, 20.436, 17.814, 20.723, 17.449, 100.0, 25.885, 100.0 };
+	vector<int> month = { 6, 6, 6, 6, 6, 6, 7, 6 };
+	vector<int> day = { 21, 21, 21, 21, 21, 21, 14, 11 };
+
+
+	double sun_results[9]; //vector to hold the results of solarpos function
+	for (size_t i = 0; i < latitudes.size(); i++)
+	{
+		//run the solarpos function and check sunrise and sunset for each location
+		//solarpos(2010, month[i], day[i], 14, 30, latitudes[i], longitudes[i], time_zones[i], sun_results);
+		solarpos_spa(2010, month[i], day[i], 14, 30, 0, latitudes[i], longitudes[i], time_zones[i], 0, 67, 0, 0, 1013.25, 15, 180, sun_results);
+		EXPECT_NEAR((double)sun_results[4], sunrise_times[i], e) << "sunrise time for lat " << latitudes[i] << " long " << longitudes[i] << " failed\n";
+		EXPECT_NEAR((double)sun_results[5], sunset_times[i], e) << "sunset time for lat " << latitudes[i] << " long " << longitudes[i] << "failed\n";
+	}
+}
+
+TEST_F(IrradTest, sunriseAndSunsetAlaskaTest_spa_lib_irradproc) {
+	e = 0.001;
+	double latitude = 68.35;
+	double longitude = -166.8;
+	double time_zone = -9;
+	double sunrise_time = 2.552;
+	double sunset_time = 25.885;
+	int month = 7;
+	int day = 14;
+	double sun_results[9];
+	solarpos_spa(2010, month, day, 14, 30, 0, latitude, longitude, time_zone, 0, 67, 0, 0, 1013.25, 15, 180, sun_results);
+	EXPECT_NEAR((double)sun_results[4], sunrise_time, e) << "sunrise time for lat " << latitude << " long " << longitude << " failed\n";
+	EXPECT_NEAR((double)sun_results[5], sunset_time, e) << "sunrise tiem for lat " << latitude << " long " << longitude << " failed\n";
+}
+
 
 TEST_F(DayCaseIrradProc, solarposTest_lib_irradproc){
 	double sun[9];
