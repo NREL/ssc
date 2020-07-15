@@ -583,11 +583,10 @@ void voltage_table_t::updateVoltage(capacity_t * capacity, thermal_t * , double 
 inline double calc_DOD(double q, double qmax) {return (1. - q/qmax) * 100.;}
 
 double voltage_table_t::calculate_max_charge_w(double q, double qmax, double, double *max_current) {
-    double DOD0 = calc_DOD(q, qmax);
-    double current = qmax*( (1.-DOD0/100.) - 1. );
-    if (max_current)
-        *max_current = current;
-    return calculate_voltage(0.) * current;
+	double current = (q - qmax) / dt_hr;
+	if (max_current)
+		*max_current = current;
+	return calculate_voltage(0.) * current * _num_cells_series;
 }
 
 double voltage_table_t::calculate_max_discharge_w(double q, double qmax, double, double *max_current) {
@@ -595,23 +594,20 @@ double voltage_table_t::calculate_max_discharge_w(double q, double qmax, double,
     double A = q - qmax;
     double B = qmax/100.;
 
-    double max = 0;
-    for (size_t i = 0; i < slopes.size(); i++){
-        double dod = -(A*slopes[i] + B*intercepts[i])/(2*B*slopes[i]);
-        double current = qmax*( (1.-DOD0/100.) - (1.-dod/100.) );
-        double p = calculate_voltage(dod) * current;
-        if (p > max){
-            max = p;
-            if (max_current)
-                *max_current = current;
-        }
-    }
-    if (max < 0){
-        max = 0.;
-        if (max_current)
-            *max_current = 0.;
-    }
-    return max;
+	double max_P = 0;
+	double max_I = 0;
+	for (size_t i = 0; i < slopes.size(); i++) {
+		double dod = -(A * slopes[i] + B * intercepts[i]) / (2 * B * slopes[i]);
+		double current = qmax * ((1. - DOD0 / 100.) - (1. - dod / 100.)) / dt_hr;
+		double p = calculate_voltage(dod) * current;
+		if (p > max_P) {
+			max_P = p;
+			max_I = current;
+		}
+	}
+	if (max_current)
+		*max_current = fmax(0, max_I);
+	return max_P * _num_cells_series;
 }
 
 double voltage_table_t::calculate_current_for_target_w(double P_watts, double q, double qmax, double) {
@@ -627,6 +623,8 @@ double voltage_table_t::calculate_current_for_target_w(double P_watts, double q,
     if (fabs(max_p) < fabs(P_watts))
         return current;
 
+	P_watts /= _num_cells_series;
+	P_watts *= dt_hr;
     double multiplier = 1.;
     if (P_watts < 0)
         multiplier = -1.;
@@ -639,25 +637,38 @@ double voltage_table_t::calculate_current_for_target_w(double P_watts, double q,
     double A = q - qmax;
     double B = qmax/100.;
 
-    double DOD_new = 0.;
-    double incr = 0;
-    while (incr + row < slopes.size() && incr + row >= 0){
-        size_t i = row + (size_t)incr;
+	double DOD_new = 0.;
+	double incr = 0;
+	// Assume the DOD goes to 0 while charging, 100 while discharging
+	double DOD_best = multiplier == -1. ? 0 : 100;
+	double P_best = 0;
+	while (incr + row < slopes.size() && incr + row >= 0) {
+		size_t i = row + (size_t)incr;
+		incr += 1 * multiplier;
 
-        double a = B * slopes[i];
-        double b = A * slopes[i] + B * intercepts[i];
-        double c = A * intercepts[i] - P_watts;
+		double a = B * slopes[i];
+		double b = A * slopes[i] + B * intercepts[i];
+		double c = A * intercepts[i] - P_watts;
 
-        DOD_new = fabs((-b + sqrt(b*b - 4*a*c))/(2*a));
+		if (a == 0) {
+			continue;
+		}
 
-        auto upper = (size_t)fmin(i, m_voltage_table.size() - 1);
-        auto lower = (size_t)fmax(0, i-1);
-        if (DOD_new <= m_voltage_table[upper].first && DOD_new >= m_voltage_table[lower].first){
-            break;
-        }
-        incr += 1 * multiplier;
-    }
-    return qmax*((1.-DOD/100.) - (1.-DOD_new/100.));
+		DOD_new = fabs((-b + sqrt(b * b - 4 * a * c)) / (2 * a));
+
+		auto upper = (size_t)fmin(i, m_voltage_table.size() - 1);
+		auto lower = (size_t)fmax(0, i - 1);
+		auto DOD_upper = m_voltage_table[upper].first;
+		auto DOD_lower = m_voltage_table[lower].first;
+		if (DOD_new <= DOD_upper && DOD_new >= DOD_lower) {
+			double P = (q - (100. - DOD_new) * qmax / 100) * (a * DOD_new + b);
+			if (fabs(P) > fabs(P_best)) {
+				P_best = P;
+				DOD_best = DOD_new;
+			}
+		}
+	}
+	return qmax * ((1. - DOD / 100.) - (1. - DOD_best / 100.)) / dt_hr;
 }
 
 // Dynamic voltage model
