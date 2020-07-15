@@ -205,6 +205,11 @@ void BatteryPowerFlow::calculateACConnected()
 	// charging
 	if (P_battery_ac <= 0)
 	{
+        // Test if battery is charging erroneously
+        if (!(m_BatteryPower->canPVCharge || m_BatteryPower->canGridCharge || m_BatteryPower->canFuelCellCharge) && P_battery_ac < 0) {
+            P_pv_to_batt_ac = P_grid_to_batt_ac = P_fuelcell_to_batt_ac = 0;
+            P_battery_ac = 0;
+        }
 		// PV always goes to load first
 		P_pv_to_load_ac = P_pv_ac;
 		if (P_pv_to_load_ac > P_load_ac) {
@@ -278,6 +283,7 @@ void BatteryPowerFlow::calculateACConnected()
 	if (!m_BatteryPower->canGridCharge && P_battery_ac < -tolerance){
 	    if ((fabs(P_grid_ac - P_grid_to_load_ac) > tolerance) && (-P_grid_ac > P_grid_to_load_ac)) {
             P_battery_ac = P_pv_ac - P_pv_to_grid_ac - P_pv_to_load_ac;
+            P_battery_ac = P_battery_ac > 0 ? P_battery_ac : 0; // Don't swap from charging to discharging
             m_BatteryPower->powerBatteryDC = -P_battery_ac * m_BatteryPower->singlePointEfficiencyACToDC;
             return calculateACConnected();
         }
