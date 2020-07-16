@@ -111,12 +111,14 @@ void voltage_table_t::initialize() {
 }
 
 voltage_table_t::voltage_table_t(int num_cells_series, int num_strings, double voltage,
-                                 util::matrix_t<double> &voltage_table, double R, double dt_hour) :
+                                 util::matrix_t<double> &voltage_table,
+                                 double R, double dt_hour, double init_soc) :
         voltage_t(voltage_params::TABLE, num_cells_series, num_strings, voltage, dt_hour) {
     params->resistance = R;
     for (int r = 0; r != (int) voltage_table.nrows(); r++)
         params->voltage_table.emplace_back(std::vector<double>({voltage_table.at(r, 0), voltage_table.at(r, 1)}));
     initialize();
+    state->cell_voltage = calculate_voltage(100. - init_soc);
 }
 
 voltage_table_t::voltage_table_t(std::shared_ptr<voltage_params> p):
@@ -270,10 +272,11 @@ void voltage_dynamic_t::initialize() {
     parameter_compute();
 }
 
-voltage_dynamic_t::voltage_dynamic_t(int num_cells_series, int num_strings, double voltage, double Vfull,
-                                     double Vexp, double Vnom, double Qfull, double Qexp, double Qnom,
-                                     double C_rate, double R, double dt_hour) :
-        voltage_t(voltage_params::MODEL, num_cells_series, num_strings, voltage, dt_hour) {
+voltage_dynamic_t::voltage_dynamic_t(int num_cells_series, int num_strings, double voltage, double Vfull, double Vexp,
+                                     double Vnom,
+                                     double Qfull, double Qexp, double Qnom, double C_rate, double R, double dt_hr,
+                                     double init_soc) :
+        voltage_t(voltage_params::MODEL, num_cells_series, num_strings, voltage, dt_hr) {
     params->dynamic.Vfull = Vfull;
     params->dynamic.Vexp = Vexp;
     params->dynamic.Vnom = Vnom;
@@ -283,6 +286,7 @@ voltage_dynamic_t::voltage_dynamic_t(int num_cells_series, int num_strings, doub
     params->dynamic.C_rate = C_rate;
     params->resistance = R;
     initialize();
+    voltage_dynamic_t::updateVoltage(init_soc * 0.01 * Qfull, Qfull, 0, 25, params->dt_hr);
 }
 
 voltage_dynamic_t::voltage_dynamic_t(std::shared_ptr<voltage_params> p):
@@ -412,8 +416,7 @@ double voltage_dynamic_t::calculate_current_for_target_w(double P_watts, double 
     }
 
     double x[1], resid[1];
-    double initial_guess_factor = 0.1;       // trial and error, this gave correct results for a variety of timescales
-    x[0] = solver_power / state->cell_voltage * initial_guess_factor;
+    x[0] = solver_power / state->cell_voltage * params->dt_hr;
     bool check = false;
 
     newton<double, std::function<void(const double *, double *)>, 1>(x, resid, check, f,
@@ -441,12 +444,14 @@ void voltage_vanadium_redox_t::initialize() {
 }
 
 voltage_vanadium_redox_t::voltage_vanadium_redox_t(int num_cells_series, int num_strings, double Vnom_default, double R,
-                                                   double dt_hour) :
+                                                   double dt_hour,
+                                                   double init_soc) :
         voltage_t(voltage_params::MODEL, num_cells_series, num_strings, Vnom_default, dt_hour) {
     params->Vnom_default = Vnom_default;
     params->resistance = R;
     params->dt_hr = params->dt_hr;
     initialize();
+    voltage_vanadium_redox_t::updateVoltage(init_soc, 100, 0, 25, params->dt_hr);
 }
 
 voltage_vanadium_redox_t::voltage_vanadium_redox_t(std::shared_ptr<voltage_params> p):
@@ -539,8 +544,7 @@ double voltage_vanadium_redox_t::calculate_current_for_target_w(double P_watts, 
                                                                 this, _1, _2);
 
     double x[1], resid[1];
-    double initial_guess_factor = 0.1;       // trial and error, this gave correct results for a variety of timescales
-    x[0] = solver_power / state->cell_voltage * initial_guess_factor;
+    x[0] = solver_power / state->cell_voltage * params->dt_hr;
     bool check = false;
 
     newton<double, std::function<void(const double *, double *)>, 1>(x, resid, check, f,
