@@ -1512,21 +1512,24 @@ public:
             std::vector<ssc_number_t> power_input_lifetime = as_vector_ssc_number_t("gen");
             std::vector<ssc_number_t> load_lifetime, load_year_one;
             size_t n_rec_lifetime = power_input_lifetime.size();
+            bool use_lifetime = as_boolean("system_use_lifetime_output");
+            size_t analysis_period = (size_t)as_integer("analysis_period");
+
+            if (use_lifetime && (double)(util::hours_per_year * analysis_period) / n_rec_lifetime > 1)
+                throw exec_error("battery", "`gen` input must be lifetime when system_use_lifetime_output=1.");
+
             size_t n_rec_single_year;
             double dt_hour_gen;
             if (is_assigned("load")) {
                 load_year_one = as_vector_ssc_number_t("load");
             }
-
-            size_t analysis_period = (size_t)as_integer("analysis_period");
-
             scalefactors scale_calculator(m_vartab);
             // compute load (electric demand) annual escalation multipliers
             std::vector<ssc_number_t> load_scale = scale_calculator.get_factors("load_escalation");
 
             double interpolation_factor = 1.0;
             single_year_to_lifetime_interpolated<ssc_number_t>(
-                    (bool)as_integer("system_use_lifetime_output"),
+                    use_lifetime,
                     analysis_period,
                     n_rec_lifetime,
                     load_year_one,
