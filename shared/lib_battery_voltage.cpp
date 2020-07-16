@@ -414,7 +414,7 @@ double voltage_dynamic_t::calculate_current_for_target_w(double P_watts, double 
     }
 
     double x[1], resid[1];
-    x[0] = solver_power / state->cell_voltage;
+    x[0] = solver_power / state->cell_voltage / 10;     // initial guess is important
     bool check = false;
 
     newton<double, std::function<void(const double *, double *)>, 1>(x, resid, check, f,
@@ -439,8 +439,6 @@ void voltage_dynamic_t::solve_current_for_discharge_power(const double *x, doubl
 // Vanadium redox flow model
 void voltage_vanadium_redox_t::initialize() {
     m_RCF = 8.314 * 1.38 / (26.801 * 3600);
-    if (params->dt_hr < 1 / 60.)
-        throw std::runtime_error("Battery time step size must be greater than 1/60th of hour.");
 }
 
 voltage_vanadium_redox_t::voltage_vanadium_redox_t(int num_cells_series, int num_strings, double Vnom_default, double R,
@@ -511,7 +509,7 @@ double voltage_vanadium_redox_t::calculate_max_discharge_w(double q, double qmax
                                                                 this, _1, _2);
 
     double x[1], resid[1];
-    x[0] = solver_q - tolerance;
+    x[0] = (solver_q - tolerance) / params->dt_hr;
     bool check = false;
 
     newton<double, std::function<void(const double *, double *)>, 1>(x, resid, check, f,
@@ -542,7 +540,7 @@ double voltage_vanadium_redox_t::calculate_current_for_target_w(double P_watts, 
                                                                 this, _1, _2);
 
     double x[1], resid[1];
-    x[0] = solver_power / state->cell_voltage;
+    x[0] = solver_power / state->cell_voltage / 10;
     bool check = false;
 
     newton<double, std::function<void(const double *, double *)>, 1>(x, resid, check, f,
