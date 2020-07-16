@@ -49,8 +49,8 @@ void single_year_to_lifetime_interpolated(
 
 	// Parse single year properties
 	double dt_hour_singleyear_input = (double)(util::hours_per_year) / (double)(singleyear_vector.size());
-	auto step_per_hour_singleyear_input = (size_t)(1 / dt_hour_singleyear_input);
-	T step_factor = (T)step_per_hour / (T)step_per_hour_singleyear_input;
+    size_t step_per_hour_singleyear_input = (size_t)(1 / dt_hour_singleyear_input);
+    T interpolation_factor = (T)step_per_hour / (T)step_per_hour_singleyear_input;
 
 	// Possible that there is no single year vector
 	if (singleyear_vector.size() > 1)
