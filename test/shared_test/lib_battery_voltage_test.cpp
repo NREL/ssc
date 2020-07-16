@@ -820,19 +820,19 @@ TEST_F(voltage_vanadium_lib_battery_voltage_test, updateCapacitySubMinute){
     cap->updateCapacity(I, dt_hour); // qmx = 10, q0 = 3
     model->updateVoltage(cap->q0(), cap->qmax(), cap->I(), 293, dt_hour);
     EXPECT_NEAR(model->cell_voltage(), 3.644, tol);
-    EXPECT_NEAR(cap->q0(), 4.99, tol);
+    EXPECT_NEAR(cap->q0(), 4.99, 1e-3);
 
     I = -2;
     cap->updateCapacity(I, dt_hour); // qmx = 10, q0 = 5
     model->updateVoltage(cap->q0(), cap->qmax(), cap->I(), 293, dt_hour);
     EXPECT_NEAR(model->cell_voltage(), 3.64, tol);
-    EXPECT_NEAR(cap->q0(), 5, tol);
+    EXPECT_NEAR(cap->q0(), 5, 1e-3);
 
     I = 5;
     cap->updateCapacity(I, dt_hour); // qmx = 10, I = 4.5, q0 = 0.5
     model->updateVoltage(cap->q0(), cap->qmax(), cap->I(), 293, dt_hour);
     EXPECT_NEAR(model->cell_voltage(), 3.71, tol);
-    EXPECT_NEAR(cap->q0(), 4.975, tol);
+    EXPECT_NEAR(cap->q0(), 4.975, 1e-3);
 }
 
 TEST_F(voltage_vanadium_lib_battery_voltage_test, calculateMaxChargeHourly){
