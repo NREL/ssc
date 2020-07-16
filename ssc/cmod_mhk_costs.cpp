@@ -106,6 +106,7 @@ static var_info _cm_vtab_mhk_costs[] = {
 	{ SSC_OUTPUT,			SSC_NUMBER,			"operations_cost",							"Operations cost",										"$",			"",								"MHKCosts",			"",						"",							"" },
 	{ SSC_OUTPUT,			SSC_NUMBER,			"maintenance_cost",							"Maintenance cost",										"$",			"",								"MHKCosts",			"",						"",							"" },
 
+    //Summary Cost Metrics
 	{ SSC_OUTPUT,			SSC_NUMBER,			"total_capital_cost_per_kwh",				"Total capital costs per kWh",							"$/kWh",		"",								"MHKCosts",			"",						"",							"" },
 	{ SSC_OUTPUT,			SSC_NUMBER,			"total_device_cost_per_kwh",				"Total device costs per kWh",							"$/kWh",		"",								"MHKCosts",			"",						"",							"" },
 	{ SSC_OUTPUT,			SSC_NUMBER,			"total_bos_cost_per_kwh",					"Total bos costs per kWh",								"$/kWh",		"",								"MHKCosts",			"",						"",							"" },
