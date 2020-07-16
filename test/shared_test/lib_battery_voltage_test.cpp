@@ -84,20 +84,20 @@ TEST_F(voltage_dynamic_lib_battery_voltage_test, updateCapacitySubMinute){
     double I = 2;
     cap->updateCapacity(I, dt_hour); // qmx = 10, q0 = 3
     model->updateVoltage(cap->q0(), cap->qmax(), cap->I(), 0, dt_hour);
-    EXPECT_NEAR(model->cell_voltage(), 4.01, tol);
-    EXPECT_NEAR(cap->q0(), 5, tol);
+    EXPECT_NEAR(model->cell_voltage(), 4.014, 1e-3);
+    EXPECT_NEAR(cap->q0(), 4.99, 1e-3);
 
     I = -2;
     cap->updateCapacity(I, dt_hour); // qmx = 10, q0 = 5
     model->updateVoltage(cap->q0(), cap->qmax(), cap->I(), 0, dt_hour);
-    EXPECT_NEAR(model->cell_voltage(), 4.1, tol);
-    EXPECT_NEAR(cap->q0(), 5, tol);
+    EXPECT_NEAR(model->cell_voltage(), 4.103, 1e-3);
+    EXPECT_NEAR(cap->q0(), 5, 1e-3);
 
     I = 5;
     cap->updateCapacity(I, dt_hour); // qmx = 10, I = 4.5, q0 = 0.5
     model->updateVoltage(cap->q0(), cap->qmax(), cap->I(), 0, dt_hour);
-    EXPECT_NEAR(model->cell_voltage(), 3.95, tol);
-    EXPECT_NEAR(cap->q0(), 4.97, tol);
+    EXPECT_NEAR(model->cell_voltage(), 3.947, 1e-3);
+    EXPECT_NEAR(cap->q0(), 4.975, 1e-3);
 }
 
 TEST_F(voltage_dynamic_lib_battery_voltage_test, calculateMaxChargeHourly){
@@ -374,19 +374,19 @@ TEST_F(voltage_table_lib_battery_voltage_test, updateCapacitySubMinute){
     cap->updateCapacity(I, dt_hour); // qmx = 10, q0 = 3
     model->updateVoltage(cap->q0(), cap->qmax(), cap->I(), 0, dt_hour);
     EXPECT_NEAR(model->cell_voltage(), 3.689, tol);
-    EXPECT_NEAR(cap->q0(), 5, tol);
+    EXPECT_NEAR(cap->q0(), 4.99, 1e-3);
 
     I = -2;
     cap->updateCapacity(I, dt_hour); // qmx = 10, q0 = 5
     model->updateVoltage(cap->q0(), cap->qmax(), cap->I(), 0, dt_hour);
     EXPECT_NEAR(model->cell_voltage(), 3.69, tol);
-    EXPECT_NEAR(cap->q0(), 5, tol);
+    EXPECT_NEAR(cap->q0(), 5, 1e-3);
 
     I = 5;
     cap->updateCapacity(I, dt_hour); // qmx = 10, I = 4.5, q0 = 0.5
     model->updateVoltage(cap->q0(), cap->qmax(), cap->I(), 0, dt_hour);
     EXPECT_NEAR(model->cell_voltage(), 3.689, tol);
-    EXPECT_NEAR(cap->q0(), 4.97, tol);
+    EXPECT_NEAR(cap->q0(), 4.975, 1e-3);
 }
 
 TEST_F(voltage_table_lib_battery_voltage_test, calculateMaxChargeHourly1){
