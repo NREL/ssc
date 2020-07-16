@@ -412,7 +412,8 @@ double voltage_dynamic_t::calculate_current_for_target_w(double P_watts, double 
     }
 
     double x[1], resid[1];
-    x[0] = solver_power / state->cell_voltage / 10;     // initial guess is important
+    double initial_guess_factor = 0.1;       // trial and error, this gave correct results for a variety of timescales
+    x[0] = solver_power / state->cell_voltage * initial_guess_factor;
     bool check = false;
 
     newton<double, std::function<void(const double *, double *)>, 1>(x, resid, check, f,
@@ -538,7 +539,8 @@ double voltage_vanadium_redox_t::calculate_current_for_target_w(double P_watts, 
                                                                 this, _1, _2);
 
     double x[1], resid[1];
-    x[0] = solver_power / state->cell_voltage / 10;
+    double initial_guess_factor = 0.1;       // trial and error, this gave correct results for a variety of timescales
+    x[0] = solver_power / state->cell_voltage * initial_guess_factor;
     bool check = false;
 
     newton<double, std::function<void(const double *, double *)>, 1>(x, resid, check, f,
