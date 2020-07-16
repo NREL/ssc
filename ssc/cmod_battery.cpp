@@ -860,8 +860,19 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
         if (batt_vars->batt_discharge_schedule_weekday.nrows() != 12 || batt_vars->batt_discharge_schedule_weekday.ncols() != 24)
             throw exec_error("battery", "invalid manual dispatch schedule matrix dimensions, must be 12 x 24");
 
+        size_t max_period = 6;
+        size_t* discharge_schedule_vec = batt_vars->batt_discharge_schedule_weekday.data();
+        size_t* period_num = std::find_if(discharge_schedule_vec, discharge_schedule_vec + batt_vars->batt_discharge_schedule_weekday.ncells() - 1, [max_period](double element) { return (max_period < element); });
+        if (*period_num > max_period)
+            throw exec_error("battery", "invalid manual dispatch period in weekday schedule. Period numbers must be less than or equal to 6");
+
         if (batt_vars->batt_discharge_schedule_weekend.nrows() != 12 || batt_vars->batt_discharge_schedule_weekend.ncols() != 24)
             throw exec_error("battery", "invalid weekend manual dispatch schedule matrix dimensions, must be 12 x 24");
+
+        discharge_schedule_vec = batt_vars->batt_discharge_schedule_weekend.data();
+        period_num = std::find_if(discharge_schedule_vec, discharge_schedule_vec + batt_vars->batt_discharge_schedule_weekend.ncells() - 1, [max_period](double element) { return (max_period < element); });
+        if (*period_num > max_period)
+            throw exec_error("battery", "invalid manual dispatch period in weekend schedule. Period numbers must be less than or equal to 6");
 
         if (batt_vars->en_fuelcell) {
             if (batt_vars->batt_can_fuelcellcharge.size() != 6)
