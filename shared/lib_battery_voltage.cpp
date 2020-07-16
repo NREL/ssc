@@ -36,8 +36,6 @@ bool voltage_state::operator==(const voltage_state &p) {
 void voltage_t::initialize() {
     state = std::make_shared<voltage_state>();
     state->cell_voltage = params->Vnom_default;
-    if (params->dt_hr < 1 / 60.)
-        throw std::runtime_error("Battery time step size must be greater than 1/60th of hour.");
 }
 
 voltage_t::voltage_t(int mode, int num_cells_series, int num_strings, double voltage, double dt_hour) {
