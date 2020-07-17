@@ -348,7 +348,7 @@ TEST_F(lib_battery_test, RoundtripEffTable){
     util::matrix_t<double> table(4, 2, &vals);
 
     auto capacityModel = new capacity_lithium_ion_t(q, SOC_init, SOC_max, SOC_min, dtHour);
-    auto voltageModel = new voltage_table_t(n_series, n_strings, Vnom_default, table, resistance, 1);
+    auto voltageModel = new voltage_table_t(n_series, n_strings, Vnom_default, table, resistance, 1, SOC_init);
     capacityModel->change_SOC_limits(0, 100);
 
     double full_current = 1000;
@@ -397,7 +397,7 @@ TEST_F(lib_battery_test, RoundtripEffTable){
 }
 
 TEST_F(lib_battery_test, RoundtripEffVanadiumFlow){
-    auto vol = new voltage_vanadium_redox_t(1, 1, 1.41, 0.001, dtHour);
+    auto vol = new voltage_vanadium_redox_t(1, 1, 1.41, 0.001, dtHour, SOC_init);
     auto cap = new capacity_lithium_ion_t(11, 30, 100, 0, dtHour);
 
     cap->change_SOC_limits(0, 100);
@@ -449,10 +449,12 @@ TEST_F(lib_battery_test, RoundtripEffVanadiumFlow){
 TEST_F(lib_battery_test, HourlyVsSubHourly)
 {
     auto cap_hourly = new capacity_lithium_ion_t(q, SOC_init, SOC_max, SOC_min, dtHour);
-    auto volt_hourly = new voltage_dynamic_t(n_series, n_strings, Vnom_default, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom, C_rate, resistance, 1);
+    auto volt_hourly = new voltage_dynamic_t(n_series, n_strings, Vnom_default, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom,
+                                             C_rate, resistance, 1, SOC_init);
 
     auto cap_subhourly = new capacity_lithium_ion_t(q, SOC_init, SOC_max, SOC_min, dtHour);
-    auto volt_subhourly = new voltage_dynamic_t(n_series, n_strings, Vnom_default, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom, C_rate, resistance, .5);
+    auto volt_subhourly = new voltage_dynamic_t(n_series, n_strings, Vnom_default, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom,
+                                                C_rate, resistance, .5, SOC_init);
 
     EXPECT_EQ(cap_hourly->q0(), cap_subhourly->q0());
     EXPECT_EQ(volt_hourly->battery_voltage(), volt_subhourly->battery_voltage());
