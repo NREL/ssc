@@ -438,7 +438,8 @@ double UtilityRateForecast::getEnergyChargeNetBillingOrTimeSeries(double energy,
 {
     double cost = 0;
     int tou_period = rate->get_tou_row(year_one_index, current_month);
-    ssc_number_t rate_esc = rate->rate_scale[year];
+    int rate_index = year < rate->rate_scale.size() ? year : rate->rate_scale.size() - 1;
+    ssc_number_t rate_esc = rate->rate_scale[rate_index];
     if (energy < 0)
     {
         if (rate->en_ts_buy_rate)
