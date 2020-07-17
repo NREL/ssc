@@ -336,8 +336,8 @@ static var_info vtab_utility_rate5[] = {
 
 void rate_setup::setup(var_table* vt, int num_recs_yearly, int nyears, rate_data& rate, std::string cm_name) {
     bool dc_enabled = vt->as_boolean("ur_dc_enable");
-    bool en_ts_buy_rate = vt->as_boolean("ur_en_ts_buy_rate");
-    bool en_ts_sell_rate = vt->as_boolean("ur_en_ts_sell_rate");
+    rate.en_ts_buy_rate = vt->as_boolean("ur_en_ts_buy_rate");
+    rate.en_ts_sell_rate = vt->as_boolean("ur_en_ts_sell_rate");
 
     size_t cnt = 0; size_t nrows, ncols, i;
     ssc_number_t* parr = 0;
@@ -362,7 +362,7 @@ void rate_setup::setup(var_table* vt, int num_recs_yearly, int nyears, rate_data
     }
     rate.rate_scale = rate_scale; 
 
-    if (en_ts_buy_rate)
+    if (rate.en_ts_buy_rate)
     {
         if (!vt->is_assigned("ur_ts_buy_rate"))
         {
@@ -379,7 +379,7 @@ void rate_setup::setup(var_table* vt, int num_recs_yearly, int nyears, rate_data
         }
     }
 
-    if (en_ts_sell_rate) {
+    if (rate.en_ts_sell_rate) {
         if (!vt->is_assigned("ur_ts_sell_rate"))
         {
             throw exec_error(cm_name, util::format("Time step sell rate enabled but no time step sell rates specified."));

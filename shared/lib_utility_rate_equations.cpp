@@ -110,7 +110,9 @@ rate_data::rate_data() :
     nm_credits_w_rollover(false),
     net_metering_credit_month(11),
     nm_credit_sell_rate(0.0),
-    rate_scale()
+    rate_scale(),
+    en_ts_buy_rate(false),
+    en_ts_sell_rate(false)
 {}
 
 rate_data::rate_data(const rate_data& tmp) :
@@ -133,7 +135,9 @@ rate_data::rate_data(const rate_data& tmp) :
     nm_credits_w_rollover(tmp.nm_credits_w_rollover),
     net_metering_credit_month(tmp.net_metering_credit_month),
     nm_credit_sell_rate(tmp.nm_credit_sell_rate),
-    rate_scale(tmp.rate_scale)
+    rate_scale(tmp.rate_scale),
+    en_ts_buy_rate(tmp.en_ts_buy_rate),
+    en_ts_sell_rate(tmp.en_ts_sell_rate)
 {}
 
 void rate_data::init(int num_rec_yearly) {

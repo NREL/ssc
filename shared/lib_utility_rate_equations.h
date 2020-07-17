@@ -110,7 +110,10 @@ public:
 
 	bool tou_demand_single_peak;
 
-    bool enable_nm; // 0 or 1
+    bool en_ts_buy_rate;
+    bool en_ts_sell_rate;
+
+    bool enable_nm; // rate option 0 or 1
     bool nm_credits_w_rollover; // rate option 0 only
     int net_metering_credit_month;
     double nm_credit_sell_rate;
