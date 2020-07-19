@@ -767,13 +767,16 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                                               batt_vars->batt_Vnom_default, batt_vars->batt_Vfull, batt_vars->batt_Vexp,
                                               batt_vars->batt_Vnom, batt_vars->batt_Qfull, batt_vars->batt_Qexp,
                                               batt_vars->batt_Qnom, batt_vars->batt_C_rate, batt_vars->batt_resistance,
-                                              dt_hr);
+                                              dt_hr, batt_vars->batt_initial_SOC);
     else if ((chem == battery_params::VANADIUM_REDOX) && batt_vars->batt_voltage_choice == voltage_params::MODEL)
         voltage_model = new voltage_vanadium_redox_t(batt_vars->batt_computed_series, batt_vars->batt_computed_strings,
-                                                     batt_vars->batt_Vnom_default, batt_vars->batt_resistance, dt_hr);
+                                                     batt_vars->batt_Vnom_default, batt_vars->batt_resistance,
+                                                     dt_hr,batt_vars->batt_initial_SOC);
     else
-        voltage_model = new voltage_table_t(batt_vars->batt_computed_series, batt_vars->batt_computed_strings, batt_vars->batt_Vnom_default,
-                                            batt_vars->batt_voltage_matrix, batt_vars->batt_resistance, dt_hr);
+        voltage_model = new voltage_table_t(batt_vars->batt_computed_series, batt_vars->batt_computed_strings,
+                                            batt_vars->batt_Vnom_default,
+                                            batt_vars->batt_voltage_matrix, batt_vars->batt_resistance,
+                                            dt_hr, batt_vars->batt_initial_SOC);
 
     if (batt_vars->batt_calendar_choice == lifetime_params::CALENDAR_CHOICE::MODEL) {
         lifetime_model = new lifetime_t(batt_vars->batt_lifetime_matrix, dt_hr,
@@ -1512,21 +1515,24 @@ public:
             std::vector<ssc_number_t> power_input_lifetime = as_vector_ssc_number_t("gen");
             std::vector<ssc_number_t> load_lifetime, load_year_one;
             size_t n_rec_lifetime = power_input_lifetime.size();
+            bool use_lifetime = as_boolean("system_use_lifetime_output");
+            size_t analysis_period = (size_t)as_integer("analysis_period");
+
+            if (use_lifetime && (double)(util::hours_per_year * analysis_period) / n_rec_lifetime > 1)
+                throw exec_error("battery", "`gen` input must be lifetime when system_use_lifetime_output=1.");
+
             size_t n_rec_single_year;
             double dt_hour_gen;
             if (is_assigned("load")) {
                 load_year_one = as_vector_ssc_number_t("load");
             }
-
-            size_t analysis_period = (size_t)as_integer("analysis_period");
-
             scalefactors scale_calculator(m_vartab);
             // compute load (electric demand) annual escalation multipliers
             std::vector<ssc_number_t> load_scale = scale_calculator.get_factors("load_escalation");
 
             double interpolation_factor = 1.0;
             single_year_to_lifetime_interpolated<ssc_number_t>(
-                    (bool)as_integer("system_use_lifetime_output"),
+                    use_lifetime,
                     analysis_period,
                     n_rec_lifetime,
                     load_year_one,

@@ -45,7 +45,8 @@ protected:
         cap = std::unique_ptr<capacity_lithium_ion_t>(new capacity_lithium_ion_t(10, 50, 95, 5, dt_hr));
 
         model = std::unique_ptr<voltage_t>(new voltage_dynamic_t(n_cells_series, n_strings,
-                voltage_nom, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom, C_rate, R, dt_hr));
+                                                                 voltage_nom, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom,
+                                                                 C_rate, R, dt_hr, 50));
     }
 };
 
@@ -64,7 +65,18 @@ protected:
         table = util::matrix_t<double>(4, 2, &vals);
 
         cap = std::unique_ptr<capacity_lithium_ion_t>(new capacity_lithium_ion_t(10, 50, 95, 5, dt_hr));
-        model = std::unique_ptr<voltage_t>(new voltage_table_t(n_cells_series, n_strings, voltage_nom, table, R, dt_hr));
+        model = std::unique_ptr<voltage_t>(new voltage_table_t(n_cells_series, n_strings, voltage_nom, table, R, dt_hr,
+                                                               50));
+    }
+
+    // Additional test case based on voltage table from a user. documented in SSC issue 412
+    void CreateModel_SSC_412(double dt_hr) {
+        std::vector<double> voltage_vals = { 0, 1.7, 4, 1.7, 5, 1.58, 60, 1.5, 85, 1.4, 90, 1.3, 93, 1.2, 95, 1, 96, 0.9 };
+        util::matrix_t<double> voltage_table(9, 2, &voltage_vals);
+
+        cap = std::unique_ptr<capacity_lithium_ion_t>(new capacity_lithium_ion_t(10, 50, 95, 5, dt_hr));
+        model = std::unique_ptr<voltage_t>(new voltage_table_t(n_cells_series, n_strings, voltage_nom, voltage_table, R,
+                                                               dt_hr, 50));
     }
 };
 
@@ -73,7 +85,8 @@ class voltage_vanadium_lib_battery_voltage_test : public lib_battery_voltage_tes
 protected:
     void CreateModel(double dt_hr){
         cap = std::unique_ptr<capacity_lithium_ion_t>(new capacity_lithium_ion_t(10, 50, 95, 5, dt_hr));
-        model = std::unique_ptr<voltage_t>(new voltage_vanadium_redox_t(n_cells_series, n_strings, voltage_nom, R, dt_hr));
+        model = std::unique_ptr<voltage_t>(new voltage_vanadium_redox_t(n_cells_series, n_strings, voltage_nom, R,
+                                                                        dt_hr, 50));
     }
 };
 
