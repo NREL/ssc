@@ -354,6 +354,11 @@ void C_pt_sf_perf_interp::converged()
 	m_ncall = -1;
 }
 
+void C_pt_sf_perf_interp::get_converged(bool& is_field_tracking_prev)
+{
+    is_field_tracking_prev = m_is_field_tracking_prev;
+}
+
 double C_pt_sf_perf_interp::rdist(VectDoub *p1, VectDoub *p2, int dim)
 {
 	double d = 0;

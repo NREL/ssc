@@ -140,6 +140,8 @@ public:
 	void off(const C_csp_solver_sim_info &sim_info);
 
 	void converged();
+
+    void get_converged(bool& is_field_tracking_prev);
 };
 
 

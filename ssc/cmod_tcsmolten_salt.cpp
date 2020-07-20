@@ -352,11 +352,14 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,     SSC_ARRAY,  "select_simulation_days",             "Selected subset of simulation days",                                                                                                      "-",            "",                                  "System Control",                           "?=0",                                                              "",              ""},
 
     // Optional Component Initialization (state at start of first timestep)
-    { SSC_INPUT,     SSC_NUMBER, "is_field_tracking_init",             "Is heliostat field tracking (1 = true)",                                                                                                  "-",            "",                                  "System Control",                           "",                                                                 "",              "" },
+        // Heliostat field
+    { SSC_INPUT,     SSC_NUMBER, "is_field_tracking_init",             "Is heliostat field tracking? (1 = true)",                                                                                                 "-",            "",                                  "System Control",                           "",                                                                 "",              "" },
 
     { SSC_INPUT,     SSC_NUMBER, "is_rec_on_initial",                  "Is receiver initially on?",                                                                                                               "-",            "",                                  "System Control",                           "?=0",                                                              "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "is_rec_startup_initial",             "Is receiver initially starting up?",                                                                                                      "-",            "",                                  "System Control",                           "?=0",                                                              "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "rec_startup_energy_initial",         "Receiver accumulated startup inventory ",                                                                                                 "MWht",         "",                                  "System Control",                           "?=0",                                                              "",              ""},
+
+        // Power cycle
     { SSC_INPUT,     SSC_NUMBER, "is_pc_on_initial",                   "Is power cycle initially on?",                                                                                                            "-",            "",                                  "System Control",                           "?=0",                                                              "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "is_pc_standby_initial",              "Is power cycle initially in standby?",                                                                                                    "-",            "",                                  "System Control",                           "?=0",                                                              "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "is_pc_startup_initial",              "Is power cycle initially starting up?",                                                                                                   "-",            "",                                  "System Control",                           "?=0",                                                              "",              ""},
@@ -664,6 +667,8 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_NUMBER, "disp_presolve_nvar_ann",             "Annual sum of dispatch problem variable count",                                                                                           "",             "",                                  "",                                         "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "disp_solve_time_ann",                "Annual sum of dispatch solver time",                                                                                                      "",             "",                                  "",                                         "*",                                                                "",              ""},
 
+    // Final component states (for use in subsequent calls to this cmod as values for "Optional Component Initialization" inputs above
+    { SSC_OUTPUT,    SSC_NUMBER, "is_field_tracking_final",            "Is heliostat field tracking final? (1 = true)",                                                                                           "-",            "",                                  "System Control",                           "",                                                                 "",              "" },
 
     var_info_invalid };
 
@@ -2761,6 +2766,12 @@ public:
         }
         //Single value outputs from radiative cooling system
 
+        // Final component state values
+            // Heliostat field
+        bool b_is_field_tracking_final;
+        heliostatfield.get_converged(b_is_field_tracking_final);
+        ssc_number_t is_field_tracking_final = (bool)b_is_field_tracking_final;
+        assign("is_field_tracking_final", is_field_tracking_final);
     }
 };
 
