@@ -117,14 +117,15 @@ void thermal_t::updateTemperature(double I, size_t lifetimeIndex) {
     }
 
     // the battery temp is the average temp over that step, starting with temp from end of last timestep
-    double source = I * I * params->resistance / (params->surface_area * params->h) + state->T_room;
+    
+    double T_steady_state = I * I * params->resistance / (params->surface_area * params->h) + state->T_room;
     double diffusion = exp(-params->surface_area * params->h * dt_sec / params->mass / params->Cp);
     double coeff_avg = params->mass * params->Cp / params->surface_area / params->h / dt_sec;
-    state->T_batt = (state->T_batt_prev - state->T_room) * coeff_avg * (1 - diffusion) + source;
-    state->heat_dissipated = (state->T_batt - state->T_room) * params->surface_area * params->h;
+    state->T_batt = (state->T_batt_prev - T_steady_state) * coeff_avg * (1 - diffusion) + T_steady_state;
+    state->heat_dissipated = (state->T_batt - state->T_room) * params->surface_area * params->h; // needs m Cp & t
 
     // update temp for use in next timestep
-    state->T_batt_prev = (state->T_batt_prev - state->T_room) * diffusion + source;
+    state->T_batt_prev = (state->T_batt_prev - T_steady_state) * diffusion + T_steady_state;
 
     calc_capacity();
 }
