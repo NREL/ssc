@@ -129,89 +129,111 @@ bool compute_module::evaluate() {
         // Calculate convergence_error by comparing var_table values with previous
         double squared_error = 0.;
         int n_differences = 0;
-        const char *it;
-        for (it = m_vartab->first(); it != nullptr; it = m_vartab->next()) {
-            auto AreSame = [](double a, double b) -> bool {
-                constexpr double kEpsilon = std::numeric_limits<double>::epsilon();
-                return fabs(a - b) < kEpsilon;
-            };
 
-            std::string variable_name(it);
-            var_data *variable_data = m_vartab->lookup(variable_name);
+        auto NumberSquaredError = [&](double a, double b) -> void {
+            constexpr double kEpsilon = std::numeric_limits<double>::epsilon();
+            if (fabs(a - b) > kEpsilon) {
+                squared_error += std::pow(a - b, 2);
+                n_differences++;
+            }
+        };
 
-            switch (variable_data->type) {
-                case SSC_STRING: {
-                    // if the strings change, throw an error
-                    std::string string_cur = m_vartab->as_string(variable_name);
-                    std::string string_prev = var_table_prev_iter.as_string(variable_name);
-                    if (string_cur != string_prev) {
-                        float time = -1.;
-                        log("Changing string variables in ssc_equations is not allowed.", SSC_ERROR,
-                            time);         // probably could add later
-                        return false;
-                    }
+        auto ArraySquaredError = [&](ssc_number_t *a, ssc_number_t *b, size_t n) -> void {
+            for (size_t i = 0; i < n; i++) {
+                NumberSquaredError(a[i], b[i]);
+            }
+        };
 
-                    break;
-                }
-                case SSC_NUMBER: {
-                    double number_cur = m_vartab->as_double(variable_name);
-                    double number_prev = var_table_prev_iter.as_double(variable_name);
-                    if (!AreSame(number_cur, number_prev)) {
-                        squared_error += pow(number_cur - number_prev, 2);
-                        n_differences++;
-                    }
+        std::function<bool(var_table *, var_table *)> TableSquaredError = [&](var_table *a, var_table *b) -> bool {
+            for (auto it = a->first(); it != nullptr; it = a->next()) {
+                std::string variable_name(it);
+                var_data *variable_data = a->lookup(variable_name);
 
-                    break;
-                }
-                case SSC_ARRAY: {
-                    size_t n_elements_cur, n_elements_prev;
-                    ssc_number_t *array_cur = m_vartab->as_array(variable_name, &n_elements_cur);
-                    ssc_number_t *array_prev = var_table_prev_iter.as_array(variable_name, &n_elements_prev);
+                switch (variable_data->type) {
+                    case SSC_STRING: {
+                        // if the strings change, throw an error
+                        std::string string_cur = a->as_string(variable_name);
+                        std::string string_prev = b->as_string(variable_name);
 
-                    if (n_elements_cur != n_elements_prev) {
-                        float time = -1.;
-                        log("Changing array variable length in ssc_equations is not allowed.", SSC_ERROR,
-                            time);       // probably could add later
-                        return false;
-                    }
-
-                    for (size_t i = 0; i < n_elements_cur; i++) {
-                        if (!AreSame(array_cur[i], array_prev[i])) {
-                            squared_error += pow(array_cur[i] - array_prev[i], 2);
-                            n_differences++;
+                        if (string_cur != string_prev) {
+                            float time = -1.;
+                            log("Changing string variables in ssc_equations is not allowed.", SSC_ERROR,
+                                time);         // probably could add later
+                            return false;
                         }
+                        break;
                     }
+                    case SSC_NUMBER: {
+                        double number_cur = a->as_double(variable_name);
+                        double number_prev = b->as_double(variable_name);
 
-                    break;
-                }
-                case SSC_MATRIX: {
-                    util::matrix_t<double> matrix_cur = m_vartab->as_matrix(variable_name);
-                    util::matrix_t<double> matrix_prev = var_table_prev_iter.as_matrix(variable_name);
+                        NumberSquaredError(number_cur, number_prev);
+                        break;
+                    }
+                    case SSC_ARRAY: {
+                        size_t n_elements_cur, n_elements_prev;
+                        ssc_number_t *array_cur = a->as_array(variable_name, &n_elements_cur);
+                        ssc_number_t *array_prev = b->as_array(variable_name, &n_elements_prev);
 
-                    if (matrix_cur.nrows() != matrix_prev.nrows() || matrix_cur.ncols() != matrix_prev.ncols()) {
+                        if (n_elements_cur != n_elements_prev) {
+                            float time = -1.;
+                            log("Changing array variable length in ssc_equations is not allowed.", SSC_ERROR,
+                                time);       // probably could add later
+                            return false;
+                        }
+
+                        ArraySquaredError(array_cur, array_prev, n_elements_cur);
+                        break;
+                    }
+                    case SSC_MATRIX: {
+                        util::matrix_t<double> matrix_cur = a->as_matrix(variable_name);
+                        util::matrix_t<double> matrix_prev = b->as_matrix(variable_name);
+
+                        if (matrix_cur.nrows() != matrix_prev.nrows() || matrix_cur.ncols() != matrix_prev.ncols()) {
+                            float time = -1.;
+                            log("Changing matrix variable dimensions in ssc_equations is not allowed.", SSC_ERROR,
+                                time);       // probably could add later
+                            return false;
+                        }
+
+                        ArraySquaredError(matrix_cur.data(), matrix_prev.data(), matrix_cur.ncells());
+                        break;
+                    }
+                    case SSC_TABLE: {
+                        auto tab = &variable_data->table;
+
+                        if (!var_table_prev_iter.is_assigned(variable_name)) {
+                            float time = -1.;
+                            log("Removing or adding table variables in ssc_equations is not allowed.", SSC_ERROR,
+                                time);
+                            return false;
+                        }
+
+                        auto tab_prev = &var_table_prev_iter.lookup(variable_name)->table;
+
+                        if (tab->size() != tab_prev->size()) {
+                            float time = -1.;
+                            log("Changing table variable dimensions in ssc_equations is not allowed.", SSC_ERROR,
+                                time);       // probably could add later
+                            return false;
+                        }
+
+                        if (!TableSquaredError(tab, tab_prev))
+                            return false;
+                        break;
+                    }
+                    default: {
                         float time = -1.;
-                        log("Changing matrix variable dimensions in ssc_equations is not allowed.", SSC_ERROR,
-                            time);       // probably could add later
+                        log(variable_name + " of data type " + var_data::type_name(variable_data->type) +
+                            " is not supported for ssc_equations", SSC_ERROR, time);
                         return false;
                     }
-
-                    for (size_t i = 0; i < matrix_cur.ncells(); i++) {
-                        if (!AreSame(matrix_cur.at(i), matrix_prev.at(i))) {
-                            squared_error += pow(matrix_cur.at(i) - matrix_prev.at(i), 2);
-                            n_differences++;
-                        }
-                    }
-
-                    break;
-                }
-                default: {
-                    float time = -1.;
-                    log(variable_name + " of data type " + var_data::type_name(variable_data->type) +
-                        " is not supported for ssc_equations", SSC_ERROR, time);
-                    return false;
                 }
             }
-        }
+            return true;
+        };
+
+        TableSquaredError(m_vartab, &var_table_prev_iter);
 
         if (n_differences == 0) {
             convergence_error = 0.;
