@@ -360,10 +360,14 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,     SSC_NUMBER, "rec_startup_energy_initial",         "Receiver accumulated startup inventory ",                                                                                                 "MWht",         "",                                  "System Control",                           "?=0",                                                              "",              ""},
 
         // Power cycle
-    { SSC_INPUT,     SSC_NUMBER, "is_pc_on_initial",                   "Is power cycle initially on?",                                                                                                            "-",            "",                                  "System Control",                           "?=0",                                                              "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "is_pc_standby_initial",              "Is power cycle initially in standby?",                                                                                                    "-",            "",                                  "System Control",                           "?=0",                                                              "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "is_pc_startup_initial",              "Is power cycle initially starting up?",                                                                                                   "-",            "",                                  "System Control",                           "?=0",                                                              "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "pc_startup_energy_initial",          "Cycle accumulated startup inventory",                                                                                                     "MWht",         "",                                  "System Control",                           "?=0",                                                              "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "pc_op_mode_initial",                 "Initial cycle operation mode 0:startup, 1:on, 2:standby, 3:off, 4:startup_controlled",                                                    "-",            "",                                  "System Control",                           "",                                                                 "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "pc_startup_time_remain_init",        "Initial cycle startup time remaining",                                                                                                    "hr",           "",                                  "System Control",                           "",                                                                 "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "pc_startup_energy_remain_initial",   "Initial cycle startup energy remaining",                                                                                                  "kwh",          "",                                  "System Control",                           "",                                                                 "",              ""},
+
+    //{ SSC_INPUT,     SSC_NUMBER, "is_pc_on_initial",                   "Is power cycle initially on?",                                                                                                            "-",            "",                                  "System Control",                           "?=0",                                                              "",              ""},
+    //{ SSC_INPUT,     SSC_NUMBER, "is_pc_standby_initial",              "Is power cycle initially in standby?",                                                                                                    "-",            "",                                  "System Control",                           "?=0",                                                              "",              ""},
+    //{ SSC_INPUT,     SSC_NUMBER, "is_pc_startup_initial",              "Is power cycle initially starting up?",                                                                                                   "-",            "",                                  "System Control",                           "?=0",                                                              "",              ""},
+    //{ SSC_INPUT,     SSC_NUMBER, "pc_startup_energy_initial",          "Cycle accumulated startup inventory",                                                                                                     "MWht",         "",                                  "System Control",                           "?=0",                                                              "",              ""},
 																																																																																																		  
     { SSC_INPUT,     SSC_NUMBER, "disp_pc_q0",                         "Cycle thermal power at start of simulation",                                                                                              "MWt",          "",                                  "System Control",                           "?=0",                                                              "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "disp_pc_persist0",                   "Initial duration cycle has been in same state ",                                                                                          "hr",           "",                                  "System Control",                           "?=1000.",                                                          "",              ""},
@@ -668,7 +672,12 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_NUMBER, "disp_solve_time_ann",                "Annual sum of dispatch solver time",                                                                                                      "",             "",                                  "",                                         "*",                                                                "",              ""},
 
     // Final component states (for use in subsequent calls to this cmod as values for "Optional Component Initialization" inputs above
+        // Heliostat field
     { SSC_OUTPUT,    SSC_NUMBER, "is_field_tracking_final",            "Is heliostat field tracking final? (1 = true)",                                                                                           "-",            "",                                  "System Control",                           "",                                                                 "",              "" },
+        // Power cycle
+    { SSC_OUTPUT,    SSC_NUMBER, "pc_op_mode_final",                   "Final cycle operation mode 0:startup, 1:on, 2:standby, 3:off, 4:startup_controlled",                                                      "-",            "",                                  "System Control",                           "",                                                                 "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "pc_startup_time_remain_final",       "Final cycle startup time remaining",                                                                                                      "hr",           "",                                  "System Control",                           "",                                                                 "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "pc_startup_energy_remain_final",     "Final cycle startup energy remaining",                                                                                                    "kwh",          "",                                  "System Control",                           "",                                                                 "",              "" },
 
     var_info_invalid };
 
@@ -1020,16 +1029,23 @@ public:
             pc->m_pc_fl = as_integer("rec_htf");                            // power cycle HTF is same as receiver HTF
             pc->m_pc_fl_props = as_matrix("field_fl_props");
 
-			pc->m_mode_initial = C_csp_power_cycle::OFF;
-			if (as_boolean("is_pc_on_initial"))
-				pc->m_mode_initial = C_csp_power_cycle::ON;
-			else if (as_boolean("is_pc_standby_initial"))
-				pc->m_mode_initial = C_csp_power_cycle::STANDBY;
-			else if (as_boolean("is_pc_startup_initial"))
-			{
-				pc->m_mode_initial = C_csp_power_cycle::STARTUP_CONTROLLED;
-				pc->m_startup_energy_accum_init = as_double("pc_startup_energy_initial");
-			}
+            // Check initialization variables
+			pc->m_operating_mode_initial = C_csp_power_cycle::OFF;
+            if (is_assigned("pc_op_mode_initial")) {
+                pc->m_operating_mode_initial = (C_csp_power_cycle::E_csp_power_cycle_modes) as_integer("pc_op_mode_initial");
+                if (is_assigned("pc_startup_time_remain_init")) {
+                    pc->m_startup_time_remain_init = as_double("pc_startup_time_remain_init");
+                }
+                else {
+                    pc->m_startup_time_remain_init = std::numeric_limits<double>::quiet_NaN();
+                }
+                if (is_assigned("pc_startup_energy_initial")) {
+                    pc->m_startup_energy_remain_init = as_double("pc_startup_energy_initial");
+                }
+                else {
+                    pc->m_startup_energy_remain_init = std::numeric_limits<double>::quiet_NaN();
+                }                    
+            }
 
             if (pb_tech_type == 0)
             {
@@ -2772,6 +2788,18 @@ public:
         heliostatfield.get_converged(b_is_field_tracking_final);
         ssc_number_t is_field_tracking_final = (bool)b_is_field_tracking_final;
         assign("is_field_tracking_final", is_field_tracking_final);
+
+        C_csp_power_cycle::E_csp_power_cycle_modes pc_op_mode_final;
+        double pc_startup_time_remain_final, pc_startup_energy_remain_final;
+        if (pb_tech_type == 0 || pb_tech_type == 1) {
+            rankine_pc.get_converged_values(pc_op_mode_final, pc_startup_time_remain_final, pc_startup_energy_remain_final);
+        }
+        else {
+            pc_startup_energy_remain_final = pc_startup_energy_remain_final = std::numeric_limits<double>::quiet_NaN();
+        }
+        assign("pc_op_mode_final", (ssc_number_t)pc_op_mode_final);
+        assign("pc_startup_time_remain_final", (ssc_number_t)pc_startup_time_remain_final);
+        assign("pc_startup_energy_remain_final", (ssc_number_t)pc_startup_energy_remain_final);
     }
 };
 

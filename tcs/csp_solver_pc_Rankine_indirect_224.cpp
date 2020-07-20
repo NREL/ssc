@@ -541,7 +541,7 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 	m_startup_energy_required = ms_params.m_startup_frac * ms_params.m_P_ref / ms_params.m_eta_ref; // [kWt-hr]
 
 	// Finally, set member model-timestep-tracking variables
-	m_operating_mode_prev = (C_csp_power_cycle::E_csp_power_cycle_modes) ms_params.m_mode_initial;			// Set initial power cycle state
+	m_operating_mode_prev = ms_params.m_operating_mode_initial;			// Set initial power cycle state
 	if (m_operating_mode_prev == C_csp_power_cycle::OFF)
 	{
 		m_startup_energy_remain_prev = m_startup_energy_required;	//[kW-hr]
@@ -550,8 +550,18 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 	}
 	else if (m_operating_mode_prev == C_csp_power_cycle::STARTUP_CONTROLLED || m_operating_mode_prev == C_csp_power_cycle::STARTUP)
 	{
-		m_startup_energy_remain_prev = std::fmax(0.0, m_startup_energy_required - ms_params.m_startup_energy_accum_init * 1000.);
-		m_startup_time_remain_prev = std::fmax(0.0, ms_params.m_startup_time - ms_params.m_startup_energy_accum_init / m_q_dot_design);
+        if (std::isfinite(ms_params.m_startup_energy_remain_init)) {
+            m_startup_energy_remain_prev = std::fmin(m_startup_energy_required, std::fmax(0.0, ms_params.m_startup_energy_remain_init));    //[kW-hr]
+        }
+        else {
+            m_startup_energy_remain_prev = m_startup_energy_required;   //[kW-hr]
+        }
+        if (std::isfinite(ms_params.m_startup_time_remain_init)) {
+            m_startup_time_remain_prev = std::fmin(ms_params.m_startup_time, std::fmax(0.0, ms_params.m_startup_time_remain_init)); //[hr]
+        }
+        else {
+            m_startup_time_remain_prev = ms_params.m_startup_time;  //[hr]
+        }
 	}
 	else
 	{
@@ -1644,6 +1654,16 @@ void C_pc_Rankine_indirect_224::converged()
 	m_ncall = -1;
 
 	mc_reported_outputs.set_timestep_outputs();
+}
+
+void C_pc_Rankine_indirect_224::get_converged_values(C_csp_power_cycle::E_csp_power_cycle_modes& op_mode,
+    double& startup_time_remain, double& startup_energy_remain)
+{
+    op_mode = m_operating_mode_prev;
+    startup_time_remain = m_startup_time_remain_prev;
+    startup_energy_remain = m_startup_energy_remain_prev;
+
+    return;
 }
 
 void C_pc_Rankine_indirect_224::write_output_intervals(double report_time_start,
