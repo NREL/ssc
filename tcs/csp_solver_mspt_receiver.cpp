@@ -1484,7 +1484,7 @@ void C_mspt_receiver::off(const C_csp_weatherreader::S_outputs &weather,
 	outputs.m_q_dot_piping_loss = 0.0;	//[MWt]
 	
 	outputs.m_inst_T_salt_hot = 0.0;
-    outputs.m_T_salt_hot_rec = 0.0;	
+    outputs.m_inst_T_salt_hot_rec = 0.0;
 	outputs.m_max_T_salt_hot = 0.0;
 	outputs.m_min_T_salt_hot = 0.0;
 	outputs.m_max_rec_tout = 0.0;
