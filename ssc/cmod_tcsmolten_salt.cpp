@@ -1659,10 +1659,10 @@ public:
 
         // Check initialization variable
         if (is_assigned("is_field_tracking_init")) {
-            heliostatfield.ms_params.m_is_field_tracking_prev = as_boolean("is_field_tracking_init");
+            heliostatfield.ms_params.m_is_field_tracking_init = as_boolean("is_field_tracking_init");
         }
         else {
-            heliostatfield.ms_params.m_is_field_tracking_prev = false;
+            heliostatfield.ms_params.m_is_field_tracking_init = false;
         }
 
         // Try running pt heliostat init() call just for funsies

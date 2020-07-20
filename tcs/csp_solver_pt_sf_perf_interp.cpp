@@ -189,7 +189,7 @@ void C_pt_sf_perf_interp::init()
 	}
 
 	// Initialize stored variables
-    m_is_field_tracking_prev = ms_params.m_is_field_tracking_prev;
+    m_is_field_tracking_prev = ms_params.m_is_field_tracking_init;
 
 	m_ncall = -1;
 }
