@@ -1909,6 +1909,7 @@ void C_mspt_receiver::calculate_steady_state_soln(s_steady_state_soln &soln, dou
 
 		// Calculate outlet temperature after piping losses
 		soln.Q_dot_piping_loss = 0.0;
+        soln.T_salt_hot_rec = soln.T_salt_hot;
 		if (m_Q_dot_piping_loss > 0.0)
 		{
 			double m_dot_salt_tot_temp = soln.m_dot_salt * m_n_lines;		//[kg/s]
@@ -1922,7 +1923,6 @@ void C_mspt_receiver::calculate_steady_state_soln(s_steady_state_soln &soln, dou
 				soln.Q_dot_piping_loss = 0.5 * (riser_loss + downc_loss) * (m_h_tower * m_pipe_length_mult + m_pipe_length_add); // Total piping thermal loss [W]
 			}
 			double delta_T_piping = soln.Q_dot_piping_loss / (m_dot_salt_tot_temp * c_p_coolant);	//[K]
-			soln.T_salt_hot_rec = soln.T_salt_hot;
 			soln.T_salt_hot -= delta_T_piping;	//[K]
 		}
 

@@ -714,6 +714,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 		q_conv_sum = 0.0; q_rad_sum = 0.0; m_T_s.fill(0.0); q_thermal = 0.0;
 		// Set the receiver outlet temperature equal to the inlet design temperature
 		T_salt_hot = m_T_htf_cold_des;
+        T_salt_hot_rec = m_T_htf_cold_des;
 		q_dot_inc_sum = 0.0;
 		// Pressure drops
 		/*DELTAP = 0.0; Pres_D = 0.0; u_coolant = 0.0;*/
@@ -1161,6 +1162,7 @@ void C_mspt_receiver_222::calculate_steady_state_soln(s_steady_state_soln &soln,
 
 		// Calculate outlet temperature after piping losses
 		soln.Q_dot_piping_loss = 0.0;
+        soln.T_salt_hot_rec = soln.T_salt_hot;
 		if (m_Q_dot_piping_loss > 0.0)
 		{
 			double m_dot_salt_tot_temp = soln.m_dot_salt * m_n_lines;		//[kg/s]
@@ -1174,7 +1176,6 @@ void C_mspt_receiver_222::calculate_steady_state_soln(s_steady_state_soln &soln,
 				soln.Q_dot_piping_loss = 0.5*(riser_loss + downc_loss) * (m_h_tower*m_pipe_length_mult + m_pipe_length_add); // Total piping thermal loss [W]
 			}
 			double delta_T_piping = soln.Q_dot_piping_loss / (m_dot_salt_tot_temp*c_p_coolant);	//[K]
-			soln.T_salt_hot_rec = soln.T_salt_hot;
 			soln.T_salt_hot -= delta_T_piping;	//[K]
 		}
 		
