@@ -735,6 +735,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 	outputs.m_q_rad_sum = q_rad_sum / 1.E6;					//[MW] convert from W
 	outputs.m_Q_thermal = q_thermal / 1.E6;					//[MW] convert from W
 	outputs.m_T_salt_hot = T_salt_hot - 273.15;				//[C] convert from K
+    outputs.m_T_salt_hot_rec = T_salt_hot_rec - 273.15;     // [C] convert from K
 	outputs.m_field_eff_adj = field_eff_adj;					//[-]
 	outputs.m_component_defocus = m_od_control;				//[-]
 	outputs.m_q_dot_rec_inc = q_dot_inc_sum / 1.E6;			//[MW] convert from W
@@ -777,6 +778,7 @@ void C_mspt_receiver_222::off(const C_csp_weatherreader::S_outputs &weather,
 	outputs.m_q_rad_sum = 0.0;			//[MW] convert from W
 	outputs.m_Q_thermal = 0.0;			//[MW] convert from W
 	outputs.m_T_salt_hot = 0.0;			//[C] convert from K
+    outputs.m_T_salt_hot_rec = 0.0;		//[C] convert from K
 	outputs.m_field_eff_adj = 0.0;		//[-]
 	outputs.m_component_defocus = 1.0;	//[-]
 	outputs.m_q_dot_rec_inc = 0.0;		//[MW] convert from kW

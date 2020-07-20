@@ -104,6 +104,7 @@ public:
         double m_q_rad_sum;				//[MW] total receiver radiation losses
         double m_Q_thermal;				//[MW] thermal power delivered to TES/PC: subtracts piping losses (q_dot_rec - q_dot_piping_losses)
         double m_T_salt_hot;			//[C] HTF outlet temperature
+        double m_T_salt_hot_rec;        //[C] HTF outlet temperature at receiver exit (before piping loss)
         double m_field_eff_adj;			//[-] heliostat field efficiency including component defocus
         double m_component_defocus;		//[-] defocus applied by receiver to stay within mass flow or other constraints
         double m_q_dot_rec_inc;			//[MWt] receiver incident thermal power (after reflection losses)
@@ -118,7 +119,8 @@ public:
         double m_time_required_su;		//[s] time it took receiver to startup
         double m_q_dot_piping_loss;		//[MWt] thermal power lost from piping to surroundings
         double m_q_heattrace;			//[MWt-hr] Power required for heat tracing
-        double m_inst_T_salt_hot;		//[C] Instantaneous HTF outlet T at the end of the time step
+        double m_inst_T_salt_hot;		//[C] Instantaneous HTF downcomer outlet T at the end of the time step
+        double m_inst_T_salt_hot_rec;	//[C] Instantaneous HTF receiver outlet T at the end of the time step
         double m_max_T_salt_hot;		//[C] Maximum HTF outlet T during the time step
         double m_min_T_salt_hot;		//[C] Minimum HTF outlet T during the time step
         double m_max_rec_tout;			//[C] Maximum HTF T (at the receiver outlet before downcomer piping loss) during the time step

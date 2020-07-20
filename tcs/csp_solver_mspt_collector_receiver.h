@@ -50,11 +50,13 @@ public:
 		E_M_DOT_HTF,			//[kg/hr] Receiver mass flow rate
 		E_Q_DOT_STARTUP,		//[MWt] Receiver startup thermal power consumed
 		E_T_HTF_IN,				//[C] Receiver HTF inlet temperature
-		E_T_HTF_OUT,			//[C] Receiver HTF outlet temperature
+		E_T_HTF_OUT,			//[C] Receiver HTF outlet temperature at downcomer exit
+        E_T_HTF_OUT_REC,		//[C] Receiver HTF outlet temperature before downcomer
 		E_Q_DOT_PIPE_LOSS,		//[MWt] Tower piping losses
         E_Q_DOT_LOSS,           //[MWt] Receiver convection and radiation losses
 		E_P_HEATTRACE,			//[MWe] Receiver heat trace parasitic
-		E_T_HTF_OUT_END,		//[C] Instantaneous receiver HTF outlet temperature at the end of the time step
+		E_T_HTF_OUT_END,		//[C] Instantaneous downcomer HTF outlet temperature at the end of the time step
+        E_T_HTF_OUT_END_REC,	//[C] Instantaneous receiver HTF outlet temperature at the end of the time step
 		E_T_HTF_OUT_MAX,		//[C] Receiver maximum HTF outlet temperature at any point during time step
 		E_T_HTF_PANEL_OUT_MAX,	//[C] Receiver panel maximum HTF outlet temperature at any point during time step
 		E_T_WALL_INLET,			//[C] Receiver inlet wall temperature at end of time step

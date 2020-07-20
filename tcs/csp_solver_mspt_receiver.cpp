@@ -1387,6 +1387,7 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 	outputs.m_q_rad_sum = q_rad_sum / 1.E6;					//[MW] convert from W
 	outputs.m_Q_thermal = q_thermal / 1.E6;					//[MW] convert from W
 	outputs.m_T_salt_hot = T_salt_hot - 273.15;		//[C] convert from K
+    outputs.m_T_salt_hot_rec = T_salt_hot_rec - 273.15;     // [C] convert from K
 	outputs.m_field_eff_adj = field_eff_adj;					//[-]
 	outputs.m_component_defocus = m_od_control;				//[-]
 	outputs.m_q_dot_rec_inc = q_dot_inc_sum / 1.E6;			//[MW] convert from W
@@ -1428,8 +1429,10 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 		outputs.m_Q_thermal = trans_outputs.timeavg_qthermal / 1.e6;		//[MWt] Time-averaged thermal power delivered to TES/PC
 		outputs.m_q_dot_piping_loss = trans_outputs.timeavg_piping_loss / 1.e6;			//[MWt] Time-averaged piping loss
 		outputs.m_q_heattrace = q_heat_trace_energy / 1.e6 / 3600.0;		//[MWt-hr] Power required for heat tracing during the time step
-		outputs.m_T_salt_hot = trans_outputs.timeavg_tout - 273.15;		//[C] Time-averaged downcomer outlet T during the time step
-		outputs.m_inst_T_salt_hot = trans_outputs.tout - 273.15;			//[C] Instantaneous salt outlet T at the end of the time step
+		outputs.m_T_salt_hot = trans_outputs.timeavg_tout - 273.15;		    //[C] Time-averaged downcomer outlet T during the time step
+        outputs.m_T_salt_hot_rec = trans_outputs.timeavg_tout_rec - 273.15;		//[C] Time-averaged receiver outlet T during the time step
+		outputs.m_inst_T_salt_hot = trans_outputs.tout - 273.15;			//[C] Instantaneous salt downcomer outlet T at the end of the time step
+        outputs.m_inst_T_salt_hot_rec = trans_outputs.tout_rec - 273.15;    //[C] Instantaneous salt receiver outlet T at the end of the time step
 		outputs.m_max_T_salt_hot = trans_outputs.max_tout - 273.15;		//[C] Maximum salt outlet T during the time step
 		outputs.m_min_T_salt_hot = trans_outputs.min_tout - 273.15;		//[C] Minimum salt outlet T during the time step
 		outputs.m_max_rec_tout = trans_outputs.max_rec_tout - 273.15;	//[C] Maximum salt T (receiver outlet) during the time step
@@ -1465,6 +1468,7 @@ void C_mspt_receiver::off(const C_csp_weatherreader::S_outputs &weather,
 	outputs.m_q_rad_sum = 0.0;			//[MW] convert from W
 	outputs.m_Q_thermal = 0.0;			//[MW] convert from W
 	outputs.m_T_salt_hot = 0.0;			//[C] convert from K
+    outputs.m_T_salt_hot_rec = 0.0;		//[C] convert from K
 	outputs.m_field_eff_adj = 0.0;		//[-]
 	outputs.m_component_defocus = 1.0;	//[-]
 	outputs.m_q_dot_rec_inc = 0.0;		//[MW] convert from kW
@@ -1480,6 +1484,7 @@ void C_mspt_receiver::off(const C_csp_weatherreader::S_outputs &weather,
 	outputs.m_q_dot_piping_loss = 0.0;	//[MWt]
 	
 	outputs.m_inst_T_salt_hot = 0.0;
+    outputs.m_T_salt_hot_rec = 0.0;	
 	outputs.m_max_T_salt_hot = 0.0;
 	outputs.m_min_T_salt_hot = 0.0;
 	outputs.m_max_rec_tout = 0.0;
@@ -3497,6 +3502,7 @@ void C_mspt_receiver::solve_transient_model(double tstep,
 
 
 	toutputs.timeavg_tout = 0.0;			// Time-averaged downcomer outlet T [K]
+    toutputs.timeavg_tout_rec = 0.0;		// Time-averaged receiver outlet T [K]
 	toutputs.tout = 0.0;					// Downcomer outlet T at the end of the time step [K]
 	toutputs.max_tout = 0.0;				// Max downcomer outlet T during the time step [K]
 	toutputs.min_tout = 5000.0;				// Min downcomer outlet T during the time step [K]
@@ -3546,7 +3552,7 @@ void C_mspt_receiver::solve_transient_model(double tstep,
 				update_pde_parameters(false, pinputs, tinputs);			
 
 
-			// Calculate time-averaged outlet temperatures
+			// Calculate time-averaged downcomer outlet temperatures
 			for (size_t i = 0; i < m_n_lines; i++)
 			{
 				for (size_t j = 0; j < m_n_elem; j++)
@@ -3647,6 +3653,7 @@ void C_mspt_receiver::solve_transient_model(double tstep,
 		// Calculate axial profile at end of time step
 		calc_axial_profile(transmodel_step, tinputs, toutputs.t_profile);		// Calculate full axial temperature profile at the end of the time step
 
+  
 		// Estimate the maximum temperature variation during the time step 
 		for (size_t i = 0; i < m_n_lines; i++)
 		{
@@ -3669,6 +3676,13 @@ void C_mspt_receiver::solve_transient_model(double tstep,
 			toutputs.timeavg_conv_loss = toutputs.timeavg_conv_loss + conv_loss_sum*(transmodel_step / tstep);
 			toutputs.timeavg_piping_loss = toutputs.timeavg_piping_loss + piping_loss_sum*(transmodel_step / tstep);
 			toutputs.timeavg_tout = toutputs.timeavg_tout + toutputs.timeavg_temp.at((size_t)m_n_elem - 1, 0)*(transmodel_step / tstep);
+
+            double tout_rec = 0.0;
+            for (size_t j = 0; j<m_n_lines; j++)
+            {
+                tout_rec += toutputs.timeavg_temp.at((size_t)m_n_elem - 2, j) / (double) m_n_lines;
+            }
+            toutputs.timeavg_tout_rec = toutputs.timeavg_tout_rec + tout_rec * (transmodel_step / tstep);
 			
 			toutputs.max_tout = fmax(toutputs.max_tout, textreme_d.at(1, 0));
 			if (textreme_d.at(0, 0) < toutputs.min_tout)
@@ -3696,9 +3710,15 @@ void C_mspt_receiver::solve_transient_model(double tstep,
 	toutputs.timeavg_qthermal = pinputs.mflow_tot * pinputs.c_htf * (toutputs.timeavg_tout - tinputs.inlet_temp);	// Time-averaged thermal power leaving the receiver during the time step [W]	
 	tinputs.tinit = tinit_start;		// Revert initial temperature profile back to profile at the start of the full time step (in case the model is called more than once during this time step)
 
+    // Calculate receiver outlet temperature profile (before downcomer) at the end of the time step
+    size_t krecout = size_t(tinputs.startpt.back()) - 1;  // Index of receiver outlet
+    toutputs.tout_rec = 0.0;
+    for (size_t j = 0; j < m_n_lines; j++)
+    {
+        toutputs.tout_rec += toutputs.t_profile.at(krecout, j) / (double)m_n_lines;
+    }
 
 	// Calculate receiver wall temperature profile at the end of the time step
-	size_t krecout = size_t(tinputs.startpt.back()) - 1;  // Index of receiver outlet
 	for (size_t i = 0; i < m_n_lines; i++)			// Loop through flow paths
 	{
 		size_t k = 0;

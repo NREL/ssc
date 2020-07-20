@@ -231,7 +231,9 @@ private:
 	struct transient_outputs
 	{
 		double timeavg_tout;					// Time-averaged downcomer outlet T [K]
-		double tout;							// Downcomer outlet T at the end of the time step [K] 
+        double timeavg_tout_rec;                // Time-averaged receiver outlet T [K]
+		double tout;							// Downcomer outlet T at the end of the time step [K]
+        double tout_rec;                        // Receiver outlet T at the end of the time step [K]
 		double max_tout;						// Max downcomer outlet T during the time step [K]
 		double min_tout;						// Min downcomer outlet T during the time step [K]
 		double max_rec_tout;					// Max receiver outlet T during the time step [K]
