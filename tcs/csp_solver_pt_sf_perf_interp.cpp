@@ -189,8 +189,7 @@ void C_pt_sf_perf_interp::init()
 	}
 
 	// Initialize stored variables
-	//m_eta_prev = 0.0;
-	//m_v_wind_prev = 0.0;
+    m_is_field_tracking_prev = ms_params.m_is_field_tracking_prev;
 
 	m_ncall = -1;
 }

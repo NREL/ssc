@@ -350,8 +350,10 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 																																																																																																		  
     { SSC_INPUT,     SSC_NUMBER, "allow_controller_exceptions",        "Allow controller exceptions? (1 = true)",                                                                                                 "-",            "",                                  "System Control",                           "?=1",                                                              "",              ""},
     { SSC_INPUT,     SSC_ARRAY,  "select_simulation_days",             "Selected subset of simulation days",                                                                                                      "-",            "",                                  "System Control",                           "?=0",                                                              "",              ""},
-																																																																																																		  
-																																																																																																		  
+
+    // Optional Component Initialization (state at start of first timestep)
+    { SSC_INPUT,     SSC_NUMBER, "is_field_tracking_init",             "Is heliostat field tracking (1 = true)",                                                                                                  "-",            "",                                  "System Control",                           "",                                                                 "",              "" },
+
     { SSC_INPUT,     SSC_NUMBER, "is_rec_on_initial",                  "Is receiver initially on?",                                                                                                               "-",            "",                                  "System Control",                           "?=0",                                                              "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "is_rec_startup_initial",             "Is receiver initially starting up?",                                                                                                      "-",            "",                                  "System Control",                           "?=0",                                                              "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "rec_startup_energy_initial",         "Receiver accumulated startup inventory ",                                                                                                 "MWht",         "",                                  "System Control",                           "?=0",                                                              "",              ""},
@@ -1649,6 +1651,14 @@ public:
         // Set callback information
         heliostatfield.mf_callback = ssc_cmod_solarpilot_callback;
         heliostatfield.m_cdata = (void*)this;
+
+        // Check initialization variable
+        if (is_assigned("is_field_tracking_init")) {
+            heliostatfield.ms_params.m_is_field_tracking_prev = as_boolean("is_field_tracking_init");
+        }
+        else {
+            heliostatfield.ms_params.m_is_field_tracking_prev = false;
+        }
 
         // Try running pt heliostat init() call just for funsies
             // What happens when no callback to reference?
