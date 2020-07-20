@@ -54,11 +54,11 @@ private:
 	double m_q_dot_design;				//[MWt]
 	double m_cp_htf_design;				//[kJ/kg-K]
 
-	int m_standby_control_prev;
+	C_csp_power_cycle::E_csp_power_cycle_modes m_operating_mode_prev;
 	double m_startup_time_remain_prev;		//[hr]
 	double m_startup_energy_remain_prev;	//[kW-hr]
 
-	int m_standby_control_calc;
+    C_csp_power_cycle::E_csp_power_cycle_modes m_operating_mode_calc;
 	double m_startup_time_remain_calc;
 	double m_startup_energy_remain_calc;
 
