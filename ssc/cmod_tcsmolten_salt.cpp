@@ -364,11 +364,11 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,     SSC_NUMBER, "pc_startup_time_remain_init",        "Initial cycle startup time remaining",                                                                                                    "hr",           "",                                  "System Control",                           "",                                                                 "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "pc_startup_energy_remain_initial",   "Initial cycle startup energy remaining",                                                                                                  "kwh",          "",                                  "System Control",                           "",                                                                 "",              ""},
 
-    //{ SSC_INPUT,     SSC_NUMBER, "is_pc_on_initial",                   "Is power cycle initially on?",                                                                                                            "-",            "",                                  "System Control",                           "?=0",                                                              "",              ""},
-    //{ SSC_INPUT,     SSC_NUMBER, "is_pc_standby_initial",              "Is power cycle initially in standby?",                                                                                                    "-",            "",                                  "System Control",                           "?=0",                                                              "",              ""},
-    //{ SSC_INPUT,     SSC_NUMBER, "is_pc_startup_initial",              "Is power cycle initially starting up?",                                                                                                   "-",            "",                                  "System Control",                           "?=0",                                                              "",              ""},
-    //{ SSC_INPUT,     SSC_NUMBER, "pc_startup_energy_initial",          "Cycle accumulated startup inventory",                                                                                                     "MWht",         "",                                  "System Control",                           "?=0",                                                              "",              ""},
-																																																																																																		  
+        // Thermal energy storage
+    { SSC_INPUT,     SSC_NUMBER, "T_tank_cold_init",                   "Initial cold tank temp",                                                                                                                  "C",            "",                                  "System Control",                           "",                                                                 "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "T_tank_hot_init",                    "Initial hot tank temp",                                                                                                                   "C",            "",                                  "System Control",                           "",                                                                 "",              ""},
+
+
     { SSC_INPUT,     SSC_NUMBER, "disp_pc_q0",                         "Cycle thermal power at start of simulation",                                                                                              "MWt",          "",                                  "System Control",                           "?=0",                                                              "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "disp_pc_persist0",                   "Initial duration cycle has been in same state ",                                                                                          "hr",           "",                                  "System Control",                           "?=1000.",                                                          "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "disp_rec_persist0",                  "Initial duration receiver has been in same state",                                                                                        "hr",           "",                                  "System Control",                           "?=1000.",                                                          "",              ""},
@@ -673,11 +673,15 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 
     // Final component states (for use in subsequent calls to this cmod as values for "Optional Component Initialization" inputs above
         // Heliostat field
-    { SSC_OUTPUT,    SSC_NUMBER, "is_field_tracking_final",            "Is heliostat field tracking final? (1 = true)",                                                                                           "-",            "",                                  "System Control",                           "",                                                                 "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "is_field_tracking_final",            "Final heliostat field operation is tracking? (1 = true)",                                                                                           "-",            "",                                  "System Control",                           "",                                                                 "",              "" },
         // Power cycle
     { SSC_OUTPUT,    SSC_NUMBER, "pc_op_mode_final",                   "Final cycle operation mode 0:startup, 1:on, 2:standby, 3:off, 4:startup_controlled",                                                      "-",            "",                                  "System Control",                           "",                                                                 "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "pc_startup_time_remain_final",       "Final cycle startup time remaining",                                                                                                      "hr",           "",                                  "System Control",                           "",                                                                 "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "pc_startup_energy_remain_final",     "Final cycle startup energy remaining",                                                                                                    "kwh",          "",                                  "System Control",                           "",                                                                 "",              "" },
+        // Thermal energy storage
+    { SSC_OUTPUT,     SSC_NUMBER, "T_tank_cold_final",                  "Final cold tank temp",                                                                                                                    "C",            "",                                  "System Control",                           "",                                                                 "",              "" },
+    { SSC_OUTPUT,     SSC_NUMBER, "T_tank_hot_final",                   "Final hot tank temp",                                                                                                                     "C",            "",                                  "System Control",                           "",                                                                 "",              "" },
+    { SSC_OUTPUT,     SSC_NUMBER, "hot_tank_htf_percent_final",         "Final percent fill of available hot tank mass",                                                                                           "%",            "",                                  "System Control",                           "",                                                                 "",              "" },
 
     var_info_invalid };
 
@@ -1911,12 +1915,25 @@ public:
         tes->m_cold_tank_Thtr = as_double("cold_tank_Thtr");
         tes->m_cold_tank_max_heat = as_double("cold_tank_max_heat");
         tes->m_dt_hot = 0.0;                                // MSPT assumes direct storage, so no user input here: hardcode = 0.0
-        tes->m_T_field_in_des = as_double("T_htf_cold_des");
-        tes->m_T_field_out_des = as_double("T_htf_hot_des");
-        tes->m_T_tank_hot_ini = as_double("T_htf_hot_des");
-        tes->m_T_tank_cold_ini = as_double("T_htf_cold_des");
+        tes->m_T_field_in_des = as_double("T_htf_cold_des");    //[C]
+        tes->m_T_field_out_des = as_double("T_htf_hot_des");    //[C]
+
+        // Check initialization variables
+        if (is_assigned("T_tank_hot_init")) {
+            tes->m_T_tank_hot_ini = as_double("T_tank_hot_init");   //[C]
+        }
+        else {
+            tes->m_T_tank_hot_ini = as_double("T_htf_hot_des");     //[C]
+        }
+        if (is_assigned("T_tank_cold_init")) {
+            tes->m_T_tank_cold_ini = as_double("T_tank_cold_init"); //[C]
+        }
+        else {
+            tes->m_T_tank_cold_ini = as_double("T_htf_cold_des");   //[C]
+        }
+        tes->m_f_V_hot_ini = as_double("csp.pt.tes.init_hot_htf_percent");  //[%]
+
         tes->m_h_tank_min = as_double("h_tank_min");
-        tes->m_f_V_hot_ini = as_double("csp.pt.tes.init_hot_htf_percent");
         tes->m_htf_pump_coef = as_double("pb_pump_coef");
 
 
@@ -2789,6 +2806,7 @@ public:
         ssc_number_t is_field_tracking_final = (bool)b_is_field_tracking_final;
         assign("is_field_tracking_final", is_field_tracking_final);
 
+            // Power cycle
         C_csp_power_cycle::E_csp_power_cycle_modes pc_op_mode_final;
         double pc_startup_time_remain_final, pc_startup_energy_remain_final;
         if (pb_tech_type == 0 || pb_tech_type == 1) {
@@ -2800,6 +2818,13 @@ public:
         assign("pc_op_mode_final", (ssc_number_t)pc_op_mode_final);
         assign("pc_startup_time_remain_final", (ssc_number_t)pc_startup_time_remain_final);
         assign("pc_startup_energy_remain_final", (ssc_number_t)pc_startup_energy_remain_final);
+
+            // Thermal energy storage
+        double f_V_hot_final, T_hot_tank_final, T_cold_tank_final;
+        storage.get_final_from_converged(f_V_hot_final, T_hot_tank_final, T_cold_tank_final);
+        assign("T_tank_cold_final", (ssc_number_t)(T_cold_tank_final - 273.15));
+        assign("T_tank_hot_final", (ssc_number_t)(T_hot_tank_final - 273.15));
+        assign("hot_tank_htf_percent_final", (ssc_number_t)(f_V_hot_final * 100.0));
     }
 };
 
