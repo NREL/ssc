@@ -784,23 +784,6 @@ bool csp_dispatch_opt::optimize()
                 {
                     add_constraintex(lp, 2, row, col, LE, (params.is_rec_operating0 ? P["Er"] : 0.));
                 }
-                //row[0] = 1.;
-                //col[0] = O.column("yr", t);
-                //
-                //row[1] = -1.0/P["Er"]; 
-                //col[1] = O.column("ursu", t);
-
-                //if(t>0)
-                //{
-                //    row[2] = -1.;
-                //    col[2] = O.column("yr", t-1);
-
-                //    add_constraintex(lp, 3, row, col, LE, 0.); 
-                //}
-                //else
-                //{
-                //    add_constraintex(lp, 2, row, col, LE, (params.is_rec_operating0 ? 1. : 0.) );
-                //}
 
                 //Receiver startup can't be enabled after a time step where the Receiver was operating
                 if(t>0)
@@ -861,7 +844,6 @@ bool csp_dispatch_opt::optimize()
                 col[0] = O.column("yr", t);
 
                 add_constraintex(lp, 1, row, col, LE, min(floor(outputs.q_sfavail_expected.at(t) / P["Qrl"]), 1.0)); //tighter formulation
-                //add_constraintex(lp, 1, row, col, LE, min(P["M"]*outputs.q_sfavail_expected.at(t), 1.0) );  //if any measurable energy, y^r can be 1
 
                 // --- new constraints ---
 
@@ -1015,34 +997,6 @@ bool csp_dispatch_opt::optimize()
                 {
                     add_constraintex(lp, i, row, col, LE, P["Ec"]*((params.is_pb_operating0 ? 1. : 0.) + (params.is_pb_standby0 ? 1. : 0.)));
                 }
-                //i=0;
-                //row[i  ] = 1.;
-                //col[i++] = O.column("y", t);
-                //
-                //row[i  ] = -1.0/P["Ec"]; 
-                //if (P["delta"] >= 1.)
-                //{
-                //    col[i++] = O.column("ucsu", t);                 // for hourly model (delta = 1)
-                //}
-                //else
-                //{
-                //    col[i++] = O.column("ucsu", t - 1);             // for sub-hourly model (delta < 1)
-                //}
-
-                //if(t>0)
-                //{
-                //    row[i  ] = -1.;
-                //    col[i++] = O.column("y", t-1);
-
-                //    row[i  ] = -1.;
-                //    col[i++] = O.column("ycsb", t-1);
-
-                //    add_constraintex(lp, i, row, col, LE, 0.); 
-                //}
-                //else
-                //{
-                //    add_constraintex(lp, i, row, col, LE, (params.is_pb_operating0 ? 1. : 0.) + (params.is_pb_standby0 ? 1. : 0.) );
-                //}
 
                 //Cycle consumption limit (valid only for hourly model -> Delta == 1)
                 if (P["delta"] >= 1.)
