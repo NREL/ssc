@@ -1054,7 +1054,8 @@ double sun_hour_angle_at_rise_set(double latitude, double delta_zero, double h0_
 	double argument = (sin(DTOR*(h0_prime)) - sin(latitude_rad) * sin(delta_zero_rad)) /
 		(cos(latitude_rad) * cos(delta_zero_rad));
 
-	if (fabs(argument) <= 1) h0 = limit_degrees180(RTOD*(acos(argument)));
+	//if (fabs(argument) <= 1) h0 = limit_degrees180(RTOD*(acos(argument)));
+	h0 = limit_degrees180(RTOD * (acos(argument)));
 
 	return h0;
 }

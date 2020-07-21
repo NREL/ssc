@@ -136,7 +136,8 @@ TEST_F(IrradTest, sunriseAndSunsetAlaskaTest_spa_lib_irradproc) {
 	int month = 7;
 	int day = 14;
 	double sun_results[9];
-	solarpos_spa(2010, month, day, 14, 30, 0, latitude, longitude, time_zone, 0, 67, 0, 0, 1013.25, 15, 180, sun_results);
+	solarpos_spa(2010, month, day, 14, 30, 0, latitude, longitude, time_zone, 0, 67, 2, 1013.25, 15, latitude, 180, sun_results);
+	//solarpos(2010, month, day, 14, 30, latitude, longitude, time_zone, sun_results);
 	EXPECT_NEAR((double)sun_results[4], sunrise_time, e) << "sunrise time for lat " << latitude << " long " << longitude << " failed\n";
 	EXPECT_NEAR((double)sun_results[5], sunset_time, e) << "sunrise tiem for lat " << latitude << " long " << longitude << " failed\n";
 }
