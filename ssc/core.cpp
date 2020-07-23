@@ -24,6 +24,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <fstream>
 #include <cstring>
 #include <algorithm>
+#include <functional>
 
 #include "core.h"
 #include "ssc_equations.h"
