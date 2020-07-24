@@ -32,7 +32,6 @@ SharedInverter::SharedInverter(int inverterType, size_t numberOfInverters,
     powerLossTotal_kW = 0.;
     dcWiringLoss_ond_kW = 0.;
     acWiringLoss_ond_kW = 0.;
-
 }
 
 SharedInverter::SharedInverter(const SharedInverter& orig){
@@ -41,13 +40,20 @@ SharedInverter::SharedInverter(const SharedInverter& orig){
     m_nameplateAC_kW = orig.m_nameplateAC_kW;
     m_tempEnabled = orig.m_tempEnabled;
     m_thermalDerateCurves = orig.m_thermalDerateCurves;
-    if (orig.m_sandiaInverter)
-        *m_sandiaInverter = sandia_inverter_t(*orig.m_sandiaInverter);
-    if (orig.m_partloadInverter)
-        *m_partloadInverter = partload_inverter_t(*orig.m_partloadInverter);
-    if (orig.m_ondInverter)
-        *m_ondInverter = ond_inverter(*orig.m_ondInverter);
+    m_sandiaInverter = orig.m_sandiaInverter;
+    m_partloadInverter = orig.m_partloadInverter;
+    m_ondInverter = orig.m_ondInverter;
     efficiencyAC = orig.efficiencyAC;
+
+	powerDC_kW = orig.powerDC_kW;
+	powerAC_kW = orig.powerAC_kW;
+	powerClipLoss_kW = orig.powerClipLoss_kW;
+	powerConsumptionLoss_kW = orig.powerConsumptionLoss_kW;
+	powerNightLoss_kW = orig.powerNightLoss_kW;
+	powerTempLoss_kW = orig.powerTempLoss_kW;
+	powerLossTotal_kW = orig.powerLossTotal_kW;
+	dcWiringLoss_ond_kW = orig.dcWiringLoss_ond_kW;
+	acWiringLoss_ond_kW = orig.acWiringLoss_ond_kW;
 }
 
 bool sortByVoltage(std::vector<double> i, std::vector<double> j)
@@ -72,7 +78,7 @@ int SharedInverter::setTempDerateCurves(std::vector<std::vector<double>> derateC
 
 	// Sort by DC voltage
 	std::sort(m_thermalDerateCurves.begin(), m_thermalDerateCurves.end(), sortByVoltage);
-	
+
 	if (m_thermalDerateCurves.size() > 0 ) m_tempEnabled = true;
 	return 0;
 }
@@ -171,7 +177,7 @@ void SharedInverter::calculateTempDerate(double V, double tempC, double& pAC, do
 	eff += deltaT* slopeInterpolated;
 	if (eff < 0) eff = 0.;
 	loss = pAC - (pDC * eff);
-	pAC = pDC * eff;	
+	pAC = pDC * eff;
 }
 
 //function that calculates AC power and inverter losses for a single inverter with one MPPT input
@@ -215,7 +221,7 @@ void SharedInverter::calculateACPower(const double powerDC_kW_in, const double D
 
 	// In event shared inverter is charging a battery only, need to re-convert to negative power
 	if (negativePower) {
-		powerAC_kW *= -1.0;
+		powerAC_kW = -1.0 * fabs(powerAC_kW);
 	}
 }
 
@@ -265,18 +271,16 @@ void SharedInverter::solve_kwdc_for_kwac(const double *x, double *f){
 
 using namespace std::placeholders;
 double SharedInverter::calculateRequiredDCPower(const double kwAC, const double DCStringV, double tempC){
-    // save original state values
-    double orig[12] = {powerDC_kW, powerAC_kW, efficiencyAC, powerClipLoss_kW, powerConsumptionLoss_kW,
-                       powerNightLoss_kW, powerTempLoss_kW, powerLossTotal_kW, dcWiringLoss_ond_kW, acWiringLoss_ond_kW,
-                       Tdry_C, StringV};
+
+    SharedInverter clone = SharedInverter(*this);
 
     // set up solver values
-    StringV = DCStringV;
-    Tdry_C = tempC;
-    solver_AC = kwAC;
+    clone.StringV = DCStringV;
+    clone.Tdry_C = tempC;
+    clone.solver_AC = kwAC;
 
     std::function<void(const double*, double*)> f;
-    f = std::bind(&SharedInverter::solve_kwdc_for_kwac, this, _1, _2);
+    f = std::bind(&SharedInverter::solve_kwdc_for_kwac, &clone, _1, _2);
 
     double x[1], resid[1];
     x[0] = kwAC * 1.04;
@@ -288,19 +292,6 @@ double SharedInverter::calculateRequiredDCPower(const double kwAC, const double 
     // if efficiency is too low, the required DC power becomes infinite
     if (!isfinite(x[0]))
         x[0] = kwAC;
-
-    powerDC_kW = orig[0];
-    powerAC_kW = orig[1];
-    efficiencyAC = orig[2];
-    powerClipLoss_kW = orig[3];
-    powerConsumptionLoss_kW = orig[4];
-    powerNightLoss_kW = orig[5];
-    powerTempLoss_kW = orig[6];
-    powerLossTotal_kW = orig[7];
-    dcWiringLoss_ond_kW = orig[8];
-    acWiringLoss_ond_kW = orig[9];
-    Tdry_C = orig[10];
-    StringV = orig[11];
 
     return x[0];
 }

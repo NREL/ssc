@@ -34,12 +34,13 @@ var_info vtab_grid_input[] = {
 	// simulation inputs
 	{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",        "Lifetime simulation",                   "0/1",     "0=SingleYearRepeated,1=RunEveryYear",   "Lifetime",        "?=0",                   "BOOLEAN",                          "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                   "Lifetime analysis period",              "years",   "The number of years in the simulation", "Lifetime",        "system_use_lifetime_output=1","",                           "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "enable_interconnection_limit",      "Enable grid interconnection limit",     "0/1",     "Enable a grid interconnection limit",   "Common",        "","",                           "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "grid_interconnection_limit_kwac",   "Grid interconnection limit",            "kWac",    "",                                      "Common",        "","",                           "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "enable_interconnection_limit",      "Enable grid interconnection limit",     "0/1",     "Enable a grid interconnection limit",   "GridLimits",        "","",                           "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "grid_interconnection_limit_kwac",   "Grid interconnection limit",            "kWac",    "",                                      "GridLimits",        "","",                           "" },
 
 	// external compute module inputs
-	{ SSC_INOUT,        SSC_ARRAY,       "gen",								  "System power generated",                "kW",        "Lifetime system generation",          "Common",                  "",                        "",                              "" },
-	{ SSC_INPUT,		SSC_ARRAY,	     "load",			                  "Electricity load (year 1)",             "kW",	    "",                                    "Common",	                       "",	                      "",	                           "" },
+	{ SSC_INOUT,        SSC_ARRAY,       "gen",								  "System power generated",                "kW",        "Lifetime system generation",          "System Output",                  "",                        "",                              "" },
+	{ SSC_INPUT,		SSC_ARRAY,	     "load",			                  "Electricity load (year 1)",             "kW",	    "",                                    "Load",	                       "",	                      "",	                           "" },
+    { SSC_INPUT,        SSC_ARRAY,       "load_escalation",                   "Annual load escalation",                "%/year",    "",                                    "Load",                        "?=0",                      "",                            "" },
 
 var_info_invalid };
 
@@ -48,7 +49,7 @@ var_info vtab_grid_output[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,       "system_pre_interconnect_kwac",     "System power before grid interconnect",  "kW",       "Lifetime system generation" "",                 "",                        "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "capacity_factor_interconnect_ac",  "Capacity factor of the interconnection (year 1)",  "%",          "",                "",                           "",                     "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_energy_pre_interconnect_ac", "Annual Energy AC pre-interconnection (year 1)",   "kWh",        "",                "",                           "",                     "",                              "" },
-	{ SSC_INOUT,        SSC_NUMBER,      "annual_energy",                    "Annual Energy AC (year 1)",                        "kWh",        "",                "",                           "",                     "",                              "" },
+	{ SSC_INOUT,        SSC_NUMBER,      "annual_energy",                    "Annual Energy AC (year 1)",                        "kWh",        "",                "System Output",                           "",                     "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_ac_interconnect_loss_percent","Annual Energy loss from interconnection limit (year 1)", "%", "",                "",                           "",                     "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_ac_interconnect_loss_kwh",   "Annual Energy loss from interconnection limit (year 1)", "kWh", "",                "",                           "",                     "",                              "" },
 
@@ -78,12 +79,77 @@ void cm_grid::construct()
 {
 	std::unique_ptr<gridVariables> tmp(new gridVariables(*this));
 	gridVars = std::move(tmp);
-	allocateOutputs();
 }
 
-void cm_grid::exec() throw (general_error)
+void cm_grid::exec()
 {
-	construct();
+    construct();
+    // System generation output, which is lifetime (if system_lifetime_output == true);
+    gridVars->systemGenerationLifetime_kW = as_vector_double("gen");
+
+    size_t n_rec_lifetime = gridVars->systemGenerationLifetime_kW.size();
+    size_t n_rec_single_year;
+
+    size_t analysis_period = 1;
+    if (is_assigned("analysis_period")) {
+        analysis_period = (size_t) as_integer("analysis_period");
+    }
+    bool system_use_lifetime_output = false;
+    if (is_assigned("system_use_lifetime_output")) {
+        system_use_lifetime_output = (bool) as_integer("system_use_lifetime_output");
+    }
+
+    std::vector<double> scaleFactors(analysis_period, 1.0); // No scaling factors for curtailment
+
+    std::vector<double> curtailment_year_one;
+    if (is_assigned("grid_curtailment")) {
+        curtailment_year_one = as_vector_double("grid_curtailment");
+    }
+    double interpolation_factor = 1.0;
+    single_year_to_lifetime_interpolated<double>(
+        system_use_lifetime_output,
+        (size_t)analysis_period,
+        n_rec_lifetime,
+        curtailment_year_one,
+        scaleFactors,
+        interpolation_factor,
+        gridVars->gridCurtailmentLifetime_MW,
+        n_rec_single_year,
+        gridVars->dt_hour_gen);
+
+    allocateOutputs();
+    gridVars->numberOfLifetimeRecords = n_rec_lifetime;
+    gridVars->numberOfSingleYearRecords = n_rec_single_year;
+    gridVars->numberOfYears = n_rec_lifetime / n_rec_single_year;
+
+    gridVars->grid_kW.reserve(gridVars->numberOfLifetimeRecords);
+    gridVars->grid_kW = gridVars->systemGenerationLifetime_kW;
+
+    std::vector<double> load_year_one;
+
+    if (is_assigned("load")) {
+        load_year_one = as_vector_double("load");
+    }
+
+    scalefactors scale_calculator(m_vartab);
+
+    // compute load (electric demand) annual escalation multipliers
+    std::vector<ssc_number_t> load_scale(analysis_period, 1.0);
+    if (is_assigned("load_escalation")) {
+        load_scale = scale_calculator.get_factors("load_escalation");
+    }
+
+    interpolation_factor = 1.0;
+    single_year_to_lifetime_interpolated<double>(
+        system_use_lifetime_output,
+        analysis_period,
+        n_rec_lifetime,
+        load_year_one,
+        load_scale,
+        interpolation_factor,
+        gridVars->loadLifetime_kW,
+        n_rec_single_year,
+        gridVars->dt_hour_gen);
 
 	// interconnection  calculations
 	double capacity_factor_interconnect, annual_energy_pre_curtailment, annual_energy_pre_interconnect, annual_energy, capacity_factor_curtailment;

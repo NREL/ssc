@@ -1,34 +1,17 @@
 #####################################################################################################################
 #
-# CMake and System Settings
+# Project Settings
 #
 #####################################################################################################################
-
-set(CMAKE_VERBOSE_MAKEFILE ON)
-
-cmake_minimum_required(VERSION 3.8)
-
-if(APPLE)
-    set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
-endif()
-
-
-#####################################################################################################################
-#
-# Project Settings 
-#
-#####################################################################################################################
-
-Project(ssc_test)
 
 if (DEFINED ENV{GTDIR})
-	set(GTDIR $ENV{GTDIR})
+    set(GTDIR $ENV{GTDIR})
 elseif (DEFINED ENV{GTEST})
-	set(GTDIR $ENV{GTEST})
+    set(GTDIR $ENV{GTEST})
 endif()
 
-include_directories(${GTDIR}/include ${GTDIR}/googletest/include . input_cases shared_test ssc_test tcs_test 
-						../ssc ../tcs ../solarpilot ../shared ../splinter )
+include_directories(${GTDIR}/include ${GTDIR}/googletest/include . input_cases shared_test ssc_test tcs_test
+						../ssc ../tcs ../solarpilot ../shared ../splinter ../jsoncpp/include )
 
 file(GLOB SSC_TESTS ssc_test/*.cpp)
 file(GLOB SHARED_TESTS shared_test/*.cpp)
@@ -36,11 +19,11 @@ file(GLOB TCS_TESTS tcs_test/*.cpp)
 file(GLOB INPUTS_SRC input_cases/*.cpp)
 set(SSC_SRC ../ssc/core.cpp ../ssc/common.cpp ../ssc/vartab.cpp)
 # add files which need to be compiled with Test in order to be tested on Windows
-set(SRC_TO_TEST 
-	../ssc/cmod_windpower.cpp
-	../ssc/cmod_battery.cpp
-	../ssc/cmod_battwatts.cpp
-	../ssc/cmod_fuelcell.cpp)
+set(SRC_TO_TEST
+        ../ssc/cmod_windpower.cpp
+        ../ssc/cmod_battery.cpp
+        ../ssc/cmod_battwatts.cpp
+        ../ssc/cmod_fuelcell.cpp)
 
 
 #####################################################################################################################
@@ -49,53 +32,40 @@ set(SRC_TO_TEST
 #
 #####################################################################################################################
 
-set(CMAKE_CXX_STANDARD 11)
+set_default_compile_options()
 
 if(MSVC)
-	add_compile_options(/MP /W3 /wd4244)
-    add_compile_definitions( __64BIT__ __WINDOWS__ _CRT_SECURE_NO_WARNINGS _MBCS )
-    foreach (flag_var CMAKE_C_FLAGS_DEBUG CMAKE_CXX_FLAGS_DEBUG)
-		set(${flag_var} "${${flag_var}} /D_DEBUG" CACHE STRING "compile flags" FORCE)
-	endforeach()
+    add_compile_options(/MP /W3 /wd4244)
+    add_compile_definitions(_MBCS)
 else()
-	if(APPLE)
-		add_compile_options(-Wall -arch x86_64 -Wno-deprecated)
-	else()
-		add_compile_options(-Wall -std=c++11 -Wno-strict-aliasing -Wno-deprecated-declarations -Wno-unknown-pragmas -Wno-reorder)
-	endif()
-	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-		add_compile_options(-D_DEBUG)
-	else()
-		add_compile_options(-O3 -DNDEBUG)
-	endif()
-	add_compile_options(-Wno-unused-function -Wno-unused-variable -Wno-unused-value)
-endif(MSVC)
+    add_compile_options(-Wno-ignored-attributes -Wno-deprecated-declarations)
+endif()
 
 
 #####################################################################################################################
-# 
+#
 # CMake Targets
 #
 #####################################################################################################################
 
 add_executable(Test
-	${SSC_TESTS}
-	${SHARED_TESTS}
-	${TCS_TESTS}
-	${INPUTS_SRC}
-	${SSC_SRC}
-	${SRC_TO_TEST}
-	main.cpp)
+        ${SSC_TESTS}
+        ${SHARED_TESTS}
+        ${TCS_TESTS}
+        ${INPUTS_SRC}
+        ${SSC_SRC}
+        ${SRC_TO_TEST}
+        main.cpp)
 
 set_target_properties(Test
-    PROPERTIES
-    DEBUG_POSTFIX "d"
-	PREFIX ""
-	)
+        PROPERTIES
+        DEBUG_POSTFIX "d"
+        PREFIX ""
+        )
 
 if (MSVC)
-	set_target_properties(Test PROPERTIES
-        LINK_FLAGS /SUBSYSTEM:CONSOLE)
+    set_target_properties(Test PROPERTIES
+            LINK_FLAGS /SUBSYSTEM:CONSOLE)
 endif()
 
 
@@ -106,22 +76,25 @@ endif()
 #####################################################################################################################
 
 unset(GTEST_LIB CACHE)
-find_library( GTEST_LIB
-	NAMES libgtest.a gtest.lib
-	PATHS ${GTDIR}/build/lib ${GTDIR}/build/lib/Release)
-target_link_libraries(Test optimized ${GTEST_LIB})
-	
+unset(GTESTD_LIB CACHE)
+
 if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR MSVC)
-	unset(GTESTD_LIB CACHE)
-	find_library( GTESTD_LIB
-		NAMES libgtestd.a gtestd.lib
-		PATHS ${GTDIR}/build/lib ${GTDIR}/build/lib/Debug)
-	target_link_libraries(Test debug ${GTESTD_LIB})
+find_library( GTESTD_LIB
+        NAMES libgtestd.a gtestd.lib
+        PATHS ${GTDIR}/build/lib ${GTDIR}/build/lib/Debug)
+target_link_libraries(Test debug ${GTESTD_LIB})
+endif()
+
+if (CMAKE_BUILD_TYPE STREQUAL "Release" OR MSVC)
+    find_library( GTEST_LIB
+            NAMES libgtest.a gtest.lib
+            PATHS ${GTDIR}/build/lib ${GTDIR}/build/lib/Release)
+    target_link_libraries(Test optimized ${GTEST_LIB})
 endif()
 target_link_libraries(Test ssc splinter)
 
 if (UNIX)
-	target_link_libraries(Test -ldl -lpthread)
+    target_link_libraries(Test -ldl -lpthread)
 endif()
 
 
@@ -132,14 +105,14 @@ endif()
 #####################################################################################################################
 
 if(MSVC)
-	set(TEST_DIR ${CMAKE_CURRENT_BINARY_DIR}/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
+    set(TEST_DIR ${CMAKE_CURRENT_BINARY_DIR}/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
 
 	foreach( file_i ${LIBCURL_FILES})
 		add_custom_command(
 		TARGET Test
 		POST_BUILD
 		COMMAND ${CMAKE_COMMAND}
-		ARGS -E copy $ENV{WEXDIR}/build_vs2017/libcurl_ssl_x64/bin/${file_i} ${TEST_DIR}
+		ARGS -E copy $ENV{WEXDIR}/build_resources/libcurl_ssl_x64/bin/${file_i} ${TEST_DIR}
 	)
 	endforeach( file_i )
 endif()

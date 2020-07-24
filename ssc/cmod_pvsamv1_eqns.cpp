@@ -1,4 +1,5 @@
 #include "cmod_pvsamv1_eqns.h"
+#include "cmod_utilityrate5_eqns.h"
 
 #include "vartab.h"
 
@@ -33,7 +34,7 @@ void map_optional_input(var_table* vt, const std::string& sam_name, var_table* r
     catch (std::runtime_error&) {
         sam_input = def_val;
     }
-    if (var_data* vd = reopt_table->lookup(reopt_name)){
+    if (reopt_table->lookup(reopt_name)){
         throw std::runtime_error(reopt_name + " variable already exists in 'reopt_table'.");
     }
     reopt_table->assign(reopt_name, sam_input);
@@ -62,7 +63,7 @@ SSCEXPORT void Reopt_size_battery_params(ssc_data_t data) {
     // use existing pv system from SAM, not allowing additional PV
     map_input(vt, "system_capacity", &reopt_pv, "existing_kw");
     map_input(vt, "system_capacity", &reopt_pv, "max_kw");
-    map_input(vt, "degradation", &reopt_pv, "degradation_pct", false, true);
+    map_optional_input(vt, "degradation", &reopt_pv, "degradation_pct", 0.5, true);
 
     map_optional_input(vt, "module_type", &reopt_pv, "module_type", 1);
 
@@ -218,86 +219,16 @@ SSCEXPORT void Reopt_size_battery_params(ssc_data_t data) {
     //
     // convert required utilityrate5 inputs
     //
-    map_input(vt, "ur_monthly_fixed_charge", &reopt_utility, "fixedmonthlycharge");
-
-    // schedule matrices are numbered starting with 1 for sam but 0 for reopt
-    std::vector<std::string> sam_sched_names = {"ur_dc_sched_weekday", "ur_dc_sched_weekend", "ur_ec_sched_weekday",
-                                                "ur_ec_sched_weekend"};
-    std::vector<std::string> reopt_sched_names = {"demandweekdayschedule", "demandweekendschedule",
-                                                  "energyweekdayschedule", "energyweekendschedule"};
-	util::matrix_t<double> mat;
-    int demand_n_tiers = 0, energy_n_tiers = 0;
-    for (size_t n = 0; n < sam_sched_names.size(); n++){
-        vt_get_matrix(vt, sam_sched_names[n], mat);
-        for (size_t i = 0; i < mat.nrows(); i++){
-            for (size_t j = 0; j < mat.ncols(); j++ ) {
-                mat.at(i, j) -= 1;
-                if (n < 2)
-                    demand_n_tiers = mat.at(i, j) > demand_n_tiers ? (int)mat.at(i, j) : demand_n_tiers;
-                else
-                    energy_n_tiers = mat.at(i, j) > energy_n_tiers ? (int)mat.at(i, j) : energy_n_tiers;
-            }
-        }
-        reopt_utility.assign(reopt_sched_names[n], var_data(mat));
-    }
-
-    // rate structures in sam are 2d arrays but are list of list of tables in reopt
-    std::vector<std::vector<var_data>> vd_mat;
-	vt_get_matrix(vt, "ur_dc_tou_mat", mat);
-    if (mat.nrows() < (size_t)demand_n_tiers){
-        throw std::runtime_error("Demand rate structure should have " + std::to_string(demand_n_tiers) + " tiers to match the provided schedule.");
-    }
-    for (size_t i = 0; i < mat.nrows(); i++){
-        std::vector<var_data> vd_vec;
-        double rate = mat.row(i)[3];
-        var_data rate_data;
-        rate_data.type = SSC_TABLE;
-        rate_data.table.assign("rate", rate);
-        vd_vec.push_back(rate_data);
-        vd_mat.push_back(vd_vec);
-    }
-    reopt_utility.assign("demandratestructure", vd_mat);
-    vd_mat.clear();
-
-	vt_get_matrix(vt, "ur_ec_tou_mat", mat);
-    if (mat.nrows() < (size_t)energy_n_tiers){
-        throw std::runtime_error("Energy rate structure should have " + std::to_string(demand_n_tiers) + " tiers to match the provided schedule.");
-    }
-    for (size_t i = 0; i < mat.nrows(); i++) {
-        std::vector<var_data> vd_vec;
-        double rate = mat.row(i)[4];
-        var_data rate_data;
-        rate_data.type = SSC_TABLE;
-        rate_data.table.assign("rate", rate);
-        rate_data.table.assign("unit", var_data("kWh"));
-        vd_vec.push_back(rate_data);
-        vd_mat.push_back(vd_vec);
-    }
-    reopt_utility.assign("energyratestructure", vd_mat);
-    vd_mat.clear();
-
-    ssc_number_t flatdemandmonths[12] = {0};
-    reopt_utility.assign("flatdemandmonths", var_data(flatdemandmonths, 12));
-
-	vt_get_matrix(vt, "ur_dc_flat_mat", mat);
-    for (size_t i = 0; i < mat.nrows(); i++){
-        std::vector<var_data> vd_vec;
-        double rate = mat.row(i)[3];
-        var_data rate_data;
-        rate_data.type = SSC_TABLE;
-        rate_data.table.assign("rate", rate);
-        vd_vec.push_back(rate_data);
-        vd_mat.push_back(vd_vec);
-    }
-    reopt_utility.assign("flatdemandstructure", vd_mat);
-    vd_mat.clear();
+    ElectricityRates_format_as_URDBv7(vt);
+    auto urdb_data = vt->lookup("urdb_data");
+    reopt_utility = urdb_data->table;
 
     //
     // convert financial inputs and set variables not modeled by SAM to 0
     //
     map_input(vt, "analysis_period", &reopt_fin, "analysis_years");
     map_input(vt, "rate_escalation", &reopt_fin, "escalation_pct", false, true);
-    map_input(vt, "value_of_lost_load", &reopt_fin, "value_of_lost_load_us_dollars_per_kwh");
+    map_optional_input(vt, "value_of_lost_load", &reopt_fin, "value_of_lost_load_us_dollars_per_kwh", 0);
     reopt_fin.assign("microgrid_upgrade_cost_pct", 0);
 
     vd = vt->lookup("federal_tax_rate");
@@ -307,7 +238,9 @@ SSCEXPORT void Reopt_size_battery_params(ssc_data_t data) {
     }
 
     vt_get_number(vt, "inflation_rate", &val1);
-    vt_get_number(vt, "real_discount_rate", &val2);
+    vd = vt->lookup("real_discount_rate");
+    if (vd) val2 = vd->num;
+    else val2 = 6.4;
     reopt_fin.assign("offtaker_discount_pct", (1 + val1/100.)*(1 + val2/100.) - 1);
 
     vd = vt->lookup("om_fixed_escal");
@@ -324,20 +257,20 @@ SSCEXPORT void Reopt_size_battery_params(ssc_data_t data) {
 
     // convert load profile inputs, which are not net loads
     vt_get_array_vec(vt, "load", vec);
-    if (vec.size() != 8760){
-        throw std::runtime_error("Load profile must have 8760 entries.");
+    if (vec.size() != 8760 && vec.size() != 8760 * 2 && vec.size() != 8760 * 4){
+        throw std::runtime_error("Load profile must be hourly, 30 min or 15 min data for a single year.");
     }
-    reopt_load.assign("loads_kw", var_data(&vec[0], 8760));
+    reopt_load.assign("loads_kw", var_data(&vec[0], vec.size()));
     reopt_load.assign("loads_kw_is_net", false);
 
 	vt_get_array_vec(vt, "crit_load", vec);
-    if (vec.size() != 8760){
-        throw std::runtime_error("Critical load profile must have 8760 entries.");
+    if (vec.size() != 8760 && vec.size() != 8760 * 2 && vec.size() != 8760 * 4){
+        throw std::runtime_error("Critical load profile must be hourly, 30 min or 15 min data for a single year.");
     }
     else{
         reopt_load.assign("critical_load_pct", 0.0);
     }
-    reopt_load.assign("critical_loads_kw", var_data(&vec[0], 8760));
+    reopt_load.assign("critical_loads_kw", var_data(&vec[0], vec.size()));
 
     // assign the reopt parameter table and log messages
     reopt_electric.assign_match_case("urdb_response", reopt_utility);

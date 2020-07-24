@@ -137,6 +137,11 @@ int C_monotonic_eq_solver::solve(S_xy_pair solved_pair_1, double x_guess_2, doub
     double x_guess_1 = solved_pair_1.x;
     double y1 = solved_pair_1.y;
 
+	ms_eq_tracker_temp.x = x_guess_1;
+	ms_eq_tracker_temp.y = y1;
+	ms_eq_tracker_temp.err_code = 0;
+	ms_eq_call_tracker.push_back(ms_eq_tracker_temp);
+
     // Check that x guesses fall with bounds (set during initialization)
     x_guess_2 = check_against_limits(x_guess_2);
 
@@ -163,6 +168,16 @@ int C_monotonic_eq_solver::solve(S_xy_pair solved_pair_1, S_xy_pair solved_pair_
 
 	double y1 = solved_pair_1.y;
 	double y2 = solved_pair_2.y;
+
+	ms_eq_tracker_temp.x = x_guess_1;
+	ms_eq_tracker_temp.y = y1;
+	ms_eq_tracker_temp.err_code = 0;
+	ms_eq_call_tracker.push_back(ms_eq_tracker_temp);
+
+	ms_eq_tracker_temp.x = x_guess_2;
+	ms_eq_tracker_temp.y = y2;
+	ms_eq_tracker_temp.err_code = 0;
+	ms_eq_call_tracker.push_back(ms_eq_tracker_temp);
 
 	return solver_core(x_guess_1, y1, x_guess_2, y2, y_target, x_solved, tol_solved, iter_solved);
 }
@@ -213,6 +228,11 @@ int C_monotonic_eq_solver::solve(std::vector<double> x_solved_vector, std::vecto
         xy_pair.x = x_solved_vector[i_high];
         xy_pair.y = y_solved_vector[i_high];
 
+		ms_eq_tracker_temp.x = xy_pair.x;
+		ms_eq_tracker_temp.y = xy_pair.y;
+		ms_eq_tracker_temp.err_code = 0;
+		ms_eq_call_tracker.push_back(ms_eq_tracker_temp);
+
         return solve(xy_pair, xy_pair.x*0.9, y_target, x_solved, tol_solved, iter_solved);
     }
     else if (i_high == -1)
@@ -220,6 +240,11 @@ int C_monotonic_eq_solver::solve(std::vector<double> x_solved_vector, std::vecto
         S_xy_pair xy_pair;
         xy_pair.x = x_solved_vector[i_low];
         xy_pair.y = y_solved_vector[i_low];
+
+		ms_eq_tracker_temp.x = xy_pair.x;
+		ms_eq_tracker_temp.y = xy_pair.y;
+		ms_eq_tracker_temp.err_code = 0;
+		ms_eq_call_tracker.push_back(ms_eq_tracker_temp);
 
         return solve(xy_pair, xy_pair.x*0.9, y_target, x_solved, tol_solved, iter_solved);
     }
@@ -229,9 +254,19 @@ int C_monotonic_eq_solver::solve(std::vector<double> x_solved_vector, std::vecto
         xy_pair1.x = x_solved_vector[i_high];
         xy_pair1.y = y_solved_vector[i_high];
 
+		ms_eq_tracker_temp.x = xy_pair1.x;
+		ms_eq_tracker_temp.y = xy_pair1.y;
+		ms_eq_tracker_temp.err_code = 0;
+		ms_eq_call_tracker.push_back(ms_eq_tracker_temp);
+
         S_xy_pair xy_pair2;
         xy_pair2.x = x_solved_vector[i_low];
         xy_pair2.y = y_solved_vector[i_low];
+
+		ms_eq_tracker_temp.x = xy_pair2.x;
+		ms_eq_tracker_temp.y = xy_pair2.y;
+		ms_eq_tracker_temp.err_code = 0;
+		ms_eq_call_tracker.push_back(ms_eq_tracker_temp);
 
         return solve(xy_pair1, xy_pair2, y_target, x_solved, tol_solved, iter_solved);
     }
@@ -901,7 +936,15 @@ double C_monotonic_eq_solver::call_mono_eq_calc_y_err(double x, double y_target)
 
 int C_monotonic_eq_solver::call_mono_eq(double x, double *y)
 {
-	ms_eq_tracker_temp.err_code = mf_mono_eq(x, y);
+    try
+    {
+        ms_eq_tracker_temp.err_code = mf_mono_eq(x, y);
+    }
+    catch (...)
+    {
+        *y = std::numeric_limits<double>::quiet_NaN();
+        ms_eq_tracker_temp.err_code = -99;
+    }
 
 	ms_eq_tracker_temp.x = x;
 	ms_eq_tracker_temp.y = *y;
@@ -925,7 +968,7 @@ bool C_monotonic_eq_solver::is_last_x_best(double & x_at_lowest, double y_target
             y_err = y_err / fabs(y_target);
 
         double min_abs_diff = fabs(y_err);
-        if (min_abs_diff < m_y_err || !std::isfinite(m_y_err))
+        if (min_abs_diff < std::fabs(m_y_err) || !std::isfinite(m_y_err))
         {
             x_at_lowest = s_eq_chars_min_abs_diff.x;
 

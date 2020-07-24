@@ -1,22 +1,22 @@
 /**
 BSD-3-Clause
 Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
 that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
 and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
 and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
 or promote products derived from this software without specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
@@ -117,7 +117,8 @@ public:
 	// control settings
 	double battery_power_to_fill();
 
-	message get_messages();
+	// test data
+	double battery_soc();
 
 	/// Return a pointer to the underlying calculated power quantities
 	BatteryPower * getBatteryPower();
@@ -149,16 +150,16 @@ protected:
 
 	double _dt_hour;
 
-	/** 
-	The dispatch mode. 
-	For behind-the-meter dispatch: 0 = LOOK_AHEAD, 1 = LOOK_BEHIND, 2 = MAINTAIN_TARGET, 3 = MANUAL
-	For front-of-meter dispatch: 0 = LOOK_AHEAD, 1 = LOOK_BEHIND, 2 = INPUT FORECAST, 3 = MANUAL
+	/**
+	The dispatch mode.
+	For behind-the-meter dispatch: 0 = LOOK_AHEAD, 1 = LOOK_BEHIND, 2 = MAINTAIN_TARGET, 3 = CUSTOM, 4 = MANUAL, 5 = RESILIENCE
+	For front-of-meter dispatch: 0 = LOOK_AHEAD, 1 = LOOK_BEHIND, 2 = INPUT FORECAST, 3 = CUSTOM, 4 = MANUAL, 5 = RESILIENCE
 	*/
-	int _mode; 
+	int _mode;
 
 	// allocated and managed internally
 	std::unique_ptr<BatteryPowerFlow> m_batteryPowerFlow;
-	
+
 	// managed by BatteryPowerFlow
 	BatteryPower * m_batteryPower;
 
@@ -174,8 +175,6 @@ protected:
 	bool _prev_charging;
 	bool _grid_recharge;
 
-	// messages
-	message _message;
 };
 
 /*
@@ -340,7 +339,7 @@ public:
 	virtual void update_dispatch(size_t hour_of_year, size_t step, size_t idx)=0;
 
 	/*! Pass in the PV power forecast */
-	virtual void update_pv_data(std::vector<double> P_pv_dc);
+	virtual void update_pv_data(std::vector<double> P_pv_ac);
 
 	/*! Pass in the user-defined dispatch power vector */
 	virtual void set_custom_dispatch(std::vector<double> P_batt_dc);
@@ -359,11 +358,11 @@ protected:
 	/*! Return the dispatch mode */
 	int get_mode();
 
-	/*! Full time-series of PV production [kW] */
-	double_vec _P_pv_dc;		
-	
+	/*! Full time-series of PV production [kW-ac] */
+	double_vec _P_pv_ac;
+
 	/*! The index of the current day (hour * steps_per_hour + step) */
-	size_t _day_index;				
+	size_t _day_index;
 
 	/*! The index of the current month (0-11) */
 	size_t _month;
@@ -376,12 +375,6 @@ protected:
 
 	/*! The index of year the dispatch was last updated */
 	size_t _hour_last_updated;
-
-	/*! The index of year the dispatch was last updated */
-	size_t _index_last_updated;
-
-	/*! The amount of indices to wait before updating */
-	size_t _d_index_update;
 
 	/*! The timestep in hours (hourly = 1, half_hourly = 0.5, etc) */
 	double _dt_hour;
@@ -468,7 +461,7 @@ public:
 	enum BTM_TARGET_MODES {TARGET_SINGLE_MONTHLY, TARGET_TIME_SERIES};
 
 protected:
-	
+
 	/*! Initialize with a pointer*/
 	void init_with_pointer(const dispatch_automatic_behind_the_meter_t * tmp);
 
@@ -480,23 +473,23 @@ protected:
 	void set_battery_power(FILE *p, bool debug);
 	void check_new_month(size_t hour_of_year, size_t step);
 
-	/*! Full time-series of loads [kW] */
-	double_vec _P_load_dc;
+	/*! Full time-series of loads [ac kW] */
+	double_vec _P_load_ac;
 
 	/*! Full time-series of target power [kW] */
-	double_vec _P_target_input; 
+	double_vec _P_target_input;
 
 	/*! Time series of length (24 hours * steps_per_hour) of target powers [kW] */
 	double_vec _P_target_use;
 
 	/*! The target grid power for the month [kW] */
-	double _P_target_month; 
+	double _P_target_month;
 
 	/*! The grid power target at the current time [kW] */
 	double _P_target_current;
 
 	/* Vector of length (24 hours * steps_per_hour) containing grid calculation [P_grid, hour, step] */
-	grid_vec grid; 
+	grid_vec grid;
 
 	/* Vector of length (24 hours * steps_per_hour) containing sorted grid calculation [P_grid, hour, step] */
 	grid_vec sorted_grid;
@@ -568,7 +561,7 @@ public:
 	void update_cliploss_data(double_vec P_cliploss);
 
 	/// Pass in the PV power forecast [kW]
-	virtual void update_pv_data(std::vector<double> P_pv_dc);
+	virtual void update_pv_data(std::vector<double> P_pv_ac);
 
 	/*! Calculate the cost to cycle */
 	void costToCycle();
@@ -584,7 +577,7 @@ public:
 
 
 protected:
-	
+
 	void init_with_pointer(const dispatch_automatic_front_of_meter_t* tmp);
 	void setup_cost_forecast_vector();
 

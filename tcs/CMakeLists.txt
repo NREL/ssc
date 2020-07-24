@@ -1,23 +1,8 @@
 #####################################################################################################################
 #
-# CMake and System Settings
+# Project Settings
 #
 #####################################################################################################################
-
-set(CMAKE_VERBOSE_MAKEFILE ON)
-
-if(APPLE)
-    set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
-endif()
-
-
-#####################################################################################################################
-#
-# Project Settings 
-#
-#####################################################################################################################
-
-Project(tcs)
 
 include_directories(. ../nlopt ../shared ../splinter ../lpsolve ../solarpilot)
 
@@ -111,6 +96,64 @@ set(TCS_SRC
 		sumprod.cpp
 		thermocline_tes.cpp
 		tou_translator.cpp
+		flat_plate_solar_collector.cpp
+		atmospheric_aod.h
+		cavity_calcs.h
+		co2props_nn1.h
+		co2_compressor_library.h
+		CO2_properties.h
+		co2_testing.h
+		csp_dispatch.h
+		csp_radiator.h
+		csp_solver_core.h
+		csp_solver_gen_collector_receiver.h
+		csp_solver_lf_dsg_collector_receiver.h
+		csp_solver_mspt_collector_receiver.h
+		csp_solver_mspt_receiver.h
+		csp_solver_mspt_receiver_222.h
+		csp_solver_pc_gen.h
+		csp_solver_pc_heat_sink.h
+		csp_solver_pc_Rankine_indirect_224.h
+		csp_solver_pc_sco2.h
+		csp_solver_pc_steam_heat_sink.h
+		csp_solver_pt_heliostatfield.h
+		csp_solver_pt_receiver.h
+		csp_solver_pt_sf_perf_interp.h
+		csp_solver_stratified_tes.h
+		csp_solver_tou_block_schedules.h
+		csp_solver_trough_collector_receiver.h
+		csp_solver_two_tank_tes.h
+		csp_solver_util.h
+		csp_system_costs.h
+		direct_steam_receivers.h
+		flat_plate_solar_collector.h
+		fmin.h
+		fmin_callbacks.h
+		heat_exchangers.h
+		htf_props.h
+		interconnect.h
+		interpolation_routines.h
+		ngcc_powerblock.h
+		nlopt_callbacks.h
+		numeric_solvers.h
+		powerblock.h
+		sam_csp_util.h
+		sco2_cycle_components.h
+		sco2_cycle_templates.h
+		sco2_partialcooling_cycle.h
+		sco2_pc_csp_int.h
+		sco2_power_cycle.h
+		sco2_recompression_cycle.h
+		sco2_rec_util.h
+		storage_hx.h
+		tcskernel.h
+		tcstype.h
+		tcs_debug.h
+		thermocline_tes.h
+		ud_power_cycle.h
+		user_defined_power_cycle.h
+		waterprop.h
+		water_properties.h
 )
 
 
@@ -120,34 +163,15 @@ set(TCS_SRC
 #
 #####################################################################################################################
 
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
-if(MSVC)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
-	add_compile_options(/MP /W0)
-    add_compile_definitions( __64BIT__ __WINDOWS__ _WINDOWS _CRT_SECURE_NO_WARNINGS LPWINAPP )
-    foreach (flag_var CMAKE_C_FLAGS_DEBUG CMAKE_CXX_FLAGS_DEBUG)
-		set(${flag_var} "${${flag_var}} /D_DEBUG" CACHE STRING "compile flags" FORCE)
-	endforeach()
-else(MSVC)
-	if (APPLE)
-		add_compile_options(-arch x86_64 -fno-common)
-  		add_definitions(-DWX_PRECOMP)
-	else()
-		add_definitions(-D__64BIT__)
-	endif()
-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11" )
-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-unknown-pragmas -Wno-sign-compare -Wno-unused-variable -Wno-uninitialized -Wno-int-to-pointer-cast ")
-	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-		add_compile_definitions(_DEBUG)
-	else()
-		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG" )
-	endif()
-endif(MSVC)
+set_default_compile_options()
+set_no_warnings()
+if (MSVC)
+    add_compile_options(/bigobj)
+endif ()
 
 
 #####################################################################################################################
-# 
+#
 # CMake Targets
 #
 #####################################################################################################################

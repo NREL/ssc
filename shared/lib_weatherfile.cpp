@@ -1,22 +1,22 @@
 /**
 BSD-3-Clause
 Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
 that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
 and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
 and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
 or promote products derived from this software without specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
@@ -36,7 +36,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CASECMP(a,b) _stricmp(a,b)
 #define CASENCMP(a,b,n) _strnicmp(a,b,n)
 #else
-#define CASECMP(a,b) strcasecmp(a,b) 
+#define CASECMP(a,b) strcasecmp(a,b)
 #define CASENCMP(a,b,n) strncasecmp(a,b,n)
 #endif
 
@@ -62,7 +62,7 @@ static std::string trimboth(std::string &buf)
 	const auto strRange = strEnd - strBegin + 1;
 	return buf.substr(strBegin, strRange);
 }
- 
+
 static std::vector<std::string> split(const std::string &buf, char delim = ',')
 {
 	std::string token;
@@ -423,6 +423,8 @@ weatherfile::weatherfile(const std::string &file, bool header_only)
 {
 	reset();
 	m_ok = open(file, header_only);
+	if (m_ok && !header_only)
+        start_hours_at_0();
 }
 
 weatherfile::~weatherfile()
@@ -532,7 +534,7 @@ bool weatherfile::timeStepChecks(int hdr_step_sec) {
 	else if (m_nRecords % 8784 == 0)
 	{
 		// Check if the weather file contains a leap day
-		// if so, correct the number of nrecords 
+		// if so, correct the number of nrecords
 		m_nRecords = m_nRecords / 8784 * 8760;
 		nmult = (int)m_nRecords / 8760;
 		m_stepSec = 3600 / nmult;
@@ -658,7 +660,7 @@ bool weatherfile::open(const std::string &file, bool header_only)
 	}
 	else if (m_type == EPW)
 	{
-		m_nRecords = 0; 
+		m_nRecords = 0;
 
 		while (getline(ifs, buf) && buf.length() > 0)
 			m_nRecords++;
@@ -757,7 +759,7 @@ bool weatherfile::open(const std::string &file, bool header_only)
 			if (m_nRecords % 8784 == 0)
 			{
 				// Check if the weather file contains a leap day
-				// if so, exit out with an error 
+				// if so, exit out with an error
 				m_message = "could not determine timestep in CSV weather file. Does the file contain a leap day?";
 				m_ok = false;
 				return false;
@@ -1362,6 +1364,13 @@ bool weatherfile::open(const std::string &file, bool header_only)
 					n_leap_data_removed++;
 					continue;
 				}
+
+				if (m_columns[MINUTE].data[i] > 59)
+				{
+					m_message = "minute column must contain integers from 0-59";
+					return false;
+				}
+
 				else
 					break;
 			}
@@ -1450,7 +1459,7 @@ bool weatherfile::open(const std::string &file, bool header_only)
 	if (m_type == EPW) {
 		for (size_t i = 0; i < m_nRecords; i++) {
 			for (int j = 5; j < 19; j++) {
-				if (j == 8 || j == 17 || j == 18 || j == 10) continue;	// EPW format does not contain 
+				if (j == 8 || j == 17 || j == 18 || j == 10) continue;	// EPW format does not contain
 				if (my_isnan(m_columns[j].data[i])) handle_missing_field(i, j);
 			}
 			if (m_columns[TWET].data[i] == -999.) m_columns[TWET].data[i] = (float)calc_twet((double)m_columns[TDRY].data[i], (double)m_columns[RH].data[i], (double)m_columns[PRES].data[i]);
@@ -1508,14 +1517,14 @@ bool weatherfile::read_average(weather_record *r, std::vector<int> &cols, size_t
 
 		// average columns requested
 		int start = (int)m_index - (int)num_timesteps / 2;
-		if (start < 0) 
+		if (start < 0)
 			start = 0;
 		if ((size_t)start + num_timesteps > m_nRecords)
 			start = (int)m_nRecords - (int)num_timesteps;
-		if (start < 0) 
+		if (start < 0)
 			start = 0;
 
-	
+
 		for (size_t i = 0; i < cols.size(); i++)
 		{
 			double col_val = 0;
@@ -1562,7 +1571,7 @@ bool weatherfile::read_average(weather_record *r, std::vector<int> &cols, size_t
 			case TDRY:
 				r->tdry = col_val;
 				break;
-			case TWET: 
+			case TWET:
 				r->twet = col_val;
 				break;
 			case TDEW:
@@ -1604,7 +1613,15 @@ bool weatherfile::read_average(weather_record *r, std::vector<int> &cols, size_t
 
 }
 
-
+void weatherfile::start_hours_at_0() {
+    auto& hours =  m_columns[HOUR].data;
+    auto max_hr = *std::max_element(hours.begin(), hours.end());
+    auto min_hr = *std::min_element(hours.begin(), hours.end());
+    if (max_hr - min_hr != 23)
+        m_message = "Weather file hour range was not (0-23) or (1-24)";
+    else if (max_hr == 24)
+        for (auto &i : hours) i -= 1.;
+}
 
 bool weatherfile::read( weather_record *r )
 {
@@ -1650,7 +1667,7 @@ bool weatherfile::convert_to_wfcsv( const std::string &input, const std::string 
 	util::stdfile fp( output, "w" );
 	if ( !fp.ok() ) return false;
 
-	weather_header hdr; 
+	weather_header hdr;
 	wf.header( &hdr );
 	weather_record rec;
 

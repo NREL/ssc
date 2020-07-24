@@ -10,6 +10,8 @@ GTEST_API_ int main(int argc, char **argv) {
 
 	printf("Running main() from gtest_main.cc\n");
 	testing::InitGoogleTest(&argc, argv);
+//	::testing::GTEST_FLAG(filter) = "CMTcsMoltenSalt*";
+//	::testing::GTEST_FLAG(filter) = "CMTroughPhysical*";
 //	  ::testing::GTEST_FLAG(filter) = "CMPvYieldTimo*";
 //	  ::testing::GTEST_FLAG(filter) = "splinterTests*";
 //	  ::testing::GTEST_FLAG(filter) = "SunsetCaseIrradProc*";
@@ -27,7 +29,10 @@ GTEST_API_ int main(int argc, char **argv) {
 //	::testing::GTEST_FLAG(filter) = "CMGrid*";
 //	::testing::GTEST_FLAG(filter) = "CMPvsamv1PowerIntegration_cmod_pvsamv1.DefaultNoFinancialModel";
 //	::testing::GTEST_FLAG(filter) = "CMPvsamv1PowerIntegration_cmod_pvsamv1.NoFinancialModelCustomWeatherFile";
+//	::testing::GTEST_FLAG(filter) = "URDBv7*";
 	
+
+
 
 	int status = RUN_ALL_TESTS();
 

@@ -30,6 +30,26 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 
+// P
+double Const_per_principal(double const_per_percent /*%*/, double total_installed_cost /*$*/) {		// [$]
+	return (const_per_percent / 100.) * total_installed_cost;
+}
+
+// I
+double Const_per_interest(double const_per_principal /*$*/, double const_per_interest_rate /*$*/,
+	double const_per_months /*months*/) {		// [$]
+	return const_per_principal * (const_per_interest_rate / 100.) / 12. * const_per_months / 2;
+}
+
+// F
+double Const_per_total(double const_per_interest /*$*/, double const_per_principal /*$*/,
+	double const_per_upfront_rate /*%*/) {		// [$]
+	
+	double up_front_fee = const_per_principal * (const_per_upfront_rate / 100.);
+	return const_per_interest + up_front_fee;
+}
+
+
 
 void save_cf(compute_module *cm, util::matrix_t<double>& mat, int cf_line, int m_nyears, const std::string &name)
 {

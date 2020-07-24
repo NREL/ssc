@@ -1,25 +1,8 @@
 #####################################################################################################################
 #
-# CMake and System Settings
+# Project Settings
 #
 #####################################################################################################################
-
-set(CMAKE_VERBOSE_MAKEFILE ON)
-
-cmake_minimum_required(VERSION 2.8)
-
-if(APPLE)
-    set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
-endif()
-
-
-#####################################################################################################################
-#
-# Project Settings 
-#
-#####################################################################################################################
-
-Project(tcsconsole)
 
 include_directories(. $ENV{WEXDIR}/include $ENV{LKDIR}/include ../tcs)
 
@@ -35,31 +18,8 @@ set(TCSCONSOLE_SRC
 #
 #####################################################################################################################
 
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
-if(MSVC)
-	add_compile_options(/W3 /MP)
-    add_compile_definitions( LK_USE_WXWIDGETS _CRT_SECURE_NO_DEPRECATE=1)
-	add_compile_definitions(_CRT_NON_CONFORMING_SWPRINTFS=1 _SCL_SECURE_NO_WARNINGS=1)
-	add_compile_definitions(__WXMSW__ _UNICODE NOPCH)
-	foreach (flag_var CMAKE_C_FLAGS_DEBUG CMAKE_CXX_FLAGS_DEBUG)
-		set(${flag_var} "${${flag_var}} /D_DEBUG" CACHE STRING "compile flags" FORCE)
-	endforeach()
-else(MSVC)
-	if (APPLE)
-		add_compile_options(-arch x86_64)
-		add_definitions(-D__WXOSX__)
-	else()
-		add_definitions(-D__64BIT__)
-	endif()
-	add_compile_options(-Wall -Wno-unknown-pragmas -fno-common -std=c++11)
-	add_definitions(-DLK_USE_WXWIDGETS -DWX_PRECOMP )
-	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-		add_compile_definitions(_DEBUG)
-	else()
-		add_compile_options(-O3 -DNDEBUG)
-	endif()
-endif(MSVC)
+set_default_compile_options()
+set_tools_compile_options()
 
 #####################################################################################################################
 #
@@ -78,19 +38,19 @@ include(${wxWidgets_USE_FILE})
 
 
 #####################################################################################################################
-# 
+#
 # CMake Targets
 #
 #####################################################################################################################
 
 # Setup Application
 if (APPLE)
-	set(MACOSX_BUNDLE_ICON_FILE ${CMAKE_CURRENT_SOURCE_DIR}/../build_osx/TCSConsole.icns)
-	set(TCSCONSOLE_ICON ${CMAKE_CURRENT_SOURCE_DIR}/../build_osx/TCSConsole.icns)
+	set(MACOSX_BUNDLE_ICON_FILE ${CMAKE_CURRENT_SOURCE_DIR}/../build_resources/TCSConsole.icns)
+	set(TCSCONSOLE_ICON ${CMAKE_CURRENT_SOURCE_DIR}/../build_resources/TCSConsole.icns)
 	set_source_files_properties(${TCSCONSOLE_ICON} PROPERTIES
 		MACOSX_PACKAGE_LOCATION "Resources")
 elseif(WIN32)
-	#set(TCSCONSOLE_ICON ${CMAKE_CURRENT_SOURCE_DIR}/../build_vs2013/TCSConsole.rc)
+	#set(TCSCONSOLE_ICON ${CMAKE_CURRENT_SOURCE_DIR}/../build_resources/TCSConsole.rc)
 endif()
 
 add_executable(TCSConsole
@@ -106,7 +66,7 @@ set_target_properties(TCSConsole
 
 if (APPLE)
 	set_target_properties(TCSConsole PROPERTIES
-		MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/../build_osx/Info-TCSConsole.plist
+		MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/../build_resources/Info-TCSConsole.plist
 	)
 endif()
 
@@ -122,38 +82,32 @@ endif()
 #
 #####################################################################################################################
 
-set( DEPENDENCIES
-		tcs
-		nlopt
-		solarpilot
-		shared
-		splinter)
-foreach( name ${DEPENDENCIES} )
-	target_link_libraries(TCSConsole ${name})
-endforeach()
+target_link_libraries(TCSConsole ssc)
 
 if (${CMAKE_PROJECT_NAME} STREQUAL system_advisor_model)
 	target_link_libraries(TCSConsole wex lk)
 else()
-	unset(WEX_LIB CACHE)
-	unset(LK_LIB CACHE)
-	find_library( WEX_LIB
-			NAMES wex.a wex.lib
-			PATHS $ENV{WEXDIR}/build $ENV{WEXDIR}/build/Release)
-	find_library( LK_LIB
-			NAMES lk.a lk.lib
-			PATHS $ENV{LKDIR}/build $ENV{LKDIR}/build/Release)
-	target_link_libraries(TCSConsole optimized ${WEX_LIB} optimized ${LK_LIB})
-		
+    if (CMAKE_BUILD_TYPE STREQUAL "Release" OR MSVC)
+        unset(WEX_LIB CACHE)
+        unset(LK_LIB CACHE)
+        find_library( WEX_LIB
+                NAMES wex.a wex.lib
+                PATHS $ENV{WEX_LIB} $ENV{WEXDIR}/build $ENV{WEXDIR}/build/Release $ENV{CMAKEBUILDDIR}/wex/Release)
+        find_library( LK_LIB
+                NAMES lk.a lk.lib
+                PATHS $ENV{LK_LIB} $ENV{LKDIR}/build $ENV{LKDIR}/build/Release $ENV{CMAKEBUILDDIR}/lk/Release)
+        target_link_libraries(TCSConsole optimized ${WEX_LIB} optimized ${LK_LIB})
+    endif()
+
 	if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR MSVC)
 		unset(LKD_LIB CACHE)
 		unset(WEXD_LIB CACHE)
 		find_library( WEXD_LIB
 				NAMES wexd.a wexd.lib
-				PATHS $ENV{WEXDIR}/build $ENV{WEXDIR}/build/Debug)
+				PATHS $ENV{WEXD_LIB} $ENV{WEXDIR}/build $ENV{WEXDIR}/build/Debug $ENV{CMAKEBUILDDIR}/wex/Debug)
 		find_library( LKD_LIB
 				NAMES lkd.a lkd.lib
-				PATHS $ENV{LKDIR}/build $ENV{LKDIR}/build/Debug)
+				PATHS $ENV{LKD_LIB} $ENV{LKDIR}/build $ENV{LKDIR}/build/Debug $ENV{CMAKEBUILDDIR}/lk/Debug)
 		target_link_libraries(TCSConsole debug ${WEXD_LIB} debug ${LKD_LIB})
 	endif()
 endif()
@@ -165,7 +119,7 @@ if (UNIX)
 elseif (MSVC)
 	find_library( CURL_LIB
 			NAMES libcurl.lib
-			PATHS $ENV{WEXDIR}/build_vs2017/libcurl_ssl_x64/lib)
+			PATHS $ENV{WEXDIR}/build_resources/libcurl_ssl_x64/lib)
 	target_link_libraries(TCSConsole ${CURL_LIB})
 	target_link_libraries(TCSConsole Winhttp)
 endif()
@@ -200,7 +154,7 @@ if(MSVC)
 		TARGET TCSConsole
 		POST_BUILD
 		COMMAND ${CMAKE_COMMAND}
-		ARGS -E copy $ENV{WEXDIR}/build_vs2017/libcurl_ssl_x64/bin/${file_i} ${TCSCONSOLE_DIR}
+		ARGS -E copy $ENV{WEXDIR}/build_resources/libcurl_ssl_x64/bin/${file_i} ${TCSCONSOLE_DIR}
 	)
 	endforeach( file_i )
 endif()
