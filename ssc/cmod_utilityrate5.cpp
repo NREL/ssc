@@ -3073,7 +3073,7 @@ public:
 								// time step buy rates
 								if (as_boolean("ur_en_ts_buy_rate")) {
 									if (c < m_ec_ts_buy_rate.size()) {
-										tier_charge = m_ec_ts_buy_rate[c] * tier_energy;
+										tier_charge = m_ec_ts_buy_rate[c] * tier_energy * rate_esc;
 									}
 								}
 
