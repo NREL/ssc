@@ -355,9 +355,10 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
         // Heliostat field
     { SSC_INPUT,     SSC_NUMBER, "is_field_tracking_init",             "Is heliostat field tracking? (1 = true)",                                                                                                 "-",            "",                                  "System Control",                           "",                                                                 "",              "" },
 
-    { SSC_INPUT,     SSC_NUMBER, "is_rec_on_initial",                  "Is receiver initially on?",                                                                                                               "-",            "",                                  "System Control",                           "?=0",                                                              "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "is_rec_startup_initial",             "Is receiver initially starting up?",                                                                                                      "-",            "",                                  "System Control",                           "?=0",                                                              "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "rec_startup_energy_initial",         "Receiver accumulated startup inventory ",                                                                                                 "MWht",         "",                                  "System Control",                           "?=0",                                                              "",              ""},
+        // Receiver
+    { SSC_INPUT,     SSC_NUMBER, "rec_op_mode_initial",                "Initial receiver operating mode 0: off, 1: startup, 2: on",                                                                               "-",            "",                                  "System Control",                           "",                                                                 "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "rec_startup_time_remain_init",       "Initial receiver startup time remaining",                                                                                                 "hr",           "",                                  "System Control",                           "",                                                                 "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "rec_startup_energy_remain_init",     "Initial receiver startup energy remaining",                                                                                               "W-hr",         "",                                  "System Control",                           "",                                                                 "",              "" },
 
         // Power cycle
     { SSC_INPUT,     SSC_NUMBER, "pc_op_mode_initial",                 "Initial cycle operation mode 0:startup, 1:on, 2:standby, 3:off, 4:startup_controlled",                                                    "-",            "",                                  "System Control",                           "",                                                                 "",              ""},
@@ -674,6 +675,12 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     // Final component states (for use in subsequent calls to this cmod as values for "Optional Component Initialization" inputs above
         // Heliostat field
     { SSC_OUTPUT,    SSC_NUMBER, "is_field_tracking_final",            "Final heliostat field operation is tracking? (1 = true)",                                                                                           "-",            "",                                  "System Control",                           "",                                                                 "",              "" },
+
+        // Receiver
+    { SSC_OUTPUT,    SSC_NUMBER, "rec_op_mode_final",                  "Final receiver operating mode 0: off, 1: startup, 2: on",                                                                               "-",            "",                                  "System Control",                           "",                                                                 "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "rec_startup_time_remain_final",      "Final receiver startup time remaining",                                                                                                 "hr",           "",                                  "System Control",                           "",                                                                 "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "rec_startup_energy_remain_final",    "Final receiver startup energy remaining",                                                                                               "W-hr",         "",                                  "System Control",                           "",                                                                 "",              "" },
+
         // Power cycle
     { SSC_OUTPUT,    SSC_NUMBER, "pc_op_mode_final",                   "Final cycle operation mode 0:startup, 1:on, 2:standby, 3:off, 4:startup_controlled",                                                      "-",            "",                                  "System Control",                           "",                                                                 "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "pc_startup_time_remain_final",       "Final cycle startup time remaining",                                                                                                      "hr",           "",                                  "System Control",                           "",                                                                 "",              "" },
@@ -1717,7 +1724,6 @@ public:
         }
 
         std::unique_ptr<C_pt_receiver> receiver;
-
         if (!as_boolean("is_rec_model_trans") && !as_boolean("is_rec_startup_trans")) {
             //std::unique_ptr<C_mspt_receiver_222> ss_receiver = std::make_unique<C_mspt_receiver_222>();   // new to C++14
             std::unique_ptr<C_mspt_receiver_222> ss_receiver = std::unique_ptr<C_mspt_receiver_222>(new C_mspt_receiver_222());   // steady-state receiver
@@ -1745,12 +1751,21 @@ public:
 			ss_receiver->m_csky_frac = as_double("rec_clearsky_fraction");
 
             ss_receiver->m_mode_initial = C_csp_collector_receiver::OFF;
-            if (as_boolean("is_rec_on_initial"))
-                ss_receiver->m_mode_initial = C_csp_collector_receiver::ON;
-            if (as_boolean("is_rec_startup_initial"))
-            {
-                ss_receiver->m_mode_initial = C_csp_collector_receiver::STARTUP;
-                ss_receiver->m_E_su_accum_init = as_double("rec_startup_energy_initial");
+            if (is_assigned("rec_op_mode_initial")) {
+                ss_receiver->m_mode_initial = (C_csp_collector_receiver::E_csp_cr_modes) as_integer("rec_op_mode_initial");
+
+                if (is_assigned("rec_startup_time_remain_init")) {
+                    ss_receiver->m_t_su_init = as_double("rec_startup_time_remain_init");
+                }
+                else {
+                    ss_receiver->m_t_su_init = std::numeric_limits<double>::quiet_NaN();
+                }
+                if (is_assigned("rec_startup_energy_remain_init")) {
+                    ss_receiver->m_E_su_init = as_double("rec_startup_energy_remain_init");
+                }
+                else {
+                    ss_receiver->m_E_su_init = std::numeric_limits<double>::quiet_NaN();
+                }
             }
 
             receiver = std::move(ss_receiver);
@@ -2805,6 +2820,18 @@ public:
         heliostatfield.get_converged(b_is_field_tracking_final);
         ssc_number_t is_field_tracking_final = (bool)b_is_field_tracking_final;
         assign("is_field_tracking_final", is_field_tracking_final);
+
+            // Receiver
+        C_csp_collector_receiver::E_csp_cr_modes rec_op_mode_final;
+        double rec_startup_time_remain_final, rec_startup_energy_remain_final;
+        rec_startup_time_remain_final = rec_startup_energy_remain_final = std::numeric_limits<double>::quiet_NaN();
+        if (!as_boolean("is_rec_model_trans") && !as_boolean("is_rec_startup_trans")) {
+            receiver->get_converged_values(rec_op_mode_final,
+                rec_startup_energy_remain_final, rec_startup_time_remain_final);
+        }
+        assign("rec_op_mode_final", (ssc_number_t) rec_op_mode_final);
+        assign("rec_startup_time_remain_final", (ssc_number_t)rec_startup_time_remain_final);
+        assign("rec_startup_energy_remain_final", (ssc_number_t)rec_startup_energy_remain_final);
 
             // Power cycle
         C_csp_power_cycle::E_csp_power_cycle_modes pc_op_mode_final;

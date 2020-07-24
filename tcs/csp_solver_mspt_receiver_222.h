@@ -51,12 +51,6 @@ private:
 	double m_eta_field_iter_prev;	//[-] Efficiency from heliostat on last iteration. Maybe change if CR gets defocus signal from controller
 	double m_tol_od;
 
-	/* declare storage variables here */
-	double m_E_su;
-	double m_E_su_prev;
-	double m_t_su;
-	double m_t_su_prev;
-
 	util::matrix_t<int> m_flow_pattern;
 	int m_n_lines;
 
@@ -180,7 +174,9 @@ public:
 	double m_A_sf;					//[m2]
 
 	C_csp_collector_receiver::E_csp_cr_modes m_mode_initial;
-	double m_E_su_accum_init;    //Initial accumulated startup energy [MWht]
+    double m_E_su_init;             //[W-hr] Initial startup energy
+    double m_t_su_init;             //[hr] Startup time requirement
+    //double m_E_su_accum_init;    //Initial accumulated startup energy [MWht]
 
 	// 8.10.2015 twn: add tower piping thermal losses to receiver performance
 	double m_pipe_loss_per_m;		//[Wt/m]

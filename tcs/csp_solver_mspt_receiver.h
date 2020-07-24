@@ -74,12 +74,6 @@ private:
 	double m_eta_field_iter_prev;	//[-] Efficiency from heliostat on last iteration. Maybe change if CR gets defocus signal from controller
 	double m_tol_od;
 
-	/* declare storage variables here */
-	double m_E_su;
-	double m_E_su_prev;
-	double m_t_su;
-	double m_t_su_prev;
-
 	util::matrix_t<int> m_flow_pattern;
 	int m_n_lines;
 
