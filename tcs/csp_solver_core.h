@@ -408,7 +408,7 @@ public:
 	{	
 	  	double m_field_control =		//[-] Defocus signal from controller (can PC and TES accept all receiver output?)
 		  std::numeric_limits<double>::quiet_NaN();
-	  	int m_input_operation_mode = -1;	//[-]
+	  	C_csp_collector_receiver::E_csp_cr_modes m_input_operation_mode = OFF;	//[-]
 	  	double m_adjust = 			//[-] Field availability / adjustment factor
 		  std::numeric_limits<double>::quiet_NaN();
 	};

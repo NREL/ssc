@@ -2,7 +2,7 @@
 *  Copyright 2017 Alliance for Sustainable Energy, LLC
 *
 *  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (ìAllianceî) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  (‚ÄúAlliance‚Äù) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
 *  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
 *  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
 *  copies to the public, perform publicly and display publicly, and to permit others to do so.
@@ -26,8 +26,8 @@
 *  4. Redistribution of this software, without modification, must refer to the software by the same
 *  designation. Redistribution of a modified version of this software (i) may not refer to the modified
 *  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as ìSystem Advisor Modelî or ìSAMî. Except
-*  to comply with the foregoing, the terms ìSystem Advisor Modelî, ìSAMî, or any confusingly similar
+*  the underlying software originally provided by Alliance as ‚ÄúSystem Advisor Model‚Äù or ‚ÄúSAM‚Äù. Except
+*  to comply with the foregoing, the terms ‚ÄúSystem Advisor Model‚Äù, ‚ÄúSAM‚Äù, or any confusingly similar
 *  designation may not be used to refer to any modified version of this software or any modified
 *  version of the underlying software originally provided by Alliance without the prior written consent
 *  of Alliance.
@@ -85,13 +85,13 @@ public:
     struct S_inputs
     {
         double m_field_eff;					                //[-] = (irradiance on receiver) / (I_bn * area of all heliostats)
-        int m_input_operation_mode;			                //[-] operating mode of collector receiver, corresponding to enum C_csp_collector_receiver::E_csp_cr_modes
+        C_csp_collector_receiver::E_csp_cr_modes m_input_operation_mode;			                //[-] operating mode of collector receiver, corresponding to enum C_csp_collector_receiver::E_csp_cr_modes
         const util::matrix_t<double> *m_flux_map_input;		//[-] flux values for each receiver surface node, as fraction of an evenly distributed irradiance
 
         S_inputs()
         {
             m_field_eff = std::numeric_limits<double>::quiet_NaN();
-            m_input_operation_mode = -1;
+            m_input_operation_mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;
         }
     };
 
@@ -182,8 +182,8 @@ protected:
     HTFProperties ambient_air;			// ambient air properties
 
     double m_m_dot_htf_des;             //[kg/s] receiver HTF mass flow at design
-    int m_mode;                         //[-] current operating mode of receiver
-    int m_mode_prev;                    //[-] operating mode of receiver at end of last converged timestep
+    C_csp_collector_receiver::E_csp_cr_modes m_mode;                         //[-] current operating mode of receiver
+    C_csp_collector_receiver::E_csp_cr_modes m_mode_prev;                    //[-] operating mode of receiver at end of last converged timestep
 
     std::string error_msg;              // member string for exception messages
 	
