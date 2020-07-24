@@ -490,17 +490,11 @@ public:
 
 	struct S_csp_cr_inputs
 	{	
-		double m_field_control;			//[-] Defocus signal from controller (can PC and TES accept all receiver output?)
-		int m_input_operation_mode;		//[-]
-        double m_adjust;                //[-] Field availability / adjustment factor
-
-		S_csp_cr_inputs()
-		{
-			m_field_control = std::numeric_limits<double>::quiet_NaN();
-			m_adjust = std::numeric_limits<double>::quiet_NaN();
-
-			m_input_operation_mode = -1;
-		}
+	  	double m_field_control =		//[-] Defocus signal from controller (can PC and TES accept all receiver output?)
+		  std::numeric_limits<double>::quiet_NaN();
+	  	C_csp_collector_receiver::E_csp_cr_modes m_input_operation_mode = OFF;	//[-]
+	  	double m_adjust = 			//[-] Field availability / adjustment factor
+		  std::numeric_limits<double>::quiet_NaN();
 	};
 	
 	struct S_csp_cr_out_solver

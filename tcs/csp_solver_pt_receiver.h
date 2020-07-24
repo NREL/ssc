@@ -85,13 +85,13 @@ public:
     struct S_inputs
     {
         double m_field_eff;					                //[-] = (irradiance on receiver) / (I_bn * area of all heliostats)
-        int m_input_operation_mode;			                //[-] operating mode of collector receiver, corresponding to enum C_csp_collector_receiver::E_csp_cr_modes
+        C_csp_collector_receiver::E_csp_cr_modes m_input_operation_mode;			                //[-] operating mode of collector receiver, corresponding to enum C_csp_collector_receiver::E_csp_cr_modes
         const util::matrix_t<double> *m_flux_map_input;		//[-] flux values for each receiver surface node, as fraction of an evenly distributed irradiance
 
         S_inputs()
         {
             m_field_eff = std::numeric_limits<double>::quiet_NaN();
-            m_input_operation_mode = -1;
+            m_input_operation_mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;
         }
     };
 
@@ -184,8 +184,8 @@ protected:
     HTFProperties ambient_air;			// ambient air properties
 
     double m_m_dot_htf_des;             //[kg/s] receiver HTF mass flow at design
-    int m_mode;                         //[-] current operating mode of receiver
-    int m_mode_prev;                    //[-] operating mode of receiver at end of last converged timestep
+    C_csp_collector_receiver::E_csp_cr_modes m_mode;                         //[-] current operating mode of receiver
+    C_csp_collector_receiver::E_csp_cr_modes m_mode_prev;                    //[-] operating mode of receiver at end of last converged timestep
 
     std::string error_msg;              // member string for exception messages
 	
