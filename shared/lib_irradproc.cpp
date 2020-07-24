@@ -1213,6 +1213,7 @@ void calculate_eot_and_sun_rise_transit_set(double jme, double tz, double alpha,
 	jd_array[1] = julian_day(year, month, day, 0, 0, 0, 0, 0); //initialize Julian array with day in question (0 UT (0h0mm0s0tz)
 	//run calculate_spa to obtain apparent sidereal time at Greenwich at 0 UT (v, degrees)
 	calculate_spa(jd_array[1], lat, lng, alt, pressure, temp, 67, tilt, azm_rotation, sun_declination_and_ascension, needed_values_nu); 
+	double delta_test = sun_declination_and_ascension[1];
 	double nu = needed_values_nu[4]; //store apparent sidereal time at Greenwich
 	jd_array[0] = jd_array[1] - 1; //Julian day for the day prior to the day in question
 	jd_array[2] = jd_array[1] + 1; //Julian day for the day following the day in question
@@ -1225,9 +1226,12 @@ void calculate_eot_and_sun_rise_transit_set(double jme, double tz, double alpha,
 	
 	double m0 = approx_sun_transit_time(alpha_array[1], lng, nu); //approximate sun transit time (fraction of day)
 	//double atmos_refract = 0.5667; //fillin
-	double h0_prime = -0.8333; //sun elevation for sunrise and sunset
+	//double h0_prime = -0.8333; //sun elevation for sunrise and sunset
+	double h0_prime = 0;
 	//double h0_prime = -1 * (0.26667 + atmos_refract);
-	double h0 = sun_hour_angle_at_rise_set(lat, delta_array[1], h0_prime); //sun hour angle correpsonding to sun elevation at sunrise/sunset (degrees) limited to 0-180°
+	//double h0 = sun_hour_angle_at_rise_set(lat, delta_array[1], h0_prime); //sun hour angle correpsonding to sun elevation at sunrise/sunset (degrees) limited to 0-180°
+	double h0 = sun_hour_angle_at_rise_set(lat, delta_test, h0_prime); //sun hour angle correpsonding to sun elevation at sunrise/sunset (degrees) limited to 0-180°
+
 
 	double approx_times_array[3]; //store approximate sun transit (solar noon) (m0), sunrise (m1), and sunset (m2) times
 	approx_times_array[0] = m0; //approximate sun transit time
@@ -1239,8 +1243,8 @@ void calculate_eot_and_sun_rise_transit_set(double jme, double tz, double alpha,
 	double h_rts_array[3]; //sun altitude storage array for time i (0-transit, 1-sunrise, 2-sunset)
 	if (h0 > 0) { //check for valid values of local hour angle h0
 		approx_sun_rise_and_set(h0, approx_times_array); //calculate the approximate sun transit, sunrise, sunset (each limited between 0-1)
-		//needed_values[1] = dayfrac_to_local_hr(approx_times_array[1],tz); //pass approximate sunrise time to the solarpos_spa outputs 
-		//needed_values[2] = dayfrac_to_local_hr(approx_times_array[2],tz); //pass approximate sunset time to the solarpos_spa outputs
+		needed_values[1] = dayfrac_to_local_hr(approx_times_array[1],tz); //pass approximate sunrise time to the solarpos_spa outputs 
+		needed_values[2] = dayfrac_to_local_hr(approx_times_array[2],tz); //pass approximate sunset time to the solarpos_spa outputs
 
 		for (i = 0; i < 3; i++) {
 
@@ -1262,9 +1266,14 @@ void calculate_eot_and_sun_rise_transit_set(double jme, double tz, double alpha,
 
 		double suntransit = dayfrac_to_local_hr(m0 - h_prime_array[0] / 360, tz); //sun transit (fraction of day)
 		double sunrise = dayfrac_to_local_hr(sun_rise_and_set(approx_times_array, h_rts_array, delta_prime_array, lat, h_prime_array, h0_prime, 1), tz); //sunrise (fraction of day)
-		needed_values[1] = sunrise;
+		//double sunrise = 12.0 - (h0 / DTOR) / 15.0 - (lng / 15.0 - tz) - E;
+		//needed_values[1] = sunrise - (lng/ 15.0) - E/60; //sunrise in local standard time
+		//needed_values[1] = sunrise;
+		
 		double sunset = dayfrac_to_local_hr(sun_rise_and_set(approx_times_array, h_rts_array, delta_prime_array, lat, h_prime_array, h0_prime, 2), tz); //sunset (fraction of day)
-		needed_values[2] = sunset;
+		//double sunset = 12.0 + (h0 / DTOR) / 15.0 - (lng / 15.0 - tz) - E;
+		//needed_values[2] = sunset;//sunrise in local standard time
+		
 
 	}
 	else {
