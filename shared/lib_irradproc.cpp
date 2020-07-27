@@ -1054,8 +1054,17 @@ double sun_hour_angle_at_rise_set(double latitude, double delta_zero, double h0_
 	double argument = (sin(DTOR*(h0_prime)) - sin(latitude_rad) * sin(delta_zero_rad)) /
 		(cos(latitude_rad) * cos(delta_zero_rad));
 
-	//if (fabs(argument) <= 1) h0 = limit_degrees180(RTOD*(acos(argument)));
-	h0 = limit_degrees180(RTOD * (acos(argument)));
+	if (fabs(argument) <= 1)
+	{
+		h0 = limit_degrees180(RTOD * (acos(argument)));
+	}
+	else
+	{
+
+	}
+	
+	
+	//h0 = limit_degrees180(RTOD * (acos(argument)));
 
 	return h0;
 }
@@ -1226,8 +1235,8 @@ void calculate_eot_and_sun_rise_transit_set(double jme, double tz, double alpha,
 	
 	double m0 = approx_sun_transit_time(alpha_array[1], lng, nu); //approximate sun transit time (fraction of day)
 	//double atmos_refract = 0.5667; //fillin
-	//double h0_prime = -0.8333; //sun elevation for sunrise and sunset
-	double h0_prime = 0;
+	double h0_prime = -0.8333; //sun elevation for sunrise and sunset
+	//double h0_prime = 0;
 	//double h0_prime = -1 * (0.26667 + atmos_refract);
 	//double h0 = sun_hour_angle_at_rise_set(lat, delta_array[1], h0_prime); //sun hour angle correpsonding to sun elevation at sunrise/sunset (degrees) limited to 0-180°
 	double h0 = sun_hour_angle_at_rise_set(lat, delta_test, h0_prime); //sun hour angle correpsonding to sun elevation at sunrise/sunset (degrees) limited to 0-180°
@@ -1243,8 +1252,8 @@ void calculate_eot_and_sun_rise_transit_set(double jme, double tz, double alpha,
 	double h_rts_array[3]; //sun altitude storage array for time i (0-transit, 1-sunrise, 2-sunset)
 	if (h0 > 0) { //check for valid values of local hour angle h0
 		approx_sun_rise_and_set(h0, approx_times_array); //calculate the approximate sun transit, sunrise, sunset (each limited between 0-1)
-		needed_values[1] = dayfrac_to_local_hr(approx_times_array[1],tz); //pass approximate sunrise time to the solarpos_spa outputs 
-		needed_values[2] = dayfrac_to_local_hr(approx_times_array[2],tz); //pass approximate sunset time to the solarpos_spa outputs
+		//needed_values[1] = dayfrac_to_local_hr(approx_times_array[1],tz); //pass approximate sunrise time to the solarpos_spa outputs 
+		//needed_values[2] = dayfrac_to_local_hr(approx_times_array[2],tz); //pass approximate sunset time to the solarpos_spa outputs
 
 		for (i = 0; i < 3; i++) {
 
@@ -1268,11 +1277,11 @@ void calculate_eot_and_sun_rise_transit_set(double jme, double tz, double alpha,
 		double sunrise = dayfrac_to_local_hr(sun_rise_and_set(approx_times_array, h_rts_array, delta_prime_array, lat, h_prime_array, h0_prime, 1), tz); //sunrise (fraction of day)
 		//double sunrise = 12.0 - (h0 / DTOR) / 15.0 - (lng / 15.0 - tz) - E;
 		//needed_values[1] = sunrise - (lng/ 15.0) - E/60; //sunrise in local standard time
-		//needed_values[1] = sunrise;
+		needed_values[1] = sunrise;
 		
 		double sunset = dayfrac_to_local_hr(sun_rise_and_set(approx_times_array, h_rts_array, delta_prime_array, lat, h_prime_array, h0_prime, 2), tz); //sunset (fraction of day)
 		//double sunset = 12.0 + (h0 / DTOR) / 15.0 - (lng / 15.0 - tz) - E;
-		//needed_values[2] = sunset;//sunrise in local standard time
+		needed_values[2] = sunset;//sunrise in local standard time
 		
 
 	}
@@ -1282,7 +1291,9 @@ void calculate_eot_and_sun_rise_transit_set(double jme, double tz, double alpha,
 		double sta = -99999;
 		double suntransit = -99999;
 		double sunrise = -99999;
+		needed_values[1] = sunrise;
 		double sunset = -99999;
+		needed_values[2] = sunset;
 	}
 }
 
