@@ -427,14 +427,34 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             if (cnt == 1)
             {
                 for (i = 0; i < nyears; i++)
-                    cycle_cost[i] = (ssc_number_t)pow((double)(inflation_rate + 1 + parr[0] * 0.01), (double)i);
+                    cycle_cost[i] = parr[0] * (ssc_number_t)pow((double)(inflation_rate + 1), (double)i);
             }
             else
             {
                 for (i = 0; i < nyears; i++)
-                    cycle_cost[i] = (ssc_number_t)(1 + parr[i] * 0.01);
+                    cycle_cost[i] = parr[i];
             }
             batt_vars->batt_cycle_cost = cycle_cost;
+
+            
+            // Battery bank replacement
+            if (vt.is_assigned("om_replacement_cost1"))
+            {
+                std::vector<ssc_number_t> replacement_cost(nyears);
+                parr = vt.as_array("om_replacement_cost1", &cnt);
+                if (cnt == 1)
+                {
+                    for (i = 0; i < nyears; i++)
+                        replacement_cost[i] = parr[0] * (ssc_number_t)pow((double)(inflation_rate + 1), (double)i);
+                }
+                else {
+                    for (i = 0; i < nyears; i++)
+                        replacement_cost[i] = parr[i];
+                }
+                batt_vars->batt_cost_per_kwh = replacement_cost;
+            }
+            else
+                batt_vars->batt_cost_per_kwh = std::vector<double>(nyears, 0.0);
 
             // Front of meter
             if (batt_vars->batt_meter_position == dispatch_t::FRONT)
@@ -569,11 +589,6 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                 batt_vars->batt_dispatch_auto_can_fuelcellcharge = vt.as_boolean("batt_dispatch_auto_can_fuelcellcharge");
             }
 
-            // Battery bank replacement
-            if (vt.is_assigned("om_replacement_cost1"))
-                batt_vars->batt_cost_per_kwh = vt.as_vector_double("om_replacement_cost1");
-            else
-                batt_vars->batt_cost_per_kwh = std::vector<double>(nyears, 0.0);
             batt_vars->batt_replacement_option = vt.as_integer("batt_replacement_option");
             batt_vars->batt_replacement_capacity = vt.as_double("batt_replacement_capacity");
 
