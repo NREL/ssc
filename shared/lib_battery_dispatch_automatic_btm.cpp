@@ -46,9 +46,9 @@ dispatch_automatic_behind_the_meter_t::dispatch_automatic_behind_the_meter_t(
 	bool can_grid_charge,
 	bool can_fuelcell_charge,
     rate_data* util_rate,
-    double battReplacementCostPerkWh,
+    std::vector<double> battReplacementCostPerkWh,
     int battCycleCostChoice,
-    double battCycleCost
+    std::vector<double> battCycleCost
 	) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max_kwdc, Pd_max_kwdc, Pc_max_kwac, Pd_max_kwac,
 		t_min, dispatch_mode, pv_dispatch, nyears, look_ahead_hours, dispatch_update_frequency_hours, can_charge, can_clip_charge, can_grid_charge, can_fuelcell_charge,
         battReplacementCostPerkWh, battCycleCostChoice, battCycleCost)
@@ -71,6 +71,8 @@ dispatch_automatic_behind_the_meter_t::dispatch_automatic_behind_the_meter_t(
     {
         rate = std::shared_ptr<rate_data>(new rate_data(*util_rate));
     }
+
+    costToCycle();
 }
 
 void dispatch_automatic_behind_the_meter_t::init_with_pointer(const dispatch_automatic_behind_the_meter_t* tmp)
@@ -112,6 +114,7 @@ void dispatch_automatic_behind_the_meter_t::dispatch(size_t year,
 	size_t hour_of_year,
 	size_t step)
 {
+    curr_year = year;
 	size_t step_per_hour = (size_t)(1 / _dt_hour);
 	size_t lifetimeIndex = util::lifetimeIndex(year, hour_of_year, step, step_per_hour);
 
@@ -823,4 +826,24 @@ void dispatch_automatic_behind_the_meter_t::set_battery_power(FILE *p, bool debu
 		for (size_t i = 0; i != _P_target_use.size(); i++)
 			fprintf(p, "i=%zu  P_battery: %.2f\n", i, _P_battery_use[i]);
 	}
+}
+
+void dispatch_automatic_behind_the_meter_t::costToCycle()
+{
+    // Calculate assuming maximum depth of discharge (most conservative assumption)
+    if (m_battCycleCostChoice == dispatch_t::MODEL_CYCLE_COST)
+    {
+        if (curr_year < m_battReplacementCostPerKWH.size()) {
+            double capacityPercentDamagePerCycle = _Battery->estimateCycleDamage();
+            m_cycleCost = 0.01 * capacityPercentDamagePerCycle * m_battReplacementCostPerKWH[curr_year] * m_battOriginalKWH;
+        }
+        else {
+            // Should only apply to BattWatts. BattWatts doesn't have price signal dispatch, so this is fine.
+            m_cycleCost = 0.0;
+        }
+    }
+    else if (m_battCycleCostChoice == dispatch_t::INPUT_CYCLE_COST)
+    {
+        m_cycleCost = cycle_costs_by_year[curr_year] * m_battOriginalKWH;
+    }
 }

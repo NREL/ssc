@@ -59,9 +59,9 @@ public:
 		bool can_grid_charge,
 		bool can_fuelcell_charge,
 		double inverter_paco,
-		double battReplacementCostPerkWh,
+        std::vector<double> battReplacementCostPerkWh,
 		int battCycleCostChoice,
-		double battCycleCost,
+        std::vector<double> battCycleCost,
 		std::vector<double> ppa_price_series_dollar_per_kwh,
 		UtilityRate * utilityRate,
 		double etaPVCharge,
@@ -99,6 +99,9 @@ protected:
 
 	void init_with_pointer(const dispatch_automatic_front_of_meter_t* tmp);
 	void setup_cost_forecast_vector();
+
+    /*! Calculate the cost to cycle per kWh */
+    void costToCycle();
 
 	/*! Inverter AC power limit */
 	double _inverter_paco;

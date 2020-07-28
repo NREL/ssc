@@ -247,9 +247,9 @@ public:
 		bool can_clipcharge,
 		bool can_grid_charge,
 		bool can_fuelcell_charge,
-        double battReplacementCostPerkWh,
+        std::vector<double> battReplacementCostPerkWh,
         int battCycleCostChoice,
-        double battCycleCost
+        std::vector<double> battCycleCost
 		);
 
 	virtual ~dispatch_automatic_t(){};
@@ -291,10 +291,7 @@ protected:
 	/*! Return the dispatch mode */
 	int get_mode();
 
-    /*! Calculate the cost to cycle */
-    void costToCycle();
-
-    /*! Return the calculated cost to cycle ($/cycle)*/
+    /*! Return the calculated cost to cycle ($/cycle for behind the meter, $/cycle-kWh for front of the meter)*/
     double cost_to_cycle() { return m_cycleCost; }
 
 	/*! Full time-series of PV production [kW] */
@@ -330,6 +327,9 @@ protected:
 	/*! The number of years in the simulation */
 	size_t _nyears;
 
+    /*! The current year of the simulation */
+    size_t curr_year;
+
 	/*! The dispatch mode, described by dispatch_t::BTM_MODES or dispatch_t::FOM_MODES*/
 	int _mode;
 
@@ -340,12 +340,13 @@ protected:
 	size_t _look_ahead_hours;
 
     /*! Cost to replace battery per kWh */
-    double m_battReplacementCostPerKWH;
+    std::vector<double> m_battReplacementCostPerKWH;
     double m_battOriginalKWH;
 
     /*! Cycling cost inputs */
     int m_battCycleCostChoice;
-    double m_cycleCost;
+    std::vector<double> cycle_costs_by_year;
+    double m_cycleCost; // $/cycle for behind the meter, $/cycle-kWh for front of the meter
 };
 
 /*! Battery metrics class */

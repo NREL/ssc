@@ -32,9 +32,9 @@ protected:
     int n_series = 139;
     int n_strings = 89;
 
-    double replacementCost = 0.0;
+    std::vector<double> replacementCost = { 0.0 };
     int cyclingChoice = 1;
-    double cyclingCost = 0.0;
+    std::vector<double> cyclingCost = { 0.0 };
 
     /*! Variables to store forecast data */
     std::vector<double> pv_prediction;

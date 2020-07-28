@@ -417,7 +417,23 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 
             // Cycle cost calculations
             batt_vars->batt_cycle_cost_choice = vt.as_integer("batt_cycle_cost_choice");
-            batt_vars->batt_cycle_cost = vt.as_double("batt_cycle_cost");
+
+            size_t cnt = 0, i = 0;
+            double inflation_rate = vt.as_double("inflation_rate") * 0.01;
+
+            // compute utility rate out-years escalation multipliers
+            std::vector<ssc_number_t> cycle_cost(nyears);
+            ssc_number_t* parr = vt.as_array("batt_cycle_cost", &cnt);
+            if (cnt == 1)
+            {
+                for (i = 0; i < nyears; i++)
+                    cycle_cost[i] = (ssc_number_t)pow((double)(inflation_rate + 1 + parr[0] * 0.01), (double)i);
+            }
+            else
+            {
+                for (i = 0; i < nyears; i++)
+                    cycle_cost[i] = (ssc_number_t)(1 + parr[i] * 0.01);
+            }
 
             // Front of meter
             if (batt_vars->batt_meter_position == dispatch_t::FRONT)
@@ -554,9 +570,9 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 
             // Battery bank replacement
             if (vt.is_assigned("om_replacement_cost1"))
-                batt_vars->batt_cost_per_kwh = vt.as_vector_double("om_replacement_cost1")[0];
+                batt_vars->batt_cost_per_kwh = vt.as_vector_double("om_replacement_cost1");
             else
-                batt_vars->batt_cost_per_kwh = 0.;
+                batt_vars->batt_cost_per_kwh = std::vector<double>(nyears, 0.0);
             batt_vars->batt_replacement_option = vt.as_integer("batt_replacement_option");
             batt_vars->batt_replacement_capacity = vt.as_double("batt_replacement_capacity");
 

@@ -68,9 +68,9 @@ public:
 		bool can_grid_charge,
 		bool can_fuelcell_charge,
         rate_data* util_rate,
-        double battReplacementCostPerkWh,
+        std::vector<double> battReplacementCostPerkWh,
         int battCycleCostChoice,
-        double battCycleCost
+        std::vector<double> battCycleCost
 		);
 
 	~dispatch_automatic_behind_the_meter_t() override {};
@@ -120,6 +120,9 @@ protected:
     void check_power_restrictions(double& power);
 	void set_battery_power(FILE *p, bool debug);
 	bool check_new_month(size_t hour_of_year, size_t step);
+
+    /*! Calculate the cost to cycle */
+    virtual void costToCycle();
 
 	/*! Full time-series of loads [kW] */
 	double_vec _P_load_ac;

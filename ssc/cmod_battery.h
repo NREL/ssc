@@ -179,7 +179,7 @@ struct batt_variables
 	double batt_calendar_c;
 
 	/*! Battery costs */
-	double batt_cost_per_kwh;
+	std::vector<double> batt_cost_per_kwh;
 
 	/*! PPA price */
 	std::vector<double> forecast_price_series_dollar_per_kwh;
@@ -198,7 +198,7 @@ struct batt_variables
 
 	/* Battery cycle costs */
 	int batt_cycle_cost_choice;
-	double batt_cycle_cost;
+    std::vector<double> batt_cycle_cost;
 };
 
 struct battstor

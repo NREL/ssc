@@ -34,6 +34,8 @@ protected:
     std::vector<double> load_prediction;
     std::vector<double> cliploss_prediction;
 
+    std::vector<double> replacementCost = { 0.0 };
+    std::vector<double> cyclingCost = { 0.005 };
 public:
 
     void CreateBattery(double dtHour)

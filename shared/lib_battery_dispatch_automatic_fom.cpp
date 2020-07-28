@@ -27,9 +27,9 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 	bool can_grid_charge,
 	bool can_fuelcell_charge,
 	double inverter_paco,
-	double battReplacementCostPerkWh,
+    std::vector<double> battReplacementCostPerkWh,
 	int battCycleCostChoice,
-	double battCycleCost,
+    std::vector<double> battCycleCost,
 	std::vector<double> forecast_price_series_dollar_per_kwh,
 	UtilityRate * utilityRate,
 	double etaPVCharge,
@@ -57,6 +57,7 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 
 	revenueToClipCharge = revenueToDischarge = revenueToGridCharge = revenueToPVCharge = 0;
 
+    costToCycle();
 	setup_cost_forecast_vector();
 }
 dispatch_automatic_front_of_meter_t::~dispatch_automatic_front_of_meter_t(){ /* NOTHING TO DO */}
@@ -112,6 +113,7 @@ void dispatch_automatic_front_of_meter_t::dispatch(size_t year,
 	size_t hour_of_year,
 	size_t step)
 {
+    curr_year = year;
 	size_t step_per_hour = (size_t)(1 / _dt_hour);
 	size_t lifetimeIndex = util::lifetimeIndex(year, hour_of_year, step, step_per_hour);
 
@@ -307,4 +309,18 @@ void dispatch_automatic_front_of_meter_t::update_pv_data(double_vec P_pv_ac)
 	// append to end to allow for look-ahead
 	for (size_t i = 0; i != _look_ahead_hours * _steps_per_hour; i++)
 		_P_pv_ac.push_back(P_pv_ac[i]);
+}
+
+void dispatch_automatic_front_of_meter_t::costToCycle()
+{
+    // Calculate assuming maximum depth of discharge (most conservative assumption)
+    if (m_battCycleCostChoice == dispatch_t::MODEL_CYCLE_COST)
+    {
+        double capacityPercentDamagePerCycle = _Battery->estimateCycleDamage();
+        m_cycleCost = 0.01 * capacityPercentDamagePerCycle * m_battReplacementCostPerKWH[curr_year];
+    }
+    else if(m_battCycleCostChoice == dispatch_t::INPUT_CYCLE_COST)
+    {
+        m_cycleCost = cycle_costs_by_year[curr_year];
+    }
 }
