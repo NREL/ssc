@@ -19,10 +19,11 @@ TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, DefaultNoFinancialModel){
 
 	for (size_t i = 0; i < 12; i++)
 		tmp += (double)monthly_energy[i];
-	EXPECT_NEAR(tmp, 6909.79, error_tolerance) << "Annual energy.";
+	//EXPECT_NEAR(tmp, 6909.79, error_tolerance) << "Annual energy.";
+	EXPECT_NEAR(tmp, 6906.346, error_tolerance) << "Annual energy.";
 
 
-	EXPECT_NEAR((double)monthly_energy[0], 435.384, error_tolerance) << "Monthly energy of January";
+	/*EXPECT_NEAR((double)monthly_energy[0], 435.384, error_tolerance) << "Monthly energy of January";
 	EXPECT_NEAR((double)monthly_energy[1], 482.864, error_tolerance) << "Monthly energy of February";
 	EXPECT_NEAR((double)monthly_energy[2], 593.982, error_tolerance) << "Monthly energy of March";
 	EXPECT_NEAR((double)monthly_energy[3], 673.599, error_tolerance) << "Monthly energy of April";
@@ -33,11 +34,25 @@ TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, DefaultNoFinancialModel){
 	EXPECT_NEAR((double)monthly_energy[8], 594.505, error_tolerance) << "Monthly energy of September";
 	EXPECT_NEAR((double)monthly_energy[9], 568.489, error_tolerance) << "Monthly energy of October";
 	EXPECT_NEAR((double)monthly_energy[10], 453.529, error_tolerance) << "Monthly energy of November";
-	EXPECT_NEAR((double)monthly_energy[11], 413.149, error_tolerance) << "Month energy of December";
+	EXPECT_NEAR((double)monthly_energy[11], 413.149, error_tolerance) << "Month energy of December";*/
+
+	EXPECT_NEAR((double)monthly_energy[0], 435.040, error_tolerance) << "Monthly energy of January";
+	EXPECT_NEAR((double)monthly_energy[1], 482.537, error_tolerance) << "Monthly energy of February";
+	EXPECT_NEAR((double)monthly_energy[2], 593.739, error_tolerance) << "Monthly energy of March";
+	EXPECT_NEAR((double)monthly_energy[3], 673.334, error_tolerance) << "Monthly energy of April";
+	EXPECT_NEAR((double)monthly_energy[4], 715.726, error_tolerance) << "Monthly energy of May";
+	EXPECT_NEAR((double)monthly_energy[5], 664.908, error_tolerance) << "Monthly energy of June";
+	EXPECT_NEAR((double)monthly_energy[6], 665.634, error_tolerance) << "Monthly energy of July";
+	EXPECT_NEAR((double)monthly_energy[7], 647.507, error_tolerance) << "Monthly energy of August";
+	EXPECT_NEAR((double)monthly_energy[8], 594.181, error_tolerance) << "Monthly energy of September";
+	EXPECT_NEAR((double)monthly_energy[9], 568.077, error_tolerance) << "Monthly energy of October";
+	EXPECT_NEAR((double)monthly_energy[10], 453.093, error_tolerance) << "Monthly energy of November";
+	EXPECT_NEAR((double)monthly_energy[11], 412.568, error_tolerance) << "Month energy of December";
 
 	ssc_number_t capacity_factor;
 	ssc_data_get_number(data, "capacity_factor", &capacity_factor);
-	EXPECT_NEAR(capacity_factor, 19.7197, error_tolerance) << "Capacity factor";
+	//EXPECT_NEAR(capacity_factor, 19.7197, error_tolerance) << "Capacity factor";
+	EXPECT_NEAR(capacity_factor, 19.7099, error_tolerance) << "Capacity factor";
 
 }
 
@@ -50,7 +65,8 @@ TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, UsingData){
 
     ssc_number_t capacity_factor;
     ssc_data_get_number(data, "capacity_factor", &capacity_factor);
-    EXPECT_NEAR(capacity_factor, 11.7368, error_tolerance) << "Capacity factor";
+    //EXPECT_NEAR(capacity_factor, 11.7368, error_tolerance) << "Capacity factor";
+	EXPECT_NEAR(capacity_factor, 11.7332, error_tolerance) << "Capacity factor";
 }
 
 /// PVWattsV5 using different technology input options
@@ -58,7 +74,8 @@ TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, DifferentTechnologyInputs)
 {
 //	std::vector<double> annual_energy_expected = { 6909.79, 7123.32, 7336.478, 6909.79, 6804.376, 8711.946, 8727.704, 9690.735 };
 	// single axis tracking reduction due to pull request 280
-	std::vector<double> annual_energy_expected = { 6909.79, 7123.32, 7336.478, 6909.79, 6804.376, 8601.011, 8727.704, 9690.735 };
+	//std::vector<double> annual_energy_expected = { 6909.79, 7123.32, 7336.478, 6909.79, 6804.376, 8601.011, 8727.704, 9690.735 };
+	std::vector<double> annual_energy_expected = { 6906.346, 7119.809, 7332.963, 6906.346, 6800.968, 8592.731, 8719.390, 9685.763 };
 	std::map<std::string, double> pairs;
 	size_t count = 0;
 
@@ -99,7 +116,8 @@ TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, DifferentTechnologyInputs)
 /// PVWattsV5 using a larger system size
 TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, LargeSystem_cmod_pvwattsv5)
 {
-	std::vector<double> annual_energy_expected = { 1727447.4, 1701094.0, 2150252.8, 2181925.8, 2422683.7 };
+	//std::vector<double> annual_energy_expected = { 1727447.4, 1701094.0, 2150252.8, 2181925.8, 2422683.7 };
+	std::vector<double> annual_energy_expected = { 1726586.5, 1700242.0, 2148182.7, 2179847.5, 2421440.7 };
 	std::map<std::string, double> pairs;
 	size_t count = 0;
 	error_tolerance = 0.1; //use a larger error tolerance for large numbers

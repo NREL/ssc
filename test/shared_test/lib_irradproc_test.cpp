@@ -394,7 +394,8 @@ TEST_F(NightCaseIrradProc, CalcTestRadMode0_lib_irradproc){
 	irr_hourly_night.get_irrad(&rad_p[0], &rad_p[1], &rad_p[2]);
 
 	sun_p[6] = (double)sunup;
-	vector<double> sun_solution = { 15.400603, 125.406063, -35.406063, 20.874693, 5.707588, 19.519211, 0, 0.968315, 0.886600, 0 };
+	//vector<double> sun_solution = { 15.400603, 125.406063, -35.406063, 20.874693, 5.707588, 19.519211, 0, 0.968315, 0.886600, 0 };
+	vector<double> sun_solution = { 15.406943, 125.967030, -35.967029, 20.872514, 5.636927, 19.584888, 0, 0.968315, 0.887054, 0 }; //value changed due to new solarpos_spa algorithm
 	for (int i = 0; i < 10; i++){
 		EXPECT_NEAR(sun_p[i], sun_solution[i], e) << "hourly_night, sun parameter " << i << " fail\n";
 	}
@@ -419,7 +420,8 @@ TEST_F(NightCaseIrradProc, CalcTestRadMode0_lib_irradproc){
 	irr_15m_night.get_irrad(&rad_p[0], &rad_p[1], &rad_p[2]);
 
 	sun_p[6] = (double)sunup;
-	sun_solution = { 11.146986, 126.137563, -36.137563, 20.876572, 5.707486, 19.519211, 0, 0.968315, 0.636612, 0 };
+	//sun_solution = { 11.146986, 126.137563, -36.137563, 20.876572, 5.707486, 19.519211, 0, 0.968315, 0.636612, 0 };
+	sun_solution = { 11.153456, 126.698858, -36.698858, 20.874383, 5.636927, 19.584888, 0, 0.968315, 0.637066, 0 }; //value changed due to new solarpos_spa algorithm
 	for (int i = 0; i < 10; i++){
 		EXPECT_NEAR(sun_p[i], sun_solution[i], e) << "15m_night, sun parameter " << i << " fail\n";
 	}
@@ -458,11 +460,13 @@ TEST_F(SunriseCaseIrradProc, CalcTestRadMode0_lib_irradproc){
 	irr_hourly_sunrise.get_irrad(&rad_p[0], &rad_p[1], &rad_p[2]);
 
 	sun_p[6] = (double)sunup;
-	vector<double> sun_solution = { 66.441256, 87.969757, 2.030243, 20.841844, 5.709384, 19.517827, 2.0, 0.968283, 5.242355, 46.902536 };
+	//vector<double> sun_solution = { 66.441256, 87.969757, 2.030243, 20.841844, 5.709384, 19.517827, 2.0, 0.968283, 5.242355, 46.902536 };
+	vector<double> sun_solution = { 66.140193, 88.414600, 1.585400, 20.840523, 5.636927, 19.584888, 2.0, 0.968283, 5.205311, 36.628798 }; //value changed due to new solarpos_spa algorithm
 	for (int i = 0; i < 10; i++){
 		EXPECT_NEAR(sun_p[i], sun_solution[i], e) << "hourly_sunrise, sun parameter " << i << " fail\n";
 	}
-	vector<double> angle_solution = { 91.975545, tilt, azim, 0, 0 };
+	//vector<double> angle_solution = { 91.975545, tilt, azim, 0, 0 };
+	vector<double> angle_solution = { 92.462599, tilt, azim, 0, 0 }; //value changed due to new solarpos_spa algorithm
 	for (int i = 0; i < 5; i++){
 		EXPECT_NEAR(angle_p[i], angle_solution[i], e) << "hourly_sunrise, angle parameter " << i << " fail\n";
 	}
@@ -483,11 +487,13 @@ TEST_F(SunriseCaseIrradProc, CalcTestRadMode0_lib_irradproc){
 	irr_15m_sunrise.get_irrad(&rad_p[0], &rad_p[1], &rad_p[2]);
 
 	sun_p[6] = (double)sunup;
-	sun_solution = { 66.441256, 87.969757, 2.030243, 20.841844, 5.709384, 19.517827, 2.0, 0.968283, 5.242355, 46.902536 };
+	//sun_solution = { 66.441256, 87.969757, 2.030243, 20.841844, 5.709384, 19.517827, 2.0, 0.968283, 5.242355, 46.902536 };
+	sun_solution = { 66.140193, 88.414600, 1.585400, 20.840523, 5.636927, 19.584888, 2.0, 0.968283, 5.205311, 36.628798 }; //value changed due to new solarpos_spa algorithm
 	for (int i = 0; i < 10; i++){
 		EXPECT_NEAR(sun_p[i], sun_solution[i], e) << "15m_sunrise, sun parameter " << i << " fail\n";
 	}
-	angle_solution = { 91.975545, tilt, azim, 0, 0 };
+	//angle_solution = { 91.975545, tilt, azim, 0, 0 };
+	angle_solution = { 92.462599, tilt, azim, 0, 0 }; //value changed due to new solarpos_spa algorithm
 	for (int i = 0; i < 5; i++){
 		EXPECT_NEAR(angle_p[i], angle_solution[i], e) << "15m_sunrise, angle parameter " << i << " fail\n";
 	}
@@ -522,7 +528,8 @@ TEST_F(DayCaseIrradProc, CalcTestRadMode0_lib_irradproc){
 	irr_hourly_day.get_irrad(&rad_p[0], &rad_p[1], &rad_p[2]);
 
 	sun_p[6] = (double)sunup;
-	vector<double> sun_solution = { 171.563258, 10.938523, 79.061477, 20.791368, 5.712128, 19.515691, 1.0, 0.968318, 11.886091, 1299.866650 };
+	//vector<double> sun_solution = { 171.563258, 10.938523, 79.061477, 20.791368, 5.712128, 19.515691, 1.0, 0.968318, 11.886091, 1299.866650 };
+	vector<double> sun_solution = { 171.590101, 10.946708, 79.053292, 20.790629, 5.636927, 19.584888, 1.0, 0.968318, 11.886537, 1299.830748 }; //value changed due to new solarpos_spa algorithm
 	for (int i = 0; i < 10; i++){
 		EXPECT_NEAR(sun_p[i], sun_solution[i], e) << "hourly_day, sun parameter " << i << " fail\n";
 	}
@@ -547,11 +554,13 @@ TEST_F(DayCaseIrradProc, CalcTestRadMode0_lib_irradproc){
 	irr_15m_day.get_irrad(&rad_p[0], &rad_p[1], &rad_p[2]);
 
 	sun_p[6] = (double)sunup;
-	sun_solution = { 190.054756, 10.986005, 79.013994, 20.789459, 5.712231, 19.515691, 1.000000, 0.968318, 12.136079, 1299.658007 };
+	//sun_solution = { 190.054756, 10.986005, 79.013994, 20.789459, 5.712231, 19.515691, 1.000000, 0.968318, 12.136079, 1299.658007 };
+	sun_solution = { 190.080931, 10.995677, 79.004323, 20.788721, 5.636927, 19.584888, 1.000000, 0.968318, 12.136525, 1299.615402 }; //value changed due to new solarpos_spa algorithm
 	for (int i = 0; i < 10; i++){
 		EXPECT_NEAR(sun_p[i], sun_solution[i], e) << "15m_day, sun parameter " << i << " fail\n";
 	}
-	angle_solution = { 2.075962, tilt, azim, 0, 0 };
+	//angle_solution = { 2.075962, tilt, azim, 0, 0 };
+	angle_solution = { 2.08540, tilt, azim, 0, 0 }; //value changed due to new solarpos_spa algorithm
 	for (int i = 0; i < 5; i++){
 		EXPECT_NEAR(angle_p[i], angle_solution[i], e) << "15m_day, angle parameter " << i << " fail\n";
 	}
@@ -585,11 +594,13 @@ TEST_F(SunsetCaseIrradProc, CalcTestRadMode0_lib_irradproc){
 	irr_hourly_sunset.get_irrad(&rad_p[0], &rad_p[1], &rad_p[2]);
 
 	sun_p[6] = (double)sunup;
-	vector<double>sun_solution = { 292.600441, 86.774381, 3.225619, 20.739568, 5.714928, 19.513485, 3.0, 0.968355, 18.643720, 74.494280 };
+	//vector<double>sun_solution = { 292.600441, 86.774381, 3.225619, 20.739568, 5.714928, 19.513485, 3.0, 0.968355, 18.643720, 74.494280 };
+	vector<double>sun_solution = { 292.796442, 87.076168, 2.923832, 20.737781, 5.636927, 19.584888, 3.0, 0.968355, 18.678677, 67.530994 }; //value changed due to new solarpos_spa algorithm
 	for (int i = 0; i < 10; i++){
 		EXPECT_NEAR(sun_p[i], sun_solution[i], e) << "hourly_sunset, sun parameter " << i << " fail\n";
 	}
-	vector<double>angle_solution = { 90.642562, tilt, azim, 0, 0 };
+	//vector<double>angle_solution = { 90.642562, tilt, azim, 0, 0 };
+	vector<double>angle_solution = { 90.971808, tilt, azim, 0, 0 }; //value changed due to new solarpos_spa algorithm
 	for (int i = 0; i < 5; i++){
 		EXPECT_NEAR(angle_p[i], angle_solution[i], e) << "hourly_sunset, angle parameter " << i << " fail\n";
 	}
@@ -610,11 +621,13 @@ TEST_F(SunsetCaseIrradProc, CalcTestRadMode0_lib_irradproc){
 	irr_15m_sunset.get_irrad(&rad_p[0], &rad_p[1], &rad_p[2]);
 
 	sun_p[6] = (double)sunup;
-	sun_solution = { 292.600441, 86.774381, 3.225619, 20.739568, 5.714928, 19.513485, 3.0, 0.968355, 18.643720, 74.494280 };
+	//sun_solution = { 292.600441, 86.774381, 3.225619, 20.739568, 5.714928, 19.513485, 3.0, 0.968355, 18.643720, 74.494280 };
+	sun_solution = { 292.796442, 87.076168, 2.923832, 20.737781, 5.636927, 19.584888, 3.0, 0.968355, 18.678677, 67.530994 }; //value changed due to new solarpos_spa algorithm
 	for (int i = 0; i < 10; i++){
 		EXPECT_NEAR(sun_p[i], sun_solution[i], e) << "15m_sunset, sun parameter " << i << " fail\n";
 	}
-	angle_solution = { 90.642562, tilt, azim, 0, 0 };
+	//angle_solution = { 90.642562, tilt, azim, 0, 0 };
+	angle_solution = { 90.971808, tilt, azim, 0, 0 }; //value changed due to new solarpos_spa algorithm
 	for (int i = 0; i < 5; i++){
 		EXPECT_NEAR(angle_p[i], angle_solution[i], e) << "15m_sunset, angle parameter " << i << " fail\n";
 	}
