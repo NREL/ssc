@@ -904,7 +904,7 @@ size_t util::hour_of_year(size_t month, size_t day, size_t hour)
 	std::vector<size_t> days_in_months = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
 	if (month >= 1 && month <= 12)
 	{
-		for (int m = 0; m < (month - 1); m++)
+		for (size_t m = 0; m < (month - 1); m++)
 			h += days_in_months[m] * 24;
 	}
 	else ok = false;
