@@ -46,32 +46,32 @@ void mp_ancillary_services(ssc_data_t data)
 		vt_get_int(vt, "system_use_lifetime_output", &system_use_lifetime_output);
 		vt_get_number(vt, "analysis_period", &analysis_period);
 		vt_get_int(vt, "mp_enable_energy_market_revenue", &mp_enable_energy_market_revenue);
-        vt_get_int(vt, "mp_enable_ancserv1", &mp_enable_ancserv1);
-        vt_get_int(vt, "mp_enable_ancserv2", &mp_enable_ancserv2);
-        vt_get_int(vt, "mp_enable_ancserv3", &mp_enable_ancserv3);
-        vt_get_int(vt, "mp_enable_ancserv4", &mp_enable_ancserv4);
-        vt_get_matrix(vt, "mp_energy_market_revenue", mp_energy_market_revenue);
-        vt_get_matrix(vt, "mp_ancserv1_revenue", mp_ancserv1_revenue);
-        vt_get_matrix(vt, "mp_ancserv2_revenue", mp_ancserv2_revenue);
-        vt_get_matrix(vt, "mp_ancserv3_revenue", mp_ancserv3_revenue);
-        vt_get_matrix(vt, "mp_ancserv4_revenue", mp_ancserv4_revenue);
-        gen_is_assigned = (vt->lookup("gen") != NULL);
+		vt_get_int(vt, "mp_enable_ancserv1", &mp_enable_ancserv1);
+		vt_get_int(vt, "mp_enable_ancserv2", &mp_enable_ancserv2);
+		vt_get_int(vt, "mp_enable_ancserv3", &mp_enable_ancserv3);
+		vt_get_int(vt, "mp_enable_ancserv4", &mp_enable_ancserv4);
+		vt_get_matrix(vt, "mp_energy_market_revenue", mp_energy_market_revenue);
+		vt_get_matrix(vt, "mp_ancserv1_revenue", mp_ancserv1_revenue);
+		vt_get_matrix(vt, "mp_ancserv2_revenue", mp_ancserv2_revenue);
+		vt_get_matrix(vt, "mp_ancserv3_revenue", mp_ancserv3_revenue);
+		vt_get_matrix(vt, "mp_ancserv4_revenue", mp_ancserv4_revenue);
+		gen_is_assigned = (vt->lookup("gen") != NULL);
 		if (gen_is_assigned)
 		{
 			system_capacity = 0.0;
 			// these are arrays so VT_GET_INPUT replaced by vt_get_matrix fails for all in commit c461b9
-            vt_get_matrix(vt, "gen", system_gen);
+			vt_get_matrix(vt, "gen", system_gen);
 			vt_get_matrix(vt, "degradation", degradation);
 		}
 		else
 		{
-            vt_get_number(vt, "system_capacity", &system_capacity);
+			vt_get_number(vt, "system_capacity", &system_capacity);
 		}
 		calculate_revenue = (vt->lookup("mp_calculate_revenue") != NULL);
 		if (calculate_revenue)
 		{
-            vt_get_int(vt, "mp_calculate_revenue", &mp_calculate_revenue);
-            calculate_revenue = (bool)mp_calculate_revenue;
+			vt_get_int(vt, "mp_calculate_revenue", &mp_calculate_revenue);
+			calculate_revenue = (bool)mp_calculate_revenue;
 		}
 
 		// kW to MW for comparison
@@ -169,7 +169,7 @@ void mp_ancillary_services(ssc_data_t data)
 										ssc_number_t degrade_factor;
 										if (degradation.nrows() == 1)
 											degrade_factor = pow((1.0 - degradation(0, 0) / 100.0), iyear);
-										else 
+										else
 											degrade_factor = (1.0 - degradation(0, ic) / 100.0);
 										current_year_capacity.push_back((system_gen(0, ic) * degrade_factor) / 1000.0); // kW to MW
 									}
@@ -414,7 +414,7 @@ void mp_ancillary_services(ssc_data_t data)
 		vt->assign("mp_ancillary_services3_generated_revenue", var_data(ancillary_services3_revenue.data(), ancillary_services3_revenue.size()));
 		vt->assign("mp_ancillary_services4_generated_revenue", var_data(ancillary_services4_revenue.data(), ancillary_services4_revenue.size()));
 
-		
+
 	}
 	catch (std::exception& e)
 	{
