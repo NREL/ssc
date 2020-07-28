@@ -434,6 +434,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                 for (i = 0; i < nyears; i++)
                     cycle_cost[i] = (ssc_number_t)(1 + parr[i] * 0.01);
             }
+            batt_vars->batt_cycle_cost = cycle_cost;
 
             // Front of meter
             if (batt_vars->batt_meter_position == dispatch_t::FRONT)
