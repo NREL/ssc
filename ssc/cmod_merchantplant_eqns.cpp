@@ -320,10 +320,11 @@ void mp_ancillary_services(ssc_data_t data)
 					// TODO: check that each enabled market cleared capacity is greater than or equal to zero.
 					if (cleared_capacity_sum.size() != system_generation.size())
 						error = util::format("cleared capacity size %d and capacity check size %d do not match", int(cleared_capacity_sum.size()), int(system_generation.size()));
-				/*	else
+					else
 					{
 						for (size_t i = 0; (i < cleared_capacity_sum.size()) && (i < system_generation.size()); i++)
 						{
+							/*
 							 if (energy_market_capacity[i] < 0)
 							{
 								error = util::format("energy market cleared capacity %g is less than zero at timestep %d", energy_market_capacity[i], int(i));
@@ -349,13 +350,13 @@ void mp_ancillary_services(ssc_data_t data)
 								error = util::format("ancillary services 4 market cleared capacity %g is less than zero at timestep %d", ancillary_services4_capacity[i], int(i));
 								break;
 							}
-							else  if ((cleared_capacity_sum[i] > 0) && (cleared_capacity_sum[i] > system_generation[i]))
+							else */  if ((cleared_capacity_sum[i] > 0) && (cleared_capacity_sum[i] > system_generation[i]))
 							{
 								error = util::format("sum of cleared capacity %g MW exceeds system capacity %g MW at timestep %d", cleared_capacity_sum[i], system_generation[i], int(i));
 								break;
 							}
 						}
-					} */
+					} 
 
 					if (calculate_revenue)
 					{ // all user specified capacities are greater than zero and sum of all less than system generation at timestep i
