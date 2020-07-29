@@ -128,7 +128,7 @@ TEST_F(IrradTest, sunriseAndSunsetAtDifferentLocationsTest_spa_lib_irradproc) {
 	}
 }
 
-TEST_F(IrradTest, sunriseAndSunsetAlaskaTest_spa_lib_irradproc) {
+/*TEST_F(IrradTest, sunriseAndSunsetAlaskaTest_spa_lib_irradproc) {
 	e = 0.001;
 	double latitude = 68.35;
 	double longitude = -166.8;
@@ -143,7 +143,7 @@ TEST_F(IrradTest, sunriseAndSunsetAlaskaTest_spa_lib_irradproc) {
 	//solarpos(2010, month, day, 14, 30, latitude, longitude, time_zone, sun_results);
 	EXPECT_NEAR((double)sun_results[4], sunrise_time, e) << "sunrise time for lat " << latitude << " long " << longitude << " failed\n";
 	EXPECT_NEAR((double)sun_results[5], sunset_time, e) << "sunrise time for lat " << latitude << " long " << longitude << " failed\n";
-}
+}*/
 
 
 TEST_F(DayCaseIrradProc, solarposTest_lib_irradproc){
