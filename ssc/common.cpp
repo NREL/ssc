@@ -1,22 +1,22 @@
 /**
 BSD-3-Clause
 Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
 that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
 and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
 and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
 or promote products derived from this software without specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
@@ -26,6 +26,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_weatherfile.h"
 #include "lib_time.h"
 #include "lib_resilience.h"
+#include "lib_util.h"
 
 var_info vtab_standard_financial[] = {
 { SSC_INPUT,SSC_NUMBER  , "analysis_period"                      , "Analyis period"                                                 , "years"                                  , ""                                      , "Financial Parameters" , "?=30"           , "INTEGER,MIN=0,MAX=50"  , ""},
@@ -87,7 +88,7 @@ var_info_invalid };
 
 var_info vtab_oandm[] = {
 /*   VARTYPE           DATATYPE         NAME                             LABEL                                UNITS      META                 GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-	
+
 { SSC_INPUT,        SSC_ARRAY,       "om_fixed",                     "Fixed O&M annual amount",           "$/year",  "",                  "System Costs",            "?=0.0",                 "",                                         "" },
 { SSC_INPUT,        SSC_NUMBER,      "om_fixed_escal",               "Fixed O&M escalation",              "%/year",  "",                  "System Costs",            "?=0.0",                 "",                                         "" },
 { SSC_INPUT,        SSC_ARRAY,       "om_production",                "Production-based O&M amount",       "$/MWh",   "",                  "System Costs",            "?=0.0",                 "",                                         "" },
@@ -583,7 +584,7 @@ bool forecast_price_signal::setup(size_t nsteps)
 		return false;
 	}
 	m_forecast_price.reserve(nsteps);
-	for (size_t i = 0; i < nsteps; i++) 
+	for (size_t i = 0; i < nsteps; i++)
 		m_forecast_price.push_back(0.0);
 
 	int forecast_price_signal_model = vartab->as_integer("forecast_price_signal_model");
@@ -778,14 +779,14 @@ void calculate_resilience_outputs(compute_module *cm, std::unique_ptr<resilience
 
 adjustment_factors::adjustment_factors( compute_module *cm, const std::string &prefix )
 : m_cm(cm), m_prefix(prefix)
-{	
+{
 }
 
 //adjustment factors changed from derates to percentages jmf 1/9/15
-bool adjustment_factors::setup(int nsteps)
+bool adjustment_factors::setup(int nsteps) //nsteps is set to 8760 in this declaration function in common.h
 {
-	float f = (float)m_cm->as_number( m_prefix + ":constant" );
-	f = 1 - f / 100; //convert from percentage to factor
+	ssc_number_t f = m_cm->as_number( m_prefix + ":constant" );
+	f = 1.0 - f / 100.0; //convert from percentage to factor
 	m_factors.resize( nsteps, f );
 
 	if ( m_cm->is_assigned(m_prefix + ":hourly") )
@@ -795,7 +796,7 @@ bool adjustment_factors::setup(int nsteps)
 		if ( p != 0 && n == (size_t)nsteps )
 		{
 			for( int i=0;i<nsteps;i++ )
-				m_factors[i] *= (1 - p[i]/100); //convert from percentages to factors
+				m_factors[i] *= (1.0 - p[i]/100.0); //convert from percentages to factors
 		}
 	}
 
@@ -809,8 +810,8 @@ bool adjustment_factors::setup(int nsteps)
 			{
 				int start = (int) mat[ nc*r ];
 				int end = (int) mat[ nc*r + 1 ];
-				float factor = (float) mat[ nc*r + 2 ];
-				
+				ssc_number_t factor =  mat[ nc*r + 2 ];
+
 				if ( start < 0 || start >= nsteps || end < start )
 				{
 					m_error = util::format( "period %d is invalid ( start: %d, end %d )", (int)r, start, end );
@@ -820,7 +821,7 @@ bool adjustment_factors::setup(int nsteps)
 				if ( end >= nsteps ) end = nsteps-1;
 
 				for( int i=start;i<=end;i++ )
-					m_factors[i] *= (1 - factor/100); //convert from percentages to factors
+					m_factors[i] *= (1.0 - factor/100.0); //convert from percentages to factors
 			}
 		}
 	}
@@ -828,7 +829,7 @@ bool adjustment_factors::setup(int nsteps)
 	return m_error.length() == 0;
 }
 
-float adjustment_factors::operator()( size_t time )
+ssc_number_t adjustment_factors::operator()( size_t time )
 {
 	if ( time < m_factors.size() ) return m_factors[time];
 	else return 0.0;
@@ -841,8 +842,8 @@ sf_adjustment_factors::sf_adjustment_factors(compute_module *cm)
 
 bool sf_adjustment_factors::setup(int nsteps)
 {
-	float f = (float)m_cm->as_number("sf_adjust:constant");
-	f = 1 - f / 100; //convert from percentage to factor
+	ssc_number_t f = m_cm->as_number("sf_adjust:constant");
+	f = 1.0 - f / 100.0; //convert from percentage to factor
 	m_factors.resize(nsteps, f);
 
 	if (m_cm->is_assigned("sf_adjust:hourly"))
@@ -852,7 +853,7 @@ bool sf_adjustment_factors::setup(int nsteps)
 		if (p != 0 && n == (size_t)nsteps)
 		{
 			for (int i = 0; i < nsteps; i++)
-				m_factors[i] *= (1 - p[i] / 100); //convert from percentages to factors
+				m_factors[i] *= (1.0 - p[i] / 100.0); //convert from percentages to factors
 		}
 		if (n!=(size_t)nsteps)
 			m_error = util::format("array length (%d) must match number of yearly simulation time steps (%d).", n, nsteps);
@@ -887,7 +888,7 @@ bool sf_adjustment_factors::setup(int nsteps)
 	return m_error.length() == 0;
 }
 
-float sf_adjustment_factors::operator()(size_t time)
+ssc_number_t sf_adjustment_factors::operator()(size_t time)
 {
 	if (time < m_factors.size()) return m_factors[time];
 	else return 0.0;
@@ -942,7 +943,7 @@ bool shading_factor_calculator::setup( compute_module *cm, const std::string &pr
 			{
 				for (size_t r = 0; r < nrows; r++)
 					for (size_t c = 0; c < ncols; c++)
-						m_beamFactors.at(r, c) = mat[r*ncols + c]; //entered in % shaded 
+						m_beamFactors.at(r, c) = mat[r*ncols + c]; //entered in % shaded
 			}
 			else if (m_string_option == 1) // use average of all strings in column zero
 			{
@@ -951,7 +952,7 @@ bool shading_factor_calculator::setup( compute_module *cm, const std::string &pr
 					double sum_percent_shaded = 0;
 					for (size_t c = 0; c < ncols; c++)
 					{
-						sum_percent_shaded += mat[r*ncols + c];//entered in % shaded 
+						sum_percent_shaded += mat[r*ncols + c];//entered in % shaded
 					}
 					sum_percent_shaded /= ncols;
 					//cm->log(util::format("hour %d avg percent beam factor %lg",
@@ -968,7 +969,7 @@ bool shading_factor_calculator::setup( compute_module *cm, const std::string &pr
 					for (size_t c = 0; c < ncols; c++)
 					{
 						if (mat[r*ncols + c]>max_percent_shaded)
-							max_percent_shaded = mat[r*ncols + c];//entered in % shaded 
+							max_percent_shaded = mat[r*ncols + c];//entered in % shaded
 					}
 					//cm->log(util::format("hour %d max percent beam factor %lg",
 					//	r, max_percent_shaded),
@@ -985,7 +986,7 @@ bool shading_factor_calculator::setup( compute_module *cm, const std::string &pr
 					for (size_t c = 0; c < ncols; c++)
 					{
 						if (mat[r*ncols + c]<min_percent_shaded)
-							min_percent_shaded = mat[r*ncols + c];//entered in % shaded 
+							min_percent_shaded = mat[r*ncols + c];//entered in % shaded
 					}
 					//cm->log(util::format("hour %d min percent beam factor %lg",
 					//	r, min_percent_shaded),
@@ -1009,7 +1010,7 @@ bool shading_factor_calculator::setup( compute_module *cm, const std::string &pr
 		}
 	}
 
- // initialize other shading inputs 
+ // initialize other shading inputs
 	m_enMxH = false;
 	if (cm->is_assigned(prefix + "shading:mxh"))
 	{
@@ -1029,7 +1030,7 @@ bool shading_factor_calculator::setup( compute_module *cm, const std::string &pr
 					for (int h = 0; h < 24; h++)
 						for (int jj = 0; jj < m_steps_per_hour; jj++)
 							m_mxhFactors.at(c++, 0) = 1 - mat[m*ncols + h] / 100;
-							
+
 		}
 		m_enMxH = true;
 	}
@@ -1078,25 +1079,26 @@ bool shading_factor_calculator::use_shade_db()
 	return (m_enTimestep && (m_string_option == 0)); // determine which fbeam function to call
 }
 
-size_t shading_factor_calculator::get_row_index_for_input(size_t hour, size_t hour_step, size_t steps_per_hour)
+size_t shading_factor_calculator::get_row_index_for_input(size_t hour_of_year, size_t minute)
 {
-	// handle different simulation timesteps and shading input timesteps
-	size_t ndx = hour * m_steps_per_hour; // m_beam row index for input hour
-	int hr_step = 0;
-	if (steps_per_hour > 0)
-		hr_step = (int)((int)m_steps_per_hour*(int)hour_step/ (int)steps_per_hour);
-	if (hr_step >= m_steps_per_hour) hr_step = m_steps_per_hour - 1;
-	if (hr_step < 0) hr_step = 0;
-	ndx += hr_step;
+	// this function needs to handle different simulation timesteps and timeseries shading input timesteps
+	// therefore, start the row index by multiplying the hour of the year by the number of timesteps per hour in the timeseries shading input
+	size_t ndx = hour_of_year * (size_t)m_steps_per_hour;
+
+	// then figure out how many row indices to add for the subhourly timeseries entries based on the minute stamp
+	// for example, minute 30 in a half-hour weather file will calculate: floor(30 / (60/2)) = 1 and will add one to the row index, which is correct
+	ndx += floor((int)minute / (60 / (m_steps_per_hour)));
+
 	return ndx;
 }
 
-bool shading_factor_calculator::fbeam(size_t hour, double solalt, double solazi, size_t hour_step, size_t steps_per_hour)
+
+bool shading_factor_calculator::fbeam(size_t hour_of_year, double minute, double solalt, double solazi)
 {
 	bool ok = false;
 	double factor = 1.0;
-	size_t irow = get_row_index_for_input(hour,hour_step,steps_per_hour);
-	if (irow < m_beamFactors.nrows())
+	size_t irow = get_row_index_for_input(hour_of_year, minute);
+	if (irow < m_beamFactors.nrows() && irow >= 0)
 	{
 		factor = m_beamFactors.at(irow, 0);
 		// apply mxh factor
@@ -1114,12 +1116,12 @@ bool shading_factor_calculator::fbeam(size_t hour, double solalt, double solazi,
 }
 
 
-bool shading_factor_calculator::fbeam_shade_db(ShadeDB8_mpp * p_shadedb, size_t hour, double solalt, double solazi, size_t hour_step, size_t steps_per_hour, double gpoa, double dpoa, double pv_cell_temp, int mods_per_str, double str_vmp_stc, double mppt_lo, double mppt_hi)
+bool shading_factor_calculator::fbeam_shade_db(ShadeDB8_mpp * p_shadedb, size_t hour, double minute, double solalt, double solazi, double gpoa, double dpoa, double pv_cell_temp, int mods_per_str, double str_vmp_stc, double mppt_lo, double mppt_hi)
 {
 	bool ok = false;
 	double dc_factor = 1.0;
 	double beam_factor = 1.0;
-	size_t irow = get_row_index_for_input(hour, hour_step, steps_per_hour);
+	size_t irow = get_row_index_for_input(hour, minute);
 	if (irow < m_beamFactors.nrows())
 	{
 		std::vector<double> shad_fracs;
@@ -1164,13 +1166,51 @@ double shading_factor_calculator::dc_shade_factor()
 	return (m_dc_shade_factor);
 }
 
+//this function checks the weather data to make sure that it is a single, continuous year with an even timestep starting jan 1 and ending dec 31
+//HOWEVER, the year value may vary (i.e., TMY) so only checking month, day, hour, minute timesteps, not actual year vector
+bool weatherdata::check_continuous_single_year(bool leapyear)
+{
+	int ts_per_hour = 0; //determine the number of timesteps in each hour
+	if (leapyear)
+		ts_per_hour = (int)(m_nRecords / 8784);
+	else
+		ts_per_hour = (int)(m_nRecords / 8760);
+	double ts_min = 60. / ts_per_hour; //determine the number of minutes of each timestep
+	int idx = 0; // index to keep track of where we are in the timestamp vectors
+	// now, check that the month, hour, day, and minute vectors are consistent with a single, continuous year with an
+	// even timestep that starts on jan 1 and ends dec 31
+	for (int m = 1; m <= 12; m++)
+	{
+		int daymax = util::days_in_month(m - 1);
+		if (m == 2 && leapyear) daymax = 29; //make sure to account for leap day in Feb
+		for (int d = 1; d <= daymax; d++)
+		{
+			for (int h = 0; h < 24; h++)
+			{
+				double min = this->m_data[idx]->minute;
+				for (int tsph = 0; tsph < ts_per_hour; tsph++)
+				{
+					min += tsph * ts_min;
+					//if any of the month, day, hour, or minute don't line up with what we've calculated, then it doesn't fit our criteria for a continuous year
+					if (this->m_data[idx]->month != m || this->m_data[idx]->day != d || this->m_data[idx]->hour != h
+					    || this->m_data[idx]->minute != min)
+						return false;
+					else
+						idx++;
+				}
+			}
+		}
+	}
+	return true;
+}
+
 weatherdata::weatherdata( var_data *data_table )
 {
 	m_startSec = m_stepSec = m_nRecords = 0;
 	m_index = 0;
 	m_ok = true;
 
-	if ( data_table->type != SSC_TABLE ) 
+	if ( data_table->type != SSC_TABLE )
 	{
 		m_message = "solar data must be an SSC table variable with fields: "
 			"(numbers): lat, lon, tz, elev, "
@@ -1225,88 +1265,62 @@ weatherdata::weatherdata( var_data *data_table )
 		}
 	}
 
-	// check that all vectors are of same length as irradiance vectors
-	vec year = get_vector( data_table, "year");
-	vec month = get_vector( data_table, "month");
-	vec day = get_vector( data_table, "day");
-	vec hour = get_vector( data_table, "hour");
-	vec minute = get_vector( data_table, "minute");
+	// check that all vectors are of same length as irradiance vectors (which were used to set nrec)
+	vec year = get_vector( data_table, "year", &nrec);
+	vec month = get_vector( data_table, "month", &nrec);
+	vec day = get_vector( data_table, "day", &nrec);
+	vec hour = get_vector( data_table, "hour", &nrec);
+	vec minute = get_vector( data_table, "minute", &nrec);
 	vec gh = get_vector( data_table, "gh", &nrec );
 	vec dn = get_vector( data_table, "dn", &nrec );
 	vec df = get_vector( data_table, "df", &nrec );
 	vec poa = get_vector(data_table, "poa", &nrec);
 	vec wspd = get_vector( data_table, "wspd", &nrec );
 	vec wdir = get_vector( data_table, "wdir", &nrec );
-	vec tdry = get_vector( data_table, "tdry", &nrec ); 
-	vec twet = get_vector( data_table, "twet", &nrec ); 
-	vec tdew = get_vector( data_table, "tdew", &nrec ); 
-	vec rhum = get_vector( data_table, "rhum", &nrec ); 
-	vec pres = get_vector( data_table, "pres", &nrec ); 
-	vec snow = get_vector( data_table, "snow", &nrec ); 
-	vec alb = get_vector( data_table, "alb", &nrec ); 
-	vec aod = get_vector( data_table, "aod", &nrec ); 
+	vec tdry = get_vector( data_table, "tdry", &nrec );
+	vec twet = get_vector( data_table, "twet", &nrec );
+	vec tdew = get_vector( data_table, "tdew", &nrec );
+	vec rhum = get_vector( data_table, "rhum", &nrec );
+	vec pres = get_vector( data_table, "pres", &nrec );
+	vec snow = get_vector( data_table, "snow", &nrec );
+	vec alb = get_vector( data_table, "alb", &nrec );
+	vec aod = get_vector( data_table, "aod", &nrec );
 	if (m_ok == false){
+		return; //m_message is set in get_vector function, so doesn't need to be set here
+	}
+
+	// new: minute column required for weather data
+	if (!has_data_column(weather_data_provider::MINUTE))
+	{
+		m_message = "minute column required for weather data input";
+		m_ok = false;
 		return;
 	}
 
 	m_nRecords = nrec;
 
-	// estimate time step
-	size_t nmult = 0;
-	if ( m_nRecords%8760 == 0 )
-	{
-		nmult = nrec / 8760;
-		m_stepSec = 3600 / nmult;
-		m_startSec = m_stepSec / 2;
-	}
-	else if ( m_nRecords%8784==0 )
-	{ 
-		// Check if the weather file contains a leap day
-		// if so, correct the number of nrecords 
-		m_nRecords = m_nRecords/8784*8760;
-		nmult = m_nRecords/8760;
-		m_stepSec = 3600 / nmult;
-		m_startSec = m_stepSec / 2;
-	}
-	else
-	{
-		m_message = "could not determine timestep in weatherdata";
-		m_ok = false;
-		return;
-	}
-
-	if ( nrec > 0 && nmult >= 1 )
+	if ( nrec > 0)
 	{
 		m_data.resize( nrec );
 		for( size_t i=0;i<nrec;i++ )
 		{
 			weather_record *r = new weather_record;
 
-			if ( i < year.len ) r->year = (int)year.p[i]; 
-			else r->year = 2000;
-
+			if ( i < year.len ) r->year = (int)year.p[i];
 			if ( i < month.len ) r->month = (int)month.p[i];
-			else if ( m_stepSec == 3600 && m_nRecords == 8760 ) {
-				r->month = util::month_of((double)i);
-			}
-
 			if ( i < day.len ) r->day = (int)day.p[i];
-			else if ( m_stepSec == 3600 && m_nRecords == 8760 ) {
-				int month = util::month_of( (double)i );
-				r->day = util::day_of_month( month, (double)i );
-			}
-
 			if ( i < hour.len ) r->hour = (int)hour.p[i];
-			else if ( m_stepSec == 3600 && m_nRecords == 8760 ) {
-				size_t day = i / 24;
-				size_t start_of_day = day * 24;
-				r->hour = (int)(i - start_of_day);
+			if ( i < minute.len ) r->minute = minute.p[i];
+
+			// minute column must go from 0-59, NOT 1-60!
+			if (minute.p[i] > 60)
+			{
+				m_message = "minute column must contain integers from 0-59";
+				m_ok = false;
+				return;
 			}
 
-			if ( i < minute.len ) r->minute = minute.p[i];
-			else r->minute = (double)((m_stepSec / 2) / 60);
-
-			r->gh = r->dn = r->df = r->poa = r->wspd = r->wdir = r->tdry = r->twet = r->tdew 
+			r->gh = r->dn = r->df = r->poa = r->wspd = r->wdir = r->tdry = r->twet = r->tdew
 				= r->rhum = r->pres = r->snow = r->alb = r->aod = std::numeric_limits<double>::quiet_NaN();
 			if ( i < gh.len ) r->gh = gh.p[i];
 			if ( i < dn.len ) r->dn = dn.p[i];
@@ -1341,6 +1355,34 @@ weatherdata::weatherdata( var_data *data_table )
 
 			m_data[i] = r;
 		}
+
+        start_hours_at_0();
+    }
+
+	// estimate time step and check for continuous year
+	size_t nmult = 0;
+	bool is_leap_year = false;
+	// Check if the weather file contains a leap day
+	// if so, correct the number of nrecords
+	if (m_nRecords % 8784 == 0)
+	{
+		m_nRecords = m_nRecords / 8784 * 8760;
+		is_leap_year = true;
+	}
+	if (m_nRecords % 8760 == 0)
+	{
+		if (check_continuous_single_year(is_leap_year))
+		{
+			nmult = nrec / 8760;
+			m_stepSec = 3600 / nmult;
+			m_startSec = m_stepSec / 2;
+		}
+		else
+			m_continuousYear = false;
+	}
+	else
+	{
+		m_continuousYear = false;
 	}
 }
 
@@ -1416,6 +1458,18 @@ ssc_number_t weatherdata::get_number( var_data *v, const char *name )
 	return std::numeric_limits<ssc_number_t>::quiet_NaN();
 }
 
+void weatherdata::start_hours_at_0() {
+    std::vector<int> hours;
+    for (weather_record *i : m_data)
+        hours.push_back(i->hour);
+    double max_hr = *std::max_element(hours.begin(), hours.end());
+    double min_hr = *std::min_element(hours.begin(), hours.end());
+    if (max_hr - min_hr != 23)
+        m_message = "Weather data range was not (0-23) or (1-24)";
+    else if (max_hr == 24)
+        for (weather_record *i : m_data) i->hour -= 1;
+}
+
 void weatherdata::set_counter_to(size_t cur_index){
 	if (cur_index < m_data.size()) {
 		m_index = cur_index;
@@ -1461,7 +1515,7 @@ bool ssc_cmod_update(std::string &log_msg, std::string &progress_msg, void *data
 
 	if (log_msg != "")
 		cm->log(log_msg, log_type);
-	
+
 	return cm->update(progress_msg, (float)progress);
 }
 

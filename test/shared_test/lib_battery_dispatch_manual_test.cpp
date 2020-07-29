@@ -468,8 +468,8 @@ TEST_F(ManualTest_lib_battery_dispatch, InverterEfficiencyCutoffDC)
     // Test discharge constraints. First constraint does not hit backoff
     batteryPower->powerPV = 0; batteryPower->voltageSystem = 600; batteryPower->powerGridToBattery = 0; batteryPower->powerLoad = 7;
     dispatchManual->dispatch(year, 0, step_of_hour);
-    EXPECT_NEAR(batteryPower->sharedInverter->efficiencyAC, 37.69, 0.1); // Not enforced becasue no PV
-    EXPECT_NEAR(batteryPower->powerBatteryDC, 4.55, 0.1);
+    EXPECT_NEAR(batteryPower->sharedInverter->efficiencyAC, 36.05, 0.1); // Not enforced becasue no PV
+    EXPECT_NEAR(batteryPower->powerBatteryDC, 4.43, 0.1);
 
     batteryPower->powerPV = 770; batteryPower->voltageSystem = 600; batteryPower->powerGridToBattery = 0; batteryPower->powerLoad = 1000;
     dispatchManual->dispatch(year, 12, step_of_hour);

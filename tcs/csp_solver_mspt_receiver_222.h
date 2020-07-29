@@ -92,7 +92,7 @@ private:
 
 	struct s_steady_state_soln
 	{
-		int mode;
+		C_csp_collector_receiver::E_csp_cr_modes mode;
 		bool rec_is_off;
 		int itermode;
 
@@ -149,7 +149,8 @@ private:
 			dni = od_control = field_eff = m_dot_salt = m_dot_salt_tot = T_salt_cold_in = T_salt_hot = T_salt_hot_rec = T_salt_props = std::numeric_limits<double>::quiet_NaN();
 			u_salt = f = Q_inc_sum = Q_conv_sum = Q_rad_sum = Q_abs_sum = Q_dot_piping_loss = Q_inc_min = Q_thermal = eta_therm = std::numeric_limits<double>::quiet_NaN();
 
-			mode = itermode = -1;
+            mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;
+            itermode = -1;
 			rec_is_off = true;
 		}
 
