@@ -32,6 +32,8 @@ struct dispatch_plan
     double cost;
     int dispatch_hours;
     int num_cycles;
+    double kWhRemaining;
+    double lowestMarginalCost;
 };
 
 /*! Automated dispatch class for behind-the-meter connections */

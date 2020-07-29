@@ -568,7 +568,7 @@ void dispatch_automatic_behind_the_meter_t::cost_based_target_power(FILE* p, boo
         plans[i].num_cycles = 0;
         plan_dispatch_for_cost(p, debug, plans[i], idx, E_max, startingEnergy);
         UtilityRateForecast midDispatchForecast(*rate_forecast);
-        plans[i].cost = midDispatchForecast.forecastCost(plans[i].plannedGridUse, year, hour_of_year, 0) + cost_to_cycle() * plans[i].num_cycles;
+        plans[i].cost = midDispatchForecast.forecastCost(plans[i].plannedGridUse, year, hour_of_year, 0) + cost_to_cycle() * plans[i].num_cycles - plans[i].kWhRemaining * plans[i].lowestMarginalCost;
 
         if (plans[i].cost < lowest_cost)
         {
@@ -605,6 +605,7 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(FILE* p, bool
         }
     }
     double remainingEnergy = E_max;
+    plan.lowestMarginalCost = sorted_grid[0].MarginalCost();
     for (i = 0; i < (plan.dispatch_hours * _steps_per_hour) && (i < sorted_grid.size()); i++)
     {
         costAtStep = sorted_grid[i].Cost();
@@ -626,11 +627,20 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(FILE* p, bool
             // Add to dispatch plan
             int index = sorted_grid[i].Hour() * _steps_per_hour + sorted_grid[i].Step(); // Assumes we're always running this function on the hour
             plan.plannedDispatch[index] = desiredPower;
+
+            if (sorted_grid[i].MarginalCost() < plan.lowestMarginalCost)
+            {
+                plan.lowestMarginalCost = sorted_grid[i].MarginalCost();
+            }
         }
     }
 
+    // Aim to keep the battery at 50%
+    double chargeEnergy = E_max - remainingEnergy;
+    chargeEnergy = std::max(chargeEnergy, E_max / 2.0);
+
     // Need to plan on charging extra to account for round trip losses
-    double requiredEnergy = (E_max - remainingEnergy) / (m_batteryPower->singlePointEfficiencyACToDC * m_batteryPower->singlePointEfficiencyDCToAC);
+    double requiredEnergy = chargeEnergy / (m_batteryPower->singlePointEfficiencyACToDC * m_batteryPower->singlePointEfficiencyDCToAC);
 
     // Iterating over hours
     // Apply clipped energy first, if available
@@ -788,6 +798,8 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(FILE* p, bool
         }
         plan.plannedGridUse.push_back(projectedGrid);
     }
+
+    plan.kWhRemaining = energy;
 }
 
 void dispatch_automatic_behind_the_meter_t::check_power_restrictions(double& power)
