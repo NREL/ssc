@@ -1183,9 +1183,9 @@ void cm_pvsamv1::exec( )
 					if (!Subarrays[nn]->enable) continue;
 
 					Subarrays[nn]->poa.poaAll->tDew = wf.tdew;
-					Subarrays[nn]->poa.poaAll->i = idx;
-					if (wf.hour == 0 && (idx % step_per_hour == 0)) {
-						Subarrays[nn]->poa.poaAll->dayStart = idx;
+					Subarrays[nn]->poa.poaAll->i = inrec;
+					if (wf.hour == 0 && (inrec % step_per_hour == 0)) {
+						Subarrays[nn]->poa.poaAll->dayStart = inrec;
 						Subarrays[nn]->poa.poaAll->doy += 1;
 					}
 				}
