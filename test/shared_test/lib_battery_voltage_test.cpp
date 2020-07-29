@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <cmath>
 
 //#include "lib_battery_capacity.h"
 #include "lib_battery.h"
