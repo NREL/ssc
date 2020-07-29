@@ -629,7 +629,8 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(FILE* p, bool
         }
     }
 
-    double requiredEnergy = E_max - remainingEnergy;
+    // Need to plan on charging extra to account for round trip losses
+    double requiredEnergy = (E_max - remainingEnergy) / (m_batteryPower->singlePointEfficiencyACToDC * m_batteryPower->singlePointEfficiencyDCToAC);
 
     // Iterating over hours
     // Apply clipped energy first, if available
