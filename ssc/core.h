@@ -311,7 +311,7 @@ public:
 		#name, desc, ver, _create_ ## name, nullptr }; \
 
 #define DEFINE_STATEFUL_MODULE_ENTRY(name, desc, ver) \
-    static compute_module *_create_ ## name () { throw std::runtime_error("stateful modules must be called with ssc_stateful_module_create"); } \
+    static compute_module *_create_ ## name () { auto x = new cm_ ## name; x->set_name(#name); return x; } \
     static compute_module *_create_stateful_ ## name (var_table* vt) { auto x = new cm_ ## name (vt); \
         x->set_name(#name); return x; } \
 	module_entry_info cm_entry_ ## name = { \
