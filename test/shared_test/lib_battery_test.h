@@ -35,6 +35,7 @@ static void compareState(thermal_state tested_state, thermal_state expected_stat
     EXPECT_NEAR(tested_state.T_batt, expected_state.T_batt, tol) << msg;
     EXPECT_NEAR(tested_state.T_room, expected_state.T_room, tol) << msg;
     EXPECT_NEAR(tested_state.q_relative_thermal, expected_state.q_relative_thermal, tol) << msg;
+    EXPECT_NEAR(tested_state.heat_dissipated, expected_state.heat_dissipated, 1e-3) << msg;
 }
 
 static void compareState(const std::shared_ptr<thermal_state>& tested_state, const std::shared_ptr<thermal_state>& expected_state, const std::string& msg){
