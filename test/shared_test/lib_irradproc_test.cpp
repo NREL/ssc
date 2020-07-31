@@ -270,7 +270,7 @@ TEST_F(DayCaseIrradProc, solarpos_spaTest_lib_irradproc) {
 	}
 	solarpos_spa(year, month, day, 19, 15, 0, lat, lon, tz, 0, 66.7, 234, 1016, 15, lat, 180, sun);
 	//solution = { 5.10579, 1.51295, 0.0578472, 0.361975, 5.71492, 19.5135, 0.968354, 18.6358, 76.5423 };
-	solution = { 5.10583, 1.51323, 0.0575698, 0.361947, 5.636927, 19.584888, 0.968358, 18.6362, 76.1900 };
+	solution = { 5.10583, 1.51323, 0.057570, 0.361947, 5.636927, 19.584888, 0.968358, 18.6362, 76.1900 };
 	sunrise_times.push_back(solution[4]);
 	sunset_times.push_back(solution[5]);
 	for (int i = 0; i < 9; i++) {
