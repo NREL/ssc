@@ -144,8 +144,6 @@ var_info vtab_battery_inputs[] = {
         { SSC_INPUT,        SSC_NUMBER,     "batt_target_choice",                          "Target power input option",                              "0/1",      "0=InputMonthlyTarget,1=InputFullTimeSeries", "BatteryDispatch", "en_batt=1&batt_meter_position=0&batt_dispatch_choice=2",                        "",                             "" },
         { SSC_INPUT,        SSC_ARRAY,      "batt_custom_dispatch",                        "Custom battery power for every time step",               "kW",       "kWAC if AC-connected, else kWDC", "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=3","",                         "" },
         { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_choice",                        "Battery dispatch algorithm",                             "0/1/2/3/4", "If behind the meter: 0=PeakShavingLookAhead,1=PeakShavingLookBehind,2=InputGridTarget,3=InputBatteryPower,4=ManualDispatch, if front of meter: 0=AutomatedLookAhead,1=AutomatedLookBehind,2=AutomatedInputForecast,3=InputBatteryPower,4=ManualDispatch",                    "BatteryDispatch",       "en_batt=1",                        "",                             "" },
-        { SSC_INPUT,        SSC_ARRAY,      "batt_pv_clipping_forecast",                   "Power clipping forecast",                                   "kW",       "",                     "BatteryDispatch",       "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2",  "",          "" },
-        { SSC_INPUT,        SSC_ARRAY,      "batt_pv_dc_forecast",                         "DC power forecast",                                   "kW",       "",                     "BatteryDispatch",       "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2",  "",          "" },
         { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_auto_can_fuelcellcharge",       "Charging from fuel cell allowed for automated dispatch?",          "kW",       "",                     "BatteryDispatch",       "",                           "",                             "" },
         { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_auto_can_gridcharge",           "Grid charging allowed for automated dispatch?",          "kW",       "",                     "BatteryDispatch",       "",                           "",                             "" },
         { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_auto_can_charge",               "System charging allowed for automated dispatch?",            "kW",       "",                     "BatteryDispatch",       "",                           "",                             "" },
@@ -153,6 +151,10 @@ var_info vtab_battery_inputs[] = {
         { SSC_INPUT,        SSC_NUMBER,     "batt_auto_gridcharge_max_daily",              "Allowed grid charging percent per day for automated dispatch","kW",  "",                     "BatteryDispatch",       "",                           "",                             "" },
         { SSC_INPUT,        SSC_NUMBER,     "batt_look_ahead_hours",                       "Hours to look ahead in automated dispatch",              "hours",    "",                     "BatteryDispatch",       "",                           "",                             "" },
         { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_update_frequency_hours",        "Frequency to update the look-ahead dispatch",            "hours",    "",                     "BatteryDispatch",       "",                           "",                             "" },
+
+        // Dispatch forecast - optional parameters used in cmod_pvsamv1
+        { SSC_INPUT,        SSC_ARRAY,      "batt_pv_clipping_forecast",                   "PV clipping forecast",                                   "kW",       "",                     "Battery",       "",  "",          "" },
+        { SSC_INPUT,        SSC_ARRAY,      "batt_pv_ac_forecast",                         "PV ac power forecast",                                   "kW",       "",                     "Battery",       "",  "",          "" },
 
         //  cycle cost inputs
         { SSC_INPUT,        SSC_NUMBER,     "batt_cycle_cost_choice",                      "Use SAM model for cycle costs or input custom",           "0/1",     "0=UseCostModel,1=InputCost", "BatterySystem", "",                           "",                             "" },
@@ -378,9 +380,6 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             // Front of meter
             if (batt_vars->batt_meter_position == dispatch_t::FRONT)
             {
-
-                batt_vars->pv_clipping_forecast = vt.as_vector_double("batt_pv_clipping_forecast");
-                batt_vars->pv_dc_power_forecast = vt.as_vector_double("batt_pv_dc_forecast");
 //
 //				size_t count_ppa_price_input;
 //				ssc_number_t* ppa_price = cm.as_array("ppa_price_input", &count_ppa_price_input);
@@ -768,13 +767,16 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                                               batt_vars->batt_Vnom_default, batt_vars->batt_Vfull, batt_vars->batt_Vexp,
                                               batt_vars->batt_Vnom, batt_vars->batt_Qfull, batt_vars->batt_Qexp,
                                               batt_vars->batt_Qnom, batt_vars->batt_C_rate, batt_vars->batt_resistance,
-                                              dt_hr);
+                                              dt_hr, batt_vars->batt_initial_SOC);
     else if ((chem == battery_params::VANADIUM_REDOX) && batt_vars->batt_voltage_choice == voltage_params::MODEL)
         voltage_model = new voltage_vanadium_redox_t(batt_vars->batt_computed_series, batt_vars->batt_computed_strings,
-                                                     batt_vars->batt_Vnom_default, batt_vars->batt_resistance, dt_hr);
+                                                     batt_vars->batt_Vnom_default, batt_vars->batt_resistance,
+                                                     dt_hr,batt_vars->batt_initial_SOC);
     else
-        voltage_model = new voltage_table_t(batt_vars->batt_computed_series, batt_vars->batt_computed_strings, batt_vars->batt_Vnom_default,
-                                            batt_vars->batt_voltage_matrix, batt_vars->batt_resistance, dt_hr);
+        voltage_model = new voltage_table_t(batt_vars->batt_computed_series, batt_vars->batt_computed_strings,
+                                            batt_vars->batt_Vnom_default,
+                                            batt_vars->batt_voltage_matrix, batt_vars->batt_resistance,
+                                            dt_hr, batt_vars->batt_initial_SOC);
 
     if (batt_vars->batt_calendar_choice == lifetime_params::CALENDAR_CHOICE::MODEL) {
         lifetime_model = new lifetime_t(batt_vars->batt_lifetime_matrix, dt_hr,
@@ -861,8 +863,19 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
         if (batt_vars->batt_discharge_schedule_weekday.nrows() != 12 || batt_vars->batt_discharge_schedule_weekday.ncols() != 24)
             throw exec_error("battery", "invalid manual dispatch schedule matrix dimensions, must be 12 x 24");
 
+        size_t max_period = 6;
+        size_t* discharge_schedule_vec = batt_vars->batt_discharge_schedule_weekday.data();
+        size_t* period_num = std::find_if(discharge_schedule_vec, discharge_schedule_vec + batt_vars->batt_discharge_schedule_weekday.ncells() - 1, [max_period](double element) { return (max_period < element); });
+        if (*period_num > max_period)
+            throw exec_error("battery", "invalid manual dispatch period in weekday schedule. Period numbers must be less than or equal to 6");
+
         if (batt_vars->batt_discharge_schedule_weekend.nrows() != 12 || batt_vars->batt_discharge_schedule_weekend.ncols() != 24)
             throw exec_error("battery", "invalid weekend manual dispatch schedule matrix dimensions, must be 12 x 24");
+
+        discharge_schedule_vec = batt_vars->batt_discharge_schedule_weekend.data();
+        period_num = std::find_if(discharge_schedule_vec, discharge_schedule_vec + batt_vars->batt_discharge_schedule_weekend.ncells() - 1, [max_period](double element) { return (max_period < element); });
+        if (*period_num > max_period)
+            throw exec_error("battery", "invalid manual dispatch period in weekend schedule. Period numbers must be less than or equal to 6");
 
         if (batt_vars->en_fuelcell) {
             if (batt_vars->batt_can_fuelcellcharge.size() != 6)
@@ -1483,6 +1496,7 @@ static var_info _cm_vtab_battery[] = {
         { SSC_INOUT,        SSC_ARRAY,       "gen",										  "System power generated",                                  "kW",         "",                     "System Output",                             "",                       "",                               "" },
         { SSC_INPUT,		SSC_ARRAY,	     "load",			                              "Electricity load (year 1)",                               "kW",	        "",				        "Load",                             "",	                      "",	                            "" },
         { SSC_INPUT,		SSC_ARRAY,	     "crit_load",			                      "Critical electricity load (year 1)",                      "kW",	        "",				        "Load",                             "",	                      "",	                            "" },
+        { SSC_INPUT,        SSC_ARRAY,       "load_escalation",                            "Annual load escalation",                                  "%/year",     "",                     "Load",                             "?=0",                    "",                               "" },
         { SSC_INOUT,        SSC_NUMBER,      "capacity_factor",                            "Capacity factor",                                         "%",          "",                     "System Output",                             "?=0",                    "",                               "" },
         { SSC_INOUT,        SSC_NUMBER,      "annual_energy",                              "Annual Energy",                                           "kWh",        "",                     "System Output",                      "?=0",                    "",                               "" },
 
@@ -1512,17 +1526,29 @@ public:
             std::vector<ssc_number_t> power_input_lifetime = as_vector_ssc_number_t("gen");
             std::vector<ssc_number_t> load_lifetime, load_year_one;
             size_t n_rec_lifetime = power_input_lifetime.size();
+            bool use_lifetime = as_boolean("system_use_lifetime_output");
+            size_t analysis_period = (size_t)as_integer("analysis_period");
+
+            if (use_lifetime && (double)(util::hours_per_year * analysis_period) / n_rec_lifetime > 1)
+                throw exec_error("battery", "`gen` input must be lifetime when system_use_lifetime_output=1.");
+
             size_t n_rec_single_year;
             double dt_hour_gen;
             if (is_assigned("load")) {
                 load_year_one = as_vector_ssc_number_t("load");
             }
+            scalefactors scale_calculator(m_vartab);
+            // compute load (electric demand) annual escalation multipliers
+            std::vector<ssc_number_t> load_scale = scale_calculator.get_factors("load_escalation");
 
+            double interpolation_factor = 1.0;
             single_year_to_lifetime_interpolated<ssc_number_t>(
-                    (bool)as_integer("system_use_lifetime_output"),
-                    (size_t)as_integer("analysis_period"),
+                    use_lifetime,
+                    analysis_period,
                     n_rec_lifetime,
                     load_year_one,
+                    load_scale,
+                    interpolation_factor,
                     load_lifetime,
                     n_rec_single_year,
                     dt_hour_gen);

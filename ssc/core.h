@@ -170,6 +170,7 @@ public:
 	compute_module( ); // cannot be created directly - has a pure virtual function
 	virtual ~compute_module();
 
+	void set_name(const std::string &n) { name = n; }
 	bool update( const std::string &current_action, float percent_done, float time=-1.0 );
 	void log( const std::string &msg, int type=SSC_NOTICE, float time=-1.0 );
 	bool extproc( const std::string &command, const std::string &workdir );
@@ -195,6 +196,9 @@ public:
 	virtual bool on_extproc_output( const std::string & ) { return false; }
 
 protected:
+
+    std::string name;
+
     /* these members are take values only during a call to 'compute(..)'
   and are NULL otherwise */
     handler_interface   *m_handler;
@@ -203,7 +207,6 @@ protected:
 	/* must be implemented to perform calculations
 	   note: can throw exceptions of type 'compute_module::error' */
 	virtual void exec( ) = 0;
-
 
 	/* can be called in constructors to build up the variable table references */
 	void add_var_info( var_info vi[] );
@@ -255,6 +258,7 @@ public:
 
 protected:
 	// called by 'compute' as necessary for precheck and postcheck
+    bool evaluate();
 	bool verify(const std::string &phase, int var_types);
 
 private:
@@ -296,18 +300,20 @@ public:
 
 
 #define DEFINE_MODULE_ENTRY( name, desc, ver ) \
-	static compute_module *_create_ ## name () { return new cm_ ## name; } \
+	static compute_module *_create_ ## name () { auto x = new cm_ ## name; x->set_name(#name); return x; } \
 	module_entry_info cm_entry_ ## name = { \
 		#name, desc, ver, _create_ ## name, nullptr }; \
 
 #define DEFINE_TCS_MODULE_ENTRY( name, desc, ver ) \
-	static compute_module *_create_ ## name() { extern tcstypeprovider sg_tcsTypeProvider; return new cm_ ## name(&sg_tcsTypeProvider); } \
+	static compute_module *_create_ ## name() { extern tcstypeprovider sg_tcsTypeProvider; \
+	    auto x = new cm_ ## name(&sg_tcsTypeProvider); x->set_name(#name); return x; } \
 	module_entry_info cm_entry_ ## name = { \
 		#name, desc, ver, _create_ ## name, nullptr }; \
 
 #define DEFINE_STATEFUL_MODULE_ENTRY(name, desc, ver) \
-    static compute_module *_create_ ## name () { return new cm_ ## name; } \
-    static compute_module *_create_stateful_ ## name (var_table* vt) { return new cm_ ## name (vt); } \
+    static compute_module *_create_ ## name () { auto x = new cm_ ## name; x->set_name(#name); return x; } \
+    static compute_module *_create_stateful_ ## name (var_table* vt) { auto x = new cm_ ## name (vt); \
+        x->set_name(#name); return x; } \
 	module_entry_info cm_entry_ ## name = { \
 		#name, desc, ver, _create_ ## name, _create_stateful_ ## name }; \
 

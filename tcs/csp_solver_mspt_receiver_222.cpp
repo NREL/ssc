@@ -71,8 +71,8 @@ C_mspt_receiver_222::C_mspt_receiver_222()
 	m_tol_od = std::numeric_limits<double>::quiet_NaN();
 	m_q_dot_inc_min = std::numeric_limits<double>::quiet_NaN();
 
-	m_mode = -1;
-	m_mode_prev = -1;
+	m_mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;
+    m_mode_prev = C_csp_collector_receiver::E_csp_cr_modes::OFF;
 	m_E_su = std::numeric_limits<double>::quiet_NaN();
 	m_E_su_prev = std::numeric_limits<double>::quiet_NaN();
 	m_t_su = std::numeric_limits<double>::quiet_NaN();
@@ -281,7 +281,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 	double field_eff = inputs.m_field_eff;					//[-]
 	const util::matrix_t<double> *flux_map_input = inputs.m_flux_map_input;
 		// When this function is called from TCS solver, input_operation_mode should always be == 2
-	int input_operation_mode = inputs.m_input_operation_mode;
+	C_csp_collector_receiver::E_csp_cr_modes input_operation_mode = inputs.m_input_operation_mode;
 
 	if(input_operation_mode < C_csp_collector_receiver::OFF || input_operation_mode > C_csp_collector_receiver::STEADY_STATE)
 	{
@@ -324,7 +324,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 	double T_sky = CSP::skytemp(T_amb, T_dp, hour);
 
 	// Set current timestep stored values to NaN so we know that code solved for them
-	m_mode = -1;
+	m_mode = C_csp_collector_receiver::OFF;
 	m_E_su = std::numeric_limits<double>::quiet_NaN();
 	m_t_su = std::numeric_limits<double>::quiet_NaN();
 
@@ -403,8 +403,8 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 	soln.field_eff = field_eff;
 	soln.T_salt_cold_in = T_salt_cold_in;	
 	soln.od_control = m_od_control;         // Initial defocus control (may be adjusted during the solution)
-	soln.mode = m_mode;
-	soln.itermode = m_itermode;
+    soln.mode = input_operation_mode;
+    soln.itermode = m_itermode;
 	soln.rec_is_off = rec_is_off;
 
 	clearsky = get_clearsky(weather, hour);  

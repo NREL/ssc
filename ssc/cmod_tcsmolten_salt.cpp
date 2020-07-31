@@ -1402,8 +1402,6 @@ public:
                         throw exec_error("sco2_csp_system", csp_exception.m_error_message);
                     }
 
-                    size_t ncols = T_htf_parametrics.ncols();
-
                     log("sCO2 off-design performance calculations for lookup tables complete.", SSC_WARNING);
                     update("sCO2 preprocess complete", 100.0);
 
