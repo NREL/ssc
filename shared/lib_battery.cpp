@@ -117,7 +117,7 @@ void thermal_t::updateTemperature(double I, size_t lifetimeIndex) {
     }
 
     // the battery temp is the average temp over that step, starting with temp from end of last timestep
-    
+
     double T_steady_state = I * I * params->resistance / (params->surface_area * params->h) + state->T_room;
     double diffusion = exp(-params->surface_area * params->h * dt_sec / params->mass / params->Cp);
     double coeff_avg = params->mass * params->Cp / params->surface_area / params->h / dt_sec;
@@ -561,9 +561,6 @@ double battery_t::run(size_t lifetimeIndex, double &I, bool stateful) {
     runVoltageModel();
     runLifetimeModel(lifetimeIndex);
     runLossesModel(lifetimeIndex);
-
-    if (voltage->battery_voltage() == 0.)
-        throw std::runtime_error("battery_t error: voltage was 0.");
 
     if (stateful) {
         state->I = I;
