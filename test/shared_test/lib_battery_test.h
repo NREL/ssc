@@ -70,7 +70,7 @@ public:
     void CreateModel(double Cp){
         model = std::unique_ptr<thermal_t>(new thermal_t(dt_hour, mass, surface_area, batt_R, Cp, h, capacityVsTemperature, T_room));
     }
-    void CreateModelTenSecondStep(double Cp) {
+    void CreateModelSixSecondStep(double Cp) {
         dt_hour = 1.0 / 600.0;
         model = std::unique_ptr<thermal_t>(new thermal_t(dt_hour, mass, surface_area, batt_R, Cp, h, capacityVsTemperature, T_room));
     }

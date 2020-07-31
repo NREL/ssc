@@ -51,7 +51,7 @@ TEST_F(lib_battery_thermal_test, updateTemperatureTest) {
 }
 
 TEST_F(lib_battery_thermal_test, updateTemperatureTestSubMinute) {
-    CreateModelTenSecondStep(Cp);
+    CreateModelSixSecondStep(Cp);
     // battery which adjusts quickly to temp {16.85, 16.85, 21.85, 21.85, 16.85, -3.15, -3.15};
     double I = 50;
     size_t idx = 0;
@@ -62,6 +62,7 @@ TEST_F(lib_battery_thermal_test, updateTemperatureTestSubMinute) {
         avgTemp += model->get_state().T_batt;
     }
     avgTemp /= 600.0;
+    EXPECT_NEAR(avgTemp, 16.86, 0.02) << "updateTemperatureTest: 1";
     auto s = thermal_state({ 93.49, 16.86, 16.85 });
     compareState(model->get_state(), s, "updateTemperatureTest: 1");
 
@@ -74,6 +75,7 @@ TEST_F(lib_battery_thermal_test, updateTemperatureTestSubMinute) {
         avgTemp += model->get_state().T_batt;
     }
     avgTemp /= 600.0;
+    EXPECT_NEAR(avgTemp, 16.87, 0.02) << "updateTemperatureTest: 2";
     s = thermal_state({ 93.49, 16.87, 16.85 });
     compareState(model->get_state(), s, "updateTemperatureTest: 2");
 
@@ -86,6 +88,7 @@ TEST_F(lib_battery_thermal_test, updateTemperatureTestSubMinute) {
         avgTemp += model->get_state().T_batt;
     }
     avgTemp /= 600.0;
+    EXPECT_NEAR(avgTemp, 17.51, 0.02) << "updateTemperatureTest: 3";
     s = thermal_state({ 94.47, 18.09, 21.85, -0.1514});
     compareState(model->get_state(), s, "updateTemperatureTest: 3");
 
@@ -98,6 +101,7 @@ TEST_F(lib_battery_thermal_test, updateTemperatureTestSubMinute) {
         avgTemp += model->get_state().T_batt;
     }
     avgTemp /= 600.0;
+    EXPECT_NEAR(avgTemp, 18.59, 0.02) << "updateTemperatureTest: 4";
     s = thermal_state({ 95.22, 19.03, 21.85, -0.1138});
     compareState(model->get_state(), s, "updateTemperatureTest: 4");
 
@@ -110,6 +114,7 @@ TEST_F(lib_battery_thermal_test, updateTemperatureTestSubMinute) {
         avgTemp += model->get_state().T_batt;
     }
     avgTemp /= 600.0;
+    EXPECT_NEAR(avgTemp, 18.74, 0.02) << "updateTemperatureTest: 5";
     s = thermal_state({ 94.79, 18.49, 16.85, 0.06618});
     compareState(model->get_state(), s, "updateTemperatureTest: 5");
 
@@ -122,6 +127,7 @@ TEST_F(lib_battery_thermal_test, updateTemperatureTestSubMinute) {
         avgTemp += model->get_state().T_batt;
     }
     avgTemp /= 600.0;
+    EXPECT_NEAR(avgTemp, 15.69, 0.02) << "updateTemperatureTest: 6";
     s = thermal_state({ 90.49, 13.12, -3.15, 0.6567});
     compareState(model->get_state(), s, "updateTemperatureTest: 6");
 
@@ -134,6 +140,7 @@ TEST_F(lib_battery_thermal_test, updateTemperatureTestSubMinute) {
         avgTemp += model->get_state().T_batt;
     }
     avgTemp /= 600.0;
+    EXPECT_NEAR(avgTemp, 11.01, 0.02) << "updateTemperatureTest: 7";
     s = thermal_state({ 87.27, 9.09, -3.15, 0.4941});
     compareState(model->get_state(), s, "updateTemperatureTest: 7");
 }
