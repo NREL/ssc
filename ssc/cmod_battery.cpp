@@ -767,16 +767,16 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                                               batt_vars->batt_Vnom_default, batt_vars->batt_Vfull, batt_vars->batt_Vexp,
                                               batt_vars->batt_Vnom, batt_vars->batt_Qfull, batt_vars->batt_Qexp,
                                               batt_vars->batt_Qnom, batt_vars->batt_C_rate, batt_vars->batt_resistance,
-                                              dt_hr, batt_vars->batt_initial_SOC);
+                                              dt_hr);
     else if ((chem == battery_params::VANADIUM_REDOX) && batt_vars->batt_voltage_choice == voltage_params::MODEL)
         voltage_model = new voltage_vanadium_redox_t(batt_vars->batt_computed_series, batt_vars->batt_computed_strings,
                                                      batt_vars->batt_Vnom_default, batt_vars->batt_resistance,
-                                                     dt_hr,batt_vars->batt_initial_SOC);
+                                                     dt_hr);
     else
         voltage_model = new voltage_table_t(batt_vars->batt_computed_series, batt_vars->batt_computed_strings,
                                             batt_vars->batt_Vnom_default,
                                             batt_vars->batt_voltage_matrix, batt_vars->batt_resistance,
-                                            dt_hr, batt_vars->batt_initial_SOC);
+                                            dt_hr);
 
     if (batt_vars->batt_calendar_choice == lifetime_params::CALENDAR_CHOICE::MODEL) {
         lifetime_model = new lifetime_t(batt_vars->batt_lifetime_matrix, dt_hr,

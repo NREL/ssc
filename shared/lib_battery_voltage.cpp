@@ -111,8 +111,7 @@ void voltage_table_t::initialize() {
 }
 
 voltage_table_t::voltage_table_t(int num_cells_series, int num_strings, double voltage,
-                                 util::matrix_t<double> &voltage_table,
-                                 double R, double dt_hour, double init_soc) :
+                                 util::matrix_t<double> &voltage_table, double R, double dt_hour) :
         voltage_t(voltage_params::TABLE, num_cells_series, num_strings, voltage, dt_hour) {
     params->resistance = R;
     for (int r = 0; r != (int) voltage_table.nrows(); r++)
@@ -275,10 +274,9 @@ void voltage_dynamic_t::initialize() {
     parameter_compute();
 }
 
-voltage_dynamic_t::voltage_dynamic_t(int num_cells_series, int num_strings, double voltage, double Vfull, double Vexp,
-                                     double Vnom,
-                                     double Qfull, double Qexp, double Qnom, double C_rate, double R, double dt_hr,
-                                     double init_soc) :
+voltage_dynamic_t::voltage_dynamic_t(int num_cells_series, int num_strings, double voltage, double Vfull,
+                                     double Vexp, double Vnom, double Qfull, double Qexp, double Qnom,
+                                     double C_rate, double R, double dt_hr) :
         voltage_t(voltage_params::MODEL, num_cells_series, num_strings, voltage, dt_hr) {
     params->dynamic.Vfull = Vfull;
     params->dynamic.Vexp = Vexp;
@@ -452,9 +450,8 @@ void voltage_vanadium_redox_t::initialize() {
     m_RCF = 8.314 * 1.38 / (26.801 * 3600);
 }
 
-voltage_vanadium_redox_t::voltage_vanadium_redox_t(int num_cells_series, int num_strings, double Vnom_default, double R,
-                                                   double dt_hour,
-                                                   double init_soc) :
+voltage_vanadium_redox_t::voltage_vanadium_redox_t(int num_cells_series, int num_strings, double Vnom_default,
+                                                   double R, double dt_hour) :
         voltage_t(voltage_params::MODEL, num_cells_series, num_strings, Vnom_default, dt_hour) {
     params->Vnom_default = Vnom_default;
     params->resistance = R;

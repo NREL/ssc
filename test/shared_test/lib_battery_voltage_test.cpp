@@ -18,7 +18,7 @@ TEST_F(voltage_dynamic_lib_battery_voltage_test, NickelMetalHydrideFromPaperTest
     cap = std::unique_ptr<capacity_lithium_ion_t>(new capacity_lithium_ion_t(6.5, 100, 100, 0, 1));
 
     model = std::unique_ptr<voltage_t>(new voltage_dynamic_t(1, 1, 1.2, 1.4,
-                                                             1.25, 1.2, 6.5, 1.3, 5.2, 0.2, 0.0046, 1, 100));
+                                                             1.25, 1.2, 6.5, 1.3, 5.2, 0.2, 0.0046, 1));
     std::vector<double> dt_hr = {1./6., 1./3., 1./3.};
     // testing with 1lt curve
     std::vector<double> voltages = {1.25, 1.22, 1.17};

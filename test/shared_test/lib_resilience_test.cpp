@@ -22,7 +22,7 @@ TEST_F(ResilienceTest_lib_resilience, VoltageCutoffParameterSetup)
                                                 dtHour, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom, C_rate, resistance);
                                         auto voltageModel = new voltage_dynamic_t(n_series, n_strings, Vnom * 0.98,
                                                                                   Vfull, Vexp, Vnom, Qfull, Qexp, Qnom,
-                                                                                  C_rate, resistance, dtHour, 100);
+                                                                                  C_rate, resistance, dtHour);
                                         try{
                                             double current1;
                                             for (auto q_ratio : {0.25, 0.5, 0.75}){
@@ -215,7 +215,7 @@ TEST_F(ResilienceTest_lib_resilience, VoltageTable)
     std::vector<double> vals = {99, 0, 50, 2, 0, 3};
     util::matrix_t<double> table(3, 2, &vals);
     double soc_init = 50;
-    auto volt = voltage_table_t(1, 1, 3, table, 0.1, 1, soc_init);
+    auto volt = voltage_table_t(1, 1, 3, table, 0.1, 1);
     auto cap = capacity_lithium_ion_t(2.25, soc_init, 100, 0, 1);
 
     volt.updateVoltage(cap.q0(), cap.qmax(), cap.I(), 0, 0.);
@@ -252,7 +252,7 @@ TEST_F(ResilienceTest_lib_resilience, DischargeVoltageTable){
     std::vector<double> vals = {99, 0, 50, 2, 0, 3};
     util::matrix_t<double> table(3, 2, &vals);
     double soc_init = 50;
-    auto volt = voltage_table_t(1, 1, 3, table, 0.1, 1, soc_init);
+    auto volt = voltage_table_t(1, 1, 3, table, 0.1, 1);
     auto cap = capacity_lithium_ion_t(2.25, soc_init, 100, 0, 1);
 
     // test discharging
@@ -297,7 +297,7 @@ TEST_F(ResilienceTest_lib_resilience, ChargeVoltageTable){
     std::vector<double> vals = {99, 0, 50, 2, 0, 3};
     util::matrix_t<double> table(3, 2, &vals);
     double soc_init = 50;
-    auto volt = voltage_table_t(1, 1, 3, table, 0.1, 1, soc_init);
+    auto volt = voltage_table_t(1, 1, 3, table, 0.1, 1);
     auto cap = capacity_lithium_ion_t(2.25, soc_init, 100, 0, 1);
 
     // test charging
@@ -326,7 +326,7 @@ TEST_F(ResilienceTest_lib_resilience, ChargeVoltageTable){
 
 TEST_F(ResilienceTest_lib_resilience, VoltageVanadium){
     double SOC_init = 30;
-    auto volt = voltage_vanadium_redox_t(1, 1, 1.41, 0.001, 1, SOC_init);
+    auto volt = voltage_vanadium_redox_t(1, 1, 1.41, 0.001, 1);
     auto cap = capacity_lithium_ion_t(11, SOC_init, 100, 0, 1);
 
     volt.updateVoltage(cap.q0(), cap.qmax(), cap.I(), 33, 1);

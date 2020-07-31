@@ -123,8 +123,8 @@ private:
 
 class voltage_table_t : public voltage_t {
 public:
-    voltage_table_t(int num_cells_series, int num_strings, double voltage, util::matrix_t<double> &voltage_table,
-                    double R, double dt_hour, double init_soc);
+    voltage_table_t(int num_cells_series, int num_strings, double voltage,
+                    util::matrix_t<double> &voltage_table, double R, double dt_hour);
 
     voltage_table_t(std::shared_ptr<voltage_params> p);
 
@@ -163,8 +163,9 @@ private:
 // Shepard + Tremblay Model
 class voltage_dynamic_t : public voltage_t {
 public:
-    voltage_dynamic_t(int num_cells_series, int num_strings, double voltage, double Vfull, double Vexp, double Vnom,
-                      double Qfull, double Qexp, double Qnom, double C_rate, double R, double dt_hr, double init_soc);
+    voltage_dynamic_t(int num_cells_series, int num_strings, double voltage, double Vfull,
+                      double Vexp, double Vnom, double Qfull, double Qexp, double Qnom,
+                      double C_rate, double R, double dt_hr);
 
     voltage_dynamic_t(std::shared_ptr<voltage_params> p);
 
@@ -218,8 +219,8 @@ private:
 // D'Agostino Vanadium Redox Flow Model
 class voltage_vanadium_redox_t : public voltage_t {
 public:
-    voltage_vanadium_redox_t(int num_cells_series, int num_strings, double Vnom_default, double R, double dt_hour,
-                             double init_soc);
+    voltage_vanadium_redox_t(int num_cells_series, int num_strings, double Vnom_default,
+                             double R, double dt_hour);
 
     explicit voltage_vanadium_redox_t(std::shared_ptr<voltage_params> p);
 
