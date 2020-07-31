@@ -41,7 +41,6 @@ struct voltage_params {
     double Vnom_default;         // nominal cell voltage [V]
     double resistance;           // internal cell resistance (Ohm)
     double dt_hr;
-    double init_soc;
 
     struct {
         double Vfull;
