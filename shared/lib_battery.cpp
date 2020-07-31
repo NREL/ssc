@@ -416,11 +416,17 @@ battery_t::battery_t(double dt_hr, int chem, capacity_t *capacity_model, voltage
     params->chem = chem;
     params->nominal_voltage = params->voltage->Vnom_default * params->voltage->num_cells_series;
     params->nominal_energy = params->nominal_voltage * params->voltage->num_strings * params->voltage->dynamic.Qfull * 1e-3;
+
+    // initial conditions
+    voltage->set_initial_SOC(capacity->state->SOC);
 }
 
 battery_t::battery_t(std::shared_ptr<battery_params> p):
         params(std::move(p)) {
     initialize();
+
+    // initial conditions
+    voltage->set_initial_SOC(capacity->state->SOC);
 }
 
 battery_t::battery_t(const battery_t &rhs) {

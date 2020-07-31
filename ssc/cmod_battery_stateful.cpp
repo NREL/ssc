@@ -299,6 +299,8 @@ std::shared_ptr<battery_params> create_battery_params(var_table *vt, double dt_h
         if (params->chem == battery_params::LEAD_ACID  || params->chem == battery_params::LITHIUM_ION) {
             vt_get_number(vt, "Vfull", &voltage->dynamic.Vfull);
             vt_get_number(vt, "Vexp", &voltage->dynamic.Vexp);
+            vt_get_number(vt, "Vnom", &voltage->dynamic.Vnom);
+            vt_get_number(vt, "Qfull", &voltage->dynamic.Qfull);
             vt_get_number(vt, "Qexp", &voltage->dynamic.Qexp);
             vt_get_number(vt, "Qnom", &voltage->dynamic.Qnom);
             vt_get_number(vt, "C_rate", &voltage->dynamic.C_rate);
