@@ -158,9 +158,10 @@ TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, SubhourlyWeather_cmod_pvwattsv7) {
 	{
 		ssc_number_t annual_energy;
 		ssc_data_get_number(data, "annual_energy", &annual_energy);
-		EXPECT_NEAR(annual_energy, 6523.727, error_tolerance) << "Annual energy.";
+		//EXPECT_NEAR(annual_energy, 6523.727, error_tolerance) << "Annual energy.";
+        EXPECT_NEAR(annual_energy, 6524.805, error_tolerance) << "Annual energy.";
 		//EXPECT_NEAR(annual_energy, 6106.900, error_tolerance) << "Annual energy.";
-		EXPECT_NEAR(annual_energy, 6106.519, error_tolerance) << "Annual energy."; //value changed due to new solarpos_spa algorithm
+		//EXPECT_NEAR(annual_energy, 6106.519, error_tolerance) << "Annual energy."; //value changed due to new solarpos_spa algorithm
 
 		ssc_number_t capacity_factor;
 		ssc_data_get_number(data, "capacity_factor", &capacity_factor);
