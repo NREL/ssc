@@ -111,14 +111,12 @@ void voltage_table_t::initialize() {
 }
 
 voltage_table_t::voltage_table_t(int num_cells_series, int num_strings, double voltage,
-                                 util::matrix_t<double> &voltage_table,
-                                 double R, double dt_hour, double init_soc) :
+                                 util::matrix_t<double> &voltage_table, double R, double dt_hour) :
         voltage_t(voltage_params::TABLE, num_cells_series, num_strings, voltage, dt_hour) {
     params->resistance = R;
     for (int r = 0; r != (int) voltage_table.nrows(); r++)
         params->voltage_table.emplace_back(std::vector<double>({voltage_table.at(r, 0), voltage_table.at(r, 1)}));
     initialize();
-    state->cell_voltage = calculate_voltage(100. - init_soc);
 }
 
 voltage_table_t::voltage_table_t(std::shared_ptr<voltage_params> p):
@@ -155,6 +153,10 @@ double voltage_table_t::calculate_voltage(double DOD) {
     }
 
     return fmax(slopes[row] * DOD + intercepts[row], 0);
+}
+
+void voltage_table_t::set_initial_SOC(double init_soc) {
+    state->cell_voltage = calculate_voltage(100. - init_soc);
 }
 
 double voltage_table_t::calculate_voltage_for_current(double I, double q, double qmax, double) {
@@ -272,10 +274,9 @@ void voltage_dynamic_t::initialize() {
     parameter_compute();
 }
 
-voltage_dynamic_t::voltage_dynamic_t(int num_cells_series, int num_strings, double voltage, double Vfull, double Vexp,
-                                     double Vnom,
-                                     double Qfull, double Qexp, double Qnom, double C_rate, double R, double dt_hr,
-                                     double init_soc) :
+voltage_dynamic_t::voltage_dynamic_t(int num_cells_series, int num_strings, double voltage, double Vfull,
+                                     double Vexp, double Vnom, double Qfull, double Qexp, double Qnom,
+                                     double C_rate, double R, double dt_hr) :
         voltage_t(voltage_params::MODEL, num_cells_series, num_strings, voltage, dt_hr) {
     params->dynamic.Vfull = Vfull;
     params->dynamic.Vexp = Vexp;
@@ -286,7 +287,6 @@ voltage_dynamic_t::voltage_dynamic_t(int num_cells_series, int num_strings, doub
     params->dynamic.C_rate = C_rate;
     params->resistance = R;
     initialize();
-    voltage_dynamic_t::updateVoltage(init_soc * 0.01 * Qfull, Qfull, 0, 25, params->dt_hr);
 }
 
 voltage_dynamic_t::voltage_dynamic_t(std::shared_ptr<voltage_params> p):
@@ -339,6 +339,10 @@ void voltage_dynamic_t::parameter_compute() {
                           "A: %f, B: %f, K: %f, E0: %f", _A, _B0, _K, _E0);
         throw std::runtime_error(err);
     }
+}
+
+void voltage_dynamic_t::set_initial_SOC(double init_soc) {
+    updateVoltage(init_soc * 0.01 * params->dynamic.Qfull, params->dynamic.Qfull, 0, 25, params->dt_hr);
 }
 
 // everything in here is on a per-cell basis
@@ -416,7 +420,10 @@ double voltage_dynamic_t::calculate_current_for_target_w(double P_watts, double 
     }
 
     double x[1], resid[1];
-    x[0] = solver_power / state->cell_voltage * params->dt_hr;
+    if (state->cell_voltage != 0)
+        x[0] = solver_power / state->cell_voltage * params->dt_hr;
+    else
+        x[0] = solver_power / params->dynamic.Vnom * params->dt_hr;
     bool check = false;
 
     newton<double, std::function<void(const double *, double *)>, 1>(x, resid, check, f,
@@ -443,15 +450,13 @@ void voltage_vanadium_redox_t::initialize() {
     m_RCF = 8.314 * 1.38 / (26.801 * 3600);
 }
 
-voltage_vanadium_redox_t::voltage_vanadium_redox_t(int num_cells_series, int num_strings, double Vnom_default, double R,
-                                                   double dt_hour,
-                                                   double init_soc) :
+voltage_vanadium_redox_t::voltage_vanadium_redox_t(int num_cells_series, int num_strings, double Vnom_default,
+                                                   double R, double dt_hour) :
         voltage_t(voltage_params::MODEL, num_cells_series, num_strings, Vnom_default, dt_hour) {
     params->Vnom_default = Vnom_default;
     params->resistance = R;
     params->dt_hr = params->dt_hr;
     initialize();
-    voltage_vanadium_redox_t::updateVoltage(init_soc, 100, 0, 25, params->dt_hr);
 }
 
 voltage_vanadium_redox_t::voltage_vanadium_redox_t(std::shared_ptr<voltage_params> p):
@@ -481,6 +486,11 @@ voltage_vanadium_redox_t::voltage_vanadium_redox_t(const voltage_vanadium_redox_
 voltage_t *voltage_vanadium_redox_t::clone() {
     return new voltage_vanadium_redox_t(*this);
 }
+
+void voltage_vanadium_redox_t::set_initial_SOC(double init_soc) {
+    updateVoltage(init_soc, 100, 0, 25, params->dt_hr);
+}
+
 
 double voltage_vanadium_redox_t::calculate_voltage_for_current(double I, double q, double qmax, double T_k) {
     return voltage_model(q / params->num_strings, qmax / params->num_strings,
@@ -544,7 +554,10 @@ double voltage_vanadium_redox_t::calculate_current_for_target_w(double P_watts, 
                                                                 this, _1, _2);
 
     double x[1], resid[1];
-    x[0] = solver_power / state->cell_voltage * params->dt_hr;
+    if (state->cell_voltage != 0.)
+        x[0] = solver_power / state->cell_voltage * params->dt_hr;
+    else
+        x[0] = solver_power / params->Vnom_default * params->dt_hr;
     bool check = false;
 
     newton<double, std::function<void(const double *, double *)>, 1>(x, resid, check, f,
