@@ -826,12 +826,13 @@ void calculate_spa(double jd, double lat, double lng, double alt, double pressur
 * \param[in] nu apparent sidereal time in Greenwich (degrees) from calculate_spa output
 * \param[out] needed_values values needed to be taken out of function to pass as outputs to calculate_spa function
 * \param[out] needed_values[0] E Equation of Time (degrees)
+* \param[out] h0 sunrise hour angle (degrees)
 * \param[out] needed_values[1] approximate sunrise time (hr)
 * \param[out] needed_values[2] approximate sunset time (hr)
 */
 void calculate_eot_and_sun_rise_transit_set(double jme, double tz, double alpha, double del_psi, double epsilon, double jd, int year, 
 	int month, int day, double lat, double lng, double alt, double pressure, double temp, double tilt, double delta_t, double azm_rotation, 
-	double needed_values[3]);
+	double needed_values[4]);
 
 /**
 *   solarpos_spa function calculates the sun position given the local standard time and location.

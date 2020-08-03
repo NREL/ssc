@@ -491,7 +491,8 @@ void PVSystem_IO::SetupPOAInput()
 				double sun[9], angle[5];
 				int tms[3];
 
-				solarpos(wf.year, wf.month, wf.day, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sun);
+				//solarpos(wf.year, wf.month, wf.day, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sun);
+                solarpos_spa(wf.year, wf.month, wf.day, 12, 0.0, 0.0, hdr.lat, hdr.lon, hdr.tz, 0, 66.7, hdr.elev, wf.pres, wf.tdry, 0, 180, sun);
 
 				double t_sunrise = sun[4];
 				double t_sunset = sun[5];
@@ -500,11 +501,14 @@ void PVSystem_IO::SetupPOAInput()
 				{
 					double sunanglestemp[9];
 					if (wf.day > 1) //simply decrement day during month
-						solarpos(wf.year, wf.month, wf.day - 1, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sunanglestemp);
+						//solarpos(wf.year, wf.month, wf.day - 1, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sunanglestemp);
+                        solarpos_spa(wf.year, wf.month, wf.day - 1, 12, 0.0, 0.0, hdr.lat, hdr.lon, hdr.tz, 0, 66.7, hdr.elev, wf.pres, wf.tdry, 0, 180, sunanglestemp);
 					else if (wf.month > 1) //on the 1st of the month, need to switch to the last day of previous month
-						solarpos(wf.year, wf.month -1 , __nday[wf.month-2], 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sunanglestemp); //month is 1-indexed and __nday is 0 indexed
-					else //on the first day of the year, need to switch to Dec 31 of last year
-						solarpos(wf.year - 1, 12, 31, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sunanglestemp);
+						//solarpos(wf.year, wf.month -1 , __nday[wf.month-2], 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sunanglestemp); //month is 1-indexed and __nday is 0 indexed
+                        solarpos_spa(wf.year, wf.month - 1, __nday[wf.month - 2], 12, 0.0, 0.0, hdr.lat, hdr.lon, hdr.tz, 0, 66.7, hdr.elev, wf.pres, wf.tdry, 0, 180, sunanglestemp);
+                    else //on the first day of the year, need to switch to Dec 31 of last year
+						//solarpos(wf.year - 1, 12, 31, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sunanglestemp);
+                        solarpos_spa(wf.year - 1, 12, 31, 12, 0.0, 0.0, hdr.lat, hdr.lon, hdr.tz, 0, 66.7, hdr.elev, wf.pres, wf.tdry, 0, 180, sunanglestemp);
 					//if sunset from yesterday WASN'T today, then it's ok to leave sunset > 24, which will cause the sun to rise today and not set today
 					if (sunanglestemp[5] >= 24)
 						t_sunset = sunanglestemp[5] - 24.0;
@@ -514,11 +518,14 @@ void PVSystem_IO::SetupPOAInput()
 				{
 					double sunanglestemp[9];
 					if (wf.day < __nday[wf.month - 1]) //simply increment the day during the month, month is 1-indexed and __nday is 0-indexed
-						solarpos(wf.year, wf.month, wf.day + 1, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sunanglestemp);
+						//solarpos(wf.year, wf.month, wf.day + 1, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sunanglestemp);
+                        solarpos_spa(wf.year, wf.month, wf.day + 1, 12, 0.0, 0.0, hdr.lat, hdr.lon, hdr.tz, 0, 66.7, hdr.elev, wf.pres, wf.tdry, 0, 180, sunanglestemp);
 					else if (wf.month < 12) //on the last day of the month, need to switch to the first day of the next month
-						solarpos(wf.year, wf.month + 1, 1, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sunanglestemp);
+						//solarpos(wf.year, wf.month + 1, 1, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sunanglestemp);
+                        solarpos_spa(wf.year, wf.month + 1, 1, 12, 0.0, 0.0, hdr.lat, hdr.lon, hdr.tz, 0, 66.7, hdr.elev, wf.pres, wf.tdry, 0, 180, sunanglestemp);
 					else //on the last day of the year, need to switch to Jan 1 of the next year
-						solarpos(wf.year + 1, 1, 1, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sunanglestemp);
+						//solarpos(wf.year + 1, 1, 1, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sunanglestemp);
+                        solarpos_spa(wf.year + 1, 1, 1, 12, 0.0, 0.0, hdr.lat, hdr.lon, hdr.tz, 0, 66.7, hdr.elev, wf.pres, wf.tdry, 0, 180, sunanglestemp);
 					//if sunrise from tomorrow isn't today, then it's ok to leave sunrise < 0, which will cause the sun to set at the right time and not rise until tomorrow
 					if (sunanglestemp[4] < 0)
 						t_sunrise = sunanglestemp[4] + 24.0;
@@ -535,7 +542,9 @@ void PVSystem_IO::SetupPOAInput()
 					tms[0] = hr_calc;
 					tms[1] = (int)min_calc;
 
-					solarpos(wf.year, wf.month, wf.day, hr_calc, min_calc, hdr.lat, hdr.lon, hdr.tz, sun);
+					//solarpos(wf.year, wf.month, wf.day, hr_calc, min_calc, hdr.lat, hdr.lon, hdr.tz, sun);
+                    solarpos_spa(wf.year, wf.month, wf.day, hr_calc, min_calc, 0, hdr.lat, hdr.lon, hdr.tz, 0, 66.7, hdr.elev, wf.pres, wf.tdry, 0, 180, sun);
+                    
 
 					tms[2] = 2;
 				}
@@ -549,7 +558,8 @@ void PVSystem_IO::SetupPOAInput()
 					tms[0] = hr_calc;
 					tms[1] = (int)min_calc;
 
-					solarpos(wf.year, wf.month, wf.day, hr_calc, min_calc, hdr.lat, hdr.lon, hdr.tz, sun);
+					//solarpos(wf.year, wf.month, wf.day, hr_calc, min_calc, hdr.lat, hdr.lon, hdr.tz, sun);
+                    solarpos_spa(wf.year, wf.month, wf.day, hr_calc, min_calc, 0.0, hdr.lat, hdr.lon, hdr.tz, 0, 66.7, hdr.elev, wf.pres, wf.tdry, 0, 180, sun);
 
 					tms[2] = 3;
 				}
@@ -561,13 +571,15 @@ void PVSystem_IO::SetupPOAInput()
 					// timestep is not sunrise nor sunset, but sun is up  (calculate position at provided t_cur)
 					tms[0] = wf.hour;
 					tms[1] = (int)wf.minute;
-					solarpos(wf.year, wf.month, wf.day, wf.hour, wf.minute, hdr.lat, hdr.lon, hdr.tz, sun);
+					//solarpos(wf.year, wf.month, wf.day, wf.hour, wf.minute, hdr.lat, hdr.lon, hdr.tz, sun);
+                    solarpos_spa(wf.year, wf.month, wf.day, wf.hour, wf.minute, 0.0, hdr.lat, hdr.lon, hdr.tz, 0, 66.7, hdr.elev, wf.pres, wf.tdry, 0, 180, sun);
 					tms[2] = 1;
 				}
 				else
 				{
 					// sun is down, assign sundown values
-					solarpos(wf.year, wf.month, wf.day, wf.hour, wf.minute, hdr.lat, hdr.lon, hdr.tz, sun);
+					//solarpos(wf.year, wf.month, wf.day, wf.hour, wf.minute, hdr.lat, hdr.lon, hdr.tz, sun);
+                    solarpos_spa(wf.year, wf.month, wf.day, wf.hour, wf.minute, 0.0, hdr.lat, hdr.lon, hdr.tz, 0, 66.7, hdr.elev, wf.pres, wf.tdry, 0, 180, sun);
 					tms[0] = wf.hour;
 					tms[1] = (int)wf.minute;
 					tms[2] = 0;
