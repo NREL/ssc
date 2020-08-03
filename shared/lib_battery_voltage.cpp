@@ -155,7 +155,7 @@ double voltage_table_t::calculate_voltage(double DOD) {
     return fmax(slopes[row] * DOD + intercepts[row], 0);
 }
 
-double voltage_table_t::set_initial_SOC(double init_soc) {
+void voltage_table_t::set_initial_SOC(double init_soc) {
     state->cell_voltage = calculate_voltage(100. - init_soc);
 }
 
@@ -341,7 +341,7 @@ void voltage_dynamic_t::parameter_compute() {
     }
 }
 
-double voltage_dynamic_t::set_initial_SOC(double init_soc) {
+void voltage_dynamic_t::set_initial_SOC(double init_soc) {
     updateVoltage(init_soc * 0.01 * params->dynamic.Qfull, params->dynamic.Qfull, 0, 25, params->dt_hr);
 }
 
@@ -487,7 +487,7 @@ voltage_t *voltage_vanadium_redox_t::clone() {
     return new voltage_vanadium_redox_t(*this);
 }
 
-double voltage_vanadium_redox_t::set_initial_SOC(double init_soc) {
+void voltage_vanadium_redox_t::set_initial_SOC(double init_soc) {
     updateVoltage(init_soc, 100, 0, 25, params->dt_hr);
 }
 

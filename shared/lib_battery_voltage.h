@@ -86,7 +86,7 @@ public:
     virtual ~voltage_t() = default;
 
     // Call after initialization to set starting V with SOC
-    virtual double set_initial_SOC(double init_soc) = 0;
+    virtual void set_initial_SOC(double init_soc) = 0;
 
     // Returns estimated max charge power over the next timestep (negative)
     virtual double calculate_max_charge_w(double q, double qmax, double kelvin, double *max_current) = 0;
@@ -136,7 +136,7 @@ public:
 
     ~voltage_table_t() override = default;
 
-    double set_initial_SOC(double init_soc) override;
+    void set_initial_SOC(double init_soc) override;
 
     double calculate_max_charge_w(double q, double qmax, double kelvin, double *max_current) override;
 
@@ -177,7 +177,7 @@ public:
 
     ~voltage_dynamic_t() override = default;
 
-    double set_initial_SOC(double init_soc) override;
+    void set_initial_SOC(double init_soc) override;
 
     double calculate_max_charge_w(double q, double qmax, double kelvin, double *max_current) override;
 
@@ -232,7 +232,7 @@ public:
 
     ~voltage_vanadium_redox_t() override = default;
 
-    double set_initial_SOC(double init_soc) override;
+    void set_initial_SOC(double init_soc) override;
 
     double calculate_max_charge_w(double q, double qmax, double kelvin, double *max_current) override;
 
