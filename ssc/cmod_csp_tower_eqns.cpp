@@ -1,3 +1,4 @@
+#include <cmath>
 #include "cmod_csp_tower_eqns.h"
 #include "cmod_csp_common_eqns.h"
 #include "vartab.h"
