@@ -78,12 +78,12 @@ static ssc_equation_entry ssc_equation_table [] = {
         {"Tower_SolarPilot_Capital_Costs_MSPT_Equations", Tower_SolarPilot_Capital_Costs_MSPT_Equations,
             "Tcsmolten_salt", Tower_SolarPilot_Capital_Costs_MSPT_Equations_doc,
             true, false},
-        {"Tower_SolarPilot_Capital_Costs_DSPT_Equations", Tower_SolarPilot_Capital_Costs_DSPT_Equations,
-            "Tcsdirect_steam", Tower_SolarPilot_Capital_Costs_DSPT_Equations_doc,
-            true, false},
-        {"Tower_SolarPilot_Capital_Costs_ISCC_Equations", Tower_SolarPilot_Capital_Costs_ISCC_Equations,
-            "Tcsiscc", Tower_SolarPilot_Capital_Costs_ISCC_Equations_doc,
-            true, false},
+        //{"Tower_SolarPilot_Capital_Costs_DSPT_Equations", Tower_SolarPilot_Capital_Costs_DSPT_Equations,
+        //    "Tcsdirect_steam", Tower_SolarPilot_Capital_Costs_DSPT_Equations_doc,
+        //    true, false},
+        //{"Tower_SolarPilot_Capital_Costs_ISCC_Equations", Tower_SolarPilot_Capital_Costs_ISCC_Equations,
+        //    "Tcsiscc", Tower_SolarPilot_Capital_Costs_ISCC_Equations_doc,
+        //    true, false},
 
         // Single owner
         {"Financial_Construction_Financing_Equations", Financial_Construction_Financing_Equations,
