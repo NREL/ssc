@@ -434,12 +434,17 @@ double C_storage_tank::get_m_T_calc()
 
 double C_storage_tank::get_m_m_calc() //ARD new getter for current mass 
 {
-	return m_m_calc;
+	return m_m_calc;    //[kg]
 }
 
 double C_storage_tank::get_vol_frac()
 {
 	return (m_V_prev - m_V_inactive) / m_V_active;
+}
+
+double C_storage_tank::get_mass_avail()
+{
+    return std::max(m_m_prev - m_mass_inactive, 0.0);		//[kg]
 }
 
 double C_storage_tank::m_dot_available(double f_unavail, double timestep)
@@ -448,7 +453,7 @@ double C_storage_tank::m_dot_available(double f_unavail, double timestep)
 	//double V = m_m_prev / rho;						//[m^3] Volume available in tank (one temperature)
 	//double V_avail = fmax(V - m_V_inactive, 0.0);	//[m^3] Volume that is active - need to maintain minimum height (corresponding m_V_inactive)
 
-	double mass_avail = std::max(m_m_prev - m_mass_inactive, 0.0);		//[kg]
+	double mass_avail = get_mass_avail();		//[kg]
 	double m_dot_avail = std::max(mass_avail - m_mass_active * f_unavail, 0.0) / timestep;	//[kg/s]
 
 	// "Unavailable" fraction now applied to one temperature tank volume, not total tank volume
@@ -697,7 +702,7 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 C_csp_two_tank_tes::C_csp_two_tank_tes()
 {
 	m_vol_tank = m_V_tank_active = m_q_pb_design = 
-		m_V_tank_hot_ini = m_cp_field_avg = m_m_dot_tes_des_over_m_dot_field_des = std::numeric_limits<double>::quiet_NaN();
+		m_V_tank_hot_ini = m_mass_total_active = m_cp_field_avg = m_m_dot_tes_des_over_m_dot_field_des = std::numeric_limits<double>::quiet_NaN();
 
 	// m_m_dot_tes_dc_max = m_m_dot_tes_ch_max = std::numeric_limits<double>::quiet_NaN();
 
@@ -843,13 +848,13 @@ void C_csp_two_tank_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs
 	// Initial storage charge based on % mass 
 	double T_tes_ave = 0.5*(ms_params.m_T_field_out_des + ms_params.m_T_field_in_des);
 	double cp_ave = mc_store_htfProps.Cp(T_tes_ave);				//[kJ/kg-K] Specific heat at average temperature
-	double mtot = Q_tes_des*3600.0 / (cp_ave / 1000.0 * (ms_params.m_T_field_out_des - ms_params.m_T_field_in_des));  //[kg] Total HTF mass at design point inlet/outlet T
+	m_mass_total_active = Q_tes_des*3600.0 / (cp_ave / 1000.0 * (ms_params.m_T_field_out_des - ms_params.m_T_field_in_des));  //[kg] Total HTF mass at design point inlet/outlet T
 	double rho_hot = mc_store_htfProps.dens(ms_params.m_T_tank_hot_ini, 1.0);  
 	double rho_cold = mc_store_htfProps.dens(ms_params.m_T_tank_cold_ini, 1.0);
 
 	double V_inactive = m_vol_tank - m_V_tank_active;
-	double V_hot_ini = ms_params.m_f_V_hot_ini*0.01*mtot / rho_hot + V_inactive;			//[m^3]
-	double V_cold_ini = (1.0 - ms_params.m_f_V_hot_ini*0.01)*mtot / rho_cold + V_inactive;	//[m^3]
+	double V_hot_ini = ms_params.m_f_V_hot_ini*0.01*m_mass_total_active / rho_hot + V_inactive;			//[m^3]
+	double V_cold_ini = (1.0 - ms_params.m_f_V_hot_ini*0.01)*m_mass_total_active / rho_cold + V_inactive;	//[m^3]
 
 	// Initial storage charge based on % volume
 	//double V_inactive = m_vol_tank - m_V_tank_active;
@@ -1775,6 +1780,13 @@ void C_csp_two_tank_tes::converged()
 	// The max charge and discharge flow rates should be set at the beginning of each timestep
 	//   during the q_dot_xx_avail_est calls
 	// m_m_dot_tes_dc_max = m_m_dot_tes_ch_max = std::numeric_limits<double>::quiet_NaN();
+}
+
+void C_csp_two_tank_tes::get_final_from_converged(double& f_V_hot, double& T_hot_tank /*K*/, double& T_cold_tank /*K*/)
+{
+    f_V_hot = mc_hot_tank.get_mass_avail() / m_mass_total_active;   //[-]
+    T_hot_tank = mc_hot_tank.get_m_T_prev();    //[K]
+    T_cold_tank = mc_cold_tank.get_m_T_prev();  //[K]
 }
 
 void C_csp_two_tank_tes::write_output_intervals(double report_time_start,

@@ -102,6 +102,8 @@ public:
 
 	double get_vol_frac();
 
+    double get_mass_avail();    //[kg]
+
 	void init(HTFProperties htf_class_in, double V_tank /*m3*/, 
 		double h_tank /*m*/, double h_min /*m*/, double u_tank /*W/m2-K*/, 
 		double tank_pairs /*-*/, double T_htr /*K*/, double max_q_htr /*MWt*/, 
@@ -145,6 +147,7 @@ private:
 	double m_V_tank_active;		//[m^3] available volume (considering h_min) of *one temperature*
 	double m_q_pb_design;		//[Wt] thermal power to power cycle at design
 	double m_V_tank_hot_ini;	//[m^3] Initial volume in hot storage tank
+    double m_mass_total_active; //[kg] Total HTF mass at design point inlet/outlet T
 
 	double m_cp_field_avg;		//[kJ/kg-K]
 
@@ -307,6 +310,8 @@ public:
 		double & T_hot_ave /*K*/, double & T_cold_ave /*K*/, double & T_hot_final /*K*/, double & T_cold_final /*K*/);
 
 	virtual void converged();
+
+    void get_final_from_converged(double& f_V_hot /*-*/, double& T_hot_tank /*K*/, double& T_cold_tank /*K*/);
 
 	virtual void write_output_intervals(double report_time_start,
 		const std::vector<double>& v_temp_ts_time_end, double report_time_end);

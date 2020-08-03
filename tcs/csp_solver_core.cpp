@@ -518,7 +518,9 @@ void C_csp_solver::init()
 
     m_is_cr_config_recirc = true;
 
-
+    // Value helps solver get out of T_field_htf_cold iteration when weird conditions cause the solution to be a very cold value
+    // Should update with technology-specific htf freeze protection values
+    m_T_field_cold_limit = -100.0;      //[C]
 
 
 	if( mc_collector_receiver.m_is_sensible_htf != mc_power_cycle.m_is_sensible_htf )
@@ -917,7 +919,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			T_htf_hot_cr_on = m_cycle_T_htf_hot_des - 273.15;	//[C]
 
 		// Get TES operating state info at end of last time step
-		double q_dot_tes_dc, q_dot_tes_ch;
+		double q_dot_tes_dc, q_dot_tes_ch;      //[MWt]
 		q_dot_tes_dc = q_dot_tes_ch = std::numeric_limits<double>::quiet_NaN();
 		double m_dot_tes_dc_est, m_dot_tes_ch_est;
 		if (m_is_tes)
@@ -938,6 +940,15 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			q_dot_tes_dc = q_dot_tes_ch = 0.0;
 			m_dot_tes_dc_est = m_dot_tes_ch_est = 0.0;
 		}
+
+        // Check that there is enough discharge energy to operate cycle for a 'reasonable' fraction of the timestep
+        double t_q_dot_min = fmax(0.05*mc_kernel.mc_sim_info.ms_ts.m_step, m_step_tolerance);   //[s]
+        if (q_dot_tes_dc * mc_kernel.mc_sim_info.ms_ts.m_step < m_cycle_q_dot_des * t_q_dot_min)
+        {
+            q_dot_tes_dc = 0.0;     //[s
+        }
+
+
 
 		// Can add the following code to simulate with no storage charge/discharge, but IDLE calcs
 		//q_dot_tes_dc = q_dot_tes_ch = 0.0;
@@ -1673,7 +1684,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
 					}
 				}
-				else if( q_dot_tes_dc && is_pc_su_allowed &&
+				else if( q_dot_tes_dc > 0.0 && is_pc_su_allowed &&
 					m_is_CR_OFF__PC_SU__TES_DC__AUX_OFF_avail )
 				{	// Can power cycle startup using TES?
 
@@ -2129,7 +2140,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 }
 
                 int cr_mode = C_csp_collector_receiver::ON;
-                int pc_mode = C_csp_power_cycle::ON;
+                C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::ON;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__TO_PC__PC_MAX;
                 C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FIXED;
                 bool is_defocus = true;
@@ -2171,7 +2182,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				}
 
                 int cr_mode = C_csp_collector_receiver::ON;
-                int pc_mode = C_csp_power_cycle::STARTUP_CONTROLLED;
+                C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::STARTUP_CONTROLLED;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__TO_PC__ITER_M_DOT_SU;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FROM_COMPONENT;
                 bool is_defocus = true;
@@ -2202,7 +2213,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
             case CR_ON__PC_RM_LO__TES_OFF__AUX_OFF:
             {
                 int cr_mode = C_csp_collector_receiver::ON;
-                int pc_mode = C_csp_power_cycle::ON;
+                C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::ON;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FIXED;
                 bool is_defocus = false;
@@ -2251,7 +2262,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 // Set Solved Controller Variables Here (that won't be reset in this operating mode)
 
                 int cr_mode = C_csp_collector_receiver::ON;
-                int pc_mode = C_csp_power_cycle::ON;
+                C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::ON;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FIXED;
                 bool is_defocus = false;
@@ -2309,7 +2320,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 }
 
                 int cr_mode = C_csp_collector_receiver::ON;
-                int pc_mode = C_csp_power_cycle::STANDBY;
+                C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::STANDBY;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FIXED;
                 bool is_defocus = false;
@@ -2408,7 +2419,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 double t_ts_initial = mc_kernel.mc_sim_info.ms_ts.m_step;   //[s]
 
                 int cr_mode = C_csp_collector_receiver::ON;
-                int pc_mode = C_csp_power_cycle::STARTUP;
+                C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::STARTUP;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FROM_COMPONENT;
                 bool is_defocus = false;
@@ -2458,7 +2469,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 double t_ts_initial = mc_kernel.mc_sim_info.ms_ts.m_step;   //[s]
                 
                 int cr_mode = C_csp_collector_receiver::STARTUP;
-                int pc_mode = C_csp_power_cycle::OFF;
+                C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::OFF;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__0;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FROM_COMPONENT;
                 bool is_defocus = false;
@@ -2482,7 +2493,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			case CR_OFF__PC_OFF__TES_OFF__AUX_OFF:
             {
                 int cr_mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;
-                int pc_mode = C_csp_power_cycle::OFF;
+                C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::OFF;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__0;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FIXED;
                 bool is_defocus = false;
@@ -2519,7 +2530,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				}
 
                 int cr_mode = C_csp_collector_receiver::OFF;
-                int pc_mode = C_csp_power_cycle::STARTUP_CONTROLLED;
+                C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::STARTUP_CONTROLLED;
+
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__ITER_M_DOT_SU_DC_ONLY;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FROM_COMPONENT;
                 bool is_defocus = false;
@@ -2555,7 +2567,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 }
 
                 int cr_mode = C_csp_collector_receiver::ON;
-                int pc_mode = C_csp_power_cycle::OFF;
+                C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::OFF;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__0;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FIXED;
                 bool is_defocus = false;
@@ -2592,7 +2604,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 }
 
                 int cr_mode = C_csp_collector_receiver::ON;
-                int pc_mode = C_csp_power_cycle::ON;
+                C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::ON;
+
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__ITER_Q_DOT_TARGET_CH_ONLY;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FIXED;
                 bool is_defocus = false;
@@ -2661,7 +2674,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				}
 
                 int cr_mode = C_csp_collector_receiver::ON;
-                int pc_mode = C_csp_power_cycle::STANDBY;
+                C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::STANDBY;
+
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__ITER_Q_DOT_TARGET_CH_ONLY;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FIXED;
                 bool is_defocus = false;
@@ -2726,7 +2740,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				}
 
                 int cr_mode = C_csp_collector_receiver::ON;
-                int pc_mode = C_csp_power_cycle::ON;
+                C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::ON;
+
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__ITER_Q_DOT_TARGET_DC_ONLY;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FIXED;
                 bool is_defocus = false;
@@ -2819,7 +2834,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 double t_ts_initial = mc_kernel.mc_sim_info.ms_ts.m_step;   //[s]
 
                 int cr_mode = C_csp_collector_receiver::ON;
-                int pc_mode = C_csp_power_cycle::ON;
+                C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::ON;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT_PLUS_TES_EMPTY;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FIXED;
                 bool is_defocus = false;
@@ -2920,7 +2935,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				}
 
                 int cr_mode = C_csp_collector_receiver::ON;
-                int pc_mode = C_csp_power_cycle::OFF;
+                C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::OFF;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__TES_FULL__0;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FIXED;
                 bool is_defocus = true;
@@ -2962,7 +2977,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 double t_ts_initial = mc_kernel.mc_sim_info.ms_ts.m_step;   //[s]
 
                 int cr_mode = C_csp_collector_receiver::OFF;
-                int pc_mode = C_csp_power_cycle::ON;
+                C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::ON;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT_PLUS_TES_EMPTY;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_Q_DOT_PC;
                 bool is_defocus = false;
@@ -3032,7 +3047,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 }
 
                 int cr_mode = C_csp_collector_receiver::OFF;
-                int pc_mode = C_csp_power_cycle::ON;
+                C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::ON;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT_PLUS_TES_EMPTY;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FIXED;
                 bool is_defocus = false;
@@ -3114,7 +3129,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 double t_ts_initial = mc_kernel.mc_sim_info.ms_ts.m_step;   //[s]
 
                 int cr_mode = C_csp_collector_receiver::STARTUP;
-                int pc_mode = C_csp_power_cycle::ON;
+                C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::ON;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT_PLUS_TES_EMPTY;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FROM_COMPONENT;
                 bool is_defocus = false;
@@ -3231,7 +3246,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 double t_ts_initial = mc_kernel.mc_sim_info.ms_ts.m_step;   //[s]
 
                 int cr_mode = C_csp_collector_receiver::STARTUP;
-                int pc_mode = C_csp_power_cycle::ON;
+                C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::ON;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT_PLUS_TES_EMPTY;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_Q_DOT_PC;
                 bool is_defocus = false;
@@ -3328,7 +3343,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				}
 
                 int cr_mode = C_csp_collector_receiver::ON;
-                int pc_mode = C_csp_power_cycle::STANDBY;
+                C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::STANDBY;
+
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__ITER_Q_DOT_TARGET_DC_ONLY;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FIXED;
                 bool is_defocus = false;
@@ -3421,7 +3437,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 }
                 
                 int cr_mode = C_csp_collector_receiver::OFF;
-                int pc_mode = C_csp_power_cycle::ON;
+                C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::ON;
+
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__ITER_Q_DOT_TARGET_DC_ONLY;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FIXED;
                 bool is_defocus = false;
@@ -3500,7 +3517,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 double t_ts_initial = mc_kernel.mc_sim_info.ms_ts.m_step;   //[s]
                 
                 int cr_mode = C_csp_collector_receiver::STARTUP;
-                int pc_mode = C_csp_power_cycle::ON;
+                C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::ON;
+
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__ITER_Q_DOT_TARGET_DC_ONLY;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FROM_COMPONENT;
                 bool is_defocus = false;
@@ -3581,7 +3599,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 }
 
                 int cr_mode = C_csp_collector_receiver::OFF;
-                int pc_mode = C_csp_power_cycle::STANDBY;
+                C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::STANDBY;
+
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__ITER_Q_DOT_TARGET_DC_ONLY;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FIXED;
                 bool is_defocus = false;
@@ -3668,7 +3687,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 double t_ts_initial = mc_kernel.mc_sim_info.ms_ts.m_step;   //[s]
 
                 int cr_mode = C_csp_collector_receiver::STARTUP;
-                int pc_mode = C_csp_power_cycle::STANDBY;
+                C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::STANDBY;
+
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__ITER_Q_DOT_TARGET_DC_ONLY;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FROM_COMPONENT;
                 bool is_defocus = false;
@@ -3757,7 +3777,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				}
 
                 int cr_mode = C_csp_collector_receiver::ON;
-                int pc_mode = C_csp_power_cycle::ON;
+                C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::ON;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT_LESS_TES_FULL;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FIXED;
                 bool is_defocus = false;
@@ -3819,7 +3839,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 double t_ts_initial = mc_kernel.mc_sim_info.ms_ts.m_step;
 
                 int cr_mode = C_csp_collector_receiver::ON;
-                int pc_mode = C_csp_power_cycle::ON;
+                C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::ON;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT_PLUS_TES_EMPTY;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_Q_DOT_PC;
                 bool is_defocus = false;
@@ -3927,7 +3947,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 }
 
                 int cr_mode = C_csp_collector_receiver::ON;
-                int pc_mode = C_csp_power_cycle::ON;
+                C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::ON;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__PC_MAX_PLUS_TES_FULL__PC_MAX;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FIXED;
                 bool is_defocus = true;
@@ -3943,6 +3963,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 if (mode_code != 0)
                 {
                     m_is_CR_DF__PC_MAX__TES_FULL__AUX_OFF_avail = false;
+                    is_rec_su_allowed = false;
                     are_models_converged = false;
                     break;
                 }
@@ -3971,7 +3992,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 double t_ts_initial = mc_kernel.mc_sim_info.ms_ts.m_step;   //[s]
 
                 int cr_mode = C_csp_collector_receiver::ON;
-                int pc_mode = C_csp_power_cycle::STARTUP_CONTROLLED;
+                C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::STARTUP_CONTROLLED;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__TO_PC_PLUS_TES_FULL__ITER_M_DOT_SU;
                 C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FROM_COMPONENT;
                 bool is_defocus = true;
@@ -4012,7 +4033,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				}
 
                 int cr_mode = C_csp_collector_receiver::ON;
-                int pc_mode = C_csp_power_cycle::STANDBY;
+                C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::STANDBY;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT_LESS_TES_FULL;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FIXED;
                 bool is_defocus = false;
@@ -4071,7 +4092,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 double t_ts_initial = mc_kernel.mc_sim_info.ms_ts.m_step;   //[s]
 
                 int cr_mode = C_csp_collector_receiver::STARTUP;
-                int pc_mode = C_csp_power_cycle::STARTUP_CONTROLLED;
+                C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::STARTUP_CONTROLLED;
+
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__ITER_M_DOT_SU_DC_ONLY;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FROM_COMPONENT;
                 bool is_defocus = false;
@@ -4114,7 +4136,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 double t_ts_initial = mc_kernel.mc_sim_info.ms_ts.m_step;   //[s]
 
                 int cr_mode = C_csp_collector_receiver::ON;
-                int pc_mode = C_csp_power_cycle::STARTUP_CONTROLLED;
+                C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::STARTUP_CONTROLLED;
+
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__ITER_M_DOT_SU_CH_ONLY;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FROM_COMPONENT;
                 bool is_defocus = false;

@@ -490,17 +490,11 @@ public:
 
 	struct S_csp_cr_inputs
 	{	
-		double m_field_control;			//[-] Defocus signal from controller (can PC and TES accept all receiver output?)
-		int m_input_operation_mode;		//[-]
-        double m_adjust;                //[-] Field availability / adjustment factor
-
-		S_csp_cr_inputs()
-		{
-			m_field_control = std::numeric_limits<double>::quiet_NaN();
-			m_adjust = std::numeric_limits<double>::quiet_NaN();
-
-			m_input_operation_mode = -1;
-		}
+	  	double m_field_control =		//[-] Defocus signal from controller (can PC and TES accept all receiver output?)
+		  std::numeric_limits<double>::quiet_NaN();
+	  	C_csp_collector_receiver::E_csp_cr_modes m_input_operation_mode = OFF;	//[-]
+	  	double m_adjust = 			//[-] Field availability / adjustment factor
+		  std::numeric_limits<double>::quiet_NaN();
 	};
 	
 	struct S_csp_cr_out_solver
@@ -634,13 +628,12 @@ public:
 
 	struct S_control_inputs
 	{
-		int m_standby_control;		//[-] Control signal indicating standby mode
+		E_csp_power_cycle_modes m_standby_control;		//[-] Control signal indicating standby mode
 		double m_m_dot;				//[kg/hr] HTF mass flow rate to power cycle
-		//int m_tou;					//[-] Time-of-use period: ONE BASED, converted to 0-based in code
 
 		S_control_inputs()
 		{
-			m_standby_control = /*m_tou =*/ -1;
+            m_standby_control = E_csp_power_cycle_modes::OFF;
 		}
 	};
 
@@ -1099,6 +1092,9 @@ private:
 	bool m_is_tes;			    //[-] True: plant has storage
     bool m_is_cr_config_recirc; //[-] True: Receiver "off" and "startup" are recirculated from outlet to inlet
 
+        // Field-side HTF
+    bool m_T_field_cold_limit;  //[C]
+
 		// Reporting and Output Tracking
     bool m_is_first_timestep;           //[-]
 	int m_i_reporting;					//[-]
@@ -1263,7 +1259,7 @@ public:
 
 		C_csp_solver* mpc_csp_solver;
 
-		int m_pc_mode;      //[-]
+		C_csp_power_cycle::E_csp_power_cycle_modes m_pc_mode;      //[-]
 		int m_cr_mode;      //[-]
 
 		double m_q_dot_pc_target;   //[MWt]
@@ -1280,10 +1276,10 @@ public:
 
 		double m_T_field_cold_calc; //[C]
 		double m_t_ts_calc;         //[s]
-		double m_m_dot_pc;
+		double m_m_dot_pc_in;       //[kg/hr]
 
 		C_MEQ__m_dot_tes(E_m_dot_solver_modes solver_mode, C_csp_solver* pc_csp_solver,
-			int pc_mode, int cr_mode,
+            C_csp_power_cycle::E_csp_power_cycle_modes pc_mode, int cr_mode,
 			double q_dot_pc_target /*MWt*/,
 			double defocus /*-*/, double t_ts /*s*/,
 			double P_field_in /*kPa*/, double x_field_in /*-*/,
@@ -1307,7 +1303,7 @@ public:
 
 		void init_calc_member_vars();
 
-		virtual int operator()(double m_dot_tes_guess /*kg/hr + = charge - = discharge*/, double* diff_target /*-*/);
+		virtual int operator()(double f_m_dot_tes /*-*/, double* diff_target /*-*/);
 	};
 
 	class C_MEQ__T_field_cold : public C_monotonic_equation
@@ -1319,7 +1315,7 @@ public:
 
 		double m_q_dot_pc_target;   //[MWt]
 
-		int m_pc_mode;      //[-]
+        C_csp_power_cycle::E_csp_power_cycle_modes m_pc_mode;      //[-]
 		int m_cr_mode;      //[-]
 
 		double m_defocus;   //[-]
@@ -1333,7 +1329,7 @@ public:
 
 		C_MEQ__T_field_cold(C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode, C_csp_solver* pc_csp_solver,
 			double q_dot_pc_target /*MWt*/,
-			int pc_mode, int cr_mode,
+            C_csp_power_cycle::E_csp_power_cycle_modes pc_mode, int cr_mode,
 			double defocus /*-*/, double t_ts /*s*/,
 			double P_field_in /*kPa*/, double x_field_in /*-*/)
 		{
@@ -1377,7 +1373,7 @@ public:
 
 		double m_q_dot_pc_target;   //[MWt]
 
-		int m_pc_mode;      //[-]
+        C_csp_power_cycle::E_csp_power_cycle_modes m_pc_mode;      //[-]
 		int m_cr_mode;      //[-]
 
 		double m_defocus;   //[-]
@@ -1386,7 +1382,7 @@ public:
 		C_MEQ__timestep(C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode, C_MEQ__timestep::E_timestep_target_modes step_target_mode,
 			C_csp_solver* pc_csp_solver,
 			double q_dot_pc_target /*MWt*/,
-			int pc_mode, int cr_mode,
+            C_csp_power_cycle::E_csp_power_cycle_modes pc_mode, int cr_mode,
 			double defocus /*-*/)
 		{
 			m_solver_mode = solver_mode;
@@ -1422,7 +1418,7 @@ public:
 
         double m_q_dot_pc_target;   //[MWt]
 
-        int m_pc_mode;      //[-]
+        C_csp_power_cycle::E_csp_power_cycle_modes m_pc_mode;      //[-]
         int m_cr_mode;      //[-]
 
         double m_t_ts_initial;  //[s]
@@ -1433,7 +1429,7 @@ public:
 			E_defocus_target_modes df_target_mode, C_MEQ__timestep::E_timestep_target_modes ts_target_mode,
             C_csp_solver *pc_csp_solver, 
 			double q_dot_pc_target /*MWt*/,
-            int pc_mode, int cr_mode,
+            C_csp_power_cycle::E_csp_power_cycle_modes pc_mode, int cr_mode,
             double t_ts_initial /*s*/)
         {
             m_solver_mode = solver_mode;
@@ -1455,7 +1451,8 @@ public:
         double calc_meq_target();
     };
 
-	int solve_operating_mode(int cr_mode, int pc_mode, C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode, C_MEQ__timestep::E_timestep_target_modes step_target_mode,
+	int solve_operating_mode(int cr_mode, C_csp_power_cycle::E_csp_power_cycle_modes pc_mode,
+        C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode, C_MEQ__timestep::E_timestep_target_modes step_target_mode,
 		double q_dot_pc_target /*MWt*/, bool is_defocus,
 		std::string op_mode_str, double& defocus_solved);
 

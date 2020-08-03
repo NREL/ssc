@@ -48,9 +48,8 @@ private:
 	int m_n_flux_y;		//[-]
 
 	//Stored Variables
-	double m_eta_prev;			//[-]
-	double m_v_wind_prev;		//[m/s]
-	double m_v_wind_current;	//[m/s]
+    bool m_is_field_tracking;
+    bool m_is_field_tracking_prev;
 
 	// member string for exception messages
 	std::string error_msg;
@@ -98,6 +97,8 @@ public:
 
 		double m_A_sf;		//[m2]
 
+        bool m_is_field_tracking_init;
+
 		S_params()
 		{
 			// Integers
@@ -107,6 +108,7 @@ public:
 			m_p_start = m_p_track = m_hel_stow_deploy = m_v_wind_max = 
 				m_land_area = m_A_sf = std::numeric_limits<double>::quiet_NaN();
 
+            m_is_field_tracking_init = false;
 		}		
 	};
 
@@ -138,6 +140,8 @@ public:
 	void off(const C_csp_solver_sim_info &sim_info);
 
 	void converged();
+
+    void get_converged(bool& is_field_tracking_prev);
 };
 
 
