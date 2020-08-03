@@ -533,7 +533,8 @@ TEST_F(DayCaseIrradProc, CalcTestRadMode0_lib_irradproc){
 	for (int i = 0; i < 10; i++){
 		EXPECT_NEAR(sun_p[i], sun_solution[i], e) << "hourly_day, sun parameter " << i << " fail\n";
 	}
-	vector<double> angle_solution = { 1.795054, tilt, azim, 0, 0 };
+	//vector<double> angle_solution = { 1.795054, tilt, azim, 0, 0 };
+    vector<double> angle_solution = { 1.795696, tilt, azim, 0, 0 }; //value changed due to new solarpos_spa algorithm
 	for (int i = 0; i < 5; i++){
 		EXPECT_NEAR(angle_p[i], angle_solution[i], e) << "hourly_day, angle parameter " << i << " fail\n";
 	}

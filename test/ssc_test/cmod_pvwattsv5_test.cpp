@@ -181,9 +181,11 @@ TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, singleTS) {
     ssc_data_get_number(data, "tcell", &val);
     EXPECT_NEAR(val, 12.77, .1);
     ssc_data_get_number(data, "dc", &val);
-    EXPECT_NEAR(val, 106739, 1);
+    //EXPECT_NEAR(val, 106739, 1);
+    EXPECT_NEAR(val, 106724, 1); //value changed due to new solarpos_spa algorithm
     ssc_data_get_number(data, "ac", &val);
-    EXPECT_NEAR(val, 100851, 1);
+    //EXPECT_NEAR(val, 100851, 1);
+    EXPECT_NEAR(val, 100837, 1); //value changed due to new solarpos_spa algorithm
 
     EXPECT_TRUE(ssc_module_exec(mod, data));
 
@@ -194,7 +196,10 @@ TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, singleTS) {
     ssc_data_get_number(data, "tcell", &val);
     EXPECT_NEAR(val, 13.36, .1);
     ssc_data_get_number(data, "dc", &val);
-    EXPECT_NEAR(val, 106459, 1);
+    //EXPECT_NEAR(val, 106459, 1);
+    EXPECT_NEAR(val, 106445, 1); //value changed due to new solarpos_spa algorithm
     ssc_data_get_number(data, "ac", &val);
-    EXPECT_NEAR(val, 100579, 1);
+    //EXPECT_NEAR(val, 100579, 1);
+    EXPECT_NEAR(val, 100565, 1); //value changed due to new solarpos_spa algorithm
+
 }

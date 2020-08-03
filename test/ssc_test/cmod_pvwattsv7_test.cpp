@@ -278,7 +278,8 @@ TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, NonAnnual)
 
 	ssc_number_t dc, gen;
 	dc = ssc_data_get_array(data, "dc", nullptr)[12];
-	EXPECT_NEAR(dc, 2512.404, 0.01) << "DC Energy at noon";
+	//EXPECT_NEAR(dc, 2512.404, 0.01) << "DC Energy at noon";
+    EXPECT_NEAR(dc, 2512.300, 0.01) << "DC Energy at noon"; //value changed due to new solarpos_spa algorithm
 
 	gen = ssc_data_get_array(data, "gen", nullptr)[12];
 	EXPECT_NEAR(gen, 2.417, 0.01) << "Gen at noon";

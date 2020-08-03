@@ -160,7 +160,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelCustomWeatherFile
 		ssc_number_t annual_energy;
 		ssc_data_get_number(data, "annual_energy", &annual_energy);
 		//EXPECT_NEAR(annual_energy, 7591, m_error_tolerance_hi) << "Annual energy.";
-		EXPECT_NEAR(annual_energy, 7595, m_error_tolerance_hi) << "Annual energy."; //value changed due to new solarpos_spa algorithm
+		EXPECT_NEAR(annual_energy, 8079.1, m_error_tolerance_hi) << "Annual energy."; //value changed due to new solarpos_spa algorithm
 
 		ssc_number_t capacity_factor;
 		ssc_data_get_number(data, "capacity_factor", &capacity_factor);
@@ -169,7 +169,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelCustomWeatherFile
 		ssc_number_t kwh_per_kw;
 		ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
 		//EXPECT_NEAR(kwh_per_kw, 1617, m_error_tolerance_hi) << "Energy yield";
-		EXPECT_NEAR(kwh_per_kw, 1618, m_error_tolerance_hi) << "Energy yield"; //value changed due to new solarpos_spa algorithm
+		EXPECT_NEAR(kwh_per_kw, 1722, m_error_tolerance_hi) << "Energy yield"; //value changed due to new solarpos_spa algorithm
 
 		ssc_number_t performance_ratio;
 		ssc_data_get_number(data, "performance_ratio", &performance_ratio);
