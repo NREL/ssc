@@ -52,7 +52,10 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 	{C_pc_Rankine_indirect_224::E_M_DOT_WATER, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_pc_Rankine_indirect_224::E_P_COND,C_csp_reported_outputs::TS_LAST },
 	{ C_pc_Rankine_indirect_224::E_RADCOOL_CNTRL,C_csp_reported_outputs::TS_WEIGHTED_AVE },
-	{C_pc_Rankine_indirect_224::E_M_DOT_HTF_REF, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_pc_Rankine_indirect_224::E_PC_OP_MODE_FINAL, C_csp_reported_outputs::TS_LAST},
+    {C_pc_Rankine_indirect_224::E_PC_STARTUP_TIME_REMAIN_FINAL, C_csp_reported_outputs::TS_LAST},
+    {C_pc_Rankine_indirect_224::E_PC_STARTUP_ENERGY_REMAIN_FINAL, C_csp_reported_outputs::TS_LAST},
+    {C_pc_Rankine_indirect_224::E_M_DOT_HTF_REF, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 
 	csp_info_invalid
 };
@@ -1652,6 +1655,11 @@ void C_pc_Rankine_indirect_224::converged()
 	m_startup_energy_remain_prev = m_startup_energy_remain_calc;
 
 	m_ncall = -1;
+
+    // Set reported cycle converged values
+    mc_reported_outputs.value(E_PC_OP_MODE_FINAL, m_operating_mode_prev);
+    mc_reported_outputs.value(E_PC_STARTUP_TIME_REMAIN_FINAL, m_startup_time_remain_prev);
+    mc_reported_outputs.value(E_PC_STARTUP_ENERGY_REMAIN_FINAL, m_startup_energy_remain_prev);
 
 	mc_reported_outputs.set_timestep_outputs();
 }

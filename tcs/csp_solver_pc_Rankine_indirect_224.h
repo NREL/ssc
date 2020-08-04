@@ -130,6 +130,9 @@ public:
 		E_M_DOT_WATER,		//[kg/hr] Cycle water consumption: makeup + cooling	
 		E_P_COND,			//[Pa] Cycle condensing pressure
 		E_RADCOOL_CNTRL,	//Code showing the status of radiative cooling with cold storage
+        E_PC_OP_MODE_FINAL, //[-] Final receiver operating mode (see E_csp_power_cycle_modes)
+        E_PC_STARTUP_TIME_REMAIN_FINAL,     //[hr] Final receiver startup time remaining
+        E_PC_STARTUP_ENERGY_REMAIN_FINAL,   //[W-hr] Final reeiver startup energy remaining
 
 		// Variables added for backwards compatability with TCS
 		E_M_DOT_HTF_REF		//[kg/hr] HTF mass flow rate at design

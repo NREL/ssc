@@ -695,6 +695,7 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 	{C_csp_two_tank_tes::E_M_DOT_TANK_TO_TANK, C_csp_reported_outputs::TS_WEIGHTED_AVE},		//[MWt] TES thermal losses
 	{C_csp_two_tank_tes::E_MASS_COLD_TANK, C_csp_reported_outputs::TS_LAST},			//[kg] Mass in cold tank at end of timestep		
 	{C_csp_two_tank_tes::E_MASS_HOT_TANK, C_csp_reported_outputs::TS_LAST},				//[kg] Mass in hot tank at end of timestep
+    {C_csp_two_tank_tes::E_HOT_TANK_HTF_PERC_FINAL, C_csp_reported_outputs::TS_LAST},	//[%] Final percent fill of available hot tank mass
 
 	csp_info_invalid
 };
@@ -1774,7 +1775,10 @@ void C_csp_two_tank_tes::converged()
 	mc_cold_tank.converged();
 	mc_hot_tank.converged();
     //mc_hx.converged();
-	
+
+    // Set reported cycle converged values
+    mc_reported_outputs.value(E_HOT_TANK_HTF_PERC_FINAL, mc_hot_tank.get_mass_avail() / m_mass_total_active * 100.0);
+
 	mc_reported_outputs.set_timestep_outputs();
 
 	// The max charge and discharge flow rates should be set at the beginning of each timestep

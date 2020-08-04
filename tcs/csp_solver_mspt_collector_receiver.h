@@ -43,7 +43,8 @@ public:
 		E_FIELD_Q_DOT_INC,		//[MWt] Field incident thermal power
 		E_FIELD_ETA_OPT,		//[-] Optical efficiency including receiver refl
 		E_FIELD_ADJUST,			//[-] Field adjustment factor
-		
+        E_IS_FIELD_TRACKING_FINAL,  //[-] Is field tracking at end of timestep
+
 		E_Q_DOT_INC,			//[MWt] Receiver incident thermal power
 		E_ETA_THERMAL,			//[-] Receiver thermal efficiency
 		E_Q_DOT_THERMAL,		//[MWt] Field incident thermal power
@@ -63,7 +64,10 @@ public:
 		E_T_DOWNC,				//[C] Downcomer temperature at the end of the time step
 		E_CLEARSKY,				//[W/m2] Clear-sky DNI 
 		E_Q_DOT_THERMAL_CSKY_SS, //[MWt] Thermal power from receiver under steady-state clear-sky conditions
-		E_Q_DOT_THERMAL_SS		//[MWt] Thermal power from receiver under steady-state conditions
+		E_Q_DOT_THERMAL_SS,		//[MWt] Thermal power from receiver under steady-state conditions
+        E_REC_OP_MODE_FINAL,    //[-] Final receiver operating mode (see E_csp_cr_modes)
+        E_REC_STARTUP_TIME_REMAIN_FINAL,    //[hr] Final receiver startup time remaining
+        E_REC_STARTUP_ENERGY_REMAIN_FINAL   //[W-hr] Final receiver startup energy remaining
 	};
 	
 	C_csp_reported_outputs mc_reported_outputs;

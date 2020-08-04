@@ -167,7 +167,8 @@ public:
 		E_TES_T_COLD,		//[C] TES final cold tank temperature
 		E_M_DOT_TANK_TO_TANK,	//[kg/s] Tank to tank mass flow rate (indirect TES)
 		E_MASS_COLD_TANK,	//[kg] Mass in cold tank at end of timestep
-		E_MASS_HOT_TANK		//[kg] Mass in hot tank at end of timestep
+		E_MASS_HOT_TANK,		//[kg] Mass in hot tank at end of timestep
+        E_HOT_TANK_HTF_PERC_FINAL   //[%] Final percent fill of available hot tank mass
 	};
 
 	C_csp_reported_outputs mc_reported_outputs;
