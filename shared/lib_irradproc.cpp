@@ -993,6 +993,14 @@ double atmospheric_refraction_correction(double pressure, double temperature,
 double topocentric_elevation_angle_corrected(double e0, double delta_e) //topocentric elevation angle corrected for atmospheric refraction (degrees)
 {
 	double e = e0 + delta_e;
+    if (e > 90.0)
+    {
+        e = 90.0;
+    }
+    else if (e < -90.0)
+    {
+        e = -90.0;
+    }
 	return e;
 }
 
@@ -1943,7 +1951,8 @@ void perez( double , double dn, double df, double alb, double inc, double tilt, 
 void irrad::setup()
 {
 	year = month = day = hour = -999;
-	minute = delt = latitudeDegrees = longitudeDegrees = timezone = elevation = pressure = temp = -999;
+	minute = delt = latitudeDegrees = longitudeDegrees = timezone =  -999;
+    elevation = pressure = temp = -999;
 	globalHorizontal = directNormal = diffuseHorizontal = -999;
 
 	for (int i = 0; i < 9; i++) {
@@ -2300,7 +2309,11 @@ int irrad::calc()
 		if(radiationMode < irrad::POA_R){
 			double hextra = sunAnglesRadians[8];
 			double hbeam = directNormal*cos( sunAnglesRadians[1] ); // calculated beam on horizontal surface: sunAnglesRadians[1]=zenith
-				
+            if (directNormal < 0)
+            {
+                hbeam = 0;
+                directNormal = 0;
+            }
 			// check beam irradiance against extraterrestrial irradiance
 			if ( hbeam > hextra )
 			{

@@ -187,7 +187,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelCustomWeatherFile
 TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelSkyDiffuseAndIrradModels)
 {
 	//std::vector<double> annual_energy_expected = { 8513, 8522, 8525, 8635, 8645, 8647, 8714, 8723, 8726, 7623, 7300};
-	std::vector<double> annual_energy_expected = { 8511, 8522, 8525, 8633, 8644, 8647, 8712, 8722, 8726, 7623, 7300 }; //value changed due to new solarpos_spa algorithm
+	std::vector<double> annual_energy_expected = { 8511, 8522, 8525, 8633, 8644, 8647, 8712, 8722, 8726, 7623, 7297 }; //value changed due to new solarpos_spa algorithm
 	std::map<std::string, double> pairs;
 	size_t count = 0;
 

@@ -1233,7 +1233,7 @@ void cm_pvsamv1::exec( )
 
 				if (code < 0) //jmf updated 11/30/18 so that negative numbers are errors, positive numbers are warnings, 0 is everything correct. implemented in patch for POA model only, will be added to develop for other irrad models as well
 					throw exec_error("pvsamv1",
-					util::format("failed to calculate irradiance incident on surface (POA) %d (code: %d) [y:%d m:%d d:%d h:%d m:%f d:%f]",
+					util::format("failed to calculate irradiance incident on surface (POA) %d (code: %d) [y:%d m:%d d:%d h:%d m:%d d:%d]",
 					nn + 1, code, wf.year, wf.month, wf.day, wf.hour, wf.minute, Irradiance->dtHour));
 
 				if (code == 40)
