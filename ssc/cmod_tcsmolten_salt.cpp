@@ -1049,8 +1049,8 @@ public:
                 else {
                     pc->m_startup_time_remain_init = std::numeric_limits<double>::quiet_NaN();
                 }
-                if (is_assigned("pc_startup_energy_initial")) {
-                    pc->m_startup_energy_remain_init = as_double("pc_startup_energy_initial");
+                if (is_assigned("pc_startup_energy_remain_initial")) {
+                    pc->m_startup_energy_remain_init = as_double("pc_startup_energy_remain_initial");
                 }
                 else {
                     pc->m_startup_energy_remain_init = std::numeric_limits<double>::quiet_NaN();
