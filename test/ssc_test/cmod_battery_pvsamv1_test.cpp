@@ -405,12 +405,12 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_ManualDispatchBatteryModelI
 	grid_and_rate_defaults(data);
 	singleowner_defaults(data);
 
-	ssc_number_t expectedEnergy = 37189640;
+	ssc_number_t expectedEnergy = 37188974;
 	ssc_number_t expectedBatteryChargeEnergy = 1297974;
-	ssc_number_t expectedBatteryDischargeEnergy = 1166766;
+	ssc_number_t expectedBatteryDischargeEnergy = 1166099;
 
 	ssc_number_t peakKwCharge = -1052.0;
-	ssc_number_t peakKwDischarge = 874.7;
+	ssc_number_t peakKwDischarge = 857.2;
 	ssc_number_t peakCycles = 1;
 	ssc_number_t avgCycles = 1;
 

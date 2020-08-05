@@ -1119,17 +1119,22 @@ void cm_pvsamv1::exec( )
     // compute load (electric demand) annual escalation multipliers
     std::vector<ssc_number_t> load_scale = scale_calculator.get_factors("load_escalation");
 
-    double interpolation_factor = 1.0;
-    single_year_to_lifetime_interpolated<ssc_number_t>(
-        (bool)as_integer("system_use_lifetime_output"),
-        nyears,
-        nlifetime,
-        p_load_in,
-        load_scale,
-        interpolation_factor,
-        p_load_full,
-        nrec,
-        ts_hour);
+    if (Simulation->annualSimulation) {
+        double interpolation_factor = 1.0;
+        single_year_to_lifetime_interpolated<ssc_number_t>(
+            (bool)as_integer("system_use_lifetime_output"),
+            nyears,
+            nlifetime,
+            p_load_in,
+            load_scale,
+            interpolation_factor,
+            p_load_full,
+            nrec,
+            ts_hour);
+    }
+    else {
+        p_load_full = p_load_in;
+    }
 
 	for (size_t mpptInput = 0; mpptInput < PVSystem->Inverter->nMpptInputs; mpptInput++)
 	{
@@ -1178,9 +1183,9 @@ void cm_pvsamv1::exec( )
 					if (!Subarrays[nn]->enable) continue;
 
 					Subarrays[nn]->poa.poaAll->tDew = wf.tdew;
-					Subarrays[nn]->poa.poaAll->i = idx;
-					if (wf.hour == 0 && (idx % step_per_hour == 0)) {
-						Subarrays[nn]->poa.poaAll->dayStart = idx;
+					Subarrays[nn]->poa.poaAll->i = inrec;
+					if (wf.hour == 0 && (inrec % step_per_hour == 0)) {
+						Subarrays[nn]->poa.poaAll->dayStart = inrec;
 						Subarrays[nn]->poa.poaAll->doy += 1;
 					}
 				}

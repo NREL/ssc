@@ -734,10 +734,17 @@ public:
 		bool two_meter = (metering_option == 4 );
 		bool timestep_reconciliation = (metering_option == 2 || metering_option == 3 || metering_option == 4);
 
+		bool time_series_rates = as_boolean("ur_en_ts_sell_rate") || as_boolean("ur_en_ts_buy_rate");
+		if (time_series_rates && !timestep_reconciliation)
+		{
+			throw exec_error("utilityrate5", "Time series rates are not compatible with net metering. Please disable time series rates or change to net billing / buy all - sell all");
+		}
+		
 		ur_month last_month;
 		ssc_number_t last_excess_energy = 0;
 		ssc_number_t last_excess_dollars = 0;
 		
+
 		idx = 0;
 		for (i=0;i<nyears;i++)
 		{
@@ -3073,7 +3080,7 @@ public:
 								// time step buy rates
 								if (as_boolean("ur_en_ts_buy_rate")) {
 									if (c < m_ec_ts_buy_rate.size()) {
-										tier_charge = m_ec_ts_buy_rate[c] * tier_energy;
+										tier_charge = m_ec_ts_buy_rate[c] * tier_energy * rate_esc;
 									}
 								}
 

@@ -117,14 +117,15 @@ void thermal_t::updateTemperature(double I, size_t lifetimeIndex) {
     }
 
     // the battery temp is the average temp over that step, starting with temp from end of last timestep
-    double source = I * I * params->resistance / (params->surface_area * params->h) + state->T_room;
+
+    double T_steady_state = I * I * params->resistance / (params->surface_area * params->h) + state->T_room;
     double diffusion = exp(-params->surface_area * params->h * dt_sec / params->mass / params->Cp);
     double coeff_avg = params->mass * params->Cp / params->surface_area / params->h / dt_sec;
-    state->T_batt = (state->T_batt_prev - state->T_room) * coeff_avg * (1 - diffusion) + source;
-    state->heat_dissipated = (state->T_batt - state->T_room) * params->surface_area * params->h;
+    state->T_batt = (state->T_batt_prev - T_steady_state) * coeff_avg * (1 - diffusion) + T_steady_state;
+    state->heat_dissipated = (state->T_batt - state->T_room) * params->surface_area * params->h / 1000.;
 
     // update temp for use in next timestep
-    state->T_batt_prev = (state->T_batt_prev - state->T_room) * diffusion + source;
+    state->T_batt_prev = (state->T_batt_prev - T_steady_state) * diffusion + T_steady_state;
 
     calc_capacity();
 }
@@ -415,11 +416,17 @@ battery_t::battery_t(double dt_hr, int chem, capacity_t *capacity_model, voltage
     params->chem = chem;
     params->nominal_voltage = params->voltage->Vnom_default * params->voltage->num_cells_series;
     params->nominal_energy = params->nominal_voltage * params->voltage->num_strings * params->voltage->dynamic.Qfull * 1e-3;
+
+    // initial conditions
+    voltage->set_initial_SOC(capacity->state->SOC);
 }
 
 battery_t::battery_t(std::shared_ptr<battery_params> p):
         params(std::move(p)) {
     initialize();
+
+    // initial conditions
+    voltage->set_initial_SOC(capacity->state->SOC);
 }
 
 battery_t::battery_t(const battery_t &rhs) {

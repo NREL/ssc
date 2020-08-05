@@ -85,7 +85,7 @@ var_info vtab_battery_stateful_inputs[] = {
         { SSC_INPUT,        SSC_ARRAY,       "schedule_loss",                              "Battery system losses at each timestep",                  "[kW]",       "",                     "ParamsPack",       "?=0",                        "",                             "" },
 
         // replacement inputs
-        { SSC_INPUT,        SSC_NUMBER,      "replacement_option",                         "Replacements: none (1), by capacity (1), or schedule (2)", "0=none,1=capacity limit,2=yearly schedule", "", "ParamsPack", "?=0",                  "INTEGER,MIN=0,MAX=2",          "" },
+        { SSC_INPUT,        SSC_NUMBER,      "replacement_option",                         "Replacements: none (0), by capacity (1), or schedule (2)", "0=none,1=capacity limit,2=yearly schedule", "", "ParamsPack", "?=0",                  "INTEGER,MIN=0,MAX=2",          "" },
         { SSC_INPUT,        SSC_NUMBER,      "replacement_capacity",                       "Capacity degradation at which to replace battery",       "%",        "",                     "ParamsPack",       "replacement_option=1",                           "",                             "" },
         { SSC_INPUT,        SSC_ARRAY,       "replacement_schedule",                       "Battery bank number of replacements in each year",       "[number/year]","length <= analysis_period",                  "ParamsPack",      "replacement_option=2",   "",                             "" },
         { SSC_INPUT,        SSC_ARRAY,       "replacement_schedule_percent",               "Percentage of battery capacity to replace in each year", "[%/year]","length <= analysis_period",                  "ParamsPack",      "replacement_option=2",   "",                             "" },
@@ -128,7 +128,7 @@ var_info vtab_battery_state[] = {
         { SSC_INOUT,        SSC_NUMBER,     "q_relative_thermal",        "Relative capacity due to thermal effects",                 "Ah",        "",                     "StateCell",        "",                           "",                               ""  },
         { SSC_INOUT,        SSC_NUMBER,     "T_batt",                    "Battery temperature averaged over time step",              "C",         "",                     "StatePack",        "",                           "",                               ""  },
         { SSC_INOUT,        SSC_NUMBER,     "T_room",                    "Room temperature",                                         "C",         "",                     "StatePack",        "",                           "",                               ""  },
-        { SSC_INOUT,        SSC_NUMBER,     "heat_dissipated",           "Heat dissipated due to flux",                              "W",         "",                     "StatePack",        "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "heat_dissipated",           "Heat dissipated due to flux",                              "kW",        "",                     "StatePack",        "",                           "",                               ""  },
         { SSC_INOUT,        SSC_NUMBER,     "T_batt_prev",               "Battery temperature at end of last time step",             "C",         "",                     "StateCell",        "",                           "",                               ""  },
 
         // lifetime
@@ -299,6 +299,8 @@ std::shared_ptr<battery_params> create_battery_params(var_table *vt, double dt_h
         if (params->chem == battery_params::LEAD_ACID  || params->chem == battery_params::LITHIUM_ION) {
             vt_get_number(vt, "Vfull", &voltage->dynamic.Vfull);
             vt_get_number(vt, "Vexp", &voltage->dynamic.Vexp);
+            vt_get_number(vt, "Vnom", &voltage->dynamic.Vnom);
+            vt_get_number(vt, "Qfull", &voltage->dynamic.Qfull);
             vt_get_number(vt, "Qexp", &voltage->dynamic.Qexp);
             vt_get_number(vt, "Qnom", &voltage->dynamic.Qnom);
             vt_get_number(vt, "C_rate", &voltage->dynamic.C_rate);
