@@ -276,6 +276,8 @@ public:
 
 		bool m_is_dispatch_targets;
 		std::vector<double> m_q_pc_target_in;
+        std::vector<double> m_q_pc_target_su_in;
+        std::vector<double> m_q_pc_target_on_in;
 		std::vector<double> m_q_pc_max_in;
 		std::vector<bool> m_is_rec_su_allowed_in;
 		std::vector<bool> m_is_pc_su_allowed_in;
@@ -849,6 +851,8 @@ public:
 			PC_Q_DOT_MIN,               //[MWt] PC required min thermal power
 			PC_Q_DOT_TARGET,            //[MWt] PC target thermal power
 			PC_Q_DOT_MAX,               //[MWt] PC allowable max thermal power
+            PC_Q_DOT_TARGET_SU,         //[MWt] PC target thermal power for startup
+            PC_Q_DOT_TARGET_ON,         //[MWt] PC target thermal power for cycle on
 			CTRL_IS_REC_SU,             //[-] Control decision: is receiver startup allowed?
 			CTRL_IS_PC_SU,              //[-] Control decision: is power cycle startup allowed?
 			CTRL_IS_PC_SB,              //[-] Control decision: is power cycle standby allowed?

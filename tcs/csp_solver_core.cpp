@@ -208,7 +208,9 @@ static C_csp_reported_outputs::S_output_info S_solver_output_info[] =
 	{C_csp_solver::C_solver_outputs::PC_Q_DOT_MIN, C_csp_reported_outputs::TS_1ST},				  //[MWt] PC required min thermal power
 	{C_csp_solver::C_solver_outputs::PC_Q_DOT_TARGET, C_csp_reported_outputs::TS_WEIGHTED_AVE},			  //[MWt] PC target thermal power
 	{C_csp_solver::C_solver_outputs::PC_Q_DOT_MAX, C_csp_reported_outputs::TS_WEIGHTED_AVE},				  //[MWt] PC allowable max thermal power
-	{C_csp_solver::C_solver_outputs::CTRL_IS_REC_SU, C_csp_reported_outputs::TS_1ST},			  //[-] Control decision: is receiver startup allowed?
+    {C_csp_solver::C_solver_outputs::PC_Q_DOT_TARGET_SU, C_csp_reported_outputs::TS_MAX},		    //[MWt] PC target thermal power for startup
+    {C_csp_solver::C_solver_outputs::PC_Q_DOT_TARGET_ON, C_csp_reported_outputs::TS_MAX},		    //[MWt] PC target thermal power for startup
+    {C_csp_solver::C_solver_outputs::CTRL_IS_REC_SU, C_csp_reported_outputs::TS_1ST},			  //[-] Control decision: is receiver startup allowed?
 	{C_csp_solver::C_solver_outputs::CTRL_IS_PC_SU, C_csp_reported_outputs::TS_1ST},				  //[-] Control decision: is power cycle startup allowed?
 	{C_csp_solver::C_solver_outputs::CTRL_IS_PC_SB, C_csp_reported_outputs::TS_1ST},				  //[-] Control decision: is power cycle standby allowed?
 	{C_csp_solver::C_solver_outputs::EST_Q_DOT_CR_SU, C_csp_reported_outputs::TS_1ST},			  //[MWt] Estimate receiver startup thermal power
@@ -1482,14 +1484,19 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		}
 
 
-
-
 		//Run from user-provided dispatch target arrays?  
 		if (mc_tou.mc_dispatch_params.m_is_dispatch_targets && !skip_day)
 		{
 			int p = (int) ceil((mc_kernel.mc_sim_info.ms_ts.m_time - sim_setup.m_sim_time_start) / baseline_step) - 1;
 
-			q_pc_target = mc_tou.mc_dispatch_params.m_q_pc_target_in.at(p);
+            q_pc_target = mc_tou.mc_dispatch_params.m_q_pc_target_in.at(p);
+            if (pc_operating_state == C_csp_power_cycle::OFF || pc_operating_state == C_csp_power_cycle::STARTUP) {
+                q_pc_target = mc_tou.mc_dispatch_params.m_q_pc_target_su_in.at(p);
+            }
+            else {
+                q_pc_target = mc_tou.mc_dispatch_params.m_q_pc_target_on_in.at(p);
+            }
+
 			m_q_dot_pc_max = mc_tou.mc_dispatch_params.m_q_pc_max_in.at(p);
 			q_dot_pc_su_max = fmin(q_dot_pc_su_max, m_q_dot_pc_max);
 			is_rec_su_allowed = mc_tou.mc_dispatch_params.m_is_rec_su_allowed_in.at(p);
@@ -1500,7 +1507,15 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			m_m_dot_pc_max = fmin(m_m_dot_pc_max, 1.2*(m_q_dot_pc_max / m_cycle_q_dot_des) * m_m_dot_pc_des);
 		}
 
-
+        // Split up reported q_dot_pc target into 'startup' and 'on' so input dispatch can specify both for a single full timestep
+        double q_dot_pc_su_target_reporting = 0.0;
+        double q_dot_pc_on_target_reporting = 0.0;
+        if (pc_operating_state == C_csp_power_cycle::OFF || pc_operating_state == C_csp_power_cycle::STARTUP) {
+            q_dot_pc_su_target_reporting = q_pc_target;
+        }
+        else {
+            q_dot_pc_on_target_reporting = q_pc_target;
+        }
 
 
         /* 
@@ -4303,7 +4318,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		mc_reported_outputs.value(C_solver_outputs::PC_Q_DOT_SB, q_pc_sb);          //[MW]     
 		mc_reported_outputs.value(C_solver_outputs::PC_Q_DOT_MIN, q_pc_min);        //[MW]    
 		mc_reported_outputs.value(C_solver_outputs::PC_Q_DOT_TARGET, q_pc_target);  //[MW]
-		mc_reported_outputs.value(C_solver_outputs::PC_Q_DOT_MAX, m_q_dot_pc_max);         //[MW]    
+		mc_reported_outputs.value(C_solver_outputs::PC_Q_DOT_MAX, m_q_dot_pc_max);         //[MW]
+        mc_reported_outputs.value(C_solver_outputs::PC_Q_DOT_TARGET_SU, q_dot_pc_su_target_reporting);  //[MW]
+        mc_reported_outputs.value(C_solver_outputs::PC_Q_DOT_TARGET_ON, q_dot_pc_on_target_reporting);  //[MW]
 		mc_reported_outputs.value(C_solver_outputs::CTRL_IS_REC_SU, is_rec_su_allowed);     //[-] 
 		mc_reported_outputs.value(C_solver_outputs::CTRL_IS_PC_SU, is_pc_su_allowed);       //[-] 
 		mc_reported_outputs.value(C_solver_outputs::CTRL_IS_PC_SB, is_pc_sb_allowed);       //[-]  
