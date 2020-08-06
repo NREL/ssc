@@ -376,7 +376,6 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 																																																																																																		  
 																																																																																																		  
     { SSC_INPUT,     SSC_NUMBER, "is_dispatch_targets",                "Run solution from user-specified dispatch targets?",                                                                                      "-",            "",                                  "System Control",                           "?=0",                                                              "",              ""},
-    { SSC_INPUT,     SSC_ARRAY,  "q_pc_target_in",                     "User-provided target thermal power to PC",                                                                                                "MWt",          "",                                  "System Control",                           "is_dispatch_targets=1",                                            "",              "" },
     { SSC_INPUT,     SSC_ARRAY,  "q_pc_target_su_in",                  "User-provided target thermal power to PC",                                                                                                "MWt",          "",                                  "System Control",                           "is_dispatch_targets=1",                                            "",              "" },
     { SSC_INPUT,     SSC_ARRAY,  "q_pc_target_on_in",                  "User-provided target thermal power to PC",                                                                                                "MWt",          "",                                  "System Control",                           "is_dispatch_targets=1",                                            "",              ""},
     { SSC_INPUT,     SSC_ARRAY,  "q_pc_max_in",                        "User-provided max thermal power to PC",                                                                                                   "MWt",          "",                                  "System Control",                           "is_dispatch_targets=1",                                            "",              ""},
@@ -638,7 +637,6 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_ARRAY,  "q_dot_pc_sb",                        "Thermal power for PC standby",                                                                                                            "MWt",          "",                                  "",                                         "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_ARRAY,  "q_dot_pc_min",                       "Thermal power for PC min operation",                                                                                                      "MWt",          "",                                  "",                                         "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_ARRAY,  "q_dot_pc_max",                       "Max thermal power to PC",                                                                                                                 "MWt",          "",                                  "",                                         "*",                                                                "",              ""},
-    { SSC_OUTPUT,    SSC_ARRAY,  "q_dot_pc_target",                    "Target thermal power to PC",                                                                                                              "MWt",          "",                                  "",                                         "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_ARRAY,  "q_dot_pc_target_su",                 "Target startup thermal power to PC",                                                                                                      "MWt",          "",                                  "",                                         "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_ARRAY,  "q_dot_pc_target_on",                 "Target on thermal power to PC",                                                                                                           "MWt",          "",                                  "",                                         "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_ARRAY,  "is_rec_su_allowed",                  "Is receiver startup allowed",                                                                                                             "",             "",                                  "",                                         "*",                                                                "",              ""},
@@ -2245,14 +2243,11 @@ public:
         {
             int n_expect = (int)ceil((sim_setup.m_sim_time_end - sim_setup.m_sim_time_start) / 3600. * steps_per_hour);
 
-            size_t n = 0;
-            ssc_number_t* q_pb_target = as_array("q_pc_target_in", &n);
-
             size_t n_q_pc_target_su_in = 0;
             ssc_number_t* q_pc_target_su_in = as_array("q_pc_target_su_in", &n_q_pc_target_su_in);
 
-            size_t n_q_pc_target_on_in = 0;
-            ssc_number_t* q_pc_target_on_in = as_array("q_pc_target_on_in", &n_q_pc_target_on_in);
+            size_t n = 0;
+            ssc_number_t* q_pc_target_on_in = as_array("q_pc_target_on_in", &n);
 
             size_t n_max = 0;
             ssc_number_t* q_pb_max = as_array("q_pc_max_in", &n_max);
@@ -2266,11 +2261,10 @@ public:
             size_t n_pbsb = 0;
             ssc_number_t* is_pc_sb_allowed_in = as_array("is_pc_sb_allowed_in", &n_pbsb);
 
-            if (n != n_expect || n_q_pc_target_su_in != n_expect || n_q_pc_target_on_in != n_expect || n_max != n_expect || n_recsu != n_expect || n_pbsu != n_expect || n_pbsb != n_expect)
+            if (n_q_pc_target_su_in != n_expect || n != n_expect || n_max != n_expect || n_recsu != n_expect || n_pbsu != n_expect || n_pbsb != n_expect)
                 throw exec_error("tcsmolten_salt", "The number of points in the user-specified arrays of dispatch targets does not match the value expected from the simulation start time, end time, and time steps per hour");
             else
             {
-                tou.mc_dispatch_params.m_q_pc_target_in.resize(n);
                 tou.mc_dispatch_params.m_q_pc_target_su_in.resize(n);
                 tou.mc_dispatch_params.m_q_pc_target_on_in.resize(n);
                 tou.mc_dispatch_params.m_q_pc_max_in.resize(n);
@@ -2280,7 +2274,6 @@ public:
 
                 for (int i = 0; i < n; i++)
                 {
-                    tou.mc_dispatch_params.m_q_pc_target_in.at(i) = q_pb_target[i];
                     tou.mc_dispatch_params.m_q_pc_target_su_in.at(i) = q_pc_target_su_in[i];
                     tou.mc_dispatch_params.m_q_pc_target_on_in.at(i) = q_pc_target_on_in[i];
                     tou.mc_dispatch_params.m_q_pc_max_in.at(i) = q_pb_max[i];
@@ -2394,7 +2387,6 @@ public:
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::PRICING_MULT, allocate("pricing_mult", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::PC_Q_DOT_SB, allocate("q_dot_pc_sb", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::PC_Q_DOT_MIN, allocate("q_dot_pc_min", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::PC_Q_DOT_TARGET, allocate("q_dot_pc_target", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::PC_Q_DOT_TARGET_SU, allocate("q_dot_pc_target_su", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::PC_Q_DOT_TARGET_ON, allocate("q_dot_pc_target_on", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::PC_Q_DOT_MAX, allocate("q_dot_pc_max", n_steps_fixed), n_steps_fixed);

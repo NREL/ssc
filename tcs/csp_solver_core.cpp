@@ -1489,7 +1489,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		{
 			int p = (int) ceil((mc_kernel.mc_sim_info.ms_ts.m_time - sim_setup.m_sim_time_start) / baseline_step) - 1;
 
-            q_pc_target = mc_tou.mc_dispatch_params.m_q_pc_target_in.at(p);
+            //q_pc_target = mc_tou.mc_dispatch_params.m_q_pc_target_in.at(p);
             if (pc_operating_state == C_csp_power_cycle::OFF || pc_operating_state == C_csp_power_cycle::STARTUP) {
                 q_pc_target = mc_tou.mc_dispatch_params.m_q_pc_target_su_in.at(p);
             }
