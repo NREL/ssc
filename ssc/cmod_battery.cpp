@@ -157,8 +157,8 @@ var_info vtab_battery_inputs[] = {
         { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_update_frequency_hours",        "Frequency to update the look-ahead dispatch",            "hours",    "",                     "BatteryDispatch",       "",                           "",                             "" },
 
         // Dispatch forecast - optional parameters used in cmod_pvsamv1
-        { SSC_INPUT,        SSC_ARRAY,      "batt_pv_clipping_forecast",                   "PV clipping forecast",                                   "kW",       "",                     "Battery",       "",  "",          "" },
-        { SSC_INPUT,        SSC_ARRAY,      "batt_pv_ac_forecast",                         "PV ac power forecast",                                   "kW",       "",                     "Battery",       "",  "",          "" },
+        { SSC_INPUT,        SSC_ARRAY,      "batt_pv_clipping_forecast",                   "PV clipping forecast",                                   "kW",       "",                     "BatteryDispatch",       "",  "",          "" },
+        { SSC_INPUT,        SSC_ARRAY,      "batt_pv_ac_forecast",                         "PV ac power forecast",                                   "kW",       "",                     "BatteryDispatch",       "",  "",          "" },
 
         //  cycle cost inputs
         { SSC_INPUT,        SSC_NUMBER,     "batt_cycle_cost_choice",                      "Use SAM model for cycle costs or input custom",           "0/1",     "0=UseCostModel,1=InputCost", "BatterySystem", "",                           "",                             "" },
@@ -826,16 +826,16 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                                               batt_vars->batt_Vnom_default, batt_vars->batt_Vfull, batt_vars->batt_Vexp,
                                               batt_vars->batt_Vnom, batt_vars->batt_Qfull, batt_vars->batt_Qexp,
                                               batt_vars->batt_Qnom, batt_vars->batt_C_rate, batt_vars->batt_resistance,
-                                              dt_hr, batt_vars->batt_initial_SOC);
+                                              dt_hr);
     else if ((chem == battery_params::VANADIUM_REDOX) && batt_vars->batt_voltage_choice == voltage_params::MODEL)
         voltage_model = new voltage_vanadium_redox_t(batt_vars->batt_computed_series, batt_vars->batt_computed_strings,
                                                      batt_vars->batt_Vnom_default, batt_vars->batt_resistance,
-                                                     dt_hr,batt_vars->batt_initial_SOC);
+                                                     dt_hr);
     else
         voltage_model = new voltage_table_t(batt_vars->batt_computed_series, batt_vars->batt_computed_strings,
                                             batt_vars->batt_Vnom_default,
                                             batt_vars->batt_voltage_matrix, batt_vars->batt_resistance,
-                                            dt_hr, batt_vars->batt_initial_SOC);
+                                            dt_hr);
 
     if (batt_vars->batt_calendar_choice == lifetime_params::CALENDAR_CHOICE::MODEL) {
         lifetime_model = new lifetime_t(batt_vars->batt_lifetime_matrix, dt_hr,

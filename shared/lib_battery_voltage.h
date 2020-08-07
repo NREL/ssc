@@ -38,8 +38,8 @@ struct voltage_params {
     MODE voltage_choice;
     int num_cells_series;        // number of cells in series
     int num_strings;             // addition number in parallel
-    double Vnom_default; // nominal cell voltage [V]
-    double resistance;                    // internal cell resistance (Ohm)
+    double Vnom_default;         // nominal cell voltage [V]
+    double resistance;           // internal cell resistance (Ohm)
     double dt_hr;
 
     struct {
@@ -85,6 +85,9 @@ public:
 
     virtual ~voltage_t() = default;
 
+    // Call after initialization to set starting V with SOC
+    virtual void set_initial_SOC(double init_soc) = 0;
+
     // Returns estimated max charge power over the next timestep (negative)
     virtual double calculate_max_charge_w(double q, double qmax, double kelvin, double *max_current) = 0;
 
@@ -120,8 +123,8 @@ private:
 
 class voltage_table_t : public voltage_t {
 public:
-    voltage_table_t(int num_cells_series, int num_strings, double voltage, util::matrix_t<double> &voltage_table,
-                    double R, double dt_hour, double init_soc);
+    voltage_table_t(int num_cells_series, int num_strings, double voltage,
+                    util::matrix_t<double> &voltage_table, double R, double dt_hour);
 
     voltage_table_t(std::shared_ptr<voltage_params> p);
 
@@ -132,6 +135,8 @@ public:
     voltage_t *clone() override;
 
     ~voltage_table_t() override = default;
+
+    void set_initial_SOC(double init_soc) override;
 
     double calculate_max_charge_w(double q, double qmax, double kelvin, double *max_current) override;
 
@@ -158,8 +163,9 @@ private:
 // Shepard + Tremblay Model
 class voltage_dynamic_t : public voltage_t {
 public:
-    voltage_dynamic_t(int num_cells_series, int num_strings, double voltage, double Vfull, double Vexp, double Vnom,
-                      double Qfull, double Qexp, double Qnom, double C_rate, double R, double dt_hr, double init_soc);
+    voltage_dynamic_t(int num_cells_series, int num_strings, double voltage, double Vfull,
+                      double Vexp, double Vnom, double Qfull, double Qexp, double Qnom,
+                      double C_rate, double R, double dt_hr);
 
     voltage_dynamic_t(std::shared_ptr<voltage_params> p);
 
@@ -170,6 +176,8 @@ public:
     voltage_t *clone() override;
 
     ~voltage_dynamic_t() override = default;
+
+    void set_initial_SOC(double init_soc) override;
 
     double calculate_max_charge_w(double q, double qmax, double kelvin, double *max_current) override;
 
@@ -211,8 +219,8 @@ private:
 // D'Agostino Vanadium Redox Flow Model
 class voltage_vanadium_redox_t : public voltage_t {
 public:
-    voltage_vanadium_redox_t(int num_cells_series, int num_strings, double Vnom_default, double R, double dt_hour,
-                             double init_soc);
+    voltage_vanadium_redox_t(int num_cells_series, int num_strings, double Vnom_default,
+                             double R, double dt_hour);
 
     explicit voltage_vanadium_redox_t(std::shared_ptr<voltage_params> p);
 
@@ -223,6 +231,8 @@ public:
     voltage_t *clone() override;
 
     ~voltage_vanadium_redox_t() override = default;
+
+    void set_initial_SOC(double init_soc) override;
 
     double calculate_max_charge_w(double q, double qmax, double kelvin, double *max_current) override;
 

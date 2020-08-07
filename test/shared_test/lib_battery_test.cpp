@@ -21,37 +21,37 @@ TEST_F(lib_battery_thermal_test, updateTemperatureTest) {
 
     I = -50;
     model->updateTemperature(I, idx++);
-    s = thermal_state({93.49, 16.87, 16.85});
+    s = thermal_state({93.49, 16.87, 16.85, 0.00017});
     compareState(model->get_state(), s, "updateTemperatureTest: 2");
 
     I = 50;
     model->updateTemperature(I, idx++);
-    s = thermal_state({94.02, 17.51, 21.85});
+    s = thermal_state({94.02, 17.51, 21.85, -0.17533});
     compareState(model->get_state(), s, "updateTemperatureTest: 3");
 
     I = 10;
     model->updateTemperature(I, idx++);
-    s = thermal_state({94.88, 18.58, 21.85});
+    s = thermal_state({94.88, 18.58, 21.85, -0.13172});
     compareState(model->get_state(), s, "updateTemperatureTest: 4");
 
     I = 10;
     model->updateTemperature(I, idx++);
-    s = thermal_state({95.00, 18.76, 16.85});
+    s = thermal_state({95.00, 18.76, 16.85, 0.07658});
     compareState(model->get_state(), s, "updateTemperatureTest: 5");
 
     I = 10;
     model->updateTemperature(I, idx++);
-    s = thermal_state({92.55, 15.69, -3.15});
+    s = thermal_state({92.55, 15.69, -3.15, 0.75990});
     compareState(model->get_state(), s, "updateTemperatureTest: 6");
 
     I = 100;
     model->updateTemperature(I, idx++);
-    s = thermal_state({88.80, 11.01, -3.15});
+    s = thermal_state({88.80, 11.01, -3.15, 0.5714});
     compareState(model->get_state(), s, "updateTemperatureTest: 7");
 }
 
 TEST_F(lib_battery_thermal_test, updateTemperatureTestSubMinute) {
-    CreateModelTenSecondStep(Cp);
+    CreateModelSixSecondStep(Cp);
     // battery which adjusts quickly to temp {16.85, 16.85, 21.85, 21.85, 16.85, -3.15, -3.15};
     double I = 50;
     size_t idx = 0;
@@ -62,8 +62,9 @@ TEST_F(lib_battery_thermal_test, updateTemperatureTestSubMinute) {
         avgTemp += model->get_state().T_batt;
     }
     avgTemp /= 600.0;
+    EXPECT_NEAR(avgTemp, 16.86, 0.02) << "updateTemperatureTest: 1";
     auto s = thermal_state({ 93.49, 16.86, 16.85 });
-    EXPECT_NEAR(avgTemp, s.T_batt, 0.02) << "updateTemperatureTest: 1";
+    compareState(model->get_state(), s, "updateTemperatureTest: 1");
 
     I = -50;
     idx++;
@@ -74,8 +75,9 @@ TEST_F(lib_battery_thermal_test, updateTemperatureTestSubMinute) {
         avgTemp += model->get_state().T_batt;
     }
     avgTemp /= 600.0;
+    EXPECT_NEAR(avgTemp, 16.87, 0.02) << "updateTemperatureTest: 2";
     s = thermal_state({ 93.49, 16.87, 16.85 });
-    EXPECT_NEAR(avgTemp, s.T_batt, 0.02) << "updateTemperatureTest: 2";
+    compareState(model->get_state(), s, "updateTemperatureTest: 2");
 
     I = 50;
     idx++;
@@ -86,8 +88,9 @@ TEST_F(lib_battery_thermal_test, updateTemperatureTestSubMinute) {
         avgTemp += model->get_state().T_batt;
     }
     avgTemp /= 600.0;
-    s = thermal_state({ 94.02, 17.51, 21.85 });
-    EXPECT_NEAR(avgTemp, s.T_batt, 0.02) << "updateTemperatureTest: 3";
+    EXPECT_NEAR(avgTemp, 17.51, 0.02) << "updateTemperatureTest: 3";
+    s = thermal_state({ 94.47, 18.09, 21.85, -0.1514});
+    compareState(model->get_state(), s, "updateTemperatureTest: 3");
 
     I = 10;
     idx++;
@@ -98,8 +101,9 @@ TEST_F(lib_battery_thermal_test, updateTemperatureTestSubMinute) {
         avgTemp += model->get_state().T_batt;
     }
     avgTemp /= 600.0;
-    s = thermal_state({ 94.88, 18.58, 21.85 });
-    EXPECT_NEAR(avgTemp, s.T_batt, 0.02) << "updateTemperatureTest: 4";
+    EXPECT_NEAR(avgTemp, 18.59, 0.02) << "updateTemperatureTest: 4";
+    s = thermal_state({ 95.22, 19.03, 21.85, -0.1138});
+    compareState(model->get_state(), s, "updateTemperatureTest: 4");
 
     I = 10;
     idx++;
@@ -110,8 +114,9 @@ TEST_F(lib_battery_thermal_test, updateTemperatureTestSubMinute) {
         avgTemp += model->get_state().T_batt;
     }
     avgTemp /= 600.0;
-    s = thermal_state({ 95.00, 18.76, 16.85 });
-    EXPECT_NEAR(avgTemp, s.T_batt, 0.02) << "updateTemperatureTest: 5";
+    EXPECT_NEAR(avgTemp, 18.74, 0.02) << "updateTemperatureTest: 5";
+    s = thermal_state({ 94.79, 18.49, 16.85, 0.06618});
+    compareState(model->get_state(), s, "updateTemperatureTest: 5");
 
     I = 10;
     idx++;
@@ -122,8 +127,9 @@ TEST_F(lib_battery_thermal_test, updateTemperatureTestSubMinute) {
         avgTemp += model->get_state().T_batt;
     }
     avgTemp /= 600.0;
-    s = thermal_state({ 92.55, 15.69, -3.15 });
-    EXPECT_NEAR(avgTemp, s.T_batt, 0.02) << "updateTemperatureTest: 6";
+    EXPECT_NEAR(avgTemp, 15.69, 0.02) << "updateTemperatureTest: 6";
+    s = thermal_state({ 90.49, 13.12, -3.15, 0.6567});
+    compareState(model->get_state(), s, "updateTemperatureTest: 6");
 
     I = 100;
     idx++;
@@ -134,8 +140,9 @@ TEST_F(lib_battery_thermal_test, updateTemperatureTestSubMinute) {
         avgTemp += model->get_state().T_batt;
     }
     avgTemp /= 600.0;
-    s = thermal_state({ 88.85, 11.01, -3.15 });
-    EXPECT_NEAR(avgTemp, s.T_batt, 0.02) << "updateTemperatureTest: 7";
+    EXPECT_NEAR(avgTemp, 11.01, 0.02) << "updateTemperatureTest: 7";
+    s = thermal_state({ 87.27, 9.09, -3.15, 0.4941});
+    compareState(model->get_state(), s, "updateTemperatureTest: 7");
 }
 
 TEST_F(lib_battery_losses_test, MonthlyLossesTest){
@@ -435,7 +442,7 @@ TEST_F(lib_battery_test, RoundtripEffTable){
     util::matrix_t<double> table(4, 2, &vals);
 
     auto capacityModel = new capacity_lithium_ion_t(q, SOC_init, SOC_max, SOC_min, dtHour);
-    auto voltageModel = new voltage_table_t(n_series, n_strings, Vnom_default, table, resistance, 1, SOC_init);
+    auto voltageModel = new voltage_table_t(n_series, n_strings, Vnom_default, table, resistance, 1);
     capacityModel->change_SOC_limits(0, 100);
 
     double full_current = 1000;
@@ -484,7 +491,7 @@ TEST_F(lib_battery_test, RoundtripEffTable){
 }
 
 TEST_F(lib_battery_test, RoundtripEffVanadiumFlow){
-    auto vol = new voltage_vanadium_redox_t(1, 1, 1.41, 0.001, dtHour, SOC_init);
+    auto vol = new voltage_vanadium_redox_t(1, 1, 1.41, 0.001, dtHour);
     auto cap = new capacity_lithium_ion_t(11, 30, 100, 0, dtHour);
 
     cap->change_SOC_limits(0, 100);
@@ -537,11 +544,11 @@ TEST_F(lib_battery_test, HourlyVsSubHourly)
 {
     auto cap_hourly = new capacity_lithium_ion_t(q, SOC_init, SOC_max, SOC_min, dtHour);
     auto volt_hourly = new voltage_dynamic_t(n_series, n_strings, Vnom_default, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom,
-                                             C_rate, resistance, 1, SOC_init);
+                                             C_rate, resistance, 1);
 
     auto cap_subhourly = new capacity_lithium_ion_t(q, SOC_init, SOC_max, SOC_min, dtHour);
     auto volt_subhourly = new voltage_dynamic_t(n_series, n_strings, Vnom_default, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom,
-                                                C_rate, resistance, .5, SOC_init);
+                                                C_rate, resistance, .5);
 
     EXPECT_EQ(cap_hourly->q0(), cap_subhourly->q0());
     EXPECT_EQ(volt_hourly->battery_voltage(), volt_subhourly->battery_voltage());
