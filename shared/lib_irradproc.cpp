@@ -2309,13 +2309,13 @@ int irrad::calc()
 		if(radiationMode < irrad::POA_R){
 			double hextra = sunAnglesRadians[8];
 			double hbeam = directNormal*cos( sunAnglesRadians[1] ); // calculated beam on horizontal surface: sunAnglesRadians[1]=zenith
-            if (directNormal < 0)
+            /*if (directNormal < 0 && radiationMode == irrad::GH_DF)
             {
                 hbeam = 0;
-                directNormal = 0;
-            }
+                //directNormal = 0;
+            }*/
 			// check beam irradiance against extraterrestrial irradiance
-			if ( hbeam > hextra )
+			if ( hbeam > hextra && radiationMode != GH_DF)
 			{
 				//beam irradiance on horizontal W/m2 exceeded calculated extraterrestrial irradiance
 				return -1;
