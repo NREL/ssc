@@ -177,7 +177,7 @@ double dispatch_resilience::get_met_loads(){
 double dispatch_resilience::dispatch_kw(double kw){
     if (kw == 0.) return 0;
     double charging_current = _Battery->calculate_current_for_power_kw(kw);
-    double power_dc = _Battery->run(current_outage_index, charging_current);
+    double power_dc = _Battery->runCurrent(current_outage_index, charging_current);
     if (fabs(kw - power_dc) < tolerance)
         return kw;
     return power_dc;

@@ -537,7 +537,7 @@ double battery_t::calculate_max_discharge_kw(double *max_current_A) {
     return power_W / 1000.;
 }
 
-double battery_t::run(size_t lifetimeIndex, double &I, bool stateful) {
+double battery_t::runCurrent(size_t lifetimeIndex, double &I) {
     // Temperature affects capacity, but capacity model can reduce current, which reduces temperature, need to iterate
     double I_initial = I;
     size_t iterate_count = 0;
@@ -562,25 +562,44 @@ double battery_t::run(size_t lifetimeIndex, double &I, bool stateful) {
     runLifetimeModel(lifetimeIndex);
     runLossesModel(lifetimeIndex);
 
-    if (stateful) {
-        state->I = I;
-        state->Q = capacity->q0();
-        state->Q_max = capacity->qmax();
-        state->V = voltage->battery_voltage();
-        state->P_dischargeable = calculate_max_discharge_kw(&state->I_dischargeable);
-        state->P_chargeable = calculate_max_charge_kw(&state->I_chargeable);
-    }
-    state->P = I * voltage->battery_voltage() * util::watt_to_kilowatt;
+    update_state(I);
     return state->P;
 }
 
-void battery_t::runCurrent(double I) {
-    run(++state->last_idx, I, true);
-}
-
-void battery_t::runPower(double P) {
+double battery_t::runPower(size_t lifetimeIndex, double P) {
+    // Temperature affects capacity, but capacity model can reduce current, which reduces temperature, need to iterate
+    double P_initial = P;
     double I = calculate_current_for_power_kw(P);
-    run(++state->last_idx, I, true);
+    size_t iterate_count = 0;
+    capacity_state capacity_initial = capacity->get_state();
+    thermal_state thermal_initial = thermal->get_state();
+
+    while (iterate_count < 5) {
+
+        printf("iterating i %f\n", I);
+        runThermalModel(I, lifetimeIndex);
+        printf("thermal i %f\n", I);
+        runCapacityModel(I);
+        printf("capacity i %f\n", I);
+        runVoltageModel();
+        runLifetimeModel(lifetimeIndex);
+        runLossesModel(lifetimeIndex);
+
+        P = I * V() * util::watt_to_kilowatt;
+
+        if (fabs(P - P_initial) / fabs(P_initial) > tolerance) {
+            *thermal->state = thermal_initial;
+            *capacity->state = capacity_initial;
+            P = P_initial;
+            I = calculate_current_for_power_kw(P_initial);
+            iterate_count++;
+        } else {
+            break;
+        }
+    }
+
+    update_state(I);
+    return state->P;
 }
 
 void battery_t::runThermalModel(double I, size_t lifetimeIndex) {
@@ -713,4 +732,14 @@ battery_params battery_t::get_params() { return *params; }
 
 void battery_t::set_state(const battery_state& tmp_state) {
     *state = tmp_state;
+}
+
+void battery_t::update_state(double I) {
+    state->I = I;
+    state->Q = capacity->q0();
+    state->Q_max = capacity->qmax();
+    state->V = voltage->battery_voltage();
+    state->P_dischargeable = calculate_max_discharge_kw(&state->I_dischargeable);
+    state->P_chargeable = calculate_max_charge_kw(&state->I_chargeable);
+    state->P = I * voltage->battery_voltage() * util::watt_to_kilowatt;
 }

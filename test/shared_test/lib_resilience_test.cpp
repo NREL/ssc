@@ -58,7 +58,7 @@ TEST_F(ResilienceTest_lib_resilience, DischargeBatteryModelHourly)
     battery_model->changeSOCLimits(0, 100);
     double current = 1;
     while (battery_model->SOC() > 40)
-        batt->battery_model->run(0, current);
+        batt->battery_model->runCurrent(0, current);
 
     battery_t initial_batt = battery_t(*batt->battery_model);
     auto battery = new battery_t(initial_batt);
@@ -73,7 +73,7 @@ TEST_F(ResilienceTest_lib_resilience, DischargeBatteryModelHourly)
     while (desired_power < max_power * 1.2){
         double target = desired_power;
         current = battery->calculate_current_for_power_kw(target);
-        battery->run(1, current);
+        battery->runCurrent(1, current);
 
         double actual_power = battery->I() * battery->V() / 1000.;
         if (desired_power < 3.981 ){
@@ -95,7 +95,7 @@ TEST_F(ResilienceTest_lib_resilience, DischargeBatteryModelSubHourly)
     batt->battery_model->changeSOCLimits(0, 100);
     double current = 1;
     while (batt->battery_model->SOC() > 40)
-        batt->battery_model->run(0, current);
+        batt->battery_model->runCurrent(0, current);
 
     battery_t initial_batt = battery_t(*batt->battery_model);
     auto battery = new battery_t(initial_batt);
@@ -109,7 +109,7 @@ TEST_F(ResilienceTest_lib_resilience, DischargeBatteryModelSubHourly)
     while (desired_power < max_power * 1.2){
         double target = desired_power;
         current = battery->calculate_current_for_power_kw(target);
-        battery->run(1, current);
+        battery->runCurrent(1, current);
         double actual_power = battery->I() * battery->V() / 1000.;
 
         if (desired_power < max_power){
@@ -133,7 +133,7 @@ TEST_F(ResilienceTest_lib_resilience, ChargeBatteryModelHourly)
 
     double current = -1;
     while (batt->battery_model->SOC() > 90)
-        batt->battery_model->run(0, current);
+        batt->battery_model->runCurrent(0, current);
 
     battery_t initial_batt = battery_t(*batt->battery_model);
     auto battery = new battery_t(initial_batt);
@@ -144,7 +144,7 @@ TEST_F(ResilienceTest_lib_resilience, ChargeBatteryModelHourly)
     while (desired_power < max_power * 1.2){
         double desired_power_neg = -1 * desired_power;
         current = battery->calculate_current_for_power_kw(desired_power_neg);
-        battery->run(1, current);
+        battery->runCurrent(1, current);
 
         if (desired_power < max_power)
             EXPECT_NEAR(battery->I() * battery->V() / 1000., -desired_power, 1e-2);
@@ -165,7 +165,7 @@ TEST_F(ResilienceTest_lib_resilience, ChargeBatteryModelSubhourly)
 
     double current = -1;
     while (batt->battery_model->SOC() > 90)
-        batt->battery_model->run(0, current);
+        batt->battery_model->runCurrent(0, current);
 
     battery_t initial_batt = battery_t(*batt->battery_model);
     auto battery = new battery_t(initial_batt);
@@ -176,7 +176,7 @@ TEST_F(ResilienceTest_lib_resilience, ChargeBatteryModelSubhourly)
     while (desired_power < max_power * 1.2){
         double desired_power_neg = -1 * desired_power;
         current = battery->calculate_current_for_power_kw(desired_power_neg);
-        battery->run(1, current);
+        battery->runCurrent(1, current);
 
         if (desired_power < max_power)
             EXPECT_NEAR(battery->I() * battery->V() / 1000., -desired_power, 1e-2);
