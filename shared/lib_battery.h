@@ -386,8 +386,6 @@ private:
     std::shared_ptr<battery_params> params;
 
     void initialize();
-
-    void update_state(double I);
 };
 
 #endif
