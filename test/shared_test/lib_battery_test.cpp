@@ -207,7 +207,7 @@ TEST_F(lib_battery_test, runTestCycleAt1C){
     size_t idx = 0;
     double capacity_passed = 0.;
     double I = Qfull * n_strings;
-    batteryModel->runCurrent(idx++, I);
+    batteryModel->run(idx++, I, true);
     capacity_passed += batteryModel->I() * batteryModel->V() / 1000.;
 //    std::cerr << "\n" << idx << ": " << capacity_passed << "\n";
 
@@ -220,7 +220,7 @@ TEST_F(lib_battery_test, runTestCycleAt1C){
     compareState(batteryModel, s, "runTestCycleAt1C: 1");
 
     while (batteryModel->SOC() > SOC_min + 1){
-        batteryModel->runCurrent(idx++, I);
+        batteryModel->run(idx++, I, true);
         capacity_passed += batteryModel->I() * batteryModel->V() / 1000.;
     }
 //    std::cerr <<  idx << ": soc " << batteryModel->SOC() << ", cap " << capacity_passed << "\n";
@@ -238,21 +238,21 @@ TEST_F(lib_battery_test, runTestCycleAt1C){
     while (n_cycles-- > 0){
         I *= -1;
         while (batteryModel->SOC() < SOC_max - 1){
-            batteryModel->runCurrent(idx++, I);
+            batteryModel->run(idx++, I, true);
             capacity_passed += -batteryModel->I() * batteryModel->V() / 1000.;
         }
         I *= -1;
         while (batteryModel->SOC() > SOC_min + 1){
-            batteryModel->runCurrent(idx++, I);
+            batteryModel->run(idx++, I, true);
             capacity_passed += batteryModel->I() * batteryModel->V() / 1000.;
         }
     }
 //    std::cerr <<  idx << ": soc " << batteryModel->SOC() << ", cap " << capacity_passed << "\n";
     // the SOC isn't at 5 so it means the controller is not able to calculate a current/voltage at which to discharge to 5
-    s = battery_state_test({{50.64, 920.75, 883.93, 8.917, 0, 5.73, 6.74, 2}, // cap
-                       368.90, // voltage
-                       93.08, {92.07, 397, 88.74, 88.72, 88.79, 89.30, 7, std::vector<double>()}, // cycle
-                        {98.0, 2739, 0.039}, // calendar
+    s = battery_state_test({{52.13, 921.15, 884.31, 9.04, 0, 5.90, 6.91, 2}, // cap
+                       374.68, // voltage
+                       93.08, {92.11, 395, 88.86, 89.10, 88.93, 89.15, 11, std::vector<double>()}, // cycle
+                        {98.06, 2669, 0.039}, // calendar
                        {96.0, 20.00, 20}, // thermal
                        32991});
     compareState(batteryModel, s, "runTestCycleAt1C: 3");
@@ -266,7 +266,7 @@ TEST_F(lib_battery_test, runTestCycleAt3C){
     size_t idx = 0;
     double capacity_passed = 0.;
     double I = Qfull * n_strings * 3;
-    batteryModel->runCurrent(idx++, I);
+    batteryModel->run(idx++, I, true);
     capacity_passed += batteryModel->I() * batteryModel->V() / 1000.;
 //    std::cerr << "\n" << idx << ": " << capacity_passed << "\n";
 
@@ -279,7 +279,7 @@ TEST_F(lib_battery_test, runTestCycleAt3C){
     compareState(batteryModel, s, "runTest: 1");
 
     while (batteryModel->SOC() > SOC_min + 1){
-        batteryModel->runCurrent(idx++, I);
+        batteryModel->run(idx++, I, true);
         capacity_passed += batteryModel->I() * batteryModel->V() / 1000.;
     }
 //    std::cerr <<  idx << ": soc " << batteryModel->SOC() << ", cap " << capacity_passed << "\n";
@@ -297,27 +297,27 @@ TEST_F(lib_battery_test, runTestCycleAt3C){
     while (n_cycles-- > 0){
         I *= -1;
         while (batteryModel->SOC() < SOC_max - 1){
-            batteryModel->runCurrent(idx++, I);
+            batteryModel->run(idx++, I, true);
             capacity_passed += -batteryModel->I() * batteryModel->V() / 1000.;
         }
         I *= -1;
         while (batteryModel->SOC() > SOC_min + 1){
-            batteryModel->runCurrent(idx++, I);
+            batteryModel->run(idx++, I, true);
             capacity_passed += batteryModel->I() * batteryModel->V() / 1000.;
         }
     }
 //    std::cerr <<  idx << ": soc " << batteryModel->SOC() << ", cap " << capacity_passed << "\n";
     // the SOC isn't at 5 so it means the controller is not able to calculate a current/voltage at which to discharge to 5
-    s = battery_state_test({{49.06, 920.77, 883.94, 8.89, 0, 5.55, 6.55, 2}, // cap
-                            362.25, // voltage
-                       93.08, {92.08, 397, 88.51, 89.14, 88.53, 89.45, 7, std::vector<double>()}, // cycle
-                        {98.11, 2613, 0.0393}, // calendar
+    s = battery_state_test({{46.21, 920.97, 884.13, 8.97, 0, 5.23, 6.24, 2}, // cap
+                       349.15, // voltage
+                       93.08, {92.10, 396, 89.27, 89.19, 89.32, 89.80, 9, std::vector<double>()}, // cycle
+                        {98.11, 2609, 0.0393}, // calendar
                        {96.01, 20, 20}, // thermal
                        32991});
     compareState(batteryModel, s, "runTest: 3");
 
 
-    EXPECT_NEAR(capacity_passed, 353328, 100) << "Current passing through cell";
+    EXPECT_NEAR(capacity_passed, 353517, 100) << "Current passing through cell";
     double qmax = fmax(s.capacity.qmax_lifetime, s.capacity.qmax_thermal);
     EXPECT_NEAR(qmax/q, 0.9209, 0.01) << "capacity relative to max capacity";
 }
@@ -331,7 +331,7 @@ TEST_F(lib_battery_test, runDuplicates) {
     // create a duplicate and discharge it
     auto Battery = new battery_t(*batteryModel);
     double I = 10;
-    Battery->runCurrent(0, I);
+    Battery->run(0, I);
 
     // get state of initial battery
     auto state2 = batteryModel->get_state();
@@ -352,9 +352,9 @@ TEST_F(lib_battery_test, createFromParams) {
     auto bat = battery_t(params);
 
     double current = 10;
-    double P_orig = batteryModel->runCurrent(0, current);
+    double P_orig = batteryModel->run(0, current);
     current = 10;
-    double P_new = bat.runCurrent(0, current);
+    double P_new = bat.run(0, current);
 
     EXPECT_EQ(P_orig, P_new);
 }
@@ -592,7 +592,7 @@ TEST_F(lib_battery_test, AugmentCapacity) {
             mult = fmod(t, 2) == 0 ? 1 : -1;
             double current = mult * I;
             batteries[replaceCount]->runReplacement(y, t, 0);
-            batteries[replaceCount]->runCurrent(i, current);
+            batteries[replaceCount]->run(i, current);
         }
         if (replacement_schedule[y] == 1) {
             replaceCount++;
@@ -613,11 +613,11 @@ TEST_F(lib_battery_test, ReplaceByCapacityTest){
     size_t idx = 0;
     double I = Qfull * n_strings * 2;
     while (idx < 100000) {
-        batteryModel->runCurrent(idx, I);
+        batteryModel->run(idx, I);
         batteryModel->runReplacement(0, idx, 0);
         idx ++;
         I = -Qfull * n_strings * 2;
-        batteryModel->runCurrent(idx, I);
+        batteryModel->run(idx, I);
         batteryModel->runReplacement(0, idx, 0);
         idx ++;
     }

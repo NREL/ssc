@@ -425,11 +425,11 @@ void cm_battery_stateful::exec() {
 
     if (static_cast<MODE>(as_integer("control_mode")) == MODE::CURRENT) {
         double I = as_number("input_current");
-        battery->runCurrent(++state.last_idx, I);
+        battery->runCurrent(I);
     }
     else {
         double P = as_number("input_power");
-        battery->runPower(++state.last_idx, P);
+        battery->runPower(P);
     }
     write_battery_state(battery->get_state(), m_vartab);
 }
