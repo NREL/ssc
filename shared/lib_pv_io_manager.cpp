@@ -86,6 +86,7 @@ Simulation_IO::Simulation_IO(compute_module* cm, Irradiance_IO & IrradianceIO)
 		saveLifetimeVars = cm->as_integer("save_full_lifetime_variables");
 	}
 	numberOfSteps = numberOfYears * numberOfWeatherFileRecords;
+	annualSimulation = IrradianceIO.weatherDataProvider->annualSimulation();
 }
 
 Irradiance_IO::Irradiance_IO(compute_module* cm, std::string cmName)
@@ -123,7 +124,7 @@ Irradiance_IO::Irradiance_IO(compute_module* cm, std::string cmName)
 
 		weatherDataProvider->rewind();
 	}
-	else if (weatherDataProvider->nrecords() == 8760)
+	else if (weatherDataProvider->annualSimulation() && weatherDataProvider->nrecords() == 8760)
 	{
 		// hourly file with no minute data column.  assume
 		// integrated/averaged values and use mid point convention for interpreting results
@@ -131,18 +132,24 @@ Irradiance_IO::Irradiance_IO(compute_module* cm, std::string cmName)
 		tsShiftHours = 0.5;
 	}
 	else
-		throw exec_error(cmName, "subhourly weather files must specify the minute for each record");
+		throw exec_error(cmName, "subhourly and non-annual weather files must specify the minute for each record");
 
 	weatherDataProvider->header(&weatherHeader);
 
 	//total number of records in the weather file (i.e. 8760 * timestep)
 	numberOfWeatherFileRecords = weatherDataProvider->nrecords();
-	stepsPerHour = numberOfWeatherFileRecords / 8760;
-	dtHour = 1.0 / stepsPerHour;
+	dtHour = 1.0; //initialize these values to 1 for non-annual simulations
+	stepsPerHour = 1.0;
+	if (weatherDataProvider->annualSimulation())
+	{
+		stepsPerHour = numberOfWeatherFileRecords / 8760;
+		if (stepsPerHour > 0)
+			dtHour /= stepsPerHour;
+	}
 
-	if (numberOfWeatherFileRecords % 8760 != 0)
+	if (weatherDataProvider->annualSimulation() && numberOfWeatherFileRecords % 8760 != 0)
 		throw exec_error(cmName, util::format("invalid number of data records (%zu): must be an integer multiple of 8760", numberOfWeatherFileRecords));
-	if (stepsPerHour < 1 || stepsPerHour > 60)
+	if (weatherDataProvider->annualSimulation() && (stepsPerHour < 1 || stepsPerHour > 60))
 		throw exec_error(cmName, util::format("%d timesteps per hour found. Weather data should be single year.", stepsPerHour));
 
 	useWeatherFileAlbedo = cm->as_boolean("use_wf_albedo");
@@ -440,13 +447,13 @@ void PVSystem_IO::SetupPOAInput()
 				Subarrays[nn]->poa.poaAll->stepSize = 60.0 / Irradiance->stepsPerHour;
 			}
 
-			Subarrays[nn]->poa.poaAll->POA.reserve(8760 * Irradiance->stepsPerHour);
-			Subarrays[nn]->poa.poaAll->inc.reserve(8760 * Irradiance->stepsPerHour);
-			Subarrays[nn]->poa.poaAll->tilt.reserve(8760 * Irradiance->stepsPerHour);
-			Subarrays[nn]->poa.poaAll->zen.reserve(8760 * Irradiance->stepsPerHour);
-			Subarrays[nn]->poa.poaAll->exTer.reserve(8760 * Irradiance->stepsPerHour);
+			Subarrays[nn]->poa.poaAll->POA.reserve(Irradiance->numberOfWeatherFileRecords);
+			Subarrays[nn]->poa.poaAll->inc.reserve(Irradiance->numberOfWeatherFileRecords);
+			Subarrays[nn]->poa.poaAll->tilt.reserve(Irradiance->numberOfWeatherFileRecords);
+			Subarrays[nn]->poa.poaAll->zen.reserve(Irradiance->numberOfWeatherFileRecords);
+			Subarrays[nn]->poa.poaAll->exTer.reserve(Irradiance->numberOfWeatherFileRecords);
 
-			for (size_t i = 0; i < 8760 * Irradiance->stepsPerHour; i++) {
+			for (size_t i = 0; i < Irradiance->numberOfWeatherFileRecords; i++) {
 				Subarrays[nn]->poa.poaAll->POA.push_back(0);
 				Subarrays[nn]->poa.poaAll->inc.push_back(0);
 				Subarrays[nn]->poa.poaAll->tilt.push_back(0);
@@ -461,131 +468,128 @@ void PVSystem_IO::SetupPOAInput()
 			weather_record wf = Irradiance->weatherRecord;
 			wdprov->rewind();
 
-			for (size_t h = 0; h < 8760; h++) {
-				for (size_t m = 0; m < Irradiance->stepsPerHour; m++) {
-					size_t ii = h * Irradiance->stepsPerHour + m;
+			for (size_t ii = 0; ii < Irradiance->numberOfWeatherFileRecords; ii++) {
 
-					if (!wdprov->read(&wf)) {
-						throw exec_error("pvsamv1", "could not read data line " + util::to_string((int)(ii + 1)) + " in weather file while loading POA data");
-					}
-					int month_idx = wf.month - 1;
+				if (!wdprov->read(&wf)) {
+					throw exec_error("pvsamv1", "could not read data line " + util::to_string((int)(ii + 1)) + " in weather file while loading POA data");
+				}
+				int month_idx = wf.month - 1;
 
-					if (Subarrays[nn]->trackMode == irrad::SEASONAL_TILT)
-						Subarrays[nn]->tiltDegrees = Subarrays[nn]->monthlyTiltDegrees[month_idx]; //overwrite the tilt input with the current tilt to be used in calculations
+				if (Subarrays[nn]->trackMode == irrad::SEASONAL_TILT)
+					Subarrays[nn]->tiltDegrees = Subarrays[nn]->monthlyTiltDegrees[month_idx]; //overwrite the tilt input with the current tilt to be used in calculations
 
-					// save POA data
-					if (wf.poa > 0)
-						Subarrays[nn]->poa.poaAll->POA[ii] = wf.poa;
-					else
-						Subarrays[nn]->poa.poaAll->POA[ii] = -999;
+				// save POA data
+				if (wf.poa > 0)
+					Subarrays[nn]->poa.poaAll->POA[ii] = wf.poa;
+				else
+					Subarrays[nn]->poa.poaAll->POA[ii] = -999;
 
-					// Calculate incident angle
-					double t_cur = wf.hour + wf.minute / 60;
+				// Calculate incident angle
+				double t_cur = wf.hour + wf.minute / 60;
 
-					// Calculate sunrise and sunset hours in local standard time for the current day
-					double sun[9], angle[5];
-					int tms[3];
+				// Calculate sunrise and sunset hours in local standard time for the current day
+				double sun[9], angle[5];
+				int tms[3];
 
-					solarpos(wf.year, wf.month, wf.day, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sun);
+				solarpos(wf.year, wf.month, wf.day, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sun);
 
-					double t_sunrise = sun[4];
-					double t_sunset = sun[5];
+				double t_sunrise = sun[4];
+				double t_sunset = sun[5];
 
-					if (t_sunset > 24) //sunset is legitimately the next day, so recalculate sunset from the previous day
-					{
-						double sunanglestemp[9];
-						if (wf.day > 1) //simply decrement day during month
-							solarpos(wf.year, wf.month, wf.day - 1, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sunanglestemp);
-						else if (wf.month > 1) //on the 1st of the month, need to switch to the last day of previous month
-							solarpos(wf.year, wf.month -1 , __nday[wf.month-2], 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sunanglestemp); //month is 1-indexed and __nday is 0 indexed
-						else //on the first day of the year, need to switch to Dec 31 of last year
-							solarpos(wf.year - 1, 12, 31, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sunanglestemp);
-						//if sunset from yesterday WASN'T today, then it's ok to leave sunset > 24, which will cause the sun to rise today and not set today
-						if (sunanglestemp[5] >= 24)
-							t_sunset = sunanglestemp[5] - 24.0;
-					}
+				if (t_sunset > 24) //sunset is legitimately the next day, so recalculate sunset from the previous day
+				{
+					double sunanglestemp[9];
+					if (wf.day > 1) //simply decrement day during month
+						solarpos(wf.year, wf.month, wf.day - 1, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sunanglestemp);
+					else if (wf.month > 1) //on the 1st of the month, need to switch to the last day of previous month
+						solarpos(wf.year, wf.month -1 , __nday[wf.month-2], 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sunanglestemp); //month is 1-indexed and __nday is 0 indexed
+					else //on the first day of the year, need to switch to Dec 31 of last year
+						solarpos(wf.year - 1, 12, 31, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sunanglestemp);
+					//if sunset from yesterday WASN'T today, then it's ok to leave sunset > 24, which will cause the sun to rise today and not set today
+					if (sunanglestemp[5] >= 24)
+						t_sunset = sunanglestemp[5] - 24.0;
+				}
 
-					if (t_sunrise < 0) //sunrise is legitimately the previous day, so recalculate for next day
-					{
-						double sunanglestemp[9];
-						if (wf.day < __nday[wf.month - 1]) //simply increment the day during the month, month is 1-indexed and __nday is 0-indexed
-							solarpos(wf.year, wf.month, wf.day + 1, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sunanglestemp);
-						else if (wf.month < 12) //on the last day of the month, need to switch to the first day of the next month
-							solarpos(wf.year, wf.month + 1, 1, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sunanglestemp);
-						else //on the last day of the year, need to switch to Jan 1 of the next year
-							solarpos(wf.year + 1, 1, 1, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sunanglestemp);
-						//if sunrise from tomorrow isn't today, then it's ok to leave sunrise < 0, which will cause the sun to set at the right time and not rise until tomorrow
-						if (sunanglestemp[4] < 0)
-							t_sunrise = sunanglestemp[4] + 24.0;
-
-					}
-
-					// time step encompasses the sunrise
-					if (t_cur >= t_sunrise - ts_hour / 2.0 && t_cur < t_sunrise + ts_hour / 2.0)
-					{
-						double t_calc = (t_sunrise + (t_cur + ts_hour / 2.0)) / 2.0; // midpoint of sunrise and end of timestep
-						int hr_calc = (int)t_calc;
-						double min_calc = (t_calc - hr_calc)*60.0;
-
-						tms[0] = hr_calc;
-						tms[1] = (int)min_calc;
-
-						solarpos(wf.year, wf.month, wf.day, hr_calc, min_calc, hdr.lat, hdr.lon, hdr.tz, sun);
-
-						tms[2] = 2;
-					}
-					// timestep encompasses the sunset
-					else if (t_cur > t_sunset - ts_hour / 2.0 && t_cur <= t_sunset + ts_hour / 2.0)
-					{
-						double t_calc = ((t_cur - ts_hour / 2.0) + t_sunset) / 2.0; // midpoint of beginning of timestep and sunset
-						int hr_calc = (int)t_calc;
-						double min_calc = (t_calc - hr_calc)*60.0;
-
-						tms[0] = hr_calc;
-						tms[1] = (int)min_calc;
-
-						solarpos(wf.year, wf.month, wf.day, hr_calc, min_calc, hdr.lat, hdr.lon, hdr.tz, sun);
-
-						tms[2] = 3;
-					}
-
-					// timestep is not sunrise nor sunset, but sun is up  (calculate position at provided t_cur)
-					else if ((t_sunrise < t_sunset && t_cur >= t_sunrise && t_cur <= t_sunset) || //this captures normal daylight cases
-						(t_sunrise > t_sunset && (t_cur <= t_sunset || t_cur >= t_sunrise))) //this captures cases where sunset (from previous day) is 1:30AM, sunrise 2:30AM, in arctic circle
-					{
-						// timestep is not sunrise nor sunset, but sun is up  (calculate position at provided t_cur)
-						tms[0] = wf.hour;
-						tms[1] = (int)wf.minute;
-						solarpos(wf.year, wf.month, wf.day, wf.hour, wf.minute, hdr.lat, hdr.lon, hdr.tz, sun);
-						tms[2] = 1;
-					}
-					else
-					{
-						// sun is down, assign sundown values
-						solarpos(wf.year, wf.month, wf.day, wf.hour, wf.minute, hdr.lat, hdr.lon, hdr.tz, sun);
-						tms[0] = wf.hour;
-						tms[1] = (int)wf.minute;
-						tms[2] = 0;
-					}
-
-
-					if (tms[2] > 0) {
-						incidence(Subarrays[nn]->trackMode, Subarrays[nn]->tiltDegrees, Subarrays[nn]->azimuthDegrees, Subarrays[nn]->trackerRotationLimitDegrees, sun[1], sun[0], Subarrays[nn]->backtrackingEnabled, Subarrays[nn]->groundCoverageRatio, false, 0.0, angle);
-					}
-					else {
-						angle[0] = -999;
-						angle[1] = -999;
-						angle[2] = -999;
-						angle[3] = -999;
-						angle[4] = -999;
-					}
-
-					Subarrays[nn]->poa.poaAll->inc[ii] = angle[0];
-					Subarrays[nn]->poa.poaAll->tilt[ii] = angle[1];
-					Subarrays[nn]->poa.poaAll->zen[ii] = sun[1];
-					Subarrays[nn]->poa.poaAll->exTer[ii] = sun[8];
+				if (t_sunrise < 0) //sunrise is legitimately the previous day, so recalculate for next day
+				{
+					double sunanglestemp[9];
+					if (wf.day < __nday[wf.month - 1]) //simply increment the day during the month, month is 1-indexed and __nday is 0-indexed
+						solarpos(wf.year, wf.month, wf.day + 1, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sunanglestemp);
+					else if (wf.month < 12) //on the last day of the month, need to switch to the first day of the next month
+						solarpos(wf.year, wf.month + 1, 1, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sunanglestemp);
+					else //on the last day of the year, need to switch to Jan 1 of the next year
+						solarpos(wf.year + 1, 1, 1, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sunanglestemp);
+					//if sunrise from tomorrow isn't today, then it's ok to leave sunrise < 0, which will cause the sun to set at the right time and not rise until tomorrow
+					if (sunanglestemp[4] < 0)
+						t_sunrise = sunanglestemp[4] + 24.0;
 
 				}
+
+				// time step encompasses the sunrise
+				if (t_cur >= t_sunrise - ts_hour / 2.0 && t_cur < t_sunrise + ts_hour / 2.0)
+				{
+					double t_calc = (t_sunrise + (t_cur + ts_hour / 2.0)) / 2.0; // midpoint of sunrise and end of timestep
+					int hr_calc = (int)t_calc;
+					double min_calc = (t_calc - hr_calc)*60.0;
+
+					tms[0] = hr_calc;
+					tms[1] = (int)min_calc;
+
+					solarpos(wf.year, wf.month, wf.day, hr_calc, min_calc, hdr.lat, hdr.lon, hdr.tz, sun);
+
+					tms[2] = 2;
+				}
+				// timestep encompasses the sunset
+				else if (t_cur > t_sunset - ts_hour / 2.0 && t_cur <= t_sunset + ts_hour / 2.0)
+				{
+					double t_calc = ((t_cur - ts_hour / 2.0) + t_sunset) / 2.0; // midpoint of beginning of timestep and sunset
+					int hr_calc = (int)t_calc;
+					double min_calc = (t_calc - hr_calc)*60.0;
+
+					tms[0] = hr_calc;
+					tms[1] = (int)min_calc;
+
+					solarpos(wf.year, wf.month, wf.day, hr_calc, min_calc, hdr.lat, hdr.lon, hdr.tz, sun);
+
+					tms[2] = 3;
+				}
+
+				// timestep is not sunrise nor sunset, but sun is up  (calculate position at provided t_cur)
+				else if ((t_sunrise < t_sunset && t_cur >= t_sunrise && t_cur <= t_sunset) || //this captures normal daylight cases
+					(t_sunrise > t_sunset && (t_cur <= t_sunset || t_cur >= t_sunrise))) //this captures cases where sunset (from previous day) is 1:30AM, sunrise 2:30AM, in arctic circle
+				{
+					// timestep is not sunrise nor sunset, but sun is up  (calculate position at provided t_cur)
+					tms[0] = wf.hour;
+					tms[1] = (int)wf.minute;
+					solarpos(wf.year, wf.month, wf.day, wf.hour, wf.minute, hdr.lat, hdr.lon, hdr.tz, sun);
+					tms[2] = 1;
+				}
+				else
+				{
+					// sun is down, assign sundown values
+					solarpos(wf.year, wf.month, wf.day, wf.hour, wf.minute, hdr.lat, hdr.lon, hdr.tz, sun);
+					tms[0] = wf.hour;
+					tms[1] = (int)wf.minute;
+					tms[2] = 0;
+				}
+
+
+				if (tms[2] > 0) {
+					incidence(Subarrays[nn]->trackMode, Subarrays[nn]->tiltDegrees, Subarrays[nn]->azimuthDegrees, Subarrays[nn]->trackerRotationLimitDegrees, sun[1], sun[0], Subarrays[nn]->backtrackingEnabled, Subarrays[nn]->groundCoverageRatio, false, 0.0, angle);
+				}
+				else {
+					angle[0] = -999;
+					angle[1] = -999;
+					angle[2] = -999;
+					angle[3] = -999;
+					angle[4] = -999;
+				}
+
+				Subarrays[nn]->poa.poaAll->inc[ii] = angle[0];
+				Subarrays[nn]->poa.poaAll->tilt[ii] = angle[1];
+				Subarrays[nn]->poa.poaAll->zen[ii] = sun[1];
+				Subarrays[nn]->poa.poaAll->exTer[ii] = sun[8];
+
 			}
 			wdprov->rewind();
 		}
@@ -647,12 +651,18 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 		//read in optional DC and AC lifetime daily losses, error check length of arrays
 		if (enableDCLifetimeLosses)
 		{
+			if (!Simulation->annualSimulation)
+				throw exec_error(cmName, "Lifetime daily losses cannot be entered with non-annual weather data");
+
 			dcLifetimeLosses = cm->as_vector_double("dc_lifetime_losses");
 			if (dcLifetimeLosses.size() != Simulation->numberOfYears * 365)
 				throw exec_error(cmName, "Length of the lifetime daily DC losses array must be equal to the analysis period * 365 days/year");
 		}
 		if (enableACLifetimeLosses)
 		{
+			if (!Simulation->annualSimulation)
+				throw exec_error(cmName, "Lifetime daily losses cannot be entered with non-annual weather data");
+
 			acLifetimeLosses = cm->as_vector_double("ac_lifetime_losses");
 			if (acLifetimeLosses.size() != Simulation->numberOfYears * 365)
 				throw exec_error(cmName, "Length of the lifetime daily AC losses array must be equal to the analysis period * 365 days/year");

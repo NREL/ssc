@@ -35,6 +35,7 @@ static void compareState(thermal_state tested_state, thermal_state expected_stat
     EXPECT_NEAR(tested_state.T_batt, expected_state.T_batt, tol) << msg;
     EXPECT_NEAR(tested_state.T_room, expected_state.T_room, tol) << msg;
     EXPECT_NEAR(tested_state.q_relative_thermal, expected_state.q_relative_thermal, tol) << msg;
+    EXPECT_NEAR(tested_state.heat_dissipated, expected_state.heat_dissipated, 1e-3) << msg;
 }
 
 static void compareState(const std::shared_ptr<thermal_state>& tested_state, const std::shared_ptr<thermal_state>& expected_state, const std::string& msg){
@@ -67,6 +68,10 @@ public:
         capacityVsTemperature.assign(vals3, 4, 2);
     }
     void CreateModel(double Cp){
+        model = std::unique_ptr<thermal_t>(new thermal_t(dt_hour, mass, surface_area, batt_R, Cp, h, capacityVsTemperature, T_room));
+    }
+    void CreateModelSixSecondStep(double Cp) {
+        dt_hour = 1.0 / 600.0;
         model = std::unique_ptr<thermal_t>(new thermal_t(dt_hour, mass, surface_area, batt_R, Cp, h, capacityVsTemperature, T_room));
     }
 };
@@ -252,7 +257,8 @@ public:
         dtHour = 1.0;
 
         capacityModel = new capacity_lithium_ion_t(q, SOC_init, SOC_max, SOC_min, dtHour);
-        voltageModel = new voltage_dynamic_t(n_series, n_strings, Vnom_default, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom, C_rate, resistance, dtHour);
+        voltageModel = new voltage_dynamic_t(n_series, n_strings, Vnom_default, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom,
+                                             C_rate, resistance, dtHour);
         lifetimeModel = new lifetime_t(cycleLifeMatrix, dtHour, 1.02, 2.66e-3, -7280, 930);
         thermalModel = new thermal_t(1.0, mass, surface_area, resistance, Cp, h, capacityVsTemperature, T_room);
         lossModel = new losses_t(monthlyLosses, monthlyLosses, monthlyLosses);

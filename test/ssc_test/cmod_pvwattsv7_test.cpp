@@ -3,6 +3,7 @@
 #include "../ssc/core.h"
 #include "../ssc/vartab.h"
 #include "../ssc/common.h"
+#include "../input_cases/weather_inputs.h"
 #include "cmod_pvwattsv7_test.h"
 
 
@@ -139,11 +140,11 @@ TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, SubhourlyWeather_cmod_pvwattsv7) {
 	{
 		ssc_number_t annual_energy;
 		ssc_data_get_number(data, "annual_energy", &annual_energy);
-		EXPECT_NEAR(annual_energy, 6106.900, error_tolerance) << "Annual energy.";
+		EXPECT_NEAR(annual_energy, 6523.727, error_tolerance) << "Annual energy.";
 
 		ssc_number_t capacity_factor;
 		ssc_data_get_number(data, "capacity_factor", &capacity_factor);
-		EXPECT_NEAR(capacity_factor, 17.4, 0.1) << "Capacity factor";
+		EXPECT_NEAR(capacity_factor, 18.62, 0.1) << "Capacity factor";
 
 	}
 }
@@ -239,3 +240,23 @@ TEST_F(CMPvwattsV7Integration, SnowModelTest_cmod_pvwattsv7) {
 	EXPECT_TRUE(pvwatts_errors);
 
 }*/
+
+TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, NonAnnual)
+{
+	//set up a weather data array and unassign the solar resource file
+
+	auto weather_data = create_weatherdata_array(24);
+	ssc_data_unassign(data, "solar_resource_file");
+	ssc_data_set_table(data, "solar_resource_data", &weather_data->table);
+
+	//run the tests
+	EXPECT_FALSE(run_module(data, "pvwattsv7"));
+
+	ssc_number_t dc, gen;
+	dc = ssc_data_get_array(data, "dc", nullptr)[12];
+	EXPECT_NEAR(dc, 2512.404, 0.01) << "DC Energy at noon";
+
+	gen = ssc_data_get_array(data, "gen", nullptr)[12];
+	EXPECT_NEAR(gen, 2.417, 0.01) << "Gen at noon";
+	free_weatherdata_array(weather_data);
+}

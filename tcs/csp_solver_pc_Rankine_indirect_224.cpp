@@ -61,7 +61,8 @@ C_pc_Rankine_indirect_224::C_pc_Rankine_indirect_224()
 {
 	m_is_initialized = false;
 
-	m_standby_control_prev = m_standby_control_calc = -1;
+    m_operating_mode_prev = C_csp_power_cycle::E_csp_power_cycle_modes::OFF;
+    m_operating_mode_calc = m_operating_mode_prev;
 
 	m_F_wcMax = m_F_wcMin = m_delta_h_steam = m_startup_energy_required = m_eta_adj =
 		m_m_dot_design = m_q_dot_design = m_cp_htf_design =
@@ -540,7 +541,7 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 	m_startup_energy_required = ms_params.m_startup_frac * ms_params.m_P_ref / ms_params.m_eta_ref; // [kWt-hr]
 
 	// Finally, set member model-timestep-tracking variables
-	m_standby_control_prev = OFF;			// Assume power cycle is off when simulation begins
+	m_operating_mode_prev = OFF;			// Assume power cycle is off when simulation begins
 	m_startup_energy_remain_prev = m_startup_energy_required;	//[kW-hr]
 	m_startup_time_remain_prev = ms_params.m_startup_time;		//[hr]
 
@@ -954,7 +955,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 	double time_required_su = 0.0;
 	double time_required_max = 0.0;
 
-	m_standby_control_calc = standby_control;
+	m_operating_mode_calc = (C_csp_power_cycle::E_csp_power_cycle_modes) standby_control;
 
 	double q_startup = 0.0;
 
@@ -977,13 +978,13 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 			if( time_required_max > time_step_hrs )
 			{
 				time_required_su = time_step_hrs;		//[hr]
-				m_standby_control_calc = STARTUP;	//[-] Power cycle requires additional startup next timestep
+                m_operating_mode_calc = STARTUP;	//[-] Power cycle requires additional startup next timestep
 				q_startup = m_dot_htf*c_htf*(T_htf_hot - ms_params.m_T_htf_cold_ref)*time_step_hrs/3600.0;	//[kW-hr]
 			}
 			else
 			{
 				time_required_su = time_required_max;	//[hr]
-				m_standby_control_calc = ON;	//[-] Power cycle has started up, next time step it will be ON
+                m_operating_mode_calc = ON;	//[-] Power cycle has started up, next time step it will be ON
 
 				double q_startup_energy_req = m_startup_energy_remain_prev;	//[kWt-hr]
 				double q_startup_ramping_req = m_dot_htf*c_htf*(T_htf_hot - ms_params.m_T_htf_cold_ref)*m_startup_time_remain_prev/3600.0;	//[kWt-hr]
@@ -1390,13 +1391,13 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 			if( time_required_su_energy > step_sec / 3600.0 )	// No: the power cycle startup will require another timestep
 			{
 				time_required_su = step_sec / 3600.0;	//[hr]
-				m_standby_control_calc = STARTUP;		//[-] Power cycle requires additional startup next timestep
+                m_operating_mode_calc = STARTUP;		//[-] Power cycle requires additional startup next timestep
 
 			}
 			else	// Yes: the power cycle will complete startup within this timestep
 			{
 				time_required_su = time_required_su_energy;	//[hr]
-				m_standby_control_calc = ON;				//[-] Power cycle has started up, next time step it will be ON
+                m_operating_mode_calc = ON;				//[-] Power cycle has started up, next time step it will be ON
 			}
 			// If the thermal energy requirement is the limiting factor, then send max q_dot to power cycle
 			q_dot_to_pc = q_dot_to_pc_max;		//[kWt]
@@ -1407,12 +1408,12 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 			if( time_required_su_ramping > step_sec / 3600.0 )	// No: the power cycle startup will require another timestep
 			{
 				time_required_su = step_sec / 3600.0;			//[hr]
-				m_standby_control_calc = STARTUP;		//[-] Power cycle requires additional startup next timestep
+                m_operating_mode_calc = STARTUP;		//[-] Power cycle requires additional startup next timestep
 			}
 			else	// Yes: the power cycle will complete startup within this timestep
 			{
 				time_required_su = time_required_su_ramping;	//[hr]
-				m_standby_control_calc = ON;					//[-] Power cycle has started up, next time step it will be ON
+                m_operating_mode_calc = ON;					//[-] Power cycle has started up, next time step it will be ON
 			}
 
 			// 2.27.17 twn: now need to recalculate q_dot_to_pc based on having more time to deliver energy requirement
@@ -1612,7 +1613,7 @@ void C_pc_Rankine_indirect_224::converged()
 {
 	mc_two_tank_ctes.converged();
 	mc_stratified_ctes.converged();
-	m_standby_control_prev = m_standby_control_calc;
+	m_operating_mode_prev = m_operating_mode_calc;
 	m_startup_time_remain_prev = m_startup_time_remain_calc;
 	m_startup_energy_remain_prev = m_startup_energy_remain_calc;
 
@@ -1640,7 +1641,7 @@ int C_pc_Rankine_indirect_224::get_operating_state()
 		return C_csp_power_cycle::ON;
 	}
 
-	return m_standby_control_prev;
+	return m_operating_mode_prev;
 }
 
 void C_pc_Rankine_indirect_224::RankineCycle(double T_db, double T_wb,

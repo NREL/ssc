@@ -302,7 +302,7 @@ public:
 			p_sunup[i] = (ssc_number_t)sunup;
 
 			p_shad_beam[i] = 1.0f;
-			if ( shad.fbeam( i, solalt, solazi ) )
+			if (shad.fbeam(i, wf.minute, solalt, solazi))
 				p_shad_beam[i] = (ssc_number_t) shad.beam_shade_factor();
 
 			if (sunup > 0)

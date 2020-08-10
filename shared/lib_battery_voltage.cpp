@@ -36,8 +36,6 @@ bool voltage_state::operator==(const voltage_state &p) {
 void voltage_t::initialize() {
     state = std::make_shared<voltage_state>();
     state->cell_voltage = params->Vnom_default;
-    if (params->dt_hr < 1 / 60.)
-        throw std::runtime_error("Battery time step size must be greater than 1/60th of hour.");
 }
 
 voltage_t::voltage_t(int mode, int num_cells_series, int num_strings, double voltage, double dt_hour) {
@@ -157,6 +155,10 @@ double voltage_table_t::calculate_voltage(double DOD) {
     return fmax(slopes[row] * DOD + intercepts[row], 0);
 }
 
+void voltage_table_t::set_initial_SOC(double init_soc) {
+    state->cell_voltage = calculate_voltage(100. - init_soc);
+}
+
 double voltage_table_t::calculate_voltage_for_current(double I, double q, double qmax, double) {
     double DOD = (q - I * params->dt_hr) / qmax * 100.;
     return calculate_voltage(DOD) * params->num_cells_series;
@@ -228,7 +230,7 @@ double voltage_table_t::calculate_current_for_target_w(double P_watts, double q,
 
     double DOD_new = 0.;
     double incr = 0;
-    double DOD_best = 0;
+    double DOD_best = DOD_best = multiplier == -1. ? 0 : 100;
     double P_best = 0;
     while (incr + row < slopes.size() && incr + row >= 0) {
         size_t i = row + (size_t) incr;
@@ -274,8 +276,8 @@ void voltage_dynamic_t::initialize() {
 
 voltage_dynamic_t::voltage_dynamic_t(int num_cells_series, int num_strings, double voltage, double Vfull,
                                      double Vexp, double Vnom, double Qfull, double Qexp, double Qnom,
-                                     double C_rate, double R, double dt_hour) :
-        voltage_t(voltage_params::MODEL, num_cells_series, num_strings, voltage, dt_hour) {
+                                     double C_rate, double R, double dt_hr) :
+        voltage_t(voltage_params::MODEL, num_cells_series, num_strings, voltage, dt_hr) {
     params->dynamic.Vfull = Vfull;
     params->dynamic.Vexp = Vexp;
     params->dynamic.Vnom = Vnom;
@@ -337,6 +339,10 @@ void voltage_dynamic_t::parameter_compute() {
                           "A: %f, B: %f, K: %f, E0: %f", _A, _B0, _K, _E0);
         throw std::runtime_error(err);
     }
+}
+
+void voltage_dynamic_t::set_initial_SOC(double init_soc) {
+    updateVoltage(init_soc * 0.01 * params->dynamic.Qfull, params->dynamic.Qfull, 0, 25, params->dt_hr);
 }
 
 // everything in here is on a per-cell basis
@@ -414,7 +420,10 @@ double voltage_dynamic_t::calculate_current_for_target_w(double P_watts, double 
     }
 
     double x[1], resid[1];
-    x[0] = solver_power / state->cell_voltage;
+    if (state->cell_voltage != 0)
+        x[0] = solver_power / state->cell_voltage * params->dt_hr;
+    else
+        x[0] = solver_power / params->dynamic.Vnom * params->dt_hr;
     bool check = false;
 
     newton<double, std::function<void(const double *, double *)>, 1>(x, resid, check, f,
@@ -439,12 +448,10 @@ void voltage_dynamic_t::solve_current_for_discharge_power(const double *x, doubl
 // Vanadium redox flow model
 void voltage_vanadium_redox_t::initialize() {
     m_RCF = 8.314 * 1.38 / (26.801 * 3600);
-    if (params->dt_hr < 1 / 60.)
-        throw std::runtime_error("Battery time step size must be greater than 1/60th of hour.");
 }
 
-voltage_vanadium_redox_t::voltage_vanadium_redox_t(int num_cells_series, int num_strings, double Vnom_default, double R,
-                                                   double dt_hour) :
+voltage_vanadium_redox_t::voltage_vanadium_redox_t(int num_cells_series, int num_strings, double Vnom_default,
+                                                   double R, double dt_hour) :
         voltage_t(voltage_params::MODEL, num_cells_series, num_strings, Vnom_default, dt_hour) {
     params->Vnom_default = Vnom_default;
     params->resistance = R;
@@ -480,6 +487,11 @@ voltage_t *voltage_vanadium_redox_t::clone() {
     return new voltage_vanadium_redox_t(*this);
 }
 
+void voltage_vanadium_redox_t::set_initial_SOC(double init_soc) {
+    updateVoltage(init_soc, 100, 0, 25, params->dt_hr);
+}
+
+
 double voltage_vanadium_redox_t::calculate_voltage_for_current(double I, double q, double qmax, double T_k) {
     return voltage_model(q / params->num_strings, qmax / params->num_strings,
                          I / params->num_strings, T_k) * params->num_cells_series;
@@ -511,7 +523,7 @@ double voltage_vanadium_redox_t::calculate_max_discharge_w(double q, double qmax
                                                                 this, _1, _2);
 
     double x[1], resid[1];
-    x[0] = solver_q - tolerance;
+    x[0] = (solver_q - tolerance) / params->dt_hr;
     bool check = false;
 
     newton<double, std::function<void(const double *, double *)>, 1>(x, resid, check, f,
@@ -542,7 +554,10 @@ double voltage_vanadium_redox_t::calculate_current_for_target_w(double P_watts, 
                                                                 this, _1, _2);
 
     double x[1], resid[1];
-    x[0] = solver_power / state->cell_voltage;
+    if (state->cell_voltage != 0.)
+        x[0] = solver_power / state->cell_voltage * params->dt_hr;
+    else
+        x[0] = solver_power / params->Vnom_default * params->dt_hr;
     bool check = false;
 
     newton<double, std::function<void(const double *, double *)>, 1>(x, resid, check, f,
