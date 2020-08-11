@@ -409,7 +409,18 @@ void weather_record::reset()
 	tdry = twet = tdew = rhum = pres = snow = alb =  aod = std::numeric_limits<double>::quiet_NaN();
 }
 
-
+bool weather_data_provider::check_hour_of_year(int hour, int line) {
+    if (hour < m_hour_of_year) {
+        std::ostringstream ss;
+        ss << "Hour " << hour << " occurs after " << m_hour_of_year << " on line " << line << " of weatherfile. If this is an interpolated subhourly file, please re-interpolate from hourly with the updated macro.";
+        m_message = ss.str();
+        return false;
+    }
+    else {
+        m_hour_of_year = hour;
+        return true;
+    }
+}
 
 #define NBUF 2048
 
@@ -1378,6 +1389,11 @@ bool weatherfile::open(const std::string &file, bool header_only)
 
 		}
 
+        int hour_of_year = util::hour_of_year(m_columns[MONTH].data[i], m_columns[DAY].data[i], m_columns[HOUR].data[i]);
+        if (!check_hour_of_year(hour_of_year, i))
+        {
+            return false;
+        }
 	}
 
 	//	if( n_leap_data_removed > 0 )
