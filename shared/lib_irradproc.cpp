@@ -1113,102 +1113,107 @@ double rts_sun_altitude(double latitude, double delta_prime, double h_prime) //s
 double sun_rise_and_set(double* m_rts, double* h_rts, double* delta_prime, double latitude,
 	double* h_prime, double h0_prime, int sun) //sunrise and sunset calculations (fraction of day)
 {
-	return m_rts[sun] + (h_rts[sun] - h0_prime) /
-		(360.0 * cos(DTOR*(delta_prime[sun])) * cos(DTOR*(latitude)) * sin(DTOR*(h_prime[sun])));
+return m_rts[sun] + (h_rts[sun] - h0_prime) /
+(360.0 * cos(DTOR * (delta_prime[sun])) * cos(DTOR * (latitude)) * sin(DTOR * (h_prime[sun])));
 }
 
 void calculate_spa(double jd, double lat, double lng, double alt, double pressure, double temp, double delta_t, double tilt, double azm_rotation, double ascension_and_declination[2], double needed_values[9])
 {
-	//Calculate the Julian and Julian Ephemeris, Day, Century, and Millennium (3.1)
-	//double jd = julian_day(year, month, day, hour, minute, second, delta_t, tz);
-	double jc = julian_century(jd); // for 2000 standard epoch
-	double jde = julian_ephemeris_day(jd, delta_t); //Adjusted for difference between Earth rotation time and the Terrestrial Time (TT) (derived from observation, reported yearly in Astronomical Almanac)
-	double jce = julian_ephemeris_century(jde); //for 2000 standard epoch
-	double jme = julian_ephemeris_millennium(jce); // jce/10 (for 2000 standard epoch)
-	needed_values[0] = jme;
+    //Calculate the Julian and Julian Ephemeris, Day, Century, and Millennium (3.1)
+    //double jd = julian_day(year, month, day, hour, minute, second, delta_t, tz);
+    double jc = julian_century(jd); // for 2000 standard epoch
+    double jde = julian_ephemeris_day(jd, delta_t); //Adjusted for difference between Earth rotation time and the Terrestrial Time (TT) (derived from observation, reported yearly in Astronomical Almanac)
+    double jce = julian_ephemeris_century(jde); //for 2000 standard epoch
+    double jme = julian_ephemeris_millennium(jce); // jce/10 (for 2000 standard epoch)
+    needed_values[0] = jme;
 
-	//Calculate the Earth heliocentric longitude latitude, and radius vector (L, B, and R) (3.2)
-	// Heliocentric - Earth position is calculated with respect to the center of the sun
-	double l = earth_heliocentric_longitude(jme); //L0-L5 values listed beginning line ?, L limited to 0-360°
-	double b = earth_heliocentric_latitude(jme); // B0-B1 values listed beginning line ?, B limited to 0-360°
-	double r = earth_radius_vector(jme); // R0-R4 valeus listed beginning line ?,  R in Astronomical Units (AU)
-	needed_values[1] = 1 / (r * r); //
+    //Calculate the Earth heliocentric longitude latitude, and radius vector (L, B, and R) (3.2)
+    // Heliocentric - Earth position is calculated with respect to the center of the sun
+    double l = earth_heliocentric_longitude(jme); //L0-L5 values listed beginning line ?, L limited to 0-360°
+    double b = earth_heliocentric_latitude(jme); // B0-B1 values listed beginning line ?, B limited to 0-360°
+    double r = earth_radius_vector(jme); // R0-R4 valeus listed beginning line ?,  R in Astronomical Units (AU)
+    needed_values[1] = 1 / (r * r); //
 
-	//Calculate the geocentric longitude and latitude (theta and beta) (3.3)
-	// Geocentric - sun position calculated with respect to the Earth center
-	double theta = geocentric_longitude(l); // Limited to 0-360°
-	double beta = geocentric_latitude(b); // Limited to 0-360°
+    //Calculate the geocentric longitude and latitude (theta and beta) (3.3)
+    // Geocentric - sun position calculated with respect to the Earth center
+    double theta = geocentric_longitude(l); // Limited to 0-360°
+    double beta = geocentric_latitude(b); // Limited to 0-360°
 
-	//Calculate the nutation in longitude and obliquity (del_psi and del_eps) (3.4)
-	double x[5];
-	x[0] = mean_elongation_moon_sun(jce); // degrees
-	x[1] = mean_anomaly_sun(jce); // degrees
-	x[2] = mean_anomaly_moon(jce); // degrees
-	x[3] = argument_latitude_moon(jce); // degrees
-	x[4] = ascending_longitude_moon(jce); // degrees
+    //Calculate the nutation in longitude and obliquity (del_psi and del_eps) (3.4)
+    double x[5];
+    x[0] = mean_elongation_moon_sun(jce); // degrees
+    x[1] = mean_anomaly_sun(jce); // degrees
+    x[2] = mean_anomaly_moon(jce); // degrees
+    x[3] = argument_latitude_moon(jce); // degrees
+    x[4] = ascending_longitude_moon(jce); // degrees
 
-	double delta_values[2]; // allocate storage for nutation in longitude (del_psi) and nutation in obliquity (del_epsilon)
-	nutation_longitude_and_obliquity(jce, x, delta_values);
-	double del_psi = delta_values[0]; //store value for use in further spa calculations
-	needed_values[2] = del_psi; //pass del_psi value to sunrise sunset calculations
-	double del_epsilon = delta_values[1]; //store value for use in further spa calculations
+    double delta_values[2]; // allocate storage for nutation in longitude (del_psi) and nutation in obliquity (del_epsilon)
+    nutation_longitude_and_obliquity(jce, x, delta_values);
+    double del_psi = delta_values[0]; //store value for use in further spa calculations
+    needed_values[2] = del_psi; //pass del_psi value to sunrise sunset calculations
+    double del_epsilon = delta_values[1]; //store value for use in further spa calculations
 
-	//Calculate the true obliquity of the ecliptic, epsilon (3.5)
-	double epsilon0 = ecliptic_mean_obliquity(jme); //mean obliquity of the ecliptic (arc seconds)
-	double epsilon = ecliptic_true_obliquity(del_epsilon, epsilon0); //true obliquity of the ecliptic (degrees)
-	needed_values[3] = epsilon;
+    //Calculate the true obliquity of the ecliptic, epsilon (3.5)
+    double epsilon0 = ecliptic_mean_obliquity(jme); //mean obliquity of the ecliptic (arc seconds)
+    double epsilon = ecliptic_true_obliquity(del_epsilon, epsilon0); //true obliquity of the ecliptic (degrees)
+    needed_values[3] = epsilon;
 
-	//Calculate the aberration correction (3.6)
-	double del_tau = aberration_correction(r); // degrees
+    //Calculate the aberration correction (3.6)
+    double del_tau = aberration_correction(r); // degrees
 
-	//Calculate the apparent sun longitude (3.7)
-	double lamda = apparent_sun_longitude(theta, del_psi, del_tau); // degrees
-	
-	//Calculate the apparent sidereal time at Greenwich at any given time (3.8) 
-	double nu0 = greenwich_mean_sidereal_time(jd, jc); //degrees 
-	double nu = greenwich_sidereal_time(nu0, del_psi, epsilon); // degrees
-	needed_values[4] = nu; 
+    //Calculate the apparent sun longitude (3.7)
+    double lamda = apparent_sun_longitude(theta, del_psi, del_tau); // degrees
 
-	//Calculate the geocentric sun right ascension (degrees) (3.9)
-	double alpha = geocentric_right_ascension(lamda, epsilon, beta); // degrees, limited to 0-360°
-	ascension_and_declination[0] = alpha; 
-	
-	//Calculate the geocentric sun declination (degrees) (3.10)
-	double delta = geocentric_declination(beta, epsilon, lamda); // degrees
-	ascension_and_declination[1] = delta;
-	
-	//Calculate local hour angle (3.11)
-	double H = observer_hour_angle(nu, lng, alpha); // positive for east of Greenwich, limited to 0-360°
+    //Calculate the apparent sidereal time at Greenwich at any given time (3.8) 
+    double nu0 = greenwich_mean_sidereal_time(jd, jc); //degrees 
+    double nu = greenwich_sidereal_time(nu0, del_psi, epsilon); // degrees
+    needed_values[4] = nu;
 
-	//Calculate the topocentric sun right ascension (3.12)
-	// Topocentric - sun position is calculated with respect to the observer local position at the Earth surface
-	double xi = sun_equatorial_horizontal_parallax(r); // degrees
-	double delta_alpha_prime[2]; //storage for parallax in the sun right ascension, topocentric sun declination
-	right_ascension_parallax_and_topocentric_dec(lat, alt, xi, H, delta, delta_alpha_prime); //outputs parallax in the sun right ascension (delta_alpha) and sun right ascension (delta_prime)
-	double delta_alpha = delta_alpha_prime[1]; // topocentric sun parallax in the sun right ascension (degrees)
-	double delta_prime = delta_alpha_prime[0]; // topocentric declination (degrees)
-	needed_values[5] = delta_prime; // pass declination as output of calculate_spa
-	double alpha_prime = topocentric_right_ascension(alpha, delta_alpha); // topocentric sun right ascenion (degrees)
+    //Calculate the geocentric sun right ascension (degrees) (3.9)
+    double alpha = geocentric_right_ascension(lamda, epsilon, beta); // degrees, limited to 0-360°
+    ascension_and_declination[0] = alpha;
 
-	//Calculate topocentric local hour angle (3.13)
-	double H_prime = topocentric_local_hour_angle(H, delta_alpha); // degrees
+    //Calculate the geocentric sun declination (degrees) (3.10)
+    double delta = geocentric_declination(beta, epsilon, lamda); // degrees
+    ascension_and_declination[1] = delta;
 
-	//Calculate the topocentric zenith angle (3.14)
-	double e0 = topocentric_elevation_angle(lat, delta_prime, H_prime); // without atmospheric refraction (degrees)
-	double atmos_refract = 0.5667; // atmospheric refraction for check if sun is below horizon
-	double del_e = atmospheric_refraction_correction(pressure, temp, atmos_refract, e0); // atmospheric refraction correction in degrees, returns 0 if sun is below horizon
-	double e = topocentric_elevation_angle_corrected(e0, del_e); // Topocentric elevation angle corrected for refraction (degrees)
-	needed_values[6] = e; // Pass topocentric elevation angle as an output of solarpos_spa (degrees)
-	double zenith = topocentric_zenith_angle(e); // Topocentric zenith angle (degrees) (90 - e)
-	needed_values[7] = zenith; // Pass topocentric zenith angle as an output of solarpos_spa (degrees)
+    //Calculate local hour angle (3.11)
+    double H = observer_hour_angle(nu, lng, alpha); // positive for east of Greenwich, limited to 0-360°
 
-	//Calculate the topocentric azimuth angle (3.15)
-	double azimuth_astro = topocentric_azimuth_angle_astro(H_prime, lat, delta_prime); //topocentric astronomers azimuth angle (degrees) (measured westward from south)
-	double azimuth = topocentric_azimuth_angle(azimuth_astro); // topocentric azimuth angle (degrees) (measured eastward from north)
-	needed_values[8] = azimuth;
+    //Calculate the topocentric sun right ascension (3.12)
+    // Topocentric - sun position is calculated with respect to the observer local position at the Earth surface
+    double xi = sun_equatorial_horizontal_parallax(r); // degrees
+    double delta_alpha_prime[2]; //storage for parallax in the sun right ascension, topocentric sun declination
+    right_ascension_parallax_and_topocentric_dec(lat, alt, xi, H, delta, delta_alpha_prime); //outputs parallax in the sun right ascension (delta_alpha) and sun right ascension (delta_prime)
+    double delta_alpha = delta_alpha_prime[1]; // topocentric sun parallax in the sun right ascension (degrees)
+    double delta_prime = delta_alpha_prime[0]; // topocentric declination (degrees)
+    needed_values[5] = delta_prime; // pass declination as output of calculate_spa
+    double alpha_prime = topocentric_right_ascension(alpha, delta_alpha); // topocentric sun right ascenion (degrees)
 
+    //Calculate topocentric local hour angle (3.13)
+    double H_prime = topocentric_local_hour_angle(H, delta_alpha); // degrees
+
+    //Calculate the topocentric zenith angle (3.14)
+    double e0 = topocentric_elevation_angle(lat, delta_prime, H_prime); // without atmospheric refraction (degrees)
+    double atmos_refract = 0.5667; // atmospheric refraction for check if sun is below horizon
+    double del_e = atmospheric_refraction_correction(pressure, temp, atmos_refract, e0); // atmospheric refraction correction in degrees, returns 0 if sun is below horizon
+    double e = topocentric_elevation_angle_corrected(e0, del_e); // Topocentric elevation angle corrected for refraction (degrees)
+    needed_values[6] = e; // Pass topocentric elevation angle as an output of solarpos_spa (degrees)
+    double zenith = topocentric_zenith_angle(e); // Topocentric zenith angle (degrees) (90 - e)
+    needed_values[7] = zenith; // Pass topocentric zenith angle as an output of solarpos_spa (degrees)
+
+    //Calculate the topocentric azimuth angle (3.15)
+    double azimuth_astro = topocentric_azimuth_angle_astro(H_prime, lat, delta_prime); //topocentric astronomers azimuth angle (degrees) (measured westward from south)
+    double azimuth = topocentric_azimuth_angle(azimuth_astro); // topocentric azimuth angle (degrees) (measured eastward from north)
+    needed_values[8] = azimuth;
+    if (cos(DTOR * e) == 0.0)
+    {
+        azimuth = M_PI;
+    }
+
+    
 	//Calculate the incidence angle for a selected surface (3.16)
-	double aoi = surface_incidence_angle(zenith, azimuth_astro, azm_rotation, tilt); //incidence angle for a surface oriented in any direction (degrees)
+	//double aoi = surface_incidence_angle(zenith, azimuth_astro, azm_rotation, tilt); //incidence angle for a surface oriented in any direction (degrees)
 }
 
 
@@ -1321,8 +1326,35 @@ void solarpos_spa(int year, int month, int day, int hour, double minute, double 
 
 	double tst = hour + minute / 60.0 + (lng / 15.0 - tz) + needed_values_eot[0]/60; //true solar time (output of function)
 
-	double zen = DTOR * needed_values_spa[7]; //zenith angle in radians
-	double Gon = 1367 * (1 + 0.033 * cos(360.0 / 365.0 * day_of_year(month, day) * M_PI / 180)); /* D&B eq 1.4.1a, using solar constant=1367 W/m2 */
+    double azm = DTOR * needed_values_spa[8];
+    if (azm < 0)
+    {
+        azm = 0;
+    }
+    else if(azm > M_PI)
+    {
+        azm = M_PI;
+    }
+    else
+    {
+
+    }
+
+    double zen = DTOR * needed_values_spa[7]; //zenith angle in radians
+    if (zen > M_PI) //check for rounding error going from degrees to radians
+    {
+        zen = M_PI;
+    }
+    else if (zen < 0)
+    {
+        zen = 0;
+    }
+    else
+    {
+
+    }
+
+    double Gon = 1367 * (1 + 0.033 * cos(360.0 / 365.0 * day_of_year(month, day) * M_PI / 180)); /* D&B eq 1.4.1a, using solar constant=1367 W/m2 */
 	//double hextra = Gon*cos(zen); //preallocate extra_terrestrial irradiance on horizontal (W/m2)
 	double hextra;
 	if (zen > 0 &&  zen < M_PI / 2) /* if sun is up */
@@ -1957,6 +1989,7 @@ void irrad::setup()
 
 	for (int i = 0; i < 9; i++) {
 		sunAnglesRadians[i] = std::numeric_limits<double>::quiet_NaN();
+        
 	}
 	surfaceAnglesRadians[0] = surfaceAnglesRadians[1] = surfaceAnglesRadians[2] = surfaceAnglesRadians[3] = surfaceAnglesRadians[4] = std::numeric_limits<double>::quiet_NaN();
 	planeOfArrayIrradianceFront[0] = planeOfArrayIrradianceFront[1] = planeOfArrayIrradianceFront[2] = diffuseIrradianceFront[0] = diffuseIrradianceFront[1] = diffuseIrradianceFront[2] = std::numeric_limits<double>::quiet_NaN();
@@ -2197,7 +2230,8 @@ int irrad::calc()
 	double t_cur = hour + minute/60.0;
 
 	// calculate sunrise and sunset hours in local standard time for the current day
-	//solarpos( year, month, day, 12, 0.0, latitudeDegrees, longitudeDegrees, timezone, sunAnglesRadians );
+    double sunAnglesRadians_test[9];
+	solarpos( year, month, day, 12, 0.0, latitudeDegrees, longitudeDegrees, timezone, sunAnglesRadians_test );
 	solarpos_spa(year, month, day, 12, 0.0, 0.0, latitudeDegrees, longitudeDegrees, timezone, 0, 66.7, elevation, pressure, temp, tiltDegrees, surfaceAzimuthDegrees, sunAnglesRadians);
 
 	double t_sunrise = sunAnglesRadians[4];
@@ -2305,17 +2339,24 @@ int irrad::calc()
 		// compute incidence angles onto fixed or tracking surface
 		incidence( trackingMode, tiltDegrees, surfaceAzimuthDegrees, rotationLimitDegrees, sunAnglesRadians[1], sunAnglesRadians[0], 
 			enableBacktrack, groundCoverageRatio, forceToStow, stowAngleDegrees, surfaceAnglesRadians );
-
+        //double surfaceAnglesRadians_test[5];
+        //incidence(trackingMode, tiltDegrees, surfaceAzimuthDegrees, rotationLimitDegrees, sunAnglesRadians_test[1], sunAnglesRadians_test[0],
+            //enableBacktrack, groundCoverageRatio, forceToStow, stowAngleDegrees, surfaceAnglesRadians);
+        //double incidence_diff = surfaceAnglesRadians_test[0] - surfaceAnglesRadians[0];
 		if(radiationMode < irrad::POA_R){
 			double hextra = sunAnglesRadians[8];
 			double hbeam = directNormal*cos( sunAnglesRadians[1] ); // calculated beam on horizontal surface: sunAnglesRadians[1]=zenith
+            if (directNormal < 0)
+            {
+                hbeam = 0;
+            }
             /*if (directNormal < 0 && radiationMode == irrad::GH_DF)
             {
                 hbeam = 0;
                 //directNormal = 0;
             }*/
 			// check beam irradiance against extraterrestrial irradiance
-			if ( hbeam > hextra && radiationMode != GH_DF)
+			if ( hbeam > hextra)// && radiationMode != GH_DF)
 			{
 				//beam irradiance on horizontal W/m2 exceeded calculated extraterrestrial irradiance
 				return -1;
