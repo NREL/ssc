@@ -80,7 +80,8 @@ TEST_F(CMPvYieldTimo, TimoModel80603_AZ_cmod_pvsamv1)
 	{
 		ssc_number_t annual_energy;
 		ssc_data_get_number(data, "annual_energy", &annual_energy);
-		EXPECT_NEAR(annual_energy, 8199354, 8199354e-4) << "Annual energy.";
+		//EXPECT_NEAR(annual_energy, 8199354, 8199354e-4) << "Annual energy.";
+        EXPECT_NEAR(annual_energy, 8198434, 8198434e-4) << "Annual energy."; //value changed due to new solarpos_spa algorithm
 
 		ssc_number_t capacity_factor;
 		ssc_data_get_number(data, "capacity_factor", &capacity_factor);

@@ -1326,7 +1326,7 @@ void solarpos_spa(int year, int month, int day, int hour, double minute, double 
 
 	double tst = hour + minute / 60.0 + (lng / 15.0 - tz) + needed_values_eot[0]/60; //true solar time (output of function)
 
-    double azm = DTOR * needed_values_spa[8];
+    /*double azm = DTOR * needed_values_spa[8];
     if (azm < 0)
     {
         azm = 0;
@@ -1338,7 +1338,7 @@ void solarpos_spa(int year, int month, int day, int hour, double minute, double 
     else
     {
 
-    }
+    }*/
 
     double zen = DTOR * needed_values_spa[7]; //zenith angle in radians
     if (zen > M_PI) //check for rounding error going from degrees to radians
@@ -1367,7 +1367,7 @@ void solarpos_spa(int year, int month, int day, int hour, double minute, double 
     double sunrise, sunset;
 
     double h0_test = needed_values_eot[1];
-    if (h0_test == (DTOR * M_PI))
+    if (h0_test == (180.0))
     {
         sunrise = -100.0;
         sunset = 100.0;
@@ -1387,8 +1387,8 @@ void solarpos_spa(int year, int month, int day, int hour, double minute, double 
 	sunn[1] = zen; //sun zenith in radians           /*  Zenith */
 	sunn[2] = DTOR*needed_values_spa[6]; // sun elevation in radians
 	sunn[3] = DTOR*needed_values_spa[5]; // sun declination in radians
-	sunn[4] = needed_values_eot[2]; //sunrise in local standard time (hrs), not corrected for refraction
-	sunn[5] = needed_values_eot[3]; //sunset in local standard time (hrs), not corrected for refraction
+    sunn[4] = sunrise; //sunrise in local standard time (hrs), not corrected for refraction
+    sunn[5] = sunset; //sunset in local standard time (hrs), not corrected for refraction
 	sunn[6] = needed_values_spa[01]; //eccentricity correction factor
 	sunn[7] = tst; //true solar time (hrs)
 	sunn[8] = hextra; //extraterrestrial solar irradaince on horizontal at particular time (W/m2)

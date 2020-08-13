@@ -750,10 +750,10 @@ void pvyield_user_support_80603_meteo(ssc_data_t &data)
 	ssc_data_set_number(data, "mlm_IAM_c_sa4", 0);
 	ssc_data_set_number(data, "mlm_IAM_c_sa5", 0);
 	ssc_data_set_number(data, "mlm_groundRelfectionFraction", 0.2);
-	ssc_number_t inc_angle[11] = { 0.0, 30.0, 40.0, 50.0, 60.0, 70.0, 75.0, 80.0, 85.0, 90.0, 100.0 };
-	ssc_data_set_array(data, "mlm_IAM_c_cs_incAngle", inc_angle, 11);
-	ssc_number_t inc_angle_value[11] = { 1.0, 0.999, 0.995, 0.987, 0.962, 0.892, 0.816, 0.681, 0.44, 0.0, 0.0 };
-	ssc_data_set_array(data, "mlm_IAM_c_cs_iamValue", inc_angle_value, 11);
+	ssc_number_t inc_angle[12] = { 0.0, 30.0, 40.0, 50.0, 60.0, 70.0, 75.0, 80.0, 85.0, 90.0, 100.0, 110.0 };
+	ssc_data_set_array(data, "mlm_IAM_c_cs_incAngle", inc_angle, 12);
+	ssc_number_t inc_angle_value[12] = { 1.0, 0.999, 0.995, 0.987, 0.962, 0.892, 0.816, 0.681, 0.44, 0.0, 0.0, 0.0 };
+	ssc_data_set_array(data, "mlm_IAM_c_cs_iamValue", inc_angle_value, 12);
 
 	ssc_data_set_number(data, "inverter_model", 4);
 	ssc_data_set_number(data, "mppt_low_inverter", 250);
@@ -1173,10 +1173,10 @@ void pvyield_user_support_80603_AZ(ssc_data_t &data)
 	ssc_data_set_number(data, "mlm_IAM_c_sa4", 0);
 	ssc_data_set_number(data, "mlm_IAM_c_sa5", 0);
 	ssc_data_set_number(data, "mlm_groundRelfectionFraction", 0.2);
-	ssc_number_t inc_angle[11] = { 0.0, 30.0, 40.0, 50.0, 60.0, 70.0, 75.0, 80.0, 85.0, 90.0, 100.0 };
-	ssc_data_set_array(data, "mlm_IAM_c_cs_incAngle", inc_angle, 11);
-	ssc_number_t inc_angle_value[11] = { 1.0, 0.999, 0.995, 0.987, 0.962, 0.892, 0.816, 0.681, 0.44, 0.0, 0.0 };
-	ssc_data_set_array(data, "mlm_IAM_c_cs_iamValue", inc_angle_value, 11);
+	ssc_number_t inc_angle[12] = { 0.0, 30.0, 40.0, 50.0, 60.0, 70.0, 75.0, 80.0, 85.0, 90.0, 100.0, 110.0 };
+	ssc_data_set_array(data, "mlm_IAM_c_cs_incAngle", inc_angle, 12);
+	ssc_number_t inc_angle_value[12] = { 1.0, 0.999, 0.995, 0.987, 0.962, 0.892, 0.816, 0.681, 0.44, 0.0, 0.0, 0.0 };
+	ssc_data_set_array(data, "mlm_IAM_c_cs_iamValue", inc_angle_value, 12);
 
 	ssc_data_set_number(data, "inverter_model", 4);
 	ssc_data_set_number(data, "mppt_low_inverter", 250);
