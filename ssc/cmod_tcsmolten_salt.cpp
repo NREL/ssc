@@ -185,9 +185,8 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,     SSC_NUMBER, "is_rec_startup_from_T_soln",         "Begin receiver startup from solved temperature profiles?",                                                                                "",             "",                                  "Tower and Receiver",                       "?=0",                                                              "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "is_rec_enforce_min_startup",         "Always enforce minimum startup time",                                                                                                     "",             "",                                  "Tower and Receiver",                       "?=1",                                                              "",              ""},
 
-    { SSC_INPUT,     SSC_NUMBER, "is_user_header_sizing",              "Use user-defined header sizing",                                                                                                          "",             "",                                  "Tower and Receiver",                       "?=0",                                                              "",              "" },
-    { SSC_INPUT,     SSC_ARRAY,  "header_sizing",                      "Header sizing [OD(mm), twall(mm), length(m)]",                                                                                            "",             "",                                  "Tower and Receiver",                       "?=0",                                                              "",              "" },
-    { SSC_INPUT,     SSC_ARRAY,  "cross_header_sizing",                "Crossover header sizing [OD(mm), twall(mm), length(m)]",                                                                                  "",             "",                                  "Tower and Receiver",                       "?=0",                                                              "",              "" },
+    { SSC_INPUT,     SSC_ARRAY,  "header_sizing",                      "Header sizing [OD(mm), twall(mm), length(m), material]",                                                                                  "",             "",                                  "Tower and Receiver",                       "?",                                                                "",              "" },
+    { SSC_INPUT,     SSC_ARRAY,  "cross_header_sizing",                "Crossover header sizing [OD(mm), twall(mm), length(m), material]",                                                                        "",             "",                                  "Tower and Receiver",                       "?",                                                                "",              "" },
 
 
     // TES parameters - general
@@ -1809,14 +1808,10 @@ public:
 			trans_receiver->m_csky_frac = as_double("rec_clearsky_fraction");
 
 
-			trans_receiver->m_mode_initial = C_csp_collector_receiver::OFF;
-			if (as_boolean("is_rec_on_initial"))
-				trans_receiver->m_mode_initial = C_csp_collector_receiver::ON;
-			if (as_boolean("is_rec_startup_initial"))
-			{
-				trans_receiver->m_mode_initial = C_csp_collector_receiver::STARTUP;
-				trans_receiver->m_E_su_accum_init = as_double("rec_startup_energy_initial");
-			}
+            trans_receiver->m_mode_initial = C_csp_collector_receiver::OFF;
+            if (is_assigned("rec_op_mode_initial")) {
+                trans_receiver->m_mode_initial = (C_csp_collector_receiver::E_csp_cr_modes) as_integer("rec_op_mode_initial");
+            }
 
             // Inputs for transient receiver model
             trans_receiver->m_is_transient = as_boolean("is_rec_model_trans");
@@ -1847,32 +1842,40 @@ public:
             }
 
             // User-defined header sizing
-            bool is_user_header_sizing = as_boolean("is_user_header_sizing");
-            if (is_user_header_sizing)
+            if (is_assigned("header_sizing"))
             {
                 size_t nh = 0;
-                size_t nc = 0;
                 ssc_number_t* header_size = as_array("header_sizing", &nh);
-                ssc_number_t* cross_header_size = as_array("crossover_header_sizing", &nh);
-
-                if (nh == 3)
+                if (nh == 4)
                 {
-                    trans_receiver->m_header_OD = header_size[0]/1000.;
-                    trans_receiver->m_header_twall = header_size[1]/1000.;
+                    trans_receiver->m_header_OD = header_size[0] / 1000.;
+                    trans_receiver->m_header_twall = header_size[1] / 1000.;
                     trans_receiver->m_header_len = header_size[2];
+                    trans_receiver->m_header_mat = (int)header_size[3];
                 }
                 else
-                    log("Incomplete header sizing provided. Required data is [OD (mm), wall thickness (mm), length (m)].  Reverting to default header sizing calculations", SSC_WARNING);
-
-                if (nc == 3)
                 {
-                    trans_receiver->m_cross_header_OD = cross_header_size[0] / 1000.;
-                    trans_receiver->m_cross_header_twall = cross_header_size[1] / 1000.;
-                    trans_receiver->m_cross_header_len = cross_header_size[2];
+                    log("Incomplete header sizing provided. Required data is [OD (mm), wall thickness (mm), length (m), material].  Reverting to default header sizing calculations and SS316 properties", SSC_WARNING);
                 }
-                else if (trans_receiver->m_flow_type == 1 || trans_receiver->m_flow_type == 2)
-                    log("Incomplete crossover header sizing provided. Required data is [OD (mm), wall thickness (mm), length (m)].  Reverting to default header sizing calculations", SSC_WARNING);
             }
+
+            if (is_assigned("crossover_header_sizing"))
+            {
+                size_t nh = 0;
+                ssc_number_t* header_size = as_array("crossover_header_sizing", &nh);
+                if (nh == 4)
+                {
+                    trans_receiver->m_cross_header_OD = header_size[0] / 1000.;
+                    trans_receiver->m_cross_header_twall = header_size[1] / 1000.;
+                    trans_receiver->m_cross_header_len = header_size[2];
+                    trans_receiver->m_cross_header_mat = (int)header_size[3];
+                }
+                else
+                {
+                    log("Incomplete crossover header sizing provided. Required data is [OD (mm), wall thickness (mm), length (m)].  Reverting to default header sizing calculations and SS316 properties", SSC_WARNING);
+                }
+            }
+
 
             receiver = std::move(trans_receiver);
         }

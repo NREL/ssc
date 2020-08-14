@@ -364,9 +364,13 @@ public:
     double m_header_OD;          // Header OD (m)
     double m_header_twall;       // Header wall thickness (m)
     double m_header_len;         // Header length (m)
+    int m_header_mat;         // Header tube material
     double m_cross_header_OD;    // Crossover header OD (m)
     double m_cross_header_twall; // Crossover header wall thickness (m)
     double m_cross_header_len;   // Crossover header length (m)
+    int m_cross_header_mat;   // Crossover header tube material
+    HTFProperties header_material;
+    HTFProperties cross_header_material;
 
 	// 4.17.15 twn: former TCS inputs, moved to member data because are constant throughout simulation
 	double m_T_salt_hot_target;			//[C], convert to K in init() call

@@ -155,9 +155,11 @@ C_mspt_receiver::C_mspt_receiver()
     m_header_OD = std::numeric_limits<double>::quiet_NaN();
     m_header_twall = std::numeric_limits<double>::quiet_NaN();
     m_header_len = std::numeric_limits<double>::quiet_NaN();
+    m_header_mat = 2;
     m_cross_header_OD = std::numeric_limits<double>::quiet_NaN();
     m_cross_header_twall = std::numeric_limits<double>::quiet_NaN();
     m_cross_header_len = std::numeric_limits<double>::quiet_NaN();
+    m_cross_header_mat = 2;
 
 	m_n_elem = 0;
 	m_nz_tot = 0;
@@ -410,6 +412,22 @@ void C_mspt_receiver::initialize_transient_parameters()
 	
 																	
 	// Header sizing
+    if (!header_material.SetFluid(m_header_mat))
+    {
+        throw(C_csp_exception("Header material code not recognized", "MSPT receiver"));
+    }
+
+    if (!cross_header_material.SetFluid(m_cross_header_mat))
+    {
+        throw(C_csp_exception("Crossover header material code not recognized", "MSPT receiver"));
+    }
+
+    double Tavg = (m_T_htf_hot_des + m_T_htf_cold_des) / 2.0;
+    double rho_header = header_material.dens(Tavg, 1.0);
+    double c_header = header_material.Cp(Tavg) * 1000.0;
+    double rho_cross_header = cross_header_material.dens(Tavg, 1.0);
+    double c_cross_header = cross_header_material.Cp(Tavg) * 1000.0;
+
     double dp_header_fract, m_per_tube_des, utube_des, Retube_des, Nutube_des, ftube_des, dp_tube, dp_header, m_m_dot_head;
     double L_header, id_header, th_header, od_header;
     double L_header_cross, id_header_cross, th_header_cross, od_header_cross;
@@ -435,7 +453,7 @@ void C_mspt_receiver::initialize_transient_parameters()
         L_header = 2.0 * (CSP::pi * m_d_rec / m_n_panels);		// Header length [m] = 2 x panel width
         calc_header_size(dp_header, m_m_dot_head, rho_htf_des, mu_htf_des, L_header, id_header, th_header, od_header);	// Calculate header size
     }
-    double tm_header_tot = L_header * (0.25 * CSP::pi * pow(id_header, 2) * rho_htf_des * c_htf_des + 0.25 * CSP::pi * (pow(od_header, 2) - pow(id_header, 2)) * rho_tube_des * c_tube_des); // Total header thermal mass [J/K]
+    double tm_header_tot = L_header * (0.25 * CSP::pi * pow(id_header, 2) * rho_htf_des * c_htf_des + 0.25 * CSP::pi * (pow(od_header, 2) - pow(id_header, 2)) * rho_header * c_header); // Total header thermal mass [J/K]
 
     double tm_header_cross, tm_header_cross_solid;
     tm_header_cross = tm_header_cross_solid = od_header_cross = id_header_cross = 0;
@@ -453,7 +471,7 @@ void C_mspt_receiver::initialize_transient_parameters()
             L_header_cross = m_d_rec;
             calc_header_size(dp_header, m_m_dot_head, rho_htf_des, mu_htf_des, m_d_rec, id_header_cross, th_header_cross, od_header_cross);	
         }
-        tm_header_cross = 0.25 * CSP::pi * pow(id_header_cross, 2) * rho_htf_des * c_htf_des + 0.25 * CSP::pi * (pow(od_header_cross, 2) - pow(id_header_cross, 2)) * rho_tube_des * c_tube_des;	// Thermal mass of crossover header tube wall and fluid [J/m/K]
+        tm_header_cross = 0.25 * CSP::pi * pow(id_header_cross, 2) * rho_htf_des * c_htf_des + 0.25 * CSP::pi * (pow(od_header_cross, 2) - pow(id_header_cross, 2)) * rho_cross_header * c_cross_header;	// Thermal mass of crossover header tube wall and fluid [J/m/K]
         tm_header_cross_solid = tm_header_cross - 0.25 * CSP::pi * pow(id_header_cross, 2) * rho_htf_des * c_htf_des;	// Thermal mass of crossover header tube wall [W/m/K]
     }
 
@@ -463,7 +481,7 @@ void C_mspt_receiver::initialize_transient_parameters()
     double tm_tube_htf = 0.25 * CSP::pi * pow(m_id_tube, 2) * rho_htf_des * c_htf_des;                          // Thermal mass of HTF in tube [J/m/K]
     double tm_tube_wall = 0.25 * CSP::pi * (pow(m_od_tube, 2) - pow(m_id_tube, 2)) * rho_tube_des * c_tube_des; // Thermal mass of tube wall [J/m/K]
     double tm_header_htf = 0.25 * CSP::pi * pow(id_header, 2) * rho_htf_des * c_htf_des;                        // Thermal mass of HTF in header [J/m/K]
-    double tm_header_wall = 0.25 * CSP::pi * (pow(od_header, 2) - pow(id_header, 2)) * rho_tube_des * c_tube_des; // Thermal mass of header wall [J/m/K]
+    double tm_header_wall = 0.25 * CSP::pi * (pow(od_header, 2) - pow(id_header, 2)) * rho_header * c_header; // Thermal mass of header wall [J/m/K]
 
     double tm_tube = m_rec_tm_mult * (tm_tube_htf + tm_tube_wall + (tm_header_htf + tm_header_wall) * L_header / m_h_rec / (double)m_n_t); // Thermal mass of receiver tube and fluid including the inter-panel header [J/m/K]
     double tm_tube_solid = tm_tube - tm_tube_htf - tm_header_htf * L_header / m_h_rec / (double)m_n_t; // Thermal mass of the reciever tube wall including inter-panel header [J/m/K]
