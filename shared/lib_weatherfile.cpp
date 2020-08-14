@@ -409,7 +409,18 @@ void weather_record::reset()
 	tdry = twet = tdew = rhum = pres = snow = alb =  aod = std::numeric_limits<double>::quiet_NaN();
 }
 
-
+bool weather_data_provider::check_hour_of_year(int hour, int line) {
+    if (hour < m_hour_of_year) {
+        std::ostringstream ss;
+        ss << "Hour " << hour << " occurs after " << m_hour_of_year << " on line " << line << " of weather file. If this is subhourly data that was interpolated from hourly using the SAM Solar Resource Interpolation macro in SAM 2020.2.29 r3 or earlier, please run the macro again to correct the interpolation.";
+        m_message = ss.str();
+        return false;
+    }
+    else {
+        m_hour_of_year = hour;
+        return true;
+    }
+}
 
 #define NBUF 2048
 
@@ -1048,6 +1059,7 @@ bool weatherfile::open(const std::string &file, bool header_only)
 	// from 1-24 standard to 0-23
 	int tmy3_hour_shift = 1;
 	int n_leap_data_removed = 0;
+    bool subtract_hour = false;
 
 	for (int i = 0; i < (int)m_nRecords; i++)
 	{
@@ -1327,7 +1339,7 @@ bool weatherfile::open(const std::string &file, bool header_only)
 		}
 		else if (m_type == WFCSV)
 		{
-
+            
 			for (;;)
 			{
 				getline(ifs, buf);
@@ -1365,6 +1377,11 @@ bool weatherfile::open(const std::string &file, bool header_only)
 					continue;
 				}
 
+                if (m_columns[HOUR].data[i] > 23)
+                {
+                    subtract_hour = true;
+                }
+
 				if (m_columns[MINUTE].data[i] > 59)
 				{
 					m_message = "minute column must contain integers from 0-59";
@@ -1374,11 +1391,18 @@ bool weatherfile::open(const std::string &file, bool header_only)
 				else
 					break;
 			}
-
-
 		}
 
 	}
+
+    // Currently only used by WFCSV
+    if (subtract_hour)
+    {
+        for (size_t i = 0; i < m_nRecords; i++)
+        {
+            m_columns[HOUR].data[i] = ((float)m_columns[HOUR].data[i]) - 1;
+        }
+    }
 
 	//	if( n_leap_data_removed > 0 )
 	//		m_message = util::format("Skipped %d data lines for February 29th (leap day).", n_leap_data_removed );
@@ -1487,6 +1511,16 @@ bool weatherfile::open(const std::string &file, bool header_only)
 			return false;
 		}
 	}
+
+    // Need to check hours after adjustments like 1 - 24 to 0 - 23 for some file types above
+    for (size_t i = 0; i < m_nRecords; i++)
+    {
+        int hour_of_year = util::hour_of_year(m_columns[MONTH].data[i], m_columns[DAY].data[i], m_columns[HOUR].data[i]);
+        if (!check_hour_of_year(hour_of_year, i))
+        {
+            return false;
+        }
+    }
 
 	return true;
 }
