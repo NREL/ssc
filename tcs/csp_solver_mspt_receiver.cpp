@@ -152,6 +152,13 @@ C_mspt_receiver::C_mspt_receiver()
 	m_is_startup_from_solved_profile = 0;
 	m_is_enforce_min_startup = 1;
 
+    m_header_OD = std::numeric_limits<double>::quiet_NaN();
+    m_header_twall = std::numeric_limits<double>::quiet_NaN();
+    m_header_len = std::numeric_limits<double>::quiet_NaN();
+    m_cross_header_OD = std::numeric_limits<double>::quiet_NaN();
+    m_cross_header_twall = std::numeric_limits<double>::quiet_NaN();
+    m_cross_header_len = std::numeric_limits<double>::quiet_NaN();
+
 	m_n_elem = 0;
 	m_nz_tot = 0;
 	m_startup_mode = -1;
@@ -402,35 +409,64 @@ void C_mspt_receiver::initialize_transient_parameters()
 
 	
 																	
-	// Header sizing 
-	double dp_header_fract = 0.1;								// Fraction of panel pressure drop allowable in header
-	double L_header = 2.0*(CSP::pi*m_d_rec / m_n_panels);		// Header length [m] = 2 x panel width
-	double m_m_dot_head = m_m_dot_htf_des / m_n_lines;			// Mass flow rate through header [kg/s]
-	double  ftube_des, Nutube_des, m_id_header, m_th_header, m_od_header;
-	ftube_des = Nutube_des = m_id_header = m_th_header = m_od_header = std::numeric_limits<double>::quiet_NaN();
-	double m_per_tube_des = m_m_dot_htf_des / ((double)m_n_lines * (double)m_n_t);									// [kg/s] Mass flow per tube at design point
-	double utube_des = m_per_tube_des / (rho_htf_des* m_id_tube * m_id_tube * 0.25 * CSP::pi);						//[m/s] Average velocity of the coolant through the receiver tubes
-	double Retube_des = rho_htf_des * utube_des*m_id_tube / mu_htf_des;												//[-] Reynolds number of internal flow for receiver tubes
-	CSP::PipeFlow(Retube_des, 4.0, m_LoverD, m_RelRough, Nutube_des, ftube_des);									// Calculate friction factor for receiver tube
-	double dp_tube = 0.5*rho_htf_des*ftube_des*pow(utube_des, 2) * (m_h_rec / m_id_tube + 2 * 16.0 + 4 * 30.0);		//[Pa] Tube pressure drop including (2) 45deg. bends and (4) 90deg. bends at design point mass flow
-	double dp_header = dp_header_fract * dp_tube;																	// Allowable header pressure drop [Pa]
-	calc_header_size(dp_header, m_m_dot_head, rho_htf_des, mu_htf_des, L_header, m_id_header, m_th_header, m_od_header);	// Calculate header size
-	double tm_header_tot = L_header * (0.25*CSP::pi*pow(m_id_header, 2)*rho_htf_des*c_htf_des + 0.25*CSP::pi*(pow(m_od_header, 2) - pow(m_id_header, 2))*rho_tube_des*c_tube_des); // Total header thermal mass [J/K]
+	// Header sizing
+    double dp_header_fract, m_per_tube_des, utube_des, Retube_des, Nutube_des, ftube_des, dp_tube, dp_header, m_m_dot_head;
+    double L_header, id_header, th_header, od_header;
+    double L_header_cross, id_header_cross, th_header_cross, od_header_cross;
 
-	 // Crossover header sizing
-	double tm_header_cross, tm_header_cross_solid, od_header_cross, id_header_cross;
-	tm_header_cross = tm_header_cross_solid = od_header_cross = id_header_cross = 0;
-	if (m_flow_type == 1 || m_flow_type == 2) 
-	{
-		double th_header_cross = std::numeric_limits<double>::quiet_NaN();
-		calc_header_size(dp_header, m_m_dot_head, rho_htf_des, mu_htf_des, m_d_rec, id_header_cross, th_header_cross, od_header_cross);	// Calculate header size
-		tm_header_cross = 0.25*CSP::pi*pow(id_header_cross, 2)*rho_htf_des*c_htf_des + 0.25*CSP::pi*(pow(od_header_cross, 2) - pow(id_header_cross, 2))*rho_tube_des*c_tube_des;	// Thermal mass of crossover header tube wall and fluid [J/m/K]
-		tm_header_cross_solid = tm_header_cross - 0.25*CSP::pi*pow(id_header_cross, 2)*rho_htf_des*c_htf_des;	// Thermal mass of crossover header tube wall [W/m/K]
-	}
+    dp_header_fract = 0.1;								// Fraction of panel pressure drop allowable in header
+    m_per_tube_des = m_m_dot_htf_des / ((double)m_n_lines * (double)m_n_t);									        // [kg/s] Mass flow per tube at design point
+    utube_des = m_per_tube_des / (rho_htf_des * m_id_tube * m_id_tube * 0.25 * CSP::pi);						    //[m/s] Average velocity of the coolant through the receiver tubes
+    Retube_des = rho_htf_des * utube_des * m_id_tube / mu_htf_des;											        //[-] Reynolds number of internal flow for receiver tubes
+    CSP::PipeFlow(Retube_des, 4.0, m_LoverD, m_RelRough, Nutube_des, ftube_des);                                    // Calculate friction factor for receiver tube
+    dp_tube = 0.5 * rho_htf_des * ftube_des * pow(utube_des, 2) * (m_h_rec / m_id_tube + 2 * 16.0 + 4 * 30.0);		//[Pa] Tube pressure drop including (2) 45deg. bends and (4) 90deg. bends at design point mass flow
+    dp_header = dp_header_fract * dp_tube;																	        // Allowable header pressure drop [Pa]
+    m_m_dot_head = m_m_dot_htf_des / m_n_lines;			                                                            // Mass flow rate through header [kg/s]
+
+    if (m_header_OD == m_header_OD)   // User-defined header sizing
+    {
+        od_header = m_header_OD;
+        th_header = m_header_twall;
+        L_header = m_header_len;
+        id_header = od_header - 2 * th_header;
+    }
+    else
+    {
+        L_header = 2.0 * (CSP::pi * m_d_rec / m_n_panels);		// Header length [m] = 2 x panel width
+        calc_header_size(dp_header, m_m_dot_head, rho_htf_des, mu_htf_des, L_header, id_header, th_header, od_header);	// Calculate header size
+    }
+    double tm_header_tot = L_header * (0.25 * CSP::pi * pow(id_header, 2) * rho_htf_des * c_htf_des + 0.25 * CSP::pi * (pow(od_header, 2) - pow(id_header, 2)) * rho_tube_des * c_tube_des); // Total header thermal mass [J/K]
+
+    double tm_header_cross, tm_header_cross_solid;
+    tm_header_cross = tm_header_cross_solid = od_header_cross = id_header_cross = 0;
+    if (m_flow_type == 1 || m_flow_type == 2)
+    {
+        if (m_cross_header_OD == m_cross_header_OD)   // User-defined cross-over header sizing
+        {
+            od_header_cross = m_cross_header_OD;
+            th_header_cross = m_cross_header_twall;
+            L_header_cross = m_cross_header_len;
+            id_header_cross = od_header_cross - 2 * th_header_cross;
+        }
+        else
+        {
+            L_header_cross = m_d_rec;
+            calc_header_size(dp_header, m_m_dot_head, rho_htf_des, mu_htf_des, m_d_rec, id_header_cross, th_header_cross, od_header_cross);	
+        }
+        tm_header_cross = 0.25 * CSP::pi * pow(id_header_cross, 2) * rho_htf_des * c_htf_des + 0.25 * CSP::pi * (pow(od_header_cross, 2) - pow(id_header_cross, 2)) * rho_tube_des * c_tube_des;	// Thermal mass of crossover header tube wall and fluid [J/m/K]
+        tm_header_cross_solid = tm_header_cross - 0.25 * CSP::pi * pow(id_header_cross, 2) * rho_htf_des * c_htf_des;	// Thermal mass of crossover header tube wall [W/m/K]
+    }
+
+
 
 	// Receiver tube thermal mass (including inter-panel headers)  [J/m/K]
-	double tm_tube = m_rec_tm_mult * (0.25*CSP::pi*pow(m_id_tube, 2)*rho_htf_des*c_htf_des + 0.25*CSP::pi*(pow(m_od_tube, 2) - pow(m_id_tube, 2))*rho_tube_des*c_tube_des + tm_header_tot / m_h_rec / (double)m_n_t);	// Thermal mass of receiver tube and fluid including the inter-panel header [J/m/K]
-	double tm_tube_solid = tm_tube - 0.25*CSP::pi*pow(m_id_tube, 2)*rho_htf_des*c_htf_des - (0.25*CSP::pi*pow(m_id_header, 2)*rho_htf_des*c_htf_des)*L_header / m_h_rec / (double)m_n_t;		// Thermal mass of receiver tube including inter-panel header [J/m/K]
+    double tm_tube_htf = 0.25 * CSP::pi * pow(m_id_tube, 2) * rho_htf_des * c_htf_des;                          // Thermal mass of HTF in tube [J/m/K]
+    double tm_tube_wall = 0.25 * CSP::pi * (pow(m_od_tube, 2) - pow(m_id_tube, 2)) * rho_tube_des * c_tube_des; // Thermal mass of tube wall [J/m/K]
+    double tm_header_htf = 0.25 * CSP::pi * pow(id_header, 2) * rho_htf_des * c_htf_des;                        // Thermal mass of HTF in header [J/m/K]
+    double tm_header_wall = 0.25 * CSP::pi * (pow(od_header, 2) - pow(id_header, 2)) * rho_tube_des * c_tube_des; // Thermal mass of header wall [J/m/K]
+
+    double tm_tube = m_rec_tm_mult * (tm_tube_htf + tm_tube_wall + (tm_header_htf + tm_header_wall) * L_header / m_h_rec / (double)m_n_t); // Thermal mass of receiver tube and fluid including the inter-panel header [J/m/K]
+    double tm_tube_solid = tm_tube - tm_tube_htf - tm_header_htf * L_header / m_h_rec / (double)m_n_t; // Thermal mass of the reciever tube wall including inter-panel header [J/m/K]
 
 	// Set up PDE parameters : dT/dt + lam1*dT/dz + lam2*T = C
 	m_n_elem = m_n_panels / m_n_lines + 2;		// Number of flow elements in each flow path: Inter-panel headers are lumped with panels for simplicity
@@ -448,6 +484,9 @@ void C_mspt_receiver::initialize_transient_parameters()
 			nq1 = (int)floor(npq) + 1;
 		else
 			nq1 = (int)floor(npq + 1.e-6);
+
+        nq1 += m_crossover_shift; 
+
 		crossposition = nq1 + 1;		// Location of crossover header in array of all flow elements
 	}
 
@@ -501,7 +540,7 @@ void C_mspt_receiver::initialize_transient_parameters()
 	m_id.at((size_t)m_n_elem - 1) = m_id_downc;
 	if (m_flow_type == 1 || m_flow_type == 2)
 	{
-		trans_inputs.length.at(crossposition) = m_d_rec;
+		trans_inputs.length.at(crossposition) = L_header_cross;
 		m_tm.at(crossposition) = tm_header_cross;
 		m_tm_solid.at(crossposition) = tm_header_cross_solid;
 		m_od.at(crossposition) = od_header_cross;

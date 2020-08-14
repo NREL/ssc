@@ -184,7 +184,12 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,     SSC_NUMBER, "startup_target_Tdiff",               "Target HTF T at end of startup - steady state hot HTF temperature",                                                                          "C",            "",                                  "Tower and Receiver",                       "?=-5.0",                                                           "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "is_rec_startup_from_T_soln",         "Begin receiver startup from solved temperature profiles?",                                                                                "",             "",                                  "Tower and Receiver",                       "?=0",                                                              "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "is_rec_enforce_min_startup",         "Always enforce minimum startup time",                                                                                                     "",             "",                                  "Tower and Receiver",                       "?=1",                                                              "",              ""},
-    
+
+    { SSC_INPUT,     SSC_NUMBER, "is_user_header_sizing",              "Use user-defined header sizing",                                                                                                          "",             "",                                  "Tower and Receiver",                       "?=0",                                                              "",              "" },
+    { SSC_INPUT,     SSC_ARRAY,  "header_sizing",                      "Header sizing [OD(mm), twall(mm), length(m)]",                                                                                            "",             "",                                  "Tower and Receiver",                       "?=0",                                                              "",              "" },
+    { SSC_INPUT,     SSC_ARRAY,  "cross_header_sizing",                "Crossover header sizing [OD(mm), twall(mm), length(m)]",                                                                                  "",             "",                                  "Tower and Receiver",                       "?=0",                                                              "",              "" },
+
+
     // TES parameters - general
     { SSC_INPUT,     SSC_NUMBER, "csp.pt.tes.init_hot_htf_percent",    "Initial fraction of available volume that is hot",                                                                                        "%",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "h_tank",                             "Total height of tank (height of HTF when tank is full)",                                                                                  "m",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
@@ -1839,6 +1844,34 @@ public:
             {
                 log("Both 'is_rec_enforce_min_startup' and 'is_rec_startup_from_T_soln' were set to 'false'. Minimum startup time will always be enforced unless 'is_rec_startup_from_T_soln' is set to 'true'", SSC_WARNING);
                 trans_receiver->m_is_enforce_min_startup = 1;
+            }
+
+            // User-defined header sizing
+            bool is_user_header_sizing = as_boolean("is_user_header_sizing");
+            if (is_user_header_sizing)
+            {
+                size_t nh = 0;
+                size_t nc = 0;
+                ssc_number_t* header_size = as_array("header_sizing", &nh);
+                ssc_number_t* cross_header_size = as_array("crossover_header_sizing", &nh);
+
+                if (nh == 3)
+                {
+                    trans_receiver->m_header_OD = header_size[0]/1000.;
+                    trans_receiver->m_header_twall = header_size[1]/1000.;
+                    trans_receiver->m_header_len = header_size[2];
+                }
+                else
+                    log("Incomplete header sizing provided. Required data is [OD (mm), wall thickness (mm), length (m)].  Reverting to default header sizing calculations", SSC_WARNING);
+
+                if (nc == 3)
+                {
+                    trans_receiver->m_cross_header_OD = cross_header_size[0] / 1000.;
+                    trans_receiver->m_cross_header_twall = cross_header_size[1] / 1000.;
+                    trans_receiver->m_cross_header_len = cross_header_size[2];
+                }
+                else if (trans_receiver->m_flow_type == 1 || trans_receiver->m_flow_type == 2)
+                    log("Incomplete crossover header sizing provided. Required data is [OD (mm), wall thickness (mm), length (m)].  Reverting to default header sizing calculations", SSC_WARNING);
             }
 
             receiver = std::move(trans_receiver);

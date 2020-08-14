@@ -361,6 +361,13 @@ public:
 	bool m_is_startup_from_solved_profile;  // Begin receiver startup from solved temperature profiles?
 	bool m_is_enforce_min_startup;		// Always enforce minimum startup time?  If false, minimum startup time is ignored when receiver starts above preheat temperature
 
+    double m_header_OD;          // Header OD (m)
+    double m_header_twall;       // Header wall thickness (m)
+    double m_header_len;         // Header length (m)
+    double m_cross_header_OD;    // Crossover header OD (m)
+    double m_cross_header_twall; // Crossover header wall thickness (m)
+    double m_cross_header_len;   // Crossover header length (m)
+
 	// 4.17.15 twn: former TCS inputs, moved to member data because are constant throughout simulation
 	double m_T_salt_hot_target;			//[C], convert to K in init() call
 	double m_hel_stow_deploy;			//[-]
