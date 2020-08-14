@@ -344,7 +344,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, TestSummerPeak) {
     batteryPower = dispatchAutoBTM->getBatteryPower();
     batteryPower->connectionMode = ChargeController::AC_CONNECTED;
 
-    std::vector<double> expectedPower = { 0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -0.058, -0.0054, 0, 0, 0.884, 1.5645, 2.3757, 3.3688,
+    std::vector<double> expectedPower = { 0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -0.058, -0.0054, 0, 0, 0.0, 0.0, 2.3757, 0.0,
                                          4.122, 0.0, 0, 0, 0, 0 };
     for (size_t h = 0; h < 24; h++) {
         batteryPower->powerPV = pv_prediction[h]; // Match the predicted PV
@@ -381,13 +381,13 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, TestSummerPeakNetMeteringCredits) {
     batteryPower = dispatchAutoBTM->getBatteryPower();
     batteryPower->connectionMode = ChargeController::AC_CONNECTED;
 
-    std::vector<double> expectedPower = { 0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -0.058, -0.0054, 0, 0, 0.884, 1.5645, 2.3757, 3.3688,
+    std::vector<double> expectedPower = { 0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -0.058, -0.0054, 0, 0, 0.0, 0.0, 2.3757, 0.0,
                                          4.122, 0.0, 0, 0, 0, 0 };
     for (size_t h = 0; h < 24; h++) {
         batteryPower->powerPV = pv_prediction[h]; // Match the predicted PV
         batteryPower->powerLoad = load_prediction[h]; // Match the predicted load
         dispatchAutoBTM->dispatch(0, h, 0);
-        EXPECT_NEAR(batteryPower->powerBatteryDC, expectedPower[h], 0.5) << " error in expected at hour " << h;
+        EXPECT_NEAR(batteryPower->powerBatteryDC, expectedPower[h], 0.1) << " error in expected at hour " << h;
     }
 }
 
@@ -418,13 +418,13 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, TestSummerPeakGridCharging) {
     batteryPower = dispatchAutoBTM->getBatteryPower();
     batteryPower->connectionMode = ChargeController::AC_CONNECTED;
 
-    std::vector<double> expectedPower = { 0.0, 0, 0, 0, 0, 0, 0, 0, -0.723,  -0.47, -1.25, -1.47, -1.417, -1.25, -0.976, 0.884, 1.5645, 2.3757, 3.3688,
-                                         4.122, 4.074, 0.0, 0.0, 0.0};
+    std::vector<double> expectedPower = { -0.648, -0.813, -0.912, -0.984, -0.949, -0.695, -0.523, -0.124, -0.723,  -1.093, -1.874, -2.092, -2.092, -1.872, -1.598, -1.21, -0.592, 2.3757, 3.3688,
+                                         4.122, 0.0, 0.0, 0.0, -0.317};
     for (size_t h = 0; h < 24; h++) {
         batteryPower->powerPV = pv_prediction[h]; // Match the predicted PV
         batteryPower->powerLoad = load_prediction[h]; // Match the predicted load
         dispatchAutoBTM->dispatch(0, h, 0);
-        EXPECT_NEAR(batteryPower->powerBatteryDC, expectedPower[h], 0.5) << " error in expected at hour " << h;
+        EXPECT_NEAR(batteryPower->powerBatteryDC, expectedPower[h], 0.1) << " error in expected at hour " << h;
     }
 }
 
@@ -467,15 +467,15 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, TestSummerPeakGridChargingSubhourly) {
     batteryPower = dispatchAutoBTM->getBatteryPower();
     batteryPower->connectionMode = ChargeController::AC_CONNECTED;
 
-    std::vector<double> expectedPower = { 0.0, 0, 0, 0, 0, 0, 0, 0, -0.723,  -0.47, -1.25, -1.47, -1.417, -1.25, -0.976, 0.884, 1.5645, 2.3757, 3.3688,
-                                         4.122, 4.074, 0.0, 0.0, 0.0 };
+    std::vector<double> expectedPower = { -0.648, -0.813, -0.912, -0.984, -0.949, -0.695, -0.523, -0.124, -0.723,  -1.093, -1.874, -2.092, -2.092, -1.872, -1.598, -1.21,  1.564, 2.3757, 3.3688,
+                                         4.122, 0.0, 0.0, 0.0, -0.317 };
     for (size_t h = 0; h < 24; h++) {
         batteryPower->powerPV = pv_prediction[h]; // Match the predicted PV
         batteryPower->powerLoad = load_prediction[h]; // Match the predicted load
         for (int j = 0; j < 2; j++)
         {
             dispatchAutoBTM->dispatch(0, h, j);
-            EXPECT_NEAR(batteryPower->powerBatteryDC, expectedPower[h], 0.5) << " error in expected at hour " << h << " step " << j;
+            EXPECT_NEAR(batteryPower->powerBatteryDC, expectedPower[h], 0.1) << " error in expected at hour " << h << " step " << j;
         }
     }
 }
@@ -513,8 +513,8 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, TestCommercialPeakForecasting) {
     batteryPower = dispatchAutoBTM->getBatteryPower();
     batteryPower->connectionMode = ChargeController::AC_CONNECTED;
 
-    std::vector<double> expectedPower = { 50.02, 44.22, 44.00, 0, -26.79, 0, 0, 50.08, 23.02, 0, 0, -14.2, -4.915, -14.48, 0, 32.51, 0, 0, 0,
-                                         0, 0, -26.39, -25.06, -31.66 };
+    std::vector<double> expectedPower = { 50.02, 44.22, 44.00, 0, -46.0, 0, 0, 50.08, 41.45, 0, 0, -46.0, -46.0, 0, 0, 50.08, 38.49, 0, 0,
+                                         0, 0, -46.0, -42.58, -46.0 };
     for (size_t h = 0; h < 24; h++) {
         batteryPower->powerPV = pv_prediction[h]; // Match the predicted PV
         batteryPower->powerLoad = load_prediction[h]; // Match the predicted load
