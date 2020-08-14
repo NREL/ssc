@@ -412,7 +412,7 @@ void weather_record::reset()
 bool weather_data_provider::check_hour_of_year(int hour, int line) {
     if (hour < m_hour_of_year) {
         std::ostringstream ss;
-        ss << "Hour " << hour << " occurs after " << m_hour_of_year << " on line " << line << " of weatherfile. If this is an interpolated subhourly file, please re-interpolate from hourly with the updated macro.";
+        ss << "Hour " << hour << " occurs after " << m_hour_of_year << " on line " << line << " of weather file. If this is subhourly data that was interpolated from hourly using the SAM Solar Resource Interpolation macro in SAM 2020.2.29 r3 or earlier, please run the macro again to correct the interpolation.";
         m_message = ss.str();
         return false;
     }
