@@ -54,11 +54,11 @@ private:
 	double m_q_dot_design;				//[MWt]
 	double m_cp_htf_design;				//[kJ/kg-K]
 
-	int m_standby_control_prev;
+	C_csp_power_cycle::E_csp_power_cycle_modes m_operating_mode_prev;
 	double m_startup_time_remain_prev;		//[hr]
 	double m_startup_energy_remain_prev;	//[kW-hr]
 
-	int m_standby_control_calc;
+    C_csp_power_cycle::E_csp_power_cycle_modes m_operating_mode_calc;
 	double m_startup_time_remain_calc;
 	double m_startup_energy_remain_calc;
 
@@ -130,6 +130,9 @@ public:
 		E_M_DOT_WATER,		//[kg/hr] Cycle water consumption: makeup + cooling	
 		E_P_COND,			//[Pa] Cycle condensing pressure
 		E_RADCOOL_CNTRL,	//Code showing the status of radiative cooling with cold storage
+        E_PC_OP_MODE_FINAL, //[-] Final receiver operating mode (see E_csp_power_cycle_modes)
+        E_PC_STARTUP_TIME_REMAIN_FINAL,     //[hr] Final receiver startup time remaining
+        E_PC_STARTUP_ENERGY_REMAIN_FINAL,   //[W-hr] Final reeiver startup energy remaining
 
 		// Variables added for backwards compatability with TCS
 		E_M_DOT_HTF_REF		//[kg/hr] HTF mass flow rate at design
@@ -177,8 +180,9 @@ public:
 		double m_startup_frac;		//[-] fraction of design thermal power needed for startup
 		double m_htf_pump_coef;		//[kW/kg/s] Pumping power to move 1 kg/s of HTF through power cycle
 
-		int m_mode_initial;			//Operating mode at start of simulation
-		double m_startup_energy_accum_init;  // [MWht] Initial accumulated startup energy at start of the simulation 
+		C_csp_power_cycle::E_csp_power_cycle_modes m_operating_mode_initial;			//Operating mode at start of simulation
+        double m_startup_time_remain_init;		//[hr]
+        double m_startup_energy_remain_init;	//[kW-hr]
 
 		int m_pc_fl;				//[-] integer flag identifying Heat Transfer Fluid (HTF) in power block {1-27}
 		util::matrix_t<double> m_pc_fl_props;
@@ -239,7 +243,9 @@ public:
 				m_m_dot_htf_low = m_m_dot_htf_high =				
 				m_W_dot_cooling_des = m_m_dot_water_des = std::numeric_limits<double>::quiet_NaN();
 
-			m_startup_energy_accum_init = 0.0;
+            m_operating_mode_initial = C_csp_power_cycle::E_csp_power_cycle_modes::OFF;
+            m_startup_time_remain_init = std::numeric_limits<double>::quiet_NaN();		//[hr]
+            m_startup_energy_remain_init = std::numeric_limits<double>::quiet_NaN();	//[kW-hr]
 		}
 	};
 
@@ -287,6 +293,8 @@ public:
 
 	virtual void assign(int index, double *p_reporting_ts_array, size_t n_reporting_ts_array);
 
+    void get_converged_values(C_csp_power_cycle::E_csp_power_cycle_modes& op_mode,
+        double& startup_time_remain, double& startup_energy_remain);
 };
 
 void get_var_setup(std::vector<double> & vec_unique, std::vector<double> & var_vec,

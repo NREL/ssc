@@ -71,8 +71,8 @@ C_mspt_receiver_222::C_mspt_receiver_222()
 	m_tol_od = std::numeric_limits<double>::quiet_NaN();
 	m_q_dot_inc_min = std::numeric_limits<double>::quiet_NaN();
 
-	m_mode = -1;
-	m_mode_prev = -1;
+	m_mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;
+    m_mode_prev = C_csp_collector_receiver::E_csp_cr_modes::OFF;
 	m_E_su = std::numeric_limits<double>::quiet_NaN();
 	m_E_su_prev = std::numeric_limits<double>::quiet_NaN();
 	m_t_su = std::numeric_limits<double>::quiet_NaN();
@@ -99,8 +99,8 @@ C_mspt_receiver_222::C_mspt_receiver_222()
 
 	m_ncall = -1;
 
-	m_mode_initial = -1;
-	m_E_su_accum_init = 0.0;
+	m_mode_initial = C_csp_collector_receiver::E_csp_cr_modes::OFF;
+    m_E_su_init = m_t_su_init = std::numeric_limits<double>::quiet_NaN();
 }
 
 void C_mspt_receiver_222::init()
@@ -196,16 +196,25 @@ void C_mspt_receiver_222::init()
 	m_m_dot_htf_max = m_m_dot_htf_max_frac * m_m_dot_htf_des;	//[kg/s]
 
 	m_mode_prev = m_mode;
-	if (m_mode_initial != C_csp_collector_receiver::ON)
-	{
-		m_E_su_prev = m_q_rec_des * m_rec_qf_delay;	//[W-hr] Startup energy
-		m_t_su_prev = m_rec_su_delay;				//[hr] Startup time requirement
-		if (m_mode_initial == C_csp_collector_receiver::STARTUP)
-		{
-			double startup_fraction = m_E_su_accum_init * 1.e6 / (m_q_rec_des * m_rec_qf_delay);
-			m_E_su_prev = std::fmax(0.0, m_q_rec_des * m_rec_qf_delay - m_E_su_accum_init * 1.e6);
-			m_t_su_prev = std::fmax(0.0, m_rec_su_delay * (1.0 - startup_fraction));  // Assume the same initial fraction of startup time and startup energy
-		}
+    if (m_mode_prev == C_csp_collector_receiver::OFF) {
+
+        m_E_su_prev = m_q_rec_des * m_rec_qf_delay;	//[W-hr] Startup energy
+        m_t_su_prev = m_rec_su_delay;				//[hr] Startup time requirement
+    }
+	if (m_mode_initial == C_csp_collector_receiver::STARTUP) {
+			
+        if (std::isfinite(m_E_su_init)) {
+            m_E_su_prev = std::fmin(m_q_rec_des * m_rec_qf_delay, std::fmax(0.0, m_E_su_init));
+        }
+        else {
+            m_E_su_prev = m_q_rec_des * m_rec_qf_delay;
+        }
+        if (std::isfinite(m_t_su_init)) {
+            m_t_su_prev = std::fmin(m_rec_su_delay, std::fmax(0.0, m_t_su_init));
+        }
+        else {
+            m_t_su_prev = m_rec_su_delay;
+        }
 	}
 	else
 	{
@@ -299,7 +308,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 	double field_eff = inputs.m_field_eff;					//[-]
 	const util::matrix_t<double> *flux_map_input = inputs.m_flux_map_input;
 		// When this function is called from TCS solver, input_operation_mode should always be == 2
-	int input_operation_mode = inputs.m_input_operation_mode;
+	C_csp_collector_receiver::E_csp_cr_modes input_operation_mode = inputs.m_input_operation_mode;
 
 	if(input_operation_mode < C_csp_collector_receiver::OFF || input_operation_mode > C_csp_collector_receiver::STEADY_STATE)
 	{
@@ -342,7 +351,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 	double T_sky = CSP::skytemp(T_amb, T_dp, hour);
 
 	// Set current timestep stored values to NaN so we know that code solved for them
-	m_mode = -1;
+	m_mode = C_csp_collector_receiver::OFF;
 	m_E_su = std::numeric_limits<double>::quiet_NaN();
 	m_t_su = std::numeric_limits<double>::quiet_NaN();
 
@@ -421,8 +430,8 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 	soln.field_eff = field_eff;
 	soln.T_salt_cold_in = T_salt_cold_in;	
 	soln.od_control = m_od_control;         // Initial defocus control (may be adjusted during the solution)
-	soln.mode = m_mode;
-	soln.itermode = m_itermode;
+    soln.mode = input_operation_mode;
+    soln.itermode = m_itermode;
 	soln.rec_is_off = rec_is_off;
 
 	clearsky = get_clearsky(weather, hour);  

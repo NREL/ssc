@@ -102,6 +102,8 @@ public:
 
 	double get_vol_frac();
 
+    double get_mass_avail();    //[kg]
+
 	void init(HTFProperties htf_class_in, double V_tank /*m3*/, 
 		double h_tank /*m*/, double h_min /*m*/, double u_tank /*W/m2-K*/, 
 		double tank_pairs /*-*/, double T_htr /*K*/, double max_q_htr /*MWt*/, 
@@ -145,6 +147,7 @@ private:
 	double m_V_tank_active;		//[m^3] available volume (considering h_min) of *one temperature*
 	double m_q_pb_design;		//[Wt] thermal power to power cycle at design
 	double m_V_tank_hot_ini;	//[m^3] Initial volume in hot storage tank
+    double m_mass_total_active; //[kg] Total HTF mass at design point inlet/outlet T
 
 	double m_cp_field_avg;		//[kJ/kg-K]
 
@@ -164,7 +167,8 @@ public:
 		E_TES_T_COLD,		//[C] TES final cold tank temperature
 		E_M_DOT_TANK_TO_TANK,	//[kg/s] Tank to tank mass flow rate (indirect TES)
 		E_MASS_COLD_TANK,	//[kg] Mass in cold tank at end of timestep
-		E_MASS_HOT_TANK		//[kg] Mass in hot tank at end of timestep
+		E_MASS_HOT_TANK,		//[kg] Mass in hot tank at end of timestep
+        E_HOT_TANK_HTF_PERC_FINAL   //[%] Final percent fill of available hot tank mass
 	};
 
 	C_csp_reported_outputs mc_reported_outputs;
@@ -307,6 +311,8 @@ public:
 		double & T_hot_ave /*K*/, double & T_cold_ave /*K*/, double & T_hot_final /*K*/, double & T_cold_final /*K*/);
 
 	virtual void converged();
+
+    void get_final_from_converged(double& f_V_hot /*-*/, double& T_hot_tank /*K*/, double& T_cold_tank /*K*/);
 
 	virtual void write_output_intervals(double report_time_start,
 		const std::vector<double>& v_temp_ts_time_end, double report_time_end);

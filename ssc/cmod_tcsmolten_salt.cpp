@@ -350,23 +350,34 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 																																																																																																		  
     { SSC_INPUT,     SSC_NUMBER, "allow_controller_exceptions",        "Allow controller exceptions? (1 = true)",                                                                                                 "-",            "",                                  "System Control",                           "?=1",                                                              "",              ""},
     { SSC_INPUT,     SSC_ARRAY,  "select_simulation_days",             "Selected subset of simulation days",                                                                                                      "-",            "",                                  "System Control",                           "?=0",                                                              "",              ""},
-																																																																																																		  
-																																																																																																		  
-    { SSC_INPUT,     SSC_NUMBER, "is_rec_on_initial",                  "Is receiver initially on?",                                                                                                               "-",            "",                                  "System Control",                           "?=0",                                                              "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "is_rec_startup_initial",             "Is receiver initially starting up?",                                                                                                      "-",            "",                                  "System Control",                           "?=0",                                                              "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "rec_startup_energy_initial",         "Receiver accumulated startup inventory ",                                                                                                 "MWht",         "",                                  "System Control",                           "?=0",                                                              "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "is_pc_on_initial",                   "Is power cycle initially on?",                                                                                                            "-",            "",                                  "System Control",                           "?=0",                                                              "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "is_pc_standby_initial",              "Is power cycle initially in standby?",                                                                                                    "-",            "",                                  "System Control",                           "?=0",                                                              "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "is_pc_startup_initial",              "Is power cycle initially starting up?",                                                                                                   "-",            "",                                  "System Control",                           "?=0",                                                              "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "pc_startup_energy_initial",          "Cycle accumulated startup inventory",                                                                                                     "MWht",         "",                                  "System Control",                           "?=0",                                                              "",              ""},
-																																																																																																		  
+
+    // Optional Component Initialization (state at start of first timestep)
+        // Heliostat field
+    { SSC_INPUT,     SSC_NUMBER, "is_field_tracking_init",             "Is heliostat field tracking? (1 = true)",                                                                                                 "-",            "",                                  "System Control",                           "",                                                                 "",              "" },
+
+        // Receiver
+    { SSC_INPUT,     SSC_NUMBER, "rec_op_mode_initial",                "Initial receiver operating mode 0: off, 1: startup, 2: on",                                                                               "-",            "",                                  "System Control",                           "",                                                                 "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "rec_startup_time_remain_init",       "Initial receiver startup time remaining",                                                                                                 "hr",           "",                                  "System Control",                           "",                                                                 "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "rec_startup_energy_remain_init",     "Initial receiver startup energy remaining",                                                                                               "W-hr",         "",                                  "System Control",                           "",                                                                 "",              "" },
+
+        // Power cycle
+    { SSC_INPUT,     SSC_NUMBER, "pc_op_mode_initial",                 "Initial cycle operation mode 0:startup, 1:on, 2:standby, 3:off, 4:startup_controlled",                                                    "-",            "",                                  "System Control",                           "",                                                                 "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "pc_startup_time_remain_init",        "Initial cycle startup time remaining",                                                                                                    "hr",           "",                                  "System Control",                           "",                                                                 "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "pc_startup_energy_remain_initial",   "Initial cycle startup energy remaining",                                                                                                  "kwh",          "",                                  "System Control",                           "",                                                                 "",              ""},
+
+        // Thermal energy storage
+    { SSC_INPUT,     SSC_NUMBER, "T_tank_cold_init",                   "Initial cold tank temp",                                                                                                                  "C",            "",                                  "System Control",                           "",                                                                 "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "T_tank_hot_init",                    "Initial hot tank temp",                                                                                                                   "C",            "",                                  "System Control",                           "",                                                                 "",              ""},
+
+
     { SSC_INPUT,     SSC_NUMBER, "disp_pc_q0",                         "Cycle thermal power at start of simulation",                                                                                              "MWt",          "",                                  "System Control",                           "?=0",                                                              "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "disp_pc_persist0",                   "Initial duration cycle has been in same state ",                                                                                          "hr",           "",                                  "System Control",                           "?=1000.",                                                          "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "disp_rec_persist0",                  "Initial duration receiver has been in same state",                                                                                        "hr",           "",                                  "System Control",                           "?=1000.",                                                          "",              ""},
 																																																																																																		  
 																																																																																																		  
     { SSC_INPUT,     SSC_NUMBER, "is_dispatch_targets",                "Run solution from user-specified dispatch targets?",                                                                                      "-",            "",                                  "System Control",                           "?=0",                                                              "",              ""},
-    { SSC_INPUT,     SSC_ARRAY,  "q_pc_target_in",                     "User-provided target thermal power to PC",                                                                                                "MWt",          "",                                  "System Control",                           "is_dispatch_targets=1",                                            "",              ""},
+    { SSC_INPUT,     SSC_ARRAY,  "q_pc_target_su_in",                  "User-provided target thermal power to PC",                                                                                                "MWt",          "",                                  "System Control",                           "is_dispatch_targets=1",                                            "",              "" },
+    { SSC_INPUT,     SSC_ARRAY,  "q_pc_target_on_in",                  "User-provided target thermal power to PC",                                                                                                "MWt",          "",                                  "System Control",                           "is_dispatch_targets=1",                                            "",              ""},
     { SSC_INPUT,     SSC_ARRAY,  "q_pc_max_in",                        "User-provided max thermal power to PC",                                                                                                   "MWt",          "",                                  "System Control",                           "is_dispatch_targets=1",                                            "",              ""},
     { SSC_INPUT,     SSC_ARRAY,  "is_rec_su_allowed_in",               "User-provided is receiver startup allowed?",                                                                                              "-",            "",                                  "System Control",                           "is_dispatch_targets=1",                                            "",              ""},
     { SSC_INPUT,     SSC_ARRAY,  "is_pc_su_allowed_in",                "User-provided is power cycle startup allowed?",                                                                                           "-",            "",                                  "System Control",                           "is_dispatch_targets=1",                                            "",              ""},
@@ -566,8 +577,8 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
         // Thermal energy storage outputs
     { SSC_OUTPUT,    SSC_ARRAY,  "tank_losses",                        "TES thermal losses",                                                                                                                      "MWt",          "",                                  "",                                         "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_ARRAY,  "q_heater",                           "TES freeze protection power",                                                                                                             "MWe",          "",                                  "",                                         "*",                                                                "",              "" },
-    { SSC_OUTPUT,    SSC_ARRAY,  "T_tes_hot",                          "TES hot temperature",                                                                                                                     "C",            "",                                  "",                                         "*",                                                                "",              "" },
-    { SSC_OUTPUT,    SSC_ARRAY,  "T_tes_cold",                         "TES cold temperature",                                                                                                                    "C",            "",                                  "",                                         "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "T_tes_hot",                          "TES hot temperature (end)",                                                                                                               "C",            "",                                  "",                                         "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "T_tes_cold",                         "TES cold temperature (end)",                                                                                                              "C",            "",                                  "",                                         "*",                                                                "",              "" },
     { SSC_OUTPUT,   SSC_ARRAY,   "mass_tes_cold",                      "TES cold tank mass (end)",                                                                                                                "kg",           "",                                  "",                                         "*",                                                                "",              "" },
     { SSC_OUTPUT,   SSC_ARRAY,   "mass_tes_hot",                       "TES hot tank mass (end)",                                                                                                                 "kg",           "",                                  "",                                         "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_ARRAY,  "q_dc_tes",                           "TES discharge thermal power",                                                                                                             "MWt",          "",                                  "",                                         "*",                                                                "",              "" },
@@ -629,7 +640,8 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_ARRAY,  "q_dot_pc_sb",                        "Thermal power for PC standby",                                                                                                            "MWt",          "",                                  "",                                         "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_ARRAY,  "q_dot_pc_min",                       "Thermal power for PC min operation",                                                                                                      "MWt",          "",                                  "",                                         "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_ARRAY,  "q_dot_pc_max",                       "Max thermal power to PC",                                                                                                                 "MWt",          "",                                  "",                                         "*",                                                                "",              ""},
-    { SSC_OUTPUT,    SSC_ARRAY,  "q_dot_pc_target",                    "Target thermal power to PC",                                                                                                              "MWt",          "",                                  "",                                         "*",                                                                "",              ""},
+    { SSC_OUTPUT,    SSC_ARRAY,  "q_dot_pc_target_su",                 "Target startup thermal power to PC",                                                                                                      "MWt",          "",                                  "",                                         "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "q_dot_pc_target_on",                 "Target on thermal power to PC",                                                                                                           "MWt",          "",                                  "",                                         "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_ARRAY,  "is_rec_su_allowed",                  "Is receiver startup allowed",                                                                                                             "",             "",                                  "",                                         "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_ARRAY,  "is_pc_su_allowed",                   "Is power cycle startup allowed",                                                                                                          "",             "",                                  "",                                         "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_ARRAY,  "is_pc_sb_allowed",                   "Is power cycle standby allowed",                                                                                                          "",             "",                                  "",                                         "*",                                                                "",              ""},
@@ -665,6 +677,22 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_NUMBER, "disp_presolve_nvar_ann",             "Annual sum of dispatch problem variable count",                                                                                           "",             "",                                  "",                                         "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "disp_solve_time_ann",                "Annual sum of dispatch solver time",                                                                                                      "",             "",                                  "",                                         "*",                                                                "",              ""},
 
+    // Final component states (for use in subsequent calls to this cmod as values for "Optional Component Initialization" inputs above
+        // Heliostat field
+    { SSC_OUTPUT,    SSC_ARRAY,  "is_field_tracking_final",            "Final heliostat field operation is tracking? (1 = true)",                                                                                           "-",            "",                                  "System Control",                           "",                                                                 "",              "" },
+                                 
+        // Receiver              
+    { SSC_OUTPUT,    SSC_ARRAY,  "rec_op_mode_final",                  "Final receiver operating mode 0: off, 1: startup, 2: on",                                                                               "-",            "",                                  "System Control",                           "",                                                                 "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "rec_startup_time_remain_final",      "Final receiver startup time remaining",                                                                                                 "hr",           "",                                  "System Control",                           "",                                                                 "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "rec_startup_energy_remain_final",    "Final receiver startup energy remaining",                                                                                               "W-hr",         "",                                  "System Control",                           "",                                                                 "",              "" },
+
+        // Power cycle
+    { SSC_OUTPUT,    SSC_ARRAY,  "pc_op_mode_final",                   "Final cycle operation mode 0:startup, 1:on, 2:standby, 3:off, 4:startup_controlled",                                                      "-",            "",                                  "System Control",                           "",                                                                 "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "pc_startup_time_remain_final",       "Final cycle startup time remaining",                                                                                                      "hr",           "",                                  "System Control",                           "",                                                                 "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "pc_startup_energy_remain_final",     "Final cycle startup energy remaining",                                                                                                    "kwh",          "",                                  "System Control",                           "",                                                                 "",              "" },
+
+        // Thermal energy storage
+    { SSC_OUTPUT,    SSC_ARRAY,  "hot_tank_htf_percent_final",         "Final percent fill of available hot tank mass",                                                                                           "%",            "",                                  "System Control",                           "",                                                                 "",              "" },
 
     var_info_invalid };
 
@@ -1016,16 +1044,23 @@ public:
             pc->m_pc_fl = as_integer("rec_htf");                            // power cycle HTF is same as receiver HTF
             pc->m_pc_fl_props = as_matrix("field_fl_props");
 
-			pc->m_mode_initial = C_csp_power_cycle::OFF;
-			if (as_boolean("is_pc_on_initial"))
-				pc->m_mode_initial = C_csp_power_cycle::ON;
-			else if (as_boolean("is_pc_standby_initial"))
-				pc->m_mode_initial = C_csp_power_cycle::STANDBY;
-			else if (as_boolean("is_pc_startup_initial"))
-			{
-				pc->m_mode_initial = C_csp_power_cycle::STARTUP_CONTROLLED;
-				pc->m_startup_energy_accum_init = as_double("pc_startup_energy_initial");
-			}
+            // Check initialization variables
+			pc->m_operating_mode_initial = C_csp_power_cycle::OFF;
+            if (is_assigned("pc_op_mode_initial")) {
+                pc->m_operating_mode_initial = (C_csp_power_cycle::E_csp_power_cycle_modes) as_integer("pc_op_mode_initial");
+                if (is_assigned("pc_startup_time_remain_init")) {
+                    pc->m_startup_time_remain_init = as_double("pc_startup_time_remain_init");
+                }
+                else {
+                    pc->m_startup_time_remain_init = std::numeric_limits<double>::quiet_NaN();
+                }
+                if (is_assigned("pc_startup_energy_remain_initial")) {
+                    pc->m_startup_energy_remain_init = as_double("pc_startup_energy_remain_initial");
+                }
+                else {
+                    pc->m_startup_energy_remain_init = std::numeric_limits<double>::quiet_NaN();
+                }                    
+            }
 
             if (pb_tech_type == 0)
             {
@@ -1597,6 +1632,9 @@ public:
         p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_T_HTF_OUT, allocate("T_pc_out", n_steps_fixed), n_steps_fixed);
         p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_M_DOT_WATER, allocate("m_dot_water_pc", n_steps_fixed), n_steps_fixed);
         p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_T_COND_OUT, allocate("T_cond_out", n_steps_fixed), n_steps_fixed);
+        p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_PC_OP_MODE_FINAL, allocate("pc_op_mode_final", n_steps_fixed), n_steps_fixed);
+        p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_PC_STARTUP_TIME_REMAIN_FINAL, allocate("pc_startup_time_remain_final", n_steps_fixed), n_steps_fixed);
+        p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_PC_STARTUP_ENERGY_REMAIN_FINAL, allocate("pc_startup_energy_remain_final", n_steps_fixed), n_steps_fixed);
 
         if (pb_tech_type == 0) {
             if (rankine_pc.ms_params.m_CT == 4) {
@@ -1653,6 +1691,14 @@ public:
         heliostatfield.mf_callback = ssc_cmod_solarpilot_callback;
         heliostatfield.m_cdata = (void*)this;
 
+        // Check initialization variable
+        if (is_assigned("is_field_tracking_init")) {
+            heliostatfield.ms_params.m_is_field_tracking_init = as_boolean("is_field_tracking_init");
+        }
+        else {
+            heliostatfield.ms_params.m_is_field_tracking_init = false;
+        }
+
         // Try running pt heliostat init() call just for funsies
             // What happens when no callback to reference?
         //heliostatfield.init();
@@ -1685,7 +1731,6 @@ public:
         }
 
         std::unique_ptr<C_pt_receiver> receiver;
-
         if (!as_boolean("is_rec_model_trans") && !as_boolean("is_rec_startup_trans")) {
             //std::unique_ptr<C_mspt_receiver_222> ss_receiver = std::make_unique<C_mspt_receiver_222>();   // new to C++14
             std::unique_ptr<C_mspt_receiver_222> ss_receiver = std::unique_ptr<C_mspt_receiver_222>(new C_mspt_receiver_222());   // steady-state receiver
@@ -1713,12 +1758,21 @@ public:
 			ss_receiver->m_csky_frac = as_double("rec_clearsky_fraction");
 
             ss_receiver->m_mode_initial = C_csp_collector_receiver::OFF;
-            if (as_boolean("is_rec_on_initial"))
-                ss_receiver->m_mode_initial = C_csp_collector_receiver::ON;
-            if (as_boolean("is_rec_startup_initial"))
-            {
-                ss_receiver->m_mode_initial = C_csp_collector_receiver::STARTUP;
-                ss_receiver->m_E_su_accum_init = as_double("rec_startup_energy_initial");
+            if (is_assigned("rec_op_mode_initial")) {
+                ss_receiver->m_mode_initial = (C_csp_collector_receiver::E_csp_cr_modes) as_integer("rec_op_mode_initial");
+
+                if (is_assigned("rec_startup_time_remain_init")) {
+                    ss_receiver->m_t_su_init = as_double("rec_startup_time_remain_init");
+                }
+                else {
+                    ss_receiver->m_t_su_init = std::numeric_limits<double>::quiet_NaN();
+                }
+                if (is_assigned("rec_startup_energy_remain_init")) {
+                    ss_receiver->m_E_su_init = as_double("rec_startup_energy_remain_init");
+                }
+                else {
+                    ss_receiver->m_E_su_init = std::numeric_limits<double>::quiet_NaN();
+                }
             }
 
             receiver = std::move(ss_receiver);
@@ -1838,6 +1892,10 @@ public:
         collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_FIELD_Q_DOT_INC, allocate("q_sf_inc", n_steps_fixed), n_steps_fixed);
         collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_FIELD_ETA_OPT, allocate("eta_field", n_steps_fixed), n_steps_fixed);
         collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_FIELD_ADJUST, allocate("sf_adjust_out", n_steps_fixed), n_steps_fixed);
+        collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_IS_FIELD_TRACKING_FINAL, allocate("is_field_tracking_final", n_steps_fixed), n_steps_fixed);
+        collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_REC_OP_MODE_FINAL, allocate("rec_op_mode_final", n_steps_fixed), n_steps_fixed);
+        collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_REC_STARTUP_TIME_REMAIN_FINAL, allocate("rec_startup_time_remain_final", n_steps_fixed), n_steps_fixed);
+        collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_REC_STARTUP_ENERGY_REMAIN_FINAL, allocate("rec_startup_energy_remain_final", n_steps_fixed), n_steps_fixed);
 
         collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_Q_DOT_INC, allocate("q_dot_rec_inc", n_steps_fixed), n_steps_fixed);
         collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_ETA_THERMAL, allocate("eta_therm", n_steps_fixed), n_steps_fixed);
@@ -1885,12 +1943,25 @@ public:
         tes->m_cold_tank_Thtr = as_double("cold_tank_Thtr");
         tes->m_cold_tank_max_heat = as_double("cold_tank_max_heat");
         tes->m_dt_hot = 0.0;                                // MSPT assumes direct storage, so no user input here: hardcode = 0.0
-        tes->m_T_field_in_des = as_double("T_htf_cold_des");
-        tes->m_T_field_out_des = as_double("T_htf_hot_des");
-        tes->m_T_tank_hot_ini = as_double("T_htf_hot_des");
-        tes->m_T_tank_cold_ini = as_double("T_htf_cold_des");
+        tes->m_T_field_in_des = as_double("T_htf_cold_des");    //[C]
+        tes->m_T_field_out_des = as_double("T_htf_hot_des");    //[C]
+
+        // Check initialization variables
+        if (is_assigned("T_tank_hot_init")) {
+            tes->m_T_tank_hot_ini = as_double("T_tank_hot_init");   //[C]
+        }
+        else {
+            tes->m_T_tank_hot_ini = as_double("T_htf_hot_des");     //[C]
+        }
+        if (is_assigned("T_tank_cold_init")) {
+            tes->m_T_tank_cold_ini = as_double("T_tank_cold_init"); //[C]
+        }
+        else {
+            tes->m_T_tank_cold_ini = as_double("T_htf_cold_des");   //[C]
+        }
+        tes->m_f_V_hot_ini = as_double("csp.pt.tes.init_hot_htf_percent");  //[%]
+
         tes->m_h_tank_min = as_double("h_tank_min");
-        tes->m_f_V_hot_ini = as_double("csp.pt.tes.init_hot_htf_percent");
         tes->m_htf_pump_coef = as_double("pb_pump_coef");
 
 
@@ -1906,10 +1977,9 @@ public:
         storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_W_DOT_HEATER, allocate("q_heater", n_steps_fixed), n_steps_fixed);
         storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_TES_T_HOT, allocate("T_tes_hot", n_steps_fixed), n_steps_fixed);
         storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_TES_T_COLD, allocate("T_tes_cold", n_steps_fixed), n_steps_fixed);
-        storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_MASS_COLD_TANK, allocate("mass_tes_cold", n_steps_fixed), n_steps_fixed);
         storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_MASS_HOT_TANK, allocate("mass_tes_hot", n_steps_fixed), n_steps_fixed);
-
-
+        storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_MASS_COLD_TANK, allocate("mass_tes_cold", n_steps_fixed), n_steps_fixed);
+        storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_HOT_TANK_HTF_PERC_FINAL, allocate("hot_tank_htf_percent_final", n_steps_fixed), n_steps_fixed);
 
         // TOU parameters
         C_csp_tou_block_schedules tou;
@@ -2178,8 +2248,11 @@ public:
         {
             int n_expect = (int)ceil((sim_setup.m_sim_time_end - sim_setup.m_sim_time_start) / 3600. * steps_per_hour);
 
+            size_t n_q_pc_target_su_in = 0;
+            ssc_number_t* q_pc_target_su_in = as_array("q_pc_target_su_in", &n_q_pc_target_su_in);
+
             size_t n = 0;
-            ssc_number_t* q_pb_target = as_array("q_pc_target_in", &n);
+            ssc_number_t* q_pc_target_on_in = as_array("q_pc_target_on_in", &n);
 
             size_t n_max = 0;
             ssc_number_t* q_pb_max = as_array("q_pc_max_in", &n_max);
@@ -2193,11 +2266,12 @@ public:
             size_t n_pbsb = 0;
             ssc_number_t* is_pc_sb_allowed_in = as_array("is_pc_sb_allowed_in", &n_pbsb);
 
-            if (n != n_expect || n_max != n_expect || n_recsu != n_expect || n_pbsu != n_expect || n_pbsb != n_expect)
+            if (n_q_pc_target_su_in != n_expect || n != n_expect || n_max != n_expect || n_recsu != n_expect || n_pbsu != n_expect || n_pbsb != n_expect)
                 throw exec_error("tcsmolten_salt", "The number of points in the user-specified arrays of dispatch targets does not match the value expected from the simulation start time, end time, and time steps per hour");
             else
             {
-                tou.mc_dispatch_params.m_q_pc_target_in.resize(n);
+                tou.mc_dispatch_params.m_q_pc_target_su_in.resize(n);
+                tou.mc_dispatch_params.m_q_pc_target_on_in.resize(n);
                 tou.mc_dispatch_params.m_q_pc_max_in.resize(n);
                 tou.mc_dispatch_params.m_is_rec_su_allowed_in.resize(n);
                 tou.mc_dispatch_params.m_is_pc_su_allowed_in.resize(n);
@@ -2205,7 +2279,8 @@ public:
 
                 for (int i = 0; i < n; i++)
                 {
-                    tou.mc_dispatch_params.m_q_pc_target_in.at(i) = q_pb_target[i];
+                    tou.mc_dispatch_params.m_q_pc_target_su_in.at(i) = q_pc_target_su_in[i];
+                    tou.mc_dispatch_params.m_q_pc_target_on_in.at(i) = q_pc_target_on_in[i];
                     tou.mc_dispatch_params.m_q_pc_max_in.at(i) = q_pb_max[i];
                     tou.mc_dispatch_params.m_is_rec_su_allowed_in.at(i) = (bool)is_rec_su_allowed_in[i];
                     tou.mc_dispatch_params.m_is_pc_su_allowed_in.at(i) = (bool)is_pc_su_allowed_in[i];
@@ -2317,7 +2392,8 @@ public:
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::PRICING_MULT, allocate("pricing_mult", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::PC_Q_DOT_SB, allocate("q_dot_pc_sb", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::PC_Q_DOT_MIN, allocate("q_dot_pc_min", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::PC_Q_DOT_TARGET, allocate("q_dot_pc_target", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::PC_Q_DOT_TARGET_SU, allocate("q_dot_pc_target_su", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::PC_Q_DOT_TARGET_ON, allocate("q_dot_pc_target_on", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::PC_Q_DOT_MAX, allocate("q_dot_pc_max", n_steps_fixed), n_steps_fixed);
         
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::CTRL_IS_REC_SU, allocate("is_rec_su_allowed", n_steps_fixed), n_steps_fixed);
@@ -2756,6 +2832,46 @@ public:
         }
         //Single value outputs from radiative cooling system
 
+        // Final component state values
+            // Heliostat field
+        /*
+        bool b_is_field_tracking_final;
+        heliostatfield.get_converged(b_is_field_tracking_final);
+        ssc_number_t is_field_tracking_final = (bool)b_is_field_tracking_final;
+        assign("is_field_tracking_final", is_field_tracking_final);
+
+            // Receiver
+        C_csp_collector_receiver::E_csp_cr_modes rec_op_mode_final;
+        double rec_startup_time_remain_final, rec_startup_energy_remain_final;
+        rec_startup_time_remain_final = rec_startup_energy_remain_final = std::numeric_limits<double>::quiet_NaN();
+        if (!as_boolean("is_rec_model_trans") && !as_boolean("is_rec_startup_trans")) {
+            receiver->get_converged_values(rec_op_mode_final,
+                rec_startup_energy_remain_final, rec_startup_time_remain_final);
+        }
+        assign("rec_op_mode_final", (ssc_number_t) rec_op_mode_final);
+        assign("rec_startup_time_remain_final", (ssc_number_t)rec_startup_time_remain_final);
+        assign("rec_startup_energy_remain_final", (ssc_number_t)rec_startup_energy_remain_final);
+
+            // Power cycle
+        C_csp_power_cycle::E_csp_power_cycle_modes pc_op_mode_final;
+        double pc_startup_time_remain_final, pc_startup_energy_remain_final;
+        if (pb_tech_type == 0 || pb_tech_type == 1) {
+            rankine_pc.get_converged_values(pc_op_mode_final, pc_startup_time_remain_final, pc_startup_energy_remain_final);
+        }
+        else {
+            pc_startup_energy_remain_final = pc_startup_energy_remain_final = std::numeric_limits<double>::quiet_NaN();
+        }
+        assign("pc_op_mode_final", (ssc_number_t)pc_op_mode_final);
+        assign("pc_startup_time_remain_final", (ssc_number_t)pc_startup_time_remain_final);
+        assign("pc_startup_energy_remain_final", (ssc_number_t)pc_startup_energy_remain_final);
+
+            // Thermal energy storage
+        double f_V_hot_final, T_hot_tank_final, T_cold_tank_final;
+        storage.get_final_from_converged(f_V_hot_final, T_hot_tank_final, T_cold_tank_final);
+        assign("T_tank_cold_final", (ssc_number_t)(T_cold_tank_final - 273.15));
+        assign("T_tank_hot_final", (ssc_number_t)(T_hot_tank_final - 273.15));
+        assign("hot_tank_htf_percent_final", (ssc_number_t)(f_V_hot_final * 100.0));
+        */
     }
 };
 
