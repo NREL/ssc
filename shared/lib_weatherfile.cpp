@@ -434,8 +434,7 @@ weatherfile::weatherfile(const std::string &file, bool header_only)
 {
 	reset();
 	m_ok = open(file, header_only);
-	if (m_ok && !header_only)
-        start_hours_at_0();
+
 }
 
 weatherfile::~weatherfile()
@@ -1059,7 +1058,6 @@ bool weatherfile::open(const std::string &file, bool header_only)
 	// from 1-24 standard to 0-23
 	int tmy3_hour_shift = 1;
 	int n_leap_data_removed = 0;
-    bool subtract_hour = false;
 
 	for (int i = 0; i < (int)m_nRecords; i++)
 	{
@@ -1377,11 +1375,6 @@ bool weatherfile::open(const std::string &file, bool header_only)
 					continue;
 				}
 
-                if (m_columns[HOUR].data[i] > 23)
-                {
-                    subtract_hour = true;
-                }
-
 				if (m_columns[MINUTE].data[i] > 59)
 				{
 					m_message = "minute column must contain integers from 0-59";
@@ -1394,15 +1387,6 @@ bool weatherfile::open(const std::string &file, bool header_only)
 		}
 
 	}
-
-    // Currently only used by WFCSV
-    if (subtract_hour)
-    {
-        for (size_t i = 0; i < m_nRecords; i++)
-        {
-            m_columns[HOUR].data[i] = ((float)m_columns[HOUR].data[i]) - 1;
-        }
-    }
 
 	//	if( n_leap_data_removed > 0 )
 	//		m_message = util::format("Skipped %d data lines for February 29th (leap day).", n_leap_data_removed );
@@ -1512,13 +1496,17 @@ bool weatherfile::open(const std::string &file, bool header_only)
 		}
 	}
 
-    // Need to check hours after adjustments like 1 - 24 to 0 - 23 for some file types above
-    for (size_t i = 0; i < m_nRecords; i++)
-    {
-        int hour_of_year = util::hour_of_year(m_columns[MONTH].data[i], m_columns[DAY].data[i], m_columns[HOUR].data[i]);
-        if (!check_hour_of_year(hour_of_year, i))
+    if (!header_only) {
+        start_hours_at_0();
+
+        // Need to check hours after adjustments like 1 - 24 to 0 - 23 for some file types above
+        for (size_t i = 0; i < m_nRecords; i++)
         {
-            return false;
+            int hour_of_year = util::hour_of_year(m_columns[MONTH].data[i], m_columns[DAY].data[i], m_columns[HOUR].data[i]);
+            if (!check_hour_of_year(hour_of_year, i))
+            {
+                return false;
+            }
         }
     }
 
