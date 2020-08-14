@@ -1005,7 +1005,7 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 								param_inputs.mflow_tot = 0.0;
 								solve_transient_startup_model(param_inputs, trans_inputs, HEAT_TRACE, heat_trace_target, 0.0, time_remaining, trans_outputs, time, energy, parasitic);
 								q_heat_trace_energy += parasitic;
-								//q_startup_energy += energy;   
+								q_startup_energy += energy;   
 								m_total_startup_time += time;		
 								time_remaining -= time;	
 								m_startup_mode = HEAT_TRACE;
@@ -1372,7 +1372,9 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 		{
 			trans_outputs.timeavg_conv_loss = 0.0; trans_outputs.timeavg_rad_loss = 0.0; trans_outputs.timeavg_piping_loss = 0.0; trans_outputs.timeavg_qthermal = 0.0;
 			trans_outputs.timeavg_tout = m_T_htf_cold_des;
+            trans_outputs.timeavg_tout_rec = m_T_htf_cold_des;
 			trans_outputs.tout = m_T_htf_cold_des;
+            trans_outputs.tout_rec = m_T_htf_cold_des;
 			trans_outputs.max_tout = m_T_htf_cold_des;
 			trans_outputs.min_tout = m_T_htf_cold_des;
 			trans_outputs.max_rec_tout = m_T_htf_cold_des;
@@ -1623,7 +1625,7 @@ util::matrix_t<double> C_mspt_receiver::calculate_flux_profiles(double dni, doub
 	int n_flux_x = (int)flux_map_input->ncols();
 	flux.resize_fill(n_flux_x, 0.0);
 
-	if (dni > 1.0)
+	if (dni > 1.e-6)
 	{
 		for (int j = 0; j<n_flux_x; j++)
 		{

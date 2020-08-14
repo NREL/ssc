@@ -884,7 +884,7 @@ util::matrix_t<double> C_mspt_receiver_222::calculate_flux_profiles(double dni, 
 	int n_flux_x = (int)flux_map_input->ncols();
 	flux.resize_fill(n_flux_x, 0.0);
 
-	if (dni > 1.0)
+	if (dni > 1.e-6)
 	{
 		for (int j = 0; j<n_flux_x; j++)
 		{
