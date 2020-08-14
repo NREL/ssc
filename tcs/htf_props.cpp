@@ -290,10 +290,10 @@ double HTFProperties::Cp( double T_K )
 	case Pressurized_Water:
 		return 1.E-5*T_C*T_C - 0.0014*T_C + 4.2092;
     case N06230:
-        return 0.2888*T_C + 397.42; // BPVC II D
+        return (0.2888*T_C + 397.42)*1.e-3; // BPVC II D
     case N07740:
-        return -1.E-9*std::pow(T_C, 4) + 3.E-6*std::pow(T_C, 3) -
-            0.0022*std::pow(T_C, 2) + 0.6218*T_C + 434.06;  // BPVC_CC_BPV_2017 Case 2702 - 3
+        return (-1.E-9*std::pow(T_C, 4) + 3.E-6*std::pow(T_C, 3) -
+            0.0022*std::pow(T_C, 2) + 0.6218*T_C + 434.06)*1.e-3;  // BPVC_CC_BPV_2017 Case 2702 - 3
 	case User_defined:
 		{
 			if ( m_userTable.nrows() < 3 ) return std::numeric_limits<double>::quiet_NaN();
