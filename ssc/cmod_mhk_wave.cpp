@@ -77,7 +77,15 @@ static var_info _cm_vtab_mhk_wave[] = {
 	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual energy production of array",											"kWh",			"",				"MHKWave",			"*",						"",							"" },
 	{ SSC_OUTPUT,			SSC_NUMBER,			"capacity_factor",						"Capacity Factor",													"%",			"",				"MHKWave",			"*",						"",							"" },
 	{ SSC_OUTPUT,			SSC_MATRIX,			"annual_energy_distribution",			"Annual energy production as function of Hs and Te",				"",				"",				"MHKWave",			"*",						"",							"" },
-	var_info_invalid
+    { SSC_OUTPUT,			SSC_NUMBER,			"wave_resource_start_height",			"Wave height at which first non-zero wave resource value occurs",				"",				"",				"MHKWave",			"*",						"",							"" },
+    { SSC_OUTPUT,			SSC_NUMBER,			"wave_resource_start_period",			"Wave period at which first non-zero wave resource value occurs",				"",				"",				"MHKWave",			"*",						"",							"" },
+    { SSC_OUTPUT,			SSC_NUMBER,			"wave_resource_end_height",			"Wave height at which first non-zero wave resource value occurs",				"",				"",				"MHKWave",			"*",						"",							"" },
+    { SSC_OUTPUT,			SSC_NUMBER,			"wave_resource_end_period",			"Wave height at which first non-zero wave resource value occurs",				"",				"",				"MHKWave",			"*",						"",							"" },
+    { SSC_OUTPUT,			SSC_NUMBER,			"wave_power_start_height",			"Wave height at which first non-zero wave resource value occurs",				"",				"",				"MHKWave",			"*",						"",							"" },
+    { SSC_OUTPUT,			SSC_NUMBER,			"wave_power_start_period",			"Wave period at which first non-zero wave resource value occurs",				"",				"",				"MHKWave",			"*",						"",							"" },
+    { SSC_OUTPUT,			SSC_NUMBER,			"wave_power_end_height",			"Wave height at which first non-zero wave resource value occurs",				"",				"",				"MHKWave",			"*",						"",							"" },
+    { SSC_OUTPUT,			SSC_NUMBER,			"wave_power_end_period",			"Wave height at which first non-zero wave resource value occurs",				"",				"",				"MHKWave",			"*",						"",							"" },
+    var_info_invalid
 };
 
 class cm_mhk_wave : public compute_module
@@ -154,6 +162,88 @@ public:
 			if (_check_column[i] != wave_power_matrix.at(i,0))
 				throw compute_module::exec_error("mhk_wave", "Wave height bins of power matrix don't match. Reset bins to default");*/
 		}
+        double wave_resource_start_period = 0;
+        double wave_resource_start_height = 0;
+        double wave_resource_end_period = 0;
+        double wave_resource_end_height = 0;
+        double row_check = 0;
+
+        for (size_t l = 0; l < (size_t)wave_power_matrix.nrows(); l++) {
+            for (size_t m = 0; m < (size_t)wave_power_matrix.ncols(); m++) {
+
+                //Store max power if not set in UI:
+                /*if(as_integer("calculate_capacity") > 0)
+                    if (_power_vect[i][j] > system_capacity)
+                        system_capacity = _power_vect[i][j];*/
+                
+                        //Calculate and allocate annual_energy_distribution:
+                if ((ssc_number_t)wave_resource_matrix.at(l, m) != 0 && (ssc_number_t)wave_resource_matrix.at(l, m - 1) == 0 && (ssc_number_t)wave_resource_matrix.at(l, m + 1) != 0 && (m-1)!=0)
+                { 
+                    if (wave_resource_start_period ==0)
+                    { 
+                        wave_resource_start_period = wave_resource_matrix.at(0, m);
+                        wave_resource_start_height = wave_resource_matrix.at(l, 0);
+                    }
+                }
+                else if ((ssc_number_t)wave_resource_matrix.at(l, m) != 0 && (ssc_number_t)wave_resource_matrix.at(l, m - 1) != 0 && (ssc_number_t)wave_resource_matrix.at(l, m + 1) == 0 && (m-1)!=0)
+                {
+                    wave_resource_end_period = wave_resource_matrix.at(0, m);
+                    wave_resource_end_height = wave_resource_matrix.at(l, 0);
+                }
+                else
+                {
+
+                }
+                
+
+            }
+
+            /*//Throw exception if default header column (of power curve and resource) does not match user input header row:
+            if (_check_column[i] != wave_resource_matrix.at(i, 0))
+                throw compute_module::exec_error("mhk_wave", "Wave height bins of resource matrix don't match. Reset bins to default");
+            if (_check_column[i] != wave_power_matrix.at(i,0))
+                throw compute_module::exec_error("mhk_wave", "Wave height bins of power matrix don't match. Reset bins to default");*/
+        }
+        double wave_power_start_period = 0;
+        double wave_power_start_height = 0;
+        double wave_power_end_period = 0;
+        double wave_power_end_height = 0;
+        for (size_t n = 0; n < (size_t)wave_power_matrix.nrows(); n++) {
+            for (size_t p = 0; p < (size_t)wave_power_matrix.ncols(); p++) {
+
+                //Store max power if not set in UI:
+                /*if(as_integer("calculate_capacity") > 0)
+                    if (_power_vect[i][j] > system_capacity)
+                        system_capacity = _power_vect[i][j];*/
+
+                        //Calculate and allocate annual_energy_distribution:
+                if ((ssc_number_t)wave_power_matrix.at(n, p) != 0 && (ssc_number_t)wave_power_matrix.at(n, p - 1) == 0 && (ssc_number_t)wave_power_matrix.at(n, p + 1) != 0 && (p-1)!=0)
+                {
+                    if (wave_power_start_period == 0)
+                    { 
+                        wave_power_start_period = wave_power_matrix.at(0, p);
+                        wave_power_start_height = wave_power_matrix.at(n, 0);
+                    }
+                }
+                else if ((ssc_number_t)wave_power_matrix.at(n, p) != 0 && (ssc_number_t)wave_power_matrix.at(n, p - 1) != 0 && (p-1)!=0 && (ssc_number_t)wave_power_matrix.at(n, p + 1) == 0)
+                {
+                    wave_power_end_period = wave_power_matrix.at(0, p);
+                    wave_power_end_height = wave_power_matrix.at(n, 0);
+                }
+                else
+                {
+
+                }
+
+
+            }
+
+            /*//Throw exception if default header column (of power curve and resource) does not match user input header row:
+            if (_check_column[i] != wave_resource_matrix.at(i, 0))
+                throw compute_module::exec_error("mhk_wave", "Wave height bins of resource matrix don't match. Reset bins to default");
+            if (_check_column[i] != wave_power_matrix.at(i,0))
+                throw compute_module::exec_error("mhk_wave", "Wave height bins of power matrix don't match. Reset bins to default");*/
+        }
 
 		/*
 		//Throw exception if default header row (of power curve and resource) does not match user input header column:
@@ -183,6 +273,15 @@ public:
 		//assign("system_capacity", var_data((ssc_number_t)system_capacity));
 		assign("capacity_factor", var_data((ssc_number_t)capacity_factor * 100));
 		assign("device_average_power", var_data((ssc_number_t)device_average_power));
+        assign("wave_resource_start_height", var_data((ssc_number_t)wave_resource_start_height));
+        assign("wave_resource_end_height", var_data((ssc_number_t)wave_resource_end_height));
+        assign("wave_resource_start_period", var_data((ssc_number_t)wave_resource_start_period));
+        assign("wave_resource_end_period", var_data((ssc_number_t)wave_resource_end_period));
+        assign("wave_power_start_height", var_data((ssc_number_t)wave_power_start_height));
+        assign("wave_power_end_height", var_data((ssc_number_t)wave_power_end_height));
+        assign("wave_power_start_period", var_data((ssc_number_t)wave_power_start_period));
+        assign("wave_power_end_period", var_data((ssc_number_t)wave_power_end_period));
+
 
 	}
 };
