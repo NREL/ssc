@@ -942,7 +942,7 @@ TEST_F(voltage_vanadium_lib_battery_voltage_test, calculateMaxChargeSubMinute){
     while (cap->SOC() > 5)
         cap->updateCapacity(I, dt_hour);
     power = model->calculate_max_charge_w(cap->q0(), cap->qmax(), 0, &max_current);
-    EXPECT_NEAR(power, -37840247, 1);
+    EXPECT_NEAR(power, -37840248, 1);
     max_current_calc = model->calculate_current_for_target_w(power, cap->q0(), cap->qmax(), 293);
     EXPECT_NEAR(max_current_calc, max_current, 1e-2 * fabs(max_current));
     // max current reduced to enforce SOC
