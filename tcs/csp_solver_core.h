@@ -678,6 +678,7 @@ public:
 
 			// Parasitics, plant net power equation
 		double m_W_dot_htf_pump;	//[MWe] HTF pumping power
+        double m_W_off_heat_par;    //[MWe] Parasitic electric heaters for cycle off
 		double m_W_cool_par;		//[MWe] Cooling system parasitic load
 
 		bool m_was_method_successful;	//[-] Return false if method did not solve as expected but can be handled by solver/controller
@@ -685,7 +686,7 @@ public:
 		S_csp_pc_out_solver()
 		{
 			m_time_required_su = m_time_required_max = m_P_cycle = m_T_htf_cold = m_q_dot_htf = m_m_dot_htf =
-				m_W_dot_htf_pump = m_W_cool_par = std::numeric_limits<double>::quiet_NaN();
+				m_W_dot_htf_pump = m_W_off_heat_par = m_W_cool_par = std::numeric_limits<double>::quiet_NaN();
 
 			m_was_method_successful = false;
 		}
@@ -910,6 +911,7 @@ public:
 			COL_W_DOT_TRACK,      //[MWe] Parasitic collector tracking, startup, stow power consumption
 			CR_W_DOT_PUMP,        //[MWe] Parasitic tower HTF pump power
 			SYS_W_DOT_PUMP,       //[MWe] Parasitic PC and TES HTF pump power
+            PC_W_DOT_OFF_HEAT,    //[MWe] Parasitic electric heaters for cycle off
 			PC_W_DOT_COOLING,     //[MWe] Parasitic condenser operation power
 			SYS_W_DOT_FIXED,      //[MWe] Parasitic fixed power consumption
 			SYS_W_DOT_BOP,        //[MWe] Parasitic BOP power consumption

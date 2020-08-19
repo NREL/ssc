@@ -291,7 +291,8 @@ void C_pc_steam_heat_sink::call(const C_csp_weatherreader::S_outputs &weather,
 	out_solver.m_P_cycle = 0.0;							//[MWe] No electricity generation
 	out_solver.m_T_htf_cold = T_steam_cold - 273.15;	//[C] convert from K
 	out_solver.m_m_dot_htf = m_dot_steam*3600.0;		//[kg/hr] Return inlet mass flow rate
-	out_solver.m_W_cool_par = 0.0;			//[MWe] No cooling load
+    out_solver.m_W_off_heat_par = 0.0;			        //[MWe] No electric heaters in off state
+	out_solver.m_W_cool_par = 0.0;			            //[MWe] No cooling load
 	
 	out_solver.m_time_required_su = 0.0;		//[s] No startup requirements, for now
 	out_solver.m_q_dot_htf = q_dot_steam;	//[MWt] Thermal power form HTF

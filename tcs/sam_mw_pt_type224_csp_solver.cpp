@@ -164,7 +164,7 @@ tcsvarinfo sam_mw_pt_type224_variables[] = {
 	{ TCS_OUTPUT,          TCS_NUMBER,      O_M_DOT_DEMAND,           "m_dot_demand",                                               "HTF required flow rate to meet power load",        "kg/hr",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,     O_M_DOT_HTF_OUT,          "m_dot_htf_out",                                    "Actual HTF flow rate passing through the power cycle",        "kg/hr",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,     O_M_DOT_HTF_REF,          "m_dot_htf_ref",                                            "Calculated reference HTF flow rate at design",        "kg/hr",             "",             "",             "" },
-	{ TCS_OUTPUT,          TCS_NUMBER,        O_W_COOL_PAR,             "W_cool_par",                                                           "Cooling system parasitic load",          "MWe",             "",             "",             "" },
+    { TCS_OUTPUT,          TCS_NUMBER,        O_W_COOL_PAR,             "W_cool_par",                                                           "Cooling system parasitic load",          "MWe",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,         O_P_REF_OUT,              "P_ref_out",                                   "Reference power level output at design (mirror param)",          "MWe",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,            O_F_BAYS,                 "f_bays",                                               "Fraction of operating heat rejection bays",         "none",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,            O_P_COND,                 "P_cond",                                                                      "Condenser pressure",           "Pa",             "",             "",             "" },
@@ -342,7 +342,7 @@ public:
 		ms_htf_state_in.m_temp = value(I_T_HTF_HOT);	//Hot HTF inlet temperature, from storage tank [C]
 		ms_inputs.m_m_dot = value(I_M_DOT_HTF);			//HTF mass flow rate [kg/hr]
 		ms_weather.m_twet = value(I_T_WB);				//Ambient wet bulb temperature [C]
-		ms_inputs.m_standby_control = (C_csp_power_cycle::E_csp_power_cycle_modes)value(I_STANDBY_CONTROL);		//Control signal indicating standby mode [none]
+		ms_inputs.m_standby_control = static_cast<C_csp_power_cycle::E_csp_power_cycle_modes>((int)value(I_STANDBY_CONTROL));		//Control signal indicating standby mode [none]
 		ms_weather.m_tdry = value(I_T_DB);				//Ambient dry bulb temperature [C]
 		ms_weather.m_pres = value(I_P_AMB);				//Ambient pressure [mbar]
 			//ms_inputs.m_tou = (int)value(I_TOU);		
@@ -403,7 +403,7 @@ public:
 
 		value(O_M_DOT_HTF_OUT, ms_out_solver.m_m_dot_htf);		//[kg/hr] Actual HTF flow rate passing through the power cycle
 		value(O_M_DOT_HTF_REF, mc_power_cycle.mc_reported_outputs.value(C_pc_Rankine_indirect_224::E_M_DOT_HTF_REF));	//[kg/hr] Calculated reference HTF flow rate at design
-		value(O_W_COOL_PAR, ms_out_solver.m_W_cool_par);		//[MWe] Cooling system parasitic load
+        value(O_W_COOL_PAR, ms_out_solver.m_W_cool_par);		        //[MWe] Cooling system parasitic load
 
 		value(O_Q_STARTUP, mc_power_cycle.mc_reported_outputs.value(C_pc_Rankine_indirect_224::E_Q_DOT_STARTUP));			//[MWt-hr] Power cycle startup energy
 
