@@ -50,6 +50,7 @@ void lifetime_cycle_t::initialize() {
     state->rainflow_jlt = 0;
     state->rainflow_Xlt = 0;
     state->rainflow_Ylt = 0;
+    state->rainflow_peaks.clear();
 }
 
 lifetime_cycle_t::lifetime_cycle_t(const util::matrix_t<double> &batt_lifetime_matrix) {

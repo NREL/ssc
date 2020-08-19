@@ -202,8 +202,8 @@ void write_battery_state(const battery_state& state, var_table* vt) {
     vt->assign_match_case("rainflow_jlt", lifetime->cycle->rainflow_jlt);
     vt->assign_match_case("rainflow_peaks", lifetime->cycle->rainflow_peaks);
     vt->assign_match_case("q_relative_calendar", lifetime->calendar->q_relative_calendar);
-    vt->assign_match_case("rainflow_Ylt", lifetime->calendar->day_age_of_battery);
-    vt->assign_match_case("rainflow_Ylt", lifetime->calendar->dq_relative_calendar_old);
+    vt->assign_match_case("day_age_of_battery", lifetime->calendar->day_age_of_battery);
+    vt->assign_match_case("dq_relative_calendar_old", lifetime->calendar->dq_relative_calendar_old);
 
     vt->assign_match_case("loss_percent", state.losses->loss_percent);
 

@@ -113,3 +113,25 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, ReadJson) {
 
     EXPECT_TRUE(1);     // means the variable retrievals all succeeded
 }
+
+TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, RunCurrentContorl) {
+    CreateKokamModel();
+
+    double range, avg_range;
+
+    std::vector<double> currents = getCurrentData();
+
+    for (int i = 0; i < currents.size(); i++)
+    {
+        //ssc_data_set_number(copy, "last_idx", i);
+        ssc_data_set_number(data, "input_current", currents[i]);
+        ssc_module_exec(mod, data);
+    }
+
+
+    ssc_data_get_number(data, "range", &range);
+    ssc_data_get_number(data, "average_range", &avg_range);
+
+    EXPECT_NEAR(range, 75.0, 0.5);
+    EXPECT_NEAR(avg_range, 60.0, 0.5);
+}

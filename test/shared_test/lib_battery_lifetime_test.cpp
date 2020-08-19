@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <random>
 
 //#include "lib_battery_capacity.h"
 #include "lib_battery.h"
@@ -58,6 +59,72 @@ TEST_F(lib_battery_lifetime_cycle_test, runCycleLifetimeTest) {
     EXPECT_NEAR(s.n_cycles, 499, tol);
 }
 
+TEST_F(lib_battery_lifetime_cycle_test, runCycleLifetimeTestJaggedProfile) {
+    std::vector<double> DOD = { 5, 95, 50, 85, 10, 50, 5, 95, 5 };  // 4 cycles
+    int idx = 0;
+    while (idx < DOD.size()) {
+        cycle_model->runCycleLifetime(DOD[idx]);
+        idx++;
+    }
+    cycle_state s = cycle_model->get_state();
+    EXPECT_NEAR(s.q_relative_cycle, 99.95, tol);
+    EXPECT_NEAR(s.rainflow_Xlt, 90, tol);
+    EXPECT_NEAR(s.rainflow_Ylt, 90, tol);
+    EXPECT_NEAR(s.rainflow_jlt, 1, tol);
+    EXPECT_NEAR(s.range, 90, tol);
+    EXPECT_NEAR(s.average_range, 63.75, tol);
+    EXPECT_NEAR(s.n_cycles, 4, tol);
+
+}
+
+TEST_F(lib_battery_lifetime_cycle_test, runCycleLifetimeTestKokamProfile) {
+    std::vector<double> DOD = { 0.66, 1.0, 0.24722075172048893, 1.0, 0.24559790735021855, 0.9989411900454035, 0.24559790735021936, 0.9989411900454057, 0.24573025859454606, 0.9990735412897335, 0.24625966357184892, 0.9992058925340614, 0.2466567173048243, 0.9992058925340647, 0.2465243660605033, 0.9982794338237967, 0.24718612228213058, 0.9992058925340731, 0.24718612228213466, 0.9982794338238032, 0.24612731232753976, 0.9981470825794796, 0.24625966357186685, 0.9984117850681331, 0.24678906854916766, 0.9984117850681358, 0.24731847352646982, 0.9985441363124643, 0.24784787850377074, 0.9988088388011173, 0.24784787850377454 };  // 4 cycles
+    int idx = 0;
+    while (idx < DOD.size()) {
+        cycle_model->runCycleLifetime((1-DOD[idx]) * 100.0);
+        idx++;
+    }
+    cycle_state s = cycle_model->get_state();
+    EXPECT_NEAR(s.q_relative_cycle, 99.79, tol);
+    EXPECT_NEAR(s.rainflow_Xlt, 75.09, tol);
+    EXPECT_NEAR(s.rainflow_Ylt, 75.27, tol);
+    EXPECT_NEAR(s.rainflow_jlt, 5, tol);
+    EXPECT_NEAR(s.range, 75.07, tol);
+    EXPECT_NEAR(s.average_range, 72.03, tol);
+    EXPECT_NEAR(s.n_cycles, 13, tol);
+
+}
+
+TEST_F(lib_battery_lifetime_cycle_test, runCycleLifetimeTestWithNoise) {
+    int seed = 100;
+
+    // Initialize a default_random_engine with the seed
+    std::default_random_engine randomEngine(seed);
+
+    // Initialize a uniform_real_distribution to produce values between -1 and 1
+    std::uniform_real_distribution<double> unifRealDist(-1.0, 1.0);
+
+    double DOD = 5;       // not used but required for function
+    int idx = 0;
+    while (idx < 500) {
+        double number = unifRealDist(randomEngine);
+        if (idx % 2 != 0) {
+            DOD = 95 + number;
+        }
+        else
+            DOD = 5 + number;
+        cycle_model->runCycleLifetime(DOD);
+        idx++;
+    }
+    cycle_state s = cycle_model->get_state();
+    EXPECT_NEAR(s.q_relative_cycle, 95.06, tol);
+    EXPECT_NEAR(s.rainflow_jlt, 6, tol);
+    EXPECT_NEAR(s.range, 89.06, tol);
+    EXPECT_NEAR(s.average_range, 90.02, tol);
+    EXPECT_NEAR(s.n_cycles, 247, tol);
+
+  
+}
 
 TEST_F(lib_battery_lifetime_cycle_test, replaceBatteryTest) {
     double DOD = 5;       // not used but required for function
@@ -257,5 +324,31 @@ TEST_F(lib_battery_lifetime_test, updateCapacityTest) {
 
 }
 
+TEST_F(lib_battery_lifetime_test, runCycleLifetimeTestWithRestPeriod) {
+    double tol = 0.01;
+
+    std::vector<double> DOD = { 5, 50, 95, 50, 5, 5, 5, 50, 95, 50, 5, 5, 5, 50, 95, 50, 5 };  // 3 cycles 90% DOD
+    std::vector<bool> charge_changed = { true, false, false, true, false, false, false, true, false, true, false, false, false, true, false, true, false };
+    int idx = 0;
+    double T_battery = 25; // deg C
+    while (idx < DOD.size()) {
+        double DOD_prev = 0;
+        if (idx > 0) {
+            DOD_prev = DOD[idx - 1];
+        }
+        model->runLifetimeModels(idx, charge_changed[idx], DOD_prev, DOD[idx], T_battery);
+        idx++;
+    }
+
+    
+    cycle_state s = *model->get_state().cycle;
+    EXPECT_NEAR(s.q_relative_cycle, 99.96, tol);
+    EXPECT_NEAR(s.rainflow_Xlt, 90, tol);
+    EXPECT_NEAR(s.rainflow_Ylt, 90, tol);
+    EXPECT_NEAR(s.rainflow_jlt, 2, tol);
+    EXPECT_NEAR(s.range, 90, tol);
+    EXPECT_NEAR(s.average_range, 90, tol);
+    EXPECT_NEAR(s.n_cycles, 2, tol);
+}
 
 
