@@ -387,6 +387,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,     SSC_ARRAY,  "is_rec_su_allowed_in",               "User-provided is receiver startup allowed?",                                                                                              "-",            "",                                  "System Control",                           "is_dispatch_targets=1",                                            "",              ""},
     { SSC_INPUT,     SSC_ARRAY,  "is_pc_su_allowed_in",                "User-provided is power cycle startup allowed?",                                                                                           "-",            "",                                  "System Control",                           "is_dispatch_targets=1",                                            "",              ""},
     { SSC_INPUT,     SSC_ARRAY,  "is_pc_sb_allowed_in",                "User-provided is power cycle standby allowed?",                                                                                           "-",            "",                                  "System Control",                           "is_dispatch_targets=1",                                            "",              ""},
+    { SSC_INPUT,     SSC_ARRAY,  "is_elec_heat_dur_off",               "User-provided does power cycle use electric heaters when off?",                                                                           "-",            "",                                  "System Control",                           "is_dispatch_targets=1",                                            "",              ""},
 																																																																																																		  
     { SSC_INPUT,     SSC_NUMBER, "is_dispatch_constr",                 "Use dispatch capacity/efficiency constraints?",                                                                                           "-",            "",                                  "System Control",                           "?=0",                                                              "",              ""},
     { SSC_INPUT,     SSC_ARRAY,  "disp_cap_constr",                    "Fraction of turbine capacity available",                                                                                                  "-",            "",                                  "System Control",                           "is_dispatch_constr=1",                                             "",              ""},
@@ -2312,7 +2313,10 @@ public:
             size_t n_pbsb = 0;
             ssc_number_t* is_pc_sb_allowed_in = as_array("is_pc_sb_allowed_in", &n_pbsb);
 
-            if (n_q_pc_target_su_in != n_expect || n != n_expect || n_max != n_expect || n_recsu != n_expect || n_pbsu != n_expect || n_pbsb != n_expect)
+            size_t n_pbeh;
+            ssc_number_t* is_elec_heat_dur_off = as_array("is_elec_heat_dur_off", &n_pbeh);
+
+            if (n_q_pc_target_su_in != n_expect || n != n_expect || n_max != n_expect || n_recsu != n_expect || n_pbsu != n_expect || n_pbsb != n_expect || n_pbeh != n_expect)
                 throw exec_error("tcsmolten_salt", "The number of points in the user-specified arrays of dispatch targets does not match the value expected from the simulation start time, end time, and time steps per hour");
             else
             {
@@ -2322,6 +2326,7 @@ public:
                 tou.mc_dispatch_params.m_is_rec_su_allowed_in.resize(n);
                 tou.mc_dispatch_params.m_is_pc_su_allowed_in.resize(n);
                 tou.mc_dispatch_params.m_is_pc_sb_allowed_in.resize(n);
+                tou.mc_dispatch_params.m_is_elec_heat_dur_off.resize(n);
 
                 for (int i = 0; i < n; i++)
                 {
@@ -2331,6 +2336,7 @@ public:
                     tou.mc_dispatch_params.m_is_rec_su_allowed_in.at(i) = (bool)is_rec_su_allowed_in[i];
                     tou.mc_dispatch_params.m_is_pc_su_allowed_in.at(i) = (bool)is_pc_su_allowed_in[i];
                     tou.mc_dispatch_params.m_is_pc_sb_allowed_in.at(i) = (bool)is_pc_sb_allowed_in[i];
+                    tou.mc_dispatch_params.m_is_elec_heat_dur_off.at(i) = (bool)is_elec_heat_dur_off[i];
                 }
 
             }

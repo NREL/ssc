@@ -282,6 +282,8 @@ public:
 		std::vector<bool> m_is_rec_su_allowed_in;
 		std::vector<bool> m_is_pc_su_allowed_in;
 		std::vector<bool> m_is_pc_sb_allowed_in;
+		std::vector<bool> m_is_elec_heat_dur_off;
+
 
 		bool m_is_disp_constr;
 		std::vector<double> m_disp_cap_constr;
@@ -631,11 +633,14 @@ public:
 	struct S_control_inputs
 	{
 		E_csp_power_cycle_modes m_standby_control;		//[-] Control signal indicating standby mode
-		double m_m_dot;				//[kg/hr] HTF mass flow rate to power cycle
+		double m_m_dot;				                    //[kg/hr] HTF mass flow rate to power cycle
+        bool m_is_elec_heat_dur_off;                    //[-] Is there electric heating when cycle is off 
+
 
 		S_control_inputs()
 		{
             m_standby_control = E_csp_power_cycle_modes::OFF;
+            m_is_elec_heat_dur_off = false;
 		}
 	};
 
