@@ -1503,6 +1503,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			is_rec_su_allowed = mc_tou.mc_dispatch_params.m_is_rec_su_allowed_in.at(p);
 			is_pc_su_allowed = mc_tou.mc_dispatch_params.m_is_pc_su_allowed_in.at(p);
 			is_pc_sb_allowed = mc_tou.mc_dispatch_params.m_is_pc_sb_allowed_in.at(p);
+            mc_pc_inputs.m_is_elec_heat_dur_off = mc_tou.mc_dispatch_params.m_is_elec_heat_dur_off.at(p);;
 
 			// Reset PC maximum mass flow rate --> Need something "close" to constrained max for convergence in defocus operating modes, but don't want mass flow guess to overconstrain thermal output
 			m_m_dot_pc_max = fmin(m_m_dot_pc_max, 1.2*(m_q_dot_pc_max / m_cycle_q_dot_des) * m_m_dot_pc_des);
