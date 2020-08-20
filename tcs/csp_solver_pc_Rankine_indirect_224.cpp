@@ -1323,14 +1323,6 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		eta = 0.0;
 		T_htf_cold = ms_params.m_T_htf_cold_ref;
 
-        /*
-        if (std::isfinite(ms_params.m_W_off_heat_frac)) {
-            W_off_heat = ms_params.m_W_off_heat_frac * ms_params.m_P_ref; //[MWe] Electric heater to keep the cycle "warm"
-        }
-        else {
-            W_off_heat = 0.0;
-        }
-        */
         W_off_heat = ms_params.m_W_off_heat_frac * ms_params.m_P_ref / 1000.; //[MWe] Electric heater to keep the cycle "warm"
 		m_dot_demand = 0.0;
 		m_dot_water_cooling = 0.0;
