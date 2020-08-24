@@ -562,21 +562,13 @@ double battery_t::run(size_t lifetimeIndex, double &I, bool stateful) {
     runLifetimeModel(lifetimeIndex);
     runLossesModel(lifetimeIndex);
 
-    if (stateful) {
-        state->I = I;
-        state->Q = capacity->q0();
-        state->Q_max = capacity->qmax();
-        state->V = voltage->battery_voltage();
-        state->P_dischargeable = calculate_max_discharge_kw(&state->I_dischargeable);
-        state->P_chargeable = calculate_max_charge_kw(&state->I_chargeable);
-    }
-    state->P = I * voltage->battery_voltage() * util::watt_to_kilowatt;
+    update_state(I);
     return state->P;
 }
 
 void battery_t::runCurrent(double I) {
     run(++state->last_idx, I, true);
-}
+        }
 
 void battery_t::runPower(double P) {
     double I = calculate_current_for_power_kw(P);
@@ -723,4 +715,14 @@ battery_params battery_t::get_params() { return *params; }
 
 void battery_t::set_state(const battery_state& tmp_state) {
     *state = tmp_state;
+}
+
+void battery_t::update_state(double I) {
+    state->I = I;
+    state->Q = capacity->q0();
+    state->Q_max = capacity->qmax();
+    state->V = voltage->battery_voltage();
+    state->P_dischargeable = calculate_max_discharge_kw(&state->I_dischargeable);
+    state->P_chargeable = calculate_max_charge_kw(&state->I_chargeable);
+    state->P = I * voltage->battery_voltage() * util::watt_to_kilowatt;
 }
