@@ -1,4 +1,6 @@
 #include <cmath>
+#include <iterator>
+#include <vector>
 #include "lib_utility_rate.h"
 #include "lib_utility_rate_equations.h"
 
