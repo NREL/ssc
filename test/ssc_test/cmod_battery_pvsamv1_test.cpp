@@ -818,7 +818,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelPriceS
         EXPECT_NEAR(batt_stats.peakKwCharge, peakKwCharge, m_error_tolerance_lo);
         EXPECT_NEAR(batt_stats.peakKwDischarge, peakKwDischarge, m_error_tolerance_lo);
         EXPECT_NEAR(batt_stats.peakCycles, peakCycles, m_error_tolerance_lo);
-        EXPECT_NEAR(batt_stats.avgCycles, avgCycles, 0.0001);
+        EXPECT_NEAR(batt_stats.avgCycles, avgCycles, 0.01); // As of 8-26-20 Linux cycles 2 more times in a year than Windows, this changes the NPV by $2 over 25 years
     }
     
 }
