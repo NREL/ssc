@@ -75,7 +75,10 @@ static var_info _cm_vtab_mhk_tidal[] = {
 	{ SSC_OUTPUT,			SSC_NUMBER,			"capacity_factor",						"Capacity Factor of array",													"%",			"",				"MHKTidal",			"*",						"",						"" },
 	{ SSC_OUTPUT,			SSC_ARRAY,			"annual_energy_distribution",			"Annual energy production of array as function of speed",					"kWh",			"",				"MHKTidal",			"*",						"",						"" },
 	{ SSC_OUTPUT,			SSC_ARRAY,			"annual_cumulative_energy_distribution","Cumulative annual energy production of array as function of speed",		"kWh",			"",				"MHKTidal",			"*",						"",						"" },
-
+    { SSC_OUTPUT,			SSC_NUMBER,			"tidal_resource_start_velocity",        "First tidal velocity where probability distribution is greater than 0",		"m/s",			"",				"MHKTidal",			"*",						"",						"" },
+    { SSC_OUTPUT,			SSC_NUMBER,			"tidal_resource_end_velocity",        "Last tidal velocity where probability distribution is greater than 0",		"m/s",			"",				"MHKTidal",			"*",						"",						"" },
+    { SSC_OUTPUT,			SSC_NUMBER,			"tidal_power_start_velocity",        "First tidal velocity where power curve is greater than 0",		"m/s",			"",				"MHKTidal",			"*",						"",						"" },
+    { SSC_OUTPUT,			SSC_NUMBER,			"tidal_power_end_velocity",        "Last tidal velocity where power curve is greater than 0",		"m/s",			"",				"MHKTidal",			"*",						"",						"" },
 	var_info_invalid
 };
 
@@ -143,8 +146,34 @@ public:
 
 
 		//Storing each column of the tidal_resource_matrix and tidal_power_curve as vectors:
+        double tidal_resource_start_velocity, tidal_power_start_velocity, tidal_resource_end_velocity, tidal_power_end_velocity = 0;
+
 		for (int i = 0; i < number_rows; i++) {
-			
+            size_t n = i;
+            if (tidal_resource_matrix.at(n, 1) != 0 && tidal_resource_matrix.at(n - 1, 1) == 0 && n != 0)
+            {
+                tidal_resource_start_velocity = tidal_resource_matrix.at(n, 0);
+            }
+            if (tidal_power_curve.at(n, 1) != 0 && tidal_power_curve.at(n - 1, 1) == 0 && n != 0)
+            {
+                tidal_power_start_velocity = tidal_power_curve.at(n, 0);
+            }
+            if (tidal_resource_matrix.at(n, 1) != 0 && tidal_resource_matrix.at(n + 1, 1) == 0 && n != 0)
+            {
+                tidal_resource_end_velocity = tidal_resource_matrix.at(n, 0);
+            }
+            if (i == number_rows - 1 && tidal_resource_end_velocity == 0)
+            {
+                tidal_resource_end_velocity = tidal_resource_matrix.at(n, 0);
+            }
+            if (tidal_power_curve.at(n, 1) != 0 && tidal_power_curve.at(n + 1, 1) == 0 && n != 0)
+            {
+                tidal_power_end_velocity = tidal_power_curve.at(n, 0);
+            }
+            if (i == number_rows - 1 && tidal_power_end_velocity == 0)
+            {
+                tidal_power_end_velocity = tidal_power_curve.at(n, 0);
+            }
 			_speed_vect[i] = tidal_resource_matrix.at(i, 0);	
 			_probability_vect[i] = tidal_resource_matrix.at(i, 1); //*******************again need to modify to handle different depths
 			_power_vect[i] = tidal_power_curve.at(i, 1);
@@ -172,6 +201,8 @@ public:
 			//Contribution to Average Power from this speed bin 
 			device_average_power += _power_vect[i] * _probability_vect[i];
 		}
+
+
 				
 		//Throw exception if frequency distribution vector sums to < 99.5%
 		double probability_tolerance = 0.005;
@@ -190,6 +221,10 @@ public:
 		assign("device_average_power", var_data((ssc_number_t)device_average_power));
 		assign("device_rated_capacity", var_data((ssc_number_t)device_rated_capacity));
 		assign("capacity_factor", var_data((ssc_number_t)capacity_factor * 100));
+        assign("tidal_resource_start_velocity", var_data((ssc_number_t)tidal_resource_start_velocity));
+        assign("tidal_resource_end_velocity", var_data((ssc_number_t)tidal_resource_end_velocity));
+        assign("tidal_power_start_velocity", var_data((ssc_number_t)tidal_power_start_velocity));
+        assign("tidal_power_end_velocity", var_data((ssc_number_t)tidal_power_end_velocity));
 	}
 }; 
 
