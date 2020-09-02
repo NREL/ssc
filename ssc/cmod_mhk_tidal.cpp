@@ -79,6 +79,7 @@ static var_info _cm_vtab_mhk_tidal[] = {
     { SSC_OUTPUT,			SSC_NUMBER,			"tidal_resource_end_velocity",        "Last tidal velocity where probability distribution is greater than 0",		"m/s",			"",				"MHKTidal",			"*",						"",						"" },
     { SSC_OUTPUT,			SSC_NUMBER,			"tidal_power_start_velocity",        "First tidal velocity where power curve is greater than 0",		"m/s",			"",				"MHKTidal",			"*",						"",						"" },
     { SSC_OUTPUT,			SSC_NUMBER,			"tidal_power_end_velocity",        "Last tidal velocity where power curve is greater than 0",		"m/s",			"",				"MHKTidal",			"*",						"",						"" },
+    
 	var_info_invalid
 };
 
@@ -147,6 +148,9 @@ public:
 
 		//Storing each column of the tidal_resource_matrix and tidal_power_curve as vectors:
         double tidal_resource_start_velocity, tidal_power_start_velocity, tidal_resource_end_velocity, tidal_power_end_velocity = 0;
+        double min_velocity, max_velocity = 0;
+        min_velocity = tidal_resource_matrix.at(0, 0);
+        max_velocity = tidal_resource_matrix.at(number_rows - 1, 0);
 
 		for (int i = 0; i < number_rows; i++) {
             size_t n = i;
@@ -225,6 +229,8 @@ public:
         assign("tidal_resource_end_velocity", var_data((ssc_number_t)tidal_resource_end_velocity));
         assign("tidal_power_start_velocity", var_data((ssc_number_t)tidal_power_start_velocity));
         assign("tidal_power_end_velocity", var_data((ssc_number_t)tidal_power_end_velocity));
+        //assign("tidal_min_velocity", var_data((ssc_number_t)min_velocity));
+        //assign("tidal_max_velocity", var_data((ssc_number_t)max_velocity));
 	}
 }; 
 
