@@ -162,7 +162,7 @@ var_info vtab_battery_inputs[] = {
 
         //  cycle cost inputs
         { SSC_INPUT,        SSC_NUMBER,     "batt_cycle_cost_choice",                      "Use SAM model for cycle costs or input custom",           "0/1",     "0=UseCostModel,1=InputCost", "BatterySystem", "",                           "",                             "" },
-        { SSC_INPUT,        SSC_NUMBER,     "batt_cycle_cost",                             "Input battery cycle costs",                               "$/cycle-kWh","",                  "BatterySystem",       "",                           "",                             "" },
+        { SSC_INPUT,        SSC_ARRAY,      "batt_cycle_cost",                             "Input battery cycle costs",                               "$/cycle-kWh","",                  "BatterySystem",       "",                           "",                             "" },
 
         // Utility rate inputs
         { SSC_INOUT,        SSC_NUMBER,     "en_electricity_rates",                        "Enable Electricity Rates",                                "0/1",     "0=EnableElectricityRates,1=NoRates",    "Electricity Rates",   "",                                   "",                             "" },
