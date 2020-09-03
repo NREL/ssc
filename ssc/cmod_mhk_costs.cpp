@@ -358,7 +358,7 @@ public:
 		assign("insurance_during_construction", var_data(static_cast<ssc_number_t>(insurance_during_construction)));
 		assign("reserve_accounts", var_data(static_cast<ssc_number_t>(reserve_accounts)));
 
-		total_capital_cost_per_kwh = (capex + plant_commissioning + site_access_port_staging + project_contingency + insurance_during_construction + reserve_accounts) / annual_energy;
+		/*total_capital_cost_per_kwh = (capex + plant_commissioning + site_access_port_staging + project_contingency + insurance_during_construction + reserve_accounts) / annual_energy;
 		total_device_cost_per_kwh = (structural_assembly + power_takeoff + mooring_found_substruc) / annual_energy;
 		total_bos_cost_per_kwh = (development + eng_and_mgmt + assembly_and_install + other_infrastructure + array_cable_system + export_cable_system + onshore_substation + offshore_substation + other_elec_infra + plant_commissioning + site_access_port_staging) / annual_energy;
 		total_financial_cost_per_kwh = (project_contingency + insurance_during_construction + reserve_accounts) / annual_energy;
@@ -368,7 +368,7 @@ public:
 		assign("total_device_cost_per_kwh", var_data(static_cast<ssc_number_t>(total_device_cost_per_kwh)));
 		assign("total_bos_cost_per_kwh", var_data(static_cast<ssc_number_t>(total_bos_cost_per_kwh)));
 		assign("total_financial_cost_per_kwh", var_data(static_cast<ssc_number_t>(total_financial_cost_per_kwh)));
-		assign("total_operations_cost_per_kwh", var_data(static_cast<ssc_number_t>(total_operations_cost_per_kwh)));
+		assign("total_operations_cost_per_kwh", var_data(static_cast<ssc_number_t>(total_operations_cost_per_kwh)));*/
 
 		
 

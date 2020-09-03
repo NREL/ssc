@@ -63,7 +63,11 @@ static var_info _cm_vtab_mhk_wave[] = {
 	{ SSC_INPUT,			SSC_NUMBER,			"system_capacity",						"System Nameplate Capacity",										"kW",			"",				"MHKWave",			"?=0",						"",							"" },
 	
 	{ SSC_INPUT,			SSC_NUMBER,			"device_rated_power",				"Rated capacity of device",													"kW",			"",				"MHKWave",			"*",		"",						"" },
-
+    { SSC_INPUT,			SSC_NUMBER,			"fixed_charge_rate",						"FCR from LCOE Cost page",									"",				"",             "MHKWave",         "?=1",                      "",				"" },
+    { SSC_INPUT,			SSC_NUMBER,			"device_costs_total",						"Device costs",									"$",				"",             "MHKWave",         "?=1",                      "",				"" },
+    { SSC_INPUT,			SSC_NUMBER,			"balance_of_system_cost_total",						"BOS costs",									"$",				"",             "MHKWave",         "?=1",                      "",				"" },
+    { SSC_INPUT,			SSC_NUMBER,			"financial_cost_total",						"Financial costs",									"$",				"",             "MHKWave",         "?=1",                      "",				"" },
+    { SSC_INPUT,			SSC_NUMBER,			"total_operating_cost",						"O&M costs",									"$",				"",             "MHKWave",         "?=1",                      "",				"" },
 	// losses
 	{ SSC_INPUT,			SSC_NUMBER,			"loss_array_spacing",				"Array spacing loss",													"%",			"",				"MHKWave",			"*",		"",						"" },
 	{ SSC_INPUT,			SSC_NUMBER,			"loss_resource_overprediction",				"Resource overprediction loss",													"%",			"",				"MHKWave",			"*",		"",						"" },
@@ -85,6 +89,16 @@ static var_info _cm_vtab_mhk_wave[] = {
     { SSC_OUTPUT,			SSC_NUMBER,			"wave_power_start_period",			"Wave period at which first non-zero wave resource value occurs",				"",				"",				"MHKWave",			"*",						"",							"" },
     { SSC_OUTPUT,			SSC_NUMBER,			"wave_power_end_height",			"Wave height at which first non-zero wave resource value occurs",				"",				"",				"MHKWave",			"*",						"",							"" },
     { SSC_OUTPUT,			SSC_NUMBER,			"wave_power_end_period",			"Wave height at which first non-zero wave resource value occurs",				"",				"",				"MHKWave",			"*",						"",							"" },
+    { SSC_OUTPUT,			SSC_NUMBER,			"total_capital_cost_kwh",        "capital costs per unit annual energy",		"$/kWh",			"",				"MHKWave",			"*",						"",						"" },
+    { SSC_OUTPUT,			SSC_NUMBER,			"total_device_cost_kwh",        "Device costs per unit annual energy",		"$/kWh",			"",				"MHKWave",			"*",						"",						"" },
+    { SSC_OUTPUT,			SSC_NUMBER,			"total_bos_cost_kwh",        "Balance of system costs per unit annual energy",		"$/kWh",			"",				"MHKWave",			"*",						"",						"" },
+    { SSC_OUTPUT,			SSC_NUMBER,			"total_financial_cost_kwh",        "Financial costs per unit annual energy",		"$/kWh",			"",				"MHKWave",			"*",						"",						"" },
+    { SSC_OUTPUT,			SSC_NUMBER,			"total_om_cost_kwh",        "O&M costs per unit annual energy",		"$/kWh",			"",				"MHKWave",			"*",						"",						"" },
+    { SSC_OUTPUT,			SSC_NUMBER,			"total_capital_cost_lcoe",        "Last tidal velocity where power curve is greater than 0",		"$/kWh",			"",				"MHKWave",			"*",						"",						"" },
+    { SSC_OUTPUT,			SSC_NUMBER,			"total_device_cost_lcoe",        "Device cost",		"$/kWh",			"",				"MHKWave",			"*",						"",						"" },
+    { SSC_OUTPUT,			SSC_NUMBER,			"total_bos_cost_lcoe",        "BOS cost",		"$/kWh",			"",				"MHKWave",			"*",						"",						"" },
+    { SSC_OUTPUT,			SSC_NUMBER,			"total_financial_cost_lcoe",        "Financial cost",		"$/kWh",			"",				"MHKWave",			"*",						"",						"" },
+    { SSC_OUTPUT,			SSC_NUMBER,			"total_om_cost_lcoe",        "O&M cost (annual)",		"$/kWh",			"",				"MHKWave",			"*",						"",						"" },
     var_info_invalid
 };
 
@@ -263,6 +277,33 @@ public:
 		annual_energy *= (1 - (total_loss / 100));
 		// leave device average power without losses
 		annual_energy *= number_devices;
+
+        //TEST cost metrics in tidal page rather than cost page
+        double device_cost = as_double("device_costs_total");
+        double bos_cost = as_double("balance_of_system_cost_total");
+        double financial_cost = as_double("financial_cost_total");
+        double om_cost = as_double("total_operating_cost");
+        double fcr = as_double("fixed_charge_rate");
+        double total_capital_cost_kwh = fcr*(device_cost + bos_cost + financial_cost) / annual_energy;
+        double total_device_cost_kwh = fcr*device_cost / annual_energy;
+        double total_bos_cost_kwh = fcr*bos_cost / annual_energy;
+        double total_financial_cost_kwh = fcr*financial_cost / annual_energy;
+        double total_om_cost_kwh = om_cost / annual_energy;
+        double total_capital_cost_lcoe = (fcr * (device_cost + bos_cost + financial_cost)) / (fcr * (device_cost + bos_cost + financial_cost) + om_cost) * 100;
+        double total_device_cost_lcoe = (fcr * device_cost) / (fcr * (device_cost + bos_cost + financial_cost) + om_cost) * 100;
+        double total_bos_cost_lcoe = (fcr * bos_cost) / (fcr * (device_cost + bos_cost + financial_cost) + om_cost) * 100;
+        double total_financial_cost_lcoe = (fcr * financial_cost) / (fcr * (device_cost + bos_cost + financial_cost) + om_cost) * 100;
+        double total_om_cost_lcoe = (om_cost) / (fcr * (device_cost + bos_cost + financial_cost) + om_cost) * 100;
+        assign("total_capital_cost_kwh", var_data((ssc_number_t)total_capital_cost_kwh));
+        assign("total_device_cost_kwh", var_data((ssc_number_t)total_device_cost_kwh));
+        assign("total_bos_cost_kwh", var_data((ssc_number_t)total_bos_cost_kwh));
+        assign("total_financial_cost_kwh", var_data((ssc_number_t)total_financial_cost_kwh));
+        assign("total_om_cost_kwh", var_data((ssc_number_t)total_om_cost_kwh));
+        assign("total_capital_cost_lcoe", var_data((ssc_number_t)total_capital_cost_lcoe));
+        assign("total_device_cost_lcoe", var_data((ssc_number_t)total_device_cost_lcoe));
+        assign("total_bos_cost_lcoe", var_data((ssc_number_t)total_bos_cost_lcoe));
+        assign("total_financial_cost_lcoe", var_data((ssc_number_t)total_financial_cost_lcoe));
+        assign("total_om_cost_lcoe", var_data((ssc_number_t)total_om_cost_lcoe));
 
 		//Calculating capacity factor:
 		capacity_factor = annual_energy / (device_rated_capacity * number_devices * 8760);
