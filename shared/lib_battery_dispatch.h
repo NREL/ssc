@@ -149,8 +149,8 @@ protected:
 
 	/**
 	The dispatch mode.
-	For behind-the-meter dispatch: 0 = LOOK_AHEAD, 1 = LOOK_BEHIND, 2 = MAINTAIN_TARGET, 3 = CUSTOM, 4 = MANUAL, 5 = RESILIENCE
-	For front-of-meter dispatch: 0 = LOOK_AHEAD, 1 = LOOK_BEHIND, 2 = INPUT FORECAST, 3 = CUSTOM, 4 = MANUAL, 5 = RESILIENCE
+	For behind-the-meter dispatch: 0 = LOOK_AHEAD, 1 = LOOK_BEHIND, 2 = MAINTAIN_TARGET, 3 = CUSTOM, 4 = MANUAL, 5 = FORECAST, 6 = RESILIENCE
+	For front-of-meter dispatch: 0 = FOM_LOOK_AHEAD, 1 = FOM_LOOK_BEHIND, 2 = INPUT FORECAST, 3 = CUSTOM, 4 = MANUAL, 5 = RESILIENCE
 	*/
 	int _mode;
 
@@ -179,7 +179,7 @@ class grid_point
 {
     /**
     Class for behind-the-meter dispatch which encapsulates the required grid power, cost, hour, and step:
-    grid_point = [grid_power, hour, step, cost]
+    grid_point = [grid_power, hour, step, cost, marginal_cost]
     */
 public:
     grid_point(double grid = 0., size_t hour = 0, size_t step = 0, double cost = 0., double marginal_cost = 0.) :

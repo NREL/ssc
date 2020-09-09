@@ -8,7 +8,11 @@
 class UtilityRate
 {
 public:
-	
+
+    /*
+     * Original class for determining costs for grid charging in frong of the meter batteries
+     * It may be possible to replace this with rate_data in UtilityRateCalculator in order to handle tiers and demand charges as appropriate for FOM
+     */
 	UtilityRate(){};
 
 	UtilityRate(bool useRealTimePrices,
@@ -89,6 +93,11 @@ protected:
 class UtilityRateForecast
 {
 public:
+
+    /*
+     * Full forecast function using utility rate data. Computes the impact of tiers, time of use, and time sereis buy and sell rates
+     * *_forecast vectors need to be 12 * analysis_period in length. Predictions are used to estimate which tiers will be used for energy charges.
+     */
 	UtilityRateForecast(rate_data* util_rate, size_t stepsPerHour, std::vector<double> monthly_load_forecast, std::vector<double> monthly_gen_forecast, std::vector<double> monthly_peak_forecast, size_t analysis_period);
 
 	UtilityRateForecast(UtilityRateForecast& tmp);
@@ -98,18 +107,21 @@ public:
 	// initialize first month prior to calling this function
 	double forecastCost(std::vector<double>& predicted_loads, size_t year, size_t hour_of_year, size_t step);
 
+    // Runs when the new month appears in the forecast for the first time. Year accounts for inflation and other pricing escalations
+    void initializeMonth(int month, int year);
+    // Runs when the start of the forecast is in the new month. Copies next rates onto current rates
 	void copyTOUForecast();
-	void initializeMonth(int month, int year);
-
+	
 	// Public for testing
 	void compute_next_composite_tou(int month, int year);
 
-	std::vector<double> current_sell_rates;
+	std::vector<double> current_sell_rates; // Sell rates at the start of the forecast
 	std::vector<double> current_buy_rates;
-	std::vector<double> next_sell_rates;
+	std::vector<double> next_sell_rates; // Sell rates if the forecast crosses into the next month
 	std::vector<double> next_buy_rates;
 protected:
 
+    /* Transfer net metering surplus credits from previous month to current month */
 	void restartMonth(int prevMonth, int currentMonth, int year);
 
     double getEnergyChargeNetMetering(int month, std::vector<double>& buy_rates, std::vector<double>& sell_rates, bool crossing_month);

@@ -25,6 +25,9 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_battery_dispatch.h"
 #include "lib_utility_rate.h"
 
+/*
+ * Data for price signal dispatch (FORECAST) to compare dispatch plans in the cost_based_target_power function 
+ */
 struct dispatch_plan
 {
     std::vector<double> plannedDispatch;
@@ -32,7 +35,7 @@ struct dispatch_plan
     double cost;
     int dispatch_hours;
     int num_cycles;
-    double kWhRemaining;
+    double kWhRemaining; // Stored to anticipate the value of energy outside the forecast period
     double lowestMarginalCost;
 };
 
@@ -45,6 +48,7 @@ class dispatch_automatic_behind_the_meter_t : public dispatch_automatic_t
 		1. Methods to set or compute the grid power target (desired grid power at every step over the next 24 hours)
 		2. Methods to program the dispatch to acheive the target
 		3. Method to update the electric load forecast
+        4. Methods to generate dispatch targets based on utility rates
 	*/
 public:
 	dispatch_automatic_behind_the_meter_t(
@@ -107,23 +111,28 @@ public:
 
 protected:
 
-	/*! Initialize with a pointer*/
+	/*! Initialize with a pointer (used by copy constructor) */
 	void init_with_pointer(const dispatch_automatic_behind_the_meter_t * tmp);
 
+    /*! Functions that are common to all dispatch methods */
 	void initialize(size_t hour_of_year, size_t lifetimeIndex);
 	void check_debug(FILE *&p, bool & debug, size_t hour_of_year, size_t idx);
-	void sort_grid(FILE *p, bool debug, size_t idx);
-	void compute_energy(FILE *p, bool debug, double & E_max);
-    double compute_available_energy(FILE* p, bool debug);
-    double compute_costs(FILE* p, bool debug, size_t idx, size_t year, size_t hour_of_year);
-	void target_power(FILE*p, bool debug, double E_max, size_t idx);
-    void cost_based_target_power(FILE* p, bool debug, size_t idx, size_t year, size_t hour_of_year, double no_dispatch_cost, double E_max);
-    void plan_dispatch_for_cost(FILE* p, bool debug, dispatch_plan& plan, size_t idx, double E_max, double startingEnergy);
-    void check_power_restrictions(double& power);
-	void set_battery_power(FILE *p, bool debug);
-	bool check_new_month(size_t hour_of_year, size_t step);
+    bool check_new_month(size_t hour_of_year, size_t step);
+    void compute_energy(FILE* p, bool debug, double& E_max);
+    void set_battery_power(FILE* p, bool debug);
 
-    /*! Calculate the cost to cycle */
+    /*! Functions used by grid power target algorithms (peak shaving, input grid power targets) */
+    void sort_grid(FILE *p, bool debug, size_t idx);
+    void target_power(FILE* p, bool debug, double E_max, size_t idx);
+
+    /*! Functions used by price signal dispatch */
+    double compute_costs(FILE* p, bool debug, size_t idx, size_t year, size_t hour_of_year); // Initial computation of no-dispatch costs, assigned hourly to grid points
+    void cost_based_target_power(FILE* p, bool debug, size_t idx, size_t year, size_t hour_of_year, double no_dispatch_cost, double E_max); // Optimizing loop, runs twelve possible dispatch scenarios
+    void plan_dispatch_for_cost(FILE* p, bool debug, dispatch_plan& plan, size_t idx, double E_max, double startingEnergy); // Generates each dispatch plan (input argument)
+    double compute_available_energy(FILE* p, bool debug); // Determine how much energy is available at the start of a dispatch plan
+    void check_power_restrictions(double& power); // Call some constraints functions to ensure dispatch doesn't exceed power/current limits
+
+    /*! Calculate the cost to cycle, updates m_cycleCost */
     virtual void costToCycle();
 
 	/*! Full time-series of loads [kW] */
@@ -150,7 +159,7 @@ protected:
     /* Utility rate data structure for cost aware dispatch algorithms */
     std::shared_ptr<rate_data> rate;
 
-    /* Forecasting class cost aware dispatch algorithms. Dispatch will make many copies of this. */
+    /* Forecasting class for cost aware dispatch algorithms. Dispatch will make many copies of this, and keep one master copy tracking the actual grid use. */
     std::shared_ptr <UtilityRateForecast> rate_forecast;
 
 };

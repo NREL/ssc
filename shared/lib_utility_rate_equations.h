@@ -73,6 +73,10 @@ public:
 	std::vector<double>  dc_tou_charge;
 	ssc_number_t dc_flat_charge;
 
+    /*!
+     * Data structure organizing all of the utility usage and charges for a given month.
+     * Functions assume timestep has already been applied to energy inputs
+    */
 	ur_month();
 	ur_month(const ur_month& tmp);
 
@@ -121,12 +125,17 @@ public:
 	rate_data();
 	rate_data(const rate_data& tmp);
 
-	void init_energy_rates(bool gen_only);
-
+    /* Set up data structures for copying from vartable. Must be called prior to any of the three below setup functions */
 	void init(int num_rec_yearly);
+    /* Optional function if time series buy or sell rates are being used */
 	void setup_time_series(size_t cnt, ssc_number_t* ts_sr, ssc_number_t* ts_br);
+    /* Required function for setting up energy rate data */
 	void setup_energy_rates(ssc_number_t* ec_weekday, ssc_number_t* ec_weekend, size_t ec_tou_rows, ssc_number_t* ec_tou_in, bool sell_eq_buy);
+    /* Optional function if demand charges are present */
 	void setup_demand_charges(ssc_number_t* dc_weekday, ssc_number_t* dc_weekend, size_t dc_tou_rows, ssc_number_t* dc_tou_in, size_t dc_flat_rows, ssc_number_t* dc_flat_in);
+
+    /* Populate ur_month objects from those filled out in setup_energy_rates. Called annually in cmod_utility_rate5, other classes may reset ur_month directly */
+    void init_energy_rates(bool gen_only);
 
 	// Runs each step
 	void sort_energy_to_periods(int month, double energy, int step); // Net metering only
@@ -137,8 +146,8 @@ public:
 	void init_dc_peak_vectors(int month);
 	ssc_number_t get_demand_charge(int month, int year); 
     // Returns error codes so compute module can print errors. 0: no error, 10x: error in previous month, 20x: error in current month. x is the period where the error occured
-    int transfer_surplus(ur_month& curr_month, ur_month& prev_month);
-    void compute_surplus(ur_month& curr_month);
+    int transfer_surplus(ur_month& curr_month, ur_month& prev_month); // For net metering rollovers
+    void compute_surplus(ur_month& curr_month); // For net metering rollovers
 };
 
 #endif // _LIB_UTILITY_RATE_EQUATIONS_H_

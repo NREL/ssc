@@ -589,7 +589,6 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(FILE* p, bool
 {
     size_t i = 0;
 
-    // Optimizing loop will start here... //
     std::sort(sorted_grid.begin(), sorted_grid.end(), byCost());
     // Iterating over sorted grid
     double costDuringDispatchHours = 0.0;
