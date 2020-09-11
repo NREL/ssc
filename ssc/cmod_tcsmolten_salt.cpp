@@ -167,6 +167,8 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INPUT,     SSC_NUMBER, "rec_clearsky_model",				   "Clearsky model: None = -1, User-defined data = 0, Meinel = 1; Hottel = 2; Allen = 3; Moon = 4",											  "",             "",                                  "Tower and Receiver",                       "?=-1",															   "",              ""},
 	{ SSC_INPUT,     SSC_ARRAY,  "rec_clearsky_dni",					"User-defined clear-sky DNI",																											  "W/m2",         "",                                  "Tower and Receiver",                       "rec_clearsky_model=0",											   "",              ""},
 	{ SSC_INPUT,     SSC_NUMBER, "rec_clearsky_fraction",               "Weighting fraction on clear-sky DNI for receiver flow control",                                                                          "",             "",                                  "Tower and Receiver",                       "?=0.0",                                                            "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "rec_control_per_path",                "Control receiver mass flow per path",                                                                                                    "",             "",                                  "Tower and Receiver",                       "?=0",                                                              "",              "" },
+
 
     // Transient receiver parameters
 	{ SSC_INPUT,     SSC_NUMBER, "is_rec_model_trans",                 "Formulate receiver model as transient?",                                                                                                  "",             "",                                  "Tower and Receiver",                       "?=0",                                                              "",              ""},
@@ -1760,6 +1762,7 @@ public:
             ss_receiver->m_hel_stow_deploy = as_double("hel_stow_deploy");
             ss_receiver->m_is_iscc = false;    // Set parameters that were set with TCS defaults
 			ss_receiver->m_csky_frac = as_double("rec_clearsky_fraction");
+            ss_receiver->m_control_per_path = as_boolean("rec_control_per_path");
 
             ss_receiver->m_mode_initial = C_csp_collector_receiver::OFF;
             if (is_assigned("rec_op_mode_initial")) {
@@ -1806,6 +1809,7 @@ public:
             trans_receiver->m_hel_stow_deploy = as_double("hel_stow_deploy");
             trans_receiver->m_is_iscc = false;    // Set parameters that were set with TCS defaults
 			trans_receiver->m_csky_frac = as_double("rec_clearsky_fraction");
+            trans_receiver->m_control_per_path = as_boolean("rec_control_per_path");
 
 
             trans_receiver->m_mode_initial = C_csp_collector_receiver::OFF;

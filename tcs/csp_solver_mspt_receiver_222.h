@@ -98,14 +98,13 @@ private:
 
 		double dni;					// DNI for this solution
 		double field_eff;			// Field efficiency for this solution
-
 		double od_control;          // Defocus control
 
-		double m_dot_salt;			// Salt mass flow per path (kg/s)
+		
 		double m_dot_salt_tot;      // Total salt mass flow (kg/s)
 		double T_salt_cold_in;		// Cold salt inlet temperature (K)
 		double T_salt_hot;			// Receiver outlet T including piping loss (K)
-		double T_salt_hot_rec;      // Receiver outlet T before piping loss (K)
+        double T_salt_hot_rec;      // Receiver outlet T before piping loss (K)
 		double T_salt_props;		// Temperature at which salt properties are evaluated
 
 		double u_salt;				// Salt velocity (m/s)
@@ -120,6 +119,11 @@ private:
 		double Q_thermal;			// Thermal power delivered to fluid (less piping loss) (W)
 
 		double eta_therm;			// Receiver thermal efficiency (energy to HTF not including piping loss / Absorbed solar energy)
+        double delta_T_piping;      // Temperature change from thermal loss in piping (K)
+
+        std::vector<double> m_dot_salt_path;	// Salt mass flow per path (kg/s)
+        std::vector<double> T_salt_hot_rec_path;      // Receiver flow path outlet T before piping loss (K)
+        std::vector<double> Q_abs_path; // Total energy transferred to HTF per path, not including piping loss (W)
 
 		util::matrix_t<double> T_s;			// Average external tube T (K)
 		util::matrix_t<double> T_panel_out; // Panel HTF outlet T (K)
@@ -140,12 +144,15 @@ private:
 		void clear()
 		{
 			hour = T_amb = T_dp = v_wind_10 = p_amb = std::numeric_limits<double>::quiet_NaN();
-			dni = od_control = field_eff = m_dot_salt = m_dot_salt_tot = T_salt_cold_in = T_salt_hot = T_salt_hot_rec = T_salt_props = std::numeric_limits<double>::quiet_NaN();
-			u_salt = f = Q_inc_sum = Q_conv_sum = Q_rad_sum = Q_abs_sum = Q_dot_piping_loss = Q_inc_min = Q_thermal = eta_therm = std::numeric_limits<double>::quiet_NaN();
+			dni = od_control = field_eff = m_dot_salt_tot = T_salt_cold_in = T_salt_hot = T_salt_hot_rec = T_salt_props = std::numeric_limits<double>::quiet_NaN();
+			u_salt = f = Q_inc_sum = Q_conv_sum = Q_rad_sum = Q_abs_sum = Q_dot_piping_loss = Q_inc_min = Q_thermal = eta_therm = delta_T_piping = std::numeric_limits<double>::quiet_NaN();
 
             mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;
             itermode = -1;
 			rec_is_off = true;
+            m_dot_salt_path.clear();
+            T_salt_hot_rec_path.clear();
+            Q_abs_path.clear();
 		}
 
 	};
@@ -207,6 +214,7 @@ public:
 
 	// Flow control
 	double m_csky_frac;
+    bool m_control_per_path;
 	
 	S_outputs outputs;
 

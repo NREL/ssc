@@ -179,6 +179,7 @@ C_mspt_receiver::C_mspt_receiver()
 	m_crossover_index = -1;
 
 	m_csky_frac = std::numeric_limits<double>::quiet_NaN();
+    m_control_per_path = false;
 
 }
 
@@ -597,6 +598,7 @@ void C_mspt_receiver::initialize_transient_parameters()
 	param_inputs.T_amb = param_inputs.T_sky = param_inputs.c_htf = param_inputs.rho_htf = param_inputs.mu_htf = param_inputs.k_htf = param_inputs.Pr_htf = std::numeric_limits<double>::quiet_NaN();
 	param_inputs.Tfeval.resize_fill(m_n_elem, m_n_lines, 0.0); param_inputs.Tseval.resize_fill(m_n_elem, m_n_lines, 0.0); param_inputs.qinc.resize_fill(m_n_elem, m_n_lines, 0.0);
 	param_inputs.qheattrace.resize_fill(m_n_elem, 0.0);
+    param_inputs.mflow_path.resize(m_n_lines);
 	return; 
 }
 
@@ -799,7 +801,7 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 
 		else if (m_csky_frac > 0.9999)   // Flow control based only on clear-sky DNI
 		{
-			soln.m_dot_salt = soln_clearsky.m_dot_salt;
+            soln.m_dot_salt_path = soln_clearsky.m_dot_salt_path;
 			soln.rec_is_off = soln_clearsky.rec_is_off;
 			soln.q_dot_inc = calculate_flux_profiles(I_bn, field_eff, soln_clearsky.od_control, flux_map_input);  // Absorbed flux profiles at actual DNI and clear-sky defocus
 			calculate_steady_state_soln(soln, 0.00025);  // Solve energy balances at clearsky mass flow rate and actual DNI conditions
@@ -810,12 +812,18 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 
 			if (soln_actual.rec_is_off)  // Receiver is off in actual DNI solution -> Set mass flow to the minimum value
 			{
-				soln_actual.m_dot_salt = m_f_rec_min * m_m_dot_htf_max;
+                for (size_t j = 0; j < m_n_lines; j++)
+                {
+                    soln_actual.m_dot_salt_path.at(j) = m_f_rec_min * m_m_dot_htf_max / m_n_lines;
+                }
 				soln_actual.od_control = 1.0;
 			}
 
 			soln.rec_is_off = false;
-			soln.m_dot_salt = (1.0 - m_csky_frac) * soln_actual.m_dot_salt + m_csky_frac * soln_clearsky.m_dot_salt;  // weighted average of clear-sky and actual DNI
+            for (size_t j = 0; j < m_n_lines; j++)
+            {
+                soln.m_dot_salt_path.at(j) = (1.0 - m_csky_frac) * soln_actual.m_dot_salt_path.at(j) + m_csky_frac * soln_clearsky.m_dot_salt_path.at(j);  // weighted average of clear-sky and actual DNI
+            }
 
 			if (soln_clearsky.od_control >= 0.9999)  // No defocus in either clear-sky or actual DNI solutions
 			{
@@ -964,6 +972,7 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 				{
 					param_inputs.tm = m_tm;	// Select combined fluid/solid thermal mass values
 					param_inputs.mflow_tot = m_dot_salt_tot;
+                    param_inputs.mflow_path = soln.m_dot_salt_path;
 					param_inputs.finitial = 1.0;
 					param_inputs.ffinal = 1.0;
 					param_inputs.ramptime = 0.0;
@@ -1174,6 +1183,10 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 						{
 							m_dot_salt_startup = fmax(m_dot_salt_tot, m_f_rec_min *m_dot_rec_des);	// HTF mass flow rate during startup (kg/s)	
 							param_inputs.mflow_tot = m_dot_salt_startup;
+                            for (size_t j = 0; j < m_n_lines; j++)
+                            {
+                                param_inputs.mflow_path.at(j) = (soln.m_dot_salt_path.at(j) / m_dot_salt_tot) * m_dot_salt_startup;
+                            }
 							param_inputs.tm = m_tm;
 							param_inputs.qinc = q_inc_panel_full;		
 
@@ -1220,6 +1233,10 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 							param_inputs.qinc = q_inc_panel_full;
 							m_dot_salt_startup = fmax(m_dot_salt_tot, m_f_rec_min*m_dot_rec_des);
 							param_inputs.mflow_tot = m_dot_salt_startup;
+                            for (size_t j = 0; j < m_n_lines; j++)
+                            {
+                                param_inputs.mflow_path.at(j) = (soln.m_dot_salt_path.at(j) / m_dot_salt_tot) * m_dot_salt_startup;
+                            }
 							if (time_hold >= time_remaining)		// Startup time requirement will not be fulfilled in the current time step
 							{
 								solve_transient_startup_model(param_inputs, trans_inputs, HOLD, 0.0, 0.0, time_remaining, trans_outputs, time, energy, parasitic);
@@ -1333,6 +1350,7 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 				{
 					param_inputs.tm = m_tm;	
 					param_inputs.mflow_tot = m_dot_salt_tot;
+                    param_inputs.mflow_path = soln.m_dot_salt_path;
 					update_pde_parameters(false, param_inputs, trans_inputs);
 					calc_ss_profile(trans_inputs, trans_outputs.t_profile, trans_outputs.t_profile_wall);
 				}
@@ -1358,6 +1376,7 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 				{
 					param_inputs.tm = m_tm;	// Set thermal mass values with both fluid and solid
 					param_inputs.mflow_tot = m_dot_salt_tot;
+                    param_inputs.mflow_path = soln.m_dot_salt_path;
 					param_inputs.finitial = 1.0;
 					param_inputs.ffinal = 1.0;
 					param_inputs.ramptime = 0.0;
@@ -1807,7 +1826,11 @@ void C_mspt_receiver::calculate_steady_state_soln(s_steady_state_soln &soln, dou
 
 	bool soln_exists = (soln.T_salt_hot == soln.T_salt_hot);
 
-	soln.m_dot_salt_tot = soln.m_dot_salt * m_n_lines;
+    soln.m_dot_salt_tot = 0.0;
+    for (size_t j = 0; j < m_n_lines; j++)
+    {
+        soln.m_dot_salt_tot += soln.m_dot_salt_path.at(j);
+    }
 
 	// Set initial guess
 	double T_salt_hot_guess;
@@ -1830,6 +1853,8 @@ void C_mspt_receiver::calculate_steady_state_soln(s_steady_state_soln &soln, dou
 		soln.q_dot_loss.resize(m_n_panels);
 		soln.q_dot_abs.resize(m_n_panels);
 		soln.T_panel_ave.resize(m_n_panels);
+        soln.T_salt_hot_rec_path.resize(m_n_lines);
+        soln.Q_abs_path.resize(m_n_lines);
 
 		if (m_night_recirc == 1)
 		{
@@ -1916,7 +1941,7 @@ void C_mspt_receiver::calculate_steady_state_soln(s_steady_state_soln &soln, dou
 				double mu_coolant = field_htfProps.visc(T_coolant_prop);							//[kg/m-s] Absolute viscosity of the coolant
 				double k_coolant = field_htfProps.cond(T_coolant_prop);								//[W/m-K] Conductivity of the coolant
 				double rho_coolant = field_htfProps.dens(T_coolant_prop, 1.0);						//[kg/m^3] Density of the coolant
-				double u_coolant = soln.m_dot_salt / (m_n_t * rho_coolant * pow((m_id_tube / 2.0), 2) * CSP::pi);	//[m/s] Average velocity of the coolant through the receiver tubes
+                double u_coolant = soln.m_dot_salt_path.at(j) / (m_n_t * rho_coolant * pow((m_id_tube / 2.0), 2) * CSP::pi);	//[m/s] Average velocity of the coolant through the receiver tubes
 				double Re_inner = rho_coolant * u_coolant * m_id_tube / mu_coolant;					//[-] Reynolds number of internal flow
 				double Pr_inner = c_p_coolant * mu_coolant / k_coolant;								//[-] Prandtl number of internal flow
 
@@ -1943,7 +1968,7 @@ void C_mspt_receiver::calculate_steady_state_soln(s_steady_state_soln &soln, dou
 					T_panel_in_guess.at(i_fp) = soln.T_salt_cold_in;
 
 
-				T_panel_out_guess.at(i_fp) = T_panel_in_guess.at(i_fp) + soln.q_dot_abs.at(i_fp) / (soln.m_dot_salt * c_p_coolant);		//[K] Energy balance for each node		
+				T_panel_out_guess.at(i_fp) = T_panel_in_guess.at(i_fp) + soln.q_dot_abs.at(i_fp) / (soln.m_dot_salt_path.at(j) * c_p_coolant);		//[K] Energy balance for each node		
 				double Tavg = (T_panel_out_guess.at(i_fp) + T_panel_in_guess.at(i_fp)) / 2.0;											//[K] Panel average temperature
 				T_s_guess.at(i_fp) = Tavg + soln.q_dot_abs.at(i_fp) * (R_conv_inner + R_tube_wall);										//[K] Surface temperature based on the absorbed heat
 				if (T_s_guess.at(i_fp) < 1.0)
@@ -1961,18 +1986,22 @@ void C_mspt_receiver::calculate_steady_state_soln(s_steady_state_soln &soln, dou
 		// Calculate average receiver outlet temperature
 		int klast = m_n_panels / m_n_lines - 1;
 		double T_salt_hot_guess_sum = 0.0;
-		for (int j = 0; j < m_n_lines; j++)
-			T_salt_hot_guess_sum += T_panel_out_guess.at(m_flow_pattern.at(j, klast));		//[K] Update the calculated hot salt outlet temp
-		soln.T_salt_hot = T_salt_hot_guess_sum / (double)m_n_lines;
+        double m_dot_salt_tot = 0.0;
+        for (int j = 0; j < m_n_lines; j++)
+        {
+            soln.T_salt_hot_rec_path.at(j) = T_panel_out_guess.at(m_flow_pattern.at(j, klast));  // Receiver outlet T for path j (before piping loss)
+            m_dot_salt_tot += soln.m_dot_salt_path.at(j); //[kg/s]
+            T_salt_hot_guess_sum += soln.m_dot_salt_path.at(j) * soln.T_salt_hot_rec_path.at(j);		//[K] Update the calculated hot salt outlet temp
+        }
+        soln.T_salt_hot = T_salt_hot_guess_sum / m_dot_salt_tot;  // Mass-weighted average exit temperature
+        soln.T_salt_hot_rec = soln.T_salt_hot;
 
 
 		// Calculate outlet temperature after piping losses
 		soln.Q_dot_piping_loss = 0.0;
-        soln.T_salt_hot_rec = soln.T_salt_hot;
+        soln.delta_T_piping = 0.0;
 		if (m_Q_dot_piping_loss > 0.0)
 		{
-			double m_dot_salt_tot_temp = soln.m_dot_salt * m_n_lines;		//[kg/s]
-
 			if (m_piping_loss_coeff != m_piping_loss_coeff)   // Calculate piping loss from constant loss per m (m_Q_dot_piping_loss)
 				soln.Q_dot_piping_loss = m_Q_dot_piping_loss;
 			else
@@ -1981,8 +2010,8 @@ void C_mspt_receiver::calculate_steady_state_soln(s_steady_state_soln &soln, dou
 				double downc_loss = 2.0 * CSP::pi * (soln.T_salt_hot - T_amb) / m_Rtot_downc; //[W/m]
 				soln.Q_dot_piping_loss = 0.5 * (riser_loss + downc_loss) * (m_h_tower * m_pipe_length_mult + m_pipe_length_add); // Total piping thermal loss [W]
 			}
-			double delta_T_piping = soln.Q_dot_piping_loss / (m_dot_salt_tot_temp * c_p_coolant);	//[K]
-			soln.T_salt_hot -= delta_T_piping;	//[K]
+            soln.delta_T_piping = soln.Q_dot_piping_loss / (m_dot_salt_tot * c_p_coolant);	//[K]
+			soln.T_salt_hot -= soln.delta_T_piping;	//[K]
 		}
 
 
@@ -2012,6 +2041,17 @@ void C_mspt_receiver::calculate_steady_state_soln(s_steady_state_soln &soln, dou
 		soln.Q_abs_sum += soln.q_dot_abs.at(i);
 		soln.Q_inc_min = fmin(soln.Q_inc_min, soln.q_dot_inc.at(i));
 	}
+
+    for (size_t j = 0; j < m_n_lines; j++)
+    {
+        soln.Q_abs_path.at(j) = 0.0;
+        for (size_t i = 0; i < m_n_panels / m_n_lines; i++)
+        {
+            int i_fp = m_flow_pattern.at(j, i);
+            soln.Q_abs_path.at(j) += soln.q_dot_abs.at(i_fp);
+        }
+    }
+
 	soln.Q_thermal = soln.Q_abs_sum - soln.Q_dot_piping_loss;
 
 	if (soln.Q_inc_sum > 0.0)
@@ -2041,18 +2081,19 @@ void C_mspt_receiver::calculate_steady_state_soln(s_steady_state_soln &soln, dou
 void C_mspt_receiver::solve_for_mass_flow(s_steady_state_soln &soln)
 {
 	
-	bool soln_exists = (soln.m_dot_salt == soln.m_dot_salt);
+    bool soln_exists = (soln.m_dot_salt_tot == soln.m_dot_salt_tot);
 
 	soln.T_salt_props = (m_T_salt_hot_target + soln.T_salt_cold_in) / 2.0;		//[K] The temperature at which the coolant properties are evaluated. Validated as constant (mjw)
 	double c_p_coolant = field_htfProps.Cp(soln.T_salt_props) * 1000.0;				//[J/kg-K] Specific heat of the coolant
 
-	double m_dot_salt_guess;
+    std::vector<double> m_dot_salt_guess(m_n_lines);
 	if (soln_exists)  // Use existing solution as intial guess
 	{
-		m_dot_salt_guess = soln.m_dot_salt;
+        m_dot_salt_guess = soln.m_dot_salt_path;
 	}
 	else  // Set inital guess for mass flow solution
 	{
+        soln.m_dot_salt_path.resize(m_n_lines);
 
 		double q_dot_inc_sum = 0.0;
 		for (int i = 0; i < m_n_panels; i++)
@@ -2060,24 +2101,30 @@ void C_mspt_receiver::solve_for_mass_flow(s_steady_state_soln &soln)
 
 		double c_guess = field_htfProps.Cp((m_T_salt_hot_target + soln.T_salt_cold_in) / 2.0) * 1000.;	//[kJ/kg-K] Estimate the specific heat of the fluid in receiver
 
-		if (soln.dni > 1.E-6)
-		{
-			double q_guess = 0.85 * q_dot_inc_sum;		//[kW] Estimate the thermal power produced by the receiver			
-			m_dot_salt_guess = q_guess / (c_guess * (m_T_salt_hot_target - soln.T_salt_cold_in) * m_n_lines);	//[kg/s] Mass flow rate for each flow path			
-		}
-		else	// The tower recirculates at night (based on earlier conditions)
-		{
-			// Enter recirculation mode, where inlet/outlet temps switch
-			double T_salt_hot = m_T_salt_hot_target;
-			m_T_salt_hot_target = soln.T_salt_cold_in;
-			soln.T_salt_cold_in = T_salt_hot;
-			m_dot_salt_guess = -3500.0 / (c_guess * (m_T_salt_hot_target - soln.T_salt_cold_in) / 2.0);
+        double m_guess;
+        if (soln.dni > 1.E-6)
+        {
+            double q_guess = 0.85 * q_dot_inc_sum;		//[kW] Estimate the thermal power produced by the receiver			
+            m_guess = q_guess / (c_guess * (m_T_salt_hot_target - soln.T_salt_cold_in) * m_n_lines);	//[kg/s] Mass flow rate for each flow path			
+        }
+        else	// The tower recirculates at night (based on earlier conditions)
+        {
+            // Enter recirculation mode, where inlet/outlet temps switch
+            double T_salt_hot = m_T_salt_hot_target;
+            m_T_salt_hot_target = soln.T_salt_cold_in;
+            soln.T_salt_cold_in = T_salt_hot;
+            m_guess = -3500.0 / (c_guess * (m_T_salt_hot_target - soln.T_salt_cold_in) / 2.0);
 
-		}
+        }
+
+        for (size_t j = 0; j < m_n_lines; j++)
+        {
+            m_dot_salt_guess.at(j) = m_guess;
+        }
 	}
 
 
-	// Set soluion tolerance
+	// Set solution tolerance
 	double T_salt_hot_guess = 9999.9;		//[K] Initial guess value for error calculation
 	double err = -999.9;					//[-] Relative outlet temperature error
 	double tol = std::numeric_limits<double>::quiet_NaN();
@@ -2088,7 +2135,7 @@ void C_mspt_receiver::solve_for_mass_flow(s_steady_state_soln &soln)
 
 	int qq_max = 50;
 	int qq = 0;
-
+    double m_dot_salt_tot;
 	bool converged = false;
 	while (!converged)
 	{
@@ -2102,33 +2149,77 @@ void C_mspt_receiver::solve_for_mass_flow(s_steady_state_soln &soln)
 			break;
 		}
 
-		soln.m_dot_salt = m_dot_salt_guess;
+        soln.m_dot_salt_path = m_dot_salt_guess;
 		double tolT = tol;
-		calculate_steady_state_soln(soln, tolT, 50);   // Solve steady state thermal model		
-		err = (soln.T_salt_hot - m_T_salt_hot_target) / m_T_salt_hot_target;
+		calculate_steady_state_soln(soln, tolT, 50);   // Solve steady state thermal model
+
+        std::vector<double> err_per_path(m_n_lines);
+        err = -999.9;
+        m_dot_salt_tot = 0.0;
+        for (size_t j = 0; j < m_n_lines; j++)
+        {
+            m_dot_salt_tot += m_dot_salt_guess.at(j);
+            if (m_control_per_path)
+            {
+                err_per_path.at(j) = (soln.T_salt_hot_rec_path.at(j) - soln.delta_T_piping - m_T_salt_hot_target) / m_T_salt_hot_target;
+            }
+            else
+            {
+                err_per_path.at(j) = (soln.T_salt_hot - m_T_salt_hot_target) / m_T_salt_hot_target;
+            }
+            err = fmax(err, fabs(err_per_path.at(j)));
+        }
 
 		if (soln.rec_is_off)  // SS solution was unsuccessful or resulted in an infeasible exit temperature -> remove outlet T for solution to start next iteration from the default intial guess
 			soln.T_salt_hot = std::numeric_limits<double>::quiet_NaN();
 
 		if (fabs(err) > tol)
 		{
-			m_dot_salt_guess = (soln.Q_abs_sum - soln.Q_dot_piping_loss) / (m_n_lines * c_p_coolant * (m_T_salt_hot_target - soln.T_salt_cold_in));			//[kg/s]
+            double m_dot_salt_min = 1.e10;
+            for (size_t j = 0; j < m_n_lines; j++)
+            {
+                m_dot_salt_min = fmin(m_dot_salt_min, m_dot_salt_guess.at(j));
+                if (m_control_per_path)
+                {
+                    double Qpiping = soln.Q_dot_piping_loss * (m_dot_salt_guess.at(j) / m_dot_salt_tot);
+                    m_dot_salt_guess.at(j) = (soln.Q_abs_path.at(j) - Qpiping) / (c_p_coolant * (m_T_salt_hot_target - soln.T_salt_cold_in));			//[kg/s]
+                }
+                else
+                {
+                    m_dot_salt_guess.at(j) = (soln.Q_abs_sum - soln.Q_dot_piping_loss) / (m_n_lines * c_p_coolant * (m_T_salt_hot_target - soln.T_salt_cold_in));
+                }
+            }
 
-			if (m_dot_salt_guess < 1.E-5)
-			{
-				soln.mode = C_csp_collector_receiver::OFF;
-				soln.rec_is_off = true;
-				break;
-			}
+            if (m_dot_salt_min < 1.E-5)
+            {
+                soln.mode = C_csp_collector_receiver::OFF;
+                soln.rec_is_off = true;
+                break;
+            }
 		}
-		else if (err > 0.0)  // Solution has converged but outlet T is above target.  CSP solver seems to perform better with slighly under-design temperature than with slighly over-design temperatures. 
-			m_dot_salt_guess *= (soln.T_salt_hot - soln.T_salt_cold_in) / ((1.0 - 0.5 * tol) * m_T_salt_hot_target - soln.T_salt_cold_in);
-		else
-			converged = true;
+        else
+        {
+            converged = true;
+            for (size_t j = 0; j < m_n_lines; j++)
+            {
+                if (err_per_path.at(j) > 0.0)   // Solution has converged but outlet T is above target.  CSP solver seems to perform better with slighly under-design temperature than with slighly over-design temperatures.
+                {
+                    converged = false;
+                    if (m_control_per_path)
+                    {
+                        m_dot_salt_guess.at(j) *= (soln.T_salt_hot_rec_path.at(j) - soln.delta_T_piping - soln.T_salt_cold_in) / ((1.0 - 0.5 * tol) * m_T_salt_hot_target - soln.T_salt_cold_in);
+                    }
+                    else
+                    {
+                        m_dot_salt_guess.at(j) *= (soln.T_salt_hot - soln.T_salt_cold_in) / ((1.0 - 0.5 * tol) * m_T_salt_hot_target - soln.T_salt_cold_in);
+                    }
+                }
+            }
+        }
 
 	}
 
-	soln.m_dot_salt_tot = soln.m_dot_salt * m_n_lines;
+    soln.m_dot_salt_tot = m_dot_salt_tot;
 
 	return;
 }
@@ -2151,9 +2242,11 @@ void C_mspt_receiver::solve_for_mass_flow_and_defocus(s_steady_state_soln &soln,
 		if (soln.rec_is_off)
 			break;
 
-		double m_dot_salt_tot = soln.m_dot_salt * m_n_lines;
-		double m_dot_tube = soln.m_dot_salt / (double)m_n_t;		//[kg/s] The mass flow through each individual tube
-
+        double m_dot_salt_tot = 0.0;
+        for (size_t j = 0; j < m_n_lines; j++)
+        {
+            m_dot_salt_tot += soln.m_dot_salt_path.at(j);
+        }
 																	// Limit the HTF mass flow rate to the maximum, if needed
 		rec_is_defocusing = false;
 		if ((m_dot_salt_tot > m_dot_htf_max) || soln.itermode == 2)
@@ -2418,10 +2511,11 @@ double C_mspt_receiver::integrate(double xlow, double xhigh, const std::vector<d
 	// yarray = dependent variable points
 	// klow, khigh = lowest,highest indicies of interest 
 
-	size_t i = klow; size_t j = (size_t)khigh - 1;
+	size_t i = klow;
+    int j = khigh - 1;
 	while (i < khigh && xarray.at(i) < xlow)		// i = first point > lower integration bound
 		i++;
-	while (j >= klow && xarray.at(i) > xhigh)		// j = last point < upper integration bound
+	while (j >= klow && xarray.at(j) > xhigh)		// j = last point < upper integration bound
 		j--;
 
 	// Interpolate to find values at lower and upper integration bounds
@@ -3371,6 +3465,7 @@ void C_mspt_receiver::initialize_transient_param_inputs(const s_steady_state_sol
 
 	double T_coolant_prop = (soln.T_salt_hot + soln.T_salt_cold_in) / 2.0;
 	pinputs.mflow_tot = soln.m_dot_salt_tot;
+    pinputs.mflow_path = soln.m_dot_salt_path;
 	pinputs.c_htf = field_htfProps.Cp(T_coolant_prop)*1000.0;		// HTF specific heat at average temperature [J/kg-K] 
 	pinputs.rho_htf = field_htfProps.dens(T_coolant_prop, 1.0);	// HTF density at average temperature [kg/m3]
 	pinputs.mu_htf = field_htfProps.visc(T_coolant_prop);			// HTF viscosity at average temperature [kg/m/s]
@@ -3420,6 +3515,7 @@ void C_mspt_receiver::update_pde_parameters(bool use_initial_t, parameter_eval_i
 
 	pinputs.
 	mflow_tot = total HTF mass flow through the receiver (kg/s)
+    mflow_path = HTF mass flow per flow circuit (kg/s)
 	T_amb = ambient temperature (K)
 	T_sky = sky temperature (K)
 	c_htf = HTF specific heat evaluated at the avg. of the current inlet and the design point outlet temperatures (J/kg/K)
@@ -3479,16 +3575,24 @@ void C_mspt_receiver::update_pde_parameters(bool use_initial_t, parameter_eval_i
 
 			if (pinputs.mflow_tot > 0.0)
 			{
-				mmult = 1.0 / (double)m_n_lines / (double)m_n_t;		// Flow rate multiplier for individual tube
-				if (m_flowelem_type.at(j, i) == -1 || m_flowelem_type.at(j, i) == -2)	// Riser or downcomer
-					mmult = 1.0;
-				if (m_flowelem_type.at(j, i) == -3)		// Crossover header
-					mmult = 1.0 / (double)m_n_lines;
+                double mflow = 0.0;
+                if (m_flowelem_type.at(j, i) >= 0)  // Receiver panel
+                {
+                    mflow = pinputs.mflow_path.at(i) / (double)m_n_t;    // Flow rate per tube (kg/s)
+                }
+                else if (m_flowelem_type.at(j, i) == -3)		// Crossover header
+                {
+                    mflow = pinputs.mflow_path.at(i);
+                }
+                else if (m_flowelem_type.at(j, i) == -1 || m_flowelem_type.at(j, i) == -2) // Riser or downcomer
+                {
+                    mflow = pinputs.mflow_tot;
+                }
 
-				Reelem = 4 * mmult*pinputs.mflow_tot / (CSP::pi * m_id.at(j)*pinputs.mu_htf);			// Flow Reynolds number in element j
+				Reelem = 4 * mflow / (CSP::pi * m_id.at(j)*pinputs.mu_htf);			// Flow Reynolds number in element j
 				CSP::PipeFlow(Reelem, Pr_htf, tinputs.length.at(j) / m_id.at(j), (4.5e-5) / m_id.at(j), Nuelem, felem);
 				hinner = Nuelem*pinputs.k_htf / m_id.at(j);										// Tube internal heat transfer coefficient [W/m2/K]
-				tinputs.lam1.at(j, i) = mmult*pinputs.mflow_tot*pinputs.c_htf / pinputs.tm.at(j);
+				tinputs.lam1.at(j, i) = mflow*pinputs.c_htf / pinputs.tm.at(j);
 				Rconv = 1.0 / (0.5*hinner* m_id.at(j));  // Convective resistance between fluid and internal tube wall
 			}
 
