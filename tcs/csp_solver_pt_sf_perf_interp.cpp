@@ -271,7 +271,9 @@ void C_pt_sf_perf_interp::call(const C_csp_weatherreader::S_outputs &weather, do
 		eta_field = fmin(fmax(eta_field, 0.0), 1.0) * field_control * sf_adjust;		// Ensure physical behavior 
 
 		//Set the active flux map
-		VectDoub pos_now(sunpos);
+		VectDoub pos_now;
+        pos_now.push_back(solaz);
+        pos_now.push_back(solzen);
 		
         //find the nearest neighbors to the current point
 		vector<double> distances;
