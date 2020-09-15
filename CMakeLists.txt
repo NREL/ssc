@@ -8,6 +8,12 @@ cmake_minimum_required(VERSION 3.11)
 
 option(skip_tools "Skips the sdktool and tcsconsole builds" OFF)
 
+option(SAMAPI_EXPORT "For Unix, compile ssc libraries for SAM_api" OFF)
+
+option(skip_api "Skips the export of ssc binaries to the SAM_api directory" OFF)
+
+option(skip_tests "Skips building tests" OFF)
+
 #
 # If project isn't system_advisor_model and skip_tools=1,
 #   environment vars LK_LIB and LKD_LIB can be used to specify where to find those libraries
