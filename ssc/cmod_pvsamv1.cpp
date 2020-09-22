@@ -653,8 +653,8 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "poa_eff",                              "Array POA radiation total after reflection (IAM)",                           "kW",   "",  "Time Series (Array)",       "*",                    "",                              "" },
 
 	//SEV: total dc snow loss time series (not a required output)
-	{ SSC_OUTPUT,        SSC_ARRAY,      "dc_snow_loss",                         "Array DC power loss due to snow",						 "kW",   "",   "Time Series (Array)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "dc_net",                               "Array DC power",                                       "kW",   "",   "Time Series (Array)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "dc_snow_loss",                         "DC power loss due to snow",						 "kW",   "",   "Time Series (Array)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "dc_net",                               "Inverter DC input power",                                       "kW",   "",   "Time Series (Array)",       "*",                    "",                              "" },
 
 	//mppt outputs
 	{ SSC_OUTPUT,        SSC_ARRAY,      "inverterMPPT1_DCVoltage",              "Inverter MPPT 1 Nominal DC voltage",                  "V",    "",  "Time Series (MPPT)",           "",                    "",                              "" },
@@ -707,8 +707,8 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_poa_eff",                             "POA irradiance total after shading and soiling",          "kWh/mo",    "",                      "Monthly",       "",                    "LENGTH=12",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_poa_beam_eff",                        "POA front-side irradiance beam after shading and soiling",           "kWh/mo",    "",                      "Monthly",       "",                    "LENGTH=12",                              "" },
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_dc",                                  "PV array DC energy",                                   "kWh/mo",    "",                      "Monthly",       "",                    "LENGTH=12",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_energy",                              "System AC energy",                                     "kWh/mo",    "",                      "Monthly",       "",                    "LENGTH=12",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_dc",                                  "DC energy",                                   "kWh/mo",    "",                      "Monthly",       "",                    "LENGTH=12",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_energy",                              "AC energy",                                     "kWh/mo",    "",                      "Monthly",       "",                    "LENGTH=12",                              "" },
 
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_gh",                                   "Annual GHI",                                                    "Wh/m2/yr",  "",                      "Annual (Year 1)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_nom",                              "POA front-side irradiance total nominal",                       "kWh/yr",    "",                      "Annual (Year 1)",       "",                    "",                              "" },
@@ -805,10 +805,10 @@ static var_info _cm_vtab_pvsamv1[] = {
 	// annual_ac_gross
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_inv_eff_loss_percent", "AC inverter efficiency loss", "%", "", "Loss", "", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_wiring_loss_percent", "AC wiring loss", "%", "", "Loss", "", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_transmission_loss_percent", "Transmission loss", "%", "", "Loss", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_transmission_loss_percent", "AC transmission loss", "%", "", "Loss", "", "", "" },
 //	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_transformer_loss_percent", "AC step-up transformer loss", "%", "", "Loss", "", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_lifetime_loss_percent", "Lifetime daily AC loss- year 1", "%", "", "Loss", "", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_battery_loss_percent", "AC connected battery loss- year 1", "%", "", "Loss", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_lifetime_loss_percent", "AC lifetime daily loss - year 1", "%", "", "Loss", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_battery_loss_percent", "AC-connected battery loss - year 1", "%", "", "Loss", "", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_xfmr_loss_percent", "Transformer loss percent", "%", "", "Loss", "", "", "" },
 
 
@@ -833,7 +833,7 @@ static var_info _cm_vtab_pvsamv1[] = {
     { SSC_OUTPUT, SSC_NUMBER, "annual_dc_optimizer_loss", "DC power optimizer loss", "kWh", "", "Annual (Year 1)", "", "", "" },
 
     // total loss diagram losses for single year, does not include lifetime losses
-    { SSC_OUTPUT, SSC_NUMBER, "annual_total_loss_percent", "PV System Loss, from Nominal POA to Net AC", "kWh", "", "Annual (Year 1)", "", "", "" },
+    { SSC_OUTPUT, SSC_NUMBER, "annual_total_loss_percent", "Total loss from nominal POA to net AC", "kWh", "", "Annual (Year 1)", "", "", "" },
 
 	/*
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_after_wiring_loss", "AC output after wiring loss", "kWh", "", "Annual (Year 1)", "", "", "" },
