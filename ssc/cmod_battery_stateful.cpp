@@ -200,10 +200,12 @@ void write_battery_state(const battery_state& state, var_table* vt) {
     vt->assign_match_case("rainflow_Xlt", lifetime->cycle->rainflow_Xlt);
     vt->assign_match_case("rainflow_Ylt", lifetime->cycle->rainflow_Ylt);
     vt->assign_match_case("rainflow_jlt", lifetime->cycle->rainflow_jlt);
-    vt->assign_match_case("rainflow_peaks", lifetime->cycle->rainflow_peaks);
+    if (!lifetime->cycle->rainflow_peaks.empty()) {
+        vt->assign_match_case("rainflow_peaks", lifetime->cycle->rainflow_peaks);
+    }
     vt->assign_match_case("q_relative_calendar", lifetime->calendar->q_relative_calendar);
-    vt->assign_match_case("rainflow_Ylt", lifetime->calendar->day_age_of_battery);
-    vt->assign_match_case("rainflow_Ylt", lifetime->calendar->dq_relative_calendar_old);
+    vt->assign_match_case("day_age_of_battery", lifetime->calendar->day_age_of_battery);
+    vt->assign_match_case("dq_relative_calendar_old", lifetime->calendar->dq_relative_calendar_old);
 
     vt->assign_match_case("loss_percent", state.losses->loss_percent);
 
@@ -257,10 +259,14 @@ void read_battery_state(battery_state& state, var_table* vt) {
     vt_get_number(vt, "rainflow_Xlt", &lifetime->cycle->rainflow_Xlt);
     vt_get_number(vt, "rainflow_Ylt", &lifetime->cycle->rainflow_Ylt);
     vt_get_int(vt, "rainflow_jlt", &lifetime->cycle->rainflow_jlt);
-    vt_get_array_vec(vt, "rainflow_peaks", lifetime->cycle->rainflow_peaks);
+    if (vt->is_assigned("rainflow_peaks"))
+    {
+        vt_get_array_vec(vt, "rainflow_peaks", lifetime->cycle->rainflow_peaks);
+        // If not assigned, leave empty
+    }
     vt_get_number(vt, "q_relative_calendar", &lifetime->calendar->q_relative_calendar);
-    vt_get_int(vt, "rainflow_Ylt", &lifetime->calendar->day_age_of_battery);
-    vt_get_number(vt, "rainflow_Ylt", &lifetime->calendar->dq_relative_calendar_old);
+    vt_get_int(vt, "day_age_of_battery", &lifetime->calendar->day_age_of_battery);
+    vt_get_number(vt, "dq_relative_calendar_old", &lifetime->calendar->dq_relative_calendar_old);
 
     vt_get_number(vt, "loss_percent", &state.losses->loss_percent);
 
