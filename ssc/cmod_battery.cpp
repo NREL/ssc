@@ -161,7 +161,7 @@ var_info vtab_battery_inputs[] = {
         { SSC_INPUT,        SSC_NUMBER,     "batt_cycle_cost",                             "Input battery cycle costs",                               "$/cycle-kWh","",                  "BatterySystem",       "",                           "",                             "" },
 
         // Utility rate inputs
-        { SSC_INOUT,        SSC_NUMBER,     "en_electricity_rates",                        "Enable Electricity Rates",                                "0/1",     "0=EnableElectricityRates,1=NoRates",    "Electricity Rates",   "",                                   "",                             "" },
+        { SSC_INOUT,        SSC_NUMBER,     "en_electricity_rates",                        "Enable Electricity Rates",                                "0/1",     "0=NoRates,1=EnableElectricityRates",    "Electricity Rates",   "",                                   "",                             "" },
         { SSC_INPUT,        SSC_NUMBER,     "ur_en_ts_sell_rate",                          "Enable time step sell rates",                             "0/1",     "",                       "Electricity Rates",              "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2",  "BOOLEAN",                           "" },
         //{ SSC_INPUT,        SSC_ARRAY,      "ur_ts_sell_rate",                             "Time step sell rates",                                    "0/1",     "",                       "Electricity Rates",              "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2",  "",                                  "" },
         { SSC_INPUT,        SSC_ARRAY,      "ur_ts_buy_rate",                              "Time step buy rates",                                     "0/1",     "",                       "Electricity Rates",              "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2",  "",                                  "" },
@@ -427,8 +427,6 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                     else {
                         batt_vars->ec_use_realtime = true;
                         batt_vars->ec_realtime_buy = batt_vars->forecast_price_series_dollar_per_kwh;
-                        vt.assign("en_electricity_rates", 1);
-                        batt_vars->ec_rate_defined = true;
                     }
                 }
 

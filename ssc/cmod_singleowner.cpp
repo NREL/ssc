@@ -1098,7 +1098,12 @@ public:
 				cf.at(CF_utility_bill, i) = ub_arr[i];
 			save_cf(CF_utility_bill, nyears, "cf_utility_bill");
 		}
-
+        else
+        {
+            for (i = 0; i <= nyears; i++)
+                cf.at(CF_utility_bill, i) = 0;
+            save_cf(CF_utility_bill, nyears, "cf_utility_bill");
+        }
 
 
 
