@@ -232,6 +232,22 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelSkyDiffuseAndIrra
 	}
 }
 
+TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelSkyDiffuseAndIrradModels_test)
+{
+    std::map<std::string, double> pairs;
+    double annual_energy_expected = 7623;
+    // Perez with POA reference cell
+    pairs["sky_model"] = 0;
+    pairs["irrad_mode"] = 1;
+    int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+    EXPECT_FALSE(pvsam_errors);
+    if (!pvsam_errors) {
+        SetCalculated("annual_energy");
+        EXPECT_NEAR(calculated_value, annual_energy_expected, m_error_tolerance_hi);
+        
+    }
+}
+
 /// Test PVSAMv1 with default no-financial model and combinations of module and inverter models
 TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelModuleAndInverterModels)
 {

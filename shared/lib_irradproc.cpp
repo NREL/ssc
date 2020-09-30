@@ -658,7 +658,7 @@ double limit_zero2one(double value) //Limit parameter to a value between 0-1
 	return limited;
 }
 
-double limit_degrees180pm(double degrees) //Limit degrees to 0-180°
+double limit_degrees180pm(double degrees) //Limit degrees to -180-180° (positive westward from the meridian, negative eastward from the meridian)
 {
 	double limited;
 
@@ -2230,8 +2230,8 @@ int irrad::calc()
 	double t_cur = hour + minute/60.0;
 
 	// calculate sunrise and sunset hours in local standard time for the current day
-    double sunAnglesRadians_test[9];
-	solarpos( year, month, day, 12, 0.0, latitudeDegrees, longitudeDegrees, timezone, sunAnglesRadians_test );
+    //double sunAnglesRadians_test[9];
+	//solarpos( year, month, day, 12, 0.0, latitudeDegrees, longitudeDegrees, timezone, sunAnglesRadians_test );
 	solarpos_spa(year, month, day, 12, 0.0, 0.0, latitudeDegrees, longitudeDegrees, timezone, 0, 66.7, elevation, pressure, temp, tiltDegrees, surfaceAzimuthDegrees, sunAnglesRadians);
 
 	double t_sunrise = sunAnglesRadians[4];

@@ -128,6 +128,7 @@ protected:
 	int shade_mode_1x;
 	int array_type;
 	double gcr;
+    double elev, pres, tdry;
     sssky_diffuse_table skydiff_table;
 
 	double ibeam, iskydiff, ignddiff;
@@ -224,12 +225,12 @@ public:
 
 
 	int process_irradiance(int year, int month, int day, int hour, double minute, double ts_hour,
-		double lat, double lon, double tz, double dn, double df, double alb)
+		double lat, double lon, double tz, double dn, double df, double alb, double elev, double pres, double tdry)
 	{
 		irrad irr;
 		irr.set_time(year, month, day, hour, minute, ts_hour);
 		irr.set_location(lat, lon, tz);
-		//irr.set_optional(elev, pres, tdry);
+		irr.set_optional(elev, pres, tdry);
 		irr.set_sky_model(2, alb);
 		irr.set_beam_diffuse(dn, df);
 		irr.set_surface(track_mode, tilt, azimuth, 45.0,
@@ -245,6 +246,28 @@ public:
 
 		return code;
 	}
+
+    int process_irradiance_1ts(int year, int month, int day, int hour, double minute, double ts_hour,
+        double lat, double lon, double tz, double dn, double df, double alb)
+    {
+        irrad irr;
+        irr.set_time(year, month, day, hour, minute, ts_hour);
+        irr.set_location(lat, lon, tz);
+        irr.set_sky_model(2, alb);
+        irr.set_beam_diffuse(dn, df);
+        irr.set_surface(track_mode, tilt, azimuth, 45.0,
+            shade_mode_1x == 1, // backtracking mode
+            gcr, false, 0.0);
+
+        int code = irr.calc();
+
+
+        irr.get_sun(&solazi, &solzen, &solalt, 0, 0, 0, &sunup, 0, 0, 0);
+        irr.get_angles(&aoi, &stilt, &sazi, &rot, &btd);
+        irr.get_poa(&ibeam, &iskydiff, &ignddiff, 0, 0, 0);
+
+        return code;
+    }
 
 	void powerout(double time, double degradationFactor, double &shad_beam, double shad_diff, double dni, double dhi, double alb, double wspd, double tdry)
 	{
@@ -517,7 +540,7 @@ public:
 
 					int code = process_irradiance(wf.year, wf.month, wf.day, wf.hour, wf.minute,
 						instantaneous ? IRRADPROC_NO_INTERPOLATE_SUNRISE_SUNSET : ts_hour,
-						hdr.lat, hdr.lon, hdr.tz, wf.dn, wf.df, alb);
+						hdr.lat, hdr.lon, hdr.tz, wf.dn, wf.df, alb, hdr.elev, wf.pres, wf.tdry);
 
 					if (-1 == code)
 					{
@@ -675,7 +698,7 @@ public:
 		double shad_beam = 1.0;
 		powerout(0, 1.0, shad_beam, 1.0, beam, diff, alb, wspd, tamb);
 
-		int code = process_irradiance(year, month, day, hour, minute,
+		int code = process_irradiance_1ts(year, month, day, hour, minute,
 			IRRADPROC_NO_INTERPOLATE_SUNRISE_SUNSET,
 			lat, lon, tz, beam, diff, alb);
 
