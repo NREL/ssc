@@ -1088,6 +1088,10 @@ void approx_sun_rise_and_set(double h0, double m_rts[3]) //approximate sunrise a
 	m_rts[0] = limit_zero2one(m0_calc); //m0 sun transit time (fraction of day)
 	m_rts[1] = limit_zero2one(m0_calc - h0_dfrac); //approximate sunrise time in fraction of day
 	m_rts[2] = limit_zero2one(m0_calc + h0_dfrac); // approximate sunset time in fraction of day
+    /*if (m_rts[2] < m_rts[1])
+    {
+        m_rts[2] = 1+ m0_calc + h0_dfrac;
+    }*/
 }
 
 double rts_alpha_delta_prime(double n, double ad[3]) //alpha and delta prime variables based on day prior, day of, day following right ascension and declination parameters
@@ -1295,8 +1299,15 @@ void calculate_eot_and_sun_rise_transit_set(double jme, double tz, double alpha,
 		//double sunrise = 12.0 - (h0 / DTOR) / 15.0 - (lng / 15.0 - tz) - E;
 		//needed_values[1] = sunrise - (lng/ 15.0) - E/60; //sunrise in local standard time
 		needed_values[2] = sunrise;
-		
-		double sunset = dayfrac_to_local_hr(sun_rise_and_set(approx_times_array, h_rts_array, delta_prime_array, lat, h_prime_array, h0_prime, 2), tz); //sunset (fraction of day)
+        
+        double sunset = dayfrac_to_local_hr(sun_rise_and_set(approx_times_array, h_rts_array, delta_prime_array, lat, h_prime_array, h0_prime, 2), tz); //sunset (fraction of day)
+        if (sunset < sunrise)
+        {
+            //double sunset_unadjusted = sun_rise_and_set(approx_times_array, h_rts_array, delta_prime_array, lat, h_prime_array, h0_prime, 2);
+            //sunset = 24 * (sunset_unadjusted + tz / 24);
+            sunset += 24;
+        }
+        //double sunset = dayfrac_to_local_hr(sun_rise_and_set(approx_times_array, h_rts_array, delta_prime_array, lat, h_prime_array, h0_prime, 2), tz); //sunset (fraction of day)
 		//double sunset = 12.0 + (h0 / DTOR) / 15.0 - (lng / 15.0 - tz) - E;
 		needed_values[3] = sunset;//sunrise in local standard time
 		
@@ -1321,8 +1332,15 @@ void solarpos_spa(int year, int month, int day, int hour, double minute, double 
 	double ascension_and_declination[2]; //preallocate storage for sun right ascension and declination (both degrees)
 	double needed_values_spa[9];
 	double needed_values_eot[4]; //preallocate storage for output from calculate_spa
+    double needed_values_eot_check[4];
 	calculate_spa(jd, lat, lng, alt, pressure, temp, delta_t, tilt, azm_rotation, ascension_and_declination, needed_values_spa); //calculate solar position algorithm values
 	calculate_eot_and_sun_rise_transit_set(needed_values_spa[0], tz, ascension_and_declination[0], needed_values_spa[2], needed_values_spa[3], jd, year, month, day, lat, lng, alt, pressure, temp, tilt, delta_t, azm_rotation, needed_values_eot); //calculate Equation of Time and sunrise/sunset values
+
+    if (needed_values_eot[3] < needed_values_eot[2])
+    {
+        calculate_eot_and_sun_rise_transit_set(needed_values_spa[0], tz, ascension_and_declination[0], needed_values_spa[2], needed_values_spa[3], jd, year, month, day+1, lat, lng, alt, pressure, temp, tilt, delta_t, azm_rotation, needed_values_eot); //calculate Equation of Time and sunrise/sunset values
+    }
+
 
 	double tst = hour + minute / 60.0 + (lng / 15.0 - tz) + needed_values_eot[0]/60; //true solar time (output of function)
 

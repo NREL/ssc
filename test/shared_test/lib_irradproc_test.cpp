@@ -112,7 +112,7 @@ TEST_F(IrradTest, sunriseAndSunsetAtDifferentLocationsTest_spa_lib_irradproc) {
 	//vector<double> sunrise_times = { 4.636, 3.849, 6.521, 5.833, 6.513, -100.0, 2.552, -100.0 };
 	vector<double> sunrise_times = { 4.549, 3.726, 6.458, 5.745, 6.451, -100.0, 2.7831, -100.0 };
 	//vector<double> sunset_times = { 19.455, 20.436, 17.814, 20.723, 17.449, 100.0, 25.885, 100.0 };
-	vector<double> sunset_times = { 19.538, 20.559, 17.877, 20.810, 17.514, 100.0, 1.6813, 100.0 };
+	vector<double> sunset_times = { 19.538, 20.559, 17.877, 20.810, 17.514, 100.0, 25.6813, 100.0 };
 	vector<int> month = { 6, 6, 6, 6, 6, 6, 7, 6 };
 	vector<int> day = { 21, 21, 21, 21, 21, 21, 20, 11 };
 	vector<int> alt = { 1730, 34, 154, 667, 0, 6, 2, 6 };
@@ -130,15 +130,15 @@ TEST_F(IrradTest, sunriseAndSunsetAtDifferentLocationsTest_spa_lib_irradproc) {
 
 TEST_F(IrradTest, sunriseAndSunsetAlaskaTest_spa_lib_irradproc) {
 	e = 0.001;
-	double latitude = 66.9;
-	double longitude = -162.6;
-	double time_zone = -9;
-	double sunrise_time = -100.0;
-	double sunset_time = 100.0;
+	double latitude = -17.75;
+	double longitude = -179.3;
+	double time_zone = 12;
+	double sunrise_time = 6.451;
+	double sunset_time = 17.514;
 	int month = 6;
-	int day = 11;
+	int day = 21;
 	double sun_results[9];
-	double alt = 2;
+	double alt = 0;
 	solarpos_spa(2010, month, day, 14, 30, 0, latitude, longitude, time_zone, 0, 67, 2, 1016, 15, latitude, 180, sun_results);
 	//solarpos(2010, month, day, 14, 30, latitude, longitude, time_zone, sun_results);
 	EXPECT_NEAR((double)sun_results[4], sunrise_time, e) << "sunrise time for lat " << latitude << " long " << longitude << " failed\n";
