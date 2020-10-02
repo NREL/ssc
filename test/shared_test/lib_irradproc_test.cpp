@@ -114,7 +114,7 @@ TEST_F(IrradTest, sunriseAndSunsetAtDifferentLocationsTest_spa_lib_irradproc) {
 	//vector<double> sunset_times = { 19.455, 20.436, 17.814, 20.723, 17.449, 100.0, 25.885, 100.0 };
 	vector<double> sunset_times = { 19.538, 20.559, 17.877, 20.810, 17.514, 100.0, 25.6813, 100.0 };
 	vector<int> month = { 6, 6, 6, 6, 6, 6, 7, 6 };
-	vector<int> day = { 21, 21, 21, 21, 21, 21, 20, 11 };
+	vector<int> day = { 21, 21, 21, 21, 21, 21, 21, 11 };
 	vector<int> alt = { 1730, 34, 154, 667, 0, 6, 2, 6 };
 
 	double sun_results[9]; //vector to hold the results of solarpos function
@@ -152,8 +152,8 @@ TEST_F(IrradTest, sunriseAndSunsetAlaskaTest2_spa_lib_irradproc) {
     double time_zone = -9;
     double sunrise_time = 2.7831;
     double sunset_time = 1.6813;
-    int month = 7;
-    int day = 20;
+    int month = 8;
+    int day = 14;
     double sun_results[9];
     double alt = 2;
     solarpos_spa(2010, month, day, 14, 30, 0, latitude, longitude, time_zone, 0, 66.7, 2, 1016, 15, latitude, 180, sun_results);
