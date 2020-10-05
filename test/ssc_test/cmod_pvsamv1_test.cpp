@@ -15,7 +15,6 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, DefaultNoFinancialModel) {
     {
         ssc_number_t annual_energy;
         ssc_data_get_number(data, "annual_energy", &annual_energy);
-        //EXPECT_NEAR(annual_energy, 8714, m_error_tolerance_hi) << "Annual energy.";
         EXPECT_NEAR(annual_energy, 8711.6, m_error_tolerance_hi) << "Annual energy."; //value changed due to new solarpos_spa algorithm
 
         ssc_number_t capacity_factor;
@@ -54,7 +53,6 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, DefaultLifetimeNoFinancialModel) 
     {
         ssc_number_t annual_energy;
         ssc_data_get_number(data, "annual_energy", &annual_energy);
-        //EXPECT_NEAR(annual_energy, 8714, m_error_tolerance_hi) << "Annual energy.";
         EXPECT_NEAR(annual_energy, 8711.6, m_error_tolerance_hi) << "Annual energy."; //value changed due to new solarpos_spa algorithm
 
         ssc_number_t capacity_factor;
@@ -84,7 +82,6 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, DefaultResidentialModel)
     {
         ssc_number_t annual_energy;
         ssc_data_get_number(data, "annual_energy", &annual_energy);
-        //EXPECT_NEAR(annual_energy, 8714, m_error_tolerance_hi) << "Annual energy.";
         EXPECT_NEAR(annual_energy, 8711.6, m_error_tolerance_hi) << "Annual energy.";
 
         ssc_number_t capacity_factor;
@@ -121,7 +118,6 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, DefaultResidentialModel)
 
         ssc_number_t npv;
         ssc_data_get_number(data, "npv", &npv);
-        //EXPECT_NEAR(npv, 4648, m_error_tolerance_hi) << "Net present value";
         EXPECT_NEAR(npv, 4646.7, m_error_tolerance_hi) << "Net present value"; //value changed due to new solarpos_spa algorithm
 
         ssc_number_t payback;
@@ -159,7 +155,6 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelCustomWeatherFile
     {
         ssc_number_t annual_energy;
         ssc_data_get_number(data, "annual_energy", &annual_energy);
-        //EXPECT_NEAR(annual_energy, 7591, m_error_tolerance_hi) << "Annual energy.";
         EXPECT_NEAR(annual_energy, 8079.1, m_error_tolerance_hi) << "Annual energy."; //value changed due to new solarpos_spa algorithm
 
         ssc_number_t capacity_factor;
@@ -168,7 +163,6 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelCustomWeatherFile
 
         ssc_number_t kwh_per_kw;
         ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
-        //EXPECT_NEAR(kwh_per_kw, 1617, m_error_tolerance_hi) << "Energy yield";
         EXPECT_NEAR(kwh_per_kw, 1722, m_error_tolerance_hi) << "Energy yield"; //value changed due to new solarpos_spa algorithm
 
         ssc_number_t performance_ratio;
@@ -186,7 +180,6 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelCustomWeatherFile
 /// Test PVSAMv1 with default no-financial model and combinations of Sky Diffuse Model and Weather File Irradiance
 TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelSkyDiffuseAndIrradModels)
 {
-    //std::vector<double> annual_energy_expected = { 8513, 8522, 8525, 8635, 8645, 8647, 8714, 8723, 8726, 7623, 7300};
     std::vector<double> annual_energy_expected = { 8511, 8522, 8525, 8633, 8644, 8647, 8712, 8722, 8726, 7623, 7297 }; //value changed due to new solarpos_spa algorithm
     std::map<std::string, double> pairs;
     size_t count = 0;
@@ -251,7 +244,6 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelSkyDiffuseAndIrra
 /// Test PVSAMv1 with default no-financial model and combinations of module and inverter models
 TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelModuleAndInverterModels)
 {
-    //std::vector<double> annual_energy_expected = { 2518, 2548, 2476, 2518, 8714, 8694, 8661, 8714, 54, 57, 60, 54, 5405, 5400, 5347, 5404, 1726, 1766, 1695, 1726};
     std::vector<double> annual_energy_expected = { 2517, 2547, 2474, 2517, 8712, 8691, 8657, 8711, 54, 57, 60, 54, 5403, 5398, 5345, 5403, 1726, 1764, 1695, 1726 }; //value changed due to new solarpos_spa algorithm
     std::map<std::string, double> pairs;
     size_t count = 0;
@@ -282,7 +274,6 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelModuleAndInverter
 //This test can be expanded when we allow different combinations of thermal, spectral, and reflection models with different module models
 TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelModuleThermalSpectralReflection)
 {
-    //std::vector<double> annual_energy_expected = { 8714, 8749 };
     std::vector<double> annual_energy_expected = { 8712, 8749 }; //value changed due to new solarpos_spa algorithm
     std::map<std::string, double> pairs;
     size_t count = 0;
@@ -320,7 +311,6 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelSystemDesign)
     pairs["inverter_count"] = 22;
     pairs["subarray1_track_mode"] = 0;
 
-    //std::vector<double> annual_energy_expected = { 183243, 242540, 258572, 216242, 192975 };
     std::vector<double> annual_energy_expected = { 183183, 242368, 258372, 216129, 192903 }; //value changed due to new solarpos_spa algorithm
 
     for (int tracking_option = 0; tracking_option != 5; tracking_option++)
@@ -347,7 +337,6 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelSystemDesign)
     {
         ssc_number_t annual_energy;
         ssc_data_get_number(data, "annual_energy", &annual_energy);
-        //EXPECT_NEAR(annual_energy, 237340, m_error_tolerance_hi) << "Annual energy.";
         EXPECT_NEAR(annual_energy, 237146, m_error_tolerance_hi) << "Annual energy."; //value changed due to new solarpos_spa algorithm
     }
 
@@ -382,7 +371,6 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelSystemDesign)
     std::vector<double> subarray2_track_mode = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
     std::vector<double> subarray3_track_mode = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 0, 0, 0, 0, 0 };
     std::vector<double> subarray4_track_mode = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4 };
-    //annual_energy_expected = { 167392, 176331, 183243, 166251, 175833, 183243, 171952, 178321, 183243, 171952, 178321, 183243, 183243, 183235, 183243, 183243, 183243, 183243, 183243, 183243, 183243, 183243, 183243, 183243, 183243, 183243, 177310, 182927, 162456, 176883, 182902, 160961, 179014, 183024, 168431, 179014, 183024, 168431, 183243, 183243, 183243, 183243, 183243, 198796, 205187, 192695, 186088, 183243, 201501, 206750, 193370, 186290, 183243, 195419, 198926, 189995, 185277, 183243, 195419, 198926, 189995, 185277 };
     annual_energy_expected = { 167338, 176267, 183183, 166198, 175768, 183183, 171896, 178257, 183183, 171896, 178257, 183183, 183183, 183175, 183183, 183183, 183183, 183183, 183183, 183183, 183183, 183183, 183183, 183183, 183183, 183183, 177254, 182865, 162398, 176827, 182841, 160903, 178957, 182963, 168372, 178957, 182963, 168372, 183183, 183183, 183183, 183183, 183183, 198697, 205087, 192621, 186025, 183183, 201406, 206648, 193294, 186227, 183183, 195336, 198838, 189925, 185216, 183183, 195336, 198838, 189925, 185216 };
     //value changed due to new solarpos_spa algorithm
 
@@ -428,7 +416,6 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelShading)
 // PR 280	std::vector<double> annual_energy_expected = { 12911, 10607, 10579, 10377 };
     // 2 - 3D shading with self-shading reduced from 10579 to 10529
     // 3 - shading with snow reduced from 10377 to 10328
-    //std::vector<double> annual_energy_expected = { 12911, 10607, 10529, 10328 };
     std::vector<double> annual_energy_expected = { 12905, 10604, 10526, 10326 }; //value changed due to new solarpos_spa algorithm
     std::map<std::string, double> pairs;
 
@@ -514,7 +501,6 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelShading)
 TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelLosses)
 {
     // 0: Default Losses, 1: Modify Point Losses, 2: Modify Availability
-    //std::vector<double> annual_energy_expected = { 8714, 7874, 7607 };
     std::vector<double> annual_energy_expected = { 8712, 7871, 7604 }; //value changed due to new solarpos_spa algorithm
     std::map<std::string, double> pairs;
 
@@ -606,7 +592,6 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, InvTempDerate) {
 /// Test PVSAMv1 multiple MPPT inverter, otherwise using default no financial model inputs
 TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelMultipleMPPT)
 {
-    //std::vector<double> annual_energy_expected = { 7633 };
     std::vector<double> annual_energy_expected = { 7631 }; //value changed due to new solarpos_spa algorithm
     std::map<std::string, double> pairs;
 
@@ -645,7 +630,6 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, SnowModel)
 
     ssc_number_t annual_energy;
     ssc_data_get_number(data, "annual_energy", &annual_energy);
-    //EXPECT_NEAR(annual_energy, 11354.7, m_error_tolerance_hi) << "Annual energy.";
     EXPECT_NEAR(annual_energy, 11346.4, m_error_tolerance_hi) << "Annual energy."; //value changed due to new solarpos_spa algorithm
 
 }
@@ -715,7 +699,6 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, bifacial) {
     {
         ssc_number_t annualEnergy;
         ssc_data_get_number(data, "annual_energy", &annualEnergy);
-        //EXPECT_NEAR(annualEnergy, 9141, 1.0) << "Bifacial annual energy from SAM version 2018.11.11 using Phoenix TMY2";
         EXPECT_NEAR(annualEnergy, 9139, 1.0) << "Bifacial annual energy from SAM version 2018.11.11 using Phoenix TMY2"; //value changed due to new solarpos_spa algorithm
     }
 }
