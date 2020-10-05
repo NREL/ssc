@@ -85,7 +85,8 @@ public:
 				break;
 			}			
 
-			solarpos( wf.year, wf.month, wf.day, wf.hour, wf.minute, hdr.lat, hdr.lon, hdr.tz, sunn );						
+			//solarpos( wf.year, wf.month, wf.day, wf.hour, wf.minute, hdr.lat, hdr.lon, hdr.tz, sunn );
+            solarpos_spa(wf.year, wf.month, wf.day, wf.hour, wf.minute, 0, hdr.lat, hdr.lon, hdr.tz, 0, 66.7, hdr.elev, wf.pres, wf.tdry, 0, 180, sunn);
 			zenith = sunn[1]; // zenith angle, radians
 			hextra = sunn[8];
 			

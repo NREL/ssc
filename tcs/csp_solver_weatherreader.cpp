@@ -126,8 +126,9 @@ void C_csp_weatherreader::timestep_call(const C_csp_solver_sim_info &p_sim_info)
 	angle[0] = angle[1] = angle[2] = angle[3] = angle[4] = 0;
 	diffc[0] = diffc[1] = diffc[2] = 0;
 
-	solarpos(m_rec.year, m_rec.month, m_rec.day, m_rec.hour, m_rec.minute,
-		m_hdr->lat, m_hdr->lon, m_hdr->tz, sunn);
+	//solarpos(m_rec.year, m_rec.month, m_rec.day, m_rec.hour, m_rec.minute,
+		//m_hdr->lat, m_hdr->lon, m_hdr->tz, sunn);
+    solarpos_spa(m_rec.year, m_rec.month, m_rec.day, m_rec.hour, m_rec.minute, 0, m_hdr->lat, m_hdr->lon, m_hdr->tz, 0, 66.7, m_hdr->elev, 0, 0, m_tilt, m_azimuth, sunn);
 
 	if( sunn[2] > 0.0087 )
 	{
