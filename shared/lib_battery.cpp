@@ -143,7 +143,7 @@ Define Losses
 */
 void losses_t::initialize() {
     state = std::make_shared<losses_state>();
-    state->loss_percent = 0;
+    state->loss_kw = 0;
     if (params->loss_choice == losses_params::MONTHLY) {
         if (params->monthly_charge_loss.size() == 1) {
             params->monthly_charge_loss = std::vector<double>(12, params->monthly_charge_loss[0]);
@@ -216,18 +216,18 @@ void losses_t::run_losses(size_t lifetimeIndex, double dtHour, double charge_ope
     // update system losses depending on user input
     if (params->loss_choice == losses_params::MONTHLY) {
         if (charge_operation == capacity_state::CHARGE)
-            state->loss_percent = params->monthly_charge_loss[monthIndex];
+            state->loss_kw = params->monthly_charge_loss[monthIndex];
         if (charge_operation == capacity_state::DISCHARGE)
-            state->loss_percent = params->monthly_discharge_loss[monthIndex];
+            state->loss_kw = params->monthly_discharge_loss[monthIndex];
         if (charge_operation == capacity_state::NO_CHARGE)
-            state->loss_percent = params->monthly_idle_loss[monthIndex];
+            state->loss_kw = params->monthly_idle_loss[monthIndex];
     }
     else if (params->loss_choice == losses_params::SCHEDULE)  {
-        state->loss_percent = params->schedule_loss[lifetimeIndex % params->schedule_loss.size()];
+        state->loss_kw = params->schedule_loss[lifetimeIndex % params->schedule_loss.size()];
     }
 }
 
-double losses_t::getLoss() { return state->loss_percent; }
+double losses_t::getLoss() { return state->loss_kw; }
 
 losses_state losses_t::get_state() { return *state; }
 

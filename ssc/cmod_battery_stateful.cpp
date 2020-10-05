@@ -146,7 +146,7 @@ var_info vtab_battery_state[] = {
         { SSC_INOUT,        SSC_NUMBER,     "dq_relative_calendar_old",  "Change in capacity of last time step",                     "%",         "",                     "StateCell",        "",                           "",                               ""  },
 
         // losses
-        { SSC_INOUT,        SSC_NUMBER,     "loss_percent",              "Power loss percent",                                       "%",         "",                     "StatePack",          "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "loss_kw",                   "Ancillary power loss",                                     "kW",         "",                     "StatePack",          "",                           "",                               ""  },
 
         // replacements
         { SSC_INOUT,        SSC_NUMBER,     "n_replacements",            "Number of replacements at current year",                   "",         "",                      "StatePack",     "",                           "",                               ""  },
@@ -207,7 +207,7 @@ void write_battery_state(const battery_state& state, var_table* vt) {
     vt->assign_match_case("day_age_of_battery", lifetime->calendar->day_age_of_battery);
     vt->assign_match_case("dq_relative_calendar_old", lifetime->calendar->dq_relative_calendar_old);
 
-    vt->assign_match_case("loss_percent", state.losses->loss_percent);
+    vt->assign_match_case("loss_kw", state.losses->loss_kw);
 
     vt->assign_match_case("n_replacements", state.replacement->n_replacements);
     vt->assign_match_case( "indices_replaced", state.replacement->indices_replaced);
@@ -268,7 +268,7 @@ void read_battery_state(battery_state& state, var_table* vt) {
     vt_get_int(vt, "day_age_of_battery", &lifetime->calendar->day_age_of_battery);
     vt_get_number(vt, "dq_relative_calendar_old", &lifetime->calendar->dq_relative_calendar_old);
 
-    vt_get_number(vt, "loss_percent", &state.losses->loss_percent);
+    vt_get_number(vt, "loss_kw", &state.losses->loss_kw);
 
     vt_get_int(vt, "n_replacements", &state.replacement->n_replacements);
     vt_get_array_vec(vt, "indices_replaced", state.replacement->indices_replaced);

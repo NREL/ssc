@@ -126,7 +126,7 @@ private:
 */
 
 struct losses_state {
-    double loss_percent;
+    double loss_kw;
 
     friend std::ostream &operator<<(std::ostream &os, const losses_state &p);
 };
