@@ -95,8 +95,10 @@ class UtilityRateForecast
 public:
 
     /*
-     * Full forecast function using utility rate data. Computes the impact of tiers, time of use, and time sereis buy and sell rates
+     * Full forecast function using utility rate data. Computes the impact of tiers, time of use, and time series buy and sell rates
+     * The rate_data object provided will be modified by this class as appropriate to the net grid usage, especially the ur_month objects
      * *_forecast vectors need to be 12 * analysis_period in length. Predictions are used to estimate which tiers will be used for energy charges.
+     * and set up baseline demand costs - equal to the demand charge at the average load during the month.
      */
 	UtilityRateForecast(rate_data* util_rate, size_t stepsPerHour, std::vector<double> monthly_load_forecast, std::vector<double> monthly_gen_forecast, std::vector<double> monthly_peak_forecast, size_t analysis_period);
 
@@ -104,17 +106,34 @@ public:
 
 	~UtilityRateForecast();
 
-	// initialize first month prior to calling this function
+	/*
+    * Returns the increase in cost for the utility bill over the forecast period (length of predicted loads * steps per hour)
+    * Loads provided to this function are included in the forecast bill going forward, so if you need to run the same period multiple times, make copies of this class
+    * For net metering, if there are surplus credits prior to the start of the the forecast period, cost will be zero
+    * End of year net metering credits are counted as zero, since this improves dispatch overall
+    * For demand charges, in order to avoid those charges occuring at 12 am on the first of each month, ur_month.dc_flat_peak and tou_peak are
+    * set to the average load for that month in initialize_month. This means the peak charges will be recorded the first time the average load goes over the month.
+    * Usage notes: initialize first month prior to calling this function
+    */
 	double forecastCost(std::vector<double>& predicted_loads, size_t year, size_t hour_of_year, size_t step);
 
-    // Runs when the new month appears in the forecast for the first time. Year accounts for inflation and other pricing escalations
+    /*
+     * Runs when the new month appears in the forecast for the first time. Year accounts for inflation and other pricing escalations
+     * Modifies ur_month and buy/sell rates for the months specified
+     */
     void initializeMonth(int month, int year);
-    // Runs when the start of the forecast is in the new month. Copies next rates onto current rates
+    // Runs when the starting hour of the forecast is in the new month. Copies next rates onto current rates
 	void copyTOUForecast();
 	
-	// Public for testing
+	/*
+     * Combine the monthly forecasts with the time of use tiers to anticipate the value of shifting load from peak to off-peak
+     * The forecast is needed so that the anticipated value of load shifting remains the same throughout the month
+     * See https://www.pge.com/includes/docs/pdfs/shared/environment/pge/cleanair/electricdrivevehicles/PEV_rate_options.pdf or cmod_utility_rate_5 for more details on the calculation in a real bill
+     * Public for testing
+     */
 	void compute_next_composite_tou(int month, int year);
 
+    // Composite buy/sell rates given the usage in the forecasts provided to the constructor.
 	std::vector<double> current_sell_rates; // Sell rates at the start of the forecast
 	std::vector<double> current_buy_rates;
 	std::vector<double> next_sell_rates; // Sell rates if the forecast crosses into the next month
