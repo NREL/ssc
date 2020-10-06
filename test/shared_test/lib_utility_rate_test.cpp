@@ -663,3 +663,55 @@ TEST(lib_utility_rate_test, test_one_at_a_time_vs_full_vector_buy_and_sell_rates
 
     ASSERT_NEAR(-75.0, cost, 0.02);
 }
+
+TEST(lib_utility_rate_test, test_ts_buy_only)
+{
+    rate_data data;
+    set_up_time_series(data);
+    data.en_ts_sell_rate = false;
+
+    int steps_per_hour = 1;
+    std::vector<double> monthly_load_forecast = { 150, 75 };
+    std::vector<double> monthly_gen_forecast = { 50, 175 };
+    std::vector<double> monthly_peak_forecast = { 100, 50 };
+
+    UtilityRateForecast rate_forecast(&data, steps_per_hour, monthly_load_forecast, monthly_gen_forecast, monthly_peak_forecast, 2);
+
+    // - is load
+    std::vector<double> forecast = { 50, -100, -50, -50, -25, 25, 50, 100 };
+    rate_forecast.initializeMonth(0, 0);
+    rate_forecast.copyTOUForecast();
+
+    UtilityRateForecast forecast_copy(rate_forecast);
+
+    int hour_of_year = 0; // 12 am on Jan 1st
+    double cost = rate_forecast.forecastCost(forecast, 0, hour_of_year, 0);
+
+    ASSERT_NEAR(350.0, cost, 0.02);
+}
+
+TEST(lib_utility_rate_test, test_ts_sell_only)
+{
+    rate_data data;
+    set_up_time_series(data);
+    data.en_ts_buy_rate = false;
+
+    int steps_per_hour = 1;
+    std::vector<double> monthly_load_forecast = { 150, 75 };
+    std::vector<double> monthly_gen_forecast = { 50, 175 };
+    std::vector<double> monthly_peak_forecast = { 100, 50 };
+
+    UtilityRateForecast rate_forecast(&data, steps_per_hour, monthly_load_forecast, monthly_gen_forecast, monthly_peak_forecast, 2);
+
+    // - is load
+    std::vector<double> forecast = { 50, -100, -50, -50, -25, 25, 50, 100 };
+    rate_forecast.initializeMonth(0, 0);
+    rate_forecast.copyTOUForecast();
+
+    UtilityRateForecast forecast_copy(rate_forecast);
+
+    int hour_of_year = 0; // 12 am on Jan 1st
+    double cost = rate_forecast.forecastCost(forecast, 0, hour_of_year, 0);
+
+    ASSERT_NEAR(-402.50, cost, 0.02);
+}

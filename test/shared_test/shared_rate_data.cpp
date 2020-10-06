@@ -123,7 +123,7 @@ void set_up_time_series(rate_data& data)
 
     data.setup_energy_rates(&p_ur_ec_sched_weekday[0], &p_ur_ec_sched_weekend[0], ec_tou_rows, &p_ur_ec_tou_mat[0], sell_eq_buy);
     data.init_energy_rates(false);
-    data.enable_nm = true;
+    data.enable_nm = false; // Can't have time series rates with nm
     data.nm_credits_w_rollover = false;
     data.nm_credit_sell_rate = 0.0;
 }
