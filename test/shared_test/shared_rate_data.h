@@ -12,4 +12,6 @@ void set_up_residential_1_4_peak(rate_data& data, size_t steps_per_hour);
 
 void set_up_time_series(rate_data& data);
 
+void set_up_simple_demand_charge(rate_data& data);
+
 #endif // _SHARED_RATE_DATA_H_

@@ -135,6 +135,34 @@ TEST(lib_utility_rate_test, test_tiered_sell_rates)
 	EXPECT_NEAR(0.0266, rate_forecast.next_sell_rates[1], 0.0001);
 }
 
+TEST(lib_utility_rate_test, test_simple_demand_charges)
+{
+    rate_data data;
+    set_up_simple_demand_charge(data); // No energy charges, $1/kW flat demand charge
+
+    int steps_per_hour = 1;
+    std::vector<double> monthly_load_forecast = { 31 * 24, 28 * 24 }; // Average load is 1 kW
+    std::vector<double> monthly_gen_forecast = { 0, 0 };
+    std::vector<double> monthly_peak_forecast = { 1, 1 };
+
+    UtilityRateForecast rate_forecast(&data, steps_per_hour, monthly_load_forecast, monthly_gen_forecast, monthly_peak_forecast, 2);
+
+    // - is load
+    std::vector<double> forecast = { -1, -1, 0, -2 }; // Demand charge increases by 1 kW from average
+    rate_forecast.initializeMonth(0, 0);
+    rate_forecast.copyTOUForecast();
+
+    int hour_of_year = 0; // 12 am on Jan 1st
+    double cost = rate_forecast.forecastCost(forecast, 0, hour_of_year, 0);
+
+    ASSERT_NEAR(1.00, cost, 0.01);
+
+    // Running the same forecast again does not increase the cost (no energy charges, demand does not increase)
+    hour_of_year = 4; // 12 am on Jan 1st
+    cost = rate_forecast.forecastCost(forecast, 0, hour_of_year, 0);
+    ASSERT_NEAR(0.0, cost, 0.01);
+}
+
 TEST(lib_utility_rate_test, test_demand_charges_crossing_months)
 {
 	rate_data data;
@@ -159,6 +187,7 @@ TEST(lib_utility_rate_test, test_demand_charges_crossing_months)
 	ASSERT_NEAR(1508.11, cost, 0.02);
 }
 
+// Excel implementation of these results is available at https://github.com/NREL/SAM-documentation/blob/master/Unit%20Testing/Utility%20Rates/UtilityRateForecast/lib_utility_rate_test_cross_checks.xlsx
 TEST(lib_utility_rate_test, test_changing_rates_crossing_months)
 {
 	rate_data data;
