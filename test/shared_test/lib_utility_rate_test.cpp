@@ -352,6 +352,30 @@ TEST(lib_utility_rate_test, test_net_metering_end_of_month_carryover)
     ASSERT_NEAR(0, cost, 0.001);
 }
 
+TEST(lib_utility_rate_test, test_net_metering_dollar_credits)
+{
+    rate_data data;
+    set_up_pge_residential_rate_data(data); // No demand charges
+    data.nm_credits_w_rollover = false;
+
+    int steps_per_hour = 1;
+    std::vector<double> monthly_load_forecast = { 0, 150 };
+    std::vector<double> monthly_gen_forecast = { 150, 0 };
+    std::vector<double> monthly_peak_forecast = { 0, 100 };
+
+    UtilityRateForecast rate_forecast(&data, steps_per_hour, monthly_load_forecast, monthly_gen_forecast, monthly_peak_forecast, 2);
+
+    // - is load
+    std::vector<double> forecast = { 100, 50, -50, -100 }; // Net zero load, but credits expire with zero sell rate
+    rate_forecast.initializeMonth(0, 0);
+    rate_forecast.copyTOUForecast();
+
+    int hour_of_year = 742; // 10 pm on Jan 31st
+    double cost = rate_forecast.forecastCost(forecast, 0, hour_of_year, 0);
+
+    ASSERT_NEAR(17.75, cost, 0.01);
+}
+
 TEST(lib_utility_rate_test, test_net_metering_end_of_month_cashout)
 {
     rate_data data;
