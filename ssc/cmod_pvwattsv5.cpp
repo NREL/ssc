@@ -706,6 +706,7 @@ public:
             elev = as_double("elevation");
             if (elev < 0 || elev > 5100) {
                 elev = elev / 3.281; //adjust feet to meters if greater than the highest city (La Rinoconada, Peru)
+                throw exec_error("poacalib", "The elevation input is outside of the expected range. Please make sure that the units are in meters");
             }
         }
         if (!is_assigned("dry_temperature")) {
@@ -713,8 +714,8 @@ public:
         }
         else {
             tdry = as_double("dry_temperature");
-            if (tdry > 128) {
-                tdry = (tdry - 32) / 1.8;
+            if (tdry > 128 || tdry < -50) {
+                throw exec_error("poacalib", "The annual average temperature input is outside of the expected range. Please make sure that the units are in degrees Celsius");
             }
         }
         if (!is_assigned("pressure")) {
@@ -722,14 +723,8 @@ public:
         }
         else {
             pres = as_double("pressure");
-            if (pres < 2 && pres > 1.5) {
-                pres *= 1000; //convert bar to millibar
-            }
-            else if (pres > 10000) {
-                pres /= 100; //convert pascals to millibar
-            }
-            else if (pres < 1.5) {
-                pres *= 1013; //convert atm to millibar
+            if (pres > 2000 || pres < 500) {
+                throw exec_error("poacalib", "The atmospheric pressure input is outside of the expected range. Please make sure that the units are in millibars");
             }
         }
 

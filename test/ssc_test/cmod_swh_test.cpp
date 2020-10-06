@@ -10,7 +10,7 @@ TEST_F(CM_SWH, ResidentialDefault_cmod_swh) {
 
     ssc_number_t annual_energy;
     ssc_data_get_number(data, "annual_energy", &annual_energy);
-    EXPECT_NEAR(annual_energy, 2361.8, 0.1); //value changed due to new solarpos_spa algorithm
+    EXPECT_NEAR(annual_energy, 2362.2, 0.1); //value changed due to new solarpos_spa algorithm
 
 }
 

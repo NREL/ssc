@@ -2162,7 +2162,7 @@ void irrad::set_location(double latDegrees, double longDegrees, double tz)
     //this->temp = tdry;
 }
 
-void irrad::set_optional(double elev = 0, double pres = 1013.25, double tdry = 15) //defaults of 0 meters elevation, atmospheric pressure, 15°C average annual temperature
+void irrad::set_optional(double elev, double pres, double tdry) //defaults of 0 meters elevation, atmospheric pressure, 15°C average annual temperature
 {
     this->elevation = elev;
     this->pressure = pres;
