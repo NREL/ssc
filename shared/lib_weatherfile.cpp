@@ -1259,7 +1259,10 @@ bool weatherfile::open(const std::string& file, bool header_only)
                 m_columns[MONTH].data[i] = (float)stoi(cols[1]);
                 m_columns[DAY].data[i] = (float)stoi(cols[2]);
                 m_columns[HOUR].data[i] = (float)stoi(cols[3]) - 1;  // hour goes 0-23, not 1-24;
-                m_columns[MINUTE].data[i] = 30; //minute goes 0-59
+                m_columns[MINUTE].data[i] = (float)stoi(cols[4]); //minute goes 0-59
+                if (m_columns[MINUTE].data[i] == 60) {
+                    m_columns[MINUTE].data[i] = 0; //Legacy TMY formats have minutes = 60, means time step includes following hour (11:00-11:59) but number should be zero for SAM purposes
+                }
                 m_columns[GHI].data[i] = check_missing(col_or_nan(cols[13]), 9999.);
                 m_columns[DNI].data[i] = check_missing(col_or_nan(cols[14]), 9999.);
                 m_columns[DHI].data[i] = check_missing(col_or_nan(cols[15]), 9999.);
