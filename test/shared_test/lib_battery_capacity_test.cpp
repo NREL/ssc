@@ -172,6 +172,60 @@ TEST_F(LiIon_lib_battery_capacity_test, runSequenceTest) {
     compareState(old_cap->get_state(), s1, "replaceBatteryTest: 8");
 }
 
+// battery is overcharged so capacity gets reduced while we want to discharge some current
+TEST_F(LiIon_lib_battery_capacity_test, OverchargedSOCLimits) {
+    double I = 35.;
+    double dt = 1./60.;
+
+    auto cap = std::make_shared<capacity_lithium_ion_t>(19984, 90, SOC_max, SOC_min, dt);
+    cap->updateCapacityForThermal(90);
+
+    // charge will be dumped
+    cap->updateCapacity(I, dt);
+
+    ASSERT_EQ(I, 35);
+}
+
+// battery is overcharged so capacity gets reduced while we want to charge some current
+TEST_F(LiIon_lib_battery_capacity_test, OverchargedSOCLimits1) {
+    double I = -20.;
+    double dt = 1./60.;
+
+    auto cap = std::make_shared<capacity_lithium_ion_t>(19984, 90, SOC_max, SOC_min, dt);
+    cap->updateCapacityForThermal(90);
+
+    // charge will be dumped
+    cap->updateCapacity(I, dt);
+
+    ASSERT_NEAR(I, 0, 1e-2);
+    ASSERT_NEAR(cap->SOC(), SOC_max, 1e-3);
+}
+
+// battery is undercharged so capacity gets increased while we want to discharge some current
+TEST_F(LiIon_lib_battery_capacity_test, UnderchargedSOCLimits) {
+    double I = 35.;
+    double dt = 1./60.;
+
+    auto cap = std::make_shared<capacity_lithium_ion_t>(19984, 10, SOC_max, SOC_min, dt);
+    cap->updateCapacityForThermal(90);
+
+    cap->updateCapacity(I, dt);
+
+    ASSERT_EQ(I, 0);
+}
+
+// battery is undercharged so capacity gets increased while we want to charge some current
+TEST_F(LiIon_lib_battery_capacity_test, UnderchargedSOCLimits1) {
+    double I = -35.;
+    double dt = 1./60.;
+
+    auto cap = std::make_shared<capacity_lithium_ion_t>(19984, 10, SOC_max, SOC_min, dt);
+    cap->updateCapacityForThermal(90);
+    cap->updateCapacity(I, dt);
+
+    ASSERT_EQ(I, -35);
+}
+
 TEST_F(KiBam_lib_battery_capacity_test, SetUpTest) {
     EXPECT_NEAR(old_cap->q1(), 25.6938, tol);
     EXPECT_EQ(old_cap->q10(), 93);

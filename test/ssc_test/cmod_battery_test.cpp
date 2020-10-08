@@ -65,7 +65,7 @@ TEST_F(CMBattery_cmod_battery, ResilienceMetricsFullLoad){
 
     EXPECT_EQ(resilience_hours[0], 0);
     EXPECT_EQ(resilience_hours[1], 1);
-    EXPECT_NEAR(avg_critical_load,  979.55, 0.1);
+    EXPECT_NEAR(avg_critical_load,  979.67, 0.1);
     EXPECT_NEAR(resilience_hrs_avg, 1.34, 0.01);
     EXPECT_EQ(resilience_hrs_min, 0);
     EXPECT_EQ(outage_durations[0], 0);

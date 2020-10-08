@@ -131,7 +131,6 @@ capacity_state capacity_t::get_state() { return *state; }
 void capacity_t::check_SOC() {
     double q_upper = state->qmax_lifetime * params->maximum_SOC * 0.01;
     double q_lower = state->qmax_lifetime * params->minimum_SOC * 0.01;
-    double I_orig = state->cell_current;
 
     // set capacity to upper thermal limit
     if (q_upper > state->qmax_thermal * params->maximum_SOC * 0.01) {
@@ -142,21 +141,23 @@ void capacity_t::check_SOC() {
         q_lower = state->qmax_thermal * params->minimum_SOC * 0.01;
     }
 
-    // check if overcharged
-    if (state->q0 > q_upper) {
-        if (fabs(state->cell_current) > tolerance) {
+    if (state->q0 > q_upper + tolerance) {
+        // if overcharged then reduce charging
+        if (state->cell_current < -tolerance) {
             state->cell_current += (state->q0 - q_upper) / params->dt_hr;
-            if (state->cell_current / I_orig < 0)
-                state->cell_current = 0;
+
+            // do not switch to discharging
+            state->cell_current = fmin(0, state->cell_current);
         }
         state->q0 = q_upper;
     }
-        // check if undercharged
-    else if (state->q0 < q_lower) {
-        if (fabs(state->cell_current) > tolerance) {
+    else if (state->q0 < q_lower - tolerance) {
+        // if undercharged then reduce discharhing
+        if (state->cell_current > tolerance) {
             state->cell_current += (state->q0 - q_lower) / params->dt_hr;
-            if (state->cell_current / I_orig < 0)
-                state->cell_current = 0;
+
+            // do not switch to charging
+            state->cell_current = fmax(0, state->cell_current);
         }
         state->q0 = q_lower;
     }
