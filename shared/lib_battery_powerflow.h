@@ -131,7 +131,7 @@ public:
 	double powerBatteryDischargeMaxDC; ///< The maximum sustained power the battery can discharge (kWdc)
 	double powerBatteryChargeMaxAC;   ///< The maximum sustained power the battery can charge (kWac)
 	double powerBatteryDischargeMaxAC; ///< The maximum sustained power the battery can discharge (kWac)
-	double powerSystemLoss;        ///< The parasitic power loss in the system (kW)
+	double powerSystemLoss;        ///< The auxiliary power loss in the system (kW)
 	double powerConversionLoss;    ///< The power loss due to conversions in the battery power electronics (kW)
 	double voltageSystem;		   ///< The system voltage
 
