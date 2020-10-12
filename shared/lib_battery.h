@@ -180,6 +180,11 @@ public:
     /// Get the loss at the specified simulation index (year 1)
     double getLoss();
 
+    // Get projected losses at a given timestep (for dispatch planning) does not update loss_kw
+    double getChargeLoss(size_t lifetimeIndex, double dtHour);
+    double getDischargeLoss(size_t lifetimeIndex, double dtHour);
+    double getIdleLoss(size_t lifetimeIndex, double dtHour);
+
     losses_state get_state();
 
     losses_params get_params();
@@ -370,6 +375,11 @@ public:
     double V_nominal(); // the nominal battery voltage
 
     double I();
+
+    // Get estimated losses
+    double getChargeLoss(size_t lifetimeIndex, double dtHour);
+    double getDischargeLoss(size_t lifetimeIndex, double dtHour);
+    double getIdleLoss(size_t lifetimeIndex, double dtHour);
 
     battery_state get_state();
 

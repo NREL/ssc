@@ -1031,7 +1031,7 @@ void dispatch_automatic_behind_the_meter_t::update_dispatch(size_t hour_of_year,
             target_power(p, debug, E_max, idx);
 
             // Set battery power profile
-            set_battery_power(p, debug);
+            set_battery_power(p, debug, idx);
         }
         // save for extraction
         _P_target_current = _P_target_use[_day_index];
@@ -1040,6 +1040,10 @@ void dispatch_automatic_behind_the_meter_t::update_dispatch(size_t hour_of_year,
     else
     {
         m_batteryPower->powerBatteryTarget = _P_battery_use[idx % (8760 * _steps_per_hour)];
+        if (m_batteryPower->powerBatteryTarget > 0) {
+            m_batteryPower->powerBatteryTarget += _Battery->getDischargeLoss(idx, _dt_hour); // Battery is responsible for covering discharge losses
+        }
+
         if (m_batteryPower->connectionMode == AC_CONNECTED) {
             if (m_batteryPower->powerBatteryTarget < 0)
                 m_batteryPower->powerBatteryTarget *= m_batteryPower->singlePointEfficiencyDCToAC;
@@ -1273,15 +1277,17 @@ void dispatch_automatic_behind_the_meter_t::target_power(FILE* p, bool debug, do
     }
 }
 
-void dispatch_automatic_behind_the_meter_t::set_battery_power(FILE* p, bool debug)
+void dispatch_automatic_behind_the_meter_t::set_battery_power(FILE* p, bool debug, size_t idx)
 {
     for (size_t i = 0; i != _P_target_use.size(); i++) {
         _P_battery_use[i] = grid[i].Grid() - _P_target_use[i];
 
+        double discharging_loss = _Battery->getDischargeLoss(idx + i, _dt_hour); // Units are kWac for AC connected batteries, and kWdc for DC connected
+
         // At this point the target power is expressed in AC, must convert to DC for battery
         if (m_batteryPower->connectionMode == m_batteryPower->AC_CONNECTED) {
             if (_P_battery_use[i] > 0) {
-                _P_battery_use[i] /= m_batteryPower->singlePointEfficiencyDCToAC;
+                _P_battery_use[i] = (_P_battery_use[i] + discharging_loss) / m_batteryPower->singlePointEfficiencyDCToAC;
             }
             else {
                 _P_battery_use[i] *= m_batteryPower->singlePointEfficiencyACToDC;
@@ -1290,7 +1296,7 @@ void dispatch_automatic_behind_the_meter_t::set_battery_power(FILE* p, bool debu
         // DC-connected is harder to convert from AC, must make assumptions about inverter efficiency and charge shource
         else {
             if (_P_battery_use[i] > 0) {
-                _P_battery_use[i] /= (m_batteryPower->singlePointEfficiencyDCToDC * m_batteryPower->singlePointEfficiencyACToDC);
+                _P_battery_use[i] = (_P_battery_use[i] + discharging_loss) / (m_batteryPower->singlePointEfficiencyDCToDC * m_batteryPower->singlePointEfficiencyACToDC);
 
             }
             // Need to bring ac load and charging values to DC side. Assume current inverter efficiency continues through dispatch forecast
@@ -1603,6 +1609,10 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
     {
         // extract input power by modifying lifetime index to year 1
         m_batteryPower->powerBatteryTarget = _P_battery_use[lifetimeIndex % (8760 * _steps_per_hour)];
+        if (m_batteryPower->powerBatteryTarget > 0) {
+            m_batteryPower->powerBatteryTarget += _Battery->getDischargeLoss(lifetimeIndex, _dt_hour); // Battery is responsible for covering discharge losses
+        }
+
         if (m_batteryPower->connectionMode == AC_CONNECTED) {
             if (m_batteryPower->powerBatteryTarget < 0)
                 m_batteryPower->powerBatteryTarget *= m_batteryPower->singlePointEfficiencyDCToAC;

@@ -229,6 +229,45 @@ void losses_t::run_losses(size_t lifetimeIndex, double dtHour, double charge_ope
 
 double losses_t::getLoss() { return state->loss_kw; }
 
+double losses_t::getChargeLoss(size_t lifetimeIndex, double dtHour) {
+    size_t indexYearOne = util::yearOneIndex(dtHour, lifetimeIndex);
+    auto hourOfYear = (size_t)std::floor(indexYearOne * dtHour);
+    size_t monthIndex = util::month_of((double)(hourOfYear)) - 1;
+
+    if (params->loss_choice == losses_params::MONTHLY) {
+        return state->loss_kw = params->monthly_charge_loss[monthIndex];
+    }
+    else if (params->loss_choice == losses_params::SCHEDULE) {
+        return params->schedule_loss[lifetimeIndex % params->schedule_loss.size()];
+    }
+}
+
+double losses_t::getDischargeLoss(size_t lifetimeIndex, double dtHour) {
+    size_t indexYearOne = util::yearOneIndex(dtHour, lifetimeIndex);
+    auto hourOfYear = (size_t)std::floor(indexYearOne * dtHour);
+    size_t monthIndex = util::month_of((double)(hourOfYear)) - 1;
+
+    if (params->loss_choice == losses_params::MONTHLY) {
+        return state->loss_kw = params->monthly_discharge_loss[monthIndex];
+    }
+    else if (params->loss_choice == losses_params::SCHEDULE) {
+        return params->schedule_loss[lifetimeIndex % params->schedule_loss.size()];
+    }
+}
+
+double losses_t::getIdleLoss(size_t lifetimeIndex, double dtHour) {
+    size_t indexYearOne = util::yearOneIndex(dtHour, lifetimeIndex);
+    auto hourOfYear = (size_t)std::floor(indexYearOne * dtHour);
+    size_t monthIndex = util::month_of((double)(hourOfYear)) - 1;
+
+    if (params->loss_choice == losses_params::MONTHLY) {
+        return state->loss_kw = params->monthly_idle_loss[monthIndex];
+    }
+    else if (params->loss_choice == losses_params::SCHEDULE) {
+        return params->schedule_loss[lifetimeIndex % params->schedule_loss.size()];
+    }
+}
+
 losses_state losses_t::get_state() { return *state; }
 
 losses_params losses_t::get_params() {return *params; }
@@ -698,6 +737,18 @@ double battery_t::V_nominal() { return voltage->battery_voltage_nominal(); }
 double battery_t::SOC() { return capacity->SOC(); }
 
 double battery_t::I() { return capacity->I(); }
+
+double battery_t::getChargeLoss(size_t lifetimeIndex, double dtHour) {
+    return losses->getChargeLoss(lifetimeIndex, dtHour);
+}
+
+double battery_t::getDischargeLoss(size_t lifetimeIndex, double dtHour) {
+    return losses->getDischargeLoss(lifetimeIndex, dtHour);
+}
+
+double battery_t::getIdleLoss(size_t lifetimeIndex, double dtHour) {
+    return losses->getIdleLoss(lifetimeIndex, dtHour);
+}
 
 battery_state battery_t::get_state() { return *state; }
 

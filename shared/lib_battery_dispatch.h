@@ -470,7 +470,7 @@ protected:
 	void sort_grid(FILE *p, bool debug, size_t idx);
 	void compute_energy(FILE *p, bool debug, double & E_max);
 	void target_power(FILE*p, bool debug, double E_max, size_t idx);
-	void set_battery_power(FILE *p, bool debug);
+	void set_battery_power(FILE *p, bool debug, size_t idx);
 	void check_new_month(size_t hour_of_year, size_t step);
 
 	/*! Full time-series of loads [ac kW] */

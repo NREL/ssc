@@ -152,16 +152,23 @@ TEST_F(lib_battery_losses_test, MonthlyLossesTest){
     int charge_mode = capacity_state::CHARGE;
 
     size_t idx = 0;
+    double dt_hr = 1;
     model->run_losses(idx, dt_hour, charge_mode);
     EXPECT_NEAR(model->getLoss(), 0, tol) << "MonthlyLossesTest: 1";
+    EXPECT_NEAR(model->getChargeLoss(idx, dt_hr), 0, tol);
+    EXPECT_NEAR(model->getIdleLoss(idx, dt_hr), 0, tol);
 
     idx = 40 * 24;
     model->run_losses(idx, dt_hour, charge_mode);
     EXPECT_NEAR(model->getLoss(), 1, tol) << "MonthlyLossesTest: 2";
+    EXPECT_NEAR(model->getChargeLoss(idx, dt_hr), 1, tol);
+    EXPECT_NEAR(model->getIdleLoss(idx, dt_hr), 1, tol);
 
     idx = 70 * 24;
     model->run_losses(idx, dt_hour, charge_mode);
     EXPECT_NEAR(model->getLoss(), 2, tol) << "MonthlyLossesTest: 3";
+    EXPECT_NEAR(model->getChargeLoss(idx, dt_hr), 2, tol);
+    EXPECT_NEAR(model->getIdleLoss(idx, dt_hr), 2, tol);
 
     // discharging
     charge_mode = capacity_state::DISCHARGE;
@@ -169,33 +176,46 @@ TEST_F(lib_battery_losses_test, MonthlyLossesTest){
     idx = 0;
     model->run_losses(idx, dt_hour, charge_mode);
     EXPECT_NEAR(model->getLoss(), 1, tol) << "MonthlyLossesTest: 4";
+    EXPECT_NEAR(model->getDischargeLoss(idx, dt_hr), 1, tol);
 
     idx = 40 * 24;
     model->run_losses(idx, dt_hour, charge_mode);
     EXPECT_NEAR(model->getLoss(), 2, tol) << "MonthlyLossesTest: 5";
+    EXPECT_NEAR(model->getDischargeLoss(idx, dt_hr), 2, tol);
 
     idx = 70 * 24;
     model->run_losses(idx, dt_hour, charge_mode);
     EXPECT_NEAR(model->getLoss(), 3, tol) << "MonthlyLossesTest: 6";
+    EXPECT_NEAR(model->getDischargeLoss(idx, dt_hr), 3, tol);
 
 }
 
 TEST_F(lib_battery_losses_test, TimeSeriesLossesTest){
     model = std::unique_ptr<losses_t>(new losses_t(fullLosses));
 
-    int charge_mode = -1;       // not used
+    int charge_mode = -1;       // not used - still need to test charge/discharge/idle loss projections since those will be used in dispatch
+    double dt_hr = 1;
 
     size_t idx = 0;
     model->run_losses(idx, dt_hour, charge_mode);
     EXPECT_NEAR(model->getLoss(), 0, tol) << "TimeSeriesLossesTest: 1";
+    EXPECT_NEAR(model->getChargeLoss(idx, dt_hr), 0, tol);
+    EXPECT_NEAR(model->getIdleLoss(idx, dt_hr), 0, tol);
+    EXPECT_NEAR(model->getDischargeLoss(idx, dt_hr), 0, tol);
 
     idx = 40;
     model->run_losses(idx, dt_hour, charge_mode);
     EXPECT_NEAR(model->getLoss(), 40./8760, tol) << "TimeSeriesLossesTest: 2";
+    EXPECT_NEAR(model->getChargeLoss(idx, dt_hr), 40. / 8760, tol);
+    EXPECT_NEAR(model->getIdleLoss(idx, dt_hr), 40. / 8760, tol);
+    EXPECT_NEAR(model->getDischargeLoss(idx, dt_hr), 40. / 8760, tol);
 
     idx = 70;
     model->run_losses(idx, dt_hour, charge_mode);
     EXPECT_NEAR(model->getLoss(), 70./8760, tol) << "TimeSeriesLossesTest: 3";
+    EXPECT_NEAR(model->getChargeLoss(idx, dt_hr), 70. / 8760, tol);
+    EXPECT_NEAR(model->getIdleLoss(idx, dt_hr), 70. / 8760, tol);
+    EXPECT_NEAR(model->getDischargeLoss(idx, dt_hr), 70. / 8760, tol);
 
 }
 
