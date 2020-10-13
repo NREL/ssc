@@ -22,6 +22,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "lib_battery_dispatch_automatic_btm.h"
 #include "lib_battery_powerflow.h"
+#include "lib_shared_inverter.h"
 
 dispatch_automatic_behind_the_meter_t::dispatch_automatic_behind_the_meter_t(
 	battery_t * Battery,
@@ -821,16 +822,22 @@ void dispatch_automatic_behind_the_meter_t::set_battery_power(FILE *p, bool debu
 				_P_battery_use[i] *= m_batteryPower->singlePointEfficiencyACToDC;
 			}
 		}
-		// DC-connected is harder to convert to AC, must make assumptions about inverter efficiency and charge shource
-		else {
-			if (_P_battery_use[i] > 0) {
-				_P_battery_use[i] /= (m_batteryPower->singlePointEfficiencyDCToDC * m_batteryPower->singlePointEfficiencyACToDC);
-			}
-			// Assuming just charging from PV not grid
-			else {
-				_P_battery_use[i] *= m_batteryPower->singlePointEfficiencyDCToDC;
-			}
-		}
+		// DC-connected is harder to convert from AC, must make assumptions about inverter efficiency and charge shource
+        else {
+            if (_P_battery_use[i] > 0) {
+                _P_battery_use[i] /= (m_batteryPower->singlePointEfficiencyDCToDC * m_batteryPower->singlePointEfficiencyACToDC);
+
+            }
+            // Need to bring ac load and charging values to DC side. Assume current inverter efficiency continues through dispatch forecast
+            else {
+                double ac_to_dc_eff = m_batteryPower->singlePointEfficiencyACToDC;
+                if (m_batteryPower->sharedInverter->efficiencyAC > 5) // 5% is the cutoff in lib_battery_powerflow
+                {
+                    ac_to_dc_eff = m_batteryPower->sharedInverter->efficiencyAC * 0.01;
+                }
+                _P_battery_use[i] *= m_batteryPower->singlePointEfficiencyDCToDC / ac_to_dc_eff;
+            }
+        }
 	}
 
 	if (debug)
