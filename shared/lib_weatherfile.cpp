@@ -1646,7 +1646,7 @@ void weatherfile::start_hours_at_0() {
     else if (max_hr == 24)
         for (auto& i : hours) i -= 1.;
     if ((max_hr - min_hr) - floor(max_hr - min_hr) != 0) {
-        m_message = "hour inputs must be integers. Use minutes to differentiate time within the hour."; //check for non-integer hour inputs
+        m_message = "Weather file hour inputs must be integers. Use minutes to differentiate time within the hour for subhourly time steps."; //check for non-integer hour inputs
     }
 }
 
