@@ -623,22 +623,22 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     outCapacityThermalPercent = 0;
     outBatteryPower = 0;
     outGridPower = 0;
-    outPVToLoad = 0;
+    outSystemToLoad = 0;
     outBatteryToLoad = 0;
     outGridToLoad = 0;
     outFuelCellToLoad = 0;
     outGridPowerTarget = 0;
-    outPVToBatt = 0;
+    outSystemToBatt = 0;
     outGridToBatt = 0;
     outFuelCellToBatt = 0;
-    outPVToGrid = 0;
+    outSystemToGrid = 0;
     outBatteryToGrid = 0;
     outFuelCellToGrid = 0;
     outBatteryConversionPowerLoss = 0;
     outBatterySystemLoss = 0;
     outAverageCycleEfficiency = 0;
-    outPVChargePercent = 0;
-    outAnnualPVChargeEnergy = 0;
+    outSystemChargePercent = 0;
+    outAnnualSystemChargeEnergy = 0;
     outAnnualGridChargeEnergy = 0;
     outAnnualChargeEnergy = 0;
     outAnnualDischargeEnergy = 0;
@@ -692,11 +692,11 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     outBatteryPower = vt.allocate("batt_power", nrec*nyears);
     outGridPower = vt.allocate("grid_power", nrec*nyears); // Net grid energy required.  Positive indicates putting energy on grid.  Negative indicates pulling off grid
     outGenPower = vt.allocate("pv_batt_gen", nrec*nyears);
-    outPVToGrid = vt.allocate("system_to_grid", nrec*nyears);
+    outSystemToGrid = vt.allocate("system_to_grid", nrec*nyears);
 
     if (batt_vars->batt_meter_position == dispatch_t::BEHIND)
     {
-        outPVToLoad = vt.allocate("system_to_load", nrec*nyears);
+        outSystemToLoad = vt.allocate("system_to_load", nrec*nyears);
         outBatteryToLoad = vt.allocate("batt_to_load", nrec*nyears);
         outGridToLoad = vt.allocate("grid_to_load", nrec*nyears);
 
@@ -719,7 +719,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             outBenefitDischarge = vt.allocate("batt_revenue_discharge", nrec*nyears);
         }
     }
-    outPVToBatt = vt.allocate("system_to_batt", nrec*nyears);
+    outSystemToBatt = vt.allocate("system_to_batt", nrec*nyears);
     outGridToBatt = vt.allocate("grid_to_batt", nrec*nyears);
 
     if (batt_vars->en_fuelcell) {
@@ -743,7 +743,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     outAnnualGridExportEnergy = vt.allocate("annual_export_to_grid_energy", annual_size);
     outAnnualEnergySystemLoss = vt.allocate("batt_annual_energy_system_loss", annual_size);
     outAnnualEnergyLoss = vt.allocate("batt_annual_energy_loss", annual_size);
-    outAnnualPVChargeEnergy = vt.allocate("batt_annual_charge_from_system", annual_size);
+    outAnnualSystemChargeEnergy = vt.allocate("batt_annual_charge_from_system", annual_size);
     outAnnualGridChargeEnergy = vt.allocate("batt_annual_charge_from_grid", annual_size);
 
     outBatteryBankReplacement[0] = 0;
@@ -1212,21 +1212,21 @@ battstor::battstor(const battstor& orig){
     outBatteryPower = orig.outBatteryPower;
     outGenPower = orig.outGenPower;
     outGridPower = orig.outGridPower;
-    outPVToLoad = orig.outPVToLoad;
+    outSystemToLoad = orig.outSystemToLoad;
     outBatteryToLoad = orig.outBatteryToLoad;
     outGridToLoad = orig.outGridToLoad;
     outFuelCellToLoad = orig.outFuelCellToLoad;
     outGridPowerTarget = orig.outGridPowerTarget;
     outBattPowerTarget = orig.outBattPowerTarget;
-    outPVToBatt = orig.outPVToBatt;
+    outSystemToBatt = orig.outSystemToBatt;
     outGridToBatt = orig.outGridToBatt;
     outFuelCellToBatt = orig.outFuelCellToBatt;
-    outPVToGrid = orig.outPVToGrid;
+    outSystemToGrid = orig.outSystemToGrid;
     outBatteryToGrid = orig.outBatteryToGrid;
     outFuelCellToGrid = orig.outFuelCellToGrid;
     outBatteryConversionPowerLoss = orig.outBatteryConversionPowerLoss;
     outBatterySystemLoss = orig.outBatterySystemLoss;
-    outAnnualPVChargeEnergy = orig.outAnnualPVChargeEnergy;
+    outAnnualSystemChargeEnergy = orig.outAnnualSystemChargeEnergy;
     outAnnualGridChargeEnergy = orig.outAnnualGridChargeEnergy;
     outAnnualChargeEnergy = orig.outAnnualChargeEnergy;
     outAnnualDischargeEnergy = orig.outAnnualDischargeEnergy;
@@ -1243,7 +1243,7 @@ battstor::battstor(const battstor& orig){
 
     outAverageCycleEfficiency = orig.outAverageCycleEfficiency;
     outAverageRoundtripEfficiency = orig.outAverageRoundtripEfficiency;
-    outPVChargePercent = orig.outPVChargePercent;
+    outSystemChargePercent = orig.outSystemChargePercent;
 
     // copy models
     if (orig.batt_vars) batt_vars = orig.batt_vars;
@@ -1311,10 +1311,10 @@ void battstor::advance(var_table *, double P_gen, double V_gen, double P_load, d
     }
 
     powerflow->powerGeneratedBySystem = P_gen;
-    powerflow->powerPV = P_gen - powerflow->powerFuelCell;
+    powerflow->powerSystem = P_gen - powerflow->powerFuelCell;
     powerflow->powerLoad = P_load;
     powerflow->voltageSystem = V_gen;
-    powerflow->powerPVClipped = P_gen_clipped;
+    powerflow->powerSystemClipped = P_gen_clipped;
 
     charge_control->run(year, hour, step, year_index);
     outputs_fixed();
@@ -1368,7 +1368,7 @@ void battstor::outputs_topology_dependent()
     outBatteryPower[index] = (ssc_number_t)(dispatch_model->power_tofrom_battery());
     outGridPower[index] = (ssc_number_t)(dispatch_model->power_tofrom_grid());
     outGenPower[index] = (ssc_number_t)(dispatch_model->power_gen());
-    outPVToBatt[index] = (ssc_number_t)(dispatch_model->power_pv_to_batt());
+    outSystemToBatt[index] = (ssc_number_t)(dispatch_model->power_pv_to_batt());
     outGridToBatt[index] = (ssc_number_t)(dispatch_model->power_grid_to_batt());
 
     // Fuel cell updates
@@ -1379,11 +1379,11 @@ void battstor::outputs_topology_dependent()
     }
     outBatteryConversionPowerLoss[index] = (ssc_number_t)(dispatch_model->power_conversion_loss());
     outBatterySystemLoss[index] = (ssc_number_t)(dispatch_model->power_system_loss());
-    outPVToGrid[index] = (ssc_number_t)(dispatch_model->power_pv_to_grid());
+    outSystemToGrid[index] = (ssc_number_t)(dispatch_model->power_pv_to_grid());
 
     if (batt_vars->batt_meter_position == dispatch_t::BEHIND)
     {
-        outPVToLoad[index] = (ssc_number_t)(dispatch_model->power_pv_to_load());
+        outSystemToLoad[index] = (ssc_number_t)(dispatch_model->power_pv_to_load());
         outBatteryToLoad[index] = (ssc_number_t)(dispatch_model->power_battery_to_load());
         outGridToLoad[index] = (ssc_number_t)(dispatch_model->power_grid_to_load());
 
@@ -1421,7 +1421,7 @@ void battstor::metrics()
         battery_model->resetReplacement();
         outAnnualGridImportEnergy[annual_index] = (ssc_number_t)(battery_metrics->energy_grid_import_annual());
         outAnnualGridExportEnergy[annual_index] = (ssc_number_t)(battery_metrics->energy_grid_export_annual());
-        outAnnualPVChargeEnergy[annual_index] = (ssc_number_t)(battery_metrics->energy_pv_charge_annual());
+        outAnnualSystemChargeEnergy[annual_index] = (ssc_number_t)(battery_metrics->energy_pv_charge_annual());
         outAnnualGridChargeEnergy[annual_index] = (ssc_number_t)(battery_metrics->energy_grid_charge_annual());
         outAnnualChargeEnergy[annual_index] = (ssc_number_t)(battery_metrics->energy_charge_annual());
         outAnnualDischargeEnergy[annual_index] = (ssc_number_t)(battery_metrics->energy_discharge_annual());
@@ -1445,11 +1445,11 @@ void battstor::metrics()
         outAverageRoundtripEfficiency = 0;
 
     // PV charge ratio
-    outPVChargePercent = (ssc_number_t)battery_metrics->pv_charge_percent();
-    if (outPVChargePercent > 100)
-        outPVChargePercent = 100;
-    else if (outPVChargePercent < 0)
-        outPVChargePercent = 0;
+    outSystemChargePercent = (ssc_number_t)battery_metrics->pv_charge_percent();
+    if (outSystemChargePercent > 100)
+        outSystemChargePercent = 100;
+    else if (outSystemChargePercent < 0)
+        outSystemChargePercent = 0;
 }
 
 // function needed to correctly calculate P_grid to to additional losses in P_gen post battery like wiring, curtailment, availablity
@@ -1464,7 +1464,7 @@ void battstor::calculate_monthly_and_annual_outputs( compute_module &cm )
     // single value metrics
     cm.assign("average_battery_conversion_efficiency", var_data( (ssc_number_t) outAverageCycleEfficiency ));
     cm.assign("average_battery_roundtrip_efficiency", var_data((ssc_number_t)outAverageRoundtripEfficiency));
-    cm.assign("batt_system_charge_percent", var_data((ssc_number_t)outPVChargePercent));
+    cm.assign("batt_system_charge_percent", var_data((ssc_number_t)outSystemChargePercent));
     cm.assign("batt_bank_installed_capacity", (ssc_number_t)batt_vars->batt_kwh);
 
     // monthly outputs

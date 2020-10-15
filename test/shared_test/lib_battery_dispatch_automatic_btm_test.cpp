@@ -81,10 +81,10 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMPVCharging) {
                                          0, 0, 0, 0, 0};
     for (size_t h = 0; h < 24; h++) {
         if (h > 6 && h < 18) {
-            batteryPower->powerPV = 700; // Match the predicted PV
+            batteryPower->powerSystem = 700; // Match the predicted PV
         }
         else {
-            batteryPower->powerPV = 0;
+            batteryPower->powerSystem = 0;
         }
         batteryPower->powerLoad = 500; // Match the predicted load
         dispatchAutoBTM->dispatch(0, h, 0);
@@ -130,9 +130,9 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMPVChargeAndDischarge) {
                                          50, 50, 50, 50, 50, 50};
     for (size_t h = 0; h < 24; h++) {
         batteryPower->powerLoad = 500;
-        batteryPower->powerPV = 0;
+        batteryPower->powerSystem = 0;
         if (h > 6 && h < 18) {
-            batteryPower->powerPV = 700; // Match the predicted PV
+            batteryPower->powerSystem = 700; // Match the predicted PV
         }
         else if (h > 18) {
             batteryPower->powerLoad = 600; // Match the predicted load
@@ -196,9 +196,9 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMPVChargeAndDischargeSubh
     for (size_t h = 0; h < 24; h++) {
         for (size_t step = 0; step < 4; step++) {
             batteryPower->powerLoad = 500;
-            batteryPower->powerPV = 0;
+            batteryPower->powerSystem = 0;
             if (h > 6 && h < 18) {
-                batteryPower->powerPV = 700; // Match the predicted PV
+                batteryPower->powerSystem = 700; // Match the predicted PV
             }
             else if (h > 18) {
                 batteryPower->powerLoad = 600; // Match the predicted load
@@ -250,9 +250,9 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMDCClipCharge) {
                                          0, 0, 0, 0, 0, 0, 50, 50, 50, 50, 50.25};
     for (size_t h = 0; h < 24; h++) {
         batteryPower->powerLoad = 500;
-        batteryPower->powerPV = 0;
+        batteryPower->powerSystem = 0;
         if (h > 6 && h < 18) {
-            batteryPower->powerPV = 700; // Match the predicted PV
+            batteryPower->powerSystem = 700; // Match the predicted PV
         }
         else if (h > 18) {
             batteryPower->powerLoad = 600; // Match the predicted load
