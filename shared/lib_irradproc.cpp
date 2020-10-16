@@ -337,8 +337,7 @@ void incidence(int mode, double tilt, double sazm, double rlim, double zen,
 				// TODO: add cross-axis slope angle parameter
 				double backrot = backtrack( azm*180/M_PI, zen*180/M_PI, // solar azimuth, zenith (deg)
 					tilt, sazm, // axis tilt, axis azimuth (deg)
-					rlim*180/M_PI, gcr, // rotation limit, GCR
-					rot*180/M_PI ); // true-tracking rotation angle
+					gcr, rot*180/M_PI ); // GCR, true-tracking rotation angle
 
 				btdiff = backrot - rot*180/M_PI; // log the difference (degrees)
 				btdiff *= M_PI/180; // convert output to radians
@@ -1863,7 +1862,7 @@ double shadeFraction1x( double solar_azimuth, double solar_zenith,
 
     double truetracking_angle = truetrack(solar_azimuth, solar_zenith, axis_tilt, axis_azimuth);
     double numerator = gcr * cosd(rotation) + (gcr * sind(rotation) - tand(cross_axis_slope)) * tand(truetracking_angle) - 1;
-    double denominator = gcr * (sind(rotation) * tand(truetracking_angle) + cosd(rotation))
+    double denominator = gcr * (sind(rotation) * tand(truetracking_angle) + cosd(rotation));
     double fs = numerator / denominator;
     fs = fs < 0 ? 0 : fs;
     fs = fs > 1 ? 1 : fs;
