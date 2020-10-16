@@ -253,29 +253,39 @@ void ModifiedDISC(const double kt[3], const double kt1[3], const double g[3], co
 /**
 * shadeFraction1x calculates if the system is shaded based on the sun position and surface position
 *
-* \param[in] solazi sun azimuth in radians, measured east from north, 0 to 2*pi
-* \param[in] solzen sun zenith in radians, 0 to pi
-* \param[in] tilt surface tilt angle from horizontal in radians
-* \param[in] azimuth surface azimuth in degrees of collector
-* \param[in] gcr grount coverage ratio of system
+* \param[in] solar_azimuth sun azimuth in degrees, measured east from north
+* \param[in] solar_zenith sun zenith in degrees
+* \param[in] axis_tilt axis tilt angle from horizontal in degrees
+* \param[in] axis_azimuth axis azimuth in degrees, measured east from north
+* \param[in] gcr ground coverage ratio of system
 * \param[in] rotation tracking axis rotation angle in degrees
 * \return fraction shaded (0-1) if system is shaded (0 for unshaded)
 */
-double shadeFraction1x(double solazi, double solzen, double tilt, double azimuth, double gcr, double rotation);
+double shadeFraction1x(double solar_azimuth, double solar_zenith, double axis_tilt, double axis_azimuth, double gcr, double rotation);
+
+/**
+* truetrack calculates the tracker rotation that minimizes the angle of incidence betweem direct irradiance and the module front surface normal
+*
+* \param[in] solar_azimuth sun azimuth in radians, measured east from north, 0 to 2*pi
+* \param[in] solar_zenith sun zenith in radians, 0 to pi
+* \param[in] axis_tilt surface tilt angle from horizontal in radians
+* \param[in] axis_azimuth surface azimuth in degrees of collector
+* \return true-tracking rotation angle in degrees
+*/
+double truetrack(double solar_azimuth, double solar_zenith, double axis_tilt, double axis_azimuth);
 
 /**
 * backtrack finds the optimum angle to use to reduce self-shading on the front-side of modules using backtracking
 *
-* \param[in] solazi sun azimuth in radians, measured east from north, 0 to 2*pi
-* \param[in] solzen sun zenith in radians, 0 to pi
-* \param[in] tilt surface tilt angle from horizontal in radians
-* \param[in] azimuth surface azimuth in degrees of collector
-* \param[in] rotlim plus or minus rotation in degrees permitted by physical constraints of tracker, range is 0 to 180 degrees.
+* \param[in] solar_azimuth sun azimuth in radians, measured east from north, 0 to 2*pi
+* \param[in] solar_zenith sun zenith in radians, 0 to pi
+* \param[in] axis_tilt surface tilt angle from horizontal in radians
+* \param[in] axis_azimuth surface azimuth in degrees of collector
 * \param[in] gcr grount coverage ratio of system
-* \param[in] rotation tracking axis rotation angle in degrees
+* \param[in] rotation true-tracking axis rotation angle in degrees
 * \return updated rotation angle in degrees after backtracking
 */
-double backtrack(double solazi, double solzen, double tilt, double azimuth, double rotlim, double gcr, double rotation);
+double backtrack(double solar_azimuth, double solar_zenith, double axis_tilt, double axis_azimuth, double gcr, double rotation);
 
 
 /**
