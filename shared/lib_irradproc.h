@@ -858,7 +858,7 @@ void calculate_eot_and_sun_rise_transit_set(double jme, double tz, double alpha,
 * \param[in] lat latitude in degrees, north positive
 * \param[in] lng longitude in degrees, east positive
 * \param[in] tz time zone, west longitudes negative
-* \param[in] dut1 difference between earth rotation time and Terrestrial Time (reported yearly in Astronomical Almanac)
+* \param[in] dut1 fractional second difference between UTC and UT which is used to adjust UTC for earth's irregular rotation rate (http://maia.usno.navy.mil/ser7/ser7.dat) (-1 to 1 second)
 * \param[in] alt altitude in meters
 * \param[in] pressure pressure in millibars
 * \param[in] temp temperature in degrees C
@@ -875,7 +875,7 @@ void calculate_eot_and_sun_rise_transit_set(double jme, double tz, double alpha,
 * \param[out] sunn[7] true solar time (hrs)
 * \param[out] sunn[8] extraterrestrial solar irradiance on horizontal at particular time (W/m2)
 */
-void solarpos_spa(int year, int month, int day, int hour, double minute, double second, double lat, double lng, double tz, double dut1, double delta_t, double alt, double pressure, double temp, double tilt, double azm_rotation, double sunn[9]);
+void solarpos_spa(int year, int month, int day, int hour, double minute, double second, double lat, double lng, double tz, double dut1, double alt, double pressure, double temp, double tilt, double azm_rotation, double sunn[9]);
 
 /**
 * incidence function calculates the incident angle of direct beam radiation to a surface.
@@ -1123,6 +1123,8 @@ public:
 
     /// Maximum irradiance allowed (W/m2)
     static const int irradiationMax = 1500;
+
+    static const int dut1 = 0; //Time correction for irregular Earth rotation (leap second); value between -1 and 1, no source for value so left at zero
 
     /// Default class constructor, calls setup()
     irrad(weather_record wr, weather_header wh,

@@ -307,7 +307,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelIntegr
     ssc_number_t expectedBatteryDischargeEnergy[3] = { 1283.8, 1285.88, 226.3 };
 
     ssc_number_t peakKwCharge[3] = { -3.21, -2.96, -2.69 };
-    ssc_number_t peakKwDischarge[3] = { 1.40, 1.31, 0.967 }; //value changed due to new solarpos_spa algorithm
+    ssc_number_t peakKwDischarge[3] = { 1.40, 1.31, 0.967 }; 
     ssc_number_t peakCycles[3] = { 2, 2, 1 };
     ssc_number_t avgCycles[3] = { 1.0109, 1.0054, 0.4794 };
 
@@ -459,7 +459,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_CustomDispatchBatteryModelD
     grid_and_rate_defaults(data);
     singleowner_defaults(data);
 
-    ssc_number_t expectedEnergy = 37308785; //value changed due to new solarpos_spa algorithm
+    ssc_number_t expectedEnergy = 37308785; 
     ssc_number_t expectedBatteryChargeEnergy = 2040;
     ssc_number_t expectedBatteryDischargeEnergy = 3254.;
 
@@ -509,7 +509,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_CustomDispatchBatteryModelD
     singleowner_defaults(data);
 
     //ssc_number_t expectedEnergy = 37264228;
-    ssc_number_t expectedEnergy = 37251482; //value changed due to new solarpos_spa algorithm
+    ssc_number_t expectedEnergy = 37251482; 
     ssc_number_t expectedBatteryChargeEnergy = 419044;
     ssc_number_t expectedBatteryDischargeEnergy = 348966;
     ssc_number_t roundtripEfficiency = 80.6;
@@ -616,10 +616,10 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ClippingForecastTest1_DC_FOM_Di
     pairs["analysis_period"] = 1;
     pairs["batt_ac_or_dc"] = 0;
 
-    ssc_number_t expectedEnergy = 537030; //value changed due to new solarpos_spa algorithm
+    ssc_number_t expectedEnergy = 537030; 
     ssc_number_t expectedBatteryChargeEnergy = 929;
     ssc_number_t expectedBatteryDischargeEnergy = 343.96;
-    ssc_number_t expectedClipLoss = 593.5; //value changed due to new solarpos_spa algorithm
+    ssc_number_t expectedClipLoss = 593.5; 
 
     ssc_number_t peakKwCharge = -9.488;
     ssc_number_t peakKwDischarge = 1.1;
@@ -671,10 +671,10 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ClippingForecastTest2_DC_FOM_Di
     pairs["batt_ac_or_dc"] = 0;
     set_array(data, "batt_pv_clipping_forecast", clipping_forecast, 8760);
 
-    ssc_number_t expectedEnergy = 537030; //value changed due to new solarpos_spa algorithm
+    ssc_number_t expectedEnergy = 537030; 
     ssc_number_t expectedBatteryChargeEnergy = 929;
     ssc_number_t expectedBatteryDischargeEnergy = 343.96;
-    ssc_number_t expectedClipLoss = 593.5; //value changed due to new solarpos_spa algorithm
+    ssc_number_t expectedClipLoss = 593.5; 
 
     ssc_number_t peakKwCharge = -9.488;
     ssc_number_t peakKwDischarge = 1.1;

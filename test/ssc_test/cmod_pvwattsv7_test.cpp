@@ -22,7 +22,7 @@ TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, DefaultNoFinancialModel_cmod_pvwat
         tmp += (double)monthly_energy[i];
     //v5 is 6909.79, decrease of 2.4%: decreases due to shading, module cover losses, and spectral losses
     //v7 prior to module coeff changes is 6750.4236, increase of 3.7% due to improved tempco for standard module
-    EXPECT_NEAR(tmp, 6999.0158, error_tolerance) << "Annual energy."; //value changed due to new solarpos_spa algorithm
+    EXPECT_NEAR(tmp, 6999.0158, error_tolerance) << "Annual energy."; 
 
 
     //values changed due to new solarpos_spa algorithm
@@ -41,7 +41,7 @@ TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, DefaultNoFinancialModel_cmod_pvwat
 
     ssc_number_t capacity_factor;
     ssc_data_get_number(data, "capacity_factor", &capacity_factor);
-    EXPECT_NEAR(capacity_factor, 19.974, error_tolerance) << "Capacity factor"; //value changed due to new solarpos_spa algorithm
+    EXPECT_NEAR(capacity_factor, 19.974, error_tolerance) << "Capacity factor"; 
 
 }
 
@@ -51,7 +51,7 @@ TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, DifferentTechnologyInputs_cmod_pvw
     //PVWattsV5 results: annual_energy_expected = { 6909.79, 7123.32, 7336.478, 6909.79, 6804.376, 8601.011, 8727.704, 9690.735};
     //V7 prior to module coefficient updates: std::vector<double> annual_energy_expected = { 6750.42, 7034.39, 7166.88, 6750.42, 6693.49, 8514.26, 8441.60, 9631.76 };
     //standard fixed -2.4%, premium fixed -1.3%, thinfilm fixed -2.4%, standard fixed -2.4%, standard roof -1.7%, standard 1-axis -1.0%, standard backtrack -3.4%, standard 2-axis -0.6%
-    std::vector<double> annual_energy_expected = { 6999.016, 7030.26, 7077.07, 6999.016, 6971.04, 8786.70, 8718.94, 9861.28 }; //value changed due to new solarpos_spa algorithm
+    std::vector<double> annual_energy_expected = { 6999.016, 7030.26, 7077.07, 6999.016, 6971.04, 8786.70, 8718.94, 9861.28 }; 
     //standard fixed +3.6%, premium fixed 0%, thinfilm fixed -1.2%, standard fixed +3.6%, standard roof +4.0%, standard 1-axis +3.3%, standard backtrack +3.3%, standard 2-axis +2.6%
 
     std::map<std::string, double> pairs;
@@ -99,7 +99,7 @@ TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, LargeSystem_cmod_pvwattsv7)
 {
     //PVWattsV5 results: std::vector<double> annual_energy_expected = { 1727447.4, 1701094.0, 2150252.8, 2181925.8, 2422683.7 };
     //PVWattsV7 prior to module coeff updates: std::vector<double> annual_energy_expected = { 1686353.2, 1673371.8, 2123603.8, 2105794.1, 2407940.7 };
-    std::vector<double> annual_energy_expected = { 1747992.0, 1742759.9, 2190543.9, 2173979.5,  2465319.1 }; //value changed due to new solarpos_spa algorithm
+    std::vector<double> annual_energy_expected = { 1747992.2, 1742760.1, 2190544.2, 2173979.7,  2465319.2 }; 
 
     std::map<std::string, double> pairs;
     size_t count = 0;
@@ -171,7 +171,7 @@ TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, LifetimeModeTest_cmod_pvwattsv7) {
     {
         ssc_number_t annual_energy;
         ssc_data_get_number(data, "annual_energy", &annual_energy);
-        EXPECT_NEAR(annual_energy, 6999.016, error_tolerance) << "Annual energy degradation array length 1."; //value changed due to new solarpos_spa algorithm
+        EXPECT_NEAR(annual_energy, 6999.016, error_tolerance) << "Annual energy degradation array length 1."; 
     }
 
     // next, test degradation array with length the same as analysis period, which should also work
@@ -186,7 +186,7 @@ TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, LifetimeModeTest_cmod_pvwattsv7) {
     {
         ssc_number_t annual_energy;
         ssc_data_get_number(data, "annual_energy", &annual_energy);
-        EXPECT_NEAR(annual_energy, 6963.977, error_tolerance) << "Annual energy degradation array length 25."; //value changed due to new solarpos_spa algorithm
+        EXPECT_NEAR(annual_energy, 6963.977, error_tolerance) << "Annual energy degradation array length 25."; 
     }
 
     // lastly, test degradation array with the wrong length, which should fail
@@ -212,7 +212,7 @@ TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, BifacialTest_cmod_pvwattsv7) {
     if (!pvwatts_errors)
     {
         ssc_data_get_number(data, "annual_energy", &annual_energy_mono);
-        EXPECT_NEAR(annual_energy_mono, 6999, 1) << "System with bifaciality"; //value changed due to new solarpos_spa algorithm
+        EXPECT_NEAR(annual_energy_mono, 6999, 1) << "System with bifaciality"; 
     }
 
     pairs["bifaciality"] = 0.65;
@@ -256,7 +256,7 @@ TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, NonAnnual)
 
     ssc_number_t dc, gen;
     dc = ssc_data_get_array(data, "dc", nullptr)[12];
-    EXPECT_NEAR(dc, 2512.300, 0.01) << "DC Energy at noon"; //value changed due to new solarpos_spa algorithm
+    EXPECT_NEAR(dc, 2512.300, 0.01) << "DC Energy at noon"; 
 
     gen = ssc_data_get_array(data, "gen", nullptr)[12];
     EXPECT_NEAR(gen, 2.417, 0.01) << "Gen at noon";

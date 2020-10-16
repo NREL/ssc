@@ -58,7 +58,7 @@ TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, DifferentTechnologyInputs)
 {
     //	std::vector<double> annual_energy_expected = { 6909.79, 7123.32, 7336.478, 6909.79, 6804.376, 8711.946, 8727.704, 9690.735 };
         // single axis tracking reduction due to pull request 280
-    std::vector<double> annual_energy_expected = { 6908.027, 7121.525, 7334.714, 6908.027, 6802.625, 8595.737, 8722.441, 9687.182 };
+    std::vector<double> annual_energy_expected = { 6908.027, 7121.525, 7334.714, 6908.027, 6802.625, 8595.737, 8722.442, 9687.182 };
     std::map<std::string, double> pairs;
     size_t count = 0;
 
@@ -99,7 +99,7 @@ TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, DifferentTechnologyInputs)
 /// PVWattsV5 using a larger system size
 TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, LargeSystem_cmod_pvwattsv5)
 {
-    std::vector<double> annual_energy_expected = { 1727006.7, 1700656.2, 2148934.2, 2180610.4, 2421795.6 };
+    std::vector<double> annual_energy_expected = { 1727006.9, 1700656.4, 2148934.4, 2180610.5, 2421795.6 };
     std::map<std::string, double> pairs;
     size_t count = 0;
     error_tolerance = 0.1; //use a larger error tolerance for large numbers
@@ -162,9 +162,9 @@ TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, singleTS) {
     ssc_data_get_number(data, "tcell", &val);
     EXPECT_NEAR(val, 12.77, .1);
     ssc_data_get_number(data, "dc", &val);
-    EXPECT_NEAR(val, 106739, 1); //value changed due to new solarpos_spa algorithm
+    EXPECT_NEAR(val, 106739, 1); 
     ssc_data_get_number(data, "ac", &val);
-    EXPECT_NEAR(val, 100852, 1); //value changed due to new solarpos_spa algorithm
+    EXPECT_NEAR(val, 100852, 1); 
 
     EXPECT_TRUE(ssc_module_exec(mod, data));
 
@@ -175,8 +175,8 @@ TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, singleTS) {
     ssc_data_get_number(data, "tcell", &val);
     EXPECT_NEAR(val, 13.36, .1);
     ssc_data_get_number(data, "dc", &val);
-    EXPECT_NEAR(val, 106460, 1); //value changed due to new solarpos_spa algorithm
+    EXPECT_NEAR(val, 106460, 1); 
     ssc_data_get_number(data, "ac", &val);
-    EXPECT_NEAR(val, 100579, 1); //value changed due to new solarpos_spa algorithm
+    EXPECT_NEAR(val, 100579, 1); 
 
 }
