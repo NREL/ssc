@@ -185,17 +185,17 @@ public:
     grid_point(double grid = 0., size_t hour = 0, size_t step = 0, double cost = 0., double marginal_cost = 0.) :
         _grid(grid), _hour(hour), _step(step), _cost(cost), _marginal_cost(marginal_cost) {}
     double Grid() const { return _grid; }
-    size_t Hour() const { return _hour; } // Hours from time of forecast
-    size_t Step() const { return _step; }
+    size_t Hour() const { return _hour; } 
+    size_t Step() const { return _step; } 
     double Cost() const { return _cost; }
     double MarginalCost() const { return _marginal_cost; }
 
 private:
-	double _grid;
-	size_t _hour;
-	size_t _step;
-    double _cost;
-    double _marginal_cost;
+	double _grid; // Power in kW, + is net load, - is net generation
+	size_t _hour; // Hours from time of forecast
+	size_t _step; // Steps from time of forecast
+    double _cost; // Total $ add to or subtracted from the utility bill for this step, given _grid
+    double _marginal_cost; // $ for 1 kW of load in this step
 };
 
 struct byGrid
@@ -341,7 +341,6 @@ protected:
 
     /*! Cost to replace battery per kWh */
     std::vector<double> m_battReplacementCostPerKWH;
-    double m_battOriginalKWH;
 
     /*! Cycling cost inputs */
     int m_battCycleCostChoice;

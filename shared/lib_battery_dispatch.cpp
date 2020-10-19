@@ -504,7 +504,6 @@ dispatch_automatic_t::dispatch_automatic_t(
 	m_batteryPower->canDischarge = true;
     m_battReplacementCostPerKWH = battReplacementCostPerkWh;
     m_battCycleCostChoice = battCycleCostChoice;
-    m_battOriginalKWH = _Battery->charge_maximum_lifetime() * _Battery->V_nominal() * util::watt_to_kilowatt;
     cycle_costs_by_year = battCycleCost;
 }
 

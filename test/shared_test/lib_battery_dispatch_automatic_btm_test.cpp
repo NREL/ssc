@@ -1,7 +1,7 @@
 #include "lib_battery_dispatch_automatic_btm_test.h"
 #include "code_generator_utilities.h"
 
-#include "shared_rate_data.h"
+#include "../input_cases/shared_rate_data.h"
 
 TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMGridCharging) {
     double dtHour = 1;
