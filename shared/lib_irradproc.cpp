@@ -2363,10 +2363,6 @@ int irrad::calc()
         // compute incidence angles onto fixed or tracking surface
         incidence(trackingMode, tiltDegrees, surfaceAzimuthDegrees, rotationLimitDegrees, sunAnglesRadians[1], sunAnglesRadians[0],
             enableBacktrack, groundCoverageRatio, forceToStow, stowAngleDegrees, surfaceAnglesRadians);
-        //double surfaceAnglesRadians_test[5];
-        //incidence(trackingMode, tiltDegrees, surfaceAzimuthDegrees, rotationLimitDegrees, sunAnglesRadians_test[1], sunAnglesRadians_test[0],
-            //enableBacktrack, groundCoverageRatio, forceToStow, stowAngleDegrees, surfaceAnglesRadians);
-        //double incidence_diff = surfaceAnglesRadians_test[0] - surfaceAnglesRadians[0];
         if (radiationMode < irrad::POA_R) {
             double hextra = sunAnglesRadians[8];
             double hbeam = directNormal * cos(sunAnglesRadians[1]); // calculated beam on horizontal surface: sunAnglesRadians[1]=zenith
