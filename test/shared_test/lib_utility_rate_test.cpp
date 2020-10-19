@@ -32,10 +32,10 @@ TEST(lib_utility_rate_test, test_copy)
     rate_forecast_1.compute_next_composite_tou(0, 0);
     rate_forecast_2.compute_next_composite_tou(4, 0);
 
-    EXPECT_NEAR(0.060, rate_forecast_1.next_buy_rates[0], 0.0001);
-    EXPECT_NEAR(0.050, rate_forecast_1.next_buy_rates[1], 0.0001);
-    EXPECT_NEAR(0.050, rate_forecast_2.next_buy_rates[0], 0.0001);
-    EXPECT_NEAR(0.0750, rate_forecast_2.next_buy_rates[1], 0.0001);
+    EXPECT_NEAR(0.060, rate_forecast_1.next_composite_buy_rates[0], 0.0001);
+    EXPECT_NEAR(0.050, rate_forecast_1.next_composite_buy_rates[1], 0.0001);
+    EXPECT_NEAR(0.050, rate_forecast_2.next_composite_buy_rates[0], 0.0001);
+    EXPECT_NEAR(0.0750, rate_forecast_2.next_composite_buy_rates[1], 0.0001);
 }
 
 TEST(lib_utility_rate_test, test_tiered_tou_cost_estimates)
@@ -79,17 +79,17 @@ TEST(lib_utility_rate_test, test_tiered_tou_cost_estimates)
 
 	rate_forecast.compute_next_composite_tou(0, 0);
 
-	ASSERT_EQ(3, rate_forecast.next_buy_rates.size());
+	ASSERT_EQ(3, rate_forecast.next_composite_buy_rates.size());
 
-	EXPECT_NEAR(0.11365, rate_forecast.next_buy_rates[0], 0.0001);
-	EXPECT_NEAR(0.22782, rate_forecast.next_buy_rates[1], 0.0001);
-	EXPECT_NEAR(0.41554, rate_forecast.next_buy_rates[2], 0.0001);
+	EXPECT_NEAR(0.11365, rate_forecast.next_composite_buy_rates[0], 0.0001);
+	EXPECT_NEAR(0.22782, rate_forecast.next_composite_buy_rates[1], 0.0001);
+	EXPECT_NEAR(0.41554, rate_forecast.next_composite_buy_rates[2], 0.0001);
 
-	ASSERT_EQ(3, rate_forecast.next_sell_rates.size());
+	ASSERT_EQ(3, rate_forecast.next_composite_sell_rates.size());
 
-	EXPECT_NEAR(0.0, rate_forecast.next_sell_rates[0], 0.0001);
-	EXPECT_NEAR(0.0, rate_forecast.next_sell_rates[1], 0.0001);
-	EXPECT_NEAR(0.0, rate_forecast.next_sell_rates[2], 0.0001);
+	EXPECT_NEAR(0.0, rate_forecast.next_composite_sell_rates[0], 0.0001);
+	EXPECT_NEAR(0.0, rate_forecast.next_composite_sell_rates[1], 0.0001);
+	EXPECT_NEAR(0.0, rate_forecast.next_composite_sell_rates[2], 0.0001);
 }
 
 TEST(lib_utility_rate_test, test_tiered_sell_rates)
@@ -124,15 +124,15 @@ TEST(lib_utility_rate_test, test_tiered_sell_rates)
 
 	rate_forecast.compute_next_composite_tou(0, 0);
 
-	ASSERT_EQ(2, rate_forecast.next_buy_rates.size());
+	ASSERT_EQ(2, rate_forecast.next_composite_buy_rates.size());
 
-	EXPECT_NEAR(0.03461, rate_forecast.next_buy_rates[0], 0.0001);
-	EXPECT_NEAR(0.09132, rate_forecast.next_buy_rates[1], 0.0001);
+	EXPECT_NEAR(0.03461, rate_forecast.next_composite_buy_rates[0], 0.0001);
+	EXPECT_NEAR(0.09132, rate_forecast.next_composite_buy_rates[1], 0.0001);
 
-	ASSERT_EQ(2, rate_forecast.next_sell_rates.size());
+	ASSERT_EQ(2, rate_forecast.next_composite_sell_rates.size());
 
-	EXPECT_NEAR(0.02, rate_forecast.next_sell_rates[0], 0.0001);
-	EXPECT_NEAR(0.0266, rate_forecast.next_sell_rates[1], 0.0001);
+	EXPECT_NEAR(0.02, rate_forecast.next_composite_sell_rates[0], 0.0001);
+	EXPECT_NEAR(0.0266, rate_forecast.next_composite_sell_rates[1], 0.0001);
 }
 
 TEST(lib_utility_rate_test, test_simple_demand_charges)

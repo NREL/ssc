@@ -100,7 +100,7 @@ public:
      * *_forecast vectors need to be 12 * analysis_period in length. Predictions are used to estimate which tiers will be used for energy charges.
      * and set up baseline demand costs - equal to the demand charge at the average load during the month.
      */
-	UtilityRateForecast(rate_data* util_rate, size_t stepsPerHour, std::vector<double> monthly_load_forecast, std::vector<double> monthly_gen_forecast, std::vector<double> monthly_peak_forecast, size_t analysis_period);
+	UtilityRateForecast(rate_data* util_rate, size_t stepsPerHour, const std::vector<double>& monthly_load_forecast, const std::vector<double>& monthly_gen_forecast, const std::vector<double>& monthly_peak_forecast, size_t analysis_period);
 
 	UtilityRateForecast(UtilityRateForecast& tmp);
 
@@ -134,10 +134,10 @@ public:
 	void compute_next_composite_tou(int month, int year);
 
     // Composite buy/sell rates given the usage in the forecasts provided to the constructor.
-	std::vector<double> current_sell_rates; // Sell rates at the start of the forecast
-	std::vector<double> current_buy_rates;
-	std::vector<double> next_sell_rates; // Sell rates if the forecast crosses into the next month
-	std::vector<double> next_buy_rates;
+	std::vector<double> current_composite_sell_rates; // Sell rates at the start of the forecast
+	std::vector<double> current_composite_buy_rates;
+	std::vector<double> next_composite_sell_rates; // Sell rates if the forecast crosses into the next month
+	std::vector<double> next_composite_buy_rates;
 protected:
 
     /* Transfer net metering surplus credits from previous month to current month */

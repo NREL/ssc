@@ -143,11 +143,11 @@ public:
 	int get_tou_row(int year_one_index, int month);
 
 	// Runs each month
-	void init_dc_peak_vectors(int month);
-	ssc_number_t get_demand_charge(int month, int year); 
+	void init_dc_peak_vectors(int month); // Reinitialize vectors for re-use of memory year to year
+	ssc_number_t get_demand_charge(int month, int year);  // Sum time of use and flat demand charges to return total cost
     // Returns error codes so compute module can print errors. 0: no error, 10x: error in previous month, 20x: error in current month. x is the period where the error occured
-    int transfer_surplus(ur_month& curr_month, ur_month& prev_month); // For net metering rollovers
-    void compute_surplus(ur_month& curr_month); // For net metering rollovers
+    int transfer_surplus(ur_month& curr_month, ur_month& prev_month); // For net metering rollovers, used between months to copy data
+    void compute_surplus(ur_month& curr_month); // For net metering rollovers, used within a single month prior to cost calculations
 };
 
 #endif // _LIB_UTILITY_RATE_EQUATIONS_H_

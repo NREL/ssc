@@ -130,11 +130,11 @@ size_t UtilityRateCalculator::getEnergyPeriod(size_t hourOfYear)
 	return period;
 }
 
-UtilityRateForecast::UtilityRateForecast(rate_data* util_rate, size_t stepsPerHour, std::vector<double> monthly_load_forecast, std::vector<double> monthly_gen_forecast, std::vector<double> monthly_peak_forecast, size_t analysis_period) :
-    current_buy_rates(),
-    current_sell_rates(),
-    next_buy_rates(),
-    next_sell_rates()
+UtilityRateForecast::UtilityRateForecast(rate_data* util_rate, size_t stepsPerHour, const std::vector<double>& monthly_load_forecast, const std::vector<double>& monthly_gen_forecast, const std::vector<double>& monthly_peak_forecast, size_t analysis_period) :
+    current_composite_buy_rates(),
+    current_composite_sell_rates(),
+    next_composite_buy_rates(),
+    next_composite_sell_rates()
 {
 	steps_per_hour = stepsPerHour;
 	dt_hour = 1.0f / stepsPerHour;
@@ -154,10 +154,10 @@ UtilityRateForecast::UtilityRateForecast(UtilityRateForecast& tmp) :
 	m_monthly_load_forecast(tmp.m_monthly_load_forecast),
 	m_monthly_gen_forecast(tmp.m_monthly_gen_forecast),
 	m_monthly_peak_forecast(tmp.m_monthly_peak_forecast),
-    current_buy_rates(tmp.current_buy_rates),
-    current_sell_rates(tmp.current_sell_rates),
-    next_buy_rates(tmp.next_buy_rates),
-    next_sell_rates(tmp.next_sell_rates),
+    current_composite_buy_rates(tmp.current_composite_buy_rates),
+    current_composite_sell_rates(tmp.current_composite_sell_rates),
+    next_composite_buy_rates(tmp.next_composite_buy_rates),
+    next_composite_sell_rates(tmp.next_composite_sell_rates),
     last_month_init(tmp.last_month_init),
     nyears(tmp.nyears)
 {
@@ -193,7 +193,7 @@ double UtilityRateForecast::forecastCost(std::vector<double>& predicted_loads, s
     double previousEnergyCharge = 0;
     if (rate->enable_nm)
     {
-        previousEnergyCharge = getEnergyChargeNetMetering(month, current_buy_rates, current_sell_rates, false);
+        previousEnergyCharge = getEnergyChargeNetMetering(month, current_composite_buy_rates, current_composite_sell_rates, false);
     }
 	if (crossing_month)
 	{
@@ -218,7 +218,7 @@ double UtilityRateForecast::forecastCost(std::vector<double>& predicted_loads, s
             if (rate->enable_nm)
             {
                 // restartMonth will change the sign of energyUse from what getEnergyCharge expects, so compute that first
-                newEnergyCharge += getEnergyChargeNetMetering(month, current_buy_rates, current_sell_rates, true);
+                newEnergyCharge += getEnergyChargeNetMetering(month, current_composite_buy_rates, current_composite_sell_rates, true);
             }
 			// This handles net metering carryover
 			restartMonth(month, current_month, year_at_end);
@@ -255,12 +255,12 @@ double UtilityRateForecast::forecastCost(std::vector<double>& predicted_loads, s
 		newPeak += rate->get_demand_charge(month_at_end, year_at_end);
         if (rate->enable_nm)
         {
-            newEnergyCharge += getEnergyChargeNetMetering(month_at_end, next_buy_rates, next_sell_rates, false);
+            newEnergyCharge += getEnergyChargeNetMetering(month_at_end, next_composite_buy_rates, next_composite_sell_rates, false);
         }
 	}
     else if(rate->enable_nm)
     {
-        newEnergyCharge += getEnergyChargeNetMetering(month, current_buy_rates, current_sell_rates, false);
+        newEnergyCharge += getEnergyChargeNetMetering(month, current_composite_buy_rates, current_composite_sell_rates, false);
     }
 
     // If forecast length is 1, restartMonth won't be triggered on the next forecast. Trigger it now
@@ -281,7 +281,7 @@ void UtilityRateForecast::compute_next_composite_tou(int month, int year)
 	ur_month& curr_month = rate->m_month[month];
 	double expected_load = m_monthly_load_forecast[year * 12 + month];
 	ssc_number_t rate_esc = rate->rate_scale[year];
-	next_buy_rates.clear();
+	next_composite_buy_rates.clear();
 
 	ssc_number_t num_per = (ssc_number_t)curr_month.ec_tou_br.nrows();
 	if (expected_load > 0)
@@ -310,7 +310,7 @@ void UtilityRateForecast::compute_next_composite_tou(int month, int year)
 				}
 				
 			}
-			next_buy_rates.push_back(periodCost);
+			next_composite_buy_rates.push_back(periodCost);
 		}
 	}
 	else
@@ -318,13 +318,13 @@ void UtilityRateForecast::compute_next_composite_tou(int month, int year)
 		for (size_t ir = 0; ir < num_per; ir++)
 		{
 			double periodBuyRate = curr_month.ec_tou_br.at(ir, 0) * rate_esc;
-			next_buy_rates.push_back(periodBuyRate);
+			next_composite_buy_rates.push_back(periodBuyRate);
 		}
 	}
 
 	// repeat for surplus
 	double expected_gen = m_monthly_gen_forecast[year * 12 + month];
-	next_sell_rates.clear();
+	next_composite_sell_rates.clear();
 	num_per = (ssc_number_t)curr_month.ec_tou_sr.nrows();
 
 	if (expected_gen > 0)
@@ -356,7 +356,7 @@ void UtilityRateForecast::compute_next_composite_tou(int month, int year)
                     }
                 }
             }
-			next_sell_rates.push_back(periodSellRate);
+			next_composite_sell_rates.push_back(periodSellRate);
 		}
 	}
 	else
@@ -369,7 +369,7 @@ void UtilityRateForecast::compute_next_composite_tou(int month, int year)
             {
                 periodSellRate = curr_month.ec_tou_sr.at(ir, 0)* rate_esc;
             }
-			next_sell_rates.push_back(periodSellRate);
+			next_composite_sell_rates.push_back(periodSellRate);
 		}
 	}
 }
@@ -395,10 +395,10 @@ void UtilityRateForecast::initializeMonth(int month, int year)
 
 void UtilityRateForecast::copyTOUForecast()
 {
-    current_buy_rates.clear();
-    current_sell_rates.clear();
-	std::copy(next_buy_rates.begin(), next_buy_rates.end(), std::back_inserter(current_buy_rates));
-	std::copy(next_sell_rates.begin(), next_sell_rates.end(), std::back_inserter(current_sell_rates));
+    current_composite_buy_rates.clear();
+    current_composite_sell_rates.clear();
+	std::copy(next_composite_buy_rates.begin(), next_composite_buy_rates.end(), std::back_inserter(current_composite_buy_rates));
+	std::copy(next_composite_sell_rates.begin(), next_composite_sell_rates.end(), std::back_inserter(current_composite_sell_rates));
 }
 
 void UtilityRateForecast::restartMonth(int prevMonth, int currentMonth, int year)
@@ -439,8 +439,12 @@ double UtilityRateForecast::getEnergyChargeNetMetering(int month, std::vector<do
 double UtilityRateForecast::getEnergyChargeNetBillingOrTimeSeries(double energy, int year_one_index, int current_month, int year, bool use_next_month)
 {
     double cost = 0;
+    // If the below is true, this function does nothing, so return zero early
+    if (rate->enable_nm && !rate->en_ts_buy_rate && !rate->en_ts_sell_rate) {
+        return cost;
+    }
     int tou_period = rate->get_tou_row(year_one_index, current_month);
-    int rate_index = year < rate->rate_scale.size() ? year : rate->rate_scale.size() - 1;
+    size_t rate_index = year < rate->rate_scale.size() ? year : rate->rate_scale.size() - 1;
     ssc_number_t rate_esc = rate->rate_scale[rate_index];
     if (energy < 0)
     {
@@ -452,11 +456,11 @@ double UtilityRateForecast::getEnergyChargeNetBillingOrTimeSeries(double energy,
         {
             if (use_next_month)
             {
-                cost += next_buy_rates[tou_period] * -energy; // rate esclation is handled in compute_next_composite_tou
+                cost += next_composite_buy_rates[tou_period] * -energy; // rate esclation is handled in compute_next_composite_tou
             }
             else
             {
-                cost += current_buy_rates[tou_period] * -energy;
+                cost += current_composite_buy_rates[tou_period] * -energy;
             }
         }
     }
@@ -470,11 +474,11 @@ double UtilityRateForecast::getEnergyChargeNetBillingOrTimeSeries(double energy,
         {
             if (use_next_month)
             {
-                cost += next_sell_rates[tou_period] * -energy;
+                cost += next_composite_sell_rates[tou_period] * -energy;
             }
             else
             {
-                cost += current_sell_rates[tou_period] * -energy;
+                cost += current_composite_sell_rates[tou_period] * -energy;
             }
         }
     }
