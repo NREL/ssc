@@ -5,6 +5,7 @@
 
 void set_up_default_commercial_rate_data(rate_data& data);
 
+// Rate is PG&E's EV9A from https://www.pge.com/includes/docs/pdfs/shared/environment/pge/cleanair/electricdrivevehicles/PEV_rate_options.pdf
 void set_up_pge_residential_rate_data(rate_data& data);
 
 // Modify typical default schedule so we can test August's behavior in "January" and avoid long forecast vectors

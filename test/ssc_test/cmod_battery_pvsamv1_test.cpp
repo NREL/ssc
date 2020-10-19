@@ -75,7 +75,6 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, TestDailyBatteryStats)
 /// Test PVSAMv1 with all defaults and battery enabled with 3 automatic dispatch methods
 TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACBatteryModelIntegration)
 {
-	ssc_data_t data = ssc_data_create();
 	pvsamv_nofinancial_default(data);
 	battery_data_default(data);
 
@@ -128,7 +127,6 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACBatteryModelIntegr
 /// Test PVSAMv1 with all defaults and battery enabled with custom dispatch
 TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACDCBatteryModelIntegrationCustomDispatchSparse)
 {
-	ssc_data_t data = ssc_data_create();
 	pvsamv_nofinancial_default(data);
 	battery_data_default(data);
 
@@ -183,7 +181,6 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACDCBatteryModelInte
 /// Test PVSAMv1 with all defaults and battery enabled with custom dispatch
 TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACDCBatteryModelIntegrationCustomDispatchFull)
 {
-	ssc_data_t data = ssc_data_create();
 	pvsamv_nofinancial_default(data);
 	battery_data_default(data);
 
@@ -238,7 +235,6 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACDCBatteryModelInte
 /// Test PVSAMv1 with all defaults and battery enabled with manual dispatch
 TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACDCBatteryModelIntegrationManualDispatch)
 {
-	ssc_data_t data = ssc_data_create();
 	pvsamv_nofinancial_default(data);
 	battery_data_default(data);
 
@@ -292,7 +288,6 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACDCBatteryModelInte
 /// Test PVSAMv1 with all defaults and DC battery enabled with 3 automatic dispatch methods
 TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelIntegration)
 {
-	ssc_data_t data = ssc_data_create();
 	pvsamv_nofinancial_default(data);
 	battery_data_default(data);
 
@@ -345,7 +340,6 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelIntegr
 /// Test PVSAMv1 with all defaults and battery enabled with 3 automatic dispatch methods
 TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_ACBatteryModelIntegration)
 {
-	ssc_data_t data = ssc_data_create();
 	pvsamv1_pv_defaults(data);
 	pvsamv1_battery_defaults(data);
 	grid_and_rate_defaults(data);
@@ -399,7 +393,6 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_ACBatteryModelIntegration)
 /// Test PVSAMv1 with all defaults and battery enabled with manual dispatch and PPA financial model
 TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_ManualDispatchBatteryModelIntegration)
 {
-	ssc_data_t data = ssc_data_create();
 	pvsamv1_pv_defaults(data);
 	pvsamv1_battery_defaults(data);
 	grid_and_rate_defaults(data);
@@ -453,7 +446,6 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_ManualDispatchBatteryModelI
 /// Test PVSAMv1 with all defaults and DC battery enabled with custom dispatch and PPA financial model
 TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_CustomDispatchBatteryModelDCIntegrationSparse)
 {
-	ssc_data_t data = ssc_data_create();
 	pvsamv1_pv_defaults(data);
 	pvsamv1_battery_defaults(data);
 	grid_and_rate_defaults(data);
@@ -502,7 +494,6 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_CustomDispatchBatteryModelD
 /// Test PVSAMv1 with all defaults and DC battery enabled with custom dispatch and PPA financial model
 TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_CustomDispatchBatteryModelDCIntegrationFull)
 {
-	ssc_data_t data = ssc_data_create();
 	pvsamv1_pv_defaults(data);
 	pvsamv1_battery_defaults(data);
 	grid_and_rate_defaults(data);
@@ -554,7 +545,6 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_CustomDispatchBatteryModelD
 /// Test PVSAMv1 clipping with multiple subarrays
 TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, CommercialMultipleSubarrayBatteryIntegration)
 {
-	ssc_data_t data = ssc_data_create();
 	commercial_multiarray_default(data);
 
 	std::map<std::string, double> pairs;
@@ -608,7 +598,6 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, CommercialMultipleSubarrayBatte
 /// Test Clipping forecast and dispatch
 TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ClippingForecastTest1_DC_FOM_Dispatch)
 {
-    ssc_data_t data = ssc_data_create();
     commercial_multiarray_default(data);
 
     std::map<std::string, double> pairs;
@@ -662,7 +651,6 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ClippingForecastTest1_DC_FOM_Di
 
 TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ClippingForecastTest2_DC_FOM_Dispatch_w_forecast)
 {
-    ssc_data_t data = ssc_data_create();
     commercial_multiarray_default(data);
 
     std::map<std::string, double> pairs;
@@ -718,7 +706,6 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ClippingForecastTest2_DC_FOM_Di
 /// Test PVSAMv1 with all defaults and DC battery enabled with custom dispatch and PPA financial model
 TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_CustomDispatchBatteryModelDCIntegrationFullSubhourly)
 {
-	ssc_data_t data = ssc_data_create();
 	pvsamv1_pv_defaults(data);
 	pvsamv1_battery_defaults(data);
 	grid_and_rate_defaults(data);
@@ -773,7 +760,6 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_CustomDispatchBatteryModelD
 
 TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelPriceSignalDispatch)
 {
-    ssc_data_t data = ssc_data_create();
     pvsamv_nofinancial_default(data);
     battery_data_default(data);
     setup_residential_utility_rates(data);
