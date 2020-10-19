@@ -69,16 +69,16 @@ public:
 		double etaDischarge
 		);
 
-	virtual ~dispatch_automatic_front_of_meter_t();
+	~dispatch_automatic_front_of_meter_t();
 
 	/*! deep copy constructor (new memory), from dispatch to this */
 	dispatch_automatic_front_of_meter_t(const dispatch_t& dispatch);
 
 	/*! shallow copy from dispatch to this */
-	virtual void copy(const dispatch_t* dispatch);
+	void copy(const dispatch_t* dispatch);
 
 	/// Public API to run the battery dispatch model for the current timestep, given the system power, and optionally the electric load, amount of system clipping, or specified battery power
-	virtual void dispatch(size_t year,
+	void dispatch(size_t year,
 		size_t hour_of_year,
 		size_t step);
 
@@ -86,7 +86,7 @@ public:
 	void update_dispatch(size_t year, size_t hour_of_year, size_t step, size_t lifetimeIndex);
 
 	/// Pass in the PV power forecast [kW]
-	virtual void update_pv_data(std::vector<double> P_pv_ac);
+    void update_pv_data(double_vec P_pv_ac);
 
 	/// Return benefit calculations
 	double benefit_charge(){ return revenueToPVCharge; }

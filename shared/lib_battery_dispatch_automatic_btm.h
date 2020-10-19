@@ -85,10 +85,10 @@ public:
 	dispatch_automatic_behind_the_meter_t(const dispatch_t& dispatch);
 
 	// copy members from dispatch to this
-	virtual void copy(const dispatch_t * dispatch);
+	void copy(const dispatch_t * dispatch);
 
 	/// Public API to run the battery dispatch model for the current timestep, given the system power, and optionally the electric load, amount of system clipping, or specified battery power
-	virtual void dispatch(size_t year,
+	void dispatch(size_t year,
 		size_t hour_of_year,
 		size_t step);
 
@@ -133,7 +133,7 @@ protected:
     void check_power_restrictions(double& power); // Call some constraints functions to ensure dispatch doesn't exceed power/current limits
 
     /*! Calculate the cost to cycle, updates m_cycleCost */
-    virtual void costToCycle();
+    void costToCycle();
 
 	/*! Full time-series of loads [kW] */
 	double_vec _P_load_ac;

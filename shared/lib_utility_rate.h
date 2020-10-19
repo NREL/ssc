@@ -10,7 +10,7 @@ class UtilityRate
 public:
 
     /*
-     * Original class for determining costs for grid charging in frong of the meter batteries
+     * Original class for determining costs for grid charging in front of the meter batteries
      * It may be possible to replace this with rate_data in UtilityRateCalculator in order to handle tiers and demand charges as appropriate for FOM
      */
 	UtilityRate(){};
