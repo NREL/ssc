@@ -1260,9 +1260,9 @@ bool weatherfile::open(const std::string& file, bool header_only)
                 m_columns[DAY].data[i] = (float)stoi(cols[2]);
                 m_columns[HOUR].data[i] = (float)stoi(cols[3]) - 1;  // hour goes 0-23, not 1-24;
                 m_columns[MINUTE].data[i] = (float)stoi(cols[4]); //minute goes 0-59
-                if (m_columns[MINUTE].data[i] == 60) {
-                    m_columns[MINUTE].data[i] = 0; //Legacy TMY formats have minutes = 60, means time step includes following hour (11:00-11:59) but number should be zero for SAM purposes
-                }
+                /*if (m_columns[MINUTE].data[i] == 60) {
+                    m_columns[MINUTE].data[i] = NAN; //Legacy TMY formats have minutes = 60, means time step includes following hour (11:00-11:59) but number should be zero for SAM purposes
+                }*/
                 m_columns[GHI].data[i] = check_missing(col_or_nan(cols[13]), 9999.);
                 m_columns[DNI].data[i] = check_missing(col_or_nan(cols[14]), 9999.);
                 m_columns[DHI].data[i] = check_missing(col_or_nan(cols[15]), 9999.);
@@ -1467,13 +1467,31 @@ bool weatherfile::open(const std::string& file, bool header_only)
 
     // special handling for missing values for various fields
     if (m_type == EPW) {
+        if (m_columns[MINUTE].data[0] == 60 && m_columns[MINUTE].data[1] == 60) { //check if 60 is the minutes value for each time step (assuming uniform time stamps
+            m_columns[MINUTE].index = -1;
+        }
         for (size_t i = 0; i < m_nRecords; i++) {
             for (int j = 5; j < 19; j++) {
                 if (j == 8 || j == 17 || j == 18 || j == 10) continue;	// EPW format does not contain
                 if (my_isnan(m_columns[j].data[i])) handle_missing_field(i, j);
             }
             if (m_columns[TWET].data[i] == -999.) m_columns[TWET].data[i] = (float)calc_twet((double)m_columns[TDRY].data[i], (double)m_columns[RH].data[i], (double)m_columns[PRES].data[i]);
+
+            if (m_columns[MINUTE].index < 0 && (int)m_columns[HOUR].data[1] == m_columns[HOUR].data[1])
+            {
+                m_columns[MINUTE].data[i] = (float)((m_stepSec / 2) / 60);
+            }
+            else if (m_columns[MINUTE].index < 0)  //implies fractional hours are provided
+            {
+                float hr = m_columns[HOUR].data[i];
+                m_columns[MINUTE].data[i] = (float)((hr - (int)hr) * 60.);
+                m_columns[HOUR].data[i] = (float)(int)hr;
+
+            }
         }
+        
+        
+        
     }
 
     // final checks over data
@@ -1703,12 +1721,12 @@ bool weatherfile::convert_to_wfcsv(const std::string& input, const std::string& 
         fprintf(fp, "Source,Location ID,City,State,Country,Latitude,Longitude,Time Zone,Elevation\n");
         fprintf(fp, "TMY2,%s,%s,%s,USA,%.6lf,%.6lf,%lg,%lg\n", hdr.location.c_str(),
             normalize_city(hdr.city).c_str(), hdr.state.c_str(), hdr.lat, hdr.lon, hdr.tz, hdr.elev);
-        fprintf(fp, "Year,Month,Day,Hour,GHI,DNI,DHI,Tdry,Tdew,RH,Pres,Wspd,Wdir,Snow Depth\n");
+        fprintf(fp, "Year,Month,Day,Hour,Minute,GHI,DNI,DHI,Tdry,Tdew,RH,Pres,Wspd,Wdir,Snow Depth\n");
         for (size_t i = 0; i < 8760; i++)
         {
             if (!wf.read(&rec)) return false;
-            fprintf(fp, "%d,%d,%d,%d,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg\n",
-                rec.year, rec.month, rec.day, rec.hour,
+            fprintf(fp, "%d,%d,%d,%d,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg\n",
+                rec.year, rec.month, rec.day, rec.hour, rec.minute,
                 rec.gh, rec.dn, rec.df, rec.tdry, rec.tdew, rec.rhum, rec.pres, rec.wspd, rec.wdir, rec.snow);
         }
     }
@@ -1717,12 +1735,12 @@ bool weatherfile::convert_to_wfcsv(const std::string& input, const std::string& 
         fprintf(fp, "Source,Location ID,City,State,Country,Latitude,Longitude,Time Zone,Elevation\n");
         fprintf(fp, "TMY3,%s,%s,%s,USA,%.6lf,%.6lf,%lg,%lg\n", hdr.location.c_str(),
             normalize_city(hdr.city).c_str(), hdr.state.c_str(), hdr.lat, hdr.lon, hdr.tz, hdr.elev);
-        fprintf(fp, "Year,Month,Day,Hour,GHI,DNI,DHI,Tdry,Tdew,RH,Pres,Wspd,Wdir,Albedo\n");
+        fprintf(fp, "Year,Month,Day,Hour,Minute,GHI,DNI,DHI,Tdry,Tdew,RH,Pres,Wspd,Wdir,Albedo\n");
         for (size_t i = 0; i < 8760; i++)
         {
             if (!wf.read(&rec)) return false;
-            fprintf(fp, "%d,%d,%d,%d,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg\n",
-                rec.year, rec.month, rec.day, rec.hour,
+            fprintf(fp, "%d,%d,%d,%d,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg\n",
+                rec.year, rec.month, rec.day, rec.hour, rec.minute,
                 rec.gh, rec.dn, rec.df, rec.tdry, rec.tdew, rec.rhum, rec.pres, rec.wspd, rec.wdir, rec.alb);
         }
     }
@@ -1731,12 +1749,12 @@ bool weatherfile::convert_to_wfcsv(const std::string& input, const std::string& 
         fprintf(fp, "Source,Location ID,City,State,Country,Latitude,Longitude,Time Zone,Elevation\n");
         fprintf(fp, "EPW,%s,%s,%s,%s,%.6lf,%.6lf,%lg,%lg\n", hdr.location.c_str(),
             normalize_city(hdr.city).c_str(), hdr.state.c_str(), hdr.country.c_str(), hdr.lat, hdr.lon, hdr.tz, hdr.elev);
-        fprintf(fp, "Year,Month,Day,Hour,GHI,DNI,DHI,Tdry,Twet,RH,Pres,Wspd,Wdir,Albedo\n");
+        fprintf(fp, "Year,Month,Day,Hour,Minute,GHI,DNI,DHI,Tdry,Twet,RH,Pres,Wspd,Wdir,Albedo\n");
         for (size_t i = 0; i < 8760; i++)
         {
             if (!wf.read(&rec)) return false;
-            fprintf(fp, "%d,%d,%d,%d,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg\n",
-                rec.year, rec.month, rec.day, rec.hour,
+            fprintf(fp, "%d,%d,%d,%d,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg\n",
+                rec.year, rec.month, rec.day, rec.hour, rec.minute,
                 rec.gh, rec.dn, rec.df, rec.tdry, rec.twet, rec.rhum, rec.pres, rec.wspd, rec.wdir, rec.alb);
         }
     }
@@ -1745,12 +1763,12 @@ bool weatherfile::convert_to_wfcsv(const std::string& input, const std::string& 
         fprintf(fp, "Source,Location ID,City,State,Latitude,Longitude,Time Zone,Elevation\n");
         fprintf(fp, "SMW,%s,%s,%s,%s,%.6lf,%.6lf,%lg,%lg\n", hdr.location.c_str(),
             normalize_city(hdr.city).c_str(), hdr.state.c_str(), hdr.country.c_str(), hdr.lat, hdr.lon, hdr.tz, hdr.elev);
-        fprintf(fp, "Month,Day,Hour,GHI,DNI,DHI,Tdry,Twet,Tdew,RH,Pres,Wspd,Wdir,Snow,Albedo\n");
+        fprintf(fp, "Month,Day,Hour,Minute,GHI,DNI,DHI,Tdry,Twet,Tdew,RH,Pres,Wspd,Wdir,Snow,Albedo\n");
         for (size_t i = 0; i < 8760; i++)
         {
             if (!wf.read(&rec)) return false;
-            fprintf(fp, "%d,%d,%d,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg\n",
-                rec.month, rec.day, rec.hour,
+            fprintf(fp, "%d,%d,%d,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg\n",
+                rec.month, rec.day, rec.hour, rec.minute,
                 rec.gh, rec.dn, rec.df, rec.tdry, rec.twet, rec.tdew, rec.rhum, rec.pres, rec.wspd, rec.wdir, rec.snow, rec.alb);
         }
     }
