@@ -40,7 +40,7 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 {
 	// if look behind, only allow 24 hours
 	if (_mode == dispatch_t::FOM_LOOK_BEHIND)
-		_look_ahead_hours = 24;
+		_forecast_hours = 24;
 
 	_inverter_paco = inverter_paco;
 	_forecast_price_rt_series = forecast_price_series_dollar_per_kwh;
@@ -63,7 +63,7 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 dispatch_automatic_front_of_meter_t::~dispatch_automatic_front_of_meter_t(){ /* NOTHING TO DO */}
 void dispatch_automatic_front_of_meter_t::init_with_pointer(const dispatch_automatic_front_of_meter_t* tmp)
 {
-	_look_ahead_hours = tmp->_look_ahead_hours;
+	_forecast_hours = tmp->_forecast_hours;
 	_inverter_paco = tmp->_inverter_paco;
 	_forecast_price_rt_series = tmp->_forecast_price_rt_series;
 
@@ -79,7 +79,7 @@ void dispatch_automatic_front_of_meter_t::setup_cost_forecast_vector()
 
 	// add elements at beginning, so our forecast is looking at yesterday's prices
 	if (_mode == dispatch_t::FOM_LOOK_BEHIND) {
-		for (size_t i = 0; i != _look_ahead_hours * _steps_per_hour; i++)
+		for (size_t i = 0; i != _forecast_hours * _steps_per_hour; i++)
 			ppa_price_series.push_back(0);
 	}
 
@@ -87,7 +87,7 @@ void dispatch_automatic_front_of_meter_t::setup_cost_forecast_vector()
 	for (size_t i = 0; i != _forecast_price_rt_series.size(); i++){
 		ppa_price_series.push_back(_forecast_price_rt_series[i]);
 	}
-	for (size_t i = 0; i != _look_ahead_hours * _steps_per_hour; i++) {
+	for (size_t i = 0; i != _forecast_hours * _steps_per_hour; i++) {
 		ppa_price_series.push_back(_forecast_price_rt_series[i]);
 	}
 	_forecast_price_rt_series = ppa_price_series;
@@ -140,7 +140,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
 
         // Compute forecast variables which don't change from year to year
         size_t idx_year1 = hour_of_year * _steps_per_hour;
-        size_t idx_lookahead = _look_ahead_hours * _steps_per_hour;
+        size_t idx_lookahead = _forecast_hours * _steps_per_hour;
         auto max_ppa_cost = std::max_element(_forecast_price_rt_series.begin() + idx_year1, _forecast_price_rt_series.begin() + idx_year1 + idx_lookahead);
         auto min_ppa_cost = std::min_element(_forecast_price_rt_series.begin() + idx_year1, _forecast_price_rt_series.begin() + idx_year1 + idx_lookahead);
         double ppa_cost = _forecast_price_rt_series[idx_year1];
@@ -150,7 +150,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
         std::vector<double> usage_cost_forecast;
         if (m_utilityRateCalculator) {
             usage_cost = m_utilityRateCalculator->getEnergyRate(hour_of_year);
-            for (size_t i = hour_of_year; i < hour_of_year + _look_ahead_hours; i++)
+            for (size_t i = hour_of_year; i < hour_of_year + _forecast_hours; i++)
             {
                 for (size_t s = 0; s < _steps_per_hour; s++) {
                     usage_cost_forecast.push_back(m_utilityRateCalculator->getEnergyRate(i % 8760));
@@ -160,8 +160,8 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
 
         // Compute forecast variables which potentially do change from year to year
         double energyToStoreClipped = 0;
-        if (_P_cliploss_dc.size() > lifetimeIndex + _look_ahead_hours) {
-            energyToStoreClipped = std::accumulate(_P_cliploss_dc.begin() + lifetimeIndex, _P_cliploss_dc.begin() + lifetimeIndex + _look_ahead_hours * _steps_per_hour, 0.0) * _dt_hour;
+        if (_P_cliploss_dc.size() > lifetimeIndex + _forecast_hours) {
+            energyToStoreClipped = std::accumulate(_P_cliploss_dc.begin() + lifetimeIndex, _P_cliploss_dc.begin() + lifetimeIndex + _forecast_hours * _steps_per_hour, 0.0) * _dt_hour;
         }
 
         /*! Economic benefit of charging from the grid in current time step to discharge sometime in next X hours ($/kWh)*/
@@ -307,7 +307,7 @@ void dispatch_automatic_front_of_meter_t::update_pv_data(double_vec P_pv_ac)
 	_P_pv_ac = P_pv_ac;
 
 	// append to end to allow for look-ahead
-	for (size_t i = 0; i != _look_ahead_hours * _steps_per_hour; i++)
+	for (size_t i = 0; i != _forecast_hours * _steps_per_hour; i++)
 		_P_pv_ac.push_back(P_pv_ac[i]);
 }
 

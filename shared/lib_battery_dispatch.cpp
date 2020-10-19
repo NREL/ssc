@@ -485,7 +485,7 @@ dispatch_automatic_t::dispatch_automatic_t(
 
 	_hour_last_updated = SIZE_MAX;
 
-	_look_ahead_hours = look_ahead_hours;
+	_forecast_hours = look_ahead_hours;
 	_steps_per_hour = (size_t)(1. / dt_hour);
 	_num_steps = 24 * _steps_per_hour;
 
@@ -521,7 +521,7 @@ void dispatch_automatic_t::init_with_pointer(const dispatch_automatic_t * tmp)
     curr_year = tmp->curr_year;
 	_mode = tmp->_mode;
 	_safety_factor = tmp->_safety_factor;
-	_look_ahead_hours = tmp->_look_ahead_hours;
+	_forecast_hours = tmp->_forecast_hours;
     m_battReplacementCostPerKWH = tmp->m_battReplacementCostPerKWH;
     m_battCycleCostChoice = tmp->m_battCycleCostChoice;
     m_cycleCost = tmp->m_cycleCost;
@@ -551,7 +551,7 @@ void dispatch_automatic_t::update_cliploss_data(double_vec P_cliploss)
     _P_cliploss_dc = P_cliploss;
 
     // append to end to allow for look-ahead
-    for (size_t i = 0; i != _look_ahead_hours * _steps_per_hour; i++)
+    for (size_t i = 0; i != _forecast_hours * _steps_per_hour; i++)
         _P_cliploss_dc.push_back(P_cliploss[i]);
 }
 void dispatch_automatic_t::set_custom_dispatch(std::vector<double> P_batt_dc) { _P_battery_use = P_batt_dc; }

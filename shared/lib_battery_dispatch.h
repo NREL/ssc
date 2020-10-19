@@ -44,8 +44,8 @@ class dispatch_t
 {
 public:
 
-	enum FOM_MODES { FOM_LOOK_AHEAD, FOM_LOOK_BEHIND, FOM_FORECAST, FOM_CUSTOM_DISPATCH, FOM_MANUAL, FOM_RESILIENCE };
-	enum BTM_MODES { LOOK_AHEAD, LOOK_BEHIND, MAINTAIN_TARGET, CUSTOM_DISPATCH, MANUAL, FORECAST, RESILIENCE };
+	enum FOM_MODES { FOM_LOOK_AHEAD, FOM_LOOK_BEHIND, FOM_FORECAST, FOM_CUSTOM_DISPATCH, FOM_MANUAL };
+	enum BTM_MODES { LOOK_AHEAD, LOOK_BEHIND, MAINTAIN_TARGET, CUSTOM_DISPATCH, MANUAL, FORECAST };
 	enum METERING { BEHIND, FRONT };
 	enum PV_PRIORITY { MEET_LOAD, CHARGE_BATTERY };
 	enum CURRENT_CHOICE { RESTRICT_POWER, RESTRICT_CURRENT, RESTRICT_BOTH };
@@ -149,8 +149,8 @@ protected:
 
 	/**
 	The dispatch mode.
-	For behind-the-meter dispatch: 0 = LOOK_AHEAD, 1 = LOOK_BEHIND, 2 = MAINTAIN_TARGET, 3 = CUSTOM, 4 = MANUAL, 5 = FORECAST, 6 = RESILIENCE
-	For front-of-meter dispatch: 0 = FOM_LOOK_AHEAD, 1 = FOM_LOOK_BEHIND, 2 = INPUT FORECAST, 3 = CUSTOM, 4 = MANUAL, 5 = RESILIENCE
+	For behind-the-meter dispatch: 0 = LOOK_AHEAD, 1 = LOOK_BEHIND, 2 = MAINTAIN_TARGET, 3 = CUSTOM, 4 = MANUAL, 5 = FORECAST
+	For front-of-meter dispatch: 0 = FOM_LOOK_AHEAD, 1 = FOM_LOOK_BEHIND, 2 = INPUT FORECAST, 3 = CUSTOM, 4 = MANUAL
 	*/
 	int _mode;
 
@@ -337,7 +337,7 @@ protected:
 	double _safety_factor;
 
 	/*! The hours to look ahead in the simulation [hour] */
-	size_t _look_ahead_hours;
+	size_t _forecast_hours;
 
     /*! Cost to replace battery per kWh */
     std::vector<double> m_battReplacementCostPerKWH;
