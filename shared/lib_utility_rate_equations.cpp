@@ -165,14 +165,12 @@ void rate_data::init(int num_rec_yearly) {
 
 	m_ec_ts_sell_rate.clear();
 	m_ec_ts_buy_rate.clear();
+    dc_hourly_peak.clear();
 
 	// for reporting purposes
-	for (i = 0; i < m_num_rec_yearly; i++)
-	{
-		m_ec_tou_sched.push_back(1);
-		m_dc_tou_sched.push_back(1);
-		dc_hourly_peak.push_back(0);
-	}
+    m_ec_tou_sched = std::vector<int>(m_num_rec_yearly, 1);
+    m_dc_tou_sched = std::vector<int>(m_num_rec_yearly, 1);
+    dc_hourly_peak = std::vector<ssc_number_t>(m_num_rec_yearly, 0);
 }
 
 void rate_data::init_energy_rates(bool gen_only) {
@@ -325,7 +323,7 @@ void rate_data::setup_energy_rates(ssc_number_t* ec_weekday, ssc_number_t* ec_we
 	size_t steps_per_hour = m_num_rec_yearly / 8760;
 	size_t idx = 0;
 
-	// This is error checked in cmod_utilitrate5 (and other calling functions)
+	// This is error checked in cmod_utilityrate5 (and other calling functions)
 	nrows = 12;
 	ncols = 24;
 
@@ -369,10 +367,7 @@ void rate_data::setup_energy_rates(ssc_number_t* ec_weekday, ssc_number_t* ec_we
 	// for each period, get list of tier numbers and then sort and construct
 	//m_ec_tou_ub, m_ec_tou_units, m_ec_tou_br, ec_tou_sr vectors of vectors
 
-	for (r = 0; r < m_ec_periods.size(); r++)
-	{
-		m_ec_periods_tiers_init.push_back(std::vector<int>());
-	}
+    m_ec_periods_tiers_init = std::vector<std::vector<int>>(m_ec_periods.size());
 
 	for (r = 0; r < ec_tou_rows; r++)
 	{
@@ -570,10 +565,7 @@ void rate_data::setup_demand_charges(ssc_number_t* dc_weekday, ssc_number_t* dc_
 	std::sort(m_dc_tou_periods.begin(), m_dc_tou_periods.end());
 	// for each period, get list of tier numbers and then sort and construct
 	//m_dc_tou_ub, m_dc_tou_units, m_dc_tou_br, dc_tou_sr vectors of vectors
-	for (r = 0; r < m_dc_tou_periods.size(); r++)
-	{
-		m_dc_tou_periods_tiers.push_back(std::vector<int>());
-	}
+	m_dc_tou_periods_tiers = std::vector<std::vector<int>>(m_dc_tou_periods.size());
 
 	for (r = 0; r < dc_tou_rows; r++)
 	{
@@ -724,11 +716,10 @@ void rate_data::init_dc_peak_vectors(int month)
 	ur_month& curr_month = m_month[month];
 	curr_month.dc_tou_peak.clear();
 	curr_month.dc_tou_peak_hour.clear();
-	for (int i = 0; i < (int)curr_month.dc_periods.size(); i++)
-	{
-		curr_month.dc_tou_peak.push_back(0);
-		curr_month.dc_tou_peak_hour.push_back(0);
-	}
+	
+	curr_month.dc_tou_peak = std::vector<ssc_number_t>(curr_month.dc_periods.size());
+	curr_month.dc_tou_peak_hour = std::vector<int>(curr_month.dc_periods.size());
+	
 }
 
 void rate_data::find_dc_tou_peak(int month, double power, int step) {

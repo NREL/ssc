@@ -299,6 +299,10 @@ void rate_setup::setup(var_table* vt, int num_recs_yearly, int nyears, rate_data
         for (i = 0; i < nyears; i++)
             rate_scale[i] = (ssc_number_t)pow((double)(inflation_rate + 1 + parr[0] * 0.01), (double)i);
     }
+    else if (cnt < nyears)
+    {
+        throw exec_error("utilityrate5", "rate_escalation must have 1 entry or length equal to analysis_period");
+    }
     else
     {
         for (i = 0; i < nyears; i++)
@@ -310,7 +314,7 @@ void rate_setup::setup(var_table* vt, int num_recs_yearly, int nyears, rate_data
     {
         if (!vt->is_assigned("ur_ts_buy_rate"))
         {
-            throw exec_error("utilityrate5", util::format("Time step buy rate enabled but no time step buy rates specified."));
+            throw exec_error("utilityrate5", util::format("Error in ur_ts_buy_rate. Time step buy rate enabled but no time step buy rates specified."));
         }
         else
         { // hourly or sub hourly loads for single year
@@ -326,7 +330,7 @@ void rate_setup::setup(var_table* vt, int num_recs_yearly, int nyears, rate_data
     if (rate.en_ts_sell_rate) {
         if (!vt->is_assigned("ur_ts_sell_rate"))
         {
-            throw exec_error(cm_name, util::format("Time step sell rate enabled but no time step sell rates specified."));
+            throw exec_error(cm_name, util::format("Error in ur_ts_sell_rate. Time step sell rate enabled but no time step sell rates specified."));
         }
         else
         { // hourly or sub hourly loads for single year

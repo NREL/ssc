@@ -57,9 +57,9 @@ public:
 	util::matrix_t<ssc_number_t>  ec_tou_br_init;
 	util::matrix_t<ssc_number_t>  ec_tou_sr_init;
 	// may change based on units and year
-	util::matrix_t<ssc_number_t>  ec_tou_ub;
-	util::matrix_t<ssc_number_t>  ec_tou_br;
-	util::matrix_t<ssc_number_t>  ec_tou_sr;
+	util::matrix_t<ssc_number_t>  ec_tou_ub; // Time of use upper bound (tiers)
+	util::matrix_t<ssc_number_t>  ec_tou_br; // Time of use buy rate
+	util::matrix_t<ssc_number_t>  ec_tou_sr; // Time of use sell rate
 	util::matrix_t<int>  ec_tou_units;
 	// calculated charges per period and tier
 	util::matrix_t<ssc_number_t>  ec_charge;
