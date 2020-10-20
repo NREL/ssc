@@ -24,6 +24,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_battery_powerflow.h"
 #include "lib_shared_inverter.h"
 
+#include "../ssc/core.h" // For errors
+
 dispatch_automatic_behind_the_meter_t::dispatch_automatic_behind_the_meter_t(
 	battery_t * Battery,
 	double dt_hour,
@@ -134,7 +136,7 @@ double dispatch_automatic_behind_the_meter_t::power_grid_target() { return _P_ta
 
 void dispatch_automatic_behind_the_meter_t::setup_rate_forecast()
 {
-    if (rate != NULL)
+    if (rate)
     {
         // Process load and pv forecasts to get _monthly_ expected gen, load, and peak
         // Do we need new member variables, or can these just be passed off to UtilityRateForecast?
@@ -177,7 +179,7 @@ void dispatch_automatic_behind_the_meter_t::setup_rate_forecast()
             if (util::month_of(hour_of_year) != curr_month || (idx == array_size - 1))
             {
                 // Push back vectors
-                // Note: this is a net-billing approach. To be accurate for net metering, we'd have to invote tou periods here, this overestimates costs for NM
+                // Note: this is a net-billing approach. To be accurate for net metering, we'd have to invoke tou periods here, this overestimates costs for NM
                 monthly_peaks.push_back(-1.0 * peak_during_month);
                 monthly_load.push_back(-1.0 * load_during_month);
                 monthly_gen.push_back(gen_during_month);
@@ -190,6 +192,9 @@ void dispatch_automatic_behind_the_meter_t::setup_rate_forecast()
         rate_forecast = std::shared_ptr<UtilityRateForecast>(new UtilityRateForecast(rate.get(), _steps_per_hour, monthly_load, monthly_gen, monthly_peaks, _nyears));
         rate_forecast->initializeMonth(0, 0);
         rate_forecast->copyTOUForecast();
+    }
+    else {
+        throw exec_error("lib_battery_dispatch_automatic_btm", "setup_rate_forecast called without utility rate. Please add electricity rate and re-run");
     }
 }
 
@@ -280,7 +285,7 @@ void dispatch_automatic_behind_the_meter_t::initialize(size_t hour_of_year, size
     size_t lifetimeMax = _P_pv_ac.size();
 	for (size_t ii = 0; ii != _num_steps && lifetimeIndex < lifetimeMax; ii++)
 	{
-		grid[ii] = grid_point(0., 0, 0);
+		grid[ii] = grid_point(0., 0, 0, 0., 0.);
 		sorted_grid[ii] = grid[ii];
 		_P_target_use.push_back(0.);
 		_P_battery_use.push_back(0.);
@@ -381,8 +386,8 @@ double dispatch_automatic_behind_the_meter_t::compute_costs(FILE* p, bool debug,
         fprintf(p, "Index\t P_load (kW)\t P_pv (kW)\t P_grid (kW)\n");
 
     // Copy utility rate calculator to do "no dispatch" forecast
-    std::unique_ptr<UtilityRateForecast> noDispatchForecast = std::unique_ptr<UtilityRateForecast>(new UtilityRateForecast(*rate_forecast.get()));
-    std::unique_ptr<UtilityRateForecast> marginalForecast = std::unique_ptr<UtilityRateForecast>(new UtilityRateForecast(*rate_forecast.get()));
+    std::unique_ptr<UtilityRateForecast> noDispatchForecast = std::unique_ptr<UtilityRateForecast>(new UtilityRateForecast(*rate_forecast));
+    std::unique_ptr<UtilityRateForecast> marginalForecast = std::unique_ptr<UtilityRateForecast>(new UtilityRateForecast(*rate_forecast));
     double no_dispatch_cost = 0;
 
     // compute grid net from pv and load (no battery)

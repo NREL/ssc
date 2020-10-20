@@ -189,18 +189,18 @@ double UtilityRateForecast::forecastCost(std::vector<double>& predicted_loads, s
     }
 
 	// Get previous peak cost - may need to run two months
-	double previousPeak = rate->get_demand_charge(month, year);
+	double previousDemandCharge = rate->get_demand_charge(month, year);
     double previousEnergyCharge = 0;
     if (rate->enable_nm)
     {
-        previousEnergyCharge = getEnergyChargeNetMetering(month, current_composite_buy_rates, current_composite_sell_rates, false);
+        previousEnergyCharge = getEnergyChargeNetMetering(month, current_composite_buy_rates, current_composite_sell_rates);
     }
 	if (crossing_month)
 	{
         initializeMonth(month_at_end, year_at_end);
         if (n > 1)
         {
-            previousPeak += rate->get_demand_charge(month_at_end, year_at_end);
+            previousDemandCharge += rate->get_demand_charge(month_at_end, year_at_end);
         }
 	}
 
@@ -218,7 +218,7 @@ double UtilityRateForecast::forecastCost(std::vector<double>& predicted_loads, s
             if (rate->enable_nm)
             {
                 // restartMonth will change the sign of energyUse from what getEnergyCharge expects, so compute that first
-                newEnergyCharge += getEnergyChargeNetMetering(month, current_composite_buy_rates, current_composite_sell_rates, true);
+                newEnergyCharge += getEnergyChargeNetMetering(month, current_composite_buy_rates, current_composite_sell_rates);
             }
 			// This handles net metering carryover
 			restartMonth(month, current_month, year_at_end);
@@ -249,18 +249,18 @@ double UtilityRateForecast::forecastCost(std::vector<double>& predicted_loads, s
 	}
 
 	// Compute new peak cost - may need to run two months
-	double newPeak = rate->get_demand_charge(month, year);
+	double newDemandCharge = rate->get_demand_charge(month, year);
 	if (crossing_month && n > 1)
 	{
-		newPeak += rate->get_demand_charge(month_at_end, year_at_end);
+		newDemandCharge += rate->get_demand_charge(month_at_end, year_at_end);
         if (rate->enable_nm)
         {
-            newEnergyCharge += getEnergyChargeNetMetering(month_at_end, next_composite_buy_rates, next_composite_sell_rates, false);
+            newEnergyCharge += getEnergyChargeNetMetering(month_at_end, next_composite_buy_rates, next_composite_sell_rates);
         }
 	}
     else if(rate->enable_nm)
     {
-        newEnergyCharge += getEnergyChargeNetMetering(month, current_composite_buy_rates, current_composite_sell_rates, false);
+        newEnergyCharge += getEnergyChargeNetMetering(month, current_composite_buy_rates, current_composite_sell_rates);
     }
 
     // If forecast length is 1, restartMonth won't be triggered on the next forecast. Trigger it now
@@ -270,7 +270,7 @@ double UtilityRateForecast::forecastCost(std::vector<double>& predicted_loads, s
         copyTOUForecast();
     }
 
-	cost += newPeak + newEnergyCharge - previousPeak - previousEnergyCharge;
+	cost += newDemandCharge + newEnergyCharge - previousDemandCharge - previousEnergyCharge;
 
 	return cost;
 }
@@ -415,7 +415,7 @@ void UtilityRateForecast::restartMonth(int prevMonth, int currentMonth, int year
     }
 }
 
-double UtilityRateForecast::getEnergyChargeNetMetering(int month, std::vector<double>& buy_rates, std::vector<double>& sell_rates, bool crossing_month)
+double UtilityRateForecast::getEnergyChargeNetMetering(int month, std::vector<double>& buy_rates, std::vector<double>& sell_rates)
 {
     double cost = 0;
     ur_month& curr_month = rate->m_month[month];

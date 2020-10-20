@@ -143,7 +143,7 @@ protected:
     /* Transfer net metering surplus credits from previous month to current month */
 	void restartMonth(int prevMonth, int currentMonth, int year);
 
-    double getEnergyChargeNetMetering(int month, std::vector<double>& buy_rates, std::vector<double>& sell_rates, bool crossing_month);
+    double getEnergyChargeNetMetering(int month, std::vector<double>& buy_rates, std::vector<double>& sell_rates);
     double getEnergyChargeNetBillingOrTimeSeries(double energy, int year_one_index, int current_month, int year, bool use_next_month);
 
 	std::shared_ptr<rate_data> rate;

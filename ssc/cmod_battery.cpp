@@ -1158,7 +1158,9 @@ void battstor::initialize_automated_dispatch(std::vector<ssc_number_t> pv, std::
                 if (input_target)
                     automatic_dispatch_btm->set_target_power(target_power);
 
-                automatic_dispatch_btm->setup_rate_forecast();
+                if (batt_vars->ec_rate_defined) {
+                    automatic_dispatch_btm->setup_rate_forecast();
+                }
             }
             else if (dispatch_automatic_front_of_meter_t * automatic_dispatch_fom = dynamic_cast<dispatch_automatic_front_of_meter_t*>(dispatch_model))
             {
