@@ -426,7 +426,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 
                 // For automated front of meter with electricity rates
                 batt_vars->ec_rate_defined = false;
-                if (vt.is_assigned("en_electricity_rates")) {
+                if (vt.is_assigned("en_electricity_rates")) { // Only defined for singleowner
                     if (vt.as_integer("en_electricity_rates"))
                     {
                         batt_vars->ec_use_realtime = vt.as_boolean("ur_en_ts_sell_rate");
@@ -465,11 +465,8 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             {
                 // For automated behind the meter with electricity rates
                 batt_vars->ec_rate_defined = false;
-                if (vt.is_assigned("en_electricity_rates")) {
-                    if (vt.as_integer("en_electricity_rates"))
-                    {
-                        batt_vars->ec_rate_defined = true;
-                    }
+                if (vt.is_assigned("ur_ec_tou_mat")) { // Some tests don't have this assigned, ensure it is before setting up forecast rate
+                    batt_vars->ec_rate_defined = true;
                 }
                     
 
