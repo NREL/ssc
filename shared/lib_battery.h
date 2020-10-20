@@ -362,6 +362,12 @@ public:
 
     double energy_nominal();
 
+    // Get the maximum energy in one full charge-dischage cycle, based on dispatch limits
+    double energy_max(double SOC_max, double SOC_min);
+
+    // Get the energy available between the current SOC and SOC_min
+    double energy_available(double SOC_min);
+
     double energy_to_fill(double SOC_max);
 
     double power_to_fill(double SOC_max);

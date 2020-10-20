@@ -358,7 +358,7 @@ void dispatch_automatic_behind_the_meter_t::sort_grid(FILE *p, bool debug, size_
 void dispatch_automatic_behind_the_meter_t::compute_energy(FILE *p, bool debug, double & E_max)
 {
 
-	E_max = _Battery->V() * _Battery->charge_maximum_lifetime() * (m_batteryPower->stateOfChargeMax - m_batteryPower->stateOfChargeMin) * 0.01 * util::watt_to_kilowatt;
+	E_max = _Battery->energy_max(m_batteryPower->stateOfChargeMax, m_batteryPower->stateOfChargeMin);
 
 	if (debug)
 	{
@@ -369,7 +369,7 @@ void dispatch_automatic_behind_the_meter_t::compute_energy(FILE *p, bool debug, 
 
 double dispatch_automatic_behind_the_meter_t::compute_available_energy(FILE* p, bool debug)
 {
-    double E_available = _Battery->V() * _Battery->charge_maximum_lifetime() * (_Battery->SOC() - m_batteryPower->stateOfChargeMin) * 0.01 * util::watt_to_kilowatt;
+    double E_available = _Battery->energy_available(m_batteryPower->stateOfChargeMin);
 
     if (debug)
     {
@@ -567,10 +567,7 @@ void dispatch_automatic_behind_the_meter_t::cost_based_target_power(FILE* p, boo
         plans[i].dispatch_hours = i;
         plans[i].plannedDispatch.resize(_num_steps);
         plans[i].plannedGridUse.clear();
-        for (int j = 0; j < plans[i].plannedDispatch.size(); j++)
-        {
-            plans[i].plannedDispatch[j] = 0;
-        }
+        plans[i].plannedDispatch = std::vector<double>(plans[i].plannedDispatch.size());
         plans[i].num_cycles = 0;
         plan_dispatch_for_cost(p, debug, plans[i], idx, E_max, startingEnergy);
         UtilityRateForecast midDispatchForecast(*rate_forecast);
