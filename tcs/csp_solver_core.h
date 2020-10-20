@@ -1075,6 +1075,13 @@ private:
 
 	bool m_is_CR_DF__PC_SU__TES_OFF__AUX_OFF_avail;
 
+    bool m_is_CR_TO_COLD__PC_TARGET__TES_DC__AUX_OFF_avail;
+    bool m_is_CR_TO_COLD__PC_RM_LO__TES_EMPTY__AUX_OFF_avail;
+    bool m_is_CR_TO_COLD__PC_SB__TES_DC__AUX_OFF_avail;
+    bool m_is_CR_TO_COLD__PC_MIN__TES_EMPTY__AUX_OFF_avail;
+    bool m_is_CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF;
+
+
 	// member string for exception messages
 	std::string error_msg;
 
@@ -1102,6 +1109,12 @@ private:
 		// Storage logic
 	bool m_is_tes;			    //[-] True: plant has storage
     bool m_is_cr_config_recirc; //[-] True: Receiver "off" and "startup" are recirculated from outlet to inlet
+
+        // System control logic
+        // True: allows control to consider sending rec exit HTF to cold tank if colder than some threshold
+    bool m_is_rec_to_coldtank_allowed;  //[-] 
+        // if 'm_is_rec_to_coldtank_allowed' then T_cr_out < this temp go to cold tank
+    double m_T_htf_hot_tank_in_min;     //[C] 
 
         // Field-side HTF
     bool m_T_field_cold_limit;  //[C]
@@ -1209,7 +1222,17 @@ public:
 
 		CR_DF__PC_SU__TES_FULL__AUX_OFF,
 
-		CR_DF__PC_SU__TES_OFF__AUX_OFF
+		CR_DF__PC_SU__TES_OFF__AUX_OFF,
+
+        CR_TO_COLD__PC_TARGET__TES_DC__AUX_OFF,
+
+        CR_TO_COLD__PC_RM_LO__TES_EMPTY__AUX_OFF,
+
+        CR_TO_COLD__PC_SB__TES_DC__AUX_OFF,
+
+        CR_TO_COLD__PC_MIN__TES_EMPTY__AUX_OFF,
+
+        CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF
 	};
     
     static std::string tech_operating_modes_str[];
@@ -1272,6 +1295,7 @@ public:
 
 		C_csp_power_cycle::E_csp_power_cycle_modes m_pc_mode;      //[-]
 		int m_cr_mode;      //[-]
+        bool m_is_rec_outlet_to_hottank;    //[-]
 
 		double m_q_dot_pc_target;   //[MWt]
 
@@ -1301,6 +1325,9 @@ public:
 			mpc_csp_solver = pc_csp_solver;
 			m_pc_mode = pc_mode;    //[-]
 			m_cr_mode = cr_mode;    //[-]
+
+            m_is_rec_outlet_to_hottank = true;
+
 			m_q_dot_pc_target = q_dot_pc_target;    //[MWt]
 			m_defocus = defocus;    //[-]
 			m_t_ts_in = t_ts;          //[s]

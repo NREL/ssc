@@ -406,6 +406,12 @@ void C_csp_solver::reset_hierarchy_logic()
 	m_is_CR_DF__PC_SU__TES_FULL__AUX_OFF_avail = true;
 
 	m_is_CR_DF__PC_SU__TES_OFF__AUX_OFF_avail = true;
+
+    m_is_CR_TO_COLD__PC_TARGET__TES_DC__AUX_OFF_avail = true;
+    m_is_CR_TO_COLD__PC_RM_LO__TES_EMPTY__AUX_OFF_avail = true;
+    m_is_CR_TO_COLD__PC_SB__TES_DC__AUX_OFF_avail = true;
+    m_is_CR_TO_COLD__PC_MIN__TES_EMPTY__AUX_OFF_avail = true;
+    m_is_CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF = true;
 } 
 
 void C_csp_solver::turn_off_plant()
@@ -458,6 +464,12 @@ void C_csp_solver::turn_off_plant()
 	m_is_CR_DF__PC_SU__TES_FULL__AUX_OFF_avail = false;
 
 	m_is_CR_DF__PC_SU__TES_OFF__AUX_OFF_avail = false;
+
+    m_is_CR_TO_COLD__PC_TARGET__TES_DC__AUX_OFF_avail = false;
+    m_is_CR_TO_COLD__PC_RM_LO__TES_EMPTY__AUX_OFF_avail = false;
+    m_is_CR_TO_COLD__PC_SB__TES_DC__AUX_OFF_avail = false;
+    m_is_CR_TO_COLD__PC_MIN__TES_EMPTY__AUX_OFF_avail = false;
+    m_is_CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF = false;
 }
 
 double C_csp_solver::get_cr_aperture_area()
@@ -517,7 +529,13 @@ void C_csp_solver::init()
 		// Thermal Storage
 	m_is_tes = mc_tes.does_tes_exist();
 
-
+        // System control logic
+    m_is_rec_to_coldtank_allowed = true;
+    if (!m_is_tes) {
+        // Can't send HTF outlet to cold tank if no cold tank
+        m_is_rec_to_coldtank_allowed = false;
+    }
+    m_T_htf_hot_tank_in_min = (0.5 * cr_solved_params.m_T_htf_cold_des + 0.5 * cr_solved_params.m_T_htf_hot_des) - 273.15;  //[C] convert from K
 
     m_is_cr_config_recirc = true;
 
@@ -905,7 +923,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			mc_pc_out_solver,
 			mc_kernel.mc_sim_info);
 		
-		
+        bool is_rec_outlet_to_hottank = true;
 		m_T_htf_pc_cold_est = mc_pc_out_solver.m_T_htf_cold;	//[C]
 		// Solve collector/receiver at steady state with design inputs and weather to estimate output
 		mc_cr_htf_state_in.m_temp = m_T_htf_pc_cold_est;	//[C]
@@ -920,6 +938,13 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		double T_htf_hot_cr_on = est_out.m_T_htf_hot;	//[C]
 		if (cr_operating_state != C_csp_collector_receiver::ON)
 			T_htf_hot_cr_on = m_cycle_T_htf_hot_des - 273.15;	//[C]
+
+        // Is receiver on and will it likely remain on
+        if (cr_operating_state == C_csp_collector_receiver::ON && m_dot_cr_on > 0.0
+            && m_is_rec_to_coldtank_allowed
+            && T_htf_hot_cr_on < m_T_htf_hot_tank_in_min) {
+            is_rec_outlet_to_hottank = false;
+        }
 
 		// Get TES operating state info at end of last time step
 		double q_dot_tes_dc, q_dot_tes_ch;      //[MWt]
@@ -1824,7 +1849,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			else if( cr_operating_state == C_csp_collector_receiver::ON &&
 				(pc_operating_state == C_csp_power_cycle::ON || pc_operating_state == C_csp_power_cycle::STANDBY) )
 			{
-				if( q_dot_cr_on > 0.0 && is_rec_su_allowed )
+				if( q_dot_cr_on > 0.0 && is_rec_su_allowed && is_rec_outlet_to_hottank )
 				{	// Receiver operation is allowed and possible - find a home for output
 
 					if( is_pc_su_allowed || is_pc_sb_allowed )
@@ -2076,7 +2101,87 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 					}	// End logic else 'pc su is NOT allowed'		
 				}	// End logic if(q_dot_cr_output > 0.0 && is_rec_su_allowed)
 
-				else	// Receiver is off - determine if power cycle can remain on
+                // 'else if' loop for receiver 'on' but sending htf to cold tank
+                else if (q_dot_cr_on > 0.0 && is_rec_su_allowed) {
+
+                    if (is_pc_su_allowed || is_pc_sb_allowed)
+                    {
+                        if (q_dot_tes_dc > 0.0)
+                        {	// Storage dispatch is available
+
+                            if (((q_dot_tes_dc * (1.0 + tol_mode_switching) > q_pc_target
+                                && m_dot_tes_dc_est * (1.0 + tol_mode_switching) > m_m_dot_pc_min)
+                                || m_dot_tes_dc_est * (1.0 + tol_mode_switching) > m_m_dot_pc_max)
+                                && is_pc_su_allowed &&
+                                m_is_CR_TO_COLD__PC_TARGET__TES_DC__AUX_OFF_avail)
+                            {	// Storage can provide enough dispatch to reach power cycle target
+                                // Tolerance is applied so that if TES is *close* to reaching PC target, the controller tries that mode
+
+                                operating_mode = CR_TO_COLD__PC_TARGET__TES_DC__AUX_OFF;
+                                throw(C_csp_exception("CR_TO_COLD_1"));
+                            }
+                            else if (q_dot_tes_dc * (1.0 + tol_mode_switching) > q_pc_min
+                                && m_dot_tes_dc_est * (1.0 + tol_mode_switching) > m_m_dot_pc_min
+                                && is_pc_su_allowed &&
+                                m_is_CR_TO_COLD__PC_RM_LO__TES_EMPTY__AUX_OFF_avail)
+                            {	// Storage can provide enough dispatch to at least meet power cycle minimum operation fraction
+                                // Run at highest possible PC fraction by dispatching all remaining storage
+                                // Tolerance is applied so that if CR + TES is *close* to reaching PC min, the controller tries that mode
+
+                                operating_mode = CR_TO_COLD__PC_RM_LO__TES_EMPTY__AUX_OFF;
+                                throw(C_csp_exception("CR_TO_COLD_2"));
+                            }
+                            else if (q_dot_tes_dc * (1.0 + tol_mode_switching) > q_pc_sb
+                                && m_dot_tes_dc_est * (1.0 + tol_mode_switching) > m_m_dot_pc_min
+                                && is_pc_sb_allowed &&
+                                m_is_CR_TO_COLD__PC_SB__TES_DC__AUX_OFF_avail)
+                            {	// Tolerance is applied so that if CR + TES is *close* to reaching standby, the controller tries that mode
+
+                                operating_mode = CR_TO_COLD__PC_SB__TES_DC__AUX_OFF;
+                                throw(C_csp_exception("CR_TO_COLD_3"));
+                            }
+                            else if (is_pc_su_allowed &&
+                                m_is_CR_TO_COLD__PC_MIN__TES_EMPTY__AUX_OFF_avail)
+                            {	// If not enough thermal power to stay in standby, then run at min PC load until TES is fully discharged
+
+                                operating_mode = CR_TO_COLD__PC_MIN__TES_EMPTY__AUX_OFF;
+                                throw(C_csp_exception("CR_TO_COLD_4"));
+                            }
+                            else if (m_is_CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF)
+                            {
+                                operating_mode = CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF;
+                                throw(C_csp_exception("CR_TO_COLD_5"));
+                            }
+                            else
+                            {
+                                operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                            }
+                        }	// End logic for if( q_dot_tes_dc > 0.0 )
+                        else if(m_is_CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF)
+                        {	// Storage dispatch is not available
+
+                            // No thermal power available to power cycle
+                            operating_mode = CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF;
+                            throw(C_csp_exception("CR_TO_COLD_6"));
+                        }
+                        else
+                        {
+                            operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                        }
+                    }	// End logic if( is_pc_su_allowed )
+                    else if (m_is_CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF)
+                    {	// If neither receiver nor power cycle operation is allowed, then shut everything off
+
+                        operating_mode = CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF;
+                        throw(C_csp_exception("CR_TO_COLD_7"));
+                    }
+                    else
+                    {
+                        operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                    }
+
+                }           
+                else	// Receiver is off - determine if power cycle can remain on
 				{
 					if( is_pc_su_allowed || is_pc_sb_allowed )
 					{

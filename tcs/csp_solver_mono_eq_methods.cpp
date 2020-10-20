@@ -646,6 +646,7 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
     mpc_csp_solver->mc_cr_htf_state_in.m_qual = m_x_field_in;	//[-]
 
     double m_dot_field_out = std::numeric_limits<double>::quiet_NaN();     //[kg/hr]
+    double m_dot_field_out_to_cold_tank = 0.0;                              //[kg/hr]
     double t_ts_cr_su = m_t_ts_in;
     if (m_cr_mode == C_csp_collector_receiver::ON)
     {
@@ -661,7 +662,14 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
             return -1;
         }
 
-        m_dot_field_out = mpc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot;     //[kg/hr]
+        if (m_is_rec_outlet_to_hottank) {
+            m_dot_field_out = mpc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot;     //[kg/hr]
+            m_dot_field_out_to_cold_tank = 0.0;
+        }
+        else {
+            m_dot_field_out_to_cold_tank = mpc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot;     //[kg/hr]
+            m_dot_field_out = 0.0;
+        }
     }
     else if (m_cr_mode == C_csp_collector_receiver::STARTUP)
     {

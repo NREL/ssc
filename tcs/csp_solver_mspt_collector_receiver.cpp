@@ -79,6 +79,7 @@ void C_csp_mspt_collector_receiver::init(const C_csp_collector_receiver::S_csp_c
 	mc_pt_receiver.init();
 
 	solved_params.m_T_htf_cold_des = mc_pt_receiver.m_T_htf_cold_des;       //[K]
+    solved_params.m_T_htf_hot_des = mc_pt_receiver.m_T_htf_hot_des;         //[K]
 	solved_params.m_q_dot_rec_des = mc_pt_receiver.m_q_rec_des / 1.E6;		//[MW]
 	solved_params.m_A_aper_total = mc_pt_heliostatfield.ms_params.m_A_sf;	//[m^2]
 
