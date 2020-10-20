@@ -70,7 +70,7 @@ dispatch_automatic_behind_the_meter_t::dispatch_automatic_behind_the_meter_t(
 		sorted_grid.push_back(grid[ii]);
 	}
 
-    if (util_rate != nullptr)
+    if (util_rate)
     {
         rate = std::shared_ptr<rate_data>(new rate_data(*util_rate));
     }
@@ -90,7 +90,7 @@ void dispatch_automatic_behind_the_meter_t::init_with_pointer(const dispatch_aut
 	_P_target_use = tmp->_P_target_use;
 	sorted_grid = tmp->sorted_grid;
 
-    if (tmp->rate != nullptr)
+    if (tmp->rate)
     {
         rate = std::shared_ptr<rate_data>(new rate_data(*tmp->rate));
         rate_forecast = std::shared_ptr<UtilityRateForecast>(new UtilityRateForecast(*tmp->rate_forecast));
@@ -123,7 +123,7 @@ void dispatch_automatic_behind_the_meter_t::dispatch(size_t year,
 
 	update_dispatch(year, hour_of_year, step, lifetimeIndex);
 	dispatch_automatic_t::dispatch(year, hour_of_year, step);
-    if (rate_forecast != nullptr)
+    if (rate_forecast)
     {
         std::vector<double> actual_dispatch = { m_batteryPower->powerGrid };
         rate_forecast->forecastCost(actual_dispatch, year, hour_of_year, step);
@@ -202,7 +202,7 @@ void dispatch_automatic_behind_the_meter_t::update_dispatch(size_t year, size_t 
 {
 	bool debug = false;
 	FILE *p;
-	check_debug(p, debug, hour_of_year, idx);
+	check_debug(hour_of_year, idx, p, debug);
 	size_t hour_of_day = util::hour_of_day(hour_of_year);
 	_day_index = (hour_of_day * _steps_per_hour + step);
 
@@ -222,10 +222,10 @@ void dispatch_automatic_behind_the_meter_t::update_dispatch(size_t year, size_t 
             }
             initialize(hour_of_year, idx);
 
-            double no_dispatch_cost = compute_costs(p, debug, idx, year, hour_of_year);
+            double no_dispatch_cost = compute_costs(idx, year, hour_of_year, p, debug);
 
-            compute_energy(p, debug, E_max);
-            cost_based_target_power(p, debug, idx, year, hour_of_year, no_dispatch_cost, E_max);
+            compute_energy(E_max, p, debug);
+            cost_based_target_power(idx, year, hour_of_year, no_dispatch_cost, E_max, p, debug);
 
             // Set battery power profile
             set_battery_power(p, debug);            
@@ -243,11 +243,11 @@ void dispatch_automatic_behind_the_meter_t::update_dispatch(size_t year, size_t 
 			initialize(hour_of_year, idx);
 
 			// compute grid power, sort highest to lowest
-			sort_grid(p, debug, idx);
+			sort_grid(idx, p, debug);
 
 			// Peak shaving scheme
-			compute_energy(p, debug, E_max);
-			target_power(p, debug, E_max, idx);
+			compute_energy(E_max, p, debug);
+			target_power(E_max, idx, p, debug);
 
 			// Set battery power profile
 			set_battery_power(p, debug);
@@ -310,7 +310,7 @@ bool dispatch_automatic_behind_the_meter_t::check_new_month(size_t hour_of_year,
 	}
     return ret_value;
 }
-void dispatch_automatic_behind_the_meter_t::check_debug(FILE *&p, bool & debug, size_t hour_of_year, size_t)
+void dispatch_automatic_behind_the_meter_t::check_debug(size_t hour_of_year, size_t, FILE*& p, bool& debug)
 {
 	// for now, don't enable
 	// debug = true;
@@ -329,7 +329,7 @@ void dispatch_automatic_behind_the_meter_t::check_debug(FILE *&p, bool & debug, 
 	}
 }
 
-void dispatch_automatic_behind_the_meter_t::sort_grid(FILE *p, bool debug, size_t idx)
+void dispatch_automatic_behind_the_meter_t::sort_grid(size_t idx, FILE *p, const bool debug)
 {
 
 	if (debug)
@@ -355,7 +355,7 @@ void dispatch_automatic_behind_the_meter_t::sort_grid(FILE *p, bool debug, size_
 	std::sort(sorted_grid.begin(), sorted_grid.end(), byGrid());
 }
 
-void dispatch_automatic_behind_the_meter_t::compute_energy(FILE *p, bool debug, double & E_max)
+void dispatch_automatic_behind_the_meter_t::compute_energy(double & E_max, FILE* p, const bool debug)
 {
 
 	E_max = _Battery->energy_max(m_batteryPower->stateOfChargeMax, m_batteryPower->stateOfChargeMin);
@@ -367,7 +367,7 @@ void dispatch_automatic_behind_the_meter_t::compute_energy(FILE *p, bool debug, 
 	}
 }
 
-double dispatch_automatic_behind_the_meter_t::compute_available_energy(FILE* p, bool debug)
+double dispatch_automatic_behind_the_meter_t::compute_available_energy(FILE* p, const bool debug)
 {
     double E_available = _Battery->energy_available(m_batteryPower->stateOfChargeMin);
 
@@ -380,7 +380,7 @@ double dispatch_automatic_behind_the_meter_t::compute_available_energy(FILE* p, 
     return E_available;
 }
 
-double dispatch_automatic_behind_the_meter_t::compute_costs(FILE* p, bool debug, size_t idx, size_t year, size_t hour_of_year)
+double dispatch_automatic_behind_the_meter_t::compute_costs(size_t idx, size_t year, size_t hour_of_year, FILE* p, const bool debug)
 {
     if (debug)
         fprintf(p, "Index\t P_load (kW)\t P_pv (kW)\t P_grid (kW)\n");
@@ -419,7 +419,7 @@ double dispatch_automatic_behind_the_meter_t::compute_costs(FILE* p, bool debug,
     return no_dispatch_cost;
 }
 
-void dispatch_automatic_behind_the_meter_t::target_power(FILE*p, bool debug, double E_useful, size_t idx)
+void dispatch_automatic_behind_the_meter_t::target_power(double E_useful, size_t idx, FILE*p, const bool debug)
 {
 	// if target power set, use that
 	if (_P_target_input.size() > idx && _P_target_input[idx] >= 0)
@@ -550,7 +550,7 @@ void dispatch_automatic_behind_the_meter_t::target_power(FILE*p, bool debug, dou
         _P_battery_use[i] = grid[i].Grid() - _P_target_use[i];
 }
 
-void dispatch_automatic_behind_the_meter_t::cost_based_target_power(FILE* p, bool debug, size_t idx, size_t year, size_t hour_of_year, double no_dispatch_cost, double E_max)
+void dispatch_automatic_behind_the_meter_t::cost_based_target_power(size_t idx, size_t year, size_t hour_of_year, double no_dispatch_cost, double E_max, FILE* p, const bool debug)
 {
     double startingEnergy = compute_available_energy(p, debug);
     std::vector<dispatch_plan> plans(_num_steps / _steps_per_hour / 2);
@@ -569,7 +569,7 @@ void dispatch_automatic_behind_the_meter_t::cost_based_target_power(FILE* p, boo
         plans[i].plannedGridUse.clear();
         plans[i].plannedDispatch = std::vector<double>(plans[i].plannedDispatch.size());
         plans[i].num_cycles = 0;
-        plan_dispatch_for_cost(p, debug, plans[i], idx, E_max, startingEnergy);
+        plan_dispatch_for_cost(plans[i], idx, E_max, startingEnergy, p, debug);
         UtilityRateForecast midDispatchForecast(*rate_forecast);
         plans[i].cost = midDispatchForecast.forecastCost(plans[i].plannedGridUse, year, hour_of_year, 0) + cost_to_cycle() * plans[i].num_cycles - plans[i].kWhRemaining * plans[i].lowestMarginalCost;
 
@@ -579,16 +579,13 @@ void dispatch_automatic_behind_the_meter_t::cost_based_target_power(FILE* p, boo
             lowest_cost = plans[i].cost;
         }
     }
-    size_t i = 0;
 
-    for (i = 0; i < _P_battery_use.size(); i++)
-    {
-        // Copy from best dispatch plan to _P_battery_use.
-        _P_battery_use[i] = plans[lowest_index].plannedDispatch[i];
-    }
+    // Copy from best dispatch plan to _P_battery_use.
+    _P_battery_use.assign(plans[lowest_index].plannedDispatch.begin(), plans[lowest_index].plannedDispatch.end());
+
 }
 
-void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(FILE* p, bool debug, dispatch_plan& plan, size_t idx, double E_max, double startingEnergy)
+void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(dispatch_plan& plan, size_t idx, double E_max, double startingEnergy, FILE* p, const bool debug)
 {
     size_t i = 0;
 
@@ -812,33 +809,15 @@ void dispatch_automatic_behind_the_meter_t::check_power_restrictions(double& pow
     power = desiredCurrent * _Battery->V() * util::watt_to_kilowatt;
 }
 
-void dispatch_automatic_behind_the_meter_t::set_battery_power(FILE *p, bool debug)
+void dispatch_automatic_behind_the_meter_t::set_battery_power(FILE *p, const bool debug)
 {
 	for (size_t i = 0; i != _P_target_use.size(); i++) {
 		// At this point the target power is expressed in AC, must convert to DC for battery
 		if (m_batteryPower->connectionMode == m_batteryPower->AC_CONNECTED) {
-			if (_P_battery_use[i] > 0) {
-				_P_battery_use[i] /= m_batteryPower->singlePointEfficiencyDCToAC;
-			}
-			else {
-				_P_battery_use[i] *= m_batteryPower->singlePointEfficiencyACToDC;
-			}
+            _P_battery_use[i] = m_batteryPower->adjustForACEfficiencies(_P_battery_use[i]);
 		}
-		// DC-connected is harder to convert from AC, must make assumptions about inverter efficiency and charge shource
         else {
-            if (_P_battery_use[i] > 0) {
-                _P_battery_use[i] /= (m_batteryPower->singlePointEfficiencyDCToDC * m_batteryPower->singlePointEfficiencyACToDC);
-
-            }
-            // Need to bring ac load and charging values to DC side. Assume current inverter efficiency continues through dispatch forecast
-            else {
-                double ac_to_dc_eff = m_batteryPower->singlePointEfficiencyACToDC;
-                if (m_batteryPower->sharedInverter->efficiencyAC > 5) // 5% is the cutoff in lib_battery_powerflow
-                {
-                    ac_to_dc_eff = m_batteryPower->sharedInverter->efficiencyAC * 0.01;
-                }
-                _P_battery_use[i] *= m_batteryPower->singlePointEfficiencyDCToDC / ac_to_dc_eff;
-            }
+            _P_battery_use[i] = m_batteryPower->adjustForDCEfficiencies(_P_battery_use[i]);
         }
 	}
 

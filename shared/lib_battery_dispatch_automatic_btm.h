@@ -116,20 +116,21 @@ protected:
 
     /*! Functions that are common to all dispatch methods */
 	void initialize(size_t hour_of_year, size_t lifetimeIndex);
-	void check_debug(FILE *&p, bool & debug, size_t hour_of_year, size_t idx);
+    // check_debug can modify the values of bool debug, so p and debug arguments are mandatory here
+	void check_debug(size_t hour_of_year, size_t idx, FILE*& p, bool& debug);
     bool check_new_month(size_t hour_of_year, size_t step);
-    void compute_energy(FILE* p, bool debug, double& E_max);
-    void set_battery_power(FILE* p, bool debug);
+    void compute_energy(double& E_max, FILE* p = NULL, const bool debug = false);
+    void set_battery_power(FILE* p = NULL, const bool debug = false);
 
     /*! Functions used by grid power target algorithms (peak shaving, input grid power targets) */
-    void sort_grid(FILE *p, bool debug, size_t idx);
-    void target_power(FILE* p, bool debug, double E_max, size_t idx);
+    void sort_grid(size_t idx, FILE *p = NULL, const bool debug = false);
+    void target_power(double E_max, size_t idx, FILE* p = NULL, bool debug = false);
 
     /*! Functions used by price signal dispatch */
-    double compute_costs(FILE* p, bool debug, size_t idx, size_t year, size_t hour_of_year); // Initial computation of no-dispatch costs, assigned hourly to grid points
-    void cost_based_target_power(FILE* p, bool debug, size_t idx, size_t year, size_t hour_of_year, double no_dispatch_cost, double E_max); // Optimizing loop, runs twelve possible dispatch scenarios
-    void plan_dispatch_for_cost(FILE* p, bool debug, dispatch_plan& plan, size_t idx, double E_max, double startingEnergy); // Generates each dispatch plan (input argument)
-    double compute_available_energy(FILE* p, bool debug); // Determine how much energy is available at the start of a dispatch plan
+    double compute_costs(size_t idx, size_t year, size_t hour_of_year, FILE* p = NULL, bool debug = false); // Initial computation of no-dispatch costs, assigned hourly to grid points
+    void cost_based_target_power(size_t idx, size_t year, size_t hour_of_year, double no_dispatch_cost, double E_max, FILE* p = NULL, const bool debug = false); // Optimizing loop, runs twelve possible dispatch scenarios
+    void plan_dispatch_for_cost(dispatch_plan& plan, size_t idx, double E_max, double startingEnergy, FILE* p = NULL, const bool debug = false); // Generates each dispatch plan (input argument)
+    double compute_available_energy(FILE* p = NULL, const bool debug = false); // Determine how much energy is available at the start of a dispatch plan
     void check_power_restrictions(double& power); // Call some constraints functions to ensure dispatch doesn't exceed power/current limits
 
     /*! Calculate the cost to cycle, updates m_cycleCost */
