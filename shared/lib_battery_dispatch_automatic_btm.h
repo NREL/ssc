@@ -101,7 +101,7 @@ public:
 	/*! Pass in the grid power target vector */
 	void set_target_power(std::vector<double> P_target);
 
-    /* Call after pv, load, and cliploss forecasts have been set*/
+    /* Call after pv, load, and cliploss forecasts have been set, only relevant to FORECAST dispatch type */
     void setup_rate_forecast();
 
 	/*! Grid target power */

@@ -24,8 +24,6 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_battery_powerflow.h"
 #include "lib_shared_inverter.h"
 
-#include "../ssc/core.h" // For errors
-
 dispatch_automatic_behind_the_meter_t::dispatch_automatic_behind_the_meter_t(
 	battery_t * Battery,
 	double dt_hour,
@@ -136,7 +134,7 @@ double dispatch_automatic_behind_the_meter_t::power_grid_target() { return _P_ta
 
 void dispatch_automatic_behind_the_meter_t::setup_rate_forecast()
 {
-    if (rate)
+    if (_mode == dispatch_t::FORECAST)
     {
         // Process load and pv forecasts to get _monthly_ expected gen, load, and peak
         // Do we need new member variables, or can these just be passed off to UtilityRateForecast?
@@ -192,9 +190,6 @@ void dispatch_automatic_behind_the_meter_t::setup_rate_forecast()
         rate_forecast = std::shared_ptr<UtilityRateForecast>(new UtilityRateForecast(rate.get(), _steps_per_hour, monthly_load, monthly_gen, monthly_peaks, _nyears));
         rate_forecast->initializeMonth(0, 0);
         rate_forecast->copyTOUForecast();
-    }
-    else {
-        throw exec_error("lib_battery_dispatch_automatic_btm", "setup_rate_forecast called without utility rate. Please add electricity rate and re-run");
     }
 }
 
