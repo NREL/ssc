@@ -317,11 +317,6 @@ void incidence(int mode, double tilt, double sazm, double rlim, double zen,
 				}
 	  /*    printf("rot=%6.1f azm=%6.1f xsazm=%6.1f xtilt=%6.1f zen=%6.1f\n",rot/DTOR,azm/DTOR,xsazm/DTOR,xtilt/DTOR,zen/DTOR);  */
 
-			if( rot < -rlim ) /* Do not let rotation exceed physical constraints */
-				rot = -rlim;
-			else if( rot > rlim )
-				rot = rlim;
-
 			//optionally force the tracker to a "stow" angle if specified
 			if (force_to_stow)
 			{
@@ -344,6 +339,10 @@ void incidence(int mode, double tilt, double sazm, double rlim, double zen,
 				rot = backrot * M_PI/180; // convert backtracked rotation angle to radians
 			}
 
+			if( rot < -rlim ) /* Do not let rotation exceed physical constraints */
+				rot = -rlim;
+			else if( rot > rlim )
+				rot = rlim;
 
 			/* Find tilt angle for the tracking surface */
 			arg = cos(xtilt)*cos(rot);
