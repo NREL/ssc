@@ -807,7 +807,8 @@ public:
 	
 	virtual void charge_avail_est(double T_hot_K, double step_s, double &q_dot_ch_est, double &m_dot_field_est /*kg/s*/, double &T_cold_field_est /*K*/) = 0;
 
-    virtual int solve_tes_off_design(double timestep /*s*/, double  T_amb /*K*/, double m_dot_field /*kg/s*/, double m_dot_cycle /*kg/s*/,
+    virtual int solve_tes_off_design(double timestep /*s*/, double  T_amb /*K*/,
+        double m_dot_cr_to_cv_hot /*kg/s*/, double m_dot_cv_hot_to_cycle /*kg/s*/, double m_dot_cr_to_cv_cold /*kg/s*/,
         double T_field_htf_out_hot /*K*/, double T_cycle_htf_out_cold /*K*/,
         double & T_cycle_htf_in_hot /*K*/, double & T_field_htf_in_cold /*K*/, 
 		C_csp_tes::S_csp_tes_outputs& outputs) = 0;
@@ -1315,6 +1316,7 @@ public:
 
 		C_MEQ__m_dot_tes(E_m_dot_solver_modes solver_mode, C_csp_solver* pc_csp_solver,
             C_csp_power_cycle::E_csp_power_cycle_modes pc_mode, int cr_mode,
+            bool is_rec_outlet_to_hottank,
 			double q_dot_pc_target /*MWt*/,
 			double defocus /*-*/, double t_ts /*s*/,
 			double P_field_in /*kPa*/, double x_field_in /*-*/,
@@ -1326,7 +1328,7 @@ public:
 			m_pc_mode = pc_mode;    //[-]
 			m_cr_mode = cr_mode;    //[-]
 
-            m_is_rec_outlet_to_hottank = true;
+            m_is_rec_outlet_to_hottank = is_rec_outlet_to_hottank;
 
 			m_q_dot_pc_target = q_dot_pc_target;    //[MWt]
 			m_defocus = defocus;    //[-]
@@ -1355,6 +1357,7 @@ public:
 
         C_csp_power_cycle::E_csp_power_cycle_modes m_pc_mode;      //[-]
 		int m_cr_mode;      //[-]
+        bool m_is_rec_outlet_to_hottank;    //[-]
 
 		double m_defocus;   //[-]
 		double m_t_ts_in;      //[s]
@@ -1368,6 +1371,7 @@ public:
 		C_MEQ__T_field_cold(C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode, C_csp_solver* pc_csp_solver,
 			double q_dot_pc_target /*MWt*/,
             C_csp_power_cycle::E_csp_power_cycle_modes pc_mode, int cr_mode,
+            bool is_rec_outlet_to_hottank,
 			double defocus /*-*/, double t_ts /*s*/,
 			double P_field_in /*kPa*/, double x_field_in /*-*/)
 		{
@@ -1379,6 +1383,7 @@ public:
 
 			m_pc_mode = pc_mode;
 			m_cr_mode = cr_mode;
+            m_is_rec_outlet_to_hottank = is_rec_outlet_to_hottank;
 			m_defocus = defocus;
 			m_t_ts_in = t_ts;  //[s]
 
@@ -1413,6 +1418,7 @@ public:
 
         C_csp_power_cycle::E_csp_power_cycle_modes m_pc_mode;      //[-]
 		int m_cr_mode;      //[-]
+        bool m_is_rec_outlet_to_hottank;    //[-]
 
 		double m_defocus;   //[-]
 
@@ -1421,6 +1427,7 @@ public:
 			C_csp_solver* pc_csp_solver,
 			double q_dot_pc_target /*MWt*/,
             C_csp_power_cycle::E_csp_power_cycle_modes pc_mode, int cr_mode,
+            bool is_rec_outlet_to_hottank,
 			double defocus /*-*/)
 		{
 			m_solver_mode = solver_mode;
@@ -1432,6 +1439,7 @@ public:
 
 			m_pc_mode = pc_mode;
 			m_cr_mode = cr_mode;
+            m_is_rec_outlet_to_hottank = is_rec_outlet_to_hottank;
 			m_defocus = defocus;
 		}
 
@@ -1458,6 +1466,7 @@ public:
 
         C_csp_power_cycle::E_csp_power_cycle_modes m_pc_mode;      //[-]
         int m_cr_mode;      //[-]
+        bool m_is_rec_outlet_to_hottank;    //[-]
 
         double m_t_ts_initial;  //[s]
     
@@ -1468,6 +1477,7 @@ public:
             C_csp_solver *pc_csp_solver, 
 			double q_dot_pc_target /*MWt*/,
             C_csp_power_cycle::E_csp_power_cycle_modes pc_mode, int cr_mode,
+            bool is_rec_outlet_to_hottank,
             double t_ts_initial /*s*/)
         {
             m_solver_mode = solver_mode;
@@ -1480,6 +1490,7 @@ public:
 
             m_pc_mode = pc_mode;
             m_cr_mode = cr_mode;
+            m_is_rec_outlet_to_hottank = is_rec_outlet_to_hottank;
 
             m_t_ts_initial = t_ts_initial;  //[s]
         }
@@ -1491,7 +1502,7 @@ public:
 
 	int solve_operating_mode(int cr_mode, C_csp_power_cycle::E_csp_power_cycle_modes pc_mode,
         C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode, C_MEQ__timestep::E_timestep_target_modes step_target_mode,
-		double q_dot_pc_target /*MWt*/, bool is_defocus,
+		double q_dot_pc_target /*MWt*/, bool is_defocus, bool is_rec_outlet_to_hottank,
 		std::string op_mode_str, double& defocus_solved);
 
     

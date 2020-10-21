@@ -530,7 +530,7 @@ void C_csp_solver::init()
 	m_is_tes = mc_tes.does_tes_exist();
 
         // System control logic
-    m_is_rec_to_coldtank_allowed = true;
+    m_is_rec_to_coldtank_allowed = false;
     if (!m_is_tes) {
         // Can't send HTF outlet to cold tank if no cold tank
         m_is_rec_to_coldtank_allowed = false;
@@ -2273,7 +2273,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 double defocus_solved = std::numeric_limits<double>::quiet_NaN();
 
                 int mode_code = solve_operating_mode(cr_mode, pc_mode, solver_mode, step_target_mode,
-                    q_dot_pc_fixed, is_defocus, op_mode_str, defocus_solved);
+                    q_dot_pc_fixed, is_defocus, is_rec_outlet_to_hottank, op_mode_str, defocus_solved);
 
                 if (mode_code != 0)
                 {
@@ -2315,7 +2315,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 double defocus_solved = std::numeric_limits<double>::quiet_NaN();
 
                 int mode_code = solve_operating_mode(cr_mode, pc_mode, solver_mode, step_target_mode,
-                    q_dot_pc_fixed, is_defocus, op_mode_str, defocus_solved);
+                    q_dot_pc_fixed, is_defocus, is_rec_outlet_to_hottank, op_mode_str, defocus_solved);
 
                 if (mode_code != 0)
                 {
@@ -2346,7 +2346,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 double defocus_solved = std::numeric_limits<double>::quiet_NaN();
 
                 int mode_code = solve_operating_mode(cr_mode, pc_mode, solver_mode, step_target_mode,
-                    q_dot_pc_fixed, is_defocus, op_mode_str, defocus_solved);
+                    q_dot_pc_fixed, is_defocus, is_rec_outlet_to_hottank, op_mode_str, defocus_solved);
 
                 if (mode_code != 0)
                 {
@@ -2395,7 +2395,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 double defocus_solved = std::numeric_limits<double>::quiet_NaN();
 
                 int mode_code = solve_operating_mode(cr_mode, pc_mode, solver_mode, step_target_mode,
-                    q_dot_pc_fixed, is_defocus, op_mode_str, defocus_solved);
+                    q_dot_pc_fixed, is_defocus, is_rec_outlet_to_hottank, op_mode_str, defocus_solved);
 
                 if (mode_code != 0)
                 {
@@ -2453,7 +2453,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 double defocus_solved = std::numeric_limits<double>::quiet_NaN();
 
                 int mode_code = solve_operating_mode(cr_mode, pc_mode, solver_mode, step_target_mode,
-                    q_dot_pc_fixed, is_defocus, op_mode_str, defocus_solved);
+                    q_dot_pc_fixed, is_defocus, is_rec_outlet_to_hottank, op_mode_str, defocus_solved);
 
                 if (mode_code != 0)
                 {
@@ -2551,7 +2551,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 double defocus_solved = std::numeric_limits<double>::quiet_NaN();
 
                 int mode_code = solve_operating_mode(cr_mode, pc_mode, solver_mode, step_target_mode,
-                    q_dot_pc_target, is_defocus, op_mode_str, defocus_solved);
+                    q_dot_pc_target, is_defocus, is_rec_outlet_to_hottank, op_mode_str, defocus_solved);
 
                 if (mode_code != 0)
                 {
@@ -2599,7 +2599,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 double defocus_solved = std::numeric_limits<double>::quiet_NaN();
 
                 int mode_code = solve_operating_mode(cr_mode, pc_mode, solver_mode, step_target_mode,
-                    std::numeric_limits<double>::quiet_NaN(), is_defocus, op_mode_str, defocus_solved);
+                    std::numeric_limits<double>::quiet_NaN(), is_defocus, is_rec_outlet_to_hottank, op_mode_str, defocus_solved);
 
                 if (mode_code != 0)
                 {
@@ -2623,7 +2623,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 double defocus_solved = std::numeric_limits<double>::quiet_NaN();
 
                 int mode_code = solve_operating_mode(cr_mode, pc_mode, solver_mode, step_target_mode,
-                    std::numeric_limits<double>::quiet_NaN(), is_defocus, op_mode_str, defocus_solved);
+                    std::numeric_limits<double>::quiet_NaN(), is_defocus, is_rec_outlet_to_hottank, op_mode_str, defocus_solved);
 
                 if (mode_code != 0)
                 {
@@ -2661,7 +2661,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 double defocus_solved = std::numeric_limits<double>::quiet_NaN();
 
                 int mode_code = solve_operating_mode(cr_mode, pc_mode, solver_mode, step_target_mode,
-                    std::numeric_limits<double>::quiet_NaN(), is_defocus, op_mode_str, defocus_solved);
+                    std::numeric_limits<double>::quiet_NaN(), is_defocus, is_rec_outlet_to_hottank, op_mode_str, defocus_solved);
 
                 if (mode_code != 0)
                 {
@@ -2697,7 +2697,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 double defocus_solved = std::numeric_limits<double>::quiet_NaN();
 
                 int mode_code = solve_operating_mode(cr_mode, pc_mode, solver_mode, step_target_mode,
-                    std::numeric_limits<double>::quiet_NaN(), is_defocus, op_mode_str, defocus_solved);
+                    std::numeric_limits<double>::quiet_NaN(), is_defocus, is_rec_outlet_to_hottank, op_mode_str, defocus_solved);
 
                 if (mode_code != 0)
                 {
@@ -2736,7 +2736,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 double defocus_solved = std::numeric_limits<double>::quiet_NaN();
 
                 int mode_code = solve_operating_mode(cr_mode, pc_mode, solver_mode, step_target_mode,
-                    q_dot_pc_fixed, is_defocus, op_mode_str, defocus_solved);
+                    q_dot_pc_fixed, is_defocus, is_rec_outlet_to_hottank, op_mode_str, defocus_solved);
 
                 if (mode_code != 0)
                 {
@@ -2808,7 +2808,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 double defocus_solved = std::numeric_limits<double>::quiet_NaN();
 
                 int mode_code = solve_operating_mode(cr_mode, pc_mode, solver_mode, step_target_mode,
-                    q_dot_pc_fixed, is_defocus, op_mode_str, defocus_solved);
+                    q_dot_pc_fixed, is_defocus, is_rec_outlet_to_hottank, op_mode_str, defocus_solved);
 
                 if (mode_code != 0)
                 {
@@ -2872,7 +2872,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 double defocus_solved = std::numeric_limits<double>::quiet_NaN();
 
                 int mode_code = solve_operating_mode(cr_mode, pc_mode, solver_mode, step_target_mode,
-                    q_dot_pc_fixed, is_defocus, op_mode_str, defocus_solved);
+                    q_dot_pc_fixed, is_defocus, is_rec_outlet_to_hottank, op_mode_str, defocus_solved);
 
                 if (mode_code != 0)
                 {
@@ -2937,9 +2937,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				m_defocus = defocus_solved;
 
                 are_models_converged = true;
-			}	// end outer bracket for case CR_ON__PC_OFF__TES_CH__AUX_OFF
+			}	// end outer bracket for case CR_ON__PC_TARGET__TES_DC__AUX_OFF
 				
-				break;	// break case CR_ON__PC_OFF__TES_CH__AUX_OFF
+				break;	// break case CR_ON__PC_TARGET__TES_DC__AUX_OFF
 
 			case CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF:
 			{
@@ -2964,7 +2964,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 double defocus_solved = std::numeric_limits<double>::quiet_NaN();
 
                 int mode_code = solve_operating_mode(cr_mode, pc_mode, solver_mode, step_target_mode,
-                    std::numeric_limits<double>::quiet_NaN(), is_defocus, op_mode_str, defocus_solved);
+                    std::numeric_limits<double>::quiet_NaN(), is_defocus, is_rec_outlet_to_hottank, op_mode_str, defocus_solved);
 
                 if (mode_code != 0)
                 {
@@ -3068,7 +3068,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 double defocus_solved = std::numeric_limits<double>::quiet_NaN();
 
                 int mode_code = solve_operating_mode(cr_mode, pc_mode, solver_mode, step_target_mode,
-                    q_dot_pc_fixed, is_defocus, op_mode_str, defocus_solved);
+                    q_dot_pc_fixed, is_defocus, is_rec_outlet_to_hottank, op_mode_str, defocus_solved);
 
                 if (mode_code != 0)
                 {
@@ -3108,7 +3108,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 double defocus_solved = std::numeric_limits<double>::quiet_NaN();
 
                 int mode_code = solve_operating_mode(cr_mode, pc_mode, solver_mode, step_target_mode,
-                    q_dot_pc_target, is_defocus, op_mode_str, defocus_solved);
+                    q_dot_pc_target, is_defocus, is_rec_outlet_to_hottank, op_mode_str, defocus_solved);
 
                 if (mode_code != 0)
                 {
@@ -3177,7 +3177,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 double defocus_solved = std::numeric_limits<double>::quiet_NaN();
 
                 int mode_code = solve_operating_mode(cr_mode, pc_mode, solver_mode, step_target_mode,
-                    std::numeric_limits<double>::quiet_NaN(), is_defocus, op_mode_str, defocus_solved);
+                    std::numeric_limits<double>::quiet_NaN(), is_defocus, is_rec_outlet_to_hottank, op_mode_str, defocus_solved);
 
                 if (mode_code != 0)
                 {
@@ -3260,7 +3260,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 double defocus_solved = std::numeric_limits<double>::quiet_NaN();
 
                 int mode_code = solve_operating_mode(cr_mode, pc_mode, solver_mode, step_target_mode,
-                    q_dot_pc_target, is_defocus, op_mode_str, defocus_solved);
+                    q_dot_pc_target, is_defocus, is_rec_outlet_to_hottank, op_mode_str, defocus_solved);
 
                 if (mode_code != 0)
                 {
@@ -3377,7 +3377,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 double defocus_solved = std::numeric_limits<double>::quiet_NaN();
 
                 int mode_code = solve_operating_mode(cr_mode, pc_mode, solver_mode, step_target_mode,
-                    q_dot_pc_target, is_defocus, op_mode_str, defocus_solved);
+                    q_dot_pc_target, is_defocus, is_rec_outlet_to_hottank, op_mode_str, defocus_solved);
 
                 if (mode_code != 0)
                 {
@@ -3478,7 +3478,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 double defocus_solved = std::numeric_limits<double>::quiet_NaN();
 
                 int mode_code = solve_operating_mode(cr_mode, pc_mode, solver_mode, step_target_mode,
-                    q_dot_pc_fixed, is_defocus, op_mode_str, defocus_solved);
+                    q_dot_pc_fixed, is_defocus, is_rec_outlet_to_hottank, op_mode_str, defocus_solved);
 
                 if (mode_code != 0)
                 {
@@ -3570,7 +3570,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 double defocus_solved = std::numeric_limits<double>::quiet_NaN();
 
                 int mode_code = solve_operating_mode(cr_mode, pc_mode, solver_mode, step_target_mode,
-                q_dot_pc_fixed, is_defocus, op_mode_str, defocus_solved);
+                q_dot_pc_fixed, is_defocus, is_rec_outlet_to_hottank, op_mode_str, defocus_solved);
 
                 if (mode_code != 0)
                 {
@@ -3650,7 +3650,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 double defocus_solved = std::numeric_limits<double>::quiet_NaN();
 
                 int mode_code = solve_operating_mode(cr_mode, pc_mode, solver_mode, step_target_mode,
-                    q_dot_pc_fixed, is_defocus, op_mode_str, defocus_solved);
+                    q_dot_pc_fixed, is_defocus, is_rec_outlet_to_hottank, op_mode_str, defocus_solved);
 
                 if (mode_code != 0)
                 {
@@ -3734,7 +3734,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 double defocus_solved = std::numeric_limits<double>::quiet_NaN();
 
                 int mode_code = solve_operating_mode(cr_mode, pc_mode, solver_mode, step_target_mode,
-                    q_dot_pc_fixed, is_defocus, op_mode_str, defocus_solved);
+                    q_dot_pc_fixed, is_defocus, is_rec_outlet_to_hottank, op_mode_str, defocus_solved);
 
                 if (mode_code != 0)
                 {
@@ -3822,7 +3822,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 double defocus_solved = std::numeric_limits<double>::quiet_NaN();
 
                 int mode_code = solve_operating_mode(cr_mode, pc_mode, solver_mode, step_target_mode,
-                    q_dot_pc_fixed, is_defocus, op_mode_str, defocus_solved);
+                    q_dot_pc_fixed, is_defocus, is_rec_outlet_to_hottank, op_mode_str, defocus_solved);
 
                 if (mode_code != 0)
                 {
@@ -3910,7 +3910,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 double defocus_solved = std::numeric_limits<double>::quiet_NaN();
 
                 int mode_code = solve_operating_mode(cr_mode, pc_mode, solver_mode, step_target_mode,
-                    q_dot_pc_fixed, is_defocus, op_mode_str, defocus_solved);
+                    q_dot_pc_fixed, is_defocus, is_rec_outlet_to_hottank, op_mode_str, defocus_solved);
 
                 if (mode_code != 0)
                 {
@@ -3973,7 +3973,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 double defocus_solved = std::numeric_limits<double>::quiet_NaN();
 
                 int mode_code = solve_operating_mode(cr_mode, pc_mode, solver_mode, step_target_mode,
-                    q_dot_pc_target, is_defocus, op_mode_str, defocus_solved);
+                    q_dot_pc_target, is_defocus, is_rec_outlet_to_hottank, op_mode_str, defocus_solved);
 
                 if (mode_code != 0)
                 {
@@ -4080,7 +4080,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 double defocus_solved = std::numeric_limits<double>::quiet_NaN();
 
                 int mode_code = solve_operating_mode(cr_mode, pc_mode, solver_mode, step_target_mode,
-                    q_dot_pc_fixed, is_defocus, op_mode_str, defocus_solved);
+                    q_dot_pc_fixed, is_defocus, is_rec_outlet_to_hottank, op_mode_str, defocus_solved);
 
                 if (mode_code != 0)
                 {
@@ -4125,7 +4125,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 double defocus_solved = std::numeric_limits<double>::quiet_NaN();
 
                 int mode_code = solve_operating_mode(cr_mode, pc_mode, solver_mode, step_target_mode,
-                    q_dot_pc_fixed, is_defocus, op_mode_str, defocus_solved);
+                    q_dot_pc_fixed, is_defocus, is_rec_outlet_to_hottank, op_mode_str, defocus_solved);
 
                 if (mode_code != 0)
                 {
@@ -4166,7 +4166,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 double defocus_solved = std::numeric_limits<double>::quiet_NaN();
 
                 int mode_code = solve_operating_mode(cr_mode, pc_mode, solver_mode, step_target_mode,
-                    q_dot_pc_fixed, is_defocus, op_mode_str, defocus_solved);
+                    q_dot_pc_fixed, is_defocus, is_rec_outlet_to_hottank, op_mode_str, defocus_solved);
 
                 if (mode_code != 0)
                 {
@@ -4225,7 +4225,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 double defocus_solved = std::numeric_limits<double>::quiet_NaN();
 
                 int mode_code = solve_operating_mode(cr_mode, pc_mode, solver_mode, step_target_mode,
-                    std::numeric_limits<double>::quiet_NaN(), is_defocus, op_mode_str, defocus_solved);
+                    std::numeric_limits<double>::quiet_NaN(), is_defocus, is_rec_outlet_to_hottank, op_mode_str, defocus_solved);
 
                 if (mode_code != 0)
                 {
@@ -4268,7 +4268,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 double defocus_solved = std::numeric_limits<double>::quiet_NaN();
 
                 int mode_code = solve_operating_mode(cr_mode, pc_mode, solver_mode, step_target_mode,
-                    std::numeric_limits<double>::quiet_NaN(), is_defocus, op_mode_str, defocus_solved);
+                    std::numeric_limits<double>::quiet_NaN(), is_defocus, is_rec_outlet_to_hottank, op_mode_str, defocus_solved);
 
                 if (mode_code != 0)
                 {

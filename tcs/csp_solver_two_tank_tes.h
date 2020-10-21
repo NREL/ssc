@@ -112,7 +112,7 @@ public:
 
 	double m_dot_available(double f_unavail, double timestep);	
 
-	void energy_balance(double timestep /*s*/, double m_dot_in, double m_dot_out, 
+	void energy_balance(double timestep /*s*/, double m_dot_in /*kg/s*/, double m_dot_out /*kg/s*/,
         double T_in /*K*/, double T_amb /*K*/, 
 		double &T_ave /*K*/, double &q_heater /*MW*/, double &q_dot_loss /*MW*/);
 
@@ -299,9 +299,10 @@ public:
 		double & q_dot_loss /*MWt*/, double & q_dot_dc_to_htf /*MWt*/, double & q_dot_ch_from_htf /*MWt*/,
 		double & T_hot_ave /*K*/, double & T_cold_ave /*K*/, double & T_hot_final /*K*/, double & T_cold_final /*K*/);
 
-    virtual int solve_tes_off_design(double timestep /*s*/, double  T_amb /*K*/, double m_dot_field /*kg/s*/, double m_dot_cycle /*kg/s*/,
-        double T_field_htf_out_hot /*K*/, double T_cycle_htf_out_cold /*K*/,
-        double & T_cycle_htf_in_hot /*K*/, double & T_field_htf_in_cold /*K*/,
+    virtual int solve_tes_off_design(double timestep /*s*/, double  T_amb /*K*/,
+        double m_dot_cr_to_cv_hot /*kg/s*/, double m_dot_cv_hot_to_cycle /*kg/s*/, double m_dot_cr_to_cv_cold /*kg/s*/,
+        double T_cr_out_hot /*K*/, double T_cycle_out_cold /*K*/,
+        double & T_cycle_htf_in_hot /*K*/, double & T_cr_in_cold /*K*/,
 		C_csp_tes::S_csp_tes_outputs& outputs);	
 
 	bool charge(double timestep /*s*/, double T_amb /*K*/, double m_dot_htf_in /*kg/s*/, 
