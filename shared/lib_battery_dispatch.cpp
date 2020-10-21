@@ -486,7 +486,7 @@ dispatch_automatic_t::dispatch_automatic_t(
 
     _hour_last_updated = SIZE_MAX;
 
-    _look_ahead_hours = look_ahead_hours;
+    _forecast_hours = look_ahead_hours;
     _steps_per_hour = (size_t)(1. / dt_hour);
     _num_steps = 24 * _steps_per_hour;
 

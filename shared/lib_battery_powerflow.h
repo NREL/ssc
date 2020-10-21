@@ -100,10 +100,10 @@ public:
 	void reset();
 
     // Multiply or divide by ac efficiency for discharging or charging
-    double adjustForACEfficiencies(double power);
+    double adjustForACEfficiencies(double power, double loss);
 
     // Multiply or divide by dc efficiency for discharging or charging
-    double adjustForDCEfficiencies(double power);
+    double adjustForDCEfficiencies(double power, double loss);
 
 	/// Copy the enumeration for AC/DC connected systems from ChargeController
 	enum CONNECTION { DC_CONNECTED, AC_CONNECTED };

@@ -223,7 +223,7 @@ void dispatch_automatic_behind_the_meter_t::update_dispatch(size_t year, size_t 
             cost_based_target_power(idx, year, hour_of_year, no_dispatch_cost, E_max, p, debug);
 
             // Set battery power profile
-            set_battery_power(p, debug);            
+            set_battery_power(idx, p, debug);            
         }
         m_batteryPower->powerBatteryTarget = _P_battery_use[step];
     }
@@ -245,7 +245,7 @@ void dispatch_automatic_behind_the_meter_t::update_dispatch(size_t year, size_t 
 			target_power(E_max, idx, p, debug);
 
 			// Set battery power profile
-			set_battery_power(p, debug);
+			set_battery_power(idx, p, debug);
 		}
 		// save for extraction
 		_P_target_current = _P_target_use[_day_index];
@@ -804,15 +804,18 @@ void dispatch_automatic_behind_the_meter_t::check_power_restrictions(double& pow
     power = desiredCurrent * _Battery->V() * util::watt_to_kilowatt;
 }
 
-void dispatch_automatic_behind_the_meter_t::set_battery_power(FILE *p, const bool debug)
+void dispatch_automatic_behind_the_meter_t::set_battery_power(size_t idx, FILE *p, const bool debug)
 {
 	for (size_t i = 0; i != _P_target_use.size(); i++) {
+
+        double discharging_loss = _Battery->getDischargeLoss(idx + i, _dt_hour); // Units are kWac for AC connected batteries, and kWdc for DC connected
+
 		// At this point the target power is expressed in AC, must convert to DC for battery
 		if (m_batteryPower->connectionMode == m_batteryPower->AC_CONNECTED) {
-            _P_battery_use[i] = m_batteryPower->adjustForACEfficiencies(_P_battery_use[i]);
+            _P_battery_use[i] = m_batteryPower->adjustForACEfficiencies(_P_battery_use[i], discharging_loss);
 		}
         else {
-            _P_battery_use[i] = m_batteryPower->adjustForDCEfficiencies(_P_battery_use[i]);
+            _P_battery_use[i] = m_batteryPower->adjustForDCEfficiencies(_P_battery_use[i], discharging_loss);
         }
 	}
 

@@ -291,12 +291,15 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
 	{
 		// extract input power by modifying lifetime index to year 1
 		m_batteryPower->powerBatteryTarget = _P_battery_use[lifetimeIndex % (8760 * _steps_per_hour)];
+        double discharge_loss = _Battery->getDischargeLoss(lifetimeIndex, _dt_hour); // Battery is responsible for covering discharge losses
         if (m_batteryPower->connectionMode == AC_CONNECTED){
-            if (m_batteryPower->powerBatteryTarget < 0)
-                m_batteryPower->powerBatteryTarget *= m_batteryPower->singlePointEfficiencyDCToAC;
-            else
-                m_batteryPower->powerBatteryTarget /= m_batteryPower->singlePointEfficiencyDCToAC;
+            m_batteryPower->powerBatteryTarget = m_batteryPower->adjustForACEfficiencies(m_batteryPower->powerBatteryTarget, discharge_loss);
         }
+        else if (m_batteryPower->powerBatteryTarget > 0) {
+            // Adjust for DC discharge losses
+            m_batteryPower->powerBatteryTarget += discharge_loss;
+        }
+
 	}
 
 	m_batteryPower->powerBatteryDC = m_batteryPower->powerBatteryTarget;

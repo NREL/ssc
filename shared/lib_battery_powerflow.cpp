@@ -126,9 +126,9 @@ void BatteryPower::reset()
     voltageSystem = 0;
 }
 
-double BatteryPower::adjustForACEfficiencies(double power) {
+double BatteryPower::adjustForACEfficiencies(double power, double loss) {
     if (power > 0) {
-        return power / singlePointEfficiencyDCToAC;
+        return (power + loss) / singlePointEfficiencyDCToAC;
     }
     else {
         return power * singlePointEfficiencyACToDC;
@@ -136,9 +136,9 @@ double BatteryPower::adjustForACEfficiencies(double power) {
 }
 
 // DC-connected is harder to convert from AC, must make assumptions about inverter efficiency and charge shource
-double BatteryPower::adjustForDCEfficiencies(double power) {
+double BatteryPower::adjustForDCEfficiencies(double power, double loss) {
     if (power > 0) {
-        return power / (singlePointEfficiencyDCToDC * singlePointEfficiencyACToDC);
+        return (power + loss) / (singlePointEfficiencyDCToDC * singlePointEfficiencyACToDC);
 
     }
     // Need to bring ac load and charging values to DC side. Assume current inverter efficiency continues through dispatch forecast

@@ -42,7 +42,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOMInputWithLosses) {
     CreateBatteryWithLosses(dtHourFOM);
     dispatchAuto = new dispatch_automatic_front_of_meter_t(batteryModel, dtHourFOM, 15, 95, 1, 999, 999, max_power, max_power,
         max_power, max_power, 1, dispatch_t::FOM_CUSTOM_DISPATCH, dispatch_t::FRONT, 1, 24, 1, true, true, false, true, 0,
-        0, 0, 0, ppaRate, ur, 98, 98, 98);
+        replacementCost, 0, cyclingCost, ppaRate, ur, 98, 98, 98);
 
     std::vector<double> P_batt = { -336.062, 336.062 };
 
@@ -55,7 +55,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOMInputWithLosses) {
 
     // battery charging from PV
     EXPECT_FALSE(batteryPower->canGridCharge);
-    dispatchAuto->update_dispatch(0, 0, 0);
+    dispatchAuto->update_dispatch(0, 0, 0, 0);
     EXPECT_NEAR(batteryPower->powerBatteryTarget, -322.6, 0.1);
     dispatchAuto->dispatch(0, 0, 0);
 
@@ -65,7 +65,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOMInputWithLosses) {
     EXPECT_NEAR(batteryPower->powerSystemLoss, 10.0, 0.1);
     EXPECT_NEAR(dispatchAuto->battery_model()->SOC(), 50.2, 1e-2);
 
-    dispatchAuto->update_dispatch(0, 0, 1);
+    dispatchAuto->update_dispatch(0, 0, 0, 1);
     EXPECT_NEAR(batteryPower->powerBatteryTarget, 370.9, 0.1);
     dispatchAuto->dispatch(0, 1, 0);
 
@@ -437,7 +437,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_ACAutoWithLosses) {
     CreateBatteryWithLosses(dtHour);
     dispatchAuto = new dispatch_automatic_front_of_meter_t(batteryModel, dtHour, 10, 100, 1, 49960, 49960, max_power,
         max_power, max_power, max_power, 1, dispatch_t::FOM_LOOK_AHEAD, dispatch_t::FRONT, 1, 18, 1, true, true, false,
-        false, 77000, 0, 1, 0.005, ppaRate, ur, 98, 98, 98);
+        false, 77000, replacementCost, 1, cyclingCost, ppaRate, ur, 98, 98, 98);
 
     // battery setup
     dispatchAuto->update_pv_data(pv); // PV Resource is available for the 1st 10 hrs
@@ -464,7 +464,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_ACAutoWithLosses) {
         batteryPower->powerPV = pv[h];
         batteryPower->powerPVClipped = clip[h];
 
-        dispatchAuto->update_dispatch(h, 0, h);
+        dispatchAuto->update_dispatch(0, h, 0, h);
         EXPECT_NEAR(batteryPower->powerBatteryTarget, targetkW[h], 0.1) << "error in expected target at hour " << h;
 
         dispatchAuto->dispatch(0, h, 0);
