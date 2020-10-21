@@ -45,9 +45,9 @@ static var_info _cm_vtab_pvwattsv1_1ts[] = {
         { SSC_INPUT,        SSC_NUMBER,      "tamb",                     "Ambient temperature",                         "C",      "",                        "PVWatts",      "*",                       "",                          "" },
         { SSC_INPUT,        SSC_NUMBER,      "wspd",                     "Wind speed",                                  "m/s",    "",                        "PVWatts",      "*",                       "",                          "" },
         { SSC_INPUT,        SSC_NUMBER,      "snow",                     "Snow cover",                                  "cm",     "",                        "PVWatts",      "?=0",                     "",                          "" },
-        { SSC_INPUT,        SSC_NUMBER,      "elevation",                "Elevation",                "m",                 "",                  "PVWatts", "?",           "",                   "" },
-        { SSC_INPUT,        SSC_NUMBER,      "dry_temperature",          "Dry Temperature",                "°C",                 "",      "PVWatts", "?",           "",                   "" },
-        { SSC_INPUT,        SSC_NUMBER,      "pressure",                 "Pressure",                "millibars",                 "",                    "PVWatts", "?",           "",                   "" },
+        { SSC_INPUT,        SSC_NUMBER,      "elevation",                "Elevation",                                   "m",      "",                        "PVWatts",      "?",                       "",                          "" },
+        { SSC_INPUT,        SSC_NUMBER,      "dry_temperature",          "Dry Temperature",                             "°C",     "",                        "PVWatts",      "?",                       "",                          "" },
+        { SSC_INPUT,        SSC_NUMBER,      "pressure",                 "Pressure",                                    "millibars","",                      "PVWatts",      "?",                       "",                          "" },
 
         { SSC_INPUT,        SSC_NUMBER,      "time_step",                "Time step of input data",                     "hr",    "",                         "PVWatts",      "?=1",                     "POSITIVE",                  "" },
 
