@@ -647,11 +647,11 @@ DEFINE_MODULE_ENTRY(pvwattsv5, "PVWatts V5 - integrated hourly weather reader an
         { SSC_INPUT,        SSC_NUMBER,      "diffuse",                  "Diffuse irradiance",                          "W/m2",   "",                        "PVWatts",      "*",                       "",                          "" },
         { SSC_INPUT,        SSC_NUMBER,      "tamb",                     "Ambient temperature",                         "C",      "",                        "PVWatts",      "*",                       "",                          "" },
         { SSC_INPUT,        SSC_NUMBER,      "wspd",                     "Wind speed",                                  "m/s",    "",                        "PVWatts",      "*",                       "",                          "" },
-        { SSC_INPUT,        SSC_NUMBER,      "alb",                      "Albedo",                                      "frac",     "",                      "PVWatts",      "?=0.2",                     "",                          "" },
-        { SSC_INPUT,        SSC_NUMBER,      "time_step",                "Time step of input data",                     "hr",    "",                         "PVWatts",      "?=1",                     "POSITIVE",                  "" },
-        { SSC_INPUT,        SSC_NUMBER,      "elevation",                "Elevation",                "m",                 "",                  "PVWatts", "?",           "",                   "" },
-        { SSC_INPUT,        SSC_NUMBER,      "dry_temperature",          "Dry Temperature",                "°C",                 "",      "PVWatts", "?",           "",                   "" },
-        { SSC_INPUT,        SSC_NUMBER,      "pressure",                 "Pressure",                "millibars",                 "",                    "PVWatts", "?",           "",                   "" },
+        { SSC_INPUT,        SSC_NUMBER,      "alb",                      "Albedo",                                      "frac",   "",                        "PVWatts",      "?=0.2",                     "",                          "" },
+        { SSC_INPUT,        SSC_NUMBER,      "time_step",                "Time step of input data",                     "hr",     "",                        "PVWatts",      "?=1",                     "POSITIVE",                  "" },
+        { SSC_INPUT,        SSC_NUMBER,      "elevation",                "Elevation",                                   "m",      "",                        "PVWatts",      "?",                       "",                          "" },
+        { SSC_INPUT,        SSC_NUMBER,      "dry_temperature",          "Dry Temperature",                             "°C",     "",                        "PVWatts",      "?",                       "",                          "" },
+        { SSC_INPUT,        SSC_NUMBER,      "pressure",                 "Pressure",                                    "mbars",  "",                        "PVWatts",      "?",                       "",                          "" },
 
         var_info_invalid };
 
@@ -705,7 +705,6 @@ public:
         else {
             elev = as_double("elevation");
             if (elev < 0 || elev > 5100) {
-                elev = elev / 3.281; //adjust feet to meters if greater than the highest city (La Rinoconada, Peru)
                 throw exec_error("poacalib", "The elevation input is outside of the expected range. Please make sure that the units are in meters");
             }
         }

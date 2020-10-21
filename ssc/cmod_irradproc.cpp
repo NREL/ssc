@@ -57,11 +57,11 @@ static var_info _cm_vtab_irradproc[] = {
         { SSC_INPUT,        SSC_NUMBER,      "azimuth",                    "Azimuth angle",                  "deg",    "E=90,S=180,W=270",      "Irradiance Processor",      "*",                       "MIN=0,MAX=360",                            "" },
         { SSC_INPUT,        SSC_NUMBER,      "tilt",                       "Tilt angle",                     "deg",    "H=0,V=90",              "Irradiance Processor",      "?",                       "MIN=0,MAX=90",                             "" },
         { SSC_INPUT,        SSC_NUMBER,      "rotlim",                     "Rotational limit on tracker",    "deg",    "",                      "Irradiance Processor",      "?=45",                    "MIN=0,MAX=90",                             "" },
-        { SSC_INPUT,        SSC_NUMBER,      "backtrack",                  "Enable backtracking",            "0/1",    "",                      "Irradiance Processor",      "?=0",                    "BOOLEAN",                                  "" },
-        { SSC_INPUT,        SSC_NUMBER,      "gcr",                        "Ground coverage ratio",          "0..1",   "",                      "Irradiance Processor",      "backtrack=1",              "MIN=0,MAX=1",                               "" },
-        { SSC_INPUT,        SSC_NUMBER,      "elevation",                  "Elevation",                "m",                 "",                  "POA Calibrate", "?",           "",                   "" },
-        { SSC_INPUT,        SSC_NUMBER,      "dry_temperature",            "Dry Temperature",                "°C",                 "",      "Irradiance Processor", "?",           "",                   "" },
-        { SSC_INPUT,        SSC_NUMBER,      "pressure",                   "Pressure",                "millibars",                 "",                    "Irradiance Processor", "?",           "",                   "" },
+        { SSC_INPUT,        SSC_NUMBER,      "backtrack",                  "Enable backtracking",            "0/1",    "",                      "Irradiance Processor",      "?=0",                    "BOOLEAN",                                   "" },
+        { SSC_INPUT,        SSC_NUMBER,      "gcr",                        "Ground coverage ratio",          "0..1",   "",                      "Irradiance Processor",      "backtrack=1",              "MIN=0,MAX=1",                             "" },
+        { SSC_INPUT,        SSC_NUMBER,      "elevation",                  "Elevation",                      "m",      "",                      "Irradiance Processor",        "?",                                 "",                             "" },
+        { SSC_INPUT,        SSC_NUMBER,      "dry_temperature",            "Dry Temperature",                "°C",     "",                      "Irradiance Processor",        "?",                                  "",                            "" },
+        { SSC_INPUT,        SSC_NUMBER,      "pressure",                   "Pressure",                       "mbars",  "",                      "Irradiance Processor",        "?",                                  "",                            "" },
 
 
         { SSC_OUTPUT,       SSC_ARRAY,       "poa_beam",                   "Incident Beam Irradiance",       "W/m2",   "",                      "Irradiance Processor",      "*",                       "",                  "" },
@@ -137,8 +137,7 @@ public:
         else {
             elev = as_double("elevation");
             if (elev < 0 || elev > 5100) {
-                elev = elev / 3.281; //adjust feet to meters if greater than the highest city (La Rinoconada, Peru)
-                throw exec_error("poacalib", "The elevation input is outside of the expected range. Please make sure that the units are in meters");
+                throw exec_error("irradproc", "The elevation input is outside of the expected range. Please make sure that the units are in meters");
             }
         }
         if (!is_assigned("dry_temperature")) {
@@ -147,7 +146,7 @@ public:
         else {
             tdry = as_double("dry_temperature");
             if (tdry > 128 || tdry < -50) {
-                throw exec_error("poacalib", "The annual average temperature input is outside of the expected range. Please make sure that the units are in degrees Celsius");
+                throw exec_error("irradproc", "The annual average temperature input is outside of the expected range. Please make sure that the units are in degrees Celsius");
             }
         }
         if (!is_assigned("pressure")) {
@@ -156,7 +155,7 @@ public:
         else {
             pres = as_double("pressure");
             if (pres > 2000 || pres < 500) {
-                throw exec_error("poacalib", "The atmospheric pressure input is outside of the expected range. Please make sure that the units are in millibars");
+                throw exec_error("irradproc", "The atmospheric pressure input is outside of the expected range. Please make sure that the units are in millibars");
             }
         }
 

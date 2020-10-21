@@ -255,7 +255,6 @@ public:
 
             irrad irr;
             irr.set_time(wf.year, wf.month, wf.day, wf.hour, wf.minute, wfile.step_sec() / 3600.0);
-            //irr.set_location( hdr.lat, hdr.lon, hdr.tz );
             irr.set_location(hdr.lat, hdr.lon, hdr.tz);
             irr.set_optional(hdr.elev, wf.pres, wf.tdry);
 

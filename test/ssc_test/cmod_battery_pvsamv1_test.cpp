@@ -345,7 +345,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_ACBatteryModelIntegration)
 	grid_and_rate_defaults(data);
 	singleowner_defaults(data);
 
-    ssc_number_t expectedEnergy[3] = { 37307927, 37277087, 37277087 }; //changed due to new solarpos_spa algorithm
+    ssc_number_t expectedEnergy[3] = { 37307927, 37277087, 37277087 };
     ssc_number_t expectedBatteryChargeEnergy[3] = { 14779, 315293, 315293 }; // No rate model means battery use is low
     ssc_number_t expectedBatteryDischargeEnergy[3] = { 14663, 284336, 284336 };
 
@@ -398,9 +398,9 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_ManualDispatchBatteryModelI
 	grid_and_rate_defaults(data);
 	singleowner_defaults(data);
 
-    ssc_number_t expectedEnergy = 37176158; //changed due to new solarpos_spa algorithm
-    ssc_number_t expectedBatteryChargeEnergy = 1297985; //changed due to new solarpos_spa algorithm
-    ssc_number_t expectedBatteryDischargeEnergy = 1166100; //changed due to new solarpos_spa algorithm
+    ssc_number_t expectedEnergy = 37176158; 
+    ssc_number_t expectedBatteryChargeEnergy = 1297985; 
+    ssc_number_t expectedBatteryDischargeEnergy = 1166100; 
 
     ssc_number_t peakKwCharge = -1052.0;
     ssc_number_t peakKwDischarge = 857.2;

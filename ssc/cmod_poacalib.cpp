@@ -42,9 +42,10 @@ static var_info _cm_vtab_poacalib[] =
         { SSC_INPUT,        SSC_NUMBER,      "array_az",          "Array Azimuth",         "degrees",          "0=N, 90=E, 180=S",  "POA Calibrate", "*",           "MIN=0,MAX=360",                 "" },
         { SSC_INPUT,        SSC_NUMBER,      "year",              "Year",                  "",                 "",                  "POA Calibrate", "*",           "",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "albedo",            "Albedo",                "",                 "",                  "POA Calibrate", "*",           "MIN=0,MAX=1",                   "" },
-        { SSC_INPUT,        SSC_NUMBER,      "elevation",         "Elevation",                "m",                 "",                  "POA Calibrate", "?",           "",                   "" },
-        { SSC_INPUT,        SSC_NUMBER,      "dry_temperature",   "Dry Temperature",                "°C",                 "",      "POA Calibrate", "?",           "",                   "" },
-        { SSC_INPUT,        SSC_NUMBER,      "pressure",          "Pressure",                "millibars",                 "",                    "POA Calibrate", "?",           "",                   "" },
+        { SSC_INPUT,        SSC_NUMBER,      "elevation",         "Elevation",             "m",                "",                  "POA Calibrate", "?",           "",                              "" },
+        { SSC_INPUT,        SSC_NUMBER,      "dry_temperature",   "Dry Temperature",       "°C",               "",                  "POA Calibrate", "?",           "",                              "" },
+        { SSC_INPUT,        SSC_NUMBER,      "pressure",          "Pressure",              "millibars",        "",                  "POA Calibrate", "?",           "",                              "" },
+        { SSC_INPUT,        SSC_NUMBER,      "pressure",          "Pressure",              "millibars",        "",                  "POA Calibrate", "?",           "",                              "" },
 
         { SSC_INPUT,        SSC_ARRAY,       "poa",               "Plane of Array",        "W/m^2",            "",                  "POA Calibrate", "*",           "LENGTH=8760",                   "" },
 
@@ -95,7 +96,6 @@ public:
         else {
             elev = as_double("elevation");
             if (elev < 0 || elev > 5100) {
-                elev = elev / 3.281; //adjust feet to meters if greater than the highest city (La Rinoconada, Peru)
                 throw exec_error("poacalib", "The elevation input is outside of the expected range. Please make sure that the units are in meters");
             }
         }

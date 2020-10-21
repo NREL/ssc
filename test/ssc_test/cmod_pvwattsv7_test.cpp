@@ -24,8 +24,6 @@ TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, DefaultNoFinancialModel_cmod_pvwat
     //v7 prior to module coeff changes is 6750.4236, increase of 3.7% due to improved tempco for standard module
     EXPECT_NEAR(tmp, 6999.0158, error_tolerance) << "Annual energy."; 
 
-
-    //values changed due to new solarpos_spa algorithm
     EXPECT_NEAR((double)monthly_energy[0], 439.453, error_tolerance) << "Monthly energy of January";
     EXPECT_NEAR((double)monthly_energy[1], 485.215, error_tolerance) << "Monthly energy of February";
     EXPECT_NEAR((double)monthly_energy[2], 597.276, error_tolerance) << "Monthly energy of March";

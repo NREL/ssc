@@ -1336,7 +1336,7 @@ void solarpos_spa(int year, int month, int day, int hour, double minute, double 
     double delta_t;
     if (year >= 1961 && year <= 1986) {
         t = year - 1975;
-        delta_t = 45.45 + 1.067 * t - pow(t, 2)/260 - pow(t, 3) / 718;
+        delta_t = 45.45 + 1.067 * t - pow(t, 2) / 260 - pow(t, 3) / 718;
     }
     else if (year > 1986 && year <= 2005) {
         t = year - 2000;
@@ -2175,9 +2175,6 @@ void irrad::set_location(double latDegrees, double longDegrees, double tz)
     this->latitudeDegrees = latDegrees;
     this->longitudeDegrees = longDegrees;
     this->timezone = tz;
-    //this->elevation = elev;
-    //this->pressure = pres;
-    //this->temp = tdry;
 }
 
 void irrad::set_optional(double elev, double pres, double tdry) //defaults of 0 meters elevation, atmospheric pressure, 15°C average annual temperature
@@ -2370,11 +2367,6 @@ int irrad::calc()
             {
                 hbeam = 0;
             }
-            /*if (directNormal < 0 && radiationMode == irrad::GH_DF)
-            {
-                hbeam = 0;
-                //directNormal = 0;
-            }*/
             // check beam irradiance against extraterrestrial irradiance
             if (hbeam > hextra)// && radiationMode != GH_DF)
             {

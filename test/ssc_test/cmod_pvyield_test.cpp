@@ -113,7 +113,7 @@ TEST_F(CMPvYieldTimo, NoFinancialModelSystemDesign_cmod_pvsamv1)
     pairs["inverter_count"] = 22;
     pairs["subarray1_track_mode"] = 0;
 
-    std::vector<double> annual_energy_expected = { 183183, 242368, 258372, 216129, 192903 }; //values changed due to new solarpos_spa algorithm
+    std::vector<double> annual_energy_expected = { 183183, 242368, 258372, 216129, 192903 }; 
     for (int tracking_option = 0; tracking_option != 5; tracking_option++)
     {
         // update tracking option
@@ -144,7 +144,7 @@ TEST_F(CMPvYieldTimo, NoFinancialModelSystemDesign_cmod_pvsamv1)
     {
         ssc_number_t annual_energy;
         ssc_data_get_number(data, "annual_energy", &annual_energy);
-        EXPECT_NEAR(annual_energy, 237146, m_error_tolerance_hi) << "Annual energy."; //values changed due to new solarpos_spa
+        EXPECT_NEAR(annual_energy, 237146, m_error_tolerance_hi) << "Annual energy.";
         //cout << "-----------------------------------------------------" << endl;
         //cout << "Fixed tilt backtracking Computed annual energy : " << annual_energy << endl;
         //cout << "Fixed tilt backtracking  Expected annual energy : " << 237340 << endl;
@@ -183,7 +183,7 @@ TEST_F(CMPvYieldTimo, NoFinancialModelSystemDesign_cmod_pvsamv1)
     std::vector<double> subarray2_track_mode = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
     std::vector<double> subarray3_track_mode = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 0, 0, 0, 0, 0 };
     std::vector<double> subarray4_track_mode = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4 };
-    annual_energy_expected = { 167338, 176267, 183183, 166198, 175768, 183183, 171896, 178257, 183183, 171896, 178257, 183183, 183183, 183175, 183183, 183183, 183183, 183183, 183183, 183183, 183183, 183183, 183183, 183183, 183183, 183183, 177254, 182865, 162398, 176827, 182841, 160903, 178957, 182963, 168372, 178957, 182963, 168372, 183183, 183183, 183183, 183183, 183183, 198697, 205087, 192620, 186025, 183183, 201406, 206648, 193294, 186227, 183183, 195336, 198838, 189925, 185216, 183183, 195336, 198838, 189925, 185216 }; //values changed due to new solarpos_spa algorithm
+    annual_energy_expected = { 167338, 176267, 183183, 166198, 175768, 183183, 171896, 178257, 183183, 171896, 178257, 183183, 183183, 183175, 183183, 183183, 183183, 183183, 183183, 183183, 183183, 183183, 183183, 183183, 183183, 183183, 177254, 182865, 162398, 176827, 182841, 160903, 178957, 182963, 168372, 178957, 182963, 168372, 183183, 183183, 183183, 183183, 183183, 198697, 205087, 192620, 186025, 183183, 201406, 206648, 193294, 186227, 183183, 195336, 198838, 189925, 185216, 183183, 195336, 198838, 189925, 185216 };
     for (size_t i = 0; i != annual_energy_expected.size(); i++)
     {
         pairs["enable_mismatch_vmax_calc"] = enable_mismatch[i];
