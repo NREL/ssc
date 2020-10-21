@@ -6,7 +6,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOMInput) {
     CreateBattery(dtHourFOM);
     dispatchAuto = new dispatch_automatic_front_of_meter_t(batteryModel, dtHourFOM, 15, 95, 1, 999, 999, max_power, max_power,
                                                            max_power, max_power, 1, dispatch_t::FOM_CUSTOM_DISPATCH, dispatch_t::FRONT, 1, 24, 1, true, true, false, true, 0,
-                                                              0, 0, 0, ppaRate, ur, 98, 98, 98);
+                                                          replacementCost, 0, cyclingCost, ppaRate, ur, 98, 98, 98);
 
     std::vector<double> P_batt = {-336.062, 336.062};
 
@@ -19,7 +19,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOMInput) {
 
     // battery charging from PV
     EXPECT_FALSE(batteryPower->canGridCharge);
-    dispatchAuto->update_dispatch(0, 0, 0);
+    dispatchAuto->update_dispatch(0, 0, 0, 0);
     EXPECT_NEAR(batteryPower->powerBatteryTarget, -322.6, 0.1);
     dispatchAuto->dispatch(0, 0, 0);
 
@@ -28,7 +28,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOMInput) {
     EXPECT_NEAR(batteryPower->powerGridToBattery, 0, 0.1);
     EXPECT_NEAR(dispatchAuto->battery_model()->SOC(), 50.2, 1e-2);
 
-    dispatchAuto->update_dispatch(0, 0, 1);
+    dispatchAuto->update_dispatch(0, 0, 0, 1);
     EXPECT_NEAR(batteryPower->powerBatteryTarget, 350.0, 0.1);
     dispatchAuto->dispatch(0, 1, 0);
 
@@ -80,7 +80,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOMInputSubhourly) {
     CreateBattery(dtHourFOM);
     dispatchAuto = new dispatch_automatic_front_of_meter_t(batteryModel, dtHourFOM, 15, 95, 1, 999, 999, max_power, max_power,
                                                            max_power, max_power, 1, dispatch_t::FOM_CUSTOM_DISPATCH, dispatch_t::FRONT, 1, 24, 1, true, true, false, true, 0,
-                                                              0, 0, 0, ppaRate, ur, 98, 98, 98);
+                                                            replacementCost, 0, cyclingCost, ppaRate, ur, 98, 98, 98);
 
     std::vector<double> P_batt = {-336.062, 336.062};
 
@@ -93,7 +93,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOMInputSubhourly) {
 
     // battery charging from PV to full maximum_SOC
     EXPECT_FALSE(batteryPower->canGridCharge);
-    dispatchAuto->update_dispatch(0, 0, 0);
+    dispatchAuto->update_dispatch(0, 0, 0, 0);
     EXPECT_NEAR(batteryPower->powerBatteryTarget, -322.6, 0.1);
     dispatchAuto->dispatch(0, 0, 0);
 
@@ -102,7 +102,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOMInputSubhourly) {
     EXPECT_NEAR(batteryPower->powerGridToBattery, 0, 0.1);
     EXPECT_NEAR(dispatchAuto->battery_model()->SOC(), 50.1, 0.1);
 
-    dispatchAuto->update_dispatch(0, 0, 1);
+    dispatchAuto->update_dispatch(0, 0, 0, 1);
     EXPECT_NEAR(batteryPower->powerBatteryTarget, 350.0, 0.1);
     dispatchAuto->dispatch(0, 0, 1);
 
@@ -116,7 +116,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_DCCustomCharge) {
     CreateBattery(dtHour);
     dispatchAuto = new dispatch_automatic_front_of_meter_t(batteryModel, dtHour, 10, 100, 1, 49960, 49960, max_power,
                                                            max_power, max_power, max_power, 1, dispatch_t::FOM_CUSTOM_DISPATCH, dispatch_t::FRONT, 1, 18, 1, true,
-                                                           true, true, false, 77000, 0, 1, 0.005, ppaRate, ur, 98, 98,
+                                                           true, true, false, 77000, replacementCost, 1, cyclingCost, ppaRate, ur, 98, 98,
                                                            98);
 
     std::vector<double> P_batt(6, -25000);
@@ -138,7 +138,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_DCCustomCharge) {
 
     std::vector<double> SOC = {64.42, 78.77, 93.06, 100., 100., 100.};
     for (size_t h = 0; h < 6; h++) {
-        dispatchAuto->update_dispatch(0, h, 0);
+        dispatchAuto->update_dispatch(0, 0, h, 0);
         EXPECT_NEAR(batteryPower->powerBatteryTarget, -25000, 0.1) << "error in expected target at hour " << h;
 
         dispatchAuto->dispatch(0, h, 0);
@@ -168,7 +168,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_DCCustomChargeSubhourly) {
     CreateBattery(dtHour);
     dispatchAuto = new dispatch_automatic_front_of_meter_t(batteryModel, dtHour, 10, 100, 1, 49960, 49960, max_power,
                                                            max_power, max_power, max_power, 1, dispatch_t::FOM_CUSTOM_DISPATCH, dispatch_t::FRONT, 1, 18, 1, true,
-                                                           true, true, false, 77000, 0, 1, 0.005, ppaRate, ur, 98, 98,
+                                                           true, true, false, 77000, replacementCost, 1, cyclingCost, ppaRate, ur, 98, 98,
                                                            98);
 
     std::vector<double> P_batt(12, -25000);
@@ -193,7 +193,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_DCCustomChargeSubhourly) {
         size_t hour_of_year = hour_of_year_from_index(h, dtHour);
         size_t step = step_from_index(h, dtHour);
 
-        dispatchAuto->update_dispatch(hour_of_year, step, h);
+        dispatchAuto->update_dispatch(0, hour_of_year, step, h);
         EXPECT_NEAR(batteryPower->powerBatteryTarget, -25000, 0.1) << "error in expected target at hour " << h;
 
         dispatchAuto->dispatch(0, hour_of_year, step);
@@ -223,7 +223,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_DCAuto) {
     CreateBattery(dtHour);
     dispatchAuto = new dispatch_automatic_front_of_meter_t(batteryModel, dtHour, 10, 100, 1, 49960, 49960, max_power,
                                                            max_power, max_power, max_power, 1, dispatch_t::FOM_LOOK_AHEAD, dispatch_t::FRONT, 1, 18, 1, true, true, false,
-                                                           false, 77000, 0, 1, 0.005, ppaRate, ur, 98, 98, 98);
+                                                           false, 77000, replacementCost, 1, cyclingCost, ppaRate, ur, 98, 98, 98);
 
     // battery setup
     dispatchAuto->update_pv_data(pv);
@@ -240,7 +240,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_DCAuto) {
         batteryPower->powerPV = pv[h];
         batteryPower->powerPVClipped = clip[h];
 
-        dispatchAuto->update_dispatch(h, 0, h);
+        dispatchAuto->update_dispatch(0, h, 0, h);
         EXPECT_NEAR(batteryPower->powerBatteryTarget, targetkW[h], 0.1) << "error in expected target at hour " << h;
 
         dispatchAuto->dispatch(0, h, 0);
@@ -255,7 +255,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_DCAutoSubhourly) {
     CreateBattery(dtHour);
     dispatchAuto = new dispatch_automatic_front_of_meter_t(batteryModel, dtHour, 10, 100, 1, 49960, 49960, max_power,
                                                            max_power, max_power, max_power, 1, dispatch_t::FOM_LOOK_AHEAD, dispatch_t::FRONT, 1, 18, 1, true, true, false,
-                                                           false, 77000, 0, 1, 0.005, ppaRate, ur, 98, 98, 98);
+                                                           false, 77000, replacementCost, 1, cyclingCost, ppaRate, ur, 98, 98, 98);
 
     // battery setup
     dispatchAuto->update_pv_data(pv);
@@ -275,7 +275,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_DCAutoSubhourly) {
         batteryPower->powerPV = pv[h];
         batteryPower->powerPVClipped = clip[h];
 
-        dispatchAuto->update_dispatch(hour_of_year, step, h);
+        dispatchAuto->update_dispatch(0, hour_of_year, step, h);
         EXPECT_NEAR(batteryPower->powerBatteryTarget, targetkW[h], 0.1) << "error in expected target at hour " << h;
 
         dispatchAuto->dispatch(0, hour_of_year, step);
@@ -290,7 +290,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_ACCustomCharge) {
     CreateBattery(dtHour);
     dispatchAuto = new dispatch_automatic_front_of_meter_t(batteryModel, dtHour, 10, 100, 1, 49960, 49960, max_power,
                                                            max_power, max_power, max_power, 1, dispatch_t::FOM_CUSTOM_DISPATCH, dispatch_t::FRONT, 1, 18, 1, true,
-                                                             true, true, false, 77000, 0, 1, 0.005, ppaRate, ur, 98, 98,
+                                                             true, true, false, 77000, replacementCost, 1, cyclingCost, ppaRate, ur, 98, 98,
                                                              98);
 
     std::vector<double> P_batt(6, -25000);
@@ -311,7 +311,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_ACCustomCharge) {
 
     std::vector<double> SOC = {63.86, 77.64, 91.37, 100.00, 100.00, 100.00};
     for (size_t h = 0; h < 6; h++) {
-        dispatchAuto->update_dispatch(0, h, 0);
+        dispatchAuto->update_dispatch(0, 0, h, 0);
         EXPECT_NEAR(batteryPower->powerBatteryTarget, -24000, 0.1) << "error in expected target at hour " << h;
 
         dispatchAuto->dispatch(0, h, 0);
@@ -341,7 +341,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_ACCustomChargeSubhourly) {
     CreateBattery(dtHour);
     dispatchAuto = new dispatch_automatic_front_of_meter_t(batteryModel, dtHour, 10, 100, 1, 49960, 49960, max_power,
                                                            max_power, max_power, max_power, 1, dispatch_t::FOM_CUSTOM_DISPATCH, dispatch_t::FRONT, 1, 18, 1, true,
-                                                           true, true, false, 77000, 0, 1, 0.005, ppaRate, ur, 98, 98,
+                                                           true, true, false, 77000, replacementCost, 1, cyclingCost, ppaRate, ur, 98, 98,
                                                            98);
 
     std::vector<double> P_batt(12, -25000);
@@ -365,7 +365,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_ACCustomChargeSubhourly) {
         size_t hour_of_year = hour_of_year_from_index(h, dtHour);
         size_t step = step_from_index(h, dtHour);
 
-        dispatchAuto->update_dispatch(hour_of_year, step, h);
+        dispatchAuto->update_dispatch(0, hour_of_year, step, h);
         EXPECT_NEAR(batteryPower->powerBatteryTarget, -24000, 0.1) << "error in expected target at hour " << h;
 
         dispatchAuto->dispatch(0, hour_of_year, step);
@@ -395,7 +395,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_ACAuto) {
     CreateBattery(dtHour);
     dispatchAuto = new dispatch_automatic_front_of_meter_t(batteryModel, dtHour, 10, 100, 1, 49960, 49960, max_power,
                                                            max_power, max_power, max_power, 1, dispatch_t::FOM_LOOK_AHEAD, dispatch_t::FRONT, 1, 18, 1, true, true, false,
-                                                           false, 77000, 0, 1, 0.005, ppaRate, ur, 98, 98, 98);
+                                                           false, 77000, replacementCost, 1, cyclingCost, ppaRate, ur, 98, 98, 98);
 
     // battery setup
     dispatchAuto->update_pv_data(pv); // PV Resource is available for the 1st 10 hrs
@@ -422,7 +422,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_ACAuto) {
         batteryPower->powerPV = pv[h];
         batteryPower->powerPVClipped = clip[h];
 
-        dispatchAuto->update_dispatch(h, 0, h);
+        dispatchAuto->update_dispatch(0, h, 0, h);
         EXPECT_NEAR(batteryPower->powerBatteryTarget, targetkW[h], 0.1) << "error in expected target at hour " << h;
 
         dispatchAuto->dispatch(0, h, 0);
@@ -479,7 +479,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_ACAutoSubhourly) {
     CreateBattery(dtHour);
     dispatchAuto = new dispatch_automatic_front_of_meter_t(batteryModel, dtHour, 10, 100, 1, 49960, 49960, max_power,
                                                            max_power, max_power, max_power, 1, dispatch_t::FOM_LOOK_AHEAD, dispatch_t::FRONT, 1, 18, 1, true, true, false,
-                                                           false, 77000, 0, 1, 0.005, ppaRate, ur, 98, 98, 98);
+                                                           false, 77000, replacementCost, 1, cyclingCost, ppaRate, ur, 98, 98, 98);
 
     // battery setup
     dispatchAuto->update_pv_data(pv);
@@ -499,7 +499,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_ACAutoSubhourly) {
         batteryPower->powerPV = pv[h];
         batteryPower->powerPVClipped = clip[h];
 
-        dispatchAuto->update_dispatch(hour_of_year, step, h);
+        dispatchAuto->update_dispatch(0, hour_of_year, step, h);
         EXPECT_NEAR(batteryPower->powerBatteryTarget, targetkW[h], 0.1) << "error in expected target at hour " << h;
 
         dispatchAuto->dispatch(0, hour_of_year, step);
