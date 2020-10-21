@@ -656,6 +656,16 @@ double battery_t::getNumReplacementYear() {
     return state->replacement->n_replacements;
 }
 
+double battery_t::getReplacementPercent()
+{
+    if (params->replacement->replacement_option == params->replacement->CAPACITY_PERCENT)
+    {
+        return (params->replacement->replacement_capacity / 100.0);
+    }
+
+    return 0.0;
+}
+
 void battery_t::changeSOCLimits(double min, double max) {
     capacity->change_SOC_limits(min, max);
 }
@@ -676,6 +686,14 @@ double battery_t::energy_to_fill(double SOC_max) {
 
 double battery_t::energy_nominal() {
     return V_nominal() * capacity->qmax() * util::watt_to_kilowatt;
+}
+
+double battery_t::energy_max(double SOC_max, double SOC_min) {
+   return V()* charge_maximum_lifetime() * (SOC_max - SOC_min) * 0.01 * util::watt_to_kilowatt;
+}
+
+double battery_t::energy_available(double SOC_min) {
+    return V() * charge_maximum_lifetime() * (SOC() - SOC_min) * 0.01 * util::watt_to_kilowatt;
 }
 
 double battery_t::power_to_fill(double SOC_max) {

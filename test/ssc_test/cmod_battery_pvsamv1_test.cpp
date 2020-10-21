@@ -75,9 +75,8 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, TestDailyBatteryStats)
 /// Test PVSAMv1 with all defaults and battery enabled with 3 automatic dispatch methods
 TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACBatteryModelIntegration)
 {
-    ssc_data_t data = ssc_data_create();
-    pvsamv_nofinancial_default(data);
-    battery_data_default(data);
+	pvsamv_nofinancial_default(data);
+	battery_data_default(data);
 
     std::map<std::string, double> pairs;
     pairs["en_batt"] = 1;
@@ -128,9 +127,8 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACBatteryModelIntegr
 /// Test PVSAMv1 with all defaults and battery enabled with custom dispatch
 TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACDCBatteryModelIntegrationCustomDispatchSparse)
 {
-    ssc_data_t data = ssc_data_create();
-    pvsamv_nofinancial_default(data);
-    battery_data_default(data);
+	pvsamv_nofinancial_default(data);
+	battery_data_default(data);
 
     std::map<std::string, double> pairs;
     pairs["en_batt"] = 1;
@@ -183,9 +181,8 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACDCBatteryModelInte
 /// Test PVSAMv1 with all defaults and battery enabled with custom dispatch
 TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACDCBatteryModelIntegrationCustomDispatchFull)
 {
-    ssc_data_t data = ssc_data_create();
-    pvsamv_nofinancial_default(data);
-    battery_data_default(data);
+	pvsamv_nofinancial_default(data);
+	battery_data_default(data);
 
     std::map<std::string, double> pairs;
     pairs["en_batt"] = 1;
@@ -238,9 +235,8 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACDCBatteryModelInte
 /// Test PVSAMv1 with all defaults and battery enabled with manual dispatch
 TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACDCBatteryModelIntegrationManualDispatch)
 {
-    ssc_data_t data = ssc_data_create();
-    pvsamv_nofinancial_default(data);
-    battery_data_default(data);
+	pvsamv_nofinancial_default(data);
+	battery_data_default(data);
 
     std::map<std::string, double> pairs;
     pairs["en_batt"] = 1;
@@ -292,9 +288,8 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACDCBatteryModelInte
 /// Test PVSAMv1 with all defaults and DC battery enabled with 3 automatic dispatch methods
 TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelIntegration)
 {
-    ssc_data_t data = ssc_data_create();
-    pvsamv_nofinancial_default(data);
-    battery_data_default(data);
+	pvsamv_nofinancial_default(data);
+	battery_data_default(data);
 
     std::map<std::string, double> pairs;
     pairs["en_batt"] = 1;
@@ -345,11 +340,10 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelIntegr
 /// Test PVSAMv1 with all defaults and battery enabled with 3 automatic dispatch methods
 TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_ACBatteryModelIntegration)
 {
-    ssc_data_t data = ssc_data_create();
-    pvsamv1_pv_defaults(data);
-    pvsamv1_battery_defaults(data);
-    grid_and_rate_defaults(data);
-    singleowner_defaults(data);
+	pvsamv1_pv_defaults(data);
+	pvsamv1_battery_defaults(data);
+	grid_and_rate_defaults(data);
+	singleowner_defaults(data);
 
     ssc_number_t expectedEnergy[3] = { 37307927, 37277087, 37277087 }; //changed due to new solarpos_spa algorithm
     ssc_number_t expectedBatteryChargeEnergy[3] = { 14779, 315293, 315293 }; // No rate model means battery use is low
@@ -399,11 +393,10 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_ACBatteryModelIntegration)
 /// Test PVSAMv1 with all defaults and battery enabled with manual dispatch and PPA financial model
 TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_ManualDispatchBatteryModelIntegration)
 {
-    ssc_data_t data = ssc_data_create();
-    pvsamv1_pv_defaults(data);
-    pvsamv1_battery_defaults(data);
-    grid_and_rate_defaults(data);
-    singleowner_defaults(data);
+	pvsamv1_pv_defaults(data);
+	pvsamv1_battery_defaults(data);
+	grid_and_rate_defaults(data);
+	singleowner_defaults(data);
 
     ssc_number_t expectedEnergy = 37176158; //changed due to new solarpos_spa algorithm
     ssc_number_t expectedBatteryChargeEnergy = 1297985; //changed due to new solarpos_spa algorithm
@@ -453,11 +446,10 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_ManualDispatchBatteryModelI
 /// Test PVSAMv1 with all defaults and DC battery enabled with custom dispatch and PPA financial model
 TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_CustomDispatchBatteryModelDCIntegrationSparse)
 {
-    ssc_data_t data = ssc_data_create();
-    pvsamv1_pv_defaults(data);
-    pvsamv1_battery_defaults(data);
-    grid_and_rate_defaults(data);
-    singleowner_defaults(data);
+	pvsamv1_pv_defaults(data);
+	pvsamv1_battery_defaults(data);
+	grid_and_rate_defaults(data);
+	singleowner_defaults(data);
 
     ssc_number_t expectedEnergy = 37308785; 
     ssc_number_t expectedBatteryChargeEnergy = 2040;
@@ -502,11 +494,10 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_CustomDispatchBatteryModelD
 /// Test PVSAMv1 with all defaults and DC battery enabled with custom dispatch and PPA financial model
 TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_CustomDispatchBatteryModelDCIntegrationFull)
 {
-    ssc_data_t data = ssc_data_create();
-    pvsamv1_pv_defaults(data);
-    pvsamv1_battery_defaults(data);
-    grid_and_rate_defaults(data);
-    singleowner_defaults(data);
+	pvsamv1_pv_defaults(data);
+	pvsamv1_battery_defaults(data);
+	grid_and_rate_defaults(data);
+	singleowner_defaults(data);
 
     //ssc_number_t expectedEnergy = 37264228;
     ssc_number_t expectedEnergy = 37251482; 
@@ -555,8 +546,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_CustomDispatchBatteryModelD
 /// Test PVSAMv1 clipping with multiple subarrays
 TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, CommercialMultipleSubarrayBatteryIntegration)
 {
-    ssc_data_t data = ssc_data_create();
-    commercial_multiarray_default(data);
+	commercial_multiarray_default(data);
 
     std::map<std::string, double> pairs;
     pairs["analysis_period"] = 1;
@@ -609,7 +599,6 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, CommercialMultipleSubarrayBatte
 /// Test Clipping forecast and dispatch
 TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ClippingForecastTest1_DC_FOM_Dispatch)
 {
-    ssc_data_t data = ssc_data_create();
     commercial_multiarray_default(data);
 
     std::map<std::string, double> pairs;
@@ -663,7 +652,6 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ClippingForecastTest1_DC_FOM_Di
 
 TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ClippingForecastTest2_DC_FOM_Dispatch_w_forecast)
 {
-    ssc_data_t data = ssc_data_create();
     commercial_multiarray_default(data);
 
     std::map<std::string, double> pairs;
@@ -719,11 +707,10 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ClippingForecastTest2_DC_FOM_Di
 /// Test PVSAMv1 with all defaults and DC battery enabled with custom dispatch and PPA financial model
 TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_CustomDispatchBatteryModelDCIntegrationFullSubhourly)
 {
-    ssc_data_t data = ssc_data_create();
-    pvsamv1_pv_defaults(data);
-    pvsamv1_battery_defaults(data);
-    grid_and_rate_defaults(data);
-    singleowner_defaults(data);
+	pvsamv1_pv_defaults(data);
+	pvsamv1_battery_defaults(data);
+	grid_and_rate_defaults(data);
+	singleowner_defaults(data);
 
     ssc_number_t expectedEnergy = 37252473;
     ssc_number_t expectedBatteryChargeEnergy = 430570;
@@ -770,4 +757,55 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_CustomDispatchBatteryModelD
         EXPECT_NEAR(batt_stats.avgCycles, avgCycles, 0.05);
     }
 
+}
+
+TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelPriceSignalDispatch)
+{
+    pvsamv_nofinancial_default(data);
+    battery_data_default(data);
+    setup_residential_utility_rates(data);
+
+    std::map<std::string, double> pairs;
+    pairs["en_batt"] = 1;
+    pairs["batt_meter_position"] = 0; // Behind the meter
+    pairs["batt_ac_or_dc"] = 0; //DC
+    pairs["analysis_period"] = 1;
+    set_array(data, "load", load_profile_path, 8760); // Load is required for peak shaving controllers
+
+    ssc_number_t expectedEnergy = 8634;
+    ssc_number_t expectedBatteryChargeEnergy = 390.9;
+    ssc_number_t expectedBatteryDischargeEnergy = 360.2;
+
+    ssc_number_t peakKwCharge = -3.537;
+    ssc_number_t peakKwDischarge = 1.99;
+    ssc_number_t peakCycles = 2;
+    ssc_number_t avgCycles = 0.4136;
+
+    pairs["batt_dispatch_choice"] = 5;
+
+    int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+    EXPECT_FALSE(pvsam_errors);
+
+    if (!pvsam_errors)
+    {
+        ssc_number_t annual_energy;
+        ssc_data_get_number(data, "annual_energy", &annual_energy);
+        EXPECT_NEAR(annual_energy, expectedEnergy, m_error_tolerance_hi) << "Annual energy.";
+
+        auto data_vtab = static_cast<var_table*>(data);
+        auto annualChargeEnergy = data_vtab->as_vector_ssc_number_t("batt_annual_charge_energy");
+        EXPECT_NEAR(annualChargeEnergy[0], expectedBatteryChargeEnergy, m_error_tolerance_hi) << "Battery annual charge energy.";
+
+        auto annualDischargeEnergy = data_vtab->as_vector_ssc_number_t("batt_annual_discharge_energy");
+        EXPECT_NEAR(annualDischargeEnergy[0], expectedBatteryDischargeEnergy, m_error_tolerance_hi) << "Battery annual discharge energy.";
+
+        auto batt_power = data_vtab->as_vector_ssc_number_t("batt_power");
+        daily_battery_stats batt_stats = daily_battery_stats(batt_power);
+
+        EXPECT_NEAR(batt_stats.peakKwCharge, peakKwCharge, m_error_tolerance_lo);
+        EXPECT_NEAR(batt_stats.peakKwDischarge, peakKwDischarge, m_error_tolerance_lo);
+        EXPECT_NEAR(batt_stats.peakCycles, peakCycles, m_error_tolerance_lo);
+        EXPECT_NEAR(batt_stats.avgCycles, avgCycles, 0.01); // As of 8-26-20 Linux cycles 2 more times in a year than Windows, this changes the NPV by $2 over 25 years
+    }
+    
 }

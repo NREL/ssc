@@ -2,6 +2,7 @@
 #define SAM_SIMULATION_CORE_LIB_BATTERY_DISPATCH_AUTOMATIC_FOM_TEST_H
 
 #include <gtest/gtest.h>
+#include <lib_battery_dispatch_automatic_fom.h>
 #include "lib_battery_dispatch_test.h"
 
 
@@ -33,6 +34,8 @@ protected:
     std::vector<double> load_prediction;
     std::vector<double> cliploss_prediction;
 
+    std::vector<double> replacementCost = { 0.0 };
+    std::vector<double> cyclingCost = { 0.005 };
 public:
 
     void CreateBattery(double dtHour)
