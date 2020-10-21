@@ -126,6 +126,32 @@ void BatteryPower::reset()
 	voltageSystem = 0;
 }
 
+double BatteryPower::adjustForACEfficiencies(double power) {
+    if (power > 0) {
+        return power / singlePointEfficiencyDCToAC;
+    }
+    else {
+        return power * singlePointEfficiencyACToDC;
+    }
+}
+
+// DC-connected is harder to convert from AC, must make assumptions about inverter efficiency and charge shource
+double BatteryPower::adjustForDCEfficiencies(double power) {
+    if (power > 0) {
+        return power / (singlePointEfficiencyDCToDC * singlePointEfficiencyACToDC);
+
+    }
+    // Need to bring ac load and charging values to DC side. Assume current inverter efficiency continues through dispatch forecast
+    else {
+        double ac_to_dc_eff = singlePointEfficiencyACToDC;
+        if (sharedInverter->efficiencyAC > 5) // 5% is the cutoff in lib_battery_powerflow
+        {
+            ac_to_dc_eff = sharedInverter->efficiencyAC * 0.01;
+        }
+        return power * singlePointEfficiencyDCToDC / ac_to_dc_eff;
+    }
+}
+
 BatteryPowerFlow::BatteryPowerFlow(double dtHour)
 {
 	std::unique_ptr<BatteryPower> tmp(new BatteryPower(dtHour));
