@@ -60,7 +60,7 @@ TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, DifferentTechnologyInputs)
 {
 //	std::vector<double> annual_energy_expected = { 6909.79, 7123.32, 7336.478, 6909.79, 6804.376, 8711.946, 8727.704, 9690.735 };
 	// single axis tracking reduction due to pull request 280
-	std::vector<double> annual_energy_expected = { 6909.79, 7123.32, 7336.478, 6909.79, 6804.376, 8601.011, 8727.704, 9690.735 };
+	std::vector<double> annual_energy_expected = { 6909.79, 7123.32, 7336.478, 6909.79, 6804.376, 8589.415, 8725.416, 9690.735 };
 	std::map<std::string, double> pairs;
 	size_t count = 0;
 
@@ -101,7 +101,7 @@ TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, DifferentTechnologyInputs)
 /// PVWattsV5 using a larger system size
 TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, LargeSystem_cmod_pvwattsv5)
 {
-	std::vector<double> annual_energy_expected = { 1727447.4, 1701094.0, 2150252.8, 2181925.8, 2422683.7 };
+	std::vector<double> annual_energy_expected = { 1727447.4, 1701094.0, 2147353.7, 2181354.0, 2422683.7 };
 	std::map<std::string, double> pairs;
 	size_t count = 0;
 	error_tolerance = 0.1; //use a larger error tolerance for large numbers

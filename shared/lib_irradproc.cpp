@@ -268,7 +268,7 @@ void incidence(int mode, double tilt, double sazm, double rlim, double zen,
 	counter clockwise the angle is negative. Range is -180 to +180 degrees.
 	When xsazm = azm : rot = 0, tilt = xtilt, and sazm = xsazm = azm  */
 
-	double arg,inc=0,xsazm,xtilt,rot=0,btdiff=0;
+	double arg,inc=0,xsazm,xtilt,rot=0,btdiff=0,truetracking_rotation=0;
 
 	if (mode == 4)
 		mode = 0; //treat timeseries tilt as fixed tilt for each timestep
@@ -317,6 +317,13 @@ void incidence(int mode, double tilt, double sazm, double rlim, double zen,
 				}
 	  /*    printf("rot=%6.1f azm=%6.1f xsazm=%6.1f xtilt=%6.1f zen=%6.1f\n",rot/DTOR,azm/DTOR,xsazm/DTOR,xtilt/DTOR,zen/DTOR);  */
 
+			truetracking_rotation = rot;
+
+			if( rot < -rlim ) /* Do not let rotation exceed physical constraints */
+				rot = -rlim;
+			else if( rot > rlim )
+				rot = rlim;
+
 			//optionally force the tracker to a "stow" angle if specified
 			if (force_to_stow)
 			{
@@ -330,19 +337,14 @@ void incidence(int mode, double tilt, double sazm, double rlim, double zen,
 			{
 				// find backtracking rotation angle
 				// TODO: add cross-axis slope angle parameter
-				double backrot = backtrack( azm*180/M_PI, zen*180/M_PI, // solar azimuth, zenith (deg)
-					tilt, sazm, // axis tilt, axis azimuth (deg)
-					gcr, rot*180/M_PI ); // GCR, true-tracking rotation angle
+				double backtracking_rotation = backtrack(truetracking_rotation*180/M_PI, gcr);
+				backtracking_rotation *= M_PI/180;
+				backtracking_rotation = backtracking_rotation > rlim ? rlim : backtracking_rotation;
+				backtracking_rotation = backtracking_rotation <-rlim ?-rlim : backtracking_rotation;
 
-				btdiff = backrot - rot*180/M_PI; // log the difference (degrees)
-				btdiff *= M_PI/180; // convert output to radians
-				rot = backrot * M_PI/180; // convert backtracked rotation angle to radians
+				btdiff = (backtracking_rotation - rot); // log the difference (radians)
+				rot = backtracking_rotation;
 			}
-
-			if( rot < -rlim ) /* Do not let rotation exceed physical constraints */
-				rot = -rlim;
-			else if( rot > rlim )
-				rot = rlim;
 
 			/* Find tilt angle for the tracking surface */
 			arg = cos(xtilt)*cos(rot);
@@ -1846,302 +1848,7 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 }
 
 
-static double vec_dot(double a[3], double b[3])
-{
-	return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
-}
-
-static void vec_cross(double a[3], double b[3], double result[3])
-{
-	result[0] = a[1] * b[2] - a[2] * b[1];
-	result[1] = a[2] * b[0] - a[0] * b[2];
-	result[2] = a[0] * b[1] - a[1] * b[0];
-}
-
-//a - b
-static void vec_diff( double a[3], double b[3], double result[3] )
-{
-	result[0] = a[0] - b[0];
-	result[1] = a[1] - b[1];
-	result[2] = a[2] - b[2];
-}
-
-static void get_vertices( double axis_tilt, double axis_azimuth, double gcr,				 
-				 double vertices[3][4][3], double rotation)
-{
-	//Get panel vertices for flat panels, no tilt or azimuth, 
-	//ordered ccw starting from x+
-	//vertices[0] is panel 0
-	//vertices[0][1] is corner 1 on panel 0
-	//vertices[0][1][2] is coordinate 2(z) for corner 1 on panel 0.
-	//All are 0-indexed.  0=x, 1=y, 2=z.
-
-	double width = 1.0;
-	double row_spacing = 1.0/gcr - 1.0;
-	double length = 10.0;
-
-	for (int i=0; i<3; i++)
-	{
-		vertices[i][0][0] = width/2 + i*(row_spacing + width);
-		vertices[i][0][1] = 0;
-		vertices[i][0][2] = 0;
-		
-		vertices[i][1][0] = width/2 + i*(row_spacing + width);
-		vertices[i][1][1] = length;
-		vertices[i][1][2] = 0;
-			
-		vertices[i][2][0] = -width/2 + i*(row_spacing + width);
-		vertices[i][2][1] = length;
-		vertices[i][2][2] = 0;
-		
-		vertices[i][3][0] = -width/2 + i*(row_spacing + width);
-		vertices[i][3][1] = 0;
-		vertices[i][3][2] = 0;
-	}
-	//We now have vertices for flat panels spaced evenly along the x+ axis.
-	
-	//Rotate each panel by rotation angle 
-	for (int i=0; i<3; i++)
-	{
-		//Move so that we rotate about y-axis.
-		//Perform rotation, then move back.
-		double offset = i*(row_spacing + width);
-		
-		vertices[i][0][0] = vertices[i][0][0] - offset;
-		vertices[i][1][0] = vertices[i][1][0] - offset;
-		vertices[i][2][0] = vertices[i][2][0] - offset;
-		vertices[i][3][0] = vertices[i][3][0] - offset;
-		
-		//Rotation matrix T is 
-		//  cos 0 sin
-		//   0  1  0
-		// -sin 0 cos
-		// for each vertex v in vector form, set v=Tv. (using matrix multiplication)
-		for(int j=0; j<4; j++)
-		{
-			//When we do calculations for new coords, they all depend on old coords.
-			double oldVertX = vertices[i][j][0]; //Z coord depends on original y coord.
-			double oldVertZ = vertices[i][j][2];
-			vertices[i][j][0] = oldVertX * cosd(rotation) + oldVertZ * sind(rotation);
-			vertices[i][j][2] = oldVertX * -sind(rotation) + oldVertZ * cosd(rotation);
-		}
-		
-		//Translate back to original location after rotation is complete.
-		vertices[i][0][0] = vertices[i][0][0] + offset;
-		vertices[i][1][0] = vertices[i][1][0] + offset;
-		vertices[i][2][0] = vertices[i][2][0] + offset;
-		vertices[i][3][0] = vertices[i][3][0] + offset;
-	}
-	
-	
-	//Now globally rotate all coords by axis tilt
-	for (int i=0; i<3; i++)
-	{
-		//Move to rotate about x axis.
-		//Perform rotation, then move back.
-		double offset = length;
-		
-		vertices[i][0][1] = vertices[i][0][1] - offset;
-		vertices[i][1][1] = vertices[i][1][1] - offset;
-		vertices[i][2][1] = vertices[i][2][1] - offset;
-		vertices[i][3][1] = vertices[i][3][1] - offset;
-		
-		//Rotation matrix T is 
-		// 1   0   0
-		// 0  cos sin
-		// 0 -sin cos
-		// for each vertex v in vector form, set v=Tv. (using matrix multiplication)
-		for (int j=0; j<4; j++)
-		{
-			//When we do calculations for new coords, they all depend on old coords.
-			double oldVertY = vertices[i][j][1]; //Z coord depends on original y coord.
-			double oldVertZ = vertices[i][j][2];
-			vertices[i][j][1] = oldVertY * cosd(axis_tilt) + oldVertZ * sind(axis_tilt);
-			vertices[i][j][2] = oldVertY * -sind(axis_tilt) + oldVertZ * cosd(axis_tilt);
-		}
-		
-		vertices[i][0][1] = vertices[i][0][1] + offset;
-		vertices[i][1][1] = vertices[i][1][1] + offset;
-		vertices[i][2][1] = vertices[i][2][1] + offset;
-		vertices[i][3][1] = vertices[i][3][1] + offset;
-	}
-	
-	
-	//Now globally rotate all coords by axis azimuth
-	for (int i=0; i<3; i++)
-	{
-		//We are rotating about the Z axis, so we don't need to translate.
-		
-		//Rotation matrix T is 
-		//  cos sin 0
-		// -sin cos 0
-		//   0   0  1
-		// for each vertex v in vector form, set v=Tv. (using matrix multiplication)
-		for (int j=0; j<4; j++)
-		{
-			//When we do calculations for new coords, they all depend on old coords.
-			double oldVertX = vertices[i][j][0]; //Z coord depends on original y coord.
-			double oldVertY = vertices[i][j][1];
-			vertices[i][j][0] = oldVertX * cosd(axis_azimuth) + oldVertY * sind(axis_azimuth);
-			vertices[i][j][1] = oldVertX * -sind(axis_azimuth) + oldVertY * cosd(axis_azimuth);
-		}
-	}
-}
-
-
-
-static void sun_unit( double sazm, double szen, double sun[3] )
-{	
-	//Get unit vector in direction of sun
-	double solalt = 90 - szen;
-		
-	if ( sazm >= 0 && sazm <= 90 )
-	{
-		sun[0] = cosd(solalt)*sind(sazm);
-		sun[1] = cosd(solalt)*cosd(sazm);
-	}
-	else if ( sazm > 90 && sazm <= 180 )
-	{
-		sun[0] = cosd(solalt)*sind(180-sazm);
-		sun[1] = -cosd(solalt)*cosd(180-sazm);
-	}
-	else if ( sazm > 180 && sazm <= 270 )
-	{
-		sun[0] = -cosd(solalt)*sind(sazm-180);
-		sun[1] = -cosd(solalt)*cosd(sazm-180);
-	}
-	else
-	{
-		sun[0] = -cosd(solalt)*sind(360-sazm);
-		sun[1] = cosd(solalt)*cosd(360-sazm);
-	}
-	
-	sun[2] = sind(solalt);
-		
-	//normalize
-	double magnitude = sqrt(sun[0]*sun[0] + sun[1]*sun[1] + sun[2]*sun[2]);
-	sun[0] = sun[0] / magnitude;
-	sun[1] = sun[1] / magnitude;
-	sun[2] = sun[2] / magnitude;
-}
-
-
-double shadeFraction1x( double solazi, double solzen,
-						 double axis_tilt, double axis_azimuth, 
-						 double gcr, double rotation )
-{
-	//Get unit vector in direction of sun
-	
-	double sun[3];
-	sun_unit( solazi, solzen, sun );
-
-	//For now, assume array has at least 3 rows.
-	//This way we can use index 1 and it has a panel on both sides.
-	
-	//Get our vertices for our array.
-	double verts[3][4][3]; //To allocate
-	get_vertices( axis_tilt, axis_azimuth, gcr, verts, rotation );
-	
-	//Find which panel is in the direction of the sun by using dot product.
-	//toPrev is a vector from panel 1 to panel 0.
-	//toNext is a vector from panel 1 to panel 2.
-	//The sun is in the direction of the panel whose vector has a larger positive
-	//dot product with the sun direction vector.
-	//Store the panel in the direction of the sun from panel 1 in the variable iPanel.
-	int iPanel = 0;
-	double toPrev[3];
-	toPrev[0] = verts[0][0][0] - verts[1][0][0];
-	toPrev[1] = verts[0][0][1] - verts[1][0][1];
-	toPrev[2] = verts[0][0][2] - verts[1][0][2];
-	double toNext[3];
-	toNext[0] = verts[2][0][0] - verts[1][0][0];
-	toNext[1] = verts[2][0][1] - verts[1][0][1];
-	toNext[2] = verts[2][0][2] - verts[1][0][2];
-	if (vec_dot(toPrev, sun) < vec_dot(toNext, sun)) iPanel = 2;
-	
-	
-	//Get midpoint of edge of panel 1 on the sun side.
-	//This edge is on the same side of panel 1 as iPanel.
-	//Store midpoint in midP.
-	double midP[3];
-	for (int i=0; i<3; i++)
-	{
-		if (iPanel == 0) midP[i] = (verts[1][2][i] + verts[1][3][i]) / 2;
-		else midP[i] = (verts[1][0][i] + verts[1][1][i]) / 2;
-	}
-	
-	//Get normal vector to plane for iPanel.
-	//This is easy - just get two vectors in the plane of iPanel and cross them.
-	//Use the vectors along the edges out of vertex 0.  That is, edge01 and edge03.
-	//Store the result in a vector called normal.
-	double normal[3],a1[3],a2[3];
-	vec_diff(verts[iPanel][1], verts[iPanel][0], a1);
-	vec_diff(verts[iPanel][3], verts[iPanel][0], a2);
-	vec_cross(a1, a2, normal);
-	
-	
-	//We want to find the point of intersection of the ray that starts at midP
-	//and goes in the direction of the sun.
-	//Assume sun is at infinity in direction 'sun'.
-	//First make sure that this ray has a unique intersection point.
-	double sunDot = vec_dot(normal, sun);
-	if (fabs(sunDot) < 0.001) return 0; //sun vector lies in plane
-	
-	//Now, vector pDir goes from midP to any point in the plane of iPanel.  Vertex 0, say.
-	//Project pDir onto the normal to iPanel, and project the sun vector onto the normal vector.
-	//The ratio of these projections tells us how fat to move along the sun vector, starting
-	//from midP, to get a point in the plane of iPanel.
-	double pDir[3];
-	vec_diff(verts[iPanel][0], midP, pDir);
-	double t = vec_dot(normal, pDir) / vec_dot(normal, sun);
-	if (t < 0) return 0; // sun has set (is behind array).
-	
-	double intersectP[3];
-	for (int i=0; i<3; i++)
-	{
-		intersectP[i] = midP[i] + t * sun[i];
-	}
-	//intersectP is along the ray from midP to the sun, and lies in the (infinite) plane of iPanel.
-	
-	//Figure out if intersectP is inside the bounds of the iPanel.
-	//This is simple.  If intersectP is on the same side of the edge as the panel for both edges,
-	//then it is in the panel.
-	//Find a vector from edge to intersectP and take dot product with vector from edge through panel.
-	//If dot product is positive, intersectP is on the panel side of that edge.
-	//Reuse a1 and a2 from above (as temporary vectors).
-	vec_diff(verts[iPanel][3], verts[iPanel][0], a1);
-	vec_diff(intersectP, verts[iPanel][0], a2);
-	if (vec_dot(a1, a2) < 0) return 0; //intersect is outside panel bounds.
-	
-	vec_diff(verts[iPanel][0], verts[iPanel][3], a1);
-	vec_diff(intersectP, verts[iPanel][3], a2);
-	if (vec_dot(a1, a2) < 0) return 0; //intersect is outside panel bounds.
-	
-	// Now we know the panel is shaded, so compute geometric shade fraction	
-	double mu[3] = { 0, 0, 0 }; // upper edge midpoint on adjacent panel
-	double ml[3] = { 0, 0, 0 }; // lower edge midpoint on adjacent panel
-	for (int i=0; i<3; i++)
-	{
-		if (iPanel == 2) mu[i] = (verts[iPanel][2][i] + verts[iPanel][3][i]) / 2;
-		else             mu[i] = (verts[iPanel][0][i] + verts[iPanel][1][i]) / 2;
-		
-		if (iPanel == 2) ml[i] = (verts[iPanel][0][i] + verts[iPanel][1][i]) / 2;
-		else             ml[i] = (verts[iPanel][2][i] + verts[iPanel][3][i]) / 2;
-		
-	}
-	
-	vec_diff(intersectP, mu, a1);
-	vec_diff(ml, mu, a2);
-	double maga2 = vec_dot(a2,a2);
-	double Ab = vec_dot(a1, a2)/maga2;  // geometric shading fraction [0..1]
-
-	return Ab;
-}
-
-
-
-// temporarily rename while putting the original version back
-double shadeFraction1x76626(double solar_azimuth, double solar_zenith,
+double shadeFraction1x(double solar_azimuth, double solar_zenith,
                        double axis_tilt, double axis_azimuth,
                        double gcr, double rotation)
 {
@@ -2162,6 +1869,7 @@ double shadeFraction1x76626(double solar_azimuth, double solar_zenith,
     fs = fs > 1 ? 1 : fs;
     return fs;
 }
+
 
 double truetrack(double solar_azimuth, double solar_zenith, double axis_tilt, double axis_azimuth)
 {
@@ -2187,9 +1895,7 @@ double truetrack(double solar_azimuth, double solar_zenith, double axis_tilt, do
 
 
 //Find optimum angle using backtracking.
-double backtrack(double solar_azimuth, double solar_zenith,
-                 double axis_tilt, double axis_azimuth, 
-                 double gcr, double rotation)
+double backtrack(double truetracking_rotation, double gcr)
 {
     /*
     Calculate the backtracking rotation that prevents row to row beam shading
@@ -2204,13 +1910,13 @@ double backtrack(double solar_azimuth, double solar_zenith,
 
     // check backtracking criterion; if there is no self-shading to avoid, then
     // return the true-tracking angle unmodified:
-    double correction_projection = abs(cosd(rotation - cross_axis_slope)) / (gcr * cosd(cross_axis_slope));
+    double correction_projection = abs(cosd(truetracking_rotation - cross_axis_slope)) / (gcr * cosd(cross_axis_slope));
     if(abs(correction_projection) >= 1){
-        return rotation;
+        return truetracking_rotation;
     }
-    int sign = rotation > 0 ? 1 : -1;
+    int sign = truetracking_rotation > 0 ? 1 : -1;
     double correction = -sign * acosd(correction_projection);
-    return rotation + correction;
+    return truetracking_rotation + correction;
 }
 
 

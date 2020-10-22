@@ -251,7 +251,9 @@ double ModifiedDISC(const double g[3], const double z[3], double td, double alt,
 void ModifiedDISC(const double kt[3], const double kt1[3], const double g[3], const double z[3], double td, double alt, int doy, double &dn);
 
 /**
-* shadeFraction1x calculates if the system is shaded based on the sun position and surface position
+* shadeFraction1x calculates the self-shaded fraction of a tracker array. The shaded
+* fraction represents the fractional distance (0 to 1) up a tilted row affected by
+* direct (beam) shading from the row in front of it.
 *
 * \param[in] solar_azimuth sun azimuth in degrees, measured east from north
 * \param[in] solar_zenith sun zenith in degrees
@@ -277,15 +279,11 @@ double truetrack(double solar_azimuth, double solar_zenith, double axis_tilt, do
 /**
 * backtrack finds the optimum angle to use to reduce self-shading on the front-side of modules using backtracking
 *
-* \param[in] solar_azimuth sun azimuth in radians, measured east from north, 0 to 2*pi
-* \param[in] solar_zenith sun zenith in radians, 0 to pi
-* \param[in] axis_tilt surface tilt angle from horizontal in radians
-* \param[in] axis_azimuth surface azimuth in degrees of collector
-* \param[in] gcr grount coverage ratio of system
-* \param[in] rotation true-tracking axis rotation angle in degrees
+* \param[in] ideal (true-tracking) axis rotation angle in degrees, not adjusted for physical limits or stow
+* \param[in] gcr ground coverage ratio (0-1) of array
 * \return updated rotation angle in degrees after backtracking
 */
-double backtrack(double solar_azimuth, double solar_zenith, double axis_tilt, double axis_azimuth, double gcr, double rotation);
+double backtrack(double truetracking_rotation, double gcr);
 
 
 /**
