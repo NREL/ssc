@@ -48,4 +48,6 @@ void utility_rate5_default(ssc_data_t& data);
 */
 void cashloan_default(ssc_data_t& data);
 
+void setup_residential_utility_rates(ssc_data_t& data);
+
 #endif

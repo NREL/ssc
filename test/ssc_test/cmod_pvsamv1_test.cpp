@@ -74,7 +74,6 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, DefaultLifetimeNoFinancialModel) 
 TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, DefaultResidentialModel)
 {
 
-	ssc_data_t data = ssc_data_create();
 	int pvsam_errors = pvsam_residential_pheonix(data);
 	EXPECT_FALSE(pvsam_errors);
 
