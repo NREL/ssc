@@ -143,6 +143,7 @@ private:
 
 	// Member data
 	bool m_is_tes;
+    bool m_is_cr_to_cold_tank_allowed;
 	double m_vol_tank;			//[m3] volume of *one temperature*, i.e. vol_tank = total cold storage = total hot storage
 	double m_V_tank_active;		//[m^3] available volume (considering h_min) of *one temperature*
 	double m_q_pb_design;		//[Wt] thermal power to power cycle at design
@@ -269,6 +270,8 @@ public:
     double P_in_des;                             //[bar] Pressure at the inlet to the TES, at the field side
     
 	virtual bool does_tes_exist();
+
+    virtual bool is_cr_to_cold_allowed();
 
 	virtual double get_hot_temp();
 

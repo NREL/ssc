@@ -765,9 +765,11 @@ public:
 		double m_q_dot_ch_from_htf;	//[MWt]  Thermal power from the HTF to storage
 		
 		double m_m_dot_cr_to_tes_hot;	//[kg/s]
-		double m_m_dot_tes_hot_out;	//[kg/s]
+        double m_m_dot_cr_to_tes_cold;  //[kg/s]
+		double m_m_dot_tes_hot_out;	    //[kg/s]
 		double m_m_dot_pc_to_tes_cold;	//[kg/s]
-		double m_m_dot_tes_cold_out;		//[kg/s]
+		double m_m_dot_tes_cold_out;	//[kg/s]
+        double m_m_dot_tes_cold_in;     //[kg/s]
 		double m_m_dot_field_to_cycle;	//[kg/s]
 		double m_m_dot_cycle_to_field;	//[kg/s]
 
@@ -777,8 +779,8 @@ public:
 		S_csp_tes_outputs()
 		{
 			m_q_heater =  m_q_dot_dc_to_htf = m_q_dot_ch_from_htf = 
-			m_m_dot_cr_to_tes_hot = m_m_dot_pc_to_tes_cold = m_m_dot_pc_to_tes_cold =
-			m_m_dot_tes_cold_out = m_m_dot_field_to_cycle = m_m_dot_cycle_to_field =
+			m_m_dot_cr_to_tes_hot = m_m_dot_cr_to_tes_cold = m_m_dot_pc_to_tes_cold = m_m_dot_pc_to_tes_cold =
+			m_m_dot_tes_cold_out = m_m_dot_tes_cold_in = m_m_dot_field_to_cycle = m_m_dot_cycle_to_field =
             m_m_dot_cold_tank_to_hot_tank = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
@@ -786,6 +788,8 @@ public:
 	virtual void init(const C_csp_tes::S_csp_tes_init_inputs init_inputs) = 0;
 
 	virtual bool does_tes_exist() = 0;
+
+    virtual bool is_cr_to_cold_allowed() = 0;
 
 	virtual double get_hot_temp() = 0;
 

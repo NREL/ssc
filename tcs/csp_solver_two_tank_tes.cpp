@@ -814,6 +814,13 @@ void C_csp_two_tank_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs
         ms_params.tanks_in_parallel = true;
     }
 
+    if (ms_params.tanks_in_parallel) {
+        m_is_cr_to_cold_tank_allowed = false;
+    }
+    else {
+        m_is_cr_to_cold_tank_allowed = true;
+    }
+
 	// Calculate thermal power to PC at design
 	m_q_pb_design = ms_params.m_W_dot_pc_design/ms_params.m_eta_pc*1.E6;	//[Wt]
 
@@ -929,6 +936,11 @@ void C_csp_two_tank_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs
 bool C_csp_two_tank_tes::does_tes_exist()
 {
 	return m_is_tes;
+}
+
+bool C_csp_two_tank_tes::is_cr_to_cold_allowed()
+{
+    return m_is_cr_to_cold_tank_allowed;
 }
 
 double C_csp_two_tank_tes::get_hot_temp()
@@ -1114,8 +1126,8 @@ int C_csp_two_tank_tes::solve_tes_off_design(double timestep /*s*/, double  T_am
 
     s_outputs = S_csp_tes_outputs();
 
-    double m_dot_cr_to_tes_hot, m_dot_tes_hot_out, m_dot_pc_to_tes_cold, m_dot_tes_cold_out;
-    m_dot_cr_to_tes_hot = m_dot_tes_hot_out = m_dot_pc_to_tes_cold = m_dot_tes_cold_out = std::numeric_limits<double>::quiet_NaN();
+    double m_dot_cr_to_tes_hot, m_dot_cr_to_tes_cold, m_dot_tes_hot_out, m_dot_pc_to_tes_cold, m_dot_tes_cold_out, m_dot_tes_cold_in;
+    m_dot_cr_to_tes_hot = m_dot_cr_to_tes_cold = m_dot_tes_hot_out = m_dot_pc_to_tes_cold = m_dot_tes_cold_out = m_dot_tes_cold_in = std::numeric_limits<double>::quiet_NaN();
     double m_dot_field_to_cycle, m_dot_cycle_to_field;
     m_dot_field_to_cycle = m_dot_cycle_to_field = std::numeric_limits<double>::quiet_NaN();
 
@@ -1126,6 +1138,7 @@ int C_csp_two_tank_tes::solve_tes_off_design(double timestep /*s*/, double  T_am
         if (m_dot_cr_to_cv_cold != 0.0) {
             throw(C_csp_exception("Receiver output to cold tank not allowed in parallel TES configuration"));
         }
+        m_dot_cr_to_tes_cold = 0.0;
 
         if (m_dot_cr_to_cv_hot >= m_dot_cv_hot_to_cycle)
         {
@@ -1145,6 +1158,7 @@ int C_csp_two_tank_tes::solve_tes_off_design(double timestep /*s*/, double  T_am
             m_dot_field_to_cycle = m_dot_cr_to_cv_hot;			//[kg/s]
             m_dot_cycle_to_field = m_dot_cr_to_cv_hot;			//[kg/s]
         }
+        m_dot_tes_cold_in = m_dot_pc_to_tes_cold;
     }
     else
     {   // Serial configuration
@@ -1154,9 +1168,11 @@ int C_csp_two_tank_tes::solve_tes_off_design(double timestep /*s*/, double  T_am
         }
 
         m_dot_cr_to_tes_hot = m_dot_cr_to_cv_hot;		//[kg/s]
+        m_dot_cr_to_tes_cold = m_dot_cr_to_cv_cold;     //[kg/s]
         m_dot_tes_hot_out = m_dot_cv_hot_to_cycle;		//[kg/s]
         m_dot_pc_to_tes_cold = m_dot_cv_hot_to_cycle;	//[kg/s]
         m_dot_tes_cold_out = m_dot_cr_to_cv_hot + m_dot_cr_to_cv_cold;		//[kg/s]
+        m_dot_tes_cold_in = m_dot_total_to_cv_cold;     //[kg/s]
         m_dot_field_to_cycle = 0.0;				//[kg/s]
         m_dot_cycle_to_field = 0.0;				//[kg/s]
     }
@@ -1339,9 +1355,11 @@ int C_csp_two_tank_tes::solve_tes_off_design(double timestep /*s*/, double  T_am
     s_outputs.m_q_dot_ch_from_htf = q_dot_ch_from_htf;
 
     s_outputs.m_m_dot_cr_to_tes_hot = m_dot_cr_to_tes_hot;		//[kg/s]
+    s_outputs.m_m_dot_cr_to_tes_cold = m_dot_cr_to_tes_cold;    //[kg/s]
     s_outputs.m_m_dot_tes_hot_out = m_dot_tes_hot_out;			//[kg/s]
     s_outputs.m_m_dot_pc_to_tes_cold = m_dot_pc_to_tes_cold;	//[kg/s]
     s_outputs.m_m_dot_tes_cold_out = m_dot_tes_cold_out;		//[kg/s]
+    s_outputs.m_m_dot_tes_cold_in = m_dot_tes_cold_in;          //[kg/s]
     s_outputs.m_m_dot_field_to_cycle = m_dot_field_to_cycle;	//[kg/s]
     s_outputs.m_m_dot_cycle_to_field = m_dot_cycle_to_field;	//[kg/s]
 
