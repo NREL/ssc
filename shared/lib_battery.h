@@ -312,6 +312,9 @@ public:
 
     double getNumReplacementYear();
 
+    // Returns the % replacement if on a capacity schedule. Returns 0 for "none" or "calendar"
+    double getReplacementPercent();
+
     // Run all for single time step, updating all component model states and return the dispatched power [kW]
     double run(size_t lifetimeIndex, double &I, bool stateful = false);
 
@@ -358,6 +361,12 @@ public:
     double charge_maximum_thermal();
 
     double energy_nominal();
+
+    // Get the maximum energy in one full charge-dischage cycle, based on dispatch limits
+    double energy_max(double SOC_max, double SOC_min);
+
+    // Get the energy available between the current SOC and SOC_min
+    double energy_available(double SOC_min);
 
     double energy_to_fill(double SOC_max);
 
