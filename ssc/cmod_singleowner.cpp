@@ -1043,15 +1043,16 @@ public:
 			ssc_number_t *batt_rep = 0;
 			std::vector<ssc_number_t> replacement_percent;
 
+            batt_rep = as_array("batt_bank_replacement", &count); // replacements per year calculated
+
 			// replace at capacity percent
 			if (as_integer("batt_replacement_option") == 1) {
-				batt_rep = as_array("batt_bank_replacement", &count); // replacements per year calculated
+				
 				for ( i = 0; i < (int)count; i++) {
 					replacement_percent.push_back(100);
 				}
 			}
 			else {// user specified
-				batt_rep = as_array("batt_replacement_schedule", &count); // replacements per year user-defined
 				replacement_percent = as_vector_ssc_number_t("batt_replacement_schedule_percent");
 			}
 			double batt_cap = as_double("batt_computed_bank_capacity");
