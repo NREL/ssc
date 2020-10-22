@@ -1060,7 +1060,8 @@ public:
 			escal_or_annual(CF_battery_replacement_cost_schedule, nyears, "om_replacement_cost1", inflation_rate, batt_cap, false, as_double("om_replacement_cost_escal")*0.01);
 
 			for (i = 0; i < nyears && i < (int)count; i++) {
-				cf.at(CF_battery_replacement_cost, i + 1) = batt_rep[i] * replacement_percent[i] * 0.01 *
+                // batt_rep is adjusted for year offset, replacement_percent is not
+				cf.at(CF_battery_replacement_cost, i + 1) = batt_rep[i + 1] * replacement_percent[i] * 0.01 *
 					cf.at(CF_battery_replacement_cost_schedule, i + 1);
 			}
 		}
