@@ -1490,7 +1490,7 @@ bool weatherfile::open(const std::string& file, bool header_only)
             }
         }
         
-        
+        m_columns[MINUTE].index = MINUTE; //replace indext to allow proper checking of minute data 
         
     }
 
