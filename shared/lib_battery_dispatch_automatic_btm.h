@@ -26,7 +26,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_utility_rate.h"
 
 /*
- * Data for price signal dispatch (FORECAST) to compare dispatch plans in the cost_based_target_power function 
+ * Data for price signal dispatch (FORECAST) to compare dispatch plans in the cost_based_target_power function
  */
 struct dispatch_plan
 {
@@ -85,15 +85,15 @@ public:
 	dispatch_automatic_behind_the_meter_t(const dispatch_t& dispatch);
 
 	// copy members from dispatch to this
-	void copy(const dispatch_t * dispatch);
+	void copy(const dispatch_t * dispatch) override;
 
 	/// Public API to run the battery dispatch model for the current timestep, given the system power, and optionally the electric load, amount of system clipping, or specified battery power
 	void dispatch(size_t year,
 		size_t hour_of_year,
-		size_t step);
+		size_t step) override;
 
 	/*! Compute the updated power to send to the battery over the next N hours */
-	void update_dispatch(size_t year, size_t hour_of_year, size_t step, size_t idx);
+	void update_dispatch(size_t year, size_t hour_of_year, size_t step, size_t idx) override;
 
 	/*! Pass in the load forecast */
 	void update_load_data(std::vector<double> P_load_ac);
@@ -105,7 +105,7 @@ public:
     void setup_rate_forecast();
 
 	/*! Grid target power */
-	double power_grid_target();
+	double power_grid_target() override;
 
 	enum BTM_TARGET_MODES {TARGET_SINGLE_MONTHLY, TARGET_TIME_SERIES};
 
