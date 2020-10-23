@@ -966,16 +966,16 @@ void cm_pvsamv1::exec()
     double module_watts_stc = Subarrays[0]->Module->moduleWattsSTC;
     SharedInverter* sharedInverter = PVSystem->m_sharedInverter.get();
 
-    //overwrite tilt with latitude if flag is set- can't do this in PVIOManager because need latitude from weather file
-    //also check here for tilt > 0 for tracking systems, since this is a very uncommon configuration but an easy mistake to make
-    for (size_t nn = 0; nn < num_subarrays; nn++)
-    {
-        if (Subarrays[nn]->tiltEqualLatitude)
-            Subarrays[nn]->tiltDegrees = fabs(Irradiance->weatherHeader.lat);
-        if (Subarrays[nn]->trackMode == irrad::SINGLE_AXIS && Subarrays[nn]->tiltDegrees > 0)
-            log(util::format("Subarray %d has one-axis tracking with a tilt angle of %f degrees. Large one-axis tracking arrays typically have a tilt angle of zero.", nn + 1, Subarrays[nn]->tiltDegrees), SSC_WARNING);
-        if (Subarrays[nn]->Module->isBifacial && !Subarrays[nn]->trackMode == irrad::FIXED_TILT)
-            log(util::format("Subarray %d uses tracking  with bifacial modules. The bifacial model is designed for fixed arrays and may not produce reliable results for tracking arrays.", nn + 1), SSC_WARNING);
+	//overwrite tilt with latitude if flag is set- can't do this in PVIOManager because need latitude from weather file
+	//also check here for tilt > 0 for tracking systems, since this is a very uncommon configuration but an easy mistake to make
+	for (size_t nn = 0; nn < num_subarrays; nn++)
+	{
+		if (Subarrays[nn]->tiltEqualLatitude)
+			Subarrays[nn]->tiltDegrees = fabs(Irradiance->weatherHeader.lat);
+		if (Subarrays[nn]->trackMode == irrad::SINGLE_AXIS && Subarrays[nn]->tiltDegrees > 0)
+			log(util::format("Subarray %d has one-axis tracking with a tilt angle of %f degrees. Large one-axis tracking arrays typically have a tilt angle of zero.", nn+1, Subarrays[nn]->tiltDegrees), SSC_WARNING);
+        if (Subarrays[nn]->Module->isBifacial && (Subarrays[nn]->trackMode != irrad::FIXED_TILT))
+            log(util::format("Subarray %d uses tracking  with bifacial modules. The bifacial model is designed for fixed arrays and may not produce reliable results for tracking arrays.", nn+1), SSC_WARNING);
     }
 
     // check for snow model with non-annual simulations: because snow model coefficients need to know the timestep, and we don't know timestep if non-annual
