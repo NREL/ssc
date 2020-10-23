@@ -1468,7 +1468,7 @@ bool weatherfile::open(const std::string& file, bool header_only)
     // special handling for missing values for various fields
     if (m_type == EPW) {
         if (m_columns[MINUTE].data[0] == 60 && m_columns[MINUTE].data[1] == 60) { //check if 60 is the minutes value for each time step (assuming uniform time stamps
-            m_columns[MINUTE].index = -1;
+            m_columns[MINUTE].index = -1; //Reset column index to allow for automatic minute calculation 
         }
         for (size_t i = 0; i < m_nRecords; i++) {
             for (int j = 5; j < 19; j++) {
@@ -1479,19 +1479,19 @@ bool weatherfile::open(const std::string& file, bool header_only)
 
             if (m_columns[MINUTE].index < 0 && (int)m_columns[HOUR].data[1] == m_columns[HOUR].data[1])
             {
-                m_columns[MINUTE].data[i] = (float)((m_stepSec / 2) / 60);
+                m_columns[MINUTE].data[i] = (float)((m_stepSec / 2) / 60); //automatic minute calculation based on halfway between step size
             }
             else if (m_columns[MINUTE].index < 0)  //implies fractional hours are provided
             {
                 float hr = m_columns[HOUR].data[i];
-                m_columns[MINUTE].data[i] = (float)((hr - (int)hr) * 60.);
+                m_columns[MINUTE].data[i] = (float)((hr - (int)hr) * 60.); //automatic minute calculation for fractional hours (may not be necessary)
                 m_columns[HOUR].data[i] = (float)(int)hr;
 
             }
         }
-        
-        m_columns[MINUTE].index = MINUTE; //replace indext to allow proper checking of minute data 
-        
+
+        m_columns[MINUTE].index = MINUTE; //rewrite index value to allow proper checking of minute data for instantaneous definition
+
     }
 
     // final checks over data
