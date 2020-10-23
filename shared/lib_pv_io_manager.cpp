@@ -289,7 +289,12 @@ Subarray_IO::Subarray_IO(compute_module* cm, const std::string& cmName, size_t s
 
 	if (enable)
 	{
-		nStrings = (size_t)cm->as_integer(prefix + "nstrings");
+        int n = cm->as_integer(prefix + "nstrings");
+        if (n < 0) {
+            throw exec_error(cmName, "invalid string allocation between subarrays.  all subarrays must have zero or positive number of strings.");
+        }
+
+        nStrings = n;
 		if (nStrings == 0) //subarrays with no strings need to be treated as if they are disabled to avoid divide by zero issues in the subarray setup
 		{
 			enable = false;
