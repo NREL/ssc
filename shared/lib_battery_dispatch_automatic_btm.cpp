@@ -808,14 +808,14 @@ void dispatch_automatic_behind_the_meter_t::set_battery_power(size_t idx, FILE *
 {
 	for (size_t i = 0; i != _P_target_use.size(); i++) {
 
-        double discharging_loss = _Battery->getDischargeLoss(idx + i, _dt_hour); // Units are kWac for AC connected batteries, and kWdc for DC connected
+        double loss_kw = _Battery->calculate_loss(_P_battery_use[i], idx + i); // Units are kWac for AC connected batteries, and kWdc for DC connected
 
 		// At this point the target power is expressed in AC, must convert to DC for battery
 		if (m_batteryPower->connectionMode == m_batteryPower->AC_CONNECTED) {
-            _P_battery_use[i] = m_batteryPower->adjustForACEfficiencies(_P_battery_use[i], discharging_loss);
+            _P_battery_use[i] = m_batteryPower->adjustForACEfficiencies(_P_battery_use[i], loss_kw);
 		}
         else {
-            _P_battery_use[i] = m_batteryPower->adjustForDCEfficiencies(_P_battery_use[i], discharging_loss);
+            _P_battery_use[i] = m_batteryPower->adjustForDCEfficiencies(_P_battery_use[i], loss_kw);
         }
 	}
 
