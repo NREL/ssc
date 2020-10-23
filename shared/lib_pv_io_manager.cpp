@@ -139,7 +139,7 @@ Irradiance_IO::Irradiance_IO(compute_module* cm, std::string cmName)
 	//total number of records in the weather file (i.e. 8760 * timestep)
 	numberOfWeatherFileRecords = weatherDataProvider->nrecords();
 	dtHour = 1.0; //initialize these values to 1 for non-annual simulations
-	stepsPerHour = 1.0;
+	stepsPerHour = (size_t) 1;
 	if (weatherDataProvider->annualSimulation())
 	{
 		stepsPerHour = numberOfWeatherFileRecords / 8760;

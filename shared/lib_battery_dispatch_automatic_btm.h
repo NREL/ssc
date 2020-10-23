@@ -33,7 +33,7 @@ struct dispatch_plan
     std::vector<double> plannedDispatch;
     std::vector<double> plannedGridUse;
     double cost;
-    int dispatch_hours;
+    size_t dispatch_hours;
     int num_cycles;
     double kWhRemaining; // Stored to anticipate the value of energy outside the forecast period
     double lowestMarginalCost;
@@ -129,7 +129,7 @@ protected:
     /*! Functions used by price signal dispatch */
     double compute_costs(size_t idx, size_t year, size_t hour_of_year, FILE* p = NULL, bool debug = false); // Initial computation of no-dispatch costs, assigned hourly to grid points
     void cost_based_target_power(size_t idx, size_t year, size_t hour_of_year, double no_dispatch_cost, double E_max, FILE* p = NULL, const bool debug = false); // Optimizing loop, runs twelve possible dispatch scenarios
-    void plan_dispatch_for_cost(dispatch_plan& plan, size_t idx, double E_max, double startingEnergy, FILE* p = NULL, const bool debug = false); // Generates each dispatch plan (input argument)
+    void plan_dispatch_for_cost(dispatch_plan& plan, size_t idx, double E_max, double startingEnergy); // Generates each dispatch plan (input argument)
     double compute_available_energy(FILE* p = NULL, const bool debug = false); // Determine how much energy is available at the start of a dispatch plan
     void check_power_restrictions(double& power); // Call some constraints functions to ensure dispatch doesn't exceed power/current limits
 
