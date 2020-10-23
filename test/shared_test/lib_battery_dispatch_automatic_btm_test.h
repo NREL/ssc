@@ -2,6 +2,7 @@
 #define SAM_SIMULATION_CORE_LIB_BATTERY_DISPATCH_AUTOMATIC_BTM_TEST_H
 
 #include <gtest/gtest.h>
+#include <lib_battery_dispatch_automatic_btm.h>
 #include "lib_battery_dispatch_test.h"
 
 /**
@@ -22,6 +23,7 @@ protected:
     battery_t * batteryModel;
     BatteryPower * batteryPower;
 
+    rate_data* util_rate{ nullptr };
     dispatch_automatic_behind_the_meter_t * dispatchAutoBTM{nullptr};
 
     double max_power = 50;
@@ -29,6 +31,10 @@ protected:
     double surface_area = 1.2 * 1.2 * 6;
     int n_series = 139;
     int n_strings = 89;
+
+    std::vector<double> replacementCost = { 0.0 };
+    int cyclingChoice = 1;
+    std::vector<double> cyclingCost = { 0.0 };
 
     /*! Variables to store forecast data */
     std::vector<double> pv_prediction;
@@ -54,6 +60,16 @@ public:
         int numberOfInverters = 40;
         m_sharedInverter = new SharedInverter(SharedInverter::SANDIA_INVERTER, numberOfInverters, sandia, partload, ond);
     }
+
+    void CreateResidentialBattery(double dtHour)
+    {
+        n_strings = 9;
+        CreateBattery(dtHour);
+        delete m_sharedInverter;
+        int numberOfInverters = 1;
+        m_sharedInverter = new SharedInverter(SharedInverter::SANDIA_INVERTER, numberOfInverters, sandia, partload, ond);
+    }
+
     void TearDown()
     {
         BatteryProperties::TearDown();

@@ -144,7 +144,8 @@ void generic_singleowner_battery_60min(ssc_data_t &data)
 	ssc_data_set_number( data, "batt_look_ahead_hours", 18 );
 	ssc_data_set_number( data, "batt_dispatch_update_frequency_hours", 1 );
 	ssc_data_set_number( data, "batt_cycle_cost_choice", 0 );
-	ssc_data_set_number( data, "batt_cycle_cost", 0.10000000149011612 );
+    ssc_number_t p_batt_cycle_cost[1] = { 0.1 };
+    ssc_data_set_array(data, "batt_cycle_cost", p_batt_cycle_cost, 1);
 	ssc_data_set_number( data, "en_electricity_rates", 0 );
 	ssc_number_t p_ur_ec_sched_weekday[288] ={ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
 	ssc_data_set_matrix( data, "ur_ec_sched_weekday", p_ur_ec_sched_weekday, 12, 24 );
@@ -479,6 +480,9 @@ void generic_commerical_battery_60min(ssc_data_t &data)
 	ssc_data_set_array(data, "batt_replacement_schedule", p_batt_replacement_schedule, 1);
 	ssc_number_t p_replacement_cost[1] = { 600 };
 	ssc_data_set_array(data, "om_replacement_cost1", p_replacement_cost, 1);
+    ssc_data_set_number(data, "batt_cycle_cost_choice", 0);
+    ssc_number_t p_batt_cycle_cost[1] = { 0.1 };
+    ssc_data_set_array(data, "batt_cycle_cost", p_batt_cycle_cost, 1);
 	ssc_data_set_number(data, "batt_mass", 507.8046875);
 	ssc_data_set_number(data, "batt_surface_area", 2.05);
 	ssc_data_set_number(data, "batt_Cp", 1000);
