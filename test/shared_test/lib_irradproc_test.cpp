@@ -624,7 +624,7 @@ TEST(SingleAxisTrackingTest, TrackingBacktracking) {
 
 	double tt, bt, fs_tt, fs_bt;
 
-	for(int i = 0; i < expected_rotations.size(); i++)
+	for(int i = 0; i < expected_truetracking.size(); i++)
 	{
 		tt = truetrack(solar_azimuths[i], solar_zeniths[i], axis_tilts[i], axis_azimuths[i]);
 		ASSERT_NEAR(tt, expected_truetracking[i], 1e-1);
@@ -633,7 +633,7 @@ TEST(SingleAxisTrackingTest, TrackingBacktracking) {
 		fs_tt = shadeFraction1x(solar_azimuths[i], solar_zeniths[i], axis_tilts[i], axis_azimuths[i], gcr, tt);
 		ASSERT_NEAR(fs_tt, expected_shadefraction[i], 1e-2);
 		fs_bt = shadeFraction1x(solar_azimuths[i], solar_zeniths[i], axis_tilts[i], axis_azimuths[i], gcr, bt);
-		ASSERT_NEAR(fs_bt, 0, 1e-10);
+		ASSERT_NEAR(fs_bt, 0, 1e-10);  // no self-shading when backtracking
 	}
 }
 
@@ -643,6 +643,6 @@ TEST(SingleAxisTrackingTest, TrackingBacktracking) {
 TEST(SingleAxisTrackingTest, SunBelowTiltedArray) {
 	double tt = truetrack(300, 89, 10, 180);
 	ASSERT_NEAR(tt, 94.60, 1e-2);  // true-tracking rotation > 90 when sun is below system plane
-	doublt bt = backtrack(tt, 0.4);
+	double bt = backtrack(tt, 0.4);
 	ASSERT_NEAR(bt, 16.16, 1e-2);
 }
