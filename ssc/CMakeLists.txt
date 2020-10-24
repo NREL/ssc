@@ -153,32 +153,6 @@ endif(MSVC)
 
 #####################################################################################################################
 #
-# Compile Options per Platform
-#
-#####################################################################################################################
-
-set_disabled_warnings()
-set_default_compile_options()
-
-if(MSVC)
-    add_compile_definitions( __DLL__ __VISUALC__ )
-else()
-    set(SRC_UNUSED_VARS
-      cmod_mhk_eqns.cpp
-      cmod_csp_tower_eqns.cpp
-      cmod_merchantplant.cpp
-      cmod_merchantplant_eqns.cpp
-      cmod_pvsamv1_eqns.cpp
-      cmod_csp_common_eqns.cpp
-      cmod_financial_eqns.cpp
-      cmod_windpower_eqns.cpp
-      cmod_utilityrate5_eqns.cpp)
-    set_source_files_properties(${SRC_UNUSED_VARS} PROPERTIES COMPILE_FLAGS -Wno-unused-variable)
-endif()
-
-
-#####################################################################################################################
-#
 # CMake Targets
 #
 #####################################################################################################################
@@ -190,6 +164,24 @@ set_target_properties(ssc
     DEBUG_POSTFIX "d"
 	)
 
+set_disabled_warnings(ssc)
+set_default_compile_options(ssc)
+
+if(MSVC)
+    set_additional_compile_options(ssc "-D__DLL__ -D__VISUALC__")
+else()
+    set(SRC_UNUSED_VARS
+            cmod_mhk_eqns.cpp
+            cmod_csp_tower_eqns.cpp
+            cmod_merchantplant.cpp
+            cmod_merchantplant_eqns.cpp
+            cmod_pvsamv1_eqns.cpp
+            cmod_csp_common_eqns.cpp
+            cmod_financial_eqns.cpp
+            cmod_windpower_eqns.cpp
+            cmod_utilityrate5_eqns.cpp)
+    set_source_files_properties(${SRC_UNUSED_VARS} PROPERTIES COMPILE_FLAGS -Wno-unused-variable)
+endif()
 
 # dltest executable for checking ssc library
 if(UNIX AND NOT SAMAPI_EXPORT)

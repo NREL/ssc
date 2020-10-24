@@ -37,28 +37,6 @@ set(LPSOLVE_SRC
 	yacc_read.c)
 
 
-#####################################################################################################################
-#
-# Compile Options per Platform
-#
-#####################################################################################################################
-
-set_default_compile_options()
-set_no_warnings()
-
-if(MSVC)
-    add_compile_definitions( _CONSOLE MSDOS CHECK_SOLUTION _SCL_SECURE_NO_DEPRECATE)
-	add_compile_definitions( YY_NEVER_INTERACTIVE PARSER_LP INVERSE_ACTIVE=INVERSE_LUSOL )
-	add_compile_definitions( RoleIsExternalInvEngine _CRT_SECURE_NO_DEPRECATE _CRT_NONSTDC_NO_DEPRECATE )
-	foreach (flag_var CMAKE_C_FLAGS_DEBUG CMAKE_CXX_FLAGS_DEBUG)
-		set(${flag_var} "${${flag_var}} /DFPUexception /DNOFORTIFY /DLP_MAXLINELEN=0" CACHE STRING "compile flags" FORCE)
-	endforeach()
-else()
-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall WX_PRECOMP CHECK_SOLUTION YY_NEVER_INTERACTIVE PARSER_LP
-		INVERSE_ACTIVE=INVERSE_LUSOL RoleIsExternalInvEngine")
-endif()
-
-
 ####################################################################################################################
 #
 # CMake Targets
@@ -76,6 +54,21 @@ if (MSVC)
 		PROPERTIES
 		LINK_FLAGS /SUBSYSTEM:CONSOLE)
 endif()
+
+set_default_compile_options(lpsolve)
+set_no_warnings(lpsolve)
+
+set(ADD_CFLAGS "")
+if(MSVC)
+    set(ADD_CFLAGS "${ADD_CFLAGS} /D_CONSOLE /DMSDOS /DCHECK_SOLUTION /D_SCL_SECURE_NO_DEPRECATE")
+    set(ADD_CFLAGS "${ADD_CFLAGS} /DYY_NEVER_INTERACTIVE /DPARSER_LP /DINVERSE_ACTIVE=INVERSE_LUSOL")
+    set(ADD_CFLAGS "${ADD_CFLAGS} /DRoleIsExternalInvEngine /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE")
+    set(ADD_CFLAGS "${ADD_CFLAGS} /DFPUexception /DNOFORTIFY /D LP_MAXLINELEN=0")
+else()
+    set(ADD_CFLAGS "${ADD_CFLAGS} -Wall -DWX_PRECOMP -DCHECK_SOLUTION -DYY_NEVER_INTERACTIVE -DPARSER_LP
+		-DINVERSE_ACTIVE=INVERSE_LUSOL -DRoleIsExternalInvEngine")
+endif()
+set_additional_compile_options(lpsolve ${ADD_CFLAGS})
 
 
 #####################################################################################################################
