@@ -268,9 +268,9 @@ double shadeFraction1x(double solar_azimuth, double solar_zenith, double axis_ti
 /**
 * truetrack calculates the tracker rotation that minimizes the angle of incidence betweem direct irradiance and the module front surface normal
 *
-* \param[in] solar_azimuth sun azimuth in radians, measured east from north, 0 to 2*pi
-* \param[in] solar_zenith sun zenith in radians, 0 to pi
-* \param[in] axis_tilt surface tilt angle from horizontal in radians
+* \param[in] solar_azimuth sun azimuth in degrees, measured east from north
+* \param[in] solar_zenith sun zenith in degrees
+* \param[in] axis_tilt surface tilt angle from horizontal in degrees
 * \param[in] axis_azimuth surface azimuth in degrees of collector
 * \return true-tracking rotation angle in degrees
 */
