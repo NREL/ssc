@@ -331,8 +331,6 @@ void incidence(int mode, double tilt, double sazm, double rlim, double zen,
 				//do not report angle difference for backtracking if forced to stow, since this isn't backtracking
 			}
 
-			// apd: added 21jan2012 to enable backtracking for 1 axis arrays using 3D iterative method
-			// coded originally by intern M.Kasberg summer 2011
 			else if ( en_backtrack )
 			{
 				// find backtracking rotation angle
@@ -1910,8 +1908,8 @@ double backtrack(double truetracking_rotation, double gcr)
 
     // check backtracking criterion; if there is no self-shading to avoid, then
     // return the true-tracking angle unmodified:
-    double correction_projection = abs(cosd(truetracking_rotation - cross_axis_slope)) / (gcr * cosd(cross_axis_slope));
-    if(abs(correction_projection) >= 1){
+    double correction_projection = fabs(cosd(truetracking_rotation - cross_axis_slope)) / (gcr * cosd(cross_axis_slope));
+    if(fabs(correction_projection) >= 1){
         return truetracking_rotation;
     }
     int sign = truetracking_rotation > 0 ? 1 : -1;
