@@ -613,10 +613,10 @@ TEST_F(BifacialIrradTest, TestRearSurfaceIrradiance)
 *   Test single-axis tracking and bactracking rotations and shaded fraction
 */
 TEST(SingleAxisTrackingTest, TrackingBacktracking) {
-	std::vector<double> solar_zeniths = {0, 10, 80, 89.9, 90};
-	std::vector<double> solar_azimuths = {180, 100, 250, 60, 300};
+	std::vector<double> solar_zeniths = {0, 10, 80, 85, 90};
+	std::vector<double> solar_azimuths = {180, 100, 250,   87.163, 300};
 	std::vector<double> axis_tilts = {0, 0, 10, 10, 10};
-	std::vector<double> axis_azimuths = {10, 150, 240, 300, 0};
+	std::vector<double> axis_azimuths = {10, 150, 240, 180, 0};
 	std::vector<double> expected_truetracking = {0.0, -7.69, 26.74, -85.559, -84.27};
 	std::vector<double> expected_backtracking = {0.0, -7.69, 26.74, -6.72, -8.72};
 	std::vector<double> expected_shadefraction = {0.0, 0.0, 0.0, 0.806, 0.751};
