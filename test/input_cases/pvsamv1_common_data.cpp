@@ -378,8 +378,6 @@ void belpe_default(ssc_data_t& data)
 void battery_data_default(ssc_data_t& data) {
 	ssc_data_set_number(data, "en_batt", 0);
 	ssc_data_set_number(data, "batt_replacement_option", 0);
-	ssc_number_t p_batt_replacement_schedule[1] = { 0 };
-	ssc_data_set_array(data, "batt_replacement_schedule", p_batt_replacement_schedule, 1);
 	ssc_data_set_number(data, "adjust:constant", 0);
 	ssc_data_set_number(data, "dc_adjust:constant", 0);
 	ssc_data_set_number(data, "batt_chem", 1);

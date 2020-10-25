@@ -87,7 +87,6 @@ var_info vtab_battery_stateful_inputs[] = {
         // replacement inputs
         { SSC_INPUT,        SSC_NUMBER,      "replacement_option",                         "Replacements: none (0), by capacity (1), or schedule (2)", "0=none,1=capacity limit,2=yearly schedule", "", "ParamsPack", "?=0",                  "INTEGER,MIN=0,MAX=2",          "" },
         { SSC_INPUT,        SSC_NUMBER,      "replacement_capacity",                       "Capacity degradation at which to replace battery",       "%",        "",                     "ParamsPack",       "replacement_option=1",                           "",                             "" },
-        { SSC_INPUT,        SSC_ARRAY,       "replacement_schedule",                       "Battery bank number of replacements in each year",       "[number/year]","length <= analysis_period",                  "ParamsPack",      "replacement_option=2",   "",                             "" },
         { SSC_INPUT,        SSC_ARRAY,       "replacement_schedule_percent",               "Percentage of battery capacity to replace in each year", "[%/year]","length <= analysis_period",                  "ParamsPack",      "replacement_option=2",   "",                             "" },
         var_info_invalid
 };
@@ -380,7 +379,6 @@ std::shared_ptr<battery_params> create_battery_params(var_table *vt, double dt_h
     vt_get_int(vt, "replacement_option", &choice);
     replacements->replacement_option = static_cast<replacement_params::OPTIONS>(choice);
     if (replacements->replacement_option == replacement_params::SCHEDULE) {
-        vt_get_array_vec(vt, "replacement_schedule", replacements->replacement_schedule);
         vt_get_array_vec(vt, "replacement_schedule_percent", replacements->replacement_schedule_percent);
     }
     else if (replacements->replacement_option == replacement_params::CAPACITY_PERCENT) {
