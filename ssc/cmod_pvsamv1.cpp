@@ -968,7 +968,7 @@ void cm_pvsamv1::exec( )
 			Subarrays[nn]->tiltDegrees = fabs(Irradiance->weatherHeader.lat);
 		if (Subarrays[nn]->trackMode == irrad::SINGLE_AXIS && Subarrays[nn]->tiltDegrees > 0)
 			log(util::format("Subarray %d has one-axis tracking with a tilt angle of %f degrees. Large one-axis tracking arrays typically have a tilt angle of zero.", nn+1, Subarrays[nn]->tiltDegrees), SSC_WARNING);
-        if (Subarrays[nn]->Module->isBifacial && !Subarrays[nn]->trackMode == irrad::FIXED_TILT)
+        if (Subarrays[nn]->Module->isBifacial && (Subarrays[nn]->trackMode != irrad::FIXED_TILT))
             log(util::format("Subarray %d uses tracking  with bifacial modules. The bifacial model is designed for fixed arrays and may not produce reliable results for tracking arrays.", nn+1), SSC_WARNING);
     }
 
