@@ -276,11 +276,12 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
 
         // Discharge if we are in a high-price period and have battery and inverter capacity
         if (highDischargeValuePeriod && revenueToDischarge > 0 && excessAcCapacity && batteryHasDischargeCapacity) {
+            double loss_kw = _Battery->calculate_loss(m_batteryPower->powerBatteryTarget, lifetimeIndex); // Battery is responsible for covering discharge losses
             if (m_batteryPower->connectionMode == BatteryPower::DC_CONNECTED) {
-                powerBattery = _inverter_paco - m_batteryPower->powerPV;
+                powerBattery = _inverter_paco + loss_kw - m_batteryPower->powerPV;
             }
             else {
-            powerBattery = _inverter_paco;
+                powerBattery = _inverter_paco; // AC connected battery is already maxed out by AC power limit, cannot increase dispatch to ccover losses
             }
         }
 		// save for extraction
