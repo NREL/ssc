@@ -1,22 +1,22 @@
 /**
 BSD-3-Clause
 Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
 that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
 and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
 and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
 or promote products derived from this software without specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
@@ -37,7 +37,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static const int __nday[12] = {31,28,31,30,31,30,31,31,30,31,30,31};
 
 /// Compute the Julian day of year
-static int julian(int yr,int month,int day)    
+static int julian(int yr,int month,int day)
 {
 	int i=1,jday=0,k;
 
@@ -70,7 +70,7 @@ static int day_of_year( int month, int day_of_month ) /* returns 1-365 */
 
 void solarpos(int year,int month,int day,int hour,double minute,double lat,double lng,double tz,double sunn[9])
 {
-/* 
+/*
 	Revised 5/15/98. Replaced algorithm for solar azimuth with one by Iqbal
 	so latitudes below the equator are correctly handled. Also put in checks
 	to allow an elevation of 90 degrees without crashing the program and prevented
@@ -194,13 +194,13 @@ void solarpos(int year,int month,int day,int hour,double minute,double lat,doubl
 	arg = -tan(lat)*tan(dec);
 	if (arg >= 1.0)  // No sunrise, continuous nights
 	{
-		ws = 0.0;                        
+		ws = 0.0;
 		sunrise = 100.0; //make sunrise and sunset sufficiently large that even if they get rolled by 24 hours, they're still out of the bounds 0-24
 		sunset = -100.0;
 	}
 	else if (arg <= -1.0) // No sunset, continuous days
 	{
-		ws = M_PI;                          
+		ws = M_PI;
 		sunrise = -100.0; //make sunrise and sunset sufficiently large that even if they get rolled by 24 hours, they're still out of the bounds 0-24
 		sunset = 100.0;
 	}
@@ -229,7 +229,7 @@ void solarpos(int year,int month,int day,int hour,double minute,double lat,doubl
 	Eo = 1.0/(Eo*Eo);                    /* Eccentricity correction factor */
 
 	tst = hour + minute/60.0 + (lng/15.0 - tz) + E;  /* True solar time (hr) */
-	
+
 	/* 25aug2011 apd: addition of calculation of horizontal extraterrestrial irradiance */
 	zen = 0.5*M_PI - elv;
 	Gon = 1367*(1+0.033*cos( 360.0/365.0*day_of_year(month,day)*M_PI/180 )); /* D&B eq 1.4.1a, using solar constant=1367 W/m2 */
@@ -429,7 +429,7 @@ void incidence(int mode,double tilt,double sazm,double rlim,double zen,double az
 void hdkr( double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] /* can be null */ )
 {
 /* added aug2011 by aron dobos. Defines Hay, Davies, Klutcher, Reindl model for diffuse irradiance on a tilted surface
-	
+
 	List of Parameters Passed to Function:
 	hextra = extraterrestrial irradiance on horizontal surface (W/m2)
 	dn     = direct normal radiation (W/m2)
@@ -443,8 +443,8 @@ void hdkr( double hextra, double dn, double df, double alb, double inc, double t
 	poa    = plane-of-array irradiances (W/m2)
 				poa[0]: incident beam
 				poa[1]: incident sky diffuse
-				poa[2]: incident ground diffuse 
-								
+				poa[2]: incident ground diffuse
+
 	diffc   = diffuse components, if an array is provided
 				diffc[0] = isotropic
 				diffc[1] = circumsolar
@@ -475,7 +475,7 @@ void hdkr( double hextra, double dn, double df, double alb, double inc, double t
 	if (poa[0] < 0) poa[0] = 0;
 	if (poa[1] < 0) poa[1] = 0;
 	if (poa[2] < 0) poa[2] = 0;
-	
+
 	if (diffc != 0)
 	{
 		diffc[0] = iso;
@@ -504,7 +504,7 @@ double Max( double v1, double v2){
 }
 
 double GTI_DIRINT( const double poa[3], const double inc[3], double zen, double tilt, double ext, double alb, int doy, double tDew, double elev, double& dnOut, double& dfOut, double& ghOut, double poaCompOut[3]){
-	
+
 	double diff = 1E6;
 	double bestDiff = 1E6;
 	double Ktp=0;
@@ -512,18 +512,18 @@ double GTI_DIRINT( const double poa[3], const double inc[3], double zen, double 
 
 	double Ci[30] = {1., 1., 1., 0.5, 0.5,
 					 0.5, 0.5, 0.5, 0.5, 0.5,
-					 0.25, 0.25, 0.25, 0.25, 0.25, 
 					 0.25, 0.25, 0.25, 0.25, 0.25,
-					 0.125, 0.125, 0.125, 0.125, 0.125, 
+					 0.25, 0.25, 0.25, 0.25, 0.25,
+					 0.125, 0.125, 0.125, 0.125, 0.125,
 					 0.125, 0.125, 0.125, 0.125, 0.125};
 
 	double poa_tmp[3], diffc_tmp[3], poaBest[3] = {0, 0, 0};
-	
+
 	// Begin iterative solution for Kt
 //	double Io = 1367.0 * (1.0 + 0.033 * cos(0.0172142 * doy));    // Extraterrestrial dn (Taken from DIRINT Model)
 	double cz = cos(zen);
 	int i = 0;
-	
+
 	while (fabs(diff) > 1.0 && i++ < 30 ){
 
 		// Calculate Kt using GTI and Eq. 2
@@ -541,7 +541,7 @@ double GTI_DIRINT( const double poa[3], const double inc[3], double zen, double 
 		perez( ext, dn_tmp, df_tmp, alb, inc[1], tilt, zen, poa_tmp, diffc_tmp );
 
 		//Compare modeled POA to measured POA
-		diff = ( poa_tmp[0] + poa_tmp[1] + poa_tmp[2]) - poa[1];   
+		diff = ( poa_tmp[0] + poa_tmp[1] + poa_tmp[2]) - poa[1];
 
 		//Check for best Difference. If found, save results
 		if ( fabs(diff) < fabs(bestDiff)){
@@ -580,7 +580,7 @@ int poaDecomp( double , double angle[], double sun[], double alb, poaDecompReq *
 	double r90(M_PI/2), r80( 80.0/180*M_PI ), r65(65.0/180*M_PI);
 
 	if ( angle[0] < r90 ){  // Check if incident angle if greater than 90 degrees
-		
+
 		double gti[] = { pA->POA[ pA->i-1 ], pA->POA[ pA->i ],pA->POA[ pA->i+1 ]};
 		double inc[] = { pA->inc[ pA->i-1 ], pA->inc[ pA->i ], pA->inc[ pA->i+1 ]};
 
@@ -592,7 +592,7 @@ int poaDecomp( double , double angle[], double sun[], double alb, poaDecompReq *
 		if( pA->stepScale == 'm'){
 			stepsInDay *= 60 / (unsigned int)pA->stepSize;
 		}
-		 
+
 		size_t noon = pA->dayStart + stepsInDay/2;
 		size_t start, stop;
 		// Check for a morning value or evening, set looping bounds accordingly
@@ -636,7 +636,7 @@ int poaDecomp( double , double angle[], double sun[], double alb, poaDecompReq *
 		double zen[3]  = {-999, sun[1]          , -999 }; // Might need to be Zenith angle instead of inciden
 
 		ModifiedDISC( Kt_, Ktp_, gti, zen, pA->tDew, pA->elev, pA->doy, dn);
-		
+
 		// Calculate DHI and GHI
 		double ct = cos(angle[1]);
 		df = (2* pA->POA[pA->i] - dn*cos(sun[1])*alb*(1-ct)) / (1 + ct + alb*(1-ct)) ;
@@ -670,7 +670,7 @@ int poaDecomp( double , double angle[], double sun[], double alb, poaDecompReq *
 void isotropic( double , double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] )
 {
 /* added aug2011 by aron dobos. Defines isotropic sky model for diffuse irradiance on a tilted surface
-	
+
 	List of Parameters Passed to Function:
 	hextra = extraterrestrial irradiance on horizontal surface (W/m2) (unused for isotropic sky)
 	dn     = direct normal radiation (W/m2)
@@ -684,8 +684,8 @@ void isotropic( double , double dn, double df, double alb, double inc, double ti
 	poa    = plane-of-array irradiances (W/m2)
 				poa[0]: incident beam
 				poa[1]: incident sky diffuse
-				poa[2]: incident ground diffuse 
-				
+				poa[2]: incident ground diffuse
+
 	diffc   = diffuse components, if an array is provided
 				diffc[0] = isotro	angle[]  = array of elements to return angles to calling function
 	angle[0] = inc  = incident angle in radians
@@ -716,7 +716,7 @@ void isotropic( double , double dn, double df, double alb, double inc, double ti
 
 void perez( double , double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] )
 {
-/* 
+/*
 	Based on original FORTRAN program by Howard Bisner.
 	Total POA is poa[0]+poa[1]+poa[2]
 	Modified aug2011 by aron dobos to split out beam, diffuse, ground for output.
@@ -769,7 +769,7 @@ void perez( double , double dn, double df, double alb, double inc, double tilt, 
 			poa[0] = 0;
 			poa[1] = df*( 1.0 + cos(tilt) )/2.0;   /* Isotropic diffuse only */
 			poa[2] = 0.0;
-			
+
 			if (diffc != 0) diffc[0] = poa[1]; /* isotropic only */
 			return;
 			}
@@ -821,14 +821,14 @@ void perez( double , double dn, double df, double alb, double inc, double tilt, 
 			A = D*(1-F1)*( 1.0 + cos(tilt) )/2.0; // isotropic diffuse
 			B = D*F1*ZC/ZH; // circumsolar diffuse
 			C = D*F2*sin(tilt); // horizon brightness term
-						
+
 			if (diffc != 0)
 			{
 				diffc[0] = A;
 				diffc[1] = B;
 				diffc[2] = C;
 			}
-			
+
 			// original PVWatts: poa = A + F1*B + F2*C + alb*(dn*CZ+D)*(1.0 - cos(tilt) )/2.0 + dn*ZC;
 			poa[0] = dn*ZC; // beam
 			poa[1] = A + B + C; // total sky diffuse
@@ -860,12 +860,12 @@ irrad::irrad()
 {
 	setup();
 }
-irrad::irrad(weather_record wf, weather_header hdr, 
+irrad::irrad(weather_record wf, weather_header hdr,
 	int skyModelIn, int radiationModeIn, int trackModeIn,
 	bool useWeatherFileAlbedo, bool instantaneousWeather, bool backtrackingEnabled, bool forceToStowIn,
-	double dtHour, double tiltDegreesIn, double azimuthDegreesIn, double trackerRotationLimitDegreesIn, double stowAngleDegreesIn, 
-	double groundCoverageRatioIn, std::vector<double> monthlyTiltDegrees, std::vector<double> userSpecifiedAlbedo, 
-	poaDecompReq * poaAllIn) : 
+	double dtHour, double tiltDegreesIn, double azimuthDegreesIn, double trackerRotationLimitDegreesIn, double stowAngleDegreesIn,
+	double groundCoverageRatioIn, std::vector<double> monthlyTiltDegrees, std::vector<double> userSpecifiedAlbedo,
+	poaDecompReq * poaAllIn) :
 	skyModel(skyModelIn), radiationMode(radiationModeIn), trackingMode(trackModeIn), enableBacktrack(backtrackingEnabled), forceToStow(forceToStowIn),
 	delt(dtHour), tiltDegrees(tiltDegreesIn), surfaceAzimuthDegrees(azimuthDegreesIn), rotationLimitDegrees(trackerRotationLimitDegreesIn),
 	stowAngleDegrees(stowAngleDegreesIn), groundCoverageRatio(groundCoverageRatioIn), poaAll(poaAllIn)
@@ -878,7 +878,7 @@ irrad::irrad(weather_record wf, weather_header hdr,
 	else if (month_idx >= 0 && month_idx < 12) {
 		albedo = userSpecifiedAlbedo[month_idx];
 	}
-	
+
 	set_time(wf.year, wf.month, wf.day, wf.hour, wf.minute,
 		instantaneousWeather ? IRRADPROC_NO_INTERPOLATE_SUNRISE_SUNSET : dtHour);
 	set_location(hdr.lat, hdr.lon, hdr.tz);
@@ -958,7 +958,7 @@ void irrad::get_angles( double *aoi,
 	if ( axisrot != 0 ) *axisrot = surfaceAnglesRadians[3] * (180/M_PI);
 	if ( btdiff != 0 ) *btdiff = surfaceAnglesRadians[4] * (180/M_PI);
 }
-	
+
 void irrad::get_poa( double *beam, double *skydiff, double *gnddiff,
 	double *isotrop, double *circum, double *horizon )
 {
@@ -1017,7 +1017,7 @@ void irrad::set_surface( int tracking, double tilt_deg, double azimuth_deg, doub
 	this->enableBacktrack = enBacktrack;
 	this->groundCoverageRatio = gcr;
 }
-	
+
 void irrad::set_beam_diffuse( double beam, double diffuse )
 {
 	this->directNormal = beam;
@@ -1071,7 +1071,7 @@ int irrad::calc()
 	surfaceAnglesRadians: result from incidence
 	planeOfArrayIrradianceFront: result from sky model
 	diff: broken out diffuse components from sky model
-*/	
+*/
 	double t_cur = hour + minute/60.0;
 
 	// calculate sunrise and sunset hours in local standard time for the current day
@@ -1091,7 +1091,7 @@ int irrad::calc()
 			solarpos(year - 1, 12, 31, 12, 0.0, latitudeDegrees, longitudeDegrees, timezone, sunanglestemp);
 		//on the last day of endless days, sunset is returned as 100 (hour angle too large for calculation), so use today's sunset time as a proxy
 		if (sunanglestemp[5] == 100.0)
-			t_sunset -= 24.0;		
+			t_sunset -= 24.0;
 		//if sunset from yesterday WASN'T today, then it's ok to leave sunset > 24, which will cause the sun to rise today and not set today
 		else if (sunanglestemp[5] >= 24.0)
 			t_sunset = sunanglestemp[5] - 24.0;
@@ -1108,7 +1108,7 @@ int irrad::calc()
 			solarpos(year + 1, 1, 1, 12, 0.0, latitudeDegrees, longitudeDegrees, timezone, sunanglestemp);
 		//on the last day of endless days, sunrise would be returned as -100 (hour angle too large for calculations), so use today's sunrise time as a proxy
 		if (sunanglestemp[4] == -100.0)
-			t_sunrise += 24.0;		
+			t_sunrise += 24.0;
 		//if sunrise from tomorrow isn't today, then it's ok to leave sunrise < 0, which will cause the sun to set at the right time and not rise until tomorrow
 		else if (sunanglestemp[4] < 0.0)
 			t_sunrise = sunanglestemp[4] + 24.0;
@@ -1124,10 +1124,10 @@ int irrad::calc()
 
 		timeStepSunPosition[0] = hr_calc;
 		timeStepSunPosition[1] = (int)min_calc;
-				
+
 		solarpos( year, month, day, hr_calc, min_calc, latitudeDegrees, longitudeDegrees, timezone, sunAnglesRadians );
 
-		timeStepSunPosition[2] = 2;				
+		timeStepSunPosition[2] = 2;
 	}
 	// timestep encompasses the sunset
 	else if ( delt > 0 && t_cur > t_sunset - delt/2.0 && t_cur <= t_sunset + delt/2.0 )
@@ -1138,7 +1138,7 @@ int irrad::calc()
 
 		timeStepSunPosition[0] = hr_calc;
 		timeStepSunPosition[1] = (int)min_calc;
-				
+
 		solarpos( year, month, day, hr_calc, min_calc, latitudeDegrees, longitudeDegrees, timezone, sunAnglesRadians );
 
 		timeStepSunPosition[2] = 3;
@@ -1146,14 +1146,14 @@ int irrad::calc()
 	// timestep is not sunrise nor sunset, but sun is up  (calculate position at provided t_cur)
 	else if ( (t_sunrise < t_sunset && t_cur >= t_sunrise && t_cur <= t_sunset) || //this captures normal daylight cases
 		(t_sunrise > t_sunset && (t_cur <= t_sunset || t_cur >= t_sunrise)) ) //this captures cases where sunset (from previous day) is 1:30AM, sunrise 2:30AM, in arctic circle
-	{				
+	{
 		timeStepSunPosition[0] = hour;
 		timeStepSunPosition[1] = (int)minute;
 		solarpos( year, month, day, hour, minute, latitudeDegrees, longitudeDegrees, timezone, sunAnglesRadians );
 		timeStepSunPosition[2] = 1;
 	}
 	else
-	{	
+	{
 		// sun is down, assign sundown values
 		solarpos(year, month, day, hour, minute, latitudeDegrees, longitudeDegrees, timezone, sunAnglesRadians);
 		timeStepSunPosition[0] = hour;
@@ -1161,22 +1161,22 @@ int irrad::calc()
 		timeStepSunPosition[2] = 0;
 	}
 
-			
+
 	planeOfArrayIrradianceFront[0]=planeOfArrayIrradianceFront[1]=planeOfArrayIrradianceFront[2] = 0;
 	diffuseIrradianceFront[0]=diffuseIrradianceFront[1]=diffuseIrradianceFront[2] = 0;
 	surfaceAnglesRadians[0]=surfaceAnglesRadians[1]=surfaceAnglesRadians[2]=surfaceAnglesRadians[3]=surfaceAnglesRadians[4] = 0;
 
 	// do irradiance calculations if sun is up
 	if (timeStepSunPosition[2] > 0)
-	{				
+	{
 		// compute incidence angles onto fixed or tracking surface
-		incidence( trackingMode, tiltDegrees, surfaceAzimuthDegrees, rotationLimitDegrees, sunAnglesRadians[1], sunAnglesRadians[0], 
+		incidence( trackingMode, tiltDegrees, surfaceAzimuthDegrees, rotationLimitDegrees, sunAnglesRadians[1], sunAnglesRadians[0],
 			enableBacktrack, groundCoverageRatio, forceToStow, stowAngleDegrees, surfaceAnglesRadians );
 
 		if(radiationMode < irrad::POA_R){
 			double hextra = sunAnglesRadians[8];
 			double hbeam = directNormal*cos( sunAnglesRadians[1] ); // calculated beam on horizontal surface: sunAnglesRadians[1]=zenith
-				
+
 			// check beam irradiance against extraterrestrial irradiance
 			if ( hbeam > hextra )
 			{
@@ -1219,15 +1219,15 @@ int irrad::calc()
 			default:
 				perez( hextra, calculatedDirectNormal, calculatedDiffuseHorizontal, albedo, surfaceAnglesRadians[0], surfaceAnglesRadians[1], sunAnglesRadians[1], planeOfArrayIrradianceFront, diffuseIrradianceFront );
 				break;
-			} 
-		} 
+			}
+		}
 		else { // Sev 2015/09/11 - perform a POA decomp.
 			int errorcode = poaDecomp( weatherFilePOA, surfaceAnglesRadians, sunAnglesRadians, albedo, poaAll, directNormal, diffuseHorizontal, globalHorizontal, planeOfArrayIrradianceFront, diffuseIrradianceFront);
 			calculatedDirectNormal = directNormal;
 			calculatedDiffuseHorizontal = diffuseHorizontal;
 			return errorcode; //this will return 0 if successful, otherwise 40, 41, or 42 if calculated decomposed dni, dhi, or ghi are negative
 		}
-	} 
+	}
 	else { globalHorizontal=0; directNormal=0; diffuseHorizontal=0;} //sun is below horizon
 
 	return 0;
@@ -1511,7 +1511,7 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
 	size_t intervals = 100;
 	double solarAzimuthRadians = sunAnglesRadians[0];
 	double solarZenithRadians = sunAnglesRadians[1];
-	double tiltRadians = surfaceAnglesRadians[1]; 
+	double tiltRadians = surfaceAnglesRadians[1];
 	double surfaceAzimuthRadians = surfaceAnglesRadians[2];
 
 	// Average GHI on ground under PV array for cases when x projection exceed 2*rtr
@@ -1525,14 +1525,14 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
 	perez(0, calculatedDirectNormal, calculatedDiffuseHorizontal, albedo, solarZenithRadians, 0, solarZenithRadians, poa, diffc);
 	double isotropicSkyDiffuse = diffc[0];
 
-	// Calculate components for a 90 degree tilt 
+	// Calculate components for a 90 degree tilt
 	double angleTmp[5] = { 0,0,0,0,0 };
 	incidence(0, 90.0, 180.0, 45.0, solarZenithRadians, solarAzimuthRadians, this->enableBacktrack, this->groundCoverageRatio, this->forceToStow, this->stowAngleDegrees, angleTmp);
 	perez(0, calculatedDirectNormal, calculatedDiffuseHorizontal, albedo, angleTmp[0], angleTmp[1], solarZenithRadians, poa, diffc);
 	double horizonDiffuse = diffc[2];
 
-	// Calculate x,y coordinates of bottom and top edges of PV row in back of desired PV row so that portions of sky and ground viewed by the 
-	// PV cell may be determined. Origin of x-y axis is the ground point below the lower front edge of the desired PV row. The row in back of 
+	// Calculate x,y coordinates of bottom and top edges of PV row in back of desired PV row so that portions of sky and ground viewed by the
+	// PV cell may be determined. Origin of x-y axis is the ground point below the lower front edge of the desired PV row. The row in back of
 	// the desired row is in the positive x direction.
 	double PbotX = -rowToRow;                        // x value for point on bottom edge of PV module/panel of row in front of (in PV panel slope lengths)
 	double PbotY = clearanceGround;                  // y value for point on bottom edge of PV module/panel of row in front of (in PV panel slope lengths)
@@ -1543,7 +1543,7 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
 	size_t cellRows = 6;
 	for (size_t i = 0; i != cellRows; i++)
 	{
-		// Calculate diffuse irradiances and reflected amounts for each cell row over its field of view of 180 degrees, 
+		// Calculate diffuse irradiances and reflected amounts for each cell row over its field of view of 180 degrees,
 		// beginning with the angle providing the upper most view of the sky (j=0)
 		double PcellX = horizontalLength * (i + 0.5) / ((double)cellRows);				   // x value for location of PV cell with OFFSET FOR SARA REFERENCE CELLS     4/26/2016
 		double PcellY = clearanceGround + verticalHeight * (i + 0.5) / ((double)cellRows); // y value for location of PV cell with OFFSET FOR SARA REFERENCE CELLS     4/26/2016
@@ -1582,7 +1582,7 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
 
 			if (fabs(projectedX1 - projectedX2) > 0.99 * rowToRow)
 			{
-				// Use average value if projection approximates the rtr      
+				// Use average value if projection approximates the rtr
 				actualGroundGHI = averageGroundGHI;
 			}
 			else
@@ -1596,13 +1596,13 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
 					projectedX1 += intervals;
 					projectedX2 += intervals;
 				}
-				
+
 				size_t index1 = static_cast<size_t>(projectedX1);
 				size_t index2 = static_cast<size_t>(projectedX2);
 
 				if (index1 == index2)
 				{
-					actualGroundGHI = frontGroundGHI[index1];		
+					actualGroundGHI = frontGroundGHI[index1];
 				}
 				else
 				{
@@ -1617,7 +1617,7 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
 						{
 							if (k < intervals) {
 								actualGroundGHI += frontGroundGHI[k] * (projectedX2 - k);
-							} 
+							}
 							else {
 								actualGroundGHI += frontGroundGHI[k - 100] * (projectedX2 - k);
 							}
@@ -1640,7 +1640,7 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
 			frontReflected[i] += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * actualGroundGHI * this->albedo * (1.0 - MarionAOICorrectionFactorsGlass[j] * (1.0 - reflectanceNormalIncidence));
 		}
 		// Calculate and add direct and circumsolar irradiance components
-		incidence(0, tiltRadians * RTOD, surfaceAzimuthRadians * RTOD, 45.0, solarZenithRadians, solarAzimuthRadians, this->enableBacktrack, this->groundCoverageRatio, 
+		incidence(0, tiltRadians * RTOD, surfaceAzimuthRadians * RTOD, 45.0, solarZenithRadians, solarAzimuthRadians, this->enableBacktrack, this->groundCoverageRatio,
 			this->forceToStow, this->stowAngleDegrees, surfaceAnglesRadians);
 		perez(0, calculatedDirectNormal, calculatedDiffuseHorizontal, albedo, surfaceAnglesRadians[0], surfaceAnglesRadians[1], solarZenithRadians, poa, diffc);
 
@@ -1654,7 +1654,7 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
 			cellShade = 0.0;
 		}
 
-		// Cell not shaded entirely and incidence angle < 90 degrees 
+		// Cell not shaded entirely and incidence angle < 90 degrees
 		if (cellShade < 1.0 && surfaceAnglesRadians[0] < M_PI / 2.0)
 		{
 			double cor = iamSjerpsKoomen(n2, surfaceAnglesRadians[0]);
@@ -1676,7 +1676,7 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 	double surfaceAzimuthRadians = surfaceAnglesRadians[2];
 
 	// Average GHI on ground under PV array for cases when x projection exceed 2*rtr
-	double averageGroundGHI = 0.0;          
+	double averageGroundGHI = 0.0;
 	for (size_t i = 0; i != rearGroundGHI.size(); i++)
 		averageGroundGHI += rearGroundGHI[i] / rearGroundGHI.size();
 
@@ -1684,14 +1684,14 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 	perez(0, calculatedDirectNormal, calculatedDiffuseHorizontal, albedo, solarZenithRadians, 0, solarZenithRadians, planeOfArrayIrradianceRear, diffuseIrradianceRear);
 	double isotropicSkyDiffuse = diffuseIrradianceRear[0];
 
-	// Calculate components for a 90 degree tilt 
+	// Calculate components for a 90 degree tilt
 	double surfaceAnglesRadians90[5] = { 0,0,0,0,0 };
 	incidence(0, 90.0, 180.0, 45.0, solarZenithRadians, solarAzimuthRadians, this->enableBacktrack, this->groundCoverageRatio, this->forceToStow, this->stowAngleDegrees, surfaceAnglesRadians90);
 	perez(0, calculatedDirectNormal, calculatedDiffuseHorizontal, albedo, surfaceAnglesRadians90[0], surfaceAnglesRadians90[1], solarZenithRadians, planeOfArrayIrradianceRear, diffuseIrradianceRear);
 	double horizonDiffuse = diffuseIrradianceRear[2];
 
-	// Calculate x,y coordinates of bottom and top edges of PV row in back of desired PV row so that portions of sky and ground viewed by the 
-	// PV cell may be determined. Origin of x-y axis is the ground point below the lower front edge of the desired PV row. The row in back of 
+	// Calculate x,y coordinates of bottom and top edges of PV row in back of desired PV row so that portions of sky and ground viewed by the
+	// PV cell may be determined. Origin of x-y axis is the ground point below the lower front edge of the desired PV row. The row in back of
 	// the desired row is in the positive x direction.
 	double PbotX = rowToRow;                         // x value for point on bottom edge of PV module/panel of row in back of (in PV panel slope lengths)
 	double PbotY = clearanceGround;                  // y value for point on bottom edge of PV module/panel of row in back of (in PV panel slope lengths)
@@ -1702,7 +1702,7 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 	size_t cellRows = 6;
 	for (size_t i = 0; i != cellRows; i++)
 	{
-		// Calculate diffuse irradiances and reflected amounts for each cell row over its field of view of 180 degrees, 
+		// Calculate diffuse irradiances and reflected amounts for each cell row over its field of view of 180 degrees,
 		// beginning with the angle providing the upper most view of the sky (j=0)
 		double PcellX = horizontalLength * (i + 0.5) / ((double)cellRows);				   // x value for location of PV cell with OFFSET FOR SARA REFERENCE CELLS     4/26/2016
 		double PcellY = clearanceGround + verticalHeight * (i + 0.5) / ((double)cellRows); // y value for location of PV cell with OFFSET FOR SARA REFERENCE CELLS     4/26/2016
@@ -1777,7 +1777,7 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 
 			if (fabs(projectedX1 - projectedX2) > 0.99 * rowToRow)
 			{
-				// Use average value if projection approximates the rtr      
+				// Use average value if projection approximates the rtr
 				actualGroundGHI = averageGroundGHI;
 			}
 			else
@@ -1848,12 +1848,12 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 			rearIrradiance[i] += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] * actualGroundGHI * this->albedo;
 		}
 		// Calculate and add direct and circumsolar irradiance components
-		incidence(0, 180.0 - tiltRadians * RTOD, (surfaceAzimuthRadians * RTOD - 180.0), 45.0, solarZenithRadians, solarAzimuthRadians, this->enableBacktrack, 
+		incidence(0, 180.0 - tiltRadians * RTOD, (surfaceAzimuthRadians * RTOD - 180.0), 45.0, solarZenithRadians, solarAzimuthRadians, this->enableBacktrack,
 			this->groundCoverageRatio, this->forceToStow, this->stowAngleDegrees, surfaceAnglesRadians);
 		perez(0, calculatedDirectNormal, calculatedDiffuseHorizontal, albedo, surfaceAnglesRadians[0], surfaceAnglesRadians[1], solarZenithRadians, planeOfArrayIrradianceRear, diffuseIrradianceRear);
 
 		double cellShade = pvBackShadeFraction * cellRows - i;
-		
+
 		// Fully shaded if >1, no shade if < 0, otherwise fractionally shaded
 		if (cellShade > 1.0) {
 			cellShade = 1.0;
@@ -1862,7 +1862,7 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 			cellShade = 0.0;
 		}
 
-		// Cell not shaded entirely and incidence angle < 90 degrees 
+		// Cell not shaded entirely and incidence angle < 90 degrees
 		if (cellShade < 1.0 && surfaceAnglesRadians[0] < M_PI / 2.0)
 		{
 			double iamMod = iamSjerpsKoomen(n2, surfaceAnglesRadians[0]);
@@ -1892,10 +1892,10 @@ static void vec_diff( double a[3], double b[3], double result[3] )
 	result[2] = a[2] - b[2];
 }
 
-static void get_vertices( double axis_tilt, double axis_azimuth, double gcr,				 
+static void get_vertices( double axis_tilt, double axis_azimuth, double gcr,
 				 double vertices[3][4][3], double rotation)
 {
-	//Get panel vertices for flat panels, no tilt or azimuth, 
+	//Get panel vertices for flat panels, no tilt or azimuth,
 	//ordered ccw starting from x+
 	//vertices[0] is panel 0
 	//vertices[0][1] is corner 1 on panel 0
@@ -1911,34 +1911,34 @@ static void get_vertices( double axis_tilt, double axis_azimuth, double gcr,
 		vertices[i][0][0] = width/2 + i*(row_spacing + width);
 		vertices[i][0][1] = 0;
 		vertices[i][0][2] = 0;
-		
+
 		vertices[i][1][0] = width/2 + i*(row_spacing + width);
 		vertices[i][1][1] = length;
 		vertices[i][1][2] = 0;
-			
+
 		vertices[i][2][0] = -width/2 + i*(row_spacing + width);
 		vertices[i][2][1] = length;
 		vertices[i][2][2] = 0;
-		
+
 		vertices[i][3][0] = -width/2 + i*(row_spacing + width);
 		vertices[i][3][1] = 0;
 		vertices[i][3][2] = 0;
 	}
 	//We now have vertices for flat panels spaced evenly along the x+ axis.
-	
-	//Rotate each panel by rotation angle 
+
+	//Rotate each panel by rotation angle
 	for (int i=0; i<3; i++)
 	{
 		//Move so that we rotate about y-axis.
 		//Perform rotation, then move back.
 		double offset = i*(row_spacing + width);
-		
+
 		vertices[i][0][0] = vertices[i][0][0] - offset;
 		vertices[i][1][0] = vertices[i][1][0] - offset;
 		vertices[i][2][0] = vertices[i][2][0] - offset;
 		vertices[i][3][0] = vertices[i][3][0] - offset;
-		
-		//Rotation matrix T is 
+
+		//Rotation matrix T is
 		//  cos 0 sin
 		//   0  1  0
 		// -sin 0 cos
@@ -1951,28 +1951,28 @@ static void get_vertices( double axis_tilt, double axis_azimuth, double gcr,
 			vertices[i][j][0] = oldVertX * cosd(rotation) + oldVertZ * sind(rotation);
 			vertices[i][j][2] = oldVertX * -sind(rotation) + oldVertZ * cosd(rotation);
 		}
-		
+
 		//Translate back to original location after rotation is complete.
 		vertices[i][0][0] = vertices[i][0][0] + offset;
 		vertices[i][1][0] = vertices[i][1][0] + offset;
 		vertices[i][2][0] = vertices[i][2][0] + offset;
 		vertices[i][3][0] = vertices[i][3][0] + offset;
 	}
-	
-	
+
+
 	//Now globally rotate all coords by axis tilt
 	for (int i=0; i<3; i++)
 	{
 		//Move to rotate about x axis.
 		//Perform rotation, then move back.
 		double offset = length;
-		
+
 		vertices[i][0][1] = vertices[i][0][1] - offset;
 		vertices[i][1][1] = vertices[i][1][1] - offset;
 		vertices[i][2][1] = vertices[i][2][1] - offset;
 		vertices[i][3][1] = vertices[i][3][1] - offset;
-		
-		//Rotation matrix T is 
+
+		//Rotation matrix T is
 		// 1   0   0
 		// 0  cos sin
 		// 0 -sin cos
@@ -1985,20 +1985,20 @@ static void get_vertices( double axis_tilt, double axis_azimuth, double gcr,
 			vertices[i][j][1] = oldVertY * cosd(axis_tilt) + oldVertZ * sind(axis_tilt);
 			vertices[i][j][2] = oldVertY * -sind(axis_tilt) + oldVertZ * cosd(axis_tilt);
 		}
-		
+
 		vertices[i][0][1] = vertices[i][0][1] + offset;
 		vertices[i][1][1] = vertices[i][1][1] + offset;
 		vertices[i][2][1] = vertices[i][2][1] + offset;
 		vertices[i][3][1] = vertices[i][3][1] + offset;
 	}
-	
-	
+
+
 	//Now globally rotate all coords by axis azimuth
 	for (int i=0; i<3; i++)
 	{
 		//We are rotating about the Z axis, so we don't need to translate.
-		
-		//Rotation matrix T is 
+
+		//Rotation matrix T is
 		//  cos sin 0
 		// -sin cos 0
 		//   0   0  1
@@ -2014,13 +2014,11 @@ static void get_vertices( double axis_tilt, double axis_azimuth, double gcr,
 	}
 }
 
-
-
 static void sun_unit( double sazm, double szen, double sun[3] )
-{	
+{
 	//Get unit vector in direction of sun
 	double solalt = 90 - szen;
-		
+
 	if ( sazm >= 0 && sazm <= 90 )
 	{
 		sun[0] = cosd(solalt)*sind(sazm);
@@ -2041,9 +2039,9 @@ static void sun_unit( double sazm, double szen, double sun[3] )
 		sun[0] = -cosd(solalt)*sind(360-sazm);
 		sun[1] = cosd(solalt)*cosd(360-sazm);
 	}
-	
+
 	sun[2] = sind(solalt);
-		
+
 	//normalize
 	double magnitude = sqrt(sun[0]*sun[0] + sun[1]*sun[1] + sun[2]*sun[2]);
 	sun[0] = sun[0] / magnitude;
@@ -2053,21 +2051,21 @@ static void sun_unit( double sazm, double szen, double sun[3] )
 
 
 double shadeFraction1x( double solazi, double solzen,
-						 double axis_tilt, double axis_azimuth, 
+						 double axis_tilt, double axis_azimuth,
 						 double gcr, double rotation )
 {
 	//Get unit vector in direction of sun
-	
+
 	double sun[3];
 	sun_unit( solazi, solzen, sun );
 
 	//For now, assume array has at least 3 rows.
 	//This way we can use index 1 and it has a panel on both sides.
-	
+
 	//Get our vertices for our array.
 	double verts[3][4][3]; //To allocate
 	get_vertices( axis_tilt, axis_azimuth, gcr, verts, rotation );
-	
+
 	//Find which panel is in the direction of the sun by using dot product.
 	//toPrev is a vector from panel 1 to panel 0.
 	//toNext is a vector from panel 1 to panel 2.
@@ -2084,8 +2082,8 @@ double shadeFraction1x( double solazi, double solzen,
 	toNext[1] = verts[2][0][1] - verts[1][0][1];
 	toNext[2] = verts[2][0][2] - verts[1][0][2];
 	if (vec_dot(toPrev, sun) < vec_dot(toNext, sun)) iPanel = 2;
-	
-	
+
+
 	//Get midpoint of edge of panel 1 on the sun side.
 	//This edge is on the same side of panel 1 as iPanel.
 	//Store midpoint in midP.
@@ -2095,7 +2093,7 @@ double shadeFraction1x( double solazi, double solzen,
 		if (iPanel == 0) midP[i] = (verts[1][2][i] + verts[1][3][i]) / 2;
 		else midP[i] = (verts[1][0][i] + verts[1][1][i]) / 2;
 	}
-	
+
 	//Get normal vector to plane for iPanel.
 	//This is easy - just get two vectors in the plane of iPanel and cross them.
 	//Use the vectors along the edges out of vertex 0.  That is, edge01 and edge03.
@@ -2104,15 +2102,15 @@ double shadeFraction1x( double solazi, double solzen,
 	vec_diff(verts[iPanel][1], verts[iPanel][0], a1);
 	vec_diff(verts[iPanel][3], verts[iPanel][0], a2);
 	vec_cross(a1, a2, normal);
-	
-	
+
+
 	//We want to find the point of intersection of the ray that starts at midP
 	//and goes in the direction of the sun.
 	//Assume sun is at infinity in direction 'sun'.
 	//First make sure that this ray has a unique intersection point.
 	double sunDot = vec_dot(normal, sun);
 	if (fabs(sunDot) < 0.001) return 0; //sun vector lies in plane
-	
+
 	//Now, vector pDir goes from midP to any point in the plane of iPanel.  Vertex 0, say.
 	//Project pDir onto the normal to iPanel, and project the sun vector onto the normal vector.
 	//The ratio of these projections tells us how fat to move along the sun vector, starting
@@ -2121,14 +2119,14 @@ double shadeFraction1x( double solazi, double solzen,
 	vec_diff(verts[iPanel][0], midP, pDir);
 	double t = vec_dot(normal, pDir) / vec_dot(normal, sun);
 	if (t < 0) return 0; // sun has set (is behind array).
-	
+
 	double intersectP[3];
 	for (int i=0; i<3; i++)
 	{
 		intersectP[i] = midP[i] + t * sun[i];
 	}
 	//intersectP is along the ray from midP to the sun, and lies in the (infinite) plane of iPanel.
-	
+
 	//Figure out if intersectP is inside the bounds of the iPanel.
 	//This is simple.  If intersectP is on the same side of the edge as the panel for both edges,
 	//then it is in the panel.
@@ -2138,24 +2136,24 @@ double shadeFraction1x( double solazi, double solzen,
 	vec_diff(verts[iPanel][3], verts[iPanel][0], a1);
 	vec_diff(intersectP, verts[iPanel][0], a2);
 	if (vec_dot(a1, a2) < 0) return 0; //intersect is outside panel bounds.
-	
+
 	vec_diff(verts[iPanel][0], verts[iPanel][3], a1);
 	vec_diff(intersectP, verts[iPanel][3], a2);
 	if (vec_dot(a1, a2) < 0) return 0; //intersect is outside panel bounds.
-	
-	// Now we know the panel is shaded, so compute geometric shade fraction	
+
+	// Now we know the panel is shaded, so compute geometric shade fraction
 	double mu[3] = { 0, 0, 0 }; // upper edge midpoint on adjacent panel
 	double ml[3] = { 0, 0, 0 }; // lower edge midpoint on adjacent panel
 	for (int i=0; i<3; i++)
 	{
 		if (iPanel == 2) mu[i] = (verts[iPanel][2][i] + verts[iPanel][3][i]) / 2;
 		else             mu[i] = (verts[iPanel][0][i] + verts[iPanel][1][i]) / 2;
-		
+
 		if (iPanel == 2) ml[i] = (verts[iPanel][0][i] + verts[iPanel][1][i]) / 2;
 		else             ml[i] = (verts[iPanel][2][i] + verts[iPanel][3][i]) / 2;
-		
+
 	}
-	
+
 	vec_diff(intersectP, mu, a1);
 	vec_diff(ml, mu, a2);
 	double maga2 = vec_dot(a2,a2);
@@ -2166,8 +2164,8 @@ double shadeFraction1x( double solazi, double solzen,
 
 
 //Find optimum angle using backtracking.
-double backtrack( double solazi, double solzen, 
-				 double axis_tilt, double axis_azimuth, 
+double backtrack( double solazi, double solzen,
+				 double axis_tilt, double axis_azimuth,
 				 double rotlim, double gcr, double rotation )
 {
 	//Now do backtracking.
@@ -2181,7 +2179,7 @@ double backtrack( double solazi, double solzen,
 			if ( fabs(rotation-1) > fabs(rotlim) )
 				break;
 			rotation = rotation - 1;
-		}	
+		}
 		else
 		{
 			if ( fabs(rotation+1) > fabs(rotlim) )
@@ -2195,7 +2193,7 @@ double backtrack( double solazi, double solzen,
 
 // Begin modified DISC code
 
-double cm[6][6][7][5] = 
+double cm[6][6][7][5] =
     {{{{ 0.385230, 0.385230, 0.385230, 0.462880, 0.317440 },
     { 0.338390, 0.338390, 0.221270, 0.316730, 0.503650 },
     { 0.235680, 0.235680, 0.241280, 0.157830, 0.269440 },
@@ -2488,17 +2486,17 @@ double ModifiedDISC(const double g[3], const double z[3], double td, double alt,
 {
     // Modification history:
 	// 25/10/2015 Converted to C++ for use in SAM by David Severin Ryberg
-    // 4/14/2015 Corrected error in incrementing i,j, and k array indices 
+    // 4/14/2015 Corrected error in incrementing i,j, and k array indices
     // 7/16/13. Converted by Bill Marion to C#. The 7/5/91 version provided by Daryl that this
     //  is based on was significantly different than the 6/26/91 I had got from Martin years ago in that
     //  the section on bin interpolating for clear stable cases had been removed.
 	// 6/28/2013. Converted to C# from Howard Bisner FORTRAN77 code
-    // 5/24/91. Richard's code to do linear interpolation between highest kt' bins added by RS. 
+    // 5/24/91. Richard's code to do linear interpolation between highest kt' bins added by RS.
     //  RS fixed some typos in Richard's untested code.
     // 6/10/91. Corrected bin interpolation near label 141 [divide by 0.007 and zbin2 not zbin]
     // 6/26/91: Richard perez: Modification of DKT1 calculation
-    //  to avoid very low sun distorsion caused by questionable     
-    //  cosine response of pyranometers    
+    //  to avoid very low sun distorsion caused by questionable
+    //  cosine response of pyranometers
     // 7/5/91:  RS: lines extending beyond col 72 fixed.
     //  Questionable use of x**-y changed to x**(-y)
     //  Made reference to intrinsic dmax1 agree with type
@@ -2565,18 +2563,18 @@ double ModifiedDISC(const double g[3], const double z[3], double td, double alt,
                 dkt1 = fabs(kt1[1] - kt1[0]);
             else
                 dkt1 = 0.5 * (fabs(kt1[1] - kt1[0]) + fabs(kt1[2] - kt1[1]));
-            
+
             k = 0;
-            //while (k < 4 && dkt1 >= dktbin[k]) 
+            //while (k < 4 && dkt1 >= dktbin[k])
             while (k < 5 && dkt1 >= dktbin[k])      // Error fix 4/14/2015
                 k++;
         }
         i = 0;
-        //while (i < 4 && kt1[1] >= ktbin[i]) 
+        //while (i < 4 && kt1[1] >= ktbin[i])
         while (i < 5 && kt1[1] >= ktbin[i])         // Error fix 4/14/2015
             i++;
         j = 0;
-        //while (j < 4 && zenith[1] >= zbin[j]) 
+        //while (j < 4 && zenith[1] >= zbin[j])
         while (j < 5 && zenith[1] >= zbin[j])       // Error fix 4/14/2015
             j++;
         if (td < -998.0)
@@ -2653,16 +2651,16 @@ void ModifiedDISC(const double kt[3], const double kt1[3], const double g[3], co
 				dkt1 = 0.5 * (fabs(kt1[1] - kt1[0]) + fabs(kt1[2] - kt1[1]));
 
 			k = 0;
-			//while (k < 4 && dkt1 >= dktbin[k]) 
+			//while (k < 4 && dkt1 >= dktbin[k])
 			while (k < 5 && dkt1 >= dktbin[k])      // Error fix 4/14/2015
 				k++;
 		}
 		i = 0;
-		//while (i < 4 && kt1[1] >= ktbin[i]) 
+		//while (i < 4 && kt1[1] >= ktbin[i])
 		while (i < 5 && kt1[1] >= ktbin[i])         // Error fix 4/14/2015
 			i++;
 		j = 0;
-		//while (j < 4 && zenith[1] >= zbin[j]) 
+		//while (j < 4 && zenith[1] >= zbin[j])
 		while (j < 5 && zenith[1] >= zbin[j])       // Error fix 4/14/2015
 			j++;
 		if (td < -998.0)

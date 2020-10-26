@@ -6,7 +6,9 @@
 
 cmake_minimum_required(VERSION 3.11)
 
-cmake_policy(SET CMP0077 NEW)
+if(POLICY CMP0077)
+    cmake_policy(SET CMP0077 NEW)
+endif()
 
 option(skip_tools "Skips the sdktool and tcsconsole builds" OFF)
 

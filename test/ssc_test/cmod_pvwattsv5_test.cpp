@@ -168,9 +168,9 @@ TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, singleTS) {
     ssc_data_get_number(data_1ts, "ac", &val);
     EXPECT_NEAR(val, 100851, 1);
 
+    // tcell & poa are assigned from above exec call
     EXPECT_TRUE(ssc_module_exec(mod, data_1ts));
 
-    // tcell & poa are assigned from above exec call
     ssc_data_get_number(data_1ts, "poa", &val);
     EXPECT_NEAR(val, 140.21, .1);
     ssc_data_get_number(data_1ts, "tcell", &val);
@@ -182,7 +182,9 @@ TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, singleTS) {
 
     // add some shading
     ssc_data_set_number(data_1ts, "shaded_percent", 50);
+
     EXPECT_TRUE(ssc_module_exec(mod, data_1ts));
+
     ssc_data_get_number(data_1ts, "poa", &val);
     EXPECT_NEAR(val, 140.05, .1);
     ssc_data_get_number(data_1ts, "tcell", &val);
