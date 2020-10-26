@@ -924,6 +924,10 @@ public:
         tes->pipe_rough           = as_double("HDR_rough");                 //[m]
         tes->DP_SGS               = as_double("DP_SGS");                    //[bar]
 
+        if (!tes->tanks_in_parallel && !tes->custom_tes_pipe_sizes) {
+            tes->calc_design_pipe_vals = false;
+        }
+
         // Set storage outputs
         storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_Q_DOT_LOSS, allocate("tank_losses", n_steps_fixed), n_steps_fixed);
         storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_W_DOT_HEATER, allocate("q_tes_heater", n_steps_fixed), n_steps_fixed);
