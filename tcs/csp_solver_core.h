@@ -1002,7 +1002,8 @@ private:
     bool m_is_cr_config_recirc; //[-] True: Receiver "off" and "startup" are recirculated from outlet to inlet
 
         // Field-side HTF
-    bool m_T_field_cold_limit;  //[C]
+    double m_T_field_cold_limit;    //[C]
+    double m_T_field_in_hot_limit;  //[C]
 
 		// Reporting and Output Tracking
     bool m_is_first_timestep;           //[-]
