@@ -562,7 +562,7 @@ int C_csp_solver::C_MEQ__timestep::operator()(double t_ts_guess /*s*/, double *t
     if (fabs(diff_T_field_cold) > 1.E-3)
     {
         // Set up solver
-        c_solver.settings(1.E-3, 50, mpc_csp_solver->m_T_field_cold_limit, std::numeric_limits<double>::quiet_NaN(), false);
+        c_solver.settings(1.E-3, 50, mpc_csp_solver->m_T_field_cold_limit, mpc_csp_solver->m_T_field_in_hot_limit, false);
 
         C_monotonic_eq_solver::S_xy_pair xy1;
         xy1.x = T_field_cold_guess_1;        //[C]

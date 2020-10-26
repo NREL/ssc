@@ -1122,7 +1122,8 @@ private:
     double m_T_htf_hot_tank_in_min;     //[C] 
 
         // Field-side HTF
-    bool m_T_field_cold_limit;  //[C]
+    double m_T_field_cold_limit;    //[C]
+    double m_T_field_in_hot_limit;  //[C]
 
 		// Reporting and Output Tracking
     bool m_is_first_timestep;           //[-]
