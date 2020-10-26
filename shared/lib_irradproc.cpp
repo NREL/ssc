@@ -88,7 +88,8 @@ solarpos(int year, int month, int day, int hour, double minute, double lat, doub
     {                                 /* Adjust julian day if needed */
         zulu = zulu + 24.0;
         jday = jday - 1;
-    } else if (zulu > 24.0) {
+    }
+    else if (zulu > 24.0) {
         zulu = zulu - 24.0;
         jday = jday + 1;
     }
@@ -154,7 +155,8 @@ solarpos(int year, int month, int day, int hour, double minute, double lat, doub
 
     if (cos(elv) == 0.0) {
         azm = M_PI;         /* Assign azimuth = 180 deg if elv = 90 or -90 */
-    } else {                 /* For solar azimuth in radians per Iqbal */
+    }
+    else {                 /* For solar azimuth in radians per Iqbal */
         arg = ((sin(elv) * sin(lat) - sin(dec)) / (cos(elv) * cos(lat))); /* for azimuth */
         if (arg > 1.0)
             azm = 0.0;              /* Azimuth(radians)*/
@@ -191,12 +193,14 @@ solarpos(int year, int month, int day, int hour, double minute, double lat, doub
         ws = 0.0;
         sunrise = 100.0; //make sunrise and sunset sufficiently large that even if they get rolled by 24 hours, they're still out of the bounds 0-24
         sunset = -100.0;
-    } else if (arg <= -1.0) // No sunset, continuous days
+    }
+    else if (arg <= -1.0) // No sunset, continuous days
     {
         ws = M_PI;
         sunrise = -100.0; //make sunrise and sunset sufficiently large that even if they get rolled by 24 hours, they're still out of the bounds 0-24
         sunset = 100.0;
-    } else {
+    }
+    else {
         ws = acos(arg); // Sunrise hour angle in radians
         // Sunrise and sunset in local standard time
         sunrise = 12.0 - (ws / DTOR) / 15.0 - (lng / 15.0 - tz) - E; //sunrise in units of hours (e.g. 5.25 = 5:15 am)
@@ -1005,7 +1009,8 @@ double topocentric_elevation_angle_corrected(double e0,
     double e = e0 + delta_e;
     if (e > 90.0) {
         e = 90.0;
-    } else if (e < -90.0) {
+    }
+    else if (e < -90.0) {
         e = -90.0;
     }
     return e;
@@ -1074,9 +1079,11 @@ double sun_hour_angle_at_rise_set(double latitude, double delta_zero, double h0_
 
     if (fabs(argument) <= 1) {
         h0 = limit_degrees180(RTOD * (acos(argument)));
-    } else if (argument < -1) {
+    }
+    else if (argument < -1) {
         h0 = RTOD * M_PI;
-    } else if (argument > 1) {
+    }
+    else if (argument > 1) {
         h0 = 0;
     }
 
@@ -1342,7 +1349,8 @@ calculate_eot_and_sun_rise_transit_set(double jme, double tz, double alpha, doub
         needed_values[3] = sunset;//sunrise in local standard time*/
 
 
-    } else {
+    }
+    else {
         double srha = -99999; // if h0 is outside of expected values, sunrise calculations do not occur
         double ssha = -99999;
         double sta = -99999;
@@ -1363,13 +1371,16 @@ solarpos_spa(int year, int month, int day, int hour, double minute, double secon
     if (year >= 1961 && year <= 1986) {
         t = year - 1975;
         delta_t = 45.45 + 1.067 * t - pow(t, 2) / 260 - pow(t, 3) / 718;
-    } else if (year > 1986 && year <= 2005) {
+    }
+    else if (year > 1986 && year <= 2005) {
         t = year - 2000;
         delta_t = 63.86 + 0.3345 * t - .060374 * pow(t, 2) + .0017275 * pow(t, 3) + 0.000651814 * pow(t, 4);
-    } else if (year > 2005 && year <= 2050) {
+    }
+    else if (year > 2005 && year <= 2050) {
         t = year - 2000;
         delta_t = 62.92 + 0.32217 * t + 0.005589 * pow(t, 2);
-    } else {
+    }
+    else {
         t = 0;
         delta_t = 66.7;
     }
@@ -1418,7 +1429,8 @@ solarpos_spa(int year, int month, int day, int hour, double minute, double secon
     if (zen > M_PI) //check for rounding error going from degrees to radians
     {
         zen = M_PI;
-    } else if (zen < 0) {
+    }
+    else if (zen < 0) {
         zen = 0;
     }
 
@@ -1439,10 +1451,12 @@ solarpos_spa(int year, int month, int day, int hour, double minute, double secon
     if (h0_test == (180.0)) {
         sunrise = -100.0;
         sunset = 100.0;
-    } else if (h0_test == 0) {
+    }
+    else if (h0_test == 0) {
         sunrise = 100.0;
         sunset = -100.0;
-    } else {
+    }
+    else {
         sunrise = needed_values_eot[2];
         sunset = needed_values_eot[3];
     }
@@ -1505,14 +1519,16 @@ void incidence(int mode, double tilt, double sazm, double rlim, double zen,
                         rot = azm - xsazm;
                     else
                         rot = azm - xsazm - 2.0 * M_PI;
-                } else        /* For xsazm > pi */
+                }
+                else        /* For xsazm > pi */
                 {
                     if (azm >= xsazm - M_PI)
                         rot = azm - xsazm;
                     else
                         rot = azm - xsazm + 2.0 * M_PI;
                 }
-            } else          /* For other than vertical axis */
+            }
+            else          /* For other than vertical axis */
             {
                 rot = truetrack(azm * 180 / M_PI, zen * 180 / M_PI, tilt, sazm);
                 rot *= M_PI / 180;
@@ -1529,7 +1545,8 @@ void incidence(int mode, double tilt, double sazm, double rlim, double zen,
             if (force_to_stow) {
                 rot = stow_angle_deg * DTOR;
                 //do not report angle difference for backtracking if forced to stow, since this isn't backtracking
-            } else if (en_backtrack) {
+            }
+            else if (en_backtrack) {
                 // TODO: add cross-axis slope angle parameter
                 double backtracking_rotation = backtrack(truetracking_rotation * 180 / M_PI, gcr);
                 backtracking_rotation *= M_PI / 180;
@@ -1756,7 +1773,8 @@ int poaDecomp(double, double angle[], double sun[], double alb, poaDecompReq *pA
 
         GTI_DIRINT(gti, inc, sun[1], angle[1], sun[8], alb, pA->doy, pA->tDew, pA->elev, dn, df, gh, poa);
 
-    } else {
+    }
+    else {
 
         size_t stepsInDay = 24;
         if (pA->stepScale == 'm') {
@@ -1769,7 +1787,8 @@ int poaDecomp(double, double angle[], double sun[], double alb, poaDecompReq *pA
         if (pA->i < noon) { // Calculate morning value
             start = pA->dayStart;
             stop = noon;
-        } else {
+        }
+        else {
             start = noon;
             stop = pA->dayStart + stepsInDay;
         }
@@ -1933,7 +1952,8 @@ perez(double, double dn, double df, double alb, double inc, double tilt, double 
 
             if (diffc != 0) diffc[0] = poa[1]; /* isotropic only */
             return;
-        } else {
+        }
+        else {
             poa[0] = 0;
             poa[1] = df * (1.0 + cos(tilt)) / 2.0;   /* Isotropic diffuse only */
             poa[2] = 0.0;
@@ -1941,7 +1961,8 @@ perez(double, double dn, double df, double alb, double inc, double tilt, double 
             if (diffc != 0) diffc[0] = poa[1]; /* isotropic only */
             return;
         }
-    } else                      /* Zen between 0 and 87.5 deg */
+    }
+    else                      /* Zen between 0 and 87.5 deg */
     {
         CZ = cos(zen);
         ZH = (CZ > 0.0871557) ? CZ : 0.0871557;    /* Maximum of 85 deg */
@@ -1954,13 +1975,15 @@ perez(double, double dn, double df, double alb, double inc, double tilt, double 
                 poa[1] = 0.0;
                 poa[2] = 0.0;
                 return;
-            } else {
+            }
+            else {
                 poa[0] = 0;
                 poa[1] = 0;
                 poa[2] = 0;
                 return;
             }
-        } else                   /* Diffuse is greater than zero */
+        }
+        else                   /* Diffuse is greater than zero */
         {
             ZENITH = zen / DTOR;
             AIRMASS = 1.0 / (CZ + 0.15 * pow(93.9 - ZENITH, -1.253));
@@ -2042,7 +2065,8 @@ irrad::irrad(weather_record wf, weather_header hdr,
     int month_idx = wf.month - 1;
     if (useWeatherFileAlbedo && std::isfinite(wf.alb) && wf.alb > 0 && wf.alb < 1) {
         albedo = wf.alb;
-    } else if (month_idx >= 0 && month_idx < 12) {
+    }
+    else if (month_idx >= 0 && month_idx < 12) {
         albedo = userSpecifiedAlbedo[month_idx];
     }
 
@@ -2337,7 +2361,8 @@ int irrad::calc() {
         solarpos_spa(year, month, day, hour, minute, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation,
                      pressure, temp, tiltDegrees, surfaceAzimuthDegrees, sunAnglesRadians);
         timeStepSunPosition[2] = 1;
-    } else {
+    }
+    else {
         // sun is down, assign sundown values
         solarpos_spa(year, month, day, hour, minute, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation,
                      pressure, temp, tiltDegrees, surfaceAzimuthDegrees, sunAnglesRadians);
@@ -2376,19 +2401,22 @@ int irrad::calc() {
             {
                 calculatedDiffuseHorizontal = diffuseHorizontal;
                 calculatedDirectNormal = directNormal;
-            } else if (radiationMode == irrad::DN_GH) // Total+Beam
+            }
+            else if (radiationMode == irrad::DN_GH) // Total+Beam
             {
                 calculatedDiffuseHorizontal = globalHorizontal - hbeam;
                 if (calculatedDiffuseHorizontal < 0) calculatedDiffuseHorizontal = 0;
                 calculatedDirectNormal = directNormal;
-            } else if (radiationMode == irrad::GH_DF) //Total+Diffuse
+            }
+            else if (radiationMode == irrad::GH_DF) //Total+Diffuse
             {
                 calculatedDiffuseHorizontal = diffuseHorizontal;
                 calculatedDirectNormal = (globalHorizontal - diffuseHorizontal) /
                                          cos(sunAnglesRadians[1]); //compute beam from total, diffuse, and zenith angle
                 if (calculatedDirectNormal > irrad::irradiationMax) calculatedDirectNormal = irrad::irradiationMax;
                 if (calculatedDirectNormal < 0) calculatedDirectNormal = 0;
-            } else
+            }
+            else
                 return -2; // just in case of a weird error
 
 
@@ -2410,7 +2438,8 @@ int irrad::calc() {
                           diffuseIrradianceFront);
                     break;
             }
-        } else { // Sev 2015/09/11 - perform a POA decomp.
+        }
+        else { // Sev 2015/09/11 - perform a POA decomp.
             int errorcode = poaDecomp(weatherFilePOA, surfaceAnglesRadians, sunAnglesRadians, albedo, poaAll,
                                       directNormal, diffuseHorizontal, globalHorizontal, planeOfArrayIrradianceFront,
                                       diffuseIrradianceFront);
@@ -2418,7 +2447,8 @@ int irrad::calc() {
             calculatedDiffuseHorizontal = diffuseHorizontal;
             return errorcode; //this will return 0 if successful, otherwise 40, 41, or 42 if calculated decomposed dni, dhi, or ghi are negative
         }
-    } else {
+    }
+    else {
         globalHorizontal = 0;
         directNormal = 0;
         diffuseHorizontal = 0;
@@ -2617,7 +2647,8 @@ irrad::getGroundShadeFactors(double rowToRow, double verticalHeight, double clea
                 pvBackSurfaceShadeFraction = 1.0;
                 shadowStart = Lc;
                 shadowEnd = Lhc + horizontalLength;
-            } else {
+            }
+            else {
                 pvFrontSurfaceShadeFraction = 1.0;
                 pvBackSurfaceShadeFraction = 0.0;
                 shadowStart = Lhc + horizontalLength;
@@ -2650,7 +2681,8 @@ irrad::getGroundShadeFactors(double rowToRow, double verticalHeight, double clea
         if ((x >= shadingStart1 && x < shadingEnd1) || (x >= shadingStart2 && x < shadingEnd2)) {
             rearGroundShade.push_back(1);
             frontGroundShade.push_back(1);
-        } else {
+        }
+        else {
             rearGroundShade.push_back(0);
             frontGroundShade.push_back(0);
         }
@@ -2678,13 +2710,15 @@ void irrad::getGroundGHI(double transmissionFactor, std::vector<double> rearSkyC
         if (rearGroundShade[i] == 0) {
             // Add beam and circumsolar component if not shaded
             rearGroundGHI[i] += incidentBeam + circumsolarDiffuse;
-        } else {
+        }
+        else {
             // Add beam and circumsolar component transmitted thru module spacing if shaded
             rearGroundGHI[i] += (incidentBeam + circumsolarDiffuse) * transmissionFactor;
         }
         if (frontGroundShade[i] == 0) {
             frontGroundGHI[i] += incidentBeam + circumsolarDiffuse;
-        } else {
+        }
+        else {
             frontGroundGHI[i] += (incidentBeam + circumsolarDiffuse) * transmissionFactor;
         }
     }
@@ -2783,7 +2817,8 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
             if (fabs(projectedX1 - projectedX2) > 0.99 * rowToRow) {
                 // Use average value if projection approximates the rtr
                 actualGroundGHI = averageGroundGHI;
-            } else {
+            }
+            else {
                 projectedX1 = intervals * projectedX1 / rowToRow;
                 projectedX2 = intervals * projectedX2 / rowToRow;
 
@@ -2798,21 +2833,26 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
 
                 if (index1 == index2) {
                     actualGroundGHI = frontGroundGHI[index1];
-                } else {
+                }
+                else {
                     // Sum irradiances on the ground if projects are in different groundGHI elements
                     for (size_t k = index1; k <= index2; k++) {
                         if (k == index1) {
                             actualGroundGHI += frontGroundGHI[k] * (k + 1.0 - projectedX1);
-                        } else if (k == index2) {
+                        }
+                        else if (k == index2) {
                             if (k < intervals) {
                                 actualGroundGHI += frontGroundGHI[k] * (projectedX2 - k);
-                            } else {
+                            }
+                            else {
                                 actualGroundGHI += frontGroundGHI[k - 100] * (projectedX2 - k);
                             }
-                        } else {
+                        }
+                        else {
                             if (k < intervals) {
                                 actualGroundGHI += frontGroundGHI[k];
-                            } else {
+                            }
+                            else {
                                 actualGroundGHI += frontGroundGHI[k - 100];
                             }
                         }
@@ -2839,7 +2879,8 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
         // Fully shaded if >1, no shade if < 0, otherwise fractionally shaded
         if (cellShade > 1.0) {
             cellShade = 1.0;
-        } else if (cellShade < 0.0) {
+        }
+        else if (cellShade < 0.0) {
             cellShade = 0.0;
         }
 
@@ -2948,13 +2989,16 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 
                 if (cellBottom >= projectedX1 - tolerance && cellTop <= projectedX2 + tolerance) {
                     cellLengthSeen = cellTop - cellBottom;
-                } else if (cellBottom <= projectedX1 + tolerance && cellTop >= projectedX2 - tolerance) {
+                }
+                else if (cellBottom <= projectedX1 + tolerance && cellTop >= projectedX2 - tolerance) {
                     cellLengthSeen = projectedX2 - projectedX1;
-                } else if (cellBottom >= projectedX1 - tolerance && projectedX2 > cellBottom - tolerance &&
-                           cellTop >= projectedX2 - tolerance) {
+                }
+                else if (cellBottom >= projectedX1 - tolerance && projectedX2 > cellBottom - tolerance &&
+                         cellTop >= projectedX2 - tolerance) {
                     cellLengthSeen = projectedX2 - cellBottom;
-                } else if (cellBottom <= projectedX1 + tolerance && projectedX1 < cellTop + tolerance &&
-                           cellTop <= projectedX2 + tolerance) {
+                }
+                else if (cellBottom <= projectedX1 + tolerance && projectedX1 < cellTop + tolerance &&
+                         cellTop <= projectedX2 + tolerance) {
                     cellLengthSeen = cellTop - projectedX1;
                 }
 
@@ -2977,7 +3021,8 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
             if (fabs(projectedX1 - projectedX2) > 0.99 * rowToRow) {
                 // Use average value if projection approximates the rtr
                 actualGroundGHI = averageGroundGHI;
-            } else {
+            }
+            else {
                 projectedX1 = intervals * projectedX1 / rowToRow;
                 projectedX2 = intervals * projectedX2 / rowToRow;
 
@@ -2996,28 +3041,35 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
                 if (index1 == index2) {
                     if (index1 < 0) {
                         actualGroundGHI = frontGroundGHI[index1 + 100];
-                    } else {
+                    }
+                    else {
                         actualGroundGHI = rearGroundGHI[index1];
                     }
-                } else {
+                }
+                else {
                     // Sum irradiances on the ground if projects are in different groundGHI elements
                     for (int k = index1; k <= index2; k++) {
                         if (k == index1) {
                             if (k < 0) {
                                 actualGroundGHI += frontGroundGHI[k + intervals] * (k + 1.0 - projectedX1);
-                            } else {
+                            }
+                            else {
                                 actualGroundGHI += rearGroundGHI[k] * (k + 1.0 - projectedX1);
                             }
-                        } else if (k == index2) {
+                        }
+                        else if (k == index2) {
                             if (k < 0) {
                                 actualGroundGHI += frontGroundGHI[k + intervals] * (projectedX2 - k);
-                            } else {
+                            }
+                            else {
                                 actualGroundGHI += rearGroundGHI[k] * (projectedX2 - k);
                             }
-                        } else {
+                        }
+                        else {
                             if (k < 0) {
                                 actualGroundGHI += frontGroundGHI[k + 100];
-                            } else {
+                            }
+                            else {
                                 actualGroundGHI += rearGroundGHI[k];
                             }
                         }
@@ -3042,7 +3094,8 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
         // Fully shaded if >1, no shade if < 0, otherwise fractionally shaded
         if (cellShade > 1.0) {
             cellShade = 1.0;
-        } else if (cellShade < 0.0) {
+        }
+        else if (cellShade < 0.0) {
             cellShade = 0.0;
         }
 
@@ -3470,7 +3523,8 @@ ModifiedDISC(const double g[3], const double z[3], double td, double alt, int do
             a = 0.512 - 1.56 * kt[1] + 2.286 * pow(kt[1], 2.0) - 2.22 * pow(kt[1], 3.0);
             b = 0.37 + 0.962 * kt[1];
             c = -0.28 + 0.932 * kt[1] - 2.048 * pow(kt[1], 2.0);
-        } else {
+        }
+        else {
             a = -5.743 + 21.77 * kt[1] - 27.49 * pow(kt[1], 2.0) + 11.56 * pow(kt[1], 3.0);
             b = 41.40 - 118.5 * kt[1] + 66.05 * pow(kt[1], 2.0) + 31.9 * pow(kt[1], 3.0);
             c = -47.01 + 184.2 * kt[1] - 222.0 * pow(kt[1], 2.0) + 73.81 * pow(kt[1], 3.0);
@@ -3548,7 +3602,8 @@ ModifiedDISC(const double kt[3], const double kt1[3], const double g[3], const d
             a = 0.512 - 1.56 * kt[1] + 2.286 * pow(kt[1], 2.0) - 2.22 * pow(kt[1], 3.0);
             b = 0.37 + 0.962 * kt[1];
             c = -0.28 + 0.932 * kt[1] - 2.048 * pow(kt[1], 2.0);
-        } else {
+        }
+        else {
             a = -5.743 + 21.77 * kt[1] - 27.49 * pow(kt[1], 2.0) + 11.56 * pow(kt[1], 3.0);
             b = 41.40 - 118.5 * kt[1] + 66.05 * pow(kt[1], 2.0) + 31.9 * pow(kt[1], 3.0);
             c = -47.01 + 184.2 * kt[1] - 222.0 * pow(kt[1], 2.0) + 73.81 * pow(kt[1], 3.0);
