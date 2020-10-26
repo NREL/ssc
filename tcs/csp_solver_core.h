@@ -1109,7 +1109,11 @@ private:
 	double m_cycle_x_hot_des;			//[-]
 	double m_m_dot_pc_des;				//[kg/hr]
 	double m_m_dot_pc_min;				//[kg/hr]
-	double m_m_dot_pc_max;				//[kg/hr]
+
+    // Max operating mass flow is dependent on ambient temperature and calculated every timestep
+    double m_m_dot_pc_max;              //[kg/hr]
+    // Max startup mass flow is always constant
+    double m_m_dot_pc_max_startup;      //[kg/hr]
 
 		// Storage logic
 	bool m_is_tes;			    //[-] True: plant has storage
