@@ -217,8 +217,14 @@ void BatteryPowerFlow::calculateACConnected()
     double P_inverter_draw_ac = m_BatteryPower->powerPVInverterDraw;
     double P_load_ac = m_BatteryPower->powerLoad;
     double P_system_loss_ac = m_BatteryPower->powerSystemLoss;
-    double P_pv_to_batt_ac, P_grid_to_batt_ac, P_batt_to_load_ac, P_grid_to_load_ac, P_pv_to_load_ac, P_pv_to_grid_ac, P_batt_to_grid_ac, P_gen_ac, P_grid_ac, P_grid_to_batt_loss_ac, P_batt_to_load_loss_ac, P_batt_to_grid_loss_ac, P_pv_to_batt_loss_ac, P_fuelcell_to_batt_ac, P_fuelcell_to_load_ac, P_fuelcell_to_grid_ac, P_available_pv, P_batt_to_system_loss, P_batt_to_system_loss_conversion_loss;
-    P_pv_to_batt_ac = P_grid_to_batt_ac = P_batt_to_load_ac = P_grid_to_load_ac = P_pv_to_load_ac = P_pv_to_grid_ac = P_batt_to_grid_ac = P_gen_ac = P_grid_ac = P_grid_to_batt_loss_ac = P_batt_to_load_loss_ac = P_batt_to_grid_loss_ac = P_pv_to_batt_loss_ac = P_fuelcell_to_batt_ac = P_fuelcell_to_load_ac = P_fuelcell_to_grid_ac = P_available_pv = P_batt_to_system_loss = P_batt_to_system_loss_conversion_loss = 0;
+    double P_pv_to_batt_ac, P_grid_to_batt_ac, P_fuelcell_to_batt_ac,
+        P_batt_to_load_ac, P_grid_to_load_ac, P_pv_to_load_ac, P_fuelcell_to_load_ac, P_available_pv,
+        P_pv_to_grid_ac, P_batt_to_grid_ac, P_fuelcell_to_grid_ac, P_gen_ac, P_grid_ac,
+        P_grid_to_batt_loss_ac, P_batt_to_load_loss_ac, P_batt_to_grid_loss_ac, P_pv_to_batt_loss_ac, P_batt_to_system_loss, P_batt_to_system_loss_conversion_loss;
+    P_pv_to_batt_ac = P_grid_to_batt_ac = P_fuelcell_to_batt_ac =
+        P_batt_to_load_ac = P_grid_to_load_ac = P_pv_to_load_ac = P_fuelcell_to_load_ac = P_available_pv =
+        P_pv_to_grid_ac = P_batt_to_grid_ac = P_fuelcell_to_grid_ac = P_gen_ac = P_grid_ac =
+        P_grid_to_batt_loss_ac = P_batt_to_load_loss_ac = P_batt_to_grid_loss_ac = P_pv_to_batt_loss_ac = P_batt_to_system_loss = P_batt_to_system_loss_conversion_loss = 0;
 
     // convert the calculated DC power to AC, considering the microinverter efficiences
     double P_battery_ac = 0;
@@ -259,7 +265,7 @@ void BatteryPowerFlow::calculateACConnected()
             }
         }
         // Apply PV to losses if possible, grid (via gen) if not
-        bool pv_handles_losses = P_pv_to_batt_ac > 0 || (P_available_pv > 0.0 && P_system_loss_ac > 0.0);
+        bool pv_handles_losses = P_pv_to_batt_ac > 0 || P_available_pv > 0.0;
 
         // Fuelcell can also charge battery
         if (m_BatteryPower->canFuelCellCharge) {
@@ -361,8 +367,12 @@ void BatteryPowerFlow::calculateDCConnected()
 {
     // Quantities are AC in KW unless otherwise specified
     double P_load_ac = m_BatteryPower->powerLoad;
-    double P_battery_ac, P_pv_ac, P_gen_ac, P_pv_to_batt_ac, P_grid_to_batt_ac, P_batt_to_load_ac, P_grid_to_load_ac, P_pv_to_load_ac, P_pv_to_grid_ac, P_batt_to_grid_ac, P_grid_ac, P_conversion_loss_ac;
-    P_battery_ac = P_pv_ac = P_pv_to_batt_ac = P_grid_to_batt_ac = P_batt_to_load_ac = P_grid_to_load_ac = P_pv_to_load_ac = P_pv_to_grid_ac = P_batt_to_grid_ac = P_gen_ac = P_grid_ac = P_conversion_loss_ac = 0;
+    double P_battery_ac, P_pv_ac, P_gen_ac, P_pv_to_batt_ac, P_grid_to_batt_ac, 
+        P_batt_to_load_ac, P_grid_to_load_ac, P_pv_to_load_ac,
+        P_pv_to_grid_ac, P_batt_to_grid_ac, P_grid_ac, P_conversion_loss_ac;
+    P_battery_ac = P_pv_ac = P_gen_ac = P_pv_to_batt_ac = P_grid_to_batt_ac =
+        P_batt_to_load_ac = P_grid_to_load_ac = P_pv_to_load_ac =
+        P_pv_to_grid_ac = P_batt_to_grid_ac =  P_grid_ac = P_conversion_loss_ac = 0;
 
     // Quantities are DC in KW unless otherwise specified
     double P_pv_to_batt_dc, P_grid_to_batt_dc, P_pv_to_inverter_dc;

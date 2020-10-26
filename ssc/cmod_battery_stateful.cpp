@@ -145,7 +145,7 @@ var_info vtab_battery_state[] = {
         { SSC_INOUT,        SSC_NUMBER,     "dq_relative_calendar_old",  "Change in capacity of last time step",                     "%",         "",                     "StateCell",        "",                           "",                               ""  },
 
         // losses
-        { SSC_INOUT,        SSC_NUMBER,     "loss_kw",                   "Ancillary power loss",                                     "kW",         "",                     "StatePack",          "",                           "",                               ""  },
+        { SSC_INOUT,        SSC_NUMBER,     "loss_kw",                   "Ancillary power loss (kW DC for DC connected, AC for AC connected)", "kW", "",                  "StatePack",          "",                           "",                               ""  },
 
         // replacements
         { SSC_INOUT,        SSC_NUMBER,     "n_replacements",            "Number of replacements at current year",                   "",         "",                      "StatePack",     "",                           "",                               ""  },

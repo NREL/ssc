@@ -382,6 +382,9 @@ public:
     // Get estimated losses
     double calculate_loss(double power, size_t lifetimeIndex);
 
+    // Get the losses at the current step
+    double getLoss();
+
     battery_state get_state();
 
     battery_params get_params();

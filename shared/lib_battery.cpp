@@ -732,6 +732,10 @@ double battery_t::calculate_loss(double power, size_t lifetimeIndex) {
     }
 }
 
+double battery_t::getLoss() {
+    return losses->getLoss();
+}
+
 battery_state battery_t::get_state() { return *state; }
 
 battery_params battery_t::get_params() { return *params; }
