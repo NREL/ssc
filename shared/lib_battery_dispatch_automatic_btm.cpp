@@ -253,12 +253,15 @@ void dispatch_automatic_behind_the_meter_t::update_dispatch(size_t year, size_t 
 	}
 	else
 	{
-		m_batteryPower->powerBatteryTarget = _P_battery_use[idx % (8760 *_steps_per_hour)];
-        if (m_batteryPower->connectionMode == AC_CONNECTED){
-            if (m_batteryPower->powerBatteryTarget < 0)
-                m_batteryPower->powerBatteryTarget *= m_batteryPower->singlePointEfficiencyDCToAC;
-            else
-                m_batteryPower->powerBatteryTarget /= m_batteryPower->singlePointEfficiencyDCToAC;
+        // extract input power by modifying lifetime index to year 1
+        m_batteryPower->powerBatteryTarget = _P_battery_use[idx % (8760 * _steps_per_hour)];
+        double loss_kw = _Battery->calculate_loss(m_batteryPower->powerBatteryTarget, idx); // Battery is responsible for covering discharge losses
+        if (m_batteryPower->connectionMode == AC_CONNECTED) {
+            m_batteryPower->powerBatteryTarget = m_batteryPower->adjustForACEfficiencies(m_batteryPower->powerBatteryTarget, loss_kw);
+        }
+        else if (m_batteryPower->powerBatteryTarget > 0) {
+            // Adjust for DC discharge losses
+            m_batteryPower->powerBatteryTarget += loss_kw;
         }
 	}
 

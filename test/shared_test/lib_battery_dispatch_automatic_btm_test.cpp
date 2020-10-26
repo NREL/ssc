@@ -620,3 +620,71 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMPVChargeAndDischargeSmal
         EXPECT_NEAR(batteryPower->powerBatteryDC, expectedPower[h], 0.5) << " error in expected at hour " << h;
     }
 }
+
+TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMCustomDispatch) {
+    double dtHour = 1;
+    CreateBattery(dtHour);
+
+    dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice,
+        max_current,
+        max_current, max_power, max_power, max_power, max_power,
+        0, dispatch_t::BTM_MODES::CUSTOM_DISPATCH, 0, 1, 24, 1, true,
+        true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost);
+
+    // Setup custom dispatch signal - signal and expected AC power are the same without losses
+    std::vector<double> expectedPower = { 0, 0, 0, 0, 0, 0, 0, -50, -50, -50, -50, -50, -1.63, 0, 0, 0, 0, 0, 0, 9.479, 9.479,
+                                     9.479, 9.479, 9.479, 9.479, 9.479, 9.479 };
+    dispatchAutoBTM->set_custom_dispatch(expectedPower);
+    
+
+    batteryPower = dispatchAutoBTM->getBatteryPower();
+    batteryPower->connectionMode = ChargeController::AC_CONNECTED;
+
+    for (size_t h = 0; h < 24; h++) {
+        batteryPower->powerLoad = 30;
+        batteryPower->powerPV = 0;
+        if (h > 6 && h < 18) {
+            batteryPower->powerPV = 100; // Match the predicted PV
+        }
+        else if (h > 18) {
+            batteryPower->powerLoad = 40; // Match the predicted load
+        }
+        dispatchAutoBTM->dispatch(0, h, 0);
+        EXPECT_NEAR(batteryPower->powerBatteryAC, expectedPower[h], 0.5) << " error in expected at hour " << h;
+    }
+}
+
+TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMCustomDispatchWithLosses) {
+    double dtHour = 1;
+    CreateBatteryWithLosses(dtHour);
+
+    dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice,
+        max_current,
+        max_current, max_power, max_power, max_power, max_power,
+        0, dispatch_t::BTM_MODES::CUSTOM_DISPATCH, 0, 1, 24, 1, true,
+        true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost);
+
+    // Setup custom dispatch signal - need to account for losses when discharging
+    std::vector<double> dispatchedPower = { 0, 0, 0, 0, 0, 0, 0, -50, -50, -50, -50, -50, -1.63, 0, 0, 0, 0, 0, 0, 9.479, 9.479,
+                                     9.479, 9.479, 9.479, 9.479, 9.479, 9.479 };
+    std::vector<double> expectedPower = { 0, 0, 0, 0, 0, 0, 0, -50, -50, -50, -50, -50, -1.63, 0, 0, 0, 0, 0, 0, 11.479, 11.479,
+                                         11.479, 11.479, 11.479, 11.479, 11.479, 11.479 };
+    dispatchAutoBTM->set_custom_dispatch(dispatchedPower);
+
+
+    batteryPower = dispatchAutoBTM->getBatteryPower();
+    batteryPower->connectionMode = ChargeController::AC_CONNECTED;
+
+    for (size_t h = 0; h < 24; h++) {
+        batteryPower->powerLoad = 30;
+        batteryPower->powerPV = 0;
+        if (h > 6 && h < 18) {
+            batteryPower->powerPV = 100; // Match the predicted PV
+        }
+        else if (h > 18) {
+            batteryPower->powerLoad = 40; // Match the predicted load
+        }
+        dispatchAutoBTM->dispatch(0, h, 0);
+        EXPECT_NEAR(batteryPower->powerBatteryAC, expectedPower[h], 0.5) << " error in expected at hour " << h;
+    }
+}
