@@ -569,32 +569,31 @@ TEST_F(lib_battery_test, HourlyVsSubHourly)
 }
 
 TEST_F(lib_battery_test, AugmentCapacity) {
-    std::vector<int> replacement_schedule = {1, 1, 1};
     std::vector<double> augmentation_percent = {50, 40, 30};
-    batteryModel->setupReplacements(replacement_schedule, augmentation_percent);
+    batteryModel->setupReplacements(augmentation_percent);
 
     // Correct future approach for augmenting batteries, by treating as separate entities
     std::vector<battery_t *> batteries;
     batteries.push_back(new battery_t(*batteryModel));
 
     batteries.push_back(new battery_t(*batteryModel));
-    batteries[1]->setupReplacements(replacement_schedule, augmentation_percent);
+    batteries[1]->setupReplacements(augmentation_percent);
 
     batteries.push_back(new battery_t(*batteryModel));
-    batteries[2]->setupReplacements(replacement_schedule, augmentation_percent);
+    batteries[2]->setupReplacements(augmentation_percent);
 
     size_t i = 0;
     double I = 100;
     double mult = 1.0;
     size_t replaceCount = 0;
-    for (size_t y = 0; y < replacement_schedule.size(); y++) {
+    for (size_t y = 0; y < augmentation_percent.size(); y++) {
         for (size_t t = 0; t < 8760; t++) {
             mult = fmod(t, 2) == 0 ? 1 : -1;
             double current = mult * I;
             batteries[replaceCount]->runReplacement(y, t, 0);
             batteries[replaceCount]->run(i, current);
         }
-        if (replacement_schedule[y] == 1) {
+        if (augmentation_percent[y] > 0) {
             replaceCount++;
         }
     }
