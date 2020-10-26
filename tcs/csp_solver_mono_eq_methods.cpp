@@ -751,7 +751,7 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
             // max: not allowing TES CH, so all field m_dot must go to pc
             // min: can't send more to pc than field + dc
             double m_dot_to_pc_max = fmin(mpc_csp_solver->m_m_dot_pc_max, m_dot_tes_dc + m_dot_field_out);
-            m_m_dot_pc_in = m_dot_field_out + f_m_dot_tes*fmax(0.0, m_dot_to_pc_max - m_dot_field_out);
+            m_m_dot_pc_in = m_dot_field_out + fmin(0.99999,f_m_dot_tes)*fmax(0.0, m_dot_to_pc_max - m_dot_field_out);
         }
         else if (m_solver_mode == E__CR_OUT__ITER_M_DOT_SU_CH_ONLY || m_solver_mode == E__CR_OUT__ITER_Q_DOT_TARGET_CH_ONLY)
         {
@@ -765,7 +765,7 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
             // max: need to send enough mass flow to pc so TES doesn't overcharge
             double m_dot_to_tes_max = fmin(m_dot_field_out, m_dot_hot_to_tes_est);
             double m_dot_to_tes_min = fmax(m_dot_field_out - mpc_csp_solver->m_m_dot_pc_max, 0.0);
-            double m_dot_to_tes = m_dot_to_tes_max - f_m_dot_tes * fmax(0.0, m_dot_to_tes_max - m_dot_to_tes_min);
+            double m_dot_to_tes = m_dot_to_tes_max - fmin(0.99999,f_m_dot_tes)* fmax(0.0, m_dot_to_tes_max - m_dot_to_tes_min);
 
             m_m_dot_pc_in = m_dot_field_out - m_dot_to_tes;
         }
@@ -813,7 +813,7 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
         }
         else if (m_solver_mode == E__TO_PC_PLUS_TES_FULL__ITER_M_DOT_SU)
         {
-            m_m_dot_pc_in = f_m_dot_tes * mpc_csp_solver->m_m_dot_pc_max;
+            m_m_dot_pc_in = fmin(0.99999, f_m_dot_tes) * mpc_csp_solver->m_m_dot_pc_max;
         }
 
         if (m_m_dot_pc_in > mpc_csp_solver->m_m_dot_pc_max)
@@ -831,7 +831,7 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
         }
         else if (m_solver_mode == E__TO_PC__ITER_M_DOT_SU)
         {
-            m_m_dot_pc_in = f_m_dot_tes * mpc_csp_solver->m_m_dot_pc_max;
+            m_m_dot_pc_in = fmin(0.99999, f_m_dot_tes) * mpc_csp_solver->m_m_dot_pc_max;
         }
 
         if (m_m_dot_pc_in > mpc_csp_solver->m_m_dot_pc_max)
