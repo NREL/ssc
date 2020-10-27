@@ -267,7 +267,7 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_net_metering_credits_in_may_with_r
     EXPECT_NEAR(0, may_dollars, 0.1);
 
     float june_dollars = excess_dollars[credit_month + 1];
-    EXPECT_NEAR(50.28, june_dollars, 0.1);
+    EXPECT_NEAR(11.37, june_dollars, 0.1);
 
     int nrows;
     int ncols;

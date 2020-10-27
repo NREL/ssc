@@ -193,7 +193,6 @@ struct batt_variables
 
 	/* Battery replacement options */
 	int batt_replacement_option;
-	std::vector<int> batt_replacement_schedule;
 	std::vector<double> batt_replacement_schedule_percent;
 
 	/* Battery cycle costs */

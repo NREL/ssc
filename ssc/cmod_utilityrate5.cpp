@@ -1736,7 +1736,6 @@ public:
 								}
 								monthly_ec_charges[m] += charge_amt;
 
-
 								// monthly rollover with year end sell at reduced rate
 								if (enable_nm)
 								{
@@ -1787,6 +1786,15 @@ public:
 			ssc_number_t dollars_applied = 0;
 			if (enable_nm)
 			{
+                if (rollover_credit && m == net_metering_credit_month)
+                {
+                    ssc_number_t year_end_dollars = monthly_cumulative_excess_energy[m] * as_number("ur_nm_yearend_sell_rate") * rate_esc;
+                    payment[c - 1] -= year_end_dollars;
+                    monthly_ec_charges[m] -= year_end_dollars;
+                    excess_dollars_earned[m] += year_end_dollars;
+                    dollars_applied += year_end_dollars;
+                }
+
 				// apply previous month rollover kwhs
 				if (m > 0 && (m != (net_metering_credit_month + 1) || rollover_credit))
 				{
@@ -1804,7 +1812,7 @@ public:
 //				if (monthly_bill[m] < 0)
 				if (monthly_ec_charges[m] < 0)
 				{
-					if (excess_monthly_dollars)
+					if (excess_monthly_dollars || rollover_credit)
 					{
 						monthly_cumulative_excess_dollars[m] -= monthly_ec_charges[m];
 						//						monthly_cumulative_excess_dollars[m] -= monthly_bill[m];
@@ -1821,7 +1829,7 @@ public:
 					if (monthly_ec_charges[m] < 0)
 					{
 						payment[c - 1] -= monthly_cumulative_excess_dollars[m] + monthly_ec_charges[m];
-						if (excess_monthly_dollars)
+						if (excess_monthly_dollars || rollover_credit)
 						{
 //							monthly_cumulative_excess_dollars[m] = -monthly_bill[m];
 							dollars_applied += monthly_cumulative_excess_dollars[m] + monthly_ec_charges[m];
@@ -1904,20 +1912,13 @@ public:
 								if (enable_nm)
 								{
 									// monthly rollover with year end sell at reduced rate
-									if (!excess_monthly_dollars && (monthly_cumulative_excess_energy[m] > 0))
+									if (!excess_monthly_dollars && (monthly_cumulative_excess_energy[m] > 0) && !rollover_credit)
 									{
 										ssc_number_t year_end_dollars = monthly_cumulative_excess_energy[m] * as_number("ur_nm_yearend_sell_rate")*rate_esc;
 										monthly_cumulative_excess_dollars[m] = year_end_dollars;
 										excess_dollars_earned[m] += year_end_dollars;
-										if (!rollover_credit) {
-											excess_dollars_applied[m] += year_end_dollars;
-											income[c] += year_end_dollars;
-										}
-										else if (m < 11) {
-											excess_dollars_applied[m + 1] += year_end_dollars;
-											int future_income = c + util::nday[m + 1] * 24 * steps_per_hour; // Apply income to next month
-											income[future_income] += year_end_dollars;
-										}
+										excess_dollars_applied[m] += year_end_dollars;
+										income[c] += year_end_dollars;
 									}
 									else if (excess_monthly_dollars && (monthly_cumulative_excess_dollars[m] > 0))
 									{

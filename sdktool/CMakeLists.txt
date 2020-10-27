@@ -16,16 +16,6 @@ set(SDKTOOL_SRC
 
 #####################################################################################################################
 #
-# Compile Options per Platform
-#
-#####################################################################################################################
-
-set_default_compile_options()
-set_tools_compile_options()
-
-
-#####################################################################################################################
-#
 # Packages
 #
 #####################################################################################################################
@@ -68,6 +58,9 @@ set_target_properties(SDKtool
     DEBUG_POSTFIX "d"
 	PREFIX ""
 	)
+
+set_default_compile_options(SDKtool)
+set_tools_compile_options(SDKtool)
 
 if (APPLE)
 	set_target_properties(SDKtool PROPERTIES

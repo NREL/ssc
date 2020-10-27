@@ -14,15 +14,6 @@ set(TCSCONSOLE_SRC
 
 #####################################################################################################################
 #
-# Compile Options per Platform
-#
-#####################################################################################################################
-
-set_default_compile_options()
-set_tools_compile_options()
-
-#####################################################################################################################
-#
 # Packages
 #
 #####################################################################################################################
@@ -63,6 +54,9 @@ set_target_properties(TCSConsole
     DEBUG_POSTFIX "d"
 	PREFIX ""
 	)
+
+set_default_compile_options(TCSConsole)
+set_tools_compile_options(TCSConsole)
 
 if (APPLE)
 	set_target_properties(TCSConsole PROPERTIES
