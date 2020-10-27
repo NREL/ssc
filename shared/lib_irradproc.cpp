@@ -2018,7 +2018,7 @@ void irrad::setup()
 {
     year = month = day = hour = -999;
     minute = delt = latitudeDegrees = longitudeDegrees = timezone = -999;
-    elevation = pressure = temp = -999;
+    elevation = pressure = tamb = -999;
     globalHorizontal = directNormal = diffuseHorizontal = -999;
 
     for (int i = 0; i < 9; i++) {
@@ -2177,11 +2177,11 @@ void irrad::set_location(double latDegrees, double longDegrees, double tz)
     this->timezone = tz;
 }
 
-void irrad::set_optional(double elev, double pres, double tdry) //defaults of 0 meters elevation, atmospheric pressure, 15°C average annual temperature
+void irrad::set_optional(double elev, double pres, double t_amb) //defaults of 0 meters elevation, atmospheric pressure, 15°C average annual temperature
 {
     this->elevation = elev;
     this->pressure = pres;
-    this->temp = tdry;
+    this->tamb = t_amb;
 }
 
 void irrad::set_sky_model(int sm, double alb)
@@ -2261,7 +2261,7 @@ int irrad::calc()
     double t_cur = hour + minute / 60.0;
 
     // calculate sunrise and sunset hours in local standard time for the current day
-    solarpos_spa(year, month, day, 12, 0.0, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation, pressure, temp, tiltDegrees, surfaceAzimuthDegrees, sunAnglesRadians);
+    solarpos_spa(year, month, day, 12, 0.0, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation, pressure, tamb, tiltDegrees, surfaceAzimuthDegrees, sunAnglesRadians);
 
     double t_sunrise = sunAnglesRadians[4];
     double t_sunset = sunAnglesRadians[5];
@@ -2272,11 +2272,11 @@ int irrad::calc()
     {
         double sunanglestemp[9];
         if (day > 1) //simply decrement day during month
-            solarpos_spa(year, month, day - 1, 12, 0.0, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation, pressure, temp, tiltDegrees, surfaceAzimuthDegrees, sunanglestemp);
+            solarpos_spa(year, month, day - 1, 12, 0.0, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation, pressure, tamb, tiltDegrees, surfaceAzimuthDegrees, sunanglestemp);
         else if (month > 1) //on the 1st of the month, need to switch to the last day of previous month
-            solarpos_spa(year, month - 1, __nday[month - 2], 12, 0.0, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation, pressure, temp, tiltDegrees, surfaceAzimuthDegrees, sunanglestemp);
+            solarpos_spa(year, month - 1, __nday[month - 2], 12, 0.0, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation, pressure, tamb, tiltDegrees, surfaceAzimuthDegrees, sunanglestemp);
         else //on the first day of the year, need to switch to Dec 31 of last year
-            solarpos_spa(year - 1, 12, 31, 12, 0.0, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation, pressure, temp, tiltDegrees, surfaceAzimuthDegrees, sunanglestemp);
+            solarpos_spa(year - 1, 12, 31, 12, 0.0, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation, pressure, tamb, tiltDegrees, surfaceAzimuthDegrees, sunanglestemp);
         //on the last day of endless days, sunset is returned as 100 (hour angle too large for calculation), so use today's sunset time as a proxy
         if (sunanglestemp[5] == 100.0)
             t_sunset -= 24.0;
@@ -2289,11 +2289,11 @@ int irrad::calc()
     {
         double sunanglestemp[9];
         if (day < __nday[month - 1]) //simply increment the day during the month, month is 1-indexed and __nday is 0-indexed
-            solarpos_spa(year, month, day + 1, 12, 0.0, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation, pressure, temp, tiltDegrees, surfaceAzimuthDegrees, sunanglestemp);
+            solarpos_spa(year, month, day + 1, 12, 0.0, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation, pressure, tamb, tiltDegrees, surfaceAzimuthDegrees, sunanglestemp);
         else if (month < 12) //on the last day of the month, need to switch to the first day of the next month
-            solarpos_spa(year, month + 1, 1, 12, 0.0, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation, pressure, temp, tiltDegrees, surfaceAzimuthDegrees, sunanglestemp);
+            solarpos_spa(year, month + 1, 1, 12, 0.0, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation, pressure, tamb, tiltDegrees, surfaceAzimuthDegrees, sunanglestemp);
         else //on the last day of the year, need to switch to Jan 1 of the next year
-            solarpos_spa(year + 1, 1, 1, 12, 0.0, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation, pressure, temp, tiltDegrees, surfaceAzimuthDegrees, sunanglestemp);
+            solarpos_spa(year + 1, 1, 1, 12, 0.0, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation, pressure, tamb, tiltDegrees, surfaceAzimuthDegrees, sunanglestemp);
         //on the last day of endless days, sunrise would be returned as -100 (hour angle too large for calculations), so use today's sunrise time as a proxy
         if (sunanglestemp[4] == -100.0)
             t_sunrise += 24.0;
@@ -2313,7 +2313,7 @@ int irrad::calc()
         timeStepSunPosition[0] = hr_calc;
         timeStepSunPosition[1] = (int)min_calc;
 
-        solarpos_spa(year, month, day, hr_calc, min_calc, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation, pressure, temp, tiltDegrees, surfaceAzimuthDegrees, sunAnglesRadians);
+        solarpos_spa(year, month, day, hr_calc, min_calc, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation, pressure, tamb, tiltDegrees, surfaceAzimuthDegrees, sunAnglesRadians);
 
         timeStepSunPosition[2] = 2;
     }
@@ -2327,7 +2327,7 @@ int irrad::calc()
         timeStepSunPosition[0] = hr_calc;
         timeStepSunPosition[1] = (int)min_calc;
 
-        solarpos_spa(year, month, day, hr_calc, min_calc, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation, pressure, temp, tiltDegrees, surfaceAzimuthDegrees, sunAnglesRadians);
+        solarpos_spa(year, month, day, hr_calc, min_calc, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation, pressure, tamb, tiltDegrees, surfaceAzimuthDegrees, sunAnglesRadians);
 
         timeStepSunPosition[2] = 3;
     }
@@ -2337,13 +2337,13 @@ int irrad::calc()
     {
         timeStepSunPosition[0] = hour;
         timeStepSunPosition[1] = (int)minute;
-        solarpos_spa(year, month, day, hour, minute, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation, pressure, temp, tiltDegrees, surfaceAzimuthDegrees, sunAnglesRadians);
+        solarpos_spa(year, month, day, hour, minute, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation, pressure, tamb, tiltDegrees, surfaceAzimuthDegrees, sunAnglesRadians);
         timeStepSunPosition[2] = 1;
     }
     else
     {
         // sun is down, assign sundown values
-        solarpos_spa(year, month, day, hour, minute, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation, pressure, temp, tiltDegrees, surfaceAzimuthDegrees, sunAnglesRadians);
+        solarpos_spa(year, month, day, hour, minute, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation, pressure, tamb, tiltDegrees, surfaceAzimuthDegrees, sunAnglesRadians);
         timeStepSunPosition[0] = hour;
         timeStepSunPosition[1] = (int)minute;
         timeStepSunPosition[2] = 0;

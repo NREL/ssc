@@ -46,7 +46,6 @@ static var_info _cm_vtab_pvwattsv1_1ts[] = {
         { SSC_INPUT,        SSC_NUMBER,      "wspd",                     "Wind speed",                                  "m/s",    "",                        "PVWatts",      "*",                       "",                          "" },
         { SSC_INPUT,        SSC_NUMBER,      "snow",                     "Snow cover",                                  "cm",     "",                        "PVWatts",      "?=0",                     "",                          "" },
         { SSC_INPUT,        SSC_NUMBER,      "elevation",                "Elevation",                                   "m",      "",                        "PVWatts",      "?",                       "",                          "" },
-        { SSC_INPUT,        SSC_NUMBER,      "dry_temperature",          "Dry Temperature",                             "°C",     "",                        "PVWatts",      "?",                       "",                          "" },
         { SSC_INPUT,        SSC_NUMBER,      "pressure",                 "Pressure",                                    "millibars","",                      "PVWatts",      "?",                       "",                          "" },
 
         { SSC_INPUT,        SSC_NUMBER,      "time_step",                "Time step of input data",                     "hr",    "",                         "PVWatts",      "?=1",                     "POSITIVE",                  "" },
@@ -122,15 +121,6 @@ public:
                 throw exec_error("pvwattsv1_1ts", "The elevation input is outside of the expected range. Please make sure that the units are in meters");
             }
         }
-        if (!is_assigned("dry_temperature")) {
-            tdry = 15; //assume 15°C average annual temperature if none is provided
-        }
-        else {
-            tdry = as_double("dry_temperature");
-            if (tdry > 128 || tdry < -50) {
-                throw exec_error("pvwattsv1_1ts", "The annual average temperature input is outside of the expected range. Please make sure that the units are in degrees Celsius");
-            }
-        }
         if (!is_assigned("pressure")) {
             pres = 1013.25; //assume 1013.24 millibars site pressure if none is provided
         }
@@ -185,7 +175,7 @@ public:
         irrad irr;
         irr.set_time(year, month, day, hour, minute, IRRADPROC_NO_INTERPOLATE_SUNRISE_SUNSET);
         irr.set_location(lat, lon, tz);
-        irr.set_optional(elev, pres, tdry);
+        irr.set_optional(elev, pres, tamb);
 
         double alb = 0.2;
         if (snow > 0 && snow < 150)

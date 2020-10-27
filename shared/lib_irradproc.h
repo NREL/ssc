@@ -705,7 +705,7 @@ void calculate_eot_and_sun_rise_transit_set(double jme, double tz, double alpha,
 * \param[in] dut1 fractional second difference between UTC and UT which is used to adjust UTC for earth's irregular rotation rate (http://maia.usno.navy.mil/ser7/ser7.dat) (-1 to 1 second)
 * \param[in] alt altitude in meters
 * \param[in] pressure pressure in millibars
-* \param[in] temp temperature in degrees C
+* \param[in] temp ambient temperature (dry-bulb temperature) in degrees C
 * \param[in] tilt tilt angle of surface for angle of incidence calculation (degrees)
 * \param[in] azm_rotation azimuth rotation of surface (surface azimuth measured from south?)
 * \param[out] sunn array of elements to return sun parameters to calling function
@@ -919,7 +919,7 @@ protected:
     double timezone;				///< time zone, west longitudes negative
     double elevation;               // site elevation (meters)
     double pressure;
-    double temp;
+    double tamb;
 
     // Model settings
     int skyModel;					///< sky model selection as defined in \link Irradiance_IO::SKYMODEL 
@@ -995,7 +995,7 @@ public:
     void set_location(double lat, double lon, double tz);
 
     // Set optional parameters for solarpos_spa calculation
-    void set_optional(double elev = 0, double pres = 1013.25, double tdry = 15);
+    void set_optional(double elev = 0, double pres = 1013.25, double t_amb = 15);
 
     /// Set the sky model for the irradiance processor, using \link Irradiance_IO::SKYMODEL 
     void set_sky_model(int skymodel, double albedo);
