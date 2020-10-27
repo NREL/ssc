@@ -910,10 +910,12 @@ public:
 			TES_Q_DOT_DC,         //[MWt] TES discharge thermal power
 			TES_Q_DOT_CH,         //[MWt] TES charge thermal power
 			TES_E_CH_STATE,       //[MWht] TES charge state at the end of the time step
-			M_DOT_CR_TO_TES_HOT,  //[kg/s] 
+			M_DOT_CR_TO_TES_HOT,  //[kg/s]
+            M_DOT_CR_TO_TES_COLD, //[kg/s]
 			M_DOT_TES_HOT_OUT,    //[kg/s]
 			M_DOT_PC_TO_TES_COLD, //[kg/s]
 			M_DOT_TES_COLD_OUT,   //[kg/s]
+            M_DOT_TES_COLD_IN,    //[kg/s]
 			M_DOT_FIELD_TO_CYCLE, //[kg/s]
 			M_DOT_CYCLE_TO_FIELD, //[kg/s]
 			//TES_M_DOT_DC,         //[MWt] TES discharge mass flow rate

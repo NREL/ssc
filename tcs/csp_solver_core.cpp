@@ -269,9 +269,11 @@ static C_csp_reported_outputs::S_output_info S_solver_output_info[] =
 	{C_csp_solver::C_solver_outputs::TES_E_CH_STATE, C_csp_reported_outputs::TS_LAST},			//[MWht] TES charge state at the end of the time step
 	
 	{C_csp_solver::C_solver_outputs::M_DOT_CR_TO_TES_HOT, C_csp_reported_outputs::TS_WEIGHTED_AVE},		//[kg/s]
-	{C_csp_solver::C_solver_outputs::M_DOT_TES_HOT_OUT, C_csp_reported_outputs::TS_WEIGHTED_AVE},		//[kg/s]
+    {C_csp_solver::C_solver_outputs::M_DOT_CR_TO_TES_COLD, C_csp_reported_outputs::TS_WEIGHTED_AVE},	//[kg/s]
+    {C_csp_solver::C_solver_outputs::M_DOT_TES_HOT_OUT, C_csp_reported_outputs::TS_WEIGHTED_AVE},		//[kg/s]
 	{C_csp_solver::C_solver_outputs::M_DOT_PC_TO_TES_COLD, C_csp_reported_outputs::TS_WEIGHTED_AVE},	//[kg/s]
-	{C_csp_solver::C_solver_outputs::M_DOT_TES_COLD_OUT, C_csp_reported_outputs::TS_WEIGHTED_AVE},		//[kg/s]
+    {C_csp_solver::C_solver_outputs::M_DOT_TES_COLD_OUT, C_csp_reported_outputs::TS_WEIGHTED_AVE},		//[kg/s]
+    {C_csp_solver::C_solver_outputs::M_DOT_TES_COLD_IN, C_csp_reported_outputs::TS_WEIGHTED_AVE},		//[kg/s]
 	{C_csp_solver::C_solver_outputs::M_DOT_FIELD_TO_CYCLE, C_csp_reported_outputs::TS_WEIGHTED_AVE},	//[kg/s]
 	{C_csp_solver::C_solver_outputs::M_DOT_CYCLE_TO_FIELD, C_csp_reported_outputs::TS_WEIGHTED_AVE},	//[kg/s]
 	
@@ -550,7 +552,7 @@ void C_csp_solver::init()
     m_T_htf_hot_tank_in_min = (0.5 * cr_solved_params.m_T_htf_cold_des + 0.5 * cr_solved_params.m_T_htf_hot_des) - 273.15;  //[C] convert from K
 
     m_is_cr_config_recirc = true;
-
+    
     // Value helps solver get out of T_field_htf_cold iteration when weird conditions cause the solution to be a very cold value
     // Should update with technology-specific htf freeze protection values
     m_T_field_cold_limit = -100.0;      //[C]
@@ -4798,11 +4800,13 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		mc_reported_outputs.value(C_solver_outputs::TES_Q_DOT_CH, mc_tes_outputs.m_q_dot_ch_from_htf);  //[MWt] TES charge thermal power    
 		mc_reported_outputs.value(C_solver_outputs::TES_E_CH_STATE, e_tes_disch);                       //[MWht] TES charge state 
 
-		mc_reported_outputs.value(C_solver_outputs::M_DOT_CR_TO_TES_HOT, mc_tes_outputs.m_m_dot_cr_to_tes_hot);		//[kg/s]
+        mc_reported_outputs.value(C_solver_outputs::M_DOT_CR_TO_TES_HOT, mc_tes_outputs.m_m_dot_cr_to_tes_hot);		//[kg/s]
+        mc_reported_outputs.value(C_solver_outputs::M_DOT_CR_TO_TES_COLD, mc_tes_outputs.m_m_dot_cr_to_tes_cold);	//[kg/s]
 		mc_reported_outputs.value(C_solver_outputs::M_DOT_TES_HOT_OUT, mc_tes_outputs.m_m_dot_tes_hot_out);			//[kg/s]
 		mc_reported_outputs.value(C_solver_outputs::M_DOT_PC_TO_TES_COLD, mc_tes_outputs.m_m_dot_pc_to_tes_cold);	//[kg/s]
 		mc_reported_outputs.value(C_solver_outputs::M_DOT_TES_COLD_OUT, mc_tes_outputs.m_m_dot_tes_cold_out);		//[kg/s]
-		mc_reported_outputs.value(C_solver_outputs::M_DOT_FIELD_TO_CYCLE, mc_tes_outputs.m_m_dot_field_to_cycle);	//[kg/s]
+        mc_reported_outputs.value(C_solver_outputs::M_DOT_TES_COLD_IN, mc_tes_outputs.m_m_dot_tes_cold_in);		//[kg/s]
+        mc_reported_outputs.value(C_solver_outputs::M_DOT_FIELD_TO_CYCLE, mc_tes_outputs.m_m_dot_field_to_cycle);	//[kg/s]
 		mc_reported_outputs.value(C_solver_outputs::M_DOT_CYCLE_TO_FIELD, mc_tes_outputs.m_m_dot_cycle_to_field);	//[kg/s]
 
 
