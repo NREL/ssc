@@ -172,7 +172,7 @@ void SharedInverter::calculateTempDerate(double V, double tempC, double& p_rated
     if (slopeInterpolated >= 0) return;
     if (slopeInterpolated < -1) slopeInterpolated = -1;
 
-    // Power in units of W, eff as ratio
+    // Power in units of W, ratio = max output / rated output
     ratio += deltaT * slopeInterpolated;
     if (ratio < 0) ratio = 0.;
     loss = p_rated - (p_rated * ratio);

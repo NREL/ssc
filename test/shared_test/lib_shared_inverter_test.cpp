@@ -10,13 +10,13 @@ protected:
 	SharedInverter* inv;
 	sandia_inverter_t sandia;
 	double pAC = 100.;
-	double eff = 0.;
+	double ratio= 0.;
 	double loss = 0.;
 	double e = 0.01;
 public:
 	void reset() {
 		pAC = 100;
-		eff = 1.;
+		ratio= 1.;
 		loss = 0.;
 	}
 	void SetUp() {
@@ -47,39 +47,39 @@ TEST_F(sharedInverterTest_lib_shared_inverter, tempDerateTest_lib_shared_inverte
 	// zero efficiency error case
 	double V = 200.;
 	double T = 5.;
-	inv->calculateTempDerate(V, T, pAC, eff, loss);
+	inv->calculateTempDerate(V, T, pAC, ratio, loss);
 	EXPECT_NEAR(pAC, 100., e) << "zero efficiency error case";
 
 	// zero power error case
 	pAC = 0.;
-	eff = 1.;
-	inv->calculateTempDerate(V, T, pAC, eff, loss);
+	ratio= 1.;
+	inv->calculateTempDerate(V, T, pAC, ratio, loss);
 	EXPECT_NEAR(pAC, 0, e) << "zero power error case";
 
 	// no derate cases
 	pAC = 100.;
-	eff = 1.;
-	inv->calculateTempDerate(V, T, pAC, eff, loss);
+	ratio= 1.;
+	inv->calculateTempDerate(V, T, pAC, ratio, loss);
 	EXPECT_NEAR(pAC, 100, e) << "no derate";
 
 	// V less than that of first curve, extrapolated startT is 10. and slope is -0.1
 	V = 100.;
 	T = 11.;
-	inv->calculateTempDerate(V, T, pAC, eff, loss);
+	inv->calculateTempDerate(V, T, pAC, ratio, loss);
 	EXPECT_NEAR(pAC, 90, e) << "case 1";
 
 	// V more than that of first curve, interpolated startT is 25. and slope is -0.25
 	V = 250.;
 	T = 26.;
 	reset();
-	inv->calculateTempDerate(V, T, pAC, eff, loss);
+	inv->calculateTempDerate(V, T, pAC, ratio, loss);
 	EXPECT_NEAR(pAC, 75, e) << "case 2";
 
 	// V more than that of second curve, interpolated startT is 40. and slope is -0.4
 	V = 400.;
 	T = 41.;
 	reset();
-	inv->calculateTempDerate(V, T, pAC, eff, loss);
+	inv->calculateTempDerate(V, T, pAC, ratio, loss);
 	EXPECT_NEAR(pAC, 60, e) << "case 3";
 
 	/// Second set of curves, different # of pairs
@@ -92,49 +92,49 @@ TEST_F(sharedInverterTest_lib_shared_inverter, tempDerateTest_lib_shared_inverte
 	V = 100.;
 	T = 9.;
 	reset();
-	inv->calculateTempDerate(V, T, pAC, eff, loss);
+	inv->calculateTempDerate(V, T, pAC, ratio, loss);
 	EXPECT_NEAR(pAC, 100, e) << "case 7";
 
 	// V<200 and 10 < T: extrapolated startT is 10. and slope is -0.1
 	V = 100.;
 	T = 11.;
 	reset();
-	inv->calculateTempDerate(V, T, pAC, eff, loss);
+	inv->calculateTempDerate(V, T, pAC, ratio, loss);
 	EXPECT_NEAR(pAC, 90, e) << "case 7";
 
 	// 200<V<300 and T < 25, interpolated startT is 25. and slope is -0.25
 	V = 250.;
 	T = 24.;
 	reset();
-	inv->calculateTempDerate(V, T, pAC, eff, loss);
+	inv->calculateTempDerate(V, T, pAC, ratio, loss);
 	EXPECT_NEAR(pAC, 100, e) << "case 9";
 
 	// 200<V<300 and 25 < T < 40, interpolated startT is 25. and slope is -0.25
 	V = 250.;
 	T = 26.;
 	reset();
-	inv->calculateTempDerate(V, T, pAC, eff, loss);
+	inv->calculateTempDerate(V, T, pAC, ratio, loss);
 	EXPECT_NEAR(pAC, 75, e) << "case 9";
 
 	// 200<V<300 and 40 < T, interpolated startT is 40. and slope is -0.4
 	V = 250.;
 	T = 41.;
 	reset();
-	inv->calculateTempDerate(V, T, pAC, eff, loss);
+	inv->calculateTempDerate(V, T, pAC, ratio, loss);
 	EXPECT_NEAR(pAC, 60, e) << "case 9";
 
 	// 300<V and T < 40, extrapolated startT is 40. and slope is -0.4
 	V = 400.;
 	T = 9.;
 	reset();
-	inv->calculateTempDerate(V, T, pAC, eff, loss);
+	inv->calculateTempDerate(V, T, pAC, ratio, loss);
 	EXPECT_NEAR(pAC, 100, e) << "case 9";
 
 	// 300<V and 40 < T < 100, interpolated startT is 40. and slope is -0.4
 	V = 400.;
 	T = 41.;
 	reset();
-	inv->calculateTempDerate(V, T, pAC, eff, loss);
+	inv->calculateTempDerate(V, T, pAC, ratio, loss);
 	EXPECT_NEAR(pAC, 60, e) << "case 9";
 
 	/// Third set of curves, different # of pairs
@@ -147,49 +147,49 @@ TEST_F(sharedInverterTest_lib_shared_inverter, tempDerateTest_lib_shared_inverte
 	V = 100.;
 	T = 9.;
 	reset();
-	inv->calculateTempDerate(V, T, pAC, eff, loss);
+	inv->calculateTempDerate(V, T, pAC, ratio, loss);
 	EXPECT_NEAR(pAC, 100, e) << "case 7";
 
 	// V<200 and 10 < T : extrapolated startT is 10. and slope is -0.1
 	V = 100.;
 	T = 11.;
 	reset();
-	inv->calculateTempDerate(V, T, pAC, eff, loss);
+	inv->calculateTempDerate(V, T, pAC, ratio, loss);
 	EXPECT_NEAR(pAC, 90, e) << "case 7";
 
 	// 200<V<300 and T < 25, interpolated startT is 25. and slope is -0.25
 	V = 250.;
 	T = 24.;
 	reset();
-	inv->calculateTempDerate(V, T, pAC, eff, loss);
+	inv->calculateTempDerate(V, T, pAC, ratio, loss);
 	EXPECT_NEAR(pAC, 100, e) << "case 9";
 
 	// 200<V<300 and 25 < T < 40, interpolated startT is 25. and slope is -0.25
 	V = 250.;
 	T = 26.;
 	reset();
-	inv->calculateTempDerate(V, T, pAC, eff, loss);
+	inv->calculateTempDerate(V, T, pAC, ratio, loss);
 	EXPECT_NEAR(pAC, 75, e) << "case 9";
 
 	// 200<V<300 and 40 < T, interpolated startT is 45. and slope is -0.45
 	V = 250.;
 	T = 46.;
 	reset();
-	inv->calculateTempDerate(V, T, pAC, eff, loss);
+	inv->calculateTempDerate(V, T, pAC, ratio, loss);
 	EXPECT_NEAR(pAC, 55, e) << "case 9";
 
 	// 300<V and T < 40, extrapolated startT is 40. and slope is -0.4
 	V = 400.;
 	T = 9.;
 	reset();
-	inv->calculateTempDerate(V, T, pAC, eff, loss);
+	inv->calculateTempDerate(V, T, pAC, ratio, loss);
 	EXPECT_NEAR(pAC, 100, e) << "case 9";
 
 	// 300<V and 40 < T, interpolated startT is 40. and slope is -0.4
 	V = 400.;
 	T = 41.;
 	reset();
-	inv->calculateTempDerate(V, T, pAC, eff, loss);
+	inv->calculateTempDerate(V, T, pAC, ratio, loss);
 	EXPECT_NEAR(pAC, 60, e) << "case 9";
 }
 
