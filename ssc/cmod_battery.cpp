@@ -122,7 +122,6 @@ var_info vtab_battery_inputs[] = {
         // replacement inputs
         { SSC_INPUT,        SSC_NUMBER,     "batt_replacement_capacity",                   "Capacity degradation at which to replace battery",       "%",        "",                     "BatterySystem",       "",                           "",                             "" },
         { SSC_INPUT,        SSC_NUMBER,     "batt_replacement_option",                     "Enable battery replacement?",                            "0=none,1=capacity based,2=user schedule", "", "BatterySystem", "?=0",                  "INTEGER,MIN=0,MAX=2",          "" },
-        { SSC_INPUT,        SSC_ARRAY,      "batt_replacement_schedule",                   "Battery bank number of replacements in each year",       "number/year","length <= analysis_period",                  "BatterySystem",      "batt_replacement_option=2",   "",                             "" },
         { SSC_INPUT,        SSC_ARRAY,      "batt_replacement_schedule_percent",           "Percentage of battery capacity to replace in each year", "%","length <= analysis_period",                  "BatterySystem",      "batt_replacement_option=2",   "",                             "" },
         { SSC_INPUT,        SSC_ARRAY,      "om_replacement_cost1",                        "Cost to replace battery per kWh",                        "$/kWh",    "",                     "BatterySystem",       "",                           "",                             "" },
 
@@ -549,7 +548,6 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             batt_vars->batt_replacement_capacity = vt.as_double("batt_replacement_capacity");
 
             if (batt_vars->batt_replacement_option == replacement_params::SCHEDULE) {
-                batt_vars->batt_replacement_schedule = vt.as_vector_integer("batt_replacement_schedule");
                 batt_vars->batt_replacement_schedule_percent = vt.as_vector_double("batt_replacement_schedule_percent");
             }
 
@@ -859,7 +857,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     battery_model = new battery_t( dt_hr, chem,capacity_model, voltage_model, lifetime_model, thermal_model, losses_model);
 
     if (batt_vars->batt_replacement_option == replacement_params::SCHEDULE) {
-        battery_model->setupReplacements(batt_vars->batt_replacement_schedule, batt_vars->batt_replacement_schedule_percent);
+        battery_model->setupReplacements(batt_vars->batt_replacement_schedule_percent);
     }
     else if (batt_vars->batt_replacement_option == replacement_params::CAPACITY_PERCENT) {
         battery_model->setupReplacements(batt_vars->batt_replacement_capacity);

@@ -214,7 +214,6 @@ struct replacement_params {
     /// Maximum capacity relative to nameplate at which to replace battery back to 100%
     double replacement_capacity;
 
-    std::vector<int> replacement_schedule;
     std::vector<double> replacement_schedule_percent;    // (0 - 100%)
 
     friend std::ostream &operator<<(std::ostream &os, const replacement_params &p);
@@ -304,7 +303,7 @@ public:
     void setupReplacements(double capacity);
 
     // replace by schedule
-    void setupReplacements(std::vector<int> schedule, std::vector<double> replacement_percents);
+    void setupReplacements(std::vector<double> replacement_percents);
 
     void runReplacement(size_t year, size_t hour, size_t step);
 
@@ -316,7 +315,7 @@ public:
     double getReplacementPercent();
 
     // Run all for single time step, updating all component model states and return the dispatched power [kW]
-    double run(size_t lifetimeIndex, double &I, bool stateful = false);
+    double run(size_t lifetimeIndex, double &I);
 
     // Run for a single time step, using a control current A and the time step found in battery state
     void runCurrent(double I);

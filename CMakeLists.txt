@@ -6,6 +6,10 @@
 
 cmake_minimum_required(VERSION 3.11)
 
+if(POLICY CMP0077)
+    cmake_policy(SET CMP0077 NEW)
+endif()
+
 option(skip_tools "Skips the sdktool and tcsconsole builds" OFF)
 
 option(SAMAPI_EXPORT "For Unix, compile ssc libraries for SAM_api" OFF)
@@ -109,7 +113,7 @@ function(set_tools_compile_options target)
     endif()
     if(MSVC)
         set(MAIN_CFLAGS "${MAIN_CFLAGS} /W3 /DLK_USE_WXWIDGETS /D _CRT_SECURE_NO_DEPRECATE=1 /D _CRT_NON_CONFORMING_SWPRINTFS=1")
-        set(MAIN_CFLAGS "${MAIN_CFLAGS} /D _SCL_SECURE_NO_WARNINGS=1 /D__WXMSW__ /D_UNICODE NOPCH")
+        set(MAIN_CFLAGS "${MAIN_CFLAGS} /D _SCL_SECURE_NO_WARNINGS=1 /D__WXMSW__ /D_UNICODE /D_NOPCH")
     else(MSVC)
         if (APPLE)
             set(MAIN_CFLAGS "${MAIN_CFLAGS} -D__WXOSX__")
