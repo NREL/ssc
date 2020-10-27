@@ -207,7 +207,7 @@ TEST_F(lib_battery_test, runTestCycleAt1C){
     size_t idx = 0;
     double capacity_passed = 0.;
     double I = Qfull * n_strings;
-    batteryModel->run(idx++, I, true);
+    batteryModel->run(idx++, I);
     capacity_passed += batteryModel->I() * batteryModel->V() / 1000.;
 //    std::cerr << "\n" << idx << ": " << capacity_passed << "\n";
 
@@ -220,7 +220,7 @@ TEST_F(lib_battery_test, runTestCycleAt1C){
     compareState(batteryModel, s, "runTestCycleAt1C: 1");
 
     while (batteryModel->SOC() > SOC_min + 1){
-        batteryModel->run(idx++, I, true);
+        batteryModel->run(idx++, I);
         capacity_passed += batteryModel->I() * batteryModel->V() / 1000.;
     }
 //    std::cerr <<  idx << ": soc " << batteryModel->SOC() << ", cap " << capacity_passed << "\n";
@@ -238,12 +238,12 @@ TEST_F(lib_battery_test, runTestCycleAt1C){
     while (n_cycles-- > 0){
         I *= -1;
         while (batteryModel->SOC() < SOC_max - 1){
-            batteryModel->run(idx++, I, true);
+            batteryModel->run(idx++, I);
             capacity_passed += -batteryModel->I() * batteryModel->V() / 1000.;
         }
         I *= -1;
         while (batteryModel->SOC() > SOC_min + 1){
-            batteryModel->run(idx++, I, true);
+            batteryModel->run(idx++, I);
             capacity_passed += batteryModel->I() * batteryModel->V() / 1000.;
         }
     }
@@ -266,7 +266,7 @@ TEST_F(lib_battery_test, runTestCycleAt3C){
     size_t idx = 0;
     double capacity_passed = 0.;
     double I = Qfull * n_strings * 3;
-    batteryModel->run(idx++, I, true);
+    batteryModel->run(idx++, I);
     capacity_passed += batteryModel->I() * batteryModel->V() / 1000.;
 //    std::cerr << "\n" << idx << ": " << capacity_passed << "\n";
 
@@ -279,7 +279,7 @@ TEST_F(lib_battery_test, runTestCycleAt3C){
     compareState(batteryModel, s, "runTest: 1");
 
     while (batteryModel->SOC() > SOC_min + 1){
-        batteryModel->run(idx++, I, true);
+        batteryModel->run(idx++, I);
         capacity_passed += batteryModel->I() * batteryModel->V() / 1000.;
     }
 //    std::cerr <<  idx << ": soc " << batteryModel->SOC() << ", cap " << capacity_passed << "\n";
@@ -297,12 +297,12 @@ TEST_F(lib_battery_test, runTestCycleAt3C){
     while (n_cycles-- > 0){
         I *= -1;
         while (batteryModel->SOC() < SOC_max - 1){
-            batteryModel->run(idx++, I, true);
+            batteryModel->run(idx++, I);
             capacity_passed += -batteryModel->I() * batteryModel->V() / 1000.;
         }
         I *= -1;
         while (batteryModel->SOC() > SOC_min + 1){
-            batteryModel->run(idx++, I, true);
+            batteryModel->run(idx++, I);
             capacity_passed += batteryModel->I() * batteryModel->V() / 1000.;
         }
     }
