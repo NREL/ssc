@@ -966,7 +966,7 @@ bool shading_factor_calculator::setup( compute_module *cm, const std::string &pr
 {
 	bool ok = true;
 	m_diffFactor = 1.0;
-	m_string_option = -1;// 0=shading db, 1=average, 1=max, 3=min, -1 not enabled.
+	m_string_option = -1;// 0=shading db, 1=average, 2=max, 3=min, -1 not enabled.
 	// Sara 1/25/16 - shading database derate applied to dc only
 	// shading loss applied to beam if not from shading database
 	m_beam_shade_factor = 1.0;

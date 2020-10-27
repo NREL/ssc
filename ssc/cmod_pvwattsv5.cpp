@@ -628,6 +628,7 @@ DEFINE_MODULE_ENTRY(pvwattsv5, "PVWatts V5 - integrated hourly weather reader an
         { SSC_INPUT,        SSC_NUMBER,      "elevation",                "Elevation",                                   "m",      "",                        "PVWatts",      "?",                       "",                          "" },
         { SSC_INPUT,        SSC_NUMBER,      "dry_temperature",          "Dry Temperature",                             "°C",     "",                        "PVWatts",      "?",                       "",                          "" },
         { SSC_INPUT,        SSC_NUMBER,      "pressure",                 "Pressure",                                    "mbars",  "",                        "PVWatts",      "?",                       "",                          "" },
+		{ SSC_INPUT,        SSC_NUMBER,      "shaded_percent",           "Percent of panels that are shaded",           "%",      "",                        "PVWatts",      "?=0",                     "MIN=0,MAX=100",             ""},
 
         var_info_invalid };
 
@@ -703,8 +704,8 @@ public:
             }
         }
 
-        double shad_beam = 1.0;
-        powerout(0, 1.0, shad_beam, 1.0, beam, diff, alb, wspd, tamb);
+		double shad_beam = 1.0 - as_double("shaded_percent") / 100.0;
+		powerout(0, 1.0, shad_beam, 1.0, beam, diff, alb, wspd, tamb);
 
         int code = process_irradiance(year, month, day, hour, minute,
             IRRADPROC_NO_INTERPOLATE_SUNRISE_SUNSET,
