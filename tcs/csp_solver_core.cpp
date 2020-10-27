@@ -541,7 +541,7 @@ void C_csp_solver::init()
     bool m_does_tes_enable_cr_to_cold_tank = mc_tes.is_cr_to_cold_allowed();
 
         // System control logic
-    m_is_rec_to_coldtank_allowed = true;
+    m_is_rec_to_coldtank_allowed = false;
     // Can't send HTF outlet to cold tank if no cold tank
     // or if TES class isn't configured to do so (parallel tanks in two-tank tes can't at the moment)
     m_is_rec_to_coldtank_allowed = m_is_rec_to_coldtank_allowed && m_is_tes && m_does_tes_enable_cr_to_cold_tank;
