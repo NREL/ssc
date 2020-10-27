@@ -765,9 +765,9 @@ TEST(SingleAxisTrackingTest, TrackingBacktracking) {
 	std::vector<double> solar_azimuths = {180, 100, 250,   87.163, 300};
 	std::vector<double> axis_tilts = {0, 0, 10, 10, 10};
 	std::vector<double> axis_azimuths = {10, 150, 240, 180, 0};
-	std::vector<double> expected_truetracking = {0.0, -7.69, 26.74, -85.559, -84.27};
-	std::vector<double> expected_backtracking = {0.0, -7.69, 26.74, -6.72, -8.72};
-	std::vector<double> expected_shadefraction = {0.0, 0.0, 0.0, 0.806, 0.751};
+	std::vector<double> expected_truetracking = {0.0, -7.69263, 26.74021, -85.55932, -84.27489};
+	std::vector<double> expected_backtracking = {0.0, -7.69263, 26.74021, -6.72036, -8.71628};
+	std::vector<double> expected_shadefraction = {0.0, 0.0, 0.0, 0.80643, 0.75061};
 	double gcr = 0.4;
 
 	double tt, bt, fs_tt, fs_bt;
@@ -775,11 +775,11 @@ TEST(SingleAxisTrackingTest, TrackingBacktracking) {
 	for(int i = 0; i < expected_truetracking.size(); i++)
 	{
 		tt = truetrack(solar_azimuths[i], solar_zeniths[i], axis_tilts[i], axis_azimuths[i]);
-		ASSERT_NEAR(tt, expected_truetracking[i], 1e-1);
+		ASSERT_NEAR(tt, expected_truetracking[i], 1e-4);
 		bt = backtrack(tt, 0.4);
-		ASSERT_NEAR(bt, expected_backtracking[i], 1e-1);
+		ASSERT_NEAR(bt, expected_backtracking[i], 1e-4);
 		fs_tt = shadeFraction1x(solar_azimuths[i], solar_zeniths[i], axis_tilts[i], axis_azimuths[i], gcr, tt);
-		ASSERT_NEAR(fs_tt, expected_shadefraction[i], 1e-2);
+		ASSERT_NEAR(fs_tt, expected_shadefraction[i], 1e-4);
 		fs_bt = shadeFraction1x(solar_azimuths[i], solar_zeniths[i], axis_tilts[i], axis_azimuths[i], gcr, bt);
 		ASSERT_NEAR(fs_bt, 0, 1e-10);  // no self-shading when backtracking
 	}
@@ -790,7 +790,7 @@ TEST(SingleAxisTrackingTest, TrackingBacktracking) {
 */
 TEST(SingleAxisTrackingTest, SunBelowTiltedArray) {
 	double tt = truetrack(300, 89, 10, 180);
-	ASSERT_NEAR(tt, 94.60, 1e-2);  // true-tracking rotation > 90 when sun is below system plane
+	ASSERT_NEAR(tt, 94.59707, 1e-4);  // true-tracking rotation > 90 when sun is below system plane
 	double bt = backtrack(tt, 0.4);
-	ASSERT_NEAR(bt, 16.16, 1e-2);
+	ASSERT_NEAR(bt, 16.15566, 1e-4);
 }
