@@ -462,10 +462,9 @@ void battery_t::setupReplacements(double capacity_percent) {
     params->replacement->replacement_capacity = capacity_percent;
 }
 
-void battery_t::setupReplacements(std::vector<int> schedule, std::vector<double> replacement_percents) {
+void battery_t::setupReplacements(std::vector<double> replacement_percents) {
     params->replacement = std::make_shared<replacement_params>();
     params->replacement->replacement_option = replacement_params::SCHEDULE;
-    params->replacement->replacement_schedule = std::move(schedule);
     params->replacement->replacement_schedule_percent = std::move(replacement_percents);
 }
 
@@ -537,7 +536,7 @@ double battery_t::calculate_max_discharge_kw(double *max_current_A) {
     return power_W / 1000.;
 }
 
-double battery_t::run(size_t lifetimeIndex, double &I, bool stateful) {
+double battery_t::run(size_t lifetimeIndex, double &I) {
     // Temperature affects capacity, but capacity model can reduce current, which reduces temperature, need to iterate
     double I_initial = I;
     size_t iterate_count = 0;
@@ -567,12 +566,12 @@ double battery_t::run(size_t lifetimeIndex, double &I, bool stateful) {
 }
 
 void battery_t::runCurrent(double I) {
-    run(++state->last_idx, I, true);
+    run(++state->last_idx, I);
         }
 
 void battery_t::runPower(double P) {
     double I = calculate_current_for_power_kw(P);
-    run(++state->last_idx, I, true);
+    run(++state->last_idx, I);
 }
 
 void battery_t::runThermalModel(double I, size_t lifetimeIndex) {
@@ -620,17 +619,11 @@ void battery_t::runReplacement(size_t year, size_t hour, size_t step) {
     bool replace = false;
     double percent = 0;
     if (params->replacement->replacement_option == replacement_params::OPTIONS::SCHEDULE) {
-        if (year < params->replacement->replacement_schedule.size()) {
-            auto num_repl = (size_t) params->replacement->replacement_schedule[year];
-            for (size_t j_repl = 0; j_repl < num_repl; j_repl++) {
-                if ((hour == (j_repl * 8760 / num_repl)) && step == 0) {
-                    replace = true;
-                    break;
-                }
-            }
-        }
-        if (replace) {
+        if (year < params->replacement->replacement_schedule_percent.size()) {
             percent = params->replacement->replacement_schedule_percent[year];
+            if (percent > 0 && hour == 0 && step == 0) {
+                replace = true;
+            }
         }
     } else if (params->replacement->replacement_option == replacement_params::OPTIONS::CAPACITY_PERCENT) {
         if ((lifetime->capacity_percent() - tolerance) <= params->replacement->replacement_capacity) {

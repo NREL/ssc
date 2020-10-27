@@ -207,7 +207,7 @@ TEST_F(lib_battery_test, runTestCycleAt1C){
     size_t idx = 0;
     double capacity_passed = 0.;
     double I = Qfull * n_strings;
-    batteryModel->run(idx++, I, true);
+    batteryModel->run(idx++, I);
     capacity_passed += batteryModel->I() * batteryModel->V() / 1000.;
 //    std::cerr << "\n" << idx << ": " << capacity_passed << "\n";
 
@@ -220,7 +220,7 @@ TEST_F(lib_battery_test, runTestCycleAt1C){
     compareState(batteryModel, s, "runTestCycleAt1C: 1");
 
     while (batteryModel->SOC() > SOC_min + 1){
-        batteryModel->run(idx++, I, true);
+        batteryModel->run(idx++, I);
         capacity_passed += batteryModel->I() * batteryModel->V() / 1000.;
     }
 //    std::cerr <<  idx << ": soc " << batteryModel->SOC() << ", cap " << capacity_passed << "\n";
@@ -238,12 +238,12 @@ TEST_F(lib_battery_test, runTestCycleAt1C){
     while (n_cycles-- > 0){
         I *= -1;
         while (batteryModel->SOC() < SOC_max - 1){
-            batteryModel->run(idx++, I, true);
+            batteryModel->run(idx++, I);
             capacity_passed += -batteryModel->I() * batteryModel->V() / 1000.;
         }
         I *= -1;
         while (batteryModel->SOC() > SOC_min + 1){
-            batteryModel->run(idx++, I, true);
+            batteryModel->run(idx++, I);
             capacity_passed += batteryModel->I() * batteryModel->V() / 1000.;
         }
     }
@@ -266,7 +266,7 @@ TEST_F(lib_battery_test, runTestCycleAt3C){
     size_t idx = 0;
     double capacity_passed = 0.;
     double I = Qfull * n_strings * 3;
-    batteryModel->run(idx++, I, true);
+    batteryModel->run(idx++, I);
     capacity_passed += batteryModel->I() * batteryModel->V() / 1000.;
 //    std::cerr << "\n" << idx << ": " << capacity_passed << "\n";
 
@@ -279,7 +279,7 @@ TEST_F(lib_battery_test, runTestCycleAt3C){
     compareState(batteryModel, s, "runTest: 1");
 
     while (batteryModel->SOC() > SOC_min + 1){
-        batteryModel->run(idx++, I, true);
+        batteryModel->run(idx++, I);
         capacity_passed += batteryModel->I() * batteryModel->V() / 1000.;
     }
 //    std::cerr <<  idx << ": soc " << batteryModel->SOC() << ", cap " << capacity_passed << "\n";
@@ -297,12 +297,12 @@ TEST_F(lib_battery_test, runTestCycleAt3C){
     while (n_cycles-- > 0){
         I *= -1;
         while (batteryModel->SOC() < SOC_max - 1){
-            batteryModel->run(idx++, I, true);
+            batteryModel->run(idx++, I);
             capacity_passed += -batteryModel->I() * batteryModel->V() / 1000.;
         }
         I *= -1;
         while (batteryModel->SOC() > SOC_min + 1){
-            batteryModel->run(idx++, I, true);
+            batteryModel->run(idx++, I);
             capacity_passed += batteryModel->I() * batteryModel->V() / 1000.;
         }
     }
@@ -569,32 +569,31 @@ TEST_F(lib_battery_test, HourlyVsSubHourly)
 }
 
 TEST_F(lib_battery_test, AugmentCapacity) {
-    std::vector<int> replacement_schedule = {1, 1, 1};
     std::vector<double> augmentation_percent = {50, 40, 30};
-    batteryModel->setupReplacements(replacement_schedule, augmentation_percent);
+    batteryModel->setupReplacements(augmentation_percent);
 
     // Correct future approach for augmenting batteries, by treating as separate entities
     std::vector<battery_t *> batteries;
     batteries.push_back(new battery_t(*batteryModel));
 
     batteries.push_back(new battery_t(*batteryModel));
-    batteries[1]->setupReplacements(replacement_schedule, augmentation_percent);
+    batteries[1]->setupReplacements(augmentation_percent);
 
     batteries.push_back(new battery_t(*batteryModel));
-    batteries[2]->setupReplacements(replacement_schedule, augmentation_percent);
+    batteries[2]->setupReplacements(augmentation_percent);
 
     size_t i = 0;
     double I = 100;
     double mult = 1.0;
     size_t replaceCount = 0;
-    for (size_t y = 0; y < replacement_schedule.size(); y++) {
+    for (size_t y = 0; y < augmentation_percent.size(); y++) {
         for (size_t t = 0; t < 8760; t++) {
             mult = fmod(t, 2) == 0 ? 1 : -1;
             double current = mult * I;
             batteries[replaceCount]->runReplacement(y, t, 0);
             batteries[replaceCount]->run(i, current);
         }
-        if (replacement_schedule[y] == 1) {
+        if (augmentation_percent[y] > 0) {
             replaceCount++;
         }
     }

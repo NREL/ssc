@@ -57,21 +57,6 @@ else()
 endif()
 
 
-#####################################################################################################################
-#
-# Compile Options per Platform
-#
-#####################################################################################################################
-
-set_default_compile_options()
-set_no_warnings()
-if(MSVC)
-    add_compile_definitions( __WXMSW__ _MBCS )
-else(MSVC)
-    add_compile_options(-Wall)
-endif(MSVC)
-
-
 ####################################################################################################################
 #
 # CMake Targets
@@ -89,6 +74,15 @@ if (MSVC)
 		PROPERTIES
 		LINK_FLAGS /SUBSYSTEM:CONSOLE)
 endif()
+
+set_default_compile_options(nlopt)
+set_no_warnings(nlopt)
+if(MSVC)
+    set_additional_compile_options(nlopt "/D__WXMSW__ /D_MBCS")
+else(MSVC)
+    set_additional_compile_options(nlopt "-Wall")
+endif(MSVC)
+
 
 #####################################################################################################################
 #
