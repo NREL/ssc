@@ -97,7 +97,11 @@ std::string C_csp_solver::tech_operating_modes_str[] =
     
     "CR_TO_COLD__PC_MIN__TES_EMPTY__AUX_OFF",
     
-    "CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF"
+    "CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF",
+
+    "SKIP_40",
+
+    "CR_TO_COLD__PC_SU__TES_DC__AUX_OFF"
 };
 
 void C_timestep_fixed::init(double time_start /*s*/, double step /*s*/)
@@ -424,7 +428,8 @@ void C_csp_solver::reset_hierarchy_logic()
     m_is_CR_TO_COLD__PC_RM_LO__TES_EMPTY__AUX_OFF_avail = true;
     m_is_CR_TO_COLD__PC_SB__TES_DC__AUX_OFF_avail = true;
     m_is_CR_TO_COLD__PC_MIN__TES_EMPTY__AUX_OFF_avail = true;
-    m_is_CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF = true;
+    m_is_CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF_avail = true;
+    m_is_CR_TO_COLD__PC_SU__TES_DC__AUX_OFF_avail = true;
 } 
 
 void C_csp_solver::turn_off_plant()
@@ -482,7 +487,8 @@ void C_csp_solver::turn_off_plant()
     m_is_CR_TO_COLD__PC_RM_LO__TES_EMPTY__AUX_OFF_avail = false;
     m_is_CR_TO_COLD__PC_SB__TES_DC__AUX_OFF_avail = false;
     m_is_CR_TO_COLD__PC_MIN__TES_EMPTY__AUX_OFF_avail = false;
-    m_is_CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF = false;
+    m_is_CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF_avail = false;
+    m_is_CR_TO_COLD__PC_SU__TES_DC__AUX_OFF_avail = false;
 }
 
 double C_csp_solver::get_cr_aperture_area()
@@ -544,7 +550,7 @@ void C_csp_solver::init()
     bool m_does_tes_enable_cr_to_cold_tank = mc_tes.is_cr_to_cold_allowed();
 
         // System control logic
-    m_is_rec_to_coldtank_allowed = false;
+    m_is_rec_to_coldtank_allowed = ms_system_params.m_is_rec_to_coldtank_allowed;
     // Can't send HTF outlet to cold tank if no cold tank
     // or if TES class isn't configured to do so (parallel tanks in two-tank tes can't at the moment)
     m_is_rec_to_coldtank_allowed = m_is_rec_to_coldtank_allowed && m_is_tes && m_does_tes_enable_cr_to_cold_tank;
@@ -1681,7 +1687,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			else if( cr_operating_state == C_csp_collector_receiver::ON &&
 				(pc_operating_state == C_csp_power_cycle::OFF || pc_operating_state == C_csp_power_cycle::STARTUP) )
 			{
-				if( q_dot_cr_on > 0.0 && is_rec_su_allowed )
+				if( q_dot_cr_on > 0.0 && is_rec_su_allowed && is_rec_outlet_to_hottank )
 				{	// Receiver is allowed to remain on, and it can produce useful energy. Now, need to find a home for it
 
 					if( is_pc_su_allowed &&
@@ -1741,16 +1747,39 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
 					}
 				}
-				else if( q_dot_tes_dc > 0.0 && is_pc_su_allowed &&
-					m_is_CR_OFF__PC_SU__TES_DC__AUX_OFF_avail )
-				{	// Can power cycle startup using TES?
+                else 
+                {
+                    if (q_dot_cr_on > 0.0 && is_rec_su_allowed)
+                    {
+                        if (q_dot_tes_dc > 0.0 && is_pc_su_allowed &&
+                            m_is_CR_TO_COLD__PC_SU__TES_DC__AUX_OFF_avail)
+                        {	// Can power cycle startup using TES?
 
-					operating_mode = CR_OFF__PC_SU__TES_DC__AUX_OFF;
-				}
-				else
-				{
-					operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-				}
+                            operating_mode = CR_TO_COLD__PC_SU__TES_DC__AUX_OFF;
+                        }
+                        else if(m_is_CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF_avail)
+                        {
+                            operating_mode = CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF;
+                        }
+                        else
+                        {
+                            operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                        }
+                    }
+                    else
+                    {
+                        if (q_dot_tes_dc > 0.0 && is_pc_su_allowed &&
+                            m_is_CR_OFF__PC_SU__TES_DC__AUX_OFF_avail)
+                        {	// Can power cycle startup using TES?
+
+                            operating_mode = CR_OFF__PC_SU__TES_DC__AUX_OFF;
+                        }
+                        else
+                        {
+                            operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                        }
+                    }
+                }
 			}
 
 			else if( (cr_operating_state == C_csp_collector_receiver::OFF || cr_operating_state == C_csp_collector_receiver::STARTUP) &&
@@ -2158,7 +2187,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
                                 operating_mode = CR_TO_COLD__PC_MIN__TES_EMPTY__AUX_OFF;
                             }
-                            else if (m_is_CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF)
+                            else if (m_is_CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF_avail)
                             {
                                 operating_mode = CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF;
                             }
@@ -2167,7 +2196,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                                 operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
                             }
                         }	// End logic for if( q_dot_tes_dc > 0.0 )
-                        else if(m_is_CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF)
+                        else if(m_is_CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF_avail)
                         {	// Storage dispatch is not available
 
                             // No thermal power available to power cycle
@@ -2178,7 +2207,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                             operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
                         }
                     }	// End logic if( is_pc_su_allowed )
-                    else if (m_is_CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF)
+                    else if (m_is_CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF_avail)
                     {	// If neither receiver nor power cycle operation is allowed, then shut everything off
 
                         operating_mode = CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF;
@@ -2669,6 +2698,46 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 are_models_converged = true;
             }
 				break;		// exit switch() after CR_OFF__PC_OFF__TES_OFF__AUX_OFF:
+
+            case CR_TO_COLD__PC_SU__TES_DC__AUX_OFF:
+            {
+                // Use thermal storage to startup power cycle
+                // This solver iterates to find the thermal storage outlet temperature to the power cycle
+                //    and the power cycle demand mass flow rate that reach system equilibrium
+
+                double t_ts_initial = mc_kernel.mc_sim_info.ms_ts.m_step;   //[s]
+
+                if (!mc_collector_receiver.m_is_sensible_htf)
+                {
+                    std::string err_msg = util::format("Operating mode, %d, is not configured for DSG mode", operating_mode);
+                    throw(C_csp_exception(err_msg, "CSP Solver"));
+                }
+
+                int cr_mode = C_csp_collector_receiver::ON;
+                C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::STARTUP_CONTROLLED;
+
+                C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__ITER_M_DOT_SU_DC_ONLY;
+                C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FROM_COMPONENT;
+                bool is_defocus = false;
+                op_mode_str = "CR_TO_COLD__PC_SU__TES_DC__AUX_OFF";
+                double defocus_solved = std::numeric_limits<double>::quiet_NaN();
+
+                int mode_code = solve_operating_mode(cr_mode, pc_mode, solver_mode, step_target_mode,
+                    std::numeric_limits<double>::quiet_NaN(), is_defocus, is_rec_outlet_to_hottank, op_mode_str, defocus_solved);
+
+                if (mode_code != 0)
+                {
+                    m_is_CR_TO_COLD__PC_SU__TES_DC__AUX_OFF_avail = false;
+                    are_models_converged = false;
+                    break;
+                }
+
+                // Set member defocus
+                m_defocus = defocus_solved;
+
+                are_models_converged = true;
+            }
+                break;
 
 			case CR_OFF__PC_SU__TES_DC__AUX_OFF:
 			{

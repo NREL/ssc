@@ -1002,11 +1002,15 @@ public:
 		double m_bop_par_1;			//[-]
 		double m_bop_par_2;			//[-]
 
+        bool m_is_rec_to_coldtank_allowed;
+
 		S_csp_system_params()
 		{
 			m_pb_fixed_par =
 
 			m_bop_par = m_bop_par_f = m_bop_par_0 = m_bop_par_1 = m_bop_par_2 = std::numeric_limits<double>::quiet_NaN();
+
+            m_is_rec_to_coldtank_allowed = false;
 		}
 	};
 
@@ -1086,8 +1090,8 @@ private:
     bool m_is_CR_TO_COLD__PC_RM_LO__TES_EMPTY__AUX_OFF_avail;
     bool m_is_CR_TO_COLD__PC_SB__TES_DC__AUX_OFF_avail;
     bool m_is_CR_TO_COLD__PC_MIN__TES_EMPTY__AUX_OFF_avail;
-    bool m_is_CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF;
-
+    bool m_is_CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF_avail;
+    bool m_is_CR_TO_COLD__PC_SU__TES_DC__AUX_OFF_avail;
 
 	// member string for exception messages
 	std::string error_msg;
@@ -1244,7 +1248,11 @@ public:
 
         CR_TO_COLD__PC_MIN__TES_EMPTY__AUX_OFF,
 
-        CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF
+        CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF,
+
+        SKIP_40,
+
+        CR_TO_COLD__PC_SU__TES_DC__AUX_OFF
 	};
     
     static std::string tech_operating_modes_str[];

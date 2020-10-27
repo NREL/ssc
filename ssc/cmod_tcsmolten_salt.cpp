@@ -1747,6 +1747,11 @@ public:
             break;
         }
 
+        // Temporary reset variables to test clearsky model with receiver outlet to cold tank option
+        assign("rec_clearsky_fraction", 1);
+        assign("rec_clearsky_model", 1);
+
+
         std::unique_ptr<C_pt_receiver> receiver;
         if (!as_boolean("is_rec_model_trans") && !as_boolean("is_rec_startup_trans")) {
             //std::unique_ptr<C_mspt_receiver_222> ss_receiver = std::make_unique<C_mspt_receiver_222>();   // new to C++14
@@ -2420,6 +2425,8 @@ public:
         system.m_bop_par_0 = as_double("bop_par_0");
         system.m_bop_par_1 = as_double("bop_par_1");
         system.m_bop_par_2 = as_double("bop_par_2");
+
+        system.m_is_rec_to_coldtank_allowed = false;
 
         // Instantiate Solver       
         C_csp_solver csp_solver(weather_reader, 
