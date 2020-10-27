@@ -536,7 +536,7 @@ double battery_t::calculate_max_discharge_kw(double *max_current_A) {
     return power_W / 1000.;
 }
 
-double battery_t::run(size_t lifetimeIndex, double &I, bool stateful) {
+double battery_t::run(size_t lifetimeIndex, double &I) {
     // Temperature affects capacity, but capacity model can reduce current, which reduces temperature, need to iterate
     double I_initial = I;
     size_t iterate_count = 0;
@@ -566,12 +566,12 @@ double battery_t::run(size_t lifetimeIndex, double &I, bool stateful) {
 }
 
 void battery_t::runCurrent(double I) {
-    run(++state->last_idx, I, true);
+    run(++state->last_idx, I);
         }
 
 void battery_t::runPower(double P) {
     double I = calculate_current_for_power_kw(P);
-    run(++state->last_idx, I, true);
+    run(++state->last_idx, I);
 }
 
 void battery_t::runThermalModel(double I, size_t lifetimeIndex) {

@@ -315,7 +315,7 @@ public:
     double getReplacementPercent();
 
     // Run all for single time step, updating all component model states and return the dispatched power [kW]
-    double run(size_t lifetimeIndex, double &I, bool stateful = false);
+    double run(size_t lifetimeIndex, double &I);
 
     // Run for a single time step, using a control current A and the time step found in battery state
     void runCurrent(double I);
