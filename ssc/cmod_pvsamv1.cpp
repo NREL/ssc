@@ -2122,11 +2122,13 @@ void cm_pvsamv1::exec( )
 				dcPowerNetPerMppt_kW[m] = PVSystem->p_dcPowerNetPerMppt[m][idx] * util::watt_to_kilowatt;
 			}
 
+            double power_before_battery = 0.0;
 			//run AC power calculation
 			if (en_batt && (batt_topology == ChargeController::DC_CONNECTED)) // DC-connected battery
 			{
 				// Compute PV clipping before adding battery
 				sharedInverter->calculateACPower(dcPower_kW, dcVoltagePerMppt[0], Irradiance->weatherRecord.tdry); //DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
+                batt->outGenWithoutBattery[idx] = sharedInverter->powerAC_kW;
 
                 if (resilience){
                     resilience->add_battery_at_outage_timestep(*batt->dispatch_model, idx);
@@ -2178,6 +2180,10 @@ void cm_pvsamv1::exec( )
 
 			//ac losses should always be subtracted, this means you can't just multiply by the derate because at nighttime it will add power
 			PVSystem->p_systemACPower[idx] = (ssc_number_t)(acpwr_gross - ac_wiringloss);
+            // AC connected batteries will set this laster
+            if (en_batt && (batt_topology == ChargeController::DC_CONNECTED)) {
+                batt->outGenWithoutBattery[idx] -= fabs(batt->outGenWithoutBattery[idx]) * PVSystem->acLossPercent * 0.01;;
+            }
 
 			// Apply transformer loss
 			ssc_number_t transformerRatingkW = static_cast<ssc_number_t>(PVSystem->ratedACOutput * util::watt_to_kilowatt);
@@ -2194,10 +2200,30 @@ void cm_pvsamv1::exec( )
 			// total load loss
 			ssc_number_t xfmr_loss = xfmr_ll + xfmr_nll; // kWh
 			PVSystem->p_systemACPower[idx] -= xfmr_loss/ts_hour; // kW
+            if (en_batt && (batt_topology == ChargeController::DC_CONNECTED)) {
+                // Recompute transformer loss as if the battery didn't run
+                ssc_number_t xfmr_ll_no_batt = PVSystem->transformerLoadLossFraction / step_per_hour;
+                ssc_number_t xfmr_nll_no_batt = PVSystem->transformerNoLoadLossFraction * static_cast<ssc_number_t>(ts_hour * transformerRatingkW);
+
+                if (PVSystem->transformerLoadLossFraction != 0 && transformerRatingkW != 0)
+                {
+                    if (PVSystem->p_systemACPower[idx] < transformerRatingkW)
+                        xfmr_ll_no_batt *= batt->outGenWithoutBattery[idx] * batt->outGenWithoutBattery[idx] / transformerRatingkW;
+                    else
+                        xfmr_ll_no_batt *= batt->outGenWithoutBattery[idx];
+                }
+                // total load loss
+                ssc_number_t xfmr_loss_no_batt = xfmr_ll + xfmr_nll; // kWh
+                batt->outGenWithoutBattery[idx] -= xfmr_loss_no_batt / ts_hour;
+            }
 
 			// transmission loss if AC power is produced
 			if (PVSystem->p_systemACPower[idx] > 0){
 				PVSystem->p_systemACPower[idx] -= (ssc_number_t)(transmissionloss);
+
+                if (en_batt && (batt_topology == ChargeController::DC_CONNECTED)) {
+                    batt->outGenWithoutBattery[idx] -= (ssc_number_t)(transmissionloss);
+                }
 			}
 
 			// accumulate first year annual energy
@@ -2280,6 +2306,7 @@ void cm_pvsamv1::exec( )
 				}
 
 				batt->advance(m_vartab, PVSystem->p_systemACPower[idx], 0, p_load_full[idx]);
+                batt->outGenWithoutBattery[idx] = PVSystem->p_systemACPower[idx];
                 PVSystem->p_systemACPower[idx] = batt->outGenPower[idx];
 			}
 
@@ -2298,6 +2325,9 @@ void cm_pvsamv1::exec( )
 				int ac_loss_index = (int)iyear * 365 + (int)floor(hour_of_year / 24); //in units of days
 				if (iyear == 0) annual_ac_lifetime_loss += PVSystem->p_systemACPower[idx] * (PVSystem->acLifetimeLosses[ac_loss_index] / 100) * util::watt_to_kilowatt * ts_hour; //this loss is still in percent, only keep track of it for year 0, convert from power W to energy kWh
 				PVSystem->p_systemACPower[idx] *= (100 - PVSystem->acLifetimeLosses[ac_loss_index]) / 100;
+                if (en_batt) {
+                    batt->outGenWithoutBattery[idx] *= (100 - PVSystem->acLifetimeLosses[ac_loss_index]) / 100;
+                }
 			}
 			// Update battery with final gen to compute grid power
 			if (en_batt)

@@ -323,6 +323,7 @@ struct battstor
 		*outDispatchMode,
 		*outBatteryPower,
 		*outGenPower,
+        *outGenWithoutBattery,
 		*outGridPower,
 		*outSystemToLoad,
 		*outBatteryToLoad,

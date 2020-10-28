@@ -218,6 +218,8 @@ var_info vtab_battery_outputs[] = {
         { SSC_OUTPUT,        SSC_ARRAY,      "batt_revenue_charge",                        "Revenue to charge from system",                         "$/kWh", "",                         "Battery",       "",                           "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "batt_revenue_clipcharge",                    "Revenue to charge from clipped",                        "$/kWh", "",                         "Battery",       "",                           "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "batt_revenue_discharge",                     "Revenue to discharge",                                  "$/kWh", "",                         "Battery",       "",                           "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "gen_without_battery",                        "Electricity to/from the renewable system, without the battery","kW","",                      "Battery",       "",                           "",                              "" },
+
 
         // monthly outputs
         { SSC_OUTPUT,        SSC_ARRAY,      "monthly_system_to_load",                     "Energy to load from system",                            "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
@@ -705,6 +707,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     outBatteryPower = vt.allocate("batt_power", nrec*nyears);
     outGridPower = vt.allocate("grid_power", nrec*nyears); // Net grid energy required.  Positive indicates putting energy on grid.  Negative indicates pulling off grid
     outGenPower = vt.allocate("pv_batt_gen", nrec*nyears);
+    outGenWithoutBattery = vt.allocate("gen_without_battery", nrec*nyears);
     outSystemToGrid = vt.allocate("system_to_grid", nrec*nyears);
 
     if (batt_vars->batt_meter_position == dispatch_t::BEHIND)
