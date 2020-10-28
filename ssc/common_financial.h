@@ -51,10 +51,10 @@ private:
 	std::vector<double> m_hourly_energy;
 	int m_nyears;
 	bool m_timestep;
-	ssc_number_t *m_gen;
-	ssc_number_t *m_multipliers;
-	size_t m_ngen;
-	size_t m_nmultipliers;
+	ssc_number_t *m_gen; // Time series power
+	ssc_number_t *m_multipliers; // Time series ppa multiplers
+	size_t m_ngen; // Number of records in gen
+	size_t m_nmultipliers; // Number of records in m_multipliers
 
 public:
 	dispatch_calculations() {};

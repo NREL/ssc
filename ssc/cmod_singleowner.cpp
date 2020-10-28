@@ -539,7 +539,9 @@ static var_info _cm_vtab_singleowner[] = {
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_sales",                        "Energy sold to grid",                 "kWh",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_purchases",                    "Energy purchased from grid",          "kWh",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_ppa_price",                           "PPA price",                     "cents/kWh",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
-    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_value",                        "PPA revenue",                     "$",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_value",                        "Net PPA revenue",                     "$",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_sales_value",                  "Gross PPA revenue",                   "$",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_purchases_value",              "Negative PPA revenue",                "$",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_thermal_value",                        "Thermal revenue",                     "$",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_om_fixed_expense",                    "O&M fixed expense",                  "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_om_production_expense",               "O&M production-based expense",       "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -2784,7 +2786,44 @@ public:
 
 //	log(util::format("after loop  - size of debt =%lg .", size_of_debt), SSC_WARNING);
 
+    
 
+    // Use PPA values to calculate revenue from purchases and sales
+    size_t n_multipliers;
+    ssc_number_t* ppa_multipliers = as_array("ppa_multipliers", &n_multipliers);
+    bool ppa_purchases = !(is_assigned("en_electricity_rates") && as_number("en_electricity_rates") == 1); 
+
+    if (as_integer("system_use_lifetime_output") == 1)
+    {
+        // hourly_enet includes all curtailment, availability
+        for (size_t i = 1; i <= nyears; i++) {
+            double ppa_value = cf.at(CF_ppa_price, i);
+            for (size_t h = 0; h < 8760; h++) {
+                cf.at(CF_energy_sales_value, i) += hourly_energy_calcs.hourly_sales()[(i - 1) * 8760 + h] * cf.at(CF_degradation, i) * ppa_value / 100.0 * ppa_multipliers[h];
+                if (ppa_purchases) {
+                    cf.at(CF_energy_purchases_value, i) += hourly_energy_calcs.hourly_purchases()[(i - 1) * 8760 + h] * cf.at(CF_degradation, i) * ppa_value / 100.0 * ppa_multipliers[h];
+                }
+            }
+            if (!ppa_purchases) {
+                cf.at(CF_energy_purchases_value, i) = 0.0;
+            }
+        }   
+    }
+    else
+    {
+        for (size_t i = 1; i <= nyears; i++) {
+            double ppa_value = cf.at(CF_ppa_price, i);
+            for (size_t h = 0; h < 8760; h++) {
+                cf.at(CF_energy_sales_value, i) += hourly_energy_calcs.hourly_sales()[h] * cf.at(CF_degradation, i) * ppa_value / 100.0 * ppa_multipliers[h];
+                if (ppa_purchases) {
+                    cf.at(CF_energy_purchases_value, i) += hourly_energy_calcs.hourly_purchases()[h] * cf.at(CF_degradation, i) * ppa_value / 100.0 * ppa_multipliers[h];
+                }
+            }
+            if (!ppa_purchases) {
+                cf.at(CF_energy_purchases_value, i) = 0.0;
+            }
+        }
+    }
 
 	assign("flip_target_year", var_data((ssc_number_t) flip_target_year ));
 	assign("flip_target_irr", var_data((ssc_number_t)  flip_target_percent ));
@@ -3154,6 +3193,8 @@ public:
 
 
 		save_cf(CF_energy_value, nyears, "cf_energy_value");
+        save_cf(CF_energy_sales_value, nyears, "cf_energy_sales_value");
+        save_cf(CF_energy_purchases_value, nyears, "cf_energy_purchases_value");
 		save_cf(CF_thermal_value, nyears, "cf_thermal_value");
 		save_cf(CF_curtailment_value, nyears, "cf_curtailment_value");
 		save_cf(CF_capacity_payment, nyears, "cf_capacity_payment");
