@@ -744,7 +744,7 @@ void solarpos_spa(int year, int month, int day, int hour, double minute, double 
 * \param[out] angle[3] tracking axis rotation angle in radians, measured from surface normal of unrotating axis (only for 1 axis trackers)
 * \param[out] angle[4] backtracking difference (rot - ideal_rot) will be zero except in case of backtracking for 1 axis tracking
 */
-void incidence(int mode, double tilt, double sazm, double rlim, double zen, double azm, bool en_backtrack, double gcr, bool force_to_stow, double stow_angle_deg, double angle[5]);
+void incidence(int mode, double tilt, double sazm, double rlim, double zen, double azm, bool en_backtrack, double gcr, bool force_to_stow, double stow_angle_deg, double cross_axis_slope, double angle[5]);
 
 
 /**
@@ -886,9 +886,10 @@ void ModifiedDISC(const double kt[3], const double kt1[3], const double g[3], co
 * \param[in] axis_azimuth axis azimuth in degrees, measured east from north
 * \param[in] gcr ground coverage ratio of system
 * \param[in] rotation tracking axis rotation angle in degrees
+* \param[in] cross_axis_slope angle from horizontal of the plane containing the tracker axes, in the cross axis direction, -90° to 90°
 * \return fraction shaded (0-1) if system is shaded (0 for unshaded)
 */
-double shadeFraction1x(double solar_azimuth, double solar_zenith, double axis_tilt, double axis_azimuth, double gcr, double rotation);
+double shadeFraction1x(double solar_azimuth, double solar_zenith, double axis_tilt, double axis_azimuth, double gcr, double rotation, double cross_axis_slope = 0);
 
 /**
 * truetrack calculates the tracker rotation that minimizes the angle of incidence betweem direct irradiance and the module front surface normal
@@ -908,7 +909,7 @@ double truetrack(double solar_azimuth, double solar_zenith, double axis_tilt, do
 * \param[in] gcr ground coverage ratio (0-1) of array
 * \return updated rotation angle in degrees after backtracking
 */
-double backtrack(double truetracking_rotation, double gcr);
+double backtrack(double truetracking_rotation, double gcr, double cross_axis_slope = 0);
 
 
 /**
@@ -933,6 +934,7 @@ protected:
     int skyModel;					///< sky model selection as defined in \link Irradiance_IO::SKYMODEL 
     int radiationMode;				///< radiation input mode as defined in \link Irradiance_IO::RADMODE
     int trackingMode;				///< the subarray tracking model as defined in \link Subarray_IO::tracking
+    double crossAxisSlope;          ///< angle of inclination from horizontal of the plane containing the tracker axes, in the cross-axis direction, -90° to 90°
     bool enableBacktrack;			///< Boolean value for whether backtracking is enabled or not
     bool forceToStow;				///< Boolean value for whether or not a single-axis tracker can be set to a stow angle
 
@@ -981,7 +983,7 @@ public:
 
     /// Default class constructor, calls setup()
     irrad(weather_record wr, weather_header wh,
-        int skyModel, int radiationModeIn, int trackModeIn,
+        int skyModel, int radiationModeIn, int trackModeIn, double crossAxisSlopeIn,
         bool useWeatherFileAlbedo, bool instantaneousWeather, bool backtrackingEnabled, bool forceToStowIn,
         double dtHour, double tiltDegrees, double azimuthDegrees, double trackerRotationLimitDegrees, double stowAngleDegreesIn,
         double groundCoverageRatio, std::vector<double> monthlyTiltDegrees, std::vector<double> userSpecifiedAlbedo,
@@ -1009,7 +1011,7 @@ public:
     void set_sky_model(int skymodel, double albedo);
 
     /// Set the surface orientation for the irradiance processor
-    void set_surface(int tracking, double tilt_deg, double azimuth_deg, double rotlim_deg, bool en_backtrack, double gcr, bool forceToStowFlag, double stowAngle);
+    void set_surface(int tracking, double tilt_deg, double azimuth_deg, double rotlim_deg, bool en_backtrack, double gcr, bool forceToStowFlag, double stowAngle, double cross_axis_slope);
 
     /// Set the direct normal and diffuse horizontal components of irradiation
     void set_beam_diffuse(double beam, double diffuse);

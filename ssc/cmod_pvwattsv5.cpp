@@ -234,7 +234,7 @@ public:
         irr.set_beam_diffuse(dn, df);
         irr.set_surface(track_mode, tilt, azimuth, 45.0,
             shade_mode_1x == 1, // backtracking mode
-            gcr, false, 0.0);
+            gcr, false, 0.0, 0.0);
 
         int code = irr.calc();
 

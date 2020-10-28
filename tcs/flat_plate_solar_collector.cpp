@@ -151,7 +151,7 @@ const PoaIrradianceComponents FlatPlateCollector::IncidentIrradiance(const TimeA
     tt.set_sky_model(sky_model, albedo);
     double tilt = time_and_position.collector_orientation.tilt;
     double azimuth = time_and_position.collector_orientation.azimuth;
-    tt.set_surface(0, tilt, azimuth, 0, 0, 0, false, 0.0);
+    tt.set_surface(0, tilt, azimuth, 0, 0, 0, false, 0.0, 0.0);
     tt.calc();
 
     double poa_beam, poa_sky_diffuse, poa_ground_reflected_diffuse;
