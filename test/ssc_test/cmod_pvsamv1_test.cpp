@@ -559,16 +559,16 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, InvTempDerate) {
     ssc_number_t annual_energy, loss, percent_loss, monthly_energy;
 
     ssc_data_get_number(data, "annual_energy", &annual_energy);
-    EXPECT_NEAR(annual_energy, 3540, 10) << "Annual energy reduced";
+    EXPECT_NEAR(annual_energy, 3585, 10) << "Annual energy reduced";
 
     ssc_data_get_number(data, "annual_inv_tdcloss", &loss);
-    EXPECT_NEAR(loss, 992, 10) << "Annual loss";
+    EXPECT_NEAR(loss, 949, 10) << "Annual loss";
 
     ssc_data_get_number(data, "annual_ac_inv_tdc_loss_percent", &percent_loss);
     EXPECT_NEAR(percent_loss, 20, 2);
 
     monthly_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[0];
-    EXPECT_NEAR(monthly_energy, 291, 10) << "Monthly energy of January reduced";
+    EXPECT_NEAR(monthly_energy, 305, 10) << "Monthly energy of January reduced";
 
     monthly_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[11];
     EXPECT_NEAR(monthly_energy, 740, 10) << "Month energy of December not reduced";

@@ -245,13 +245,14 @@ void SharedInverter::calculateACPower(const std::vector<double> powerDC_kW_in, c
     Tdry_C = tempC;
     StringV = DCStringVoltage[0];
     double tempLoss = 0.0;
+    double power_ratio = 1.0;
     if (m_tempEnabled) {
         //use average of the DC voltages to pick which temp curve to use- a weighted average might be better but we don't have that information here
         double avgDCVoltage = 0;
         for (size_t i = 0; i < DCStringVoltage.size(); i++)
             avgDCVoltage += DCStringVoltage[i];
         avgDCVoltage /= DCStringVoltage.size();
-        calculateTempDerate(avgDCVoltage, tempC, powerAC_Watts, efficiencyAC, tempLoss);
+        calculateTempDerate(avgDCVoltage, tempC, powerAC_Watts, power_ratio, tempLoss);
     }
 
     // Scale to total system size
