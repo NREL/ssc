@@ -1463,6 +1463,7 @@ void pvsamMPPT_nofinancial_default(ssc_data_t& data)
     ssc_data_set_number(data, "cec_array_rows", 1);
     ssc_data_set_number(data, "cec_array_cols", 10);
     ssc_data_set_number(data, "cec_backside_temp", 20);
+    ssc_data_set_number(data, "cec_transient_thermal_model_unit_mass", 11.09186);
     ssc_data_set_number(data, "6par_celltech", 1);
     ssc_data_set_number(data, "6par_is_bifacial", 0);
     ssc_data_set_number(data, "6par_bifacial_transmission_factor", 0);
@@ -1480,6 +1481,7 @@ void pvsamMPPT_nofinancial_default(ssc_data_t& data)
     ssc_data_set_number(data, "6par_tnoct", 46);
     ssc_data_set_number(data, "6par_standoff", 6);
     ssc_data_set_number(data, "6par_mounting", 0);
+    ssc_data_set_number(data, "6par_transient_thermal_model_unit_mass", 11.09186);
     ssc_data_set_number(data, "snl_module_structure", 0);
     ssc_data_set_number(data, "snl_a", -3.619999885559082);
     ssc_data_set_number(data, "snl_b", -0.075000002980232239);
@@ -1522,6 +1524,7 @@ void pvsamMPPT_nofinancial_default(ssc_data_t& data)
     ssc_data_set_number(data, "snl_series_cells", 72);
     ssc_data_set_number(data, "snl_vmpo", 40);
     ssc_data_set_number(data, "snl_voco", 47.700000762939453);
+    ssc_data_set_number(data, "snl_transient_thermal_model_unit_mass", 11.09186);
     ssc_data_set_number(data, "sd11par_nser", 116);
     ssc_data_set_number(data, "sd11par_area", 0.72000002861022949);
     ssc_data_set_number(data, "sd11par_AMa0", 0.94169998168945313);
