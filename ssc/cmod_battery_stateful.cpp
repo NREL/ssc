@@ -407,8 +407,8 @@ cm_battery_stateful::cm_battery_stateful(var_table* vt) :
         battery = std::unique_ptr<battery_t>(new battery_t(params));
         write_battery_state(battery->get_state(), m_vartab);
     }
-    catch (std::exception& e) {
-        throw runtime_error(e.what());
+    catch (general_error& e) {
+        throw std::runtime_error(e.err_text);
     }
 }
 
