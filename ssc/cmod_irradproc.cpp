@@ -60,7 +60,7 @@ static var_info _cm_vtab_irradproc[] = {
         { SSC_INPUT,        SSC_NUMBER,      "backtrack",                  "Enable backtracking",            "0/1",    "",                      "Irradiance Processor",      "?=0",                    "BOOLEAN",                                   "" },
         { SSC_INPUT,        SSC_NUMBER,      "gcr",                        "Ground coverage ratio",          "0..1",   "",                      "Irradiance Processor",      "backtrack=1",              "MIN=0,MAX=1",                             "" },
         { SSC_INPUT,        SSC_NUMBER,      "elevation",                  "Elevation",                      "m",      "",                      "Irradiance Processor",        "?",                                 "",                             "" },
-        { SSC_INPUT,        SSC_NUMBER,      "tamb",                       "Ambient Temperature",            "°C",     "",                      "Irradiance Processor",        "?",                                  "",                            "" },
+        { SSC_INPUT,        SSC_NUMBER,      "tamb",                       "Ambient Temperature (dry bulb temperature)","°C",     "",           "Irradiance Processor",        "?",                                  "",                            "" },
         { SSC_INPUT,        SSC_NUMBER,      "pressure",                   "Pressure",                       "mbars",  "",                      "Irradiance Processor",        "?",                                  "",                            "" },
 
 

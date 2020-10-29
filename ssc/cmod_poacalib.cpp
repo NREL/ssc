@@ -43,7 +43,7 @@ static var_info _cm_vtab_poacalib[] =
         { SSC_INPUT,        SSC_NUMBER,      "year",              "Year",                  "",                 "",                  "POA Calibrate", "*",           "",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "albedo",            "Albedo",                "",                 "",                  "POA Calibrate", "*",           "MIN=0,MAX=1",                   "" },
         { SSC_INPUT,        SSC_NUMBER,      "elevation",         "Elevation",             "m",                "",                  "POA Calibrate", "?",           "",                              "" },
-        { SSC_INPUT,        SSC_NUMBER,      "tamb",              "Ambient Temperature",   "°C",               "",                  "POA Calibrate", "?",           "",                              "" },
+        { SSC_INPUT,        SSC_NUMBER,      "tamb",              "Ambient Temperature (dry bulb temperature)","°C",     "",        "POA Calibrate", "?",           "",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "pressure",          "Pressure",              "millibars",        "",                  "POA Calibrate", "?",           "",                              "" },
 
         { SSC_INPUT,        SSC_ARRAY,       "poa",               "Plane of Array",        "W/m^2",            "",                  "POA Calibrate", "*",           "LENGTH=8760",                   "" },
