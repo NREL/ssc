@@ -71,6 +71,7 @@ void pvsamv1_pv_defaults(ssc_data_t& data) {
 	ssc_data_set_number(data, "subarray1_tilt_eq_lat", 0);
 	ssc_data_set_number(data, "subarray1_azimuth", 180);
 	ssc_data_set_number(data, "subarray1_track_mode", 0);
+    ssc_data_set_number(data, "subarray1_cross_axis_slope", 0);
 	ssc_data_set_number(data, "subarray1_rotlim", 45);
 	ssc_data_set_number(data, "subarray1_shade_mode", 0);
 	ssc_data_set_number(data, "subarray1_gcr", 0.29999999999999999);
@@ -117,6 +118,7 @@ void pvsamv1_pv_defaults(ssc_data_t& data) {
 	ssc_data_set_number(data, "subarray2_tilt_eq_lat", 0);
 	ssc_data_set_number(data, "subarray2_azimuth", 180);
 	ssc_data_set_number(data, "subarray2_track_mode", 0);
+    ssc_data_set_number(data, "subarray2_cross_axis_slope", 0);
 	ssc_data_set_number(data, "subarray2_rotlim", 45);
 	ssc_data_set_number(data, "subarray2_shade_mode", 0);
 	ssc_data_set_number(data, "subarray2_gcr", 0.29999999999999999);
@@ -136,6 +138,7 @@ void pvsamv1_pv_defaults(ssc_data_t& data) {
 	ssc_data_set_number(data, "subarray3_tilt_eq_lat", 0);
 	ssc_data_set_number(data, "subarray3_azimuth", 180);
 	ssc_data_set_number(data, "subarray3_track_mode", 0);
+    ssc_data_set_number(data, "subarray3_cross_axis_slope", 0);
 	ssc_data_set_number(data, "subarray3_rotlim", 45);
 	ssc_data_set_number(data, "subarray3_shade_mode", 0);
 	ssc_data_set_number(data, "subarray3_gcr", 0.29999999999999999);
@@ -155,6 +158,7 @@ void pvsamv1_pv_defaults(ssc_data_t& data) {
 	ssc_data_set_number(data, "subarray4_tilt_eq_lat", 0);
 	ssc_data_set_number(data, "subarray4_azimuth", 180);
 	ssc_data_set_number(data, "subarray4_track_mode", 0);
+    ssc_data_set_number(data, "subarray4_cross_axis_slope", 0);
 	ssc_data_set_number(data, "subarray4_rotlim", 45);
 	ssc_data_set_number(data, "subarray4_shade_mode", 0);
 	ssc_data_set_number(data, "subarray4_gcr", 0.29999999999999999);
@@ -789,6 +793,7 @@ void commercial_multiarray_default(ssc_data_t& data) {
 	ssc_data_set_number(data, "subarray1_tilt_eq_lat", 0);
 	ssc_data_set_number(data, "subarray1_azimuth", 180);
 	ssc_data_set_number(data, "subarray1_track_mode", 0);
+    ssc_data_set_number(data, "subarray1_cross_axis_slope", 0);
 	ssc_data_set_number(data, "subarray1_rotlim", 45);
 	ssc_data_set_number(data, "subarray1_shade_mode", 0);
 	ssc_data_set_number(data, "subarray1_gcr", 0.29999999999999999);
@@ -835,6 +840,7 @@ void commercial_multiarray_default(ssc_data_t& data) {
 	ssc_data_set_number(data, "subarray2_tilt_eq_lat", 0);
 	ssc_data_set_number(data, "subarray2_azimuth", 180);
 	ssc_data_set_number(data, "subarray2_track_mode", 0);
+    ssc_data_set_number(data, "subarray2_cross_axis_slope", 0);
 	ssc_data_set_number(data, "subarray2_rotlim", 45);
 	ssc_data_set_number(data, "subarray2_shade_mode", 0);
 	ssc_data_set_number(data, "subarray2_gcr", 0.29999999999999999);
@@ -854,6 +860,7 @@ void commercial_multiarray_default(ssc_data_t& data) {
 	ssc_data_set_number(data, "subarray3_tilt_eq_lat", 0);
 	ssc_data_set_number(data, "subarray3_azimuth", 180);
 	ssc_data_set_number(data, "subarray3_track_mode", 0);
+    ssc_data_set_number(data, "subarray3_cross_axis_slope", 0);
 	ssc_data_set_number(data, "subarray3_rotlim", 45);
 	ssc_data_set_number(data, "subarray3_shade_mode", 0);
 	ssc_data_set_number(data, "subarray3_gcr", 0.29999999999999999);
@@ -873,6 +880,7 @@ void commercial_multiarray_default(ssc_data_t& data) {
 	ssc_data_set_number(data, "subarray4_tilt_eq_lat", 0);
 	ssc_data_set_number(data, "subarray4_azimuth", 180);
 	ssc_data_set_number(data, "subarray4_track_mode", 0);
+    ssc_data_set_number(data, "subarray4_cross_axis_slope", 0);
 	ssc_data_set_number(data, "subarray4_rotlim", 45);
 	ssc_data_set_number(data, "subarray4_shade_mode", 0);
 	ssc_data_set_number(data, "subarray4_gcr", 0.29999999999999999);
