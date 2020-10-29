@@ -1238,6 +1238,7 @@ battstor::battstor(const battstor& orig){
     outDispatchMode = orig.outDispatchMode;
     outBatteryPower = orig.outBatteryPower;
     outGenPower = orig.outGenPower;
+    outGenWithoutBattery = orig.outGenWithoutBattery;
     outGridPower = orig.outGridPower;
     outSystemToLoad = orig.outSystemToLoad;
     outBatteryToLoad = orig.outBatteryToLoad;

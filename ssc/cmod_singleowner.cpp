@@ -42,9 +42,11 @@ static var_info _cm_vtab_singleowner[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "gen_purchases",                              "Electricity purchases from the grid for battery charging or losses","kW",      "",                       "System Output",       "",                           "",                              "" },
 
 
-	{ SSC_INPUT, SSC_ARRAY, "gen", "Net power to or from the grid", "kW", "", "System Output", "*", "", "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "gen",                                         "Net power to or from the grid",                            "kW",       "",                    "System Output", "*", "", "" },
+    { SSC_INPUT,        SSC_ARRAY,      "gen_without_battery",                          "Electricity to/from the renewable system, without the battery", "kW", "",                     "System Output", "", "", "" },
 
-	{ SSC_INPUT, SSC_ARRAY, "degradation", "Annual energy degradation", "", "", "System Output", "*", "", "" },
+
+	{ SSC_INPUT,        SSC_ARRAY, "degradation", "Annual energy degradation", "", "", "System Output", "*", "", "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "system_capacity",			              "System nameplate capacity",		                               "kW",                "",                        "System Output",             "*",					   "MIN=1e-3",                      "" },
     
 	/* PPA Buy Rate values */
@@ -538,6 +540,7 @@ static var_info _cm_vtab_singleowner[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_net",                          "Energy produced",                     "kWh",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_sales",                        "Energy sold to grid",                 "kWh",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_purchases",                    "Energy purchased from grid",          "kWh",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_without_battery",              "Energy produced without the battery or curtailment", "kWh",      "",       "Cash Flow Revenues",             "",                       "LENGTH_EQUAL=cf_length",                             "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_ppa_price",                           "PPA price",                     "cents/kWh",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_value",                        "Net PPA revenue",                     "$",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_sales_value",                  "Gross PPA revenue",                   "$",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
@@ -878,6 +881,8 @@ enum {
     CF_energy_purchases,
     CF_energy_purchases_value,
 
+    CF_energy_without_battery,
+
 	CF_max };
 
 
@@ -1188,6 +1193,33 @@ public:
                 
 		}
 
+        if (is_assigned("gen_without_battery"))
+        {
+            ssc_number_t first_year_energy_without_battery = 0.0;
+            if (as_integer("system_use_lifetime_output") == 1)
+            {
+                // hourly_enet includes all curtailment, availability
+                for (size_t y = 1; y <= (size_t)nyears; y++)
+                {
+                    for (size_t h = 0; h < 8760; h++)
+                    {
+                        cf.at(CF_energy_without_battery, y) += hourly_energy_calcs.hourly_energy_without_battery()[(y - 1) * 8760 + h] * cf.at(CF_degradation, y);
+                    }
+                }
+            }
+            else
+            {
+                for (i = 0; i < 8760; i++) {
+                    first_year_energy_without_battery += hourly_energy_calcs.hourly_energy_without_battery()[i];
+                }
+                cf.at(CF_energy_without_battery, 1) = first_year_energy_without_battery;
+                for (i = 1; i <= nyears; i++) {
+                    cf.at(CF_energy_without_battery, i) = first_year_energy_without_battery * cf.at(CF_degradation, i);
+                }
+
+            }
+        }
+
 		// curtailed energy and revenue
 		ssc_number_t pre_curtailement_year1_energy = as_number("annual_energy_pre_curtailment_ac");
 		size_t count_curtailment_price;
@@ -1299,7 +1331,13 @@ public:
 
 		for (i=1;i<=nyears;i++)
 		{
-			cf.at(CF_om_production_expense,i) *= cf.at(CF_energy_net,i);
+            if (is_assigned("gen_without_battery")) {
+                // TODO: this does not include curtailment, but CF_energy_net does. Which should be used for VOM?
+                cf.at(CF_om_production_expense, i) *= cf.at(CF_energy_without_battery, i);
+            }
+            else {
+                cf.at(CF_om_production_expense, i) *= cf.at(CF_energy_net, i);
+            }
 			cf.at(CF_om_capacity_expense, i) *= nameplate;
 			cf.at(CF_om_capacity1_expense, i) *= nameplate1;
 			cf.at(CF_om_capacity2_expense, i) *= nameplate2;
@@ -3229,6 +3267,11 @@ public:
 		save_cf( CF_energy_net, nyears, "cf_energy_net" );
 		save_cf( CF_energy_sales, nyears, "cf_energy_sales" );
 		save_cf( CF_energy_purchases, nyears, "cf_energy_purchases" );
+
+        if (is_assigned("gen_without_battery")) {
+            save_cf(CF_energy_without_battery, nyears, "cf_energy_without_battery");
+        }
+
 		save_cf( CF_reserve_debtservice, nyears, "cf_reserve_debtservice" );
 		save_cf(CF_reserve_om, nyears, "cf_reserve_om");
 		save_cf(CF_reserve_receivables, nyears, "cf_reserve_receivables");
