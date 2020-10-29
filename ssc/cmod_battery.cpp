@@ -1660,6 +1660,7 @@ public:
                             resilience->run_surviving_batteries(p_crit_load[lifetime_idx % n_rec_single_year], power_input_lifetime[lifetime_idx]);
                         }
 
+                        batt->outGenWithoutBattery[lifetime_idx] = power_input_lifetime[lifetime_idx];
                         batt->advance(m_vartab, power_input_lifetime[lifetime_idx], 0, load_lifetime[lifetime_idx], 0);
                         p_gen[lifetime_idx] = batt->outGenPower[lifetime_idx];
                         if (year == 0) {
