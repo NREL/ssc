@@ -773,6 +773,8 @@ public:
 		double m_m_dot_field_to_cycle;	//[kg/s]
 		double m_m_dot_cycle_to_field;	//[kg/s]
 
+        double m_T_tes_cold_in;         //[K]
+
 		// Mass flow rate from one tank directly to another. = 0 for direct systems
 		double m_m_dot_cold_tank_to_hot_tank;	//[kg/s] 
 
@@ -781,6 +783,7 @@ public:
 			m_q_heater =  m_q_dot_dc_to_htf = m_q_dot_ch_from_htf = 
 			m_m_dot_cr_to_tes_hot = m_m_dot_cr_to_tes_cold = m_m_dot_pc_to_tes_cold = m_m_dot_pc_to_tes_cold =
 			m_m_dot_tes_cold_out = m_m_dot_tes_cold_in = m_m_dot_field_to_cycle = m_m_dot_cycle_to_field =
+            m_T_tes_cold_in = 
             m_m_dot_cold_tank_to_hot_tank = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
@@ -910,6 +913,7 @@ public:
 			TES_Q_DOT_DC,         //[MWt] TES discharge thermal power
 			TES_Q_DOT_CH,         //[MWt] TES charge thermal power
 			TES_E_CH_STATE,       //[MWht] TES charge state at the end of the time step
+            TES_T_COLD_IN,        //[C] Inlet temperature to cold TES
 			M_DOT_CR_TO_TES_HOT,  //[kg/s]
             M_DOT_CR_TO_TES_COLD, //[kg/s]
 			M_DOT_TES_HOT_OUT,    //[kg/s]
@@ -1004,11 +1008,18 @@ public:
 
         bool m_is_rec_to_coldtank_allowed;
 
+        // If receiver outlet to cold tank is allowed
+        //   outlet temps colder than this value go to the cold tank
+        //   calculate T_htf_hot_tank_in_min = f*T_hot_des + (1-f)*T_cold_des
+        double f_htf_hot_des__T_htf_hot_tank_in_min;   //[-]
+
 		S_csp_system_params()
 		{
 			m_pb_fixed_par =
 
 			m_bop_par = m_bop_par_f = m_bop_par_0 = m_bop_par_1 = m_bop_par_2 = std::numeric_limits<double>::quiet_NaN();
+
+            f_htf_hot_des__T_htf_hot_tank_in_min = std::numeric_limits<double>::quiet_NaN();
 
             m_is_rec_to_coldtank_allowed = false;
 		}

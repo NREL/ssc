@@ -1363,6 +1363,8 @@ int C_csp_two_tank_tes::solve_tes_off_design(double timestep /*s*/, double  T_am
     s_outputs.m_m_dot_field_to_cycle = m_dot_field_to_cycle;	//[kg/s]
     s_outputs.m_m_dot_cycle_to_field = m_dot_cycle_to_field;	//[kg/s]
 
+    s_outputs.m_T_tes_cold_in = T_htf_cold_cv_in;       //[K]
+
     s_outputs.m_m_dot_cold_tank_to_hot_tank = m_dot_cold_tank_to_hot_tank;
 
     mc_reported_outputs.value(E_Q_DOT_LOSS, q_dot_loss);		//[MWt]

@@ -356,6 +356,10 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,     SSC_NUMBER, "allow_controller_exceptions",        "Allow controller exceptions? (1 = true)",                                                                                                 "-",            "",                                  "System Control",                           "?=1",                                                              "",              ""},
     { SSC_INPUT,     SSC_ARRAY,  "select_simulation_days",             "Selected subset of simulation days",                                                                                                      "-",            "",                                  "System Control",                           "?=0",                                                              "",              ""},
 
+    { SSC_INPUT,     SSC_NUMBER, "is_rec_to_coldtank_allowed",         "Can controller send receiver output to cold tank if it's colder than the input threshold? (1 = true)",                                    "-",            "",                                  "System Control",                           "?=0",                                                              "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "f_T_htf_hot_des_is_hot_tank_in_min", "Sets temperature threshold for rec output to cold tank = f*T_hot_des + (1-f)*T_cold_des",                                                 "-",            "",                                  "System Control",                           "?=0.5",                                                            "",              "" },
+
+
     // Optional Component Initialization (state at start of first timestep)
         // Heliostat field
     { SSC_INPUT,     SSC_NUMBER, "is_field_tracking_init",             "Is heliostat field tracking? (1 = true)",                                                                                                 "-",            "",                                  "System Control",                           "",                                                                 "",              "" },
@@ -585,6 +589,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_ARRAY,  "q_heater",                           "TES freeze protection power",                                                                                                             "MWe",          "",                                  "",                                         "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_ARRAY,  "T_tes_hot",                          "TES hot temperature (end)",                                                                                                               "C",            "",                                  "",                                         "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_ARRAY,  "T_tes_cold",                         "TES cold temperature (end)",                                                                                                              "C",            "",                                  "",                                         "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "T_tes_cold_in",                      "TES cold inlet",                                                                                                                          "C",            "",                                  "",                                         "*",                                                                "",              "" },
     { SSC_OUTPUT,   SSC_ARRAY,   "mass_tes_cold",                      "TES cold tank mass (end)",                                                                                                                "kg",           "",                                  "",                                         "*",                                                                "",              "" },
     { SSC_OUTPUT,   SSC_ARRAY,   "mass_tes_hot",                       "TES hot tank mass (end)",                                                                                                                 "kg",           "",                                  "",                                         "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_ARRAY,  "q_dc_tes",                           "TES discharge thermal power",                                                                                                             "MWt",          "",                                  "",                                         "*",                                                                "",              "" },
@@ -2421,7 +2426,8 @@ public:
         system.m_bop_par_1 = as_double("bop_par_1");
         system.m_bop_par_2 = as_double("bop_par_2");
 
-        system.m_is_rec_to_coldtank_allowed = false;
+        system.m_is_rec_to_coldtank_allowed = as_boolean("is_rec_to_coldtank_allowed");
+        system.f_htf_hot_des__T_htf_hot_tank_in_min = as_double("f_T_htf_hot_des_is_hot_tank_in_min");  
 
         // Instantiate Solver       
         C_csp_solver csp_solver(weather_reader, 
@@ -2494,7 +2500,8 @@ public:
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TES_Q_DOT_DC, allocate("q_dc_tes", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TES_Q_DOT_CH, allocate("q_ch_tes", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TES_E_CH_STATE, allocate("e_ch_tes", n_steps_fixed), n_steps_fixed);
-       
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TES_T_COLD_IN, allocate("T_tes_cold_in", n_steps_fixed), n_steps_fixed);
+
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::M_DOT_CR_TO_TES_HOT, allocate("m_dot_cr_to_tes_hot", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::M_DOT_CR_TO_TES_COLD, allocate("m_dot_cr_to_tes_cold", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::M_DOT_TES_HOT_OUT, allocate("m_dot_tes_hot_out", n_steps_fixed), n_steps_fixed);

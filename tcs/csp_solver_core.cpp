@@ -271,7 +271,8 @@ static C_csp_reported_outputs::S_output_info S_solver_output_info[] =
 	{C_csp_solver::C_solver_outputs::TES_Q_DOT_DC, C_csp_reported_outputs::TS_WEIGHTED_AVE},	//[MWt] TES discharge thermal power
 	{C_csp_solver::C_solver_outputs::TES_Q_DOT_CH, C_csp_reported_outputs::TS_WEIGHTED_AVE},	//[MWt] TES charge thermal power
 	{C_csp_solver::C_solver_outputs::TES_E_CH_STATE, C_csp_reported_outputs::TS_LAST},			//[MWht] TES charge state at the end of the time step
-	
+    {C_csp_solver::C_solver_outputs::TES_T_COLD_IN, C_csp_reported_outputs::TS_WEIGHTED_AVE},	//[MWt] Inlet temperature to cold TES
+
 	{C_csp_solver::C_solver_outputs::M_DOT_CR_TO_TES_HOT, C_csp_reported_outputs::TS_WEIGHTED_AVE},		//[kg/s]
     {C_csp_solver::C_solver_outputs::M_DOT_CR_TO_TES_COLD, C_csp_reported_outputs::TS_WEIGHTED_AVE},	//[kg/s]
     {C_csp_solver::C_solver_outputs::M_DOT_TES_HOT_OUT, C_csp_reported_outputs::TS_WEIGHTED_AVE},		//[kg/s]
@@ -551,11 +552,17 @@ void C_csp_solver::init()
 
         // System control logic
     m_is_rec_to_coldtank_allowed = ms_system_params.m_is_rec_to_coldtank_allowed;
+    m_T_htf_hot_tank_in_min = (ms_system_params.f_htf_hot_des__T_htf_hot_tank_in_min * cr_solved_params.m_T_htf_cold_des +
+        (1.0 - ms_system_params.f_htf_hot_des__T_htf_hot_tank_in_min) * cr_solved_params.m_T_htf_hot_des) - 273.15;     //[C] convert from K
+    //m_T_htf_hot_tank_in_min = (0.5 * cr_solved_params.m_T_htf_cold_des + 0.5 * cr_solved_params.m_T_htf_hot_des) - 273.15;  //[C] convert from K
+
     // Can't send HTF outlet to cold tank if no cold tank
     // or if TES class isn't configured to do so (parallel tanks in two-tank tes can't at the moment)
-    m_is_rec_to_coldtank_allowed = m_is_rec_to_coldtank_allowed && m_is_tes && m_does_tes_enable_cr_to_cold_tank;
-
-    m_T_htf_hot_tank_in_min = (0.5 * cr_solved_params.m_T_htf_cold_des + 0.5 * cr_solved_params.m_T_htf_hot_des) - 273.15;  //[C] convert from K
+    // or if hot tank in min is nan or "too hot"
+    m_is_rec_to_coldtank_allowed = m_is_rec_to_coldtank_allowed && m_is_tes &&
+                                    m_does_tes_enable_cr_to_cold_tank &&
+                                    std::isfinite(m_T_htf_hot_tank_in_min) &&
+                                    m_T_htf_hot_tank_in_min < (m_cycle_T_htf_hot_des);
 
     m_is_cr_config_recirc = true;
     
@@ -4868,6 +4875,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		mc_reported_outputs.value(C_solver_outputs::TES_Q_DOT_DC, mc_tes_outputs.m_q_dot_dc_to_htf);    //[MWt] TES discharge thermal power   
 		mc_reported_outputs.value(C_solver_outputs::TES_Q_DOT_CH, mc_tes_outputs.m_q_dot_ch_from_htf);  //[MWt] TES charge thermal power    
 		mc_reported_outputs.value(C_solver_outputs::TES_E_CH_STATE, e_tes_disch);                       //[MWht] TES charge state 
+        mc_reported_outputs.value(C_solver_outputs::TES_T_COLD_IN, mc_tes_outputs.m_T_tes_cold_in - 273.15);    //[C]
 
         mc_reported_outputs.value(C_solver_outputs::M_DOT_CR_TO_TES_HOT, mc_tes_outputs.m_m_dot_cr_to_tes_hot);		//[kg/s]
         mc_reported_outputs.value(C_solver_outputs::M_DOT_CR_TO_TES_COLD, mc_tes_outputs.m_m_dot_cr_to_tes_cold);	//[kg/s]
