@@ -152,6 +152,7 @@ TEST_F(lib_battery_losses_test, MonthlyLossesTest){
     int charge_mode = capacity_state::CHARGE;
 
     size_t idx = 0;
+    double dt_hr = 1;
     model->run_losses(idx, dt_hour, charge_mode);
     EXPECT_NEAR(model->getLoss(), 0, tol) << "MonthlyLossesTest: 1";
 
@@ -183,7 +184,8 @@ TEST_F(lib_battery_losses_test, MonthlyLossesTest){
 TEST_F(lib_battery_losses_test, TimeSeriesLossesTest){
     model = std::unique_ptr<losses_t>(new losses_t(fullLosses));
 
-    int charge_mode = -1;       // not used
+    int charge_mode = -1;       // not used - still need to test charge/discharge/idle loss projections since those will be used in dispatch
+    double dt_hr = 1;
 
     size_t idx = 0;
     model->run_losses(idx, dt_hour, charge_mode);

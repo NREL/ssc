@@ -120,7 +120,7 @@ protected:
 	void check_debug(size_t hour_of_year, size_t idx, FILE*& p, bool& debug);
     bool check_new_month(size_t hour_of_year, size_t step);
     void compute_energy(double& E_max, FILE* p = NULL, const bool debug = false);
-    void set_battery_power(FILE* p = NULL, const bool debug = false);
+    void set_battery_power(size_t idx, FILE* p = NULL, const bool debug = false);
 
     /*! Functions used by grid power target algorithms (peak shaving, input grid power targets) */
     void sort_grid(size_t idx, FILE *p = NULL, const bool debug = false);
