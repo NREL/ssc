@@ -110,7 +110,7 @@ TEST_F(UsingFileCaseWeatherReader, IntegrationTest_csp_solver_core) {
     EXPECT_NEAR(wr.ms_outputs.m_wspd, 1.5, e) << "Values copied from weather file\n";
     EXPECT_NEAR(wr.ms_outputs.m_aod, 0.291, e) << "Values copied from weather file\n";
     EXPECT_NEAR(wr.ms_outputs.m_solazi, 79.817137, e) << "Members specific to CSP weather\n";
-    EXPECT_NEAR(wr.ms_outputs.m_solzen, 34.112929, e) << "Members specific to CSP weather\n";
+    EXPECT_NEAR(wr.ms_outputs.m_solzen, 34.102205, e) << "Members specific to CSP weather\n";
     EXPECT_NEAR(wr.ms_solved_params.m_shift, -13.530000, e) << "Members specific to CSP weather\n";
     EXPECT_FALSE(wr.ms_solved_params.m_leapyear) << "Members specific to CSP weather\n";
 
@@ -137,10 +137,10 @@ TEST_F(UsingFileCaseWeatherReader, IntegrationTest_csp_solver_core) {
     EXPECT_NEAR(wr.ms_outputs.m_albedo, 0.17, e) << "Values copied from weather file\n";
     EXPECT_NEAR(wr.ms_outputs.m_aod, 0.291, e) << "Values copied from weather file\n";
 
-    EXPECT_NEAR(wr.ms_outputs.m_poa, 871.602434, e) << "Calculated in timestep_call()\n";
+    EXPECT_NEAR(wr.ms_outputs.m_poa, 871.628310, e) << "Calculated in timestep_call()\n";
     EXPECT_NEAR(wr.ms_outputs.m_solazi, 64.094861, e) << "Calculated in timestep_call()\n";
-    EXPECT_NEAR(wr.ms_outputs.m_solzen, 22.393625, e) << "Calculated in timestep_call()\n";
-    EXPECT_NEAR(wr.ms_outputs.m_hor_beam, 556.602434, e) << "Calculated in timestep_call()\n";
+    EXPECT_NEAR(wr.ms_outputs.m_solzen, 22.387110, e) << "Calculated in timestep_call()\n";
+    EXPECT_NEAR(wr.ms_outputs.m_hor_beam, 556.628310, e) << "Calculated in timestep_call()\n";
     EXPECT_NEAR(wr.ms_outputs.m_time_rise, 5.804955, e) << "11th hour\n";
     EXPECT_NEAR(wr.ms_outputs.m_time_set, 20.095858, e) << "11th hour\n";
 }
@@ -183,7 +183,7 @@ TEST_F(UsingDataCaseWeatherReader, IntegrationTest_csp_solver_core) {
     EXPECT_NEAR(wr.ms_outputs.m_wspd, 1.5, e) << "Values copied from weather file\n";
     EXPECT_NEAR(wr.ms_outputs.m_aod, 0.291, e) << "Values copied from weather file\n";
     EXPECT_NEAR(wr.ms_outputs.m_solazi, 79.817137, e) << "Members specific to CSP weather\n";
-    EXPECT_NEAR(wr.ms_outputs.m_solzen, 34.112929, e) << "Members specific to CSP weather\n";
+    EXPECT_NEAR(wr.ms_outputs.m_solzen, 34.102206, e) << "Members specific to CSP weather\n";
     EXPECT_NEAR(wr.ms_solved_params.m_shift, -13.530000, e) << "Members specific to CSP weather\n";
     EXPECT_FALSE(wr.ms_solved_params.m_leapyear) << "Members specific to CSP weather\n";
 
@@ -210,10 +210,10 @@ TEST_F(UsingDataCaseWeatherReader, IntegrationTest_csp_solver_core) {
     EXPECT_NEAR(wr.ms_outputs.m_albedo, 0.17, e) << "11th hour\n";
     EXPECT_NEAR(wr.ms_outputs.m_aod, 0.291, e) << "11th hour\n";
 
-    EXPECT_NEAR(wr.ms_outputs.m_poa, 871.602434, e) << "11th hour\n";
+    EXPECT_NEAR(wr.ms_outputs.m_poa, 871.628306, e) << "11th hour\n";
     EXPECT_NEAR(wr.ms_outputs.m_solazi, 64.094861, e) << "11th hour\n";
-    EXPECT_NEAR(wr.ms_outputs.m_solzen, 22.393625, e) << "11th hour\n";
-    EXPECT_NEAR(wr.ms_outputs.m_hor_beam, 556.602434, e) << "11th hour\n";
+    EXPECT_NEAR(wr.ms_outputs.m_solzen, 22.387111, e) << "11th hour\n";
+    EXPECT_NEAR(wr.ms_outputs.m_hor_beam, 556.628306, e) << "11th hour\n";
     EXPECT_NEAR(wr.ms_outputs.m_time_rise, 5.804955, e) << "11th hour\n";
     EXPECT_NEAR(wr.ms_outputs.m_time_set, 20.095858, e) << "11th hour\n";
 }
