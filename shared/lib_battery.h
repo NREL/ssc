@@ -153,9 +153,9 @@ public:
     *
     * Construct the losses object for monthly losses
     *
-    * \param[in] monthly_charge vector (size 1 for annual or 12 for monthly) containing battery system losses when charging (kW)
-    * \param[in] monthly_discharge vector (size 1 for annual or 12 for monthly) containing battery system losses when discharge (kW)
-    * \param[in] monthly_idle vector (size 1 for annual or 12 for monthly) containing battery system losses when idle (kW)
+    * \param[in] monthly_charge vector (size 1 for annual or 12 for monthly) containing battery system losses when charging (kW) (applied to PV or grid)
+    * \param[in] monthly_discharge vector (size 1 for annual or 12 for monthly) containing battery system losses when discharge (kW) (applied to battery power)
+    * \param[in] monthly_idle vector (size 1 for annual or 12 for monthly) containing battery system losses when idle (kW) (applied to PV or grid)
     */
     losses_t(const std::vector<double>& monthly_charge, const std::vector<double>& monthly_discharge, const std::vector<double>& monthly_idle);
 
