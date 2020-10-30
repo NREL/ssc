@@ -164,7 +164,7 @@ TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, singleTS) {
     ssc_data_get_number(data_1ts, "dc", &val);
     EXPECT_NEAR(val, 106739, 1);
     ssc_data_get_number(data_1ts, "ac", &val);
-    EXPECT_NEAR(val, 100851, 1);
+    EXPECT_NEAR(val, 100852, 1);
 
     // tcell & poa are assigned from above exec call
     EXPECT_TRUE(ssc_module_exec(mod, data_1ts));
@@ -174,7 +174,7 @@ TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, singleTS) {
     ssc_data_get_number(data_1ts, "tcell", &val);
     EXPECT_NEAR(val, 13.36, .1);
     ssc_data_get_number(data_1ts, "dc", &val);
-    EXPECT_NEAR(val, 106459, 1);
+    EXPECT_NEAR(val, 106460, 1);
     ssc_data_get_number(data_1ts, "ac", &val);
     EXPECT_NEAR(val, 100579, 1);
 
@@ -188,9 +188,9 @@ TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, singleTS) {
     ssc_data_get_number(data_1ts, "tcell", &val);
     EXPECT_NEAR(val, 13.36, .1);
     ssc_data_get_number(data_1ts, "dc", &val);
-    EXPECT_NEAR(val, 106341, 1);
+    EXPECT_NEAR(val, 106342, 1);
     ssc_data_get_number(data_1ts, "ac", &val);
-    EXPECT_NEAR(val, 100463, 1);
+    EXPECT_NEAR(val, 100464, 1);
 
     ssc_data_free(data_1ts);
 }
