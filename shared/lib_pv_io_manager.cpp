@@ -1488,7 +1488,7 @@ void Inverter_IO::setupSharedInverter(compute_module* cm, SharedInverter* a_shar
         thermalDerateCurves.push_back(row);
     }
     int err = sharedInverter->setTempDerateCurves(thermalDerateCurves);
-    if (err > 1) {
-        throw exec_error("pvsamv1", "Inverter temperature derate curve " + util::to_string((int)(-err - 1)) + " is invalid.");
+    if (err > 0) {
+        throw exec_error("pvsamv1", "Inverter temperature derate curve row " + util::to_string((int)(err - 1)) + " is invalid.");
     }
 }
