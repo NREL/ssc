@@ -188,8 +188,8 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
         revenueToPVCharge = _P_pv_ac[idx_year1] > 0 ? *max_ppa_cost * m_etaDischarge - ppa_cost / m_etaPVCharge - m_cycleCost : 0;
 
         /*! Computed revenue to charge from PV in each of next X hours ($/kWh)*/
-        size_t t_duration = static_cast<size_t>(ceilf(
-                _Battery->energy_nominal() / m_batteryPower->powerBatteryChargeMaxDC));
+        size_t t_duration = static_cast<size_t>(ceilf( (float)
+                _Battery->energy_nominal() / (float) m_batteryPower->powerBatteryChargeMaxDC));
         size_t pv_hours_on;
         double revenueToPVChargeMax = 0;
         if (m_batteryPower->canPVCharge) {
