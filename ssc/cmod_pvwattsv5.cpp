@@ -73,7 +73,7 @@ static var_info _cm_vtab_pvwattsv5_part2[] = {
         { SSC_OUTPUT,       SSC_ARRAY,       "gh",                             "Global horizontal irradiance",                "W/m2",   "",                        "Time Series",      "*",                       "",                          "" },
         { SSC_OUTPUT,       SSC_ARRAY,       "dn",                             "Beam irradiance",                             "W/m2",   "",                        "Time Series",      "*",                       "",                          "" },
         { SSC_OUTPUT,       SSC_ARRAY,       "df",                             "Diffuse irradiance",                          "W/m2",   "",                        "Time Series",      "*",                       "",                          "" },
-        { SSC_OUTPUT,       SSC_ARRAY,       "tamb",                           "Ambient temperature",                         "C",      "",                        "Time Series",      "*",                       "",                          "" },
+        { SSC_OUTPUT,       SSC_ARRAY,       "tamb",                           "Ambient temperature (dry bulb temperature)",  "C",      "",                        "Time Series",      "*",                       "",                          "" },
         { SSC_OUTPUT,       SSC_ARRAY,       "wspd",                           "Wind speed",                                  "m/s",    "",                        "Time Series",      "*",                       "",                          "" },
 
         { SSC_OUTPUT,       SSC_ARRAY,       "sunup",                          "Sun up over horizon",                         "0/1",    "",                        "Time Series",      "*",                       "",                          "" },
@@ -621,12 +621,11 @@ DEFINE_MODULE_ENTRY(pvwattsv5, "PVWatts V5 - integrated hourly weather reader an
         { SSC_INPUT,        SSC_NUMBER,      "tz",                       "Time zone",                                   "hr",     "",                        "PVWatts",      "*",                        "",                      "" },
         { SSC_INPUT,        SSC_NUMBER,      "beam",                     "Beam normal irradiance",                      "W/m2",   "",                        "PVWatts",      "*",                       "",                          "" },
         { SSC_INPUT,        SSC_NUMBER,      "diffuse",                  "Diffuse irradiance",                          "W/m2",   "",                        "PVWatts",      "*",                       "",                          "" },
-        { SSC_INPUT,        SSC_NUMBER,      "tamb",                     "Ambient temperature",                         "C",      "",                        "PVWatts",      "*",                       "",                          "" },
+        { SSC_INPUT,        SSC_NUMBER,      "tamb",                     "Ambient temperature (dry bulb temperature)",  "C",      "",                        "PVWatts",      "*",                       "",                          "" },
         { SSC_INPUT,        SSC_NUMBER,      "wspd",                     "Wind speed",                                  "m/s",    "",                        "PVWatts",      "*",                       "",                          "" },
         { SSC_INPUT,        SSC_NUMBER,      "alb",                      "Albedo",                                      "frac",   "",                        "PVWatts",      "?=0.2",                     "",                          "" },
         { SSC_INPUT,        SSC_NUMBER,      "time_step",                "Time step of input data",                     "hr",     "",                        "PVWatts",      "?=1",                     "POSITIVE",                  "" },
         { SSC_INPUT,        SSC_NUMBER,      "elevation",                "Elevation",                                   "m",      "",                        "PVWatts",      "?",                       "",                          "" },
-        { SSC_INPUT,        SSC_NUMBER,      "dry_temperature",          "Dry Temperature",                             "°C",     "",                        "PVWatts",      "?",                       "",                          "" },
         { SSC_INPUT,        SSC_NUMBER,      "pressure",                 "Pressure",                                    "mbars",  "",                        "PVWatts",      "?",                       "",                          "" },
 		{ SSC_INPUT,        SSC_NUMBER,      "shaded_percent",           "Percent of panels that are shaded",           "%",      "",                        "PVWatts",      "?=0",                     "MIN=0,MAX=100",             ""},
 
@@ -685,15 +684,6 @@ public:
                 throw exec_error("poacalib", "The elevation input is outside of the expected range. Please make sure that the units are in meters");
             }
         }
-        if (!is_assigned("dry_temperature")) {
-            tdry = 15; //assume 15°C average annual temperature if none is provided
-        }
-        else {
-            tdry = as_double("dry_temperature");
-            if (tdry > 128 || tdry < -50) {
-                throw exec_error("poacalib", "The annual average temperature input is outside of the expected range. Please make sure that the units are in degrees Celsius");
-            }
-        }
         if (!is_assigned("pressure")) {
             pres = 1013.25; //assume 1013.24 millibars site pressure if none is provided
         }
@@ -709,7 +699,7 @@ public:
 
         int code = process_irradiance(year, month, day, hour, minute,
             IRRADPROC_NO_INTERPOLATE_SUNRISE_SUNSET,
-            lat, lon, tz, beam, diff, alb, elev, pres, tdry);
+            lat, lon, tz, beam, diff, alb, elev, pres, tamb);
 
         if (code != 0)
             throw exec_error("pvwattsv5_1ts", "failed to calculate plane of array irradiance with given input parameters");
