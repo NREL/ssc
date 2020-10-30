@@ -569,6 +569,12 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             batt_vars->batt_h_to_ambient = vt.as_double("batt_h_to_ambient");
             batt_vars->T_room = vt.as_vector_double("batt_room_temperature_celsius");
 
+            // If only one variable was specified, use a fixed ambient temperature
+            if (batt_vars->T_room.size() == 1) {
+                double T_ambient = batt_vars->T_room[0];
+                batt_vars->T_room = std::vector<double>(T_ambient, nrec);
+            }
+
             // Inverter settings
             batt_vars->inverter_model = vt.as_integer("inverter_model");
             if (batt_vars->inverter_model < 4) //user has assigned an actual inverter model
