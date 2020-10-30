@@ -103,9 +103,9 @@ void SharedInverter::findPointOnCurve(size_t idx, double T, double& startT, doub
     slope = m_thermalDerateCurves[idx][2 * p + 2];
 }
 
-void SharedInverter::calculateTempDerate(double V, double tempC, double& p_rated, double& ratio, double& loss)
+void SharedInverter::calculateTempDerate(double V, double tempC, double& p_dc_rated, double& ratio, double& loss)
 {
-    if (ratio == 0. || p_rated == 0.) return;
+    if (ratio == 0. || p_dc_rated == 0.) return;
 
     double slope = 0.0;
     double startT = 0.0;
@@ -113,6 +113,8 @@ void SharedInverter::calculateTempDerate(double V, double tempC, double& p_rated
     double slope2 = 0.0;
     double startT2 = 0.0;
     double Vdc2 = 0.0;
+
+    double p_dc_max = getInverterDCMaxPower(p_dc_rated);
 
     // Find the appropriate derate curve depending on DC voltage
     size_t idx = 0;
@@ -179,8 +181,33 @@ void SharedInverter::calculateTempDerate(double V, double tempC, double& p_rated
     // Power in units of W, ratio = max output / rated output
     ratio += deltaT * slopeInterpolated;
     if (ratio < 0) ratio = 0.;
-    loss = p_rated - (p_rated * ratio);
-    p_rated = p_rated * ratio;
+    double p_dc_limit = p_dc_max * ratio;
+    if(p_dc_rated > p_dc_limit) {
+        loss = p_dc_rated - (p_dc_limit);
+        p_dc_rated = p_dc_limit;
+    }
+    else {
+        loss = 0;
+    }
+}
+
+double SharedInverter::getInverterDCMaxPower(double p_dc_rated)
+{
+    double inv_dc_max_power;
+    if (m_inverterType == SANDIA_INVERTER || m_inverterType == DATASHEET_INVERTER || m_inverterType == COEFFICIENT_GENERATOR)
+        //m_sandiaInverter->acpower(std::fabs(powerDC_Watts) / m_numInverters, DCStringVoltage, &powerAC_Watts, &P_par, &P_lr, &efficiencyAC, &powerClipLoss_kW, &powerConsumptionLoss_kW, &powerNightLoss_kW);
+        inv_dc_max_power = m_sandiaInverter->Pdco;
+    else if (m_inverterType == PARTLOAD_INVERTER)
+        //m_partloadInverter->acpower(std::fabs(powerDC_Watts) / m_numInverters, &powerAC_Watts, &P_lr, &P_par, &efficiencyAC, &powerClipLoss_kW, &powerNightLoss_kW);
+        inv_dc_max_power = m_partloadInverter->Pdco;
+    else if (m_inverterType == OND_INVERTER)
+        //m_ondInverter->acpower(std::fabs(powerDC_Watts) / m_numInverters, DCStringVoltage, tempC, &powerAC_Watts, &P_par, &P_lr, &efficiencyAC, &powerClipLoss_kW, &powerConsumptionLoss_kW, &powerNightLoss_kW, &dcWiringLoss_ond_kW, &acWiringLoss_ond_kW);
+        inv_dc_max_power = m_ondInverter->PMaxDC;
+    else if (m_inverterType == NONE) {
+        inv_dc_max_power = p_dc_rated * util::kilowatt_to_watt;
+    }
+
+    return inv_dc_max_power;
 }
 
 //function that calculates AC power and inverter losses for a single inverter with one MPPT input
@@ -196,6 +223,14 @@ void SharedInverter::calculateACPower(const double powerDC_kW_in, const double D
     // Power quantities go in and come out in units of W
     double powerDC_Watts = powerDC_kW_in * util::kilowatt_to_watt;
     double powerAC_Watts = 0.0;
+    Tdry_C = tempC;
+    StringV = DCStringVoltage;
+    double tempLoss = 0.0;
+    double power_ratio = 1.0;
+    if (m_tempEnabled) {
+        calculateTempDerate(DCStringVoltage, tempC, powerDC_Watts, power_ratio, tempLoss);
+    }
+
 
     if (m_inverterType == SANDIA_INVERTER || m_inverterType == DATASHEET_INVERTER || m_inverterType == COEFFICIENT_GENERATOR)
         m_sandiaInverter->acpower(std::fabs(powerDC_Watts) / m_numInverters, DCStringVoltage, &powerAC_Watts, &P_par, &P_lr, &efficiencyAC, &powerClipLoss_kW, &powerConsumptionLoss_kW, &powerNightLoss_kW);
@@ -211,14 +246,7 @@ void SharedInverter::calculateACPower(const double powerDC_kW_in, const double D
         powerAC_Watts = powerDC_Watts * efficiencyAC;
     }
 
-    Tdry_C = tempC;
-    StringV = DCStringVoltage;
-    double tempLoss = 0.0;
-    double power_ratio = 1.0;
-    if (m_tempEnabled) {
-        calculateTempDerate(DCStringVoltage, tempC, powerAC_Watts, power_ratio, tempLoss);
-    }
-
+    
     // Convert units to kW- no need to scale to system size because passed in as power to total number of inverters
     powerDC_kW = powerDC_Watts * util::watt_to_kilowatt;
     convertOutputsToKWandScale(tempLoss, powerAC_Watts);
@@ -236,9 +264,27 @@ void SharedInverter::calculateACPower(const std::vector<double> powerDC_kW_in, c
 
     //need to convert to watts and divide power by m_num_inverters
     std::vector<double> powerDC_Watts_one_inv;
-    for (size_t i = 0; i < powerDC_kW_in.size(); i++)
+    std::vector<double> powerDC_Watts_one_inv_iter;
+    for (size_t i = 0; i < powerDC_kW_in.size(); i++) {
         powerDC_Watts_one_inv.push_back(powerDC_kW_in[i] * util::kilowatt_to_watt / m_numInverters);
-
+        //powerDC_Watts_one_inv_iter[i] = powerDC_kW_in[i] * util::kilowatt_to_watt / m_numInverters;
+    }
+    Tdry_C = tempC;
+    StringV = DCStringVoltage[0];
+    int size = DCStringVoltage.size();
+    std::vector<double> tempLoss(size, 0);
+   
+    double power_ratio = 1.0;
+    if (m_tempEnabled) {
+        //use average of the DC voltages to pick which temp curve to use- a weighted average might be better but we don't have that information here
+        double avgDCVoltage = 0;
+        double avgDCPower_Watts = 0;
+        for (size_t i = 0; i < powerDC_Watts_one_inv.size(); i++) {
+            //avgDCVoltage += DCStringVoltage[i];
+            power_ratio = 1.0;
+            calculateTempDerate(DCStringVoltage[i], tempC, powerDC_Watts_one_inv[i], power_ratio, tempLoss[i]);
+        }
+    }
     // Power quantities go in and come out in units of W
     double powerAC_Watts = 0;
     if (m_inverterType == SANDIA_INVERTER || m_inverterType == DATASHEET_INVERTER || m_inverterType == COEFFICIENT_GENERATOR)
@@ -246,27 +292,19 @@ void SharedInverter::calculateACPower(const std::vector<double> powerDC_kW_in, c
     else if (m_inverterType == PARTLOAD_INVERTER)
         m_partloadInverter->acpower(powerDC_Watts_one_inv, &powerAC_Watts, &P_lr, &P_par, &efficiencyAC, &powerClipLoss_kW, &powerNightLoss_kW);
 
-    Tdry_C = tempC;
-    StringV = DCStringVoltage[0];
-    double tempLoss = 0.0;
-    double power_ratio = 1.0;
-    if (m_tempEnabled) {
-        //use average of the DC voltages to pick which temp curve to use- a weighted average might be better but we don't have that information here
-        double avgDCVoltage = 0;
-        for (size_t i = 0; i < DCStringVoltage.size(); i++)
-            avgDCVoltage += DCStringVoltage[i];
-        avgDCVoltage /= DCStringVoltage.size();
-        calculateTempDerate(avgDCVoltage, tempC, powerAC_Watts, power_ratio, tempLoss);
-    }
+    
 
     // Scale to total system size
     // Do not need to scale back up by m_numInverters because scaling them down was a separate vector, powerDC_Watts_one_inv
     powerDC_kW = 0;
-    for (size_t i = 0; i < powerDC_kW_in.size(); i++)
-        powerDC_kW += powerDC_kW_in[i];
-
+    double tempLoss_avg = 0;
+    for (size_t i = 0; i < powerDC_Watts_one_inv.size(); i++) {
+        powerDC_kW += powerDC_Watts_one_inv[i] * util::watt_to_kilowatt * m_numInverters;
+        tempLoss_avg += tempLoss[i];
+    }
+    tempLoss_avg /= tempLoss.size();
     //Convert units to kW and scale to total array for all other outputs
-    convertOutputsToKWandScale(tempLoss, powerAC_Watts);
+    convertOutputsToKWandScale(tempLoss_avg, powerAC_Watts);
 }
 
 void SharedInverter::solve_kwdc_for_kwac(const double* x, double* f) {

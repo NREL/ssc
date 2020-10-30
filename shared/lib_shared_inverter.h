@@ -28,10 +28,13 @@ public:
 
 	std::vector<std::vector<double>> getTempDerateCurves();
 
-	/// Modifies pAc, eff, and loss by calculating derate, using curves interpolated by input V
-	void calculateTempDerate(double V, double tempC, double& pAC, double& eff, double& loss);
+	/// Modifies pDc, power ratio of max output to rated output, and loss by calculating derate, using curves interpolated by input V
+	void calculateTempDerate(double V, double tempC, double& p_dc_rated, double& ratio, double& loss);
 
-	/// Given the combined PV plus battery DC power (kW), voltage and ambient T, compute the AC power (kW) for a single inverter with one MPPT input
+    /// Find the Maximum DC power of the inverter at a given time step to use for clipping comparisons
+    double getInverterDCMaxPower(double p_dc_rated);
+
+    /// Given the combined PV plus battery DC power (kW), voltage and ambient T, compute the AC power (kW) for a single inverter with one MPPT input
 	void calculateACPower(const double powerDC_kW, const double DCStringVoltage, double tempC);
 	
 	/// Given the combined PV plus battery DC power (kW), voltage and ambient T, compute the AC power (kW) for a single inverter with multiple MPPT inputs
