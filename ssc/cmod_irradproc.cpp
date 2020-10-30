@@ -60,7 +60,7 @@ static var_info _cm_vtab_irradproc[] = {
         { SSC_INPUT,        SSC_NUMBER,      "backtrack",                  "Enable backtracking",            "0/1",    "",                      "Irradiance Processor",      "?=0",                    "BOOLEAN",                                   "" },
         { SSC_INPUT,        SSC_NUMBER,      "gcr",                        "Ground coverage ratio",          "0..1",   "",                      "Irradiance Processor",      "backtrack=1",              "MIN=0,MAX=1",                             "" },
         { SSC_INPUT,        SSC_NUMBER,      "elevation",                  "Elevation",                      "m",      "",                      "Irradiance Processor",        "?",                                 "",                             "" },
-        { SSC_INPUT,        SSC_NUMBER,      "dry_temperature",            "Dry Temperature",                "°C",     "",                      "Irradiance Processor",        "?",                                  "",                            "" },
+        { SSC_INPUT,        SSC_NUMBER,      "tamb",                       "Ambient Temperature (dry bulb temperature)","°C",     "",           "Irradiance Processor",        "?",                                  "",                            "" },
         { SSC_INPUT,        SSC_NUMBER,      "pressure",                   "Pressure",                       "mbars",  "",                      "Irradiance Processor",        "?",                                  "",                            "" },
 
 
@@ -129,7 +129,7 @@ public:
         double lat = as_double("lat");
         double lon = as_double("lon");
         double tz = as_double("tz");
-        double elev, tdry, pres;
+        double elev, tamb, pres;
 
         if (!is_assigned("elevation")) {
             elev = 0; //assume 0 meter elevation if none is provided
@@ -140,12 +140,12 @@ public:
                 throw exec_error("irradproc", "The elevation input is outside of the expected range. Please make sure that the units are in meters");
             }
         }
-        if (!is_assigned("dry_temperature")) {
-            tdry = 15; //assume 15°C average annual temperature if none is provided
+        if (!is_assigned("tamb")) {
+            tamb = 15; //assume 15°C average annual temperature if none is provided
         }
         else {
-            tdry = as_double("dry_temperature");
-            if (tdry > 128 || tdry < -50) {
+            tamb = as_double("tamb");
+            if (tamb > 128 || tamb < -50) {
                 throw exec_error("irradproc", "The annual average temperature input is outside of the expected range. Please make sure that the units are in degrees Celsius");
             }
         }
@@ -230,7 +230,7 @@ public:
 
             x.set_time((int)year[i], (int)month[i], (int)day[i], (int)hour[i], minute[i], IRRADPROC_NO_INTERPOLATE_SUNRISE_SUNSET);
             x.set_location(lat, lon, tz);
-            x.set_optional(elev, pres, tdry);
+            x.set_optional(elev, pres, tamb);
             x.set_sky_model(sky_model, alb);
             if (irrad_mode == 1) x.set_global_beam(glob[i], beam[i]);
             else if (irrad_mode == 2) x.set_global_diffuse(glob[i], diff[i]);

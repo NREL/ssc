@@ -43,7 +43,7 @@ static var_info _cm_vtab_poacalib[] =
         { SSC_INPUT,        SSC_NUMBER,      "year",              "Year",                  "",                 "",                  "POA Calibrate", "*",           "",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "albedo",            "Albedo",                "",                 "",                  "POA Calibrate", "*",           "MIN=0,MAX=1",                   "" },
         { SSC_INPUT,        SSC_NUMBER,      "elevation",         "Elevation",             "m",                "",                  "POA Calibrate", "?",           "",                              "" },
-        { SSC_INPUT,        SSC_NUMBER,      "dry_temperature",   "Dry Temperature",       "°C",               "",                  "POA Calibrate", "?",           "",                              "" },
+        { SSC_INPUT,        SSC_NUMBER,      "tamb",              "Ambient Temperature (dry bulb temperature)","°C",     "",        "POA Calibrate", "?",           "",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "pressure",          "Pressure",              "millibars",        "",                  "POA Calibrate", "?",           "",                              "" },
 
         { SSC_INPUT,        SSC_ARRAY,       "poa",               "Plane of Array",        "W/m^2",            "",                  "POA Calibrate", "*",           "LENGTH=8760",                   "" },
@@ -80,7 +80,7 @@ public:
         double timezone = as_double("time_zone");
         int year = as_integer("year");
         double alb = as_double("albedo");
-        double elev, tdry, pres;
+        double elev, tamb, pres;
 
         // pointers to irradiance arrays
         size_t num_steps;
@@ -98,12 +98,12 @@ public:
                 throw exec_error("poacalib", "The elevation input is outside of the expected range. Please make sure that the units are in meters");
             }
         }
-        if (!is_assigned("dry_temperature")) {
-            tdry = 15; //assume 15°C average annual temperature if none is provided
+        if (!is_assigned("tamb")) {
+            tamb = 15; //assume 15°C average annual temperature if none is provided
         }
         else {
-            tdry = as_double("dry_temperature");
-            if (tdry > 128 || tdry < -50) {
+            tamb = as_double("tamb");
+            if (tamb > 128 || tamb < -50) {
                 throw exec_error("poacalib", "The annual average temperature input is outside of the expected range. Please make sure that the units are in degrees Celsius");
             }
         }
@@ -143,7 +143,7 @@ public:
                     // call irradiance class for needed variables and assign variables
                     irrad x;
                     x.set_location(lat, lon, timezone);
-                    x.set_optional(elev, pres, tdry);
+                    x.set_optional(elev, pres, tamb);
                     x.set_time(year, m, (int)d, h, 30, 1.0);
                     x.set_surface(0, tilt, az, 0, 0, 0, false, 0.0);
                     x.set_sky_model(2, alb);
