@@ -3251,7 +3251,7 @@ bool hourly_energy_calculation::calculate(compute_module *cm)
 
     if (cm->is_assigned("gen_without_battery")) {
         ssc_number_t* gen_without_battery = m_cm->as_array("gen_without_battery", &nrec_gen);
-        if (nrec_gen == m_nyears * 8760) {
+        if (nrec_gen % 8760 == 0) {
             sum_ts_to_hourly(gen_without_battery, m_energy_without_battery);
         }
     }

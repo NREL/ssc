@@ -1193,7 +1193,7 @@ public:
                 
 		}
 
-        if (is_assigned("gen_without_battery"))
+        if (is_assigned("gen_without_battery") && as_vector_double("gen_without_battery").size() > 0)
         {
             ssc_number_t first_year_energy_without_battery = 0.0;
             if (as_integer("system_use_lifetime_output") == 1)

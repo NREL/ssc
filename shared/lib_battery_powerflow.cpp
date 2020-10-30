@@ -360,7 +360,7 @@ void BatteryPowerFlow::calculateACConnected()
 	m_BatteryPower->powerFuelCellToBattery = P_fuelcell_to_batt_ac;
 	m_BatteryPower->powerFuelCellToLoad= P_fuelcell_to_load_ac;
 	m_BatteryPower->powerFuelCellToGrid = P_fuelcell_to_grid_ac;
-	m_BatteryPower->powerConversionLoss = P_batt_to_load_loss_ac + P_batt_to_grid_loss_ac + P_grid_to_batt_loss_ac + P_pv_to_batt_loss_ac;
+	m_BatteryPower->powerConversionLoss = P_batt_to_load_loss_ac + P_batt_to_grid_loss_ac + P_grid_to_batt_loss_ac + P_pv_to_batt_loss_ac + P_batt_to_system_loss_conversion_loss;
 }
 
 void BatteryPowerFlow::calculateDCConnected()
