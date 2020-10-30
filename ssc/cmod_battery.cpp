@@ -130,7 +130,7 @@ var_info vtab_battery_inputs[] = {
         { SSC_INPUT,        SSC_NUMBER,     "batt_surface_area",                            "Battery surface area",                                   "m^2",      "",                     "BatterySystem",       "",                           "",                             "" },
         { SSC_INPUT,        SSC_NUMBER,     "batt_Cp",                                     "Battery specific heat capacity",                         "J/KgK",    "",                     "BatteryCell",       "",                           "",                             "" },
         { SSC_INPUT,        SSC_NUMBER,     "batt_h_to_ambient",                           "Heat transfer between battery and environment",          "W/m2K",    "",                     "BatteryCell",       "",                           "",                             "" },
-        { SSC_INPUT,        SSC_ARRAY,      "batt_room_temperature_celsius",               "Temperature of storage room",                            "C",        "",                     "BatteryCell",       "",                           "",                             "" },
+        { SSC_INPUT,        SSC_ARRAY,      "batt_room_temperature_celsius",               "Temperature of storage room",                            "C", "length=1 for fixed, # of weatherfile records otherwise", "BatteryCell",        "",                           "",                             "" },
         { SSC_INPUT,        SSC_MATRIX,     "cap_vs_temp",                                 "Effective capacity as function of temperature",          "C,%",      "",                     "BatteryCell",       "",                           "",                             "" },
 
         // storage dispatch
