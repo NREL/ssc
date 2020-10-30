@@ -481,3 +481,24 @@ TEST_F(ManualTest_lib_battery_dispatch, InverterEfficiencyCutoffDC)
     EXPECT_NEAR(batteryPower->sharedInverter->efficiencyAC, 77, 0.1);
     EXPECT_NEAR(batteryPower->powerBatteryDC, 0.0, 2.0); // Overwhelm inverter with PV, back off battery
 }
+
+TEST_F(ManualTest_lib_battery_dispatch_losses, TestLossesWithDispatch)
+{
+    dispatchManual = new dispatch_manual_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice, currentChargeMax, currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax, powerDischargeMax, minimumModeTime,
+        dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge, canDischarge, canGridcharge, canGridcharge, percentDischarge, percentGridcharge);
+
+    batteryPower = dispatchManual->getBatteryPower();
+    batteryPower->connectionMode = ChargeController::DC_CONNECTED;
+    batteryPower->setSharedInverter(m_sharedInverter);
+
+    // Test max charge power constraint
+    batteryPower->powerSystem = 40; batteryPower->voltageSystem = 600;
+    dispatchManual->dispatch(year, hour_of_year, step_of_hour);
+    EXPECT_NEAR(batteryPower->powerSystemToBattery, batteryPower->powerSystem - batteryPower->powerSystemLoss, 0.1);
+
+    // Test max discharge power constraint
+    batteryPower->powerSystem = 0; batteryPower->voltageSystem = 600; batteryPower->powerLoad = 40;
+    dispatchManual->dispatch(year, hour_of_year, step_of_hour);
+    EXPECT_NEAR(batteryPower->powerGeneratedBySystem, batteryPower->powerLoad, 0.5); // Constraints drive efficiency lower, meaning some grid power is used to meet load (<0.5 kW)
+    EXPECT_NEAR(batteryPower->powerBatteryToLoad, batteryPower->powerLoad, 0.5);
+}

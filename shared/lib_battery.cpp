@@ -143,7 +143,7 @@ Define Losses
 */
 void losses_t::initialize() {
     state = std::make_shared<losses_state>();
-    state->loss_percent = 0;
+    state->loss_kw = 0;
     if (params->loss_choice == losses_params::MONTHLY) {
         if (params->monthly_charge_loss.size() == 1) {
             params->monthly_charge_loss = std::vector<double>(12, params->monthly_charge_loss[0]);
@@ -216,18 +216,18 @@ void losses_t::run_losses(size_t lifetimeIndex, double dtHour, double charge_ope
     // update system losses depending on user input
     if (params->loss_choice == losses_params::MONTHLY) {
         if (charge_operation == capacity_state::CHARGE)
-            state->loss_percent = params->monthly_charge_loss[monthIndex];
+            state->loss_kw = params->monthly_charge_loss[monthIndex];
         if (charge_operation == capacity_state::DISCHARGE)
-            state->loss_percent = params->monthly_discharge_loss[monthIndex];
+            state->loss_kw = params->monthly_discharge_loss[monthIndex];
         if (charge_operation == capacity_state::NO_CHARGE)
-            state->loss_percent = params->monthly_idle_loss[monthIndex];
+            state->loss_kw = params->monthly_idle_loss[monthIndex];
     }
     else if (params->loss_choice == losses_params::SCHEDULE)  {
-        state->loss_percent = params->schedule_loss[lifetimeIndex % params->schedule_loss.size()];
+        state->loss_kw = params->schedule_loss[lifetimeIndex % params->schedule_loss.size()];
     }
 }
 
-double losses_t::getLoss() { return state->loss_percent; }
+double losses_t::getLoss() { return state->loss_kw; }
 
 losses_state losses_t::get_state() { return *state; }
 
@@ -709,6 +709,32 @@ double battery_t::V_nominal() { return voltage->battery_voltage_nominal(); }
 double battery_t::SOC() { return capacity->SOC(); }
 
 double battery_t::I() { return capacity->I(); }
+
+double battery_t::calculate_loss(double power, size_t lifetimeIndex) {
+    size_t indexYearOne = util::yearOneIndex(params->dt_hour, lifetimeIndex);
+    auto hourOfYear = (size_t)std::floor(indexYearOne * params->dt_hour);
+    size_t monthIndex = (size_t) util::month_of((double)(hourOfYear)) - 1;
+
+    if (params->losses->loss_choice == losses_params::MONTHLY) {
+        if (power > 0) {
+            return params->losses->monthly_discharge_loss[monthIndex];
+        }
+        else if (power < 0) {
+            return params->losses->monthly_charge_loss[monthIndex];
+        }
+        else {
+            return params->losses->monthly_idle_loss[monthIndex];
+        }
+
+    }
+    else if (params->losses->loss_choice == losses_params::SCHEDULE) {
+        return params->losses->schedule_loss[lifetimeIndex % params->losses->schedule_loss.size()];
+    }
+}
+
+double battery_t::getLoss() {
+    return losses->getLoss();
+}
 
 battery_state battery_t::get_state() { return *state; }
 

@@ -163,7 +163,7 @@ std::ostream &operator<<(std::ostream &os, const thermal_params &p) {
 
 std::ostream &operator<<(std::ostream& os, const losses_state &p) {
     char buf[256];
-    sprintf(buf, R"("losses_state": { "loss_percent": %.3f })", p.loss_percent);
+    sprintf(buf, R"("losses_state": { "loss_percent": %.3f })", p.loss_kw);
     os << buf;
     return os;
 }
