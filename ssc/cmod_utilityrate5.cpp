@@ -181,19 +181,19 @@ static var_info vtab_utility_rate5[] = {
 	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec", "Energy charge with system", "$", "", "Charges by Month", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec", "Energy charge without system", "$", "", "Charges by Month", "*", "", "" },
 
-	// added for monthly bill balancing per 12/14/16 meeting
+        // Updated based on https://github.com/NREL/SAM/issues/372
 	{ SSC_OUTPUT, SSC_MATRIX, "charge_w_sys_ec_gross_ym", "Energy charge with system before credits", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
 	{ SSC_OUTPUT, SSC_MATRIX, "excess_dollars_applied_ym", "Excess generation $ credit applied", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
 	{ SSC_OUTPUT, SSC_MATRIX, "excess_dollars_earned_ym", "Excess generation $ credit earned", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
 	{ SSC_OUTPUT, SSC_MATRIX, "excess_kwhs_applied_ym", "Excess generation kWh credit applied", "kWh", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
-	{ SSC_OUTPUT, SSC_MATRIX, "excess_kwhs_earned_ym", "Excess generation kWh credit earned", "kWh", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
+	{ SSC_OUTPUT, SSC_MATRIX, "excess_kwhs_earned_ym", "Excess generation (kWh)", "kWh", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
 
-	// added for monthly bill balancing per 12/14/16 meeting
+	// Updated based on https://github.com/NREL/SAM/issues/372
 	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_ec_charge_gross_with_system", "Energy charge with system before credits", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "year1_excess_dollars_applied", "Excess generation $ credit applied", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "year1_excess_dollars_earned", "Excess generation $ credit earned", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "year1_excess_kwhs_applied", "Excess generation kWh credit applied", "kWh/mo", "", "Monthly", "*", "LENGTH=12", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "year1_excess_kwhs_earned", "Excess generation kWh credit earned", "kWh/mo", "", "Monthly", "*", "LENGTH=12", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "year1_excess_kwhs_earned", "Excess generation (kWh)", "kWh/mo", "", "Monthly", "*", "LENGTH=12", "" },
 
 
 // for Pablo at IRENA 8/8/15
@@ -2133,7 +2133,6 @@ public:
 									energy_charge[c] = -(ssc_number_t)credit_amt;
 								}
 								curr_month.ec_energy_surplus.at(row, tier) += (ssc_number_t)tier_energy;
-								excess_kwhs_earned[m] += tier_energy;
 							}
 							else
 							{ // calculate payment or charge
