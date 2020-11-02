@@ -130,7 +130,7 @@ var_info vtab_battery_inputs[] = {
         { SSC_INPUT,        SSC_NUMBER,     "batt_surface_area",                            "Battery surface area",                                   "m^2",      "",                     "BatterySystem",       "",                           "",                             "" },
         { SSC_INPUT,        SSC_NUMBER,     "batt_Cp",                                     "Battery specific heat capacity",                         "J/KgK",    "",                     "BatteryCell",       "",                           "",                             "" },
         { SSC_INPUT,        SSC_NUMBER,     "batt_h_to_ambient",                           "Heat transfer between battery and environment",          "W/m2K",    "",                     "BatteryCell",       "",                           "",                             "" },
-        { SSC_INPUT,        SSC_ARRAY,      "batt_room_temperature_celsius",               "Temperature of storage room",                            "C",        "",                     "BatteryCell",       "",                           "",                             "" },
+        { SSC_INPUT,        SSC_ARRAY,      "batt_room_temperature_celsius",               "Temperature of storage room",                            "C", "length=1 for fixed, # of weatherfile records otherwise", "BatteryCell",        "",                           "",                             "" },
         { SSC_INPUT,        SSC_MATRIX,     "cap_vs_temp",                                 "Effective capacity as function of temperature",          "C,%",      "",                     "BatteryCell",       "",                           "",                             "" },
 
         // storage dispatch
@@ -568,6 +568,12 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             batt_vars->batt_Cp = vt.as_double("batt_Cp");
             batt_vars->batt_h_to_ambient = vt.as_double("batt_h_to_ambient");
             batt_vars->T_room = vt.as_vector_double("batt_room_temperature_celsius");
+
+            // If only one variable was specified, use a fixed ambient temperature
+            if (batt_vars->T_room.size() == 1) {
+                double T_ambient = batt_vars->T_room[0];
+                batt_vars->T_room = std::vector<double>(T_ambient, nrec);
+            }
 
             // Inverter settings
             batt_vars->inverter_model = vt.as_integer("inverter_model");
