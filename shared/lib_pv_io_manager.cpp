@@ -287,19 +287,19 @@ Subarray_IO::Subarray_IO(compute_module* cm, const std::string& cmName, size_t s
     if (subarrayNumber > 1)
         enable = cm->as_boolean(prefix + "enable");
 
-	if (enable)
-	{
+    if (enable)
+    {
         int n = cm->as_integer(prefix + "nstrings");
         if (n < 0) {
             throw exec_error(cmName, "invalid string allocation between subarrays.  all subarrays must have zero or positive number of strings.");
         }
 
         nStrings = n;
-		if (nStrings == 0) //subarrays with no strings need to be treated as if they are disabled to avoid divide by zero issues in the subarray setup
-		{
-			enable = false;
-			return;
-		}
+        if (nStrings == 0) //subarrays with no strings need to be treated as if they are disabled to avoid divide by zero issues in the subarray setup
+        {
+            enable = false;
+            return;
+        }
 
         nModulesPerString = cm->as_integer(prefix + "modules_per_string");
         mpptInput = cm->as_integer(prefix + "mppt_input");
@@ -416,10 +416,10 @@ Subarray_IO::Subarray_IO(compute_module* cm, const std::string& cmName, size_t s
             }
         }
 
-		// Initialize module model
-		std::unique_ptr<Module_IO> tmp(new Module_IO(cm, cmName, 1 - dcLossTotalPercent));
-		Module = std::move(tmp);
-	}
+        // Initialize module model
+        std::unique_ptr<Module_IO> tmp(new Module_IO(cm, cmName, 1 - dcLossTotalPercent));
+        Module = std::move(tmp);
+    }
 }
 void Subarray_IO::AssignOutputs(compute_module* cm)
 {
@@ -1476,6 +1476,10 @@ void Inverter_IO::setupSharedInverter(compute_module* cm, SharedInverter* a_shar
     else if (inverterType == 3) // coefficient generator
     {
         inv_tdc = cm->as_matrix("inv_tdc_cec_cg");
+    }
+    else
+    {
+        return;
     }
 
     // Parse into std::vector form

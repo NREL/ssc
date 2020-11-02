@@ -67,14 +67,11 @@ int SharedInverter::setTempDerateCurves(std::vector<std::vector<double>> derateC
 
     // Check derate curves have V > 0, and that for each pair T > -273, slope < 0
     for (size_t r = 0; r < derateCurves.size(); r++) {
-        if (derateCurves[r][0] <= 0.)
-            return (int)r + 1;
+        if (derateCurves[r][0] <= 0.) return (int)r + 1;
         size_t tempSlopeEntries = derateCurves[r].size() - 1;
-        if ((tempSlopeEntries % 2) != 0)
-            return (int)r + 1;
+        if ((tempSlopeEntries % 2) != 0) return (int)r + 1;
         for (size_t p = 0; p < tempSlopeEntries / 2; p++) {
-            if (derateCurves[r][2 * p + 1] <= -273. || derateCurves[r][2 * p + 2] > 0.)
-                return (int)r + 1;
+            if (derateCurves[r][2 * p + 1] <= -273. || derateCurves[r][2 * p + 2] > 0.) return (int)r + 1;
         }
         m_thermalDerateCurves.push_back(derateCurves[r]);
     }
