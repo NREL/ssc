@@ -179,7 +179,7 @@ void SharedInverter::calculateTempDerate(double V, double tempC, double& p_dc_ra
     ratio += deltaT * slopeInterpolated;
     if (ratio < 0) ratio = 0.;
     double p_dc_limit = p_dc_max * ratio;
-    if(p_dc_rated > p_dc_limit) {
+    if (p_dc_rated > p_dc_limit) {
         loss = p_dc_rated - (p_dc_limit);
         p_dc_rated = p_dc_limit;
     }
@@ -243,7 +243,7 @@ void SharedInverter::calculateACPower(const double powerDC_kW_in, const double D
         powerAC_Watts = powerDC_Watts * efficiencyAC;
     }
 
-    
+
     // Convert units to kW- no need to scale to system size because passed in as power to total number of inverters
     powerDC_kW = powerDC_Watts * util::watt_to_kilowatt;
     convertOutputsToKWandScale(tempLoss, powerAC_Watts);
@@ -270,7 +270,7 @@ void SharedInverter::calculateACPower(const std::vector<double> powerDC_kW_in, c
     StringV = DCStringVoltage[0];
     int size = DCStringVoltage.size();
     std::vector<double> tempLoss(size, 0);
-   
+
     double power_ratio = 1.0;
     if (m_tempEnabled) {
         //use average of the DC voltages to pick which temp curve to use- a weighted average might be better but we don't have that information here
@@ -289,7 +289,7 @@ void SharedInverter::calculateACPower(const std::vector<double> powerDC_kW_in, c
     else if (m_inverterType == PARTLOAD_INVERTER)
         m_partloadInverter->acpower(powerDC_Watts_one_inv, &powerAC_Watts, &P_lr, &P_par, &efficiencyAC, &powerClipLoss_kW, &powerNightLoss_kW);
 
-    
+
 
     // Scale to total system size
     // Do not need to scale back up by m_numInverters because scaling them down was a separate vector, powerDC_Watts_one_inv
