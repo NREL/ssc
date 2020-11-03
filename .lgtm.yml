@@ -1,0 +1,27 @@
+path_classifiers:
+  test:
+    - "test/*/*.cpp"
+extraction:
+  cpp:
+    prepare:
+      packages:
+        libwebkitgtk-dev
+        libgtk2.0-dev
+        libgl1-mesa-dev
+        mesa-common-dev
+        freeglut3-dev
+        libcurl4-openssl-dev
+        libc6
+
+    after_prepare:
+      - git clone --depth=1 https://github.com/google/googletest $LGTM_WORKSPACE/build/googletest
+      - export GTEST=$LGTM_WORKSPACE/build/googletest
+      - export SSCDIR=$LGTM_SRC
+    configure:
+      -  mkdir ${GTEST}/build; cd ${GTEST}/build; cmake -DCMAKE_CXX_FLAGS=-std=c++11 ..;
+      -  cd ${SSCDIR}/build; cmake .. -DCMAKE_BUILD_TYPE=Release -Dskip_tools=1
+    before_index:
+      -  cd ${GTEST}; make;
+    index:    
+      build_command:
+        - cd ${SSCDIR}/build; make -j4
