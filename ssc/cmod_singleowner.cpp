@@ -2844,6 +2844,8 @@ public:
             }
             if (!ppa_purchases) {
                 cf.at(CF_energy_purchases_value, i) = 0.0;
+                // Recompute this variable because the ppa_gen values (hourly_net) were all positve until now 
+                cf.at(CF_energy_net, i) = cf.at(CF_energy_sales, i) + cf.at(CF_energy_purchases, i); // Adding a positive and negative number
             }
         }   
     }
@@ -2859,6 +2861,8 @@ public:
             }
             if (!ppa_purchases) {
                 cf.at(CF_energy_purchases_value, i) = 0.0;
+                // Recompute this variable because the ppa_gen values (hourly_net) were all positve until now 
+                cf.at(CF_energy_net, i) = cf.at(CF_energy_sales, i) + cf.at(CF_energy_purchases, i); // Adding a positive and negative number
             }
         }
     }
