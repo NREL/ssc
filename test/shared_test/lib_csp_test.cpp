@@ -3,96 +3,85 @@
 #include "lib_csp_test.h"
 
 
-CollectorTestSpecifications default_collector_test_specifications()
+FlatPlateArray* FpcFactory::MakeFpcArray(FlatPlateCollector* flat_plate_collector,
+                                         CollectorLocation* collector_location,
+                                         CollectorOrientation* collector_orientation,
+                                         ArrayDimensions* array_dimensions,
+                                         Pipe* inlet_pipe,
+                                         Pipe* outlet_pipe) const
 {
-    CollectorTestSpecifications collector_test_specifications;
-    collector_test_specifications.FRta = 0.689;
-    collector_test_specifications.FRUL = 3.85;
-    collector_test_specifications.iam = 0.2;
-    collector_test_specifications.area_coll = 2.98;
-    collector_test_specifications.m_dot = 0.045528;         // kg/s   
-    collector_test_specifications.heat_capacity = 4.182;    // kJ/kg-K
-
-    return collector_test_specifications;
+    return new FlatPlateArray(*flat_plate_collector, *collector_location,
+        *collector_orientation, *array_dimensions, *inlet_pipe, *outlet_pipe);
 }
 
-FlatPlateCollector* default_flat_plate_collector()
+FlatPlateCollector* FpcFactory::MakeCollector(CollectorTestSpecifications* collector_test_specifications) const
 {
-    CollectorTestSpecifications collector_test_specifications = default_collector_test_specifications();
-
-    return new FlatPlateCollector(collector_test_specifications);
+    return new FlatPlateCollector(*collector_test_specifications);
 }
 
-tm default_time()
+TimeAndPosition* FpcFactory::MakeTimeAndPosition() const
 {
-    tm time;
-    // TODO - The timestamp should be generated from a string so all attributes are valid
-    time.tm_year = 2012 - 1900;  // years since 1900
-    time.tm_mon = 1 - 1;         // months since Jan. (Jan. = 0)
-    time.tm_mday = 1;
-    time.tm_hour = 12;
-    time.tm_min = 30;
-    time.tm_sec = 0;
-
-    return time;
-}
-
-CollectorLocation default_location()
-{
-    CollectorLocation collector_location;
-    collector_location.latitude = 33.45000;
-    collector_location.longitude = -111.98000;
-    collector_location.timezone = -7;
-
-    return collector_location;
-}
-
-CollectorOrientation default_orientation()
-{
-    CollectorOrientation collector_orientation;
-    collector_orientation.tilt = 30.;
-    collector_orientation.azimuth = 180.;
-
-    return collector_orientation;
-}
-
-ArrayDimensions default_dimensions()
-{
-    ArrayDimensions array_dimensions;
-    array_dimensions.num_in_parallel = 1;
-    array_dimensions.num_in_series = 1;
-
-    return array_dimensions;
-}
-
-TimeAndPosition default_time_and_position()
-{
-    TimeAndPosition time_and_position;
-    time_and_position.timestamp = default_time();
-    time_and_position.collector_location = default_location();
-    time_and_position.collector_orientation = default_orientation();
+    TimeAndPosition* time_and_position = new TimeAndPosition;
+    time_and_position->timestamp = *this->MakeTime();
+    time_and_position->collector_location = *this->MakeLocation();
+    time_and_position->collector_orientation = *this->MakeOrientation();
 
     return time_and_position;
 }
 
-ExternalConditions default_external_conditions()
+FlatPlateArray* DefaultFpcFactory::MakeFpcArray() const
 {
-    ExternalConditions external_conditions;
-    external_conditions.weather.ambient_temp = 25.;
-    external_conditions.weather.dni = 935.;
-    external_conditions.weather.dhi = 84.;
-    external_conditions.weather.ghi = std::numeric_limits<double>::quiet_NaN();
-    external_conditions.weather.wind_speed = std::numeric_limits<double>::quiet_NaN();
-    external_conditions.weather.wind_direction = std::numeric_limits<double>::quiet_NaN();
-    external_conditions.inlet_fluid_flow.m_dot = 0.091056;          // kg/s
-    external_conditions.inlet_fluid_flow.specific_heat = 4.182;     // kJ/kg-K
-    external_conditions.inlet_fluid_flow.temp = 45.9;               // from previous timestep
-    external_conditions.albedo = 0.2;
+    FlatPlateCollector* flat_plate_collector = this->MakeCollector();
+    CollectorLocation* collector_location = this->MakeLocation();
+    CollectorOrientation* collector_orientation = this->MakeOrientation();
+    ArrayDimensions* array_dimensions = this->MakeArrayDimensions();
 
-    return external_conditions;
+    Pipe* inlet_pipe = this->MakePipe();
+    Pipe* outlet_pipe = this->MakePipe();
+
+    return new FlatPlateArray(*flat_plate_collector, *collector_location,
+        *collector_orientation, *array_dimensions, *inlet_pipe, *outlet_pipe);
 }
 
-Pipe* default_pipe()
+FlatPlateCollector* DefaultFpcFactory::MakeCollector() const
+{
+    CollectorTestSpecifications* collector_test_specifications = this->MakeTestSpecifications();
+    return new FlatPlateCollector(*collector_test_specifications);
+}
+
+CollectorTestSpecifications* DefaultFpcFactory::MakeTestSpecifications() const
+{
+    CollectorTestSpecifications* collector_test_specifications = new CollectorTestSpecifications();
+    collector_test_specifications->FRta = 0.689;
+    collector_test_specifications->FRUL = 3.85;
+    collector_test_specifications->iam = 0.2;
+    collector_test_specifications->area_coll = 2.98;
+    collector_test_specifications->m_dot = 0.045528;         // kg/s   
+    collector_test_specifications->heat_capacity = 4.182;    // kJ/kg-K
+
+    return collector_test_specifications;
+}
+
+CollectorLocation* DefaultFpcFactory::MakeLocation() const
+{
+    CollectorLocation* collector_location = new CollectorLocation;
+    collector_location->latitude = 33.45000;
+    collector_location->longitude = -111.98000;
+    collector_location->timezone = -7;
+
+    return collector_location;
+}
+
+CollectorOrientation* DefaultFpcFactory::MakeOrientation() const
+{
+    CollectorOrientation* collector_orientation = new CollectorOrientation;
+    collector_orientation->tilt = 30.;
+    collector_orientation->azimuth = 180.;
+
+    return collector_orientation;
+}
+
+Pipe* DefaultFpcFactory::MakePipe() const
 {
     double inner_diameter = 0.019;
     double insulation_conductivity = 0.03;
@@ -102,47 +91,71 @@ Pipe* default_pipe()
     return new Pipe(inner_diameter, insulation_conductivity, insulation_thickness, length);
 }
 
-void FlatPlateCollectorTest::SetUp()
-{    
-    // Too much in the Setup; can't change the configuration in the tests
-    flat_plate_collector_ = default_flat_plate_collector();
+ExternalConditions* DefaultFpcFactory::MakeExternalConditions() const
+{
+    ExternalConditions* external_conditions = new ExternalConditions;
+    external_conditions->weather.ambient_temp = 25.;
+    external_conditions->weather.dni = 935.;
+    external_conditions->weather.dhi = 84.;
+    external_conditions->weather.ghi = std::numeric_limits<double>::quiet_NaN();
+    external_conditions->weather.wind_speed = std::numeric_limits<double>::quiet_NaN();
+    external_conditions->weather.wind_direction = std::numeric_limits<double>::quiet_NaN();
+    external_conditions->inlet_fluid_flow.m_dot = 0.091056;          // kg/s
+    external_conditions->inlet_fluid_flow.specific_heat = 4.182;     // kJ/kg-K
+    external_conditions->inlet_fluid_flow.temp = 45.9;               // from previous timestep
+    external_conditions->albedo = 0.2;
+
+    return external_conditions;
 }
+
+tm* DefaultFpcFactory::MakeTime() const
+{
+    tm* time = new tm;
+    // TODO - The timestamp should be generated from a string so all attributes are valid
+    time->tm_year = 2012 - 1900;  // years since 1900
+    time->tm_mon = 1 - 1;         // months since Jan. (Jan. = 0)
+    time->tm_mday = 1;
+    time->tm_hour = 12;
+    time->tm_min = 30;
+    time->tm_sec = 0;
+
+    return time;
+}
+
+ArrayDimensions* DefaultFpcFactory::MakeArrayDimensions() const
+{
+    ArrayDimensions* array_dimensions = new ArrayDimensions;
+    array_dimensions->num_in_parallel = 1;
+    array_dimensions->num_in_series = 1;
+
+    return array_dimensions;
+}
+
 
 TEST_F(FlatPlateCollectorTest, TestFlatPlateCollectorNominalOperation)
 {
-    TimeAndPosition time_and_position = default_time_and_position();
-    ExternalConditions external_conditions = default_external_conditions();
+    DefaultFpcFactory default_fpc_factory = DefaultFpcFactory();
+    FlatPlateCollector* flat_plate_collector = default_fpc_factory.MakeCollector();
+    TimeAndPosition* time_and_position = default_fpc_factory.MakeTimeAndPosition();
+    ExternalConditions* external_conditions = default_fpc_factory.MakeExternalConditions();
 
-    double useful_power_gain = flat_plate_collector_->UsefulPowerGain(time_and_position, external_conditions);  // [W]
-    double T_out = flat_plate_collector_->T_out(time_and_position, external_conditions);                        // [C]
+    double useful_power_gain = flat_plate_collector->UsefulPowerGain(*time_and_position, *external_conditions);  // [W]
+    double T_out = flat_plate_collector->T_out(*time_and_position, *external_conditions);                        // [C]
 
     EXPECT_NEAR(useful_power_gain, 1.659e3, 1.659e3 * m_error_tolerance_hi);
     EXPECT_NEAR(T_out, 50.26, 50.26 * m_error_tolerance_hi);
 }
 
-void FlatPlateArrayTest::SetUp()
-{
-    // Too much in the Setup; can't change the configuration in the tests
-    flat_plate_collector_ = default_flat_plate_collector();
-    collector_location_ = default_location();
-    collector_orientation_ = default_orientation();
-    array_dimensions_ = default_dimensions();
-
-    inlet_pipe_ = default_pipe();
-    outlet_pipe_ = default_pipe();
-
-    flat_plate_array_ = new FlatPlateArray(*flat_plate_collector_, collector_location_,
-        collector_orientation_, array_dimensions_, *inlet_pipe_, *outlet_pipe_);
-}
-
 TEST_F(FlatPlateArrayTest, TestFlatPlateArrayOfOneNominalOperation)
 {
-    tm timestamp = default_time();
-    ExternalConditions external_conditions = default_external_conditions();
-    external_conditions.inlet_fluid_flow.temp = 44.86;
+    DefaultFpcFactory default_fpc_factory = DefaultFpcFactory();
+    FlatPlateArray* flat_plate_array = default_fpc_factory.MakeFpcArray();
+    tm* timestamp = default_fpc_factory.MakeTime();
+    ExternalConditions* external_conditions = default_fpc_factory.MakeExternalConditions();    
+    external_conditions->inlet_fluid_flow.temp = 44.86;
 
-    double useful_power_gain = flat_plate_array_->UsefulPowerGain(timestamp, external_conditions);  // [W]
-    double T_out = flat_plate_array_->T_out(timestamp, external_conditions);                        // [C]
+    double useful_power_gain = flat_plate_array->UsefulPowerGain(*timestamp, *external_conditions);  // [W]
+    double T_out = flat_plate_array->T_out(*timestamp, *external_conditions);                        // [C]
 
     EXPECT_NEAR(useful_power_gain, 1.587e3, 1.587e3 * m_error_tolerance_hi);
     EXPECT_NEAR(T_out, 49.03, 49.03 * m_error_tolerance_hi);

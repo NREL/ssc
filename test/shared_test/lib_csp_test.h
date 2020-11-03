@@ -5,30 +5,55 @@
 #include "../tcs/storage_hx.h"
 #include "../tcs/flat_plate_solar_collector.h"
 
+class FpcFactory {
+public:
+    FpcFactory() {};
+
+    virtual FlatPlateArray* MakeFpcArray() const = 0;
+    FlatPlateArray* MakeFpcArray(FlatPlateCollector* flat_plate_collector,
+                                 CollectorLocation* collector_location,
+                                 CollectorOrientation* collector_orientation,
+                                 ArrayDimensions* array_dimensions,
+                                 Pipe* inlet_pipe,
+                                 Pipe* outlet_pipe) const;
+    virtual FlatPlateCollector* MakeCollector() const = 0;
+    FlatPlateCollector* MakeCollector(CollectorTestSpecifications* collector_test_specifications) const;
+    TimeAndPosition* MakeTimeAndPosition() const;
+
+    virtual CollectorTestSpecifications* MakeTestSpecifications() const = 0;
+    virtual CollectorLocation* MakeLocation() const = 0;
+    virtual CollectorOrientation* MakeOrientation() const = 0;
+    virtual Pipe* MakePipe() const = 0;
+    virtual ExternalConditions* MakeExternalConditions() const = 0;
+    virtual tm* MakeTime() const = 0;
+    virtual ArrayDimensions* MakeArrayDimensions() const = 0;
+};
+
+class DefaultFpcFactory : public FpcFactory {
+public:
+    DefaultFpcFactory() {};
+
+    virtual FlatPlateArray* MakeFpcArray() const;
+    virtual FlatPlateCollector* MakeCollector() const;
+
+    virtual CollectorTestSpecifications* MakeTestSpecifications() const;
+    virtual CollectorLocation* MakeLocation() const;
+    virtual CollectorOrientation* MakeOrientation() const;
+    virtual Pipe* MakePipe() const;
+    virtual ExternalConditions* MakeExternalConditions() const;
+    virtual tm* MakeTime() const;
+    virtual ArrayDimensions* MakeArrayDimensions() const;
+};
+
 class FlatPlateCollectorTest : public ::testing::Test
 {
 public:
     const double m_error_tolerance_lo = 0.001;    // 0.1%
     const double m_error_tolerance_hi = 0.01;     // 1.0%
 
-    void SetUp();
+    void SetUp() {}
 
-    void TearDown()
-    {
-        if (flat_plate_collector_) {
-            delete flat_plate_collector_;
-            flat_plate_collector_ = nullptr;
-        }
-    }
-protected:
-    FlatPlateCollector *flat_plate_collector_;
-
-    // inputs
-
-    // outputs
-
-    // parameters for initialization
-
+    void TearDown() {}
 };
 
 class FlatPlateArrayTest : public ::testing::Test
@@ -37,30 +62,11 @@ public:
     const double m_error_tolerance_lo = 0.001;    // 0.1%
     const double m_error_tolerance_hi = 0.01;     // 1.0%
 
-    void SetUp();
+    void SetUp() {}
 
-    void TearDown()
-    {
-        if (flat_plate_array_) {
-            delete flat_plate_array_;
-            flat_plate_array_ = nullptr;
-        }
-    }
-protected:
-    FlatPlateArray *flat_plate_array_;
-
-    // inputs
-
-    // outputs
-
-    // parameters for initialization
-    FlatPlateCollector *flat_plate_collector_;
-    CollectorLocation collector_location_;
-    CollectorOrientation collector_orientation_;
-    ArrayDimensions array_dimensions_;
-    Pipe *inlet_pipe_;
-    Pipe *outlet_pipe_;
+    void TearDown() {}
 };
+
 
 class StorageTankTest : public ::testing::Test
 {
