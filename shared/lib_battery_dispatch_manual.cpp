@@ -1,6 +1,8 @@
 #include "lib_battery_dispatch_manual.h"
 #include "lib_battery_powerflow.h"
 
+#include <math.h>
+
 /*
 Manual Dispatch
 */
