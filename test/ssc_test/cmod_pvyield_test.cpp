@@ -36,7 +36,7 @@ TEST_F(CMPvYieldTimo, DefaultTimoModel_cmod_pvsamv1)
     }
 }
 
-/// Test PVSAMv1 with inputs from PVYield and user support 80603 with ,eteo weather file
+/// Test PVSAMv1 with inputs from PVYield and user support 80603 with meteo weather file
 TEST_F(CMPvYieldTimo, TimoModel80603_meteo_cmod_pvsamv1)
 {
     // first set of results for Phoenix and second set for meteo weather file.

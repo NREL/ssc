@@ -377,12 +377,6 @@ void pvyield_no_financial_meteo(ssc_data_t& data)
     ssc_data_set_number(data, "inv_snl_eff_cec", 96.636932373046875);
     ssc_data_set_number(data, "inv_pd_eff", 95);
     ssc_data_set_number(data, "inv_cec_cg_eff_cec", 96.636306762695313);
-    ssc_number_t matrix_inv_tdc[3] = { 1., 52.8, -0.021 };
-    ssc_data_set_matrix(data, "inv_tdc_cec_db", matrix_inv_tdc, 1, 3);
-    ssc_data_set_matrix(data, "inv_tdc_cec_cg", matrix_inv_tdc, 1, 3);
-    ssc_data_set_matrix(data, "inv_tdc_plc", matrix_inv_tdc, 1, 3);
-    ssc_data_set_matrix(data, "inv_tdc_ds", matrix_inv_tdc, 1, 3);
-
 
 
     // PVYield inverter model
@@ -803,11 +797,6 @@ void pvyield_user_support_80603_meteo(ssc_data_t& data)
     ssc_data_set_number(data, "inv_snl_eff_cec", 96.636932373046875);
     ssc_data_set_number(data, "inv_pd_eff", 95);
     ssc_data_set_number(data, "inv_cec_cg_eff_cec", 96.636306762695313);
-    ssc_number_t matrix_inv_tdc[3] = { 1., 52.8, -0.021 };
-    ssc_data_set_matrix(data, "inv_tdc_cec_db", matrix_inv_tdc, 1, 3);
-    ssc_data_set_matrix(data, "inv_tdc_cec_cg", matrix_inv_tdc, 1, 3);
-    ssc_data_set_matrix(data, "inv_tdc_plc", matrix_inv_tdc, 1, 3);
-    ssc_data_set_matrix(data, "inv_tdc_ds", matrix_inv_tdc, 1, 3);
 
 
 
@@ -1226,12 +1215,6 @@ void pvyield_user_support_80603_AZ(ssc_data_t& data)
     ssc_data_set_number(data, "inv_snl_eff_cec", 96.636932373046875);
     ssc_data_set_number(data, "inv_pd_eff", 95);
     ssc_data_set_number(data, "inv_cec_cg_eff_cec", 96.636306762695313);
-    ssc_number_t matrix_inv_tdc[3] = { 1., 52.8, -0.021 };
-    ssc_data_set_matrix(data, "inv_tdc_cec_db", matrix_inv_tdc, 1, 3);
-    ssc_data_set_matrix(data, "inv_tdc_cec_cg", matrix_inv_tdc, 1, 3);
-    ssc_data_set_matrix(data, "inv_tdc_plc", matrix_inv_tdc, 1, 3);
-    ssc_data_set_matrix(data, "inv_tdc_ds", matrix_inv_tdc, 1, 3);
-
 
 
     // PVYield inverter model
@@ -1599,11 +1582,6 @@ void pvsamMPPT_nofinancial_default(ssc_data_t& data)
     ssc_data_set_number(data, "inv_snl_eff_cec", 96.636932373046875);
     ssc_data_set_number(data, "inv_pd_eff", 95);
     ssc_data_set_number(data, "inv_cec_cg_eff_cec", 96.636306762695313);
-    ssc_number_t matrix_inv_tdc[3] = { 1., 52.8, -0.021 };
-    ssc_data_set_matrix(data, "inv_tdc_cec_db", matrix_inv_tdc, 1, 3);
-    ssc_data_set_matrix(data, "inv_tdc_cec_cg", matrix_inv_tdc, 1, 3);
-    ssc_data_set_matrix(data, "inv_tdc_plc", matrix_inv_tdc, 1, 3);
-    ssc_data_set_matrix(data, "inv_tdc_ds", matrix_inv_tdc, 1, 3);
 }
 
 

@@ -9,13 +9,13 @@ class sharedInverterTest_lib_shared_inverter : public ::testing::Test {
 protected:
     SharedInverter* inv;
     sandia_inverter_t sandia;
-    double pDC = 100.;
+    double pDC = 61130.8;
     double ratio = 0.;
     double loss = 0.;
     double e = 0.01;
 public:
     void reset() {
-        pDC = 100;
+        pDC = 61130.8;
         ratio = 1.;
         loss = 0.;
     }
@@ -25,7 +25,7 @@ public:
         sandia.C2 = 0.002606;
         sandia.C3 = 0.000501;
         sandia.Paco = 59860;
-        sandia.Pdco = 100;
+        sandia.Pdco = 61130.8;
         sandia.Vdco = 630;
         sandia.Pso = 97.21398;
         sandia.Pntare = 17.958;
@@ -48,7 +48,7 @@ TEST_F(sharedInverterTest_lib_shared_inverter, tempDerateTest_lib_shared_inverte
     double V = 200.;
     double T = 5.;
     inv->calculateTempDerate(V, T, pDC, ratio, loss);
-    EXPECT_NEAR(pDC, 100., e) << "zero efficiency error case";
+    EXPECT_NEAR(pDC, 61130.8, e) << "zero efficiency error case";
 
     // zero power error case
     pDC = 0.;
@@ -57,30 +57,30 @@ TEST_F(sharedInverterTest_lib_shared_inverter, tempDerateTest_lib_shared_inverte
     EXPECT_NEAR(pDC, 0, e) << "zero power error case";
 
     // no derate cases
-    pDC = 100.;
+    pDC = 61130.8;
     ratio = 1.;
     inv->calculateTempDerate(V, T, pDC, ratio, loss);
-    EXPECT_NEAR(pDC, 100, e) << "no derate";
+    EXPECT_NEAR(pDC, 61130.8, e) << "no derate";
 
     // V less than that of first curve, extrapolated startT is 10. and slope is -0.1
     V = 100.;
     T = 11.;
     inv->calculateTempDerate(V, T, pDC, ratio, loss);
-    EXPECT_NEAR(pDC, 90., e) << "case 1";
+    EXPECT_NEAR(pDC, 55017.72, e) << "case 1";
 
     // V more than that of first curve, interpolated startT is 25. and slope is -0.25
     V = 250.;
     T = 26.;
     reset();
     inv->calculateTempDerate(V, T, pDC, ratio, loss);
-    EXPECT_NEAR(pDC, 75, e) << "case 2";
+    EXPECT_NEAR(pDC, 45848.1, e) << "case 2";
 
     // V more than that of second curve, interpolated startT is 40. and slope is -0.4
     V = 400.;
     T = 41.;
     reset();
     inv->calculateTempDerate(V, T, pDC, ratio, loss);
-    EXPECT_NEAR(pDC, 60, e) << "case 3";
+    EXPECT_NEAR(pDC, 36678.48, e) << "case 3";
 
     /// Second set of curves, different # of pairs
     std::vector<double> c3 = { 200., 20., -0.2 };
@@ -93,49 +93,49 @@ TEST_F(sharedInverterTest_lib_shared_inverter, tempDerateTest_lib_shared_inverte
     T = 9.;
     reset();
     inv->calculateTempDerate(V, T, pDC, ratio, loss);
-    EXPECT_NEAR(pDC, 100, e) << "case 7";
+    EXPECT_NEAR(pDC, 61130.8, e) << "case 7";
 
     // V<200 and 10 < T: extrapolated startT is 10. and slope is -0.1
     V = 100.;
     T = 11.;
     reset();
     inv->calculateTempDerate(V, T, pDC, ratio, loss);
-    EXPECT_NEAR(pDC, 90, e) << "case 7";
+    EXPECT_NEAR(pDC, 55017.72, e) << "case 7";
 
     // 200<V<300 and T < 25, interpolated startT is 25. and slope is -0.25
     V = 250.;
     T = 24.;
     reset();
     inv->calculateTempDerate(V, T, pDC, ratio, loss);
-    EXPECT_NEAR(pDC, 100, e) << "case 9";
+    EXPECT_NEAR(pDC, 61130.8, e) << "case 9";
 
     // 200<V<300 and 25 < T < 40, interpolated startT is 25. and slope is -0.25
     V = 250.;
     T = 26.;
     reset();
     inv->calculateTempDerate(V, T, pDC, ratio, loss);
-    EXPECT_NEAR(pDC, 75, e) << "case 9";
+    EXPECT_NEAR(pDC, 45848.1, e) << "case 9";
 
     // 200<V<300 and 40 < T, interpolated startT is 40. and slope is -0.4
     V = 250.;
     T = 41.;
     reset();
     inv->calculateTempDerate(V, T, pDC, ratio, loss);
-    EXPECT_NEAR(pDC, 60, e) << "case 9";
+    EXPECT_NEAR(pDC, 36678.48, e) << "case 9";
 
     // 300<V and T < 40, extrapolated startT is 40. and slope is -0.4
     V = 400.;
     T = 9.;
     reset();
     inv->calculateTempDerate(V, T, pDC, ratio, loss);
-    EXPECT_NEAR(pDC, 100, e) << "case 9";
+    EXPECT_NEAR(pDC, 61130.8, e) << "case 9";
 
     // 300<V and 40 < T < 100, interpolated startT is 40. and slope is -0.4
     V = 400.;
     T = 41.;
     reset();
     inv->calculateTempDerate(V, T, pDC, ratio, loss);
-    EXPECT_NEAR(pDC, 60, e) << "case 9";
+    EXPECT_NEAR(pDC, 36678.48, e) << "case 9";
 
     /// Third set of curves, different # of pairs
     std::vector<double> c5 = { 200., 20., -0.2, 60, -0.6 };
@@ -148,49 +148,49 @@ TEST_F(sharedInverterTest_lib_shared_inverter, tempDerateTest_lib_shared_inverte
     T = 9.;
     reset();
     inv->calculateTempDerate(V, T, pDC, ratio, loss);
-    EXPECT_NEAR(pDC, 100, e) << "case 7";
+    EXPECT_NEAR(pDC, 61130.8, e) << "case 7";
 
     // V<200 and 10 < T : extrapolated startT is 10. and slope is -0.1
     V = 100.;
     T = 11.;
     reset();
     inv->calculateTempDerate(V, T, pDC, ratio, loss);
-    EXPECT_NEAR(pDC, 90, e) << "case 7";
+    EXPECT_NEAR(pDC, 55017.72, e) << "case 7";
 
     // 200<V<300 and T < 25, interpolated startT is 25. and slope is -0.25
     V = 250.;
     T = 24.;
     reset();
     inv->calculateTempDerate(V, T, pDC, ratio, loss);
-    EXPECT_NEAR(pDC, 100, e) << "case 9";
+    EXPECT_NEAR(pDC, 61130.8, e) << "case 9";
 
     // 200<V<300 and 25 < T < 40, interpolated startT is 25. and slope is -0.25
     V = 250.;
     T = 26.;
     reset();
     inv->calculateTempDerate(V, T, pDC, ratio, loss);
-    EXPECT_NEAR(pDC, 75, e) << "case 9";
+    EXPECT_NEAR(pDC, 45848.1, e) << "case 9";
 
     // 200<V<300 and 40 < T, interpolated startT is 45. and slope is -0.45
     V = 250.;
     T = 46.;
     reset();
     inv->calculateTempDerate(V, T, pDC, ratio, loss);
-    EXPECT_NEAR(pDC, 55, e) << "case 9";
+    EXPECT_NEAR(pDC, 33621.94, e) << "case 9";
 
     // 300<V and T < 40, extrapolated startT is 40. and slope is -0.4
     V = 400.;
     T = 9.;
     reset();
     inv->calculateTempDerate(V, T, pDC, ratio, loss);
-    EXPECT_NEAR(pDC, 100, e) << "case 9";
+    EXPECT_NEAR(pDC, 61130.8, e) << "case 9";
 
     // 300<V and 40 < T, interpolated startT is 40. and slope is -0.4
     V = 400.;
     T = 41.;
     reset();
     inv->calculateTempDerate(V, T, pDC, ratio, loss);
-    EXPECT_NEAR(pDC, 60, e) << "case 9";
+    EXPECT_NEAR(pDC, 36678.48, e) << "case 9";
 }
 
 TEST_F(sharedInverterTest_lib_shared_inverter, calculateEffForACPower) {
