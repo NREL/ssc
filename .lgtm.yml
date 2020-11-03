@@ -18,10 +18,10 @@ extraction:
       - export GTEST=$LGTM_WORKSPACE/build/googletest
       - export SSCDIR=$LGTM_SRC
     configure:
-      -  mkdir ${GTEST}/build; cd ${GTEST}/build; cmake -DCMAKE_CXX_FLAGS=-std=c++11 ..;
-      -  cd ${SSCDIR}/build; cmake .. -DCMAKE_BUILD_TYPE=Release -Dskip_tools=1
+      - mkdir ${GTEST}/build; cd ${GTEST}/build; cmake -DCMAKE_CXX_FLAGS=-std=c++11 ..;
+      - cd ${SSCDIR}/build; cmake .. -DCMAKE_BUILD_TYPE=Release -Dskip_tools=1
     before_index:
-      -  cd ${GTEST}; make;
+      - cd ${GTEST}; make;
     index:    
       build_command:
         - cd ${SSCDIR}/build; make -j4
