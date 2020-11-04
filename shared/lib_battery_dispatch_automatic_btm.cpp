@@ -24,6 +24,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_battery_powerflow.h"
 #include "lib_shared_inverter.h"
 
+#include <math.h>
+
 dispatch_automatic_behind_the_meter_t::dispatch_automatic_behind_the_meter_t(
 	battery_t * Battery,
 	double dt_hour,
