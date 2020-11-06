@@ -264,7 +264,6 @@ void SharedInverter::calculateACPower(const std::vector<double> powerDC_kW_in, c
     std::vector<double> powerDC_Watts_one_inv_iter;
     for (size_t i = 0; i < powerDC_kW_in.size(); i++) {
         powerDC_Watts_one_inv.push_back(powerDC_kW_in[i] * util::kilowatt_to_watt / m_numInverters);
-        //powerDC_Watts_one_inv_iter[i] = powerDC_kW_in[i] * util::kilowatt_to_watt / m_numInverters;
     }
     Tdry_C = tempC;
     StringV = DCStringVoltage[0];
@@ -277,7 +276,6 @@ void SharedInverter::calculateACPower(const std::vector<double> powerDC_kW_in, c
         double avgDCVoltage = 0;
         double avgDCPower_Watts = 0;
         for (size_t i = 0; i < powerDC_Watts_one_inv.size(); i++) {
-            //avgDCVoltage += DCStringVoltage[i];
             power_ratio = 1.0;
             calculateTempDerate(DCStringVoltage[i], tempC, powerDC_Watts_one_inv[i], power_ratio, tempLoss[i]);
         }
