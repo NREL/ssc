@@ -5,6 +5,44 @@
 
 using namespace solar_thermal;
 
+//========Tests===================================================================================
+// **This is NOT a test fixture class test, but is now in its own namespace in Test Explorer.**
+// Basic test of expected power gain and outlet temperature of a single flat plate collector
+// Uses a factory (abstract factory pattern) to create the different physical and non-physical components
+NAMESPACE_TEST(solar_thermal, FlatPlateCollectorTest, TestFlatPlateCollectorNominalOperation)
+{
+    DefaultFpcFactory default_fpc_factory = DefaultFpcFactory();
+    std::unique_ptr<FlatPlateCollector> flat_plate_collector = default_fpc_factory.MakeCollector();
+    std::unique_ptr<TimeAndPosition> time_and_position = default_fpc_factory.MakeTimeAndPosition();
+    std::unique_ptr<ExternalConditions> external_conditions = default_fpc_factory.MakeExternalConditions();
+
+    double useful_power_gain = flat_plate_collector->UsefulPowerGain(*time_and_position, *external_conditions);  // [W]
+    double T_out = flat_plate_collector->T_out(*time_and_position, *external_conditions);                        // [C]
+
+    EXPECT_NEAR(useful_power_gain, 1.659e3, 1.659e3 * kErrorToleranceHi);
+    EXPECT_NEAR(T_out, 50.26, 50.26 * kErrorToleranceHi);
+}
+
+// Basic test of expected power gain and outlet temperature of a flat plate collector array
+// Uses a factory (abstract factory pattern) to create the different physical and non-physical components
+NAMESPACE_TEST(solar_thermal, FlatPlateArrayTest, TestFlatPlateArrayOfOneNominalOperation)
+{
+    DefaultFpcFactory default_fpc_factory = DefaultFpcFactory();
+    std::unique_ptr<FlatPlateArray> flat_plate_array = default_fpc_factory.MakeFpcArray();
+    tm timestamp = default_fpc_factory.MakeTime();
+    std::unique_ptr<ExternalConditions> external_conditions = default_fpc_factory.MakeExternalConditions();
+    external_conditions->inlet_fluid_flow.temp = 44.86;
+
+    double useful_power_gain = flat_plate_array->UsefulPowerGain(timestamp, *external_conditions);  // [W]
+    double T_out = flat_plate_array->T_out(timestamp, *external_conditions);                        // [C]
+
+    EXPECT_NEAR(useful_power_gain, 1.587e3, 1.587e3 * kErrorToleranceHi);
+    EXPECT_NEAR(T_out, 49.03, 49.03 * kErrorToleranceHi);
+}
+//========/Tests==================================================================================
+
+//========Factories:==============================================================================
+//========FpcFactory (super class)================================================================
 std::unique_ptr<FlatPlateArray> FpcFactory::MakeFpcArray(FlatPlateCollector* flat_plate_collector,
                                                          CollectorLocation* collector_location,
                                                          CollectorOrientation* collector_orientation,
@@ -30,7 +68,9 @@ std::unique_ptr<TimeAndPosition> FpcFactory::MakeTimeAndPosition() const
 
     return time_and_position;
 }
+//========/FpcFactory============================================================================
 
+//========DefaultFactory (subclass)==============================================================
 std::unique_ptr<FlatPlateArray> DefaultFpcFactory::MakeFpcArray() const
 {
     std::unique_ptr<FlatPlateCollector> flat_plate_collector = this->MakeCollector();
@@ -132,55 +172,7 @@ ArrayDimensions DefaultFpcFactory::MakeArrayDimensions() const
 
     return array_dimensions;
 }
-
-
-//TEST_F(FlatPlateCollectorTest, TestFlatPlateCollectorNominalOperation)
-//{
-//    DefaultFpcFactory default_fpc_factory = DefaultFpcFactory();
-//    std::unique_ptr<FlatPlateCollector> flat_plate_collector = default_fpc_factory.MakeCollector();
-//    std::unique_ptr<TimeAndPosition> time_and_position = default_fpc_factory.MakeTimeAndPosition();
-//    std::unique_ptr<ExternalConditions> external_conditions = default_fpc_factory.MakeExternalConditions();
-//
-//    double useful_power_gain = flat_plate_collector->UsefulPowerGain(*time_and_position, *external_conditions);  // [W]
-//    double T_out = flat_plate_collector->T_out(*time_and_position, *external_conditions);                        // [C]
-//
-//    EXPECT_NEAR(useful_power_gain, 1.659e3, 1.659e3 * m_error_tolerance_hi);
-//    EXPECT_NEAR(T_out, 50.26, 50.26 * m_error_tolerance_hi);
-//}
-
-
-// This is NOT a test fixture class test, but is now in its own namespace in Test Explorer.
-NAMESPACE_TEST(solar_thermal, FlatPlateCollectorTest, TestFlatPlateCollectorNominalOperation)
-{
-    DefaultFpcFactory default_fpc_factory = DefaultFpcFactory();
-    std::unique_ptr<FlatPlateCollector> flat_plate_collector = default_fpc_factory.MakeCollector();
-    std::unique_ptr<TimeAndPosition> time_and_position = default_fpc_factory.MakeTimeAndPosition();
-    std::unique_ptr<ExternalConditions> external_conditions = default_fpc_factory.MakeExternalConditions();
-
-    double useful_power_gain = flat_plate_collector->UsefulPowerGain(*time_and_position, *external_conditions);  // [W]
-    double T_out = flat_plate_collector->T_out(*time_and_position, *external_conditions);                        // [C]
-
-    const double m_error_tolerance_hi = 0.01;
-    EXPECT_NEAR(useful_power_gain, 1.659e3, 1.659e3 * m_error_tolerance_hi);
-    EXPECT_NEAR(T_out, 50.26, 50.26 * m_error_tolerance_hi);
-}
-
-TEST_F(FlatPlateArrayTest, TestFlatPlateArrayOfOneNominalOperation)
-{
-    DefaultFpcFactory default_fpc_factory = DefaultFpcFactory();
-    std::unique_ptr<FlatPlateArray> flat_plate_array = default_fpc_factory.MakeFpcArray();
-    tm timestamp = default_fpc_factory.MakeTime();
-    std::unique_ptr<ExternalConditions> external_conditions = default_fpc_factory.MakeExternalConditions();
-    external_conditions->inlet_fluid_flow.temp = 44.86;
-
-    double useful_power_gain = flat_plate_array->UsefulPowerGain(timestamp, *external_conditions);  // [W]
-    double T_out = flat_plate_array->T_out(timestamp, *external_conditions);                        // [C]
-
-    EXPECT_NEAR(useful_power_gain, 1.587e3, 1.587e3 * m_error_tolerance_hi);
-    EXPECT_NEAR(T_out, 49.03, 49.03 * m_error_tolerance_hi);
-}
-
-
+//========/DefaultFactory========================================================================
 
 void StorageTankTest::SetUp()
 {

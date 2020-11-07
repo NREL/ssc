@@ -7,6 +7,9 @@
 
 namespace solar_thermal
 {
+    const double kErrorToleranceLo = 0.001;    // 0.1%
+    const double kErrorToleranceHi = 0.01;     // 1.0%
+
     class FpcFactory {
     public:
         FpcFactory() {};
@@ -47,27 +50,19 @@ namespace solar_thermal
         virtual ArrayDimensions MakeArrayDimensions() const;
     };
 
-    class FlatPlateCollectorTest : public ::testing::Test
-    {
-    public:
-        const double m_error_tolerance_lo = 0.001;    // 0.1%
-        const double m_error_tolerance_hi = 0.01;     // 1.0%
+    //class FlatPlateCollectorTest : public ::testing::Test
+    //{
+    //public:
+    //    void SetUp() {}
+    //    void TearDown() {}
+    //};
 
-        void SetUp() {}
-
-        void TearDown() {}
-    };
-
-    class FlatPlateArrayTest : public ::testing::Test
-    {
-    public:
-        const double m_error_tolerance_lo = 0.001;    // 0.1%
-        const double m_error_tolerance_hi = 0.01;     // 1.0%
-
-        void SetUp() {}
-
-        void TearDown() {}
-    };
+    //class FlatPlateArrayTest : public ::testing::Test
+    //{
+    //public:
+    //    void SetUp() {}
+    //    void TearDown() {}
+    //};
 }
 
 class StorageTankTest : public ::testing::Test
