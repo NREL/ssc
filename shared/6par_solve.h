@@ -517,7 +517,7 @@ public:
 		Isc = Isc_save;
 
         // try the "default" initial guesses that multiSi uses
-        if (Type != multiSi and err < 0 ) {
+        if (Type != multiSi && err < 0 ) {
             Type = multiSi;
             return solve_with_sanity_and_heuristics<double>(max_iter, tol);
         }
