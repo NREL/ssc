@@ -418,6 +418,8 @@ double lifetime_calendar_t::runLifetimeCalendarModel(size_t lifetimeIndex, doubl
         runLithiumIonModel(T, SOC);
     else if (params->calendar_choice == lifetime_params::CALENDAR_CHOICE::TABLE)
         runTableModel();
+    else
+        state->q_relative_calendar = 100;
 
     return state->q_relative_calendar;
 }
