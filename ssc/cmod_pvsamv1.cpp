@@ -671,7 +671,7 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_OUTPUT,        SSC_ARRAY,      "inv_cliploss",                         "Inverter clipping loss AC power limit",                "kW",   "",  "Time Series (Inverter)",       "*",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "inv_psoloss",                          "Inverter power consumption loss",                      "kW",   "",  "Time Series (Inverter)",       "*",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "inv_pntloss",                          "Inverter night time loss",                             "kW",   "",  "Time Series (Inverter)",       "*",                    "",                              "" },
-        { SSC_OUTPUT,        SSC_ARRAY,      "inv_tdcloss",                       	 "Inverter thermal derate loss",                         "kW",   "",   "Time Series (Inverter)",      "*",             "",                   "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "inv_tdcloss",                       	 "Inverter thermal derate DC power loss",                "kW",   "",   "Time Series (Inverter)",      "*",             "",                   "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "inv_total_loss",                       "Inverter total power loss",                            "kW",   "",   "Time Series (Inverter)",      "*",             "",                   "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "ac_wiring_loss",                       "AC wiring loss",                                       "kW",   "",   "Time Series (Inverter)",      "*",                        "",                   "" },
 
@@ -692,7 +692,7 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_OUTPUT,        SSC_NUMBER,     "annual_inv_cliploss",                  "Inverter clipping loss AC power limit",                  "kWh/yr",    "",                      "Annual (Year 1)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_NUMBER,     "annual_inv_psoloss",                   "Inverter power consumption loss",                        "kWh/yr",    "",                      "Annual (Year 1)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_NUMBER,     "annual_inv_pntloss",                   "Inverter night time loss",                               "kWh/yr",    "",                      "Annual (Year 1)",       "",                    "",                              "" },
-        { SSC_OUTPUT,        SSC_NUMBER,     "annual_inv_tdcloss",                   "Inverter thermal derate loss",				                   "kWh/yr",    "",                      "Annual (Year 1)",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_NUMBER,     "annual_inv_tdcloss",                   "Inverter thermal derate DC power loss",				   "kWh/yr",    "",                      "Annual (Year 1)",       "",                    "",                              "" },
 
         { SSC_OUTPUT,        SSC_NUMBER,     "subarray1_dcloss",                     "Subarray 1 Total DC power loss",                                       "%",      "", "Annual (Year 1)",              "",                        "",                   "" },
         { SSC_OUTPUT,        SSC_NUMBER,     "subarray2_dcloss",                     "Subarray 2 Total DC power loss",                                       "%",      "", "Annual (Year 1)",              "",                        "",                   "" },
@@ -799,12 +799,12 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_OUTPUT, SSC_NUMBER, "annual_dc_perf_adj_loss_percent", "DC performance adjustment loss", "%", "", "Loss", "", "", "" },
         { SSC_OUTPUT, SSC_NUMBER, "annual_dc_lifetime_loss_percent", "Lifetime daily DC loss- year 1", "%", "", "Loss", "", "", "" },
         { SSC_OUTPUT, SSC_NUMBER, "annual_dc_battery_loss_percent", "DC connected battery loss- year 1", "%", "", "Loss", "", "", "" },
-
+        { SSC_OUTPUT, SSC_NUMBER, "annual_dc_inv_tdc_loss_percent", "DC inverter thermal derate loss", "%", "", "Loss", "", "", "" },
         //annual_dc_net
         { SSC_OUTPUT, SSC_NUMBER, "annual_ac_inv_clip_loss_percent", "AC inverter power clipping loss", "%", "", "Loss", "", "", "" },
         { SSC_OUTPUT, SSC_NUMBER, "annual_ac_inv_pso_loss_percent", "AC inverter power consumption loss", "%", "", "Loss", "", "", "" },
         { SSC_OUTPUT, SSC_NUMBER, "annual_ac_inv_pnt_loss_percent", "AC inverter night tare loss", "%", "", "Loss", "", "", "" },
-        { SSC_OUTPUT, SSC_NUMBER, "annual_ac_inv_tdc_loss_percent", "AC inverter thermal derate loss", "%", "", "Loss", "", "", "" },
+
         // annual_ac_gross
         { SSC_OUTPUT, SSC_NUMBER, "annual_ac_inv_eff_loss_percent", "AC inverter efficiency loss", "%", "", "Loss", "", "", "" },
         { SSC_OUTPUT, SSC_NUMBER, "annual_ac_wiring_loss_percent", "AC wiring loss", "%", "", "Loss", "", "", "" },
@@ -918,14 +918,14 @@ static var_info _cm_vtab_pvsamv1[] = {
 
 cm_pvsamv1::cm_pvsamv1()
 {
-	add_var_info( _cm_vtab_pvsamv1 );
-	add_var_info(vtab_adjustment_factors);
-	add_var_info(vtab_dc_adjustment_factors);
-	add_var_info(vtab_technology_outputs);
-	add_var_info(vtab_battery_inputs);
-	add_var_info(vtab_forecast_price_signal);
-	add_var_info(vtab_battery_outputs);
-	add_var_info(vtab_resilience_outputs);
+    add_var_info(_cm_vtab_pvsamv1);
+    add_var_info(vtab_adjustment_factors);
+    add_var_info(vtab_dc_adjustment_factors);
+    add_var_info(vtab_technology_outputs);
+    add_var_info(vtab_battery_inputs);
+    add_var_info(vtab_forecast_price_signal);
+    add_var_info(vtab_battery_outputs);
+    add_var_info(vtab_resilience_outputs);
     add_var_info(vtab_utility_rate_common); // Required by battery
 }
 
@@ -963,16 +963,16 @@ void cm_pvsamv1::exec()
     double module_watts_stc = Subarrays[0]->Module->moduleWattsSTC;
     SharedInverter* sharedInverter = PVSystem->m_sharedInverter.get();
 
-	//overwrite tilt with latitude if flag is set- can't do this in PVIOManager because need latitude from weather file
-	//also check here for tilt > 0 for tracking systems, since this is a very uncommon configuration but an easy mistake to make
-	for (size_t nn = 0; nn < num_subarrays; nn++)
-	{
-		if (Subarrays[nn]->tiltEqualLatitude)
-			Subarrays[nn]->tiltDegrees = fabs(Irradiance->weatherHeader.lat);
-		if (Subarrays[nn]->trackMode == irrad::SINGLE_AXIS && Subarrays[nn]->tiltDegrees > 0)
-			log(util::format("Subarray %d has one-axis tracking with a tilt angle of %f degrees. Large one-axis tracking arrays typically have a tilt angle of zero.", nn+1, Subarrays[nn]->tiltDegrees), SSC_WARNING);
+    //overwrite tilt with latitude if flag is set- can't do this in PVIOManager because need latitude from weather file
+    //also check here for tilt > 0 for tracking systems, since this is a very uncommon configuration but an easy mistake to make
+    for (size_t nn = 0; nn < num_subarrays; nn++)
+    {
+        if (Subarrays[nn]->tiltEqualLatitude)
+            Subarrays[nn]->tiltDegrees = fabs(Irradiance->weatherHeader.lat);
+        if (Subarrays[nn]->trackMode == irrad::SINGLE_AXIS && Subarrays[nn]->tiltDegrees > 0)
+            log(util::format("Subarray %d has one-axis tracking with a tilt angle of %f degrees. Large one-axis tracking arrays typically have a tilt angle of zero.", nn + 1, Subarrays[nn]->tiltDegrees), SSC_WARNING);
         if (Subarrays[nn]->Module->isBifacial && (Subarrays[nn]->trackMode != irrad::FIXED_TILT))
-            log(util::format("Subarray %d uses tracking  with bifacial modules. The bifacial model is designed for fixed arrays and may not produce reliable results for tracking arrays.", nn+1), SSC_WARNING);
+            log(util::format("Subarray %d uses tracking  with bifacial modules. The bifacial model is designed for fixed arrays and may not produce reliable results for tracking arrays.", nn + 1), SSC_WARNING);
     }
 
     // check for snow model with non-annual simulations: because snow model coefficients need to know the timestep, and we don't know timestep if non-annual
@@ -1748,10 +1748,10 @@ void cm_pvsamv1::exec()
                         if (as_double("module_model") == 1) {
                             wma_mu = as_double("cec_transient_thermal_model_unit_mass");
                         }
-                        if (as_double("module_model")==2) {
+                        if (as_double("module_model") == 2) {
                             wma_mu = as_double("6par_transient_thermal_model_unit_mass");
                         }
-                        if (as_double("module_model")==3) {
+                        if (as_double("module_model") == 3) {
                             wma_mu = as_double("snl_transient_thermal_model_unit_mass");
                         }
                         // weight function
@@ -2478,7 +2478,8 @@ void cm_pvsamv1::exec()
         assign("annual_dc_after_tracking_loss", var_data((ssc_number_t)sys_output));
         sys_output -= annual_nameplate_loss;
         assign("annual_dc_after_nameplate_loss", var_data((ssc_number_t)sys_output));
-
+        sys_output -= annual_inv_tdcloss;
+        assign("annual_dc_after_inv_tdcloss", var_data((ssc_number_t)sys_output));
         //#define WITH_CHECKS
 
 #ifdef WITH_CHECKS
@@ -2494,8 +2495,7 @@ void cm_pvsamv1::exec()
         assign("annual_ac_after_inv_psoloss", var_data((ssc_number_t)sys_output));
         sys_output -= annual_inv_pntloss;
         assign("annual_ac_after_inv_pntloss", var_data((ssc_number_t)sys_output));
-        sys_output -= annual_inv_tdcloss;
-        assign("annual_ac_after_inv_tdcloss", var_data((ssc_number_t)sys_output));
+
 
         double acwiring = as_double("acwiring_loss");
         double transmission = as_double("transmission_loss");
@@ -2577,6 +2577,10 @@ void cm_pvsamv1::exec()
         assign("annual_dc_optimizer_loss_percent", var_data((ssc_number_t)percent));
 
         percent = 0.;
+        if (annual_dc_gross > 0) percent = 100 * annual_inv_tdcloss / annual_dc_gross;
+        assign("annual_dc_inv_tdc_loss_percent", var_data((ssc_number_t)percent));
+
+        percent = 0.;
         if (annual_dc_gross > 0) percent = 100 * annual_dc_adjust_loss / annual_dc_gross;
         assign("annual_dc_perf_adj_loss_percent", var_data((ssc_number_t)percent));
 
@@ -2601,10 +2605,6 @@ void cm_pvsamv1::exec()
         percent = 0.;
         if (annual_dc_net > 0) percent = 100 * annual_inv_pntloss / annual_dc_net;
         assign("annual_ac_inv_pnt_loss_percent", var_data((ssc_number_t)percent));
-
-        percent = 0.;
-        if (annual_dc_net > 0) percent = 100 * annual_inv_tdcloss / annual_dc_net;
-        assign("annual_ac_inv_tdc_loss_percent", var_data((ssc_number_t)percent));
 
         sys_output = annual_dc_net;
         sys_output -= (annual_inv_cliploss + annual_inv_pntloss + annual_inv_psoloss);

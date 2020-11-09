@@ -384,7 +384,6 @@ void pvyield_no_financial_meteo(ssc_data_t& data)
     ssc_data_set_matrix(data, "inv_tdc_ds", matrix_inv_tdc, 1, 3);
 
 
-
     // PVYield inverter model
     ssc_data_set_number(data, "ond_PNomConv", 500000);
     ssc_data_set_number(data, "ond_PMaxOUT", 600000);
@@ -1231,7 +1230,6 @@ void pvyield_user_support_80603_AZ(ssc_data_t& data)
     ssc_data_set_matrix(data, "inv_tdc_cec_cg", matrix_inv_tdc, 1, 3);
     ssc_data_set_matrix(data, "inv_tdc_plc", matrix_inv_tdc, 1, 3);
     ssc_data_set_matrix(data, "inv_tdc_ds", matrix_inv_tdc, 1, 3);
-
 
 
     // PVYield inverter model
