@@ -4,190 +4,183 @@
 #include <gtest/gtest.h>
 #include "csp_solver_trough_collector_receiver.h"
 
-#include "lib_trough_properties.h"
+// Aliases (e.g., typedef)
+using Trough = C_csp_trough_collector_receiver;
+using Location = C_csp_collector_receiver::S_csp_cr_init_inputs;
+using TroughSolvedParams = C_csp_collector_receiver::S_csp_cr_solved_params;
+using TimeAndWeather = C_csp_weatherreader::S_outputs;
+using FluidInletState = C_csp_solver_htf_1state;
+using TimestepAndTou = C_csp_solver_sim_info;
+using TroughOutputs = C_csp_collector_receiver::S_csp_cr_out_solver;
 
-class TroughTest : public TroughProperties
+namespace csp_trough
 {
-protected:
-    C_csp_trough_collector_receiver *troughModel;
-    C_csp_collector_receiver::S_csp_cr_init_inputs troughInitInputs;            // for init()
-    C_csp_collector_receiver::S_csp_cr_solved_params troughSolvedParams;        // for init()
+    struct TroughSpecifications;    // forward declaration
+    struct TroughState;
 
-    C_csp_weatherreader::S_outputs weatherValues;
-    C_csp_solver_htf_1state htfInletState;
-    double defocus;
-    C_csp_solver_sim_info troughInfo;
-    C_csp_collector_receiver::S_csp_cr_out_solver troughOutputs;
+    const double kErrorToleranceLo = 0.001;    // 0.1%
+    const double kErrorToleranceHi = 0.01;     // 1.0%
 
-public:
-    double m_error_tolerance_lo = 0.001;    // 0.1%
-    double m_error_tolerance_hi = 0.01;     // 1.0%
+    class TroughFactory {
+    public:
+        TroughFactory() {};
 
-    void SetUp() {
-        TroughProperties::SetUp();
-        troughModel = new C_csp_trough_collector_receiver();
+        virtual std::unique_ptr<Trough> MakeTrough(Location location) const = 0;
+        std::unique_ptr<Trough> MakeTrough(TroughSpecifications* trough_specifications,
+            Location location) const;
+        virtual std::unique_ptr<TroughSpecifications> MakeSpecifications() const = 0;
+        virtual std::unique_ptr<TroughState> MakeTroughState() const = 0;
+        virtual std::unique_ptr<TimeAndWeather> MakeTimeLocationWeather(Location location) const = 0;
+        virtual TimestepAndTou MakeTimestepAndTou() const = 0;
+        virtual FluidInletState MakeInletState() const = 0;
+        virtual double MakeDefocus() const = 0;
+        virtual Location MakeLocation() const = 0;
 
-        troughModel->m_nSCA = nSCA;
-        troughModel->m_nHCEt = nHCEt;
-        troughModel->m_nColt = nColt;
-        troughModel->m_nHCEVar = nHCEVar;
-        troughModel->m_nLoops = nLoops;
-        troughModel->m_FieldConfig = FieldConfig;
-        troughModel->m_L_power_block_piping = L_power_block_piping;
-        troughModel->m_include_fixed_power_block_runner = include_fixed_power_block_runner;
-        troughModel->m_eta_pump = eta_pump;
-        troughModel->m_Fluid = Fluid;
-        //troughModel->m_fthrok = fthrok;
-        troughModel->m_fthrctrl = fthrctrl;
-        troughModel->m_accept_loc = accept_loc;
-        troughModel->m_HDR_rough = HDR_rough;
-        troughModel->m_theta_stow = theta_stow;
-        troughModel->m_theta_dep = theta_dep;
-        troughModel->m_Row_Distance = Row_Distance;
+        static void SetTroughState(Trough* trough, TroughState* trough_state);
+    };
 
-        troughModel->m_T_loop_in_des = T_loop_in_des;
-        troughModel->m_T_loop_out_des = T_loop_out_des;
-        troughModel->m_T_startup = T_startup;
-        troughModel->m_m_dot_htfmin = m_dot_htfmin;
-        troughModel->m_m_dot_htfmax = m_dot_htfmax;
-        troughModel->m_field_fl_props = field_fl_props;
-        troughModel->m_T_fp = T_fp;
-        troughModel->m_I_bn_des = I_bn_des;
-        troughModel->m_V_hdr_cold_max = V_hdr_cold_max;
-        troughModel->m_V_hdr_cold_min = V_hdr_cold_min;
-        troughModel->m_V_hdr_hot_max = V_hdr_hot_max;
-        troughModel->m_V_hdr_hot_min = V_hdr_hot_min;
-        troughModel->m_V_hdr_max = V_hdr_max;
-        troughModel->m_V_hdr_min = V_hdr_min;
-        troughModel->m_Pipe_hl_coef = Pipe_hl_coef;
-        troughModel->m_SCA_drives_elec = SCA_drives_elec;
-        troughModel->m_ColTilt = ColTilt;
-        troughModel->m_ColAz = ColAz;
-        troughModel->m_wind_stow_speed = wind_stow_speed;
-        troughModel->m_accept_mode = accept_mode;
-        troughModel->m_accept_init = accept_init;
-        troughModel->m_solar_mult = solar_mult;
-        troughModel->m_mc_bal_hot_per_MW = mc_bal_hot_per_MW;
-        troughModel->m_mc_bal_cold_per_MW = mc_bal_cold_per_MW;
-        troughModel->m_mc_bal_sca = mc_bal_sca;
+    class DefaultTroughFactory : public TroughFactory {
+    public:
+        DefaultTroughFactory() {};
 
-        troughModel->m_W_aperture = W_aperture;
-        troughModel->m_A_aperture = A_aperture;
-        troughModel->m_TrackingError = TrackingError;
-        troughModel->m_GeomEffects = GeomEffects;
-        troughModel->m_Rho_mirror_clean = Rho_mirror_clean;
-        troughModel->m_Dirt_mirror = Dirt_mirror;
-        troughModel->m_Error = Error;
-        troughModel->m_Ave_Focal_Length = Ave_Focal_Length;
-        troughModel->m_L_SCA = L_SCA;
-        troughModel->m_L_aperture = L_aperture;
-        troughModel->m_ColperSCA = ColperSCA;
-        troughModel->m_Distance_SCA = Distance_SCA;
+        virtual std::unique_ptr<Trough> MakeTrough(Location location) const;
+        virtual std::unique_ptr<TroughSpecifications> MakeSpecifications() const;
+        virtual std::unique_ptr<TroughState> MakeTroughState() const;
+        virtual std::unique_ptr<TimeAndWeather> MakeTimeLocationWeather(Location location) const;
+        virtual TimestepAndTou MakeTimestepAndTou() const;
+        virtual FluidInletState MakeInletState() const;
+        virtual double MakeDefocus() const;
+        virtual Location MakeLocation() const;
+    };
 
-        troughModel->m_IAM_matrix = IAM_matrix;
-        troughModel->m_HCE_FieldFrac = HCE_FieldFrac;
-        troughModel->m_D_2 = D_2;
-        troughModel->m_D_3 = D_3;
-        troughModel->m_D_4 = D_4;
-        troughModel->m_D_5 = D_5;
-        troughModel->m_D_p = D_p;
-        troughModel->m_Flow_type = Flow_type;
-        troughModel->m_Rough = Rough;
-        troughModel->m_alpha_env = alpha_env;
-
-        troughModel->m_epsilon_3_11 = epsilon_3_11;
-        troughModel->m_epsilon_3_12 = epsilon_3_12;
-        troughModel->m_epsilon_3_13 = epsilon_3_13;
-        troughModel->m_epsilon_3_14 = epsilon_3_14;
-        troughModel->m_epsilon_3_21 = epsilon_3_21;
-        troughModel->m_epsilon_3_22 = epsilon_3_22;
-        troughModel->m_epsilon_3_23 = epsilon_3_23;
-        troughModel->m_epsilon_3_24 = epsilon_3_24;
-        troughModel->m_epsilon_3_31 = epsilon_3_31;
-        troughModel->m_epsilon_3_32 = epsilon_3_32;
-        troughModel->m_epsilon_3_33 = epsilon_3_33;
-        troughModel->m_epsilon_3_34 = epsilon_3_34;
-        troughModel->m_epsilon_3_41 = epsilon_3_41;
-        troughModel->m_epsilon_3_42 = epsilon_3_42;
-        troughModel->m_epsilon_3_43 = epsilon_3_43;
-        troughModel->m_epsilon_3_44 = epsilon_3_44;
-
-        troughModel->m_alpha_abs = alpha_abs;
-        troughModel->m_Tau_envelope = Tau_envelope;
-        troughModel->m_EPSILON_4 = EPSILON_4;
-        troughModel->m_EPSILON_5 = EPSILON_5;
-        troughModel->m_GlazingIntact = GlazingIntact;
-        troughModel->m_P_a = P_a;
-        troughModel->m_AnnulusGas = AnnulusGas;
-        troughModel->m_AbsorberMaterial = AbsorberMaterial;
-        troughModel->m_Shadowing = Shadowing;
-        troughModel->m_Dirt_HCE = Dirt_HCE;
-        troughModel->m_Design_loss = Design_loss;
-        troughModel->m_SCAInfoArray = SCAInfoArray;
-
-        troughModel->m_calc_design_pipe_vals = calc_design_pipe_vals;
-        troughModel->m_L_rnr_pb = L_rnr_pb;
-        troughModel->m_N_max_hdr_diams = N_max_hdr_diams;
-        troughModel->m_L_rnr_per_xpan = L_rnr_per_xpan;
-        troughModel->m_L_xpan_hdr = L_xpan_hdr;
-        troughModel->m_L_xpan_rnr = L_xpan_rnr;
-        troughModel->m_Min_rnr_xpans = Min_rnr_xpans;
-        troughModel->m_northsouth_field_sep = northsouth_field_sep;
-        troughModel->m_N_hdr_per_xpan = N_hdr_per_xpan;
-        troughModel->m_K_cpnt = K_cpnt;
-        troughModel->m_D_cpnt = D_cpnt;
-        troughModel->m_L_cpnt = L_cpnt;
-        troughModel->m_Type_cpnt = Type_cpnt;
-        troughModel->m_custom_sf_pipe_sizes = custom_sf_pipe_sizes;
-        troughModel->m_sf_rnr_diams = sf_rnr_diams;
-        troughModel->m_sf_rnr_wallthicks = sf_rnr_wallthicks;
-        troughModel->m_sf_rnr_lengths = sf_rnr_lengths;
-        troughModel->m_sf_hdr_diams = sf_hdr_diams;
-        troughModel->m_sf_hdr_wallthicks = sf_hdr_wallthicks;
-        troughModel->m_sf_hdr_lengths = sf_hdr_lengths;
-
-        // init inputs
-        troughInitInputs.m_latitude = 32.13000107;
-        troughInitInputs.m_longitude = -110.9400024;
-        troughInitInputs.m_tz = -7;
-        troughInitInputs.m_shift = -5.940002441;
-        troughInitInputs.m_elev = -773;
-
-        troughModel->init(troughInitInputs, troughSolvedParams);
-
-        // inputs, constant or unused
-        weatherValues.m_lat       = 32.13000107;
-        weatherValues.m_lon       = -110.9400024;
-        weatherValues.m_tz        = -7;
-        weatherValues.m_shift     = -5.940002441;
-        weatherValues.m_elev      = 773;
-        weatherValues.m_global    = std::numeric_limits<double>::quiet_NaN();
-        weatherValues.m_hor_beam  = std::numeric_limits<double>::quiet_NaN();    // 433.1
-        weatherValues.m_diffuse   = std::numeric_limits<double>::quiet_NaN();    // 282
-        weatherValues.m_twet      = std::numeric_limits<double>::quiet_NaN();
-        weatherValues.m_wdir      = std::numeric_limits<double>::quiet_NaN();    // 88
-        weatherValues.m_rhum      = std::numeric_limits<double>::quiet_NaN();
-        weatherValues.m_snow      = std::numeric_limits<double>::quiet_NaN();
-        weatherValues.m_albedo    = std::numeric_limits<double>::quiet_NaN();    // 0.213
-        weatherValues.m_aod       = std::numeric_limits<double>::quiet_NaN();
-        weatherValues.m_poa       = std::numeric_limits<double>::quiet_NaN();    // 715.1
-        weatherValues.m_time_rise = std::numeric_limits<double>::quiet_NaN();    // 7.486443134
-        weatherValues.m_time_set  = std::numeric_limits<double>::quiet_NaN();    // 17.46109472
-
-        htfInletState.m_pres      = std::numeric_limits<double>::quiet_NaN();
-        htfInletState.m_qual      = -1.;
-        htfInletState.m_m_dot     = std::numeric_limits<double>::quiet_NaN();
-    }
-
-    void TearDown()
+    struct TroughSpecifications
     {
-        TroughProperties::TearDown();
-        if (troughModel) {
-            delete troughModel;
-            troughModel = nullptr;
-        }
-    }
+        int nSCA;                                                 //[-] Number of SCA's in a loop
+        int nHCEt;                                                //[-] Number of HCE types
+        int nColt;                                                //[-] Number of collector types
+        int nHCEVar;                                              //[-] Number of HCE variants per t
+        int nLoops;                                               //[-] Number of loops in the field
+        int FieldConfig;                                          //[-] Number of subfield headers
+        double L_power_block_piping;                              //[m] Length of piping (full mass flow) through power block (if applicable)
+        bool include_fixed_power_block_runner;	                  //[-] Should model consider piping through power block (is_model_power_block_piping)?
+        double eta_pump;                                          //[-] HTF pump efficiency
+        int Fluid;                                                //[-] Field HTF fluid number
+        //int fthrok;                                               //[-] Flag to allow partial defocusing of the collectors
+        int fthrctrl;                                             //[-] Defocusing strategy; hardcode2 for now
+        int accept_loc;                                           //[-] In acceptance testing mode - temperature sensor location (1=hx,2=loop)
+        double HDR_rough;                                         //[m] Header pipe roughness
+        double theta_stow;                                        //[deg] stow angle
+        double theta_dep;                                         //[deg] deploy angle
+        double Row_Distance;                                      //[m] Spacing between rows (centerline to centerline)
 
-};
+        double T_loop_in_des;                                     //[C] Design loop inlet temperature, converted to K in init
+        double T_loop_out_des;                                    //[C] Target loop outlet temperature, converted to K in init
+        double T_startup;                                         //[C] The required temperature (converted to K in init) of the system before the power block can be switched on
+        double m_dot_htfmin;                                      //[kg/s] Minimum loop HTF flow rate
+        double m_dot_htfmax;                                      //[kg/s] Maximum loop HTF flow rate
+        util::matrix_t<double> field_fl_props;                    //[-] User-defined field HTF properties
+        double T_fp;                                              //[C] Freeze protection temperature (heat trace activation temperature), convert to K in init
+        double I_bn_des;                                          //[W/m^2] Solar irradiation at design
+        double V_hdr_cold_max;                                    //[m/s] Maximum HTF velocity in the cold header at design
+        double V_hdr_cold_min;                                    //[m/s] Minimum HTF velocity in the cold header at design
+        double V_hdr_hot_max;                                     //[m/s] Maximum HTF velocity in the hot header at design
+        double V_hdr_hot_min;                                     //[m/s] Minimum HTF velocity in the hot header at design
+        double V_hdr_max;                                         //[m/s] Maximum HTF velocity in the header at design, for backwards compatibility, marked for removal
+        double V_hdr_min;                                         //[m/s] Minimum HTF velocity in the header at design, for backwards compatibility, marked for removal
+        double Pipe_hl_coef;                                      //[W/m2-K] Loss coefficient from the header, runner pipe, and non-HCE piping
+        double SCA_drives_elec;                                   //[W/SCA] Tracking power, in Watts per SCA drive
+        double ColTilt;                                           //[deg] Collector tilt angle (0 is horizontal, 90deg is vertical) ("tilt")
+        double ColAz;                                             //[deg] Collector azimuth angle ("azimuth")
+        double wind_stow_speed;                                   //[m/s] Wind speed at and above which the collectors will be stowed
+        int accept_mode;                                          //[-] Acceptance testing mode? (1=yes, 0=no)
+        bool accept_init;                                         //[-] In acceptance testing mode - require steady-state startup
+        double solar_mult;                                        //[-] Solar Multiple
+        double mc_bal_hot_per_MW;                                 //[kWht/K-MWt] The heat capacity of the balance of plant on the hot side ("mc_bal_hot")
+        double mc_bal_cold_per_MW;                                //[kWht/K-MWt] The heat capacity of the balance of plant on the cold side ("mc_bal_cold")
+        double mc_bal_sca;                                        //[Wht/K-m] Non-HTF heat capacity associated with each SCA - per meter basis
 
+        std::vector<double> W_aperture;                           //[m] The collector aperture width (Total structural area.. used for shadowing)
+        std::vector<double> A_aperture;                           //[m^2] Reflective aperture area of the collector
+        std::vector<double> TrackingError;                        //[-] Tracking error derate
+        std::vector<double> GeomEffects;                          //[-] Geometry effects derate
+        std::vector<double> Rho_mirror_clean;                     //[-] Clean mirror reflectivity
+        std::vector<double> Dirt_mirror;                          //[-] Dirt on mirror derate
+        std::vector<double> Error;                                //[-] General optical error derate
+        std::vector<double> Ave_Focal_Length;                     //[m] The average focal length of the collector 
+        std::vector<double> L_SCA;                                //[m] The length of the SCA 
+        std::vector<double> L_aperture;                           //[m] The length of a single mirror/HCE unit
+        std::vector<double> ColperSCA;                            //[-] The number of individual collector sections in an SCA
+        std::vector<double> Distance_SCA;                         //[m] Piping distance between SCA's in the field
+
+        util::matrix_t<double> IAM_matrix;                        //[-] IAM coefficients, matrix for 4 collectors                                                                          
+        util::matrix_t<double> HCE_FieldFrac;                     //[-] Fraction of the field occupied by this HCE type
+        util::matrix_t<double> D_2;                               //[m] Inner absorber tube diameter
+        util::matrix_t<double> D_3;                               //[m] Outer absorber tube diameter
+        util::matrix_t<double> D_4;                               //[m] Inner glass envelope diameter
+        util::matrix_t<double> D_5;                               //[m] Outer glass envelope diameter
+        util::matrix_t<double> D_p;                               //[m] Diameter of the absorber flow plug (optional)
+        util::matrix_t<double> Flow_type;                         //[-] Flow type through the absorber
+        util::matrix_t<double> Rough;                             //[m] Roughness of the internal surface
+        util::matrix_t<double> alpha_env;                         //[-] Envelope absorptance
+
+        util::matrix_t<double> epsilon_3_11;                      //[-] Absorber emittance for receiver type 1 variation 1
+        util::matrix_t<double> epsilon_3_12;                      //[-] Absorber emittance for receiver type 1 variation 2
+        util::matrix_t<double> epsilon_3_13;                      //[-] Absorber emittance for receiver type 1 variation 3
+        util::matrix_t<double> epsilon_3_14;                      //[-] Absorber emittance for receiver type 1 variation 4
+        util::matrix_t<double> epsilon_3_21;                      //[-] Absorber emittance for receiver type 2 variation 1
+        util::matrix_t<double> epsilon_3_22;                      //[-] Absorber emittance for receiver type 2 variation 2
+        util::matrix_t<double> epsilon_3_23;                      //[-] Absorber emittance for receiver type 2 variation 3
+        util::matrix_t<double> epsilon_3_24;                      //[-] Absorber emittance for receiver type 2 variation 4
+        util::matrix_t<double> epsilon_3_31;                      //[-] Absorber emittance for receiver type 3 variation 1
+        util::matrix_t<double> epsilon_3_32;                      //[-] Absorber emittance for receiver type 3 variation 2
+        util::matrix_t<double> epsilon_3_33;                      //[-] Absorber emittance for receiver type 3 variation 3
+        util::matrix_t<double> epsilon_3_34;                      //[-] Absorber emittance for receiver type 3 variation 4
+        util::matrix_t<double> epsilon_3_41;                      //[-] Absorber emittance for receiver type 4 variation 1
+        util::matrix_t<double> epsilon_3_42;                      //[-] Absorber emittance for receiver type 4 variation 2
+        util::matrix_t<double> epsilon_3_43;                      //[-] Absorber emittance for receiver type 4 variation 3
+        util::matrix_t<double> epsilon_3_44;                      //[-] Absorber emittance for receiver type 4 variation 4
+
+        util::matrix_t<double> alpha_abs;                         //[-] Absorber absorptance
+        util::matrix_t<double> Tau_envelope;                      //[-] Envelope transmittance
+        util::matrix_t<double> EPSILON_4;                         //[-] Inner glass envelope emissivities
+        util::matrix_t<double> EPSILON_5;                         //[-] Outer glass envelope emissivities
+        util::matrix_t<double> GlazingIntact_dbl;                 //[-] Glazing intact (broken glass) flag {1=true, else=false}, as double
+        util::matrix_t<bool> GlazingIntact;                       //[-] Glazing intact (broken glass) flag {1=true, else=false}
+        util::matrix_t<double> P_a;                               //[torr] Annulus gas pressure
+        util::matrix_t<double> AnnulusGas;                        //[-] Annulus gas type (1=air, 26=Ar, 27=H2)
+        util::matrix_t<double> AbsorberMaterial;                  //[-] Absorber material type
+        util::matrix_t<double> Shadowing;                         //[-] Receiver bellows shadowing loss factor
+        util::matrix_t<double> Dirt_HCE;                          //[-] Loss due to dirt on the receiver envelope
+        util::matrix_t<double> Design_loss;                       //[-] Receiver heat loss at design
+        util::matrix_t<double> SCAInfoArray;                      //[-] Receiver (,1) and collector (,2) type for each assembly in loop
+
+        bool calc_design_pipe_vals;                               //[-] Should the HTF state be calculated at design conditions
+        double L_rnr_pb;                                          //[m] Length of hot or cold runner pipe around the power block
+        double N_max_hdr_diams;                                   //[-] Maximum number of allowed diameters in each of the hot and cold headers
+        double L_rnr_per_xpan;                                    //[m] Threshold length of straight runner pipe without an expansion loop
+        double L_xpan_hdr;                                        //[m] Combined length in meters of the two perpendicular segments of a header expansion loop
+        double L_xpan_rnr;                                        //[m] Combined length in meters of the two perpendicular segments of a runner expansion loop
+        double Min_rnr_xpans;                                     //[-] Minimum number of expansion loops per single-diameter runner section
+        double northsouth_field_sep;                              //[m] Shortest north/south distance between SCAs in different subfields
+        double N_hdr_per_xpan;                                    //[-] Number of collector loops per header expansion loops. 1expansion loop between every collector loop
+        util::matrix_t<double> K_cpnt;                            //[-] Minor loss coefficients of the components in each loop interconnect
+        util::matrix_t<double> D_cpnt;                            //[m] Inner diameters of the components in each loop interconnect
+        util::matrix_t<double> L_cpnt;                            //[m] Lengths of the components in each loop interconnect
+        util::matrix_t<double> Type_cpnt;                         //[-] Type of component in each loop interconnect [0=fitting | 1=pipe | 2=flex_hose]
+        bool custom_sf_pipe_sizes;                                //[-] Should the field pipe diameters, wall thickness and lengths be imported instead of calculated
+        util::matrix_t<double> sf_rnr_diams;                      //[m] Imported runner diameters, used if custom_sf_pipe_sizes is true
+        util::matrix_t<double> sf_rnr_wallthicks;                 //[m] Imported runner wall thicknesses, used if custom_sf_pipe_sizes is true
+        util::matrix_t<double> sf_rnr_lengths;                    //[m] Imported runner lengths, used if custom_sf_pipe_sizes is true
+        util::matrix_t<double> sf_hdr_diams;                      //[m] Imported header diameters, used if custom_sf_pipe_sizes is true
+        util::matrix_t<double> sf_hdr_wallthicks;                 //[m] Imported header wall thicknesses, used if custom_sf_pipe_sizes is true
+        util::matrix_t<double> sf_hdr_lengths;                    //[m] Imported header lengths, used if custom_sf_pipe_sizes is true
+    };
+
+    struct TroughState
+    {
+        double T_in_loop_prev;                  // corresponds to m_T_sys_c_t_end_converged
+        double T_out_loop_prev;                 // corresponds to m_T_sys_h_t_end_converged
+        std::vector<double> T_out_SCAs_prev;    // corresponds to m_T_htf_out_t_end_converged;
+    };
+}
 #endif

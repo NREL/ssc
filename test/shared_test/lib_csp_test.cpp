@@ -70,7 +70,7 @@ std::unique_ptr<TimeAndPosition> FpcFactory::MakeTimeAndPosition() const
 }
 //========/FpcFactory============================================================================
 
-//========DefaultFactory (subclass)==============================================================
+//========DefaultFPCFactory (subclass)===========================================================
 std::unique_ptr<FlatPlateArray> DefaultFpcFactory::MakeFpcArray() const
 {
     std::unique_ptr<FlatPlateCollector> flat_plate_collector = this->MakeCollector();
@@ -172,7 +172,7 @@ ArrayDimensions DefaultFpcFactory::MakeArrayDimensions() const
 
     return array_dimensions;
 }
-//========/DefaultFactory========================================================================
+//========/DefaultFpcFactory=====================================================================
 
 void StorageTankTest::SetUp()
 {
