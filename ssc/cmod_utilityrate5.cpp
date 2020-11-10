@@ -116,7 +116,7 @@ static var_info vtab_utility_rate5[] = {
 	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_use_wo_system", "Electricity use without system", "kWh/mo", "", "Monthly", "*", "LENGTH=12", "" },
 
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_electricity_to_grid",    "Electricity to/from grid",           "kWh/mo", "", "Monthly",          "*",                         "LENGTH=12",                     "" },
-    { SSC_OUTPUT, SSC_ARRAY, "year1_monthly_cumulative_excess_generation", "Excess generation cumulative kWh credit earned", "kWh/mo", "", "Monthly", "*", "LENGTH=12", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "year1_monthly_cumulative_excess_generation", "Net metering cumulative kWh credit earned for annual true-up", "kWh/mo", "", "Monthly", "*", "LENGTH=12", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_cumulative_excess_dollars", "Excess generation cumulative $ credit earned", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
     { SSC_OUTPUT, SSC_ARRAY, "year1_monthly_utility_bill_w_sys", "Electricity bill with system", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_utility_bill_wo_sys", "Electricity bill without system", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
@@ -2209,49 +2209,6 @@ public:
 					monthly_ec_charges[m] = 0;
 					monthly_cumulative_excess_dollars[m] -= monthly_ec_charges[m];
 				}
-				/*
-									if (monthly_ec_charges[m] < 0)
-					{
-						payment[c - 1] -= monthly_cumulative_excess_dollars[m] + monthly_ec_charges[m];
-						if (excess_monthly_dollars)
-						{
-//							monthly_cumulative_excess_dollars[m] = -monthly_bill[m];
-							dollars_applied += monthly_cumulative_excess_dollars[m] + monthly_ec_charges[m];
-							monthly_cumulative_excess_dollars[m] = -monthly_ec_charges[m];
-						}
-						//						monthly_bill[m] = 0;
-						monthly_ec_charges[m] = 0;
-					}
-					else
-					{
-						dollars_applied += monthly_cumulative_excess_dollars[m];
-						payment[c - 1] -= monthly_cumulative_excess_dollars[m];
-						monthly_cumulative_excess_dollars[m] = 0;
-					}
-
-
-
-				*/
-
-
-
-				/*
-				else // apply current month rollover and adjust
-				{
-					monthly_ec_charges[m] -= monthly_cumulative_excess_dollars[m];
-					if (monthly_ec_charges[m] < 0)
-					{
-						monthly_cumulative_excess_dollars[m] = -monthly_ec_charges[m];
-					//	monthly_ec_charges[m] = 0;
-					//	payment[c - 1] = 0; // fixed charges applied below
-					}
-					else
-					{
-						payment[c - 1] -= monthly_cumulative_excess_dollars[m];
-						monthly_cumulative_excess_kwhs[m] = 0;
-					}
-				}
-				*/
 			}
 			if (monthly_ec_charges_gross[m] < dollars_applied) dollars_applied = monthly_ec_charges_gross[m];
 			excess_dollars_applied[m] = dollars_applied;
