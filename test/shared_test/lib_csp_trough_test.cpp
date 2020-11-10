@@ -1,14 +1,15 @@
 #include <gtest/gtest.h>
 
 #define private public              // for setting private data members
-#include "lib_trough_test.h"
+#include "lib_csp_trough_test.h"
 #include "vs_google_test_explorer_namespace.h"
 
 using namespace csp_trough;
 
 //========Tests===================================================================================
-// Test a standard trough loop at single point in time
-// Uses a factory (abstract factory pattern) to create the different physical and non-physical components
+//=== Using factory patterns to create the different physical and non-physical components=========
+
+// Test a standard trough loop at a single point in time
 NAMESPACE_TEST(csp_trough, TroughTest, DefaultTest)
 {
     DefaultTroughFactory default_trough_factory = DefaultTroughFactory();
@@ -106,7 +107,7 @@ NAMESPACE_TEST(csp_trough, TroughTest, SteadyStateTest)
 std::unique_ptr<Trough> TroughFactory::MakeTrough(TroughSpecifications* trough_specifications,
     Location location) const
 {
-    auto trough = std::unique_ptr<C_csp_trough_collector_receiver>(new C_csp_trough_collector_receiver);
+    auto trough = std::unique_ptr<Trough>(new Trough);
 
     trough->m_nSCA = trough_specifications->nSCA;
     trough->m_nHCEt = trough_specifications->nHCEt;
