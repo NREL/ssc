@@ -282,7 +282,7 @@ if (MSVC)
 			)
 	endif()
 
-	if (NOT skip_api)
+	if (SAMAPI_EXPORT)
 		if (${CMAKE_PROJECT_NAME} STREQUAL system_advisor_model)
 			set(APIGENDIR ${CMAKE_CURRENT_BINARY_DIR}/../../sam/api/api_autogen/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
 			add_custom_command(

@@ -14,9 +14,9 @@ extraction:
     configure:
       command:
         - mkdir ${GTEST}/build; cd ${GTEST}/build; cmake -DCMAKE_CXX_FLAGS=-std=c++11 ..;
-        - mkdir ${SSCDIR}/build; cd ${SSCDIR}/build; cmake .. -DCMAKE_BUILD_TYPE=Release -Dskip_tools=1
+        - mkdir ${SSCDIR}/build; cd ${SSCDIR}/build; cmake .. -DCMAKE_BUILD_TYPE=Release -DSAM_SKIP_TOOLS=1
     before_index:
       - cd ${GTEST}/build; make;
-    index:    
+    index:
       build_command:
         - cd ${SSCDIR}/build; make -j4
