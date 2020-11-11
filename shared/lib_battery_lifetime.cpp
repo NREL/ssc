@@ -454,8 +454,8 @@ void lifetime_calendar_t::runLithiumIonModel(double temp, double SOC) {
 void lifetime_calendar_t::runLithiumIonNMCModel(double temp, double SOC) {
     temp += 273.15;
     SOC *= 0.01;
-    U_neg = 0.18;
-    DOD_max = 0.8;
+    double U_neg = 0.18;
+    double DOD_max = 0.8;
     double k_cal = params->calendar_nmc_a * exp(params->calendar_nmc_b * (1. / temp - 1. / 296))
         * exp(params->calendar_nmc_c * (U_neg / temp - 1. / 296)) * exp(params->calendar_nmc_d * DOD_max);
     double dq_new;
