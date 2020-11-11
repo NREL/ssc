@@ -98,9 +98,9 @@ protected:
 
 public:
     void SetUp() override {
-        cal_model = std::unique_ptr<lifetime_calendar_t>(new lifetime_calendar_t(dt_hour, double q0 = 1.02,
-            double nmc_a = 3.503e-3, double nmc_b = 4.2569e3,
-            double nmc_c = -1.1605e4, double nmc_d = 2.472));
+        //cal_model = std::unique_ptr<lifetime_calendar_t>(new lifetime_calendar_t(dt_hour, q0 = 1.02, nmc_a = 3.503e-3,  nmc_b = 4.2569e3,
+        //    nmc_c = -1.1605e4,  nmc_d = 2.472));
+        cal_model = std::unique_ptr<lifetime_calendar_t>(new lifetime_calendar_t(dt_hour, 1.02, 3.503e-3,4.2569e3, -1.1605e4, 2.472));
     }
 };
 

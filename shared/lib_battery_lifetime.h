@@ -164,10 +164,10 @@ public:
     /// Constructors for independent models, owning its state and params
     lifetime_calendar_t(double dt_hour, const util::matrix_t<double>& calendar_matrix);
 
-    explicit lifetime_calendar_t(double dt_hour, double q0= 1.02, double a= 2.66e-3, double b= -7280, double c= 930);
+    explicit lifetime_calendar_t(double dt_hour, double q0 = 1.02, double a = 2.66e-3, double b = -7280, double c = 930);
 
     explicit lifetime_calendar_t(double dt_hour, double q0 = 1.02, double nmc_a = 3.503e-3, double nmc_b = 4.2569e3,
-        double nmc_c = -1.1605e4, double nmc_d = 2.472);
+            double nmc_c = -1.1605e4, double nmc_d = 2.472);
 
     /// Constructor as lifetime_t component
     explicit lifetime_calendar_t(std::shared_ptr<lifetime_params> params_ptr);
