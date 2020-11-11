@@ -218,7 +218,7 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_net_metering_credits_in_may) {
     float may_dollars = excess_dollars[credit_month];
     EXPECT_NEAR(50.28, may_dollars, 0.1);
 
-    excess_dollars = ssc_data_get_array(data, "year1_excess_dollars_applied", &length);
+    excess_dollars = ssc_data_get_array(data, "year1_nm_dollars_applied", &length);
     may_dollars = excess_dollars[credit_month];
     EXPECT_NEAR(50.28, may_dollars, 0.1);
 
@@ -262,7 +262,7 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_net_metering_credits_in_may_with_r
     float may_dollars = excess_dollars[credit_month];
     EXPECT_NEAR(50.28, may_dollars, 0.1);
 
-    excess_dollars = ssc_data_get_array(data, "year1_excess_dollars_applied", &length);
+    excess_dollars = ssc_data_get_array(data, "year1_nm_dollars_applied", &length);
     may_dollars = excess_dollars[credit_month];
     EXPECT_NEAR(0, may_dollars, 0.1);
 

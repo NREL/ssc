@@ -160,7 +160,7 @@ static var_info vtab_utility_rate5[] = {
 
     // Updated based on https://github.com/NREL/SAM/issues/372
 	{ SSC_OUTPUT, SSC_MATRIX, "charge_w_sys_ec_gross_ym", "Energy charge with system before credits", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
-	{ SSC_OUTPUT, SSC_MATRIX, "excess_dollars_applied_ym", "Excess generation $ credit applied", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
+	{ SSC_OUTPUT, SSC_MATRIX, "nm_dollars_applied_ym", "Net metering credit $", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
 	{ SSC_OUTPUT, SSC_MATRIX, "excess_dollars_earned_ym", "Excess generation $ credit earned", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
 	{ SSC_OUTPUT, SSC_MATRIX, "excess_kwhs_earned_ym", "Excess generation (kWh)", "kWh", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
     { SSC_OUTPUT, SSC_MATRIX, "nm_total_rollover_kwh_ym", "Net metering month to month rollover credits (cumulative)", "kWh", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
@@ -169,11 +169,11 @@ static var_info vtab_utility_rate5[] = {
 
 	// Updated based on https://github.com/NREL/SAM/issues/372
 	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_ec_charge_gross_with_system", "Energy charge with system before credits", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "year1_excess_dollars_applied", "Excess generation $ credit applied", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "year1_nm_dollars_applied", "Net metering credit $", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "year1_excess_dollars_earned", "Excess generation $ credit earned", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "year1_excess_kwhs_earned", "Excess generation (kWh)", "kWh/mo", "", "Monthly", "*", "LENGTH=12", "" },
     { SSC_OUTPUT, SSC_ARRAY, "year1_nm_total_rollover_kwh", "Net metering month to month rollover credits (cumulative)", "kWh", "", "Monthly", "*", "LENGTH=12", "" },
-
+    { SSC_OUTPUT, SSC_ARRAY, "year1_net_billing_credits", "Net billing credits", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
 
 // for Pablo at IRENA 8/8/15
 // first year outputs only per email from Paul 8/9/15
@@ -552,7 +552,7 @@ public:
 			monthly_fixed_charges(12), monthly_minimum_charges(12),
 			monthly_ec_charges(12),
 			monthly_ec_charges_gross(12),
-			monthly_excess_dollars_applied(12),
+			monthly_nm_dollars_applied(12),
 			monthly_excess_dollars_earned(12),
 			monthly_total_rollover_kwhs(12),
 			monthly_excess_kwhs_earned(12),
@@ -580,7 +580,7 @@ public:
 		ssc_number_t *ch_w_sys_ec_ym = allocate("charge_w_sys_ec_ym", nyears + 1, 12);
 
 		ssc_number_t *ch_w_sys_ec_gross_ym = allocate("charge_w_sys_ec_gross_ym", nyears + 1, 12);
-		ssc_number_t *excess_dollars_applied_ym = allocate("excess_dollars_applied_ym", nyears + 1, 12);
+		ssc_number_t *nm_dollars_applied_ym = allocate("nm_dollars_applied_ym", nyears + 1, 12);
 		ssc_number_t *excess_dollars_earned_ym = allocate("excess_dollars_earned_ym", nyears + 1, 12);
 		ssc_number_t *nm_total_rollover_kwh_ym = allocate("nm_total_rollover_kwh_ym", nyears + 1, 12);
 		ssc_number_t *excess_kwhs_earned_ym = allocate("excess_kwhs_earned_ym", nyears + 1, 12);
@@ -842,7 +842,6 @@ public:
 					&monthly_ec_charges[0],
 					&monthly_ec_charges_gross[0],
 					&monthly_excess_dollars_earned[0],
-					&monthly_excess_dollars_applied[0],
 					&monthly_excess_kwhs_earned[0],
 					&monthly_total_rollover_kwhs[0],
                     &monthly_net_billing_credits[0],
@@ -858,7 +857,7 @@ public:
 					&monthly_ec_charges[0],
 					&monthly_ec_charges_gross[0],
 					&monthly_excess_dollars_earned[0],
-					&monthly_excess_dollars_applied[0],
+					&monthly_nm_dollars_applied[0],
 					&monthly_excess_kwhs_earned[0],
 					&monthly_total_rollover_kwhs[0],
 					&rate.dc_hourly_peak[0], &monthly_cumulative_excess_energy[0],
@@ -994,7 +993,6 @@ public:
 						&monthly_ec_charges[0],
 						&monthly_ec_charges_gross[0],
 						&monthly_excess_dollars_earned[0],
-						&monthly_excess_dollars_applied[0],
 						&monthly_excess_kwhs_earned[0],
 						&monthly_total_rollover_kwhs[0],
                         &monthly_net_billing_credits[0],
@@ -1010,7 +1008,6 @@ public:
 						&monthly_ec_charges[0],
 						&monthly_ec_charges_gross[0],
 						&monthly_excess_dollars_earned[0],
-						&monthly_excess_dollars_applied[0],
 						&monthly_excess_kwhs_earned[0],
 						&monthly_total_rollover_kwhs[0],
                         &monthly_net_billing_credits[0],
@@ -1030,7 +1027,7 @@ public:
 						&monthly_ec_charges[0],
 						&monthly_ec_charges_gross[0],
 						&monthly_excess_dollars_earned[0],
-						&monthly_excess_dollars_applied[0],
+						&monthly_nm_dollars_applied[0],
 						&monthly_excess_kwhs_earned[0],
 						&monthly_total_rollover_kwhs[0],
 						&rate.dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate.rate_scale[i],
@@ -1046,7 +1043,7 @@ public:
 						&monthly_ec_charges[0],
 						&monthly_ec_charges_gross[0],
 						&monthly_excess_dollars_earned[0],
-						&monthly_excess_dollars_applied[0],
+						&monthly_nm_dollars_applied[0],
 						&monthly_excess_kwhs_earned[0],
 						&monthly_total_rollover_kwhs[0],
 						&rate.dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0],
@@ -1277,9 +1274,10 @@ public:
 				assign("year1_monthly_dc_tou_with_system", var_data(&rate.monthly_dc_tou[0], 12));
 				assign("year1_monthly_ec_charge_with_system", var_data(&monthly_ec_charges[0], 12));
 				assign("year1_monthly_ec_charge_gross_with_system", var_data(&monthly_ec_charges_gross[0], 12));
-				assign("year1_excess_dollars_applied", var_data(&monthly_excess_dollars_applied[0], 12));
+				assign("year1_nm_dollars_applied", var_data(&monthly_nm_dollars_applied[0], 12));
 				assign("year1_excess_dollars_earned", var_data(&monthly_excess_dollars_earned[0], 12));
 				assign("year1_nm_total_rollover_kwh", var_data(&monthly_total_rollover_kwhs[0], 12));
+				assign("year1_net_billing_credits", var_data(&monthly_net_billing_credits[0], 12));
 				assign("year1_excess_kwhs_earned", var_data(&monthly_excess_kwhs_earned[0], 12));
 				// peak demand and testing energy use
 				for (int ii = 0; ii < 12; ii++)
@@ -1322,7 +1320,7 @@ public:
 				ch_w_sys_ec_ym[(i + 1) * 12 + j] = monthly_ec_charges[j];
 
 				ch_w_sys_ec_gross_ym[(i + 1) * 12 + j] = monthly_ec_charges_gross[j];
-				excess_dollars_applied_ym[(i + 1) * 12 + j] = monthly_excess_dollars_applied[j];
+				nm_dollars_applied_ym[(i + 1) * 12 + j] = monthly_nm_dollars_applied[j];
 				excess_dollars_earned_ym[(i + 1) * 12 + j] = monthly_excess_dollars_earned[j];
                 nm_total_rollover_kwh_ym[(i + 1) * 12 + j] = monthly_total_rollover_kwhs[j];
 				excess_kwhs_earned_ym[(i + 1) * 12 + j] = monthly_excess_kwhs_earned[j];
@@ -1934,7 +1932,6 @@ public:
 		ssc_number_t monthly_ec_charges[12],
 		ssc_number_t monthly_ec_charges_gross[12],
 		ssc_number_t excess_dollars_earned[12],
-		ssc_number_t excess_dollars_applied[12],
 		ssc_number_t excess_kwhs_earned[12],
 		ssc_number_t total_rollover_kwh[12],
         ssc_number_t net_billing_credits[12],
@@ -1955,7 +1952,6 @@ public:
 				= monthly_ec_charges[i]
 				= monthly_ec_charges_gross[i]
 				= excess_dollars_earned[i]
-				= excess_dollars_applied[i]
 				= excess_kwhs_earned[i]
 				= total_rollover_kwh[i]
                 = net_billing_credits[i]
@@ -2232,7 +2228,6 @@ public:
                 net_billing_credits[m] = dollars_applied;
 			}
 			
-			excess_dollars_applied[m] = dollars_applied;
 			monthly_bill[m] = monthly_ec_charges[m] + rate.monthly_dc_fixed[m] + rate.monthly_dc_tou[m];
 		} // end of month m (m loop)
 
