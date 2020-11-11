@@ -345,14 +345,14 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_ACBatteryModelIntegration)
     grid_and_rate_defaults(data);
     singleowner_defaults(data);
 
-    ssc_number_t expectedEnergy[3] = { 37307927, 37277087, 37277087 };
-    ssc_number_t expectedBatteryChargeEnergy[3] = { 14779, 315293, 315293 }; // No rate model means battery use is low
-    ssc_number_t expectedBatteryDischargeEnergy[3] = { 14663, 284336, 284336 };
+    ssc_number_t expectedEnergy[3] = { 37307927, 37306925, 37308021 };
+    ssc_number_t expectedBatteryChargeEnergy[3] = { 14779, 25275, 14779 }; // No rate model means battery use is low
+    ssc_number_t expectedBatteryDischargeEnergy[3] = { 14663, 24062, 14663 };
 
     ssc_number_t peakKwCharge[3] = { -1040.2, -1051.5, -1051.5 };
     ssc_number_t peakKwDischarge[3] = { 967.5, 969.5, 969.5 };
     ssc_number_t peakCycles[3] = { 1, 1, 1 };
-    ssc_number_t avgCycles[3] = { 0.003, 0.2356, 0.2356 };
+    ssc_number_t avgCycles[3] = { 0.003, 0.014, 0.003 };
 
     // Test peak shaving look ahead, peak shaving look behind, and automated grid power target. Others require additional input data
     for (int i = 0; i < 3; i++) {
