@@ -83,6 +83,27 @@ public:
     }
 };
 
+class lib_battery_lifetime_calendar_model_liion_nmc_test : public ::testing::Test
+{
+protected:
+    //    std::unique_ptr<battery_capacity_interface> new_cap;
+    std::unique_ptr<lifetime_calendar_t> cal_model;
+
+    //    std::shared_ptr<storage_time_params> time;
+
+    //    battery_capacity_params params;
+    double tol = 0.01;
+
+    double dt_hour = 1;
+
+public:
+    void SetUp() override {
+        cal_model = std::unique_ptr<lifetime_calendar_t>(new lifetime_calendar_t(dt_hour, double q0 = 1.02,
+            double nmc_a = 3.503e-3, double nmc_b = 4.2569e3,
+            double nmc_c = -1.1605e4, double nmc_d = 2.472));
+    }
+};
+
 class lib_battery_lifetime_test : public ::testing::Test{
 protected:
     std::unique_ptr<lifetime_t> model;

@@ -40,7 +40,7 @@ struct lifetime_params {
 
     // calendar
     enum CALENDAR_CHOICE {
-        NONE, MODEL, TABLE
+        NONE, MODEL, NMC_MODEL, TABLE
     };
     int calendar_choice;
     double dt_hour;
@@ -50,6 +50,12 @@ struct lifetime_params {
     double calendar_a;  // 1/sqrt(day)
     double calendar_b;  // K
     double calendar_c;  // K
+
+    //K.Smith: LiIonNMC Model coefficents
+    double calendar_nmc_a; // unitless
+    double calendar_nmc_b;  // 1/sqrt(day)
+    double calendar_nmc_c;  // K
+    double calendar_nmc_d;  // K
 
     // table entries
     util::matrix_t<double> calendar_matrix;
@@ -160,6 +166,9 @@ public:
 
     explicit lifetime_calendar_t(double dt_hour, double q0= 1.02, double a= 2.66e-3, double b= -7280, double c= 930);
 
+    explicit lifetime_calendar_t(double dt_hour, double q0 = 1.02, double nmc_a = 3.503e-3, double nmc_b = 4.2569e3,
+        double nmc_c = -1.1605e4, double nmc_d = 2.472);
+
     /// Constructor as lifetime_t component
     explicit lifetime_calendar_t(std::shared_ptr<lifetime_params> params_ptr);
 
@@ -182,6 +191,8 @@ public:
 
 protected:
     void runLithiumIonModel(double temp_C, double SOC);
+
+    void runLithiumIonNMCModel(double temp_C, double SOC);
 
     void runTableModel();
 
@@ -224,6 +235,10 @@ public:
     /// Cycle with Calendar model
     lifetime_t(const util::matrix_t<double> &batt_lifetime_matrix,
                double dt_hour, double q0, double a, double b, double c);
+
+    /// Cycle with Calendar NMC model
+    lifetime_t(const util::matrix_t<double>& batt_lifetime_matrix,
+        double dt_hour, double q0, double nmc_a, double nmc_b, double nmc_c, double nmc_d);
 
     /// Cycle with no Calendar
     lifetime_t(const util::matrix_t<double> &batt_lifetime_matrix, double dt_hour);

@@ -383,6 +383,19 @@ lifetime_calendar_t::lifetime_calendar_t(double dt_hour, double q0, double a, do
     initialize();
 }
 
+lifetime_calendar_t::lifetime_calendar_t(double dt_hour, double q0, double nmc_a, double nmc_b, double nmc_c, double nmc_d) {
+    params = std::make_shared<lifetime_params>();
+    params->dt_hour = dt_hour;
+    params->calendar_choice = lifetime_params::CALENDAR_CHOICE::NMC_MODEL;
+    params->calendar_q0 = q0;
+    params->calendar_nmc_a = nmc_a;
+    params->calendar_nmc_b = nmc_b;
+    params->calendar_nmc_c = nmc_c;
+    params->calendar_nmc_d = nmc_d;
+
+    initialize();
+}
+
 lifetime_calendar_t::lifetime_calendar_t(std::shared_ptr<lifetime_params> params_ptr) :
         params(std::move(params_ptr)) {
     initialize();
@@ -416,6 +429,8 @@ double lifetime_calendar_t::runLifetimeCalendarModel(size_t lifetimeIndex, doubl
 
     if (params->calendar_choice == lifetime_params::CALENDAR_CHOICE::MODEL)
         runLithiumIonModel(T, SOC);
+    if (params->calendar_choice == lifetime_params::CALENDAR_CHOICE::NMC_MODEL)
+        runLithiumIonNMCModel(T, SOC);
     else if (params->calendar_choice == lifetime_params::CALENDAR_CHOICE::TABLE)
         runTableModel();
 
@@ -427,6 +442,22 @@ void lifetime_calendar_t::runLithiumIonModel(double temp, double SOC) {
     SOC *= 0.01;
     double k_cal = params->calendar_a * exp(params->calendar_b * (1. / temp - 1. / 296))
                    * exp(params->calendar_c * (SOC / temp - 1. / 296));
+    double dq_new;
+    if (state->dq_relative_calendar_old == 0)
+        dq_new = k_cal * sqrt(dt_day);
+    else
+        dq_new = (0.5 * pow(k_cal, 2) / state->dq_relative_calendar_old) * dt_day + state->dq_relative_calendar_old;
+    state->dq_relative_calendar_old = dq_new;
+    state->q_relative_calendar = (params->calendar_q0 - (dq_new)) * 100;
+}
+
+void lifetime_calendar_t::runLithiumIonNMCModel(double temp, double SOC) {
+    temp += 273.15;
+    SOC *= 0.01;
+    U_neg = 0.18;
+    DOD_max = 0.8;
+    double k_cal = params->calendar_nmc_a * exp(params->calendar_nmc_b * (1. / temp - 1. / 296))
+        * exp(params->calendar_nmc_c * (U_neg / temp - 1. / 296)) * exp(params->calendar_nmc_d * DOD_max);
     double dq_new;
     if (state->dq_relative_calendar_old == 0)
         dq_new = k_cal * sqrt(dt_day);
@@ -531,6 +562,21 @@ lifetime_t::lifetime_t(const util::matrix_t<double> &batt_lifetime_matrix, doubl
     params->calendar_a = a;
     params->calendar_b = b;
     params->calendar_c = c;
+
+    initialize();
+}
+
+lifetime_t::lifetime_t(const util::matrix_t<double>& batt_lifetime_matrix, double dt_hour, double q0, double nmc_a, double nmc_b,
+    double nmc_c, double nmc_d) {
+    params = std::make_shared<lifetime_params>();
+    params->dt_hour = dt_hour;
+    params->cycling_matrix = batt_lifetime_matrix;
+    params->calendar_choice = lifetime_params::CALENDAR_CHOICE::NMC_MODEL;
+    params->calendar_q0 = q0;
+    params->calendar_nmc_a = nmc_a;
+    params->calendar_nmc_b = nmc_b;
+    params->calendar_c = nmc_c;
+    params->calendar_nmc_d = nmc_d; 
 
     initialize();
 }
