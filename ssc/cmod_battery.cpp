@@ -212,7 +212,7 @@ var_info vtab_battery_outputs[] = {
         { SSC_OUTPUT,        SSC_ARRAY,      "batt_system_loss",                           "Electricity loss from battery ancillary equipment (kW DC for DC connected, AC for AC connected)",     "kW",      "",                       "Battery",       "",                           "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "grid_power_target",                          "Electricity grid power target for automated dispatch","kW","",                               "Battery",       "",                           "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "batt_power_target",                          "Electricity battery power target for automated dispatch","kW","",                            "Battery",       "",                           "",                              "" },
-        { SSC_OUTPUT,        SSC_ARRAY,      "batt_cost_to_cycle",                         "Battery computed cost to cycle",                                "$/cycle", "",                       "Battery",       "",                           "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "batt_cost_to_cycle",                         "Battery computed cycle degradation penalty",            "$/cycle FOM, $/cycle-kWh BTM", "",                       "Battery",       "",                           "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "market_sell_rate_series_yr1",                "Market sell rate (Year 1)",                             "$/MWh", "",                         "Battery",       "",                           "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "batt_revenue_gridcharge",					   "Revenue to charge from grid",                           "$/kWh", "",                         "Battery",       "",                           "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "batt_revenue_charge",                        "Revenue to charge from system",                         "$/kWh", "",                         "Battery",       "",                           "",                              "" },
@@ -732,7 +732,6 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
         outBatteryToGrid = vt.allocate("batt_to_grid", nrec*nyears);
 
         if (batt_vars->batt_dispatch != dispatch_t::FOM_MANUAL) {
-            outCostToCycle = vt.allocate("batt_cost_to_cycle", nrec*nyears);
             outBattPowerTarget = vt.allocate("batt_power_target", nrec*nyears);
             outBenefitCharge = vt.allocate("batt_revenue_charge", nrec*nyears);
             outBenefitGridcharge = vt.allocate("batt_revenue_gridcharge", nrec*nyears);
@@ -748,6 +747,12 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
         outFuelCellToGrid = vt.allocate("fuelcell_to_grid", nrec*nyears);
         outFuelCellToLoad = vt.allocate("fuelcell_to_load", nrec*nyears);
 
+    }
+
+    bool cycleCostRelevant = (batt_vars->batt_meter_position == dispatch_t::BEHIND && batt_vars->batt_dispatch == dispatch_t::FORECAST) ||
+        (batt_vars->batt_meter_position == dispatch_t::FRONT && (batt_vars->batt_dispatch != dispatch_t::FOM_MANUAL && batt_vars->batt_dispatch != dispatch_t::FOM_CUSTOM_DISPATCH));
+    if (cycleCostRelevant && batt_vars->batt_cycle_cost_choice == dispatch_t::MODEL_CYCLE_COST) {
+        outCostToCycle = vt.allocate("batt_cost_to_cycle", nrec * nyears);
     }
 
     outBatteryConversionPowerLoss = vt.allocate("batt_conversion_loss", nrec*nyears);
@@ -1432,13 +1437,18 @@ void battstor::outputs_topology_dependent()
 
         if (batt_vars->batt_dispatch != dispatch_t::FOM_MANUAL) {
             dispatch_automatic_front_of_meter_t * dispatch_fom = dynamic_cast<dispatch_automatic_front_of_meter_t *>(dispatch_model);
-            outCostToCycle[index] = (ssc_number_t)(dispatch_model->cost_to_cycle());
             outBattPowerTarget[index] = (ssc_number_t)(dispatch_model->power_batt_target());
             outBenefitCharge[index] = (ssc_number_t)(dispatch_fom->benefit_charge());
             outBenefitDischarge[index] = (ssc_number_t)(dispatch_fom->benefit_discharge());
             outBenefitClipcharge[index] = (ssc_number_t)(dispatch_fom->benefit_clipcharge());
             outBenefitGridcharge[index] = (ssc_number_t)(dispatch_fom->benefit_gridcharge());
         }
+    }
+
+    bool cycleCostRelevant = (batt_vars->batt_meter_position == dispatch_t::BEHIND && batt_vars->batt_dispatch == dispatch_t::FORECAST) ||
+        (batt_vars->batt_meter_position == dispatch_t::FRONT && (batt_vars->batt_dispatch != dispatch_t::FOM_MANUAL && batt_vars->batt_dispatch != dispatch_t::FOM_CUSTOM_DISPATCH));
+    if (cycleCostRelevant && batt_vars->batt_cycle_cost_choice == dispatch_t::MODEL_CYCLE_COST) {
+        outCostToCycle[index] = (ssc_number_t)(dispatch_model->cost_to_cycle());
     }
 }
 
