@@ -1486,7 +1486,8 @@ public:
 		// excess earned
 		for (m = 0; m < 12; m++)
 		{
-			if (rate.m_month[m].energy_net > 0)
+            // Excess generation (kWh) should remain zero for buy all / sell all
+            if (rate.m_month[m].energy_net > 0 && !gen_only)
 				excess_kwhs_earned[m] = rate.m_month[m].energy_net;
 		}
 
@@ -2009,7 +2010,8 @@ public:
 		// excess earned
 		for (m = 0; m < 12; m++)
 		{
-			if (rate.m_month[m].energy_net > 0)
+            // Excess generation (kWh) should remain zero for buy all / sell all
+			if (rate.m_month[m].energy_net > 0 && !gen_only)
 				excess_kwhs_earned[m] = rate.m_month[m].energy_net;
 		}
 
@@ -2110,7 +2112,9 @@ public:
 									monthly_ec_charges[m] -= (ssc_number_t)credit_amt;
 									income[c] = (ssc_number_t)credit_amt;
 									energy_charge[c] = -(ssc_number_t)credit_amt;
-                                    net_billing_credits[m] += credit_amt;
+                                    if (!gen_only) {
+                                        net_billing_credits[m] += credit_amt;
+                                    }
 								}
 								curr_month.ec_energy_surplus.at(row, tier) += (ssc_number_t)tier_energy;
 							}
