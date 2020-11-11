@@ -2205,6 +2205,14 @@ public:
 					payment[c - 1] -= prev_excess_dollars;
 					dollars_applied += prev_excess_dollars;
 				}
+                else if (m == excess_dollars_credit_month)
+                {
+                    // Apply current month to end of year credit, in addition to previous month
+                    ssc_number_t total_excess_credit_month = monthly_cumulative_excess_dollars[m - 1] + monthly_cumulative_excess_dollars[m];
+                    monthly_ec_charges[m] -= total_excess_credit_month;
+                    payment[c - 1] -= total_excess_credit_month;
+                    dollars_applied += total_excess_credit_month;
+                }
 				else if (m > 0 && m != excess_dollars_credit_month + 1)
 				{
 					monthly_ec_charges[m] -= monthly_cumulative_excess_dollars[m - 1];
