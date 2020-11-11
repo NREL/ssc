@@ -3845,13 +3845,13 @@ int C_sco2_phx_air_cooler::solve_P_LP_in__target_T_htf_cold(double od_tol /*-*/)
             }
         }
 
-        double P_LP_in_guess_upper = P_LP_in_guess_lower * 1.001;    //[kPa]
+        double P_LP_in_guess_upper = P_LP_in_guess_lower * (1.0 + od_tol);      //[kPa]
 
         double y_P_mc_out_upper = std::numeric_limits<double>::quiet_NaN();
 
         int no_err_err_code = c_P_LP__no_err_solver.test_member_function(P_LP_in_guess_upper, &y_P_mc_out_upper);
 
-        if (!std::isfinite(y_P_mc_out_upper))
+        if (!std::isfinite(y_P_mc_out_upper) || y_P_mc_out_lower > y_P_mc_out_upper)
         {
             // If an inlet pressure that is very close to the first pressure fails, then choose first pressure
             // Need to call model again to use the correct pressure.
