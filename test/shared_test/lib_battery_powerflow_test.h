@@ -33,11 +33,11 @@ public:
     double calc_dc_gen() {
         //		return m_batteryPower->powerPVToLoad + m_batteryPower->powerPVToGrid + m_batteryPower->powerBatteryToLoad
         //			   + m_batteryPower->powerBatteryToGrid - m_batteryPower->powerGridToBattery * m_batteryPower->singlePointEfficiencyDCToDC;
-        return m_batteryPower->powerBatteryAC + m_batteryPower->powerPV - m_batteryPower->powerSystemLoss; // Combining some DC and AC values here, the error in check_net_flows is high enough to allow this
+        return m_batteryPower->powerBatteryAC + m_batteryPower->powerSystem - m_batteryPower->powerSystemLoss; // Combining some DC and AC values here, the error in check_net_flows is high enough to allow this
     }
 
     double calc_met_load() {
-        return m_batteryPower->powerBatteryToLoad + m_batteryPower->powerGridToLoad + m_batteryPower->powerPVToLoad;
+        return m_batteryPower->powerBatteryToLoad + m_batteryPower->powerGridToLoad + m_batteryPower->powerSystemToLoad;
     }
 
     void check_net_flows(std::string id_string) {
