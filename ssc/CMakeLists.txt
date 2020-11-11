@@ -205,7 +205,7 @@ if(UNIX)
 			add_custom_command(
 				TARGET ssc
 				POST_BUILD
-				COMMAND install_name_tool -id @rpath/libssc.so $<TARGET_FILE:ssc>
+				COMMAND install_name_tool -id @rpath/libssc$<$<CONFIG:Debug>:d>.so $<TARGET_FILE:ssc>
 			)
 		endif()
 	endif()
