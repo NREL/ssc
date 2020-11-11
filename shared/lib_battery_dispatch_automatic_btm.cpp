@@ -705,7 +705,7 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(dispatch_plan
                     requiredPower = -requiredEnergy / _dt_hour;
                 }
             }
-            else if (m_batteryPower->canPVCharge && sorted_grid[i].Grid() < 0)
+            else if (m_batteryPower->canSystemCharge && sorted_grid[i].Grid() < 0)
             {
                 requiredPower = sorted_grid[i].Grid();
             }

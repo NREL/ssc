@@ -12,7 +12,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOMInput) {
 
     batteryPower = dispatchAuto->getBatteryPower();
     batteryPower->connectionMode = ChargeController::AC_CONNECTED;
-    batteryPower->powerPV = 750;
+    batteryPower->powerSystem = 750;
     batteryPower->powerFuelCell = 300;
 
     dispatchAuto->set_custom_dispatch(P_batt);
@@ -48,7 +48,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOMInputWithLosses) {
 
     batteryPower = dispatchAuto->getBatteryPower();
     batteryPower->connectionMode = ChargeController::AC_CONNECTED;
-    batteryPower->powerPV = 750;
+    batteryPower->powerSystem = 750;
     batteryPower->powerFuelCell = 300;
 
     dispatchAuto->set_custom_dispatch(P_batt);
@@ -86,7 +86,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOMInputSubhourly) {
 
     batteryPower = dispatchAuto->getBatteryPower();
     batteryPower->connectionMode = ChargeController::AC_CONNECTED;
-    batteryPower->powerPV = 750;
+    batteryPower->powerSystem = 750;
     batteryPower->powerFuelCell = 300;
 
     dispatchAuto->set_custom_dispatch(P_batt);
@@ -133,8 +133,8 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_DCCustomCharge) {
     batteryPower->inverterEfficiencyCutoff = 0;
 
     batteryPower->powerGeneratedBySystem = 0;
-    batteryPower->powerPV = 0;
-    batteryPower->powerPVClipped = 0;
+    batteryPower->powerSystem = 0;
+    batteryPower->powerSystemClipped = 0;
 
     std::vector<double> SOC = {64.42, 78.77, 93.06, 100., 100., 100.};
     for (size_t h = 0; h < 6; h++) {
@@ -185,8 +185,8 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_DCCustomChargeSubhourly) {
     batteryPower->inverterEfficiencyCutoff = 0;
 
     batteryPower->powerGeneratedBySystem = 0;
-    batteryPower->powerPV = 0;
-    batteryPower->powerPVClipped = 0;
+    batteryPower->powerSystem = 0;
+    batteryPower->powerSystemClipped = 0;
 
     std::vector<double> SOC = {57.24, 64.45, 71.64, 78.81, 85.97, 93.12, 100.00, 100.00, 100.00, 100.00, 100.00, 100.00};
     for (size_t h = 0; h < 12; h++) {
@@ -247,8 +247,8 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_DCAuto) {
                                 66.63, 49.97, 33.30, 16.63, 10, 10 }; // 18 - 23
     for (size_t h = 0; h < 24; h++) {
         batteryPower->powerGeneratedBySystem = pv[h];
-        batteryPower->powerPV = pv[h];
-        batteryPower->powerPVClipped = clip[h];
+        batteryPower->powerSystem = pv[h];
+        batteryPower->powerSystemClipped = clip[h];
 
         dispatchAuto->update_dispatch(0, h, 0, h);
         EXPECT_NEAR(batteryPower->powerBatteryTarget, targetkW[h], 0.1) << "error in expected target at hour " << h;
@@ -289,8 +289,8 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_DCAutoWithLosses) {
                                 66.63, 49.97, 33.30, 16.63, 10, 10 }; // 18 - 23
     for (size_t h = 0; h < 24; h++) {
         batteryPower->powerGeneratedBySystem = pv[h];
-        batteryPower->powerPV = pv[h];
-        batteryPower->powerPVClipped = clip[h];
+        batteryPower->powerSystem = pv[h];
+        batteryPower->powerSystemClipped = clip[h];
 
         dispatchAuto->update_dispatch(0, h, 0, h);
         EXPECT_NEAR(batteryPower->powerBatteryTarget, targetkW[h], 0.1) << "error in expected target at hour " << h;
@@ -323,8 +323,8 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_DCAutoSubhourly) {
         size_t step = step_from_index(h, dtHour);
 
         batteryPower->powerGeneratedBySystem = pv[h];
-        batteryPower->powerPV = pv[h];
-        batteryPower->powerPVClipped = clip[h];
+        batteryPower->powerSystem = pv[h];
+        batteryPower->powerSystemClipped = clip[h];
 
         dispatchAuto->update_dispatch(0, hour_of_year, step, h);
         EXPECT_NEAR(batteryPower->powerBatteryTarget, targetkW[h], 0.1) << "error in expected target at hour " << h;
@@ -357,8 +357,8 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_ACCustomCharge) {
     batteryPower->setSharedInverter(m_sharedInverter);
 
     batteryPower->powerGeneratedBySystem = 0;
-    batteryPower->powerPV = 0;
-    batteryPower->powerPVClipped = 0;
+    batteryPower->powerSystem = 0;
+    batteryPower->powerSystemClipped = 0;
 
     std::vector<double> SOC = {63.86, 77.64, 91.37, 100.00, 100.00, 100.00};
     for (size_t h = 0; h < 6; h++) {
@@ -408,8 +408,8 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_ACCustomChargeSubhourly) {
     batteryPower->setSharedInverter(m_sharedInverter);
 
     batteryPower->powerGeneratedBySystem = 0;
-    batteryPower->powerPV = 0;
-    batteryPower->powerPVClipped = 0;
+    batteryPower->powerSystem = 0;
+    batteryPower->powerSystemClipped = 0;
 
     std::vector<double> SOC = {56.95, 63.88, 70.79, 77.68, 84.56, 91.43, 98.28, 100.00, 100.00, 100.00, 100.00, 100.00};
     for (size_t h = 0; h < 12; h++) {
@@ -470,8 +470,8 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_ACAuto) {
                                 66.63, 49.97, 33.30, 16.63, 10.0, 10.0 };
     for (size_t h = 0; h < 24; h++) {
         batteryPower->powerGeneratedBySystem = pv[h];
-        batteryPower->powerPV = pv[h];
-        batteryPower->powerPVClipped = clip[h];
+        batteryPower->powerSystem = pv[h];
+        batteryPower->powerSystemClipped = clip[h];
 
         dispatchAuto->update_dispatch(0, h, 0, h);
         EXPECT_NEAR(batteryPower->powerBatteryTarget, targetkW[h], 0.1) << "error in expected target at hour " << h;
@@ -512,8 +512,8 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_ACAutoWithLosses) {
                                 66.63, 49.97, 33.30, 16.63, 10.0, 10.0 };
     for (size_t h = 0; h < 24; h++) {
         batteryPower->powerGeneratedBySystem = pv[h];
-        batteryPower->powerPV = pv[h];
-        batteryPower->powerPVClipped = clip[h];
+        batteryPower->powerSystem = pv[h];
+        batteryPower->powerSystemClipped = clip[h];
 
         dispatchAuto->update_dispatch(0, h, 0, h);
         EXPECT_NEAR(batteryPower->powerBatteryTarget, targetkW[h], 0.1) << "error in expected target at hour " << h;
@@ -547,8 +547,8 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_ACAutoSubhourly) {
         size_t step = step_from_index(h, dtHour);
 
         batteryPower->powerGeneratedBySystem = pv[h];
-        batteryPower->powerPV = pv[h];
-        batteryPower->powerPVClipped = clip[h];
+        batteryPower->powerSystem = pv[h];
+        batteryPower->powerSystemClipped = clip[h];
 
         dispatchAuto->update_dispatch(0, hour_of_year, step, h);
         EXPECT_NEAR(batteryPower->powerBatteryTarget, targetkW[h], 0.1) << "error in expected target at hour " << h;
