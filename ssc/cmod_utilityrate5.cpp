@@ -2193,7 +2193,13 @@ public:
 			// apply previous month rollover kwhs
 			if (excess_monthly_dollars)
 			{
-				if (year > 0 && m == 0 && excess_dollars_credit_month != 11) {
+                if (m == 0 && excess_dollars_credit_month == 0) {
+                    ssc_number_t total_excess_credit_month = prev_excess_dollars + monthly_cumulative_excess_dollars[m];
+                    monthly_ec_charges[m] -= total_excess_credit_month;
+                    payment[c - 1] -= total_excess_credit_month;
+                    dollars_applied += total_excess_credit_month;
+                }
+				else if (m == 0 && excess_dollars_credit_month != 11) {
 					monthly_ec_charges[m] -= prev_excess_dollars;
 					payment[c - 1] -= prev_excess_dollars;
 					dollars_applied += prev_excess_dollars;

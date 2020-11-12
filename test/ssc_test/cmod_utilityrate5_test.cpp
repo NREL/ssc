@@ -442,6 +442,68 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover_ap
     EXPECT_NEAR(0.0, jan_year_2, 0.1);
 }
 
+TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover_jan_reset) {
+    ssc_data_t data = new var_table;
+
+    setup_residential_rates(data);
+    ssc_data_set_number(data, "ur_metering_option", 3);
+    ssc_number_t p_ur_ec_tou_mat[24] = { 1, 1, 9.9999999999999998e+37, 0, 0.10000000000000001, 0.10000000000000001,
+                                     2, 1, 9.9999999999999998e+37, 0, 0.050000000000000003, 0.050000000000000003,
+                                     3, 1, 9.9999999999999998e+37, 0, 0.20000000000000001, 0.20000000000000001,
+                                     4, 1, 9.9999999999999998e+37, 0, 0.25, 0.25 };
+    ssc_data_set_matrix(data, "ur_ec_tou_mat", p_ur_ec_tou_mat, 4, 6);
+    ssc_data_set_number(data, "ur_nm_credit_month", 0); // January
+
+    int analysis_period = 25;
+    ssc_data_set_number(data, "system_use_lifetime_output", 1);
+    ssc_data_set_number(data, "analysis_period", analysis_period);
+    set_array(data, "load", load_profile_path, 8760);
+    set_array(data, "gen", gen_path, 8760 * analysis_period);
+
+    int status = run_module(data, "utilityrate5");
+    EXPECT_FALSE(status);
+
+    ssc_number_t cost_without_system;
+    ssc_data_get_number(data, "elec_cost_without_system_year1", &cost_without_system);
+    EXPECT_NEAR(771.8, cost_without_system, 0.1);
+
+    ssc_number_t cost_with_system;
+    ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
+    EXPECT_NEAR(-153.91, cost_with_system, 0.1);
+
+    int nrows;
+    int ncols;
+    ssc_number_t* annual_bills = ssc_data_get_matrix(data, "utility_bill_w_sys_ym", &nrows, &ncols);
+    util::matrix_t<double> bill_matrix(nrows, ncols);
+    bill_matrix.assign(annual_bills, nrows, ncols);
+
+    // Receive rollover credits in January
+    double jan_year_2 = bill_matrix.at((size_t)2, (size_t)0);
+    EXPECT_NEAR(-40.99, jan_year_2, 0.1);
+}
+
+TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover_incorrect_month) {
+    ssc_data_t data = new var_table;
+
+    setup_residential_rates(data);
+    ssc_data_set_number(data, "ur_metering_option", 3);
+    ssc_number_t p_ur_ec_tou_mat[24] = { 1, 1, 9.9999999999999998e+37, 0, 0.10000000000000001, 0.10000000000000001,
+                                     2, 1, 9.9999999999999998e+37, 0, 0.050000000000000003, 0.050000000000000003,
+                                     3, 1, 9.9999999999999998e+37, 0, 0.20000000000000001, 0.20000000000000001,
+                                     4, 1, 9.9999999999999998e+37, 0, 0.25, 0.25 };
+    ssc_data_set_matrix(data, "ur_ec_tou_mat", p_ur_ec_tou_mat, 4, 6);
+    ssc_data_set_number(data, "ur_nm_credit_month", 12); // Non-existant month
+
+    int analysis_period = 25;
+    ssc_data_set_number(data, "system_use_lifetime_output", 1);
+    ssc_data_set_number(data, "analysis_period", analysis_period);
+    set_array(data, "load", load_profile_path, 8760);
+    set_array(data, "gen", gen_path, 8760 * analysis_period);
+
+    int status = run_module(data, "utilityrate5");
+    EXPECT_TRUE(status);
+}
+
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_buyall_sellall) {
     ssc_data_t data = new var_table;
 
