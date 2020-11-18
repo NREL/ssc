@@ -107,6 +107,9 @@ public:
 	/*! Grid target power */
 	double power_grid_target() override;
 
+    /*! Return the calculated cost to cycle for battery outputs */
+    double cost_to_cycle_per_kwh();
+
 	enum BTM_TARGET_MODES {TARGET_SINGLE_MONTHLY, TARGET_TIME_SERIES};
 
 protected:
