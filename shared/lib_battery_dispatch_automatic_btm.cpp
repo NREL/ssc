@@ -705,9 +705,23 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(dispatch_plan
                     requiredPower = -requiredEnergy / _dt_hour;
                 }
             }
-            else if (m_batteryPower->canSystemCharge && sorted_grid[i].Grid() < 0)
+            else if (m_batteryPower->canSystemCharge)
             {
-                requiredPower = sorted_grid[i].Grid();
+                bool systemCharge = false;
+                // Powerflow considerations are different between AC and DC connected batteries for system charging
+                if (m_batteryPower->connectionMode == m_batteryPower->AC_CONNECTED) {
+                    // AC connected assumes PV goes to load first. Need net generation in this case
+                    if (sorted_grid[i].Grid() < 0) {
+                        requiredPower = sorted_grid[i].Grid();
+                    }
+                }
+                else {
+                    // DC connected can charge the battery before sending energy to load
+                    if (idx + index < _P_pv_ac.size() && _P_pv_ac[idx + index] > 0) {
+                        requiredPower = -_P_pv_ac[idx + index];
+                    }
+                }
+                
             }
 
             if (requiredPower < 0)
