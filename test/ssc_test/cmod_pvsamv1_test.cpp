@@ -704,7 +704,10 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, reopt_sizing) {
     auto vd = static_cast<var_table*>(data);
     ASSERT_TRUE(vd->is_assigned("reopt_scenario"));
     auto site = vd->lookup("reopt_scenario");
+
     site = site->table.lookup("Scenario");
+    assert(site->table.lookup("time_steps_per_hour")->num == 1);
+
     site = site->table.lookup("Site");
     std::vector<std::string> sections = { "ElectricTariff", "LoadProfile", "Financial", "Storage", "Wind", "PV" };
     for (const auto& s : sections)
