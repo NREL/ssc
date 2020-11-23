@@ -401,7 +401,8 @@ public:
 	double tiltDegrees;					// The surface tilt [degrees]
 	double azimuthDegrees;				// The surface azimuth [degrees]
 	int trackMode;						// The tracking mode [0 = fixed, 1 = single-axis tracking, 2 = two-axis tracking, 3 = azimuth-axis tracking, 4 = seasonal-tilt
-	double trackerRotationLimitDegrees; // The rotational limit of the tracker [degrees]
+    double crossAxisSlope;              // angle of inclination from horizontal of the plane containing the tracker axes, in the cross-axis direction, -90° to 90°
+    double trackerRotationLimitDegrees; // The rotational limit of the tracker [degrees]
 	flag tiltEqualLatitude;				// Set the tilt equal to the latitude
 	std::vector<double> monthlyTiltDegrees; // The seasonal tilt [degrees]
 	flag backtrackingEnabled;			// Backtracking enabled or not
