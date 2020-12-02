@@ -62,7 +62,7 @@
 
 SSCEXPORT int ssc_version()
 {
-	return 249;
+	return 250;
 }
 
 SSCEXPORT const char *ssc_build_info()
