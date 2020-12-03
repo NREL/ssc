@@ -55,8 +55,10 @@
 
 static var_info _cm_vtab_mhk_wave[] = {
 	//   VARTYPE			DATATYPE			NAME									LABEL																UNITS           META            GROUP              REQUIRED_IF					CONSTRAINTS					UI_HINTS	
-	{ SSC_INPUT,			SSC_MATRIX,			"wave_resource_matrix",					"Frequency distribution of wave resource as a function of Hs and Te","",			"",             "MHKWave",			"*",						"",							"" },
-	{ SSC_INPUT,			SSC_MATRIX,			"wave_power_matrix",					"Wave Power Matrix",												"",				"",             "MHKWave",			"*",						"",							"" },
+	{ SSC_INPUT,            SSC_MATRIX,         "wave_resource_model_choice",           "Hourly or JPD wave resource data",                                 "0/1",             "",             "MHKWave",          "",                         "INTEGER",                  "" },
+    { SSC_INPUT,			SSC_MATRIX,			"wave_resource_matrix",					"Frequency distribution of wave resource as a function of Hs and Te","",			"",             "MHKWave",			"wave_resource_model_choice=0",						"",							"" },
+    { SSC_INPUT,            SSC_MATRIX,         "wave_resource_time_series",            "Time series (3 hour?) wave resource data",                         "",             "",             "MHKWave",          "wave_resource_model_choice=1","",                      "" },
+    { SSC_INPUT,			SSC_MATRIX,			"wave_power_matrix",					"Wave Power Matrix",												"",				"",             "MHKWave",			"*",						"",							"" },
 //	{ SSC_INPUT,			SSC_NUMBER,			"annual_energy_loss",					"Total energy losses",												"%",			"",             "MHKWave",			"?=0",						"",							"" },
 	//{ SSC_INPUT,			SSC_NUMBER,			"calculate_capacity",					"Calculate capacity outside UI?",									"0/1",			"",             "MHKWave",          "?=1",                      "INTEGER,MIN=0,MAX=1",      "" },
 	{ SSC_INPUT,			SSC_NUMBER,			"number_devices",						"Number of wave devices in the system",								"",				"",             "MHKWave",          "?=1",                      "INTEGER",			    	"" },
@@ -114,6 +116,7 @@ public:
 
 		//Read and store wave resource and power matrix as a 2D matrix of vectors:
 		util::matrix_t<double>  wave_resource_matrix = as_matrix("wave_resource_matrix");
+        util::matrix_t<double>  wave_resource_time_series = as_matrix("Wave_resourec_time_series");
 		util::matrix_t<double>  wave_power_matrix = as_matrix("wave_power_matrix");
 		
 		//Check to ensure size of wave_power_matrix == wave_resource_matrix :
@@ -176,6 +179,56 @@ public:
 			if (_check_column[i] != wave_power_matrix.at(i,0))
 				throw compute_module::exec_error("mhk_wave", "Wave height bins of power matrix don't match. Reset bins to default");*/
 		}
+        double ts_significant_wave_height, ts_energy_period;
+        /* Bilinear interpolation of power matrix for time series analysis*/
+        double Q11, Q12, Q21, Q22;
+        double x1, x2, y1, y2;
+        double a0, a1, a2, a3;
+        Q11 = wave_power_matrix.at(1, 1);
+        Q12 = wave_power_matrix.at(1, wave_power_matrix.ncols() - 1);
+        Q21 = wave_power_matrix.at(wave_power_matrix.nrows() - 1, 1);
+        Q22 = wave_power_matrix.at(wave_power_matrix.nrows() - 1, wave_power_matrix.ncols() - 1);
+        x1 = wave_power_matrix.at(1, 0);
+        x2 = wave_power_matrix.at(wave_power_matrix.nrows() - 1, 0);
+        y1 = wave_power_matrix.at(0, 1);
+        y2 = wave_power_matrix.at(0, wave_power_matrix.ncols() - 1);
+
+        a0 = (Q11 * x2 * y2) / ((x1 - x2) * (y1 - y2)) + (Q12 * x2 * y1) / ((x1 - x2) * (y2 - y1)) + (Q21 * x1 * y2) / ((x1 - x2) * (y2 - y1)) + (Q22 * x1 * y1) / ((x1 - x2) * (y1 - y2));
+        a1 = (Q11 * y2) / ((x1 - x2) * (y2 - y1)) + (Q12 * y1) / ((x1 - x2) * (y1 - y2)) + (Q21 * y2) / ((x1 - x2) * (y1 - y2)) + (Q22 * y1) / ((x1 - x2) * (y2 - y1));
+        a2 = (Q11 * x2) / ((x1 - x2) * (y2 - y1)) + (Q12 * x1) / ((x1 - x2) * (y1 - y2)) + (Q21 * x2) / ((x1 - x2) * (y1 - y2)) + (Q22 * x1) / ((x1 - x2) * (y2 - y1));
+        a3 = (Q11) / ((x1 - x2) * (y1 - y2)) + (Q12) / ((x1 - x2) * (y2 - y1)) + (Q21) / ((x1 - x2) * (y2 - y1)) + (Q22) / ((x1 - x2) * (y1 - y2));
+
+
+        for (size_t i = 0; i < (size_t)wave_resource_time_series.nrows(); i++) {
+            ts_significant_wave_height = wave_resource_time_series.at(i, 1);
+            ts_energy_period = wave_resource_time_series.at(i, 2);
+            //To do: bilinear interpolation of power matrix to interpolate at each time step
+
+                //Store max power if not set in UI:
+                /*if(as_integer("calculate_capacity") > 0)
+                    if (_power_vect[i][j] > system_capacity)
+                        system_capacity = _power_vect[i][j];*/
+
+                        //Calculate and allocate annual_energy_distribution:
+                if (j == 0 || i == 0)	//Where (i = 0) is the row header, and (j =  0) is the column header.
+                    p_annual_energy_dist[k] = (ssc_number_t)wave_resource_matrix.at(i, j);
+                else {
+                    p_annual_energy_dist[k] = (ssc_number_t)(wave_resource_matrix.at(i, j) * wave_power_matrix.at(i, j) * 8760.0 / 100.0);
+                    annual_energy += p_annual_energy_dist[k];
+                    device_average_power += (p_annual_energy_dist[k] / 8760);
+                    //Checker to ensure frequency distribution adds to >= 99.5%:
+                    resource_vect_checker += wave_resource_matrix.at(i, j);
+                }
+                k++;
+
+           
+
+            /*//Throw exception if default header column (of power curve and resource) does not match user input header row:
+            if (_check_column[i] != wave_resource_matrix.at(i, 0))
+                throw compute_module::exec_error("mhk_wave", "Wave height bins of resource matrix don't match. Reset bins to default");
+            if (_check_column[i] != wave_power_matrix.at(i,0))
+                throw compute_module::exec_error("mhk_wave", "Wave height bins of power matrix don't match. Reset bins to default");*/
+        }
         double wave_resource_start_period = 0;
         double wave_resource_start_height = 0;
         double wave_resource_end_period = 0;
