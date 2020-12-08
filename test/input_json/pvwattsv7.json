@@ -1,0 +1,18 @@
+{
+	"solar_resource_file" : "C:/Projects/GitHub/NREL/save_as_JSON/SAM/deploy/solar_resource/phoenix_az_33.450495_-111.983688_psmv3_60_tmy.csv",
+	"system_use_lifetime_output" : 0,
+	"analysis_period" : 25,
+	"system_capacity" : 50000,
+	"module_type" : 0,
+	"dc_ac_ratio" : 1.2,
+	"array_type" : 0,
+	"tilt" : 33,
+	"azimuth" : 180,
+	"gcr" : 0.40000000000000002,
+	"losses" : 14.075660705566406,
+	"en_snowloss" : 0,
+	"inv_eff" : 96,
+	"batt_simple_enable" : 0,
+	"constant" : 0,
+	"number_inputs" : 15
+}
