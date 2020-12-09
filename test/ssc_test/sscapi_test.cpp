@@ -60,6 +60,83 @@ TEST(sscapi_test, json_to_ssc_data) {
     EXPECT_GT(vt->lookup("error")->str.size(), 0);
 }
 
+
+
+////////////////////////////  RapidJSON testing
+TEST(sscapi_test, rapidjson_to_ssc_data) {
+    std::string json_string = R"({"num": 5})";
+    ssc_data_t dat = rapidjson_to_ssc_data(json_string.c_str());
+    auto vt = static_cast<var_table*>(dat);
+    EXPECT_EQ(vt->lookup("num")->num[0], 5);
+    ssc_data_free(dat);
+
+    json_string = R"({"str": "string"})";
+    dat = rapidjson_to_ssc_data(json_string.c_str());
+    vt = static_cast<var_table*>(dat);
+    EXPECT_STRCASEEQ(vt->lookup("str")->str.c_str(), "string");
+    ssc_data_free(dat);
+
+    json_string = R"({"arr": [1, 2]})";
+    dat = rapidjson_to_ssc_data(json_string.c_str());
+    vt = static_cast<var_table*>(dat);
+    EXPECT_EQ(vt->lookup("arr")->num[0], 1);
+    EXPECT_EQ(vt->lookup("arr")->num[1], 2);
+    ssc_data_free(dat);
+    
+    json_string = R"({"mat": [[1, 2], [3, 4]]})";
+    dat = rapidjson_to_ssc_data(json_string.c_str());
+    vt = static_cast<var_table*>(dat);
+    EXPECT_EQ(vt->lookup("mat")->num[0], 1);
+    EXPECT_EQ(vt->lookup("mat")->num[1], 2);
+    EXPECT_EQ(vt->lookup("mat")->num[2], 3);
+    EXPECT_EQ(vt->lookup("mat")->num[3], 4);
+    ssc_data_free(dat);
+    
+    json_string = R"({"datarr": ["one", 2]})";
+    dat = rapidjson_to_ssc_data(json_string.c_str());
+    vt = static_cast<var_table*>(dat);
+    EXPECT_STRCASEEQ(vt->lookup("datarr")->vec[0].str.c_str(), "one");
+    EXPECT_EQ(vt->lookup("datarr")->vec[1].num[0], 2);
+    ssc_data_free(dat);
+    /*
+    json_string = R"({"datmat": [["one", 2], [3, {"four": 4}]]})";
+    dat = rapidjson_to_ssc_data(json_string.c_str());
+    vt = static_cast<var_table*>(dat);
+    EXPECT_STRCASEEQ(vt->lookup("datmat")->vec[0].vec[0].str.c_str(), "one");
+    EXPECT_EQ(vt->lookup("datmat")->vec[0].vec[1].num[0], 2);
+    EXPECT_EQ(vt->lookup("datmat")->vec[1].vec[0].num[0], 3);
+    EXPECT_EQ(vt->lookup("datmat")->vec[1].vec[1].table.lookup("four")->num[0], 4);
+    ssc_data_free(dat);
+   
+    
+    json_string = R"({"table": {"entry": 1}}})";
+    dat = rapidjson_to_ssc_data(json_string.c_str());
+    vt = static_cast<var_table*>(dat);
+    EXPECT_EQ(vt->lookup("table")->table.lookup("entry")->num[0], 1);
+    ssc_data_free(dat);
+
+    json_string = R"({"wrong": format})";
+    dat = rapidjson_to_ssc_data(json_string.c_str());
+    vt = static_cast<var_table*>(dat);
+    EXPECT_GT(vt->lookup("error")->str.size(), 0);
+   */ 
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 TEST(sscapi_test, ssc_data_to_json) {
     var_table vt;
     vt.assign("num", 1);

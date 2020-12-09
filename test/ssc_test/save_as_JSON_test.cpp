@@ -5,6 +5,8 @@
 
 #include "../ssc/vartab.h"
 #include "json/json.h" // Jsoncpp
+#include "../rapidjson/document.h"
+#include "../rapidjson/istreamwrapper.h"
 
 static const char* SSCDIR = std::getenv("SSCDIR");
 
@@ -17,14 +19,25 @@ int nj3 = sprintf(JSON_for_PySAM_Grid, "%s/test/input_json/grid.json", SSCDIR);
 char JSON_for_PySAM_MerchantPlant[256] = {};
 int nj4 = sprintf(JSON_for_PySAM_MerchantPlant, "%s/test/input_json/merchantplant.json", SSCDIR);
 
+char inputs_as_JSON1[256] = {};
+int np1 = sprintf(inputs_as_JSON1, "%s/test/input_json/pvwatts_merchantplant.json", SSCDIR);
+char inputs_as_JSON2[256] = {};
+int np2 = sprintf(inputs_as_JSON2, "%s/test/input_json/PB_Batt_MP.json", SSCDIR);
+char inputs_as_JSON3[256] = {};
+int np3 = sprintf(inputs_as_JSON3, "%s/test/input_json/PT_MP.json", SSCDIR);
+char inputs_as_JSON4[256] = {};
+int np4 = sprintf(inputs_as_JSON4, "%s/test/input_json/Trough_MP.json", SSCDIR);
+
+
+
 TEST(save_as_JSON_test, pvwatts_mechant_plant_read_file_to_string) {
     std::ifstream test(inputs_as_JSON);
     std::string str((std::istreambuf_iterator<char>(test)), std::istreambuf_iterator<char>());
     EXPECT_EQ(str.length(), 12263249);
 }
 
-TEST(save_as_JSON_test, pvwatts_mechant_plant_jsoncpp_parse_file) {
-    Json::Value root;  
+TEST(save_as_JSON_test_parse, pvwatts_mechant_plant_jsoncpp_parse_file) {
+    Json::Value root;
     Json::Reader reader;
     std::ifstream test(inputs_as_JSON, std::ifstream::binary);
     bool parsingSuccessful = reader.parse(test, root, false);
@@ -36,6 +49,104 @@ TEST(save_as_JSON_test, pvwatts_mechant_plant_jsoncpp_parse_file) {
     }
     EXPECT_TRUE(parsingSuccessful);
 }
+
+TEST(save_as_JSON_test_parse, pvwatts_mechant_plant_rapidjson_parse_file) {
+    std::ifstream test(inputs_as_JSON, std::ifstream::binary);
+    rapidjson::Document document;
+    rapidjson::IStreamWrapper isw(test);
+    document.ParseStream(isw);
+    if (document.HasParseError())
+    {
+        // report to the user the failure and their locations in the document.
+        std::cout << document.GetParseError()
+            << "\n";
+    }
+    EXPECT_TRUE(!document.HasParseError());
+}
+TEST(save_as_JSON_test_parse, pv_batt_mechant_plant_jsoncpp_parse_file) {
+    Json::Value root;
+    Json::Reader reader;
+    std::ifstream test(inputs_as_JSON2, std::ifstream::binary);
+    bool parsingSuccessful = reader.parse(test, root, false);
+    if (!parsingSuccessful)
+    {
+        // report to the user the failure and their locations in the document.
+        std::cout << reader.getFormatedErrorMessages()
+            << "\n";
+    }
+    EXPECT_TRUE(parsingSuccessful);
+}
+
+TEST(save_as_JSON_test_parse, pv_batt_mechant_plant_rapidjson_parse_file) {
+    std::ifstream test(inputs_as_JSON2, std::ifstream::binary);
+    rapidjson::Document document;
+    rapidjson::IStreamWrapper isw(test);
+    document.ParseStream(isw);
+    if (document.HasParseError())
+    {
+        // report to the user the failure and their locations in the document.
+        std::cout << document.GetParseError()
+            << "\n";
+    }
+    EXPECT_TRUE(!document.HasParseError());
+}
+TEST(save_as_JSON_test_parse, pt_mechant_plant_jsoncpp_parse_file) {
+    Json::Value root;
+    Json::Reader reader;
+    std::ifstream test(inputs_as_JSON3, std::ifstream::binary);
+    bool parsingSuccessful = reader.parse(test, root, false);
+    if (!parsingSuccessful)
+    {
+        // report to the user the failure and their locations in the document.
+        std::cout << reader.getFormatedErrorMessages()
+            << "\n";
+    }
+    EXPECT_TRUE(parsingSuccessful);
+}
+
+TEST(save_as_JSON_test_parse, pt_mechant_plant_rapidjson_parse_file) {
+    std::ifstream test(inputs_as_JSON3, std::ifstream::binary);
+    rapidjson::Document document;
+    rapidjson::IStreamWrapper isw(test);
+    document.ParseStream(isw);
+    if (document.HasParseError())
+    {
+        // report to the user the failure and their locations in the document.
+        std::cout << document.GetParseError()
+            << "\n";
+    }
+    EXPECT_TRUE(!document.HasParseError());
+}
+TEST(save_as_JSON_test_parse, trough_mechant_plant_jsoncpp_parse_file) {
+    Json::Value root;
+    Json::Reader reader;
+    std::ifstream test(inputs_as_JSON4, std::ifstream::binary);
+    bool parsingSuccessful = reader.parse(test, root, false);
+    if (!parsingSuccessful)
+    {
+        // report to the user the failure and their locations in the document.
+        std::cout << reader.getFormatedErrorMessages()
+            << "\n";
+    }
+    EXPECT_TRUE(parsingSuccessful);
+}
+
+TEST(save_as_JSON_test_parse, trough_mechant_plant_rapidjson_parse_file) {
+    std::ifstream test(inputs_as_JSON4, std::ifstream::binary);
+    rapidjson::Document document;
+    rapidjson::IStreamWrapper isw(test);
+    document.ParseStream(isw);
+    if (document.HasParseError())
+    {
+        // report to the user the failure and their locations in the document.
+        std::cout << document.GetParseError()
+            << "\n";
+    }
+    EXPECT_TRUE(!document.HasParseError());
+}
+
+
+
 
 TEST(save_as_JSON_test, pvwatts_mechant_plant_jsoncpp_read_file_to_ssc_var_table) {
     std::ifstream test(inputs_as_JSON);
