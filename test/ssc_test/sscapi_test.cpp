@@ -98,7 +98,7 @@ TEST(sscapi_test, rapidjson_to_ssc_data) {
     EXPECT_STRCASEEQ(vt->lookup("datarr")->vec[0].str.c_str(), "one");
     EXPECT_EQ(vt->lookup("datarr")->vec[1].num[0], 2);
     ssc_data_free(dat);
-    /*
+    
     json_string = R"({"datmat": [["one", 2], [3, {"four": 4}]]})";
     dat = rapidjson_to_ssc_data(json_string.c_str());
     vt = static_cast<var_table*>(dat);
@@ -107,19 +107,31 @@ TEST(sscapi_test, rapidjson_to_ssc_data) {
     EXPECT_EQ(vt->lookup("datmat")->vec[1].vec[0].num[0], 3);
     EXPECT_EQ(vt->lookup("datmat")->vec[1].vec[1].table.lookup("four")->num[0], 4);
     ssc_data_free(dat);
-   
-    
+
+   /* parse error returned because of malformed json (extra "}" at end) not caught by jsoncpp */
     json_string = R"({"table": {"entry": 1}}})";
     dat = rapidjson_to_ssc_data(json_string.c_str());
     vt = static_cast<var_table*>(dat);
-    EXPECT_EQ(vt->lookup("table")->table.lookup("entry")->num[0], 1);
+    if (vt->is_assigned("table"))
+        EXPECT_EQ(vt->lookup("table")->table.lookup("entry")->num[0], 1);
+    else // error test fails - report error code and not throw SEH error from parse error
+        EXPECT_STRCASEEQ(vt->lookup("error")->str.c_str(), "The document root must not be followed by other values.");
+    ssc_data_free(dat);
+    
+    json_string = R"({"table": {"entry": 1}})";
+    dat = rapidjson_to_ssc_data(json_string.c_str());
+    vt = static_cast<var_table*>(dat);
+    if (vt->is_assigned("table"))
+        EXPECT_EQ(vt->lookup("table")->table.lookup("entry")->num[0], 1);
+    else // error test fails - report error code and not throw SEH error from parse error
+        EXPECT_STRCASEEQ(vt->lookup("error")->str.c_str(), "error");
     ssc_data_free(dat);
 
     json_string = R"({"wrong": format})";
     dat = rapidjson_to_ssc_data(json_string.c_str());
     vt = static_cast<var_table*>(dat);
     EXPECT_GT(vt->lookup("error")->str.size(), 0);
-   */ 
+    
 }
 
 

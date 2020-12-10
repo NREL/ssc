@@ -58,6 +58,7 @@
 
 #include <json/json.h>
 #include "../rapidjson/document.h"
+#include "../rapidjson/error/en.h" // parser errors returned as char strings
 
 #pragma warning (disable : 4706 )
 
@@ -831,22 +832,22 @@ void rapidjson_to_ssc_var(const rapidjson::Value& json_val, ssc_var_t ssc_val) {
     vd->clear();
     //using namespace Json;
     //Json::Value::Members members;
-//    bool is_arr, is_mat;
+    bool is_arr, is_mat;
     std::vector<ssc_number_t> vec;
     std::vector<var_data>* vd_arr;
     var_table* vd_tab;
-    /*
-    auto is_numerical = [](const Json::Value& json_val) {
+    
+    auto is_numerical = [](const rapidjson::Value& json_val) {
         bool is_num = true;
-        for (const auto& value : json_val) {
-            if (!value.isDouble() && !value.isBool()) {
+        for (rapidjson::SizeType i = 0; i < json_val.Size(); i++) {
+            if (!json_val[i].IsNumber() && !json_val[i].IsBool()) {
                 is_num = false;
                 break;
             }
         }
         return is_num;
     };
-    */
+    
     switch (json_val.GetType()) {
     default:
     case rapidjson::Type::kNullType:
@@ -862,20 +863,27 @@ void rapidjson_to_ssc_var(const rapidjson::Value& json_val, ssc_var_t ssc_val) {
         vd->str = json_val.GetString();
         return;
     case rapidjson::Type::kArrayType:
-
-        if (json_val[0].IsObject() || json_val[0].IsString()) {
-            // SSC_DATARR 
-            vd_arr = &vd->vec;
- //           for (rapidjson::Value::ConstMemberIterator itr = json_val.MemberBegin(); itr != json_val.MemberEnd(); ++itr) {
+        // determine if SSC_ARRAY
+        is_arr = is_numerical(json_val);
+        if (is_arr) {
+            vd->type = SSC_ARRAY;
+            if (json_val[0].IsNull())
+                return;
             for (rapidjson::SizeType i = 0; i < json_val.Size(); i++) {
-                vd_arr->emplace_back(var_data());
-                auto entry = &vd_arr->back();
-                rapidjson_to_ssc_var(json_val[i], entry);
+                vec.push_back(json_val[i].GetDouble());
             }
-            vd->type = SSC_DATARR;
+            vd->num.assign(&vec[0], vec.size());
             return;
         }
-        else if (json_val[0].IsArray()) {
+        // SSC_MATRIX
+        is_mat = true;
+        for (rapidjson::SizeType i = 0; i < json_val.Size(); i++) {
+            if (json_val[i].GetType() != rapidjson::Type::kArrayType || !is_numerical(json_val[i])) {
+                is_mat = false;
+                break;
+            }
+        }
+        if (is_mat) {
             vd->type = SSC_MATRIX;
             if (json_val[0].IsNull())
                 return;
@@ -887,16 +895,15 @@ void rapidjson_to_ssc_var(const rapidjson::Value& json_val, ssc_var_t ssc_val) {
             vd->num.assign(&vec[0], json_val.Size(), json_val[0].Size());
             return;
         }
-        else {
-            vd->type = SSC_ARRAY;
-            if (json_val[0].IsNull())
-                return;
-            for (rapidjson::SizeType i = 0; i < json_val.Size(); i++) {
-                vec.push_back(json_val[i].GetDouble());
-            }
-            vd->num.assign(&vec[0], vec.size());
-            return;
+        // SSC_DATARR
+        vd_arr = &vd->vec;
+        for (rapidjson::SizeType i = 0; i < json_val.Size(); i++) {
+            vd_arr->emplace_back(var_data());
+            auto entry = &vd_arr->back();
+            rapidjson_to_ssc_var(json_val[i], entry);
         }
+        vd->type = SSC_DATARR;
+        return;
     case rapidjson::Type::kObjectType:
         vd_tab = &vd->table;
         for (rapidjson::Value::ConstMemberIterator itr = json_val.MemberBegin(); itr != json_val.MemberEnd(); ++itr) {
@@ -909,37 +916,13 @@ void rapidjson_to_ssc_var(const rapidjson::Value& json_val, ssc_var_t ssc_val) {
 
 SSCEXPORT ssc_data_t rapidjson_to_ssc_data(const char* json_str) {
     auto vt = new var_table;
-    //const std::string rawJson(json_str);
-    //const auto rawJsonLength = static_cast<int>(rawJson.length());
-    /*
-    JSONCPP_STRING err;
-    Json::Value root;
-    Json::CharReaderBuilder builder;
-    const std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
-    if (!reader->parse(rawJson.c_str(), rawJson.c_str() + rawJsonLength, &root,
-        &err)) {
-        vt->assign("error", err);
-        return dynamic_cast<ssc_data_t>(vt);
-    }
-    */
     rapidjson::Document document;
     document.Parse(json_str);
     if (document.HasParseError()) {
-        vt->assign("error", document.GetParseError());
+        std::string s = rapidjson::GetParseError_En(document.GetParseError());
+        vt->assign("error", s);
         return dynamic_cast<ssc_data_t>(vt);
     }
-
-
-/*
-    Json::Value::Members members = root.getMemberNames();
-    for (auto const& name : members) {
-        var_data ssc_val;
-        json_to_ssc_var(root[name], &ssc_val);
-        vt->assign(name, ssc_val);
-    }
-
-*/
-
 //    static const char* kTypeNames[] = { "Null", "False", "True", "Object", "Array", "String", "Number" };
     for (rapidjson::Value::ConstMemberIterator itr = document.MemberBegin(); itr != document.MemberEnd(); ++itr) {
         //printf("Type of member %s is %s\n", itr->name.GetString(), kTypeNames[itr->value.GetType()]);
