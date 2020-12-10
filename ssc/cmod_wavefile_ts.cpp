@@ -25,10 +25,10 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_util.h"
 #include "lib_weatherfile.cpp"
 
-static var_info _cm_wave_file_reader[] = {
+static var_info _cm_wave_ts_file_reader[] = {
 /*   VARTYPE           DATATYPE         NAME                           LABEL                                        UNITS     META                      GROUP                 REQUIRED_IF                CONSTRAINTS        UI_HINTS*/
-	{ SSC_INPUT,         SSC_STRING,      "wave_resource_filename",               "local weather file path",                     "",       "",                      "Weather Reader",      "*",                       "LOCAL_FILE",      "" },
-	{ SSC_INPUT,         SSC_NUMBER,      "use_specific_wf_wave",               "user specified file",                     "0/1",       "",                      "Weather Reader",      "?=0",                       "INTEGER,MIN=0,MAX=1",      "" },
+	{ SSC_INPUT,         SSC_STRING,      "wave_resource_ts_filename",               "local weather file path",                     "",       "",                      "Weather Reader",      "*",                       "LOCAL_FILE",      "" },
+	{ SSC_INPUT,         SSC_NUMBER,      "use_specific_ts_wf_wave",               "user specified file",                     "0/1",       "",                      "Weather Reader",      "?=0",                       "INTEGER,MIN=0,MAX=1",      "" },
 	
 // header data
 	{ SSC_OUTPUT,        SSC_STRING,      "name",                    "Name",                                        "",       "",                      "Weather Reader",      "use_specific_wf_wave=0",                        "",               "" },
@@ -51,13 +51,13 @@ static var_info _cm_wave_file_reader[] = {
 
 var_info_invalid };
 
-class cm_wave_file_reader : public compute_module
+class cm_wave_ts_file_reader : public compute_module
 {
 public:
 
-	cm_wave_file_reader()
+	cm_wave_ts_file_reader()
 	{
-		add_var_info(_cm_wave_file_reader);
+		add_var_info(_cm_wave_ts_file_reader);
 	}
 	
 	void exec( )
@@ -133,8 +133,8 @@ public:
 			assign("notes", var_data(values[12]));
 		}
 		// read in 21 rows x 22 columns
-		ssc_number_t *mat = allocate("wave_resource_matrix", 21, 22);
-		for (size_t r = 0; r < 21; r++)
+		ssc_number_t *mat = allocate("wave_resource_time_series", 2920, 3);
+		for (size_t r = 0; r < 2920; r++)
 		{
 			getline(ifs, buf);
 			values.clear();
@@ -143,12 +143,9 @@ public:
 			{
 				throw exec_error("wave_file_reader", "incorrect number of data columns: " + std::to_string(values.size()));
 			}
-			for (size_t c = 0; c < 22; c++)
+			for (size_t c = 0; c < 3; c++)
 			{
-				if (r == 0 && c == 0)
-					mat[r*22+c] = 0.0;
-				else
-					mat[r * 22 + c] = std::stod(values[c]);
+				mat[r * 3 + c] = std::stod(values[c]);
 			}
 		}
 		return;
@@ -156,4 +153,4 @@ public:
 	}
 };
 
-DEFINE_MODULE_ENTRY(wave_file_reader, "SAM Wave Resource File Reader", 1)
+DEFINE_MODULE_ENTRY(wave_file_reader_ts, "SAM Wave Resource File Reader", 1)
