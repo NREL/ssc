@@ -169,8 +169,13 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INPUT,     SSC_NUMBER, "rec_clearsky_fraction",               "Weighting fraction on clear-sky DNI for receiver flow control",                                                                          "",             "",                                  "Tower and Receiver",                       "?=0.0",                                                            "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "rec_control_per_path",                "Control receiver mass flow per path",                                                                                                    "",             "",                                  "Tower and Receiver",                       "?=0",                                                              "",              "" },
 
+    { SSC_INPUT,     SSC_NUMBER, "is_rec_user_mflow",                   "Use user-defined receiver mass flow control array?",                                                                                     "",             "",                                  "Tower and Receiver",                       "?=0.0",                                                            "",              "" },
+    { SSC_INPUT,     SSC_ARRAY,  "rec_user_mflow",                      "User-defined receiver mass flow control array (total)",                                                                                  "",             "",                                  "Tower and Receiver",                       "?=0.0",                                                            "",              "" },
+    { SSC_INPUT,     SSC_ARRAY,  "rec_user_mflow_path_1",               "User-defined receiver mass flow control array (path 1)",                                                                                 "",             "",                                  "Tower and Receiver",                       "?=0.0",                                                            "",              "" },
+    { SSC_INPUT,     SSC_ARRAY,  "rec_user_mflow_path_2",               "User-defined receiver mass flow control array (path 2)",                                                                                 "",             "",                                  "Tower and Receiver",                       "?=0.0",                                                            "",              "" },
 
-    // Transient receiver parameters
+
+        // Transient receiver parameters
 	{ SSC_INPUT,     SSC_NUMBER, "is_rec_model_trans",                 "Formulate receiver model as transient?",                                                                                                  "",             "",                                  "Tower and Receiver",                       "?=0",                                                              "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "is_rec_startup_trans",               "Formulate receiver startup model as transient?",                                                                                          "",             "",                                  "Tower and Receiver",                       "?=0",                                                              "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "rec_tm_mult",                        "Receiver thermal mass multiplier",                                                                                                        "",             "",                                  "Tower and Receiver",                       "?=1.0",                                                            "",              ""},
@@ -1782,6 +1787,38 @@ public:
                 }
             }
 
+            // User-defined mass flow rates
+            ss_receiver->m_is_user_mflow = as_boolean("is_rec_user_mflow");
+            if (ss_receiver->m_is_user_mflow)
+            {
+                if (!as_boolean("rec_control_per_path"))
+                {
+                    size_t n_mflow = 0;
+                    ssc_number_t* mflow = as_array("rec_user_mflow", &n_mflow);
+                    if (n_mflow != n_steps_full)
+                        throw exec_error("tcsmolten_salt", "Invalid user-defined mass flow control signal. Array must have " + util::to_string((int)n_steps_full) + " rows.");
+                    ss_receiver->m_user_mflow.resize(n_steps_full);
+                    for (size_t i = 0; i < n_steps_full; i++)
+                        ss_receiver->m_user_mflow.at(i) = (double)mflow[i];
+                }
+                else
+                {
+                    size_t n_mflow1, n_mflow2;
+                    ssc_number_t* mflow1 = as_array("rec_user_mflow_path_1", &n_mflow1);
+                    ssc_number_t* mflow2 = as_array("rec_user_mflow_path_2", &n_mflow2);
+                    if (n_mflow1 != n_steps_full || n_mflow1 != n_mflow2)
+                        throw exec_error("tcsmolten_salt", "Invalid user-defined mass flow control signals. Arrays must have " + util::to_string((int)n_steps_full) + " rows.");
+                    ss_receiver->m_user_mflow_path1.resize(n_steps_full);
+                    ss_receiver->m_user_mflow_path2.resize(n_steps_full);
+
+                    for (size_t i = 0; i < n_steps_full; i++)
+                    {
+                        ss_receiver->m_user_mflow_path1.at(i) = (double)mflow1[i];
+                        ss_receiver->m_user_mflow_path2.at(i) = (double)mflow2[i];
+                    }
+                }
+            }
+
             receiver = std::move(ss_receiver);
         }
         else {
@@ -1880,6 +1917,37 @@ public:
                 }
             }
 
+            // User-defined mass flow rates
+            trans_receiver->m_is_user_mflow = as_boolean("is_rec_user_mflow");
+            if (trans_receiver->m_is_user_mflow)
+            {
+                if (!as_boolean("rec_control_per_path"))
+                {
+                    size_t n_mflow = 0;
+                    ssc_number_t* mflow = as_array("rec_user_mflow", &n_mflow);
+                    if (n_mflow != n_steps_full)
+                        throw exec_error("tcsmolten_salt", "Invalid user-defined mass flow control signal. Array must have " + util::to_string((int)n_steps_full) + " rows.");
+                    trans_receiver->m_user_mflow.resize(n_steps_full);
+                    for (size_t i = 0; i < n_steps_full; i++)
+                        trans_receiver->m_user_mflow.at(i) = (double)mflow[i];
+                }
+                else
+                {
+                    size_t n_mflow1, n_mflow2;
+                    ssc_number_t* mflow1 = as_array("rec_user_mflow_path_1", &n_mflow1);
+                    ssc_number_t* mflow2 = as_array("rec_user_mflow_path_2", &n_mflow2);
+                    if (n_mflow1 != n_steps_full || n_mflow1 != n_mflow2)
+                        throw exec_error("tcsmolten_salt", "Invalid user-defined mass flow control signals. Arrays must have " + util::to_string((int)n_steps_full) + " rows.");
+                    trans_receiver->m_user_mflow_path1.resize(n_steps_full);
+                    trans_receiver->m_user_mflow_path2.resize(n_steps_full);
+
+                    for (size_t i = 0; i < n_steps_full; i++)
+                    {
+                        trans_receiver->m_user_mflow_path1.at(i) = (double)mflow1[i];
+                        trans_receiver->m_user_mflow_path2.at(i) = (double)mflow2[i];
+                    }
+                }
+            }
 
             receiver = std::move(trans_receiver);
         }

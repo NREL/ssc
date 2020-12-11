@@ -215,6 +215,10 @@ public:
 	// Flow control
 	double m_csky_frac;
     bool m_control_per_path;
+    bool m_is_user_mflow;
+    std::vector<double> m_user_mflow;
+    std::vector<double> m_user_mflow_path1;
+    std::vector<double> m_user_mflow_path2;
 	
 	S_outputs outputs;
 
