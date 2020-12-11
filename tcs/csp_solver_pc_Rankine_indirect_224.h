@@ -179,6 +179,7 @@ public:
 		double m_startup_time;		//[hr] time needed for power block startup
 		double m_startup_frac;		//[-] fraction of design thermal power needed for startup
 		double m_htf_pump_coef;		//[kW/kg/s] Pumping power to move 1 kg/s of HTF through power cycle
+        double m_W_off_heat_frac;   //[-] fraction of power required to keep the cycle in a warm off state
 
 		C_csp_power_cycle::E_csp_power_cycle_modes m_operating_mode_initial;			//Operating mode at start of simulation
         double m_startup_time_remain_init;		//[hr]
@@ -231,7 +232,7 @@ public:
 		{
 			m_P_ref = m_eta_ref = m_T_htf_hot_ref = m_T_htf_cold_ref = m_dT_cw_ref = m_T_amb_des =
 				m_q_sby_frac = m_P_boil = m_startup_time = m_startup_frac = m_T_approach = m_T_ITD_des =
-				m_P_cond_ratio = m_pb_bd_frac = m_P_cond_min = m_htf_pump_coef = std::numeric_limits<double>::quiet_NaN();
+				m_P_cond_ratio = m_pb_bd_frac = m_P_cond_min = m_htf_pump_coef = m_W_off_heat_frac = std::numeric_limits<double>::quiet_NaN();
 
 			m_pc_fl = m_CT = m_tech_type = m_n_pl_inc = -1;
 

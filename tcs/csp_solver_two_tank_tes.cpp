@@ -470,7 +470,8 @@ void C_storage_tank::converged()
 	m_m_prev = m_m_calc;		//[kg]
 }
 
-void C_storage_tank::energy_balance(double timestep /*s*/, double m_dot_in, double m_dot_out, double T_in /*K*/, double T_amb /*K*/, 
+void C_storage_tank::energy_balance(double timestep /*s*/, double m_dot_in /*kg/s*/, double m_dot_out /*kg/s*/,
+    double T_in /*K*/, double T_amb /*K*/, 
 	double &T_ave /*K*/, double & q_heater /*MW*/, double & q_dot_loss /*MW*/)
 {
 	// Get properties from tank state at the end of last time step
@@ -813,6 +814,13 @@ void C_csp_two_tank_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs
         ms_params.tanks_in_parallel = true;
     }
 
+    if (ms_params.tanks_in_parallel) {
+        m_is_cr_to_cold_tank_allowed = false;
+    }
+    else {
+        m_is_cr_to_cold_tank_allowed = true;
+    }
+
 	// Calculate thermal power to PC at design
 	m_q_pb_design = ms_params.m_W_dot_pc_design/ms_params.m_eta_pc*1.E6;	//[Wt]
 
@@ -928,6 +936,11 @@ void C_csp_two_tank_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs
 bool C_csp_two_tank_tes::does_tes_exist()
 {
 	return m_is_tes;
+}
+
+bool C_csp_two_tank_tes::is_cr_to_cold_allowed()
+{
+    return m_is_cr_to_cold_tank_allowed;
 }
 
 double C_csp_two_tank_tes::get_hot_temp()
@@ -1094,84 +1107,103 @@ void C_csp_two_tank_tes::charge_avail_est(double T_hot_K, double step_s,
 	}
 }
 
-int C_csp_two_tank_tes::solve_tes_off_design(double timestep /*s*/, double  T_amb /*K*/, 
-    double m_dot_field /*kg/s*/, double m_dot_cycle /*kg/s*/,
-    double T_field_htf_out_hot /*K*/, double T_cycle_htf_out_cold /*K*/,
-    double & T_cycle_htf_in_hot /*K*/, double & T_field_htf_in_cold /*K*/,
-    C_csp_tes::S_csp_tes_outputs & s_outputs)		//, C_csp_solver_htf_state & s_tes_ch_htf, C_csp_solver_htf_state & s_tes_dc_htf)
+int C_csp_two_tank_tes::solve_tes_off_design(double timestep /*s*/, double  T_amb /*K*/,
+    double m_dot_cr_to_cv_hot /*kg/s*/, double m_dot_cv_hot_to_cycle /*kg/s*/, double m_dot_cr_to_cv_cold /*kg/s*/,
+    double T_cr_out_hot /*K*/, double T_cycle_out_cold /*K*/,
+    double& T_cycle_htf_in_hot /*K*/, double& T_cr_in_cold /*K*/,
+    C_csp_tes::S_csp_tes_outputs& s_outputs)		//, C_csp_solver_htf_state & s_tes_ch_htf, C_csp_solver_htf_state & s_tes_dc_htf)
 {
-	s_outputs = S_csp_tes_outputs();
+    // Enthalpy balance on inlet to cold cv
+    double T_htf_cold_cv_in = T_cycle_out_cold;     //[K]
+    double m_dot_total_to_cv_cold = m_dot_cv_hot_to_cycle + m_dot_cr_to_cv_cold;    //[kg/s]
+    if (m_dot_total_to_cv_cold > 0.0) {
+        T_htf_cold_cv_in = (m_dot_cv_hot_to_cycle*T_cycle_out_cold + m_dot_cr_to_cv_cold*T_cr_out_hot) / (m_dot_total_to_cv_cold);
+    }
 
-	double m_dot_cr_to_tes_hot, m_dot_tes_hot_out, m_dot_pc_to_tes_cold, m_dot_tes_cold_out;
-	m_dot_cr_to_tes_hot = m_dot_tes_hot_out = m_dot_pc_to_tes_cold = m_dot_tes_cold_out = std::numeric_limits<double>::quiet_NaN();
-	double m_dot_field_to_cycle, m_dot_cycle_to_field;
-	m_dot_field_to_cycle = m_dot_cycle_to_field = std::numeric_limits<double>::quiet_NaN();
+    // Total mass flow leaving cold tank to cr
+    // One of the RHS should always be 0...
+    double m_dot_cv_cold_to_cr = m_dot_cr_to_cv_hot + m_dot_cr_to_cv_cold;
 
-	if (ms_params.tanks_in_parallel)
-	{
-		if (m_dot_field >= m_dot_cycle)
-		{
-			m_dot_cr_to_tes_hot = m_dot_field - m_dot_cycle;		//[kg/s]
-			m_dot_tes_hot_out = 0.0;							//[kg/s]
-			m_dot_pc_to_tes_cold = 0.0;							//[kg/s]
-			m_dot_tes_cold_out = m_dot_cr_to_tes_hot;			//[kg/s]
-			m_dot_field_to_cycle = m_dot_cycle;					//[kg/s]
-			m_dot_cycle_to_field = m_dot_cycle;					//[kg/s]
-		}
-		else
-		{
-			m_dot_cr_to_tes_hot = 0.0;							//[kg/s]
-			m_dot_tes_hot_out = m_dot_cycle - m_dot_field;		//[kg/s]
-			m_dot_pc_to_tes_cold = m_dot_tes_hot_out;			//[kg/s]
-			m_dot_tes_cold_out = 0.0;							//[kg/s]
-			m_dot_field_to_cycle = m_dot_field;					//[kg/s]
-			m_dot_cycle_to_field = m_dot_field;					//[kg/s]
-		}
-	}
-	else
-	{
-		if (ms_params.m_is_hx)
-		{
-			throw(C_csp_exception("Serial operation of C_csp_two_tank_tes not available if there is a storage HX"));
-		}
+    s_outputs = S_csp_tes_outputs();
 
-		m_dot_cr_to_tes_hot = m_dot_field;		//[kg/s]
-		m_dot_tes_hot_out = m_dot_cycle;		//[kg/s]
-		m_dot_pc_to_tes_cold = m_dot_cycle;		//[kg/s]
-		m_dot_tes_cold_out = m_dot_field;		//[kg/s]
-		m_dot_field_to_cycle = 0.0;				//[kg/s]
-		m_dot_cycle_to_field = 0.0;				//[kg/s]
-	}
+    double m_dot_cr_to_tes_hot, m_dot_cr_to_tes_cold, m_dot_tes_hot_out, m_dot_pc_to_tes_cold, m_dot_tes_cold_out, m_dot_tes_cold_in;
+    m_dot_cr_to_tes_hot = m_dot_cr_to_tes_cold = m_dot_tes_hot_out = m_dot_pc_to_tes_cold = m_dot_tes_cold_out = m_dot_tes_cold_in = std::numeric_limits<double>::quiet_NaN();
+    double m_dot_field_to_cycle, m_dot_cycle_to_field;
+    m_dot_field_to_cycle = m_dot_cycle_to_field = std::numeric_limits<double>::quiet_NaN();
 
+    if (ms_params.tanks_in_parallel)
+    {
+        // Receiver bypass is possible in a parallel configuration,
+        //  but need to determine if it actually makes sense and how to model it
+        if (m_dot_cr_to_cv_cold != 0.0) {
+            throw(C_csp_exception("Receiver output to cold tank not allowed in parallel TES configuration"));
+        }
+        m_dot_cr_to_tes_cold = 0.0;
 
-	double q_dot_heater = std::numeric_limits<double>::quiet_NaN();			//[MWe]  Heating power required to keep tanks at a minimum temperature
-	double m_dot_cold_tank_to_hot_tank = std::numeric_limits<double>::quiet_NaN();	//[kg/s] Hot tank mass flow rate, valid for direct and indirect systems
-	double W_dot_rhtf_pump = std::numeric_limits<double>::quiet_NaN();		//[MWe]  Pumping power, just for tank-to-tank in indirect storage
-	double q_dot_loss = std::numeric_limits<double>::quiet_NaN();			//[MWt]  Storage thermal losses
-	double q_dot_dc_to_htf = std::numeric_limits<double>::quiet_NaN();		//[MWt]  Thermal power to the HTF from storage
-	double q_dot_ch_from_htf = std::numeric_limits<double>::quiet_NaN();	//[MWt]  Thermal power from the HTF to storage
-	double T_hot_ave = std::numeric_limits<double>::quiet_NaN();		    //[K]    Average hot tank temperature over timestep
-	double T_cold_ave = std::numeric_limits<double>::quiet_NaN();			//[K]    Average cold tank temperature over timestep
-	double T_hot_final = std::numeric_limits<double>::quiet_NaN();			//[K]    Hot tank temperature at end of timestep
-	double T_cold_final = std::numeric_limits<double>::quiet_NaN();			//[K]    Cold tank temperature at end of timestep
+        if (m_dot_cr_to_cv_hot >= m_dot_cv_hot_to_cycle)
+        {
+            m_dot_cr_to_tes_hot = m_dot_cr_to_cv_hot - m_dot_cv_hot_to_cycle;		//[kg/s]
+            m_dot_tes_hot_out = 0.0;							//[kg/s]
+            m_dot_pc_to_tes_cold = 0.0;							//[kg/s]
+            m_dot_tes_cold_out = m_dot_cr_to_tes_hot;			//[kg/s]
+            m_dot_field_to_cycle = m_dot_cv_hot_to_cycle;		//[kg/s]
+            m_dot_cycle_to_field = m_dot_cv_hot_to_cycle;		//[kg/s]
+        }
+        else
+        {
+            m_dot_cr_to_tes_hot = 0.0;							//[kg/s]
+            m_dot_tes_hot_out = m_dot_cv_hot_to_cycle - m_dot_cr_to_cv_hot;		//[kg/s]
+            m_dot_pc_to_tes_cold = m_dot_tes_hot_out;			//[kg/s]
+            m_dot_tes_cold_out = 0.0;							//[kg/s]
+            m_dot_field_to_cycle = m_dot_cr_to_cv_hot;			//[kg/s]
+            m_dot_cycle_to_field = m_dot_cr_to_cv_hot;			//[kg/s]
+        }
+        m_dot_tes_cold_in = m_dot_pc_to_tes_cold;
+    }
+    else
+    {   // Serial configuration
+        if (ms_params.m_is_hx)
+        {
+            throw(C_csp_exception("Serial operation of C_csp_two_tank_tes not available if there is a storage HX"));
+        }
 
+        m_dot_cr_to_tes_hot = m_dot_cr_to_cv_hot;		//[kg/s]
+        m_dot_cr_to_tes_cold = m_dot_cr_to_cv_cold;     //[kg/s]
+        m_dot_tes_hot_out = m_dot_cv_hot_to_cycle;		//[kg/s]
+        m_dot_pc_to_tes_cold = m_dot_cv_hot_to_cycle;	//[kg/s]
+        m_dot_tes_cold_out = m_dot_cr_to_cv_hot + m_dot_cr_to_cv_cold;		//[kg/s]
+        m_dot_tes_cold_in = m_dot_total_to_cv_cold;     //[kg/s]
+        m_dot_field_to_cycle = 0.0;				//[kg/s]
+        m_dot_cycle_to_field = 0.0;				//[kg/s]
+    }
 
-	if (ms_params.tanks_in_parallel)	
+    double q_dot_heater = std::numeric_limits<double>::quiet_NaN();			//[MWe]  Heating power required to keep tanks at a minimum temperature
+    double m_dot_cold_tank_to_hot_tank = std::numeric_limits<double>::quiet_NaN();	//[kg/s] Hot tank mass flow rate, valid for direct and indirect systems
+    double W_dot_rhtf_pump = std::numeric_limits<double>::quiet_NaN();		//[MWe]  Pumping power, just for tank-to-tank in indirect storage
+    double q_dot_loss = std::numeric_limits<double>::quiet_NaN();			//[MWt]  Storage thermal losses
+    double q_dot_dc_to_htf = std::numeric_limits<double>::quiet_NaN();		//[MWt]  Thermal power to the HTF from storage
+    double q_dot_ch_from_htf = std::numeric_limits<double>::quiet_NaN();	//[MWt]  Thermal power from the HTF to storage
+    double T_hot_ave = std::numeric_limits<double>::quiet_NaN();		    //[K]    Average hot tank temperature over timestep
+    double T_cold_ave = std::numeric_limits<double>::quiet_NaN();			//[K]    Average cold tank temperature over timestep
+    double T_hot_final = std::numeric_limits<double>::quiet_NaN();			//[K]    Hot tank temperature at end of timestep
+    double T_cold_final = std::numeric_limits<double>::quiet_NaN();			//[K]    Cold tank temperature at end of timestep
+
+    if (ms_params.tanks_in_parallel)
     {
 
-		if (m_dot_field >= m_dot_cycle) // Charging
+        if (m_dot_cr_to_cv_hot >= m_dot_cv_hot_to_cycle) // Charging
         {
-            T_cycle_htf_in_hot = T_field_htf_out_hot;       //[K]
-            double m_dot_tes_ch = m_dot_field - m_dot_cycle;    //[kg/s]
+            T_cycle_htf_in_hot = T_cr_out_hot;       //[K]
+            double m_dot_tes_ch = m_dot_cr_to_cv_hot - m_dot_cv_hot_to_cycle;    //[kg/s]
             double T_htf_tes_cold = std::numeric_limits<double>::quiet_NaN();   //[K]
             bool ch_solved = charge(timestep,
                 T_amb,
                 m_dot_tes_ch,
-                T_field_htf_out_hot,
+                T_cr_out_hot,
                 T_htf_tes_cold,
                 q_dot_heater, m_dot_cold_tank_to_hot_tank, W_dot_rhtf_pump,
-				q_dot_loss, q_dot_dc_to_htf, q_dot_ch_from_htf,
-				T_hot_ave, T_cold_ave, T_hot_final, T_cold_final);
+                q_dot_loss, q_dot_dc_to_htf, q_dot_ch_from_htf,
+                T_hot_ave, T_cold_ave, T_hot_final, T_cold_final);
 
             // Check if TES.charge method solved
             if (!ch_solved)
@@ -1180,30 +1212,30 @@ int C_csp_two_tank_tes::solve_tes_off_design(double timestep /*s*/, double  T_am
             }
 
             // Enthalpy balance to calculate T_htf_cold to CR
-            if (m_dot_field == 0.0)
+            if (m_dot_cr_to_cv_hot == 0.0)
             {
-                T_field_htf_in_cold = T_htf_tes_cold;       //[K]
+                T_cr_in_cold = T_htf_tes_cold;       //[K]
             }
             else
             {
-                T_field_htf_in_cold = (m_dot_tes_ch*T_htf_tes_cold + m_dot_cycle * T_cycle_htf_out_cold) / m_dot_field;       //[K]
-            }            
+                T_cr_in_cold = (m_dot_tes_ch*T_htf_tes_cold + m_dot_cv_hot_to_cycle*T_cycle_out_cold) / m_dot_cr_to_cv_hot;       //[K]
+            }
         }
         else    // Discharging
         {
-            T_field_htf_in_cold = T_cycle_htf_out_cold;     //[K]
-            double m_dot_tes_dc = m_dot_cycle - m_dot_field;    //[kg/s]
+            T_cr_in_cold = T_cycle_out_cold;     //[K]
+            double m_dot_tes_dc = m_dot_cv_hot_to_cycle - m_dot_cr_to_cv_hot;    //[kg/s]
             double T_htf_tes_hot = std::numeric_limits<double>::quiet_NaN();
             bool is_tes_success = discharge(timestep,
                 T_amb,
                 m_dot_tes_dc,
-                T_cycle_htf_out_cold,
+                T_cycle_out_cold,
                 T_htf_tes_hot,
-				q_dot_heater, m_dot_cold_tank_to_hot_tank, W_dot_rhtf_pump,
-				q_dot_loss, q_dot_dc_to_htf, q_dot_ch_from_htf,
-				T_hot_ave, T_cold_ave, T_hot_final, T_cold_final);
+                q_dot_heater, m_dot_cold_tank_to_hot_tank, W_dot_rhtf_pump,
+                q_dot_loss, q_dot_dc_to_htf, q_dot_ch_from_htf,
+                T_hot_ave, T_cold_ave, T_hot_final, T_cold_final);
 
-			m_dot_cold_tank_to_hot_tank *= -1.0;
+            m_dot_cold_tank_to_hot_tank *= -1.0;
 
             // Check if discharge method solved
             if (!is_tes_success)
@@ -1211,7 +1243,7 @@ int C_csp_two_tank_tes::solve_tes_off_design(double timestep /*s*/, double  T_am
                 return -4;
             }
 
-            T_cycle_htf_in_hot = (m_dot_tes_dc*T_htf_tes_hot + m_dot_field * T_field_htf_out_hot) / m_dot_cycle;   //[K]
+            T_cycle_htf_in_hot = (m_dot_tes_dc*T_htf_tes_hot + m_dot_cr_to_cv_hot*T_cr_out_hot) / m_dot_cv_hot_to_cycle;   //[K]
         }
     }
     else // Serial tank operation
@@ -1222,19 +1254,20 @@ int C_csp_two_tank_tes::solve_tes_off_design(double timestep /*s*/, double  T_am
         }
 
         // Inputs are:
-        // 1) Mass flow rate of HTF through the field
-        // 2) Mass flow rate of HTF 
-        // 3) Temperature of HTF leaving field and entering hot tank
-        // 4) Temperature of HTF leaving the power cycle and entering the cold tank
+        // 1) Mass flow rate of HTF from field to hot tank
+        // 2) Mass flow rate of HTF from field to cold tank
+        // 3) Mass flow rate of HTF from hot tank to cycle
+        // 4) Temperature of HTF leaving field and entering hot tank
+        // 5) Temperature of HTF leaving the power cycle and entering the cold tank
 
-		double q_dot_ch_est, m_dot_tes_ch_max, T_cold_to_field_est;
-		q_dot_ch_est = m_dot_tes_ch_max = T_cold_to_field_est = std::numeric_limits<double>::quiet_NaN();
-		charge_avail_est(T_field_htf_out_hot, timestep, q_dot_ch_est, m_dot_tes_ch_max, T_cold_to_field_est);
+        double q_dot_ch_est, m_dot_tes_ch_max, T_cold_to_field_est;
+        q_dot_ch_est = m_dot_tes_ch_max = T_cold_to_field_est = std::numeric_limits<double>::quiet_NaN();
+        charge_avail_est(T_cr_out_hot, timestep, q_dot_ch_est, m_dot_tes_ch_max, T_cold_to_field_est);
 
-        if (m_dot_field > m_dot_cycle && std::max(1.E-4,(m_dot_field - m_dot_cycle)) > 1.0001*std::max(1.E-4,m_dot_tes_ch_max))
+        if (m_dot_cr_to_cv_hot > m_dot_cv_hot_to_cycle && std::max(1.E-4, (m_dot_cr_to_cv_hot - m_dot_cv_hot_to_cycle)) > 1.0001 * std::max(1.E-4, m_dot_tes_ch_max))
         {
             q_dot_heater = std::numeric_limits<double>::quiet_NaN();
-			m_dot_cold_tank_to_hot_tank = std::numeric_limits<double>::quiet_NaN();
+            m_dot_cold_tank_to_hot_tank = std::numeric_limits<double>::quiet_NaN();
             W_dot_rhtf_pump = std::numeric_limits<double>::quiet_NaN();
             q_dot_loss = std::numeric_limits<double>::quiet_NaN();
             q_dot_dc_to_htf = std::numeric_limits<double>::quiet_NaN();
@@ -1247,14 +1280,16 @@ int C_csp_two_tank_tes::solve_tes_off_design(double timestep /*s*/, double  T_am
             return -1;
         }
 
-		double q_dot_dc_est, m_dot_tes_dc_max, T_hot_to_pc_est;
-		q_dot_dc_est = m_dot_tes_dc_max = T_hot_to_pc_est = std::numeric_limits<double>::quiet_NaN();
-		discharge_avail_est(T_cycle_htf_out_cold, timestep, q_dot_dc_est, m_dot_tes_dc_max, T_hot_to_pc_est);
+        double q_dot_dc_est, m_dot_tes_dc_max, T_hot_to_pc_est;
+        q_dot_dc_est = m_dot_tes_dc_max = T_hot_to_pc_est = std::numeric_limits<double>::quiet_NaN();
+        // Use temperature downstream of cycle-out and cr-to-cold-tank mixer
+        discharge_avail_est(T_htf_cold_cv_in, timestep, q_dot_dc_est, m_dot_tes_dc_max, T_hot_to_pc_est);
 
-        if (m_dot_cycle > m_dot_field && std::max(1.E-4,(m_dot_cycle - m_dot_field)) > 1.0001*std::max(1.E-4,m_dot_tes_dc_max))
+        // If mass flow into the cold tank *from the cycle* is greater than mass flow going from cold tank to field to hot tank
+        if (m_dot_cv_hot_to_cycle > m_dot_cr_to_cv_hot && std::max(1.E-4, (m_dot_cv_hot_to_cycle - m_dot_cr_to_cv_hot)) > 1.0001 * std::max(1.E-4, m_dot_tes_dc_max))
         {
             q_dot_heater = std::numeric_limits<double>::quiet_NaN();
-			m_dot_cold_tank_to_hot_tank = std::numeric_limits<double>::quiet_NaN();
+            m_dot_cold_tank_to_hot_tank = std::numeric_limits<double>::quiet_NaN();
             W_dot_rhtf_pump = std::numeric_limits<double>::quiet_NaN();
             q_dot_loss = std::numeric_limits<double>::quiet_NaN();
             q_dot_dc_to_htf = std::numeric_limits<double>::quiet_NaN();
@@ -1267,81 +1302,330 @@ int C_csp_two_tank_tes::solve_tes_off_design(double timestep /*s*/, double  T_am
             return -2;
         }
 
-		// serial operation constrained to direct configuration, so HTF leaving TES must pass through another plant component
-		m_dot_cold_tank_to_hot_tank = 0.0;	//[kg/s]
+        // serial operation constrained to direct configuration, so HTF leaving TES must pass through another plant component
+        m_dot_cold_tank_to_hot_tank = 0.0;	//[kg/s]
 
         double q_heater_hot, q_dot_loss_hot, q_heater_cold, q_dot_loss_cold;
         q_heater_hot = q_dot_loss_hot = q_heater_cold = q_dot_loss_cold = std::numeric_limits<double>::quiet_NaN();
 
         // Call energy balance on hot tank discharge to get average outlet temperature over timestep
-        mc_hot_tank.energy_balance(timestep, m_dot_field, m_dot_cycle, T_field_htf_out_hot, T_amb,
+        mc_hot_tank.energy_balance(timestep, m_dot_cr_to_cv_hot, m_dot_cv_hot_to_cycle,
+            T_cr_out_hot, T_amb,
             T_cycle_htf_in_hot, q_heater_hot, q_dot_loss_hot);
 
         // Call energy balance on cold tank charge to track tank mass and temperature
-        mc_cold_tank.energy_balance(timestep, m_dot_cycle, m_dot_field, T_cycle_htf_out_cold, T_amb,
-            T_field_htf_in_cold, q_heater_cold, q_dot_loss_cold);
+        // Use mass flow and temperature downstream of cycle-out and cr-to-cold-tank mixer
+        mc_cold_tank.energy_balance(timestep, m_dot_total_to_cv_cold, m_dot_cv_cold_to_cr,
+            T_htf_cold_cv_in, T_amb,
+            T_cr_in_cold, q_heater_cold, q_dot_loss_cold);
 
         // Set output structure
         q_dot_heater = q_heater_cold + q_heater_hot;			//[MWt]
-        double m_dot_tes_abs_net = fabs(m_dot_cycle - m_dot_field);          //[kg/s]
 
         W_dot_rhtf_pump = 0;                              //[MWe] Tank-to-tank pumping power
 
         q_dot_loss = q_dot_loss_cold + q_dot_loss_hot;	//[MWt]
         q_dot_ch_from_htf = 0.0;		                    //[MWt]
         T_hot_ave = T_cycle_htf_in_hot;						//[K]
-        T_cold_ave = T_field_htf_in_cold;						//[K]
+        T_cold_ave = T_cr_in_cold;						//[K]
         T_hot_final = mc_hot_tank.get_m_T_calc();			//[K]
         T_cold_final = mc_cold_tank.get_m_T_calc();		//[K]
 
         // Net TES discharge
-		double q_dot_tes_net_discharge = m_cp_field_avg * (m_dot_tes_hot_out * T_hot_ave + m_dot_tes_cold_out * T_cold_ave -
-			m_dot_cr_to_tes_hot * T_field_htf_out_hot - m_dot_pc_to_tes_cold * T_cycle_htf_out_cold) / 1000.0;		//[MWt]
+        double q_dot_tes_net_discharge = m_cp_field_avg*(m_dot_tes_hot_out*T_hot_ave + m_dot_tes_cold_out*T_cold_ave -
+            m_dot_cr_to_tes_hot*T_cr_out_hot - m_dot_total_to_cv_cold*T_htf_cold_cv_in) / 1000.0;		//[MWt]
 
-        if (m_dot_cycle >= m_dot_field)
+        if (m_dot_cv_hot_to_cycle >= m_dot_cr_to_cv_hot)
         {
-            //double T_htf_ave = 0.5*(T_cycle_htf_in_hot + T_cycle_htf_out_cold);	//[K]
-            //double cp_htf_ave = mc_field_htfProps.Cp(T_htf_ave);		    //[kJ/kg-K]
-            //q_dot_dc_to_htf = (m_dot_cycle - m_dot_field) * cp_htf_ave*(T_cycle_htf_in_hot - T_cycle_htf_out_cold) / 1000.0;		//[MWt]
             q_dot_ch_from_htf = 0.0;
 
-			q_dot_dc_to_htf = q_dot_tes_net_discharge;	//[MWt]
+            q_dot_dc_to_htf = q_dot_tes_net_discharge;	//[MWt]
         }
         else
         {
-            //double T_htf_ave = 0.5*(T_field_htf_out_hot + T_field_htf_in_cold);	//[K]
-            //double cp_htf_ave = mc_field_htfProps.Cp(T_htf_ave);		    //[kJ/kg-K]
             q_dot_dc_to_htf = 0.0;
-            //q_dot_ch_from_htf = (m_dot_field - m_dot_cycle) * cp_htf_ave*(T_field_htf_out_hot - T_field_htf_in_cold) / 1000.0;		//[MWt]
 
-			q_dot_ch_from_htf = -q_dot_tes_net_discharge;	//[MWt]
+            q_dot_ch_from_htf = -q_dot_tes_net_discharge;	//[MWt]
         }
 
     }
 
-	s_outputs.m_q_heater = q_dot_heater;
-	s_outputs.m_q_dot_dc_to_htf = q_dot_dc_to_htf;
-	s_outputs.m_q_dot_ch_from_htf = q_dot_ch_from_htf;
+    s_outputs.m_q_heater = q_dot_heater;
+    s_outputs.m_q_dot_dc_to_htf = q_dot_dc_to_htf;
+    s_outputs.m_q_dot_ch_from_htf = q_dot_ch_from_htf;
 
-	s_outputs.m_m_dot_cr_to_tes_hot = m_dot_cr_to_tes_hot;		//[kg/s]
-	s_outputs.m_m_dot_tes_hot_out = m_dot_tes_hot_out;			//[kg/s]
-	s_outputs.m_m_dot_pc_to_tes_cold = m_dot_pc_to_tes_cold;	//[kg/s]
-	s_outputs.m_m_dot_tes_cold_out = m_dot_tes_cold_out;		//[kg/s]
-	s_outputs.m_m_dot_field_to_cycle = m_dot_field_to_cycle;	//[kg/s]
-	s_outputs.m_m_dot_cycle_to_field = m_dot_cycle_to_field;	//[kg/s]
+    s_outputs.m_m_dot_cr_to_tes_hot = m_dot_cr_to_tes_hot;		//[kg/s]
+    s_outputs.m_m_dot_cr_to_tes_cold = m_dot_cr_to_tes_cold;    //[kg/s]
+    s_outputs.m_m_dot_tes_hot_out = m_dot_tes_hot_out;			//[kg/s]
+    s_outputs.m_m_dot_pc_to_tes_cold = m_dot_pc_to_tes_cold;	//[kg/s]
+    s_outputs.m_m_dot_tes_cold_out = m_dot_tes_cold_out;		//[kg/s]
+    s_outputs.m_m_dot_tes_cold_in = m_dot_tes_cold_in;          //[kg/s]
+    s_outputs.m_m_dot_field_to_cycle = m_dot_field_to_cycle;	//[kg/s]
+    s_outputs.m_m_dot_cycle_to_field = m_dot_cycle_to_field;	//[kg/s]
 
-	s_outputs.m_m_dot_cold_tank_to_hot_tank = m_dot_cold_tank_to_hot_tank;
+    s_outputs.m_T_tes_cold_in = T_htf_cold_cv_in;       //[K]
 
-	mc_reported_outputs.value(E_Q_DOT_LOSS, q_dot_loss);		//[MWt]
-	mc_reported_outputs.value(E_W_DOT_HEATER, q_dot_heater);		//[MWt]
-	mc_reported_outputs.value(E_TES_T_HOT, T_hot_final - 273.15);	//[C]
-	mc_reported_outputs.value(E_TES_T_COLD, T_cold_final - 273.15);	//[C]
-	mc_reported_outputs.value(E_M_DOT_TANK_TO_TANK, m_dot_cold_tank_to_hot_tank);	//[kg/s]
-	mc_reported_outputs.value(E_MASS_COLD_TANK, mc_cold_tank.get_m_m_calc());		//[kg]
-	mc_reported_outputs.value(E_MASS_HOT_TANK, mc_hot_tank.get_m_m_calc());			//[kg]
+    s_outputs.m_m_dot_cold_tank_to_hot_tank = m_dot_cold_tank_to_hot_tank;
+
+    mc_reported_outputs.value(E_Q_DOT_LOSS, q_dot_loss);		//[MWt]
+    mc_reported_outputs.value(E_W_DOT_HEATER, q_dot_heater);		//[MWt]
+    mc_reported_outputs.value(E_TES_T_HOT, T_hot_final - 273.15);	//[C]
+    mc_reported_outputs.value(E_TES_T_COLD, T_cold_final - 273.15);	//[C]
+    mc_reported_outputs.value(E_M_DOT_TANK_TO_TANK, m_dot_cold_tank_to_hot_tank);	//[kg/s]
+    mc_reported_outputs.value(E_MASS_COLD_TANK, mc_cold_tank.get_m_m_calc());		//[kg]
+    mc_reported_outputs.value(E_MASS_HOT_TANK, mc_hot_tank.get_m_m_calc());			//[kg]
 
     return 0;
 }
+
+//int C_csp_two_tank_tes::solve_tes_off_design(double timestep /*s*/, double  T_amb /*K*/, 
+//    double m_dot_field /*kg/s*/, double m_dot_cycle /*kg/s*/,
+//    double T_field_htf_out_hot /*K*/, double T_cycle_htf_out_cold /*K*/,
+//    double & T_cycle_htf_in_hot /*K*/, double & T_field_htf_in_cold /*K*/,
+//    C_csp_tes::S_csp_tes_outputs & s_outputs)		//, C_csp_solver_htf_state & s_tes_ch_htf, C_csp_solver_htf_state & s_tes_dc_htf)
+//{
+//	s_outputs = S_csp_tes_outputs();
+//
+//	double m_dot_cr_to_tes_hot, m_dot_tes_hot_out, m_dot_pc_to_tes_cold, m_dot_tes_cold_out;
+//	m_dot_cr_to_tes_hot = m_dot_tes_hot_out = m_dot_pc_to_tes_cold = m_dot_tes_cold_out = std::numeric_limits<double>::quiet_NaN();
+//	double m_dot_field_to_cycle, m_dot_cycle_to_field;
+//	m_dot_field_to_cycle = m_dot_cycle_to_field = std::numeric_limits<double>::quiet_NaN();
+//
+//	if (ms_params.tanks_in_parallel)
+//	{
+//		if (m_dot_field >= m_dot_cycle)
+//		{
+//			m_dot_cr_to_tes_hot = m_dot_field - m_dot_cycle;		//[kg/s]
+//			m_dot_tes_hot_out = 0.0;							//[kg/s]
+//			m_dot_pc_to_tes_cold = 0.0;							//[kg/s]
+//			m_dot_tes_cold_out = m_dot_cr_to_tes_hot;			//[kg/s]
+//			m_dot_field_to_cycle = m_dot_cycle;					//[kg/s]
+//			m_dot_cycle_to_field = m_dot_cycle;					//[kg/s]
+//		}
+//		else
+//		{
+//			m_dot_cr_to_tes_hot = 0.0;							//[kg/s]
+//			m_dot_tes_hot_out = m_dot_cycle - m_dot_field;		//[kg/s]
+//			m_dot_pc_to_tes_cold = m_dot_tes_hot_out;			//[kg/s]
+//			m_dot_tes_cold_out = 0.0;							//[kg/s]
+//			m_dot_field_to_cycle = m_dot_field;					//[kg/s]
+//			m_dot_cycle_to_field = m_dot_field;					//[kg/s]
+//		}
+//	}
+//	else
+//	{
+//		if (ms_params.m_is_hx)
+//		{
+//			throw(C_csp_exception("Serial operation of C_csp_two_tank_tes not available if there is a storage HX"));
+//		}
+//
+//		m_dot_cr_to_tes_hot = m_dot_field;		//[kg/s]
+//		m_dot_tes_hot_out = m_dot_cycle;		//[kg/s]
+//		m_dot_pc_to_tes_cold = m_dot_cycle;		//[kg/s]
+//		m_dot_tes_cold_out = m_dot_field;		//[kg/s]
+//		m_dot_field_to_cycle = 0.0;				//[kg/s]
+//		m_dot_cycle_to_field = 0.0;				//[kg/s]
+//	}
+//
+//
+//	double q_dot_heater = std::numeric_limits<double>::quiet_NaN();			//[MWe]  Heating power required to keep tanks at a minimum temperature
+//	double m_dot_cold_tank_to_hot_tank = std::numeric_limits<double>::quiet_NaN();	//[kg/s] Hot tank mass flow rate, valid for direct and indirect systems
+//	double W_dot_rhtf_pump = std::numeric_limits<double>::quiet_NaN();		//[MWe]  Pumping power, just for tank-to-tank in indirect storage
+//	double q_dot_loss = std::numeric_limits<double>::quiet_NaN();			//[MWt]  Storage thermal losses
+//	double q_dot_dc_to_htf = std::numeric_limits<double>::quiet_NaN();		//[MWt]  Thermal power to the HTF from storage
+//	double q_dot_ch_from_htf = std::numeric_limits<double>::quiet_NaN();	//[MWt]  Thermal power from the HTF to storage
+//	double T_hot_ave = std::numeric_limits<double>::quiet_NaN();		    //[K]    Average hot tank temperature over timestep
+//	double T_cold_ave = std::numeric_limits<double>::quiet_NaN();			//[K]    Average cold tank temperature over timestep
+//	double T_hot_final = std::numeric_limits<double>::quiet_NaN();			//[K]    Hot tank temperature at end of timestep
+//	double T_cold_final = std::numeric_limits<double>::quiet_NaN();			//[K]    Cold tank temperature at end of timestep
+//
+//
+//	if (ms_params.tanks_in_parallel)	
+//    {
+//
+//		if (m_dot_field >= m_dot_cycle) // Charging
+//        {
+//            T_cycle_htf_in_hot = T_field_htf_out_hot;       //[K]
+//            double m_dot_tes_ch = m_dot_field - m_dot_cycle;    //[kg/s]
+//            double T_htf_tes_cold = std::numeric_limits<double>::quiet_NaN();   //[K]
+//            bool ch_solved = charge(timestep,
+//                T_amb,
+//                m_dot_tes_ch,
+//                T_field_htf_out_hot,
+//                T_htf_tes_cold,
+//                q_dot_heater, m_dot_cold_tank_to_hot_tank, W_dot_rhtf_pump,
+//				q_dot_loss, q_dot_dc_to_htf, q_dot_ch_from_htf,
+//				T_hot_ave, T_cold_ave, T_hot_final, T_cold_final);
+//
+//            // Check if TES.charge method solved
+//            if (!ch_solved)
+//            {
+//                return -3;
+//            }
+//
+//            // Enthalpy balance to calculate T_htf_cold to CR
+//            if (m_dot_field == 0.0)
+//            {
+//                T_field_htf_in_cold = T_htf_tes_cold;       //[K]
+//            }
+//            else
+//            {
+//                T_field_htf_in_cold = (m_dot_tes_ch*T_htf_tes_cold + m_dot_cycle * T_cycle_htf_out_cold) / m_dot_field;       //[K]
+//            }            
+//        }
+//        else    // Discharging
+//        {
+//            T_field_htf_in_cold = T_cycle_htf_out_cold;     //[K]
+//            double m_dot_tes_dc = m_dot_cycle - m_dot_field;    //[kg/s]
+//            double T_htf_tes_hot = std::numeric_limits<double>::quiet_NaN();
+//            bool is_tes_success = discharge(timestep,
+//                T_amb,
+//                m_dot_tes_dc,
+//                T_cycle_htf_out_cold,
+//                T_htf_tes_hot,
+//				q_dot_heater, m_dot_cold_tank_to_hot_tank, W_dot_rhtf_pump,
+//				q_dot_loss, q_dot_dc_to_htf, q_dot_ch_from_htf,
+//				T_hot_ave, T_cold_ave, T_hot_final, T_cold_final);
+//
+//			m_dot_cold_tank_to_hot_tank *= -1.0;
+//
+//            // Check if discharge method solved
+//            if (!is_tes_success)
+//            {
+//                return -4;
+//            }
+//
+//            T_cycle_htf_in_hot = (m_dot_tes_dc*T_htf_tes_hot + m_dot_field * T_field_htf_out_hot) / m_dot_cycle;   //[K]
+//        }
+//    }
+//    else // Serial tank operation
+//    {
+//        if (ms_params.m_is_hx)
+//        {
+//            throw(C_csp_exception("C_csp_two_tank_tes::discharge_decoupled not available if there is a storage HX"));
+//        }
+//
+//        // Inputs are:
+//        // 1) Mass flow rate of HTF through the field
+//        // 2) Mass flow rate of HTF 
+//        // 3) Temperature of HTF leaving field and entering hot tank
+//        // 4) Temperature of HTF leaving the power cycle and entering the cold tank
+//
+//		double q_dot_ch_est, m_dot_tes_ch_max, T_cold_to_field_est;
+//		q_dot_ch_est = m_dot_tes_ch_max = T_cold_to_field_est = std::numeric_limits<double>::quiet_NaN();
+//		charge_avail_est(T_field_htf_out_hot, timestep, q_dot_ch_est, m_dot_tes_ch_max, T_cold_to_field_est);
+//
+//        if (m_dot_field > m_dot_cycle && std::max(1.E-4,(m_dot_field - m_dot_cycle)) > 1.0001*std::max(1.E-4,m_dot_tes_ch_max))
+//        {
+//            q_dot_heater = std::numeric_limits<double>::quiet_NaN();
+//			m_dot_cold_tank_to_hot_tank = std::numeric_limits<double>::quiet_NaN();
+//            W_dot_rhtf_pump = std::numeric_limits<double>::quiet_NaN();
+//            q_dot_loss = std::numeric_limits<double>::quiet_NaN();
+//            q_dot_dc_to_htf = std::numeric_limits<double>::quiet_NaN();
+//            q_dot_ch_from_htf = std::numeric_limits<double>::quiet_NaN();
+//            T_hot_ave = std::numeric_limits<double>::quiet_NaN();
+//            T_cold_ave = std::numeric_limits<double>::quiet_NaN();
+//            T_hot_final = std::numeric_limits<double>::quiet_NaN();
+//            T_cold_final = std::numeric_limits<double>::quiet_NaN();
+//
+//            return -1;
+//        }
+//
+//		double q_dot_dc_est, m_dot_tes_dc_max, T_hot_to_pc_est;
+//		q_dot_dc_est = m_dot_tes_dc_max = T_hot_to_pc_est = std::numeric_limits<double>::quiet_NaN();
+//		discharge_avail_est(T_cycle_htf_out_cold, timestep, q_dot_dc_est, m_dot_tes_dc_max, T_hot_to_pc_est);
+//
+//        if (m_dot_cycle > m_dot_field && std::max(1.E-4,(m_dot_cycle - m_dot_field)) > 1.0001*std::max(1.E-4,m_dot_tes_dc_max))
+//        {
+//            q_dot_heater = std::numeric_limits<double>::quiet_NaN();
+//			m_dot_cold_tank_to_hot_tank = std::numeric_limits<double>::quiet_NaN();
+//            W_dot_rhtf_pump = std::numeric_limits<double>::quiet_NaN();
+//            q_dot_loss = std::numeric_limits<double>::quiet_NaN();
+//            q_dot_dc_to_htf = std::numeric_limits<double>::quiet_NaN();
+//            q_dot_ch_from_htf = std::numeric_limits<double>::quiet_NaN();
+//            T_hot_ave = std::numeric_limits<double>::quiet_NaN();
+//            T_cold_ave = std::numeric_limits<double>::quiet_NaN();
+//            T_hot_final = std::numeric_limits<double>::quiet_NaN();
+//            T_cold_final = std::numeric_limits<double>::quiet_NaN();
+//
+//            return -2;
+//        }
+//
+//		// serial operation constrained to direct configuration, so HTF leaving TES must pass through another plant component
+//		m_dot_cold_tank_to_hot_tank = 0.0;	//[kg/s]
+//
+//        double q_heater_hot, q_dot_loss_hot, q_heater_cold, q_dot_loss_cold;
+//        q_heater_hot = q_dot_loss_hot = q_heater_cold = q_dot_loss_cold = std::numeric_limits<double>::quiet_NaN();
+//
+//        // Call energy balance on hot tank discharge to get average outlet temperature over timestep
+//        mc_hot_tank.energy_balance(timestep, m_dot_field, m_dot_cycle, T_field_htf_out_hot, T_amb,
+//            T_cycle_htf_in_hot, q_heater_hot, q_dot_loss_hot);
+//
+//        // Call energy balance on cold tank charge to track tank mass and temperature
+//        mc_cold_tank.energy_balance(timestep, m_dot_cycle, m_dot_field, T_cycle_htf_out_cold, T_amb,
+//            T_field_htf_in_cold, q_heater_cold, q_dot_loss_cold);
+//
+//        // Set output structure
+//        q_dot_heater = q_heater_cold + q_heater_hot;			//[MWt]
+//        double m_dot_tes_abs_net = fabs(m_dot_cycle - m_dot_field);          //[kg/s]
+//
+//        W_dot_rhtf_pump = 0;                              //[MWe] Tank-to-tank pumping power
+//
+//        q_dot_loss = q_dot_loss_cold + q_dot_loss_hot;	//[MWt]
+//        q_dot_ch_from_htf = 0.0;		                    //[MWt]
+//        T_hot_ave = T_cycle_htf_in_hot;						//[K]
+//        T_cold_ave = T_field_htf_in_cold;						//[K]
+//        T_hot_final = mc_hot_tank.get_m_T_calc();			//[K]
+//        T_cold_final = mc_cold_tank.get_m_T_calc();		//[K]
+//
+//        // Net TES discharge
+//		double q_dot_tes_net_discharge = m_cp_field_avg * (m_dot_tes_hot_out * T_hot_ave + m_dot_tes_cold_out * T_cold_ave -
+//			m_dot_cr_to_tes_hot * T_field_htf_out_hot - m_dot_pc_to_tes_cold * T_cycle_htf_out_cold) / 1000.0;		//[MWt]
+//
+//        if (m_dot_cycle >= m_dot_field)
+//        {
+//            //double T_htf_ave = 0.5*(T_cycle_htf_in_hot + T_cycle_htf_out_cold);	//[K]
+//            //double cp_htf_ave = mc_field_htfProps.Cp(T_htf_ave);		    //[kJ/kg-K]
+//            //q_dot_dc_to_htf = (m_dot_cycle - m_dot_field) * cp_htf_ave*(T_cycle_htf_in_hot - T_cycle_htf_out_cold) / 1000.0;		//[MWt]
+//            q_dot_ch_from_htf = 0.0;
+//
+//			q_dot_dc_to_htf = q_dot_tes_net_discharge;	//[MWt]
+//        }
+//        else
+//        {
+//            //double T_htf_ave = 0.5*(T_field_htf_out_hot + T_field_htf_in_cold);	//[K]
+//            //double cp_htf_ave = mc_field_htfProps.Cp(T_htf_ave);		    //[kJ/kg-K]
+//            q_dot_dc_to_htf = 0.0;
+//            //q_dot_ch_from_htf = (m_dot_field - m_dot_cycle) * cp_htf_ave*(T_field_htf_out_hot - T_field_htf_in_cold) / 1000.0;		//[MWt]
+//
+//			q_dot_ch_from_htf = -q_dot_tes_net_discharge;	//[MWt]
+//        }
+//
+//    }
+//
+//	s_outputs.m_q_heater = q_dot_heater;
+//	s_outputs.m_q_dot_dc_to_htf = q_dot_dc_to_htf;
+//	s_outputs.m_q_dot_ch_from_htf = q_dot_ch_from_htf;
+//
+//	s_outputs.m_m_dot_cr_to_tes_hot = m_dot_cr_to_tes_hot;		//[kg/s]
+//	s_outputs.m_m_dot_tes_hot_out = m_dot_tes_hot_out;			//[kg/s]
+//	s_outputs.m_m_dot_pc_to_tes_cold = m_dot_pc_to_tes_cold;	//[kg/s]
+//	s_outputs.m_m_dot_tes_cold_out = m_dot_tes_cold_out;		//[kg/s]
+//	s_outputs.m_m_dot_field_to_cycle = m_dot_field_to_cycle;	//[kg/s]
+//	s_outputs.m_m_dot_cycle_to_field = m_dot_cycle_to_field;	//[kg/s]
+//
+//	s_outputs.m_m_dot_cold_tank_to_hot_tank = m_dot_cold_tank_to_hot_tank;
+//
+//	mc_reported_outputs.value(E_Q_DOT_LOSS, q_dot_loss);		//[MWt]
+//	mc_reported_outputs.value(E_W_DOT_HEATER, q_dot_heater);		//[MWt]
+//	mc_reported_outputs.value(E_TES_T_HOT, T_hot_final - 273.15);	//[C]
+//	mc_reported_outputs.value(E_TES_T_COLD, T_cold_final - 273.15);	//[C]
+//	mc_reported_outputs.value(E_M_DOT_TANK_TO_TANK, m_dot_cold_tank_to_hot_tank);	//[kg/s]
+//	mc_reported_outputs.value(E_MASS_COLD_TANK, mc_cold_tank.get_m_m_calc());		//[kg]
+//	mc_reported_outputs.value(E_MASS_HOT_TANK, mc_hot_tank.get_m_m_calc());			//[kg]
+//
+//    return 0;
+//}
 
 bool C_csp_two_tank_tes::discharge(double timestep /*s*/, double T_amb /*K*/, double m_dot_htf_in /*kg/s*/, 
 	double T_htf_cold_in /*K*/, double & T_htf_hot_out /*K*/, 

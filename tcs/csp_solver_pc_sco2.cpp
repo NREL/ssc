@@ -481,6 +481,7 @@ void C_pc_sco2::call(const C_csp_weatherreader::S_outputs &weather,
 	//out_report.m_m_dot_demand = m_dot_demand;			//[kg/hr] HTF required flow rate to meet power load
 	out_solver.m_m_dot_htf = m_dot_htf;					//[kg/hr] Actual HTF flow rate passing through the power cycle
 	//out_report.m_m_dot_htf_ref = m_m_dot_htf_des;		//[kg/hr] Calculated reference HTF flow rate at design
+    out_solver.m_W_off_heat_par = 0.0;				    //[MWe] Zero electric heat in off state
 	out_solver.m_W_cool_par = W_cool_par;				//[MWe] Cooling system parasitic load
 	//out_report.m_P_ref = m_W_dot_des;					//[MWe] Reference power level output at design not counting cooling parasitics
 	//out_report.m_f_hrsys = 0.0;							//[-] Fraction of operating heat rejection system

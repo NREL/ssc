@@ -282,6 +282,8 @@ public:
 		std::vector<bool> m_is_rec_su_allowed_in;
 		std::vector<bool> m_is_pc_su_allowed_in;
 		std::vector<bool> m_is_pc_sb_allowed_in;
+		std::vector<bool> m_is_elec_heat_dur_off;
+
 
 		bool m_is_disp_constr;
 		std::vector<double> m_disp_cap_constr;
@@ -631,11 +633,14 @@ public:
 	struct S_control_inputs
 	{
 		E_csp_power_cycle_modes m_standby_control;		//[-] Control signal indicating standby mode
-		double m_m_dot;				//[kg/hr] HTF mass flow rate to power cycle
+		double m_m_dot;				                    //[kg/hr] HTF mass flow rate to power cycle
+        bool m_is_elec_heat_dur_off;                    //[-] Is there electric heating when cycle is off 
+
 
 		S_control_inputs()
 		{
             m_standby_control = E_csp_power_cycle_modes::OFF;
+            m_is_elec_heat_dur_off = false;
 		}
 	};
 
@@ -678,6 +683,7 @@ public:
 
 			// Parasitics, plant net power equation
 		double m_W_dot_htf_pump;	//[MWe] HTF pumping power
+        double m_W_off_heat_par;    //[MWe] Parasitic electric heaters for cycle off
 		double m_W_cool_par;		//[MWe] Cooling system parasitic load
 
 		bool m_was_method_successful;	//[-] Return false if method did not solve as expected but can be handled by solver/controller
@@ -685,7 +691,7 @@ public:
 		S_csp_pc_out_solver()
 		{
 			m_time_required_su = m_time_required_max = m_P_cycle = m_T_htf_cold = m_q_dot_htf = m_m_dot_htf =
-				m_W_dot_htf_pump = m_W_cool_par = std::numeric_limits<double>::quiet_NaN();
+				m_W_dot_htf_pump = m_W_off_heat_par = m_W_cool_par = std::numeric_limits<double>::quiet_NaN();
 
 			m_was_method_successful = false;
 		}
@@ -759,11 +765,15 @@ public:
 		double m_q_dot_ch_from_htf;	//[MWt]  Thermal power from the HTF to storage
 		
 		double m_m_dot_cr_to_tes_hot;	//[kg/s]
-		double m_m_dot_tes_hot_out;	//[kg/s]
+        double m_m_dot_cr_to_tes_cold;  //[kg/s]
+		double m_m_dot_tes_hot_out;	    //[kg/s]
 		double m_m_dot_pc_to_tes_cold;	//[kg/s]
-		double m_m_dot_tes_cold_out;		//[kg/s]
+		double m_m_dot_tes_cold_out;	//[kg/s]
+        double m_m_dot_tes_cold_in;     //[kg/s]
 		double m_m_dot_field_to_cycle;	//[kg/s]
 		double m_m_dot_cycle_to_field;	//[kg/s]
+
+        double m_T_tes_cold_in;         //[K]
 
 		// Mass flow rate from one tank directly to another. = 0 for direct systems
 		double m_m_dot_cold_tank_to_hot_tank;	//[kg/s] 
@@ -771,8 +781,9 @@ public:
 		S_csp_tes_outputs()
 		{
 			m_q_heater =  m_q_dot_dc_to_htf = m_q_dot_ch_from_htf = 
-			m_m_dot_cr_to_tes_hot = m_m_dot_pc_to_tes_cold = m_m_dot_pc_to_tes_cold =
-			m_m_dot_tes_cold_out = m_m_dot_field_to_cycle = m_m_dot_cycle_to_field =
+			m_m_dot_cr_to_tes_hot = m_m_dot_cr_to_tes_cold = m_m_dot_pc_to_tes_cold = m_m_dot_pc_to_tes_cold =
+			m_m_dot_tes_cold_out = m_m_dot_tes_cold_in = m_m_dot_field_to_cycle = m_m_dot_cycle_to_field =
+            m_T_tes_cold_in = 
             m_m_dot_cold_tank_to_hot_tank = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
@@ -780,6 +791,8 @@ public:
 	virtual void init(const C_csp_tes::S_csp_tes_init_inputs init_inputs) = 0;
 
 	virtual bool does_tes_exist() = 0;
+
+    virtual bool is_cr_to_cold_allowed() = 0;
 
 	virtual double get_hot_temp() = 0;
 
@@ -801,7 +814,8 @@ public:
 	
 	virtual void charge_avail_est(double T_hot_K, double step_s, double &q_dot_ch_est, double &m_dot_field_est /*kg/s*/, double &T_cold_field_est /*K*/) = 0;
 
-    virtual int solve_tes_off_design(double timestep /*s*/, double  T_amb /*K*/, double m_dot_field /*kg/s*/, double m_dot_cycle /*kg/s*/,
+    virtual int solve_tes_off_design(double timestep /*s*/, double  T_amb /*K*/,
+        double m_dot_cr_to_cv_hot /*kg/s*/, double m_dot_cv_hot_to_cycle /*kg/s*/, double m_dot_cr_to_cv_cold /*kg/s*/,
         double T_field_htf_out_hot /*K*/, double T_cycle_htf_out_cold /*K*/,
         double & T_cycle_htf_in_hot /*K*/, double & T_field_htf_in_cold /*K*/, 
 		C_csp_tes::S_csp_tes_outputs& outputs) = 0;
@@ -899,10 +913,13 @@ public:
 			TES_Q_DOT_DC,         //[MWt] TES discharge thermal power
 			TES_Q_DOT_CH,         //[MWt] TES charge thermal power
 			TES_E_CH_STATE,       //[MWht] TES charge state at the end of the time step
-			M_DOT_CR_TO_TES_HOT,  //[kg/s] 
+            TES_T_COLD_IN,        //[C] Inlet temperature to cold TES
+			M_DOT_CR_TO_TES_HOT,  //[kg/s]
+            M_DOT_CR_TO_TES_COLD, //[kg/s]
 			M_DOT_TES_HOT_OUT,    //[kg/s]
 			M_DOT_PC_TO_TES_COLD, //[kg/s]
 			M_DOT_TES_COLD_OUT,   //[kg/s]
+            M_DOT_TES_COLD_IN,    //[kg/s]
 			M_DOT_FIELD_TO_CYCLE, //[kg/s]
 			M_DOT_CYCLE_TO_FIELD, //[kg/s]
 			//TES_M_DOT_DC,         //[MWt] TES discharge mass flow rate
@@ -910,6 +927,7 @@ public:
 			COL_W_DOT_TRACK,      //[MWe] Parasitic collector tracking, startup, stow power consumption
 			CR_W_DOT_PUMP,        //[MWe] Parasitic tower HTF pump power
 			SYS_W_DOT_PUMP,       //[MWe] Parasitic PC and TES HTF pump power
+            PC_W_DOT_OFF_HEAT,    //[MWe] Parasitic electric heaters for cycle off
 			PC_W_DOT_COOLING,     //[MWe] Parasitic condenser operation power
 			SYS_W_DOT_FIXED,      //[MWe] Parasitic fixed power consumption
 			SYS_W_DOT_BOP,        //[MWe] Parasitic BOP power consumption
@@ -988,11 +1006,22 @@ public:
 		double m_bop_par_1;			//[-]
 		double m_bop_par_2;			//[-]
 
+        bool m_is_rec_to_coldtank_allowed;
+
+        // If receiver outlet to cold tank is allowed
+        //   outlet temps colder than this value go to the cold tank
+        //   calculate T_htf_hot_tank_in_min = f*T_hot_des + (1-f)*T_cold_des
+        double f_htf_hot_des__T_htf_hot_tank_in_min;   //[-]
+
 		S_csp_system_params()
 		{
 			m_pb_fixed_par =
 
 			m_bop_par = m_bop_par_f = m_bop_par_0 = m_bop_par_1 = m_bop_par_2 = std::numeric_limits<double>::quiet_NaN();
+
+            f_htf_hot_des__T_htf_hot_tank_in_min = std::numeric_limits<double>::quiet_NaN();
+
+            m_is_rec_to_coldtank_allowed = false;
 		}
 	};
 
@@ -1068,6 +1097,13 @@ private:
 
 	bool m_is_CR_DF__PC_SU__TES_OFF__AUX_OFF_avail;
 
+    bool m_is_CR_TO_COLD__PC_TARGET__TES_DC__AUX_OFF_avail;
+    bool m_is_CR_TO_COLD__PC_RM_LO__TES_EMPTY__AUX_OFF_avail;
+    bool m_is_CR_TO_COLD__PC_SB__TES_DC__AUX_OFF_avail;
+    bool m_is_CR_TO_COLD__PC_MIN__TES_EMPTY__AUX_OFF_avail;
+    bool m_is_CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF_avail;
+    bool m_is_CR_TO_COLD__PC_SU__TES_DC__AUX_OFF_avail;
+
 	// member string for exception messages
 	std::string error_msg;
 
@@ -1090,14 +1126,25 @@ private:
 	double m_cycle_x_hot_des;			//[-]
 	double m_m_dot_pc_des;				//[kg/hr]
 	double m_m_dot_pc_min;				//[kg/hr]
-	double m_m_dot_pc_max;				//[kg/hr]
+
+    // Max operating mass flow is dependent on ambient temperature and calculated every timestep
+    double m_m_dot_pc_max;              //[kg/hr]
+    // Max startup mass flow is always constant
+    double m_m_dot_pc_max_startup;      //[kg/hr]
 
 		// Storage logic
 	bool m_is_tes;			    //[-] True: plant has storage
     bool m_is_cr_config_recirc; //[-] True: Receiver "off" and "startup" are recirculated from outlet to inlet
 
+        // System control logic
+        // True: allows control to consider sending rec exit HTF to cold tank if colder than some threshold
+    bool m_is_rec_to_coldtank_allowed;  //[-] 
+        // if 'm_is_rec_to_coldtank_allowed' then T_cr_out < this temp go to cold tank
+    double m_T_htf_hot_tank_in_min;     //[C] 
+
         // Field-side HTF
-    bool m_T_field_cold_limit;  //[C]
+    double m_T_field_cold_limit;    //[C]
+    double m_T_field_in_hot_limit;  //[C]
 
 		// Reporting and Output Tracking
     bool m_is_first_timestep;           //[-]
@@ -1202,7 +1249,21 @@ public:
 
 		CR_DF__PC_SU__TES_FULL__AUX_OFF,
 
-		CR_DF__PC_SU__TES_OFF__AUX_OFF
+		CR_DF__PC_SU__TES_OFF__AUX_OFF,
+
+        CR_TO_COLD__PC_TARGET__TES_DC__AUX_OFF,
+
+        CR_TO_COLD__PC_RM_LO__TES_EMPTY__AUX_OFF,
+
+        CR_TO_COLD__PC_SB__TES_DC__AUX_OFF,
+
+        CR_TO_COLD__PC_MIN__TES_EMPTY__AUX_OFF,
+
+        CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF,
+
+        SKIP_40,
+
+        CR_TO_COLD__PC_SU__TES_DC__AUX_OFF
 	};
     
     static std::string tech_operating_modes_str[];
@@ -1265,6 +1326,7 @@ public:
 
 		C_csp_power_cycle::E_csp_power_cycle_modes m_pc_mode;      //[-]
 		int m_cr_mode;      //[-]
+        bool m_is_rec_outlet_to_hottank;    //[-]
 
 		double m_q_dot_pc_target;   //[MWt]
 
@@ -1284,6 +1346,7 @@ public:
 
 		C_MEQ__m_dot_tes(E_m_dot_solver_modes solver_mode, C_csp_solver* pc_csp_solver,
             C_csp_power_cycle::E_csp_power_cycle_modes pc_mode, int cr_mode,
+            bool is_rec_outlet_to_hottank,
 			double q_dot_pc_target /*MWt*/,
 			double defocus /*-*/, double t_ts /*s*/,
 			double P_field_in /*kPa*/, double x_field_in /*-*/,
@@ -1294,6 +1357,9 @@ public:
 			mpc_csp_solver = pc_csp_solver;
 			m_pc_mode = pc_mode;    //[-]
 			m_cr_mode = cr_mode;    //[-]
+
+            m_is_rec_outlet_to_hottank = is_rec_outlet_to_hottank;
+
 			m_q_dot_pc_target = q_dot_pc_target;    //[MWt]
 			m_defocus = defocus;    //[-]
 			m_t_ts_in = t_ts;          //[s]
@@ -1321,6 +1387,7 @@ public:
 
         C_csp_power_cycle::E_csp_power_cycle_modes m_pc_mode;      //[-]
 		int m_cr_mode;      //[-]
+        bool m_is_rec_outlet_to_hottank;    //[-]
 
 		double m_defocus;   //[-]
 		double m_t_ts_in;      //[s]
@@ -1334,6 +1401,7 @@ public:
 		C_MEQ__T_field_cold(C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode, C_csp_solver* pc_csp_solver,
 			double q_dot_pc_target /*MWt*/,
             C_csp_power_cycle::E_csp_power_cycle_modes pc_mode, int cr_mode,
+            bool is_rec_outlet_to_hottank,
 			double defocus /*-*/, double t_ts /*s*/,
 			double P_field_in /*kPa*/, double x_field_in /*-*/)
 		{
@@ -1345,6 +1413,7 @@ public:
 
 			m_pc_mode = pc_mode;
 			m_cr_mode = cr_mode;
+            m_is_rec_outlet_to_hottank = is_rec_outlet_to_hottank;
 			m_defocus = defocus;
 			m_t_ts_in = t_ts;  //[s]
 
@@ -1379,6 +1448,7 @@ public:
 
         C_csp_power_cycle::E_csp_power_cycle_modes m_pc_mode;      //[-]
 		int m_cr_mode;      //[-]
+        bool m_is_rec_outlet_to_hottank;    //[-]
 
 		double m_defocus;   //[-]
 
@@ -1387,6 +1457,7 @@ public:
 			C_csp_solver* pc_csp_solver,
 			double q_dot_pc_target /*MWt*/,
             C_csp_power_cycle::E_csp_power_cycle_modes pc_mode, int cr_mode,
+            bool is_rec_outlet_to_hottank,
 			double defocus /*-*/)
 		{
 			m_solver_mode = solver_mode;
@@ -1398,6 +1469,7 @@ public:
 
 			m_pc_mode = pc_mode;
 			m_cr_mode = cr_mode;
+            m_is_rec_outlet_to_hottank = is_rec_outlet_to_hottank;
 			m_defocus = defocus;
 		}
 
@@ -1424,6 +1496,7 @@ public:
 
         C_csp_power_cycle::E_csp_power_cycle_modes m_pc_mode;      //[-]
         int m_cr_mode;      //[-]
+        bool m_is_rec_outlet_to_hottank;    //[-]
 
         double m_t_ts_initial;  //[s]
     
@@ -1434,6 +1507,7 @@ public:
             C_csp_solver *pc_csp_solver, 
 			double q_dot_pc_target /*MWt*/,
             C_csp_power_cycle::E_csp_power_cycle_modes pc_mode, int cr_mode,
+            bool is_rec_outlet_to_hottank,
             double t_ts_initial /*s*/)
         {
             m_solver_mode = solver_mode;
@@ -1446,6 +1520,7 @@ public:
 
             m_pc_mode = pc_mode;
             m_cr_mode = cr_mode;
+            m_is_rec_outlet_to_hottank = is_rec_outlet_to_hottank;
 
             m_t_ts_initial = t_ts_initial;  //[s]
         }
@@ -1457,7 +1532,7 @@ public:
 
 	int solve_operating_mode(int cr_mode, C_csp_power_cycle::E_csp_power_cycle_modes pc_mode,
         C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode, C_MEQ__timestep::E_timestep_target_modes step_target_mode,
-		double q_dot_pc_target /*MWt*/, bool is_defocus,
+		double q_dot_pc_target /*MWt*/, bool is_defocus, bool is_rec_outlet_to_hottank,
 		std::string op_mode_str, double& defocus_solved);
 
     

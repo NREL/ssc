@@ -700,6 +700,7 @@ public:
 		pc->m_cycle_max_frac = as_double("cycle_max_frac");			    //[-]
 		pc->m_cycle_cutoff_frac = as_double("cycle_cutoff_frac");	    //[-]
 		pc->m_q_sby_frac = as_double("q_sby_frac");					    //[-]
+        pc->m_W_off_heat_frac = 0.0;					                //[-] Hardcode no electric heaters in cycle off for now
 		pc->m_startup_time = as_double("startup_time");				    //[hr]
 		pc->m_startup_frac = as_double("startup_frac");				    //[-]
 		pc->m_htf_pump_coef = as_double("pb_pump_coef");			    //[kW/kg/s]

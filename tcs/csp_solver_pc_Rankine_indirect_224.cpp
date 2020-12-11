@@ -978,9 +978,9 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		}
 	}//radiative cooling and cold storage setup
 
-	double P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_water_cooling, W_cool_par, f_hrsys, P_cond, T_cond_out, T_rad_out;
+	double P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_water_cooling, W_cool_par, f_hrsys, P_cond, T_cond_out, T_rad_out, W_off_heat;
 	int radcool_cntrl=0;
-	P_cycle = eta = T_htf_cold = m_dot_demand = m_dot_htf_ref = m_dot_water_cooling = W_cool_par = f_hrsys = P_cond = T_cond_out=T_rad_out= std::numeric_limits<double>::quiet_NaN();
+	P_cycle = eta = T_htf_cold = m_dot_demand = m_dot_htf_ref = m_dot_water_cooling = W_cool_par = f_hrsys = P_cond = T_cond_out=T_rad_out = W_off_heat = std::numeric_limits<double>::quiet_NaN();
 
 
 	// 4.15.15 twn: hardcode these so they don't have to be passed into call(). Mode is always = 2 for CSP simulations
@@ -1045,6 +1045,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		// *****
 		m_dot_demand = 0.0;
 		m_dot_water_cooling = 0.0;
+        W_off_heat = 0.0;
 		W_cool_par = 0.0;
 		f_hrsys = 0.0;
 		P_cond = 0.0;
@@ -1082,6 +1083,8 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 			RankineCycle(T_db, T_wb, P_amb, T_htf_hot, m_dot_htf, mode, demand_var, ms_params.m_P_boil,
 				ms_params.m_F_wc[tou], m_F_wcMin, m_F_wcMax, T_cold_prev,dT_cw_design,
 				P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_water_cooling, W_cool_par, f_hrsys, P_cond, T_cond_out);
+
+            W_off_heat = 0.0; //[MWe] No heaters on during generation 
 
 			if (ms_params.m_CT == 4) // only if radiative cooling is chosen ARD
 			{
@@ -1253,6 +1256,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 			m_dot_st_bd = 0.0;					//[kg/hr]
 			m_dot_htf_ref = m_m_dot_design;		//[kg/hr]
 
+            W_off_heat = 0.0;   //[MWe] Not captured in User-defined power cycle model
 			f_hrsys = 0.0;		//[-] Not captured in User-defined power cycle model
 			P_cond = 0.0;		//[Pa] Not captured in User-defined power cycle model
 			m_dot_demand = 0.0;	//[kg/hr] Not captured in User-defined power cycle model
@@ -1281,6 +1285,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 			m_dot_demand = m_dot_sby;
 			m_dot_st_bd = 0.0;
 			m_dot_water_cooling = 0.0;
+            W_off_heat = 0.0; //[MWe] No heaters on during standby 
 			W_cool_par = 0.0;
 			f_hrsys = 0.0;
 			P_cond = 0.0;
@@ -1318,6 +1323,12 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		eta = 0.0;
 		T_htf_cold = ms_params.m_T_htf_cold_ref;
 
+        if (inputs.m_is_elec_heat_dur_off) {
+            W_off_heat = ms_params.m_W_off_heat_frac * ms_params.m_P_ref / 1000.; //[MWe] Electric heater to keep the cycle "warm"
+        }
+        else {
+            W_off_heat = 0.0;
+        }
 		m_dot_demand = 0.0;
 		m_dot_water_cooling = 0.0;
 		m_dot_st_bd = 0.0;
@@ -1475,6 +1486,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		//m_dot_demand = m_dot_htf_required*3600.0;		//[kg/hr], convert from kg/s
 		m_dot_water_cooling = 0.0;
 		m_dot_st_bd = 0.0;
+        W_off_heat = 0.0; //[MWe] No heaters on during startup
 		W_cool_par = 0.0;
 		f_hrsys = 0.0;
 		P_cond = 0.0;
@@ -1621,6 +1633,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 
 	//out_report.m_m_dot_htf_ref = m_dot_htf_ref;		//[kg/hr] Calculated reference HTF flow rate at design
 	mc_reported_outputs.value(E_M_DOT_HTF_REF, m_dot_htf_ref);	//[kg/hr]
+    out_solver.m_W_off_heat_par = W_off_heat;			        //[MWe] Electric heaters for cycle off
 	out_solver.m_W_cool_par = W_cool_par+W_radpump;				//[MWe] Cooling system parasitic load
 	//out_report.m_P_ref = ms_params.m_P_ref / 1000.0;		//[MWe] Reference power level output at design, convert from kWe
 	//out_report.m_f_hrsys = f_hrsys;					//[-] Fraction of operating heat rejection system

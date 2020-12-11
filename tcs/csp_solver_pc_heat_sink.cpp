@@ -230,6 +230,7 @@ void C_pc_heat_sink::call(const C_csp_weatherreader::S_outputs &weather,
 	out_solver.m_P_cycle = 0.0;		//[MWe] No electricity generation
 	out_solver.m_T_htf_cold = ms_params.m_T_htf_cold_des;		//[C]
 	out_solver.m_m_dot_htf = m_dot_htf*3600.0;	//[kg/hr] Return inlet mass flow rate
+    out_solver.m_W_off_heat_par = 0.0;	//[MWe] No electric heater load
 	out_solver.m_W_cool_par = 0.0;		//[MWe] No cooling load
 
 	out_solver.m_time_required_su = 0.0;	//[s] No startup requirements, for now
