@@ -209,9 +209,9 @@ public:
 			snow_max = std::numeric_limits<double>::quiet_NaN();
 
 
-		assign("annual_global", var_data((ssc_number_t)(0.001 * gh_sum / 365)));
+		assign("annual_glob", var_data((ssc_number_t)(0.001 * gh_sum / 365)));
 		assign("annual_beam", var_data((ssc_number_t) (0.001 * dn_sum / 365)));
-		assign("annual_diffuse", var_data((ssc_number_t)(0.001 * df_sum / 365)));
+		assign("annual_diff", var_data((ssc_number_t)(0.001 * df_sum / 365)));
 		assign("annual_tdry", var_data((ssc_number_t)(temp_sum / records)));
 		assign("annual_wspd", var_data((ssc_number_t)(wind_sum / records)));
 		assign("annual_snow", var_data((ssc_number_t)snow_max));
