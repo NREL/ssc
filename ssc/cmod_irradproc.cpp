@@ -34,8 +34,8 @@ static var_info _cm_vtab_irradproc[] = {
         { SSC_INPUT,        SSC_NUMBER,      "irrad_mode",                 "Irradiance input mode",           "0/1/2",   "Beam+Diff,Global+Beam, Global+Diff",  "Irradiance Processor",      "?=0",                     "INTEGER,MIN=0,MAX=2", ""},
 
         { SSC_INPUT,        SSC_ARRAY,       "beam",                       "Beam normal irradiance",          "W/m2",   "",                      "Irradiance Processor",      "irrad_mode~2",                        "",                      "" },
-        { SSC_INPUT,        SSC_ARRAY,       "diffuse",                    "Diffuse horizontal irradiance",   "W/m2",   "",                      "Irradiance Processor",      "irrad_mode~1",             "LENGTH_EQUAL=beam",     "" },
-        { SSC_INPUT,        SSC_ARRAY,       "global",                     "Global horizontal irradiance",    "W/m2",   "",                      "Irradiance Processor",      "irrad_mode~0",              "LENGTH_EQUAL=beam",     "" },
+        { SSC_INPUT,        SSC_ARRAY,       "diff",                       "Diffuse horizontal irradiance",   "W/m2",   "",                      "Irradiance Processor",      "irrad_mode~1",             "LENGTH_EQUAL=beam",     "" },
+        { SSC_INPUT,        SSC_ARRAY,       "glob",                       "Global horizontal irradiance",    "W/m2",   "",                      "Irradiance Processor",      "irrad_mode~0",              "LENGTH_EQUAL=beam",     "" },
 
         { SSC_INPUT,        SSC_ARRAY,       "albedo",                     "Ground reflectance (time depend.)","frac",  "0..1",                   "Irradiance Processor",      "?",                        "LENGTH_EQUAL=beam",     "" },
         { SSC_INPUT,        SSC_NUMBER,      "albedo_const",               "Ground reflectance (single value)","frac",  "0..1",                   "Irradiance Processor",      "?=0.2",                    "",                      "" },
@@ -103,19 +103,19 @@ public:
         {
             beam = as_array("beam", &count);
             if (count < 2) throw general_error("need at least 2 data points in irradproc");
-            diff = as_array("diffuse", &count);
+            diff = as_array("diff", &count);
         }
         else if (irrad_mode == 1) //global and beam
         {
             beam = as_array("beam", &count);
             if (count < 2) throw general_error("need at least 2 data points in irradproc");
-            glob = as_array("global", &count);
+            glob = as_array("glob", &count);
         }
         else //global and diffuse
         {
-            diff = as_array("diffuse", &count);
+            diff = as_array("diff", &count);
             if (count < 2) throw general_error("need at least 2 data points in irradproc");
-            glob = as_array("global", &count);
+            glob = as_array("glob", &count);
         }
 
         ssc_number_t* year = as_array("year", &count);
@@ -217,7 +217,7 @@ public:
                 delt = t_cur - t_prev;
             }
 
-            // double precsion issue (15 digits IEEE 754) encountered by Anthony Lopez 4/29/13 for 
+            // double precsion issue (15 digits IEEE 754) encountered by Anthony Lopez 4/29/13 for
             // minutes other than 15,30,45 and 60
             if (fabs(delt - 1.0) < 1e-14) delt = 1.0;
 
