@@ -10,7 +10,7 @@ CollectorTestSpecifications default_collector_test_specifications()
     collector_test_specifications.FRUL = 3.85;
     collector_test_specifications.iam = 0.2;
     collector_test_specifications.area_coll = 2.98;
-    collector_test_specifications.m_dot = 0.045528;         // kg/s   
+    collector_test_specifications.m_dot = 0.045528;         // kg/s
     collector_test_specifications.heat_capacity = 4.182;    // kJ/kg-K
 
     return collector_test_specifications;
@@ -103,7 +103,7 @@ Pipe* default_pipe()
 }
 
 void FlatPlateCollectorTest::SetUp()
-{    
+{
     // Too much in the Setup; can't change the configuration in the tests
     flat_plate_collector_ = default_flat_plate_collector();
 }
@@ -156,8 +156,6 @@ void StorageTankTest::SetUp()
 
     m_field_fluid = 18;
     m_store_fluid = 18;
-    m_fluid_field;
-    m_fluid_store;
     m_is_direct = true;
     m_config = 2;
     m_duty_des = 623595520.;
@@ -193,7 +191,7 @@ TEST_F(StorageTankTest, TestDrainingTank_storage_hx)
     m_m_dot_out = 1239.16;      // this will more than drain the tank
     m_T_in = 566.15;
     m_T_amb = 296.15;
-    
+
     m_storage->mixed_tank(m_is_hot_tank, m_dt, m_m_prev, m_T_prev, m_m_dot_in, m_m_dot_out, m_T_in, m_T_amb,
         m_T_ave, m_vol_ave, m_q_loss, m_T_fin, m_vol_fin, m_m_fin, m_q_heater);
 

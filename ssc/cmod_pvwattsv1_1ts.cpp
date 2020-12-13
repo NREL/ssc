@@ -111,7 +111,7 @@ public:
         int track_mode = as_integer("track_mode"); // 0, 1, 2, 3
         double azimuth = as_double("azimuth");
         double tilt = fabs(as_double("tilt"));
-        double elev, tdry, pres;
+        double elev, pres;
         if (!is_assigned("elevation")) {
             elev = 0; //assume 0 meter elevation if none is provided
         }
