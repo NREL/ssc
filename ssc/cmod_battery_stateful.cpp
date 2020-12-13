@@ -395,26 +395,22 @@ cm_battery_stateful::cm_battery_stateful():
     add_var_info(vtab_battery_state);
 }
 
-cm_battery_stateful::cm_battery_stateful(var_table* vt) :
-        cm_battery_stateful() {
+bool cm_battery_stateful::setup(var_table* vt) {
     m_vartab = vt;
-    try {
-        if (!compute_module::verify("precheck input", SSC_INPUT))
-            throw exec_error("battery_stateful", log(0)->text);
-        dt_hour = as_number("dt_hr");
-        control_mode = as_integer("control_mode");
-        params = create_battery_params(m_vartab, dt_hour);
-        battery = std::unique_ptr<battery_t>(new battery_t(params));
-        write_battery_state(battery->get_state(), m_vartab);
+    if (!compute_module::verify("precheck input", SSC_INPUT)) {
+        return false;
     }
-    catch (general_error& e) {
-        throw std::runtime_error(e.err_text);
-    }
+    dt_hour = as_number("dt_hr");
+    control_mode = as_integer("control_mode");
+    params = create_battery_params(m_vartab, dt_hour);
+    battery = std::unique_ptr<battery_t>(new battery_t(params));
+    write_battery_state(battery->get_state(), m_vartab);
+    return true;
 }
 
 void cm_battery_stateful::exec() {
     if (!battery)
-        throw exec_error("battery_stateful", "Battery model must be initialized first.");
+        throw exec_error("battery_stateful", "Battery stateful model must be `setup` first.");
 
     battery_state state;
     try {

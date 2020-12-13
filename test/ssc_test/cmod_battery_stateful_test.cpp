@@ -103,7 +103,7 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, ReadJson) {
     auto copy = json_to_ssc_data(js.c_str());
     double P, V, SOC;
 
-    mod = ssc_stateful_module_create("battery_stateful", copy);
+    ssc_stateful_module_setup(mod, copy);
     copy = json_to_ssc_data(js.c_str());
     ssc_module_exec(mod, copy);
 

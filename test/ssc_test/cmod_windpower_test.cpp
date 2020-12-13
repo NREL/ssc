@@ -477,7 +477,8 @@ bool setup_python() {
     }
 #endif
 
-    set_python_path(python_dir.c_str());
+    if (!set_python_path(python_dir.c_str()))
+        std::cerr << "set_python_path error for directory " + python_dir;
     return true;
 }
 
@@ -488,6 +489,8 @@ TEST(windpower_landbosse, SetupPython) {
 
 	Json::Value python_config_root;
 	std::string configPath = std::string(get_python_path()) + "python_config.json";
+    if (configPath.empty())
+        return;
 
 	std::ifstream python_config_doc(configPath);
 	if (python_config_doc.fail()) {
@@ -526,6 +529,9 @@ bool check_Python_setup() {
         return false;
     }
     std::string configPath = std::string(get_python_path()) + "python_config.json";
+    if (configPath.empty())
+        return false;
+
     std::ifstream python_config_doc(configPath);
     Json::Value python_config_root;
     python_config_doc >> python_config_root;
