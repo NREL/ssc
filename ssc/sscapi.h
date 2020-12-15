@@ -295,7 +295,7 @@ SSCEXPORT const char* ssc_data_to_json(ssc_data_t p_data);
  */
 SSCEXPORT ssc_data_t rapidjson_to_ssc_data(const char* json_str);
 
-SSCEXPORT const char* ssc_data_to_json(ssc_data_t p_data);
+SSCEXPORT const char* ssc_data_to_rapidjson(ssc_data_t p_data);
 
 
 

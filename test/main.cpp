@@ -32,8 +32,8 @@ GTEST_API_ int main(int argc, char **argv) {
 //	::testing::GTEST_FLAG(filter) = "URDBv7*";
 //    ::testing::GTEST_FLAG(filter) = "save_as_JSON_test_parse*";
 //    ::testing::GTEST_FLAG(filter) = "save_as_JSON_test*";
-    ::testing::GTEST_FLAG(filter) = "save_as_JSON_test_run*";
-//    ::testing::GTEST_FLAG(filter) = "sscapi_test.rapidjson*";
+//    ::testing::GTEST_FLAG(filter) = "save_as_JSON_test_run*";
+    ::testing::GTEST_FLAG(filter) = "sscapi_test*";
 
 
 

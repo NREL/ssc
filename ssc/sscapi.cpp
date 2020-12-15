@@ -59,6 +59,8 @@
 #include <json/json.h>
 #include "../rapidjson/document.h"
 #include "../rapidjson/error/en.h" // parser errors returned as char strings
+#include "../rapidjson/stringbuffer.h"
+#include "../rapidjson/writer.h"
 
 #pragma warning (disable : 4706 )
 
@@ -932,6 +934,84 @@ SSCEXPORT ssc_data_t rapidjson_to_ssc_data(const char* json_str) {
     }
     return vt;
 }
+
+
+
+
+rapidjson::Value ssc_var_to_rapidjson(var_data* vd, rapidjson::Document& d) {
+    rapidjson::Value json_val;
+    switch (vd->type) {
+    default:
+    case SSC_INVALID:
+        return json_val;
+    case SSC_NUMBER:
+        json_val = vd->num[0];
+        return json_val;
+    case SSC_STRING:
+        json_val.SetString(vd->str.c_str(),d.GetAllocator());
+        return json_val;
+    case SSC_ARRAY:
+        json_val.SetArray();
+  //      json_val.Reserve((rapidjson::SizeType)vd->num.ncols(), d.GetAllocator());
+        for (size_t i = 0; i < vd->num.ncols(); i++) {
+            json_val.PushBack(rapidjson::Value(vd->num[i]), d.GetAllocator());
+//            json_val[(rapidjson::SizeType)i] = rapidjson::Value(vd->num[i]);
+        }
+        return json_val;
+    case SSC_MATRIX:
+        json_val.SetArray();
+        //json_val.Reserve((rapidjson::SizeType)vd->num.nrows(), d.GetAllocator());
+        for (size_t i = 0; i < vd->num.nrows(); i++) {
+            json_val.PushBack(rapidjson::Value(rapidjson::kArrayType), d.GetAllocator());
+            for (size_t j = 0; j < vd->num.ncols(); j++) {
+                json_val[(rapidjson::SizeType)i].PushBack(vd->num.at(i, j),d.GetAllocator());
+            }
+        }
+        return json_val;
+    case SSC_DATARR:
+        json_val.SetArray();
+        for (auto& dat : vd->vec) {
+            json_val.PushBack(ssc_var_to_rapidjson(&dat,d),d.GetAllocator());
+        }
+        return json_val;
+    case SSC_DATMAT:
+        json_val.SetArray();
+        for (auto& row : vd->mat) {
+            auto& json_row =rapidjson::Value(rapidjson::kArrayType);
+            for (auto& dat : row) {
+                json_row.PushBack(ssc_var_to_rapidjson(&dat,d), d.GetAllocator());
+            }
+            json_val.PushBack(json_row, d.GetAllocator());
+        }
+        return json_val;
+    case SSC_TABLE:
+        json_val.SetObject();
+        for (auto const& it : *vd->table.get_hash()) {
+            json_val.AddMember(rapidjson::Value(it.first.c_str(), d.GetAllocator()).Move(), ssc_var_to_rapidjson(it.second, d).Move(), d.GetAllocator());
+//            json_val[it.first] = ssc_var_to_json(it.second);
+        }
+        return json_val;
+    }
+}
+
+SSCEXPORT const char* ssc_data_to_rapidjson(ssc_data_t p_data) {
+    auto vt = static_cast<var_table*>(p_data);
+    if (!vt) return nullptr;
+
+    rapidjson::Document root;
+    root.SetObject();
+    for (auto const& it : *vt->get_hash()) {
+        root.AddMember(rapidjson::Value(it.first.c_str(), it.first.size(), root.GetAllocator()).Move(), ssc_var_to_rapidjson(it.second, root).Move(), root.GetAllocator());
+    }
+    rapidjson::StringBuffer buffer;
+    buffer.Clear();
+    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+    root.Accept(writer);
+
+//    return std::string(buffer.GetString()).c_str();
+    return strdup(buffer.GetString());
+}
+ 
 
 
 
