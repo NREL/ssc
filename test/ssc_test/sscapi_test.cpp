@@ -1,4 +1,5 @@
 #include <string>
+#include <cmath>
 #include <gtest/gtest.h>
 
 #include "../ssc/vartab.h"
