@@ -1,4 +1,5 @@
 #include <string>
+#include <cmath>
 #include <iostream>
 #include <fstream>
 #include <gtest/gtest.h>
