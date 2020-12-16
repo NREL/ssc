@@ -27,7 +27,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static var_info _cm_wave_file_reader[] = {
 /*   VARTYPE           DATATYPE         NAME                           LABEL                                        UNITS     META                      GROUP                 REQUIRED_IF                CONSTRAINTS        UI_HINTS*/
-	{ SSC_INPUT,         SSC_STRING,      "wave_resource_filename",               "local weather file path",                     "",       "",                      "Weather Reader",      "*",                       "LOCAL_FILE",      "" },
+    { SSC_INPUT,         SSC_NUMBER,      "wave_resource_model_choice",           "Hourly or JPD wave resource data",                                 "0/1",             "",             "Weather Reader",          "",                         "INTEGER",                  "" },
+    { SSC_INPUT,         SSC_STRING,      "wave_resource_filename",               "local weather file path",                     "",       "",                      "Weather Reader",      "?",                       "LOCAL_FILE",      "" },
     { SSC_INPUT,         SSC_TABLE,       "wave_resource_data",                   "wave resource data from memory",     "",      "",       "Weather Reader",                  "?",                                            "",                "" },
     { SSC_INPUT,         SSC_NUMBER,      "use_specific_wf_wave",               "user specified file",                     "0/1",       "",                      "Weather Reader",      "?=0",                       "INTEGER,MIN=0,MAX=1",      "" },
 	
@@ -48,8 +49,9 @@ static var_info _cm_wave_file_reader[] = {
 
 																										            
 // weather data records																					            
-	{ SSC_OUTPUT,        SSC_MATRIX,      "wave_resource_matrix",              "Frequency distribution of resource",                                  "m/s",   "",                       "Weather Reader",      "*",                        "",                            "" },
-
+	{ SSC_OUTPUT,        SSC_MATRIX,      "wave_resource_matrix",              "Frequency distribution of resource",                                  "m/s",   "",                       "Weather Reader",      "?",                        "",                            "" },
+    { SSC_OUTPUT,        SSC_ARRAY,       "wave_significant_height",           "Wave height time series data",                                        "m",     "",                       "Weather Reader",      "?",                        "",                            "" },
+    { SSC_OUTPUT,        SSC_ARRAY,       "wave_energy_period",                "Wave period time series data",                                        "s",     "",                       "Weather Reader",      "?",                        "",                            "" },
 var_info_invalid };
 
 class wave_data_provider
@@ -64,24 +66,24 @@ public:
         _MAXCOL_
     };
 
-    wave_data_provider();
-    virtual ~wave_data_provider();
+    //wave_data_provider();
+    //virtual ~wave_data_provider();
 
+    std::string name;
     std::string city;
     std::string state;
-    std::string locid;
     std::string country;
-    std::string desc;
+    std::string bathymetry;
+    std::string sea_bed;
+    std::string data_source;
+    std::string notes;
     int year;
     double lat;
     double lon;
     double tz;
     double data_type;
-    double nearby_buoy_number;
+    std::string nearby_buoy_number;
     double average_power_flux;
-    double bathymetry;
-    double elev;
-    double measurementHeight;
 
     std::vector<int> types() { return m_dataid; }
     std::vector<double> wave_heights() { return m_sigwaveheight; }
@@ -92,7 +94,7 @@ public:
 
     
 
-    virtual bool read_line(std::vector<double>& values) = 0;
+    //virtual bool read_line(std::vector<double>& values) = 0;
     virtual size_t nrecords() = 0;
 
 
@@ -103,7 +105,7 @@ public:
 
    
 
-    bool check_hour_of_year(int hour, int line);
+    //bool check_hour_of_year(int hour, int line);
     //std::vector<double> read(int datatype, double* wave_height[nrecords], double* wave_period);
     //std::vector<double> read_wave_height(int datatype,)
     // virtual functions specific to weather data source
@@ -120,13 +122,14 @@ protected:
     std::vector<double> m_sigwaveheight;
     std::vector<double> m_waveperiod;
     util::matrix_t<double> m_wave_resource_matrix_data;
+    //ssc_number_t* m_wave_resource_matrix_data;
     //std::vector<double> m_wave_resource_matrix_data;
     //std::vector<double> m_resourcematrix;
     std::vector<double> m_relativeHumidity;
     std::string m_errorMsg;
 
-    bool find_closest(int& closest_index, int id, int ncols, double requested_height, int index_to_exclude = -1);
-    bool can_interpolate(int index1, int index2, int ncols, double requested_height);
+    //bool find_closest(int& closest_index, int id, int ncols, double requested_height, int index_to_exclude = -1);
+    //bool can_interpolate(int index1, int index2, int ncols, double requested_height);
     
 };
 
@@ -147,7 +150,7 @@ public:
     ssc_number_t get_number(var_data* v, const char* name);
 
     ssc_number_t* get_vector(var_data* v, const char* name, size_t* len);
-    std::string* get_string(var_data* v, const char* name);
+    std::string get_string(var_data* v, const char* name);
 
     bool read_line(std::vector<double>& values);
 
@@ -169,10 +172,22 @@ wavedata::wavedata(var_data* data_table)
         return;
     }
 
+   
+
     lat = get_number(data_table, "lat");
     lon = get_number(data_table, "lon");
+    name = get_string(data_table, "name");
+    city = get_string(data_table, "city");
+    state = get_string(data_table, "state");
+    country = get_string(data_table, "country");
+    bathymetry = get_string(data_table, "bathymetry");
+    sea_bed = get_string(data_table, "sea_bed");
+    tz = get_number(data_table, "tz");
+    data_source = get_string(data_table, "data_source");
+    notes = get_string(data_table, "notes");
+
     data_type = get_number(data_table, "data_type"); //0-time series data, 1- jpd
-    nearby_buoy_number = get_number(data_table, "nearby_buoy_number");
+    nearby_buoy_number = get_string(data_table, "nearby_buoy_number");
     average_power_flux = get_number(data_table, "average_power_flux");
     //bathymetry = get_number(data_table, "bathymetry"); return string?
     if (data_type == 0) {
@@ -191,9 +206,9 @@ wavedata::wavedata(var_data* data_table)
         }
     }
     else if (data_type == 1) {
-        if (var_data* D = data_table->table.lookup("jpd_data"))
-            if (D->type == SSC_ARRAY)
-                wave_resource_matrix_data = D->num;
+        if (var_data* D = data_table->table.lookup("wave_resource_jpd"))
+            if (D->type == SSC_MATRIX)
+                m_wave_resource_matrix_data = D->num;
 
     }
     else {
@@ -224,6 +239,15 @@ ssc_number_t wavedata::get_number(var_data* v, const char* name)
     }
 
     return std::numeric_limits<ssc_number_t>::quiet_NaN();
+}
+
+std::string wavedata::get_string(var_data* v, const char* name)
+{
+    if (var_data* value = v->table.lookup(name))
+    {
+        if (value->type == SSC_STRING)
+            return name;
+    }
 }
 
 ssc_number_t* wavedata::get_vector(var_data* v, const char* name, size_t* len)
@@ -336,10 +360,12 @@ public:
                 assign("notes", var_data(values[12]));
             }
             // read in 21 rows x 22 columns
+            
             ssc_number_t* mat = allocate("wave_resource_matrix", 21, 22);
             ssc_number_t* wave_heights = allocate("wave_significant_height", values.size());
             ssc_number_t* wave_periods = allocate("wave_energy_period", values.size());
-            if (values.size() != 22)
+            //if (values.size() != 22)
+            if (as_integer("wave_resource_model_choice")==1) 
             {
                 for (size_t r = 0; r < 2920; r++) {
                     getline(ifs, buf);
@@ -351,7 +377,7 @@ public:
                 }
                 
             }
-            else {
+            else if (as_integer("wave_resource_model_choice")==0) {
                 for (size_t r = 0; r < 21; r++)
                 {
                     getline(ifs, buf);
@@ -374,6 +400,9 @@ public:
                     }
                 }
             }
+            else {
+                throw exec_error("wave_file_reader", "Resource data type needs to be defined ");
+            }
             
             return;
         }
@@ -382,8 +411,8 @@ public:
             wave_dp = std::unique_ptr<wave_data_provider>(new wavedata(lookup("wave_resource_data")));
             if (!wave_dp->error().empty()) {
                 throw exec_error("wave_file_reader", wave_dp->error());
+                return;
             }
-            return;
             nstep = wave_dp->nrecords();
 
             // check for leap day
@@ -396,12 +425,13 @@ public:
                 nstep = leap_steps_per_hr * 8760;
             }
 
-            size_t steps_per_hour = nstep / 8760;
+            /*ze_t steps_per_hour = nstep / 8760;
             if (steps_per_hour * 8760 != nstep && !contains_leap_day)
                 throw exec_error("windpower", util::format("invalid number of data records (%d): must be an integer multiple of 8760", (int)nstep));
-
+            */
             //ssc_number_t* mat = allocate("wave_resource_matrix", 21, 22);
-            util::matrix_t<ssc_number_t> &mat = allocate_matrix("wave_resource_matrix", 21, 22);
+            ssc_number_t* mat = allocate("wave_resource_matrix", 21, 22);
+            //util::matrix_t<ssc_number_t> &mat = allocate_matrix("wave_resource_matrix", 21, 22);
             ssc_number_t *wave_height = allocate("wave_significant_height", nstep);
             ssc_number_t* wave_period = allocate("wave_period", nstep);
             std::vector<double> wave_height_data = wave_dp->wave_heights();
@@ -416,6 +446,7 @@ public:
             }
             else if (wave_dp->data_type == 1)
             {
+
                 for (size_t r = 0; r < 21; r++)
                 {
                     
@@ -423,12 +454,26 @@ public:
                     for (size_t c = 0; c < 22; c++)
                     {
                         if (r == 0 && c == 0)
-                            mat[r,c] = 0.0;
+                            mat[r * 22 + c] = 0.0;
                         else
-                            mat[r, c] = wave_resource[r, c];
+                            mat[r * 22 + c] = wave_resource[r * 22 + c];
                     }
                 }
             }
+            assign("lat", wave_dp->lat);
+            assign("lon", wave_dp->lon);
+            assign("name", wave_dp->name);
+            assign("city", wave_dp->city);
+            assign("state", wave_dp->state);
+            assign("country", wave_dp->state);
+            assign("bathymetry", wave_dp->bathymetry);
+            assign("sea_bed", wave_dp->sea_bed);
+            assign("tz", wave_dp->tz);
+            assign("data_source", wave_dp->data_source);
+            assign("notes", wave_dp->notes);
+            assign("nearby_buoy_number", wave_dp->nearby_buoy_number);
+            assign("average_power_flux", wave_dp->average_power_flux);
+            assign("data_type", wave_dp->data_type);
             return;
         }
         else
