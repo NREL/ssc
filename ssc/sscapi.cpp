@@ -977,7 +977,7 @@ rapidjson::Value ssc_var_to_rapidjson(var_data* vd, rapidjson::Document& d) {
     case SSC_DATMAT:
         json_val.SetArray();
         for (auto& row : vd->mat) {
-            auto& json_row =rapidjson::Value(rapidjson::kArrayType);
+            auto json_row =rapidjson::Value(rapidjson::kArrayType);
             for (auto& dat : row) {
                 json_row.PushBack(ssc_var_to_rapidjson(&dat,d), d.GetAllocator());
             }
