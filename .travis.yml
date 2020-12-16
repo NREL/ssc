@@ -66,4 +66,4 @@ branches:
   - patch
   - PySAM
   - wind_pruf
-
+  - save_as_JSON
