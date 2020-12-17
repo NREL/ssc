@@ -952,15 +952,12 @@ rapidjson::Value ssc_var_to_rapidjson(var_data* vd, rapidjson::Document& d) {
         return json_val;
     case SSC_ARRAY:
         json_val.SetArray();
-  //      json_val.Reserve((rapidjson::SizeType)vd->num.ncols(), d.GetAllocator());
         for (size_t i = 0; i < vd->num.ncols(); i++) {
             json_val.PushBack(rapidjson::Value(vd->num[i]), d.GetAllocator());
-//            json_val[(rapidjson::SizeType)i] = rapidjson::Value(vd->num[i]);
         }
         return json_val;
     case SSC_MATRIX:
         json_val.SetArray();
-        //json_val.Reserve((rapidjson::SizeType)vd->num.nrows(), d.GetAllocator());
         for (size_t i = 0; i < vd->num.nrows(); i++) {
             json_val.PushBack(rapidjson::Value(rapidjson::kArrayType), d.GetAllocator());
             for (size_t j = 0; j < vd->num.ncols(); j++) {
@@ -988,7 +985,6 @@ rapidjson::Value ssc_var_to_rapidjson(var_data* vd, rapidjson::Document& d) {
         json_val.SetObject();
         for (auto const& it : *vd->table.get_hash()) {
             json_val.AddMember(rapidjson::Value(it.first.c_str(), d.GetAllocator()).Move(), ssc_var_to_rapidjson(it.second, d).Move(), d.GetAllocator());
-//            json_val[it.first] = ssc_var_to_json(it.second);
         }
         return json_val;
     }
