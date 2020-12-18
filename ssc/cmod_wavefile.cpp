@@ -362,8 +362,9 @@ public:
             // read in 21 rows x 22 columns
             
             ssc_number_t* mat = allocate("wave_resource_matrix", 21, 22);
-            ssc_number_t* wave_heights = allocate("wave_significant_height", values.size());
-            ssc_number_t* wave_periods = allocate("wave_energy_period", values.size());
+            size_t numberRecords = 2920;
+            ssc_number_t* wave_heights = allocate("wave_significant_height", numberRecords);
+            ssc_number_t* wave_periods = allocate("wave_energy_period", numberRecords);
             //if (values.size() != 22)
             if (as_integer("wave_resource_model_choice")==1) 
             {
@@ -371,10 +372,11 @@ public:
                     getline(ifs, buf);
                     values.clear();
                     values = split(buf);
-                    wave_heights[r] = std::stod(values[0]);
-                    wave_periods[r] = std::stod(values[1]);
+                    wave_heights[r] = (ssc_number_t)std::stod(values[1]);
+                    wave_periods[r] = (ssc_number_t)std::stod(values[2]);
                     
                 }
+                return;
                 
             }
             else if (as_integer("wave_resource_model_choice")==0) {
