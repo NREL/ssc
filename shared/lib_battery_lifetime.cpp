@@ -146,6 +146,7 @@ void lifetime_cycle_t::rainflow_ranges_circular(int index) {
 }
 
 int lifetime_cycle_t::rainflow_compareRanges() {
+    double dq = 0;
     int retCode = cycle_state::LT_SUCCESS;
     bool contained = true;
 
@@ -162,9 +163,14 @@ int lifetime_cycle_t::rainflow_compareRanges() {
         state->n_cycles++;
 
         // the capacity percent cannot increase
-        double dq =
-                bilinear(state->average_range, state->n_cycles) - bilinear(state->average_range, state->n_cycles + 1);
-        if (dq > 0)
+        if (params->calendar_choice == lifetime_params::CALENDAR_CHOICE::NMC_MODEL) {
+            double dq = bilinear_NMC(state->average_range, state->n_cycles) - bilinear_NMC(state->average_range, state->n_cycles + 1);
+        }
+        else
+            double dq = 
+            bilinear(state->average_range, state->n_cycles) - bilinear(state->average_range, state->n_cycles + 1);
+
+        if (dq >0)
             state->q_relative_cycle -= dq;
 
         if (state->q_relative_cycle < 0)
@@ -210,6 +216,10 @@ double lifetime_cycle_t::capacity_percent() { return state->q_relative_cycle; }
 
 cycle_state lifetime_cycle_t::get_state() { return *state; }
 
+double lifetime_cycle_t::bilinear_NMC(double DOD, int cycle_number) {
+    double C = 100;
+    return C; 
+}
 double lifetime_cycle_t::bilinear(double DOD, int cycle_number) {
     /*
     Work could be done to make this simpler
@@ -348,10 +358,12 @@ bool calendar_state::operator==(const calendar_state &p) {
 
 void lifetime_calendar_t::initialize() {
     state = std::make_shared<calendar_state>();
+    cycle_model = std::unique_ptr<lifetime_cycle_t>(new lifetime_cycle_t(params));
+    cyc_state = std::make_shared<cycle_state>();
     state->day_age_of_battery = 0;
     state->q_relative_calendar = 100;
     state->dq_relative_calendar_old = 0;
-    if (params->calendar_choice == lifetime_params::CALENDAR_CHOICE::MODEL) {
+    if (params->calendar_choice == lifetime_params::CALENDAR_CHOICE::MODEL || params->calendar_choice == lifetime_params::CALENDAR_CHOICE::NMC_MODEL) {
         dt_day = params->dt_hour / util::hours_per_day;
         state->q_relative_calendar = params->calendar_q0 * 100;
     }
@@ -359,6 +371,14 @@ void lifetime_calendar_t::initialize() {
         if (params->calendar_matrix.nrows() < 2 || params->calendar_matrix.ncols() != 2)
             throw std::runtime_error("lifetime_calendar_t error: Battery calendar lifetime matrix must have 2 columns and at least 2 rows");
     }
+    cyc_state->n_cycles = 0;
+    cyc_state->q_relative_cycle = cycle_model->bilinear(0., 0);
+    cyc_state->range = 0;
+    cyc_state->average_range = 0;
+    cyc_state->rainflow_jlt = 0;
+    cyc_state->rainflow_Xlt = 0;
+    cyc_state->rainflow_Ylt = 0;
+    cyc_state->rainflow_peaks.clear();
 }
 
 lifetime_calendar_t::lifetime_calendar_t(double dt_hour, const util::matrix_t<double>& calendar_matrix) {
@@ -379,6 +399,19 @@ lifetime_calendar_t::lifetime_calendar_t(double dt_hour, double q0, double a, do
     params->calendar_a = a;
     params->calendar_b = b;
     params->calendar_c = c;
+
+    initialize();
+}
+
+lifetime_calendar_t::lifetime_calendar_t(double dt_hour, double q0, double nmc_a, double nmc_b, double nmc_c, double nmc_d) {
+    params = std::make_shared<lifetime_params>();
+    params->dt_hour = dt_hour;
+    params->calendar_choice = lifetime_params::CALENDAR_CHOICE::NMC_MODEL;
+    params->calendar_q0 = q0;
+    params->calendar_nmc_a = nmc_a;
+    params->calendar_nmc_b = nmc_b;
+    params->calendar_nmc_c = nmc_c;
+    params->calendar_nmc_d = nmc_d;
 
     initialize();
 }
@@ -416,6 +449,8 @@ double lifetime_calendar_t::runLifetimeCalendarModel(size_t lifetimeIndex, doubl
 
     if (params->calendar_choice == lifetime_params::CALENDAR_CHOICE::MODEL)
         runLithiumIonModel(T, SOC);
+    if (params->calendar_choice == lifetime_params::CALENDAR_CHOICE::NMC_MODEL)
+        runLithiumIonNMCModel(T, SOC);
     else if (params->calendar_choice == lifetime_params::CALENDAR_CHOICE::TABLE)
         runTableModel();
     else
@@ -438,6 +473,35 @@ void lifetime_calendar_t::runLithiumIonModel(double temp, double SOC) {
     state->q_relative_calendar = (params->calendar_q0 - (dq_new)) * 100;
 }
 
+void lifetime_calendar_t::runLithiumIonNMCModel(double temp, double SOC) {
+    temp += 273.15;
+    SOC *= 0.01;
+    double tau_b3 = 5.; 
+    double U_neg = U_neg_computation(SOC);
+    double V_oc = V_oc_computation(SOC);
+    double DOD_max = 0.8;
+    double k_cal_1 = params->calendar_nmc_a * exp(params->calendar_nmc_b * (1. / temp - 1. / 296))
+        * exp(params->calendar_nmc_c * (U_neg / temp - 1. / 296)) * exp(params->calendar_nmc_d * DOD_max);
+    double k_cal_2 = params-> calendar_nmc_a * exp(params->calendar_nmc_b * (1. / temp - 1. / 296))
+        *exp(params->calendar_nmc_c * (V_oc / temp - 1. / 296)) * exp(params->calendar_nmc_d * DOD_max);
+    double k_cal_3 = params->calendar_nmc_a * (1. / temp - 1. / 296) * (cyc_state->n_cycles - cyc_state->n_cycles_old);
+    double dq_new;
+    if (state->dq_relative_calendar_old == 0)
+        dq_new = k_cal_1 * sqrt(dt_day) + k_cal_2*exp(-dt_day/tau_b3);
+    else
+        dq_new = (0.5 * pow(k_cal_1, 2) / state->dq_relative_calendar_old) * dt_day +
+        (0.5 * pow(k_cal_2, 2) / state->dq_relative_calendar_old) * dt_day + state->dq_relative_calendar_old;
+    state->dq_relative_calendar_old = dq_new;
+    state->q_relative_calendar = (params->calendar_q0 - (dq_new)) * 100;
+}
+
+double lifetime_calendar_t::U_neg_computation(double SOC) {
+    return SOC;
+}
+
+double lifetime_calendar_t::V_oc_computation(double SOC) {
+    return SOC;
+}
 void lifetime_calendar_t::runTableModel() {
     size_t n_rows = params->calendar_matrix.nrows();
     size_t n = n_rows - 1;
@@ -533,6 +597,21 @@ lifetime_t::lifetime_t(const util::matrix_t<double> &batt_lifetime_matrix, doubl
     params->calendar_a = a;
     params->calendar_b = b;
     params->calendar_c = c;
+
+    initialize();
+}
+
+lifetime_t::lifetime_t(const util::matrix_t<double>& batt_lifetime_matrix, double dt_hour, double q0, double nmc_a, double nmc_b,
+    double nmc_c, double nmc_d) {
+    params = std::make_shared<lifetime_params>();
+    params->dt_hour = dt_hour;
+    params->cycling_matrix = batt_lifetime_matrix;
+    params->calendar_choice = lifetime_params::CALENDAR_CHOICE::NMC_MODEL;
+    params->calendar_q0 = q0;
+    params->calendar_nmc_a = nmc_a;
+    params->calendar_nmc_b = nmc_b;
+    params->calendar_c = nmc_c;
+    params->calendar_nmc_d = nmc_d; 
 
     initialize();
 }

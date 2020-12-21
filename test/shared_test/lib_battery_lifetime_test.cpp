@@ -241,6 +241,34 @@ TEST_F(lib_battery_lifetime_calendar_model_test, runCalendarModelTest) {
     EXPECT_NEAR(s.dq_relative_calendar_old, 0.00306, tol);
 }
 
+TEST_F(lib_battery_lifetime_calendar_model_test, runCalendarModelLiIonNMCTest) {
+    double T = 4.85, SOC = 20;       // not used but required for function
+    int idx = 0;
+    while (idx < 500) {
+        if (idx % 2 != 0) {
+            SOC = 90;
+        }
+        cal_model->runLifetimeCalendarModel(idx, T, SOC);
+        idx++;
+    }
+    calendar_state s = cal_model->get_state();
+    EXPECT_NEAR(s.day_age_of_battery, 20, tol);
+    EXPECT_NEAR(s.q_relative_calendar, 101.78, tol);
+    EXPECT_NEAR(s.dq_relative_calendar_old, 0.00217, tol);
+
+    while (idx < 1000) {
+        if (idx % 2 != 0) {
+            SOC = 90;
+        }
+        cal_model->runLifetimeCalendarModel(idx, T, SOC);
+        idx++;
+    }
+    s = cal_model->get_state();
+    EXPECT_NEAR(s.day_age_of_battery, 41, tol);
+    EXPECT_NEAR(s.q_relative_calendar, 101.69, tol);
+    EXPECT_NEAR(s.dq_relative_calendar_old, 0.00306, tol);
+}
+
 TEST_F(lib_battery_lifetime_calendar_model_test, replaceBatteryTest) {
     double T = 4.85, SOC = 20;
     int idx = 0;

@@ -40,7 +40,7 @@ struct lifetime_params {
 
     // calendar
     enum CALENDAR_CHOICE {
-        NONE, MODEL, TABLE
+        NONE, MODEL, NMC_MODEL, TABLE
     };
     int calendar_choice;
     double dt_hour;
@@ -50,6 +50,12 @@ struct lifetime_params {
     double calendar_a;  // 1/sqrt(day)
     double calendar_b;  // K
     double calendar_c;  // K
+
+    //K.Smith: LiIonNMC Model coefficents
+    double calendar_nmc_a; // unitless
+    double calendar_nmc_b;  // 1/sqrt(day)
+    double calendar_nmc_c;  // K
+    double calendar_nmc_d;  // K
 
     // table entries
     util::matrix_t<double> calendar_matrix;
@@ -63,6 +69,7 @@ struct lifetime_params {
 struct cycle_state {
     double q_relative_cycle;                // %
     int n_cycles;
+    int n_cycles_old; 
     double range;
     double average_range;
     enum RAINFLOW_CODES {
@@ -129,14 +136,16 @@ protected:
 
     /// Bilinear interpolation, given the depth-of-discharge and cycle number, return the capacity percent
     double bilinear(double DOD, int cycle_number);
-
+    double bilinear_NMC(double DOD, int cycle_number);
     std::shared_ptr<cycle_state> state;
     std::shared_ptr<lifetime_params> params;
+    std::unique_ptr<lifetime_cycle_t> cycle_model;
 
 private:
     void initialize();
 
     friend class lifetime_t;
+    friend class lifetime_calendar_t;
 };
 
 /*
@@ -158,7 +167,9 @@ public:
     /// Constructors for independent models, owning its state and params
     lifetime_calendar_t(double dt_hour, const util::matrix_t<double>& calendar_matrix);
 
-    explicit lifetime_calendar_t(double dt_hour, double q0= 1.02, double a= 2.66e-3, double b= -7280, double c= 930);
+    explicit lifetime_calendar_t(double dt_hour, double q0 = 1.02, double a = 2.66e-3, double b = -7280, double c = 930);
+
+    explicit lifetime_calendar_t(double dt_hour, double q0, double nmc_a,double nmc_b, double nmc_c, double nmc_d);
 
     /// Constructor as lifetime_t component
     explicit lifetime_calendar_t(std::shared_ptr<lifetime_params> params_ptr);
@@ -178,10 +189,18 @@ public:
     /// Return the relative capacity percentage of nominal (%)
     double capacity_percent();
 
+    /// Compute negative electrode voltage based on SOC
+    double U_neg_computation(double SOC);
+
+    /// Compute open circuit voltage based on SOC
+    double V_oc_computation(double SOC);
+
     calendar_state get_state();
 
 protected:
     void runLithiumIonModel(double temp_C, double SOC);
+
+    void runLithiumIonNMCModel(double temp_C, double SOC);
 
     void runTableModel();
 
@@ -189,7 +208,8 @@ protected:
 
     std::shared_ptr<calendar_state> state;
     std::shared_ptr<lifetime_params> params;
-
+    std::shared_ptr<cycle_state> cyc_state;
+    std::unique_ptr<lifetime_cycle_t> cycle_model;
 private:
     void initialize();
 
@@ -224,6 +244,10 @@ public:
     /// Cycle with Calendar model
     lifetime_t(const util::matrix_t<double> &batt_lifetime_matrix,
                double dt_hour, double q0, double a, double b, double c);
+
+    /// Cycle with Calendar NMC model
+    lifetime_t(const util::matrix_t<double>& batt_lifetime_matrix,
+        double dt_hour, double q0, double nmc_a, double nmc_b, double nmc_c, double nmc_d);
 
     /// Cycle with no Calendar
     lifetime_t(const util::matrix_t<double> &batt_lifetime_matrix, double dt_hour);
