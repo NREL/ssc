@@ -196,7 +196,6 @@ struct batt_variables
 
 	/* Battery replacement options */
 	int batt_replacement_option;
-	std::vector<int> batt_replacement_schedule;
 	std::vector<double> batt_replacement_schedule_percent;
 
 	/* Battery cycle costs */
@@ -222,10 +221,10 @@ struct battstor
 
 	void initialize_time(size_t year, size_t hour_of_year, size_t step);
 
-	/// Run the battery for the current timestep, given the PV power, load, and clipped power
+	/// Run the battery for the current timestep, given the System power, load, and clipped power
 	void advance(var_table *vt, double P_gen, double V_gen=0, double P_load=0, double P_gen_clipped=0);
 
-	/// Given a DC connected battery, set the shared PV and battery invertr
+	/// Given a DC connected battery, set the shared system (typically PV) and battery inverter
 	void setSharedInverter(SharedInverter * sharedInverter);
 
 	void outputs_fixed();
@@ -327,22 +326,23 @@ struct battstor
 		*outDispatchMode,
 		*outBatteryPower,
 		*outGenPower,
+        *outGenWithoutBattery,
 		*outGridPower,
-		*outPVToLoad,
+		*outSystemToLoad,
 		*outBatteryToLoad,
 		*outGridToLoad,
 		*outFuelCellToLoad,
 		*outGridPowerTarget,
 		*outBattPowerTarget,
-		*outPVToBatt,
+		*outSystemToBatt,
 		*outGridToBatt,
 		*outFuelCellToBatt,
-		*outPVToGrid,
+		*outSystemToGrid,
 		*outBatteryToGrid,
 		*outFuelCellToGrid,
 		*outBatteryConversionPowerLoss,
 		*outBatterySystemLoss,
-		*outAnnualPVChargeEnergy,
+		*outAnnualSystemChargeEnergy,
 		*outAnnualGridChargeEnergy,
 		*outAnnualChargeEnergy,
 		*outAnnualDischargeEnergy,
@@ -359,7 +359,7 @@ struct battstor
 
 	double outAverageCycleEfficiency;
 	double outAverageRoundtripEfficiency;
-	double outPVChargePercent;
+	double outSystemChargePercent;
 };
 
 #endif

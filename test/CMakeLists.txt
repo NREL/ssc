@@ -14,9 +14,13 @@ include_directories(${GTDIR}/include ${GTDIR}/googletest/include . input_cases s
 						../ssc ../tcs ../solarpilot ../shared ../splinter ../jsoncpp/include )
 
 file(GLOB SSC_TESTS ssc_test/*.cpp)
+file(GLOB SSC_TESTS_HEADERS ssc_test/*.h)
 file(GLOB SHARED_TESTS shared_test/*.cpp)
+file(GLOB SHARED_TESTS_HEADERS shared_test/*.h)
 file(GLOB TCS_TESTS tcs_test/*.cpp)
+file(GLOB TCS_TESTS_HEADERS tcs_test/*.h)
 file(GLOB INPUTS_SRC input_cases/*.cpp)
+file(GLOB INPUTS_SRC_HEADERS input_cases/*.h)
 set(SSC_SRC ../ssc/core.cpp ../ssc/common.cpp ../ssc/vartab.cpp)
 # add files which need to be compiled with Test in order to be tested on Windows
 set(SRC_TO_TEST
@@ -29,31 +33,19 @@ set(SRC_TO_TEST
 
 #####################################################################################################################
 #
-# Compile Options per Platform
-#
-#####################################################################################################################
-
-set_default_compile_options()
-
-if(MSVC)
-    add_compile_options(/MP /W3 /wd4244)
-    add_compile_definitions(_MBCS)
-else()
-    add_compile_options(-Wno-ignored-attributes -Wno-deprecated-declarations)
-endif()
-
-
-#####################################################################################################################
-#
 # CMake Targets
 #
 #####################################################################################################################
 
 add_executable(Test
         ${SSC_TESTS}
+		${SSC_TESTS_HEADERS}
         ${SHARED_TESTS}
+		${SHARED_TESTS_HEADERS}
         ${TCS_TESTS}
+		${TCS_TESTS_HEADERS}
         ${INPUTS_SRC}
+		${INPUTS_SRC_HEADERS}
         ${SSC_SRC}
         ${SRC_TO_TEST}
         main.cpp)
@@ -63,6 +55,13 @@ set_target_properties(Test
         DEBUG_POSTFIX "d"
         PREFIX ""
         )
+
+set_default_compile_options(Test)
+if(MSVC)
+    set_additional_compile_options(Test "/MP /W3 /wd4244 /D_MBCS")
+else()
+    set_additional_compile_options(Test "-Wno-ignored-attributes -Wno-deprecated-declarations")
+endif()
 
 if (MSVC)
     set_target_properties(Test PROPERTIES
@@ -76,20 +75,17 @@ endif()
 #
 #####################################################################################################################
 
-unset(GTEST_LIB CACHE)
-unset(GTESTD_LIB CACHE)
-
 if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR MSVC)
 find_library( GTESTD_LIB
         NAMES libgtestd.a gtestd.lib
-        PATHS ${GTDIR}/build/lib ${GTDIR}/build/lib/Debug)
+        PATHS $ENV{GTESTD_DIR} ${GTDIR}/build/lib ${GTDIR}/build/lib/Debug)
 target_link_libraries(Test debug ${GTESTD_LIB})
 endif()
 
 if (CMAKE_BUILD_TYPE STREQUAL "Release" OR MSVC)
     find_library( GTEST_LIB
             NAMES libgtest.a gtest.lib
-            PATHS ${GTDIR}/build/lib ${GTDIR}/build/lib/Release)
+            PATHS $ENV{GTEST_DIR} ${GTDIR}/build/lib ${GTDIR}/build/lib/Release)
     target_link_libraries(Test optimized ${GTEST_LIB})
 endif()
 target_link_libraries(Test ssc splinter)
