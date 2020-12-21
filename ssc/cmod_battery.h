@@ -177,7 +177,10 @@ struct batt_variables
 	double batt_calendar_a;
 	double batt_calendar_b;
 	double batt_calendar_c;
-
+    double batt_calendar_nmc_a;
+    double batt_calendar_nmc_b;
+    double batt_calendar_nmc_c;
+    double batt_calendar_nmc_d;
 	/*! Battery costs */
 	std::vector<double> batt_cost_per_kwh;
 

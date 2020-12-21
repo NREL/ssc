@@ -69,6 +69,7 @@ struct lifetime_params {
 struct cycle_state {
     double q_relative_cycle;                // %
     int n_cycles;
+    int n_cycles_old; 
     double range;
     double average_range;
     enum RAINFLOW_CODES {
@@ -135,14 +136,16 @@ protected:
 
     /// Bilinear interpolation, given the depth-of-discharge and cycle number, return the capacity percent
     double bilinear(double DOD, int cycle_number);
-
+    double bilinear_NMC(double DOD, int cycle_number);
     std::shared_ptr<cycle_state> state;
     std::shared_ptr<lifetime_params> params;
+    std::unique_ptr<lifetime_cycle_t> cycle_model;
 
 private:
     void initialize();
 
     friend class lifetime_t;
+    friend class lifetime_calendar_t;
 };
 
 /*
@@ -166,8 +169,7 @@ public:
 
     explicit lifetime_calendar_t(double dt_hour, double q0 = 1.02, double a = 2.66e-3, double b = -7280, double c = 930);
 
-    explicit lifetime_calendar_t(double dt_hour, double q0, double nmc_a = 3.503e-3, double nmc_b = 4.2569e3,
-            double nmc_c = -1.1605e4, double nmc_d = 2.472);
+    explicit lifetime_calendar_t(double dt_hour, double q0, double nmc_a,double nmc_b, double nmc_c, double nmc_d);
 
     /// Constructor as lifetime_t component
     explicit lifetime_calendar_t(std::shared_ptr<lifetime_params> params_ptr);
@@ -187,6 +189,12 @@ public:
     /// Return the relative capacity percentage of nominal (%)
     double capacity_percent();
 
+    /// Compute negative electrode voltage based on SOC
+    double U_neg_computation(double SOC);
+
+    /// Compute open circuit voltage based on SOC
+    double V_oc_computation(double SOC);
+
     calendar_state get_state();
 
 protected:
@@ -200,7 +208,8 @@ protected:
 
     std::shared_ptr<calendar_state> state;
     std::shared_ptr<lifetime_params> params;
-
+    std::shared_ptr<cycle_state> cyc_state;
+    std::unique_ptr<lifetime_cycle_t> cycle_model;
 private:
     void initialize();
 

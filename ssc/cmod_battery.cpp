@@ -797,6 +797,11 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
         lifetime_model = new lifetime_t(batt_vars->batt_lifetime_matrix, dt_hr,
                                         batt_vars->batt_calendar_q0, batt_vars->batt_calendar_a, batt_vars->batt_calendar_b, batt_vars->batt_calendar_c);
     }
+    else if (batt_vars->batt_calendar_choice == lifetime_params::CALENDAR_CHOICE::NMC_MODEL) {
+        lifetime_model = new lifetime_t(batt_vars->batt_lifetime_matrix, dt_hr,
+            batt_vars->batt_calendar_q0, batt_vars->batt_calendar_nmc_a, batt_vars->batt_calendar_nmc_b,
+            batt_vars->batt_calendar_nmc_c, batt_vars->batt_calendar_nmc_d);
+    }
     else if (batt_vars->batt_calendar_choice == lifetime_params::CALENDAR_CHOICE::TABLE) {
         lifetime_model = new lifetime_t(batt_vars->batt_lifetime_matrix, dt_hr, batt_vars->batt_calendar_lifetime_matrix);
     }
