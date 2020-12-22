@@ -96,6 +96,7 @@ var_info vtab_battery_inputs[] = {
         { SSC_INPUT,        SSC_NUMBER,      "batt_Qnom",                                  "Cell capacity at end of nominal zone",                    "Ah",      "",                     "BatteryCell",       "",                           "",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "batt_C_rate",                                "Rate at which voltage vs. capacity curve input",          "",        "",                     "BatteryCell",       "",                           "",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "batt_resistance",                            "Internal resistance",                                     "Ohm",     "",                     "BatteryCell",       "",                           "",                              "" },
+        { SSC_INPUT,        SSC_NUMBER,      "batt_voltage_cutoff",                        "Cutoff voltage for battery rated capacity",               "V",       "",                     "BatteryCell",       "",                           "",                              "" },
         { SSC_INPUT,		SSC_MATRIX,      "batt_voltage_matrix",                        "Battery voltage vs. depth-of-discharge",                 "",         "",                     "BatteryCell",       "",                           "",                             "" },
 
         // lead-acid inputs
@@ -325,6 +326,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             batt_vars->batt_Qnom = vt.as_double("batt_Qnom");
             batt_vars->batt_C_rate = vt.as_double("batt_C_rate");
             batt_vars->batt_resistance = vt.as_double("batt_resistance");
+            batt_vars->batt_voltage_cutoff = vt.as_double("batt_voltage_cutoff");
 
             // Current and capacity
             batt_vars->batt_current_choice = vt.as_integer("batt_current_choice");

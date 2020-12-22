@@ -136,6 +136,7 @@ struct batt_variables
 	double batt_Qnom;
 	double batt_C_rate;
 	double batt_resistance;
+    double batt_voltage_cutoff;
 
 	double batt_replacement_capacity;
 	util::matrix_t<double> cap_vs_temp;
