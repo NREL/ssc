@@ -280,6 +280,7 @@ public:
         std::vector<double> m_q_pc_target_on_in;
 		std::vector<double> m_q_pc_max_in;
 		std::vector<bool> m_is_rec_su_allowed_in;
+        std::vector<bool> m_is_rec_sb_allowed_in;
 		std::vector<bool> m_is_pc_su_allowed_in;
 		std::vector<bool> m_is_pc_sb_allowed_in;
 		std::vector<bool> m_is_elec_heat_dur_off;
