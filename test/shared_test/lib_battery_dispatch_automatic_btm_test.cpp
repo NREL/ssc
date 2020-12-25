@@ -84,10 +84,10 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMPVCharging) {
                                          0, 0, 0, 0, 0};
     for (size_t h = 0; h < 24; h++) {
         if (h > 6 && h < 18) {
-            batteryPower->powerPV = 700; // Match the predicted PV
+            batteryPower->powerSystem = 700; // Match the predicted PV
         }
         else {
-            batteryPower->powerPV = 0;
+            batteryPower->powerSystem = 0;
         }
         batteryPower->powerLoad = 500; // Match the predicted load
         dispatchAutoBTM->dispatch(0, h, 0);
@@ -133,9 +133,9 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMPVChargeAndDischarge) {
                                          50, 50, 50, 50, 50, 50};
     for (size_t h = 0; h < 24; h++) {
         batteryPower->powerLoad = 500;
-        batteryPower->powerPV = 0;
+        batteryPower->powerSystem = 0;
         if (h > 6 && h < 18) {
-            batteryPower->powerPV = 700; // Match the predicted PV
+            batteryPower->powerSystem = 700; // Match the predicted PV
         }
         else if (h > 18) {
             batteryPower->powerLoad = 600; // Match the predicted load
@@ -197,9 +197,9 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMPVChargeAndDischargeSubh
     for (size_t h = 0; h < 24; h++) {
         for (size_t step = 0; step < 4; step++) {
             batteryPower->powerLoad = 500;
-            batteryPower->powerPV = 0;
+            batteryPower->powerSystem = 0;
             if (h > 6 && h < 18) {
-                batteryPower->powerPV = 700; // Match the predicted PV
+                batteryPower->powerSystem = 700; // Match the predicted PV
             }
             else if (h > 18) {
                 batteryPower->powerLoad = 600; // Match the predicted load
@@ -251,9 +251,9 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMDCClipCharge) {
                                          0, 0, 0, 0, 0, 0, 50, 50, 50, 50, 50.25};
     for (size_t h = 0; h < 24; h++) {
         batteryPower->powerLoad = 500;
-        batteryPower->powerPV = 0;
+        batteryPower->powerSystem = 0;
         if (h > 6 && h < 18) {
-            batteryPower->powerPV = 700; // Match the predicted PV
+            batteryPower->powerSystem = 700; // Match the predicted PV
         }
         else if (h > 18) {
             batteryPower->powerLoad = 600; // Match the predicted load
@@ -304,9 +304,9 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, TestBasicForecast) {
                                          50, 50, 50, 50, 50, 50 };
     for (size_t h = 0; h < 24; h++) {
         batteryPower->powerLoad = 500;
-        batteryPower->powerPV = 0;
+        batteryPower->powerSystem = 0;
         if (h > 6 && h < 18) {
-            batteryPower->powerPV = 700; // Match the predicted PV
+            batteryPower->powerSystem = 700; // Match the predicted PV
         }
         else if (h > 18) {
             batteryPower->powerLoad = 600; // Match the predicted load
@@ -345,7 +345,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, TestSummerPeak) {
     std::vector<double> expectedPower = { 0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -0.058, -0.0054, 0, 0, 0.0, 0.0, 2.3757, 0.0,
                                          4.122, 0.0, 0, 0, 0, 0 };
     for (size_t h = 0; h < 24; h++) {
-        batteryPower->powerPV = pv_prediction[h]; // Match the predicted PV
+        batteryPower->powerSystem = pv_prediction[h]; // Match the predicted PV
         batteryPower->powerLoad = load_prediction[h]; // Match the predicted load
         dispatchAutoBTM->dispatch(0, h, 0);
         EXPECT_NEAR(batteryPower->powerBatteryDC, expectedPower[h], 0.5) << " error in expected at hour " << h;
@@ -382,7 +382,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, TestSummerPeakNetMeteringCredits) {
     std::vector<double> expectedPower = { 0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -0.058, -0.0054, 0, 0, 0.0, 0.0, 2.3757, 0.0,
                                          4.122, 0.0, 0, 0, 0, 0 };
     for (size_t h = 0; h < 24; h++) {
-        batteryPower->powerPV = pv_prediction[h]; // Match the predicted PV
+        batteryPower->powerSystem = pv_prediction[h]; // Match the predicted PV
         batteryPower->powerLoad = load_prediction[h]; // Match the predicted load
         dispatchAutoBTM->dispatch(0, h, 0);
         EXPECT_NEAR(batteryPower->powerBatteryDC, expectedPower[h], 0.1) << " error in expected at hour " << h;
@@ -419,7 +419,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, TestSummerPeakGridCharging) {
     std::vector<double> expectedPower = { -0.648, -0.813, -0.912, -0.984, -0.949, -0.695, -0.523, -0.124, -0.723,  -1.093, -1.874, -2.092, -2.092, -1.872, -1.598, -1.21, -0.592, 2.3757, 3.3688,
                                          4.122, 0.0, 0.0, 0.0, -0.317};
     for (size_t h = 0; h < 24; h++) {
-        batteryPower->powerPV = pv_prediction[h]; // Match the predicted PV
+        batteryPower->powerSystem = pv_prediction[h]; // Match the predicted PV
         batteryPower->powerLoad = load_prediction[h]; // Match the predicted load
         dispatchAutoBTM->dispatch(0, h, 0);
         EXPECT_NEAR(batteryPower->powerBatteryDC, expectedPower[h], 0.1) << " error in expected at hour " << h;
@@ -468,7 +468,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, TestSummerPeakGridChargingSubhourly) {
     std::vector<double> expectedPower = { -0.648, -0.813, -0.912, -0.984, -0.949, -0.695, -0.523, -0.124, -0.723,  -1.093, -1.874, -2.092, -2.092, -1.872, -1.598, -1.21,  1.564, 2.3757, 3.3688,
                                          4.122, 0.0, 0.0, 0.0, -0.317 };
     for (size_t h = 0; h < 24; h++) {
-        batteryPower->powerPV = pv_prediction[h]; // Match the predicted PV
+        batteryPower->powerSystem = pv_prediction[h]; // Match the predicted PV
         batteryPower->powerLoad = load_prediction[h]; // Match the predicted load
         for (int j = 0; j < 2; j++)
         {
@@ -514,7 +514,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, TestCommercialPeakForecasting) {
     std::vector<double> expectedPower = { 50.02, 44.22, 44.00, 0, -46.0, 0, 0, 50.08, 41.45, 0, 0, -46.0, -46.0, 0, 0, 50.08, 38.49, 0, 0,
                                          0, 0, -46.0, -42.58, -46.0 };
     for (size_t h = 0; h < 24; h++) {
-        batteryPower->powerPV = pv_prediction[h]; // Match the predicted PV
+        batteryPower->powerSystem = pv_prediction[h]; // Match the predicted PV
         batteryPower->powerLoad = load_prediction[h]; // Match the predicted load
         dispatchAutoBTM->dispatch(0, h, 0);
         EXPECT_NEAR(batteryPower->powerBatteryDC, expectedPower[h], 0.5) << " error in expected at hour " << h;
@@ -559,9 +559,9 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMPVChargeAndDischargeSmal
                                          9.479, 9.479, 9.479, 9.479, 9.479, 9.479 }; // Shave peak to ~30 kW
     for (size_t h = 0; h < 24; h++) {
         batteryPower->powerLoad = 30;
-        batteryPower->powerPV = 0;
+        batteryPower->powerSystem = 0;
         if (h > 6 && h < 18) {
-            batteryPower->powerPV = 100; // Match the predicted PV
+            batteryPower->powerSystem = 100; // Match the predicted PV
         }
         else if (h > 18) {
             batteryPower->powerLoad = 40; // Match the predicted load
@@ -609,9 +609,9 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMPVChargeAndDischargeSmal
                                          11.479, 11.479, 11.479, 11.479, 11.479, 11.479 }; // Shave peak to ~30 kW
     for (size_t h = 0; h < 24; h++) {
         batteryPower->powerLoad = 30;
-        batteryPower->powerPV = 0;
+        batteryPower->powerSystem = 0;
         if (h > 6 && h < 18) {
-            batteryPower->powerPV = 100; // Match the predicted PV
+            batteryPower->powerSystem = 100; // Match the predicted PV
         }
         else if (h > 18) {
             batteryPower->powerLoad = 40; // Match the predicted load
@@ -642,9 +642,9 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMCustomDispatch) {
 
     for (size_t h = 0; h < 24; h++) {
         batteryPower->powerLoad = 30;
-        batteryPower->powerPV = 0;
+        batteryPower->powerSystem = 0;
         if (h > 6 && h < 18) {
-            batteryPower->powerPV = 100; // Match the predicted PV
+            batteryPower->powerSystem = 100; // Match the predicted PV
         }
         else if (h > 18) {
             batteryPower->powerLoad = 40; // Match the predicted load
@@ -677,9 +677,9 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMCustomDispatchWithLosses
 
     for (size_t h = 0; h < 24; h++) {
         batteryPower->powerLoad = 30;
-        batteryPower->powerPV = 0;
+        batteryPower->powerSystem = 0;
         if (h > 6 && h < 18) {
-            batteryPower->powerPV = 100; // Match the predicted PV
+            batteryPower->powerSystem = 100; // Match the predicted PV
         }
         else if (h > 18) {
             batteryPower->powerLoad = 40; // Match the predicted load

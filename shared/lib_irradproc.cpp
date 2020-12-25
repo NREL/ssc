@@ -2027,7 +2027,12 @@ perez(double, double dn, double df, double alb, double inc, double tilt, double 
 void irrad::setup() {
     year = month = day = hour = -999;
     minute = delt = latitudeDegrees = longitudeDegrees = timezone = -999;
-    elevation = pressure = tamb = -999;
+
+    // defaults for optional inputs
+    elevation = 0;
+    pressure = 1013.25;
+    tamb = 15;
+
     globalHorizontal = directNormal = diffuseHorizontal = -999;
 
     for (int i = 0; i < 9; i++) {
@@ -2191,9 +2196,12 @@ void irrad::set_location(double latDegrees, double longDegrees, double tz) {
 
 void irrad::set_optional(double elev, double pres, double t_amb) //defaults of 0 meters elevation, atmospheric pressure, 15°C average annual temperature
 {
-    this->elevation = elev;
-    this->pressure = pres;
-    this->tamb = t_amb;
+    if (!std::isnan(elev) && elev >= 0)
+        this->elevation = elev;
+    if (!std::isnan(pres) && pres > 800)
+        this->pressure = pres;
+    if (!std::isnan(tamb))
+        this->tamb = t_amb;
 }
 
 void irrad::set_sky_model(int sm, double alb) {

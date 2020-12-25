@@ -24,6 +24,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_battery_powerflow.h"
 #include "lib_shared_inverter.h"
 
+#include <math.h>
+
 dispatch_automatic_behind_the_meter_t::dispatch_automatic_behind_the_meter_t(
 	battery_t * Battery,
 	double dt_hour,
@@ -703,9 +705,22 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(dispatch_plan
                     requiredPower = -requiredEnergy / _dt_hour;
                 }
             }
-            else if (m_batteryPower->canPVCharge && sorted_grid[i].Grid() < 0)
+            else if (m_batteryPower->canSystemCharge)
             {
-                requiredPower = sorted_grid[i].Grid();
+                // Powerflow considerations are different between AC and DC connected batteries for system charging
+                if (m_batteryPower->connectionMode == m_batteryPower->AC_CONNECTED) {
+                    // AC connected assumes PV goes to load first. Need net generation in this case
+                    if (sorted_grid[i].Grid() < 0) {
+                        requiredPower = sorted_grid[i].Grid();
+                    }
+                }
+                else {
+                    // DC connected can charge the battery before sending power to load
+                    if (idx + index < _P_pv_ac.size() && _P_pv_ac[idx + index] > 0) {
+                        requiredPower = -_P_pv_ac[idx + index];
+                    }
+                }
+                
             }
 
             if (requiredPower < 0)
@@ -847,4 +862,9 @@ void dispatch_automatic_behind_the_meter_t::costToCycle()
     {
         m_cycleCost = cycle_costs_by_year[curr_year] * _Battery->get_params().nominal_energy;
     }
+}
+
+double dispatch_automatic_behind_the_meter_t::cost_to_cycle_per_kwh()
+{
+    return m_cycleCost / _Battery->get_params().nominal_energy;
 }
