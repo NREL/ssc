@@ -21,6 +21,7 @@ public:
 	// voltage
 	double Vnom_default;
 	double Vfull;
+    double Vcut;
 	double Vexp;
 	double Vnom;
 	double Qfull;
@@ -69,6 +70,7 @@ public:
 		Vfull = 4.1;
 		Vexp = 4.05;
 		Vnom = 3.4;
+        Vcut = 0.66 * Vfull;
 		Qfull = 2.25;
 		Qexp = 0.04;
 		Qnom = 2.0;

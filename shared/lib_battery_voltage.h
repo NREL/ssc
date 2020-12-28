@@ -50,6 +50,7 @@ struct voltage_params {
         double Qexp;
         double Qnom;
         double C_rate;
+        double Vcut;
     } dynamic;
 
     //  depth-of-discharge [%] and cell voltage [V] pairs
@@ -165,7 +166,7 @@ class voltage_dynamic_t : public voltage_t {
 public:
     voltage_dynamic_t(int num_cells_series, int num_strings, double voltage, double Vfull,
                       double Vexp, double Vnom, double Qfull, double Qexp, double Qnom,
-                      double C_rate, double R, double dt_hr);
+                      double C_rate, double R, double dt_hr, double Vcut);
 
     voltage_dynamic_t(std::shared_ptr<voltage_params> p);
 

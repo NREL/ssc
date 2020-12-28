@@ -546,11 +546,11 @@ TEST_F(lib_battery_test, HourlyVsSubHourly)
 {
     auto cap_hourly = new capacity_lithium_ion_t(q, SOC_init, SOC_max, SOC_min, dtHour);
     auto volt_hourly = new voltage_dynamic_t(n_series, n_strings, Vnom_default, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom,
-                                             C_rate, resistance, 1);
+                                             C_rate, resistance, 1, Vcut);
 
     auto cap_subhourly = new capacity_lithium_ion_t(q, SOC_init, SOC_max, SOC_min, dtHour);
     auto volt_subhourly = new voltage_dynamic_t(n_series, n_strings, Vnom_default, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom,
-                                                C_rate, resistance, .5);
+                                                C_rate, resistance, .5, Vcut);
 
     EXPECT_EQ(cap_hourly->q0(), cap_subhourly->q0());
     EXPECT_EQ(volt_hourly->battery_voltage(), volt_subhourly->battery_voltage());

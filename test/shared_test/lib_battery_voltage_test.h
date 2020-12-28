@@ -34,6 +34,7 @@ class voltage_dynamic_lib_battery_voltage_test : public lib_battery_voltage_test
 {
 protected:
     double Vfull = 4.1;
+    double Vcut = 2.706;
     double Vexp = 4.05;
     double Vnom = 3.4;
     double Qfull = 2.25;
@@ -46,7 +47,7 @@ protected:
 
         model = std::unique_ptr<voltage_t>(new voltage_dynamic_t(n_cells_series, n_strings,
                                                                  voltage_nom, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom,
-                                                                 C_rate, R, dt_hr));
+                                                                 C_rate, R, dt_hr, Vcut));
         model->set_initial_SOC(50);
     }
 };

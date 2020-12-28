@@ -6,6 +6,7 @@ TEST_F(ResilienceTest_lib_resilience, VoltageCutoffParameterSetup)
     int n_strings = 3;
     for (auto dtHour : {1., .5, 0.25}){
         for (auto Vfull : {1.1, 2.2, 2.5, 3.3, 3.8, 4.4, 5.5}){
+            auto Vcut = 0.66 * Vfull;
             for (auto Vexp : {.8, .85, .9}){
                 Vexp *= Vfull;
                 for (auto Vnom : {.8, .85, .9}){
@@ -22,7 +23,7 @@ TEST_F(ResilienceTest_lib_resilience, VoltageCutoffParameterSetup)
                                                 dtHour, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom, C_rate, resistance);
                                         auto voltageModel = new voltage_dynamic_t(n_series, n_strings, Vnom * 0.98,
                                                                                   Vfull, Vexp, Vnom, Qfull, Qexp, Qnom,
-                                                                                  C_rate, resistance, dtHour);
+                                                                                  C_rate, resistance, dtHour, Vcut);
                                         try{
                                             double current1;
                                             for (auto q_ratio : {0.25, 0.5, 0.75}){
