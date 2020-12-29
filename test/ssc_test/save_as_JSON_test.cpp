@@ -8,6 +8,7 @@
 #include "json/json.h" // Jsoncpp
 #include "../rapidjson/document.h"
 #include "../rapidjson/istreamwrapper.h"
+#include "../rapidjson/filereadstream.h"
 
 static const char* SSCDIR = std::getenv("SSCDIR");
 
@@ -64,6 +65,23 @@ TEST(save_as_JSON_test_parse, pvwatts_mechant_plant_rapidjson_parse_file) {
     }
     EXPECT_TRUE(!document.HasParseError());
 }
+TEST(save_as_JSON_test_parse, pvwatts_mechant_plant_rapidjson_parse_file_freadstream) {
+ //   std::ifstream test(inputs_as_JSON, std::ifstream::binary);
+    FILE* fp = fopen(inputs_as_JSON, "rb"); // non-Windows use "r"
+    char readBuffer[65536];
+    rapidjson::FileReadStream is(fp, readBuffer, sizeof(readBuffer));
+    rapidjson::Document document;
+ //   rapidjson::IStreamWrapper isw(test);
+    document.ParseStream(is);
+    if (document.HasParseError())
+    {
+        // report to the user the failure and their locations in the document.
+        std::cout << document.GetParseError()
+            << "\n";
+    }
+    EXPECT_TRUE(!document.HasParseError());
+}
+
 TEST(save_as_JSON_test_parse, pv_batt_mechant_plant_jsoncpp_parse_file) {
     Json::Value root;
     Json::Reader reader;
