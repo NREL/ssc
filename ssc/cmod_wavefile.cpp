@@ -372,8 +372,8 @@ public:
                     getline(ifs, buf);
                     values.clear();
                     values = split(buf);
-                    wave_heights[r] = (ssc_number_t)std::stod(values[1]);
-                    wave_periods[r] = (ssc_number_t)std::stod(values[2]);
+                    wave_heights[r] = (ssc_number_t)std::stod(values[2]);
+                    wave_periods[r] = (ssc_number_t)std::stod(values[1]);
                     
                 }
                 return;

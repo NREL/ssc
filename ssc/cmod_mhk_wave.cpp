@@ -324,8 +324,10 @@ public:
             double diff_sig_wave_height, diff_energy_period;
             double sig_wave_height_index, energy_period_index;
             for (size_t i = 0; i < 2920; i++) {
-                ts_significant_wave_height = wave_resource_time_series[1][i];
-                ts_energy_period = wave_resource_time_series[0][i];
+                //ts_significant_wave_height = wave_resource_time_series[1][i];
+                ts_significant_wave_height = wave_height_input[i];
+                //ts_energy_period = wave_resource_time_series[0][i];
+                ts_energy_period = wave_period_input[i];
                 for (size_t j = 0; j < (size_t)wave_power_matrix.nrows(); j++) {
                     if (abs(ts_significant_wave_height - wave_power_matrix.at(j, 0)) < 0.25) {
                         sig_wave_height_index = j;
