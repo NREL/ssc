@@ -239,3 +239,22 @@ ssc_data_t singleowner_defaults()
 
     return data;
 }
+
+/**
+*  Default data for iph_to_lcoefcr
+*/
+void convert_and_adjust_fixed_charge(ssc_data_t& data)
+{
+    ssc_data_set_number(data, "electricity_rate", 0.059999998658895493);
+    ssc_data_set_number(data, "fixed_operating_cost", 103758.203125);
+}
+
+/**
+*  Default data for lcoefcr
+*/
+void fixed_charge_rate_default(ssc_data_t& data)
+{
+    ssc_data_set_number(data, "capital_cost", 7263074);
+    ssc_data_set_number(data, "variable_operating_cost", 0.0010000000474974513);
+    ssc_data_set_number(data, "fixed_charge_rate", 0.10807877779006958);
+}

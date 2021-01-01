@@ -2,24 +2,21 @@
 #define _TROUGH_PHYSICAL_IPH_COMMON_DATA_H_
 
 #include <stdio.h>
-
 #include "../input_cases/code_generator_utilities.h"
 
 char wlim_series_path2[512];
-
 int ntpiph1 = sprintf(wlim_series_path2, "%s/test/input_cases/tcstrough_data/wlim_series.csv", std::getenv("SSCDIR"));
 
 /**
 *  Default data for trough_physical_process_heat run that can be further modified
 */
-void trough_physical_iph_default(ssc_data_t &data)
+ssc_data_t trough_physical_iph_defaults()
 {
+    ssc_data_t data = ssc_data_create();
+
 	const char * SSCDIR = std::getenv("SSCDIR");
-
-	char solar_resource_path[512];
+    char solar_resource_path[512];
 	//char load_profile_path[512];
-
-
 	int n1 = sprintf(solar_resource_path, "%s/test/input_cases/tcstrough_data/tucson_az_32.116521_-110.933042_psmv3_60_tmy.csv", SSCDIR);
 	//int n2 = sprintf(load_profile_path, "%s/test/input_cases/pvsamv1_data/pvsamv1_residential_load.csv", SSCDIR);
 
@@ -238,25 +235,8 @@ void trough_physical_iph_default(ssc_data_t &data)
     ssc_number_t p_sf_hdr_lengths[1] = { -1 };
     ssc_data_set_matrix(data, "sf_hdr_lengths", p_sf_hdr_lengths, 1, 1);
     ssc_data_set_number(data, "adjust:constant", 4);
-}
 
-/**
-*  Default data for iph_to_lcoefcr run that can be further modified
-*/
-void convert_and_adjust_fixed_charge(ssc_data_t &data)
-{
-    ssc_data_set_number(data, "electricity_rate", 0.059999998658895493);
-    ssc_data_set_number(data, "fixed_operating_cost", 103758.203125);
-}
-
-/**
-*  Default data for lcoefcr run that can be further modified
-*/
-void fixed_charge_rate_default(ssc_data_t &data)
-{
-    ssc_data_set_number(data, "capital_cost", 7263074);
-    ssc_data_set_number(data, "variable_operating_cost", 0.0010000000474974513);
-    ssc_data_set_number(data, "fixed_charge_rate", 0.10807877779006958);
+    return data;
 }
 
 #endif
