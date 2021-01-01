@@ -2,6 +2,7 @@
 #define _CSP_COMMON_TEST_H_
 
 #include <gtest/gtest.h>
+#include<vector>
 #include "../ssc/common.h"
 //#include "csp_financial_defaults.h"
 #include "../input_cases/code_generator_utilities.h"
@@ -27,6 +28,16 @@ public:
     }
     void SetInput(std::string name, ssc_number_t value) {
         ssc_data_set_number(this->data_, name.c_str(), value);
+    }
+    void SetInput(std::string name, std::string value) {
+        ssc_data_set_string(this->data_, name.c_str(), value.c_str());
+    }
+    void SetInput(std::string name, ssc_number_t values[], int size) {
+        // deprecated, replaced by the following that uses initializer_list
+        ssc_data_set_array(this->data_, name.c_str(), values, size);
+    }
+    void SetInput(std::string name, const std::initializer_list<ssc_number_t>& values) {
+        ssc_data_set_array(this->data_, name.c_str(), (ssc_number_t*)(values.begin()), values.size());
     }
     ssc_number_t GetOutput(std::string name) const {
         ssc_number_t output;
