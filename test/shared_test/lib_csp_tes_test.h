@@ -6,7 +6,7 @@
 
 using Tank = Storage_HX;
 
-namespace csp_tes
+namespace csp_common
 {
     struct TankSpecifications;          // forward declaration
     struct TankState;

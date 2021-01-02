@@ -3,13 +3,13 @@
 #include "lib_csp_tes_test.h"
 #include "vs_google_test_explorer_namespace.h"
 
-using namespace csp_tes;
+using namespace csp_common;
 
 //========Tests===================================================================================
 //=== Using factory patterns to create the different physical and non-physical components=========
 
 // Test draining storage tank
-NAMESPACE_TEST(csp_tes, StorageTank, DrainingTank)
+NAMESPACE_TEST(csp_common, StorageTank, DrainingTank)
 {
     bool is_hot_tank = false;
     double dt = 3600.;
@@ -39,7 +39,7 @@ NAMESPACE_TEST(csp_tes, StorageTank, DrainingTank)
 }
 
 // Test an initially drained storage tank
-NAMESPACE_TEST(csp_tes, StorageTank, InitiallyDrainedTank)
+NAMESPACE_TEST(csp_common, StorageTank, InitiallyDrainedTank)
 {
     bool is_hot_tank = false;
     double dt = 3600.;

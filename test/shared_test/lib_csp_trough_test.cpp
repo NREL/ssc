@@ -10,7 +10,7 @@ using namespace csp_trough;
 //=== Using factory patterns to create the different physical and non-physical components=========
 
 // Test a standard trough loop at a single point in time
-NAMESPACE_TEST(csp_trough, TroughTest, DefaultTest)
+NAMESPACE_TEST(csp_trough, TroughLoop, DefaultTest)
 {
     DefaultTroughFactory default_trough_factory = DefaultTroughFactory();
     Location location = default_trough_factory.MakeLocation();
@@ -31,7 +31,7 @@ NAMESPACE_TEST(csp_trough, TroughTest, DefaultTest)
 }
 
 // Test a standard trough loop from a homogenous initial condition to steady-state
-NAMESPACE_TEST(csp_trough, TroughTest, SteadyStateTest)
+NAMESPACE_TEST(csp_trough, TroughLoop, SteadyStateTest)
 {
     DefaultTroughFactory default_trough_factory = DefaultTroughFactory();
     Location location = default_trough_factory.MakeLocation();
