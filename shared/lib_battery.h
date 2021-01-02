@@ -133,7 +133,7 @@ struct losses_state {
 
 struct losses_params {
     enum OPTIONS {
-        MONTHLY, SCHEDULE, VALUE
+        MONTHLY, SCHEDULE
     };
     int loss_choice;
 

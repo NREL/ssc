@@ -167,7 +167,7 @@ void losses_t::initialize() {
         fail:
         throw std::runtime_error("losses_t error: loss arrays length must be 1 or 12 for monthly input mode");
     }
-    else if (params->loss_choice == losses_params::SCHEDULE) {
+    else {
         if (params->schedule_loss.empty()) {
             throw std::runtime_error("losses_t error: loss length must be greater than 0 for schedule mode");
         }
