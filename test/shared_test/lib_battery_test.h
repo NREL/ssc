@@ -265,7 +265,7 @@ public:
         batteryModel = std::unique_ptr<battery_t>(new battery_t(dtHour, chemistry, capacityModel, voltageModel, lifetimeModel, thermalModel, lossModel));
     }
 
-    void TearDown(){
+    void TearDown() override {
         // batteryModel takes ownership of component models
     }
 

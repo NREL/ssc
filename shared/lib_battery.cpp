@@ -727,7 +727,7 @@ double battery_t::calculate_loss(double power, size_t lifetimeIndex) {
         }
 
     }
-    else if (params->losses->loss_choice == losses_params::SCHEDULE) {
+    else {
         return params->losses->schedule_loss[lifetimeIndex % params->losses->schedule_loss.size()];
     }
 }
