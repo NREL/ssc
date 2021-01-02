@@ -32,6 +32,11 @@ Lifetime cycling class.
 */
 
 struct lifetime_params {
+    enum MODEL_CHOICE {
+        CALCYC, NMCNREL
+    };
+    int model_choice;
+
     // cycling
     util::matrix_t<double> cycling_matrix;
     enum CYCLING_COLUMNS {
@@ -45,7 +50,6 @@ struct lifetime_params {
     int calendar_choice;
     double dt_hour;
 
-    // K. Smith: Life Prediction model coefficients
     double calendar_q0; // unitless
     double calendar_a;  // 1/sqrt(day)
     double calendar_b;  // K
@@ -56,6 +60,8 @@ struct lifetime_params {
     enum CALENDAR_COLUMNS {
         DAYS, CAPACITY_CAL
     };
+
+    // K. Smith: Life Prediction model coefficients
 
     friend std::ostream &operator<<(std::ostream &os, const lifetime_params &p);
 };

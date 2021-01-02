@@ -112,7 +112,8 @@ std::ostream &operator<<(std::ostream &os, const lifetime_state &p) {
 }
 
 std::ostream &operator<<(std::ostream &os, const lifetime_params &p) {
-    os << R"("lifetime_params": { "cycling_matrix": )" << p.cycling_matrix;
+    os << R"("lifetime_params": { "life_model: ")" << p.model_choice;
+    os << ", \"cycling_matrix\": " << p.cycling_matrix;
 
     char buf[1024];
     sprintf(buf, ", \"calendar_choice\": %d, \"dt_hour\": %.3f, \"calendar_q0\": %.3f, "

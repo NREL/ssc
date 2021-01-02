@@ -69,13 +69,14 @@ var_info vtab_battery_stateful_inputs[] = {
         { SSC_INPUT,        SSC_MATRIX,      "cap_vs_temp",                                "Table with Temperature and Capacity % as columns",        "[[C,%]]",  "",                     "ParamsPack",       "*",                           "",                             "" },
 
         // lifetime inputs
-        { SSC_INPUT,		SSC_MATRIX,      "cycling_matrix",                             "Table with DOD %, Cycle #, and Capacity % columns",       "[[%, #, %]]","",                     "ParamsCell",       "*",                           "",                             "" },
-        { SSC_INPUT,        SSC_NUMBER,      "calendar_choice",                            "Calendar life degradation input option",                  "0/1/2",    "0=None,1=LithiomIonModel,2=InputLossTable",  "ParamsCell",       "*",       "",                             "" },
-        { SSC_INPUT,        SSC_MATRIX,      "calendar_matrix",                            "Table with Day # and Capacity % columns",                 "[[#, %]]", "",                     "ParamsCell",       "calendar_choice=2",        "",                             "" },
-        { SSC_INPUT,        SSC_NUMBER,      "calendar_q0",                                "Calendar life model initial capacity cofficient",         "",         "",                     "ParamsCell",       "calendar_choice=1",        "",                             "" },
-        { SSC_INPUT,        SSC_NUMBER,      "calendar_a",                                 "Calendar life model coefficient",                         "1/sqrt(day)","",                   "ParamsCell",       "calendar_choice=1",        "",                             "" },
-        { SSC_INPUT,        SSC_NUMBER,      "calendar_b",                                 "Calendar life model coefficient",                         "K",        "",                     "ParamsCell",       "calendar_choice=1",        "",                             "" },
-        { SSC_INPUT,        SSC_NUMBER,      "calendar_c",                                 "Calendar life model coefficient",                         "K",        "",                     "ParamsCell",       "calendar_choice=1",        "",                             "" },
+        { SSC_INPUT,		SSC_NUMBER,      "life_model",                                 "Battery life model specifier",                            "0/1",      "0=calendar/cycle,1=NMC", "ParamsCell",       "*",                                   "",                             "" },
+        { SSC_INPUT,		SSC_MATRIX,      "cycling_matrix",                             "Table with DOD %, Cycle #, and Capacity % columns",       "[[%, #, %]]","",                     "ParamsCell",       "life_model=0",                        "",                             "" },
+        { SSC_INPUT,        SSC_NUMBER,      "calendar_choice",                            "Calendar life degradation input option",                  "0/1/2",    "0=None,1=LithiomIonModel,2=InputLossTable",  "ParamsCell",       "life_model=0",    "",                             "" },
+        { SSC_INPUT,        SSC_MATRIX,      "calendar_matrix",                            "Table with Day # and Capacity % columns",                 "[[#, %]]", "",                     "ParamsCell",       "life_model=0&calendar_choice=2",        "",                             "" },
+        { SSC_INPUT,        SSC_NUMBER,      "calendar_q0",                                "Calendar life model initial capacity cofficient",         "",         "",                     "ParamsCell",       "life_model=0&calendar_choice=1",        "",                             "" },
+        { SSC_INPUT,        SSC_NUMBER,      "calendar_a",                                 "Calendar life model coefficient",                         "1/sqrt(day)","",                   "ParamsCell",       "life_model=0&calendar_choice=1",        "",                             "" },
+        { SSC_INPUT,        SSC_NUMBER,      "calendar_b",                                 "Calendar life model coefficient",                         "K",        "",                     "ParamsCell",       "life_model=0&calendar_choice=1",        "",                             "" },
+        { SSC_INPUT,        SSC_NUMBER,      "calendar_c",                                 "Calendar life model coefficient",                         "K",        "",                     "ParamsCell",       "life_model=0&calendar_choice=1",        "",                             "" },
 
         // losses
         { SSC_INPUT,        SSC_NUMBER,      "loss_choice",                                "Loss power input option",                                 "0/1",        "0=Monthly,1=TimeSeries", "ParamsPack",       "?=0",                        "",                             "" },
@@ -335,18 +336,22 @@ std::shared_ptr<battery_params> create_battery_params(var_table *vt, double dt_h
 
     // lifetime
     auto lifetime = params->lifetime;
-    vt_get_int(vt, "calendar_choice", &choice);
-    lifetime->calendar_choice = static_cast<lifetime_params::CALENDAR_CHOICE>(choice);
-    lifetime->dt_hour = dt_hr;
-    vt_get_matrix(vt, "cycling_matrix", lifetime->cycling_matrix);
-    if (lifetime->calendar_choice == lifetime_params::CALENDAR_CHOICE::MODEL) {
-        vt_get_number(vt, "calendar_q0", &lifetime->calendar_q0);
-        vt_get_number(vt, "calendar_a", &lifetime->calendar_a);
-        vt_get_number(vt, "calendar_b", &lifetime->calendar_b);
-        vt_get_number(vt, "calendar_c", &lifetime->calendar_c);
-    }
-    else if (lifetime->calendar_choice == lifetime_params::CALENDAR_CHOICE::TABLE) {
-        vt_get_matrix(vt, "calendar_matrix", lifetime->calendar_matrix);
+    vt_get_int(vt, "life_model", &choice);
+    lifetime->model_choice = static_cast<lifetime_params::MODEL_CHOICE>(choice);
+    if (lifetime->model_choice == lifetime_params::CALCYC) {
+        vt_get_int(vt, "calendar_choice", &choice);
+        lifetime->calendar_choice = static_cast<lifetime_params::CALENDAR_CHOICE>(choice);
+        lifetime->dt_hour = dt_hr;
+        vt_get_matrix(vt, "cycling_matrix", lifetime->cycling_matrix);
+        if (lifetime->calendar_choice == lifetime_params::CALENDAR_CHOICE::MODEL) {
+            vt_get_number(vt, "calendar_q0", &lifetime->calendar_q0);
+            vt_get_number(vt, "calendar_a", &lifetime->calendar_a);
+            vt_get_number(vt, "calendar_b", &lifetime->calendar_b);
+            vt_get_number(vt, "calendar_c", &lifetime->calendar_c);
+        }
+        else if (lifetime->calendar_choice == lifetime_params::CALENDAR_CHOICE::TABLE) {
+            vt_get_matrix(vt, "calendar_matrix", lifetime->calendar_matrix);
+        }
     }
 
     // thermal
