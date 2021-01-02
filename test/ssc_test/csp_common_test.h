@@ -8,6 +8,7 @@
 #include "../input_cases/code_generator_utilities.h"
 
 #define EXPECT_NEAR_FRAC(val1, val2, frac_error) EXPECT_NEAR(val1, val2, val2 * frac_error)
+#define ASSERT_NEAR_FRAC(val1, val2, frac_error) ASSERT_NEAR(val1, val2, val2 * frac_error)
 
 const double kErrorToleranceLo = 0.001;    // 0.1%
 const double kErrorToleranceHi = 0.01;     // 1.0%
