@@ -786,7 +786,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 
     // model initialization
     voltage_t* voltage_model = 0;
-    lifetime_t* lifetime_model = 0;
+    lifetime_calendar_cycle_t* lifetime_model = 0;
     thermal_t* thermal_model = 0;
     capacity_t* capacity_model = 0;
     losses_t* losses_model = 0;
@@ -808,15 +808,15 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                                             dt_hr);
 
     if (batt_vars->batt_life_model == 0) {
-        if (batt_vars->batt_calendar_choice == lifetime_params::CALENDAR_CHOICE::MODEL) {
-            lifetime_model = new lifetime_t(batt_vars->batt_lifetime_matrix, dt_hr,
-                                            batt_vars->batt_calendar_q0, batt_vars->batt_calendar_a, batt_vars->batt_calendar_b, batt_vars->batt_calendar_c);
+        if (batt_vars->batt_calendar_choice == calendar_cycle_params::CALENDAR_CHOICE::MODEL) {
+            lifetime_model = new lifetime_calendar_cycle_t(batt_vars->batt_lifetime_matrix, dt_hr,
+                                                           batt_vars->batt_calendar_q0, batt_vars->batt_calendar_a, batt_vars->batt_calendar_b, batt_vars->batt_calendar_c);
         }
-        else if (batt_vars->batt_calendar_choice == lifetime_params::CALENDAR_CHOICE::TABLE) {
-            lifetime_model = new lifetime_t(batt_vars->batt_lifetime_matrix, dt_hr, batt_vars->batt_calendar_lifetime_matrix);
+        else if (batt_vars->batt_calendar_choice == calendar_cycle_params::CALENDAR_CHOICE::TABLE) {
+            lifetime_model = new lifetime_calendar_cycle_t(batt_vars->batt_lifetime_matrix, dt_hr, batt_vars->batt_calendar_lifetime_matrix);
         }
         else {
-            lifetime_model = new lifetime_t(batt_vars->batt_lifetime_matrix, dt_hr);
+            lifetime_model = new lifetime_calendar_cycle_t(batt_vars->batt_lifetime_matrix, dt_hr);
         }
     }
     else if (batt_vars->batt_life_model == 1) {
@@ -1404,10 +1404,10 @@ void battstor::outputs_fixed()
     outCurrent[index] = (ssc_number_t)(state.capacity->cell_current);
     outBatteryVoltage[index] = (ssc_number_t)(battery_model->V());
 
-    outCycles[index] = (ssc_number_t)(state.lifetime->cycle->n_cycles);
+    outCycles[index] = (ssc_number_t)(state.lifetime->n_cycles);
     outSOC[index] = (ssc_number_t)(state.capacity->SOC);
-    outDOD[index] = (ssc_number_t)(state.lifetime->cycle->range);
-    outDODCycleAverage[index] = (ssc_number_t)(state.lifetime->cycle->average_range);
+    outDOD[index] = (ssc_number_t)(state.lifetime->range);
+    outDODCycleAverage[index] = (ssc_number_t)(state.lifetime->average_range);
     outCapacityPercent[index] = (ssc_number_t)(state.lifetime->q_relative);
     outCapacityPercentCycle[index] = (ssc_number_t)(state.lifetime->cycle->q_relative_cycle);
     outCapacityPercentCalendar[index] = (ssc_number_t)(state.lifetime->calendar->q_relative_calendar);

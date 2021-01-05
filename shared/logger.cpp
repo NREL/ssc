@@ -3,7 +3,7 @@
 #include "lib_util.h"
 #include "lib_battery_capacity.h"
 #include "lib_battery_voltage.h"
-#include "lib_battery_lifetime.h"
+#include "lib_battery_lifetime_calendar_cycle.h"
 #include "lib_battery.h"
 
 /**
@@ -88,9 +88,9 @@ std::ostream &operator<<(std::ostream &os, const capacity_params &p) {
 
 std::ostream &operator<<(std::ostream &os, const cycle_state &p) {
     char buf[1024];
-    sprintf(buf, "\"cycle_state\": { \"q_relative_cycle\": %.3f, \"n_cycles\": %d, \"range\": %.3f, \"average_range\": %.3f, "
+    sprintf(buf, "\"cycle_state\": { \"q_relative_cycle\": %.3f, "
                  "\"rainflow_Xlt\": %.3f, \"rainflow_Ylt\": %.3f, \"rainflow_jlt\": %d, \"rainflow_peaks\": ",
-            p.q_relative_cycle, p.n_cycles, p.range, p.average_range,
+            p.q_relative_cycle,
             p.rainflow_Xlt, p.rainflow_Ylt, p.rainflow_jlt);
     os << buf << p.rainflow_peaks << " }";
     return os;
@@ -98,22 +98,24 @@ std::ostream &operator<<(std::ostream &os, const cycle_state &p) {
 
 std::ostream &operator<<(std::ostream &os, const calendar_state &p) {
     char buf[1024];
-    sprintf(buf, "\"calendar_state\": { \"q_relative_calendar\": %.3f, \"day_age_of_battery\": %d, "
+    sprintf(buf, "\"calendar_state\": { \"q_relative_calendar\": %.3f, "
                  "\"dq_relative_calendar_old\": %.3f }",
-            p.q_relative_calendar, p.day_age_of_battery, p.dq_relative_calendar_old);
+            p.q_relative_calendar, p.dq_relative_calendar_old);
     os << buf;
     return os;
 }
 
 std::ostream &operator<<(std::ostream &os, const lifetime_state &p) {
     os.precision(3);
-    os << R"("lifetime_state" : { "q_relative": )" << p.q_relative << ", " << *p.cycle << ", " << *p.calendar << " }";
+    char buf[1024];
+    sprintf(buf, R"("lifetime_state": { "q_relative": %f, "n_cycles": %d, "range": %.3f, "average_range": %.3f, )",
+            p.q_relative, p.n_cycles, p.range, p.average_range);
+    os << *p.cycle << ", " << *p.calendar << " }";
     return os;
 }
 
-std::ostream &operator<<(std::ostream &os, const lifetime_params &p) {
-    os << R"("lifetime_params": { "life_model: ")" << p.model_choice;
-    os << ", \"cycling_matrix\": " << p.cycling_matrix;
+std::ostream &operator<<(std::ostream &os, const calendar_cycle_params &p) {
+    os << R"("calendar_cycle_params": { "cycling_matrix": )" << p.cycling_matrix;
 
     char buf[1024];
     sprintf(buf, ", \"calendar_choice\": %d, \"dt_hour\": %.3f, \"calendar_q0\": %.3f, "

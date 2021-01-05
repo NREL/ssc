@@ -391,7 +391,10 @@ void battery_t::initialize() {
     }
 
     // lifetime
-    lifetime = std::unique_ptr<lifetime_t>(new lifetime_t(params->lifetime));
+    if (params->lifetime->model_choice == lifetime_params::CALCYC)
+        lifetime = std::unique_ptr<lifetime_calendar_cycle_t>(new lifetime_calendar_cycle_t(params->lifetime));
+    else
+        lifetime = std::unique_ptr<lifetime_nmc_t>(new lifetime_nmc_t(params->lifetime->nmc));
 
     // thermal
     thermal = std::unique_ptr<thermal_t>(new thermal_t(params->thermal));
@@ -403,10 +406,10 @@ void battery_t::initialize() {
 }
 
 battery_t::battery_t(double dt_hr, int chem, capacity_t *capacity_model, voltage_t *voltage_model,
-                     lifetime_t *lifetime_model, thermal_t *thermal_model, losses_t *losses_model) {
+                     lifetime_calendar_cycle_t *lifetime_model, thermal_t *thermal_model, losses_t *losses_model) {
     capacity = std::unique_ptr<capacity_t>(capacity_model);
     voltage = std::unique_ptr<voltage_t>(voltage_model);
-    lifetime = std::unique_ptr<lifetime_t>(lifetime_model);
+    lifetime = std::unique_ptr<lifetime_calendar_cycle_t>(lifetime_model);
     thermal = std::unique_ptr<thermal_t>(thermal_model);
     losses = std::unique_ptr<losses_t>(losses_model);
 
@@ -440,7 +443,7 @@ battery_t &battery_t::operator=(const battery_t& rhs) {
         capacity = std::unique_ptr<capacity_t>(rhs.capacity->clone());
         voltage = std::unique_ptr<voltage_t>(rhs.voltage->clone());
         thermal = std::unique_ptr<thermal_t>(new thermal_t(*rhs.thermal));
-        lifetime = std::unique_ptr<lifetime_t>(new lifetime_t(*rhs.lifetime));
+        lifetime = std::unique_ptr<lifetime_t>(rhs.lifetime->clone());
         losses = std::unique_ptr<losses_t>(new losses_t(*rhs.losses));
         state = std::make_shared<battery_state>(capacity->state, voltage->state, thermal->state, lifetime->state, losses->state);
         *state->replacement = *rhs.state->replacement;
