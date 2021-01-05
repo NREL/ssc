@@ -111,7 +111,7 @@ var_info vtab_battery_inputs[] = {
         { SSC_INPUT,        SSC_NUMBER,      "batt_minimum_modetime",                      "Minimum time at charge state",                            "min",     "",                     "BatteryCell",       "",                           "",                              "" },
 
         // lifetime inputs
-        { SSC_INPUT,		SSC_NUMBER,     "batt_life_model",                             "Battery life model specifier",                           "0/1",      "0=calendar/cycle,1=NMC", "BatteryCell",       "",                           "",                             "" },
+        { SSC_INPUT,		SSC_NUMBER,     "batt_life_model",                             "Battery life model specifier",                           "0/1",      "0=calendar/cycle,1=NMC", "BatteryCell",       "en_batt=1",                           "",                             "" },
         { SSC_INPUT,		SSC_MATRIX,     "batt_lifetime_matrix",                        "Cycles vs capacity at different depths-of-discharge",    "",         "",                     "BatteryCell",       "batt_life_model=0",                           "",                             "" },
         { SSC_INPUT,        SSC_NUMBER,     "batt_calendar_choice",                        "Calendar life degradation input option",                 "0/1/2",    "0=NoCalendarDegradation,1=LithiomIonModel,2=InputLossTable", "BatteryCell",       "batt_life_model=0",                           "",                             "" },
         { SSC_INPUT,        SSC_MATRIX,     "batt_calendar_lifetime_matrix",               "Days vs capacity",                                       "",         "",                     "BatteryCell",       "batt_life_model=0&batt_calendar_choice=2", "",                             "" },
@@ -786,7 +786,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 
     // model initialization
     voltage_t* voltage_model = 0;
-    lifetime_calendar_cycle_t* lifetime_model = 0;
+    lifetime_t* lifetime_model = 0;
     thermal_t* thermal_model = 0;
     capacity_t* capacity_model = 0;
     losses_t* losses_model = 0;
@@ -820,7 +820,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
         }
     }
     else if (batt_vars->batt_life_model == 1) {
-
+        lifetime_model = new lifetime_nmc_t(dt_hr);
     }
     else {
         throw exec_error("battery", "Unrecognized `batt_life_model` option. Valid options are 0 for separate calendar & cycle models; "
