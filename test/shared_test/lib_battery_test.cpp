@@ -218,6 +218,7 @@ TEST_F(lib_battery_test, runTestCycleAt1C){
     s.batt_voltage = 550.65;
     s.lifetime.calendar->q_relative_calendar = 102;
     s.lifetime.cycle->q_relative_cycle = 100;
+    s.lifetime.cycle->rainflow_jlt = 1;
     s.lifetime.q_relative = 100;
     s.thermal = {96.00, 20.00, 20};
     compareState(batteryModel, s, "runTestCycleAt1C: 1");
@@ -289,6 +290,7 @@ TEST_F(lib_battery_test, runTestCycleAt3C){
     s.batt_voltage = 548.35;
     s.lifetime.q_relative = 100;
     s.lifetime.cycle->q_relative_cycle = 100;
+    s.lifetime.cycle->rainflow_jlt = 1;
     s.lifetime.calendar->q_relative_calendar = 102;
     s.thermal = {96.01, 20.01, 20};
     s.last_idx = 0;
@@ -334,13 +336,12 @@ TEST_F(lib_battery_test, runTestCycleAt3C){
     s.lifetime.cycle->rainflow_Xlt = 88.53;
     s.lifetime.cycle->rainflow_Ylt = 89.45;
     s.lifetime.cycle->rainflow_jlt = 7;
-    s.lifetime.cycle->q_relative_cycle = 98.11;
-    s.lifetime.calendar->q_relative_calendar = 102;
+    s.lifetime.cycle->q_relative_cycle = 92.08;
+    s.lifetime.calendar->q_relative_calendar = 98.11;
     s.lifetime.calendar->dq_relative_calendar_old = 0.0393;
     s.thermal = {96.01, 20, 20};
     s.last_idx = 32991;
     compareState(batteryModel, s, "runTest: 3");
-
 
     EXPECT_NEAR(capacity_passed, 353328, 100) << "Current passing through cell";
     double qmax = fmax(s.capacity.qmax_lifetime, s.capacity.qmax_thermal);

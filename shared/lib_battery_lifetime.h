@@ -4,7 +4,6 @@
 #include <memory>
 
 struct calendar_cycle_params;
-struct nmc_params;
 
 struct lifetime_params {
     enum MODEL_CHOICE {
@@ -13,7 +12,6 @@ struct lifetime_params {
     } model_choice;
 
     std::shared_ptr<calendar_cycle_params> cal_cyc;
-    std::shared_ptr<nmc_params> nmc;
 
     lifetime_params();
 
@@ -22,7 +20,6 @@ struct lifetime_params {
 
 struct cycle_state;
 struct calendar_state;
-struct nmc_state;
 
 struct lifetime_state {
     double q_relative;                      // total lifetime relative capacity %
@@ -35,9 +32,6 @@ struct lifetime_state {
     // CALCYC model state
     std::shared_ptr<calendar_state> calendar;
     std::shared_ptr<cycle_state> cycle;
-
-    // NMCNREL model state
-//    std::shared_ptr<nmc_state> nmc;
 
     lifetime_state();
 
@@ -57,6 +51,8 @@ public:
     virtual lifetime_t &operator=(const lifetime_t &rhs);
 
     virtual lifetime_t *clone() = 0;
+
+    virtual ~lifetime_t() = default;
 
     /// Execute the lifetime models given the current lifetime run index, capacity model, and temperature
     virtual void runLifetimeModels(size_t lifetimeIndex, bool charge_changed, double prev_DOD, double DOD, double T_battery) = 0;

@@ -6,15 +6,11 @@
 #include "lib_util.h"
 #include "lib_battery_lifetime_calendar_cycle.h"
 
-struct nmc_params {
-
-};
-
 class lifetime_nmc_t : public lifetime_t {
 public:
     lifetime_nmc_t() {};
 
-    lifetime_nmc_t(std::shared_ptr<nmc_params> params_pt) {};
+    lifetime_nmc_t(std::shared_ptr<lifetime_params> params_pt) {};
 
     lifetime_t *clone() { return nullptr;};
 

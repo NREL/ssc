@@ -127,6 +127,14 @@ std::ostream &operator<<(std::ostream &os, const calendar_cycle_params &p) {
     return os;
 }
 
+std::ostream &operator<<(std::ostream &os, const lifetime_params &p) {
+    os.precision(3);
+    char buf[1024];
+    sprintf(buf, R"("lifetime_params": { "model_choice": %d, )", p.model_choice);
+    os << *p.cal_cyc << " }";
+    return os;
+}
+
 std::ostream &operator<<(std::ostream &os, const replacement_state &p) {
     char buf[256];
     sprintf(buf, R"("replacement_state": { "n_replacements": %d, "indices_replaced": )", p.n_replacements);

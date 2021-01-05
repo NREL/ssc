@@ -349,7 +349,7 @@ void lifetime_calendar_t::initialize() {
     state->calendar->dq_relative_calendar_old = 0;
     if (params->calendar_choice == calendar_cycle_params::CALENDAR_CHOICE::MODEL) {
         dt_day = params->dt_hour / util::hours_per_day;
-//        state->q_relative_calendar = params->calendar_q0 * 100;
+        state->calendar->q_relative_calendar = params->calendar_q0 * 100;
     }
     else if (params->calendar_choice == calendar_cycle_params::CALENDAR_CHOICE::TABLE) {
         if (params->calendar_matrix.nrows() < 2 || params->calendar_matrix.ncols() != 2)
@@ -375,12 +375,6 @@ lifetime_calendar_t::lifetime_calendar_t(double dt_hour, double q0, double a, do
     params->calendar_a = a;
     params->calendar_b = b;
     params->calendar_c = c;
-    state = std::make_shared<lifetime_state>();
-    initialize();
-}
-
-lifetime_calendar_t::lifetime_calendar_t(std::shared_ptr<calendar_cycle_params> params_ptr) :
-        params(std::move(params_ptr)) {
     state = std::make_shared<lifetime_state>();
     initialize();
 }
@@ -490,8 +484,8 @@ Define Lifetime Model
 
 void lifetime_calendar_cycle_t::initialize() {
     state = std::make_shared<lifetime_state>();
-    cycle_model = std::unique_ptr<lifetime_cycle_t>(new lifetime_cycle_t(params->cal_cyc));
-    calendar_model = std::unique_ptr<lifetime_calendar_t>(new lifetime_calendar_t(params->cal_cyc));
+    cycle_model = std::unique_ptr<lifetime_cycle_t>(new lifetime_cycle_t(params->cal_cyc, state));
+    calendar_model = std::unique_ptr<lifetime_calendar_t>(new lifetime_calendar_t(params->cal_cyc, state));
     state->q_relative = fmin(state->cycle->q_relative_cycle, state->calendar->q_relative_calendar);
 }
 

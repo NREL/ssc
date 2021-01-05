@@ -1,22 +1,12 @@
 #include "lib_battery_lifetime.h"
 #include "lib_battery_lifetime_calendar_cycle.h"
+#include "lib_battery_lifetime_nmc.h"
 
 lifetime_params::lifetime_params() {
-    model_choice = MODEL_CHOICE::CALCYC;
-    cal_cyc = nullptr;
-}
-
-std::ostream &operator<<(std::ostream &os, const lifetime_params &p) {
-
+    cal_cyc = std::make_shared<calendar_cycle_params>();
 }
 
 lifetime_state::lifetime_state(){
-    q_relative = 0;
-    n_cycles = 0;
-    range = 0;
-    average_range = 0;
-    day_age_of_battery = 0;
-
     cycle = std::make_shared<cycle_state>();
     calendar = std::make_shared<calendar_state>();
 }

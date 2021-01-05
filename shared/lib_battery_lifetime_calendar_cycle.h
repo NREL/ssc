@@ -163,9 +163,6 @@ public:
 
     explicit lifetime_calendar_t(double dt_hour, double q0= 1.02, double a= 2.66e-3, double b= -7280, double c= 930);
 
-    /// Constructor as lifetime_calendar_cycle_t component
-    explicit lifetime_calendar_t(std::shared_ptr<calendar_cycle_params> params_ptr);
-
     lifetime_calendar_t(std::shared_ptr<calendar_cycle_params> params_ptr, std::shared_ptr<lifetime_state> state_ptr);
 
     lifetime_calendar_t(const lifetime_calendar_t &rhs);
@@ -241,6 +238,8 @@ public:
     lifetime_calendar_cycle_t &operator=(const lifetime_calendar_cycle_t& rhs);
 
     lifetime_calendar_cycle_t *clone() override;
+
+    ~lifetime_calendar_cycle_t() override = default;
 
     /// Execute the lifetime models given the current lifetime run index, capacity model, and temperature
     void runLifetimeModels(size_t lifetimeIndex, bool charge_changed, double prev_DOD, double DOD, double T_battery) override;

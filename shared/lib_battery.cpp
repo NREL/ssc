@@ -394,7 +394,7 @@ void battery_t::initialize() {
     if (params->lifetime->model_choice == lifetime_params::CALCYC)
         lifetime = std::unique_ptr<lifetime_calendar_cycle_t>(new lifetime_calendar_cycle_t(params->lifetime));
     else
-        lifetime = std::unique_ptr<lifetime_nmc_t>(new lifetime_nmc_t(params->lifetime->nmc));
+        lifetime = std::unique_ptr<lifetime_nmc_t>(new lifetime_nmc_t(params->lifetime));
 
     // thermal
     thermal = std::unique_ptr<thermal_t>(new thermal_t(params->thermal));
@@ -406,10 +406,10 @@ void battery_t::initialize() {
 }
 
 battery_t::battery_t(double dt_hr, int chem, capacity_t *capacity_model, voltage_t *voltage_model,
-                     lifetime_calendar_cycle_t *lifetime_model, thermal_t *thermal_model, losses_t *losses_model) {
+                     lifetime_t *lifetime_model, thermal_t *thermal_model, losses_t *losses_model) {
     capacity = std::unique_ptr<capacity_t>(capacity_model);
     voltage = std::unique_ptr<voltage_t>(voltage_model);
-    lifetime = std::unique_ptr<lifetime_calendar_cycle_t>(lifetime_model);
+    lifetime = std::unique_ptr<lifetime_t>(lifetime_model);
     thermal = std::unique_ptr<thermal_t>(thermal_model);
     losses = std::unique_ptr<losses_t>(losses_model);
 

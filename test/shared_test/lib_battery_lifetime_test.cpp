@@ -119,7 +119,7 @@ TEST_F(lib_battery_lifetime_cycle_test, runCycleLifetimeTestWithNoise) {
     }
     lifetime_state s = cycle_model->get_state();
     EXPECT_NEAR(s.cycle->q_relative_cycle, 95.06, tol_high);
-    EXPECT_NEAR(s.range, 89.06, tol_high);
+    EXPECT_NEAR(s.range, 90.6, tol_high);
     EXPECT_NEAR(s.average_range, 90.02, tol_high);
 
 }

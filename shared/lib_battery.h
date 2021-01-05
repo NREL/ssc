@@ -290,7 +290,7 @@ public:
     battery_t(double dt_hr, int chem,
               capacity_t* capacity_model,
               voltage_t* voltage_model,
-              lifetime_calendar_cycle_t* lifetime_model,
+              lifetime_t* lifetime_model,
               thermal_t* thermal_model,
               losses_t* losses_model);
 
