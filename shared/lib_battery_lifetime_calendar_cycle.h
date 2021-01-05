@@ -203,21 +203,6 @@ private:
 Class to encapsulate multiple lifetime models, and linearly combined the associated degradation and handle replacements
 */
 
-//struct lifetime_state {
-//    double q_relative;                      // total lifetime relative capacity %
-//
-//    std::shared_ptr<cycle_state> cycle;
-//    std::shared_ptr<calendar_state> calendar;
-//
-//    lifetime_state();
-//
-//    lifetime_state(const std::shared_ptr<cycle_state>& cyc, const std::shared_ptr<calendar_state>& cal);
-//
-//    lifetime_state &operator=(const lifetime_state &rhs);
-//
-//    friend std::ostream &operator<<(std::ostream &os, const lifetime_state &p);
-//};
-
 class lifetime_calendar_cycle_t : public lifetime_t {
 public:
     /// Cycle with Calendar table

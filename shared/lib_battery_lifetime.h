@@ -15,6 +15,8 @@ struct lifetime_params {
 
     lifetime_params();
 
+    lifetime_params &operator=(const lifetime_params &rhs);
+
     friend std::ostream &operator<<(std::ostream &os, const lifetime_params &p);
 };
 

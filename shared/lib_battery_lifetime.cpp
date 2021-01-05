@@ -3,15 +3,30 @@
 #include "lib_battery_lifetime_nmc.h"
 
 lifetime_params::lifetime_params() {
+    model_choice = CALCYC;
     cal_cyc = std::make_shared<calendar_cycle_params>();
 }
 
 lifetime_state::lifetime_state(){
+    q_relative = 0;
     cycle = std::make_shared<cycle_state>();
     calendar = std::make_shared<calendar_state>();
 }
 
+lifetime_params &lifetime_params::operator=(const lifetime_params &rhs) {
+    if (this != &rhs) {
+        model_choice = rhs.model_choice;
+        *cal_cyc = *rhs.cal_cyc;
+    }
+    return *this;
+}
+
 lifetime_state::lifetime_state(const std::shared_ptr<cycle_state>& cyc, const std::shared_ptr<calendar_state>& cal) {
+    q_relative = 0;
+    n_cycles = 0;
+    range = 0;
+    average_range = 0;
+    day_age_of_battery = 0;
     cycle = cyc;
     calendar = cal;
     q_relative = fmin(cycle->q_relative_cycle, calendar->q_relative_calendar);
