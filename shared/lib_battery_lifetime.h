@@ -33,11 +33,11 @@ struct lifetime_state {
     double dt_hour;
 
     // CALCYC model state
-    std::shared_ptr<cycle_state> cycle;
     std::shared_ptr<calendar_state> calendar;
+    std::shared_ptr<cycle_state> cycle;
 
     // NMCNREL model state
-    std::shared_ptr<nmc_state> nmc;
+//    std::shared_ptr<nmc_state> nmc;
 
     lifetime_state();
 
@@ -45,7 +45,7 @@ struct lifetime_state {
 
     lifetime_state &operator=(const lifetime_state &rhs);
 
-//    friend std::ostream &operator<<(std::ostream &os, const lifetime_state &p);
+    friend std::ostream &operator<<(std::ostream &os, const lifetime_state &p);
 };
 
 class lifetime_t {

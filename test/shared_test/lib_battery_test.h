@@ -109,9 +109,7 @@ public:
 struct battery_state_test{
     capacity_state capacity;
     double batt_voltage;
-    double q_lifetime;
-    cycle_state cycle;
-    calendar_state cal;
+    lifetime_state lifetime;
     thermal_state thermal;
 
     size_t last_idx;
@@ -125,18 +123,20 @@ static void compareState(std::unique_ptr<battery_t>&model, const battery_state_t
 
     double tol = 0.01;
     auto lifetime_tested = tested_state.lifetime;
-    auto cal_expected = expected_state.cal;
-    EXPECT_NEAR(lifetime_tested->calendar->day_age_of_battery, cal_expected.day_age_of_battery, tol) << msg;
+    auto lifetime_expected = expected_state.lifetime;
+    EXPECT_NEAR(lifetime_tested->day_age_of_battery, lifetime_expected.day_age_of_battery, tol) << msg;
+    EXPECT_NEAR(lifetime_tested->range, lifetime_expected.range, tol) << msg;
+    EXPECT_NEAR(lifetime_tested->average_range, lifetime_expected.average_range, tol) << msg;
+    EXPECT_NEAR(lifetime_tested->n_cycles, lifetime_expected.n_cycles, tol) << msg;
+
+    auto cal_expected = *lifetime_expected.calendar;
     EXPECT_NEAR(lifetime_tested->calendar->q_relative_calendar, cal_expected.q_relative_calendar, tol) << msg;
     EXPECT_NEAR(lifetime_tested->calendar->dq_relative_calendar_old, cal_expected.dq_relative_calendar_old, tol) << msg;
 
-    auto cyc_expected = expected_state.cycle;
+    auto cyc_expected = *lifetime_expected.cycle;
     EXPECT_NEAR(lifetime_tested->cycle->q_relative_cycle, cyc_expected.q_relative_cycle, tol) << msg;
     EXPECT_NEAR(lifetime_tested->cycle->rainflow_Xlt, cyc_expected.rainflow_Xlt, tol) << msg;
     EXPECT_NEAR(lifetime_tested->cycle->rainflow_Ylt, cyc_expected.rainflow_Ylt, tol) << msg;
-    EXPECT_NEAR(lifetime_tested->cycle->range, cyc_expected.range, tol) << msg;
-    EXPECT_NEAR(lifetime_tested->cycle->average_range, cyc_expected.average_range, tol) << msg;
-    EXPECT_NEAR(lifetime_tested->cycle->n_cycles, cyc_expected.n_cycles, tol) << msg;
     EXPECT_NEAR(lifetime_tested->cycle->rainflow_jlt, cyc_expected.rainflow_jlt, tol) << msg;
 
     compareState(*tested_state.thermal, expected_state.thermal, msg);
