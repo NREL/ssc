@@ -319,7 +319,6 @@ TEST_F(lib_battery_lifetime_test, updateCapacityTest) {
 
         idx ++;
     }
-
 }
 
 TEST_F(lib_battery_lifetime_test, runCycleLifetimeTestWithRestPeriod) {
@@ -349,4 +348,15 @@ TEST_F(lib_battery_lifetime_test, runCycleLifetimeTestWithRestPeriod) {
     EXPECT_NEAR(s.n_cycles, 2, tol);
 }
 
+TEST_F(lib_battery_lifetime_nmc_test, updateCapacityTest) {
+    size_t idx = 0;
+    while (idx < 876){
+        model->runLifetimeModels(idx, true, 5,95, 25);
+        model->runLifetimeModels(idx, true, 95, 5, 25);
 
+        auto state = model->get_state();
+
+        // do tests here
+        idx ++;
+    }
+}

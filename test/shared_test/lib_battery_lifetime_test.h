@@ -97,4 +97,16 @@ public:
         model = std::unique_ptr<lifetime_calendar_cycle_t>(new lifetime_calendar_cycle_t(cycles_vs_DOD, dt_hour, 1.02, 2.66e-3, -7280, 930));
     }
 };
+
+class lib_battery_lifetime_nmc_test : public ::testing::Test{
+protected:
+    std::unique_ptr<lifetime_nmc_t> model;
+
+    double dt_hour = 1;
+public:
+    void SetUp() override {
+        model = std::unique_ptr<lifetime_nmc_t>(new lifetime_nmc_t(dt_hour));
+    }
+};
+
 #endif //SAM_SIMULATION_CORE_LIB_BATTERY_LIFETIME_TEST_H

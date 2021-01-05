@@ -7,7 +7,7 @@ void lifetime_nmc_t::initialize() {
 
 lifetime_nmc_t::lifetime_nmc_t(double dt_hr) {
     params = std::make_shared<lifetime_params>();
-    params->model_choice == lifetime_params::NMCNREL;
+    params->model_choice = lifetime_params::NMCNREL;
     params->dt_hour = dt_hr;
     initialize();
 }
@@ -27,6 +27,7 @@ lifetime_nmc_t& lifetime_nmc_t::operator=(const lifetime_nmc_t& rhs) {
         *params = *rhs.params;
         *state = *rhs.state;
     }
+    return *this;
 }
 
 lifetime_t * lifetime_nmc_t::clone() {
