@@ -349,11 +349,13 @@ void voltage_dynamic_t::set_initial_SOC(double init_soc) {
 // everything in here is on a per-cell basis
 double voltage_dynamic_t::voltage_model_tremblay_hybrid(double Q_cell, double I, double q0_cell) {
     double it = Q_cell - q0_cell;
+    /*
     double C = (-1 * params->dynamic.Vcut + _E0 - params->resistance * I + _A * exp(-_B0 * Q_cell)) / _K;
     double x = Q_cell / (C - 1);
     double Q_cell_mod = Q_cell + x;
     //double E = _E0 - _K * (Q_cell / (Q_cell - it)) + _A * exp(-_B0 * it);
-    double E = _E0 - _K * (Q_cell_mod / (Q_cell_mod - it)) + _A * exp(-_B0 * it);
+    */
+    double E = _E0 - _K * (Q_cell / (Q_cell - it)) + _A * exp(-_B0 * it);
     return E - params->resistance * I;
 }
 
@@ -375,10 +377,14 @@ void voltage_dynamic_t::updateVoltage(double q, double qmax, double I, const dou
 double voltage_dynamic_t::calculate_max_charge_w(double q, double qmax, double kelvin, double *max_current) {
     q /= params->num_strings;
     qmax /= params->num_strings;
+    
     double current = (q - qmax) / params->dt_hr;
+    double C = (-1 * params->dynamic.Vcut + _E0 - params->resistance * current + _A * exp(-_B0 * qmax)) / _K;
+    double x = qmax / (C - 1);
+    double qmax_mod = qmax + x;
     if (max_current)
         *max_current = current * params->num_strings;
-    return current * voltage_model_tremblay_hybrid(qmax, current, qmax) * params->num_strings *
+    return current * voltage_model_tremblay_hybrid(qmax_mod, current, qmax_mod) * params->num_strings *
            params->num_cells_series;
 }
 
@@ -393,9 +399,12 @@ double voltage_dynamic_t::calculate_max_discharge_w(double q, double qmax, doubl
     double incr = q / 10;
     double vol_diff = params->dynamic.Vcut - vol;
     double max_p = 0, max_I = 0;
-    while (current * params->dt_hr < q - tolerance && vol_diff >=0) {
-        vol = voltage_model_tremblay_hybrid(qmax, current, q - current * params->dt_hr);
-        vol_diff = params->dynamic.Vcut - vol;
+    while (current * params->dt_hr < q - tolerance && vol_diff >= .01) {
+        double C = (-1 * params->dynamic.Vcut + _E0 - params->resistance * current + _A * exp(-_B0 * qmax)) / _K;
+        double x = qmax / (C - 1);
+        double qmax_mod = qmax + x;
+        vol = voltage_model_tremblay_hybrid(qmax_mod, current, q - current * params->dt_hr);
+        vol_diff = abs(params->dynamic.Vcut - vol);
         double p = current * vol;
         if (p > max_p) {
             max_p = p;
@@ -411,7 +420,7 @@ double voltage_dynamic_t::calculate_max_discharge_w(double q, double qmax, doubl
     return max_p * params->num_strings * params->num_cells_series;
 }
 
-double voltage_dynamic_t::calculate_current_for_target_w(double P_watts, double q, double qmax, double) {
+double voltage_dynamic_t::calculate_current_for_target_w(double P_watts, double q, double qmax, double kelvin) {
     if (P_watts == 0) return 0.;
 
     solver_power = fabs(P_watts) / (params->num_cells_series * params->num_strings);
