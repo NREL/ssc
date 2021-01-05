@@ -203,7 +203,7 @@ void write_battery_state(const battery_state& state, var_table* vt) {
     vt->assign_match_case("average_range", lifetime->average_range);
     vt->assign_match_case("day_age_of_battery", lifetime->day_age_of_battery);
 
-    vt_get_int(vt, "model_choice", &choice);
+    vt_get_int(vt, "life_model", &choice);
     if (choice == lifetime_params::CALCYC) {
         vt->assign_match_case("q_relative_cycle", lifetime->cycle->q_relative_cycle);
         vt->assign_match_case("rainflow_Xlt", lifetime->cycle->rainflow_Xlt);
@@ -275,7 +275,7 @@ void read_battery_state(battery_state& state, var_table* vt) {
     vt_get_number(vt, "average_range", &lifetime->average_range);
     vt_get_int(vt, "day_age_of_battery", &lifetime->day_age_of_battery);
 
-    vt_get_int(vt, "model_choice", &choice);
+    vt_get_int(vt, "life_model", &choice);
     if (choice == lifetime_params::CALCYC) {
         vt_get_number(vt, "rainflow_Xlt", &lifetime->cycle->rainflow_Xlt);
         vt_get_number(vt, "rainflow_Ylt", &lifetime->cycle->rainflow_Ylt);
