@@ -25,6 +25,11 @@ lifetime_state::lifetime_state(){
     calendar = std::make_shared<calendar_state>();
 }
 
+lifetime_state::lifetime_state(const lifetime_state &rhs) :
+        lifetime_state() {
+    operator=(rhs);
+}
+
 lifetime_state::lifetime_state(const std::shared_ptr<cycle_state>& cyc, const std::shared_ptr<calendar_state>& cal) {
     q_relative = 0;
     n_cycles = 0;
