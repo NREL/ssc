@@ -6,18 +6,28 @@ typedef std::chrono::high_resolution_clock Clock;
 
 TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, TestStep) {
     CreateModel(1);
-    double last_idx, current, SOC, V, P;
+    double last_idx, I, SOC, V, P, Q, I_d, I_c, P_d, P_c;
 
     ssc_module_exec(mod, data);
     ssc_data_get_number(data, "last_idx", &last_idx);
-    ssc_data_get_number(data, "I", &current);
-    ssc_data_get_number(data, "P", &P);
     ssc_data_get_number(data, "V", &V);
+    ssc_data_get_number(data, "P", &P);
+    ssc_data_get_number(data, "Q", &Q);
+    ssc_data_get_number(data, "I", &I);
+    ssc_data_get_number(data, "I_dischargeable", &I_d);
+    ssc_data_get_number(data, "I_chargeable", &I_c);
+    ssc_data_get_number(data, "P_dischargeable", &P_d);
+    ssc_data_get_number(data, "P_chargeable", &P_c);
     ssc_data_get_number(data, "SOC", &SOC);
     EXPECT_EQ(last_idx, 1);
-    EXPECT_NEAR(current, 1, 1e-2);
-    EXPECT_NEAR(P, 0.549, 1e-2);
     EXPECT_NEAR(V, 549.18, 1e-2);
+    EXPECT_NEAR(P, 0.549, 1e-2);
+    EXPECT_NEAR(Q, 9.125, 1e-2);
+    EXPECT_NEAR(I, 1, 1e-2);
+    EXPECT_NEAR(I_d, 7.30, 1e-2);
+    EXPECT_NEAR(I_c, -9.34, 1e-2);
+    EXPECT_NEAR(P_d, 3.36, 1e-2);
+    EXPECT_NEAR(P_c, -5.32, 1e-2);
     EXPECT_NEAR(SOC, 46.94, 1e-2);
 
     // make a copy
@@ -26,27 +36,47 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, TestStep) {
 
     ssc_module_exec(mod, data);
     ssc_data_get_number(data, "last_idx", &last_idx);
-    ssc_data_get_number(data, "I", &current);
-    ssc_data_get_number(data, "P", &P);
     ssc_data_get_number(data, "V", &V);
+    ssc_data_get_number(data, "P", &P);
+    ssc_data_get_number(data, "Q", &Q);
+    ssc_data_get_number(data, "I", &I);
+    ssc_data_get_number(data, "I_dischargeable", &I_d);
+    ssc_data_get_number(data, "I_chargeable", &I_c);
+    ssc_data_get_number(data, "P_dischargeable", &P_d);
+    ssc_data_get_number(data, "P_chargeable", &P_c);
     ssc_data_get_number(data, "SOC", &SOC);
     EXPECT_EQ(last_idx, 2);
-    EXPECT_NEAR(current, 1, 1e-2);
-    EXPECT_NEAR(P, 0.546, 1e-2);
     EXPECT_NEAR(V, 546.09, 1e-2);
+    EXPECT_NEAR(P, 0.546, 1e-2);
+    EXPECT_NEAR(Q, 8.125, 1e-2);
+    EXPECT_NEAR(I, 1, 1e-2);
+    EXPECT_NEAR(I_d, 6.5, 1e-2);
+    EXPECT_NEAR(I_c, -10.34, 1e-2);
+    EXPECT_NEAR(P_d, 2.90, 1e-2);
+    EXPECT_NEAR(P_c, -5.89, 1e-2);
     EXPECT_NEAR(SOC, 41.79, 1e-2);
 
     // run the copy, should end up in same place
     ssc_module_exec(mod, copy);
-    ssc_data_get_number(data, "last_idx", &last_idx);
-    ssc_data_get_number(data, "I", &current);
-    ssc_data_get_number(data, "P", &P);
-    ssc_data_get_number(data, "V", &V);
-    ssc_data_get_number(data, "SOC", &SOC);
+    ssc_data_get_number(copy, "last_idx", &last_idx);
+    ssc_data_get_number(copy, "V", &V);
+    ssc_data_get_number(copy, "P", &P);
+    ssc_data_get_number(copy, "Q", &Q);
+    ssc_data_get_number(copy, "I", &I);
+    ssc_data_get_number(copy, "I_dischargeable", &I_d);
+    ssc_data_get_number(copy, "I_chargeable", &I_c);
+    ssc_data_get_number(copy, "P_dischargeable", &P_d);
+    ssc_data_get_number(copy, "P_chargeable", &P_c);
+    ssc_data_get_number(copy, "SOC", &SOC);
     EXPECT_EQ(last_idx, 2);
-    EXPECT_NEAR(current, 1, 1e-2);
-    EXPECT_NEAR(P, 0.546, 1e-2);
     EXPECT_NEAR(V, 546.09, 1e-2);
+    EXPECT_NEAR(P, 0.546, 1e-2);
+    EXPECT_NEAR(Q, 8.125, 1e-2);
+    EXPECT_NEAR(I, 1, 1e-2);
+    EXPECT_NEAR(I_d, 6.5, 1e-2);
+    EXPECT_NEAR(I_c, -10.34, 1e-2);
+    EXPECT_NEAR(P_d, 2.90, 1e-2);
+    EXPECT_NEAR(P_c, -5.89, 1e-2);
     EXPECT_NEAR(SOC, 41.79, 1e-2);
 }
 
@@ -117,7 +147,7 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, ReadJson) {
 TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, RunCurrentControl) {
     CreateKokamModel();
 
-    double range, avg_range, n_cycles;
+    double range, avg_range, n_cycles, q_max, q_rel;
 
     std::vector<double> currents = getCurrentData();
 
@@ -130,11 +160,17 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, RunCurrentControl) {
         ssc_module_exec(mod, data);
     }
 
+
     ssc_data_get_number(data, "range", &range);
     ssc_data_get_number(data, "average_range", &avg_range);
     ssc_data_get_number(data, "n_cycles", &n_cycles);
+    ssc_data_get_number(data, "Q_max", &q_max);
+    ssc_data_get_number(data, "q_relative", &q_rel);
 
-    EXPECT_NEAR(range, 75.0, 0.5);
-    EXPECT_NEAR(avg_range, 61.5, 0.1);
-    EXPECT_NEAR(n_cycles, 3.0, 0.1);
+
+    EXPECT_NEAR(range, 75.34, 0.01);
+    EXPECT_NEAR(avg_range, 61.54, 0.01);
+    EXPECT_NEAR(n_cycles, 3.0, 0.01);
+    EXPECT_NEAR(q_max, 75.55, 0.01);
+    EXPECT_NEAR(q_rel, 99.99, 0.01);
 }
