@@ -379,10 +379,12 @@ TEST_F(lib_battery_test, createFromParams) {
 
     double current = 10;
     double P_orig = batteryModel->run(0, current);
-    current = 10;
+
     double P_new = bat.run(0, current);
 
     EXPECT_EQ(P_orig, P_new);
+    EXPECT_EQ(batteryModel->I(), bat.I());
+    EXPECT_EQ(batteryModel->charge_maximum(), bat.charge_maximum());
 }
 
 TEST_F(lib_battery_test,logging) {
