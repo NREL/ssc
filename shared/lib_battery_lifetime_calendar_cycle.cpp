@@ -533,8 +533,6 @@ lifetime_calendar_cycle_t::lifetime_calendar_cycle_t(std::shared_ptr<lifetime_pa
 
 lifetime_calendar_cycle_t::lifetime_calendar_cycle_t(const lifetime_calendar_cycle_t& rhs) :
         lifetime_t(rhs){
-    state = std::make_shared<lifetime_state>();
-    params = std::make_shared<lifetime_params>();
     operator=(rhs);
 }
 

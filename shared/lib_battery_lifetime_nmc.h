@@ -12,6 +12,10 @@ public:
 
     lifetime_nmc_t(std::shared_ptr<lifetime_params> params_pt);
 
+    lifetime_nmc_t(const lifetime_nmc_t& rhs);
+
+    lifetime_nmc_t &operator=(const lifetime_nmc_t& rhs);
+
     lifetime_t *clone() override;
 
     /// Execute the lifetime models given the current lifetime run index, capacity model, and temperature
