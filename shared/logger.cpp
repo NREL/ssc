@@ -118,9 +118,9 @@ std::ostream &operator<<(std::ostream &os, const calendar_cycle_params &p) {
     os << R"("calendar_cycle_params": { "cycling_matrix": )" << p.cycling_matrix;
 
     char buf[1024];
-    sprintf(buf, ", \"calendar_choice\": %d, \"dt_hour\": %.3f, \"calendar_q0\": %.3f, "
+    sprintf(buf, ", \"calendar_choice\": %d, \"calendar_q0\": %.3f, "
                  "\"calendar_a\": %.3f, \"calendar_b\": %.3f, "
-                 "\"calendar_c\": %.3f, ", p.calendar_choice, p.dt_hour, p.calendar_q0,
+                 "\"calendar_c\": %.3f, ", p.calendar_choice, p.calendar_q0,
             p.calendar_a, p.calendar_b, p.calendar_c);
     os << buf;
     os << R"("calendar_matrix": )" << p.calendar_matrix << " }";
@@ -130,7 +130,7 @@ std::ostream &operator<<(std::ostream &os, const calendar_cycle_params &p) {
 std::ostream &operator<<(std::ostream &os, const lifetime_params &p) {
     os.precision(3);
     char buf[1024];
-    sprintf(buf, R"("lifetime_params": { "model_choice": %d, )", p.model_choice);
+    sprintf(buf, R"("lifetime_params": { "dt_hour": %.3f, "model_choice": %d, )", p.dt_hour, p.model_choice);
     os << *p.cal_cyc << " }";
     return os;
 }

@@ -365,7 +365,7 @@ std::shared_ptr<battery_params> create_battery_params(var_table *vt, double dt_h
     if (lifetime->model_choice == lifetime_params::CALCYC) {
         vt_get_int(vt, "calendar_choice", &choice);
         lifetime->cal_cyc->calendar_choice = static_cast<calendar_cycle_params::CALENDAR_CHOICE>(choice);
-        lifetime->cal_cyc->dt_hour = dt_hr;
+        lifetime->dt_hour = dt_hr;
         vt_get_matrix(vt, "cycling_matrix", lifetime->cal_cyc->cycling_matrix);
         if (lifetime->cal_cyc->calendar_choice == calendar_cycle_params::CALENDAR_CHOICE::MODEL) {
             vt_get_number(vt, "calendar_q0", &lifetime->cal_cyc->calendar_q0);

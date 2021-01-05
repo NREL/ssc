@@ -44,7 +44,6 @@ struct calendar_cycle_params {
         NONE, MODEL, TABLE
     };
     int calendar_choice;
-    double dt_hour;
 
     double calendar_q0; // unitless
     double calendar_a;  // 1/sqrt(day)
@@ -62,9 +61,6 @@ struct calendar_cycle_params {
 
 struct cycle_state {
     double q_relative_cycle;                // %
-//    int n_cycles;
-//    double range;
-//    double average_range;
     enum RAINFLOW_CODES {
         LT_SUCCESS, LT_GET_DATA, LT_RERANGE
     };
@@ -74,8 +70,6 @@ struct cycle_state {
     std::vector<double> rainflow_peaks;
 
     friend std::ostream &operator<<(std::ostream &os, const cycle_state &p);
-
-    bool operator==(const cycle_state &p) const;
 };
 
 class lifetime_cycle_t {
@@ -85,9 +79,9 @@ public:
     lifetime_cycle_t(const util::matrix_t<double> &batt_lifetime_matrix);
 
     /// Constructor as lifetime_calendar_cycle_t component
-    explicit lifetime_cycle_t(std::shared_ptr<calendar_cycle_params> params_ptr);
+    explicit lifetime_cycle_t(std::shared_ptr<lifetime_params> params_ptr);
 
-    lifetime_cycle_t(std::shared_ptr<calendar_cycle_params> params_ptr, std::shared_ptr<lifetime_state> state_ptr);
+    lifetime_cycle_t(std::shared_ptr<lifetime_params> params_ptr, std::shared_ptr<lifetime_state> state_ptr);
 
     lifetime_cycle_t(const lifetime_cycle_t &rhs);
 
@@ -132,7 +126,7 @@ protected:
     /// Bilinear interpolation, given the depth-of-discharge and cycle number, return the capacity percent
     double bilinear(double DOD, int cycle_number);
 
-    std::shared_ptr<calendar_cycle_params> params;
+    std::shared_ptr<lifetime_params> params;
 
     std::shared_ptr<lifetime_state> state;
 
@@ -163,7 +157,7 @@ public:
 
     explicit lifetime_calendar_t(double dt_hour, double q0= 1.02, double a= 2.66e-3, double b= -7280, double c= 930);
 
-    lifetime_calendar_t(std::shared_ptr<calendar_cycle_params> params_ptr, std::shared_ptr<lifetime_state> state_ptr);
+    lifetime_calendar_t(std::shared_ptr<lifetime_params> params_ptr, std::shared_ptr<lifetime_state> state_ptr);
 
     lifetime_calendar_t(const lifetime_calendar_t &rhs);
 
@@ -189,7 +183,7 @@ protected:
 
     double dt_day;
 
-    std::shared_ptr<calendar_cycle_params> params;
+    std::shared_ptr<lifetime_params> params;
 
     std::shared_ptr<lifetime_state> state;
 

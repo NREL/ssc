@@ -30,7 +30,7 @@ extern double tolerance;
 extern double low_tolerance;
 
 void lifetime_cycle_t::initialize() {
-    if (params->cycling_matrix.nrows() < 3 || params->cycling_matrix.ncols() != 3)
+    if (params->cal_cyc->cycling_matrix.nrows() < 3 || params->cal_cyc->cycling_matrix.ncols() != 3)
         throw std::runtime_error("lifetime_cycle_t error: Battery lifetime matrix must have three columns and at least three rows");
     state->n_cycles = 0;
     state->range = 0;
@@ -43,19 +43,19 @@ void lifetime_cycle_t::initialize() {
 }
 
 lifetime_cycle_t::lifetime_cycle_t(const util::matrix_t<double> &batt_lifetime_matrix) {
-    params = std::make_shared<calendar_cycle_params>();
-    params->cycling_matrix = batt_lifetime_matrix;
+    params = std::make_shared<lifetime_params>();
+    params->cal_cyc->cycling_matrix = batt_lifetime_matrix;
     state = std::make_shared<lifetime_state>();
     initialize();
 }
 
-lifetime_cycle_t::lifetime_cycle_t(std::shared_ptr<calendar_cycle_params> params_ptr) :
+lifetime_cycle_t::lifetime_cycle_t(std::shared_ptr<lifetime_params> params_ptr) :
         params(std::move(params_ptr)) {
     state = std::make_shared<lifetime_state>();
     initialize();
 }
 
-lifetime_cycle_t::lifetime_cycle_t(std::shared_ptr<calendar_cycle_params> params_ptr, std::shared_ptr<lifetime_state> state_ptr) :
+lifetime_cycle_t::lifetime_cycle_t(std::shared_ptr<lifetime_params> params_ptr, std::shared_ptr<lifetime_state> state_ptr) :
         params(std::move(params_ptr)),
         state(std::move(state_ptr)){
     initialize();
@@ -223,20 +223,20 @@ double lifetime_cycle_t::bilinear(double DOD, int cycle_number) {
     double D = 0.;
     size_t n = 0;
     double C = 100;
-    size_t n_rows = params->cycling_matrix.nrows();
+    size_t n_rows = params->cal_cyc->cycling_matrix.nrows();
 
     // get unique values of D
-    D_unique_vect.push_back(params->cycling_matrix.at(0, calendar_cycle_params::DOD));
+    D_unique_vect.push_back(params->cal_cyc->cycling_matrix.at(0, calendar_cycle_params::DOD));
     for (size_t i = 0; i < n_rows; i++) {
         bool contained = false;
         for (double j : D_unique_vect) {
-            if (params->cycling_matrix.at(i, calendar_cycle_params::DOD) == j) {
+            if (params->cal_cyc->cycling_matrix.at(i, calendar_cycle_params::DOD) == j) {
                 contained = true;
                 break;
             }
         }
         if (!contained) {
-            D_unique_vect.push_back(params->cycling_matrix.at(i, calendar_cycle_params::DOD));
+            D_unique_vect.push_back(params->cal_cyc->cycling_matrix.at(i, calendar_cycle_params::DOD));
         }
     }
     n = D_unique_vect.size();
@@ -247,7 +247,7 @@ double lifetime_cycle_t::bilinear(double DOD, int cycle_number) {
         double D_hi = 100;
 
         for (size_t i = 0; i < n_rows; i++) {
-            D = params->cycling_matrix.at(i, calendar_cycle_params::DOD);
+            D = params->cal_cyc->cycling_matrix.at(i, calendar_cycle_params::DOD);
             if (D < DOD && D > D_lo)
                 D_lo = D;
             else if (D >= DOD && D < D_hi)
@@ -259,7 +259,7 @@ double lifetime_cycle_t::bilinear(double DOD, int cycle_number) {
         double D_max = 0.;
 
         for (size_t i = 0; i < n_rows; i++) {
-            D = params->cycling_matrix.at(i, calendar_cycle_params::DOD);
+            D = params->cal_cyc->cycling_matrix.at(i, calendar_cycle_params::DOD);
             if (D == D_lo)
                 low_indices.push_back(i);
             else if (D == D_hi)
@@ -272,7 +272,7 @@ double lifetime_cycle_t::bilinear(double DOD, int cycle_number) {
         // if we're out of the bounds, just make the upper bound equal to the highest input
         if (high_indices.empty()) {
             for (size_t i = 0; i != n_rows; i++) {
-                if (params->cycling_matrix.at(i, calendar_cycle_params::DOD) == D_max)
+                if (params->cal_cyc->cycling_matrix.at(i, calendar_cycle_params::DOD) == D_max)
                     high_indices.push_back(i);
             }
         }
@@ -292,14 +292,14 @@ double lifetime_cycle_t::bilinear(double DOD, int cycle_number) {
 
         if (n_rows_lo != 0) {
             for (int i = 0; i < (int) n_rows_lo; i++) {
-                C_n_low_vect.push_back(params->cycling_matrix.at(low_indices[i], calendar_cycle_params::CYCLE));
-                C_n_low_vect.push_back(params->cycling_matrix.at(low_indices[i], calendar_cycle_params::CAPACITY_CYCLE));
+                C_n_low_vect.push_back(params->cal_cyc->cycling_matrix.at(low_indices[i], calendar_cycle_params::CYCLE));
+                C_n_low_vect.push_back(params->cal_cyc->cycling_matrix.at(low_indices[i], calendar_cycle_params::CAPACITY_CYCLE));
             }
         }
         if (n_rows_hi != 0) {
             for (int i = 0; i < (int) n_rows_hi; i++) {
-                C_n_high_vect.push_back(params->cycling_matrix.at(high_indices[i], calendar_cycle_params::CYCLE));
-                C_n_high_vect.push_back(params->cycling_matrix.at(high_indices[i], calendar_cycle_params::CAPACITY_CYCLE));
+                C_n_high_vect.push_back(params->cal_cyc->cycling_matrix.at(high_indices[i], calendar_cycle_params::CYCLE));
+                C_n_high_vect.push_back(params->cal_cyc->cycling_matrix.at(high_indices[i], calendar_cycle_params::CAPACITY_CYCLE));
             }
         }
         n_rows_lo = C_n_low_vect.size() / n_cols;
@@ -326,7 +326,7 @@ double lifetime_cycle_t::bilinear(double DOD, int cycle_number) {
     }
         // just have one row, single level interpolation
     else {
-        C = util::linterp_col(params->cycling_matrix, 1, cycle_number, 2);
+        C = util::linterp_col(params->cal_cyc->cycling_matrix, 1, cycle_number, 2);
     }
 
     return C;
@@ -347,39 +347,39 @@ void lifetime_calendar_t::initialize() {
     state->day_age_of_battery = 0;
     state->calendar->q_relative_calendar = 100;
     state->calendar->dq_relative_calendar_old = 0;
-    if (params->calendar_choice == calendar_cycle_params::CALENDAR_CHOICE::MODEL) {
+    if (params->cal_cyc->calendar_choice == calendar_cycle_params::CALENDAR_CHOICE::MODEL) {
         dt_day = params->dt_hour / util::hours_per_day;
-        state->calendar->q_relative_calendar = params->calendar_q0 * 100;
+        state->calendar->q_relative_calendar = params->cal_cyc->calendar_q0 * 100;
     }
-    else if (params->calendar_choice == calendar_cycle_params::CALENDAR_CHOICE::TABLE) {
-        if (params->calendar_matrix.nrows() < 2 || params->calendar_matrix.ncols() != 2)
+    else if (params->cal_cyc->calendar_choice == calendar_cycle_params::CALENDAR_CHOICE::TABLE) {
+        if (params->cal_cyc->calendar_matrix.nrows() < 2 || params->cal_cyc->calendar_matrix.ncols() != 2)
             throw std::runtime_error("lifetime_calendar_t error: Battery calendar lifetime matrix must have 2 columns and at least 2 rows");
     }
 }
 
 lifetime_calendar_t::lifetime_calendar_t(double dt_hour, const util::matrix_t<double>& calendar_matrix) {
-    params = std::make_shared<calendar_cycle_params>();
+    params = std::make_shared<lifetime_params>();
     params->dt_hour = dt_hour;
-    params->calendar_choice = calendar_cycle_params::CALENDAR_CHOICE::TABLE;
-    params->calendar_matrix = calendar_matrix;
+    params->cal_cyc->calendar_choice = calendar_cycle_params::CALENDAR_CHOICE::TABLE;
+    params->cal_cyc->calendar_matrix = calendar_matrix;
     state = std::make_shared<lifetime_state>();
     initialize();
 }
 
 
 lifetime_calendar_t::lifetime_calendar_t(double dt_hour, double q0, double a, double b, double c) {
-    params = std::make_shared<calendar_cycle_params>();
+    params = std::make_shared<lifetime_params>();
     params->dt_hour = dt_hour;
-    params->calendar_choice = calendar_cycle_params::CALENDAR_CHOICE::MODEL;
-    params->calendar_q0 = q0;
-    params->calendar_a = a;
-    params->calendar_b = b;
-    params->calendar_c = c;
+    params->cal_cyc->calendar_choice = calendar_cycle_params::CALENDAR_CHOICE::MODEL;
+    params->cal_cyc->calendar_q0 = q0;
+    params->cal_cyc->calendar_a = a;
+    params->cal_cyc->calendar_b = b;
+    params->cal_cyc->calendar_c = c;
     state = std::make_shared<lifetime_state>();
     initialize();
 }
 
-lifetime_calendar_t::lifetime_calendar_t(std::shared_ptr<calendar_cycle_params> params_ptr, std::shared_ptr<lifetime_state> state_ptr) :
+lifetime_calendar_t::lifetime_calendar_t(std::shared_ptr<lifetime_params> params_ptr, std::shared_ptr<lifetime_state> state_ptr) :
         params(std::move(params_ptr)),
         state(std::move(state_ptr))
 {
@@ -388,7 +388,7 @@ lifetime_calendar_t::lifetime_calendar_t(std::shared_ptr<calendar_cycle_params> 
 
 lifetime_calendar_t::lifetime_calendar_t(const lifetime_calendar_t &rhs) {
     state = std::make_shared<lifetime_state>(*rhs.state);
-    params = std::make_shared<calendar_cycle_params>(*rhs.params);
+    params = std::make_shared<lifetime_params>(*rhs.params);
     dt_day = rhs.dt_day;
 }
 
@@ -412,9 +412,9 @@ lifetime_state lifetime_calendar_t::get_state() { return *state; }
 double lifetime_calendar_t::runLifetimeCalendarModel(size_t lifetimeIndex, double T, double SOC) {
     state->day_age_of_battery = (int)(lifetimeIndex / (util::hours_per_day / params->dt_hour));
 
-    if (params->calendar_choice == calendar_cycle_params::CALENDAR_CHOICE::MODEL)
+    if (params->cal_cyc->calendar_choice == calendar_cycle_params::CALENDAR_CHOICE::MODEL)
         runLithiumIonModel(T, SOC);
-    else if (params->calendar_choice == calendar_cycle_params::CALENDAR_CHOICE::TABLE)
+    else if (params->cal_cyc->calendar_choice == calendar_cycle_params::CALENDAR_CHOICE::TABLE)
         runTableModel();
     else
         state->calendar->q_relative_calendar = 100;
@@ -425,29 +425,29 @@ double lifetime_calendar_t::runLifetimeCalendarModel(size_t lifetimeIndex, doubl
 void lifetime_calendar_t::runLithiumIonModel(double temp, double SOC) {
     temp += 273.15;
     SOC *= 0.01;
-    double k_cal = params->calendar_a * exp(params->calendar_b * (1. / temp - 1. / 296))
-                   * exp(params->calendar_c * (SOC / temp - 1. / 296));
+    double k_cal = params->cal_cyc->calendar_a * exp(params->cal_cyc->calendar_b * (1. / temp - 1. / 296))
+                   * exp(params->cal_cyc->calendar_c * (SOC / temp - 1. / 296));
     double dq_new;
     if (state->calendar->dq_relative_calendar_old == 0)
         dq_new = k_cal * sqrt(dt_day);
     else
         dq_new = (0.5 * pow(k_cal, 2) / state->calendar->dq_relative_calendar_old) * dt_day + state->calendar->dq_relative_calendar_old;
     state->calendar->dq_relative_calendar_old = dq_new;
-    state->calendar->q_relative_calendar = (params->calendar_q0 - (dq_new)) * 100;
+    state->calendar->q_relative_calendar = (params->cal_cyc->calendar_q0 - (dq_new)) * 100;
 }
 
 void lifetime_calendar_t::runTableModel() {
-    size_t n_rows = params->calendar_matrix.nrows();
+    size_t n_rows = params->cal_cyc->calendar_matrix.nrows();
     size_t n = n_rows - 1;
     size_t day_lo = 0;
-    auto day_hi = (size_t) params->calendar_matrix.at(n, calendar_cycle_params::DAYS);
+    auto day_hi = (size_t) params->cal_cyc->calendar_matrix.at(n, calendar_cycle_params::DAYS);
     double capacity_lo = 100;
     double capacity_hi = 0;
 
     // interpolation mode
     for (size_t i = 0; i != n_rows; i++) {
-        int day = (int)params->calendar_matrix.at(i, calendar_cycle_params::DAYS);
-        double capacity = (int) params->calendar_matrix.at(i, calendar_cycle_params::CAPACITY_CAL);
+        int day = (int)params->cal_cyc->calendar_matrix.at(i, calendar_cycle_params::DAYS);
+        double capacity = (int) params->cal_cyc->calendar_matrix.at(i, calendar_cycle_params::CAPACITY_CAL);
         if (day <= state->day_age_of_battery) {
             day_lo = day;
             capacity_lo = capacity;
@@ -459,10 +459,10 @@ void lifetime_calendar_t::runTableModel() {
         }
     }
     if (day_lo == day_hi) {
-        day_lo = (int) params->calendar_matrix.at(n - 1, calendar_cycle_params::DAYS);
-        day_hi = (int) params->calendar_matrix.at(n, calendar_cycle_params::DAYS);
-        capacity_lo = (int) params->calendar_matrix.at(n - 1, calendar_cycle_params::CAPACITY_CAL);
-        capacity_hi = (int) params->calendar_matrix.at(n, calendar_cycle_params::CAPACITY_CAL);
+        day_lo = (int) params->cal_cyc->calendar_matrix.at(n - 1, calendar_cycle_params::DAYS);
+        day_hi = (int) params->cal_cyc->calendar_matrix.at(n, calendar_cycle_params::DAYS);
+        capacity_lo = (int) params->cal_cyc->calendar_matrix.at(n - 1, calendar_cycle_params::CAPACITY_CAL);
+        capacity_hi = (int) params->cal_cyc->calendar_matrix.at(n, calendar_cycle_params::CAPACITY_CAL);
     }
 
     state->calendar->q_relative_calendar = util::interpolate((double) day_lo, capacity_lo, (double) day_hi, capacity_hi, (double) state->day_age_of_battery);
@@ -472,9 +472,9 @@ void lifetime_calendar_t::replaceBattery(double replacement_percent) {
     state->day_age_of_battery = 0;
     state->calendar->dq_relative_calendar_old = 0;
     state->calendar->q_relative_calendar += replacement_percent;
-    if (params->calendar_choice == calendar_cycle_params::MODEL)
-        state->calendar->q_relative_calendar = fmin(params->calendar_q0 * 100, state->calendar->q_relative_calendar);
-    if (params->calendar_choice == calendar_cycle_params::TABLE)
+    if (params->cal_cyc->calendar_choice == calendar_cycle_params::MODEL)
+        state->calendar->q_relative_calendar = fmin(params->cal_cyc->calendar_q0 * 100, state->calendar->q_relative_calendar);
+    if (params->cal_cyc->calendar_choice == calendar_cycle_params::TABLE)
         state->calendar->q_relative_calendar = fmin(100, state->calendar->q_relative_calendar);
 }
 
@@ -484,8 +484,8 @@ Define Lifetime Model
 
 void lifetime_calendar_cycle_t::initialize() {
     state = std::make_shared<lifetime_state>();
-    cycle_model = std::unique_ptr<lifetime_cycle_t>(new lifetime_cycle_t(params->cal_cyc, state));
-    calendar_model = std::unique_ptr<lifetime_calendar_t>(new lifetime_calendar_t(params->cal_cyc, state));
+    cycle_model = std::unique_ptr<lifetime_cycle_t>(new lifetime_cycle_t(params, state));
+    calendar_model = std::unique_ptr<lifetime_calendar_t>(new lifetime_calendar_t(params, state));
     state->q_relative = fmin(state->cycle->q_relative_cycle, state->calendar->q_relative_calendar);
 }
 
@@ -493,7 +493,7 @@ lifetime_calendar_cycle_t::lifetime_calendar_cycle_t(const util::matrix_t<double
                                                      const util::matrix_t<double> &calendar_matrix) {
     params = std::make_shared<lifetime_params>();
     params->model_choice = lifetime_params::CALCYC;
-    params->cal_cyc->dt_hour = dt_hour;
+    params->dt_hour = dt_hour;
     params->cal_cyc->cycling_matrix = batt_lifetime_matrix;
     params->cal_cyc->calendar_choice = calendar_cycle_params::CALENDAR_CHOICE::TABLE;
     params->cal_cyc->calendar_matrix = calendar_matrix;
@@ -505,7 +505,7 @@ lifetime_calendar_cycle_t::lifetime_calendar_cycle_t(const util::matrix_t<double
                                                      double c) {
     params = std::make_shared<lifetime_params>();
     params->model_choice = lifetime_params::CALCYC;
-    params->cal_cyc->dt_hour = dt_hour;
+    params->dt_hour = dt_hour;
     params->cal_cyc->cycling_matrix = batt_lifetime_matrix;
     params->cal_cyc->calendar_choice = calendar_cycle_params::CALENDAR_CHOICE::MODEL;
     params->cal_cyc->calendar_q0 = q0;
@@ -519,7 +519,7 @@ lifetime_calendar_cycle_t::lifetime_calendar_cycle_t(const util::matrix_t<double
 lifetime_calendar_cycle_t::lifetime_calendar_cycle_t(const util::matrix_t<double> &batt_lifetime_matrix, double dt_hour) {
     params = std::make_shared<lifetime_params>();
     params->model_choice = lifetime_params::CALCYC;\
-    params->cal_cyc->dt_hour = dt_hour;
+    params->dt_hour = dt_hour;
     params->cal_cyc->cycling_matrix = batt_lifetime_matrix;
     params->cal_cyc->calendar_choice = calendar_cycle_params::CALENDAR_CHOICE::NONE;
 
@@ -542,8 +542,8 @@ lifetime_calendar_cycle_t& lifetime_calendar_cycle_t::operator=(const lifetime_c
     if (this != &rhs) {
         *params = *rhs.params;
         *state = *rhs.state;
-        calendar_model = std::unique_ptr<lifetime_calendar_t>(new lifetime_calendar_t(params->cal_cyc, state));
-        cycle_model = std::unique_ptr<lifetime_cycle_t>(new lifetime_cycle_t(params->cal_cyc, state));
+        calendar_model = std::unique_ptr<lifetime_calendar_t>(new lifetime_calendar_t(params, state));
+        cycle_model = std::unique_ptr<lifetime_cycle_t>(new lifetime_cycle_t(params, state));
     }
     return *this;
 }

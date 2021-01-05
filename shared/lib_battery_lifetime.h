@@ -6,6 +6,8 @@
 struct calendar_cycle_params;
 
 struct lifetime_params {
+    double dt_hour;
+
     enum MODEL_CHOICE {
         CALCYC,
         NMCNREL         // K. Smith: Life Prediction model coefficients
@@ -29,7 +31,6 @@ struct lifetime_state {
     double range;
     double average_range;
     int day_age_of_battery;
-    double dt_hour;
 
     // CALCYC model state
     std::shared_ptr<calendar_state> calendar;
