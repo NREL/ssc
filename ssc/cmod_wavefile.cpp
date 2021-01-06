@@ -29,6 +29,8 @@ static var_info _cm_wave_file_reader[] = {
 /*   VARTYPE           DATATYPE         NAME                           LABEL                                        UNITS     META                      GROUP                 REQUIRED_IF                CONSTRAINTS        UI_HINTS*/
     { SSC_INPUT,         SSC_NUMBER,      "wave_resource_model_choice",           "Hourly or JPD wave resource data",                                 "0/1",             "",             "Weather Reader",          "",                         "INTEGER",                  "" },
     { SSC_INPUT,         SSC_STRING,      "wave_resource_filename",               "local weather file path",                     "",       "",                      "Weather Reader",      "?",                       "LOCAL_FILE",      "" },
+    { SSC_INPUT,         SSC_STRING,      "wave_resource_filename_ts",               "local weather file path",                     "",       "",                      "Weather Reader",      "?",                       "LOCAL_FILE",      "" },
+
     { SSC_INPUT,         SSC_TABLE,       "wave_resource_data",                   "wave resource data from memory",     "",      "",       "Weather Reader",                  "?",                                            "",                "" },
     { SSC_INPUT,         SSC_NUMBER,      "use_specific_wf_wave",               "user specified file",                     "0/1",       "",                      "Weather Reader",      "?=0",                       "INTEGER,MIN=0,MAX=1",      "" },
 	
@@ -283,132 +285,142 @@ public:
 		add_var_info(_cm_wave_file_reader);
 	}
 	
-	void exec( )
-	{
+    void exec()
+    {
         smart_ptr<wave_data_provider>::ptr wave_dp;
         size_t nstep = 2920;
-        if (is_assigned("wave_resource_filename"))
+        std::string file;
+        if (is_assigned("wave_resource_filename") && as_integer("wave_resource_model_choice")==0)
         {
-            std::string file = as_string("wave_resource_filename");
+            file = as_string("wave_resource_filename");
+        }
+        else if (is_assigned("wave_resource_filename_ts") && as_integer("wave_resource_model_choice")==1)
+        {
+            file = as_string("wave_resource_filename_ts");
+            //throw exec_error("wave_file_reader", "Time series filename check");
+        }
+        else
+        {
+            throw exec_error("wave_file_reader", "Model choice and wave file do not match");
+        }
+        if (file.empty())
+        {
+            throw exec_error("wave_file_reader", "File name missing.");
+        }
 
-            if (file.empty())
+
+        std::string buf, buf1;
+        std::ifstream ifs(file);
+
+        if (!ifs.is_open())
+        {
+            throw exec_error("wave_file_reader", "could not open file for reading: " + file);
+        }
+
+        std::vector<std::string> values;
+        // header if not use_specific_wf_file
+        if (as_integer("use_specific_wf_wave") == 0)
+        {
+            getline(ifs, buf);
+            getline(ifs, buf1);
+
+            // header name value pairs
+            std::vector<std::string> keys = split(buf);
+            values = split(buf1);
+            int ncols = (int)keys.size();
+            int ncols1 = (int)values.size();
+
+            if (ncols != ncols1 || ncols < 13)
             {
-                throw exec_error("wave_file_reader", "File name missing.");
+                throw exec_error("wave_file_reader", "incorrect number of header columns: " + std::to_string(ncols));
             }
 
-
-            std::string buf, buf1;
-            std::ifstream ifs(file);
-
-            if (!ifs.is_open())
+            assign("name", var_data(values[0]));
+            assign("city", var_data(values[1]));
+            assign("state", var_data(values[2]));
+            assign("country", var_data(values[3]));
+            // lat with S is negative
+            ssc_number_t dlat = std::numeric_limits<double>::quiet_NaN();
+            std::vector<std::string> slat = split(values[4], ' ');
+            if (slat.size() > 0)
             {
-                throw exec_error("wave_file_reader", "could not open file for reading: " + file);
+                dlat = std::stod(slat[0]);
+                if (slat.size() > 1)
+                {
+                    if (slat[1] == "S") dlat = 0.0 - dlat;
+                }
             }
+            assign("lat", var_data(dlat));
+            // lon with W is negative
+            ssc_number_t dlon = std::numeric_limits<double>::quiet_NaN();
+            std::vector<std::string> slon = split(values[5], ' ');
+            if (slon.size() > 0)
+            {
+                dlon = std::stod(slon[0]);
+                if (slon.size() > 1)
+                {
+                    if (slon[1] == "W") dlon = 0.0 - dlon;
+                }
+            }
+            assign("lon", var_data(dlon));
+            assign("nearby_buoy_number", var_data(values[6]));
+            assign("average_power_flux", var_data(std::stod(values[7])));
+            assign("bathymetry", var_data(values[8]));
+            assign("sea_bed", var_data(values[9]));
+            assign("tz", var_data(std::stod(values[10])));
+            assign("data_source", var_data(values[11]));
+            assign("notes", var_data(values[12]));
+        }
+        // read in 21 rows x 22 columns
 
-            std::vector<std::string> values;
-            // header if not use_specific_wf_file
-            if (as_integer("use_specific_wf_wave") == 0)
+        ssc_number_t* mat = allocate("wave_resource_matrix", 21, 22);
+        size_t numberRecords = 2920;
+        ssc_number_t* wave_heights = allocate("wave_significant_height", numberRecords);
+        ssc_number_t* wave_periods = allocate("wave_energy_period", numberRecords);
+        //if (values.size() != 22)
+        if (as_integer("wave_resource_model_choice") == 1)
+        {
+            for (size_t r = 0; r < 2920; r++) {
+                getline(ifs, buf);
+                values.clear();
+                values = split(buf);
+                wave_heights[r] = (ssc_number_t)std::stod(values[2]);
+                wave_periods[r] = (ssc_number_t)std::stod(values[1]);
+
+            }
+            return;
+
+        }
+        else if (as_integer("wave_resource_model_choice") == 0) {
+            for (size_t r = 0; r < 21; r++)
             {
                 getline(ifs, buf);
-                getline(ifs, buf1);
-
-                // header name value pairs
-                std::vector<std::string> keys = split(buf);
-                values = split(buf1);
-                int ncols = (int)keys.size();
-                int ncols1 = (int)values.size();
-
-                if (ncols != ncols1 || ncols < 13)
+                values.clear();
+                values = split(buf);
+                if (values.size() != 22)
                 {
-                    throw exec_error("wave_file_reader", "incorrect number of header columns: " + std::to_string(ncols));
-                }
+                    for (size_t c = 0; c < 2; c++)
+                    {
 
-                assign("name", var_data(values[0]));
-                assign("city", var_data(values[1]));
-                assign("state", var_data(values[2]));
-                assign("country", var_data(values[3]));
-                // lat with S is negative
-                ssc_number_t dlat = std::numeric_limits<double>::quiet_NaN();
-                std::vector<std::string> slat = split(values[4], ' ');
-                if (slat.size() > 0)
-                {
-                    dlat = std::stod(slat[0]);
-                    if (slat.size() > 1)
-                    {
-                        if (slat[1] == "S") dlat = 0.0 - dlat;
                     }
+                    //throw exec_error("wave_file_reader", "incorrect number of data columns: " + std::to_string(values.size()));
                 }
-                assign("lat", var_data(dlat));
-                // lon with W is negative
-                ssc_number_t dlon = std::numeric_limits<double>::quiet_NaN();
-                std::vector<std::string> slon = split(values[5], ' ');
-                if (slon.size() > 0)
+                for (size_t c = 0; c < 22; c++)
                 {
-                    dlon = std::stod(slon[0]);
-                    if (slon.size() > 1)
-                    {
-                        if (slon[1] == "W") dlon = 0.0 - dlon;
-                    }
-                }
-                assign("lon", var_data(dlon));
-                assign("nearby_buoy_number", var_data(values[6]));
-                assign("average_power_flux", var_data(std::stod(values[7])));
-                assign("bathymetry", var_data(values[8]));
-                assign("sea_bed", var_data(values[9]));
-                assign("tz", var_data(std::stod(values[10])));
-                assign("data_source", var_data(values[11]));
-                assign("notes", var_data(values[12]));
-            }
-            // read in 21 rows x 22 columns
-            
-            ssc_number_t* mat = allocate("wave_resource_matrix", 21, 22);
-            size_t numberRecords = 2920;
-            ssc_number_t* wave_heights = allocate("wave_significant_height", numberRecords);
-            ssc_number_t* wave_periods = allocate("wave_energy_period", numberRecords);
-            //if (values.size() != 22)
-            if (as_integer("wave_resource_model_choice")==1) 
-            {
-                for (size_t r = 0; r < 2920; r++) {
-                    getline(ifs, buf);
-                    values.clear();
-                    values = split(buf);
-                    wave_heights[r] = (ssc_number_t)std::stod(values[2]);
-                    wave_periods[r] = (ssc_number_t)std::stod(values[1]);
-                    
-                }
-                return;
-                
-            }
-            else if (as_integer("wave_resource_model_choice")==0) {
-                for (size_t r = 0; r < 21; r++)
-                {
-                    getline(ifs, buf);
-                    values.clear();
-                    values = split(buf);
-                    if (values.size() != 22)
-                    {
-                        for (size_t c = 0; c < 2; c++)
-                        {
-
-                        }
-                        //throw exec_error("wave_file_reader", "incorrect number of data columns: " + std::to_string(values.size()));
-                    }
-                    for (size_t c = 0; c < 22; c++)
-                    {
-                        if (r == 0 && c == 0)
-                            mat[r * 22 + c] = 0.0;
-                        else
-                            mat[r * 22 + c] = std::stod(values[c]);
-                    }
+                    if (r == 0 && c == 0)
+                        mat[r * 22 + c] = 0.0;
+                    else
+                        mat[r * 22 + c] = std::stod(values[c]);
                 }
             }
-            else {
-                throw exec_error("wave_file_reader", "Resource data type needs to be defined ");
-            }
-            
-            return;
         }
-        else if (is_assigned("wave_resource_data"))
+        else {
+            throw exec_error("wave_file_reader", "Resource data type needs to be defined ");
+        }
+
+        //return;
+
+        if (is_assigned("wave_resource_data"))
         {
             wave_dp = std::unique_ptr<wave_data_provider>(new wavedata(lookup("wave_resource_data")));
             if (!wave_dp->error().empty()) {
@@ -434,7 +446,7 @@ public:
             //ssc_number_t* mat = allocate("wave_resource_matrix", 21, 22);
             ssc_number_t* mat = allocate("wave_resource_matrix", 21, 22);
             //util::matrix_t<ssc_number_t> &mat = allocate_matrix("wave_resource_matrix", 21, 22);
-            ssc_number_t *wave_height = allocate("wave_significant_height", nstep);
+            ssc_number_t* wave_height = allocate("wave_significant_height", nstep);
             ssc_number_t* wave_period = allocate("wave_period", nstep);
             std::vector<double> wave_height_data = wave_dp->wave_heights();
             std::vector<double> wave_period_data = wave_dp->wave_periods();
@@ -451,8 +463,8 @@ public:
 
                 for (size_t r = 0; r < 21; r++)
                 {
-                    
-                    
+
+
                     for (size_t c = 0; c < 22; c++)
                     {
                         if (r == 0 && c == 0)
@@ -482,7 +494,7 @@ public:
         {
             return;
         }
-	}
+    }
 };
 
 DEFINE_MODULE_ENTRY(wave_file_reader, "SAM Wave Resource File Reader", 1)
