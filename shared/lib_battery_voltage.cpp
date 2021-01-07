@@ -287,6 +287,7 @@ voltage_dynamic_t::voltage_dynamic_t(int num_cells_series, int num_strings, doub
     params->dynamic.C_rate = C_rate;
     params->resistance = R;
     params->dynamic.Vcut = Vcut;
+    params->dynamic.Qfull_mod = Qfull + .01;
     initialize();
 }
 
@@ -333,7 +334,9 @@ void voltage_dynamic_t::parameter_compute() {
     _K = ((params->dynamic.Vfull - params->dynamic.Vnom + _A * (std::exp(-_B0 * params->dynamic.Qnom) - 1)) *
           (params->dynamic.Qfull - params->dynamic.Qnom)) / (params->dynamic.Qnom); // [V] - polarization voltage
     _E0 = params->dynamic.Vfull + _K + params->resistance * I - _A;
-    
+    double C = (-1 * params->dynamic.Vcut + _E0 - params->resistance * I + _A * (std::exp(-_B0 * params->dynamic.Qfull))) / _K;
+    double x = params->dynamic.Qfull / (C - 1);
+    params->dynamic.Qfull += x;
     if (_A < 0 || _B0 < 0 || _K < 0 || _E0 < 0) {
         char err[254];
         std::sprintf(err, "Error during calculation of battery voltage model parameters: negative value(s) found.\n"
@@ -379,12 +382,13 @@ double voltage_dynamic_t::calculate_max_charge_w(double q, double qmax, double k
     qmax /= params->num_strings;
     
     double current = (q - qmax) / params->dt_hr;
-    double C = (-1 * params->dynamic.Vcut + _E0 - params->resistance * current + _A * exp(-_B0 * qmax)) / _K;
-    double x = qmax / (C - 1);
-    double qmax_mod = qmax + x;
+    //double C = (-1 * params->dynamic.Vcut + _E0 - params->resistance * current + _A * exp(-_B0 * qmax)) / _K;
+    //double x = qmax / (C - 1);
+    //*qmax_mod = qmax + x;
+    //params->dynamic.Qfull_mod = qmax + x;
     if (max_current)
         *max_current = current * params->num_strings;
-    return current * voltage_model_tremblay_hybrid(qmax_mod, current, qmax_mod) * params->num_strings *
+    return current * voltage_model_tremblay_hybrid(qmax, current, qmax) * params->num_strings *
            params->num_cells_series;
 }
 
@@ -399,11 +403,11 @@ double voltage_dynamic_t::calculate_max_discharge_w(double q, double qmax, doubl
     double incr = q / 10;
     double vol_diff = params->dynamic.Vcut - vol;
     double max_p = 0, max_I = 0;
-    while (current * params->dt_hr < q - tolerance && vol_diff >= .01) {
-        double C = (-1 * params->dynamic.Vcut + _E0 - params->resistance * current + _A * exp(-_B0 * qmax)) / _K;
-        double x = qmax / (C - 1);
-        double qmax_mod = qmax + x;
-        vol = voltage_model_tremblay_hybrid(qmax_mod, current, q - current * params->dt_hr);
+    while (current * params->dt_hr < q - tolerance && vol_diff >= .0001) {
+        //double C = (-1 * params->dynamic.Vcut + _E0 - params->resistance * current + _A * exp(-_B0 * qmax)) / _K;
+        //double x = qmax / (C - 1);
+        //params->dynamic.Qfull_mod = qmax + x;
+        vol = voltage_model_tremblay_hybrid(qmax, current, q - current * params->dt_hr);
         vol_diff = abs(params->dynamic.Vcut - vol);
         double p = current * vol;
         if (p > max_p) {
@@ -426,7 +430,7 @@ double voltage_dynamic_t::calculate_current_for_target_w(double P_watts, double 
     solver_power = fabs(P_watts) / (params->num_cells_series * params->num_strings);
     solver_q = q / params->num_strings;
     solver_Q = qmax / params->num_strings;
-
+    //solver_Q = params->dynamic.Qfull_mod;// / params->num_strings;
     std::function<void(const double *, double *)> f;
     double direction = 1.;
     if (P_watts > 0)

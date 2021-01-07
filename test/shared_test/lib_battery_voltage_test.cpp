@@ -249,6 +249,26 @@ TEST_F(voltage_dynamic_lib_battery_voltage_test, calculateMaxDischargeHourly){
     EXPECT_NEAR(cap->SOC(), 19, 1e-3);
 }
 
+TEST_F(voltage_dynamic_lib_battery_voltage_test, calculateMaxDischargeHourly_cutoff) {
+    double dt_hour = 1;
+    CreateModel(dt_hour);
+
+    // start at half SOC
+    double max_current;
+    double q = 3.19;
+    double qmax = 3.2;
+    double T = 298;
+    double power = model->calculate_max_discharge_w(q, qmax, T, &max_current);
+    EXPECT_NEAR(power, 1845, 1);        // current ~4
+    double max_current_calc = model->calculate_current_for_target_w(power, q, qmax, T);
+    double voltage_calc = model->calculate_voltage_for_current(max_current_calc, q, qmax, T);
+    EXPECT_NEAR(max_current_calc, max_current, 1e-2);
+    EXPECT_NEAR(voltage_calc, 10, 1e-2);
+    // Does not empty battery for highest power
+    cap->updateCapacity(max_current, dt_hour);
+    EXPECT_NEAR(cap->SOC(), 10, 1e-3);
+}
+
 TEST_F(voltage_dynamic_lib_battery_voltage_test, calculateMaxDischargeSubHourly){
     double dt_hour = 0.5;
     CreateModel(dt_hour);

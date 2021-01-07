@@ -91,6 +91,8 @@ var_info vtab_battery_inputs[] = {
         { SSC_INPUT,        SSC_NUMBER,      "batt_Vnom",                                  "Cell voltage at end of nominal zone",                     "V",       "",                     "BatteryCell",       "",                           "",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "batt_Vnom_default",                          "Default nominal cell voltage",                            "V",       "",                     "BatteryCell",       "",                           "",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "batt_Qfull",                                 "Fully charged cell capacity",                             "Ah",      "",                     "BatteryCell",       "",                           "",                              "" },
+        { SSC_INPUT,        SSC_NUMBER,      "batt_Qfull_cutoff",                                 "Fully charged cell capacity",                             "Ah",      "",                     "BatteryCell",       "",                           "",                              "" },
+
         { SSC_INPUT,        SSC_NUMBER,      "batt_Qfull_flow",                            "Fully charged flow battery capacity",                     "Ah",      "",                     "BatteryCell",       "",                           "",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "batt_Qexp",                                  "Cell capacity at end of exponential zone",                "Ah",      "",                     "BatteryCell",       "",                           "",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "batt_Qnom",                                  "Cell capacity at end of nominal zone",                    "Ah",      "",                     "BatteryCell",       "",                           "",                              "" },
@@ -322,11 +324,13 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             batt_vars->batt_Vnom = vt.as_double("batt_Vnom");
             batt_vars->batt_Qfull_flow = vt.as_double("batt_Qfull_flow");
             batt_vars->batt_Qfull = vt.as_double("batt_Qfull");
+            batt_vars->batt_Qfull_cutoff = vt.as_double("batt_Qfull_cutoff");
             batt_vars->batt_Qexp = vt.as_double("batt_Qexp");
             batt_vars->batt_Qnom = vt.as_double("batt_Qnom");
             batt_vars->batt_C_rate = vt.as_double("batt_C_rate");
             batt_vars->batt_resistance = vt.as_double("batt_resistance");
             batt_vars->batt_voltage_cutoff = vt.as_double("batt_voltage_cutoff");
+            
 
             // Current and capacity
             batt_vars->batt_current_choice = vt.as_integer("batt_current_choice");
@@ -792,7 +796,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     if ((chem == battery_params::LEAD_ACID || chem == battery_params::LITHIUM_ION) && batt_vars->batt_voltage_choice == voltage_params::MODEL)
         voltage_model = new voltage_dynamic_t(batt_vars->batt_computed_series, batt_vars->batt_computed_strings,
                                               batt_vars->batt_Vnom_default, batt_vars->batt_Vfull, batt_vars->batt_Vexp,
-                                              batt_vars->batt_Vnom, batt_vars->batt_Qfull, batt_vars->batt_Qexp,
+                                              batt_vars->batt_Vnom, batt_vars->batt_Qfull_cutoff, batt_vars->batt_Qexp,
                                               batt_vars->batt_Qnom, batt_vars->batt_C_rate, batt_vars->batt_resistance,
                                               dt_hr, batt_vars->batt_voltage_cutoff);
     else if ((chem == battery_params::VANADIUM_REDOX) && batt_vars->batt_voltage_choice == voltage_params::MODEL)
@@ -846,7 +850,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     else if (chem == battery_params::LITHIUM_ION)
     {
         capacity_model = new capacity_lithium_ion_t(
-                batt_vars->batt_Qfull*batt_vars->batt_computed_strings, batt_vars->batt_initial_SOC, batt_vars->batt_maximum_SOC, batt_vars->batt_minimum_SOC, dt_hr);
+                batt_vars->batt_Qfull_cutoff*batt_vars->batt_computed_strings, batt_vars->batt_initial_SOC, batt_vars->batt_maximum_SOC, batt_vars->batt_minimum_SOC, dt_hr);
     }
         // for now assume Flow Batteries responds quickly, like Lithium-ion, but with an independent capacity/power
     else if (chem == battery_params::VANADIUM_REDOX || chem == battery_params::IRON_FLOW)

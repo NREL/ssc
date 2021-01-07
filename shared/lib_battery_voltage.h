@@ -51,6 +51,7 @@ struct voltage_params {
         double Qnom;
         double C_rate;
         double Vcut;
+        double Qfull_mod;
     } dynamic;
 
     //  depth-of-discharge [%] and cell voltage [V] pairs
