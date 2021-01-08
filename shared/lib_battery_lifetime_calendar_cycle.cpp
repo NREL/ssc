@@ -30,8 +30,6 @@ extern double tolerance;
 extern double low_tolerance;
 
 void lifetime_cycle_t::initialize() {
-    if (params->cal_cyc->cycling_matrix.nrows() < 3 || params->cal_cyc->cycling_matrix.ncols() != 3)
-        throw std::runtime_error("lifetime_cycle_t error: Battery lifetime matrix must have three columns and at least three rows");
     state->n_cycles = 0;
     state->range = 0;
     state->average_range = 0;
@@ -484,6 +482,8 @@ Define Lifetime Model
 
 void lifetime_calendar_cycle_t::initialize() {
     state = std::make_shared<lifetime_state>();
+    if (params->cal_cyc->cycling_matrix.nrows() < 3 || params->cal_cyc->cycling_matrix.ncols() != 3)
+        throw std::runtime_error("lifetime_cycle_t error: Battery lifetime matrix must have three columns and at least three rows");
     cycle_model = std::unique_ptr<lifetime_cycle_t>(new lifetime_cycle_t(params, state));
     calendar_model = std::unique_ptr<lifetime_calendar_t>(new lifetime_calendar_t(params, state));
     state->q_relative = fmin(state->cycle->q_relative_cycle, state->calendar->q_relative_calendar);

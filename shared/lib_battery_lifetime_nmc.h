@@ -26,6 +26,8 @@ public:
     void replaceBattery(double percent_to_replace) override;
 
 protected:
+    std::unique_ptr<lifetime_cycle_t> cycle_model;
+
     void initialize();
 
     // add constants / coefficients / data here

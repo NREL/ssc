@@ -359,4 +359,5 @@ TEST_F(lib_battery_lifetime_nmc_test, updateCapacityTest) {
         // do tests here
         idx ++;
     }
+    ASSERT_EQ(model->get_state().n_cycles, 875);
 }

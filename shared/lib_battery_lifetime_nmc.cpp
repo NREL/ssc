@@ -1,14 +1,17 @@
+#include "lib_battery_lifetime_calendar_cycle.h"
 #include "lib_battery_lifetime_nmc.h"
 
 void lifetime_nmc_t::initialize() {
+    // cycle model for counting cycles only, no cycle-only degradation
+    cycle_model = std::unique_ptr<lifetime_cycle_t>(new lifetime_cycle_t(params, state));
     // do any state initialization here
-
 }
 
 lifetime_nmc_t::lifetime_nmc_t(double dt_hr) {
     params = std::make_shared<lifetime_params>();
     params->model_choice = lifetime_params::NMCNREL;
     params->dt_hour = dt_hr;
+    state = std::make_shared<lifetime_state>();
     initialize();
 }
 
@@ -36,6 +39,8 @@ lifetime_t * lifetime_nmc_t::clone() {
 
 void lifetime_nmc_t::runLifetimeModels(size_t lifetimeIndex, bool charge_changed, double prev_DOD, double DOD,
                                        double T_battery) {
+    if (charge_changed)
+        cycle_model->rainflow(prev_DOD);
 
 }
 
