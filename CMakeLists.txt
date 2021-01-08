@@ -10,7 +10,7 @@ if(POLICY CMP0077)
     cmake_policy(SET CMP0077 NEW)
 endif()
 
-option(SAM_SKIP_TOOLS "Skips the sdktool and tcsconsole builds" OFF)
+option(SAM_SKIP_TOOLS "Skips the sdktool and tcsconsole builds" OFF)h
 
 option(SAM_SKIP_TESTS "Skips building tests" OFF)
 
@@ -140,12 +140,7 @@ endfunction()
 # turn off examples, tests and install for jsoncpp
 set(JSONCPP_WITH_EXAMPLE 0)
 set(JSONCPP_WITH_TESTS 0)
-macro (install)
-endmacro ()
-add_subdirectory(jsoncpp)
-macro (install)
-  _install(${ARGV})
-endmacro(install)
+add_subdirectory(jsoncpp EXCLUDE_FROM_ALL)
 
 add_subdirectory(splinter)
 add_subdirectory(shared)
