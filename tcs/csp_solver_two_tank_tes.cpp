@@ -858,12 +858,23 @@ void C_csp_two_tank_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs
 	double T_tes_ave = 0.5*(ms_params.m_T_field_out_des + ms_params.m_T_field_in_des);
 	double cp_ave = mc_store_htfProps.Cp(T_tes_ave);				//[kJ/kg-K] Specific heat at average temperature
 	m_mass_total_active = Q_tes_des*3600.0 / (cp_ave / 1000.0 * (ms_params.m_T_field_out_des - ms_params.m_T_field_in_des));  //[kg] Total HTF mass at design point inlet/outlet T
-	double rho_hot = mc_store_htfProps.dens(ms_params.m_T_tank_hot_ini, 1.0);  
-	double rho_cold = mc_store_htfProps.dens(ms_params.m_T_tank_cold_ini, 1.0);
+    double V_inactive = m_vol_tank - m_V_tank_active;
 
-	double V_inactive = m_vol_tank - m_V_tank_active;
-	double V_hot_ini = ms_params.m_f_V_hot_ini*0.01*m_mass_total_active / rho_hot + V_inactive;			//[m^3]
-	double V_cold_ini = (1.0 - ms_params.m_f_V_hot_ini*0.01)*m_mass_total_active / rho_cold + V_inactive;	//[m^3]
+    double rho_hot_des = mc_store_htfProps.dens(ms_params.m_T_field_out_des, 1.0);
+    double rho_cold_des = mc_store_htfProps.dens(ms_params.m_T_field_in_des, 1.0);
+    double rho_hot = mc_store_htfProps.dens(ms_params.m_T_tank_hot_ini, 1.0);
+    double rho_cold = mc_store_htfProps.dens(ms_params.m_T_tank_cold_ini, 1.0);
+    double m_hot_ini = ms_params.m_f_V_hot_ini * 0.01 * m_mass_total_active + V_inactive * rho_hot_des;  // Updating intiial storage charge calculation to avoid variation in total mass with specified initial T
+    double m_cold_ini = (1.0 - ms_params.m_f_V_hot_ini * 0.01) * m_mass_total_active + V_inactive * rho_cold_des;
+    double V_hot_ini = m_hot_ini / rho_hot;
+    double V_cold_ini = m_cold_ini / rho_cold;
+
+    //double rho_hot = mc_store_htfProps.dens(ms_params.m_T_tank_hot_ini, 1.0);  
+	//double rho_cold = mc_store_htfProps.dens(ms_params.m_T_tank_cold_ini, 1.0);
+
+	//double V_inactive = m_vol_tank - m_V_tank_active;
+	//double V_hot_ini = ms_params.m_f_V_hot_ini*0.01*m_mass_total_active / rho_hot + V_inactive;			//[m^3]
+	//double V_cold_ini = (1.0 - ms_params.m_f_V_hot_ini*0.01)*m_mass_total_active / rho_cold + V_inactive;	//[m^3]
 
 	// Initial storage charge based on % volume
 	//double V_inactive = m_vol_tank - m_V_tank_active;
