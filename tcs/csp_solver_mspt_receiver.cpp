@@ -181,6 +181,7 @@ C_mspt_receiver::C_mspt_receiver()
 	m_csky_frac = std::numeric_limits<double>::quiet_NaN();
     m_control_per_path = false;
     m_is_user_mflow = false;
+    m_ignore_thermal_min = false;
 
 }
 
@@ -1362,7 +1363,7 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 					m_mode = C_csp_collector_receiver::ON;
 					q_startup = 0.0;
 
-					if (q_dot_inc_sum < m_q_dot_inc_min)
+                    if (q_dot_inc_sum < m_q_dot_inc_min && (!m_ignore_thermal_min || m_dot_salt_tot < m_f_rec_min * m_m_dot_htf_des))  // Allow minimums to be mass flow limits if m_ignore_thermal_min = true (added to allow receiver to continue operating at low thermal power with clear-sky control and cold-tank recirculation)
 					{
 						// If output here is less than specified allowed minimum, then need to shut off receiver
 						m_mode = C_csp_collector_receiver::OFF;
@@ -1397,7 +1398,7 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 				q_thermal_ss = m_dot_salt_tot_ss*c_p_coolant*(T_salt_hot - T_salt_cold_in);
 				calc_pump_performance(rho_coolant, m_dot_salt_tot, f, Pres_D, W_dot_pump);
 
-				if (q_dot_inc_sum < m_q_dot_inc_min)				// Receiver is not allowed to operate
+                if (q_dot_inc_sum < m_q_dot_inc_min && (!m_ignore_thermal_min || m_dot_salt_tot < m_f_rec_min * m_m_dot_htf_des))  // Allow minimums to be mass flow limits if m_ignore_thermal_min = true (added to allow receiver to continue operating at low thermal power with clear-sky control and cold-tank recirculation)
 				{
 					m_mode = C_csp_collector_receiver::OFF;
 					W_dot_pump = 0.0;
@@ -1416,7 +1417,7 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 				}
 			}
 
-			if (q_dot_inc_sum < m_q_dot_inc_min)
+            if (q_dot_inc_sum < m_q_dot_inc_min && (!m_ignore_thermal_min || m_dot_salt_tot < m_f_rec_min * m_m_dot_htf_des))
 				rec_is_off = true;
 
 			break;
@@ -1433,7 +1434,7 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 				q_thermal = q_dot_inc_sum;
 			else
 			{
-				if (q_dot_inc_sum < m_q_dot_inc_min && m_mode_prev == C_csp_collector_receiver::ON)
+                if (q_dot_inc_sum < m_q_dot_inc_min && (!m_ignore_thermal_min || m_dot_salt_tot < m_f_rec_min * m_m_dot_htf_des) && m_mode_prev == C_csp_collector_receiver::ON)
 					rec_is_off = true;
 			}
 
@@ -2054,8 +2055,9 @@ void C_mspt_receiver::calculate_steady_state_soln(s_steady_state_soln &soln, dou
 
 	} // End iterations
 
-	if (soln.T_salt_hot < soln.T_salt_cold_in)
-		soln.mode = C_csp_collector_receiver::OFF;
+    // Removing this to allow outlet < inlet for receiver standby (clear-sky control with little DNI)
+	//if (soln.T_salt_hot < soln.T_salt_cold_in)
+	//	soln.mode = C_csp_collector_receiver::OFF;
 
 
 	// Save overall energy loss

@@ -1806,6 +1806,13 @@ public:
                 }
             }
 
+            // Use minimum mass flow operational limits in receiver code instead of thermal power
+            if (as_boolean("is_dispatch_targets") || as_boolean("is_rec_user_mflow"))
+            {
+                ss_receiver->m_ignore_thermal_min = true;  // Allow receiver minimum to be enforced from mass flow instead of thermal power (for clear-sky control with receiver allowable on/off periods taken from dispatch targets)
+            }
+
+
             // User-defined mass flow rates
             ss_receiver->m_is_user_mflow = as_boolean("is_rec_user_mflow");
             if (ss_receiver->m_is_user_mflow)

@@ -104,6 +104,7 @@ C_mspt_receiver_222::C_mspt_receiver_222()
 
     m_control_per_path = false;
     m_is_user_mflow = false;
+    m_ignore_thermal_min = false;
 }
 
 void C_mspt_receiver_222::init()
@@ -707,7 +708,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 				q_thermal = m_dot_salt_tot*c_p_coolant*(T_salt_hot - T_salt_cold_in);
 
 				//if( q_thermal < m_q_rec_min )
-				if(q_dot_inc_sum < m_q_dot_inc_min)
+				if(q_dot_inc_sum < m_q_dot_inc_min && (!m_ignore_thermal_min || m_dot_salt_tot < m_f_rec_min*m_m_dot_htf_des))  // Allow minimums to be mass flow limits if m_ignore_thermal_min = true (added to allow receiver to continue operating at low thermal power with clear-sky control and cold-tank recirculation)
 				{
 					// If output here is less than specified allowed minimum, then need to shut off receiver
 					m_mode = C_csp_collector_receiver::OFF;
@@ -736,7 +737,8 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 		q_thermal_ss = m_dot_salt_tot_ss*c_p_coolant*(T_salt_hot - T_salt_cold_in);
 
 		// After convergence, determine whether the mass flow rate falls below the lower limit
-		if(q_dot_inc_sum < m_q_dot_inc_min)
+		//if(q_dot_inc_sum < m_q_dot_inc_min)
+        if (q_dot_inc_sum < m_q_dot_inc_min && (!m_ignore_thermal_min || m_dot_salt_tot < m_f_rec_min * m_m_dot_htf_des))  // Allow minimums to be mass flow limits if m_ignore_thermal_min = true (added to allow receiver to continue operating at low thermal power with clear-sky control and cold-tank recirculation)
 		{
 			// GOTO 900
 			// Steady State always reports q_thermal (even when much less than min) because model is letting receiver begin startup with this energy
@@ -1246,8 +1248,9 @@ void C_mspt_receiver_222::calculate_steady_state_soln(s_steady_state_soln &soln,
 
 	} // End iterations
 
-	if (soln.T_salt_hot < soln.T_salt_cold_in)
-		soln.mode = C_csp_collector_receiver::OFF;
+    // Removing this to allow outlet < inlet for receiver standby (clear-sky control with little DNI)
+	//if (soln.T_salt_hot < soln.T_salt_cold_in)  
+	//	soln.mode = C_csp_collector_receiver::OFF;
 
 
 	// Save overall energy loss

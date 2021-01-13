@@ -213,6 +213,7 @@ public:
 	int m_cycle_config;
 
 	// Flow control
+    bool m_ignore_thermal_min;  // Override minimum allowable thermal power, and use minimum allowable mass flow instead (for interaction with external dispatch optimization signal)
 	double m_csky_frac;
     bool m_control_per_path;
     bool m_is_user_mflow;

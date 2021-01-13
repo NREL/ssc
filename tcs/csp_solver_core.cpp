@@ -1636,8 +1636,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		}
 
 
-		// Check if receiver can be defocused enough to stay under cycle+TES max thermal power and mass flow (this will usually be the case unless using clear-sky control or constrained cycle thermal input)
-		if (cr_operating_state == C_csp_collector_receiver::ON && q_dot_cr_on>0.0 && is_rec_su_allowed && m_is_tes)
+		// Check if receiver can be defocused enough to stay under cycle+TES max thermal power and mass flow (if cold recirculation is not enabled)
+        // (this will usually be the case unless using clear-sky control or constrained cycle thermal input)
+		if (cr_operating_state == C_csp_collector_receiver::ON && q_dot_cr_on >0.0 && is_rec_su_allowed && is_rec_outlet_to_hottank && m_is_tes)
 		{
 			double qpcmax = m_q_dot_pc_max;
 			if (pc_operating_state == C_csp_power_cycle::OFF || C_csp_power_cycle::STARTUP)
@@ -1759,7 +1760,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				}
                 else 
                 {
-                    if (q_dot_cr_on > 0.0 && is_rec_su_allowed)
+                    if ((q_dot_cr_on >0.0 || m_dot_cr_on>0.0)  && is_rec_su_allowed)
                     {
                         if (q_dot_tes_dc > 0.0 && is_pc_su_allowed &&
                             m_is_CR_TO_COLD__PC_SU__TES_DC__AUX_OFF_avail)
@@ -2156,7 +2157,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				}	// End logic if(q_dot_cr_output > 0.0 && is_rec_su_allowed)
 
                 // 'else if' loop for receiver 'on' but sending htf to cold tank
-                else if (q_dot_cr_on > 0.0 && is_rec_su_allowed) {
+                else if ((q_dot_cr_on > 0.0 || m_dot_cr_on > 0.0)&& is_rec_su_allowed) {
 
                     if (is_pc_su_allowed || is_pc_sb_allowed)
                     {
@@ -4832,7 +4833,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		mc_reported_outputs.value(C_solver_outputs::CTRL_IS_REC_SU, is_rec_su_allowed);     //[-] 
 		mc_reported_outputs.value(C_solver_outputs::CTRL_IS_PC_SU, is_pc_su_allowed);       //[-] 
 		mc_reported_outputs.value(C_solver_outputs::CTRL_IS_PC_SB, is_pc_sb_allowed);       //[-]  
-		mc_reported_outputs.value(C_solver_outputs::EST_Q_DOT_CR_SU, is_pc_sb_allowed);     //[-]
+		mc_reported_outputs.value(C_solver_outputs::EST_Q_DOT_CR_SU, q_dot_cr_startup);     //[-]
 		mc_reported_outputs.value(C_solver_outputs::EST_Q_DOT_CR_ON, q_dot_cr_on);          //[MWt]
 		mc_reported_outputs.value(C_solver_outputs::EST_Q_DOT_DC, q_dot_tes_dc);            //[MWt]    
 		mc_reported_outputs.value(C_solver_outputs::EST_Q_DOT_CH, q_dot_tes_ch);            //[MWt]    
