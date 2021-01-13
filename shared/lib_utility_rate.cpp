@@ -130,7 +130,7 @@ size_t UtilityRateCalculator::getEnergyPeriod(size_t hourOfYear)
 	return period;
 }
 
-UtilityRateForecast::UtilityRateForecast(rate_data* util_rate, size_t stepsPerHour, const std::vector<double>& monthly_load_forecast, const std::vector<double>& monthly_gen_forecast, const std::vector<double>& monthly_peak_forecast, size_t analysis_period) :
+UtilityRateForecast::UtilityRateForecast(rate_data* util_rate, size_t stepsPerHour, const std::vector<double>& monthly_load_forecast, const std::vector<double>& monthly_gen_forecast, const std::vector<double>& monthly_avg_load_forecast, size_t analysis_period) :
     current_composite_buy_rates(),
     current_composite_sell_rates(),
     next_composite_buy_rates(),
@@ -143,7 +143,7 @@ UtilityRateForecast::UtilityRateForecast(rate_data* util_rate, size_t stepsPerHo
 	rate = std::shared_ptr<rate_data>(new rate_data(*util_rate));
 	m_monthly_load_forecast = monthly_load_forecast;
 	m_monthly_gen_forecast = monthly_gen_forecast;
-	m_monthly_peak_forecast = monthly_peak_forecast;
+	m_monthly_avg_load_forecast = monthly_avg_load_forecast;
     nyears = analysis_period;
 }
 
@@ -153,7 +153,7 @@ UtilityRateForecast::UtilityRateForecast(UtilityRateForecast& tmp) :
 	last_step(tmp.last_step),
 	m_monthly_load_forecast(tmp.m_monthly_load_forecast),
 	m_monthly_gen_forecast(tmp.m_monthly_gen_forecast),
-	m_monthly_peak_forecast(tmp.m_monthly_peak_forecast),
+	m_monthly_avg_load_forecast(tmp.m_monthly_avg_load_forecast),
     current_composite_buy_rates(tmp.current_composite_buy_rates),
     current_composite_sell_rates(tmp.current_composite_sell_rates),
     next_composite_buy_rates(tmp.next_composite_buy_rates),
@@ -382,7 +382,7 @@ void UtilityRateForecast::initializeMonth(int month, size_t year)
 		rate->init_dc_peak_vectors(month);
 		compute_next_composite_tou(month, year);
 
-		double avg_load = m_monthly_peak_forecast[year * 12 + month];
+		double avg_load = m_monthly_avg_load_forecast[year * 12 + month];
 
 		ur_month& curr_month = rate->m_month[month];
 		curr_month.dc_flat_peak = avg_load;
