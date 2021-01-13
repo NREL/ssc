@@ -570,7 +570,7 @@ TEST(lib_utility_rate_test, test_one_at_a_time_vs_full_vector)
     double cost = rate_forecast.forecastCost(forecast, 0, hour_of_year, 0);
 
     // Total cost for the months would be $1511.25, but this subtracts off the peaks predicted by average load ($3.12)
-    ASSERT_NEAR(1508.11, cost, 0.02);
+    ASSERT_NEAR(11.25, cost, 0.02);
 
     cost = 0;
     for (int i = 0; i < forecast.size(); i++)
@@ -579,7 +579,7 @@ TEST(lib_utility_rate_test, test_one_at_a_time_vs_full_vector)
         cost += forecast_copy.forecastCost(single_forecast, 0, hour_of_year + i, 0);
     }
 
-    ASSERT_NEAR(1508.11, cost, 0.02);
+    ASSERT_NEAR(11.25, cost, 0.02);
 }
 
 TEST(lib_utility_rate_test, test_one_at_a_time_vs_full_vector_nm_credits)

@@ -153,10 +153,9 @@ void dispatch_automatic_behind_the_meter_t::setup_rate_forecast()
         for (size_t idx = 0; idx < num_recs && idx < array_size; idx++)
         {
             double grid_power = _P_pv_ac[idx] - _P_load_ac[idx];
-            if (grid_power < peak_during_month)
-            {
-                peak_during_month = grid_power;
-            }
+
+            peak_during_month += _P_load_ac[idx] * _dt_hour;
+            
 
             if (grid_power < 0)
             {
@@ -180,7 +179,7 @@ void dispatch_automatic_behind_the_meter_t::setup_rate_forecast()
             {
                 // Push back vectors
                 // Note: this is a net-billing approach. To be accurate for net metering, we'd have to invoke tou periods here, this overestimates costs for NM
-                monthly_peaks.push_back(-1.0 * peak_during_month);
+                monthly_peaks.push_back(peak_during_month / util::hours_in_month(curr_month));
                 monthly_load.push_back(-1.0 * load_during_month);
                 monthly_gen.push_back(gen_during_month);
 
@@ -604,6 +603,7 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(dispatch_plan
         }
     }
     double remainingEnergy = E_max;
+    double powerAtMaxCost = 0;
     plan.lowestMarginalCost = sorted_grid[0].MarginalCost();
     for (i = 0; i < (plan.dispatch_hours * _steps_per_hour) && (i < sorted_grid.size()); i++)
     {
@@ -612,10 +612,17 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(dispatch_plan
         {
             double costPercent = costAtStep / costDuringDispatchHours;
             double desiredPower = remainingEnergy * costPercent / _dt_hour;
+
+            // Prevent the wierd signals from demand charges from reducing dispatch (maybe fix this upstream in the future)
+            if (desiredPower < powerAtMaxCost && sorted_grid[i].Grid() >= powerAtMaxCost) {
+                desiredPower = powerAtMaxCost;
+            }
+
             if (desiredPower > sorted_grid[i].Grid())
             {
                 desiredPower = sorted_grid[i].Grid();
             }
+            
             // Account for discharging constraints assuming voltage is constant over forecast period
             check_power_restrictions(desiredPower);
 
@@ -630,6 +637,10 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(dispatch_plan
             if (sorted_grid[i].MarginalCost() < plan.lowestMarginalCost)
             {
                 plan.lowestMarginalCost = sorted_grid[i].MarginalCost();
+            }
+
+            if (powerAtMaxCost == 0) {
+                powerAtMaxCost = desiredPower;
             }
         }
     }
