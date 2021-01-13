@@ -634,14 +634,23 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(dispatch_plan
             index = sorted_grid[i].Hour() * _steps_per_hour + sorted_grid[i].Step(); // Assumes we're always running this function on the hour
             plan.plannedDispatch[index] = desiredPower;
 
+            if (powerAtMaxCost == 0) {
+                powerAtMaxCost = desiredPower;
+            }
+        }
+    }
+
+    for (i = 0; i < _steps_per_hour && (i < sorted_grid.size()); i++)
+    {
+        if (sorted_grid[i].Cost() > 0)
+        {
             if (sorted_grid[i].MarginalCost() < plan.lowestMarginalCost)
             {
                 plan.lowestMarginalCost = sorted_grid[i].MarginalCost();
             }
-
-            if (powerAtMaxCost == 0) {
-                powerAtMaxCost = desiredPower;
-            }
+        }
+        else {
+            break;
         }
     }
 
