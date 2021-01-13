@@ -1548,7 +1548,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 q_pc_target = mc_tou.mc_dispatch_params.m_q_pc_target_su_in.at(p);
             }
             else {
-                q_pc_target = mc_tou.mc_dispatch_params.m_q_pc_target_on_in.at(p);
+                q_pc_target = mc_tou.mc_dispatch_params.m_q_pc_target_on_in.at(p) + mc_tou.mc_dispatch_params.m_q_pc_target_su_in.at(p);  // Dispatch can miss startup timing -> Use total target to avoid attempted solutions with q_pc_target = 0
             }
 
 			m_q_dot_pc_max = mc_tou.mc_dispatch_params.m_q_pc_max_in.at(p);
