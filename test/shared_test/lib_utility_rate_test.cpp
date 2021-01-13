@@ -183,8 +183,33 @@ TEST(lib_utility_rate_test, test_demand_charges_crossing_months)
 	int hour_of_year = 742; // 10 pm on Jan 31st
 	double cost = rate_forecast.forecastCost(forecast, 0, hour_of_year, 0);
 
-	// Total cost for the months would be $1511.25, but this subtracts off the peaks predicted by average load ($3.12)
-	ASSERT_NEAR(1508.11, cost, 0.02);
+	// Total cost for the months would be $1511.25, but this subtracts off the peaks predicted by average load ($1500)
+	ASSERT_NEAR(11.25, cost, 0.02);
+}
+
+// Test imperfect peak forecast
+TEST(lib_utility_rate_test, test_demand_charges_inaccurate_forecast)
+{
+    rate_data data;
+    set_up_default_commercial_rate_data(data); // Net billing
+
+    int steps_per_hour = 1;
+    std::vector<double> monthly_load_forecast = { 150, 75 };
+    std::vector<double> monthly_gen_forecast = { 0, 0 };
+    std::vector<double> monthly_peak_forecast = { 50, 0 };
+
+    UtilityRateForecast rate_forecast(&data, steps_per_hour, monthly_load_forecast, monthly_gen_forecast, monthly_peak_forecast, 2);
+
+    // - is load
+    std::vector<double> forecast = { -100, -50, -50, -25 };
+    rate_forecast.initializeMonth(0, 0);
+    rate_forecast.copyTOUForecast();
+
+    int hour_of_year = 742; // 10 pm on Jan 31st
+    double cost = rate_forecast.forecastCost(forecast, 0, hour_of_year, 0);
+
+    // Total cost for the months would be $1511.25, but this subtracts off the peaks predicted ($500)
+    ASSERT_NEAR(1011.25, cost, 0.02);
 }
 
 // Excel implementation of these results is available at https://github.com/NREL/SAM-documentation/blob/master/Unit%20Testing/Utility%20Rates/UtilityRateForecast/lib_utility_rate_test_cross_checks.xlsx
@@ -208,8 +233,8 @@ TEST(lib_utility_rate_test, test_changing_rates_crossing_months)
 	int hour_of_year = 2878; // 10 pm on Apr 30th
 	double cost = rate_forecast.forecastCost(forecast, 0, hour_of_year, 0);
 
-	// Total cost for the months would be $1513.13, but this subtracts off the peaks predicted by average load ($3.09)
-	ASSERT_NEAR(1510.03, cost, 0.02);
+	// Total cost for the months would be $1513.13, but this subtracts off the peaks predicted by monthly peak forecast ($1500)
+	ASSERT_NEAR(13.125, cost, 0.02);
 }
 
 TEST(lib_utility_rate_test, test_demand_charges_crossing_year)
@@ -232,7 +257,7 @@ TEST(lib_utility_rate_test, test_demand_charges_crossing_year)
 	int hour_of_year = 8758; // 10 pm on Dec 31st
 	double cost = rate_forecast.forecastCost(forecast, 0, hour_of_year, 0);
 
-	ASSERT_NEAR(1520.79, cost, 0.02);
+	ASSERT_NEAR(11.34, cost, 0.02);
 }
 
 // Net billing with a sell rate
@@ -290,7 +315,7 @@ TEST(lib_utility_rate_test, test_sell_rates)
     double cost = rate_forecast.forecastCost(forecast, 0, hour_of_year, 0);
 
     
-    ASSERT_NEAR(1506.11, cost, 0.02);
+    ASSERT_NEAR(9.25, cost, 0.02);
 }
 
 TEST(lib_utility_rate_test, test_net_metering_one_tou_period)
