@@ -160,7 +160,7 @@ var_info vtab_battery_inputs[] = {
         { SSC_INPUT,        SSC_ARRAY,      "batt_pv_ac_forecast",                         "PV ac power forecast",                                   "kW",       "",                     "BatteryDispatch",       "",  "",          "" },
 
         //  cycle cost inputs
-        { SSC_INPUT,        SSC_NUMBER,     "batt_cycle_cost_choice",                      "Use SAM cost model for degradaton penalty or input custom via batt_cycle_cost", "0/1",     "0=UseCostModel,1=InputCost", "BatterySystem", "",                           "",                             "" },
+        { SSC_INPUT,        SSC_NUMBER,     "batt_cycle_cost_choice",                      "Use SAM cost model for degradaton penalty or input custom via batt_cycle_cost", "0/1",     "0=UseCostModel,1=InputCost", "BatterySystem", "?=0",                           "",                             "" },
         { SSC_INPUT,        SSC_ARRAY,      "batt_cycle_cost",                             "Input battery cycle degradaton penalty per year",                      "$/cycle-kWh","length 1 or analysis_period, length 1 will be extended using inflation", "BatterySystem",       "batt_cycle_cost_choice=1",                           "",                             "" },
 
         { SSC_INPUT,        SSC_NUMBER,     "inflation_rate",                              "Inflation rate",                                          "%", "", "Lifetime", "?=0", "MIN=-99", "" },
