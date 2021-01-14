@@ -465,7 +465,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, TestSummerPeakGridChargingSubhourly) {
     batteryPower = dispatchAutoBTM->getBatteryPower();
     batteryPower->connectionMode = ChargeController::AC_CONNECTED;
 
-    std::vector<double> expectedPower = { -0.648, -0.813, -0.912, -0.984, -0.949, -0.695, -0.523, -0.124, -0.723,  -1.093, -1.874, -2.092, -2.092, -1.872, -1.598, -1.21,  1.564, 2.3757, 3.3688,
+    std::vector<double> expectedPower = { -0.648, -0.813, -0.912, -0.984, -0.949, -0.695, -0.523, -0.124, -0.723,  -1.093, -1.874, -2.092, -2.092, -1.872, -1.598, 0.885,  1.564, 2.3757, 3.3688,
                                          4.122, 0.0, 0.0, 0.0, -0.317 };
     for (size_t h = 0; h < 24; h++) {
         batteryPower->powerSystem = pv_prediction[h]; // Match the predicted PV
