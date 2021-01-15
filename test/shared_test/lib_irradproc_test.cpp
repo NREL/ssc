@@ -15,7 +15,7 @@ TEST_F(NightCaseIrradProc, solarposTest_lib_irradproc) {
     double sun[9];
     vector<double> sunrise_times;
     vector<double> sunset_times;
-
+    e = 0.0001;
     /* Just before sunrise test case */
     solarpos(year, month, day, 4, 30, lat, lon, tz, sun);
     vector<double> solution = { 0.95662, 1.79457, -0.223771, 0.363938, 5.70882, 19.5183, 0.968276, 3.88646, 0 };
@@ -105,7 +105,7 @@ TEST_F(IrradTest, sunriseAndSunsetAtDifferentLocationsTest_spa_lib_irradproc) {
     arctic circle #2: Point Hope, Alaska
     arctic circle #3: Kotzebue, Alaska on the first day of continuous days
     */
-    e = 0.001;
+    e = 0.0001;
     vector<double> latitudes = { 39.77, 52.5, -12.03, 40.43, -17.75, 66.9, 68.35, 66.9 };
     vector<double> longitudes = { -105.22, 13.3, -77.06, -3.72, -179.3, -162.6, -166.8, -162.6 };
     vector<double> time_zones = { -7, 1, -5, 1, 12, -9, -9, -9 };
@@ -126,7 +126,7 @@ TEST_F(IrradTest, sunriseAndSunsetAtDifferentLocationsTest_spa_lib_irradproc) {
 }
 
 TEST_F(IrradTest, sunriseAndSunsetAlaskaTest_spa_lib_irradproc) {
-    e = 0.001;
+    e = 0.0001;
     double latitude = -17.75;
     double longitude = -179.3;
     double time_zone = 12;
@@ -139,6 +139,22 @@ TEST_F(IrradTest, sunriseAndSunsetAlaskaTest_spa_lib_irradproc) {
     solarpos_spa(2010, month, day, 14, 30, 0, latitude, longitude, time_zone, 0, 2, 1016, 15, latitude, 180, sun_results);
     EXPECT_NEAR((double)sun_results[4], sunrise_time, e) << "sunrise time for lat " << latitude << " long " << longitude << " failed\n";
     EXPECT_NEAR((double)sun_results[5], sunset_time, e) << "sunrise time for lat " << latitude << " long " << longitude << " failed\n";
+}
+
+TEST_F(IrradTest, atmos_refractionTest_spa_lib_irradproc) {
+    //Test to check for atmospheric refraction correction occuring only if sun is above horizon
+    e = 0.0001;
+    double latitude = 31.6430;
+    double longitude = 74.8723;
+    double time_zone = 5.5;
+    double elevation_angle = -.00175; //topocentric elevation angle corrected for atmospheric refraction (radians)
+    //double sunset_time = 17.514;
+    int month = 7;
+    int day = 19;
+    double sun_results[9];
+    double alt = 0;
+    solarpos_spa(2017, month, day, 5, 39, 0, latitude, longitude, time_zone, 0, 234, 1013.25, 15, latitude, 180, sun_results);
+    EXPECT_NEAR((double)sun_results[2], elevation_angle, e) << "elevation angle for lat " << latitude << " long " << longitude << " failed\n";
 }
 
 
@@ -200,7 +216,7 @@ TEST_F(NightCaseIrradProc, solarpos_spaTest_lib_irradproc) {
     double needed[13];
     vector<double> sunrise_times;
     vector<double> sunset_times;
-
+    e = 0.0001;
     /* Just before sunrise test case */
     solarpos_spa(year, month, day, 4, 30, 0, lat, lon, tz, 0, 0, 1016, 15, lat, 180, sun);
     vector<double> solution = { 0.95668, 1.80432, -0.233522, 0.363905, 5.636927, 19.584888, 0.968276, 3.88691, 0 };
@@ -239,7 +255,7 @@ TEST_F(SunriseCaseIrradProc, solarpos_spaTest_lib_irradproc) {
     double needed[13];
     vector<double> sunrise_times;
     vector<double> sunset_times;
-
+    e = 0.0001;
     solarpos_spa(year, month, day, 5, 30, 0, lat, lon, tz, 0, 234, 1016, 15, lat, 180, sun);
     vector<double> solution = { 1.11053, 1.61284, -0.0420474, 0.363777, 5.636927, 19.584888, 0.968281, 4.88686, 0 };
     sunrise_times.push_back(solution[4]);
@@ -286,7 +302,7 @@ TEST_F(SunsetCaseIrradProc, solarpos_spaTest_lib_irradproc) {
     double needed[13];
     vector<double> sunrise_times;
     vector<double> sunset_times;
-
+    e = 0.0001;
     solarpos_spa(year, month, day, 19, 30, 0, lat, lon, tz, 0, 234, 1016, 15, lat, 180, sun);
     vector<double> solution = { 5.13951, 1.56025, 0.010544, 0.361913, 5.636927, 19.584888, 0.968356, 18.88622, 13.98903 };
     sunrise_times.push_back(solution[4]);
@@ -794,3 +810,5 @@ TEST(SingleAxisTrackingTest, SunBelowTiltedArray) {
 	double bt = backtrack(tt, 0.4);
 	ASSERT_NEAR(bt, 16.15566, 1e-4);
 }
+
+
