@@ -105,7 +105,7 @@ TEST_F(IrradTest, sunriseAndSunsetAtDifferentLocationsTest_spa_lib_irradproc) {
     arctic circle #2: Point Hope, Alaska
     arctic circle #3: Kotzebue, Alaska on the first day of continuous days
     */
-    e = 0.0001;
+    e = 0.001;
     vector<double> latitudes = { 39.77, 52.5, -12.03, 40.43, -17.75, 66.9, 68.35, 66.9 };
     vector<double> longitudes = { -105.22, 13.3, -77.06, -3.72, -179.3, -162.6, -166.8, -162.6 };
     vector<double> time_zones = { -7, 1, -5, 1, 12, -9, -9, -9 };
@@ -126,7 +126,7 @@ TEST_F(IrradTest, sunriseAndSunsetAtDifferentLocationsTest_spa_lib_irradproc) {
 }
 
 TEST_F(IrradTest, sunriseAndSunsetAlaskaTest_spa_lib_irradproc) {
-    e = 0.0001;
+    e = 0.001;
     double latitude = -17.75;
     double longitude = -179.3;
     double time_zone = 12;
@@ -143,7 +143,6 @@ TEST_F(IrradTest, sunriseAndSunsetAlaskaTest_spa_lib_irradproc) {
 
 TEST_F(IrradTest, atmos_refractionTest_spa_lib_irradproc) {
     //Test to check for atmospheric refraction correction occuring only if sun is above horizon
-    e = 0.0001;
     double latitude = 31.6430;
     double longitude = 74.8723;
     double time_zone = 5.5;
