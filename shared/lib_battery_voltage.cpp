@@ -399,24 +399,27 @@ double voltage_dynamic_t::calculate_max_discharge_w(double q, double qmax, doubl
     qmax /= params->num_strings;
 
     double current = 0.;
-    double vol = 0;
+    double vol = params->dynamic.Vcut + 0.012;
+    //double vol = 0;
     double incr = q / 10;
-    double vol_diff = params->dynamic.Vcut - vol;
-    double max_p = 0, max_I = 0;
-    while (current * params->dt_hr < q - tolerance && vol_diff >= .0001) {
+    //double vol_diff = params->dynamic.Vcut - vol;
+    double max_p = 0, max_I = 0, max_V = 0;
+    while (current * params->dt_hr < q - tolerance && vol >= params->dynamic.Vcut + 0.012) {
         //double C = (-1 * params->dynamic.Vcut + _E0 - params->resistance * current + _A * exp(-_B0 * qmax)) / _K;
         //double x = qmax / (C - 1);
         //params->dynamic.Qfull_mod = qmax + x;
         vol = voltage_model_tremblay_hybrid(qmax, current, q - current * params->dt_hr);
-        vol_diff = abs(params->dynamic.Vcut - vol);
+        //vol_diff = params->dynamic.Vcut - vol;
         double p = current * vol;
         if (p > max_p) {
             max_p = p;
             max_I = current;
+            max_V = vol;
         }
         current += incr;
     }
     current = max_I;
+    vol = max_V;
 
     if (max_current)
         *max_current = current * params->num_strings;
