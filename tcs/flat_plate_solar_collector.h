@@ -108,6 +108,12 @@ class FlatPlateCollector
 public:
     FlatPlateCollector();
     FlatPlateCollector(const CollectorTestSpecifications &collector_test_specifications);
+    const static PoaIrradianceComponents IncidentIrradiances(const TimeAndPosition &time_and_position,
+        const Weather &weather,
+        double albedo /*-*/);
+    const static double FlatPlateCollector::IncidentIrradiance(const TimeAndPosition& time_and_position,
+        const Weather& weather,
+        double albedo  /*-*/);   // [W/m2]
     const double RatedPowerGain();
     const double UsefulPowerGain(const TimeAndPosition &time_and_position, const ExternalConditions &external_conditions);  // [W]
     const double T_out(const TimeAndPosition &time_and_position, const ExternalConditions &external_conditions);            // [C]
@@ -121,10 +127,7 @@ private:
     double area_coll_;                  // [m2] collector area
     double m_dot_test_;                 // [kg/s] mass flow through collector during test
     double heat_capacity_rate_test_;    // [kW/K] m_dot * c_p during ratings test
-    const static PoaIrradianceComponents IncidentIrradiance(const TimeAndPosition &time_and_position,
-        const Weather &weather,
-        double albedo /*-*/);
-    const double TransmittedIrradiance(const CollectorOrientation &collector_orientation,
+    const double AbsorbedIrradianceOverTauAlphaN(const CollectorOrientation &collector_orientation,
         const PoaIrradianceComponents &poa_irradiance_components);      // [W/m2]
     const double AbsorbedRadiantPower(double transmitted_irradiance /*W/m2*/,
         const InletFluidFlow &inlet_fluid_flow,

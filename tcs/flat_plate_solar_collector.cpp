@@ -61,9 +61,9 @@ const double FlatPlateCollector::UsefulPowerGain(const TimeAndPosition &time_and
     InletFluidFlow inlet_fluid_flow(external_conditions.inlet_fluid_flow);
     double albedo(external_conditions.albedo);
 
-    PoaIrradianceComponents poa_irradiance_components = IncidentIrradiance(time_and_position, weather, albedo);
-    double transmitted_irradiance = TransmittedIrradiance(time_and_position.collector_orientation, poa_irradiance_components);
-    double absorbed_radiant_power = AbsorbedRadiantPower(transmitted_irradiance, inlet_fluid_flow, ambient_temp);
+    PoaIrradianceComponents poa_irradiance_components = IncidentIrradiances(time_and_position, weather, albedo);
+    double absorbed_irradiance_over_taualpha_n = AbsorbedIrradianceOverTauAlphaN(time_and_position.collector_orientation, poa_irradiance_components);
+    double absorbed_radiant_power = AbsorbedRadiantPower(absorbed_irradiance_over_taualpha_n, inlet_fluid_flow, ambient_temp);
     double thermal_power_loss = ThermalPowerLoss(inlet_fluid_flow, ambient_temp);
     double useful_power_gain = absorbed_radiant_power - thermal_power_loss;
 
@@ -106,7 +106,7 @@ const CollectorTestSpecifications FlatPlateCollector::TestSpecifications()
     return collector_test_specifications;
 }
 
-const PoaIrradianceComponents FlatPlateCollector::IncidentIrradiance(const TimeAndPosition &time_and_position,
+const PoaIrradianceComponents FlatPlateCollector::IncidentIrradiances(const TimeAndPosition &time_and_position,
     const Weather &weather,
     double albedo  /*-*/)   // [W/m2]
 {
@@ -174,9 +174,20 @@ const PoaIrradianceComponents FlatPlateCollector::IncidentIrradiance(const TimeA
     return poa_irradiance_components;
 };
 
+const double FlatPlateCollector::IncidentIrradiance(const TimeAndPosition& time_and_position,
+    const Weather& weather,
+    double albedo  /*-*/)   // [W/m2]
+{
+    PoaIrradianceComponents poa_irradiance_components = IncidentIrradiances(time_and_position, weather, albedo);
+    double Dni_on_tilted = poa_irradiance_components.beam_with_aoi.at(0);
+    double Dhi_on_tilted = poa_irradiance_components.sky_diffuse_with_aoi.at(0);
+    double ground_reflected_on_tilted = poa_irradiance_components.ground_reflected_diffuse_with_aoi.at(0);
+    
+    return Dni_on_tilted + Dhi_on_tilted + ground_reflected_on_tilted;
+}
 
-
-const double FlatPlateCollector::TransmittedIrradiance(const CollectorOrientation &collector_orientation,
+// Returns the absorbed irradiance divided by transmittance-absorptance product at normal incidence, or: S/(tau-alpha_n)
+const double FlatPlateCollector::AbsorbedIrradianceOverTauAlphaN(const CollectorOrientation &collector_orientation,
     const PoaIrradianceComponents &poa_irradiance_components)   // [W/m2]
 {
     // calculate transmittance through cover
@@ -237,15 +248,15 @@ const double FlatPlateCollector::TransmittedIrradiance(const CollectorOrientatio
     double poa_beam = poa_irradiance_components.beam_with_aoi.at(0);
     double poa_sky_diffuse = poa_irradiance_components.sky_diffuse_with_aoi.at(0);
     double poa_ground_reflected_diffuse = poa_irradiance_components.ground_reflected_diffuse_with_aoi.at(0);
-    double I_transmitted =
+    double s_over_taualpha_n =
         Kta_b * poa_beam * beam_shading_factor +
         Kta_d * poa_sky_diffuse * diffuse_shading_factor +
         Kta_g * poa_ground_reflected_diffuse;
 
-    return I_transmitted;
+    return s_over_taualpha_n;
 }
 
-const double FlatPlateCollector::AbsorbedRadiantPower(double transmitted_irradiance /*W/m2*/, const  InletFluidFlow &inlet_fluid_flow, double T_amb /*C*/)    // [W]
+const double FlatPlateCollector::AbsorbedRadiantPower(double absorbed_irradiance_over_taualpha_n /*W/m2*/, const  InletFluidFlow &inlet_fluid_flow, double T_amb /*C*/)    // [W]
 {
     double m_dot = inlet_fluid_flow.m_dot;
     double specific_heat = inlet_fluid_flow.specific_heat;
@@ -256,7 +267,7 @@ const double FlatPlateCollector::AbsorbedRadiantPower(double transmitted_irradia
     double r = (mdotCp_use / area_coll_ * (1 - exp(-area_coll_ * FprimeUL / mdotCp_use))) / FRUL_; // D&B eqn 6.20.3
     double FRta_use = FRta_ * r; // FRta_use = value for this time step 
 
-    double Q_dot_absorbed = area_coll_ * FRta_use*transmitted_irradiance; // from D&B eqn 6.8.1
+    double Q_dot_absorbed = area_coll_ * FRta_use* absorbed_irradiance_over_taualpha_n; // from D&B eqn 6.8.1
     return Q_dot_absorbed;
 }
 
