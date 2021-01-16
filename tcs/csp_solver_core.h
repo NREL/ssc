@@ -275,6 +275,7 @@ public:
 		std::vector<bool> m_select_days;
 
 		bool m_is_dispatch_targets;
+        bool m_is_rec_user_mflow;
 		std::vector<double> m_q_pc_target_in;
         std::vector<double> m_q_pc_target_su_in;
         std::vector<double> m_q_pc_target_on_in;
@@ -376,6 +377,7 @@ public:
 			m_select_days.assign(365, 1);
 
 			m_is_dispatch_targets = false;
+            m_is_rec_user_mflow = false;
 			m_is_disp_constr = false;
 
 			m_pc_max_rampup = 60.;				// Maximum cycle ramp-up (fraction of capacity per hour)

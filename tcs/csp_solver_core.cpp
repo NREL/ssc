@@ -1638,23 +1638,46 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 		// Check if receiver can be defocused enough to stay under cycle+TES max thermal power and mass flow (if cold recirculation is not enabled)
         // (this will usually be the case unless using clear-sky control or constrained cycle thermal input)
-		if (cr_operating_state == C_csp_collector_receiver::ON && q_dot_cr_on >0.0 && is_rec_su_allowed && is_rec_outlet_to_hottank && m_is_tes)
+		if (cr_operating_state == C_csp_collector_receiver::ON && (q_dot_cr_on >0.0 || m_dot_cr_on > 0.0) && is_rec_su_allowed && is_rec_outlet_to_hottank && m_is_tes)
 		{
 			double qpcmax = m_q_dot_pc_max;
 			if (pc_operating_state == C_csp_power_cycle::OFF || C_csp_power_cycle::STARTUP)
 				qpcmax = q_dot_pc_su_max;
 
-			double qmax = (m_q_dot_pc_max + q_dot_tes_ch) / (1.0 - tol_mode_switching);
-			double mmax = (m_m_dot_pc_max + m_dot_tes_ch_est) / (1.0 - tol_mode_switching);
-			if (q_dot_cr_on > qmax || m_dot_cr_on > mmax)
+            double qmax = q_dot_tes_ch / (1.0 - tol_mode_switching);
+            double mmax = m_dot_tes_ch_est / (1.0 - tol_mode_switching);
+            if (is_pc_su_allowed)
+            {
+                qmax += m_q_dot_pc_max / (1.0 - tol_mode_switching);
+                mmax += m_m_dot_pc_max / (1.0 - tol_mode_switching);
+            }
+
+			if (q_dot_cr_on > qmax || m_dot_cr_on > mmax)  // Receiver will need to be defocused
 			{
-				double df = fmin(qmax / q_dot_cr_on, mmax / m_dot_cr_on);
-				mc_collector_receiver.on(mc_weather.ms_outputs, mc_cr_htf_state_in, df, mc_cr_out_solver, mc_kernel.mc_sim_info);
-				if (mc_cr_out_solver.m_q_thermal == 0.0)  // Receiver solution wasn't successful 
-					is_rec_su_allowed = false;
+                if (mc_tou.mc_dispatch_params.m_is_rec_user_mflow && m_dot_cr_on > m_dot_tes_ch_est)  // Defocus can't change receiver mass flow rate
+                {
+                    is_rec_su_allowed = false;
+                }
+                else
+                {
+				    double df = fmin(qmax / q_dot_cr_on, mmax / m_dot_cr_on);
+				    mc_collector_receiver.on(mc_weather.ms_outputs, mc_cr_htf_state_in, df, mc_cr_out_solver, mc_kernel.mc_sim_info);
+				    if (mc_cr_out_solver.m_q_thermal == 0.0)  // Receiver solution wasn't successful
+					    is_rec_su_allowed = false;
+                }
 			}
 
 		}
+
+        if (mc_tou.mc_dispatch_params.m_is_rec_user_mflow)   // Don't allow controller to try defocus modes when mass flow rates are fixed from external inputs
+        {
+            m_is_CR_DF__PC_SU__TES_FULL__AUX_OFF_avail = false;
+            m_is_CR_DF__PC_SU__TES_OFF__AUX_OFF_avail = false;
+            m_is_CR_DF__PC_MAX__TES_FULL__AUX_OFF_avail = false;
+            m_is_CR_DF__PC_MAX__TES_OFF__AUX_OFF_avail = false;
+            m_is_CR_DF__PC_OFF__TES_FULL__AUX_OFF_avail = false;
+        }
+
 
 
 		while(!are_models_converged)		// Solve for correct operating mode and performance in following loop:

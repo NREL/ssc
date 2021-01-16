@@ -1398,7 +1398,7 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 				q_thermal_ss = m_dot_salt_tot_ss*c_p_coolant*(T_salt_hot - T_salt_cold_in);
 				calc_pump_performance(rho_coolant, m_dot_salt_tot, f, Pres_D, W_dot_pump);
 
-                if (q_dot_inc_sum < m_q_dot_inc_min && (!m_ignore_thermal_min || m_dot_salt_tot < m_f_rec_min * m_m_dot_htf_des))  // Allow minimums to be mass flow limits if m_ignore_thermal_min = true (added to allow receiver to continue operating at low thermal power with clear-sky control and cold-tank recirculation)
+                if (q_dot_inc_sum < m_q_dot_inc_min && (!m_ignore_thermal_min || m_dot_salt_tot < m_f_rec_min * m_m_dot_htf_des || field_eff < 0.0))  // Allow minimums to be mass flow limits if m_ignore_thermal_min = true (added to allow receiver to continue operating at low thermal power with clear-sky control and cold-tank recirculation)
 				{
 					m_mode = C_csp_collector_receiver::OFF;
 					W_dot_pump = 0.0;
@@ -1417,7 +1417,8 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 				}
 			}
 
-            if (q_dot_inc_sum < m_q_dot_inc_min && (!m_ignore_thermal_min || m_dot_salt_tot < m_f_rec_min * m_m_dot_htf_des))
+
+            if (q_dot_inc_sum < m_q_dot_inc_min && (!m_ignore_thermal_min || m_dot_salt_tot < m_f_rec_min * m_m_dot_htf_des || field_eff < 0.0))
 				rec_is_off = true;
 
 			break;
@@ -1434,7 +1435,7 @@ void C_mspt_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 				q_thermal = q_dot_inc_sum;
 			else
 			{
-                if (q_dot_inc_sum < m_q_dot_inc_min && (!m_ignore_thermal_min || m_dot_salt_tot < m_f_rec_min * m_m_dot_htf_des) && m_mode_prev == C_csp_collector_receiver::ON)
+                if (q_dot_inc_sum < m_q_dot_inc_min && (!m_ignore_thermal_min || m_dot_salt_tot < m_f_rec_min * m_m_dot_htf_des || field_eff < 0.0) && m_mode_prev == C_csp_collector_receiver::ON)  // Allow minimums to be mass flow limits if m_ignore_thermal_min = true (added to allow receiver to continue operating at low thermal power with clear-sky control and cold-tank recirculation)
 					rec_is_off = true;
 			}
 

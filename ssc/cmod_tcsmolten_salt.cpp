@@ -2368,6 +2368,9 @@ public:
         }
 
 
+        // User-specified receiver mass flow
+        tou.mc_dispatch_params.m_is_rec_user_mflow = as_boolean("is_rec_user_mflow");
+
         // User-specified dispatch targets (specified at weather-file resolution)
         bool is_dispatch_targets = as_boolean("is_dispatch_targets");
         if (is_dispatch_targets && tou.mc_dispatch_params.m_dispatch_optimize)
