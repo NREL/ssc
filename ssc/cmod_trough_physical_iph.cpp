@@ -316,7 +316,7 @@ static var_info _cm_vtab_trough_physical_process_heat[] = {
     { SSC_OUTPUT,   SSC_ARRAY,   "T_troughs_in",                        "Troughs inlet temperature after flat plate collectors", "C", "", "trough_field",        "*",        "",     "" },
 
     { SSC_OUTPUT,   SSC_NUMBER,  "flat_plates_in_series",               "Number of flat plate collectors in series",    "", "",         "trough_field",        "*",        "",     "" },
-    { SSC_OUTPUT,   SSC_NUMBER,  "flat_plates_in_parallel",             "Number of flat plate collectors in parallel",  "", "",         "trough_field",        "*",        "",     "" },
+    { SSC_OUTPUT,   SSC_NUMBER,  "flat_plates_in_parallel",             "Number of flat plate collectors in parallel, per loop",  "", "",         "trough_field",        "*",        "",     "" },
                                                                                                                         
         // Heat Sink                                                                                                    
     { SSC_OUTPUT,   SSC_ARRAY,   "q_dot_to_heat_sink",                  "Heat sink thermal power",                      "MWt",     "",  "Heat_Sink",           "*",        "",     "" },
