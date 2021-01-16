@@ -422,11 +422,13 @@ void battery_data_default(ssc_data_t& data) {
     ssc_data_set_number(data, "batt_Vnom", 3.4000000953674316);
     ssc_data_set_number(data, "batt_Vnom_default", 3.5999999046325684);
     ssc_data_set_number(data, "batt_Qfull", 2.25);
+    ssc_data_set_number(data, "batt_Qfull_cutoff", 2.25);
     ssc_data_set_number(data, "batt_Qfull_flow", 198);
     ssc_data_set_number(data, "batt_Qexp", 0.040049999952316284);
     ssc_data_set_number(data, "batt_Qnom", 2.0002501010894775);
     ssc_data_set_number(data, "batt_C_rate", 0.20000000298023224);
     ssc_data_set_number(data, "batt_resistance", 0.0002);
+    ssc_data_set_number(data, "batt_voltage_cutoff", 0);
     ssc_number_t p_batt_voltage_matrix[2] = { 0, 0 };
     ssc_data_set_matrix(data, "batt_voltage_matrix", p_batt_voltage_matrix, 1, 2);
     ssc_data_set_number(data, "LeadAcid_q20_computed", 198);

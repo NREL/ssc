@@ -162,6 +162,7 @@ public:
     double Vexp;
     double Vnom;
     double Qfull;
+    double Qfull_mod;
     double Qexp;
     double Qnom;
     double C_rate;
@@ -215,10 +216,12 @@ public:
         n_strings = 9;
         Vnom_default = 3.6;
         Vfull = 4.1;
-        Vcut = 0.66 * Vfull;
+        //Vcut = 0.66 * Vfull;
+        Vcut = 0;
         Vexp = 4.05;
         Vnom = 3.4;
         Qfull = 2.25;
+        Qfull_mod = 2.25;
         Qexp = 0.04;
         Qnom = 2.0;
         C_rate = 0.2;

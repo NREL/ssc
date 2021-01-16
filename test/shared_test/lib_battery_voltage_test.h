@@ -12,7 +12,9 @@ class lib_battery_voltage_test : public ::testing::Test
 protected:
 //    std::unique_ptr<battery_capacity_interface> new_cap;
     std::unique_ptr<voltage_t> model;
+    std::unique_ptr<voltage_t> model2;
     std::unique_ptr<capacity_t> cap;
+    std::unique_ptr<capacity_t> cap2;
 
 //    std::shared_ptr<storage_time_params> time;
 
@@ -34,7 +36,7 @@ class voltage_dynamic_lib_battery_voltage_test : public lib_battery_voltage_test
 {
 protected:
     double Vfull = 4.1;
-    double Vcut = 2.706;
+    double Vcut = 0;
     double Vexp = 4.05;
     double Vnom = 3.4;
     double Qfull = 2.25;
@@ -44,11 +46,41 @@ protected:
 
     void CreateModel(double dt_hr){
         cap = std::unique_ptr<capacity_lithium_ion_t>(new capacity_lithium_ion_t(10, 50, 95, 5, dt_hr));
+        
 
         model = std::unique_ptr<voltage_t>(new voltage_dynamic_t(n_cells_series, n_strings,
                                                                  voltage_nom, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom,
                                                                  C_rate, R, dt_hr, Vcut));
         model->set_initial_SOC(50);
+
+        
+    }
+};
+
+class voltage_dynamic_lib_battery_voltage_cutoff_test : public lib_battery_voltage_test
+{
+protected:
+    double Vfull = 4.1;
+    double Vcut = 0;
+    double Vcut2 = 3;
+    double Vexp = 4.05;
+    double Vnom = 3.4;
+    double Qfull = 2.25;
+    double Qexp = 0.04;
+    double Qnom = 2.0;
+    double C_rate = 0.2;
+
+    void CreateModel(double dt_hr) {
+        cap = std::unique_ptr<capacity_lithium_ion_t>(new capacity_lithium_ion_t(10, 50, 95, 5, dt_hr));
+        cap2 = std::unique_ptr<capacity_lithium_ion_t>(new capacity_lithium_ion_t(10, 50, 95, 5, dt_hr));
+        model = std::unique_ptr<voltage_t>(new voltage_dynamic_t(n_cells_series, n_strings,
+            voltage_nom, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom,
+            C_rate, R, dt_hr, Vcut));
+        model2 = std::unique_ptr<voltage_t>(new voltage_dynamic_t(n_cells_series, n_strings,
+            voltage_nom, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom,
+            C_rate, R, dt_hr, Vcut2));
+        model->set_initial_SOC(50);
+        model2->set_initial_SOC(50);
     }
 };
 

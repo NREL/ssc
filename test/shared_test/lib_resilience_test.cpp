@@ -6,7 +6,8 @@ TEST_F(ResilienceTest_lib_resilience, VoltageCutoffParameterSetup)
     int n_strings = 3;
     for (auto dtHour : {1., .5, 0.25}){
         for (auto Vfull : {1.1, 2.2, 2.5, 3.3, 3.8, 4.4, 5.5}){
-            auto Vcut = 0.66 * Vfull;
+            //auto Vcut = 0.66 * Vfull;
+            auto Vcut = 0;
             for (auto Vexp : {.8, .85, .9}){
                 Vexp *= Vfull;
                 for (auto Vnom : {.8, .85, .9}){
