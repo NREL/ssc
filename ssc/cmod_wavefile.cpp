@@ -373,13 +373,16 @@ public:
         }
         // read in 21 rows x 22 columns
 
-        ssc_number_t* mat = allocate("wave_resource_matrix", 21, 22);
-        size_t numberRecords = 2920;
-        ssc_number_t* wave_heights = allocate("wave_significant_height", numberRecords);
-        ssc_number_t* wave_periods = allocate("wave_energy_period", numberRecords);
+        //ssc_number_t* mat = allocate("wave_resource_matrix", 21, 22);
+        //size_t numberRecords = 2920;
+        //ssc_number_t* wave_heights = allocate("wave_significant_height", numberRecords);
+        //ssc_number_t* wave_periods = allocate("wave_energy_period", numberRecords);
         //if (values.size() != 22)
         if (as_integer("wave_resource_model_choice") == 1)
         {
+            size_t numberRecords = 2920;
+            ssc_number_t* wave_heights = allocate("wave_significant_height", numberRecords);
+            ssc_number_t* wave_periods = allocate("wave_energy_period", numberRecords);
             for (size_t r = 0; r < 2920; r++) {
                 getline(ifs, buf);
                 values.clear();
@@ -392,6 +395,7 @@ public:
 
         }
         else if (as_integer("wave_resource_model_choice") == 0) {
+            ssc_number_t* mat = allocate("wave_resource_matrix", 21, 22);
             for (size_t r = 0; r < 21; r++)
             {
                 getline(ifs, buf);
