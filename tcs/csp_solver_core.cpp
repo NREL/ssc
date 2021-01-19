@@ -943,6 +943,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		mc_pc_inputs.m_m_dot = (std::min)(m_m_dot_pc_max, m_m_dot_pc_des);				//[kg/hr] no mass flow rate to power cycle
 		// Inputs
 		mc_pc_inputs.m_standby_control = C_csp_power_cycle::ON;
+        mc_pc_inputs.m_is_elec_heat_dur_off = mc_tou.mc_dispatch_params.m_is_elec_heat_dur_off; // Use electric heater parasitic when cycle is off
 		//mc_pc_inputs.m_tou = tou_timestep;
 		// Performance Call
 		mc_power_cycle.call(mc_weather.ms_outputs,
@@ -1556,7 +1557,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			is_rec_su_allowed = mc_tou.mc_dispatch_params.m_is_rec_su_allowed_in.at(p);
 			is_pc_su_allowed = mc_tou.mc_dispatch_params.m_is_pc_su_allowed_in.at(p);
 			is_pc_sb_allowed = mc_tou.mc_dispatch_params.m_is_pc_sb_allowed_in.at(p);
-            mc_pc_inputs.m_is_elec_heat_dur_off = mc_tou.mc_dispatch_params.m_is_elec_heat_dur_off.at(p);
+            if (mc_pc_inputs.m_is_elec_heat_dur_off && mc_tou.mc_dispatch_params.m_is_ignore_elec_heat_dur_off.at(p)) // Over-ride use of electric heater parasitic in this time step
+            {
+                mc_pc_inputs.m_is_elec_heat_dur_off = false;
+            }
 
             if (is_rec_outlet_to_hottank)  // Send outlet to cold tank if below cutoff temperature, or if required by user-input signal
                 is_rec_outlet_to_hottank = !mc_tou.mc_dispatch_params.m_is_rec_sb_allowed_in.at(p);

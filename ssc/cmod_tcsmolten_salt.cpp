@@ -366,6 +366,8 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,     SSC_NUMBER, "is_rec_to_coldtank_allowed",         "Can controller send receiver output to cold tank if it's colder than the input threshold? (1 = true)",                                    "-",            "",                                  "System Control",                           "?=0",                                                              "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "f_T_htf_hot_des_is_hot_tank_in_min", "Sets temperature threshold for rec output to cold tank = f*T_hot_des + (1-f)*T_cold_des",                                                 "-",            "",                                  "System Control",                           "?=0.5",                                                            "",              "" },
 
+    { SSC_INPUT,     SSC_NUMBER,  "is_elec_heat_dur_off",               "Does power cycle use electric heaters when off?",                                                                                        "-",            "",                                  "System Control",                           "?=0",                                                              "",              "" },
+
 
     // Optional Component Initialization (state at start of first timestep)
         // Heliostat field
@@ -399,8 +401,8 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,     SSC_ARRAY,  "is_rec_sb_allowed_in",               "User-provided is receiver standby allowed?",                                                                                              "-",            "",                                  "System Control",                           "?=0",                                                              "",              "" },
     { SSC_INPUT,     SSC_ARRAY,  "is_pc_su_allowed_in",                "User-provided is power cycle startup allowed?",                                                                                           "-",            "",                                  "System Control",                           "is_dispatch_targets=1",                                            "",              ""},
     { SSC_INPUT,     SSC_ARRAY,  "is_pc_sb_allowed_in",                "User-provided is power cycle standby allowed?",                                                                                           "-",            "",                                  "System Control",                           "is_dispatch_targets=1",                                            "",              ""},
-    { SSC_INPUT,     SSC_ARRAY,  "is_elec_heat_dur_off",               "User-provided does power cycle use electric heaters when off?",                                                                           "-",            "",                                  "System Control",                           "?=0",                                                              "",              ""},
-																																																																																																		  
+    { SSC_INPUT,     SSC_ARRAY,  "is_ignore_elec_heat_dur_off",        "User-provided time series allowing over-ride of cycle electric heater parasitic",                                                         "-",            "",                                  "System Control",                           "?=0",                                                              "",              "" },
+
     { SSC_INPUT,     SSC_NUMBER, "is_dispatch_constr",                 "Use dispatch capacity/efficiency constraints?",                                                                                           "-",            "",                                  "System Control",                           "?=0",                                                              "",              ""},
     { SSC_INPUT,     SSC_ARRAY,  "disp_cap_constr",                    "Fraction of turbine capacity available",                                                                                                  "-",            "",                                  "System Control",                           "is_dispatch_constr=1",                                             "",              ""},
     { SSC_INPUT,     SSC_ARRAY,  "disp_eff_constr",                    "Fraction of design point turbine efficiency available",                                                                                   "-",            "",                                  "System Control",                           "is_dispatch_constr=1",                                             "",              ""},
@@ -2359,6 +2361,8 @@ public:
         tou.mc_dispatch_params.m_q_dot_rec_des_mult = -1.23;
         tou.mc_dispatch_params.m_f_q_dot_pc_overwrite = -1.23;
 
+        tou.mc_dispatch_params.m_is_elec_heat_dur_off = as_boolean("is_elec_heat_dur_off"); // Cycle electric heater parasitic when off
+
         size_t n_select_simulation_days = 0;
         ssc_number_t* select_simulation_days = as_array("select_simulation_days", &n_select_simulation_days);
         if (n_select_simulation_days == 365)
@@ -2366,7 +2370,6 @@ public:
             for (int i = 0; i < 365; i++)
                 tou.mc_dispatch_params.m_select_days.at(i) = (bool)select_simulation_days[i];
         }
-
 
         // User-specified receiver mass flow
         tou.mc_dispatch_params.m_is_rec_user_mflow = as_boolean("is_rec_user_mflow");
@@ -2406,8 +2409,8 @@ public:
             size_t n_pbsb = 0;
             ssc_number_t* is_pc_sb_allowed_in = as_array("is_pc_sb_allowed_in", &n_pbsb);
 
-            size_t n_pbeh;
-            ssc_number_t* is_elec_heat_dur_off = as_array("is_elec_heat_dur_off", &n_pbeh);
+            size_t n_pbeh = 0;
+            ssc_number_t* is_ignore_elec_heat_dur_off = as_array("is_ignore_elec_heat_dur_off", &n_pbeh);  
 
             if (n_q_pc_target_su_in != n_expect || n != n_expect || n_max != n_expect || n_recsu != n_expect || n_pbsu != n_expect || n_pbsb != n_expect)  // Require all arrays except is_rec_sb_allowed_in and is_elec_heat_dur_off
                 throw exec_error("tcsmolten_salt", "The number of points in the user-specified arrays of dispatch targets does not match the value expected from the simulation start time, end time, and time steps per hour");
@@ -2420,7 +2423,7 @@ public:
                 tou.mc_dispatch_params.m_is_rec_sb_allowed_in.resize(n);
                 tou.mc_dispatch_params.m_is_pc_su_allowed_in.resize(n);
                 tou.mc_dispatch_params.m_is_pc_sb_allowed_in.resize(n);
-                tou.mc_dispatch_params.m_is_elec_heat_dur_off.resize(n);
+                tou.mc_dispatch_params.m_is_ignore_elec_heat_dur_off.resize(n);
 
                 for (int i = 0; i < n; i++)
                 {
@@ -2437,12 +2440,11 @@ public:
                         tou.mc_dispatch_params.m_is_rec_sb_allowed_in.at(i) = (bool)is_rec_sb_allowed_in[i];
                     }
 
-                    tou.mc_dispatch_params.m_is_elec_heat_dur_off.at(i) = false;
-                    if (n_pbeh == n)
+                    tou.mc_dispatch_params.m_is_ignore_elec_heat_dur_off.at(i) = false;
+                    if (n_recsb == n)
                     {
-                        tou.mc_dispatch_params.m_is_elec_heat_dur_off.at(i) = (bool)is_elec_heat_dur_off[i];
+                        tou.mc_dispatch_params.m_is_ignore_elec_heat_dur_off.at(i) = (bool)is_ignore_elec_heat_dur_off[i];
                     }
-
                 }
 
             }

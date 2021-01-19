@@ -272,6 +272,8 @@ public:
 		double m_q_dot_rec_des_mult;
 		double m_f_q_dot_pc_overwrite;
 
+        bool m_is_elec_heat_dur_off;
+
 		std::vector<bool> m_select_days;
 
 		bool m_is_dispatch_targets;
@@ -284,8 +286,7 @@ public:
         std::vector<bool> m_is_rec_sb_allowed_in;
 		std::vector<bool> m_is_pc_su_allowed_in;
 		std::vector<bool> m_is_pc_sb_allowed_in;
-		std::vector<bool> m_is_elec_heat_dur_off;
-
+        std::vector<bool> m_is_ignore_elec_heat_dur_off;
 
 		bool m_is_disp_constr;
 		std::vector<double> m_disp_cap_constr;
@@ -372,6 +373,8 @@ public:
 			m_use_rule_2 = false;
 			m_q_dot_rec_des_mult = -1.23;
 			m_f_q_dot_pc_overwrite = 1.23;
+
+            m_is_elec_heat_dur_off = false;
 
 			m_select_days.resize(365);
 			m_select_days.assign(365, 1);
