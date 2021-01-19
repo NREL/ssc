@@ -163,8 +163,8 @@ var_info vtab_battery_inputs[] = {
         { SSC_INPUT,        SSC_ARRAY,      "batt_pv_ac_forecast",                         "PV ac power forecast",                                   "kW",       "",                     "BatteryDispatch",       "",  "",          "" },
 
         //  cycle cost inputs
-        { SSC_INPUT,        SSC_NUMBER,     "batt_cycle_cost_choice",                      "Use SAM cost model for degradaton penalty or input custom via batt_cycle_cost", "0/1",     "0=UseCostModel,1=InputCost", "BatterySystem", "",                           "",                             "" },
-        { SSC_INPUT,        SSC_ARRAY,      "batt_cycle_cost",                             "Input battery cycle degradaton penalty per year",                      "$/cycle-kWh","length 1 or analysis_period, length 1 will be extended using inflation", "BatterySystem",       "",                           "",                             "" },
+        { SSC_INPUT,        SSC_NUMBER,     "batt_cycle_cost_choice",                      "Use SAM cost model for degradaton penalty or input custom via batt_cycle_cost", "0/1",     "0=UseCostModel,1=InputCost", "BatterySystem", "?=0",                           "",                             "" },
+        { SSC_INPUT,        SSC_ARRAY,      "batt_cycle_cost",                             "Input battery cycle degradaton penalty per year",                      "$/cycle-kWh","length 1 or analysis_period, length 1 will be extended using inflation", "BatterySystem",       "batt_cycle_cost_choice=1",                           "",                             "" },
 
         { SSC_INPUT,        SSC_NUMBER,     "inflation_rate",                              "Inflation rate",                                          "%", "", "Lifetime", "?=0", "MIN=-99", "" },
         { SSC_INPUT,        SSC_ARRAY,      "load_escalation",                             "Annual load escalation",                                  "%/year", "",                                                                                                                                                                                      "Load",                                               "?=0",                                "",                    "" },
@@ -379,20 +379,23 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 
             // compute utility rate out-years escalation multipliers
             std::vector<ssc_number_t> cycle_cost(nyears);
-            ssc_number_t* parr = vt.as_array("batt_cycle_cost", &cnt);
-            if (cnt == 1)
+            if (batt_vars->batt_cycle_cost_choice == 1)
             {
-                for (i = 0; i < nyears; i++)
-                    cycle_cost[i] = parr[0] * (ssc_number_t)pow((double)(inflation_rate + 1), (double)i);
-            }
-            else if (cnt < nyears)
-            {
-                throw exec_error("battery", "invalid number for batt_cycle_cost, must be 1 or equal to analysis_period");
-            }
-            else
-            {
-                for (i = 0; i < nyears; i++)
-                    cycle_cost[i] = parr[i];
+                ssc_number_t* parr = vt.as_array("batt_cycle_cost", &cnt);
+                if (cnt == 1)
+                {
+                    for (i = 0; i < nyears; i++)
+                        cycle_cost[i] = parr[0] * (ssc_number_t)pow((double)(inflation_rate + 1), (double)i);
+                }
+                else if (cnt < nyears)
+                {
+                    throw exec_error("battery", "invalid number for batt_cycle_cost, must be 1 or equal to analysis_period");
+                }
+                else
+                {
+                    for (i = 0; i < nyears; i++)
+                        cycle_cost[i] = parr[i];
+                }
             }
             batt_vars->batt_cycle_cost = cycle_cost;
 
@@ -401,7 +404,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             if (vt.is_assigned("om_replacement_cost1"))
             {
                 std::vector<ssc_number_t> replacement_cost(nyears);
-                parr = vt.as_array("om_replacement_cost1", &cnt);
+                ssc_number_t*  parr = vt.as_array("om_replacement_cost1", &cnt);
                 if (cnt == 1)
                 {
                     for (i = 0; i < nyears; i++)
