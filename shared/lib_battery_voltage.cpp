@@ -287,7 +287,7 @@ voltage_dynamic_t::voltage_dynamic_t(int num_cells_series, int num_strings, doub
     params->dynamic.C_rate = C_rate;
     params->resistance = R;
     params->dynamic.Vcut = Vcut;
-    params->dynamic.Qfull_mod = Qfull + .01;
+    params->dynamic.Qfull_mod = Qfull;
     initialize();
 }
 
@@ -334,9 +334,11 @@ void voltage_dynamic_t::parameter_compute() {
     _K = ((params->dynamic.Vfull - params->dynamic.Vnom + _A * (std::exp(-_B0 * params->dynamic.Qnom) - 1)) *
           (params->dynamic.Qfull - params->dynamic.Qnom)) / (params->dynamic.Qnom); // [V] - polarization voltage
     _E0 = params->dynamic.Vfull + _K + params->resistance * I - _A;
-    double C = (-1 * params->dynamic.Vcut + _E0 - params->resistance * I + _A * (std::exp(-_B0 * params->dynamic.Qfull))) / _K;
-    double x = params->dynamic.Qfull / (C - 1);
-    params->dynamic.Qfull += x;
+    /*if (params->dynamic.Vcut != 0) {
+        double C = (-1 * params->dynamic.Vcut + _E0 - params->resistance * I + _A * (std::exp(-_B0 * params->dynamic.Qfull))) / _K;
+        double x = params->dynamic.Qfull / (C - 1);
+        params->dynamic.Qfull += x;
+    }*/
     if (_A < 0 || _B0 < 0 || _K < 0 || _E0 < 0) {
         char err[254];
         std::sprintf(err, "Error during calculation of battery voltage model parameters: negative value(s) found.\n"
