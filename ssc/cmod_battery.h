@@ -130,14 +130,13 @@ struct batt_variables
 	double batt_Vfull;
 	double batt_Vexp;
 	double batt_Vnom;
+    double batt_Vcut;
 	double batt_Qfull;
-    double batt_Qfull_cutoff;
 	double batt_Qfull_flow;
 	double batt_Qexp;
 	double batt_Qnom;
 	double batt_C_rate;
 	double batt_resistance;
-    double batt_voltage_cutoff;
 
 	double batt_replacement_capacity;
 	util::matrix_t<double> cap_vs_temp;
