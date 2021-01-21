@@ -52,6 +52,7 @@ static var_info _cm_wave_file_reader[] = {
 																										            
 // weather data records																					            
 	{ SSC_OUTPUT,        SSC_MATRIX,      "wave_resource_matrix",              "Frequency distribution of resource",                                  "m/s",   "",                       "Weather Reader",      "?",                        "",                            "" },
+    { SSC_OUTPUT,        SSC_ARRAY,       "time_check",                        "Time check",                                                          "",      "",                       "Weather Reader",      "?",                        "",                            "" },
     { SSC_OUTPUT,        SSC_ARRAY,       "wave_significant_height",           "Wave height time series data",                                        "m",     "",                       "Weather Reader",      "?",                        "",                            "" },
     { SSC_OUTPUT,        SSC_ARRAY,       "wave_energy_period",                "Wave period time series data",                                        "s",     "",                       "Weather Reader",      "?",                        "",                            "" },
 var_info_invalid };
@@ -97,8 +98,10 @@ public:
     
 
     //virtual bool read_line(std::vector<double>& values) = 0;
-    virtual size_t nrecords() = 0;
-
+    //virtual size_t nrecords() = 0;
+    size_t nrecords() { return m_nRecords; }
+        
+    
 
     std::string error() { return m_errorMsg; }
 
@@ -120,6 +123,7 @@ public:
 protected:
     /// index of resource type (temp=1,pres=2,speed=3,dir=4) for each measurement height
     std::vector<int> m_dataid;
+    size_t m_nRecords;
     /// measurement height corresponding to each column header; same size as m_dataid
     std::vector<double> m_sigwaveheight;
     std::vector<double> m_waveperiod;
@@ -225,9 +229,11 @@ wavedata::wavedata(var_data* data_table)
 size_t wavedata::nrecords()
 {
     if (data_type == 0) {
+        m_nRecords = m_sigwaveheight.size();
         return m_sigwaveheight.size();
     }
     else {
+        m_nRecords = wave_resource_matrix_data.nrows();
         return wave_resource_matrix_data.nrows();
     }
 }
@@ -318,6 +324,8 @@ public:
         }
 
         std::vector<std::string> values;
+        std::vector<std::string> value_0;
+        std::vector<std::string> value_1;
         // header if not use_specific_wf_file
         if (as_integer("use_specific_wf_wave") == 0)
         {
@@ -380,15 +388,35 @@ public:
         //if (values.size() != 22)
         if (as_integer("wave_resource_model_choice") == 1)
         {
-            size_t numberRecords = 2920;
+            //size_t numberRecords = 2920;
+            ssc_number_t hour0, hour1, hourdiff;
+            size_t numberRecords = wave_dp->nrecords();
+            ssc_number_t* timecheck = allocate("time_check", numberRecords);
+            timecheck[0] = 0;
             ssc_number_t* wave_heights = allocate("wave_significant_height", numberRecords);
             ssc_number_t* wave_periods = allocate("wave_energy_period", numberRecords);
-            for (size_t r = 0; r < 2920; r++) {
+            for (size_t r = 0; r < numberRecords; r++) {
                 getline(ifs, buf);
                 values.clear();
                 values = split(buf);
-                wave_heights[r] = (ssc_number_t)std::stod(values[2]);
-                wave_periods[r] = (ssc_number_t)std::stod(values[1]);
+                if (r == 0) {
+                    //value_0 = split(buf);
+                    hour0 = (ssc_number_t)std::stod(values[3]);
+                }
+                if (r == 1) {
+                    //value_1 = split(buf);
+                    hour1 = (ssc_number_t)std::stod(values[3]);
+                    hourdiff = hour1 - hour0;
+                }
+                timecheck[r] = (ssc_number_t)std::stod(values[3]);
+                if (r > 0) {
+                    if (timecheck[r] - timecheck[r - 1] != hourdiff) {
+                        //throw exec_error("wave_file_reader", "Time steps are nonuniform");
+                        timecheck[r] = 999;
+                    }
+                }
+                wave_heights[r] = (ssc_number_t)std::stod(values[6]);
+                wave_periods[r] = (ssc_number_t)std::stod(values[5]);
 
             }
             return;
