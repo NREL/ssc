@@ -382,6 +382,7 @@ void UtilityRateForecast::initializeMonth(int month, size_t year)
 		rate->init_dc_peak_vectors(month);
 		compute_next_composite_tou(month, year);
 
+        // Ignore any peak charges lower than the average gross load - this prevents the price signal from showing demand charges on the first hour of each month when the load is not really a peak
 		double avg_load = m_monthly_avg_load_forecast[year * 12 + month];
 
 		ur_month& curr_month = rate->m_month[month];
