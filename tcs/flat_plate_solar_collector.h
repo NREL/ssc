@@ -111,10 +111,11 @@ public:
     const static PoaIrradianceComponents IncidentIrradiances(const TimeAndPosition &time_and_position,
         const Weather &weather,
         double albedo /*-*/);
-    const static double FlatPlateCollector::IncidentIrradiance(const TimeAndPosition& time_and_position,
+    const static double IncidentIrradiance(const TimeAndPosition& time_and_position,
         const Weather& weather,
         double albedo  /*-*/);   // [W/m2]
-    const double RatedPowerGain();
+    const double RatedPowerGain();      // [W]
+    const double EstimatePowerGain(double POA /*W/m2*/, double T_in /*C*/, double T_amb /*C*/);   // [W]
     const double UsefulPowerGain(const TimeAndPosition &time_and_position, const ExternalConditions &external_conditions);  // [W]
     const double T_out(const TimeAndPosition &time_and_position, const ExternalConditions &external_conditions);            // [C]
     const double area_coll();           // [m2]
@@ -171,6 +172,9 @@ public:
     void resize_array(ArrayDimensions array_dimensions);
     void resize_array(double m_dot_array_design /*kg/s*/, double specific_heat /*kJ/kg-K*/, double temp_rise_array_design /*K*/);
     ArrayDimensions array_size() const;
+    const double IncidentIrradiance(const tm& timestamp, const ExternalConditions& external_conditions);   // [W/m2] POA
+    const double RatedPowerGain();  // [W]
+    const double EstimatePowerGain(double POA /*W/m2*/, double T_in /*C*/, double T_amb /*C*/);   // [W]
     const double UsefulPowerGain(const tm &timestamp, const ExternalConditions &external_conditions);      // [W]
     const double T_out(const tm &timestamp, const ExternalConditions &external_conditions);                // [C]
 private:

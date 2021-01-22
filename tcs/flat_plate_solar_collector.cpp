@@ -54,6 +54,11 @@ const double FlatPlateCollector::RatedPowerGain()   // [W]
     return area_coll_ * (FRta_*G_T - FRUL_*T_inlet_minus_T_amb);
 }
 
+const double FlatPlateCollector::EstimatePowerGain(double POA /*W/m2*/, double T_in /*C*/, double T_amb /*C*/)   // [W]
+{
+    return area_coll_ * (FRta_ * POA - FRUL_ * (T_in - T_amb));
+}
+
 const double FlatPlateCollector::UsefulPowerGain(const TimeAndPosition &time_and_position, const ExternalConditions &external_conditions)  // [W]
 {
     Weather weather(external_conditions.weather);
@@ -183,7 +188,7 @@ const double FlatPlateCollector::IncidentIrradiance(const TimeAndPosition& time_
     double Dhi_on_tilted = poa_irradiance_components.sky_diffuse_with_aoi.at(0);
     double ground_reflected_on_tilted = poa_irradiance_components.ground_reflected_diffuse_with_aoi.at(0);
     
-    return Dni_on_tilted + Dhi_on_tilted + ground_reflected_on_tilted;
+    return Dni_on_tilted + Dhi_on_tilted + ground_reflected_on_tilted;  // POA
 }
 
 // Returns the absorbed irradiance divided by transmittance-absorptance product at normal incidence, or: S/(tau-alpha_n)
@@ -413,6 +418,25 @@ void FlatPlateArray::resize_array(double m_dot_array_design /*kg/s*/, double spe
 ArrayDimensions FlatPlateArray::array_size() const
 {
     return array_dimensions_;
+}
+
+const double FlatPlateArray::IncidentIrradiance(const tm &timestamp, const ExternalConditions& external_conditions)     // [W/m2] POA
+{
+    TimeAndPosition time_and_position;
+    time_and_position.collector_location = collector_location_;
+    time_and_position.collector_orientation = collector_orientation_;
+    time_and_position.timestamp = timestamp;
+    return flat_plate_collector_.IncidentIrradiance(time_and_position, external_conditions.weather, external_conditions.albedo);
+}
+
+const double FlatPlateArray::RatedPowerGain()
+{
+    return this->ncoll() * flat_plate_collector_.RatedPowerGain();
+}
+
+const double FlatPlateArray::EstimatePowerGain(double POA, double T_in, double T_amb)
+{
+    return this->ncoll() * flat_plate_collector_.EstimatePowerGain(POA, T_in, T_amb);
 }
 
 const double FlatPlateArray::UsefulPowerGain(const tm &timestamp, const ExternalConditions &external_conditions)      // [W]
