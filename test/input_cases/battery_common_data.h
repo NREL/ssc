@@ -56,15 +56,14 @@ namespace {
 		ssc_data_set_number(data, "batt_Vfull", 4.0999999046325684);
 		ssc_data_set_number(data, "batt_Vexp", 4.0500001907348633);
 		ssc_data_set_number(data, "batt_Vnom", 3.4000000953674316);
+        ssc_data_set_number(data, "batt_Vcut", 0.66 * 4.0999999046325684);
 		ssc_data_set_number(data, "batt_Vnom_default", 3.5999999046325684);
 		ssc_data_set_number(data, "batt_Qfull", 1);
-        ssc_data_set_number(data, "batt_Qfull_cutoff", 1);
 		ssc_data_set_number(data, "batt_Qfull_flow", 12148);
 		ssc_data_set_number(data, "batt_Qexp", 0.017799999564886093);
 		ssc_data_set_number(data, "batt_Qnom", 0.88899999856948853);
 		ssc_data_set_number(data, "batt_C_rate", 0.20000000298023224);
 		ssc_data_set_number(data, "batt_resistance", 0.0002);
-        ssc_data_set_number(data, "batt_voltage_cutoff", 0);
 		ssc_number_t p_batt_voltage_matrix[2] = { 0, 0 };
 		ssc_data_set_matrix(data, "batt_voltage_matrix", p_batt_voltage_matrix, 1, 2);
 		ssc_data_set_number(data, "LeadAcid_q20_computed", 12148);

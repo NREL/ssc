@@ -49,8 +49,8 @@ protected:
         
 
         model = std::unique_ptr<voltage_t>(new voltage_dynamic_t(n_cells_series, n_strings,
-                                                                 voltage_nom, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom,
-                                                                 C_rate, R, dt_hr, Vcut));
+                                                                 voltage_nom, Vfull, Vexp, Vnom, Vcut, Qfull, Qexp, Qnom,
+                                                                 C_rate, R, dt_hr ));
         model->set_initial_SOC(50);
 
         
@@ -74,11 +74,11 @@ protected:
         cap = std::unique_ptr<capacity_lithium_ion_t>(new capacity_lithium_ion_t(10, 50, 95, 5, dt_hr));
         cap2 = std::unique_ptr<capacity_lithium_ion_t>(new capacity_lithium_ion_t(10, 50, 95, 5, dt_hr));
         model = std::unique_ptr<voltage_t>(new voltage_dynamic_t(n_cells_series, n_strings,
-            voltage_nom, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom,
-            C_rate, R, dt_hr, Vcut));
+            voltage_nom, Vfull, Vexp, Vnom, Vcut, Qfull, Qexp, Qnom,
+            C_rate, R, dt_hr ));
         model2 = std::unique_ptr<voltage_t>(new voltage_dynamic_t(n_cells_series, n_strings,
-            voltage_nom, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom,
-            C_rate, R, dt_hr, Vcut2));
+            voltage_nom, Vfull, Vexp, Vnom, Vcut2, Qfull, Qexp, Qnom,
+            C_rate, R, dt_hr ));
         model->set_initial_SOC(50);
         model2->set_initial_SOC(50);
     }

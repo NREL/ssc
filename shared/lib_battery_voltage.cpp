@@ -337,7 +337,8 @@ void voltage_dynamic_t::parameter_compute() {
     if (params->dynamic.Vcut != 0) {
         double C = (-1 * params->dynamic.Vcut + _E0 - params->resistance * I + _A * (std::exp(-_B0 * params->dynamic.Qfull))) / _K;
         double x = params->dynamic.Qfull / (C - 1);
-        params->dynamic.Qfull += x;
+        //params->dynamic.Qfull += x;
+        params->dynamic.Qfull_mod = params->dynamic.Qfull_mod + x;
     }
     if (_A < 0 || _B0 < 0 || _K < 0 || _E0 < 0) {
         char err[254];
@@ -384,10 +385,6 @@ double voltage_dynamic_t::calculate_max_charge_w(double q, double qmax, double k
     qmax /= params->num_strings;
     
     double current = (q - qmax) / params->dt_hr;
-    //double C = (-1 * params->dynamic.Vcut + _E0 - params->resistance * current + _A * exp(-_B0 * qmax)) / _K;
-    //double x = qmax / (C - 1);
-    //*qmax_mod = qmax + x;
-    //params->dynamic.Qfull_mod = qmax + x;
     if (max_current)
         *max_current = current * params->num_strings;
     return current * voltage_model_tremblay_hybrid(qmax, current, qmax) * params->num_strings *
@@ -407,11 +404,7 @@ double voltage_dynamic_t::calculate_max_discharge_w(double q, double qmax, doubl
     //double vol_diff = params->dynamic.Vcut - vol;
     double max_p = 0, max_I = 0, max_V = 0;
     while (current * params->dt_hr < q - tolerance && vol >= params->dynamic.Vcut + 0.012) {
-        //double C = (-1 * params->dynamic.Vcut + _E0 - params->resistance * current + _A * exp(-_B0 * qmax)) / _K;
-        //double x = qmax / (C - 1);
-        //params->dynamic.Qfull_mod = qmax + x;
         vol = voltage_model_tremblay_hybrid(qmax, current, q - current * params->dt_hr);
-        //vol_diff = params->dynamic.Vcut - vol;
         double p = current * vol;
         if (p > max_p) {
             max_p = p;
@@ -435,7 +428,6 @@ double voltage_dynamic_t::calculate_current_for_target_w(double P_watts, double 
     solver_power = fabs(P_watts) / (params->num_cells_series * params->num_strings);
     solver_q = q / params->num_strings;
     solver_Q = qmax / params->num_strings;
-    //solver_Q = params->dynamic.Qfull_mod;// / params->num_strings;
     std::function<void(const double *, double *)> f;
     double direction = 1.;
     if (P_watts > 0)

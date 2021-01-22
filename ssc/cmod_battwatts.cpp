@@ -82,14 +82,14 @@ battwatts_create(size_t n_recs, size_t n_years, int chem, int meter_pos, double 
         batt_vars->batt_Vfull = 4.1;
         batt_vars->batt_Vexp = 4.05;
         batt_vars->batt_Vnom = 3.4;
+        batt_vars->batt_Vcut = 0;
         batt_vars->batt_Qfull = 2.25;
-        batt_vars->batt_Qfull_cutoff = 2.25;
         batt_vars->batt_Qfull_flow = 0;
         batt_vars->batt_Qexp = 0.178 * batt_vars->batt_Qfull;
         batt_vars->batt_Qnom = 0.889 * batt_vars->batt_Qfull;
         batt_vars->batt_C_rate = 0.2;
         batt_vars->batt_resistance = 0.1;
-        batt_vars->batt_voltage_cutoff = 0;
+
 
         // Battery lifetime
         lifetime_matrix->push_back(20); lifetime_matrix->push_back(0); lifetime_matrix->push_back(100);
@@ -129,8 +129,8 @@ battwatts_create(size_t n_recs, size_t n_years, int chem, int meter_pos, double 
         batt_vars->batt_Vfull = 2.2;
         batt_vars->batt_Vexp = 2.06;
         batt_vars->batt_Vnom = 2.03;
+        batt_vars->batt_Vcut = 0;
         batt_vars->batt_Qfull = 20;
-        batt_vars->batt_Qfull_cutoff = 20;
         batt_vars->batt_Qexp = 0.025 * batt_vars->batt_Qfull;
         batt_vars->batt_Qnom = 0.90 * batt_vars->batt_Qfull;
         batt_vars->batt_C_rate = 0.05;
