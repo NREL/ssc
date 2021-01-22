@@ -64,6 +64,7 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 	{C_csp_trough_collector_receiver::E_W_DOT_PUMP, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 
     {C_csp_trough_collector_receiver::E_T_TROUGHS_IN, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_csp_trough_collector_receiver::E_M_DOT_FLAT_PLATES, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 
 	csp_info_invalid
 };
@@ -457,6 +458,7 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
         collector_orientation, array_dimensions,
         inlet_pipe, outlet_pipe);
 
+	heat_exchanger_ = C_hx_two_tank_tes();
 
 	// for test start
 	init_fieldgeom();
@@ -660,11 +662,19 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 		m_mc_bal_cold = m_mc_bal_cold_per_MW * 3.6 * m_q_design;  //[J/K]
         
         // Size flat plate array
+		flat_plate_htf_.SetFluid(HTFProperties::Water_liquid);
+		double T_avg_cold = 0.5 * (m_T_loop_in_des + m_T_PTC_in_des);
+		double T_avg_hot = T_avg_cold + T_approach_hx_;
+		double m_dot_fp_design = m_m_dot_design * m_htfProps.Cp(T_avg_cold) / flat_plate_htf_.Cp(T_avg_hot);	// sizing for an ideal hx capacitance ratio of unity
 		double design_temp_rise_flat_plate_array = m_T_PTC_in_des - m_T_loop_in_des;
-        flat_plate_array_.resize_array(m_m_dot_loop_des, m_c_htf_ave * 1.e-3, design_temp_rise_flat_plate_array);
+        flat_plate_array_.resize_array(m_dot_fp_design, flat_plate_htf_.Cp(T_avg_hot), design_temp_rise_flat_plate_array);
 		ArrayDimensions array_dimensions = flat_plate_array_.array_size();
 		flat_plates_in_series_ = array_dimensions.num_in_series;
 		flat_plates_in_parallel_ = array_dimensions.num_in_parallel;
+
+		// Size heat exchanger for flat plate array
+		heat_exchanger_.init(m_htfProps, flat_plate_htf_, flat_plate_array_.RatedPowerGain() /*W*/,
+			T_approach_hx_ /*C*/, m_T_PTC_in_des /*K*/, m_T_loop_in_des /*K*/);
 
 		//need to provide fluid density
         double rho_cold = m_htfProps.dens(m_T_PTC_in_des, 10.e5); //kg/m3
@@ -1004,7 +1014,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 		m_T_sys_c_t_end = m_T_htf_in_t_int[0];		//[K]
 	}
 
-    // Run through flat plate array
+    // Run through flat plate array (per loop)
     tm timestamp;
     timestamp.tm_year = weather.m_year - 1900;  // years since 1900
     timestamp.tm_mon = weather.m_month - 1;     // months since Jan. (Jan. = 0)
@@ -1019,12 +1029,91 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
     external_conditions.weather.ghi = weather.m_global;
     external_conditions.weather.wind_speed = weather.m_wspd;
     external_conditions.weather.wind_direction = weather.m_wdir;
-    external_conditions.inlet_fluid_flow.m_dot = m_dot_htf_loop;
-    external_conditions.inlet_fluid_flow.specific_heat = m_htfProps.Cp(m_T_loop_in);
-    external_conditions.inlet_fluid_flow.temp = m_T_loop_in - 273.15;
+	external_conditions.inlet_fluid_flow = InletFluidFlow();	// not used
     external_conditions.albedo = 0.2;
-    double T_flat_plate_out = flat_plate_array_.T_out(timestamp, external_conditions) + 273.15;
-    m_T_troughs_in = T_flat_plate_out;
+
+	// Run through heat exchanger for flat plate
+	double POA = flat_plate_array_.IncidentIrradiance(timestamp, external_conditions);
+	double T_out_fp_target = m_T_PTC_in_des + T_approach_hx_;			// [K]
+	double T_in_fp_expected = m_T_loop_in + T_approach_hx_;				// [K]
+	bool fp_array_is_on = false;
+
+	// Setup calling of all flat plate array and HX equations for convergence
+	double T_in_fp_calcd;
+	const size_t kMaxIterations = 100;
+	const double kMaxConvergenceTol = 0.3;    // [K] (default is 0.001 RMS)
+	size_t iteration = 0;
+	double convergence_error = std::numeric_limits<double>::quiet_NaN();
+	auto SquaredError = [&](double a, double b) -> double {
+		constexpr double kEpsilon = std::numeric_limits<double>::epsilon();
+		if (fabs(a - b) > kEpsilon) {
+			return std::pow(a - b, 2);
+		}
+	};
+
+	// Iterate until convergence
+	double T_in_fp_guess = T_in_fp_expected;
+	do {
+		iteration++;
+
+		double Q_fp_est = flat_plate_array_.EstimatePowerGain(POA, T_in_fp_guess - 273.15, external_conditions.weather.ambient_temp);	// [W]
+		if (Q_fp_est <= 0. || T_in_fp_expected > T_out_fp_target) {
+			fp_array_is_on = false;
+			T_in_fp_calcd = T_in_fp_guess;
+			break;
+		}
+		else {
+			fp_array_is_on = true;
+			double T_fp_avg_guess = 0.5 * (T_out_fp_target + T_in_fp_guess);	// [K]
+			m_m_dot_fp = Q_fp_est * 1.e-3 / (flat_plate_htf_.Cp(T_fp_avg_guess) * (T_out_fp_target - T_in_fp_guess));		// Cp is in [kJ/kg-K]
+			// Verify m_m_dot_fp?
+			double T_f_htf_hx_out, eff, q_dot_hx;	// hx outputs
+			heat_exchanger_.solve(
+				m_T_loop_in,					 // [K]    heat exchanger in from 'field' (process heat)
+				m_m_dot_design,					 // [kg/s] mass flow from process heat
+				T_out_fp_target,				 // [K]	  outlet temperature of flat plates
+				m_m_dot_fp,						 // [kg/s] mass flow through entire flat plate array (all loops)
+				// Outputs:
+				T_f_htf_hx_out,					 // [K]    hot temperature out of HX on 'field' side (to PTCs)
+				T_in_fp_calcd,					 // [K]    cold temperature out of HX on 'storage' side (back to FPCs)
+				eff,							 // [-]    heat exchanger effectiveness
+				q_dot_hx						 // [MWt]  heat flow across heat exchanger from one fluid to the other
+			);
+		}
+
+		//convergence_error = SquaredError(T_in_fp_guess, T_in_fp_calcd);
+		convergence_error = fabs(T_in_fp_guess - T_in_fp_calcd);
+		T_in_fp_guess = 0.5 * (T_in_fp_guess + T_in_fp_calcd);		// for next iteration
+
+	} while (convergence_error > kMaxConvergenceTol && iteration < kMaxIterations);
+
+	if (!fp_array_is_on) {
+		m_T_troughs_in = m_T_loop_in;		// bypassing HX and flat plate array
+	}
+	else {
+		// Detailed flat plate and HX model runs using converged approximate temperatures
+		external_conditions.inlet_fluid_flow.m_dot = m_m_dot_fp;
+		external_conditions.inlet_fluid_flow.specific_heat = flat_plate_htf_.Cp(0.5 * (T_in_fp_calcd + T_out_fp_target));
+		external_conditions.inlet_fluid_flow.temp = T_in_fp_calcd - 273.15;
+		double T_out_fp = flat_plate_array_.T_out(timestamp, external_conditions) + 273.15;
+		double T_f_htf_hx_out, T_in_fp, eff, q_dot_hx;		// hx outputs
+		heat_exchanger_.solve(
+			m_T_loop_in,					 // [K]    heat exchanger in from 'field' (process heat)
+			m_m_dot_design,					 // [kg/s] mass flow from process heat
+			T_out_fp,						 // [K]	  outlet temperature of flat plates
+			m_m_dot_fp,						 // [kg/s] mass flow through entire flat plate array (all loops)
+			// Outputs:
+			T_f_htf_hx_out,					 // [K]    hot temperature out of HX on 'field' side (to PTCs)
+			T_in_fp,						 // [K]    cold temperature out of HX on 'storage' side (back to FPCs)
+			eff,							 // [-]    heat exchanger effectiveness
+			q_dot_hx						 // [MWt]  heat flow across heat exchanger from one fluid to the other
+		);
+
+		m_T_troughs_in = T_f_htf_hx_out;
+	}
+	//////////////////////////////
+	// End of flat plate models //
+	//////////////////////////////
     
     double P_intc_in = m_P_field_in;
     m_T_loop[0] = m_T_troughs_in;
@@ -1849,10 +1938,11 @@ void C_csp_trough_collector_receiver::set_output_value()
 	mc_reported_outputs.value(E_T_FIELD_HOT_OUT, m_T_sys_h_t_int_fullts - 273.15);			//[C]
 	mc_reported_outputs.value(E_PRESSURE_DROP, m_dP_total);		//[bar]
 
-	mc_reported_outputs.value(E_W_DOT_SCA_TRACK, m_W_dot_sca_tracking);		//[MWe]
-	mc_reported_outputs.value(E_W_DOT_PUMP, m_W_dot_pump);					//[MWe]
+	mc_reported_outputs.value(E_W_DOT_SCA_TRACK, m_W_dot_sca_tracking);						//[MWe]
+	mc_reported_outputs.value(E_W_DOT_PUMP, m_W_dot_pump);									//[MWe]
 
-    mc_reported_outputs.value(E_T_TROUGHS_IN, m_T_troughs_in - 273.15);					//[C]
+    mc_reported_outputs.value(E_T_TROUGHS_IN, m_T_troughs_in - 273.15);						//[C]
+	mc_reported_outputs.value(E_M_DOT_FLAT_PLATES, m_m_dot_fp);								//[kg/s]
 
 	return;
 }

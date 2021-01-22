@@ -38,6 +38,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <fstream>
 
 #include "flat_plate_solar_collector.h"
+#include "csp_solver_two_tank_tes.h"
 
 class C_csp_trough_collector_receiver : public C_csp_collector_receiver
 {
@@ -77,7 +78,8 @@ public:
 
 		E_W_DOT_SCA_TRACK,	//[MWe]
 		E_W_DOT_PUMP,		//[MWe]
-        E_T_TROUGHS_IN      //[C]
+        E_T_TROUGHS_IN,     //[C]
+		E_M_DOT_FLAT_PLATES //[kg/s]
 	};
 
 	C_csp_reported_outputs mc_reported_outputs;
@@ -85,11 +87,13 @@ public:
 private:
 
     FlatPlateArray flat_plate_array_;
+	C_hx_two_tank_tes heat_exchanger_;
 
 	// Member classes
-	HTFProperties m_htfProps, m_airProps;
+	HTFProperties m_htfProps, m_airProps, flat_plate_htf_;
 	
 	// Hardcoded constants
+	double T_approach_hx_ = 5.;	// [C]
 	double m_d2r, m_r2d, m_mtoinch;
 	double m_T_htf_prop_min;	//[K] Minimum temperature allowed in props call to minimize errors
 
@@ -198,6 +202,7 @@ private:
     double m_P_field_in;
 
     double m_T_troughs_in;
+	double m_m_dot_fp;
 
 
 	// Classes that are defined as member data so are re-declared each time performance function is called
