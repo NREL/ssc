@@ -115,6 +115,9 @@ public:
         const Weather& weather,
         double albedo  /*-*/);   // [W/m2]
     const double RatedPowerGain();      // [W]
+    const double RatedMassFlow();       // [kg/s]
+    const double MaxAllowedTemp();      // [C]
+    const double MaxMassFlow();         // [kg/s]
     const double EstimatePowerGain(double POA /*W/m2*/, double T_in /*C*/, double T_amb /*C*/);   // [W]
     const double UsefulPowerGain(const TimeAndPosition &time_and_position, const ExternalConditions &external_conditions);  // [W]
     const double T_out(const TimeAndPosition &time_and_position, const ExternalConditions &external_conditions);            // [C]
@@ -128,6 +131,7 @@ private:
     double area_coll_;                  // [m2] collector area
     double m_dot_test_;                 // [kg/s] mass flow through collector during test
     double heat_capacity_rate_test_;    // [kW/K] m_dot * c_p during ratings test
+    const static double kMDotRated_  ; // [kg/s] based on published Heliodyne specs for Gobi 410
     const double AbsorbedIrradianceOverTauAlphaN(const CollectorOrientation &collector_orientation,
         const PoaIrradianceComponents &poa_irradiance_components);      // [W/m2]
     const double AbsorbedRadiantPower(double transmitted_irradiance /*W/m2*/,
@@ -173,8 +177,11 @@ public:
     void resize_array(double m_dot_array_design /*kg/s*/, double specific_heat /*kJ/kg-K*/, double temp_rise_array_design /*K*/);
     ArrayDimensions array_size() const;
     const double IncidentIrradiance(const tm& timestamp, const ExternalConditions& external_conditions);   // [W/m2] POA
-    const double RatedPowerGain();  // [W]
-    const double EstimatePowerGain(double POA /*W/m2*/, double T_in /*C*/, double T_amb /*C*/);   // [W]
+    const double RatedPowerGain();      // [W]
+    const double RatedMassFlow();       // [kg/s]
+    const double MaxAllowedTemp();      // [C]
+    const double MaxMassFlow();         // [kg/s]
+    const double EstimatePowerGain(double POA /*W/m2*/, double T_in /*C*/, double T_amb /*C*/);            // [W]
     const double UsefulPowerGain(const tm &timestamp, const ExternalConditions &external_conditions);      // [W]
     const double T_out(const tm &timestamp, const ExternalConditions &external_conditions);                // [C]
 private:

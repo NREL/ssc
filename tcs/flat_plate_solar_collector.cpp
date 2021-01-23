@@ -44,6 +44,8 @@ FlatPlateCollector::FlatPlateCollector(const CollectorTestSpecifications &collec
 
 }
 
+const double FlatPlateCollector::kMDotRated_ = 0.0821;
+
 const double FlatPlateCollector::RatedPowerGain()   // [W]
 {
     // Calculation taken from UI equation
@@ -52,6 +54,24 @@ const double FlatPlateCollector::RatedPowerGain()   // [W]
     double T_inlet_minus_T_amb = 30.;   // [K]
 
     return area_coll_ * (FRta_*G_T - FRUL_*T_inlet_minus_T_amb);
+}
+
+const double FlatPlateCollector::RatedMassFlow()
+{
+    return kMDotRated_;
+}
+
+const double FlatPlateCollector::MaxAllowedTemp()   // [C]
+{
+    return 163.;        // based on rated continuous temperature of high-temp DYN-O-FLO HD glycol
+}
+
+const double FlatPlateCollector::MaxMassFlow()   // [kg/s]
+{
+    // assuming 50/50 propylene glycol, for a specific gravity of 1.041, or 1041 kg/m3
+    // Heliodyne states a recommended design flow rate (with 50/50 PG) of 1.25 gal/min (7.886e-5 m3/s) for the GOBI 410
+    // this translates to 0.0821 kg/s, compared to the test flow rate of 0.0498 kg/s
+    return 3. * kMDotRated_;    // based on published recommendation from Heliodyne to not exceed recommended flow rates by more than (3) times
 }
 
 const double FlatPlateCollector::EstimatePowerGain(double POA /*W/m2*/, double T_in /*C*/, double T_amb /*C*/)   // [W]
@@ -389,12 +409,9 @@ void FlatPlateArray::resize_array(double m_dot_array_design /*kg/s*/, double spe
 {
     if (!std::isnormal(m_dot_array_design) || !std::isnormal(specific_heat) || !std::isnormal(temp_rise_array_design)) return;
     if (m_dot_array_design <= 0. || specific_heat <= 0. || temp_rise_array_design <= 0.) return;
-    
-    CollectorTestSpecifications collector_test_specifications = flat_plate_collector_.TestSpecifications();
 
     // Number in parallel
-    double m_dot_design_single_collector = collector_test_specifications.m_dot;
-    double exact_fractional_collectors_in_parallel = m_dot_array_design / m_dot_design_single_collector;
+    double exact_fractional_collectors_in_parallel = m_dot_array_design / flat_plate_collector_.RatedMassFlow();
     if (exact_fractional_collectors_in_parallel < 1.) {
         array_dimensions_.num_in_parallel = 1;
     }
@@ -432,6 +449,21 @@ const double FlatPlateArray::IncidentIrradiance(const tm &timestamp, const Exter
 const double FlatPlateArray::RatedPowerGain()
 {
     return this->ncoll() * flat_plate_collector_.RatedPowerGain();
+}
+
+const double FlatPlateArray::RatedMassFlow()
+{
+    return array_dimensions_.num_in_parallel * flat_plate_collector_.RatedMassFlow();
+}
+
+const double FlatPlateArray::MaxAllowedTemp()
+{
+    return flat_plate_collector_.MaxAllowedTemp();
+}
+
+const double FlatPlateArray::MaxMassFlow()
+{
+    return array_dimensions_.num_in_parallel * flat_plate_collector_.MaxMassFlow();
 }
 
 const double FlatPlateArray::EstimatePowerGain(double POA, double T_in, double T_amb)
