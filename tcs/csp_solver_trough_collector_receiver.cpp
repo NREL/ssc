@@ -1014,7 +1014,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 		m_T_sys_c_t_end = m_T_htf_in_t_int[0];		//[K]
 	}
 
-    // Run through flat plate array
+    // Compile time and conditions for flat plate array and hx
     tm timestamp;
     timestamp.tm_year = weather.m_year - 1900;  // years since 1900
     timestamp.tm_mon = weather.m_month - 1;     // months since Jan. (Jan. = 0)
@@ -1032,15 +1032,15 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 	external_conditions.inlet_fluid_flow = InletFluidFlow();	// not used
     external_conditions.albedo = 0.2;
 
-	// Run through heat exchanger for flat plate
+	// Setup calling of all flat plate array and HX equations
 	double POA = flat_plate_array_.IncidentIrradiance(timestamp, external_conditions);
 	double m_m_dot_process_heat = m_dot_htf_loop * float(m_nLoops);
 	double T_out_fp_target = m_T_PTC_in_des + T_approach_hx_;			// [K]
 	double T_in_fp_expected = m_T_loop_in + T_approach_hx_;				// [K]
 	double T_min_rise = 3;		// [K] don't run flat plate array if the temperature rise is small
 	bool fp_array_is_on = false;
-
-	// Setup calling of all flat plate array and HX equations for convergence
+	
+	// Setup iteration for convergence
 	double Q_fp_est, T_in_fp_calcd;
 	const size_t kMaxIterations = 100;
 	const double kMaxConvergenceTol = 0.3;    // [K] (default is 0.001 RMS)
@@ -1060,7 +1060,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 		iteration++;
 
 		Q_fp_est = flat_plate_array_.EstimatePowerGain(POA, T_in_fp_guess - 273.15, external_conditions.weather.ambient_temp);	// [W]
-		if (Q_fp_est <= 0. || T_out_fp_target - T_in_fp_expected < T_min_rise) {
+		if (Q_fp_est <= 0. || m_T_PTC_in_des - m_T_loop_in < T_min_rise) {		// the second half of this condition should be factored out and applied earlier
 			fp_array_is_on = false;
 			m_m_dot_fp = 0.;
 			T_in_fp_calcd = T_in_fp_guess;
@@ -1070,7 +1070,6 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 			fp_array_is_on = true;
 			double T_fp_avg_guess = 0.5 * (T_out_fp_target + T_in_fp_guess);	// [K]
 			m_m_dot_fp = Q_fp_est * 1.e-3 / (flat_plate_htf_.Cp(T_fp_avg_guess) * (T_out_fp_target - T_in_fp_guess));		// Cp is in [kJ/kg-K]
-			// Verify m_m_dot_fp?
 			heat_exchanger_.solve(
 				m_T_loop_in,					 // [K]    heat exchanger in from 'field' (process heat)
 				m_m_dot_process_heat,			 // [kg/s] mass flow from process heat
@@ -1090,32 +1089,48 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 
 	} while (convergence_error > kMaxConvergenceTol && iteration < kMaxIterations);
 
-	double T_out_fp, T_in_fp;
+	// turn off array if no solution found
+	if (iteration >= kMaxIterations) {
+		fp_array_is_on = false;
+		m_m_dot_fp = 0.;
+	}
+
+	double T_out_fp, T_in_fp, estimate_error;
 	if (fp_array_is_on) {
 		// Detailed flat plate and HX model runs using converged approximate temperatures
+		double maxflow = flat_plate_array_.MaxMassFlow();		// temp for debugging, can remove
+		m_m_dot_fp = std::min(m_m_dot_fp, flat_plate_array_.MaxMassFlow());		// enforce max mass flow
 		external_conditions.inlet_fluid_flow.m_dot = m_m_dot_fp;
 		external_conditions.inlet_fluid_flow.specific_heat = flat_plate_htf_.Cp(0.5 * (T_in_fp_calcd + T_out_fp_target));
 		external_conditions.inlet_fluid_flow.temp = T_in_fp_calcd - 273.15;
-		T_out_fp = flat_plate_array_.T_out(timestamp, external_conditions) + 273.15;
-		heat_exchanger_.solve(
-			m_T_loop_in,					 // [K]    heat exchanger in from 'field' (process heat)
-			m_m_dot_process_heat,			 // [kg/s] mass flow from process heat
-			T_out_fp,						 // [K]	   outlet temperature of flat plates
-			m_m_dot_fp,						 // [kg/s] mass flow through entire flat plate array (all loops)
-			// Outputs:
-			T_f_htf_hx_out,					 // [K]    hot temperature out of HX on 'field' side (to PTCs)
-			T_in_fp,						 // [K]    cold temperature out of HX on 'storage' side (back to FPCs)
-			eff,							 // [-]    heat exchanger effectiveness
-			q_dot_hx						 // [MWt]  heat flow across heat exchanger from one fluid to the other
-		);
-
-		m_T_troughs_in = T_f_htf_hx_out;
+		T_out_fp = flat_plate_array_.T_out(timestamp, external_conditions) + 273.15;	// [K]
+		if (T_out_fp - 273.15 > flat_plate_array_.MaxAllowedTemp()) {
+			fp_array_is_on = false;
+			m_m_dot_fp = 0.;
+		}
+		else {
+			heat_exchanger_.solve(
+				m_T_loop_in,					 // [K]    heat exchanger in from 'field' (process heat)
+				m_m_dot_process_heat,			 // [kg/s] mass flow from process heat
+				T_out_fp,						 // [K]	   outlet temperature of flat plates
+				m_m_dot_fp,						 // [kg/s] mass flow through entire flat plate array (all loops)
+				// Outputs:
+				T_f_htf_hx_out,					 // [K]    hot temperature out of HX on 'field' side (to PTCs)
+				T_in_fp,						 // [K]    cold temperature out of HX on 'storage' side (back to FPCs)
+				eff,							 // [-]    heat exchanger effectiveness
+				q_dot_hx						 // [MWt]  heat flow across heat exchanger from one fluid to the other
+			);
+			estimate_error = std::abs(T_in_fp_calcd - T_in_fp);		// not currently using
+		}
 	}
 
-	if (!fp_array_is_on || T_out_fp - T_in_fp < T_min_rise) {
+	if (!fp_array_is_on || T_f_htf_hx_out - m_T_loop_in < T_min_rise) {		// flat plate array is off or isn't heating the system temp. much
 		fp_array_is_on = false;
 		m_m_dot_fp = 0.;
 		m_T_troughs_in = m_T_loop_in;		// bypassing HX and flat plate array
+	}
+	else {
+		m_T_troughs_in = T_f_htf_hx_out;
 	}
 	//////////////////////////////
 	// End of flat plate models //
