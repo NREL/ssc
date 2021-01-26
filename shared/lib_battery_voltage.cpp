@@ -334,11 +334,11 @@ void voltage_dynamic_t::parameter_compute() {
     _K = ((params->dynamic.Vfull - params->dynamic.Vnom + _A * (std::exp(-_B0 * params->dynamic.Qnom) - 1)) *
           (params->dynamic.Qfull - params->dynamic.Qnom)) / (params->dynamic.Qnom); // [V] - polarization voltage
     _E0 = params->dynamic.Vfull + _K + params->resistance * I - _A;
-    if (params->dynamic.Vcut != 0) {
+    if (params->dynamic.Vcut != 0.00 && params->dynamic.Qfull_mod == params->dynamic.Qfull) { //make sure Qfull_mod does not
         double C = (-1 * params->dynamic.Vcut + _E0 - params->resistance * I + _A * (std::exp(-_B0 * params->dynamic.Qfull))) / _K;
         double x = params->dynamic.Qfull / (C - 1);
         //params->dynamic.Qfull += x;
-        params->dynamic.Qfull_mod = params->dynamic.Qfull_mod + x;
+        params->dynamic.Qfull_mod = params->dynamic.Qfull + x;
     }
     if (_A < 0 || _B0 < 0 || _K < 0 || _E0 < 0) {
         char err[254];
@@ -355,13 +355,15 @@ void voltage_dynamic_t::set_initial_SOC(double init_soc) {
 // everything in here is on a per-cell basis
 double voltage_dynamic_t::voltage_model_tremblay_hybrid(double Q_cell, double I, double q0_cell) {
     double it = Q_cell - q0_cell;
+    //double it = params->dynamic.Qfull_mod - q0_cell;
     /*
     double C = (-1 * params->dynamic.Vcut + _E0 - params->resistance * I + _A * exp(-_B0 * Q_cell)) / _K;
     double x = Q_cell / (C - 1);
     double Q_cell_mod = Q_cell + x;
     //double E = _E0 - _K * (Q_cell / (Q_cell - it)) + _A * exp(-_B0 * it);
     */
-    double E = _E0 - _K * (Q_cell / (Q_cell - it)) + _A * exp(-_B0 * it);
+    //double E = _E0 - _K * (Q_cell / (Q_cell - it)) + _A * exp(-_B0 * it);
+    double E = _E0 - _K * (params->dynamic.Qfull_mod / (params->dynamic.Qfull_mod - it)) + _A * exp(-_B0 * it);
     return E - params->resistance * I;
 }
 
