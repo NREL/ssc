@@ -319,6 +319,12 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             batt_vars->batt_Vfull = vt.as_double("batt_Vfull");
             batt_vars->batt_Vexp = vt.as_double("batt_Vexp");
             batt_vars->batt_Vnom = vt.as_double("batt_Vnom");
+            //Voltage error checking
+            if (batt_vars->batt_voltage_choice==0 &&
+                ((batt_vars->batt_Vfull < batt_vars->batt_Vexp) ||
+                batt_vars->batt_Vexp < batt_vars->batt_Vnom)) {
+                throw exec_error("battery", "for the electrochemical battery voltage model, Vfull must be greater than Vexp, which must be greater than Vnom");
+            }
             batt_vars->batt_Qfull_flow = vt.as_double("batt_Qfull_flow");
             batt_vars->batt_Qfull = vt.as_double("batt_Qfull");
             batt_vars->batt_Qexp = vt.as_double("batt_Qexp");
