@@ -323,7 +323,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             if (batt_vars->batt_voltage_choice==0 &&
                 ((batt_vars->batt_Vfull < batt_vars->batt_Vexp) ||
                 batt_vars->batt_Vexp < batt_vars->batt_Vnom)) {
-                throw exec_error("battery", "for the electrochemical battery voltage model, Vfull must be greater than Vexp, which must be greater than Vnom");
+                throw exec_error("battery", "For the electrochemical battery voltage model, voltage inputs must meet the requirement Vfull > Vexp > Vnom.");
             }
             batt_vars->batt_Qfull_flow = vt.as_double("batt_Qfull_flow");
             batt_vars->batt_Qfull = vt.as_double("batt_Qfull");
@@ -389,7 +389,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                 }
                 else if (cnt < nyears)
                 {
-                    throw exec_error("battery", "invalid number for batt_cycle_cost, must be 1 or equal to analysis_period");
+                    throw exec_error("battery", "Invalid number for batt_cycle_cost, must be 1 or equal to analysis_period.");
                 }
                 else
                 {
@@ -412,7 +412,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                 }
                 else if (cnt < nyears)
                 {
-                    throw exec_error("battery", "invalid number for om_replacement_cost1, must be 1 or equal to analysis_period");
+                    throw exec_error("battery", "Invalid number for om_replacement_cost1, must be 1 or equal to analysis_period.");
                 }
                 else {
                     for (i = 0; i < nyears; i++)
@@ -504,7 +504,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                         target_power = batt_vars->target_power;
 
                     if (target_power.size() != nrec)
-                        throw exec_error("battery", "invalid number of target powers, must be equal to number of records in weather file");
+                        throw exec_error("battery", "Invalid number of target powers, must be equal to number of records in weather file.");
 
                     // extend target power to lifetime internally
                     for (size_t y = 1; y < nyears; y++) {
@@ -686,7 +686,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 
     if (!batt_vars->system_use_lifetime_output){
         if (batt_vars->batt_replacement_option > 0)
-            throw exec_error("battery", "Replacements are enabled without running lifetime simulation, please run over lifetime to consider battery replacements");
+            throw exec_error("battery", "Battery replacements are enabled with single year simulation. You must enable lifetime simulations to model battery replacements.");
     }
     total_steps = nyears * 8760 * step_per_hour;
     chem = batt_vars->batt_chem;
@@ -824,7 +824,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     }
 
     if (batt_vars->T_room.size() != nrec) {
-        throw exec_error("battery", "Environment temperature input length must equal number of weather file records");
+        throw exec_error("battery", "Environment temperature input length must equal number of weather file records.");
     }
 
     thermal_model = new thermal_t(
@@ -867,7 +867,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     }
     else if (batt_vars->batt_loss_choice == losses_params::SCHEDULE) {
         if (!(batt_vars->batt_losses.size() == 1 || batt_vars->batt_losses.size() == nrec)) {
-            throw exec_error("battery", "system loss input length must be 1 or equal to weather file length for time series input mode");
+            throw exec_error("battery", "System loss input length must be 1 or equal to weather file length for time series input mode.");
         }
         losses_model = new losses_t(batt_vars->batt_losses);
     }
@@ -892,28 +892,28 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     {
         /*! Generic manual dispatch model inputs */
         if (batt_vars->batt_can_charge.size() != 6 || batt_vars->batt_can_discharge.size() != 6 || batt_vars->batt_can_gridcharge.size() != 6)
-            throw exec_error("battery", "invalid manual dispatch control vector lengths, must be length 6");
+            throw exec_error("battery", "Invalid manual dispatch control vector length, must be length 6.");
 
         if (batt_vars->batt_discharge_schedule_weekday.nrows() != 12 || batt_vars->batt_discharge_schedule_weekday.ncols() != 24)
-            throw exec_error("battery", "invalid manual dispatch schedule matrix dimensions, must be 12 x 24");
+            throw exec_error("battery", "Invalid manual dispatch schedule matrix dimensions, must be 12 x 24.");
 
         size_t max_period = 6;
         size_t* discharge_schedule_vec = batt_vars->batt_discharge_schedule_weekday.data();
         size_t* period_num = std::find_if(discharge_schedule_vec, discharge_schedule_vec + batt_vars->batt_discharge_schedule_weekday.ncells() - 1, [max_period](double element) { return (max_period < element); });
         if (*period_num > max_period)
-            throw exec_error("battery", "invalid manual dispatch period in weekday schedule. Period numbers must be less than or equal to 6");
+            throw exec_error("battery", "Invalid manual dispatch period in weekday schedule. Period numbers must be less than or equal to 6.");
 
         if (batt_vars->batt_discharge_schedule_weekend.nrows() != 12 || batt_vars->batt_discharge_schedule_weekend.ncols() != 24)
-            throw exec_error("battery", "invalid weekend manual dispatch schedule matrix dimensions, must be 12 x 24");
+            throw exec_error("battery", "Invalid weekend manual dispatch schedule matrix dimensions, must be 12 x 24.");
 
         discharge_schedule_vec = batt_vars->batt_discharge_schedule_weekend.data();
         period_num = std::find_if(discharge_schedule_vec, discharge_schedule_vec + batt_vars->batt_discharge_schedule_weekend.ncells() - 1, [max_period](double element) { return (max_period < element); });
         if (*period_num > max_period)
-            throw exec_error("battery", "invalid manual dispatch period in weekend schedule. Period numbers must be less than or equal to 6");
+            throw exec_error("battery", "Invalid manual dispatch period in weekend schedule. Period numbers must be less than or equal to 6.");
 
         if (batt_vars->en_fuelcell) {
             if (batt_vars->batt_can_fuelcellcharge.size() != 6)
-                throw exec_error("fuelcell", "invalid manual dispatch control vector lengths, must be length 6");
+                throw exec_error("fuelcell", "Invalid manual dispatch control vector lengths, must be length 6.");
         }
 
 
@@ -978,7 +978,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             if (dispatch_automatic_front_of_meter_t * dispatch_fom = dynamic_cast<dispatch_automatic_front_of_meter_t*>(dispatch_model))
             {
                 if (batt_vars->batt_custom_dispatch.size() != 8760 * step_per_hour) {
-                    throw exec_error("battery", "invalid custom dispatch, must be 8760 * steps_per_hour");
+                    throw exec_error("battery", "Invalid custom dispatch length, must be 8760 * steps_per_hour.");
                 }
                 dispatch_fom->set_custom_dispatch(batt_vars->batt_custom_dispatch);
             }
@@ -1008,7 +1008,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             if (dispatch_automatic_behind_the_meter_t * dispatch_btm = dynamic_cast<dispatch_automatic_behind_the_meter_t*>(dispatch_model))
             {
                 if (batt_vars->batt_custom_dispatch.size() != 8760 * step_per_hour) {
-                    throw exec_error("battery", "invalid custom dispatch, must be 8760 * steps_per_hour");
+                    throw exec_error("battery", "Invalid custom dispatch, must be 8760 * steps_per_hour.");
                 }
                 dispatch_btm->set_custom_dispatch(batt_vars->batt_custom_dispatch);
             }
@@ -1582,7 +1582,7 @@ public:
             size_t analysis_period = (size_t)as_integer("analysis_period");
 
             if (use_lifetime && (double)(util::hours_per_year * analysis_period) / n_rec_lifetime > 1)
-                throw exec_error("battery", "`gen` input must be lifetime when system_use_lifetime_output=1.");
+                throw exec_error("battery", "Input gen must be from lifetime simulation when system_use_lifetime_output=1.");
 
             size_t n_rec_single_year;
             double dt_hour_gen;
@@ -1612,10 +1612,10 @@ public:
             batt->initialize_automated_dispatch(power_input_lifetime, load_lifetime);
 
             if (load_lifetime.size() != n_rec_lifetime) {
-                throw exec_error("battery", "Load length does not match system generation length");
+                throw exec_error("battery", "Load length does not match system generation length.");
             }
             if (batt->batt_vars->batt_topology == ChargeController::DC_CONNECTED) {
-                throw exec_error("battery", "Generic System must be AC connected to battery");
+                throw exec_error("battery", "Generic System must be AC connected to battery.");
             }
 
             // resilience metrics for battery
@@ -1625,7 +1625,7 @@ public:
                 p_crit_load = as_vector_ssc_number_t("crit_load");
                 size_t nload = p_crit_load.size();
                 if (nload != n_rec_single_year)
-                    throw exec_error("battery", "electric load profile must have same number of values as weather file, or 8760");
+                    throw exec_error("battery", "Electric load profile must have same number of values as weather file, or 8760.");
                 if (!p_crit_load.empty() && *std::max_element(p_crit_load.begin(), p_crit_load.end()) > 0){
                     resilience = std::unique_ptr<resilience_runner>(new resilience_runner(batt));
                     auto logs = resilience->get_logs();
@@ -1671,7 +1671,7 @@ public:
                         float techs = 3;
                         percent = percent_complete + 100.0f * ((float)lifetime_idx + 1) / ((float)n_rec_lifetime) / techs;
                         if (!update("", percent, (float)hour)) {
-                            throw exec_error("battery", "simulation canceled at hour " + util::to_string(hour + 1.0));
+                            throw exec_error("battery", "Simulation canceled at hour " + util::to_string(hour + 1.0));
                         }
                     }
 
