@@ -448,8 +448,8 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	collector_orientation.tilt = flat_plate_tilt;
 
     ArrayDimensions array_dimensions;
-    array_dimensions.num_in_series = 1;
-    array_dimensions.num_in_parallel = 1;
+    array_dimensions.num_in_series = flat_plates_in_series;
+    array_dimensions.num_in_parallel = flat_plates_in_parallel;
 
     Pipe inlet_pipe(0.019, 0.03, 0.006, 5);		// these are the 'loop' pipe values
     Pipe outlet_pipe(inlet_pipe);
@@ -667,10 +667,19 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 		double T_avg_hot = T_avg_cold + T_approach_hx_;
 		double m_dot_fp_design = m_m_dot_design * m_htfProps.Cp(T_avg_cold) / flat_plate_htf_.Cp(T_avg_hot);	// sizing for an ideal hx capacitance ratio of unity
 		double design_temp_rise_flat_plate_array = m_T_PTC_in_des - m_T_loop_in_des;
-        flat_plate_array_.resize_array(m_dot_fp_design, flat_plate_htf_.Cp(T_avg_hot), design_temp_rise_flat_plate_array);
+
+        //flat_plate_array_.resize_array(m_dot_fp_design, flat_plate_htf_.Cp(T_avg_hot), design_temp_rise_flat_plate_array);
 		ArrayDimensions array_dimensions = flat_plate_array_.array_size();
-		flat_plates_in_series_ = array_dimensions.num_in_series;
-		flat_plates_in_parallel_ = array_dimensions.num_in_parallel;
+		if (array_dimensions.num_in_parallel < 1) {
+			flat_plate_array_.resize_num_in_parallel(m_dot_fp_design);
+		}
+		if (array_dimensions.num_in_series < 1) {
+			flat_plate_array_.resize_num_in_series(m_dot_fp_design, flat_plate_htf_.Cp(T_avg_hot), design_temp_rise_flat_plate_array);
+		}
+
+		array_dimensions = flat_plate_array_.array_size();
+		flat_plates_in_series = array_dimensions.num_in_series;
+		flat_plates_in_parallel = array_dimensions.num_in_parallel;
 
 		// Size heat exchanger for flat plate array
 		heat_exchanger_.init(m_htfProps, flat_plate_htf_, flat_plate_array_.RatedPowerGain() /*W*/,

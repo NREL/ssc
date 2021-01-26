@@ -407,10 +407,14 @@ void FlatPlateArray::resize_array(ArrayDimensions array_dimensions)
 
 void FlatPlateArray::resize_array(double m_dot_array_design /*kg/s*/, double specific_heat /*kJ/kg-K*/, double temp_rise_array_design /*K*/)
 {
-    if (!std::isnormal(m_dot_array_design) || !std::isnormal(specific_heat) || !std::isnormal(temp_rise_array_design)) return;
-    if (m_dot_array_design <= 0. || specific_heat <= 0. || temp_rise_array_design <= 0.) return;
+    resize_num_in_parallel(m_dot_array_design);
+    resize_num_in_series(m_dot_array_design, specific_heat, temp_rise_array_design);
+}
 
-    // Number in parallel
+void FlatPlateArray::resize_num_in_parallel(double m_dot_array_design /*kg/s*/)
+{
+    if (!std::isnormal(m_dot_array_design) || m_dot_array_design <= 0.) return;
+
     double exact_fractional_collectors_in_parallel = m_dot_array_design / flat_plate_collector_.RatedMassFlow();
     if (exact_fractional_collectors_in_parallel < 1.) {
         array_dimensions_.num_in_parallel = 1;
@@ -418,9 +422,14 @@ void FlatPlateArray::resize_array(double m_dot_array_design /*kg/s*/, double spe
     else {
         array_dimensions_.num_in_parallel = static_cast<int>(std::round(exact_fractional_collectors_in_parallel));      // std::round() rounds up at halfway point
     }
-    double m_dot_series_string = m_dot_array_design / array_dimensions_.num_in_parallel;      // [kg/s]
+}
 
-    // Number in series
+void FlatPlateArray::resize_num_in_series(double m_dot_array_design /*kg/s*/, double specific_heat /*kJ/kg-K*/, double temp_rise_array_design /*K*/)
+{
+    if (!std::isnormal(m_dot_array_design) || !std::isnormal(specific_heat) || !std::isnormal(temp_rise_array_design)) return;
+    if (m_dot_array_design <= 0. || specific_heat <= 0. || temp_rise_array_design <= 0.) return;
+
+    double m_dot_series_string = m_dot_array_design / array_dimensions_.num_in_parallel;      // [kg/s]
     double collector_rated_power = flat_plate_collector_.RatedPowerGain();  // [W]
     double collector_rated_temp_rise = collector_rated_power / (m_dot_series_string * specific_heat * 1.e3);
     double exact_fractional_collectors_in_series = temp_rise_array_design / collector_rated_temp_rise;

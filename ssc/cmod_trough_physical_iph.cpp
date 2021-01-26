@@ -316,8 +316,8 @@ static var_info _cm_vtab_trough_physical_process_heat[] = {
     { SSC_OUTPUT,   SSC_ARRAY,   "T_troughs_in",                        "Troughs inlet temperature after flat plate collectors", "C", "", "trough_field",      "*",        "",     "" },
     { SSC_OUTPUT,   SSC_ARRAY,   "m_dot_flat_plates",                   "Mass flow in flat plate array",                "kg/s",  "",    "trough_field",        "*",        "",     "" },
 
-    { SSC_OUTPUT,   SSC_NUMBER,  "flat_plates_in_series",               "Number of flat plate collectors in series",    "", "",         "trough_field",        "*",        "",     "" },
-    { SSC_OUTPUT,   SSC_NUMBER,  "flat_plates_in_parallel",             "Number of flat plate collectors in parallel",  "", "",         "trough_field",        "*",        "",     "" },
+    { SSC_INOUT,   SSC_NUMBER,  "flat_plates_in_series",               "Number of flat plate collectors in series",    "", "",         "trough_field",         "*",        "",     "" },
+    { SSC_INOUT,   SSC_NUMBER,  "flat_plates_in_parallel",             "Number of flat plate collectors in parallel",  "", "",         "trough_field",         "*",        "",     "" },
                                                                                                                         
         // Heat Sink                                                                                                    
     { SSC_OUTPUT,   SSC_ARRAY,   "q_dot_to_heat_sink",                  "Heat sink thermal power",                      "MWt",     "",  "Heat_Sink",           "*",        "",     "" },
@@ -435,7 +435,8 @@ public:
         c_trough.flat_plate_tested_heat_capacity = as_double("flat_plate_tested_heat_capacity");
         c_trough.flat_plate_azimuth = as_double("flat_plate_azimuth");
         c_trough.flat_plate_tilt = as_double("flat_plate_tilt");
-
+        c_trough.flat_plates_in_series = as_integer("flat_plates_in_series");
+        c_trough.flat_plates_in_parallel = as_integer("flat_plates_in_parallel");
 
         c_trough.m_nSCA = as_integer("nSCA");						//[-] Number of SCA's in a loop
         c_trough.m_nHCEt = as_integer("nHCEt");						//[-] Number of HCE types
@@ -1017,8 +1018,8 @@ public:
             //p_m_dot_tes_ch[i] = (ssc_number_t)(p_m_dot_tes_ch[i] / 3600.0);		//[kg/s] convert from kg/hr
         }
 
-        assign("flat_plates_in_series", (ssc_number_t)c_trough.flat_plates_in_series_);
-        assign("flat_plates_in_parallel", (ssc_number_t)c_trough.flat_plates_in_parallel_);
+        assign("flat_plates_in_series", (ssc_number_t)c_trough.flat_plates_in_series);
+        assign("flat_plates_in_parallel", (ssc_number_t)c_trough.flat_plates_in_parallel);
 
         // Monthly outputs
 

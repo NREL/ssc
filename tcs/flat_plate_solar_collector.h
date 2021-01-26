@@ -175,6 +175,8 @@ public:
     const double area_total();                             // [m2]
     void resize_array(ArrayDimensions array_dimensions);
     void resize_array(double m_dot_array_design /*kg/s*/, double specific_heat /*kJ/kg-K*/, double temp_rise_array_design /*K*/);
+    void resize_num_in_parallel(double m_dot_array_design /*kg/s*/);
+    void resize_num_in_series(double m_dot_array_design /*kg/s*/, double specific_heat /*kJ/kg-K*/, double temp_rise_array_design /*K*/);
     ArrayDimensions array_size() const;
     const double IncidentIrradiance(const tm& timestamp, const ExternalConditions& external_conditions);   // [W/m2] POA
     const double RatedPowerGain();      // [W]
