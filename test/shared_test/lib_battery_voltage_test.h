@@ -45,7 +45,8 @@ protected:
     double C_rate = 0.2;
 
     void CreateModel(double dt_hr){
-        cap = std::unique_ptr<capacity_lithium_ion_t>(new capacity_lithium_ion_t(10, 50, 95, 5, dt_hr));
+        n_strings = 5;
+        cap = std::unique_ptr<capacity_lithium_ion_t>(new capacity_lithium_ion_t(Qfull*n_strings, 50, 95, 5, dt_hr));
         
 
         model = std::unique_ptr<voltage_t>(new voltage_dynamic_t(n_cells_series, n_strings,
@@ -71,8 +72,9 @@ protected:
     double C_rate = 0.2;
 
     void CreateModel(double dt_hr) {
-        cap = std::unique_ptr<capacity_lithium_ion_t>(new capacity_lithium_ion_t(10, 50, 95, 5, dt_hr));
-        cap2 = std::unique_ptr<capacity_lithium_ion_t>(new capacity_lithium_ion_t(10, 50, 95, 5, dt_hr));
+        n_strings = 5;
+        cap = std::unique_ptr<capacity_lithium_ion_t>(new capacity_lithium_ion_t(Qfull*n_strings, 50, 95, 5, dt_hr));
+        cap2 = std::unique_ptr<capacity_lithium_ion_t>(new capacity_lithium_ion_t(Qfull * n_strings, 50, 95, 5, dt_hr));
         model = std::unique_ptr<voltage_t>(new voltage_dynamic_t(n_cells_series, n_strings,
             voltage_nom, Vfull, Vexp, Vnom, Vcut, Qfull, Qexp, Qnom,
             C_rate, R, dt_hr ));

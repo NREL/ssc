@@ -415,7 +415,7 @@ battery_t::battery_t(double dt_hr, int chem, capacity_t *capacity_model, voltage
     params->dt_hour = dt_hr;
     params->chem = chem;
     params->nominal_voltage = params->voltage->Vnom_default * params->voltage->num_cells_series;
-    params->nominal_energy = params->nominal_voltage * params->voltage->num_strings * params->voltage->dynamic.Qfull_mod * 1e-3;
+    params->nominal_energy = params->nominal_voltage * params->voltage->num_strings * params->voltage->dynamic.Qfull * 1e-3;
 
     // initial conditions
     voltage->set_initial_SOC(capacity->state->SOC);

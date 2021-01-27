@@ -328,13 +328,14 @@ void voltage_dynamic_t::parameter_compute() {
     // Tremblay 2009 "A Generic Bettery Model for the Dynamic Simulation of Hybrid Electric Vehicles"
 //	double eta = 0.995;
     double I = params->dynamic.Qfull * params->dynamic.C_rate; // [A]
+    params->dynamic.Qfull_mod = params->dynamic.Qfull;
     //_R = params->dynamic.Vnom*(1. - eta) / (params->dynamic.C_rate*params->dynamic.Qnom); // [Ohm]
     _A = params->dynamic.Vfull - params->dynamic.Vexp; // [V]
     _B0 = 3. / params->dynamic.Qexp;     // [1/Ah]
     _K = ((params->dynamic.Vfull - params->dynamic.Vnom + _A * (std::exp(-_B0 * params->dynamic.Qnom) - 1)) *
           (params->dynamic.Qfull - params->dynamic.Qnom)) / (params->dynamic.Qnom); // [V] - polarization voltage
     _E0 = params->dynamic.Vfull + _K + params->resistance * I - _A;
-    if (params->dynamic.Vcut != 0.00 && params->dynamic.Qfull_mod == params->dynamic.Qfull) { //make sure Qfull_mod does not
+    if (params->dynamic.Vcut != 0.00) {// && params->dynamic.Qfull_mod == params->dynamic.Qfull) { //make sure Qfull_mod does not
         double C = (-1 * params->dynamic.Vcut + _E0 - params->resistance * I + _A * (std::exp(-_B0 * params->dynamic.Qfull))) / _K;
         double x = params->dynamic.Qfull / (C - 1);
         //params->dynamic.Qfull += x;
@@ -349,21 +350,26 @@ void voltage_dynamic_t::parameter_compute() {
 }
 
 void voltage_dynamic_t::set_initial_SOC(double init_soc) {
-    updateVoltage(init_soc * 0.01 * params->dynamic.Qfull, params->dynamic.Qfull, 0, 25, params->dt_hr);
+    updateVoltage(init_soc * 0.01 * params->dynamic.Qfull * params->num_strings, params->dynamic.Qfull * params->num_strings, 0, 25, params->dt_hr);
 }
 
 // everything in here is on a per-cell basis
 double voltage_dynamic_t::voltage_model_tremblay_hybrid(double Q_cell, double I, double q0_cell) {
     double it = Q_cell - q0_cell;
     //double it = params->dynamic.Qfull_mod - q0_cell;
-    /*
-    double C = (-1 * params->dynamic.Vcut + _E0 - params->resistance * I + _A * exp(-_B0 * Q_cell)) / _K;
-    double x = Q_cell / (C - 1);
-    double Q_cell_mod = Q_cell + x;
+    double Q_cell_mod, C, x;
+    if (params->dynamic.Vcut != 0) {
+        C = (-1 * params->dynamic.Vcut + _E0 - params->resistance * I + _A * exp(-_B0 * Q_cell)) / _K;
+        x = Q_cell / (C - 1);
+        Q_cell_mod = Q_cell + x;
+    }
+    else {
+        Q_cell_mod = Q_cell;
+    }
     //double E = _E0 - _K * (Q_cell / (Q_cell - it)) + _A * exp(-_B0 * it);
-    */
-    //double E = _E0 - _K * (Q_cell / (Q_cell - it)) + _A * exp(-_B0 * it);
-    double E = _E0 - _K * (params->dynamic.Qfull_mod / (params->dynamic.Qfull_mod - it)) + _A * exp(-_B0 * it);
+    
+    double E = _E0 - _K * (Q_cell_mod / (Q_cell_mod - it)) + _A * exp(-_B0 * it);
+    //double E = _E0 - _K * (params->dynamic.Qfull_mod / (params->dynamic.Qfull_mod - it)) + _A * exp(-_B0 * it);
     return E - params->resistance * I;
 }
 
@@ -405,7 +411,7 @@ double voltage_dynamic_t::calculate_max_discharge_w(double q, double qmax, doubl
     double incr = q / 10;
     //double vol_diff = params->dynamic.Vcut - vol;
     double max_p = 0, max_I = 0, max_V = 0;
-    while (current * params->dt_hr < q - tolerance && vol >= params->dynamic.Vcut + 0.012) {
+    while (current * params->dt_hr < q - tolerance && vol > params->dynamic.Vcut ) {
         vol = voltage_model_tremblay_hybrid(qmax, current, q - current * params->dt_hr);
         double p = current * vol;
         if (p > max_p) {
