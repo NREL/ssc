@@ -174,3 +174,61 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, RunCurrentControl) {
     EXPECT_NEAR(q_max, 75.55, 0.01);
     EXPECT_NEAR(q_rel, 99.99, 0.01);
 }
+
+TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, AdaptiveTimestep) {
+    CreateModel(1.);
+
+    double power = 1;
+    ssc_data_set_number(data, "control_mode", 1);
+    ssc_data_set_number(data, "input_power", power);
+
+    // create adaptive
+    var_table data_copy;
+    data_copy = *static_cast<var_table*>(data);
+    ssc_data_set_number(&data_copy, "input_power", power);
+    auto adaptive_batt = ssc_stateful_module_create("battery_stateful", &data_copy);
+
+    double P, hourly_E = 0, adaptive_E = 0;
+
+    // run both at hourly
+    ssc_module_exec(mod, data);
+    ssc_data_get_number(data, "P", &P);
+    hourly_E += P;
+
+    ssc_module_exec(adaptive_batt, &data_copy);
+    ssc_data_get_number(&data_copy, "P", &P);
+    adaptive_E += P;
+
+    // run at hourly and adaptive at 15 min
+    ssc_module_exec(mod, data);
+    ssc_data_get_number(data, "P", &P);
+    hourly_E += P;
+
+    size_t steps_per_hour = 4;
+    ssc_data_set_number(&data_copy, "dt_hr", 1. / (double)steps_per_hour);
+    for (size_t i = 0; i < steps_per_hour; i++) {
+        ssc_module_exec(adaptive_batt, &data_copy);
+        ssc_data_get_number(&data_copy, "P", &P);
+        adaptive_E += P / (double)steps_per_hour;
+    }
+
+    // run both at hourly
+    ssc_module_exec(mod, data);
+    ssc_data_get_number(data, "P", &P);
+    hourly_E += P;
+
+    ssc_data_set_number(&data_copy, "dt_hr", 1.);
+    ssc_module_exec(adaptive_batt, &data_copy);
+    ssc_data_get_number(&data_copy, "P", &P);
+    adaptive_E += P;
+
+    double hourly_SOC, adaptive_SOC;
+    ssc_data_get_number(data, "SOC", &hourly_SOC);
+    ssc_data_get_number(&data_copy, "SOC", &adaptive_SOC);
+
+    EXPECT_NEAR(hourly_E, 2.994, 1e-3);
+    EXPECT_NEAR(adaptive_E, 2.994, 1e-3);
+    EXPECT_NEAR(hourly_SOC, 23.370, 1e-3);
+    EXPECT_NEAR(adaptive_SOC, 23.428, 1e-3);
+
+}
