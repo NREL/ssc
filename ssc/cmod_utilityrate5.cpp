@@ -2203,15 +2203,18 @@ public:
 					dollars_applied += monthly_cumulative_excess_dollars[m - 1];
 				}
 
-				if (monthly_ec_charges[m] < 0)
-				{
-					payment[c - 1] -= monthly_cumulative_excess_dollars[m] + monthly_ec_charges[m];
-					dollars_applied += monthly_cumulative_excess_dollars[m] + monthly_ec_charges[m];
-					monthly_cumulative_excess_dollars[m] = -monthly_ec_charges[m];
+                if (monthly_ec_charges[m] < 0)
+                {
+                    if (m != excess_dollars_credit_month)
+                    {
+                        payment[c - 1] -= monthly_cumulative_excess_dollars[m] + monthly_ec_charges[m];
+                        dollars_applied += monthly_cumulative_excess_dollars[m] + monthly_ec_charges[m];
+                    }
+                    monthly_cumulative_excess_dollars[m] = -monthly_ec_charges[m];
 					monthly_ec_charges[m] = 0;
 				}
 
-                if (monthly_ec_charges_gross[m] < dollars_applied) dollars_applied = monthly_ec_charges_gross[m];
+                if (monthly_ec_charges_gross[m] < dollars_applied && m != excess_dollars_credit_month) dollars_applied = monthly_ec_charges_gross[m];
                 net_billing_credits[m] = dollars_applied;
 			}
 			

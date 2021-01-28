@@ -391,7 +391,7 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover) {
 
     ssc_number_t cost_with_system;
     ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
-    EXPECT_NEAR(-184.5, cost_with_system, 0.1);
+    EXPECT_NEAR(-206.62, cost_with_system, 0.1);
 
     int nrows;
     int ncols;
@@ -469,7 +469,7 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover_ja
 
     ssc_number_t cost_with_system;
     ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
-    EXPECT_NEAR(-153.91, cost_with_system, 0.1);
+    EXPECT_NEAR(-122.16, cost_with_system, 0.1);
 
     int nrows;
     int ncols;
