@@ -317,7 +317,7 @@ std::shared_ptr<battery_params> create_battery_params(var_table *vt, double dt_h
     vt_get_number(vt, "initial_SOC", &capacity->initial_SOC);
     vt_get_number(vt, "maximum_soc", &capacity->maximum_SOC);
     vt_get_number(vt, "minimum_soc", &capacity->minimum_SOC);
-    params->dt_hour = dt_hr;
+    params->dt_hr = dt_hr;
     if (params->chem == battery_params::LEAD_ACID) {
         vt_get_number(vt, "leadacid_tn", &capacity->leadacid.tn);
         vt_get_number(vt, "leadacid_qn", &capacity->leadacid.qn);
@@ -337,7 +337,7 @@ std::shared_ptr<battery_params> create_battery_params(var_table *vt, double dt_h
     auto lifetime = params->lifetime;
     vt_get_int(vt, "calendar_choice", &choice);
     lifetime->calendar_choice = static_cast<lifetime_params::CALENDAR_CHOICE>(choice);
-    lifetime->dt_hour = dt_hr;
+    lifetime->dt_hr = dt_hr;
     vt_get_matrix(vt, "cycling_matrix", lifetime->cycling_matrix);
     if (lifetime->calendar_choice == lifetime_params::CALENDAR_CHOICE::MODEL) {
         vt_get_number(vt, "calendar_q0", &lifetime->calendar_q0);
@@ -351,7 +351,7 @@ std::shared_ptr<battery_params> create_battery_params(var_table *vt, double dt_h
 
     // thermal
     auto thermal = params->thermal;
-    thermal->dt_hour = dt_hr;
+    thermal->dt_hr = dt_hr;
     thermal->option = thermal_params::VALUE;
     thermal->resistance = params->voltage->resistance;
     vt_get_number(vt, "mass", &thermal->mass);
