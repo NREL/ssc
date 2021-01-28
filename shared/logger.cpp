@@ -130,7 +130,7 @@ std::ostream &operator<<(std::ostream &os, const calendar_cycle_params &p) {
 std::ostream &operator<<(std::ostream &os, const lifetime_params &p) {
     os.precision(3);
     char buf[1024];
-    sprintf(buf, R"("lifetime_params": { "dt_hour": %.3f, "model_choice": %d, )", p.dt_hour, p.model_choice);
+    sprintf(buf, R"("lifetime_params": { "dt_hr": %.3f, "model_choice": %d, )", p.dt_hr, p.model_choice);
     os << *p.cal_cyc << " }";
     return os;
 }
@@ -161,10 +161,10 @@ std::ostream &operator<<(std::ostream &os, const thermal_state &p) {
 
 std::ostream &operator<<(std::ostream &os, const thermal_params &p) {
     char buf[1024];
-    sprintf(buf, "\"thermal_params\": { \"dt_hour\": %.3f, \"mass\": %.3f, \"surface_area\": %.3f, "
+    sprintf(buf, "\"thermal_params\": { \"dt_hr\": %.3f, \"mass\": %.3f, \"surface_area\": %.3f, "
                  "\"Cp\": %.3f, \"h\": %.3f, \"resistance\": %.3e, \"cap_vs_temp\": ",
-                 p.dt_hour, p.mass, p.surface_area,
-                 p.Cp, p.h, p.resistance);
+            p.dt_hr, p.mass, p.surface_area,
+            p.Cp, p.h, p.resistance);
     os << buf << p.cap_vs_temp;
     os.precision(3);
     os << R"(, "option": )" << p.option;
@@ -209,8 +209,8 @@ std::ostream &operator<<(std::ostream &os, const battery_state &p) {
 
 std::ostream &operator<<(std::ostream &os, const battery_params &p) {
     char buf[1024];
-    sprintf(buf, R"("battery_params": { "chem": %u, "dt_hour": %.3f, "nominal_voltage": %.3f, "nominal_energy": %.3f)",
-            p.chem, p.dt_hour, p.nominal_voltage, p.nominal_energy);
+    sprintf(buf, R"("battery_params": { "chem": %u, "dt_hr": %.3f, "nominal_voltage": %.3f, "nominal_energy": %.3f)",
+            p.chem, p.dt_hr, p.nominal_voltage, p.nominal_energy);
     os << buf << ", ";
     os << *p.capacity << ", ";
     os << *p.voltage << ", ";
