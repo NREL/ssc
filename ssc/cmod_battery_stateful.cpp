@@ -278,6 +278,7 @@ std::shared_ptr<battery_params> create_battery_params(var_table *vt, double dt_h
     int chem;
     vt_get_int(vt, "chem", &chem);
     params->chem = static_cast<battery_params::CHEM>(chem);
+    params->dt_hr = dt_hr;
 
     // voltage
     auto voltage = params->voltage;
@@ -317,7 +318,7 @@ std::shared_ptr<battery_params> create_battery_params(var_table *vt, double dt_h
     vt_get_number(vt, "initial_SOC", &capacity->initial_SOC);
     vt_get_number(vt, "maximum_soc", &capacity->maximum_SOC);
     vt_get_number(vt, "minimum_soc", &capacity->minimum_SOC);
-    params->dt_hr = dt_hr;
+    capacity->dt_hr = dt_hr;
     if (params->chem == battery_params::LEAD_ACID) {
         vt_get_number(vt, "leadacid_tn", &capacity->leadacid.tn);
         vt_get_number(vt, "leadacid_qn", &capacity->leadacid.qn);
@@ -389,7 +390,7 @@ std::shared_ptr<battery_params> create_battery_params(var_table *vt, double dt_h
 }
 
 cm_battery_stateful::cm_battery_stateful():
-        dt_hour(0),
+        dt_hr(0),
         control_mode(0){
     add_var_info(vtab_battery_stateful_inputs);
     add_var_info(vtab_battery_state);
@@ -401,9 +402,9 @@ cm_battery_stateful::cm_battery_stateful(var_table* vt) :
     try {
         if (!compute_module::verify("precheck input", SSC_INPUT))
             throw exec_error("battery_stateful", log(0)->text);
-        dt_hour = as_number("dt_hr");
+        dt_hr = as_number("dt_hr");
         control_mode = as_integer("control_mode");
-        params = create_battery_params(m_vartab, dt_hour);
+        params = create_battery_params(m_vartab, dt_hr);
         battery = std::unique_ptr<battery_t>(new battery_t(params));
         write_battery_state(battery->get_state(), m_vartab);
     }
