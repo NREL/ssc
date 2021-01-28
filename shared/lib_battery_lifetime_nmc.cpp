@@ -42,6 +42,8 @@ void lifetime_nmc_t::runLifetimeModels(size_t lifetimeIndex, bool charge_changed
     if (charge_changed)
         cycle_model->rainflow(prev_DOD);
 
+    state->day_age_of_battery = (int)(lifetimeIndex / (util::hours_per_day / params->dt_hour));
+
 }
 
 double lifetime_nmc_t::estimateCycleDamage() {
