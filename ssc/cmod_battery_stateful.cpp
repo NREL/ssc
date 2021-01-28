@@ -417,6 +417,7 @@ void cm_battery_stateful::exec() {
     if (!battery)
         throw exec_error("battery_stateful", "Battery model must be initialized first.");
 
+    // Update state
     battery_state state;
     try {
         read_battery_state(state, m_vartab);
@@ -428,6 +429,15 @@ void cm_battery_stateful::exec() {
         throw runtime_error(err);
     }
 
+    // Update controls
+    control_mode = as_integer("control_mode");
+    double control_dt_hr = as_float("dt_hr");
+    if (fabs(control_dt_hr - dt_hr) > 1e-7) {
+        dt_hr = control_dt_hr;
+        battery->ChangeTimestep(dt_hr);
+    }
+
+    // Simulate
     if (static_cast<MODE>(as_integer("control_mode")) == MODE::CURRENT) {
         double I = as_number("input_current");
         battery->runCurrent(I);
@@ -436,6 +446,7 @@ void cm_battery_stateful::exec() {
         double P = as_number("input_power");
         battery->runPower(P);
     }
+
     write_battery_state(battery->get_state(), m_vartab);
 }
 
