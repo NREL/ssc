@@ -256,7 +256,7 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_net_metering_credits_in_may_with_r
     int length;
     ssc_number_t* excess_dollars = ssc_data_get_array(data, "year1_nm_dollars_applied", &length);
     float may_dollars = excess_dollars[credit_month];
-    EXPECT_NEAR(0, may_dollars, 0.1);
+    EXPECT_NEAR(50.28, may_dollars, 0.1);
 
     float june_dollars = excess_dollars[credit_month + 1];
     EXPECT_NEAR(11.37, june_dollars, 0.1);
@@ -391,7 +391,7 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover) {
 
     ssc_number_t cost_with_system;
     ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
-    EXPECT_NEAR(-206.62, cost_with_system, 0.1);
+    EXPECT_NEAR(-179.41, cost_with_system, 0.1);
 
     int nrows;
     int ncols;
@@ -430,7 +430,7 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover_ap
 
     ssc_number_t cost_with_system;
     ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
-    EXPECT_NEAR(-173.7, cost_with_system, 0.1);
+    EXPECT_NEAR(-206.61, cost_with_system, 0.1);
 
     int nrows;
     int ncols;

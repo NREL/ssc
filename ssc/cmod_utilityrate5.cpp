@@ -1775,15 +1775,13 @@ public:
 					dollars_applied += prev_excess_dollars;
 				}
 
-//				if (monthly_bill[m] < 0)
 				if (monthly_ec_charges[m] < 0)
 				{
 					if (excess_monthly_dollars || rollover_credit)
 					{
 						monthly_cumulative_excess_dollars[m] -= monthly_ec_charges[m];
-						//						monthly_cumulative_excess_dollars[m] -= monthly_bill[m];
 					}
-					//					monthly_bill[m] = 0;
+					
 					payment[c - 1] -= monthly_ec_charges[m];; // keep demand charges
 					monthly_ec_charges[m] = 0;
 				}
@@ -1798,8 +1796,15 @@ public:
 						if (excess_monthly_dollars || rollover_credit)
 						{
 //							monthly_cumulative_excess_dollars[m] = -monthly_bill[m];
-							dollars_applied += monthly_cumulative_excess_dollars[m] + monthly_ec_charges[m];
-							monthly_cumulative_excess_dollars[m] = -monthly_ec_charges[m];
+                            if (m != net_metering_credit_month)
+                            {
+                                dollars_applied += monthly_cumulative_excess_dollars[m] + monthly_ec_charges[m];
+                            }
+                            else
+                            {
+                                dollars_applied += monthly_cumulative_excess_dollars[m];
+                            }
+                            monthly_cumulative_excess_dollars[m] = -monthly_ec_charges[m];
 						}
 						//						monthly_bill[m] = 0;
 						monthly_ec_charges[m] = 0;
@@ -1812,7 +1817,7 @@ public:
 					}
 				}
 			}
-			if (monthly_ec_charges_gross[m] < dollars_applied) dollars_applied = monthly_ec_charges_gross[m];
+			if (monthly_ec_charges_gross[m] < dollars_applied && m != net_metering_credit_month) dollars_applied = monthly_ec_charges_gross[m];
 			excess_dollars_applied[m] = dollars_applied;
 			monthly_bill[m] = monthly_ec_charges[m] + rate.monthly_dc_fixed[m] + rate.monthly_dc_tou[m];
 
@@ -1889,6 +1894,7 @@ public:
 									else if (excess_monthly_dollars && (monthly_cumulative_excess_dollars[m] > 0))
 									{
 										income[c] += monthly_cumulative_excess_dollars[m];
+                                        excess_dollars_applied[m] = monthly_cumulative_excess_dollars[m];
 										// ? net metering energy?
 									}
 								}
