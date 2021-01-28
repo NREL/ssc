@@ -97,6 +97,8 @@ set(SSC_SRC
 		cmod_singleowner.cpp
 		cmod_snowmodel.cpp
 		cmod_solarpilot.cpp
+		cmod_solar_thermal_eqns.cpp
+		cmod_solar_thermal_eqns.h
 		cmod_swh.cpp
 		cmod_tcsdirect_steam.cpp
 		cmod_tcsdish.cpp
