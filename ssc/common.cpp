@@ -437,6 +437,8 @@ var_info vtab_financial_metrics[] = {
 { SSC_OUTPUT,       SSC_NUMBER,     "flip_actual_irr",                        "IRR in target year",                        "%",                   "", "Metrics", "*", "", "" },
 { SSC_OUTPUT,       SSC_NUMBER,     "lcoe_real",                              "Levelized cost (real)",                               "cents/kWh",               "", "Metrics", "*", "", "" },
 { SSC_OUTPUT,       SSC_NUMBER,     "lcoe_nom",                               "Levelized cost (nominal)",                            "cents/kWh",               "", "Metrics", "*", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "lcos_real",                              "Levelized cost of storage (real)",                               "cents/kWh",               "", "Metrics", "?", "", "" },
+//{ SSC_OUTPUT,       SSC_NUMBER,     "lcos_nom",                               "Levelized cost of storage (nominal)",                            "cents/kWh",               "", "Metrics", "?", "", "" },
 { SSC_OUTPUT,       SSC_NUMBER,     "npv_energy_nom",                         "Present value of annual energy (nominal)",     "kWh",                 "", "Metrics", "*", "", "" },
 { SSC_OUTPUT,       SSC_NUMBER,     "npv_energy_real",                        "Present value of annual energy (real)",     "kWh",                 "", "Metrics", "*", "", "" },
 { SSC_OUTPUT,       SSC_NUMBER,     "present_value_oandm",                    "Present value of O&M",				       "$",                   "", "Metrics", "*", "", "" },
