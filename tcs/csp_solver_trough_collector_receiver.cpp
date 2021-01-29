@@ -662,7 +662,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 		m_mc_bal_cold = m_mc_bal_cold_per_MW * 3.6 * m_q_design;  //[J/K]
         
         // Size flat plate array
-		flat_plate_htf_.SetFluid(HTFProperties::Water_liquid);
+		flat_plate_htf_.SetFluid(HTFProperties::PG_50_50);
 		double T_avg_cold = 0.5 * (m_T_loop_in_des + m_T_PTC_in_des);
 		double T_avg_hot = T_avg_cold + T_approach_hx_;
 		double m_dot_fp_design = m_m_dot_design * m_htfProps.Cp(T_avg_cold) / flat_plate_htf_.Cp(T_avg_hot);	// sizing for an ideal hx capacitance ratio of unity

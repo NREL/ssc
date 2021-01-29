@@ -67,6 +67,7 @@ public:
 		Pressurized_Water,
         N06230,         // Nickel alloy
         N07740,         // Nickel alloy
+		PG_50_50,		// propylene glycol, 50%
 		End_Library_Fluids,
 		User_defined = 50
 	};
