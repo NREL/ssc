@@ -3010,8 +3010,8 @@ public:
         cf.at(CF_om_production1_expense, a) *= charged_total[a];
         cf.at(CF_energy_discharged, a) = lcos_energy_discharged[a];
         cf.at(CF_annual_cost_lcos, a) = cf.at(CF_charging_cost_grid, a) +
-            cf.at(CF_charging_cost_pv, a) - cf.at(CF_om_fixed1_expense, a) -
-            cf.at(CF_om_capacity1_expense, a) - cf.at(CF_om_production1_expense, a) -
+            cf.at(CF_charging_cost_pv, a) + cf.at(CF_om_fixed1_expense, a) -
+            cf.at(CF_om_capacity1_expense, a) + cf.at(CF_om_production1_expense, a) -
             cf.at(CF_battery_replacement_cost, a);
         
     }
@@ -3029,7 +3029,7 @@ public:
     cf.at(CF_energy_discharged, 0) = 0; //no discharge in year 0
     double lcos_denominator_real = npv(CF_energy_discharged, nyears, disc_real);
     //double lcos_numerator = (lcos_investment_cost + lcos_om_cost + lcos_charging_cost + lcos_salvage_value);
-    double lcos_numerator = -(npv(CF_annual_cost_lcos, nyears, nom_discount_rate)) + cf.at(CF_annual_cost_lcos, 0);
+    double lcos_numerator = (npv(CF_annual_cost_lcos, nyears, nom_discount_rate)) + cf.at(CF_annual_cost_lcos, 0);
     assign("npv_annual_costs_lcos", var_data((ssc_number_t)lcos_numerator));
     save_cf(CF_annual_cost_lcos, nyears, "cf_annual_cost_lcos");
     save_cf(CF_energy_discharged, nyears, "cf_annual_discharge_lcos");
