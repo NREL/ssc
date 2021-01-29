@@ -761,3 +761,37 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NonAnnual)
     EXPECT_NEAR(gen, 3.0525, 0.01) << "Gen at noon";
     free_weatherdata_array(weather_data);
 }
+
+//test non-annual run that includes Feb 29
+TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NonAnnualWithLeapDay)
+{
+    //set up a weather data array containing leap day and assign it to the solar resource data
+    const int length = 24;
+    double month[length] = { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 };
+    double day[length] = { 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29 };
+
+    var_data month_vd = var_data(month, length);
+    var_data day_vd = var_data(day, length);
+
+    auto weather_data = create_weatherdata_array(length);
+    weather_data->table.assign("month", month_vd);
+    weather_data->table.assign("day", day_vd);
+
+    ssc_data_unassign(data, "solar_resource_file");
+    ssc_data_set_table(data, "solar_resource_data", &weather_data->table);
+
+    std::vector<double> load(length, 1);
+    ssc_data_set_array(data, "load", &load[0], (int)load.size());
+
+    //run the tests
+    EXPECT_FALSE(run_module(data, "pvsamv1"));
+
+    ssc_number_t dc_net, gen;
+    dc_net = ssc_data_get_array(data, "dc_net", nullptr)[12];
+    EXPECT_NEAR(dc_net, 2.7319, 0.01) << "DC Net Energy at noon";
+
+    gen = ssc_data_get_array(data, "gen", nullptr)[12];
+    EXPECT_NEAR(gen, 2.6189, 0.01) << "Gen at noon";
+    free_weatherdata_array(weather_data);
+}
+
