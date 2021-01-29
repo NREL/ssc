@@ -2183,44 +2183,28 @@ public:
 			// apply previous month rollover kwhs
 			if (excess_monthly_dollars)
 			{
-                if (m == 0 && excess_dollars_credit_month == 0) {
-                    ssc_number_t total_excess_credit_month = prev_excess_dollars + monthly_cumulative_excess_dollars[m];
-                    monthly_ec_charges[m] -= total_excess_credit_month;
-                    payment[c - 1] -= total_excess_credit_month;
-                    dollars_applied += total_excess_credit_month;
-                }
-				else if (m == 0 && excess_dollars_credit_month != 11) {
+				if (m == 0 && excess_dollars_credit_month != 11) {
 					monthly_ec_charges[m] -= prev_excess_dollars;
 					payment[c - 1] -= prev_excess_dollars;
 					dollars_applied += prev_excess_dollars;
 				}
-                else if (m == excess_dollars_credit_month)
-                {
-                    // Apply current month to end of year credit, in addition to previous month
-                    ssc_number_t total_excess_credit_month = monthly_cumulative_excess_dollars[m - 1] + monthly_cumulative_excess_dollars[m];
-                    monthly_ec_charges[m] -= total_excess_credit_month;
-                    payment[c - 1] -= total_excess_credit_month;
-                    dollars_applied += total_excess_credit_month;
-                }
 				else if (m > 0 && m != excess_dollars_credit_month + 1)
 				{
 					monthly_ec_charges[m] -= monthly_cumulative_excess_dollars[m - 1];
 					payment[c - 1] -= monthly_cumulative_excess_dollars[m - 1];
 					dollars_applied += monthly_cumulative_excess_dollars[m - 1];
 				}
+                // Rollover credits at end of true-up period are applied after annual minimums below this section
 
                 if (monthly_ec_charges[m] < 0)
                 {
-                    if (m != excess_dollars_credit_month)
-                    {
-                        payment[c - 1] -= monthly_cumulative_excess_dollars[m] + monthly_ec_charges[m];
-                        dollars_applied += monthly_cumulative_excess_dollars[m] + monthly_ec_charges[m];
-                    }
-                    monthly_cumulative_excess_dollars[m] = -monthly_ec_charges[m];
+                    payment[c - 1] -= monthly_ec_charges[m];
+                    dollars_applied += monthly_ec_charges[m];
+                    monthly_cumulative_excess_dollars[m] -= monthly_ec_charges[m];
 					monthly_ec_charges[m] = 0;
 				}
 
-                if (monthly_ec_charges_gross[m] < dollars_applied && m != excess_dollars_credit_month) dollars_applied = monthly_ec_charges_gross[m];
+                if (monthly_ec_charges_gross[m] < dollars_applied) dollars_applied = monthly_ec_charges_gross[m];
                 net_billing_credits[m] = dollars_applied;
 			}
 			
@@ -2286,6 +2270,7 @@ public:
 								{
 									income[c] += monthly_cumulative_excess_dollars[m];
 									monthly_bill[m] -= monthly_cumulative_excess_dollars[m];
+                                    net_billing_credits[m] = monthly_cumulative_excess_dollars[m];
 								}
 							}
 							monthly_bill[m] += monthly_fixed_charges[m] + monthly_minimum_charges[m];

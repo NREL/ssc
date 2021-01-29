@@ -14,6 +14,9 @@ int dummy_for_gen = sprintf(gen_path, "%s/test/input_cases/utility_rate_data/gen
 char subhourly_gen_path[256];
 int dummy_for_subhourly_gen = sprintf(subhourly_gen_path, "%s/test/input_cases/utility_rate_data/gen_residential_1_year_15_min.csv", SSCDIR);
 
+char one_year_gen_path[256];
+int dummy_for_one_year_gen = sprintf(one_year_gen_path, "%s/test/input_cases/utility_rate_data/gen_1_yr_residential.csv", SSCDIR);
+
 char commercial_gen_path[256];
 int dummy_for_commercial_gen = sprintf(commercial_gen_path, "%s/test/input_cases/utility_rate_data/gen_25_year_commercial.csv", SSCDIR);
 
@@ -391,7 +394,7 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover) {
 
     ssc_number_t cost_with_system;
     ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
-    EXPECT_NEAR(-179.41, cost_with_system, 0.1);
+    EXPECT_NEAR(-150.02, cost_with_system, 0.01);
 
     int nrows;
     int ncols;
@@ -430,7 +433,7 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover_ap
 
     ssc_number_t cost_with_system;
     ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
-    EXPECT_NEAR(-206.61, cost_with_system, 0.1);
+    EXPECT_NEAR(-57.12, cost_with_system, 0.1);
 
     int nrows;
     int ncols;
@@ -455,10 +458,10 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover_ja
     ssc_data_set_number(data, "ur_nm_credit_month", 0); // January
 
     int analysis_period = 25;
-    ssc_data_set_number(data, "system_use_lifetime_output", 1);
+    ssc_data_set_number(data, "system_use_lifetime_output", 0);
     ssc_data_set_number(data, "analysis_period", analysis_period);
     set_array(data, "load", load_profile_path, 8760);
-    set_array(data, "gen", gen_path, 8760 * analysis_period);
+    set_array(data, "gen", one_year_gen_path, 8760);
 
     int status = run_module(data, "utilityrate5");
     EXPECT_FALSE(status);
@@ -469,7 +472,7 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover_ja
 
     ssc_number_t cost_with_system;
     ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
-    EXPECT_NEAR(-122.16, cost_with_system, 0.1);
+    EXPECT_NEAR(19.12, cost_with_system, 0.1);
 
     int nrows;
     int ncols;
@@ -479,7 +482,7 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover_ja
 
     // Receive rollover credits in January
     double jan_year_2 = bill_matrix.at((size_t)2, (size_t)0);
-    EXPECT_NEAR(-40.99, jan_year_2, 0.1);
+    EXPECT_NEAR(-175.92, jan_year_2, 0.1);
 }
 
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover_incorrect_month) {
