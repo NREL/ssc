@@ -43,7 +43,7 @@ struct lifetime_params {
         NONE, MODEL, TABLE
     };
     int calendar_choice;
-    double dt_hr;
+    double dt_hour;
 
     // K. Smith: Life Prediction model coefficients
     double calendar_q0; // unitless

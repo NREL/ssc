@@ -54,7 +54,7 @@ struct thermal_state {
 };
 
 struct thermal_params {
-    double dt_hr;
+    double dt_hour;
     double mass;                 // [kg]
     double surface_area;         // [m2] - exposed surface area
     double Cp;                   // [J/KgK] - battery specific heat capacity
@@ -261,7 +261,7 @@ struct battery_params {
         LEAD_ACID, LITHIUM_ION, VANADIUM_REDOX, IRON_FLOW
     };
     int chem;
-    double dt_hr;
+    double dt_hour;
     double nominal_energy;
     double nominal_voltage;
     std::shared_ptr<capacity_params> capacity;
@@ -287,11 +287,11 @@ struct battery_params {
 class battery_t {
 public:
     battery_t(double dt_hr, int chem,
-              capacity_t* capacity_model,
-              voltage_t* voltage_model,
-              lifetime_t* lifetime_model,
-              thermal_t* thermal_model,
-              losses_t* losses_model);
+            capacity_t* capacity_model,
+            voltage_t* voltage_model,
+            lifetime_t* lifetime_model,
+            thermal_t* thermal_model,
+            losses_t* losses_model);
 
     explicit battery_t(std::shared_ptr<battery_params> p);
 
@@ -313,9 +313,6 @@ public:
 
     // Returns the % replacement if on a capacity schedule. Returns 0 for "none" or "calendar"
     double getReplacementPercent();
-
-    // Change the timestep of the battery and its component models
-    void ChangeTimestep(double dt_hr);
 
     // Run all for single time step, updating all component model states and return the dispatched power [kW]
     double run(size_t lifetimeIndex, double &I);

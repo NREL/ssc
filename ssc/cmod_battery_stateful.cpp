@@ -278,7 +278,6 @@ std::shared_ptr<battery_params> create_battery_params(var_table *vt, double dt_h
     int chem;
     vt_get_int(vt, "chem", &chem);
     params->chem = static_cast<battery_params::CHEM>(chem);
-    params->dt_hr = dt_hr;
 
     // voltage
     auto voltage = params->voltage;
@@ -318,7 +317,7 @@ std::shared_ptr<battery_params> create_battery_params(var_table *vt, double dt_h
     vt_get_number(vt, "initial_SOC", &capacity->initial_SOC);
     vt_get_number(vt, "maximum_soc", &capacity->maximum_SOC);
     vt_get_number(vt, "minimum_soc", &capacity->minimum_SOC);
-    capacity->dt_hr = dt_hr;
+    params->dt_hour = dt_hr;
     if (params->chem == battery_params::LEAD_ACID) {
         vt_get_number(vt, "leadacid_tn", &capacity->leadacid.tn);
         vt_get_number(vt, "leadacid_qn", &capacity->leadacid.qn);
@@ -338,7 +337,7 @@ std::shared_ptr<battery_params> create_battery_params(var_table *vt, double dt_h
     auto lifetime = params->lifetime;
     vt_get_int(vt, "calendar_choice", &choice);
     lifetime->calendar_choice = static_cast<lifetime_params::CALENDAR_CHOICE>(choice);
-    lifetime->dt_hr = dt_hr;
+    lifetime->dt_hour = dt_hr;
     vt_get_matrix(vt, "cycling_matrix", lifetime->cycling_matrix);
     if (lifetime->calendar_choice == lifetime_params::CALENDAR_CHOICE::MODEL) {
         vt_get_number(vt, "calendar_q0", &lifetime->calendar_q0);
@@ -352,7 +351,7 @@ std::shared_ptr<battery_params> create_battery_params(var_table *vt, double dt_h
 
     // thermal
     auto thermal = params->thermal;
-    thermal->dt_hr = dt_hr;
+    thermal->dt_hour = dt_hr;
     thermal->option = thermal_params::VALUE;
     thermal->resistance = params->voltage->resistance;
     vt_get_number(vt, "mass", &thermal->mass);
@@ -390,7 +389,7 @@ std::shared_ptr<battery_params> create_battery_params(var_table *vt, double dt_h
 }
 
 cm_battery_stateful::cm_battery_stateful():
-        dt_hr(0),
+        dt_hour(0),
         control_mode(0){
     add_var_info(vtab_battery_stateful_inputs);
     add_var_info(vtab_battery_state);
@@ -402,9 +401,9 @@ cm_battery_stateful::cm_battery_stateful(var_table* vt) :
     try {
         if (!compute_module::verify("precheck input", SSC_INPUT))
             throw exec_error("battery_stateful", log(0)->text);
-        dt_hr = as_number("dt_hr");
+        dt_hour = as_number("dt_hr");
         control_mode = as_integer("control_mode");
-        params = create_battery_params(m_vartab, dt_hr);
+        params = create_battery_params(m_vartab, dt_hour);
         battery = std::unique_ptr<battery_t>(new battery_t(params));
         write_battery_state(battery->get_state(), m_vartab);
     }
@@ -417,7 +416,6 @@ void cm_battery_stateful::exec() {
     if (!battery)
         throw exec_error("battery_stateful", "Battery model must be initialized first.");
 
-    // Update state
     battery_state state;
     try {
         read_battery_state(state, m_vartab);
@@ -429,15 +427,6 @@ void cm_battery_stateful::exec() {
         throw runtime_error(err);
     }
 
-    // Update controls
-    control_mode = static_cast<MODE>(as_integer("control_mode"));
-    double control_dt_hr = as_float("dt_hr");
-    if (fabs(control_dt_hr - dt_hr) > 1e-7) {
-        dt_hr = control_dt_hr;
-        battery->ChangeTimestep(dt_hr);
-    }
-
-    // Simulate
     if (static_cast<MODE>(as_integer("control_mode")) == MODE::CURRENT) {
         double I = as_number("input_current");
         battery->runCurrent(I);
@@ -446,7 +435,6 @@ void cm_battery_stateful::exec() {
         double P = as_number("input_power");
         battery->runPower(P);
     }
-
     write_battery_state(battery->get_state(), m_vartab);
 }
 

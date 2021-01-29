@@ -115,9 +115,9 @@ std::ostream &operator<<(std::ostream &os, const lifetime_params &p) {
     os << R"("lifetime_params": { "cycling_matrix": )" << p.cycling_matrix;
 
     char buf[1024];
-    sprintf(buf, ", \"calendar_choice\": %d, \"dt_hr\": %.3f, \"calendar_q0\": %.3f, "
+    sprintf(buf, ", \"calendar_choice\": %d, \"dt_hour\": %.3f, \"calendar_q0\": %.3f, "
                  "\"calendar_a\": %.3f, \"calendar_b\": %.3f, "
-                 "\"calendar_c\": %.3f, ", p.calendar_choice, p.dt_hr, p.calendar_q0,
+                 "\"calendar_c\": %.3f, ", p.calendar_choice, p.dt_hour, p.calendar_q0,
             p.calendar_a, p.calendar_b, p.calendar_c);
     os << buf;
     os << R"("calendar_matrix": )" << p.calendar_matrix << " }";
@@ -150,10 +150,10 @@ std::ostream &operator<<(std::ostream &os, const thermal_state &p) {
 
 std::ostream &operator<<(std::ostream &os, const thermal_params &p) {
     char buf[1024];
-    sprintf(buf, "\"thermal_params\": { \"dt_hr\": %.3f, \"mass\": %.3f, \"surface_area\": %.3f, "
+    sprintf(buf, "\"thermal_params\": { \"dt_hour\": %.3f, \"mass\": %.3f, \"surface_area\": %.3f, "
                  "\"Cp\": %.3f, \"h\": %.3f, \"resistance\": %.3e, \"cap_vs_temp\": ",
-            p.dt_hr, p.mass, p.surface_area,
-            p.Cp, p.h, p.resistance);
+                 p.dt_hour, p.mass, p.surface_area,
+                 p.Cp, p.h, p.resistance);
     os << buf << p.cap_vs_temp;
     os.precision(3);
     os << R"(, "option": )" << p.option;
@@ -198,8 +198,8 @@ std::ostream &operator<<(std::ostream &os, const battery_state &p) {
 
 std::ostream &operator<<(std::ostream &os, const battery_params &p) {
     char buf[1024];
-    sprintf(buf, R"("battery_params": { "chem": %u, "dt_hr": %.3f, "nominal_voltage": %.3f, "nominal_energy": %.3f)",
-            p.chem, p.dt_hr, p.nominal_voltage, p.nominal_energy);
+    sprintf(buf, R"("battery_params": { "chem": %u, "dt_hour": %.3f, "nominal_voltage": %.3f, "nominal_energy": %.3f)",
+            p.chem, p.dt_hour, p.nominal_voltage, p.nominal_energy);
     os << buf << ", ";
     os << *p.capacity << ", ";
     os << *p.voltage << ", ";
