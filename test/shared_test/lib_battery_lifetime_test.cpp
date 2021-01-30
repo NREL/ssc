@@ -97,7 +97,7 @@ TEST_F(lib_battery_lifetime_cycle_test, runCycleLifetimeTestKokamProfile) {
 
 TEST_F(lib_battery_lifetime_cycle_test, runCycleLifetimeTestWithNoise) {
     int seed = 100;
-    double tol_high = 1.0; // Randomness will generate different results on different platforms
+    double tol_high = 1.6; // Randomness will generate different results on different platforms
 
     // Initialize a default_random_engine with the seed
     std::default_random_engine randomEngine(seed);
@@ -350,14 +350,33 @@ TEST_F(lib_battery_lifetime_test, runCycleLifetimeTestWithRestPeriod) {
 
 TEST_F(lib_battery_lifetime_nmc_test, updateCapacityTest) {
     size_t idx = 0;
+    double tol = 0.01;
+
+    //check lifetime_nmc_state_initialization
+    ASSERT_EQ(model->get_state().nmc_state->q_relative_neg, 100);
+    ASSERT_EQ(model->get_state().nmc_state->q_relative_li, 100);
+    ASSERT_EQ(model->get_state().nmc_state->b1_dt.size(), 0);
+    ASSERT_EQ(model->get_state().nmc_state->b2_dt.size(), 0);
+    ASSERT_EQ(model->get_state().nmc_state->b3_dt.size(), 0);
+
+    //check U_neg, and Voc functions (SOC as a fractional input)
+    ASSERT_NEAR(model->Uneg_computation(0.1), 0.242, tol);
+    ASSERT_NEAR(model->Voc_computation(0.1), 3.4679, tol);
+    ASSERT_NEAR(model->Uneg_computation(0.5), 0.1726, tol);
+    ASSERT_NEAR(model->Voc_computation(0.5), 3.6912, tol);
+    ASSERT_NEAR(model->Uneg_computation(0.9), 0.1032, tol);
+    ASSERT_NEAR(model->Voc_computation(0.9), 4.0818, tol);
+
+    // check number of cycles 
     while (idx < 876){
         model->runLifetimeModels(idx, true, 5,95, 25);
         model->runLifetimeModels(idx, true, 95, 5, 25);
 
         auto state = model->get_state();
 
-        // do tests here
         idx ++;
     }
+    
     ASSERT_EQ(model->get_state().n_cycles, 875);
+
 }

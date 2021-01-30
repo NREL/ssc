@@ -3,6 +3,7 @@
 
 #include <memory>
 
+
 struct calendar_cycle_params;
 
 struct lifetime_params {
@@ -24,6 +25,8 @@ struct lifetime_params {
 
 struct cycle_state;
 struct calendar_state;
+// Rohit -add states for lifetime_nmc
+struct lifetime_nmc_state;
 
 struct lifetime_state {
     double q_relative;                      // total lifetime relative capacity %
@@ -35,12 +38,17 @@ struct lifetime_state {
     // CALCYC model state
     std::shared_ptr<calendar_state> calendar;
     std::shared_ptr<cycle_state> cycle;
+    std::shared_ptr<lifetime_nmc_state> nmc_state;
 
     lifetime_state();
 
     lifetime_state(const lifetime_state &rhs);
 
     lifetime_state(const std::shared_ptr<cycle_state>& cyc, const std::shared_ptr<calendar_state>& cal);
+
+    // Rohit - define lifetime_state constructor with lifetime_nmc_state as parameter
+
+    lifetime_state(const std::shared_ptr<lifetime_nmc_state>& nmc);
 
     lifetime_state &operator=(const lifetime_state &rhs);
 

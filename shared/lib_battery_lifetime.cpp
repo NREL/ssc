@@ -23,6 +23,7 @@ lifetime_state::lifetime_state(){
     day_age_of_battery = 0;
     cycle = std::make_shared<cycle_state>();
     calendar = std::make_shared<calendar_state>();
+    nmc_state = std::make_shared<lifetime_nmc_state>();
 }
 
 lifetime_state::lifetime_state(const lifetime_state &rhs) :
@@ -41,6 +42,18 @@ lifetime_state::lifetime_state(const std::shared_ptr<cycle_state>& cyc, const st
     q_relative = fmin(cycle->q_relative_cycle, calendar->q_relative_calendar);
 }
 
+//Rohit - define constructor for lifetime_state with lifetime_nmc_state as parameter
+lifetime_state::lifetime_state(const std::shared_ptr<lifetime_nmc_state>& nmc) {
+    q_relative = 0;
+    n_cycles = 0;
+    range = 0;
+    average_range = 0;
+    day_age_of_battery = 0;
+    nmc_state = nmc;
+    q_relative = fmin(nmc_state->q_relative_li, nmc_state->q_relative_neg);
+}
+
+
 lifetime_state &lifetime_state::operator=(const lifetime_state &rhs) {
     if (this != &rhs) {
         q_relative = rhs.q_relative;
@@ -50,6 +63,7 @@ lifetime_state &lifetime_state::operator=(const lifetime_state &rhs) {
         day_age_of_battery = rhs.day_age_of_battery;
         *cycle = *rhs.cycle;
         *calendar = *rhs.calendar;
+        *nmc_state = *rhs.nmc_state;
     }
     return *this;
 }

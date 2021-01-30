@@ -105,6 +105,16 @@ std::ostream &operator<<(std::ostream &os, const calendar_state &p) {
     return os;
 }
 
+//Rohit
+std::ostream& operator<<(std::ostream& os, const lifetime_nmc_state& p) {
+    char buf[1024];
+    sprintf(buf, "\"lifetime_nmc_state\": { \"q_relative_li\": %.3f, "
+        "\"q_relative_neg\": %.3f } ",
+        p.q_relative_li, p.q_relative_neg);
+    os << buf ;
+    return os;
+}
+
 std::ostream &operator<<(std::ostream &os, const lifetime_state &p) {
     os.precision(3);
     char buf[1024];

@@ -24,6 +24,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <memory>
 
 #include "lib_battery_lifetime.h"
+#include "lib_battery_lifetime_nmc.h"
 #include "lib_battery_lifetime_calendar_cycle.h"
 
 extern double tolerance;
