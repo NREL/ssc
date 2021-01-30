@@ -347,7 +347,7 @@ void lifetime_calendar_t::initialize() {
     state->calendar->q_relative_calendar = 100;
     state->calendar->dq_relative_calendar_old = 0;
     if (params->cal_cyc->calendar_choice == calendar_cycle_params::CALENDAR_CHOICE::MODEL) {
-        dt_day = params->dt_hour / util::hours_per_day;
+        dt_day = params->dt_hr / util::hours_per_day;
         state->calendar->q_relative_calendar = params->cal_cyc->calendar_q0 * 100;
     }
     else if (params->cal_cyc->calendar_choice == calendar_cycle_params::CALENDAR_CHOICE::TABLE) {
@@ -358,7 +358,7 @@ void lifetime_calendar_t::initialize() {
 
 lifetime_calendar_t::lifetime_calendar_t(double dt_hour, const util::matrix_t<double>& calendar_matrix) {
     params = std::make_shared<lifetime_params>();
-    params->dt_hour = dt_hour;
+    params->dt_hr = dt_hour;
     params->cal_cyc->calendar_choice = calendar_cycle_params::CALENDAR_CHOICE::TABLE;
     params->cal_cyc->calendar_matrix = calendar_matrix;
     state = std::make_shared<lifetime_state>();
@@ -368,7 +368,7 @@ lifetime_calendar_t::lifetime_calendar_t(double dt_hour, const util::matrix_t<do
 
 lifetime_calendar_t::lifetime_calendar_t(double dt_hour, double q0, double a, double b, double c) {
     params = std::make_shared<lifetime_params>();
-    params->dt_hour = dt_hour;
+    params->dt_hr = dt_hour;
     params->cal_cyc->calendar_choice = calendar_cycle_params::CALENDAR_CHOICE::MODEL;
     params->cal_cyc->calendar_q0 = q0;
     params->cal_cyc->calendar_a = a;
@@ -409,7 +409,7 @@ double lifetime_calendar_t::capacity_percent() { return state->calendar->q_relat
 lifetime_state lifetime_calendar_t::get_state() { return *state; }
 
 double lifetime_calendar_t::runLifetimeCalendarModel(size_t lifetimeIndex, double T, double SOC) {
-    state->day_age_of_battery = (int)(lifetimeIndex / (util::hours_per_day / params->dt_hour));
+    state->day_age_of_battery = (int)(lifetimeIndex / (util::hours_per_day / params->dt_hr));
 
     if (params->cal_cyc->calendar_choice == calendar_cycle_params::CALENDAR_CHOICE::MODEL)
         runLithiumIonModel(T, SOC);
@@ -494,7 +494,7 @@ lifetime_calendar_cycle_t::lifetime_calendar_cycle_t(const util::matrix_t<double
                                                      const util::matrix_t<double> &calendar_matrix) {
     params = std::make_shared<lifetime_params>();
     params->model_choice = lifetime_params::CALCYC;
-    params->dt_hour = dt_hour;
+    params->dt_hr = dt_hour;
     params->cal_cyc->cycling_matrix = batt_lifetime_matrix;
     params->cal_cyc->calendar_choice = calendar_cycle_params::CALENDAR_CHOICE::TABLE;
     params->cal_cyc->calendar_matrix = calendar_matrix;
@@ -506,7 +506,7 @@ lifetime_calendar_cycle_t::lifetime_calendar_cycle_t(const util::matrix_t<double
                                                      double c) {
     params = std::make_shared<lifetime_params>();
     params->model_choice = lifetime_params::CALCYC;
-    params->dt_hour = dt_hour;
+    params->dt_hr = dt_hour;
     params->cal_cyc->cycling_matrix = batt_lifetime_matrix;
     params->cal_cyc->calendar_choice = calendar_cycle_params::CALENDAR_CHOICE::MODEL;
     params->cal_cyc->calendar_q0 = q0;
@@ -520,7 +520,7 @@ lifetime_calendar_cycle_t::lifetime_calendar_cycle_t(const util::matrix_t<double
 lifetime_calendar_cycle_t::lifetime_calendar_cycle_t(const util::matrix_t<double> &batt_lifetime_matrix, double dt_hour) {
     params = std::make_shared<lifetime_params>();
     params->model_choice = lifetime_params::CALCYC;\
-    params->dt_hour = dt_hour;
+    params->dt_hr = dt_hour;
     params->cal_cyc->cycling_matrix = batt_lifetime_matrix;
     params->cal_cyc->calendar_choice = calendar_cycle_params::CALENDAR_CHOICE::NONE;
 

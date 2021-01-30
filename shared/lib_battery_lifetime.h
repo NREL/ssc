@@ -7,7 +7,7 @@
 struct calendar_cycle_params;
 
 struct lifetime_params {
-    double dt_hour;
+    double dt_hr;
 
     enum MODEL_CHOICE {
         CALCYC,

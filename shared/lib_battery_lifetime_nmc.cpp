@@ -18,8 +18,7 @@ void lifetime_nmc_t::initialize() {
 lifetime_nmc_t::lifetime_nmc_t(double dt_hr) {
     params = std::make_shared<lifetime_params>();
     params->model_choice = lifetime_params::NMCNREL;
-    params->dt_hour = dt_hr;
-
+    params->dt_hr = dt_hr;
     state = std::make_shared<lifetime_state>();
     initialize();
 }
@@ -72,6 +71,8 @@ void lifetime_nmc_t::runLifetimeModels(size_t lifetimeIndex, bool charge_changed
                                        double T_battery) {
     if (charge_changed)
         cycle_model->rainflow(prev_DOD);
+
+    state->day_age_of_battery = (int)(lifetimeIndex / (util::hours_per_day / params->dt_hr));
 
 }
 
