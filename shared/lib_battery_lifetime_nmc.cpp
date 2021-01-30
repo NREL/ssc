@@ -9,6 +9,7 @@ void lifetime_nmc_t::initialize() {
     // do any state initialization here
     state->nmc_state->q_relative_li = 100;
     state->nmc_state->q_relative_neg = 100;
+    state->nmc_state->day_age_of_battery_float = 0;
     state->nmc_state->b1_dt.clear();
     state->nmc_state->b2_dt.clear();
     state->nmc_state->b3_dt.clear();

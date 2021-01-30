@@ -12,6 +12,8 @@ struct lifetime_nmc_state {
     double q_relative_li;                // %
     double q_relative_neg;
 
+    float day_age_of_battery_float; // keep track of age of battery with changing timestep
+
     // for complex cycling of battery, b1 = summagion of b1_dt * dt_day over a day
     // lifetime capacity updated after 24 hours elapse.
 
