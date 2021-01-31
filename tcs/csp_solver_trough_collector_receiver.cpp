@@ -1045,7 +1045,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 	external_conditions.inlet_fluid_flow = InletFluidFlow();	// not used
 	external_conditions.albedo = 0.2;
 
-	double T_min_rise = 3;		// don't run flat plate array if the temperature rise is small
+	double T_min_rise = 0.;		// doing away with min temp rise so fpc array is more predictable to controller
 	bool fp_array_is_on = false;
 	double T_in_hx_f = m_T_loop_in - 273.15;
 	double T_in_ptc_des = m_T_PTC_in_des - 273.15;
@@ -1061,77 +1061,60 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 		fp_array_is_on = false;
 	}
 	else {
-		// Setup MEQ
-		C_MEQ__mdot_fp c_eq(T_approach_hx_, T_in_hx_f, T_in_ptc_des,
+		double T_f_hx_avg_est = 0.5 * (T_in_hx_f + T_in_ptc_des);
+		double T_fp_avg_est = T_f_hx_avg_est + T_approach_hx_;
+		mdot_fp = m_m_dot_process_heat * m_htfProps.Cp(T_f_hx_avg_est + 273.15) / flat_plate_htf_.Cp(T_fp_avg_est + 273.15);		// choosing mdot_fp so C_R = 1
+
+		C_MEQ__T_in_fp c_eq(T_approach_hx_, mdot_fp, T_in_hx_f, T_in_ptc_des,
 			m_m_dot_process_heat, &flat_plate_array_, &heat_exchanger_, &m_htfProps,
 			&flat_plate_htf_, &timestamp, &external_conditions);
 		C_monotonic_eq_solver c_solver(c_eq);
-		double mdot_fp_max = flat_plate_array_.MaxMassFlow();
-		// Restricting the flate plate mass flow because it can converge both at near-design and at very (too) high values:
-		c_solver.settings(1.e-3, 75, 1.e-3, std::min(2. * m_m_dot_process_heat, mdot_fp_max), false);
+		c_solver.settings(1.e-3, 75, std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(), false);
 
-		// Get guesses for mdot_fp
-		double T_fp_avg_guess = 0.5 * (T_out_fp_target + T_in_fp_expected);
-		double mdot_fp_est = Q_fp_est * 1.e-3 / (flat_plate_htf_.Cp(T_fp_avg_guess + 273.15) * (T_out_fp_target - T_in_fp_expected));		// Cp is in [kJ/kg-K]
-		double mdot_fp_guess_lower = 0.5 * mdot_fp_est;
-		double mdot_fp_guess_higher = 1. * mdot_fp_est;
+		double T_in_fp_guess_lower = T_in_hx_f;
+		double T_in_fp_guess_higher = T_in_hx_f + 2. * T_approach_hx_;
 
-		// MEQ outputs
-		double mdot_fp_solved, tol_solved;
-		mdot_fp_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
+		double T_in_fp_solved, tol_solved;
+		T_in_fp_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
 		int iter_solved = -1;
 		int solver_code = 0;
 
 		try {
-			solver_code = c_solver.solve(mdot_fp_guess_lower, mdot_fp_guess_higher, 0., mdot_fp_solved, tol_solved, iter_solved);
+			solver_code = c_solver.solve(T_in_fp_guess_lower, T_in_fp_guess_higher, 0., T_in_fp_solved, tol_solved, iter_solved);
 		}
 		catch (C_csp_exception) {
-			throw(C_csp_exception("C_MEQ__mdot_fp received exception from mono equation solver"));
+			throw(C_csp_exception("C_MEQ__mdot_fp -> C_MEQ__T_in_fp received exception from mono equation solver"));
 		}
 
 		if (solver_code != C_monotonic_eq_solver::CONVERGED) {
-			// Check if the flat plate array can't hit the target but still helps raise the temperature
-			if (std::isnormal(c_eq.T_closest_f_hx_out_iter_) &&
-				//c_eq.T_max_f_hx_out_iter_ <= T_in_ptc_des &&
-				c_eq.T_closest_f_hx_out_iter_ - T_in_hx_f >= T_min_rise &&
-				c_eq.T_out_fp_at_T_closest_iter_ <= flat_plate_array_.MaxAllowedTemp())
-			{
-				fp_array_is_on = true;
-				T_f_hx_out = c_eq.T_closest_f_hx_out_iter_;
-				mdot_fp = c_eq.mdot_fp_at_T_closest_iter_;
-				T_out_fp = c_eq.T_out_fp_at_T_closest_iter_;
-			}
-			else {
-				fp_array_is_on = false;
-			}
+			fp_array_is_on = false;
 
-			//if (solver_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) <= 0.1) {
+			if (solver_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) <= 0.1) {
 				//mpc_csp_solver->error_msg = util::format("At time = %lg the C_MEQ__mdot_fp -> C_MEQ__T_in_fp iteration "
 				//    "to find the flat plate cold inlet HTF temperature only reached a convergence = %lg. "
 				//    "Check that results at this timestep are not unreasonably biasing total simulation results",
 				//    mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
 				//mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::NOTICE, mpc_csp_solver->error_msg);
-			//}
-			//else {
-			//}
-		}
-		else {
-			// Results
-			T_f_hx_out = c_eq.T_f_hx_out_;
-			mdot_fp = mdot_fp_solved;
-			T_out_fp = c_eq.T_out_fp_;
-
-			// Is there a max PTC inlet temperature?? Currently assuming no.
-
-			if (T_out_fp > flat_plate_array_.MaxAllowedTemp()) {
-				fp_array_is_on = false;
-			}
-			else if (T_f_hx_out - T_in_hx_f < T_min_rise) {	// flat plate array isn't heating the system temp. much
-				fp_array_is_on = false;
 			}
 			else {
-				fp_array_is_on = true;
+				//
 			}
+		}
+
+		// Results
+		T_f_hx_out = c_eq.T_f_hx_out_;
+		T_out_fp = c_eq.T_out_fp_;
+
+		// Is there a max PTC inlet temperature?? Currently assuming no.
+
+		if (T_out_fp > flat_plate_array_.MaxAllowedTemp()) {
+			fp_array_is_on = false;
+		}
+		else if (T_f_hx_out - T_in_hx_f < T_min_rise) {	// flat plate array isn't heating the system temp. much
+			fp_array_is_on = false;
+		}
+		else {
+			fp_array_is_on = true;
 		}
 	}
 
@@ -1143,6 +1126,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 		m_T_troughs_in = T_in_hx_f + 273.15;		// bypassing HX and flat plate array
 		m_m_dot_fp = 0.;
 	}
+
 
 	//////////////////////////////
 	// End of flat plate models //
