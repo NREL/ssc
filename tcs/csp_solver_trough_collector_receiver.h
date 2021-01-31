@@ -753,9 +753,9 @@ public:
 
 	{
 		fp_array_is_on_ = true;
-		T_max_f_hx_out_iter_ = -std::numeric_limits<double>::infinity();
-		T_out_fp_at_T_max_iter_ = std::numeric_limits<double>::quiet_NaN();
-		mdot_fp_at_T_max_iter_ = std::numeric_limits<double>::quiet_NaN();
+		T_closest_f_hx_out_iter_ = -std::numeric_limits<double>::infinity();
+		T_out_fp_at_T_closest_iter_ = std::numeric_limits<double>::quiet_NaN();
+		mdot_fp_at_T_closest_iter_ = std::numeric_limits<double>::quiet_NaN();
 	}
 
 	bool fp_array_is_on_;
@@ -765,9 +765,9 @@ public:
 	double q_dot_hx_;
 	double dT_hot_;
 	double dT_cold_;
-	double T_max_f_hx_out_iter_;		// max converged temperature found during iteration of outer MEQ
-	double T_out_fp_at_T_max_iter_;		// flat plate outlet temperature at max converged system temperature
-	double mdot_fp_at_T_max_iter_;		// flat plate mass flow at max converged system temperature
+	double T_closest_f_hx_out_iter_;		// max converged temperature found during iteration of outer MEQ
+	double T_out_fp_at_T_closest_iter_;		// flat plate outlet temperature at max converged system temperature
+	double mdot_fp_at_T_closest_iter_;		// flat plate mass flow at max converged system temperature
 	virtual int operator()(double mdot_fp /*kg/s*/, double* diff_T_out_f /*C*/);
 
 private:

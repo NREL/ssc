@@ -1066,8 +1066,9 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 			m_m_dot_process_heat, &flat_plate_array_, &heat_exchanger_, &m_htfProps,
 			&flat_plate_htf_, &timestamp, &external_conditions);
 		C_monotonic_eq_solver c_solver(c_eq);
-		double mdot_fp_max = flat_plate_array_.MaxMassFlow();		// for debugging, can remove
-		c_solver.settings(1.e-3, 75, 1.e-3, flat_plate_array_.MaxMassFlow(), false);
+		double mdot_fp_max = flat_plate_array_.MaxMassFlow();
+		// Restricting the flate plate mass flow because it can converge both at near-design and at very (too) high values:
+		c_solver.settings(1.e-3, 75, 1.e-3, std::min(2. * m_m_dot_process_heat, mdot_fp_max), false);
 
 		// Get guesses for mdot_fp
 		double T_fp_avg_guess = 0.5 * (T_out_fp_target + T_in_fp_expected);
@@ -1090,15 +1091,15 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 
 		if (solver_code != C_monotonic_eq_solver::CONVERGED) {
 			// Check if the flat plate array can't hit the target but still helps raise the temperature
-			if (std::isnormal(c_eq.T_max_f_hx_out_iter_) &&
-				c_eq.T_max_f_hx_out_iter_ <= T_in_ptc_des &&
-				c_eq.T_max_f_hx_out_iter_ - T_in_hx_f >= T_min_rise &&
-				c_eq.T_out_fp_at_T_max_iter_ <= flat_plate_array_.MaxAllowedTemp())
+			if (std::isnormal(c_eq.T_closest_f_hx_out_iter_) &&
+				//c_eq.T_max_f_hx_out_iter_ <= T_in_ptc_des &&
+				c_eq.T_closest_f_hx_out_iter_ - T_in_hx_f >= T_min_rise &&
+				c_eq.T_out_fp_at_T_closest_iter_ <= flat_plate_array_.MaxAllowedTemp())
 			{
 				fp_array_is_on = true;
-				T_f_hx_out = c_eq.T_max_f_hx_out_iter_;
-				mdot_fp = c_eq.mdot_fp_at_T_max_iter_;
-				T_out_fp = c_eq.T_out_fp_at_T_max_iter_;
+				T_f_hx_out = c_eq.T_closest_f_hx_out_iter_;
+				mdot_fp = c_eq.mdot_fp_at_T_closest_iter_;
+				T_out_fp = c_eq.T_out_fp_at_T_closest_iter_;
 			}
 			else {
 				fp_array_is_on = false;
@@ -5085,7 +5086,7 @@ int C_MEQ__mdot_fp::operator()(double mdot_fp /*kg/s*/, double *diff_T_out_f /*C
         m_m_dot_process_heat_, flat_plate_array_, heat_exchanger_, m_htfProps_,
         flat_plate_htf_, timestamp_, external_conditions_);
     C_monotonic_eq_solver c_solver(c_eq);
-    c_solver.settings(1.e-3, 75, 1.e-3, std::numeric_limits<double>::quiet_NaN(), false);
+    c_solver.settings(1.e-3, 75, std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(), false);
 
     double T_in_fp_guess_lower = m_T_loop_in_;
     double T_in_fp_guess_higher = m_T_loop_in_ + 2. * T_approach_;
@@ -5123,13 +5124,13 @@ int C_MEQ__mdot_fp::operator()(double mdot_fp /*kg/s*/, double *diff_T_out_f /*C
 	dT_hot_ = c_eq.dT_hot_;
 	dT_cold_ = c_eq.dT_cold_;
 
-	if (T_f_hx_out_ > T_max_f_hx_out_iter_ &&
-		T_f_hx_out_ <= T_f_hx_out_target_ &&
+	if (std::abs(T_f_hx_out_ - T_f_hx_out_target_) < std::abs(T_closest_f_hx_out_iter_ - T_f_hx_out_target_) &&
+		//T_f_hx_out_ <= T_f_hx_out_target_ &&
 		T_out_fp_ <= flat_plate_array_->MaxAllowedTemp())
 	{
-		T_max_f_hx_out_iter_ = T_f_hx_out_;
-		T_out_fp_at_T_max_iter_ = T_out_fp_;
-		mdot_fp_at_T_max_iter_ = mdot_fp;
+		T_closest_f_hx_out_iter_ = T_f_hx_out_;
+		T_out_fp_at_T_closest_iter_ = T_out_fp_;
+		mdot_fp_at_T_closest_iter_ = mdot_fp;
 	}
     *diff_T_out_f = T_f_hx_out_ - T_f_hx_out_target_;            //[C]
 
