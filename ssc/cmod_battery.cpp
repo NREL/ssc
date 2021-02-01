@@ -831,7 +831,19 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
         throw exec_error("battery", "Environment temperature input length must equal number of weather file records");
     }
 
-    thermal_model = new thermal_t(
+    if (batt_vars->batt_life_model == 1) {
+        thermal_model = new thermal_t(
+            dt_hr,
+            batt_vars->batt_mass, // [kg]
+            batt_vars->batt_surface_area, // [m]
+            batt_vars->batt_resistance, // [J/kgK]
+            batt_vars->batt_Cp,
+            batt_vars->batt_h_to_ambient,
+            batt_vars->T_room[0]
+        );
+    }
+    else {
+        thermal_model = new thermal_t(
             dt_hr,
             batt_vars->batt_mass, // [kg]
             batt_vars->batt_surface_area, // [m]
@@ -840,7 +852,9 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             batt_vars->batt_h_to_ambient,
             batt_vars->cap_vs_temp,
             batt_vars->T_room
-    );
+        );
+    }
+
 
     if (chem == battery_params::LEAD_ACID)
     {

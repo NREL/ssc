@@ -62,6 +62,7 @@ struct thermal_params {
     double h;                    // [W/m2/K] - general heat transfer coefficient
     double resistance;                    // [Ohm] - internal resistance
     util::matrix_t<double> cap_vs_temp;
+    bool analytical_model;
 
     enum OPTIONS {
         VALUE, SCHEDULE
@@ -80,6 +81,10 @@ public:
 
     thermal_t(double dt_hour, double mass, double surface_area, double R, double Cp, double h,
               const util::matrix_t<double> &c_vs_t, double T_room_C);
+
+    // constructor for analytical model to update capacity
+    thermal_t(double dt_hour, double mass, double surface_area, double R, double Cp, double h,
+        double T_room_C);
 
     explicit thermal_t(std::shared_ptr<thermal_params> p);
 
@@ -108,6 +113,11 @@ protected:
 
     std::shared_ptr<thermal_params> params;
     std::shared_ptr<thermal_state> state;
+
+    double Ea_d0_1 = 4126.0;
+    double Ea_d0_2 = 9752000;
+    double Rug = 8.314;
+    double T_ref = 298.15;
 
 private:
     void initialize();

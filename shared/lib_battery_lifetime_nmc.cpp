@@ -171,9 +171,17 @@ void lifetime_nmc_t::runLifetimeModels(size_t lifetimeIndex, bool charge_changed
 }
 
 double lifetime_nmc_t::estimateCycleDamage() {
-    return 0.1;
+    return 0;
 }
 
 void lifetime_nmc_t::replaceBattery(double percent_to_replace) {
-
+    state->day_age_of_battery = 0;
+    state->nmc_state->day_age_of_battery_float = 0;
+    state->nmc_state->dq_relative_li_old = 0;
+    state->nmc_state->dq_relative_neg_old = 0;
+    state->nmc_state->q_relative_li += percent_to_replace;
+    state->nmc_state->q_relative_neg += percent_to_replace;
+    state->nmc_state->q_relative_li = fmin(100, state->nmc_state->q_relative_li);
+    state->nmc_state->q_relative_neg = fmin(100, state->nmc_state->q_relative_neg);
+    state->q_relative = fmin(state->nmc_state->q_relative_li, state->nmc_state->q_relative_neg);
 }
