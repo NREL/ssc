@@ -36,8 +36,10 @@ struct voltage_params {
     };      // voltage model (0), voltage table (1)
 
     MODE voltage_choice;
-    int num_cells_series;        // number of cells in series
-    int num_strings;             // addition number in parallel
+//    int num_cells_series;        // number of cells in series
+//    int num_strings;             // addition number in parallel
+    double num_cells_series;        // number of cells in series
+    double num_strings;             // addition number in parallel
     double Vnom_default;         // nominal cell voltage [V]
     double resistance;           // internal cell resistance (Ohm)
     double dt_hr;

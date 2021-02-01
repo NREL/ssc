@@ -120,8 +120,10 @@ struct batt_variables
 	std::vector<double> batt_losses_idle;
 	std::vector<double> batt_losses;
 
-	int batt_computed_series;
-	int batt_computed_strings;
+//    int batt_computed_series;
+//    int batt_computed_strings;
+    size_t batt_computed_series;
+    size_t batt_computed_strings;
 
 	double batt_kw;
 	double batt_kwh;

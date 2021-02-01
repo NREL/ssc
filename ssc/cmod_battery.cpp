@@ -308,8 +308,10 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             }
 
             // Battery bank sizing
-            batt_vars->batt_computed_series = vt.as_integer("batt_computed_series");
-            batt_vars->batt_computed_strings = vt.as_integer("batt_computed_strings");
+//            batt_vars->batt_computed_series = vt.as_integer("batt_computed_series");
+//            batt_vars->batt_computed_strings = vt.as_integer("batt_computed_strings");
+            batt_vars->batt_computed_series = vt.as_unsigned_long("batt_computed_series");
+            batt_vars->batt_computed_strings = vt.as_unsigned_long("batt_computed_strings");
             batt_vars->batt_kwh = vt.as_double("batt_computed_bank_capacity");
             batt_vars->batt_kw = vt.as_double("batt_power_discharge_max_kwdc");
 
