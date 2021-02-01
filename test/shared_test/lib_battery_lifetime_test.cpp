@@ -358,6 +358,7 @@ TEST_F(lib_battery_lifetime_nmc_test, updateCapacityTest) {
     ASSERT_EQ(model->get_state().nmc_state->b1_dt.size(), 0);
     ASSERT_EQ(model->get_state().nmc_state->b2_dt.size(), 0);
     ASSERT_EQ(model->get_state().nmc_state->b3_dt.size(), 0);
+    ASSERT_EQ(model->get_state().nmc_state->day_age_of_battery_float, 0);
 
     //check U_neg, and Voc functions (SOC as a fractional input)
     ASSERT_NEAR(model->Uneg_computation(0.1), 0.242, tol);

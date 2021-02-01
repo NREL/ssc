@@ -11,6 +11,10 @@
 struct lifetime_nmc_state {
     double q_relative_li;                // %
     double q_relative_neg;
+    double dq_relative_li_old;
+    double dq_relative_neg_old;
+    double DOD_max;
+    int n_cycles_prev_day;
 
     float day_age_of_battery_float; // keep track of age of battery with changing timestep
 
@@ -20,6 +24,7 @@ struct lifetime_nmc_state {
     std::vector<double> b1_dt;
     std::vector<double> b2_dt;
     std::vector<double> b3_dt;
+    std::vector<double> c2_dt; 
 
     friend std::ostream& operator<<(std::ostream& os, const lifetime_nmc_state& p);
 };
@@ -49,6 +54,12 @@ public:
     /// Calculate open circuit voltage from SOC
     double Voc_computation(double SOC);
 
+    // Capacity degradation due to SEI 
+    double runLifetimeNMC_Qli();
+
+    // Capacity degradation due to cycles
+    double runLifetimeNMC_Qneg(double T_battery, double SOC);
+
 protected:
     std::unique_ptr<lifetime_cycle_t> cycle_model;
 
@@ -76,6 +87,10 @@ protected:
     double theta = 0.135;
     double tau_b3 = 5;
 
+    double c0_ref = 75.1;
+    double c2_ref = 0.0039193;
+    double Ea_c_2 = -48260;
+    double beta_c2 = 4.54;
 };
 
 
