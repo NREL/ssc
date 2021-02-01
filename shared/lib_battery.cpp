@@ -129,8 +129,8 @@ void thermal_t::replace_battery(size_t lifetimeIndex) {
 void thermal_t::calc_capacity() {
     double percent; 
     if (params->analytical_model) {
-        percent = 100 * exp(-(Ea_d0_1 / Rug) * (1 / state->T_batt - 1 / T_ref) -
-            (Ea_d0_2 / Rug) * pow((1 / state->T_batt - 1 / T_ref), 2));
+        percent = 100 * exp(-(Ea_d0_1 / Rug) * (1 /( state->T_batt+273) - 1 / T_ref) -
+            (Ea_d0_2 / Rug) * pow((1 / (state->T_batt+273) - 1 / T_ref), 2));
     }
     else
     {
