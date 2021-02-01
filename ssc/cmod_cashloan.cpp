@@ -26,9 +26,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_financial.h"
 #include "lib_util.h"
 #include "common_financial.h"
-#include <sstream>
-#include "../test/input_cases/sscapi.h"
 using namespace libfin;
+#include <sstream>
 
 static var_info vtab_cashloan[] = {
 /*   VARTYPE           DATATYPE          NAME                        LABEL                                  UNITS         META                      GROUP            REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
@@ -1041,7 +1040,8 @@ public:
         std::vector<double> charged_total = as_vector_double("batt_annual_charge_energy");
         std::vector<double> lcos_energy_discharged = as_vector_double("batt_annual_discharge_energy");
         for (int a = 0; a <= nyears; a++) {
-            cf.at(CF_charging_cost_grid, a) = charged_grid[a] * cf.at(CF_ppa_price, a) / 100;
+            //cf.at(CF_charging_cost_grid, a) = charged_grid[a] * cf.at(CF_ppa_price, a) / 100; //What is the BTM charge for charging from the grid (do we need to calculate based on utility rates?)
+            cf.at(CF_charging_cost_grid, a) = charged_grid[a] * 10 / 100; //using 0.10 $/kWh as a placeholder
             cf.at(CF_charging_cost_pv, a) = charged_pv[a] * lcoe_nom / 100;
             //charged_total[a] = charged_grid[a] + charged_pv[a];
             cf.at(CF_energy_charged_grid, a) = cf.at(CF_charging_cost_grid, a) + cf.at(CF_charging_cost_pv, a);
@@ -1062,7 +1062,7 @@ public:
         cf.at(CF_salvage_cost_lcos, nyears) = lcos_salvage_value;
         cf.at(CF_annual_cost_lcos, nyears) -= cf.at(CF_salvage_cost_lcos, nyears);
         double lcos_denominator = npv(CF_energy_discharged, nyears, nom_discount_rate);
-        double lcos_denominator_real = npv(CF_energy_discharged, nyears, disc_real);
+        double lcos_denominator_real = npv(CF_energy_discharged, nyears, real_discount_rate);
         //double lcos_numerator = (lcos_investment_cost + lcos_om_cost + lcos_charging_cost + lcos_salvage_value);
         double lcos_numerator = -(npv(CF_annual_cost_lcos, nyears, nom_discount_rate)) - cf.at(CF_annual_cost_lcos, 0);
         assign("npv_annual_costs_lcos", var_data((ssc_number_t)lcos_numerator));
