@@ -839,7 +839,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             batt_vars->batt_resistance, // [J/kgK]
             batt_vars->batt_Cp,
             batt_vars->batt_h_to_ambient,
-            batt_vars->T_room[0]
+            batt_vars->T_room
         );
     }
     else {

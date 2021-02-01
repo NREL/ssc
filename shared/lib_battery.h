@@ -86,6 +86,9 @@ public:
     thermal_t(double dt_hour, double mass, double surface_area, double R, double Cp, double h,
         double T_room_C);
 
+    thermal_t(double dt_hour, double mass, double surface_area, double R, double Cp, double h,
+         std::vector<double> T_room_C);
+
     explicit thermal_t(std::shared_ptr<thermal_params> p);
 
     thermal_t(const thermal_t &rhs);

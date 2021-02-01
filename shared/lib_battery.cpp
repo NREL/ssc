@@ -81,6 +81,19 @@ thermal_t::thermal_t(double dt_hour, double mass, double surface_area, double R,
     initialize();
 }
 
+thermal_t::thermal_t(double dt_hour, double mass, double surface_area, double R, double Cp, double h,
+     std::vector<double> T_room_C) {
+    util::matrix_t<double> c_vs_t;
+    double vals3[] = { -10, 60, 0, 80, 25, 100, 40, 100 };
+    c_vs_t.assign(vals3, 4, 2);
+    params = std::shared_ptr<thermal_params>(new thermal_params({ dt_hour, mass, surface_area, Cp, h, R, c_vs_t }));
+    params->option = thermal_params::SCHEDULE;
+    params->T_room_schedule = std::move(T_room_C);
+    params->analytical_model = true;
+    initialize();
+    state->T_room = params->T_room_schedule[0];
+}
+
 thermal_t::thermal_t(std::shared_ptr<thermal_params> p) {
     params = std::move(p);
     initialize();
