@@ -653,8 +653,8 @@ static var_info _cm_vtab_singleowner[] = {
     { SSC_OUTPUT,       SSC_NUMBER,     "project_return_aftertax_npv",            "Net present value (after-tax)",             "$",                   "", "Metrics", "*", "", "" },
 
     { SSC_OUTPUT, SSC_ARRAY, "cf_annual_costs", "Annual costs", "$", "", "LCOE calculations", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_annual_cost_lcos", "Annual storage costs", "$", "", "LCOE calculations", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_annual_discharge_lcos", "Annual storage discharge", "kWh", "", "LCOE calculations", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_annual_cost_lcos", "Annual storage costs", "$", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_annual_discharge_lcos", "Annual storage discharge", "kWh", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
 
     { SSC_OUTPUT, SSC_NUMBER, "npv_annual_costs", "Present value of annual costs", "$", "", "LCOE calculations", "*", "", "" },
     { SSC_OUTPUT, SSC_NUMBER, "npv_annual_costs_lcos", "Present value of annual storage costs", "$", "", "LCOE calculations", "", "", "" },
@@ -2991,55 +2991,48 @@ public:
 
     ///////////////////////////////////////////////////////////////////////
     //LCOS Calculations
-    //throw exec_error("singleowner", "Checkpoint 2");
-    double lcos_investment_cost = as_double("battery_total_cost_lcos"); //does not include replacement costs
-    cf.at(CF_annual_cost_lcos, 0) = -lcos_investment_cost;
-    //lcos_investment_cost += npv(CF_battery_replacement_cost, nyears, nom_discount_rate);
-    double lcos_om_cost = npv(CF_om_capacity1_expense, nyears, nom_discount_rate); //Todo: include variable om due to charging
-    std::vector<double> charged_grid = as_vector_double("batt_annual_charge_from_grid");
-    
-    std::vector<double> charged_pv = as_vector_double("batt_annual_charge_from_system");
-    std::vector<double> charged_total = as_vector_double("batt_annual_charge_energy");
-    std::vector<double> lcos_energy_discharged = as_vector_double("batt_annual_discharge_energy");
-    //throw exec_error("singleowner", "Checkpoint 3");
-    for (int a = 1; a < nyears; a++) {
-        cf.at(CF_charging_cost_grid,a) = charged_grid[a-1] * cf.at(CF_ppa_price, a)/100;
-        cf.at(CF_charging_cost_pv,a) = charged_pv[a-1] * lcoe_nom/100;
-        //charged_total[a] = charged_grid[a] + charged_pv[a];
-        cf.at(CF_energy_charged_grid, a) = cf.at(CF_charging_cost_grid, a) + cf.at(CF_charging_cost_pv, a);
-        cf.at(CF_om_production1_expense, a) *= charged_total[a];
-        cf.at(CF_energy_discharged, a) = lcos_energy_discharged[a];
-        cf.at(CF_annual_cost_lcos, a) = cf.at(CF_charging_cost_grid, a) +
-            cf.at(CF_charging_cost_pv, a) + cf.at(CF_om_fixed1_expense, a) -
-            cf.at(CF_om_capacity1_expense, a) + cf.at(CF_om_production1_expense, a) -
-            cf.at(CF_battery_replacement_cost, a);
-        
+    if (as_integer("en_batt") == 1) {
+        double lcos_investment_cost = as_double("battery_total_cost_lcos"); //does not include replacement costs
+        double lcos_om_cost = npv(CF_om_capacity1_expense, nyears, nom_discount_rate); //Todo: include variable om due to charging
+        std::vector<double> charged_grid = as_vector_double("batt_annual_charge_from_grid");
+        std::vector<double> charged_pv = as_vector_double("batt_annual_charge_from_system");
+        std::vector<double> charged_total = as_vector_double("batt_annual_charge_energy");
+        std::vector<double> lcos_energy_discharged = as_vector_double("batt_annual_discharge_energy");
+        for (int a = 0; a <= nyears; a++) {
+            cf.at(CF_charging_cost_grid, a) = charged_grid[a] * cf.at(CF_ppa_price, a) / 100;
+            cf.at(CF_charging_cost_pv, a) = charged_pv[a] * lcoe_nom / 100;
+            //charged_total[a] = charged_grid[a] + charged_pv[a];
+            cf.at(CF_energy_charged_grid, a) = cf.at(CF_charging_cost_grid, a) + cf.at(CF_charging_cost_pv, a);
+            cf.at(CF_om_production1_expense, a) *= charged_total[a];
+            cf.at(CF_energy_discharged, a) = lcos_energy_discharged[a];
+            cf.at(CF_annual_cost_lcos, a) = -cf.at(CF_charging_cost_grid, a) +
+                -cf.at(CF_charging_cost_pv, a) + -cf.at(CF_om_fixed1_expense, a) +
+                -cf.at(CF_om_capacity1_expense, a) + -cf.at(CF_om_production1_expense, a) +
+                -cf.at(CF_battery_replacement_cost, a);
+
+        }
+        cf.at(CF_annual_cost_lcos, 0) += -lcos_investment_cost; //add initial investment to year 0
+        lcos_om_cost += npv(CF_om_production1_expense, nyears, nom_discount_rate);
+        lcos_om_cost += npv(CF_om_fixed1_expense, nyears, nom_discount_rate);
+        double lcos_charging_cost = npv(CF_energy_charged_grid, nyears, nom_discount_rate);
+        double batt_salvage_value_frac = as_double("batt_salvage_percentage") * 0.01;
+        double lcos_salvage_value = lcos_investment_cost * batt_salvage_value_frac / pow(1 + nom_discount_rate, nyears + 1); //set as a percentage or direct salvage value
+        cf.at(CF_salvage_cost_lcos, nyears) = lcos_salvage_value;
+        cf.at(CF_annual_cost_lcos, nyears) -= cf.at(CF_salvage_cost_lcos, nyears);
+        double lcos_denominator = npv(CF_energy_discharged, nyears, nom_discount_rate);
+        double lcos_denominator_real = npv(CF_energy_discharged, nyears, disc_real);
+        //double lcos_numerator = (lcos_investment_cost + lcos_om_cost + lcos_charging_cost + lcos_salvage_value);
+        double lcos_numerator = -(npv(CF_annual_cost_lcos, nyears, nom_discount_rate)) - cf.at(CF_annual_cost_lcos, 0);
+        assign("npv_annual_costs_lcos", var_data((ssc_number_t)lcos_numerator));
+        save_cf(CF_annual_cost_lcos, nyears, "cf_annual_cost_lcos");
+        save_cf(CF_energy_discharged, nyears, "cf_annual_discharge_lcos");
+        double lcos_nom = lcos_numerator / lcos_denominator * 100.0; // cent/kWh
+        double lcos_real = lcos_numerator / lcos_denominator_real * 100.0; // cents/kWh
+        assign("lcos_nom", var_data((ssc_number_t)lcos_nom));
+        assign("lcos_real", var_data((ssc_number_t)lcos_real));
+        assign("npv_energy_lcos_nom", var_data((ssc_number_t)lcos_denominator));
+        assign("npv_energy_lcos_real", var_data((ssc_number_t)lcos_denominator_real));
     }
-    //throw exec_error("singleowner", "Checkpoint 4");
-    lcos_om_cost += npv(CF_om_production1_expense, nyears, nom_discount_rate);
-    lcos_om_cost += npv(CF_om_fixed1_expense, nyears, nom_discount_rate);
-    //throw exec_error("singleowner", "Checkpoint 5");
-    double lcos_charging_cost = npv(CF_energy_charged_grid, nyears, nom_discount_rate);
-    double batt_salvage_value_frac = as_double("batt_salvage_percentage") * 0.01;
-    double lcos_salvage_value = lcos_investment_cost * batt_salvage_value_frac / pow(1 + nom_discount_rate, nyears + 1); //set as a percentage or direct salvage value
-    cf.at(CF_salvage_cost_lcos, nyears) = lcos_salvage_value;
-    cf.at(CF_annual_cost_lcos, nyears) += cf.at(CF_salvage_cost_lcos, nyears);
-    double lcos_denominator = npv(CF_energy_discharged, nyears, nom_discount_rate);
-    lcos_investment_cost += npv(CF_battery_replacement_cost, nyears, nom_discount_rate);
-    cf.at(CF_energy_discharged, 0) = 0; //no discharge in year 0
-    double lcos_denominator_real = npv(CF_energy_discharged, nyears, disc_real);
-    //double lcos_numerator = (lcos_investment_cost + lcos_om_cost + lcos_charging_cost + lcos_salvage_value);
-    double lcos_numerator = (npv(CF_annual_cost_lcos, nyears, nom_discount_rate)) + cf.at(CF_annual_cost_lcos, 0);
-    assign("npv_annual_costs_lcos", var_data((ssc_number_t)lcos_numerator));
-    save_cf(CF_annual_cost_lcos, nyears, "cf_annual_cost_lcos");
-    save_cf(CF_energy_discharged, nyears, "cf_annual_discharge_lcos");
-    //throw exec_error("singleowner", "Checkpoint 5");
-    double lcos_nom = lcos_numerator / lcos_denominator * 100.0; // cent/kWh
-    double lcos_real = lcos_numerator / lcos_denominator_real * 100.0; // cents/kWh
-    assign("lcos_nom", var_data((ssc_number_t)lcos_nom));
-    assign("lcos_real", var_data((ssc_number_t)lcos_real));
-    assign("npv_energy_lcos_nom", var_data((ssc_number_t)lcos_denominator));
-    assign("npv_energy_lcos_real", var_data((ssc_number_t)lcos_denominator_real));
     /////////////////////////////////////////////////////////////////////////////////////////
 
 	// DSCR calculations
