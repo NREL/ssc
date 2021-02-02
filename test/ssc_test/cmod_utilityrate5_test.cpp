@@ -66,6 +66,32 @@ void setup_residential_rates(ssc_data_t& data) {
     ssc_data_set_matrix(data, "ur_dc_flat_mat", p_ur_dc_flat_mat, 12, 4);
 };
 
+void ensure_outputs_line_up(ssc_data_t& data) {
+    int nrows;
+    int ncols;
+    ssc_number_t* annual_bills = ssc_data_get_matrix(data, "utility_bill_w_sys_ym", &nrows, &ncols);
+    util::matrix_t<double> bill_matrix_ub(nrows, ncols);
+    bill_matrix_ub.assign(annual_bills, nrows, ncols);
+
+    ssc_number_t* annual_bills_ec = ssc_data_get_array(data, "elec_cost_with_system", &nrows);
+    std::vector<double> annual_bill_ec(nrows);
+    annual_bill_ec = util::array_to_vector(annual_bills_ec, nrows);
+
+    ssc_number_t* annual_bills_ub = ssc_data_get_array(data, "utility_bill_w_sys", &nrows);
+    std::vector<double> annual_bill_ub(nrows);
+    annual_bill_ub = util::array_to_vector(annual_bills_ub, nrows);
+
+    for (size_t i = 0; i < nrows; i++) {
+        double sum_over_year = 0;
+        for (size_t j = 0; j < ncols; j++) {
+            double utility_bill_w_sys_value = bill_matrix_ub.at(i, j);
+            sum_over_year += utility_bill_w_sys_value;
+        }
+        EXPECT_NEAR(sum_over_year, annual_bill_ec[i], 0.001); // These should align within one tenth of a cent
+        EXPECT_NEAR(sum_over_year, annual_bill_ub[i], 0.001);
+    }
+};
+
 TEST(URDBv7_cmod_utilityrate5_eqns, ElectricityRates_format_as_URDBv7){
     auto data = new var_table;
 
@@ -178,6 +204,8 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates) {
     int status = run_module(data, "utilityrate5");
     EXPECT_FALSE(status);
 
+    ensure_outputs_line_up(data);
+
     ssc_number_t cost_without_system;
     ssc_data_get_number(data, "elec_cost_without_system_year1", &cost_without_system);
     EXPECT_NEAR(771.8, cost_without_system, 0.1);
@@ -207,6 +235,8 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_net_metering_credits_in_may) {
 
     int status = run_module(data, "utilityrate5");
     EXPECT_FALSE(status);
+
+    ensure_outputs_line_up(data);
 
     ssc_number_t cost_without_system;
     ssc_data_get_number(data, "elec_cost_without_system_year1", &cost_without_system);
@@ -248,6 +278,8 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_net_metering_credits_in_may_with_r
     int status = run_module(data, "utilityrate5");
     EXPECT_FALSE(status);
 
+    ensure_outputs_line_up(data);
+
     ssc_number_t cost_without_system;
     ssc_data_get_number(data, "elec_cost_without_system_year1", &cost_without_system);
     EXPECT_NEAR(771.8, cost_without_system, 0.1);
@@ -288,6 +320,8 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_subhourly_gen) {
     int status = run_module(data, "utilityrate5");
     EXPECT_FALSE(status);
 
+    ensure_outputs_line_up(data);
+
     ssc_number_t cost_without_system;
     ssc_data_get_number(data, "elec_cost_without_system_year1", &cost_without_system);
     EXPECT_NEAR(771.8, cost_without_system, 0.1); // Same as hourly, good!
@@ -311,6 +345,8 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_subhourly_gen_and_load) 
     int status = run_module(data, "utilityrate5");
     EXPECT_FALSE(status);
 
+    ensure_outputs_line_up(data);
+
     ssc_number_t cost_without_system;
     ssc_data_get_number(data, "elec_cost_without_system_year1", &cost_without_system);
     EXPECT_NEAR(771.8, cost_without_system, 0.1); // Same as hourly, good!
@@ -323,7 +359,7 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_subhourly_gen_and_load) 
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_metering_credits) {
     ssc_data_t data = new var_table;
 
-    setup_residential_rates(data);
+    setup_residential_rates(data); // No sell rate in the defaults, so no credits
     ssc_data_set_number(data, "ur_metering_option", 1);
 
     int analysis_period = 1;
@@ -335,13 +371,24 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_metering_credits) {
     int status = run_module(data, "utilityrate5");
     EXPECT_FALSE(status);
 
+    ensure_outputs_line_up(data);
+
     ssc_number_t cost_without_system;
     ssc_data_get_number(data, "elec_cost_without_system_year1", &cost_without_system);
     EXPECT_NEAR(771.8, cost_without_system, 0.1); // Same as hourly, good!
 
     ssc_number_t cost_with_system;
     ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
-    EXPECT_NEAR(81.4, cost_with_system, 0.1); 
+    EXPECT_NEAR(81.4, cost_with_system, 0.1);
+
+    int nrows;
+    int ncols;
+    ssc_number_t* net_billing_credits = ssc_data_get_matrix(data, "nm_dollars_applied_ym", &nrows, &ncols);
+    util::matrix_t<double> credits_matrix(nrows, ncols);
+    credits_matrix.assign(net_billing_credits, nrows, ncols);
+
+    double dec_year_1_credits = credits_matrix.at((size_t)1, (size_t)11);
+    EXPECT_NEAR(0, dec_year_1_credits, 0.1);
 }
 
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing) {
@@ -359,6 +406,8 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing) {
     int status = run_module(data, "utilityrate5");
     EXPECT_FALSE(status);
 
+    ensure_outputs_line_up(data);
+
     ssc_number_t cost_without_system;
     ssc_data_get_number(data, "elec_cost_without_system_year1", &cost_without_system);
     EXPECT_NEAR(771.8, cost_without_system, 0.1); // Same as hourly, good!
@@ -366,8 +415,18 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing) {
     ssc_number_t cost_with_system;
     ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
     EXPECT_NEAR(441.4, cost_with_system, 0.1);
+
+    int nrows;
+    int ncols;
+    ssc_number_t* net_billing_credits = ssc_data_get_matrix(data, "net_billing_credits_ym", &nrows, &ncols);
+    util::matrix_t<double> credits_matrix(nrows, ncols);
+    credits_matrix.assign(net_billing_credits, nrows, ncols);
+
+    double dec_year_1_credits = credits_matrix.at((size_t)1, (size_t)11);
+    EXPECT_NEAR(0, dec_year_1_credits, 0.1);
 }
 
+// If these results change, validate with https://github.com/NREL/SAM-documentation/blob/master/Unit%20Testing/Utility%20Rates/SAM%202020.11.29%20Rollover%20Month%20Tests/2020.11.29_net_billing_carryover.xlsx
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover) {
     ssc_data_t data = new var_table;
 
@@ -388,6 +447,8 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover) {
     int status = run_module(data, "utilityrate5");
     EXPECT_FALSE(status);
 
+    ensure_outputs_line_up(data);
+
     ssc_number_t cost_without_system;
     ssc_data_get_number(data, "elec_cost_without_system_year1", &cost_without_system);
     EXPECT_NEAR(771.8, cost_without_system, 0.1); 
@@ -404,8 +465,19 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover) {
 
     double jan_year_2 = bill_matrix.at((size_t) 2, (size_t) 0);
     EXPECT_NEAR(32.54, jan_year_2, 0.1);
+
+    ssc_number_t* net_billing_credits = ssc_data_get_matrix(data, "net_billing_credits_ym", &nrows, &ncols);
+    util::matrix_t<double> credits_matrix(nrows, ncols);
+    credits_matrix.assign(net_billing_credits, nrows, ncols);
+
+    double dec_year_1_credits = credits_matrix.at((size_t)1, (size_t)11);
+    EXPECT_NEAR(181.77, dec_year_1_credits, 0.1);
+
+    double jan_year_2_credits = credits_matrix.at((size_t)2, (size_t)0);
+    EXPECT_NEAR(0, jan_year_2_credits, 0.1);
 }
 
+// If these results change, validate with https://github.com/NREL/SAM-documentation/blob/master/Unit%20Testing/Utility%20Rates/SAM%202020.11.29%20Rollover%20Month%20Tests/2020.11.29_net_billing_carryover.xlsx
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover_april_reset) {
     ssc_data_t data = new var_table;
 
@@ -427,6 +499,8 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover_ap
     int status = run_module(data, "utilityrate5");
     EXPECT_FALSE(status);
 
+    ensure_outputs_line_up(data);
+
     ssc_number_t cost_without_system;
     ssc_data_get_number(data, "elec_cost_without_system_year1", &cost_without_system);
     EXPECT_NEAR(771.8, cost_without_system, 0.1);
@@ -441,10 +515,27 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover_ap
     util::matrix_t<double> bill_matrix(nrows, ncols);
     bill_matrix.assign(annual_bills, nrows, ncols);
 
+    double apr_year_1 = bill_matrix.at((size_t)1, (size_t)3);
+    EXPECT_NEAR(-122.19, apr_year_1, 0.1);
+
     double jan_year_2 = bill_matrix.at((size_t)2, (size_t)0);
     EXPECT_NEAR(0.0, jan_year_2, 0.1);
+
+    ssc_number_t* net_billing_credits = ssc_data_get_matrix(data, "net_billing_credits_ym", &nrows, &ncols);
+    util::matrix_t<double> credits_matrix(nrows, ncols);
+    credits_matrix.assign(net_billing_credits, nrows, ncols);
+
+    double apr_year_1_credits = credits_matrix.at((size_t)1, (size_t)3);
+    EXPECT_NEAR(122.19, apr_year_1_credits, 0.1);
+
+    double dec_year_1_credits = credits_matrix.at((size_t)1, (size_t)11);
+    EXPECT_NEAR(32.21, dec_year_1_credits, 0.1);
+
+    double jan_year_2_credits = credits_matrix.at((size_t)2, (size_t)0);
+    EXPECT_NEAR(32.54, jan_year_2_credits, 0.1);
 }
 
+// If these results change, validate with https://github.com/NREL/SAM-documentation/blob/master/Unit%20Testing/Utility%20Rates/SAM%202020.11.29%20Rollover%20Month%20Tests/2020.11.29_net_billing_carryover.xlsx
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover_jan_reset) {
     ssc_data_t data = new var_table;
 
@@ -466,6 +557,8 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover_ja
     int status = run_module(data, "utilityrate5");
     EXPECT_FALSE(status);
 
+    ensure_outputs_line_up(data);
+
     ssc_number_t cost_without_system;
     ssc_data_get_number(data, "elec_cost_without_system_year1", &cost_without_system);
     EXPECT_NEAR(771.8, cost_without_system, 0.1);
@@ -483,6 +576,19 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover_ja
     // Receive rollover credits in January
     double jan_year_2 = bill_matrix.at((size_t)2, (size_t)0);
     EXPECT_NEAR(-175.92, jan_year_2, 0.1);
+
+    ssc_number_t* net_billing_credits = ssc_data_get_matrix(data, "net_billing_credits_ym", &nrows, &ncols);
+    util::matrix_t<double> credits_matrix(nrows, ncols);
+    credits_matrix.assign(net_billing_credits, nrows, ncols);
+
+    double apr_year_1_credits = credits_matrix.at((size_t)1, (size_t)3);
+    EXPECT_NEAR(24.65, apr_year_1_credits, 0.1);
+
+    double dec_year_1_credits = credits_matrix.at((size_t)1, (size_t)11);
+    EXPECT_NEAR(32.21, dec_year_1_credits, 0.1);
+
+    double jan_year_2_credits = credits_matrix.at((size_t)2, (size_t)0);
+    EXPECT_NEAR(175.92, jan_year_2_credits, 0.1);
 }
 
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover_incorrect_month) {
@@ -528,6 +634,8 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_buyall_sellall) {
     int status = run_module(data, "utilityrate5");
     EXPECT_FALSE(status);
 
+    ensure_outputs_line_up(data);
+
     ssc_number_t cost_without_system;
     ssc_data_get_number(data, "elec_cost_without_system_year1", &cost_without_system);
     EXPECT_NEAR(771.8, cost_without_system, 0.1); // Same as hourly, good!
@@ -551,6 +659,8 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_no_credit) {
 
     int status = run_module(data, "utilityrate5");
     EXPECT_FALSE(status);
+
+    ensure_outputs_line_up(data);
 
     ssc_number_t cost_without_system;
     ssc_data_get_number(data, "elec_cost_without_system_year1", &cost_without_system);
@@ -576,6 +686,8 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_annual_minimum) {
 
     int status = run_module(data, "utilityrate5");
     EXPECT_FALSE(status);
+
+    ensure_outputs_line_up(data);
 
     ssc_number_t cost_without_system;
     ssc_data_get_number(data, "elec_cost_without_system_year1", &cost_without_system);
@@ -632,6 +744,8 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_w_tiers) {
     int status = run_module(data, "utilityrate5");
     EXPECT_FALSE(status);
 
+    ensure_outputs_line_up(data);
+
     ssc_number_t cost_without_system;
     ssc_data_get_number(data, "elec_cost_without_system_year1", &cost_without_system);
     EXPECT_NEAR(1839.7, cost_without_system, 0.1);
@@ -686,6 +800,8 @@ TEST(cmod_utilityrate5_eqns, Test_Commercial_Demand_Charges) {
 
     int status = run_module(data, "utilityrate5");
     EXPECT_FALSE(status);
+
+    ensure_outputs_line_up(data);
 
     ssc_number_t cost_without_system;
     ssc_data_get_number(data, "elec_cost_without_system_year1", &cost_without_system);
