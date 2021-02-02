@@ -262,7 +262,7 @@ public:
         dtHour = 1.0;
 
         capacityModel = new capacity_lithium_ion_t(q, SOC_init, SOC_max, SOC_min, dtHour);
-        voltageModel = new voltage_dynamic_t(n_series, n_strings, Vnom_default, Vfull, Vexp, Vnom, Vcut, Qfull, Qexp, Qnom,
+        voltageModel = new voltage_dynamic_t(n_series, n_strings, Vnom_default, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom, Vcut, 
                                              C_rate, resistance, dtHour );
         lifetimeModel = new lifetime_t(cycleLifeMatrix, dtHour, 1.02, 2.66e-3, -7280, 930);
         thermalModel = new thermal_t(1.0, mass, surface_area, resistance, Cp, h, capacityVsTemperature, T_room);

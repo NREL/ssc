@@ -62,7 +62,7 @@ struct voltage_params {
 
 struct voltage_state {
     double cell_voltage;         // closed circuit voltage per cell [V]
-
+    double Q_full_mod;           // Cell capacity adjusted for cutoff voltage [Ah]
     friend std::ostream &operator<<(std::ostream &os, const voltage_state &p);
 
     bool operator==(const voltage_state &p);
@@ -166,7 +166,7 @@ private:
 class voltage_dynamic_t : public voltage_t {
 public:
     voltage_dynamic_t(int num_cells_series, int num_strings, double voltage, double Vfull,
-                      double Vexp, double Vnom, double Vcut, double Qfull, double Qexp, double Qnom,
+                      double Vexp, double Vnom, double Qfull, double Qexp, double Qnom, double Vcut,
                       double C_rate, double R, double dt_hr);
 
     voltage_dynamic_t(std::shared_ptr<voltage_params> p);

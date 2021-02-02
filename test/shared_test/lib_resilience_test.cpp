@@ -23,7 +23,7 @@ TEST_F(ResilienceTest_lib_resilience, VoltageCutoffParameterSetup)
                                         sprintf(buf, "dtHour, %f, Vfull, %f, Vexp, %f, Vnom, %f, Qfull, %f, Qexp, %f, Qnom, %f, C rate, %f, res, %f",
                                                 dtHour, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom, C_rate, resistance);
                                         auto voltageModel = new voltage_dynamic_t(n_series, n_strings, Vnom * 0.98,
-                                                                                  Vfull, Vexp, Vnom, Vcut, Qfull, Qexp, Qnom,
+                                                                                  Vfull, Vexp, Vnom, Qfull, Qexp, Qnom, Vcut,
                                                                                   C_rate, resistance, dtHour );
                                         try{
                                             double current1;

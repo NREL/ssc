@@ -36,6 +36,7 @@ bool voltage_state::operator==(const voltage_state &p) {
 void voltage_t::initialize() {
     state = std::make_shared<voltage_state>();
     state->cell_voltage = params->Vnom_default;
+    state->Q_full_mod = params->dynamic.Qfull;
 }
 
 voltage_t::voltage_t(int mode, int num_cells_series, int num_strings, double voltage, double dt_hour) {
@@ -266,16 +267,17 @@ typedef void (voltage_dynamic_t::*voltage_dynamic_fptr)(const double *, double *
 
 void voltage_dynamic_t::initialize() {
     if ((params->dynamic.Vfull < params->dynamic.Vexp) ||
-            (params->dynamic.Vexp < params->dynamic.Vnom)) {
-        throw std::runtime_error("voltage_dynamic_t error: Vfull must be greater than Vexp, which must be greater than Vnom");
+            (params->dynamic.Vexp < params->dynamic.Vnom) || (params->dynamic.Vnom < params->dynamic.Vcut)) {
+        throw std::runtime_error("voltage_dynamic_t error: For the electrochemical battery voltage model, voltage inputs must meet the requirement Vfull > Vexp > Vnom > Vcut.");
     }
     // assume fully charged, not the nominal value
     state->cell_voltage = params->dynamic.Vfull;
+    state->Q_full_mod = params->dynamic.Qfull;
     parameter_compute();
 }
 
 voltage_dynamic_t::voltage_dynamic_t(int num_cells_series, int num_strings, double voltage, double Vfull,
-                                     double Vexp, double Vnom, double Vcut, double Qfull, double Qexp, double Qnom,
+                                     double Vexp, double Vnom, double Qfull, double Qexp, double Qnom, double Vcut,
                                      double C_rate, double R, double dt_hr ) :
         voltage_t(voltage_params::MODEL, num_cells_series, num_strings, voltage, dt_hr) {
     params->dynamic.Vfull = Vfull;
@@ -287,7 +289,6 @@ voltage_dynamic_t::voltage_dynamic_t(int num_cells_series, int num_strings, doub
     params->dynamic.C_rate = C_rate;
     params->resistance = R;
     params->dynamic.Vcut = Vcut;
-    params->dynamic.Qfull_mod = Qfull;
     initialize();
 }
 
@@ -335,12 +336,6 @@ void voltage_dynamic_t::parameter_compute() {
     _K = ((params->dynamic.Vfull - params->dynamic.Vnom + _A * (std::exp(-_B0 * params->dynamic.Qnom) - 1)) *
           (params->dynamic.Qfull - params->dynamic.Qnom)) / (params->dynamic.Qnom); // [V] - polarization voltage
     _E0 = params->dynamic.Vfull + _K + params->resistance * I - _A;
-    if (params->dynamic.Vcut != 0.00) {// && params->dynamic.Qfull_mod == params->dynamic.Qfull) { //make sure Qfull_mod does not
-        double C = (-1 * params->dynamic.Vcut + _E0 - params->resistance * I + _A * (std::exp(-_B0 * params->dynamic.Qfull))) / _K;
-        double x = params->dynamic.Qfull / (C - 1);
-        //params->dynamic.Qfull += x;
-        //params->dynamic.Qfull_mod = params->dynamic.Qfull + x;
-    }
     if (_A < 0 || _B0 < 0 || _K < 0 || _E0 < 0) {
         char err[254];
         std::sprintf(err, "Error during calculation of battery voltage model parameters: negative value(s) found.\n"
@@ -357,8 +352,7 @@ void voltage_dynamic_t::set_initial_SOC(double init_soc) {
 double voltage_dynamic_t::voltage_model_tremblay_hybrid(double Q_cell, double I, double q0_cell) {
     double it = Q_cell - q0_cell;
     //double it = params->dynamic.Qfull_mod - q0_cell;
-    double Q_cell_mod, C, x;
-    if (params->dynamic.Vcut != 0) {
+    /*if (params->dynamic.Vcut != 0) {
         C = (-1 * params->dynamic.Vcut + _E0 - params->resistance * I + _A * exp(-_B0 * Q_cell)) / _K;
         x = Q_cell / (C - 1);
         Q_cell_mod = Q_cell + x;
@@ -368,11 +362,11 @@ double voltage_dynamic_t::voltage_model_tremblay_hybrid(double Q_cell, double I,
         Q_cell_mod = Q_cell;
         params->dynamic.Qfull_mod = 0;
         
-    }
+    }*/
     //->dynamic.Qfull_mod = Q_cell_mod;
     //double E = _E0 - _K * (Q_cell / (Q_cell - it)) + _A * exp(-_B0 * it);
     
-    double E = _E0 - _K * (Q_cell_mod / (Q_cell_mod - it)) + _A * exp(-_B0 * it);
+    double E = _E0 - _K * (state->Q_full_mod / (state->Q_full_mod - it)) + _A * exp(-_B0 * it);
     //double E = _E0 - _K * (params->dynamic.Qfull_mod / (params->dynamic.Qfull_mod - it)) + _A * exp(-_B0 * it);
     return E - params->resistance * I;
 }
@@ -388,11 +382,22 @@ void voltage_dynamic_t::updateVoltage(double q, double qmax, double I, const dou
     qmax /= params->num_strings;
     q /= params->num_strings;
     I /= params->num_strings;
+    double C, x, Q_cell_mod;
+    if (params->dynamic.Vcut != 0) {
+        C = (-1 * params->dynamic.Vcut + _E0 - params->resistance * I + _A * exp(-_B0 * qmax)) / _K;
+        x = qmax / (C - 1);
+        Q_cell_mod = qmax + x;
 
+    }
+    else {
+        Q_cell_mod = qmax;
+        
+    }
+    state->Q_full_mod = Q_cell_mod;
     state->cell_voltage = fmax(voltage_model_tremblay_hybrid(qmax, I, q), 0);
 }
 
-double voltage_dynamic_t::calculate_max_charge_w(double q, double qmax, double kelvin, double *max_current) {
+double voltage_dynamic_t::calculate_max_charge_w(double q, double qmax, double , double *max_current) {
     q /= params->num_strings;
     qmax /= params->num_strings;
     
@@ -405,30 +410,24 @@ double voltage_dynamic_t::calculate_max_charge_w(double q, double qmax, double k
 
 using namespace std::placeholders;
 
-double voltage_dynamic_t::calculate_max_discharge_w(double q, double qmax, double kelvin, double *max_current) {
+double voltage_dynamic_t::calculate_max_discharge_w(double q, double qmax, double , double *max_current) {
     q /= params->num_strings;
     qmax /= params->num_strings;
 
     double current = 0.;
-    double vol = params->dynamic.Vcut + 0.012;
+    double vol = params->dynamic.Vcut;
     //double vol = 0;
     double incr = q / 10;
     //double vol_diff = params->dynamic.Vcut - vol;
     double max_p = 0, max_I = 0, max_V = 0;
     double C, x;
-    while (current * params->dt_hr < q - tolerance && vol >= params->dynamic.Vcut + 0.012 ) {
+    while (current * params->dt_hr < q - tolerance && vol >= params->dynamic.Vcut) {
         vol = voltage_model_tremblay_hybrid(qmax, current, q - current * params->dt_hr);
         double p = current * vol;
-        if (p > max_p) {
+        if (p > max_p && vol >= params->dynamic.Vcut) {
             max_p = p;
             max_I = current;
             max_V = vol;
-            if (params->dynamic.Vcut != 0) {
-                C = (-1 * params->dynamic.Vcut + _E0 - params->resistance * q - current * params->dt_hr + _A * exp(-_B0 * qmax)) / _K;
-                x = qmax / (C - 1);
-                params->dynamic.Qfull_mod = x;
-                 
-            }
         }
         current += incr;
     }
@@ -447,7 +446,7 @@ double voltage_dynamic_t::calculate_current_for_target_w(double P_watts, double 
     solver_power = fabs(P_watts) / (params->num_cells_series * params->num_strings);
     solver_q = q / params->num_strings;
     solver_Q = qmax  / params->num_strings;
-    //solver_Q = params->dynamic.Qfull_mod / params->num_strings;
+    //solver_Q = state->Q_full_mod;
     std::function<void(const double *, double *)> f;
     double direction = 1.;
     if (P_watts > 0)
@@ -479,7 +478,8 @@ void voltage_dynamic_t::solve_current_for_charge_power(const double *x, double *
 void voltage_dynamic_t::solve_current_for_discharge_power(const double *x, double *f) {
     double I = x[0];
     double V = _E0 - _K * solver_Q / (solver_q - I * params->dt_hr) +
-               _A * exp(-_B0 * (solver_Q - (solver_q - I * params->dt_hr))) - params->resistance * I;
+             _A * exp(-_B0 * (solver_Q - (solver_q - I * params->dt_hr))) - params->resistance * I;
+    //double V = _E0 - _K * solver_Q / (solver_Q - (solver_Q - solver_q)) + _A * exp(-_B0 * I * params->dt_hr) - params->resistance * I;
     f[0] = I * V - solver_power;
 }
 

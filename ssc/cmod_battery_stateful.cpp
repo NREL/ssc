@@ -392,7 +392,7 @@ std::shared_ptr<battery_params> create_battery_params(var_table* vt, double dt_h
 }
 
 cm_battery_stateful::cm_battery_stateful() :
-    dt_hour(0),
+    dt_hr(0),
     control_mode(0) {
     add_var_info(vtab_battery_stateful_inputs);
     add_var_info(vtab_battery_state);
@@ -406,7 +406,7 @@ cm_battery_stateful::cm_battery_stateful(var_table* vt) :
             throw exec_error("battery_stateful", log(0)->text);
         dt_hr = as_number("dt_hr");
         control_mode = as_integer("control_mode");
-        params = create_battery_params(m_vartab, dt_hour);
+        params = create_battery_params(m_vartab, dt_hr);
         if ((params->voltage->dynamic.Vcut > params->voltage->dynamic.Vnom) || (params->voltage->dynamic.Vnom > params->voltage->dynamic.Vexp) || (params->voltage->dynamic.Vexp > params->voltage->dynamic.Vfull)) {
             throw exec_error("battery_stateful", "Vfull must be greater than Vexp, which must be greater than Vnom, which must be greater than Vcut");
         } //Not sure if this belongs here -MP

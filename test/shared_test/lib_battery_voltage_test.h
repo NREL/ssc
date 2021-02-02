@@ -50,7 +50,7 @@ protected:
         
 
         model = std::unique_ptr<voltage_t>(new voltage_dynamic_t(n_cells_series, n_strings,
-                                                                 voltage_nom, Vfull, Vexp, Vnom, Vcut, Qfull, Qexp, Qnom,
+                                                                 voltage_nom, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom, Vcut, 
                                                                  C_rate, R, dt_hr ));
         model->set_initial_SOC(50);
 
@@ -63,7 +63,7 @@ class voltage_dynamic_lib_battery_voltage_cutoff_test : public lib_battery_volta
 protected:
     double Vfull = 4.1;
     double Vcut = 0;
-    double Vcut2 = 3.0;
+    double Vcut2 = 2.7;
     double Vexp = 4.05;
     double Vnom = 3.4;
     double Qfull = 2.25;
@@ -76,10 +76,10 @@ protected:
         cap = std::unique_ptr<capacity_lithium_ion_t>(new capacity_lithium_ion_t(Qfull*n_strings, 50, 95, 5, dt_hr));
         cap2 = std::unique_ptr<capacity_lithium_ion_t>(new capacity_lithium_ion_t(Qfull * n_strings, 50, 95, 5, dt_hr));
         model = std::unique_ptr<voltage_t>(new voltage_dynamic_t(n_cells_series, n_strings,
-            voltage_nom, Vfull, Vexp, Vnom, Vcut, Qfull, Qexp, Qnom,
+            voltage_nom, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom, Vcut,
             C_rate, R, dt_hr ));
         model2 = std::unique_ptr<voltage_t>(new voltage_dynamic_t(n_cells_series, n_strings,
-            voltage_nom, Vfull, Vexp, Vnom, Vcut2, Qfull, Qexp, Qnom,
+            voltage_nom, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom, Vcut2,
             C_rate, R, dt_hr ));
         model->set_initial_SOC(50);
         model2->set_initial_SOC(50);
