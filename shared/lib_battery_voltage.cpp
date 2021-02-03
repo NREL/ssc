@@ -329,7 +329,6 @@ void voltage_dynamic_t::parameter_compute() {
     // Tremblay 2009 "A Generic Bettery Model for the Dynamic Simulation of Hybrid Electric Vehicles"
 //	double eta = 0.995;
     double I = params->dynamic.Qfull * params->dynamic.C_rate; // [A]
-    //params->dynamic.Qfull_mod = params->dynamic.Qfull;
     //_R = params->dynamic.Vnom*(1. - eta) / (params->dynamic.C_rate*params->dynamic.Qnom); // [Ohm]
     _A = params->dynamic.Vfull - params->dynamic.Vexp; // [V]
     _B0 = 3. / params->dynamic.Qexp;     // [1/Ah]
@@ -352,7 +351,6 @@ void voltage_dynamic_t::set_initial_SOC(double init_soc) {
 double voltage_dynamic_t::voltage_model_tremblay_hybrid(double Q_cell, double I, double q0_cell) {
     double it = Q_cell - q0_cell;
     double E = _E0 - _K * (state->Q_full_mod / (state->Q_full_mod - it)) + _A * exp(-_B0 * it);
-    //double E = _E0 - _K * (params->dynamic.Qfull_mod / (params->dynamic.Qfull_mod - it)) + _A * exp(-_B0 * it);
     return E - params->resistance * I;
 }
 
