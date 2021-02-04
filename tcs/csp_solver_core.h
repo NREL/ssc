@@ -1435,7 +1435,21 @@ public:
 		double q_dot_pc_target /*MWt*/, bool is_defocus, bool is_rec_outlet_to_hottank,
 		std::string op_mode_str, double& defocus_solved);
 
-    
+    /*class C_system_operating_modes
+    {
+
+
+    };
+
+    class C_operating_mode
+    {
+    protected:
+
+        C_csp_collector_receiver::E_csp_cr_modes m_cr_mode;
+        C_csp_power_cycle::E_csp_power_cycle_modes m_pc_mode;
+        C
+
+    };*/
 
 };
 
