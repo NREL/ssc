@@ -1449,12 +1449,12 @@ public:
             Q_DOT_STARTUP,
             Q_DOT_STANDBY,
             Q_DOT_MIN,
-            Q_DOT_MAX,
-            UNASSIGNED
+            Q_DOT_MAX
         };
 
     protected:
 
+        // Constructor arguments
         C_csp_collector_receiver::E_csp_cr_modes m_cr_mode;
         C_csp_power_cycle::E_csp_power_cycle_modes m_pc_mode;
         C_MEQ__m_dot_tes::E_m_dot_solver_modes m_solver_mode;
@@ -1464,16 +1464,29 @@ public:
         std::string m_op_mode_name;
 
         cycle_targets m_cycle_target_type;
+        // *****************************************
 
         bool m_is_mode_available;
 
     public:
 
-        C_operating_mode_core()
+        C_operating_mode_core(C_csp_collector_receiver::E_csp_cr_modes cr_mode,
+                                C_csp_power_cycle::E_csp_power_cycle_modes pc_mode,
+                                C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode,
+                                C_MEQ__timestep::E_timestep_target_modes step_target_mode,
+                                bool is_defocus,
+                                std::string op_mode_name,
+                                cycle_targets cycle_target_type)
         {
-            m_is_defocus = false;
+            m_cr_mode = cr_mode;
+            m_pc_mode = pc_mode;
+            m_solver_mode = solver_mode;
+            m_step_target_mode = step_target_mode;
+            m_is_defocus = is_defocus;
+            m_op_mode_name = op_mode_name;
+            m_cycle_target_type = cycle_target_type;
+
             m_is_mode_available = true;
-            m_cycle_target_type = UNASSIGNED;
         }
 
         virtual void handle_solve_error(int solve_error_code, double time /*hr*/) = 0;
@@ -1481,7 +1494,7 @@ public:
         bool solve(C_csp_solver* pc_csp_solver, bool is_rec_outlet_to_hottank,
             double q_dot_pc_on_target /*MWt*/, double q_dot_pc_startup /*MWt*/, double q_dot_pc_standby /*MWt*/,
             double q_dot_pc_min /*MWt*/, double q_dot_pc_max /*MWt*/,
-            double& defocus_solved)
+            double& defocus_solved, bool& is_op_mode_avail /*-*/)
         {
             double q_dot_pc_fixed = std::numeric_limits<double>::quiet_NaN();
 
@@ -1517,7 +1530,6 @@ public:
                 q_dot_pc_fixed = q_dot_pc_max;              //[MWt]
                 break;
             }
-            case UNASSIGNED:
             default:
                 throw(C_csp_exception("Unknown cycle target type"));
             }
@@ -1526,13 +1538,15 @@ public:
                 m_step_target_mode, q_dot_pc_fixed, m_is_defocus, is_rec_outlet_to_hottank,
                 m_op_mode_name, defocus_solved);
 
+            bool is_converged = true;
             if (solve_error_code != 0) {
                 handle_solve_error(solve_error_code, pc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time);
-                return false;
+                is_converged = false;
             }
-            else{
-                return true;
-            }
+
+            is_op_mode_avail = m_is_mode_available;
+
+            return is_converged;
         }
 
     };
@@ -1540,20 +1554,39 @@ public:
     class C_CR_OFF__PC_OFF__TES_OFF__AUX_OFF : public C_operating_mode_core
     {
     public:
-        C_CR_OFF__PC_OFF__TES_OFF__AUX_OFF()
-        {
-            m_cr_mode = C_csp_collector_receiver::OFF;
-            m_pc_mode = C_csp_power_cycle::OFF;
-            m_solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__0;
-            m_step_target_mode = C_MEQ__timestep::E_STEP_FIXED;
-            m_is_defocus = false;
-            m_op_mode_name = "CR_OFF__PC_OFF__TES_OFF__AUX_OFF";
-            m_cycle_target_type = QUIETNAN;
-        }
+        C_CR_OFF__PC_OFF__TES_OFF__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::OFF,
+            C_csp_power_cycle::OFF, C_MEQ__m_dot_tes::E__CR_OUT__0, C_MEQ__timestep::E_STEP_FIXED,
+            false, "CR_OFF__PC_OFF__TES_OFF__AUX_OFF", QUIETNAN) {}
 
         void handle_solve_error(int solve_error_code, double time /*hr*/)
         {
-            throw(C_csp_exception(util::format("At time = %lg, operating mode %s failed", time, m_op_mode_name), ""));
+            throw(C_csp_exception(util::format("At time = %lg ", time/3600.0) + " operating mode " + m_op_mode_name + " failed", ""));
+        }
+    };
+
+    class C_CR_SU__PC_OFF__TES_OFF__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_SU__PC_OFF__TES_OFF__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::STARTUP,
+            C_csp_power_cycle::OFF, C_MEQ__m_dot_tes::E__CR_OUT__0, C_MEQ__timestep::E_STEP_FROM_COMPONENT,
+            false, "CR_SU__PC_OFF__TES_OFF", QUIETNAN) {}
+
+        void handle_solve_error(int solve_error_code, double time /*hr*/)
+        {
+            m_is_mode_available = false;
+        }
+    };
+
+    class C_CR_ON__PC_SU__TES_OFF__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_ON__PC_SU__TES_OFF__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::ON,
+            C_csp_power_cycle::STARTUP, C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT, C_MEQ__timestep::E_STEP_FROM_COMPONENT,
+            false, "CR_ON__PC_SU__TES_OFF__AUX_OFF", QUIETNAN) {}
+
+        void handle_solve_error(int solve_error_code, double time /*hr*/)
+        {
+            m_is_mode_available = false;
         }
     };
 
@@ -1562,6 +1595,8 @@ public:
     private:
 
         C_CR_OFF__PC_OFF__TES_OFF__AUX_OFF mc_CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+        C_CR_SU__PC_OFF__TES_OFF__AUX_OFF mc_CR_SU__PC_OFF__TES_OFF__AUX_OFF;
+        C_CR_ON__PC_SU__TES_OFF__AUX_OFF mc_CR_ON__PC_SU__TES_OFF__AUX_OFF;
 
     public:
 
@@ -1648,18 +1683,20 @@ public:
         C_system_operating_modes()
         {
             m_operating_modes_map[E_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF] = &mc_CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+            m_operating_modes_map[E_operating_modes::CR_SU__PC_OFF__TES_OFF__AUX_OFF] = &mc_CR_SU__PC_OFF__TES_OFF__AUX_OFF;
+            m_operating_modes_map[E_operating_modes::CR_ON__PC_SU__TES_OFF__AUX_OFF] = &mc_CR_ON__PC_SU__TES_OFF__AUX_OFF;
 
         }
 
         bool solve(C_system_operating_modes::E_operating_modes op_mode, C_csp_solver* pc_csp_solver, bool is_rec_outlet_to_hottank,
             double q_dot_pc_on_target /*MWt*/, double q_dot_pc_startup /*MWt*/, double q_dot_pc_standby /*MWt*/,
             double q_dot_pc_min /*MWt*/, double q_dot_pc_max /*MWt*/,
-            double& defocus_solved)
+            double& defocus_solved, bool& is_op_mode_avail /*-*/)
         {
             return m_operating_modes_map[op_mode]->solve(pc_csp_solver, is_rec_outlet_to_hottank,
                 q_dot_pc_on_target, q_dot_pc_startup, q_dot_pc_standby,
                 q_dot_pc_min, q_dot_pc_max,
-                defocus_solved);
+                defocus_solved, is_op_mode_avail);
         }
 
         C_operating_mode_core* get_operating_mode_pointer(E_operating_modes op_mode)
@@ -1669,6 +1706,7 @@ public:
     };
 
     C_system_operating_modes mc_operating_modes;
+
 };
 
 
