@@ -215,7 +215,7 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates) {
     EXPECT_NEAR(-11.9, cost_with_system, 0.1);
 
     int length;
-    ssc_number_t* excess_dollars = ssc_data_get_array(data, "year1_nm_dollars_applied", &length);
+    ssc_number_t* excess_dollars = ssc_data_get_array(data, "year1_true_up_credits", &length);
     float dec_dollars = excess_dollars[length - 1];
     EXPECT_NEAR(75.9, dec_dollars, 0.1);
 }
@@ -247,7 +247,7 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_net_metering_credits_in_may) {
     EXPECT_NEAR(36.6, cost_with_system, 0.1);
 
     int length;
-    ssc_number_t* excess_dollars = ssc_data_get_array(data, "year1_nm_dollars_applied", &length);
+    ssc_number_t* excess_dollars = ssc_data_get_array(data, "year1_true_up_credits", &length);
     float may_dollars = excess_dollars[credit_month];
     EXPECT_NEAR(50.28, may_dollars, 0.1);
 
@@ -466,12 +466,16 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover) {
     double jan_year_2 = bill_matrix.at((size_t) 2, (size_t) 0);
     EXPECT_NEAR(32.54, jan_year_2, 0.1);
 
+    ssc_number_t* true_up_credits = ssc_data_get_matrix(data, "true_up_credits_ym", &nrows, &ncols);
+    util::matrix_t<double> true_up_credits_matrix(nrows, ncols);
+    true_up_credits_matrix.assign(true_up_credits, nrows, ncols);
+
+    double dec_year_1_credits = true_up_credits_matrix.at((size_t)1, (size_t)11);
+    EXPECT_NEAR(181.77, dec_year_1_credits, 0.1);
+
     ssc_number_t* net_billing_credits = ssc_data_get_matrix(data, "net_billing_credits_ym", &nrows, &ncols);
     util::matrix_t<double> credits_matrix(nrows, ncols);
     credits_matrix.assign(net_billing_credits, nrows, ncols);
-
-    double dec_year_1_credits = credits_matrix.at((size_t)1, (size_t)11);
-    EXPECT_NEAR(181.77, dec_year_1_credits, 0.1);
 
     double jan_year_2_credits = credits_matrix.at((size_t)2, (size_t)0);
     EXPECT_NEAR(0, jan_year_2_credits, 0.1);
@@ -525,14 +529,18 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover_ap
     util::matrix_t<double> credits_matrix(nrows, ncols);
     credits_matrix.assign(net_billing_credits, nrows, ncols);
 
-    double apr_year_1_credits = credits_matrix.at((size_t)1, (size_t)3);
-    EXPECT_NEAR(122.19, apr_year_1_credits, 0.1);
-
     double dec_year_1_credits = credits_matrix.at((size_t)1, (size_t)11);
     EXPECT_NEAR(32.21, dec_year_1_credits, 0.1);
 
     double jan_year_2_credits = credits_matrix.at((size_t)2, (size_t)0);
     EXPECT_NEAR(32.54, jan_year_2_credits, 0.1);
+
+    ssc_number_t* true_up_credits = ssc_data_get_matrix(data, "true_up_credits_ym", &nrows, &ncols);
+    util::matrix_t<double> true_up_credits_matrix(nrows, ncols);
+    true_up_credits_matrix.assign(true_up_credits, nrows, ncols);
+
+    double apr_year_1_credits = true_up_credits_matrix.at((size_t)1, (size_t)3);
+    EXPECT_NEAR(122.19, apr_year_1_credits, 0.1);
 }
 
 // If these results change, validate with https://github.com/NREL/SAM-documentation/blob/master/Unit%20Testing/Utility%20Rates/SAM%202020.11.29%20Rollover%20Month%20Tests/2020.11.29_net_billing_carryover.xlsx
@@ -587,7 +595,11 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover_ja
     double dec_year_1_credits = credits_matrix.at((size_t)1, (size_t)11);
     EXPECT_NEAR(32.21, dec_year_1_credits, 0.1);
 
-    double jan_year_2_credits = credits_matrix.at((size_t)2, (size_t)0);
+    ssc_number_t* true_up_credits = ssc_data_get_matrix(data, "true_up_credits_ym", &nrows, &ncols);
+    util::matrix_t<double> true_up_credits_matrix(nrows, ncols);
+    true_up_credits_matrix.assign(true_up_credits, nrows, ncols);
+
+    double jan_year_2_credits = true_up_credits_matrix.at((size_t)2, (size_t)0);
     EXPECT_NEAR(175.92, jan_year_2_credits, 0.1);
 }
 
@@ -635,11 +647,15 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover_lo
     util::matrix_t<double> credits_matrix(nrows, ncols);
     credits_matrix.assign(net_billing_credits, nrows, ncols);
 
-    double dec_year_1_credits = credits_matrix.at((size_t)1, (size_t)11);
-    EXPECT_NEAR(21.80, dec_year_1_credits, 0.1);
-
     double jan_year_2_credits = credits_matrix.at((size_t)2, (size_t)0);
     EXPECT_NEAR(0, jan_year_2_credits, 0.1);
+
+    ssc_number_t* true_up_credits = ssc_data_get_matrix(data, "true_up_credits_ym", &nrows, &ncols);
+    util::matrix_t<double> true_up_credits_matrix(nrows, ncols);
+    true_up_credits_matrix.assign(true_up_credits, nrows, ncols);
+
+    double dec_year_1_credits = true_up_credits_matrix.at((size_t)1, (size_t)11);
+    EXPECT_NEAR(21.80, dec_year_1_credits, 0.1);
 }
 
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover_incorrect_month) {
