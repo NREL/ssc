@@ -102,6 +102,8 @@ public:
 
 	double get_vol_frac();
 
+    double get_mass_avail();    //[kg]
+
 	void init(HTFProperties htf_class_in, double V_tank /*m3*/, 
 		double h_tank /*m*/, double h_min /*m*/, double u_tank /*W/m2-K*/, 
 		double tank_pairs /*-*/, double T_htr /*K*/, double max_q_htr /*MWt*/, 
@@ -110,7 +112,7 @@ public:
 
 	double m_dot_available(double f_unavail, double timestep);	
 
-	void energy_balance(double timestep /*s*/, double m_dot_in, double m_dot_out, 
+	void energy_balance(double timestep /*s*/, double m_dot_in /*kg/s*/, double m_dot_out /*kg/s*/,
         double T_in /*K*/, double T_amb /*K*/, 
 		double &T_ave /*K*/, double &q_heater /*MW*/, double &q_dot_loss /*MW*/);
 
@@ -141,10 +143,12 @@ private:
 
 	// Member data
 	bool m_is_tes;
+    bool m_is_cr_to_cold_tank_allowed;
 	double m_vol_tank;			//[m3] volume of *one temperature*, i.e. vol_tank = total cold storage = total hot storage
 	double m_V_tank_active;		//[m^3] available volume (considering h_min) of *one temperature*
 	double m_q_pb_design;		//[Wt] thermal power to power cycle at design
 	double m_V_tank_hot_ini;	//[m^3] Initial volume in hot storage tank
+    double m_mass_total_active; //[kg] Total HTF mass at design point inlet/outlet T
 
 	double m_cp_field_avg;		//[kJ/kg-K]
 
@@ -164,7 +168,8 @@ public:
 		E_TES_T_COLD,		//[C] TES final cold tank temperature
 		E_M_DOT_TANK_TO_TANK,	//[kg/s] Tank to tank mass flow rate (indirect TES)
 		E_MASS_COLD_TANK,	//[kg] Mass in cold tank at end of timestep
-		E_MASS_HOT_TANK		//[kg] Mass in hot tank at end of timestep
+		E_MASS_HOT_TANK,		//[kg] Mass in hot tank at end of timestep
+        E_HOT_TANK_HTF_PERC_FINAL   //[%] Final percent fill of available hot tank mass
 	};
 
 	C_csp_reported_outputs mc_reported_outputs;
@@ -266,6 +271,8 @@ public:
     
 	virtual bool does_tes_exist();
 
+    virtual bool is_cr_to_cold_allowed();
+
 	virtual double get_hot_temp();
 
 	virtual double get_cold_temp();
@@ -280,6 +287,8 @@ public:
 
     virtual double get_degradation_rate();  // s^-1
 
+	virtual void reset_storage_to_initial_state();
+
 	virtual void discharge_avail_est(double T_cold_K, double step_s, 
 		double &q_dot_dc_est /*MWt*/, double &m_dot_field_est /*kg/s*/, double &T_hot_field_est /*K*/);
 
@@ -293,9 +302,10 @@ public:
 		double & q_dot_loss /*MWt*/, double & q_dot_dc_to_htf /*MWt*/, double & q_dot_ch_from_htf /*MWt*/,
 		double & T_hot_ave /*K*/, double & T_cold_ave /*K*/, double & T_hot_final /*K*/, double & T_cold_final /*K*/);
 
-    virtual int solve_tes_off_design(double timestep /*s*/, double  T_amb /*K*/, double m_dot_field /*kg/s*/, double m_dot_cycle /*kg/s*/,
-        double T_field_htf_out_hot /*K*/, double T_cycle_htf_out_cold /*K*/,
-        double & T_cycle_htf_in_hot /*K*/, double & T_field_htf_in_cold /*K*/,
+    virtual int solve_tes_off_design(double timestep /*s*/, double  T_amb /*K*/,
+        double m_dot_cr_to_cv_hot /*kg/s*/, double m_dot_cv_hot_to_cycle /*kg/s*/, double m_dot_cr_to_cv_cold /*kg/s*/,
+        double T_cr_out_hot /*K*/, double T_cycle_out_cold /*K*/,
+        double & T_cycle_htf_in_hot /*K*/, double & T_cr_in_cold /*K*/,
 		C_csp_tes::S_csp_tes_outputs& outputs);	
 
 	bool charge(double timestep /*s*/, double T_amb /*K*/, double m_dot_htf_in /*kg/s*/, 
@@ -305,6 +315,8 @@ public:
 		double & T_hot_ave /*K*/, double & T_cold_ave /*K*/, double & T_hot_final /*K*/, double & T_cold_final /*K*/);
 
 	virtual void converged();
+
+    void get_final_from_converged(double& f_V_hot /*-*/, double& T_hot_tank /*K*/, double& T_cold_tank /*K*/);
 
 	virtual void write_output_intervals(double report_time_start,
 		const std::vector<double>& v_temp_ts_time_end, double report_time_end);
@@ -520,6 +532,8 @@ public:
 	double get_max_charge_energy(); //MWh
 
 	double get_degradation_rate();  // s^-1
+
+    virtual void reset_storage_to_initial_state();
 
 	void discharge_avail_est(double T_cold_K, double step_s, double &q_dot_dc_est, double &m_dot_field_est, double &T_hot_field_est);
 
