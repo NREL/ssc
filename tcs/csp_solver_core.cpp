@@ -53,13 +53,6 @@ double C_timestep_fixed::get_step()
 	return ms_timestep.m_step;
 }
 
-//C_csp_solver::C_system_operating_modes::C_system_operating_modes()
-//{
-//    m_operating_modes_map[E_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF] = &mc_CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-//
-//    return;
-//}
-
 void C_csp_solver::C_csp_solver_kernel::init(C_csp_solver::S_sim_setup & sim_setup, double wf_step /*s*/, double baseline_step /*s*/, C_csp_messages & csp_messages)
 {
 	ms_sim_setup = sim_setup;
@@ -1876,7 +1869,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                     throw(C_csp_exception(err_msg, "CSP Solver"));
                 }
 
-                int cr_mode = C_csp_collector_receiver::ON;
+                C_csp_collector_receiver::E_csp_cr_modes cr_mode = C_csp_collector_receiver::ON;
                 C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::ON;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__TO_PC__PC_MAX;
                 C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FIXED;
@@ -1918,7 +1911,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 					throw(C_csp_exception(err_msg, "CSP Solver"));
 				}
 
-                int cr_mode = C_csp_collector_receiver::ON;
+                C_csp_collector_receiver::E_csp_cr_modes cr_mode = C_csp_collector_receiver::ON;
                 C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::STARTUP_CONTROLLED;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__TO_PC__ITER_M_DOT_SU;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FROM_COMPONENT;
@@ -1949,7 +1942,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
             case CR_ON__PC_RM_LO__TES_OFF__AUX_OFF:
             {
-                int cr_mode = C_csp_collector_receiver::ON;
+                C_csp_collector_receiver::E_csp_cr_modes cr_mode = C_csp_collector_receiver::ON;
                 C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::ON;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FIXED;
@@ -1998,7 +1991,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
                 // Set Solved Controller Variables Here (that won't be reset in this operating mode)
 
-                int cr_mode = C_csp_collector_receiver::ON;
+                C_csp_collector_receiver::E_csp_cr_modes cr_mode = C_csp_collector_receiver::ON;
                 C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::ON;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FIXED;
@@ -2056,7 +2049,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                     throw(C_csp_exception(err_msg, "CSP Solver"));
                 }
 
-                int cr_mode = C_csp_collector_receiver::ON;
+                C_csp_collector_receiver::E_csp_cr_modes cr_mode = C_csp_collector_receiver::ON;
                 C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::STANDBY;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FIXED;
@@ -2155,7 +2148,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
                 double t_ts_initial = mc_kernel.mc_sim_info.ms_ts.m_step;   //[s]
 
-                int cr_mode = C_csp_collector_receiver::ON;
+                C_csp_collector_receiver::E_csp_cr_modes cr_mode = C_csp_collector_receiver::ON;
                 C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::STARTUP;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FROM_COMPONENT;
@@ -2205,7 +2198,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
             {
                 double t_ts_initial = mc_kernel.mc_sim_info.ms_ts.m_step;   //[s]
                 
-                int cr_mode = C_csp_collector_receiver::STARTUP;
+                C_csp_collector_receiver::E_csp_cr_modes cr_mode = C_csp_collector_receiver::STARTUP;
                 C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::OFF;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__0;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FROM_COMPONENT;
@@ -2229,7 +2222,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
             case CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF:
             {
-                int cr_mode = C_csp_collector_receiver::E_csp_cr_modes::ON;
+                C_csp_collector_receiver::E_csp_cr_modes cr_mode = C_csp_collector_receiver::E_csp_cr_modes::ON;
                 C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::OFF;
                 C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__0;
                 C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FIXED;
@@ -2254,7 +2247,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 			case CR_OFF__PC_OFF__TES_OFF__AUX_OFF:
             {
-                int cr_mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;
+                C_csp_collector_receiver::E_csp_cr_modes cr_mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;
                 C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::OFF;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__0;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FIXED;
@@ -2291,7 +2284,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                     throw(C_csp_exception(err_msg, "CSP Solver"));
                 }
 
-                int cr_mode = C_csp_collector_receiver::ON;
+                C_csp_collector_receiver::E_csp_cr_modes cr_mode = C_csp_collector_receiver::ON;
                 C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::STARTUP_CONTROLLED;
 
                 C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__ITER_M_DOT_SU_DC_ONLY;
@@ -2331,7 +2324,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 					throw(C_csp_exception(err_msg, "CSP Solver"));
 				}
 
-                int cr_mode = C_csp_collector_receiver::OFF;
+                C_csp_collector_receiver::E_csp_cr_modes cr_mode = C_csp_collector_receiver::OFF;
                 C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::STARTUP_CONTROLLED;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__ITER_M_DOT_SU_DC_ONLY;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FROM_COMPONENT;
@@ -2367,7 +2360,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                     throw(C_csp_exception(err_msg, "CSP Solver"));
                 }
 
-                int cr_mode = C_csp_collector_receiver::ON;
+                C_csp_collector_receiver::E_csp_cr_modes cr_mode = C_csp_collector_receiver::ON;
                 C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::OFF;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__0;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FIXED;
@@ -2404,7 +2397,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                     throw(C_csp_exception(err_msg, "CSP Solver"));
                 }
 
-                int cr_mode = C_csp_collector_receiver::ON;
+                C_csp_collector_receiver::E_csp_cr_modes cr_mode = C_csp_collector_receiver::ON;
                 C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::ON;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__ITER_Q_DOT_TARGET_CH_ONLY;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FIXED;
@@ -2473,7 +2466,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 					throw(C_csp_exception(err_msg, "CSP Solver"));
 				}
 
-                int cr_mode = C_csp_collector_receiver::ON;
+                C_csp_collector_receiver::E_csp_cr_modes cr_mode = C_csp_collector_receiver::ON;
                 C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::STANDBY;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__ITER_Q_DOT_TARGET_CH_ONLY;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FIXED;
@@ -2538,7 +2531,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 					throw(C_csp_exception(err_msg, "CSP Solver"));
 				}
 
-                int cr_mode = C_csp_collector_receiver::ON;
+                C_csp_collector_receiver::E_csp_cr_modes cr_mode = C_csp_collector_receiver::ON;
                 C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::ON;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__ITER_Q_DOT_TARGET_DC_ONLY;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FIXED;
@@ -2631,7 +2624,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
                 double t_ts_initial = mc_kernel.mc_sim_info.ms_ts.m_step;   //[s]
 
-                int cr_mode = C_csp_collector_receiver::ON;
+                C_csp_collector_receiver::E_csp_cr_modes cr_mode = C_csp_collector_receiver::ON;
                 C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::ON;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT_PLUS_TES_EMPTY;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FIXED;
@@ -2732,7 +2725,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 					throw(C_csp_exception(err_msg, "CSP Solver"));
 				}
 
-                int cr_mode = C_csp_collector_receiver::ON;
+                C_csp_collector_receiver::E_csp_cr_modes cr_mode = C_csp_collector_receiver::ON;
                 C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::OFF;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__TES_FULL__0;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FIXED;
@@ -2774,7 +2767,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
                 double t_ts_initial = mc_kernel.mc_sim_info.ms_ts.m_step;   //[s]
 
-                int cr_mode = C_csp_collector_receiver::ON;
+                C_csp_collector_receiver::E_csp_cr_modes cr_mode = C_csp_collector_receiver::ON;
                 C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::ON;
                 C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT_PLUS_TES_EMPTY;
                 C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_Q_DOT_PC;
@@ -2846,7 +2839,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
                 double t_ts_initial = mc_kernel.mc_sim_info.ms_ts.m_step;   //[s]
 
-                int cr_mode = C_csp_collector_receiver::OFF;
+                C_csp_collector_receiver::E_csp_cr_modes cr_mode = C_csp_collector_receiver::OFF;
                 C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::ON;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT_PLUS_TES_EMPTY;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_Q_DOT_PC;
@@ -2915,7 +2908,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                     throw(C_csp_exception(err_msg, "CSP Solver"));
                 }
 
-                int cr_mode = C_csp_collector_receiver::ON;
+                C_csp_collector_receiver::E_csp_cr_modes cr_mode = C_csp_collector_receiver::ON;
                 C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::ON;
                 C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT_PLUS_TES_EMPTY;
                 C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FIXED;
@@ -2995,7 +2988,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                     throw(C_csp_exception(err_msg, "CSP Solver"));
                 }
 
-                int cr_mode = C_csp_collector_receiver::OFF;
+                C_csp_collector_receiver::E_csp_cr_modes cr_mode = C_csp_collector_receiver::OFF;
                 C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::ON;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT_PLUS_TES_EMPTY;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FIXED;
@@ -3077,7 +3070,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
                 double t_ts_initial = mc_kernel.mc_sim_info.ms_ts.m_step;   //[s]
 
-                int cr_mode = C_csp_collector_receiver::STARTUP;
+                C_csp_collector_receiver::E_csp_cr_modes cr_mode = C_csp_collector_receiver::STARTUP;
                 C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::ON;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT_PLUS_TES_EMPTY;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FROM_COMPONENT;
@@ -3168,7 +3161,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
                 double t_ts_initial = mc_kernel.mc_sim_info.ms_ts.m_step;   //[s]
 
-                int cr_mode = C_csp_collector_receiver::STARTUP;
+                C_csp_collector_receiver::E_csp_cr_modes cr_mode = C_csp_collector_receiver::STARTUP;
                 C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::ON;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT_PLUS_TES_EMPTY;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_Q_DOT_PC;
@@ -3265,7 +3258,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 					throw(C_csp_exception(err_msg, "CSP Solver"));
 				}
 
-                int cr_mode = C_csp_collector_receiver::ON;
+                C_csp_collector_receiver::E_csp_cr_modes cr_mode = C_csp_collector_receiver::ON;
                 C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::STANDBY;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__ITER_Q_DOT_TARGET_DC_ONLY;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FIXED;
@@ -3357,7 +3350,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                     throw(C_csp_exception(err_msg, "CSP Solver"));
                 }
 
-                int cr_mode = C_csp_collector_receiver::ON;
+                C_csp_collector_receiver::E_csp_cr_modes cr_mode = C_csp_collector_receiver::ON;
                 C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::ON;
 
                 C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__ITER_Q_DOT_TARGET_DC_ONLY;
@@ -3435,7 +3428,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                     throw(C_csp_exception(err_msg, "CSP Solver"));
                 }
                 
-                int cr_mode = C_csp_collector_receiver::OFF;
+                C_csp_collector_receiver::E_csp_cr_modes cr_mode = C_csp_collector_receiver::OFF;
                 C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::ON;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__ITER_Q_DOT_TARGET_DC_ONLY;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FIXED;
@@ -3514,7 +3507,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 
                 double t_ts_initial = mc_kernel.mc_sim_info.ms_ts.m_step;   //[s]
                 
-                int cr_mode = C_csp_collector_receiver::STARTUP;
+                C_csp_collector_receiver::E_csp_cr_modes cr_mode = C_csp_collector_receiver::STARTUP;
                 C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::ON;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__ITER_Q_DOT_TARGET_DC_ONLY;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FROM_COMPONENT;
@@ -3595,7 +3588,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                     throw(C_csp_exception(err_msg, "CSP Solver"));
                 }
 
-                int cr_mode = C_csp_collector_receiver::ON;
+                C_csp_collector_receiver::E_csp_cr_modes cr_mode = C_csp_collector_receiver::ON;
                 C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::STANDBY;
 
                 C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__ITER_Q_DOT_TARGET_DC_ONLY;
@@ -3681,7 +3674,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                     throw(C_csp_exception(err_msg, "CSP Solver"));
                 }
 
-                int cr_mode = C_csp_collector_receiver::OFF;
+                C_csp_collector_receiver::E_csp_cr_modes cr_mode = C_csp_collector_receiver::OFF;
                 C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::STANDBY;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__ITER_Q_DOT_TARGET_DC_ONLY;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FIXED;
@@ -3768,7 +3761,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
                 double t_ts_initial = mc_kernel.mc_sim_info.ms_ts.m_step;   //[s]
 
-                int cr_mode = C_csp_collector_receiver::STARTUP;
+                C_csp_collector_receiver::E_csp_cr_modes cr_mode = C_csp_collector_receiver::STARTUP;
                 C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::STANDBY;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__ITER_Q_DOT_TARGET_DC_ONLY;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FROM_COMPONENT;
@@ -3857,7 +3850,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 					throw(C_csp_exception(err_msg, "CSP Solver"));
 				}
 
-                int cr_mode = C_csp_collector_receiver::ON;
+                C_csp_collector_receiver::E_csp_cr_modes cr_mode = C_csp_collector_receiver::ON;
                 C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::ON;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT_LESS_TES_FULL;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FIXED;
@@ -3919,7 +3912,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 // Get initial timestep
                 double t_ts_initial = mc_kernel.mc_sim_info.ms_ts.m_step;
 
-                int cr_mode = C_csp_collector_receiver::ON;
+                C_csp_collector_receiver::E_csp_cr_modes cr_mode = C_csp_collector_receiver::ON;
                 C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::ON;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT_PLUS_TES_EMPTY;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_Q_DOT_PC;
@@ -4027,7 +4020,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                     throw(C_csp_exception(err_msg, "CSP Solver"));
                 }
 
-                int cr_mode = C_csp_collector_receiver::ON;
+                C_csp_collector_receiver::E_csp_cr_modes cr_mode = C_csp_collector_receiver::ON;
                 C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::ON;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__PC_MAX_PLUS_TES_FULL__PC_MAX;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FIXED;
@@ -4072,7 +4065,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
                 double t_ts_initial = mc_kernel.mc_sim_info.ms_ts.m_step;   //[s]
 
-                int cr_mode = C_csp_collector_receiver::ON;
+                C_csp_collector_receiver::E_csp_cr_modes cr_mode = C_csp_collector_receiver::ON;
                 C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::STARTUP_CONTROLLED;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__TO_PC_PLUS_TES_FULL__ITER_M_DOT_SU;
                 C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FROM_COMPONENT;
@@ -4113,7 +4106,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 					throw(C_csp_exception(err_msg, "CSP Solver"));
 				}
 
-                int cr_mode = C_csp_collector_receiver::ON;
+                C_csp_collector_receiver::E_csp_cr_modes cr_mode = C_csp_collector_receiver::ON;
                 C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::STANDBY;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT_LESS_TES_FULL;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FIXED;
@@ -4172,7 +4165,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
                 double t_ts_initial = mc_kernel.mc_sim_info.ms_ts.m_step;   //[s]
 
-                int cr_mode = C_csp_collector_receiver::STARTUP;
+                C_csp_collector_receiver::E_csp_cr_modes cr_mode = C_csp_collector_receiver::STARTUP;
                 C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::STARTUP_CONTROLLED;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__ITER_M_DOT_SU_DC_ONLY;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FROM_COMPONENT;
@@ -4215,7 +4208,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
                 double t_ts_initial = mc_kernel.mc_sim_info.ms_ts.m_step;   //[s]
 
-                int cr_mode = C_csp_collector_receiver::ON;
+                C_csp_collector_receiver::E_csp_cr_modes cr_mode = C_csp_collector_receiver::ON;
                 C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::STARTUP_CONTROLLED;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__ITER_M_DOT_SU_CH_ONLY;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FROM_COMPONENT;

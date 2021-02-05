@@ -1226,7 +1226,7 @@ public:
 		C_csp_solver* mpc_csp_solver;
 
 		C_csp_power_cycle::E_csp_power_cycle_modes m_pc_mode;      //[-]
-		int m_cr_mode;      //[-]
+        C_csp_collector_receiver::E_csp_cr_modes m_cr_mode;      //[-]
         bool m_is_rec_outlet_to_hottank;    //[-]
 
 		double m_q_dot_pc_target;   //[MWt]
@@ -1246,7 +1246,7 @@ public:
 		double m_m_dot_pc_in;       //[kg/hr]
 
 		C_MEQ__m_dot_tes(E_m_dot_solver_modes solver_mode, C_csp_solver* pc_csp_solver,
-            C_csp_power_cycle::E_csp_power_cycle_modes pc_mode, int cr_mode,
+            C_csp_power_cycle::E_csp_power_cycle_modes pc_mode, C_csp_collector_receiver::E_csp_cr_modes cr_mode,
             bool is_rec_outlet_to_hottank,
 			double q_dot_pc_target /*MWt*/,
 			double defocus /*-*/, double t_ts /*s*/,
@@ -1287,7 +1287,7 @@ public:
 		double m_q_dot_pc_target;   //[MWt]
 
         C_csp_power_cycle::E_csp_power_cycle_modes m_pc_mode;      //[-]
-		int m_cr_mode;      //[-]
+        C_csp_collector_receiver::E_csp_cr_modes m_cr_mode;      //[-]
         bool m_is_rec_outlet_to_hottank;    //[-]
 
 		double m_defocus;   //[-]
@@ -1301,7 +1301,7 @@ public:
 
 		C_MEQ__T_field_cold(C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode, C_csp_solver* pc_csp_solver,
 			double q_dot_pc_target /*MWt*/,
-            C_csp_power_cycle::E_csp_power_cycle_modes pc_mode, int cr_mode,
+            C_csp_power_cycle::E_csp_power_cycle_modes pc_mode, C_csp_collector_receiver::E_csp_cr_modes cr_mode,
             bool is_rec_outlet_to_hottank,
 			double defocus /*-*/, double t_ts /*s*/,
 			double P_field_in /*kPa*/, double x_field_in /*-*/)
@@ -1348,7 +1348,7 @@ public:
 		double m_q_dot_pc_target;   //[MWt]
 
         C_csp_power_cycle::E_csp_power_cycle_modes m_pc_mode;      //[-]
-		int m_cr_mode;      //[-]
+        C_csp_collector_receiver::E_csp_cr_modes m_cr_mode;      //[-]
         bool m_is_rec_outlet_to_hottank;    //[-]
 
 		double m_defocus;   //[-]
@@ -1357,7 +1357,7 @@ public:
 		C_MEQ__timestep(C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode, C_MEQ__timestep::E_timestep_target_modes step_target_mode,
 			C_csp_solver* pc_csp_solver,
 			double q_dot_pc_target /*MWt*/,
-            C_csp_power_cycle::E_csp_power_cycle_modes pc_mode, int cr_mode,
+            C_csp_power_cycle::E_csp_power_cycle_modes pc_mode, C_csp_collector_receiver::E_csp_cr_modes cr_mode,
             bool is_rec_outlet_to_hottank,
 			double defocus /*-*/)
 		{
@@ -1396,7 +1396,7 @@ public:
         double m_q_dot_pc_target;   //[MWt]
 
         C_csp_power_cycle::E_csp_power_cycle_modes m_pc_mode;      //[-]
-        int m_cr_mode;      //[-]
+        C_csp_collector_receiver::E_csp_cr_modes m_cr_mode;      //[-]
         bool m_is_rec_outlet_to_hottank;    //[-]
 
         double m_t_ts_initial;  //[s]
@@ -1407,7 +1407,7 @@ public:
 			E_defocus_target_modes df_target_mode, C_MEQ__timestep::E_timestep_target_modes ts_target_mode,
             C_csp_solver *pc_csp_solver, 
 			double q_dot_pc_target /*MWt*/,
-            C_csp_power_cycle::E_csp_power_cycle_modes pc_mode, int cr_mode,
+            C_csp_power_cycle::E_csp_power_cycle_modes pc_mode, C_csp_collector_receiver::E_csp_cr_modes cr_mode,
             bool is_rec_outlet_to_hottank,
             double t_ts_initial /*s*/)
         {
@@ -1431,7 +1431,7 @@ public:
         double calc_meq_target();
     };
 
-	int solve_operating_mode(int cr_mode, C_csp_power_cycle::E_csp_power_cycle_modes pc_mode,
+	int solve_operating_mode(C_csp_collector_receiver::E_csp_cr_modes cr_mode, C_csp_power_cycle::E_csp_power_cycle_modes pc_mode,
         C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode, C_MEQ__timestep::E_timestep_target_modes step_target_mode,
 		double q_dot_pc_target /*MWt*/, bool is_defocus, bool is_rec_outlet_to_hottank,
 		std::string op_mode_str, double& defocus_solved);
@@ -1448,6 +1448,11 @@ public:
 
         bool m_is_defocus;
         std::string m_op_mode_name;
+
+    public:
+
+        int solve(C_csp_solver* pc_csp_solver, double& defocus_solved);
+
     };
 
     class C_CR_OFF__PC_OFF__TES_OFF__AUX_OFF : public C_operating_mode_core
@@ -1553,6 +1558,10 @@ public:
 
         }
 
+        C_operating_mode_core* get_operating_mode_point(E_operating_modes op_mode)
+        {
+            return m_operating_modes_map[op_mode];
+        }
     };
 
 };
