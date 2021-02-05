@@ -32,6 +32,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "csp_solver_util.h"
 
 #include "numeric_solvers.h"
+#include "lib_util.h"
 
 class C_csp_solver_steam_state
 {
@@ -1439,6 +1440,19 @@ public:
 
     class C_operating_mode_core
     {
+    public:
+
+        enum cycle_targets
+        {
+            QUIETNAN,
+            Q_DOT_TARGET,
+            Q_DOT_STARTUP,
+            Q_DOT_STANDBY,
+            Q_DOT_MIN,
+            Q_DOT_MAX,
+            UNASSIGNED
+        };
+
     protected:
 
         C_csp_collector_receiver::E_csp_cr_modes m_cr_mode;
@@ -1449,9 +1463,77 @@ public:
         bool m_is_defocus;
         std::string m_op_mode_name;
 
+        cycle_targets m_cycle_target_type;
+
+        bool m_is_mode_available;
+
     public:
 
-        int solve(C_csp_solver* pc_csp_solver, double& defocus_solved);
+        C_operating_mode_core()
+        {
+            m_is_defocus = false;
+            m_is_mode_available = true;
+            m_cycle_target_type = UNASSIGNED;
+        }
+
+        virtual void handle_solve_error(int solve_error_code, double time /*hr*/) = 0;
+
+        bool solve(C_csp_solver* pc_csp_solver, bool is_rec_outlet_to_hottank,
+            double q_dot_pc_on_target /*MWt*/, double q_dot_pc_startup /*MWt*/, double q_dot_pc_standby /*MWt*/,
+            double q_dot_pc_min /*MWt*/, double q_dot_pc_max /*MWt*/,
+            double& defocus_solved)
+        {
+            double q_dot_pc_fixed = std::numeric_limits<double>::quiet_NaN();
+
+            switch (m_cycle_target_type)
+            {
+            case QUIETNAN:
+            {
+                q_dot_pc_fixed = std::numeric_limits<double>::quiet_NaN();
+                break;
+            }
+            case Q_DOT_TARGET:
+            {
+                q_dot_pc_fixed = q_dot_pc_on_target;       //[MWt]
+                break;
+            }
+            case Q_DOT_STARTUP:
+            {
+                q_dot_pc_fixed = q_dot_pc_startup;          //[MWt]
+                break;
+            }
+            case Q_DOT_STANDBY:
+            {
+                q_dot_pc_fixed = q_dot_pc_standby;          //[MWt]
+                break;
+            }
+            case Q_DOT_MIN:
+            {
+                q_dot_pc_fixed = q_dot_pc_min;              //[MWt]
+                break;
+            }
+            case Q_DOT_MAX:
+            {
+                q_dot_pc_fixed = q_dot_pc_max;              //[MWt]
+                break;
+            }
+            case UNASSIGNED:
+            default:
+                throw(C_csp_exception("Unknown cycle target type"));
+            }
+
+            int solve_error_code = pc_csp_solver->solve_operating_mode(m_cr_mode, m_pc_mode, m_solver_mode,
+                m_step_target_mode, q_dot_pc_fixed, m_is_defocus, is_rec_outlet_to_hottank,
+                m_op_mode_name, defocus_solved);
+
+            if (solve_error_code != 0) {
+                handle_solve_error(solve_error_code, pc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time);
+                return false;
+            }
+            else{
+                return true;
+            }
+        }
 
     };
 
@@ -1461,6 +1543,17 @@ public:
         C_CR_OFF__PC_OFF__TES_OFF__AUX_OFF()
         {
             m_cr_mode = C_csp_collector_receiver::OFF;
+            m_pc_mode = C_csp_power_cycle::OFF;
+            m_solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__0;
+            m_step_target_mode = C_MEQ__timestep::E_STEP_FIXED;
+            m_is_defocus = false;
+            m_op_mode_name = "CR_OFF__PC_OFF__TES_OFF__AUX_OFF";
+            m_cycle_target_type = QUIETNAN;
+        }
+
+        void handle_solve_error(int solve_error_code, double time /*hr*/)
+        {
+            throw(C_csp_exception(util::format("At time = %lg, operating mode %s failed", time, m_op_mode_name), ""));
         }
     };
 
@@ -1558,12 +1651,24 @@ public:
 
         }
 
-        C_operating_mode_core* get_operating_mode_point(E_operating_modes op_mode)
+        bool solve(C_system_operating_modes::E_operating_modes op_mode, C_csp_solver* pc_csp_solver, bool is_rec_outlet_to_hottank,
+            double q_dot_pc_on_target /*MWt*/, double q_dot_pc_startup /*MWt*/, double q_dot_pc_standby /*MWt*/,
+            double q_dot_pc_min /*MWt*/, double q_dot_pc_max /*MWt*/,
+            double& defocus_solved)
+        {
+            return m_operating_modes_map[op_mode]->solve(pc_csp_solver, is_rec_outlet_to_hottank,
+                q_dot_pc_on_target, q_dot_pc_startup, q_dot_pc_standby,
+                q_dot_pc_min, q_dot_pc_max,
+                defocus_solved);
+        }
+
+        C_operating_mode_core* get_operating_mode_pointer(E_operating_modes op_mode)
         {
             return m_operating_modes_map[op_mode];
         }
     };
 
+    C_system_operating_modes mc_operating_modes;
 };
 
 

@@ -2247,26 +2247,31 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 			case CR_OFF__PC_OFF__TES_OFF__AUX_OFF:
             {
-                C_csp_collector_receiver::E_csp_cr_modes cr_mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;
+                double defocus_solved = std::numeric_limits<double>::quiet_NaN();
+                are_models_converged = mc_operating_modes.solve(C_system_operating_modes::E_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF, this, is_rec_outlet_to_hottank,
+                    q_pc_target, q_dot_pc_su_max, q_pc_sb,
+                    q_pc_min, m_q_dot_pc_max,
+                    defocus_solved);
+
+                /*C_csp_collector_receiver::E_csp_cr_modes cr_mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;
                 C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::OFF;
 				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__0;
 				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FIXED;
                 bool is_defocus = false;
                 op_mode_str = "CR_OFF__PC_OFF__TES_OFF__AUX_OFF";
-                double defocus_solved = std::numeric_limits<double>::quiet_NaN();
 
                 int mode_code = solve_operating_mode(cr_mode, pc_mode, solver_mode, step_target_mode,
-                    std::numeric_limits<double>::quiet_NaN(), is_defocus, is_rec_outlet_to_hottank, op_mode_str, defocus_solved);
+                    std::numeric_limits<double>::quiet_NaN(), is_defocus, is_rec_outlet_to_hottank, op_mode_str, defocus_solved);*/
 
-                if (mode_code != 0)
+                /*if (mode_code != 0)
                 {
                     throw(C_csp_exception(util::format("At time = %lg, CR_OFF__PC_OFF__TES_OFF__AUX_OFF failed", mc_kernel.mc_sim_info.ms_ts.m_time), ""));
-                }
+                }*/
 
 				// Set member defocus
 				m_defocus = defocus_solved;
 
-                are_models_converged = true;
+                //are_models_converged = true;
             }
 				break;		// exit switch() after CR_OFF__PC_OFF__TES_OFF__AUX_OFF:
 
