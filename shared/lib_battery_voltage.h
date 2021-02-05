@@ -203,13 +203,18 @@ protected:
 
     double voltage_model_tremblay_hybrid(double Q_cell, double I, double q0_cell);
 
+    void update_Qfull_mod(double qmax);
+
     // solver quantities
     double solver_Q;
+    double solver_Q_mod;
     double solver_q;
     double solver_cutoff_voltage;
     double solver_power;
 
     void solve_current_for_charge_power(const double *x, double *f);
+
+    
 
     void solve_current_for_discharge_power(const double *x, double *f);
 
