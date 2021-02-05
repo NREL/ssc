@@ -163,13 +163,15 @@ static var_info vtab_utility_rate5[] = {
 	{ SSC_OUTPUT, SSC_MATRIX, "excess_kwhs_earned_ym", "Excess generation", "kWh", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
     { SSC_OUTPUT, SSC_MATRIX, "net_billing_credits_ym", "Net billing credit", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
     { SSC_OUTPUT, SSC_MATRIX, "two_meter_sales_ym",     "Generation sales to grid", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
+    { SSC_OUTPUT, SSC_MATRIX, "true_up_credits_ym",     "Annual true-up payments", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
 
 	// Updated based on https://github.com/NREL/SAM/issues/372
 	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_ec_charge_gross_with_system", "Energy charge with system before credits", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "year1_nm_dollars_applied", "Net metering credit", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "year1_excess_kwhs_earned", "Excess generation", "kWh/mo", "", "Monthly", "*", "LENGTH=12", "" },
     { SSC_OUTPUT, SSC_ARRAY, "year1_net_billing_credits", "Net billing credit", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "year1_two_meter_sales_ym",  "Generation sales to grid", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "year1_two_meter_sales",  "Generation sales to grid", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "year1_true_up_credits",  "Annual true-up payments", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
 
 // for Pablo at IRENA 8/8/15
 // first year outputs only per email from Paul 8/9/15
@@ -555,7 +557,8 @@ public:
 			monthly_load(12), monthly_system_generation(12), monthly_elec_to_grid(12),
 			monthly_elec_needed_from_grid(12),
 			monthly_cumulative_excess_energy(12), monthly_cumulative_excess_dollars(12), monthly_bill(12), monthly_peak(12), monthly_test(12),
-            monthly_two_meter_sales(12);
+            monthly_two_meter_sales(12),
+            monthly_true_up_credits(12);
 
 		/* allocate outputs */
 		ssc_number_t *annual_net_revenue = allocate("annual_energy_value", nyears+1);
@@ -578,6 +581,7 @@ public:
 		ssc_number_t *excess_kwhs_earned_ym = allocate("excess_kwhs_earned_ym", nyears + 1, 12);
         ssc_number_t* net_billing_credits_ym = allocate("net_billing_credits_ym", nyears + 1, 12);
         ssc_number_t* two_meter_sales_ym = allocate("two_meter_sales_ym", nyears + 1, 12);
+        ssc_number_t* true_up_credits_ym = allocate("true_up_credits_ym", nyears + 1, 12);
 
 		ssc_number_t *ch_wo_sys_dc_fixed_ym = allocate("charge_wo_sys_dc_fixed_ym", nyears + 1, 12);
 		ssc_number_t *ch_wo_sys_dc_tou_ym = allocate("charge_wo_sys_dc_tou_ym", nyears + 1, 12);
@@ -1246,7 +1250,8 @@ public:
 				assign("year1_nm_dollars_applied", var_data(&monthly_nm_dollars_applied[0], 12));
 				assign("year1_net_billing_credits", var_data(&monthly_net_billing_credits[0], 12));
 				assign("year1_excess_kwhs_earned", var_data(&monthly_excess_kwhs_earned[0], 12));
-                assign("year1_two_meter_sales_ym", var_data(&monthly_two_meter_sales[0], 12));
+                assign("year1_two_meter_sales", var_data(&monthly_two_meter_sales[0], 12));
+                assign("year1_true_up_credits", var_data(&monthly_true_up_credits[0], 12));
 				// peak demand and testing energy use
 				for (int ii = 0; ii < 12; ii++)
 				{
@@ -1291,6 +1296,8 @@ public:
 				nm_dollars_applied_ym[(i + 1) * 12 + j] = monthly_nm_dollars_applied[j];
 				excess_kwhs_earned_ym[(i + 1) * 12 + j] = monthly_excess_kwhs_earned[j];
                 net_billing_credits_ym[(i + 1) * 12 + j] = monthly_net_billing_credits[j];
+                two_meter_sales_ym[(i + 1) * 12 + j] = monthly_two_meter_sales[j];
+                true_up_credits_ym[(i + 1) * 12 + j] = monthly_true_up_credits[j];
 
 				ch_w_sys_fixed_ym[(i + 1) * 12 + j] = monthly_fixed_charges[j];
 				ch_w_sys_minimum_ym[(i + 1) * 12 + j] = monthly_minimum_charges[j];
@@ -1932,7 +1939,8 @@ public:
                 = net_billing_credits[i]
 				= monthly_cumulative_excess_energy[i]
 				= monthly_cumulative_excess_dollars[i]
-				= monthly_bill[i] = 0.0;
+				= monthly_bill[i]
+                = monthly_two_meter_sales[i] = 0.0;
 		}
 
 		// 0=hourly (match with 2015.1.30 release, 1=monthly (most common unit in URDB), 2=daily (used for PG&E baseline rates). Currently hidden in UI and set to zero
