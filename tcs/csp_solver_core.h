@@ -26,6 +26,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <numeric>
 #include <limits>
 #include <memory>
+#include <unordered_map>
 
 #include "lib_weatherfile.h"
 #include "csp_solver_util.h"
@@ -1435,21 +1436,124 @@ public:
 		double q_dot_pc_target /*MWt*/, bool is_defocus, bool is_rec_outlet_to_hottank,
 		std::string op_mode_str, double& defocus_solved);
 
-    /*class C_system_operating_modes
-    {
 
-
-    };
-
-    class C_operating_mode
+    class C_operating_mode_core
     {
     protected:
 
         C_csp_collector_receiver::E_csp_cr_modes m_cr_mode;
         C_csp_power_cycle::E_csp_power_cycle_modes m_pc_mode;
-        C
+        C_MEQ__m_dot_tes::E_m_dot_solver_modes m_solver_mode;
+        C_MEQ__timestep::E_timestep_target_modes m_step_target_mode;
 
-    };*/
+        bool m_is_defocus;
+        std::string m_op_mode_name;
+    };
+
+    class C_CR_OFF__PC_OFF__TES_OFF__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_OFF__PC_OFF__TES_OFF__AUX_OFF()
+        {
+            m_cr_mode = C_csp_collector_receiver::OFF;
+        }
+    };
+
+    class C_system_operating_modes
+    {
+    private:
+
+        C_CR_OFF__PC_OFF__TES_OFF__AUX_OFF mc_CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+
+    public:
+
+        enum E_operating_modes
+        {
+            ENTRY_MODE = 0,
+
+            CR_OFF__PC_OFF__TES_OFF__AUX_OFF,
+            CR_SU__PC_OFF__TES_OFF__AUX_OFF,
+            CR_ON__PC_SU__TES_OFF__AUX_OFF,
+            CR_ON__PC_SB__TES_OFF__AUX_OFF,
+
+            CR_ON__PC_RM_HI__TES_OFF__AUX_OFF,
+            CR_ON__PC_RM_LO__TES_OFF__AUX_OFF,
+
+            CR_DF__PC_MAX__TES_OFF__AUX_OFF,
+
+            CR_OFF__PC_SU__TES_DC__AUX_OFF,
+            CR_ON__PC_OFF__TES_CH__AUX_OFF,
+
+            SKIP_10,
+
+            CR_ON__PC_TARGET__TES_CH__AUX_OFF,
+            CR_ON__PC_TARGET__TES_DC__AUX_OFF,
+
+            CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF,
+
+            CR_DF__PC_OFF__TES_FULL__AUX_OFF,
+
+            CR_OFF__PC_SB__TES_DC__AUX_OFF,
+            CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF,
+            CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF,
+
+            CR_ON__PC_SB__TES_CH__AUX_OFF,
+            CR_SU__PC_MIN__TES_EMPTY__AUX_OFF,
+
+            SKIP_20,
+
+            CR_SU__PC_SB__TES_DC__AUX_OFF,
+            CR_ON__PC_SB__TES_DC__AUX_OFF,
+            CR_OFF__PC_TARGET__TES_DC__AUX_OFF,
+            CR_SU__PC_TARGET__TES_DC__AUX_OFF,
+            CR_ON__PC_RM_HI__TES_FULL__AUX_OFF,
+
+            CR_ON__PC_MIN__TES_EMPTY__AUX_OFF,
+
+            CR_SU__PC_RM_LO__TES_EMPTY__AUX_OFF,
+
+            CR_DF__PC_MAX__TES_FULL__AUX_OFF,
+
+            CR_ON__PC_SB__TES_FULL__AUX_OFF,
+
+            SKIP_30,
+
+            CR_SU__PC_SU__TES_DC__AUX_OFF,
+
+            CR_ON__PC_SU__TES_CH__AUX_OFF,
+
+            CR_DF__PC_SU__TES_FULL__AUX_OFF,
+
+            CR_DF__PC_SU__TES_OFF__AUX_OFF,
+
+            CR_TO_COLD__PC_TARGET__TES_DC__AUX_OFF,
+
+            CR_TO_COLD__PC_RM_LO__TES_EMPTY__AUX_OFF,
+
+            CR_TO_COLD__PC_SB__TES_DC__AUX_OFF,
+
+            CR_TO_COLD__PC_MIN__TES_EMPTY__AUX_OFF,
+
+            CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF,
+
+            SKIP_40,
+
+            CR_TO_COLD__PC_SU__TES_DC__AUX_OFF
+        };
+
+    private:
+
+        std::unordered_map<C_system_operating_modes::E_operating_modes, C_operating_mode_core*> m_operating_modes_map;
+
+    public:
+
+        C_system_operating_modes()
+        {
+            m_operating_modes_map[E_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF] = &mc_CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+
+        }
+
+    };
 
 };
 

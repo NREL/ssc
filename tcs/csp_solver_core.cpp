@@ -53,6 +53,13 @@ double C_timestep_fixed::get_step()
 	return ms_timestep.m_step;
 }
 
+//C_csp_solver::C_system_operating_modes::C_system_operating_modes()
+//{
+//    m_operating_modes_map[E_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF] = &mc_CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+//
+//    return;
+//}
+
 void C_csp_solver::C_csp_solver_kernel::init(C_csp_solver::S_sim_setup & sim_setup, double wf_step /*s*/, double baseline_step /*s*/, C_csp_messages & csp_messages)
 {
 	ms_sim_setup = sim_setup;
