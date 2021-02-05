@@ -49,6 +49,11 @@ static var_info _cm_vtab_singleowner[] = {
     { SSC_INPUT,        SSC_ARRAY,      "batt_annual_charge_energy",                  "Battery annual energy charged",                         "kWh",      "",                      "Battery",       "",                           "",                               "" },
     { SSC_INPUT,        SSC_ARRAY,      "batt_annual_discharge_energy",               "Battery annual energy discharged",                      "kWh",      "",                      "Battery",       "",                           "",                               "" },
     { SSC_INPUT,        SSC_NUMBER,      "battery_total_cost_lcos",               "Battery total investment cost",                      "$",      "",                      "Battery",       "en_batt=1",                           "",                               "" },
+    { SSC_INPUT, SSC_ARRAY, "year1_hourly_e_fromgrid", "Electricity from grid (year 1 hourly)", "kWh", "", "Time Series", "", "", "" },
+    { SSC_INPUT,       SSC_ARRAY,      "year1_hourly_salespurchases_with_system",     "Electricity sales/purchases with system (year 1 hourly)",    "$", "",          "Time Series",             "",                         "",                   "" },
+    { SSC_INPUT,        SSC_ARRAY,      "grid_to_batt",                               "Electricity to grid from battery",                      "kW",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_INPUT,        SSC_ARRAY,      "annual_import_to_grid_energy",               "Annual energy imported from grid",                      "kWh",      "",                      "Battery",       "",                           "",                               "" },
+    { SSC_INPUT,        SSC_ARRAY,      "batt_capacity_percent",                      "Battery relative capacity to nameplate",                 "%",        "",                     "Battery",       "",                           "",                              "" },
 
 
 	{ SSC_INPUT,        SSC_ARRAY, "degradation", "Annual energy degradation", "", "", "System Output", "*", "", "" },
@@ -655,6 +660,8 @@ static var_info _cm_vtab_singleowner[] = {
     { SSC_OUTPUT, SSC_ARRAY, "cf_annual_costs", "Annual costs", "$", "", "LCOE calculations", "*", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_annual_cost_lcos", "Annual storage costs", "$", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_annual_discharge_lcos", "Annual storage discharge", "kWh", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_charging_cost_grid", "Annual cost to charge from grid", "kWh", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_charging_cost_pv", "Annual cost to charge from pv", "kWh", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
 
     { SSC_OUTPUT, SSC_NUMBER, "npv_annual_costs", "Present value of annual costs", "$", "", "LCOE calculations", "*", "", "" },
     { SSC_OUTPUT, SSC_NUMBER, "npv_annual_costs_lcos", "Present value of annual storage costs", "$", "", "LCOE calculations", "", "", "" },
@@ -2856,9 +2863,17 @@ public:
 
     // Use PPA values to calculate revenue from purchases and sales
     size_t n_multipliers;
+    size_t n_batt_to_grid, n_elec_purchases, n_elec_from_grid, n_annual_import_to_grid_energy;
     ssc_number_t* ppa_multipliers = as_array("ppa_multipliers", &n_multipliers);
-    bool ppa_purchases = !(is_assigned("en_electricity_rates") && as_number("en_electricity_rates") == 1); 
-
+    ssc_number_t* grid_to_batt = as_array("grid_to_batt", &n_batt_to_grid);
+    
+    ssc_number_t* annual_import_to_grid_energy = as_array("annual_import_to_grid_energy", &n_annual_import_to_grid_energy);
+    bool ppa_purchases = !(is_assigned("en_electricity_rates") && as_number("en_electricity_rates") == 1);
+    std::vector<double> charged_grid = as_vector_double("batt_annual_charge_from_grid");
+    cf.at(CF_charging_cost_grid, 0) = 0;
+    //ssc_number_t* elec_purchases = as_array("year1_hourly_salespurchases_with_system", &n_elec_purchases);
+    //ssc_number_t* elec_from_grid = as_array("year1_hourly_e_fromgrid", &n_elec_from_grid);
+    
     if (as_integer("system_use_lifetime_output") == 1)
     {
         // hourly_enet includes all curtailment, availability
@@ -2868,12 +2883,14 @@ public:
                 cf.at(CF_energy_sales_value, i) += hourly_energy_calcs.hourly_sales()[(i - 1) * 8760 + h] * cf.at(CF_degradation, i) * ppa_value / 100.0 * ppa_multipliers[h];
                 if (ppa_purchases) {
                     cf.at(CF_energy_purchases_value, i) += hourly_energy_calcs.hourly_purchases()[(i - 1) * 8760 + h] * cf.at(CF_degradation, i) * ppa_value / 100.0 * ppa_multipliers[h];
+                    cf.at(CF_charging_cost_grid, i) += grid_to_batt[(i - 1) * 8760 + h] * ppa_value / 100.0 * ppa_multipliers[h];
                 }
             }
             if (!ppa_purchases) {
                 cf.at(CF_energy_purchases_value, i) = 0.0;
                 // Recompute this variable because the ppa_gen values (hourly_net) were all positve until now 
                 cf.at(CF_energy_net, i) = cf.at(CF_energy_sales, i) + cf.at(CF_energy_purchases, i); // Adding a positive and negative number
+                cf.at(CF_charging_cost_grid, i) += charged_grid[i] * cf.at(CF_utility_bill, i) / annual_import_to_grid_energy[i];
             }
         }   
     }
@@ -2885,12 +2902,14 @@ public:
                 cf.at(CF_energy_sales_value, i) += hourly_energy_calcs.hourly_sales()[h] * cf.at(CF_degradation, i) * ppa_value / 100.0 * ppa_multipliers[h];
                 if (ppa_purchases) {
                     cf.at(CF_energy_purchases_value, i) += hourly_energy_calcs.hourly_purchases()[h] * cf.at(CF_degradation, i) * ppa_value / 100.0 * ppa_multipliers[h];
+                    cf.at(CF_charging_cost_grid, i) += grid_to_batt[h] * ppa_value / 100.0 * ppa_multipliers[h];
                 }
             }
             if (!ppa_purchases) {
                 cf.at(CF_energy_purchases_value, i) = 0.0;
                 // Recompute this variable because the ppa_gen values (hourly_net) were all positve until now 
                 cf.at(CF_energy_net, i) = cf.at(CF_energy_sales, i) + cf.at(CF_energy_purchases, i); // Adding a positive and negative number
+                cf.at(CF_charging_cost_grid, i) += charged_grid[i] * cf.at(CF_utility_bill, i) / annual_import_to_grid_energy[i];
             }
         }
     }
@@ -2994,16 +3013,17 @@ public:
     if (as_integer("en_batt") == 1) {
         double lcos_investment_cost = as_double("battery_total_cost_lcos"); //does not include replacement costs
         double lcos_om_cost = npv(CF_om_capacity1_expense, nyears, nom_discount_rate); //Todo: include variable om due to charging
-        std::vector<double> charged_grid = as_vector_double("batt_annual_charge_from_grid");
+        //std::vector<double> charged_grid = as_vector_double("batt_annual_charge_from_grid");
         std::vector<double> charged_pv = as_vector_double("batt_annual_charge_from_system");
         std::vector<double> charged_total = as_vector_double("batt_annual_charge_energy");
         std::vector<double> lcos_energy_discharged = as_vector_double("batt_annual_discharge_energy");
+        std::vector<double> batt_capacity_percent = as_vector_double("batt_capacity_percent");
         for (int a = 0; a <= nyears; a++) {
-            cf.at(CF_charging_cost_grid, a) = charged_grid[a] * cf.at(CF_ppa_price, a) / 100;
+            //cf.at(CF_charging_cost_grid, a) = charged_grid[a] * cf.at(CF_ppa_price, a) / 100;
             cf.at(CF_charging_cost_pv, a) = charged_pv[a] * lcoe_nom / 100;
             //charged_total[a] = charged_grid[a] + charged_pv[a];
             cf.at(CF_energy_charged_grid, a) = cf.at(CF_charging_cost_grid, a) + cf.at(CF_charging_cost_pv, a);
-            cf.at(CF_om_production1_expense, a) *= charged_total[a];
+            cf.at(CF_om_production1_expense, a) *= lcos_energy_discharged[a];
             cf.at(CF_energy_discharged, a) = lcos_energy_discharged[a];
             cf.at(CF_annual_cost_lcos, a) = -cf.at(CF_charging_cost_grid, a) +
                 -cf.at(CF_charging_cost_pv, a) + -cf.at(CF_om_fixed1_expense, a) +
@@ -3016,7 +3036,7 @@ public:
         lcos_om_cost += npv(CF_om_fixed1_expense, nyears, nom_discount_rate);
         double lcos_charging_cost = npv(CF_energy_charged_grid, nyears, nom_discount_rate);
         double batt_salvage_value_frac = as_double("batt_salvage_percentage") * 0.01;
-        double lcos_salvage_value = lcos_investment_cost * batt_salvage_value_frac / pow(1 + nom_discount_rate, nyears + 1); //set as a percentage or direct salvage value
+        double lcos_salvage_value = lcos_investment_cost * batt_capacity_percent[(nyears - 1)*8760 + 8659]/100 * batt_salvage_value_frac / pow(1 + nom_discount_rate, nyears + 1); //set as a percentage or direct salvage value
         cf.at(CF_salvage_cost_lcos, nyears) = lcos_salvage_value;
         cf.at(CF_annual_cost_lcos, nyears) -= cf.at(CF_salvage_cost_lcos, nyears);
         double lcos_denominator = npv(CF_energy_discharged, nyears, nom_discount_rate);
@@ -3026,6 +3046,8 @@ public:
         assign("npv_annual_costs_lcos", var_data((ssc_number_t)lcos_numerator));
         save_cf(CF_annual_cost_lcos, nyears, "cf_annual_cost_lcos");
         save_cf(CF_energy_discharged, nyears, "cf_annual_discharge_lcos");
+        save_cf(CF_charging_cost_grid, nyears, "cf_charging_cost_grid");
+        save_cf(CF_charging_cost_pv, nyears, "cf_charging_cost_pv");
         double lcos_nom = lcos_numerator / lcos_denominator * 100.0; // cent/kWh
         double lcos_real = lcos_numerator / lcos_denominator_real * 100.0; // cents/kWh
         assign("lcos_nom", var_data((ssc_number_t)lcos_nom));
