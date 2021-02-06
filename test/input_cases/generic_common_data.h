@@ -79,8 +79,8 @@ void generic_singleowner_battery_60min(ssc_data_t &data)
 	ssc_data_set_number( data, "batt_Vfull", 3.5999999046325684 );
 	ssc_data_set_number( data, "batt_Vexp", 3.4000000953674316 );
 	ssc_data_set_number( data, "batt_Vnom", 3.2999999523162842 );
-    //ssc_data_set_number(data, "batt_Vcut", 0.66 * 3.5999999046325684);
-    ssc_data_set_number(data, "batt_Vcut", 0);
+    ssc_data_set_number(data, "batt_Vcut", 0.66 * 3.5999999046325684);
+    //ssc_data_set_number(data, "batt_Vcut", 0);
 	ssc_data_set_number( data, "batt_Vnom_default", 3.2999999523162842 );
 	ssc_data_set_number( data, "batt_Qfull", 2.2999999523162842 );
 	ssc_data_set_number( data, "batt_Qfull_flow", 3987240.75 );
@@ -451,8 +451,8 @@ void generic_commerical_battery_60min(ssc_data_t &data)
 	ssc_data_set_number(data, "batt_Vfull", 4.0999999046325684);
 	ssc_data_set_number(data, "batt_Vexp", 4.0500001907348633);
 	ssc_data_set_number(data, "batt_Vnom", 3.4000000953674316);
-    //ssc_data_set_number(data, "batt_Vcut", 0.66 * 4.0999999046325684);
-    ssc_data_set_number(data, "batt_Vcut", 0);
+    ssc_data_set_number(data, "batt_Vcut", 0.66 * 4.0999999046325684);
+    //ssc_data_set_number(data, "batt_Vcut", 0);
 	ssc_data_set_number(data, "batt_Vnom_default", 3.5999999046325684);
 	ssc_data_set_number(data, "batt_Qfull", 2.25);
 	ssc_data_set_number(data, "batt_Qfull_flow", 200.25);

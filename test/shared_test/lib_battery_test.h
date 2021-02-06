@@ -215,8 +215,8 @@ public:
         n_strings = 9;
         Vnom_default = 3.6;
         Vfull = 4.1;
-        //Vcut = 0.66 * Vfull;
-        Vcut = 0;
+        Vcut = 0.66 * Vfull;
+        //Vcut = 0;
         Vexp = 4.05;
         Vnom = 3.4;
         Qfull = 2.25;
