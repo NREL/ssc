@@ -1464,6 +1464,7 @@ public:
         std::string m_op_mode_name;
 
         cycle_targets m_cycle_target_type;
+        bool m_is_sensible_htf_only;            // True: operating mode only applicable for sensible heat technologies
         // *****************************************
 
         bool m_is_mode_available;
@@ -1476,7 +1477,8 @@ public:
                                 C_MEQ__timestep::E_timestep_target_modes step_target_mode,
                                 bool is_defocus,
                                 std::string op_mode_name,
-                                cycle_targets cycle_target_type)
+                                cycle_targets cycle_target_type,
+                                bool is_sensible_htf_only)
         {
             m_cr_mode = cr_mode;
             m_pc_mode = pc_mode;
@@ -1485,6 +1487,7 @@ public:
             m_is_defocus = is_defocus;
             m_op_mode_name = op_mode_name;
             m_cycle_target_type = cycle_target_type;
+            m_is_sensible_htf_only = is_sensible_htf_only;
 
             m_is_mode_available = true;
         }
@@ -1505,6 +1508,12 @@ public:
             double m_dot_pc_startup_max /*kg/hr*/,
             double& defocus_solved, bool& is_op_mode_avail /*-*/, bool& is_turn_off_plant)
         {
+            if (!pc_csp_solver->mc_collector_receiver.m_is_sensible_htf && m_is_sensible_htf_only) {
+                std::string error_msg = util::format("At time = %lg ", pc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0);
+                error_msg += " controller chose operating mode " + m_op_mode_name + " which is not configured for DSG systems";
+                throw(C_csp_exception(error_msg, "CSP Solver"));
+            }
+
             double q_dot_pc_fixed = std::numeric_limits<double>::quiet_NaN();
 
             switch (m_cycle_target_type)
@@ -1572,7 +1581,7 @@ public:
     public:
         C_CR_OFF__PC_OFF__TES_OFF__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::OFF,
             C_csp_power_cycle::OFF, C_MEQ__m_dot_tes::E__CR_OUT__0, C_MEQ__timestep::E_STEP_FIXED,
-            false, "CR_OFF__PC_OFF__TES_OFF__AUX_OFF", QUIETNAN) {}
+            false, "CR_OFF__PC_OFF__TES_OFF__AUX_OFF", QUIETNAN, false) {}
 
         void handle_solve_error(int solve_error_code, double time /*hr*/)
         {
@@ -1585,7 +1594,7 @@ public:
     public:
         C_CR_SU__PC_OFF__TES_OFF__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::STARTUP,
             C_csp_power_cycle::OFF, C_MEQ__m_dot_tes::E__CR_OUT__0, C_MEQ__timestep::E_STEP_FROM_COMPONENT,
-            false, "CR_SU__PC_OFF__TES_OFF", QUIETNAN) {}
+            false, "CR_SU__PC_OFF__TES_OFF", QUIETNAN, false) {}
 
         void handle_solve_error(int solve_error_code, double time /*hr*/)
         {
@@ -1598,7 +1607,7 @@ public:
     public:
         C_CR_ON__PC_SU__TES_OFF__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::ON,
             C_csp_power_cycle::STARTUP, C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT, C_MEQ__timestep::E_STEP_FROM_COMPONENT,
-            false, "CR_ON__PC_SU__TES_OFF__AUX_OFF", QUIETNAN) {}
+            false, "CR_ON__PC_SU__TES_OFF__AUX_OFF", QUIETNAN, false) {}
 
         void handle_solve_error(int solve_error_code, double time /*hr*/)
         {
@@ -1630,6 +1639,20 @@ public:
         }
     };
 
+    class C_CR_OFF__PC_SU__TES_DC__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_OFF__PC_SU__TES_DC__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::OFF,
+            C_csp_power_cycle::STARTUP_CONTROLLED, C_MEQ__m_dot_tes::E__CR_OUT__ITER_M_DOT_SU_DC_ONLY, C_MEQ__timestep::E_STEP_FROM_COMPONENT,
+            false, "CR_OFF__PC_SU__TES_DC__AUX_OFF", QUIETNAN, true) {}
+
+        void handle_solve_error(int solve_error_code, double time /*hr*/)
+        {
+            m_is_mode_available = false;
+        }
+
+    };
+
     class C_system_operating_modes
     {
     private:
@@ -1637,6 +1660,7 @@ public:
         C_CR_OFF__PC_OFF__TES_OFF__AUX_OFF mc_CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
         C_CR_SU__PC_OFF__TES_OFF__AUX_OFF mc_CR_SU__PC_OFF__TES_OFF__AUX_OFF;
         C_CR_ON__PC_SU__TES_OFF__AUX_OFF mc_CR_ON__PC_SU__TES_OFF__AUX_OFF;
+        C_CR_OFF__PC_SU__TES_DC__AUX_OFF mc_CR_OFF__PC_SU__TES_DC__AUX_OFF;
 
     public:
 
@@ -1725,6 +1749,7 @@ public:
             m_operating_modes_map[E_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF] = &mc_CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
             m_operating_modes_map[E_operating_modes::CR_SU__PC_OFF__TES_OFF__AUX_OFF] = &mc_CR_SU__PC_OFF__TES_OFF__AUX_OFF;
             m_operating_modes_map[E_operating_modes::CR_ON__PC_SU__TES_OFF__AUX_OFF] = &mc_CR_ON__PC_SU__TES_OFF__AUX_OFF;
+            m_operating_modes_map[E_operating_modes::CR_OFF__PC_SU__TES_DC__AUX_OFF] = &mc_CR_OFF__PC_SU__TES_DC__AUX_OFF;
 
         }
 
