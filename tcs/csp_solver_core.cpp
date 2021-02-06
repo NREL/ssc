@@ -2150,11 +2150,13 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 double defocus_solved = std::numeric_limits<double>::quiet_NaN();   //[-]
 
                 bool is_op_mode_avail = true;
+                bool is_turn_off_plant = false;
                 are_models_converged = mc_operating_modes.solve(C_system_operating_modes::E_operating_modes::CR_ON__PC_SU__TES_OFF__AUX_OFF,
                     this, is_rec_outlet_to_hottank,
                     q_pc_target, q_dot_pc_su_max, q_pc_sb,
-                    q_pc_min, m_q_dot_pc_max,
-                    defocus_solved, is_op_mode_avail);
+                    q_pc_min, m_q_dot_pc_max, q_dot_pc_su_max,
+                    m_m_dot_pc_max_startup,
+                    defocus_solved, is_op_mode_avail, is_turn_off_plant);
 
                 m_is_CR_ON__PC_SU__TES_OFF__AUX_OFF_avail = is_op_mode_avail;
                 m_defocus = defocus_solved;
@@ -2182,23 +2184,23 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
     //                break;
     //            }
 
-                // Compare q_dot_to_pc to q_dot_pc_su_max
-                if (mc_cr_out_solver.m_q_thermal > q_dot_pc_su_max || mc_cr_out_solver.m_m_dot_salt_tot > m_m_dot_pc_max_startup)
-                {
-                    if (mc_cr_out_solver.m_q_thermal > q_dot_pc_su_max)
-                    {
-                        error_msg = util::format("At time = %lg CR_ON__PC_SU__TES_OFF__AUX_OFF method converged to a power cycle"
-                            " thermal input, %lg [MWt], greater than the target %lg [MWt].",
-                            mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, mc_cr_out_solver.m_q_thermal, q_dot_pc_su_max);
-                    }
-                    else
-                    {
-                        error_msg = util::format("At time = %lg CR_ON__PC_SU__TES_OFF__AUX_OFF method converged to a power cycle"
-                            " mass flow rate input, %lg [kg/s], greater than the maximum allowable %lg [kg/s].",
-                            mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, mc_cr_out_solver.m_m_dot_salt_tot / 3600.0, m_m_dot_pc_max_startup / 3600.0);
-                    }
-                    mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
-                }
+                //// Compare q_dot_to_pc to q_dot_pc_su_max
+                //if (mc_cr_out_solver.m_q_thermal > q_dot_pc_su_max || mc_cr_out_solver.m_m_dot_salt_tot > m_m_dot_pc_max_startup)
+                //{
+                //    if (mc_cr_out_solver.m_q_thermal > q_dot_pc_su_max)
+                //    {
+                //        error_msg = util::format("At time = %lg CR_ON__PC_SU__TES_OFF__AUX_OFF method converged to a power cycle"
+                //            " thermal input, %lg [MWt], greater than the target %lg [MWt].",
+                //            mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, mc_cr_out_solver.m_q_thermal, q_dot_pc_su_max);
+                //    }
+                //    else
+                //    {
+                //        error_msg = util::format("At time = %lg CR_ON__PC_SU__TES_OFF__AUX_OFF method converged to a power cycle"
+                //            " mass flow rate input, %lg [kg/s], greater than the maximum allowable %lg [kg/s].",
+                //            mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, mc_cr_out_solver.m_m_dot_salt_tot / 3600.0, m_m_dot_pc_max_startup / 3600.0);
+                //    }
+                //    mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
+                //}
 
 				// Set member defocus
 				//m_defocus = defocus_solved;
@@ -2214,10 +2216,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 double defocus_solved = std::numeric_limits<double>::quiet_NaN();   //[-]
 
                 bool is_op_mode_avail = true;
+                bool is_turn_off_plant = false;
                 are_models_converged = mc_operating_modes.solve(C_system_operating_modes::E_operating_modes::CR_SU__PC_OFF__TES_OFF__AUX_OFF, this, is_rec_outlet_to_hottank,
                     q_pc_target, q_dot_pc_su_max, q_pc_sb,
-                    q_pc_min, m_q_dot_pc_max,
-                    defocus_solved, is_op_mode_avail);
+                    q_pc_min, m_q_dot_pc_max, q_dot_pc_su_max,
+                    m_m_dot_pc_max_startup,
+                    defocus_solved, is_op_mode_avail, is_turn_off_plant);
 
                 m_is_CR_SU__PC_OFF__TES_OFF__AUX_OFF_avail = is_op_mode_avail;
                 m_defocus = defocus_solved;
@@ -2275,10 +2279,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 double defocus_solved = std::numeric_limits<double>::quiet_NaN();
 
                 bool is_op_mode_avail = true;
+                bool is_turn_off_plant = false;
                 are_models_converged = mc_operating_modes.solve(C_system_operating_modes::E_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF, this, is_rec_outlet_to_hottank,
                     q_pc_target, q_dot_pc_su_max, q_pc_sb,
-                    q_pc_min, m_q_dot_pc_max,
-                    defocus_solved, is_op_mode_avail);
+                    q_pc_min, m_q_dot_pc_max, q_dot_pc_su_max,
+                    m_m_dot_pc_max_startup,
+                    defocus_solved, is_op_mode_avail, is_turn_off_plant);
 
                 
                 m_defocus = defocus_solved;
