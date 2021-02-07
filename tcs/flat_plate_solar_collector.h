@@ -26,6 +26,9 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <limits>
 #include <time.h>
 #include <vector>
+#include "htf_props.h"
+#include "numeric_solvers.h"
+#include "csp_solver_two_tank_tes.h"
 
 struct CollectorTestSpecifications
 {
@@ -73,17 +76,18 @@ struct Weather
     double wind_direction;              // [deg] Clockwise from North
 };
 
-struct InletFluidFlow
+struct FluidFlow
 {
+    HTFProperties fluid;
     double temp;                        // [C]
     double m_dot;                       // [kg/s]
-    double specific_heat;               // [kJ/kg-K]
+    double specific_heat;               // [kJ/kg-K]    TODO: remove this
 };
 
 struct ExternalConditions
 {
     Weather weather;
-    InletFluidFlow inlet_fluid_flow;
+    FluidFlow inlet_fluid_flow;
     double albedo;                      // [-]
 };
 
@@ -135,9 +139,9 @@ private:
     const double AbsorbedIrradianceOverTauAlphaN(const CollectorOrientation &collector_orientation,
         const PoaIrradianceComponents &poa_irradiance_components);      // [W/m2]
     const double AbsorbedRadiantPower(double transmitted_irradiance /*W/m2*/,
-        const InletFluidFlow &inlet_fluid_flow,
+        const FluidFlow &inlet_fluid_flow,
         double T_amb /*C*/);    // [W]
-    const double ThermalPowerLoss(const InletFluidFlow &inlet_fluid_flow,
+    const double ThermalPowerLoss(const FluidFlow &inlet_fluid_flow,
         double T_amb /*C*/);    // [W]
 };
 
@@ -159,6 +163,25 @@ private:
     const double UA_pipe();             // [W/K]
 };
 
+struct HxDesignProps
+{
+    int external_fluid_id;     // HTFProperties::enum
+    int subsystem_fluid_id;    // HTFProperties::enum
+    double duty;            // [kW]
+    double dT_approach;     // [K]
+    double T_in_hot;        // [C]
+    double T_out_hot;       // [C]
+};
+
+class HeatExchanger : public C_hx_two_tank_tes
+{
+public:
+    HeatExchanger(const HxDesignProps &hx_design_props);
+    HeatExchanger();
+    const HxDesignProps* GetHxDesignProps() const;
+private:
+    HxDesignProps hx_design_props_;
+};
 
 
 class FlatPlateArray
@@ -171,6 +194,7 @@ public:
     FlatPlateArray(const CollectorTestSpecifications &collector_test_specifications, const CollectorLocation &collector_location,
         const CollectorOrientation &collector_orientation, const ArrayDimensions &array_dimensions,
         const Pipe &inlet_pipe, const Pipe &outlet_pipe);
+    FluidFlow RunWithHx(tm& timestamp, ExternalConditions& external_conditions, double T_out_target);
     const int ncoll();
     const double area_total();                             // [m2]
     void resize_array(ArrayDimensions array_dimensions);
@@ -186,9 +210,11 @@ public:
     const double EstimatePowerGain(double POA /*W/m2*/, double T_in /*C*/, double T_amb /*C*/);            // [W]
     const double UsefulPowerGain(const tm &timestamp, const ExternalConditions &external_conditions);      // [W]
     const double T_out(const tm &timestamp, const ExternalConditions &external_conditions);                // [C]
+    HTFProperties* GetFluid();
 private:
     FlatPlateCollector flat_plate_collector_;       // just scale a single collector for now -> premature optimization??
-    
+    HeatExchanger heat_exchanger_;
+    HTFProperties fluid_;                           // used only if there's a HX
     CollectorLocation collector_location_;
     CollectorOrientation collector_orientation_;
     ArrayDimensions array_dimensions_;
@@ -197,5 +223,118 @@ private:
 };
 
 
+class C_MEQ__mdot_fp : public C_monotonic_equation
+{
+public:
+    C_MEQ__mdot_fp(
+        double T_approach,
+        double m_T_loop_in,
+        double T_f_hx_out_target,
+        double m_m_dot_process_heat,
+        FlatPlateArray* flat_plate_array,
+        C_hx_two_tank_tes* heat_exchanger,
+        HTFProperties* m_htfProps,
+        HTFProperties* flat_plate_htf,
+        tm* timestamp,
+        ExternalConditions* external_conditions
+    ) :
+        T_approach_(T_approach),
+        m_T_loop_in_(m_T_loop_in),
+        T_f_hx_out_target_(T_f_hx_out_target),
+        m_m_dot_process_heat_(m_m_dot_process_heat),
+        flat_plate_array_(flat_plate_array),
+        heat_exchanger_(heat_exchanger),
+        m_htfProps_(m_htfProps),
+        flat_plate_htf_(flat_plate_htf),
+        timestamp_(timestamp),
+        external_conditions_(external_conditions)
+
+    {
+        fp_array_is_on_ = true;
+        T_closest_f_hx_out_iter_ = -std::numeric_limits<double>::infinity();
+        T_out_fp_at_T_closest_iter_ = std::numeric_limits<double>::quiet_NaN();
+        mdot_fp_at_T_closest_iter_ = std::numeric_limits<double>::quiet_NaN();
+    }
+
+    bool fp_array_is_on_;
+    double T_f_hx_out_;
+    double T_out_fp_;
+    double eff_hx_;
+    double q_dot_hx_;
+    double dT_hot_;
+    double dT_cold_;
+    double T_closest_f_hx_out_iter_;		// max converged temperature found during iteration of outer MEQ
+    double T_out_fp_at_T_closest_iter_;		// flat plate outlet temperature at max converged system temperature
+    double mdot_fp_at_T_closest_iter_;		// flat plate mass flow at max converged system temperature
+    virtual int operator()(double mdot_fp /*kg/s*/, double* diff_T_out_f /*C*/);
+
+private:
+    double T_approach_;
+    double mdot_fp_;
+    double m_T_loop_in_;
+    double T_f_hx_out_target_;
+    double m_m_dot_process_heat_;
+    FlatPlateArray* flat_plate_array_;
+    C_hx_two_tank_tes* heat_exchanger_;
+    HTFProperties* m_htfProps_;
+    HTFProperties* flat_plate_htf_;
+    tm* timestamp_;
+    ExternalConditions* external_conditions_;
+};
+
+
+class C_MEQ__T_in_fp : public C_monotonic_equation
+{
+public:
+    C_MEQ__T_in_fp(
+        double T_approach,
+        double mdot_fp,					// this is provided by the outer MEQ, constrained to max mass flow
+        double m_T_loop_in,
+        double T_f_hx_out_target,
+        double m_m_dot_process_heat,
+        FlatPlateArray* flat_plate_array,
+        C_hx_two_tank_tes* heat_exchanger,
+        HTFProperties* m_htfProps,
+        HTFProperties* flat_plate_htf,
+        tm* timestamp,
+        ExternalConditions* external_conditions
+    ) :
+        T_approach_(T_approach),
+        mdot_fp_(mdot_fp),
+        m_T_loop_in_(m_T_loop_in),
+        T_f_hx_out_target_(T_f_hx_out_target),
+        m_m_dot_process_heat_(m_m_dot_process_heat),
+        flat_plate_array_(flat_plate_array),
+        heat_exchanger_(heat_exchanger),
+        m_htfProps_(m_htfProps),
+        flat_plate_htf_(flat_plate_htf),
+        timestamp_(timestamp),
+        external_conditions_(external_conditions)
+    {
+        fp_array_is_on_ = true;
+    }
+
+    bool fp_array_is_on_;
+    double T_f_hx_out_;		// this is used by the outer MEQ
+    double T_out_fp_;
+    double eff_hx_;
+    double q_dot_hx_;
+    double dT_hot_;
+    double dT_cold_;
+    virtual int operator()(double T_in_fp /*C*/, double* diff_T_in_fp /*C*/);
+
+private:
+    double T_approach_;
+    double mdot_fp_;
+    double m_T_loop_in_;
+    double T_f_hx_out_target_;
+    double m_m_dot_process_heat_;
+    FlatPlateArray* flat_plate_array_;
+    C_hx_two_tank_tes* heat_exchanger_;
+    HTFProperties* m_htfProps_;
+    HTFProperties* flat_plate_htf_;
+    tm* timestamp_;
+    ExternalConditions* external_conditions_;
+};
 
 #endif // __FLAT_PLATE_SOLAR_COLLECTOR__
