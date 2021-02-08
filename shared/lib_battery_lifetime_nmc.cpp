@@ -36,7 +36,6 @@ void lifetime_nmc_t::initialize() {
     state->nmc->q_relative_neg = 100;
     state->nmc->dq_relative_li_old = 0;
     state->nmc->dq_relative_neg_old = 0;
-    state->nmc->day_age_of_battery_float = 0;
     state->nmc->DOD_max = 50;
     state->nmc->n_cycles_prev_day = 0;
     state->nmc->b1_dt = 0;
@@ -75,9 +74,8 @@ lifetime_t * lifetime_nmc_t::clone() {
     return new lifetime_nmc_t(*this);
 }
 
-// Rohit - Define negative electrode voltage function
-double lifetime_nmc_t::Uneg_computation(double SOC) {
-    double Uneg = 0.1;
+double lifetime_nmc_t::calculate_Uneg(double SOC) {
+    double Uneg;
     if (SOC <= 0.1)
         Uneg = ((0.2420 - 1.2868) / 0.1) * SOC + 1.2868;
     else
@@ -85,9 +83,8 @@ double lifetime_nmc_t::Uneg_computation(double SOC) {
     return Uneg;
 }
 
-// Rohit - Define open circuit voltage function
-double lifetime_nmc_t::Voc_computation(double SOC) {
-    double Voc = 0.1;
+double lifetime_nmc_t::calculate_Voc(double SOC) {
+    double Voc;
     if (SOC <= 0.1)
         Voc = ((0.4679) / 0.1) * SOC + 3;
     else if (SOC <= 0.6)
@@ -97,7 +94,7 @@ double lifetime_nmc_t::Voc_computation(double SOC) {
     return Voc;
 }
 
-double lifetime_nmc_t::runLifetimeNMC_Qli() {
+double lifetime_nmc_t::runQli() {
     double dt_day = 1;
     int dn_cycles = state->n_cycles - state->nmc->n_cycles_prev_day;
     double k_cal = 0;
@@ -125,7 +122,7 @@ double lifetime_nmc_t::runLifetimeNMC_Qli() {
     return state->nmc->q_relative_li;
 }
 
-double lifetime_nmc_t::runLifetimeNMC_Qneg(double T_battery, double SOC) {
+double lifetime_nmc_t::runQneg(double T_battery, double SOC) {
 
     int dn_cycles = state->n_cycles - state->nmc->n_cycles_prev_day;
 
@@ -151,10 +148,9 @@ void lifetime_nmc_t::runLifetimeModels(size_t lifetimeIndex, bool charge_changed
     double q_last = state->q_relative;
 
     // update day age of battery
-    int day_age_of_battery_old = (int)(state->nmc->day_age_of_battery_float);
-    state->nmc->day_age_of_battery_float = state->nmc->day_age_of_battery_float +
-                                           float( params->dt_hr/ util::hours_per_day);
-    state->day_age_of_battery = (int)(state->nmc->day_age_of_battery_float);
+    size_t day_age_of_battery_old = (size_t)(state->day_age_of_battery);
+    state->day_age_of_battery += params->dt_hr / (double)util::hours_per_day;
+    auto ts_per_day = (size_t)(util::hours_per_day / params->dt_hr);
 
     // convert battery temperature to Kelvin
     T_battery += 273;
@@ -168,8 +164,8 @@ void lifetime_nmc_t::runLifetimeModels(size_t lifetimeIndex, bool charge_changed
     //compute open circuit and negative electrode voltage as function of SOC
     double SOC = 0.01 * (100 - DOD);
     double DOD_max = state->nmc->DOD_max * 0.01;
-    double U_neg = Uneg_computation(SOC);
-    double V_oc = Voc_computation(SOC);
+    double U_neg = calculate_Uneg(SOC);
+    double V_oc = calculate_Voc(SOC);
 
     // compute lifetime degradation coefficients for current time step,
     //multiply by timestep in days and populate corresponding vectors
@@ -191,12 +187,15 @@ void lifetime_nmc_t::runLifetimeModels(size_t lifetimeIndex, bool charge_changed
     state->nmc->c2_dt += c2_dt_el;
 
     //Run capacity degradation model after every 24 hours
-    if (state->day_age_of_battery - day_age_of_battery_old == 1) {
-        state->nmc->q_relative_li = runLifetimeNMC_Qli();
-        state->nmc->q_relative_neg = runLifetimeNMC_Qneg(T_battery, SOC);
+    if (lifetimeIndex % ts_per_day == 23) {
+        state->nmc->q_relative_li = runQli();
+        state->nmc->q_relative_neg = runQneg(T_battery, SOC);
         state->q_relative = fmin(state->nmc->q_relative_li, state->nmc->q_relative_neg);
         state->nmc->n_cycles_prev_day = state->n_cycles;
+//        printf("%zu, %f, %zu, %f, %f, %f\n", lifetimeIndex, state->day_age_of_battery, (size_t)(day_age_of_battery_old), state->nmc->q_relative_li, state->nmc->q_relative_neg, state->q_relative);
     }
+//    else
+//        printf("%zu, %f, %zu, %zu\n", lifetimeIndex, state->day_age_of_battery, (size_t)state->day_age_of_battery, day_age_of_battery_old);
 
     state->q_relative = fmin(state->q_relative, q_last);
 }
@@ -207,7 +206,6 @@ double lifetime_nmc_t::estimateCycleDamage() {
 
 void lifetime_nmc_t::replaceBattery(double percent_to_replace) {
     state->day_age_of_battery = 0;
-    state->nmc->day_age_of_battery_float = 0;
     state->nmc->dq_relative_li_old = 0;
     state->nmc->dq_relative_neg_old = 0;
     state->nmc->q_relative_li += percent_to_replace;

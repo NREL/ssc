@@ -53,7 +53,7 @@ struct lifetime_state {
     int n_cycles;
     double range;
     double average_range;
-    int day_age_of_battery;
+    double day_age_of_battery;
 
     // CALCYC model state
     std::shared_ptr<calendar_state> calendar;

@@ -35,8 +35,6 @@ struct lifetime_nmc_state {
     double DOD_max;
     int n_cycles_prev_day;
 
-    float day_age_of_battery_float; // keep track of age of battery with changing timestep
-
     // for complex cycling of battery, b1 = summation of b1_dt * dt_day over a day
     // lifetime capacity updated after 24 hours elapse.
 
@@ -68,23 +66,24 @@ public:
     void replaceBattery(double percent_to_replace) override;
 
     /// Calculate negative electrode voltage from SOC
-    double Uneg_computation(double SOC);
+    static double calculate_Uneg(double SOC);
 
     /// Calculate open circuit voltage from SOC
-    double Voc_computation(double SOC);
-
-    // Capacity degradation due to SEI
-    double runLifetimeNMC_Qli();
-
-    // Capacity degradation due to cycles
-    double runLifetimeNMC_Qneg(double T_battery, double SOC);
+    static double calculate_Voc(double SOC);
 
 protected:
+
     std::unique_ptr<lifetime_cycle_t> cycle_model;
+
+    /// Capacity degradation due to SEI
+    double runQli();
+
+    /// Capacity degradation due to cycles
+    double runQneg(double T_battery, double SOC);
 
     void initialize();
 
-    /// Rohit - Add Li-ion NMC Kandler Smith parameters
+    /// NMC Kandler Smith parameters
     double Ea_d0_1 = 4126.0;
     double b1_ref = 0.003503;
     double Ea_b_1 = 35392.;
