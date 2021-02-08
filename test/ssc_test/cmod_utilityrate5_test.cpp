@@ -69,6 +69,7 @@ void setup_residential_rates(ssc_data_t& data) {
 void ensure_outputs_line_up(ssc_data_t& data) {
     int nrows;
     int ncols;
+    // Monthly and annual bills
     ssc_number_t* annual_bills = ssc_data_get_matrix(data, "utility_bill_w_sys_ym", &nrows, &ncols);
     util::matrix_t<double> bill_matrix_ub(nrows, ncols);
     bill_matrix_ub.assign(annual_bills, nrows, ncols);
@@ -81,10 +82,96 @@ void ensure_outputs_line_up(ssc_data_t& data) {
     std::vector<double> annual_bill_ub(nrows);
     annual_bill_ub = util::array_to_vector(annual_bills_ub, nrows);
 
+    // Compensation for distributed generation
+    ssc_number_t* net_metering_credits = ssc_data_get_matrix(data, "nm_dollars_applied_ym", &nrows, &ncols);
+    util::matrix_t<double> nm_credits(nrows, ncols);
+    nm_credits.assign(net_metering_credits, nrows, ncols);
+
+    ssc_number_t* net_billing_credits = ssc_data_get_matrix(data, "net_billing_credits_ym", &nrows, &ncols);
+    util::matrix_t<double> nb_credits(nrows, ncols);
+    nb_credits.assign(net_billing_credits, nrows, ncols);
+
+    ssc_number_t* two_meter_credits = ssc_data_get_matrix(data, "two_meter_sales_ym", &nrows, &ncols);
+    util::matrix_t<double> tm_credits(nrows, ncols);
+    tm_credits.assign(two_meter_credits, nrows, ncols);
+
+    // Applies to bill, but not energy charges
+    ssc_number_t* true_up_credits = ssc_data_get_matrix(data, "true_up_credits_ym", &nrows, &ncols);
+    util::matrix_t<double> tu_credits(nrows, ncols);
+    tu_credits.assign(true_up_credits, nrows, ncols);
+
+    // Charges
+    ssc_number_t* monthly_fixed = ssc_data_get_matrix(data, "charge_w_sys_fixed_ym", &nrows, &ncols);
+    util::matrix_t<double> fixed_charges(nrows, ncols);
+    fixed_charges.assign(monthly_fixed, nrows, ncols);
+
+    ssc_number_t* ch_min = ssc_data_get_matrix(data, "charge_w_sys_minimum_ym", &nrows, &ncols);
+    util::matrix_t<double> min_charges(nrows, ncols);
+    min_charges.assign(ch_min, nrows, ncols);
+
+    ssc_number_t* dc_flat = ssc_data_get_matrix(data, "charge_w_sys_dc_fixed_ym", &nrows, &ncols);
+    util::matrix_t<double> demand_flat_charges(nrows, ncols);
+    demand_flat_charges.assign(dc_flat, nrows, ncols);
+
+    ssc_number_t* dc_tou = ssc_data_get_matrix(data, "charge_w_sys_dc_tou_ym", &nrows, &ncols);
+    util::matrix_t<double> demand_tou_charges(nrows, ncols);
+    demand_tou_charges.assign(dc_tou, nrows, ncols);
+
+    ssc_number_t* ec_gross = ssc_data_get_matrix(data, "charge_w_sys_ec_gross_ym", &nrows, &ncols);
+    util::matrix_t<double> gross_energy_charges(nrows, ncols);
+    gross_energy_charges.assign(ec_gross, nrows, ncols);
+
+    ssc_number_t* ec_net = ssc_data_get_matrix(data, "charge_w_sys_ec_ym", &nrows, &ncols);
+    util::matrix_t<double> net_energy_charges(nrows, ncols);
+    net_energy_charges.assign(ec_net, nrows, ncols);
+
+    ssc_number_t true_up_applied;
+    ssc_data_get_number(data, "ur_nm_credit_rollover", &true_up_applied);
+
     for (size_t i = 0; i < nrows; i++) {
         double sum_over_year = 0;
         for (size_t j = 0; j < ncols; j++) {
+
+            // Ensure energy charges gross minus credits is energy net
+            double ec_gross_month = gross_energy_charges.at(i, j);
+            double ec_net_month = net_energy_charges.at(i, j);
+            double nm_month = nm_credits.at(i, j);
+            double nb_month = nb_credits.at(i, j);
+            double tm_month = tm_credits.at(i, j);
+
+            double calc = ec_gross_month - nm_month - nb_month - tm_month;
+            EXPECT_NEAR(calc, ec_net_month, 0.001);
+
+            // Ensure only one of credit columns is active
+            if (nm_month > 0) {
+                EXPECT_NEAR(0, nb_month, 0.001);
+                EXPECT_NEAR(0, tm_month, 0.001);
+            }
+            else if (nb_month > 0) {
+                EXPECT_NEAR(0, nm_month, 0.001);
+                EXPECT_NEAR(0, tm_month, 0.001);
+            }
+            else if (tm_month > 0) {
+                EXPECT_NEAR(0, nm_month, 0.001);
+                EXPECT_NEAR(0, nb_month, 0.001);
+            }
+
             double utility_bill_w_sys_value = bill_matrix_ub.at(i, j);
+
+            // Ensure energy credits line up w/ bill = ec + fixed + min + dc - true up payment
+            double fc_month = fixed_charges.at(i, j);
+            double mc_month = min_charges.at(i, j);
+            double dc_flat_month = demand_flat_charges.at(i, j);
+            double dc_tou_month = demand_tou_charges.at(i, j);
+            double true_up_month = tu_credits.at(i, j); // credit
+            if (true_up_applied == 1) {
+                true_up_month = 0;
+            }
+            
+
+            calc = ec_net_month + fc_month + mc_month + dc_flat_month + dc_tou_month - true_up_month;
+            EXPECT_NEAR(utility_bill_w_sys_value, calc, 0.001);
+
             sum_over_year += utility_bill_w_sys_value;
         }
         EXPECT_NEAR(sum_over_year, annual_bill_ec[i], 0.001); // These should align within one tenth of a cent
@@ -428,6 +515,102 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing) {
     EXPECT_NEAR(0, dec_year_1_credits, 0.1);
 }
 
+TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_w_sell_rates) {
+    ssc_data_t data = new var_table;
+
+    setup_residential_rates(data);
+    ssc_data_set_number(data, "ur_metering_option", 2);
+    ssc_number_t p_ur_ec_tou_mat[24] = { 1, 1, 9.9999999999999998e+37, 0, 0.10000000000000001, 0.10000000000000001,
+                             2, 1, 9.9999999999999998e+37, 0, 0.050000000000000003, 0.050000000000000003,
+                             3, 1, 9.9999999999999998e+37, 0, 0.20000000000000001, 0.20000000000000001,
+                             4, 1, 9.9999999999999998e+37, 0, 0.25, 0.25 };
+    ssc_data_set_matrix(data, "ur_ec_tou_mat", p_ur_ec_tou_mat, 4, 6);
+
+    int analysis_period = 25;
+    ssc_data_set_number(data, "system_use_lifetime_output", 1);
+    ssc_data_set_number(data, "analysis_period", analysis_period);
+    set_array(data, "load", load_profile_path, 8760);
+    set_array(data, "gen", gen_path, 8760 * analysis_period);
+
+    int status = run_module(data, "utilityrate5");
+    EXPECT_FALSE(status);
+
+    ensure_outputs_line_up(data);
+
+    ssc_number_t cost_without_system;
+    ssc_data_get_number(data, "elec_cost_without_system_year1", &cost_without_system);
+    EXPECT_NEAR(771.8, cost_without_system, 0.1); // Same as hourly, good!
+
+    ssc_number_t cost_with_system;
+    ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
+    EXPECT_NEAR(-150.02, cost_with_system, 0.1);
+
+    int nrows;
+    int ncols;
+    ssc_number_t* net_billing_credits = ssc_data_get_matrix(data, "net_billing_credits_ym", &nrows, &ncols);
+    util::matrix_t<double> credits_matrix(nrows, ncols);
+    credits_matrix.assign(net_billing_credits, nrows, ncols);
+
+    double dec_year_1_credits = credits_matrix.at((size_t)1, (size_t)11);
+    EXPECT_NEAR(34.47, dec_year_1_credits, 0.1);
+}
+TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_subhourly_gen_and_load) {
+    ssc_data_t data = new var_table;
+
+    setup_residential_rates(data);
+    ssc_data_set_number(data, "ur_metering_option", 2);
+
+    int analysis_period = 1;
+    ssc_data_set_number(data, "system_use_lifetime_output", 1);
+    ssc_data_set_number(data, "analysis_period", analysis_period);
+    set_array(data, "load", load_residential_subhourly, 8760 * 4); // 15 min data
+    set_array(data, "gen", subhourly_gen_path, 8760 * 4); // 15 min data
+
+    int status = run_module(data, "utilityrate5");
+    EXPECT_FALSE(status);
+
+    ensure_outputs_line_up(data);
+
+    ssc_number_t cost_without_system;
+    ssc_data_get_number(data, "elec_cost_without_system_year1", &cost_without_system);
+    EXPECT_NEAR(771.8, cost_without_system, 0.1); // Same as hourly, good!
+
+    ssc_number_t cost_with_system;
+    ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
+    EXPECT_NEAR(441.4, cost_with_system, 0.1);
+}
+
+TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_subhourly_gen_and_load_w_sell_rates) {
+    ssc_data_t data = new var_table;
+
+    setup_residential_rates(data);
+    ssc_data_set_number(data, "ur_metering_option", 2);
+    ssc_number_t p_ur_ec_tou_mat[24] = { 1, 1, 9.9999999999999998e+37, 0, 0.10000000000000001, 0.10000000000000001,
+                                 2, 1, 9.9999999999999998e+37, 0, 0.050000000000000003, 0.050000000000000003,
+                                 3, 1, 9.9999999999999998e+37, 0, 0.20000000000000001, 0.20000000000000001,
+                                 4, 1, 9.9999999999999998e+37, 0, 0.25, 0.25 };
+    ssc_data_set_matrix(data, "ur_ec_tou_mat", p_ur_ec_tou_mat, 4, 6);
+
+    int analysis_period = 1;
+    ssc_data_set_number(data, "system_use_lifetime_output", 1);
+    ssc_data_set_number(data, "analysis_period", analysis_period);
+    set_array(data, "load", load_residential_subhourly, 8760 * 4); // 15 min data
+    set_array(data, "gen", subhourly_gen_path, 8760 * 4); // 15 min data
+
+    int status = run_module(data, "utilityrate5");
+    EXPECT_FALSE(status);
+
+    ensure_outputs_line_up(data);
+
+    ssc_number_t cost_without_system;
+    ssc_data_get_number(data, "elec_cost_without_system_year1", &cost_without_system);
+    EXPECT_NEAR(771.8, cost_without_system, 0.1); // Same as hourly, good!
+
+    ssc_number_t cost_with_system;
+    ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
+    EXPECT_NEAR(-156.95, cost_with_system, 0.1); // Subhourly data allows for increased sales - consistent with net metering
+}
+
 // If these results change, validate with https://github.com/NREL/SAM-documentation/blob/master/Unit%20Testing/Utility%20Rates/SAM%202020.11.29%20Rollover%20Month%20Tests/2020.11.29_net_billing_carryover.xlsx
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover) {
     ssc_data_t data = new var_table;
@@ -712,6 +895,15 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_buyall_sellall) {
     ssc_number_t cost_with_system;
     ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
     EXPECT_NEAR(-157.0, cost_with_system, 0.1);
+
+    int nrows;
+    int ncols;
+    ssc_number_t* net_billing_credits = ssc_data_get_matrix(data, "two_meter_sales_ym", &nrows, &ncols);
+    util::matrix_t<double> credits_matrix(nrows, ncols);
+    credits_matrix.assign(net_billing_credits, nrows, ncols);
+
+    double dec_year_1_credits = credits_matrix.at((size_t)1, (size_t)11);
+    EXPECT_NEAR(45.49, dec_year_1_credits, 0.1);
 }
 
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_no_credit) {
