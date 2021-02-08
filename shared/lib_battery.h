@@ -61,8 +61,9 @@ struct thermal_params {
     double Cp;                   // [J/KgK] - battery specific heat capacity
     double h;                    // [W/m2/K] - general heat transfer coefficient
     double resistance;                    // [Ohm] - internal resistance
+
     util::matrix_t<double> cap_vs_temp;
-    bool analytical_model;
+    bool cap_analytical;       // if true, do not use cap_vs_temp
 
     enum OPTIONS {
         VALUE, SCHEDULE

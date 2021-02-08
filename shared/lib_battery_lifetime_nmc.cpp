@@ -5,7 +5,7 @@
 #include <cmath>
 
 void lifetime_nmc_t::initialize() {
-    
+
     // cycle model for counting cycles only, no cycle-only degradation
     cycle_model = std::unique_ptr<lifetime_cycle_t>(new lifetime_cycle_t(params, state));
     // do any state initialization here
@@ -80,7 +80,7 @@ double lifetime_nmc_t::runLifetimeNMC_Qli() {
     int dn_cycles = state->n_cycles - state->nmc_state->n_cycles_prev_day;
     double k_cal = 0;
     //double b1 = std::accumulate(state->nmc_state->b1_dt.begin(), state->nmc_state->b1_dt.end(), 0);
-    double b1 = state->nmc_state->b1_dt; 
+    double b1 = state->nmc_state->b1_dt;
     double b2 = state->nmc_state->b2_dt;
     double b3 = state->nmc_state->b3_dt;
 
@@ -104,8 +104,7 @@ double lifetime_nmc_t::runLifetimeNMC_Qli() {
 }
 
 double lifetime_nmc_t::runLifetimeNMC_Qneg(double T_battery, double SOC) {
-    
-    double DOD = 1 - SOC; 
+
     int dn_cycles = state->n_cycles - state->nmc_state->n_cycles_prev_day;
 
     double c2 = state->nmc_state->c2_dt;
@@ -120,7 +119,7 @@ double lifetime_nmc_t::runLifetimeNMC_Qneg(double T_battery, double SOC) {
     state->nmc_state->dq_relative_neg_old = dq_new;
 
     state->nmc_state->q_relative_neg = (1 - (dq_new)) * 100;
-    
+
     //return state->nmc_state->q_relative_neg;
     return 100;
 }
@@ -128,16 +127,16 @@ double lifetime_nmc_t::runLifetimeNMC_Qneg(double T_battery, double SOC) {
 void lifetime_nmc_t::runLifetimeModels(size_t lifetimeIndex, bool charge_changed, double prev_DOD, double DOD,
                                        double T_battery) {
     double q_last = state->q_relative;
-    
+
     // update day age of battery
     int day_age_of_battery_old = (int)(state->nmc_state->day_age_of_battery_float);
     state->nmc_state->day_age_of_battery_float = state->nmc_state->day_age_of_battery_float +
         float( params->dt_hr/ util::hours_per_day);
     state->day_age_of_battery = (int)(state->nmc_state->day_age_of_battery_float);
-    
- 
+
+
     // convert battery temperature to Kelvin
-    T_battery += 273; 
+    T_battery += 273;
     if (charge_changed)
         cycle_model->rainflow(prev_DOD);
 
@@ -147,7 +146,7 @@ void lifetime_nmc_t::runLifetimeModels(size_t lifetimeIndex, bool charge_changed
 
     //compute open circuit and negative electrode voltage as function of SOC
     double SOC = 0.01 * (100 - DOD);
-    double DOD_max = state->nmc_state->DOD_max * 0.01; 
+    double DOD_max = state->nmc_state->DOD_max * 0.01;
     double U_neg = Uneg_computation(SOC);
     double V_oc = Voc_computation(SOC);
 
@@ -179,7 +178,7 @@ void lifetime_nmc_t::runLifetimeModels(size_t lifetimeIndex, bool charge_changed
     }
 
     state->q_relative = fmin(state->q_relative, q_last);
-    
+
 }
 
 double lifetime_nmc_t::estimateCycleDamage() {

@@ -734,3 +734,18 @@ TEST_F(lib_battery_test, ReplaceByCapacityTest){
     double rep = batteryModel->getNumReplacementYear();
     EXPECT_EQ(rep, 1);
 }
+
+TEST_F(lib_battery_test, NMCLifeModel) {
+    auto lifetimeModelNMC = new lifetime_nmc_t(dtHour);
+    auto thermalModelNMC = new thermal_t(1.0, mass, surface_area, resistance, Cp, h, T_room);
+    auto capacityModelNMC = new capacity_lithium_ion_t(q, SOC_init, SOC_max, SOC_min, dtHour);
+    auto voltageModelNMC = new voltage_dynamic_t(n_series, n_strings, Vnom_default, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom,
+                                         C_rate, resistance, dtHour);
+    auto lossModelNMC = new losses_t(monthlyLosses, monthlyLosses, monthlyLosses);
+
+    auto batteryNMC = std::unique_ptr<battery_t>(new battery_t(dtHour, chemistry, capacityModelNMC, voltageModelNMC, lifetimeModelNMC, thermalModelNMC, lossModelNMC));
+    double I = Qfull * n_strings * 2;
+
+    batteryNMC->run(0, I);
+
+}
