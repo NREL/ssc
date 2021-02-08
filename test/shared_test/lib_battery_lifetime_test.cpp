@@ -353,12 +353,12 @@ TEST_F(lib_battery_lifetime_nmc_test, updateCapacityTest) {
     double tol = 0.01;
 
     //check lifetime_nmc_state_initialization
-    ASSERT_EQ(model->get_state().nmc_state->q_relative_neg, 100);
-    ASSERT_EQ(model->get_state().nmc_state->q_relative_li, 100);
-    ASSERT_EQ(model->get_state().nmc_state->b1_dt, 0);
-    ASSERT_EQ(model->get_state().nmc_state->b2_dt, 0);
-    ASSERT_EQ(model->get_state().nmc_state->b3_dt, 0);
-    ASSERT_EQ(model->get_state().nmc_state->day_age_of_battery_float, 0);
+    ASSERT_EQ(model->get_state().nmc->q_relative_neg, 100);
+    ASSERT_EQ(model->get_state().nmc->q_relative_li, 100);
+    ASSERT_EQ(model->get_state().nmc->b1_dt, 0);
+    ASSERT_EQ(model->get_state().nmc->b2_dt, 0);
+    ASSERT_EQ(model->get_state().nmc->b3_dt, 0);
+    ASSERT_EQ(model->get_state().nmc->day_age_of_battery_float, 0);
 
     //check U_neg, and Voc functions (SOC as a fractional input)
     ASSERT_NEAR(model->Uneg_computation(0.1), 0.242, tol);
@@ -368,7 +368,7 @@ TEST_F(lib_battery_lifetime_nmc_test, updateCapacityTest) {
     ASSERT_NEAR(model->Uneg_computation(0.9), 0.1032, tol);
     ASSERT_NEAR(model->Voc_computation(0.9), 4.0818, tol);
 
-    // check number of cycles 
+    // check number of cycles
     while (idx < 876){
         model->runLifetimeModels(idx, true, 5,95, 25);
         model->runLifetimeModels(idx, true, 95, 5, 25);
@@ -377,7 +377,7 @@ TEST_F(lib_battery_lifetime_nmc_test, updateCapacityTest) {
 
         idx ++;
     }
-    
+
     ASSERT_EQ(model->get_state().n_cycles, 875);
 
 }
@@ -389,7 +389,7 @@ TEST_F(lib_battery_lifetime_nmc_test, NoCyclingCapacityTest) {
     // check capacity degradation with no cycling
     while (idx < 2400) {
         model->runLifetimeModels(idx, false, 50, 50, 25);
-        
+
         auto state = model->get_state();
 
         idx++;
@@ -410,6 +410,6 @@ TEST_F(lib_battery_lifetime_nmc_test, NoCyclingCapacityTest) {
         idx++;
     }
     ASSERT_EQ(model->get_state().n_cycles, 0);
-    ASSERT_NEAR(model->get_state().nmc_state->q_relative_li, 92.8315, tol);
+    ASSERT_NEAR(model->get_state().nmc->q_relative_li, 92.8315, tol);
 
 }

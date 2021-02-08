@@ -1,3 +1,25 @@
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+or promote products derived from this software without specific prior written permission.
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+
 #include "lib_battery_lifetime_calendar_cycle.h"
 #include "lib_battery_lifetime_nmc.h"
 #include "lib_battery_lifetime.h"
@@ -10,17 +32,17 @@ void lifetime_nmc_t::initialize() {
     cycle_model = std::unique_ptr<lifetime_cycle_t>(new lifetime_cycle_t(params, state));
     // do any state initialization here
     state->q_relative = 100;
-    state->nmc_state->q_relative_li = 100;
-    state->nmc_state->q_relative_neg = 100;
-    state->nmc_state->dq_relative_li_old = 0;
-    state->nmc_state->dq_relative_neg_old = 0;
-    state->nmc_state->day_age_of_battery_float = 0;
-    state->nmc_state->DOD_max = 50;
-    state->nmc_state->n_cycles_prev_day = 0;
-    state->nmc_state->b1_dt = 0;
-    state->nmc_state->b2_dt = 0;
-    state->nmc_state->b3_dt = 0;
-    state->nmc_state->c2_dt = 0;
+    state->nmc->q_relative_li = 100;
+    state->nmc->q_relative_neg = 100;
+    state->nmc->dq_relative_li_old = 0;
+    state->nmc->dq_relative_neg_old = 0;
+    state->nmc->day_age_of_battery_float = 0;
+    state->nmc->DOD_max = 50;
+    state->nmc->n_cycles_prev_day = 0;
+    state->nmc->b1_dt = 0;
+    state->nmc->b2_dt = 0;
+    state->nmc->b3_dt = 0;
+    state->nmc->c2_dt = 0;
 }
 
 lifetime_nmc_t::lifetime_nmc_t(double dt_hr) {
@@ -77,16 +99,16 @@ double lifetime_nmc_t::Voc_computation(double SOC) {
 
 double lifetime_nmc_t::runLifetimeNMC_Qli() {
     double dt_day = 1;
-    int dn_cycles = state->n_cycles - state->nmc_state->n_cycles_prev_day;
+    int dn_cycles = state->n_cycles - state->nmc->n_cycles_prev_day;
     double k_cal = 0;
-    //double b1 = std::accumulate(state->nmc_state->b1_dt.begin(), state->nmc_state->b1_dt.end(), 0);
-    double b1 = state->nmc_state->b1_dt;
-    double b2 = state->nmc_state->b2_dt;
-    double b3 = state->nmc_state->b3_dt;
+    //double b1 = std::accumulate(state->nmc->b1_dt.begin(), state->nmc->b1_dt.end(), 0);
+    double b1 = state->nmc->b1_dt;
+    double b2 = state->nmc->b2_dt;
+    double b3 = state->nmc->b3_dt;
 
-    state->nmc_state->b1_dt = 0;
-    state->nmc_state->b2_dt = 0;
-    state->nmc_state->b3_dt = 0;
+    state->nmc->b1_dt = 0;
+    state->nmc->b2_dt = 0;
+    state->nmc->b3_dt = 0;
 
     if (state->day_age_of_battery > 0)
         k_cal = (0.5 * b1) / (sqrt(state->day_age_of_battery)) + (b3 / tau_b3) * exp(-(state->day_age_of_battery / tau_b3));
@@ -94,33 +116,33 @@ double lifetime_nmc_t::runLifetimeNMC_Qli() {
         k_cal = 0;
 
     double dq_new;
-    if (state->nmc_state->dq_relative_li_old == 0)
+    if (state->nmc->dq_relative_li_old == 0)
         dq_new = k_cal * dt_day + b2 * dn_cycles;
     else
-        dq_new = k_cal * dt_day + b2 * dn_cycles + state->nmc_state->dq_relative_li_old;
-    state->nmc_state->dq_relative_li_old = dq_new;
-    state->nmc_state->q_relative_li = (1.07 - (dq_new)) * 100;
-    return state->nmc_state->q_relative_li;
+        dq_new = k_cal * dt_day + b2 * dn_cycles + state->nmc->dq_relative_li_old;
+    state->nmc->dq_relative_li_old = dq_new;
+    state->nmc->q_relative_li = (1.07 - (dq_new)) * 100;
+    return state->nmc->q_relative_li;
 }
 
 double lifetime_nmc_t::runLifetimeNMC_Qneg(double T_battery, double SOC) {
 
-    int dn_cycles = state->n_cycles - state->nmc_state->n_cycles_prev_day;
+    int dn_cycles = state->n_cycles - state->nmc->n_cycles_prev_day;
 
-    double c2 = state->nmc_state->c2_dt;
-    state->nmc_state->c2_dt = 0;
+    double c2 = state->nmc->c2_dt;
+    state->nmc->c2_dt = 0;
 
     double dq_new;
-    if (state->nmc_state->dq_relative_neg_old == 0)
+    if (state->nmc->dq_relative_neg_old == 0)
         dq_new = 1 - sqrt(1 - 2 * (c2 / c0_ref) * dn_cycles);
     else
-        dq_new = 1 - sqrt(1 - 2 * (c2 / c0_ref) * dn_cycles) + state->nmc_state->dq_relative_neg_old;
+        dq_new = 1 - sqrt(1 - 2 * (c2 / c0_ref) * dn_cycles) + state->nmc->dq_relative_neg_old;
 
-    state->nmc_state->dq_relative_neg_old = dq_new;
+    state->nmc->dq_relative_neg_old = dq_new;
 
-    state->nmc_state->q_relative_neg = (1 - (dq_new)) * 100;
+    state->nmc->q_relative_neg = (1 - (dq_new)) * 100;
 
-    //return state->nmc_state->q_relative_neg;
+    //return state->nmc->q_relative_neg;
     return 100;
 }
 
@@ -129,10 +151,10 @@ void lifetime_nmc_t::runLifetimeModels(size_t lifetimeIndex, bool charge_changed
     double q_last = state->q_relative;
 
     // update day age of battery
-    int day_age_of_battery_old = (int)(state->nmc_state->day_age_of_battery_float);
-    state->nmc_state->day_age_of_battery_float = state->nmc_state->day_age_of_battery_float +
-        float( params->dt_hr/ util::hours_per_day);
-    state->day_age_of_battery = (int)(state->nmc_state->day_age_of_battery_float);
+    int day_age_of_battery_old = (int)(state->nmc->day_age_of_battery_float);
+    state->nmc->day_age_of_battery_float = state->nmc->day_age_of_battery_float +
+                                           float( params->dt_hr/ util::hours_per_day);
+    state->day_age_of_battery = (int)(state->nmc->day_age_of_battery_float);
 
 
     // convert battery temperature to Kelvin
@@ -141,12 +163,12 @@ void lifetime_nmc_t::runLifetimeModels(size_t lifetimeIndex, bool charge_changed
         cycle_model->rainflow(prev_DOD);
 
     // update DOD_max if DOD > old DOD_max
-    if (DOD > state->nmc_state->DOD_max)
-        state->nmc_state->DOD_max = DOD;
+    if (DOD > state->nmc->DOD_max)
+        state->nmc->DOD_max = DOD;
 
     //compute open circuit and negative electrode voltage as function of SOC
     double SOC = 0.01 * (100 - DOD);
-    double DOD_max = state->nmc_state->DOD_max * 0.01;
+    double DOD_max = state->nmc->DOD_max * 0.01;
     double U_neg = Uneg_computation(SOC);
     double V_oc = Voc_computation(SOC);
 
@@ -160,21 +182,21 @@ void lifetime_nmc_t::runLifetimeModels(size_t lifetimeIndex, bool charge_changed
     double b3_dt_el = b3_ref * exp(-(Ea_b_3 / Rug) * (1. / T_battery - 1. / T_ref))
         * exp((alpha_a_b3 * F / Rug) * (V_oc / T_battery - V_ref / T_ref))
         * (1 + theta * DOD_max);
-    state->nmc_state->b1_dt += b1_dt_el;
-    state->nmc_state->b2_dt += b2_dt_el;
-    state->nmc_state->b3_dt += b3_dt_el;
+    state->nmc->b1_dt += b1_dt_el;
+    state->nmc->b2_dt += b2_dt_el;
+    state->nmc->b3_dt += b3_dt_el;
 
     //computations for q_neg
     double c2_dt_el = c2_ref * exp(-(Ea_c_2 / Rug) * (1. / T_battery - 1. / T_ref))
         * pow(0.01 * DOD, beta_c2);
-    state->nmc_state->c2_dt += c2_dt_el;
+    state->nmc->c2_dt += c2_dt_el;
 
     //Run capacity degradation model after every 24 hours
     if (state->day_age_of_battery - day_age_of_battery_old == 1) {
-        state->nmc_state->q_relative_li = runLifetimeNMC_Qli();
-        state->nmc_state->q_relative_neg = runLifetimeNMC_Qneg(T_battery, SOC);
-        state->q_relative = fmin(state->nmc_state->q_relative_li, state->nmc_state->q_relative_neg);
-        state->nmc_state->n_cycles_prev_day = state->n_cycles;
+        state->nmc->q_relative_li = runLifetimeNMC_Qli();
+        state->nmc->q_relative_neg = runLifetimeNMC_Qneg(T_battery, SOC);
+        state->q_relative = fmin(state->nmc->q_relative_li, state->nmc->q_relative_neg);
+        state->nmc->n_cycles_prev_day = state->n_cycles;
     }
 
     state->q_relative = fmin(state->q_relative, q_last);
@@ -187,12 +209,12 @@ double lifetime_nmc_t::estimateCycleDamage() {
 
 void lifetime_nmc_t::replaceBattery(double percent_to_replace) {
     state->day_age_of_battery = 0;
-    state->nmc_state->day_age_of_battery_float = 0;
-    state->nmc_state->dq_relative_li_old = 0;
-    state->nmc_state->dq_relative_neg_old = 0;
-    state->nmc_state->q_relative_li += percent_to_replace;
-    state->nmc_state->q_relative_neg += percent_to_replace;
-    state->nmc_state->q_relative_li = fmin(100, state->nmc_state->q_relative_li);
-    state->nmc_state->q_relative_neg = fmin(100, state->nmc_state->q_relative_neg);
-    state->q_relative = fmin(state->nmc_state->q_relative_li, state->nmc_state->q_relative_neg);
+    state->nmc->day_age_of_battery_float = 0;
+    state->nmc->dq_relative_li_old = 0;
+    state->nmc->dq_relative_neg_old = 0;
+    state->nmc->q_relative_li += percent_to_replace;
+    state->nmc->q_relative_neg += percent_to_replace;
+    state->nmc->q_relative_li = fmin(100, state->nmc->q_relative_li);
+    state->nmc->q_relative_neg = fmin(100, state->nmc->q_relative_neg);
+    state->q_relative = fmin(state->nmc->q_relative_li, state->nmc->q_relative_neg);
 }
