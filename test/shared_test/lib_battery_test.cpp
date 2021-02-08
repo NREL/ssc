@@ -678,6 +678,7 @@ TEST_F(lib_battery_test, AdaptiveTimestep) {
     EXPECT_NEAR(batt_adaptive->SOC(), 88.67, 1e-2);
 }
 
+
 TEST_F(lib_battery_test, AugmentCapacity) {
     std::vector<double> augmentation_percent = {50, 40, 30};
     batteryModel->setupReplacements(augmentation_percent);
