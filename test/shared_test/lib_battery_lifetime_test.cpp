@@ -384,7 +384,7 @@ TEST_F(lib_battery_lifetime_nmc_test, updateCapacityTest) {
 
 TEST_F(lib_battery_lifetime_nmc_test, NoCyclingCapacityTest) {
     size_t idx = 0;
-    double tol = 0.1;
+    double tol = 0.001;
 
     // check capacity degradation with no cycling
     while (idx < 2400) {
@@ -395,8 +395,18 @@ TEST_F(lib_battery_lifetime_nmc_test, NoCyclingCapacityTest) {
         idx++;
     }
     //Values compared to MATLAB model
-    ASSERT_EQ(model->get_state().n_cycles, 0);
-    ASSERT_NEAR(model->get_state().q_relative, 98.8258,tol);
+    auto state = model->get_state();
+
+    EXPECT_EQ(state.n_cycles, 0);
+    EXPECT_NEAR(state.q_relative, 98.798, tol);
+    EXPECT_NEAR(state.nmc->day_age_of_battery_float, 99.998, tol);
+    EXPECT_NEAR(state.nmc->q_relative_li, 98.798, tol);
+    EXPECT_NEAR(state.nmc->q_relative_neg, 100, tol);
+    EXPECT_NEAR(state.nmc->dq_relative_li_old, 0.082, tol);
+    EXPECT_NEAR(state.nmc->b1_dt, 0.000157, 1e-6);
+    EXPECT_NEAR(state.nmc->b2_dt, 0.0000149, 1e-7);
+    EXPECT_NEAR(state.nmc->b3_dt, 0.0851, 1e-4);
+    EXPECT_NEAR(state.nmc->c2_dt, 0.00391, 1e-5);
 
     model = std::unique_ptr<lifetime_nmc_t>(new lifetime_nmc_t(dt_hour));
     idx = 0;
@@ -409,7 +419,15 @@ TEST_F(lib_battery_lifetime_nmc_test, NoCyclingCapacityTest) {
 
         idx++;
     }
-    ASSERT_EQ(model->get_state().n_cycles, 0);
-    ASSERT_NEAR(model->get_state().nmc->q_relative_li, 92.8315, tol);
-
+    state = model->get_state();
+    EXPECT_EQ(model->get_state().n_cycles, 0);
+    EXPECT_NEAR(state.q_relative, 92.7835, tol);
+    EXPECT_NEAR(state.nmc->day_age_of_battery_float, 300.002, tol);
+    EXPECT_NEAR(state.nmc->q_relative_li, 92.783, tol);
+    EXPECT_NEAR(state.nmc->q_relative_neg, 100, tol);
+    EXPECT_NEAR(state.nmc->dq_relative_li_old, 0.142, tol);
+    EXPECT_EQ(state.nmc->b1_dt, 0);
+    EXPECT_EQ(state.nmc->b2_dt, 0);
+    EXPECT_EQ(state.nmc->b3_dt, 0);
+    EXPECT_EQ(state.nmc->c2_dt, 0);
 }

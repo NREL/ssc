@@ -156,7 +156,6 @@ void lifetime_nmc_t::runLifetimeModels(size_t lifetimeIndex, bool charge_changed
                                            float( params->dt_hr/ util::hours_per_day);
     state->day_age_of_battery = (int)(state->nmc->day_age_of_battery_float);
 
-
     // convert battery temperature to Kelvin
     T_battery += 273;
     if (charge_changed)
@@ -200,7 +199,6 @@ void lifetime_nmc_t::runLifetimeModels(size_t lifetimeIndex, bool charge_changed
     }
 
     state->q_relative = fmin(state->q_relative, q_last);
-
 }
 
 double lifetime_nmc_t::estimateCycleDamage() {
