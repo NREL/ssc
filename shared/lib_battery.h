@@ -63,7 +63,7 @@ struct thermal_params {
     double resistance;                    // [Ohm] - internal resistance
 
     util::matrix_t<double> cap_vs_temp;
-    bool cap_analytical;       // if true, do not use cap_vs_temp
+    bool analytical_model;       // if true, do not use cap_vs_temp
 
     enum OPTIONS {
         VALUE, SCHEDULE

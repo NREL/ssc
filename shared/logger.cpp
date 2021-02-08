@@ -119,7 +119,7 @@ std::ostream &operator<<(std::ostream &os, const lifetime_state &p) {
     char buf[1024];
     sprintf(buf, R"("lifetime_state": { "q_relative": %f, "n_cycles": %d, "range": %.3f, "average_range": %.3f, )",
             p.q_relative, p.n_cycles, p.range, p.average_range);
-    os << buf << *p.cycle << ", " << *p.calendar << ", " << *p.nmc << " }";
+    os << buf << *p.cycle << ", " << *p.calendar << ", " << *p.nmc_state << " }";
     return os;
 }
 
