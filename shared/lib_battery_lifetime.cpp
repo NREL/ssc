@@ -64,14 +64,14 @@ lifetime_state::lifetime_state(const std::shared_ptr<cycle_state>& cyc, const st
     q_relative = fmin(cycle->q_relative_cycle, calendar->q_relative_calendar);
 }
 
-lifetime_state::lifetime_state(const std::shared_ptr<lifetime_nmc_state>& nmc_state) {
+lifetime_state::lifetime_state(const std::shared_ptr<lifetime_nmc_state>& nmc) {
     q_relative = 0;
     n_cycles = 0;
     range = 0;
     average_range = 0;
     day_age_of_battery = 0;
-    nmc_state = nmc_state;
-    q_relative = fmin(nmc_state->q_relative_li, nmc_state->q_relative_neg);
+    nmc_state = nmc;
+    q_relative = fmin(nmc->q_relative_li, nmc->q_relative_neg);
 }
 
 
