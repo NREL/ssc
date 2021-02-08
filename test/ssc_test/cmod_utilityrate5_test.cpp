@@ -129,9 +129,6 @@ void ensure_outputs_line_up(ssc_data_t& data) {
     util::matrix_t<double> net_energy_charges(nrows, ncols);
     net_energy_charges.assign(ec_net, nrows, ncols);
 
-    ssc_number_t true_up_applied;
-    ssc_data_get_number(data, "ur_nm_credit_rollover", &true_up_applied);
-
     for (size_t i = 0; i < nrows; i++) {
         double sum_over_year = 0;
         for (size_t j = 0; j < ncols; j++) {
@@ -167,11 +164,7 @@ void ensure_outputs_line_up(ssc_data_t& data) {
             double mc_month = min_charges.at(i, j);
             double dc_flat_month = demand_flat_charges.at(i, j);
             double dc_tou_month = demand_tou_charges.at(i, j);
-            double true_up_month = tu_credits.at(i, j); // credit
-            if (true_up_applied == 1) {
-                true_up_month = 0;
-            }
-            
+            double true_up_month = tu_credits.at(i, j); // credit           
 
             calc = ec_net_month + fc_month + mc_month + dc_flat_month + dc_tou_month - true_up_month;
             EXPECT_NEAR(utility_bill_w_sys_value, calc, 0.001);
@@ -382,7 +375,7 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_net_metering_credits_in_may_with_r
     int length;
     ssc_number_t* true_up_dollars = ssc_data_get_array(data, "year1_true_up_credits", &length);
     float may_dollars = true_up_dollars[credit_month];
-    EXPECT_NEAR(50.28, may_dollars, 0.1);
+    EXPECT_NEAR(0.0, may_dollars, 0.1);
 
     ssc_number_t* excess_dollars = ssc_data_get_array(data, "year1_nm_dollars_applied", &length);
 

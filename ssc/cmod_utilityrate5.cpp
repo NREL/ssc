@@ -1760,7 +1760,7 @@ public:
                     ssc_number_t year_end_dollars = monthly_cumulative_excess_energy[m] * as_number("ur_nm_yearend_sell_rate") * rate_esc;
                     payment[c - 1] -= year_end_dollars;
                     monthly_ec_charges[m] -= year_end_dollars;
-                    monthly_true_up_credits[m] += year_end_dollars;
+                    // Don't apply this to monthly_true_up_credits, since the dollars aren't recieved this month when rollover_credit is true
                     dollars_applied += year_end_dollars;
                 }
 
