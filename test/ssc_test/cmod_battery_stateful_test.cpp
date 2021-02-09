@@ -20,13 +20,13 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, TestStep) {
     ssc_data_get_number(data, "P_chargeable", &P_c);
     ssc_data_get_number(data, "SOC", &SOC);
     EXPECT_EQ(last_idx, 1);
-    EXPECT_NEAR(V, 549.18, 1e-2);
+    EXPECT_NEAR(V, 550.81, 1e-2);
     EXPECT_NEAR(P, 0.549, 1e-2);
     EXPECT_NEAR(Q, 9.125, 1e-2);
     EXPECT_NEAR(I, 1, 1e-2);
-    EXPECT_NEAR(I_d, 7.30, 1e-2);
+    EXPECT_NEAR(I_d, 8.21, 1e-2);
     EXPECT_NEAR(I_c, -9.34, 1e-2);
-    EXPECT_NEAR(P_d, 3.36, 1e-2);
+    EXPECT_NEAR(P_d, 3.82, 1e-2);
     EXPECT_NEAR(P_c, -5.32, 1e-2);
     EXPECT_NEAR(SOC, 46.94, 1e-2);
 
@@ -46,13 +46,13 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, TestStep) {
     ssc_data_get_number(data, "P_chargeable", &P_c);
     ssc_data_get_number(data, "SOC", &SOC);
     EXPECT_EQ(last_idx, 2);
-    EXPECT_NEAR(V, 546.09, 1e-2);
+    EXPECT_NEAR(V, 548.3, 1e-2);
     EXPECT_NEAR(P, 0.546, 1e-2);
     EXPECT_NEAR(Q, 8.125, 1e-2);
     EXPECT_NEAR(I, 1, 1e-2);
-    EXPECT_NEAR(I_d, 6.5, 1e-2);
+    EXPECT_NEAR(I_d, 7.31, 1e-2);
     EXPECT_NEAR(I_c, -10.34, 1e-2);
-    EXPECT_NEAR(P_d, 2.90, 1e-2);
+    EXPECT_NEAR(P_d, 3.36, 1e-2);
     EXPECT_NEAR(P_c, -5.89, 1e-2);
     EXPECT_NEAR(SOC, 41.79, 1e-2);
 
@@ -69,13 +69,13 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, TestStep) {
     ssc_data_get_number(copy, "P_chargeable", &P_c);
     ssc_data_get_number(copy, "SOC", &SOC);
     EXPECT_EQ(last_idx, 2);
-    EXPECT_NEAR(V, 546.09, 1e-2);
+    EXPECT_NEAR(V, 548.30, 1e-2);
     EXPECT_NEAR(P, 0.546, 1e-2);
     EXPECT_NEAR(Q, 8.125, 1e-2);
     EXPECT_NEAR(I, 1, 1e-2);
-    EXPECT_NEAR(I_d, 6.5, 1e-2);
+    EXPECT_NEAR(I_d, 7.31, 1e-2);
     EXPECT_NEAR(I_c, -10.34, 1e-2);
-    EXPECT_NEAR(P_d, 2.90, 1e-2);
+    EXPECT_NEAR(P_d, 3.36, 1e-2);
     EXPECT_NEAR(P_c, -5.89, 1e-2);
     EXPECT_NEAR(SOC, 41.79, 1e-2);
 }
@@ -93,7 +93,7 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, SubMinute) {
     EXPECT_EQ(last_idx, 1);
     EXPECT_NEAR(current, 1, 1e-2);
     EXPECT_NEAR(P, 0.551, 0.02);
-    EXPECT_NEAR(V, 551.65, 1e-2);
+    EXPECT_NEAR(V, 552.87, 1e-2);
     EXPECT_NEAR(SOC, 52.07, 1e-2);
 
     // make a copy
@@ -109,7 +109,7 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, SubMinute) {
     EXPECT_EQ(last_idx, 2);
     EXPECT_NEAR(current, 1, 1e-2);
     EXPECT_NEAR(P, 0.551, 1e-2);
-    EXPECT_NEAR(V, 551.64, 1e-2);
+    EXPECT_NEAR(V, 552.87, 1e-2);
     EXPECT_NEAR(SOC, 52.05, 1e-2);
 
     // run the copy, should end up in same place
@@ -122,7 +122,7 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, SubMinute) {
     EXPECT_EQ(last_idx, 2);
     EXPECT_NEAR(current, 1, 1e-2);
     EXPECT_NEAR(P, 0.551, 1e-2);
-    EXPECT_NEAR(V, 551.64, 1e-2);
+    EXPECT_NEAR(V, 552.87, 1e-2);
     EXPECT_NEAR(SOC, 52.05, 1e-2);
 }
 
@@ -226,9 +226,9 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, AdaptiveTimestep) {
     ssc_data_get_number(data, "SOC", &hourly_SOC);
     ssc_data_get_number(&data_copy, "SOC", &adaptive_SOC);
 
-    EXPECT_NEAR(hourly_E, 2.994, 1e-3);
-    EXPECT_NEAR(adaptive_E, 2.994, 1e-3);
-    EXPECT_NEAR(hourly_SOC, 23.370, 1e-3);
-    EXPECT_NEAR(adaptive_SOC, 23.428, 1e-3);
+    EXPECT_NEAR(hourly_E, 2.833, 1e-3);
+    EXPECT_NEAR(adaptive_E, 2.837, 1e-3);
+    EXPECT_NEAR(hourly_SOC, 25.210, 1e-3);
+    EXPECT_NEAR(adaptive_SOC, 25.210, 1e-3);
 
 }

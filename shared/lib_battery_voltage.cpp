@@ -362,13 +362,15 @@ void voltage_dynamic_t::update_Qfull_mod(double qmax) {
         C = (-1 * params->dynamic.Vcut + _E0 - params->resistance * qmax * params->dynamic.C_rate + _A * exp(-_B0 * qmax)) / _K;
         x = qmax / (C - 1);
         Q_cell_mod = qmax + x;
-
+        //Q_cell_mod = qmax;
     }
     else {
+       
         Q_cell_mod = qmax;
 
     }
     state->Q_full_mod = Q_cell_mod;
+    
 }
 
 double voltage_dynamic_t::calculate_voltage_for_current(double I, double q, double qmax, double) {
@@ -435,10 +437,16 @@ double voltage_dynamic_t::calculate_current_for_target_w(double P_watts, double 
     solver_power = fabs(P_watts) / (params->num_cells_series * params->num_strings);
     solver_q = q / params->num_strings;
     solver_Q = qmax  / params->num_strings;
+    double Qfull_mod_store = state->Q_full_mod;
     if (params->dynamic.Vcut != 0) {
+        //Qfull_mod_store = state->Q_full_mod;
+        update_Qfull_mod(qmax / params->num_strings);
+        
         solver_Q_mod = state->Q_full_mod;
+        //solver_Q_mod = solver_Q;
     }
     else {
+        
         solver_Q_mod = solver_Q;
     }
     std::function<void(const double *, double *)> f;
@@ -459,6 +467,8 @@ double voltage_dynamic_t::calculate_current_for_target_w(double P_watts, double 
 
     newton<double, std::function<void(const double *, double *)>, 1>(x, resid, check, f,
                                                                      100, 1e-6, 1e-6, 0.7);
+
+    state->Q_full_mod = Qfull_mod_store;
     return x[0] * params->num_strings * direction;
 }
 

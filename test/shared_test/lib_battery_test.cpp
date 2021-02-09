@@ -214,7 +214,7 @@ TEST_F(lib_battery_test, runTestCycleAt1C){
 //    std::cerr << "\n" << idx << ": " << capacity_passed << "\n";
 
     auto s = battery_state_test({{479.75, 1000, 960.01, 20.25, 0, 49.97, 52.09, 2}, // cap
-                            550.65, // voltage
+                            552.03, // voltage
                            100, {100, 0, 0, 0, 0, 0, 1, std::vector<double>()}, // cycle
                             {102, 0, 0}, // calendar
                            {96.00, 20.00, 20}, // thermal
@@ -228,7 +228,7 @@ TEST_F(lib_battery_test, runTestCycleAt1C){
 //    std::cerr <<  idx << ": soc " << batteryModel->SOC() << ", cap " << capacity_passed << "\n";
     // the SOC isn't at 5 so it means the controller is not able to calculate a current/voltage at which to discharge to 5
     s = battery_state_test({{54.5, 1000, 960.01, 20.25, 0, 5.67, 7.79, 2}, // cap
-                       366.96, // voltage
+                       470.17, // voltage
                        100, {100, 0, 0, 0, 0, 0, 1, std::vector<double>()}, // cycle
                         {101.976, 0, 0.0002}, // calendar
                        {96.01, 20.01, 20}, // thermal
@@ -252,14 +252,14 @@ TEST_F(lib_battery_test, runTestCycleAt1C){
 //    std::cerr <<  idx << ": soc " << batteryModel->SOC() << ", cap " << capacity_passed << "\n";
     // the SOC isn't at 5 so it means the controller is not able to calculate a current/voltage at which to discharge to 5
     s = battery_state_test({{50.64, 920.75, 883.93, 8.917, 0, 5.73, 6.74, 2}, // cap
-                       368.90, // voltage
+                       470.64, // voltage
                        93.08, {92.07, 397, 88.74, 88.72, 88.79, 89.30, 7, std::vector<double>()}, // cycle
                         {98.0, 2739, 0.039}, // calendar
                        {96.0, 20.00, 20}, // thermal
                        32991});
     compareState(batteryModel, s, "runTestCycleAt1C: 3");
 
-    EXPECT_NEAR(capacity_passed, 352736, 1000) << "Current passing through cell";
+    EXPECT_NEAR(capacity_passed, 357072, 1000) << "Current passing through cell";
     double qmax = fmax(s.capacity.qmax_lifetime, s.capacity.qmax_thermal);
     EXPECT_NEAR(qmax/q, .93, 0.01) << "capacity relative to max capacity";
 }
@@ -273,7 +273,7 @@ TEST_F(lib_battery_test, runTestCycleAt3C){
 //    std::cerr << "\n" << idx << ": " << capacity_passed << "\n";
 
     auto s = battery_state_test({{439.25, 1000, 960.02, 60.75, 0, 45.75, 52.08, 2}, // cap
-                            548.35, // voltage
+                            550.11, // voltage
                             100, {100, 0, 0, 0, 0, 0, 1, std::vector<double>()}, // cycle
                              {102, 0}, // calendar
                             {96.01, 20.01, 20}, // thermal
@@ -287,7 +287,7 @@ TEST_F(lib_battery_test, runTestCycleAt3C){
 //    std::cerr <<  idx << ": soc " << batteryModel->SOC() << ", cap " << capacity_passed << "\n";
     // the SOC isn't at 5 so it means the controller is not able to calculate a current/voltage at which to discharge to 5
     s = battery_state_test({{48.01, 1000, 960.11, 26.74, 0, 5.00, 7.78, 2}, // cap
-                       338.91, // voltage
+                       463.93, // voltage
                        101.98, {100, 0, 0, 0, 0, 0, 1, std::vector<double>()}, // cycle
                         {101.98, 0}, // calendar
                        {96.01, 20.01, 20}, // thermal
@@ -311,7 +311,7 @@ TEST_F(lib_battery_test, runTestCycleAt3C){
 //    std::cerr <<  idx << ": soc " << batteryModel->SOC() << ", cap " << capacity_passed << "\n";
     // the SOC isn't at 5 so it means the controller is not able to calculate a current/voltage at which to discharge to 5
     s = battery_state_test({{49.06, 920.77, 883.94, 8.89, 0, 5.55, 6.55, 2}, // cap
-                            362.25, // voltage
+                            469.07, // voltage
                        93.08, {92.08, 397, 88.51, 89.14, 88.53, 89.45, 7, std::vector<double>()}, // cycle
                         {98.11, 2613, 0.0393}, // calendar
                        {96.01, 20, 20}, // thermal
@@ -319,7 +319,7 @@ TEST_F(lib_battery_test, runTestCycleAt3C){
     compareState(batteryModel, s, "runTest: 3");
 
 
-    EXPECT_NEAR(capacity_passed, 353328, 100) << "Current passing through cell";
+    EXPECT_NEAR(capacity_passed, 358503, 100) << "Current passing through cell";
     double qmax = fmax(s.capacity.qmax_lifetime, s.capacity.qmax_thermal);
     EXPECT_NEAR(qmax/q, 0.9209, 0.01) << "capacity relative to max capacity";
 }
@@ -425,14 +425,14 @@ TEST_F(lib_battery_test, RoundtripEffModel){
         current += fabs(max_current) / 100.;
         eff_vs_current.emplace_back(fabs(output_power/input_power));
     }
-    std::vector<double> eff_expected = {0.99, 0.99, 0.98, 0.98, 0.97, 0.97, 0.96, 0.97, 0.95, 0.95, 0.94, 0.95, 0.93, // i = 12
-                                        0.91, 0.93, 0.93, 0.92, 0.92, 0.90, 0.93, 0.88, 0.92, 0.90, 0.88, 0.91, 0.89, // i = 25
-                                        0.88, 0.90, 0.90, 0.84, 0.87, 0.88, 0.89, 0.89, 0.81, 0.85, 0.85, 0.86, 0.88, // i = 38
-                                        0.88, 0.87, 0.78, 0.81, 0.81, 0.83, 0.84, 0.85, 0.86, 0.87, 0.87, 0.85, 0.79, // i = 51
-                                        0.73, 0.75, 0.76, 0.77, 0.78, 0.79, 0.80, 0.81, 0.82, 0.83, 0.84, 0.85, 0.85, // i = 64
-                                        0.84, 0.84, 0.82, 0.76, 0.65, 0.66, 0.66, 0.67, 0.68, 0.69, 0.70, 0.70, 0.71, // i = 77
-                                        0.72, 0.73, 0.74, 0.74, 0.75, 0.76, 0.77, 0.77, 0.78, 0.78, 0.79, 0.80, 0.81, // i = 90
-                                        0.81, 0.81, 0.81, 0.81, 0.82, 0.82, 0.81, 0.81, // i = 98
+    std::vector<double> eff_expected = {0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.98, 0.98, 0.98, 0.98, // i = 12
+                                        0.98, 0.98, 0.98, 0.98, 0.97, 0.97, 0.97, 0.97, 0.97, 0.97, 0.96, 0.96, 0.96, // i = 25
+                                        0.96, 0.96, 0.96, 0.96, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95, // i = 38
+                                        0.95, 0.95, 0.94, 0.93, 0.94, 0.94, 0.94, 0.94, 0.94, 0.94, 0.94, 0.94, 0.93, // i = 51
+                                        0.92, 0.92, 0.92, 0.92, 0.92, 0.92, 0.92, 0.93, 0.93, 0.93, 0.93, 0.93, 0.93, // i = 64
+                                        0.93, 0.93, 0.92, 0.91, 0.91, 0.89, 0.88, 0.89, 0.89, 0.89, 0.89, 0.89, 0.90, // i = 77
+                                        0.90, 0.90, 0.90, 0.90, 0.91, 0.91, 0.91, 0.91, 0.91, 0.91, 0.91, 0.91, 0.92, // i = 90
+                                        0.92, 0.92, 0.92, 0.92, 0.91, 0.91, 0.91, 0.91, // i = 98
     };
     for (size_t i = 0; i < eff_expected.size(); i++)
         EXPECT_NEAR(eff_vs_current[i], eff_expected[i], .01) << " i = " << i;
@@ -544,18 +544,19 @@ TEST_F(lib_battery_test, RoundtripEffVanadiumFlow){
 
 TEST_F(lib_battery_test, HourlyVsSubHourly)
 {
-    auto cap_hourly = new capacity_lithium_ion_t(q, SOC_init, SOC_max, SOC_min, dtHour);
+    n_strings = 444;
+    auto cap_hourly = new capacity_lithium_ion_t(Qfull * n_strings, SOC_init, SOC_max, SOC_min, dtHour);
     auto volt_hourly = new voltage_dynamic_t(n_series, n_strings, Vnom_default, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom, Vcut, 
                                              C_rate, resistance, 1 );
 
-    auto cap_subhourly = new capacity_lithium_ion_t(q, SOC_init, SOC_max, SOC_min, dtHour);
+    auto cap_subhourly = new capacity_lithium_ion_t(Qfull * n_strings, SOC_init, SOC_max, SOC_min, dtHour);
     auto volt_subhourly = new voltage_dynamic_t(n_series, n_strings, Vnom_default, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom, Vcut, 
                                                 C_rate, resistance, .5 );
 
     EXPECT_EQ(cap_hourly->q0(), cap_subhourly->q0());
     EXPECT_EQ(volt_hourly->battery_voltage(), volt_subhourly->battery_voltage());
 
-    double discharge_watts = 100.;
+    double discharge_watts = 100.22;
     while (cap_hourly->SOC() > 16){
         double I_hourly = volt_hourly->calculate_current_for_target_w(discharge_watts, cap_hourly->q0(), cap_hourly->qmax(), 0);
         cap_hourly->updateCapacity(I_hourly, 1);
