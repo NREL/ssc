@@ -2,6 +2,7 @@
 //#include "cmod_solar_thermal_common_eqns.h"   // doesn't yet exist
 #include "flat_plate_solar_collector.h"         // bypassing a common eqns intermediary for now
 #include "vartab.h"
+#include "htf_props.h"
 
 #pragma warning(disable: 4297)  // ignore warning: 'function assumed not to throw an exception but does'
 
@@ -53,7 +54,11 @@ void Flat_Plate_Array_Design_Equations(ssc_data_t data)
     vt_get_number(vt, "m_dot_array_design", &m_dot_array_design);
     vt_get_number(vt, "specific_heat", &specific_heat);       // [kJ/kg-K]
     vt_get_number(vt, "temp_rise_array_design", &temp_rise_array_design);
-    flat_plate_array.resize_array(m_dot_array_design, specific_heat, temp_rise_array_design);
+    double dT_approach = 0.;    // 0 = for no HX
+
+    HTFProperties fluid;
+    fluid.SetFluid(HTFProperties::Water_liquid);
+    flat_plate_array.resize_array(m_dot_array_design, specific_heat, temp_rise_array_design, dT_approach, fluid);
     array_dimensions = flat_plate_array.array_size();
     double ncoll = flat_plate_array.ncoll();
     double area_total = flat_plate_array.area_total();

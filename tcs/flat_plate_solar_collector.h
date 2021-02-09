@@ -201,9 +201,9 @@ public:
     const int ncoll();
     const double area_total();                             // [m2]
     void resize_array(ArrayDimensions array_dimensions);
-    void resize_array(double m_dot_array_design /*kg/s*/, double specific_heat /*kJ/kg-K*/, double temp_rise_array_design /*K*/);
-    void resize_num_in_parallel(double m_dot_array_design /*kg/s*/);
-    void resize_num_in_series(double m_dot_array_design /*kg/s*/, double specific_heat /*kJ/kg-K*/, double temp_rise_array_design /*K*/);
+    void resize_array(double T_in_des_external /*C*/, double dT_design_external /*K*/, double mdot_design_external /*kg/s*/, double dT_approach /*K*/, HTFProperties& fluid_external);
+    void resize_num_in_series(double T_in_des_external /*C*/, double dT_design_external /*K*/, double dT_approach /*K*/);
+    void resize_num_in_parallel(double T_in_des_external /*C*/, double dT_design_external /*K*/, double mdot_design_external /*kg/s*/, HTFProperties& fluid_external);
     ArrayDimensions array_size() const;
     const double IncidentIrradiance(const tm& timestamp, const ExternalConditions& external_conditions);   // [W/m2] POA
     const double RatedPowerGain();      // [W]
@@ -213,6 +213,7 @@ public:
     const double EstimatePowerGain(double POA /*W/m2*/, double T_in /*C*/, double T_amb /*C*/);            // [W]
     const double UsefulPowerGain(const tm &timestamp, const ExternalConditions &external_conditions);      // [W]
     const double T_out(const tm &timestamp, const ExternalConditions &external_conditions);                // [C]
+    void SetFluid(int fluid_id);
     HTFProperties* GetFluid();
 private:
     FlatPlateCollector flat_plate_collector_;       // just scale a single collector for now -> premature optimization??

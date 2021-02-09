@@ -560,39 +560,48 @@ void FlatPlateArray::resize_array(ArrayDimensions array_dimensions)
     array_dimensions_ = array_dimensions;
 }
 
-void FlatPlateArray::resize_array(double m_dot_array_design /*kg/s*/, double specific_heat /*kJ/kg-K*/, double temp_rise_array_design /*K*/)
+void FlatPlateArray::resize_array(double T_in_des_external /*C*/, double dT_design_external /*K*/, double mdot_design_external /*kg/s*/, double dT_approach /*K*/, HTFProperties& fluid_external)
 {
-    resize_num_in_parallel(m_dot_array_design);
-    resize_num_in_series(m_dot_array_design, specific_heat, temp_rise_array_design);
+    resize_num_in_series(T_in_des_external, dT_design_external, dT_approach);
+    resize_num_in_parallel(T_in_des_external, dT_design_external, mdot_design_external, fluid_external);
 }
 
-void FlatPlateArray::resize_num_in_parallel(double m_dot_array_design /*kg/s*/)
+void FlatPlateArray::resize_num_in_series(double T_in_des_external /*C*/, double dT_design_external /*K*/, double dT_approach = 0. /*K*/)
 {
-    if (!std::isnormal(m_dot_array_design) || m_dot_array_design <= 0.) return;
+    if (!std::isnormal(dT_design_external)) return;
 
-    double exact_fractional_collectors_in_parallel = m_dot_array_design / flat_plate_collector_.RatedMassFlow();
-    if (exact_fractional_collectors_in_parallel < 1.) {
-        array_dimensions_.num_in_parallel = 1;
-    }
-    else {
-        array_dimensions_.num_in_parallel = static_cast<int>(std::round(exact_fractional_collectors_in_parallel));      // std::round() rounds up at halfway point
-    }
-}
-
-void FlatPlateArray::resize_num_in_series(double m_dot_array_design /*kg/s*/, double specific_heat /*kJ/kg-K*/, double temp_rise_array_design /*K*/)
-{
-    if (!std::isnormal(m_dot_array_design) || !std::isnormal(specific_heat) || !std::isnormal(temp_rise_array_design)) return;
-    if (m_dot_array_design <= 0. || specific_heat <= 0. || temp_rise_array_design <= 0.) return;
-
-    double m_dot_series_string = m_dot_array_design / array_dimensions_.num_in_parallel;      // [kg/s]
-    double collector_rated_power = flat_plate_collector_.RatedPowerGain();  // [W]
-    double collector_rated_temp_rise = collector_rated_power / (m_dot_series_string * specific_heat * 1.e3);
-    double exact_fractional_collectors_in_series = temp_rise_array_design / collector_rated_temp_rise;
+    double Q_des_collector = flat_plate_collector_.RatedPowerGain() * 1.e-3;                // [kWt]
+    double mdot_des_collector = flat_plate_collector_.RatedMassFlow();                      // [kg/s]
+    double T_avg_fp_array = T_in_des_external + 0.5 * dT_design_external + dT_approach;     // [C]
+    double Cp_collector = fluid_.Cp(T_avg_fp_array + 273.15);                               // TODO: add dT_approach, but should be close enough
+    double dT_collector = Q_des_collector / (mdot_des_collector * Cp_collector);            // [K]
+    double exact_fractional_collectors_in_series = dT_design_external / dT_collector;
     if (exact_fractional_collectors_in_series < 1.) {
         array_dimensions_.num_in_series = 1;
     }
     else {
         array_dimensions_.num_in_series = static_cast<int>(std::round(exact_fractional_collectors_in_series));      // std::round() rounds up at halfway point
+    }
+
+}
+
+void FlatPlateArray::resize_num_in_parallel(double T_in_des_external /*C*/, double dT_design_external /*K*/, double mdot_design_external /*kg/s*/,
+    HTFProperties &fluid_external)
+{
+    if (!std::isnormal(mdot_design_external) || !std::isnormal(dT_design_external)) return;
+    if (mdot_design_external <= 0.) return;
+
+    double T_avg_external = T_in_des_external + 0.5 * dT_design_external;
+    double Cp_external = fluid_external.Cp(T_avg_external + 273.15);
+    double Q_des_fp_array = mdot_design_external * Cp_external * dT_design_external;                                    // [kWt]
+    double Q_des_series_string = array_dimensions_.num_in_series * flat_plate_collector_.RatedPowerGain() * 1.e-3;      // [kWt]
+
+    double exact_fractional_collectors_in_parallel = Q_des_fp_array / Q_des_series_string;
+    if (exact_fractional_collectors_in_parallel < 1.) {
+        array_dimensions_.num_in_parallel = 1;
+    }
+    else {
+        array_dimensions_.num_in_parallel = static_cast<int>(std::round(exact_fractional_collectors_in_parallel));      // std::round() rounds up at halfway point
     }
 }
 
@@ -704,6 +713,11 @@ const double FlatPlateArray::T_out(const tm &timestamp, const ExternalConditions
     // Outlet pipe
     double T_out_outlet_pipe = outlet_pipe_.T_out(T_array_out, T_amb, specific_heat_capacity);
     return T_out_outlet_pipe;
+}
+
+void FlatPlateArray::SetFluid(int fluid_id)
+{
+    fluid_.SetFluid(fluid_id);
 }
 
 HTFProperties* FlatPlateArray::GetFluid()

@@ -660,19 +660,14 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 		m_mc_bal_cold = m_mc_bal_cold_per_MW * 3.6 * m_q_design;  //[J/K]
         
         // Size flat plate array
-		int kFluidFp = HTFProperties::PG_50_50;
-		flat_plate_htf_.SetFluid(kFluidFp);
-		double T_avg_cold = 0.5 * (m_T_loop_in_des + m_T_PTC_in_des);
-		double T_avg_hot = T_avg_cold + T_approach_hx_;
-		double m_dot_fp_design = m_m_dot_design * m_htfProps.Cp(T_avg_cold) / flat_plate_htf_.Cp(T_avg_hot);	// sizing for an ideal hx capacitance ratio of unity
-		double design_temp_rise_flat_plate_array = m_T_PTC_in_des - m_T_loop_in_des;
-
+		int kFluidFp = HTFProperties::PG_50_50;		// also used for HX
+		flat_plate_array_.SetFluid(kFluidFp);
 		ArrayDimensions array_dimensions = flat_plate_array_.array_size();
-		if (array_dimensions.num_in_parallel < 1) {
-			flat_plate_array_.resize_num_in_parallel(m_dot_fp_design);
-		}
 		if (array_dimensions.num_in_series < 1) {
-			flat_plate_array_.resize_num_in_series(m_dot_fp_design, flat_plate_htf_.Cp(T_avg_hot), design_temp_rise_flat_plate_array);
+			flat_plate_array_.resize_num_in_series(m_T_loop_in_des - 273.15, m_T_PTC_in_des - m_T_loop_in_des, T_approach_hx_);
+		}
+		if (array_dimensions.num_in_parallel < 1) {
+			flat_plate_array_.resize_num_in_parallel(m_T_loop_in_des - 273.15, m_T_PTC_in_des - m_T_loop_in_des, m_m_dot_design, m_htfProps);
 		}
 
 		array_dimensions = flat_plate_array_.array_size();
