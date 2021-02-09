@@ -178,6 +178,7 @@ class HeatExchanger : public C_hx_two_tank_tes
 public:
     HeatExchanger(const HxDesignProps &hx_design_props);
     HeatExchanger();
+    void SetHxDesignProps(const HxDesignProps &hx_design_props);
     const HxDesignProps* GetHxDesignProps() const;
 private:
     HxDesignProps hx_design_props_;
@@ -194,7 +195,9 @@ public:
     FlatPlateArray(const CollectorTestSpecifications &collector_test_specifications, const CollectorLocation &collector_location,
         const CollectorOrientation &collector_orientation, const ArrayDimensions &array_dimensions,
         const Pipe &inlet_pipe, const Pipe &outlet_pipe);
+    void SetHxDesignProps(const HxDesignProps &hx_design_props);
     FluidFlow RunWithHx(tm& timestamp, ExternalConditions& external_conditions, double T_out_target);
+    FluidFlow RunSimplifiedWithHx(tm& timestamp, ExternalConditions& external_conditions);
     const int ncoll();
     const double area_total();                             // [m2]
     void resize_array(ArrayDimensions array_dimensions);

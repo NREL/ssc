@@ -366,7 +366,14 @@ HeatExchanger::HeatExchanger(const HxDesignProps& hx_design_props)
         hx_design_props.T_out_hot + 273.15 /*K*/);
 }
 
-HeatExchanger::HeatExchanger() {};
+HeatExchanger::HeatExchanger() {
+    hx_design_props_ = HxDesignProps();
+};
+
+void HeatExchanger::SetHxDesignProps(const HxDesignProps& hx_design_props)
+{
+    hx_design_props_ = hx_design_props;
+}
 
 const HxDesignProps* HeatExchanger::GetHxDesignProps() const
 {
@@ -410,8 +417,11 @@ FlatPlateArray::FlatPlateArray(const CollectorTestSpecifications &collector_test
 
 }
 
-FluidFlow FlatPlateArray::RunWithHx(tm& timestamp, ExternalConditions& external_conditions,
-    double T_out_target /*C*/)
+void FlatPlateArray::SetHxDesignProps(const HxDesignProps& hx_design_props) {
+    heat_exchanger_.SetHxDesignProps(hx_design_props);
+}
+
+FluidFlow FlatPlateArray::RunWithHx(tm& timestamp, ExternalConditions& external_conditions, double T_out_target /*C*/)
 {
     double T_in_hx_f = external_conditions.inlet_fluid_flow.temp;
     double mdot_external = external_conditions.inlet_fluid_flow.m_dot;
@@ -498,6 +508,37 @@ FluidFlow FlatPlateArray::RunWithHx(tm& timestamp, ExternalConditions& external_
         outlet_fluid_flow.temp = T_in_hx_f;		// bypassing HX and flat plate array
         mdot_fp = 0.;
     }
+
+    return outlet_fluid_flow;
+}
+
+FluidFlow FlatPlateArray::RunSimplifiedWithHx(tm& timestamp, ExternalConditions& external_conditions)
+{
+    double T_min_rise = 0.;		// doing away with min temp rise so fpc array is more predictable to controller
+    bool fp_array_is_on = false;
+
+    // Get starting temperatures
+    const HxDesignProps *hx_design_props = heat_exchanger_.GetHxDesignProps();
+    double T_approach_hx = hx_design_props->dT_approach;
+    double T_in_hx_external = external_conditions.inlet_fluid_flow.temp;
+    double T_in_fp_expected = T_in_hx_external + T_approach_hx;
+
+    // Get solar heat gain
+    double POA = IncidentIrradiance(timestamp, external_conditions);
+    double Q_fp_est = EstimatePowerGain(POA, T_in_fp_expected, external_conditions.weather.ambient_temp) * 1.e-3;		// [kW]
+
+    // Calculate outlet temperature on external side
+    double T_avg_external = 0.5 * (hx_design_props->T_in_hot + hx_design_props->T_out_hot) - T_approach_hx;
+    double mdot_external = external_conditions.inlet_fluid_flow.m_dot;
+    HTFProperties fluid_external = external_conditions.inlet_fluid_flow.fluid;
+    double Cp = fluid_external.Cp(T_avg_external + 273.15);
+    double T_out_hx_external = Q_fp_est / (mdot_external * fluid_external.Cp(T_avg_external + 273.15)) + T_in_hx_external;
+
+    // Populate outputs
+    FluidFlow outlet_fluid_flow;
+    outlet_fluid_flow.fluid = external_conditions.inlet_fluid_flow.fluid;
+    outlet_fluid_flow.m_dot = external_conditions.inlet_fluid_flow.m_dot;
+    outlet_fluid_flow.temp = T_out_hx_external;
 
     return outlet_fluid_flow;
 }

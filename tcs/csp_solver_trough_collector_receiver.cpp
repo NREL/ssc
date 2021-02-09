@@ -660,7 +660,8 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 		m_mc_bal_cold = m_mc_bal_cold_per_MW * 3.6 * m_q_design;  //[J/K]
         
         // Size flat plate array
-		flat_plate_htf_.SetFluid(HTFProperties::PG_50_50);
+		int kFluidFp = HTFProperties::PG_50_50;
+		flat_plate_htf_.SetFluid(kFluidFp);
 		double T_avg_cold = 0.5 * (m_T_loop_in_des + m_T_PTC_in_des);
 		double T_avg_hot = T_avg_cold + T_approach_hx_;
 		double m_dot_fp_design = m_m_dot_design * m_htfProps.Cp(T_avg_cold) / flat_plate_htf_.Cp(T_avg_hot);	// sizing for an ideal hx capacitance ratio of unity
@@ -677,6 +678,16 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 		array_dimensions = flat_plate_array_.array_size();
 		flat_plates_in_series = array_dimensions.num_in_series;
 		flat_plates_in_parallel = array_dimensions.num_in_parallel;
+
+		HxDesignProps hx_design_props = HxDesignProps();
+		hx_design_props.dT_approach = T_approach_hx_;
+		hx_design_props.duty = flat_plate_array_.RatedPowerGain() * 1.e-3;	// [kW]
+		hx_design_props.external_fluid_id = m_Fluid;
+		hx_design_props.subsystem_fluid_id = kFluidFp;
+		hx_design_props.T_in_hot = m_T_PTC_in_des - 273.15 + T_approach_hx_;
+		hx_design_props.T_out_hot = m_T_loop_in_des - 273.15 + T_approach_hx_;
+		flat_plate_array_.SetHxDesignProps(hx_design_props);
+
 
 		//need to provide fluid density
         double rho_cold = m_htfProps.dens(m_T_PTC_in_des, 10.e5); //kg/m3
@@ -1036,11 +1047,14 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 	external_conditions.inlet_fluid_flow.temp = m_T_loop_in - 273.15;
 	external_conditions.albedo = 0.2;
 
-	FluidFlow outlet_fluid_flow = flat_plate_array_.RunWithHx(
-		datetime, external_conditions, m_T_PTC_in_des - 273.15);
+	//FluidFlow outlet_fluid_flow = flat_plate_array_.RunWithHx(
+	//	datetime, external_conditions, m_T_PTC_in_des - 273.15);
+
+	FluidFlow outlet_fluid_flow = flat_plate_array_.RunSimplifiedWithHx(
+		datetime, external_conditions);
 
 	m_T_troughs_in = outlet_fluid_flow.temp + 273.15;
-	// /Flat plate array
+	// end Flat plate array
 
     double P_intc_in = m_P_field_in;
     m_T_loop[0] = m_T_troughs_in;
