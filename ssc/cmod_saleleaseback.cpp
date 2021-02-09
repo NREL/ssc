@@ -39,7 +39,7 @@ static var_info _cm_vtab_saleleaseback[] = {
     { SSC_INPUT,        SSC_ARRAY,      "batt_annual_charge_from_grid",               "Battery annual energy charged from grid",               "kWh",      "",                      "Battery",       "",                           "",                               "" },
     { SSC_INPUT,        SSC_ARRAY,      "batt_annual_charge_energy",                  "Battery annual energy charged",                         "kWh",      "",                      "Battery",       "",                           "",                               "" },
     { SSC_INPUT,        SSC_ARRAY,      "batt_annual_discharge_energy",               "Battery annual energy discharged",                      "kWh",      "",                      "Battery",       "",                           "",                               "" },
-    { SSC_INPUT,        SSC_NUMBER,      "battery_total_cost_lcos",               "Battery total investment cost",                      "$",      "",                      "Battery",       "en_batt=1",                           "",                               "" },
+    { SSC_INPUT,        SSC_NUMBER,      "battery_total_cost_lcos",               "Battery total investment cost",                      "$",      "",                      "Battery",       "",                           "",                               "" },
 
 
 
@@ -2566,7 +2566,7 @@ public:
 
     ///////////////////////////////////////////////////////////////////////
 //LCOS Calculations
-    if (as_double("battery_total_cost_lcos") != 0) {
+    if (is_assigned("battery_total_cost_lcos") && as_double("battery_total_cost_lcos") != 0) {
         double lcos_investment_cost = as_double("battery_total_cost_lcos"); //does not include replacement costs
         double lcos_om_cost = npv(CF_om_capacity1_expense, nyears, nom_discount_rate); //Todo: include variable om due to charging
         std::vector<double> charged_grid = as_vector_double("batt_annual_charge_from_grid");
