@@ -15,14 +15,14 @@ NAMESPACE_TEST(csp_tower, SteamTowerCmod, Default_NoFinancial)
     int errors = steam_tower.RunModule();
     EXPECT_FALSE(errors);
     if (!errors) {
-        EXPECT_NEAR_FRAC(steam_tower.GetOutput("annual_energy"), 263809742, kErrorToleranceLo);
-        EXPECT_NEAR(steam_tower.GetOutput("annual_fuel_usage"), 0., kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(steam_tower.GetOutput("capacity_factor"), 30.08, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(steam_tower.GetOutput("annual_W_cycle_gross"), 296630582, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(steam_tower.GetOutput("kwh_per_kw"), 2635, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(steam_tower.GetOutput("conversion_factor"), 92.64, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(steam_tower.GetOutput("system_heat_rate"), 3.413, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(steam_tower.GetOutput("annual_total_water_use"), 55716, kErrorToleranceLo);
+        EXPECT_NEAR_FRAC(steam_tower.GetOutput("annual_energy"), 263809742, kErrorToleranceHi);
+        EXPECT_NEAR(steam_tower.GetOutput("annual_fuel_usage"), 0., kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(steam_tower.GetOutput("capacity_factor"), 30.08, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(steam_tower.GetOutput("annual_W_cycle_gross"), 296630582, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(steam_tower.GetOutput("kwh_per_kw"), 2635, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(steam_tower.GetOutput("conversion_factor"), 92.64, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(steam_tower.GetOutput("system_heat_rate"), 3.413, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(steam_tower.GetOutput("annual_total_water_use"), 55716, kErrorToleranceHi);
     }
 }
 
@@ -39,14 +39,14 @@ NAMESPACE_TEST(csp_tower, SteamTowerCmod, EvaporativeCondenser_NoFinancial)
     int errors = steam_tower.RunModule();
     EXPECT_FALSE(errors);
     if (!errors) {
-        EXPECT_NEAR_FRAC(steam_tower.GetOutput("annual_energy"), 280975356, kErrorToleranceLo);
-        EXPECT_NEAR(steam_tower.GetOutput("annual_fuel_usage"), 0., kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(steam_tower.GetOutput("capacity_factor"), 32.03, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(steam_tower.GetOutput("annual_W_cycle_gross"), 307624737, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(steam_tower.GetOutput("kwh_per_kw"), 2806, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(steam_tower.GetOutput("conversion_factor"), 95.14, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(steam_tower.GetOutput("system_heat_rate"), 3.413, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(steam_tower.GetOutput("annual_total_water_use"), 893431, kErrorToleranceLo);
+        EXPECT_NEAR_FRAC(steam_tower.GetOutput("annual_energy"), 280975356, kErrorToleranceHi);
+        EXPECT_NEAR(steam_tower.GetOutput("annual_fuel_usage"), 0., kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(steam_tower.GetOutput("capacity_factor"), 32.03, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(steam_tower.GetOutput("annual_W_cycle_gross"), 307624737, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(steam_tower.GetOutput("kwh_per_kw"), 2806, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(steam_tower.GetOutput("conversion_factor"), 95.14, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(steam_tower.GetOutput("system_heat_rate"), 3.413, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(steam_tower.GetOutput("annual_total_water_use"), 893431, kErrorToleranceHi);
     }
 }
 
@@ -63,14 +63,14 @@ NAMESPACE_TEST(csp_tower, SteamTowerCmod, HybridCondenser_NoFinancial)
     int errors = steam_tower.RunModule();
     EXPECT_FALSE(errors);
     if (!errors) {
-        EXPECT_NEAR_FRAC(steam_tower.GetOutput("annual_energy"), 268116066, kErrorToleranceLo);
-        EXPECT_NEAR(steam_tower.GetOutput("annual_fuel_usage"), 0., kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(steam_tower.GetOutput("capacity_factor"), 30.57, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(steam_tower.GetOutput("annual_W_cycle_gross"), 304066728, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(steam_tower.GetOutput("kwh_per_kw"), 2678, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(steam_tower.GetOutput("conversion_factor"), 91.85, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(steam_tower.GetOutput("system_heat_rate"), 3.413, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(steam_tower.GetOutput("annual_total_water_use"), 55716, kErrorToleranceLo);
+        EXPECT_NEAR_FRAC(steam_tower.GetOutput("annual_energy"), 268116066, kErrorToleranceHi);
+        EXPECT_NEAR(steam_tower.GetOutput("annual_fuel_usage"), 0., kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(steam_tower.GetOutput("capacity_factor"), 30.57, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(steam_tower.GetOutput("annual_W_cycle_gross"), 304066728, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(steam_tower.GetOutput("kwh_per_kw"), 2678, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(steam_tower.GetOutput("conversion_factor"), 91.85, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(steam_tower.GetOutput("system_heat_rate"), 3.413, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(steam_tower.GetOutput("annual_total_water_use"), 55716, kErrorToleranceHi);
     }
 }
 
