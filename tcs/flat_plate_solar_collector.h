@@ -236,7 +236,7 @@ public:
         double T_f_hx_out_target,
         double m_m_dot_process_heat,
         FlatPlateArray* flat_plate_array,
-        C_hx_two_tank_tes* heat_exchanger,
+        HeatExchanger* heat_exchanger,
         HTFProperties* m_htfProps,
         HTFProperties* flat_plate_htf,
         tm* timestamp,
@@ -279,7 +279,7 @@ private:
     double T_f_hx_out_target_;
     double m_m_dot_process_heat_;
     FlatPlateArray* flat_plate_array_;
-    C_hx_two_tank_tes* heat_exchanger_;
+    HeatExchanger* heat_exchanger_;
     HTFProperties* m_htfProps_;
     HTFProperties* flat_plate_htf_;
     tm* timestamp_;
@@ -297,7 +297,7 @@ public:
         double T_f_hx_out_target,
         double m_m_dot_process_heat,
         FlatPlateArray* flat_plate_array,
-        C_hx_two_tank_tes* heat_exchanger,
+        HeatExchanger* heat_exchanger,
         HTFProperties* m_htfProps,
         HTFProperties* flat_plate_htf,
         tm* timestamp,
@@ -334,7 +334,7 @@ private:
     double T_f_hx_out_target_;
     double m_m_dot_process_heat_;
     FlatPlateArray* flat_plate_array_;
-    C_hx_two_tank_tes* heat_exchanger_;
+    HeatExchanger* heat_exchanger_;
     HTFProperties* m_htfProps_;
     HTFProperties* flat_plate_htf_;
     tm* timestamp_;

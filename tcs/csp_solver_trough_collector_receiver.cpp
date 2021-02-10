@@ -1042,11 +1042,11 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 	external_conditions.inlet_fluid_flow.temp = m_T_loop_in - 273.15;
 	external_conditions.albedo = 0.2;
 
-	//FluidFlow outlet_fluid_flow = flat_plate_array_.RunWithHx(
-	//	datetime, external_conditions, m_T_PTC_in_des - 273.15);
+	FluidFlow outlet_fluid_flow = flat_plate_array_.RunWithHx(
+		datetime, external_conditions, m_T_PTC_in_des - 273.15);
 
-	FluidFlow outlet_fluid_flow = flat_plate_array_.RunSimplifiedWithHx(
-		datetime, external_conditions);
+	//FluidFlow outlet_fluid_flow = flat_plate_array_.RunSimplifiedWithHx(
+	//	datetime, external_conditions);
 
 	m_T_troughs_in = outlet_fluid_flow.temp + 273.15;
 	// end Flat plate array

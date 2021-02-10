@@ -373,6 +373,18 @@ HeatExchanger::HeatExchanger() {
 void HeatExchanger::SetHxDesignProps(const HxDesignProps& hx_design_props)
 {
     hx_design_props_ = hx_design_props;
+    HTFProperties fluid_subsystem = HTFProperties();
+    fluid_subsystem.SetFluid(hx_design_props.subsystem_fluid_id);
+    HTFProperties fluid_external = HTFProperties();
+    fluid_external.SetFluid(hx_design_props.external_fluid_id);
+    this->init(
+        fluid_subsystem,
+        fluid_external,
+        hx_design_props.duty * 1.e3,            // [W]
+        hx_design_props.dT_approach,
+        hx_design_props.T_in_hot + 273.15,      // [K]
+        hx_design_props.T_out_hot + 273.15      // [K]
+    );    
 }
 
 const HxDesignProps* HeatExchanger::GetHxDesignProps() const
@@ -794,7 +806,7 @@ int C_MEQ__T_in_fp::operator()(double T_in_fp /*C*/, double* diff_T_in_fp /*C*/)
     }
 
     double POA = flat_plate_array_->IncidentIrradiance(*timestamp_, *external_conditions_);
-    double Q_fp_est = flat_plate_array_->EstimatePowerGain(POA, T_in_fp, external_conditions_->weather.ambient_temp);	// [W]
+    double Q_fp_est = flat_plate_array_->EstimatePowerGain(POA, T_in_fp, external_conditions_->weather.ambient_temp) * 1.e-3;	// [kW]
 
     // This should be verified before calling the MEQs; this is a 'just-in-case'
     if (Q_fp_est <= 0.) {
@@ -803,7 +815,7 @@ int C_MEQ__T_in_fp::operator()(double T_in_fp /*C*/, double* diff_T_in_fp /*C*/)
     }
 
     double T_avg_guess = 0.5 * (m_T_loop_in_ + T_f_hx_out_target_) + T_approach_;
-    double T_out_fp_guess = Q_fp_est / (mdot_fp_ * flat_plate_htf_->Cp(T_avg_guess + 273.15) * 1.e3) + T_in_fp;		// Cp is in [kJ/kg-K]
+    double T_out_fp_guess = Q_fp_est / (mdot_fp_ * flat_plate_htf_->Cp(T_avg_guess + 273.15)) + T_in_fp;		// Cp is in [kJ/kg-K]
     external_conditions_->inlet_fluid_flow.m_dot = mdot_fp_;
     external_conditions_->inlet_fluid_flow.specific_heat = flat_plate_htf_->Cp(0.5 * (T_in_fp + T_out_fp_guess) + 273.15);
     external_conditions_->inlet_fluid_flow.temp = T_in_fp;
