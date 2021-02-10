@@ -899,7 +899,7 @@ enum {
 	CF_battery_replacement_cost_schedule,
 	CF_battery_replacement_cost,
 
-	CF_max,
+	
 
     CF_energy_charged_grid,
     CF_energy_charged_pv,
@@ -910,6 +910,8 @@ enum {
     CF_salvage_cost_lcos,
     CF_investment_cost_lcos,
     CF_annual_cost_lcos,
+
+    CF_max,
 };
 
 

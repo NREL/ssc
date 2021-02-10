@@ -860,7 +860,7 @@ enum {
 	CF_nte,
 	CF_host_energy_value,
 
-	CF_max,
+	
 
     CF_energy_charged_grid,
     CF_energy_charged_pv,
@@ -870,7 +870,9 @@ enum {
     CF_om_cost_lcos,
     CF_salvage_cost_lcos,
     CF_investment_cost_lcos,
-    CF_annual_cost_lcos
+    CF_annual_cost_lcos,
+
+    CF_max,
  };
 
 

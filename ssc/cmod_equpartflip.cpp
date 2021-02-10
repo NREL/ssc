@@ -884,7 +884,7 @@ enum {
     CF_energy_purchases,
     CF_energy_purchases_value,
 
-	CF_max,
+	
 
     CF_energy_charged_grid,
     CF_energy_charged_pv,
@@ -895,6 +895,8 @@ enum {
     CF_salvage_cost_lcos,
     CF_investment_cost_lcos,
     CF_annual_cost_lcos,
+
+    CF_max,
 };
 
 

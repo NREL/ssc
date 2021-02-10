@@ -1123,6 +1123,12 @@ public:
                     cf.at(CF_battery_replacement_cost_schedule, i + 1);
             }
         }
+        else
+        {
+            double batt_cap = as_double("batt_computed_bank_capacity");
+            // updated 10/17/15 per 10/14/15 meeting
+            escal_or_annual(CF_battery_replacement_cost_schedule, nyears, "om_batt_replacement_cost", inflation_rate, batt_cap, false, as_double("om_replacement_cost_escal") * 0.01);
+        }
 		
 
 		// fuelcell cost - replacement from lifetime analysis
@@ -3013,6 +3019,7 @@ public:
         std::vector<double> charged_pv = as_vector_double("batt_annual_charge_from_system");
         std::vector<double> charged_total = as_vector_double("batt_annual_charge_energy");
         std::vector<double> lcos_energy_discharged = as_vector_double("batt_annual_discharge_energy");
+        //std::vector<double> batt_cost_replacement_schedule = as_vector_double("cf_battery_replacement_cost_schedule");
         //std::vector<double> batt_capacity_percent = as_vector_double("batt_capacity_percent");
         size_t n_batt_capacity_percent;
         ssc_number_t* batt_capacity_percent = as_array("batt_capacity_percent", &n_batt_capacity_percent);
@@ -3083,7 +3090,7 @@ public:
         lcos_om_cost += npv(CF_om_fixed1_expense, nyears, nom_discount_rate);
         double lcos_charging_cost = npv(CF_energy_charged_grid, nyears, nom_discount_rate);
         double batt_salvage_value_frac = as_double("batt_salvage_percentage") * 0.01;
-        double lcos_salvage_value = lcos_investment_cost * batt_capacity_percent[n_batt_capacity_percent - 1] / 100 * batt_salvage_value_frac; //set as a percentage or direct salvage value
+        double lcos_salvage_value = cf.at(CF_battery_replacement_cost_schedule, nyears) * batt_capacity_percent[n_batt_capacity_percent - 1] / 100 * batt_salvage_value_frac; //set as a percentage or direct salvage value
         cf.at(CF_salvage_cost_lcos, nyears) = -lcos_salvage_value;
         cf.at(CF_annual_cost_lcos, nyears) -= cf.at(CF_salvage_cost_lcos, nyears);
         double lcos_denominator = npv(CF_energy_discharged, nyears, nom_discount_rate);
