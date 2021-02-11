@@ -320,11 +320,11 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             batt_vars->batt_Vexp = vt.as_double("batt_Vexp");
             batt_vars->batt_Vnom = vt.as_double("batt_Vnom");
             //Voltage error checking
-            if (batt_vars->batt_voltage_choice==0 &&
+            /*if (batt_vars->batt_voltage_choice==0 &&
                 ((batt_vars->batt_Vfull < batt_vars->batt_Vexp) ||
                 batt_vars->batt_Vexp < batt_vars->batt_Vnom)) {
                 throw exec_error("battery", "For the electrochemical battery voltage model, voltage inputs must meet the requirement Vfull > Vexp > Vnom.");
-            }
+            }*/
             batt_vars->batt_Qfull_flow = vt.as_double("batt_Qfull_flow");
             batt_vars->batt_Qfull = vt.as_double("batt_Qfull");
             batt_vars->batt_Qexp = vt.as_double("batt_Qexp");
@@ -796,12 +796,19 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     capacity_t* capacity_model = 0;
     losses_t* losses_model = 0;
 
-    if ((chem == battery_params::LEAD_ACID || chem == battery_params::LITHIUM_ION) && batt_vars->batt_voltage_choice == voltage_params::MODEL)
-        voltage_model = new voltage_dynamic_t(batt_vars->batt_computed_series, batt_vars->batt_computed_strings,
-                                              batt_vars->batt_Vnom_default, batt_vars->batt_Vfull, batt_vars->batt_Vexp,
-                                              batt_vars->batt_Vnom, batt_vars->batt_Qfull, batt_vars->batt_Qexp,
-                                              batt_vars->batt_Qnom, batt_vars->batt_C_rate, batt_vars->batt_resistance,
-                                              dt_hr);
+    if ((chem == battery_params::LEAD_ACID || chem == battery_params::LITHIUM_ION) && batt_vars->batt_voltage_choice == voltage_params::MODEL) {
+        try {
+            voltage_model = new voltage_dynamic_t(batt_vars->batt_computed_series, batt_vars->batt_computed_strings,
+                batt_vars->batt_Vnom_default, batt_vars->batt_Vfull, batt_vars->batt_Vexp,
+                batt_vars->batt_Vnom, batt_vars->batt_Qfull, batt_vars->batt_Qexp,
+                batt_vars->batt_Qnom, batt_vars->batt_C_rate, batt_vars->batt_resistance,
+                dt_hr);
+        }
+        catch (std::runtime_error& e) {
+
+            throw exec_error("battery", e.what());
+        }
+    }
     else if ((chem == battery_params::VANADIUM_REDOX) && batt_vars->batt_voltage_choice == voltage_params::MODEL)
         voltage_model = new voltage_vanadium_redox_t(batt_vars->batt_computed_series, batt_vars->batt_computed_strings,
                                                      batt_vars->batt_Vnom_default, batt_vars->batt_resistance,
