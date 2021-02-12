@@ -173,6 +173,10 @@ void rate_data::init(int num_rec_yearly) {
     dc_hourly_peak = std::vector<ssc_number_t>(m_num_rec_yearly, 0);
 }
 
+bool rate_data::check_for_kwh_per_kw_rate(int units) {
+    return (units == 1) || (units == 3);
+}
+
 void rate_data::init_energy_rates(bool gen_only) {
 	// calculate the monthly net energy per tier and period based on units
 	for (int m = 0; m < (int)m_month.size(); m++)
@@ -185,7 +189,6 @@ void rate_data::init_energy_rates(bool gen_only) {
 
 		if (!gen_only) // added for two meter no load scenarios to use load tier sizing
 		{
-			//start_tier = 0;
 			end_tier = (int)m_month[m].ec_tou_ub_init.ncols() - 1;
 			//int num_periods = (int)m_month[m].ec_tou_ub_init.nrows();
 			num_tiers = end_tier - start_tier + 1;
@@ -201,37 +204,81 @@ void rate_data::init_energy_rates(bool gen_only) {
 			if ((m_month[m].ec_tou_units.ncols() > 0 && m_month[m].ec_tou_units.nrows() > 0)
 				&& ((m_month[m].ec_tou_units.at(0, 0) == 1) || (m_month[m].ec_tou_units.at(0, 0) == 3)))
 			{
+                std::vector<double> kWh_per_kW_tiers; // Fill this first so we can see where the kWh tiers break
+                std::vector<size_t> tier_numbers;
+                std::vector<double> tier_kwh;
+
 				// monthly total energy / monthly peak to determine which kWh/kW tier
 				double mon_kWhperkW = -m_month[m].energy_net; // load negative
-				if (m_month[m].dc_flat_peak != 0)
-					mon_kWhperkW /= m_month[m].dc_flat_peak;
+                double flat_peak = m_month[m].dc_flat_peak;
+				if (flat_peak != 0)
+					mon_kWhperkW /= flat_peak;
 				// find correct start and end tier based on kWhperkW band
-				start_tier = 1;
-				bool found = false;
-				for (size_t i_tier = 0; i_tier < m_month[m].ec_tou_units.ncols(); i_tier++)
+				start_tier = 0; // Starts at 0 in case this rate is exclusively kWh/kW
+
+                // get kWh/kW break points based on actual demand
+                for (size_t i_tier = 0; i_tier < m_month[m].ec_tou_units.ncols(); i_tier++)
+                {
+                    int units = (int)m_month[m].ec_tou_units.at(0, i_tier);
+                    if (check_for_kwh_per_kw_rate(units))
+                    {
+                        double kwh_per_kw = m_month[m].ec_tou_ub_init.at(0, i_tier);
+                        if (kwh_per_kw > 1e+37) {
+                            // Max double stays max double
+                            kWh_per_kW_tiers.push_back(kwh_per_kw);
+                        }
+                        else {
+                            kWh_per_kW_tiers.push_back(kwh_per_kw * flat_peak);
+                        }
+                    }
+                }
+
+                size_t block = 0;
+                size_t total_tiers = m_month[m].ec_tou_units.ncols();
+				for (size_t i_tier = 0; i_tier < total_tiers; i_tier++)
 				{
 					int units = (int)m_month[m].ec_tou_units.at(0, i_tier);
-					if ((units == 1) || (units == 3))
+					if (check_for_kwh_per_kw_rate(units))
 					{
-						if (found)
-						{
-							end_tier = i_tier - 1;
-							break;
-						}
-						else if (mon_kWhperkW < m_month[m].ec_tou_ub_init.at(0, i_tier))
-						{
-							start_tier = i_tier + 1;
-							found = true;
-						}
+                        // Update to current block
+                        double kwh_per_kw = m_month[m].ec_tou_ub_init.at(0, i_tier);
+                        if (kWh_per_kW_tiers[block] < kwh_per_kw * flat_peak && (block + 1 < kWh_per_kW_tiers.size())) {
+                            block++;
+                        }
+						// Check this block, if it has kWh steps skip it and move on, otherwise add it
+                        if (i_tier + 1 < total_tiers) {
+                            int next_units = (int)m_month[m].ec_tou_units.at(0, i_tier+1);
+                            
+                            if (check_for_kwh_per_kw_rate(next_units)) {
+                                tier_numbers.push_back(i_tier);
+                                tier_kwh.push_back(kWh_per_kW_tiers[block]);
+                            }
+                            // Else do nothing, loop again and add the step
+                        }
+                        else {
+                            // Last tier - push it
+                            tier_numbers.push_back(i_tier);
+                            tier_kwh.push_back(kWh_per_kW_tiers[block]);
+                        }
 					}
+                    else {
+                        // Add steps up to block max
+                        double max = m_month[m].ec_tou_ub_init.at(0, i_tier);
+                        if (max < kWh_per_kW_tiers[block]) {
+                            tier_kwh.push_back(max);
+                            tier_numbers.push_back(i_tier);
+                        }
+                        else {
+                            if (tier_kwh.empty() || (tier_kwh[tier_kwh.size() - 1] < kWh_per_kW_tiers[block])) {
+                                tier_kwh.push_back(kWh_per_kW_tiers[block]);
+                                tier_numbers.push_back(i_tier);
+                            }
+                        }
+                        
+                    }
 				}
-				// last tier since no max specified in rate
-				if (!found) start_tier = end_tier;
-				if (start_tier >= (int)m_month[m].ec_tou_ub_init.ncols())
-					start_tier = (int)m_month[m].ec_tou_ub_init.ncols() - 1;
-				if (end_tier < start_tier)
-					end_tier = start_tier;
-				num_tiers = end_tier - start_tier + 1;
+
+                num_tiers = tier_kwh.size();
 				// resize everytime to handle load and energy changes
 				// resize sr, br and ub for use in energy charge calculations below
 				util::matrix_t<double> br(num_periods, num_tiers);
@@ -242,11 +289,11 @@ void rate_data::init_energy_rates(bool gen_only) {
 				{
 					for (size_t tier = 0; tier < num_tiers; tier++)
 					{
-						br.at(period, tier) = m_month[m].ec_tou_br_init.at(period, start_tier + tier);
-						sr.at(period, tier) = m_month[m].ec_tou_sr_init.at(period, start_tier + tier);
-						ub.at(period, tier) = m_month[m].ec_tou_ub_init.at(period, start_tier + tier);
+						br.at(period, tier) = m_month[m].ec_tou_br_init.at(period, tier_numbers[tier]);
+						sr.at(period, tier) = m_month[m].ec_tou_sr_init.at(period, tier_numbers[tier]);
+						ub.at(period, tier) = tier_kwh[tier];
 						// update for correct tier number column headings
-						m_month[m].ec_periods_tiers[period][tier] = (int) (start_tier + m_ec_periods_tiers_init[period][tier]);
+						m_month[m].ec_periods_tiers[period][tier] = (int) (m_ec_periods_tiers_init[period][tier_numbers[tier]]);
 					}
 				}
 

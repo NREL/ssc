@@ -236,7 +236,7 @@ TEST(lib_utility_rate_equations_test, test_block_step_tiers)
     // Each month is only going to have one TOU period in this schedule
     EXPECT_NEAR(3000, curr_month.ec_tou_ub.at(0, 0), 0.1);
     EXPECT_NEAR(10000, curr_month.ec_tou_ub.at(0, 1), 0.1);
-    EXPECT_NEAR(121600, curr_month.ec_tou_ub.at(0, 2), 0.1);
+    EXPECT_NEAR(131600, curr_month.ec_tou_ub.at(0, 2), 0.1);
     EXPECT_NEAR(263200, curr_month.ec_tou_ub.at(0, 3), 0.1);
     EXPECT_NEAR(394800, curr_month.ec_tou_ub.at(0, 4), 0.1);
     EXPECT_NEAR(9.9999999999999998e+37, curr_month.ec_tou_ub.at(0, 5), 0.1);
@@ -267,3 +267,5 @@ TEST(lib_utility_rate_equations_test, test_block_step_tiers)
 
     // TODO - test the buy rates are appropriate as well
 }
+
+// TODO - additional tests: a rate w/only kWh/kW tiers
