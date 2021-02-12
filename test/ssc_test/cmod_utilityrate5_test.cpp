@@ -1221,7 +1221,7 @@ TEST(cmod_utilityrate5_eqns, Test_Commercial_kWh_per_kW_charges) {
     ssc_data_set_number(data, "ur_nm_yearend_sell_rate", 0);
     ssc_data_set_number(data, "ur_nm_credit_month", 11);
     ssc_data_set_number(data, "ur_nm_credit_rollover", 0);
-    ssc_data_set_number(data, "ur_monthly_fixed_charge", 26.260000228881836);
+    ssc_data_set_number(data, "ur_monthly_fixed_charge", 21);
     ssc_data_set_number(data, "ur_monthly_min_charge", 0);
     ssc_data_set_number(data, "ur_annual_min_charge", 0);
     ssc_number_t  ur_ts_sell_rate[1] = { 0 };
@@ -1254,7 +1254,18 @@ TEST(cmod_utilityrate5_eqns, Test_Commercial_kWh_per_kW_charges) {
     ssc_data_set_matrix(data, "ur_dc_sched_weekend", p_ur_dc_sched_weekend, 12, 24);
     ssc_number_t p_ur_dc_tou_mat[4] = { 1, 1, 9.9999999999999998e+37, 0 };
     ssc_data_set_matrix(data, "ur_dc_tou_mat", p_ur_dc_tou_mat, 1, 4);
-    ssc_number_t p_ur_dc_flat_mat[48] = { 0, 1, 9.9999999999999998e+37, 0, 1, 1, 9.9999999999999998e+37, 0, 2, 1, 9.9999999999999998e+37, 0, 3, 1, 9.9999999999999998e+37, 0, 4, 1, 9.9999999999999998e+37, 0, 5, 1, 9.9999999999999998e+37, 0, 6, 1, 9.9999999999999998e+37, 0, 7, 1, 9.9999999999999998e+37, 0, 8, 1, 9.9999999999999998e+37, 0, 9, 1, 9.9999999999999998e+37, 0, 10, 1, 9.9999999999999998e+37, 0, 11, 1, 9.9999999999999998e+37, 0 };
+    ssc_number_t p_ur_dc_flat_mat[48] = { 0, 1, 9.9999999999999998e+37, 0,
+                                         1, 1, 9.9999999999999998e+37, 0,
+                                         2, 1, 9.9999999999999998e+37, 0,
+                                         3, 1, 9.9999999999999998e+37, 0,
+                                         4, 1, 9.9999999999999998e+37, 0,
+                                         5, 1, 9.9999999999999998e+37, 0,
+                                         6, 1, 9.9999999999999998e+37, 0,
+                                         7, 1, 9.9999999999999998e+37, 0,
+                                         8, 1, 9.9999999999999998e+37, 0,
+                                         9, 1, 9.9999999999999998e+37, 0,
+                                         10, 1, 9.9999999999999998e+37, 0,
+                                         11, 1, 9.9999999999999998e+37, 0 };
     ssc_data_set_matrix(data, "ur_dc_flat_mat", p_ur_dc_flat_mat, 12, 4);
 
     int analysis_period = 25;
@@ -1273,5 +1284,5 @@ TEST(cmod_utilityrate5_eqns, Test_Commercial_kWh_per_kW_charges) {
     bill_matrix.assign(annual_bills, nrows, ncols);
 
     double july_year_1 = bill_matrix.at((size_t)1, (size_t)6);
-    EXPECT_NEAR(16774.76, july_year_1, 0.01);
+    EXPECT_NEAR(16774.68, july_year_1, 0.01);
 }

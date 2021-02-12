@@ -241,7 +241,13 @@ TEST(lib_utility_rate_equations_test, test_block_step_tiers)
     EXPECT_NEAR(394800, curr_month.ec_tou_ub.at(0, 4), 0.1);
     EXPECT_NEAR(9.9999999999999998e+37, curr_month.ec_tou_ub.at(0, 5), 0.1);
 
-    // TODO - test the buy rates are appropriate as well
+    EXPECT_NEAR(0.132655, curr_month.ec_tou_br.at(0, 0), 0.0001);
+    EXPECT_NEAR(0.120303, curr_month.ec_tou_br.at(0, 1), 0.0001);
+    EXPECT_NEAR(0.102607, curr_month.ec_tou_br.at(0, 2), 0.0001);
+    EXPECT_NEAR(0.013627, curr_month.ec_tou_br.at(0, 3), 0.0001);
+    EXPECT_NEAR(0.010275, curr_month.ec_tou_br.at(0, 4), 0.0001);
+    EXPECT_NEAR(0.00771, curr_month.ec_tou_br.at(0, 5), 0.0001);
+
 
     day_one_power = { -500, -1413, -1000, };
     data.init_dc_peak_vectors(5);
@@ -265,7 +271,13 @@ TEST(lib_utility_rate_equations_test, test_block_step_tiers)
     EXPECT_NEAR(847800, curr_month.ec_tou_ub.at(0, 5), 0.1);
     EXPECT_NEAR(9.9999999999999998e+37, curr_month.ec_tou_ub.at(0, 6), 0.1);
 
-    // TODO - test the buy rates are appropriate as well
+    EXPECT_NEAR(0.132655, curr_month.ec_tou_br.at(0, 0), 0.0001);
+    EXPECT_NEAR(0.120303, curr_month.ec_tou_br.at(0, 1), 0.0001);
+    EXPECT_NEAR(0.102607, curr_month.ec_tou_br.at(0, 2), 0.0001);
+    EXPECT_NEAR(0.079109, curr_month.ec_tou_br.at(0, 3), 0.0001);
+    EXPECT_NEAR(0.013627, curr_month.ec_tou_br.at(0, 4), 0.0001);
+    EXPECT_NEAR(0.010275, curr_month.ec_tou_br.at(0, 5), 0.0001);
+    EXPECT_NEAR(0.00771, curr_month.ec_tou_br.at(0, 6), 0.0001);
 }
 
 // TODO - additional tests: a rate w/only kWh/kW tiers
