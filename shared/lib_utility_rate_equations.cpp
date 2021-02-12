@@ -182,39 +182,29 @@ void rate_data::init_energy_rates(bool gen_only) {
 	for (int m = 0; m < (int)m_month.size(); m++)
 	{
 		// check for kWh/kW
-        size_t start_tier = 0;
-        size_t end_tier = (int)m_month[m].ec_tou_ub.ncols() - 1;
         size_t num_periods = (int)m_month[m].ec_tou_ub.nrows();
-        size_t num_tiers = end_tier - start_tier + 1;
+        size_t num_tiers = (int)m_month[m].ec_tou_ub.ncols(); // Likely to be overwritten later
 
 		if (!gen_only) // added for two meter no load scenarios to use load tier sizing
 		{
-			end_tier = (int)m_month[m].ec_tou_ub_init.ncols() - 1;
-			//int num_periods = (int)m_month[m].ec_tou_ub_init.nrows();
-			num_tiers = end_tier - start_tier + 1;
-
 
 			// kWh/kW (kWh/kW daily handled in Setup)
 			// 1. find kWh/kW tier
-			// 2. set min tier and max tier based on next item in ec_tou matrix
-			// 3. resize use and chart based on number of tiers in kWh/kW section
+			// 2. fill in kWh tiers as needed, up to kWh/kW * flat peak
+            // 3. repeat until maximum tier is reached
 			// 4. assumption is that all periods in same month have same tier breakdown
 			// 5. assumption is that tier numbering is correct for the kWh/kW breakdown
 			// That is, first tier must be kWh/kW
+            // See example at: https://github.com/NREL/SAM-documentation/blob/master/Unit%20Testing/Utility%20Rates/block_step/GPC_PLL_Tiered_Bill_Calc_Example_v3_btm_tests.xlsx
 			if ((m_month[m].ec_tou_units.ncols() > 0 && m_month[m].ec_tou_units.nrows() > 0)
-				&& ((m_month[m].ec_tou_units.at(0, 0) == 1) || (m_month[m].ec_tou_units.at(0, 0) == 3)))
+				&& check_for_kwh_per_kw_rate(m_month[m].ec_tou_units.at(0, 0)))
 			{
                 std::vector<double> kWh_per_kW_tiers; // Fill this first so we can see where the kWh tiers break
                 std::vector<size_t> tier_numbers;
                 std::vector<double> tier_kwh;
 
-				// monthly total energy / monthly peak to determine which kWh/kW tier
-				double mon_kWhperkW = -m_month[m].energy_net; // load negative
+				// track monthly peak to determine which kWh/kW tier
                 double flat_peak = m_month[m].dc_flat_peak;
-				if (flat_peak != 0)
-					mon_kWhperkW /= flat_peak;
-				// find correct start and end tier based on kWhperkW band
-				start_tier = 0; // Starts at 0 in case this rate is exclusively kWh/kW
 
                 // get kWh/kW break points based on actual demand
                 for (size_t i_tier = 0; i_tier < m_month[m].ec_tou_units.ncols(); i_tier++)
@@ -233,7 +223,7 @@ void rate_data::init_energy_rates(bool gen_only) {
                     }
                 }
 
-                size_t block = 0;
+                size_t block = 0; // Start with first kWh/kW tier
                 size_t total_tiers = m_month[m].ec_tou_units.ncols();
 				for (size_t i_tier = 0; i_tier < total_tiers; i_tier++)
 				{
@@ -243,7 +233,7 @@ void rate_data::init_energy_rates(bool gen_only) {
                         // Update to current block
                         double kwh_per_kw = m_month[m].ec_tou_ub_init.at(0, i_tier);
                         if (kWh_per_kW_tiers[block] < kwh_per_kw * flat_peak && (block + 1 < kWh_per_kW_tiers.size())) {
-                            block++;
+                            block++; // Move on to next block tier
                         }
 						// Check this block, if it has kWh steps skip it and move on, otherwise add it
                         if (i_tier + 1 < total_tiers) {
@@ -256,7 +246,7 @@ void rate_data::init_energy_rates(bool gen_only) {
                             // Else do nothing, loop again and add the step
                         }
                         else {
-                            // Last tier - push it
+                            // Last tier - add it
                             tier_numbers.push_back(i_tier);
                             tier_kwh.push_back(kWh_per_kW_tiers[block]);
                         }
@@ -302,9 +292,6 @@ void rate_data::init_energy_rates(bool gen_only) {
 				m_month[m].ec_tou_ub = ub;
 			}
 		}
-		// reset now resized
-		start_tier = 0;
-		end_tier = m_month[m].ec_tou_ub.ncols() - 1;
 
 		m_month[m].ec_energy_surplus.resize_fill(num_periods, num_tiers, 0);
 		m_month[m].ec_energy_use.resize_fill(num_periods, num_tiers, 0);
