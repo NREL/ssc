@@ -696,8 +696,8 @@ static var_info _cm_vtab_singleowner[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,     "npv_thermal_value",                        "Present value of thermal value",              "$",                   "", "Metrics", "*", "", "" },
 
     //lcos (in common.cpp)
-    { SSC_OUTPUT,       SSC_NUMBER,     "lcos_nom",                        "Nominal levelized cost of storage",              "cents/kWh",                   "", "Metrics", "", "", "" },
-    { SSC_OUTPUT,       SSC_NUMBER,     "lcos_real",                        "Real levelized cost of storage",              "cents/kWh",                   "", "Metrics", "", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "lcos_nom",                        "Levelized cost of storage (nominal)",              "cents/kWh",                   "", "Metrics", "", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "lcos_real",                        "Levelized cost of storage (real)",              "cents/kWh",                   "", "Metrics", "", "", "" },
 
 
 var_info_invalid };
@@ -3027,7 +3027,6 @@ public:
         // Use PPA values to calculate revenue from purchases and sales
         size_t n_multipliers;
         size_t n_batt_to_grid, n_elec_purchases, n_elec_from_grid, n_annual_import_to_grid_energy;
-        ssc_number_t* ppa_multipliers = as_array("ppa_multipliers", &n_multipliers);
         //ssc_number_t* grid_to_batt = as_array("grid_to_batt", &n_batt_to_grid);
         
         std::vector<double> grid_to_batt = as_vector_double("grid_to_batt");
@@ -3036,42 +3035,54 @@ public:
 
         std::vector<double> charged_grid = as_vector_double("batt_annual_charge_from_grid");
         cf.at(CF_charging_cost_grid, 0) = 0;
-        //ssc_number_t* elec_purchases = as_array("year1_hourly_salespurchases_with_system", &n_elec_purchases);
-        //ssc_number_t* elec_from_grid = as_array("year1_hourly_e_fromgrid", &n_elec_from_grid);
+        std::vector<double> elec_purchases = as_vector_double("year1_hourly_salespurchases_with_system");
+        std::vector<double> elec_from_grid = as_vector_double("year1_hourly_e_fromgrid");
         
-        bool ppa_purchases = !(is_assigned("en_electricity_rates") && as_number("en_electricity_rates") == 1);
-        if (as_integer("system_use_lifetime_output") == 1)
-        {
-            // hourly_enet includes all curtailment, availability
-            for (size_t i = 1; i <= nyears; i++) {
-                double ppa_value = cf.at(CF_ppa_price, i);
-                for (size_t h = 0; h < 8760; h++) {
-                    if (ppa_purchases) {
-                        cf.at(CF_charging_cost_grid, i) += grid_to_batt[(i - 1) * 8760 + h] * ppa_value / 100.0 * ppa_multipliers[h];
-                    }
-                }
-                if (!ppa_purchases) {
-                    // Recompute this variable because the ppa_gen values (hourly_net) were all positve until now 
-                    cf.at(CF_charging_cost_grid, i) += charged_grid[i] * cf.at(CF_utility_bill, i) / annual_import_to_grid_energy[i];
-                }
-            }
-        }
-        else
-        {
-            for (size_t i = 1; i <= nyears; i++) {
-                double ppa_value = cf.at(CF_ppa_price, i);
-                for (size_t h = 0; h < 8760; h++) {
-                    if (ppa_purchases) {
-                        cf.at(CF_charging_cost_grid, i) += grid_to_batt[h] * ppa_value / 100.0 * ppa_multipliers[h];
-                    }
-                }
-                if (!ppa_purchases) {
-                    // Recompute this variable because the ppa_gen values (hourly_net) were all positve until now 
-                    cf.at(CF_charging_cost_grid, i) += charged_grid[i] * cf.at(CF_utility_bill, i) / annual_import_to_grid_energy[i];
-                }
-            }
-        }
+        
         for (int a = 0; a <= nyears; a++) {
+            if (as_integer("system_use_lifetime_output") == 1)
+            {
+                // hourly_enet includes all curtailment, availability
+                
+                double ppa_value = cf.at(CF_ppa_price, a);
+                for (size_t h = 0; h < 8760; h++) {
+                    if (ppa_purchases && a!=0) {
+                        cf.at(CF_charging_cost_grid, a) += grid_to_batt[(a - 1) * 8760 + h] * ppa_value / 100.0 * ppa_multipliers[h];
+                    }
+                    if (!ppa_purchases && a != 0) {
+                        // Recompute this variable because the ppa_gen values (hourly_net) were all positve until now 
+                        if (elec_from_grid[h] != 0) {
+                            //cf.at(CF_charging_cost_grid, a) += charged_grid[a] * cf.at(CF_utility_bill, a) / annual_import_to_grid_energy[a];
+                            cf.at(CF_charging_cost_grid, a) += grid_to_batt[(a - 1) * 8760 + h] * elec_purchases[h] * pow((1 + inflation_rate), a - 1) / elec_from_grid[h];
+                        }
+                        else
+                            cf.at(CF_charging_cost_grid, a) += 0;
+                    }
+                }
+                
+                
+            }
+            else
+            {
+                
+                double ppa_value = cf.at(CF_ppa_price, a);
+                for (size_t h = 0; h < 8760; h++) {
+                    if (ppa_purchases && a!=0) {
+                        cf.at(CF_charging_cost_grid, a) += grid_to_batt[h] * ppa_value / 100.0 * ppa_multipliers[h];
+                    }
+                    if (!ppa_purchases && a != 0) {
+                        // Recompute this variable because the ppa_gen values (hourly_net) were all positve until now 
+                        if (elec_from_grid[h] != 0) {
+                            cf.at(CF_charging_cost_grid, a) += grid_to_batt[h] * elec_purchases[h] * pow((1 + inflation_rate), a - 1) / elec_from_grid[h];
+                        }
+                        else
+                            cf.at(CF_charging_cost_grid, a) += 0;
+                    }
+                }
+                
+                
+            }
+
             //cf.at(CF_charging_cost_grid, a) = charged_grid[a] * cf.at(CF_ppa_price, a) / 100;
             cf.at(CF_charging_cost_pv, a) = charged_pv[a] * lcoe_nom / 100;
             //charged_total[a] = charged_grid[a] + charged_pv[a];

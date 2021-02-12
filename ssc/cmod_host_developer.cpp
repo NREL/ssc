@@ -60,6 +60,9 @@ static var_info _cm_vtab_host_developer[] = {
     { SSC_INPUT,        SSC_ARRAY,      "batt_annual_charge_energy",                  "Battery annual energy charged",                         "kWh",      "",                      "Battery",       "",                           "",                               "" },
     { SSC_INPUT,        SSC_ARRAY,      "batt_annual_discharge_energy",               "Battery annual energy discharged",                      "kWh",      "",                      "Battery",       "",                           "",                               "" },
     { SSC_INPUT,        SSC_NUMBER,      "battery_total_cost_lcos",               "Battery total investment cost",                      "$",      "",                      "Battery",       "?=0",                           "",                               "" },
+    { SSC_INPUT, SSC_ARRAY, "year1_hourly_e_fromgrid", "Electricity from grid (year 1 hourly)", "kWh", "", "Time Series", "", "", "" },
+    { SSC_INPUT,       SSC_ARRAY,      "year1_hourly_salespurchases_with_system",     "Electricity sales/purchases with system (year 1 hourly)",    "$", "",          "Time Series",             "",                         "",                   "" },
+    { SSC_INPUT,        SSC_ARRAY,      "grid_to_batt",                               "Electricity to grid from battery",                      "kW",      "",                       "Battery",       "",                           "",                              "" },
 
 	{ SSC_INPUT, SSC_ARRAY, "degradation", "Annual energy degradation", "", "", "System Output", "*", "", "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "system_capacity",			              "System nameplate capacity",		                               "kW",                "",                        "System Output",             "*",					   "MIN=1e-3",                      "" },
@@ -2777,8 +2780,51 @@ public:
         std::vector<double> charged_pv = as_vector_double("batt_annual_charge_from_system");
         std::vector<double> charged_total = as_vector_double("batt_annual_charge_energy");
         std::vector<double> lcos_energy_discharged = as_vector_double("batt_annual_discharge_energy");
+        std::vector<double> grid_to_batt = as_vector_double("grid_to_batt");
+        cf.at(CF_charging_cost_grid, 0) = 0;
+        std::vector<double> elec_purchases = as_vector_double("year1_hourly_salespurchases_with_system");
+        std::vector<double> elec_from_grid = as_vector_double("year1_hourly_e_fromgrid");
         for (int a = 0; a <= nyears; a++) {
-            cf.at(CF_charging_cost_grid, a) = charged_grid[a] * cf.at(CF_ppa_price, a) / 100;
+
+            if (as_integer("system_use_lifetime_output") == 1)
+            {
+                // hourly_enet includes all curtailment, availability
+
+
+                for (size_t h = 0; h < 8760; h++) {
+
+                    if (a != 0) {
+                        // Recompute this variable because the ppa_gen values (hourly_net) were all positve until now 
+                        if (elec_from_grid[h] != 0) {
+                            //cf.at(CF_charging_cost_grid, a) += charged_grid[a] * cf.at(CF_utility_bill, a) / annual_import_to_grid_energy[a];
+                            cf.at(CF_charging_cost_grid, a) += grid_to_batt[(a - 1) * 8760 + h] * elec_purchases[h] * pow((1 + inflation_rate), a - 1) / elec_from_grid[h];
+                        }
+                        else
+                            cf.at(CF_charging_cost_grid, a) += 0;
+                    }
+                }
+
+
+            }
+            else
+            {
+
+
+                for (size_t h = 0; h < 8760; h++) {
+
+                    if (a != 0) {
+                        // Recompute this variable because the ppa_gen values (hourly_net) were all positve until now 
+                        if (elec_from_grid[h] != 0) {
+                            cf.at(CF_charging_cost_grid, a) += grid_to_batt[h] * elec_purchases[h] * pow((1 + inflation_rate), a - 1) / elec_from_grid[h];
+                        }
+                        else
+                            cf.at(CF_charging_cost_grid, a) += 0;
+                    }
+                }
+
+
+            }
+            //cf.at(CF_charging_cost_grid, a) = charged_grid[a] * cf.at(CF_ppa_price, a) / 100;
             cf.at(CF_charging_cost_pv, a) = charged_pv[a] * lcoe_nom / 100;
             //charged_total[a] = charged_grid[a] + charged_pv[a];
             cf.at(CF_energy_charged_grid, a) = cf.at(CF_charging_cost_grid, a) + cf.at(CF_charging_cost_pv, a);

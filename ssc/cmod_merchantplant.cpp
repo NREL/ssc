@@ -2740,9 +2740,43 @@ public:
         std::vector<double> charged_pv = as_vector_double("batt_annual_charge_from_system");
         std::vector<double> charged_total = as_vector_double("batt_annual_charge_energy");
         std::vector<double> lcos_energy_discharged = as_vector_double("batt_annual_discharge_energy");
+        cf.at(CF_charging_cost_grid, 0) = 0;
+        std::vector<double> grid_to_batt = as_vector_double("grid_to_batt");
+        std::vector<double> elec_purchases = as_vector_double("year1_hourly_salespurchases_with_system");
+        std::vector<double> elec_from_grid = as_vector_double("year1_hourly_e_fromgrid");
+        size_t n_multipliers, n_mp_market_price;
+        ssc_number_t* ppa_multipliers = as_array("ppa_multipliers", &n_multipliers);
+        ssc_number_t* mp_market_price = as_array("mp_energy_market_price", &n_mp_market_price);
         for (int a = 0; a <= nyears; a++) {
+            if (as_integer("system_use_lifetime_output") == 1)
+            {
+                // hourly_enet includes all curtailment, availability
+
+                double market_price = mp_market_price[a] / 1000; //$/kWh
+                for (size_t h = 0; h < 8760; h++) {
+                    if (a != 0) {
+                        cf.at(CF_charging_cost_grid, a) += grid_to_batt[(a - 1) * 8760 + h] * mp_market_price[(a - 1) * 8760 + h]/ (100.0*1000);
+                    }
+
+                }
+
+
+            }
+            else
+            {
+
+                
+                for (size_t h = 0; h < 8760; h++) {
+                    if (a != 0) {
+                        cf.at(CF_charging_cost_grid, a) += grid_to_batt[h] * mp_market_price[(a-1)*8760+h] / (100.0*1000);
+                    }
+
+                }
+
+
+            }
             //cf.at(CF_charging_cost_grid, a) = charged_grid[a] * cf.at(CF_ppa_price, a) / 100;
-            cf.at(CF_charging_cost_grid, a) = charged_grid[a] * 10 / 100; //todo: set up utility rate structure
+            //cf.at(CF_charging_cost_grid, a) = charged_grid[a] * 10 / 100; //todo: set up utility rate structure
             cf.at(CF_charging_cost_pv, a) = charged_pv[a] * lcoe_nom / 100;
             //charged_total[a] = charged_grid[a] + charged_pv[a];
             cf.at(CF_energy_charged_grid, a) = cf.at(CF_charging_cost_grid, a) + cf.at(CF_charging_cost_pv, a);
