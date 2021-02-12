@@ -1217,7 +1217,7 @@ TEST(cmod_utilityrate5_eqns, Test_Commercial_kWh_per_kW_charges) {
     ssc_data_set_array(data, "load_escalation", p_load_escalation, 1);
     ssc_number_t p_rate_escalation[1] = { 0 };
     ssc_data_set_array(data, "rate_escalation", p_rate_escalation, 1);
-    ssc_data_set_number(data, "ur_metering_option", 4);
+    ssc_data_set_number(data, "ur_metering_option", 0);
     ssc_data_set_number(data, "ur_nm_yearend_sell_rate", 0);
     ssc_data_set_number(data, "ur_nm_credit_month", 11);
     ssc_data_set_number(data, "ur_nm_credit_rollover", 0);
