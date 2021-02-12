@@ -284,6 +284,7 @@ enum {
     CF_salvage_cost_lcos,
     CF_investment_cost_lcos,
     CF_annual_cost_lcos,
+    CF_util_escal_rate,
 
     CF_max,
 };
@@ -1048,6 +1049,11 @@ public:
         cf.at(CF_charging_cost_grid, 0) = 0;
         std::vector<double> elec_purchases = as_vector_double("year1_hourly_salespurchases_with_system");
         std::vector<double> elec_from_grid = as_vector_double("year1_hourly_e_fromgrid");
+
+        if (is_assigned("rate_escalation"))
+            escal_or_annual(CF_util_escal_rate, nyears, "rate_escalation", inflation_rate, 0.01, true, 0);
+        save_cf(CF_util_escal_rate, nyears, "cf_util_escal_rate");
+
         for (int a = 0; a <= nyears; a++) {
             if (as_integer("system_use_lifetime_output") == 1)
             {
@@ -1060,7 +1066,7 @@ public:
                         // Recompute this variable because the ppa_gen values (hourly_net) were all positve until now 
                         if (elec_from_grid[h] != 0) {
                             //cf.at(CF_charging_cost_grid, a) += charged_grid[a] * cf.at(CF_utility_bill, a) / annual_import_to_grid_energy[a];
-                            cf.at(CF_charging_cost_grid, a) += grid_to_batt[(a - 1) * 8760 + h] * elec_purchases[h] * pow((1 + inflation_rate), a - 1) / elec_from_grid[h];
+                            cf.at(CF_charging_cost_grid, a) += grid_to_batt[(a - 1) * 8760 + h] * -elec_purchases[h] * cf.at(CF_util_escal_rate, a) / elec_from_grid[h];
                         }
                         else
                             cf.at(CF_charging_cost_grid, a) += 0;
@@ -1078,7 +1084,7 @@ public:
                     if (a != 0) {
                         // Recompute this variable because the ppa_gen values (hourly_net) were all positve until now 
                         if (elec_from_grid[h] != 0) {
-                            cf.at(CF_charging_cost_grid, a) += grid_to_batt[h] * elec_purchases[h] * pow((1 + inflation_rate), a - 1) / elec_from_grid[h];
+                            cf.at(CF_charging_cost_grid, a) += grid_to_batt[h] * -elec_purchases[h] * cf.at(CF_util_escal_rate, a) / elec_from_grid[h];
                         }
                         else
                             cf.at(CF_charging_cost_grid, a) += 0;
