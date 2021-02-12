@@ -667,6 +667,7 @@ static var_info _cm_vtab_singleowner[] = {
     { SSC_OUTPUT, SSC_ARRAY, "cf_om_fixed1_expense", "Annual fixed cost for battery maintenance", "$", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_batt_replacement_cost", "Annual cost of battery replacements", "$", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_salvage_cost_lcos", "Annual battery salvage value costs", "$", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_util_escal_rate", "Utility rate escalation", "%", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
 
 
     { SSC_OUTPUT, SSC_NUMBER, "npv_annual_costs", "Present value of annual costs", "$", "", "LCOE calculations", "*", "", "" },
@@ -924,6 +925,7 @@ enum {
     CF_salvage_cost_lcos,
     CF_investment_cost_lcos,
     CF_annual_cost_lcos,
+    CF_util_escal_rate,
 
     CF_max,
  };
@@ -3035,8 +3037,16 @@ public:
 
         std::vector<double> charged_grid = as_vector_double("batt_annual_charge_from_grid");
         cf.at(CF_charging_cost_grid, 0) = 0;
-        std::vector<double> elec_purchases = as_vector_double("year1_hourly_salespurchases_with_system");
-        std::vector<double> elec_from_grid = as_vector_double("year1_hourly_e_fromgrid");
+        std::vector<double> elec_purchases, elec_from_grid;
+        if (!ppa_purchases) {
+            elec_purchases = as_vector_double("year1_hourly_salespurchases_with_system");
+            elec_from_grid = as_vector_double("year1_hourly_e_fromgrid");
+        }
+
+        if (is_assigned("rate_escalation"))
+            escal_or_annual(CF_util_escal_rate, nyears, "rate_escalation", inflation_rate, 0.01, true, 0);
+        save_cf(CF_util_escal_rate, nyears, "cf_util_escal_rate");
+
         
         
         for (int a = 0; a <= nyears; a++) {
@@ -3053,7 +3063,7 @@ public:
                         // Recompute this variable because the ppa_gen values (hourly_net) were all positve until now 
                         if (elec_from_grid[h] != 0) {
                             //cf.at(CF_charging_cost_grid, a) += charged_grid[a] * cf.at(CF_utility_bill, a) / annual_import_to_grid_energy[a];
-                            cf.at(CF_charging_cost_grid, a) += grid_to_batt[(a - 1) * 8760 + h] * elec_purchases[h] * pow((1 + inflation_rate), a - 1) / elec_from_grid[h];
+                            cf.at(CF_charging_cost_grid, a) += grid_to_batt[(a - 1) * 8760 + h] * -elec_purchases[h] * cf.at(CF_util_escal_rate, a) / elec_from_grid[h];
                         }
                         else
                             cf.at(CF_charging_cost_grid, a) += 0;
@@ -3073,7 +3083,7 @@ public:
                     if (!ppa_purchases && a != 0) {
                         // Recompute this variable because the ppa_gen values (hourly_net) were all positve until now 
                         if (elec_from_grid[h] != 0) {
-                            cf.at(CF_charging_cost_grid, a) += grid_to_batt[h] * elec_purchases[h] * pow((1 + inflation_rate), a - 1) / elec_from_grid[h];
+                            cf.at(CF_charging_cost_grid, a) += grid_to_batt[h] * -elec_purchases[h] * cf.at(CF_util_escal_rate, a) / elec_from_grid[h];
                         }
                         else
                             cf.at(CF_charging_cost_grid, a) += 0;
