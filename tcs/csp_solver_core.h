@@ -1518,9 +1518,10 @@ public:
             turn_on_mode_availability();
         }
 
-        virtual void handle_solve_error(double time /*hr*/, bool& is_rec_su_allowed)
+        virtual void handle_solve_error(double time /*hr*/, bool& is_rec_su_unchanged)
         {
             m_is_mode_available = false;
+            is_rec_su_unchanged = true;            
         }
 
         virtual void check_system_limits(C_csp_solver* pc_csp_solver,
@@ -1540,7 +1541,7 @@ public:
             double q_dot_pc_min /*MWt*/, double q_dot_pc_max /*MWt*/, double q_dot_pc_startup_max /*MWt*/,
             double m_dot_pc_startup_max /*kg/hr*/, double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
             double limit_comp_tol /*-*/,
-            double& defocus_solved, bool& is_op_mode_avail /*-*/, bool& is_turn_off_plant)
+            double& defocus_solved, bool& is_op_mode_avail /*-*/, bool& is_turn_off_plant, bool& is_rec_su_unchanged)
         {
             if (!pc_csp_solver->mc_collector_receiver.m_is_sensible_htf && m_is_sensible_htf_only) {
                 std::string error_msg = util::format("At time = %lg ", pc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0);
@@ -1592,9 +1593,9 @@ public:
 
             bool is_converged = true;
             bool is_turn_off_plant_local = false;
-            bool is_rec_su_allowed_local = true;
+            bool is_rec_su_unchanged_local = true;
             if (solve_error_code != 0) {
-                handle_solve_error(pc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time, is_rec_su_allowed_local);
+                handle_solve_error(pc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time, is_rec_su_unchanged_local);
                 is_converged = false;
             }
             else {
@@ -1609,6 +1610,7 @@ public:
 
             is_turn_off_plant = is_turn_off_plant_local;
             is_op_mode_avail = m_is_mode_available;
+            is_rec_su_unchanged = is_rec_su_unchanged_local;
 
             return is_converged;
         }
@@ -1629,7 +1631,7 @@ public:
             C_csp_power_cycle::OFF, C_MEQ__m_dot_tes::E__CR_OUT__0, C_MEQ__timestep::E_STEP_FIXED,
             false, "CR_OFF__PC_OFF__TES_OFF__AUX_OFF", QUIETNAN, false) {}
 
-        void handle_solve_error(double time /*hr*/, bool& is_rec_su_allowed)
+        void handle_solve_error(double time /*hr*/, bool& is_rec_su_unchanged)
         {
             throw(C_csp_exception(util::format("At time = %lg ", time/3600.0) + " operating mode " + m_op_mode_name + " failed", ""));
         }
@@ -1864,7 +1866,7 @@ public:
             C_csp_power_cycle::ON, C_MEQ__m_dot_tes::E__CR_OUT__ITER_Q_DOT_TARGET_CH_ONLY, C_MEQ__timestep::E_STEP_FIXED,
             false, "CR_ON__PC_TARGET__TES_CH__AUX_OFF", Q_DOT_PC_TARGET, true) {}
 
-        void handle_solve_error(double time /*hr*/, bool& is_rec_su_allowed)
+        void handle_solve_error(double time /*hr*/, bool& is_rec_su_unchanged)
         {
             // LO side needs to stay 'true' so controller can try modes with TES discharge
             m_is_HI_SIDE_mode_available = false;
@@ -2448,10 +2450,10 @@ public:
             C_csp_power_cycle::ON, C_MEQ__m_dot_tes::E__PC_MAX_PLUS_TES_FULL__PC_MAX, C_MEQ__timestep::E_STEP_FIXED,
             true, "CR_DF__PC_MAX__TES_FULL__AUX_OFF", QUIETNAN, true) {}
 
-        void handle_solve_error(double time /*hr*/, bool& is_rec_su_allowed)
+        void handle_solve_error(double time /*hr*/, bool& is_rec_su_unchanged)
         {
             m_is_mode_available = false;
-            is_rec_su_allowed = false;
+            is_rec_su_unchanged = false;
         }
     };
 
@@ -2470,7 +2472,7 @@ public:
             C_csp_power_cycle::ON, C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT, C_MEQ__timestep::E_STEP_FIXED,
             false, "CR_ON__PC_RM_HI__TES_OFF__AUX_OFF", QUIETNAN, false) {}
 
-        void handle_solve_error(double time /*hr*/, bool& is_rec_su_allowed)
+        void handle_solve_error(double time /*hr*/, bool& is_rec_su_unchanged)
         {
             m_is_HI_SIDE_mode_available = false;
         }
@@ -2861,6 +2863,15 @@ public:
 
     };
 
+    class C_CR_SU__PC_SU__TES_DC__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_SU__PC_SU__TES_DC__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::STARTUP,
+            C_csp_power_cycle::STARTUP_CONTROLLED, C_MEQ__m_dot_tes::E__CR_OUT__ITER_M_DOT_SU_DC_ONLY, C_MEQ__timestep::E_STEP_FROM_COMPONENT,
+            false, "CR_SU__PC_SU__TES_DC__AUX_OFF", QUIETNAN, true) {}
+
+    };
+
     class C_system_operating_modes
     {
     private:
@@ -2895,6 +2906,7 @@ public:
         C_CR_SU__PC_SB__TES_DC__AUX_OFF mc_CR_SU__PC_SB__TES_DC__AUX_OFF;
         C_CR_ON__PC_SB__TES_OFF__AUX_OFF mc_CR_ON__PC_SB__TES_OFF__AUX_OFF;
         C_CR_ON__PC_SU__TES_CH__AUX_OFF mc_CR_ON__PC_SU__TES_CH__AUX_OFF;
+        C_CR_SU__PC_SU__TES_DC__AUX_OFF mc_CR_SU__PC_SU__TES_DC__AUX_OFF;
 
     public:
 
@@ -3010,6 +3022,7 @@ public:
             m_operating_modes_map[E_operating_modes::CR_SU__PC_SB__TES_DC__AUX_OFF] = &mc_CR_SU__PC_SB__TES_DC__AUX_OFF;
             m_operating_modes_map[E_operating_modes::CR_ON__PC_SB__TES_OFF__AUX_OFF] = &mc_CR_ON__PC_SB__TES_OFF__AUX_OFF;
             m_operating_modes_map[E_operating_modes::CR_ON__PC_SU__TES_CH__AUX_OFF] = &mc_CR_ON__PC_SU__TES_CH__AUX_OFF;
+            m_operating_modes_map[E_operating_modes::CR_SU__PC_SU__TES_DC__AUX_OFF] = &mc_CR_SU__PC_SU__TES_DC__AUX_OFF;
         }
 
         bool solve(C_system_operating_modes::E_operating_modes op_mode, C_csp_solver* pc_csp_solver, bool is_rec_outlet_to_hottank,
@@ -3017,14 +3030,14 @@ public:
             double q_dot_pc_min /*MWt*/, double q_dot_pc_max /*MWt*/, double q_dot_pc_startup_max /*MWt*/,
             double m_dot_pc_startup_max /*kg/hr*/, double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
             double limit_comp_tol /*-*/,
-            double& defocus_solved, bool& is_op_mode_avail /*-*/, bool& is_turn_off_plant)
+            double& defocus_solved, bool& is_op_mode_avail /*-*/, bool& is_turn_off_plant, bool& is_rec_su_unchanged)
         {
             return m_operating_modes_map[op_mode]->solve(pc_csp_solver, is_rec_outlet_to_hottank,
                 q_dot_pc_on_target, q_dot_pc_startup, q_dot_pc_standby,
                 q_dot_pc_min, q_dot_pc_max, q_dot_pc_startup_max,
                 m_dot_pc_startup_max, m_dot_pc_max, m_dot_pc_min,
                 limit_comp_tol,
-                defocus_solved, is_op_mode_avail, is_turn_off_plant);
+                defocus_solved, is_op_mode_avail, is_turn_off_plant, is_rec_su_unchanged);
         }
 
         C_operating_mode_core* get_operating_mode_pointer(E_operating_modes op_mode)

@@ -1859,6 +1859,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			m_op_mode_tracking.push_back(operating_mode);
 
             op_mode_str = "";
+            bool is_rec_su_unchanged = true;
             
             switch( operating_mode )
 			{
@@ -1869,12 +1870,16 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
                 bool is_op_mode_avail = true;
                 bool is_turn_off_plant = false;
+                
                 are_models_converged = mc_operating_modes.solve(C_system_operating_modes::E_operating_modes::CR_DF__PC_MAX__TES_OFF__AUX_OFF, this, is_rec_outlet_to_hottank,
                     q_pc_target, q_dot_pc_su_max, q_pc_sb,
                     q_pc_min, m_q_dot_pc_max, q_dot_pc_su_max,
                     m_m_dot_pc_max_startup, m_m_dot_pc_max, m_m_dot_pc_min,
                     1.E-3,
-                    defocus_solved, is_op_mode_avail, is_turn_off_plant);
+                    defocus_solved, is_op_mode_avail, is_turn_off_plant, is_rec_su_unchanged);
+                if (!is_rec_su_unchanged) {
+                    is_rec_su_allowed = false;
+                }
 
                 m_is_CR_DF__PC_MAX__TES_OFF__AUX_OFF_avail = is_op_mode_avail;
 
@@ -1938,7 +1943,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                     q_pc_min, m_q_dot_pc_max, q_dot_pc_su_max,
                     m_m_dot_pc_max_startup, m_m_dot_pc_max, m_m_dot_pc_min,
                     1.E-3,
-                    defocus_solved, is_op_mode_avail, is_turn_off_plant);
+                    defocus_solved, is_op_mode_avail, is_turn_off_plant, is_rec_su_unchanged);
+                if (!is_rec_su_unchanged) {
+                    is_rec_su_allowed = false;
+                }
 
                 m_is_CR_DF__PC_SU__TES_OFF__AUX_OFF_avail = is_op_mode_avail;
 
@@ -2005,7 +2013,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                     q_pc_min, m_q_dot_pc_max, q_dot_pc_su_max,
                     m_m_dot_pc_max_startup, m_m_dot_pc_max, m_m_dot_pc_min,
                     1.E-3,
-                    defocus_solved, is_op_mode_avail, is_turn_off_plant);
+                    defocus_solved, is_op_mode_avail, is_turn_off_plant, is_rec_su_unchanged);
+                if (!is_rec_su_unchanged) {
+                    is_rec_su_allowed = false;
+                }
 
                 m_defocus = defocus_solved;
                 m_is_CR_ON__PC_RM_LO__TES_OFF__AUX_OFF_avail = is_op_mode_avail;
@@ -2079,7 +2090,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                     q_pc_min, m_q_dot_pc_max, q_dot_pc_su_max,
                     m_m_dot_pc_max_startup, m_m_dot_pc_max, m_m_dot_pc_min,
                     1.E-3,
-                    defocus_solved, is_op_mode_avail, is_turn_off_plant);
+                    defocus_solved, is_op_mode_avail, is_turn_off_plant, is_rec_su_unchanged);
+                if (!is_rec_su_unchanged) {
+                    is_rec_su_allowed = false;
+                }
 
                 m_is_CR_ON__PC_RM_HI__TES_OFF__AUX_OFF_avail_HI_SIDE = mc_operating_modes.get_operating_mode_pointer(C_system_operating_modes::E_operating_modes::CR_ON__PC_RM_HI__TES_OFF__AUX_OFF)->is_HI_SIDE_mode_available();
                 m_is_CR_ON__PC_RM_HI__TES_OFF__AUX_OFF_avail_LO_SIDE = mc_operating_modes.get_operating_mode_pointer(C_system_operating_modes::E_operating_modes::CR_ON__PC_RM_HI__TES_OFF__AUX_OFF)->is_LO_SIDE_mode_available();
@@ -2155,7 +2169,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                     q_pc_min, m_q_dot_pc_max, q_dot_pc_su_max,
                     m_m_dot_pc_max_startup, m_m_dot_pc_max, m_m_dot_pc_min,
                     1.E-3,
-                    defocus_solved, is_op_mode_avail, is_turn_off_plant);
+                    defocus_solved, is_op_mode_avail, is_turn_off_plant, is_rec_su_unchanged);
+                if (!is_rec_su_unchanged) {
+                    is_rec_su_allowed = false;
+                }
 
                 m_is_CR_ON__PC_SB__TES_OFF__AUX_OFF_avail = is_op_mode_avail;
 
@@ -2283,7 +2300,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                     q_pc_min, m_q_dot_pc_max, q_dot_pc_su_max,
                     m_m_dot_pc_max_startup, m_m_dot_pc_max, m_m_dot_pc_min,
                     1.E-3,
-                    defocus_solved, is_op_mode_avail, is_turn_off_plant);
+                    defocus_solved, is_op_mode_avail, is_turn_off_plant, is_rec_su_unchanged);
+                if (!is_rec_su_unchanged) {
+                    is_rec_su_allowed = false;
+                }
 
                 m_is_CR_ON__PC_SU__TES_OFF__AUX_OFF_avail = is_op_mode_avail;
                 m_defocus = defocus_solved;
@@ -2356,7 +2376,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                     q_pc_min, m_q_dot_pc_max, q_dot_pc_su_max,
                     m_m_dot_pc_max_startup, m_m_dot_pc_max, m_m_dot_pc_min,
                     1.E-3,
-                    defocus_solved, is_op_mode_avail, is_turn_off_plant);
+                    defocus_solved, is_op_mode_avail, is_turn_off_plant, is_rec_su_unchanged);
+                if (!is_rec_su_unchanged) {
+                    is_rec_su_allowed = false;
+                }
 
                 m_is_CR_SU__PC_OFF__TES_OFF__AUX_OFF_avail = is_op_mode_avail;
                 m_defocus = defocus_solved;
@@ -2428,7 +2451,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                     q_pc_min, m_q_dot_pc_max, q_dot_pc_su_max,
                     m_m_dot_pc_max_startup, m_m_dot_pc_max, m_m_dot_pc_min,
                     1.E-3,
-                    defocus_solved, is_op_mode_avail, is_turn_off_plant);
+                    defocus_solved, is_op_mode_avail, is_turn_off_plant, is_rec_su_unchanged);
+                if (!is_rec_su_unchanged) {
+                    is_rec_su_allowed = false;
+                }
 
                 m_defocus = defocus_solved;
 
@@ -2518,7 +2544,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                     q_pc_min, m_q_dot_pc_max, q_dot_pc_su_max,
                     m_m_dot_pc_max_startup, m_m_dot_pc_max, m_m_dot_pc_min,
                     1.E-3,
-                    defocus_solved, is_op_mode_avail, is_turn_off_plant);
+                    defocus_solved, is_op_mode_avail, is_turn_off_plant, is_rec_su_unchanged);
+                if (!is_rec_su_unchanged) {
+                    is_rec_su_allowed = false;
+                }
 
                 m_defocus = defocus_solved;
                 m_is_CR_OFF__PC_SU__TES_DC__AUX_OFF_avail = is_op_mode_avail;
@@ -2577,7 +2606,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                     q_pc_min, m_q_dot_pc_max, q_dot_pc_su_max,
                     m_m_dot_pc_max_startup, m_m_dot_pc_max, m_m_dot_pc_min,
                     1.E-3,
-                    defocus_solved, is_op_mode_avail, is_turn_off_plant);
+                    defocus_solved, is_op_mode_avail, is_turn_off_plant, is_rec_su_unchanged);
+                if (!is_rec_su_unchanged) {
+                    is_rec_su_allowed = false;
+                }
 
                 m_defocus = defocus_solved;
                 m_is_CR_ON__PC_OFF__TES_CH__AUX_OFF_avail = is_op_mode_avail;
@@ -2637,7 +2669,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                     q_pc_min, m_q_dot_pc_max, q_dot_pc_su_max,
                     m_m_dot_pc_max_startup, m_m_dot_pc_max, m_m_dot_pc_min,
                     1.E-3,
-                    defocus_solved, is_op_mode_avail, is_turn_off_plant);
+                    defocus_solved, is_op_mode_avail, is_turn_off_plant, is_rec_su_unchanged);
+                if (!is_rec_su_unchanged) {
+                    is_rec_su_allowed = false;
+                }
 
                 m_defocus = defocus_solved;
                 //m_is_CR_ON__PC_TARGET__TES_CH__AUX_OFF_avail = is_op_mode_avail;
@@ -2732,7 +2767,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                     q_pc_min, m_q_dot_pc_max, q_dot_pc_su_max,
                     m_m_dot_pc_max_startup, m_m_dot_pc_max, m_m_dot_pc_min,
                     1.E-3,
-                    defocus_solved, is_op_mode_avail, is_turn_off_plant);
+                    defocus_solved, is_op_mode_avail, is_turn_off_plant, is_rec_su_unchanged);
+                if (!is_rec_su_unchanged) {
+                    is_rec_su_allowed = false;
+                }
 
                 m_is_CR_ON__PC_SB__TES_CH__AUX_OFF_avail = is_op_mode_avail;
 
@@ -2821,7 +2859,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                     q_pc_min, m_q_dot_pc_max, q_dot_pc_su_max,
                     m_m_dot_pc_max_startup, m_m_dot_pc_max, m_m_dot_pc_min,
                     1.E-3,
-                    defocus_solved, is_op_mode_avail, is_turn_off_plant);
+                    defocus_solved, is_op_mode_avail, is_turn_off_plant, is_rec_su_unchanged);
+                if (!is_rec_su_unchanged) {
+                    is_rec_su_allowed = false;
+                }
 
                 m_defocus = defocus_solved;
                 m_is_CR_ON__PC_TARGET__TES_DC__AUX_OFF_avail = is_op_mode_avail;
@@ -2935,7 +2976,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                     q_pc_min, m_q_dot_pc_max, q_dot_pc_su_max,
                     m_m_dot_pc_max_startup, m_m_dot_pc_max, m_m_dot_pc_min,
                     1.E-3,
-                    defocus_solved, is_op_mode_avail, is_turn_off_plant);
+                    defocus_solved, is_op_mode_avail, is_turn_off_plant, is_rec_su_unchanged);
+                if (!is_rec_su_unchanged) {
+                    is_rec_su_allowed = false;
+                }
 
                 m_is_CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF_avail = is_op_mode_avail;
 
@@ -3064,7 +3108,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                     q_pc_min, m_q_dot_pc_max, q_dot_pc_su_max,
                     m_m_dot_pc_max_startup, m_m_dot_pc_max, m_m_dot_pc_min,
                     1.E-3,
-                    defocus_solved, is_op_mode_avail, is_turn_off_plant);
+                    defocus_solved, is_op_mode_avail, is_turn_off_plant, is_rec_su_unchanged);
+                if (!is_rec_su_unchanged) {
+                    is_rec_su_allowed = false;
+                }
 
                 m_is_CR_DF__PC_OFF__TES_FULL__AUX_OFF_avail = is_op_mode_avail;
 
@@ -3203,7 +3250,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                     q_pc_min, m_q_dot_pc_max, q_dot_pc_su_max,
                     m_m_dot_pc_max_startup, m_m_dot_pc_max, m_m_dot_pc_min,
                     1.E-3,
-                    defocus_solved, is_op_mode_avail, is_turn_off_plant);
+                    defocus_solved, is_op_mode_avail, is_turn_off_plant, is_rec_su_unchanged);
+                if (!is_rec_su_unchanged) {
+                    is_rec_su_allowed = false;
+                }
 
                 m_defocus = defocus_solved;
                 m_is_CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF_avail = is_op_mode_avail;
@@ -3377,7 +3427,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                     q_pc_min, m_q_dot_pc_max, q_dot_pc_su_max,
                     m_m_dot_pc_max_startup, m_m_dot_pc_max, m_m_dot_pc_min,
                     1.E-3,
-                    defocus_solved, is_op_mode_avail, is_turn_off_plant);
+                    defocus_solved, is_op_mode_avail, is_turn_off_plant, is_rec_su_unchanged);
+                if (!is_rec_su_unchanged) {
+                    is_rec_su_allowed = false;
+                }
 
                 m_is_CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF_avail = is_op_mode_avail;
 
@@ -3480,7 +3533,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                     q_pc_min, m_q_dot_pc_max, q_dot_pc_su_max,
                     m_m_dot_pc_max_startup, m_m_dot_pc_max, m_m_dot_pc_min,
                     1.E-3,
-                    defocus_solved, is_op_mode_avail, is_turn_off_plant);
+                    defocus_solved, is_op_mode_avail, is_turn_off_plant, is_rec_su_unchanged);
+                if (!is_rec_su_unchanged) {
+                    is_rec_su_allowed = false;
+                }
 
                 m_is_CR_SU__PC_RM_LO__TES_EMPTY__AUX_OFF_avail = is_op_mode_avail;
 
@@ -3595,7 +3651,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                     q_pc_min, m_q_dot_pc_max, q_dot_pc_su_max,
                     m_m_dot_pc_max_startup, m_m_dot_pc_max, m_m_dot_pc_min,
                     1.E-3,
-                    defocus_solved, is_op_mode_avail, is_turn_off_plant);
+                    defocus_solved, is_op_mode_avail, is_turn_off_plant, is_rec_su_unchanged);
+                if (!is_rec_su_unchanged) {
+                    is_rec_su_allowed = false;
+                }
 
                 m_is_CR_SU__PC_MIN__TES_EMPTY__AUX_OFF_avail = is_op_mode_avail;
 
@@ -3717,7 +3776,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                     q_pc_min, m_q_dot_pc_max, q_dot_pc_su_max,
                     m_m_dot_pc_max_startup, m_m_dot_pc_max, m_m_dot_pc_min,
                     1.E-3,
-                    defocus_solved, is_op_mode_avail, is_turn_off_plant);
+                    defocus_solved, is_op_mode_avail, is_turn_off_plant, is_rec_su_unchanged);
+                if (!is_rec_su_unchanged) {
+                    is_rec_su_allowed = false;
+                }
 
                 m_is_CR_ON__PC_SB__TES_DC__AUX_OFF_avail = is_op_mode_avail;
 
@@ -3910,7 +3972,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                     q_pc_min, m_q_dot_pc_max, q_dot_pc_su_max,
                     m_m_dot_pc_max_startup, m_m_dot_pc_max, m_m_dot_pc_min,
                     1.E-3,
-                    defocus_solved, is_op_mode_avail, is_turn_off_plant);
+                    defocus_solved, is_op_mode_avail, is_turn_off_plant, is_rec_su_unchanged);
+                if (!is_rec_su_unchanged) {
+                    is_rec_su_allowed = false;
+                }
 
                 m_defocus = defocus_solved;
                 m_is_CR_OFF__PC_TARGET__TES_DC__AUX_OFF_avail = is_op_mode_avail;
@@ -4010,7 +4075,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                     q_pc_min, m_q_dot_pc_max, q_dot_pc_su_max,
                     m_m_dot_pc_max_startup, m_m_dot_pc_max, m_m_dot_pc_min,
                     1.E-3,
-                    defocus_solved, is_op_mode_avail, is_turn_off_plant);
+                    defocus_solved, is_op_mode_avail, is_turn_off_plant, is_rec_su_unchanged);
+                if (!is_rec_su_unchanged) {
+                    is_rec_su_allowed = false;
+                }
 
                 m_is_CR_SU__PC_TARGET__TES_DC__AUX_OFF_avail = is_op_mode_avail;
 
@@ -4204,7 +4272,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                     q_pc_min, m_q_dot_pc_max, q_dot_pc_su_max,
                     m_m_dot_pc_max_startup, m_m_dot_pc_max, m_m_dot_pc_min,
                     1.E-3,
-                    defocus_solved, is_op_mode_avail, is_turn_off_plant);
+                    defocus_solved, is_op_mode_avail, is_turn_off_plant, is_rec_su_unchanged);
+                if (!is_rec_su_unchanged) {
+                    is_rec_su_allowed = false;
+                }
 
                 m_is_CR_OFF__PC_SB__TES_DC__AUX_OFF_avail = is_op_mode_avail;
 
@@ -4314,7 +4385,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                     q_pc_min, m_q_dot_pc_max, q_dot_pc_su_max,
                     m_m_dot_pc_max_startup, m_m_dot_pc_max, m_m_dot_pc_min,
                     1.E-3,
-                    defocus_solved, is_op_mode_avail, is_turn_off_plant);
+                    defocus_solved, is_op_mode_avail, is_turn_off_plant, is_rec_su_unchanged);
+                if (!is_rec_su_unchanged) {
+                    is_rec_su_allowed = false;
+                }
 
                 m_is_CR_SU__PC_SB__TES_DC__AUX_OFF_avail = is_op_mode_avail;
 
@@ -4429,7 +4503,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                     q_pc_min, m_q_dot_pc_max, q_dot_pc_su_max,
                     m_m_dot_pc_max_startup, m_m_dot_pc_max, m_m_dot_pc_min,
                     1.E-3,
-                    defocus_solved, is_op_mode_avail, is_turn_off_plant);
+                    defocus_solved, is_op_mode_avail, is_turn_off_plant, is_rec_su_unchanged);
+                if (!is_rec_su_unchanged) {
+                    is_rec_su_allowed = false;
+                }
 
                 m_is_CR_ON__PC_RM_HI__TES_FULL__AUX_OFF_avail = is_op_mode_avail;
 
@@ -4516,7 +4593,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                     q_pc_min, m_q_dot_pc_max, q_dot_pc_su_max,
                     m_m_dot_pc_max_startup, m_m_dot_pc_max, m_m_dot_pc_min,
                     1.E-3,
-                    defocus_solved, is_op_mode_avail, is_turn_off_plant);
+                    defocus_solved, is_op_mode_avail, is_turn_off_plant, is_rec_su_unchanged);
+                if (!is_rec_su_unchanged) {
+                    is_rec_su_allowed = false;
+                }
 
                 m_is_CR_ON__PC_MIN__TES_EMPTY__AUX_OFF_avail = is_op_mode_avail;
 
@@ -4640,65 +4720,68 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 // TES is fully charged at the end of the timestep
                 // The CR is still delivering too much mass flow rate and needs to be defocused
 
-                //double t_ts_initial = mc_kernel.mc_sim_info.ms_ts.m_step;   //[s]
-                //double defocus_solved = std::numeric_limits<double>::quiet_NaN();
-
-                //bool is_op_mode_avail = true;
-                //bool is_turn_off_plant = false;
-                //are_models_converged = mc_operating_modes.solve(C_system_operating_modes::E_operating_modes::CR_DF__PC_MAX__TES_FULL__AUX_OFF, this, is_rec_outlet_to_hottank,
-                //    q_pc_target, q_dot_pc_su_max, q_pc_sb,
-                //    q_pc_min, m_q_dot_pc_max, q_dot_pc_su_max,
-                //    m_m_dot_pc_max_startup, m_m_dot_pc_max, m_m_dot_pc_min,
-                //    1.E-3,
-                //    defocus_solved, is_op_mode_avail, is_turn_off_plant);
-
-                //m_is_CR_DF__PC_MAX__TES_FULL__AUX_OFF_avail = is_op_mode_avail;
-
-                //if (!are_models_converged) {
-                //    reset_time(t_ts_initial);
-                //    if (is_turn_off_plant) {
-                //        turn_off_plant();
-                //    }
-                //    break;
-                //}
-                //m_defocus = defocus_solved;
-
-
-
-
-
-                if (!mc_collector_receiver.m_is_sensible_htf)
-                {
-                    std::string err_msg = util::format("Operating mode, %d, is not configured for DSG mode", operating_mode);
-                    throw(C_csp_exception(err_msg, "CSP Solver"));
-                }
-
-                C_csp_collector_receiver::E_csp_cr_modes cr_mode = C_csp_collector_receiver::ON;
-                C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::ON;
-				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__PC_MAX_PLUS_TES_FULL__PC_MAX;
-				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FIXED;
-                bool is_defocus = true;
-
-                double q_dot_pc_fixed = std::numeric_limits<double>::quiet_NaN();   // m_q_dot_pc_max // q_pc_target;        //[MWt]
-                op_mode_str = "CR_DF__PC_MAX__TES_FULL__AUX_OFF";
-
+                double t_ts_initial = mc_kernel.mc_sim_info.ms_ts.m_step;   //[s]
                 double defocus_solved = std::numeric_limits<double>::quiet_NaN();
 
-                int mode_code = solve_operating_mode(cr_mode, pc_mode, solver_mode, step_target_mode,
-                    q_dot_pc_fixed, is_defocus, is_rec_outlet_to_hottank, op_mode_str, defocus_solved);
-
-                if (mode_code != 0)
-                {
-                    m_is_CR_DF__PC_MAX__TES_FULL__AUX_OFF_avail = false;
+                bool is_op_mode_avail = true;
+                bool is_turn_off_plant = false;
+                are_models_converged = mc_operating_modes.solve(C_system_operating_modes::E_operating_modes::CR_DF__PC_MAX__TES_FULL__AUX_OFF, this, is_rec_outlet_to_hottank,
+                    q_pc_target, q_dot_pc_su_max, q_pc_sb,
+                    q_pc_min, m_q_dot_pc_max, q_dot_pc_su_max,
+                    m_m_dot_pc_max_startup, m_m_dot_pc_max, m_m_dot_pc_min,
+                    1.E-3,
+                    defocus_solved, is_op_mode_avail, is_turn_off_plant, is_rec_su_unchanged);
+                if (!is_rec_su_unchanged) {
                     is_rec_su_allowed = false;
-                    are_models_converged = false;
-                    break;
                 }
 
-                // Set member defocus
+                m_is_CR_DF__PC_MAX__TES_FULL__AUX_OFF_avail = is_op_mode_avail;
+
+                if (!are_models_converged) {
+                    reset_time(t_ts_initial);
+                    if (is_turn_off_plant) {
+                        turn_off_plant();
+                    }
+                    break;
+                }
                 m_defocus = defocus_solved;
 
-                are_models_converged = true;
+
+
+
+
+    //            if (!mc_collector_receiver.m_is_sensible_htf)
+    //            {
+    //                std::string err_msg = util::format("Operating mode, %d, is not configured for DSG mode", operating_mode);
+    //                throw(C_csp_exception(err_msg, "CSP Solver"));
+    //            }
+
+    //            C_csp_collector_receiver::E_csp_cr_modes cr_mode = C_csp_collector_receiver::ON;
+    //            C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::ON;
+				//C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__PC_MAX_PLUS_TES_FULL__PC_MAX;
+				//C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FIXED;
+    //            bool is_defocus = true;
+
+    //            double q_dot_pc_fixed = std::numeric_limits<double>::quiet_NaN();   // m_q_dot_pc_max // q_pc_target;        //[MWt]
+    //            op_mode_str = "CR_DF__PC_MAX__TES_FULL__AUX_OFF";
+
+    //            double defocus_solved = std::numeric_limits<double>::quiet_NaN();
+
+    //            int mode_code = solve_operating_mode(cr_mode, pc_mode, solver_mode, step_target_mode,
+    //                q_dot_pc_fixed, is_defocus, is_rec_outlet_to_hottank, op_mode_str, defocus_solved);
+
+    //            if (mode_code != 0)
+    //            {
+    //                m_is_CR_DF__PC_MAX__TES_FULL__AUX_OFF_avail = false;
+    //                is_rec_su_allowed = false;
+    //                are_models_converged = false;
+    //                break;
+    //            }
+
+    //            // Set member defocus
+    //            m_defocus = defocus_solved;
+
+    //            are_models_converged = true;
 
             }	// end 'CR_DF__PC_MAX__TES_FULL__AUX_OFF'
                 break;
@@ -4720,7 +4803,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                     q_pc_min, m_q_dot_pc_max, q_dot_pc_su_max,
                     m_m_dot_pc_max_startup, m_m_dot_pc_max, m_m_dot_pc_min,
                     1.E-3,
-                    defocus_solved, is_op_mode_avail, is_turn_off_plant);
+                    defocus_solved, is_op_mode_avail, is_turn_off_plant, is_rec_su_unchanged);
+                if (!is_rec_su_unchanged) {
+                    is_rec_su_allowed = false;
+                }
 
                 m_is_CR_DF__PC_SU__TES_FULL__AUX_OFF_avail = is_op_mode_avail;
 
@@ -4791,7 +4877,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                     q_pc_min, m_q_dot_pc_max, q_dot_pc_su_max,
                     m_m_dot_pc_max_startup, m_m_dot_pc_max, m_m_dot_pc_min,
                     1.E-3,
-                    defocus_solved, is_op_mode_avail, is_turn_off_plant);
+                    defocus_solved, is_op_mode_avail, is_turn_off_plant, is_rec_su_unchanged);
+                if (!is_rec_su_unchanged) {
+                    is_rec_su_allowed = false;
+                }
 
                 m_is_CR_ON__PC_SB__TES_FULL__AUX_OFF_avail = is_op_mode_avail;
 
@@ -4862,38 +4951,67 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				// Code calculates the shortest timestep of: (CR SU, PC SU, initial timestep)
 				//      and then recalculates the other component startup as necessary
 
-				if( !mc_collector_receiver.m_is_sensible_htf )
-				{
-					std::string err_msg = util::format("Operating mode, %d, is not configured for DSG mode", operating_mode);
-					throw(C_csp_exception(err_msg, "CSP Solver"));
-				}
-
                 double t_ts_initial = mc_kernel.mc_sim_info.ms_ts.m_step;   //[s]
-
-                C_csp_collector_receiver::E_csp_cr_modes cr_mode = C_csp_collector_receiver::STARTUP;
-                C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::STARTUP_CONTROLLED;
-				C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__ITER_M_DOT_SU_DC_ONLY;
-				C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FROM_COMPONENT;
-                bool is_defocus = false;
-                
-                op_mode_str = "CR_SU__PC_SU__TES_DC__AUX_OFF";
-                
                 double defocus_solved = std::numeric_limits<double>::quiet_NaN();
 
-                int mode_code = solve_operating_mode(cr_mode, pc_mode, solver_mode, step_target_mode,
-                    std::numeric_limits<double>::quiet_NaN(), is_defocus, is_rec_outlet_to_hottank, op_mode_str, defocus_solved);
-
-                if (mode_code != 0)
-                {
-                    m_is_CR_SU__PC_SU__TES_DC__AUX_OFF_avail = false;
-                    are_models_converged = false;
-                    break;
+                bool is_op_mode_avail = true;
+                bool is_turn_off_plant = false;
+                are_models_converged = mc_operating_modes.solve(C_system_operating_modes::E_operating_modes::CR_SU__PC_SU__TES_DC__AUX_OFF, this, is_rec_outlet_to_hottank,
+                    q_pc_target, q_dot_pc_su_max, q_pc_sb,
+                    q_pc_min, m_q_dot_pc_max, q_dot_pc_su_max,
+                    m_m_dot_pc_max_startup, m_m_dot_pc_max, m_m_dot_pc_min,
+                    1.E-3,
+                    defocus_solved, is_op_mode_avail, is_turn_off_plant, is_rec_su_unchanged);
+                if (!is_rec_su_unchanged) {
+                    is_rec_su_allowed = false;
                 }
 
-				// Set member defocus
-				m_defocus = defocus_solved;
+                m_is_CR_SU__PC_SU__TES_DC__AUX_OFF_avail = is_op_mode_avail;
 
-                are_models_converged = true;
+                if (!are_models_converged) {
+                    reset_time(t_ts_initial);
+                    if (is_turn_off_plant) {
+                        turn_off_plant();
+                    }
+                    break;
+                }
+                m_defocus = defocus_solved;
+
+
+
+
+				//if( !mc_collector_receiver.m_is_sensible_htf )
+				//{
+				//	std::string err_msg = util::format("Operating mode, %d, is not configured for DSG mode", operating_mode);
+				//	throw(C_csp_exception(err_msg, "CSP Solver"));
+				//}
+
+    //            double t_ts_initial = mc_kernel.mc_sim_info.ms_ts.m_step;   //[s]
+
+    //            C_csp_collector_receiver::E_csp_cr_modes cr_mode = C_csp_collector_receiver::STARTUP;
+    //            C_csp_power_cycle::E_csp_power_cycle_modes pc_mode = C_csp_power_cycle::STARTUP_CONTROLLED;
+				//C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode = C_MEQ__m_dot_tes::E__CR_OUT__ITER_M_DOT_SU_DC_ONLY;
+				//C_MEQ__timestep::E_timestep_target_modes step_target_mode = C_MEQ__timestep::E_STEP_FROM_COMPONENT;
+    //            bool is_defocus = false;
+    //            
+    //            op_mode_str = "CR_SU__PC_SU__TES_DC__AUX_OFF";
+    //            
+    //            double defocus_solved = std::numeric_limits<double>::quiet_NaN();
+
+    //            int mode_code = solve_operating_mode(cr_mode, pc_mode, solver_mode, step_target_mode,
+    //                std::numeric_limits<double>::quiet_NaN(), is_defocus, is_rec_outlet_to_hottank, op_mode_str, defocus_solved);
+
+    //            if (mode_code != 0)
+    //            {
+    //                m_is_CR_SU__PC_SU__TES_DC__AUX_OFF_avail = false;
+    //                are_models_converged = false;
+    //                break;
+    //            }
+
+				//// Set member defocus
+				//m_defocus = defocus_solved;
+
+    //            are_models_converged = true;
 			}
 				break;
 
@@ -4915,7 +5033,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                     q_pc_min, m_q_dot_pc_max, q_dot_pc_su_max,
                     m_m_dot_pc_max_startup, m_m_dot_pc_max, m_m_dot_pc_min,
                     1.E-3,
-                    defocus_solved, is_op_mode_avail, is_turn_off_plant);
+                    defocus_solved, is_op_mode_avail, is_turn_off_plant, is_rec_su_unchanged);
+                if (!is_rec_su_unchanged) {
+                    is_rec_su_allowed = false;
+                }
 
                 m_is_CR_ON__PC_SU__TES_CH__AUX_OFF_avail = is_op_mode_avail;
 
