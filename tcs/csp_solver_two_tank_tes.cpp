@@ -894,13 +894,6 @@ void C_csp_two_tank_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs
 		ms_params.m_u_tank, ms_params.m_tank_pairs, ms_params.m_cold_tank_Thtr, ms_params.m_cold_tank_max_heat,
 		V_cold_ini, T_cold_ini, ms_params.m_T_field_in_des);
 
-    // Size TES piping and output values
-    if (ms_params.tes_lengths.ncells() < 11) {
-        // set defaults
-        double vals1[11] = { 0., 90., 100., 120., 0., 0., 0., 0., 80., 120., 80. };
-        ms_params.tes_lengths.assign(vals1, 11);
-    }
-
     if (ms_params.custom_tes_pipe_sizes &&
         (ms_params.tes_diams.ncells() != N_tes_pipe_sections ||
             ms_params.tes_wallthicks.ncells() != N_tes_pipe_sections)) {
@@ -1365,7 +1358,6 @@ int C_csp_two_tank_tes::solve_tes_off_design(double timestep /*s*/, double  T_am
     s_outputs.m_q_heater = q_dot_heater;
     s_outputs.m_q_dot_dc_to_htf = q_dot_dc_to_htf;
     s_outputs.m_q_dot_ch_from_htf = q_dot_ch_from_htf;
-
     s_outputs.m_m_dot_cr_to_tes_hot = m_dot_cr_to_tes_hot;		//[kg/s]
     s_outputs.m_m_dot_cr_to_tes_cold = m_dot_cr_to_tes_cold;    //[kg/s]
     s_outputs.m_m_dot_tes_hot_out = m_dot_tes_hot_out;			//[kg/s]

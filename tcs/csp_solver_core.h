@@ -1228,6 +1228,7 @@ public:
 
 		C_csp_power_cycle::E_csp_power_cycle_modes m_pc_mode;      //[-]
         C_csp_collector_receiver::E_csp_cr_modes m_cr_mode;      //[-]
+
         bool m_is_rec_outlet_to_hottank;    //[-]
 
 		double m_q_dot_pc_target;   //[MWt]
@@ -1289,6 +1290,7 @@ public:
 
         C_csp_power_cycle::E_csp_power_cycle_modes m_pc_mode;      //[-]
         C_csp_collector_receiver::E_csp_cr_modes m_cr_mode;      //[-]
+
         bool m_is_rec_outlet_to_hottank;    //[-]
 
 		double m_defocus;   //[-]
