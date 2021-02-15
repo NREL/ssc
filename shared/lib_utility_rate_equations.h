@@ -52,7 +52,7 @@ public:
 	std::vector<size_t> dc_tou_peak_hour;
 	ssc_number_t dc_flat_peak;
 	size_t dc_flat_peak_hour;
-	// energy tou charges
+	// energy tou charges: Rows are periods, columns are tiers
 	util::matrix_t<ssc_number_t>  ec_tou_ub_init;
 	util::matrix_t<ssc_number_t>  ec_tou_br_init;
 	util::matrix_t<ssc_number_t>  ec_tou_sr_init;
