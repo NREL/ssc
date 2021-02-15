@@ -210,6 +210,11 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, AdaptiveTimestep) {
         ssc_module_exec(adaptive_batt, &data_copy);
         ssc_data_get_number(&data_copy, "P", &P);
         adaptive_E += P / (double)steps_per_hour;
+        std::string js = ssc_data_to_json(data);
+        std::string js_adaptive = ssc_data_to_json(&data_copy);
+        printf("%s\n", js.c_str());
+        printf("%s\n", js_adaptive.c_str());
+
     }
 
     // run both at hourly
@@ -222,13 +227,18 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, AdaptiveTimestep) {
     ssc_data_get_number(&data_copy, "P", &P);
     adaptive_E += P;
 
+    std::string js = ssc_data_to_json(data);
+    std::string js_adaptive = ssc_data_to_json(&data_copy);
+    printf("%s\n", js.c_str());
+    printf("%s\n", js_adaptive.c_str());
+
     double hourly_SOC, adaptive_SOC;
     ssc_data_get_number(data, "SOC", &hourly_SOC);
     ssc_data_get_number(&data_copy, "SOC", &adaptive_SOC);
 
-    EXPECT_NEAR(hourly_E, 2.833, 1e-3);
-    EXPECT_NEAR(adaptive_E, 2.837, 1e-3);
-    EXPECT_NEAR(hourly_SOC, 25.210, 1e-3);
-    EXPECT_NEAR(adaptive_SOC, 25.210, 1e-3);
-
+    EXPECT_NEAR(hourly_E, 2.995, 1e-3);
+    EXPECT_NEAR(adaptive_E, 2.995, 1e-3);
+    EXPECT_NEAR(hourly_SOC, 23.614, 1e-3);
+    EXPECT_NEAR(adaptive_SOC, 23.657, 1e-3);
 }
+
