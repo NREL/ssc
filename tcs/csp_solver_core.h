@@ -1518,7 +1518,10 @@ public:
             turn_on_mode_availability();
         }
 
-        virtual void handle_solve_error(int solve_error_code, double time /*hr*/) = 0;
+        virtual void handle_solve_error(double time /*hr*/, bool& is_rec_su_allowed)
+        {
+            m_is_mode_available = false;
+        }
 
         virtual void check_system_limits(C_csp_solver* pc_csp_solver,
             double q_dot_pc_su_max /*MWt*/, double m_dot_pc_max_startup /*kg/hr*/,
@@ -1589,8 +1592,9 @@ public:
 
             bool is_converged = true;
             bool is_turn_off_plant_local = false;
+            bool is_rec_su_allowed_local = true;
             if (solve_error_code != 0) {
-                handle_solve_error(solve_error_code, pc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time);
+                handle_solve_error(pc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time, is_rec_su_allowed_local);
                 is_converged = false;
             }
             else {
@@ -1625,7 +1629,7 @@ public:
             C_csp_power_cycle::OFF, C_MEQ__m_dot_tes::E__CR_OUT__0, C_MEQ__timestep::E_STEP_FIXED,
             false, "CR_OFF__PC_OFF__TES_OFF__AUX_OFF", QUIETNAN, false) {}
 
-        void handle_solve_error(int solve_error_code, double time /*hr*/)
+        void handle_solve_error(double time /*hr*/, bool& is_rec_su_allowed)
         {
             throw(C_csp_exception(util::format("At time = %lg ", time/3600.0) + " operating mode " + m_op_mode_name + " failed", ""));
         }
@@ -1637,11 +1641,6 @@ public:
         C_CR_SU__PC_OFF__TES_OFF__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::STARTUP,
             C_csp_power_cycle::OFF, C_MEQ__m_dot_tes::E__CR_OUT__0, C_MEQ__timestep::E_STEP_FROM_COMPONENT,
             false, "CR_SU__PC_OFF__TES_OFF", QUIETNAN, false) {}
-
-        void handle_solve_error(int solve_error_code, double time /*hr*/)
-        {
-            m_is_mode_available = false;
-        }
     };
 
     class C_CR_ON__PC_SU__TES_OFF__AUX_OFF : public C_operating_mode_core
@@ -1650,11 +1649,6 @@ public:
         C_CR_ON__PC_SU__TES_OFF__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::ON,
             C_csp_power_cycle::STARTUP, C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT, C_MEQ__timestep::E_STEP_FROM_COMPONENT,
             false, "CR_ON__PC_SU__TES_OFF__AUX_OFF", QUIETNAN, false) {}
-
-        void handle_solve_error(int solve_error_code, double time /*hr*/)
-        {
-            m_is_mode_available = false;
-        }
 
         virtual void check_system_limits(C_csp_solver* pc_csp_solver,
             double q_dot_pc_su_max /*MWt*/, double m_dot_pc_max_startup /*kg/hr*/,
@@ -1692,12 +1686,6 @@ public:
         C_CR_OFF__PC_SU__TES_DC__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::OFF,
             C_csp_power_cycle::STARTUP_CONTROLLED, C_MEQ__m_dot_tes::E__CR_OUT__ITER_M_DOT_SU_DC_ONLY, C_MEQ__timestep::E_STEP_FROM_COMPONENT,
             false, "CR_OFF__PC_SU__TES_DC__AUX_OFF", QUIETNAN, true) {}
-
-        void handle_solve_error(int solve_error_code, double time /*hr*/)
-        {
-            m_is_mode_available = false;
-        }
-
     };
 
     class C_CR_OFF__PC_TARGET__TES_DC__AUX_OFF : public C_operating_mode_core
@@ -1706,11 +1694,6 @@ public:
         C_CR_OFF__PC_TARGET__TES_DC__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::OFF,
             C_csp_power_cycle::ON, C_MEQ__m_dot_tes::E__CR_OUT__ITER_Q_DOT_TARGET_DC_ONLY, C_MEQ__timestep::E_STEP_FIXED,
             false, "CR_OFF__PC_TARGET__TES_DC__AUX_OFF", Q_DOT_PC_TARGET, true) {}
-
-        void handle_solve_error(int solve_error_code, double time /*hr*/)
-        {
-            m_is_mode_available = false;
-        }
 
         virtual void check_system_limits(C_csp_solver* pc_csp_solver,
             double q_dot_pc_su_max /*MWt*/, double m_dot_pc_max_startup /*kg/hr*/,
@@ -1775,11 +1758,6 @@ public:
         C_CR_ON__PC_TARGET__TES_DC__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::ON,
             C_csp_power_cycle::ON, C_MEQ__m_dot_tes::E__CR_OUT__ITER_Q_DOT_TARGET_DC_ONLY, C_MEQ__timestep::E_STEP_FIXED,
             false, "CR_ON__PC_TARGET__TES_DC__AUX_OFF", Q_DOT_PC_TARGET, true) {}
-
-        void handle_solve_error(int solve_error_code, double time /*hr*/)
-        {
-            m_is_mode_available = false;
-        }
 
         virtual void check_system_limits(C_csp_solver* pc_csp_solver,
             double q_dot_pc_su_max /*MWt*/, double m_dot_pc_max_startup /*kg/hr*/,
@@ -1862,11 +1840,6 @@ public:
             C_csp_power_cycle::ON, C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT, C_MEQ__timestep::E_STEP_FIXED,
             false, "CR_ON__PC_RM_LO__TES_OFF__AUX_OFF", QUIETNAN, false) {}
 
-        void handle_solve_error(int solve_error_code, double time /*hr*/)
-        {
-            m_is_mode_available = false;
-        }
-
         virtual void check_system_limits(C_csp_solver* pc_csp_solver,
             double q_dot_pc_su_max /*MWt*/, double m_dot_pc_max_startup /*kg/hr*/,
             double q_dot_pc_solve_target /*MWt*/, double q_dot_pc_on_dispatch_target,
@@ -1891,7 +1864,7 @@ public:
             C_csp_power_cycle::ON, C_MEQ__m_dot_tes::E__CR_OUT__ITER_Q_DOT_TARGET_CH_ONLY, C_MEQ__timestep::E_STEP_FIXED,
             false, "CR_ON__PC_TARGET__TES_CH__AUX_OFF", Q_DOT_PC_TARGET, true) {}
 
-        void handle_solve_error(int solve_error_code, double time /*hr*/)
+        void handle_solve_error(double time /*hr*/, bool& is_rec_su_allowed)
         {
             // LO side needs to stay 'true' so controller can try modes with TES discharge
             m_is_HI_SIDE_mode_available = false;
@@ -1944,10 +1917,6 @@ public:
             C_csp_power_cycle::OFF, C_MEQ__m_dot_tes::E__CR_OUT__0, C_MEQ__timestep::E_STEP_FIXED,
             false, "CR_ON__PC_OFF__TES_CH__AUX_OFF", QUIETNAN, true) {}
 
-        void handle_solve_error(int solver_error_cocde, double time /*hr*/)
-        {
-            m_is_mode_available = false;
-        }
     };
 
     class C_CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF : public C_operating_mode_core
@@ -1956,11 +1925,6 @@ public:
         C_CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::OFF,
             C_csp_power_cycle::ON, C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT_PLUS_TES_EMPTY, C_MEQ__timestep::E_STEP_Q_DOT_PC,
             false, "CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF", Q_DOT_PC_MIN, true) {}
-
-        void handle_solve_error(int solver_error_cocde, double time /*hr*/)
-        {
-            m_is_mode_available = false;
-        }
 
         virtual void check_system_limits(C_csp_solver* pc_csp_solver,
             double q_dot_pc_su_max /*MWt*/, double m_dot_pc_max_startup /*kg/hr*/,
@@ -2009,11 +1973,6 @@ public:
         C_CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::ON,
             C_csp_power_cycle::ON, C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT_PLUS_TES_EMPTY, C_MEQ__timestep::E_STEP_FIXED,
             false, "CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF", QUIETNAN, true) {}
-
-        void handle_solve_error(int solver_error_cocde, double time /*hr*/)
-        {
-            m_is_mode_available = false;
-        }
 
         virtual void check_system_limits(C_csp_solver* pc_csp_solver,
             double q_dot_pc_su_max /*MWt*/, double m_dot_pc_max_startup /*kg/hr*/,
@@ -2095,11 +2054,6 @@ public:
             C_csp_power_cycle::ON, C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT_PLUS_TES_EMPTY, C_MEQ__timestep::E_STEP_FIXED,
             false, "CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF", QUIETNAN, true) {}
 
-        void handle_solve_error(int solver_error_cocde, double time /*hr*/)
-        {
-            m_is_mode_available = false;
-        }
-
         virtual void check_system_limits(C_csp_solver* pc_csp_solver,
             double q_dot_pc_su_max /*MWt*/, double m_dot_pc_max_startup /*kg/hr*/,
             double q_dot_pc_solve_target /*MWt*/, double q_dot_pc_on_dispatch_target,
@@ -2168,11 +2122,6 @@ public:
             C_csp_power_cycle::ON, C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT_PLUS_TES_EMPTY, C_MEQ__timestep::E_STEP_Q_DOT_PC,
             false, "CR_ON__PC_MIN__TES_EMPTY__AUX_OFF", Q_DOT_PC_MIN, true) {}
 
-        void handle_solve_error(int solver_error_cocde, double time /*hr*/)
-        {
-            m_is_mode_available = false;
-        }
-
         virtual void check_system_limits(C_csp_solver* pc_csp_solver,
             double q_dot_pc_su_max /*MWt*/, double m_dot_pc_max_startup /*kg/hr*/,
             double q_dot_pc_solve_target /*MWt*/, double q_dot_pc_on_dispatch_target,
@@ -2236,11 +2185,6 @@ public:
             C_csp_power_cycle::ON, C_MEQ__m_dot_tes::E__CR_OUT__ITER_Q_DOT_TARGET_DC_ONLY, C_MEQ__timestep::E_STEP_FROM_COMPONENT,
             false, "CR_SU__PC_TARGET__TES_DC__AUX_OFF", Q_DOT_PC_TARGET, true) {}
 
-        void handle_solve_error(int solver_error_cocde, double time /*hr*/)
-        {
-            m_is_mode_available = false;
-        }
-
         virtual void check_system_limits(C_csp_solver* pc_csp_solver,
             double q_dot_pc_su_max /*MWt*/, double m_dot_pc_max_startup /*kg/hr*/,
             double q_dot_pc_solve_target /*MWt*/, double q_dot_pc_on_dispatch_target,
@@ -2301,11 +2245,6 @@ public:
         C_CR_SU__PC_MIN__TES_EMPTY__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::STARTUP,
             C_csp_power_cycle::ON, C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT_PLUS_TES_EMPTY, C_MEQ__timestep::E_STEP_Q_DOT_PC,
             false, "CR_SU__PC_MIN__TES_EMPTY__AUX_OFF", Q_DOT_PC_MIN, true) {}
-
-        void handle_solve_error(int solver_error_cocde, double time /*hr*/)
-        {
-            m_is_mode_available = false;
-        }
 
         virtual void check_system_limits(C_csp_solver* pc_csp_solver,
             double q_dot_pc_su_max /*MWt*/, double m_dot_pc_max_startup /*kg/hr*/,
@@ -2383,11 +2322,6 @@ public:
             C_csp_power_cycle::ON, C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT_PLUS_TES_EMPTY, C_MEQ__timestep::E_STEP_FROM_COMPONENT,
             false, "CR_SU__PC_RM_LO__TES_EMPTY__AUX_OFF", QUIETNAN, true) {}
 
-        void handle_solve_error(int solver_error_cocde, double time /*hr*/)
-        {
-            m_is_mode_available = false;
-        }
-
         virtual void check_system_limits(C_csp_solver* pc_csp_solver,
             double q_dot_pc_su_max /*MWt*/, double m_dot_pc_max_startup /*kg/hr*/,
             double q_dot_pc_solve_target /*MWt*/, double q_dot_pc_on_dispatch_target,
@@ -2453,11 +2387,6 @@ public:
             C_csp_power_cycle::STANDBY, C_MEQ__m_dot_tes::E__CR_OUT__ITER_Q_DOT_TARGET_DC_ONLY, C_MEQ__timestep::E_STEP_FIXED,
             false, "CR_OFF__PC_SB__TES_DC__AUX_OFF", Q_DOT_PC_STANDBY, true) {}
 
-        void handle_solve_error(int solver_error_cocde, double time /*hr*/)
-        {
-            m_is_mode_available = false;
-        }
-
         virtual void check_system_limits(C_csp_solver* pc_csp_solver,
             double q_dot_pc_su_max /*MWt*/, double m_dot_pc_max_startup /*kg/hr*/,
             double q_dot_pc_solve_target /*MWt*/, double q_dot_pc_on_dispatch_target,
@@ -2519,9 +2448,10 @@ public:
             C_csp_power_cycle::ON, C_MEQ__m_dot_tes::E__PC_MAX_PLUS_TES_FULL__PC_MAX, C_MEQ__timestep::E_STEP_FIXED,
             true, "CR_DF__PC_MAX__TES_FULL__AUX_OFF", QUIETNAN, true) {}
 
-        void handle_solve_error(int solver_error_cocde, double time /*hr*/)
+        void handle_solve_error(double time /*hr*/, bool& is_rec_su_allowed)
         {
             m_is_mode_available = false;
+            is_rec_su_allowed = false;
         }
     };
 
@@ -2530,12 +2460,405 @@ public:
     public:
         C_CR_DF__PC_MAX__TES_OFF__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::ON,
             C_csp_power_cycle::ON, C_MEQ__m_dot_tes::E__TO_PC__PC_MAX, C_MEQ__timestep::E_STEP_FIXED,
-            true, "CR_DF__PC_MAX__TES_OFF__AUX_OFF", QUIETNAN, true) {}
+            true, "CR_DF__PC_MAX__TES_OFF__AUX_OFF", QUIETNAN, false) {}
+    };
 
-        void handle_solve_error(int solver_error_cocde, double time /*hr*/)
+    class C_CR_ON__PC_RM_HI__TES_OFF__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_ON__PC_RM_HI__TES_OFF__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::ON,
+            C_csp_power_cycle::ON, C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT, C_MEQ__timestep::E_STEP_FIXED,
+            false, "CR_ON__PC_RM_HI__TES_OFF__AUX_OFF", QUIETNAN, false) {}
+
+        void handle_solve_error(double time /*hr*/, bool& is_rec_su_allowed)
         {
-            m_is_mode_available = false;
+            m_is_HI_SIDE_mode_available = false;
         }
+
+        virtual void check_system_limits(C_csp_solver* pc_csp_solver,
+            double q_dot_pc_su_max /*MWt*/, double m_dot_pc_max_startup /*kg/hr*/,
+            double q_dot_pc_solve_target /*MWt*/, double q_dot_pc_on_dispatch_target,
+            double q_dot_pc_max /*MWt*/, double q_dot_pc_min /*MWt*/, double q_dot_pc_sb /*MWt*/,
+            double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
+            double limit_comp_tol /*-*/,
+            bool& is_model_converged, bool& is_turn_off_plant)
+        {
+            if (pc_csp_solver->mc_cr_out_solver.m_q_thermal > q_dot_pc_max || pc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot > m_dot_pc_max)
+            {
+                m_is_HI_SIDE_mode_available = false;
+                is_model_converged = false;
+                is_turn_off_plant = false;
+                return;
+            }
+            else if (pc_csp_solver->mc_cr_out_solver.m_q_thermal < q_dot_pc_on_dispatch_target)
+            {
+                m_is_LO_SIDE_mode_available = false;
+                is_model_converged = false;
+                is_turn_off_plant = false;
+                return;
+            }
+        }
+    };
+
+    class C_CR_ON__PC_RM_HI__TES_FULL__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_ON__PC_RM_HI__TES_FULL__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::ON,
+            C_csp_power_cycle::ON, C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT_LESS_TES_FULL, C_MEQ__timestep::E_STEP_FIXED,
+            false, "CR_ON__PC_RM_HI__TES_FULL__AUX_OFF", QUIETNAN, true) {}
+
+        virtual void check_system_limits(C_csp_solver* pc_csp_solver,
+            double q_dot_pc_su_max /*MWt*/, double m_dot_pc_max_startup /*kg/hr*/,
+            double q_dot_pc_solve_target /*MWt*/, double q_dot_pc_on_dispatch_target,
+            double q_dot_pc_max /*MWt*/, double q_dot_pc_min /*MWt*/, double q_dot_pc_sb /*MWt*/,
+            double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
+            double limit_comp_tol /*-*/,
+            bool& is_model_converged, bool& is_turn_off_plant)
+        {
+            if ((pc_csp_solver->mc_pc_out_solver.m_q_dot_htf - q_dot_pc_max) / q_dot_pc_max > limit_comp_tol)
+            {
+                m_is_mode_available = false;
+                is_model_converged = false;
+                is_turn_off_plant = false;
+                return;
+            }
+            else if (pc_csp_solver->mc_pc_out_solver.m_q_dot_htf < q_dot_pc_on_dispatch_target)
+            {
+                std::string error_msg = time_and_op_mode_to_string(pc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time) +
+                    util::format(" converged to a power cycle thermal input %lg [MWt] less than the target %lg [MWt].",
+                    pc_csp_solver->mc_pc_out_solver.m_q_dot_htf, q_dot_pc_on_dispatch_target);
+                pc_csp_solver->mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
+            }
+        }
+    };
+
+    class C_CR_DF__PC_SU__TES_FULL__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_DF__PC_SU__TES_FULL__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::ON,
+            C_csp_power_cycle::STARTUP_CONTROLLED, C_MEQ__m_dot_tes::E__TO_PC_PLUS_TES_FULL__ITER_M_DOT_SU, C_MEQ__timestep::E_STEP_FROM_COMPONENT,
+            true, "CR_DF__PC_SU__TES_FULL__AUX_OFF", QUIETNAN, true) {}
+
+    };
+
+    class C_CR_DF__PC_OFF__TES_FULL__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_DF__PC_OFF__TES_FULL__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::ON,
+            C_csp_power_cycle::OFF, C_MEQ__m_dot_tes::E__TES_FULL__0, C_MEQ__timestep::E_STEP_FIXED,
+            true, "CR_DF__PC_OFF__TES_FULL__AUX_OFF", QUIETNAN, true) {}
+
+    };
+
+    class C_CR_DF__PC_SU__TES_OFF__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_DF__PC_SU__TES_OFF__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::ON,
+            C_csp_power_cycle::STARTUP_CONTROLLED, C_MEQ__m_dot_tes::E__TO_PC__ITER_M_DOT_SU, C_MEQ__timestep::E_STEP_FROM_COMPONENT,
+            true, "CR_DF__PC_SU__TES_OFF__AUX_OFF", QUIETNAN, false) {}
+
+    };
+
+    class C_CR_ON__PC_SB__TES_CH__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_ON__PC_SB__TES_CH__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::ON,
+            C_csp_power_cycle::STANDBY, C_MEQ__m_dot_tes::E__CR_OUT__ITER_Q_DOT_TARGET_CH_ONLY, C_MEQ__timestep::E_STEP_FIXED,
+            false, "CR_ON__PC_SB__TES_CH__AUX_OFF", Q_DOT_PC_STANDBY, true) {}
+
+        virtual void check_system_limits(C_csp_solver* pc_csp_solver,
+            double q_dot_pc_su_max /*MWt*/, double m_dot_pc_max_startup /*kg/hr*/,
+            double q_dot_pc_solve_target /*MWt*/, double q_dot_pc_on_dispatch_target,
+            double q_dot_pc_max /*MWt*/, double q_dot_pc_min /*MWt*/, double q_dot_pc_sb /*MWt*/,
+            double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
+            double limit_comp_tol /*-*/,
+            bool& is_model_converged, bool& is_turn_off_plant)
+        {
+            double q_dot_pc_solved = pc_csp_solver->mc_pc_out_solver.m_q_dot_htf;		//[MWt]
+            double m_dot_pc_solved = pc_csp_solver->mc_pc_out_solver.m_m_dot_htf;		//[kg/hr]
+
+            if (fabs(q_dot_pc_solved - q_dot_pc_sb) / q_dot_pc_sb < limit_comp_tol)
+            {	// If successfully solved for target thermal power, check that mass flow is above minimum
+                if ((m_dot_pc_solved - m_dot_pc_min) / fmax(0.01, m_dot_pc_min) < -limit_comp_tol)
+                {
+                    std::string error_msg = time_and_op_mode_to_string(pc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time) +
+                        util::format(" solved with a PC HTF mass flow rate %lg [kg/s] smaller than the minimum %lg [kg/s]. Controller shut off plant",
+                        m_dot_pc_solved / 3600.0, m_dot_pc_min / 3600.0);
+
+                    pc_csp_solver->mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
+
+                    m_is_mode_available = false;
+                    is_model_converged = false;
+                    is_turn_off_plant = true;
+                    return;
+                }
+            }
+            else if ((q_dot_pc_solved - q_dot_pc_sb) / q_dot_pc_sb < -1.E-3)
+            {
+                m_is_mode_available = false;
+                is_model_converged = false;
+                is_turn_off_plant = false;
+                return;
+            }
+        }
+    };
+
+    class C_CR_ON__PC_SB__TES_FULL__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_ON__PC_SB__TES_FULL__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::ON,
+            C_csp_power_cycle::STANDBY, C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT_LESS_TES_FULL, C_MEQ__timestep::E_STEP_FIXED,
+            false, "CR_ON__PC_SB__TES_FULL__AUX_OFF", QUIETNAN, true) {}
+
+        virtual void check_system_limits(C_csp_solver* pc_csp_solver,
+            double q_dot_pc_su_max /*MWt*/, double m_dot_pc_max_startup /*kg/hr*/,
+            double q_dot_pc_solve_target /*MWt*/, double q_dot_pc_on_dispatch_target,
+            double q_dot_pc_max /*MWt*/, double q_dot_pc_min /*MWt*/, double q_dot_pc_sb /*MWt*/,
+            double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
+            double limit_comp_tol /*-*/,
+            bool& is_model_converged, bool& is_turn_off_plant)
+        {
+            if ((pc_csp_solver->mc_pc_out_solver.m_q_dot_htf - q_dot_pc_max) / q_dot_pc_max > limit_comp_tol)
+            {
+                m_is_mode_available = false;
+                is_model_converged = false;
+                is_turn_off_plant = false;
+                return;
+            }
+            else if (pc_csp_solver->mc_pc_out_solver.m_q_dot_htf < q_dot_pc_sb)
+            {
+                m_is_mode_available = false;
+                is_model_converged = false;
+                is_turn_off_plant = false;
+                return;
+            }
+        }
+
+    };
+
+    class C_CR_ON__PC_SB__TES_DC__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_ON__PC_SB__TES_DC__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::ON,
+            C_csp_power_cycle::STANDBY, C_MEQ__m_dot_tes::E__CR_OUT__ITER_Q_DOT_TARGET_DC_ONLY, C_MEQ__timestep::E_STEP_FIXED,
+            false, "CR_ON__PC_SB__TES_DC__AUX_OFF", Q_DOT_PC_STANDBY, true) {}
+
+        virtual void check_system_limits(C_csp_solver* pc_csp_solver,
+            double q_dot_pc_su_max /*MWt*/, double m_dot_pc_max_startup /*kg/hr*/,
+            double q_dot_pc_solve_target /*MWt*/, double q_dot_pc_on_dispatch_target,
+            double q_dot_pc_max /*MWt*/, double q_dot_pc_min /*MWt*/, double q_dot_pc_sb /*MWt*/,
+            double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
+            double limit_comp_tol /*-*/,
+            bool& is_model_converged, bool& is_turn_off_plant)
+        {
+            double q_dot_pc_solved = pc_csp_solver->mc_pc_out_solver.m_q_dot_htf;	//[MWt]
+            double m_dot_pc_solved = pc_csp_solver->mc_pc_out_solver.m_m_dot_htf;	//[kg/hr]
+
+            // Check bounds on solved thermal power and mass flow rate
+            if ((q_dot_pc_solved - q_dot_pc_sb) / q_dot_pc_sb > limit_comp_tol)
+            {
+                if ((q_dot_pc_solved - q_dot_pc_max) / q_dot_pc_max > limit_comp_tol)
+                {
+                    std::string error_msg = time_and_op_mode_to_string(pc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time) +
+                        util::format(" solved with a PC thermal power %lg [MWt] greater than the maximum %lg [MWt]. Controller shut off plant",
+                        q_dot_pc_solved, q_dot_pc_max);
+                    pc_csp_solver->mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
+
+                    m_is_mode_available = false;
+                    is_model_converged = false;
+                    is_turn_off_plant = true;
+                    return;
+                }
+                else
+                {
+                    std::string error_msg = time_and_op_mode_to_string(pc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time) +
+                        util::format(" solved with a PC thermal power %lg [MWt] greater than the target %lg [MWt]",
+                        q_dot_pc_solved, q_dot_pc_sb);
+                    pc_csp_solver->mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
+                }
+            }
+            if (m_dot_pc_solved < m_dot_pc_min)
+            {	// If we're already hitting the minimum mass flow rate, then trying next operating mode won't help
+                std::string error_msg = time_and_op_mode_to_string(pc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time) +
+                    util::format(" solved with a PC HTF mass flow rate %lg [kg/s] less than the minimum %lg [kg/s]. Controller shut off plant",
+                    m_dot_pc_solved / 3600.0, m_dot_pc_min / 3600.0);
+                pc_csp_solver->mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
+
+                m_is_mode_available = false;
+                is_model_converged = false;
+                is_turn_off_plant = true;
+                return;
+            }
+
+            if ((q_dot_pc_solved - q_dot_pc_sb) / q_dot_pc_sb < -limit_comp_tol)
+            {
+                m_is_mode_available = false;
+                is_model_converged = false;
+                is_turn_off_plant = false;
+                return;
+            }
+
+            if (m_dot_pc_solved > m_dot_pc_max)
+            {	// Shouldn't happen but can try next operating mode
+                m_is_mode_available = false;
+                is_model_converged = false;
+                is_turn_off_plant = false;
+                return;
+            }
+        }
+    };
+
+    class C_CR_SU__PC_SB__TES_DC__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_SU__PC_SB__TES_DC__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::STARTUP,
+            C_csp_power_cycle::STANDBY, C_MEQ__m_dot_tes::E__CR_OUT__ITER_Q_DOT_TARGET_DC_ONLY, C_MEQ__timestep::E_STEP_FROM_COMPONENT,
+            false, "CR_SU__PC_SB__TES_DC__AUX_OFF", Q_DOT_PC_STANDBY, true) {}
+
+        virtual void check_system_limits(C_csp_solver* pc_csp_solver,
+            double q_dot_pc_su_max /*MWt*/, double m_dot_pc_max_startup /*kg/hr*/,
+            double q_dot_pc_solve_target /*MWt*/, double q_dot_pc_on_dispatch_target,
+            double q_dot_pc_max /*MWt*/, double q_dot_pc_min /*MWt*/, double q_dot_pc_sb /*MWt*/,
+            double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
+            double limit_comp_tol /*-*/,
+            bool& is_model_converged, bool& is_turn_off_plant)
+        {
+            double q_dot_pc_solved = pc_csp_solver->mc_pc_out_solver.m_q_dot_htf;	//[MWt]
+            double m_dot_pc_solved = pc_csp_solver->mc_pc_out_solver.m_m_dot_htf;	//[kg/hr]
+
+            // Check if solved thermal power is greater than target
+            if ((q_dot_pc_solved - q_dot_pc_sb) / q_dot_pc_sb > limit_comp_tol)
+            {
+                if ((q_dot_pc_solved - q_dot_pc_max) / q_dot_pc_max > limit_comp_tol)
+                {
+                    std::string error_msg = time_and_op_mode_to_string(pc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time) +
+                        util::format(" converged to a PC thermal power %lg [MWt] larger than the maximum PC thermal power %lg [MWt]. Controller shut off plant",
+                        q_dot_pc_solved, q_dot_pc_max);
+                    pc_csp_solver->mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
+
+                    m_is_mode_available = false;
+                    is_model_converged = false;
+                    is_turn_off_plant = true;
+                    return;
+                }
+                else
+                {
+                    std::string error_msg = time_and_op_mode_to_string(pc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time) +
+                        util::format(" converged to a PC thermal power %lg [MWt] larger than the target PC thermal power %lg [MWt] but less than the maximum thermal power %lg [MWt]",
+                        q_dot_pc_solved, q_dot_pc_sb, q_dot_pc_max);
+
+                    pc_csp_solver->mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
+                }
+            }
+            else if ((q_dot_pc_solved - q_dot_pc_sb) / q_dot_pc_sb < -limit_comp_tol)
+            {
+                if (m_dot_pc_solved < m_dot_pc_max)
+                {	// TES cannot provide enough thermal power - step down to next operating mode
+                    m_is_mode_available = false;
+                    is_model_converged = false;
+                    is_turn_off_plant = false;
+                    return;
+                }
+                // Notes:
+                //else
+                //{	// PC maximum mass flow is constraining the thermal power that TES can send the PC. Changing modes wont' help
+                //
+                //}
+            }
+        }
+    };
+
+    class C_CR_ON__PC_SB__TES_OFF__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_ON__PC_SB__TES_OFF__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::ON,
+            C_csp_power_cycle::STANDBY, C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT, C_MEQ__timestep::E_STEP_FIXED,
+            false, "CR_ON__PC_SB__TES_OFF__AUX_OFF", QUIETNAN, false) {}
+
+        virtual void check_system_limits(C_csp_solver* pc_csp_solver,
+            double q_dot_pc_su_max /*MWt*/, double m_dot_pc_max_startup /*kg/hr*/,
+            double q_dot_pc_solve_target /*MWt*/, double q_dot_pc_on_dispatch_target,
+            double q_dot_pc_max /*MWt*/, double q_dot_pc_min /*MWt*/, double q_dot_pc_sb /*MWt*/,
+            double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
+            double limit_comp_tol /*-*/,
+            bool& is_model_converged, bool& is_turn_off_plant)
+        {
+            // Check that cr and pc mass flow rates balance
+            if (fabs(pc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot - pc_csp_solver->mc_pc_out_solver.m_m_dot_htf) / pc_csp_solver->m_m_dot_pc_des > limit_comp_tol/10.)
+            {
+                m_is_mode_available = false;
+                is_model_converged = false;
+                is_turn_off_plant = false;
+                return;
+            }
+
+            // Check if solved thermal power is greater than target
+            if ((pc_csp_solver->mc_pc_out_solver.m_q_dot_htf - q_dot_pc_max) > limit_comp_tol)
+            {
+                std::string error_msg = time_and_op_mode_to_string(pc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time) +
+                    util::format(" converged to a PC thermal power %lg [MWt] larger than the maximum PC thermal power %lg [MWt]. Controller shut off plant",
+                    pc_csp_solver->mc_pc_out_solver.m_q_dot_htf, q_dot_pc_max);
+
+                pc_csp_solver->mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
+
+                m_is_mode_available = false;
+                is_model_converged = false;
+                is_turn_off_plant = true;
+                return;
+            }
+
+            if (pc_csp_solver->mc_pc_out_solver.m_m_dot_htf > m_dot_pc_max)
+            {
+                std::string error_msg = time_and_op_mode_to_string(pc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time) +
+                    util::format(" converged to a HTF mass flow rate %lg [kg/s] larger than the maximum PC mass flow rate %lg [kg/s]. Controller shut off plant",
+                    pc_csp_solver->mc_pc_out_solver.m_m_dot_htf / 3600.0, m_dot_pc_max / 3600.0);
+
+                pc_csp_solver->mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
+
+                m_is_mode_available = false;
+                is_model_converged = false;
+                is_turn_off_plant = true;
+                return;
+            }
+
+            // Check if solved thermal power is less than target
+            if ((pc_csp_solver->mc_pc_out_solver.m_q_dot_htf - q_dot_pc_sb) / q_dot_pc_sb < -limit_comp_tol)
+            {
+                std::string error_msg = time_and_op_mode_to_string(pc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time) +
+                    util::format(" converged to a PC thermal power %lg [MWt] less than the minimum PC thermal power %lg [MWt].",
+                    pc_csp_solver->mc_pc_out_solver.m_q_dot_htf, q_dot_pc_min);
+
+                pc_csp_solver->mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
+
+                m_is_mode_available = false;
+                is_model_converged = false;
+                is_turn_off_plant = false;
+                return;
+            }
+
+            if (pc_csp_solver->mc_pc_out_solver.m_m_dot_htf < m_dot_pc_min)
+            {
+                std::string error_msg = time_and_op_mode_to_string(pc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time) +
+                    util::format(" converged to a HTF mass flow rate %lg [kg/s] less than the minimum PC HTF mass flow rate %lg [kg/s].",
+                    pc_csp_solver->mc_pc_out_solver.m_m_dot_htf / 3600.0, m_dot_pc_min / 3600.0);
+
+                pc_csp_solver->mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
+
+                m_is_mode_available = false;
+                is_model_converged = false;
+                is_turn_off_plant = false;
+                return;
+            }
+        }
+    };
+
+    class C_CR_ON__PC_SU__TES_CH__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_ON__PC_SU__TES_CH__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::ON,
+            C_csp_power_cycle::STARTUP_CONTROLLED, C_MEQ__m_dot_tes::E__CR_OUT__ITER_M_DOT_SU_CH_ONLY, C_MEQ__timestep::E_STEP_FROM_COMPONENT,
+            false, "CR_ON__PC_SU__TES_CH__AUX_OFF", QUIETNAN, true) {}
+
     };
 
     class C_system_operating_modes
@@ -2561,6 +2884,17 @@ public:
         C_CR_OFF__PC_SB__TES_DC__AUX_OFF mc_CR_OFF__PC_SB__TES_DC__AUX_OFF;
         C_CR_DF__PC_MAX__TES_FULL__AUX_OFF mc_CR_DF__PC_MAX__TES_FULL__AUX_OFF;
         C_CR_DF__PC_MAX__TES_OFF__AUX_OFF mc_CR_DF__PC_MAX__TES_OFF__AUX_OFF;
+        C_CR_ON__PC_RM_HI__TES_OFF__AUX_OFF mc_CR_ON__PC_RM_HI__TES_OFF__AUX_OFF;
+        C_CR_ON__PC_RM_HI__TES_FULL__AUX_OFF mc_CR_ON__PC_RM_HI__TES_FULL__AUX_OFF;
+        C_CR_DF__PC_SU__TES_FULL__AUX_OFF mc_CR_DF__PC_SU__TES_FULL__AUX_OFF;
+        C_CR_DF__PC_OFF__TES_FULL__AUX_OFF mc_CR_DF__PC_OFF__TES_FULL__AUX_OFF;
+        C_CR_DF__PC_SU__TES_OFF__AUX_OFF mc_CR_DF__PC_SU__TES_OFF__AUX_OFF;
+        C_CR_ON__PC_SB__TES_CH__AUX_OFF mc_CR_ON__PC_SB__TES_CH__AUX_OFF;
+        C_CR_ON__PC_SB__TES_FULL__AUX_OFF mc_CR_ON__PC_SB__TES_FULL__AUX_OFF;
+        C_CR_ON__PC_SB__TES_DC__AUX_OFF mc_CR_ON__PC_SB__TES_DC__AUX_OFF;
+        C_CR_SU__PC_SB__TES_DC__AUX_OFF mc_CR_SU__PC_SB__TES_DC__AUX_OFF;
+        C_CR_ON__PC_SB__TES_OFF__AUX_OFF mc_CR_ON__PC_SB__TES_OFF__AUX_OFF;
+        C_CR_ON__PC_SU__TES_CH__AUX_OFF mc_CR_ON__PC_SU__TES_CH__AUX_OFF;
 
     public:
 
@@ -2663,8 +2997,19 @@ public:
             m_operating_modes_map[E_operating_modes::CR_SU__PC_MIN__TES_EMPTY__AUX_OFF] = &mc_CR_SU__PC_MIN__TES_EMPTY__AUX_OFF;
             m_operating_modes_map[E_operating_modes::CR_SU__PC_RM_LO__TES_EMPTY__AUX_OFF] = &mc_CR_SU__PC_RM_LO__TES_EMPTY__AUX_OFF;
             m_operating_modes_map[E_operating_modes::CR_OFF__PC_SB__TES_DC__AUX_OFF] = &mc_CR_OFF__PC_SB__TES_DC__AUX_OFF;
-            m_operating_modes_map[E_operating_modes::CR_DF__PC_MAX__TES_FULL__AUX_OFF] = &mc_CR_DF__PC_MAX__TES_FULL__AUX_OFF;
-            m_operating_modes_map[E_operating_modes::CR_DF__PC_MAX__TES_OFF__AUX_OFF] = &mc_CR_DF__PC_MAX__TES_OFF__AUX_OFF;
+            m_operating_modes_map[E_operating_modes::CR_DF__PC_MAX__TES_FULL__AUX_OFF] = &mc_CR_DF__PC_MAX__TES_FULL__AUX_OFF; // switched THIS ONE
+            m_operating_modes_map[E_operating_modes::CR_DF__PC_MAX__TES_OFF__AUX_OFF] = &mc_CR_DF__PC_MAX__TES_OFF__AUX_OFF; // tried
+            m_operating_modes_map[E_operating_modes::CR_ON__PC_RM_HI__TES_OFF__AUX_OFF] = &mc_CR_ON__PC_RM_HI__TES_OFF__AUX_OFF;  // tried
+            m_operating_modes_map[E_operating_modes::CR_ON__PC_RM_HI__TES_FULL__AUX_OFF] = &mc_CR_ON__PC_RM_HI__TES_FULL__AUX_OFF; // tried
+            m_operating_modes_map[E_operating_modes::CR_DF__PC_SU__TES_FULL__AUX_OFF] = &mc_CR_DF__PC_SU__TES_FULL__AUX_OFF;    // tried
+            m_operating_modes_map[E_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF] = &mc_CR_DF__PC_OFF__TES_FULL__AUX_OFF;  // tried
+            m_operating_modes_map[E_operating_modes::CR_DF__PC_SU__TES_OFF__AUX_OFF] = &mc_CR_DF__PC_SU__TES_OFF__AUX_OFF;  // tried
+            m_operating_modes_map[E_operating_modes::CR_ON__PC_SB__TES_CH__AUX_OFF] = &mc_CR_ON__PC_SB__TES_CH__AUX_OFF;
+            m_operating_modes_map[E_operating_modes::CR_ON__PC_SB__TES_FULL__AUX_OFF] = &mc_CR_ON__PC_SB__TES_FULL__AUX_OFF;
+            m_operating_modes_map[E_operating_modes::CR_ON__PC_SB__TES_DC__AUX_OFF] = &mc_CR_ON__PC_SB__TES_DC__AUX_OFF;
+            m_operating_modes_map[E_operating_modes::CR_SU__PC_SB__TES_DC__AUX_OFF] = &mc_CR_SU__PC_SB__TES_DC__AUX_OFF;
+            m_operating_modes_map[E_operating_modes::CR_ON__PC_SB__TES_OFF__AUX_OFF] = &mc_CR_ON__PC_SB__TES_OFF__AUX_OFF;
+            m_operating_modes_map[E_operating_modes::CR_ON__PC_SU__TES_CH__AUX_OFF] = &mc_CR_ON__PC_SU__TES_CH__AUX_OFF;
         }
 
         bool solve(C_system_operating_modes::E_operating_modes op_mode, C_csp_solver* pc_csp_solver, bool is_rec_outlet_to_hottank,
