@@ -214,7 +214,7 @@ TEST_F(lib_battery_test, runTestCycleAt1C){
 //    std::cerr << "\n" << idx << ": " << capacity_passed << "\n";
 
     auto s = battery_state_test({{48.32, 1001.25, 962.26, 452.31, 0, 5.02, 52.03, 2}, // cap
-                           466.01, // voltage
+                           464.06, // voltage
                            100, {100, 0, 0, 0, 0, 0, 1, std::vector<double>()}, // cycle
                             {102, 0, 0}, // calendar
                            {96.105, 20.13, 20}, // thermal
@@ -228,7 +228,7 @@ TEST_F(lib_battery_test, runTestCycleAt1C){
 //    std::cerr <<  idx << ": soc " << batteryModel->SOC() << ", cap " << capacity_passed << "\n";
     // the SOC isn't at 5 so it means the controller is not able to calculate a current/voltage at which to discharge to 5
     s = battery_state_test({{48.32, 1001.25, 962.26, 452.31, 0, 5.021, 52.026, 2}, // cap
-                       466.01, // voltage
+                       464.06, // voltage
                        100, {100, 0, 0, 0, 0, 0, 1, std::vector<double>()}, // cycle
                         {101.998, 0, 0.0002}, // calendar
                        {96.105, 20.131, 20}, // thermal
@@ -252,7 +252,7 @@ TEST_F(lib_battery_test, runTestCycleAt1C){
 //    std::cerr <<  idx << ": soc " << batteryModel->SOC() << ", cap " << capacity_passed << "\n";
     // the SOC isn't at 5 so it means the controller is not able to calculate a current/voltage at which to discharge to 5
     s = battery_state_test({{48.53, 921.98, 885.10, 9.051, 0, 5.48, 6.51, 2}, // cap
-                       470.37, // voltage
+                       468.35, // voltage
                        93.08, {92.08, 398, 88.93, 88.81, 88.97, 89.54, 5, std::vector<double>()}, // cycle
                         {97.930, 2852, 0.039}, // calendar
                        {96.0, 20.00, 20}, // thermal
@@ -273,7 +273,7 @@ TEST_F(lib_battery_test, runTestCycleAt3C){
 //    std::cerr << "\n" << idx << ": " << capacity_passed << "\n";
 
     auto s = battery_state_test({{50.0625, 1001.25, 962.25, 450.5625, 0, 5.20, 52.03, 2}, // cap
-                            467.75, // voltage
+                            465.80, // voltage
                             100, {100, 0, 0, 0, 0, 0, 1, std::vector<double>()}, // cycle
                              {102, 0}, // calendar
                             {96.10, 20.13, 20}, // thermal
@@ -287,7 +287,7 @@ TEST_F(lib_battery_test, runTestCycleAt3C){
 //    std::cerr <<  idx << ": soc " << batteryModel->SOC() << ", cap " << capacity_passed << "\n";
     // the SOC isn't at 5 so it means the controller is not able to calculate a current/voltage at which to discharge to 5
     s = battery_state_test({{50.0625, 1001.25, 962.25, 450.5625, 0, 5.20, 52.03, 2}, // cap
-                       467.75, // voltage
+                       465.80, // voltage
                        102.00, {100, 0, 0, 0, 0, 0, 1, std::vector<double>()}, // cycle
                         {102.00, 0}, // calendar
                        {96.10, 20.13, 20}, // thermal
@@ -311,7 +311,7 @@ TEST_F(lib_battery_test, runTestCycleAt3C){
 //    std::cerr <<  idx << ": soc " << batteryModel->SOC() << ", cap " << capacity_passed << "\n";
     // the SOC isn't at 5 so it means the controller is not able to calculate a current/voltage at which to discharge to 5
     s = battery_state_test({{44.68, 921.98, 885.10, 8.94, 0, 5.05, 6.06, 2}, // cap
-                            466.29, // voltage
+                            464.29, // voltage
                        93.08, {92.08, 398, 89.84, 88.70, 89.91, 90.00, 5, std::vector<double>()}, // cycle
                         {97.91, 2884, 0.0393}, // calendar
                        {96.01, 20, 20}, // thermal
@@ -319,7 +319,7 @@ TEST_F(lib_battery_test, runTestCycleAt3C){
     compareState(batteryModel, s, "runTest: 3");
 
 
-    EXPECT_NEAR(capacity_passed, 358503, 100) << "Current passing through cell";
+    EXPECT_NEAR(capacity_passed, 357813, 100) << "Current passing through cell";
     double qmax = fmax(s.capacity.qmax_lifetime, s.capacity.qmax_thermal);
     EXPECT_NEAR(qmax/q, 0.9209, 0.01) << "capacity relative to max capacity";
 }
@@ -425,14 +425,14 @@ TEST_F(lib_battery_test, RoundtripEffModel){
         current += fabs(max_current) / 100.;
         eff_vs_current.emplace_back(fabs(output_power/input_power));
     }
-    std::vector<double> eff_expected = { 0.98, 0.98, 0.97, 0.98, 0.97, 0.97, 0.96, 0.97, 0.95, 0.95, 0.94, 0.95, 0.95, // i = 12
-                                        0.92, 0.91, 0.93, 0.94, 0.94, 0.90, 0.93, 0.88, 0.92, 0.90, 0.91, 0.91, 0.89, // i = 25
-                                        0.89, 0.90, 0.90, 0.88, 0.87, 0.88, 0.89, 0.89, 0.85, 0.85, 0.85, 0.86, 0.88, // i = 38
-                                        0.88, 0.87, 0.81, 0.81, 0.81, 0.83, 0.84, 0.85, 0.86, 0.87, 0.87, 0.85, 0.82, // i = 51
-                                        0.75, 0.75, 0.76, 0.77, 0.78, 0.79, 0.80, 0.81, 0.82, 0.83, 0.84, 0.85, 0.85, // i = 64
-                                        0.84, 0.84, 0.86, 0.79, 0.67, 0.66, 0.66, 0.67, 0.68, 0.69, 0.70, 0.70, 0.71, // i = 77
-                                        0.72, 0.73, 0.74, 0.74, 0.75, 0.76, 0.77, 0.77, 0.78, 0.78, 0.79, 0.80, 0.81, // i = 90
-                                        0.81, 0.81, 0.81, 0.81, 0.82, 0.82, 0.81, 0.81, // i = 98
+    std::vector<double> eff_expected = { 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.98, 0.98, 0.98, 0.98, // i = 12
+                                        0.98, 0.98, 0.98, 0.98, 0.97, 0.97, 0.97, 0.97, 0.97, 0.97, 0.96, 0.96, 0.96, // i = 25
+                                        0.96, 0.96, 0.96, 0.96, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95, // i = 38
+                                        0.95, 0.95, 0.94, 0.93, 0.94, 0.94, 0.94, 0.94, 0.94, 0.94, 0.94, 0.94, 0.93, // i = 51
+                                        0.92, 0.92, 0.92, 0.92, 0.92, 0.92, 0.92, 0.93, 0.93, 0.93, 0.93, 0.93, 0.93, // i = 64
+                                        0.93, 0.93, 0.92, 0.92, 0.91, 0.89, 0.88, 0.89, 0.89, 0.89, 0.89, 0.89, 0.90, // i = 77
+                                        0.90, 0.90, 0.90, 0.90, 0.91, 0.91, 0.91, 0.91, 0.91, 0.91, 0.91, 0.91, 0.92, // i = 90
+                                        0.92, 0.92, 0.92, 0.92, 0.91, 0.91, 0.91, 0.91, // i = 98
     };
     for (size_t i = 0; i < eff_expected.size(); i++)
         EXPECT_NEAR(eff_vs_current[i], eff_expected[i], .01) << " i = " << i;
