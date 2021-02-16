@@ -1285,4 +1285,95 @@ TEST(cmod_utilityrate5_eqns, Test_Commercial_kWh_per_kW_charges) {
 
     double july_year_1 = bill_matrix.at((size_t)1, (size_t)6);
     EXPECT_NEAR(16774.68, july_year_1, 0.01);
+
+    // Rerun with buy all / sell all
+    ssc_data_set_number(data, "ur_metering_option", 4);
+    status = run_module(data, "utilityrate5");
+    EXPECT_FALSE(status);
+
+    annual_bills = ssc_data_get_matrix(data, "utility_bill_wo_sys_ym", &nrows, &ncols);
+    bill_matrix.assign(annual_bills, nrows, ncols);
+
+    july_year_1 = bill_matrix.at((size_t)1, (size_t)6);
+    EXPECT_NEAR(16774.68, july_year_1, 0.01);
+}
+
+TEST(cmod_utilityrate5_eqns, Test_Commercial_Energy_Tiers_net_billing) {
+    ssc_data_t data = new var_table;
+
+    ssc_data_set_number(data, "en_electricity_rates", 1);
+    ssc_data_set_number(data, "ur_en_ts_sell_rate", 0);
+    ssc_number_t p_ur_ts_buy_rate[1] = { 0 };
+    ssc_data_set_array(data, "ur_ts_buy_rate", p_ur_ts_buy_rate, 1);
+    ssc_number_t p_ur_ec_sched_weekday[288] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+    ssc_data_set_matrix(data, "ur_ec_sched_weekday", p_ur_ec_sched_weekday, 12, 24);
+    ssc_number_t p_ur_ec_sched_weekend[288] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+    ssc_data_set_matrix(data, "ur_ec_sched_weekend", p_ur_ec_sched_weekend, 12, 24);
+    ssc_number_t p_ur_ec_tou_mat[42] = { 1, 1, 10000, 0, 0.050000000000000003, 0, 1, 2, 20000, 0, 0.10000000000000001, 0, 1, 3, 30000, 0, 0.14999999999999999, 0, 1, 4, 40000, 0, 0.20000000000000001, 0, 1, 5, 50000, 0, 0.25, 0, 1, 6, 60000, 0, 0.29999999999999999, 0, 1, 7, 9.9999999999999998e+37, 0, 0.34999999999999998, 0 };
+    ssc_data_set_matrix(data, "ur_ec_tou_mat", p_ur_ec_tou_mat, 7, 6);
+    ssc_data_set_number(data, "inflation_rate", 2.5);
+    ssc_number_t p_degradation[1] = { 0 };
+    ssc_data_set_array(data, "degradation", p_degradation, 1);
+    ssc_number_t p_load_escalation[1] = { 0 };
+    ssc_data_set_array(data, "load_escalation", p_load_escalation, 1);
+    ssc_number_t p_rate_escalation[1] = { 0 };
+    ssc_data_set_array(data, "rate_escalation", p_rate_escalation, 1);
+    ssc_data_set_number(data, "ur_metering_option", 2);
+    ssc_data_set_number(data, "ur_nm_yearend_sell_rate", 0);
+    ssc_data_set_number(data, "ur_monthly_fixed_charge", 30);
+    ssc_data_set_number(data, "ur_monthly_min_charge", 0);
+    ssc_data_set_number(data, "ur_annual_min_charge", 0);
+    ssc_number_t  ur_ts_sell_rate[1] = { 0 };
+    ssc_data_set_array(data, "ur_ts_sell_rate", ur_ts_sell_rate, 1);
+    ssc_data_set_number(data, "ur_dc_enable", 0);
+    ssc_number_t p_ur_dc_sched_weekday[288] = { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 2, 2, 2, 2 };
+    ssc_data_set_matrix(data, "ur_dc_sched_weekday", p_ur_dc_sched_weekday, 12, 24);
+    ssc_number_t p_ur_dc_sched_weekend[288] = { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 };
+    ssc_data_set_matrix(data, "ur_dc_sched_weekend", p_ur_dc_sched_weekend, 12, 24);
+    ssc_number_t p_ur_dc_tou_mat[16] = { 1, 1, 100, 20, 1, 2, 9.9999999999999998e+37, 15, 2, 1, 100, 10, 2, 2, 9.9999999999999998e+37, 5 };
+    ssc_data_set_matrix(data, "ur_dc_tou_mat", p_ur_dc_tou_mat, 4, 4);
+    ssc_number_t p_ur_dc_flat_mat[48] = { 0, 1, 9.9999999999999998e+37, 0, 1, 1, 9.9999999999999998e+37, 0, 2, 1, 9.9999999999999998e+37, 0, 3, 1, 9.9999999999999998e+37, 0, 4, 1, 9.9999999999999998e+37, 0, 5, 1, 9.9999999999999998e+37, 0, 6, 1, 9.9999999999999998e+37, 0, 7, 1, 9.9999999999999998e+37, 0, 8, 1, 9.9999999999999998e+37, 0, 9, 1, 9.9999999999999998e+37, 0, 10, 1, 9.9999999999999998e+37, 0, 11, 1, 9.9999999999999998e+37, 0 };
+    ssc_data_set_matrix(data, "ur_dc_flat_mat", p_ur_dc_flat_mat, 12, 4);
+
+    int analysis_period = 25;
+    ssc_data_set_number(data, "system_use_lifetime_output", 1);
+    ssc_data_set_number(data, "analysis_period", analysis_period);
+    set_array(data, "load", load_commercial, 8760);
+    set_array(data, "gen", commercial_gen_path, 8760 * analysis_period);
+
+    int status = run_module(data, "utilityrate5");
+    EXPECT_FALSE(status);
+
+    ensure_outputs_line_up(data);
+
+    int nrows;
+    int ncols;
+    ssc_number_t* april_tiers = ssc_data_get_matrix(data, "energy_wo_sys_ec_apr_tp", &nrows, &ncols);
+    util::matrix_t<double> tier_matrix(nrows, ncols);
+    tier_matrix.assign(april_tiers, nrows, ncols);
+
+    double tier_usage = 0;
+    for (size_t i = 1; i < 6; i++) {
+        tier_usage = tier_matrix.at((size_t)1, i);
+        EXPECT_NEAR(10000.0, tier_usage, 0.001);
+    }
+    tier_usage = tier_matrix.at((size_t)1, (size_t)6);
+    EXPECT_NEAR(3014.93, tier_usage, 0.001);
+
+    // Re-run with net metering to run ur_calc
+    ssc_data_set_number(data, "ur_metering_option", 0);
+
+    status = run_module(data, "utilityrate5");
+    EXPECT_FALSE(status);
+
+    ensure_outputs_line_up(data);
+    april_tiers = ssc_data_get_matrix(data, "energy_wo_sys_ec_apr_tp", &nrows, &ncols);
+    tier_matrix.assign(april_tiers, nrows, ncols);
+
+    for (size_t i = 1; i < 6; i++) {
+        tier_usage = tier_matrix.at((size_t)1, i);
+        EXPECT_NEAR(10000.0, tier_usage, 0.001);
+    }
+    tier_usage = tier_matrix.at((size_t)1, (size_t)6);
+    EXPECT_NEAR(3014.93, tier_usage, 0.001);
 }
