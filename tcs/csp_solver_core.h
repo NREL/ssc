@@ -1489,6 +1489,11 @@ public:
             m_is_LO_SIDE_mode_available = true;
         }
 
+        bool is_mode_available()
+        {
+            return m_is_mode_available;
+        }
+
         bool is_HI_SIDE_mode_available()
         {
             return m_is_HI_SIDE_mode_available;
@@ -3317,6 +3322,21 @@ public:
         C_operating_mode_core* get_operating_mode_pointer(E_operating_modes op_mode)
         {
             return m_operating_modes_map[op_mode];
+        }
+
+        bool is_mode_avail(E_operating_modes op_mode)
+        {
+            return m_operating_modes_map[op_mode]->is_mode_available();
+        }
+
+        bool is_HI_SIDE_mode_avail(E_operating_modes op_mode)
+        {
+            return m_operating_modes_map[op_mode]->is_HI_SIDE_mode_available();
+        }
+
+        bool is_LO_SIDE_mode_avail(E_operating_modes op_mode)
+        {
+            return m_operating_modes_map[op_mode]->is_LO_SIDE_mode_available();
         }
 
         void reset_all_availability()
