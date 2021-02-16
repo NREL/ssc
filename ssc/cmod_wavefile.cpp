@@ -55,6 +55,8 @@ static var_info _cm_wave_file_reader[] = {
     { SSC_OUTPUT,        SSC_ARRAY,       "time_check",                        "Time check",                                                          "",      "",                       "Weather Reader",      "?",                        "",                            "" },
     { SSC_OUTPUT,        SSC_ARRAY,       "wave_significant_height",           "Wave height time series data",                                        "m",     "",                       "Weather Reader",      "?",                        "",                            "" },
     { SSC_OUTPUT,        SSC_ARRAY,       "wave_energy_period",                "Wave period time series data",                                        "s",     "",                       "Weather Reader",      "?",                        "",                            "" },
+    { SSC_OUTPUT,        SSC_NUMBER,       "hourstep_ts",                "Hour interval",                                        "s",     "",                       "Weather Reader",      "?",                        "",                            "" },
+
 var_info_invalid };
 
 class wave_data_provider
@@ -293,6 +295,7 @@ public:
 	
     void exec()
     {
+        
         smart_ptr<wave_data_provider>::ptr wave_dp;
         size_t nstep = 2920;
         std::string file;
@@ -388,13 +391,25 @@ public:
         //if (values.size() != 22)
         if (as_integer("wave_resource_model_choice") == 1)
         {
-            //size_t numberRecords = 2920;
+            size_t numberRecords = 0;
+            // read all the lines to determine the nubmer of records in the file
+            
+            while (getline(ifs, buf))
+                numberRecords++;
+            double hourStep = 8760 / numberRecords;
+            assign("hourstep_ts", var_data(hourStep));
+            // rewind the file and reposition right after the header information
+            ifs.clear();
+            ifs.seekg(0);
+            for (size_t i = 0; i < 2; i++)
+                getline(ifs, buf);
             ssc_number_t hour0, hour1, hourdiff;
-            size_t numberRecords = wave_dp->nrecords();
+            //size_t numberRecords = wave_dp->nrecords();
             ssc_number_t* timecheck = allocate("time_check", numberRecords);
             timecheck[0] = 0;
             ssc_number_t* wave_heights = allocate("wave_significant_height", numberRecords);
             ssc_number_t* wave_periods = allocate("wave_energy_period", numberRecords);
+            //throw exec_error("wave_file_reader", "Test1");
             for (size_t r = 0; r < numberRecords; r++) {
                 getline(ifs, buf);
                 values.clear();
@@ -411,7 +426,7 @@ public:
                 timecheck[r] = (ssc_number_t)std::stod(values[3]);
                 if (r > 0) {
                     if (timecheck[r] - timecheck[r - 1] != hourdiff) {
-                        //throw exec_error("wave_file_reader", "Time steps are nonuniform");
+                        throw exec_error("wave_file_reader", "Time steps are nonuniform");
                         timecheck[r] = 999;
                     }
                 }
