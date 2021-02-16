@@ -162,13 +162,16 @@ static var_info vtab_utility_rate5[] = {
 	{ SSC_OUTPUT, SSC_MATRIX, "nm_dollars_applied_ym", "Net metering credit", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
 	{ SSC_OUTPUT, SSC_MATRIX, "excess_kwhs_earned_ym", "Excess generation", "kWh", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
     { SSC_OUTPUT, SSC_MATRIX, "net_billing_credits_ym", "Net billing credit", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
-
+    { SSC_OUTPUT, SSC_MATRIX, "two_meter_sales_ym",     "Buy all sell all electricity sales to grid", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
+    { SSC_OUTPUT, SSC_MATRIX, "true_up_credits_ym",     "Net annual true-up payments", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
 
 	// Updated based on https://github.com/NREL/SAM/issues/372
 	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_ec_charge_gross_with_system", "Energy charge with system before credits", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "year1_nm_dollars_applied", "Net metering credit", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "year1_excess_kwhs_earned", "Excess generation", "kWh/mo", "", "Monthly", "*", "LENGTH=12", "" },
     { SSC_OUTPUT, SSC_ARRAY, "year1_net_billing_credits", "Net billing credit", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "year1_two_meter_sales",  "Buy all sell all electricity sales to grid", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "year1_true_up_credits",  "Net annual true-up payments", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
 
 // for Pablo at IRENA 8/8/15
 // first year outputs only per email from Paul 8/9/15
@@ -553,7 +556,9 @@ public:
 			monthly_salespurchases(12),
 			monthly_load(12), monthly_system_generation(12), monthly_elec_to_grid(12),
 			monthly_elec_needed_from_grid(12),
-			monthly_cumulative_excess_energy(12), monthly_cumulative_excess_dollars(12), monthly_bill(12), monthly_peak(12), monthly_test(12);
+			monthly_cumulative_excess_energy(12), monthly_cumulative_excess_dollars(12), monthly_bill(12), monthly_peak(12), monthly_test(12),
+            monthly_two_meter_sales(12),
+            monthly_true_up_credits(12); // Realistically only one true-up month will be non-zero, but track them all for monthly outputs
 
 		/* allocate outputs */
 		ssc_number_t *annual_net_revenue = allocate("annual_energy_value", nyears+1);
@@ -575,7 +580,8 @@ public:
 		ssc_number_t *nm_dollars_applied_ym = allocate("nm_dollars_applied_ym", nyears + 1, 12);
 		ssc_number_t *excess_kwhs_earned_ym = allocate("excess_kwhs_earned_ym", nyears + 1, 12);
         ssc_number_t* net_billing_credits_ym = allocate("net_billing_credits_ym", nyears + 1, 12);
-
+        ssc_number_t* two_meter_sales_ym = allocate("two_meter_sales_ym", nyears + 1, 12);
+        ssc_number_t* true_up_credits_ym = allocate("true_up_credits_ym", nyears + 1, 12);
 
 		ssc_number_t *ch_wo_sys_dc_fixed_ym = allocate("charge_wo_sys_dc_fixed_ym", nyears + 1, 12);
 		ssc_number_t *ch_wo_sys_dc_tou_ym = allocate("charge_wo_sys_dc_tou_ym", nyears + 1, 12);
@@ -834,7 +840,10 @@ public:
 					&monthly_excess_kwhs_earned[0],
                     &monthly_net_billing_credits[0],
 					&rate.dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], 
-					&monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate.rate_scale[i], i,
+					&monthly_cumulative_excess_dollars[0], &monthly_bill[0],
+                    &monthly_two_meter_sales[0],
+                    &monthly_true_up_credits[0],
+                    rate.rate_scale[i], i,
 					last_excess_dollars);
 			}
 			else
@@ -848,7 +857,8 @@ public:
 					&monthly_nm_dollars_applied[0],
 					&monthly_excess_kwhs_earned[0],
 					&rate.dc_hourly_peak[0], &monthly_cumulative_excess_energy[0],
-					&monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate.rate_scale[i], i,
+					&monthly_cumulative_excess_dollars[0], &monthly_bill[0],
+                    &monthly_true_up_credits[0], rate.rate_scale[i], i,
 					&last_month, last_excess_energy, last_excess_dollars);
 			}
 
@@ -980,7 +990,8 @@ public:
 						&monthly_excess_dollars_earned[0],
 						&monthly_excess_kwhs_earned[0],
                         &monthly_net_billing_credits[0],
-						&rate.dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate.rate_scale[i],
+						&rate.dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0],
+                        &monthly_two_meter_sales[0], &monthly_true_up_credits[0], rate.rate_scale[i],
 						i, last_excess_dollars, false, false, true);
 				}
 				else
@@ -995,42 +1006,28 @@ public:
 						&monthly_excess_kwhs_earned[0],
                         &monthly_net_billing_credits[0],
 						&rate.dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0],
-						&monthly_bill[0], rate.rate_scale[i], i, last_excess_dollars);
+						&monthly_bill[0], &monthly_two_meter_sales[0],
+                        &monthly_true_up_credits[0],
+                        rate.rate_scale[i], i, last_excess_dollars);
 				}
 			}
 			else // monthly reconciliation per 2015.6.30 release
 			{
-				if (two_meter)
-				{
-					// calculate revenue with solar system (using system energy & maxpower)
-					ur_calc(&e_sys_cy[0], &p_sys_cy[0],
-						&revenue_w_sys[0], &payment[0], &income[0],
-						&demand_charge_w_sys[0], &energy_charge_w_sys[0],
-						&monthly_fixed_charges[0], &monthly_minimum_charges[0],
-						&monthly_ec_charges[0],
-						&monthly_ec_charges_gross[0],
-						&monthly_excess_dollars_earned[0],
-						&monthly_nm_dollars_applied[0],
-						&monthly_excess_kwhs_earned[0],
-						&rate.dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate.rate_scale[i],
-						i, &last_month, last_excess_energy, last_excess_dollars, false, false, true);
-				}
-				else
-				{
-					// calculate revenue with solar system (using net grid energy & maxpower)
-					ur_calc(&e_grid_cy[0], &p_grid_cy[0],
-						&revenue_w_sys[0], &payment[0], &income[0],
-						&demand_charge_w_sys[0], &energy_charge_w_sys[0],
-						&monthly_fixed_charges[0], &monthly_minimum_charges[0],
-						&monthly_ec_charges[0],
-						&monthly_ec_charges_gross[0],
-						&monthly_excess_dollars_earned[0],
-						&monthly_nm_dollars_applied[0],
-						&monthly_excess_kwhs_earned[0],
-						&rate.dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0],
-						&monthly_bill[0], rate.rate_scale[i], i,
-						&last_month, last_excess_energy, last_excess_dollars);
-				}
+				// Two-meter always hits the timestep_reconciliation path, so ur_calc will never be called for buy all / sell all
+				// calculate revenue with solar system (using net grid energy & maxpower)
+				ur_calc(&e_grid_cy[0], &p_grid_cy[0],
+					&revenue_w_sys[0], &payment[0], &income[0],
+					&demand_charge_w_sys[0], &energy_charge_w_sys[0],
+					&monthly_fixed_charges[0], &monthly_minimum_charges[0],
+					&monthly_ec_charges[0],
+					&monthly_ec_charges_gross[0],
+					&monthly_excess_dollars_earned[0],
+					&monthly_nm_dollars_applied[0],
+					&monthly_excess_kwhs_earned[0],
+					&rate.dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0],
+					&monthly_bill[0], &monthly_true_up_credits[0],
+                    rate.rate_scale[i], i,
+					&last_month, last_excess_energy, last_excess_dollars);
 			}
 			if (two_meter)
 			{
@@ -1257,6 +1254,8 @@ public:
 				assign("year1_nm_dollars_applied", var_data(&monthly_nm_dollars_applied[0], 12));
 				assign("year1_net_billing_credits", var_data(&monthly_net_billing_credits[0], 12));
 				assign("year1_excess_kwhs_earned", var_data(&monthly_excess_kwhs_earned[0], 12));
+                assign("year1_two_meter_sales", var_data(&monthly_two_meter_sales[0], 12));
+                assign("year1_true_up_credits", var_data(&monthly_true_up_credits[0], 12));
 				// peak demand and testing energy use
 				for (int ii = 0; ii < 12; ii++)
 				{
@@ -1301,6 +1300,8 @@ public:
 				nm_dollars_applied_ym[(i + 1) * 12 + j] = monthly_nm_dollars_applied[j];
 				excess_kwhs_earned_ym[(i + 1) * 12 + j] = monthly_excess_kwhs_earned[j];
                 net_billing_credits_ym[(i + 1) * 12 + j] = monthly_net_billing_credits[j];
+                two_meter_sales_ym[(i + 1) * 12 + j] = monthly_two_meter_sales[j];
+                true_up_credits_ym[(i + 1) * 12 + j] = monthly_true_up_credits[j];
 
 				ch_w_sys_fixed_ym[(i + 1) * 12 + j] = monthly_fixed_charges[j];
 				ch_w_sys_minimum_ym[(i + 1) * 12 + j] = monthly_minimum_charges[j];
@@ -1388,6 +1389,7 @@ public:
 		ssc_number_t excess_kwhs_earned[12],
 		ssc_number_t *dc_hourly_peak, ssc_number_t monthly_cumulative_excess_energy[12],
 		ssc_number_t monthly_cumulative_excess_dollars[12], ssc_number_t monthly_bill[12],
+        ssc_number_t monthly_true_up_credits[12],
 		ssc_number_t rate_esc, size_t year, ur_month* prev_dec, ssc_number_t prev_excess_energy, ssc_number_t prev_excess_dollars, bool include_fixed=true, bool include_min=true, bool gen_only=false)
 
 	{
@@ -1408,7 +1410,8 @@ public:
 				= excess_kwhs_earned[i]
 				= monthly_cumulative_excess_energy[i]
 				= monthly_cumulative_excess_dollars[i]
-				= monthly_bill[i] = 0.0;
+				= monthly_bill[i]
+                = monthly_true_up_credits[i] = 0.0;
 		}
 		// initialize all montly values
 
@@ -1757,7 +1760,7 @@ public:
                     ssc_number_t year_end_dollars = monthly_cumulative_excess_energy[m] * as_number("ur_nm_yearend_sell_rate") * rate_esc;
                     payment[c - 1] -= year_end_dollars;
                     monthly_ec_charges[m] -= year_end_dollars;
-                    excess_dollars_earned[m] += year_end_dollars;
+                    // Don't apply this to monthly_true_up_credits, since the dollars aren't recieved this month when rollover_credit is true
                     dollars_applied += year_end_dollars;
                 }
 
@@ -1775,15 +1778,13 @@ public:
 					dollars_applied += prev_excess_dollars;
 				}
 
-//				if (monthly_bill[m] < 0)
 				if (monthly_ec_charges[m] < 0)
 				{
 					if (excess_monthly_dollars || rollover_credit)
 					{
 						monthly_cumulative_excess_dollars[m] -= monthly_ec_charges[m];
-						//						monthly_cumulative_excess_dollars[m] -= monthly_bill[m];
 					}
-					//					monthly_bill[m] = 0;
+					
 					payment[c - 1] -= monthly_ec_charges[m];; // keep demand charges
 					monthly_ec_charges[m] = 0;
 				}
@@ -1797,9 +1798,8 @@ public:
 						payment[c - 1] -= monthly_cumulative_excess_dollars[m] + monthly_ec_charges[m];
 						if (excess_monthly_dollars || rollover_credit)
 						{
-//							monthly_cumulative_excess_dollars[m] = -monthly_bill[m];
 							dollars_applied += monthly_cumulative_excess_dollars[m] + monthly_ec_charges[m];
-							monthly_cumulative_excess_dollars[m] = -monthly_ec_charges[m];
+                            monthly_cumulative_excess_dollars[m] = -monthly_ec_charges[m];
 						}
 						//						monthly_bill[m] = 0;
 						monthly_ec_charges[m] = 0;
@@ -1883,12 +1883,13 @@ public:
 										ssc_number_t year_end_dollars = monthly_cumulative_excess_energy[m] * as_number("ur_nm_yearend_sell_rate")*rate_esc;
 										monthly_cumulative_excess_dollars[m] = year_end_dollars;
 										excess_dollars_earned[m] += year_end_dollars;
-										excess_dollars_applied[m] += year_end_dollars;
+                                        monthly_true_up_credits[m] += year_end_dollars;
 										income[c] += year_end_dollars;
 									}
 									else if (excess_monthly_dollars && (monthly_cumulative_excess_dollars[m] > 0))
 									{
 										income[c] += monthly_cumulative_excess_dollars[m];
+                                        monthly_true_up_credits[m] = monthly_cumulative_excess_dollars[m];
 										// ? net metering energy?
 									}
 								}
@@ -1916,6 +1917,7 @@ public:
         ssc_number_t net_billing_credits[12],
 		ssc_number_t *dc_hourly_peak, ssc_number_t monthly_cumulative_excess_energy[12],
 		ssc_number_t monthly_cumulative_excess_dollars[12], ssc_number_t monthly_bill[12],
+        ssc_number_t monthly_two_meter_sales[12], ssc_number_t monthly_true_up_credits[12],
 		ssc_number_t rate_esc, size_t year, ssc_number_t prev_excess_dollars, bool include_fixed = true, bool include_min = true, bool gen_only = false)
 
 	{
@@ -1935,7 +1937,9 @@ public:
                 = net_billing_credits[i]
 				= monthly_cumulative_excess_energy[i]
 				= monthly_cumulative_excess_dollars[i]
-				= monthly_bill[i] = 0.0;
+				= monthly_bill[i]
+                = monthly_two_meter_sales[i]
+                = monthly_true_up_credits[i] = 0.0;
 		}
 
 		// 0=hourly (match with 2015.1.30 release, 1=monthly (most common unit in URDB), 2=daily (used for PG&E baseline rates). Currently hidden in UI and set to zero
@@ -2099,6 +2103,9 @@ public:
                                     if (!gen_only) {
                                         net_billing_credits[m] += credit_amt;
                                     }
+                                    else {
+                                        monthly_two_meter_sales[m] += credit_amt;
+                                    }
 								}
 								curr_month.ec_energy_surplus.at(row, tier) += (ssc_number_t)tier_energy;
 							}
@@ -2141,6 +2148,11 @@ public:
 
 								payment[c] = (ssc_number_t)charge_amt;
 								monthly_ec_charges[m] += (ssc_number_t)charge_amt;
+                                if (!excess_monthly_dollars)
+                                {
+                                    // Runs for net billing (option 2) and buy all / sell all (option 4)
+                                    monthly_ec_charges_gross[m] += (ssc_number_t)charge_amt;
+                                }
 //								price[c] += (ssc_number_t)charge_amt;
 								energy_charge[c] = (ssc_number_t)charge_amt;
 							}
@@ -2172,42 +2184,31 @@ public:
 
 			excess_dollars_earned[m] = monthly_cumulative_excess_dollars[m];
 
-			monthly_ec_charges_gross[m] = monthly_ec_charges[m];
+			
 			ssc_number_t dollars_applied = 0;
 			// apply previous month rollover kwhs
 			if (excess_monthly_dollars)
 			{
-                if (m == 0 && excess_dollars_credit_month == 0) {
-                    ssc_number_t total_excess_credit_month = prev_excess_dollars + monthly_cumulative_excess_dollars[m];
-                    monthly_ec_charges[m] -= total_excess_credit_month;
-                    payment[c - 1] -= total_excess_credit_month;
-                    dollars_applied += total_excess_credit_month;
-                }
-				else if (m == 0 && excess_dollars_credit_month != 11) {
+                // Overwrite this to include the current month's charges
+                monthly_ec_charges_gross[m] = monthly_ec_charges[m];
+				if (m == 0 && excess_dollars_credit_month != 11) {
 					monthly_ec_charges[m] -= prev_excess_dollars;
 					payment[c - 1] -= prev_excess_dollars;
 					dollars_applied += prev_excess_dollars;
 				}
-                else if (m == excess_dollars_credit_month)
-                {
-                    // Apply current month to end of year credit, in addition to previous month
-                    ssc_number_t total_excess_credit_month = monthly_cumulative_excess_dollars[m - 1] + monthly_cumulative_excess_dollars[m];
-                    monthly_ec_charges[m] -= total_excess_credit_month;
-                    payment[c - 1] -= total_excess_credit_month;
-                    dollars_applied += total_excess_credit_month;
-                }
 				else if (m > 0 && m != excess_dollars_credit_month + 1)
 				{
 					monthly_ec_charges[m] -= monthly_cumulative_excess_dollars[m - 1];
 					payment[c - 1] -= monthly_cumulative_excess_dollars[m - 1];
 					dollars_applied += monthly_cumulative_excess_dollars[m - 1];
 				}
+                // Rollover credits at end of true-up period are applied after annual minimums below this section
 
-				if (monthly_ec_charges[m] < 0)
-				{
-					payment[c - 1] -= monthly_cumulative_excess_dollars[m] + monthly_ec_charges[m];
-					dollars_applied += monthly_cumulative_excess_dollars[m] + monthly_ec_charges[m];
-					monthly_cumulative_excess_dollars[m] = -monthly_ec_charges[m];
+                if (monthly_ec_charges[m] < 0)
+                {
+                    payment[c - 1] -= monthly_ec_charges[m];
+                    dollars_applied += monthly_ec_charges[m];
+                    monthly_cumulative_excess_dollars[m] -= monthly_ec_charges[m];
 					monthly_ec_charges[m] = 0;
 				}
 
@@ -2277,6 +2278,7 @@ public:
 								{
 									income[c] += monthly_cumulative_excess_dollars[m];
 									monthly_bill[m] -= monthly_cumulative_excess_dollars[m];
+                                    monthly_true_up_credits[m] = monthly_cumulative_excess_dollars[m];
 								}
 							}
 							monthly_bill[m] += monthly_fixed_charges[m] + monthly_minimum_charges[m];
