@@ -79,7 +79,7 @@ protected:
     double runQli();
 
     /// Capacity degradation due to cycles
-    double runQneg(double T_battery, double SOC);
+    double runQneg();
 
     void initialize();
 
