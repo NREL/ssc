@@ -997,17 +997,6 @@ private:
 		// Estimates to use
 	double m_T_htf_pc_cold_est;			//[C]
 
-	enum E_solver_outcomes
-	{
-		CSP_NO_SOLUTION,	// Models did not provide enough information with which to iterate on T_rec_in
-		POOR_CONVERGENCE,	// Models solved, but convergence on T_rec_in was not within specified tolerance
-		CSP_CONVERGED,		// Models solved; convergence within specified tolerance
-		KNOW_NEXT_MODE,		// Models did not solve, but failure mode allowed next mode to be determined
-		UNDER_TARGET_PC,	// Models solved, but could not converge because the operating mode did not allow enough thermal power to go to power cycle
-		OVER_TARGET_PC,		// Models solved, but could not converge because the operating mode could not reduce the mass flow rate enough to the power cycle
-		REC_IS_OFF			// Collector-receiver model did not produce power
-	};
-
 	// Solved Controller Variables
 	double m_defocus;		//[-] (1..0) Should only be less than 1 if receiver is on, but defocused
 	
