@@ -1946,75 +1946,42 @@ public:
 
         enum E_operating_modes
         {
-            ENTRY_MODE = 0,
-
             CR_OFF__PC_OFF__TES_OFF__AUX_OFF,
             CR_SU__PC_OFF__TES_OFF__AUX_OFF,
             CR_ON__PC_SU__TES_OFF__AUX_OFF,
             CR_ON__PC_SB__TES_OFF__AUX_OFF,
-
             CR_ON__PC_RM_HI__TES_OFF__AUX_OFF,
             CR_ON__PC_RM_LO__TES_OFF__AUX_OFF,
-
             CR_DF__PC_MAX__TES_OFF__AUX_OFF,
-
             CR_OFF__PC_SU__TES_DC__AUX_OFF,
             CR_ON__PC_OFF__TES_CH__AUX_OFF,
-
-            SKIP_10,
-
             CR_ON__PC_TARGET__TES_CH__AUX_OFF,
             CR_ON__PC_TARGET__TES_DC__AUX_OFF,
-
             CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF,
-
             CR_DF__PC_OFF__TES_FULL__AUX_OFF,
-
             CR_OFF__PC_SB__TES_DC__AUX_OFF,
             CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF,
             CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF,
-
             CR_ON__PC_SB__TES_CH__AUX_OFF,
             CR_SU__PC_MIN__TES_EMPTY__AUX_OFF,
-
-            SKIP_20,
-
             CR_SU__PC_SB__TES_DC__AUX_OFF,
             CR_ON__PC_SB__TES_DC__AUX_OFF,
             CR_OFF__PC_TARGET__TES_DC__AUX_OFF,
             CR_SU__PC_TARGET__TES_DC__AUX_OFF,
             CR_ON__PC_RM_HI__TES_FULL__AUX_OFF,
-
             CR_ON__PC_MIN__TES_EMPTY__AUX_OFF,
-
             CR_SU__PC_RM_LO__TES_EMPTY__AUX_OFF,
-
             CR_DF__PC_MAX__TES_FULL__AUX_OFF,
-
             CR_ON__PC_SB__TES_FULL__AUX_OFF,
-
-            SKIP_30,
-
             CR_SU__PC_SU__TES_DC__AUX_OFF,
-
             CR_ON__PC_SU__TES_CH__AUX_OFF,
-
             CR_DF__PC_SU__TES_FULL__AUX_OFF,
-
             CR_DF__PC_SU__TES_OFF__AUX_OFF,
-
             CR_TO_COLD__PC_TARGET__TES_DC__AUX_OFF,
-
             CR_TO_COLD__PC_RM_LO__TES_EMPTY__AUX_OFF,
-
             CR_TO_COLD__PC_SB__TES_DC__AUX_OFF,
-
             CR_TO_COLD__PC_MIN__TES_EMPTY__AUX_OFF,
-
             CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF,
-
-            SKIP_40,
-
             CR_TO_COLD__PC_SU__TES_DC__AUX_OFF
         };
 

@@ -602,7 +602,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
     if(end_time != 8760*3600.)
         mc_csp_messages.add_message(C_csp_messages::WARNING, util::format("End time: %f", end_time) );
 
-    C_system_operating_modes::E_operating_modes operating_mode = C_system_operating_modes::ENTRY_MODE;
+    C_system_operating_modes::E_operating_modes operating_mode = C_system_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
 
 	while( mc_kernel.mc_sim_info.ms_ts.m_time <= mc_kernel.get_sim_setup()->m_sim_time_end )
 	{
@@ -1736,7 +1736,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			// End operating state mode for CR ON, PC ON/STANDBY
 
 			// Store operating mode
-			m_op_mode_tracking.push_back(operating_mode);
+			m_op_mode_tracking.push_back((int)operating_mode);
 
             double t_ts_initial = mc_kernel.mc_sim_info.ms_ts.m_step;   //[s]
             double defocus_solved = std::numeric_limits<double>::quiet_NaN();
@@ -1767,7 +1767,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
         /* 
         ------------ End loop to find correct operating mode and system performance --------
         */
-
 
 		// Calculate system-level parasitics: can happen after controller/solver converges
 		double W_dot_fixed = ms_system_params.m_pb_fixed_par*m_cycle_W_dot_des;			//[MWe]
@@ -1989,54 +1988,32 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		mc_reported_outputs.value(C_solver_outputs::DISPATCH_PRES_NVAR, dispatch.outputs.presolve_nvar);
 		mc_reported_outputs.value(C_solver_outputs::DISPATCH_SOLVE_TIME, dispatch.outputs.solve_time);
 
-		// Report series of operating modes attempted during the timestep as a 'double' using 0s to separate the enumerations 
-		// ... (10 is set as a dummy enumeration so it won't show up as a potential operating mode)
+		// Report series of operating modes attempted during the timestep as a 'double' so can see in hourly outputs
+        // Key will start with 1 then add two digits for each operating mode. Single digits enumerations will add a 0 before the number
+        // So a sequence that tries CR_ON__PC_TARGET__TES_CH then CR_ON__PC_TARGET__TES_DC then CR_ON__PC_RM_LO__TES_EMPTY
+        //    will result in key: 1091011
 		int n_op_modes = (int)m_op_mode_tracking.size();
-		double op_mode_key = 0.0;
+		double op_mode_key = 1.0;
 		for( int i = 0; i < fmin(3,n_op_modes); i++ )
 		{
 			double op_mode_step = m_op_mode_tracking[i];
-
-			if( op_mode_step < 10.0 )
-			{
-				op_mode_key = 100.0*op_mode_key + 10.0*op_mode_step;
-			}
-			else
-			{
-				op_mode_key = 100.0*op_mode_key + op_mode_step;
-			}
+            op_mode_key = 100.0 * op_mode_key + op_mode_step;
 		}
 		mc_reported_outputs.value(C_solver_outputs::CTRL_OP_MODE_SEQ_A, op_mode_key);
 
 		op_mode_key = 0.0;
 		for( int i = 3; i < fmin(6,n_op_modes); i++ )
 		{
-			double op_mode_step = m_op_mode_tracking[i];
-
-			if( op_mode_step < 10.0 )
-			{
-				op_mode_key = 100.0*op_mode_key + 10.0*op_mode_step;
-			}
-			else
-			{
-				op_mode_key = 100.0*op_mode_key + op_mode_step;
-			}
+            double op_mode_step = m_op_mode_tracking[i];
+            op_mode_key = 100.0 * op_mode_key + op_mode_step;
 		}
 		mc_reported_outputs.value(C_solver_outputs::CTRL_OP_MODE_SEQ_B, op_mode_key);
 
 		op_mode_key = 0.0;
 		for( int i = 6; i < n_op_modes; i++ )
 		{
-			double op_mode_step = m_op_mode_tracking[i];
-
-			if( op_mode_step < 10.0 )
-			{
-				op_mode_key = 100.0*op_mode_key + 10.0*op_mode_step;
-			}
-			else
-			{
-				op_mode_key = 100.0*op_mode_key + op_mode_step;
-			}
+            double op_mode_step = m_op_mode_tracking[i];
+            op_mode_key = 100.0 * op_mode_key + op_mode_step;
 		}
 		mc_reported_outputs.value(C_solver_outputs::CTRL_OP_MODE_SEQ_C, op_mode_key);
 
