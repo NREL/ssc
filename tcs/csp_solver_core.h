@@ -96,16 +96,11 @@ class C_csp_solver_sim_info
 public:
 	
 	S_timestep ms_ts;
-	
-	//double m_time;		//[s] Time at end of timestep
-	//double m_step;		//[s] Duration of timestep
 
 	int m_tou;		//[-] Time-Of-Use Period
 
 	C_csp_solver_sim_info()
 	{
-		//m_time = m_step = std::numeric_limits<double>::quiet_NaN();
-
 		m_tou = -1;
 	}
 };
@@ -1002,10 +997,6 @@ private:
 		// Estimates to use
 	double m_T_htf_pc_cold_est;			//[C]
 
-		// Reset hierarchy logic
-	//void reset_hierarchy_logic();
-	//void turn_off_plant();
-
 	enum E_solver_outcomes
 	{
 		CSP_NO_SOLUTION,	// Models did not provide enough information with which to iterate on T_rec_in
@@ -1036,8 +1027,6 @@ public:
 
 	// Vector to track operating modes
 	std::vector<int> m_op_mode_tracking;
-    
-    static std::string tech_operating_modes_str[];
     
 	C_csp_solver(C_csp_weatherreader &weather,
 		C_csp_collector_receiver &collector_receiver,
@@ -1902,46 +1891,6 @@ public:
 
     class C_system_operating_modes
     {
-    private:
-
-        C_CR_OFF__PC_OFF__TES_OFF__AUX_OFF mc_CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-        C_CR_SU__PC_OFF__TES_OFF__AUX_OFF mc_CR_SU__PC_OFF__TES_OFF__AUX_OFF;
-        C_CR_ON__PC_SU__TES_OFF__AUX_OFF mc_CR_ON__PC_SU__TES_OFF__AUX_OFF;
-        C_CR_OFF__PC_SU__TES_DC__AUX_OFF mc_CR_OFF__PC_SU__TES_DC__AUX_OFF;
-        C_CR_OFF__PC_TARGET__TES_DC__AUX_OFF mc_CR_OFF__PC_TARGET__TES_DC__AUX_OFF;
-        C_CR_ON__PC_TARGET__TES_DC__AUX_OFF mc_CR_ON__PC_TARGET__TES_DC__AUX_OFF;
-        C_CR_ON__PC_RM_LO__TES_OFF__AUX_OFF mc_CR_ON__PC_RM_LO__TES_OFF__AUX_OFF;
-        C_CR_ON__PC_TARGET__TES_CH__AUX_OFF mc_CR_ON__PC_TARGET__TES_CH__AUX_OFF;
-        C_CR_ON__PC_OFF__TES_CH__AUX_OFF mc_CR_ON__PC_OFF__TES_CH__AUX_OFF;
-        C_CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF mc_CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF;
-        C_CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF mc_CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF;
-        C_CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF mc_CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF;
-        C_CR_ON__PC_MIN__TES_EMPTY__AUX_OFF mc_CR_ON__PC_MIN__TES_EMPTY__AUX_OFF;
-        C_CR_SU__PC_TARGET__TES_DC__AUX_OFF mc_CR_SU__PC_TARGET__TES_DC__AUX_OFF;
-        C_CR_SU__PC_MIN__TES_EMPTY__AUX_OFF mc_CR_SU__PC_MIN__TES_EMPTY__AUX_OFF;
-        C_CR_SU__PC_RM_LO__TES_EMPTY__AUX_OFF mc_CR_SU__PC_RM_LO__TES_EMPTY__AUX_OFF;
-        C_CR_OFF__PC_SB__TES_DC__AUX_OFF mc_CR_OFF__PC_SB__TES_DC__AUX_OFF;
-        C_CR_DF__PC_MAX__TES_FULL__AUX_OFF mc_CR_DF__PC_MAX__TES_FULL__AUX_OFF;
-        C_CR_DF__PC_MAX__TES_OFF__AUX_OFF mc_CR_DF__PC_MAX__TES_OFF__AUX_OFF;
-        C_CR_ON__PC_RM_HI__TES_OFF__AUX_OFF mc_CR_ON__PC_RM_HI__TES_OFF__AUX_OFF;
-        C_CR_ON__PC_RM_HI__TES_FULL__AUX_OFF mc_CR_ON__PC_RM_HI__TES_FULL__AUX_OFF;
-        C_CR_DF__PC_SU__TES_FULL__AUX_OFF mc_CR_DF__PC_SU__TES_FULL__AUX_OFF;
-        C_CR_DF__PC_OFF__TES_FULL__AUX_OFF mc_CR_DF__PC_OFF__TES_FULL__AUX_OFF;
-        C_CR_DF__PC_SU__TES_OFF__AUX_OFF mc_CR_DF__PC_SU__TES_OFF__AUX_OFF;
-        C_CR_ON__PC_SB__TES_CH__AUX_OFF mc_CR_ON__PC_SB__TES_CH__AUX_OFF;
-        C_CR_ON__PC_SB__TES_FULL__AUX_OFF mc_CR_ON__PC_SB__TES_FULL__AUX_OFF;
-        C_CR_ON__PC_SB__TES_DC__AUX_OFF mc_CR_ON__PC_SB__TES_DC__AUX_OFF;
-        C_CR_SU__PC_SB__TES_DC__AUX_OFF mc_CR_SU__PC_SB__TES_DC__AUX_OFF;
-        C_CR_ON__PC_SB__TES_OFF__AUX_OFF mc_CR_ON__PC_SB__TES_OFF__AUX_OFF;
-        C_CR_ON__PC_SU__TES_CH__AUX_OFF mc_CR_ON__PC_SU__TES_CH__AUX_OFF;
-        C_CR_SU__PC_SU__TES_DC__AUX_OFF mc_CR_SU__PC_SU__TES_DC__AUX_OFF;
-        C_CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF mc_CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF;
-        C_CR_TO_COLD__PC_SU__TES_DC__AUX_OFF mc_CR_TO_COLD__PC_SU__TES_DC__AUX_OFF;
-        C_CR_TO_COLD__PC_MIN__TES_EMPTY__AUX_OFF mc_CR_TO_COLD__PC_MIN__TES_EMPTY__AUX_OFF;
-        C_CR_TO_COLD__PC_RM_LO__TES_EMPTY__AUX_OFF mc_CR_TO_COLD__PC_RM_LO__TES_EMPTY__AUX_OFF;
-        C_CR_TO_COLD__PC_TARGET__TES_DC__AUX_OFF mc_CR_TO_COLD__PC_TARGET__TES_DC__AUX_OFF;
-        C_CR_TO_COLD__PC_SB__TES_DC__AUX_OFF mc_CR_TO_COLD__PC_SB__TES_DC__AUX_OFF;
-
     public:
 
         enum E_operating_modes
@@ -1987,70 +1936,57 @@ public:
 
     private:
 
-        std::unordered_map<C_system_operating_modes::E_operating_modes, C_operating_mode_core*> m_operating_modes_map;
+        std::unordered_map<C_system_operating_modes::E_operating_modes, C_operating_mode_core*> m_operating_modes_map =
+            std::unordered_map<C_system_operating_modes::E_operating_modes, C_operating_mode_core*>{
+                {E_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF,       new C_CR_OFF__PC_OFF__TES_OFF__AUX_OFF},
+                {E_operating_modes::CR_SU__PC_OFF__TES_OFF__AUX_OFF,        new C_CR_SU__PC_OFF__TES_OFF__AUX_OFF},
+                {E_operating_modes::CR_ON__PC_SU__TES_OFF__AUX_OFF,         new C_CR_ON__PC_SU__TES_OFF__AUX_OFF},
+                {E_operating_modes::CR_OFF__PC_SU__TES_DC__AUX_OFF,         new C_CR_OFF__PC_SU__TES_DC__AUX_OFF},
+                {E_operating_modes::CR_OFF__PC_TARGET__TES_DC__AUX_OFF,     new C_CR_OFF__PC_TARGET__TES_DC__AUX_OFF},
+                {E_operating_modes::CR_ON__PC_TARGET__TES_DC__AUX_OFF,      new C_CR_ON__PC_TARGET__TES_DC__AUX_OFF},
+                {E_operating_modes::CR_ON__PC_RM_LO__TES_OFF__AUX_OFF,      new C_CR_ON__PC_RM_LO__TES_OFF__AUX_OFF},
+                {E_operating_modes::CR_ON__PC_TARGET__TES_CH__AUX_OFF,      new C_CR_ON__PC_TARGET__TES_CH__AUX_OFF},
+                {E_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF,         new C_CR_ON__PC_OFF__TES_CH__AUX_OFF},
+                {E_operating_modes::CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF,     new C_CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF},
+                {E_operating_modes::CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF,    new C_CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF},
+                {E_operating_modes::CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF,   new C_CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF},
+                {E_operating_modes::CR_ON__PC_MIN__TES_EMPTY__AUX_OFF,      new C_CR_ON__PC_MIN__TES_EMPTY__AUX_OFF},
+                {E_operating_modes::CR_SU__PC_TARGET__TES_DC__AUX_OFF,      new C_CR_SU__PC_TARGET__TES_DC__AUX_OFF},
+                {E_operating_modes::CR_SU__PC_MIN__TES_EMPTY__AUX_OFF,      new C_CR_SU__PC_MIN__TES_EMPTY__AUX_OFF},
+                {E_operating_modes::CR_SU__PC_RM_LO__TES_EMPTY__AUX_OFF,    new C_CR_SU__PC_RM_LO__TES_EMPTY__AUX_OFF},
+                {E_operating_modes::CR_OFF__PC_SB__TES_DC__AUX_OFF,         new C_CR_OFF__PC_SB__TES_DC__AUX_OFF},
+                {E_operating_modes::CR_DF__PC_MAX__TES_FULL__AUX_OFF,       new C_CR_DF__PC_MAX__TES_FULL__AUX_OFF},
+                {E_operating_modes::CR_DF__PC_MAX__TES_OFF__AUX_OFF,        new C_CR_DF__PC_MAX__TES_OFF__AUX_OFF},
+                {E_operating_modes::CR_ON__PC_RM_HI__TES_OFF__AUX_OFF,      new C_CR_ON__PC_RM_HI__TES_OFF__AUX_OFF},
+                {E_operating_modes::CR_ON__PC_RM_HI__TES_FULL__AUX_OFF,     new C_CR_ON__PC_RM_HI__TES_FULL__AUX_OFF},
+                {E_operating_modes::CR_DF__PC_SU__TES_FULL__AUX_OFF,        new C_CR_DF__PC_SU__TES_FULL__AUX_OFF},
+                {E_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF,       new C_CR_DF__PC_OFF__TES_FULL__AUX_OFF},
+                {E_operating_modes::CR_DF__PC_SU__TES_OFF__AUX_OFF,         new C_CR_DF__PC_SU__TES_OFF__AUX_OFF},
+                {E_operating_modes::CR_ON__PC_SB__TES_CH__AUX_OFF,          new C_CR_ON__PC_SB__TES_CH__AUX_OFF},
+                {E_operating_modes::CR_ON__PC_SB__TES_FULL__AUX_OFF,        new C_CR_ON__PC_SB__TES_FULL__AUX_OFF},
+                {E_operating_modes::CR_ON__PC_SB__TES_DC__AUX_OFF,          new C_CR_ON__PC_SB__TES_DC__AUX_OFF},
+                {E_operating_modes::CR_SU__PC_SB__TES_DC__AUX_OFF,          new C_CR_SU__PC_SB__TES_DC__AUX_OFF},
+                {E_operating_modes::CR_ON__PC_SB__TES_OFF__AUX_OFF,         new C_CR_ON__PC_SB__TES_OFF__AUX_OFF},
+                {E_operating_modes::CR_ON__PC_SU__TES_CH__AUX_OFF,          new C_CR_ON__PC_SU__TES_CH__AUX_OFF},
+                {E_operating_modes::CR_SU__PC_SU__TES_DC__AUX_OFF,          new C_CR_SU__PC_SU__TES_DC__AUX_OFF},
+                {E_operating_modes::CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF,   new C_CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF},
+                {E_operating_modes::CR_TO_COLD__PC_SU__TES_DC__AUX_OFF,     new C_CR_TO_COLD__PC_SU__TES_DC__AUX_OFF},
+                {E_operating_modes::CR_TO_COLD__PC_MIN__TES_EMPTY__AUX_OFF, new C_CR_TO_COLD__PC_MIN__TES_EMPTY__AUX_OFF},
+                {E_operating_modes::CR_TO_COLD__PC_RM_LO__TES_EMPTY__AUX_OFF, new C_CR_TO_COLD__PC_RM_LO__TES_EMPTY__AUX_OFF},
+                {E_operating_modes::CR_TO_COLD__PC_TARGET__TES_DC__AUX_OFF, new C_CR_TO_COLD__PC_TARGET__TES_DC__AUX_OFF},
+                {E_operating_modes::CR_TO_COLD__PC_SB__TES_DC__AUX_OFF,     new C_CR_TO_COLD__PC_SB__TES_DC__AUX_OFF}
+        };
 
     public:
 
-        C_system_operating_modes()
-        {
-            m_operating_modes_map[E_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF] = &mc_CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-            m_operating_modes_map[E_operating_modes::CR_SU__PC_OFF__TES_OFF__AUX_OFF] = &mc_CR_SU__PC_OFF__TES_OFF__AUX_OFF;
-            m_operating_modes_map[E_operating_modes::CR_ON__PC_SU__TES_OFF__AUX_OFF] = &mc_CR_ON__PC_SU__TES_OFF__AUX_OFF;
-            m_operating_modes_map[E_operating_modes::CR_OFF__PC_SU__TES_DC__AUX_OFF] = &mc_CR_OFF__PC_SU__TES_DC__AUX_OFF;
-            m_operating_modes_map[E_operating_modes::CR_OFF__PC_TARGET__TES_DC__AUX_OFF] = &mc_CR_OFF__PC_TARGET__TES_DC__AUX_OFF;
-            m_operating_modes_map[E_operating_modes::CR_ON__PC_TARGET__TES_DC__AUX_OFF] = &mc_CR_ON__PC_TARGET__TES_DC__AUX_OFF;
-            m_operating_modes_map[E_operating_modes::CR_ON__PC_RM_LO__TES_OFF__AUX_OFF] = &mc_CR_ON__PC_RM_LO__TES_OFF__AUX_OFF;
-            m_operating_modes_map[E_operating_modes::CR_ON__PC_TARGET__TES_CH__AUX_OFF] = &mc_CR_ON__PC_TARGET__TES_CH__AUX_OFF;
-            m_operating_modes_map[E_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF] = &mc_CR_ON__PC_OFF__TES_CH__AUX_OFF;
-            m_operating_modes_map[E_operating_modes::CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF] = &mc_CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF;
-            m_operating_modes_map[E_operating_modes::CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF] = &mc_CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF;
-            m_operating_modes_map[E_operating_modes::CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF] = &mc_CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF;
-            m_operating_modes_map[E_operating_modes::CR_ON__PC_MIN__TES_EMPTY__AUX_OFF] = &mc_CR_ON__PC_MIN__TES_EMPTY__AUX_OFF;
-            m_operating_modes_map[E_operating_modes::CR_SU__PC_TARGET__TES_DC__AUX_OFF] = &mc_CR_SU__PC_TARGET__TES_DC__AUX_OFF;
-            m_operating_modes_map[E_operating_modes::CR_SU__PC_MIN__TES_EMPTY__AUX_OFF] = &mc_CR_SU__PC_MIN__TES_EMPTY__AUX_OFF;
-            m_operating_modes_map[E_operating_modes::CR_SU__PC_RM_LO__TES_EMPTY__AUX_OFF] = &mc_CR_SU__PC_RM_LO__TES_EMPTY__AUX_OFF;
-            m_operating_modes_map[E_operating_modes::CR_OFF__PC_SB__TES_DC__AUX_OFF] = &mc_CR_OFF__PC_SB__TES_DC__AUX_OFF;
-            m_operating_modes_map[E_operating_modes::CR_DF__PC_MAX__TES_FULL__AUX_OFF] = &mc_CR_DF__PC_MAX__TES_FULL__AUX_OFF; // switched THIS ONE
-            m_operating_modes_map[E_operating_modes::CR_DF__PC_MAX__TES_OFF__AUX_OFF] = &mc_CR_DF__PC_MAX__TES_OFF__AUX_OFF; // tried
-            m_operating_modes_map[E_operating_modes::CR_ON__PC_RM_HI__TES_OFF__AUX_OFF] = &mc_CR_ON__PC_RM_HI__TES_OFF__AUX_OFF;  // tried
-            m_operating_modes_map[E_operating_modes::CR_ON__PC_RM_HI__TES_FULL__AUX_OFF] = &mc_CR_ON__PC_RM_HI__TES_FULL__AUX_OFF; // tried
-            m_operating_modes_map[E_operating_modes::CR_DF__PC_SU__TES_FULL__AUX_OFF] = &mc_CR_DF__PC_SU__TES_FULL__AUX_OFF;    // tried
-            m_operating_modes_map[E_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF] = &mc_CR_DF__PC_OFF__TES_FULL__AUX_OFF;  // tried
-            m_operating_modes_map[E_operating_modes::CR_DF__PC_SU__TES_OFF__AUX_OFF] = &mc_CR_DF__PC_SU__TES_OFF__AUX_OFF;  // tried
-            m_operating_modes_map[E_operating_modes::CR_ON__PC_SB__TES_CH__AUX_OFF] = &mc_CR_ON__PC_SB__TES_CH__AUX_OFF;
-            m_operating_modes_map[E_operating_modes::CR_ON__PC_SB__TES_FULL__AUX_OFF] = &mc_CR_ON__PC_SB__TES_FULL__AUX_OFF;
-            m_operating_modes_map[E_operating_modes::CR_ON__PC_SB__TES_DC__AUX_OFF] = &mc_CR_ON__PC_SB__TES_DC__AUX_OFF;
-            m_operating_modes_map[E_operating_modes::CR_SU__PC_SB__TES_DC__AUX_OFF] = &mc_CR_SU__PC_SB__TES_DC__AUX_OFF;
-            m_operating_modes_map[E_operating_modes::CR_ON__PC_SB__TES_OFF__AUX_OFF] = &mc_CR_ON__PC_SB__TES_OFF__AUX_OFF;
-            m_operating_modes_map[E_operating_modes::CR_ON__PC_SU__TES_CH__AUX_OFF] = &mc_CR_ON__PC_SU__TES_CH__AUX_OFF;
-            m_operating_modes_map[E_operating_modes::CR_SU__PC_SU__TES_DC__AUX_OFF] = &mc_CR_SU__PC_SU__TES_DC__AUX_OFF;
-            m_operating_modes_map[E_operating_modes::CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF] = &mc_CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF;
-            m_operating_modes_map[E_operating_modes::CR_TO_COLD__PC_SU__TES_DC__AUX_OFF] = &mc_CR_TO_COLD__PC_SU__TES_DC__AUX_OFF;
-            m_operating_modes_map[E_operating_modes::CR_TO_COLD__PC_MIN__TES_EMPTY__AUX_OFF] = &mc_CR_TO_COLD__PC_MIN__TES_EMPTY__AUX_OFF;
-            m_operating_modes_map[E_operating_modes::CR_TO_COLD__PC_RM_LO__TES_EMPTY__AUX_OFF] = &mc_CR_TO_COLD__PC_RM_LO__TES_EMPTY__AUX_OFF;
-            m_operating_modes_map[E_operating_modes::CR_TO_COLD__PC_TARGET__TES_DC__AUX_OFF] = &mc_CR_TO_COLD__PC_TARGET__TES_DC__AUX_OFF;
-            m_operating_modes_map[E_operating_modes::CR_TO_COLD__PC_SB__TES_DC__AUX_OFF] = &mc_CR_TO_COLD__PC_SB__TES_DC__AUX_OFF;
-        }
+        C_system_operating_modes(){}
 
         bool solve(C_system_operating_modes::E_operating_modes op_mode, C_csp_solver* pc_csp_solver, bool is_rec_outlet_to_hottank,
             double q_dot_pc_on_target /*MWt*/, double q_dot_pc_startup /*MWt*/, double q_dot_pc_standby /*MWt*/,
             double q_dot_pc_min /*MWt*/, double q_dot_pc_max /*MWt*/, double q_dot_pc_startup_max /*MWt*/,
             double m_dot_pc_startup_max /*kg/hr*/, double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
             double limit_comp_tol /*-*/,
-            double& defocus_solved, bool& is_op_mode_avail /*-*/, bool& is_turn_off_plant, bool& is_rec_su_unchanged)
-        {
-            return m_operating_modes_map[op_mode]->solve(pc_csp_solver, is_rec_outlet_to_hottank,
-                q_dot_pc_on_target, q_dot_pc_startup, q_dot_pc_standby,
-                q_dot_pc_min, q_dot_pc_max, q_dot_pc_startup_max,
-                m_dot_pc_startup_max, m_dot_pc_max, m_dot_pc_min,
-                limit_comp_tol,
-                defocus_solved, is_op_mode_avail, is_turn_off_plant, is_rec_su_unchanged);
-        }
-
-        C_operating_mode_core* get_operating_mode_pointer(E_operating_modes op_mode)
-        {
-            return m_operating_modes_map[op_mode];
-        }
+            double& defocus_solved, bool& is_op_mode_avail /*-*/, bool& is_turn_off_plant, bool& is_turn_off_rec_su);
 
         bool is_mode_avail(E_operating_modes op_mode)
         {
