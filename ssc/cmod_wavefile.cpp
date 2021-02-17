@@ -54,6 +54,9 @@ static var_info _cm_wave_file_reader[] = {
 	{ SSC_OUTPUT,        SSC_MATRIX,      "wave_resource_matrix",              "Frequency distribution of resource",                                  "m/s",   "",                       "Weather Reader",      "?",                        "",                            "" },
     { SSC_OUTPUT,        SSC_ARRAY,       "time_check",                        "Time check",                                                          "",      "",                       "Weather Reader",      "?",                        "",                            "" },
     { SSC_OUTPUT,        SSC_ARRAY,       "wave_significant_height",           "Wave height time series data",                                        "m",     "",                       "Weather Reader",      "?",                        "",                            "" },
+    { SSC_OUTPUT,        SSC_ARRAY,       "number_records",                "Number of records in wave time series",                                        "",     "",                       "Weather Reader",      "?",                        "",                            "" },
+    { SSC_OUTPUT,        SSC_ARRAY,       "number_hours",                "Number of hours in wave time series",                                        "",     "",                       "Weather Reader",      "?",                        "",                            "" },
+
     { SSC_OUTPUT,        SSC_ARRAY,       "wave_energy_period",                "Wave period time series data",                                        "s",     "",                       "Weather Reader",      "?",                        "",                            "" },
 var_info_invalid };
 
@@ -388,7 +391,16 @@ public:
         //if (values.size() != 22)
         if (as_integer("wave_resource_model_choice") == 1)
         {
-            size_t numberRecords = 2920;
+            size_t numberRecords = 0;
+            
+            while (getline(ifs, buf))
+                numberRecords++;
+            assign("number_records", (int)numberRecords);
+            // rewind the file and reposition right after the header information
+            ifs.clear();
+            ifs.seekg(0);
+            for (size_t i = 0; i < 2; i++)
+                getline(ifs, buf);
             ssc_number_t hour0, hour1, hourdiff;
             //size_t numberRecords = wave_dp->nrecords();
             ssc_number_t* timecheck = allocate("time_check", numberRecords);
@@ -419,6 +431,7 @@ public:
                 wave_periods[r] = (ssc_number_t)std::stod(values[5]);
 
             }
+            assign("number_hours", int(numberRecords * hourdiff));
             return;
 
         }
