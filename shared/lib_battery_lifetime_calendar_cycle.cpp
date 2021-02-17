@@ -519,7 +519,7 @@ lifetime_calendar_cycle_t::lifetime_calendar_cycle_t(const util::matrix_t<double
 
 lifetime_calendar_cycle_t::lifetime_calendar_cycle_t(const util::matrix_t<double> &batt_lifetime_matrix, double dt_hour) {
     params = std::make_shared<lifetime_params>();
-    params->model_choice = lifetime_params::CALCYC;\
+    params->model_choice = lifetime_params::CALCYC;
     params->dt_hr = dt_hour;
     params->cal_cyc->cycling_matrix = batt_lifetime_matrix;
     params->cal_cyc->calendar_choice = calendar_cycle_params::CALENDAR_CHOICE::NONE;
