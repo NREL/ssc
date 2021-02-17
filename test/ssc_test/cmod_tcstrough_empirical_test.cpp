@@ -14,14 +14,14 @@ NAMESPACE_TEST(csp_trough, EmpiricalTroughCmod, Default_NoFinancial)
     int errors = empirical_trough.RunModule();
     EXPECT_FALSE(errors);
     if (!errors) {
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("annual_energy"), 344049128, kErrorToleranceLo);
-        EXPECT_NEAR(empirical_trough.GetOutput("annual_fuel_usage"), 0., kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("capacity_factor"), 39.31, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("annual_W_cycle_gross"), 403814011, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("kwh_per_kw"), 3444, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("conversion_factor"), 88.75, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("system_heat_rate"), 3.413, kErrorToleranceLo);
-        EXPECT_NEAR(empirical_trough.GetOutput("system_use_lifetime_output"), 0., kErrorToleranceLo);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("annual_energy"), 344049128, kErrorToleranceHi);
+        EXPECT_NEAR(empirical_trough.GetOutput("annual_fuel_usage"), 0., kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("capacity_factor"), 39.31, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("annual_W_cycle_gross"), 403814011, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("kwh_per_kw"), 3444, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("conversion_factor"), 88.75, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("system_heat_rate"), 3.413, kErrorToleranceHi);
+        EXPECT_NEAR(empirical_trough.GetOutput("system_use_lifetime_output"), 0., kErrorToleranceHi);
     }
 }
 
@@ -37,14 +37,14 @@ NAMESPACE_TEST(csp_trough, EmpiricalTroughCmod, SolarSaltHtf_NoFinancial)
     int errors = empirical_trough.RunModule();
     EXPECT_FALSE(errors);
     if (!errors) {
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("annual_energy"), 340377809, kErrorToleranceLo);
-        EXPECT_NEAR(empirical_trough.GetOutput("annual_fuel_usage"), 0., kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("capacity_factor"), 38.89, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("annual_W_cycle_gross"), 399556634, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("kwh_per_kw"), 3407, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("conversion_factor"), 88.74, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("system_heat_rate"), 3.413, kErrorToleranceLo);
-        EXPECT_NEAR(empirical_trough.GetOutput("system_use_lifetime_output"), 0., kErrorToleranceLo);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("annual_energy"), 340377809, kErrorToleranceHi);
+        EXPECT_NEAR(empirical_trough.GetOutput("annual_fuel_usage"), 0., kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("capacity_factor"), 38.89, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("annual_W_cycle_gross"), 399556634, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("kwh_per_kw"), 3407, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("conversion_factor"), 88.74, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("system_heat_rate"), 3.413, kErrorToleranceHi);
+        EXPECT_NEAR(empirical_trough.GetOutput("system_use_lifetime_output"), 0., kErrorToleranceHi);
     }
 }
 
@@ -68,14 +68,14 @@ NAMESPACE_TEST(csp_trough, EmpiricalTroughCmod, EuroTrough_NoFinancial)
     int errors = empirical_trough.RunModule();
     EXPECT_FALSE(errors);
     if (!errors) {
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("annual_energy"), 343687390, kErrorToleranceLo);
-        EXPECT_NEAR(empirical_trough.GetOutput("annual_fuel_usage"), 0., kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("capacity_factor"), 39.27, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("annual_W_cycle_gross"), 402926405, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("kwh_per_kw"), 3440, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("conversion_factor"), 88.85, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("system_heat_rate"), 3.413, kErrorToleranceLo);
-        EXPECT_NEAR(empirical_trough.GetOutput("system_use_lifetime_output"), 0., kErrorToleranceLo);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("annual_energy"), 343687390, kErrorToleranceHi);
+        EXPECT_NEAR(empirical_trough.GetOutput("annual_fuel_usage"), 0., kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("capacity_factor"), 39.27, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("annual_W_cycle_gross"), 402926405, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("kwh_per_kw"), 3440, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("conversion_factor"), 88.85, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("system_heat_rate"), 3.413, kErrorToleranceHi);
+        EXPECT_NEAR(empirical_trough.GetOutput("system_use_lifetime_output"), 0., kErrorToleranceHi);
     }
 }
 
@@ -103,14 +103,14 @@ NAMESPACE_TEST(csp_trough, EmpiricalTroughCmod, LuzCermetHce_NoFinancial)
     int errors = empirical_trough.RunModule();
     EXPECT_FALSE(errors);
     if (!errors) {
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("annual_energy"), 310891768, kErrorToleranceLo);
-        EXPECT_NEAR(empirical_trough.GetOutput("annual_fuel_usage"), 0., kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("capacity_factor"), 35.53, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("annual_W_cycle_gross"), 369630914, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("kwh_per_kw"), 3112, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("conversion_factor"), 87.61, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("system_heat_rate"), 3.413, kErrorToleranceLo);
-        EXPECT_NEAR(empirical_trough.GetOutput("system_use_lifetime_output"), 0., kErrorToleranceLo);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("annual_energy"), 310891768, kErrorToleranceHi);
+        EXPECT_NEAR(empirical_trough.GetOutput("annual_fuel_usage"), 0., kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("capacity_factor"), 35.53, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("annual_W_cycle_gross"), 369630914, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("kwh_per_kw"), 3112, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("conversion_factor"), 87.61, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("system_heat_rate"), 3.413, kErrorToleranceHi);
+        EXPECT_NEAR(empirical_trough.GetOutput("system_use_lifetime_output"), 0., kErrorToleranceHi);
     }
 }
 
@@ -147,14 +147,14 @@ NAMESPACE_TEST(csp_trough, EmpiricalTroughCmod, PowerCycle_NoFinancial)
     int errors = empirical_trough.RunModule();
     EXPECT_FALSE(errors);
     if (!errors) {
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("annual_energy"), 350313341, kErrorToleranceLo);
-        EXPECT_NEAR(empirical_trough.GetOutput("annual_fuel_usage"), 0., kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("capacity_factor"), 40.03, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("annual_W_cycle_gross"), 427283458, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("kwh_per_kw"), 3507, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("conversion_factor"), 85.40, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("system_heat_rate"), 3.413, kErrorToleranceLo);
-        EXPECT_NEAR(empirical_trough.GetOutput("system_use_lifetime_output"), 0., kErrorToleranceLo);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("annual_energy"), 350313341, kErrorToleranceHi);
+        EXPECT_NEAR(empirical_trough.GetOutput("annual_fuel_usage"), 0., kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("capacity_factor"), 40.03, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("annual_W_cycle_gross"), 427283458, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("kwh_per_kw"), 3507, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("conversion_factor"), 85.40, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("system_heat_rate"), 3.413, kErrorToleranceHi);
+        EXPECT_NEAR(empirical_trough.GetOutput("system_use_lifetime_output"), 0., kErrorToleranceHi);
     }
 }
 
@@ -169,14 +169,14 @@ NAMESPACE_TEST(csp_trough, EmpiricalTroughCmod, TherminolHtf_NoFinancial)
     int errors = empirical_trough.RunModule();
     EXPECT_FALSE(errors);
     if (!errors) {
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("annual_energy"), 343856219, kErrorToleranceLo);
-        EXPECT_NEAR(empirical_trough.GetOutput("annual_fuel_usage"), 0., kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("capacity_factor"), 39.29, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("annual_W_cycle_gross"), 403443026, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("kwh_per_kw"), 3444, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("conversion_factor"), 88.78, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("system_heat_rate"), 3.413, kErrorToleranceLo);
-        EXPECT_NEAR(empirical_trough.GetOutput("system_use_lifetime_output"), 0., kErrorToleranceLo);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("annual_energy"), 343856219, kErrorToleranceHi);
+        EXPECT_NEAR(empirical_trough.GetOutput("annual_fuel_usage"), 0., kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("capacity_factor"), 39.29, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("annual_W_cycle_gross"), 403443026, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("kwh_per_kw"), 3444, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("conversion_factor"), 88.78, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("system_heat_rate"), 3.413, kErrorToleranceHi);
+        EXPECT_NEAR(empirical_trough.GetOutput("system_use_lifetime_output"), 0., kErrorToleranceHi);
     }
 }
 
@@ -196,14 +196,14 @@ NAMESPACE_TEST(csp_trough, EmpiricalTroughCmod, ParasiticElectric_NoFinancial)
     int errors = empirical_trough.RunModule();
     EXPECT_FALSE(errors);
     if (!errors) {
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("annual_energy"), 357850265, kErrorToleranceLo);
-        EXPECT_NEAR(empirical_trough.GetOutput("annual_fuel_usage"), 0., kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("capacity_factor"), 40.89, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("annual_W_cycle_gross"), 403814011, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("kwh_per_kw"), 3582, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("conversion_factor"), 92.31, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("system_heat_rate"), 3.413, kErrorToleranceLo);
-        EXPECT_NEAR(empirical_trough.GetOutput("system_use_lifetime_output"), 0., kErrorToleranceLo);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("annual_energy"), 357850265, kErrorToleranceHi);
+        EXPECT_NEAR(empirical_trough.GetOutput("annual_fuel_usage"), 0., kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("capacity_factor"), 40.89, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("annual_W_cycle_gross"), 403814011, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("kwh_per_kw"), 3582, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("conversion_factor"), 92.31, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("system_heat_rate"), 3.413, kErrorToleranceHi);
+        EXPECT_NEAR(empirical_trough.GetOutput("system_use_lifetime_output"), 0., kErrorToleranceHi);
     }
 }
 
@@ -219,14 +219,14 @@ NAMESPACE_TEST(csp_trough, EmpiricalTroughCmod, Phoenix_NoFinancial)
     int errors = empirical_trough.RunModule();
     EXPECT_FALSE(errors);
     if (!errors) {
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("annual_energy"), 332549669, kErrorToleranceLo);
-        EXPECT_NEAR(empirical_trough.GetOutput("annual_fuel_usage"), 0., kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("capacity_factor"), 38.00, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("annual_W_cycle_gross"), 391115710, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("kwh_per_kw"), 3329, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("conversion_factor"), 88.56, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("system_heat_rate"), 3.413, kErrorToleranceLo);
-        EXPECT_NEAR(empirical_trough.GetOutput("system_use_lifetime_output"), 0., kErrorToleranceLo);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("annual_energy"), 332549669, kErrorToleranceHi);
+        EXPECT_NEAR(empirical_trough.GetOutput("annual_fuel_usage"), 0., kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("capacity_factor"), 38.00, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("annual_W_cycle_gross"), 391115710, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("kwh_per_kw"), 3329, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("conversion_factor"), 88.56, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(empirical_trough.GetOutput("system_heat_rate"), 3.413, kErrorToleranceHi);
+        EXPECT_NEAR(empirical_trough.GetOutput("system_use_lifetime_output"), 0., kErrorToleranceHi);
     }
 }
 
