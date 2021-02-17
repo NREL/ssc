@@ -112,13 +112,13 @@ var_info vtab_battery_inputs[] = {
 
         // lifetime inputs
         { SSC_INPUT,		SSC_NUMBER,     "batt_life_model",                             "Battery life model specifier",                           "0/1",      "0=calendar/cycle,1=NMC", "BatteryCell",       "en_batt=1",                           "",                             "" },
-        { SSC_INPUT,		SSC_MATRIX,     "batt_lifetime_matrix",                        "Cycles vs capacity at different depths-of-discharge",    "",         "",                     "BatteryCell",       "batt_life_model=0",                           "",                             "" },
-        { SSC_INPUT,        SSC_NUMBER,     "batt_calendar_choice",                        "Calendar life degradation input option",                 "0/1/2",    "0=NoCalendarDegradation,1=LithiomIonModel,2=InputLossTable", "BatteryCell",       "batt_life_model=0",                           "",                             "" },
-        { SSC_INPUT,        SSC_MATRIX,     "batt_calendar_lifetime_matrix",               "Days vs capacity",                                       "",         "",                     "BatteryCell",       "batt_life_model=0&batt_calendar_choice=2", "",                             "" },
-        { SSC_INPUT,        SSC_NUMBER,     "batt_calendar_q0",                            "Calendar life model initial capacity cofficient",        "",         "",                     "BatteryCell",       "batt_life_model=0&batt_calendar_choice=1",  "",                             "" },
-        { SSC_INPUT,        SSC_NUMBER,     "batt_calendar_a",                             "Calendar life model coefficient",                        "1/sqrt(day)","",                   "BatteryCell",       "batt_life_model=0&batt_calendar_choice=1",  "",                             "" },
-        { SSC_INPUT,        SSC_NUMBER,     "batt_calendar_b",                             "Calendar life model coefficient",                        "K",        "",                     "BatteryCell",       "batt_life_model=0&batt_calendar_choice=1",  "",                             "" },
-        { SSC_INPUT,        SSC_NUMBER,     "batt_calendar_c",                             "Calendar life model coefficient",                        "K",        "",                     "BatteryCell",       "batt_life_model=0&batt_calendar_choice=1",  "",                             "" },
+        { SSC_INPUT,		SSC_MATRIX,     "batt_lifetime_matrix",                        "Cycles vs capacity at different depths-of-discharge",    "",         "",                     "BatteryCell",       "en_batt=1&batt_life_model=0",                           "",                             "" },
+        { SSC_INPUT,        SSC_NUMBER,     "batt_calendar_choice",                        "Calendar life degradation input option",                 "0/1/2",    "0=NoCalendarDegradation,1=LithiomIonModel,2=InputLossTable", "BatteryCell",       "en_batt=1&batt_life_model=0",                           "",                             "" },
+        { SSC_INPUT,        SSC_MATRIX,     "batt_calendar_lifetime_matrix",               "Days vs capacity",                                       "",         "",                     "BatteryCell",       "en_batt=1&batt_life_model=0&batt_calendar_choice=2", "",                             "" },
+        { SSC_INPUT,        SSC_NUMBER,     "batt_calendar_q0",                            "Calendar life model initial capacity cofficient",        "",         "",                     "BatteryCell",       "en_batt=1&batt_life_model=0&batt_calendar_choice=1",  "",                             "" },
+        { SSC_INPUT,        SSC_NUMBER,     "batt_calendar_a",                             "Calendar life model coefficient",                        "1/sqrt(day)","",                   "BatteryCell",       "en_batt=1&batt_life_model=0&batt_calendar_choice=1",  "",                             "" },
+        { SSC_INPUT,        SSC_NUMBER,     "batt_calendar_b",                             "Calendar life model coefficient",                        "K",        "",                     "BatteryCell",       "en_batt=1&batt_life_model=0&batt_calendar_choice=1",  "",                             "" },
+        { SSC_INPUT,        SSC_NUMBER,     "batt_calendar_c",                             "Calendar life model coefficient",                        "K",        "",                     "BatteryCell",       "en_batt=1&batt_life_model=0&batt_calendar_choice=1",  "",                             "" },
 
         // replacement inputs
         { SSC_INPUT,        SSC_NUMBER,     "batt_replacement_capacity",                   "Capacity degradation at which to replace battery",       "%",        "",                     "BatterySystem",       "",                           "",                             "" },
@@ -563,6 +563,10 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 
             // Battery lifetime
             batt_vars->batt_life_model = vt.as_integer("batt_life_model");
+
+            if (batt_vars->batt_life_model == 1 && batt_vars->batt_chem != 1)
+                throw exec_error("battery", "NREL NMC life model (batt_life_model=1) can only be used with Li-Ion chemistries (batt_chem=1).");
+
             if (batt_vars->batt_life_model == 0) {
                 batt_vars->batt_calendar_choice = vt.as_integer("batt_calendar_choice");
                 batt_vars->batt_lifetime_matrix = vt.as_matrix("batt_lifetime_matrix");
