@@ -2585,8 +2585,6 @@ public:
         //std::vector<double> grid_to_batt = as_vector_double("grid_to_batt");
         ssc_number_t* grid_to_batt = as_array("grid_to_batt", &n_batt_to_grid);
         size_t n_steps_per_year = n_batt_to_grid / nyears;
-        std::vector<double> elec_purchases = as_vector_double("year1_hourly_salespurchases_with_system");
-        std::vector<double> elec_from_grid = as_vector_double("year1_hourly_e_fromgrid");
         size_t n_multipliers;
         ssc_number_t* ppa_multipliers = as_array("ppa_multipliers", &n_multipliers);
         for (int a = 0; a <= nyears; a++) {

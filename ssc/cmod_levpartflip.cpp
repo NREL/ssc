@@ -2783,8 +2783,6 @@ public:
         ssc_number_t* grid_to_batt = as_array("grid_to_batt", &n_grid_to_batt); //Power from grid to battery in kW (needs to be changed to kwh)
         size_t n_steps_per_year = n_grid_to_batt / nyears;
         //std::vector<double> grid_to_batt = as_vector_double("grid_to_batt");
-        std::vector<double> elec_purchases = as_vector_double("year1_hourly_salespurchases_with_system");
-        std::vector<double> elec_from_grid = as_vector_double("year1_hourly_e_fromgrid");
         size_t n_multipliers;
         ssc_number_t* ppa_multipliers = as_array("ppa_multipliers", &n_multipliers);
         for (int a = 0; a <= nyears; a++) {
