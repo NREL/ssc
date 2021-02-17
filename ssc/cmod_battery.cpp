@@ -563,6 +563,10 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 
             // Battery lifetime
             batt_vars->batt_life_model = vt.as_integer("batt_life_model");
+
+            if (batt_vars->batt_life_model == 1 && batt_vars->batt_chem != 1)
+                throw exec_error("battery", "NREL NMC life model (batt_life_model=1) can only be used with Li-Ion chemistries (batt_chem=1).");
+
             if (batt_vars->batt_life_model == 0) {
                 batt_vars->batt_calendar_choice = vt.as_integer("batt_calendar_choice");
                 batt_vars->batt_lifetime_matrix = vt.as_matrix("batt_lifetime_matrix");
