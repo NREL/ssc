@@ -45,14 +45,11 @@ static var_info _cm_vtab_singleowner[] = {
 	{ SSC_INPUT,        SSC_ARRAY,       "gen",                                         "Net power to or from the grid",                            "kW",       "",                    "System Output", "*", "", "" },
     { SSC_INPUT,        SSC_ARRAY,      "gen_without_battery",                          "Electricity to or from the renewable system, without the battery", "kW", "",                     "System Output", "", "", "" },
     { SSC_INPUT,        SSC_ARRAY,      "batt_annual_charge_from_system",                 "Battery annual energy charged from system",                 "kWh",      "",                      "Battery",       "",                           "",                               "" },
-    { SSC_INPUT,        SSC_ARRAY,      "batt_annual_charge_from_grid",               "Battery annual energy charged from grid",               "kWh",      "",                      "Battery",       "",                           "",                               "" },
-    { SSC_INPUT,        SSC_ARRAY,      "batt_annual_charge_energy",                  "Battery annual energy charged",                         "kWh",      "",                      "Battery",       "",                           "",                               "" },
     { SSC_INPUT,        SSC_ARRAY,      "batt_annual_discharge_energy",               "Battery annual energy discharged",                      "kWh",      "",                      "Battery",       "",                           "",                               "" },
-    { SSC_INPUT,        SSC_NUMBER,      "battery_total_cost_lcos",               "Battery total investment cost",                      "$",      "",                      "Battery",       "",                           "",                               "" },
-    { SSC_INPUT, SSC_ARRAY, "year1_hourly_e_fromgrid", "Electricity from grid (year 1 hourly)", "kWh", "", "Time Series", "", "", "" },
-    { SSC_INPUT,       SSC_ARRAY,      "year1_hourly_salespurchases_with_system",     "Electricity sales/purchases with system (year 1 hourly)",    "$", "",          "Time Series",             "",                         "",                   "" },
+    { SSC_INPUT,        SSC_NUMBER,     "battery_total_cost_lcos",               "Battery total investment cost",                      "$",      "",                      "Battery",       "",                           "",                               "" },
+    { SSC_INPUT,        SSC_ARRAY,      "year1_hourly_e_fromgrid",               "Electricity from grid (year 1 hourly)", "kWh", "", "Time Series", "", "", "" },
+    { SSC_INPUT,        SSC_ARRAY,      "year1_hourly_salespurchases_with_system",     "Electricity sales/purchases with system (year 1 hourly)",    "$", "",          "Time Series",             "",                         "",                   "" },
     { SSC_INPUT,        SSC_ARRAY,      "grid_to_batt",                               "Electricity to grid from battery",                      "kW",      "",                       "Battery",       "",                           "",                              "" },
-    { SSC_INPUT,        SSC_ARRAY,      "annual_import_to_grid_energy",               "Annual energy imported from grid",                      "kWh",      "",                      "Battery",       "",                           "",                               "" },
     { SSC_INPUT,        SSC_ARRAY,      "batt_capacity_percent",                      "Battery relative capacity to nameplate",                 "%",        "",                     "Battery",       "",                           "",                              "" },
 
 
@@ -662,9 +659,9 @@ static var_info _cm_vtab_singleowner[] = {
     { SSC_OUTPUT, SSC_ARRAY, "cf_annual_discharge_lcos", "Annual storage discharge", "kWh", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_charging_cost_grid", "Annual cost to charge from grid", "$", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_charging_cost_pv", "Annual cost to charge from system", "$", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_om_production1_expense", "Annual cost to for battery production based maintenance", "$", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_om_capacity1_expense", "Annual cost for battery capacity based maintenance", "$", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT, SSC_ARRAY, "cf_om_fixed1_expense", "Annual fixed cost for battery maintenance", "$", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_om_batt_production_expense", "Annual cost to for battery production based maintenance", "$", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_om_batt_capacity_expense", "Annual cost for battery capacity based maintenance", "$", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_om_batt_fixed_expense", "Annual fixed cost for battery maintenance", "$", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_batt_replacement_cost", "Annual cost of battery replacements", "$", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_salvage_cost_lcos", "Annual battery salvage value costs", "$", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_util_escal_rate", "Utility rate escalation", "%", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
@@ -3016,24 +3013,21 @@ public:
     //LCOS Calculations
     if (is_assigned("battery_total_cost_lcos") && as_double("battery_total_cost_lcos") != 0) {
         double lcos_investment_cost = as_double("battery_total_cost_lcos"); //does not include replacement costs
-        double lcos_om_cost = npv(CF_om_capacity1_expense, nyears, nom_discount_rate); //Todo: include variable om due to charging
-        //std::vector<double> charged_grid = as_vector_double("batt_annual_charge_from_grid");
-        std::vector<double> charged_pv = as_vector_double("batt_annual_charge_from_system");
-        std::vector<double> charged_total = as_vector_double("batt_annual_charge_energy");
-        std::vector<double> lcos_energy_discharged = as_vector_double("batt_annual_discharge_energy");
-        //std::vector<double> batt_cost_replacement_schedule = as_vector_double("cf_battery_replacement_cost_schedule");
-        //std::vector<double> batt_capacity_percent = as_vector_double("batt_capacity_percent");
+
+        std::vector<double> charged_pv = as_vector_double("batt_annual_charge_from_system"); //amount energy to battery from system (kwh)
+        std::vector<double> lcos_energy_discharged = as_vector_double("batt_annual_discharge_energy"); //annual energy discharged from battery (kwh)
+        
         size_t n_batt_capacity_percent;
-        ssc_number_t* batt_capacity_percent = as_array("batt_capacity_percent", &n_batt_capacity_percent);
+        ssc_number_t* batt_capacity_percent = as_array("batt_capacity_percent", &n_batt_capacity_percent); //battery capacity relative to nameplate (%)
 
         // Use PPA values to calculate revenue from purchases and sales
         size_t n_multipliers;
-        size_t n_batt_to_grid, n_elec_purchases, n_elec_from_grid, n_annual_import_to_grid_energy;
-        //ssc_number_t* grid_to_batt = as_array("grid_to_batt", &n_batt_to_grid);
-        
-        std::vector<double> grid_to_batt = as_vector_double("grid_to_batt");
+        size_t n_grid_to_batt, n_elec_purchases, n_elec_from_grid;
+        ssc_number_t* grid_to_batt = as_array("grid_to_batt", &n_grid_to_batt); //Power from grid to battery in kW (needs to be changed to kwh)
+        size_t n_steps_per_year = n_grid_to_batt / nyears;
+        //std::vector<double> grid_to_batt = as_vector_double("grid_to_batt"); //energy from grid to battery (hourly or lifetime)
 
-        ssc_number_t* annual_import_to_grid_energy = as_array("annual_import_to_grid_energy", &n_annual_import_to_grid_energy);
+
 
         std::vector<double> charged_grid = as_vector_double("batt_annual_charge_from_grid");
         cf.at(CF_charging_cost_grid, 0) = 0;
@@ -3052,21 +3046,19 @@ public:
         for (int a = 0; a <= nyears; a++) {
             if (as_integer("system_use_lifetime_output") == 1)
             {
-                // hourly_enet includes all curtailment, availability
-                
+                //Lifetime calculations
+                //Calculate cost to charge battery from grid (either using ppa price or electricity rates if enabled)
                 double ppa_value = cf.at(CF_ppa_price, a);
-                for (size_t h = 0; h < 8760; h++) {
+                for (size_t h = 0; h < n_steps_per_year; h++) {
                     if (ppa_purchases && a!=0) {
-                        cf.at(CF_charging_cost_grid, a) += grid_to_batt[(a - 1) * 8760 + h] * ppa_value / 100.0 * ppa_multipliers[h];
+                        cf.at(CF_charging_cost_grid, a) += grid_to_batt[(a - 1) * n_steps_per_year + h] * 8760/n_steps_per_year * ppa_value / 100.0 * ppa_multipliers[h];
                     }
                     if (!ppa_purchases && a != 0) {
                         // Recompute this variable because the ppa_gen values (hourly_net) were all positve until now 
                         if (elec_from_grid[h] != 0) {
-                            //cf.at(CF_charging_cost_grid, a) += charged_grid[a] * cf.at(CF_utility_bill, a) / annual_import_to_grid_energy[a];
-                            cf.at(CF_charging_cost_grid, a) += grid_to_batt[(a - 1) * 8760 + h] * -elec_purchases[h] * cf.at(CF_util_escal_rate, a) / elec_from_grid[h];
+                            cf.at(CF_charging_cost_grid, a) += grid_to_batt[(a - 1) * n_steps_per_year + h] * 8760 / n_steps_per_year * -elec_purchases[h] * cf.at(CF_util_escal_rate, a) / elec_from_grid[h];
                         }
-                        else
-                            cf.at(CF_charging_cost_grid, a) += 0;
+                        
                     }
                 }
                 
@@ -3074,14 +3066,14 @@ public:
             }
             else
             {
-                
+                //Single year calculations (might not be needed as their is no Single Owner for PVWatts Battery
+                //Calculate cost to charge battery from grid (either using ppa price or electricity rates if enabled)
                 double ppa_value = cf.at(CF_ppa_price, a);
                 for (size_t h = 0; h < 8760; h++) {
                     if (ppa_purchases && a!=0) {
                         cf.at(CF_charging_cost_grid, a) += grid_to_batt[h] * ppa_value / 100.0 * ppa_multipliers[h];
                     }
                     if (!ppa_purchases && a != 0) {
-                        // Recompute this variable because the ppa_gen values (hourly_net) were all positve until now 
                         if (elec_from_grid[h] != 0) {
                             cf.at(CF_charging_cost_grid, a) += grid_to_batt[h] * -elec_purchases[h] * cf.at(CF_util_escal_rate, a) / elec_from_grid[h];
                         }
@@ -3093,43 +3085,42 @@ public:
                 
             }
 
-            //cf.at(CF_charging_cost_grid, a) = charged_grid[a] * cf.at(CF_ppa_price, a) / 100;
-            cf.at(CF_charging_cost_pv, a) = charged_pv[a] * lcoe_nom / 100;
-            //charged_total[a] = charged_grid[a] + charged_pv[a];
-            cf.at(CF_energy_charged_grid, a) = cf.at(CF_charging_cost_grid, a) + cf.at(CF_charging_cost_pv, a);
-            cf.at(CF_om_production1_expense, a) *= lcos_energy_discharged[a];
-            cf.at(CF_energy_discharged, a) = lcos_energy_discharged[a];
-            cf.at(CF_salvage_cost_lcos, a) = 0;
-            cf.at(CF_annual_cost_lcos, a) = -cf.at(CF_charging_cost_grid, a) +
-                -cf.at(CF_charging_cost_pv, a) + -cf.at(CF_om_fixed1_expense, a) +
-                -cf.at(CF_om_capacity1_expense, a) + -cf.at(CF_om_production1_expense, a) +
-                -cf.at(CF_battery_replacement_cost, a);
+
+            cf.at(CF_charging_cost_pv, a) = charged_pv[a] * lcoe_nom / 100; //Cost to charge from pv based on LCOE calculation
+            //Should it be nom or real LCOE
+            //Should it be flat or adjusted for discount rate + inflation?
+
+            cf.at(CF_energy_charged_grid, a) = cf.at(CF_charging_cost_grid, a) + cf.at(CF_charging_cost_pv, a); //total amount of energy charged, not used
+            cf.at(CF_om_production1_expense, a) *= lcos_energy_discharged[a]; //Multiply OM production expense by energy discharged annually
+            cf.at(CF_energy_discharged, a) = lcos_energy_discharged[a]; //store amount of energy discharged annually
+            cf.at(CF_salvage_cost_lcos, a) = 0; //Set battery salvage value to 0 in each year (not necessary) will overwrite for final year
+            cf.at(CF_annual_cost_lcos, a) = -cf.at(CF_charging_cost_grid, a) + //Charging cost from grid
+                -cf.at(CF_charging_cost_pv, a) + -cf.at(CF_om_fixed1_expense, a) + //Charging cost from system + fixed OM expense
+                -cf.at(CF_om_capacity1_expense, a) + -cf.at(CF_om_production1_expense, a) + //OM capacity based expense + OM production based expense
+                -cf.at(CF_battery_replacement_cost, a); //Battery replacement cost in each year
+                                                        //Add up all cost components in each year for cash flow 
 
         }
-        cf.at(CF_annual_cost_lcos, 0) += -lcos_investment_cost; //add initial investment to year 0
-        lcos_om_cost += npv(CF_om_production1_expense, nyears, nom_discount_rate);
-        lcos_om_cost += npv(CF_om_fixed1_expense, nyears, nom_discount_rate);
-        double lcos_charging_cost = npv(CF_energy_charged_grid, nyears, nom_discount_rate);
+        cf.at(CF_annual_cost_lcos, 0) += -lcos_investment_cost; //add initial investment cost to year 0
         double batt_salvage_value_frac = as_double("batt_salvage_percentage") * 0.01;
         double lcos_salvage_value = cf.at(CF_battery_replacement_cost_schedule, nyears) * batt_capacity_percent[n_batt_capacity_percent - 1] / 100 * batt_salvage_value_frac; //set as a percentage or direct salvage value
-        cf.at(CF_salvage_cost_lcos, nyears) = -lcos_salvage_value;
-        cf.at(CF_annual_cost_lcos, nyears) -= cf.at(CF_salvage_cost_lcos, nyears);
-        double lcos_denominator = npv(CF_energy_discharged, nyears, nom_discount_rate);
-        double lcos_denominator_real = npv(CF_energy_discharged, nyears, disc_real);
-        //double lcos_numerator = (lcos_investment_cost + lcos_om_cost + lcos_charging_cost + lcos_salvage_value);
-        double lcos_numerator = -(npv(CF_annual_cost_lcos, nyears, nom_discount_rate)) - cf.at(CF_annual_cost_lcos, 0);
+        cf.at(CF_salvage_cost_lcos, nyears) = -lcos_salvage_value; //Add in salvage value to final year
+        cf.at(CF_annual_cost_lcos, nyears) -= cf.at(CF_salvage_cost_lcos, nyears); //Add battery salvage value to overall cash flow
+        double lcos_denominator = npv(CF_energy_discharged, nyears, nom_discount_rate); //Nominal energy discharged value
+        double lcos_denominator_real = npv(CF_energy_discharged, nyears, disc_real); // Real energy discharged value
+        double lcos_numerator = -(npv(CF_annual_cost_lcos, nyears, nom_discount_rate)) - cf.at(CF_annual_cost_lcos, 0); //Nominal dollars in numerator
         assign("npv_annual_costs_lcos", var_data((ssc_number_t)lcos_numerator));
         save_cf(CF_annual_cost_lcos, nyears, "cf_annual_cost_lcos");
         save_cf(CF_energy_discharged, nyears, "cf_annual_discharge_lcos");
         save_cf(CF_charging_cost_grid, nyears, "cf_charging_cost_grid");
         save_cf(CF_charging_cost_pv, nyears, "cf_charging_cost_pv");
-        save_cf(CF_om_capacity1_expense, nyears, "cf_om_capacity1_expense");
-        save_cf(CF_om_production1_expense, nyears, "cf_om_production1_expense");
-        save_cf(CF_om_fixed1_expense, nyears, "cf_om_fixed1_expense");
+        save_cf(CF_om_capacity1_expense, nyears, "cf_om_batt_capacity_expense");
+        save_cf(CF_om_production1_expense, nyears, "cf_om_batt_production_expense");
+        save_cf(CF_om_fixed1_expense, nyears, "cf_om_batt_fixed_expense");
         save_cf(CF_battery_replacement_cost, nyears, "cf_batt_replacement_cost");
         save_cf(CF_salvage_cost_lcos, nyears, "cf_salvage_cost_lcos");
-        double lcos_nom = lcos_numerator / lcos_denominator * 100.0; // cent/kWh
-        double lcos_real = lcos_numerator / lcos_denominator_real * 100.0; // cents/kWh
+        double lcos_nom = lcos_numerator / lcos_denominator * 100.0; // Nominal LCOS cent/kWh 
+        double lcos_real = lcos_numerator / lcos_denominator_real * 100.0; // Real LCOS cents/kWh
         assign("lcos_nom", var_data((ssc_number_t)lcos_nom));
         assign("lcos_real", var_data((ssc_number_t)lcos_real));
         assign("npv_energy_lcos_nom", var_data((ssc_number_t)lcos_denominator));

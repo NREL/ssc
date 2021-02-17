@@ -2581,7 +2581,10 @@ public:
         std::vector<double> charged_total = as_vector_double("batt_annual_charge_energy");
         std::vector<double> lcos_energy_discharged = as_vector_double("batt_annual_discharge_energy");
         cf.at(CF_charging_cost_grid, 0) = 0;
-        std::vector<double> grid_to_batt = as_vector_double("grid_to_batt");
+        size_t n_batt_to_grid;
+        //std::vector<double> grid_to_batt = as_vector_double("grid_to_batt");
+        ssc_number_t* grid_to_batt = as_array("grid_to_batt", &n_batt_to_grid);
+        size_t n_steps_per_year = n_batt_to_grid / nyears;
         std::vector<double> elec_purchases = as_vector_double("year1_hourly_salespurchases_with_system");
         std::vector<double> elec_from_grid = as_vector_double("year1_hourly_e_fromgrid");
         size_t n_multipliers;
@@ -2593,9 +2596,9 @@ public:
                 // hourly_enet includes all curtailment, availability
 
                 double ppa_value = cf.at(CF_ppa_price, a);
-                for (size_t h = 0; h < 8760; h++) {
+                for (size_t h = 0; h < n_steps_per_year; h++) {
                     if (a != 0) {
-                        cf.at(CF_charging_cost_grid, a) += grid_to_batt[(a - 1) * 8760 + h] * ppa_value / 100.0 * ppa_multipliers[h];
+                        cf.at(CF_charging_cost_grid, a) += grid_to_batt[(a - 1) * n_steps_per_year + h] * 8760/n_steps_per_year * ppa_value / 100.0 * ppa_multipliers[h];
                     }
 
                 }
@@ -2606,9 +2609,9 @@ public:
             {
 
                 double ppa_value = cf.at(CF_ppa_price, a);
-                for (size_t h = 0; h < 8760; h++) {
+                for (size_t h = 0; h < n_steps_per_year; h++) {
                     if (a != 0) {
-                        cf.at(CF_charging_cost_grid, a) += grid_to_batt[h] * ppa_value / 100.0 * ppa_multipliers[h];
+                        cf.at(CF_charging_cost_grid, a) += grid_to_batt[h] * 8760 / n_steps_per_year * ppa_value / 100.0 * ppa_multipliers[h];
                     }
 
                 }

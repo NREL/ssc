@@ -647,6 +647,14 @@ static var_info _cm_vtab_host_developer[] = {
 	{ SSC_OUTPUT, SSC_NUMBER, "npv_annual_costs", "Present value of annual costs", "$", "", "LCOE calculations", "*", "", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_annual_cost_lcos", "Annual storage costs", "$", "", "LCOS calculations", "", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_annual_discharge_lcos", "Annual storage discharge", "kWh", "", "LCOS calculations", "", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_charging_cost_grid", "Annual cost to charge from grid", "$", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_charging_cost_pv", "Annual cost to charge from system", "$", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_om_batt_production_expense", "Annual cost to for battery production based maintenance", "$", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_om_batt_capacity_expense", "Annual cost for battery capacity based maintenance", "$", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_om_batt_fixed_expense", "Annual fixed cost for battery maintenance", "$", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_batt_replacement_cost", "Annual cost of battery replacements", "$", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_salvage_cost_lcos", "Annual battery salvage value costs", "$", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
+
     { SSC_OUTPUT, SSC_NUMBER, "npv_annual_costs_lcos", "Present value of annual storage costs", "$", "", "LCOE calculations", "", "", "" },
     { SSC_OUTPUT, SSC_NUMBER, "npv_energy_lcos_real", "Present value of annual stored energy (real)", "kWh", "", "LCOE calculations", "", "", "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "lcos_nom",                        "Nominal levelized cost of storage",              "cents/kWh",                   "", "Metrics", "", "", "" },
@@ -2774,6 +2782,7 @@ public:
 
     ///////////////////////////////////////////////////////////////////////
 //LCOS Calculations
+    //Equation based on "Projecting the Future Levelized Cost of Electricity Storage Technologies", https://www.cell.com/joule/pdfExtended/S2542-4351(18)30583-X
     if (is_assigned("battery_total_cost_lcos") && as_double("battery_total_cost_lcos") != 0) {
         double lcos_investment_cost = as_double("battery_total_cost_lcos"); //does not include replacement costs
         double lcos_om_cost = npv(CF_om_capacity1_expense, nyears, nom_discount_rate); //Todo: include variable om due to charging
@@ -2781,7 +2790,10 @@ public:
         std::vector<double> charged_pv = as_vector_double("batt_annual_charge_from_system");
         std::vector<double> charged_total = as_vector_double("batt_annual_charge_energy");
         std::vector<double> lcos_energy_discharged = as_vector_double("batt_annual_discharge_energy");
-        std::vector<double> grid_to_batt = as_vector_double("grid_to_batt");
+        //std::vector<double> grid_to_batt = as_vector_double("grid_to_batt");
+        size_t n_grid_to_batt;
+        ssc_number_t* grid_to_batt = as_array("grid_to_batt", &n_grid_to_batt); //Power from grid to battery in kW (needs to be changed to kwh)
+        size_t n_steps_per_year = n_grid_to_batt / nyears;
         cf.at(CF_charging_cost_grid, 0) = 0;
         std::vector<double> elec_purchases = as_vector_double("year1_hourly_salespurchases_with_system");
         std::vector<double> elec_from_grid = as_vector_double("year1_hourly_e_fromgrid");
@@ -2797,13 +2809,13 @@ public:
                 // hourly_enet includes all curtailment, availability
 
 
-                for (size_t h = 0; h < 8760; h++) {
+                for (size_t h = 0; h < n_steps_per_year; h++) {
 
                     if (a != 0) {
                         // Recompute this variable because the ppa_gen values (hourly_net) were all positve until now 
                         if (elec_from_grid[h] != 0) {
                             //cf.at(CF_charging_cost_grid, a) += charged_grid[a] * cf.at(CF_utility_bill, a) / annual_import_to_grid_energy[a];
-                            cf.at(CF_charging_cost_grid, a) += grid_to_batt[(a - 1) * 8760 + h] * -elec_purchases[h] * cf.at(CF_util_escal_rate, a) / elec_from_grid[h];
+                            cf.at(CF_charging_cost_grid, a) += grid_to_batt[(a - 1) * n_steps_per_year + h] * 8760 / n_steps_per_year * -elec_purchases[h] * cf.at(CF_util_escal_rate, a) / elec_from_grid[h];
                         }
                         else
                             cf.at(CF_charging_cost_grid, a) += 0;
@@ -2816,12 +2828,12 @@ public:
             {
 
 
-                for (size_t h = 0; h < 8760; h++) {
+                for (size_t h = 0; h < n_steps_per_year; h++) {
 
                     if (a != 0) {
                         // Recompute this variable because the ppa_gen values (hourly_net) were all positve until now 
                         if (elec_from_grid[h] != 0) {
-                            cf.at(CF_charging_cost_grid, a) += grid_to_batt[h] * -elec_purchases[h] * cf.at(CF_util_escal_rate, a) / elec_from_grid[h];
+                            cf.at(CF_charging_cost_grid, a) += grid_to_batt[h] * 8760 / n_steps_per_year * -elec_purchases[h] * cf.at(CF_util_escal_rate, a) / elec_from_grid[h];
                         }
                         else
                             cf.at(CF_charging_cost_grid, a) += 0;
