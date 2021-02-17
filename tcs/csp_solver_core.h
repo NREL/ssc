@@ -26,11 +26,13 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <numeric>
 #include <limits>
 #include <memory>
+#include <unordered_map>
 
 #include "lib_weatherfile.h"
 #include "csp_solver_util.h"
 
 #include "numeric_solvers.h"
+#include "lib_util.h"
 
 class C_csp_solver_steam_state
 {
@@ -94,16 +96,11 @@ class C_csp_solver_sim_info
 public:
 	
 	S_timestep ms_ts;
-	
-	//double m_time;		//[s] Time at end of timestep
-	//double m_step;		//[s] Duration of timestep
 
 	int m_tou;		//[-] Time-Of-Use Period
 
 	C_csp_solver_sim_info()
 	{
-		//m_time = m_step = std::numeric_limits<double>::quiet_NaN();
-
 		m_tou = -1;
 	}
 };
@@ -947,63 +944,6 @@ private:
 
 	C_csp_solver::C_csp_solver_kernel mc_kernel;
 
-	// Hierarchy logic
-	bool m_is_CR_SU__PC_OFF__TES_OFF__AUX_OFF_avail;
-	bool m_is_CR_ON__PC_SB__TES_OFF__AUX_OFF_avail;
-	bool m_is_CR_ON__PC_SU__TES_OFF__AUX_OFF_avail;
-	bool m_is_CR_ON__PC_OFF__TES_CH__AUX_OFF_avail;
-	bool m_is_CR_OFF__PC_SU__TES_DC__AUX_OFF_avail;
-	bool m_is_CR_DF__PC_MAX__TES_OFF__AUX_OFF_avail;
-	
-	bool m_is_CR_ON__PC_RM_HI__TES_OFF__AUX_OFF_avail_HI_SIDE;
-	bool m_is_CR_ON__PC_RM_HI__TES_OFF__AUX_OFF_avail_LO_SIDE;
-
-	bool m_is_CR_ON__PC_RM_LO__TES_OFF__AUX_OFF_avail;
-
-	bool m_is_CR_ON__PC_TARGET__TES_CH__AUX_OFF_avail_HI_SIDE;
-	bool m_is_CR_ON__PC_TARGET__TES_CH__AUX_OFF_avail_LO_SIDE;
-
-	bool m_is_CR_ON__PC_TARGET__TES_DC__AUX_OFF_avail;
-	bool m_is_CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF_avail;
-
-	bool m_is_CR_DF__PC_OFF__TES_FULL__AUX_OFF_avail;
-
-	bool m_is_CR_OFF__PC_SB__TES_DC__AUX_OFF_avail;
-	bool m_is_CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF_avail;
-	bool m_is_CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF_avail;
-
-	bool m_is_CR_ON__PC_SB__TES_CH__AUX_OFF_avail;
-	bool m_is_CR_SU__PC_MIN__TES_EMPTY__AUX_OFF_avail;
-	bool m_is_CR_SU__PC_SB__TES_DC__AUX_OFF_avail;
-	bool m_is_CR_ON__PC_SB__TES_DC__AUX_OFF_avail;
-
-	bool m_is_CR_OFF__PC_TARGET__TES_DC__AUX_OFF_avail;
-	bool m_is_CR_SU__PC_TARGET__TES_DC__AUX_OFF_avail;
-	bool m_is_CR_ON__PC_RM_HI__TES_FULL__AUX_OFF_avail;
-
-	bool m_is_CR_ON__PC_MIN__TES_EMPTY__AUX_OFF_avail;
-
-	bool m_is_CR_SU__PC_RM_LO__TES_EMPTY__AUX_OFF_avail;
-
-	bool m_is_CR_DF__PC_MAX__TES_FULL__AUX_OFF_avail;
-
-	bool m_is_CR_ON__PC_SB__TES_FULL__AUX_OFF_avail;
-
-	bool m_is_CR_SU__PC_SU__TES_DC__AUX_OFF_avail;
-
-	bool m_is_CR_ON__PC_SU__TES_CH__AUX_OFF_avail;
-
-	bool m_is_CR_DF__PC_SU__TES_FULL__AUX_OFF_avail;
-
-	bool m_is_CR_DF__PC_SU__TES_OFF__AUX_OFF_avail;
-
-    bool m_is_CR_TO_COLD__PC_TARGET__TES_DC__AUX_OFF_avail;
-    bool m_is_CR_TO_COLD__PC_RM_LO__TES_EMPTY__AUX_OFF_avail;
-    bool m_is_CR_TO_COLD__PC_SB__TES_DC__AUX_OFF_avail;
-    bool m_is_CR_TO_COLD__PC_MIN__TES_EMPTY__AUX_OFF_avail;
-    bool m_is_CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF_avail;
-    bool m_is_CR_TO_COLD__PC_SU__TES_DC__AUX_OFF_avail;
-
 	// member string for exception messages
 	std::string error_msg;
 
@@ -1057,21 +997,6 @@ private:
 		// Estimates to use
 	double m_T_htf_pc_cold_est;			//[C]
 
-		// Reset hierarchy logic
-	void reset_hierarchy_logic();
-	void turn_off_plant();
-
-	enum E_solver_outcomes
-	{
-		CSP_NO_SOLUTION,	// Models did not provide enough information with which to iterate on T_rec_in
-		POOR_CONVERGENCE,	// Models solved, but convergence on T_rec_in was not within specified tolerance
-		CSP_CONVERGED,		// Models solved; convergence within specified tolerance
-		KNOW_NEXT_MODE,		// Models did not solve, but failure mode allowed next mode to be determined
-		UNDER_TARGET_PC,	// Models solved, but could not converge because the operating mode did not allow enough thermal power to go to power cycle
-		OVER_TARGET_PC,		// Models solved, but could not converge because the operating mode could not reduce the mass flow rate enough to the power cycle
-		REC_IS_OFF			// Collector-receiver model did not produce power
-	};
-
 	// Solved Controller Variables
 	double m_defocus;		//[-] (1..0) Should only be less than 1 if receiver is on, but defocused
 	
@@ -1091,82 +1016,6 @@ public:
 
 	// Vector to track operating modes
 	std::vector<int> m_op_mode_tracking;
-
-	enum tech_operating_modes
-	{
-		ENTRY_MODE = 0,
-		
-		CR_OFF__PC_OFF__TES_OFF__AUX_OFF,
-		CR_SU__PC_OFF__TES_OFF__AUX_OFF,
-		CR_ON__PC_SU__TES_OFF__AUX_OFF,
-		CR_ON__PC_SB__TES_OFF__AUX_OFF,
-		
-		CR_ON__PC_RM_HI__TES_OFF__AUX_OFF,
-		CR_ON__PC_RM_LO__TES_OFF__AUX_OFF,
-		
-		CR_DF__PC_MAX__TES_OFF__AUX_OFF,
-
-		CR_OFF__PC_SU__TES_DC__AUX_OFF,
-		CR_ON__PC_OFF__TES_CH__AUX_OFF,
-
-		SKIP_10,
-
-		CR_ON__PC_TARGET__TES_CH__AUX_OFF,
-		CR_ON__PC_TARGET__TES_DC__AUX_OFF,
-
-		CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF,
-
-		CR_DF__PC_OFF__TES_FULL__AUX_OFF,
-		
-		CR_OFF__PC_SB__TES_DC__AUX_OFF,
-		CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF,
-		CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF,
-
-		CR_ON__PC_SB__TES_CH__AUX_OFF,
-		CR_SU__PC_MIN__TES_EMPTY__AUX_OFF,
-
-		SKIP_20,
-
-		CR_SU__PC_SB__TES_DC__AUX_OFF,
-		CR_ON__PC_SB__TES_DC__AUX_OFF,
-		CR_OFF__PC_TARGET__TES_DC__AUX_OFF,
-		CR_SU__PC_TARGET__TES_DC__AUX_OFF,
-		CR_ON__PC_RM_HI__TES_FULL__AUX_OFF,
-
-		CR_ON__PC_MIN__TES_EMPTY__AUX_OFF,
-
-		CR_SU__PC_RM_LO__TES_EMPTY__AUX_OFF,
-
-		CR_DF__PC_MAX__TES_FULL__AUX_OFF,
-
-		CR_ON__PC_SB__TES_FULL__AUX_OFF,
-
-		SKIP_30,
-
-		CR_SU__PC_SU__TES_DC__AUX_OFF,
-
-		CR_ON__PC_SU__TES_CH__AUX_OFF,
-
-		CR_DF__PC_SU__TES_FULL__AUX_OFF,
-
-		CR_DF__PC_SU__TES_OFF__AUX_OFF,
-
-        CR_TO_COLD__PC_TARGET__TES_DC__AUX_OFF,
-
-        CR_TO_COLD__PC_RM_LO__TES_EMPTY__AUX_OFF,
-
-        CR_TO_COLD__PC_SB__TES_DC__AUX_OFF,
-
-        CR_TO_COLD__PC_MIN__TES_EMPTY__AUX_OFF,
-
-        CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF,
-
-        SKIP_40,
-
-        CR_TO_COLD__PC_SU__TES_DC__AUX_OFF
-	};
-    
-    static std::string tech_operating_modes_str[];
     
 	C_csp_solver(C_csp_weatherreader &weather,
 		C_csp_collector_receiver &collector_receiver,
@@ -1225,7 +1074,8 @@ public:
 		C_csp_solver* mpc_csp_solver;
 
 		C_csp_power_cycle::E_csp_power_cycle_modes m_pc_mode;      //[-]
-		int m_cr_mode;      //[-]
+        C_csp_collector_receiver::E_csp_cr_modes m_cr_mode;      //[-]
+
         bool m_is_rec_outlet_to_hottank;    //[-]
 
 		double m_q_dot_pc_target;   //[MWt]
@@ -1245,7 +1095,7 @@ public:
 		double m_m_dot_pc_in;       //[kg/hr]
 
 		C_MEQ__m_dot_tes(E_m_dot_solver_modes solver_mode, C_csp_solver* pc_csp_solver,
-            C_csp_power_cycle::E_csp_power_cycle_modes pc_mode, int cr_mode,
+            C_csp_power_cycle::E_csp_power_cycle_modes pc_mode, C_csp_collector_receiver::E_csp_cr_modes cr_mode,
             bool is_rec_outlet_to_hottank,
 			double q_dot_pc_target /*MWt*/,
 			double defocus /*-*/, double t_ts /*s*/,
@@ -1286,7 +1136,8 @@ public:
 		double m_q_dot_pc_target;   //[MWt]
 
         C_csp_power_cycle::E_csp_power_cycle_modes m_pc_mode;      //[-]
-		int m_cr_mode;      //[-]
+        C_csp_collector_receiver::E_csp_cr_modes m_cr_mode;      //[-]
+
         bool m_is_rec_outlet_to_hottank;    //[-]
 
 		double m_defocus;   //[-]
@@ -1300,7 +1151,7 @@ public:
 
 		C_MEQ__T_field_cold(C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode, C_csp_solver* pc_csp_solver,
 			double q_dot_pc_target /*MWt*/,
-            C_csp_power_cycle::E_csp_power_cycle_modes pc_mode, int cr_mode,
+            C_csp_power_cycle::E_csp_power_cycle_modes pc_mode, C_csp_collector_receiver::E_csp_cr_modes cr_mode,
             bool is_rec_outlet_to_hottank,
 			double defocus /*-*/, double t_ts /*s*/,
 			double P_field_in /*kPa*/, double x_field_in /*-*/)
@@ -1347,7 +1198,7 @@ public:
 		double m_q_dot_pc_target;   //[MWt]
 
         C_csp_power_cycle::E_csp_power_cycle_modes m_pc_mode;      //[-]
-		int m_cr_mode;      //[-]
+        C_csp_collector_receiver::E_csp_cr_modes m_cr_mode;      //[-]
         bool m_is_rec_outlet_to_hottank;    //[-]
 
 		double m_defocus;   //[-]
@@ -1356,7 +1207,7 @@ public:
 		C_MEQ__timestep(C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode, C_MEQ__timestep::E_timestep_target_modes step_target_mode,
 			C_csp_solver* pc_csp_solver,
 			double q_dot_pc_target /*MWt*/,
-            C_csp_power_cycle::E_csp_power_cycle_modes pc_mode, int cr_mode,
+            C_csp_power_cycle::E_csp_power_cycle_modes pc_mode, C_csp_collector_receiver::E_csp_cr_modes cr_mode,
             bool is_rec_outlet_to_hottank,
 			double defocus /*-*/)
 		{
@@ -1395,7 +1246,7 @@ public:
         double m_q_dot_pc_target;   //[MWt]
 
         C_csp_power_cycle::E_csp_power_cycle_modes m_pc_mode;      //[-]
-        int m_cr_mode;      //[-]
+        C_csp_collector_receiver::E_csp_cr_modes m_cr_mode;      //[-]
         bool m_is_rec_outlet_to_hottank;    //[-]
 
         double m_t_ts_initial;  //[s]
@@ -1406,7 +1257,7 @@ public:
 			E_defocus_target_modes df_target_mode, C_MEQ__timestep::E_timestep_target_modes ts_target_mode,
             C_csp_solver *pc_csp_solver, 
 			double q_dot_pc_target /*MWt*/,
-            C_csp_power_cycle::E_csp_power_cycle_modes pc_mode, int cr_mode,
+            C_csp_power_cycle::E_csp_power_cycle_modes pc_mode, C_csp_collector_receiver::E_csp_cr_modes cr_mode,
             bool is_rec_outlet_to_hottank,
             double t_ts_initial /*s*/)
         {
@@ -1430,12 +1281,723 @@ public:
         double calc_meq_target();
     };
 
-	int solve_operating_mode(int cr_mode, C_csp_power_cycle::E_csp_power_cycle_modes pc_mode,
+	int solve_operating_mode(C_csp_collector_receiver::E_csp_cr_modes cr_mode, C_csp_power_cycle::E_csp_power_cycle_modes pc_mode,
         C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode, C_MEQ__timestep::E_timestep_target_modes step_target_mode,
 		double q_dot_pc_target /*MWt*/, bool is_defocus, bool is_rec_outlet_to_hottank,
 		std::string op_mode_str, double& defocus_solved);
 
-    
+
+    class C_operating_mode_core
+    {
+    public:
+
+        enum cycle_targets
+        {
+            QUIETNAN,
+            Q_DOT_PC_TARGET,
+            Q_DOT_PC_STARTUP,
+            Q_DOT_PC_STANDBY,
+            Q_DOT_PC_MIN,
+            Q_DOT_PC_MAX
+        };
+
+    protected:
+
+        // Constructor arguments
+        C_csp_collector_receiver::E_csp_cr_modes m_cr_mode;
+        C_csp_power_cycle::E_csp_power_cycle_modes m_pc_mode;
+        C_MEQ__m_dot_tes::E_m_dot_solver_modes m_solver_mode;
+        C_MEQ__timestep::E_timestep_target_modes m_step_target_mode;
+
+        bool m_is_defocus;
+        std::string m_op_mode_name;
+
+        cycle_targets m_cycle_target_type;
+        bool m_is_sensible_htf_only;            // True: operating mode only applicable for sensible heat technologies
+        // *****************************************
+
+        bool m_is_mode_available;
+        bool m_is_HI_SIDE_mode_available;
+        bool m_is_LO_SIDE_mode_available;
+
+    public:
+
+        void turn_off_mode_availability();
+
+        void turn_on_mode_availability();
+
+        bool is_mode_available()
+        {
+            return m_is_mode_available;
+        }
+
+        bool is_HI_SIDE_mode_available()
+        {
+            return m_is_HI_SIDE_mode_available;
+        }
+
+        bool is_LO_SIDE_mode_available()
+        {
+            return m_is_LO_SIDE_mode_available;
+        }
+
+        C_operating_mode_core(C_csp_collector_receiver::E_csp_cr_modes cr_mode,
+                                C_csp_power_cycle::E_csp_power_cycle_modes pc_mode,
+                                C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode,
+                                C_MEQ__timestep::E_timestep_target_modes step_target_mode,
+                                bool is_defocus,
+                                std::string op_mode_name,
+                                cycle_targets cycle_target_type,
+                                bool is_sensible_htf_only);
+
+        virtual void handle_solve_error(double time /*hr*/, bool& is_rec_su_unchanged);
+
+        virtual void check_system_limits(C_csp_solver* pc_csp_solver,
+            double q_dot_pc_su_max /*MWt*/, double m_dot_pc_max_startup /*kg/hr*/,
+            double q_dot_pc_solve_target /*MWt*/, double q_dot_pc_on_dispatch_target,
+            double q_dot_pc_max /*MWt*/, double q_dot_pc_min /*MWt*/, double q_dot_pc_sb /*MWt*/,
+            double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
+            double limit_comp_tol /*-*/,
+            bool& is_model_converged, bool& is_turn_off_plant);
+
+        bool solve(C_csp_solver* pc_csp_solver, bool is_rec_outlet_to_hottank,
+            double q_dot_pc_on_dispatch_target /*MWt*/, double q_dot_pc_startup /*MWt*/, double q_dot_pc_standby /*MWt*/,
+            double q_dot_pc_min /*MWt*/, double q_dot_pc_max /*MWt*/, double q_dot_pc_startup_max /*MWt*/,
+            double m_dot_pc_startup_max /*kg/hr*/, double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
+            double limit_comp_tol /*-*/,
+            double& defocus_solved, bool& is_op_mode_avail /*-*/, bool& is_turn_off_plant, bool& is_rec_su_unchanged);
+
+    protected:
+
+        std::string time_and_op_mode_to_string(double time /*s*/);
+
+    };
+
+    class C_CR_OFF__PC_OFF__TES_OFF__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_OFF__PC_OFF__TES_OFF__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::OFF,
+            C_csp_power_cycle::OFF, C_MEQ__m_dot_tes::E__CR_OUT__0, C_MEQ__timestep::E_STEP_FIXED,
+            false, "CR_OFF__PC_OFF__TES_OFF__AUX_OFF", QUIETNAN, false) {}
+
+        void handle_solve_error(double time /*hr*/, bool& is_rec_su_unchanged);
+    };
+
+    class C_CR_SU__PC_OFF__TES_OFF__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_SU__PC_OFF__TES_OFF__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::STARTUP,
+            C_csp_power_cycle::OFF, C_MEQ__m_dot_tes::E__CR_OUT__0, C_MEQ__timestep::E_STEP_FROM_COMPONENT,
+            false, "CR_SU__PC_OFF__TES_OFF", QUIETNAN, false) {}
+    };
+
+    class C_CR_ON__PC_SU__TES_OFF__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_ON__PC_SU__TES_OFF__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::ON,
+            C_csp_power_cycle::STARTUP, C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT, C_MEQ__timestep::E_STEP_FROM_COMPONENT,
+            false, "CR_ON__PC_SU__TES_OFF__AUX_OFF", QUIETNAN, false) {}
+
+        virtual void check_system_limits(C_csp_solver* pc_csp_solver,
+            double q_dot_pc_su_max /*MWt*/, double m_dot_pc_max_startup /*kg/hr*/,
+            double q_dot_pc_solve_target /*MWt*/, double q_dot_pc_on_dispatch_target,
+            double q_dot_pc_max /*MWt*/, double q_dot_pc_min /*MWt*/, double q_dot_pc_sb /*MWt*/,
+            double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
+            double limit_comp_tol,
+            bool& is_model_converged, bool& is_turn_off_plant);
+    };
+
+    class C_CR_OFF__PC_SU__TES_DC__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_OFF__PC_SU__TES_DC__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::OFF,
+            C_csp_power_cycle::STARTUP_CONTROLLED, C_MEQ__m_dot_tes::E__CR_OUT__ITER_M_DOT_SU_DC_ONLY, C_MEQ__timestep::E_STEP_FROM_COMPONENT,
+            false, "CR_OFF__PC_SU__TES_DC__AUX_OFF", QUIETNAN, true) {}
+    };
+
+    class C_CR_OFF__PC_TARGET__TES_DC__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_OFF__PC_TARGET__TES_DC__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::OFF,
+            C_csp_power_cycle::ON, C_MEQ__m_dot_tes::E__CR_OUT__ITER_Q_DOT_TARGET_DC_ONLY, C_MEQ__timestep::E_STEP_FIXED,
+            false, "CR_OFF__PC_TARGET__TES_DC__AUX_OFF", Q_DOT_PC_TARGET, true) {}
+
+        virtual void check_system_limits(C_csp_solver* pc_csp_solver,
+            double q_dot_pc_su_max /*MWt*/, double m_dot_pc_max_startup /*kg/hr*/,
+            double q_dot_pc_solve_target /*MWt*/, double q_dot_pc_on_dispatch_target,
+            double q_dot_pc_max /*MWt*/, double q_dot_pc_min /*MWt*/, double q_dot_pc_sb /*MWt*/,
+            double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
+            double limit_comp_tol /*-*/,
+            bool& is_model_converged, bool& is_turn_off_plant);
+    };
+
+    class C_CR_ON__PC_TARGET__TES_DC__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_ON__PC_TARGET__TES_DC__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::ON,
+            C_csp_power_cycle::ON, C_MEQ__m_dot_tes::E__CR_OUT__ITER_Q_DOT_TARGET_DC_ONLY, C_MEQ__timestep::E_STEP_FIXED,
+            false, "CR_ON__PC_TARGET__TES_DC__AUX_OFF", Q_DOT_PC_TARGET, true) {}
+
+        virtual void check_system_limits(C_csp_solver* pc_csp_solver,
+            double q_dot_pc_su_max /*MWt*/, double m_dot_pc_max_startup /*kg/hr*/,
+            double q_dot_pc_solve_target /*MWt*/, double q_dot_pc_on_dispatch_target,
+            double q_dot_pc_max /*MWt*/, double q_dot_pc_min /*MWt*/, double q_dot_pc_sb /*MWt*/,
+            double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
+            double limit_comp_tol /*-*/,
+            bool& is_model_converged, bool& is_turn_off_plant);
+    };
+
+    class C_CR_ON__PC_RM_LO__TES_OFF__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_ON__PC_RM_LO__TES_OFF__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::ON,
+            C_csp_power_cycle::ON, C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT, C_MEQ__timestep::E_STEP_FIXED,
+            false, "CR_ON__PC_RM_LO__TES_OFF__AUX_OFF", QUIETNAN, false) {}
+
+        virtual void check_system_limits(C_csp_solver* pc_csp_solver,
+            double q_dot_pc_su_max /*MWt*/, double m_dot_pc_max_startup /*kg/hr*/,
+            double q_dot_pc_solve_target /*MWt*/, double q_dot_pc_on_dispatch_target,
+            double q_dot_pc_max /*MWt*/, double q_dot_pc_min /*MWt*/, double q_dot_pc_sb /*MWt*/,
+            double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
+            double limit_comp_tol /*-*/,
+            bool& is_model_converged, bool& is_turn_off_plant);
+    };
+
+    class C_CR_ON__PC_TARGET__TES_CH__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_ON__PC_TARGET__TES_CH__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::ON,
+            C_csp_power_cycle::ON, C_MEQ__m_dot_tes::E__CR_OUT__ITER_Q_DOT_TARGET_CH_ONLY, C_MEQ__timestep::E_STEP_FIXED,
+            false, "CR_ON__PC_TARGET__TES_CH__AUX_OFF", Q_DOT_PC_TARGET, true) {}
+
+        void handle_solve_error(double time /*hr*/, bool& is_rec_su_unchanged);
+
+        virtual void check_system_limits(C_csp_solver* pc_csp_solver,
+            double q_dot_pc_su_max /*MWt*/, double m_dot_pc_max_startup /*kg/hr*/,
+            double q_dot_pc_solve_target /*MWt*/, double q_dot_pc_on_dispatch_target,
+            double q_dot_pc_max /*MWt*/, double q_dot_pc_min /*MWt*/, double q_dot_pc_sb /*MWt*/,
+            double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
+            double limit_comp_tol /*-*/,
+            bool& is_model_converged, bool& is_turn_off_plant);
+    };
+
+    class C_CR_ON__PC_OFF__TES_CH__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_ON__PC_OFF__TES_CH__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::ON,
+            C_csp_power_cycle::OFF, C_MEQ__m_dot_tes::E__CR_OUT__0, C_MEQ__timestep::E_STEP_FIXED,
+            false, "CR_ON__PC_OFF__TES_CH__AUX_OFF", QUIETNAN, true) {}
+
+    };
+
+    class C_CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::OFF,
+            C_csp_power_cycle::ON, C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT_PLUS_TES_EMPTY, C_MEQ__timestep::E_STEP_Q_DOT_PC,
+            false, "CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF", Q_DOT_PC_MIN, true) {}
+
+        virtual void check_system_limits(C_csp_solver* pc_csp_solver,
+            double q_dot_pc_su_max /*MWt*/, double m_dot_pc_max_startup /*kg/hr*/,
+            double q_dot_pc_solve_target /*MWt*/, double q_dot_pc_on_dispatch_target,
+            double q_dot_pc_max /*MWt*/, double q_dot_pc_min /*MWt*/, double q_dot_pc_sb /*MWt*/,
+            double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
+            double limit_comp_tol /*-*/,
+            bool& is_model_converged, bool& is_turn_off_plant);
+    };
+
+    class C_CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::ON,
+            C_csp_power_cycle::ON, C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT_PLUS_TES_EMPTY, C_MEQ__timestep::E_STEP_FIXED,
+            false, "CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF", QUIETNAN, true) {}
+
+        virtual void check_system_limits(C_csp_solver* pc_csp_solver,
+            double q_dot_pc_su_max /*MWt*/, double m_dot_pc_max_startup /*kg/hr*/,
+            double q_dot_pc_solve_target /*MWt*/, double q_dot_pc_on_dispatch_target,
+            double q_dot_pc_max /*MWt*/, double q_dot_pc_min /*MWt*/, double q_dot_pc_sb /*MWt*/,
+            double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
+            double limit_comp_tol /*-*/,
+            bool& is_model_converged, bool& is_turn_off_plant);
+    };
+
+    class C_CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::OFF,
+            C_csp_power_cycle::ON, C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT_PLUS_TES_EMPTY, C_MEQ__timestep::E_STEP_FIXED,
+            false, "CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF", QUIETNAN, true) {}
+
+        virtual void check_system_limits(C_csp_solver* pc_csp_solver,
+            double q_dot_pc_su_max /*MWt*/, double m_dot_pc_max_startup /*kg/hr*/,
+            double q_dot_pc_solve_target /*MWt*/, double q_dot_pc_on_dispatch_target,
+            double q_dot_pc_max /*MWt*/, double q_dot_pc_min /*MWt*/, double q_dot_pc_sb /*MWt*/,
+            double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
+            double limit_comp_tol /*-*/,
+            bool& is_model_converged, bool& is_turn_off_plant);
+    };
+
+    class C_CR_ON__PC_MIN__TES_EMPTY__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_ON__PC_MIN__TES_EMPTY__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::ON,
+            C_csp_power_cycle::ON, C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT_PLUS_TES_EMPTY, C_MEQ__timestep::E_STEP_Q_DOT_PC,
+            false, "CR_ON__PC_MIN__TES_EMPTY__AUX_OFF", Q_DOT_PC_MIN, true) {}
+
+        virtual void check_system_limits(C_csp_solver* pc_csp_solver,
+            double q_dot_pc_su_max /*MWt*/, double m_dot_pc_max_startup /*kg/hr*/,
+            double q_dot_pc_solve_target /*MWt*/, double q_dot_pc_on_dispatch_target,
+            double q_dot_pc_max /*MWt*/, double q_dot_pc_min /*MWt*/, double q_dot_pc_sb /*MWt*/,
+            double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
+            double limit_comp_tol /*-*/,
+            bool& is_model_converged, bool& is_turn_off_plant);
+    };
+
+    class C_CR_SU__PC_TARGET__TES_DC__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_SU__PC_TARGET__TES_DC__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::STARTUP,
+            C_csp_power_cycle::ON, C_MEQ__m_dot_tes::E__CR_OUT__ITER_Q_DOT_TARGET_DC_ONLY, C_MEQ__timestep::E_STEP_FROM_COMPONENT,
+            false, "CR_SU__PC_TARGET__TES_DC__AUX_OFF", Q_DOT_PC_TARGET, true) {}
+
+        virtual void check_system_limits(C_csp_solver* pc_csp_solver,
+            double q_dot_pc_su_max /*MWt*/, double m_dot_pc_max_startup /*kg/hr*/,
+            double q_dot_pc_solve_target /*MWt*/, double q_dot_pc_on_dispatch_target,
+            double q_dot_pc_max /*MWt*/, double q_dot_pc_min /*MWt*/, double q_dot_pc_sb /*MWt*/,
+            double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
+            double limit_comp_tol /*-*/,
+            bool& is_model_converged, bool& is_turn_off_plant);
+    };
+
+    class C_CR_SU__PC_MIN__TES_EMPTY__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_SU__PC_MIN__TES_EMPTY__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::STARTUP,
+            C_csp_power_cycle::ON, C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT_PLUS_TES_EMPTY, C_MEQ__timestep::E_STEP_Q_DOT_PC,
+            false, "CR_SU__PC_MIN__TES_EMPTY__AUX_OFF", Q_DOT_PC_MIN, true) {}
+
+        virtual void check_system_limits(C_csp_solver* pc_csp_solver,
+            double q_dot_pc_su_max /*MWt*/, double m_dot_pc_max_startup /*kg/hr*/,
+            double q_dot_pc_solve_target /*MWt*/, double q_dot_pc_on_dispatch_target,
+            double q_dot_pc_max /*MWt*/, double q_dot_pc_min /*MWt*/, double q_dot_pc_sb /*MWt*/,
+            double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
+            double limit_comp_tol /*-*/,
+            bool& is_model_converged, bool& is_turn_off_plant);
+    };
+
+    class C_CR_SU__PC_RM_LO__TES_EMPTY__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_SU__PC_RM_LO__TES_EMPTY__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::STARTUP,
+            C_csp_power_cycle::ON, C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT_PLUS_TES_EMPTY, C_MEQ__timestep::E_STEP_FROM_COMPONENT,
+            false, "CR_SU__PC_RM_LO__TES_EMPTY__AUX_OFF", QUIETNAN, true) {}
+
+        virtual void check_system_limits(C_csp_solver* pc_csp_solver,
+            double q_dot_pc_su_max /*MWt*/, double m_dot_pc_max_startup /*kg/hr*/,
+            double q_dot_pc_solve_target /*MWt*/, double q_dot_pc_on_dispatch_target,
+            double q_dot_pc_max /*MWt*/, double q_dot_pc_min /*MWt*/, double q_dot_pc_sb /*MWt*/,
+            double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
+            double limit_comp_tol /*-*/,
+            bool& is_model_converged, bool& is_turn_off_plant);
+    };
+
+    class C_CR_OFF__PC_SB__TES_DC__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_OFF__PC_SB__TES_DC__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::OFF,
+            C_csp_power_cycle::STANDBY, C_MEQ__m_dot_tes::E__CR_OUT__ITER_Q_DOT_TARGET_DC_ONLY, C_MEQ__timestep::E_STEP_FIXED,
+            false, "CR_OFF__PC_SB__TES_DC__AUX_OFF", Q_DOT_PC_STANDBY, true) {}
+
+        virtual void check_system_limits(C_csp_solver* pc_csp_solver,
+            double q_dot_pc_su_max /*MWt*/, double m_dot_pc_max_startup /*kg/hr*/,
+            double q_dot_pc_solve_target /*MWt*/, double q_dot_pc_on_dispatch_target,
+            double q_dot_pc_max /*MWt*/, double q_dot_pc_min /*MWt*/, double q_dot_pc_sb /*MWt*/,
+            double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
+            double limit_comp_tol /*-*/,
+            bool& is_model_converged, bool& is_turn_off_plant);
+    };
+
+    class C_CR_DF__PC_MAX__TES_FULL__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_DF__PC_MAX__TES_FULL__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::ON,
+            C_csp_power_cycle::ON, C_MEQ__m_dot_tes::E__PC_MAX_PLUS_TES_FULL__PC_MAX, C_MEQ__timestep::E_STEP_FIXED,
+            true, "CR_DF__PC_MAX__TES_FULL__AUX_OFF", QUIETNAN, true) {}
+
+        void handle_solve_error(double time /*hr*/, bool& is_rec_su_unchanged);
+    };
+
+    class C_CR_DF__PC_MAX__TES_OFF__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_DF__PC_MAX__TES_OFF__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::ON,
+            C_csp_power_cycle::ON, C_MEQ__m_dot_tes::E__TO_PC__PC_MAX, C_MEQ__timestep::E_STEP_FIXED,
+            true, "CR_DF__PC_MAX__TES_OFF__AUX_OFF", QUIETNAN, false) {}
+    };
+
+    class C_CR_ON__PC_RM_HI__TES_OFF__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_ON__PC_RM_HI__TES_OFF__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::ON,
+            C_csp_power_cycle::ON, C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT, C_MEQ__timestep::E_STEP_FIXED,
+            false, "CR_ON__PC_RM_HI__TES_OFF__AUX_OFF", QUIETNAN, false) {}
+
+        void handle_solve_error(double time /*hr*/, bool& is_rec_su_unchanged);
+
+        virtual void check_system_limits(C_csp_solver* pc_csp_solver,
+            double q_dot_pc_su_max /*MWt*/, double m_dot_pc_max_startup /*kg/hr*/,
+            double q_dot_pc_solve_target /*MWt*/, double q_dot_pc_on_dispatch_target,
+            double q_dot_pc_max /*MWt*/, double q_dot_pc_min /*MWt*/, double q_dot_pc_sb /*MWt*/,
+            double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
+            double limit_comp_tol /*-*/,
+            bool& is_model_converged, bool& is_turn_off_plant);
+    };
+
+    class C_CR_ON__PC_RM_HI__TES_FULL__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_ON__PC_RM_HI__TES_FULL__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::ON,
+            C_csp_power_cycle::ON, C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT_LESS_TES_FULL, C_MEQ__timestep::E_STEP_FIXED,
+            false, "CR_ON__PC_RM_HI__TES_FULL__AUX_OFF", QUIETNAN, true) {}
+
+        virtual void check_system_limits(C_csp_solver* pc_csp_solver,
+            double q_dot_pc_su_max /*MWt*/, double m_dot_pc_max_startup /*kg/hr*/,
+            double q_dot_pc_solve_target /*MWt*/, double q_dot_pc_on_dispatch_target,
+            double q_dot_pc_max /*MWt*/, double q_dot_pc_min /*MWt*/, double q_dot_pc_sb /*MWt*/,
+            double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
+            double limit_comp_tol /*-*/,
+            bool& is_model_converged, bool& is_turn_off_plant);
+    };
+
+    class C_CR_DF__PC_SU__TES_FULL__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_DF__PC_SU__TES_FULL__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::ON,
+            C_csp_power_cycle::STARTUP_CONTROLLED, C_MEQ__m_dot_tes::E__TO_PC_PLUS_TES_FULL__ITER_M_DOT_SU, C_MEQ__timestep::E_STEP_FROM_COMPONENT,
+            true, "CR_DF__PC_SU__TES_FULL__AUX_OFF", QUIETNAN, true) {}
+
+    };
+
+    class C_CR_DF__PC_OFF__TES_FULL__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_DF__PC_OFF__TES_FULL__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::ON,
+            C_csp_power_cycle::OFF, C_MEQ__m_dot_tes::E__TES_FULL__0, C_MEQ__timestep::E_STEP_FIXED,
+            true, "CR_DF__PC_OFF__TES_FULL__AUX_OFF", QUIETNAN, true) {}
+
+    };
+
+    class C_CR_DF__PC_SU__TES_OFF__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_DF__PC_SU__TES_OFF__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::ON,
+            C_csp_power_cycle::STARTUP_CONTROLLED, C_MEQ__m_dot_tes::E__TO_PC__ITER_M_DOT_SU, C_MEQ__timestep::E_STEP_FROM_COMPONENT,
+            true, "CR_DF__PC_SU__TES_OFF__AUX_OFF", QUIETNAN, false) {}
+
+    };
+
+    class C_CR_ON__PC_SB__TES_CH__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_ON__PC_SB__TES_CH__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::ON,
+            C_csp_power_cycle::STANDBY, C_MEQ__m_dot_tes::E__CR_OUT__ITER_Q_DOT_TARGET_CH_ONLY, C_MEQ__timestep::E_STEP_FIXED,
+            false, "CR_ON__PC_SB__TES_CH__AUX_OFF", Q_DOT_PC_STANDBY, true) {}
+
+        virtual void check_system_limits(C_csp_solver* pc_csp_solver,
+            double q_dot_pc_su_max /*MWt*/, double m_dot_pc_max_startup /*kg/hr*/,
+            double q_dot_pc_solve_target /*MWt*/, double q_dot_pc_on_dispatch_target,
+            double q_dot_pc_max /*MWt*/, double q_dot_pc_min /*MWt*/, double q_dot_pc_sb /*MWt*/,
+            double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
+            double limit_comp_tol /*-*/,
+            bool& is_model_converged, bool& is_turn_off_plant);
+    };
+
+    class C_CR_ON__PC_SB__TES_FULL__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_ON__PC_SB__TES_FULL__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::ON,
+            C_csp_power_cycle::STANDBY, C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT_LESS_TES_FULL, C_MEQ__timestep::E_STEP_FIXED,
+            false, "CR_ON__PC_SB__TES_FULL__AUX_OFF", QUIETNAN, true) {}
+
+        virtual void check_system_limits(C_csp_solver* pc_csp_solver,
+            double q_dot_pc_su_max /*MWt*/, double m_dot_pc_max_startup /*kg/hr*/,
+            double q_dot_pc_solve_target /*MWt*/, double q_dot_pc_on_dispatch_target,
+            double q_dot_pc_max /*MWt*/, double q_dot_pc_min /*MWt*/, double q_dot_pc_sb /*MWt*/,
+            double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
+            double limit_comp_tol /*-*/,
+            bool& is_model_converged, bool& is_turn_off_plant);
+    };
+
+    class C_CR_ON__PC_SB__TES_DC__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_ON__PC_SB__TES_DC__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::ON,
+            C_csp_power_cycle::STANDBY, C_MEQ__m_dot_tes::E__CR_OUT__ITER_Q_DOT_TARGET_DC_ONLY, C_MEQ__timestep::E_STEP_FIXED,
+            false, "CR_ON__PC_SB__TES_DC__AUX_OFF", Q_DOT_PC_STANDBY, true) {}
+
+        virtual void check_system_limits(C_csp_solver* pc_csp_solver,
+            double q_dot_pc_su_max /*MWt*/, double m_dot_pc_max_startup /*kg/hr*/,
+            double q_dot_pc_solve_target /*MWt*/, double q_dot_pc_on_dispatch_target,
+            double q_dot_pc_max /*MWt*/, double q_dot_pc_min /*MWt*/, double q_dot_pc_sb /*MWt*/,
+            double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
+            double limit_comp_tol /*-*/,
+            bool& is_model_converged, bool& is_turn_off_plant);
+    };
+
+    class C_CR_SU__PC_SB__TES_DC__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_SU__PC_SB__TES_DC__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::STARTUP,
+            C_csp_power_cycle::STANDBY, C_MEQ__m_dot_tes::E__CR_OUT__ITER_Q_DOT_TARGET_DC_ONLY, C_MEQ__timestep::E_STEP_FROM_COMPONENT,
+            false, "CR_SU__PC_SB__TES_DC__AUX_OFF", Q_DOT_PC_STANDBY, true) {}
+
+        virtual void check_system_limits(C_csp_solver* pc_csp_solver,
+            double q_dot_pc_su_max /*MWt*/, double m_dot_pc_max_startup /*kg/hr*/,
+            double q_dot_pc_solve_target /*MWt*/, double q_dot_pc_on_dispatch_target,
+            double q_dot_pc_max /*MWt*/, double q_dot_pc_min /*MWt*/, double q_dot_pc_sb /*MWt*/,
+            double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
+            double limit_comp_tol /*-*/,
+            bool& is_model_converged, bool& is_turn_off_plant);
+    };
+
+    class C_CR_ON__PC_SB__TES_OFF__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_ON__PC_SB__TES_OFF__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::ON,
+            C_csp_power_cycle::STANDBY, C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT, C_MEQ__timestep::E_STEP_FIXED,
+            false, "CR_ON__PC_SB__TES_OFF__AUX_OFF", QUIETNAN, false) {}
+
+        virtual void check_system_limits(C_csp_solver* pc_csp_solver,
+            double q_dot_pc_su_max /*MWt*/, double m_dot_pc_max_startup /*kg/hr*/,
+            double q_dot_pc_solve_target /*MWt*/, double q_dot_pc_on_dispatch_target,
+            double q_dot_pc_max /*MWt*/, double q_dot_pc_min /*MWt*/, double q_dot_pc_sb /*MWt*/,
+            double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
+            double limit_comp_tol /*-*/,
+            bool& is_model_converged, bool& is_turn_off_plant);
+    };
+
+    class C_CR_ON__PC_SU__TES_CH__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_ON__PC_SU__TES_CH__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::ON,
+            C_csp_power_cycle::STARTUP_CONTROLLED, C_MEQ__m_dot_tes::E__CR_OUT__ITER_M_DOT_SU_CH_ONLY, C_MEQ__timestep::E_STEP_FROM_COMPONENT,
+            false, "CR_ON__PC_SU__TES_CH__AUX_OFF", QUIETNAN, true) {}
+
+    };
+
+    class C_CR_SU__PC_SU__TES_DC__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_SU__PC_SU__TES_DC__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::STARTUP,
+            C_csp_power_cycle::STARTUP_CONTROLLED, C_MEQ__m_dot_tes::E__CR_OUT__ITER_M_DOT_SU_DC_ONLY, C_MEQ__timestep::E_STEP_FROM_COMPONENT,
+            false, "CR_SU__PC_SU__TES_DC__AUX_OFF", QUIETNAN, true) {}
+
+    };
+
+    class C_CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::ON,
+            C_csp_power_cycle::OFF, C_MEQ__m_dot_tes::E__CR_OUT__0, C_MEQ__timestep::E_STEP_FIXED,
+            false, "CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF", QUIETNAN, false) {}
+
+        void handle_solve_error(double time /*hr*/, bool& is_rec_su_unchanged);
+    };
+
+    class C_CR_TO_COLD__PC_SU__TES_DC__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_TO_COLD__PC_SU__TES_DC__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::ON,
+            C_csp_power_cycle::STARTUP_CONTROLLED, C_MEQ__m_dot_tes::E__CR_OUT__ITER_M_DOT_SU_DC_ONLY, C_MEQ__timestep::E_STEP_FROM_COMPONENT,
+            false, "CR_TO_COLD__PC_SU__TES_DC__AUX_OFF", QUIETNAN, true) {}
+
+    };
+
+    class C_CR_TO_COLD__PC_MIN__TES_EMPTY__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_TO_COLD__PC_MIN__TES_EMPTY__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::ON,
+            C_csp_power_cycle::ON, C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT_PLUS_TES_EMPTY, C_MEQ__timestep::E_STEP_Q_DOT_PC,
+            false, "CR_TO_COLD__PC_MIN__TES_EMPTY__AUX_OFF", Q_DOT_PC_MIN, true) {}
+
+        virtual void check_system_limits(C_csp_solver* pc_csp_solver,
+            double q_dot_pc_su_max /*MWt*/, double m_dot_pc_max_startup /*kg/hr*/,
+            double q_dot_pc_solve_target /*MWt*/, double q_dot_pc_on_dispatch_target,
+            double q_dot_pc_max /*MWt*/, double q_dot_pc_min /*MWt*/, double q_dot_pc_sb /*MWt*/,
+            double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
+            double limit_comp_tol /*-*/,
+            bool& is_model_converged, bool& is_turn_off_plant);
+    };
+
+    class C_CR_TO_COLD__PC_RM_LO__TES_EMPTY__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_TO_COLD__PC_RM_LO__TES_EMPTY__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::ON,
+            C_csp_power_cycle::ON, C_MEQ__m_dot_tes::E__CR_OUT__CR_OUT_PLUS_TES_EMPTY, C_MEQ__timestep::E_STEP_FIXED,
+            false, "CR_TO_COLD__PC_RM_LO__TES_EMPTY__AUX_OFF", QUIETNAN, true) {}
+
+        virtual void check_system_limits(C_csp_solver* pc_csp_solver,
+            double q_dot_pc_su_max /*MWt*/, double m_dot_pc_max_startup /*kg/hr*/,
+            double q_dot_pc_solve_target /*MWt*/, double q_dot_pc_on_dispatch_target,
+            double q_dot_pc_max /*MWt*/, double q_dot_pc_min /*MWt*/, double q_dot_pc_sb /*MWt*/,
+            double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
+            double limit_comp_tol /*-*/,
+            bool& is_model_converged, bool& is_turn_off_plant);
+    };
+
+    class C_CR_TO_COLD__PC_TARGET__TES_DC__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_TO_COLD__PC_TARGET__TES_DC__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::ON,
+            C_csp_power_cycle::ON, C_MEQ__m_dot_tes::E__CR_OUT__ITER_Q_DOT_TARGET_DC_ONLY, C_MEQ__timestep::E_STEP_FIXED,
+            false, "CR_TO_COLD__PC_TARGET__TES_DC__AUX_OFF", Q_DOT_PC_TARGET, true) {}
+
+        virtual void check_system_limits(C_csp_solver* pc_csp_solver,
+            double q_dot_pc_su_max /*MWt*/, double m_dot_pc_max_startup /*kg/hr*/,
+            double q_dot_pc_solve_target /*MWt*/, double q_dot_pc_on_dispatch_target,
+            double q_dot_pc_max /*MWt*/, double q_dot_pc_min /*MWt*/, double q_dot_pc_sb /*MWt*/,
+            double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
+            double limit_comp_tol /*-*/,
+            bool& is_model_converged, bool& is_turn_off_plant);
+    };
+
+    class C_CR_TO_COLD__PC_SB__TES_DC__AUX_OFF : public C_operating_mode_core
+    {
+    public:
+        C_CR_TO_COLD__PC_SB__TES_DC__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::ON,
+            C_csp_power_cycle::STANDBY, C_MEQ__m_dot_tes::E__CR_OUT__ITER_Q_DOT_TARGET_DC_ONLY, C_MEQ__timestep::E_STEP_FIXED,
+            false, "CR_TO_COLD__PC_SB__TES_DC__AUX_OFF", Q_DOT_PC_STANDBY, true) {}
+
+        virtual void check_system_limits(C_csp_solver* pc_csp_solver,
+            double q_dot_pc_su_max /*MWt*/, double m_dot_pc_max_startup /*kg/hr*/,
+            double q_dot_pc_solve_target /*MWt*/, double q_dot_pc_on_dispatch_target,
+            double q_dot_pc_max /*MWt*/, double q_dot_pc_min /*MWt*/, double q_dot_pc_sb /*MWt*/,
+            double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
+            double limit_comp_tol /*-*/,
+            bool& is_model_converged, bool& is_turn_off_plant);
+    };
+
+    class C_system_operating_modes
+    {
+    public:
+
+        enum E_operating_modes
+        {
+            CR_OFF__PC_OFF__TES_OFF__AUX_OFF,
+            CR_SU__PC_OFF__TES_OFF__AUX_OFF,
+            CR_ON__PC_SU__TES_OFF__AUX_OFF,
+            CR_ON__PC_SB__TES_OFF__AUX_OFF,
+            CR_ON__PC_RM_HI__TES_OFF__AUX_OFF,
+            CR_ON__PC_RM_LO__TES_OFF__AUX_OFF,
+            CR_DF__PC_MAX__TES_OFF__AUX_OFF,
+            CR_OFF__PC_SU__TES_DC__AUX_OFF,
+            CR_ON__PC_OFF__TES_CH__AUX_OFF,
+            CR_ON__PC_TARGET__TES_CH__AUX_OFF,
+            CR_ON__PC_TARGET__TES_DC__AUX_OFF,
+            CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF,
+            CR_DF__PC_OFF__TES_FULL__AUX_OFF,
+            CR_OFF__PC_SB__TES_DC__AUX_OFF,
+            CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF,
+            CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF,
+            CR_ON__PC_SB__TES_CH__AUX_OFF,
+            CR_SU__PC_MIN__TES_EMPTY__AUX_OFF,
+            CR_SU__PC_SB__TES_DC__AUX_OFF,
+            CR_ON__PC_SB__TES_DC__AUX_OFF,
+            CR_OFF__PC_TARGET__TES_DC__AUX_OFF,
+            CR_SU__PC_TARGET__TES_DC__AUX_OFF,
+            CR_ON__PC_RM_HI__TES_FULL__AUX_OFF,
+            CR_ON__PC_MIN__TES_EMPTY__AUX_OFF,
+            CR_SU__PC_RM_LO__TES_EMPTY__AUX_OFF,
+            CR_DF__PC_MAX__TES_FULL__AUX_OFF,
+            CR_ON__PC_SB__TES_FULL__AUX_OFF,
+            CR_SU__PC_SU__TES_DC__AUX_OFF,
+            CR_ON__PC_SU__TES_CH__AUX_OFF,
+            CR_DF__PC_SU__TES_FULL__AUX_OFF,
+            CR_DF__PC_SU__TES_OFF__AUX_OFF,
+            CR_TO_COLD__PC_TARGET__TES_DC__AUX_OFF,
+            CR_TO_COLD__PC_RM_LO__TES_EMPTY__AUX_OFF,
+            CR_TO_COLD__PC_SB__TES_DC__AUX_OFF,
+            CR_TO_COLD__PC_MIN__TES_EMPTY__AUX_OFF,
+            CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF,
+            CR_TO_COLD__PC_SU__TES_DC__AUX_OFF
+        };
+
+    private:
+
+        std::unordered_map<C_system_operating_modes::E_operating_modes, C_operating_mode_core*> m_operating_modes_map =
+            std::unordered_map<C_system_operating_modes::E_operating_modes, C_operating_mode_core*>{
+                {E_operating_modes::CR_OFF__PC_OFF__TES_OFF__AUX_OFF,       new C_CR_OFF__PC_OFF__TES_OFF__AUX_OFF},
+                {E_operating_modes::CR_SU__PC_OFF__TES_OFF__AUX_OFF,        new C_CR_SU__PC_OFF__TES_OFF__AUX_OFF},
+                {E_operating_modes::CR_ON__PC_SU__TES_OFF__AUX_OFF,         new C_CR_ON__PC_SU__TES_OFF__AUX_OFF},
+                {E_operating_modes::CR_OFF__PC_SU__TES_DC__AUX_OFF,         new C_CR_OFF__PC_SU__TES_DC__AUX_OFF},
+                {E_operating_modes::CR_OFF__PC_TARGET__TES_DC__AUX_OFF,     new C_CR_OFF__PC_TARGET__TES_DC__AUX_OFF},
+                {E_operating_modes::CR_ON__PC_TARGET__TES_DC__AUX_OFF,      new C_CR_ON__PC_TARGET__TES_DC__AUX_OFF},
+                {E_operating_modes::CR_ON__PC_RM_LO__TES_OFF__AUX_OFF,      new C_CR_ON__PC_RM_LO__TES_OFF__AUX_OFF},
+                {E_operating_modes::CR_ON__PC_TARGET__TES_CH__AUX_OFF,      new C_CR_ON__PC_TARGET__TES_CH__AUX_OFF},
+                {E_operating_modes::CR_ON__PC_OFF__TES_CH__AUX_OFF,         new C_CR_ON__PC_OFF__TES_CH__AUX_OFF},
+                {E_operating_modes::CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF,     new C_CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF},
+                {E_operating_modes::CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF,    new C_CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF},
+                {E_operating_modes::CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF,   new C_CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF},
+                {E_operating_modes::CR_ON__PC_MIN__TES_EMPTY__AUX_OFF,      new C_CR_ON__PC_MIN__TES_EMPTY__AUX_OFF},
+                {E_operating_modes::CR_SU__PC_TARGET__TES_DC__AUX_OFF,      new C_CR_SU__PC_TARGET__TES_DC__AUX_OFF},
+                {E_operating_modes::CR_SU__PC_MIN__TES_EMPTY__AUX_OFF,      new C_CR_SU__PC_MIN__TES_EMPTY__AUX_OFF},
+                {E_operating_modes::CR_SU__PC_RM_LO__TES_EMPTY__AUX_OFF,    new C_CR_SU__PC_RM_LO__TES_EMPTY__AUX_OFF},
+                {E_operating_modes::CR_OFF__PC_SB__TES_DC__AUX_OFF,         new C_CR_OFF__PC_SB__TES_DC__AUX_OFF},
+                {E_operating_modes::CR_DF__PC_MAX__TES_FULL__AUX_OFF,       new C_CR_DF__PC_MAX__TES_FULL__AUX_OFF},
+                {E_operating_modes::CR_DF__PC_MAX__TES_OFF__AUX_OFF,        new C_CR_DF__PC_MAX__TES_OFF__AUX_OFF},
+                {E_operating_modes::CR_ON__PC_RM_HI__TES_OFF__AUX_OFF,      new C_CR_ON__PC_RM_HI__TES_OFF__AUX_OFF},
+                {E_operating_modes::CR_ON__PC_RM_HI__TES_FULL__AUX_OFF,     new C_CR_ON__PC_RM_HI__TES_FULL__AUX_OFF},
+                {E_operating_modes::CR_DF__PC_SU__TES_FULL__AUX_OFF,        new C_CR_DF__PC_SU__TES_FULL__AUX_OFF},
+                {E_operating_modes::CR_DF__PC_OFF__TES_FULL__AUX_OFF,       new C_CR_DF__PC_OFF__TES_FULL__AUX_OFF},
+                {E_operating_modes::CR_DF__PC_SU__TES_OFF__AUX_OFF,         new C_CR_DF__PC_SU__TES_OFF__AUX_OFF},
+                {E_operating_modes::CR_ON__PC_SB__TES_CH__AUX_OFF,          new C_CR_ON__PC_SB__TES_CH__AUX_OFF},
+                {E_operating_modes::CR_ON__PC_SB__TES_FULL__AUX_OFF,        new C_CR_ON__PC_SB__TES_FULL__AUX_OFF},
+                {E_operating_modes::CR_ON__PC_SB__TES_DC__AUX_OFF,          new C_CR_ON__PC_SB__TES_DC__AUX_OFF},
+                {E_operating_modes::CR_SU__PC_SB__TES_DC__AUX_OFF,          new C_CR_SU__PC_SB__TES_DC__AUX_OFF},
+                {E_operating_modes::CR_ON__PC_SB__TES_OFF__AUX_OFF,         new C_CR_ON__PC_SB__TES_OFF__AUX_OFF},
+                {E_operating_modes::CR_ON__PC_SU__TES_CH__AUX_OFF,          new C_CR_ON__PC_SU__TES_CH__AUX_OFF},
+                {E_operating_modes::CR_SU__PC_SU__TES_DC__AUX_OFF,          new C_CR_SU__PC_SU__TES_DC__AUX_OFF},
+                {E_operating_modes::CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF,   new C_CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF},
+                {E_operating_modes::CR_TO_COLD__PC_SU__TES_DC__AUX_OFF,     new C_CR_TO_COLD__PC_SU__TES_DC__AUX_OFF},
+                {E_operating_modes::CR_TO_COLD__PC_MIN__TES_EMPTY__AUX_OFF, new C_CR_TO_COLD__PC_MIN__TES_EMPTY__AUX_OFF},
+                {E_operating_modes::CR_TO_COLD__PC_RM_LO__TES_EMPTY__AUX_OFF, new C_CR_TO_COLD__PC_RM_LO__TES_EMPTY__AUX_OFF},
+                {E_operating_modes::CR_TO_COLD__PC_TARGET__TES_DC__AUX_OFF, new C_CR_TO_COLD__PC_TARGET__TES_DC__AUX_OFF},
+                {E_operating_modes::CR_TO_COLD__PC_SB__TES_DC__AUX_OFF,     new C_CR_TO_COLD__PC_SB__TES_DC__AUX_OFF}
+        };
+
+    public:
+
+        C_system_operating_modes(){}
+
+        bool solve(C_system_operating_modes::E_operating_modes op_mode, C_csp_solver* pc_csp_solver, bool is_rec_outlet_to_hottank,
+            double q_dot_pc_on_target /*MWt*/, double q_dot_pc_startup /*MWt*/, double q_dot_pc_standby /*MWt*/,
+            double q_dot_pc_min /*MWt*/, double q_dot_pc_max /*MWt*/, double q_dot_pc_startup_max /*MWt*/,
+            double m_dot_pc_startup_max /*kg/hr*/, double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
+            double limit_comp_tol /*-*/,
+            double& defocus_solved, bool& is_op_mode_avail /*-*/, bool& is_turn_off_plant, bool& is_turn_off_rec_su);
+
+        bool is_mode_avail(E_operating_modes op_mode)
+        {
+            return m_operating_modes_map[op_mode]->is_mode_available();
+        }
+
+        bool is_HI_SIDE_mode_avail(E_operating_modes op_mode)
+        {
+            return m_operating_modes_map[op_mode]->is_HI_SIDE_mode_available();
+        }
+
+        bool is_LO_SIDE_mode_avail(E_operating_modes op_mode)
+        {
+            return m_operating_modes_map[op_mode]->is_LO_SIDE_mode_available();
+        }
+
+        void reset_all_availability();
+
+        void turn_off_plant();
+    };
+
+    C_system_operating_modes mc_operating_modes;
 
 };
 
