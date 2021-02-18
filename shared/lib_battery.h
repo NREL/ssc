@@ -63,7 +63,7 @@ struct thermal_params {
     double resistance;                    // [Ohm] - internal resistance
 
     util::matrix_t<double> cap_vs_temp;
-    bool analytical_model;       // if true, do not use cap_vs_temp
+    bool cap_analytical;       // if true, do not use cap_vs_temp. Temp dependence of  capacity is updated based on an analytical model
 
     enum OPTIONS {
         VALUE, SCHEDULE
@@ -119,12 +119,12 @@ protected:
     std::shared_ptr<thermal_params> params;
     std::shared_ptr<thermal_state> state;
 
+private:
+
     double Ea_d0_1 = 4126.0;
     double Ea_d0_2 = 9752000;
     double Rug = 8.314;
     double T_ref = 298.15;
-
-private:
     void initialize();
 
     friend class battery_t;
