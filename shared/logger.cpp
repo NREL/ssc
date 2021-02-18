@@ -108,8 +108,11 @@ std::ostream &operator<<(std::ostream &os, const calendar_state &p) {
 std::ostream& operator<<(std::ostream& os, const lifetime_nmc_state& p) {
     char buf[1024];
     sprintf(buf, "\"lifetime_nmc_state\": { \"q_relative_li\": %.3f, "
-        "\"q_relative_neg\": %.3f } ",
-        p.q_relative_li, p.q_relative_neg);
+        "\"q_relative_neg\": %.3f, \"dq_relative_li_old\": %.3f, \"dq_relative_neg_old\": %.3f, "
+        "\"DOD_max\": %f, \"n_cycles_prev_day\": %d, \"b1_dt\": %.3f, "
+        "\"b2_dt\": %.3f, \"b3_dt\": %.3f, \"c2_dt\": %.3f,  } ",
+        p.q_relative_li, p.q_relative_neg, p.dq_relative_li_old, p.dq_relative_neg_old, p.DOD_max, p.n_cycles_prev_day,
+        p.b1_dt, p.b2_dt, p.b3_dt, p.c2_dt);
     os << buf ;
     return os;
 }
@@ -140,6 +143,7 @@ std::ostream &operator<<(std::ostream &os, const lifetime_params &p) {
     os.precision(3);
     char buf[1024];
     sprintf(buf, R"("lifetime_params": { "dt_hr": %.3f, "model_choice": %d, )", p.dt_hr, p.model_choice);
+    os << buf;
     os << *p.cal_cyc << " }";
     return os;
 }

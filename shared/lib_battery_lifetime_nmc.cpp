@@ -20,14 +20,15 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
+#include <cmath>
+
 #include "lib_battery_lifetime_calendar_cycle.h"
 #include "lib_battery_lifetime_nmc.h"
 #include "lib_battery_lifetime.h"
-#include <numeric>
-#include <cmath>
+#include "logger.h"
 
 void lifetime_nmc_t::initialize() {
-
+    state = std::make_shared<lifetime_state>();
     // cycle model for counting cycles only, no cycle-only degradation
     cycle_model = std::unique_ptr<lifetime_cycle_t>(new lifetime_cycle_t(params, state));
     // do any state initialization here
@@ -48,7 +49,6 @@ lifetime_nmc_t::lifetime_nmc_t(double dt_hr) {
     params = std::make_shared<lifetime_params>();
     params->model_choice = lifetime_params::NMCNREL;
     params->dt_hr = dt_hr;
-    state = std::make_shared<lifetime_state>();
     initialize();
 }
 
@@ -139,8 +139,7 @@ double lifetime_nmc_t::runQneg(double T_battery, double SOC) {
 
     state->nmc_state->q_relative_neg = (1 - (dq_new)) * 100;
 
-    //return state->nmc_state->q_relative_neg;
-    return 100;
+    return state->nmc_state->q_relative_neg;
 }
 
 void lifetime_nmc_t::runLifetimeModels(size_t lifetimeIndex, bool charge_changed, double prev_DOD, double DOD,
@@ -168,7 +167,7 @@ void lifetime_nmc_t::runLifetimeModels(size_t lifetimeIndex, bool charge_changed
     double V_oc = calculate_Voc(SOC);
 
     // compute lifetime degradation coefficients for current time step,
-    //multiply by timestep in days and populate corresponding vectors
+    // multiply by timestep in days and populate corresponding vectors
     double dt_day = (1. / 24) * params->dt_hr;
     double b1_dt_el = b1_ref * exp(-(Ea_b_1 / Rug) * (1. / T_battery - 1. / T_ref))
         * exp((alpha_a_b1 * F / Rug) * (U_neg / T_battery - U_ref / T_ref))
@@ -176,10 +175,16 @@ void lifetime_nmc_t::runLifetimeModels(size_t lifetimeIndex, bool charge_changed
     double b2_dt_el = b2_ref * exp(-(Ea_b_2 / Rug) * (1. / T_battery - 1. / T_ref)) * dt_day;
     double b3_dt_el = b3_ref * exp(-(Ea_b_3 / Rug) * (1. / T_battery - 1. / T_ref))
         * exp((alpha_a_b3 * F / Rug) * (V_oc / T_battery - V_ref / T_ref))
-        * (1 + theta * DOD_max);
+        * (1 + theta * DOD_max) * dt_day;
     state->nmc_state->b1_dt += b1_dt_el;
     state->nmc_state->b2_dt += b2_dt_el;
     state->nmc_state->b3_dt += b3_dt_el;
+
+//    printf("bat %f, %f, %f, %f, b1 %f, %f, %f\n", SOC, DOD_max, U_neg, V_oc, T_battery, b1_dt_el, state->nmc_state->b1_dt);
+
+//    printf("b1 %f, %f, %f\n", T_battery, b1_dt_el, state->nmc_state->b1_dt);
+    printf("b2 %f, %f, b3 %f, %f\n", b2_dt_el, state->nmc_state->b2_dt, b3_dt_el,  state->nmc_state->b3_dt);
+
 
     //computations for q_neg
     double c2_dt_el = c2_ref * exp(-(Ea_c_2 / Rug) * (1. / T_battery - 1. / T_ref))
@@ -187,17 +192,22 @@ void lifetime_nmc_t::runLifetimeModels(size_t lifetimeIndex, bool charge_changed
     state->nmc_state->c2_dt += c2_dt_el;
 
     //Run capacity degradation model after every 24 hours
-    if (lifetimeIndex % ts_per_day == 23) {
+    if (lifetimeIndex % ts_per_day == ts_per_day - 1) {
         state->nmc_state->q_relative_li = runQli();
         state->nmc_state->q_relative_neg = runQneg(T_battery, SOC);
         state->q_relative = fmin(state->nmc_state->q_relative_li, state->nmc_state->q_relative_neg);
         state->nmc_state->n_cycles_prev_day = state->n_cycles;
-//        printf("%zu, %f, %zu, %f, %f, %f\n", lifetimeIndex, state->day_age_of_battery, (size_t)(day_age_of_battery_old), state->nmc_state->q_relative_li, state->nmc_state->q_relative_neg, state->q_relative);
+
+        printf("%zu, %f, %zu, %f, %f, %f\n", lifetimeIndex, state->day_age_of_battery, ts_per_day, state->nmc_state->q_relative_li, state->nmc_state->q_relative_neg, state->q_relative);
+        logger log(std::cout);
+
+        log << *state->nmc_state << "\n";
     }
 //    else
 //        printf("%zu, %f, %zu, %zu\n", lifetimeIndex, state->day_age_of_battery, (size_t)state->day_age_of_battery, day_age_of_battery_old);
 
     state->q_relative = fmin(state->q_relative, q_last);
+
 }
 
 double lifetime_nmc_t::estimateCycleDamage() {

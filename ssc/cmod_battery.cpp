@@ -565,7 +565,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             batt_vars->batt_life_model = vt.as_integer("batt_life_model");
 
             if (batt_vars->batt_life_model == 1 && batt_vars->batt_chem != 1)
-                throw exec_error("battery", "NREL NMC life model (batt_life_model=1) can only be used with Li-Ion chemistries (batt_chem=1).");
+                throw exec_error("battery", "NMC life model (batt_life_model=1) can only be used with Li-Ion chemistries (batt_chem=1).");
 
             if (batt_vars->batt_life_model == 0) {
                 batt_vars->batt_calendar_choice = vt.as_integer("batt_calendar_choice");
@@ -837,7 +837,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     }
     else {
         throw exec_error("battery", "Unrecognized `batt_life_model` option. Valid options are 0 for separate calendar & cycle models; "
-                                    "1 for NREL NMC life model.");
+                                    "1 for NMC (Smith 2017) life model.");
     }
 
     if (batt_vars->T_room.size() != nrec) {
