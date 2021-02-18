@@ -197,10 +197,12 @@ public:
 
     capacity_lithium_ion_t * capacityModel;
     voltage_t * voltageModel;
+    voltage_t* voltageModel_adaptive;
     thermal_t * thermalModel;
     lifetime_t * lifetimeModel;
     losses_t * lossModel;
     std::unique_ptr<battery_t> batteryModel;
+    std::unique_ptr<battery_t> batteryModel_adaptive;
 
     void SetUp() override
     {

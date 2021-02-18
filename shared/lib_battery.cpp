@@ -605,6 +605,7 @@ void battery_t::runCapacityModel(double &I) {
 
 void battery_t::runVoltageModel() {
     voltage->updateVoltage(capacity->q0(), capacity->qmax(), capacity->I(), thermal->T_battery(), params->dt_hr);
+
 }
 
 void battery_t::runLifetimeModel(size_t lifetimeIndex) {

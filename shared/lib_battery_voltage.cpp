@@ -468,7 +468,7 @@ double voltage_dynamic_t::calculate_current_for_target_w(double P_watts, double 
     newton<double, std::function<void(const double *, double *)>, 1>(x, resid, check, f,
                                                                      100, 1e-6, 1e-6, 0.7);
 
-    //state->Q_full_mod = Qfull_mod_store;
+    state->Q_full_mod = Qfull_mod_store;
     return x[0] * params->num_strings * direction;
 }
 
