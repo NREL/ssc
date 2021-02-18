@@ -145,7 +145,9 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, ReadJson) {
 }
 
 TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, RunCurrentControl) {
-    CreateKokamModel();
+    double dt_hour = 1.0 / 360;
+
+    CreateKokamModel(dt_hour);
 
     double range, avg_range, n_cycles, q_max, q_rel;
 
@@ -153,13 +155,10 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, RunCurrentControl) {
 
     EXPECT_EQ(currents.size(), 2000);
 
-    for (int i = 0; i < currents.size(); i++)
-    {
-        //ssc_data_set_number(copy, "last_idx", i);
-        ssc_data_set_number(data, "input_current", currents[i]);
+    for (double current : currents) {
+        ssc_data_set_number(data, "input_current", current);
         ssc_module_exec(mod, data);
     }
-
 
     ssc_data_get_number(data, "range", &range);
     ssc_data_get_number(data, "average_range", &avg_range);
@@ -167,12 +166,11 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, RunCurrentControl) {
     ssc_data_get_number(data, "Q_max", &q_max);
     ssc_data_get_number(data, "q_relative", &q_rel);
 
-
-    EXPECT_NEAR(range, 75.34, 0.01);
-    EXPECT_NEAR(avg_range, 61.54, 0.01);
+    EXPECT_NEAR(range, 75.362, 0.01);
+    EXPECT_NEAR(avg_range, 61.638, 0.01);
     EXPECT_NEAR(n_cycles, 3.0, 0.01);
-    EXPECT_NEAR(q_max, 75.55, 0.01);
-    EXPECT_NEAR(q_rel, 99.99, 0.01);
+    EXPECT_NEAR(q_max, 75.56, 0.01);
+    EXPECT_NEAR(q_rel, 100, 0.01);
 }
 
 TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, AdaptiveTimestep) {
