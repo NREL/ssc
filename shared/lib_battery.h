@@ -121,10 +121,6 @@ protected:
 
 private:
 
-    double Ea_d0_1 = 4126.0;
-    double Ea_d0_2 = 9752000;
-    double Rug = 8.314;
-    double T_ref = 298.15;
     void initialize();
 
     friend class battery_t;

@@ -125,6 +125,10 @@ void thermal_t::replace_battery(size_t lifetimeIndex) {
 }
 
 void thermal_t::calc_capacity() {
+    // NMC Life Model reversible thermal capacity dependence
+    double Ea_d0_1 = 4126.0;    // J/mol
+    double Ea_d0_2 = 9752000.0; // J/mol
+
     double percent;
     if (params->cap_analytical) {
         percent = 100. * exp(-(Ea_d0_1 / Rug) * (1 /( state->T_batt+273) - 1 / T_ref) -
@@ -149,7 +153,6 @@ void thermal_t::updateTemperature(double I, size_t lifetimeIndex) {
     }
 
     // the battery temp is the average temp over that step, starting with temp from end of last timestep
-
     double T_steady_state = I * I * params->resistance / (params->surface_area * params->h) + state->T_room;
     double diffusion = exp(-params->surface_area * params->h * dt_sec / params->mass / params->Cp);
     double coeff_avg = params->mass * params->Cp / params->surface_area / params->h / dt_sec;

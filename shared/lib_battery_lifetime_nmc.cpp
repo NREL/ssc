@@ -169,11 +169,11 @@ void lifetime_nmc_t::runLifetimeModels(size_t lifetimeIndex, bool charge_changed
     // compute lifetime degradation coefficients for current time step,
     // multiply by timestep in days and populate corresponding vectors
     double dt_day = (1. / 24) * params->dt_hr;
-    double b1_dt_el = b1_ref * exp(-(Ea_b_1 / Rug) * (1. / T_battery - 1. / T_ref))
-        * exp((alpha_a_b1 * F / Rug) * (U_neg / T_battery - U_ref / T_ref))
+    double b1_dt_el = b1_ref * exp(-(Ea_b1 / Rug) * (1. / T_battery - 1. / T_ref))
+        * exp((alpha_a_b1 * F / Rug) * (U_neg / T_battery - Uneg_ref / T_ref))
         * exp(gamma * pow(DOD_max, beta_b1)) * dt_day;
     double b2_dt_el = b2_ref * exp(-(Ea_b_2 / Rug) * (1. / T_battery - 1. / T_ref)) * dt_day;
-    double b3_dt_el = b3_ref * exp(-(Ea_b_3 / Rug) * (1. / T_battery - 1. / T_ref))
+    double b3_dt_el = b3_ref * exp(-(Ea_b3 / Rug) * (1. / T_battery - 1. / T_ref))
         * exp((alpha_a_b3 * F / Rug) * (V_oc / T_battery - V_ref / T_ref))
         * (1 + theta * DOD_max) * dt_day;
     state->nmc_li_neg->b1_dt += b1_dt_el;
@@ -187,7 +187,7 @@ void lifetime_nmc_t::runLifetimeModels(size_t lifetimeIndex, bool charge_changed
 
 
     //computations for q_neg
-    double c2_dt_el = c2_ref * exp(-(Ea_c_2 / Rug) * (1. / T_battery - 1. / T_ref))
+    double c2_dt_el = c2_ref * exp(-(Ea_c2 / Rug) * (1. / T_battery - 1. / T_ref))
         * pow(0.01 * DOD, beta_c2);
     state->nmc_li_neg->c2_dt += c2_dt_el;
 
