@@ -1286,8 +1286,8 @@ TEST(cmod_utilityrate5_eqns, Test_Commercial_kWh_per_kW_charges) {
     double july_year_1 = bill_matrix.at((size_t)1, (size_t)6);
     EXPECT_NEAR(16774.68, july_year_1, 0.01);
 
-    // Rerun with buy all / sell all
-    ssc_data_set_number(data, "ur_metering_option", 4);
+    // Rerun with net billing
+    ssc_data_set_number(data, "ur_metering_option", 2);
     status = run_module(data, "utilityrate5");
     EXPECT_FALSE(status);
 
@@ -1296,6 +1296,25 @@ TEST(cmod_utilityrate5_eqns, Test_Commercial_kWh_per_kW_charges) {
 
     july_year_1 = bill_matrix.at((size_t)1, (size_t)6);
     EXPECT_NEAR(16774.68, july_year_1, 0.01);
+
+    ssc_number_t* july_tiers = ssc_data_get_matrix(data, "energy_wo_sys_ec_jul_tp", &nrows, &ncols);
+    util::matrix_t<double> tier_matrix(nrows, ncols);
+    tier_matrix.assign(july_tiers, nrows, ncols);
+
+    EXPECT_NEAR(3000.0, tier_matrix.at((size_t)1, 1), 0.01);
+    EXPECT_NEAR(7000.0, tier_matrix.at((size_t)1, 2), 0.01);
+    EXPECT_NEAR(121603.13, tier_matrix.at((size_t)1, 3), 0.01);
+    EXPECT_NEAR(131603.13, tier_matrix.at((size_t)1, 4), 0.01);
+    EXPECT_NEAR(120963.36, tier_matrix.at((size_t)1, 5), 0.01);
+
+    july_tiers = ssc_data_get_matrix(data, "energy_w_sys_ec_jul_tp", &nrows, &ncols);
+    tier_matrix.assign(july_tiers, nrows, ncols);
+
+    EXPECT_NEAR(3000.0, tier_matrix.at((size_t)1, 1), 0.01);
+    EXPECT_NEAR(7000.0, tier_matrix.at((size_t)1, 2), 0.01);
+    EXPECT_NEAR(121603.13, tier_matrix.at((size_t)1, 3), 0.01);
+    EXPECT_NEAR(131603.13, tier_matrix.at((size_t)1, 4), 0.01);
+    EXPECT_NEAR(103255.44, tier_matrix.at((size_t)1, 5), 0.01);
 }
 
 TEST(cmod_utilityrate5_eqns, Test_Commercial_Energy_Tiers_net_billing) {
