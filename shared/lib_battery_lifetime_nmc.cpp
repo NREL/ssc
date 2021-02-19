@@ -198,7 +198,7 @@ void lifetime_nmc_t::runLifetimeModels(size_t lifetimeIndex, bool charge_changed
         state->q_relative = fmin(state->nmc_li_neg->q_relative_li, state->nmc_li_neg->q_relative_neg);
         state->nmc_li_neg->n_cycles_prev_day = state->n_cycles;
 
-        printf("%f, %f, %f\n", state->nmc_li_neg->q_relative_li, state->nmc_li_neg->q_relative_neg, state->q_relative);
+//        printf("%f, %f, %f\n", state->nmc_li_neg->q_relative_li, state->nmc_li_neg->q_relative_neg, state->q_relative);
 //        logger log(std::cout);
 //
 //        log << *state->nmc_li_neg << "\n";
