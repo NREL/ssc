@@ -114,13 +114,13 @@ protected:
     double b2_ref = 0.00001541; // 1
     double Ea_b_2 = -42800.;    // J mol^-1
 
-    double b3_ref = 0.003503;   // 1
+    double b3_ref = 0.02805;    // 1
     double Ea_b3 = 42800.;      // J mol^-1
     double alpha_a_b3 = 0.0066; // 1
     double tau_b3 = 5;          // 1
     double theta = 0.135;       // 1
 
-    double runQli();
+    double runQli(double T_battery_K);
 
     /// Capacity degradation due to cycles
     double c0_ref = 75.64;      // Ah

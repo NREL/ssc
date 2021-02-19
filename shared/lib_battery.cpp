@@ -125,17 +125,10 @@ void thermal_t::replace_battery(size_t lifetimeIndex) {
 }
 
 void thermal_t::calc_capacity() {
-    // NMC Life Model reversible thermal capacity dependence
-    double Ea_d0_1 = 4126.0;    // J/mol
-    double Ea_d0_2 = 9752000.0; // J/mol
+    double percent = 100;
 
-    double percent;
-    if (params->cap_analytical) {
-        percent = 100. * exp(-(Ea_d0_1 / Rug) * (1 /( state->T_batt+273) - 1 / T_ref) -
-            (Ea_d0_2 / Rug) * pow((1 / (state->T_batt+273) - 1 / T_ref), 2));
-    }
-    else
-    {
+    // if using cap_analytical, it is done in the life model
+    if (!params->cap_analytical) {
         percent = util::linterp_col(params->cap_vs_temp, 0, state->T_batt, 1);
     }
 

@@ -371,11 +371,8 @@ TEST_F(lib_battery_lifetime_nmc_test, InitTest) {
 
 /// run at different days
 TEST_F(lib_battery_lifetime_nmc_test, StorageDays) {
-    auto params = std::make_shared<lifetime_params>(model->get_params());
-    auto state = std::make_shared<lifetime_state>(model->get_state());
-
     std::vector<double> days = {0, 10, 50 , 500, 5000};
-    std::vector<double> expected_q_li = {1.071, 1.042, 1.033, 1.016, 0.961};
+    std::vector<double> expected_q_li = {106.50, 104.36, 103.97, 103.72, 102.93};
 
     for (size_t i = 0; i < days.back() + 1; i++) {
         for (size_t h = 0; h < 24; h++) {
@@ -384,11 +381,28 @@ TEST_F(lib_battery_lifetime_nmc_test, StorageDays) {
         }
         auto pos = std::find(days.begin(), days.end(), i);
         if (pos != days.end()) {
-            auto lifetime_state = model->get_state();
-            EXPECT_NEAR(lifetime_state.nmc_li_neg->q_relative_li, expected_q_li[pos - days.begin()], 1e-3);
+            auto state = model->get_state();
+            EXPECT_NEAR(state.nmc_li_neg->q_relative_li, expected_q_li[pos - days.begin()], 0.5);
         }
     }
+}
 
+/// run at different days at different temperatures
+TEST_F(lib_battery_lifetime_nmc_test, StorageTemp) {
+    std::vector<double> temps = {0, 10, 15, 40};
+    std::vector<double> expected_q_li = {81.73, 93.08, 97.43, 102.33};
+
+    for (size_t n = 3; n < temps.size(); n++) {
+        model = std::unique_ptr<lifetime_nmc_t>(new lifetime_nmc_t(dt_hour));
+        for (size_t d = 0; d < 5000 + 1; d++) {
+            for (size_t h = 0; h < 24; h++) {
+                size_t hr = d * 24 + h;
+                model->runLifetimeModels(hr, false, 50, 50, temps[n]);
+            }
+        }
+        auto state = model->get_state();
+        EXPECT_NEAR(state.nmc_li_neg->q_relative_li, expected_q_li[n], 1);
+    }
 }
 
 TEST_F(lib_battery_lifetime_nmc_test, CyclingTest) {

@@ -102,7 +102,7 @@ double lifetime_nmc_t::calculate_Voc(double SOC) {
 
 
 
-double lifetime_nmc_t::runQli() {
+double lifetime_nmc_t::runQli(double T_battery_K) {
     double dt_day = 1;
     int dn_cycles = state->n_cycles - state->nmc_li_neg->n_cycles_prev_day;
     double b1 = state->nmc_li_neg->b1_dt;
@@ -113,13 +113,17 @@ double lifetime_nmc_t::runQli() {
     state->nmc_li_neg->b2_dt = 0;
     state->nmc_li_neg->b3_dt = 0;
 
+    // Reversible thermal capacity dependence
+    double d0_t = d0_ref * exp(-(Ea_d0_1 / Rug) * (1 / T_battery_K - 1 / T_ref) -
+                      (Ea_d0_2 / Rug) * pow(1 / T_battery_K - 1 / T_ref, 2));
+
     double k_cal = 0;
     if (state->day_age_of_battery > 0)
         k_cal = (0.5 * b1) / (sqrt(state->day_age_of_battery)) + (b3 / tau_b3) * exp(-(state->day_age_of_battery / tau_b3));
 
     double dq_new = k_cal * dt_day + b2 * dn_cycles + state->nmc_li_neg->dq_relative_li_old;
     state->nmc_li_neg->dq_relative_li_old = dq_new;
-    state->nmc_li_neg->q_relative_li = (b0 - (dq_new)) * 100;
+    state->nmc_li_neg->q_relative_li = (b0 - (dq_new)) * 100 * d0_t / 75;
     return state->nmc_li_neg->q_relative_li;
 }
 
@@ -152,7 +156,7 @@ void lifetime_nmc_t::runLifetimeModels(size_t lifetimeIndex, bool charge_changed
     auto ts_per_day = (size_t)(util::hours_per_day / params->dt_hr);
 
     // convert battery temperature to Kelvin
-    T_battery += 273;
+    T_battery += 273.15;
     if (charge_changed)
         cycle_model->rainflow(prev_DOD);
 
