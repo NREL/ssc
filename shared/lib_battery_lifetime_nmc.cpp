@@ -57,6 +57,12 @@ lifetime_nmc_t::lifetime_nmc_t(std::shared_ptr<lifetime_params> params_pt) {
     initialize();
 }
 
+lifetime_nmc_t::lifetime_nmc_t(std::shared_ptr<lifetime_params> params_pt, std::shared_ptr<lifetime_state> state_pt) {
+    params = std::move(params_pt);
+    state = std::move(state_pt);
+    cycle_model = std::unique_ptr<lifetime_cycle_t>(new lifetime_cycle_t(params, state));
+}
+
 lifetime_nmc_t::lifetime_nmc_t(const lifetime_nmc_t &rhs) :
         lifetime_t(rhs){
     operator=(rhs);
@@ -94,11 +100,11 @@ double lifetime_nmc_t::calculate_Voc(double SOC) {
     return Voc;
 }
 
+
+
 double lifetime_nmc_t::runQli() {
     double dt_day = 1;
     int dn_cycles = state->n_cycles - state->nmc_li_neg->n_cycles_prev_day;
-    double k_cal = 0;
-    //double b1 = std::accumulate(state->nmc_state->b1_dt.begin(), state->nmc_state->b1_dt.end(), 0);
     double b1 = state->nmc_li_neg->b1_dt;
     double b2 = state->nmc_li_neg->b2_dt;
     double b3 = state->nmc_li_neg->b3_dt;
@@ -107,18 +113,13 @@ double lifetime_nmc_t::runQli() {
     state->nmc_li_neg->b2_dt = 0;
     state->nmc_li_neg->b3_dt = 0;
 
+    double k_cal = 0;
     if (state->day_age_of_battery > 0)
         k_cal = (0.5 * b1) / (sqrt(state->day_age_of_battery)) + (b3 / tau_b3) * exp(-(state->day_age_of_battery / tau_b3));
-    else
-        k_cal = 0;
 
-    double dq_new;
-    if (state->nmc_li_neg->dq_relative_li_old == 0)
-        dq_new = k_cal * dt_day + b2 * dn_cycles;
-    else
-        dq_new = k_cal * dt_day + b2 * dn_cycles + state->nmc_li_neg->dq_relative_li_old;
+    double dq_new = k_cal * dt_day + b2 * dn_cycles + state->nmc_li_neg->dq_relative_li_old;
     state->nmc_li_neg->dq_relative_li_old = dq_new;
-    state->nmc_li_neg->q_relative_li = (1.07 - (dq_new)) * 100;
+    state->nmc_li_neg->q_relative_li = (b0 - (dq_new)) * 100;
     return state->nmc_li_neg->q_relative_li;
 }
 
@@ -147,7 +148,6 @@ void lifetime_nmc_t::runLifetimeModels(size_t lifetimeIndex, bool charge_changed
     double q_last = state->q_relative;
 
     // update day age of battery
-    size_t day_age_of_battery_old = (size_t)(state->day_age_of_battery);
     state->day_age_of_battery += params->dt_hr / (double)util::hours_per_day;
     auto ts_per_day = (size_t)(util::hours_per_day / params->dt_hr);
 
@@ -183,7 +183,7 @@ void lifetime_nmc_t::runLifetimeModels(size_t lifetimeIndex, bool charge_changed
 //    printf("bat %f, %f, %f, %f, b1 %f, %f, %f\n", SOC, DOD_max, U_neg, V_oc, T_battery, b1_dt_el, state->nmc_state->b1_dt);
 
 //    printf("b1 %f, %f, %f\n", T_battery, b1_dt_el, state->nmc_state->b1_dt);
-    printf("b2 %f, %f, b3 %f, %f\n", b2_dt_el, state->nmc_li_neg->b2_dt, b3_dt_el,  state->nmc_li_neg->b3_dt);
+//    printf("b2 %f, %f, b3 %f, %f\n", b2_dt_el, state->nmc_li_neg->b2_dt, b3_dt_el,  state->nmc_li_neg->b3_dt);
 
 
     //computations for q_neg
@@ -198,14 +198,13 @@ void lifetime_nmc_t::runLifetimeModels(size_t lifetimeIndex, bool charge_changed
         state->q_relative = fmin(state->nmc_li_neg->q_relative_li, state->nmc_li_neg->q_relative_neg);
         state->nmc_li_neg->n_cycles_prev_day = state->n_cycles;
 
-        printf("%zu, %f, %zu, %f, %f, %f\n", lifetimeIndex, state->day_age_of_battery, ts_per_day, state->nmc_li_neg->q_relative_li,
-               state->nmc_li_neg->q_relative_neg, state->q_relative);
-        logger log(std::cout);
-
-        log << *state->nmc_li_neg << "\n";
+        printf("%f, %f, %f\n", state->nmc_li_neg->q_relative_li, state->nmc_li_neg->q_relative_neg, state->q_relative);
+//        logger log(std::cout);
+//
+//        log << *state->nmc_li_neg << "\n";
     }
-//    else
-//        printf("%zu, %f, %zu, %zu\n", lifetimeIndex, state->day_age_of_battery, (size_t)state->day_age_of_battery, day_age_of_battery_old);
+    else
+//        printf("%zu, %f, %zu, %zu\n", lifetimeIndex, state->day_age_of_battery, (size_t)state->day_age_of_battery);
 
     state->q_relative = fmin(state->q_relative, q_last);
 

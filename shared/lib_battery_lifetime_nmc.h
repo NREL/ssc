@@ -68,6 +68,8 @@ public:
 
     lifetime_nmc_t(std::shared_ptr<lifetime_params> params_pt);
 
+    lifetime_nmc_t(std::shared_ptr<lifetime_params> params_pt, std::shared_ptr<lifetime_state> state_pt);
+
     lifetime_nmc_t(const lifetime_nmc_t& rhs);
 
     lifetime_nmc_t &operator=(const lifetime_nmc_t& rhs);
@@ -91,10 +93,18 @@ protected:
 
     std::unique_ptr<lifetime_cycle_t> cycle_model;
 
+    /// Reference Anode and Cell potential
     double Uneg_ref = 0.08;     // V
     double V_ref = 3.7;         // V
 
+    /// Capacity degradation due to positive electrode-site-limit
+    double d0_ref = 75.1;       // Ah
+    double Ea_d0_1 = 4126.0;    // J/mol
+    double Ea_d0_2 = 9752000.0; // J/mol
+
+
     /// Capacity degradation due to SEI
+    double b0 = 1.07;           // 1
     double b1_ref = 0.003503;   // day^-0.5
     double Ea_b1 = 35392.;      // J mol^-1
     double alpha_a_b1 = -1;     // 1
@@ -113,8 +123,9 @@ protected:
     double runQli();
 
     /// Capacity degradation due to cycles
-    double c0_ref = 75.1;       // Ah
+    double c0_ref = 75.64;      // Ah
     double c2_ref = 0.0039193;  // Ah cycle^-1
+    double Ea_c2_ref = 2224;    // J mol^-1
     double Ea_c2 = -48260;      // J mol^-1
     double beta_c2 = 4.54;      // 1
 
