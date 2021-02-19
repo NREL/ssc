@@ -373,19 +373,20 @@ TEST_F(lib_battery_lifetime_nmc_test, InitTest) {
 TEST_F(lib_battery_lifetime_nmc_test, StorageDays) {
     auto params = std::make_shared<lifetime_params>(model->get_params());
     auto state = std::make_shared<lifetime_state>(model->get_state());
-    size_t steps_per_day = 24 / (size_t)params->dt_hr;
 
-    std::vector<double> days = {0, 10, 50 , 500, 1000};
-    std::vector<double> expected_q_li = {1.0027};
+    std::vector<double> days = {0, 10, 50 , 500, 5000};
+    std::vector<double> expected_q_li = {1.071, 1.042, 1.033, 1.016, 0.961};
 
-    for (size_t i = 0; i < days.size(); i++) {
-        double day = days[i];
-        state->day_age_of_battery = day;
-        model = std::unique_ptr<lifetime_nmc_t>(new lifetime_nmc_t(params, state));
-        model->runLifetimeModels((size_t)(steps_per_day * day - 1), false, 50, 50, 25);
-
-        auto lifetime_state = model->get_state();
-        EXPECT_NEAR(lifetime_state.nmc_li_neg->q_relative_li, expected_q_li[i], 1e-3);
+    for (size_t i = 0; i < days.back() + 1; i++) {
+        for (size_t h = 0; h < 24; h++) {
+            size_t hr = i * 24 + h;
+            model->runLifetimeModels(hr, false, 50, 50, 25);
+        }
+        auto pos = std::find(days.begin(), days.end(), i);
+        if (pos != days.end()) {
+            auto lifetime_state = model->get_state();
+            EXPECT_NEAR(lifetime_state.nmc_li_neg->q_relative_li, expected_q_li[pos - days.begin()], 1e-3);
+        }
     }
 
 }
