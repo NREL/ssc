@@ -3453,8 +3453,7 @@ void C_csp_solver::C_CR_TO_COLD__PC_SB__TES_DC__AUX_OFF::check_system_limits(C_c
     double q_dot_pc_solved = pc_csp_solver->mc_pc_out_solver.m_q_dot_htf;	//[MWt]
     double m_dot_pc_solved = pc_csp_solver->mc_pc_out_solver.m_m_dot_htf;	//[kg/hr]
 
-    std::string error_msg = util::format("At time = %lg plant controller tried operating mode %s which hasn't been tested",
-        pc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, m_op_mode_name);
+    std::string error_msg = util::format("At time = %lg [hr]", pc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0) + ", the plant controller tried operating mode " + m_op_mode_name + " which hasn't been tested";
     pc_csp_solver->mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
     // Check if solved thermal power is greater than target
@@ -3499,6 +3498,89 @@ void C_csp_solver::C_CR_TO_COLD__PC_SB__TES_DC__AUX_OFF::check_system_limits(C_c
     }
 }
 
+C_csp_solver::C_operating_mode_core* C_csp_solver::C_system_operating_modes::get_pointer_to_op_mode(E_operating_modes op_mode)
+{
+    switch (op_mode)
+    {
+    case CR_OFF__PC_OFF__TES_OFF__AUX_OFF:
+        return &mc_CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+    case CR_SU__PC_OFF__TES_OFF__AUX_OFF:
+        return &mc_CR_SU__PC_OFF__TES_OFF__AUX_OFF;
+    case CR_ON__PC_SU__TES_OFF__AUX_OFF:
+        return &mc_CR_ON__PC_SU__TES_OFF__AUX_OFF;
+    case CR_ON__PC_SB__TES_OFF__AUX_OFF:
+        return &mc_CR_ON__PC_SB__TES_OFF__AUX_OFF;
+    case CR_ON__PC_RM_HI__TES_OFF__AUX_OFF:
+        return &mc_CR_ON__PC_RM_HI__TES_OFF__AUX_OFF;
+    case CR_ON__PC_RM_LO__TES_OFF__AUX_OFF:
+        return &mc_CR_ON__PC_RM_LO__TES_OFF__AUX_OFF;
+    case CR_DF__PC_MAX__TES_OFF__AUX_OFF:
+        return &mc_CR_DF__PC_MAX__TES_OFF__AUX_OFF;
+    case CR_OFF__PC_SU__TES_DC__AUX_OFF:
+        return &mc_CR_OFF__PC_SU__TES_DC__AUX_OFF;
+    case CR_ON__PC_OFF__TES_CH__AUX_OFF:
+        return &mc_CR_ON__PC_OFF__TES_CH__AUX_OFF;
+    case CR_ON__PC_TARGET__TES_CH__AUX_OFF:
+        return &mc_CR_ON__PC_TARGET__TES_CH__AUX_OFF;
+    case CR_ON__PC_TARGET__TES_DC__AUX_OFF:
+        return &mc_CR_ON__PC_TARGET__TES_DC__AUX_OFF;
+    case CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF:
+        return &mc_CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF;
+    case CR_DF__PC_OFF__TES_FULL__AUX_OFF:
+        return &mc_CR_DF__PC_OFF__TES_FULL__AUX_OFF;
+    case CR_OFF__PC_SB__TES_DC__AUX_OFF:
+        return &mc_CR_OFF__PC_SB__TES_DC__AUX_OFF;
+    case CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF:
+        return &mc_CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF;
+    case CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF:
+        return &mc_CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF;
+    case CR_ON__PC_SB__TES_CH__AUX_OFF:
+        return &mc_CR_ON__PC_SB__TES_CH__AUX_OFF;
+    case CR_SU__PC_MIN__TES_EMPTY__AUX_OFF:
+        return &mc_CR_SU__PC_MIN__TES_EMPTY__AUX_OFF;
+    case CR_SU__PC_SB__TES_DC__AUX_OFF:
+        return &mc_CR_SU__PC_SB__TES_DC__AUX_OFF;
+    case CR_ON__PC_SB__TES_DC__AUX_OFF:
+        return &mc_CR_ON__PC_SB__TES_DC__AUX_OFF;
+    case CR_OFF__PC_TARGET__TES_DC__AUX_OFF:
+        return &mc_CR_OFF__PC_TARGET__TES_DC__AUX_OFF;
+    case CR_SU__PC_TARGET__TES_DC__AUX_OFF:
+        return &mc_CR_SU__PC_TARGET__TES_DC__AUX_OFF;
+    case CR_ON__PC_RM_HI__TES_FULL__AUX_OFF:
+        return &mc_CR_ON__PC_RM_HI__TES_FULL__AUX_OFF;
+    case CR_ON__PC_MIN__TES_EMPTY__AUX_OFF:
+        return &mc_CR_ON__PC_MIN__TES_EMPTY__AUX_OFF;
+    case CR_SU__PC_RM_LO__TES_EMPTY__AUX_OFF:
+        return &mc_CR_SU__PC_RM_LO__TES_EMPTY__AUX_OFF;
+    case CR_DF__PC_MAX__TES_FULL__AUX_OFF:
+        return &mc_CR_DF__PC_MAX__TES_FULL__AUX_OFF;
+    case CR_ON__PC_SB__TES_FULL__AUX_OFF:
+        return &mc_CR_ON__PC_SB__TES_FULL__AUX_OFF;
+    case CR_SU__PC_SU__TES_DC__AUX_OFF:
+        return &mc_CR_SU__PC_SU__TES_DC__AUX_OFF;
+    case CR_ON__PC_SU__TES_CH__AUX_OFF:
+        return &mc_CR_ON__PC_SU__TES_CH__AUX_OFF;
+    case CR_DF__PC_SU__TES_FULL__AUX_OFF:
+        return &mc_CR_DF__PC_SU__TES_FULL__AUX_OFF;
+    case CR_DF__PC_SU__TES_OFF__AUX_OFF:
+        return &mc_CR_DF__PC_SU__TES_OFF__AUX_OFF;
+    case CR_TO_COLD__PC_TARGET__TES_DC__AUX_OFF:
+        return &mc_CR_TO_COLD__PC_TARGET__TES_DC__AUX_OFF;
+    case CR_TO_COLD__PC_RM_LO__TES_EMPTY__AUX_OFF:
+        return &mc_CR_TO_COLD__PC_RM_LO__TES_EMPTY__AUX_OFF;
+    case CR_TO_COLD__PC_SB__TES_DC__AUX_OFF:
+        return &mc_CR_TO_COLD__PC_SB__TES_DC__AUX_OFF;
+    case CR_TO_COLD__PC_MIN__TES_EMPTY__AUX_OFF:
+        return &mc_CR_TO_COLD__PC_MIN__TES_EMPTY__AUX_OFF;
+    case CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF:
+        return &mc_CR_TO_COLD__PC_OFF__TES_OFF__AUX_OFF;
+    case CR_TO_COLD__PC_SU__TES_DC__AUX_OFF:
+        return &mc_CR_TO_COLD__PC_SU__TES_DC__AUX_OFF;
+    default:
+        throw(C_csp_exception("Operating mode class not defined"));
+    }
+}
+
 bool C_csp_solver::C_system_operating_modes::solve(C_system_operating_modes::E_operating_modes op_mode, C_csp_solver* pc_csp_solver, bool is_rec_outlet_to_hottank,
     double q_dot_pc_on_target /*MWt*/, double q_dot_pc_startup /*MWt*/, double q_dot_pc_standby /*MWt*/,
     double q_dot_pc_min /*MWt*/, double q_dot_pc_max /*MWt*/, double q_dot_pc_startup_max /*MWt*/,
@@ -3506,7 +3588,7 @@ bool C_csp_solver::C_system_operating_modes::solve(C_system_operating_modes::E_o
     double limit_comp_tol /*-*/,
     double& defocus_solved, bool& is_op_mode_avail /*-*/, bool& is_turn_off_plant, bool& is_turn_off_rec_su)
 {
-    return m_operating_modes_map[op_mode]->solve(pc_csp_solver, is_rec_outlet_to_hottank,
+    return get_pointer_to_op_mode(op_mode)->solve(pc_csp_solver, is_rec_outlet_to_hottank,
         q_dot_pc_on_target, q_dot_pc_startup, q_dot_pc_standby,
         q_dot_pc_min, q_dot_pc_max, q_dot_pc_startup_max,
         m_dot_pc_startup_max, m_dot_pc_max, m_dot_pc_min,
@@ -3516,16 +3598,15 @@ bool C_csp_solver::C_system_operating_modes::solve(C_system_operating_modes::E_o
 
 void C_csp_solver::C_system_operating_modes::reset_all_availability()
 {
-    std::unordered_map<C_system_operating_modes::E_operating_modes, C_operating_mode_core*>::iterator it;
-    for (it = m_operating_modes_map.begin(); it != m_operating_modes_map.end(); it++) {
-        it->second->turn_on_mode_availability();
+    for (int it = ITER_START + 1; it != E_operating_modes::ITER_END; it++) {
+        get_pointer_to_op_mode(static_cast<E_operating_modes>(it))->turn_on_mode_availability();
     }
 }
 
 void C_csp_solver::C_system_operating_modes::turn_off_plant()
 {
-    std::unordered_map<C_system_operating_modes::E_operating_modes, C_operating_mode_core*>::iterator it;
-    for (it = m_operating_modes_map.begin(); it != m_operating_modes_map.end(); it++) {
-        it->second->turn_off_mode_availability();
+    for (int it = ITER_START + 1; it != E_operating_modes::ITER_END; it++) {
+        get_pointer_to_op_mode(static_cast<E_operating_modes>(it))->turn_off_mode_availability();
     }
+
 }
