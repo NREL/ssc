@@ -71,7 +71,8 @@ public:
 	var_data *lookup( const std::string &name );
 	var_data *lookup_match_case( const std::string &name );
     size_t as_unsigned_long(const std::string &name);
-    int as_integer( const std::string &name );
+    int as_integer(const std::string& name);
+//    double as_integer(const std::string& name);
     bool as_boolean( const std::string &name );
     float as_float( const std::string &name );
     ssc_number_t as_number( const std::string &name );

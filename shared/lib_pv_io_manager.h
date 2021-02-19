@@ -392,9 +392,11 @@ public:
 	flag enable;						// Whether or not the subarray is enabled
 
 	// Electrical characteristics
-	size_t nStrings;					// Number of strings in the subarray
-	int nModulesPerString;				// The number of modules per string
-	int mpptInput;						// Which inverter MPPT input this subarray is connected to
+    //size_t nStrings;					// Number of strings in the subarray
+    //int nModulesPerString;				// The number of modules per string
+    double nStrings;					// Number of strings in the subarray
+    double nModulesPerString;				// The number of modules per string
+    int mpptInput;						// Which inverter MPPT input this subarray is connected to
 
 	// Physical characteristics
 	double groundCoverageRatio;			// The ground coverage ratio [0 - 1]

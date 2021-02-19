@@ -66,7 +66,8 @@ pvsnowmodel::pvsnowmodel()
 
 }
 
-bool pvsnowmodel::setup(int nmody_in, float baseTilt_in, bool limitTilt){
+bool pvsnowmodel::setup(double nmody_in, float baseTilt_in, bool limitTilt) {
+//    bool pvsnowmodel::setup(int nmody_in, float baseTilt_in, bool limitTilt) {
 
 	nmody = nmody_in;
 	baseTilt = baseTilt_in;

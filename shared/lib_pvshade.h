@@ -35,7 +35,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // static self-shading inputs- these do not change with timestep. dynamic inputs are inputs to the ss_exec function
 struct ssinputs
 {
-    int nstrx, nmodx, nmody, nrows;
+//    int nstrx, nmodx, nmody, nrows;
+    double nstrx, nmodx, nmody, nrows;
     double length, width;
     int mod_orient, str_orient;
     double row_space;

@@ -31,7 +31,8 @@ public:
 	pvsnowmodel();
 
 	// limitTilt requires tilt to be between 10 and 45 degrees
-	bool setup(int, float, bool limitTilt = true);
+//    bool setup(int, float, bool limitTilt = true);
+    bool setup(double, float, bool limitTilt = true);
 
 	bool getLoss(float poa, float tilt, float wspd, float tdry, float snowDepth, int sunup, float dt, float &returnLoss);
 
@@ -44,8 +45,8 @@ public:
 		coverage,		// Snow coverage ( 0...1 )
 		pCvg;			// Snow coverage from previous iteration ( 0...1 )
 
-	int nmody,			// number of modules in a row
-		badValues,		// keeps track of the number of detected bad snow depth values
+    double nmody;			// number of modules in a row
+	int	badValues,		// keeps track of the number of detected bad snow depth values
 		maxBadValues;	// The number of maximum bad snow depth values that is acceptable
 
 	std::string msg;		// This is a string used to return error messages
