@@ -201,7 +201,6 @@ public:
             double wave_resource_start_height = 0;
             double wave_resource_end_period = 0;
             double wave_resource_end_height = 0;
-            double row_check = 0;
             for (size_t l = 0; l < (size_t)wave_power_matrix.nrows(); l++) {
                 for (size_t m = 0; m < (size_t)wave_power_matrix.ncols(); m++) {
 
@@ -323,31 +322,30 @@ public:
             a2 = (Q11 * x2) / ((x1 - x2) * (y2 - y1)) + (Q12 * x1) / ((x1 - x2) * (y1 - y2)) + (Q21 * x2) / ((x1 - x2) * (y1 - y2)) + (Q22 * x1) / ((x1 - x2) * (y2 - y1));
             a3 = (Q11) / ((x1 - x2) * (y1 - y2)) + (Q12) / ((x1 - x2) * (y2 - y1)) + (Q21) / ((x1 - x2) * (y2 - y1)) + (Q22) / ((x1 - x2) * (y1 - y2));
 
-            double diff_sig_wave_height, diff_energy_period;
-            double sig_wave_height_index, energy_period_index;
+            
+            ssc_number_t sig_wave_height_index = 0;
+            ssc_number_t energy_period_index = 0;
             for (size_t i = 0; i < 2920; i++) {
-                //ts_significant_wave_height = wave_resource_time_series[1][i];
                 ts_significant_wave_height = wave_height_input[i];
-                //ts_energy_period = wave_resource_time_series[0][i];
                 ts_energy_period = wave_period_input[i];
-                for (size_t j = 0; j < (size_t)wave_power_matrix.nrows(); j++) {
-                    if (abs(ts_significant_wave_height - wave_power_matrix.at(j, 0)) < 0.25) {
+                for (ssc_number_t j = 0; j < (ssc_number_t)wave_power_matrix.nrows(); j++) {
+                    if (abs(ts_significant_wave_height - wave_power_matrix.at(size_t(j), 0)) < 0.25) {
                         sig_wave_height_index = j;
                         sig_wave_height_index_mat[i] = sig_wave_height_index;
                     }
                 }
-                for (size_t m = 0; m < (size_t)wave_power_matrix.ncols(); m++) {
-                    if (abs(ts_energy_period - wave_power_matrix.at(0, m)) < 0.50) {
+                for (ssc_number_t m = 0; m < (ssc_number_t)wave_power_matrix.ncols(); m++) {
+                    if (abs(ts_energy_period - wave_power_matrix.at(0, size_t(m))) < 0.50) {
                         energy_period_index = m;
                         energy_period_index_mat[i] = energy_period_index;
                     }
                 }
 
             
-                energy_hourly[i] = (ssc_number_t)(wave_power_matrix.at(sig_wave_height_index, energy_period_index)) * 3;
-                sig_wave_height_index_mat[i] = (ssc_number_t)(wave_power_matrix.at(sig_wave_height_index, 0));
-                energy_period_index_mat[i] = (ssc_number_t)(wave_power_matrix.at(0, energy_period_index));
-                wave_power_index_mat[i] = (ssc_number_t)(wave_power_matrix.at(sig_wave_height_index, energy_period_index));
+                energy_hourly[i] = (ssc_number_t)(wave_power_matrix.at(size_t(sig_wave_height_index), size_t(energy_period_index))) * 3;
+                sig_wave_height_index_mat[i] = (ssc_number_t)(wave_power_matrix.at(size_t(sig_wave_height_index), 0));
+                energy_period_index_mat[i] = (ssc_number_t)(wave_power_matrix.at(0, size_t(energy_period_index)));
+                wave_power_index_mat[i] = (ssc_number_t)(wave_power_matrix.at(size_t(sig_wave_height_index), size_t(energy_period_index)));
                 annual_energy += energy_hourly[i];
                 //device_average_power += energy_hourly[i] / 8760;
                 device_average_power += energy_hourly[i] / number_hours;
