@@ -2764,7 +2764,7 @@ public:
                 double market_price = mp_market_price[a] / 1000; //$/kWh
                 for (size_t h = 0; h < n_steps_per_year; h++) {
                     if (a != 0) {
-                        cf.at(CF_charging_cost_grid, a) += grid_to_batt[(a - 1) * n_steps_per_year + h] * 8760 / n_steps_per_year * mp_market_price[(a - 1) * n_steps_per_year + h]/ (100.0*1000);
+                        cf.at(CF_charging_cost_grid, a) += grid_to_batt[(a - 1) * n_steps_per_year + h] * 8760 / n_steps_per_year * mp_market_price[(a - 1) * n_steps_per_year + h]/ (1000);
                     }
 
                 }
@@ -2777,7 +2777,7 @@ public:
                 
                 for (size_t h = 0; h < n_steps_per_year; h++) {
                     if (a != 0) {
-                        cf.at(CF_charging_cost_grid, a) += grid_to_batt[h] * 8760 / n_steps_per_year * mp_market_price[h] / (100.0*1000);
+                        cf.at(CF_charging_cost_grid, a) += grid_to_batt[h] * 8760 / n_steps_per_year * mp_market_price[h] / (1000);
                     }
 
                 }
@@ -2786,7 +2786,7 @@ public:
             }
             //cf.at(CF_charging_cost_grid, a) = charged_grid[a] * cf.at(CF_ppa_price, a) / 100;
             //cf.at(CF_charging_cost_grid, a) = charged_grid[a] * 10 / 100; //todo: set up utility rate structure
-            cf.at(CF_charging_cost_pv, a) = charged_pv[a] * lcoe_nom / 100;
+            cf.at(CF_charging_cost_pv, a) = charged_pv[a] * lcoe_real / 100 * pow(1+inflation_rate, a-1);
             //charged_total[a] = charged_grid[a] + charged_pv[a];
             cf.at(CF_energy_charged_grid, a) = cf.at(CF_charging_cost_grid, a) + cf.at(CF_charging_cost_pv, a);
             cf.at(CF_om_production1_expense, a) *= charged_total[a];

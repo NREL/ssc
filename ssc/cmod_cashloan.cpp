@@ -1106,7 +1106,7 @@ public:
 
             //cf.at(CF_charging_cost_grid, a) = charged_grid[a] * cf.at(CF_ppa_price, a) / 100; //What is the BTM charge for charging from the grid (do we need to calculate based on utility rates?)
             //cf.at(CF_charging_cost_grid, a) = charged_grid[a] * 10 / 100; //using 0.10 $/kWh as a placeholder
-            cf.at(CF_charging_cost_pv, a) = charged_pv[a] * lcoe_nom / 100;
+            cf.at(CF_charging_cost_pv, a) = charged_pv[a] * lcoe_real / 100 * pow(1 + inflation_rate, a - 1);
             //charged_total[a] = charged_grid[a] + charged_pv[a];
             cf.at(CF_energy_charged_grid, a) = cf.at(CF_charging_cost_grid, a) + cf.at(CF_charging_cost_pv, a);
             cf.at(CF_om_production1_expense, a) *= charged_total[a];

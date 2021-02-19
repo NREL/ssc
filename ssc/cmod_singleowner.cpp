@@ -3086,9 +3086,14 @@ public:
             }
 
 
-            cf.at(CF_charging_cost_pv, a) = charged_pv[a] * lcoe_nom / 100; //Cost to charge from pv based on LCOE calculation
+            //cf.at(CF_charging_cost_pv, a) = charged_pv[a] * lcoe_nom / 100; //Cost to charge from pv based on LCOE calculation
+            cf.at(CF_charging_cost_pv, a) = charged_pv[a] * lcoe_real / 100 * pow((1 + inflation_rate), a - 1);
             //Should it be nom or real LCOE
             //Should it be flat or adjusted for discount rate + inflation?
+            //Change name to system rather than pv for generic battery
+            //Compare lcoe_real to current cost of electricity
+            //lcoe_real*(1+inflation)^nyears
+            //change a to year
 
             cf.at(CF_energy_charged_grid, a) = cf.at(CF_charging_cost_grid, a) + cf.at(CF_charging_cost_pv, a); //total amount of energy charged, not used
             cf.at(CF_om_production1_expense, a) *= lcos_energy_discharged[a]; //Multiply OM production expense by energy discharged annually
