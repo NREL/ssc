@@ -30,11 +30,11 @@ Define Thermal Model
 */
 
 void thermal_t::initialize() {
-    if (!params->cap_analytical && (params->cap_vs_temp.nrows() < 2 || params->cap_vs_temp.ncols() != 2)) {
+    if (!params->en_cap_vs_temp && (params->cap_vs_temp.nrows() < 2 || params->cap_vs_temp.ncols() != 2)) {
         throw std::runtime_error("thermal_t: capacity vs temperature matrix must have two columns and at least two rows");
     }
 
-    if (!params->cap_analytical) {
+    if (!params->en_cap_vs_temp) {
         size_t n = params->cap_vs_temp.nrows();
         for (int i = 0; i < (int) n; i++) {
             params->cap_vs_temp(i, 0);
@@ -58,7 +58,7 @@ thermal_t::thermal_t(double dt_hour, double mass, double surface_area, double R,
                      const util::matrix_t<double> &c_vs_t, std::vector<double> T_room_C) {
     params = std::shared_ptr<thermal_params>(new thermal_params({dt_hour, mass, surface_area, Cp, h, R, c_vs_t}));
     params->option = thermal_params::SCHEDULE;
-    params->cap_analytical = false;
+    params->en_cap_vs_temp = false;
     params->T_room_schedule = std::move(T_room_C);
     initialize();
     state->T_room = params->T_room_schedule[0];
@@ -69,7 +69,7 @@ thermal_t::thermal_t(double dt_hour, double mass, double surface_area, double R,
     params = std::shared_ptr<thermal_params>(new thermal_params({dt_hour, mass, surface_area, Cp, h, R, c_vs_t}));
     params->option = thermal_params::VALUE;
     params->T_room_init = T_room_C;
-    params->cap_analytical = false;
+    params->en_cap_vs_temp = false;
     initialize();
 }
 
@@ -78,7 +78,7 @@ thermal_t::thermal_t(double dt_hour, double mass, double surface_area, double R,
     params = std::shared_ptr<thermal_params>(new thermal_params({dt_hour, mass, surface_area, Cp, h, R, util::matrix_t<double>()}));
     params->option = thermal_params::VALUE;
     params->T_room_init = T_room_C;
-    params->cap_analytical = true;
+    params->en_cap_vs_temp = true;
     initialize();
 }
 
@@ -87,7 +87,7 @@ thermal_t::thermal_t(double dt_hour, double mass, double surface_area, double R,
     params = std::shared_ptr<thermal_params>(new thermal_params({ dt_hour, mass, surface_area, Cp, h, R, util::matrix_t<double>()}));
     params->option = thermal_params::SCHEDULE;
     params->T_room_schedule = std::move(T_room_C);
-    params->cap_analytical = true;
+    params->en_cap_vs_temp = true;
     initialize();
     state->T_room = params->T_room_schedule[0];
 }
@@ -127,8 +127,8 @@ void thermal_t::replace_battery(size_t lifetimeIndex) {
 void thermal_t::calc_capacity() {
     double percent = 100;
 
-    // if using cap_analytical, it is done in the life model
-    if (!params->cap_analytical) {
+    // if using en_cap_vs_temp, it is done in the life model
+    if (!params->en_cap_vs_temp) {
         percent = util::linterp_col(params->cap_vs_temp, 0, state->T_batt, 1);
     }
 

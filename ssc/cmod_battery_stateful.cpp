@@ -225,6 +225,7 @@ void write_battery_state(const battery_state& state, var_table* vt) {
         vt->assign_match_case("b1_dt", lifetime->nmc_li_neg->b1_dt);
         vt->assign_match_case("b2_dt", lifetime->nmc_li_neg->b2_dt);
         vt->assign_match_case("b3_dt", lifetime->nmc_li_neg->b3_dt);
+        vt->assign_match_case("c0_dt", lifetime->nmc_li_neg->c0_dt);
         vt->assign_match_case("c2_dt", lifetime->nmc_li_neg->c2_dt);
     }
 
@@ -307,6 +308,7 @@ void read_battery_state(battery_state& state, var_table* vt) {
         vt_get_number(vt, "b1_dt", &lifetime->nmc_li_neg->b1_dt);
         vt_get_number(vt, "b2_dt", &lifetime->nmc_li_neg->b2_dt);
         vt_get_number(vt, "b3_dt", &lifetime->nmc_li_neg->b3_dt);
+        vt_get_number(vt, "c0_dt", &lifetime->nmc_li_neg->c0_dt);
         vt_get_number(vt, "c2_dt", &lifetime->nmc_li_neg->c2_dt);
     }
 
@@ -415,10 +417,10 @@ std::shared_ptr<battery_params> create_battery_params(var_table *vt, double dt_h
     vt_get_number(vt, "T_room_init", &thermal->T_room_init);
     if (lifetime->model_choice == lifetime_params::CALCYC) {
         vt_get_matrix(vt, "cap_vs_temp", thermal->cap_vs_temp);
-        thermal->cap_analytical = false;
+        thermal->en_cap_vs_temp = false;
     }
     else {
-        thermal->cap_analytical = true;
+        thermal->en_cap_vs_temp = true;
     }
 
     // losses

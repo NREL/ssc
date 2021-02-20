@@ -62,8 +62,8 @@ struct thermal_params {
     double h;                    // [W/m2/K] - general heat transfer coefficient
     double resistance;                    // [Ohm] - internal resistance
 
+    bool en_cap_vs_temp;       // if true, no capacity degradation from temp and do not use cap_vs_temp
     util::matrix_t<double> cap_vs_temp;
-    bool cap_analytical;       // if true, do not use cap_vs_temp. Temp dependence of  capacity is updated based on an analytical model
 
     enum OPTIONS {
         VALUE, SCHEDULE

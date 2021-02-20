@@ -110,9 +110,9 @@ std::ostream& operator<<(std::ostream& os, const lifetime_nmc_state& p) {
     sprintf(buf, "\"lifetime_nmc_state\": { \"q_relative_li\": %.3f, "
         "\"q_relative_neg\": %.3f, \"dq_relative_li_old\": %.3f, \"dq_relative_neg_old\": %.3f, "
         "\"DOD_max\": %f, \"n_cycles_prev_day\": %d, \"b1_dt\": %.3f, "
-        "\"b2_dt\": %.3f, \"b3_dt\": %.3f, \"c2_dt\": %.3f,  } ",
+        "\"b2_dt\": %.3f, \"b3_dt\": %.3f, \"c0_dt\": %.3f, \"c2_dt\": %.3f }",
         p.q_relative_li, p.q_relative_neg, p.dq_relative_li_old, p.dq_relative_neg_old, p.DOD_max, p.n_cycles_prev_day,
-        p.b1_dt, p.b2_dt, p.b3_dt, p.c2_dt);
+        p.b1_dt, p.b2_dt, p.b3_dt, p.c0_dt, p.c2_dt);
     os << buf ;
     return os;
 }
@@ -175,9 +175,9 @@ std::ostream &operator<<(std::ostream &os, const thermal_state &p) {
 std::ostream &operator<<(std::ostream &os, const thermal_params &p) {
     char buf[1024];
     sprintf(buf, "\"thermal_params\": { \"dt_hr\": %.3f, \"mass\": %.3f, \"surface_area\": %.3f, "
-                 "\"Cp\": %.3f, \"h\": %.3f, \"resistance\": %.3e, \"cap_vs_temp\": ",
+                 "\"Cp\": %.3f, \"h\": %.3f, \"resistance\": %.3e, \"en_cap_vs_temp\": %d, \"cap_vs_temp\": ",
             p.dt_hr, p.mass, p.surface_area,
-            p.Cp, p.h, p.resistance);
+            p.Cp, p.h, p.resistance, p.en_cap_vs_temp);
     os << buf << p.cap_vs_temp;
     os.precision(3);
     os << R"(, "option": )" << p.option;
