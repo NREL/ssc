@@ -42,6 +42,7 @@ void lifetime_nmc_t::initialize() {
     state->nmc_li_neg->b1_dt = 0;
     state->nmc_li_neg->b2_dt = 0;
     state->nmc_li_neg->b3_dt = 0;
+    state->nmc_li_neg->c0_dt = 0;
     state->nmc_li_neg->c2_dt = 0;
 }
 
@@ -100,8 +101,6 @@ double lifetime_nmc_t::calculate_Voc(double SOC) {
     return Voc;
 }
 
-
-
 double lifetime_nmc_t::runQli(double T_battery_K) {
     double dt_day = 1;
     int dn_cycles = state->n_cycles - state->nmc_li_neg->n_cycles_prev_day;
@@ -119,11 +118,11 @@ double lifetime_nmc_t::runQli(double T_battery_K) {
 
     double k_cal = 0;
     if (state->day_age_of_battery > 0)
-        k_cal = (0.5 * b1) / (sqrt(state->day_age_of_battery)) + (b3 / tau_b3) * exp(-(state->day_age_of_battery / tau_b3));
+        k_cal = (0.5 * b1) / sqrt(state->day_age_of_battery) + (b3 / tau_b3) * exp(-(state->day_age_of_battery / tau_b3));
 
     double dq_new = k_cal * dt_day + b2 * dn_cycles + state->nmc_li_neg->dq_relative_li_old;
     state->nmc_li_neg->dq_relative_li_old = dq_new;
-    state->nmc_li_neg->q_relative_li = (b0 - (dq_new)) * 100 * d0_t / 75;
+    state->nmc_li_neg->q_relative_li = d0_t / Ah_ref * (b0 - dq_new) * 100.;
     return state->nmc_li_neg->q_relative_li;
 }
 
@@ -131,18 +130,19 @@ double lifetime_nmc_t::runQneg() {
 
     int dn_cycles = state->n_cycles - state->nmc_li_neg->n_cycles_prev_day;
 
+    double c0 = state->nmc_li_neg->c0_dt;
     double c2 = state->nmc_li_neg->c2_dt;
+    state->nmc_li_neg->c0_dt = 0;
     state->nmc_li_neg->c2_dt = 0;
+    state->nmc_li_neg->DOD_max = 0;
 
-    double dq_new;
-    if (state->nmc_li_neg->dq_relative_neg_old == 0)
-        dq_new = 1 - sqrt(1 - 2 * (c2 / c0_ref) * dn_cycles);
-    else
-        dq_new = 1 - sqrt(1 - 2 * (c2 / c0_ref) * dn_cycles) + state->nmc_li_neg->dq_relative_neg_old;
+    double dq_new = 0;
+    if (state->n_cycles > 0)
+        dq_new = c2 / sqrt(c0 * c0 - 2 * c2 * c0 * state->n_cycles) * dn_cycles + state->nmc_li_neg->dq_relative_neg_old;
 
     state->nmc_li_neg->dq_relative_neg_old = dq_new;
+    state->nmc_li_neg->q_relative_neg = c0 / Ah_ref * (1 - dq_new) * 100;
 
-    state->nmc_li_neg->q_relative_neg = (1 - (dq_new)) * 100;
 
     return state->nmc_li_neg->q_relative_neg;
 }
@@ -184,34 +184,22 @@ void lifetime_nmc_t::runLifetimeModels(size_t lifetimeIndex, bool charge_changed
     state->nmc_li_neg->b2_dt += b2_dt_el;
     state->nmc_li_neg->b3_dt += b3_dt_el;
 
-//    printf("bat %f, %f, %f, %f, b1 %f, %f, %f\n", SOC, DOD_max, U_neg, V_oc, T_battery, b1_dt_el, state->nmc_state->b1_dt);
-
-//    printf("b1 %f, %f, %f\n", T_battery, b1_dt_el, state->nmc_state->b1_dt);
-//    printf("b2 %f, %f, b3 %f, %f\n", b2_dt_el, state->nmc_li_neg->b2_dt, b3_dt_el,  state->nmc_li_neg->b3_dt);
-
-
-    //computations for q_neg
+    // computations for q_neg
     double c2_dt_el = c2_ref * exp(-(Ea_c2 / Rug) * (1. / T_battery - 1. / T_ref))
-        * pow(0.01 * DOD, beta_c2);
+        * pow(0.01 * state->nmc_li_neg->DOD_max, beta_c2) * dt_day;
+    double c0_dt_el = c0_ref * exp(-Ea_c0_ref / Rug * (1 / T_battery - 1 / T_ref)) * dt_day;
+    state->nmc_li_neg->c0_dt += c0_dt_el;
     state->nmc_li_neg->c2_dt += c2_dt_el;
 
-    //Run capacity degradation model after every 24 hours
+    // Run capacity degradation model after every 24 hours
     if (lifetimeIndex % ts_per_day == ts_per_day - 1) {
-        state->nmc_li_neg->q_relative_li = runQli();
+        state->nmc_li_neg->q_relative_li = runQli(T_battery);
         state->nmc_li_neg->q_relative_neg = runQneg();
         state->q_relative = fmin(state->nmc_li_neg->q_relative_li, state->nmc_li_neg->q_relative_neg);
         state->nmc_li_neg->n_cycles_prev_day = state->n_cycles;
-
-//        printf("%f, %f, %f\n", state->nmc_li_neg->q_relative_li, state->nmc_li_neg->q_relative_neg, state->q_relative);
-//        logger log(std::cout);
-//
-//        log << *state->nmc_li_neg << "\n";
     }
-    else
-//        printf("%zu, %f, %zu, %zu\n", lifetimeIndex, state->day_age_of_battery, (size_t)state->day_age_of_battery);
-
+    
     state->q_relative = fmin(state->q_relative, q_last);
-
 }
 
 double lifetime_nmc_t::estimateCycleDamage() {

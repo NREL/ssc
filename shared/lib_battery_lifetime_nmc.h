@@ -57,6 +57,7 @@ struct lifetime_nmc_state {
     double b1_dt;
     double b2_dt;
     double b3_dt;
+    double c0_dt;
     double c2_dt;
 
     friend std::ostream& operator<<(std::ostream& os, const lifetime_nmc_state& p);
@@ -101,7 +102,7 @@ protected:
     double d0_ref = 75.1;       // Ah
     double Ea_d0_1 = 4126.0;    // J/mol
     double Ea_d0_2 = 9752000.0; // J/mol
-
+    double Ah_ref = 75.;        // Ah
 
     /// Capacity degradation due to SEI
     double b0 = 1.07;           // 1
@@ -124,9 +125,9 @@ protected:
 
     /// Capacity degradation due to cycles
     double c0_ref = 75.64;      // Ah
+    double Ea_c0_ref = 2224.;   // J mol^-1
     double c2_ref = 0.0039193;  // Ah cycle^-1
-    double Ea_c2_ref = 2224;    // J mol^-1
-    double Ea_c2 = -48260;      // J mol^-1
+    double Ea_c2 = -48260.;     // J mol^-1
     double beta_c2 = 4.54;      // 1
 
     double runQneg();
