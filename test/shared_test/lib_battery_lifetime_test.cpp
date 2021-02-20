@@ -349,16 +349,14 @@ TEST_F(lib_battery_lifetime_test, runCycleLifetimeTestWithRestPeriod) {
 }
 
 TEST_F(lib_battery_lifetime_nmc_test, InitTest) {
-    double tol = 0.01;
+    double tol = 0.001;
 
     //check lifetime_nmc_state_initialization
     auto lifetime_state = model->get_state();
-    EXPECT_EQ(lifetime_state.nmc_li_neg->q_relative_neg, 100);
-    EXPECT_EQ(lifetime_state.nmc_li_neg->q_relative_li, 100);
-    EXPECT_EQ(lifetime_state.nmc_li_neg->b1_dt, 0);
-    EXPECT_EQ(lifetime_state.nmc_li_neg->b2_dt, 0);
-    EXPECT_EQ(lifetime_state.nmc_li_neg->b3_dt, 0);
+    EXPECT_NEAR(lifetime_state.nmc_li_neg->q_relative_neg, 100.853, tol);
+    EXPECT_NEAR(lifetime_state.nmc_li_neg->q_relative_li, 107.142, tol);
     EXPECT_EQ(model->get_state().day_age_of_battery, 0);
+    EXPECT_EQ(model->get_state().n_cycles, 0);
 
     //check U_neg, and Voc functions (SOC as a fractional input)
     EXPECT_NEAR(model->calculate_Uneg(0.1), 0.242, tol);

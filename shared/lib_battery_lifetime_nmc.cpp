@@ -32,18 +32,18 @@ void lifetime_nmc_t::initialize() {
     // cycle model for counting cycles only, no cycle-only degradation
     cycle_model = std::unique_ptr<lifetime_cycle_t>(new lifetime_cycle_t(params, state));
     // do any state initialization here
-    state->q_relative = 100;
-    state->nmc_li_neg->q_relative_li = 100;
-    state->nmc_li_neg->q_relative_neg = 100;
     state->nmc_li_neg->dq_relative_li_old = 0;
     state->nmc_li_neg->dq_relative_neg_old = 0;
-    state->nmc_li_neg->DOD_max = 50;
+    state->nmc_li_neg->DOD_max = 0;
     state->nmc_li_neg->n_cycles_prev_day = 0;
-    state->nmc_li_neg->b1_dt = 0;
-    state->nmc_li_neg->b2_dt = 0;
-    state->nmc_li_neg->b3_dt = 0;
-    state->nmc_li_neg->c0_dt = 0;
-    state->nmc_li_neg->c2_dt = 0;
+    state->nmc_li_neg->b1_dt = b1_ref;
+    state->nmc_li_neg->b2_dt = b2_ref;
+    state->nmc_li_neg->b3_dt = b3_ref;
+    state->nmc_li_neg->q_relative_li = runQli(T_ref);
+    state->nmc_li_neg->c0_dt = c0_ref;
+    state->nmc_li_neg->c2_dt = c2_ref;
+    state->nmc_li_neg->q_relative_neg = runQneg();
+    state->q_relative = fmin(state->nmc_li_neg->q_relative_li, state->nmc_li_neg->q_relative_neg);
 }
 
 lifetime_nmc_t::lifetime_nmc_t(double dt_hr) {
@@ -198,7 +198,7 @@ void lifetime_nmc_t::runLifetimeModels(size_t lifetimeIndex, bool charge_changed
         state->q_relative = fmin(state->nmc_li_neg->q_relative_li, state->nmc_li_neg->q_relative_neg);
         state->nmc_li_neg->n_cycles_prev_day = state->n_cycles;
     }
-    
+
     state->q_relative = fmin(state->q_relative, q_last);
 }
 
