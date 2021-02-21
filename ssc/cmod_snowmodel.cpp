@@ -98,8 +98,9 @@ public:
 		ssc_number_t *tilt = as_array( "subarray1_surf_tilt", &num_steps );		// Surface Tilt
 		ssc_number_t *sDep = as_array( "snowdepth", &num_steps );				// Snow Depth
 		ssc_number_t *sunup = as_array( "sunup", &num_steps );					// Sun up flag
-		int nmody = as_integer("subarray1_nmody");								// The number of modules in a row
-		int baseTilt = as_integer("subarray1_tilt");							// The tilt for static systems
+//        int nmody = as_integer("subarray1_nmody");								// The number of modules in a row
+        double nmody = as_double("subarray1_nmody");								// The number of modules in a row
+        int baseTilt = as_integer("subarray1_tilt");							// The tilt for static systems
 		//int trackMode = as_integer("subarray1_track_mode");						// The systems tracking mode (0 -> static, 1 -> 1 axis tracking)
 
 		// Define output arrays and variables

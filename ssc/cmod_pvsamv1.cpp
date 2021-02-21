@@ -2876,7 +2876,8 @@ void cm_pvsamv1::inverter_size_check()
     int numHoursClipped = 0;
     double maxACOutput = 0;
     int invType = as_integer("inverter_model");
-    int numInv = as_integer("inverter_count");
+//    int numInv = as_integer("inverter_count");
+    double numInv = as_double("inverter_count");
 
     double ratedACOutput = 0;
     double ratedDCOutput = 0;

@@ -310,8 +310,10 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             // Battery bank sizing
 //            batt_vars->batt_computed_series = vt.as_integer("batt_computed_series");
 //            batt_vars->batt_computed_strings = vt.as_integer("batt_computed_strings");
-            batt_vars->batt_computed_series = vt.as_unsigned_long("batt_computed_series");
-            batt_vars->batt_computed_strings = vt.as_unsigned_long("batt_computed_strings");
+//            batt_vars->batt_computed_series = vt.as_unsigned_long("batt_computed_series");
+//            batt_vars->batt_computed_strings = vt.as_unsigned_long("batt_computed_strings");
+            batt_vars->batt_computed_series = vt.as_double("batt_computed_series");
+            batt_vars->batt_computed_strings = vt.as_double("batt_computed_strings");
             batt_vars->batt_kwh = vt.as_double("batt_computed_bank_capacity");
             batt_vars->batt_kw = vt.as_double("batt_power_discharge_max_kwdc");
 
@@ -584,7 +586,8 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             batt_vars->inverter_model = vt.as_integer("inverter_model");
             if (batt_vars->inverter_model < 4) //user has assigned an actual inverter model
             {
-                batt_vars->inverter_count = vt.as_integer("inverter_count");
+//                batt_vars->inverter_count = vt.as_integer("inverter_count");
+                batt_vars->inverter_count = vt.as_double("inverter_count");
                 batt_vars->batt_inverter_efficiency_cutoff = vt.as_double("batt_inverter_efficiency_cutoff");
 
                 if (batt_vars->inverter_model == SharedInverter::SANDIA_INVERTER)

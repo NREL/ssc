@@ -246,7 +246,8 @@ struct PVSystem_IO
 	void SetupPOAInput();
 
 	size_t numberOfSubarrays;
-	size_t numberOfInverters;
+//    size_t numberOfInverters;
+    double numberOfInverters;
 
 	Irradiance_IO * Irradiance;
 	Simulation_IO * Simulation;
@@ -408,7 +409,8 @@ public:
 	std::vector<double> monthlyTiltDegrees; // The seasonal tilt [degrees]
 	flag backtrackingEnabled;			// Backtracking enabled or not
 	double moduleAspectRatio;			// The aspect ratio of the models used in the subarray
-	int nStringsBottom;					// Number of strings along bottom from self-shading
+//    int nStringsBottom;					// Number of strings along bottom from self-shading
+    double nStringsBottom;					// Number of strings along bottom from self-shading
 
 	// Subarray-specific losses
 	std::vector<double> monthlySoiling; // The soiling loss by month [%]
