@@ -138,7 +138,6 @@ double lifetime_nmc_t::runQneg() {
     double c2 = state->nmc_li_neg->c2_dt;
     state->nmc_li_neg->c0_dt = 0;
     state->nmc_li_neg->c2_dt = 0;
-    state->nmc_li_neg->DOD_max = 0;
 
     double dq_new = 0;
     if (state->n_cycles > 0)
@@ -146,7 +145,6 @@ double lifetime_nmc_t::runQneg() {
 
     state->nmc_li_neg->dq_relative_neg_old = dq_new;
     state->nmc_li_neg->q_relative_neg = c0 / Ah_ref * (1 - dq_new) * 100;
-
 
     return state->nmc_li_neg->q_relative_neg;
 }
@@ -200,6 +198,10 @@ void lifetime_nmc_t::runLifetimeModels(size_t lifetimeIndex, bool charge_changed
         state->nmc_li_neg->q_relative_li = runQli(T_battery);
         state->nmc_li_neg->q_relative_neg = runQneg();
         state->q_relative = fmin(state->nmc_li_neg->q_relative_li, state->nmc_li_neg->q_relative_neg);
+
+        // reset DOD_max for cycle tracking
+        if (state->n_cycles - state->nmc_li_neg->n_cycles_prev_day > 0)
+            state->nmc_li_neg->DOD_max = DOD;
         state->nmc_li_neg->n_cycles_prev_day = state->n_cycles;
     }
 
