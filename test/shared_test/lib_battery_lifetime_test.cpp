@@ -383,6 +383,30 @@ TEST_F(lib_battery_lifetime_nmc_test, StorageDays) {
             EXPECT_NEAR(state.nmc_li_neg->q_relative_li, expected_q_li[pos - days.begin()], 0.5);
         }
     }
+    EXPECT_EQ((size_t)model->get_state().day_age_of_battery, 5001);
+}
+
+/// Run with minute timestep instead
+TEST_F(lib_battery_lifetime_nmc_test, StorageMinuteTimestep) {
+    double dt_hr = 1. / 60;
+    model = std::unique_ptr<lifetime_nmc_t>(new lifetime_nmc_t(dt_hr));
+
+    std::vector<double> days = {0, 10, 50 , 500, 5000};
+    std::vector<double> expected_q_li = {106.50, 104.36, 103.97, 103.72, 102.93};
+
+    auto steps_per_day = (size_t)(24 / dt_hr);
+    for (size_t i = 0; i < days.back() + 1; i++) {
+        for (size_t h = 0; h < steps_per_day; h++) {
+            size_t hr = i * steps_per_day + h;
+            model->runLifetimeModels(hr, false, 50, 50, 25);
+        }
+        auto pos = std::find(days.begin(), days.end(), i);
+        if (pos != days.end()) {
+            auto state = model->get_state();
+            EXPECT_NEAR(state.nmc_li_neg->q_relative_li, expected_q_li[pos - days.begin()], 0.5);
+        }
+    }
+    EXPECT_EQ((size_t)model->get_state().day_age_of_battery, 5001);
 }
 
 /// run at different days at different temperatures
@@ -399,7 +423,7 @@ TEST_F(lib_battery_lifetime_nmc_test, StorageTemp) {
             }
         }
         auto state = model->get_state();
-        EXPECT_NEAR(state.nmc_li_neg->q_relative_li, expected_q_li[n], 1);
+        EXPECT_NEAR((size_t)state.nmc_li_neg->q_relative_li, expected_q_li[n], 1);
     }
 }
 
@@ -597,8 +621,61 @@ TEST_F(lib_battery_lifetime_nmc_test, CyclingTestCRate) {
     EXPECT_NEAR(state.day_age_of_battery, 870, 1e-3);
 }
 
-TEST_F(lib_battery_lifetime_nmc_test, MinuteTimestep) {
+TEST_F(lib_battery_lifetime_nmc_test, CyclingTestCRateMinuteTimestep) {
     double dt_hr = 1. / 60;
-    auto lifetimeModelNMC = new lifetime_nmc_t(dt_hr);
+    auto steps_per_day = (size_t)(24 / dt_hr);
+    model = std::unique_ptr<lifetime_nmc_t>(new lifetime_nmc_t(dt_hr));
 
+    size_t day = 0;
+    size_t idx = 0;
+    // 90 DOD cycle once per day, slower Crate than above
+    std::vector<double> DODs_day = {50., 56.67, 63.33, 70., 76.67, 83.33,
+                                    90., 83.33, 76.67, 70., 63.33, 56.67, 50., 43.33, 36.67, 30., 23.33, 16.67,
+                                    10., 16.67, 23.33, 30., 36.67, 43.33};
+
+    while (day < 87) {
+        for (size_t hr = 0; hr < DODs_day.size(); hr++) {
+            double prev_DOD = DODs_day[hr % 24];
+            double DOD = DODs_day[hr];
+            for (size_t min = 0; min < (size_t)(1. / dt_hr); min++) {
+                bool charge_changed = (hr == 7 || hr == 19) && min == 0;
+                if (min != 0)
+                    prev_DOD = DOD;
+                model->runLifetimeModels(idx, charge_changed, prev_DOD, DOD, 25);
+                idx ++;
+            }
+        }
+        day ++;
+    }
+
+    auto state = model->get_state();
+
+    EXPECT_EQ(state.n_cycles, 86);
+    EXPECT_EQ(state.nmc_li_neg->DOD_max, 0);
+    EXPECT_NEAR(state.nmc_li_neg->q_relative_li, 103, 1);
+    EXPECT_NEAR(state.nmc_li_neg->q_relative_neg, 100, 1);
+    EXPECT_NEAR(state.day_age_of_battery, 87, 1e-3);
+
+    while (day < 870) {
+        for (size_t hr = 0; hr < DODs_day.size(); hr++) {
+            double prev_DOD = DODs_day[hr % 24];
+            double DOD = DODs_day[hr];
+            for (size_t min = 0; min < (size_t)(1. / dt_hr); min++) {
+                bool charge_changed = (hr == 7 || hr == 19) && min == 0;
+                if (min != 0)
+                    prev_DOD = DOD;
+                model->runLifetimeModels(idx, charge_changed, prev_DOD, DOD, 25);
+                idx ++;
+            }
+        }
+        day ++;
+    }
+
+    state = model->get_state();
+
+    EXPECT_EQ(state.n_cycles, 869);
+    EXPECT_EQ(state.nmc_li_neg->DOD_max, 0);
+    EXPECT_NEAR(state.nmc_li_neg->q_relative_li, 97.61, 1);
+    EXPECT_NEAR(state.nmc_li_neg->q_relative_neg, 98, 1);
+    EXPECT_NEAR(state.day_age_of_battery, 870, 1e-3);
 }
