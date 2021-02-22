@@ -209,7 +209,7 @@ void lifetime_nmc_t::runLifetimeModels(size_t lifetimeIndex, bool charge_changed
 double lifetime_nmc_t::estimateCycleDamage() {
     // Assume T_battery is at T_ref and use average range
     double c2 = c2_ref * pow(0.01 * state->average_range, beta_c2);
-    double dq_cycle = c2 / sqrt(c0_ref * c0_ref - 2 * c2 * c0_ref);
+    double dq_cycle = c2 / sqrt(c0_ref * c0_ref - 2 * c2 * c0_ref * state->n_cycles);
     return c0_ref / Ah_ref * dq_cycle * 100;
 }
 
