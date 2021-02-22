@@ -56,9 +56,8 @@ void thermal_t::initialize() {
 
 thermal_t::thermal_t(double dt_hour, double mass, double surface_area, double R, double Cp, double h,
                      const util::matrix_t<double> &c_vs_t, std::vector<double> T_room_C) {
-    params = std::shared_ptr<thermal_params>(new thermal_params({dt_hour, mass, surface_area, Cp, h, R, c_vs_t}));
+    params = std::shared_ptr<thermal_params>(new thermal_params({dt_hour, mass, surface_area, Cp, h, R, true, c_vs_t}));
     params->option = thermal_params::SCHEDULE;
-    params->en_cap_vs_temp = false;
     params->T_room_schedule = std::move(T_room_C);
     initialize();
     state->T_room = params->T_room_schedule[0];
@@ -66,28 +65,25 @@ thermal_t::thermal_t(double dt_hour, double mass, double surface_area, double R,
 
 thermal_t::thermal_t(double dt_hour, double mass, double surface_area, double R, double Cp, double h,
                      const util::matrix_t<double> &c_vs_t, double T_room_C) {
-    params = std::shared_ptr<thermal_params>(new thermal_params({dt_hour, mass, surface_area, Cp, h, R, c_vs_t}));
+    params = std::shared_ptr<thermal_params>(new thermal_params({dt_hour, mass, surface_area, Cp, h, R, true, c_vs_t}));
     params->option = thermal_params::VALUE;
     params->T_room_init = T_room_C;
-    params->en_cap_vs_temp = false;
     initialize();
 }
 
 thermal_t::thermal_t(double dt_hour, double mass, double surface_area, double R, double Cp, double h,
                      double T_room_C) {
-    params = std::shared_ptr<thermal_params>(new thermal_params({dt_hour, mass, surface_area, Cp, h, R, util::matrix_t<double>()}));
+    params = std::shared_ptr<thermal_params>(new thermal_params({dt_hour, mass, surface_area, Cp, h, R, false, util::matrix_t<double>()}));
     params->option = thermal_params::VALUE;
     params->T_room_init = T_room_C;
-    params->en_cap_vs_temp = true;
     initialize();
 }
 
 thermal_t::thermal_t(double dt_hour, double mass, double surface_area, double R, double Cp, double h,
                      std::vector<double> T_room_C) {
-    params = std::shared_ptr<thermal_params>(new thermal_params({ dt_hour, mass, surface_area, Cp, h, R, util::matrix_t<double>()}));
+    params = std::shared_ptr<thermal_params>(new thermal_params({ dt_hour, mass, surface_area, Cp, h, R, false, util::matrix_t<double>()}));
     params->option = thermal_params::SCHEDULE;
     params->T_room_schedule = std::move(T_room_C);
-    params->en_cap_vs_temp = true;
     initialize();
     state->T_room = params->T_room_schedule[0];
 }
