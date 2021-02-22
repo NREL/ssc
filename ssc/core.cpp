@@ -746,8 +746,7 @@ bool compute_module::check_constraints(const std::string &name, std::string &fai
         } else if (expr == "integer") {
             if (dat.type != SSC_NUMBER) fail_constraint("number data type required");
 
-            //if (((ssc_number_t)((int)dat.num)) != dat.num) fail_constraint(
-             if (((ssc_number_t)(dat.num)) != dat.num) fail_constraint(
+            if (((ssc_number_t)((int)dat.num)) != dat.num) fail_constraint(
                     "number could not be interpreted as an integer: " + util::to_string((double) dat.num));
         } else if (expr == "tousched") {
             if (dat.type != SSC_STRING) fail_constraint("string data type required");
