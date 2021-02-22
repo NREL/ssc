@@ -672,8 +672,8 @@ TEST_F(lib_battery_test, AdaptiveTimestep) {
         EXPECT_NEAR(batt_subhourly->charge_maximum(), batt_adaptive->charge_maximum(), 20) << "At count " << count;
     }
     EXPECT_NEAR(batteryModel->charge_maximum(), 577.09, 1e-2);
-    EXPECT_NEAR(batt_subhourly->charge_maximum(), 582.22, 1e-2);
-    EXPECT_NEAR(batt_adaptive->charge_maximum(), 577.27, 1e-2);
+    EXPECT_NEAR(batt_subhourly->charge_maximum(), 582.40, 1e-2);
+    EXPECT_NEAR(batt_adaptive->charge_maximum(), 577.48, 1e-2);
 
     EXPECT_NEAR(batteryModel->SOC(), 94.97, 1e-2);
     EXPECT_NEAR(batt_subhourly->SOC(), 88.14, 1e-2);

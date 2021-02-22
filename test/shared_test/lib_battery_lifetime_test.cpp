@@ -448,7 +448,7 @@ TEST_F(lib_battery_lifetime_nmc_test, CyclingHighDOD) {
     auto state = model->get_state();
 
     EXPECT_EQ(state.n_cycles, 86);
-    EXPECT_EQ(state.nmc_li_neg->DOD_max, 0);
+    EXPECT_EQ(state.nmc_li_neg->DOD_max, 50);
     EXPECT_NEAR(state.nmc_li_neg->q_relative_li, 103.23, 0.5);
     EXPECT_NEAR(state.nmc_li_neg->q_relative_neg, 100.6, 0.5);
     EXPECT_NEAR(state.day_age_of_battery, 87, 1e-3);
@@ -471,7 +471,7 @@ TEST_F(lib_battery_lifetime_nmc_test, CyclingHighDOD) {
     state = model->get_state();
 
     EXPECT_EQ(state.n_cycles, 869);
-    EXPECT_EQ(state.nmc_li_neg->DOD_max, 0);
+    EXPECT_EQ(state.nmc_li_neg->DOD_max, 50);
     EXPECT_NEAR(state.nmc_li_neg->q_relative_li, 99.6, 0.5);
     EXPECT_NEAR(state.nmc_li_neg->q_relative_neg, 98.00, 0.5);
     EXPECT_NEAR(state.day_age_of_battery, 870, 1e-3);
@@ -494,7 +494,7 @@ TEST_F(lib_battery_lifetime_nmc_test, CyclingHighDOD) {
     state = model->get_state();
 
     EXPECT_EQ(state.n_cycles, 8699);
-    EXPECT_EQ(state.nmc_li_neg->DOD_max, 0);
+    EXPECT_EQ(state.nmc_li_neg->DOD_max, 50);
     EXPECT_NEAR(state.nmc_li_neg->q_relative_li, 84.19, 3);
     EXPECT_NEAR(state.nmc_li_neg->q_relative_neg, 67.00, 0.5);
     EXPECT_NEAR(state.day_age_of_battery, 8700, 1e-3);
@@ -522,7 +522,7 @@ TEST_F(lib_battery_lifetime_nmc_test, CyclingHighTemp) {
     auto state = model->get_state();
 
     EXPECT_EQ(state.n_cycles, 86);
-    EXPECT_EQ(state.nmc_li_neg->DOD_max, 0);
+    EXPECT_EQ(state.nmc_li_neg->DOD_max, 50);
     EXPECT_NEAR(state.nmc_li_neg->q_relative_li, 105.45, 0.6);
     EXPECT_NEAR(state.nmc_li_neg->q_relative_neg, 103.79, 0.5);
     EXPECT_NEAR(state.day_age_of_battery, 87, 1e-3);
@@ -545,7 +545,7 @@ TEST_F(lib_battery_lifetime_nmc_test, CyclingHighTemp) {
     state = model->get_state();
 
     EXPECT_EQ(state.n_cycles, 869);
-    EXPECT_EQ(state.nmc_li_neg->DOD_max, 0);
+    EXPECT_EQ(state.nmc_li_neg->DOD_max, 50);
     EXPECT_NEAR(state.nmc_li_neg->q_relative_li, 103.49, 0.5);
     EXPECT_NEAR(state.nmc_li_neg->q_relative_neg, 103.35, 0.5);
     EXPECT_NEAR(state.day_age_of_battery, 870, 1e-3);
@@ -568,7 +568,7 @@ TEST_F(lib_battery_lifetime_nmc_test, CyclingHighTemp) {
     state = model->get_state();
 
     EXPECT_EQ(state.n_cycles, 8699);
-    EXPECT_EQ(state.nmc_li_neg->DOD_max, 0);
+    EXPECT_EQ(state.nmc_li_neg->DOD_max, 50);
     EXPECT_NEAR(state.nmc_li_neg->q_relative_li, 92.38, 0.5);
     EXPECT_NEAR(state.nmc_li_neg->q_relative_neg, 98.93, 0.5);
     EXPECT_NEAR(state.day_age_of_battery, 8700, 1e-3);
@@ -596,7 +596,7 @@ TEST_F(lib_battery_lifetime_nmc_test, CyclingCRate) {
     auto state = model->get_state();
 
     EXPECT_EQ(state.n_cycles, 86);
-    EXPECT_EQ(state.nmc_li_neg->DOD_max, 0);
+    EXPECT_EQ(state.nmc_li_neg->DOD_max, 43.33);
     EXPECT_NEAR(state.nmc_li_neg->q_relative_li, 103, 1);
     EXPECT_NEAR(state.nmc_li_neg->q_relative_neg, 100, 1);
     EXPECT_NEAR(state.day_age_of_battery, 87, 1e-3);
@@ -615,7 +615,7 @@ TEST_F(lib_battery_lifetime_nmc_test, CyclingCRate) {
     state = model->get_state();
 
     EXPECT_EQ(state.n_cycles, 869);
-    EXPECT_EQ(state.nmc_li_neg->DOD_max, 0);
+    EXPECT_EQ(state.nmc_li_neg->DOD_max, 43.33);
     EXPECT_NEAR(state.nmc_li_neg->q_relative_li, 97.61, 1);
     EXPECT_NEAR(state.nmc_li_neg->q_relative_neg, 98, 1);
     EXPECT_NEAR(state.day_age_of_battery, 870, 1e-3);
@@ -651,7 +651,7 @@ TEST_F(lib_battery_lifetime_nmc_test, CyclingCRateMinuteTimestep) {
     auto state = model->get_state();
 
     EXPECT_EQ(state.n_cycles, 86);
-    EXPECT_EQ(state.nmc_li_neg->DOD_max, 0);
+    EXPECT_EQ(state.nmc_li_neg->DOD_max, 43.33);
     EXPECT_NEAR(state.nmc_li_neg->q_relative_li, 103, 1);
     EXPECT_NEAR(state.nmc_li_neg->q_relative_neg, 100, 1);
     EXPECT_NEAR(state.day_age_of_battery, 87, 1e-3);
@@ -674,7 +674,7 @@ TEST_F(lib_battery_lifetime_nmc_test, CyclingCRateMinuteTimestep) {
     state = model->get_state();
 
     EXPECT_EQ(state.n_cycles, 869);
-    EXPECT_EQ(state.nmc_li_neg->DOD_max, 0);
+    EXPECT_EQ(state.nmc_li_neg->DOD_max, 43.33);
     EXPECT_NEAR(state.nmc_li_neg->q_relative_li, 97.61, 1);
     EXPECT_NEAR(state.nmc_li_neg->q_relative_neg, 98, 1);
     EXPECT_NEAR(state.day_age_of_battery, 870, 1e-3);
