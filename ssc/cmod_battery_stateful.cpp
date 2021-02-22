@@ -417,10 +417,10 @@ std::shared_ptr<battery_params> create_battery_params(var_table *vt, double dt_h
     vt_get_number(vt, "T_room_init", &thermal->T_room_init);
     if (lifetime->model_choice == lifetime_params::CALCYC) {
         vt_get_matrix(vt, "cap_vs_temp", thermal->cap_vs_temp);
-        thermal->en_cap_vs_temp = false;
+        thermal->en_cap_vs_temp = true;
     }
     else {
-        thermal->en_cap_vs_temp = true;
+        thermal->en_cap_vs_temp = false;
     }
 
     // losses

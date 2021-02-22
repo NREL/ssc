@@ -166,11 +166,11 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, RunCurrentControl) {
     ssc_data_get_number(data, "Q_max", &q_max);
     ssc_data_get_number(data, "q_relative", &q_rel);
 
-    EXPECT_NEAR(range, 75.362, 0.01);
-    EXPECT_NEAR(avg_range, 61.638, 0.01);
+    EXPECT_NEAR(range, 75.330, 0.01);
+    EXPECT_NEAR(avg_range, 61.535, 0.01);
     EXPECT_NEAR(n_cycles, 3.0, 0.01);
     EXPECT_NEAR(q_max, 75.56, 0.01);
-    EXPECT_NEAR(q_rel, 100, 0.01);
+    EXPECT_NEAR(q_rel, 100.853, 0.01);
 }
 
 TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, AdaptiveTimestep) {
