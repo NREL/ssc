@@ -30,11 +30,11 @@ Define Thermal Model
 */
 
 void thermal_t::initialize() {
-    if (!params->en_cap_vs_temp && (params->cap_vs_temp.nrows() < 2 || params->cap_vs_temp.ncols() != 2)) {
+    if (params->en_cap_vs_temp && (params->cap_vs_temp.nrows() < 2 || params->cap_vs_temp.ncols() != 2)) {
         throw std::runtime_error("thermal_t: capacity vs temperature matrix must have two columns and at least two rows");
     }
 
-    if (!params->en_cap_vs_temp) {
+    if (params->en_cap_vs_temp) {
         size_t n = params->cap_vs_temp.nrows();
         for (int i = 0; i < (int) n; i++) {
             params->cap_vs_temp(i, 0);
@@ -124,7 +124,7 @@ void thermal_t::calc_capacity() {
     double percent = 100;
 
     // if using en_cap_vs_temp, it is done in the life model
-    if (!params->en_cap_vs_temp) {
+    if (params->en_cap_vs_temp) {
         percent = util::linterp_col(params->cap_vs_temp, 0, state->T_batt, 1);
     }
 

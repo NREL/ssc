@@ -750,4 +750,21 @@ TEST_F(lib_battery_test, NMCLifeModel) {
 
     batteryNMC->run(0, I);
 
+    auto state = batteryNMC->get_state().lifetime;
+
+    EXPECT_NEAR(state->q_relative, 100.853, 1e-3);
+    EXPECT_NEAR(state->n_cycles, 0, 1e-3);
+    EXPECT_NEAR(state->range, 0, 1e-3);
+    EXPECT_NEAR(state->average_range, 0, 1e-3);
+    EXPECT_NEAR(state->nmc_li_neg->q_relative_li, 107.143, 1e-3);
+    EXPECT_NEAR(state->nmc_li_neg->q_relative_neg, 100.853, 1e-3);
+    EXPECT_NEAR(state->nmc_li_neg->dq_relative_li_old, 0, 1e-3);
+    EXPECT_NEAR(state->nmc_li_neg->dq_relative_neg_old, 0, 1e-3);
+    EXPECT_NEAR(state->nmc_li_neg->DOD_max, 54.05, 1e-3);
+    EXPECT_NEAR(state->nmc_li_neg->n_cycles_prev_day, 0, 1e-3);
+    EXPECT_NEAR(state->nmc_li_neg->b1_dt, 4.046e-6, 1e-9);
+    EXPECT_NEAR(state->nmc_li_neg->b2_dt, 8.619e-7, 1e-10);
+    EXPECT_NEAR(state->nmc_li_neg->b3_dt, 9.416e-4, 1e-7);
+    EXPECT_NEAR(state->nmc_li_neg->c0_dt, 3.104, 1e-3);
+    EXPECT_NEAR(state->nmc_li_neg->c2_dt, 1.393e-5, 1e-8);
 }

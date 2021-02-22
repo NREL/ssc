@@ -120,8 +120,9 @@ std::ostream& operator<<(std::ostream& os, const lifetime_nmc_state& p) {
 std::ostream &operator<<(std::ostream &os, const lifetime_state &p) {
     os.precision(3);
     char buf[1024];
-    sprintf(buf, R"("lifetime_state": { "q_relative": %f, "n_cycles": %d, "range": %.3f, "average_range": %.3f, )",
-            p.q_relative, p.n_cycles, p.range, p.average_range);
+    sprintf(buf, R"("lifetime_state": { "q_relative": %f, "n_cycles": %d, "range": %.3f, "average_range": %.3f,
+                 "day_age_of_battery": %.3f, )",
+            p.q_relative, p.n_cycles, p.range, p.average_range, p.day_age_of_battery);
     os << buf << *p.cycle << ", " << *p.calendar << ", " << *p.nmc_li_neg << " }";
     return os;
 }
