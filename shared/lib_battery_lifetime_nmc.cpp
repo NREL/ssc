@@ -81,6 +81,10 @@ lifetime_t * lifetime_nmc_t::clone() {
     return new lifetime_nmc_t(*this);
 }
 
+//calculate_Uneg, and calculate_Voc are picewise linear functions. The linear functions were obtained by using values
+//from  Table B.1 of the applied energy paper " Analysis of degradation in residential battery energy storate systems
+// for rate-based use-cases"
+
 double lifetime_nmc_t::calculate_Uneg(double SOC) {
     double Uneg;
     if (SOC <= 0.1)
