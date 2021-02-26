@@ -202,7 +202,7 @@ TEST_F(CM_MHKWave, ComputeModuleTest_cmod_mhk_wave_time_series_file) {
     var_table* vt2 = static_cast<var_table*>(data);
     //vt2->assign("wave_resource_data", *input);
     //wxString file_string = "C:/Users/mprillim/sam_dev/deploy/wave_resource_ts/test_timeseries_data.csv";
-    vt2->assign("wave_resource_filename_ts", (var_data)"C:/Users/mprillim/sam_dev/sam/deploy/wave_resource_ts/test_timeseries_data.csv");
+    vt2->assign("wave_resource_filename_ts", (var_data)"C:/Users/mprillim/sam_dev/sam/deploy/wave_resource_ts/a_test_timeseries_data.csv");
     vt2->assign("wave_resource_model_choice", (var_data)1);
     int mhk_wave_errors = run_module(data, "wave_file_reader");
     int len;

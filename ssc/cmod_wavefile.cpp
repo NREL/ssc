@@ -402,6 +402,13 @@ public:
             for (size_t i = 0; i < 2; i++)
                 getline(ifs, buf);
             ssc_number_t hour0, hour1, hourdiff;
+            ssc_number_t ts_significant_wave_height;
+            ssc_number_t ts_energy_period;
+            size_t ncols = 22;
+            size_t nrows = 21;
+            size_t sig_wave_height_index = 0;
+            size_t energy_period_index = 0;
+            ssc_number_t* mat = allocate("wave_resource_matrix", 21, 22);
             //size_t numberRecords = wave_dp->nrecords();
             ssc_number_t* timecheck = allocate("time_check", numberRecords);
             timecheck[0] = 0;
@@ -430,7 +437,41 @@ public:
                 wave_heights[r] = (ssc_number_t)std::stod(values[6]);
                 wave_periods[r] = (ssc_number_t)std::stod(values[5]);
 
+                //Make JPD from time series data
+                
+                ts_significant_wave_height = wave_heights[r];
+                ts_energy_period = wave_periods[r];
+                for (size_t j = 0; j < 21; j++) {
+
+                    if (r == 0) mat[(j + 1) * ncols] = (0.25 + j * 0.5);
+                    if (abs(ts_significant_wave_height - (0.25 + j * 0.5)) <= 0.25) {
+                        sig_wave_height_index = j;
+                        if (r!=0) break;
+                    }
+                }
+                for (size_t m = 0; m < 22; m++) {
+                    if (r==0) mat[m] = m - 0.5;
+                    if (abs(ts_energy_period - (0.5 + m)) <= 0.5) {
+                        energy_period_index = m;
+                        if (r!=0) break;
+                    }
+
+                    
+                }
+
+                
+                //mat[sig_wave_height_index * ncols + energy_period_index] = mat[sig_wave_height_index * ncols + energy_period_index] + 1 / 2920 * 100;
+                mat[sig_wave_height_index * ncols + energy_period_index] += 0.0342465753;
+                //Set decimal values to 2 for JPD
+                if (r == numberRecords - 1) {
+                    for (size_t r2 = 0; r2 < 21; r2++) {
+                        for (size_t c2 = 0; c2 < 22; c2++) {
+                            if (r2 != 0 && c2 != 0) mat[r2 * 22 + c2] = round(mat[r2 * 22 + c2] * 100) / 100;
+                        }
+                    }
+                }
             }
+            mat[0] = 0;
             assign("number_hours", int(numberRecords * hourdiff));
             return;
 
