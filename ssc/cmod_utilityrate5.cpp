@@ -1948,8 +1948,11 @@ public:
 		// single meter so single net accumulation
 		ssc_number_t daily_surplus_energy;
 		ssc_number_t monthly_surplus_energy;
+        ssc_number_t step_surplus_energy; // For tier rollovers
 		ssc_number_t daily_deficit_energy;
 		ssc_number_t monthly_deficit_energy;
+        ssc_number_t step_deficit_energy; // For tier rollovers
+        ssc_number_t e_upper; // For tier computation
 
 		bool ec_enabled = true; // per 2/25/16 meeting
 		bool dc_enabled = as_boolean("ur_dc_enable");
@@ -1972,7 +1975,8 @@ public:
 
 
 		// calculate the monthly net energy and monthly hours
-		int m, h, s, tier;
+        int m, h, s;
+        size_t surplus_tier = 0, deficit_tier = 0;
 		size_t d;
 		size_t c = 0;
 		for (m = 0; m < (int)rate.m_month.size(); m++)
@@ -2038,11 +2042,19 @@ public:
 			ur_month& curr_month = rate.m_month[m];
 			monthly_surplus_energy = 0;
 			monthly_deficit_energy = 0;
+            if (ur_ec_hourly_acc_period == 1) {
+                surplus_tier = 0;
+                deficit_tier = 0;
+            }
+                
 			for (d = 0; d<util::nday[m]; d++)
 			{
 				daily_surplus_energy = 0;
 				daily_deficit_energy = 0;
-				//daily_net_energy = 0;
+                if (ur_ec_hourly_acc_period == 2) {
+                    surplus_tier = 0;
+                    deficit_tier = 0;
+                }
 				for (h = 0; h<24; h++)
 				{
 					for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
@@ -2051,9 +2063,13 @@ public:
 						if (ec_enabled)
 						{
 							int row = rate.get_tou_row(c, m);
+                            
+                            step_surplus_energy = 0.0;
+                            step_deficit_energy = 0.0;
 
 							if (e_in[c] >= 0.0)
 							{ // calculate income or credit
+                                e_upper = curr_month.ec_tou_ub.at(row, surplus_tier); // Have to check this each step to swap between surplus and deficit
 								monthly_surplus_energy += e_in[c];
 								daily_surplus_energy += e_in[c];
 
@@ -2068,23 +2084,45 @@ public:
 
 								// cumulative energy used to determine tier for credit of entire surplus amount
 								ssc_number_t credit_amt = 0;
-								for (tier = 0; tier < (int)curr_month.ec_tou_ub.ncols(); tier++)
-								{
-									ssc_number_t e_upper = curr_month.ec_tou_ub.at(row, tier);
-									if (cumulative_energy < e_upper)
-										break;
-								}
-								if (tier >= (int)curr_month.ec_tou_ub.ncols())
-									tier = (int)curr_month.ec_tou_ub.ncols() - 1;
-								ssc_number_t tier_energy = energy_surplus;
-								ssc_number_t sr = curr_month.ec_tou_sr.at(row, tier);
-								// time step sell rates
-								if (as_boolean("ur_en_ts_sell_rate")) {
-									if (c < rate.m_ec_ts_sell_rate.size()) {
-										sr = rate.m_ec_ts_sell_rate[c];
-									}
-								}
-								ssc_number_t tier_credit = tier_energy * sr * rate_esc;
+
+                                ssc_number_t tier_credit = 0.0, sr = 0.0, tier_energy = 0.0;
+                                // time step sell rates
+                                if (as_boolean("ur_en_ts_sell_rate")) {
+                                    if (c < rate.m_ec_ts_sell_rate.size()) {
+                                        tier_energy = energy_surplus;
+                                        sr = rate.m_ec_ts_sell_rate[c];
+                                        tier_credit = tier_energy * sr * rate_esc;
+                                        curr_month.ec_energy_surplus.at(row, surplus_tier) += (ssc_number_t)tier_energy;
+                                    }
+                                }
+
+                                // Fall back to TOU rates if m_ec_ts_sell_rate.size() is too small
+                                if (tier_credit == 0) {
+                                    if (cumulative_energy > e_upper) {
+                                        step_surplus_energy = energy_surplus - (cumulative_energy - e_upper); // Subtract amount above the tier to find amount in this tier
+
+                                        ssc_number_t sr_base = curr_month.ec_tou_sr.at(row, surplus_tier);
+                                        tier_credit = step_surplus_energy * sr_base * rate_esc;
+                                        curr_month.ec_energy_surplus.at(row, surplus_tier) += (ssc_number_t)step_surplus_energy;
+
+                                        ssc_number_t upper_tier_energy = energy_surplus - step_surplus_energy;
+                                        
+                                        surplus_tier++;
+                                        if (surplus_tier >= (int)curr_month.ec_tou_ub.ncols())
+                                            surplus_tier = (int)curr_month.ec_tou_ub.ncols() - 1;
+
+                                        sr = curr_month.ec_tou_sr.at(row, surplus_tier);
+                                        tier_credit += upper_tier_energy * tier_credit * rate_esc;
+                                        curr_month.ec_energy_surplus.at(row, surplus_tier) += (ssc_number_t)upper_tier_energy;
+                                    }
+                                    else {
+                                        tier_energy = energy_surplus;
+                                        sr = curr_month.ec_tou_sr.at(row, surplus_tier);
+
+                                        tier_credit = tier_energy * sr * rate_esc;
+                                        curr_month.ec_energy_surplus.at(row, surplus_tier) += (ssc_number_t)tier_energy;
+                                    }
+                                }								
 
 								credit_amt = tier_credit;
 
@@ -2095,7 +2133,7 @@ public:
 								}
 								else
 								{
-									curr_month.ec_charge.at(row, tier) -= (ssc_number_t)tier_credit;
+									curr_month.ec_charge.at(row, surplus_tier) -= (ssc_number_t)tier_credit;
 									//								price[c] += (ssc_number_t)credit_amt;
 									monthly_ec_charges[m] -= (ssc_number_t)credit_amt;
 									income[c] = (ssc_number_t)credit_amt;
@@ -2107,10 +2145,10 @@ public:
                                         monthly_two_meter_sales[m] += credit_amt;
                                     }
 								}
-								curr_month.ec_energy_surplus.at(row, tier) += (ssc_number_t)tier_energy;
 							}
 							else
 							{ // calculate payment or charge
+                                e_upper = curr_month.ec_tou_ub.at(row, deficit_tier); // Have to check this each step to swap between surplus and deficit
 								monthly_deficit_energy -= e_in[c];
 								daily_deficit_energy -= e_in[c];
 								double charge_amt = 0;
@@ -2122,29 +2160,50 @@ public:
 								else if (ur_ec_hourly_acc_period == 2)
 									cumulative_deficit = daily_deficit_energy;
 
+                                ssc_number_t tier_charge = 0.0, br = 0.0, tier_energy = 0.0;
+                                // time step sell rates
+                                if (as_boolean("ur_en_ts_buy_rate")) {
+                                    if (c < rate.m_ec_ts_buy_rate.size()) {
+                                        tier_energy = energy_deficit;
+                                        br = rate.m_ec_ts_buy_rate[c];
+                                        charge_amt = tier_energy * br * rate_esc;
+                                        curr_month.ec_energy_use.at(row, deficit_tier) += (ssc_number_t)tier_energy;
+                                        curr_month.ec_charge.at(row, deficit_tier) += (ssc_number_t)charge_amt;
+                                    }
+                                }
 
-								// cumulative energy used to determine tier for credit of entire surplus amount
-								for (tier = 0; tier < (int)curr_month.ec_tou_ub.ncols(); tier++)
-								{
-									double e_upper = curr_month.ec_tou_ub.at(row, tier);
-									if (cumulative_deficit < e_upper)
-										break;
-								}
-								if (tier >= (int)curr_month.ec_tou_ub.ncols())
-									tier = (int)curr_month.ec_tou_ub.ncols() - 1;
-								double tier_energy = energy_deficit;
-								double tier_charge = tier_energy * curr_month.ec_tou_br.at(row, tier) * rate_esc;
+                                // Fall back to TOU rates if m_ec_ts_buy_rate.size() is too small
+                                if (tier_charge == 0) {
+                                    if (cumulative_deficit > e_upper) {
+                                        step_deficit_energy = energy_deficit - (cumulative_deficit - e_upper); // Subtract amount above the tier to find amount in this tier
 
-								// time step buy rates
-								if (as_boolean("ur_en_ts_buy_rate")) {
-									if (c < rate.m_ec_ts_buy_rate.size()) {
-										tier_charge = rate.m_ec_ts_buy_rate[c] * tier_energy * rate_esc;
-									}
-								}
+                                        ssc_number_t br_base = curr_month.ec_tou_br.at(row, deficit_tier);
+                                        tier_charge = step_deficit_energy * br_base * rate_esc;
+                                        curr_month.ec_energy_use.at(row, deficit_tier) += (ssc_number_t)step_deficit_energy;
+                                        charge_amt += tier_charge;
+                                        curr_month.ec_charge.at(row, deficit_tier) += (ssc_number_t)tier_charge;
 
-								charge_amt = tier_charge;
-								curr_month.ec_energy_use.at(row, tier) += (ssc_number_t)tier_energy;
-								curr_month.ec_charge.at(row, tier) += (ssc_number_t)tier_charge;
+                                        ssc_number_t upper_tier_energy = energy_deficit - step_deficit_energy;
+
+                                        deficit_tier++;
+                                        if (deficit_tier >= (int)curr_month.ec_tou_ub.ncols())
+                                            deficit_tier = (int)curr_month.ec_tou_ub.ncols() - 1;
+
+                                        br = curr_month.ec_tou_br.at(row, deficit_tier);
+                                        tier_charge = upper_tier_energy * br * rate_esc;
+                                        charge_amt += tier_charge;
+                                        curr_month.ec_energy_use.at(row, deficit_tier) += (ssc_number_t)upper_tier_energy;
+                                        curr_month.ec_charge.at(row, deficit_tier) += (ssc_number_t)tier_charge;
+                                    }
+                                    else {
+                                        tier_energy = energy_deficit;
+                                        br = curr_month.ec_tou_br.at(row, deficit_tier);
+
+                                        charge_amt = tier_energy * br * rate_esc;
+                                        curr_month.ec_energy_use.at(row, deficit_tier) += (ssc_number_t)tier_energy;
+                                        curr_month.ec_charge.at(row, deficit_tier) += (ssc_number_t)charge_amt;
+                                    }
+                                }
 
 								payment[c] = (ssc_number_t)charge_amt;
 								monthly_ec_charges[m] += (ssc_number_t)charge_amt;

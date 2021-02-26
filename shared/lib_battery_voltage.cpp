@@ -269,7 +269,6 @@ void voltage_dynamic_t::initialize() {
     if ((params->dynamic.Vfull < params->dynamic.Vexp) ||
             (params->dynamic.Vexp < params->dynamic.Vnom) || (params->dynamic.Vnom < params->dynamic.Vcut)) {
         throw std::runtime_error("voltage_dynamic_t error: For the electrochemical battery voltage model, voltage inputs must meet the requirement Vfull > Vexp > Vnom > Vcut.");
-        //throw std::("voltage_dynamic_t error: For the electrochemical battery voltage model, voltage inputs must meet the requirement Vfull > Vexp > Vnom > Vcut.");
     }
     // assume fully charged, not the nominal value
     state->cell_voltage = params->dynamic.Vfull;
