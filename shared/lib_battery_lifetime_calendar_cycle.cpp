@@ -146,10 +146,10 @@ int lifetime_cycle_t::rainflow_compareRanges() {
     bool contained = true;
 
     // modified to disregard some of algorithm which doesn't work well
-    if (state->cycle->rainflow_Xlt + tolerance >= state->cycle->rainflow_Ylt)
-        contained = false;
-    else if (state->cycle->rainflow_Xlt < state->cycle->rainflow_Ylt)
+    if (state->cycle->rainflow_Xlt + tolerance < state->cycle->rainflow_Ylt)
         retCode = cycle_state::LT_GET_DATA;
+    else
+        contained = false;
 
     // Step 5: Count range Y, discard peak & valley of Y, go to Step 2
     if (!contained) {

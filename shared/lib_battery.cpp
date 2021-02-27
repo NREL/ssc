@@ -458,6 +458,7 @@ battery_t::battery_t(const battery_t &rhs) {
     params = std::make_shared<battery_params>();
     *params = *rhs.params;
     initialize();
+    *state = *rhs.state;
 }
 
 void battery_t::setupReplacements(double capacity_percent) {
