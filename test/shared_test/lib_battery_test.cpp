@@ -803,7 +803,7 @@ TEST_F(lib_battery_test, AdaptiveTimestepNMC) {
     auto lifetimeModelNMC = new lifetime_nmc_t(dtHour);
     auto thermalModelNMC = new thermal_t(1.0, mass, surface_area, resistance, Cp, h, T_room);
     auto capacityModelNMC = new capacity_lithium_ion_t(q, SOC_init, SOC_max, SOC_min, dtHour);
-    auto voltageModelNMC = new voltage_dynamic_t(n_series, n_strings, Vnom_default, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom,
+    auto voltageModelNMC = new voltage_dynamic_t(n_series, n_strings, Vnom_default, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom, Vcut,
                                                  C_rate, resistance, dtHour);
     auto lossModelNMC = new losses_t(monthlyLosses, monthlyLosses, monthlyLosses);
 
@@ -909,11 +909,11 @@ TEST_F(lib_battery_test, AdaptiveTimestepNMC) {
 
     }
 
-    EXPECT_NEAR(batteryModel->charge_maximum(), 889.17, 1e-2);
-    EXPECT_NEAR(batt_subhourly->charge_maximum(), 881.46, 1e-2);
-    EXPECT_NEAR(batt_adaptive->charge_maximum(), 882.53, 1e-2);
+    EXPECT_NEAR(batteryModel->charge_maximum(), 887.11, 1e-2);
+    EXPECT_NEAR(batt_subhourly->charge_maximum(), 893.09, 1e-2);
+    EXPECT_NEAR(batt_adaptive->charge_maximum(), 890.67, 1e-2);
 
-    EXPECT_NEAR(batteryModel->SOC(), 89.95, 1e-2);
-    EXPECT_NEAR(batt_subhourly->SOC(), 88.73, 1e-2);
-    EXPECT_NEAR(batt_adaptive->SOC(), 88.64, 1e-2);
+    EXPECT_NEAR(batteryModel->SOC(), 86.65, 1e-2);
+    EXPECT_NEAR(batt_subhourly->SOC(), 86.95, 1e-2);
+    EXPECT_NEAR(batt_adaptive->SOC(), 87.17, 1e-2);
 }
