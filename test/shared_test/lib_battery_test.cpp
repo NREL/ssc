@@ -255,17 +255,17 @@ TEST_F(lib_battery_test, runTestCycleAt1C){
     }
 //    std::cerr <<  idx << ": soc " << batteryModel->SOC() << ", cap " << capacity_passed << "\n";
     // the SOC isn't at 5 so it means the controller is not able to calculate a current/voltage at which to discharge to 5
-    s.capacity = {50.64, 920.75, 883.93, 8.917, 0, 5.73, 6.74, 2};
-    s.batt_voltage = 368.90;
+    s.capacity = {50.33, 920.36, 883.54, 8.941, 0, 5.70, 6.71, 2};
+    s.batt_voltage = 367.69;
     s.lifetime.q_relative = 93.08;
-    s.lifetime.cycle->q_relative_cycle = 92.07;
-    s.lifetime.n_cycles = 397;
-    s.lifetime.range = 88.74;
-    s.lifetime.average_range = 88.72;
-    s.lifetime.cycle->rainflow_Xlt = 88.79;
+    s.lifetime.cycle->q_relative_cycle = 92.04;
+    s.lifetime.n_cycles = 399;
+    s.lifetime.range = 89.04;
+    s.lifetime.average_range = 88.85;
+    s.lifetime.cycle->rainflow_Xlt = 89.06;
     s.lifetime.cycle->rainflow_Ylt = 89.30;
-    s.lifetime.cycle->rainflow_jlt = 7;
-    s.lifetime.day_age_of_battery = 2739.71;
+    s.lifetime.cycle->rainflow_jlt = 3;
+    s.lifetime.day_age_of_battery = 2739.96;
     s.lifetime.calendar->q_relative_calendar = 98.0;
     s.lifetime.calendar->dq_relative_calendar_old = 0.039;
     s.thermal = {96.0, 20.00, 20};
@@ -327,25 +327,25 @@ TEST_F(lib_battery_test, runTestCycleAt3C){
     }
 //    std::cerr <<  idx << ": soc " << batteryModel->SOC() << ", cap " << capacity_passed << "\n";
     // the SOC isn't at 5 so it means the controller is not able to calculate a current/voltage at which to discharge to 5
-    s.capacity = {49.06, 920.77, 883.94, 8.89, 0, 5.55, 6.55, 2};
-    s.batt_voltage = 362.25;
+    s.capacity = {52.06, 920.37, 883.56, 8.94, 0, 5.89, 6.90, 2};
+    s.batt_voltage = 374.55;
     s.lifetime.q_relative = 93.08;
-    s.lifetime.day_age_of_battery = 2613.08;
+    s.lifetime.day_age_of_battery = 2644;
     s.lifetime.cycle->q_relative_cycle = 92.08;
-    s.lifetime.n_cycles = 397;
-    s.lifetime.range = 88.51;
-    s.lifetime.average_range = 89.14;
-    s.lifetime.cycle->rainflow_Xlt = 88.53;
-    s.lifetime.cycle->rainflow_Ylt = 89.45;
-    s.lifetime.cycle->rainflow_jlt = 7;
-    s.lifetime.cycle->q_relative_cycle = 92.08;
-    s.lifetime.calendar->q_relative_calendar = 98.11;
+    s.lifetime.n_cycles = 399;
+    s.lifetime.range = 89.07;
+    s.lifetime.average_range = 89.00;
+    s.lifetime.cycle->rainflow_Xlt = 89.09;
+    s.lifetime.cycle->rainflow_Ylt = 89.11;
+    s.lifetime.cycle->rainflow_jlt = 3;
+    s.lifetime.cycle->q_relative_cycle = 92.04;
+    s.lifetime.calendar->q_relative_calendar = 98.08;
     s.lifetime.calendar->dq_relative_calendar_old = 0.0393;
     s.thermal = {96.01, 20, 20};
     s.last_idx = 32991;
     compareState(batteryModel, s, "runTest: 3");
 
-    EXPECT_NEAR(capacity_passed, 353328, 100) << "Current passing through cell";
+    EXPECT_NEAR(capacity_passed, 352794, 100) << "Current passing through cell";
     double qmax = fmax(s.capacity.qmax_lifetime, s.capacity.qmax_thermal);
     EXPECT_NEAR(qmax/q, 0.9209, 0.01) << "capacity relative to max capacity";
 }
@@ -609,11 +609,14 @@ TEST_F(lib_battery_test, AdaptiveTimestep) {
     EXPECT_EQ(batt_adaptive->charge_maximum(), batteryModel->charge_maximum());
     EXPECT_EQ(batt_adaptive->V(), batteryModel->V());
     EXPECT_EQ(batt_adaptive->I(), batteryModel->I());
+    ASSERT_NEAR(batt_subhourly->get_params().lifetime->dt_hr, 0.25, 1e-3);
 
     double kw_hourly = 100.;
     size_t count = 0;
     while (count < 2000){
         double hourly_E = 0;
+        double hourly_V = 0;
+        double hourly_I = 0;
         double subhourly_E = 0;
         double adaptive_E = 0;
         double subhourly_V = 0;
@@ -626,6 +629,8 @@ TEST_F(lib_battery_test, AdaptiveTimestep) {
             hourly_E += batteryModel->get_state().P;
             hourly_V = batteryModel->get_state().V;
             hourly_I = batteryModel->get_state().I;
+            ASSERT_NEAR(batt_subhourly->get_params().lifetime->dt_hr, 0.25, 1e-3);
+
             // run subhourly
             for (size_t i = 0; i < steps_per_hour; i++) {
                 batt_subhourly->runPower(kw_hourly);
@@ -651,6 +656,10 @@ TEST_F(lib_battery_test, AdaptiveTimestep) {
                     adaptive_I = batt_adaptive->get_state().I;
                 }
             }
+            EXPECT_NEAR(batteryModel->get_state().lifetime->day_age_of_battery,
+                        batt_subhourly->get_state().lifetime->day_age_of_battery, 1e-3);
+            EXPECT_NEAR(batteryModel->get_state().lifetime->day_age_of_battery,
+                        batt_adaptive->get_state().lifetime->day_age_of_battery, 1e-3);
         }
         while (batteryModel->SOC() < 85) {
             batteryModel->runPower(-kw_hourly);
@@ -689,17 +698,18 @@ TEST_F(lib_battery_test, AdaptiveTimestep) {
         EXPECT_NEAR(subhourly_E, adaptive_E, subhourly_E * 0.20) << "At count " << count;
 
         // max lifetime degradation error is about 15, out of charge max of ~600 -> 20 / 600 = 3.3 % error
-        EXPECT_NEAR(batteryModel->charge_maximum(), batt_adaptive->charge_maximum(), 110) << "At count " <<  count;
-        EXPECT_NEAR(batt_subhourly->charge_maximum(), batt_adaptive->charge_maximum(), 110) << "At count " << count;
+        EXPECT_NEAR(batteryModel->charge_maximum(), batt_adaptive->charge_maximum(), 20) << "At count " <<  count;
+        EXPECT_NEAR(batt_subhourly->charge_maximum(), batt_adaptive->charge_maximum(), 20) << "At count " << count;
 
     }
+
     EXPECT_NEAR(batteryModel->charge_maximum(), 577.09, 1e-2);
-    EXPECT_NEAR(batt_subhourly->charge_maximum(), 582.09, 1e-2);
-    EXPECT_NEAR(batt_adaptive->charge_maximum(), 577.33, 1e-2);
+    EXPECT_NEAR(batt_subhourly->charge_maximum(), 576.95, 1e-2);
+    EXPECT_NEAR(batt_adaptive->charge_maximum(), 576.95, 1e-2);
 
     EXPECT_NEAR(batteryModel->SOC(), 94.98, 1e-2);
-    EXPECT_NEAR(batt_subhourly->SOC(), 88.16, 1e-2);
-    EXPECT_NEAR(batt_adaptive->SOC(), 88.68, 1e-2);
+    EXPECT_NEAR(batt_subhourly->SOC(), 94.95, 1e-2);
+    EXPECT_NEAR(batt_adaptive->SOC(), 94.95, 1e-2);
 }
 
 

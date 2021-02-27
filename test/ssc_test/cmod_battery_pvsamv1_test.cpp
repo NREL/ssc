@@ -345,14 +345,14 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_ACBatteryModelIntegration)
     grid_and_rate_defaults(data);
     singleowner_defaults(data);
 
-    ssc_number_t expectedEnergy[3] = { 37308139, 37307177, 37308139 };
-    ssc_number_t expectedBatteryChargeEnergy[3] = { 14779, 25275, 14779 }; // No rate model means battery use is low
-    ssc_number_t expectedBatteryDischargeEnergy[3] = { 14808, 24300, 14808 };
+    ssc_number_t expectedEnergy[3] = { 37308020, 37307080, 37308021 };
+    ssc_number_t expectedBatteryChargeEnergy[3] = { 14779, 24265, 14779 }; // No rate model means battery use is low
+    ssc_number_t expectedBatteryDischargeEnergy[3] = { 14663, 23209, 14663 };
 
     ssc_number_t peakKwCharge[3] = { -1040.2, -1051.5, -1051.5 };
     ssc_number_t peakKwDischarge[3] = { 967.5, 969.5, 969.5 };
     ssc_number_t peakCycles[3] = { 1, 1, 1 };
-    ssc_number_t avgCycles[3] = { 0.003, 0.014, 0.003 };
+    ssc_number_t avgCycles[3] = { 0.003, 0.006, 0.003 };
 
     // Test peak shaving look ahead, peak shaving look behind, and automated grid power target. Others require additional input data
     for (int i = 0; i < 3; i++) {
@@ -398,9 +398,9 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_ManualDispatchBatteryModelI
     grid_and_rate_defaults(data);
     singleowner_defaults(data);
 
-    ssc_number_t expectedEnergy = 37184423;
-    ssc_number_t expectedBatteryChargeEnergy = 1300910;
-    ssc_number_t expectedBatteryDischargeEnergy = 1177196;
+    ssc_number_t expectedEnergy = 37175792;
+    ssc_number_t expectedBatteryChargeEnergy = 1298028;
+    ssc_number_t expectedBatteryDischargeEnergy = 1165681;
 
     ssc_number_t peakKwCharge = -1052.0;
     ssc_number_t peakKwDischarge = 848.6;
@@ -809,7 +809,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelPriceS
 
         auto batt_q_rel = data_vtab->as_vector_ssc_number_t("batt_capacity_percent");
         auto batt_cyc_avg = data_vtab->as_vector_ssc_number_t("batt_DOD_cycle_average");
-        EXPECT_NEAR(batt_q_rel.back(), 97.847, 1e-2);
-        EXPECT_NEAR(batt_cyc_avg.back(), 24.72, 0.5);
+        EXPECT_NEAR(batt_q_rel.back(), 97.846, 1e-2);
+        EXPECT_NEAR(batt_cyc_avg.back(), 26.15, 0.5);
     }
 }
