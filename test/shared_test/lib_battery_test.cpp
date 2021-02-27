@@ -273,7 +273,7 @@ TEST_F(lib_battery_test, runTestCycleAt1C){
 
     compareState(batteryModel, s, "runTestCycleAt1C: 3");
 
-    EXPECT_NEAR(capacity_passed, 358810, 1000) << "Current passing through cell";
+    EXPECT_NEAR(capacity_passed, 352362, 1000) << "Current passing through cell";
     double qmax = fmax(s.capacity.qmax_lifetime, s.capacity.qmax_thermal);
     EXPECT_NEAR(qmax/q, .93, 0.01) << "capacity relative to max capacity";
 }
@@ -616,11 +616,9 @@ TEST_F(lib_battery_test, AdaptiveTimestep) {
     while (count < 2000){
         double hourly_E = 0;
         double hourly_V = 0;
-        double hourly_I = 0;
         double subhourly_E = 0;
         double adaptive_E = 0;
         double subhourly_V = 0;
-        double hourly_V = 0;
         double adaptive_V = 0;
         double hourly_I, subhourly_I, adaptive_I = 0;
         while (batteryModel->SOC() > 15) {
