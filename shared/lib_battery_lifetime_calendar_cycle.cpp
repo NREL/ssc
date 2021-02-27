@@ -24,6 +24,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <memory>
 
 #include "lib_battery_lifetime.h"
+#include "lib_battery_lifetime_nmc.h"
 #include "lib_battery_lifetime_calendar_cycle.h"
 
 extern double tolerance;
@@ -408,7 +409,7 @@ double lifetime_calendar_t::capacity_percent() { return state->calendar->q_relat
 lifetime_state lifetime_calendar_t::get_state() { return *state; }
 
 double lifetime_calendar_t::runLifetimeCalendarModel(size_t lifetimeIndex, double T, double SOC) {
-    state->day_age_of_battery = (int)(lifetimeIndex / (util::hours_per_day / params->dt_hr));
+    state->day_age_of_battery = lifetimeIndex / (util::hours_per_day / params->dt_hr);
 
     if (params->cal_cyc->calendar_choice == calendar_cycle_params::CALENDAR_CHOICE::MODEL)
         runLithiumIonModel(T, SOC);
@@ -446,11 +447,11 @@ void lifetime_calendar_t::runTableModel() {
     for (size_t i = 0; i != n_rows; i++) {
         int day = (int)params->cal_cyc->calendar_matrix.at(i, calendar_cycle_params::DAYS);
         double capacity = (int) params->cal_cyc->calendar_matrix.at(i, calendar_cycle_params::CAPACITY_CAL);
-        if (day <= state->day_age_of_battery) {
+        if (day <= (int)state->day_age_of_battery) {
             day_lo = day;
             capacity_lo = capacity;
         }
-        if (day > state->day_age_of_battery) {
+        if (day > (int)state->day_age_of_battery) {
             day_hi = day;
             capacity_hi = capacity;
             break;
@@ -463,7 +464,7 @@ void lifetime_calendar_t::runTableModel() {
         capacity_hi = (int) params->cal_cyc->calendar_matrix.at(n, calendar_cycle_params::CAPACITY_CAL);
     }
 
-    state->calendar->q_relative_calendar = util::interpolate((double) day_lo, capacity_lo, (double) day_hi, capacity_hi, (double) state->day_age_of_battery);
+    state->calendar->q_relative_calendar = util::interpolate((double) day_lo, capacity_lo, (double) day_hi, capacity_hi, state->day_age_of_battery);
 }
 
 void lifetime_calendar_t::replaceBattery(double replacement_percent) {
@@ -518,7 +519,7 @@ lifetime_calendar_cycle_t::lifetime_calendar_cycle_t(const util::matrix_t<double
 
 lifetime_calendar_cycle_t::lifetime_calendar_cycle_t(const util::matrix_t<double> &batt_lifetime_matrix, double dt_hour) {
     params = std::make_shared<lifetime_params>();
-    params->model_choice = lifetime_params::CALCYC;\
+    params->model_choice = lifetime_params::CALCYC;
     params->dt_hr = dt_hour;
     params->cal_cyc->cycling_matrix = batt_lifetime_matrix;
     params->cal_cyc->calendar_choice = calendar_cycle_params::CALENDAR_CHOICE::NONE;

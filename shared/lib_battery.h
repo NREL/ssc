@@ -61,6 +61,8 @@ struct thermal_params {
     double Cp;                   // [J/KgK] - battery specific heat capacity
     double h;                    // [W/m2/K] - general heat transfer coefficient
     double resistance;                    // [Ohm] - internal resistance
+
+    bool en_cap_vs_temp;       // if true, no capacity degradation from temp and do not use cap_vs_temp
     util::matrix_t<double> cap_vs_temp;
 
     enum OPTIONS {
@@ -75,11 +77,19 @@ struct thermal_params {
 
 class thermal_t {
 public:
+    // constructors for capacity as an entry from a cap_vs_temp table
     thermal_t(double dt_hour, double mass, double surface_area, double R, double Cp, double h,
               const util::matrix_t<double> &c_vs_t, std::vector<double> T_room_C);
 
     thermal_t(double dt_hour, double mass, double surface_area, double R, double Cp, double h,
               const util::matrix_t<double> &c_vs_t, double T_room_C);
+
+    // constructors for capacity as an analytical function
+    thermal_t(double dt_hour, double mass, double surface_area, double R, double Cp, double h,
+        double T_room_C);
+
+    thermal_t(double dt_hour, double mass, double surface_area, double R, double Cp, double h,
+         std::vector<double> T_room_C);
 
     explicit thermal_t(std::shared_ptr<thermal_params> p);
 
@@ -110,6 +120,7 @@ protected:
     std::shared_ptr<thermal_state> state;
 
 private:
+
     void initialize();
 
     friend class battery_t;
