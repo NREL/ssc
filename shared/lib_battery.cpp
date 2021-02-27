@@ -413,6 +413,7 @@ void battery_t::initialize() {
     else if (params->chem == battery_params::VANADIUM_REDOX) {
         voltage = std::unique_ptr<voltage_t>(new voltage_vanadium_redox_t(params->voltage));
     }
+    voltage->set_initial_SOC(capacity->state->SOC);
 
     // lifetime
     if (params->lifetime->model_choice == lifetime_params::CALCYC)
@@ -451,36 +452,12 @@ battery_t::battery_t(double dt_hr, int chem, capacity_t *capacity_model, voltage
 battery_t::battery_t(std::shared_ptr<battery_params> p):
         params(std::move(p)) {
     initialize();
-
-    // initial conditions
-    voltage->set_initial_SOC(capacity->state->SOC);
 }
 
 battery_t::battery_t(const battery_t &rhs) {
     params = std::make_shared<battery_params>();
-    operator=(rhs);
-}
-
-battery_t &battery_t::operator=(const battery_t& rhs) {
-    if (this != &rhs) {
-        *params = *rhs.params;
-        capacity = std::unique_ptr<capacity_t>(rhs.capacity->clone());
-        voltage = std::unique_ptr<voltage_t>(rhs.voltage->clone());
-        thermal = std::unique_ptr<thermal_t>(new thermal_t(*rhs.thermal));
-        lifetime = std::unique_ptr<lifetime_t>(rhs.lifetime->clone());
-        losses = std::unique_ptr<losses_t>(new losses_t(*rhs.losses));
-        state = std::make_shared<battery_state>(capacity->state, voltage->state, thermal->state, lifetime->state, losses->state);
-        *state->replacement = *rhs.state->replacement;
-        state->last_idx = rhs.state->last_idx;
-        state->Q = rhs.state->Q;
-        state->Q_max = rhs.state->Q_max;
-        state->I = rhs.state->I;
-        state->P = rhs.state->P;
-        state->P_chargeable = rhs.state->P_chargeable;
-        state->P_dischargeable = rhs.state->P_dischargeable;
-        state->V = rhs.state->V;
-    }
-    return *this;
+    *params = *rhs.params;
+    initialize();
 }
 
 void battery_t::setupReplacements(double capacity_percent) {
@@ -568,6 +545,10 @@ void battery_t::ChangeTimestep(double dt_hr) {
         throw std::runtime_error("battery_t timestep must be greater than 0 hour");
     if (dt_hr > 1)
         throw std::runtime_error("battery_t timestep must be less than or equal to 1 hour");
+
+    auto old_hr = (double)state->last_idx * params->dt_hr;
+    state->last_idx = (size_t)(old_hr / dt_hr);
+
     params->dt_hr = dt_hr;
     params->capacity->dt_hr = dt_hr;
     params->voltage->dt_hr = dt_hr;

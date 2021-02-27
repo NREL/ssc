@@ -608,17 +608,23 @@ TEST_F(lib_battery_test, AdaptiveTimestep) {
     EXPECT_EQ(batt_adaptive->charge_maximum(), batteryModel->charge_maximum());
     EXPECT_EQ(batt_adaptive->V(), batteryModel->V());
     EXPECT_EQ(batt_adaptive->I(), batteryModel->I());
+    ASSERT_NEAR(batt_subhourly->get_params().lifetime->dt_hr, 0.25, 1e-3);
 
     double kw_hourly = 100.;
     size_t count = 0;
     while (count < 2000){
         double hourly_E = 0;
+        double hourly_V = 0;
+        double hourly_I = 0;
         double subhourly_E = 0;
         double adaptive_E = 0;
         while (batteryModel->SOC() > 15) {
             // run hourly
             batteryModel->runPower(kw_hourly);
             hourly_E += batteryModel->get_state().P;
+            hourly_V = batteryModel->get_state().V;
+            hourly_I = batteryModel->get_state().I;
+            ASSERT_NEAR(batt_subhourly->get_params().lifetime->dt_hr, 0.25, 1e-3);
 
             // run subhourly
             for (size_t i = 0; i < steps_per_hour; i++) {
@@ -639,6 +645,10 @@ TEST_F(lib_battery_test, AdaptiveTimestep) {
                     adaptive_E += batt_adaptive->get_state().P / (double)steps_per_hour;
                 }
             }
+            EXPECT_NEAR(batteryModel->get_state().lifetime->day_age_of_battery,
+                        batt_subhourly->get_state().lifetime->day_age_of_battery, 1e-3);
+            EXPECT_NEAR(batteryModel->get_state().lifetime->day_age_of_battery,
+                        batt_adaptive->get_state().lifetime->day_age_of_battery, 1e-3);
         }
         while (batteryModel->SOC() < 85) {
             batteryModel->runPower(-kw_hourly);
@@ -670,14 +680,16 @@ TEST_F(lib_battery_test, AdaptiveTimestep) {
         // max lifetime degradation error is about 15, out of charge max of ~600 -> 20 / 600 = 3.3 % error
         EXPECT_NEAR(batteryModel->charge_maximum(), batt_adaptive->charge_maximum(), 20) << "At count " <<  count;
         EXPECT_NEAR(batt_subhourly->charge_maximum(), batt_adaptive->charge_maximum(), 20) << "At count " << count;
-    }
-    EXPECT_NEAR(batteryModel->charge_maximum(), 577.09, 1e-2);
-    EXPECT_NEAR(batt_subhourly->charge_maximum(), 582.40, 1e-2);
-    EXPECT_NEAR(batt_adaptive->charge_maximum(), 577.48, 1e-2);
 
-    EXPECT_NEAR(batteryModel->SOC(), 94.97, 1e-2);
-    EXPECT_NEAR(batt_subhourly->SOC(), 88.14, 1e-2);
-    EXPECT_NEAR(batt_adaptive->SOC(), 88.67, 1e-2);
+    }
+
+    EXPECT_NEAR(batteryModel->charge_maximum(), 577.09, 1e-2);
+    EXPECT_NEAR(batt_subhourly->charge_maximum(), 576.95, 1e-2);
+    EXPECT_NEAR(batt_adaptive->charge_maximum(), 576.95, 1e-2);
+
+    EXPECT_NEAR(batteryModel->SOC(), 94.98, 1e-2);
+    EXPECT_NEAR(batt_subhourly->SOC(), 94.95, 1e-2);
+    EXPECT_NEAR(batt_adaptive->SOC(), 94.95, 1e-2);
 }
 
 
