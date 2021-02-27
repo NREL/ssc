@@ -255,17 +255,17 @@ TEST_F(lib_battery_test, runTestCycleAt1C){
     }
 //    std::cerr <<  idx << ": soc " << batteryModel->SOC() << ", cap " << capacity_passed << "\n";
     // the SOC isn't at 5 so it means the controller is not able to calculate a current/voltage at which to discharge to 5
-    s.capacity = {50.64, 920.75, 883.93, 8.917, 0, 5.73, 6.74, 2};
-    s.batt_voltage = 368.90;
+    s.capacity = {50.33, 920.36, 883.54, 8.941, 0, 5.70, 6.71, 2};
+    s.batt_voltage = 367.69;
     s.lifetime.q_relative = 93.08;
-    s.lifetime.cycle->q_relative_cycle = 92.07;
-    s.lifetime.n_cycles = 397;
-    s.lifetime.range = 88.74;
-    s.lifetime.average_range = 88.72;
-    s.lifetime.cycle->rainflow_Xlt = 88.79;
+    s.lifetime.cycle->q_relative_cycle = 92.04;
+    s.lifetime.n_cycles = 399;
+    s.lifetime.range = 89.04;
+    s.lifetime.average_range = 88.85;
+    s.lifetime.cycle->rainflow_Xlt = 89.06;
     s.lifetime.cycle->rainflow_Ylt = 89.30;
-    s.lifetime.cycle->rainflow_jlt = 7;
-    s.lifetime.day_age_of_battery = 2739.71;
+    s.lifetime.cycle->rainflow_jlt = 3;
+    s.lifetime.day_age_of_battery = 2739.96;
     s.lifetime.calendar->q_relative_calendar = 98.0;
     s.lifetime.calendar->dq_relative_calendar_old = 0.039;
     s.thermal = {96.0, 20.00, 20};
@@ -327,25 +327,25 @@ TEST_F(lib_battery_test, runTestCycleAt3C){
     }
 //    std::cerr <<  idx << ": soc " << batteryModel->SOC() << ", cap " << capacity_passed << "\n";
     // the SOC isn't at 5 so it means the controller is not able to calculate a current/voltage at which to discharge to 5
-    s.capacity = {49.06, 920.77, 883.94, 8.89, 0, 5.55, 6.55, 2};
-    s.batt_voltage = 362.25;
+    s.capacity = {52.06, 920.37, 883.56, 8.94, 0, 5.89, 6.90, 2};
+    s.batt_voltage = 374.55;
     s.lifetime.q_relative = 93.08;
-    s.lifetime.day_age_of_battery = 2613.08;
+    s.lifetime.day_age_of_battery = 2644;
     s.lifetime.cycle->q_relative_cycle = 92.08;
-    s.lifetime.n_cycles = 397;
-    s.lifetime.range = 88.51;
-    s.lifetime.average_range = 89.14;
-    s.lifetime.cycle->rainflow_Xlt = 88.53;
-    s.lifetime.cycle->rainflow_Ylt = 89.45;
-    s.lifetime.cycle->rainflow_jlt = 7;
-    s.lifetime.cycle->q_relative_cycle = 92.08;
-    s.lifetime.calendar->q_relative_calendar = 98.11;
+    s.lifetime.n_cycles = 399;
+    s.lifetime.range = 89.07;
+    s.lifetime.average_range = 89.00;
+    s.lifetime.cycle->rainflow_Xlt = 89.09;
+    s.lifetime.cycle->rainflow_Ylt = 89.11;
+    s.lifetime.cycle->rainflow_jlt = 3;
+    s.lifetime.cycle->q_relative_cycle = 92.04;
+    s.lifetime.calendar->q_relative_calendar = 98.08;
     s.lifetime.calendar->dq_relative_calendar_old = 0.0393;
     s.thermal = {96.01, 20, 20};
     s.last_idx = 32991;
     compareState(batteryModel, s, "runTest: 3");
 
-    EXPECT_NEAR(capacity_passed, 353328, 100) << "Current passing through cell";
+    EXPECT_NEAR(capacity_passed, 352794, 100) << "Current passing through cell";
     double qmax = fmax(s.capacity.qmax_lifetime, s.capacity.qmax_thermal);
     EXPECT_NEAR(qmax/q, 0.9209, 0.01) << "capacity relative to max capacity";
 }
