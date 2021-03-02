@@ -369,9 +369,13 @@ void voltage_dynamic_t::update_Qfull_mod(double qmax) {
 }
 
 double voltage_dynamic_t::calculate_voltage_for_current(double I, double q, double qmax, double) {
-    return params->num_cells_series *
-           fmax(voltage_model_tremblay_hybrid(qmax / params->num_strings, I / params->num_strings,
-                                              q / params->num_strings), 0);
+    double Qfull_mod_store = state->Q_full_mod;
+    update_Qfull_mod(qmax / params->num_strings);
+    double vol = params->num_cells_series *
+        fmax(voltage_model_tremblay_hybrid(qmax / params->num_strings, I / params->num_strings,
+            q / params->num_strings), 0);
+    state->Q_full_mod = Qfull_mod_store;
+    return vol;
 }
 
 // I, Q, q0 are on a per-string basis since adding cells in series does not change current or charge

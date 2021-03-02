@@ -15,15 +15,15 @@ TEST_F(ResilienceTest_lib_resilience, VoltageCutoffParameterSetup)
                             Qexp *= Qfull;
                             for (auto Qnom : {0.8, 0.9}){
                                 Qnom *= Qexp;
-                                for (auto Vcut : { 0.5, 0.4 }) {
-                                    //Vcut *= Vnom;
+                                for (auto Vcut : { 0.8, 0.9 }) {
+                                    Vcut *= Vnom;
                                     for (auto C_rate : { 0.05, 0.1, 0.2 }) {
                                         for (auto resistance : { 0.05, 0.1, 0.2 }) {
                                             char buf[300];
                                             sprintf(buf, "dtHour, %f, Vfull, %f, Vexp, %f, Vnom, %f, Qfull, %f, Qexp, %f, Qnom, %f, Vcut, %f, C rate, %f, res, %f",
                                                 dtHour, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom, Vcut, C_rate, resistance);
                                             auto voltageModel = new voltage_dynamic_t(n_series, n_strings, Vnom * 0.98,
-                                                Vfull, Vexp, Vnom, Qfull, Qexp, Qnom, 0,
+                                                Vfull, Vexp, Vnom, Qfull, Qexp, Qnom, Vcut,
                                                 C_rate, resistance, dtHour);
                                             try {
                                                 double current1;
