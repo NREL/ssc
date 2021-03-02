@@ -62,7 +62,6 @@ class voltage_dynamic_lib_battery_voltage_cutoff_test : public lib_battery_volta
 {
 protected:
     double Vfull = 4.1;
-    double Vcut = 0;
     double Vcut2 = 2.7;
     double Vexp = 4.05;
     double Vnom = 3.4;

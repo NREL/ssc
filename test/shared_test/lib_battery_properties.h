@@ -71,7 +71,6 @@ public:
 		Vexp = 4.05;
 		Vnom = 3.4;
         Vcut = 0.66 * Vfull;
-        //Vcut = 0;
 		Qfull = 2.25;
 		Qexp = 0.04;
 		Qnom = 2.0;

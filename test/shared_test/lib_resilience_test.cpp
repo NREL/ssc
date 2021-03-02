@@ -15,8 +15,8 @@ TEST_F(ResilienceTest_lib_resilience, VoltageCutoffParameterSetup)
                             Qexp *= Qfull;
                             for (auto Qnom : {0.8, 0.9}){
                                 Qnom *= Qexp;
-                                for (auto Vcut : { 0.8, 0.9 }) {
-                                    Vcut *= Vnom;
+                                for (auto Vcut : { 0.5, 0.4 }) {
+                                    //Vcut *= Vnom;
                                     for (auto C_rate : { 0.05, 0.1, 0.2 }) {
                                         for (auto resistance : { 0.05, 0.1, 0.2 }) {
                                             char buf[300];
