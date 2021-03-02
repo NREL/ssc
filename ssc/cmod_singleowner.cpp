@@ -3085,7 +3085,10 @@ public:
                 
             }
 
-
+            double lcoe_real_lcos;
+            double lcoe_real_lcos_denominator = npv(CF_energy_without_battery, nyears, disc_real);
+            double lcoe_real_lcos_numerator = -(npv(CF_Annual_Costs, nyears, nom_discount_rate)
+                + cf.at(CF_Annual_Costs, 0)) + lcos_investment_cost;
             //cf.at(CF_charging_cost_pv, a) = charged_pv[a] * lcoe_nom / 100; //Cost to charge from pv based on LCOE calculation
             cf.at(CF_charging_cost_pv, a) = charged_pv[a] * lcoe_real / 100 * pow((1 + inflation_rate), a - 1);
             //Should it be nom or real LCOE
@@ -3103,7 +3106,21 @@ public:
                 -cf.at(CF_charging_cost_pv, a) + -cf.at(CF_om_fixed1_expense, a) + //Charging cost from system + fixed OM expense
                 -cf.at(CF_om_capacity1_expense, a) + -cf.at(CF_om_production1_expense, a) + //OM capacity based expense + OM production based expense
                 -cf.at(CF_battery_replacement_cost, a); //Battery replacement cost in each year
-                                                        //Add up all cost components in each year for cash flow 
+                                                        //Add up all cost components in each year for cash flow
+
+            double lcoe_real_lcos;
+            double lcoe_real_lcos_denominator = npv(CF_energy_without_battery, nyears, disc_real);
+            double lcoe_real_lcos_numerator = -(npv(CF_Annual_Costs, nyears, nom_discount_rate)
+                + cf.at(CF_Annual_Costs, 0)) + lcos_investment_cost + npv(CF_om_fixed1_expense, nyears, nom_discount_rate)
+                + npv(CF_om_capacity1_expense, nyears, nom_discount_rate) + npv(CF_om_capacity1_expense, nyears, nom_discount_rate);
+            //cf.at(CF_charging_cost_pv, a) = charged_pv[a] * lcoe_nom / 100; //Cost to charge from pv based on LCOE calculation
+            cf.at(CF_charging_cost_pv, a) = charged_pv[a] * lcoe_real / 100 * pow((1 + inflation_rate), a - 1);
+            //Should it be nom or real LCOE
+            //Should it be flat or adjusted for discount rate + inflation?
+            //Change name to system rather than pv for generic battery
+            //Compare lcoe_real to current cost of electricity
+            //lcoe_real*(1+inflation)^nyears
+            //change a to year
 
         }
         cf.at(CF_annual_cost_lcos, 0) += -lcos_investment_cost; //add initial investment cost to year 0
