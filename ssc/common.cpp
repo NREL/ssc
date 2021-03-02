@@ -1230,7 +1230,7 @@ bool weatherdata::check_continuous_single_year(bool leapyear)
 		ts_per_hour = (int)(m_nRecords / 8760);
 	double ts_min = 60. / ts_per_hour; //determine the number of minutes of each timestep
 
-    //next, check if the data has leap day (feb 29). need to do this because some toold pass in 8760 data that contains feb 29 and not dec 31
+    //next, check if the data has leap day (feb 29). need to do this because some tools pass in 8760 data that contains feb 29 and not dec 31
     bool has_leapday = false;
     int leapDayNoon = 1429 * ts_per_hour; //look for the index of noon on leap day. noon on leap day is hour 1429 of the year
     if (this->m_data[leapDayNoon]->month == 2 && this->m_data[leapDayNoon]->day == 29) //check noon on what would be feb 29 if it's in the data
