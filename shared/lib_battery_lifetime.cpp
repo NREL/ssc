@@ -31,6 +31,7 @@ lifetime_params::lifetime_params() {
 
 lifetime_params &lifetime_params::operator=(const lifetime_params &rhs) {
     if (this != &rhs) {
+        dt_hr = rhs.dt_hr;
         model_choice = rhs.model_choice;
         *cal_cyc = *rhs.cal_cyc;
     }

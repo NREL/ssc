@@ -194,7 +194,7 @@ void lifetime_nmc_t::runLifetimeModels(size_t lifetimeIndex, bool charge_changed
     state->nmc_li_neg->c2_dt += c2_dt_el;
 
     // Run capacity degradation model after every 24 hours
-    if (lifetimeIndex % ts_per_day == ts_per_day - 1) {
+    if (lifetimeIndex % ts_per_day == ts_per_day - (size_t)(1. / params->dt_hr)) {
         state->nmc_li_neg->q_relative_li = runQli(T_battery);
         state->nmc_li_neg->q_relative_neg = runQneg();
         state->q_relative = fmin(state->nmc_li_neg->q_relative_li, state->nmc_li_neg->q_relative_neg);
