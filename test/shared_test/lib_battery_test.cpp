@@ -751,7 +751,7 @@ TEST_F(lib_battery_test, ReplaceByCapacityTest){
 
 TEST_F(lib_battery_test, NMCLifeModel) {
     auto lifetimeModelNMC = new lifetime_nmc_t(dtHour);
-    auto thermalModelNMC = new thermal_t(1.0, mass, surface_area, resistance, Cp, h, T_room);
+    auto thermalModelNMC = new thermal_t(dtHour, mass, surface_area, resistance, Cp, h, T_room);
     auto capacityModelNMC = new capacity_lithium_ion_t(q, SOC_init, SOC_max, SOC_min, dtHour);
     auto voltageModelNMC = new voltage_dynamic_t(n_series, n_strings, Vnom_default, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom,
                                          C_rate, resistance, dtHour);
@@ -781,10 +781,9 @@ TEST_F(lib_battery_test, NMCLifeModel) {
     EXPECT_NEAR(state->nmc_li_neg->c2_dt, 1.393e-5, 1e-8);
 }
 
-
 TEST_F(lib_battery_test, AdaptiveTimestepNMC) {
     auto lifetimeModelNMC = new lifetime_nmc_t(dtHour);
-    auto thermalModelNMC = new thermal_t(1.0, mass, surface_area, resistance, Cp, h, T_room);
+    auto thermalModelNMC = new thermal_t(dtHour, mass, surface_area, resistance, Cp, h, T_room);
     auto capacityModelNMC = new capacity_lithium_ion_t(q, SOC_init, SOC_max, SOC_min, dtHour);
     auto voltageModelNMC = new voltage_dynamic_t(n_series, n_strings, Vnom_default, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom,
                                                  C_rate, resistance, dtHour);
@@ -892,11 +891,11 @@ TEST_F(lib_battery_test, AdaptiveTimestepNMC) {
 
     }
 
-    EXPECT_NEAR(batteryModel->charge_maximum(), 889.17, 1e-2);
-    EXPECT_NEAR(batt_subhourly->charge_maximum(), 881.46, 1e-2);
-    EXPECT_NEAR(batt_adaptive->charge_maximum(), 882.53, 1e-2);
+    EXPECT_NEAR(batteryModel->charge_maximum(), 883.92, 1e-2);
+    EXPECT_NEAR(batt_subhourly->charge_maximum(), 889.71, 1e-2);
+    EXPECT_NEAR(batt_adaptive->charge_maximum(), 887.37, 1e-2);
 
-    EXPECT_NEAR(batteryModel->SOC(), 89.95, 1e-2);
-    EXPECT_NEAR(batt_subhourly->SOC(), 88.73, 1e-2);
-    EXPECT_NEAR(batt_adaptive->SOC(), 88.64, 1e-2);
+    EXPECT_NEAR(batteryModel->SOC(), 86.93, 1e-2);
+    EXPECT_NEAR(batt_subhourly->SOC(), 87.25, 1e-2);
+    EXPECT_NEAR(batt_adaptive->SOC(), 87.46, 1e-2);
 }
