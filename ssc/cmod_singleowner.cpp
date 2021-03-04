@@ -221,6 +221,7 @@ static var_info _cm_vtab_singleowner[] = {
 
 /* construction period */                                                     
 	{ SSC_INPUT,       SSC_NUMBER,      "construction_financing_cost",	          "Construction financing total",	                                "$",	 "",					  "Financial Parameters",			 "*",                         "",                             "" },
+    { SSC_INPUT,       SSC_NUMBER,      "construction_financing_cost_batt",	          "Construction financing total battery",	                                "$",	 "",					  "Financial Parameters",			 "*",                         "",                             "" },
 
 /* intermediate outputs */
 	{ SSC_OUTPUT,       SSC_NUMBER,     "cost_debt_upfront",                      "Debt up-front fee",          "$",   "",					  "Intermediate Costs",			 "?=0",                         "",                             "" },
@@ -923,6 +924,9 @@ enum {
     CF_investment_cost_lcos,
     CF_annual_cost_lcos,
     CF_util_escal_rate,
+    CF_property_tax_assessed_value_batt,
+    CF_property_tax_expense_batt,
+    CF_insurance_expense_batt,
 
     CF_max,
  };
@@ -3085,18 +3089,6 @@ public:
                 
             }
 
-            double lcoe_real_lcos;
-            double lcoe_real_lcos_denominator = npv(CF_energy_without_battery, nyears, disc_real);
-            double lcoe_real_lcos_numerator = -(npv(CF_Annual_Costs, nyears, nom_discount_rate)
-                + cf.at(CF_Annual_Costs, 0)) + lcos_investment_cost;
-            //cf.at(CF_charging_cost_pv, a) = charged_pv[a] * lcoe_nom / 100; //Cost to charge from pv based on LCOE calculation
-            cf.at(CF_charging_cost_pv, a) = charged_pv[a] * lcoe_real / 100 * pow((1 + inflation_rate), a - 1);
-            //Should it be nom or real LCOE
-            //Should it be flat or adjusted for discount rate + inflation?
-            //Change name to system rather than pv for generic battery
-            //Compare lcoe_real to current cost of electricity
-            //lcoe_real*(1+inflation)^nyears
-            //change a to year
 
             cf.at(CF_energy_charged_grid, a) = cf.at(CF_charging_cost_grid, a) + cf.at(CF_charging_cost_pv, a); //total amount of energy charged, not used
             cf.at(CF_om_production1_expense, a) *= lcos_energy_discharged[a]; //Multiply OM production expense by energy discharged annually
@@ -3109,10 +3101,16 @@ public:
                                                         //Add up all cost components in each year for cash flow
 
             double lcoe_real_lcos;
+            double property_tax_assessed_value_batt = lcos_investment_cost * as_double("prop_tax_cost_assessed_percent") * 0.01;
+            double decline_percent = 100 - (i - 1) * property_tax_decline_percentage;
+            cf.at(CF_property_tax_assessed_value_batt, i) = (decline_percent > 0) ? property_tax_assessed_value_batt * decline_percent * 0.01 : 0.0;
+            cf.at(CF_property_tax_expense_batt, i) = cf.at(CF_property_tax_assessed_value, i) * property_tax_rate;
+            cf.at(CF_insurance_expense_batt, i) = cost_prefinancing * insurance_rate * pow(1 + inflation_rate, i - 1);
             double lcoe_real_lcos_denominator = npv(CF_energy_without_battery, nyears, disc_real);
             double lcoe_real_lcos_numerator = -(npv(CF_Annual_Costs, nyears, nom_discount_rate)
                 + cf.at(CF_Annual_Costs, 0)) + lcos_investment_cost + npv(CF_om_fixed1_expense, nyears, nom_discount_rate)
-                + npv(CF_om_capacity1_expense, nyears, nom_discount_rate) + npv(CF_om_capacity1_expense, nyears, nom_discount_rate);
+                + npv(CF_om_capacity1_expense, nyears, nom_discount_rate) + npv(CF_om_capacity1_expense, nyears, nom_discount_rate)
+                + npv(CF_battery_replacement_cost, nyears, nom_discount_rate);
             //cf.at(CF_charging_cost_pv, a) = charged_pv[a] * lcoe_nom / 100; //Cost to charge from pv based on LCOE calculation
             cf.at(CF_charging_cost_pv, a) = charged_pv[a] * lcoe_real / 100 * pow((1 + inflation_rate), a - 1);
             //Should it be nom or real LCOE
