@@ -201,9 +201,9 @@ protected:
 
     void parameter_compute();
 
-    double voltage_model_tremblay_hybrid(double Q_cell, double I, double q0_cell);
+    double voltage_model_tremblay_hybrid(double Q_cell, double I, double q0_cell, double Q_cell_mod);
 
-    void update_Qfull_mod(double qmax);
+    double calculate_Qfull_mod(double qmax);
 
     // solver quantities
     double solver_Q;
