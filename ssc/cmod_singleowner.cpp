@@ -666,6 +666,7 @@ static var_info _cm_vtab_singleowner[] = {
     { SSC_OUTPUT, SSC_ARRAY, "cf_batt_replacement_cost", "Annual cost of battery replacements", "$", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_salvage_cost_lcos", "Annual battery salvage value costs", "$", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_util_escal_rate", "Utility rate escalation", "%", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_annual_cost_lcoe_system", "Annual cost for lcoe of system without storage", "%", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
 
 
     { SSC_OUTPUT, SSC_NUMBER, "npv_annual_costs", "Present value of annual costs", "$", "", "LCOE calculations", "*", "", "" },
@@ -697,6 +698,7 @@ static var_info _cm_vtab_singleowner[] = {
     //lcos (in common.cpp)
     { SSC_OUTPUT,       SSC_NUMBER,     "lcos_nom",                        "Levelized cost of storage (nominal)",              "cents/kWh",                   "", "Metrics", "", "", "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "lcos_real",                        "Levelized cost of storage (real)",              "cents/kWh",                   "", "Metrics", "", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "lcoe_system",                        "Levelized cost of energy (real) based on only system (no storage)",              "cents/kWh",                   "", "Metrics", "", "", "" },
 
 
 var_info_invalid };
@@ -924,6 +926,7 @@ enum {
     CF_investment_cost_lcos,
     CF_annual_cost_lcos,
     CF_util_escal_rate,
+    CF_annual_cost_lcoe_system,
     CF_property_tax_assessed_value_batt,
     CF_property_tax_expense_batt,
     CF_insurance_expense_batt,
@@ -2068,13 +2071,14 @@ public:
 				- cbi_oth_amount;
 			cost_installed += debt_frac *cost_installed*cost_debt_fee_frac; // approximate up front fee
 			double loan_amount = debt_frac * cost_installed;
+            double loan_amount_batt = debt_frac * (cost_installed - as_double("battery_total_cost_lcos"));
 
 			int i_repeat = 0;
 			double old_ds_reserve = 0, new_ds_reserve = 0;
 
 			// first year principal payment based on loan moratorium
 			ssc_number_t first_principal_payment = 0;
-
+            ssc_number_t first_principal_payment_batt = 0;
 			do
 			{
 				// first iteration - calculate debt reserve account based on initial installed cost
@@ -3044,8 +3048,15 @@ public:
         if (is_assigned("rate_escalation"))
             escal_or_annual(CF_util_escal_rate, nyears, "rate_escalation", inflation_rate, 0.01, true, 0);
         save_cf(CF_util_escal_rate, nyears, "cf_util_escal_rate");
-
-        
+        cf.at(CF_annual_cost_lcoe_system, 0) = -(cost_prefinancing - lcos_investment_cost);
+        for (int i = 1; i <= nyears; i++) {
+            cf.at(CF_annual_cost_lcoe_system, i) = -cf.at(CF_om_capacity_expense, i) +
+                -cf.at(CF_om_fixed_expense, i) + -cf.at(CF_om_production_expense, i);
+        }
+        cf.at(CF_annual_cost_lcoe_system, nyears) += salvage_value;
+        double lcoe_system_real_numerator = -npv(CF_annual_cost_lcoe_system, nyears, disc_real);
+        double lcoe_system_real_denominator = npv(CF_energy_without_battery, nyears, nom_discount_rate);
+        double lcoe_system = lcoe_system_real_numerator / lcoe_system_real_denominator * 100; //cents/kWh
         
         for (int a = 0; a <= nyears; a++) {
             if (as_integer("system_use_lifetime_output") == 1)
@@ -3089,7 +3100,7 @@ public:
                 
             }
 
-
+            cf.at(CF_charging_cost_pv, a) = charged_pv[a] * lcoe_system / 100 * pow((1 + inflation_rate), a - 1);
             cf.at(CF_energy_charged_grid, a) = cf.at(CF_charging_cost_grid, a) + cf.at(CF_charging_cost_pv, a); //total amount of energy charged, not used
             cf.at(CF_om_production1_expense, a) *= lcos_energy_discharged[a]; //Multiply OM production expense by energy discharged annually
             cf.at(CF_energy_discharged, a) = lcos_energy_discharged[a]; //store amount of energy discharged annually
@@ -3100,19 +3111,8 @@ public:
                 -cf.at(CF_battery_replacement_cost, a); //Battery replacement cost in each year
                                                         //Add up all cost components in each year for cash flow
 
-            double lcoe_real_lcos;
-            double property_tax_assessed_value_batt = lcos_investment_cost * as_double("prop_tax_cost_assessed_percent") * 0.01;
-            double decline_percent = 100 - (i - 1) * property_tax_decline_percentage;
-            cf.at(CF_property_tax_assessed_value_batt, i) = (decline_percent > 0) ? property_tax_assessed_value_batt * decline_percent * 0.01 : 0.0;
-            cf.at(CF_property_tax_expense_batt, i) = cf.at(CF_property_tax_assessed_value, i) * property_tax_rate;
-            cf.at(CF_insurance_expense_batt, i) = cost_prefinancing * insurance_rate * pow(1 + inflation_rate, i - 1);
-            double lcoe_real_lcos_denominator = npv(CF_energy_without_battery, nyears, disc_real);
-            double lcoe_real_lcos_numerator = -(npv(CF_Annual_Costs, nyears, nom_discount_rate)
-                + cf.at(CF_Annual_Costs, 0)) + lcos_investment_cost + npv(CF_om_fixed1_expense, nyears, nom_discount_rate)
-                + npv(CF_om_capacity1_expense, nyears, nom_discount_rate) + npv(CF_om_capacity1_expense, nyears, nom_discount_rate)
-                + npv(CF_battery_replacement_cost, nyears, nom_discount_rate);
             //cf.at(CF_charging_cost_pv, a) = charged_pv[a] * lcoe_nom / 100; //Cost to charge from pv based on LCOE calculation
-            cf.at(CF_charging_cost_pv, a) = charged_pv[a] * lcoe_real / 100 * pow((1 + inflation_rate), a - 1);
+            
             //Should it be nom or real LCOE
             //Should it be flat or adjusted for discount rate + inflation?
             //Change name to system rather than pv for generic battery
@@ -3139,12 +3139,14 @@ public:
         save_cf(CF_om_fixed1_expense, nyears, "cf_om_batt_fixed_expense");
         save_cf(CF_battery_replacement_cost, nyears, "cf_batt_replacement_cost");
         save_cf(CF_salvage_cost_lcos, nyears, "cf_salvage_cost_lcos");
+        save_cf(CF_annual_cost_lcoe_system, nyears, "cf_annual_cost_lcoe_system");
         double lcos_nom = lcos_numerator / lcos_denominator * 100.0; // Nominal LCOS cent/kWh 
         double lcos_real = lcos_numerator / lcos_denominator_real * 100.0; // Real LCOS cents/kWh
         assign("lcos_nom", var_data((ssc_number_t)lcos_nom));
         assign("lcos_real", var_data((ssc_number_t)lcos_real));
         assign("npv_energy_lcos_nom", var_data((ssc_number_t)lcos_denominator));
         assign("npv_energy_lcos_real", var_data((ssc_number_t)lcos_denominator_real));
+        assign("lcoe_system", var_data((ssc_number_t)lcoe_system));
     }
     /////////////////////////////////////////////////////////////////////////////////////////
 
