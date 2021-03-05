@@ -49,6 +49,8 @@ public:
     // return true for success, otherwise errors in log
     bool setup(var_table* vt);
 
+    bool compute(handler_interface *handler, var_table *data) override;
+
     void exec() override;
 };
 

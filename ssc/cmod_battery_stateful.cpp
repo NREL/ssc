@@ -60,14 +60,6 @@ var_info vtab_battery_stateful_inputs[] = {
         { SSC_INPUT,        SSC_NUMBER,      "C_rate",                                     "Rate at which voltage vs. capacity curve input",          "",        "",                     "ParamsCell",       "voltage_choice=0&chem~2", "",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "Qfull_flow",                                 "Fully charged flow battery capacity",                     "Ah",      "",                     "ParamsCell",       "voltage_choice=0&chem=3", "",                              "" },
 
-        // thermal inputs
-        { SSC_INPUT,        SSC_NUMBER,      "mass",                                       "Battery mass",                                            "kg",       "",                     "ParamsPack",       "*",                           "",                             "" },
-        { SSC_INPUT,        SSC_NUMBER,      "surface_area",                               "Battery surface area",                                    "m^2",      "",                     "ParamsPack",       "*",                           "",                             "" },
-        { SSC_INPUT,        SSC_NUMBER,      "Cp",                                         "Battery specific heat capacity",                          "J/KgK",    "",                     "ParamsPack",       "*",                           "",                             "" },
-        { SSC_INPUT,        SSC_NUMBER,      "h",                                          "Heat transfer between battery and environment",           "W/m2K",    "",                     "ParamsPack",       "*",                           "",                             "" },
-        { SSC_INPUT,        SSC_NUMBER,      "T_room_init",                                "Temperature of storage room",                             "C",        "",                     "ParamsPack",       "*",                           "",                             "" },
-        { SSC_INPUT,        SSC_MATRIX,      "cap_vs_temp",                                "Table with Temperature and Capacity % as columns",        "[[C,%]]",  "",                     "ParamsPack",       "life_model=0",                "",                             "" },
-
         // lifetime inputs
         { SSC_INPUT,		SSC_NUMBER,      "life_model",                                 "Battery life model specifier",                            "0/1",      "0=calendar/cycle,1=NMC", "ParamsCell",       "*",                                   "",                             "" },
         { SSC_INPUT,		SSC_MATRIX,      "cycling_matrix",                             "Table with DOD %, Cycle #, and Capacity % columns",       "[[%, #, %]]","",                     "ParamsCell",       "life_model=0",                        "",                             "" },
@@ -77,6 +69,14 @@ var_info vtab_battery_stateful_inputs[] = {
         { SSC_INPUT,        SSC_NUMBER,      "calendar_a",                                 "Calendar life model coefficient",                         "1/sqrt(day)","",                   "ParamsCell",       "life_model=0&calendar_choice=1",        "",                             "" },
         { SSC_INPUT,        SSC_NUMBER,      "calendar_b",                                 "Calendar life model coefficient",                         "K",        "",                     "ParamsCell",       "life_model=0&calendar_choice=1",        "",                             "" },
         { SSC_INPUT,        SSC_NUMBER,      "calendar_c",                                 "Calendar life model coefficient",                         "K",        "",                     "ParamsCell",       "life_model=0&calendar_choice=1",        "",                             "" },
+
+        // thermal inputs
+        { SSC_INPUT,        SSC_NUMBER,      "mass",                                       "Battery mass",                                            "kg",       "",                     "ParamsPack",       "*",                           "",                             "" },
+        { SSC_INPUT,        SSC_NUMBER,      "surface_area",                               "Battery surface area",                                    "m^2",      "",                     "ParamsPack",       "*",                           "",                             "" },
+        { SSC_INPUT,        SSC_NUMBER,      "Cp",                                         "Battery specific heat capacity",                          "J/KgK",    "",                     "ParamsPack",       "*",                           "",                             "" },
+        { SSC_INPUT,        SSC_NUMBER,      "h",                                          "Heat transfer between battery and environment",           "W/m2K",    "",                     "ParamsPack",       "*",                           "",                             "" },
+        { SSC_INPUT,        SSC_NUMBER,      "T_room_init",                                "Temperature of storage room",                             "C",        "",                     "ParamsPack",       "*",                           "",                             "" },
+        { SSC_INPUT,        SSC_MATRIX,      "cap_vs_temp",                                "Table with Temperature and Capacity % as columns",        "[[C,%]]",  "",                     "ParamsPack",       "life_model=0",                "",                             "" },
 
         // losses
         { SSC_INPUT,        SSC_NUMBER,      "loss_choice",                                "Loss power input option",                                 "0/1",        "0=Monthly,1=TimeSeries", "ParamsPack",       "?=0",                        "",                             "" },
@@ -469,6 +469,34 @@ bool cm_battery_stateful::setup(var_table* vt) {
     params = create_battery_params(m_vartab, dt_hr);
     battery = std::unique_ptr<battery_t>(new battery_t(params));
     write_battery_state(battery->get_state(), m_vartab);
+    return true;
+}
+
+bool cm_battery_stateful::compute(handler_interface *handler, var_table *data) {
+    m_handler = NULL;
+    m_vartab = NULL;
+
+    if (!handler) {
+        log("no request handler assigned to computation engine", SSC_ERROR);
+        return false;
+    }
+    m_handler = handler;
+
+    if (!data) {
+        log("no data object assigned to computation engine", SSC_ERROR);
+        return false;
+    }
+    m_vartab = data;
+
+    try {
+        exec();
+    } catch (general_error &e) {
+        log(e.err_text, SSC_ERROR, e.time);
+        return false;
+    } catch (std::exception &e) {
+        log("compute fail(" + name + "): " + e.what(), SSC_ERROR, -1);
+        return false;
+    }
     return true;
 }
 
