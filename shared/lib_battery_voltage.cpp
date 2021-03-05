@@ -348,7 +348,8 @@ void voltage_dynamic_t::set_initial_SOC(double init_soc) {
 }
 
 // everything in here is on a per-cell basis
-double voltage_dynamic_t::voltage_model_tremblay_hybrid(double Q_cell, double I, double q0_cell, double Q_cell_mod) {
+double voltage_dynamic_t::voltage_model_tremblay_hybrid(double Q_cell, double I, double q0_cell) {
+    double Q_cell_mod = calculate_Qfull_mod(Q_cell);
     double it = Q_cell - q0_cell;
     double E = _E0 - _K * (Q_cell_mod / (Q_cell_mod - it)) + _A * exp(-_B0 * it);
     return E - params->resistance * I;
@@ -369,10 +370,9 @@ double voltage_dynamic_t::calculate_Qfull_mod(double qmax) {
 }
 
 double voltage_dynamic_t::calculate_voltage_for_current(double I, double q, double qmax, double) {
-    double Qfull_mod = calculate_Qfull_mod(qmax / params->num_strings);
     double vol = params->num_cells_series *
         fmax(voltage_model_tremblay_hybrid(qmax / params->num_strings, I / params->num_strings,
-            q / params->num_strings, Qfull_mod), 0);
+            q / params->num_strings), 0);
     return vol;
 }
 
@@ -381,18 +381,16 @@ void voltage_dynamic_t::updateVoltage(double q, double qmax, double I, const dou
     qmax /= params->num_strings;
     q /= params->num_strings;
     I /= params->num_strings;
-    double Qfull_mod = calculate_Qfull_mod(qmax);
-    state->cell_voltage = fmax(voltage_model_tremblay_hybrid(qmax, I, q, Qfull_mod), 0);
+    state->cell_voltage = fmax(voltage_model_tremblay_hybrid(qmax, I, q), 0);
 }
 
 double voltage_dynamic_t::calculate_max_charge_w(double q, double qmax, double , double *max_current) {
     q /= params->num_strings;
     qmax /= params->num_strings;
-    double Qfull_mod = calculate_Qfull_mod(qmax);
     double current = (q - qmax) / params->dt_hr;
     if (max_current)
         *max_current = current * params->num_strings;
-    return current * voltage_model_tremblay_hybrid(qmax, current, qmax, Qfull_mod) * params->num_strings *
+    return current * voltage_model_tremblay_hybrid(qmax, current, qmax) * params->num_strings *
            params->num_cells_series;
 }
 
@@ -401,13 +399,12 @@ using namespace std::placeholders;
 double voltage_dynamic_t::calculate_max_discharge_w(double q, double qmax, double , double *max_current) {
     q /= params->num_strings;
     qmax /= params->num_strings;
-    double Qfull_mod = calculate_Qfull_mod(qmax);
     double current = 0.;
     double vol = params->dynamic.Vcut;
     double incr = q / 10;
     double max_p = 0, max_I = 0, max_V = 0;
     while (current * params->dt_hr < q - tolerance && vol >= params->dynamic.Vcut) {
-        vol = voltage_model_tremblay_hybrid(qmax, current, q - current * params->dt_hr, Qfull_mod);
+        vol = voltage_model_tremblay_hybrid(qmax, current, q - current * params->dt_hr);
         double p = current * vol;
         if (p > max_p && vol >= params->dynamic.Vcut) {
             max_p = p;
