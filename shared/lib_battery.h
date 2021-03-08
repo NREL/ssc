@@ -328,7 +328,7 @@ public:
     void ChangeTimestep(double dt_hr);
 
     // Run all for single time step, updating all component model states and return the dispatched power [kW]
-    double run(size_t lifetimeIndex, double &I);
+    double run(size_t lifetimeIndex, double &I, bool update_full_state = true);
 
     // Run for a single time step, using a control current A and the time step found in battery state
     void runCurrent(double I);
@@ -416,7 +416,7 @@ private:
 
     void initialize();
 
-    void update_state(double I);
+    void update_state(double I, bool include_calculated_limits = true);
 };
 
 #endif

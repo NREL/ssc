@@ -558,7 +558,7 @@ void battery_t::ChangeTimestep(double dt_hr) {
     params->lifetime->dt_hr = dt_hr;
 }
 
-double battery_t::run(size_t lifetimeIndex, double &I) {
+double battery_t::run(size_t lifetimeIndex, double &I, bool update_full_state) {
     // Temperature affects capacity, but capacity model can reduce current, which reduces temperature, need to iterate
     double I_initial = I;
     size_t iterate_count = 0;
@@ -584,13 +584,13 @@ double battery_t::run(size_t lifetimeIndex, double &I) {
     runLifetimeModel(lifetimeIndex);
     runLossesModel(lifetimeIndex);
 
-    update_state(I);
+    update_state(I, update_full_state);
     return state->P;
 }
 
 void battery_t::runCurrent(double I) {
     run(++state->last_idx, I);
-        }
+}
 
 void battery_t::runPower(double P) {
     double I = calculate_current_for_power_kw(P);
@@ -767,12 +767,14 @@ void battery_t::set_state(const battery_state& tmp_state) {
     *state = tmp_state;
 }
 
-void battery_t::update_state(double I) {
+void battery_t::update_state(double I, bool include_calculated_limits) {
     state->I = I;
     state->Q = capacity->q0();
     state->Q_max = capacity->qmax();
     state->V = voltage->battery_voltage();
-    state->P_dischargeable = calculate_max_discharge_kw(&state->I_dischargeable);
-    state->P_chargeable = calculate_max_charge_kw(&state->I_chargeable);
+    if (include_calculated_limits) {
+        state->P_dischargeable = calculate_max_discharge_kw(&state->I_dischargeable);
+        state->P_chargeable = calculate_max_charge_kw(&state->I_chargeable);
+    }
     state->P = I * voltage->battery_voltage() * util::watt_to_kilowatt;
 }
