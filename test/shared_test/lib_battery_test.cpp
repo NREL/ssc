@@ -891,11 +891,11 @@ TEST_F(lib_battery_test, AdaptiveTimestepNMC) {
 
     }
 
-    EXPECT_NEAR(batteryModel->charge_maximum(), 883.92, 1e-2);
-    EXPECT_NEAR(batt_subhourly->charge_maximum(), 889.71, 1e-2);
-    EXPECT_NEAR(batt_adaptive->charge_maximum(), 887.37, 1e-2);
+    EXPECT_NEAR(batteryModel->charge_maximum(), 895.75, 1e-2);
+    EXPECT_NEAR(batt_subhourly->charge_maximum(), 889.07, 1e-2);
+    EXPECT_NEAR(batt_adaptive->charge_maximum(), 890.60, 1e-2);
 
-    EXPECT_NEAR(batteryModel->SOC(), 86.93, 1e-2);
-    EXPECT_NEAR(batt_subhourly->SOC(), 87.25, 1e-2);
-    EXPECT_NEAR(batt_adaptive->SOC(), 87.46, 1e-2);
+    EXPECT_NEAR(batteryModel->SOC(), 89.31, 1e-2);
+    EXPECT_NEAR(batt_subhourly->SOC(), 88.05, 1e-2);
+    EXPECT_NEAR(batt_adaptive->SOC(), 87.91, 1e-2);
 }
