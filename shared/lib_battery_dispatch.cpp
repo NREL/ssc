@@ -126,7 +126,7 @@ void dispatch_t::finalize(size_t idx, double& I)
 	m_batteryPower->powerGridToBattery = 0;
 	m_batteryPower->powerBatteryToGrid = 0;
 	m_batteryPower->powerSystemToGrid = 0;
-	_Battery->run(idx, I, false);
+	_Battery->run(idx, I);
 }
 
 bool dispatch_t::check_constraints(double& I, size_t count)
@@ -407,7 +407,7 @@ void dispatch_t::runDispatch(size_t year, size_t hour_of_year, size_t step)
     do {
 
         // Run Battery Model to update charge based on charge/discharge
-        m_batteryPower->powerBatteryDC = _Battery->run(lifetimeIndex, I, false);
+        m_batteryPower->powerBatteryDC = _Battery->run(lifetimeIndex, I);
         m_batteryPower->powerSystemLoss = _Battery->getLoss();
 
         // Update power flow calculations, calculate AC power, and check the constraints
