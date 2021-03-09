@@ -309,8 +309,6 @@ public:
 
     battery_t(const battery_t &battery);
 
-    battery_t &operator=(const battery_t& rhs);
-
     // replace by capacity
     void setupReplacements(double capacity);
 
