@@ -696,6 +696,9 @@ static var_info _cm_vtab_singleowner[] = {
     //lcos (in common.cpp)
     { SSC_OUTPUT,       SSC_NUMBER,     "lcos_nom",                        "Levelized cost of storage (nominal)",              "cents/kWh",                   "", "Metrics", "", "", "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "lcos_real",                        "Levelized cost of storage (real)",              "cents/kWh",                   "", "Metrics", "", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "battery_capital_cost",                        "Capital cost battery only",              "$",                   "", "Metrics", "", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "pv_capital_cost",                        "Capital cost pv system only",              "$",                   "", "Metrics", "", "", "" },
+
     { SSC_OUTPUT,       SSC_NUMBER,     "lcoe_system",                        "Levelized cost of energy (real) based on only system (no storage)",              "cents/kWh",                   "", "Metrics", "", "", "" },
 
 
@@ -3149,6 +3152,8 @@ public:
         double lcos_nom = lcos_numerator / lcos_denominator * 100.0; // Nominal LCOS cent/kWh 
         double lcos_real = lcos_numerator / lcos_denominator_real * 100.0; // Real LCOS cents/kWh
         assign("lcos_nom", var_data((ssc_number_t)lcos_nom));
+        assign("battery_capital_cost", var_data((ssc_number_t)lcos_investment_cost));
+        assign("pv_capital_cost", var_data((ssc_number_t)cost_prefinancing - lcos_investment_cost));
         assign("lcos_real", var_data((ssc_number_t)lcos_real));
         assign("npv_energy_lcos_nom", var_data((ssc_number_t)lcos_denominator));
         assign("npv_energy_lcos_real", var_data((ssc_number_t)lcos_denominator_real));
