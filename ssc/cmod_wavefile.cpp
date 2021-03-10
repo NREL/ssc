@@ -53,6 +53,8 @@ static var_info _cm_wave_file_reader[] = {
 // weather data records																					            
 	{ SSC_OUTPUT,        SSC_MATRIX,      "wave_resource_matrix",              "Frequency distribution of resource",                                  "m/s",   "",                       "Weather Reader",      "?",                        "",                            "" },
     { SSC_OUTPUT,        SSC_ARRAY,       "time_check",                        "Time check",                                                          "",      "",                       "Weather Reader",      "?",                        "",                            "" },
+    { SSC_OUTPUT,        SSC_ARRAY,       "month",                        "Time check",                                                          "",      "",                       "Weather Reader",      "?",                        "",                            "" },
+
     { SSC_OUTPUT,        SSC_ARRAY,       "wave_significant_height",           "Wave height time series data",                                        "m",     "",                       "Weather Reader",      "?",                        "",                            "" },
     { SSC_OUTPUT,        SSC_ARRAY,       "number_records",                "Number of records in wave time series",                                        "",     "",                       "Weather Reader",      "?",                        "",                            "" },
     { SSC_OUTPUT,        SSC_ARRAY,       "number_hours",                "Number of hours in wave time series",                                        "",     "",                       "Weather Reader",      "?",                        "",                            "" },
@@ -410,6 +412,7 @@ public:
             size_t energy_period_index = 0;
             ssc_number_t* mat = allocate("wave_resource_matrix", 21, 22);
             //size_t numberRecords = wave_dp->nrecords();
+            ssc_number_t* month = allocate("month", numberRecords);
             ssc_number_t* timecheck = allocate("time_check", numberRecords);
             timecheck[0] = 0;
             ssc_number_t* wave_heights = allocate("wave_significant_height", numberRecords);
@@ -427,6 +430,7 @@ public:
                     hour1 = (ssc_number_t)std::stod(values[3]);
                     hourdiff = hour1 - hour0;
                 }
+                month[r] = (ssc_number_t)std::stod(values[2]);
                 timecheck[r] = (ssc_number_t)std::stod(values[3]);
                 if (r > 0) {
                     if (timecheck[r] - timecheck[r - 1] != hourdiff && timecheck[r] != 0) {

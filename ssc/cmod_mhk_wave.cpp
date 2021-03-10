@@ -67,6 +67,8 @@ static var_info _cm_vtab_mhk_wave[] = {
 	{ SSC_INPUT,			SSC_NUMBER,			"system_capacity",						"System Nameplate Capacity",										"kW",			"",				"MHKWave",			"?=0",						"",							"" },
     { SSC_INPUT,           SSC_ARRAY,           "number_hours",                "Number of hours in wave time series",                                        "",     "",                       "Weather Reader",      "?",                        "",                            "" },
     { SSC_INPUT,           SSC_ARRAY,           "number_records",                "Number of records in wave time series",                                        "",     "",                       "Weather Reader",      "?",                        "",                            "" },
+    { SSC_INPUT,           SSC_ARRAY,           "month",                        "Month",                                                          "",      "",                       "Weather Reader",      "?",                        "",                            "" },
+    { SSC_INPUT,          SSC_ARRAY,           "time_check",                        "Time check",                                                          "",      "",                       "Weather Reader",      "?",                        "",                            "" },
 
 	{ SSC_INPUT,			SSC_NUMBER,			"device_rated_power",				"Rated capacity of device",													"kW",			"",				"MHKWave",			"*",		"",						"" },
     { SSC_INPUT,			SSC_NUMBER,			"fixed_charge_rate",						"FCR from LCOE Cost page",									"",				"",             "MHKWave",         "?=1",                      "",				"" },
@@ -309,6 +311,8 @@ public:
             int number_hours = as_integer("number_hours");
             std::vector<double> wave_height_input = as_vector_double("wave_significant_height");
             std::vector<double> wave_period_input = as_vector_double("wave_energy_period");
+            std::vector<double> month = as_vector_double("month");
+            std::vector<double> hour = as_vector_double("time_check");
             ssc_number_t* energy_hourly = allocate("hourly_energy", number_records);
             ssc_number_t* energy_hourly_interp = allocate("hourly_energy_interp", number_hours);
             ssc_number_t* sig_wave_height_index_mat = allocate("sig_wave_height_index_mat", number_records);
