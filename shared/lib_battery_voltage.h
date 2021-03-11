@@ -194,10 +194,10 @@ public:
     
 
 protected:
-    double _A;
-    double _B0;
-    double _E0;
-    double _K;
+    double _A; //Exponential zone amplitude (V)
+    double _B0; //Exponential zone time constant inverse (Ah)^-1
+    double _E0; //Battery constant voltage (V)
+    double _K; //Polarization voltage (K)
 
     void parameter_compute();
 
@@ -206,10 +206,10 @@ protected:
     double calculate_Qfull_mod(double qmax);
 
     // solver quantities
-    double solver_Q;
-    double solver_Q_mod;
-    double solver_q;
-    double solver_power;
+    double solver_Q; //Maximum battery capacity (Ah)
+    double solver_Q_mod; //Modified battery capacity for cutoff voltage input (Ah)
+    double solver_q; //Actual battery capacity (Ah)
+    double solver_power; //Battery output power (W)
 
     void solve_current_for_charge_power(const double *x, double *f);
 

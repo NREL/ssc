@@ -331,6 +331,119 @@ TEST_F(voltage_dynamic_lib_battery_voltage_test, calculateMaxDischargeSubMinute)
     EXPECT_NEAR(cap->SOC(), 92.736, 1e-3);
 }
 
+TEST_F(voltage_dynamic_lib_battery_voltage_cutoff_test, calculateMaxChargeHourly) {
+    double dt_hour = 1;
+    CreateModel(dt_hour);
+
+    // start at half SOC
+    double max_current;
+    double power = model2->calculate_max_charge_w(cap2->q0(), cap2->qmax(), 0, &max_current);
+    EXPECT_NEAR(power, -3452, 1);
+    double max_current_calc = model2->calculate_current_for_target_w(power, cap2->q0(), cap2->qmax(), 0);
+    EXPECT_NEAR(max_current_calc, max_current, 1e-3);
+    // max current reduced to enforce SOC
+    cap2->updateCapacity(max_current, dt_hour);
+    EXPECT_NEAR(cap2->SOC(), 95, 1e-3);
+
+
+    // start at full SOC
+    power = model2->calculate_max_charge_w(cap2->q0(), cap2->qmax(), 0, &max_current);
+    EXPECT_NEAR(power, -329, 1);
+    max_current_calc = model2->calculate_current_for_target_w(power, cap2->q0(), cap2->qmax(), 0);
+    EXPECT_NEAR(max_current_calc, max_current, 1e-3);
+    // max current reduced to enforce SOC
+    cap2->updateCapacity(max_current, dt_hour);
+    EXPECT_NEAR(cap2->SOC(), 95, 1e-3);
+
+
+    // start at empty SOC
+    double I = 2;
+    while (cap2->SOC() > 5)
+        cap2->updateCapacity(I, dt_hour);
+    power = model2->calculate_max_charge_w(cap2->q0(), cap2->qmax(), 0, &max_current);
+    EXPECT_NEAR(power, -6860, 1);
+    max_current_calc = model2->calculate_current_for_target_w(power, cap2->q0(), cap2->qmax(), 0);
+    EXPECT_NEAR(max_current_calc, max_current, 1e-3);
+    // max current reduced to enforce SOC
+    cap2->updateCapacity(max_current, dt_hour);
+    EXPECT_NEAR(cap2->SOC(), 95, 1e-3);
+}
+
+TEST_F(voltage_dynamic_lib_battery_voltage_cutoff_test, calculateMaxChargeSubHourly) {
+    double dt_hour = 0.5;
+    CreateModel(dt_hour);
+
+    // start at half SOC
+    double max_current;
+    double power = model2->calculate_max_charge_w(cap2->q0(), cap2->qmax(), 0, &max_current);
+    EXPECT_NEAR(power, -7256, 1);
+    double max_current_calc = model2->calculate_current_for_target_w(power, cap2->q0(), cap2->qmax(), 0);
+    EXPECT_NEAR(max_current_calc, max_current, 1e-3);
+    // max current reduced to enforce SOC
+    cap2->updateCapacity(max_current, dt_hour);
+    EXPECT_NEAR(cap2->SOC(), 95, 1e-3);
+
+    // start at full SOC
+    power = model2->calculate_max_charge_w(cap2->q0(), cap2->qmax(), 0, &max_current);
+    EXPECT_NEAR(power, -662, 1);
+    max_current_calc = model2->calculate_current_for_target_w(power, cap2->q0(), cap2->qmax(), 0);
+    EXPECT_NEAR(max_current_calc, max_current, 1e-3);
+    // max current reduced to enforce SOC
+    cap2->updateCapacity(max_current, dt_hour);
+    EXPECT_NEAR(cap2->SOC(), 95, 1e-3);
+
+
+    // start at empty SOC
+    double I = 2;
+    while (cap2->SOC() > 5)
+        cap2->updateCapacity(I, dt_hour);
+    power = model2->calculate_max_charge_w(cap2->q0(), cap2->qmax(), 0, &max_current);
+    EXPECT_NEAR(power, -14989, 1);
+    max_current_calc = model2->calculate_current_for_target_w(power, cap2->q0(), cap2->qmax(), 0);
+    EXPECT_NEAR(max_current_calc, max_current, 1e-3);
+    // max current reduced to enforce SOC
+    cap2->updateCapacity(max_current, dt_hour);
+    EXPECT_NEAR(cap2->SOC(), 95, 1e-3);
+}
+
+TEST_F(voltage_dynamic_lib_battery_voltage_cutoff_test, calculateMaxChargeSubMinute) {
+    double dt_hour = 1. / 360;
+    CreateModel(dt_hour);
+
+    // start at half SOC
+    double max_current;
+    double power = model2->calculate_max_charge_w(cap2->q0(), cap2->qmax(), 0, &max_current);
+    EXPECT_NEAR(power, -23978855, 1);
+    double max_current_calc = model2->calculate_current_for_target_w(power, cap2->q0(), cap2->qmax(), 0);
+    EXPECT_NEAR(max_current_calc, max_current, 1e-3);
+    // max current reduced to enforce SOC
+    cap2->updateCapacity(max_current, dt_hour);
+    EXPECT_NEAR(cap2->SOC(), 95, 1e-3);
+
+    // start at full SOC
+    power = model2->calculate_max_charge_w(cap2->q0(), cap2->qmax(), 0, &max_current);
+    EXPECT_NEAR(power, -345933, 1);
+    max_current_calc = model2->calculate_current_for_target_w(power, cap2->q0(), cap2->qmax(), 0);
+    EXPECT_NEAR(max_current_calc, max_current, 1e-3);
+    // max current reduced to enforce SOC
+    cap2->updateCapacity(max_current, dt_hour);
+    EXPECT_NEAR(cap2->SOC(), 95, 1e-3);
+
+
+    // start at empty SOC
+    double I = 2;
+    while (cap2->SOC() > 5)
+        cap2->updateCapacity(I, dt_hour);
+    power = model2->calculate_max_charge_w(cap2->q0(), cap2->qmax(), 0, &max_current);
+    EXPECT_NEAR(power, -84546927, 1);
+    max_current_calc = model2->calculate_current_for_target_w(power, cap2->q0(), cap2->qmax(), 0);
+    EXPECT_NEAR(max_current_calc, max_current, 1e-3);
+    // max current reduced to enforce SOC
+    cap2->updateCapacity(max_current, dt_hour);
+    EXPECT_NEAR(cap2->SOC(), 95, 1e-3);
+}
+
+
 TEST_F(voltage_dynamic_lib_battery_voltage_cutoff_test, calculateMaxDischargeHourly) {
     double dt_hour = 1;
     CreateModel(dt_hour);

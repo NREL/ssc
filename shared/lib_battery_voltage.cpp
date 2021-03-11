@@ -349,6 +349,10 @@ void voltage_dynamic_t::set_initial_SOC(double init_soc) {
 
 // everything in here is on a per-cell basis
 double voltage_dynamic_t::voltage_model_tremblay_hybrid(double Q_cell, double I, double q0_cell) {
+    //Q_cell - battery capacity (Ah) on a cell basis
+    //q0_cell - actual charge of battery (q - I*dt_dr) (Ah)
+    //I - battery current (A)
+
     double Q_cell_mod = calculate_Qfull_mod(Q_cell);
     double it = Q_cell - q0_cell;
     double E = _E0 - _K * (Q_cell_mod / (Q_cell_mod - it)) + _A * exp(-_B0 * it);
@@ -370,6 +374,10 @@ double voltage_dynamic_t::calculate_Qfull_mod(double qmax) {
 }
 
 double voltage_dynamic_t::calculate_voltage_for_current(double I, double q, double qmax, double) {
+    //I - battery current (A)
+    //q - Actual battery charge (Ah)
+    //qmax - Battery capacity (Ah)
+
     double vol = params->num_cells_series *
         fmax(voltage_model_tremblay_hybrid(qmax / params->num_strings, I / params->num_strings,
             q / params->num_strings), 0);
@@ -378,6 +386,10 @@ double voltage_dynamic_t::calculate_voltage_for_current(double I, double q, doub
 
 // I, Q, q0 are on a per-string basis since adding cells in series does not change current or charge
 void voltage_dynamic_t::updateVoltage(double q, double qmax, double I, const double, double) {
+    //I - battery current (A)
+    //q - Actual battery charge (Ah)
+    //qmax - Battery capacity (Ah)
+
     qmax /= params->num_strings;
     q /= params->num_strings;
     I /= params->num_strings;
@@ -385,6 +397,9 @@ void voltage_dynamic_t::updateVoltage(double q, double qmax, double I, const dou
 }
 
 double voltage_dynamic_t::calculate_max_charge_w(double q, double qmax, double , double *max_current) {
+    //q - Actual battery charge (Ah)
+    //qmax - Battery capacity (Ah)
+
     q /= params->num_strings;
     qmax /= params->num_strings;
     double current = (q - qmax) / params->dt_hr;
@@ -397,6 +412,9 @@ double voltage_dynamic_t::calculate_max_charge_w(double q, double qmax, double ,
 using namespace std::placeholders;
 
 double voltage_dynamic_t::calculate_max_discharge_w(double q, double qmax, double , double *max_current) {
+    //q - Actual battery charge (Ah)
+    //qmax - Battery capacity (Ah)
+
     q /= params->num_strings;
     qmax /= params->num_strings;
     double current = 0.;
@@ -423,6 +441,9 @@ double voltage_dynamic_t::calculate_max_discharge_w(double q, double qmax, doubl
 }
 
 double voltage_dynamic_t::calculate_current_for_target_w(double P_watts, double q, double qmax, double) {
+    //q - Actual battery charge (Ah)
+    //qmax - Battery capacity (Ah)
+
     if (P_watts == 0) return 0.;
 
     solver_power = fabs(P_watts) / (params->num_cells_series * params->num_strings);
@@ -458,14 +479,19 @@ double voltage_dynamic_t::calculate_current_for_target_w(double P_watts, double 
 
 void voltage_dynamic_t::solve_current_for_charge_power(const double *x, double *f) {
     double I = x[0];
-    double V = _E0 - _K * solver_Q_mod / (solver_Q_mod - (solver_Q - (solver_q + I * params->dt_hr))) +
-               _A * exp(-_B0 * (solver_Q - (solver_q + I * params->dt_hr))) + params->resistance * I;
+    double it = (solver_Q - (solver_q + I * params->dt_hr));
+    double V = _E0 - _K * solver_Q_mod / (solver_Q_mod - it) + _A * exp(-_B0 * it) + params->resistance * I;
     f[0] = I * V - solver_power;
 }
 
 void voltage_dynamic_t::solve_current_for_discharge_power(const double *x, double *f) {
+    //solver_Q_mod - battery capacity (qmax) adjusted for cutoff voltage (Ah)
+    //solver_Q - battery capacity (qmax) of original voltage model inputs (Ah)
+    //solver_q - actual charge of battery 
+
     double I = x[0];
-    double V = _E0 - _K * solver_Q_mod / (solver_Q_mod - (solver_Q - (solver_q - I * params->dt_hr))) + _A * exp(-_B0 * (solver_Q - (solver_q - I * params->dt_hr))) - params->resistance * I;
+    double it = (solver_Q - (solver_q - I * params->dt_hr));
+    double V = _E0 - _K * solver_Q_mod / (solver_Q_mod - it) + _A * exp(-_B0 * it) - params->resistance * I;
     f[0] = I * V - solver_power;
 }
 
