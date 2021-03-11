@@ -104,6 +104,8 @@ static var_info _cm_vtab_mhk_wave[] = {
     { SSC_OUTPUT,			SSC_NUMBER,			"numberHours",						"Number of Hours",													"",			"",				"MHKWave",			"",						"",							"" },
 
     { SSC_OUTPUT,			SSC_MATRIX,			"annual_energy_distribution",			"Annual energy production as function of Hs and Te",				"",				"",				"MHKWave",			"",						"",							"" },
+    { SSC_OUTPUT,			SSC_MATRIX,			"annual_energy_distribution_time",			"Annual energy production as function of Time",				"",				"",				"MHKWave",			"",						"",							"" },
+
     { SSC_OUTPUT,			SSC_NUMBER,			"wave_resource_start_height",			"Wave height at which first non-zero wave resource value occurs (m)",				"",				"",				"MHKWave",			"wave_resource_model_choice=0",						"",							"" },
     { SSC_OUTPUT,			SSC_NUMBER,			"wave_resource_start_period",			"Wave period at which first non-zero wave resource value occurs (s)",				"",				"",				"MHKWave",			"wave_resource_model_choice=0",						"",							"" },
     { SSC_OUTPUT,			SSC_NUMBER,			"wave_resource_end_height",			"Wave height at which last non-zero wave resource value occurs (m)",				"",				"",				"MHKWave",			"wave_resource_model_choice=0",						"",							"" },
@@ -323,6 +325,7 @@ public:
             ssc_number_t* energy_period_index_mat_interp = allocate("energy_period_index_mat_interp", number_hours);
             ssc_number_t* wave_power_index_mat = allocate("wave_power_index_mat", number_records);
             ssc_number_t* p_annual_energy_dist = allocate("annual_energy_distribution", wave_power_matrix.nrows(), wave_power_matrix.ncols());
+            ssc_number_t* p_annual_energy_dist_time = allocate("annual_energy_distribution_time", 13, 9);
             double ts_significant_wave_height, ts_energy_period;
             
             int hour_step = number_hours / number_records;
@@ -370,9 +373,22 @@ public:
             
                 energy_hourly[i] = (ssc_number_t)(wave_power_matrix.at(size_t(sig_wave_height_index), size_t(energy_period_index))) * hour_step;
                 p_annual_energy_dist[size_t(sig_wave_height_index) * 22 + size_t(energy_period_index)] += energy_hourly[i];
+                
                 energy_hourly_interp[i*3] = energy_hourly[i];
                 energy_hourly_interp[i*3 + 1] = energy_hourly[i];
                 energy_hourly_interp[i*3 + 2] = energy_hourly[i];
+                for (size_t m = 0; m < 13; m++) {
+                    for (size_t h = 0; h < 9; h++) {
+                        if (i == 0) {
+                            p_annual_energy_dist_time[m * 9] = m;
+                            p_annual_energy_dist_time[h] = 3*(h-1);
+                        }
+                        if (month[i] == m && hour[i] == 3*(h-1)) {
+                            p_annual_energy_dist_time[m * 9 + h] += energy_hourly[i];
+                            break;
+                        }
+                    }
+                }
                 sig_wave_height_index_mat[i] = (ssc_number_t)(wave_power_matrix.at(size_t(sig_wave_height_index), 0));
                 sig_wave_height_index_mat_interp[i * 3] = sig_wave_height_index_mat[i];
                 sig_wave_height_index_mat_interp[i * 3 + 1] = sig_wave_height_index_mat[i];
@@ -391,6 +407,7 @@ public:
 
             }
             p_annual_energy_dist[0] = 0; //set top left corner of matrix to 0
+            p_annual_energy_dist_time[0] = 0;
             
             assign("numberRecords", number_records);
             assign("numberHours", number_hours);
