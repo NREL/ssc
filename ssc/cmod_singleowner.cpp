@@ -696,6 +696,8 @@ static var_info _cm_vtab_singleowner[] = {
     //lcos (in common.cpp)
     { SSC_OUTPUT,       SSC_NUMBER,     "lcos_nom",                        "Levelized cost of storage (nominal)",              "cents/kWh",                   "", "Metrics", "", "", "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "lcos_real",                        "Levelized cost of storage (real)",              "cents/kWh",                   "", "Metrics", "", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "lcoe_real_lcos",                        "Levelized cost of energy estimate for PV only (real)",              "cents/kWh",                   "", "Metrics", "", "", "" },
+
     { SSC_OUTPUT,       SSC_NUMBER,     "battery_capital_cost",                        "Capital cost battery only",              "$",                   "", "Metrics", "", "", "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "pv_capital_cost",                        "Capital cost pv system only",              "$",                   "", "Metrics", "", "", "" },
 
@@ -3033,8 +3035,9 @@ public:
         size_t n_steps_per_year = n_grid_to_batt / nyears;
         //std::vector<double> grid_to_batt = as_vector_double("grid_to_batt"); //energy from grid to battery (hourly or lifetime)
 
-
-
+        double capex_lcoe_ratio = 1 / 0.9; //ratio of capex ratio between PV+batt / PV to LCOE ratio PV+batt/ PV (assumed based on table)
+        double lcoe_real_lcos = lcoe_real * capex_lcoe_ratio * (cost_prefinancing - lcos_investment_cost) / cost_prefinancing; //cents/kWh
+        assign("lcoe_real_lcos", var_data((ssc_number_t)lcoe_real_lcos));
         std::vector<double> charged_grid = as_vector_double("batt_annual_charge_from_grid");
         cf.at(CF_charging_cost_grid, 0) = 0;
         std::vector<double> elec_purchases, elec_from_grid;
@@ -3090,12 +3093,9 @@ public:
                 
             }
 
-            double lcoe_real_lcos;
-            double lcoe_real_lcos_denominator = npv(CF_energy_without_battery, nyears, disc_real);
-            double lcoe_real_lcos_numerator = -(npv(CF_Annual_Costs, nyears, nom_discount_rate)
-                + cf.at(CF_Annual_Costs, 0)) + lcos_investment_cost;
+            
             //cf.at(CF_charging_cost_pv, a) = charged_pv[a] * lcoe_nom / 100; //Cost to charge from pv based on LCOE calculation
-            cf.at(CF_charging_cost_pv, a) = charged_pv[a] * lcoe_real / 100 * pow((1 + inflation_rate), a - 1);
+            cf.at(CF_charging_cost_pv, a) = charged_pv[a] * lcoe_real_lcos / 100 * pow((1 + inflation_rate), a - 1);
             //Build a table of 5 systems PV and PV + Battery
             //Determine ratio of capital costs for different systems
             //Battery replacements effect  - Add to battery costs
