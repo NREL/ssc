@@ -204,7 +204,7 @@ SSCEXPORT void Reopt_size_battery_params(ssc_data_t data) {
     }
 
     // battery replacement only enabled for pvsam, use REopt defaults otherwise
-    if ((vd = vt->lookup("om_replacement_cost1")))
+    if ((vd = vt->lookup("om_batt_replacement_cost")))
         reopt_batt.assign("replace_cost_us_dollars_per_kwh", vd->num[0]);
 
     // ReOpt's battery replacement single year versus SAM's array schedule

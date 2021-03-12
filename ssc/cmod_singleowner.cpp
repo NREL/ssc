@@ -1026,7 +1026,6 @@ public:
 
 		// In conjunction with SAM - take installed costs and salestax costs (for deducting if necessary)
 		double cost_prefinancing = as_double("total_installed_cost");
-        double cost_prefinancing_system = cost_prefinancing - as_double("battery_total_cost_lcos");
 
 		// use named range names for variables whenever possible
 		double nameplate = as_double("system_capacity");
@@ -1094,10 +1093,10 @@ public:
 		}
 		if (add_om_num_types > 1) // PV Battery Fuel Cell
 		{
-			escal_or_annual(CF_om_fixed2_expense, nyears, "om_fixed2", inflation_rate, 1.0, false, as_double("om_fixed_escal")*0.01);
-			escal_or_annual(CF_om_production2_expense, nyears, "om_production2", inflation_rate, 0.001, false, as_double("om_production_escal")*0.01);
-			escal_or_annual(CF_om_capacity2_expense, nyears, "om_capacity2", inflation_rate, 1.0, false, as_double("om_capacity_escal")*0.01);
-			nameplate2 = as_number("om_capacity2_nameplate");
+			escal_or_annual(CF_om_fixed2_expense, nyears, "om_fuelcell_fixed_cost", inflation_rate, 1.0, false, as_double("om_fixed_escal")*0.01);
+			escal_or_annual(CF_om_production2_expense, nyears, "om_fuelcell_variable_cost", inflation_rate, 0.001, false, as_double("om_production_escal")*0.01);
+			escal_or_annual(CF_om_capacity2_expense, nyears, "om_fuelcell_capacity_cost", inflation_rate, 1.0, false, as_double("om_capacity_escal")*0.01);
+			nameplate2 = as_number("ui_fuelcell_capacity");
 		}
 
 
@@ -1145,7 +1144,7 @@ public:
 				fuelcell_rep = as_array("fuelcell_replacement", &count); // replacements per year calculated
 			else // user specified
 				fuelcell_rep = as_array("fuelcell_replacement_schedule", &count); // replacements per year user-defined
-			escal_or_annual(CF_fuelcell_replacement_cost_schedule, nyears, "om_replacement_cost2", inflation_rate, nameplate2, false, as_double("om_replacement_cost_escal")*0.01);
+			escal_or_annual(CF_fuelcell_replacement_cost_schedule, nyears, "om_fuelcell_replacement_cost", inflation_rate, nameplate2, false, as_double("om_replacement_cost_escal")*0.01);
 
 			for (i = 0; i < nyears && i < (int)count; i++) {
 				cf.at(CF_fuelcell_replacement_cost, i + 1) = fuelcell_rep[i] *
@@ -2071,7 +2070,6 @@ public:
 				- cbi_oth_amount;
 			cost_installed += debt_frac *cost_installed*cost_debt_fee_frac; // approximate up front fee
 			double loan_amount = debt_frac * cost_installed;
-            double loan_amount_batt = debt_frac * (cost_installed - as_double("battery_total_cost_lcos"));
 
 			int i_repeat = 0;
 			double old_ds_reserve = 0, new_ds_reserve = 0;

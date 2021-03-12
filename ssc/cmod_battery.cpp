@@ -124,7 +124,7 @@ var_info vtab_battery_inputs[] = {
         { SSC_INPUT,        SSC_NUMBER,     "batt_replacement_capacity",                   "Capacity degradation at which to replace battery",       "%",        "",                     "BatterySystem",       "",                           "",                             "" },
         { SSC_INPUT,        SSC_NUMBER,     "batt_replacement_option",                     "Enable battery replacement?",                            "0=none,1=capacity based,2=user schedule", "", "BatterySystem", "?=0",                  "INTEGER,MIN=0,MAX=2",          "" },
         { SSC_INPUT,        SSC_ARRAY,      "batt_replacement_schedule_percent",           "Percentage of battery capacity to replace in each year", "%","length <= analysis_period",                  "BatterySystem",      "batt_replacement_option=2",   "",                             "" },
-        { SSC_INPUT,        SSC_ARRAY,      "om_replacement_cost1",                        "Cost to replace battery per kWh",                        "$/kWh",    "",                     "BatterySystem",       "",                           "",                             "" },
+        { SSC_INPUT,        SSC_ARRAY,      "om_batt_replacement_cost",                        "Cost to replace battery per kWh",                        "$/kWh",    "",                     "BatterySystem",       "",                           "",                             "" },
 
         // thermal inputs
         { SSC_INPUT,        SSC_NUMBER,     "batt_mass",                                   "Battery mass",                                           "kg",       "",                     "BatterySystem",       "",                           "",                             "" },
@@ -396,10 +396,10 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 
 
             // Battery bank replacement
-            if (vt.is_assigned("om_replacement_cost1"))
+            if (vt.is_assigned("om_batt_replacement_cost"))
             {
                 std::vector<ssc_number_t> replacement_cost(nyears);
-                ssc_number_t*  parr = vt.as_array("om_replacement_cost1", &cnt);
+                ssc_number_t*  parr = vt.as_array("om_batt_replacement_cost", &cnt);
                 if (cnt == 1)
                 {
                     for (i = 0; i < nyears; i++)
