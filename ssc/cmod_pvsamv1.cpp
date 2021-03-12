@@ -252,6 +252,8 @@ static var_info _cm_vtab_pvsamv1[] = {
 { SSC_INPUT, SSC_NUMBER,   "cec_array_rows",                       "Rows of modules in array",                            "",       "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1&cec_temp_corr_mode=1","",                    "" },
 { SSC_INPUT, SSC_NUMBER,   "cec_array_cols",                       "Columns of modules in array",                         "",       "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1&cec_temp_corr_mode=1","",                    "" },
 { SSC_INPUT, SSC_NUMBER,   "cec_backside_temp",                    "Module backside temperature",                         "C",      "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1&cec_temp_corr_mode=1","POSITIVE",            "" },
+{ SSC_INPUT, SSC_NUMBER,   "cec_lacunarity_length",                    "Module lacurnarity length for spatial heterogeneity",                         "C",      "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1&cec_temp_corr_mode=1","POSITIVE",            "" },
+
 { SSC_INPUT, SSC_NUMBER,   "cec_transient_thermal_model_unit_mass","Module unit mass",                                    "kg/m^2",      "",                                                                                                                                                                        "CEC Performance Model with Module Database",                     "module_model=1","POSITIVE",                                 "" },
 
 // 6 par model
@@ -547,6 +549,9 @@ static var_info _cm_vtab_pvsamv1[] = {
     { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_modeff",                     "Subarray 1 Module efficiency",                                         "%",      "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_celltemp",                   "Subarray 1 Cell temperature",                                          "C",      "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_celltempSS",                 "Subarray 1 Cell temperature (steady state)",                           "C",      "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
+    { SSC_OUTPUT,        SSC_NUMBER,      "temp_test",                 "Subarray 1 Cell temperature test value",                           "C",      "", "Temperature",       "",                    "",                              "" },
+    { SSC_OUTPUT,        SSC_NUMBER,      "temp_test2",                 "Subarray 1 Cell temperature test value2",                           "C",      "", "Temperature",       "",                    "",                              "" },
+
     { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_dc_voltage",                 "Subarray 1 Operating DC voltage",                                         "V",      "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_dc_gross",                   "Subarray 1 DC power gross",                                             "kW",      "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_voc",                        "Subarray 1 Open circuit DC voltage",                                      "V",      "", "Time Series (Subarray 1)",       "",                     "",                              "" },
@@ -2072,6 +2077,9 @@ void cm_pvsamv1::exec()
             PVSystem->p_dcDegradationFactor[iyear] = (ssc_number_t)(PVSystem->dcDegradationFactor[iyear]);
         }
     }
+
+    assign("temp_test", PVSystem->p_temperatureCell[0][12]);
+    assign("temp_test2", PVSystem->p_temperatureCell[0][33]);
 
     // Initialize DC battery predictive controller
     if (en_batt && batt_topology == ChargeController::DC_CONNECTED)

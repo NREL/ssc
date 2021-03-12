@@ -89,7 +89,8 @@ public:
 	double Width; // module width, along vertical dimension, (m)
 	double Wgap;  // gap width spacing (m)
 	double TbackInteg;  // back surface temperature for integrated modules ('C)
-	
+    double Lsc; //Lacunarity length scale for spatial heterogeneity (m)
+
 	virtual bool operator() ( pvinput_t &input, pvmodule_t &module, double opvoltage, double &Tcell );
 
 	virtual ~mcsp_celltemp_t() {};

@@ -990,6 +990,7 @@ Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
             mountingSpecificCellTemp.Nrows = cm->as_integer("cec_array_rows");
             mountingSpecificCellTemp.Ncols = cm->as_integer("cec_array_cols");
             mountingSpecificCellTemp.TbackInteg = cm->as_double("cec_backside_temp");
+            mountingSpecificCellTemp.Lsc = cm->as_double("cec_lacunarity_length");
 
             cellTempModel = &mountingSpecificCellTemp;
             mountingSpecificCellTemperatureForceNoPOA = true;
