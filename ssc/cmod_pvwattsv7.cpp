@@ -174,6 +174,7 @@ static var_info _cm_vtab_pvwattsv7[] = {
         { SSC_OUTPUT,       SSC_ARRAY,       "dc_monthly",                     "DC output",                             "kWh",       "",                                             "Monthly",          "",                       "LENGTH=12",                          "" },
         { SSC_OUTPUT,       SSC_ARRAY,       "ac_monthly",                     "AC output",                            "kWh",       "",                                             "Monthly",          "",                       "LENGTH=12",                          "" },
         { SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",                 "Monthly energy",                              "kWh",       "",                                             "Monthly",          "",                       "LENGTH=12",                          "" },
+        { SSC_OUTPUT,	    SSC_MATRIX,			"annual_energy_distribution_time",			"Annual energy production as function of Time",				"",				"",				"Heatmaps",			"",						"",							"" },
 
         { SSC_OUTPUT,       SSC_NUMBER,      "solrad_annual",                  "Daily average solar irradiance",              "kWh/m2/day","",                                             "Annual",      "",                       "",                          "" },
         { SSC_OUTPUT,       SSC_NUMBER,      "ac_annual",                      "Annual AC output",                     "kWh",       "",                                             "Annual",      "",                       "",                          "" },
@@ -718,6 +719,7 @@ public:
         ssc_number_t* p_dc = allocate("dc", nrec);
         ssc_number_t* p_ac = allocate("ac", nrec);
         ssc_number_t* p_gen = allocate("gen", nlifetime);
+        ssc_number_t* p_annual_energy_dist_time = allocate("annual_energy_distribution_time", 13, 25);
 
         pvwatts_celltemp tccalc(pv.inoct + 273.15, PVWATTS_HEIGHT, ts_hour); //in pvwattsv5 there is some code about previous tcell and poa that doesn't appear to get used, so not adding it here
 
@@ -1229,6 +1231,21 @@ public:
                 // accumulate hourly energy (kWh) (was initialized to zero when allocated)
                 p_gen[idx_life] = (ssc_number_t)(ac * haf(hour_of_year) * util::watt_to_kilowatt);
 
+                if (y == 0) {
+                    for (size_t m = 0; m < 13; m++) {
+                        for (size_t h = 0; h < 25; h++) {
+                            if (idx == 0) {
+                                p_annual_energy_dist_time[m * 25] = m;
+                                p_annual_energy_dist_time[h] = (h - 1);
+                            }
+                            if (wf.month == m && wf.hour == (h - 1)) {
+                                p_annual_energy_dist_time[m * 25 + h] += p_gen[idx_life];
+                                break;
+                            }
+                        }
+                    }
+                }
+
                 if (y == 0 && wdprov->annualSimulation()) { //report first year annual energy
                     annual_kwh += p_gen[idx] / step_per_hour;
                 }
@@ -1241,7 +1258,7 @@ public:
 
             wdprov->rewind();
         }
-
+        p_annual_energy_dist_time[0] = 0;
         // monthly and annual outputs
         if (wdprov->annualSimulation())
         {

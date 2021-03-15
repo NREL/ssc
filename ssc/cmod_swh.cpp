@@ -574,6 +574,8 @@ public:
 		int mode = 0;
 		double annual_kwh = 0.0;
 		size_t hour = 0;
+        ssc_number_t* p_annual_energy_dist_time = allocate("annual_energy_distribution_time", 13, 25);
+        size_t imonth = 0;
 		idx = 0;
 		for (hour = 0; hour < 8760; hour++)
 		{
@@ -800,7 +802,20 @@ public:
 				Mode[idx] = (ssc_number_t)mode; // save mode for debugging
 
 				out_energy[idx] =  (ssc_number_t)( Q_saved * ts_hour * haf(hour) * watt_to_kw); // kWh energy, with adjustment factors applied
-
+                imonth = util::month_of(double(hour));
+                for (size_t m = 0; m < 13; m++) {
+                    for (size_t hr = 0; hr < 25; hr++) {
+                        if (idx == 0) {
+                            p_annual_energy_dist_time[m * 25] = m;
+                            p_annual_energy_dist_time[hr] = (hr - 1);
+                        }
+                        if (imonth == m && fmod(double(hour),24) == (hr - 1)) {
+                            p_annual_energy_dist_time[m * 25 + hr] += out_energy[idx];
+                            break;
+                        }
+                    }
+                }
+                
 				// accumulate hourly and annual energy
 				annual_kwh += out_energy[idx];
 				idx++;

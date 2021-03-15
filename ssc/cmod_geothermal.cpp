@@ -147,7 +147,9 @@ static var_info _cm_vtab_geothermal[] = {
     // With hourly analysis, there are still monthly results, but there are hourly (over the whole lifetime of the project) results as well.														             
 //	{ SSC_OUTPUT, SSC_ARRAY, "annual_replacements", "Resource replacement? (1=yes)", "kWhac", "", "GeoHourly", "ui_calculations_only=0", "", "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "gen",                                "System power generated",                              "kW",                      "GeoHourly",        "",                         "",                "",                               "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "system_lifetime_recapitalize",       "Resource replacement? (1=yes)", "", "", "GeoHourly", "ui_calculations_only=0", "", "" },
+    { SSC_OUTPUT, SSC_MATRIX,			"annual_energy_distribution_time",			"Annual energy production as function of Time",				"",				"",				"Heatmaps",			"",						"",							"" },
+
+    { SSC_OUTPUT,       SSC_ARRAY,      "system_lifetime_recapitalize",       "Resource replacement? (1=yes)", "", "", "GeoHourly", "ui_calculations_only=0", "", "" },
 
     { SSC_OUTPUT,       SSC_ARRAY,      "monthly_resource_temperature",       "Monthly avg resource temperature",                    "C",       "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "monthly_power",                      "Monthly power",                                       "kW",      "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
@@ -557,11 +559,27 @@ public:
 			double nameplate = geo_inputs.md_DesiredSalesCapacityKW; // Was md_GrossPlantOutputMW*1000 -> now it is md_DesiredSalesCapacityKW
 			double annual_energy = 0.0;
 
+            ssc_number_t* p_annual_energy_dist_time = allocate("annual_energy_distribution_time", 13, 25);
+            size_t imonth = 0;
+
 			//Loop calculates total energy generation over entire project lifetime (in kWh) 
 			// Why?  Is the annual energy changing from year to year?
 			for (size_t i = 0; i <n_rec ; i++)	{
 				annual_energy += geo_outputs.maf_hourly_power[i];
 				p_gen[i] = geo_outputs.maf_hourly_power[i];
+                imonth = util::month_of(double(i));
+                for (size_t m = 0; m < 13; m++) {
+                    for (size_t hr = 0; hr < 25; hr++) {
+                        if (i == 0) {
+                            p_annual_energy_dist_time[m * 25] = m;
+                            p_annual_energy_dist_time[hr] = (hr - 1);
+                        }
+                        if (imonth == m && fmod(double(i), 24) == (hr - 1)) {
+                            p_annual_energy_dist_time[m * 25 + hr] += p_gen[i];
+                            break;
+                        }
+                    }
+                }
 			}
 
 			if (nameplate > 0) kWhperkW = annual_energy / nameplate;
