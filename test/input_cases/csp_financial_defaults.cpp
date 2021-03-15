@@ -31,8 +31,8 @@ ssc_data_t singleowner_defaults()
     ssc_number_t p_om_fuel_cost[1] = { 0 };
     ssc_data_set_array(data, "om_fuel_cost", p_om_fuel_cost, 1);
     ssc_data_set_number(data, "om_fuel_cost_escal", 0);
-    ssc_number_t p_om_replacement_cost1[1] = { 0 };
-    ssc_data_set_array(data, "om_replacement_cost1", p_om_replacement_cost1, 1);
+    ssc_number_t p_om_batt_replacement_cost[1] = { 0 };
+    ssc_data_set_array(data, "om_batt_replacement_cost", p_om_batt_replacement_cost, 1);
     ssc_data_set_number(data, "om_replacement_cost_escal", 0);
     ssc_data_set_number(data, "itc_fed_amount", 0);
     ssc_data_set_number(data, "itc_fed_amount_deprbas_fed", 1);

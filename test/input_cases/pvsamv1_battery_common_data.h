@@ -431,8 +431,8 @@ void pvsamv1_battery_defaults(ssc_data_t& data) {
 	ssc_data_set_array(data, "batt_replacement_schedule", p_batt_replacement_schedule, 25);
 	ssc_number_t p_batt_replacement_schedule_percent[25] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 	ssc_data_set_array(data, "batt_replacement_schedule_percent", p_batt_replacement_schedule_percent, 25);
-	ssc_number_t p_om_replacement_cost1[25] = { 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500,500, 500, 500, 500, 500 };
-	ssc_data_set_array(data, "om_replacement_cost1", p_om_replacement_cost1, 25);
+	ssc_number_t p_om_batt_replacement_cost[25] = { 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500,500, 500, 500, 500, 500 };
+	ssc_data_set_array(data, "om_batt_replacement_cost", p_om_batt_replacement_cost, 25);
 	ssc_data_set_number(data, "batt_mass", 95);
 	ssc_data_set_number(data, "batt_surface_area", 502.3);
 	ssc_data_set_number(data, "batt_Cp", 1004);
@@ -1148,8 +1148,8 @@ void commercial_multiarray_default(ssc_data_t& data) {
 	ssc_data_set_array(data, "batt_replacement_schedule", p_batt_replacement_schedule, 25);
 	ssc_number_t p_batt_replacement_schedule_percent[25] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 	ssc_data_set_array(data, "batt_replacement_schedule_percent", p_batt_replacement_schedule_percent, 25);
-	ssc_number_t p_om_replacement_cost1[1] = { 300 };
-	ssc_data_set_array(data, "om_replacement_cost1", p_om_replacement_cost1, 1);
+	ssc_number_t p_om_batt_replacement_cost[1] = { 300 };
+	ssc_data_set_array(data, "om_batt_replacement_cost", p_om_batt_replacement_cost, 1);
 	ssc_data_set_number(data, "batt_mass", 102.70206451416016);
 	ssc_data_set_number(data, "batt_surface_area", 0.7);
 	ssc_data_set_number(data, "batt_Cp", 1004);
