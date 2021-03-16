@@ -107,7 +107,7 @@ public:
 	    sys_degradation.reserve(nyears);
 		double derate = (1 - (double)as_number("derate") / 100);
 
-        ssc_number_t* p_annual_energy_dist_time = allocate("annual_energy_distribution_time", 13, 25);
+        ssc_number_t* p_annual_energy_dist_time = allocate("annual_energy_distribution_time", 25, 13);
         size_t imonth = 0;
 
 		adjustment_factors haf(this, "adjust");
@@ -213,11 +213,11 @@ public:
                         for (size_t m = 0; m < 13; m++) {
                             for (size_t hr = 0; hr < 25; hr++) {
                                 if (idx == 0) {
-                                    p_annual_energy_dist_time[m * 25] = m;
-                                    p_annual_energy_dist_time[hr] = (hr - 1);
+                                    p_annual_energy_dist_time[hr * 13] = (hr - 1);
+                                    p_annual_energy_dist_time[m] = m;
                                 }
                                 if (imonth == m && fmod(double(hour), 24) == (hr - 1)) {
-                                    p_annual_energy_dist_time[m * 25 + hr] += enet[idx];
+                                    p_annual_energy_dist_time[hr * 13 + m] += enet[idx];
                                     break;
                                 }
                             }

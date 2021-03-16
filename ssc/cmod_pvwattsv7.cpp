@@ -719,7 +719,7 @@ public:
         ssc_number_t* p_dc = allocate("dc", nrec);
         ssc_number_t* p_ac = allocate("ac", nrec);
         ssc_number_t* p_gen = allocate("gen", nlifetime);
-        ssc_number_t* p_annual_energy_dist_time = allocate("annual_energy_distribution_time", 13, 25);
+        ssc_number_t* p_annual_energy_dist_time = allocate("annual_energy_distribution_time", 25, 13);
 
         pvwatts_celltemp tccalc(pv.inoct + 273.15, PVWATTS_HEIGHT, ts_hour); //in pvwattsv5 there is some code about previous tcell and poa that doesn't appear to get used, so not adding it here
 
@@ -1235,11 +1235,11 @@ public:
                     for (size_t m = 0; m < 13; m++) {
                         for (size_t h = 0; h < 25; h++) {
                             if (idx == 0) {
-                                p_annual_energy_dist_time[m * 25] = m;
-                                p_annual_energy_dist_time[h] = (h - 1);
+                                p_annual_energy_dist_time[h * 13] = (h - 1);
+                                p_annual_energy_dist_time[m] = m;
                             }
                             if (wf.month == m && wf.hour == (h - 1)) {
-                                p_annual_energy_dist_time[m * 25 + h] += p_gen[idx_life];
+                                p_annual_energy_dist_time[h * 13 + m] += p_gen[idx] / step_per_hour;
                                 break;
                             }
                         }

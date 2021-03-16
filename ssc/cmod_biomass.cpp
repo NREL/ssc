@@ -918,7 +918,7 @@ public:
 		std::vector<double> _tnorm(8760, 0.0);
 		std::vector<double> _gross(8760, 0.0);
 		ssc_number_t *_pbeta = allocate("hourly_pbeta", 8760);
-        ssc_number_t* p_annual_energy_dist_time = allocate("annual_energy_distribution_time", 13, 25);
+        ssc_number_t* p_annual_energy_dist_time = allocate("annual_energy_distribution_time", 25, 13);
         size_t imonth;
 
 		double annual_heatrate_hhv = 0;
@@ -1030,11 +1030,11 @@ public:
             for (size_t m = 0; m < 13; m++) {
                 for (size_t hr = 0; hr < 25; hr++) {
                     if (i == 0) {
-                        p_annual_energy_dist_time[m * 25] = m;
-                        p_annual_energy_dist_time[hr] = (hr - 1);
+                        p_annual_energy_dist_time[hr * 13] = (hr - 1);
+                        p_annual_energy_dist_time[m] = m;
                     }
                     if (imonth == m && fmod(double(i), 24) == (hr - 1)) {
-                        p_annual_energy_dist_time[m * 25 + hr] += _enet[i];
+                        p_annual_energy_dist_time[hr * 13 + m] += _enet[i];
                         break;
                     }
                 }

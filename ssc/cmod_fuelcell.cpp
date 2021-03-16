@@ -188,11 +188,11 @@ void cm_fuelcell::exec()
                     for (size_t m = 0; m < 13; m++) {
                         for (size_t hr = 0; hr < 25; hr++) {
                             if (h == 0) {
-                                p_annual_energy_dist_time[m * 25] = m;
-                                p_annual_energy_dist_time[hr] = (hr - 1);
+                                p_annual_energy_dist_time[hr * 13] = (hr - 1);
+                                p_annual_energy_dist_time[m] = m;
                             }
                             if (imonth + 1 == m && fmod(double(h), 24) == (hr - 1)) {
-                                p_annual_energy_dist_time[m * 25 + hr] += p_gen_kW[idx] * fcVars->dt_hour;
+                                p_annual_energy_dist_time[hr * 13 + m] += p_gen_kW[idx] * fcVars->dt_hour;
                                 break;
                             }
                         }
@@ -252,7 +252,7 @@ void cm_fuelcell::allocateOutputs()
 	p_fuelCellConsumption_MCf_annual[0] = 0;
 
 	p_gen_kW = allocate("gen", fcVars->numberOfLifetimeRecords);
-    p_annual_energy_dist_time = allocate("annual_energy_distribution_time_fc", 13, 25);
+    p_annual_energy_dist_time = allocate("annual_energy_distribution_time_fc", 25, 13);
 
 }
 

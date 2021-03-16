@@ -325,7 +325,7 @@ public:
             ssc_number_t* energy_period_index_mat_interp = allocate("energy_period_index_mat_interp", number_hours);
             ssc_number_t* wave_power_index_mat = allocate("wave_power_index_mat", number_records);
             ssc_number_t* p_annual_energy_dist = allocate("annual_energy_distribution", wave_power_matrix.nrows(), wave_power_matrix.ncols());
-            ssc_number_t* p_annual_energy_dist_time = allocate("annual_energy_distribution_time", 13, 9);
+            ssc_number_t* p_annual_energy_dist_time = allocate("annual_energy_distribution_time", 9, 13);
             double ts_significant_wave_height, ts_energy_period;
             
             int hour_step = number_hours / number_records;
@@ -380,11 +380,11 @@ public:
                 for (size_t m = 0; m < 13; m++) {
                     for (size_t h = 0; h < 9; h++) {
                         if (i == 0) {
-                            p_annual_energy_dist_time[m * 9] = m;
-                            p_annual_energy_dist_time[h] = 3*(h-1);
+                            p_annual_energy_dist_time[h * 13] = 3*(h-1);
+                            p_annual_energy_dist_time[m] = m;
                         }
                         if (month[i] == m && hour[i] == 3*(h-1)) {
-                            p_annual_energy_dist_time[m * 9 + h] += energy_hourly[i];
+                            p_annual_energy_dist_time[h * 13 + m] += energy_hourly[i];
                             break;
                         }
                     }
