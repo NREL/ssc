@@ -918,6 +918,8 @@ public:
 		std::vector<double> _tnorm(8760, 0.0);
 		std::vector<double> _gross(8760, 0.0);
 		ssc_number_t *_pbeta = allocate("hourly_pbeta", 8760);
+        ssc_number_t* p_annual_energy_dist_time = allocate("annual_energy_distribution_time", 13, 25);
+        size_t imonth;
 
 		double annual_heatrate_hhv = 0;
 		double annual_heatrate_lhv = 0;
@@ -1024,6 +1026,19 @@ public:
 			total_etaa += eta_adj / 8760.0; //for loss diagram
 			_qtpb[i] = (ssc_number_t)Qtopb;
 			_enet[i] = (ssc_number_t)(Wnet*haf(i));
+            imonth = util::month_of(double(i));
+            for (size_t m = 0; m < 13; m++) {
+                for (size_t hr = 0; hr < 25; hr++) {
+                    if (i == 0) {
+                        p_annual_energy_dist_time[m * 25] = m;
+                        p_annual_energy_dist_time[hr] = (hr - 1);
+                    }
+                    if (imonth == m && fmod(double(i), 24) == (hr - 1)) {
+                        p_annual_energy_dist_time[m * 25 + hr] += _enet[i];
+                        break;
+                    }
+                }
+            }
 //			_gen[i] = _enet[i];
 			_tnorm[i] = Tnorm;
 			capfactor[iMonth] += capfact / (nday[iMonth] * 24.0);

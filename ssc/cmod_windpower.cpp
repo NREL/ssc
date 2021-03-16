@@ -479,6 +479,8 @@ void cm_windpower::exec()
 	ssc_number_t *air_temp = allocate("temp", nstep);
 	ssc_number_t *air_pres = allocate("pressure", nstep);
 
+    ssc_number_t* p_annual_energy_dist_time = allocate("annual_energy_distribution_time", 13, 25);
+
 	std::vector<double> Power(wpc.nTurbines, 0.), Thrust(wpc.nTurbines, 0.),
 		Eff(wpc.nTurbines, 0.), Wind(wpc.nTurbines, 0.), Turb(wpc.nTurbines, 0.),
 		DistDown(wpc.nTurbines, 0.), DistCross(wpc.nTurbines, 0.);
@@ -590,10 +592,23 @@ void cm_windpower::exec()
 			monthly[imonth] += farmpwr[i] / (ssc_number_t)steps_per_hour;
 			annual += farmpwr[i] / (ssc_number_t)steps_per_hour;
 
+            for (size_t m = 0; m < 13; m++) {
+                for (size_t h = 0; h < 25; h++) {
+                    if (hr == 0) {
+                        p_annual_energy_dist_time[m * 25] = m;
+                        p_annual_energy_dist_time[h] = (h - 1);
+                    }
+                    if (imonth + 1 == m && fmod(double(hr), 24) == (h - 1)) {
+                        p_annual_energy_dist_time[m * 25 + h] += farmpwr[i];
+                        break;
+                    }
+                }
+            }
+
 			i++;
 		} // end steps_per_hour loop
 	} // end 1->8760 loop
-
+    p_annual_energy_dist_time[0] = 0;
 	// assign outputs
 	assign("annual_energy", var_data((ssc_number_t)annual));
 	double kWhperkW = 0.0;

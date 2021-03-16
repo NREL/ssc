@@ -96,6 +96,7 @@ var_info vtab_fuelcell_output[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,      "system_heat_rate",                    "Heat rate conversion factor (MMBTUs/MWhe)",  "MMBTUs/MWhe",   "",      "Fuel Cell",           "*",               "",                    "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_fuel_usage",                   "Annual Fuel Usage",                          "kWht",          "",      "Fuel Cell",           "*",               "",                    "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "annual_fuel_usage_lifetime",            "Annual Fuel Usage (lifetime)",               "kWht",          "",      "Fuel Cell",           "",               "",                    "" },
+    { SSC_OUTPUT,	    SSC_MATRIX,			"annual_energy_distribution_time_fc",			"Annual energy production as function of Time",				"",				"",				"Heatmaps",			"",						"",							"" },
 
 
 var_info_invalid };
@@ -168,7 +169,8 @@ void cm_fuelcell::exec()
 				}
 			}
 */
-			for (size_t s = 0; s < fcVars->stepsPerHour; s++) {
+            size_t imonth = util::month_of(double(h));
+            for (size_t s = 0; s < fcVars->stepsPerHour; s++) {
 				fuelCellDispatch->runSingleTimeStep(h, idx_year, fcVars->systemGeneration_kW[idx], fcVars->electricLoad_kW[idx]);
 				p_fuelCellPower_kW[idx] = (ssc_number_t)fuelCellDispatch->getPower();
 				p_fuelCellPowerMaxAvailable_percent[idx] = (ssc_number_t)fuelCellDispatch->getPowerMaxPercent();
@@ -183,6 +185,18 @@ void cm_fuelcell::exec()
 
 				if (y == 0) {
 					annual_energy += p_gen_kW[idx] * fcVars->dt_hour;
+                    for (size_t m = 0; m < 13; m++) {
+                        for (size_t hr = 0; hr < 25; hr++) {
+                            if (h == 0) {
+                                p_annual_energy_dist_time[m * 25] = m;
+                                p_annual_energy_dist_time[hr] = (hr - 1);
+                            }
+                            if (imonth + 1 == m && fmod(double(h), 24) == (hr - 1)) {
+                                p_annual_energy_dist_time[m * 25 + hr] += p_gen_kW[idx] * fcVars->dt_hour;
+                                break;
+                            }
+                        }
+                    }
 				}
 
 				idx++;
@@ -197,7 +211,7 @@ void cm_fuelcell::exec()
 		p_fuelCellReplacements[annual_index] = (ssc_number_t)(fuelCell->getTotalReplacements());
 		fuelCell->resetReplacements();
 	}
-
+    p_annual_energy_dist_time[0] = 0;
 	// capacity factor update
 	double capacity_factor_in, annual_energy_in, nameplate_in;
 	capacity_factor_in = annual_energy_in = nameplate_in = 0;
@@ -238,6 +252,7 @@ void cm_fuelcell::allocateOutputs()
 	p_fuelCellConsumption_MCf_annual[0] = 0;
 
 	p_gen_kW = allocate("gen", fcVars->numberOfLifetimeRecords);
+    p_annual_energy_dist_time = allocate("annual_energy_distribution_time_fc", 13, 25);
 
 }
 
