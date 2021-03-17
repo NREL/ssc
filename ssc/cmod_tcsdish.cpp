@@ -552,6 +552,7 @@ public:
 		{
 			annual_energy += hourly[i];
 		}
+        ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, 1);
 		if (nameplate > 0) kWhperkW = annual_energy / nameplate;
 		assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
 		assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
