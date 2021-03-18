@@ -370,7 +370,7 @@ double voltage_dynamic_t::calculate_Qfull_mod(double qmax) {
         Q_cell_mod = qmax;
     }
     return Q_cell_mod;
-    
+
 }
 
 double voltage_dynamic_t::calculate_voltage_for_current(double I, double q, double qmax, double) {
@@ -417,7 +417,7 @@ double voltage_dynamic_t::calculate_max_discharge_w(double q, double qmax, doubl
 
     q /= params->num_strings;
     qmax /= params->num_strings;
-    double current = 0.;
+    double current = q * 0.5;
     double vol = params->dynamic.Vcut;
     double incr = q / 10;
     double max_p = 0, max_I = 0, max_V = 0;
@@ -487,7 +487,7 @@ void voltage_dynamic_t::solve_current_for_charge_power(const double *x, double *
 void voltage_dynamic_t::solve_current_for_discharge_power(const double *x, double *f) {
     //solver_Q_mod - battery capacity (qmax) adjusted for cutoff voltage (Ah)
     //solver_Q - battery capacity (qmax) of original voltage model inputs (Ah)
-    //solver_q - actual charge of battery 
+    //solver_q - actual charge of battery
 
     double I = x[0];
     double it = (solver_Q - (solver_q - I * params->dt_hr));
