@@ -37,6 +37,7 @@ static var_info _cm_vtab_windpower[] = {
 	{ SSC_INPUT  , SSC_NUMBER , "weibull_reference_height"           , "Reference height for Weibull wind speed"  , "m"       ,""                                    , "Resource"                             , "?=50"                                            , "MIN=0"                                           , "" } ,
 	{ SSC_INPUT  , SSC_NUMBER , "weibull_k_factor"                   , "Weibull K factor for wind resource"       , ""        ,""                                    , "Resource"                             , "wind_resource_model_choice=1"                    , ""                                                , "" } ,
 	{ SSC_INPUT  , SSC_NUMBER , "weibull_wind_speed"                 , "Average wind speed for Weibull model"     , ""        ,""                                    , "Resource"                             , "wind_resource_model_choice=1"                    , "MIN=0"                                           , "" } ,
+    { SSC_INOUT  , SSC_NUMBER , "en_wind_uncertainty"                 , "No Uncertianty model or Enable uncertainty model"     , "0/1"        ,""                                    , "Resource"                             , "?=0"                    , "MIN=0"                                           , "" } ,
 
 	{ SSC_INPUT  , SSC_NUMBER , "wind_resource_shear"                , "Shear exponent"                           , ""        ,""                                    , "Turbine"                              , "*"                                               , "MIN=0"                                           , "" } ,
 	{ SSC_INPUT  , SSC_NUMBER , "wind_turbine_rotor_diameter"        , "Rotor diameter"                           , "m"       ,""                                    , "Turbine"                              , "*"                                               , "POSITIVE"                                        , "" } ,
@@ -99,7 +100,6 @@ static var_info _cm_vtab_windpower[] = {
     { SSC_OUTPUT , SSC_NUMBER , "ops_losses"                         , "Operational losses"                       , "%"       ,""                                    , "Annual"                           ,"" , ""                                                , "" } ,
     { SSC_OUTPUT , SSC_NUMBER , "turb_losses"                        , "Turbine losses"                           , "%"       ,""                                    , "Annual"                           ,"" , ""                                                , "" } ,
     { SSC_OUTPUT , SSC_NUMBER , "wake_losses"                        , "Wake losses"                              , "%"       ,""                                    , "Annual"                           ,"" , ""                                                , "" } ,
-
     { SSC_OUTPUT , SSC_NUMBER , "cutoff_losses"                      , "Low temp and Icing Cutoff losses"         , "%"       ,""                                    , "Annual"                           ,"" , ""                                                , "" } ,
 	var_info_invalid };
 
@@ -609,6 +609,8 @@ void cm_windpower::exec()
         wsp_avg += wspd[n];
     wsp_avg /= nstep;
     assign("wind_speed_average", wsp_avg);
+    
+    
 
 	// internal wake loss is calculated during simulation rather than provided
 	if (wakeModelChoice != 3){
