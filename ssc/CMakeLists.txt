@@ -207,7 +207,7 @@ if(UNIX)
 				POST_BUILD
 				COMMAND install_name_tool -id @rpath/libssc$<$<CONFIG:Debug>:d>.so $<TARGET_FILE:ssc>
 			)
-		endif()
+        endif()
 	endif()
 endif()
 
