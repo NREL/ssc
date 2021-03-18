@@ -478,8 +478,14 @@ FluidFlow FlatPlateArray::RunWithHx(tm& timestamp, ExternalConditions& external_
             throw(C_csp_exception("C_MEQ__mdot_fp -> C_MEQ__T_in_fp received exception from mono equation solver"));
         }
 
-        if (solver_code != C_monotonic_eq_solver::CONVERGED) {
+        if (solver_code == C_monotonic_eq_solver::CONVERGED) {
+            T_f_hx_out = c_eq.T_f_hx_out_;      // out of HX on the system side, opposite flat plate array
+            T_out_fp = c_eq.T_out_fp_;          // out of flat plate array into the HX on the subsystem side
+        }
+        else {
             fp_array_is_on = false;
+            T_f_hx_out = T_in_hx_f;
+            T_out_fp = external_conditions.weather.ambient_temp;       // just a placeholder, not accurate
 
             if (solver_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) <= 0.1) {
                 //mpc_csp_solver->error_msg = util::format("At time = %lg the C_MEQ__mdot_fp -> C_MEQ__T_in_fp iteration "
@@ -492,10 +498,6 @@ FluidFlow FlatPlateArray::RunWithHx(tm& timestamp, ExternalConditions& external_
                 //
             }
         }
-
-        // Results
-        T_f_hx_out = c_eq.T_f_hx_out_;
-        T_out_fp = c_eq.T_out_fp_;
 
         // Is there a max PTC inlet temperature?? Currently assuming no.
 
