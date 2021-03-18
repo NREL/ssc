@@ -86,6 +86,16 @@ C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 	m_W_dot_sca_tracking_nom = std::numeric_limits<double>::quiet_NaN();
 
 	// set initial values for all parameters to prevent possible misuse
+	flat_plate_tested_frta = std::numeric_limits<double>::quiet_NaN();
+	flat_plate_tested_frul = std::numeric_limits<double>::quiet_NaN();
+	flat_plate_tested_iam = std::numeric_limits<double>::quiet_NaN();
+	flat_plate_tested_area_coll = std::numeric_limits<double>::quiet_NaN();
+	flat_plate_tested_m_dot = std::numeric_limits<double>::quiet_NaN();				// [kg/s]
+	flat_plate_tested_heat_capacity = std::numeric_limits<double>::quiet_NaN();		// [kJ/kg-K]
+	flat_plate_azimuth = std::numeric_limits<double>::quiet_NaN();
+	flat_plate_tilt = std::numeric_limits<double>::quiet_NaN();
+	flat_plates_in_series = -1;
+	flat_plates_in_parallel = -1;
 	m_nSCA = -1;
 	m_nHCEt = -1;
 	m_nColt = -1;

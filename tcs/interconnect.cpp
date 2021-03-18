@@ -345,7 +345,8 @@ interconnect::interconnect()
     OuterSurfArea_valid_(false),
     OuterSurfArea_(0),
     FluidVolume_valid_(false),
-    FluidVolume_(0)
+    FluidVolume_(0),
+    FluidProps_()
 {
 }
 

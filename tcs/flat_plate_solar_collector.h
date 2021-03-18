@@ -38,6 +38,15 @@ struct CollectorTestSpecifications
     double area_coll;                   // [m2]
     double m_dot;                       // [kg/s]
     double heat_capacity;               // [kJ/kg-K]
+
+    CollectorTestSpecifications() {
+        FRta = std::numeric_limits<double>::quiet_NaN();
+        FRUL = std::numeric_limits<double>::quiet_NaN();
+        iam = std::numeric_limits<double>::quiet_NaN();
+        area_coll = std::numeric_limits<double>::quiet_NaN();
+        m_dot = std::numeric_limits<double>::quiet_NaN();
+        heat_capacity = std::numeric_limits<double>::quiet_NaN();
+    }
 };
 
 struct CollectorLocation
@@ -45,18 +54,34 @@ struct CollectorLocation
     double latitude;                    // [deg N]
     double longitude;                   // [deg E]
     int timezone;                       // [hr]
+
+    CollectorLocation() {
+        latitude = std::numeric_limits<double>::quiet_NaN();
+        longitude = std::numeric_limits<double>::quiet_NaN();
+        timezone = -1;
+    }
 };
 
 struct CollectorOrientation
 {
     double tilt;                        // [deg]
     double azimuth;                     // [deg] Clockwise from North
+
+    CollectorOrientation() {
+        tilt = std::numeric_limits<double>::quiet_NaN();
+        azimuth = std::numeric_limits<double>::quiet_NaN();
+    }
 };
 
 struct ArrayDimensions
 {
     int num_in_series;
     int num_in_parallel;
+
+    ArrayDimensions() {
+        num_in_series = -1;
+        num_in_parallel = -1;
+    }
 };
 
 struct TimeAndPosition
@@ -64,6 +89,12 @@ struct TimeAndPosition
     tm timestamp;
     CollectorLocation collector_location;
     CollectorOrientation collector_orientation;
+
+    TimeAndPosition() {
+        timestamp = tm();
+        collector_location = CollectorLocation();
+        collector_orientation = CollectorOrientation();
+    }
 };
 
 struct Weather
@@ -74,6 +105,15 @@ struct Weather
     double ambient_temp;                // [C]
     double wind_speed;                  // [m/s]
     double wind_direction;              // [deg] Clockwise from North
+
+    Weather() {
+        dni = std::numeric_limits<double>::quiet_NaN();
+        dhi = std::numeric_limits<double>::quiet_NaN();
+        ghi = std::numeric_limits<double>::quiet_NaN();
+        ambient_temp = std::numeric_limits<double>::quiet_NaN();
+        wind_speed = std::numeric_limits<double>::quiet_NaN();
+        wind_direction = std::numeric_limits<double>::quiet_NaN();
+    }
 };
 
 struct FluidFlow
@@ -82,6 +122,13 @@ struct FluidFlow
     double temp;                        // [C]
     double m_dot;                       // [kg/s]
     double specific_heat;               // [kJ/kg-K]    TODO: remove this
+
+    FluidFlow() {
+        fluid = HTFProperties();
+        temp = std::numeric_limits<double>::quiet_NaN();
+        m_dot = std::numeric_limits<double>::quiet_NaN();
+        specific_heat = std::numeric_limits<double>::quiet_NaN();
+    }
 };
 
 struct ExternalConditions
@@ -89,6 +136,12 @@ struct ExternalConditions
     Weather weather;
     FluidFlow inlet_fluid_flow;
     double albedo;                      // [-]
+
+    ExternalConditions() {
+        weather = Weather();
+        inlet_fluid_flow = FluidFlow();
+        albedo = std::numeric_limits<double>::quiet_NaN();
+    }
 };
 
 struct PoaIrradianceComponents
@@ -97,8 +150,7 @@ struct PoaIrradianceComponents
     std::vector<double> sky_diffuse_with_aoi;                   // {[W/m2], [deg]}
     std::vector<double> ground_reflected_diffuse_with_aoi;      // {[W/m2], [deg]}
 
-    PoaIrradianceComponents()
-    {
+    PoaIrradianceComponents() {
         beam_with_aoi.resize(2, std::numeric_limits<double>::quiet_NaN());
         sky_diffuse_with_aoi.resize(2, std::numeric_limits<double>::quiet_NaN());
         ground_reflected_diffuse_with_aoi.resize(2, std::numeric_limits<double>::quiet_NaN());
@@ -261,20 +313,20 @@ public:
     }
 
     bool fp_array_is_on_;
-    double T_f_hx_out_;
-    double T_out_fp_;
-    double eff_hx_;
-    double q_dot_hx_;
-    double dT_hot_;
-    double dT_cold_;
-    double T_closest_f_hx_out_iter_;		// max converged temperature found during iteration of outer MEQ
-    double T_out_fp_at_T_closest_iter_;		// flat plate outlet temperature at max converged system temperature
-    double mdot_fp_at_T_closest_iter_;		// flat plate mass flow at max converged system temperature
+    double T_f_hx_out_ = std::numeric_limits<double>::quiet_NaN();
+    double T_out_fp_ = std::numeric_limits<double>::quiet_NaN();
+    double eff_hx_ = std::numeric_limits<double>::quiet_NaN();
+    double q_dot_hx_ = std::numeric_limits<double>::quiet_NaN();
+    double dT_hot_ = std::numeric_limits<double>::quiet_NaN();
+    double dT_cold_ = std::numeric_limits<double>::quiet_NaN();
+    double T_closest_f_hx_out_iter_ = std::numeric_limits<double>::quiet_NaN();		    // max converged temperature found during iteration of outer MEQ
+    double T_out_fp_at_T_closest_iter_ = std::numeric_limits<double>::quiet_NaN();		// flat plate outlet temperature at max converged system temperature
+    double mdot_fp_at_T_closest_iter_ = std::numeric_limits<double>::quiet_NaN();		// flat plate mass flow at max converged system temperature
     virtual int operator()(double mdot_fp /*kg/s*/, double* diff_T_out_f /*C*/);
 
 private:
     double T_approach_;
-    double mdot_fp_;
+    double mdot_fp_ = std::numeric_limits<double>::quiet_NaN();
     double m_T_loop_in_;
     double T_f_hx_out_target_;
     double m_m_dot_process_heat_;
@@ -319,12 +371,12 @@ public:
     }
 
     bool fp_array_is_on_;
-    double T_f_hx_out_;		// this is used by the outer MEQ
-    double T_out_fp_;
-    double eff_hx_;
-    double q_dot_hx_;
-    double dT_hot_;
-    double dT_cold_;
+    double T_f_hx_out_ = std::numeric_limits<double>::quiet_NaN();		            // this is used by the outer MEQ
+    double T_out_fp_ = std::numeric_limits<double>::quiet_NaN();
+    double eff_hx_ = std::numeric_limits<double>::quiet_NaN();
+    double q_dot_hx_ = std::numeric_limits<double>::quiet_NaN();
+    double dT_hot_ = std::numeric_limits<double>::quiet_NaN();
+    double dT_cold_ = std::numeric_limits<double>::quiet_NaN();
     virtual int operator()(double T_in_fp /*C*/, double* diff_T_in_fp /*C*/);
 
 private:
