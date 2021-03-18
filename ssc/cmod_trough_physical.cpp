@@ -280,7 +280,7 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "custom_tes_pipe_sizes",     "Use custom TES pipe diams, wallthks, and lengths",                                 "-",            "",               "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_MATRIX,      "tes_diams",                 "Custom TES diameters",                                                             "m",            "",               "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_MATRIX,      "tes_wallthicks",            "Custom TES wall thicknesses",                                                      "m",            "",               "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_MATRIX,      "tes_lengths",               "Custom TES lengths",                                                               "m",            "",               "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_MATRIX,      "tes_lengths",               "Custom TES lengths",                                                               "m",            "",               "controller",     "",                        "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "DP_SGS",                    "Pressure drop within the steam generator",                                         "bar",          "",               "controller",     "*",                       "",                      "" },
 
 
@@ -919,10 +919,16 @@ public:
         tes->custom_tes_pipe_sizes = as_boolean("custom_tes_pipe_sizes");   //[-]
         tes->tes_diams            = as_matrix("tes_diams");                 //[m]
         tes->tes_wallthicks       = as_matrix("tes_wallthicks");            //[m]
-        tes->tes_lengths          = as_matrix("tes_lengths");               //[m]
         tes->calc_design_pipe_vals = as_boolean("calc_design_pipe_vals");   //[-]
         tes->pipe_rough           = as_double("HDR_rough");                 //[m]
         tes->DP_SGS               = as_double("DP_SGS");                    //[bar]
+        if (is_assigned("tes_lengths")) {
+            tes->tes_lengths = as_matrix("tes_lengths");               //[m]
+        }
+        if (!is_assigned("tes_lengths") || tes->tes_lengths.ncells() < 11) {
+            double vals1[11] = { 0., 90., 100., 120., 0., 30., 90., 80., 80., 120., 80. };
+            tes->tes_lengths.assign(vals1, 11);
+        }
 
         // Set storage outputs
         storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_Q_DOT_LOSS, allocate("tank_losses", n_steps_fixed), n_steps_fixed);

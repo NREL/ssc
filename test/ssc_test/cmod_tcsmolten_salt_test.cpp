@@ -15,19 +15,19 @@ NAMESPACE_TEST(csp_tower, PowerTowerCmod, Default_NoFinancial)
     int errors = power_tower.RunModule();
     EXPECT_FALSE(errors);
     if (!errors) {
-        EXPECT_NEAR_FRAC(power_tower.GetOutput("annual_energy"), 571408807, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_tower.GetOutput("land_area_base"), 1847, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_tower.GetOutput("capacity_factor"), 63.02, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_tower.GetOutput("annual_W_cycle_gross"), 638478912, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_tower.GetOutput("kwh_per_kw"), 5521, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_tower.GetOutput("conversion_factor"), 89.55, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_tower.GetOutput("N_hel"), 8790, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_tower.GetOutput("rec_height"), 21.60, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_tower.GetOutput("A_sf"), 1269054, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_tower.GetOutput("D_rec"), 17.65, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_tower.GetOutput("annual_total_water_use"), 98402, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_tower.GetOutput("csp.pt.cost.total_land_area"), 1892, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_tower.GetOutput("h_tower"), 193.5, kErrorToleranceLo);
+        EXPECT_NEAR_FRAC(power_tower.GetOutput("annual_energy"), 571408807, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_tower.GetOutput("land_area_base"), 1847, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_tower.GetOutput("capacity_factor"), 63.02, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_tower.GetOutput("annual_W_cycle_gross"), 638478912, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_tower.GetOutput("kwh_per_kw"), 5521, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_tower.GetOutput("conversion_factor"), 89.55, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_tower.GetOutput("N_hel"), 8790, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_tower.GetOutput("rec_height"), 21.60, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_tower.GetOutput("A_sf"), 1269054, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_tower.GetOutput("D_rec"), 17.65, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_tower.GetOutput("annual_total_water_use"), 98402, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_tower.GetOutput("csp.pt.cost.total_land_area"), 1892, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_tower.GetOutput("h_tower"), 193.5, kErrorToleranceHi);
     }
 
     //ssc_data_t defaults = singleowner_defaults();
@@ -48,19 +48,19 @@ NAMESPACE_TEST(csp_tower, PowerTowerCmod, SlidingPressure_NoFinancial)
     EXPECT_FALSE(errors);
     if (!errors)
     {
-        EXPECT_NEAR_FRAC(power_tower.GetOutput("annual_energy"), 578111750, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_tower.GetOutput("land_area_base"), 1847, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_tower.GetOutput("capacity_factor"), 63.76, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_tower.GetOutput("annual_W_cycle_gross"), 645396296, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_tower.GetOutput("kwh_per_kw"), 5586, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_tower.GetOutput("conversion_factor"), 89.57, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_tower.GetOutput("N_hel"), 8790, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_tower.GetOutput("rec_height"), 21.60, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_tower.GetOutput("A_sf"), 1269054, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_tower.GetOutput("D_rec"), 17.65, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_tower.GetOutput("annual_total_water_use"), 98238, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_tower.GetOutput("csp.pt.cost.total_land_area"), 1892, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_tower.GetOutput("h_tower"), 193.5, kErrorToleranceLo);
+        EXPECT_NEAR_FRAC(power_tower.GetOutput("annual_energy"), 578111750, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_tower.GetOutput("land_area_base"), 1847, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_tower.GetOutput("capacity_factor"), 63.76, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_tower.GetOutput("annual_W_cycle_gross"), 645396296, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_tower.GetOutput("kwh_per_kw"), 5586, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_tower.GetOutput("conversion_factor"), 89.57, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_tower.GetOutput("N_hel"), 8790, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_tower.GetOutput("rec_height"), 21.60, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_tower.GetOutput("A_sf"), 1269054, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_tower.GetOutput("D_rec"), 17.65, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_tower.GetOutput("annual_total_water_use"), 98238, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_tower.GetOutput("csp.pt.cost.total_land_area"), 1892, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_tower.GetOutput("h_tower"), 193.5, kErrorToleranceHi);
     }
 }
 
@@ -73,19 +73,19 @@ NAMESPACE_TEST(csp_tower, PowerTowerCmod, FlowPattern_NoFinancial)
     EXPECT_FALSE(errors);
     if (!errors)
     {
-        EXPECT_NEAR_FRAC(power_tower.GetOutput("annual_energy"), 519995603, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_tower.GetOutput("land_area_base"), 1847, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_tower.GetOutput("capacity_factor"), 57.35, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_tower.GetOutput("annual_W_cycle_gross"), 642716926, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_tower.GetOutput("kwh_per_kw"), 5024, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_tower.GetOutput("conversion_factor"), 80.90, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_tower.GetOutput("N_hel"), 8790, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_tower.GetOutput("rec_height"), 21.60, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_tower.GetOutput("A_sf"), 1269054, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_tower.GetOutput("D_rec"), 17.65, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_tower.GetOutput("annual_total_water_use"), 98678, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_tower.GetOutput("csp.pt.cost.total_land_area"), 1892, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_tower.GetOutput("h_tower"), 193.5, kErrorToleranceLo);
+        EXPECT_NEAR_FRAC(power_tower.GetOutput("annual_energy"), 519995603, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_tower.GetOutput("land_area_base"), 1847, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_tower.GetOutput("capacity_factor"), 57.35, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_tower.GetOutput("annual_W_cycle_gross"), 642716926, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_tower.GetOutput("kwh_per_kw"), 5024, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_tower.GetOutput("conversion_factor"), 80.90, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_tower.GetOutput("N_hel"), 8790, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_tower.GetOutput("rec_height"), 21.60, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_tower.GetOutput("A_sf"), 1269054, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_tower.GetOutput("D_rec"), 17.65, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_tower.GetOutput("annual_total_water_use"), 98678, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_tower.GetOutput("csp.pt.cost.total_land_area"), 1892, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_tower.GetOutput("h_tower"), 193.5, kErrorToleranceHi);
     }
 }
 
