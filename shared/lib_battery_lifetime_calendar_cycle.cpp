@@ -57,7 +57,6 @@ lifetime_cycle_t::lifetime_cycle_t(std::shared_ptr<lifetime_params> params_ptr) 
 lifetime_cycle_t::lifetime_cycle_t(std::shared_ptr<lifetime_params> params_ptr, std::shared_ptr<lifetime_state> state_ptr) :
         params(std::move(params_ptr)),
         state(std::move(state_ptr)){
-    initialize();
 }
 
 lifetime_cycle_t::lifetime_cycle_t(const lifetime_cycle_t &rhs) {

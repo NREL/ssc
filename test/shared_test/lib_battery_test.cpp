@@ -911,13 +911,8 @@ TEST_F(lib_battery_test, AdaptiveTimestepNonIntegerStep) {
     auto batt_adaptive = std::unique_ptr<battery_t>(new battery_t(dtHour, chemistry, capacityModelNMC, voltageModelNMC, lifetimeModelNMC, thermalModelNMC, lossModelNMC));
 
     double dt_hr = 0.5;
-    double adaptive_E = 0;
-    double adaptive_V = 0;
-    double adaptive_I = 0;
     batt_adaptive->ChangeTimestep(dt_hr);
-
     batt_adaptive->runPower(100);
 
     EXPECT_ANY_THROW(batt_adaptive->ChangeTimestep(1));
-
 }
