@@ -484,10 +484,12 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 		case 1 : // !Rack Mounting Configuration 
 			while( fabs(err_TC) > 0.001 )
 			{
-                L_char = Lsc; //Change characteristic length to Lacunarity length scale
+                //L_char = Lsc; //Change characteristic length to Lacunarity length scale
 				double rho_air    = Patm*28.967/8314.34*(1./((TA+TC)/2.)) ; // !density of air as a function of pressure and ambient temp
-				double Re_forced  = MAX(0.1,rho_air*V_cover*L_char/mu_air) ; //  !Reynolds number of wind moving across module
-				double Nu_forced  = 0.037 * pow(Re_forced,4./5.) * pow(Pr_air, 1./3.) ; //  !Nusselt Number (Incropera et al., 2006)
+				//double Re_forced  = MAX(0.1,rho_air*V_cover*L_char/mu_air) ; //  !Reynolds number of wind moving across module
+                double Re_forced = MAX(0.1, rho_air * V_cover * Lsc / mu_air); //  !Reynolds number of wind moving across module
+
+                double Nu_forced  = 0.037 * pow(Re_forced,4./5.) * pow(Pr_air, 1./3.) ; //  !Nusselt Number (Incropera et al., 2006)
 				double h_forced   = Nu_forced * k_air / L_char;
 				double h_sky      = (TC*TC+T_sky*T_sky)*(TC+T_sky);
 				double h_ground   = (TC*TC+T_ground*T_ground)*(TC+T_ground);
