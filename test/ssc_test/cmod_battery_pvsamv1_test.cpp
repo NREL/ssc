@@ -143,7 +143,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACDCBatteryModelInte
     ssc_number_t expectedBatteryDischargeEnergy[2] = { 0.76, 7.6 };
 
     ssc_number_t peakKwCharge[2] = { -2.7, -2.8 };
-    ssc_number_t peakKwDischarge[2] = { 0.6, 4.0 };
+    ssc_number_t peakKwDischarge[2] = { 0.03, 0.16 };
     ssc_number_t peakCycles[2] = { 1, 1 };
     ssc_number_t avgCycles[2] = { 0.0027, 0.0027 };
 
@@ -193,8 +193,8 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACDCBatteryModelInte
     set_array(data, "batt_custom_dispatch", custom_dispatch_residential_hourly_schedule, 8760);
 
     ssc_number_t expectedEnergy[2] = { 8708, 8672 };
-    ssc_number_t expectedBatteryChargeEnergy[2] = { 511, 538 };
-    ssc_number_t expectedBatteryDischargeEnergy[2] = { 469, 495 };
+    ssc_number_t expectedBatteryChargeEnergy[2] = { 396.1, 359.95 };
+    ssc_number_t expectedBatteryDischargeEnergy[2] = { 395.95, 419.2 };
 
     ssc_number_t peakKwCharge[2] = { -0.47, -0.46 };
     ssc_number_t peakKwDischarge[2] = { 0.39, 0.41 };
