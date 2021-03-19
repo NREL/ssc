@@ -49,7 +49,9 @@ static var_info _cm_vtab_singleowner[] = {
     { SSC_INPUT,        SSC_NUMBER,     "battery_total_cost_lcos",               "Battery total investment cost",                      "$",      "",                      "Battery",       "",                           "",                               "" },
     { SSC_INPUT,        SSC_ARRAY,      "year1_hourly_e_fromgrid",               "Electricity from grid (year 1 hourly)", "kWh", "", "Time Series", "", "", "" },
     { SSC_INPUT,        SSC_ARRAY,      "year1_hourly_salespurchases_with_system",     "Electricity sales/purchases with system (year 1 hourly)",    "$", "",          "Time Series",             "",                         "",                   "" },
-    { SSC_INPUT,        SSC_ARRAY,      "grid_to_batt",                               "Electricity to grid from battery",                      "kW",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_INPUT,        SSC_ARRAY,      "grid_to_batt",                               "Electricity to battery from grid",                      "kW",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_INPUT,        SSC_ARRAY,      "batt_to_grid",                               "Electricity to grid from battery",                      "kW",      "",                       "Battery",       "",                           "",                              "" },
+
     { SSC_INPUT,        SSC_ARRAY,      "batt_capacity_percent",                      "Battery relative capacity to nameplate",                 "%",        "",                     "Battery",       "",                           "",                              "" },
 
 
@@ -3028,26 +3030,50 @@ public:
 
         // Use PPA values to calculate revenue from purchases and sales
         size_t n_multipliers;
-        size_t n_grid_to_batt, n_elec_purchases, n_elec_from_grid;
+        size_t n_grid_to_batt, n_elec_purchases, n_elec_from_grid, n_batt_to_grid;
         ssc_number_t* grid_to_batt = as_array("grid_to_batt", &n_grid_to_batt); //Power from grid to battery in kW (needs to be changed to kwh)
+        ssc_number_t* batt_to_grid = as_array("batt_to_grid", &n_batt_to_grid); //Power from grid to battery in kW (needs to be changed to kwh)
         size_t n_steps_per_year = n_grid_to_batt / nyears;
         //std::vector<double> grid_to_batt = as_vector_double("grid_to_batt"); //energy from grid to battery (hourly or lifetime)
 
-        double capex_lcoe_ratio = 1 / 0.9; //ratio of capex ratio between PV+batt / PV to LCOE ratio PV+batt/ PV (assumed based on table)
+        double capex_lcoe_ratio = 1 / 0.8; //ratio of capex ratio between PV+batt / PV to LCOE ratio PV+batt/ PV (assumed based on table)
         double lcoe_real_lcos = lcoe_real * capex_lcoe_ratio * (cost_prefinancing - lcos_investment_cost) / cost_prefinancing; //cents/kWh
         assign("lcoe_real_lcos", var_data((ssc_number_t)lcoe_real_lcos));
         std::vector<double> charged_grid = as_vector_double("batt_annual_charge_from_grid");
         cf.at(CF_charging_cost_grid, 0) = 0;
-        std::vector<double> elec_purchases, elec_from_grid;
+        //std::vector<double> elec_purchases, elec_from_grid;
+        ssc_number_t* elec_purchases;
+        ssc_number_t* elec_from_grid;
         if (!ppa_purchases) {
-            elec_purchases = as_vector_double("year1_hourly_salespurchases_with_system");
-            elec_from_grid = as_vector_double("year1_hourly_e_fromgrid");
+            //elec_purchases = as_vector_double("year1_hourly_salespurchases_with_system");
+            elec_purchases = as_array("year1_hourly_salespurchases_with_system", &n_elec_purchases);
+            //elec_from_grid = as_vector_double("year1_hourly_e_fromgrid");
+            elec_from_grid = as_array("year1_hourly_e_fromgrid", &n_elec_from_grid);
         }
 
         if (is_assigned("rate_escalation"))
             escal_or_annual(CF_util_escal_rate, nyears, "rate_escalation", inflation_rate, 0.01, true, 0);
         save_cf(CF_util_escal_rate, nyears, "cf_util_escal_rate");
+        size_t n_rate_escalation;
+
+        // compute utility rate out-years escalation multipliers
+        std::vector<ssc_number_t> rate_scale(nyears);
         
+        ssc_number_t* rate_escalation = as_array("rate_escalation", &n_rate_escalation);
+        if (n_rate_escalation == 1)
+        {
+            for (i = 0; i < nyears; i++)
+                rate_scale[i] = (ssc_number_t)pow((double)(inflation_rate + 1 + rate_escalation[0] * 0.01), (double)i);
+        }
+        else if (n_rate_escalation < nyears)
+        {
+            throw exec_error("utilityrate5", "rate_escalation must have 1 entry or length equal to analysis_period");
+        }
+        else
+        {
+            for (i = 0; i < nyears; i++)
+                rate_scale[i] = (ssc_number_t)(1 + rate_escalation[i] * 0.01);
+        }
         
         for (int a = 0; a <= nyears; a++) {
             if (as_integer("system_use_lifetime_output") == 1)
@@ -3062,7 +3088,8 @@ public:
                     if (!ppa_purchases && a != 0) {
                         // Recompute this variable because the ppa_gen values (hourly_net) were all positve until now 
                         if (elec_from_grid[h] != 0) {
-                            cf.at(CF_charging_cost_grid, a) += grid_to_batt[(a - 1) * n_steps_per_year + h] * 8760 / n_steps_per_year * -elec_purchases[h] * cf.at(CF_util_escal_rate, a) / elec_from_grid[h];
+                            //cf.at(CF_charging_cost_grid, a) += grid_to_batt[(a - 1) * n_steps_per_year + h] * 8760 / n_steps_per_year * -elec_purchases[h] * cf.at(CF_util_escal_rate, a) / elec_from_grid[h];
+                            cf.at(CF_charging_cost_grid, a) += grid_to_batt[(a - 1) * n_steps_per_year + h] * 8760 / n_steps_per_year * -elec_purchases[h] * rate_scale[a-1] / elec_from_grid[h];
                         }
                         
                     }
