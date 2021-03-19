@@ -430,7 +430,7 @@ SSCEXPORT void __ssc_segfault();
  * Functions for calling python as an external process with python_handler
  */
 
-SSCEXPORT void set_python_path(const char* abs_path);
+SSCEXPORT int set_python_path(const char* abs_path);
 
 SSCEXPORT const char *get_python_path();
 
@@ -438,7 +438,8 @@ SSCEXPORT const char *get_python_path();
  * Functions for calling stateful compute modules
  */
 
-SSCEXPORT ssc_module_t ssc_stateful_module_create(const char *name, ssc_data_t p_data);
+// returns 1 if successful, otherwise 0 with errors stored in log and retrieved with `ssc_module_log`
+SSCEXPORT int ssc_stateful_module_setup(ssc_module_t p_mod, ssc_data_t p_data);
 
 #ifndef __SSCLINKAGECPP__
 
