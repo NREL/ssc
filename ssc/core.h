@@ -179,7 +179,7 @@ public:
 	log_item *log(int index);
 	var_info *info(int index);
 
-	bool compute( handler_interface *handler, var_table *data );
+    virtual bool compute( handler_interface *handler, var_table *data );
 
 
 	/* on_extproc_output: this function will be called by the

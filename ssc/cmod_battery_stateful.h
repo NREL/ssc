@@ -36,7 +36,7 @@ void read_battery_state(const battery_state& state, var_table* vt);
 
 class cm_battery_stateful : public compute_module {
 public:
-    double dt_hour;
+    double dt_hr;
     enum MODE {
         CURRENT, POWER
     };
@@ -48,6 +48,8 @@ public:
 
     // return true for success, otherwise errors in log
     bool setup(var_table* vt);
+
+    bool compute(handler_interface *handler, var_table *data) override;
 
     void exec() override;
 };
