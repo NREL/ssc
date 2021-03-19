@@ -114,7 +114,7 @@ static var_info _cm_vtab_tcsgeneric_solar[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "solazi",            "Resource Solar Azimuth",                                          "deg",          "",            "weather",        "*",                       "LENGTH=8760",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "solzen",            "Resource Solar Zenith",                                           "deg",          "",            "weather",        "*",                       "LENGTH=8760",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "beam",              "Resource Beam normal irradiance",                                 "W/m2",         "",            "weather",        "*",                       "LENGTH=8760",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "glob",              "Resource Global horizontal irradiance",                           "W/m2",         "",            "weather",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "global",            "Resource Global horizontal irradiance",                           "W/m2",         "",            "weather",        "*",                       "LENGTH=8760",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "diff",              "Resource Diffuse horizontal irradiance",                          "W/m2",         "",            "weather",        "*",                       "LENGTH=8760",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "tdry",              "Resource Dry bulb temperature",                                   "C",            "",            "weather",        "*",                       "LENGTH=8760",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "twet",              "Resource Wet bulb temperature",                                   "C",            "",            "weather",        "*",                       "LENGTH=8760",           "" },
@@ -343,7 +343,7 @@ public:
 
 		// Connect the units
 		bool bConnected = connect(weather, "beam", type260_genericsolar, "ibn");
-		bConnected &= connect(weather, "glob", type260_genericsolar, "itoth");
+		bConnected &= connect(weather, "global", type260_genericsolar, "itoth");
 		bConnected &= connect(weather, "poa_beam", type260_genericsolar, "ibh");
 		bConnected &= connect(weather, "tdry", type260_genericsolar, "tdb");
 		bConnected &= connect(weather, "twet", type260_genericsolar, "twb");
