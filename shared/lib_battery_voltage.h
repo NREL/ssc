@@ -50,6 +50,7 @@ struct voltage_params {
         double Qexp;
         double Qnom;
         double C_rate;
+        double Vcut;
     } dynamic;
 
     //  depth-of-discharge [%] and cell voltage [V] pairs
@@ -60,7 +61,7 @@ struct voltage_params {
 
 struct voltage_state {
     double cell_voltage;         // closed circuit voltage per cell [V]
-
+    double Q_full_mod;           // Cell capacity adjusted for cutoff voltage [Ah]
     friend std::ostream &operator<<(std::ostream &os, const voltage_state &p);
 
     bool operator==(const voltage_state &p);
@@ -164,7 +165,7 @@ private:
 class voltage_dynamic_t : public voltage_t {
 public:
     voltage_dynamic_t(int num_cells_series, int num_strings, double voltage, double Vfull,
-                      double Vexp, double Vnom, double Qfull, double Qexp, double Qnom,
+                      double Vexp, double Vnom, double Qfull, double Qexp, double Qnom, double Vcut,
                       double C_rate, double R, double dt_hr);
 
     voltage_dynamic_t(std::shared_ptr<voltage_params> p);
@@ -193,22 +194,26 @@ public:
     
 
 protected:
-    double _A;
-    double _B0;
-    double _E0;
-    double _K;
+    double _A; //Exponential zone amplitude (V)
+    double _B0; //Exponential zone time constant inverse (Ah)^-1
+    double _E0; //Battery constant voltage (V)
+    double _K; //Polarization voltage (K)
 
     void parameter_compute();
 
     double voltage_model_tremblay_hybrid(double Q_cell, double I, double q0_cell);
 
+    double calculate_Qfull_mod(double qmax);
+
     // solver quantities
-    double solver_Q;
-    double solver_q;
-    double solver_cutoff_voltage;
-    double solver_power;
+    double solver_Q; //Maximum battery capacity (Ah)
+    double solver_Q_mod; //Modified battery capacity for cutoff voltage input (Ah)
+    double solver_q; //Actual battery capacity (Ah)
+    double solver_power; //Battery output power (W)
 
     void solve_current_for_charge_power(const double *x, double *f);
+
+    
 
     void solve_current_for_discharge_power(const double *x, double *f);
 

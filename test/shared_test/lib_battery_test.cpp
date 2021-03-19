@@ -215,7 +215,7 @@ TEST_F(lib_battery_test, runTestCycleAt1C){
 
     auto s = battery_state_test();
     s.capacity = {479.75, 1000, 960.01, 20.25, 0, 49.97, 52.09, 2};
-    s.batt_voltage = 550.65;
+    s.batt_voltage = 552.03;
     s.lifetime.calendar->q_relative_calendar = 102;
     s.lifetime.cycle->q_relative_cycle = 100;
     s.lifetime.cycle->rainflow_jlt = 1;
@@ -230,7 +230,7 @@ TEST_F(lib_battery_test, runTestCycleAt1C){
 //    std::cerr <<  idx << ": soc " << batteryModel->SOC() << ", cap " << capacity_passed << "\n";
     // the SOC isn't at 5 so it means the controller is not able to calculate a current/voltage at which to discharge to 5
     s.capacity = {54.5, 1000, 960.01, 20.25, 0, 5.67, 7.79, 2};
-    s.batt_voltage = 366.96;
+    s.batt_voltage = 470.17;
     s.lifetime.day_age_of_battery = 0.875;
     s.lifetime.q_relative = 100;
     s.lifetime.cycle->q_relative_cycle = 100;
@@ -256,7 +256,7 @@ TEST_F(lib_battery_test, runTestCycleAt1C){
 //    std::cerr <<  idx << ": soc " << batteryModel->SOC() << ", cap " << capacity_passed << "\n";
     // the SOC isn't at 5 so it means the controller is not able to calculate a current/voltage at which to discharge to 5
     s.capacity = {50.33, 920.36, 883.54, 8.941, 0, 5.70, 6.71, 2};
-    s.batt_voltage = 367.69;
+    s.batt_voltage = 470.35;
     s.lifetime.q_relative = 93.08;
     s.lifetime.cycle->q_relative_cycle = 92.04;
     s.lifetime.n_cycles = 399;
@@ -273,7 +273,7 @@ TEST_F(lib_battery_test, runTestCycleAt1C){
 
     compareState(batteryModel, s, "runTestCycleAt1C: 3");
 
-    EXPECT_NEAR(capacity_passed, 352736, 1000) << "Current passing through cell";
+    EXPECT_NEAR(capacity_passed, 357300, 1000) << "Current passing through cell";
     double qmax = fmax(s.capacity.qmax_lifetime, s.capacity.qmax_thermal);
     EXPECT_NEAR(qmax/q, .93, 0.01) << "capacity relative to max capacity";
 }
@@ -288,7 +288,7 @@ TEST_F(lib_battery_test, runTestCycleAt3C){
 
     auto s = battery_state_test();
     s.capacity = {439.25, 1000, 960.02, 60.75, 0, 45.75, 52.08, 2};
-    s.batt_voltage = 548.35;
+    s.batt_voltage = 550.10;
     s.lifetime.q_relative = 100;
     s.lifetime.cycle->q_relative_cycle = 100;
     s.lifetime.cycle->rainflow_jlt = 1;
@@ -304,7 +304,7 @@ TEST_F(lib_battery_test, runTestCycleAt3C){
 //    std::cerr <<  idx << ": soc " << batteryModel->SOC() << ", cap " << capacity_passed << "\n";
     // the SOC isn't at 5 so it means the controller is not able to calculate a current/voltage at which to discharge to 5
     s.capacity = {48.01, 1000, 960.11, 26.74, 0, 5.00, 7.78, 2};
-    s.batt_voltage = 338.91;
+    s.batt_voltage = 463.93;
     s.lifetime.day_age_of_battery = 0.29;
     s.lifetime.q_relative = 101.98;
     s.lifetime.calendar->q_relative_calendar = 101.98;
@@ -328,7 +328,7 @@ TEST_F(lib_battery_test, runTestCycleAt3C){
 //    std::cerr <<  idx << ": soc " << batteryModel->SOC() << ", cap " << capacity_passed << "\n";
     // the SOC isn't at 5 so it means the controller is not able to calculate a current/voltage at which to discharge to 5
     s.capacity = {52.06, 920.37, 883.56, 8.94, 0, 5.89, 6.90, 2};
-    s.batt_voltage = 374.55;
+    s.batt_voltage = 472.02;
     s.lifetime.q_relative = 93.08;
     s.lifetime.day_age_of_battery = 2644;
     s.lifetime.cycle->q_relative_cycle = 92.08;
@@ -345,7 +345,7 @@ TEST_F(lib_battery_test, runTestCycleAt3C){
     s.last_idx = 32991;
     compareState(batteryModel, s, "runTest: 3");
 
-    EXPECT_NEAR(capacity_passed, 352794, 100) << "Current passing through cell";
+    EXPECT_NEAR(capacity_passed, 357859, 100) << "Current passing through cell";
     double qmax = fmax(s.capacity.qmax_lifetime, s.capacity.qmax_thermal);
     EXPECT_NEAR(qmax/q, 0.9209, 0.01) << "capacity relative to max capacity";
 }
@@ -453,14 +453,14 @@ TEST_F(lib_battery_test, RoundtripEffModel){
         current += fabs(max_current) / 100.;
         eff_vs_current.emplace_back(fabs(output_power/input_power));
     }
-    std::vector<double> eff_expected = {0.99, 0.99, 0.98, 0.98, 0.97, 0.97, 0.96, 0.97, 0.95, 0.95, 0.94, 0.95, 0.93, // i = 12
-                                        0.91, 0.93, 0.93, 0.92, 0.92, 0.90, 0.93, 0.88, 0.92, 0.90, 0.88, 0.91, 0.89, // i = 25
-                                        0.88, 0.90, 0.90, 0.84, 0.87, 0.88, 0.89, 0.89, 0.81, 0.85, 0.85, 0.86, 0.88, // i = 38
-                                        0.88, 0.87, 0.78, 0.81, 0.81, 0.83, 0.84, 0.85, 0.86, 0.87, 0.87, 0.85, 0.79, // i = 51
-                                        0.73, 0.75, 0.76, 0.77, 0.78, 0.79, 0.80, 0.81, 0.82, 0.83, 0.84, 0.85, 0.85, // i = 64
-                                        0.84, 0.84, 0.82, 0.76, 0.65, 0.66, 0.66, 0.67, 0.68, 0.69, 0.70, 0.70, 0.71, // i = 77
-                                        0.72, 0.73, 0.74, 0.74, 0.75, 0.76, 0.77, 0.77, 0.78, 0.78, 0.79, 0.80, 0.81, // i = 90
-                                        0.81, 0.81, 0.81, 0.81, 0.82, 0.82, 0.81, 0.81, // i = 98
+    std::vector<double> eff_expected = { 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.98, 0.98, 0.98, 0.98, // i = 12
+                                        0.98, 0.98, 0.98, 0.98, 0.97, 0.97, 0.97, 0.97, 0.97, 0.97, 0.96, 0.96, 0.96, // i = 25
+                                        0.96, 0.96, 0.96, 0.96, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95, // i = 38
+                                        0.95, 0.95, 0.94, 0.93, 0.94, 0.94, 0.94, 0.94, 0.94, 0.94, 0.94, 0.94, 0.93, // i = 51
+                                        0.92, 0.92, 0.92, 0.92, 0.92, 0.92, 0.92, 0.93, 0.93, 0.93, 0.93, 0.93, 0.93, // i = 64
+                                        0.93, 0.93, 0.92, 0.92, 0.91, 0.89, 0.88, 0.89, 0.89, 0.89, 0.89, 0.89, 0.90, // i = 77
+                                        0.90, 0.90, 0.90, 0.90, 0.91, 0.91, 0.91, 0.91, 0.91, 0.91, 0.91, 0.91, 0.92, // i = 90
+                                        0.92, 0.92, 0.92, 0.92, 0.91, 0.91, 0.91, 0.91, // i = 98
     };
     for (size_t i = 0; i < eff_expected.size(); i++)
         EXPECT_NEAR(eff_vs_current[i], eff_expected[i], .01) << " i = " << i;
@@ -572,18 +572,19 @@ TEST_F(lib_battery_test, RoundtripEffVanadiumFlow){
 
 TEST_F(lib_battery_test, HourlyVsSubHourly)
 {
-    auto cap_hourly = new capacity_lithium_ion_t(q, SOC_init, SOC_max, SOC_min, dtHour);
-    auto volt_hourly = new voltage_dynamic_t(n_series, n_strings, Vnom_default, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom,
-                                             C_rate, resistance, 1);
+    n_strings = 444;
+    auto cap_hourly = new capacity_lithium_ion_t(Qfull * n_strings, SOC_init, SOC_max, SOC_min, dtHour);
+    auto volt_hourly = new voltage_dynamic_t(n_series, n_strings, Vnom_default, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom, Vcut,
+                                             C_rate, resistance, 1 );
 
-    auto cap_subhourly = new capacity_lithium_ion_t(q, SOC_init, SOC_max, SOC_min, dtHour);
-    auto volt_subhourly = new voltage_dynamic_t(n_series, n_strings, Vnom_default, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom,
-                                                C_rate, resistance, .5);
+    auto cap_subhourly = new capacity_lithium_ion_t(Qfull * n_strings, SOC_init, SOC_max, SOC_min, dtHour);
+    auto volt_subhourly = new voltage_dynamic_t(n_series, n_strings, Vnom_default, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom, Vcut,
+                                                C_rate, resistance, .5 );
 
     EXPECT_EQ(cap_hourly->q0(), cap_subhourly->q0());
     EXPECT_EQ(volt_hourly->battery_voltage(), volt_subhourly->battery_voltage());
 
-    double discharge_watts = 100.;
+    double discharge_watts = 100.22;
     while (cap_hourly->SOC() > 16){
         double I_hourly = volt_hourly->calculate_current_for_target_w(discharge_watts, cap_hourly->q0(), cap_hourly->qmax(), 0);
         cap_hourly->updateCapacity(I_hourly, 1);
@@ -614,16 +615,12 @@ TEST_F(lib_battery_test, AdaptiveTimestep) {
     size_t count = 0;
     while (count < 2000){
         double hourly_E = 0;
-        double hourly_V = 0;
-        double hourly_I = 0;
         double subhourly_E = 0;
         double adaptive_E = 0;
         while (batteryModel->SOC() > 15) {
             // run hourly
             batteryModel->runPower(kw_hourly);
             hourly_E += batteryModel->get_state().P;
-            hourly_V = batteryModel->get_state().V;
-            hourly_I = batteryModel->get_state().I;
             ASSERT_NEAR(batt_subhourly->get_params().lifetime->dt_hr, 0.25, 1e-3);
 
             // run subhourly
@@ -657,6 +654,7 @@ TEST_F(lib_battery_test, AdaptiveTimestep) {
             for (size_t i = 0; i < steps_per_hour; i++) {
                 batt_subhourly->runPower(-kw_hourly);
                 subhourly_E -= batt_subhourly->get_state().P / (double)steps_per_hour;
+
             }
             if (count % 2 == 0) {
                 batt_adaptive->ChangeTimestep(1);
@@ -683,7 +681,7 @@ TEST_F(lib_battery_test, AdaptiveTimestep) {
 
     }
 
-    EXPECT_NEAR(batteryModel->charge_maximum(), 577.09, 1e-2);
+    EXPECT_NEAR(batteryModel->charge_maximum(), 576.93, 1e-2);
     EXPECT_NEAR(batt_subhourly->charge_maximum(), 576.95, 1e-2);
     EXPECT_NEAR(batt_adaptive->charge_maximum(), 576.95, 1e-2);
 
@@ -751,9 +749,9 @@ TEST_F(lib_battery_test, ReplaceByCapacityTest){
 
 TEST_F(lib_battery_test, NMCLifeModel) {
     auto lifetimeModelNMC = new lifetime_nmc_t(dtHour);
-    auto thermalModelNMC = new thermal_t(1.0, mass, surface_area, resistance, Cp, h, T_room);
+    auto thermalModelNMC = new thermal_t(dtHour, mass, surface_area, resistance, Cp, h, T_room);
     auto capacityModelNMC = new capacity_lithium_ion_t(q, SOC_init, SOC_max, SOC_min, dtHour);
-    auto voltageModelNMC = new voltage_dynamic_t(n_series, n_strings, Vnom_default, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom,
+    auto voltageModelNMC = new voltage_dynamic_t(n_series, n_strings, Vnom_default, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom, Vcut,
                                          C_rate, resistance, dtHour);
     auto lossModelNMC = new losses_t(monthlyLosses, monthlyLosses, monthlyLosses);
 
@@ -781,13 +779,12 @@ TEST_F(lib_battery_test, NMCLifeModel) {
     EXPECT_NEAR(state->nmc_li_neg->c2_dt, 1.393e-5, 1e-8);
 }
 
-
 TEST_F(lib_battery_test, AdaptiveTimestepNMC) {
     auto lifetimeModelNMC = new lifetime_nmc_t(dtHour);
-    auto thermalModelNMC = new thermal_t(1.0, mass, surface_area, resistance, Cp, h, T_room);
+    auto thermalModelNMC = new thermal_t(dtHour, mass, surface_area, resistance, Cp, h, T_room);
     auto capacityModelNMC = new capacity_lithium_ion_t(q, SOC_init, SOC_max, SOC_min, dtHour);
     auto voltageModelNMC = new voltage_dynamic_t(n_series, n_strings, Vnom_default, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom,
-                                                 C_rate, resistance, dtHour);
+                                                 Vcut, C_rate, resistance, dtHour);
     auto lossModelNMC = new losses_t(monthlyLosses, monthlyLosses, monthlyLosses);
 
     batteryModel = std::unique_ptr<battery_t>(new battery_t(dtHour, chemistry, capacityModelNMC, voltageModelNMC, lifetimeModelNMC, thermalModelNMC, lossModelNMC));
@@ -807,25 +804,16 @@ TEST_F(lib_battery_test, AdaptiveTimestepNMC) {
     size_t count = 0;
     while (count < 2000){
         double hourly_E = 0;
-        double hourly_V = 0;
         double subhourly_E = 0;
         double adaptive_E = 0;
-        double subhourly_V = 0;
-        double adaptive_V = 0;
-        double hourly_I, subhourly_I, adaptive_I = 0;
         while (batteryModel->SOC() > 15) {
             // run hourly
             batteryModel->runPower(kw_hourly);
             hourly_E += batteryModel->get_state().P;
-            hourly_V = batteryModel->get_state().V;
-            hourly_I = batteryModel->get_state().I;
-
             // run subhourly
             for (size_t i = 0; i < steps_per_hour; i++) {
                 batt_subhourly->runPower(kw_hourly);
                 subhourly_E += batt_subhourly->get_state().P / (double)steps_per_hour;
-                subhourly_V = batt_subhourly->get_state().V;
-                subhourly_I = batt_subhourly->get_state().I;
             }
 
             // run adaptive
@@ -833,16 +821,12 @@ TEST_F(lib_battery_test, AdaptiveTimestepNMC) {
                 batt_adaptive->ChangeTimestep(1);
                 batt_adaptive->runPower(kw_hourly);
                 adaptive_E += batt_adaptive->get_state().P;
-                adaptive_V = batt_adaptive->get_state().V;
-                adaptive_I = batt_adaptive->get_state().I;
             }
             else {
                 batt_adaptive->ChangeTimestep(1. / (double)steps_per_hour);
                 for (size_t i = 0; i < steps_per_hour; i++) {
                     batt_adaptive->runPower(kw_hourly);
                     adaptive_E += batt_adaptive->get_state().P / (double)steps_per_hour;
-                    adaptive_V = batt_adaptive->get_state().V;
-                    adaptive_I = batt_adaptive->get_state().I;
                 }
             }
             EXPECT_NEAR(batteryModel->get_state().lifetime->day_age_of_battery,
@@ -853,38 +837,30 @@ TEST_F(lib_battery_test, AdaptiveTimestepNMC) {
         while (batteryModel->SOC() < 85) {
             batteryModel->runPower(-kw_hourly);
             hourly_E -= batteryModel->get_state().P;
-            hourly_V = batteryModel->get_state().V;
-            hourly_I = batteryModel->get_state().I;
 
             for (size_t i = 0; i < steps_per_hour; i++) {
                 batt_subhourly->runPower(-kw_hourly);
                 subhourly_E -= batt_subhourly->get_state().P / (double)steps_per_hour;
-                subhourly_V = batt_subhourly->get_state().V;
-                subhourly_I = batt_subhourly->get_state().I;
 
             }
             if (count % 2 == 0) {
                 batt_adaptive->ChangeTimestep(1);
                 batt_adaptive->runPower(-kw_hourly);
                 adaptive_E -= batt_adaptive->get_state().P;
-                adaptive_V = batt_adaptive->get_state().V;
-                adaptive_I = batt_adaptive->get_state().I;
             }
             else {
                 batt_adaptive->ChangeTimestep(1. / (double)steps_per_hour);
                 for (size_t i = 0; i < steps_per_hour; i++) {
                     batt_adaptive->runPower(-kw_hourly);
                     adaptive_E -= batt_adaptive->get_state().P / (double)steps_per_hour;
-                    adaptive_V = batt_adaptive->get_state().V;
-                    adaptive_I = batt_adaptive->get_state().I;
                 }
             }
         }
         count++;
 
         // max energy throughput error is about 10% from hourly runs and 15% from 15 min runs
-        ASSERT_NEAR(hourly_E, adaptive_E, hourly_E * 0.12) << "At count " <<  count;
-        ASSERT_NEAR(subhourly_E, adaptive_E, subhourly_E * 0.20) << "At count " << count;
+        ASSERT_NEAR(hourly_E, adaptive_E, hourly_E * 0.10) << "At count " <<  count;
+        ASSERT_NEAR(subhourly_E, adaptive_E, subhourly_E * 0.15) << "At count " << count;
 
         // max lifetime degradation error is about 15, out of charge max of ~600 -> 20 / 600 = 3.3 % error
         ASSERT_NEAR(batteryModel->charge_maximum(), batt_adaptive->charge_maximum(), 20) << "At count " <<  count;
@@ -892,11 +868,28 @@ TEST_F(lib_battery_test, AdaptiveTimestepNMC) {
 
     }
 
-    EXPECT_NEAR(batteryModel->charge_maximum(), 889.17, 1e-2);
-    EXPECT_NEAR(batt_subhourly->charge_maximum(), 881.46, 1e-2);
-    EXPECT_NEAR(batt_adaptive->charge_maximum(), 882.53, 1e-2);
+    EXPECT_NEAR(batteryModel->charge_maximum(), 883.92, 1e-2);
+    EXPECT_NEAR(batt_subhourly->charge_maximum(), 889.71, 1e-2);
+    EXPECT_NEAR(batt_adaptive->charge_maximum(), 887.37, 1e-2);
 
-    EXPECT_NEAR(batteryModel->SOC(), 89.95, 1e-2);
-    EXPECT_NEAR(batt_subhourly->SOC(), 88.73, 1e-2);
-    EXPECT_NEAR(batt_adaptive->SOC(), 88.64, 1e-2);
+    EXPECT_NEAR(batteryModel->SOC(), 86.93, 1e-2);
+    EXPECT_NEAR(batt_subhourly->SOC(), 87.25, 1e-2);
+    EXPECT_NEAR(batt_adaptive->SOC(), 87.46, 1e-2);
+}
+
+TEST_F(lib_battery_test, AdaptiveTimestepNonIntegerStep) {
+    auto lifetimeModelNMC = new lifetime_nmc_t(dtHour);
+    auto thermalModelNMC = new thermal_t(dtHour, mass, surface_area, resistance, Cp, h, T_room);
+    auto capacityModelNMC = new capacity_lithium_ion_t(q, SOC_init, SOC_max, SOC_min, dtHour);
+    auto voltageModelNMC = new voltage_dynamic_t(n_series, n_strings, Vnom_default, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom, 0,
+                                                 C_rate, resistance, dtHour);
+    auto lossModelNMC = new losses_t(monthlyLosses, monthlyLosses, monthlyLosses);
+
+    auto batt_adaptive = std::unique_ptr<battery_t>(new battery_t(dtHour, chemistry, capacityModelNMC, voltageModelNMC, lifetimeModelNMC, thermalModelNMC, lossModelNMC));
+
+    double dt_hr = 0.5;
+    batt_adaptive->ChangeTimestep(dt_hr);
+    batt_adaptive->runPower(100);
+
+    EXPECT_ANY_THROW(batt_adaptive->ChangeTimestep(1));
 }

@@ -56,6 +56,7 @@ namespace {
 		ssc_data_set_number(data, "batt_Vfull", 4.0999999046325684);
 		ssc_data_set_number(data, "batt_Vexp", 4.0500001907348633);
 		ssc_data_set_number(data, "batt_Vnom", 3.4000000953674316);
+        ssc_data_set_number(data, "batt_Vcut", 0.66 * 4.0999999046325684);
 		ssc_data_set_number(data, "batt_Vnom_default", 3.5999999046325684);
 		ssc_data_set_number(data, "batt_Qfull", 1);
 		ssc_data_set_number(data, "batt_Qfull_flow", 12148);
