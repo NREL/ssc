@@ -14,15 +14,15 @@ NAMESPACE_TEST(csp_trough, PowerTroughCmod, Default_NoFinancial)
     int errors = power_trough.RunModule();
     EXPECT_FALSE(errors);
     if (!errors) {
-        EXPECT_NEAR_FRAC(power_trough.GetOutput("annual_energy"), 369272759, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_trough.GetOutput("annual_thermal_consumption"), 596547, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_trough.GetOutput("annual_tes_freeze_protection"), 558505, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_trough.GetOutput("annual_field_freeze_protection"), 38042, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_trough.GetOutput("capacity_factor"), 42.20, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_trough.GetOutput("annual_W_cycle_gross"), 420379150, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_trough.GetOutput("kwh_per_kw"), 3696, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_trough.GetOutput("conversion_factor"), 87.84, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(power_trough.GetOutput("annual_total_water_use"), 80708, kErrorToleranceLo);
+        EXPECT_NEAR_FRAC(power_trough.GetOutput("annual_energy"), 369272759, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_trough.GetOutput("annual_thermal_consumption"), 596547, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_trough.GetOutput("annual_tes_freeze_protection"), 558505, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_trough.GetOutput("annual_field_freeze_protection"), 38042, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_trough.GetOutput("capacity_factor"), 42.20, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_trough.GetOutput("annual_W_cycle_gross"), 420379150, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_trough.GetOutput("kwh_per_kw"), 3696, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_trough.GetOutput("conversion_factor"), 87.84, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_trough.GetOutput("annual_total_water_use"), 80708, kErrorToleranceHi);
     }
 
     //ssc_data_t defaults = singleowner_defaults();
