@@ -169,7 +169,6 @@ void lifetime_nmc_t::integrateDegParams(double dt_day, double DOD, double T_batt
     state->nmc_li_neg->b1_dt += b1_dt_el;
     state->nmc_li_neg->b2_dt += b2_dt_el;
     state->nmc_li_neg->b3_dt += b3_dt_el;
-    state->nmc_li_neg->cum_dt += dt_day;
 
     // computations for q_neg
     double c2_dt_el = c2_ref * exp(-(Ea_c2 / Rug) * (1. / T_battery - 1. / T_ref))
