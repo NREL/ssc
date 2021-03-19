@@ -133,8 +133,7 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, ReadJson) {
     auto copy = json_to_ssc_data(js.c_str());
     double P, V, SOC;
 
-    mod = ssc_stateful_module_create("battery_stateful", copy);
-    copy = json_to_ssc_data(js.c_str());
+    EXPECT_TRUE(ssc_stateful_module_setup(mod, copy));
     EXPECT_TRUE(ssc_module_exec(mod, copy));
 
     ssc_data_get_number(copy, "P", &P);
@@ -184,7 +183,8 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, AdaptiveTimestep) {
     var_table data_copy;
     data_copy = *static_cast<var_table*>(data);
     ssc_data_set_number(&data_copy, "input_power", power);
-    auto adaptive_batt = ssc_stateful_module_create("battery_stateful", &data_copy);
+    auto adaptive_batt = ssc_module_create("battery_stateful");
+    ssc_stateful_module_setup(adaptive_batt, &data_copy);
 
     double P, hourly_E = 0, adaptive_E = 0;
 
