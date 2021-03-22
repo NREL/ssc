@@ -131,6 +131,17 @@ struct FluidFlow
     }
 };
 
+struct FluidFlows
+{
+    FluidFlow subsystem_side;       // e.g., flat plate array side
+    FluidFlow system_side;          // other side of HX
+
+    FluidFlows() {
+        subsystem_side = FluidFlow();
+        system_side = FluidFlow();
+    }
+};
+
 struct ExternalConditions
 {
     Weather weather;
@@ -248,7 +259,7 @@ public:
         const CollectorOrientation &collector_orientation, const ArrayDimensions &array_dimensions,
         const Pipe &inlet_pipe, const Pipe &outlet_pipe);
     void SetHxDesignProps(const HxDesignProps &hx_design_props);
-    FluidFlow RunWithHx(tm& timestamp, ExternalConditions& external_conditions, double T_out_target);
+    FluidFlows RunWithHx(tm& timestamp, ExternalConditions& external_conditions, double T_out_target);
     FluidFlow RunSimplifiedWithHx(tm& timestamp, ExternalConditions& external_conditions);
     const int ncoll();
     const double area_total();                             // [m2]

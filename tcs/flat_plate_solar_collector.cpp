@@ -433,7 +433,7 @@ void FlatPlateArray::SetHxDesignProps(const HxDesignProps& hx_design_props) {
     heat_exchanger_.SetHxDesignProps(hx_design_props);
 }
 
-FluidFlow FlatPlateArray::RunWithHx(tm& timestamp, ExternalConditions& external_conditions, double T_out_target /*C*/)
+FluidFlows FlatPlateArray::RunWithHx(tm& timestamp, ExternalConditions& external_conditions, double T_out_target /*C*/)
 {
     double T_in_hx_f = external_conditions.inlet_fluid_flow.temp;
     double mdot_external = external_conditions.inlet_fluid_flow.m_dot;
@@ -451,6 +451,9 @@ FluidFlow FlatPlateArray::RunWithHx(tm& timestamp, ExternalConditions& external_
 
     if (T_out_target - T_in_hx_f < T_min_rise || Q_fp_est <= 0.) {
         fp_array_is_on = false;
+        mdot_fp = 0.;
+        T_f_hx_out = T_in_hx_f;
+        T_out_fp = external_conditions.weather.ambient_temp;       // just a placeholder, not accurate
     }
     else {
         double T_f_hx_avg_est = 0.5 * (T_in_hx_f + T_out_target);
@@ -484,6 +487,7 @@ FluidFlow FlatPlateArray::RunWithHx(tm& timestamp, ExternalConditions& external_
         }
         else {
             fp_array_is_on = false;
+            mdot_fp = 0.;
             T_f_hx_out = T_in_hx_f;
             T_out_fp = external_conditions.weather.ambient_temp;       // just a placeholder, not accurate
 
@@ -502,7 +506,8 @@ FluidFlow FlatPlateArray::RunWithHx(tm& timestamp, ExternalConditions& external_
         // Is there a max PTC inlet temperature?? Currently assuming no.
 
         if (T_out_fp > MaxAllowedTemp()) {
-            fp_array_is_on = false;
+            //fp_array_is_on = false;
+            fp_array_is_on = true;
         }
         else if (T_f_hx_out - T_in_hx_f < T_min_rise) {	// flat plate array isn't heating the system temp. much
             fp_array_is_on = false;
@@ -512,18 +517,20 @@ FluidFlow FlatPlateArray::RunWithHx(tm& timestamp, ExternalConditions& external_
         }
     }
 
-    FluidFlow outlet_fluid_flow;
-    outlet_fluid_flow.fluid = external_conditions.inlet_fluid_flow.fluid;
-    outlet_fluid_flow.m_dot = external_conditions.inlet_fluid_flow.m_dot;
-    if (fp_array_is_on) {
-        outlet_fluid_flow.temp = T_f_hx_out;
-    }
-    else {
-        outlet_fluid_flow.temp = T_in_hx_f;		// bypassing HX and flat plate array
+    if (!fp_array_is_on) {
+        T_f_hx_out = T_in_hx_f;         // bypassing HX and flat plate array
         mdot_fp = 0.;
     }
 
-    return outlet_fluid_flow;
+    FluidFlows fluid_flows;
+    fluid_flows.subsystem_side.fluid = *GetFluid();
+    fluid_flows.subsystem_side.temp = T_out_fp;
+    fluid_flows.subsystem_side.m_dot = mdot_fp;
+    fluid_flows.system_side.fluid = external_conditions.inlet_fluid_flow.fluid;
+    fluid_flows.system_side.temp = T_f_hx_out;
+    fluid_flows.system_side.m_dot = external_conditions.inlet_fluid_flow.m_dot;
+
+    return fluid_flows;
 }
 
 FluidFlow FlatPlateArray::RunSimplifiedWithHx(tm& timestamp, ExternalConditions& external_conditions)
