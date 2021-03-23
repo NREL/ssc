@@ -65,6 +65,9 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 
     {C_csp_trough_collector_receiver::E_T_TROUGHS_IN, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_csp_trough_collector_receiver::E_M_DOT_FLAT_PLATES, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_csp_trough_collector_receiver::E_Q_GAIN_FLAT_PLATES, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_csp_trough_collector_receiver::E_Q_LOSS_FLAT_PLATES, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_csp_trough_collector_receiver::E_Q_NET_FLAT_PLATES, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 
 	csp_info_invalid
 };
@@ -686,7 +689,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 
 		HxDesignProps hx_design_props = HxDesignProps();
 		hx_design_props.dT_approach = T_approach_hx_;
-		hx_design_props.duty = flat_plate_array_.RatedPowerGain() * 1.e-3;	// [kW]
+		hx_design_props.duty = flat_plate_array_.RatedHeatGain();	// [kWt]
 		hx_design_props.external_fluid_id = m_Fluid;
 		hx_design_props.subsystem_fluid_id = kFluidFp;
 		hx_design_props.T_in_hot = m_T_PTC_in_des - 273.15 + T_approach_hx_;
@@ -1052,14 +1055,18 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 	external_conditions.inlet_fluid_flow.temp = m_T_loop_in - 273.15;
 	external_conditions.albedo = 0.2;
 
-	FluidFlows outlet_fluid_flows = flat_plate_array_.RunWithHx(
+	FluidFlowsAndSystemHeats fluid_flows_and_system_heats = flat_plate_array_.RunWithHx(
 		datetime, external_conditions, m_T_PTC_in_des - 273.15);
 
 	//FluidFlow outlet_fluid_flow = flat_plate_array_.RunSimplifiedWithHx(
 	//	datetime, external_conditions);
 
-	m_m_dot_fp = outlet_fluid_flows.subsystem_side.m_dot;
-	m_T_troughs_in = outlet_fluid_flows.system_side.temp + 273.15;
+	m_m_dot_fp = fluid_flows_and_system_heats.fluid_flows.subsystem_side.m_dot;
+	m_T_troughs_in = fluid_flows_and_system_heats.fluid_flows.system_side.temp + 273.15;
+	m_Q_gain_fp = fluid_flows_and_system_heats.Q_gain_subsystem;
+	m_Q_loss_fp = fluid_flows_and_system_heats.Q_loss_subsystem;
+	m_Q_net_fp = m_Q_gain_fp - m_Q_loss_fp;
+
 	// end Flat plate array
 
     double P_intc_in = m_P_field_in;
@@ -1890,6 +1897,9 @@ void C_csp_trough_collector_receiver::set_output_value()
 
     mc_reported_outputs.value(E_T_TROUGHS_IN, m_T_troughs_in - 273.15);						//[C]
 	mc_reported_outputs.value(E_M_DOT_FLAT_PLATES, m_m_dot_fp);								//[kg/s]
+	mc_reported_outputs.value(E_Q_GAIN_FLAT_PLATES, m_Q_gain_fp);							//[kWt]
+	mc_reported_outputs.value(E_Q_LOSS_FLAT_PLATES, m_Q_loss_fp);							//[kWt]
+	mc_reported_outputs.value(E_Q_NET_FLAT_PLATES, m_Q_net_fp);							    //[kWt]
 
 	return;
 }

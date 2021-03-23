@@ -315,6 +315,9 @@ static var_info _cm_vtab_trough_physical_process_heat[] = {
     { SSC_OUTPUT,   SSC_ARRAY,   "W_dot_field_pump",                    "Field htf pumping power",                      "MWe",   "",    "trough_field",        "*",        "",     "" },
     { SSC_OUTPUT,   SSC_ARRAY,   "T_troughs_in",                        "Troughs inlet temperature after flat plate collectors", "C", "", "trough_field",      "*",        "",     "" },
     { SSC_OUTPUT,   SSC_ARRAY,   "m_dot_flat_plates",                   "Mass flow in flat plate array",                "kg/s",  "",    "trough_field",        "*",        "",     "" },
+    { SSC_OUTPUT,   SSC_ARRAY,   "Q_gain_flat_plates",                  "Heat gain in flat plate array",                "kWt",   "",    "trough_field",        "*",        "",     "" },
+    { SSC_OUTPUT,   SSC_ARRAY,   "Q_loss_flat_plates",                  "Heat loss in flat plate array",                "kWt",   "",    "trough_field",        "*",        "",     "" },
+    { SSC_OUTPUT,   SSC_ARRAY,   "Q_net_flat_plates",                   "Net heat gain in flat plate array",            "kWt",   "",    "trough_field",        "*",        "",     "" },
 
     { SSC_INOUT,   SSC_NUMBER,  "flat_plates_in_series",               "Number of flat plate collectors in series",    "", "",         "trough_field",         "*",        "",     "" },
     { SSC_INOUT,   SSC_NUMBER,  "flat_plates_in_parallel",             "Number of flat plate collectors in parallel",  "", "",         "trough_field",         "*",        "",     "" },
@@ -689,6 +692,9 @@ public:
         c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_W_DOT_PUMP, allocate("W_dot_field_pump", n_steps_fixed), n_steps_fixed);			//[MWe]
         c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_T_TROUGHS_IN, allocate("T_troughs_in", n_steps_fixed), n_steps_fixed);			//[C]
         c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_M_DOT_FLAT_PLATES, allocate("m_dot_flat_plates", n_steps_fixed), n_steps_fixed);	//[kg/s]
+        c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_GAIN_FLAT_PLATES, allocate("Q_gain_flat_plates", n_steps_fixed), n_steps_fixed); //[kWt]
+        c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_LOSS_FLAT_PLATES, allocate("Q_loss_flat_plates", n_steps_fixed), n_steps_fixed); //[kWt]
+        c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_NET_FLAT_PLATES, allocate("Q_net_flat_plates", n_steps_fixed), n_steps_fixed);	  //[kWt]
 
         // ********************************
         // ********************************

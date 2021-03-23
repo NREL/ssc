@@ -142,6 +142,34 @@ struct FluidFlows
     }
 };
 
+struct HeatAndTempInOut
+{
+    double Q_gain;                  // [kWt]
+    double Q_loss;                  // [kWt]
+    double T_in;                    // [C]
+    double T_out;                   // [C]
+
+    HeatAndTempInOut() {
+        Q_gain = std::numeric_limits<double>::quiet_NaN();
+        Q_loss = std::numeric_limits<double>::quiet_NaN();
+        T_in = std::numeric_limits<double>::quiet_NaN();
+        T_out = std::numeric_limits<double>::quiet_NaN();
+    }
+};
+
+struct FluidFlowsAndSystemHeats
+{
+    FluidFlows fluid_flows;
+    double Q_gain_subsystem;       // [kWt]
+    double Q_loss_subsystem;       // [kWt]
+
+    FluidFlowsAndSystemHeats() {
+        fluid_flows = FluidFlows();
+        Q_gain_subsystem = std::numeric_limits<double>::quiet_NaN();
+        Q_loss_subsystem = std::numeric_limits<double>::quiet_NaN();
+    }
+};
+
 struct ExternalConditions
 {
     Weather weather;
@@ -180,14 +208,14 @@ public:
         double albedo /*-*/);
     const static double IncidentIrradiance(const TimeAndPosition& time_and_position,
         const Weather& weather,
-        double albedo  /*-*/);   // [W/m2]
-    const double RatedPowerGain();      // [W]
+        double albedo  /*-*/);          // [W/m2]
+    const double RatedHeatGain();       // [kWt]
     const double RatedMassFlow();       // [kg/s]
     const double MaxAllowedTemp();      // [C]
     const double MaxMassFlow();         // [kg/s]
-    const double EstimatePowerGain(double POA /*W/m2*/, double T_in /*C*/, double T_amb /*C*/);   // [W]
-    const double UsefulPowerGain(const TimeAndPosition &time_and_position, const ExternalConditions &external_conditions);  // [W]
-    const double T_out(const TimeAndPosition &time_and_position, const ExternalConditions &external_conditions);            // [C]
+    const double EstimateHeatGain(double POA /*W/m2*/, double T_in /*C*/, double T_amb /*C*/);   // [kWt]
+    const HeatAndTempInOut HeatGainAndLoss(const TimeAndPosition &time_and_position, const ExternalConditions &external_conditions);  // [W]
+    const HeatAndTempInOut HeatFlowsAndOutletTemp(const TimeAndPosition &time_and_position, const ExternalConditions &external_conditions);            // [C]
     const double area_coll();           // [m2]
     void area_coll(double collector_area /*m2*/);
     const CollectorTestSpecifications TestSpecifications();
@@ -198,14 +226,14 @@ private:
     double area_coll_;                  // [m2] collector area
     double m_dot_test_;                 // [kg/s] mass flow through collector during test
     double heat_capacity_rate_test_;    // [kW/K] m_dot * c_p during ratings test
-    const static double kMDotRated_  ; // [kg/s] based on published Heliodyne specs for Gobi 410
+    const static double kMDotRated_  ;  // [kg/s] based on published Heliodyne specs for Gobi 410
     const double AbsorbedIrradianceOverTauAlphaN(const CollectorOrientation &collector_orientation,
         const PoaIrradianceComponents &poa_irradiance_components);      // [W/m2]
-    const double AbsorbedRadiantPower(double transmitted_irradiance /*W/m2*/,
+    const double AbsorbedRadiantHeat(double transmitted_irradiance /*W/m2*/,
         const FluidFlow &inlet_fluid_flow,
-        double T_amb /*C*/);    // [W]
-    const double ThermalPowerLoss(const FluidFlow &inlet_fluid_flow,
-        double T_amb /*C*/);    // [W]
+        double T_amb /*C*/);    // [kWt]
+    const double ThermalHeatLoss(const FluidFlow &inlet_fluid_flow,
+        double T_amb /*C*/);    // [kWt]
 };
 
 
@@ -216,7 +244,7 @@ public:
     Pipe();
     Pipe(double pipe_diam /*m*/, double pipe_k /*W/m2-K*/, double pipe_insul /*m*/, double pipe_length /*m*/);
     const double pipe_od();             // [m]
-    const double ThermalPowerLoss(double T_in /*C*/, double T_amb /*C*/);    // [W]
+    const double ThermalHeatLoss(double T_in /*C*/, double T_amb /*C*/);    // [kWt]
     const double T_out(double T_in /*C*/, double T_amb /*C*/, double heat_capacity_rate /*kW/K*/);  // [C]
 private:
     double pipe_diam_;                  // [m]
@@ -259,7 +287,7 @@ public:
         const CollectorOrientation &collector_orientation, const ArrayDimensions &array_dimensions,
         const Pipe &inlet_pipe, const Pipe &outlet_pipe);
     void SetHxDesignProps(const HxDesignProps &hx_design_props);
-    FluidFlows RunWithHx(tm& timestamp, ExternalConditions& external_conditions, double T_out_target);
+    FluidFlowsAndSystemHeats RunWithHx(tm& timestamp, ExternalConditions& external_conditions, double T_out_target);
     FluidFlow RunSimplifiedWithHx(tm& timestamp, ExternalConditions& external_conditions);
     const int ncoll();
     const double area_total();                             // [m2]
@@ -269,13 +297,12 @@ public:
     void resize_num_in_parallel(double T_in_des_external /*C*/, double dT_design_external /*K*/, double mdot_design_external /*kg/s*/, HTFProperties& fluid_external);
     ArrayDimensions array_size() const;
     const double IncidentIrradiance(const tm& timestamp, const ExternalConditions& external_conditions);   // [W/m2] POA
-    const double RatedPowerGain();      // [W]
+    const double RatedHeatGain();       // [kWt]
     const double RatedMassFlow();       // [kg/s]
     const double MaxAllowedTemp();      // [C]
     const double MaxMassFlow();         // [kg/s]
-    const double EstimatePowerGain(double POA /*W/m2*/, double T_in /*C*/, double T_amb /*C*/);            // [W]
-    const double UsefulPowerGain(const tm &timestamp, const ExternalConditions &external_conditions);      // [W]
-    const double T_out(const tm &timestamp, const ExternalConditions &external_conditions);                // [C]
+    const double EstimateHeatGain(double POA /*W/m2*/, double T_in /*C*/, double T_amb /*C*/);                              // [kWt]
+    const HeatAndTempInOut HeatFlowsAndOutletTemp(const tm &timestamp, const ExternalConditions &external_conditions);      // [C]
     void SetFluid(int fluid_id);
     HTFProperties* GetFluid();
 private:
@@ -388,6 +415,8 @@ public:
     double q_dot_hx_ = std::numeric_limits<double>::quiet_NaN();
     double dT_hot_ = std::numeric_limits<double>::quiet_NaN();
     double dT_cold_ = std::numeric_limits<double>::quiet_NaN();
+    double Q_gain_fp_ = std::numeric_limits<double>::quiet_NaN();
+    double Q_loss_fp_ = std::numeric_limits<double>::quiet_NaN();
     virtual int operator()(double T_in_fp /*C*/, double* diff_T_in_fp /*C*/);
 
 private:

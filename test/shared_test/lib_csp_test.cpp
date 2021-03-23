@@ -113,10 +113,12 @@ TEST_F(FlatPlateCollectorTest, TestFlatPlateCollectorNominalOperation)
     TimeAndPosition time_and_position = default_time_and_position();
     ExternalConditions external_conditions = default_external_conditions();
 
-    double useful_power_gain = flat_plate_collector_->UsefulPowerGain(time_and_position, external_conditions);  // [W]
-    double T_out = flat_plate_collector_->T_out(time_and_position, external_conditions);                        // [C]
+    HeatAndTempInOut heat_and_temp_in_out = flat_plate_collector_->HeatGainAndLoss(time_and_position, external_conditions);  // [kWt]
+    double useful_power_gain = heat_and_temp_in_out.Q_gain - heat_and_temp_in_out.Q_loss;
+    heat_and_temp_in_out = flat_plate_collector_->HeatFlowsAndOutletTemp(time_and_position, external_conditions);                    // [C]
+    double T_out = heat_and_temp_in_out.T_out;
 
-    EXPECT_NEAR(useful_power_gain, 1.659e3, 1.659e3 * m_error_tolerance_hi);
+    EXPECT_NEAR(useful_power_gain, 1.659, 1.659 * m_error_tolerance_hi);
     EXPECT_NEAR(T_out, 50.26, 50.26 * m_error_tolerance_hi);
 }
 
@@ -141,10 +143,12 @@ TEST_F(FlatPlateArrayTest, TestFlatPlateArrayOfOneNominalOperation)
     ExternalConditions external_conditions = default_external_conditions();
     external_conditions.inlet_fluid_flow.temp = 44.86;
 
-    double useful_power_gain = flat_plate_array_->UsefulPowerGain(timestamp, external_conditions);  // [W]
-    double T_out = flat_plate_array_->T_out(timestamp, external_conditions);                        // [C]
+    //double useful_power_gain = flat_plate_array_->HeatGainAndLoss(timestamp, external_conditions);  // [kWt]
+    HeatAndTempInOut heat_and_temp_in_out = flat_plate_array_->HeatFlowsAndOutletTemp(timestamp, external_conditions);                        // [C]
+    double useful_power_gain = heat_and_temp_in_out.Q_gain - heat_and_temp_in_out.Q_loss;
+    double T_out = heat_and_temp_in_out.T_out;
 
-    EXPECT_NEAR(useful_power_gain, 1.587e3, 1.587e3 * m_error_tolerance_hi);
+    EXPECT_NEAR(useful_power_gain, 1.587, 1.587 * m_error_tolerance_hi);
     EXPECT_NEAR(T_out, 49.03, 49.03 * m_error_tolerance_hi);
 }
 

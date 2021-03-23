@@ -79,7 +79,10 @@ public:
 		E_W_DOT_SCA_TRACK,	//[MWe]
 		E_W_DOT_PUMP,		//[MWe]
         E_T_TROUGHS_IN,     //[C]
-		E_M_DOT_FLAT_PLATES //[kg/s]
+		E_M_DOT_FLAT_PLATES, //[kg/s]
+		E_Q_GAIN_FLAT_PLATES, //[kWt]
+		E_Q_LOSS_FLAT_PLATES, //[kWt]
+		E_Q_NET_FLAT_PLATES //[kWt]
 	};
 
 	C_csp_reported_outputs mc_reported_outputs;
@@ -202,6 +205,9 @@ private:
 
     double m_T_troughs_in;
 	double m_m_dot_fp;
+	double m_Q_gain_fp;
+	double m_Q_loss_fp;
+	double m_Q_net_fp;
 
 
 	// Classes that are defined as member data so are re-declared each time performance function is called
