@@ -1646,6 +1646,7 @@ public:
 
 // main loop
 		c = 0;
+        ssc_number_t* br_bin_ts = allocate("buy_rate_ts", m_num_rec_yearly);
 		// process one month at a time
 		for (m = 0; m < (int)rate.m_month.size(); m++)
 		{
@@ -2038,6 +2039,7 @@ public:
 // main loop
 		c = 0; // hourly count
         ssc_number_t* br_bin = allocate("buy_rate_ts", size_t(m_num_rec_yearly));
+        ssc_number_t br_bin_it;
 		// process one timestep at a time
 		for (m = 0; m < 12; m++)
 		{
@@ -2114,13 +2116,14 @@ public:
                                             surplus_tier = (int)curr_month.ec_tou_ub.ncols() - 1;
 
                                         sr = curr_month.ec_tou_sr.at(row, surplus_tier);
+                                        br_bin[c] = (step_surplus_energy * sr_base + upper_tier_energy * sr) / (step_surplus_energy + upper_tier_energy);
                                         tier_credit += upper_tier_energy * tier_credit * rate_esc;
                                         curr_month.ec_energy_surplus.at(row, surplus_tier) += (ssc_number_t)upper_tier_energy;
                                     }
                                     else {
                                         tier_energy = energy_surplus;
                                         sr = curr_month.ec_tou_sr.at(row, surplus_tier);
-
+                                        br_bin[c] = curr_month.ec_tou_br.at(row, surplus_tier);
                                         tier_credit = tier_energy * sr * rate_esc;
                                         curr_month.ec_energy_surplus.at(row, surplus_tier) += (ssc_number_t)tier_energy;
                                     }
@@ -2198,6 +2201,7 @@ public:
                                         
                                         tier_charge = upper_tier_energy * br * rate_esc;
                                         charge_amt += tier_charge;
+                                        br_bin_it = (step_deficit_energy * br_base + upper_tier_energy * br) / (step_deficit_energy + upper_tier_energy);
                                         br_bin[c] = (step_deficit_energy * br_base + upper_tier_energy * br) / (step_deficit_energy + upper_tier_energy) ;
                                         curr_month.ec_energy_use.at(row, deficit_tier) += (ssc_number_t)upper_tier_energy;
                                         curr_month.ec_charge.at(row, deficit_tier) += (ssc_number_t)tier_charge;
@@ -2205,6 +2209,7 @@ public:
                                     else {
                                         tier_energy = energy_deficit;
                                         br = curr_month.ec_tou_br.at(row, deficit_tier);
+                                        br_bin_it = br;
                                         br_bin[c] = br;
                                         charge_amt = tier_energy * br * rate_esc;
                                         curr_month.ec_energy_use.at(row, deficit_tier) += (ssc_number_t)tier_energy;
@@ -2223,8 +2228,11 @@ public:
 								energy_charge[c] = (ssc_number_t)charge_amt;
 							}
                             //br_bin[c] = curr_month.ec_tou_br.at(row, deficit_tier);
-                            if (br_bin[c] == 0)
-                                br_bin[c] = curr_month.ec_tou_br.at(row, deficit_tier);
+                            /*if (br_bin[c] == 0) {
+                                br_bin_it = curr_month.ec_tou_br.at(row, deficit_tier);
+                                br_bin[c] = br_bin_it;
+                            }*/
+
 						}
 						// end of energy charge
 

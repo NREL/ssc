@@ -51,7 +51,7 @@ static var_info _cm_vtab_singleowner[] = {
     { SSC_INPUT,        SSC_ARRAY,      "year1_hourly_salespurchases_with_system",     "Electricity sales/purchases with system (year 1 hourly)",    "$", "",          "Time Series",             "",                         "",                   "" },
     { SSC_INPUT,        SSC_ARRAY,      "grid_to_batt",                               "Electricity to battery from grid",                      "kW",      "",                       "Battery",       "",                           "",                              "" },
     { SSC_INPUT,        SSC_ARRAY,      "batt_to_grid",                               "Electricity to grid from battery",                      "kW",      "",                       "Battery",       "",                           "",                              "" },
-    { SSC_INPUT,        SSC_ARRAY,      "buy_rate_ts",                               "TOU buy rates",                      "$",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_INPUT,        SSC_ARRAY,      "buy_rate_ts", "TOU buy rate for energy charges (year 1 hourly)", "", "", "Time Series", "", "", "" },
 
     { SSC_INPUT,        SSC_ARRAY,      "batt_capacity_percent",                      "Battery relative capacity to nameplate",                 "%",        "",                     "Battery",       "",                           "",                              "" },
 
