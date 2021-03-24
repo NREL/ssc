@@ -527,6 +527,42 @@ var_info vtab_technology_outputs[] = {
 
     var_info_invalid };
 
+ssc_number_t* gen_heatmap(compute_module* cm, double step_per_hour) {
+    if (!cm)
+        return 0;
+    size_t count = 8760 * step_per_hour;
+    size_t imonth = 0;
+    size_t iday = 0;
+    size_t hour;
+    size_t count_gen;
+    ssc_number_t* p_gen = cm->as_array("gen", &count_gen);
+    //ssc_number_t* p_annual_energy_dist_time = allocate("annual_energy_distribution_time", 25, 13);
+    ssc_number_t* p_annual_energy_dist_time = cm->allocate("annual_energy_distribution_time", 25, 366);
+    //ssc_number_t* p_annual_energy_dist_time;
+    for (size_t i = 0; i < count; i++) {
+        //hour = floor(fmod(double(i),24) / step_per_hour);
+        hour = fmod(floor(double(i) / step_per_hour), 24);
+        imonth = util::month_of(double(floor(double(i) / step_per_hour)));
+        iday = floor(double(i) / 24) ;
+        for (size_t m = 0; m < 366; m++) {
+            for (size_t h = 0; h < 25; h++) {
+                if (i == 0) {
+                    p_annual_energy_dist_time[h * 366] = (h - 1);
+                    p_annual_energy_dist_time[m] = m;
+                }
+                if (iday == m && hour == (h - 1) && m != 365) {
+                    p_annual_energy_dist_time[h * 366 + m + 1] += p_gen[i] * 1 / step_per_hour;
+                    break;
+                }
+            }
+        }
+    }
+    p_annual_energy_dist_time[0] = 0;
+    return p_annual_energy_dist_time;
+
+
+}
+
 var_info vtab_p50p90[] = {
         { SSC_INPUT, SSC_NUMBER ,  "total_uncert"                 , "Total uncertainty in energy production as percent of annual energy", "%"                                   , ""                                      , "Uncertainty"          , ""              , "MIN=0,MAX=100"         , ""},
         { SSC_OUTPUT, SSC_NUMBER , "annual_energy_p75"            , "Annual energy with 75% probability of exceedance"                  , "kWh"                                 , ""                                      , "Uncertainty"          , ""              , ""                      , ""},
