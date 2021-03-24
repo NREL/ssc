@@ -54,6 +54,7 @@ struct lifetime_nmc_state {
     // for complex cycling of battery, b1 = summation of b1_dt * dt_day over a day
     // lifetime capacity updated after 24 hours elapse.
 
+    double cum_dt;      // cumulated dt elapsed
     double b1_dt;
     double b2_dt;
     double b3_dt;
@@ -131,6 +132,12 @@ protected:
     double beta_c2 = 4.54;      // 1
 
     double runQneg();
+
+    /// compute lifetime degradation coefficients for current time step
+    void integrateDegParams(double dt_day, double DOD, double T_battery);
+
+    /// Integrate degradation from QLi and Qneg over one day, resets `x_dt` values
+    void integrateDegLoss(double DOD, double T_battery);
 
     void initialize();
 };

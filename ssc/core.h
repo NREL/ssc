@@ -171,6 +171,7 @@ public:
 	virtual ~compute_module();
 
 	void set_name(const std::string &n) { name = n; }
+	std::string get_name() { return name; }
 	bool update( const std::string &current_action, float percent_done, float time=-1.0 );
 	void log( const std::string &msg, int type=SSC_NOTICE, float time=-1.0 );
 	bool extproc( const std::string &command, const std::string &workdir );
@@ -178,7 +179,7 @@ public:
 	log_item *log(int index);
 	var_info *info(int index);
 
-	bool compute( handler_interface *handler, var_table *data );
+    virtual bool compute( handler_interface *handler, var_table *data );
 
 
 	/* on_extproc_output: this function will be called by the
@@ -313,10 +314,10 @@ public:
 
 #define DEFINE_STATEFUL_MODULE_ENTRY(name, desc, ver) \
     static compute_module *_create_ ## name () { auto x = new cm_ ## name; x->set_name(#name); return x; } \
-    static compute_module *_create_stateful_ ## name (var_table* vt) { auto x = new cm_ ## name (vt); \
-        x->set_name(#name); return x; } \
+    static int _setup_ ## name (compute_module *cm, var_table *vt) { auto cms = dynamic_cast<cm_ ##name *>(cm); \
+        if (!cms) return 0; return cms->setup(vt);  } \
 	module_entry_info cm_entry_ ## name = { \
-		#name, desc, ver, _create_ ## name, _create_stateful_ ## name }; \
+		#name, desc, ver, _create_ ## name, _setup_ ## name }; \
 
 struct module_entry_info
 {
@@ -324,7 +325,7 @@ struct module_entry_info
 	const char *description;
 	int version;
 	compute_module * (*f_create)();
-	compute_module * (*f_create_stateful)(var_table*);
+	int (*f_setup_stateful)(compute_module*, var_table*);       // return 1 for success, otherwise 0 with errors in log
 };
 
 
