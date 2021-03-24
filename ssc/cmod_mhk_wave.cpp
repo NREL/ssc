@@ -87,8 +87,8 @@ static var_info _cm_vtab_mhk_wave[] = {
 
 	{ SSC_OUTPUT,			SSC_NUMBER,			"device_average_power",					"Average power production of a single device",											"kW",			"",				"MHKWave",			"*",						"",							"" },
 	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual energy production of array",											"kWh",			"",				"MHKWave",			"*",						"",							"" },
-    { SSC_OUTPUT,           SSC_ARRAY,          "hourly_energy",                        "Hourly energy production of array",                                            "kWh",          "", "Time Series",          "wave_resource_model_choice=1",                        "",          "" },
-    { SSC_OUTPUT,           SSC_ARRAY,          "hourly_energy_interp",                        "Hourly energy production of array (8760)",                                            "kWh",          "", "Time Series",          "wave_resource_model_choice=1",                        "",          "" },
+    { SSC_OUTPUT,           SSC_ARRAY,          "hourly_energy",                        "Hourly energy production of device",                                            "kWh",          "", "Time Series",          "wave_resource_model_choice=1",                        "",          "" },
+    { SSC_OUTPUT,           SSC_ARRAY,          "gen",                        "Device power generated",                                            "kW",          "", "Time Series",          "",                        "",          "" },
 
     { SSC_OUTPUT,           SSC_ARRAY,          "sig_wave_height_index_mat",            "Wave height index locations for time series",                      "m",                         "", "MHKWave",          "wave_resource_model_choice=1",                        "",          "" },
     { SSC_OUTPUT,           SSC_ARRAY,          "sig_wave_height_index_mat_interp",            "Wave height index locations for time series",                      "m",                         "", "Time Series",          "wave_resource_model_choice=1",                        "",          "" },
@@ -192,7 +192,7 @@ public:
 				    if (j == 0 || i == 0)	//Where (i = 0) is the row header, and (j =  0) is the column header.
 					    p_annual_energy_dist[k] = (ssc_number_t) wave_resource_matrix.at(i, j);
 				    else {
-					    p_annual_energy_dist[k] = (ssc_number_t)(wave_resource_matrix.at(i,j) * wave_power_matrix.at(i,j) * 8760.0 / 100.0);
+					    p_annual_energy_dist[k] = (ssc_number_t)(wave_resource_matrix.at(i,j) * wave_power_matrix.at(i,j) * 8760.0 / 100.0) * (1-total_loss/100) * number_devices;
 					    annual_energy += p_annual_energy_dist[k];
 					    device_average_power += (p_annual_energy_dist[k] / 8760);
 					    //Checker to ensure frequency distribution adds to >= 99.5%:
@@ -316,7 +316,7 @@ public:
             std::vector<double> month = as_vector_double("month");
             std::vector<double> hour = as_vector_double("time_check");
             ssc_number_t* energy_hourly = allocate("hourly_energy", number_records);
-            ssc_number_t* energy_hourly_interp = allocate("hourly_energy_interp", number_hours);
+            ssc_number_t* energy_hourly_interp = allocate("gen", number_hours);
             ssc_number_t* sig_wave_height_index_mat = allocate("sig_wave_height_index_mat", number_records);
             ssc_number_t* sig_wave_height_index_location = allocate("sig_wave_height_index_location", number_records);
             ssc_number_t* sig_wave_height_index_mat_interp = allocate("sig_wave_height_index_mat_interp", number_hours);
@@ -325,9 +325,10 @@ public:
             ssc_number_t* energy_period_index_mat_interp = allocate("energy_period_index_mat_interp", number_hours);
             ssc_number_t* wave_power_index_mat = allocate("wave_power_index_mat", number_records);
             ssc_number_t* p_annual_energy_dist = allocate("annual_energy_distribution", wave_power_matrix.nrows(), wave_power_matrix.ncols());
-            ssc_number_t* p_annual_energy_dist_time = allocate("annual_energy_distribution_time", 9, 13);
+            //ssc_number_t* p_annual_energy_dist_time = allocate("annual_energy_distribution_time", 9, 13);
             double ts_significant_wave_height, ts_energy_period;
-            
+            double resource_vect_checker = 0;
+            size_t iday = 0;
             int hour_step = number_hours / number_records;
             /* Bilinear interpolation of power matrix for time series analysis*/
             double Q11, Q12, Q21, Q22;
@@ -350,6 +351,8 @@ public:
             
             ssc_number_t sig_wave_height_index = 0;
             ssc_number_t energy_period_index = 0;
+            
+            ssc_number_t* p_annual_energy_dist_time = allocate("annual_energy_distribution_time", 9, 366);
             for (size_t i = 0; i < number_records; i++) {
                 ts_significant_wave_height = wave_height_input[i];
                 ts_energy_period = wave_period_input[i];
@@ -357,8 +360,8 @@ public:
                     if (abs(ts_significant_wave_height - wave_resource_matrix.at(size_t(j), 0)) < 0.25) {
                         sig_wave_height_index = j;
                         sig_wave_height_index_mat[i] = sig_wave_height_index;
-                        
-                       
+
+
                     }
                     if (i == 0) p_annual_energy_dist[size_t(j) * 22] = wave_resource_matrix.at(j, 0);
                 }
@@ -370,21 +373,22 @@ public:
                     if (i == 0) p_annual_energy_dist[size_t(m)] = wave_resource_matrix.at(0, m);
                 }
 
-            
-                energy_hourly[i] = (ssc_number_t)(wave_power_matrix.at(size_t(sig_wave_height_index), size_t(energy_period_index))) * hour_step;
+
+                energy_hourly[i] = (ssc_number_t)(wave_power_matrix.at(size_t(sig_wave_height_index), size_t(energy_period_index))) * hour_step * (1 - total_loss / 100) * number_devices;
                 p_annual_energy_dist[size_t(sig_wave_height_index) * 22 + size_t(energy_period_index)] += energy_hourly[i];
-                
-                energy_hourly_interp[i*3] = energy_hourly[i];
-                energy_hourly_interp[i*3 + 1] = energy_hourly[i];
-                energy_hourly_interp[i*3 + 2] = energy_hourly[i];
-                for (size_t m = 0; m < 13; m++) {
+
+                energy_hourly_interp[i * 3] = energy_hourly[i] / hour_step;
+                energy_hourly_interp[i * 3 + 1] = energy_hourly[i]  / hour_step;
+                energy_hourly_interp[i * 3 + 2] = energy_hourly[i] / hour_step;
+                iday = floor(double(i * 3) / 24);
+                for (size_t m = 0; m < 366; m++) {
                     for (size_t h = 0; h < 9; h++) {
                         if (i == 0) {
-                            p_annual_energy_dist_time[h * 13] = 3*(h-1);
+                            p_annual_energy_dist_time[h * 366] = 3 * (h - 1);
                             p_annual_energy_dist_time[m] = m;
                         }
-                        if (month[i] == m && hour[i] == 3*(h-1)) {
-                            p_annual_energy_dist_time[h * 13 + m] += energy_hourly[i];
+                        if (iday == m && hour[i] == 3 * (h - 1) && m != 365) {
+                            p_annual_energy_dist_time[h * 366 + m + 1] += energy_hourly[i];
                             break;
                         }
                     }
@@ -403,14 +407,15 @@ public:
                 annual_energy += energy_hourly[i];
                 //device_average_power += energy_hourly[i] / 8760;
                 device_average_power += energy_hourly[i] / number_hours;
-                
+
 
             }
             p_annual_energy_dist[0] = 0; //set top left corner of matrix to 0
             p_annual_energy_dist_time[0] = 0;
-            
+
             assign("numberRecords", number_records);
             assign("numberHours", number_hours);
+            
         }
 
 
@@ -427,9 +432,10 @@ public:
 
 		//Factoring in losses in total annual energy production:
 		//Factoring in losses in total annual energy production:
-		annual_energy *= (1 - (total_loss / 100));
+		//annual_energy *= (1 - (total_loss / 100));
 		// leave device average power without losses
-		annual_energy *= number_devices;
+		//annual_energy *= number_devices;
+
 
         //TEST cost metrics in tidal page rather than cost page
         double device_cost = as_double("device_costs_total");

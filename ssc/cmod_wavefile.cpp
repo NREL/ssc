@@ -421,6 +421,7 @@ public:
                 getline(ifs, buf);
                 values.clear();
                 values = split(buf);
+                
                 if (r == 0) {
                     //value_0 = split(buf);
                     hour0 = (ssc_number_t)std::stod(values[3]);
@@ -442,28 +443,28 @@ public:
                 wave_periods[r] = (ssc_number_t)std::stod(values[5]);
 
                 //Make JPD from time series data
-                
+
                 ts_significant_wave_height = wave_heights[r];
                 ts_energy_period = wave_periods[r];
                 for (size_t j = 0; j < 21; j++) {
 
                     if (r == 0) mat[(j + 1) * ncols] = (0.25 + j * 0.5);
-                    if (abs(ts_significant_wave_height - (0.25 + (j-1) * 0.5)) <= 0.25 && j!=0) {
+                    if (abs(ts_significant_wave_height - (0.25 + (j - 1) * 0.5)) <= 0.25 && j != 0) {
                         sig_wave_height_index = j;
-                        if (r!=0) break;
+                        if (r != 0) break;
                     }
                 }
                 for (size_t m = 0; m < 22; m++) {
-                    if (r==0) mat[m] = m - 0.5;
-                    if (abs(ts_energy_period - (0.5 + (m-1))) <= 0.5 && m!=0) {
+                    if (r == 0) mat[m] = m - 0.5;
+                    if (abs(ts_energy_period - (0.5 + (m - 1))) <= 0.5 && m != 0) {
                         energy_period_index = m;
-                        if (r!=0) break;
+                        if (r != 0) break;
                     }
 
-                    
+
                 }
 
-                
+
                 //mat[sig_wave_height_index * ncols + energy_period_index] = mat[sig_wave_height_index * ncols + energy_period_index] + 1 / 2920 * 100;
                 mat[sig_wave_height_index * ncols + energy_period_index] += 0.0342465753;
                 //Set decimal values to 2 for JPD
@@ -474,6 +475,7 @@ public:
                         }
                     }
                 }
+                
             }
             mat[0] = 0;
             assign("number_hours", int(numberRecords * hourdiff));
