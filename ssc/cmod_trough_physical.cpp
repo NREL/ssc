@@ -1285,7 +1285,6 @@ public:
         //ssc_number_t *p_m_dot_tes_ch = as_array("m_dot_tes_ch", &count);
         //if ((int)count != n_steps_fixed)
         //    throw exec_error("trough_physical", "The number of fixed steps for 'm_dot_tes_ch' does not match the length of output data arrays");
-        
         for(int i = 0; i < n_steps_fixed; i++)
         {
             size_t hour = (size_t)ceil(p_time_final_hr[i]);
@@ -1295,8 +1294,9 @@ public:
             p_q_dot_defocus_est[i] = (ssc_number_t)(1.0 - p_SCAs_def[i])*p_q_dot_htf_sf_out[i]; //[MWt]
             //p_m_dot_tes_dc[i] = (ssc_number_t)(p_m_dot_tes_dc[i] / 3600.0);     //[kg/s] convert from kg/hr
             //p_m_dot_tes_ch[i] = (ssc_number_t)(p_m_dot_tes_ch[i] / 3600.0);     //[kg/s] convert from kg/hr
+           
         }
-
+        ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, steps_per_hour);
         // Non-timeseries array outputs
         double P_adj = storage.P_in_des; // slightly adjust all field design pressures to account for pressure drop in TES before hot tank
         transform(c_trough.m_P_rnr_dsn.begin(), c_trough.m_P_rnr_dsn.end(), c_trough.m_P_rnr_dsn.begin(), [P_adj](double x) {return x + P_adj; });

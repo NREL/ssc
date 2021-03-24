@@ -107,9 +107,6 @@ public:
 	    sys_degradation.reserve(nyears);
 		double derate = (1 - (double)as_number("derate") / 100);
 
-        ssc_number_t* p_annual_energy_dist_time = allocate("annual_energy_distribution_time", 13, 25);
-        size_t imonth = 0;
-
 		adjustment_factors haf(this, "adjust");
 		if (!haf.setup())
 			throw exec_error("generic system", "failed to setup adjustment factors: " + haf.error());
@@ -209,25 +206,14 @@ public:
 
 					if (iyear == 0) {
 						annual_energy += (ssc_number_t)(enet[idx] * ts_hour);
-                        imonth = util::month_of(double(hour));
-                        for (size_t m = 0; m < 13; m++) {
-                            for (size_t hr = 0; hr < 25; hr++) {
-                                if (idx == 0) {
-                                    p_annual_energy_dist_time[m * 25] = m;
-                                    p_annual_energy_dist_time[hr] = (hr - 1);
-                                }
-                                if (imonth == m && fmod(double(hour), 24) == (hr - 1)) {
-                                    p_annual_energy_dist_time[m * 25 + hr] += enet[idx];
-                                    break;
-                                }
-                            }
-                        }
 					}
 
 					idx++;
 				}
 			}
 		}
+
+        ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, steps_per_hour);
 
 		accumulate_monthly_for_year("gen", "monthly_energy", ts_hour, steps_per_hour);
 		annual_output = accumulate_annual_for_year("gen", "annual_energy", ts_hour, steps_per_hour);

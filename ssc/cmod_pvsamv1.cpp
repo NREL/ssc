@@ -2088,7 +2088,7 @@ void cm_pvsamv1::exec()
 
     double annual_dc_loss_ond = 0, annual_ac_loss_ond = 0; // (TR)
 
-    ssc_number_t* p_annual_energy_dist_time = allocate("annual_energy_distribution_time", 13, 25);
+    //ssc_number_t* p_annual_energy_dist_time = allocate("annual_energy_distribution_time", 25, 13);
 
 
     for (size_t iyear = 0; iyear < nyears; iyear++)
@@ -2335,7 +2335,7 @@ void cm_pvsamv1::exec()
 
             if (iyear == 0) {
                 annual_energy += (ssc_number_t)(PVSystem->p_systemACPower[idx] * ts_hour);
-                for (size_t m = 0; m < 13; m++) {
+                /*for (size_t m = 0; m < 13; m++) {
                     for (size_t h = 0; h < 25; h++) {
                         if (idx == 0) {
                             p_annual_energy_dist_time[m * 25] = m;
@@ -2346,13 +2346,14 @@ void cm_pvsamv1::exec()
                             break;
                         }
                     }
-                }
+                }*/
             }
 
         }
         wdprov->rewind();
     }
-    p_annual_energy_dist_time[0] = 0;
+    //p_annual_energy_dist_time[0] = 0;
+    ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, 1 / ts_hour);
     // Check the snow models and if neccessary report a warning
     //  *This only needs to be done for subarray1 since all of the activated subarrays should
     //   have the same number of bad values

@@ -563,6 +563,8 @@ public:
 			p_hourly_energy[i] = hourly_energy[i] * (ssc_number_t)(haf(i) * 1000.0);
 		}
 
+        ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, 1);
+
 		accumulate_annual("gen", "annual_energy"); // already in kWh
         accumulate_monthly("gen", "monthly_energy"); // already in kWh
 
@@ -570,8 +572,9 @@ public:
 		double kWhperkW = 0.0;
 		double nameplate = as_double("system_capacity");
 		double annual_energy = 0.0;
-		for (int i = 0; i < 8760; i++)
-			annual_energy += p_hourly_energy[i];
+        for (int i = 0; i < 8760; i++) {
+            annual_energy += p_hourly_energy[i]; 
+        }
 		if (nameplate > 0) kWhperkW = annual_energy / nameplate;
 		assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
 		assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
