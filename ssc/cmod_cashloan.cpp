@@ -50,6 +50,7 @@ static var_info vtab_cashloan[] = {
     { SSC_INPUT, SSC_ARRAY, "year1_hourly_e_fromgrid", "Electricity from grid (year 1 hourly)", "kWh", "", "Time Series", "", "", "" },
     { SSC_INPUT,       SSC_ARRAY,      "year1_hourly_salespurchases_with_system",     "Electricity sales/purchases with system (year 1 hourly)",    "$", "",          "Time Series",             "",                         "",                   "" },
     { SSC_INPUT,        SSC_ARRAY,      "grid_to_batt",                               "Electricity to grid from battery",                      "kW",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_INPUT,        SSC_ARRAY,      "buy_rate_ts", "TOU buy rate for energy charges (year 1 hourly)", "", "", "Time Series", "", "", "" },
 
 
     { SSC_INPUT,        SSC_ARRAY,       "degradation",              "Annual degradation", "%", "", "System Output", "*", "", "" },
@@ -1054,7 +1055,11 @@ public:
         std::vector<double> lcos_energy_discharged = as_vector_double("batt_annual_discharge_energy");
         size_t n_grid_to_batt;
         ssc_number_t* grid_to_batt = as_array("grid_to_batt", &n_grid_to_batt); //Power from grid to battery in kW (needs to be changed to kwh)
-        size_t n_steps_per_year = n_grid_to_batt / nyears;
+        size_t n_steps_per_year = 8760;
+        if (as_integer("system_use_lifetime_output") == 1)
+            n_steps_per_year = n_grid_to_batt / nyears;
+        else
+            n_steps_per_year = n_grid_to_batt;
         //std::vector<double> grid_to_batt = as_vector_double("grid_to_batt");
         cf.at(CF_charging_cost_grid, 0) = 0;
         std::vector<double> elec_purchases = as_vector_double("year1_hourly_salespurchases_with_system");
@@ -1063,6 +1068,15 @@ public:
         if (is_assigned("rate_escalation"))
             escal_or_annual(CF_util_escal_rate, nyears, "rate_escalation", inflation_rate, 0.01, true, 0);
         save_cf(CF_util_escal_rate, nyears, "cf_util_escal_rate");
+
+        size_t n_buy_rate_ts;
+        ssc_number_t* buy_rate_ts;
+        if (is_assigned("buy_rate_ts")) {
+            buy_rate_ts = as_array("buy_rate_ts", &n_buy_rate_ts);
+        }
+        else {
+            throw exec_error("cashloan", "Buy rates not loaded");
+        }
 
         for (int a = 0; a <= nyears; a++) {
             if (as_integer("system_use_lifetime_output") == 1)
@@ -1074,12 +1088,11 @@ public:
         
                     if (a != 0) {
                         // Recompute this variable because the ppa_gen values (hourly_net) were all positve until now 
-                        if (elec_from_grid[h] != 0) {
-                            //cf.at(CF_charging_cost_grid, a) += charged_grid[a] * cf.at(CF_utility_bill, a) / annual_import_to_grid_energy[a];
-                            cf.at(CF_charging_cost_grid, a) += grid_to_batt[(a - 1) * n_steps_per_year + h] * 8760 / n_steps_per_year * -elec_purchases[h] * cf.at(CF_util_escal_rate, a) / elec_from_grid[h];
-                        }
-                        else
-                            cf.at(CF_charging_cost_grid, a) += 0;
+                       
+                        //cf.at(CF_charging_cost_grid, a) += charged_grid[a] * cf.at(CF_utility_bill, a) / annual_import_to_grid_energy[a];
+                        cf.at(CF_charging_cost_grid, a) += grid_to_batt[(a - 1) * n_steps_per_year + h] * 8760 / n_steps_per_year * buy_rate_ts[(a - 1) * n_steps_per_year + h] * cf.at(CF_util_escal_rate, a);
+                        
+                        
                     }
                 }
 
@@ -1092,12 +1105,9 @@ public:
                 for (size_t h = 0; h < n_steps_per_year; h++) {
                     
                     if (a != 0) {
-                        // Recompute this variable because the ppa_gen values (hourly_net) were all positve until now 
-                        if (elec_from_grid[h] != 0) {
-                            cf.at(CF_charging_cost_grid, a) += grid_to_batt[h] * 8760 / n_steps_per_year * -elec_purchases[h] * cf.at(CF_util_escal_rate, a) / elec_from_grid[h];
-                        }
-                        else
-                            cf.at(CF_charging_cost_grid, a) += 0;
+                        // Recompute this variable becaif (elec_from_grid[h] != 0) {
+                        cf.at(CF_charging_cost_grid, a) += grid_to_batt[h] * 8760 / n_steps_per_year * buy_rate_ts[h] * cf.at(CF_util_escal_rate, a);
+                       
                     }
                 }
 

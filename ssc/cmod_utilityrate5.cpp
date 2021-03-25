@@ -741,6 +741,8 @@ public:
 		// lifetime hourly load
 		ssc_number_t *lifetime_load = allocate("lifetime_load", nrec_gen);
 
+        ssc_number_t* buy_rate_ts = allocate("buy_rate_ts", nrec_gen);
+        std::vector<ssc_number_t> buy_rate_year(m_num_rec_yearly);
 		/*
 		0=Single meter with monthly rollover credits in kWh
 		1=Single meter with monthly rollover credits in $
@@ -843,9 +845,14 @@ public:
 					&rate.dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], 
 					&monthly_cumulative_excess_dollars[0], &monthly_bill[0],
                     &monthly_two_meter_sales[0],
-                    &monthly_true_up_credits[0],
+                    &monthly_true_up_credits[0], &buy_rate_year[0],
                     rate.rate_scale[i], i,
 					last_excess_dollars);
+                for (size_t j = 0; j < m_num_rec_yearly; j++)
+                    if (as_integer("system_use_lifetime_output") == 1)
+                        buy_rate_ts[i * m_num_rec_yearly + j] = buy_rate_year[j];
+                    else
+                        buy_rate_ts[j] = buy_rate_year[j];
 			}
 			else
 			{
@@ -992,8 +999,14 @@ public:
 						&monthly_excess_kwhs_earned[0],
                         &monthly_net_billing_credits[0],
 						&rate.dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0],
-                        &monthly_two_meter_sales[0], &monthly_true_up_credits[0], rate.rate_scale[i],
+                        &monthly_two_meter_sales[0], &monthly_true_up_credits[0], &buy_rate_year[0], rate.rate_scale[i],
 						i, last_excess_dollars, false, false, true);
+                    
+                    for (size_t j = 0; j < m_num_rec_yearly; j++)
+                        if (as_integer("system_use_lifetime_output") == 1)
+                            buy_rate_ts[i * m_num_rec_yearly + j] = buy_rate_year[j];
+                        else
+                            buy_rate_ts[j] = buy_rate_year[j];
 				}
 				else
 				{
@@ -1008,8 +1021,15 @@ public:
                         &monthly_net_billing_credits[0],
 						&rate.dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0],
 						&monthly_bill[0], &monthly_two_meter_sales[0],
-                        &monthly_true_up_credits[0],
+                        &monthly_true_up_credits[0], &buy_rate_year[0],
                         rate.rate_scale[i], i, last_excess_dollars);
+
+                    
+                    for (size_t j = 0; j < m_num_rec_yearly; j++)
+                        if (as_integer("system_use_lifetime_output") == 1)
+                            buy_rate_ts[i * m_num_rec_yearly + j] = buy_rate_year[j];
+                        else
+                            buy_rate_ts[j] = buy_rate_year[j];
 				}
 			}
 			else // monthly reconciliation per 2015.6.30 release
@@ -1646,7 +1666,6 @@ public:
 
 // main loop
 		c = 0;
-        ssc_number_t* br_bin_ts = allocate("buy_rate_ts", m_num_rec_yearly);
 		// process one month at a time
 		for (m = 0; m < (int)rate.m_month.size(); m++)
 		{
@@ -1659,7 +1678,8 @@ public:
 					// energy charge
 					for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
 					{
-						if (d == util::nday[m] - 1 && h == 23 && s == (int)(steps_per_hour-1) )
+                        int row = rate.get_tou_row(c, m);
+                        if (d == util::nday[m] - 1 && h == 23 && s == (int)(steps_per_hour-1) )
 						{
 							if (ec_enabled)
 							{
@@ -1919,7 +1939,7 @@ public:
         ssc_number_t net_billing_credits[12],
 		ssc_number_t *dc_hourly_peak, ssc_number_t monthly_cumulative_excess_energy[12],
 		ssc_number_t monthly_cumulative_excess_dollars[12], ssc_number_t monthly_bill[12],
-        ssc_number_t monthly_two_meter_sales[12], ssc_number_t monthly_true_up_credits[12],
+        ssc_number_t monthly_two_meter_sales[12], ssc_number_t monthly_true_up_credits[12], ssc_number_t *buy_rate_ts,
 		ssc_number_t rate_esc, size_t year, ssc_number_t prev_excess_dollars, bool include_fixed = true, bool include_min = true, bool gen_only = false)
 
 	{
@@ -2038,7 +2058,8 @@ public:
 
 // main loop
 		c = 0; // hourly count
-        ssc_number_t* br_bin = allocate("buy_rate_ts", size_t(m_num_rec_yearly));
+        //ssc_number_t* br_bin = allocate("buy_rate_ts", size_t(m_num_rec_yearly));
+        ssc_number_t* br_bin;
         ssc_number_t br_bin_it;
 		// process one timestep at a time
 		for (m = 0; m < 12; m++)
@@ -2116,14 +2137,14 @@ public:
                                             surplus_tier = (int)curr_month.ec_tou_ub.ncols() - 1;
 
                                         sr = curr_month.ec_tou_sr.at(row, surplus_tier);
-                                        br_bin[c] = (step_surplus_energy * sr_base + upper_tier_energy * sr) / (step_surplus_energy + upper_tier_energy);
+                                        buy_rate_ts[c] = (step_surplus_energy * sr_base + upper_tier_energy * sr) / (step_surplus_energy + upper_tier_energy);
                                         tier_credit += upper_tier_energy * tier_credit * rate_esc;
                                         curr_month.ec_energy_surplus.at(row, surplus_tier) += (ssc_number_t)upper_tier_energy;
                                     }
                                     else {
                                         tier_energy = energy_surplus;
                                         sr = curr_month.ec_tou_sr.at(row, surplus_tier);
-                                        br_bin[c] = curr_month.ec_tou_br.at(row, surplus_tier);
+                                        buy_rate_ts[c] = curr_month.ec_tou_br.at(row, surplus_tier);
                                         tier_credit = tier_energy * sr * rate_esc;
                                         curr_month.ec_energy_surplus.at(row, surplus_tier) += (ssc_number_t)tier_energy;
                                     }
@@ -2172,7 +2193,7 @@ public:
                                     if (c < rate.m_ec_ts_buy_rate.size()) {
                                         tier_energy = energy_deficit;
                                         br = rate.m_ec_ts_buy_rate[c];
-                                        br_bin[c] = br;
+                                        buy_rate_ts[c] = br;
                                         charge_amt = tier_energy * br * rate_esc;
                                         curr_month.ec_energy_use.at(row, deficit_tier) += (ssc_number_t)tier_energy;
                                         curr_month.ec_charge.at(row, deficit_tier) += (ssc_number_t)charge_amt;
@@ -2202,7 +2223,7 @@ public:
                                         tier_charge = upper_tier_energy * br * rate_esc;
                                         charge_amt += tier_charge;
                                         br_bin_it = (step_deficit_energy * br_base + upper_tier_energy * br) / (step_deficit_energy + upper_tier_energy);
-                                        br_bin[c] = (step_deficit_energy * br_base + upper_tier_energy * br) / (step_deficit_energy + upper_tier_energy) ;
+                                        buy_rate_ts[c] = (step_deficit_energy * br_base + upper_tier_energy * br) / (step_deficit_energy + upper_tier_energy) ;
                                         curr_month.ec_energy_use.at(row, deficit_tier) += (ssc_number_t)upper_tier_energy;
                                         curr_month.ec_charge.at(row, deficit_tier) += (ssc_number_t)tier_charge;
                                     }
@@ -2210,7 +2231,7 @@ public:
                                         tier_energy = energy_deficit;
                                         br = curr_month.ec_tou_br.at(row, deficit_tier);
                                         br_bin_it = br;
-                                        br_bin[c] = br;
+                                        buy_rate_ts[c] = br;
                                         charge_amt = tier_energy * br * rate_esc;
                                         curr_month.ec_energy_use.at(row, deficit_tier) += (ssc_number_t)tier_energy;
                                         curr_month.ec_charge.at(row, deficit_tier) += (ssc_number_t)charge_amt;
@@ -2296,7 +2317,7 @@ public:
 			monthly_bill[m] = monthly_ec_charges[m] + rate.monthly_dc_fixed[m] + rate.monthly_dc_tou[m];
 		} // end of month m (m loop)
 
-
+        
 		// Assumption that fixed and minimum charges independent of rollovers kWh or $
 		// process monthly fixed charges
 		// compute revenue ( = income - payment ) and monthly bill ( = payment - income) and apply fixed and minimum charges

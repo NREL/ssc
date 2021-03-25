@@ -3099,9 +3099,9 @@ public:
                         // Recompute this variable because the ppa_gen values (hourly_net) were all positve until now 
                         
                         //cf.at(CF_charging_cost_grid, a) += grid_to_batt[(a - 1) * n_steps_per_year + h] * 8760 / n_steps_per_year * -elec_purchases[h] * cf.at(CF_util_escal_rate, a) / elec_from_grid[h];
-                        cf.at(CF_charging_cost_grid, a) += grid_to_batt[(size_t(a) - 1) * n_steps_per_year + h] * 8760 / n_steps_per_year * buy_rate_ts[h] * rate_scale[a-1];
+                        cf.at(CF_charging_cost_grid, a) += grid_to_batt[(size_t(a) - 1) * n_steps_per_year + h] * 8760 / n_steps_per_year * buy_rate_ts[(size_t(a) - 1) * n_steps_per_year + h] * rate_scale[a-1];
                         //cf.at(CF_charging_cost_grid, a) += grid_to_batt[(a - 1) * n_steps_per_year + h] * 8760 / n_steps_per_year * buy_rate_ts[h] * pow((1+inflation_rate + 0.01),a-1);
-                        grid_charge_cost_ts[(size_t(a)-1) * n_steps_per_year + h] = grid_to_batt[(size_t(a) - 1) * n_steps_per_year + h] * 8760 / n_steps_per_year * buy_rate_ts[h] * rate_scale[a - 1];
+                        grid_charge_cost_ts[(size_t(a)-1) * n_steps_per_year + h] = grid_to_batt[(size_t(a) - 1) * n_steps_per_year + h] * 8760 / n_steps_per_year * buy_rate_ts[(size_t(a) - 1) * n_steps_per_year + h] * rate_scale[a - 1];
                         //cf.at(CF_charging_cost_grid, a) += grid_to_batt[(a - 1) * n_steps_per_year + h] * 8760 / n_steps_per_year * -elec_purchases[h] * rate_scale[a-1] / elec_from_grid[h];
                         
                         
