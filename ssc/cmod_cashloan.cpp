@@ -1069,6 +1069,9 @@ public:
             escal_or_annual(CF_util_escal_rate, nyears, "rate_escalation", inflation_rate, 0.01, true, 0);
         save_cf(CF_util_escal_rate, nyears, "cf_util_escal_rate");
 
+        double capex_lcoe_ratio = 1 / 0.8; //ratio of capex ratio between PV+batt / PV to LCOE ratio PV+batt/ PV (assumed based on table)
+        double lcoe_real_lcos = lcoe_real * capex_lcoe_ratio * (total_cost - lcos_investment_cost) / total_cost; //cents/kWh
+
         size_t n_buy_rate_ts;
         ssc_number_t* buy_rate_ts;
         if (is_assigned("buy_rate_ts")) {
@@ -1116,11 +1119,19 @@ public:
 
             //cf.at(CF_charging_cost_grid, a) = charged_grid[a] * cf.at(CF_ppa_price, a) / 100; //What is the BTM charge for charging from the grid (do we need to calculate based on utility rates?)
             //cf.at(CF_charging_cost_grid, a) = charged_grid[a] * 10 / 100; //using 0.10 $/kWh as a placeholder
-            cf.at(CF_charging_cost_pv, a) = charged_pv[a] * lcoe_real / 100 * pow(1 + inflation_rate, a - 1);
+            if (as_integer("system_use_lifetime_output") == 1) {
+                cf.at(CF_charging_cost_pv, a) = charged_pv[a] * lcoe_real_lcos / 100 * pow(1 + inflation_rate, a - 1);
+                cf.at(CF_energy_charged_grid, a) = cf.at(CF_charging_cost_grid, a) + cf.at(CF_charging_cost_pv, a);
+                cf.at(CF_om_production1_expense, a) *= charged_total[a];
+                cf.at(CF_energy_discharged, a) = lcos_energy_discharged[a];
+                
+            }
+            else {
+                cf.at(CF_charging_cost_pv, a) = charged_pv[0] * lcoe_real_lcos / 100 * pow(1 + inflation_rate, a - 1);
+                cf.at(CF_om_production1_expense, a) *= charged_total[0];
+                cf.at(CF_energy_discharged, a) = lcos_energy_discharged[0];
+            }
             //charged_total[a] = charged_grid[a] + charged_pv[a];
-            cf.at(CF_energy_charged_grid, a) = cf.at(CF_charging_cost_grid, a) + cf.at(CF_charging_cost_pv, a);
-            cf.at(CF_om_production1_expense, a) *= charged_total[a];
-            cf.at(CF_energy_discharged, a) = lcos_energy_discharged[a];
             cf.at(CF_annual_cost_lcos, a) = -cf.at(CF_charging_cost_grid, a) +
                 -cf.at(CF_charging_cost_pv, a) + -cf.at(CF_om_fixed1_expense, a) +
                 -cf.at(CF_om_capacity1_expense, a) + -cf.at(CF_om_production1_expense, a) +
