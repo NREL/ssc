@@ -2333,6 +2333,8 @@ void cm_pvsamv1::exec()
 
             if (iyear == 0)
                 annual_energy += (ssc_number_t)(PVSystem->p_systemACPower[idx] * ts_hour);
+            }
+
         }
         wdprov->rewind();
     }

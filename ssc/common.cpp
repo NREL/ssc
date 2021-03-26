@@ -523,7 +523,8 @@ var_info vtab_grid_curtailment[] = {
 var_info vtab_technology_outputs[] = {
 	// instantaneous power at each timestep - consistent with sun position
 { SSC_OUTPUT, SSC_ARRAY , "gen"                                  , "System power generated"                                         , "kW"                                     , ""                                      , "Time Series"          , "*"              , ""                      , ""},
-{ SSC_OUTPUT, SSC_MATRIX, "annual_energy_distribution_time",	   "Annual energy production as function of time",				"kW",				"",				"Heatmaps",			"",						"",							"" },
+{ SSC_OUTPUT, SSC_MATRIX,			"annual_energy_distribution_time",			"Annual energy production as function of time",				"kW",				"",				"Heatmaps",			"",						"",							"" },
+
     var_info_invalid };
 
 ssc_number_t* gen_heatmap(compute_module* cm, double step_per_hour) {
