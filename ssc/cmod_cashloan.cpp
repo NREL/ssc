@@ -51,6 +51,9 @@ static var_info vtab_cashloan[] = {
     { SSC_INPUT,       SSC_ARRAY,      "year1_hourly_salespurchases_with_system",     "Electricity sales/purchases with system (year 1 hourly)",    "$", "",          "Time Series",             "",                         "",                   "" },
     { SSC_INPUT,        SSC_ARRAY,      "grid_to_batt",                               "Electricity to grid from battery",                      "kW",      "",                       "Battery",       "",                           "",                              "" },
     { SSC_INPUT,        SSC_ARRAY,      "buy_rate_ts", "TOU buy rate for energy charges (year 1 hourly)", "", "", "Time Series", "", "", "" },
+    { SSC_INPUT, SSC_ARRAY, "charge_w_sys_ec", "Energy charge with system", "$", "", "Charges by Month", "*", "", "" },
+    { SSC_INPUT,        SSC_ARRAY,      "monthly_grid_to_batt",                       "Energy to battery from grid",                           "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "monthly_grid_to_load",                       "Energy to load from grid",                              "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
 
 
     { SSC_INPUT,        SSC_ARRAY,       "degradation",              "Annual degradation", "%", "", "System Output", "*", "", "" },
@@ -67,6 +70,8 @@ static var_info vtab_cashloan[] = {
     { SSC_OUTPUT, SSC_ARRAY, "cf_annual_cost_lcos", "Annual storage costs", "$", "", "LCOS calculations", "", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_annual_discharge_lcos", "Annual storage discharge", "kWh", "", "LCOS calculations", "", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_charging_cost_grid", "Annual cost to charge from grid", "$", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_charging_cost_grid_month", "Annual cost to charge from grid (monthly)", "$", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
+
     { SSC_OUTPUT, SSC_ARRAY, "cf_charging_cost_pv", "Annual cost to charge from system", "$", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_om_batt_production_expense", "Annual cost to for battery production based maintenance", "$", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_om_batt_capacity_expense", "Annual cost for battery capacity based maintenance", "$", "", "LCOE calculations", "", "LENGTH_EQUAL=cf_length", "" },
@@ -288,6 +293,7 @@ enum {
     CF_energy_discharged,
     CF_charging_cost_pv,
     CF_charging_cost_grid,
+    CF_charging_cost_grid_month,
     CF_om_cost_lcos,
     CF_salvage_cost_lcos,
     CF_investment_cost_lcos,
@@ -1053,8 +1059,11 @@ public:
         std::vector<double> charged_pv = as_vector_double("batt_annual_charge_from_system");
         std::vector<double> charged_total = as_vector_double("batt_annual_charge_energy");
         std::vector<double> lcos_energy_discharged = as_vector_double("batt_annual_discharge_energy");
-        size_t n_grid_to_batt;
+        size_t n_grid_to_batt, n_monthly_grid_to_batt, n_monthly_grid_to_load, n_monthly_energy_charge;
         ssc_number_t* grid_to_batt = as_array("grid_to_batt", &n_grid_to_batt); //Power from grid to battery in kW (needs to be changed to kwh)
+        ssc_number_t* monthly_grid_to_batt = as_array("monthly_grid_to_batt", &n_monthly_grid_to_batt);
+        ssc_number_t* monthly_grid_to_load = as_array("monthly_grid_to_load", &n_monthly_grid_to_load);
+        ssc_number_t* monthly_energy_charge = as_array("year1_monthly_ec_charge_with_system", &n_monthly_energy_charge); //Power from grid to battery in kW (needs to be changed to kwh)
         size_t n_steps_per_year = 8760;
         if (as_integer("system_use_lifetime_output") == 1)
             n_steps_per_year = n_grid_to_batt / nyears;
@@ -1099,12 +1108,18 @@ public:
                     }
                 }
 
+                for (size_t m = 0; m < 12; m++) {
+                    if (a != 0) {
+                        cf.at(CF_charging_cost_grid_month, a) += monthly_grid_to_batt[m] / (monthly_grid_to_batt[m] + monthly_grid_to_load[m]) * monthly_energy_charge[m] * cf.at(CF_util_escal_rate, a);
+                    }
+                }
+
 
             }
             else
             {
 
-                
+                /*
                 for (size_t h = 0; h < n_steps_per_year; h++) {
                     
                     if (a != 0) {
@@ -1112,7 +1127,14 @@ public:
                         cf.at(CF_charging_cost_grid, a) += grid_to_batt[h] * 8760 / n_steps_per_year * buy_rate_ts[h] * cf.at(CF_util_escal_rate, a);
                        
                     }
+                }*/
+
+                for (size_t m = 0; m < 12; m++) {
+                    if (a != 0) {
+                        cf.at(CF_charging_cost_grid, a) += monthly_grid_to_batt[m] / (monthly_grid_to_batt[m] + monthly_grid_to_load[m]) * monthly_energy_charge[m] * cf.at(CF_util_escal_rate, a);
+                    }
                 }
+
 
 
             }
@@ -1154,6 +1176,7 @@ public:
         save_cf(CF_annual_cost_lcos, nyears, "cf_annual_cost_lcos");
         save_cf(CF_energy_discharged, nyears, "cf_annual_discharge_lcos");
         save_cf(CF_charging_cost_grid, nyears, "cf_charging_cost_grid");
+        save_cf(CF_charging_cost_grid_month, nyears, "cf_charging_cost_grid_month");
         save_cf(CF_charging_cost_pv, nyears, "cf_charging_cost_pv");
         save_cf(CF_om_capacity1_expense, nyears, "cf_om_batt_capacity_expense");
         save_cf(CF_om_production1_expense, nyears, "cf_om_batt_production_expense");
