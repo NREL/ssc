@@ -399,6 +399,7 @@ public:
 		{
 			hourly[i] = enet[i] * 1000 * haf(i); // convert from MWh to kWh
 		}
+        ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, 1);
 
 		accumulate_annual("gen",        "annual_energy");
 		accumulate_annual("w_gr",                 "annual_w_gr",1000); // convert from MWh to kWh

@@ -843,12 +843,13 @@ public:
 		    msg << "gen count incorrect (should be 8760): " << count;
 		    throw exec_error("tcsmolten_salt", msg.str());
 		  }
+
 		// apply performance adjustments and convert from MWh to kWh
 		for (size_t i = 0; i < count; i++)
 		{
 			p_hourly_energy[i] = hourly_energy[i] * (ssc_number_t)(haf(i) * 1000.0);
 		}
-
+        ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, 1);
 		accumulate_annual("gen", "annual_energy"); // already in kWh
 
 		// First, sum power cycle water consumption timeseries outputs

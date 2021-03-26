@@ -1228,6 +1228,8 @@ public:
 
 		//convert internal variables into external variables
 
+        ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, 1);
+
 		// Single value outputs
 		assign("system.annual.boiler_loss_fuel_kwh", var_data((ssc_number_t)(total_fuel_eff_loss*fuel_usage)));
 
