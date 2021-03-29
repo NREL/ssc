@@ -398,6 +398,7 @@ void pvsamv1_battery_defaults(ssc_data_t& data) {
 	ssc_data_set_number(data, "batt_Vfull", 4.0999999999999996);
 	ssc_data_set_number(data, "batt_Vexp", 4.0499999999999998);
 	ssc_data_set_number(data, "batt_Vnom", 3.3999999999999999);
+    ssc_data_set_number(data, "batt_Vcut", 0.66 * 4.0999999999999996);
 	ssc_data_set_number(data, "batt_Vnom_default", 3.6000000000000001);
 	ssc_data_set_number(data, "batt_Qfull", 2.25);
 	ssc_data_set_number(data, "batt_Qfull_flow", 7994.25);
@@ -1115,6 +1116,7 @@ void commercial_multiarray_default(ssc_data_t& data) {
 	ssc_data_set_number(data, "batt_Vfull", 4.0999999999999996);
 	ssc_data_set_number(data, "batt_Vexp", 4.0499999999999998);
 	ssc_data_set_number(data, "batt_Vnom", 3.3999999999999999);
+    ssc_data_set_number(data, "batt_Vcut", 0.66 * 4.0999999999999996);
 	ssc_data_set_number(data, "batt_Vnom_default", 3.6000000000000001);
 	ssc_data_set_number(data, "batt_Qfull", 2.25);
 	ssc_data_set_number(data, "batt_Qfull_flow", 40.5);

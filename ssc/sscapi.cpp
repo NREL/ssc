@@ -62,7 +62,7 @@
 
 SSCEXPORT int ssc_version()
 {
-	return 253;
+	return 254;
 }
 
 SSCEXPORT const char *ssc_build_info()
@@ -1168,36 +1168,44 @@ SSCEXPORT void __ssc_segfault()
 
 static std::string* s_python_path;
 
-SSCEXPORT void set_python_path(const char* abs_path) {
+SSCEXPORT int set_python_path(const char* abs_path) {
     if (util::dir_exists(abs_path)){
         delete s_python_path;
         s_python_path = new std::string(abs_path);
+        return 1;
     }
     else
-        throw(std::runtime_error("set_python_path error. Python directory doesn't not exist: " + std::string(abs_path)));
+        return 0;
 }
 
 SSCEXPORT const char *get_python_path() {
     if (s_python_path)
         return s_python_path->c_str();
     else
-        throw(std::runtime_error("get_python_path error. Path does not exist. Set with 'set_python_path' first."));
+        return nullptr;
 }
 
-SSCEXPORT ssc_module_t ssc_stateful_module_create( const char *name, ssc_data_t p_data) {
-    auto vt = static_cast<var_table*>(p_data);
-    if (!vt) throw std::runtime_error("p_data invalid.");
+SSCEXPORT int ssc_stateful_module_setup(ssc_module_t p_mod, ssc_data_t p_data) {
+    auto cm = static_cast<compute_module*>(p_mod);
+    if (!cm)
+        return 0;
 
-    std::string lname = util::lower_case( name );
+    auto vt = static_cast<var_table*>(p_data);
+    if (!vt)
+        cm->log("p_data invalid.");
+
+    std::string lname = cm->get_name();
     int i = 0;
     while ( module_table[i] != nullptr && module_table[i]->f_create != nullptr ) {
         if ( lname == util::lower_case( module_table[i]->name ) ) {
-            if (module_table[i]->f_create_stateful)
-                return (*(module_table[i]->f_create_stateful))(vt);
-            else
-                throw std::runtime_error("stateful module by that name does not exist.");
+            if (module_table[i]->f_setup_stateful)
+                return (*(module_table[i]->f_setup_stateful))(cm, vt);
+            else {
+                cm->log("This module is not stateful. `setup` does not need to be called.");
+                return 0;
+            }
         }
         i++;
     }
-    throw std::runtime_error("stateful module by that name does not exist.");
+    return 0;
 }

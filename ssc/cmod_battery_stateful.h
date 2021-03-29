@@ -46,7 +46,10 @@ public:
 
     cm_battery_stateful();
 
-    explicit cm_battery_stateful(var_table* vt);
+    // return true for success, otherwise errors in log
+    bool setup(var_table* vt);
+
+    bool compute(handler_interface *handler, var_table *data) override;
 
     void exec() override;
 };
