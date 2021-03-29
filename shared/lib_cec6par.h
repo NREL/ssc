@@ -90,7 +90,7 @@ public:
 	double Wgap;  // gap width spacing (m)
 	double TbackInteg;  // back surface temperature for integrated modules ('C)
     double Lsc; //Lacunarity length scale for spatial heterogeneity (m)
-
+    double h_lacunarity; //heat transfer coefficient from lacunarity scale experiments (W/m2K)
 	virtual bool operator() ( pvinput_t &input, pvmodule_t &module, double opvoltage, double &Tcell );
 
 	virtual ~mcsp_celltemp_t() {};
