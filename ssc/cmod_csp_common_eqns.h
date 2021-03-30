@@ -147,5 +147,11 @@ double Solar_mult(int radio_sm_or_area, double specified_solar_multiple, double 
 double Nloops(int radio_sm_or_area, double specified_solar_multiple, double total_required_aperture_for_SM1,
     double specified_total_aperture, double single_loop_aperature);
 
+double Max_field_flow_velocity(double m_dot_htfmax, double fluid_dens_outlet_temp, double min_inner_diameter);
+
+double Min_field_flow_velocity(double m_dot_htfmin, double fluid_dens_inlet_temp, double min_inner_diameter);
+
+double Field_htf_cp_avg(double T_in /*C*/, double T_out /*C*/, int rec_htf /*-*/,
+    const util::matrix_t<ssc_number_t>& field_fl_props /*-*/);      // [kJ/kg-K]
 
 #endif

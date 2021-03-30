@@ -64,3 +64,41 @@ void Physical_Trough_System_Design_Equations(ssc_data_t data)
 */
     double x = 1.;
 }
+
+void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
+{
+    auto vt = static_cast<var_table*>(data);
+    if (!vt) {
+        throw std::runtime_error("ssc_data_t data invalid");
+    }
+
+    double T_loop_in_des, T_loop_out, fluid, field_htf_cp_avg,
+        m_dot_htfmax, fluid_dens_outlet_temp, min_inner_diameter, max_field_flow_velocity,
+        m_dot_htfmin, fluid_dens_inlet_temp, min_field_flow_velocity;
+
+    util::matrix_t<double> field_fl_props;
+
+    // field_htf_cp_avg
+    ssc_data_t_get_number(data, "T_loop_in_des", &T_loop_in_des);
+    ssc_data_t_get_number(data, "T_loop_out", &T_loop_out);
+    ssc_data_t_get_number(data, "fluid", &fluid);
+    ssc_data_t_get_matrix(vt, "field_fl_props", field_fl_props);
+    field_htf_cp_avg = Field_htf_cp_avg(T_loop_in_des, T_loop_out, fluid, field_fl_props);      // [kJ/kg-K]
+    ssc_data_t_set_number(data, "field_htf_cp_avg", field_htf_cp_avg);
+
+    // max_field_flow_velocity
+    ssc_data_t_get_number(data, "m_dot_htfmax", &m_dot_htfmax);
+    ssc_data_t_get_number(data, "fluid_dens_outlet_temp", &fluid_dens_outlet_temp);
+    ssc_data_t_get_number(data, "min_inner_diameter", &min_inner_diameter);
+    max_field_flow_velocity = Max_field_flow_velocity(m_dot_htfmax, fluid_dens_outlet_temp, min_inner_diameter);
+    ssc_data_t_set_number(data, "max_field_flow_velocity", max_field_flow_velocity);
+
+    // min_field_flow_velocity
+    ssc_data_t_get_number(data, "m_dot_htfmin", &m_dot_htfmin);
+    ssc_data_t_get_number(data, "fluid_dens_inlet_temp", &fluid_dens_inlet_temp);
+    min_field_flow_velocity = Min_field_flow_velocity(m_dot_htfmin, fluid_dens_inlet_temp, min_inner_diameter);
+    ssc_data_t_set_number(data, "min_field_flow_velocity", min_field_flow_velocity);
+
+
+    double x = 1.;
+}
