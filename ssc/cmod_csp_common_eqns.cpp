@@ -136,6 +136,11 @@ HTFProperties GetHtfProperties(int fluid_number, const util::matrix_t<double> &s
 
 
 
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+// Power Tower //////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////
+
 // Originally from 'MSPT System Design' UI form
 double Nameplate(double P_ref /*MWe*/, double gross_net_conversion_factor /*-*/) {      // MWe
     return P_ref * gross_net_conversion_factor;
@@ -473,4 +478,48 @@ void Tower_SolarPilot_Capital_Costs_Equations(ssc_data_t data)
     ssc_data_t_set_number(data, "total_indirect_cost", (ssc_number_t)sys_costs.ms_out.total_indirect_cost);
     ssc_data_t_set_number(data, "total_installed_cost", (ssc_number_t)sys_costs.ms_out.total_installed_cost);
     ssc_data_t_set_number(data, "csp.pt.cost.installed_per_capacity", (ssc_number_t)sys_costs.ms_out.estimated_installed_cost_per_cap);
+}
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+// Physical Trough //////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+
+double Solar_mult(int radio_sm_or_area, double specified_solar_multiple, double total_aperture, double total_required_aperture_for_SM1)
+{
+    double solar_mult = std::numeric_limits<double>::quiet_NaN();
+
+    if (radio_sm_or_area == 0) {
+        solar_mult = specified_solar_multiple;
+    }
+    else if (radio_sm_or_area == 1) {
+        solar_mult = total_aperture / total_required_aperture_for_SM1;
+    }
+    else {
+        throw std::runtime_error("Physical Trough. Solar multiple calculation failed, invalid option.");
+    }
+
+    return solar_mult;
+}
+
+double Nloops(int radio_sm_or_area, double specified_solar_multiple, double total_required_aperture_for_SM1,
+    double specified_total_aperture, double single_loop_aperture)
+{
+    double total_aperture = std::numeric_limits<double>::quiet_NaN();
+    double n_loops = std::numeric_limits<double>::quiet_NaN();
+
+    if (radio_sm_or_area == 0) {
+        total_aperture = specified_solar_multiple * total_required_aperture_for_SM1;
+    }
+    else if (radio_sm_or_area == 1) {
+        total_aperture = specified_total_aperture;
+    }
+    else {
+        throw std::runtime_error("Physical Trough. Number of loops calculation failed, invalid option.");
+    }
+
+    n_loops = std::ceil(total_aperture / single_loop_aperture);
+    return n_loops;
 }

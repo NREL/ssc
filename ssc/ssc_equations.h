@@ -7,6 +7,7 @@
 #include "cmod_merchantplant_eqns.h"
 #include "cmod_pvsamv1_eqns.h"
 #include "cmod_csp_tower_eqns.h"
+#include "cmod_csp_trough_eqns.h"
 #include "cmod_financial_eqns.h"
 #include "cmod_utilityrate5_eqns.h"
 
@@ -84,6 +85,9 @@ static ssc_equation_entry ssc_equation_table [] = {
         //{"Tower_SolarPilot_Capital_Costs_ISCC_Equations", Tower_SolarPilot_Capital_Costs_ISCC_Equations,
         //    "Tcsiscc", Tower_SolarPilot_Capital_Costs_ISCC_Equations_doc,
         //    true, false},
+        {"Physical_Trough_System_Design_Equations", Physical_Trough_System_Design_Equations,
+            "Trough_physical", Physical_Trough_System_Design_Equations_doc,
+            true, false},
 
         // Single owner
         {"Financial_Construction_Financing_Equations", Financial_Construction_Financing_Equations,

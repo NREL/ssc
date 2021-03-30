@@ -135,4 +135,17 @@ double Csp_pt_cost_power_block_mwe(TowerTypes tower_type /*-*/, double p_ref = s
 
 void Tower_SolarPilot_Capital_Costs_Equations(ssc_data_t data);
 
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+// Physical Trough //////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+// Originally from 'Physical Trough System Design'
+double Solar_mult(int radio_sm_or_area, double specified_solar_multiple, double total_aperture, double total_required_aperture_for_SM1);
+
+double Nloops(int radio_sm_or_area, double specified_solar_multiple, double total_required_aperture_for_SM1,
+    double specified_total_aperture, double single_loop_aperature);
+
+
 #endif
