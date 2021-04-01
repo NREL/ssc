@@ -93,6 +93,19 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
 
     util::matrix_t<ssc_number_t> field_fl_props, trough_loop_control;
 
+    // max_field_flow_velocity
+    ssc_data_t_get_number(data, "m_dot_htfmax", &m_dot_htfmax);
+    ssc_data_t_get_number(data, "fluid_dens_outlet_temp", &fluid_dens_outlet_temp);
+    ssc_data_t_get_number(data, "min_inner_diameter", &min_inner_diameter);
+    max_field_flow_velocity = Max_field_flow_velocity(m_dot_htfmax, fluid_dens_outlet_temp, min_inner_diameter);
+    ssc_data_t_set_number(data, "max_field_flow_velocity", max_field_flow_velocity);
+
+    // min_field_flow_velocity
+    ssc_data_t_get_number(data, "m_dot_htfmin", &m_dot_htfmin);
+    ssc_data_t_get_number(data, "fluid_dens_inlet_temp", &fluid_dens_inlet_temp);
+    min_field_flow_velocity = Min_field_flow_velocity(m_dot_htfmin, fluid_dens_inlet_temp, min_inner_diameter);
+    ssc_data_t_set_number(data, "min_field_flow_velocity", min_field_flow_velocity);
+
     // field_htf_cp_avg
     ssc_data_t_get_number(data, "T_loop_in_des", &T_loop_in_des);
     ssc_data_t_get_number(data, "T_loop_out", &T_loop_out);
@@ -166,19 +179,6 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
         csp_dtr_hce_optical_eff_1, csp_dtr_hce_optical_eff_2,
         csp_dtr_hce_optical_eff_3, csp_dtr_hce_optical_eff_4);
     ssc_data_t_set_number(data, "loop_optical_efficiency", loop_optical_efficiency);
-
-    // max_field_flow_velocity
-    ssc_data_t_get_number(data, "m_dot_htfmax", &m_dot_htfmax);
-    ssc_data_t_get_number(data, "fluid_dens_outlet_temp", &fluid_dens_outlet_temp);
-    ssc_data_t_get_number(data, "min_inner_diameter", &min_inner_diameter);
-    max_field_flow_velocity = Max_field_flow_velocity(m_dot_htfmax, fluid_dens_outlet_temp, min_inner_diameter);
-    ssc_data_t_set_number(data, "max_field_flow_velocity", max_field_flow_velocity);
-
-    // min_field_flow_velocity
-    ssc_data_t_get_number(data, "m_dot_htfmin", &m_dot_htfmin);
-    ssc_data_t_get_number(data, "fluid_dens_inlet_temp", &fluid_dens_inlet_temp);
-    min_field_flow_velocity = Min_field_flow_velocity(m_dot_htfmin, fluid_dens_inlet_temp, min_inner_diameter);
-    ssc_data_t_set_number(data, "min_field_flow_velocity", min_field_flow_velocity);
 
 
     double x = 1.;

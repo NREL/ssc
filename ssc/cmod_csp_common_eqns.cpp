@@ -525,6 +525,26 @@ double Nloops(int radio_sm_or_area, double specified_solar_multiple, double tota
     return n_loops;
 }
 
+double Max_field_flow_velocity(double m_dot_htfmax, double fluid_dens_outlet_temp, double min_inner_diameter)
+{
+    return m_dot_htfmax * 4 / (fluid_dens_outlet_temp * M_PI *
+        min_inner_diameter * min_inner_diameter);
+}
+
+double Min_field_flow_velocity(double m_dot_htfmin, double fluid_dens_inlet_temp, double min_inner_diameter)
+{
+    return m_dot_htfmin * 4 / (fluid_dens_inlet_temp * M_PI *
+        min_inner_diameter * min_inner_diameter);
+}
+
+double Field_htf_cp_avg(double T_in /*C*/, double T_out /*C*/, int rec_htf /*-*/,
+    const util::matrix_t<ssc_number_t>& field_fl_props /*-*/)      // [kJ/kg-K]
+{
+    double T_avg = 0.5 * (T_in + T_out);
+    HTFProperties htf_properties = GetHtfProperties(rec_htf, field_fl_props);
+    return htf_properties.Cp(T_avg + 273.15);
+}
+
 double Min_inner_diameter(const util::matrix_t<ssc_number_t>& trough_loop_control,
     double csp_dtr_hce_diam_absorber_inner_1, double csp_dtr_hce_diam_absorber_inner_2,
     double csp_dtr_hce_diam_absorber_inner_3, double csp_dtr_hce_diam_absorber_inner_4)
@@ -687,22 +707,4 @@ double Loop_optical_efficiency(const util::matrix_t<ssc_number_t>& trough_loop_c
     return weighted_hce_eff * weighted_sca_eff;
 }
 
-double Max_field_flow_velocity(double m_dot_htfmax, double fluid_dens_outlet_temp, double min_inner_diameter)
-{
-    return m_dot_htfmax * 4 / (fluid_dens_outlet_temp * M_PI *
-        min_inner_diameter * min_inner_diameter);
-}
 
-double Min_field_flow_velocity(double m_dot_htfmin, double fluid_dens_inlet_temp, double min_inner_diameter)
-{
-    return m_dot_htfmin * 4 / (fluid_dens_inlet_temp * M_PI *
-        min_inner_diameter * min_inner_diameter);
-}
-
-double Field_htf_cp_avg(double T_in /*C*/, double T_out /*C*/, int rec_htf /*-*/,
-    const util::matrix_t<ssc_number_t>& field_fl_props /*-*/)      // [kJ/kg-K]
-{
-    double T_avg = 0.5 * (T_in + T_out);
-    HTFProperties htf_properties = GetHtfProperties(rec_htf, field_fl_props);
-    return htf_properties.Cp(T_avg + 273.15);
-}

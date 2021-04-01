@@ -147,6 +147,13 @@ double Solar_mult(int radio_sm_or_area, double specified_solar_multiple, double 
 double Nloops(int radio_sm_or_area, double specified_solar_multiple, double total_required_aperture_for_SM1,
     double specified_total_aperture, double single_loop_aperature);
 
+double Max_field_flow_velocity(double m_dot_htfmax, double fluid_dens_outlet_temp, double min_inner_diameter);
+
+double Min_field_flow_velocity(double m_dot_htfmin, double fluid_dens_inlet_temp, double min_inner_diameter);
+
+double Field_htf_cp_avg(double T_in /*C*/, double T_out /*C*/, int rec_htf /*-*/,
+    const util::matrix_t<ssc_number_t>& field_fl_props /*-*/);      // [kJ/kg-K]
+
 double Min_inner_diameter(const util::matrix_t<ssc_number_t>& trough_loop_control,
     double csp_dtr_hce_diam_absorber_inner_1, double csp_dtr_hce_diam_absorber_inner_2,
     double csp_dtr_hce_diam_absorber_inner_3, double csp_dtr_hce_diam_absorber_inner_4);
@@ -167,12 +174,5 @@ double Loop_optical_efficiency(const util::matrix_t<ssc_number_t>& trough_loop_c
     double csp_dtr_sca_length_1, double csp_dtr_sca_length_2, double csp_dtr_sca_length_3, double csp_dtr_sca_length_4,
     double csp_dtr_hce_optical_eff_1, double csp_dtr_hce_optical_eff_2,
     double csp_dtr_hce_optical_eff_3, double csp_dtr_hce_optical_eff_4);
-
-double Max_field_flow_velocity(double m_dot_htfmax, double fluid_dens_outlet_temp, double min_inner_diameter);
-
-double Min_field_flow_velocity(double m_dot_htfmin, double fluid_dens_inlet_temp, double min_inner_diameter);
-
-double Field_htf_cp_avg(double T_in /*C*/, double T_out /*C*/, int rec_htf /*-*/,
-    const util::matrix_t<ssc_number_t>& field_fl_props /*-*/);      // [kJ/kg-K]
 
 #endif
