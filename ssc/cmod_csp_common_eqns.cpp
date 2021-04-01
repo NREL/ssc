@@ -541,11 +541,150 @@ double Min_inner_diameter(const util::matrix_t<ssc_number_t>& trough_loop_contro
     for (int i = 0; i < static_cast<int>(trough_loop_control.at(0)); i++)
     {
         hce_t = std::min(std::max(static_cast<int>(trough_loop_control.at(i * 3 + 2)), 1), 4) - 1;
-        if (diam_inputs[hce_t] < minval)
+        if (diam_inputs[hce_t] < minval) {
             minval = diam_inputs[hce_t];
+        }
     }
 
     return minval;
+}
+
+double Single_loop_aperature(const util::matrix_t<ssc_number_t>& trough_loop_control,
+    double csp_dtr_sca_aperture_1, double csp_dtr_sca_aperture_2,
+    double csp_dtr_sca_aperture_3, double csp_dtr_sca_aperture_4)
+{
+    std::vector<double> sca_ap(4, std::numeric_limits<double>::quiet_NaN());
+
+    int nsca = static_cast<int>(trough_loop_control.at(0));
+    sca_ap[0] = csp_dtr_sca_aperture_1;
+    sca_ap[1] = csp_dtr_sca_aperture_2;
+    sca_ap[2] = csp_dtr_sca_aperture_3;
+    sca_ap[3] = csp_dtr_sca_aperture_4;
+
+    double total_ap = 0.;
+    int sca_t = -1;
+    for (int i = 0; i < nsca; i++)
+    {
+        sca_t = std::min(std::max(static_cast<int>(trough_loop_control.at(1 + i * 3)), 1), 4) - 1;
+        total_ap = total_ap + sca_ap[sca_t];
+    }
+
+    return total_ap;
+}
+
+double Cspdtr_loop_hce_heat_loss(const util::matrix_t<ssc_number_t>& trough_loop_control, double I_bn_des,
+    double csp_dtr_hce_design_heat_loss_1, double csp_dtr_hce_design_heat_loss_2,
+    double csp_dtr_hce_design_heat_loss_3, double csp_dtr_hce_design_heat_loss_4,
+    double csp_dtr_sca_length_1, double csp_dtr_sca_length_2, double csp_dtr_sca_length_3, double csp_dtr_sca_length_4,
+    double csp_dtr_sca_aperture_1, double csp_dtr_sca_aperture_2, double csp_dtr_sca_aperture_3, double csp_dtr_sca_aperture_4)
+{
+    std::vector<double> hce_hl(4, std::numeric_limits<double>::quiet_NaN());
+    std::vector<double> sca_len(4, std::numeric_limits<double>::quiet_NaN());
+    std::vector<double> sca_ap(4, std::numeric_limits<double>::quiet_NaN());
+    int ncol = static_cast<int>(trough_loop_control.at(0));
+    double total_len = 0.;
+
+    hce_hl[0] = csp_dtr_hce_design_heat_loss_1;
+    hce_hl[1] = csp_dtr_hce_design_heat_loss_2;
+    hce_hl[2] = csp_dtr_hce_design_heat_loss_3;
+    hce_hl[3] = csp_dtr_hce_design_heat_loss_4;
+
+    sca_len[0] = csp_dtr_sca_length_1;
+    sca_len[1] = csp_dtr_sca_length_2;
+    sca_len[2] = csp_dtr_sca_length_3;
+    sca_len[3] = csp_dtr_sca_length_4;
+
+    sca_ap[0] = csp_dtr_sca_aperture_1;
+    sca_ap[1] = csp_dtr_sca_aperture_2;
+    sca_ap[2] = csp_dtr_sca_aperture_3;
+    sca_ap[3] = csp_dtr_sca_aperture_4;
+
+    double derate = 0.;
+    for (int i = 0; i < ncol; i++)
+    {
+        int sca_t = std::min(std::max(static_cast<int>(trough_loop_control.at(1 + i * 3)), 1), 4) - 1;
+        int hce_t = std::min(std::max(static_cast<int>(trough_loop_control.at(2 + i * 3)), 1), 4) - 1;
+        total_len = total_len + sca_len[sca_t];
+        derate = derate + sca_len[sca_t] * (1 - (hce_hl[hce_t] / (I_bn_des * sca_ap[sca_t] / sca_len[sca_t])));
+    }
+
+    if (total_len != 0.0) {
+        derate = derate / total_len;
+    }
+    else {
+        derate = -777.7;
+    }
+
+    return derate;
+}
+
+double Loop_optical_efficiency(const util::matrix_t<ssc_number_t>& trough_loop_control,
+    double csp_dtr_sca_calc_sca_eff_1, double csp_dtr_sca_calc_sca_eff_2,
+    double csp_dtr_sca_calc_sca_eff_3, double csp_dtr_sca_calc_sca_eff_4,
+    double csp_dtr_sca_length_1, double csp_dtr_sca_length_2, double csp_dtr_sca_length_3, double csp_dtr_sca_length_4,
+    double csp_dtr_hce_optical_eff_1, double csp_dtr_hce_optical_eff_2,
+    double csp_dtr_hce_optical_eff_3, double csp_dtr_hce_optical_eff_4)
+{
+    std::vector<double> sca_eff(4, std::numeric_limits<double>::quiet_NaN());
+    std::vector<double> sca_len(4, std::numeric_limits<double>::quiet_NaN());
+    std::vector<double> hce_eff(4, std::numeric_limits<double>::quiet_NaN());
+    int ncol = static_cast<int>(trough_loop_control.at(0));
+
+    if (trough_loop_control.ncells() != ncol * 3 + 1) {
+        return -888.8;
+    }
+
+    // sca efficiency
+    sca_eff[0] = csp_dtr_sca_calc_sca_eff_1;
+    sca_eff[1] = csp_dtr_sca_calc_sca_eff_2;
+    sca_eff[2] = csp_dtr_sca_calc_sca_eff_3;
+    sca_eff[3] = csp_dtr_sca_calc_sca_eff_4;
+
+    sca_len[0] = csp_dtr_sca_length_1;
+    sca_len[1] = csp_dtr_sca_length_2;
+    sca_len[2] = csp_dtr_sca_length_3;
+    sca_len[3] = csp_dtr_sca_length_4;
+
+    double total_len = 0.;
+    double weighted_sca_eff = 0.0;
+    for (int i = 0; i < ncol; i++)
+    {
+        int sca_t = std::min(std::max(static_cast<int>(trough_loop_control.at(1 + i * 3)), 1), 4) - 1;
+        total_len = total_len + sca_len[sca_t];
+        weighted_sca_eff = weighted_sca_eff + sca_len[sca_t] * sca_eff[sca_t];
+    }
+
+    if (total_len != 0.0) {
+        weighted_sca_eff = weighted_sca_eff / total_len;
+    }
+    else {
+        weighted_sca_eff = -777.7;
+    }
+
+    // hce efficiency
+    hce_eff[0] = csp_dtr_hce_optical_eff_1;
+    hce_eff[1] = csp_dtr_hce_optical_eff_2;
+    hce_eff[2] = csp_dtr_hce_optical_eff_3;
+    hce_eff[3] = csp_dtr_hce_optical_eff_4;
+
+    total_len = 0;
+    double weighted_hce_eff = 0.0;
+    for (int i = 0; i < ncol; i++)
+    {
+        int hce_t = std::min(std::max(static_cast<int>(trough_loop_control.at(2 + i * 3)), 1), 4) - 1;
+        int sca_t = std::min(std::max(static_cast<int>(trough_loop_control.at(1 + i * 3)), 1), 4) - 1;
+        total_len = total_len + sca_len[sca_t];
+        weighted_hce_eff = weighted_hce_eff + sca_len[sca_t] * hce_eff[hce_t];
+    }
+
+    if (total_len != 0.0) {
+        weighted_hce_eff = weighted_hce_eff / total_len;
+    }
+    else {
+        weighted_hce_eff = -777.7;
+    }
+
+    return weighted_hce_eff * weighted_sca_eff;
 }
 
 double Max_field_flow_velocity(double m_dot_htfmax, double fluid_dens_outlet_temp, double min_inner_diameter)

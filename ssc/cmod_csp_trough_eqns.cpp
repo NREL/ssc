@@ -75,6 +75,19 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     double T_loop_in_des, T_loop_out, fluid, field_htf_cp_avg,
         csp_dtr_hce_diam_absorber_inner_1, csp_dtr_hce_diam_absorber_inner_2,
         csp_dtr_hce_diam_absorber_inner_3, csp_dtr_hce_diam_absorber_inner_4, min_inner_diameter,
+        csp_dtr_sca_aperture_1, csp_dtr_sca_aperture_2,
+        csp_dtr_sca_aperture_3, csp_dtr_sca_aperture_4, single_loop_aperature,
+        csp_dtr_hce_design_heat_loss_1, csp_dtr_hce_design_heat_loss_2,
+        csp_dtr_hce_design_heat_loss_3, csp_dtr_hce_design_heat_loss_4,
+        csp_dtr_sca_length_1, csp_dtr_sca_length_2,
+        csp_dtr_sca_length_3, csp_dtr_sca_length_4, cspdtr_loop_hce_heat_loss,
+
+        I_bn_des,
+        csp_dtr_sca_calc_sca_eff_1, csp_dtr_sca_calc_sca_eff_2,
+        csp_dtr_sca_calc_sca_eff_3, csp_dtr_sca_calc_sca_eff_4,
+        csp_dtr_hce_optical_eff_1, csp_dtr_hce_optical_eff_2,
+        csp_dtr_hce_optical_eff_3, csp_dtr_hce_optical_eff_4, loop_optical_efficiency,
+
         m_dot_htfmax, fluid_dens_outlet_temp, max_field_flow_velocity,
         m_dot_htfmin, fluid_dens_inlet_temp, min_field_flow_velocity;
 
@@ -97,6 +110,62 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     min_inner_diameter = Min_inner_diameter(trough_loop_control, csp_dtr_hce_diam_absorber_inner_1,
         csp_dtr_hce_diam_absorber_inner_2, csp_dtr_hce_diam_absorber_inner_3, csp_dtr_hce_diam_absorber_inner_4);
     ssc_data_t_set_number(data, "min_inner_diameter", min_inner_diameter);
+
+    // single_loop_aperature
+    //ssc_data_t_get_matrix(vt, "trough_loop_control", trough_loop_control);  // Already gotten above
+    ssc_data_t_get_number(data, "csp_dtr_sca_aperture_1", &csp_dtr_sca_aperture_1);
+    ssc_data_t_get_number(data, "csp_dtr_sca_aperture_2", &csp_dtr_sca_aperture_2);
+    ssc_data_t_get_number(data, "csp_dtr_sca_aperture_3", &csp_dtr_sca_aperture_3);
+    ssc_data_t_get_number(data, "csp_dtr_sca_aperture_4", &csp_dtr_sca_aperture_4);
+    single_loop_aperature = Single_loop_aperature(trough_loop_control, csp_dtr_sca_aperture_1,
+        csp_dtr_sca_aperture_2, csp_dtr_sca_aperture_3, csp_dtr_sca_aperture_4);
+    ssc_data_t_set_number(data, "single_loop_aperature", single_loop_aperature);
+
+    // cspdtr_loop_hce_heat_loss
+    //ssc_data_t_get_matrix(vt, "trough_loop_control", trough_loop_control);  // Already gotten above
+    ssc_data_t_get_number(data, "I_bn_des", &I_bn_des);
+    ssc_data_t_get_number(data, "csp_dtr_hce_design_heat_loss_1", &csp_dtr_hce_design_heat_loss_1);
+    ssc_data_t_get_number(data, "csp_dtr_hce_design_heat_loss_2", &csp_dtr_hce_design_heat_loss_2);
+    ssc_data_t_get_number(data, "csp_dtr_hce_design_heat_loss_3", &csp_dtr_hce_design_heat_loss_3);
+    ssc_data_t_get_number(data, "csp_dtr_hce_design_heat_loss_4", &csp_dtr_hce_design_heat_loss_4);
+    ssc_data_t_get_number(data, "csp_dtr_sca_length_1", &csp_dtr_sca_length_1);
+    ssc_data_t_get_number(data, "csp_dtr_sca_length_2", &csp_dtr_sca_length_2);
+    ssc_data_t_get_number(data, "csp_dtr_sca_length_3", &csp_dtr_sca_length_3);
+    ssc_data_t_get_number(data, "csp_dtr_sca_length_4", &csp_dtr_sca_length_4);
+    // Already gotten above:
+    //ssc_data_t_get_number(data, "csp_dtr_sca_aperture_1", &csp_dtr_sca_aperture_1);
+    //ssc_data_t_get_number(data, "csp_dtr_sca_aperture_2", &csp_dtr_sca_aperture_2);
+    //ssc_data_t_get_number(data, "csp_dtr_sca_aperture_3", &csp_dtr_sca_aperture_3);
+    //ssc_data_t_get_number(data, "csp_dtr_sca_aperture_4", &csp_dtr_sca_aperture_4);
+    cspdtr_loop_hce_heat_loss = Cspdtr_loop_hce_heat_loss(trough_loop_control, I_bn_des,
+        csp_dtr_hce_design_heat_loss_1, csp_dtr_hce_design_heat_loss_2,
+        csp_dtr_hce_design_heat_loss_3, csp_dtr_hce_design_heat_loss_4,
+        csp_dtr_sca_length_1, csp_dtr_sca_length_2, csp_dtr_sca_length_3, csp_dtr_sca_length_4,
+        csp_dtr_sca_aperture_1, csp_dtr_sca_aperture_2, csp_dtr_sca_aperture_3, csp_dtr_sca_aperture_4);
+    ssc_data_t_set_number(data, "cspdtr_loop_hce_heat_loss", cspdtr_loop_hce_heat_loss);
+
+    // loop_optical_efficiency
+    //ssc_data_t_get_matrix(vt, "trough_loop_control", trough_loop_control);  // Already gotten above
+    ssc_data_t_get_number(data, "csp_dtr_sca_calc_sca_eff_1", &csp_dtr_sca_calc_sca_eff_1);
+    ssc_data_t_get_number(data, "csp_dtr_sca_calc_sca_eff_2", &csp_dtr_sca_calc_sca_eff_2);
+    ssc_data_t_get_number(data, "csp_dtr_sca_calc_sca_eff_3", &csp_dtr_sca_calc_sca_eff_3);
+    ssc_data_t_get_number(data, "csp_dtr_sca_calc_sca_eff_4", &csp_dtr_sca_calc_sca_eff_4);
+    // Already gotten above:
+    //ssc_data_t_get_number(data, "csp_dtr_sca_length_1", &csp_dtr_sca_length_1);
+    //ssc_data_t_get_number(data, "csp_dtr_sca_length_2", &csp_dtr_sca_length_2);
+    //ssc_data_t_get_number(data, "csp_dtr_sca_length_3", &csp_dtr_sca_length_3);
+    //ssc_data_t_get_number(data, "csp_dtr_sca_length_4", &csp_dtr_sca_length_4);
+    ssc_data_t_get_number(data, "csp_dtr_hce_optical_eff_1", &csp_dtr_hce_optical_eff_1);
+    ssc_data_t_get_number(data, "csp_dtr_hce_optical_eff_2", &csp_dtr_hce_optical_eff_2);
+    ssc_data_t_get_number(data, "csp_dtr_hce_optical_eff_3", &csp_dtr_hce_optical_eff_3);
+    ssc_data_t_get_number(data, "csp_dtr_hce_optical_eff_4", &csp_dtr_hce_optical_eff_4);
+    loop_optical_efficiency = Loop_optical_efficiency(trough_loop_control,
+        csp_dtr_sca_calc_sca_eff_1, csp_dtr_sca_calc_sca_eff_2,
+        csp_dtr_sca_calc_sca_eff_3, csp_dtr_sca_calc_sca_eff_4,
+        csp_dtr_sca_length_1, csp_dtr_sca_length_2, csp_dtr_sca_length_3, csp_dtr_sca_length_4,
+        csp_dtr_hce_optical_eff_1, csp_dtr_hce_optical_eff_2,
+        csp_dtr_hce_optical_eff_3, csp_dtr_hce_optical_eff_4);
+    ssc_data_t_set_number(data, "loop_optical_efficiency", loop_optical_efficiency);
 
     // max_field_flow_velocity
     ssc_data_t_get_number(data, "m_dot_htfmax", &m_dot_htfmax);
