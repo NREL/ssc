@@ -3125,7 +3125,7 @@ public:
 
                 for (size_t m = 0; m < 12; m++) {
                     if (a != 0) {
-                        cf.at(CF_charging_cost_grid_month, a) += monthly_grid_to_batt[m] / ((monthly_batt_to_grid[m] + monthly_system_to_grid[m]) + -monthly_electricity_tofrom_grid[m]) * monthly_energy_charge[m] * cf.at(CF_util_escal_rate, a);
+                        cf.at(CF_charging_cost_grid_month, a) += monthly_grid_to_batt[m] / ((monthly_batt_to_grid[m] + monthly_system_to_grid[m]) + -monthly_electricity_tofrom_grid[m]) * monthly_energy_charge[m] * charged_grid[a] / charged_grid[1] * cf.at(CF_util_escal_rate, a);
                     }
                 }
                 
@@ -3153,7 +3153,7 @@ public:
 
                 for (size_t m = 0; m < 12; m++) {
                     if (a != 0) {
-                        cf.at(CF_charging_cost_grid_month, a) += monthly_grid_to_batt[m] / (-monthly_electricity_tofrom_grid[m] + (monthly_batt_to_grid[m] + monthly_system_to_grid[m])) * monthly_energy_charge[m] * cf.at(CF_util_escal_rate, a);
+                        cf.at(CF_charging_cost_grid_month, a) += monthly_grid_to_batt[m] / (-monthly_electricity_tofrom_grid[m] + (monthly_batt_to_grid[m] + monthly_system_to_grid[m])) * monthly_energy_charge[m] * charged_grid[a] / charged_grid[1] * cf.at(CF_util_escal_rate, a);
                     }
                 }
                 
