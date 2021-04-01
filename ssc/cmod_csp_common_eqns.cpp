@@ -638,6 +638,17 @@ double Cspdtr_loop_hce_heat_loss(const util::matrix_t<ssc_number_t>& trough_loop
     return derate;
 }
 
+
+double Total_aperture(double single_loop_aperature, double nloops)
+{
+    return single_loop_aperature * nloops;
+};
+
+double Required_number_of_loops_for_SM1(double total_required_aperture_for_SM1, double single_loop_aperature)
+{
+    return std::ceil(total_required_aperture_for_SM1 / single_loop_aperature);
+};
+
 double Loop_optical_efficiency(const util::matrix_t<ssc_number_t>& trough_loop_control,
     double csp_dtr_sca_calc_sca_eff_1, double csp_dtr_sca_calc_sca_eff_2,
     double csp_dtr_sca_calc_sca_eff_3, double csp_dtr_sca_calc_sca_eff_4,
@@ -707,4 +718,8 @@ double Loop_optical_efficiency(const util::matrix_t<ssc_number_t>& trough_loop_c
     return weighted_hce_eff * weighted_sca_eff;
 }
 
+double Total_loop_conversion_efficiency(double loop_optical_efficiency, double cspdtr_loop_hce_heat_loss)
+{
+    return loop_optical_efficiency * cspdtr_loop_hce_heat_loss;
+}
 

@@ -88,6 +88,10 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
         csp_dtr_hce_optical_eff_1, csp_dtr_hce_optical_eff_2,
         csp_dtr_hce_optical_eff_3, csp_dtr_hce_optical_eff_4, loop_optical_efficiency,
 
+        nloops, total_aperture,
+        total_required_aperture_for_SM1, required_number_of_loops_for_SM1,
+        total_loop_conversion_efficiency,
+
         m_dot_htfmax, fluid_dens_outlet_temp, max_field_flow_velocity,
         m_dot_htfmin, fluid_dens_inlet_temp, min_field_flow_velocity;
 
@@ -157,6 +161,18 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
         csp_dtr_sca_aperture_1, csp_dtr_sca_aperture_2, csp_dtr_sca_aperture_3, csp_dtr_sca_aperture_4);
     ssc_data_t_set_number(data, "cspdtr_loop_hce_heat_loss", cspdtr_loop_hce_heat_loss);
 
+    // total_aperture
+    ssc_data_t_get_number(data, "single_loop_aperature", &single_loop_aperature);
+    ssc_data_t_get_number(data, "nloops", &nloops);
+    total_aperture = Total_aperture(single_loop_aperature, nloops);
+    ssc_data_t_set_number(data, "total_aperture", total_aperture);
+
+    // required_number_of_loops_for_SM1
+    ssc_data_t_get_number(data, "total_required_aperture_for_SM1", &total_required_aperture_for_SM1);
+    //ssc_data_t_get_number(data, "single_loop_aperature", &single_loop_aperature);
+    required_number_of_loops_for_SM1 = Required_number_of_loops_for_SM1(total_required_aperture_for_SM1, single_loop_aperature);
+    ssc_data_t_set_number(data, "required_number_of_loops_for_SM1", required_number_of_loops_for_SM1);
+
     // loop_optical_efficiency
     //ssc_data_t_get_matrix(vt, "trough_loop_control", trough_loop_control);  // Already gotten above
     ssc_data_t_get_number(data, "csp_dtr_sca_calc_sca_eff_1", &csp_dtr_sca_calc_sca_eff_1);
@@ -180,6 +196,11 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
         csp_dtr_hce_optical_eff_3, csp_dtr_hce_optical_eff_4);
     ssc_data_t_set_number(data, "loop_optical_efficiency", loop_optical_efficiency);
 
+    // total_loop_conversion_efficiency
+    //ssc_data_t_get_number(data, "loop_optical_efficiency", &loop_optical_efficiency);
+    ssc_data_t_get_number(data, "nloops", &nloops);
+    total_loop_conversion_efficiency = Total_loop_conversion_efficiency(loop_optical_efficiency, cspdtr_loop_hce_heat_loss);
+    ssc_data_t_set_number(data, "total_loop_conversion_efficiency", total_loop_conversion_efficiency);
 
     double x = 1.;
 }
