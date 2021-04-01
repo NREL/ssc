@@ -523,7 +523,42 @@ var_info vtab_grid_curtailment[] = {
 var_info vtab_technology_outputs[] = {
 	// instantaneous power at each timestep - consistent with sun position
 { SSC_OUTPUT, SSC_ARRAY , "gen"                                  , "System power generated"                                         , "kW"                                     , ""                                      , "Time Series"          , "*"              , ""                      , ""},
-	var_info_invalid };
+{ SSC_OUTPUT, SSC_MATRIX,			"annual_energy_distribution_time",			"Annual energy production as function of time",				"kW",				"",				"Heatmaps",			"",						"",							"" },
+
+    var_info_invalid };
+
+ssc_number_t* gen_heatmap(compute_module* cm, double step_per_hour) {
+    if (!cm)
+        return 0;
+    size_t count = 8760 * step_per_hour;
+    size_t imonth = 0;
+    size_t iday = 0;
+    size_t hour;
+    size_t count_gen;
+    ssc_number_t* p_gen = cm->as_array("gen", &count_gen);
+    ssc_number_t* p_annual_energy_dist_time = cm->allocate("annual_energy_distribution_time", 25, 366);
+    for (size_t i = 0; i < count; i++) {
+        hour = fmod(floor(double(i) / step_per_hour), 24);
+        imonth = util::month_of(double(floor(double(i) / step_per_hour)));
+        iday = floor(double(i) / 24) ;
+        for (size_t d = 0; d < 366; d++) {
+            for (size_t h = 0; h < 25; h++) {
+                if (i == 0) {
+                    p_annual_energy_dist_time[h * 366] = (h - 1);
+                    p_annual_energy_dist_time[d] = d;
+                }
+                if (iday == d && hour == (h - 1) && d != 365) {
+                    p_annual_energy_dist_time[h * 366 + d + 1] += p_gen[i] * 1 / step_per_hour;
+                    break;
+                }
+            }
+        }
+    }
+    p_annual_energy_dist_time[0] = 0;
+    return p_annual_energy_dist_time;
+
+
+}
 
 var_info vtab_p50p90[] = {
         { SSC_INPUT, SSC_NUMBER ,  "total_uncert"                 , "Total uncertainty in energy production as percent of annual energy", "%"                                   , ""                                      , "Uncertainty"          , ""              , "MIN=0,MAX=100"         , ""},

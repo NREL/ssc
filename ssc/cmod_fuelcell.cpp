@@ -96,6 +96,7 @@ var_info vtab_fuelcell_output[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,      "system_heat_rate",                    "Heat rate conversion factor (MMBTUs/MWhe)",  "MMBTUs/MWhe",   "",      "Fuel Cell",           "*",               "",                    "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_fuel_usage",                   "Annual Fuel Usage",                          "kWht",          "",      "Fuel Cell",           "*",               "",                    "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "annual_fuel_usage_lifetime",            "Annual Fuel Usage (lifetime)",               "kWht",          "",      "Fuel Cell",           "",               "",                    "" },
+    { SSC_OUTPUT,	    SSC_MATRIX,			"annual_energy_distribution_time_fc",			"Annual energy production (PV + battery + fuel cell) as function of Time",				"",				"",				"Heatmaps",			"",						"",							"" },
 
 
 var_info_invalid };
@@ -197,7 +198,7 @@ void cm_fuelcell::exec()
 		p_fuelCellReplacements[annual_index] = (ssc_number_t)(fuelCell->getTotalReplacements());
 		fuelCell->resetReplacements();
 	}
-
+    ssc_number_t* p_annual_energy_dist_time_fc = gen_heatmap(this, 1);
 	// capacity factor update
 	double capacity_factor_in, annual_energy_in, nameplate_in;
 	capacity_factor_in = annual_energy_in = nameplate_in = 0;
