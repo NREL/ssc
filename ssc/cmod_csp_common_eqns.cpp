@@ -723,3 +723,21 @@ double Total_loop_conversion_efficiency(double loop_optical_efficiency, double c
     return loop_optical_efficiency * cspdtr_loop_hce_heat_loss;
 }
 
+double Field_thermal_output(double I_bn_des, double total_loop_conversion_efficiency, double total_aperture)
+{
+    return I_bn_des * total_loop_conversion_efficiency * total_aperture / 1.E6;  // default now = 626.008
+    //return solar_mult * P_ref / eta_ref;   // default = 623.596
+}
+
+double Total_required_aperture_for_sm1(double q_pb_design, double I_bn_des, double total_loop_conversion_efficiency)
+{
+    return q_pb_design / (I_bn_des * total_loop_conversion_efficiency) * 1000000.0;
+}
+
+double Fixed_land_area(double total_aperture, double row_distance, double max_collector_width) {
+    return total_aperture * row_distance / max_collector_width * 0.0002471;
+}
+
+double Total_land_area(double fixed_land_area, double non_solar_field_land_area_multiplier) {
+    return fixed_land_area * non_solar_field_land_area_multiplier;
+}

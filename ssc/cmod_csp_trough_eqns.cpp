@@ -93,7 +93,12 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
         total_loop_conversion_efficiency,
 
         m_dot_htfmax, fluid_dens_outlet_temp, max_field_flow_velocity,
-        m_dot_htfmin, fluid_dens_inlet_temp, min_field_flow_velocity;
+        m_dot_htfmin, fluid_dens_inlet_temp, min_field_flow_velocity,
+
+        field_thermal_output,
+        q_pb_design, total_required_aperture_for_sm1,
+        fixed_land_area, non_solar_field_land_area_multiplier, total_land_area,
+        row_distance, max_collector_width;
 
     util::matrix_t<ssc_number_t> field_fl_props, trough_loop_control;
 
@@ -201,6 +206,34 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     ssc_data_t_get_number(data, "nloops", &nloops);
     total_loop_conversion_efficiency = Total_loop_conversion_efficiency(loop_optical_efficiency, cspdtr_loop_hce_heat_loss);
     ssc_data_t_set_number(data, "total_loop_conversion_efficiency", total_loop_conversion_efficiency);
+
+    // field_thermal_output
+    //ssc_data_t_get_number(data, "I_bn_des", &I_bn_des);
+    //ssc_data_t_get_number(data, "total_aperture", &total_aperture);
+    field_thermal_output = Field_thermal_output(I_bn_des, total_loop_conversion_efficiency, total_aperture);
+    ssc_data_t_set_number(data, "field_thermal_output", field_thermal_output);
+
+    // total_required_aperture_for_sm1
+    ssc_data_t_get_number(data, "q_pb_design", &q_pb_design);
+    //ssc_data_t_get_number(data, "I_bn_des", &I_bn_des);
+    //ssc_data_t_get_number(data, "total_loop_conversion_efficiency", &total_loop_conversion_efficiency);
+    total_required_aperture_for_sm1 = Total_required_aperture_for_sm1(q_pb_design, I_bn_des, total_loop_conversion_efficiency);
+    ssc_data_t_set_number(data, "total_required_aperture_for_sm1", total_required_aperture_for_sm1);
+
+    // fixed_land_area
+    //ssc_data_t_get_number(data, "total_aperture", &total_aperture);
+    ssc_data_t_get_number(data, "row_distance", &row_distance);
+    ssc_data_t_get_number(data, "max_collector_width", &max_collector_width);
+    fixed_land_area = Fixed_land_area(total_aperture, row_distance, max_collector_width);
+    ssc_data_t_set_number(data, "fixed_land_area", fixed_land_area);
+
+    // total_land_area
+    //ssc_data_t_get_number(data, "fixed_land_area", &fixed_land_area);
+    ssc_data_t_get_number(data, "non_solar_field_land_area_multiplier", &non_solar_field_land_area_multiplier);
+    total_land_area = Total_land_area(fixed_land_area, non_solar_field_land_area_multiplier);
+    ssc_data_t_set_number(data, "total_land_area", total_land_area);
+
+
 
     double x = 1.;
 }

@@ -172,13 +172,22 @@ double Total_aperture(double single_loop_aperature, double nloops);
 
 double Required_number_of_loops_for_SM1(double total_required_aperture_for_SM1, double single_loop_aperature);
 
-double Total_loop_conversion_efficiency(double loop_optical_efficiency, double cspdtr_loop_hce_heat_loss);
-
 double Loop_optical_efficiency(const util::matrix_t<ssc_number_t>& trough_loop_control,
     double csp_dtr_sca_calc_sca_eff_1, double csp_dtr_sca_calc_sca_eff_2,
     double csp_dtr_sca_calc_sca_eff_3, double csp_dtr_sca_calc_sca_eff_4,
     double csp_dtr_sca_length_1, double csp_dtr_sca_length_2, double csp_dtr_sca_length_3, double csp_dtr_sca_length_4,
     double csp_dtr_hce_optical_eff_1, double csp_dtr_hce_optical_eff_2,
     double csp_dtr_hce_optical_eff_3, double csp_dtr_hce_optical_eff_4);
+
+double Total_loop_conversion_efficiency(double loop_optical_efficiency, double cspdtr_loop_hce_heat_loss);
+
+double Field_thermal_output(double I_bn_des, double total_loop_conversion_efficiency, double total_aperture);
+
+double Total_required_aperture_for_sm1(double q_pb_design, double I_bn_des, double total_loop_conversion_efficiency);
+
+double Fixed_land_area(double total_aperture, double row_distance, double max_collector_width);
+
+double Total_land_area(double fixed_land_area, double non_solar_field_land_area_multiplier);
+
 
 #endif
