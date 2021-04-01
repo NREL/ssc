@@ -1723,6 +1723,7 @@ public:
                 }
             }
             batt->calculate_monthly_and_annual_outputs(*this);
+            ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, double(n_rec_single_year / 8760));
 
             // update capacity factor and annual energy
             assign("capacity_factor", var_data(static_cast<ssc_number_t>(annual_energy * 100.0 / (nameplate_in * util::hours_per_year))));
