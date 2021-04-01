@@ -1,5 +1,6 @@
 #include <cmath>
 #include <math.h>
+#include <algorithm>
 #include "cmod_csp_common_eqns.h"
 #include "vartab.h"
 #include "csp_system_costs.h"
@@ -522,6 +523,29 @@ double Nloops(int radio_sm_or_area, double specified_solar_multiple, double tota
 
     n_loops = std::ceil(total_aperture / single_loop_aperture);
     return n_loops;
+}
+
+double Min_inner_diameter(const util::matrix_t<ssc_number_t>& trough_loop_control,
+    double csp_dtr_hce_diam_absorber_inner_1, double csp_dtr_hce_diam_absorber_inner_2,
+    double csp_dtr_hce_diam_absorber_inner_3, double csp_dtr_hce_diam_absorber_inner_4)
+{
+    //std::vector<ssc_number_t> trough_loop_control{ 8, 1, 1, 8, 1, 1, 7, 1, 1, 6, 1, 1, 5, 1, 1, 4, 1, 1, 3, 1, 1, 2, 1, 1, 1 };
+    std::vector<double> diam_inputs(4, std::numeric_limits<double>::quiet_NaN());
+    diam_inputs[0] = csp_dtr_hce_diam_absorber_inner_1;
+    diam_inputs[1] = csp_dtr_hce_diam_absorber_inner_2;
+    diam_inputs[2] = csp_dtr_hce_diam_absorber_inner_3;
+    diam_inputs[3] = csp_dtr_hce_diam_absorber_inner_4;
+
+    double minval = diam_inputs[0];
+    int hce_t = -1;
+    for (int i = 0; i < static_cast<int>(trough_loop_control.at(0)); i++)
+    {
+        hce_t = std::min(std::max(static_cast<int>(trough_loop_control.at(i * 3 + 2)), 1), 4) - 1;
+        if (diam_inputs[hce_t] < minval)
+            minval = diam_inputs[hce_t];
+    }
+
+    return minval;
 }
 
 double Max_field_flow_velocity(double m_dot_htfmax, double fluid_dens_outlet_temp, double min_inner_diameter)

@@ -73,10 +73,12 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     }
 
     double T_loop_in_des, T_loop_out, fluid, field_htf_cp_avg,
-        m_dot_htfmax, fluid_dens_outlet_temp, min_inner_diameter, max_field_flow_velocity,
+        csp_dtr_hce_diam_absorber_inner_1, csp_dtr_hce_diam_absorber_inner_2,
+        csp_dtr_hce_diam_absorber_inner_3, csp_dtr_hce_diam_absorber_inner_4, min_inner_diameter,
+        m_dot_htfmax, fluid_dens_outlet_temp, max_field_flow_velocity,
         m_dot_htfmin, fluid_dens_inlet_temp, min_field_flow_velocity;
 
-    util::matrix_t<double> field_fl_props;
+    util::matrix_t<ssc_number_t> field_fl_props, trough_loop_control;
 
     // field_htf_cp_avg
     ssc_data_t_get_number(data, "T_loop_in_des", &T_loop_in_des);
@@ -85,6 +87,16 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     ssc_data_t_get_matrix(vt, "field_fl_props", field_fl_props);
     field_htf_cp_avg = Field_htf_cp_avg(T_loop_in_des, T_loop_out, fluid, field_fl_props);      // [kJ/kg-K]
     ssc_data_t_set_number(data, "field_htf_cp_avg", field_htf_cp_avg);
+
+    // min_inner_diameter
+    ssc_data_t_get_matrix(vt, "trough_loop_control", trough_loop_control);
+    ssc_data_t_get_number(data, "csp_dtr_hce_diam_absorber_inner_1", &csp_dtr_hce_diam_absorber_inner_1);
+    ssc_data_t_get_number(data, "csp_dtr_hce_diam_absorber_inner_2", &csp_dtr_hce_diam_absorber_inner_2);
+    ssc_data_t_get_number(data, "csp_dtr_hce_diam_absorber_inner_3", &csp_dtr_hce_diam_absorber_inner_3);
+    ssc_data_t_get_number(data, "csp_dtr_hce_diam_absorber_inner_4", &csp_dtr_hce_diam_absorber_inner_4);
+    min_inner_diameter = Min_inner_diameter(trough_loop_control, csp_dtr_hce_diam_absorber_inner_1,
+        csp_dtr_hce_diam_absorber_inner_2, csp_dtr_hce_diam_absorber_inner_3, csp_dtr_hce_diam_absorber_inner_4);
+    ssc_data_t_set_number(data, "min_inner_diameter", min_inner_diameter);
 
     // max_field_flow_velocity
     ssc_data_t_get_number(data, "m_dot_htfmax", &m_dot_htfmax);
