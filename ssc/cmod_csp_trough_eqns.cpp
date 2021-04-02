@@ -98,9 +98,11 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
         field_thermal_output,
         q_pb_design, total_required_aperture_for_sm1,
         fixed_land_area, non_solar_field_land_area_multiplier, total_land_area,
-        row_distance, max_collector_width;
+        row_distance, max_collector_width,
 
-    util::matrix_t<ssc_number_t> field_fl_props, trough_loop_control;
+        nsca, sca_drives_elec, total_tracking_power;
+
+    util::matrix_t<ssc_number_t> field_fl_props, trough_loop_control, sca_info_array, sca_defocus_array;
 
     // max_field_flow_velocity
     ssc_data_t_get_number(data, "m_dot_htfmax", &m_dot_htfmax);
@@ -233,6 +235,19 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     total_land_area = Total_land_area(fixed_land_area, non_solar_field_land_area_multiplier);
     ssc_data_t_set_number(data, "total_land_area", total_land_area);
 
+    // sca_info_array
+    sca_info_array = Sca_info_array(trough_loop_control);
+    ssc_data_t_set_array(data, "sca_info_array", sca_info_array.data(), sca_info_array.ncells());
+
+    // sca_defocus_array
+    sca_defocus_array = Sca_defocus_array(trough_loop_control);
+    ssc_data_t_set_array(data, "sca_defocus_array", sca_defocus_array.data(), sca_defocus_array.ncells());
+
+    // total_tracking_power
+    ssc_data_t_get_number(data, "nsca", &nsca);
+    ssc_data_t_get_number(data, "sca_drives_elec", &sca_drives_elec);
+    total_tracking_power = Total_tracking_power(static_cast<int>(nsca), static_cast<int>(nloops), sca_drives_elec);
+    ssc_data_t_set_number(data, "total_tracking_power", total_tracking_power);
 
 
     double x = 1.;

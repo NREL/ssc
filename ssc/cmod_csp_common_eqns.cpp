@@ -734,10 +734,40 @@ double Total_required_aperture_for_sm1(double q_pb_design, double I_bn_des, doub
     return q_pb_design / (I_bn_des * total_loop_conversion_efficiency) * 1000000.0;
 }
 
-double Fixed_land_area(double total_aperture, double row_distance, double max_collector_width) {
+double Fixed_land_area(double total_aperture, double row_distance, double max_collector_width)
+{
     return total_aperture * row_distance / max_collector_width * 0.0002471;
 }
 
-double Total_land_area(double fixed_land_area, double non_solar_field_land_area_multiplier) {
+double Total_land_area(double fixed_land_area, double non_solar_field_land_area_multiplier)
+{
     return fixed_land_area * non_solar_field_land_area_multiplier;
+}
+
+util::matrix_t<ssc_number_t> Sca_info_array(const util::matrix_t<ssc_number_t>& trough_loop_control)
+{
+    int assemblies = static_cast<int>(trough_loop_control.at(0));
+    util::matrix_t<ssc_number_t> p1(assemblies, 2);
+    for (int i = 0; i < assemblies; i++) {
+        p1.at(i, 1) = static_cast<int>(trough_loop_control.at(1 + 3 * i));
+        p1.at(i, 0) = static_cast<int>(trough_loop_control.at(2 + 3 * i));
+    }
+
+    return p1;
+}
+
+util::matrix_t<ssc_number_t> Sca_defocus_array(const util::matrix_t<ssc_number_t>& trough_loop_control)
+{
+    int assemblies = static_cast<int>(trough_loop_control.at(0));
+    util::matrix_t<ssc_number_t> p1(assemblies);
+    for (int i = 0; i < assemblies; i++) {
+        p1.at(i) = static_cast<int>(trough_loop_control.at(3 + 3 * i));
+    }
+
+    return p1;
+}
+
+double Total_tracking_power(int nSCA, int nLoops, double SCA_drives_elec)
+{
+    return nSCA * nLoops * SCA_drives_elec;
 }

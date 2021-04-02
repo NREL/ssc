@@ -189,5 +189,10 @@ double Fixed_land_area(double total_aperture, double row_distance, double max_co
 
 double Total_land_area(double fixed_land_area, double non_solar_field_land_area_multiplier);
 
+util::matrix_t<ssc_number_t> Sca_info_array(const util::matrix_t<ssc_number_t>& trough_loop_control);
+
+util::matrix_t<ssc_number_t> Sca_defocus_array(const util::matrix_t<ssc_number_t>& trough_loop_control);
+
+double Total_tracking_power(int nSCA, int nLoops, double SCA_drives_elec);
 
 #endif
