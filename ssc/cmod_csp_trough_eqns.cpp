@@ -72,50 +72,61 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
         throw std::runtime_error("ssc_data_t data invalid");
     }
 
-    double T_loop_in_des, T_loop_out, fluid, field_htf_cp_avg,
-        csp_dtr_hce_diam_absorber_inner_1, csp_dtr_hce_diam_absorber_inner_2,
-        csp_dtr_hce_diam_absorber_inner_3, csp_dtr_hce_diam_absorber_inner_4, min_inner_diameter,
-        csp_dtr_sca_aperture_1, csp_dtr_sca_aperture_2,
-        csp_dtr_sca_aperture_3, csp_dtr_sca_aperture_4, single_loop_aperature,
-        csp_dtr_hce_design_heat_loss_1, csp_dtr_hce_design_heat_loss_2,
-        csp_dtr_hce_design_heat_loss_3, csp_dtr_hce_design_heat_loss_4,
-        csp_dtr_sca_length_1, csp_dtr_sca_length_2,
-        csp_dtr_sca_length_3, csp_dtr_sca_length_4, cspdtr_loop_hce_heat_loss,
-
-        I_bn_des,
-        csp_dtr_sca_calc_sca_eff_1, csp_dtr_sca_calc_sca_eff_2,
-        csp_dtr_sca_calc_sca_eff_3, csp_dtr_sca_calc_sca_eff_4,
-        csp_dtr_hce_optical_eff_1, csp_dtr_hce_optical_eff_2,
-        csp_dtr_hce_optical_eff_3, csp_dtr_hce_optical_eff_4, loop_optical_efficiency,
-
-        nloops, total_aperture,
-        total_required_aperture_for_SM1, required_number_of_loops_for_SM1,
-        total_loop_conversion_efficiency,
-
-        m_dot_htfmax, fluid_dens_outlet_temp, max_field_flow_velocity,
-        m_dot_htfmin, fluid_dens_inlet_temp, min_field_flow_velocity,
-
-        field_thermal_output,
-        q_pb_design, total_required_aperture_for_sm1,
-        fixed_land_area, non_solar_field_land_area_multiplier, total_land_area,
+    // Inputs
+    double P_ref, gross_net_conversion_factor,
+        eta_ref,
+        T_loop_in_des, T_loop_out, fluid,
+        csp_dtr_sca_aperture_1, csp_dtr_sca_aperture_2, csp_dtr_sca_aperture_3, csp_dtr_sca_aperture_4,
+        csp_dtr_hce_diam_absorber_inner_1, csp_dtr_hce_diam_absorber_inner_2, csp_dtr_hce_diam_absorber_inner_3, csp_dtr_hce_diam_absorber_inner_4,
+        I_bn_des, csp_dtr_hce_design_heat_loss_1, csp_dtr_hce_design_heat_loss_2, csp_dtr_hce_design_heat_loss_3, csp_dtr_hce_design_heat_loss_4,
+        csp_dtr_sca_length_1, csp_dtr_sca_length_2, csp_dtr_sca_length_3, csp_dtr_sca_length_4,
+        csp_dtr_sca_calc_sca_eff_1, csp_dtr_sca_calc_sca_eff_2, csp_dtr_sca_calc_sca_eff_3, csp_dtr_sca_calc_sca_eff_4,
+        csp_dtr_hce_optical_eff_1, csp_dtr_hce_optical_eff_2, csp_dtr_hce_optical_eff_3, csp_dtr_hce_optical_eff_4,
+        m_dot_htfmax, fluid_dens_outlet_temp,
+        m_dot_htfmin, fluid_dens_inlet_temp,
+        total_required_aperture_for_SM1,
+        radio_sm_or_area, specified_solar_multiple, specified_total_aperture, single_loop_aperture,
+        tshours,
         row_distance, max_collector_width,
+        non_solar_field_land_area_multiplier,
+        nsca, sca_drives_elec;
 
-        nsca, sca_drives_elec, total_tracking_power;
+
+    // Outputs
+    double csp_dtr_pwrb_nameplate,
+        q_pb_design,
+        field_htf_cp_avg,
+        single_loop_aperature,
+        min_inner_diameter,
+        cspdtr_loop_hce_heat_loss,
+        loop_optical_efficiency,
+        max_field_flow_velocity,
+        min_field_flow_velocity,
+        required_number_of_loops_for_SM1,
+        total_loop_conversion_efficiency,
+        total_required_aperture_for_sm1,
+        nloops,
+        total_aperture,
+        field_thermal_output,
+        solar_mult,
+        q_rec_des,
+        tshours_sf,
+        fixed_land_area,
+        total_land_area,
+        total_tracking_power;
 
     util::matrix_t<ssc_number_t> field_fl_props, trough_loop_control, sca_info_array, sca_defocus_array;
 
-    // max_field_flow_velocity
-    ssc_data_t_get_number(data, "m_dot_htfmax", &m_dot_htfmax);
-    ssc_data_t_get_number(data, "fluid_dens_outlet_temp", &fluid_dens_outlet_temp);
-    ssc_data_t_get_number(data, "min_inner_diameter", &min_inner_diameter);
-    max_field_flow_velocity = Max_field_flow_velocity(m_dot_htfmax, fluid_dens_outlet_temp, min_inner_diameter);
-    ssc_data_t_set_number(data, "max_field_flow_velocity", max_field_flow_velocity);
+    // csp_dtr_pwrb_nameplate
+    ssc_data_t_get_number(data, "P_ref", &P_ref);
+    ssc_data_t_get_number(data, "gross_net_conversion_factor", &gross_net_conversion_factor);
+    csp_dtr_pwrb_nameplate = Nameplate(P_ref, gross_net_conversion_factor);
+    ssc_data_t_set_number(data, "csp_dtr_pwrb_nameplate", csp_dtr_pwrb_nameplate);
 
-    // min_field_flow_velocity
-    ssc_data_t_get_number(data, "m_dot_htfmin", &m_dot_htfmin);
-    ssc_data_t_get_number(data, "fluid_dens_inlet_temp", &fluid_dens_inlet_temp);
-    min_field_flow_velocity = Min_field_flow_velocity(m_dot_htfmin, fluid_dens_inlet_temp, min_inner_diameter);
-    ssc_data_t_set_number(data, "min_field_flow_velocity", min_field_flow_velocity);
+    // q_pb_design
+    ssc_data_t_get_number(data, "eta_ref", &eta_ref);
+    q_pb_design = Q_pb_design(P_ref, eta_ref);
+    ssc_data_t_set_number(data, "q_pb_design", q_pb_design);
 
     // field_htf_cp_avg
     ssc_data_t_get_number(data, "T_loop_in_des", &T_loop_in_des);
@@ -125,18 +136,8 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     field_htf_cp_avg = Field_htf_cp_avg(T_loop_in_des, T_loop_out, fluid, field_fl_props);      // [kJ/kg-K]
     ssc_data_t_set_number(data, "field_htf_cp_avg", field_htf_cp_avg);
 
-    // min_inner_diameter
-    ssc_data_t_get_matrix(vt, "trough_loop_control", trough_loop_control);
-    ssc_data_t_get_number(data, "csp_dtr_hce_diam_absorber_inner_1", &csp_dtr_hce_diam_absorber_inner_1);
-    ssc_data_t_get_number(data, "csp_dtr_hce_diam_absorber_inner_2", &csp_dtr_hce_diam_absorber_inner_2);
-    ssc_data_t_get_number(data, "csp_dtr_hce_diam_absorber_inner_3", &csp_dtr_hce_diam_absorber_inner_3);
-    ssc_data_t_get_number(data, "csp_dtr_hce_diam_absorber_inner_4", &csp_dtr_hce_diam_absorber_inner_4);
-    min_inner_diameter = Min_inner_diameter(trough_loop_control, csp_dtr_hce_diam_absorber_inner_1,
-        csp_dtr_hce_diam_absorber_inner_2, csp_dtr_hce_diam_absorber_inner_3, csp_dtr_hce_diam_absorber_inner_4);
-    ssc_data_t_set_number(data, "min_inner_diameter", min_inner_diameter);
-
     // single_loop_aperature
-    //ssc_data_t_get_matrix(vt, "trough_loop_control", trough_loop_control);  // Already gotten above
+    ssc_data_t_get_matrix(vt, "trough_loop_control", trough_loop_control);
     ssc_data_t_get_number(data, "csp_dtr_sca_aperture_1", &csp_dtr_sca_aperture_1);
     ssc_data_t_get_number(data, "csp_dtr_sca_aperture_2", &csp_dtr_sca_aperture_2);
     ssc_data_t_get_number(data, "csp_dtr_sca_aperture_3", &csp_dtr_sca_aperture_3);
@@ -145,8 +146,16 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
         csp_dtr_sca_aperture_2, csp_dtr_sca_aperture_3, csp_dtr_sca_aperture_4);
     ssc_data_t_set_number(data, "single_loop_aperature", single_loop_aperature);
 
+    // min_inner_diameter
+    ssc_data_t_get_number(data, "csp_dtr_hce_diam_absorber_inner_1", &csp_dtr_hce_diam_absorber_inner_1);
+    ssc_data_t_get_number(data, "csp_dtr_hce_diam_absorber_inner_2", &csp_dtr_hce_diam_absorber_inner_2);
+    ssc_data_t_get_number(data, "csp_dtr_hce_diam_absorber_inner_3", &csp_dtr_hce_diam_absorber_inner_3);
+    ssc_data_t_get_number(data, "csp_dtr_hce_diam_absorber_inner_4", &csp_dtr_hce_diam_absorber_inner_4);
+    min_inner_diameter = Min_inner_diameter(trough_loop_control, csp_dtr_hce_diam_absorber_inner_1,
+        csp_dtr_hce_diam_absorber_inner_2, csp_dtr_hce_diam_absorber_inner_3, csp_dtr_hce_diam_absorber_inner_4);
+    ssc_data_t_set_number(data, "min_inner_diameter", min_inner_diameter);
+
     // cspdtr_loop_hce_heat_loss
-    //ssc_data_t_get_matrix(vt, "trough_loop_control", trough_loop_control);  // Already gotten above
     ssc_data_t_get_number(data, "I_bn_des", &I_bn_des);
     ssc_data_t_get_number(data, "csp_dtr_hce_design_heat_loss_1", &csp_dtr_hce_design_heat_loss_1);
     ssc_data_t_get_number(data, "csp_dtr_hce_design_heat_loss_2", &csp_dtr_hce_design_heat_loss_2);
@@ -156,11 +165,6 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     ssc_data_t_get_number(data, "csp_dtr_sca_length_2", &csp_dtr_sca_length_2);
     ssc_data_t_get_number(data, "csp_dtr_sca_length_3", &csp_dtr_sca_length_3);
     ssc_data_t_get_number(data, "csp_dtr_sca_length_4", &csp_dtr_sca_length_4);
-    // Already gotten above:
-    //ssc_data_t_get_number(data, "csp_dtr_sca_aperture_1", &csp_dtr_sca_aperture_1);
-    //ssc_data_t_get_number(data, "csp_dtr_sca_aperture_2", &csp_dtr_sca_aperture_2);
-    //ssc_data_t_get_number(data, "csp_dtr_sca_aperture_3", &csp_dtr_sca_aperture_3);
-    //ssc_data_t_get_number(data, "csp_dtr_sca_aperture_4", &csp_dtr_sca_aperture_4);
     cspdtr_loop_hce_heat_loss = Cspdtr_loop_hce_heat_loss(trough_loop_control, I_bn_des,
         csp_dtr_hce_design_heat_loss_1, csp_dtr_hce_design_heat_loss_2,
         csp_dtr_hce_design_heat_loss_3, csp_dtr_hce_design_heat_loss_4,
@@ -168,29 +172,11 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
         csp_dtr_sca_aperture_1, csp_dtr_sca_aperture_2, csp_dtr_sca_aperture_3, csp_dtr_sca_aperture_4);
     ssc_data_t_set_number(data, "cspdtr_loop_hce_heat_loss", cspdtr_loop_hce_heat_loss);
 
-    // total_aperture
-    ssc_data_t_get_number(data, "single_loop_aperature", &single_loop_aperature);
-    ssc_data_t_get_number(data, "nloops", &nloops);
-    total_aperture = Total_aperture(single_loop_aperature, nloops);
-    ssc_data_t_set_number(data, "total_aperture", total_aperture);
-
-    // required_number_of_loops_for_SM1
-    ssc_data_t_get_number(data, "total_required_aperture_for_SM1", &total_required_aperture_for_SM1);
-    //ssc_data_t_get_number(data, "single_loop_aperature", &single_loop_aperature);
-    required_number_of_loops_for_SM1 = Required_number_of_loops_for_SM1(total_required_aperture_for_SM1, single_loop_aperature);
-    ssc_data_t_set_number(data, "required_number_of_loops_for_SM1", required_number_of_loops_for_SM1);
-
     // loop_optical_efficiency
-    //ssc_data_t_get_matrix(vt, "trough_loop_control", trough_loop_control);  // Already gotten above
     ssc_data_t_get_number(data, "csp_dtr_sca_calc_sca_eff_1", &csp_dtr_sca_calc_sca_eff_1);
     ssc_data_t_get_number(data, "csp_dtr_sca_calc_sca_eff_2", &csp_dtr_sca_calc_sca_eff_2);
     ssc_data_t_get_number(data, "csp_dtr_sca_calc_sca_eff_3", &csp_dtr_sca_calc_sca_eff_3);
     ssc_data_t_get_number(data, "csp_dtr_sca_calc_sca_eff_4", &csp_dtr_sca_calc_sca_eff_4);
-    // Already gotten above:
-    //ssc_data_t_get_number(data, "csp_dtr_sca_length_1", &csp_dtr_sca_length_1);
-    //ssc_data_t_get_number(data, "csp_dtr_sca_length_2", &csp_dtr_sca_length_2);
-    //ssc_data_t_get_number(data, "csp_dtr_sca_length_3", &csp_dtr_sca_length_3);
-    //ssc_data_t_get_number(data, "csp_dtr_sca_length_4", &csp_dtr_sca_length_4);
     ssc_data_t_get_number(data, "csp_dtr_hce_optical_eff_1", &csp_dtr_hce_optical_eff_1);
     ssc_data_t_get_number(data, "csp_dtr_hce_optical_eff_2", &csp_dtr_hce_optical_eff_2);
     ssc_data_t_get_number(data, "csp_dtr_hce_optical_eff_3", &csp_dtr_hce_optical_eff_3);
@@ -203,38 +189,6 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
         csp_dtr_hce_optical_eff_3, csp_dtr_hce_optical_eff_4);
     ssc_data_t_set_number(data, "loop_optical_efficiency", loop_optical_efficiency);
 
-    // total_loop_conversion_efficiency
-    //ssc_data_t_get_number(data, "loop_optical_efficiency", &loop_optical_efficiency);
-    ssc_data_t_get_number(data, "nloops", &nloops);
-    total_loop_conversion_efficiency = Total_loop_conversion_efficiency(loop_optical_efficiency, cspdtr_loop_hce_heat_loss);
-    ssc_data_t_set_number(data, "total_loop_conversion_efficiency", total_loop_conversion_efficiency);
-
-    // field_thermal_output
-    //ssc_data_t_get_number(data, "I_bn_des", &I_bn_des);
-    //ssc_data_t_get_number(data, "total_aperture", &total_aperture);
-    field_thermal_output = Field_thermal_output(I_bn_des, total_loop_conversion_efficiency, total_aperture);
-    ssc_data_t_set_number(data, "field_thermal_output", field_thermal_output);
-
-    // total_required_aperture_for_sm1
-    ssc_data_t_get_number(data, "q_pb_design", &q_pb_design);
-    //ssc_data_t_get_number(data, "I_bn_des", &I_bn_des);
-    //ssc_data_t_get_number(data, "total_loop_conversion_efficiency", &total_loop_conversion_efficiency);
-    total_required_aperture_for_sm1 = Total_required_aperture_for_sm1(q_pb_design, I_bn_des, total_loop_conversion_efficiency);
-    ssc_data_t_set_number(data, "total_required_aperture_for_sm1", total_required_aperture_for_sm1);
-
-    // fixed_land_area
-    //ssc_data_t_get_number(data, "total_aperture", &total_aperture);
-    ssc_data_t_get_number(data, "row_distance", &row_distance);
-    ssc_data_t_get_number(data, "max_collector_width", &max_collector_width);
-    fixed_land_area = Fixed_land_area(total_aperture, row_distance, max_collector_width);
-    ssc_data_t_set_number(data, "fixed_land_area", fixed_land_area);
-
-    // total_land_area
-    //ssc_data_t_get_number(data, "fixed_land_area", &fixed_land_area);
-    ssc_data_t_get_number(data, "non_solar_field_land_area_multiplier", &non_solar_field_land_area_multiplier);
-    total_land_area = Total_land_area(fixed_land_area, non_solar_field_land_area_multiplier);
-    ssc_data_t_set_number(data, "total_land_area", total_land_area);
-
     // sca_info_array
     sca_info_array = Sca_info_array(trough_loop_control);
     ssc_data_t_set_array(data, "sca_info_array", sca_info_array.data(), sca_info_array.ncells());
@@ -242,6 +196,76 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     // sca_defocus_array
     sca_defocus_array = Sca_defocus_array(trough_loop_control);
     ssc_data_t_set_array(data, "sca_defocus_array", sca_defocus_array.data(), sca_defocus_array.ncells());
+
+    //
+    // End of no calculated dependencies
+    //
+
+
+    // max_field_flow_velocity
+    ssc_data_t_get_number(data, "m_dot_htfmax", &m_dot_htfmax);
+    ssc_data_t_get_number(data, "fluid_dens_outlet_temp", &fluid_dens_outlet_temp);
+    max_field_flow_velocity = Max_field_flow_velocity(m_dot_htfmax, fluid_dens_outlet_temp, min_inner_diameter);
+    ssc_data_t_set_number(data, "max_field_flow_velocity", max_field_flow_velocity);
+
+    // min_field_flow_velocity
+    ssc_data_t_get_number(data, "m_dot_htfmin", &m_dot_htfmin);
+    ssc_data_t_get_number(data, "fluid_dens_inlet_temp", &fluid_dens_inlet_temp);
+    min_field_flow_velocity = Min_field_flow_velocity(m_dot_htfmin, fluid_dens_inlet_temp, min_inner_diameter);
+    ssc_data_t_set_number(data, "min_field_flow_velocity", min_field_flow_velocity);
+
+    // required_number_of_loops_for_SM1
+    ssc_data_t_get_number(data, "total_required_aperture_for_SM1", &total_required_aperture_for_SM1);
+    required_number_of_loops_for_SM1 = Required_number_of_loops_for_SM1(total_required_aperture_for_SM1, single_loop_aperature);
+    ssc_data_t_set_number(data, "required_number_of_loops_for_SM1", required_number_of_loops_for_SM1);
+
+    // total_loop_conversion_efficiency
+    total_loop_conversion_efficiency = Total_loop_conversion_efficiency(loop_optical_efficiency, cspdtr_loop_hce_heat_loss);
+    ssc_data_t_set_number(data, "total_loop_conversion_efficiency", total_loop_conversion_efficiency);
+
+    // total_required_aperture_for_sm1
+    total_required_aperture_for_sm1 = Total_required_aperture_for_sm1(q_pb_design, I_bn_des, total_loop_conversion_efficiency);
+    ssc_data_t_set_number(data, "total_required_aperture_for_sm1", total_required_aperture_for_sm1);
+
+    // nloops
+    ssc_data_t_get_number(data, "radio_sm_or_area", &radio_sm_or_area);
+    ssc_data_t_get_number(data, "specified_solar_multiple", &specified_solar_multiple);
+    ssc_data_t_get_number(data, "specified_total_aperture", &specified_total_aperture);
+    ssc_data_t_get_number(data, "single_loop_aperature", &single_loop_aperture);
+    nloops = Nloops(static_cast<int>(radio_sm_or_area), specified_solar_multiple, total_required_aperture_for_sm1, specified_total_aperture, single_loop_aperture);
+    ssc_data_t_set_number(data, "nloops", nloops);
+
+    // total_aperture
+    total_aperture = Total_aperture(single_loop_aperature, nloops);
+    ssc_data_t_set_number(data, "total_aperture", total_aperture);
+
+    // field_thermal_output
+    field_thermal_output = Field_thermal_output(I_bn_des, total_loop_conversion_efficiency, total_aperture);
+    ssc_data_t_set_number(data, "field_thermal_output", field_thermal_output);
+
+    // solar_mult
+    solar_mult = Solar_mult(static_cast<int>(radio_sm_or_area), specified_solar_multiple, total_aperture, total_required_aperture_for_sm1);
+    ssc_data_t_set_number(data, "solar_mult", solar_mult);
+
+    // q_rec_des
+    q_rec_des = Q_rec_des(solar_mult, q_pb_design);
+    ssc_data_t_set_number(data, "q_rec_des", q_rec_des);
+
+    // tshours_sf
+    ssc_data_t_get_number(data, "tshours", &tshours);
+    tshours_sf = Tshours_sf(tshours, solar_mult);
+    ssc_data_t_set_number(data, "tshours_sf", tshours_sf);
+
+    // fixed_land_area
+    ssc_data_t_get_number(data, "row_distance", &row_distance);
+    ssc_data_t_get_number(data, "max_collector_width", &max_collector_width);
+    fixed_land_area = Fixed_land_area(total_aperture, row_distance, max_collector_width);
+    ssc_data_t_set_number(data, "fixed_land_area", fixed_land_area);
+
+    // total_land_area
+    ssc_data_t_get_number(data, "non_solar_field_land_area_multiplier", &non_solar_field_land_area_multiplier);
+    total_land_area = Total_land_area(fixed_land_area, non_solar_field_land_area_multiplier);
+    ssc_data_t_set_number(data, "total_land_area", total_land_area);
 
     // total_tracking_power
     ssc_data_t_get_number(data, "nsca", &nsca);
