@@ -116,7 +116,7 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
         total_tracking_power;
 
     util::matrix_t<ssc_number_t> field_fl_props, trough_loop_control, sca_info_array, sca_defocus_array;
-
+    /*
     // csp_dtr_pwrb_nameplate
     ssc_data_t_get_number(data, "P_ref", &P_ref);
     ssc_data_t_get_number(data, "gross_net_conversion_factor", &gross_net_conversion_factor);
@@ -188,11 +188,12 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
         csp_dtr_hce_optical_eff_1, csp_dtr_hce_optical_eff_2,
         csp_dtr_hce_optical_eff_3, csp_dtr_hce_optical_eff_4);
     ssc_data_t_set_number(data, "loop_optical_efficiency", loop_optical_efficiency);
-
+    */
     // sca_info_array
+    ssc_data_t_get_matrix(vt, "trough_loop_control", trough_loop_control);
     sca_info_array = Sca_info_array(trough_loop_control);
-    ssc_data_t_set_array(data, "sca_info_array", sca_info_array.data(), sca_info_array.ncells());
-
+    ssc_data_t_set_matrix(data, "sca_info_array", sca_info_array);
+    
     // sca_defocus_array
     sca_defocus_array = Sca_defocus_array(trough_loop_control);
     ssc_data_t_set_array(data, "sca_defocus_array", sca_defocus_array.data(), sca_defocus_array.ncells());
@@ -201,7 +202,7 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     // End of no calculated dependencies
     //
 
-
+    /*
     // max_field_flow_velocity
     ssc_data_t_get_number(data, "m_dot_htfmax", &m_dot_htfmax);
     ssc_data_t_get_number(data, "fluid_dens_outlet_temp", &fluid_dens_outlet_temp);
@@ -275,4 +276,5 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
 
 
     double x = 1.;
+    */
 }
