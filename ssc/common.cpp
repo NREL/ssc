@@ -523,7 +523,7 @@ var_info vtab_grid_curtailment[] = {
 var_info vtab_technology_outputs[] = {
 	// instantaneous power at each timestep - consistent with sun position
 { SSC_OUTPUT, SSC_ARRAY , "gen"                                  , "System power generated"                                         , "kW"                                     , ""                                      , "Time Series"          , "*"              , ""                      , ""},
-{ SSC_OUTPUT, SSC_MATRIX,			"annual_energy_distribution_time",			"Annual energy production as function of Time",				"",				"",				"Heatmaps",			"",						"",							"" },
+{ SSC_OUTPUT, SSC_MATRIX,			"annual_energy_distribution_time",			"Annual energy production as function of time",				"kW",				"",				"Heatmaps",			"",						"",							"" },
 
     var_info_invalid };
 
@@ -536,22 +536,19 @@ ssc_number_t* gen_heatmap(compute_module* cm, double step_per_hour) {
     size_t hour;
     size_t count_gen;
     ssc_number_t* p_gen = cm->as_array("gen", &count_gen);
-    //ssc_number_t* p_annual_energy_dist_time = allocate("annual_energy_distribution_time", 25, 13);
     ssc_number_t* p_annual_energy_dist_time = cm->allocate("annual_energy_distribution_time", 25, 366);
-    //ssc_number_t* p_annual_energy_dist_time;
     for (size_t i = 0; i < count; i++) {
-        //hour = floor(fmod(double(i),24) / step_per_hour);
         hour = fmod(floor(double(i) / step_per_hour), 24);
         imonth = util::month_of(double(floor(double(i) / step_per_hour)));
         iday = floor(double(i) / 24) ;
-        for (size_t m = 0; m < 366; m++) {
+        for (size_t d = 0; d < 366; d++) {
             for (size_t h = 0; h < 25; h++) {
                 if (i == 0) {
                     p_annual_energy_dist_time[h * 366] = (h - 1);
-                    p_annual_energy_dist_time[m] = m;
+                    p_annual_energy_dist_time[d] = d;
                 }
-                if (iday == m && hour == (h - 1) && m != 365) {
-                    p_annual_energy_dist_time[h * 366 + m + 1] += p_gen[i] * 1 / step_per_hour;
+                if (iday == d && hour == (h - 1) && d != 365) {
+                    p_annual_energy_dist_time[h * 366 + d + 1] += p_gen[i] * 1 / step_per_hour;
                     break;
                 }
             }

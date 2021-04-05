@@ -1258,8 +1258,7 @@ public:
 
             wdprov->rewind();
         }
-        //p_annual_energy_dist_time[0] = 0;
-        p_annual_energy_dist_time = gen_heatmap(this, step_per_hour);
+        ssc_number_t *p_annual_energy_dist_time = gen_heatmap(this, step_per_hour);
         // monthly and annual outputs
         if (wdprov->annualSimulation())
         {
