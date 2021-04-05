@@ -2333,9 +2333,12 @@ void cm_pvsamv1::exec()
 
             if (iyear == 0)
                 annual_energy += (ssc_number_t)(PVSystem->p_systemACPower[idx] * ts_hour);
+            
+
         }
         wdprov->rewind();
     }
+    ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, 1 / ts_hour);
     // Check the snow models and if neccessary report a warning
     //  *This only needs to be done for subarray1 since all of the activated subarrays should
     //   have the same number of bad values
