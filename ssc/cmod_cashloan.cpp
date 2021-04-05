@@ -51,7 +51,9 @@ static var_info vtab_cashloan[] = {
     { SSC_INPUT,       SSC_ARRAY,      "year1_hourly_salespurchases_with_system",     "Electricity sales/purchases with system (year 1 hourly)",    "$", "",          "Time Series",             "",                         "",                   "" },
     { SSC_INPUT,        SSC_ARRAY,      "grid_to_batt",                               "Electricity to grid from battery",                      "kW",      "",                       "Battery",       "",                           "",                              "" },
     { SSC_INPUT,        SSC_ARRAY,      "buy_rate_ts", "TOU buy rate for energy charges (year 1 hourly)", "", "", "Time Series", "", "", "" },
-    { SSC_INPUT, SSC_ARRAY, "charge_w_sys_ec", "Energy charge with system", "$", "", "Charges by Month", "*", "", "" },
+    { SSC_INPUT, SSC_ARRAY, "year1_monthly_ec_charge_with_system", "Energy charge with system", "$", "", "Charges by Month", "", "", "" },
+    { SSC_INPUT, SSC_ARRAY, "year1_monthly_ec_charge_gross_with_system", "Energy charge with system before credits", "$/mo", "", "Monthly", "", "LENGTH=12", "" },
+
     { SSC_INPUT,        SSC_ARRAY,      "monthly_grid_to_batt",                       "Energy to battery from grid",                           "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
     { SSC_INPUT,        SSC_ARRAY,      "monthly_grid_to_load",                       "Energy to load from grid",                              "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
     { SSC_INPUT,       SSC_ARRAY,      "year1_monthly_electricity_to_grid",    "Electricity to/from grid",           "kWh/mo", "", "Monthly",          "*",                         "LENGTH=12",                     "" },
@@ -1066,7 +1068,7 @@ public:
         ssc_number_t* grid_to_batt = as_array("grid_to_batt", &n_grid_to_batt); //Power from grid to battery in kW (needs to be changed to kwh)
         ssc_number_t* monthly_grid_to_batt = as_array("monthly_grid_to_batt", &n_monthly_grid_to_batt);
         ssc_number_t* monthly_grid_to_load = as_array("monthly_grid_to_load", &n_monthly_grid_to_load);
-        ssc_number_t* monthly_energy_charge = as_array("year1_monthly_ec_charge_with_system", &n_monthly_energy_charge); //Power from grid to battery in kW (needs to be changed to kwh)
+        ssc_number_t* monthly_energy_charge = as_array("year1_monthly_ec_charge_gross_with_system", &n_monthly_energy_charge); //Power from grid to battery in kW (needs to be changed to kwh)
         size_t n_steps_per_year = 8760;
         //ssc_number_t* monthly_batt_to_grid = as_array("monthly_batt_to_grid", &n_monthly_grid_to_load);
         ssc_number_t* monthly_system_to_grid = as_array("monthly_system_to_grid", &n_monthly_grid_to_load);
@@ -1118,7 +1120,7 @@ public:
                 for (size_t m = 0; m < 12; m++) {
                     if (a != 0) {
                         //cf.at(CF_charging_cost_grid_month, a) += monthly_grid_to_batt[m] / (monthly_grid_to_batt[m] + monthly_grid_to_load[m]) * monthly_energy_charge[m] * charged_grid[a] / charged_grid[1] * cf.at(CF_util_escal_rate, a);
-                        cf.at(CF_charging_cost_grid_month, a) += monthly_grid_to_batt[m] / (-monthly_electricity_tofrom_grid[m]  + monthly_system_to_grid[m])* monthly_energy_charge[m] * charged_grid[a] / charged_grid[1] * cf.at(CF_util_escal_rate, a);
+                        cf.at(CF_charging_cost_grid_month, a) += monthly_grid_to_batt[m] / (-monthly_electricity_tofrom_grid[m]  + monthly_system_to_grid[m]) * monthly_energy_charge[m] * charged_grid[a] / charged_grid[1] * cf.at(CF_util_escal_rate, a);
 
                     }
                 }
