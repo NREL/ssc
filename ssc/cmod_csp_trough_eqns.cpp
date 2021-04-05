@@ -19,7 +19,7 @@ void Physical_Trough_System_Design_Equations(ssc_data_t data)
         q_rec_des,
         tshours, tshours_sf,
         specified_total_aperture, single_loop_aperture, nloops;
-
+/*
     // csp_dtr_pwrb_nameplate
     ssc_data_t_get_number(data, "P_ref", &P_ref);
     ssc_data_t_get_number(data, "gross_net_conversion_factor", &gross_net_conversion_factor);
@@ -32,7 +32,6 @@ void Physical_Trough_System_Design_Equations(ssc_data_t data)
     q_pb_design = Q_pb_design(P_ref, eta_ref);
     ssc_data_t_set_number(data, "q_pb_design", q_pb_design);
 
-/*
     // solar_mult
     ssc_data_t_get_number(data, "radio_sm_or_area", &radio_sm_or_area);
     ssc_data_t_get_number(data, "specified_solar_multiple", &specified_solar_multiple);
@@ -116,7 +115,7 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
         total_tracking_power;
 
     util::matrix_t<ssc_number_t> field_fl_props, trough_loop_control, sca_info_array, sca_defocus_array;
-    /*
+
     // csp_dtr_pwrb_nameplate
     ssc_data_t_get_number(data, "P_ref", &P_ref);
     ssc_data_t_get_number(data, "gross_net_conversion_factor", &gross_net_conversion_factor);
@@ -188,7 +187,7 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
         csp_dtr_hce_optical_eff_1, csp_dtr_hce_optical_eff_2,
         csp_dtr_hce_optical_eff_3, csp_dtr_hce_optical_eff_4);
     ssc_data_t_set_number(data, "loop_optical_efficiency", loop_optical_efficiency);
-    */
+
     // sca_info_array
     ssc_data_t_get_matrix(vt, "trough_loop_control", trough_loop_control);
     sca_info_array = Sca_info_array(trough_loop_control);
