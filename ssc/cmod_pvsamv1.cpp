@@ -2088,7 +2088,6 @@ void cm_pvsamv1::exec()
 
     double annual_dc_loss_ond = 0, annual_ac_loss_ond = 0; // (TR)
 
-    //ssc_number_t* p_annual_energy_dist_time = allocate("annual_energy_distribution_time", 25, 13);
 
 
     for (size_t iyear = 0; iyear < nyears; iyear++)
@@ -2335,8 +2334,8 @@ void cm_pvsamv1::exec()
 
             if (iyear == 0) {
                 annual_energy += (ssc_number_t)(PVSystem->p_systemACPower[idx] * ts_hour);
-            
 
+            }
         }
         wdprov->rewind();
     }

@@ -719,7 +719,6 @@ public:
         ssc_number_t* p_dc = allocate("dc", nrec);
         ssc_number_t* p_ac = allocate("ac", nrec);
         ssc_number_t* p_gen = allocate("gen", nlifetime);
-        ssc_number_t* p_annual_energy_dist_time = allocate("annual_energy_distribution_time", 25, 13);
 
         pvwatts_celltemp tccalc(pv.inoct + 273.15, PVWATTS_HEIGHT, ts_hour); //in pvwattsv5 there is some code about previous tcell and poa that doesn't appear to get used, so not adding it here
 
