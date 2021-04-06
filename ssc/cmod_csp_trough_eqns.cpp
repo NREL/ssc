@@ -83,7 +83,6 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
         csp_dtr_hce_optical_eff_1, csp_dtr_hce_optical_eff_2, csp_dtr_hce_optical_eff_3, csp_dtr_hce_optical_eff_4,
         m_dot_htfmax, fluid_dens_outlet_temp,
         m_dot_htfmin, fluid_dens_inlet_temp,
-        total_required_aperture_for_SM1,
         radio_sm_or_area, specified_solar_multiple, specified_total_aperture, single_loop_aperture,
         tshours,
         row_distance, max_collector_width,
@@ -101,7 +100,7 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
         loop_optical_efficiency,
         max_field_flow_velocity,
         min_field_flow_velocity,
-        required_number_of_loops_for_SM1,
+        required_number_of_loops_for_sm1,
         total_loop_conversion_efficiency,
         total_required_aperture_for_sm1,
         nloops,
@@ -201,7 +200,7 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     // End of no calculated dependencies
     //
 
-    /*
+
     // max_field_flow_velocity
     ssc_data_t_get_number(data, "m_dot_htfmax", &m_dot_htfmax);
     ssc_data_t_get_number(data, "fluid_dens_outlet_temp", &fluid_dens_outlet_temp);
@@ -214,11 +213,6 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     min_field_flow_velocity = Min_field_flow_velocity(m_dot_htfmin, fluid_dens_inlet_temp, min_inner_diameter);
     ssc_data_t_set_number(data, "min_field_flow_velocity", min_field_flow_velocity);
 
-    // required_number_of_loops_for_SM1
-    ssc_data_t_get_number(data, "total_required_aperture_for_SM1", &total_required_aperture_for_SM1);
-    required_number_of_loops_for_SM1 = Required_number_of_loops_for_SM1(total_required_aperture_for_SM1, single_loop_aperature);
-    ssc_data_t_set_number(data, "required_number_of_loops_for_SM1", required_number_of_loops_for_SM1);
-
     // total_loop_conversion_efficiency
     total_loop_conversion_efficiency = Total_loop_conversion_efficiency(loop_optical_efficiency, cspdtr_loop_hce_heat_loss);
     ssc_data_t_set_number(data, "total_loop_conversion_efficiency", total_loop_conversion_efficiency);
@@ -227,6 +221,11 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     total_required_aperture_for_sm1 = Total_required_aperture_for_sm1(q_pb_design, I_bn_des, total_loop_conversion_efficiency);
     ssc_data_t_set_number(data, "total_required_aperture_for_sm1", total_required_aperture_for_sm1);
 
+    // required_number_of_loops_for_SM1
+    required_number_of_loops_for_sm1 = Required_number_of_loops_for_SM1(total_required_aperture_for_sm1, single_loop_aperature);
+    ssc_data_t_set_number(data, "required_number_of_loops_for_SM1", required_number_of_loops_for_sm1);
+
+    /*
     // nloops
     ssc_data_t_get_number(data, "radio_sm_or_area", &radio_sm_or_area);
     ssc_data_t_get_number(data, "specified_solar_multiple", &specified_solar_multiple);
