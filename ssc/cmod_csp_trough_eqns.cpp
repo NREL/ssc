@@ -83,7 +83,7 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
         csp_dtr_hce_optical_eff_1, csp_dtr_hce_optical_eff_2, csp_dtr_hce_optical_eff_3, csp_dtr_hce_optical_eff_4,
         m_dot_htfmax, fluid_dens_outlet_temp,
         m_dot_htfmin, fluid_dens_inlet_temp,
-        radio_sm_or_area, specified_solar_multiple, specified_total_aperture, single_loop_aperture,
+        radio_sm_or_area, specified_solar_multiple, specified_total_aperture,
         tshours,
         row_distance, max_collector_width,
         non_solar_field_land_area_multiplier,
@@ -225,15 +225,14 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     required_number_of_loops_for_sm1 = Required_number_of_loops_for_SM1(total_required_aperture_for_sm1, single_loop_aperature);
     ssc_data_t_set_number(data, "required_number_of_loops_for_SM1", required_number_of_loops_for_sm1);
 
-    /*
     // nloops
     ssc_data_t_get_number(data, "radio_sm_or_area", &radio_sm_or_area);
     ssc_data_t_get_number(data, "specified_solar_multiple", &specified_solar_multiple);
     ssc_data_t_get_number(data, "specified_total_aperture", &specified_total_aperture);
-    ssc_data_t_get_number(data, "single_loop_aperature", &single_loop_aperture);
-    nloops = Nloops(static_cast<int>(radio_sm_or_area), specified_solar_multiple, total_required_aperture_for_sm1, specified_total_aperture, single_loop_aperture);
+    nloops = Nloops(static_cast<int>(radio_sm_or_area), specified_solar_multiple, total_required_aperture_for_sm1, specified_total_aperture, single_loop_aperature);
     ssc_data_t_set_number(data, "nloops", nloops);
 
+    /*
     // total_aperture
     total_aperture = Total_aperture(single_loop_aperature, nloops);
     ssc_data_t_set_number(data, "total_aperture", total_aperture);
