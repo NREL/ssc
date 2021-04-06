@@ -92,11 +92,11 @@ static var_info _cm_vtab_mhk_wave[] = {
 
     { SSC_OUTPUT,           SSC_ARRAY,          "sig_wave_height_index_mat",            "Wave height index locations for time series",                      "m",                         "", "MHKWave",          "wave_resource_model_choice=1",                        "",          "" },
     { SSC_OUTPUT,           SSC_ARRAY,          "sig_wave_height_index_mat_interp",            "Wave height index locations for time series",                      "m",                         "", "Time Series",          "wave_resource_model_choice=1",                        "",          "" },
-    { SSC_OUTPUT,           SSC_ARRAY,          "sig_wave_height_index_location",            "Wave height index number for time series",                      "m",                         "", "MHKWave",          "wave_resource_model_choice=1",                        "",          "" },
+    //{ SSC_OUTPUT,           SSC_ARRAY,          "sig_wave_height_index_location",            "Wave height index number for time series",                      "m",                         "", "MHKWave",          "wave_resource_model_choice=1",                        "",          "" },
 
     { SSC_OUTPUT,           SSC_ARRAY,          "energy_period_index_mat",            "Wave period index locations for time series",                      "s",                         "", "MHKWave",          "wave_resource_model_choice=1",                        "",          "" },
     { SSC_OUTPUT,           SSC_ARRAY,          "energy_period_index_mat_interp",            "Wave period index locations for time series",                      "s",                         "", "Time Series",          "wave_resource_model_choice=1",                        "",          "" },
-    { SSC_OUTPUT,           SSC_ARRAY,          "energy_period_index_location",            "Wave period index number for time series",                      "s",                         "", "MHKWave",          "wave_resource_model_choice=1",                        "",          "" },
+    //{ SSC_OUTPUT,           SSC_ARRAY,          "energy_period_index_location",            "Wave period index number for time series",                      "s",                         "", "MHKWave",          "wave_resource_model_choice=1",                        "",          "" },
 
     { SSC_OUTPUT,           SSC_ARRAY,          "wave_power_index_mat",            "Wave power for time series",                      "kW",                         "", "MHKWave",          "wave_resource_model_choice=1",                        "",          "" },
     { SSC_OUTPUT,			SSC_NUMBER,			"capacity_factor",						"Capacity Factor",													"%",			"",				"MHKWave",			"*",						"",							"" },
@@ -194,7 +194,7 @@ public:
 				    else {
 					    p_annual_energy_dist[k] = (ssc_number_t)(wave_resource_matrix.at(i,j) * wave_power_matrix.at(i,j) * 8760.0 / 100.0) * (1-total_loss/100) * number_devices;
 					    annual_energy += p_annual_energy_dist[k];
-					    device_average_power += (p_annual_energy_dist[k] / 8760);
+					    device_average_power += (p_annual_energy_dist[k] / (8760 * (1 - total_loss / 100) * number_devices));
 					    //Checker to ensure frequency distribution adds to >= 99.5%:
 					    resource_vect_checker += wave_resource_matrix.at(i,j);
 				    }
@@ -406,7 +406,7 @@ public:
                 wave_power_index_mat[i] = (ssc_number_t)(wave_power_matrix.at(size_t(sig_wave_height_index), size_t(energy_period_index)));
                 annual_energy += energy_hourly[i];
                 //device_average_power += energy_hourly[i] / 8760;
-                device_average_power += energy_hourly[i] / number_hours;
+                device_average_power += energy_hourly[i] / (number_hours * (1 - total_loss / 100) * number_devices);
 
 
             }
