@@ -185,7 +185,8 @@ double Field_thermal_output(double I_bn_des, double total_loop_conversion_effici
 
 double Total_required_aperture_for_sm1(double q_pb_design, double I_bn_des, double total_loop_conversion_efficiency);
 
-double Fixed_land_area(double total_aperture, double row_distance, double max_collector_width);
+double Fixed_land_area(double total_aperture, double row_distance, util::matrix_t<ssc_number_t> sca_info_array,
+    double csp_dtr_sca_w_profile_1, double csp_dtr_sca_w_profile_2, double csp_dtr_sca_w_profile_3, double csp_dtr_sca_w_profile_4);
 
 double Total_land_area(double fixed_land_area, double non_solar_field_land_area_multiplier);
 
