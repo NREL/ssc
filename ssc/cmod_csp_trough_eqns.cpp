@@ -113,7 +113,8 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
         total_land_area,
         total_tracking_power;
 
-    util::matrix_t<ssc_number_t> field_fl_props, trough_loop_control, SCAInfoArray, SCADefocusArray;
+    util::matrix_t<ssc_number_t> field_fl_props, trough_loop_control, SCAInfoArray, SCADefocusArray,
+        K_cpnt, D_cpnt, L_cpnt, Type_cpnt;
 
     // csp_dtr_pwrb_nameplate
     ssc_data_t_get_number(data, "P_ref", &P_ref);
@@ -272,6 +273,22 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     ssc_data_t_get_number(data, "SCA_drives_elec", &SCA_drives_elec);
     total_tracking_power = Total_tracking_power(static_cast<int>(nSCA), static_cast<int>(nLoops), SCA_drives_elec);
     ssc_data_t_set_number(data, "total_tracking_power", total_tracking_power);
+
+    // K_cpnt
+    K_cpnt = K_Cpnt(static_cast<int>(nSCA));
+    ssc_data_t_set_matrix(data, "k_cpnt", K_cpnt);
+
+    // D_cpnt
+    D_cpnt = D_Cpnt(static_cast<int>(nSCA));
+    ssc_data_t_set_matrix(data, "d_cpnt", D_cpnt);
+
+    // L_cpnt
+    L_cpnt = L_Cpnt(static_cast<int>(nSCA));
+    ssc_data_t_set_matrix(data, "l_cpnt", L_cpnt);
+
+    // Type_cpnt
+    Type_cpnt = Type_Cpnt(static_cast<int>(nSCA));
+    ssc_data_t_set_matrix(data, "type_cpnt", Type_cpnt);
 
     /*
     double x = 1.;

@@ -777,3 +777,131 @@ double Total_tracking_power(int nSCA, int nLoops, double SCA_drives_elec)
 {
     return nSCA * nLoops * SCA_drives_elec;
 }
+
+util::matrix_t<ssc_number_t> K_Cpnt(int nSCA)
+{
+    std::vector<double> K_cpnt_0 = { 0.9, 0, 0.19, 0, 0.9, -1, -1, -1, -1, -1, -1 };
+    std::vector<double> K_cpnt_1 = { 0, 0.6, 0.05, 0, 0.6, 0, 0.6, 0, 0.42, 0, 0.15 };
+    std::vector<double> K_cpnt_i = { 0.05, 0, 0.42, 0, 0.6, 0, 0.6, 0, 0.42, 0, 0.15 };
+    std::vector<double> K_cpnt_x_2 = { 0.05, 0, 0.42, 0, 0.6, 0, 0.6, 0, 0.15, 0.6, 0 };
+    std::vector<double> K_cpnt_x_1 = { 0.9, 0, 0.19, 0, 0.9, -1, -1, -1, -1, -1, -1 };
+
+    util::matrix_t<ssc_number_t> K(nSCA + 3, 11);
+
+    // After cold header before SCAs
+    for (int j = 0; j < K_cpnt_0.size(); j++) {
+        K.at(0, j) = K_cpnt_0.at(j);
+        K.at(1, j) = K_cpnt_1.at(j);
+    }
+
+    // Between SCAs
+    for (int i = 0; i < nSCA - 1; i++) {
+        for (int j = 0; j < K_cpnt_i.size(); j++) {
+            K.at(i + 2, j) = K_cpnt_i.at(j);
+        }
+    }
+
+    // After SCAs before hot header
+    for (int j = 0; j < K_cpnt_x_2.size(); j++) {
+        K.at(nSCA + 1, j) = K_cpnt_x_2.at(j);
+        K.at(nSCA + 2, j) = K_cpnt_x_1.at(j);
+    }
+
+    return K;
+}
+
+util::matrix_t<ssc_number_t> D_Cpnt(int nSCA)
+{
+    std::vector<double> D_cpnt_0 = { 0.085, 0.0635, 0.085, 0.0635, 0.085, -1, -1, -1, -1, -1, -1 };
+    std::vector<double> D_cpnt_1 = { 0.085, 0.085, 0.085, 0.0635, 0.0635, 0.0635, 0.0635, 0.0635, 0.0635, 0.0635, 0.085 };
+    std::vector<double> D_cpnt_i = { 0.085, 0.0635, 0.0635, 0.0635, 0.0635, 0.0635, 0.0635, 0.0635, 0.0635, 0.0635, 0.085 };
+    std::vector<double> D_cpnt_x_2 = { 0.085, 0.0635, 0.0635, 0.0635, 0.0635, 0.0635, 0.0635, 0.0635, 0.085, 0.085, 0.085 };
+    std::vector<double> D_cpnt_x_1 = { 0.085, 0.0635, 0.085, 0.0635, 0.085, -1, -1, -1, -1, -1, -1 };
+
+    util::matrix_t<ssc_number_t> D(nSCA + 3, 11);
+
+    // After cold header before SCAs
+    for (int j = 0; j < D_cpnt_0.size(); j++) {
+        D.at(0, j) = D_cpnt_0.at(j);
+        D.at(1, j) = D_cpnt_1.at(j);
+    }
+
+    // Between SCAs
+    for (int i = 0; i < nSCA - 1; i++) {
+        for (int j = 0; j < D_cpnt_i.size(); j++) {
+            D.at(i + 2, j) = D_cpnt_i.at(j);
+        }
+    }
+
+    // After SCAs before hot header
+    for (int j = 0; j < D_cpnt_x_2.size(); j++) {
+        D.at(nSCA + 1, j) = D_cpnt_x_2.at(j);
+        D.at(nSCA + 2, j) = D_cpnt_x_1.at(j);
+    }
+
+    return D;
+}
+
+util::matrix_t<ssc_number_t> L_Cpnt(int nSCA)
+{
+    std::vector<double> L_cpnt_0 = { 0, 0, 0, 0, 0, -1, -1, -1, -1, -1, -1 };
+    std::vector<double> L_cpnt_1 = { 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0 };
+    std::vector<double> L_cpnt_i = { 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0 };
+    std::vector<double> L_cpnt_x_2 = { 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0 };
+    std::vector<double> L_cpnt_x_1 = { 0, 0, 0, 0, 0, -1, -1, -1, -1, -1, -1 };
+
+    util::matrix_t<ssc_number_t> L(nSCA + 3, 11);
+
+    // After cold header before SCAs
+    for (int j = 0; j < L_cpnt_0.size(); j++) {
+        L.at(0, j) = L_cpnt_0.at(j);
+        L.at(1, j) = L_cpnt_1.at(j);
+    }
+
+    // Between SCAs
+    for (int i = 0; i < nSCA - 1; i++) {
+        for (int j = 0; j < L_cpnt_i.size(); j++) {
+            L.at(i + 2, j) = L_cpnt_i.at(j);
+        }
+    }
+
+    // After SCAs before hot header
+    for (int j = 0; j < L_cpnt_x_2.size(); j++) {
+        L.at(nSCA + 1, j) = L_cpnt_x_2.at(j);
+        L.at(nSCA + 2, j) = L_cpnt_x_1.at(j);
+    }
+
+    return L;
+}
+
+util::matrix_t<ssc_number_t> Type_Cpnt(int nSCA)
+{
+    std::vector<double> Type_cpnt_0 = { 0, 1, 0, 1, 0, -1, -1, -1, -1, -1, -1 };
+    std::vector<double> Type_cpnt_1 = { 1, 0, 0, 2, 0, 1, 0, 2, 0, 2, 0 };
+    std::vector<double> Type_cpnt_i = { 0, 2, 0, 2, 0, 1, 0, 2, 0, 2, 0 };
+    std::vector<double> Type_cpnt_x_2 = { 0, 2, 0, 2, 0, 1, 0, 2, 0, 0, 1 };
+    std::vector<double> Type_cpnt_x_1 = { 0, 1, 0, 1, 0, -1, -1, -1, -1, -1, -1 };
+
+    util::matrix_t<ssc_number_t> Type(nSCA + 3, 11);
+
+    // After cold header before SCAs
+    for (int j = 0; j < Type_cpnt_0.size(); j++) {
+        Type.at(0, j) = Type_cpnt_0.at(j);
+        Type.at(1, j) = Type_cpnt_1.at(j);
+    }
+
+    // Between SCAs
+    for (int i = 0; i < nSCA - 1; i++) {
+        for (int j = 0; j < Type_cpnt_i.size(); j++) {
+            Type.at(i + 2, j) = Type_cpnt_i.at(j);
+        }
+    }
+
+    // After SCAs before hot header
+    for (int j = 0; j < Type_cpnt_x_2.size(); j++) {
+        Type.at(nSCA + 1, j) = Type_cpnt_x_2.at(j);
+        Type.at(nSCA + 2, j) = Type_cpnt_x_1.at(j);
+    }
+
+    return Type;
+}

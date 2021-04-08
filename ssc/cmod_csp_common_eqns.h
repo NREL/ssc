@@ -196,4 +196,12 @@ util::matrix_t<ssc_number_t> Sca_defocus_array(const util::matrix_t<ssc_number_t
 
 double Total_tracking_power(int nSCA, int nLoops, double SCA_drives_elec);
 
+util::matrix_t<ssc_number_t> K_Cpnt(int nSCA);
+
+util::matrix_t<ssc_number_t> D_Cpnt(int nSCA);
+
+util::matrix_t<ssc_number_t> L_Cpnt(int nSCA);
+
+util::matrix_t<ssc_number_t> Type_Cpnt(int nSCA);
+
 #endif
