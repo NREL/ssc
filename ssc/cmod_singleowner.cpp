@@ -3061,7 +3061,7 @@ public:
         ssc_number_t* buy_rate_ts;
         if (is_assigned("buy_rate_ts"))
             buy_rate_ts = as_array("buy_rate_ts", &n_buy_rate_ts);
-        size_t n_grid_charge_cost_ts = 8760 * size_t(nyears);
+        size_t n_grid_charge_cost_ts = n_steps_per_year * size_t(nyears);
         ssc_number_t* grid_charge_cost_ts = allocate("grid_charge_cost_ts", n_grid_charge_cost_ts);
 
         double capex_lcoe_ratio = 1 / 0.8; //ratio of capex ratio between PV+batt / PV to LCOE ratio PV+batt/ PV (assumed based on table)
