@@ -1,5 +1,6 @@
 #include <cmath>
 #include <math.h>
+#include <cmath>
 #include <algorithm>
 #include "cmod_csp_common_eqns.h"
 #include "vartab.h"
@@ -904,4 +905,60 @@ util::matrix_t<ssc_number_t> Type_Cpnt(int nSCA)
     }
 
     return Type;
+}
+
+// Originally from 'Physical Trough Collector Type 1' (and 2, 3, 4)
+double Csp_dtr_sca_ap_length(double csp_dtr_sca_length, double csp_dtr_sca_ncol_per_sca) {
+    return csp_dtr_sca_length / csp_dtr_sca_ncol_per_sca;
+}
+
+double Csp_dtr_sca_calc_end_gain(double csp_dtr_sca_ave_focal_len, double csp_dtr_sca_calc_theta, double csp_dtr_sca_piping_dist) {
+    return  std::max(csp_dtr_sca_ave_focal_len * tan(csp_dtr_sca_calc_theta) - csp_dtr_sca_piping_dist, 0.);
+}
+
+double Csp_dtr_sca_calc_costh(double csp_dtr_sca_calc_zenith, double tilt, double azimuth) {
+    return  sqrt(1 - pow(cos(1.57 - csp_dtr_sca_calc_zenith - tilt)
+        - cos(tilt)
+        * cos(1.57 - csp_dtr_sca_calc_zenith)
+        * (1. - cos(0. - azimuth)), 2)
+    );
+}
+
+double Csp_dtr_sca_calc_end_loss(double csp_dtr_sca_ave_focal_len, double csp_dtr_sca_calc_theta, double nSCA, double csp_dtr_sca_calc_end_gain,
+    double csp_dtr_sca_length, double csp_dtr_sca_ncol_per_sca) {
+    return  1 - (csp_dtr_sca_ave_focal_len * tan(csp_dtr_sca_calc_theta)
+        - (nSCA - 1) / nSCA * csp_dtr_sca_calc_end_gain)
+        / (csp_dtr_sca_length * csp_dtr_sca_ncol_per_sca);
+}
+
+double Csp_dtr_sca_calc_sca_eff(double csp_dtr_sca_tracking_error, double csp_dtr_sca_geometry_effects,
+    double csp_dtr_sca_clean_reflectivity, double csp_dtr_sca_mirror_dirt, double csp_dtr_sca_general_error) {
+    return  csp_dtr_sca_tracking_error * csp_dtr_sca_geometry_effects *
+        csp_dtr_sca_clean_reflectivity * csp_dtr_sca_mirror_dirt * csp_dtr_sca_general_error;
+}
+
+double Csp_dtr_sca_calc_latitude(double lat) {
+    return lat;
+}
+
+double Csp_dtr_sca_calc_zenith(double lat) {
+    return M_PI / 180. * (90. - (90. - (lat - 23.5)));
+}
+
+double Csp_dtr_sca_calc_iam(const util::matrix_t<ssc_number_t>& IAMs, double csp_dtr_sca_calc_theta, double csp_dtr_sca_calc_costh) {
+    double IAM = IAMs.at(0);
+    int l_IAM = IAMs.ncells();
+    if (l_IAM < 2) {
+        return IAM;
+    }
+    else {
+        for (int i = 1; i < l_IAM; i++) {
+            IAM = IAM + IAMs.at(i) * pow(csp_dtr_sca_calc_theta, i) / csp_dtr_sca_calc_costh;
+        }
+        return IAM;
+    }
+}
+
+double Csp_dtr_sca_calc_theta(double csp_dtr_sca_calc_costh) {
+    return acos(csp_dtr_sca_calc_costh);
 }

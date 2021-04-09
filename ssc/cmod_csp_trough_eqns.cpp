@@ -294,3 +294,84 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     double x = 1.;
     */
 }
+
+void Physical_Trough_Collector_Type_Equations(ssc_data_t data)
+{
+    auto vt = static_cast<var_table*>(data);
+    if (!vt) {
+        throw std::runtime_error("ssc_data_t data invalid");
+    }
+
+    // Inputs
+    double csp_dtr_sca_length, csp_dtr_sca_ncol_per_sca,
+        csp_dtr_sca_ave_focal_len, csp_dtr_sca_piping_dist,
+        tilt, azimuth,
+        nSCA,
+        csp_dtr_sca_tracking_error, csp_dtr_sca_geometry_effects, csp_dtr_sca_clean_reflectivity, csp_dtr_sca_mirror_dirt, csp_dtr_sca_general_error,
+        lat;
+
+    // Outputs
+    double csp_dtr_sca_ap_length,
+        csp_dtr_sca_calc_theta,
+        csp_dtr_sca_calc_end_gain,
+        csp_dtr_sca_calc_zenith,
+        csp_dtr_sca_calc_costh,
+        csp_dtr_sca_calc_end_loss,
+        csp_dtr_sca_calc_sca_eff,
+        csp_dtr_sca_calc_latitude,
+        csp_dtr_sca_calc_iam;
+
+    util::matrix_t<ssc_number_t> IAMs;
+
+    // csp_dtr_sca_ap_length
+    ssc_data_t_get_number(data, "csp_dtr_sca_length", &csp_dtr_sca_length);
+    ssc_data_t_get_number(data, "csp_dtr_sca_ncol_per_sca", &csp_dtr_sca_ncol_per_sca);
+    csp_dtr_sca_ap_length = Csp_dtr_sca_ap_length(csp_dtr_sca_length, csp_dtr_sca_ncol_per_sca);
+    ssc_data_t_set_number(data, "csp_dtr_sca_ap_length", csp_dtr_sca_ap_length);
+
+    // csp_dtr_sca_calc_theta
+    ssc_data_t_get_number(data, "lat", &lat);
+    csp_dtr_sca_calc_theta = Csp_dtr_sca_calc_theta(lat);
+    ssc_data_t_set_number(data, "csp_dtr_sca_calc_theta", csp_dtr_sca_calc_theta);
+
+    // csp_dtr_sca_calc_end_gain
+    ssc_data_t_get_number(data, "csp_dtr_sca_ave_focal_len", &csp_dtr_sca_ave_focal_len);
+    ssc_data_t_get_number(data, "csp_dtr_sca_piping_dist", &csp_dtr_sca_piping_dist);
+    csp_dtr_sca_calc_end_gain = Csp_dtr_sca_calc_end_gain(csp_dtr_sca_ave_focal_len, csp_dtr_sca_calc_theta, csp_dtr_sca_piping_dist);
+    ssc_data_t_set_number(data, "csp_dtr_sca_calc_end_gain", csp_dtr_sca_calc_end_gain);
+
+    // csp_dtr_sca_calc_zenith
+    csp_dtr_sca_calc_zenith = Csp_dtr_sca_calc_zenith(lat);
+    ssc_data_t_set_number(data, "csp_dtr_sca_calc_zenith", csp_dtr_sca_calc_zenith);
+
+    // csp_dtr_sca_calc_costh
+    ssc_data_t_get_number(data, "tilt", &tilt);
+    ssc_data_t_get_number(data, "azimuth", &azimuth);
+    csp_dtr_sca_calc_costh = Csp_dtr_sca_calc_costh(csp_dtr_sca_calc_zenith, tilt, azimuth);
+    ssc_data_t_set_number(data, "csp_dtr_sca_calc_costh", csp_dtr_sca_calc_costh);
+
+    // csp_dtr_sca_calc_end_loss
+    ssc_data_t_get_number(data, "nSCA", &nSCA);
+    csp_dtr_sca_calc_end_loss = Csp_dtr_sca_calc_end_loss(csp_dtr_sca_ave_focal_len, csp_dtr_sca_calc_theta, nSCA,
+        csp_dtr_sca_calc_end_gain, csp_dtr_sca_length, csp_dtr_sca_ncol_per_sca);
+    ssc_data_t_set_number(data, "csp_dtr_sca_calc_end_loss", csp_dtr_sca_calc_end_loss);
+
+    // csp_dtr_sca_calc_sca_eff
+    ssc_data_t_get_number(data, "csp_dtr_sca_tracking_error", &csp_dtr_sca_tracking_error);
+    ssc_data_t_get_number(data, "csp_dtr_sca_geometry_effects", &csp_dtr_sca_geometry_effects);
+    ssc_data_t_get_number(data, "csp_dtr_sca_clean_reflectivity", &csp_dtr_sca_clean_reflectivity);
+    ssc_data_t_get_number(data, "csp_dtr_sca_mirror_dirt", &csp_dtr_sca_mirror_dirt);
+    ssc_data_t_get_number(data, "csp_dtr_sca_general_error", &csp_dtr_sca_general_error);
+    csp_dtr_sca_calc_sca_eff = Csp_dtr_sca_calc_sca_eff(csp_dtr_sca_tracking_error, csp_dtr_sca_geometry_effects,
+        csp_dtr_sca_clean_reflectivity, csp_dtr_sca_mirror_dirt, csp_dtr_sca_general_error);
+    ssc_data_t_set_number(data, "csp_dtr_sca_calc_sca_eff", csp_dtr_sca_calc_sca_eff);
+
+    // csp_dtr_sca_calc_latitude
+    csp_dtr_sca_calc_latitude = Csp_dtr_sca_calc_latitude(lat);
+    ssc_data_t_set_number(data, "csp_dtr_sca_calc_latitude", csp_dtr_sca_calc_latitude);
+
+    // csp_dtr_sca_calc_iam
+    ssc_data_t_get_matrix(vt, "IAMs", IAMs);
+    csp_dtr_sca_calc_iam = Csp_dtr_sca_calc_iam(IAMs, csp_dtr_sca_calc_theta, csp_dtr_sca_calc_costh);
+    ssc_data_t_set_number(data, "csp_dtr_sca_calc_iam", csp_dtr_sca_calc_iam);
+}

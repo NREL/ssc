@@ -91,6 +91,9 @@ static ssc_equation_entry ssc_equation_table [] = {
         {"Physical_Trough_Solar_Field_Equations", Physical_Trough_Solar_Field_Equations,
             "Trough_physical", Physical_Trough_Solar_Field_Equations_doc,
             true, false},
+        {"Physical_Trough_Collector_Type_Equations", Physical_Trough_Collector_Type_Equations,
+            "Trough_physical", Physical_Trough_Collector_Type_Equations_doc,
+            true, false},
 
         // Single owner
         {"Financial_Construction_Financing_Equations", Financial_Construction_Financing_Equations,
