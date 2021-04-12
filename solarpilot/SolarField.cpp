@@ -271,7 +271,9 @@ SolarField::SolarField( const SolarField &sf )
 
 	//Flux
 	//if(_flux != (Flux*)NULL ) delete _flux;
+	if (_flux != 0) delete _flux;
 	_flux = new Flux( *sf._flux );
+
 
 }
 
@@ -552,13 +554,24 @@ void SolarField::Clean(){
 
 	for(int i=0; i<4; i++) _helio_extents[i] = 0.;
 	_layout.clear();
+
+	for (unsigned int i = 0; i < _layout_groups.size(); i++) {
+		_layout_groups.at(i).clear();
+	}
+	_layout_groups.clear();
+
 	_helio_objects.clear();
 	_helio_templates.clear();
     _helio_template_objects.clear();
-	_heliostats.clear();
 	_helio_groups.clear();
 	_helio_by_id.clear();
 	_neighbors.clear();
+	_heliostats.clear();
+
+	//Delete receivers
+	for (unsigned int i = 0; i < _receivers.size(); i++) {
+		delete _receivers.at(i);
+	}
 	_receivers.clear();
 	
 	_is_created = false;

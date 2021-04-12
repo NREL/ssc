@@ -130,7 +130,7 @@ public:
     struct VAR_DIM { enum A { DIM_T, DIM_NT, DIM_T2, DIM_2T_TRI }; };
 
     mrec_optimization_vars();
-    //~mrec_optimization_vars();
+    ~mrec_optimization_vars();
 
     void add_var(const std::string &vname, int var_type /* VAR_TYPE enum */, int var_dim /* VAR_DIM enum */, int var_dim_size, REAL lowbo = -DEF_INFINITE, REAL upbo = DEF_INFINITE);
     void add_var(const std::string &vname, int var_type /* VAR_TYPE enum */, int var_dim /* VAR_DIM enum */, int var_dim_size, int var_dim_size2, REAL lowbo = -DEF_INFINITE, REAL upbo = DEF_INFINITE);
@@ -465,6 +465,12 @@ int multi_rec_opt_helper::run(SolarField *SF)
         results[id][rec] = vars[i];
     }
 
+    delete[] vars;
+    if (lp != NULL) {
+        /* clean up such that all used memory by lpsolve is freed */
+        delete_lp(lp);
+    }
+
     //create a pointer map between heliostat ID and heliostat address
     unordered_map<int, Heliostat*> hmap;
     std::vector<Heliostat>* hobjs = SF->getHeliostatObjects();
@@ -528,6 +534,12 @@ mrec_optimization_vars::mrec_optimization_vars()
     current_mem_pos = 0;
     alloc_mem_size = 0;
 }
+
+mrec_optimization_vars::~mrec_optimization_vars()
+{
+    delete[] data;
+}
+
 void mrec_optimization_vars::add_var(const std::string &vname, int var_type /* VAR_TYPE enum */, int var_dim /* VAR_DIM enum */, int var_dim_size, REAL lobo, REAL upbo)
 {
     if (var_dim == VAR_DIM::DIM_T2)
@@ -587,7 +599,7 @@ bool mrec_optimization_vars::construct()
     if (current_mem_pos < 0 || current_mem_pos > 1000000)
         throw std::runtime_error("Bad memory allocation when constructing variable table for dispatch optimization.");
 
-    data = new REAL[current_mem_pos];
+    data = new REAL[current_mem_pos];  //where is this deallocated?
 
     alloc_mem_size = current_mem_pos;
 
