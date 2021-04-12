@@ -12,7 +12,7 @@ void Flat_Plate_Array_Design_Equations(ssc_data_t data)
     if (!vt) {
         throw std::runtime_error("ssc_data_t data invalid");
     }
-    double m_dot_array_design /*kg/s*/, specific_heat /*kJ/kg-K*/, temp_rise_array_design /*K*/;
+    double m_dot_array_design /*kg/s*/, specific_heat /*kJ/kg-K*/, temp_rise_array_design /*K*/, T_in_des_external /*C*/;
 
     CollectorTestSpecifications collector_test_specifications;
     vt_get_number(vt, "frta", &collector_test_specifications.FRta);
@@ -32,8 +32,11 @@ void Flat_Plate_Array_Design_Equations(ssc_data_t data)
     vt_get_number(vt, "azimuth", &collector_orientation.azimuth);
 
     ArrayDimensions array_dimensions;
-    array_dimensions.num_in_series = 1;     // placeholder, will resize
-    array_dimensions.num_in_parallel = 1;   // placeholder, will resize
+    double num_in_series, num_in_parallel;
+    vt_get_number(vt, "num_in_series", &num_in_series);
+    vt_get_number(vt, "num_in_parallel", &num_in_parallel);
+    array_dimensions.num_in_series = static_cast<int>(num_in_series);
+    array_dimensions.num_in_parallel = static_cast<int>(num_in_parallel);
 
     // As hardcoded in csp_solver_trough_collector_receiver.cpp, line 453
     double pipe_diam = 0.019;       // [m]
@@ -54,19 +57,32 @@ void Flat_Plate_Array_Design_Equations(ssc_data_t data)
     vt_get_number(vt, "m_dot_array_design", &m_dot_array_design);
     vt_get_number(vt, "specific_heat", &specific_heat);       // [kJ/kg-K]
     vt_get_number(vt, "temp_rise_array_design", &temp_rise_array_design);
-    double dT_approach = 0.;    // 0 = for no HX
-
-    HTFProperties fluid;
-    fluid.SetFluid(HTFProperties::Water_liquid);
-    flat_plate_array.resize_array(m_dot_array_design, specific_heat, temp_rise_array_design, dT_approach, fluid);
+    vt_get_number(vt, "T_in_des_external", &T_in_des_external);
+    double dT_approach = 5.;    // 0 = for no HX
+    double Fluid;
+    vt_get_number(vt, "Fluid", &Fluid);
+    HTFProperties fluid_external;
+    fluid_external.SetFluid(static_cast<int>(Fluid));
+    //flat_plate_array.resize_array(m_dot_array_design, specific_heat, temp_rise_array_design, dT_approach, fluid_external);
+    
+    int kFluidFp = HTFProperties::PG_50_50;		// also used for HX
+    flat_plate_array.SetFluid(kFluidFp);
+    array_dimensions = flat_plate_array.array_size();
+    if (array_dimensions.num_in_series < 1) {
+        flat_plate_array.resize_num_in_series(T_in_des_external, temp_rise_array_design, dT_approach);
+    }
+    if (array_dimensions.num_in_parallel < 1) {
+        flat_plate_array.resize_num_in_parallel(T_in_des_external, temp_rise_array_design, m_dot_array_design, fluid_external);
+    }
+        
     array_dimensions = flat_plate_array.array_size();
     double ncoll = flat_plate_array.ncoll();
     double area_total = flat_plate_array.area_total();
 
-    vt->assign("num_in_series", array_dimensions.num_in_series);
-    vt->assign("num_in_parallel", array_dimensions.num_in_parallel);
-    vt->assign("num_collectors", ncoll);
-    vt->assign("aperture_array", area_total);
+    // vt->assign("num_in_series", array_dimensions.num_in_series);
+    // vt->assign("num_in_parallel", array_dimensions.num_in_parallel);
+    // vt->assign("num_collectors", ncoll);
+    // vt->assign("aperture_array", area_total);
 
     double dni_des, poa_des, frta, frul, Ti_minus_Ta, conversion_efficiency, thermal_output;
     //double poa_irradiance = FlatPlateCollector::IncidentIrradiance();
