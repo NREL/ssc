@@ -668,12 +668,20 @@ public:
 		// ********************************
 		// ********************************
 		// Heat Sink
+        size_t n_f_turbine = 0;
+        ssc_number_t* p_f_turbine = as_array("f_turb_tou_periods", &n_f_turbine);   // heat sink, not turbine
+        double f_turbine_max = 1.0;
+        for (size_t i = 0; i < n_f_turbine; i++) {
+            f_turbine_max = max(f_turbine_max, p_f_turbine[i]);
+        }
+
 		C_pc_heat_sink c_heat_sink;
 		c_heat_sink.ms_params.m_T_htf_hot_des = as_double("T_loop_out");		//[C] FIELD design outlet temperature
 		c_heat_sink.ms_params.m_T_htf_cold_des = as_double("T_loop_in_des");	//[C] FIELD design inlet temperature
 		c_heat_sink.ms_params.m_q_dot_des = as_double("q_pb_design");			//[MWt] HEAT SINK design thermal power (could have field solar multiple...)
 			// 9.18.2016 twn: assume for now there's no pressure drop though heat sink
 		c_heat_sink.ms_params.m_htf_pump_coef = as_double("pb_pump_coef");		//[kWe/kg/s]
+        c_heat_sink.ms_params.m_max_frac = f_turbine_max;
 		
 		c_heat_sink.ms_params.m_pc_fl = as_integer("Fluid");
 		c_heat_sink.ms_params.m_pc_fl_props = as_matrix("field_fl_props");
@@ -805,8 +813,8 @@ public:
         tou.mc_dispatch_params.m_q_dot_rec_des_mult = -1.23;
         tou.mc_dispatch_params.m_f_q_dot_pc_overwrite = -1.23;
 
-        size_t n_f_turbine = 0;
-        ssc_number_t *p_f_turbine = as_array("f_turb_tou_periods", &n_f_turbine);   // heat sink, not turbine
+        //size_t n_f_turbine = 0;
+        //ssc_number_t *p_f_turbine = as_array("f_turb_tou_periods", &n_f_turbine);   // heat sink, not turbine
         tou_params->mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC].resize(n_f_turbine, 0.0);
         //tou_params->mv_t_frac.resize(n_f_turbine, 0.0);
         for (size_t i = 0; i < n_f_turbine; i++)
