@@ -544,6 +544,8 @@ public:
 			p_W_dot_par_tot_haf[i] = (ssc_number_t)(p_W_dot_parasitic_tot[i] * haf(hour) * 1.E3);		//[kWe]
 		}
 
+        ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, steps_per_hour);
+
 
 		accumulate_annual_for_year("gen", "annual_field_energy", sim_setup.m_report_step / 3600.0, steps_per_hour);	//[kWt-hr]
 		accumulate_annual_for_year("W_dot_par_tot_haf", "annual_electricity_consumption", sim_setup.m_report_step / 3600.0, steps_per_hour);	//[kWe-hr]

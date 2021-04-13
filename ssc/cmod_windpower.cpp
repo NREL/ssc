@@ -479,6 +479,7 @@ void cm_windpower::exec()
 	ssc_number_t *air_temp = allocate("temp", nstep);
 	ssc_number_t *air_pres = allocate("pressure", nstep);
 
+
 	std::vector<double> Power(wpc.nTurbines, 0.), Thrust(wpc.nTurbines, 0.),
 		Eff(wpc.nTurbines, 0.), Wind(wpc.nTurbines, 0.), Turb(wpc.nTurbines, 0.),
 		DistDown(wpc.nTurbines, 0.), DistCross(wpc.nTurbines, 0.);
@@ -593,7 +594,7 @@ void cm_windpower::exec()
 			i++;
 		} // end steps_per_hour loop
 	} // end 1->8760 loop
-
+    ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, steps_per_hour);
 	// assign outputs
 	assign("annual_energy", var_data((ssc_number_t)annual));
 	double kWhperkW = 0.0;

@@ -803,11 +803,11 @@ public:
 		out_msg = tstr;
 		if( count != 8760 )
 			throw exec_error("tcsmslf", out_msg);
-
 		// Get hourly energy
-		for( size_t i = 0; i < count; i++ )
-			p_hourly_energy[i] = (ssc_number_t)(timestep_energy_MW[i] * 1000.0);	// convert to kW
-
+        for (size_t i = 0; i < count; i++) {
+            p_hourly_energy[i] = (ssc_number_t)(timestep_energy_MW[i] * 1000.0);	// convert to kW
+        }
+        ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, 1);
 		//1.7.15, twn: Need to calculated the conversion factor before the performance adjustments are applied to "hourly energy"
 		accumulate_annual("gen", "annual_energy"); // already in kWh
 		accumulate_annual("P_cycle", "annual_W_cycle_gross", 1000); // convert from MWh to kWh

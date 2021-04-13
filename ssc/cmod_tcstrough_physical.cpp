@@ -991,7 +991,7 @@ public:
 			}
 			ae += (ssc_number_t)(ts_power * ts_hour); // honoring Ty's wishes below
 		}
-
+        ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, step_per_hour);
 		//1.7.15, twn: Need to calculated the conversion factor before the performance adjustments are applied to "hourly energy"
 		double annual_energy = accumulate_annual("gen", "annual_energy", ts_hour);						// already in kWh
 		accumulate_annual("W_cycle_gross", "annual_W_cycle_gross", ts_hour * 1000);	// convert from MW to kWh

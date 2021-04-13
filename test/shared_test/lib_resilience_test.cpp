@@ -15,29 +15,32 @@ TEST_F(ResilienceTest_lib_resilience, VoltageCutoffParameterSetup)
                             Qexp *= Qfull;
                             for (auto Qnom : {0.8, 0.9}){
                                 Qnom *= Qexp;
-                                for (auto C_rate : {0.05, 0.1, 0.2}){
-                                    for (auto resistance : {0.05, 0.1, 0.2}){
-                                        char buf[300];
-                                        sprintf(buf, "dtHour, %f, Vfull, %f, Vexp, %f, Vnom, %f, Qfull, %f, Qexp, %f, Qnom, %f, C rate, %f, res, %f",
-                                                dtHour, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom, C_rate, resistance);
-                                        auto voltageModel = new voltage_dynamic_t(n_series, n_strings, Vnom * 0.98,
-                                                                                  Vfull, Vexp, Vnom, Qfull, Qexp, Qnom,
-                                                                                  C_rate, resistance, dtHour);
-                                        try{
-                                            double current1;
-                                            for (auto q_ratio : {0.25, 0.5, 0.75}){
-                                                double q = n_strings * Qfull * q_ratio;
-                                                double qmax = n_strings * Qfull;
-                                                auto max_1 = voltageModel->calculate_max_discharge_w(q, qmax, 0, &current1);
-                                                auto power1 = voltageModel->calculate_voltage_for_current(current1, q - current1 * dtHour, qmax, 0) * current1;
-                                                EXPECT_NEAR(max_1, power1, 1e-3) << buf << ", q_ratio, " << q_ratio;
-                                            }
-                                            delete voltageModel;
+                                for (auto Vcut : { 0.8, 0.9 }) {
+                                    Vcut *= Vnom;
+                                    for (auto C_rate : { 0.05, 0.1, 0.2 }) {
+                                        for (auto resistance : { 0.05, 0.1, 0.2 }) {
+                                            char buf[300];
+                                            sprintf(buf, "dtHour, %f, Vfull, %f, Vexp, %f, Vnom, %f, Qfull, %f, Qexp, %f, Qnom, %f, Vcut, %f, C rate, %f, res, %f",
+                                                dtHour, Vfull, Vexp, Vnom, Qfull, Qexp, Qnom, Vcut, C_rate, resistance);
+                                            auto voltageModel = new voltage_dynamic_t(n_series, n_strings, Vnom * 0.98,
+                                                Vfull, Vexp, Vnom, Qfull, Qexp, Qnom, Vcut,
+                                                C_rate, resistance, dtHour);
+                                            try {
+                                                double current1;
+                                                for (auto q_ratio : { 0.25, 0.5, 0.75 }) {
+                                                    double q = n_strings * Qfull * q_ratio;
+                                                    double qmax = n_strings * Qfull;
+                                                    auto max_1 = voltageModel->calculate_max_discharge_w(q, qmax, 0, &current1);
+                                                    auto power1 = voltageModel->calculate_voltage_for_current(current1, q - current1 * dtHour, qmax, 0) * current1;
+                                                    EXPECT_NEAR(max_1, power1, 1e-3) << buf << ", q_ratio, " << q_ratio;
+                                                }
+                                                delete voltageModel;
 
-                                        }
-                                        catch (std::exception&){
-                                            std::cerr << buf;
-                                            delete voltageModel;
+                                            }
+                                            catch (std::exception&) {
+                                                std::cerr << buf;
+                                                delete voltageModel;
+                                            }
                                         }
                                     }
                                 }

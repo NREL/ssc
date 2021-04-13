@@ -21,6 +21,7 @@ public:
 	// voltage
 	double Vnom_default;
 	double Vfull;
+    double Vcut;
 	double Vexp;
 	double Vnom;
 	double Qfull;
@@ -69,6 +70,7 @@ public:
 		Vfull = 4.1;
 		Vexp = 4.05;
 		Vnom = 3.4;
+        Vcut = 0.66 * Vfull;
 		Qfull = 2.25;
 		Qexp = 0.04;
 		Qnom = 2.0;
@@ -81,7 +83,7 @@ public:
 		double vals2[] = { 0, 100, 3650, 80, 7300, 50 };
 		calendarLifeMatrix.assign(vals2, 3, 2);
 
-		calendarChoice = lifetime_params::CALENDAR_CHOICE::MODEL;
+		calendarChoice = calendar_cycle_params::CALENDAR_CHOICE::MODEL;
 
 		// thermal
 		mass = 507;

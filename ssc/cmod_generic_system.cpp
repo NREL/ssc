@@ -213,6 +213,8 @@ public:
 			}
 		}
 
+        ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, steps_per_hour);
+
 		accumulate_monthly_for_year("gen", "monthly_energy", ts_hour, steps_per_hour);
 		annual_output = accumulate_annual_for_year("gen", "annual_energy", ts_hour, steps_per_hour);
 

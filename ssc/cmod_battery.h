@@ -53,6 +53,7 @@ struct batt_variables
 	int batt_meter_position;
 	int batt_target_choice;
 	int batt_loss_choice;
+	int batt_life_model;
 	int batt_calendar_choice;
 
 	ssc_number_t *pcharge = 0;
@@ -130,6 +131,7 @@ struct batt_variables
 	double batt_Vfull;
 	double batt_Vexp;
 	double batt_Vnom;
+    double batt_Vcut;
 	double batt_Qfull;
 	double batt_Qfull_flow;
 	double batt_Qexp;

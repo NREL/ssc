@@ -2306,14 +2306,13 @@ public:
         if( !haf.setup() )
             throw exec_error("tcsmolten_salt", "failed to setup adjustment factors: " + haf.error());
 
-
         ssc_number_t *p_gen = allocate("gen", count);
         for( size_t i = 0; i < count; i++ )
         {
             size_t hour = (size_t)ceil(p_time_final_hr[i]);
             p_gen[i] = (ssc_number_t)(p_W_dot_net[i] * 1.E3 * haf(hour));           //[kWe]
         }
-
+        ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, steps_per_hour);
         accumulate_annual_for_year("gen", "annual_energy", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed/steps_per_hour);
         
         accumulate_annual_for_year("P_cycle", "annual_W_cycle_gross", 1000.0*sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed/steps_per_hour);        //[kWe-hr]

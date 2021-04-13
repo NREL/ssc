@@ -88,6 +88,7 @@ option(BUILD_SHARED_LIBS "Build jsoncpp_lib as a shared library." OFF)
 # Enable runtime search path support for dynamic libraries on OSX
 if(APPLE)
     set(CMAKE_MACOSX_RPATH 1)
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.9")
 endif()
 
 # Adhere to GNU filesystem layout conventions
