@@ -3109,6 +3109,7 @@ public:
                 //Lifetime calculations
                 //Calculate cost to charge battery from grid (either using ppa price or electricity rates if enabled)
                 double ppa_value = cf.at(CF_ppa_price, a);
+                /*
                 for (size_t h = 0; h < n_steps_per_year; h++) {
                     if (ppa_purchases && a!=0) {
                         cf.at(CF_charging_cost_grid, a) += grid_to_batt[(size_t(a) - 1) * n_steps_per_year + h] * 8760/n_steps_per_year * ppa_value / 100.0 * ppa_multipliers[h];
@@ -3117,7 +3118,7 @@ public:
                         // Recompute this variable because the ppa_gen values (hourly_net) were all positve until now 
                         
                         //cf.at(CF_charging_cost_grid, a) += grid_to_batt[(a - 1) * n_steps_per_year + h] * 8760 / n_steps_per_year * -elec_purchases[h] * cf.at(CF_util_escal_rate, a) / elec_from_grid[h];
-                        cf.at(CF_charging_cost_grid, a) += grid_to_batt[(size_t(a) - 1) * n_steps_per_year + h] * 8760 / n_steps_per_year * buy_rate_ts[(size_t(a) - 1) * n_steps_per_year + h] * rate_scale[a-1];
+                        cf.at(CF_charging_cost_grid, a) += grid_to_batt[(size_t(a) - 1) * n_steps_per_year + h] * 8760 / n_steps_per_year * buy_rate_ts[(size_t(a) - 1) * n_steps_per_year + h];
                         //cf.at(CF_charging_cost_grid, a) += grid_to_batt[(a - 1) * n_steps_per_year + h] * 8760 / n_steps_per_year * buy_rate_ts[h] * pow((1+inflation_rate + 0.01),a-1);
                         grid_charge_cost_ts[(size_t(a)-1) * n_steps_per_year + h] = grid_to_batt[(size_t(a) - 1) * n_steps_per_year + h] * 8760 / n_steps_per_year * buy_rate_ts[(size_t(a) - 1) * n_steps_per_year + h] * rate_scale[a - 1];
                         //cf.at(CF_charging_cost_grid, a) += grid_to_batt[(a - 1) * n_steps_per_year + h] * 8760 / n_steps_per_year * -elec_purchases[h] * rate_scale[a-1] / elec_from_grid[h];
@@ -3125,11 +3126,11 @@ public:
 
                         
                     }
-                }
+                }*/
 
                 for (size_t m = 0; m < 12; m++) {
                     if (!ppa_purchases && a != 0) {
-                        cf.at(CF_charging_cost_grid_month, a) += monthly_grid_to_batt[m] / ((monthly_batt_to_grid[m] + monthly_system_to_grid[m]) + -monthly_electricity_tofrom_grid[m]) * monthly_energy_charge[m] * charged_grid[a] / charged_grid[1] * cf.at(CF_util_escal_rate, a);
+                        cf.at(CF_charging_cost_grid, a) += monthly_grid_to_batt[m] / ((monthly_batt_to_grid[m] + monthly_system_to_grid[m]) + -monthly_electricity_tofrom_grid[m]) * monthly_energy_charge[m] * charged_grid[a] / charged_grid[1] * cf.at(CF_util_escal_rate, a);
                     }
                 }
                 
@@ -3140,6 +3141,7 @@ public:
                 //Single year calculations (might not be needed as their is no Single Owner for PVWatts Battery
                 //Calculate cost to charge battery from grid (either using ppa price or electricity rates if enabled)
                 double ppa_value = cf.at(CF_ppa_price, a);
+                /*
                 for (size_t h = 0; h < 8760; h++) {
                     if (ppa_purchases && a!=0) {
                         cf.at(CF_charging_cost_grid, a) += grid_to_batt[h] * ppa_value / 100.0 * ppa_multipliers[h];
@@ -3153,11 +3155,11 @@ public:
                         else
                             cf.at(CF_charging_cost_grid, a) += 0;
                     }
-                }
+                }*/
 
                 for (size_t m = 0; m < 12; m++) {
                     if (!ppa_purchases && a != 0) {
-                        cf.at(CF_charging_cost_grid_month, a) += monthly_grid_to_batt[m] / (-monthly_electricity_tofrom_grid[m] + (monthly_batt_to_grid[m] + monthly_system_to_grid[m])) * monthly_energy_charge[m] * charged_grid[a] / charged_grid[1] * cf.at(CF_util_escal_rate, a);
+                        cf.at(CF_charging_cost_grid, a) += monthly_grid_to_batt[m] / (-monthly_electricity_tofrom_grid[m] + (monthly_batt_to_grid[m] + monthly_system_to_grid[m])) * monthly_energy_charge[m] * charged_grid[a] / charged_grid[1] * cf.at(CF_util_escal_rate, a);
                     }
                 }
                 
