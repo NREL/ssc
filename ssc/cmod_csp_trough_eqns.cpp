@@ -323,11 +323,18 @@ void Physical_Trough_Collector_Type_Equations(ssc_data_t data)
 
     util::matrix_t<ssc_number_t> IAMs_1;
 
-    // csp_dtr_sca_ap_length
-    ssc_data_t_get_number(data, "csp_dtr_sca_length_1", &csp_dtr_sca_length_1);
-    ssc_data_t_get_number(data, "csp_dtr_sca_ncol_per_sca_1", &csp_dtr_sca_ncol_per_sca_1);
-    csp_dtr_sca_ap_length_1 = Csp_dtr_sca_ap_length(csp_dtr_sca_length_1, csp_dtr_sca_ncol_per_sca_1);
-    ssc_data_t_set_number(data, "csp_dtr_sca_ap_length_1", csp_dtr_sca_ap_length_1);
+    //// csp_dtr_sca_ap_length
+    //ssc_data_t_get_number(data, "csp_dtr_sca_length_1", &csp_dtr_sca_length_1);
+    //ssc_data_t_get_number(data, "csp_dtr_sca_ncol_per_sca_1", &csp_dtr_sca_ncol_per_sca_1);
+    //csp_dtr_sca_ap_length_1 = Csp_dtr_sca_ap_length(csp_dtr_sca_length_1, csp_dtr_sca_ncol_per_sca_1);
+    //ssc_data_t_set_number(data, "csp_dtr_sca_ap_length_1", csp_dtr_sca_ap_length_1);
+
+    // csp_dtr_sca_ap_lengths
+    util::matrix_t<ssc_number_t> csp_dtr_sca_lengths, csp_dtr_sca_ncol_per_scas, csp_dtr_sca_ap_lengths;
+    ssc_data_t_get_matrix(vt, "csp_dtr_sca_lengths", csp_dtr_sca_lengths);
+    ssc_data_t_get_matrix(vt, "csp_dtr_sca_ncol_per_scas", csp_dtr_sca_ncol_per_scas);
+    csp_dtr_sca_ap_lengths = Csp_dtr_sca_ap_lengths(csp_dtr_sca_lengths, csp_dtr_sca_ncol_per_scas);
+    ssc_data_t_set_matrix(data, "csp_dtr_sca_ap_lengths", csp_dtr_sca_ap_lengths);
 
     // csp_dtr_sca_calc_theta
     ssc_data_t_get_number(data, "lat", &lat);
@@ -353,7 +360,7 @@ void Physical_Trough_Collector_Type_Equations(ssc_data_t data)
     // csp_dtr_sca_calc_end_loss
     ssc_data_t_get_number(data, "nSCA", &nSCA);
     csp_dtr_sca_calc_end_loss_1 = Csp_dtr_sca_calc_end_loss(csp_dtr_sca_ave_focal_len_1, csp_dtr_sca_calc_theta_1, nSCA,
-        csp_dtr_sca_calc_end_gain_1, csp_dtr_sca_length_1, csp_dtr_sca_ncol_per_sca_1);
+        csp_dtr_sca_calc_end_gain_1, csp_dtr_sca_lengths.at(0), csp_dtr_sca_ncol_per_sca_1);
     ssc_data_t_set_number(data, "csp_dtr_sca_calc_end_loss_1", csp_dtr_sca_calc_end_loss_1);
 
     // csp_dtr_sca_calc_sca_eff

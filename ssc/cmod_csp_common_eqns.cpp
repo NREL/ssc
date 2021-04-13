@@ -912,6 +912,16 @@ double Csp_dtr_sca_ap_length(double csp_dtr_sca_length, double csp_dtr_sca_ncol_
     return csp_dtr_sca_length / csp_dtr_sca_ncol_per_sca;
 }
 
+util::matrix_t<ssc_number_t> Csp_dtr_sca_ap_lengths(const util::matrix_t<ssc_number_t>& csp_dtr_sca_lengths, const util::matrix_t<ssc_number_t>& csp_dtr_sca_ncol_per_scas) {
+    int n = csp_dtr_sca_lengths.ncells();
+
+    util::matrix_t<ssc_number_t> result(n);
+    for (int i = 0; i < n; i++) {
+        result.at(i) = csp_dtr_sca_lengths.at(i) / csp_dtr_sca_ncol_per_scas.at(i);
+    }
+    return result;
+}
+
 double Csp_dtr_sca_calc_end_gain(double csp_dtr_sca_ave_focal_len, double csp_dtr_sca_calc_theta, double csp_dtr_sca_piping_dist) {
     return  std::max(csp_dtr_sca_ave_focal_len * tan(csp_dtr_sca_calc_theta) - csp_dtr_sca_piping_dist, 0.);
 }
