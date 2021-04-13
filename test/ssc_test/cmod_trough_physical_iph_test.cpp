@@ -14,7 +14,7 @@ NAMESPACE_TEST(csp_trough, HeatTroughCmod, Default_NoFinancial)
     int errors = heat_trough.RunModule();
     EXPECT_FALSE(errors);
     if (!errors) {
-        EXPECT_NEAR_FRAC(heat_trough.GetOutput("annual_gross_energy"), 24328026, kErrorToleranceLo);
+        EXPECT_NEAR_FRAC(heat_trough.GetOutput("annual_gross_energy"), 24267285, kErrorToleranceLo);
         EXPECT_NEAR_FRAC(heat_trough.GetOutput("annual_energy"), 24267070, kErrorToleranceLo);
         EXPECT_NEAR_FRAC(heat_trough.GetOutput("annual_electricity_consumption"), 92979, kErrorToleranceLo);
         EXPECT_NEAR_FRAC(heat_trough.GetOutput("annual_thermal_consumption"), 215.00, kErrorToleranceLo);
