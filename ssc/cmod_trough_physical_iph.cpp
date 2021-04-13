@@ -668,12 +668,20 @@ public:
 		// ********************************
 		// ********************************
 		// Heat Sink
+        size_t n_f_turbine = 0;
+        ssc_number_t* p_f_turbine = as_array("f_turb_tou_periods", &n_f_turbine);   // heat sink, not turbine
+        double f_turbine_max = 1.0;
+        for (size_t i = 0; i < n_f_turbine; i++) {
+            f_turbine_max = max(f_turbine_max, p_f_turbine[i]);
+        }
+
 		C_pc_heat_sink c_heat_sink;
 		c_heat_sink.ms_params.m_T_htf_hot_des = as_double("T_loop_out");		//[C] FIELD design outlet temperature
 		c_heat_sink.ms_params.m_T_htf_cold_des = as_double("T_loop_in_des");	//[C] FIELD design inlet temperature
 		c_heat_sink.ms_params.m_q_dot_des = as_double("q_pb_design");			//[MWt] HEAT SINK design thermal power (could have field solar multiple...)
 			// 9.18.2016 twn: assume for now there's no pressure drop though heat sink
 		c_heat_sink.ms_params.m_htf_pump_coef = as_double("pb_pump_coef");		//[kWe/kg/s]
+        c_heat_sink.ms_params.m_max_frac = f_turbine_max;
 		
 		c_heat_sink.ms_params.m_pc_fl = as_integer("Fluid");
 		c_heat_sink.ms_params.m_pc_fl_props = as_matrix("field_fl_props");
@@ -805,8 +813,8 @@ public:
         tou.mc_dispatch_params.m_q_dot_rec_des_mult = -1.23;
         tou.mc_dispatch_params.m_f_q_dot_pc_overwrite = -1.23;
 
-        size_t n_f_turbine = 0;
-        ssc_number_t *p_f_turbine = as_array("f_turb_tou_periods", &n_f_turbine);   // heat sink, not turbine
+        //size_t n_f_turbine = 0;
+        //ssc_number_t *p_f_turbine = as_array("f_turb_tou_periods", &n_f_turbine);   // heat sink, not turbine
         tou_params->mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC].resize(n_f_turbine, 0.0);
         //tou_params->mv_t_frac.resize(n_f_turbine, 0.0);
         for (size_t i = 0; i < n_f_turbine; i++)
@@ -978,7 +986,6 @@ public:
 		//ssc_number_t *p_m_dot_tes_ch = as_array("m_dot_tes_ch", &count);
 		//if (count != n_steps_fixed)
 		//	throw exec_error("trough_physical_iph", "The number of fixed steps for 'm_dot_tes_ch' does not match the length of output data arrays");
-		
 		for(size_t i = 0; i < n_steps_fixed; i++)
 		{
 			size_t hour = (size_t)ceil(p_time_final_hr[i]);
@@ -988,11 +995,12 @@ public:
 			p_q_dot_defocus_est[i] = (ssc_number_t)(1.0 - p_SCAs_def[i])*p_q_dot_htf_sf_out[i];	//[MWt]
 			//p_m_dot_tes_dc[i] = (ssc_number_t)(p_m_dot_tes_dc[i] / 3600.0);		//[kg/s] convert from kg/hr
 			//p_m_dot_tes_ch[i] = (ssc_number_t)(p_m_dot_tes_ch[i] / 3600.0);		//[kg/s] convert from kg/hr
+
 		}
 
 		// Monthly outputs
 
-
+        ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, steps_per_hour);
 
 		// Annual outputs
 		accumulate_annual_for_year("gen", "annual_gross_energy", sim_setup.m_report_step / 3600.0, steps_per_hour);	//[kWt-hr]
