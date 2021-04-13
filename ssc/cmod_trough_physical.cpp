@@ -320,6 +320,16 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "csp_dtr_sca_w_profile_3",             "csp_dtr_sca_w_profile_3",                                                "-",            "",               "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "csp_dtr_sca_w_profile_4",             "csp_dtr_sca_w_profile_4",                                                "-",            "",               "controller",     "*",                       "",                      "" },
 
+    { SSC_INPUT,        SSC_NUMBER,      "csp_dtr_sca_ncol_per_sca_1",          "csp_dtr_sca_ncol_per_sca_1",                                             "-",            "",               "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "csp_dtr_sca_ave_focal_len_1",         "csp_dtr_sca_ave_focal_len_1",                                            "-",            "",               "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "csp_dtr_sca_piping_dist_1",           "csp_dtr_sca_piping_dist_1",                                              "-",            "",               "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "csp_dtr_sca_tracking_error_1",        "csp_dtr_sca_tracking_error_1",                                           "-",            "",               "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "csp_dtr_sca_geometry_effects_1",      "csp_dtr_sca_geometry_effects_1",                                         "-",            "",               "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "csp_dtr_sca_clean_reflectivity_1",    "csp_dtr_sca_clean_reflectivity_1",                                       "-",            "",               "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "csp_dtr_sca_mirror_dirt_1",           "csp_dtr_sca_mirror_dirt_1",                                              "-",            "",               "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "csp_dtr_sca_general_error_1",         "csp_dtr_sca_general_error_1",                                            "-",            "",               "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "lat",                                 "lat",                                                                    "-",            "",               "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_MATRIX,      "IAMs_1",                              "IAMs_1",                                                                 "-",            "",               "controller",     "*",                       "",                      "" },
 
     // *************************************************************************************************
     //    OUTPUTS
