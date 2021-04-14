@@ -739,7 +739,12 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
         {
             double q_dot_dc_est, m_dot_tes_dc, T_tes_dc_est;
             q_dot_dc_est = m_dot_tes_dc = T_tes_dc_est = std::numeric_limits<double>::quiet_NaN();
-            mpc_csp_solver->mc_tes.discharge_avail_est(m_T_field_cold_guess, mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step, q_dot_dc_est, m_dot_tes_dc, T_tes_dc_est);
+            if (mpc_csp_solver->m_is_tes) {
+                mpc_csp_solver->mc_tes.discharge_avail_est(m_T_field_cold_guess, mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step, q_dot_dc_est, m_dot_tes_dc, T_tes_dc_est);
+            }
+            else {
+                q_dot_dc_est = m_dot_tes_dc = T_tes_dc_est = 0.0;
+            }
             m_dot_tes_dc *= 3600.0;     //[kg/hr] convert from kg/s
             m_m_dot_pc_in = fmin(m_dot_pc_max, m_dot_field_out + m_dot_tes_dc);
         }
@@ -751,7 +756,12 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
         {
             double q_dot_dc_est, m_dot_tes_dc, T_tes_dc_est;
             q_dot_dc_est = m_dot_tes_dc = T_tes_dc_est = std::numeric_limits<double>::quiet_NaN();
-            mpc_csp_solver->mc_tes.discharge_avail_est(m_T_field_cold_guess, mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step, q_dot_dc_est, m_dot_tes_dc, T_tes_dc_est);
+            if (mpc_csp_solver->m_is_tes) {
+                mpc_csp_solver->mc_tes.discharge_avail_est(m_T_field_cold_guess, mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step, q_dot_dc_est, m_dot_tes_dc, T_tes_dc_est);
+            }
+            else {
+                q_dot_dc_est = m_dot_tes_dc = T_tes_dc_est = 0.0;
+            }
             m_dot_tes_dc *= 3600.0;     //[kg/hr] convert from kg/s
 
             // max: not allowing TES CH, so all field m_dot must go to pc
@@ -763,8 +773,13 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
         {
             double q_dot_ch_est, m_dot_hot_to_tes_est, T_cold_field_est;
             q_dot_ch_est = m_dot_hot_to_tes_est = T_cold_field_est = std::numeric_limits<double>::quiet_NaN();
-            mpc_csp_solver->mc_tes.charge_avail_est(mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot + 273.15, mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
-                q_dot_ch_est, m_dot_hot_to_tes_est, T_cold_field_est);
+            if (mpc_csp_solver->m_is_tes) {
+                mpc_csp_solver->mc_tes.charge_avail_est(mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot + 273.15, mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
+                    q_dot_ch_est, m_dot_hot_to_tes_est, T_cold_field_est);
+            }
+            else {
+                q_dot_ch_est = m_dot_hot_to_tes_est = T_cold_field_est = 0.0;
+            }
             m_dot_hot_to_tes_est *= 3600;       //[kg/hr] convert from kg/s
 
             // min: not allowing TES DC, so max m_dot to pc is field m_dot
@@ -783,8 +798,13 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
         {
             double q_dot_ch_est, m_dot_hot_to_tes_est, T_cold_field_est;
             q_dot_ch_est = m_dot_hot_to_tes_est = T_cold_field_est = std::numeric_limits<double>::quiet_NaN();
-            mpc_csp_solver->mc_tes.charge_avail_est(mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot + 273.15, mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
-                q_dot_ch_est, m_dot_hot_to_tes_est, T_cold_field_est);
+            if (mpc_csp_solver->m_is_tes) {
+                mpc_csp_solver->mc_tes.charge_avail_est(mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot + 273.15, mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
+                    q_dot_ch_est, m_dot_hot_to_tes_est, T_cold_field_est);
+            }
+            else {
+                q_dot_ch_est = m_dot_hot_to_tes_est = T_cold_field_est = 0.0;
+            }
 
             m_dot_hot_to_tes_est *= 3600;       //[kg/hr] convert from kg/s
 
@@ -808,8 +828,13 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
     {
         double q_dot_ch_est, m_dot_hot_to_tes_est, T_cold_field_est;
         q_dot_ch_est = m_dot_hot_to_tes_est = T_cold_field_est = std::numeric_limits<double>::quiet_NaN();
-        mpc_csp_solver->mc_tes.charge_avail_est(mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot + 273.15, mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
-            q_dot_ch_est, m_dot_hot_to_tes_est, T_cold_field_est); 
+        if (mpc_csp_solver->m_is_tes) {
+            mpc_csp_solver->mc_tes.charge_avail_est(mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot + 273.15, mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
+                q_dot_ch_est, m_dot_hot_to_tes_est, T_cold_field_est);
+        }
+        else {
+            q_dot_ch_est = m_dot_hot_to_tes_est = T_cold_field_est = 0.0;
+        }
         
         m_dot_hot_to_tes_est *= 3600;       //[kg/hr] convert from kg/s
 
@@ -851,9 +876,13 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
     {
         double q_dot_ch_est, m_dot_hot_to_tes_est, T_cold_field_est;
         q_dot_ch_est = m_dot_hot_to_tes_est = T_cold_field_est = std::numeric_limits<double>::quiet_NaN();
-        mpc_csp_solver->mc_tes.charge_avail_est(mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot + 273.15, mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
-            q_dot_ch_est, m_dot_hot_to_tes_est, T_cold_field_est);
-
+        if (mpc_csp_solver->m_is_tes) {
+            mpc_csp_solver->mc_tes.charge_avail_est(mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot + 273.15, mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
+                q_dot_ch_est, m_dot_hot_to_tes_est, T_cold_field_est);
+        }
+        else {
+            q_dot_ch_est = m_dot_hot_to_tes_est = T_cold_field_est = 0.0;
+        }
         m_dot_hot_to_tes_est *= 3600;       //[kg/hr] convert from kg/s
 
         m_dot_hot_to_tes = m_dot_hot_to_tes_est;    //[kg/hr]
