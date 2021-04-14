@@ -323,7 +323,8 @@ void Physical_Trough_Collector_Type_Equations(ssc_data_t data)
         csp_dtr_sca_calc_latitude_1,
         csp_dtr_sca_calc_iam_1;
 
-    util::matrix_t<ssc_number_t> IAMs_1;
+    util::matrix_t<ssc_number_t> IAMs_1,
+        csp_dtr_sca_ave_focal_lens, csp_dtr_sca_piping_dists;
 
     //// csp_dtr_sca_ap_length
     //ssc_data_t_get_number(data, "csp_dtr_sca_length_1", &csp_dtr_sca_length_1);
@@ -344,9 +345,9 @@ void Physical_Trough_Collector_Type_Equations(ssc_data_t data)
     ssc_data_t_set_number(data, "csp_dtr_sca_calc_theta_1", csp_dtr_sca_calc_theta_1);
 
     // csp_dtr_sca_calc_end_gain
-    ssc_data_t_get_number(data, "csp_dtr_sca_ave_focal_len_1", &csp_dtr_sca_ave_focal_len_1);
-    ssc_data_t_get_number(data, "csp_dtr_sca_piping_dist_1", &csp_dtr_sca_piping_dist_1);
-    csp_dtr_sca_calc_end_gain_1 = Csp_dtr_sca_calc_end_gain(csp_dtr_sca_ave_focal_len_1, csp_dtr_sca_calc_theta_1, csp_dtr_sca_piping_dist_1);
+    ssc_data_t_get_matrix(vt, "csp_dtr_sca_ave_focal_lens", csp_dtr_sca_ave_focal_lens);
+    ssc_data_t_get_matrix(vt, "csp_dtr_sca_piping_dists", csp_dtr_sca_piping_dists);
+    csp_dtr_sca_calc_end_gain_1 = Csp_dtr_sca_calc_end_gain(csp_dtr_sca_ave_focal_lens.at(0), csp_dtr_sca_calc_theta_1, csp_dtr_sca_piping_dists.at(0));
     ssc_data_t_set_number(data, "csp_dtr_sca_calc_end_gain_1", csp_dtr_sca_calc_end_gain_1);
 
     // csp_dtr_sca_calc_zenith
@@ -361,7 +362,7 @@ void Physical_Trough_Collector_Type_Equations(ssc_data_t data)
 
     // csp_dtr_sca_calc_end_loss
     ssc_data_t_get_number(data, "nSCA", &nSCA);
-    csp_dtr_sca_calc_end_loss_1 = Csp_dtr_sca_calc_end_loss(csp_dtr_sca_ave_focal_len_1, csp_dtr_sca_calc_theta_1, nSCA,
+    csp_dtr_sca_calc_end_loss_1 = Csp_dtr_sca_calc_end_loss(csp_dtr_sca_ave_focal_lens.at(0), csp_dtr_sca_calc_theta_1, nSCA,
         csp_dtr_sca_calc_end_gain_1, csp_dtr_sca_lengths.at(0), csp_dtr_sca_ncol_per_scas.at(1));
     ssc_data_t_set_number(data, "csp_dtr_sca_calc_end_loss_1", csp_dtr_sca_calc_end_loss_1);
 
