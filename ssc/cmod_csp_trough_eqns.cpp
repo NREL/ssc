@@ -324,7 +324,8 @@ void Physical_Trough_Collector_Type_Equations(ssc_data_t data)
         csp_dtr_sca_calc_iam_1;
 
     util::matrix_t<ssc_number_t> IAMs_1,
-        csp_dtr_sca_ave_focal_lens, csp_dtr_sca_piping_dists;
+        csp_dtr_sca_ave_focal_lens, csp_dtr_sca_piping_dists,
+        csp_dtr_sca_tracking_errors, csp_dtr_sca_geometry_effects, csp_dtr_sca_clean_reflectivities, csp_dtr_sca_mirror_dirts, csp_dtr_sca_general_errors;
 
     //// csp_dtr_sca_ap_length
     //ssc_data_t_get_number(data, "csp_dtr_sca_length_1", &csp_dtr_sca_length_1);
@@ -367,13 +368,13 @@ void Physical_Trough_Collector_Type_Equations(ssc_data_t data)
     ssc_data_t_set_number(data, "csp_dtr_sca_calc_end_loss_1", csp_dtr_sca_calc_end_loss_1);
 
     // csp_dtr_sca_calc_sca_eff
-    ssc_data_t_get_number(data, "csp_dtr_sca_tracking_error_1", &csp_dtr_sca_tracking_error_1);
-    ssc_data_t_get_number(data, "csp_dtr_sca_geometry_effects_1", &csp_dtr_sca_geometry_effects_1);
-    ssc_data_t_get_number(data, "csp_dtr_sca_clean_reflectivity_1", &csp_dtr_sca_clean_reflectivity_1);
-    ssc_data_t_get_number(data, "csp_dtr_sca_mirror_dirt_1", &csp_dtr_sca_mirror_dirt_1);
-    ssc_data_t_get_number(data, "csp_dtr_sca_general_error_1", &csp_dtr_sca_general_error_1);
-    csp_dtr_sca_calc_sca_eff_1 = Csp_dtr_sca_calc_sca_eff(csp_dtr_sca_tracking_error_1, csp_dtr_sca_geometry_effects_1,
-        csp_dtr_sca_clean_reflectivity_1, csp_dtr_sca_mirror_dirt_1, csp_dtr_sca_general_error_1);
+    ssc_data_t_get_matrix(vt, "csp_dtr_sca_tracking_errors", csp_dtr_sca_tracking_errors);
+    ssc_data_t_get_matrix(vt, "csp_dtr_sca_geometry_effects", csp_dtr_sca_geometry_effects);
+    ssc_data_t_get_matrix(vt, "csp_dtr_sca_clean_reflectivities", csp_dtr_sca_clean_reflectivities);
+    ssc_data_t_get_matrix(vt, "csp_dtr_sca_mirror_dirts", csp_dtr_sca_mirror_dirts);
+    ssc_data_t_get_matrix(vt, "csp_dtr_sca_general_errors", csp_dtr_sca_general_errors);
+    csp_dtr_sca_calc_sca_eff_1 = Csp_dtr_sca_calc_sca_eff(csp_dtr_sca_tracking_errors.at(0), csp_dtr_sca_geometry_effects.at(0),
+        csp_dtr_sca_clean_reflectivities.at(0), csp_dtr_sca_mirror_dirts.at(0), csp_dtr_sca_general_errors.at(0));
     ssc_data_t_set_number(data, "csp_dtr_sca_calc_sca_eff_1", csp_dtr_sca_calc_sca_eff_1);
 
     // csp_dtr_sca_calc_latitude
