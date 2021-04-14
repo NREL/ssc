@@ -114,7 +114,7 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
         total_tracking_power;
 
     util::matrix_t<ssc_number_t> field_fl_props, trough_loop_control, SCAInfoArray, SCADefocusArray,
-        K_cpnt, D_cpnt, L_cpnt, Type_cpnt;
+        K_cpnt, D_cpnt, L_cpnt, Type_cpnt, csp_dtr_sca_lengths;
 
     // csp_dtr_pwrb_nameplate
     ssc_data_t_get_number(data, "P_ref", &P_ref);
@@ -160,10 +160,12 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     ssc_data_t_get_number(data, "csp_dtr_hce_design_heat_loss_2", &csp_dtr_hce_design_heat_loss_2);
     ssc_data_t_get_number(data, "csp_dtr_hce_design_heat_loss_3", &csp_dtr_hce_design_heat_loss_3);
     ssc_data_t_get_number(data, "csp_dtr_hce_design_heat_loss_4", &csp_dtr_hce_design_heat_loss_4);
-    ssc_data_t_get_number(data, "csp_dtr_sca_length_1", &csp_dtr_sca_length_1);
-    ssc_data_t_get_number(data, "csp_dtr_sca_length_2", &csp_dtr_sca_length_2);
-    ssc_data_t_get_number(data, "csp_dtr_sca_length_3", &csp_dtr_sca_length_3);
-    ssc_data_t_get_number(data, "csp_dtr_sca_length_4", &csp_dtr_sca_length_4);
+
+    ssc_data_t_get_matrix(vt, "csp_dtr_sca_lengths", csp_dtr_sca_lengths);
+    csp_dtr_sca_length_1 = csp_dtr_sca_lengths.at(0);
+    csp_dtr_sca_length_2 = csp_dtr_sca_lengths.at(1);
+    csp_dtr_sca_length_3 = csp_dtr_sca_lengths.at(2);
+    csp_dtr_sca_length_4 = csp_dtr_sca_lengths.at(3);
     cspdtr_loop_hce_heat_loss = Cspdtr_loop_hce_heat_loss(trough_loop_control, I_bn_des,
         csp_dtr_hce_design_heat_loss_1, csp_dtr_hce_design_heat_loss_2,
         csp_dtr_hce_design_heat_loss_3, csp_dtr_hce_design_heat_loss_4,
@@ -360,7 +362,7 @@ void Physical_Trough_Collector_Type_Equations(ssc_data_t data)
     // csp_dtr_sca_calc_end_loss
     ssc_data_t_get_number(data, "nSCA", &nSCA);
     csp_dtr_sca_calc_end_loss_1 = Csp_dtr_sca_calc_end_loss(csp_dtr_sca_ave_focal_len_1, csp_dtr_sca_calc_theta_1, nSCA,
-        csp_dtr_sca_calc_end_gain_1, csp_dtr_sca_lengths.at(0), csp_dtr_sca_ncol_per_sca_1);
+        csp_dtr_sca_calc_end_gain_1, csp_dtr_sca_lengths.at(0), csp_dtr_sca_ncol_per_scas.at(1));
     ssc_data_t_set_number(data, "csp_dtr_sca_calc_end_loss_1", csp_dtr_sca_calc_end_loss_1);
 
     // csp_dtr_sca_calc_sca_eff
