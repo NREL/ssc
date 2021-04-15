@@ -25,12 +25,30 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "csp_solver_core.h"
 
+#include "htf_props.h"
+
 class C_csp_cr_electric_resistance : public C_csp_collector_receiver
 {
+private:
+
+    // Defined in constructor
+    double m_T_htf_cold_des;        //[C]
+    double m_T_htf_hot_des;         //[C]
+    double m_q_dot_heater_des;      //[MWt]
+
+    int m_htf_code;
+    util::matrix_t<double> m_ud_htf_props;
+
+    // ********************************
+
+    HTFProperties mc_pc_htfProps;
+    double m_m_dot_htf_des;         //[kg/s]
+    double m_dP_htf;                //[bar]
 
 public:
 
-    C_csp_cr_electric_resistance();
+    C_csp_cr_electric_resistance(double T_htf_cold_des /*C*/, double T_htf_hot_des /*C*/, double q_dot_heater_des /*MWt*/,
+        int htf_code /*-*/, util::matrix_t<double> ud_htf_props);
 
     ~C_csp_cr_electric_resistance();
 
