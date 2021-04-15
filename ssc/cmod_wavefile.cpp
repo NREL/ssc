@@ -49,11 +49,17 @@ static var_info _cm_wave_file_reader[] = {
 	{ SSC_OUTPUT,        SSC_STRING,      "data_source",             "Data source",                                 "",       "",                      "Weather Reader",      "use_specific_wf_wave=0",                        "",               "" },
 	{ SSC_OUTPUT,        SSC_STRING,      "notes",                   "Notes",                                       "",       "",                      "Weather Reader",      "use_specific_wf_wave=0",                        "",               "" },
 
-																										            
+
+    { SSC_OUTPUT,        SSC_ARRAY,       "year",                    "Year",                             "yr",     "",                      "Weather Reader",      "wave_resource_model_choice=1",                       "",               "" },
+    { SSC_OUTPUT,        SSC_ARRAY,       "month",                   "Month",                            "mn",     "1-12",                  "Weather Reader",      "wave_resource_model_choice=1",                       "",                          "" },
+    { SSC_OUTPUT,        SSC_ARRAY,       "day",                     "Day",                              "dy",     "1-365",                 "Weather Reader",      "wave_resource_model_choice=1",                       "",                          "" },
+    { SSC_OUTPUT,        SSC_ARRAY,       "hour",                    "Hour",                             "hr",     "0-23",                  "Weather Reader",      "wave_resource_model_choice=1",                       "",                          "" },
+    { SSC_OUTPUT,        SSC_ARRAY,       "minute",                  "Minute",                           "min",    "0-59",                  "Weather Reader",      "wave_resource_model_choice=1",                       "",                          "" },
+
 // weather data records																					            
 	{ SSC_OUTPUT,        SSC_MATRIX,      "wave_resource_matrix",              "Frequency distribution of resource",                                  "m/s",   "",                       "Weather Reader",      "?",                        "",                            "" },
     { SSC_OUTPUT,        SSC_ARRAY,       "time_check",                        "Time check",                                                          "",      "",                       "Weather Reader",      "?",                        "",                            "" },
-    { SSC_OUTPUT,        SSC_ARRAY,       "month",                        "Month",                                                          "",      "",                       "Weather Reader",      "?",                        "",                            "" },
+   // { SSC_OUTPUT,        SSC_ARRAY,       "month",                        "Month",                                                          "",      "",                       "Weather Reader",      "?",                        "",                            "" },
 
     { SSC_OUTPUT,        SSC_ARRAY,       "wave_significant_height",           "Wave height time series data",                                        "m",     "",                       "Weather Reader",      "?",                        "",                            "" },
     { SSC_OUTPUT,        SSC_ARRAY,       "number_records",                "Number of records in wave time series",                                        "",     "",                       "Weather Reader",      "?",                        "",                            "" },
@@ -394,15 +400,40 @@ public:
         if (as_integer("wave_resource_model_choice") == 1)
         {
             size_t numberRecords = 0;
-            
+            size_t year_index = 0, month_index = 0, day_index = 0, hour_index = 0, minute_index = 0, period_index = 0, height_index = 0;
+            getline(ifs, buf); //Skip past column labels for record counting
             while (getline(ifs, buf))
                 numberRecords++;
             assign("number_records", (int)numberRecords);
             // rewind the file and reposition right after the header information
             ifs.clear();
             ifs.seekg(0);
-            for (size_t i = 0; i < 2; i++)
+            for (size_t i = 0; i < 3; i++)
                 getline(ifs, buf);
+            if (ifs.eof())
+            {
+                throw exec_error("wave_file_reader", "Could not read column names");
+            }
+
+            auto cols = split(buf);
+            int num_cols = (int)cols.size();
+            for (int i = 0; i < num_cols; i++)
+            {
+                const std::string name = trimboth(cols[i]);
+                if (name.length() > 0)
+                {
+                    std::string lowname = util::lower_case(name);
+
+                    if (lowname == "yr" || lowname == "year") year_index = i;
+                    else if (lowname == "mo" || lowname == "month") month_index = i;
+                    else if (lowname == "day") day_index = i;
+                    else if (lowname == "hour" || lowname == "hr") hour_index = i;
+                    else if (lowname == "min" || lowname == "minute") minute_index = i;
+                    else if (lowname == "wave height" || lowname == "wave heights" || lowname == "heights" || lowname == "height" || lowname == "hs") height_index = i;
+                    else if (lowname == "wave period" || lowname == "wave periods" || lowname == "period" || lowname == "periods" || lowname == "tp") period_index = i;
+                    
+                }
+            }
             ssc_number_t hour0, hour1, hourdiff;
             ssc_number_t ts_significant_wave_height;
             ssc_number_t ts_energy_period;
@@ -410,7 +441,11 @@ public:
             size_t nrows = 21;
             size_t sig_wave_height_index = 0;
             size_t energy_period_index = 0;
-            ssc_number_t* mat = allocate("wave_resource_matrix", 21, 22);
+            ssc_number_t* p_year = allocate("year", numberRecords);
+            ssc_number_t* p_day = allocate("day", numberRecords);
+            ssc_number_t* p_hour = allocate("hour", numberRecords);
+            ssc_number_t* p_minute = allocate("minute", numberRecords);
+            ssc_number_t* mat = allocate("wave_resource_matrix", nrows, ncols);
             //size_t numberRecords = wave_dp->nrecords();
             ssc_number_t* month = allocate("month", numberRecords);
             ssc_number_t* timecheck = allocate("time_check", numberRecords);
@@ -424,23 +459,27 @@ public:
                 
                 if (r == 0) {
                     //value_0 = split(buf);
-                    hour0 = (ssc_number_t)std::stod(values[3]);
+                    hour0 = (ssc_number_t)std::stod(values[hour_index]);
                 }
                 if (r == 1) {
                     //value_1 = split(buf);
-                    hour1 = (ssc_number_t)std::stod(values[3]);
+                    hour1 = (ssc_number_t)std::stod(values[hour_index]);
                     hourdiff = hour1 - hour0;
                 }
-                month[r] = (ssc_number_t)std::stod(values[1]);
-                timecheck[r] = (ssc_number_t)std::stod(values[3]);
+                month[r] = (ssc_number_t)std::stod(values[month_index]);
+                timecheck[r] = (ssc_number_t)std::stod(values[hour_index]);
                 if (r > 0) {
                     if (timecheck[r] - timecheck[r - 1] != hourdiff && timecheck[r] != 0) {
                         //throw exec_error("wave_file_reader", "Time steps are nonuniform");
                         timecheck[r] = 999;
                     }
                 }
-                wave_heights[r] = (ssc_number_t)std::stod(values[6]);
-                wave_periods[r] = (ssc_number_t)std::stod(values[5]);
+                p_year[r] = (ssc_number_t)std::stod(values[year_index]);
+                p_hour[r] = (ssc_number_t)std::stod(values[hour_index]);
+                p_day[r] = (ssc_number_t)std::stod(values[day_index]);
+                p_minute[r] = (ssc_number_t)std::stod(values[minute_index]);
+                wave_heights[r] = (ssc_number_t)std::stod(values[height_index]);
+                wave_periods[r] = (ssc_number_t)std::stod(values[period_index]);
 
                 //Make JPD from time series data
 
