@@ -370,14 +370,15 @@ void Physical_Trough_Collector_Type_Equations(ssc_data_t data)
     ssc_data_t_set_matrix(data, "csp_dtr_sca_calc_end_losses", csp_dtr_sca_calc_end_losses);
 
     // csp_dtr_sca_calc_sca_eff
+    util::matrix_t<ssc_number_t> csp_dtr_sca_calc_sca_effs;
     ssc_data_t_get_matrix(vt, "csp_dtr_sca_tracking_errors", csp_dtr_sca_tracking_errors);
     ssc_data_t_get_matrix(vt, "csp_dtr_sca_geometry_effects", csp_dtr_sca_geometry_effects);
     ssc_data_t_get_matrix(vt, "csp_dtr_sca_clean_reflectivities", csp_dtr_sca_clean_reflectivities);
     ssc_data_t_get_matrix(vt, "csp_dtr_sca_mirror_dirts", csp_dtr_sca_mirror_dirts);
     ssc_data_t_get_matrix(vt, "csp_dtr_sca_general_errors", csp_dtr_sca_general_errors);
-    csp_dtr_sca_calc_sca_eff_1 = Csp_dtr_sca_calc_sca_eff(csp_dtr_sca_tracking_errors.at(0), csp_dtr_sca_geometry_effects.at(0),
-        csp_dtr_sca_clean_reflectivities.at(0), csp_dtr_sca_mirror_dirts.at(0), csp_dtr_sca_general_errors.at(0));
-    ssc_data_t_set_number(data, "csp_dtr_sca_calc_sca_eff_1", csp_dtr_sca_calc_sca_eff_1);
+    csp_dtr_sca_calc_sca_effs = Csp_dtr_sca_calc_sca_effs(csp_dtr_sca_tracking_errors, csp_dtr_sca_geometry_effects,
+        csp_dtr_sca_clean_reflectivities, csp_dtr_sca_mirror_dirts, csp_dtr_sca_general_errors);
+    ssc_data_t_set_matrix(data, "csp_dtr_sca_calc_sca_effs", csp_dtr_sca_calc_sca_effs);
 
     // csp_dtr_sca_calc_latitude
     csp_dtr_sca_calc_latitude = Csp_dtr_sca_calc_latitude(lat);

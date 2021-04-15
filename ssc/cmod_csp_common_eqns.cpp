@@ -964,10 +964,22 @@ util::matrix_t<ssc_number_t> Csp_dtr_sca_calc_end_losses(const util::matrix_t<ss
     return result;
 }
 
-double Csp_dtr_sca_calc_sca_eff(double csp_dtr_sca_tracking_error, double csp_dtr_sca_geometry_effects,
-    double csp_dtr_sca_clean_reflectivity, double csp_dtr_sca_mirror_dirt, double csp_dtr_sca_general_error) {
-    return  csp_dtr_sca_tracking_error * csp_dtr_sca_geometry_effects *
-        csp_dtr_sca_clean_reflectivity * csp_dtr_sca_mirror_dirt * csp_dtr_sca_general_error;
+//double Csp_dtr_sca_calc_sca_eff(double csp_dtr_sca_tracking_error, double csp_dtr_sca_geometry_effects,
+//    double csp_dtr_sca_clean_reflectivity, double csp_dtr_sca_mirror_dirt, double csp_dtr_sca_general_error) {
+//    return  csp_dtr_sca_tracking_error * csp_dtr_sca_geometry_effects *
+//        csp_dtr_sca_clean_reflectivity * csp_dtr_sca_mirror_dirt * csp_dtr_sca_general_error;
+//}
+
+util::matrix_t<ssc_number_t> Csp_dtr_sca_calc_sca_effs(const util::matrix_t<ssc_number_t>& csp_dtr_sca_tracking_errors, const util::matrix_t<ssc_number_t>& csp_dtr_sca_geometry_effects,
+    const util::matrix_t<ssc_number_t>& csp_dtr_sca_clean_reflectivities, const util::matrix_t<ssc_number_t>& csp_dtr_sca_mirror_dirts, const util::matrix_t<ssc_number_t>& csp_dtr_sca_general_errors) {
+    int n = csp_dtr_sca_tracking_errors.ncells();
+
+    util::matrix_t<ssc_number_t> result(n);
+    for (int i = 0; i < n; i++) {
+        result.at(i) =  csp_dtr_sca_tracking_errors.at(i) * csp_dtr_sca_geometry_effects.at(i) *
+            csp_dtr_sca_clean_reflectivities.at(i) * csp_dtr_sca_mirror_dirts.at(i) * csp_dtr_sca_general_errors.at(i);
+    }
+    return result;
 }
 
 double Csp_dtr_sca_calc_latitude(double lat) {
