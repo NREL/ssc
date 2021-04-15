@@ -216,8 +216,11 @@ util::matrix_t<ssc_number_t> Csp_dtr_sca_calc_end_gains(const util::matrix_t<ssc
 
 double Csp_dtr_sca_calc_costh(double csp_dtr_sca_calc_zenith, double tilt, double azimuth);
 
-double Csp_dtr_sca_calc_end_loss(double csp_dtr_sca_ave_focal_len, double csp_dtr_sca_calc_theta, double nSCA, double csp_dtr_sca_calc_end_gain,
-    double csp_dtr_sca_length, double csp_dtr_sca_ncol_per_sca);
+//double Csp_dtr_sca_calc_end_loss(double csp_dtr_sca_ave_focal_len, double csp_dtr_sca_calc_theta, double nSCA, double csp_dtr_sca_calc_end_gain,
+//    double csp_dtr_sca_length, double csp_dtr_sca_ncol_per_sca);
+
+util::matrix_t<ssc_number_t> Csp_dtr_sca_calc_end_losses(const util::matrix_t<ssc_number_t>& csp_dtr_sca_ave_focal_lens, double csp_dtr_sca_calc_theta, double nSCA,
+    const util::matrix_t<ssc_number_t>& csp_dtr_sca_calc_end_gains, const util::matrix_t<ssc_number_t>& csp_dtr_sca_lengths, const util::matrix_t<ssc_number_t>& csp_dtr_sca_ncol_per_scas);
 
 double Csp_dtr_sca_calc_sca_eff(double csp_dtr_sca_tracking_error, double csp_dtr_sca_geometry_effects,
     double csp_dtr_sca_clean_reflectivity, double csp_dtr_sca_mirror_dirt, double csp_dtr_sca_general_error);

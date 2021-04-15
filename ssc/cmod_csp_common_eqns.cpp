@@ -944,11 +944,24 @@ double Csp_dtr_sca_calc_costh(double csp_dtr_sca_calc_zenith, double tilt, doubl
     );
 }
 
-double Csp_dtr_sca_calc_end_loss(double csp_dtr_sca_ave_focal_len, double csp_dtr_sca_calc_theta, double nSCA, double csp_dtr_sca_calc_end_gain,
-    double csp_dtr_sca_length, double csp_dtr_sca_ncol_per_sca) {
-    return  1 - (csp_dtr_sca_ave_focal_len * tan(csp_dtr_sca_calc_theta)
-        - (nSCA - 1) / nSCA * csp_dtr_sca_calc_end_gain)
-        / (csp_dtr_sca_length * csp_dtr_sca_ncol_per_sca);
+//double Csp_dtr_sca_calc_end_loss(double csp_dtr_sca_ave_focal_len, double csp_dtr_sca_calc_theta, double nSCA, double csp_dtr_sca_calc_end_gain,
+//    double csp_dtr_sca_length, double csp_dtr_sca_ncol_per_sca) {
+//    return  1 - (csp_dtr_sca_ave_focal_len * tan(csp_dtr_sca_calc_theta)
+//        - (nSCA - 1) / nSCA * csp_dtr_sca_calc_end_gain)
+//        / (csp_dtr_sca_length * csp_dtr_sca_ncol_per_sca);
+//}
+
+util::matrix_t<ssc_number_t> Csp_dtr_sca_calc_end_losses(const util::matrix_t<ssc_number_t>& csp_dtr_sca_ave_focal_lens, double csp_dtr_sca_calc_theta, double nSCA,
+    const util::matrix_t<ssc_number_t>& csp_dtr_sca_calc_end_gains, const util::matrix_t<ssc_number_t>& csp_dtr_sca_lengths, const util::matrix_t<ssc_number_t>& csp_dtr_sca_ncol_per_scas) {
+    int n = csp_dtr_sca_ave_focal_lens.ncells();
+
+    util::matrix_t<ssc_number_t> result(n);
+    for (int i = 0; i < n; i++) {
+        result.at(i) =  1 - (csp_dtr_sca_ave_focal_lens.at(i) * tan(csp_dtr_sca_calc_theta)
+            - (nSCA - 1) / nSCA * csp_dtr_sca_calc_end_gains.at(i))
+            / (csp_dtr_sca_lengths.at(i) * csp_dtr_sca_ncol_per_scas.at(i));
+    }
+    return result;
 }
 
 double Csp_dtr_sca_calc_sca_eff(double csp_dtr_sca_tracking_error, double csp_dtr_sca_geometry_effects,
