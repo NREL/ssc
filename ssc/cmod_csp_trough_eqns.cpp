@@ -314,13 +314,13 @@ void Physical_Trough_Collector_Type_Equations(ssc_data_t data)
 
     // Outputs
     double csp_dtr_sca_ap_length_1,
-        csp_dtr_sca_calc_theta_1,
+        csp_dtr_sca_calc_theta,             // singular
         csp_dtr_sca_calc_end_gain_1,
-        csp_dtr_sca_calc_zenith_1,
-        csp_dtr_sca_calc_costh_1,
+        csp_dtr_sca_calc_zenith,            // singular
+        csp_dtr_sca_calc_costh,             // singular
         csp_dtr_sca_calc_end_loss_1,
         csp_dtr_sca_calc_sca_eff_1,
-        csp_dtr_sca_calc_latitude_1,
+        csp_dtr_sca_calc_latitude,          // singular
         csp_dtr_sca_calc_iam_1;
 
     util::matrix_t<ssc_number_t> IAMs_1,
@@ -342,28 +342,28 @@ void Physical_Trough_Collector_Type_Equations(ssc_data_t data)
 
     // csp_dtr_sca_calc_zenith
     ssc_data_t_get_number(data, "lat", &lat);
-    csp_dtr_sca_calc_zenith_1 = Csp_dtr_sca_calc_zenith(lat);
-    ssc_data_t_set_number(data, "csp_dtr_sca_calc_zenith_1", csp_dtr_sca_calc_zenith_1);
+    csp_dtr_sca_calc_zenith = Csp_dtr_sca_calc_zenith(lat);
+    ssc_data_t_set_number(data, "csp_dtr_sca_calc_zenith", csp_dtr_sca_calc_zenith);
 
     // csp_dtr_sca_calc_costh
     ssc_data_t_get_number(data, "tilt", &tilt);
     ssc_data_t_get_number(data, "azimuth", &azimuth);
-    csp_dtr_sca_calc_costh_1 = Csp_dtr_sca_calc_costh(csp_dtr_sca_calc_zenith_1, tilt, azimuth);
-    ssc_data_t_set_number(data, "csp_dtr_sca_calc_costh_1", csp_dtr_sca_calc_costh_1);
+    csp_dtr_sca_calc_costh = Csp_dtr_sca_calc_costh(csp_dtr_sca_calc_zenith, tilt, azimuth);
+    ssc_data_t_set_number(data, "csp_dtr_sca_calc_costh", csp_dtr_sca_calc_costh);
 
     // csp_dtr_sca_calc_theta
-    csp_dtr_sca_calc_theta_1 = Csp_dtr_sca_calc_theta(csp_dtr_sca_calc_costh_1);
-    ssc_data_t_set_number(data, "csp_dtr_sca_calc_theta_1", csp_dtr_sca_calc_theta_1);
+    csp_dtr_sca_calc_theta = Csp_dtr_sca_calc_theta(csp_dtr_sca_calc_costh);
+    ssc_data_t_set_number(data, "csp_dtr_sca_calc_theta", csp_dtr_sca_calc_theta);
 
     // csp_dtr_sca_calc_end_gain
     ssc_data_t_get_matrix(vt, "csp_dtr_sca_ave_focal_lens", csp_dtr_sca_ave_focal_lens);
     ssc_data_t_get_matrix(vt, "csp_dtr_sca_piping_dists", csp_dtr_sca_piping_dists);
-    csp_dtr_sca_calc_end_gain_1 = Csp_dtr_sca_calc_end_gain(csp_dtr_sca_ave_focal_lens.at(0), csp_dtr_sca_calc_theta_1, csp_dtr_sca_piping_dists.at(0));
+    csp_dtr_sca_calc_end_gain_1 = Csp_dtr_sca_calc_end_gain(csp_dtr_sca_ave_focal_lens.at(0), csp_dtr_sca_calc_theta, csp_dtr_sca_piping_dists.at(0));
     ssc_data_t_set_number(data, "csp_dtr_sca_calc_end_gain_1", csp_dtr_sca_calc_end_gain_1);
 
     // csp_dtr_sca_calc_end_loss
     ssc_data_t_get_number(data, "nSCA", &nSCA);
-    csp_dtr_sca_calc_end_loss_1 = Csp_dtr_sca_calc_end_loss(csp_dtr_sca_ave_focal_lens.at(0), csp_dtr_sca_calc_theta_1, nSCA,
+    csp_dtr_sca_calc_end_loss_1 = Csp_dtr_sca_calc_end_loss(csp_dtr_sca_ave_focal_lens.at(0), csp_dtr_sca_calc_theta, nSCA,
         csp_dtr_sca_calc_end_gain_1, csp_dtr_sca_lengths.at(0), csp_dtr_sca_ncol_per_scas.at(1));
     ssc_data_t_set_number(data, "csp_dtr_sca_calc_end_loss_1", csp_dtr_sca_calc_end_loss_1);
 
@@ -378,11 +378,11 @@ void Physical_Trough_Collector_Type_Equations(ssc_data_t data)
     ssc_data_t_set_number(data, "csp_dtr_sca_calc_sca_eff_1", csp_dtr_sca_calc_sca_eff_1);
 
     // csp_dtr_sca_calc_latitude
-    csp_dtr_sca_calc_latitude_1 = Csp_dtr_sca_calc_latitude(lat);
-    ssc_data_t_set_number(data, "csp_dtr_sca_calc_latitude_1", csp_dtr_sca_calc_latitude_1);
+    csp_dtr_sca_calc_latitude = Csp_dtr_sca_calc_latitude(lat);
+    ssc_data_t_set_number(data, "csp_dtr_sca_calc_latitude", csp_dtr_sca_calc_latitude);
 
     // csp_dtr_sca_calc_iam
     ssc_data_t_get_matrix(vt, "IAMs_1", IAMs_1);
-    csp_dtr_sca_calc_iam_1 = Csp_dtr_sca_calc_iam(IAMs_1, csp_dtr_sca_calc_theta_1, csp_dtr_sca_calc_costh_1);
+    csp_dtr_sca_calc_iam_1 = Csp_dtr_sca_calc_iam(IAMs_1, csp_dtr_sca_calc_theta, csp_dtr_sca_calc_costh);
     ssc_data_t_set_number(data, "csp_dtr_sca_calc_iam_1", csp_dtr_sca_calc_iam_1);
 }
