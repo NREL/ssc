@@ -232,7 +232,9 @@ double Csp_dtr_sca_calc_latitude(double lat);
 
 double Csp_dtr_sca_calc_zenith(double lat);
 
-double Csp_dtr_sca_calc_iam(const util::matrix_t<ssc_number_t>& IAMs, double csp_dtr_sca_calc_theta, double csp_dtr_sca_calc_costh);
+//double Csp_dtr_sca_calc_iam(const util::matrix_t<ssc_number_t>& IAMs, double csp_dtr_sca_calc_theta, double csp_dtr_sca_calc_costh);
+
+util::matrix_t<ssc_number_t> Csp_dtr_sca_calc_iams(const util::matrix_t<ssc_number_t>& IAMs, double csp_dtr_sca_calc_theta, double csp_dtr_sca_calc_costh);
 
 double Csp_dtr_sca_calc_theta(double csp_dtr_sca_calc_costh);
 

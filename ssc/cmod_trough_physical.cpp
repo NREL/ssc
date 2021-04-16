@@ -325,7 +325,7 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_INPUT,        SSC_ARRAY,       "csp_dtr_sca_mirror_dirts",            "csp_dtr_sca_mirror_dirts",                                               "-",            "",               "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "csp_dtr_sca_general_errors",          "csp_dtr_sca_general_errors",                                             "-",            "",               "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "lat",                                 "lat",                                                                    "-",            "",               "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_ARRAY,       "IAMs_1",                              "IAMs_1",                                                                 "-",            "",               "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_MATRIX,      "IAMs",                                "IAMs",                                                                   "-",            "",               "controller",     "*",                       "",                      "" },
 
     // *************************************************************************************************
     //    OUTPUTS

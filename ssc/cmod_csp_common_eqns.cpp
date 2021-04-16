@@ -990,18 +990,36 @@ double Csp_dtr_sca_calc_zenith(double lat) {
     return M_PI / 180. * (90. - (90. - (lat - 23.5)));
 }
 
-double Csp_dtr_sca_calc_iam(const util::matrix_t<ssc_number_t>& IAMs, double csp_dtr_sca_calc_theta, double csp_dtr_sca_calc_costh) {
-    double IAM = IAMs.at(0);
-    int l_IAM = IAMs.ncells();
-    if (l_IAM < 2) {
-        return IAM;
-    }
-    else {
-        for (int i = 1; i < l_IAM; i++) {
-            IAM = IAM + IAMs.at(i) * pow(csp_dtr_sca_calc_theta, i) / csp_dtr_sca_calc_costh;
+//double Csp_dtr_sca_calc_iam(const util::matrix_t<ssc_number_t>& IAMs, double csp_dtr_sca_calc_theta, double csp_dtr_sca_calc_costh) {
+//    double IAM = IAMs.at(0);
+//    int l_IAM = IAMs.ncells();
+//    if (l_IAM < 2) {
+//        return IAM;
+//    }
+//    else {
+//        for (int i = 1; i < l_IAM; i++) {
+//            IAM = IAM + IAMs.at(i) * pow(csp_dtr_sca_calc_theta, i) / csp_dtr_sca_calc_costh;
+//        }
+//        return IAM;
+//    }
+//}
+
+util::matrix_t<ssc_number_t> Csp_dtr_sca_calc_iams(const util::matrix_t<ssc_number_t>& IAMs, double csp_dtr_sca_calc_theta, double csp_dtr_sca_calc_costh) {
+
+    util::matrix_t<ssc_number_t> result(IAMs.nrows());
+    for (int i = 0; i < IAMs.nrows(); i++) {
+        if (IAMs.ncols() < 2) {                            // not sure this actually captures varying lengths of the different 1-D arrays in this matrix
+            result.at(i) = IAMs.at(i, 0);
         }
-        return IAM;
+        else {
+            double IAM = IAMs.at(i, 0);
+            for (int j = 1; j < IAMs.ncols(); j++) {
+                IAM = IAM + IAMs.at(i, j) * pow(csp_dtr_sca_calc_theta, j) / csp_dtr_sca_calc_costh;
+            }
+            result.at(i) = IAM;
+        }
     }
+    return result;
 }
 
 double Csp_dtr_sca_calc_theta(double csp_dtr_sca_calc_costh) {
