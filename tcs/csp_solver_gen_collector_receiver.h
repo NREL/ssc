@@ -117,7 +117,7 @@ public:
 	// Done
 	void init_sf();
 
-	virtual int get_operating_state();
+	virtual C_csp_collector_receiver::E_csp_cr_modes get_operating_state();
 
 	virtual double get_startup_time();
 	virtual double get_startup_energy(); //MWh

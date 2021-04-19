@@ -40,10 +40,18 @@ private:
     util::matrix_t<double> m_ud_htf_props;
 
     // ********************************
+    // ********************************
 
     HTFProperties mc_pc_htfProps;
     double m_m_dot_htf_des;         //[kg/s]
     double m_dP_htf;                //[bar]
+
+    // ********************************
+    // ********************************
+
+    // State variables
+    C_csp_collector_receiver::E_csp_cr_modes m_operating_mode_converged;
+    C_csp_collector_receiver::E_csp_cr_modes m_operating_mode;
 
 public:
 
@@ -56,7 +64,7 @@ public:
     virtual void init(const C_csp_collector_receiver::S_csp_cr_init_inputs init_inputs,
         C_csp_collector_receiver::S_csp_cr_solved_params& solved_params);
 
-    virtual int get_operating_state();
+    virtual C_csp_collector_receiver::E_csp_cr_modes get_operating_state();
 
     virtual double get_startup_time();
     virtual double get_startup_energy(); //MWh

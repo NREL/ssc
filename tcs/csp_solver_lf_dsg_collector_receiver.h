@@ -129,8 +129,8 @@ private:
 	// *******************************************
 	// Timestep Calculations
 		// Control & operation
-	int m_operating_mode_converged;
-	int m_operating_mode;
+    C_csp_collector_receiver::E_csp_cr_modes m_operating_mode_converged;
+    C_csp_collector_receiver::E_csp_cr_modes m_operating_mode;
 	int m_ncall;
 		// *********************************************
 		// CSP Solver Temperature Tracking
@@ -381,7 +381,7 @@ public:
 	virtual void init(const C_csp_collector_receiver::S_csp_cr_init_inputs init_inputs,
 		C_csp_collector_receiver::S_csp_cr_solved_params & solved_params);
 
-	virtual int get_operating_state();
+	virtual C_csp_collector_receiver::E_csp_cr_modes get_operating_state();
 
 	virtual double get_startup_time();
 	virtual double get_startup_energy(); //MWh

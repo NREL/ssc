@@ -97,12 +97,14 @@ void C_csp_cr_electric_resistance::init(const C_csp_collector_receiver::S_csp_cr
     solved_params.m_A_aper_total = 0.0;                         //[m2]
     solved_params.m_dP_sf = m_dP_htf;                           //[bar]
 
+    // State variables
+    m_operating_mode_converged = C_csp_collector_receiver::OFF;					//
+
 }
 
-int C_csp_cr_electric_resistance::get_operating_state()
+C_csp_collector_receiver::E_csp_cr_modes C_csp_cr_electric_resistance::get_operating_state()
 {
-    throw(C_csp_exception("C_csp_cr_electric_resistance::get_operating_state(...) is not complete"));
-    return -1;
+    return m_operating_mode_converged;	//[-]
 }
 
 double C_csp_cr_electric_resistance::get_startup_time()

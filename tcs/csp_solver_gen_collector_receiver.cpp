@@ -323,11 +323,11 @@ void C_csp_gen_collector_receiver::init_sf()
 	return;
 }
 
-int C_csp_gen_collector_receiver::get_operating_state()
+C_csp_collector_receiver::E_csp_cr_modes C_csp_gen_collector_receiver::get_operating_state()
 {
 	throw(C_csp_exception("C_csp_gen_collector_receiver::get_operating_state() is not complete"));
 
-	return -1;
+	return C_csp_collector_receiver::E_csp_cr_modes::STEADY_STATE;
 }
 
 double C_csp_gen_collector_receiver::get_startup_time()

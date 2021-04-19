@@ -813,7 +813,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 }
 
 
-int C_csp_trough_collector_receiver::get_operating_state()
+C_csp_collector_receiver::E_csp_cr_modes C_csp_trough_collector_receiver::get_operating_state()
 {
 	return m_operating_mode_converged;	//[-]
 }

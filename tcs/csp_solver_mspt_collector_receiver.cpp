@@ -79,7 +79,7 @@ void C_csp_mspt_collector_receiver::init(const C_csp_collector_receiver::S_csp_c
 	return;
 }
 
-int C_csp_mspt_collector_receiver::get_operating_state()
+C_csp_collector_receiver::E_csp_cr_modes C_csp_mspt_collector_receiver::get_operating_state()
 {
 	return mc_pt_receiver.get_operating_state();
 }

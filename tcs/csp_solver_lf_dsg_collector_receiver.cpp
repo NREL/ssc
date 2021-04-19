@@ -114,8 +114,8 @@ C_csp_lf_dsg_collector_receiver::C_csp_lf_dsg_collector_receiver()
 	// ***********************************************************
 	// Timestep Calculations
 		// Control & operation
-	m_operating_mode_converged = -1;	//[-]
-	m_operating_mode = -1;				//[-]
+	m_operating_mode_converged = C_csp_collector_receiver::E_csp_cr_modes::OFF;	//[-]
+	m_operating_mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;			//[-]
 	m_ncall = -1;						//[-]
 		// CSP Solver Temperature Tracking
 			// SUB TIMESTEP outputs
@@ -1005,7 +1005,7 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 
 } // init
 
-int C_csp_lf_dsg_collector_receiver::get_operating_state()
+C_csp_collector_receiver::E_csp_cr_modes C_csp_lf_dsg_collector_receiver::get_operating_state()
 {
 	return m_operating_mode_converged;
 }

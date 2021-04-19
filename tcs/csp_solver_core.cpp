@@ -534,7 +534,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
     //-------------------------------
 
         
-	int cr_operating_state = C_csp_collector_receiver::OFF;
+    C_csp_collector_receiver::E_csp_cr_modes cr_operating_state = C_csp_collector_receiver::OFF;
 	int pc_operating_state = C_csp_power_cycle::OFF;
 
 	
@@ -617,11 +617,17 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		
 		// Get tou for timestep
 		mc_tou.call(mc_kernel.mc_sim_info.ms_ts.m_time, mc_tou_outputs);
-		size_t tou_period = mc_tou_outputs.m_csp_op_tou;	//[-]
+		size_t f_turb_tou_period = mc_tou_outputs.m_csp_op_tou;	//[-]
+        size_t pricing_tou_period = mc_tou_outputs.m_pricing_tou;   //[-]
 		double f_turbine_tou = mc_tou_outputs.m_f_turbine;	//[-]
 		double pricing_mult = mc_tou_outputs.m_price_mult;	//[-]
+        double purchase_mult = pricing_mult;
+        if (!mc_tou.mc_dispatch_params.m_is_purchase_mult_same_as_price) {
+            throw(C_csp_exception("CSP Solver not yet setup to handle purchase schedule separate from price schedule"));
+        }
 
-		// Get collector/receiver & power cycle operating states at start of time step (last time step)
+		// Get collector/receiver & power cycle operating states at start of time step (end of last time step)
+            // collector/receiver
 		cr_operating_state = mc_collector_receiver.get_operating_state();
 		if( cr_operating_state < C_csp_collector_receiver::OFF ||
 			cr_operating_state > C_csp_collector_receiver::ON )
@@ -630,6 +636,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				" values are from %d to %d\n", mc_kernel.mc_sim_info.ms_ts.m_step/ 3600.0, cr_operating_state, C_csp_collector_receiver::OFF, C_csp_collector_receiver::ON);
 			throw(C_csp_exception(msg,"CSP Solver Core"));
 		}
+            // power cycle
 		pc_operating_state = mc_power_cycle.get_operating_state();
         if (m_is_first_timestep && f_turbine_tou <= 0.) pc_operating_state = C_csp_power_cycle::OFF;
 
@@ -1892,7 +1899,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		}
 		
 
-		mc_reported_outputs.value(C_solver_outputs::TOU_PERIOD, (double)tou_period);        //[-]       
+		mc_reported_outputs.value(C_solver_outputs::TOU_PERIOD, (double)f_turb_tou_period);        //[-]       
 		mc_reported_outputs.value(C_solver_outputs::PRICING_MULT, pricing_mult);	//[-] 
 		mc_reported_outputs.value(C_solver_outputs::PC_Q_DOT_SB, q_pc_sb);          //[MW]     
 		mc_reported_outputs.value(C_solver_outputs::PC_Q_DOT_MIN, q_pc_min);        //[MW]    

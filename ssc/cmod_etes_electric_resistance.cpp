@@ -455,27 +455,27 @@ public:
         // Run timeseries simulation
         update("Begin timeseries simulation...", 0.0);
 
-        //try
-        //{
-        //    // Simulate !
-        //    csp_solver.Ssimulate(sim_setup);
-        //}
-        //catch (C_csp_exception& csp_exception)
-        //{
-        //    // Report warning before exiting with error
-        //    while (csp_solver.mc_csp_messages.get_message(&out_type, &out_msg))
-        //    {
-        //        log(out_msg);
-        //    }
+        try
+        {
+            // Simulate !
+            csp_solver.Ssimulate(sim_setup);
+        }
+        catch (C_csp_exception& csp_exception)
+        {
+            // Report warning before exiting with error
+            while (csp_solver.mc_csp_messages.get_message(&out_type, &out_msg))
+            {
+                log(out_msg);
+            }
 
-        //    throw exec_error("etes_electric_resistance", csp_exception.m_error_message);
-        //}
+            throw exec_error("etes_electric_resistance", csp_exception.m_error_message);
+        }
 
-        //// If no exception, then report messages
-        //while (csp_solver.mc_csp_messages.get_message(&out_type, &out_msg))
-        //{
-        //    log(out_msg, out_type);
-        //}
+        // If no exception, then report messages
+        while (csp_solver.mc_csp_messages.get_message(&out_type, &out_msg))
+        {
+            log(out_msg, out_type);
+        }
 
     }
 };

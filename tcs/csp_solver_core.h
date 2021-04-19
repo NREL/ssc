@@ -249,6 +249,7 @@ public:
         bool m_is_tod_pc_target_also_pc_max;
 
 		bool m_is_block_dispatch;
+        bool m_is_purchase_mult_same_as_price;
 
 		bool m_use_rule_1;
 		double m_standby_off_buffer;
@@ -291,7 +292,8 @@ public:
             m_is_tod_pc_target_also_pc_max = false;
 
 			m_is_block_dispatch = true;			// Either this or m_dispatch_optimize must be true
-			
+            m_is_purchase_mult_same_as_price = true;
+
 			// Rule 1: if the sun sets (or does not rise) in m_standby_off_buffer [hours], then do not allow power cycle standby
 			m_use_rule_1 = false;				
 			m_standby_off_buffer = -1.23;		//[hr]
@@ -457,7 +459,7 @@ public:
 	virtual void init( const C_csp_collector_receiver::S_csp_cr_init_inputs init_inputs,
 		C_csp_collector_receiver::S_csp_cr_solved_params & solved_params) = 0;
 
-	virtual int get_operating_state() = 0;
+	virtual E_csp_cr_modes get_operating_state() = 0;
 
     virtual double get_startup_time() = 0;
     virtual double get_startup_energy() = 0; //MWh
