@@ -44,6 +44,8 @@ extern var_info vtab_payment_incentives[];
 extern var_info vtab_debt[];
 extern var_info vtab_ppa_inout[];
 extern var_info vtab_financial_metrics[];
+extern var_info vtab_lcos_inputs[];
+extern var_info vtab_lcos_outputs[];
 
 extern var_info vtab_adjustment_factors[];
 extern var_info vtab_dc_adjustment_factors[];
