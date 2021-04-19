@@ -40,7 +40,7 @@ C_pc_heat_sink::C_pc_heat_sink()
 {
 	mc_reported_outputs.construct(S_output_info);
 
-	m_max_frac = 100.0;
+    m_max_frac = std::numeric_limits<double>::quiet_NaN();
 
 	m_m_dot_htf_des = std::numeric_limits<double>::quiet_NaN();
 }
@@ -112,7 +112,7 @@ void C_pc_heat_sink::init(C_csp_power_cycle::S_solved_params &solved_params)
 	solved_params.m_q_dot_des = ms_params.m_q_dot_des;	//[MWt]
 	solved_params.m_q_startup = 0.0;		//[MWt-hr] Assuming heat sink does not require any startup energy
 	
-	
+    m_max_frac = ms_params.m_max_frac;      //[-]
 	solved_params.m_max_frac = m_max_frac;	//[-] For now (set in constructor), make this really large so heat sink can handle any collector-receiver output
 	solved_params.m_max_frac = 1.0;			//[-]
 
