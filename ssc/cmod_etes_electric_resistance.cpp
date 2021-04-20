@@ -356,7 +356,8 @@ public:
         tou.mc_dispatch_params.m_dispatch_optimize = as_boolean("is_dispatch");
 
         tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max = true;
-        tou.mc_dispatch_params.m_is_block_dispatch = !tou.mc_dispatch_params.m_dispatch_optimize;
+        tou.mc_dispatch_params.m_is_block_dispatch = false;
+        tou.mc_dispatch_params.m_is_arbitrage_policy = !tou.mc_dispatch_params.m_dispatch_optimize;
         tou.mc_dispatch_params.m_use_rule_1 = false;
         tou.mc_dispatch_params.m_standby_off_buffer = 2.0;          //[hr] Applies if m_use_rule_1 is true
         tou.mc_dispatch_params.m_use_rule_2 = false;

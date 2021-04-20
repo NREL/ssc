@@ -45,6 +45,7 @@ private:
     HTFProperties mc_pc_htfProps;
     double m_m_dot_htf_des;         //[kg/s]
     double m_dP_htf;                //[bar]
+    double m_cp_htf_des;            //[kJ/kg-K]
 
     // ********************************
     // ********************************

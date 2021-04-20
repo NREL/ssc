@@ -39,6 +39,7 @@ C_csp_cr_electric_resistance::C_csp_cr_electric_resistance(double T_htf_cold_des
     // Initialize calculated member data
     m_m_dot_htf_des = std::numeric_limits<double>::quiet_NaN();
     m_dP_htf = std::numeric_limits<double>::quiet_NaN();
+    m_cp_htf_des = std::numeric_limits<double>::quiet_NaN();
 }
 
 C_csp_cr_electric_resistance::~C_csp_cr_electric_resistance(){}
@@ -86,8 +87,8 @@ void C_csp_cr_electric_resistance::init(const C_csp_collector_receiver::S_csp_cr
     m_dP_htf = 0.0;
 
     // Calculate the design point HTF mass flow rate
-    double cp_htf_des = mc_pc_htfProps.Cp_ave(m_T_htf_cold_des + 273.15, m_T_htf_hot_des + 273.15, 5);	//[kJ/kg-K]
-    m_m_dot_htf_des = m_q_dot_heater_des*1.E3 / (cp_htf_des*(m_T_htf_hot_des - m_T_htf_cold_des));	//[kg/s]
+    m_cp_htf_des = mc_pc_htfProps.Cp_ave(m_T_htf_cold_des + 273.15, m_T_htf_hot_des + 273.15, 5);	//[kJ/kg-K]
+    m_m_dot_htf_des = m_q_dot_heater_des*1.E3 / (m_cp_htf_des*(m_T_htf_hot_des - m_T_htf_cold_des));	//[kg/s]
 
     solved_params.m_T_htf_cold_des = m_T_htf_cold_des + 273.15; //[K]
     solved_params.m_P_cold_des = std::numeric_limits<double>::quiet_NaN();  //[kPa]
@@ -173,7 +174,33 @@ void C_csp_cr_electric_resistance::estimates(const C_csp_weatherreader::S_output
     C_csp_collector_receiver::S_csp_cr_est_out& est_out,
     const C_csp_solver_sim_info& sim_info)
 {
-    throw(C_csp_exception("C_csp_cr_electric_resistance::estimates(...) is not complete"));
+    // Assume:
+    // 1) no dependence between available heater output and weather
+    // 2) heater is always capable of design output
+    // 3) no mass flow rate bounds (for now)
+    // 4) heater is controlled to always return HTF at design hot temperature
+
+    double m_dot_htf = m_q_dot_heater_des * 1.E3 / (m_cp_htf_des * (m_T_htf_hot_des - htf_state_in.m_temp));    //[kg/s]
+
+    E_csp_cr_modes mode = get_operating_state();
+
+    if (mode == C_csp_collector_receiver::ON)
+    {
+        est_out.m_q_dot_avail = m_q_dot_heater_des;		//[MWt]
+        est_out.m_m_dot_avail = m_dot_htf*3600.0;		//[kg/hr]
+        est_out.m_T_htf_hot = m_T_htf_hot_des;			//[C]
+        est_out.m_q_startup_avail = 0.0;                //[MWt]
+    }
+    else
+    {
+        est_out.m_q_startup_avail = m_q_dot_heater_des;		//[MWt]
+        est_out.m_q_dot_avail = 0.0;
+        est_out.m_m_dot_avail = 0.0;
+        est_out.m_T_htf_hot = 0.0;
+    }
+    
+
+    return;
 }
 
 void C_csp_cr_electric_resistance::converged()

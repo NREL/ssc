@@ -373,7 +373,7 @@ void C_csp_solver::init()
 
     m_is_cr_config_recirc = true;
 
-    if (!mc_tou.mc_dispatch_params.m_is_block_dispatch && !mc_tou.mc_dispatch_params.m_dispatch_optimize) {
+    if (!mc_tou.mc_dispatch_params.m_is_block_dispatch && !mc_tou.mc_dispatch_params.m_dispatch_optimize && !mc_tou.mc_dispatch_params.m_is_arbitrage_policy) {
         throw(C_csp_exception("Either block dispatch or dispatch optimization must be specified", "CSP Solver"));
     }
 
@@ -690,8 +690,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			mc_cr_htf_state_in,
 			est_out,
 			mc_kernel.mc_sim_info);
-		double q_dot_cr_startup = est_out.m_q_startup_avail;
-		double q_dot_cr_on = est_out.m_q_dot_avail;
+		double q_dot_cr_startup = est_out.m_q_startup_avail;    //[MWt]
+		double q_dot_cr_on = est_out.m_q_dot_avail;     //[MWt]
 		double m_dot_cr_on = est_out.m_m_dot_avail;		//[kg/hr]
 		double T_htf_hot_cr_on = est_out.m_T_htf_hot;	//[C]
 		if (cr_operating_state != C_csp_collector_receiver::ON)
@@ -813,6 +813,18 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			    q_pc_target = 0.0;
 		    }
 		}
+        // use simply policy to govern arbitrage operation
+        else if (mc_tou.mc_dispatch_params.m_is_arbitrage_policy) {
+
+            // Check purchase multiplier
+            // If less than 1, then allow charging
+
+            // Check (sale) price multiplier
+            // If greater than 1, the allow discharging
+
+            double abce = 1.23;
+
+        }
         // Run dispatch optimization?
         else if(mc_tou.mc_dispatch_params.m_dispatch_optimize)
         {
@@ -2135,14 +2147,16 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 void C_csp_tou::init_parent()
 {
 	// Check that dispatch logic is reasonable
-	if( !(mc_dispatch_params.m_dispatch_optimize || mc_dispatch_params.m_is_block_dispatch) )
+	if( !(mc_dispatch_params.m_dispatch_optimize || mc_dispatch_params.m_is_block_dispatch || mc_dispatch_params.m_is_arbitrage_policy) )
 	{
 		throw(C_csp_exception("Must select a plant control strategy", "TOU initialization"));
 	}
 
-	if( mc_dispatch_params.m_dispatch_optimize && mc_dispatch_params.m_is_block_dispatch )
+	if( (mc_dispatch_params.m_dispatch_optimize && mc_dispatch_params.m_is_block_dispatch) ||
+        (mc_dispatch_params.m_dispatch_optimize && mc_dispatch_params.m_is_arbitrage_policy) ||
+        (mc_dispatch_params.m_is_block_dispatch && mc_dispatch_params.m_is_arbitrage_policy) )
 	{
-		throw(C_csp_exception("Both plant control strategies were selected. Please select one.", "TOU initialization"));
+		throw(C_csp_exception("Multiple plant control strategies were selected. Please select one.", "TOU initialization"));
 	}
 
 	if( mc_dispatch_params.m_is_block_dispatch )

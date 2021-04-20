@@ -220,8 +220,12 @@ class C_csp_tou
 public:
     struct S_csp_tou_params
     {
+        bool m_is_block_dispatch;
+        bool m_is_arbitrage_policy;
+        bool m_dispatch_optimize;
+
+
         bool m_isleapyear;
-		bool m_dispatch_optimize;
         int m_optimize_frequency;
         int m_disp_steps_per_hour;
         int m_optimize_horizon;
@@ -248,7 +252,6 @@ public:
 		
         bool m_is_tod_pc_target_also_pc_max;
 
-		bool m_is_block_dispatch;
         bool m_is_purchase_mult_same_as_price;
 
 		bool m_use_rule_1;
@@ -261,8 +264,11 @@ public:
 
         S_csp_tou_params()
         {
-            m_isleapyear = false;
+            m_is_block_dispatch = true;			// Either this or m_dispatch_optimize must be true
+            m_is_arbitrage_policy = false;
             m_dispatch_optimize = false;        //Do dispatch optimization
+
+            m_isleapyear = false;
             m_optimize_frequency = 24;          //[hr] Optimization occurs every X hours
             m_disp_steps_per_hour = 1;          //[-] Steps per hour for dispatch optimization
             m_optimize_horizon = 48;            //[hr] Optimization time horizon
@@ -291,7 +297,6 @@ public:
 			
             m_is_tod_pc_target_also_pc_max = false;
 
-			m_is_block_dispatch = true;			// Either this or m_dispatch_optimize must be true
             m_is_purchase_mult_same_as_price = true;
 
 			// Rule 1: if the sun sets (or does not rise) in m_standby_off_buffer [hours], then do not allow power cycle standby
