@@ -390,3 +390,100 @@ void Physical_Trough_Collector_Type_Equations(ssc_data_t data)
     csp_dtr_sca_calc_iams = Csp_dtr_sca_calc_iams(IAMs, csp_dtr_sca_calc_theta, csp_dtr_sca_calc_costh);
     ssc_data_t_set_matrix(data, "csp_dtr_sca_calc_iams", csp_dtr_sca_calc_iams);
 }
+
+
+void Physical_Trough_Receiver_Type_Equations(ssc_data_t data)
+{
+    auto vt = static_cast<var_table*>(data);
+    if (!vt) {
+        throw std::runtime_error("ssc_data_t data invalid");
+    }
+
+    // Inputs
+    util::matrix_t<ssc_number_t> csp_dtr_hce_var1_field_fractions,
+        csp_dtr_hce_var1_rated_heat_losses,
+        csp_dtr_hce_var2_field_fractions,
+        csp_dtr_hce_var2_rated_heat_losses,
+        csp_dtr_hce_var3_field_fractions,
+        csp_dtr_hce_var3_rated_heat_losses,
+        csp_dtr_hce_var4_field_fractions,
+        csp_dtr_hce_var4_rated_heat_losses,
+        csp_dtr_hce_var1_bellows_shadowings,
+        csp_dtr_hce_var1_env_trans,
+        csp_dtr_hce_var2_bellows_shadowings,
+        csp_dtr_hce_var3_bellows_shadowings,
+        csp_dtr_hce_var4_bellows_shadowings,
+        csp_dtr_hce_var1_hce_dirts,
+        csp_dtr_hce_var2_hce_dirts,
+        csp_dtr_hce_var3_hce_dirts,
+        csp_dtr_hce_var4_hce_dirts,
+        csp_dtr_hce_var2_abs_abs,
+        csp_dtr_hce_var2_env_trans,
+        csp_dtr_hce_var3_abs_abs,
+        csp_dtr_hce_var3_env_trans,
+        csp_dtr_hce_var4_env_trans,
+        csp_dtr_hce_var1_abs_abs,
+        csp_dtr_hce_var4_abs_abs;
+
+    // Outputs
+    util::matrix_t<ssc_number_t> csp_dtr_hce_design_heat_losses, csp_dtr_hce_optical_effs;
+
+
+    // csp_dtr_hce_design_heat_loss_1
+    ssc_data_t_get_matrix(vt, "csp_dtr_hce_var1_field_fractions", csp_dtr_hce_var1_field_fractions);
+    ssc_data_t_get_matrix(vt, "csp_dtr_hce_var1_rated_heat_losses", csp_dtr_hce_var1_rated_heat_losses);
+    ssc_data_t_get_matrix(vt, "csp_dtr_hce_var2_field_fractions", csp_dtr_hce_var2_field_fractions);
+    ssc_data_t_get_matrix(vt, "csp_dtr_hce_var2_rated_heat_losses", csp_dtr_hce_var2_rated_heat_losses);
+    ssc_data_t_get_matrix(vt, "csp_dtr_hce_var3_field_fractions", csp_dtr_hce_var3_field_fractions);
+    ssc_data_t_get_matrix(vt, "csp_dtr_hce_var3_rated_heat_losses", csp_dtr_hce_var3_rated_heat_losses);
+    ssc_data_t_get_matrix(vt, "csp_dtr_hce_var4_field_fractions", csp_dtr_hce_var4_field_fractions);
+    ssc_data_t_get_matrix(vt, "csp_dtr_hce_var4_rated_heat_losses", csp_dtr_hce_var4_rated_heat_losses);
+    csp_dtr_hce_design_heat_losses = Csp_dtr_hce_design_heat_losses(
+        csp_dtr_hce_var1_field_fractions, csp_dtr_hce_var1_rated_heat_losses,
+        csp_dtr_hce_var2_field_fractions, csp_dtr_hce_var2_rated_heat_losses,
+        csp_dtr_hce_var3_field_fractions, csp_dtr_hce_var3_rated_heat_losses,
+        csp_dtr_hce_var4_field_fractions, csp_dtr_hce_var4_rated_heat_losses);
+    ssc_data_t_set_matrix(data, "csp_dtr_hce_design_heat_losses", csp_dtr_hce_design_heat_losses);
+
+
+    // csp_dtr_hce_optical_eff_1
+    ssc_data_t_get_matrix(vt, "csp_dtr_hce_var1_bellows_shadowings", csp_dtr_hce_var1_bellows_shadowings);
+    ssc_data_t_get_matrix(vt, "csp_dtr_hce_var1_hce_dirts", csp_dtr_hce_var1_hce_dirts);
+    ssc_data_t_get_matrix(vt, "csp_dtr_hce_var1_abs_abs", csp_dtr_hce_var1_abs_abs);
+    ssc_data_t_get_matrix(vt, "csp_dtr_hce_var1_env_trans", csp_dtr_hce_var1_env_trans);
+    ssc_data_t_get_matrix(vt, "csp_dtr_hce_var2_bellows_shadowings", csp_dtr_hce_var2_bellows_shadowings);
+    ssc_data_t_get_matrix(vt, "csp_dtr_hce_var2_hce_dirts", csp_dtr_hce_var2_hce_dirts);
+    ssc_data_t_get_matrix(vt, "csp_dtr_hce_var2_abs_abs", csp_dtr_hce_var2_abs_abs);
+    ssc_data_t_get_matrix(vt, "csp_dtr_hce_var2_env_trans", csp_dtr_hce_var2_env_trans);
+    ssc_data_t_get_matrix(vt, "csp_dtr_hce_var3_bellows_shadowings", csp_dtr_hce_var3_bellows_shadowings);
+    ssc_data_t_get_matrix(vt, "csp_dtr_hce_var3_hce_dirts", csp_dtr_hce_var3_hce_dirts);
+    ssc_data_t_get_matrix(vt, "csp_dtr_hce_var3_abs_abs", csp_dtr_hce_var3_abs_abs);
+    ssc_data_t_get_matrix(vt, "csp_dtr_hce_var3_env_trans", csp_dtr_hce_var3_env_trans);
+    ssc_data_t_get_matrix(vt, "csp_dtr_hce_var4_bellows_shadowings", csp_dtr_hce_var4_bellows_shadowings);
+    ssc_data_t_get_matrix(vt, "csp_dtr_hce_var4_hce_dirts", csp_dtr_hce_var4_hce_dirts);
+    ssc_data_t_get_matrix(vt, "csp_dtr_hce_var4_abs_abs", csp_dtr_hce_var4_abs_abs);
+    ssc_data_t_get_matrix(vt, "csp_dtr_hce_var4_env_trans", csp_dtr_hce_var4_env_trans);
+
+    csp_dtr_hce_optical_effs = Csp_dtr_hce_optical_effs(
+        csp_dtr_hce_var1_field_fractions,
+        csp_dtr_hce_var1_bellows_shadowings,
+        csp_dtr_hce_var1_hce_dirts,
+        csp_dtr_hce_var1_abs_abs,
+        csp_dtr_hce_var1_env_trans,
+        csp_dtr_hce_var2_field_fractions,
+        csp_dtr_hce_var2_bellows_shadowings,
+        csp_dtr_hce_var2_hce_dirts,
+        csp_dtr_hce_var2_abs_abs,
+        csp_dtr_hce_var2_env_trans,
+        csp_dtr_hce_var3_field_fractions,
+        csp_dtr_hce_var3_bellows_shadowings,
+        csp_dtr_hce_var3_hce_dirts,
+        csp_dtr_hce_var3_abs_abs,
+        csp_dtr_hce_var3_env_trans,
+        csp_dtr_hce_var4_field_fractions,
+        csp_dtr_hce_var4_bellows_shadowings,
+        csp_dtr_hce_var4_hce_dirts,
+        csp_dtr_hce_var4_abs_abs,
+        csp_dtr_hce_var4_env_trans);
+    ssc_data_t_set_matrix(data, "csp_dtr_hce_optical_effs", csp_dtr_hce_optical_effs);
+}

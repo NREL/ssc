@@ -238,4 +238,34 @@ util::matrix_t<ssc_number_t> Csp_dtr_sca_calc_iams(const util::matrix_t<ssc_numb
 
 double Csp_dtr_sca_calc_theta(double csp_dtr_sca_calc_costh);
 
+
+// Originally from 'Physical Trough Receiver Type 1' (and 2, 3, 4)
+util::matrix_t<ssc_number_t> Csp_dtr_hce_design_heat_losses(
+    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var1_field_fractions, const util::matrix_t<ssc_number_t>& csp_dtr_hce_var1_rated_heat_losses,
+    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var2_field_fractions, const util::matrix_t<ssc_number_t>& csp_dtr_hce_var2_rated_heat_losses,
+    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var3_field_fractions, const util::matrix_t<ssc_number_t>& csp_dtr_hce_var3_rated_heat_losses,
+    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var4_field_fractions, const util::matrix_t<ssc_number_t>& csp_dtr_hce_var4_rated_heat_losses);
+
+util::matrix_t<ssc_number_t> Csp_dtr_hce_optical_effs(
+    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var1_field_fractions,
+    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var1_bellows_shadowings,
+    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var1_hce_dirts,
+    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var1_abs_abs,
+    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var1_env_trans,
+    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var2_field_fractions,
+    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var2_bellows_shadowings,
+    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var2_hce_dirts,
+    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var2_abs_abs,
+    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var2_env_trans,
+    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var3_field_fractions,
+    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var3_bellows_shadowings,
+    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var3_hce_dirts,
+    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var3_abs_abs,
+    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var3_env_trans,
+    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var4_field_fractions,
+    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var4_bellows_shadowings,
+    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var4_hce_dirts,
+    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var4_abs_abs,
+    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var4_env_trans);
+
 #endif

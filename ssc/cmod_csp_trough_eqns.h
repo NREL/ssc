@@ -36,6 +36,16 @@ extern "C" {
 
     SSCEXPORT void Physical_Trough_Collector_Type_Equations(ssc_data_t data);
 
+
+    static const char* Physical_Trough_Receiver_Type_Equations_doc =
+        "\\n"
+        "Input: var_table with key-value pairs\\n"
+        "     'design_eff' - double [-]\\n"
+        "Output: key-value pairs added to var_table\\n"
+        "     'nameplate' - double [MWe]\\n";
+
+    SSCEXPORT void Physical_Trough_Receiver_Type_Equations(ssc_data_t data);
+
 #ifdef __cplusplus
 }
 #endif
