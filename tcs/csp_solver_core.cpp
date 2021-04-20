@@ -658,6 +658,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		bool is_pc_sb_allowed = true;
 		mc_kernel.mc_sim_info.m_tou = f_turb_tou_period;	    //[base 1] used ONLY by power cycle model for hybrid cooling - may also want to move this to controller
 
+
 		// Get standby fraction and min operating fraction
 			// Could eventually be a method in PC class...
 		double cycle_sb_frac = m_cycle_sb_frac_des;				//[-]
