@@ -1099,3 +1099,8 @@ util::matrix_t<ssc_number_t> Csp_dtr_hce_optical_effs(
     }
     return result;
 }
+
+// Originally from 'Physical Trough System Control'
+double Is_wlim_series(double is_dispatch) {
+    return is_dispatch;
+}

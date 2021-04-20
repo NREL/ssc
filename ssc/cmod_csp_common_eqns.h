@@ -268,4 +268,8 @@ util::matrix_t<ssc_number_t> Csp_dtr_hce_optical_effs(
     const util::matrix_t<ssc_number_t>& csp_dtr_hce_var4_abs_abs,
     const util::matrix_t<ssc_number_t>& csp_dtr_hce_var4_env_trans);
 
+
+// Originally from 'Physical Trough System Control'
+double Is_wlim_series(double is_dispatch);
+
 #endif

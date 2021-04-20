@@ -350,6 +350,7 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_INPUT,        SSC_ARRAY,       "csp_dtr_hce_var4_hce_dirts",          "csp_dtr_hce_var4_hce_dirts",                                             "-",            "",               "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "csp_dtr_hce_var4_abs_abs",            "csp_dtr_hce_var4_abs_abs",                                               "-",            "",               "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "csp_dtr_hce_var4_env_trans",          "csp_dtr_hce_var4_env_trans",                                             "-",            "",               "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "disp_wlim_maxspec",                   "disp_wlim_maxspec",                                                      "-",            "",               "controller",     "*",                       "",                      "" },
 
 
 

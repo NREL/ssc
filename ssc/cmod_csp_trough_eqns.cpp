@@ -487,3 +487,45 @@ void Physical_Trough_Receiver_Type_Equations(ssc_data_t data)
         csp_dtr_hce_var4_env_trans);
     ssc_data_t_set_matrix(data, "csp_dtr_hce_optical_effs", csp_dtr_hce_optical_effs);
 }
+
+
+void Physical_Trough_System_Control_Equations(ssc_data_t data)
+{
+    auto vt = static_cast<var_table*>(data);
+    if (!vt) {
+        throw std::runtime_error("ssc_data_t data invalid");
+    }
+
+    // Inputs
+    double is_dispatch, disp_wlim_maxspec, constant;
+    util::matrix_t<ssc_number_t> xxx;
+
+    // Outputs
+    double is_wlim_series, disp_wlim_max;
+    util::matrix_t<ssc_number_t> wlim_series;
+
+    // is_wlim_series
+    ssc_data_t_get_number(data, "is_dispatch", &is_dispatch);
+    is_wlim_series = Is_wlim_series(is_dispatch);
+    ssc_data_t_set_number(data, "is_wlim_series", is_wlim_series);
+
+    // disp_wlim_max
+    disp_wlim_maxspec = constant = std::numeric_limits<double>::quiet_NaN();
+    ssc_data_t_get_number(data, "disp_wlim_maxspec", &disp_wlim_maxspec);       // if coming from UI
+    if (std::isnan(disp_wlim_maxspec)) {
+        disp_wlim_maxspec = 1.;                                                 // not passed to LK script
+    }
+    ssc_data_t_get_number(data, "constant", &constant);                         // if coming from UI
+    if (std::isnan(constant)) {
+        ssc_data_t_get_number(data, "adjust:constant", &constant);              // if coming from LK script
+    }
+    disp_wlim_max = Disp_wlim_max(disp_wlim_maxspec, constant);
+    ssc_data_t_set_number(data, "disp_wlim_max", disp_wlim_max);
+
+    // wlim_series
+    if (!vt->is_assigned("wlim_series")) {
+        wlim_series = Wlim_series(disp_wlim_max);
+        ssc_data_t_set_array(data, "wlim_series", wlim_series.data(), wlim_series.ncells());
+    }
+
+}
