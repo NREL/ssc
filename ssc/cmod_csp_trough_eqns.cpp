@@ -385,9 +385,9 @@ void Physical_Trough_Collector_Type_Equations(ssc_data_t data)
     ssc_data_t_set_number(data, "csp_dtr_sca_calc_latitude", csp_dtr_sca_calc_latitude);
 
     // csp_dtr_sca_calc_iam
-    util::matrix_t<ssc_number_t> IAMs, csp_dtr_sca_calc_iams;
-    ssc_data_t_get_matrix(vt, "IAMs", IAMs);
-    csp_dtr_sca_calc_iams = Csp_dtr_sca_calc_iams(IAMs, csp_dtr_sca_calc_theta, csp_dtr_sca_calc_costh);
+    util::matrix_t<ssc_number_t> IAM_matrix, csp_dtr_sca_calc_iams;
+    ssc_data_t_get_matrix(vt, "IAM_matrix", IAM_matrix);
+    csp_dtr_sca_calc_iams = Csp_dtr_sca_calc_iams(IAM_matrix, csp_dtr_sca_calc_theta, csp_dtr_sca_calc_costh);
     ssc_data_t_set_matrix(data, "csp_dtr_sca_calc_iams", csp_dtr_sca_calc_iams);
 }
 
