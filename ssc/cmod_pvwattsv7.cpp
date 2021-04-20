@@ -834,13 +834,13 @@ public:
 
                 if (-1 == code)
                 {
-                    log(util::format("Beam irradiance exceeded extraterrestrial value at record [y:%d m:%d d:%d h:%d].",
-                        wf.year, wf.month, wf.day, wf.hour));
+                    log(util::format("Beam irradiance exceeded extraterrestrial value at record [y:%d m:%d d:%d h:%d minute:%lg].",
+                        wf.year, wf.month, wf.day, wf.hour, wf.minute));
                 }
                 else if (0 != code)
                     throw exec_error("pvwattsv7",
-                        util::format("Failed to process irradiation on surface (code: %d) [y:%d m:%d d:%d h:%d].",
-                            code, wf.year, wf.month, wf.day, wf.hour));
+                        util::format("Failed to process irradiation on surface (code: %d) [y:%d m:%d d:%d h:%d minute:%lg].",
+                            code, wf.year, wf.month, wf.day, wf.hour, wf.minute));
 
                 p_sunup[idx] = (ssc_number_t)sunup;
                 p_aoi[idx] = (ssc_number_t)aoi;
