@@ -287,7 +287,10 @@ public:
         // *****************************************************
         // Electric resistance heater
         // Construct electric resistance heater class
+        double f_q_dot_des_allowable_su = 1.0;  //[-]
+        double hrs_startup_at_max_rate = 0.25;  //[hr]
         C_csp_cr_electric_resistance c_electric_resistance(T_htf_cold_des, T_htf_hot_des, q_dot_heater_des,
+            f_q_dot_des_allowable_su, hrs_startup_at_max_rate,
             tes_fl_code, ud_tes_fl_props);
 
         // Test init()

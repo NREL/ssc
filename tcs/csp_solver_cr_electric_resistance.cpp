@@ -26,12 +26,16 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "htf_props.h"
 
 C_csp_cr_electric_resistance::C_csp_cr_electric_resistance(double T_htf_cold_des /*C*/, double T_htf_hot_des /*C*/, double q_dot_heater_des /*MWt*/,
+    double f_q_dot_des_allowable_su /*-*/, double hrs_startup_at_max_rate /*hr*/,
     int htf_code /*-*/, util::matrix_t<double> ud_htf_props)
 {
     // Pass arguements to member data
     m_T_htf_cold_des = T_htf_cold_des;      //[C]
     m_T_htf_hot_des = T_htf_hot_des;        //[C]
     m_q_dot_heater_des = q_dot_heater_des;  //[MWt]
+
+    m_f_q_dot_des_allowable_su = f_q_dot_des_allowable_su;  //[-]
+    m_hrs_startup_at_max_rate = hrs_startup_at_max_rate;    //[hr]
 
     m_htf_code = htf_code;              //[-] htf fluid code
     m_ud_htf_props = ud_htf_props;      //[-] user defined fluid properties
@@ -40,6 +44,11 @@ C_csp_cr_electric_resistance::C_csp_cr_electric_resistance(double T_htf_cold_des
     m_m_dot_htf_des = std::numeric_limits<double>::quiet_NaN();
     m_dP_htf = std::numeric_limits<double>::quiet_NaN();
     m_cp_htf_des = std::numeric_limits<double>::quiet_NaN();
+    m_q_dot_su_max = std::numeric_limits<double>::quiet_NaN();
+    m_E_su_des = std::numeric_limits<double>::quiet_NaN();
+
+    // Initialize state variables
+    m_E_su_initial = m_E_su_calculated = std::numeric_limits<double>::quiet_NaN();
 }
 
 C_csp_cr_electric_resistance::~C_csp_cr_electric_resistance(){}
@@ -90,6 +99,11 @@ void C_csp_cr_electric_resistance::init(const C_csp_collector_receiver::S_csp_cr
     m_cp_htf_des = mc_pc_htfProps.Cp_ave(m_T_htf_cold_des + 273.15, m_T_htf_hot_des + 273.15, 5);	//[kJ/kg-K]
     m_m_dot_htf_des = m_q_dot_heater_des*1.E3 / (m_cp_htf_des*(m_T_htf_hot_des - m_T_htf_cold_des));	//[kg/s]
 
+    // Calculate design startup requirements
+    m_q_dot_su_max = m_q_dot_heater_des*m_f_q_dot_des_allowable_su;  //[MWt]
+    m_E_su_des = m_q_dot_su_max*m_hrs_startup_at_max_rate;   //[MWt-hr]
+    m_t_su_des = m_E_su_des / m_q_dot_su_max;   //[hr]
+
     solved_params.m_T_htf_cold_des = m_T_htf_cold_des + 273.15; //[K]
     solved_params.m_P_cold_des = std::numeric_limits<double>::quiet_NaN();  //[kPa]
     solved_params.m_x_cold_des = std::numeric_limits<double>::quiet_NaN();  //[-]
@@ -100,6 +114,7 @@ void C_csp_cr_electric_resistance::init(const C_csp_collector_receiver::S_csp_cr
 
     // State variables
     m_operating_mode_converged = C_csp_collector_receiver::OFF;					//
+    m_E_su_initial = m_E_su_des;        //[MWt-hr]
 
 }
 
@@ -157,7 +172,37 @@ void C_csp_cr_electric_resistance::startup(const C_csp_weatherreader::S_outputs&
     C_csp_collector_receiver::S_csp_cr_out_solver& cr_out_solver,
     const C_csp_solver_sim_info& sim_info)
 {
-    throw(C_csp_exception("C_csp_cr_electric_resistance::startup(...) is not complete"));
+    double step_hrs = sim_info.ms_ts.m_step / 3600.0;    //[hr]
+
+    double time_remaining_su = m_E_su_initial / m_q_dot_su_max; //[hr]
+
+    double time_required_su = std::numeric_limits<double>::quiet_NaN();
+
+    if (time_remaining_su > step_hrs) {
+        time_required_su = step_hrs;
+        m_operating_mode = C_csp_collector_receiver::STARTUP;
+    }
+    else {
+        time_required_su = time_remaining_su;
+        m_operating_mode = C_csp_collector_receiver::ON;
+    }
+
+    double q_startup = m_q_dot_su_max * time_required_su;       //[MWt-hr]
+
+    m_E_su_calculated = fmax(0.0, m_E_su_initial - q_startup);  //[MWt-hr]
+
+    cr_out_solver.m_q_startup = q_startup;                  //[MWt-hr]
+    cr_out_solver.m_time_required_su = time_required_su*3600.0; //[s]
+    cr_out_solver.m_m_dot_salt_tot = 0.0;                   //[kg/hr]
+    cr_out_solver.m_q_thermal = 0.0;                        //[MWt]
+    cr_out_solver.m_T_salt_hot = m_T_htf_hot_des;           //[C]
+    cr_out_solver.m_component_defocus = 1.0;                //[-]
+    cr_out_solver.m_is_recirculating = false;               //[-]
+    cr_out_solver.m_E_fp_total = 0.0;                       //[MWt]
+    cr_out_solver.m_W_dot_col_tracking = 0.0;               //[MWe]
+    cr_out_solver.m_W_dot_htf_pump = 0.0;                   //[MWe]
+    cr_out_solver.m_q_rec_heattrace = 0.0;                  //[MWt]
+
 }
 
 void C_csp_cr_electric_resistance::on(const C_csp_weatherreader::S_outputs& weather,
@@ -205,7 +250,9 @@ void C_csp_cr_electric_resistance::estimates(const C_csp_weatherreader::S_output
 
 void C_csp_cr_electric_resistance::converged()
 {
-    throw(C_csp_exception("C_csp_cr_electric_resistance::converged(...) is not complete"));
+    m_operating_mode_converged = m_operating_mode;
+
+    m_E_su_initial = m_E_su_calculated;
 }
 
 void C_csp_cr_electric_resistance::write_output_intervals(double report_time_start,

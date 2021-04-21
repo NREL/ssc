@@ -822,13 +822,36 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
             // If less than 1, then allow charging
             if (purchase_mult < 1.0) {
                 is_rec_su_allowed = true;
-                q_dot_elec_to_CR_heat = 1.0;
+                q_dot_elec_to_CR_heat = m_q_dot_rec_des;    //[MWt]
+            }
+            else {
+                is_rec_su_allowed = false;
+                q_dot_elec_to_CR_heat = 0.0;
             }
 
             // Check (sale) price multiplier
             // If greater than 1, the allow discharging
+            if (pricing_mult > 1.0) {
+                is_pc_su_allowed = true;
+                is_pc_sb_allowed = false;
 
-            // Do we need
+                q_pc_target = m_cycle_q_dot_des;	//[MWt]
+                if (mc_tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max) {
+                    m_q_dot_pc_max = q_pc_target;     //[MWt]
+                }
+                else {
+                    m_q_dot_pc_max = m_cycle_max_frac * m_cycle_q_dot_des;		//[MWt]
+                }
+            }
+            else {
+                is_pc_su_allowed = false;
+                is_pc_sb_allowed = false;
+
+                q_pc_target = 0.0;
+                m_q_dot_pc_max = 0.0;
+            }
+
+            // Do we need to reset q_cr_on for control logic?
 
             double abce = 1.23;
 

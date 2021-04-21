@@ -36,27 +36,40 @@ private:
     double m_T_htf_hot_des;         //[C]
     double m_q_dot_heater_des;      //[MWt]
 
+    double m_f_q_dot_des_allowable_su;//[-] fraction of design thermal power allowed for startup
+    double m_hrs_startup_at_max_rate; //[hr]
+
     int m_htf_code;
     util::matrix_t<double> m_ud_htf_props;
 
     // ********************************
     // ********************************
 
+
+    // ********************************
+    // Calculated system design parameters
     HTFProperties mc_pc_htfProps;
     double m_m_dot_htf_des;         //[kg/s]
     double m_dP_htf;                //[bar]
     double m_cp_htf_des;            //[kJ/kg-K]
+    double m_q_dot_su_max;          //[MWt]
+    double m_E_su_des;              //[MWt-hr]
+    double m_t_su_des;              //[hr]
 
     // ********************************
     // ********************************
 
-    // State variables
+    // Timestep state variables
     C_csp_collector_receiver::E_csp_cr_modes m_operating_mode_converged;
     C_csp_collector_receiver::E_csp_cr_modes m_operating_mode;
+
+    double m_E_su_initial;      //[MWt-hr] Startup energy at beginning of timestep
+    double m_E_su_calculated;   //[MWt-hr] Startup energy at end of timestep
 
 public:
 
     C_csp_cr_electric_resistance(double T_htf_cold_des /*C*/, double T_htf_hot_des /*C*/, double q_dot_heater_des /*MWt*/,
+        double f_q_dot_des_allowable_su /*-*/, double hrs_startup_at_max_rate /*hr*/,
         int htf_code /*-*/, util::matrix_t<double> ud_htf_props);
 
     ~C_csp_cr_electric_resistance();

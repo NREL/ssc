@@ -38,8 +38,8 @@ var( 'dispatch_sched_weekend',
 [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 ], 
 [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 ], 
 [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 ] ] );
-var( 'dispatch_factor1', 1.5 );
-var( 'dispatch_factor2', 0.5 );
+var( 'dispatch_factor1', 0.5 );
+var( 'dispatch_factor2', 1.5 );
 var( 'dispatch_factor3', 1 );
 var( 'dispatch_factor4', 1 );
 var( 'dispatch_factor5', 1 );
