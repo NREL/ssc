@@ -1028,24 +1028,26 @@ double Csp_dtr_sca_calc_theta(double csp_dtr_sca_calc_costh) {
 
 
 // Originally from 'Physical Trough Receiver Type 1' (and 2, 3, 4)
+//util::matrix_t<ssc_number_t> Csp_dtr_hce_design_heat_losses(
+//    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var1_field_fractions, const util::matrix_t<ssc_number_t>& csp_dtr_hce_var1_rated_heat_losses,
+//    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var2_field_fractions, const util::matrix_t<ssc_number_t>& csp_dtr_hce_var2_rated_heat_losses,
+//    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var3_field_fractions, const util::matrix_t<ssc_number_t>& csp_dtr_hce_var3_rated_heat_losses,
+//    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var4_field_fractions, const util::matrix_t<ssc_number_t>& csp_dtr_hce_var4_rated_heat_losses) {
 util::matrix_t<ssc_number_t> Csp_dtr_hce_design_heat_losses(
-    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var1_field_fractions, const util::matrix_t<ssc_number_t>& csp_dtr_hce_var1_rated_heat_losses,
-    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var2_field_fractions, const util::matrix_t<ssc_number_t>& csp_dtr_hce_var2_rated_heat_losses,
-    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var3_field_fractions, const util::matrix_t<ssc_number_t>& csp_dtr_hce_var3_rated_heat_losses,
-    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var4_field_fractions, const util::matrix_t<ssc_number_t>& csp_dtr_hce_var4_rated_heat_losses) {
+    const util::matrix_t<ssc_number_t>& HCE_FieldFrac, const util::matrix_t<ssc_number_t>& Design_loss) {
 
-    int n = csp_dtr_hce_var1_field_fractions.ncells();
+    int n = HCE_FieldFrac.nrows();
 
     util::matrix_t<ssc_number_t> result(n);
     for (int i = 0; i < n; i++) {
-        result.at(i) = csp_dtr_hce_var1_field_fractions.at(i)
-            * csp_dtr_hce_var1_rated_heat_losses.at(i)
-            + csp_dtr_hce_var2_field_fractions.at(i)
-            * csp_dtr_hce_var2_rated_heat_losses.at(i)
-            + csp_dtr_hce_var3_field_fractions.at(i)
-            * csp_dtr_hce_var3_rated_heat_losses.at(i)
-            + csp_dtr_hce_var4_field_fractions.at(i)
-            * csp_dtr_hce_var4_rated_heat_losses.at(i);
+        result.at(i) = HCE_FieldFrac.at(i, 0)
+            * Design_loss.at(i, 0)
+            + HCE_FieldFrac.at(i, 1)
+            * Design_loss.at(i, 1)
+            + HCE_FieldFrac.at(i, 2)
+            * Design_loss.at(i, 2)
+            + HCE_FieldFrac.at(i, 3)
+            * Design_loss.at(i, 3);
     }
     return result;
 }

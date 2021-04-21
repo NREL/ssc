@@ -143,10 +143,6 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     csp_dtr_sca_aperture_2 = A_aperture.at(1);
     csp_dtr_sca_aperture_3 = A_aperture.at(2);
     csp_dtr_sca_aperture_4 = A_aperture.at(3);
-    //ssc_data_t_get_number(data, "csp_dtr_sca_aperture_1", &csp_dtr_sca_aperture_1);
-    //ssc_data_t_get_number(data, "csp_dtr_sca_aperture_2", &csp_dtr_sca_aperture_2);
-    //ssc_data_t_get_number(data, "csp_dtr_sca_aperture_3", &csp_dtr_sca_aperture_3);
-    //ssc_data_t_get_number(data, "csp_dtr_sca_aperture_4", &csp_dtr_sca_aperture_4);
     single_loop_aperature = Single_loop_aperature(trough_loop_control, csp_dtr_sca_aperture_1,
         csp_dtr_sca_aperture_2, csp_dtr_sca_aperture_3, csp_dtr_sca_aperture_4);
     ssc_data_t_set_number(data, "single_loop_aperature", single_loop_aperature);
@@ -158,10 +154,6 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     csp_dtr_hce_diam_absorber_inner_2 = D_2.at(1,0);
     csp_dtr_hce_diam_absorber_inner_3 = D_2.at(2,0);
     csp_dtr_hce_diam_absorber_inner_4 = D_2.at(3,0);
-    //ssc_data_t_get_number(data, "csp_dtr_hce_diam_absorber_inner_1", &csp_dtr_hce_diam_absorber_inner_1);
-    //ssc_data_t_get_number(data, "csp_dtr_hce_diam_absorber_inner_2", &csp_dtr_hce_diam_absorber_inner_2);
-    //ssc_data_t_get_number(data, "csp_dtr_hce_diam_absorber_inner_3", &csp_dtr_hce_diam_absorber_inner_3);
-    //ssc_data_t_get_number(data, "csp_dtr_hce_diam_absorber_inner_4", &csp_dtr_hce_diam_absorber_inner_4);
     min_inner_diameter = Min_inner_diameter(trough_loop_control, csp_dtr_hce_diam_absorber_inner_1,
         csp_dtr_hce_diam_absorber_inner_2, csp_dtr_hce_diam_absorber_inner_3, csp_dtr_hce_diam_absorber_inner_4);
     ssc_data_t_set_number(data, "min_inner_diameter", min_inner_diameter);
@@ -278,10 +270,6 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     csp_dtr_sca_w_profile_2 = W_aperture.at(1);
     csp_dtr_sca_w_profile_3 = W_aperture.at(2);
     csp_dtr_sca_w_profile_4 = W_aperture.at(3);
-    //ssc_data_t_get_number(data, "csp_dtr_sca_w_profile_1", &csp_dtr_sca_w_profile_1);
-    //ssc_data_t_get_number(data, "csp_dtr_sca_w_profile_2", &csp_dtr_sca_w_profile_2);
-    //ssc_data_t_get_number(data, "csp_dtr_sca_w_profile_3", &csp_dtr_sca_w_profile_3);
-    //ssc_data_t_get_number(data, "csp_dtr_sca_w_profile_4", &csp_dtr_sca_w_profile_4);
     fixed_land_area = Fixed_land_area(total_aperture, Row_Distance, SCAInfoArray,
         csp_dtr_sca_w_profile_1, csp_dtr_sca_w_profile_2, csp_dtr_sca_w_profile_3, csp_dtr_sca_w_profile_4);
     ssc_data_t_set_number(data, "fixed_land_area", fixed_land_area);
@@ -346,13 +334,7 @@ void Physical_Trough_Collector_Type_Equations(ssc_data_t data)
 
     util::matrix_t<ssc_number_t> IAMs_1,
         Ave_Focal_Length, Distance_SCA,
-        csp_dtr_sca_tracking_errors, csp_dtr_sca_geometry_effects, csp_dtr_sca_clean_reflectivities, csp_dtr_sca_mirror_dirts, csp_dtr_sca_general_errors;
-
-    //// csp_dtr_sca_ap_length
-    //ssc_data_t_get_number(data, "csp_dtr_sca_length_1", &csp_dtr_sca_length_1);
-    //ssc_data_t_get_number(data, "csp_dtr_sca_ncol_per_sca_1", &csp_dtr_sca_ncol_per_sca_1);
-    //csp_dtr_sca_ap_length_1 = Csp_dtr_sca_ap_length(csp_dtr_sca_length_1, csp_dtr_sca_ncol_per_sca_1);
-    //ssc_data_t_set_number(data, "csp_dtr_sca_ap_length_1", csp_dtr_sca_ap_length_1);
+        TrackingError, GeomEffects, Rho_mirror_clean, Dirt_mirror, Error;
 
     // csp_dtr_sca_ap_lengths
     util::matrix_t<ssc_number_t> L_SCA, ColperSCA, csp_dtr_sca_ap_lengths;
@@ -392,13 +374,13 @@ void Physical_Trough_Collector_Type_Equations(ssc_data_t data)
 
     // csp_dtr_sca_calc_sca_eff
     util::matrix_t<ssc_number_t> csp_dtr_sca_calc_sca_effs;
-    ssc_data_t_get_matrix(vt, "csp_dtr_sca_tracking_errors", csp_dtr_sca_tracking_errors);
-    ssc_data_t_get_matrix(vt, "csp_dtr_sca_geometry_effects", csp_dtr_sca_geometry_effects);
-    ssc_data_t_get_matrix(vt, "csp_dtr_sca_clean_reflectivities", csp_dtr_sca_clean_reflectivities);
-    ssc_data_t_get_matrix(vt, "csp_dtr_sca_mirror_dirts", csp_dtr_sca_mirror_dirts);
-    ssc_data_t_get_matrix(vt, "csp_dtr_sca_general_errors", csp_dtr_sca_general_errors);
-    csp_dtr_sca_calc_sca_effs = Csp_dtr_sca_calc_sca_effs(csp_dtr_sca_tracking_errors, csp_dtr_sca_geometry_effects,
-        csp_dtr_sca_clean_reflectivities, csp_dtr_sca_mirror_dirts, csp_dtr_sca_general_errors);
+    ssc_data_t_get_matrix(vt, "TrackingError", TrackingError);
+    ssc_data_t_get_matrix(vt, "GeomEffects", GeomEffects);
+    ssc_data_t_get_matrix(vt, "Rho_mirror_clean", Rho_mirror_clean);
+    ssc_data_t_get_matrix(vt, "Dirt_mirror", Dirt_mirror);
+    ssc_data_t_get_matrix(vt, "Error", Error);
+    csp_dtr_sca_calc_sca_effs = Csp_dtr_sca_calc_sca_effs(TrackingError, GeomEffects,
+        Rho_mirror_clean, Dirt_mirror, Error);
     ssc_data_t_set_matrix(data, "csp_dtr_sca_calc_sca_effs", csp_dtr_sca_calc_sca_effs);
 
     // csp_dtr_sca_calc_latitude
@@ -421,13 +403,16 @@ void Physical_Trough_Receiver_Type_Equations(ssc_data_t data)
     }
 
     // Inputs
-    util::matrix_t<ssc_number_t> csp_dtr_hce_var1_field_fractions,
+    util::matrix_t<ssc_number_t>
+        HCE_FieldFrac,
+        Design_loss,
+        csp_dtr_hce_var1_field_fractions(4),
         csp_dtr_hce_var1_rated_heat_losses,
-        csp_dtr_hce_var2_field_fractions,
+        csp_dtr_hce_var2_field_fractions(4),
         csp_dtr_hce_var2_rated_heat_losses,
-        csp_dtr_hce_var3_field_fractions,
+        csp_dtr_hce_var3_field_fractions(4),
         csp_dtr_hce_var3_rated_heat_losses,
-        csp_dtr_hce_var4_field_fractions,
+        csp_dtr_hce_var4_field_fractions(4),
         csp_dtr_hce_var4_rated_heat_losses,
         csp_dtr_hce_var1_bellows_shadowings,
         csp_dtr_hce_var1_env_trans,
@@ -451,19 +436,22 @@ void Physical_Trough_Receiver_Type_Equations(ssc_data_t data)
 
 
     // csp_dtr_hce_design_heat_loss_1
-    ssc_data_t_get_matrix(vt, "csp_dtr_hce_var1_field_fractions", csp_dtr_hce_var1_field_fractions);
-    ssc_data_t_get_matrix(vt, "csp_dtr_hce_var1_rated_heat_losses", csp_dtr_hce_var1_rated_heat_losses);
-    ssc_data_t_get_matrix(vt, "csp_dtr_hce_var2_field_fractions", csp_dtr_hce_var2_field_fractions);
-    ssc_data_t_get_matrix(vt, "csp_dtr_hce_var2_rated_heat_losses", csp_dtr_hce_var2_rated_heat_losses);
-    ssc_data_t_get_matrix(vt, "csp_dtr_hce_var3_field_fractions", csp_dtr_hce_var3_field_fractions);
-    ssc_data_t_get_matrix(vt, "csp_dtr_hce_var3_rated_heat_losses", csp_dtr_hce_var3_rated_heat_losses);
-    ssc_data_t_get_matrix(vt, "csp_dtr_hce_var4_field_fractions", csp_dtr_hce_var4_field_fractions);
-    ssc_data_t_get_matrix(vt, "csp_dtr_hce_var4_rated_heat_losses", csp_dtr_hce_var4_rated_heat_losses);
-    csp_dtr_hce_design_heat_losses = Csp_dtr_hce_design_heat_losses(
-        csp_dtr_hce_var1_field_fractions, csp_dtr_hce_var1_rated_heat_losses,
-        csp_dtr_hce_var2_field_fractions, csp_dtr_hce_var2_rated_heat_losses,
-        csp_dtr_hce_var3_field_fractions, csp_dtr_hce_var3_rated_heat_losses,
-        csp_dtr_hce_var4_field_fractions, csp_dtr_hce_var4_rated_heat_losses);
+    ssc_data_t_get_matrix(vt, "HCE_FieldFrac", HCE_FieldFrac);
+    ssc_data_t_get_matrix(vt, "Design_loss", Design_loss);
+    //ssc_data_t_get_matrix(vt, "csp_dtr_hce_var1_field_fractions", csp_dtr_hce_var1_field_fractions);
+    //ssc_data_t_get_matrix(vt, "csp_dtr_hce_var1_rated_heat_losses", csp_dtr_hce_var1_rated_heat_losses);
+    //ssc_data_t_get_matrix(vt, "csp_dtr_hce_var2_field_fractions", csp_dtr_hce_var2_field_fractions);
+    //ssc_data_t_get_matrix(vt, "csp_dtr_hce_var2_rated_heat_losses", csp_dtr_hce_var2_rated_heat_losses);
+    //ssc_data_t_get_matrix(vt, "csp_dtr_hce_var3_field_fractions", csp_dtr_hce_var3_field_fractions);
+    //ssc_data_t_get_matrix(vt, "csp_dtr_hce_var3_rated_heat_losses", csp_dtr_hce_var3_rated_heat_losses);
+    //ssc_data_t_get_matrix(vt, "csp_dtr_hce_var4_field_fractions", csp_dtr_hce_var4_field_fractions);
+    //ssc_data_t_get_matrix(vt, "csp_dtr_hce_var4_rated_heat_losses", csp_dtr_hce_var4_rated_heat_losses);
+    csp_dtr_hce_design_heat_losses = Csp_dtr_hce_design_heat_losses(HCE_FieldFrac, Design_loss);
+    //csp_dtr_hce_design_heat_losses = Csp_dtr_hce_design_heat_losses(
+    //    csp_dtr_hce_var1_field_fractions, csp_dtr_hce_var1_rated_heat_losses,
+    //    csp_dtr_hce_var2_field_fractions, csp_dtr_hce_var2_rated_heat_losses,
+    //    csp_dtr_hce_var3_field_fractions, csp_dtr_hce_var3_rated_heat_losses,
+    //    csp_dtr_hce_var4_field_fractions, csp_dtr_hce_var4_rated_heat_losses);
     ssc_data_t_set_matrix(data, "csp_dtr_hce_design_heat_losses", csp_dtr_hce_design_heat_losses);
 
 
@@ -484,6 +472,26 @@ void Physical_Trough_Receiver_Type_Equations(ssc_data_t data)
     ssc_data_t_get_matrix(vt, "csp_dtr_hce_var4_hce_dirts", csp_dtr_hce_var4_hce_dirts);
     ssc_data_t_get_matrix(vt, "csp_dtr_hce_var4_abs_abs", csp_dtr_hce_var4_abs_abs);
     ssc_data_t_get_matrix(vt, "csp_dtr_hce_var4_env_trans", csp_dtr_hce_var4_env_trans);
+
+    csp_dtr_hce_var1_field_fractions.at(0) = HCE_FieldFrac.at(0, 0);
+    csp_dtr_hce_var1_field_fractions.at(1) = HCE_FieldFrac.at(1, 0);
+    csp_dtr_hce_var1_field_fractions.at(2) = HCE_FieldFrac.at(2, 0);
+    csp_dtr_hce_var1_field_fractions.at(3) = HCE_FieldFrac.at(3, 0);
+
+    csp_dtr_hce_var2_field_fractions.at(0) = HCE_FieldFrac.at(0, 1);
+    csp_dtr_hce_var2_field_fractions.at(1) = HCE_FieldFrac.at(1, 1);
+    csp_dtr_hce_var2_field_fractions.at(2) = HCE_FieldFrac.at(2, 1);
+    csp_dtr_hce_var2_field_fractions.at(3) = HCE_FieldFrac.at(3, 1);
+
+    csp_dtr_hce_var3_field_fractions.at(0) = HCE_FieldFrac.at(0, 2);
+    csp_dtr_hce_var3_field_fractions.at(1) = HCE_FieldFrac.at(1, 2);
+    csp_dtr_hce_var3_field_fractions.at(2) = HCE_FieldFrac.at(2, 2);
+    csp_dtr_hce_var3_field_fractions.at(3) = HCE_FieldFrac.at(3, 2);
+
+    csp_dtr_hce_var4_field_fractions.at(0) = HCE_FieldFrac.at(0, 3);
+    csp_dtr_hce_var4_field_fractions.at(1) = HCE_FieldFrac.at(1, 3);
+    csp_dtr_hce_var4_field_fractions.at(2) = HCE_FieldFrac.at(2, 3);
+    csp_dtr_hce_var4_field_fractions.at(3) = HCE_FieldFrac.at(3, 3);
 
     csp_dtr_hce_optical_effs = Csp_dtr_hce_optical_effs(
         csp_dtr_hce_var1_field_fractions,
