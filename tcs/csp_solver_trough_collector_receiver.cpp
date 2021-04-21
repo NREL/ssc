@@ -478,7 +478,7 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
         troughInfo.m_tou = 1.;
         C_csp_collector_receiver::S_csp_cr_out_solver troughOutputs;
 
-        steady_state(weatherValues, htfInletState, defocus, troughOutputs, troughInfo);
+        steady_state(weatherValues, htfInletState, std::numeric_limits<double>::quiet_NaN(), defocus, troughOutputs, troughInfo);
         solved_params.m_T_htf_hot_des = m_T_field_out;
         solved_params.m_dP_sf = troughOutputs.m_dP_sf;
 
@@ -2422,7 +2422,7 @@ void C_csp_trough_collector_receiver::apply_component_defocus(double defocus /*-
 
 void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &weather,
 	const C_csp_solver_htf_1state &htf_state_in,
-	double field_control,
+    double W_dot_elec_to_CR_heat /*MWe*/, double field_control,
 	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
 	//C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
 	const C_csp_solver_sim_info &sim_info)
@@ -2658,7 +2658,7 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 
 void C_csp_trough_collector_receiver::steady_state(const C_csp_weatherreader::S_outputs &weather,
     const C_csp_solver_htf_1state &htf_state_in,
-    double field_control,
+    double W_dot_elec_to_CR_heat /*MWe*/, double field_control,
     C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
     const C_csp_solver_sim_info &sim_info)
 {
@@ -2680,7 +2680,7 @@ void C_csp_trough_collector_receiver::steady_state(const C_csp_weatherreader::S_
 
     do
     {
-        this->on(weather, htf_state_in, field_control, cr_out_solver, sim_info);
+        this->on(weather, htf_state_in, W_dot_elec_to_CR_heat, field_control, cr_out_solver, sim_info);
 
         // Calculate metric for deciding whether steady-state is reached
         ss_diff = 0.;
@@ -2839,7 +2839,7 @@ void C_csp_trough_collector_receiver::estimates(const C_csp_weatherreader::S_out
 	{
 		C_csp_collector_receiver::S_csp_cr_out_solver cr_out_solver;
 
-		on(weather, htf_state_in, 1.0, cr_out_solver, sim_info);
+		on(weather, htf_state_in, std::numeric_limits<double>::quiet_NaN(), 1.0, cr_out_solver, sim_info);
 
 		est_out.m_q_dot_avail = cr_out_solver.m_q_thermal;		//[MWt]
 		est_out.m_m_dot_avail = cr_out_solver.m_m_dot_salt_tot;	//[kg/hr]

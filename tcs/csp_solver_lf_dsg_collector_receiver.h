@@ -402,7 +402,7 @@ public:
 
 	virtual void on(const C_csp_weatherreader::S_outputs &weather,
 		const C_csp_solver_htf_1state &htf_state_in,
-		double field_control,
+        double W_dot_elec_to_CR_heat /*MWe*/, double field_control,
 		C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
 		const C_csp_solver_sim_info &sim_info);
 

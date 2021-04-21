@@ -758,6 +758,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
         bool is_pc_su_allowed = false;
         bool is_pc_sb_allowed = false;
 
+        double W_dot_elec_to_CR_heat = std::numeric_limits<double>::quiet_NaN();
+
 		// Optional rules for TOD Block Plant Control
 		if( mc_tou.mc_dispatch_params.m_is_block_dispatch )
 		{
@@ -821,6 +823,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
             // Check (sale) price multiplier
             // If greater than 1, the allow discharging
+
+            // Do we need
 
             double abce = 1.23;
 
@@ -1117,7 +1121,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			if (q_dot_cr_on > qmax || m_dot_cr_on > mmax)  // Receiver will need to be defocused
 			{
 				double df = fmin(qmax / q_dot_cr_on, mmax / m_dot_cr_on);
-				mc_collector_receiver.on(mc_weather.ms_outputs, mc_cr_htf_state_in, df, mc_cr_out_solver, mc_kernel.mc_sim_info);
+				mc_collector_receiver.on(mc_weather.ms_outputs, mc_cr_htf_state_in, W_dot_elec_to_CR_heat, df, mc_cr_out_solver, mc_kernel.mc_sim_info);
 				if (mc_cr_out_solver.m_q_thermal == 0.0)  // Receiver solution wasn't successful 
 					is_rec_su_allowed = false;
 			}
@@ -1772,7 +1776,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 q_pc_target, q_dot_pc_su_max, q_pc_sb,
                 q_pc_min, m_q_dot_pc_max, q_dot_pc_su_max,
                 m_m_dot_pc_max_startup, m_m_dot_pc_max, m_m_dot_pc_min,
-                1.E-3,
+                W_dot_elec_to_CR_heat, 1.E-3,
                 defocus_solved, is_op_mode_avail, is_turn_off_plant, is_turn_off_rec_su);
             if (is_turn_off_rec_su) {
                 is_rec_su_allowed = false;
@@ -2239,7 +2243,7 @@ bool C_csp_solver::C_operating_mode_core::solve(C_csp_solver* pc_csp_solver, boo
     double q_dot_pc_on_dispatch_target /*MWt*/, double q_dot_pc_startup /*MWt*/, double q_dot_pc_standby /*MWt*/,
     double q_dot_pc_min /*MWt*/, double q_dot_pc_max /*MWt*/, double q_dot_pc_startup_max /*MWt*/,
     double m_dot_pc_startup_max /*kg/hr*/, double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
-    double limit_comp_tol /*-*/,
+    double W_dot_elec_to_CR_heat /*MWe*/, double limit_comp_tol /*-*/,
     double& defocus_solved, bool& is_op_mode_avail /*-*/, bool& is_turn_off_plant, bool& is_turn_off_rec_su)
 {
     if (!pc_csp_solver->mc_collector_receiver.m_is_sensible_htf && m_is_sensible_htf_only) {
@@ -2288,6 +2292,7 @@ bool C_csp_solver::C_operating_mode_core::solve(C_csp_solver* pc_csp_solver, boo
 
     int solve_error_code = pc_csp_solver->solve_operating_mode(m_cr_mode, m_pc_mode, m_solver_mode,
         m_step_target_mode, q_dot_pc_solve, m_is_defocus, is_rec_outlet_to_hottank,
+        W_dot_elec_to_CR_heat,
         m_op_mode_name, defocus_solved);
 
     bool is_converged = true;
@@ -3610,14 +3615,14 @@ bool C_csp_solver::C_system_operating_modes::solve(C_system_operating_modes::E_o
     double q_dot_pc_on_target /*MWt*/, double q_dot_pc_startup /*MWt*/, double q_dot_pc_standby /*MWt*/,
     double q_dot_pc_min /*MWt*/, double q_dot_pc_max /*MWt*/, double q_dot_pc_startup_max /*MWt*/,
     double m_dot_pc_startup_max /*kg/hr*/, double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
-    double limit_comp_tol /*-*/,
+    double W_dot_elec_to_CR_heat /*MWe*/, double limit_comp_tol /*-*/,
     double& defocus_solved, bool& is_op_mode_avail /*-*/, bool& is_turn_off_plant, bool& is_turn_off_rec_su)
 {
     return get_pointer_to_op_mode(op_mode)->solve(pc_csp_solver, is_rec_outlet_to_hottank,
         q_dot_pc_on_target, q_dot_pc_startup, q_dot_pc_standby,
         q_dot_pc_min, q_dot_pc_max, q_dot_pc_startup_max,
         m_dot_pc_startup_max, m_dot_pc_max, m_dot_pc_min,
-        limit_comp_tol,
+        W_dot_elec_to_CR_heat, limit_comp_tol,
         defocus_solved, is_op_mode_avail, is_turn_off_plant, is_turn_off_rec_su);
 }
 
