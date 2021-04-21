@@ -114,7 +114,7 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
         total_tracking_power;
 
     util::matrix_t<ssc_number_t> field_fl_props, trough_loop_control, SCAInfoArray, SCADefocusArray,
-        K_cpnt, D_cpnt, L_cpnt, Type_cpnt, csp_dtr_sca_lengths;
+        K_cpnt, D_cpnt, L_cpnt, Type_cpnt, L_SCA;
 
     // csp_dtr_pwrb_nameplate
     ssc_data_t_get_number(data, "P_ref", &P_ref);
@@ -174,11 +174,11 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     ssc_data_t_get_number(data, "csp_dtr_hce_design_heat_loss_3", &csp_dtr_hce_design_heat_loss_3);
     ssc_data_t_get_number(data, "csp_dtr_hce_design_heat_loss_4", &csp_dtr_hce_design_heat_loss_4);
 
-    ssc_data_t_get_matrix(vt, "csp_dtr_sca_lengths", csp_dtr_sca_lengths);
-    csp_dtr_sca_length_1 = csp_dtr_sca_lengths.at(0);
-    csp_dtr_sca_length_2 = csp_dtr_sca_lengths.at(1);
-    csp_dtr_sca_length_3 = csp_dtr_sca_lengths.at(2);
-    csp_dtr_sca_length_4 = csp_dtr_sca_lengths.at(3);
+    ssc_data_t_get_matrix(vt, "L_SCA", L_SCA);
+    csp_dtr_sca_length_1 = L_SCA.at(0);
+    csp_dtr_sca_length_2 = L_SCA.at(1);
+    csp_dtr_sca_length_3 = L_SCA.at(2);
+    csp_dtr_sca_length_4 = L_SCA.at(3);
     cspdtr_loop_hce_heat_loss = Cspdtr_loop_hce_heat_loss(trough_loop_control, I_bn_des,
         csp_dtr_hce_design_heat_loss_1, csp_dtr_hce_design_heat_loss_2,
         csp_dtr_hce_design_heat_loss_3, csp_dtr_hce_design_heat_loss_4,
@@ -345,7 +345,7 @@ void Physical_Trough_Collector_Type_Equations(ssc_data_t data)
         csp_dtr_sca_calc_iam_1;
 
     util::matrix_t<ssc_number_t> IAMs_1,
-        csp_dtr_sca_ave_focal_lens, csp_dtr_sca_piping_dists,
+        Ave_Focal_Length, Distance_SCA,
         csp_dtr_sca_tracking_errors, csp_dtr_sca_geometry_effects, csp_dtr_sca_clean_reflectivities, csp_dtr_sca_mirror_dirts, csp_dtr_sca_general_errors;
 
     //// csp_dtr_sca_ap_length
@@ -355,10 +355,10 @@ void Physical_Trough_Collector_Type_Equations(ssc_data_t data)
     //ssc_data_t_set_number(data, "csp_dtr_sca_ap_length_1", csp_dtr_sca_ap_length_1);
 
     // csp_dtr_sca_ap_lengths
-    util::matrix_t<ssc_number_t> csp_dtr_sca_lengths, csp_dtr_sca_ncol_per_scas, csp_dtr_sca_ap_lengths;
-    ssc_data_t_get_matrix(vt, "csp_dtr_sca_lengths", csp_dtr_sca_lengths);
-    ssc_data_t_get_matrix(vt, "csp_dtr_sca_ncol_per_scas", csp_dtr_sca_ncol_per_scas);
-    csp_dtr_sca_ap_lengths = Csp_dtr_sca_ap_lengths(csp_dtr_sca_lengths, csp_dtr_sca_ncol_per_scas);
+    util::matrix_t<ssc_number_t> L_SCA, ColperSCA, csp_dtr_sca_ap_lengths;
+    ssc_data_t_get_matrix(vt, "L_SCA", L_SCA);
+    ssc_data_t_get_matrix(vt, "ColperSCA", ColperSCA);
+    csp_dtr_sca_ap_lengths = Csp_dtr_sca_ap_lengths(L_SCA, ColperSCA);
     ssc_data_t_set_matrix(data, "csp_dtr_sca_ap_lengths", csp_dtr_sca_ap_lengths);
 
     // csp_dtr_sca_calc_zenith
@@ -378,16 +378,16 @@ void Physical_Trough_Collector_Type_Equations(ssc_data_t data)
 
     // csp_dtr_sca_calc_end_gain
     util::matrix_t<ssc_number_t> csp_dtr_sca_calc_end_gains;
-    ssc_data_t_get_matrix(vt, "csp_dtr_sca_ave_focal_lens", csp_dtr_sca_ave_focal_lens);
-    ssc_data_t_get_matrix(vt, "csp_dtr_sca_piping_dists", csp_dtr_sca_piping_dists);
-    csp_dtr_sca_calc_end_gains = Csp_dtr_sca_calc_end_gains(csp_dtr_sca_ave_focal_lens, csp_dtr_sca_calc_theta, csp_dtr_sca_piping_dists);
+    ssc_data_t_get_matrix(vt, "Ave_Focal_Length", Ave_Focal_Length);
+    ssc_data_t_get_matrix(vt, "Distance_SCA", Distance_SCA);
+    csp_dtr_sca_calc_end_gains = Csp_dtr_sca_calc_end_gains(Ave_Focal_Length, csp_dtr_sca_calc_theta, Distance_SCA);
     ssc_data_t_set_matrix(data, "csp_dtr_sca_calc_end_gains", csp_dtr_sca_calc_end_gains);
 
     // csp_dtr_sca_calc_end_loss
     util::matrix_t<ssc_number_t> csp_dtr_sca_calc_end_losses;
     ssc_data_t_get_number(data, "nSCA", &nSCA);
-    csp_dtr_sca_calc_end_losses = Csp_dtr_sca_calc_end_losses(csp_dtr_sca_ave_focal_lens, csp_dtr_sca_calc_theta, nSCA,
-        csp_dtr_sca_calc_end_gains, csp_dtr_sca_lengths, csp_dtr_sca_ncol_per_scas);
+    csp_dtr_sca_calc_end_losses = Csp_dtr_sca_calc_end_losses(Ave_Focal_Length, csp_dtr_sca_calc_theta, nSCA,
+        csp_dtr_sca_calc_end_gains, L_SCA, ColperSCA);
     ssc_data_t_set_matrix(data, "csp_dtr_sca_calc_end_losses", csp_dtr_sca_calc_end_losses);
 
     // csp_dtr_sca_calc_sca_eff
