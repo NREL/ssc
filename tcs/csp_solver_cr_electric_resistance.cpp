@@ -162,7 +162,7 @@ void C_csp_cr_electric_resistance::startup(const C_csp_weatherreader::S_outputs&
 
 void C_csp_cr_electric_resistance::on(const C_csp_weatherreader::S_outputs& weather,
     const C_csp_solver_htf_1state& htf_state_in,
-    double W_dot_elec_to_CR_heat /*MWe*/, double field_control,
+    double q_dot_elec_to_CR_heat /*MWt*/, double field_control,
     C_csp_collector_receiver::S_csp_cr_out_solver& cr_out_solver,
     const C_csp_solver_sim_info& sim_info)
 {
