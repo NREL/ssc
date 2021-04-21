@@ -137,25 +137,38 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
 
     // single_loop_aperature
     ssc_data_t_get_matrix(vt, "trough_loop_control", trough_loop_control);
-    ssc_data_t_get_number(data, "csp_dtr_sca_aperture_1", &csp_dtr_sca_aperture_1);
-    ssc_data_t_get_number(data, "csp_dtr_sca_aperture_2", &csp_dtr_sca_aperture_2);
-    ssc_data_t_get_number(data, "csp_dtr_sca_aperture_3", &csp_dtr_sca_aperture_3);
-    ssc_data_t_get_number(data, "csp_dtr_sca_aperture_4", &csp_dtr_sca_aperture_4);
+    util::matrix_t<ssc_number_t> A_aperture;
+    ssc_data_t_get_matrix(vt, "A_aperture", A_aperture);
+    csp_dtr_sca_aperture_1 = A_aperture.at(0);
+    csp_dtr_sca_aperture_2 = A_aperture.at(1);
+    csp_dtr_sca_aperture_3 = A_aperture.at(2);
+    csp_dtr_sca_aperture_4 = A_aperture.at(3);
+    //ssc_data_t_get_number(data, "csp_dtr_sca_aperture_1", &csp_dtr_sca_aperture_1);
+    //ssc_data_t_get_number(data, "csp_dtr_sca_aperture_2", &csp_dtr_sca_aperture_2);
+    //ssc_data_t_get_number(data, "csp_dtr_sca_aperture_3", &csp_dtr_sca_aperture_3);
+    //ssc_data_t_get_number(data, "csp_dtr_sca_aperture_4", &csp_dtr_sca_aperture_4);
     single_loop_aperature = Single_loop_aperature(trough_loop_control, csp_dtr_sca_aperture_1,
         csp_dtr_sca_aperture_2, csp_dtr_sca_aperture_3, csp_dtr_sca_aperture_4);
     ssc_data_t_set_number(data, "single_loop_aperature", single_loop_aperature);
 
     // min_inner_diameter
-    ssc_data_t_get_number(data, "csp_dtr_hce_diam_absorber_inner_1", &csp_dtr_hce_diam_absorber_inner_1);
-    ssc_data_t_get_number(data, "csp_dtr_hce_diam_absorber_inner_2", &csp_dtr_hce_diam_absorber_inner_2);
-    ssc_data_t_get_number(data, "csp_dtr_hce_diam_absorber_inner_3", &csp_dtr_hce_diam_absorber_inner_3);
-    ssc_data_t_get_number(data, "csp_dtr_hce_diam_absorber_inner_4", &csp_dtr_hce_diam_absorber_inner_4);
+    util::matrix_t<ssc_number_t> D_2;
+    ssc_data_t_get_matrix(vt, "D_2", D_2);
+    csp_dtr_hce_diam_absorber_inner_1 = D_2.at(0,0);
+    csp_dtr_hce_diam_absorber_inner_2 = D_2.at(1,0);
+    csp_dtr_hce_diam_absorber_inner_3 = D_2.at(2,0);
+    csp_dtr_hce_diam_absorber_inner_4 = D_2.at(3,0);
+    //ssc_data_t_get_number(data, "csp_dtr_hce_diam_absorber_inner_1", &csp_dtr_hce_diam_absorber_inner_1);
+    //ssc_data_t_get_number(data, "csp_dtr_hce_diam_absorber_inner_2", &csp_dtr_hce_diam_absorber_inner_2);
+    //ssc_data_t_get_number(data, "csp_dtr_hce_diam_absorber_inner_3", &csp_dtr_hce_diam_absorber_inner_3);
+    //ssc_data_t_get_number(data, "csp_dtr_hce_diam_absorber_inner_4", &csp_dtr_hce_diam_absorber_inner_4);
     min_inner_diameter = Min_inner_diameter(trough_loop_control, csp_dtr_hce_diam_absorber_inner_1,
         csp_dtr_hce_diam_absorber_inner_2, csp_dtr_hce_diam_absorber_inner_3, csp_dtr_hce_diam_absorber_inner_4);
     ssc_data_t_set_number(data, "min_inner_diameter", min_inner_diameter);
 
     // cspdtr_loop_hce_heat_loss
     ssc_data_t_get_number(data, "I_bn_des", &I_bn_des);
+    // **THESE ARE OUTPUTS FROM ANOTHER FORM**
     ssc_data_t_get_number(data, "csp_dtr_hce_design_heat_loss_1", &csp_dtr_hce_design_heat_loss_1);
     ssc_data_t_get_number(data, "csp_dtr_hce_design_heat_loss_2", &csp_dtr_hce_design_heat_loss_2);
     ssc_data_t_get_number(data, "csp_dtr_hce_design_heat_loss_3", &csp_dtr_hce_design_heat_loss_3);
@@ -174,10 +187,12 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     ssc_data_t_set_number(data, "cspdtr_loop_hce_heat_loss", cspdtr_loop_hce_heat_loss);
 
     // loop_optical_efficiency
+    // **THESE ARE OUTPUTS FROM ANOTHER FORM**
     ssc_data_t_get_number(data, "csp_dtr_sca_calc_sca_eff_1", &csp_dtr_sca_calc_sca_eff_1);
     ssc_data_t_get_number(data, "csp_dtr_sca_calc_sca_eff_2", &csp_dtr_sca_calc_sca_eff_2);
     ssc_data_t_get_number(data, "csp_dtr_sca_calc_sca_eff_3", &csp_dtr_sca_calc_sca_eff_3);
     ssc_data_t_get_number(data, "csp_dtr_sca_calc_sca_eff_4", &csp_dtr_sca_calc_sca_eff_4);
+    // **THESE ARE OUTPUTS FROM ANOTHER FORM**
     ssc_data_t_get_number(data, "csp_dtr_hce_optical_eff_1", &csp_dtr_hce_optical_eff_1);
     ssc_data_t_get_number(data, "csp_dtr_hce_optical_eff_2", &csp_dtr_hce_optical_eff_2);
     ssc_data_t_get_number(data, "csp_dtr_hce_optical_eff_3", &csp_dtr_hce_optical_eff_3);
@@ -257,10 +272,16 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
 
     // fixed_land_area
     ssc_data_t_get_number(data, "Row_Distance", &Row_Distance);
-    ssc_data_t_get_number(data, "csp_dtr_sca_w_profile_1", &csp_dtr_sca_w_profile_1);
-    ssc_data_t_get_number(data, "csp_dtr_sca_w_profile_2", &csp_dtr_sca_w_profile_2);
-    ssc_data_t_get_number(data, "csp_dtr_sca_w_profile_3", &csp_dtr_sca_w_profile_3);
-    ssc_data_t_get_number(data, "csp_dtr_sca_w_profile_4", &csp_dtr_sca_w_profile_4);
+    util::matrix_t<ssc_number_t> W_aperture;
+    ssc_data_t_get_matrix(vt, "W_aperture", W_aperture);
+    csp_dtr_sca_w_profile_1 = W_aperture.at(0);
+    csp_dtr_sca_w_profile_2 = W_aperture.at(1);
+    csp_dtr_sca_w_profile_3 = W_aperture.at(2);
+    csp_dtr_sca_w_profile_4 = W_aperture.at(3);
+    //ssc_data_t_get_number(data, "csp_dtr_sca_w_profile_1", &csp_dtr_sca_w_profile_1);
+    //ssc_data_t_get_number(data, "csp_dtr_sca_w_profile_2", &csp_dtr_sca_w_profile_2);
+    //ssc_data_t_get_number(data, "csp_dtr_sca_w_profile_3", &csp_dtr_sca_w_profile_3);
+    //ssc_data_t_get_number(data, "csp_dtr_sca_w_profile_4", &csp_dtr_sca_w_profile_4);
     fixed_land_area = Fixed_land_area(total_aperture, Row_Distance, SCAInfoArray,
         csp_dtr_sca_w_profile_1, csp_dtr_sca_w_profile_2, csp_dtr_sca_w_profile_3, csp_dtr_sca_w_profile_4);
     ssc_data_t_set_number(data, "fixed_land_area", fixed_land_area);
