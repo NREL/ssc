@@ -67,8 +67,16 @@ static var_info _cm_vtab_mhk_wave[] = {
 	{ SSC_INPUT,			SSC_NUMBER,			"system_capacity",						"System Nameplate Capacity",										"kW",			"",				"MHKWave",			"?=0",						"",							"" },
     { SSC_INPUT,           SSC_ARRAY,           "number_hours",                "Number of hours in wave time series",                                        "",     "",                       "Weather Reader",      "?",                        "",                            "" },
     { SSC_INPUT,           SSC_ARRAY,           "number_records",                "Number of records in wave time series",                                        "",     "",                       "Weather Reader",      "?",                        "",                            "" },
+
+    //time stamps
+    /*
     { SSC_INPUT,           SSC_ARRAY,           "month",                        "Month",                                                          "",      "",                       "Weather Reader",      "?",                        "",                            "" },
-    { SSC_INPUT,          SSC_ARRAY,           "time_check",                        "Time check",                                                          "",      "",                       "Weather Reader",      "?",                        "",                            "" },
+    { SSC_INPUT,        SSC_ARRAY,       "year",                    "Year",                             "yr",     "",                      "Weather Reader",      "",                       "",               "" },
+    { SSC_INPUT,        SSC_ARRAY,       "day",                     "Day",                              "dy",     "1-365",                 "Weather Reader",      "",                       "",                          "" },
+    { SSC_INPUT,        SSC_ARRAY,       "hour",                    "Hour",                             "hr",     "0-23",                  "Weather Reader",      "",                       "",                          "" },
+    { SSC_INPUT,        SSC_ARRAY,       "minute",                  "Minute",                           "min",    "0-59",                  "Weather Reader",      "",                       "",                          "" },
+    */
+    //{ SSC_INPUT,          SSC_ARRAY,           "time_check",                        "Time check",                                                          "",      "",                       "Weather Reader",      "?",                        "",                            "" },
 
 	{ SSC_INPUT,			SSC_NUMBER,			"device_rated_power",				"Rated capacity of device",													"kW",			"",				"MHKWave",			"*",		"",						"" },
     { SSC_INPUT,			SSC_NUMBER,			"fixed_charge_rate",						"FCR from LCOE Cost page",									"",				"",             "MHKWave",         "?=1",                      "",				"" },
@@ -313,10 +321,9 @@ public:
             int number_hours = as_integer("number_hours");
             std::vector<double> wave_height_input = as_vector_double("wave_significant_height");
             std::vector<double> wave_period_input = as_vector_double("wave_energy_period");
-            std::vector<double> month = as_vector_double("month");
-            std::vector<double> hour = as_vector_double("time_check");
+            //std::vector<double> hour = as_vector_double("time_check");
             ssc_number_t* energy_hourly = allocate("hourly_energy", number_records);
-            ssc_number_t* energy_hourly_interp = allocate("gen", number_hours);
+            ssc_number_t* energy_hourly_gen = allocate("gen", number_records);
             ssc_number_t* sig_wave_height_index_mat = allocate("sig_wave_height_index_mat", number_records);
             ssc_number_t* sig_wave_height_index_location = allocate("sig_wave_height_index_location", number_records);
             ssc_number_t* sig_wave_height_index_mat_interp = allocate("sig_wave_height_index_mat_interp", number_hours);
@@ -329,6 +336,7 @@ public:
             double ts_significant_wave_height, ts_energy_period;
             double resource_vect_checker = 0;
             size_t iday = 0;
+            size_t ihour = 0;
             int hour_step = number_hours / number_records;
             /* Bilinear interpolation of power matrix for time series analysis*/
             double Q11, Q12, Q21, Q22;
@@ -376,18 +384,19 @@ public:
 
                 energy_hourly[i] = (ssc_number_t)(wave_power_matrix.at(size_t(sig_wave_height_index), size_t(energy_period_index))) * hour_step * (1 - total_loss / 100) * number_devices;
                 p_annual_energy_dist[size_t(sig_wave_height_index) * 22 + size_t(energy_period_index)] += energy_hourly[i];
-
-                energy_hourly_interp[i * 3] = energy_hourly[i] / hour_step;
-                energy_hourly_interp[i * 3 + 1] = energy_hourly[i]  / hour_step;
-                energy_hourly_interp[i * 3 + 2] = energy_hourly[i] / hour_step;
+                energy_hourly_gen[i] = energy_hourly[i];
+                //energy_hourly_interp[i * 3] = energy_hourly[i] / hour_step;
+                //energy_hourly_interp[i * 3 + 1] = energy_hourly[i]  / hour_step;
+                //energy_hourly_interp[i * 3 + 2] = energy_hourly[i] / hour_step;
                 iday = floor(double(i * 3) / 24);
+                ihour = fmod(i * 3, 24);
                 for (size_t m = 0; m < 366; m++) {
                     for (size_t h = 0; h < 9; h++) {
                         if (i == 0) {
                             p_annual_energy_dist_time[h * 366] = 3 * (h - 1);
                             p_annual_energy_dist_time[m] = m;
                         }
-                        if (iday == m && hour[i] == 3 * (h - 1) && m != 365) {
+                        if (iday == m && ihour == 3 * (h - 1) && m != 365) {
                             p_annual_energy_dist_time[h * 366 + m + 1] += energy_hourly[i];
                             break;
                         }

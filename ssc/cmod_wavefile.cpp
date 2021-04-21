@@ -49,16 +49,17 @@ static var_info _cm_wave_file_reader[] = {
 	{ SSC_OUTPUT,        SSC_STRING,      "data_source",             "Data source",                                 "",       "",                      "Weather Reader",      "use_specific_wf_wave=0",                        "",               "" },
 	{ SSC_OUTPUT,        SSC_STRING,      "notes",                   "Notes",                                       "",       "",                      "Weather Reader",      "use_specific_wf_wave=0",                        "",               "" },
 
-
+    //timestamps
+    /*
     { SSC_OUTPUT,        SSC_ARRAY,       "year",                    "Year",                             "yr",     "",                      "Weather Reader",      "wave_resource_model_choice=1",                       "",               "" },
     { SSC_OUTPUT,        SSC_ARRAY,       "month",                   "Month",                            "mn",     "1-12",                  "Weather Reader",      "wave_resource_model_choice=1",                       "",                          "" },
     { SSC_OUTPUT,        SSC_ARRAY,       "day",                     "Day",                              "dy",     "1-365",                 "Weather Reader",      "wave_resource_model_choice=1",                       "",                          "" },
     { SSC_OUTPUT,        SSC_ARRAY,       "hour",                    "Hour",                             "hr",     "0-23",                  "Weather Reader",      "wave_resource_model_choice=1",                       "",                          "" },
     { SSC_OUTPUT,        SSC_ARRAY,       "minute",                  "Minute",                           "min",    "0-59",                  "Weather Reader",      "wave_resource_model_choice=1",                       "",                          "" },
-
+    */
 // weather data records																					            
 	{ SSC_OUTPUT,        SSC_MATRIX,      "wave_resource_matrix",              "Frequency distribution of resource",                                  "m/s",   "",                       "Weather Reader",      "?",                        "",                            "" },
-    { SSC_OUTPUT,        SSC_ARRAY,       "time_check",                        "Time check",                                                          "",      "",                       "Weather Reader",      "?",                        "",                            "" },
+   // { SSC_OUTPUT,        SSC_ARRAY,       "time_check",                        "Time check",                                                          "",      "",                       "Weather Reader",      "?",                        "",                            "" },
    // { SSC_OUTPUT,        SSC_ARRAY,       "month",                        "Month",                                                          "",      "",                       "Weather Reader",      "?",                        "",                            "" },
 
     { SSC_OUTPUT,        SSC_ARRAY,       "wave_significant_height",           "Wave height time series data",                                        "m",     "",                       "Weather Reader",      "?",                        "",                            "" },
@@ -448,7 +449,7 @@ public:
             ssc_number_t* mat = allocate("wave_resource_matrix", nrows, ncols);
             //size_t numberRecords = wave_dp->nrecords();
             ssc_number_t* month = allocate("month", numberRecords);
-            ssc_number_t* timecheck = allocate("time_check", numberRecords);
+            std::vector<ssc_number_t> timecheck(numberRecords);
             timecheck[0] = 0;
             ssc_number_t* wave_heights = allocate("wave_significant_height", numberRecords);
             ssc_number_t* wave_periods = allocate("wave_energy_period", numberRecords);
@@ -470,7 +471,7 @@ public:
                 timecheck[r] = (ssc_number_t)std::stod(values[hour_index]);
                 if (r > 0) {
                     if (timecheck[r] - timecheck[r - 1] != hourdiff && timecheck[r] != 0) {
-                        //throw exec_error("wave_file_reader", "Time steps are nonuniform");
+                        throw exec_error("wave_file_reader", "Time steps are nonuniform");
                         timecheck[r] = 999;
                     }
                 }
