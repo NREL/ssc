@@ -82,7 +82,7 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
         m_dot_htfmin, fluid_dens_inlet_temp,
         radio_sm_or_area, specified_solar_multiple, specified_total_aperture,
         tshours,
-        Row_Distance, csp_dtr_sca_w_profile_1, csp_dtr_sca_w_profile_2, csp_dtr_sca_w_profile_3, csp_dtr_sca_w_profile_4,
+        Row_Distance,
         non_solar_field_land_area_multiplier,
         nSCA, SCA_drives_elec;
 
@@ -247,12 +247,7 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     ssc_data_t_get_number(data, "Row_Distance", &Row_Distance);
     util::matrix_t<ssc_number_t> W_aperture;
     ssc_data_t_get_matrix(vt, "W_aperture", W_aperture);
-    csp_dtr_sca_w_profile_1 = W_aperture.at(0);
-    csp_dtr_sca_w_profile_2 = W_aperture.at(1);
-    csp_dtr_sca_w_profile_3 = W_aperture.at(2);
-    csp_dtr_sca_w_profile_4 = W_aperture.at(3);
-    fixed_land_area = Fixed_land_area(total_aperture, Row_Distance, SCAInfoArray,
-        csp_dtr_sca_w_profile_1, csp_dtr_sca_w_profile_2, csp_dtr_sca_w_profile_3, csp_dtr_sca_w_profile_4);
+    fixed_land_area = Fixed_land_area(total_aperture, Row_Distance, SCAInfoArray, W_aperture);
     ssc_data_t_set_number(data, "fixed_land_area", fixed_land_area);
 
     // total_land_area

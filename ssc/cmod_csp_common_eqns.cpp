@@ -731,12 +731,11 @@ double Total_required_aperture_for_sm1(double q_pb_design, double I_bn_des, doub
 }
 
 double Fixed_land_area(double total_aperture, double row_distance, util::matrix_t<ssc_number_t> sca_info_array,
-    double csp_dtr_sca_w_profile_1, double csp_dtr_sca_w_profile_2, double csp_dtr_sca_w_profile_3, double csp_dtr_sca_w_profile_4)
+    util::matrix_t<ssc_number_t> W_aperture)
 {
-    std::vector<double> collector_widths = {csp_dtr_sca_w_profile_1, csp_dtr_sca_w_profile_2, csp_dtr_sca_w_profile_3, csp_dtr_sca_w_profile_4};
     double max_collector_width = 0.;
     for (int i = 0; i < sca_info_array.nrows(); i++) {
-        max_collector_width = std::max(max_collector_width, collector_widths.at(sca_info_array.at(i, 0) - 1));
+        max_collector_width = std::max(max_collector_width, W_aperture.at(sca_info_array.at(i, 0) - 1));
     }
 
     return total_aperture * row_distance / max_collector_width * 0.0002471;
