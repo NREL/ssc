@@ -1054,19 +1054,20 @@ util::matrix_t<ssc_number_t> Csp_dtr_hce_design_heat_losses(
 
 util::matrix_t<ssc_number_t> Csp_dtr_hce_optical_effs(
     const util::matrix_t<ssc_number_t>& HCE_FieldFrac,
-    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var1_bellows_shadowings,
+    const util::matrix_t<ssc_number_t>& Shadowing,
+    //const util::matrix_t<ssc_number_t>& csp_dtr_hce_var1_bellows_shadowings,
     const util::matrix_t<ssc_number_t>& csp_dtr_hce_var1_hce_dirts,
     const util::matrix_t<ssc_number_t>& csp_dtr_hce_var1_abs_abs,
     const util::matrix_t<ssc_number_t>& csp_dtr_hce_var1_env_trans,
-    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var2_bellows_shadowings,
+    //const util::matrix_t<ssc_number_t>& csp_dtr_hce_var2_bellows_shadowings,
     const util::matrix_t<ssc_number_t>& csp_dtr_hce_var2_hce_dirts,
     const util::matrix_t<ssc_number_t>& csp_dtr_hce_var2_abs_abs,
     const util::matrix_t<ssc_number_t>& csp_dtr_hce_var2_env_trans,
-    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var3_bellows_shadowings,
+    //const util::matrix_t<ssc_number_t>& csp_dtr_hce_var3_bellows_shadowings,
     const util::matrix_t<ssc_number_t>& csp_dtr_hce_var3_hce_dirts,
     const util::matrix_t<ssc_number_t>& csp_dtr_hce_var3_abs_abs,
     const util::matrix_t<ssc_number_t>& csp_dtr_hce_var3_env_trans,
-    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var4_bellows_shadowings,
+    //const util::matrix_t<ssc_number_t>& csp_dtr_hce_var4_bellows_shadowings,
     const util::matrix_t<ssc_number_t>& csp_dtr_hce_var4_hce_dirts,
     const util::matrix_t<ssc_number_t>& csp_dtr_hce_var4_abs_abs,
     const util::matrix_t<ssc_number_t>& csp_dtr_hce_var4_env_trans) {
@@ -1076,22 +1077,22 @@ util::matrix_t<ssc_number_t> Csp_dtr_hce_optical_effs(
     util::matrix_t<ssc_number_t> result(n);
     for (int i = 0; i < n; i++) {
         result.at(i) = HCE_FieldFrac.at(i, 0)
-            * csp_dtr_hce_var1_bellows_shadowings.at(i)
+            * Shadowing.at(i, 0)
             * csp_dtr_hce_var1_hce_dirts.at(i)
             * csp_dtr_hce_var1_abs_abs.at(i)
             * csp_dtr_hce_var1_env_trans.at(i)
             + HCE_FieldFrac.at(i, 1)
-            * csp_dtr_hce_var2_bellows_shadowings.at(i)
+            * Shadowing.at(i, 0)
             * csp_dtr_hce_var2_hce_dirts.at(i)
             * csp_dtr_hce_var2_abs_abs.at(i)
             * csp_dtr_hce_var2_env_trans.at(i)
             + HCE_FieldFrac.at(i, 2)
-            * csp_dtr_hce_var3_bellows_shadowings.at(i)
+            * Shadowing.at(i, 0)
             * csp_dtr_hce_var3_hce_dirts.at(i)
             * csp_dtr_hce_var3_abs_abs.at(i)
             * csp_dtr_hce_var3_env_trans.at(i)
             + HCE_FieldFrac.at(i, 3)
-            * csp_dtr_hce_var4_bellows_shadowings.at(i)
+            * Shadowing.at(i, 0)
             * csp_dtr_hce_var4_hce_dirts.at(i)
             * csp_dtr_hce_var4_abs_abs.at(i)
             * csp_dtr_hce_var4_env_trans.at(i);
