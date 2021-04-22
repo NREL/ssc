@@ -13,55 +13,8 @@ void Physical_Trough_System_Design_Equations(ssc_data_t data)
         throw std::runtime_error("ssc_data_t data invalid");
     }
 
-    double P_ref, gross_net_conversion_factor, csp_dtr_pwrb_nameplate,
-        eta_ref, q_pb_design,
-        radio_sm_or_area, specified_solar_multiple, total_aperture, total_required_aperture_for_SM1, solar_mult,
-        q_rec_des,
-        tshours, tshours_sf,
-        specified_total_aperture, single_loop_aperture, nloops;
-/*
-    // csp_dtr_pwrb_nameplate
-    ssc_data_t_get_number(data, "P_ref", &P_ref);
-    ssc_data_t_get_number(data, "gross_net_conversion_factor", &gross_net_conversion_factor);
-    csp_dtr_pwrb_nameplate = Nameplate(P_ref, gross_net_conversion_factor);
-    ssc_data_t_set_number(data, "csp_dtr_pwrb_nameplate", csp_dtr_pwrb_nameplate);
-
-    // q_pb_design
-    //ssc_data_t_get_number(data, "P_ref", &P_ref);
-    ssc_data_t_get_number(data, "eta_ref", &eta_ref);
-    q_pb_design = Q_pb_design(P_ref, eta_ref);
-    ssc_data_t_set_number(data, "q_pb_design", q_pb_design);
-
-    // solar_mult
-    ssc_data_t_get_number(data, "radio_sm_or_area", &radio_sm_or_area);
-    ssc_data_t_get_number(data, "specified_solar_multiple", &specified_solar_multiple);
-    ssc_data_t_get_number(data, "total_aperture", &total_aperture);
-    ssc_data_t_get_number(data, "total_required_aperture_for_SM1", &total_required_aperture_for_SM1);
-    solar_mult = Solar_mult(static_cast<int>(radio_sm_or_area), specified_solar_multiple, total_aperture, total_required_aperture_for_SM1);
-    ssc_data_t_set_number(data, "solar_mult", solar_mult);
-
-    // q_rec_des
-    ssc_data_t_get_number(data, "solar_mult", &solar_mult);
-    ssc_data_t_get_number(data, "q_pb_design", &q_pb_design);
-    q_rec_des = Q_rec_des(solar_mult, q_pb_design);
-    ssc_data_t_set_number(data, "q_rec_des", q_rec_des);
-
-    // tshours_sf
-    ssc_data_t_get_number(data, "tshours", &tshours);
-    ssc_data_t_get_number(data, "solar_mult", &solar_mult);
-    tshours_sf = Tshours_sf(tshours, solar_mult);
-    ssc_data_t_set_number(data, "tshours_sf", tshours_sf);
-
-    // nloops
-    ssc_data_t_get_number(data, "radio_sm_or_area", &radio_sm_or_area);
-    ssc_data_t_get_number(data, "specified_solar_multiple", &specified_solar_multiple);
-    ssc_data_t_get_number(data, "total_required_aperture_for_SM1", &total_required_aperture_for_SM1);
-    ssc_data_t_get_number(data, "specified_total_aperture", &specified_total_aperture);
-    ssc_data_t_get_number(data, "single_loop_aperature", &single_loop_aperture);
-    nloops = Nloops(static_cast<int>(radio_sm_or_area), specified_solar_multiple, total_required_aperture_for_SM1, specified_total_aperture, single_loop_aperture);
-    ssc_data_t_set_number(data, "nloops", nloops);
-*/
-    double x = 1.;
+    double x;
+    x = 1.;
 }
 
 void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
@@ -111,7 +64,8 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
         total_tracking_power;
 
     util::matrix_t<ssc_number_t> field_fl_props, trough_loop_control, SCAInfoArray, SCADefocusArray,
-        K_cpnt, D_cpnt, L_cpnt, Type_cpnt, L_SCA;
+        K_cpnt, D_cpnt, L_cpnt, Type_cpnt, L_SCA,
+        TrackingError, GeomEffects, Rho_mirror_clean, Dirt_mirror, Error;
 
     // csp_dtr_pwrb_nameplate
     ssc_data_t_get_number(data, "P_ref", &P_ref);
@@ -159,12 +113,23 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
         L_SCA, A_aperture);
     ssc_data_t_set_number(data, "cspdtr_loop_hce_heat_loss", cspdtr_loop_hce_heat_loss);
 
+    // csp_dtr_sca_calc_sca_eff
+    util::matrix_t<ssc_number_t> csp_dtr_sca_calc_sca_effs;
+    ssc_data_t_get_matrix(vt, "TrackingError", TrackingError);
+    ssc_data_t_get_matrix(vt, "GeomEffects", GeomEffects);
+    ssc_data_t_get_matrix(vt, "Rho_mirror_clean", Rho_mirror_clean);
+    ssc_data_t_get_matrix(vt, "Dirt_mirror", Dirt_mirror);
+    ssc_data_t_get_matrix(vt, "Error", Error);
+    csp_dtr_sca_calc_sca_effs = Csp_dtr_sca_calc_sca_effs(TrackingError, GeomEffects,
+        Rho_mirror_clean, Dirt_mirror, Error);
+    ssc_data_t_set_matrix(data, "csp_dtr_sca_calc_sca_effs", csp_dtr_sca_calc_sca_effs);
+
     // loop_optical_efficiency
-    // **THESE ARE OUTPUTS FROM ANOTHER FORM**
-    ssc_data_t_get_number(data, "csp_dtr_sca_calc_sca_eff_1", &csp_dtr_sca_calc_sca_eff_1);
-    ssc_data_t_get_number(data, "csp_dtr_sca_calc_sca_eff_2", &csp_dtr_sca_calc_sca_eff_2);
-    ssc_data_t_get_number(data, "csp_dtr_sca_calc_sca_eff_3", &csp_dtr_sca_calc_sca_eff_3);
-    ssc_data_t_get_number(data, "csp_dtr_sca_calc_sca_eff_4", &csp_dtr_sca_calc_sca_eff_4);
+    csp_dtr_sca_calc_sca_eff_1 = csp_dtr_sca_calc_sca_effs.at(0);
+    csp_dtr_sca_calc_sca_eff_2 = csp_dtr_sca_calc_sca_effs.at(1);
+    csp_dtr_sca_calc_sca_eff_3 = csp_dtr_sca_calc_sca_effs.at(2);
+    csp_dtr_sca_calc_sca_eff_4 = csp_dtr_sca_calc_sca_effs.at(3);
+
     // **THESE ARE OUTPUTS FROM ANOTHER FORM**
     ssc_data_t_get_number(data, "csp_dtr_hce_optical_eff_1", &csp_dtr_hce_optical_eff_1);
     ssc_data_t_get_number(data, "csp_dtr_hce_optical_eff_2", &csp_dtr_hce_optical_eff_2);
@@ -309,8 +274,7 @@ void Physical_Trough_Collector_Type_Equations(ssc_data_t data)
         csp_dtr_sca_calc_iam_1;
 
     util::matrix_t<ssc_number_t> IAMs_1,
-        Ave_Focal_Length, Distance_SCA,
-        TrackingError, GeomEffects, Rho_mirror_clean, Dirt_mirror, Error;
+        Ave_Focal_Length, Distance_SCA;
 
     // csp_dtr_sca_ap_lengths
     util::matrix_t<ssc_number_t> L_SCA, ColperSCA, csp_dtr_sca_ap_lengths;
@@ -347,17 +311,6 @@ void Physical_Trough_Collector_Type_Equations(ssc_data_t data)
     csp_dtr_sca_calc_end_losses = Csp_dtr_sca_calc_end_losses(Ave_Focal_Length, csp_dtr_sca_calc_theta, nSCA,
         csp_dtr_sca_calc_end_gains, L_SCA, ColperSCA);
     ssc_data_t_set_matrix(data, "csp_dtr_sca_calc_end_losses", csp_dtr_sca_calc_end_losses);
-
-    // csp_dtr_sca_calc_sca_eff
-    util::matrix_t<ssc_number_t> csp_dtr_sca_calc_sca_effs;
-    ssc_data_t_get_matrix(vt, "TrackingError", TrackingError);
-    ssc_data_t_get_matrix(vt, "GeomEffects", GeomEffects);
-    ssc_data_t_get_matrix(vt, "Rho_mirror_clean", Rho_mirror_clean);
-    ssc_data_t_get_matrix(vt, "Dirt_mirror", Dirt_mirror);
-    ssc_data_t_get_matrix(vt, "Error", Error);
-    csp_dtr_sca_calc_sca_effs = Csp_dtr_sca_calc_sca_effs(TrackingError, GeomEffects,
-        Rho_mirror_clean, Dirt_mirror, Error);
-    ssc_data_t_set_matrix(data, "csp_dtr_sca_calc_sca_effs", csp_dtr_sca_calc_sca_effs);
 
     // csp_dtr_sca_calc_latitude
     csp_dtr_sca_calc_latitude = Csp_dtr_sca_calc_latitude(lat);
