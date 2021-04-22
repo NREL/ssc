@@ -55,11 +55,12 @@
 
 static var_info _cm_vtab_mhk_wave[] = {
 	//   VARTYPE			DATATYPE			NAME									LABEL																UNITS           META            GROUP              REQUIRED_IF					CONSTRAINTS					UI_HINTS	
-	{ SSC_INPUT,            SSC_NUMBER,         "wave_resource_model_choice",           "Hourly or JPD wave resource data",                                 "0/1",             "",             "MHKWave",          "",                         "INTEGER",                  "" },
-    { SSC_INPUT,			SSC_MATRIX,			"wave_resource_matrix",					"Frequency distribution of wave resource as a function of Hs and Te","",			"",             "MHKWave",			"wave_resource_model_choice=0",						"",							"" },
+	{ SSC_INPUT,            SSC_NUMBER,         "wave_resource_model_choice",           "Hourly or JPD wave resource data",                                 "0/1",             "",             "MHKWave",          "?=1",                         "INTEGER",                  "" },
+    { SSC_INPUT,			SSC_MATRIX,			"wave_resource_matrix",					"Frequency distribution of wave resource as a function of Hs and Te","",			"",             "MHKWave",			"?",						"",							"" },
+    { SSC_INPUT,         SSC_TABLE,       "wave_resource_data",                   "wave resource data from memory",     "",      "",       "MHKWave",                  "?",                                            "",                "" },
     //{ SSC_INPUT,            SSC_MATRIX,         "wave_resource_time_series",            "Time series (3 hour?) wave resource data",                         "",             "",             "MHKWave",          "wave_resource_model_choice=1","",                      "" },
-    { SSC_INPUT,            SSC_ARRAY,          "wave_significant_height",              "Significant wave height time series data",                         "m",            "",             "MHKWave",          "wave_resource_model_choice=1", "",                 ""   },
-    { SSC_INPUT,            SSC_ARRAY,          "wave_energy_period",                   "Wave period time series data",                                     "s",            "",             "MHKWave",          "wave_resource_model_choice=1", "",                 ""   },
+    { SSC_INPUT,            SSC_ARRAY,          "wave_significant_height",              "Significant wave height time series data",                         "m",            "",             "MHKWave",          "?", "",                 ""   },
+    { SSC_INPUT,            SSC_ARRAY,          "wave_energy_period",                   "Wave period time series data",                                     "s",            "",             "MHKWave",          "?", "",                 ""   },
     { SSC_INPUT,			SSC_MATRIX,			"wave_power_matrix",					"Wave Power Matrix",												"",				"",             "MHKWave",			"*",						"",							"" },
 //	{ SSC_INPUT,			SSC_NUMBER,			"annual_energy_loss",					"Total energy losses",												"%",			"",             "MHKWave",			"?=0",						"",							"" },
 	//{ SSC_INPUT,			SSC_NUMBER,			"calculate_capacity",					"Calculate capacity outside UI?",									"0/1",			"",             "MHKWave",          "?=1",                      "INTEGER,MIN=0,MAX=1",      "" },
@@ -135,6 +136,233 @@ static var_info _cm_vtab_mhk_wave[] = {
     var_info_invalid
 };
 
+class wave_data_provider
+{
+public:
+    enum {
+        YEAR, MONTH, DAY, HOUR, MINUTE,
+        GHI, DNI, DHI, POA,
+        TDRY, TWET, TDEW,
+        WSPD, WDIR,
+        RH, PRES, SNOW, ALB, AOD,
+        _MAXCOL_
+    };
+
+    //wave_data_provider();
+    //virtual ~wave_data_provider();
+
+    std::string name;
+    std::string city;
+    std::string state;
+    std::string country;
+    std::string bathymetry;
+    std::string sea_bed;
+    std::string data_source;
+    std::string notes;
+    int year = 0;
+    double lat = 0;
+    double lon = 0;
+    double tz  = 0;
+    double data_type = 1;
+    std::string nearby_buoy_number;
+    double average_power_flux = 0;
+
+    std::vector<int> types() { return m_dataid; }
+    std::vector<double> wave_heights() { return m_sigwaveheight; }
+    std::vector<double> wave_periods() { return m_waveperiod; }
+    //std::vector<double> wave_matrix() { return m_wave_resource_matrix_data; }
+    util::matrix_t<double> wave_matrix() { return m_wave_resource_matrix_data; }
+    std::vector<double> relativeHumidity() { return m_relativeHumidity; }
+
+
+
+    //virtual bool read_line(std::vector<double>& values) = 0;
+    //virtual size_t nrecords() = 0;
+    size_t nrecords() { return m_nRecords; }
+
+
+
+    std::string error() { return m_errorMsg; }
+
+    bool has_message() { return m_errorMsg.size() > 0; }
+    std::string message() { return m_errorMsg; }
+
+
+
+    //bool check_hour_of_year(int hour, int line);
+    //std::vector<double> read(int datatype, double* wave_height[nrecords], double* wave_period);
+    //std::vector<double> read_wave_height(int datatype,)
+    // virtual functions specific to weather data source
+    /// check if the data is available from weather file
+
+
+    /// reads one more record
+    //virtual bool read(weather_record* r) = 0;
+
+protected:
+    /// index of resource type (temp=1,pres=2,speed=3,dir=4) for each measurement height
+    std::vector<int> m_dataid;
+    size_t m_nRecords = 2920;
+    /// measurement height corresponding to each column header; same size as m_dataid
+    std::vector<double> m_sigwaveheight;
+    std::vector<double> m_waveperiod;
+    util::matrix_t<double> m_wave_resource_matrix_data;
+    //ssc_number_t* m_wave_resource_matrix_data;
+    //std::vector<double> m_wave_resource_matrix_data;
+    //std::vector<double> m_resourcematrix;
+    std::vector<double> m_relativeHumidity;
+    std::string m_errorMsg;
+
+    //bool find_closest(int& closest_index, int id, int ncols, double requested_height, int index_to_exclude = -1);
+    //bool can_interpolate(int index1, int index2, int ncols, double requested_height);
+
+};
+
+class wavedata : public wave_data_provider
+{
+    size_t irecord;
+    util::matrix_t<double> wave_resource_matrix_data;
+    std::string stdErrorMsg;
+public:
+    explicit wavedata(var_data* data_table);
+
+
+    size_t nrecords();
+
+    ssc_number_t get_number(var_data* v, const char* name);
+
+    ssc_number_t* get_vector(var_data* v, const char* name, size_t* len);
+    std::string get_string(var_data* v, const char* name);
+
+    bool read_line(std::vector<double>& values);
+
+    std::string get_stdErrorMsg() { return stdErrorMsg; };
+};
+
+wavedata::wavedata(var_data* data_table)
+{
+    irecord = 0;
+
+    stdErrorMsg = "wave data must be an SSC table variable with fields: "
+        "(string): name, city, state, country, sea_bed, data_source, notes, "
+        "(number): lat, lon, nearby_buoy_number, average_power_flux, bathymetry, tz, "
+        "(array): wave_significant_height, wave_energy_period";
+
+    if (data_table->type != SSC_TABLE)
+    {
+        m_errorMsg = stdErrorMsg;
+        return;
+    }
+
+
+
+    lat = get_number(data_table, "lat");
+    lon = get_number(data_table, "lon");
+    name = get_string(data_table, "name");
+    city = get_string(data_table, "city");
+    state = get_string(data_table, "state");
+    country = get_string(data_table, "country");
+    bathymetry = get_string(data_table, "bathymetry");
+    sea_bed = get_string(data_table, "sea_bed");
+    tz = get_number(data_table, "tz");
+    data_source = get_string(data_table, "data_source");
+    notes = get_string(data_table, "notes");
+    if(data_table->table.lookup("data_type"))
+        data_type = get_number(data_table, "data_type"); //1-time series data, 0- jpd
+    nearby_buoy_number = get_string(data_table, "nearby_buoy_number");
+    average_power_flux = get_number(data_table, "average_power_flux");
+    //bathymetry = get_number(data_table, "bathymetry"); return string?
+    if (data_type == 1) {
+        size_t len = 0;
+        if (data_table->table.lookup("wave_significant_height") || data_table->table.lookup("wave_energy_period")) {
+            m_errorMsg = util::format("Must specify significant wave height and wave energy period inputs");
+            return;
+        }
+        ssc_number_t* p = get_vector(data_table, "wave_significant_height", &len);
+        for (size_t i = 0; i < len; i++)
+            m_sigwaveheight.push_back((double)p[i]);
+
+        p = get_vector(data_table, "wave_energy_period", &len);
+        for (size_t i = 0; i < len; i++)
+            m_waveperiod.push_back((double)p[i]);
+        size_t wave_size = m_waveperiod.size();
+        size_t height_size = m_sigwaveheight.size();
+        if (m_waveperiod.size() != m_sigwaveheight.size()) {
+            m_errorMsg = util::format("number of wave height entries must be same as number of wave period entries");
+            return;
+        }
+    }
+    else if (data_type == 0) {
+        if (var_data* D = data_table->table.lookup("wave_resource_matrix"))
+            if (D->type == SSC_MATRIX)
+                m_wave_resource_matrix_data = D->num;
+
+    }
+    else {
+        m_errorMsg = util::format("must define data type to specify whether wave resource data is in a time series or joint probability distribution");
+        return;
+    }
+
+
+
+}
+
+size_t wavedata::nrecords()
+{
+    if (data_type == 1) {
+        m_nRecords = m_sigwaveheight.size();
+        size_t m_nRecords_period = m_waveperiod.size();
+        if (m_nRecords == m_nRecords_period)
+            return m_sigwaveheight.size(); 
+        else
+            return std::numeric_limits<ssc_number_t>::quiet_NaN();
+    }
+    else {
+        m_nRecords = wave_resource_matrix_data.nrows();
+        if (m_nRecords == 21)
+            return wave_resource_matrix_data.nrows();
+        else
+            return std::numeric_limits<ssc_number_t>::quiet_NaN();
+    }
+}
+
+ssc_number_t wavedata::get_number(var_data* v, const char* name)
+{
+    if (var_data* value = v->table.lookup(name))
+    {
+        if (value->type == SSC_NUMBER)
+            return value->num;
+    }
+
+    return std::numeric_limits<ssc_number_t>::quiet_NaN();
+}
+
+std::string wavedata::get_string(var_data* v, const char* name)
+{
+    if (var_data* value = v->table.lookup(name))
+    {
+        if (value->type == SSC_STRING)
+            return name;
+    }
+
+    return "none";
+}
+
+ssc_number_t* wavedata::get_vector(var_data* v, const char* name, size_t* len)
+{
+    ssc_number_t* p = 0;
+    *len = 0;
+    if (var_data* value = v->table.lookup(name))
+    {
+        if (value->type == SSC_ARRAY)
+        {
+            *len = value->num.length();
+            p = value->num.data();
+        }
+    }
+    return p;
+}
+
 class cm_mhk_wave : public compute_module
 {
 private:
@@ -165,7 +393,29 @@ public:
         int number_devices = as_integer("number_devices");
         
         //Read and store wave resource and power matrix as a 2D matrix of vectors:
-        util::matrix_t<double>  wave_resource_matrix = as_matrix("wave_resource_matrix");
+        util::matrix_t<double>  wave_resource_matrix;
+        smart_ptr<wave_data_provider>::ptr wave_dp;
+        if (is_assigned("wave_resource_data")) {
+            wave_dp = std::unique_ptr<wave_data_provider>(new wavedata(lookup("wave_resource_data")));
+            if (!wave_dp->error().empty()) {
+                throw exec_error("mhk_wave", wave_dp->error());
+                return;
+            }
+        }
+        if (is_assigned("wave_resource_matrix"))
+            wave_resource_matrix = as_matrix("wave_resource_matrix");
+        else if (!is_assigned("wave_resource_matrix") && as_integer("wave_resource_model_choice") == 0) {
+            wave_resource_matrix = wave_dp->wave_matrix();
+            size_t table_records = wave_dp->nrecords();
+            if (table_records != 21)  //21 rows for jpd matrix
+                throw exec_error("mhk_wave", "Wave resource data from table must be 21x22 matrix");
+            
+        }
+        else if (is_assigned("wave_resource_matrix") && as_integer("wave_resource_model_choice") == 1)
+            throw exec_error("mhk_wave", "Resource model is set to use JPD and no JPD is given. Change wave_resource_model_choice to 0 to use JPD data");
+
+            
+            
 
         if(as_integer("wave_resource_model_choice")==0) {
 
@@ -220,7 +470,7 @@ public:
             if (resource_vect_checker < 99.5)
                 throw exec_error("mhk_wave", "Probability vector does not add up to 100%.");
 
-
+            //Can probably take all this stuff out
             double wave_resource_start_period = 0;
             double wave_resource_start_height = 0;
             double wave_resource_end_period = 0;
@@ -310,17 +560,31 @@ public:
             assign("wave_power_end_height", var_data((ssc_number_t)wave_power_end_height));
             assign("wave_power_start_period", var_data((ssc_number_t)wave_power_start_period));
             assign("wave_power_end_period", var_data((ssc_number_t)wave_power_end_period));
+            //End of start height and period to potentially remove
 
-            capacity_factor = annual_energy / (device_rated_capacity * number_devices * 8760);
 
         }
 
         if (as_integer("wave_resource_model_choice")==1) {
 
-            int number_records = as_integer("number_records");
-            int number_hours = as_integer("number_hours");
-            std::vector<double> wave_height_input = as_vector_double("wave_significant_height");
-            std::vector<double> wave_period_input = as_vector_double("wave_energy_period");
+            int number_records = 2920;
+            int number_hours = 8760;
+            std::vector<double> wave_height_input;
+            std::vector<double> wave_period_input;
+            if (is_assigned("wave_significant_height") && is_assigned("wave_energy_period")) {
+                number_records = as_integer("number_records");
+                number_hours = as_integer("number_hours");
+                wave_height_input = as_vector_double("wave_significant_height");
+                wave_period_input = as_vector_double("wave_energy_period");
+            }
+            else if (!is_assigned("wave_significant_height") && !is_assigned("wave_energy_period") && is_assigned("wave_resource_data")) {
+                number_records = wave_dp->nrecords();
+                if(number_records == std::numeric_limits<ssc_number_t>::quiet_NaN())
+                    throw exec_error("mhk_wave", "Table definitions of wave height and wave period are of different array sizes");
+                number_hours = number_records * 3; //always 3 hour data from wave api calls
+                wave_height_input = wave_dp->wave_heights();
+                wave_period_input = wave_dp->wave_periods();
+            }
             //std::vector<double> hour = as_vector_double("time_check");
             ssc_number_t* energy_hourly = allocate("hourly_energy", number_records);
             ssc_number_t* energy_hourly_gen = allocate("gen", number_records);
@@ -339,6 +603,7 @@ public:
             size_t ihour = 0;
             int hour_step = number_hours / number_records;
             /* Bilinear interpolation of power matrix for time series analysis*/
+            /*
             double Q11, Q12, Q21, Q22;
             double x1, x2, y1, y2;
             double a0, a1, a2, a3;
@@ -355,7 +620,7 @@ public:
             a1 = (Q11 * y2) / ((x1 - x2) * (y2 - y1)) + (Q12 * y1) / ((x1 - x2) * (y1 - y2)) + (Q21 * y2) / ((x1 - x2) * (y1 - y2)) + (Q22 * y1) / ((x1 - x2) * (y2 - y1));
             a2 = (Q11 * x2) / ((x1 - x2) * (y2 - y1)) + (Q12 * x1) / ((x1 - x2) * (y1 - y2)) + (Q21 * x2) / ((x1 - x2) * (y1 - y2)) + (Q22 * x1) / ((x1 - x2) * (y2 - y1));
             a3 = (Q11) / ((x1 - x2) * (y1 - y2)) + (Q12) / ((x1 - x2) * (y2 - y1)) + (Q21) / ((x1 - x2) * (y2 - y1)) + (Q22) / ((x1 - x2) * (y1 - y2));
-
+            */
             
             ssc_number_t sig_wave_height_index = 0;
             ssc_number_t energy_period_index = 0;
@@ -364,21 +629,21 @@ public:
             for (size_t i = 0; i < number_records; i++) {
                 ts_significant_wave_height = wave_height_input[i];
                 ts_energy_period = wave_period_input[i];
-                for (ssc_number_t j = 0; j < (ssc_number_t)wave_resource_matrix.nrows(); j++) {
-                    if (abs(ts_significant_wave_height - wave_resource_matrix.at(size_t(j), 0)) < 0.25) {
+                for (ssc_number_t j = 0; j < (ssc_number_t)wave_power_matrix.nrows(); j++) {
+                    if (abs(ts_significant_wave_height - wave_power_matrix.at(size_t(j), 0)) < 0.25) {
                         sig_wave_height_index = j;
                         sig_wave_height_index_mat[i] = sig_wave_height_index;
 
 
                     }
-                    if (i == 0) p_annual_energy_dist[size_t(j) * 22] = wave_resource_matrix.at(j, 0);
+                    if (i == 0) p_annual_energy_dist[size_t(j) * 22] = wave_power_matrix.at(j, 0);
                 }
-                for (ssc_number_t m = 0; m < (ssc_number_t)wave_resource_matrix.ncols(); m++) {
-                    if (abs(ts_energy_period - wave_resource_matrix.at(0, size_t(m))) < 0.50) {
+                for (ssc_number_t m = 0; m < (ssc_number_t)wave_power_matrix.ncols(); m++) {
+                    if (abs(ts_energy_period - wave_power_matrix.at(0, size_t(m))) < 0.50) {
                         energy_period_index = m;
                         energy_period_index_mat[i] = energy_period_index;
                     }
-                    if (i == 0) p_annual_energy_dist[size_t(m)] = wave_resource_matrix.at(0, m);
+                    if (i == 0) p_annual_energy_dist[size_t(m)] = wave_power_matrix.at(0, m);
                 }
 
 
@@ -403,14 +668,14 @@ public:
                     }
                 }
                 sig_wave_height_index_mat[i] = (ssc_number_t)(wave_power_matrix.at(size_t(sig_wave_height_index), 0));
-                sig_wave_height_index_mat_interp[i * 3] = sig_wave_height_index_mat[i];
-                sig_wave_height_index_mat_interp[i * 3 + 1] = sig_wave_height_index_mat[i];
-                sig_wave_height_index_mat_interp[i * 3 + 2] = sig_wave_height_index_mat[i];
+                //sig_wave_height_index_mat_interp[i * 3] = sig_wave_height_index_mat[i];
+                //sig_wave_height_index_mat_interp[i * 3 + 1] = sig_wave_height_index_mat[i];
+                //sig_wave_height_index_mat_interp[i * 3 + 2] = sig_wave_height_index_mat[i];
                 sig_wave_height_index_location[i] = sig_wave_height_index;
                 energy_period_index_mat[i] = (ssc_number_t)(wave_power_matrix.at(0, size_t(energy_period_index)));
-                energy_period_index_mat_interp[i * 3] = energy_period_index_mat[i];
-                energy_period_index_mat_interp[i * 3 + 1] = energy_period_index_mat[i];
-                energy_period_index_mat_interp[i * 3 + 2] = energy_period_index_mat[i];
+                //energy_period_index_mat_interp[i * 3] = energy_period_index_mat[i];
+                //energy_period_index_mat_interp[i * 3 + 1] = energy_period_index_mat[i];
+                //energy_period_index_mat_interp[i * 3 + 2] = energy_period_index_mat[i];
                 energy_period_index_location[i] = energy_period_index;
                 wave_power_index_mat[i] = (ssc_number_t)(wave_power_matrix.at(size_t(sig_wave_height_index), size_t(energy_period_index)));
                 annual_energy += energy_hourly[i];
