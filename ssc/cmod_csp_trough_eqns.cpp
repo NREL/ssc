@@ -438,20 +438,7 @@ void Physical_Trough_Receiver_Type_Equations(ssc_data_t data)
     // csp_dtr_hce_design_heat_loss_1
     ssc_data_t_get_matrix(vt, "HCE_FieldFrac", HCE_FieldFrac);
     ssc_data_t_get_matrix(vt, "Design_loss", Design_loss);
-    //ssc_data_t_get_matrix(vt, "csp_dtr_hce_var1_field_fractions", csp_dtr_hce_var1_field_fractions);
-    //ssc_data_t_get_matrix(vt, "csp_dtr_hce_var1_rated_heat_losses", csp_dtr_hce_var1_rated_heat_losses);
-    //ssc_data_t_get_matrix(vt, "csp_dtr_hce_var2_field_fractions", csp_dtr_hce_var2_field_fractions);
-    //ssc_data_t_get_matrix(vt, "csp_dtr_hce_var2_rated_heat_losses", csp_dtr_hce_var2_rated_heat_losses);
-    //ssc_data_t_get_matrix(vt, "csp_dtr_hce_var3_field_fractions", csp_dtr_hce_var3_field_fractions);
-    //ssc_data_t_get_matrix(vt, "csp_dtr_hce_var3_rated_heat_losses", csp_dtr_hce_var3_rated_heat_losses);
-    //ssc_data_t_get_matrix(vt, "csp_dtr_hce_var4_field_fractions", csp_dtr_hce_var4_field_fractions);
-    //ssc_data_t_get_matrix(vt, "csp_dtr_hce_var4_rated_heat_losses", csp_dtr_hce_var4_rated_heat_losses);
     csp_dtr_hce_design_heat_losses = Csp_dtr_hce_design_heat_losses(HCE_FieldFrac, Design_loss);
-    //csp_dtr_hce_design_heat_losses = Csp_dtr_hce_design_heat_losses(
-    //    csp_dtr_hce_var1_field_fractions, csp_dtr_hce_var1_rated_heat_losses,
-    //    csp_dtr_hce_var2_field_fractions, csp_dtr_hce_var2_rated_heat_losses,
-    //    csp_dtr_hce_var3_field_fractions, csp_dtr_hce_var3_rated_heat_losses,
-    //    csp_dtr_hce_var4_field_fractions, csp_dtr_hce_var4_rated_heat_losses);
     ssc_data_t_set_matrix(data, "csp_dtr_hce_design_heat_losses", csp_dtr_hce_design_heat_losses);
 
 
