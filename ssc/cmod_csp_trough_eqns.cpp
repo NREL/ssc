@@ -406,14 +406,6 @@ void Physical_Trough_Receiver_Type_Equations(ssc_data_t data)
     util::matrix_t<ssc_number_t>
         HCE_FieldFrac,
         Design_loss,
-        csp_dtr_hce_var1_field_fractions(4),
-        csp_dtr_hce_var1_rated_heat_losses,
-        csp_dtr_hce_var2_field_fractions(4),
-        csp_dtr_hce_var2_rated_heat_losses,
-        csp_dtr_hce_var3_field_fractions(4),
-        csp_dtr_hce_var3_rated_heat_losses,
-        csp_dtr_hce_var4_field_fractions(4),
-        csp_dtr_hce_var4_rated_heat_losses,
         csp_dtr_hce_var1_bellows_shadowings,
         csp_dtr_hce_var1_env_trans,
         csp_dtr_hce_var2_bellows_shadowings,
@@ -460,43 +452,20 @@ void Physical_Trough_Receiver_Type_Equations(ssc_data_t data)
     ssc_data_t_get_matrix(vt, "csp_dtr_hce_var4_abs_abs", csp_dtr_hce_var4_abs_abs);
     ssc_data_t_get_matrix(vt, "csp_dtr_hce_var4_env_trans", csp_dtr_hce_var4_env_trans);
 
-    csp_dtr_hce_var1_field_fractions.at(0) = HCE_FieldFrac.at(0, 0);
-    csp_dtr_hce_var1_field_fractions.at(1) = HCE_FieldFrac.at(1, 0);
-    csp_dtr_hce_var1_field_fractions.at(2) = HCE_FieldFrac.at(2, 0);
-    csp_dtr_hce_var1_field_fractions.at(3) = HCE_FieldFrac.at(3, 0);
-
-    csp_dtr_hce_var2_field_fractions.at(0) = HCE_FieldFrac.at(0, 1);
-    csp_dtr_hce_var2_field_fractions.at(1) = HCE_FieldFrac.at(1, 1);
-    csp_dtr_hce_var2_field_fractions.at(2) = HCE_FieldFrac.at(2, 1);
-    csp_dtr_hce_var2_field_fractions.at(3) = HCE_FieldFrac.at(3, 1);
-
-    csp_dtr_hce_var3_field_fractions.at(0) = HCE_FieldFrac.at(0, 2);
-    csp_dtr_hce_var3_field_fractions.at(1) = HCE_FieldFrac.at(1, 2);
-    csp_dtr_hce_var3_field_fractions.at(2) = HCE_FieldFrac.at(2, 2);
-    csp_dtr_hce_var3_field_fractions.at(3) = HCE_FieldFrac.at(3, 2);
-
-    csp_dtr_hce_var4_field_fractions.at(0) = HCE_FieldFrac.at(0, 3);
-    csp_dtr_hce_var4_field_fractions.at(1) = HCE_FieldFrac.at(1, 3);
-    csp_dtr_hce_var4_field_fractions.at(2) = HCE_FieldFrac.at(2, 3);
-    csp_dtr_hce_var4_field_fractions.at(3) = HCE_FieldFrac.at(3, 3);
-
     csp_dtr_hce_optical_effs = Csp_dtr_hce_optical_effs(
-        csp_dtr_hce_var1_field_fractions,
+        HCE_FieldFrac,
         csp_dtr_hce_var1_bellows_shadowings,
         csp_dtr_hce_var1_hce_dirts,
         csp_dtr_hce_var1_abs_abs,
         csp_dtr_hce_var1_env_trans,
-        csp_dtr_hce_var2_field_fractions,
         csp_dtr_hce_var2_bellows_shadowings,
         csp_dtr_hce_var2_hce_dirts,
         csp_dtr_hce_var2_abs_abs,
         csp_dtr_hce_var2_env_trans,
-        csp_dtr_hce_var3_field_fractions,
         csp_dtr_hce_var3_bellows_shadowings,
         csp_dtr_hce_var3_hce_dirts,
         csp_dtr_hce_var3_abs_abs,
         csp_dtr_hce_var3_env_trans,
-        csp_dtr_hce_var4_field_fractions,
         csp_dtr_hce_var4_bellows_shadowings,
         csp_dtr_hce_var4_hce_dirts,
         csp_dtr_hce_var4_abs_abs,
