@@ -78,7 +78,6 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
         csp_dtr_sca_aperture_1, csp_dtr_sca_aperture_2, csp_dtr_sca_aperture_3, csp_dtr_sca_aperture_4,
         csp_dtr_hce_diam_absorber_inner_1, csp_dtr_hce_diam_absorber_inner_2, csp_dtr_hce_diam_absorber_inner_3, csp_dtr_hce_diam_absorber_inner_4,
         I_bn_des, csp_dtr_hce_design_heat_loss_1, csp_dtr_hce_design_heat_loss_2, csp_dtr_hce_design_heat_loss_3, csp_dtr_hce_design_heat_loss_4,
-        csp_dtr_sca_length_1, csp_dtr_sca_length_2, csp_dtr_sca_length_3, csp_dtr_sca_length_4,
         csp_dtr_sca_calc_sca_eff_1, csp_dtr_sca_calc_sca_eff_2, csp_dtr_sca_calc_sca_eff_3, csp_dtr_sca_calc_sca_eff_4,
         csp_dtr_hce_optical_eff_1, csp_dtr_hce_optical_eff_2, csp_dtr_hce_optical_eff_3, csp_dtr_hce_optical_eff_4,
         m_dot_htfmax, fluid_dens_outlet_temp,
@@ -167,14 +166,15 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     ssc_data_t_get_number(data, "csp_dtr_hce_design_heat_loss_4", &csp_dtr_hce_design_heat_loss_4);
 
     ssc_data_t_get_matrix(vt, "L_SCA", L_SCA);
-    csp_dtr_sca_length_1 = L_SCA.at(0);
-    csp_dtr_sca_length_2 = L_SCA.at(1);
-    csp_dtr_sca_length_3 = L_SCA.at(2);
-    csp_dtr_sca_length_4 = L_SCA.at(3);
+    //csp_dtr_sca_length_1 = L_SCA.at(0);
+    //csp_dtr_sca_length_2 = L_SCA.at(1);
+    //csp_dtr_sca_length_3 = L_SCA.at(2);
+    //csp_dtr_sca_length_4 = L_SCA.at(3);
     cspdtr_loop_hce_heat_loss = Cspdtr_loop_hce_heat_loss(trough_loop_control, I_bn_des,
         csp_dtr_hce_design_heat_loss_1, csp_dtr_hce_design_heat_loss_2,
         csp_dtr_hce_design_heat_loss_3, csp_dtr_hce_design_heat_loss_4,
-        csp_dtr_sca_length_1, csp_dtr_sca_length_2, csp_dtr_sca_length_3, csp_dtr_sca_length_4,
+        //csp_dtr_sca_length_1, csp_dtr_sca_length_2, csp_dtr_sca_length_3, csp_dtr_sca_length_4,
+        L_SCA,
         csp_dtr_sca_aperture_1, csp_dtr_sca_aperture_2, csp_dtr_sca_aperture_3, csp_dtr_sca_aperture_4);
     ssc_data_t_set_number(data, "cspdtr_loop_hce_heat_loss", cspdtr_loop_hce_heat_loss);
 
@@ -192,7 +192,8 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     loop_optical_efficiency = Loop_optical_efficiency(trough_loop_control,
         csp_dtr_sca_calc_sca_eff_1, csp_dtr_sca_calc_sca_eff_2,
         csp_dtr_sca_calc_sca_eff_3, csp_dtr_sca_calc_sca_eff_4,
-        csp_dtr_sca_length_1, csp_dtr_sca_length_2, csp_dtr_sca_length_3, csp_dtr_sca_length_4,
+        //csp_dtr_sca_length_1, csp_dtr_sca_length_2, csp_dtr_sca_length_3, csp_dtr_sca_length_4,
+        L_SCA,
         csp_dtr_hce_optical_eff_1, csp_dtr_hce_optical_eff_2,
         csp_dtr_hce_optical_eff_3, csp_dtr_hce_optical_eff_4);
     ssc_data_t_set_number(data, "loop_optical_efficiency", loop_optical_efficiency);
