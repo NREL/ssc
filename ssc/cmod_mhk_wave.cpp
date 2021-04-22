@@ -274,7 +274,7 @@ wavedata::wavedata(var_data* data_table)
     //bathymetry = get_number(data_table, "bathymetry"); return string?
     if (data_type == 1) {
         size_t len = 0;
-        if (data_table->table.lookup("wave_significant_height") || data_table->table.lookup("wave_energy_period")) {
+        if (!data_table->table.lookup("wave_significant_height") || !data_table->table.lookup("wave_energy_period")) {
             m_errorMsg = util::format("Must specify significant wave height and wave energy period inputs");
             return;
         }
