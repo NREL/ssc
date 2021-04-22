@@ -676,9 +676,9 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
         }
 
         if (m_is_rec_outlet_to_hottank) {
-        m_dot_field_out = mpc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot;     //[kg/hr]
+            m_dot_field_out = mpc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot;     //[kg/hr]
             m_dot_field_out_to_cold_tank = 0.0;
-    }
+        }
         else {
             m_dot_field_out_to_cold_tank = mpc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot;     //[kg/hr]
             m_dot_field_out = 0.0;

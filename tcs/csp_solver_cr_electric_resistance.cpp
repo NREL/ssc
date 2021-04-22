@@ -164,7 +164,22 @@ void C_csp_cr_electric_resistance::off(const C_csp_weatherreader::S_outputs& wea
     C_csp_collector_receiver::S_csp_cr_out_solver& cr_out_solver,
     const C_csp_solver_sim_info& sim_info)
 {
-    throw(C_csp_exception("C_csp_cr_electric_resistance::off(...) is not complete"));
+    cr_out_solver.m_q_startup = 0.0;                //[MWt-hr]
+    cr_out_solver.m_time_required_su = 0.0;         //[s]
+    cr_out_solver.m_m_dot_salt_tot = 0.0;           //[kg/hr]
+    cr_out_solver.m_q_thermal = 0.0;                //[MWt]
+    cr_out_solver.m_T_salt_hot = m_T_htf_hot_des;   //[C]
+    cr_out_solver.m_component_defocus = 1.0;        //[-]
+    cr_out_solver.m_is_recirculating = false;       //[-]
+    cr_out_solver.m_E_fp_total = 0.0;               //[MWt]
+    cr_out_solver.m_W_dot_col_tracking = 0.0;       //[MWe]
+    cr_out_solver.m_W_dot_htf_pump = 0.0;           //[MWe]
+    cr_out_solver.m_q_rec_heattrace = 0.0;          //[MWt]
+
+    m_operating_mode = C_csp_collector_receiver::OFF;
+    m_E_su_calculated = m_E_su_des;     //[MWt-hr]
+
+    return;
 }
 
 void C_csp_cr_electric_resistance::startup(const C_csp_weatherreader::S_outputs& weather,
@@ -211,7 +226,36 @@ void C_csp_cr_electric_resistance::on(const C_csp_weatherreader::S_outputs& weat
     C_csp_collector_receiver::S_csp_cr_out_solver& cr_out_solver,
     const C_csp_solver_sim_info& sim_info)
 {
-    throw(C_csp_exception("C_csp_cr_electric_resistance::on(...) is not complete"));
+    // Assume:
+    // 1) no dependence between available heater output and weather
+    // 2) heater is always capable of design output
+    // 3) no mass flow rate bounds (for now)
+    // 4) heater is controlled to always return HTF at design hot temperature
+
+    // Control may send separate q_dot_elec_to_CR_heat and field_control signals
+    // May eventually also want to apply a "component turn-down"
+    // .... e.g. inlet HTF temp is warm relative to design, causing mass flow rate to be too high
+    double heater_turn_down = 1.0;  //[-]
+    double q_dot_elec = q_dot_elec_to_CR_heat * field_control * heater_turn_down;  //[MWt]
+
+    double m_dot_htf = q_dot_elec * 1.E3 / (m_cp_htf_des*(m_T_htf_hot_des - htf_state_in.m_temp));  //[kg/s]
+
+    m_operating_mode = C_csp_collector_receiver::ON;
+    m_E_su_calculated = 0.0;        //[MWt-hr]
+
+    // Set solver outputs and return
+    cr_out_solver.m_q_startup = 0.0;        //[MWt-hr]
+    cr_out_solver.m_time_required_su = 0.0; //[s]
+    cr_out_solver.m_m_dot_salt_tot = m_dot_htf*3600.0;  //[kg/hr]
+    cr_out_solver.m_q_thermal = q_dot_elec; //[MWt]
+    cr_out_solver.m_T_salt_hot = m_T_htf_hot_des;   //[C]
+    cr_out_solver.m_component_defocus = heater_turn_down;   //[-]
+    cr_out_solver.m_E_fp_total = 0.0;   //[MW]
+    cr_out_solver.m_W_dot_col_tracking = 0.0;  //[MWe]
+    cr_out_solver.m_W_dot_htf_pump = 0.0;      //[MWe]
+    cr_out_solver.m_q_rec_heattrace = 0.0;     //[MWt]
+
+    return;
 }
 
 void C_csp_cr_electric_resistance::estimates(const C_csp_weatherreader::S_outputs& weather,
@@ -258,7 +302,7 @@ void C_csp_cr_electric_resistance::converged()
 void C_csp_cr_electric_resistance::write_output_intervals(double report_time_start,
     const std::vector<double>& v_temp_ts_time_end, double report_time_end)
 {
-    throw(C_csp_exception("C_csp_cr_electric_resistance::write_output_intervals(...) is not complete"));
+    return;
 }
 
 double C_csp_cr_electric_resistance::calculate_optical_efficiency(const C_csp_weatherreader::S_outputs& weather, const C_csp_solver_sim_info& sim)

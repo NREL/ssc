@@ -820,7 +820,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
             // Check purchase multiplier
             // If less than 1, then allow charging
-            if (purchase_mult < 1.0) {
+            if (purchase_mult < 1.0 && q_dot_tes_ch > 0.0) {
                 is_rec_su_allowed = true;
                 q_dot_elec_to_CR_heat = m_q_dot_rec_des;    //[MWt]
             }
