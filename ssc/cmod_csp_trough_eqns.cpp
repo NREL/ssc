@@ -65,7 +65,9 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
 
     util::matrix_t<ssc_number_t> field_fl_props, trough_loop_control, SCAInfoArray, SCADefocusArray,
         K_cpnt, D_cpnt, L_cpnt, Type_cpnt, L_SCA,
-        TrackingError, GeomEffects, Rho_mirror_clean, Dirt_mirror, Error;
+        TrackingError, GeomEffects, Rho_mirror_clean, Dirt_mirror, Error,
+        HCE_FieldFrac, Design_loss, Shadowing, Dirt_HCE, alpha_abs, Tau_envelope,
+        csp_dtr_hce_design_heat_losses, csp_dtr_hce_optical_effs;
 
     // csp_dtr_pwrb_nameplate
     ssc_data_t_get_number(data, "P_ref", &P_ref);
@@ -99,13 +101,18 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     min_inner_diameter = Min_inner_diameter(trough_loop_control, D_2);
     ssc_data_t_set_number(data, "min_inner_diameter", min_inner_diameter);
 
+    // csp_dtr_hce_design_heat_loss_1
+    ssc_data_t_get_matrix(vt, "HCE_FieldFrac", HCE_FieldFrac);
+    ssc_data_t_get_matrix(vt, "Design_loss", Design_loss);
+    csp_dtr_hce_design_heat_losses = Csp_dtr_hce_design_heat_losses(HCE_FieldFrac, Design_loss);
+    ssc_data_t_set_matrix(data, "csp_dtr_hce_design_heat_losses", csp_dtr_hce_design_heat_losses);
+
     // cspdtr_loop_hce_heat_loss
     ssc_data_t_get_number(data, "I_bn_des", &I_bn_des);
-    // **THESE ARE OUTPUTS FROM ANOTHER FORM**
-    ssc_data_t_get_number(data, "csp_dtr_hce_design_heat_loss_1", &csp_dtr_hce_design_heat_loss_1);
-    ssc_data_t_get_number(data, "csp_dtr_hce_design_heat_loss_2", &csp_dtr_hce_design_heat_loss_2);
-    ssc_data_t_get_number(data, "csp_dtr_hce_design_heat_loss_3", &csp_dtr_hce_design_heat_loss_3);
-    ssc_data_t_get_number(data, "csp_dtr_hce_design_heat_loss_4", &csp_dtr_hce_design_heat_loss_4);
+    csp_dtr_hce_design_heat_loss_1 = csp_dtr_hce_design_heat_losses.at(0);
+    csp_dtr_hce_design_heat_loss_2 = csp_dtr_hce_design_heat_losses.at(1);
+    csp_dtr_hce_design_heat_loss_3 = csp_dtr_hce_design_heat_losses.at(2);
+    csp_dtr_hce_design_heat_loss_4 = csp_dtr_hce_design_heat_losses.at(3);
     ssc_data_t_get_matrix(vt, "L_SCA", L_SCA);
     cspdtr_loop_hce_heat_loss = Cspdtr_loop_hce_heat_loss(trough_loop_control, I_bn_des,
         csp_dtr_hce_design_heat_loss_1, csp_dtr_hce_design_heat_loss_2,
@@ -124,17 +131,24 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
         Rho_mirror_clean, Dirt_mirror, Error);
     ssc_data_t_set_matrix(data, "csp_dtr_sca_calc_sca_effs", csp_dtr_sca_calc_sca_effs);
 
+    // csp_dtr_hce_optical_eff_1
+    ssc_data_t_get_matrix(vt, "Shadowing", Shadowing);
+    ssc_data_t_get_matrix(vt, "Dirt_HCE", Dirt_HCE);
+    ssc_data_t_get_matrix(vt, "alpha_abs", alpha_abs);
+    ssc_data_t_get_matrix(vt, "Tau_envelope", Tau_envelope);
+    csp_dtr_hce_optical_effs = Csp_dtr_hce_optical_effs(HCE_FieldFrac, Shadowing, Dirt_HCE, alpha_abs, Tau_envelope);
+    ssc_data_t_set_matrix(data, "csp_dtr_hce_optical_effs", csp_dtr_hce_optical_effs);
+
     // loop_optical_efficiency
     csp_dtr_sca_calc_sca_eff_1 = csp_dtr_sca_calc_sca_effs.at(0);
     csp_dtr_sca_calc_sca_eff_2 = csp_dtr_sca_calc_sca_effs.at(1);
     csp_dtr_sca_calc_sca_eff_3 = csp_dtr_sca_calc_sca_effs.at(2);
     csp_dtr_sca_calc_sca_eff_4 = csp_dtr_sca_calc_sca_effs.at(3);
+    csp_dtr_hce_optical_eff_1 = csp_dtr_hce_optical_effs.at(0);
+    csp_dtr_hce_optical_eff_2 = csp_dtr_hce_optical_effs.at(1);
+    csp_dtr_hce_optical_eff_3 = csp_dtr_hce_optical_effs.at(2);
+    csp_dtr_hce_optical_eff_4 = csp_dtr_hce_optical_effs.at(3);
 
-    // **THESE ARE OUTPUTS FROM ANOTHER FORM**
-    ssc_data_t_get_number(data, "csp_dtr_hce_optical_eff_1", &csp_dtr_hce_optical_eff_1);
-    ssc_data_t_get_number(data, "csp_dtr_hce_optical_eff_2", &csp_dtr_hce_optical_eff_2);
-    ssc_data_t_get_number(data, "csp_dtr_hce_optical_eff_3", &csp_dtr_hce_optical_eff_3);
-    ssc_data_t_get_number(data, "csp_dtr_hce_optical_eff_4", &csp_dtr_hce_optical_eff_4);
     loop_optical_efficiency = Loop_optical_efficiency(trough_loop_control,
         csp_dtr_sca_calc_sca_eff_1, csp_dtr_sca_calc_sca_eff_2,
         csp_dtr_sca_calc_sca_eff_3, csp_dtr_sca_calc_sca_eff_4,
@@ -331,25 +345,8 @@ void Physical_Trough_Receiver_Type_Equations(ssc_data_t data)
         throw std::runtime_error("ssc_data_t data invalid");
     }
 
-    // Inputs
-    util::matrix_t<ssc_number_t> HCE_FieldFrac, Design_loss, Shadowing, Dirt_HCE, alpha_abs, Tau_envelope;
-
-    // Outputs
-    util::matrix_t<ssc_number_t> csp_dtr_hce_design_heat_losses, csp_dtr_hce_optical_effs;
-
-    // csp_dtr_hce_design_heat_loss_1
-    ssc_data_t_get_matrix(vt, "HCE_FieldFrac", HCE_FieldFrac);
-    ssc_data_t_get_matrix(vt, "Design_loss", Design_loss);
-    csp_dtr_hce_design_heat_losses = Csp_dtr_hce_design_heat_losses(HCE_FieldFrac, Design_loss);
-    ssc_data_t_set_matrix(data, "csp_dtr_hce_design_heat_losses", csp_dtr_hce_design_heat_losses);
-
-    // csp_dtr_hce_optical_eff_1
-    ssc_data_t_get_matrix(vt, "Shadowing", Shadowing);
-    ssc_data_t_get_matrix(vt, "Dirt_HCE", Dirt_HCE);
-    ssc_data_t_get_matrix(vt, "alpha_abs", alpha_abs);
-    ssc_data_t_get_matrix(vt, "Tau_envelope", Tau_envelope);
-    csp_dtr_hce_optical_effs = Csp_dtr_hce_optical_effs(HCE_FieldFrac, Shadowing, Dirt_HCE, alpha_abs, Tau_envelope);
-    ssc_data_t_set_matrix(data, "csp_dtr_hce_optical_effs", csp_dtr_hce_optical_effs);
+    double x;
+    x = 1.;
 }
 
 
@@ -391,5 +388,4 @@ void Physical_Trough_System_Control_Equations(ssc_data_t data)
         wlim_series = Wlim_series(disp_wlim_max);
         ssc_data_t_set_array(data, "wlim_series", wlim_series.data(), wlim_series.ncells());
     }
-
 }
