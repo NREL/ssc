@@ -1028,11 +1028,6 @@ double Csp_dtr_sca_calc_theta(double csp_dtr_sca_calc_costh) {
 
 
 // Originally from 'Physical Trough Receiver Type 1' (and 2, 3, 4)
-//util::matrix_t<ssc_number_t> Csp_dtr_hce_design_heat_losses(
-//    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var1_field_fractions, const util::matrix_t<ssc_number_t>& csp_dtr_hce_var1_rated_heat_losses,
-//    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var2_field_fractions, const util::matrix_t<ssc_number_t>& csp_dtr_hce_var2_rated_heat_losses,
-//    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var3_field_fractions, const util::matrix_t<ssc_number_t>& csp_dtr_hce_var3_rated_heat_losses,
-//    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var4_field_fractions, const util::matrix_t<ssc_number_t>& csp_dtr_hce_var4_rated_heat_losses) {
 util::matrix_t<ssc_number_t> Csp_dtr_hce_design_heat_losses(
     const util::matrix_t<ssc_number_t>& HCE_FieldFrac, const util::matrix_t<ssc_number_t>& Design_loss) {
 
@@ -1040,7 +1035,8 @@ util::matrix_t<ssc_number_t> Csp_dtr_hce_design_heat_losses(
 
     util::matrix_t<ssc_number_t> result(n);
     for (int i = 0; i < n; i++) {
-        result.at(i) = HCE_FieldFrac.at(i, 0)
+        result.at(i) =
+            HCE_FieldFrac.at(i, 0)
             * Design_loss.at(i, 0)
             + HCE_FieldFrac.at(i, 1)
             * Design_loss.at(i, 1)
@@ -1055,47 +1051,35 @@ util::matrix_t<ssc_number_t> Csp_dtr_hce_design_heat_losses(
 util::matrix_t<ssc_number_t> Csp_dtr_hce_optical_effs(
     const util::matrix_t<ssc_number_t>& HCE_FieldFrac,
     const util::matrix_t<ssc_number_t>& Shadowing,
-    //const util::matrix_t<ssc_number_t>& csp_dtr_hce_var1_bellows_shadowings,
-    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var1_hce_dirts,
-    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var1_abs_abs,
-    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var1_env_trans,
-    //const util::matrix_t<ssc_number_t>& csp_dtr_hce_var2_bellows_shadowings,
-    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var2_hce_dirts,
-    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var2_abs_abs,
-    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var2_env_trans,
-    //const util::matrix_t<ssc_number_t>& csp_dtr_hce_var3_bellows_shadowings,
-    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var3_hce_dirts,
-    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var3_abs_abs,
-    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var3_env_trans,
-    //const util::matrix_t<ssc_number_t>& csp_dtr_hce_var4_bellows_shadowings,
-    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var4_hce_dirts,
-    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var4_abs_abs,
-    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var4_env_trans) {
+    const util::matrix_t<ssc_number_t>& Dirt_HCE,
+    const util::matrix_t<ssc_number_t>& alpha_abs,
+    const util::matrix_t<ssc_number_t>& Tau_envelope) {
 
     int n = HCE_FieldFrac.nrows();
 
     util::matrix_t<ssc_number_t> result(n);
     for (int i = 0; i < n; i++) {
-        result.at(i) = HCE_FieldFrac.at(i, 0)
+        result.at(i) =
+            HCE_FieldFrac.at(i, 0)
             * Shadowing.at(i, 0)
-            * csp_dtr_hce_var1_hce_dirts.at(i)
-            * csp_dtr_hce_var1_abs_abs.at(i)
-            * csp_dtr_hce_var1_env_trans.at(i)
+            * Dirt_HCE.at(i, 0)
+            * alpha_abs.at(i, 0)
+            * Tau_envelope.at(i, 0)
             + HCE_FieldFrac.at(i, 1)
-            * Shadowing.at(i, 0)
-            * csp_dtr_hce_var2_hce_dirts.at(i)
-            * csp_dtr_hce_var2_abs_abs.at(i)
-            * csp_dtr_hce_var2_env_trans.at(i)
+            * Shadowing.at(i, 1)
+            * Dirt_HCE.at(i, 1)
+            * alpha_abs.at(i, 1)
+            * Tau_envelope.at(i, 1)
             + HCE_FieldFrac.at(i, 2)
-            * Shadowing.at(i, 0)
-            * csp_dtr_hce_var3_hce_dirts.at(i)
-            * csp_dtr_hce_var3_abs_abs.at(i)
-            * csp_dtr_hce_var3_env_trans.at(i)
+            * Shadowing.at(i, 2)
+            * Dirt_HCE.at(i, 2)
+            * alpha_abs.at(i, 2)
+            * Tau_envelope.at(i, 2)
             + HCE_FieldFrac.at(i, 3)
-            * Shadowing.at(i, 0)
-            * csp_dtr_hce_var4_hce_dirts.at(i)
-            * csp_dtr_hce_var4_abs_abs.at(i)
-            * csp_dtr_hce_var4_env_trans.at(i);
+            * Shadowing.at(i, 3)
+            * Dirt_HCE.at(i, 3)
+            * alpha_abs.at(i, 3)
+            * Tau_envelope.at(i, 3);
     }
     return result;
 }

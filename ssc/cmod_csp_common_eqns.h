@@ -241,28 +241,15 @@ double Csp_dtr_sca_calc_theta(double csp_dtr_sca_calc_costh);
 
 // Originally from 'Physical Trough Receiver Type 1' (and 2, 3, 4)
 util::matrix_t<ssc_number_t> Csp_dtr_hce_design_heat_losses(
-    const util::matrix_t<ssc_number_t>& HCE_FieldFrac, const util::matrix_t<ssc_number_t>& Design_loss);
+    const util::matrix_t<ssc_number_t>& HCE_FieldFrac,
+    const util::matrix_t<ssc_number_t>& Design_loss);
 
 util::matrix_t<ssc_number_t> Csp_dtr_hce_optical_effs(
     const util::matrix_t<ssc_number_t>& HCE_FieldFrac,
     const util::matrix_t<ssc_number_t>& Shadowing,
-    //const util::matrix_t<ssc_number_t>& csp_dtr_hce_var1_bellows_shadowings,
-    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var1_hce_dirts,
-    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var1_abs_abs,
-    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var1_env_trans,
-    //const util::matrix_t<ssc_number_t>& csp_dtr_hce_var2_bellows_shadowings,
-    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var2_hce_dirts,
-    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var2_abs_abs,
-    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var2_env_trans,
-    //const util::matrix_t<ssc_number_t>& csp_dtr_hce_var3_bellows_shadowings,
-    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var3_hce_dirts,
-    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var3_abs_abs,
-    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var3_env_trans,
-    //const util::matrix_t<ssc_number_t>& csp_dtr_hce_var4_bellows_shadowings,
-    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var4_hce_dirts,
-    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var4_abs_abs,
-    const util::matrix_t<ssc_number_t>& csp_dtr_hce_var4_env_trans);
-
+    const util::matrix_t<ssc_number_t>& Dirt_HCE,
+    const util::matrix_t<ssc_number_t>& alpha_abs,
+    const util::matrix_t<ssc_number_t>& Tau_envelope);
 
 // Originally from 'Physical Trough System Control'
 double Is_wlim_series(double is_dispatch);

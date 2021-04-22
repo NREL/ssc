@@ -403,76 +403,23 @@ void Physical_Trough_Receiver_Type_Equations(ssc_data_t data)
     }
 
     // Inputs
-    util::matrix_t<ssc_number_t>
-        HCE_FieldFrac,
-        Design_loss,
-        Shadowing,
-        //csp_dtr_hce_var1_bellows_shadowings,
-        csp_dtr_hce_var1_env_trans,
-        //csp_dtr_hce_var2_bellows_shadowings,
-        //csp_dtr_hce_var3_bellows_shadowings,
-        //csp_dtr_hce_var4_bellows_shadowings,
-        csp_dtr_hce_var1_hce_dirts,
-        csp_dtr_hce_var2_hce_dirts,
-        csp_dtr_hce_var3_hce_dirts,
-        csp_dtr_hce_var4_hce_dirts,
-        csp_dtr_hce_var2_abs_abs,
-        csp_dtr_hce_var2_env_trans,
-        csp_dtr_hce_var3_abs_abs,
-        csp_dtr_hce_var3_env_trans,
-        csp_dtr_hce_var4_env_trans,
-        csp_dtr_hce_var1_abs_abs,
-        csp_dtr_hce_var4_abs_abs;
+    util::matrix_t<ssc_number_t> HCE_FieldFrac, Design_loss, Shadowing, Dirt_HCE, alpha_abs, Tau_envelope;
 
     // Outputs
     util::matrix_t<ssc_number_t> csp_dtr_hce_design_heat_losses, csp_dtr_hce_optical_effs;
 
-
     // csp_dtr_hce_design_heat_loss_1
     ssc_data_t_get_matrix(vt, "HCE_FieldFrac", HCE_FieldFrac);
     ssc_data_t_get_matrix(vt, "Design_loss", Design_loss);
-    ssc_data_t_get_matrix(vt, "Shadowing", Shadowing);
     csp_dtr_hce_design_heat_losses = Csp_dtr_hce_design_heat_losses(HCE_FieldFrac, Design_loss);
     ssc_data_t_set_matrix(data, "csp_dtr_hce_design_heat_losses", csp_dtr_hce_design_heat_losses);
 
-
     // csp_dtr_hce_optical_eff_1
-    //ssc_data_t_get_matrix(vt, "csp_dtr_hce_var1_bellows_shadowings", csp_dtr_hce_var1_bellows_shadowings);
-    ssc_data_t_get_matrix(vt, "csp_dtr_hce_var1_hce_dirts", csp_dtr_hce_var1_hce_dirts);
-    ssc_data_t_get_matrix(vt, "csp_dtr_hce_var1_abs_abs", csp_dtr_hce_var1_abs_abs);
-    ssc_data_t_get_matrix(vt, "csp_dtr_hce_var1_env_trans", csp_dtr_hce_var1_env_trans);
-    //ssc_data_t_get_matrix(vt, "csp_dtr_hce_var2_bellows_shadowings", csp_dtr_hce_var2_bellows_shadowings);
-    ssc_data_t_get_matrix(vt, "csp_dtr_hce_var2_hce_dirts", csp_dtr_hce_var2_hce_dirts);
-    ssc_data_t_get_matrix(vt, "csp_dtr_hce_var2_abs_abs", csp_dtr_hce_var2_abs_abs);
-    ssc_data_t_get_matrix(vt, "csp_dtr_hce_var2_env_trans", csp_dtr_hce_var2_env_trans);
-    //ssc_data_t_get_matrix(vt, "csp_dtr_hce_var3_bellows_shadowings", csp_dtr_hce_var3_bellows_shadowings);
-    ssc_data_t_get_matrix(vt, "csp_dtr_hce_var3_hce_dirts", csp_dtr_hce_var3_hce_dirts);
-    ssc_data_t_get_matrix(vt, "csp_dtr_hce_var3_abs_abs", csp_dtr_hce_var3_abs_abs);
-    ssc_data_t_get_matrix(vt, "csp_dtr_hce_var3_env_trans", csp_dtr_hce_var3_env_trans);
-    //ssc_data_t_get_matrix(vt, "csp_dtr_hce_var4_bellows_shadowings", csp_dtr_hce_var4_bellows_shadowings);
-    ssc_data_t_get_matrix(vt, "csp_dtr_hce_var4_hce_dirts", csp_dtr_hce_var4_hce_dirts);
-    ssc_data_t_get_matrix(vt, "csp_dtr_hce_var4_abs_abs", csp_dtr_hce_var4_abs_abs);
-    ssc_data_t_get_matrix(vt, "csp_dtr_hce_var4_env_trans", csp_dtr_hce_var4_env_trans);
-
-    csp_dtr_hce_optical_effs = Csp_dtr_hce_optical_effs(
-        HCE_FieldFrac,
-        Shadowing,
-        //csp_dtr_hce_var1_bellows_shadowings,
-        csp_dtr_hce_var1_hce_dirts,
-        csp_dtr_hce_var1_abs_abs,
-        csp_dtr_hce_var1_env_trans,
-        //csp_dtr_hce_var2_bellows_shadowings,
-        csp_dtr_hce_var2_hce_dirts,
-        csp_dtr_hce_var2_abs_abs,
-        csp_dtr_hce_var2_env_trans,
-        //csp_dtr_hce_var3_bellows_shadowings,
-        csp_dtr_hce_var3_hce_dirts,
-        csp_dtr_hce_var3_abs_abs,
-        csp_dtr_hce_var3_env_trans,
-        //csp_dtr_hce_var4_bellows_shadowings,
-        csp_dtr_hce_var4_hce_dirts,
-        csp_dtr_hce_var4_abs_abs,
-        csp_dtr_hce_var4_env_trans);
+    ssc_data_t_get_matrix(vt, "Shadowing", Shadowing);
+    ssc_data_t_get_matrix(vt, "Dirt_HCE", Dirt_HCE);
+    ssc_data_t_get_matrix(vt, "alpha_abs", alpha_abs);
+    ssc_data_t_get_matrix(vt, "Tau_envelope", Tau_envelope);
+    csp_dtr_hce_optical_effs = Csp_dtr_hce_optical_effs(HCE_FieldFrac, Shadowing, Dirt_HCE, alpha_abs, Tau_envelope);
     ssc_data_t_set_matrix(data, "csp_dtr_hce_optical_effs", csp_dtr_hce_optical_effs);
 }
 
