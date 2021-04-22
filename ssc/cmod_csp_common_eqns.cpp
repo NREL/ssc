@@ -645,12 +645,9 @@ double Required_number_of_loops_for_SM1(double total_required_aperture_for_SM1, 
 };
 
 double Loop_optical_efficiency(const util::matrix_t<ssc_number_t>& trough_loop_control,
-    double csp_dtr_sca_calc_sca_eff_1, double csp_dtr_sca_calc_sca_eff_2,
-    double csp_dtr_sca_calc_sca_eff_3, double csp_dtr_sca_calc_sca_eff_4,
-    //double csp_dtr_sca_length_1, double csp_dtr_sca_length_2, double csp_dtr_sca_length_3, double csp_dtr_sca_length_4,
+    const util::matrix_t<ssc_number_t>& csp_dtr_sca_calc_sca_effs,
     const util::matrix_t<ssc_number_t>& L_SCA,
-    double csp_dtr_hce_optical_eff_1, double csp_dtr_hce_optical_eff_2,
-    double csp_dtr_hce_optical_eff_3, double csp_dtr_hce_optical_eff_4)
+    const util::matrix_t<ssc_number_t>& csp_dtr_hce_optical_effs)
 {
     std::vector<double> sca_eff(4, std::numeric_limits<double>::quiet_NaN());
     std::vector<double> sca_len(4, std::numeric_limits<double>::quiet_NaN());
@@ -662,10 +659,10 @@ double Loop_optical_efficiency(const util::matrix_t<ssc_number_t>& trough_loop_c
     }
 
     // sca efficiency
-    sca_eff[0] = csp_dtr_sca_calc_sca_eff_1;
-    sca_eff[1] = csp_dtr_sca_calc_sca_eff_2;
-    sca_eff[2] = csp_dtr_sca_calc_sca_eff_3;
-    sca_eff[3] = csp_dtr_sca_calc_sca_eff_4;
+    sca_eff[0] = csp_dtr_sca_calc_sca_effs.at(0);
+    sca_eff[1] = csp_dtr_sca_calc_sca_effs.at(1);
+    sca_eff[2] = csp_dtr_sca_calc_sca_effs.at(2);
+    sca_eff[3] = csp_dtr_sca_calc_sca_effs.at(3);
 
     sca_len[0] = L_SCA.at(0);
     sca_len[1] = L_SCA.at(1);
@@ -689,10 +686,10 @@ double Loop_optical_efficiency(const util::matrix_t<ssc_number_t>& trough_loop_c
     }
 
     // hce efficiency
-    hce_eff[0] = csp_dtr_hce_optical_eff_1;
-    hce_eff[1] = csp_dtr_hce_optical_eff_2;
-    hce_eff[2] = csp_dtr_hce_optical_eff_3;
-    hce_eff[3] = csp_dtr_hce_optical_eff_4;
+    hce_eff[0] = csp_dtr_hce_optical_effs.at(0);
+    hce_eff[1] = csp_dtr_hce_optical_effs.at(1);
+    hce_eff[2] = csp_dtr_hce_optical_effs.at(2);
+    hce_eff[3] = csp_dtr_hce_optical_effs.at(3);
 
     total_len = 0;
     double weighted_hce_eff = 0.0;
