@@ -154,20 +154,16 @@ double Min_field_flow_velocity(double m_dot_htfmin, double fluid_dens_inlet_temp
 double Field_htf_cp_avg(double T_in /*C*/, double T_out /*C*/, int rec_htf /*-*/,
     const util::matrix_t<ssc_number_t>& field_fl_props /*-*/);      // [kJ/kg-K]
 
-double Min_inner_diameter(const util::matrix_t<ssc_number_t>& trough_loop_control,
-    double csp_dtr_hce_diam_absorber_inner_1, double csp_dtr_hce_diam_absorber_inner_2,
-    double csp_dtr_hce_diam_absorber_inner_3, double csp_dtr_hce_diam_absorber_inner_4);
+double Min_inner_diameter(const util::matrix_t<ssc_number_t>& trough_loop_control, const util::matrix_t<ssc_number_t>& D_2);
 
-double Single_loop_aperature(const util::matrix_t<ssc_number_t>& trough_loop_control,
-    double csp_dtr_sca_aperture_1, double csp_dtr_sca_aperture_2,
-    double csp_dtr_sca_aperture_3, double csp_dtr_sca_aperture_4);
+double Single_loop_aperature(const util::matrix_t<ssc_number_t>& trough_loop_control, const util::matrix_t<ssc_number_t>& A_aperture);
 
 double Cspdtr_loop_hce_heat_loss(const util::matrix_t<ssc_number_t>& trough_loop_control, double I_bn_des,
     double csp_dtr_hce_design_heat_loss_1, double csp_dtr_hce_design_heat_loss_2,
     double csp_dtr_hce_design_heat_loss_3, double csp_dtr_hce_design_heat_loss_4,
     //double csp_dtr_sca_length_1, double csp_dtr_sca_length_2, double csp_dtr_sca_length_3, double csp_dtr_sca_length_4,
     const util::matrix_t<ssc_number_t>& L_SCA,
-    double csp_dtr_sca_aperture_1, double csp_dtr_sca_aperture_2, double csp_dtr_sca_aperture_3, double csp_dtr_sca_aperture_4);
+    const util::matrix_t<ssc_number_t>& A_aperture);
 
 double Total_aperture(double single_loop_aperature, double nloops);
 

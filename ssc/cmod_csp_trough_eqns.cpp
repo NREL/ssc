@@ -75,8 +75,6 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     double P_ref, gross_net_conversion_factor,
         eta_ref,
         T_loop_in_des, T_loop_out, Fluid,
-        csp_dtr_sca_aperture_1, csp_dtr_sca_aperture_2, csp_dtr_sca_aperture_3, csp_dtr_sca_aperture_4,
-        csp_dtr_hce_diam_absorber_inner_1, csp_dtr_hce_diam_absorber_inner_2, csp_dtr_hce_diam_absorber_inner_3, csp_dtr_hce_diam_absorber_inner_4,
         I_bn_des, csp_dtr_hce_design_heat_loss_1, csp_dtr_hce_design_heat_loss_2, csp_dtr_hce_design_heat_loss_3, csp_dtr_hce_design_heat_loss_4,
         csp_dtr_sca_calc_sca_eff_1, csp_dtr_sca_calc_sca_eff_2, csp_dtr_sca_calc_sca_eff_3, csp_dtr_sca_calc_sca_eff_4,
         csp_dtr_hce_optical_eff_1, csp_dtr_hce_optical_eff_2, csp_dtr_hce_optical_eff_3, csp_dtr_hce_optical_eff_4,
@@ -138,23 +136,13 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     ssc_data_t_get_matrix(vt, "trough_loop_control", trough_loop_control);
     util::matrix_t<ssc_number_t> A_aperture;
     ssc_data_t_get_matrix(vt, "A_aperture", A_aperture);
-    csp_dtr_sca_aperture_1 = A_aperture.at(0);
-    csp_dtr_sca_aperture_2 = A_aperture.at(1);
-    csp_dtr_sca_aperture_3 = A_aperture.at(2);
-    csp_dtr_sca_aperture_4 = A_aperture.at(3);
-    single_loop_aperature = Single_loop_aperature(trough_loop_control, csp_dtr_sca_aperture_1,
-        csp_dtr_sca_aperture_2, csp_dtr_sca_aperture_3, csp_dtr_sca_aperture_4);
+    single_loop_aperature = Single_loop_aperature(trough_loop_control, A_aperture);
     ssc_data_t_set_number(data, "single_loop_aperature", single_loop_aperature);
 
     // min_inner_diameter
     util::matrix_t<ssc_number_t> D_2;
     ssc_data_t_get_matrix(vt, "D_2", D_2);
-    csp_dtr_hce_diam_absorber_inner_1 = D_2.at(0,0);
-    csp_dtr_hce_diam_absorber_inner_2 = D_2.at(1,0);
-    csp_dtr_hce_diam_absorber_inner_3 = D_2.at(2,0);
-    csp_dtr_hce_diam_absorber_inner_4 = D_2.at(3,0);
-    min_inner_diameter = Min_inner_diameter(trough_loop_control, csp_dtr_hce_diam_absorber_inner_1,
-        csp_dtr_hce_diam_absorber_inner_2, csp_dtr_hce_diam_absorber_inner_3, csp_dtr_hce_diam_absorber_inner_4);
+    min_inner_diameter = Min_inner_diameter(trough_loop_control, D_2);
     ssc_data_t_set_number(data, "min_inner_diameter", min_inner_diameter);
 
     // cspdtr_loop_hce_heat_loss
@@ -164,18 +152,11 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     ssc_data_t_get_number(data, "csp_dtr_hce_design_heat_loss_2", &csp_dtr_hce_design_heat_loss_2);
     ssc_data_t_get_number(data, "csp_dtr_hce_design_heat_loss_3", &csp_dtr_hce_design_heat_loss_3);
     ssc_data_t_get_number(data, "csp_dtr_hce_design_heat_loss_4", &csp_dtr_hce_design_heat_loss_4);
-
     ssc_data_t_get_matrix(vt, "L_SCA", L_SCA);
-    //csp_dtr_sca_length_1 = L_SCA.at(0);
-    //csp_dtr_sca_length_2 = L_SCA.at(1);
-    //csp_dtr_sca_length_3 = L_SCA.at(2);
-    //csp_dtr_sca_length_4 = L_SCA.at(3);
     cspdtr_loop_hce_heat_loss = Cspdtr_loop_hce_heat_loss(trough_loop_control, I_bn_des,
         csp_dtr_hce_design_heat_loss_1, csp_dtr_hce_design_heat_loss_2,
         csp_dtr_hce_design_heat_loss_3, csp_dtr_hce_design_heat_loss_4,
-        //csp_dtr_sca_length_1, csp_dtr_sca_length_2, csp_dtr_sca_length_3, csp_dtr_sca_length_4,
-        L_SCA,
-        csp_dtr_sca_aperture_1, csp_dtr_sca_aperture_2, csp_dtr_sca_aperture_3, csp_dtr_sca_aperture_4);
+        L_SCA, A_aperture);
     ssc_data_t_set_number(data, "cspdtr_loop_hce_heat_loss", cspdtr_loop_hce_heat_loss);
 
     // loop_optical_efficiency
@@ -192,7 +173,6 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     loop_optical_efficiency = Loop_optical_efficiency(trough_loop_control,
         csp_dtr_sca_calc_sca_eff_1, csp_dtr_sca_calc_sca_eff_2,
         csp_dtr_sca_calc_sca_eff_3, csp_dtr_sca_calc_sca_eff_4,
-        //csp_dtr_sca_length_1, csp_dtr_sca_length_2, csp_dtr_sca_length_3, csp_dtr_sca_length_4,
         L_SCA,
         csp_dtr_hce_optical_eff_1, csp_dtr_hce_optical_eff_2,
         csp_dtr_hce_optical_eff_3, csp_dtr_hce_optical_eff_4);

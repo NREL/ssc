@@ -526,16 +526,13 @@ double Field_htf_cp_avg(double T_in /*C*/, double T_out /*C*/, int rec_htf /*-*/
     return htf_properties.Cp(T_avg + 273.15);
 }
 
-double Min_inner_diameter(const util::matrix_t<ssc_number_t>& trough_loop_control,
-    double csp_dtr_hce_diam_absorber_inner_1, double csp_dtr_hce_diam_absorber_inner_2,
-    double csp_dtr_hce_diam_absorber_inner_3, double csp_dtr_hce_diam_absorber_inner_4)
+double Min_inner_diameter(const util::matrix_t<ssc_number_t>& trough_loop_control, const util::matrix_t<ssc_number_t>& D_2)
 {
-    //std::vector<ssc_number_t> trough_loop_control{ 8, 1, 1, 8, 1, 1, 7, 1, 1, 6, 1, 1, 5, 1, 1, 4, 1, 1, 3, 1, 1, 2, 1, 1, 1 };
     std::vector<double> diam_inputs(4, std::numeric_limits<double>::quiet_NaN());
-    diam_inputs[0] = csp_dtr_hce_diam_absorber_inner_1;
-    diam_inputs[1] = csp_dtr_hce_diam_absorber_inner_2;
-    diam_inputs[2] = csp_dtr_hce_diam_absorber_inner_3;
-    diam_inputs[3] = csp_dtr_hce_diam_absorber_inner_4;
+    diam_inputs[0] = D_2.at(0);
+    diam_inputs[1] = D_2.at(1);
+    diam_inputs[2] = D_2.at(2);
+    diam_inputs[3] = D_2.at(3);
 
     double minval = diam_inputs[0];
     int hce_t = -1;
@@ -550,17 +547,15 @@ double Min_inner_diameter(const util::matrix_t<ssc_number_t>& trough_loop_contro
     return minval;
 }
 
-double Single_loop_aperature(const util::matrix_t<ssc_number_t>& trough_loop_control,
-    double csp_dtr_sca_aperture_1, double csp_dtr_sca_aperture_2,
-    double csp_dtr_sca_aperture_3, double csp_dtr_sca_aperture_4)
+double Single_loop_aperature(const util::matrix_t<ssc_number_t>& trough_loop_control, const util::matrix_t<ssc_number_t>& A_aperture)
 {
     std::vector<double> sca_ap(4, std::numeric_limits<double>::quiet_NaN());
 
     int nsca = static_cast<int>(trough_loop_control.at(0));
-    sca_ap[0] = csp_dtr_sca_aperture_1;
-    sca_ap[1] = csp_dtr_sca_aperture_2;
-    sca_ap[2] = csp_dtr_sca_aperture_3;
-    sca_ap[3] = csp_dtr_sca_aperture_4;
+    sca_ap[0] = A_aperture.at(0);
+    sca_ap[1] = A_aperture.at(1);
+    sca_ap[2] = A_aperture.at(2);
+    sca_ap[3] = A_aperture.at(3);
 
     double total_ap = 0.;
     int sca_t = -1;
@@ -576,9 +571,8 @@ double Single_loop_aperature(const util::matrix_t<ssc_number_t>& trough_loop_con
 double Cspdtr_loop_hce_heat_loss(const util::matrix_t<ssc_number_t>& trough_loop_control, double I_bn_des,
     double csp_dtr_hce_design_heat_loss_1, double csp_dtr_hce_design_heat_loss_2,
     double csp_dtr_hce_design_heat_loss_3, double csp_dtr_hce_design_heat_loss_4,
-    //double csp_dtr_sca_length_1, double csp_dtr_sca_length_2, double csp_dtr_sca_length_3, double csp_dtr_sca_length_4,
     const util::matrix_t<ssc_number_t>& L_SCA,
-    double csp_dtr_sca_aperture_1, double csp_dtr_sca_aperture_2, double csp_dtr_sca_aperture_3, double csp_dtr_sca_aperture_4)
+    const util::matrix_t<ssc_number_t>& A_aperture)
 {
     std::vector<double> hce_hl(4, std::numeric_limits<double>::quiet_NaN());
     std::vector<double> sca_len(4, std::numeric_limits<double>::quiet_NaN());
@@ -596,10 +590,10 @@ double Cspdtr_loop_hce_heat_loss(const util::matrix_t<ssc_number_t>& trough_loop
     sca_len[2] = L_SCA.at(2);
     sca_len[3] = L_SCA.at(3);
 
-    sca_ap[0] = csp_dtr_sca_aperture_1;
-    sca_ap[1] = csp_dtr_sca_aperture_2;
-    sca_ap[2] = csp_dtr_sca_aperture_3;
-    sca_ap[3] = csp_dtr_sca_aperture_4;
+    sca_ap[0] = A_aperture.at(0);
+    sca_ap[1] = A_aperture.at(1);
+    sca_ap[2] = A_aperture.at(2);
+    sca_ap[3] = A_aperture.at(3);
 
     double derate = 0.;
     for (int i = 0; i < ncol; i++)
