@@ -1239,18 +1239,18 @@ void cm_pvsamv1::exec()
 
                 if (code < 0) //jmf updated 11/30/18 so that negative numbers are errors, positive numbers are warnings, 0 is everything correct. implemented in patch for POA model only, will be added to develop for other irrad models as well
                     throw exec_error("pvsamv1",
-                        util::format("Failed to calculate POA irradiance %d (code: %d) [y:%d m:%d d:%d h:%d]",
-                            nn + 1, code, wf.year, wf.month, wf.day, wf.hour));
+                        util::format("Failed to calculate POA irradiance %d (code: %d) [y:%d m:%d d:%d h:%d minute:%lg]",
+                            nn + 1, code, wf.year, wf.month, wf.day, wf.hour, wf.minute));
 
                 if (code == 40)
-                    log(util::format("POA decomposition model calculated negative direct normal irradiance at time [y:%d m:%d d:%d h:%d], set to zero.",
-                        wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
+                    log(util::format("POA decomposition model calculated negative direct normal irradiance at time [y:%d m:%d d:%d h:%d minute:%lg], set to zero.",
+                        wf.year, wf.month, wf.day, wf.hour, wf.minute), SSC_WARNING, (float)idx);
                 else if (code == 41)
-                    log(util::format("POA decomposition model calculated negative diffuse horizontal irradiance at time [y:%d m:%d d:%d h:%d], set to zero.",
-                        wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
+                    log(util::format("POA decomposition model calculated negative diffuse horizontal irradiance at time [y:%d m:%d d:%d h:%d minute:%lg], set to zero.",
+                        wf.year, wf.month, wf.day, wf.hour, wf.minute), SSC_WARNING, (float)idx);
                 else if (code == 42)
-                    log(util::format("POA decomposition model calculated negative global horizontal irradiance at time [y:%d m:%d d:%d h:%d], set to zero.",
-                        wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
+                    log(util::format("POA decomposition model calculated negative global horizontal irradiance at time [y:%d m:%d d:%d h:%d minute:%lg], set to zero.",
+                        wf.year, wf.month, wf.day, wf.hour, wf.minute), SSC_WARNING, (float)idx);
 
                 // p_irrad_calc is only weather file records long...
                 if (iyear == 0)
@@ -1319,8 +1319,8 @@ void cm_pvsamv1::exec()
                         Irradiance->p_IrradianceCalculated[2][idx] = (ssc_number_t)((wf.gh - wf.df) / cos(solzen * 3.1415926 / 180));
                         if (Irradiance->p_IrradianceCalculated[2][idx] < -1)
                         {
-                            log(util::format("Calculated negative beam irradiance of %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero.",
-                                Irradiance->p_IrradianceCalculated[2][idx], wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
+                            log(util::format("Calculated negative beam irradiance of %lg W/m2 at time [y:%d m:%d d:%d h:%d, minute:%lg], set to zero.",
+                                Irradiance->p_IrradianceCalculated[2][idx], wf.year, wf.month, wf.day, wf.hour, wf.minute), SSC_WARNING, (float)idx);
                             Irradiance->p_IrradianceCalculated[2][idx] = 0;
                         }
                     }
@@ -1331,8 +1331,8 @@ void cm_pvsamv1::exec()
                         Irradiance->p_IrradianceCalculated[0][idx] = (ssc_number_t)(wf.df + wf.dn * cos(solzen * 3.1415926 / 180));
                         if (Irradiance->p_IrradianceCalculated[0][idx] < -1)
                         {
-                            log(util::format("Calculated negative global horizontal irradiance of %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero.",
-                                Irradiance->p_IrradianceCalculated[0][idx], wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
+                            log(util::format("Calculated negative global horizontal irradiance of %lg W/m2 at time [y:%d m:%d d:%d h:%d minute:%lg], set to zero.",
+                                Irradiance->p_IrradianceCalculated[0][idx], wf.year, wf.month, wf.day, wf.hour, wf.minute), SSC_WARNING, (float)idx);
                             Irradiance->p_IrradianceCalculated[0][idx] = 0;
                         }
                     }
@@ -1343,8 +1343,8 @@ void cm_pvsamv1::exec()
                         Irradiance->p_IrradianceCalculated[1][idx] = (ssc_number_t)(wf.gh - wf.dn * cos(solzen * 3.1415926 / 180));
                         if (Irradiance->p_IrradianceCalculated[1][idx] < -1)
                         {
-                            log(util::format("Calculated negative diffuse horizontal irradiance of %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero.",
-                                Irradiance->p_IrradianceCalculated[1][idx], wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
+                            log(util::format("Calculated negative diffuse horizontal irradiance of %lg W/m2 at time [y:%d m:%d d:%d h:%d minute:%lg], set to zero.",
+                                Irradiance->p_IrradianceCalculated[1][idx], wf.year, wf.month, wf.day, wf.hour, wf.minute), SSC_WARNING, (float)idx);
                             Irradiance->p_IrradianceCalculated[1][idx] = 0;
                         }
                     }
@@ -1432,12 +1432,12 @@ void cm_pvsamv1::exec()
                     if (radmode == irrad::POA_R || radmode == irrad::POA_P) {
                         Subarrays[nn]->poa.usePOAFromWF = false;
                         if (Subarrays[nn]->poa.poaShadWarningCount == 0) {
-                            log(util::format("POA irradiance as input with the beam shading losses at time [y:%d m:%d d:%d h:%d]: Using POA decomposition model to calculate incident beam irradiance.",
-                                wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
+                            log(util::format("POA irradiance as input with the beam shading losses at time [y:%d m:%d d:%d h:%d minute:%lg]: Using POA decomposition model to calculate incident beam irradiance.",
+                                wf.year, wf.month, wf.day, wf.hour, wf.minute), SSC_WARNING, (float)idx);
                         }
                         else {
-                            log(util::format("POA irradiance as input with the beam shading losses at time [y:%d m:%d d:%d h:%d]: Using POA decomposition model to calculate incident beam irradiance.",
-                                wf.year, wf.month, wf.day, wf.hour), SSC_NOTICE, (float)idx);
+                            log(util::format("POA irradiance as input with the beam shading losses at time [y:%d m:%d d:%d h:%d minute:%lg]: Using POA decomposition model to calculate incident beam irradiance.",
+                                wf.year, wf.month, wf.day, wf.hour, wf.minute), SSC_NOTICE, (float)idx);
                         }
                         Subarrays[nn]->poa.poaShadWarningCount++;
                     }
