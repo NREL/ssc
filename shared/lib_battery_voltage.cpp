@@ -189,6 +189,8 @@ double voltage_table_t::calculate_max_discharge_w(double q, double qmax, double,
     double max_I = 0;
     for (size_t i = 0; i < slopes.size(); i++) {
         double dod = -(A * slopes[i] + B * intercepts[i]) / (2 * B * slopes[i]);
+        dod = fmin(100, dod);
+        dod = fmax(0, dod);
         double current = qmax * ((1. - DOD0 / 100.) - (1. - dod / 100.)) / params->dt_hr;
         double p = calculate_voltage(dod) * current;
         if (p > max_P) {

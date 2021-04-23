@@ -649,6 +649,34 @@ TEST_F(voltage_table_lib_battery_voltage_test, calculateMaxDischargeHourly){
     EXPECT_NEAR(cap->SOC(), 27.02, 1e-2);
 }
 
+TEST_F(voltage_table_lib_battery_voltage_test, calculateMaxDischargeHourlyInputErrors) {
+    double dt_hour = 1;
+    CreateModel_SSC_565(dt_hour);
+    cap->change_SOC_limits(5, 100);
+
+    // start at half SOC
+    double max_current;
+    // Use larger than available qmax to simulate a mismatch between voltage table and nominal voltage in cell calcs
+    double power = model->calculate_max_discharge_w(cap->q0(), cap->qmax(), 0, &max_current);
+    EXPECT_NEAR(power, 329.4, 1); // Assumes 4.5 A of discharge at ~12V across 6 cells
+    double max_current_calc = model->calculate_current_for_target_w(power, cap->q0(), cap->qmax(), 0);
+    EXPECT_NEAR(max_current_calc, max_current, 1e-2); // Show that two methods agree on possible power
+
+    cap->updateCapacity(max_current, dt_hour);
+    EXPECT_NEAR(cap->SOC(), 5, 1e-3); // Discharge limit is not exceeded
+    EXPECT_NEAR(cap->q0(), 0.5, 1e-3);
+    EXPECT_NEAR(cap->qmax(), 10, 1e-3);
+
+    // start at empty SOC
+    power = model->calculate_max_discharge_w(cap->q0(), cap->qmax(), 0, &max_current);
+    EXPECT_NEAR(power, 32.9, 1); // Power decreases as we approach SOC Limits
+    max_current_calc = model->calculate_current_for_target_w(power, cap->q0(), cap->qmax(), 0);
+    EXPECT_NEAR(max_current_calc, max_current, 1e-1);
+    // Empties battery for highest power
+    cap->updateCapacity(max_current, dt_hour);
+    EXPECT_NEAR(cap->SOC(), 5, 1e-3);
+}
+
 TEST_F(voltage_table_lib_battery_voltage_test, calculateMaxDischargeSubHourly){
     double dt_hour = 0.5;
     CreateModel(dt_hour);
