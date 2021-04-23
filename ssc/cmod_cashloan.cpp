@@ -26,6 +26,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_financial.h"
 #include "lib_util.h"
 #include "common_financial.h"
+#include "common.h"
 using namespace libfin;
 #include <sstream>
 
@@ -209,7 +210,7 @@ extern var_info
     vtab_lcos_inputs[];
     
 
-enum CF_values{
+enum {
 	CF_degradation,
 	CF_energy_net,
 	CF_energy_value,
@@ -319,6 +320,7 @@ class cm_cashloan : public compute_module
 {
 private:
 	util::matrix_t<double> cf;
+    util::matrix_t<double> cf_lcos;
 	double ibi_fed_amount;
 	double ibi_sta_amount;
 	double ibi_uti_amount;
@@ -357,7 +359,6 @@ public:
 		bool is_commercial = (as_integer("market")==1);
 		bool is_mortgage = (as_integer("mortgage")==1);
 
-        CF_values cf_values = CF_max;
 //		throw exec_error("cmod_cashloan", "mortgage = " + util::to_string(as_integer("mortgage")));
 //		if (is_commercial) log("commercial market"); else log("residential market");
 //		if (is_mortgage) log("mortgage loan"); else log("standard loan");
@@ -367,6 +368,7 @@ public:
 
 		// initialize cashflow matrix
 		cf.resize_fill( CF_max, nyears+1, 0.0 );
+        cf_lcos.resize_fill(CF_max, nyears + 1, 0.0);
 
 		// initialize energy and revenue
 		size_t count = 0;
@@ -1063,6 +1065,13 @@ public:
     ///////////////////////////////////////////////////////////////////////
 //LCOS Calculations
     if (is_assigned("battery_total_cost_lcos") && as_double("battery_total_cost_lcos") != 0) {
+        for (int y = 0; y <= nyears; y++) {
+            cf_lcos.at(0, y) = cf.at(CF_battery_replacement_cost, y);
+            
+        }
+        int grid_charging_cost_version = 0;
+        lcos_calc(this, cf_lcos, nyears, nom_discount_rate, inflation_rate, lcoe_real, total_cost, real_discount_rate, grid_charging_cost_version, 0);
+        /*
         double lcos_investment_cost = as_double("battery_total_cost_lcos"); //does not include replacement costs
         double lcos_om_cost = npv(CF_om_capacity1_expense, nyears, nom_discount_rate); //Todo: include variable om due to charging
         //std::vector<double> charged_grid = as_vector_double("batt_annual_charge_from_grid");
@@ -1115,19 +1124,7 @@ public:
             {
                 // hourly_enet includes all curtailment, availability
 
-                /*
-                for (size_t h = 0; h < n_steps_per_year; h++) {
-        
-
-                    if (a != 0) {
-                        // Recompute this variable because the ppa_gen values (hourly_net) were all positve until now 
-                       
-                        //cf.at(CF_charging_cost_grid, a) += charged_grid[a] * cf.at(CF_utility_bill, a) / annual_import_to_grid_energy[a];
-                        cf.at(CF_charging_cost_grid, a) += grid_to_batt[(a - 1) * n_steps_per_year + h] * 8760 / n_steps_per_year * buy_rate_ts[(a - 1) * n_steps_per_year + h] * cf.at(CF_util_escal_rate, a);
-                        
-                        
-                    }
-                }*/
+                
 
                 for (size_t m = 0; m < 12; m++) {
                     if (a != 0) {
@@ -1142,15 +1139,7 @@ public:
             else
             {
 
-                /*
-                for (size_t h = 0; h < n_steps_per_year; h++) {
-                    
-                    if (a != 0) {
-                        // Recompute this variable becaif (elec_from_grid[h] != 0) {
-                        cf.at(CF_charging_cost_grid, a) += grid_to_batt[h] * 8760 / n_steps_per_year * buy_rate_ts[h] * cf.at(CF_util_escal_rate, a);
-                       
-                    }
-                }*/
+                
 
                 for (size_t m = 0; m < 12; m++) {
                     if (a != 0) {
@@ -1211,6 +1200,7 @@ public:
         assign("lcos_real", var_data((ssc_number_t)lcos_real));
         assign("npv_energy_lcos_nom", var_data((ssc_number_t)lcos_denominator));
         assign("npv_energy_lcos_real", var_data((ssc_number_t)lcos_denominator_real));
+        */
     }
     /////////////////////////////////////////////////////////////////////////////////////////
 

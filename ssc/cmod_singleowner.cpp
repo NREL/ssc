@@ -21,6 +21,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "common_financial.h"
+#include "common.h"
 #include "lib_financial.h"
 using namespace libfin;
 #include <sstream>
@@ -958,6 +959,7 @@ class cm_singleowner : public compute_module
 {
 private:
 	util::matrix_t<double> cf;
+    util::matrix_t<double> cf_lcos;
 	dispatch_calculations m_disp_calcs;
 	hourly_energy_calculation hourly_energy_calcs;
 
@@ -990,7 +992,7 @@ public:
 		// cash flow initialization
 		int nyears = as_integer("analysis_period");
 		cf.resize_fill(CF_max, nyears + 1, 0.0);
-
+        cf_lcos.resize_fill(CF_max, nyears + 1, 0.0);
 		// assign inputs
 		double inflation_rate = as_double("inflation_rate")*0.01;
 		double ppa_escalation = as_double("ppa_escalation")*0.01;
@@ -3038,6 +3040,13 @@ public:
     ///////////////////////////////////////////////////////////////////////
     //LCOS Calculations
     if (is_assigned("battery_total_cost_lcos") && as_double("battery_total_cost_lcos") != 0) {
+        for (int y = 0; y <= nyears; y++) {
+            cf_lcos.at(0, y) = cf.at(CF_battery_replacement_cost, y);
+            cf_lcos.at(1, y) = cf.at(CF_ppa_price, y);
+        }
+        int grid_charging_cost_version = 1;
+        lcos_calc(this, cf_lcos, nyears, nom_discount_rate, inflation_rate, lcoe_real, cost_prefinancing, disc_real, grid_charging_cost_version, ppa_multipliers);
+        /*
         double lcos_investment_cost = as_double("battery_total_cost_lcos"); //does not include replacement costs
 
         std::vector<double> charged_pv = as_vector_double("batt_annual_charge_from_system"); //amount energy to battery from system (kwh)
@@ -3076,11 +3085,10 @@ public:
         //std::vector<double> elec_purchases, elec_from_grid;
         ssc_number_t* elec_purchases;
         ssc_number_t* elec_from_grid;
-        /*
         if (is_assigned("rate_escalation"))
             escal_or_annual(CF_util_escal_rate, nyears, "rate_escalation", inflation_rate, 0.01, true, 0);
         save_cf(CF_util_escal_rate, nyears, "cf_util_escal_rate");
-        size_t n_rate_escalation;*/
+        size_t n_rate_escalation;
 
         // compute utility rate out-years escalation multipliers
         
@@ -3091,24 +3099,6 @@ public:
                 //Lifetime calculations
                 //Calculate cost to charge battery from grid (either using ppa price or electricity rates if enabled)
                 double ppa_value = cf.at(CF_ppa_price, a);
-                /*
-                for (size_t h = 0; h < n_steps_per_year; h++) {
-                    if (ppa_purchases && a!=0) {
-                        cf.at(CF_charging_cost_grid, a) += grid_to_batt[(size_t(a) - 1) * n_steps_per_year + h] * 8760/n_steps_per_year * ppa_value / 100.0 * ppa_multipliers[h];
-                    }
-                    if (!ppa_purchases && a != 0) {
-                        // Recompute this variable because the ppa_gen values (hourly_net) were all positve until now 
-                        
-                        //cf.at(CF_charging_cost_grid, a) += grid_to_batt[(a - 1) * n_steps_per_year + h] * 8760 / n_steps_per_year * -elec_purchases[h] * cf.at(CF_util_escal_rate, a) / elec_from_grid[h];
-                        cf.at(CF_charging_cost_grid, a) += grid_to_batt[(size_t(a) - 1) * n_steps_per_year + h] * 8760 / n_steps_per_year * buy_rate_ts[(size_t(a) - 1) * n_steps_per_year + h];
-                        //cf.at(CF_charging_cost_grid, a) += grid_to_batt[(a - 1) * n_steps_per_year + h] * 8760 / n_steps_per_year * buy_rate_ts[h] * pow((1+inflation_rate + 0.01),a-1);
-                        grid_charge_cost_ts[(size_t(a)-1) * n_steps_per_year + h] = grid_to_batt[(size_t(a) - 1) * n_steps_per_year + h] * 8760 / n_steps_per_year * buy_rate_ts[(size_t(a) - 1) * n_steps_per_year + h] * rate_scale[a - 1];
-                        //cf.at(CF_charging_cost_grid, a) += grid_to_batt[(a - 1) * n_steps_per_year + h] * 8760 / n_steps_per_year * -elec_purchases[h] * rate_scale[a-1] / elec_from_grid[h];
-
-
-                        
-                    }
-                }*/
                 if (ppa_purchases && a != 0) {
                     for (size_t h = 0; h < n_steps_per_year; h++) {
                         cf.at(CF_charging_cost_grid, a) += grid_to_batt[(size_t(a) - 1) * n_steps_per_year + h] * 8760 / n_steps_per_year * ppa_value / 100.0 * ppa_multipliers[h];
@@ -3129,21 +3119,7 @@ public:
                 //Single year calculations (might not be needed as their is no Single Owner for PVWatts Battery
                 //Calculate cost to charge battery from grid (either using ppa price or electricity rates if enabled)
                 double ppa_value = cf.at(CF_ppa_price, a);
-                /*
-                for (size_t h = 0; h < 8760; h++) {
-                    if (ppa_purchases && a!=0) {
-                        cf.at(CF_charging_cost_grid, a) += grid_to_batt[h] * ppa_value / 100.0 * ppa_multipliers[h];
-                    }
-                    if (!ppa_purchases && a != 0) {
-                        if (elec_from_grid[h] != 0) {
-                            //cf.at(CF_charging_cost_grid, a) += grid_to_batt[h] * -elec_purchases[h] * cf.at(CF_util_escal_rate, a) / elec_from_grid[h];
-                            cf.at(CF_charging_cost_grid, a) += grid_to_batt[h] * buy_rate_ts[h] * cf.at(CF_util_escal_rate, a);
-
-                        }
-                        else
-                            cf.at(CF_charging_cost_grid, a) += 0;
-                    }
-                }*/
+                
                 if (ppa_purchases && a != 0) {
                     for (size_t h = 0; h < 8760; h++) {
                         cf.at(CF_charging_cost_grid, a) += grid_to_batt[h] * ppa_value / 100.0 * ppa_multipliers[h];
@@ -3224,6 +3200,7 @@ public:
         assign("lcos_real", var_data((ssc_number_t)lcos_real));
         assign("npv_energy_lcos_nom", var_data((ssc_number_t)lcos_denominator));
         assign("npv_energy_lcos_real", var_data((ssc_number_t)lcos_denominator_real));
+        */
     }
     /////////////////////////////////////////////////////////////////////////////////////////
 

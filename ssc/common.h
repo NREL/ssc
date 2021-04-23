@@ -63,6 +63,9 @@ void calculate_resilience_outputs(compute_module *cm, std::unique_ptr<resilience
 
 ssc_number_t* gen_heatmap(compute_module* cm, double step_per_hour);
 
+void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double nom_discount_rate, double inflation_rate, double lcoe_real, double total_cost, double real_discount_rate, int grid_charging_cost_version, ssc_number_t* ppa_multipliers);
+
+
 class adjustment_factors
 {
 	compute_module *m_cm;
