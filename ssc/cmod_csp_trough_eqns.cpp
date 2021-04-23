@@ -14,16 +14,21 @@ void Physical_Trough_System_Design_Equations(ssc_data_t data)
     }
 
     // Inputs
-    double P_ref, gross_net_conversion_factor;
+    double P_ref, gross_net_conversion_factor, eta_ref;
 
     // Outputs
-    double csp_dtr_pwrb_nameplate;
+    double csp_dtr_pwrb_nameplate, q_pb_design;
 
     // csp_dtr_pwrb_nameplate
     ssc_data_t_get_number(data, "P_ref", &P_ref);
     ssc_data_t_get_number(data, "gross_net_conversion_factor", &gross_net_conversion_factor);
     csp_dtr_pwrb_nameplate = Nameplate(P_ref, gross_net_conversion_factor);
     ssc_data_t_set_number(data, "csp_dtr_pwrb_nameplate", csp_dtr_pwrb_nameplate);
+
+    // q_pb_design
+    ssc_data_t_get_number(data, "eta_ref", &eta_ref);
+    q_pb_design = Q_pb_design(P_ref, eta_ref);
+    ssc_data_t_set_number(data, "q_pb_design", q_pb_design);
 }
 
 void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
@@ -34,8 +39,7 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     }
 
     // Inputs
-    double P_ref, eta_ref,
-        T_loop_in_des, T_loop_out, Fluid,
+    double T_loop_in_des, T_loop_out, Fluid,
         I_bn_des,
         m_dot_htfmax, fluid_dens_outlet_temp,
         m_dot_htfmin, fluid_dens_inlet_temp,
@@ -75,11 +79,7 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
         csp_dtr_hce_design_heat_losses, csp_dtr_hce_optical_effs;
 
 
-    // q_pb_design
-    ssc_data_t_get_number(data, "P_ref", &P_ref);
-    ssc_data_t_get_number(data, "eta_ref", &eta_ref);
-    q_pb_design = Q_pb_design(P_ref, eta_ref);
-    ssc_data_t_set_number(data, "q_pb_design", q_pb_design);
+    ssc_data_t_get_number(data, "q_pb_design", &q_pb_design);
 
     // field_htf_cp_avg
     ssc_data_t_get_number(data, "T_loop_in_des", &T_loop_in_des);
