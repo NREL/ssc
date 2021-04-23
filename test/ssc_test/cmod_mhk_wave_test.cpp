@@ -127,6 +127,79 @@ TEST_F(CM_MHKWave, ComputeModuleTest_cmod_mhk_wave_time_series) {
 
 }
 
+TEST_F(CM_MHKWave, ComputeModuleTest_cmod_mhk_wave_time_series_array) {
+    //ssc_data_set_number(data, "wave_resource_model_choice", 1);
+    //ssc_data_clear(data);
+    ssc_data_unassign(data, "wave_resource_matrix");
+    var_data* waveresourcedata = create_wavedata_array(1, 1);
+    var_table* vt = static_cast<var_table*>(data);
+    vt->assign("wave_resource_data", *waveresourcedata);
+    double lat = 25;
+    double lon = 30;
+    int data_type = 1; //1 for time series data, 0 for jpd
+    //int nearby_buoy_number = 335;
+    double average_power_flux = 550.2;
+    
+
+    //util::matrix_t<double> wave_resource_matrix = [[0; 0.5; 1.5; 2.5; 3.5; 4.5; 5.5; 6.5; 7.5; 8.5; 9.5; 10.5; 11.5; 12.5; 13.5; 14.5; 15.5; 16.5; 17.5; 18.5; 19.5; 20.5][0.25; 0; 0; 0; 0; 0; 0; 0; 0.02; 0.03; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0][0.75; 0; 0; 0; 0; 0.02; 0.46; 1.49; 2.68; 1.91; 1.1; 0.53; 0.17; 0.02; 0; 0; 0; 0; 0; 0; 0; 0][1.25; 0; 0; 0; 0; 0.01; 0.59; 4.11; 5.56; 4.48; 2.74; 1.28; 0.67; 0.33; 0.07; 0.02; 0.02; 0; 0; 0; 0; 0][1.75; 0; 0; 0; 0; 0; 0.12; 3.27; 5.14; 4.62; 3.93; 2.11; 1.24; 0.76; 0.31; 0.1; 0.03; 0; 0; 0; 0; 0][2.25; 0; 0; 0; 0; 0; 0; 0.92; 5.25; 3.68; 4.14; 2.87; 1.31; 0.84; 0.42; 0.2; 0.08; 0.02; 0; 0; 0; 0][2.75; 0; 0; 0; 0; 0; 0; 0.14; 2.43; 2.6; 2.82; 2.85; 1.57; 0.8; 0.32; 0.14; 0.06; 0.02; 0; 0; 0; 0][3.25; 0; 0; 0; 0; 0; 0; 0; 0.45; 1.54; 1.47; 1.96; 1.42; 0.79; 0.32; 0.11; 0.04; 0.02; 0.01; 0.01; 0; 0][3.75; 0; 0; 0; 0; 0; 0; 0; 0.05; 0.49; 0.63; 1.08; 1.01; 0.63; 0.29; 0.1; 0.05; 0.02; 0; 0; 0; 0][4.25; 0; 0; 0; 0; 0; 0; 0; 0; 0.09; 0.21; 0.45; 0.56; 0.42; 0.21; 0.07; 0.02; 0.02; 0; 0; 0; 0][4.75; 0; 0; 0; 0; 0; 0; 0; 0; 0.02; 0.08; 0.12; 0.26; 0.27; 0.19; 0.07; 0.02; 0.01; 0; 0; 0; 0][5.25; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0.03; 0.03; 0.11; 0.15; 0.13; 0.07; 0.02; 0; 0; 0; 0; 0][5.75; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0.02; 0.07; 0.05; 0.05; 0.02; 0; 0; 0; 0; 0][6.25; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0.03; 0.04; 0.02; 0.01; 0; 0; 0; 0; 0][6.75; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0.02; 0.02; 0; 0; 0; 0; 0; 0][7.25; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0][7.75; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0][8.25; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0][8.75; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0][9.25; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0][9.75; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0]];
+
+    
+   
+    /*ssc_number_t* mat = vt->allocate("wave_resource_matrix", 21, 22);
+    for (size_t i = 0; i < 21; i++) {
+        for (size_t j = 0; j < 22; j++) {
+            mat[i * 22 + j] = jpd_data[i*22 + j];
+        }
+    }*/
+    //vt->assign("wave_resource_matrix", wave_data);
+    //vt->assign("lat", lat);
+    //vt->assign("lon", lon);
+    //vt->assign("data_type", data_type);
+    //vt->assign("nearby_buoy_number", var_data("NDBC 46094"));
+    //vt->assign("average_power_flux", average_power_flux);
+    //vt->assign("wave_significant_height", sig_wave_height);
+    //vt->assign("wave_energy_period", wave_period);
+    //vt->assign("wave_resource_matrix", var_data(wave_resource_matrix));
+    //vt->assign("name", var_data("matt"));
+    //vt->assign("city", var_data("golden"));
+    //vt->assign("state", var_data("Colorado"));
+    //vt->assign("country", var_data("US"));
+    //vt->assign("data_source", var_data("test"));
+    //vt->assign("bathymetry", var_data("bathymetry"));
+    //vt->assign("sea_bed", var_data("rocks"));
+    //vt->assign("notes", var_data("wasup"));
+    //vt->assign("tz", var_data(7));
+    //var_data* input = new var_data;
+    //input->type = SSC_TABLE;
+    //input->table = *vt;
+    //var_table* vt2 = static_cast<var_table*>(data);
+    //vt2->assign("wave_resource_data", *input);
+
+    int mhk_wave_errors = run_module(data, "mhk_wave");
+    int* len = 0;
+    double* wave_heights_test = ssc_data_get_array(data, "gen", len);
+    ASSERT_EQ(mhk_wave_errors, 0);
+
+    ssc_number_t annual_energy, average_power, capacity_factor, lcoe_fcr;
+
+    ssc_data_get_number(data, "annual_energy", &annual_energy);
+    EXPECT_NEAR(annual_energy, 732680, 1);
+
+    ssc_data_get_number(data, "device_average_power", &average_power);
+    EXPECT_NEAR(average_power, 90, 0.5);
+
+    ssc_data_get_number(data, "capacity_factor", &capacity_factor);
+    EXPECT_NEAR(capacity_factor, 29.24, 0.1);
+
+    mhk_wave_errors = run_module(data, "lcoefcr");
+    ASSERT_EQ(mhk_wave_errors, 0);
+
+    ssc_data_get_number(data, "lcoe_fcr", &lcoe_fcr);
+    EXPECT_NEAR(lcoe_fcr, 3.48, 0.1);
+
+
+}
+
 TEST_F(CM_MHKWave, ComputeModuleTest_cmod_mhk_wave_time_series_file) {
     //ssc_data_set_number(data, "wave_resource_model_choice", 1);
     ssc_data_clear(data);

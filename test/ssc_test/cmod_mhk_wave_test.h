@@ -39,6 +39,31 @@ public:
 		calculated_array = ssc_data_get_array(data, const_cast<char *>(name.c_str()), &n);
 	}
 
+    var_data* create_wavedata_array(int intervalsPerHour, int nMeasurementHeights) {
+        size_t timeLength = 2920;
+        double* height_data = new double[2920];
+        double* period_data = new double[2920];
+        for (int i = 0; i < (int)timeLength; i++) {
+            height_data[i] = 5 + fmod(i, 10)/10;
+            period_data[i] = 10 + fmod(i, 10) / 10;
+        }
+
+        
+        
+        var_data height_vd = var_data(height_data, int(timeLength));
+        var_data periods_vd = var_data(period_data, int(timeLength));
+
+        var_table* vt = new var_table;
+        vt->assign("wave_significant_height", height_vd);
+        vt->assign("wave_energy_period", periods_vd);
+        
+
+        var_data* input = new var_data;
+        input->type = SSC_TABLE;
+        input->table = *vt;
+        return input;
+    }
+
 };
 
 #endif // !CMOD_MHK_WAVE_TEST_H_
