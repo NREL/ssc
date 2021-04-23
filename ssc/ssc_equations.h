@@ -64,6 +64,7 @@ static ssc_equation_entry ssc_equation_table [] = {
             false, true},
 
         // CSP
+        // MSPT:
         {"MSPT_System_Design_Equations", MSPT_System_Design_Equations,
             "Tcsmolten_salt", MSPT_System_Design_Equations_doc,
             true, false},
@@ -85,6 +86,8 @@ static ssc_equation_entry ssc_equation_table [] = {
         //{"Tower_SolarPilot_Capital_Costs_ISCC_Equations", Tower_SolarPilot_Capital_Costs_ISCC_Equations,
         //    "Tcsiscc", Tower_SolarPilot_Capital_Costs_ISCC_Equations_doc,
         //    true, false},
+
+        // Physical Trough:
         {"Physical_Trough_System_Design_Equations", Physical_Trough_System_Design_Equations,
             "Trough_physical", Physical_Trough_System_Design_Equations_doc,
             true, false},
@@ -100,6 +103,24 @@ static ssc_equation_entry ssc_equation_table [] = {
         {"Physical_Trough_System_Control_Equations", Physical_Trough_System_Control_Equations,
             "Trough_physical", Physical_Trough_System_Control_Equations_doc,
             true, false},
+
+        // Trough IPH
+        //{"Phys_Trough_System_Design_Equations", Phy_Trough_System_Design_Equations,
+        //    "Trough_physical_process_heat", Phys_Trough_System_Design_Equations_doc,
+        //    true, false},
+        {"Physical_Trough_Solar_Field_Equations", Physical_Trough_Solar_Field_Equations,
+            "Trough_physical_process_heat", Physical_Trough_Solar_Field_Equations_doc,
+            true, false},
+        {"Physical_Trough_Collector_Type_Equations", Physical_Trough_Collector_Type_Equations,
+            "Trough_physical_process_heat", Physical_Trough_Collector_Type_Equations_doc,
+            true, false},
+        {"Physical_Trough_Receiver_Type_Equations", Physical_Trough_Receiver_Type_Equations,
+            "Trough_physical_process_heat", Physical_Trough_Receiver_Type_Equations_doc,
+            true, false},
+        //{"Phys_Trough_System_Control_Equations", Phys_Trough_System_Control_Equations,
+        //    "Trough_physical_process_heat", Phys_Trough_System_Control_Equations_doc,
+        //    true, false},
+
 
         // Single owner
         {"Financial_Construction_Financing_Equations", Financial_Construction_Financing_Equations,
