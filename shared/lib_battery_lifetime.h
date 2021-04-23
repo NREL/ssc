@@ -93,6 +93,8 @@ public:
     /// Return the relative capacity percentage of nominal (%)
     double capacity_percent();
 
+    double day_age_of_battery();
+
     virtual double estimateCycleDamage() = 0;
 
     virtual void replaceBattery(double percent_to_replace) = 0;

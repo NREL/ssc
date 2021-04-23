@@ -1,7 +1,9 @@
 #include <gtest/gtest.h>
 #include <random>
+#include <fstream>
 
-//#include "lib_battery_capacity.h"
+#include <json/json.h>
+#include "logger.h"
 #include "lib_battery.h"
 #include "lib_battery_lifetime_test.h"
 
@@ -91,8 +93,7 @@ TEST_F(lib_battery_lifetime_cycle_test, runCycleLifetimeTestKokamProfile) {
     EXPECT_NEAR(s.cycle->rainflow_jlt, 5, tol);
     EXPECT_NEAR(s.range, 75.07, tol);
     EXPECT_NEAR(s.average_range, 72.03, tol);
-    EXPECT_NEAR(s.n_cycles, 13, tol);
-
+    EXPECT_NEAR(s.n_cycles, 14, tol);
 }
 
 TEST_F(lib_battery_lifetime_cycle_test, runCycleLifetimeTestWithNoise) {
@@ -121,7 +122,7 @@ TEST_F(lib_battery_lifetime_cycle_test, runCycleLifetimeTestWithNoise) {
     EXPECT_NEAR(s.cycle->q_relative_cycle, 95.06, tol_high);
     EXPECT_NEAR(s.range, 90.6, tol_high);
     EXPECT_NEAR(s.average_range, 90.02, tol_high);
-
+    EXPECT_NEAR(s.n_cycles, 2, tol);
 }
 
 TEST_F(lib_battery_lifetime_cycle_test, replaceBatteryTest) {
@@ -795,4 +796,156 @@ TEST_F(lib_battery_lifetime_nmc_test, IrregularTimeStep) {
     EXPECT_NEAR(state.nmc_li_neg->q_relative_li, 105.965, 1e-3);
     EXPECT_NEAR(state.nmc_li_neg->q_relative_neg, 103.829, 1e-3);
     EXPECT_NEAR(state.day_age_of_battery, 88, 1e-3);
+}
+
+TEST_F(lib_battery_lifetime_nmc_test, TestAgainstKokamData) {
+    const char * SSCDIR = std::getenv("SSCDIR");
+
+    std::string kokam_validation_path = std::string(SSCDIR) + "/test/input_cases/battery_nmc_life/";
+
+    std::vector<int> cells_to_test = {1, 2, 3, 4, 6, 7, 9};
+    cells_to_test = {6, 7, 9};
+
+    dt_hour = 1. / 60 / 60 * 10;
+    double tol = 0.02;
+
+    for (auto cell : cells_to_test) {
+        // Get Cell input data
+        std::string file_path = kokam_validation_path + "lifetime_validation_cell_" + std::to_string(cell) + ".json";
+        std::ifstream file(file_path);
+
+        Json::Value root;
+        file >> root;
+
+        std::vector<double> rpt_cycles;
+        for (const auto & i : root["rpt_cycles"])
+            rpt_cycles.push_back(i.asDouble());
+
+        std::vector<double> single_cycle_soc_profile;
+        for (const auto & i : root["soc_profile"])
+            single_cycle_soc_profile.push_back(i.asDouble());
+
+        std::vector<int> days_to_test;
+        for (const auto & i : root["rpt_days"])
+            days_to_test.push_back((int)std::round(i.asDouble()));
+
+        std::vector<int> steps_per_day_to_cycle;
+        for (const auto & i : root["steps_per_day_to_cycle"])
+            steps_per_day_to_cycle.push_back(i.asInt());
+
+        int total_steps_per_day = root["total_steps_per_day"].asInt();
+
+        double cell_temp = root["temp"].asDouble();
+
+        // Create SOC profile for entire test period
+        std::vector<double> cycles_at_days = {0};
+        size_t cycle_index = 0;
+        std::vector<double> full_soc_profile;
+        for (size_t n = 1; n < days_to_test.size(); n++) {
+            int test_day = days_to_test[n] - days_to_test[n - 1];
+            // run all the days with the cycle-per-day rate between each RPT
+            int steps_per_day = steps_per_day_to_cycle[n - 1];
+            for (size_t d = 0; d < test_day; d++) {
+                for (int step = 0; step < steps_per_day; step++) {
+                    size_t soc_index = cycle_index % single_cycle_soc_profile.size();
+                    full_soc_profile.emplace_back(single_cycle_soc_profile[soc_index]);
+                    cycle_index++;
+                }
+                for (int step = 0; step < total_steps_per_day - steps_per_day; step++) {
+                    full_soc_profile.push_back(full_soc_profile.back());
+                }
+            }
+            cycles_at_days.emplace_back((double)cycle_index / (double)single_cycle_soc_profile.size());
+        }
+
+        // Run Life model with the profile, which starts with charging and ends with discharging
+        model = std::unique_ptr<lifetime_nmc_t>(new lifetime_nmc_t(dt_hour));
+
+        // record capacity and cycles elapsed at RPT days, days_to_test
+        std::vector<double> life_model_caps;
+        std::vector<double> life_model_qLi;
+        std::vector<double> life_model_qNeg;
+        std::vector<double> cycs;
+
+        // charging = -1; discharging = 1
+        int charge_mode = -1;
+        int prev_charge_mode = 1;
+
+        for (int i = 0; i < full_soc_profile.size(); i++) {
+            int j = i + 1;
+            if (j > full_soc_profile.size() - 1)
+                j = 0;
+            double prev_SOC = full_soc_profile[i];
+            double SOC = full_soc_profile[j];
+
+            if (SOC - prev_SOC > 1e-5)
+                charge_mode = -1;
+            else if (prev_SOC - SOC > 1e-5)
+                charge_mode = 1;
+
+            bool charge_changed = false;
+
+            if (charge_mode != prev_charge_mode) {
+                charge_changed = true;
+//                printf("%d, %d: SOC %f, SOC prev %f, %d -> ", cycle_count, i, SOC, prev_SOC, model->get_state().n_cycles);
+            }
+            model->runLifetimeModels(i, charge_changed, (1. - prev_SOC) * 100, (1. - SOC) * 100., cell_temp);
+            prev_charge_mode = charge_mode;
+
+            if (model->day_age_of_battery() - days_to_test[0] > 0) {
+                auto s = model->get_state();
+                life_model_caps.push_back(s.q_relative * 0.75);
+                life_model_qLi.push_back(s.nmc_li_neg->q_relative_li * 0.75);
+                life_model_qNeg.push_back(s.nmc_li_neg->q_relative_neg * 0.75);
+                cycs.push_back(s.n_cycles);
+                days_to_test.erase(days_to_test.begin());
+            }
+            if (days_to_test.empty())
+                break;
+        }
+
+        // Get Actual RPT data and Model Prediction
+        std::vector<double> rpt_caps;
+        for (const auto & i : root["rpt_caps"])
+            rpt_caps.push_back(i.asDouble());
+
+        std::vector<double> static_model_caps;
+        for (const auto & i : root["model_caps"])
+            static_model_caps.push_back(i.asDouble());
+
+        std::vector<double> rpt_diff_normed;
+        std::vector<double> static_diff_normed;
+        for (size_t n = 0; n < life_model_caps.size(); n++){
+            rpt_diff_normed.emplace_back((life_model_caps[n] - rpt_caps[n]) / rpt_caps[n]);
+            static_diff_normed.emplace_back((life_model_caps[n] - static_model_caps[n]) / static_model_caps[n]);
+        }
+
+
+        int comp_index = (int)root["rpt_days"].size() - 1;
+        comp_index = 15;
+        printf("Cell #\t End Day\t qLi Model\t qNeg Model\t Cap Model\t Cap RPT\t RPT Diff\t Cap Static\t Static Diff\n");
+        printf("%d\t\t %0.2f\t\t%0.2f \t\t %0.2f \t\t %0.2f \t\t %0.2f \t\t %0.3f \t\t %0.2f \t\t %0.3f\n", cell,
+               root["rpt_days"][comp_index].asDouble(),
+               life_model_qLi[comp_index], life_model_qNeg[comp_index], life_model_caps[comp_index],
+               rpt_caps[comp_index], rpt_diff_normed[comp_index],
+               static_model_caps[comp_index], static_diff_normed[comp_index]);
+
+//        continue;
+        printf("static model cycles:");
+        for (auto i : static_model_caps)
+            printf("%f, ", i);
+        printf("\nlife model cycles:");
+        for (auto i : life_model_caps)
+            printf("%f, ", i);
+        printf("\nrpt cycles:");
+        for (auto i : rpt_cycles)
+            printf("%f, ", i);
+        printf("\nrun cycles:");
+        for (auto i : cycs)
+            printf("%f, ", i);
+        printf("\ndays at end: %f, avg range: %f, cycles: %d\n", model->get_state().day_age_of_battery,
+               model->get_state().average_range, model->get_state().n_cycles);
+
+        printf("\n");
+    }
 }

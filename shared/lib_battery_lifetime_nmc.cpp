@@ -82,8 +82,8 @@ lifetime_t * lifetime_nmc_t::clone() {
     return new lifetime_nmc_t(*this);
 }
 
-//calculate_Uneg, and calculate_Voc are picewise linear functions. The linear functions were obtained by using values
-//from  Table B.1 of the applied energy paper " Analysis of degradation in residential battery energy storate systems
+// calculate_Uneg, and calculate_Voc are piecewise linear functions. The linear functions were obtained by using values
+// from Table B.1 of the applied energy paper "Analysis of degradation in residential battery energy storage systems
 // for rate-based use-cases"
 
 double lifetime_nmc_t::calculate_Uneg(double SOC) {
@@ -194,6 +194,8 @@ void lifetime_nmc_t::integrateDegLoss(double DOD, double T_battery) {
 
 void lifetime_nmc_t::runLifetimeModels(size_t _, bool charge_changed, double prev_DOD, double DOD,
                                        double T_battery) {
+    prev_DOD = fmax(fmin(prev_DOD, 100), 0);
+    DOD = fmax(fmin(DOD, 100), 0);
     double q_last = state->q_relative;
     // convert battery temperature to Kelvin
     T_battery += 273.15;

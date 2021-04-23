@@ -105,6 +105,7 @@ lifetime_t &lifetime_t::operator=(const lifetime_t &rhs) {
 
 double lifetime_t::capacity_percent() { return state->q_relative; }
 
+double lifetime_t::day_age_of_battery() { return state->day_age_of_battery; }
 
 lifetime_params lifetime_t::get_params() { return *params; }
 
