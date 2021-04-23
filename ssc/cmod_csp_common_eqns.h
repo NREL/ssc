@@ -159,8 +159,7 @@ double Min_inner_diameter(const util::matrix_t<ssc_number_t>& trough_loop_contro
 double Single_loop_aperature(const util::matrix_t<ssc_number_t>& trough_loop_control, const util::matrix_t<ssc_number_t>& A_aperture);
 
 double Cspdtr_loop_hce_heat_loss(const util::matrix_t<ssc_number_t>& trough_loop_control, double I_bn_des,
-    double csp_dtr_hce_design_heat_loss_1, double csp_dtr_hce_design_heat_loss_2,
-    double csp_dtr_hce_design_heat_loss_3, double csp_dtr_hce_design_heat_loss_4,
+    const util::matrix_t<ssc_number_t>& csp_dtr_hce_design_heat_losses,
     const util::matrix_t<ssc_number_t>& L_SCA,
     const util::matrix_t<ssc_number_t>& A_aperture);
 
@@ -200,8 +199,6 @@ util::matrix_t<ssc_number_t> Type_Cpnt(int nSCA);
 
 
 // Originally from 'Physical Trough Collector Type 1' (and 2, 3, 4)
-//double Csp_dtr_sca_ap_length(double csp_dtr_sca_length, double csp_dtr_sca_ncol_per_sca);
-
 util::matrix_t<ssc_number_t> Csp_dtr_sca_ap_lengths(const util::matrix_t<ssc_number_t>& csp_dtr_sca_lengths, const util::matrix_t<ssc_number_t>& csp_dtr_sca_ncol_per_scas);
 
 //double Csp_dtr_sca_calc_end_gain(double csp_dtr_sca_ave_focal_len, double csp_dtr_sca_calc_theta, double csp_dtr_sca_piping_dist);
@@ -210,14 +207,8 @@ util::matrix_t<ssc_number_t> Csp_dtr_sca_calc_end_gains(const util::matrix_t<ssc
 
 double Csp_dtr_sca_calc_costh(double csp_dtr_sca_calc_zenith, double tilt, double azimuth);
 
-//double Csp_dtr_sca_calc_end_loss(double csp_dtr_sca_ave_focal_len, double csp_dtr_sca_calc_theta, double nSCA, double csp_dtr_sca_calc_end_gain,
-//    double csp_dtr_sca_length, double csp_dtr_sca_ncol_per_sca);
-
 util::matrix_t<ssc_number_t> Csp_dtr_sca_calc_end_losses(const util::matrix_t<ssc_number_t>& csp_dtr_sca_ave_focal_lens, double csp_dtr_sca_calc_theta, double nSCA,
     const util::matrix_t<ssc_number_t>& csp_dtr_sca_calc_end_gains, const util::matrix_t<ssc_number_t>& csp_dtr_sca_lengths, const util::matrix_t<ssc_number_t>& csp_dtr_sca_ncol_per_scas);
-
-//double Csp_dtr_sca_calc_sca_eff(double csp_dtr_sca_tracking_error, double csp_dtr_sca_geometry_effects,
-//    double csp_dtr_sca_clean_reflectivity, double csp_dtr_sca_mirror_dirt, double csp_dtr_sca_general_error);
 
 util::matrix_t<ssc_number_t> Csp_dtr_sca_calc_sca_effs(const util::matrix_t<ssc_number_t>& csp_dtr_sca_tracking_errors, const util::matrix_t<ssc_number_t>& csp_dtr_sca_geometry_effects,
     const util::matrix_t<ssc_number_t>& csp_dtr_sca_clean_reflectivities, const util::matrix_t<ssc_number_t>& csp_dtr_sca_mirror_dirts, const util::matrix_t<ssc_number_t>& csp_dtr_sca_general_errors);
@@ -225,8 +216,6 @@ util::matrix_t<ssc_number_t> Csp_dtr_sca_calc_sca_effs(const util::matrix_t<ssc_
 double Csp_dtr_sca_calc_latitude(double lat);
 
 double Csp_dtr_sca_calc_zenith(double lat);
-
-//double Csp_dtr_sca_calc_iam(const util::matrix_t<ssc_number_t>& IAMs, double csp_dtr_sca_calc_theta, double csp_dtr_sca_calc_costh);
 
 util::matrix_t<ssc_number_t> Csp_dtr_sca_calc_iams(const util::matrix_t<ssc_number_t>& IAMs, double csp_dtr_sca_calc_theta, double csp_dtr_sca_calc_costh);
 

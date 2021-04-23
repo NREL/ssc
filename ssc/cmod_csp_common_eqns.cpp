@@ -528,19 +528,13 @@ double Field_htf_cp_avg(double T_in /*C*/, double T_out /*C*/, int rec_htf /*-*/
 
 double Min_inner_diameter(const util::matrix_t<ssc_number_t>& trough_loop_control, const util::matrix_t<ssc_number_t>& D_2)
 {
-    std::vector<double> diam_inputs(4, std::numeric_limits<double>::quiet_NaN());
-    diam_inputs[0] = D_2.at(0);
-    diam_inputs[1] = D_2.at(1);
-    diam_inputs[2] = D_2.at(2);
-    diam_inputs[3] = D_2.at(3);
-
-    double minval = diam_inputs[0];
+    double minval = D_2[0];
     int hce_t = -1;
     for (int i = 0; i < static_cast<int>(trough_loop_control.at(0)); i++)
     {
         hce_t = std::min(std::max(static_cast<int>(trough_loop_control.at(i * 3 + 2)), 1), 4) - 1;
-        if (diam_inputs[hce_t] < minval) {
-            minval = diam_inputs[hce_t];
+        if (D_2[hce_t] < minval) {
+            minval = D_2[hce_t];
         }
     }
 
@@ -549,59 +543,34 @@ double Min_inner_diameter(const util::matrix_t<ssc_number_t>& trough_loop_contro
 
 double Single_loop_aperature(const util::matrix_t<ssc_number_t>& trough_loop_control, const util::matrix_t<ssc_number_t>& A_aperture)
 {
-    std::vector<double> sca_ap(4, std::numeric_limits<double>::quiet_NaN());
-
     int nsca = static_cast<int>(trough_loop_control.at(0));
-    sca_ap[0] = A_aperture.at(0);
-    sca_ap[1] = A_aperture.at(1);
-    sca_ap[2] = A_aperture.at(2);
-    sca_ap[3] = A_aperture.at(3);
 
     double total_ap = 0.;
     int sca_t = -1;
     for (int i = 0; i < nsca; i++)
     {
         sca_t = std::min(std::max(static_cast<int>(trough_loop_control.at(1 + i * 3)), 1), 4) - 1;
-        total_ap = total_ap + sca_ap[sca_t];
+        total_ap = total_ap + A_aperture[sca_t];
     }
 
     return total_ap;
 }
 
 double Cspdtr_loop_hce_heat_loss(const util::matrix_t<ssc_number_t>& trough_loop_control, double I_bn_des,
-    double csp_dtr_hce_design_heat_loss_1, double csp_dtr_hce_design_heat_loss_2,
-    double csp_dtr_hce_design_heat_loss_3, double csp_dtr_hce_design_heat_loss_4,
+    const util::matrix_t<ssc_number_t>& csp_dtr_hce_design_heat_losses,
     const util::matrix_t<ssc_number_t>& L_SCA,
     const util::matrix_t<ssc_number_t>& A_aperture)
 {
-    std::vector<double> hce_hl(4, std::numeric_limits<double>::quiet_NaN());
-    std::vector<double> sca_len(4, std::numeric_limits<double>::quiet_NaN());
-    std::vector<double> sca_ap(4, std::numeric_limits<double>::quiet_NaN());
     int ncol = static_cast<int>(trough_loop_control.at(0));
     double total_len = 0.;
-
-    hce_hl[0] = csp_dtr_hce_design_heat_loss_1;
-    hce_hl[1] = csp_dtr_hce_design_heat_loss_2;
-    hce_hl[2] = csp_dtr_hce_design_heat_loss_3;
-    hce_hl[3] = csp_dtr_hce_design_heat_loss_4;
-
-    sca_len[0] = L_SCA.at(0);
-    sca_len[1] = L_SCA.at(1);
-    sca_len[2] = L_SCA.at(2);
-    sca_len[3] = L_SCA.at(3);
-
-    sca_ap[0] = A_aperture.at(0);
-    sca_ap[1] = A_aperture.at(1);
-    sca_ap[2] = A_aperture.at(2);
-    sca_ap[3] = A_aperture.at(3);
 
     double derate = 0.;
     for (int i = 0; i < ncol; i++)
     {
         int sca_t = std::min(std::max(static_cast<int>(trough_loop_control.at(1 + i * 3)), 1), 4) - 1;
         int hce_t = std::min(std::max(static_cast<int>(trough_loop_control.at(2 + i * 3)), 1), 4) - 1;
-        total_len = total_len + sca_len[sca_t];
-        derate = derate + sca_len[sca_t] * (1 - (hce_hl[hce_t] / (I_bn_des * sca_ap[sca_t] / sca_len[sca_t])));
+        total_len = total_len + L_SCA[sca_t];
+        derate = derate + L_SCA[sca_t] * (1 - (csp_dtr_hce_design_heat_losses[hce_t] / (I_bn_des * A_aperture[sca_t] / L_SCA[sca_t])));
     }
 
     if (total_len != 0.0) {
@@ -649,33 +618,19 @@ double Loop_optical_efficiency(const util::matrix_t<ssc_number_t>& trough_loop_c
     const util::matrix_t<ssc_number_t>& L_SCA,
     const util::matrix_t<ssc_number_t>& csp_dtr_hce_optical_effs)
 {
-    std::vector<double> sca_eff(4, std::numeric_limits<double>::quiet_NaN());
-    std::vector<double> sca_len(4, std::numeric_limits<double>::quiet_NaN());
-    std::vector<double> hce_eff(4, std::numeric_limits<double>::quiet_NaN());
     int ncol = static_cast<int>(trough_loop_control.at(0));
 
     if (trough_loop_control.ncells() != ncol * 3 + 1) {
         return -888.8;
     }
 
-    // sca efficiency
-    sca_eff[0] = csp_dtr_sca_calc_sca_effs.at(0);
-    sca_eff[1] = csp_dtr_sca_calc_sca_effs.at(1);
-    sca_eff[2] = csp_dtr_sca_calc_sca_effs.at(2);
-    sca_eff[3] = csp_dtr_sca_calc_sca_effs.at(3);
-
-    sca_len[0] = L_SCA.at(0);
-    sca_len[1] = L_SCA.at(1);
-    sca_len[2] = L_SCA.at(2);
-    sca_len[3] = L_SCA.at(3);
-
     double total_len = 0.;
     double weighted_sca_eff = 0.0;
     for (int i = 0; i < ncol; i++)
     {
         int sca_t = std::min(std::max(static_cast<int>(trough_loop_control.at(1 + i * 3)), 1), 4) - 1;
-        total_len = total_len + sca_len[sca_t];
-        weighted_sca_eff = weighted_sca_eff + sca_len[sca_t] * sca_eff[sca_t];
+        total_len = total_len + L_SCA[sca_t];
+        weighted_sca_eff = weighted_sca_eff + L_SCA[sca_t] * csp_dtr_sca_calc_sca_effs[sca_t];
     }
 
     if (total_len != 0.0) {
@@ -685,20 +640,14 @@ double Loop_optical_efficiency(const util::matrix_t<ssc_number_t>& trough_loop_c
         weighted_sca_eff = -777.7;
     }
 
-    // hce efficiency
-    hce_eff[0] = csp_dtr_hce_optical_effs.at(0);
-    hce_eff[1] = csp_dtr_hce_optical_effs.at(1);
-    hce_eff[2] = csp_dtr_hce_optical_effs.at(2);
-    hce_eff[3] = csp_dtr_hce_optical_effs.at(3);
-
     total_len = 0;
     double weighted_hce_eff = 0.0;
     for (int i = 0; i < ncol; i++)
     {
         int hce_t = std::min(std::max(static_cast<int>(trough_loop_control.at(2 + i * 3)), 1), 4) - 1;
         int sca_t = std::min(std::max(static_cast<int>(trough_loop_control.at(1 + i * 3)), 1), 4) - 1;
-        total_len = total_len + sca_len[sca_t];
-        weighted_hce_eff = weighted_hce_eff + sca_len[sca_t] * hce_eff[hce_t];
+        total_len = total_len + L_SCA[sca_t];
+        weighted_hce_eff = weighted_hce_eff + L_SCA[sca_t] * csp_dtr_hce_optical_effs[hce_t];
     }
 
     if (total_len != 0.0) {
@@ -900,10 +849,6 @@ util::matrix_t<ssc_number_t> Type_Cpnt(int nSCA)
 }
 
 // Originally from 'Physical Trough Collector Type 1' (and 2, 3, 4)
-//double Csp_dtr_sca_ap_length(double csp_dtr_sca_length, double csp_dtr_sca_ncol_per_sca) {
-//    return csp_dtr_sca_length / csp_dtr_sca_ncol_per_sca;
-//}
-
 util::matrix_t<ssc_number_t> Csp_dtr_sca_ap_lengths(const util::matrix_t<ssc_number_t>& csp_dtr_sca_lengths, const util::matrix_t<ssc_number_t>& csp_dtr_sca_ncol_per_scas) {
     int n = csp_dtr_sca_lengths.ncells();
 
@@ -913,10 +858,6 @@ util::matrix_t<ssc_number_t> Csp_dtr_sca_ap_lengths(const util::matrix_t<ssc_num
     }
     return result;
 }
-
-//double Csp_dtr_sca_calc_end_gain(double csp_dtr_sca_ave_focal_len, double csp_dtr_sca_calc_theta, double csp_dtr_sca_piping_dist) {
-//    return  std::max(csp_dtr_sca_ave_focal_len * tan(csp_dtr_sca_calc_theta) - csp_dtr_sca_piping_dist, 0.);
-//}
 
 util::matrix_t<ssc_number_t> Csp_dtr_sca_calc_end_gains(const util::matrix_t<ssc_number_t>& csp_dtr_sca_ave_focal_lens, double csp_dtr_sca_calc_theta, const util::matrix_t<ssc_number_t>& csp_dtr_sca_piping_dists) {
     int n = csp_dtr_sca_ave_focal_lens.ncells();
@@ -936,13 +877,6 @@ double Csp_dtr_sca_calc_costh(double csp_dtr_sca_calc_zenith, double tilt, doubl
     );
 }
 
-//double Csp_dtr_sca_calc_end_loss(double csp_dtr_sca_ave_focal_len, double csp_dtr_sca_calc_theta, double nSCA, double csp_dtr_sca_calc_end_gain,
-//    double csp_dtr_sca_length, double csp_dtr_sca_ncol_per_sca) {
-//    return  1 - (csp_dtr_sca_ave_focal_len * tan(csp_dtr_sca_calc_theta)
-//        - (nSCA - 1) / nSCA * csp_dtr_sca_calc_end_gain)
-//        / (csp_dtr_sca_length * csp_dtr_sca_ncol_per_sca);
-//}
-
 util::matrix_t<ssc_number_t> Csp_dtr_sca_calc_end_losses(const util::matrix_t<ssc_number_t>& csp_dtr_sca_ave_focal_lens, double csp_dtr_sca_calc_theta, double nSCA,
     const util::matrix_t<ssc_number_t>& csp_dtr_sca_calc_end_gains, const util::matrix_t<ssc_number_t>& csp_dtr_sca_lengths, const util::matrix_t<ssc_number_t>& csp_dtr_sca_ncol_per_scas) {
     int n = csp_dtr_sca_ave_focal_lens.ncells();
@@ -955,12 +889,6 @@ util::matrix_t<ssc_number_t> Csp_dtr_sca_calc_end_losses(const util::matrix_t<ss
     }
     return result;
 }
-
-//double Csp_dtr_sca_calc_sca_eff(double csp_dtr_sca_tracking_error, double csp_dtr_sca_geometry_effects,
-//    double csp_dtr_sca_clean_reflectivity, double csp_dtr_sca_mirror_dirt, double csp_dtr_sca_general_error) {
-//    return  csp_dtr_sca_tracking_error * csp_dtr_sca_geometry_effects *
-//        csp_dtr_sca_clean_reflectivity * csp_dtr_sca_mirror_dirt * csp_dtr_sca_general_error;
-//}
 
 util::matrix_t<ssc_number_t> Csp_dtr_sca_calc_sca_effs(const util::matrix_t<ssc_number_t>& csp_dtr_sca_tracking_errors, const util::matrix_t<ssc_number_t>& csp_dtr_sca_geometry_effects,
     const util::matrix_t<ssc_number_t>& csp_dtr_sca_clean_reflectivities, const util::matrix_t<ssc_number_t>& csp_dtr_sca_mirror_dirts, const util::matrix_t<ssc_number_t>& csp_dtr_sca_general_errors) {
@@ -981,20 +909,6 @@ double Csp_dtr_sca_calc_latitude(double lat) {
 double Csp_dtr_sca_calc_zenith(double lat) {
     return M_PI / 180. * (90. - (90. - (lat - 23.5)));
 }
-
-//double Csp_dtr_sca_calc_iam(const util::matrix_t<ssc_number_t>& IAMs, double csp_dtr_sca_calc_theta, double csp_dtr_sca_calc_costh) {
-//    double IAM = IAMs.at(0);
-//    int l_IAM = IAMs.ncells();
-//    if (l_IAM < 2) {
-//        return IAM;
-//    }
-//    else {
-//        for (int i = 1; i < l_IAM; i++) {
-//            IAM = IAM + IAMs.at(i) * pow(csp_dtr_sca_calc_theta, i) / csp_dtr_sca_calc_costh;
-//        }
-//        return IAM;
-//    }
-//}
 
 util::matrix_t<ssc_number_t> Csp_dtr_sca_calc_iams(const util::matrix_t<ssc_number_t>& IAMs, double csp_dtr_sca_calc_theta, double csp_dtr_sca_calc_costh) {
 

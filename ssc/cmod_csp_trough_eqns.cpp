@@ -28,9 +28,7 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     double P_ref, gross_net_conversion_factor,
         eta_ref,
         T_loop_in_des, T_loop_out, Fluid,
-        I_bn_des, csp_dtr_hce_design_heat_loss_1, csp_dtr_hce_design_heat_loss_2, csp_dtr_hce_design_heat_loss_3, csp_dtr_hce_design_heat_loss_4,
-        csp_dtr_sca_calc_sca_eff_1, csp_dtr_sca_calc_sca_eff_2, csp_dtr_sca_calc_sca_eff_3, csp_dtr_sca_calc_sca_eff_4,
-        csp_dtr_hce_optical_eff_1, csp_dtr_hce_optical_eff_2, csp_dtr_hce_optical_eff_3, csp_dtr_hce_optical_eff_4,
+        I_bn_des,
         m_dot_htfmax, fluid_dens_outlet_temp,
         m_dot_htfmin, fluid_dens_inlet_temp,
         radio_sm_or_area, specified_solar_multiple, specified_total_aperture,
@@ -109,14 +107,9 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
 
     // cspdtr_loop_hce_heat_loss
     ssc_data_t_get_number(data, "I_bn_des", &I_bn_des);
-    csp_dtr_hce_design_heat_loss_1 = csp_dtr_hce_design_heat_losses.at(0);
-    csp_dtr_hce_design_heat_loss_2 = csp_dtr_hce_design_heat_losses.at(1);
-    csp_dtr_hce_design_heat_loss_3 = csp_dtr_hce_design_heat_losses.at(2);
-    csp_dtr_hce_design_heat_loss_4 = csp_dtr_hce_design_heat_losses.at(3);
     ssc_data_t_get_matrix(vt, "L_SCA", L_SCA);
     cspdtr_loop_hce_heat_loss = Cspdtr_loop_hce_heat_loss(trough_loop_control, I_bn_des,
-        csp_dtr_hce_design_heat_loss_1, csp_dtr_hce_design_heat_loss_2,
-        csp_dtr_hce_design_heat_loss_3, csp_dtr_hce_design_heat_loss_4,
+        csp_dtr_hce_design_heat_losses,
         L_SCA, A_aperture);
     ssc_data_t_set_number(data, "cspdtr_loop_hce_heat_loss", cspdtr_loop_hce_heat_loss);
 
@@ -140,15 +133,6 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     ssc_data_t_set_matrix(data, "csp_dtr_hce_optical_effs", csp_dtr_hce_optical_effs);
 
     // loop_optical_efficiency
-    //csp_dtr_sca_calc_sca_eff_1 = csp_dtr_sca_calc_sca_effs.at(0);
-    //csp_dtr_sca_calc_sca_eff_2 = csp_dtr_sca_calc_sca_effs.at(1);
-    //csp_dtr_sca_calc_sca_eff_3 = csp_dtr_sca_calc_sca_effs.at(2);
-    //csp_dtr_sca_calc_sca_eff_4 = csp_dtr_sca_calc_sca_effs.at(3);
-    //csp_dtr_hce_optical_eff_1 = csp_dtr_hce_optical_effs.at(0);
-    //csp_dtr_hce_optical_eff_2 = csp_dtr_hce_optical_effs.at(1);
-    //csp_dtr_hce_optical_eff_3 = csp_dtr_hce_optical_effs.at(2);
-    //csp_dtr_hce_optical_eff_4 = csp_dtr_hce_optical_effs.at(3);
-
     loop_optical_efficiency = Loop_optical_efficiency(trough_loop_control,
         csp_dtr_sca_calc_sca_effs,
         L_SCA,
