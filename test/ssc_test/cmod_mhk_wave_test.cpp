@@ -85,8 +85,8 @@ TEST_F(CM_MHKWave, ComputeModuleTest_cmod_mhk_wave_time_series) {
     //vt->assign("data_type", data_type);
     //vt->assign("nearby_buoy_number", var_data("NDBC 46094"));
     //vt->assign("average_power_flux", average_power_flux);
-    vt->assign("wave_significant_height", sig_wave_height);
-    vt->assign("wave_energy_period", wave_period);
+    vt->assign("significant_wave_height", sig_wave_height);
+    vt->assign("energy_period", wave_period);
     //vt->assign("wave_resource_matrix", var_data(wave_resource_matrix));
     //vt->assign("name", var_data("matt"));
     //vt->assign("city", var_data("golden"));
@@ -197,7 +197,6 @@ TEST_F(CM_MHKWave, ComputeModuleTest_cmod_mhk_wave_time_series_file) {
     ssc_data_set_number(data, "wave_resource_model_choice", 1);
     int mhk_wave_errors = run_module(data, "wave_file_reader");
     int len;
-    //ssc_number_t * wave_heights_test = ssc_data_get_array(data, "wave_significant_height", &len);
     ASSERT_EQ(mhk_wave_errors, 0);
     //TearDown();
     ssc_data_clear(data);

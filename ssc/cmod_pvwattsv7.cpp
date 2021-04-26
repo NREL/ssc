@@ -1230,21 +1230,6 @@ public:
                 // accumulate hourly energy (kWh) (was initialized to zero when allocated)
                 p_gen[idx_life] = (ssc_number_t)(ac * haf(hour_of_year) * util::watt_to_kilowatt);
 
-                /*if (y == 0) {
-                    for (size_t m = 0; m < 13; m++) {
-                        for (size_t h = 0; h < 25; h++) {
-                            if (idx == 0) {
-                                p_annual_energy_dist_time[h * 13] = (h - 1);
-                                p_annual_energy_dist_time[m] = m;
-                            }
-                            if (wf.month == m && wf.hour == (h - 1)) {
-                                p_annual_energy_dist_time[h * 13 + m] += p_gen[idx] / step_per_hour;
-                                break;
-                            }
-                        }
-                    }
-                }*/
-
                 if (y == 0 && wdprov->annualSimulation()) { //report first year annual energy
                     annual_kwh += p_gen[idx] / step_per_hour;
                 }

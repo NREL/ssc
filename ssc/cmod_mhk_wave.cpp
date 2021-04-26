@@ -57,10 +57,9 @@ static var_info _cm_vtab_mhk_wave[] = {
 	//   VARTYPE			DATATYPE			NAME									LABEL																UNITS           META            GROUP              REQUIRED_IF					CONSTRAINTS					UI_HINTS	
 	{ SSC_INPUT,            SSC_NUMBER,         "wave_resource_model_choice",           "Hourly or JPD wave resource data",                                 "0/1",             "",             "MHKWave",          "?=1",                         "INTEGER",                  "" },
     { SSC_INPUT,			SSC_MATRIX,			"wave_resource_matrix",					"Frequency distribution of wave resource as a function of Hs and Te","",			"",             "MHKWave",			"?",						"",							"" },
-    { SSC_INPUT,         SSC_TABLE,       "wave_resource_data",                   "wave resource data from memory",     "",      "",       "MHKWave",                  "?",                                            "",                "" },
-    //{ SSC_INPUT,            SSC_MATRIX,         "wave_resource_time_series",            "Time series (3 hour?) wave resource data",                         "",             "",             "MHKWave",          "wave_resource_model_choice=1","",                      "" },
-    { SSC_INPUT,            SSC_ARRAY,          "wave_significant_height",              "Significant wave height time series data",                         "m",            "",             "MHKWave",          "?", "",                 ""   },
-    { SSC_INPUT,            SSC_ARRAY,          "wave_energy_period",                   "Wave period time series data",                                     "s",            "",             "MHKWave",          "?", "",                 ""   },
+    { SSC_INPUT,         SSC_TABLE,             "wave_resource_data",                   "wave resource data from memory",     "",      "",       "MHKWave",                  "?",                                            "",                "" },
+    { SSC_INPUT,            SSC_ARRAY,          "significant_wave_height",              "Significant wave height time series data",                         "m",            "",             "MHKWave",          "?", "",                 ""   },
+    { SSC_INPUT,            SSC_ARRAY,          "energy_period",                   "Wave period time series data",                                     "s",            "",             "MHKWave",          "?", "",                 ""   },
     { SSC_INPUT,			SSC_MATRIX,			"wave_power_matrix",					"Wave Power Matrix",												"",				"",             "MHKWave",			"*",						"",							"" },
 //	{ SSC_INPUT,			SSC_NUMBER,			"annual_energy_loss",					"Total energy losses",												"%",			"",             "MHKWave",			"?=0",						"",							"" },
 	//{ SSC_INPUT,			SSC_NUMBER,			"calculate_capacity",					"Calculate capacity outside UI?",									"0/1",			"",             "MHKWave",          "?=1",                      "INTEGER,MIN=0,MAX=1",      "" },
@@ -246,7 +245,7 @@ wavedata::wavedata(var_data* data_table)
     stdErrorMsg = "wave data must be an SSC table variable with fields: "
         "(string): name, city, state, country, sea_bed, data_source, notes, "
         "(number): lat, lon, nearby_buoy_number, average_power_flux, bathymetry, tz, "
-        "(array): wave_significant_height, wave_energy_period";
+        "(array): significant_wave_height, energy_period";
 
     if (data_table->type != SSC_TABLE)
     {
@@ -274,15 +273,15 @@ wavedata::wavedata(var_data* data_table)
     //bathymetry = get_number(data_table, "bathymetry"); return string?
     if (data_type == 1) {
         size_t len = 0;
-        if (!data_table->table.lookup("wave_significant_height") || !data_table->table.lookup("wave_energy_period")) {
+        if (!data_table->table.lookup("significant_wave_height") || !data_table->table.lookup("energy_period")) {
             m_errorMsg = util::format("Must specify significant wave height and wave energy period inputs");
             return;
         }
-        ssc_number_t* p = get_vector(data_table, "wave_significant_height", &len);
+        ssc_number_t* p = get_vector(data_table, "significant_wave_height", &len);
         for (size_t i = 0; i < len; i++)
             m_sigwaveheight.push_back((double)p[i]);
 
-        p = get_vector(data_table, "wave_energy_period", &len);
+        p = get_vector(data_table, "energy_period", &len);
         for (size_t i = 0; i < len; i++)
             m_waveperiod.push_back((double)p[i]);
         size_t wave_size = m_waveperiod.size();
@@ -569,13 +568,13 @@ public:
             int number_hours = 8760;
             std::vector<double> wave_height_input;
             std::vector<double> wave_period_input;
-            if (is_assigned("wave_significant_height") && is_assigned("wave_energy_period")) {
+            if (is_assigned("significant_wave_height") && is_assigned("energy_period")) {
                 number_records = as_integer("number_records");
                 number_hours = as_integer("number_hours");
-                wave_height_input = as_vector_double("wave_significant_height");
-                wave_period_input = as_vector_double("wave_energy_period");
+                wave_height_input = as_vector_double("significant_wave_height");
+                wave_period_input = as_vector_double("energy_period");
             }
-            else if (!is_assigned("wave_significant_height") && !is_assigned("wave_energy_period") && is_assigned("wave_resource_data")) {
+            else if (!is_assigned("significant_wave_height") && !is_assigned("energy_period") && is_assigned("wave_resource_data")) {
                 number_records = wave_dp->nrecords();
                 if(number_records == std::numeric_limits<ssc_number_t>::quiet_NaN())
                     throw exec_error("mhk_wave", "Table definitions of wave height and wave period are of different array sizes");

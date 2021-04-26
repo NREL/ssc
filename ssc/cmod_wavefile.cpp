@@ -27,9 +27,9 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static var_info _cm_wave_file_reader[] = {
 /*   VARTYPE           DATATYPE         NAME                           LABEL                                        UNITS     META                      GROUP                 REQUIRED_IF                CONSTRAINTS        UI_HINTS*/
-    { SSC_INPUT,         SSC_NUMBER,      "wave_resource_model_choice",           "Hourly or JPD wave resource data",                                 "0/1",             "",             "Weather Reader",          "",                         "INTEGER",                  "" },
-    { SSC_INPUT,         SSC_STRING,      "wave_resource_filename",               "local weather file path",                     "",       "",                      "Weather Reader",      "?",                       "LOCAL_FILE",      "" },
-    { SSC_INPUT,         SSC_STRING,      "wave_resource_filename_ts",               "local weather file path",                     "",       "",                      "Weather Reader",      "?",                       "LOCAL_FILE",      "" },
+    { SSC_INPUT,         SSC_NUMBER,      "wave_resource_model_choice",           "Joint PDF or 3-hour wave resource data",                                 "0/1",             "",             "Weather Reader",          "",                         "INTEGER",                  "" },
+    { SSC_INPUT,         SSC_STRING,      "wave_resource_filename",               "File path with Wave Height x Period Distribution as 2-D PDF",                     "",       "",                      "Weather Reader",      "wave_resource_model_choice=0",                       "LOCAL_FILE",      "" },
+    { SSC_INPUT,         SSC_STRING,      "wave_resource_filename_ts",               "File path with 3-hour Wave Height and Period data as Time Series array",                     "",       "",                      "Weather Reader",      "wave_resource_model_choice=1",                       "LOCAL_FILE",      "" },
 
     { SSC_INPUT,         SSC_NUMBER,      "use_specific_wf_wave",               "user specified file",                     "0/1",       "",                      "Weather Reader",      "?=0",                       "INTEGER,MIN=0,MAX=1",      "" },
 	
@@ -49,23 +49,23 @@ static var_info _cm_wave_file_reader[] = {
 	{ SSC_OUTPUT,        SSC_STRING,      "notes",                   "Notes",                                       "",       "",                      "Weather Reader",      "use_specific_wf_wave=0",                        "",               "" },
 
     //timestamps
-    /*
+    
     { SSC_OUTPUT,        SSC_ARRAY,       "year",                    "Year",                             "yr",     "",                      "Weather Reader",      "wave_resource_model_choice=1",                       "",               "" },
     { SSC_OUTPUT,        SSC_ARRAY,       "month",                   "Month",                            "mn",     "1-12",                  "Weather Reader",      "wave_resource_model_choice=1",                       "",                          "" },
     { SSC_OUTPUT,        SSC_ARRAY,       "day",                     "Day",                              "dy",     "1-365",                 "Weather Reader",      "wave_resource_model_choice=1",                       "",                          "" },
     { SSC_OUTPUT,        SSC_ARRAY,       "hour",                    "Hour",                             "hr",     "0-23",                  "Weather Reader",      "wave_resource_model_choice=1",                       "",                          "" },
     { SSC_OUTPUT,        SSC_ARRAY,       "minute",                  "Minute",                           "min",    "0-59",                  "Weather Reader",      "wave_resource_model_choice=1",                       "",                          "" },
-    */
+    
 // weather data records																					            
 	{ SSC_OUTPUT,        SSC_MATRIX,      "wave_resource_matrix",              "Frequency distribution of resource",                                  "m/s",   "",                       "Weather Reader",      "?",                        "",                            "" },
    // { SSC_OUTPUT,        SSC_ARRAY,       "time_check",                        "Time check",                                                          "",      "",                       "Weather Reader",      "?",                        "",                            "" },
    // { SSC_OUTPUT,        SSC_ARRAY,       "month",                        "Month",                                                          "",      "",                       "Weather Reader",      "?",                        "",                            "" },
 
-    { SSC_OUTPUT,        SSC_ARRAY,       "wave_significant_height",           "Wave height time series data",                                        "m",     "",                       "Weather Reader",      "?",                        "",                            "" },
+    { SSC_OUTPUT,        SSC_ARRAY,       "significant_wave_height",           "Wave height time series data",                                        "m",     "",                       "Weather Reader",      "?",                        "",                            "" },
     { SSC_OUTPUT,        SSC_NUMBER,       "number_records",                "Number of records in wave time series",                                        "",     "",                       "Weather Reader",      "?",                        "",                            "" },
     { SSC_OUTPUT,        SSC_NUMBER,       "number_hours",                "Number of hours in wave time series",                                        "",     "",                       "Weather Reader",      "?",                        "",                            "" },
 
-    { SSC_OUTPUT,        SSC_ARRAY,       "wave_energy_period",                "Wave period time series data",                                        "s",     "",                       "Weather Reader",      "?",                        "",                            "" },
+    { SSC_OUTPUT,        SSC_ARRAY,       "energy_period",                "Wave period time series data",                                        "s",     "",                       "Weather Reader",      "?",                        "",                            "" },
 var_info_invalid };
 
 
@@ -124,10 +124,10 @@ public:
             values = split(buf1);
             int ncols = (int)keys.size();
             int ncols1 = (int)values.size();
-
+            //Do we need to require all 
             if (ncols != ncols1 || ncols < 13)
             {
-                throw exec_error("wave_file_reader", "incorrect number of header columns: " + std::to_string(ncols));
+                throw exec_error("wave_file_reader", "Number of header column labels does not match number of values. There are " + std::to_string(ncols) + "keys and " + std::to_string(ncols1) + "values.");
             }
 
             assign("name", var_data(values[0]));
@@ -166,20 +166,15 @@ public:
             assign("data_source", var_data(values[11]));
             assign("notes", var_data(values[12]));
         }
-        // read in 21 rows x 22 columns
 
-        //ssc_number_t* mat = allocate("wave_resource_matrix", 21, 22);
-        //size_t numberRecords = 2920;
-        //ssc_number_t* wave_heights = allocate("wave_significant_height", numberRecords);
-        //ssc_number_t* wave_periods = allocate("wave_energy_period", numberRecords);
-        //if (values.size() != 22)
         if (as_integer("wave_resource_model_choice") == 1)
         {
             size_t numberRecords = 0;
-            size_t year_index = 0, month_index = 0, day_index = 0, hour_index = 0, minute_index = 0, period_index = 0, height_index = 0;
+            size_t year_index = -1, month_index = -1, day_index = -1, hour_index = -1, minute_index = -1, period_index = -1, height_index = -1;
             getline(ifs, buf); //Skip past column labels for record counting
             while (getline(ifs, buf))
                 numberRecords++;
+            if (numberRecords < 2920) throw exec_error("wave_file_reader", "Number of records in the wave file must = 2920 (8760 h / 3 h interval)");
             assign("number_records", (int)numberRecords);
             // rewind the file and reposition right after the header information
             ifs.clear();
@@ -206,10 +201,13 @@ public:
                     else if (lowname == "hour" || lowname == "hr") hour_index = i;
                     else if (lowname == "min" || lowname == "minute") minute_index = i;
                     else if (lowname == "wave height" || lowname == "wave heights" || lowname == "heights" || lowname == "height" || lowname == "hs") height_index = i;
-                    else if (lowname == "wave period" || lowname == "wave periods" || lowname == "period" || lowname == "periods" || lowname == "tp") period_index = i;
+                    else if (lowname == "wave period" || lowname == "wave periods" || lowname == "energy period" || lowname == "energy periods" || lowname == "tp") period_index = i;
                     
                 }
             }
+            if (year_index == -1 || month_index == -1 || day_index == -1 || hour_index == -1 || minute_index == -1 ||
+                period_index == -1 || height_index == -1)
+                throw exec_error("wave_file_reader", "Data values could not be identified from column headings. Please check for year, month, day, hour, minute, wave period, and wave height columns headings");
             ssc_number_t hour0, hour1, hourdiff;
             ssc_number_t ts_significant_wave_height;
             ssc_number_t ts_energy_period;
@@ -222,12 +220,17 @@ public:
             ssc_number_t* p_hour = allocate("hour", numberRecords);
             ssc_number_t* p_minute = allocate("minute", numberRecords);
             ssc_number_t* mat = allocate("wave_resource_matrix", nrows, ncols);
-            //size_t numberRecords = wave_dp->nrecords();
+            for (size_t j = 0; j < 21; j++) {
+                mat[(j + 1) * ncols] = (0.25 + j * 0.5);
+            }
+            for (size_t m = 0; m < 22; m++) {
+                mat[m] = m - 0.5;
+            }
             ssc_number_t* month = allocate("month", numberRecords);
             std::vector<ssc_number_t> timecheck(numberRecords);
             timecheck[0] = 0;
-            ssc_number_t* wave_heights = allocate("wave_significant_height", numberRecords);
-            ssc_number_t* wave_periods = allocate("wave_energy_period", numberRecords);
+            ssc_number_t* wave_heights = allocate("significant_wave_height", numberRecords);
+            ssc_number_t* wave_periods = allocate("energy_period", numberRecords);
             for (size_t r = 0; r < numberRecords; r++) {
                 getline(ifs, buf);
                 values.clear();
@@ -247,7 +250,6 @@ public:
                 if (r > 0) {
                     if (timecheck[r] - timecheck[r - 1] != hourdiff && timecheck[r] != 0) {
                         throw exec_error("wave_file_reader", "Time steps are nonuniform");
-                        timecheck[r] = 999;
                     }
                 }
                 p_year[r] = (ssc_number_t)std::stod(values[year_index]);
@@ -262,26 +264,21 @@ public:
                 ts_significant_wave_height = wave_heights[r];
                 ts_energy_period = wave_periods[r];
                 for (size_t j = 0; j < 21; j++) {
-
-                    if (r == 0) mat[(j + 1) * ncols] = (0.25 + j * 0.5);
                     if (abs(ts_significant_wave_height - (0.25 + (j - 1) * 0.5)) <= 0.25 && j != 0) {
                         sig_wave_height_index = j;
-                        if (r != 0) break;
+                        break;
                     }
                 }
                 for (size_t m = 0; m < 22; m++) {
-                    if (r == 0) mat[m] = m - 0.5;
                     if (abs(ts_energy_period - (0.5 + (m - 1))) <= 0.5 && m != 0) {
                         energy_period_index = m;
-                        if (r != 0) break;
+                        break;
                     }
-
-
                 }
 
 
                 //mat[sig_wave_height_index * ncols + energy_period_index] = mat[sig_wave_height_index * ncols + energy_period_index] + 1 / 2920 * 100;
-                mat[sig_wave_height_index * ncols + energy_period_index] += 0.0342465753;
+                mat[sig_wave_height_index * ncols + energy_period_index] += 100 / numberRecords;
                 //Set decimal values to 2 for JPD
                 if (r == numberRecords - 1) {
                     for (size_t r2 = 0; r2 < 21; r2++) {
@@ -294,7 +291,7 @@ public:
             }
             mat[0] = 0;
             assign("number_hours", int(numberRecords * hourdiff));
-            return;
+            
 
         }
         else if (as_integer("wave_resource_model_choice") == 0) {
@@ -306,11 +303,7 @@ public:
                 values = split(buf);
                 if (values.size() != 22)
                 {
-                    for (size_t c = 0; c < 2; c++)
-                    {
-
-                    }
-                    //throw exec_error("wave_file_reader", "incorrect number of data columns: " + std::to_string(values.size()));
+                    throw exec_error("wave_file_reader", "Wave period columns must span 0.5s to 20.5s with increments of 1s. Incorrect number of wave period (s) columns: " + std::to_string(values.size()));
                 }
                 for (size_t c = 0; c < 22; c++)
                 {
@@ -320,13 +313,13 @@ public:
                         mat[r * 22 + c] = std::stod(values[c]);
                 }
             }
-            return;
+            
         }
         else {
             throw exec_error("wave_file_reader", "Resource data type needs to be defined ");
         }
 
-        
+        return;
     }
 };
 

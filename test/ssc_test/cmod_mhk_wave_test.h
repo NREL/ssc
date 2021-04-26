@@ -54,8 +54,8 @@ public:
         var_data periods_vd = var_data(period_data, int(timeLength));
 
         var_table* vt = new var_table;
-        vt->assign("wave_significant_height", height_vd);
-        vt->assign("wave_energy_period", periods_vd);
+        vt->assign("significant_wave_height", height_vd);
+        vt->assign("energy_period", periods_vd);
         
 
         var_data* input = new var_data;

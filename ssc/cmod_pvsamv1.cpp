@@ -2088,8 +2088,6 @@ void cm_pvsamv1::exec()
 
     double annual_dc_loss_ond = 0, annual_ac_loss_ond = 0; // (TR)
 
-
-
     for (size_t iyear = 0; iyear < nyears; iyear++)
     {
         //idx is the current array index in the (possibly subhourly) year of weather data or the non-annual array
