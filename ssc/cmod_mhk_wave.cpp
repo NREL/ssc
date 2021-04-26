@@ -475,16 +475,14 @@ public:
             double wave_resource_start_height = 0;
             double wave_resource_end_period = 0;
             double wave_resource_end_height = 0;
-            for (size_t l = 0; l < (size_t)wave_power_matrix.nrows(); l++) {
-                for (size_t m = 0; m < (size_t)wave_power_matrix.ncols(); m++) {
+            
+            for (size_t l = 1; l < (size_t)wave_power_matrix.nrows()-1; l++) {
+                for (size_t m = 1; m < (size_t)wave_power_matrix.ncols()-1; m++) {
 
-                    //Store max power if not set in UI:
-                    /*if(as_integer("calculate_capacity") > 0)
-                        if (_power_vect[i][j] > system_capacity)
-                            system_capacity = _power_vect[i][j];*/
+                    
 
                             //Calculate and allocate annual_energy_distribution:
-                    if ((ssc_number_t)wave_resource_matrix.at(l, m) != 0 && (ssc_number_t)wave_resource_matrix.at(l, m - 1) == 0 && (ssc_number_t)wave_resource_matrix.at(l, m + 1) != 0 && (m - 1) != 0)
+                    if ((ssc_number_t)wave_resource_matrix.at(l, m) != 0 && (ssc_number_t)wave_resource_matrix.at(l, m - 1) == 0 && (ssc_number_t)wave_resource_matrix.at(l, m + 1) != 0 && (m - 1) >= 0)
                     {
                         if (wave_resource_start_period == 0)
                         {
@@ -492,7 +490,7 @@ public:
                             wave_resource_start_height = wave_resource_matrix.at(l, 0);
                         }
                     }
-                    else if ((ssc_number_t)wave_resource_matrix.at(l, m) != 0 && (ssc_number_t)wave_resource_matrix.at(l, m - 1) != 0 && (ssc_number_t)wave_resource_matrix.at(l, m + 1) == 0 && (m - 1) != 0)
+                    else if ((ssc_number_t)wave_resource_matrix.at(l, m) != 0 && (ssc_number_t)wave_resource_matrix.at(l, m - 1) != 0 && (ssc_number_t)wave_resource_matrix.at(l, m + 1) == 0 && (m - 1) >= 0)
                     {
                         wave_resource_end_period = wave_resource_matrix.at(0, m);
                         wave_resource_end_height = wave_resource_matrix.at(l, 0);
@@ -515,8 +513,8 @@ public:
             double wave_power_start_height = 0;
             double wave_power_end_period = 0;
             double wave_power_end_height = 0;
-            for (size_t n = 0; n < (size_t)wave_power_matrix.nrows(); n++) {
-                for (size_t p = 0; p < (size_t)wave_power_matrix.ncols(); p++) {
+            for (size_t n = 1; n < (size_t)wave_power_matrix.nrows()-1; n++) {
+                for (size_t p = 1; p < (size_t)wave_power_matrix.ncols()-1; p++) {
 
                     //Store max power if not set in UI:
                     /*if(as_integer("calculate_capacity") > 0)
@@ -524,7 +522,7 @@ public:
                             system_capacity = _power_vect[i][j];*/
 
                             //Calculate and allocate annual_energy_distribution:
-                    if ((ssc_number_t)wave_power_matrix.at(n, p) != 0 && (ssc_number_t)wave_power_matrix.at(n, p - 1) == 0 && (ssc_number_t)wave_power_matrix.at(n, p + 1) != 0 && (p - 1) != 0)
+                    if ((ssc_number_t)wave_power_matrix.at(n, p) != 0 && (ssc_number_t)wave_power_matrix.at(n, p - 1) == 0 && (ssc_number_t)wave_power_matrix.at(n, p + 1) != 0 && (p - 1) > 0)
                     {
                         if (wave_power_start_period == 0)
                         {
@@ -532,7 +530,7 @@ public:
                             wave_power_start_height = wave_power_matrix.at(n, 0);
                         }
                     }
-                    else if ((ssc_number_t)wave_power_matrix.at(n, p) != 0 && (ssc_number_t)wave_power_matrix.at(n, p - 1) != 0 && (p - 1) != 0 && (ssc_number_t)wave_power_matrix.at(n, p + 1) == 0)
+                    else if ((ssc_number_t)wave_power_matrix.at(n, p) != 0 && (ssc_number_t)wave_power_matrix.at(n, p - 1) != 0 && (p - 1) > 0 && (ssc_number_t)wave_power_matrix.at(n, p + 1) == 0)
                     {
                         wave_power_end_period = wave_power_matrix.at(0, p);
                         wave_power_end_height = wave_power_matrix.at(n, 0);

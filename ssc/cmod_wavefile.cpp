@@ -62,8 +62,8 @@ static var_info _cm_wave_file_reader[] = {
    // { SSC_OUTPUT,        SSC_ARRAY,       "month",                        "Month",                                                          "",      "",                       "Weather Reader",      "?",                        "",                            "" },
 
     { SSC_OUTPUT,        SSC_ARRAY,       "wave_significant_height",           "Wave height time series data",                                        "m",     "",                       "Weather Reader",      "?",                        "",                            "" },
-    { SSC_OUTPUT,        SSC_ARRAY,       "number_records",                "Number of records in wave time series",                                        "",     "",                       "Weather Reader",      "?",                        "",                            "" },
-    { SSC_OUTPUT,        SSC_ARRAY,       "number_hours",                "Number of hours in wave time series",                                        "",     "",                       "Weather Reader",      "?",                        "",                            "" },
+    { SSC_OUTPUT,        SSC_NUMBER,       "number_records",                "Number of records in wave time series",                                        "",     "",                       "Weather Reader",      "?",                        "",                            "" },
+    { SSC_OUTPUT,        SSC_NUMBER,       "number_hours",                "Number of hours in wave time series",                                        "",     "",                       "Weather Reader",      "?",                        "",                            "" },
 
     { SSC_OUTPUT,        SSC_ARRAY,       "wave_energy_period",                "Wave period time series data",                                        "s",     "",                       "Weather Reader",      "?",                        "",                            "" },
 var_info_invalid };
@@ -320,6 +320,7 @@ public:
                         mat[r * 22 + c] = std::stod(values[c]);
                 }
             }
+            return;
         }
         else {
             throw exec_error("wave_file_reader", "Resource data type needs to be defined ");
