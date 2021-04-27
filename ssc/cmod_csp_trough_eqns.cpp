@@ -182,17 +182,17 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     total_aperture = Total_aperture(single_loop_aperature, nLoops);
     ssc_data_t_set_number(data, "total_aperture", total_aperture);
 
+    // field_thermal_output
+    field_thermal_output = Field_thermal_output(I_bn_des, total_loop_conversion_efficiency, total_aperture);
+    ssc_data_t_set_number(data, "field_thermal_output", field_thermal_output);
+
     // solar_mult
-    solar_mult = Solar_mult(static_cast<int>(radio_sm_or_area), specified_solar_multiple, total_aperture, total_required_aperture_for_SM1);
+    solar_mult = Solar_mult(static_cast<int>(radio_sm_or_area), field_thermal_output, q_pb_design, specified_solar_multiple, total_aperture, total_required_aperture_for_SM1);
     ssc_data_t_set_number(data, "solar_mult", solar_mult);
 
     // required_number_of_loops_for_SM1
     required_number_of_loops_for_SM1 = Required_number_of_loops_for_SM1(total_required_aperture_for_SM1, single_loop_aperature);
     ssc_data_t_set_number(data, "required_number_of_loops_for_sm1", required_number_of_loops_for_SM1);
-
-    // field_thermal_output
-    field_thermal_output = Field_thermal_output(I_bn_des, total_loop_conversion_efficiency, total_aperture);
-    ssc_data_t_set_number(data, "field_thermal_output", field_thermal_output);
 
     // Q_rec_des
     q_rec_des = Q_rec_des(solar_mult, q_pb_design);

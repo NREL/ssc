@@ -142,7 +142,7 @@ void Tower_SolarPilot_Capital_Costs_Equations(ssc_data_t data);
 /////////////////////////////////////////////////////////////////////////////////////////////
 
 // Originally from 'Physical Trough System Design'
-double Solar_mult(int radio_sm_or_area, double specified_solar_multiple, double total_aperture, double total_required_aperture_for_SM1);
+double Solar_mult(int radio_sm_or_area, double field_thermal_output, double q_pb_design, double specified_solar_multiple, double total_aperture, double total_required_aperture_for_SM1);
 
 double Nloops(int radio_sm_or_area, double specified_solar_multiple, double total_required_aperture_for_SM1,
     double specified_total_aperture, double single_loop_aperature);

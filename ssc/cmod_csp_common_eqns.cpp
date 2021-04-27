@@ -489,11 +489,14 @@ void Tower_SolarPilot_Capital_Costs_Equations(ssc_data_t data)
 /////////////////////////////////////////////////////////////////////////////////////////////
 
 
-double Solar_mult(int radio_sm_or_area, double specified_solar_multiple, double total_aperture, double total_required_aperture_for_SM1)
+double Solar_mult(int radio_sm_or_area, double field_thermal_output, double q_pb_design, double specified_solar_multiple, double total_aperture, double total_required_aperture_for_SM1)
 {
     double solar_mult = std::numeric_limits<double>::quiet_NaN();
 
-    if (radio_sm_or_area == 0) {
+    if (radio_sm_or_area == -1) {
+        solar_mult = field_thermal_output / q_pb_design;
+    }
+    else if (radio_sm_or_area == 0) {
         solar_mult = specified_solar_multiple;
     }
     else if (radio_sm_or_area == 1) {
@@ -589,7 +592,7 @@ double Nloops(int radio_sm_or_area, double specified_solar_multiple, double tota
     double total_aperture = std::numeric_limits<double>::quiet_NaN();
     double n_loops = std::numeric_limits<double>::quiet_NaN();
 
-    if (radio_sm_or_area == 0) {
+    if (radio_sm_or_area == -1 || radio_sm_or_area == 0) {    // includes -1 for IPH
         total_aperture = specified_solar_multiple * total_required_aperture_for_SM1;
     }
     else if (radio_sm_or_area == 1) {
