@@ -57,7 +57,7 @@ static var_info _cm_wave_file_reader[] = {
     { SSC_OUTPUT,        SSC_ARRAY,       "minute",                  "Minute",                           "min",    "0-59",                  "Weather Reader",      "wave_resource_model_choice=1",                       "",                          "" },
     
 // weather data records																					            
-	{ SSC_OUTPUT,        SSC_MATRIX,      "wave_resource_matrix",              "Frequency distribution of resource",                                  "m/s",   "",                       "Weather Reader",      "?",                        "",                            "" },
+	{ SSC_OUTPUT,        SSC_MATRIX,      "wave_resource_matrix",              "Frequency distribution of resource",                                  "m/s",   "",                       "Weather Reader",      "wave_resource_model_choice=0",                        "",                            "" },
    // { SSC_OUTPUT,        SSC_ARRAY,       "time_check",                        "Time check",                                                          "",      "",                       "Weather Reader",      "?",                        "",                            "" },
    // { SSC_OUTPUT,        SSC_ARRAY,       "month",                        "Month",                                                          "",      "",                       "Weather Reader",      "?",                        "",                            "" },
 
@@ -166,7 +166,7 @@ public:
             assign("data_source", var_data(values[11]));
             assign("notes", var_data(values[12]));
         }
-
+        
         if (as_integer("wave_resource_model_choice") == 1)
         {
             size_t numberRecords = 0;
@@ -219,13 +219,14 @@ public:
             ssc_number_t* p_day = allocate("day", numberRecords);
             ssc_number_t* p_hour = allocate("hour", numberRecords);
             ssc_number_t* p_minute = allocate("minute", numberRecords);
-            ssc_number_t* mat = allocate("wave_resource_matrix", nrows, ncols);
+            //ssc_number_t* mat = allocate("wave_resource_matrix", nrows, ncols);
+            /*
             for (size_t j = 0; j < 21; j++) {
                 mat[(j + 1) * ncols] = (0.25 + j * 0.5);
             }
             for (size_t m = 0; m < 22; m++) {
                 mat[m] = m - 0.5;
-            }
+            }*/
             ssc_number_t* month = allocate("month", numberRecords);
             std::vector<ssc_number_t> timecheck(numberRecords);
             timecheck[0] = 0;
@@ -278,6 +279,7 @@ public:
 
 
                 //mat[sig_wave_height_index * ncols + energy_period_index] = mat[sig_wave_height_index * ncols + energy_period_index] + 1 / 2920 * 100;
+                /*
                 mat[sig_wave_height_index * ncols + energy_period_index] += 100 / numberRecords;
                 //Set decimal values to 2 for JPD
                 if (r == numberRecords - 1) {
@@ -286,15 +288,16 @@ public:
                             if (r2 != 0 && c2 != 0) mat[r2 * 22 + c2] = round(mat[r2 * 22 + c2] * 100) / 100;
                         }
                     }
-                }
+                }*/
                 
             }
-            mat[0] = 0;
+            //mat[0] = 0;
             assign("number_hours", int(numberRecords * hourdiff));
             
 
         }
         else if (as_integer("wave_resource_model_choice") == 0) {
+            //ssc_number_t* mat = allocate("wave_resource_matrix", 21, 22);
             ssc_number_t* mat = allocate("wave_resource_matrix", 21, 22);
             for (size_t r = 0; r < 21; r++)
             {

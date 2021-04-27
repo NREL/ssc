@@ -73,30 +73,8 @@ TEST_F(CM_MHKWave, ComputeModuleTest_cmod_mhk_wave_time_series) {
     }
     var_table* vt = new var_table;
     var_data wave_data = var_data(jpd_data, 21, 22);
-    /*ssc_number_t* mat = vt->allocate("wave_resource_matrix", 21, 22);
-    for (size_t i = 0; i < 21; i++) {
-        for (size_t j = 0; j < 22; j++) {
-            mat[i * 22 + j] = jpd_data[i*22 + j];
-        }
-    }*/
-    //vt->assign("wave_resource_matrix", wave_data);
-    //vt->assign("lat", lat);
-    //vt->assign("lon", lon);
-    //vt->assign("data_type", data_type);
-    //vt->assign("nearby_buoy_number", var_data("NDBC 46094"));
-    //vt->assign("average_power_flux", average_power_flux);
     vt->assign("significant_wave_height", sig_wave_height);
     vt->assign("energy_period", wave_period);
-    //vt->assign("wave_resource_matrix", var_data(wave_resource_matrix));
-    //vt->assign("name", var_data("matt"));
-    //vt->assign("city", var_data("golden"));
-    //vt->assign("state", var_data("Colorado"));
-    //vt->assign("country", var_data("US"));
-    //vt->assign("data_source", var_data("test"));
-    //vt->assign("bathymetry", var_data("bathymetry"));
-    //vt->assign("sea_bed", var_data("rocks"));
-    //vt->assign("notes", var_data("wasup"));
-    //vt->assign("tz", var_data(7));
     var_data* input = new var_data;
     input->type = SSC_TABLE;
     input->table = *vt;
