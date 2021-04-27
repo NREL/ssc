@@ -117,9 +117,9 @@ static ssc_equation_entry ssc_equation_table [] = {
         {"Physical_Trough_Receiver_Type_Equations", Physical_Trough_Receiver_Type_Equations,
             "Trough_physical_process_heat", Physical_Trough_Receiver_Type_Equations_doc,
             true, false},
-        //{"Phys_Trough_System_Control_Equations", Phys_Trough_System_Control_Equations,
-        //    "Trough_physical_process_heat", Phys_Trough_System_Control_Equations_doc,
-        //    true, false},
+        {"Physical_Trough_System_Control_Equations", Physical_Trough_System_Control_Equations,
+            "Trough_physical_process_heat", Physical_Trough_System_Control_Equations_doc,
+            true, false},
 
 
         // Single owner
