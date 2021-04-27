@@ -26,6 +26,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <float.h>
 #endif
 #include "common_financial.h"
+#include "common.h"
 #include "lib_financial.h"
 #include "cmod_merchantplant_eqns.h"
 using namespace libfin;
@@ -845,6 +846,7 @@ class cm_merchantplant : public compute_module
 {
 private:
 	util::matrix_t<double> cf;
+    util::matrix_t<double> cf_lcos;
 	hourly_energy_calculation hourly_energy_calcs;
 
 
@@ -875,6 +877,7 @@ public:
 		// cash flow initialization
 		int nyears = as_integer("analysis_period");
 		cf.resize_fill(CF_max, nyears + 1, 0.0);
+        cf_lcos.resize_fill(CF_max, nyears + 1, 0.0);
 
 		// assign inputs
 		double inflation_rate = as_double("inflation_rate")*0.01;
@@ -2746,6 +2749,13 @@ public:
     ///////////////////////////////////////////////////////////////////////
 //LCOS Calculations
     if (is_assigned("battery_total_cost_lcos") && as_double("battery_total_cost_lcos") != 0) {
+        for (int y = 0; y <= nyears; y++) {
+            cf_lcos.at(0, y) = cf.at(CF_battery_replacement_cost, y);
+
+        }
+        int grid_charging_cost_version = 3;
+        lcos_calc(this, cf_lcos, nyears, nom_discount_rate, inflation_rate, lcoe_real, cost_prefinancing, disc_real, grid_charging_cost_version, 0);
+
         double lcos_investment_cost = as_double("battery_total_cost_lcos"); //does not include replacement costs
         double lcos_om_cost = npv(CF_om_capacity1_expense, nyears, nom_discount_rate); //Todo: include variable om due to charging
         std::vector<double> charged_grid = as_vector_double("batt_annual_charge_from_grid");
