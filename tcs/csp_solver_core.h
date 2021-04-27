@@ -912,6 +912,10 @@ public:
 
         bool m_is_rec_to_coldtank_allowed;
 
+        //[-] True - use in W_dot_net balance, False - assume other heat source
+        // Default true for electricity generation models. IPH will nominally use false
+        bool m_is_field_freeze_protection_electric; 
+
         // If receiver outlet to cold tank is allowed
         //   outlet temps colder than this value go to the cold tank
         //   calculate T_htf_hot_tank_in_min = f*T_hot_des + (1-f)*T_cold_des
@@ -926,6 +930,8 @@ public:
             f_htf_hot_des__T_htf_hot_tank_in_min = std::numeric_limits<double>::quiet_NaN();
 
             m_is_rec_to_coldtank_allowed = false;
+
+            m_is_field_freeze_protection_electric = true;
 		}
 	};
 
