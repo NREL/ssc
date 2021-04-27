@@ -90,9 +90,20 @@ void voltage_table_t::initialize() {
     // save slope and intercept for every set of points to interpolate between
     std::sort(params->voltage_table.begin(), params->voltage_table.end(),
               [](std::vector<double> a, std::vector<double> b) { return a[1] > b[1]; });
+    bool need_less_than_nom = true;
+    bool need_greater_than_nom = true;
+
     for (size_t i = 0; i != params->voltage_table.size(); i++) {
         double DOD = params->voltage_table[i][0];
         double V = params->voltage_table[i][1];
+
+        if (need_less_than_nom && V < params->Vnom_default) {
+            need_less_than_nom = false;
+        }
+        else if (need_greater_than_nom && V > params->Vnom_default) {
+            need_greater_than_nom = false;
+        }
+
         double slope = 0;
         double intercept = V;
         if (i > 0) {
@@ -103,6 +114,14 @@ void voltage_table_t::initialize() {
         }
         slopes.emplace_back(slope);
         intercepts.emplace_back(intercept);
+    }
+
+    if (need_less_than_nom) {
+        throw std::runtime_error("voltage_table_t error: no voltages less than nominal voltage. align voltage table and nominal voltage");
+    }
+
+    if (need_greater_than_nom) {
+        throw std::runtime_error("voltage_table_t error: no voltages greater than nominal voltage. align voltage table and nominal voltage");
     }
 
     // for extrapolation beyond given points
