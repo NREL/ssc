@@ -122,6 +122,11 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
     { SSC_INPUT,  SSC_NUMBER, "dispatch_factor9",              "Dispatch payment factor 9",                                     "",             "",                                  "Time of Delivery Factors",                 "?=1",                                                              "",              ""},
 
 
+    // System outputs
+    { SSC_OUTPUT, SSC_ARRAY,  "P_out_net",                     "Total electric power to grid",                                  "MWe",          "",                                  "",                                         "*",                                                                "",              ""},
+
+
+
     var_info_invalid };
 
 class cm_etes_electric_resistance : public compute_module
@@ -419,6 +424,7 @@ public:
             (void*)(this));
 
         // Set system cmod outputs
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::W_DOT_NET, allocate("P_out_net", n_steps_fixed), n_steps_fixed);
 
         // *****************************************************
         // *****************************************************
