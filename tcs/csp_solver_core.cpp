@@ -1848,7 +1848,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
         double W_dot_cr_freeze_protection = 0.0;
         if (ms_system_params.m_is_field_freeze_protection_electric) {
-            W_dot_cr_freeze_protection = mc_cr_out_solver.m_q_rec_heattrace;    //[MWe]
+            W_dot_cr_freeze_protection = mc_cr_out_solver.m_q_dot_heater;
         }
 
 		double W_dot_net = mc_pc_out_solver.m_P_cycle - 
