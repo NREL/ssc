@@ -110,8 +110,6 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     util::matrix_t<ssc_number_t> W_aperture(1, 1, std::numeric_limits<double>::quiet_NaN());
 
 
-    ssc_data_t_get_number(data, "q_pb_design", &q_pb_design);
-
     // field_htf_cp_avg
     ssc_data_t_get_number(data, "T_loop_in_des", &T_loop_in_des);
     ssc_data_t_get_number(data, "T_loop_out", &T_loop_out);
@@ -196,6 +194,7 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     ssc_data_t_set_number(data, "total_loop_conversion_efficiency", total_loop_conversion_efficiency);
 
     // total_required_aperture_for_SM1
+    ssc_data_t_get_number(data, "q_pb_design", &q_pb_design);
     total_required_aperture_for_SM1 = Total_required_aperture_for_sm1(q_pb_design, I_bn_des, total_loop_conversion_efficiency);
     ssc_data_t_set_number(data, "total_required_aperture_for_sm1", total_required_aperture_for_SM1);
 
