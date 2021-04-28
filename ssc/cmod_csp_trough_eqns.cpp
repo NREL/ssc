@@ -58,6 +58,23 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     double non_solar_field_land_area_multiplier = std::numeric_limits<double>::quiet_NaN();
     double nSCA = std::numeric_limits<double>::quiet_NaN();
     double SCA_drives_elec = std::numeric_limits<double>::quiet_NaN();
+    util::matrix_t<ssc_number_t> field_fl_props(1, 1, std::numeric_limits<double>::quiet_NaN());
+    util::matrix_t<ssc_number_t> trough_loop_control(1, 1, std::numeric_limits<double>::quiet_NaN());
+    util::matrix_t<ssc_number_t> A_aperture(1, 1, std::numeric_limits<double>::quiet_NaN());
+    util::matrix_t<ssc_number_t> D_2(1, 1, std::numeric_limits<double>::quiet_NaN());
+    util::matrix_t<ssc_number_t> HCE_FieldFrac(1, 1, std::numeric_limits<double>::quiet_NaN());
+    util::matrix_t<ssc_number_t> Design_loss(1, 1, std::numeric_limits<double>::quiet_NaN());
+    util::matrix_t<ssc_number_t> L_SCA(1, 1, std::numeric_limits<double>::quiet_NaN());
+    util::matrix_t<ssc_number_t> TrackingError(1, 1, std::numeric_limits<double>::quiet_NaN());
+    util::matrix_t<ssc_number_t> GeomEffects(1, 1, std::numeric_limits<double>::quiet_NaN());
+    util::matrix_t<ssc_number_t> Rho_mirror_clean(1, 1, std::numeric_limits<double>::quiet_NaN());
+    util::matrix_t<ssc_number_t> Dirt_mirror(1, 1, std::numeric_limits<double>::quiet_NaN());
+    util::matrix_t<ssc_number_t> Error(1, 1, std::numeric_limits<double>::quiet_NaN());
+    util::matrix_t<ssc_number_t> Shadowing(1, 1, std::numeric_limits<double>::quiet_NaN());
+    util::matrix_t<ssc_number_t> Dirt_HCE(1, 1, std::numeric_limits<double>::quiet_NaN());
+    util::matrix_t<ssc_number_t> alpha_abs(1, 1, std::numeric_limits<double>::quiet_NaN());
+    util::matrix_t<ssc_number_t> Tau_envelope(1, 1, std::numeric_limits<double>::quiet_NaN());
+    util::matrix_t<ssc_number_t> W_aperture(1, 1, std::numeric_limits<double>::quiet_NaN());
 
 
     // Outputs
@@ -81,33 +98,16 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     double fixed_land_area = std::numeric_limits<double>::quiet_NaN();
     double total_land_area = std::numeric_limits<double>::quiet_NaN();
     double total_tracking_power = std::numeric_limits<double>::quiet_NaN();
-
-    util::matrix_t<ssc_number_t> field_fl_props(1, 1, std::numeric_limits<double>::quiet_NaN());
-    util::matrix_t<ssc_number_t> trough_loop_control(1, 1, std::numeric_limits<double>::quiet_NaN());
+    util::matrix_t<ssc_number_t> csp_dtr_hce_design_heat_losses(1, 1, std::numeric_limits<double>::quiet_NaN());
+    util::matrix_t<ssc_number_t> csp_dtr_sca_calc_sca_effs(1, 1, std::numeric_limits<double>::quiet_NaN());
+    util::matrix_t<ssc_number_t> csp_dtr_hce_optical_effs(1, 1, std::numeric_limits<double>::quiet_NaN());
     util::matrix_t<ssc_number_t> SCAInfoArray(1, 1, std::numeric_limits<double>::quiet_NaN());
     util::matrix_t<ssc_number_t> SCADefocusArray(1, 1, std::numeric_limits<double>::quiet_NaN());
     util::matrix_t<ssc_number_t> K_cpnt(1, 1, std::numeric_limits<double>::quiet_NaN());
     util::matrix_t<ssc_number_t> D_cpnt(1, 1, std::numeric_limits<double>::quiet_NaN());
     util::matrix_t<ssc_number_t> L_cpnt(1, 1, std::numeric_limits<double>::quiet_NaN());
     util::matrix_t<ssc_number_t> Type_cpnt(1, 1, std::numeric_limits<double>::quiet_NaN());
-    util::matrix_t<ssc_number_t> L_SCA(1, 1, std::numeric_limits<double>::quiet_NaN());
-    util::matrix_t<ssc_number_t> TrackingError(1, 1, std::numeric_limits<double>::quiet_NaN());
-    util::matrix_t<ssc_number_t> GeomEffects(1, 1, std::numeric_limits<double>::quiet_NaN());
-    util::matrix_t<ssc_number_t> Rho_mirror_clean(1, 1, std::numeric_limits<double>::quiet_NaN());
-    util::matrix_t<ssc_number_t> Dirt_mirror(1, 1, std::numeric_limits<double>::quiet_NaN());
-    util::matrix_t<ssc_number_t> Error(1, 1, std::numeric_limits<double>::quiet_NaN());
-    util::matrix_t<ssc_number_t> HCE_FieldFrac(1, 1, std::numeric_limits<double>::quiet_NaN());
-    util::matrix_t<ssc_number_t> Design_loss(1, 1, std::numeric_limits<double>::quiet_NaN());
-    util::matrix_t<ssc_number_t> Shadowing(1, 1, std::numeric_limits<double>::quiet_NaN());
-    util::matrix_t<ssc_number_t> Dirt_HCE(1, 1, std::numeric_limits<double>::quiet_NaN());
-    util::matrix_t<ssc_number_t> alpha_abs(1, 1, std::numeric_limits<double>::quiet_NaN());
-    util::matrix_t<ssc_number_t> Tau_envelope(1, 1, std::numeric_limits<double>::quiet_NaN());
-    util::matrix_t<ssc_number_t> csp_dtr_hce_design_heat_losses(1, 1, std::numeric_limits<double>::quiet_NaN());
-    util::matrix_t<ssc_number_t> csp_dtr_hce_optical_effs(1, 1, std::numeric_limits<double>::quiet_NaN());
-    util::matrix_t<ssc_number_t> D_2(1, 1, std::numeric_limits<double>::quiet_NaN());
-    util::matrix_t<ssc_number_t> A_aperture(1, 1, std::numeric_limits<double>::quiet_NaN());
-    util::matrix_t<ssc_number_t> csp_dtr_sca_calc_sca_effs(1, 1, std::numeric_limits<double>::quiet_NaN());
-    util::matrix_t<ssc_number_t> W_aperture(1, 1, std::numeric_limits<double>::quiet_NaN());
+
 
 
     // field_htf_cp_avg
@@ -262,10 +262,6 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     // Type_cpnt
     Type_cpnt = Type_Cpnt(static_cast<int>(nSCA));
     ssc_data_t_set_matrix(data, "type_cpnt", Type_cpnt);
-
-    /*
-    double x = 1.;
-    */
 }
 
 void Physical_Trough_Collector_Type_Equations(ssc_data_t data)
@@ -276,40 +272,26 @@ void Physical_Trough_Collector_Type_Equations(ssc_data_t data)
     }
 
     // Inputs
-    double csp_dtr_sca_length_1 = std::numeric_limits<double>::quiet_NaN();
-    double csp_dtr_sca_ncol_per_sca_1 = std::numeric_limits<double>::quiet_NaN();
-    double csp_dtr_sca_ave_focal_len_1 = std::numeric_limits<double>::quiet_NaN();
-    double csp_dtr_sca_piping_dist_1 = std::numeric_limits<double>::quiet_NaN();
+    double lat = std::numeric_limits<double>::quiet_NaN();
     double tilt = std::numeric_limits<double>::quiet_NaN();
     double azimuth = std::numeric_limits<double>::quiet_NaN();
     double nSCA = std::numeric_limits<double>::quiet_NaN();
-    double csp_dtr_sca_tracking_error_1 = std::numeric_limits<double>::quiet_NaN();
-    double csp_dtr_sca_geometry_effects_1 = std::numeric_limits<double>::quiet_NaN();
-    double csp_dtr_sca_clean_reflectivity_1 = std::numeric_limits<double>::quiet_NaN();
-    double csp_dtr_sca_mirror_dirt_1 = std::numeric_limits<double>::quiet_NaN();
-    double csp_dtr_sca_general_error_1 = std::numeric_limits<double>::quiet_NaN();
-    double lat = std::numeric_limits<double>::quiet_NaN();
-
-    // Outputs
-    double csp_dtr_sca_ap_length_1 = std::numeric_limits<double>::quiet_NaN();
-    double csp_dtr_sca_calc_theta = std::numeric_limits<double>::quiet_NaN();             // singular
-    double csp_dtr_sca_calc_end_gain_1 = std::numeric_limits<double>::quiet_NaN();
-    double csp_dtr_sca_calc_zenith = std::numeric_limits<double>::quiet_NaN();            // singular
-    double csp_dtr_sca_calc_costh = std::numeric_limits<double>::quiet_NaN();             // singular
-    double csp_dtr_sca_calc_end_loss_1 = std::numeric_limits<double>::quiet_NaN();
-    double csp_dtr_sca_calc_sca_eff_1 = std::numeric_limits<double>::quiet_NaN();
-    double csp_dtr_sca_calc_latitude = std::numeric_limits<double>::quiet_NaN();          // singular
-    double csp_dtr_sca_calc_iam_1 = std::numeric_limits<double>::quiet_NaN();
-
-    util::matrix_t<ssc_number_t> IAMs_1(1, 1, std::numeric_limits<double>::quiet_NaN());
-    util::matrix_t<ssc_number_t> Ave_Focal_Length(1, 1, std::numeric_limits<double>::quiet_NaN());
-    util::matrix_t<ssc_number_t> Distance_SCA(1, 1, std::numeric_limits<double>::quiet_NaN());
     util::matrix_t<ssc_number_t> L_SCA(1, 1, std::numeric_limits<double>::quiet_NaN());
     util::matrix_t<ssc_number_t> ColperSCA(1, 1, std::numeric_limits<double>::quiet_NaN());
+    util::matrix_t<ssc_number_t> Ave_Focal_Length(1, 1, std::numeric_limits<double>::quiet_NaN());
+    util::matrix_t<ssc_number_t> Distance_SCA(1, 1, std::numeric_limits<double>::quiet_NaN());
+    util::matrix_t<ssc_number_t> IAM_matrix(1, 1, std::numeric_limits<double>::quiet_NaN());
+
+    // Outputs
+    double csp_dtr_sca_calc_zenith = std::numeric_limits<double>::quiet_NaN();            // singular
+    double csp_dtr_sca_calc_costh = std::numeric_limits<double>::quiet_NaN();             // singular
+    double csp_dtr_sca_calc_theta = std::numeric_limits<double>::quiet_NaN();             // singular
+    double csp_dtr_sca_calc_latitude = std::numeric_limits<double>::quiet_NaN();          // singular
     util::matrix_t<ssc_number_t> csp_dtr_sca_ap_lengths(1, 1, std::numeric_limits<double>::quiet_NaN());
     util::matrix_t<ssc_number_t> csp_dtr_sca_calc_end_gains(1, 1, std::numeric_limits<double>::quiet_NaN());
-    util::matrix_t<ssc_number_t> IAM_matrix, csp_dtr_sca_calc_iams(1, 1, std::numeric_limits<double>::quiet_NaN());
     util::matrix_t<ssc_number_t> csp_dtr_sca_calc_end_losses(1, 1, std::numeric_limits<double>::quiet_NaN());
+    util::matrix_t<ssc_number_t> csp_dtr_sca_calc_iams(1, 1, std::numeric_limits<double>::quiet_NaN());
+
 
     // csp_dtr_sca_ap_lengths
     ssc_data_t_get_matrix(vt, "L_SCA", L_SCA);
@@ -352,18 +334,6 @@ void Physical_Trough_Collector_Type_Equations(ssc_data_t data)
     ssc_data_t_get_matrix(vt, "IAM_matrix", IAM_matrix);
     csp_dtr_sca_calc_iams = Csp_dtr_sca_calc_iams(IAM_matrix, csp_dtr_sca_calc_theta, csp_dtr_sca_calc_costh);
     ssc_data_t_set_matrix(data, "csp_dtr_sca_calc_iams", csp_dtr_sca_calc_iams);
-}
-
-
-void Physical_Trough_Receiver_Type_Equations(ssc_data_t data)
-{
-    auto vt = static_cast<var_table*>(data);
-    if (!vt) {
-        throw std::runtime_error("ssc_data_t data invalid");
-    }
-
-    double x;
-    x = 1.;
 }
 
 
