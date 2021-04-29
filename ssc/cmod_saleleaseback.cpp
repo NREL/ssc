@@ -2586,8 +2586,10 @@ public:
             cf_lcos.at(0, y) = cf.at(CF_battery_replacement_cost, y);
 
         }
-        int grid_charging_cost_version = 0;
-        lcos_calc(this, cf_lcos, nyears, nom_discount_rate, inflation_rate, lcoe_real, cost_prefinancing, disc_real, grid_charging_cost_version, 0);
+        int grid_charging_cost_version = 2;
+        size_t n_multipliers;
+        ssc_number_t* ppa_multipliers = as_array("ppa_multipliers", &n_multipliers);
+        lcos_calc(this, cf_lcos, nyears, nom_discount_rate, inflation_rate, lcoe_real, cost_prefinancing, disc_real, grid_charging_cost_version, ppa_multipliers);
         /*
         double lcos_investment_cost = as_double("battery_total_cost_lcos"); //does not include replacement costs
         double lcos_om_cost = npv(CF_om_capacity1_expense, nyears, nom_discount_rate); //Todo: include variable om due to charging
