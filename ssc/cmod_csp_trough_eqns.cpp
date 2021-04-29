@@ -58,6 +58,7 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
     double non_solar_field_land_area_multiplier = std::numeric_limits<double>::quiet_NaN();
     double nSCA = std::numeric_limits<double>::quiet_NaN();
     double SCA_drives_elec = std::numeric_limits<double>::quiet_NaN();
+    double q_pb_design = std::numeric_limits<double>::quiet_NaN();
     util::matrix_t<ssc_number_t> field_fl_props(1, 1, std::numeric_limits<double>::quiet_NaN());
     util::matrix_t<ssc_number_t> trough_loop_control(1, 1, std::numeric_limits<double>::quiet_NaN());
     util::matrix_t<ssc_number_t> A_aperture(1, 1, std::numeric_limits<double>::quiet_NaN());
@@ -78,7 +79,6 @@ void Physical_Trough_Solar_Field_Equations(ssc_data_t data)
 
 
     // Outputs
-    double q_pb_design = std::numeric_limits<double>::quiet_NaN();
     double field_htf_cp_avg = std::numeric_limits<double>::quiet_NaN();
     double single_loop_aperature = std::numeric_limits<double>::quiet_NaN();
     double min_inner_diameter = std::numeric_limits<double>::quiet_NaN();
