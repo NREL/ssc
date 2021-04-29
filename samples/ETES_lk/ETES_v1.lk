@@ -129,7 +129,6 @@ var( 'disp_csu_cost', 10000 );
 var( 'disp_pen_delta_w', 0.10000000000000001 );
 var( 'disp_inventory_incentive', 0.14999999999999999 );
 var( 'is_wlim_series', 0 );
-var( 'wlim_series', real_array(read_text_file('C:/Users/tneises/Documents/2021 ETES Dispatch/model_development/lk_scripts/wlim_series.csv')));
 
 var( 'is_dispatch_series', 0 );
 var( 'dispatch_series', [ 0 ] );
@@ -155,7 +154,8 @@ var( 'const_per_upfront_rate3', 0 );
 var( 'const_per_upfront_rate4', 0 );
 var( 'const_per_upfront_rate5', 0 );
 var( 'adjust:constant', 4 );
-var( 'sf_adjust:constant', 0 );
+
+
 
 run('etes_electric_resistance');
 

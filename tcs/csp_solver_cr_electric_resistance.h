@@ -68,6 +68,13 @@ private:
 
 public:
 
+    enum
+    {
+        E_W_DOT_HEATER      //[MWe] Electricity consumed by heater
+    };
+
+    C_csp_reported_outputs mc_reported_outputs;
+
     C_csp_cr_electric_resistance(double T_htf_cold_des /*C*/, double T_htf_hot_des /*C*/, double q_dot_heater_des /*MWt*/,
         double f_q_dot_des_allowable_su /*-*/, double hrs_startup_at_max_rate /*hr*/,
         int htf_code /*-*/, util::matrix_t<double> ud_htf_props);
