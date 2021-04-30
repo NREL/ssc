@@ -776,7 +776,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelPriceS
     ssc_number_t expectedBatteryChargeEnergy = 390.9;
     ssc_number_t expectedBatteryDischargeEnergy = 360.2;
 
-    ssc_number_t peakKwCharge = -3.914;
+    ssc_number_t peakKwCharge = -3.709;
     ssc_number_t peakKwDischarge = 1.99;
     ssc_number_t peakCycles = 2;
     ssc_number_t avgCycles = 0.41;
@@ -809,7 +809,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelPriceS
 
         auto batt_q_rel = data_vtab->as_vector_ssc_number_t("batt_capacity_percent");
         auto batt_cyc_avg = data_vtab->as_vector_ssc_number_t("batt_DOD_cycle_average");
-        EXPECT_NEAR(batt_q_rel.back(), 97.846, 2e-2);
-        EXPECT_NEAR(batt_cyc_avg.back(), 26.15, 0.5);
+        EXPECT_NEAR(batt_q_rel.back(), 98.04, 2e-2);
+        EXPECT_NEAR(batt_cyc_avg.back(), 25.60, 0.5);
     }
 }
