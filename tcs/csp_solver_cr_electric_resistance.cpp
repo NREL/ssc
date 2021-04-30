@@ -28,7 +28,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static C_csp_reported_outputs::S_output_info S_cr_electric_resistance_output_info[] =
 {
     {C_csp_cr_electric_resistance::E_W_DOT_HEATER, C_csp_reported_outputs::TS_WEIGHTED_AVE},
-
+    {C_csp_cr_electric_resistance::E_Q_DOT_HTF, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_csp_cr_electric_resistance::E_Q_DOT_STARTUP, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 
     csp_info_invalid
 };
@@ -190,7 +191,9 @@ void C_csp_cr_electric_resistance::off(const C_csp_weatherreader::S_outputs& wea
     m_E_su_calculated = m_E_su_des;     //[MWt-hr]
 
     // Set reported outputs
-    mc_reported_outputs.value(E_W_DOT_HEATER, 0.0); //[MWe]
+    mc_reported_outputs.value(E_W_DOT_HEATER, 0.0);     //[MWe]
+    mc_reported_outputs.value(E_Q_DOT_HTF, 0.0);        //[MWt]
+    mc_reported_outputs.value(E_Q_DOT_STARTUP, 0.0);    //[MWt]
 
     return;
 }
@@ -234,7 +237,9 @@ void C_csp_cr_electric_resistance::startup(const C_csp_weatherreader::S_outputs&
     cr_out_solver.m_q_dot_heater = m_q_dot_su_max;          //[MWt]
 
     // Set reported outputs
-    mc_reported_outputs.value(E_W_DOT_HEATER, W_dot_heater);     //[MWe]
+    mc_reported_outputs.value(E_W_DOT_HEATER, W_dot_heater);    //[MWe]
+    mc_reported_outputs.value(E_Q_DOT_HTF, 0.0);     //[MWt]
+    mc_reported_outputs.value(E_Q_DOT_STARTUP, m_q_dot_su_max); //[MWt]
 }
 
 void C_csp_cr_electric_resistance::on(const C_csp_weatherreader::S_outputs& weather,
@@ -275,7 +280,9 @@ void C_csp_cr_electric_resistance::on(const C_csp_weatherreader::S_outputs& weat
     cr_out_solver.m_q_dot_heater = q_dot_elec; //[MWt]
 
     // Set reported outputs
-    mc_reported_outputs.value(E_W_DOT_HEATER, W_dot_heater);     //[MWe]
+    mc_reported_outputs.value(E_W_DOT_HEATER, W_dot_heater);    //[MWe]
+    mc_reported_outputs.value(E_Q_DOT_HTF, q_dot_elec);         //[MWt]
+    mc_reported_outputs.value(E_Q_DOT_STARTUP, 0.0);            //[MWt]
 
     return;
 }

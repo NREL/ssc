@@ -76,7 +76,7 @@ var( 'csp.pt.cost.plm.fixed', 0 );
 var( 'csp.pt.sf.fixed_land_area', 45 );
 var( 'csp.pt.sf.land_overhead_factor', 1 );
 
-var( 'csp.pt.tes.init_hot_htf_percent', 30 );
+var( 'csp.pt.tes.init_hot_htf_percent', 0.0 );
 var( 'h_tank', 12 );
 var( 'cold_tank_max_heat', 15 );
 var( 'u_tank', 0.40000000000000002 );

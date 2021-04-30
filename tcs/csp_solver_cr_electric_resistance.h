@@ -70,7 +70,9 @@ public:
 
     enum
     {
-        E_W_DOT_HEATER      //[MWe] Electricity consumed by heater
+        E_W_DOT_HEATER,     //[MWe] Electricity consumed by heater
+        E_Q_DOT_HTF,        //[MWt] Heat transferred to HTF
+        E_Q_DOT_STARTUP     //[MWt] Heat consumed during startup
     };
 
     C_csp_reported_outputs mc_reported_outputs;
