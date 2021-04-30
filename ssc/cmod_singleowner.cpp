@@ -625,7 +625,7 @@ static var_info _cm_vtab_singleowner[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_project_mecs",                        "Reserve capital spending major equipment total",  "$", "",                      "Cash Flow Total and Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_project_investing_activities",        "Cash flow from investing activities",  "$", "",                      "Cash Flow Total and Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
-	{ SSC_OUTPUT,       SSC_NUMBER,     "issuance_of_equity",	                  "Issuance of equity",	"$",	 "",					  "TCash Flow Total and Returnsotal Cash Flow and Returns",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "issuance_of_equity",	                  "Issuance of equity",	"$",	 "",					  "Cash Flow Total and Returns",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_project_financing_activities",        "Cash flow from financing activities",  "$", "",                      "Cash Flow Total and Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_pretax_cashflow",                     "Total pre-tax cash flow",  "$", "",                      "Cash Flow Total and Returns",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -3264,11 +3264,11 @@ public:
 		save_cf( CF_property_tax_assessed_value, nyears, "cf_property_tax_assessed_value" );
 		save_cf( CF_property_tax_expense, nyears, "cf_property_tax_expense" );
 		save_cf( CF_insurance_expense, nyears, "cf_insurance_expense" );
-        if ((as_integer("en_batt") == 1) && (as_integer("batt_replacement_option") > 0)) {
+        if (as_integer("en_batt") == 1) {
             save_cf(CF_battery_replacement_cost, nyears, "cf_battery_replacement_cost");
             save_cf(CF_battery_replacement_cost_schedule, nyears, "cf_battery_replacement_cost_schedule");
         }
-        if (is_assigned("fuelcell_replacement_option") && (as_integer("fuelcell_replacement_option") > 0)) {
+        if (is_assigned("fuelcell_replacement_option")) {
             save_cf(CF_fuelcell_replacement_cost, nyears, "cf_fuelcell_replacement_cost");
             save_cf(CF_fuelcell_replacement_cost_schedule, nyears, "cf_fuelcell_replacement_cost_schedule");
         }

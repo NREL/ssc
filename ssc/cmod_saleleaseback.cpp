@@ -2806,7 +2806,7 @@ public:
 	save_cf( CF_om_fuel_expense, nyears, "cf_om_fuel_expense" );
 	save_cf( CF_om_opt_fuel_1_expense, nyears, "cf_om_opt_fuel_1_expense" );
 	save_cf( CF_om_opt_fuel_2_expense, nyears, "cf_om_opt_fuel_2_expense" );
-    if ((as_integer("en_batt") == 1) && (as_integer("batt_replacement_option") > 0)) {
+    if (as_integer("en_batt") == 1) {
         save_cf(CF_battery_replacement_cost, nyears, "cf_battery_replacement_cost");
         save_cf(CF_battery_replacement_cost_schedule, nyears, "cf_battery_replacement_cost_schedule");
     }

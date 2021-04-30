@@ -2998,7 +2998,7 @@ public:
 		save_cf( CF_property_tax_assessed_value, nyears, "cf_property_tax_assessed_value" );
 		save_cf( CF_property_tax_expense, nyears, "cf_property_tax_expense" );
 		save_cf( CF_insurance_expense, nyears, "cf_insurance_expense" );
-        if ((as_integer("en_batt") == 1) && (as_integer("batt_replacement_option") > 0)) {
+        if (as_integer("en_batt") == 1) {
             save_cf(CF_battery_replacement_cost, nyears, "cf_battery_replacement_cost");
             save_cf(CF_battery_replacement_cost_schedule, nyears, "cf_battery_replacement_cost_schedule");
         }

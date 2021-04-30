@@ -2996,15 +2996,16 @@ public:
 		save_cf( CF_property_tax_assessed_value, nyears, "cf_property_tax_assessed_value" );
 		save_cf( CF_property_tax_expense, nyears, "cf_property_tax_expense" );
 		save_cf( CF_insurance_expense, nyears, "cf_insurance_expense" );
-        if ((as_integer("en_batt") == 1) && (as_integer("batt_replacement_option") > 0)) {
+        if (as_integer("en_batt") == 1) {
             save_cf(CF_battery_replacement_cost, nyears, "cf_battery_replacement_cost");
             save_cf(CF_battery_replacement_cost_schedule, nyears, "cf_battery_replacement_cost_schedule");
         }
-        if (is_assigned("fuelcell_replacement_option") && (as_integer("fuelcell_replacement_option") > 0)) {
+        if (is_assigned("fuelcell_replacement_option")) {
             save_cf(CF_fuelcell_replacement_cost, nyears, "cf_fuelcell_replacement_cost");
             save_cf(CF_fuelcell_replacement_cost_schedule, nyears, "cf_fuelcell_replacement_cost_schedule");
         }
-		save_cf( CF_ebitda, nyears, "cf_ebitda" );
+        save_cf(CF_operating_expenses, nyears, "cf_operating_expenses");
+        save_cf( CF_ebitda, nyears, "cf_ebitda" );
 		save_cf( CF_net_salvage_value, nyears, "cf_net_salvage_value" );
 		save_cf( CF_total_revenue, nyears, "cf_total_revenue" );
 		save_cf( CF_energy_net, nyears, "cf_energy_net" );
