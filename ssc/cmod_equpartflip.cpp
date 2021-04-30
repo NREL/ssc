@@ -2719,8 +2719,10 @@ public:
 		save_cf( CF_om_fuel_expense, nyears, "cf_om_fuel_expense" );
 		save_cf( CF_om_opt_fuel_1_expense, nyears, "cf_om_opt_fuel_1_expense" );
 		save_cf( CF_om_opt_fuel_2_expense, nyears, "cf_om_opt_fuel_2_expense" );
-		save_cf(CF_battery_replacement_cost, nyears, "cf_battery_replacement_cost");
-		save_cf(CF_battery_replacement_cost_schedule, nyears, "cf_battery_replacement_cost_schedule");
+        if (as_integer("en_batt") == 1) {
+            save_cf(CF_battery_replacement_cost, nyears, "cf_battery_replacement_cost");
+            save_cf(CF_battery_replacement_cost_schedule, nyears, "cf_battery_replacement_cost_schedule");
+        }
 		save_cf( CF_property_tax_assessed_value, nyears, "cf_property_tax_assessed_value" );
 		save_cf( CF_property_tax_expense, nyears, "cf_property_tax_expense" );
 		save_cf( CF_insurance_expense, nyears, "cf_insurance_expense" );

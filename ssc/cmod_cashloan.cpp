@@ -76,13 +76,13 @@ static var_info vtab_cashloan[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_production_expense", "O&M production-based expense",       "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_capacity_expense",   "O&M capacity-based expense",         "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fixed1_expense",      "Battery fixed expense",                  "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_production1_expense", "Battery production-based expense",       "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_capacity1_expense",   "Battery capacity-based expense",         "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fixed1_expense",      "Battery fixed expense",                  "$",            "",                      "Cash Flow",      "",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_production1_expense", "Battery production-based expense",       "$",            "",                      "Cash Flow",      "",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_capacity1_expense",   "Battery capacity-based expense",         "$",            "",                      "Cash Flow",      "",                     "LENGTH_EQUAL=cf_length",                "" },
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fixed2_expense",      "Fuel cell fixed expense",                  "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_production2_expense", "Fuel cell production-based expense",       "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_capacity2_expense",   "Fuel cell capacity-based expense",         "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fixed2_expense",      "Fuel cell fixed expense",                  "$",            "",                      "Cash Flow",      "",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_production2_expense", "Fuel cell production-based expense",       "$",            "",                      "Cash Flow",      "",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_capacity2_expense",   "Fuel cell capacity-based expense",         "$",            "",                      "Cash Flow",      "",                     "LENGTH_EQUAL=cf_length",                "" },
 
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fuel_expense",       "O&M fuel expense",                   "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -1092,12 +1092,16 @@ public:
 		save_cf(CF_om_fixed_expense, nyears, "cf_om_fixed_expense");
 		save_cf(CF_om_production_expense, nyears, "cf_om_production_expense");
 		save_cf(CF_om_capacity_expense, nyears, "cf_om_capacity_expense");
-		save_cf(CF_om_fixed1_expense, nyears, "cf_om_fixed1_expense");
-		save_cf(CF_om_production1_expense, nyears, "cf_om_production1_expense");
-		save_cf(CF_om_capacity1_expense, nyears, "cf_om_capacity1_expense");
-		save_cf(CF_om_fixed2_expense, nyears, "cf_om_fixed2_expense");
-		save_cf(CF_om_production2_expense, nyears, "cf_om_production2_expense");
-		save_cf(CF_om_capacity2_expense, nyears, "cf_om_capacity2_expense");
+        if (add_om_num_types > 0) {
+            save_cf(CF_om_fixed1_expense, nyears, "cf_om_fixed1_expense");
+            save_cf(CF_om_production1_expense, nyears, "cf_om_production1_expense");
+            save_cf(CF_om_capacity1_expense, nyears, "cf_om_capacity1_expense");
+        }
+        if (add_om_num_types > 1) {
+            save_cf(CF_om_fixed2_expense, nyears, "cf_om_fixed2_expense");
+            save_cf(CF_om_production2_expense, nyears, "cf_om_production2_expense");
+            save_cf(CF_om_capacity2_expense, nyears, "cf_om_capacity2_expense");
+        }
 		save_cf( CF_om_fuel_expense, nyears, "cf_om_fuel_expense" );
 		save_cf( CF_om_opt_fuel_1_expense, nyears, "cf_om_opt_fuel_1_expense" );
 		save_cf( CF_om_opt_fuel_2_expense, nyears, "cf_om_opt_fuel_2_expense" );
@@ -1105,10 +1109,14 @@ public:
 		save_cf( CF_property_tax_expense, nyears, "cf_property_tax_expense" );
 		save_cf( CF_insurance_expense, nyears, "cf_insurance_expense" );
 		save_cf( CF_net_salvage_value, nyears, "cf_net_salvage_value" );
-		save_cf(CF_battery_replacement_cost, nyears, "cf_battery_replacement_cost");
-		save_cf(CF_battery_replacement_cost_schedule, nyears, "cf_battery_replacement_cost_schedule");
-		save_cf(CF_fuelcell_replacement_cost, nyears, "cf_fuelcell_replacement_cost");
-		save_cf(CF_fuelcell_replacement_cost_schedule, nyears, "cf_fuelcell_replacement_cost_schedule");
+        if (as_integer("en_batt") == 1) {
+            save_cf(CF_battery_replacement_cost, nyears, "cf_battery_replacement_cost");
+            save_cf(CF_battery_replacement_cost_schedule, nyears, "cf_battery_replacement_cost_schedule");
+        }
+        if (is_assigned("fuelcell_replacement_option")) {
+            save_cf(CF_fuelcell_replacement_cost, nyears, "cf_fuelcell_replacement_cost");
+            save_cf(CF_fuelcell_replacement_cost_schedule, nyears, "cf_fuelcell_replacement_cost_schedule");
+        }
 		save_cf(CF_operating_expenses, nyears, "cf_operating_expenses");
 
 		save_cf( CF_deductible_expenses, nyears, "cf_deductible_expenses");
