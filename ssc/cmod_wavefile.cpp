@@ -219,14 +219,14 @@ public:
             ssc_number_t* p_day = allocate("day", numberRecords);
             ssc_number_t* p_hour = allocate("hour", numberRecords);
             ssc_number_t* p_minute = allocate("minute", numberRecords);
-            //ssc_number_t* mat = allocate("wave_resource_matrix", nrows, ncols);
-            /*
+            ssc_number_t* mat = allocate("wave_resource_matrix", nrows, ncols);
+            
             for (size_t j = 0; j < 21; j++) {
-                mat[(j + 1) * ncols] = (0.25 + j * 0.5);
+                mat[j * ncols] = (0.25 + (j-1) * 0.5);
             }
             for (size_t m = 0; m < 22; m++) {
                 mat[m] = m - 0.5;
-            }*/
+            }
             ssc_number_t* month = allocate("month", numberRecords);
             std::vector<ssc_number_t> timecheck(numberRecords);
             timecheck[0] = 0;
@@ -276,28 +276,22 @@ public:
                         break;
                     }
                 }
-
-
-                //mat[sig_wave_height_index * ncols + energy_period_index] = mat[sig_wave_height_index * ncols + energy_period_index] + 1 / 2920 * 100;
-                /*
-                mat[sig_wave_height_index * ncols + energy_period_index] += 100 / numberRecords;
-                //Set decimal values to 2 for JPD
-                if (r == numberRecords - 1) {
-                    for (size_t r2 = 0; r2 < 21; r2++) {
-                        for (size_t c2 = 0; c2 < 22; c2++) {
-                            if (r2 != 0 && c2 != 0) mat[r2 * 22 + c2] = round(mat[r2 * 22 + c2] * 100) / 100;
-                        }
-                    }
-                }*/
-                
+                //Add percentage point to resource matrix for matcing wave height and energy period bins
+                mat[sig_wave_height_index * ncols + energy_period_index] += 100 / numberRecords; //1/numberRecords * 100 to make a percentage at each time step
+                                
             }
-            //mat[0] = 0;
+            //Set decimals to 2 places in resource matrix for easier reading in output
+            for (size_t r2 = 0; r2 < 21; r2++) {
+                for (size_t c2 = 0; c2 < 22; c2++) {
+                    if (r2 != 0 && c2 != 0) mat[r2 * 22 + c2] = round(mat[r2 * 22 + c2] * 100) / 100;
+                }
+            }
+            mat[0] = 0;
             assign("number_hours", int(numberRecords * hourdiff));
             
 
         }
         else if (as_integer("wave_resource_model_choice") == 0) {
-            //ssc_number_t* mat = allocate("wave_resource_matrix", 21, 22);
             ssc_number_t* mat = allocate("wave_resource_matrix", 21, 22);
             for (size_t r = 0; r < 21; r++)
             {
