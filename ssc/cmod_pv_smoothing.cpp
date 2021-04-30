@@ -21,28 +21,34 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "core.h"
+#include "lib_util.h"
+#include <fstream>
+
 
 static var_info _cm_vtab_pv_smoothing[] = 
 {	
 /*   VARTYPE           DATATYPE         NAME                         LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-/*   VARTYPE           DATATYPE         NAME                         LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-    { SSC_INPUT,        SSC_NUMBER,      "max_ramp",                 "Start time",                     "seconds", "0=jan1st 12am",         "PV Smoothing", "*",                       "MIN=0,MAX=31536000",                     "" },
-    { SSC_INPUT,        SSC_NUMBER,      "ramp_interval",                   "End time",                       "seconds", "0=jan1st 12am",         "PV Smoothing", "*",                       "MIN=0,MAX=31536000",                     "" },
-    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_ac_ub_enable",                  "Time step",                      "seconds", "",                     "PV Smoothing", "*",                       "MIN=1,MAX=3600",                         "" },
-    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_ac_lb_enable",                 "Start time",                     "seconds", "0=jan1st 12am",         "PV Smoothing", "*",                       "MIN=0,MAX=31536000",                     "" },
-    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_ac_ub",                   "End time",                       "seconds", "0=jan1st 12am",         "PV Smoothing", "*",                       "MIN=0,MAX=31536000",                     "" },
-    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_ac_lb",                  "Time step",                      "seconds", "",                     "PV Smoothing", "*",                       "MIN=1,MAX=3600",                         "" },
-    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_short_forecast_enable",                 "Start time",                     "seconds", "0=jan1st 12am",         "PV Smoothing", "*",                       "MIN=0,MAX=31536000",                     "" },
-    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_forecast_shift_periods",                   "End time",                       "seconds", "0=jan1st 12am",         "PV Smoothing", "*",                       "MIN=0,MAX=31536000",                     "" },
-    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_battery_energy",                  "Time step",                      "seconds", "",                     "PV Smoothing", "*",                       "MIN=1,MAX=3600",                         "" },
-    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_battery_power",                  "Time step",                      "seconds", "",                     "PV Smoothing", "*",                       "MIN=1,MAX=3600",                         "" },
-    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_battery_rte",                  "Time step",                      "seconds", "",                     "PV Smoothing", "*",                       "MIN=1,MAX=3600",                         "" },
-    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_curtail_as_control",                  "Time step",                      "seconds", "",                     "PV Smoothing", "*",                       "MIN=1,MAX=3600",                         "" },
-    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_curtail_if_violation",                  "Time step",                      "seconds", "",                     "PV Smoothing", "*",                       "MIN=1,MAX=3600",                         "" },
-    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_kp",                  "Time step",                      "seconds", "",                     "PV Smoothing", "*",                       "MIN=1,MAX=3600",                         "" },
-    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_ki",                  "Time step",                      "seconds", "",                     "PV Smoothing", "*",                       "MIN=1,MAX=3600",                         "" },
-    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_kf",                  "Time step",                      "seconds", "",                     "PV Smoothing", "*",                       "MIN=1,MAX=3600",                         "" },
-    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_soc_rest",                  "Time step",                      "seconds", "",                     "PV Smoothing", "*",                       "MIN=1,MAX=3600",                         "" },
+    { SSC_INPUT,        SSC_STRING,   "batt_dispatch_pvs_pv_power_file",                  "CSV input pv power profile for testing",         "",       "",      "PV Smoothing",                                        "*",                                  "",                    "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_max_ramp",                 "Maximum ramp rate",                     "% nameplate per ramp interval", "",         "PV Smoothing", "*",                       "",                     "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_timestep_multiplier",                   "Weather file timestep multiplier",                       "", "",         "PV Smoothing", "*",                       "",                     "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_ac_ub_enable",                  "Enable AC upper bound",                      "0/1", "",                     "PV Smoothing", "*",                       "",                         "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_ac_lb_enable",                 "Enable AC lower bound",                     "0/1", "",         "PV Smoothing", "*",                       "",                     "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_ac_ub",                   "AC upper bound",                       "% nameplate", "",         "PV Smoothing", "*",                       "",                     "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_ac_lb",                  "AC lower bound",                      "% nameplate", "",                     "PV Smoothing", "*",                       "",                         "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_short_forecast_enable",                 "Enable forecast",                     "0/1", "",         "PV Smoothing", "*",                       "",                     "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_forecast_shift_periods",                   "Forecast shift periods",                       "", "",         "PV Smoothing", "*",                      "",                     "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_battery_energy",                  "Battery energy",                      "kWhac", "",                     "PV Smoothing", "*",                       "",                         "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_battery_power",                  "Battery power",                      "kWac", "",                     "PV Smoothing", "*",                      "",                         "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_battery_rte",                  "Round trip efficiency",                      "%", "",                     "PV Smoothing", "*",                       "",                         "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_curtail_as_control",                  "Curtail as control",                      "0/1", "",                     "PV Smoothing", "*",                       "",                         "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_curtail_if_violation",                  "Curtail if violation",                      "0/1", "",                     "PV Smoothing", "*",                      "",                         "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_kp",                  "kp",                      "", "",                     "PV Smoothing", "*",                       "",                         "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_ki",                  "ki",                      "", "",                     "PV Smoothing", "*",                       "",                         "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_kf",                  "kf",                      "", "",                     "PV Smoothing", "*",                       "",                         "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_soc_rest",                  "SOC rest",                      "%", "",                     "PV Smoothing", "*",                       "",                         "" },
+
+    { SSC_OUTPUT,        SSC_ARRAY,      "batt_dispatch_pvs_pv_power",                  "Input PV Power",                      "kWac", "",                     "PV Smoothing", "*",                       "",                         "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "batt_dispatch_pvs_pv_power_resampled",                  "Resampled input PV Power",                      "kWac", "",                     "PV Smoothing", "*",                       "",                         "" },
 
 var_info_invalid };
 
@@ -57,11 +63,67 @@ public:
 
 	void exec( )
 	{
-		double t_start = as_double("start_time");
-		double t_end = as_double("end_time");
-		double t_step = as_double("time_step"); // seconds
+    /* Note that the file will be replaced by gen in the library and this file will be a specific test case */
+        std::string file = as_string("batt_dispatch_pvs_pv_power_file");
+        std::string buf, buf1;
+        std::ifstream ifs(file);
 
-		size_t num_steps = check_timestep_seconds( t_start, t_end, t_step );
+        if (!ifs.is_open())
+        {
+            throw exec_error("pv_smoothing", "failed to read local test file: " + std::string(file));
+            return;
+        }
+        // header columns
+        getline(ifs, buf);
+        // number of records
+        size_t nRecords = 0; // figure out how many records there are
+
+        while (getline(ifs, buf) && buf.length() > 0)
+            nRecords++;
+
+
+        // reposition to where we were
+        ifs.clear();
+        ifs.seekg(0);
+        getline(ifs, buf);  // header names
+
+        ssc_number_t* pv_power_input = allocate("batt_dispatch_pvs_pv_power", nRecords);
+        size_t ndx = 0;
+        while (getline(ifs, buf) && buf.length() > 0 && ndx < nRecords) {
+            auto cols = util::split(buf,",");
+            int ncols = (int)cols.size();
+            if (ncols != 2) {
+                throw exec_error("pv_smoothing", "failed to read 2 columns local test file: " + std::string(file) + " at line "  + std::to_string(ndx));
+                return;
+            }
+            pv_power_input[ndx] = atof(cols[1].c_str());
+            ndx++;
+        }
+
+        size_t timestep_multiplier = as_integer("batt_dispatch_pvs_timestep_multiplier");
+        size_t nRecordsSampled = nRecords / timestep_multiplier;
+        ssc_number_t* pv_power_input_sampled = allocate("batt_dispatch_pvs_pv_power_resampled", nRecordsSampled);
+
+        ndx = 0;
+        for (size_t ndx_sampled = 0; ndx_sampled < nRecordsSampled; ndx_sampled++) {
+            ssc_number_t sum = 0;
+            for (size_t i_sampled = 0; i_sampled < timestep_multiplier && ndx < nRecords; i_sampled++) {
+                sum += pv_power_input[ndx];
+                ndx++;
+            }
+            pv_power_input_sampled[ndx_sampled] = sum / timestep_multiplier;
+        }
+
+        /*
+        if (m_type == WFCSV)
+        {
+            // if we opened a csv file, it could be SAM/WFCSV format or TMY3
+            // try to autodetect a TMY3
+            getline(ifs, buf);
+            getline(ifs, buf1);
+            int ncols = (int)split(buf).size();
+            int ncols1 = (int)split(buf1).size();
+            size_t num_steps = check_timestep_seconds( t_start, t_end, t_step );
 
 		ssc_number_t *time = allocate("time", num_steps);
 		ssc_number_t *timehr = allocate("timehr", num_steps);
@@ -88,7 +150,7 @@ public:
 			T += t_step;
 			idx++;
 		}
-
+*/
 	}
 };
 
