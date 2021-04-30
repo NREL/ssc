@@ -572,7 +572,7 @@ void dispatch_automatic_behind_the_meter_t::cost_based_target_power(size_t idx, 
         UtilityRateForecast midDispatchForecast(*rate_forecast);
         plans[i].cost = midDispatchForecast.forecastCost(plans[i].plannedGridUse, year, hour_of_year, 0) + cost_to_cycle() * plans[i].num_cycles - plans[i].kWhRemaining * plans[i].lowestMarginalCost;
 
-        if (plans[i].cost < lowest_cost)
+        if (plans[i].cost <= lowest_cost)
         {
             lowest_index = i;
             lowest_cost = plans[i].cost;
@@ -640,23 +640,7 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(dispatch_plan
         }
     }
 
-    for (i = 0; i < _steps_per_hour && (i < sorted_grid.size()); i++)
-    {
-        if (sorted_grid[i].Cost() > 0)
-        {
-            if (sorted_grid[i].MarginalCost() < plan.lowestMarginalCost)
-            {
-                plan.lowestMarginalCost = sorted_grid[i].MarginalCost();
-            }
-        }
-        else {
-            break;
-        }
-    }
-
-    // Aim to keep the battery at 50%
     double chargeEnergy = E_max - remainingEnergy;
-    chargeEnergy = std::max(chargeEnergy, E_max / 2.0);
 
     // Need to plan on charging extra to account for round trip losses
     double requiredEnergy = chargeEnergy / (m_batteryPower->singlePointEfficiencyACToDC * m_batteryPower->singlePointEfficiencyDCToAC);
@@ -687,17 +671,17 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(dispatch_plan
     while (lookingForGridUse && i < _num_steps)
     {
         index = sorted_grid[i].Hour() * _steps_per_hour + sorted_grid[i].Step();
-        if (plan.plannedDispatch[index] < 0)
+
+        if (sorted_grid[i].Grid() <= 0)
+        {
+            lookingForGridUse = false;
+        }
+        else if (plan.plannedDispatch[index] < 1e-7)
         {
             i++;
         }
         else {
             peakDesiredGridUse = sorted_grid[i].Grid() > 0 ? sorted_grid[i].Grid() : 0.0;
-            lookingForGridUse = false;
-        }
-
-        if (lookingForGridUse && sorted_grid[i].Grid() <= 0)
-        {
             lookingForGridUse = false;
         }
     }
@@ -831,7 +815,7 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(dispatch_plan
         plan.plannedGridUse.push_back(projectedGrid);
     }
 
-    plan.kWhRemaining = energy;
+    plan.kWhRemaining = energy * m_batteryPower->singlePointEfficiencyDCToAC;
 }
 
 void dispatch_automatic_behind_the_meter_t::check_power_restrictions(double& power)
