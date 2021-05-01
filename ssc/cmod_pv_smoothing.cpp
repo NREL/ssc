@@ -39,6 +39,8 @@ static var_info _cm_vtab_pv_smoothing[] =
     { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_forecast_shift_periods",                   "Forecast shift periods",                       "", "",         "PV Smoothing", "*",                      "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_battery_energy",                  "Battery energy",                      "kWhac", "",                     "PV Smoothing", "*",                       "",                         "" },
     { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_battery_power",                  "Battery power",                      "kWac", "",                     "PV Smoothing", "*",                      "",                         "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_nameplate_ac",                  "Nameplate",                      "kWac", "",                     "PV Smoothing", "*",                       "",                         "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_interconnection_limit",                  "Interconnection limit",                      "kWac", "",                     "PV Smoothing", "*",                      "",                         "" },
     { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_battery_rte",                  "Round trip efficiency",                      "%", "",                     "PV Smoothing", "*",                       "",                         "" },
     { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_curtail_as_control",                  "Curtail as control",                      "0/1", "",                     "PV Smoothing", "*",                       "",                         "" },
     { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_curtail_if_violation",                  "Curtail if violation",                      "0/1", "",                     "PV Smoothing", "*",                      "",                         "" },
@@ -89,14 +91,53 @@ public:
 
         ssc_number_t* pv_power_input = allocate("batt_dispatch_pvs_pv_power", nRecords);
         size_t ndx = 0;
+
+        // lambda function to split Python sample file that has delimiters in timestamps
+        auto splitfunc = [](std::string& str, std::string& delim) {
+            std::vector< std::string > list;
+
+            char cur_delim[2] = { 0,0 };
+            std::string::size_type m_pos = 0;
+            std::string token;
+
+            while (m_pos < str.length())
+            {
+                std::string::size_type pos = str.find(delim, m_pos);
+                if (pos == std::string::npos)
+                {
+                    cur_delim[0] = 0;
+                    token.assign(str, m_pos, std::string::npos);
+                    m_pos = str.length();
+                }
+                else
+                {
+                    cur_delim[0] = str[pos];
+                    std::string::size_type len = pos - m_pos;
+                    token.assign(str, m_pos, len);
+                    m_pos = pos + delim.length();
+                }
+
+                 list.push_back(token);
+            }
+
+            return list;
+
+        };
+
+        std::string delim = "\",";
+        // combining to match with Python code
+        //    df['Power_scaled'] = df['Power'].divide(500) #normalize by the AC nameplate rating
+        ssc_number_t batt_dispatch_pvs_nameplate_ac = as_number("batt_dispatch_pvs_nameplate_ac");
+
         while (getline(ifs, buf) && buf.length() > 0 && ndx < nRecords) {
-            auto cols = util::split(buf,",");
+//            auto cols = util::split(buf, "\","); // Cheat for now since Python timestamps include "," delimiter
+            auto cols = splitfunc(buf,delim); // Cheat for now since Python timestamps include "," delimiter
             int ncols = (int)cols.size();
             if (ncols != 2) {
                 throw exec_error("pv_smoothing", "failed to read 2 columns local test file: " + std::string(file) + " at line "  + std::to_string(ndx));
                 return;
             }
-            pv_power_input[ndx] = atof(cols[1].c_str());
+            pv_power_input[ndx] = atof(cols[1].c_str()) / batt_dispatch_pvs_nameplate_ac;
             ndx++;
         }
 
