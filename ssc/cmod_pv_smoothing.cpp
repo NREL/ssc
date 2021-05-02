@@ -28,9 +28,12 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static var_info _cm_vtab_pv_smoothing[] = 
 {	
 /*   VARTYPE           DATATYPE         NAME                         LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-    { SSC_INPUT,        SSC_STRING,   "batt_dispatch_pvs_pv_power_file",                  "CSV input pv power profile for testing",         "",       "",      "PV Smoothing",                                        "*",                                  "",                    "" },
+    { SSC_INPUT,        SSC_STRING,      "batt_dispatch_pvs_pv_power_file",                  "CSV input pv power profile for testing",         "",       "",      "PV Smoothing",                                        "*",                                  "",                    "" },
     { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_max_ramp",                 "Maximum ramp rate",                     "% nameplate per ramp interval", "",         "PV Smoothing", "*",                       "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_timestep_multiplier",                   "Weather file timestep multiplier",                       "", "",         "PV Smoothing", "*",                       "",                     "" },
+    // calculated values that is = batt_dispatch_pvs_timestep_multiplier * gen input timestep
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_ramp_interval",                   "Remp interval",                       "minutes", "",         "PV Smoothing", "*",                       "",                     "" },
+
     { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_ac_ub_enable",                  "Enable AC upper bound",                      "0/1", "",                     "PV Smoothing", "*",                       "",                         "" },
     { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_ac_lb_enable",                 "Enable AC lower bound",                     "0/1", "",         "PV Smoothing", "*",                       "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_ac_ub",                   "AC upper bound",                       "% nameplate", "",         "PV Smoothing", "*",                       "",                     "" },
@@ -51,6 +54,7 @@ static var_info _cm_vtab_pv_smoothing[] =
 
     { SSC_OUTPUT,        SSC_ARRAY,      "batt_dispatch_pvs_pv_power",                  "Input PV Power",                      "kWac", "",                     "PV Smoothing", "*",                       "",                         "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "batt_dispatch_pvs_pv_power_resampled",                  "Resampled input PV Power",                      "kWac", "",                     "PV Smoothing", "*",                       "",                         "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "batt_dispatch_pvs_pv_energy_forecast",                  "Perfect energy forecast of input PV Power",                      "kWhac", "",                     "PV Smoothing", "*",                       "",                         "" },
 
 var_info_invalid };
 
@@ -155,43 +159,22 @@ public:
             pv_power_input_sampled[ndx_sampled] = sum / timestep_multiplier;
         }
 
-        /*
-        if (m_type == WFCSV)
-        {
-            // if we opened a csv file, it could be SAM/WFCSV format or TMY3
-            // try to autodetect a TMY3
-            getline(ifs, buf);
-            getline(ifs, buf1);
-            int ncols = (int)split(buf).size();
-            int ncols1 = (int)split(buf1).size();
-            size_t num_steps = check_timestep_seconds( t_start, t_end, t_step );
+        // TODO only calculate if forecast enabled
+        if (as_boolean("batt_dispatch_pvs_short_forecast_enable")) {
+            ssc_number_t forecast_shift_periods = as_number("batt_dispatch_pvs_forecast_shift_periods");
+            ssc_number_t ramp_interval = as_number("batt_dispatch_pvs_ramp_interval")/60.0; // minutes to hour
+            ssc_number_t* forecast_pv_energy = allocate("batt_dispatch_pvs_pv_energy_forecast", nRecordsSampled);
+            for (size_t ndx_sampled = 0; ndx_sampled < nRecordsSampled; ndx_sampled++) {
+                ndx = 0;
+                ssc_number_t sum = 0;
+                while ((ndx < forecast_shift_periods) && (ndx_sampled+ndx < nRecordsSampled)) {
+                    sum += pv_power_input_sampled[ndx_sampled + ndx];
+                    ndx++;
+                }
+                forecast_pv_energy[ndx_sampled] = sum * ramp_interval;
+            }
+        }
 
-		ssc_number_t *time = allocate("time", num_steps);
-		ssc_number_t *timehr = allocate("timehr", num_steps);
-		ssc_number_t *month = allocate("month", num_steps);
-		ssc_number_t *day = allocate("day", num_steps);
-		ssc_number_t *hour = allocate("hour", num_steps);
-		ssc_number_t *minute = allocate("minute", num_steps);
-
-		double T = t_start;
-		size_t idx = 0;
-		while (T < t_end && idx < num_steps)
-		{
-			double Thr = T / 3600.0;
-
-			time[idx] = (float) T;
-			timehr[idx] = (float) Thr;
-						
-			int m = util::month_of(Thr);
-			month[idx] = (ssc_number_t) m ;              // month goes 1-12
-			day[idx] = (ssc_number_t) util::day_of_month(m,Thr) ;   // day goes 1-nday_in_month
-			hour[idx] = (ssc_number_t) ((int)(Thr)%24);		         // hour goes 0-23
-			minute[idx] = (ssc_number_t) ((int)( (Thr-floor(Thr))*60  + t_step/3600.0*30));      // minute goes 0-59
-	
-			T += t_step;
-			idx++;
-		}
-*/
 	}
 };
 
