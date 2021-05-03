@@ -75,6 +75,7 @@ protected:
         std::vector<double> voltage_vals = { 0, 1.7, 4, 1.7, 5, 1.58, 60, 1.5, 85, 1.4, 90, 1.3, 93, 1.2, 95, 1, 96, 0.9 };
         util::matrix_t<double> voltage_table(9, 2, &voltage_vals);
 
+        voltage_nom = 1.5;
         cap = std::unique_ptr<capacity_lithium_ion_t>(new capacity_lithium_ion_t(10, 50, 95, 5, dt_hr));
         model = std::unique_ptr<voltage_t>(new voltage_table_t(n_cells_series, n_strings, voltage_nom, voltage_table, R,
                                                                dt_hr));
@@ -110,7 +111,7 @@ protected:
 
         n_cells_series = 6;
         n_strings = 28;
-        voltage_nom = 2;
+        voltage_nom = 12;
 
         cap = std::unique_ptr<capacity_lithium_ion_t>(new capacity_lithium_ion_t(10, 50, 95, 5, dt_hr));
         model = std::unique_ptr<voltage_t>(new voltage_table_t(n_cells_series, n_strings, voltage_nom, voltage_table, R,

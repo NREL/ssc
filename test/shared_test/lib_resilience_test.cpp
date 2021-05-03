@@ -251,7 +251,7 @@ TEST_F(ResilienceTest_lib_resilience, VoltageTable)
     std::vector<double> vals = {99, 0, 50, 2, 0, 3};
     util::matrix_t<double> table(3, 2, &vals);
     double soc_init = 50;
-    auto volt = voltage_table_t(1, 1, 3, table, 0.1, 1);
+    auto volt = voltage_table_t(1, 1, 2, table, 0.1, 1);
     auto cap = capacity_lithium_ion_t(2.25, soc_init, 100, 0, 1);
 
     volt.updateVoltage(cap.q0(), cap.qmax(), cap.I(), 0, 0.);
@@ -288,7 +288,7 @@ TEST_F(ResilienceTest_lib_resilience, DischargeVoltageTable){
     std::vector<double> vals = {99, 0, 50, 2, 0, 3};
     util::matrix_t<double> table(3, 2, &vals);
     double soc_init = 50;
-    auto volt = voltage_table_t(1, 1, 3, table, 0.1, 1);
+    auto volt = voltage_table_t(1, 1, 2, table, 0.1, 1);
     auto cap = capacity_lithium_ion_t(2.25, soc_init, 100, 0, 1);
 
     // test discharging
@@ -333,7 +333,7 @@ TEST_F(ResilienceTest_lib_resilience, ChargeVoltageTable){
     std::vector<double> vals = {99, 0, 50, 2, 0, 3};
     util::matrix_t<double> table(3, 2, &vals);
     double soc_init = 50;
-    auto volt = voltage_table_t(1, 1, 3, table, 0.1, 1);
+    auto volt = voltage_table_t(1, 1, 2, table, 0.1, 1);
     auto cap = capacity_lithium_ion_t(2.25, soc_init, 100, 0, 1);
 
     // test charging
