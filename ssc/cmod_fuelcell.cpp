@@ -179,7 +179,8 @@ void cm_fuelcell::exec()
 				p_fuelCellConsumption_MCf[idx] = (ssc_number_t)fuelCellDispatch->getFuelConsumption();
 				p_fuelCellConsumption_MCf_annual[annual_index] += (ssc_number_t)MCF_TO_KWH(p_fuelCellConsumption_MCf[idx], fcVars->lowerHeatingValue_BtuPerFt3);
 				p_fuelCellToGrid_kW[idx] = (ssc_number_t)(fuelCellDispatch->getBatteryPower()->powerFuelCellToGrid);
-				p_fuelCellToLoad_kW[idx] = (ssc_number_t)(fuelCellDispatch->getBatteryPower()->powerFuelCellToLoad);
+                if (is_assigned("load"))
+				    p_fuelCellToLoad_kW[idx] = (ssc_number_t)(fuelCellDispatch->getBatteryPower()->powerFuelCellToLoad);
 				p_gen_kW[idx] = (ssc_number_t)(fcVars->systemGeneration_kW[idx]) + p_fuelCellPower_kW[idx];
 
 				if (y == 0) {
@@ -227,7 +228,8 @@ void cm_fuelcell::allocateOutputs()
 	p_fuelCellPowerThermal_kW = allocate("fuelcell_power_thermal", fcVars->numberOfLifetimeRecords);
 	p_fuelCellConsumption_MCf = allocate("fuelcell_fuel_consumption_mcf", fcVars->numberOfLifetimeRecords);
 	p_fuelCellToGrid_kW = allocate("fuelcell_to_grid", fcVars->numberOfLifetimeRecords);
-	p_fuelCellToLoad_kW = allocate("fuelcell_to_load", fcVars->numberOfLifetimeRecords);
+    if(is_assigned("load"))
+	    p_fuelCellToLoad_kW = allocate("fuelcell_to_load", fcVars->numberOfLifetimeRecords);
 
 	// annual outputs
 	size_t annual_size = fcVars->numberOfYears + 1;
