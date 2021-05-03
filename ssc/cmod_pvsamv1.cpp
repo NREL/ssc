@@ -993,6 +993,8 @@ void cm_pvsamv1::exec()
 
     // SELF-SHADING MODULE INFORMATION
     double width = sqrt((ref_area_m2 / aspect_ratio));
+    if (width <= 0)
+        throw exec_error("pvsamv1", "Area of PV module must be > 0, but is instead " + util::to_string(width));
     for (size_t nn = 0; nn < num_subarrays; nn++)
     {
         Subarrays[nn]->selfShadingInputs.width = width;
@@ -2416,7 +2418,7 @@ void cm_pvsamv1::exec()
 
         // accumulate annual and monthly battery model outputs
         if (en_batt) batt->calculate_monthly_and_annual_outputs(*this);
-        else assign("average_battery_roundtrip_efficiency", var_data(0.0f)); // if battery disabled, since it's shown in the metrics table
+        //else assign("average_battery_roundtrip_efficiency", var_data(0.0f)); // if battery disabled, since it's shown in the metrics table
 
         // calculate nominal dc input
         double annual_dc_nominal = (inp_rad * mod_eff / 100.0);
@@ -2704,6 +2706,11 @@ void cm_pvsamv1::exec()
         }
         assign("annual_total_loss_percent", var_data((ssc_number_t)(1. - percent) * 100.));
         // annual_ac_net = system_output
+        //After calculating total loss remove Battery loss percentages from outputs
+        if (!en_batt) {
+            unassign("annual_dc_battery_loss_percent");
+            unassign("annual_ac_battery_loss_percent");
+        }
 
 #ifdef WITH_CHECKS
     // check that ac_net = sys_output at this point
