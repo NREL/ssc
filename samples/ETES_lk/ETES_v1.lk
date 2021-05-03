@@ -60,13 +60,18 @@ var( 'dispatch_factor9', 1 );
 var( 'solar_resource_file', '../../test/input_cases/moltensalt_data/daggett_ca_34.865371_-116.783023_psmv3_60_tmy.csv' );
 var( 'gross_net_conversion_factor', 0.90000000000000002 );
 
-var( 'plant_spec_cost', 1040 );
-var( 'bop_spec_cost', 290 );
+var( 'cycle_spec_cost', 1040 );
+var( 'heater_spec_cost', var('cycle_spec_cost')/10.0 );
 var( 'tes_spec_cost', 22 );
 var( 'contingency_rate', 7 );
 var( 'sales_tax_rate', 5 );
 var( 'sales_tax_frac', 80 );
-var( 'cost_sf_fixed', 0 );
+var( 'epc_cost_perc_of_direct', 13 );
+var( 'epc_cost_per_watt', 0 );
+var( 'epc_cost_fixed', 0 );
+var( 'plm_cost_perc_of_direct', 0 );
+var( 'plm_cost_per_watt', 0 );
+var( 'plm_cost_fixed', 0 );
 
 
 var( 'opt_init_step', 0.059999999999999998 );
@@ -74,15 +79,9 @@ var( 'opt_max_iter', 200 );
 var( 'opt_conv_tol', 0.001 );
 var( 'opt_flux_penalty', 0.25 );
 var( 'opt_algorithm', 1 );
-var( 'csp.pt.cost.epc.per_acre', 0 );
-var( 'csp.pt.cost.epc.percent', 13 );
-var( 'csp.pt.cost.epc.per_watt', 0 );
-var( 'csp.pt.cost.epc.fixed', 0 );
-var( 'csp.pt.cost.plm.percent', 0 );
-var( 'csp.pt.cost.plm.per_watt', 0 );
-var( 'csp.pt.cost.plm.fixed', 0 );
-var( 'csp.pt.sf.fixed_land_area', 45 );
-var( 'csp.pt.sf.land_overhead_factor', 1 );
+
+
+
 
 var( 'csp.pt.tes.init_hot_htf_percent', 0.0 );
 var( 'h_tank', 12 );

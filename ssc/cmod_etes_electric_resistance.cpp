@@ -79,7 +79,8 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
     { SSC_INPUT,  SSC_MATRIX, "ud_ind_od",                     "Off design user-defined power cycle performance as function of T_htf, m_dot_htf [ND], and T_amb", "",       "",       "User Defined Power Cycle",                 "pc_config=1",                                                      "",              ""},
 
 
-    // TES 
+    // TES
+        // Performance
 /*new*/    { SSC_INPUT,  SSC_NUMBER, "tes_fl_code",                   "Receiver HTF, 17=Salt (60% NaNO3, 40% KNO3) 10=Salt (46.5% LiF 11.5% NaF 42% KF) 50=Lookup tables", "", "",           "Thermal Storage",                                      "*",                                                                "",              ""},
 /*new*/    { SSC_INPUT,  SSC_MATRIX, "ud_tes_fl_props",               "User-defined TES fluid property data",                           "-",            "",                                  "Thermal Storage",                                      "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "csp.pt.tes.init_hot_htf_percent", "Initial fraction of available volume that is hot",              "%",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
@@ -91,6 +92,9 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
     { SSC_INPUT,  SSC_NUMBER, "h_tank_min",                    "Minimum allowable HTF height in storage tank",                  "m",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "hot_tank_Thtr",                 "Minimum allowable hot tank HTF temperature",                    "C",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "hot_tank_max_heat",             "Rated heater capacity for hot tank heating",                    "MW",           "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
+
+
+    // Heater ??
 
 
     // System control
@@ -120,6 +124,21 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
     { SSC_INPUT,  SSC_NUMBER, "dispatch_factor7",              "Dispatch payment factor 7",                                     "",             "",                                  "Time of Delivery Factors",                 "?=1",                                                              "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "dispatch_factor8",              "Dispatch payment factor 8",                                     "",             "",                                  "Time of Delivery Factors",                 "?=1",                                                              "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "dispatch_factor9",              "Dispatch payment factor 9",                                     "",             "",                                  "Time of Delivery Factors",                 "?=1",                                                              "",              ""},
+
+
+    // System Costs
+    { SSC_INPUT,  SSC_NUMBER, "cycle_spec_cost",               "Power cycle specific cost",                                     "$/kWe",        "",                                  "System Cost",                              "*",                                                                "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "tes_spec_cost",                 "Thermal energy storage specific cost",                          "$/kWht",       "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "heater_spec_cost",              "Heater specific cost",                                          "$/kWht",       "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "contingency_rate",              "Contingency for cost overrun",                                  "%",            "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "sales_tax_rate",                "Sales tax rate",                                                "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "sales_tax_frac",                "Percent of cost to which sales tax applies",                    "%",            "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "epc_cost_perc_of_direct",       "EPC cost percent of direct",                                    "%",            "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "epc_cost_per_watt",             "EPC cost per watt",                                             "$/W",          "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "epc_cost_fixed",                "EPC fixed",                                                     "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "plm_cost_perc_of_direct",       "PLM cost percent of direct",                                    "%",            "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "plm_cost_per_watt",             "PLM cost per watt",                                             "$/W",          "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "plm_cost_fixed",                "PLM fixed",                                                     "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
 
 
     // ****************************************************************************************************************************************
