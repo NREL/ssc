@@ -26,7 +26,6 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_financial.h"
 #include "lib_util.h"
 #include "common_financial.h"
-#include "common.h"
 using namespace libfin;
 #include <sstream>
 
