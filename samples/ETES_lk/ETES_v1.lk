@@ -1,5 +1,10 @@
 clear();
 
+// PPA schedule option
+// 0: Simple step-change TOU block schedule (dispatch_sched_weekday, dispatch_sched_weekend, dispatch_factorX)
+// To test hourly schedule (dispatch_factor_ts)
+var( 'ppa_multiplier_model', 0 );
+
 
 var( 'T_htf_cold_des', 290 );
 var( 'T_htf_hot_des', 574 );
@@ -11,7 +16,10 @@ var( 'tes_fl_code', 17 );
 var( 'ud_tes_fl_props', 
 [ [ 0, 0, 0, 0, 0, 0, 0 ] ] );
 
-var( 'ppa_multiplier_model', 0 );
+var( 'is_dispatch', 0 );
+
+var( 'dispatch_factors_ts', real_array(read_text_file('PPA_mults_v1.csv')));
+outln(var('dispatch_factors_ts'));
 var( 'dispatch_sched_weekday', 
 [ [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 ], 
 [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 ], 
@@ -117,7 +125,7 @@ var( 'bop_par_0', 0 );
 var( 'bop_par_1', 0.48299999999999998 );
 var( 'bop_par_2', 0 );
 var( 'is_tod_pc_target_also_pc_max', 0 );
-var( 'is_dispatch', 0 );
+
 var( 'disp_horizon', 48 );
 var( 'disp_frequency', 24 );
 var( 'disp_max_iter', 35000 );
@@ -130,8 +138,6 @@ var( 'disp_pen_delta_w', 0.10000000000000001 );
 var( 'disp_inventory_incentive', 0.14999999999999999 );
 var( 'is_wlim_series', 0 );
 
-var( 'is_dispatch_series', 0 );
-var( 'dispatch_series', [ 0 ] );
 
 var( 'const_per_interest_rate1', 4 );
 var( 'const_per_interest_rate2', 0 );

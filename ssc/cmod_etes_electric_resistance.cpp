@@ -148,7 +148,7 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
 
 
         // System outputs
-    { SSC_OUTPUT, SSC_ARRAY,  "P_out_net",                     "Total electric power to grid",                                  "MWe",          "",                                  "",                                         "*",                                                                "",              ""},
+    { SSC_OUTPUT, SSC_ARRAY,  "W_dot_out_net",                 "Total electric power to grid",                                  "MWe",          "",                                  "",                                         "*",                                                                "",              ""},
 
     { SSC_OUTPUT, SSC_ARRAY,  "gen",                           "Total electric power to grid with available derate",            "kWe",          "",                                  "",                                         "*",                                                                "",              "" },
 
@@ -476,7 +476,7 @@ public:
         // Set system cmod outputs
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TIME_FINAL, allocate("time_hr", n_steps_fixed), n_steps_fixed);
 
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::W_DOT_NET, allocate("P_out_net", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::W_DOT_NET, allocate("W_dot_out_net", n_steps_fixed), n_steps_fixed);
 
             // TES
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TES_Q_DOT_DC, allocate("q_dot_dc_tes", n_steps_fixed), n_steps_fixed);
@@ -551,7 +551,7 @@ public:
         // *****************************************************
         // Post-process
         size_t count;
-        ssc_number_t* p_W_dot_net = as_array("P_out_net", &count);
+        ssc_number_t* p_W_dot_net = as_array("W_dot_out_net", &count);
         ssc_number_t* p_time_final_hr = as_array("time_hr", &count);
 
         // 'adjustment_factors' class stores factors in hourly array, so need to index as such
@@ -574,7 +574,7 @@ public:
         ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, steps_per_hour);
 
         accumulate_annual_for_year("gen", "annual_energy", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);
-        accumulate_annual_for_year("P_out_net", "annual_energy_full_availability", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);
+        accumulate_annual_for_year("W_dot_out_net", "annual_energy_full_availability", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);
         accumulate_annual_for_year("W_dot_heater", "annual_E_heater", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour); //[MWhe]
         accumulate_annual_for_year("q_dot_heater_to_htf", "annual_Q_heater_to_htf", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour); //[MWhe]
         accumulate_annual_for_year("q_dot_heater_startup", "annual_Q_heater_startup", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour); //[MWht]
