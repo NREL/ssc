@@ -2,7 +2,7 @@ clear();
 
 // PPA schedule option
 // 0: Simple step-change TOU block schedule (dispatch_sched_weekday, dispatch_sched_weekend, dispatch_factorX)
-// To test hourly schedule (dispatch_factor_ts)
+// 1: Hourly schedule (dispatch_factor_ts)
 var( 'ppa_multiplier_model', 0 );
 
 
@@ -19,7 +19,6 @@ var( 'ud_tes_fl_props',
 var( 'is_dispatch', 0 );
 
 var( 'dispatch_factors_ts', real_array(read_text_file('PPA_mults_v1.csv')));
-outln(var('dispatch_factors_ts'));
 var( 'dispatch_sched_weekday', 
 [ [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 ], 
 [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 ], 
@@ -63,6 +62,7 @@ var( 'gross_net_conversion_factor', 0.90000000000000002 );
 var( 'cycle_spec_cost', 1040 );
 var( 'heater_spec_cost', var('cycle_spec_cost')/10.0 );
 var( 'tes_spec_cost', 22 );
+var( 'bop_spec_cost', 0.0 );
 var( 'contingency_rate', 7 );
 var( 'sales_tax_rate', 5 );
 var( 'sales_tax_frac', 80 );
