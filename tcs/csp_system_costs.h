@@ -187,6 +187,52 @@ namespace N_mspt
         double& estimated_installed_cost_per_cap        //[$/kWe]
     );
 
+    void calculate_etes_costs(
+
+        // TES
+        double Q_storage,				//[MWt-hr] Storage capacity
+        double tes_spec_cost,			//[$/kWt-hr] TES specific cost
+
+        // Power Cycle
+        double W_dot_design,			//[MWe] Power cycle design output (w/o subtracting plant parasitics)
+        double power_cycle_spec_cost,	//[$/kWe] Power cycle specific cost
+
+        // Heater
+        double q_dot_heater_design,     //[MWt] Heater design thermal power
+        double heater_spec_cost,        //[$/kWe] Heater specific cost
+
+        // Balance Of Plant
+        double bop_spec_cost,			//[$/kWe] BOP specific cost
+
+        // Contingency Cost
+        double contingency_rate,		//[%] Of precontingency direct capital costs
+
+        // Indirect Capital Costs
+        double plant_net_capacity,		    //[MWe] Nameplate plant capacity (Net cycle output less estimated parasitics)
+        double EPC_land_perc_direct_cost,	//[%] Of calculated direct cost
+        double EPC_land_per_power_cost,		//[$/We] Of plant net capacity
+        double EPC_land_fixed_cost,		    //[$]
+        double total_land_perc_direct_cost,	//[%] Of calculated direct cost
+        double total_land_per_power_cost,	//[$/We] Of plant net capacity
+        double total_land_fixed_cost,	    //[$]
+        double sales_tax_basis,			    //[%] Of total direct cost
+        double sales_tax_rate,			    //[%]
+
+        // Calculated Outputs
+        double& tes_cost,                               //[$]
+        double& power_cycle_cost,                       //[$]
+        double& heater_cost,                            //[$]
+        double& bop_cost,                               //[$]
+        double& direct_capital_precontingency_cost,     //[$]
+        double& contingency_cost,                       //[$]
+        double& total_direct_cost,                      //[$]
+        double& total_land_cost,                        //[$]
+        double& epc_and_owner_cost,                     //[$]
+        double& sales_tax_cost,                         //[$]
+        double& total_indirect_cost,                    //[$]
+        double& total_installed_cost,                   //[$]
+        double& estimated_installed_cost_per_cap        //[$/kWe]
+    );
 
     double site_improvement_cost(double A_refl /*m^2*/, double site_improv_spec_cost /*$/m^2_reflect*/);
 

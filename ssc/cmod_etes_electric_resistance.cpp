@@ -29,6 +29,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "csp_solver_pc_Rankine_indirect_224.h"
 #include "csp_solver_tou_block_schedules.h"
 
+#include "csp_system_costs.h"
+
 static var_info _cm_vtab_etes_electric_resistance[] = {
 
     // Resource Data
@@ -136,9 +138,9 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
     { SSC_INPUT,  SSC_NUMBER, "epc_cost_perc_of_direct",       "EPC cost percent of direct",                                    "%",            "",                                  "System Costs",                             "*",                                                                "",              "" },
     { SSC_INPUT,  SSC_NUMBER, "epc_cost_per_watt",             "EPC cost per watt",                                             "$/W",          "",                                  "System Costs",                             "*",                                                                "",              "" },
     { SSC_INPUT,  SSC_NUMBER, "epc_cost_fixed",                "EPC fixed",                                                     "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
-    { SSC_INPUT,  SSC_NUMBER, "plm_cost_perc_of_direct",       "PLM cost percent of direct",                                    "%",            "",                                  "System Costs",                             "*",                                                                "",              "" },
-    { SSC_INPUT,  SSC_NUMBER, "plm_cost_per_watt",             "PLM cost per watt",                                             "$/W",          "",                                  "System Costs",                             "*",                                                                "",              "" },
-    { SSC_INPUT,  SSC_NUMBER, "plm_cost_fixed",                "PLM fixed",                                                     "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "land_cost_perc_of_direct",      "Land cost percent of direct",                                   "%",            "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "land_cost_per_watt",            "Land cost per watt",                                            "$/W",          "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "land_cost_fixed",               "Land fixed",                                                    "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
 
 
     // Financial Parameters
@@ -220,6 +222,7 @@ public:
 
         // System Design Calcs
         double q_dot_pc_des = W_dot_cycle_des / eta_cycle;      //[MWt]
+        double Q_tes = q_dot_pc_des * tshours;                  //[MWt-hr]
         double q_dot_heater_des = q_dot_pc_des * heater_mult;   //[MWt]
         double system_capacity = W_dot_cycle_des * gross_net_conversion_factor * 1.E-3; //[kWe]
         // *****************************************************
@@ -618,6 +621,43 @@ public:
         double Q_cycle_thermal_in = as_double("annual_Q_cycle_thermal_in");
 
         double q_balance_rel = (Q_heater_to_htf + Q_tes_heater - Q_tes_losses - Q_cycle_thermal_in) / Q_cycle_thermal_in;
+
+
+        // *****************************************************
+        // Calculate system costs
+        double tes_spec_cost = as_double("tes_spec_cost");
+        double power_cycle_spec_cost = as_double("cycle_spec_cost");
+        double heater_spec_cost = as_double("heater_spec_cost");
+        double bop_spec_cost = as_double("bop_spec_cost");
+        double contingency_rate = as_double("contingency_rate");
+
+        double plant_net_capacity = system_capacity / 1000.0;         //[MWe], convert from kWe
+        double EPC_perc_direct_cost = as_double("epc_cost_perc_of_direct");
+        double EPC_per_power_cost = as_double("epc_cost_per_watt");
+        double EPC_fixed_cost = as_double("epc_cost_fixed");
+        double total_land_perc_direct_cost = as_double("land_cost_perc_of_direct");
+        double total_land_per_power_cost = as_double("land_cost_per_watt");
+        double total_land_fixed_cost = as_double("land_cost_fixed");
+        double sales_tax_basis = as_double("sales_tax_frac");
+        double sales_tax_rate = as_double("sales_tax_rate");
+
+        // Cost model outputs
+        double tes_cost, power_cycle_cost, heater_cost, bop_cost, fossil_backup_cost,
+            direct_capital_precontingency_cost, contingency_cost, total_direct_cost, total_land_cost,
+            epc_and_owner_cost, sales_tax_cost, total_indirect_cost, total_installed_cost, estimated_installed_cost_per_cap;
+        tes_cost = power_cycle_cost = heater_cost = bop_cost = fossil_backup_cost =
+            direct_capital_precontingency_cost = contingency_cost = total_direct_cost = total_land_cost =
+            epc_and_owner_cost = sales_tax_cost = total_indirect_cost = total_installed_cost = estimated_installed_cost_per_cap = std::numeric_limits<double>::quiet_NaN();
+
+        N_mspt::calculate_etes_costs(Q_tes, tes_spec_cost, W_dot_cycle_des, power_cycle_spec_cost,
+            q_dot_heater_des, heater_spec_cost, bop_spec_cost, contingency_rate,
+            plant_net_capacity, EPC_perc_direct_cost, EPC_per_power_cost, EPC_fixed_cost,
+            total_land_perc_direct_cost, total_land_per_power_cost, total_land_fixed_cost,
+            sales_tax_basis, sales_tax_rate,
+            tes_cost, power_cycle_cost, heater_cost, bop_cost, direct_capital_precontingency_cost,
+            contingency_cost, total_direct_cost, total_land_cost, epc_and_owner_cost,
+            sales_tax_cost, total_indirect_cost, total_installed_cost, estimated_installed_cost_per_cap);
+           
     }
 };
 
