@@ -30,7 +30,8 @@ GTEST_API_ int main(int argc, char **argv) {
 //	::testing::GTEST_FLAG(filter) = "CMPvsamv1PowerIntegration_cmod_pvsamv1.DefaultNoFinancialModel";
 //	::testing::GTEST_FLAG(filter) = "CMPvsamv1PowerIntegration_cmod_pvsamv1.NoFinancialModelCustomWeatherFile";
 //	::testing::GTEST_FLAG(filter) = "URDBv7*";
-	
+	::testing::GTEST_FLAG(filter) = "CMPVSmoothing*";
+
 
 
 
