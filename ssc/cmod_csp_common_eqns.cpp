@@ -411,66 +411,140 @@ void Tower_SolarPilot_Capital_Costs_Equations(ssc_data_t data)
         throw std::runtime_error("ssc_data_t data invalid");
     }
 
-    C_mspt_system_costs sys_costs;
+    double A_sf_refl, site_improv_spec_cost, heliostat_spec_cost, heliostat_fixed_cost,
+        h_tower, h_rec, h_helio, tower_fixed_cost, tower_cost_scaling_exp,
+        A_rec, rec_ref_cost, A_rec_ref, rec_cost_scaling_exp,
+        Q_storage, tes_spec_cost,
+        W_dot_design, power_cycle_spec_cost,
+        bop_spec_cost,
+        fossil_backup_spec_cost,
+        contingency_rate,
+        total_land_area, plant_net_capacity, EPC_land_spec_cost, EPC_land_perc_direct_cost,
+        EPC_land_per_power_cost, EPC_land_fixed_cost, total_land_spec_cost, total_land_perc_direct_cost,
+        total_land_per_power_cost, total_land_fixed_cost, sales_tax_basis, sales_tax_rate;
 
     //sys_costs.ms_par.A_sf_refl = as_double("A_sf");
-    ssc_data_t_get_number(data, "a_sf_ui", &sys_costs.ms_par.A_sf_refl);
-    ssc_data_t_get_number(data, "site_spec_cost", &sys_costs.ms_par.site_improv_spec_cost);
-    ssc_data_t_get_number(data, "heliostat_spec_cost", &sys_costs.ms_par.heliostat_spec_cost);
-    ssc_data_t_get_number(data, "cost_sf_fixed", &sys_costs.ms_par.heliostat_fixed_cost);
-    ssc_data_t_get_number(data, "h_tower", &sys_costs.ms_par.h_tower);                            // set different for other techs
-    ssc_data_t_get_number(data, "rec_height", &sys_costs.ms_par.h_rec);
-    ssc_data_t_get_number(data, "helio_height", &sys_costs.ms_par.h_helio);
-    ssc_data_t_get_number(data, "tower_fixed_cost", &sys_costs.ms_par.tower_fixed_cost);
-    ssc_data_t_get_number(data, "tower_exp", &sys_costs.ms_par.tower_cost_scaling_exp);
-    ssc_data_t_get_number(data, "csp.pt.cost.receiver.area", &sys_costs.ms_par.A_rec);            // calculation specific to each tech
-    ssc_data_t_get_number(data, "rec_ref_cost", &sys_costs.ms_par.rec_ref_cost);
-    ssc_data_t_get_number(data, "rec_ref_area", &sys_costs.ms_par.A_rec_ref);
-    ssc_data_t_get_number(data, "rec_cost_exp", &sys_costs.ms_par.rec_cost_scaling_exp);
-    ssc_data_t_get_number(data, "csp.pt.cost.storage_mwht", &sys_costs.ms_par.Q_storage);         // calculation specific to each tech
-    ssc_data_t_get_number(data, "tes_spec_cost", &sys_costs.ms_par.tes_spec_cost);
-    ssc_data_t_get_number(data, "csp.pt.cost.power_block_mwe", &sys_costs.ms_par.W_dot_design);   // calculation specific to each tech
-    ssc_data_t_get_number(data, "plant_spec_cost", &sys_costs.ms_par.power_cycle_spec_cost);
-    ssc_data_t_get_number(data, "bop_spec_cost", &sys_costs.ms_par.bop_spec_cost);
-    ssc_data_t_get_number(data, "fossil_spec_cost", &sys_costs.ms_par.fossil_backup_spec_cost);
-    ssc_data_t_get_number(data, "contingency_rate", &sys_costs.ms_par.contingency_rate);
-    ssc_data_t_get_number(data, "csp.pt.sf.total_land_area", &sys_costs.ms_par.total_land_area);
-    ssc_data_t_get_number(data, "nameplate", &sys_costs.ms_par.plant_net_capacity);
-    ssc_data_t_get_number(data, "csp.pt.cost.epc.per_acre", &sys_costs.ms_par.EPC_land_spec_cost);
-    ssc_data_t_get_number(data, "csp.pt.cost.epc.percent", &sys_costs.ms_par.EPC_land_perc_direct_cost);
-    ssc_data_t_get_number(data, "csp.pt.cost.epc.per_watt", &sys_costs.ms_par.EPC_land_per_power_cost);
-    ssc_data_t_get_number(data, "csp.pt.cost.epc.fixed", &sys_costs.ms_par.EPC_land_fixed_cost);
-    ssc_data_t_get_number(data, "land_spec_cost", &sys_costs.ms_par.total_land_spec_cost);
-    ssc_data_t_get_number(data, "csp.pt.cost.plm.percent", &sys_costs.ms_par.total_land_perc_direct_cost);
-    ssc_data_t_get_number(data, "csp.pt.cost.plm.per_watt", &sys_costs.ms_par.total_land_per_power_cost);
-    ssc_data_t_get_number(data, "csp.pt.cost.plm.fixed", &sys_costs.ms_par.total_land_fixed_cost);
-    ssc_data_t_get_number(data, "sales_tax_frac", &sys_costs.ms_par.sales_tax_basis);
-    ssc_data_t_get_number(data, "sales_tax_rate", &sys_costs.ms_par.sales_tax_rate);
+    ssc_data_t_get_number(data, "a_sf_ui", &A_sf_refl);
+    ssc_data_t_get_number(data, "site_spec_cost", &site_improv_spec_cost);
+    ssc_data_t_get_number(data, "heliostat_spec_cost", &heliostat_spec_cost);
+    ssc_data_t_get_number(data, "cost_sf_fixed", &heliostat_fixed_cost);
+    ssc_data_t_get_number(data, "h_tower", &h_tower);                            // set different for other techs
+    ssc_data_t_get_number(data, "rec_height", &h_rec);
+    ssc_data_t_get_number(data, "helio_height", &h_helio);
+    ssc_data_t_get_number(data, "tower_fixed_cost", &tower_fixed_cost);
+    ssc_data_t_get_number(data, "tower_exp", &tower_cost_scaling_exp);
+    ssc_data_t_get_number(data, "csp.pt.cost.receiver.area", &A_rec);            // calculation specific to each tech
+    ssc_data_t_get_number(data, "rec_ref_cost", &rec_ref_cost);
+    ssc_data_t_get_number(data, "rec_ref_area", &A_rec_ref);
+    ssc_data_t_get_number(data, "rec_cost_exp", &rec_cost_scaling_exp);
+    ssc_data_t_get_number(data, "csp.pt.cost.storage_mwht", &Q_storage);         // calculation specific to each tech
+    ssc_data_t_get_number(data, "tes_spec_cost", &tes_spec_cost);
+    ssc_data_t_get_number(data, "csp.pt.cost.power_block_mwe", &W_dot_design);   // calculation specific to each tech
+    ssc_data_t_get_number(data, "plant_spec_cost", &power_cycle_spec_cost);
+    ssc_data_t_get_number(data, "bop_spec_cost", &bop_spec_cost);
+    ssc_data_t_get_number(data, "fossil_spec_cost", &fossil_backup_spec_cost);
+    ssc_data_t_get_number(data, "contingency_rate", &contingency_rate);
+    ssc_data_t_get_number(data, "csp.pt.sf.total_land_area", &total_land_area);
+    ssc_data_t_get_number(data, "nameplate", &plant_net_capacity);
+    ssc_data_t_get_number(data, "csp.pt.cost.epc.per_acre", &EPC_land_spec_cost);
+    ssc_data_t_get_number(data, "csp.pt.cost.epc.percent", &EPC_land_perc_direct_cost);
+    ssc_data_t_get_number(data, "csp.pt.cost.epc.per_watt", &EPC_land_per_power_cost);
+    ssc_data_t_get_number(data, "csp.pt.cost.epc.fixed", &EPC_land_fixed_cost);
+    ssc_data_t_get_number(data, "land_spec_cost", &total_land_spec_cost);
+    ssc_data_t_get_number(data, "csp.pt.cost.plm.percent", &total_land_perc_direct_cost);
+    ssc_data_t_get_number(data, "csp.pt.cost.plm.per_watt", &total_land_per_power_cost);
+    ssc_data_t_get_number(data, "csp.pt.cost.plm.fixed", &total_land_fixed_cost);
+    ssc_data_t_get_number(data, "sales_tax_frac", &sales_tax_basis);
+    ssc_data_t_get_number(data, "sales_tax_rate", &sales_tax_rate);
 
-    try
-    {
-        sys_costs.calculate_costs();
-    }
-    catch (...)
-    {
-        throw std::runtime_error("MSPT system costs. System cost calculations failed. Check that all inputs are properly defined");
-    }
 
-    ssc_data_t_set_number(data, "csp.pt.cost.site_improvements", (ssc_number_t)sys_costs.ms_out.site_improvement_cost);
-    ssc_data_t_set_number(data, "csp.pt.cost.heliostats", (ssc_number_t)sys_costs.ms_out.heliostat_cost);
-    ssc_data_t_set_number(data, "csp.pt.cost.tower", (ssc_number_t)sys_costs.ms_out.tower_cost);
-    ssc_data_t_set_number(data, "csp.pt.cost.receiver", (ssc_number_t)sys_costs.ms_out.receiver_cost);
-    ssc_data_t_set_number(data, "csp.pt.cost.storage", (ssc_number_t)sys_costs.ms_out.tes_cost);
-    ssc_data_t_set_number(data, "csp.pt.cost.power_block", (ssc_number_t)sys_costs.ms_out.power_cycle_cost);
-    ssc_data_t_set_number(data, "csp.pt.cost.bop", (ssc_number_t)sys_costs.ms_out.bop_cost);
-    ssc_data_t_set_number(data, "csp.pt.cost.fossil", (ssc_number_t)sys_costs.ms_out.fossil_backup_cost);
-    ssc_data_t_set_number(data, "ui_direct_subtotal", (ssc_number_t)sys_costs.ms_out.direct_capital_precontingency_cost);
-    ssc_data_t_set_number(data, "csp.pt.cost.contingency", (ssc_number_t)sys_costs.ms_out.contingency_cost);
-    ssc_data_t_set_number(data, "total_direct_cost", (ssc_number_t)sys_costs.ms_out.total_direct_cost);
-    ssc_data_t_set_number(data, "csp.pt.cost.epc.total", (ssc_number_t)sys_costs.ms_out.epc_and_owner_cost);
-    ssc_data_t_set_number(data, "csp.pt.cost.plm.total", (ssc_number_t)sys_costs.ms_out.total_land_cost);
-    ssc_data_t_set_number(data, "csp.pt.cost.sales_tax.total", (ssc_number_t)sys_costs.ms_out.sales_tax_cost);
-    ssc_data_t_set_number(data, "total_indirect_cost", (ssc_number_t)sys_costs.ms_out.total_indirect_cost);
-    ssc_data_t_set_number(data, "total_installed_cost", (ssc_number_t)sys_costs.ms_out.total_installed_cost);
-    ssc_data_t_set_number(data, "csp.pt.cost.installed_per_capacity", (ssc_number_t)sys_costs.ms_out.estimated_installed_cost_per_cap);
+    double site_improvement_cost, heliostat_cost, tower_cost, receiver_cost, tes_cost, power_cycle_cost,
+        bop_cost, fossil_backup_cost,
+        direct_capital_precontingency_cost, contingency_cost, total_direct_cost, epc_and_owner_cost, total_land_cost,
+        sales_tax_cost, total_indirect_cost, total_installed_cost, estimated_installed_cost_per_cap;
+
+    site_improvement_cost = heliostat_cost = tower_cost = receiver_cost = tes_cost = power_cycle_cost =
+        bop_cost = fossil_backup_cost =
+        direct_capital_precontingency_cost = contingency_cost = total_direct_cost = epc_and_owner_cost = total_land_cost =
+        sales_tax_cost = total_indirect_cost = total_installed_cost = estimated_installed_cost_per_cap = std::numeric_limits<double>::quiet_NaN();
+
+
+    N_mspt::calculate_mspt__no_rad_cool__costs(
+        A_sf_refl,
+        site_improv_spec_cost,
+        heliostat_spec_cost,
+        heliostat_fixed_cost,
+
+        h_tower,
+        h_rec,
+        h_helio,
+        tower_fixed_cost,
+        tower_cost_scaling_exp,
+
+        A_rec,
+        rec_ref_cost,
+        A_rec_ref,
+        rec_cost_scaling_exp,
+
+        Q_storage,
+        tes_spec_cost,
+
+        W_dot_design,
+        power_cycle_spec_cost,
+
+        bop_spec_cost,
+
+        fossil_backup_spec_cost,
+
+        contingency_rate,
+
+        total_land_area,
+        plant_net_capacity,
+        EPC_land_spec_cost,
+        EPC_land_perc_direct_cost,
+        EPC_land_per_power_cost,
+        EPC_land_fixed_cost,
+        total_land_spec_cost,
+        total_land_perc_direct_cost,
+        total_land_per_power_cost,
+        total_land_fixed_cost,
+        sales_tax_basis,
+        sales_tax_rate,
+
+        site_improvement_cost,
+        heliostat_cost,
+        tower_cost,
+        receiver_cost,
+        tes_cost,
+        power_cycle_cost,
+        bop_cost,
+        fossil_backup_cost,
+        direct_capital_precontingency_cost,
+        contingency_cost,
+        total_direct_cost,
+        total_land_cost,
+        epc_and_owner_cost,
+        sales_tax_cost,
+        total_indirect_cost,
+        total_installed_cost,
+        estimated_installed_cost_per_cap
+    );
+
+    ssc_data_t_set_number(data, "csp.pt.cost.site_improvements", (ssc_number_t)site_improvement_cost);
+    ssc_data_t_set_number(data, "csp.pt.cost.heliostats", (ssc_number_t)heliostat_cost);
+    ssc_data_t_set_number(data, "csp.pt.cost.tower", (ssc_number_t)tower_cost);
+    ssc_data_t_set_number(data, "csp.pt.cost.receiver", (ssc_number_t)receiver_cost);
+    ssc_data_t_set_number(data, "csp.pt.cost.storage", (ssc_number_t)tes_cost);
+    ssc_data_t_set_number(data, "csp.pt.cost.power_block", (ssc_number_t)power_cycle_cost);
+    ssc_data_t_set_number(data, "csp.pt.cost.bop", (ssc_number_t)bop_cost);
+    ssc_data_t_set_number(data, "csp.pt.cost.fossil", (ssc_number_t)fossil_backup_cost);
+    ssc_data_t_set_number(data, "ui_direct_subtotal", (ssc_number_t)direct_capital_precontingency_cost);
+    ssc_data_t_set_number(data, "csp.pt.cost.contingency", (ssc_number_t)contingency_cost);
+    ssc_data_t_set_number(data, "total_direct_cost", (ssc_number_t)total_direct_cost);
+    ssc_data_t_set_number(data, "csp.pt.cost.epc.total", (ssc_number_t)epc_and_owner_cost);
+    ssc_data_t_set_number(data, "csp.pt.cost.plm.total", (ssc_number_t)total_land_cost);
+    ssc_data_t_set_number(data, "csp.pt.cost.sales_tax.total", (ssc_number_t)sales_tax_cost);
+    ssc_data_t_set_number(data, "total_indirect_cost", (ssc_number_t)total_indirect_cost);
+    ssc_data_t_set_number(data, "total_installed_cost", (ssc_number_t)total_installed_cost);
+    ssc_data_t_set_number(data, "csp.pt.cost.installed_per_capacity", (ssc_number_t)estimated_installed_cost_per_cap);
 }

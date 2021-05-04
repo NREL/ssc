@@ -855,6 +855,7 @@ public:
         system.m_bop_par_0 = bop_array[2];    //as_double("bop_par_0");
         system.m_bop_par_1 = bop_array[3];    //as_double("bop_par_1");
         system.m_bop_par_2 = bop_array[4];    //as_double("bop_par_2");
+        system.m_is_field_freeze_protection_electric = false;
 
 		// Instantiate Solver
 		C_csp_solver csp_solver(weather_reader, 
