@@ -2170,11 +2170,9 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 	cr_out_solver.m_component_defocus = 1.0;
     cr_out_solver.m_is_recirculating = m_is_m_dot_recirc;
 
-	cr_out_solver.m_E_fp_total = m_q_dot_freeze_protection;		//[MWe]
 	cr_out_solver.m_W_dot_col_tracking = m_W_dot_sca_tracking;	//[MWe]
 	cr_out_solver.m_W_dot_htf_pump = m_W_dot_pump;				//[MWe]
-
-    cr_out_solver.m_q_rec_heattrace = m_q_dot_freeze_protection;    //[MWt]
+    cr_out_solver.m_q_dot_heater = m_q_dot_freeze_protection;   //[MWt]
 
 	m_operating_mode = C_csp_collector_receiver::OFF;
 
@@ -2350,14 +2348,13 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	cr_out_solver.m_component_defocus = 1.0;	//[-]
     cr_out_solver.m_is_recirculating = m_is_m_dot_recirc;
 
-		// Shouldn't need freeze protection if in startup, but may want a check on this
-	cr_out_solver.m_E_fp_total = m_q_dot_freeze_protection;		//[MWt]
+		
 		// Is this calculated in the 'optical' method, or a TBD 'metrics' method?
 	cr_out_solver.m_W_dot_col_tracking = m_W_dot_sca_tracking;	//[MWe]
 		// Is this calculated in the 'energy balance' method, or a TBD 'metrics' method?
 	cr_out_solver.m_W_dot_htf_pump = m_W_dot_pump;				//[MWe]
-
-    cr_out_solver.m_q_rec_heattrace = m_q_dot_freeze_protection;    //[MWt]
+        // Shouldn't need freeze protection if in startup, but may want a check on this
+    cr_out_solver.m_q_dot_heater = m_q_dot_freeze_protection;    //[MWt]
 
 	set_output_value();
 }
@@ -2615,12 +2612,10 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		// ***********************************************************
 
 		// For now, set parasitic outputs to 0
-		cr_out_solver.m_E_fp_total = 0.0;			//[MW]
 		cr_out_solver.m_W_dot_col_tracking = m_W_dot_sca_tracking;	//[MWe]
 		cr_out_solver.m_W_dot_htf_pump = m_W_dot_pump;				//[MWe]
         cr_out_solver.m_dP_sf = m_dP_total;         //[bar]
-
-        cr_out_solver.m_q_rec_heattrace = m_q_dot_freeze_protection;    //[MWt]
+        cr_out_solver.m_q_dot_heater = m_q_dot_freeze_protection;    //[MWt]
 	}
 	else
 	{	// Solution failed, so tell controller/solver
@@ -2643,12 +2638,11 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		cr_out_solver.m_T_salt_hot = 0.0;			//[C]
 		cr_out_solver.m_component_defocus = 1.0;	//[-]
         cr_out_solver.m_is_recirculating = false;
-		cr_out_solver.m_E_fp_total = 0.0;
 		cr_out_solver.m_W_dot_col_tracking = 0.0;
 		cr_out_solver.m_W_dot_htf_pump = 0.0;
         cr_out_solver.m_dP_sf = 0.0;                //[bar]
 
-        cr_out_solver.m_q_rec_heattrace = m_q_dot_freeze_protection;    //[MWt]
+        cr_out_solver.m_q_dot_heater = m_q_dot_freeze_protection;    //[MWt]
 	}
 
 	set_output_value();
@@ -3101,11 +3095,10 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 				cr_out_solver.m_q_thermal = 0.0;			//[MWt]
 				cr_out_solver.m_T_salt_hot = m_T_loop_in_des - 273.15;	//[C] Reset to loop inlet temperature, I guess?
 
-				cr_out_solver.m_E_fp_total = 0.0;
 				cr_out_solver.m_W_dot_col_tracking = 0.0;
 				cr_out_solver.m_W_dot_htf_pump = 0.0;
 
-                cr_out_solver.m_q_rec_heattrace = 0.0;    //[MWt]
+                cr_out_solver.m_q_dot_heater = 0.0;    //[MWt]
 
 				//cr_out_report.m_q_dot_field_inc = 0.0;
 				//cr_out_report.m_eta_field = 0.0;
@@ -3905,10 +3898,10 @@ set_outputs_and_return:
 	
 	cr_out_solver.m_W_dot_htf_pump = W_dot_pump_out;	//[MWe] Required solar field pumping power
 	//value(O_W_DOT_PUMP, W_dot_pump_out);		//[MWe] Required solar field pumping power
-	cr_out_solver.m_E_fp_total = E_fp_tot_out;	//[MW] Freeze protection energy
+	cr_out_solver.m_q_dot_heater = E_fp_tot_out;	//[MW] Freeze protection energy
 	//value(O_E_FP_TOT, E_fp_tot_out);			//[MW] Freeze protection energy
 	
-    cr_out_solver.m_q_rec_heattrace = m_q_dot_freeze_protection;    //[MWt]
+    //cr_out_solver.m_q_rec_heattrace = m_q_dot_freeze_protection;    //[MWt]
 
 	//value(O_QQ, m_qq);							//[none] Number of iterations required to solve
 	//value(O_T_SYS_C, T_sys_c_out);				//[C] Collector inlet temperature

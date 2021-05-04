@@ -1858,11 +1858,16 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
             throw(C_csp_exception(error_msg, "System-level parasitics"));
         }
 
+        double W_dot_cr_freeze_protection = 0.0;
+        if (ms_system_params.m_is_field_freeze_protection_electric) {
+            W_dot_cr_freeze_protection = mc_cr_out_solver.m_q_dot_heater;
+        }
+
 		double W_dot_net = mc_pc_out_solver.m_P_cycle - 
 			mc_cr_out_solver.m_W_dot_col_tracking -
 			mc_cr_out_solver.m_W_dot_htf_pump - 
 			(mc_pc_out_solver.m_W_dot_htf_pump + W_dot_tes_pump) -
-			mc_cr_out_solver.m_q_rec_heattrace -
+			W_dot_cr_freeze_protection -
 			mc_pc_out_solver.m_W_cool_par -
 			mc_tes_outputs.m_q_heater - 
 			W_dot_fixed -

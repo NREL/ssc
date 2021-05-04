@@ -1,5 +1,11 @@
 clear();
 
+// PPA schedule option
+// 0: Simple step-change TOU block schedule (dispatch_sched_weekday, dispatch_sched_weekend, dispatch_factorX)
+// To test hourly schedule (dispatch_factor_ts)
+var( 'ppa_multiplier_model', 0 );
+
+
 var( 'T_htf_cold_des', 290 );
 var( 'T_htf_hot_des', 574 );
 var( 'P_ref', 115 );
@@ -10,7 +16,10 @@ var( 'tes_fl_code', 17 );
 var( 'ud_tes_fl_props', 
 [ [ 0, 0, 0, 0, 0, 0, 0 ] ] );
 
-var( 'ppa_multiplier_model', 0 );
+var( 'is_dispatch', 0 );
+
+var( 'dispatch_factors_ts', real_array(read_text_file('PPA_mults_v1.csv')));
+outln(var('dispatch_factors_ts'));
 var( 'dispatch_sched_weekday', 
 [ [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 ], 
 [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 ], 
@@ -51,13 +60,18 @@ var( 'dispatch_factor9', 1 );
 var( 'solar_resource_file', '../../test/input_cases/moltensalt_data/daggett_ca_34.865371_-116.783023_psmv3_60_tmy.csv' );
 var( 'gross_net_conversion_factor', 0.90000000000000002 );
 
-var( 'plant_spec_cost', 1040 );
-var( 'bop_spec_cost', 290 );
+var( 'cycle_spec_cost', 1040 );
+var( 'heater_spec_cost', var('cycle_spec_cost')/10.0 );
 var( 'tes_spec_cost', 22 );
 var( 'contingency_rate', 7 );
 var( 'sales_tax_rate', 5 );
 var( 'sales_tax_frac', 80 );
-var( 'cost_sf_fixed', 0 );
+var( 'epc_cost_perc_of_direct', 13 );
+var( 'epc_cost_per_watt', 0 );
+var( 'epc_cost_fixed', 0 );
+var( 'plm_cost_perc_of_direct', 0 );
+var( 'plm_cost_per_watt', 0 );
+var( 'plm_cost_fixed', 0 );
 
 
 var( 'opt_init_step', 0.059999999999999998 );
@@ -65,17 +79,11 @@ var( 'opt_max_iter', 200 );
 var( 'opt_conv_tol', 0.001 );
 var( 'opt_flux_penalty', 0.25 );
 var( 'opt_algorithm', 1 );
-var( 'csp.pt.cost.epc.per_acre', 0 );
-var( 'csp.pt.cost.epc.percent', 13 );
-var( 'csp.pt.cost.epc.per_watt', 0 );
-var( 'csp.pt.cost.epc.fixed', 0 );
-var( 'csp.pt.cost.plm.percent', 0 );
-var( 'csp.pt.cost.plm.per_watt', 0 );
-var( 'csp.pt.cost.plm.fixed', 0 );
-var( 'csp.pt.sf.fixed_land_area', 45 );
-var( 'csp.pt.sf.land_overhead_factor', 1 );
 
-var( 'csp.pt.tes.init_hot_htf_percent', 30 );
+
+
+
+var( 'csp.pt.tes.init_hot_htf_percent', 0.0 );
 var( 'h_tank', 12 );
 var( 'cold_tank_max_heat', 15 );
 var( 'u_tank', 0.40000000000000002 );
@@ -118,6 +126,7 @@ var( 'bop_par_2', 0 );
 var( 'is_tod_pc_target_also_pc_max', 0 );
 var( 'is_dispatch', 1 );
 var( 'disp_reporting', 4);
+
 var( 'disp_horizon', 48 );
 var( 'disp_frequency', 24 );
 var( 'disp_max_iter', 35000 );
@@ -129,10 +138,7 @@ var( 'disp_csu_cost', 10000 );
 var( 'disp_pen_delta_w', 0.10000000000000001 );
 var( 'disp_inventory_incentive', 0.14999999999999999 );
 var( 'is_wlim_series', 0 );
-var( 'wlim_series', real_array(read_text_file('C:/Users/tneises/Documents/2021 ETES Dispatch/model_development/lk_scripts/wlim_series.csv')));
 
-var( 'is_dispatch_series', 0 );
-var( 'dispatch_series', [ 0 ] );
 
 var( 'const_per_interest_rate1', 4 );
 var( 'const_per_interest_rate2', 0 );
@@ -155,7 +161,8 @@ var( 'const_per_upfront_rate3', 0 );
 var( 'const_per_upfront_rate4', 0 );
 var( 'const_per_upfront_rate5', 0 );
 var( 'adjust:constant', 4 );
-var( 'sf_adjust:constant', 0 );
+
+
 
 run('etes_electric_resistance');
 

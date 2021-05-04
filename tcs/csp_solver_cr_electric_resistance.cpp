@@ -25,6 +25,15 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "htf_props.h"
 
+static C_csp_reported_outputs::S_output_info S_cr_electric_resistance_output_info[] =
+{
+    {C_csp_cr_electric_resistance::E_W_DOT_HEATER, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_csp_cr_electric_resistance::E_Q_DOT_HTF, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_csp_cr_electric_resistance::E_Q_DOT_STARTUP, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+
+    csp_info_invalid
+};
+
 C_csp_cr_electric_resistance::C_csp_cr_electric_resistance(double T_htf_cold_des /*C*/, double T_htf_hot_des /*C*/, double q_dot_heater_des /*MWt*/,
     double f_q_dot_des_allowable_su /*-*/, double hrs_startup_at_max_rate /*hr*/,
     int htf_code /*-*/, util::matrix_t<double> ud_htf_props)
@@ -49,6 +58,8 @@ C_csp_cr_electric_resistance::C_csp_cr_electric_resistance(double T_htf_cold_des
 
     // Initialize state variables
     m_E_su_initial = m_E_su_calculated = std::numeric_limits<double>::quiet_NaN();
+
+    mc_reported_outputs.construct(S_cr_electric_resistance_output_info);
 }
 
 C_csp_cr_electric_resistance::~C_csp_cr_electric_resistance(){}
@@ -176,13 +187,18 @@ void C_csp_cr_electric_resistance::off(const C_csp_weatherreader::S_outputs& wea
     cr_out_solver.m_T_salt_hot = m_T_htf_hot_des;   //[C]
     cr_out_solver.m_component_defocus = 1.0;        //[-]
     cr_out_solver.m_is_recirculating = false;       //[-]
-    cr_out_solver.m_E_fp_total = 0.0;               //[MWt]
+
     cr_out_solver.m_W_dot_col_tracking = 0.0;       //[MWe]
     cr_out_solver.m_W_dot_htf_pump = 0.0;           //[MWe]
-    cr_out_solver.m_q_rec_heattrace = 0.0;          //[MWt]
+    cr_out_solver.m_q_dot_heater = 0.0;             //[MWt]
 
     m_operating_mode = C_csp_collector_receiver::OFF;
     m_E_su_calculated = m_E_su_des;     //[MWt-hr]
+
+    // Set reported outputs
+    mc_reported_outputs.value(E_W_DOT_HEATER, 0.0);     //[MWe]
+    mc_reported_outputs.value(E_Q_DOT_HTF, 0.0);        //[MWt]
+    mc_reported_outputs.value(E_Q_DOT_STARTUP, 0.0);    //[MWt]
 
     return;
 }
@@ -209,6 +225,8 @@ void C_csp_cr_electric_resistance::startup(const C_csp_weatherreader::S_outputs&
 
     double q_startup = m_q_dot_su_max * time_required_su;       //[MWt-hr]
 
+    double W_dot_heater = m_q_dot_su_max;       //[MWe]
+
     m_E_su_calculated = fmax(0.0, m_E_su_initial - q_startup);  //[MWt-hr]
 
     cr_out_solver.m_q_startup = q_startup;                  //[MWt-hr]
@@ -218,11 +236,15 @@ void C_csp_cr_electric_resistance::startup(const C_csp_weatherreader::S_outputs&
     cr_out_solver.m_T_salt_hot = m_T_htf_hot_des;           //[C]
     cr_out_solver.m_component_defocus = 1.0;                //[-]
     cr_out_solver.m_is_recirculating = false;               //[-]
-    cr_out_solver.m_E_fp_total = 0.0;                       //[MWt]
+
     cr_out_solver.m_W_dot_col_tracking = 0.0;               //[MWe]
     cr_out_solver.m_W_dot_htf_pump = 0.0;                   //[MWe]
-    cr_out_solver.m_q_rec_heattrace = 0.0;                  //[MWt]
+    cr_out_solver.m_q_dot_heater = m_q_dot_su_max;          //[MWt]
 
+    // Set reported outputs
+    mc_reported_outputs.value(E_W_DOT_HEATER, W_dot_heater);    //[MWe]
+    mc_reported_outputs.value(E_Q_DOT_HTF, 0.0);     //[MWt]
+    mc_reported_outputs.value(E_Q_DOT_STARTUP, m_q_dot_su_max); //[MWt]
 }
 
 void C_csp_cr_electric_resistance::on(const C_csp_weatherreader::S_outputs& weather,
@@ -243,6 +265,8 @@ void C_csp_cr_electric_resistance::on(const C_csp_weatherreader::S_outputs& weat
     double heater_turn_down = 1.0;  //[-]
     double q_dot_elec = q_dot_elec_to_CR_heat * field_control * heater_turn_down;  //[MWt]
 
+    double W_dot_heater = q_dot_elec;       //[MWe]
+
     double m_dot_htf = q_dot_elec * 1.E3 / (m_cp_htf_des*(m_T_htf_hot_des - htf_state_in.m_temp));  //[kg/s]
 
     m_operating_mode = C_csp_collector_receiver::ON;
@@ -255,10 +279,15 @@ void C_csp_cr_electric_resistance::on(const C_csp_weatherreader::S_outputs& weat
     cr_out_solver.m_q_thermal = q_dot_elec; //[MWt]
     cr_out_solver.m_T_salt_hot = m_T_htf_hot_des;   //[C]
     cr_out_solver.m_component_defocus = heater_turn_down;   //[-]
-    cr_out_solver.m_E_fp_total = 0.0;   //[MW]
+
     cr_out_solver.m_W_dot_col_tracking = 0.0;  //[MWe]
     cr_out_solver.m_W_dot_htf_pump = 0.0;      //[MWe]
-    cr_out_solver.m_q_rec_heattrace = 0.0;     //[MWt]
+    cr_out_solver.m_q_dot_heater = q_dot_elec; //[MWt]
+
+    // Set reported outputs
+    mc_reported_outputs.value(E_W_DOT_HEATER, W_dot_heater);    //[MWe]
+    mc_reported_outputs.value(E_Q_DOT_HTF, q_dot_elec);         //[MWt]
+    mc_reported_outputs.value(E_Q_DOT_STARTUP, 0.0);            //[MWt]
 
     return;
 }
@@ -302,12 +331,15 @@ void C_csp_cr_electric_resistance::converged()
     m_operating_mode_converged = m_operating_mode;
 
     m_E_su_initial = m_E_su_calculated;
+
+    mc_reported_outputs.set_timestep_outputs();
 }
 
 void C_csp_cr_electric_resistance::write_output_intervals(double report_time_start,
     const std::vector<double>& v_temp_ts_time_end, double report_time_end)
 {
-    return;
+    mc_reported_outputs.send_to_reporting_ts_array(report_time_start,
+        v_temp_ts_time_end, report_time_end);
 }
 
 double C_csp_cr_electric_resistance::calculate_optical_efficiency(const C_csp_weatherreader::S_outputs& weather, const C_csp_solver_sim_info& sim)
