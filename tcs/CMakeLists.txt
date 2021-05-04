@@ -36,6 +36,7 @@ set(TCS_SRC
 		csp_solver_weatherreader.cpp
 		csp_system_costs.cpp
 		direct_steam_receivers.cpp
+		etes_dispatch.cpp
 		fmin.cpp
 		fmin_callbacks.cpp
 		heat_exchangers.cpp
@@ -128,6 +129,7 @@ set(TCS_SRC
 		csp_solver_util.h
 		csp_system_costs.h
 		direct_steam_receivers.h
+		etes_dispatch.h
 		flat_plate_solar_collector.h
 		fmin.h
 		fmin_callbacks.h

@@ -88,17 +88,19 @@ csp_dispatch_opt::csp_dispatch_opt()
     m_nstep_opt = 0;
     m_current_read_step = 0;
     m_last_opt_successful = false;
-    price_signal.clear();
+    
     clear_output_arrays();
     m_is_weather_setup = false;
 
     //parameters
+    params.sell_price.clear();
+
     params.is_pb_operating0 = false;
     params.is_pb_standby0 = false;
     params.is_rec_operating0 = false;
     params.q_pb0 = numeric_limits<double>::quiet_NaN();
     params.dt = numeric_limits<double>::quiet_NaN();
-    params.e_tes_init = numeric_limits<double>::quiet_NaN();          
+    params.e_tes0 = numeric_limits<double>::quiet_NaN();          
     params.e_tes_min = numeric_limits<double>::quiet_NaN();           
     params.e_tes_max = numeric_limits<double>::quiet_NaN();           
     params.q_pb_standby = numeric_limits<double>::quiet_NaN();        
@@ -121,7 +123,7 @@ csp_dispatch_opt::csp_dispatch_opt()
     params.sf_effadj = 1.;
     params.info_time = 0.;
     params.eta_cycle_ref = numeric_limits<double>::quiet_NaN();
-    params.disp_time_weighting = numeric_limits<double>::quiet_NaN();
+    params.time_weighting = numeric_limits<double>::quiet_NaN();
     params.rsu_cost = params.csu_cost = params.pen_delta_w = params.q_rec_standby = numeric_limits<double>::quiet_NaN();
     
     outputs.objective = 0.;
@@ -164,7 +166,7 @@ void csp_dispatch_opt::clear_output_arrays()
 bool csp_dispatch_opt::check_setup(int nstep)
 {
     //check parameters and inputs to make sure everything has been set up correctly
-    if( (int)price_signal.size() < nstep )   return false;
+    if( (int)params.sell_price.size() < nstep )   return false;
 
     if( !m_is_weather_setup ) return false;
     if( params.siminfo == 0 ) return false;
@@ -301,7 +303,7 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
         pars["Qrsd"] = 0.;      //<< not yet modeled, passing temporarily as zero
 
 
-        pars["s0"] = optinst->params.e_tes_init ;
+        pars["s0"] = optinst->params.e_tes0;
         pars["ursu0"] = 0.;
         pars["ucsu0"] = 0.;
         pars["y0"] = (optinst->params.is_pb_operating0 ? 1 : 0) ;
@@ -368,7 +370,7 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
         }
 
         //temporary fixed constants
-        pars["disp_time_weighting"] = optinst->params.disp_time_weighting;
+        pars["disp_time_weighting"] = optinst->params.time_weighting;
         pars["rsu_cost"] = optinst->params.rsu_cost; //952.;
         pars["csu_cost"] = optinst->params.csu_cost; //10000.;
         pars["pen_delta_w"] = optinst->params.pen_delta_w; //0.1;
@@ -519,37 +521,37 @@ bool csp_dispatch_opt::optimize()
 
             //calculate the mean price to appropriately weight the receiver production timing derate
             double pmean =0;
-            for(int t=0; t<(int)price_signal.size(); t++)
-                pmean += price_signal.at(t);
-            pmean /= (double)price_signal.size();
+            for(int t=0; t<(int)params.sell_price.size(); t++)
+                pmean += params.sell_price.at(t);
+            pmean /= (double)params.sell_price.size();
             //--
             
             for(int t=0; t<nt; t++)
             {
                 i = 0;
                 col[ t + nt*(i  ) ] = O.column("wdot", t);
-                row[ t + nt*(i++) ] = P["delta"] * price_signal.at(t)*tadj*(1.-outputs.w_condf_expected.at(t));
+                row[ t + nt*(i++) ] = P["delta"] * params.sell_price.at(t)*tadj*(1.-outputs.w_condf_expected.at(t));
 
                 col[ t + nt*(i  ) ] = O.column("xr", t);
-                row[ t + nt*(i++) ] = -(P["delta"] * price_signal.at(t)*(1/tadj) * P["Lr"]); // +tadj * pmean;  // tadj added to prefer receiver production sooner (i.e. delay dumping)
+                row[ t + nt*(i++) ] = -(P["delta"] * params.sell_price.at(t)*(1/tadj) * P["Lr"]); // +tadj * pmean;  // tadj added to prefer receiver production sooner (i.e. delay dumping)
 
                 col[ t + nt*(i  ) ] = O.column("xrsu", t);
-                row[ t + nt*(i++) ] = -P["delta"] * price_signal.at(t)*(1/tadj)* P["Lr"];
+                row[ t + nt*(i++) ] = -P["delta"] * params.sell_price.at(t)*(1/tadj)* P["Lr"];
 
                 col[ t + nt*(i  ) ] = O.column("yrsu", t);
-                row[ t + nt*(i++) ] = -price_signal.at(t)* (1/tadj) * (params.w_rec_ht + params.w_stow);
+                row[ t + nt*(i++) ] = -params.sell_price.at(t)* (1/tadj) * (params.w_rec_ht + params.w_stow);
 
                 col[ t + nt*(i  ) ] = O.column("yr", t);
-                row[ t + nt*(i++) ] = -(P["delta"] * price_signal.at(t)* (1/tadj) * params.w_track); // +tadj;	// tadj added to prefer receiver operation in nearer term to longer term
+                row[ t + nt*(i++) ] = -(P["delta"] * params.sell_price.at(t)* (1/tadj) * params.w_track); // +tadj;	// tadj added to prefer receiver operation in nearer term to longer term
 
                 col[ t + nt*(i  ) ] = O.column("x", t);
-                row[ t + nt*(i++) ] = -P["delta"] * price_signal.at(t)* (1/tadj) * params.w_cycle_pump;
+                row[ t + nt*(i++) ] = -P["delta"] * params.sell_price.at(t)* (1/tadj) * params.w_cycle_pump;
 
                 col[ t + nt*(i  ) ] = O.column("ycsb", t);
-                row[ t + nt*(i++) ] = -P["delta"] * price_signal.at(t)* (1/tadj) * params.w_cycle_standby;
+                row[ t + nt*(i++) ] = -P["delta"] * params.sell_price.at(t)* (1/tadj) * params.w_cycle_standby;
 
                 //xxcol[ t + nt*(i   ] = O.column("yrsb", t);
-                //xxrow[ t + nt*(i++) ] = -delta * price_signal.at(t) * (Lr * Qrl + (params.w_stow / delta));
+                //xxrow[ t + nt*(i++) ] = -delta * params.sell_price.at(t) * (Lr * Qrl + (params.w_stow / delta));
 
                 //xxcol[ t + nt*(i   ] = O.column("yrsd", t);
                 //xxrow[ t + nt*(i++) ] = -0.5 - (params.w_stow);
@@ -1796,7 +1798,7 @@ std::string csp_dispatch_opt::write_ampl()
 
         fout << "param P := \n";
         for(int t=0; t<nt; t++)
-            fout << t+1 << "\t" << price_signal.at(t) << "\n";
+            fout << t+1 << "\t" << params.sell_price.at(t) << "\n";
         fout << ";\n\n";
 
         fout << "param etaamb := \n";   //power block ambient adjustment

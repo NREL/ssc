@@ -34,14 +34,15 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
     // Resource Data
     { SSC_INPUT,  SSC_STRING, "solar_resource_file",           "Local weather file path",                                        "",             "",                                  "Solar Resource",                    "?",                                                                "LOCAL_FILE",    ""},
 
-    // Simulation Parametes
+    // Simulation Parameters
+    { SSC_INPUT,  SSC_NUMBER, "is_dispatch",                   "Allow dispatch optimization?",                                  "",             "",                                  "System Control",                           "?=0",                                                              "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "time_start",                    "Simulation start time",                                          "s",            "",                                  "System Control",                           "?=0",                                                              "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "time_stop",                     "Simulation stop time",                                           "s",            "",                                  "System Control",                           "?=31536000",                                                       "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "time_steps_per_hour",           "Number of simulation time steps per hour",                       "",             "",                                  "System Control",                           "?=-1",                                                             "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "vacuum_arrays",                 "Allocate arrays for only the required number of steps",          "",             "",                                  "System Control",                           "?=0",                                                              "",              ""},
 
 
-    // System 
+    // System
     { SSC_INPUT,  SSC_NUMBER, "T_htf_cold_des",                "Cold HTF inlet temperature at design conditions",                "C",            "",                                  "System Design",                            "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "T_htf_hot_des",                 "Hot HTF outlet temperature at design conditions",                "C",            "",                                  "System Design",                            "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "P_ref",                         "Reference output electric power at design condition",            "MW",           "",                                  "System Design",                            "*",                                                                "",              ""},
@@ -95,6 +96,17 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
 
     // System control
     { SSC_INPUT,  SSC_NUMBER, "is_dispatch",                   "Allow dispatch optimization?",                                  "",             "",                                  "System Control",                           "?=0",                                                              "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "disp_horizon",                       "Time horizon for dispatch optimization",                                                                                                  "hour",         "",                                  "System Control",                           "is_dispatch=1",                                                    "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "disp_frequency",                     "Frequency for dispatch optimization calculations",                                                                                        "hour",         "",                                  "System Control",                           "is_dispatch=1",                                                    "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "disp_steps_per_hour",                "Time steps per hour for dispatch optimization calculations",                                                                              "",             "",                                  "System Control",                           "?=1",                                                              "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "disp_max_iter",                      "Max number of dispatch optimization iterations",                                                                                          "",             "",                                  "System Control",                           "is_dispatch=1",                                                    "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "disp_timeout",                       "Max dispatch optimization solve duration",                                                                                                "s",            "",                                  "System Control",                           "is_dispatch=1",                                                    "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "disp_mip_gap",                       "Dispatch optimization solution tolerance",                                                                                                "",             "",                                  "System Control",                           "is_dispatch=1",                                                    "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "disp_spec_bb",                       "Dispatch optimization B&B heuristic",                                                                                                     "",             "",                                  "System Control",                           "?=-1",                                                             "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "disp_reporting",                     "Dispatch optimization reporting level",                                                                                                   "",             "",                                  "System Control",                           "?=-1",                                                             "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "disp_spec_presolve",                 "Dispatch optimization presolve heuristic",                                                                                                "",             "",                                  "System Control",                           "?=-1",                                                             "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "disp_spec_scaling",                  "Dispatch optimization scaling heuristic",                                                                                                 "",             "",                                  "System Control",                           "?=-1",                                                             "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "disp_time_weighting",                "Dispatch optimization future time discounting factor",                                                                                    "",             "",                                  "System Control",                           "?=0.99",                                                           "",              ""},
 
 
     // System performance
@@ -366,6 +378,25 @@ public:
         tou.mc_dispatch_params.m_use_rule_2 = false;
         tou.mc_dispatch_params.m_q_dot_rec_des_mult = -1.23;        //[-] Applies if m_use_rule_2 is true
         tou.mc_dispatch_params.m_f_q_dot_pc_overwrite = -1.23;      //[-] Applies if m_use_rule_2 is true
+
+        if (tou.mc_dispatch_params.m_dispatch_optimize)
+        {
+            tou.mc_dispatch_params.m_optimize_frequency = as_integer("disp_frequency");
+            tou.mc_dispatch_params.m_disp_steps_per_hour = as_integer("disp_steps_per_hour");
+            tou.mc_dispatch_params.m_optimize_horizon = as_integer("disp_horizon");
+            tou.mc_dispatch_params.m_max_iterations = as_integer("disp_max_iter");
+            tou.mc_dispatch_params.m_solver_timeout = as_double("disp_timeout");
+            tou.mc_dispatch_params.m_mip_gap = as_double("disp_mip_gap");
+            tou.mc_dispatch_params.m_presolve_type = as_integer("disp_spec_presolve");
+            tou.mc_dispatch_params.m_bb_type = as_integer("disp_spec_bb");
+            tou.mc_dispatch_params.m_disp_reporting = as_integer("disp_reporting");
+            tou.mc_dispatch_params.m_scaling_type = as_integer("disp_spec_scaling");
+            tou.mc_dispatch_params.m_disp_time_weighting = as_double("disp_time_weighting");
+            //tou.mc_dispatch_params.m_rsu_cost = as_double("disp_rsu_cost");
+            //tou.mc_dispatch_params.m_csu_cost = as_double("disp_csu_cost");
+            //tou.mc_dispatch_params.m_pen_delta_w = as_double("disp_pen_delta_w");
+            //tou.mc_dispatch_params.m_disp_inventory_incentive = as_double("disp_inventory_incentive");
+        }
 
         bool is_timestep_input = (as_integer("ppa_multiplier_model") == 1);
         tou_params->mc_pricing.mv_is_diurnal = !(is_timestep_input);
