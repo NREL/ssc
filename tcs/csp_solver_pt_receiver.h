@@ -152,7 +152,7 @@ public:
 
     virtual void init() = 0;
 
-    int get_operating_state();
+    C_csp_collector_receiver::E_csp_cr_modes get_operating_state();
 
     virtual void call(const C_csp_weatherreader::S_outputs &weather,
         const C_csp_solver_htf_1state &htf_state_in,

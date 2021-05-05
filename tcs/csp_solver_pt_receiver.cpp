@@ -77,7 +77,7 @@ C_pt_receiver::C_pt_receiver()
 	m_clearsky_data.resize(0);
 }
 
-int C_pt_receiver::get_operating_state()
+C_csp_collector_receiver::E_csp_cr_modes C_pt_receiver::get_operating_state()
 {
     return m_mode_prev;
 }
