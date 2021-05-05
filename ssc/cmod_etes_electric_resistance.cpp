@@ -147,6 +147,29 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
     { SSC_INPUT,  SSC_NUMBER, "sales_tax_rate",                "Sales tax rate",                                                "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
 
 
+        // Construction financing inputs/outputs (SSC variable table from cmod_cb_construction_financing)
+    { SSC_INPUT,  SSC_NUMBER, "const_per_interest_rate1",      "Interest rate, loan 1",                                         "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "const_per_interest_rate2",      "Interest rate, loan 2",                                         "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "const_per_interest_rate3",      "Interest rate, loan 3",                                         "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "const_per_interest_rate4",      "Interest rate, loan 4",                                         "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "const_per_interest_rate5",      "Interest rate, loan 5",                                         "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "const_per_months1",             "Months prior to operation, loan 1",                             "",             "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "const_per_months2",             "Months prior to operation, loan 2",                             "",             "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "const_per_months3",             "Months prior to operation, loan 3",                             "",             "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "const_per_months4",             "Months prior to operation, loan 4",                             "",             "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "const_per_months5",             "Months prior to operation, loan 5",                             "",             "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "const_per_percent1",            "Percent of total installed cost, loan 1",                       "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "const_per_percent2",            "Percent of total installed cost, loan 2",                       "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "const_per_percent3",            "Percent of total installed cost, loan 3",                       "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "const_per_percent4",            "Percent of total installed cost, loan 4",                       "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "const_per_percent5",            "Percent of total installed cost, loan 5",                       "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "const_per_upfront_rate1",       "Upfront fee on principal, loan 1",                              "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "const_per_upfront_rate2",       "Upfront fee on principal, loan 2",                              "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "const_per_upfront_rate3",       "Upfront fee on principal, loan 3",                              "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "const_per_upfront_rate4",       "Upfront fee on principal, loan 4",                              "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "const_per_upfront_rate5",       "Upfront fee on principal, loan 5",                              "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+
+
 
     // ****************************************************************************************************************************************
     // Outputs here:
@@ -190,6 +213,10 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
     { SSC_OUTPUT, SSC_NUMBER, "annual_E_cycle_gross",          "Annual cycle gross electric energy generation",                 "MWhe",         "",                                  "",                                         "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "annual_Q_cycle_thermal_in",     "Annual cycle thermal energy input",                             "MWht",         "",                                  "",                                         "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "annual_Q_cycle_thermal_startup","Annual cycle thermal energy consumed by startup",               "MWht",         "",                                  "",                                         "*",                                                                "",              "" },
+
+        // Calculated costs - should these be INOUT?
+    { SSC_OUTPUT, SSC_NUMBER, "total_installed_cost",          "Total installed cost",                                          "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "construction_financing_cost",   "Total construction financing cost",                             "$",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
 
 
     var_info_invalid };
@@ -657,7 +684,54 @@ public:
             tes_cost, power_cycle_cost, heater_cost, bop_cost, direct_capital_precontingency_cost,
             contingency_cost, total_direct_cost, total_land_cost, epc_and_owner_cost,
             sales_tax_cost, total_indirect_cost, total_installed_cost, estimated_installed_cost_per_cap);
-           
+
+        assign("total_installed_cost", (ssc_number_t)total_installed_cost);
+
+        // Update construction financing costs, specifically, update: "construction_financing_cost"
+        double const_per_interest_rate1 = as_double("const_per_interest_rate1");
+        double const_per_interest_rate2 = as_double("const_per_interest_rate2");
+        double const_per_interest_rate3 = as_double("const_per_interest_rate3");
+        double const_per_interest_rate4 = as_double("const_per_interest_rate4");
+        double const_per_interest_rate5 = as_double("const_per_interest_rate5");
+        double const_per_months1 = as_double("const_per_months1");
+        double const_per_months2 = as_double("const_per_months2");
+        double const_per_months3 = as_double("const_per_months3");
+        double const_per_months4 = as_double("const_per_months4");
+        double const_per_months5 = as_double("const_per_months5");
+        double const_per_percent1 = as_double("const_per_percent1");
+        double const_per_percent2 = as_double("const_per_percent2");
+        double const_per_percent3 = as_double("const_per_percent3");
+        double const_per_percent4 = as_double("const_per_percent4");
+        double const_per_percent5 = as_double("const_per_percent5");
+        double const_per_upfront_rate1 = as_double("const_per_upfront_rate1");
+        double const_per_upfront_rate2 = as_double("const_per_upfront_rate2");
+        double const_per_upfront_rate3 = as_double("const_per_upfront_rate3");
+        double const_per_upfront_rate4 = as_double("const_per_upfront_rate4");
+        double const_per_upfront_rate5 = as_double("const_per_upfront_rate5");
+
+        double const_per_principal1, const_per_principal2, const_per_principal3, const_per_principal4, const_per_principal5;
+        double const_per_interest1, const_per_interest2, const_per_interest3, const_per_interest4, const_per_interest5;
+        double const_per_total1, const_per_total2, const_per_total3, const_per_total4, const_per_total5;
+        double const_per_percent_total, const_per_principal_total, const_per_interest_total, construction_financing_cost;
+
+        const_per_principal1 = const_per_principal2 = const_per_principal3 = const_per_principal4 = const_per_principal5 =
+            const_per_interest1 = const_per_interest2 = const_per_interest3 = const_per_interest4 = const_per_interest5 =
+            const_per_total1 = const_per_total2 = const_per_total3 = const_per_total4 = const_per_total5 =
+            const_per_percent_total = const_per_principal_total = const_per_interest_total = construction_financing_cost =
+            std::numeric_limits<double>::quiet_NaN();
+
+        N_financial_parameters::construction_financing_total_cost(total_installed_cost,
+            const_per_interest_rate1, const_per_interest_rate2, const_per_interest_rate3, const_per_interest_rate4, const_per_interest_rate5,
+            const_per_months1, const_per_months2, const_per_months3, const_per_months4, const_per_months5,
+            const_per_percent1, const_per_percent2, const_per_percent3, const_per_percent4, const_per_percent5,
+            const_per_upfront_rate1, const_per_upfront_rate2, const_per_upfront_rate3, const_per_upfront_rate4, const_per_upfront_rate5,
+            const_per_principal1, const_per_principal2, const_per_principal3, const_per_principal4, const_per_principal5,
+            const_per_interest1, const_per_interest2, const_per_interest3, const_per_interest4, const_per_interest5,
+            const_per_total1, const_per_total2, const_per_total3, const_per_total4, const_per_total5,
+            const_per_percent_total, const_per_principal_total, const_per_interest_total, construction_financing_cost);
+
+        assign("construction_financing_cost", (ssc_number_t)construction_financing_cost);
+
     }
 };
 
