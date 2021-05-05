@@ -82,10 +82,10 @@ voltage_state voltage_t::get_state() { return *state; }
 
 void voltage_table_t::initialize() {
     if (params->voltage_table.empty()) {
-        throw std::runtime_error("voltage_table_t error: empty voltage table");
+        throw std::runtime_error("voltage_table_t error: Empty voltage table.");
     }
     if (params->voltage_table.size() < 2 || params->voltage_table[0].size() != 2)
-        throw std::runtime_error("voltage_table_t error: Battery lifetime matrix must have 2 columns and at least 2 rows");
+        throw std::runtime_error("voltage_table_t error: Battery lifetime matrix must have 2 columns and at least 2 rows.");
 
     // save slope and intercept for every set of points to interpolate between
     std::sort(params->voltage_table.begin(), params->voltage_table.end(),
@@ -117,11 +117,11 @@ void voltage_table_t::initialize() {
     }
 
     if (need_less_than_nom) {
-        throw std::runtime_error("voltage_table_t error: no voltages less than nominal voltage. align voltage table and nominal voltage");
+        throw std::runtime_error("voltage_table_t error: Voltage table contains no voltages less than the nominal voltage. Change either the values in the voltage table or the nominal voltage.");
     }
 
     if (need_greater_than_nom) {
-        throw std::runtime_error("voltage_table_t error: no voltages greater than nominal voltage. align voltage table and nominal voltage");
+        throw std::runtime_error("voltage_table_t error: Voltage table contains no voltages greater than nominal voltage. Change either the values in the voltage table or the nominal voltage.e");
     }
 
     // for extrapolation beyond given points
