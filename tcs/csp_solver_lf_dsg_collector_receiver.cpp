@@ -114,8 +114,8 @@ C_csp_lf_dsg_collector_receiver::C_csp_lf_dsg_collector_receiver()
 	// ***********************************************************
 	// Timestep Calculations
 		// Control & operation
-	m_operating_mode_converged = -1;	//[-]
-	m_operating_mode = -1;				//[-]
+	m_operating_mode_converged = C_csp_collector_receiver::E_csp_cr_modes::OFF;	//[-]
+	m_operating_mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;			//[-]
 	m_ncall = -1;						//[-]
 		// CSP Solver Temperature Tracking
 			// SUB TIMESTEP outputs
@@ -1005,7 +1005,7 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 
 } // init
 
-int C_csp_lf_dsg_collector_receiver::get_operating_state()
+C_csp_collector_receiver::E_csp_cr_modes C_csp_lf_dsg_collector_receiver::get_operating_state()
 {
 	return m_operating_mode_converged;
 }
@@ -1342,9 +1342,9 @@ void C_csp_lf_dsg_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 	cr_out_solver.m_T_salt_hot = T_sys_hot_out_t_int_ts_ave - 273.15;	//[C] Average timestep field outlet temperature
 	cr_out_solver.m_component_defocus = 1.0;		//[-]
 
-	cr_out_solver.m_E_fp_total = m_q_dot_freeze_protection;		//[MWt]
 	cr_out_solver.m_W_dot_col_tracking = m_W_dot_sca_tracking;	//[MWe]
 	cr_out_solver.m_W_dot_htf_pump = m_W_dot_pump;				//[MWe]
+    cr_out_solver.m_q_dot_heater = m_q_dot_freeze_protection;   //[MWt]
 
 	cr_out_solver.m_standby_control = -1;
 	cr_out_solver.m_dP_sf_sh = 0.0;
@@ -1554,9 +1554,9 @@ void C_csp_lf_dsg_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	cr_out_solver.m_component_defocus = 1.0;
 
 		// Shouldn't need freeze protection if in startup, but may want a check on this
-	cr_out_solver.m_E_fp_total = m_q_dot_freeze_protection;		//[MWt]
 	cr_out_solver.m_W_dot_col_tracking = m_W_dot_sca_tracking;	//[MWe]
 	cr_out_solver.m_W_dot_htf_pump = m_W_dot_pump;				//[MWe]
+    cr_out_solver.m_q_dot_heater = m_q_dot_freeze_protection;	//[MWt]
 
 	cr_out_solver.m_standby_control = -1;
 	cr_out_solver.m_dP_sf_sh = 0.0;
@@ -1605,7 +1605,7 @@ int C_csp_lf_dsg_collector_receiver::C_mono_eq_defocus::operator()(double defocu
 
 void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &weather,
 	const C_csp_solver_htf_1state &htf_state_in,
-	double field_control,
+    double q_dot_elec_to_CR_heat /*MWt*/, double field_control,
 	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
 	const C_csp_solver_sim_info &sim_info)
 {
@@ -1881,9 +1881,9 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		cr_out_solver.m_component_defocus = m_component_defocus;
 
 		// For now, set parasitic outputs to 0
-		cr_out_solver.m_E_fp_total = 0.0;			//[MW]
 		cr_out_solver.m_W_dot_col_tracking = m_W_dot_sca_tracking;	//[MWe]
 		cr_out_solver.m_W_dot_htf_pump = m_W_dot_pump;				//[MWe]
+        cr_out_solver.m_q_dot_heater = 0.0;			//[MWt]
 
 		cr_out_solver.m_standby_control = -1;		//[-]
 		cr_out_solver.m_dP_sf_sh = 0.0;				//[bar]
@@ -1912,9 +1912,9 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		cr_out_solver.m_T_salt_hot = 0.0;			//[C]
 		cr_out_solver.m_component_defocus = 1.0;	//[-]
 
-		cr_out_solver.m_E_fp_total = 0.0;			//[MW]
 		cr_out_solver.m_W_dot_col_tracking = 0.0;	//[MWe]
 		cr_out_solver.m_W_dot_htf_pump = 0.0;		//[MWe]
+        cr_out_solver.m_q_dot_heater = 0.0;			//[MW]
 
 		cr_out_solver.m_standby_control = -1;		//[-]
 		cr_out_solver.m_dP_sf_sh = 0.0;				//[bar]
@@ -1937,7 +1937,7 @@ void C_csp_lf_dsg_collector_receiver::estimates(const C_csp_weatherreader::S_out
 	{
 		C_csp_collector_receiver::S_csp_cr_out_solver cr_out_solver;
 
-		on(weather, htf_state_in, 1.0, cr_out_solver, sim_info);
+		on(weather, htf_state_in, std::numeric_limits<double>::quiet_NaN(), 1.0, cr_out_solver, sim_info);
 
 		est_out.m_q_dot_avail = cr_out_solver.m_q_thermal;		//[MWt]
 		est_out.m_m_dot_avail = cr_out_solver.m_m_dot_salt_tot;	//[kg/hr]

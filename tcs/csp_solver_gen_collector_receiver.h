@@ -117,7 +117,7 @@ public:
 	// Done
 	void init_sf();
 
-	virtual int get_operating_state();
+	virtual C_csp_collector_receiver::E_csp_cr_modes get_operating_state();
 
 	virtual double get_startup_time();
 	virtual double get_startup_energy(); //MWh
@@ -140,9 +140,8 @@ public:
 
 	virtual void on(const C_csp_weatherreader::S_outputs &weather,
 		const C_csp_solver_htf_1state &htf_state_in,
-		double field_control,
+        double q_dot_elec_to_CR_heat /*MWt*/, double field_control,
 		C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
-		//C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
 		const C_csp_solver_sim_info &sim_info);
 
 	virtual void estimates(const C_csp_weatherreader::S_outputs &weather,
