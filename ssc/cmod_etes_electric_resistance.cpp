@@ -215,6 +215,7 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
     { SSC_OUTPUT, SSC_NUMBER, "annual_Q_cycle_thermal_startup","Annual cycle thermal energy consumed by startup",               "MWht",         "",                                  "",                                         "*",                                                                "",              "" },
 
         // Calculated costs - should these be INOUT?
+    { SSC_OUTPUT, SSC_NUMBER, "system_capacity",               "System capacity",                                               "kWe",          "",                                  "System Costs",                             "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "total_installed_cost",          "Total installed cost",                                          "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "construction_financing_cost",   "Total construction financing cost",                             "$",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
 
@@ -685,8 +686,6 @@ public:
             contingency_cost, total_direct_cost, total_land_cost, epc_and_owner_cost,
             sales_tax_cost, total_indirect_cost, total_installed_cost, estimated_installed_cost_per_cap);
 
-        assign("total_installed_cost", (ssc_number_t)total_installed_cost);
-
         // Update construction financing costs, specifically, update: "construction_financing_cost"
         double const_per_interest_rate1 = as_double("const_per_interest_rate1");
         double const_per_interest_rate2 = as_double("const_per_interest_rate2");
@@ -730,7 +729,10 @@ public:
             const_per_total1, const_per_total2, const_per_total3, const_per_total4, const_per_total5,
             const_per_percent_total, const_per_principal_total, const_per_interest_total, construction_financing_cost);
 
-        assign("construction_financing_cost", (ssc_number_t)construction_financing_cost);
+        // Assign cmod variables required by downstream models
+        assign("system_capacity", system_capacity);     //[kWe]
+        assign("total_installed_cost", (ssc_number_t)total_installed_cost);                 //[$]
+        assign("construction_financing_cost", (ssc_number_t)construction_financing_cost);   //[$]
 
     }
 };
