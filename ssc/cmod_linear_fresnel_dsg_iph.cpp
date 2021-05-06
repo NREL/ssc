@@ -432,6 +432,7 @@ public:
 		system.m_bop_par_0 = 0.0;
 		system.m_bop_par_1 = 0.0;
 		system.m_bop_par_2 = 0.0;
+        system.m_is_field_freeze_protection_electric = false;
 
 		// ********************************
 		// ********************************
