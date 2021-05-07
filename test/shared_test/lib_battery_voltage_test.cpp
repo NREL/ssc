@@ -626,6 +626,9 @@ TEST_F(voltage_table_lib_battery_voltage_test, calculateMaxDischargeHourly){
     // Does not empty battery for highest power
     cap->updateCapacity(max_current, dt_hour);
     EXPECT_NEAR(cap->SOC(), 25.5, 1e-3);
+    // Check power
+    model->updateVoltage(cap->q0(), cap->qmax(), max_current_calc, 0, dt_hour);
+    EXPECT_NEAR(max_current_calc * model->battery_voltage(), power, 2);
 
     // start at empty SOC
     power = model->calculate_max_discharge_w(cap->q0(), cap->qmax(), 0, &max_current);
@@ -635,6 +638,9 @@ TEST_F(voltage_table_lib_battery_voltage_test, calculateMaxDischargeHourly){
     // Empties battery for highest power
     cap->updateCapacity(max_current, dt_hour);
     EXPECT_NEAR(cap->SOC(), 13.25, 1e-3);
+    // Check power
+    model->updateVoltage(cap->q0(), cap->qmax(), max_current_calc, 0, dt_hour);
+    EXPECT_NEAR(max_current_calc * model->battery_voltage(), power, 2);
 
     // start at full SOC
     double I = -2;
@@ -647,6 +653,9 @@ TEST_F(voltage_table_lib_battery_voltage_test, calculateMaxDischargeHourly){
     // Does not empty battery for highest power
     cap->updateCapacity(max_current, dt_hour);
     EXPECT_NEAR(cap->SOC(), 27.02, 1e-2);
+    // Check power
+    model->updateVoltage(cap->q0(), cap->qmax(), max_current_calc, 0, dt_hour);
+    EXPECT_NEAR(max_current_calc * model->battery_voltage(), power, 2);
 }
 
 TEST_F(voltage_table_lib_battery_voltage_test, calculateMaxDischargeHourlyInputErrors) {
@@ -687,6 +696,7 @@ TEST_F(voltage_table_lib_battery_voltage_test, calculateMaxDischargeSubHourly){
     double power = model->calculate_max_discharge_w(cap->q0(), cap->qmax(), 0, &max_current);
     EXPECT_NEAR(power, 2388, 1);        // current ~4
     double max_current_calc = model->calculate_current_for_target_w(power - 1, cap->q0(), cap->qmax(), 0);
+    EXPECT_NEAR(max_current, 4.9, 1e-2);
     EXPECT_NEAR(max_current_calc, 4.9, 1e-2);
     // Does not empty battery for highest power
     cap->updateCapacity(max_current, dt_hour);
@@ -696,6 +706,7 @@ TEST_F(voltage_table_lib_battery_voltage_test, calculateMaxDischargeSubHourly){
     power = model->calculate_max_discharge_w(cap->q0(), cap->qmax(), 0, &max_current);
     EXPECT_NEAR(power, 1163, 1);
     max_current_calc = model->calculate_current_for_target_w(power - 1, cap->q0(), cap->qmax(), 0);
+    EXPECT_NEAR(max_current, 2.44, 1e-1);
     EXPECT_NEAR(max_current_calc, 2.44, 1e-1);
     // Empties battery for highest power
     cap->updateCapacity(max_current, dt_hour);
@@ -723,19 +734,26 @@ TEST_F(voltage_table_lib_battery_voltage_test, calculateMaxDischargeHourly_table
     double power = model->calculate_max_discharge_w(cap->q0(), cap->qmax(), 293, &max_current);
     EXPECT_NEAR(power, 719.25, 1);        // current ~4
     double max_current_calc = model->calculate_current_for_target_w(power, cap->q0(), cap->qmax(), 293);
+    EXPECT_NEAR(max_current, 3.94, 1e-2);
     EXPECT_NEAR(max_current_calc, 3.94, 1e-2);
     // Does not empty battery for highest power
     cap->updateCapacity(max_current, dt_hour);
     EXPECT_NEAR(cap->SOC(), 10.5, 1e-3);
+    // Check power
+    model->updateVoltage(cap->q0(), cap->qmax(), max_current_calc, 293, dt_hour);
+    EXPECT_NEAR(max_current_calc * model->battery_voltage(), power, 1e-2);
 
     // start at empty SOC
     power = model->calculate_max_discharge_w(cap->q0(), cap->qmax(), 293, &max_current);
     EXPECT_NEAR(power, 83.48, 1);
     max_current_calc = model->calculate_current_for_target_w(power, cap->q0(), cap->qmax(), 293);
     EXPECT_NEAR(max_current_calc, max_current, 1e-1);
-    // Empties battery for highest power
+    // Empties battery for highest power but also runs into SOC limits reducing current
     cap->updateCapacity(max_current, dt_hour);
     EXPECT_NEAR(cap->SOC(), 5, 1e-3);
+    EXPECT_LT(max_current, max_current_calc);
+    model->updateVoltage(cap->q0(), cap->qmax(), max_current, 293, dt_hour);
+    EXPECT_LT(max_current * model->battery_voltage(), power);
 
     // start at full SOC
     double I = -2;
@@ -744,10 +762,14 @@ TEST_F(voltage_table_lib_battery_voltage_test, calculateMaxDischargeHourly_table
     power = model->calculate_max_discharge_w(cap->q0(), cap->qmax(), 293, &max_current);
     EXPECT_NEAR(power, 1480.35, 1);
     max_current_calc = model->calculate_current_for_target_w(power, cap->q0(), cap->qmax(), 293);
+    EXPECT_NEAR(max_current, 7.5, 1e-2);
     EXPECT_NEAR(max_current_calc, 7.5, 1e-2);
     // Does not empty battery for highest power
     cap->updateCapacity(max_current, dt_hour);
     EXPECT_NEAR(cap->SOC(), 20, 1e-3);
+    // Check power
+    model->updateVoltage(cap->q0(), cap->qmax(), max_current_calc, 293, dt_hour);
+    EXPECT_NEAR(max_current_calc * model->battery_voltage(), power, 1e-2);
 }
 
 TEST_F(voltage_table_lib_battery_voltage_test, calculateMaxDischargeSubMinute){
@@ -763,6 +785,9 @@ TEST_F(voltage_table_lib_battery_voltage_test, calculateMaxDischargeSubMinute){
     // Does not empty battery for highest power
     cap->updateCapacity(max_current, dt_hour);
     EXPECT_NEAR(cap->SOC(), 25.5, 1e-3);
+    // Check power
+    model->updateVoltage(cap->q0(), cap->qmax(), max_current_calc, 293, dt_hour);
+    EXPECT_NEAR(max_current_calc * model->battery_voltage(), power, 1e-2);
 
     // start at empty SOC
     power = model->calculate_max_discharge_w(cap->q0(), cap->qmax(), 0, &max_current);
@@ -772,6 +797,9 @@ TEST_F(voltage_table_lib_battery_voltage_test, calculateMaxDischargeSubMinute){
     // Does not empty battery for highest power
     cap->updateCapacity(max_current, dt_hour);
     EXPECT_NEAR(cap->SOC(), 13.25, 1e-3);
+    // Check power
+    model->updateVoltage(cap->q0(), cap->qmax(), max_current_calc, 293, dt_hour);
+    EXPECT_NEAR(max_current_calc * model->battery_voltage(), power, 1e-2);
 
     // start at full SOC
     double I = -2;
@@ -784,31 +812,33 @@ TEST_F(voltage_table_lib_battery_voltage_test, calculateMaxDischargeSubMinute){
     // Does not empty battery for highest power
     cap->updateCapacity(max_current, dt_hour);
     EXPECT_NEAR(cap->SOC(), 24.52, 1e-3);
+    // Check power
+    model->updateVoltage(cap->q0(), cap->qmax(), max_current_calc, 293, dt_hour);
+    EXPECT_NEAR(max_current_calc * model->battery_voltage(), power, 1e-2);
 }
 
 TEST_F(voltage_table_lib_battery_voltage_test, calculate_discharging_past_limits) {
     double dt_hour = 1;
     CreateModel_SSC_412(dt_hour);
 
-    // start at half SOC
-    double max_current;
-    double power = model->calculate_max_discharge_w(cap->q0(), cap->qmax(), 293, &max_current);
-    EXPECT_NEAR(power, 719.25, 1);        // current ~4
-    double max_current_calc = model->calculate_current_for_target_w(power, cap->q0(), cap->qmax(), 293);
-    EXPECT_NEAR(max_current_calc, 3.94, 1e-2);
 
-    // Empty battery somewhat
+    // start at half SOC and run battery nearly empty
     double I = 2;
     while (cap->SOC() > 8)
         cap->updateCapacity(I, dt_hour);
 
-    // Estimate too much power, should get low positive current
-    max_current_calc = model->calculate_current_for_target_w(1000.0, cap->q0(), cap->qmax(), 293);
+    double max_current;
+    double power = model->calculate_max_discharge_w(cap->q0(), cap->qmax(), 293, &max_current);
+
+    // Try using too much power, should get low positive current
+    double max_current_calc = model->calculate_current_for_target_w(1000.0, cap->q0(), cap->qmax(), 293);
     EXPECT_NEAR(max_current_calc, 0.5, 1e-2);
 
-    // Does not empty battery for highest power
-    cap->updateCapacity(max_current, dt_hour);
+    // Power limited by SOC limits in capacity
+    cap->updateCapacity(max_current_calc, dt_hour);
     EXPECT_NEAR(cap->SOC(), 5, 1e-3);
+    model->updateVoltage(cap->q0(), cap->qmax(), max_current_calc, 293, dt_hour);
+    EXPECT_NEAR(model->battery_voltage() * max_current_calc, 0, 1e-2);
 }
 
 
