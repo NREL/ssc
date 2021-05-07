@@ -24,7 +24,7 @@ NAMESPACE_TEST(csp_trough, TroughLoop, DefaultTest)
     TroughOutputs trough_outputs;
     TimestepAndTou timestep_and_tou = default_trough_factory.MakeTimestepAndTou();
 
-    trough->on(*time_and_weather, fluid_inlet_state, defocus, trough_outputs, timestep_and_tou);
+    trough->on(*time_and_weather, fluid_inlet_state, std::numeric_limits<double>::quiet_NaN(), defocus, trough_outputs, timestep_and_tou);
 
     EXPECT_NEAR(trough_outputs.m_T_salt_hot, 391.17, 391.17 * kErrorToleranceLo);
     EXPECT_NEAR(trough_outputs.m_m_dot_salt_tot, 6568369, 6568369 * kErrorToleranceLo);
@@ -74,7 +74,7 @@ NAMESPACE_TEST(csp_trough, TroughLoop, SteadyStateTest)
 
     do
     {
-        trough->on(*time_and_weather, fluid_inlet_state, defocus, trough_outputs, timestep_and_tou);
+        trough->on(*time_and_weather, fluid_inlet_state, std::numeric_limits<double>::quiet_NaN(), defocus, trough_outputs, timestep_and_tou);
 
         // Calculate metric for deciding whether steady-state is reached
         ss_diff = 0.;
