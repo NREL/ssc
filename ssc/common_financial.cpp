@@ -3343,8 +3343,8 @@ var_info vtab_lcos_inputs[] = {
 
     { SSC_OUTPUT, SSC_NUMBER, "npv_annual_costs_lcos", "Present value of annual storage costs", "$", "", "LCOE calculations", "", "", "" },
     { SSC_OUTPUT, SSC_NUMBER, "npv_energy_lcos_real", "Present value of annual stored energy (real)", "kWh", "", "LCOE calculations", "", "", "" },
-    { SSC_OUTPUT,       SSC_NUMBER,     "lcos_nom",                        "Nominal levelized cost of storage",              "cents/kWh",                   "", "Metrics", "", "", "" },
-    { SSC_OUTPUT,       SSC_NUMBER,     "lcos_real",                        "Real levelized cost of storage",              "cents/kWh",                   "", "Metrics", "", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "lcos_nom",                        "Levelized cost of storage (nominal)",              "cents/kWh",                   "", "Metrics", "", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "lcos_real",                        "Levelized cost of storage (real)",              "cents/kWh",                   "", "Metrics", "", "", "" },
     { SSC_OUTPUT, SSC_NUMBER, "npv_energy_lcos_nom", "Present value of annual stored energy (nominal)", "kWh", "", "LCOE calculations", "", "", "" },
     var_info_invalid };
 
@@ -3405,6 +3405,7 @@ void save_cf(int cf_line, int nyears, const std::string& name, util::matrix_t<do
 void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double nom_discount_rate, double inflation_rate, double lcoe_real, double total_cost, double real_discount_rate, int grid_charging_cost_version, ssc_number_t* ppa_multipliers = { 0 }) {
     enum {
         CF_battery_replacement_cost_lcos,
+        CF_battery_replacement_cost_schedule_lcos,
         CF_ppa_price_lcos,
         CF_om_fixed_expense_lcos,
         CF_om_production_expense_lcos,
@@ -3445,6 +3446,9 @@ void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double
         ssc_number_t* monthly_grid_to_load;
         if (grid_charging_cost_version == 0) //For BTM systems the battery exports to load
             monthly_grid_to_load = cm->as_array("monthly_grid_to_load", &n_monthly_grid_to_load);//monthly battery exports to load for first year (kWh)
+
+        size_t n_batt_capacity_percent;
+        ssc_number_t* batt_capacity_percent = cm->as_array("batt_capacity_percent", &n_batt_capacity_percent); //battery capacity relative to nameplate (%)
 
 
         util::matrix_t<double> monthly_energy_charge; //monthly energy charges at 12 month x nyears matrix ($)
@@ -3627,7 +3631,7 @@ void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double
         cf.at(CF_energy_discharged_lcos, 0) = 0; //Initialize year 0 of energy discharged to 0 for investment year
         cf.at(CF_annual_cost_lcos_lcos, 0) += -lcos_investment_cost; //add initial investment to year 0
         double batt_salvage_value_frac = cm->as_double("batt_salvage_percentage") * 0.01; //Battery salvage percentage of initial battery capital cost turned to fraction
-        double lcos_salvage_value = lcos_investment_cost * batt_salvage_value_frac / pow(1 + nom_discount_rate, nyears + 1); //Calculate salvage value of batter only
+        double lcos_salvage_value = cf.at(CF_battery_replacement_cost_schedule_lcos, nyears) * batt_capacity_percent[n_batt_capacity_percent - 1] / 100 * batt_salvage_value_frac; //set as a percentage or direct salvage value //Calculate salvage value of batter only
         cf.at(CF_salvage_cost_lcos_lcos, nyears) = lcos_salvage_value; //Store salvage value in cash flow
         cf.at(CF_annual_cost_lcos_lcos, nyears) -= cf.at(CF_salvage_cost_lcos_lcos, nyears); //Add salvage value to overall LCOS cash flow
         double lcos_denominator = npv(CF_energy_discharged_lcos, nyears, nom_discount_rate, cf); //Find npv of battery energy discharged to use as denominator of LCOS equation (kWh)

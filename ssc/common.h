@@ -44,7 +44,6 @@ extern var_info vtab_payment_incentives[];
 extern var_info vtab_debt[];
 extern var_info vtab_ppa_inout[];
 extern var_info vtab_financial_metrics[];
-//extern var_info vtab_lcos_inputs[];
 
 extern var_info vtab_adjustment_factors[];
 extern var_info vtab_dc_adjustment_factors[];
@@ -61,8 +60,6 @@ bool calculate_p50p90(compute_module *cm);
 void calculate_resilience_outputs(compute_module *cm, std::unique_ptr<resilience_runner> &resilience);
 
 ssc_number_t* gen_heatmap(compute_module* cm, double step_per_hour);
-
-//void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double nom_discount_rate, double inflation_rate, double lcoe_real, double total_cost, double real_discount_rate, int grid_charging_cost_version, ssc_number_t* ppa_multipliers);
 
 
 class adjustment_factors
