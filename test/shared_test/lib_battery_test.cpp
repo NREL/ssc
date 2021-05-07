@@ -683,11 +683,11 @@ TEST_F(lib_battery_test, AdaptiveTimestep) {
 
     }
 
-    EXPECT_NEAR(batteryModel->charge_maximum(), 577.09, 1e-2);
+    EXPECT_NEAR(batteryModel->charge_maximum(), 577.24, 1e-2);
     EXPECT_NEAR(batt_subhourly->charge_maximum(), 576.95, 1e-2);
-    EXPECT_NEAR(batt_adaptive->charge_maximum(), 576.95, 1e-2);
+    EXPECT_NEAR(batt_adaptive->charge_maximum(), 576.94, 1e-2);
 
-    EXPECT_NEAR(batteryModel->SOC(), 94.98, 1e-2);
+    EXPECT_NEAR(batteryModel->SOC(), 94.96, 1e-2);
     EXPECT_NEAR(batt_subhourly->SOC(), 94.95, 1e-2);
     EXPECT_NEAR(batt_adaptive->SOC(), 94.95, 1e-2);
 }
@@ -891,13 +891,13 @@ TEST_F(lib_battery_test, AdaptiveTimestepNMC) {
 
     }
 
-    EXPECT_NEAR(batteryModel->charge_maximum(), 895.75, 1e-2);
+    EXPECT_NEAR(batteryModel->charge_maximum(), 896.50, 1e-2);
     EXPECT_NEAR(batt_subhourly->charge_maximum(), 889.07, 1e-2);
-    EXPECT_NEAR(batt_adaptive->charge_maximum(), 890.60, 1e-2);
+    EXPECT_NEAR(batt_adaptive->charge_maximum(), 890.90, 1e-2);
 
-    EXPECT_NEAR(batteryModel->SOC(), 89.31, 1e-2);
+    EXPECT_NEAR(batteryModel->SOC(), 89.24, 1e-2);
     EXPECT_NEAR(batt_subhourly->SOC(), 88.05, 1e-2);
-    EXPECT_NEAR(batt_adaptive->SOC(), 87.91, 1e-2);
+    EXPECT_NEAR(batt_adaptive->SOC(), 87.88, 1e-2);
 }
 
 TEST_F(lib_battery_test, AdaptiveTimestepNonIntegerStep) {
