@@ -524,8 +524,7 @@ double battery_t::calculate_max_charge_kw(double *max_current_A) {
 double battery_t::calculate_max_discharge_kw(double *max_current_A) {
     thermal_state thermal_initial = thermal->get_state();
     double q = capacity->q0();
-    double SOC_ratio = (1. - capacity->params->minimum_SOC * 0.01);
-    double qmax = charge_maximum() * SOC_ratio;
+    double qmax = charge_maximum();
     double power_W = 0;
     double current = 0;
     size_t its = 0;
@@ -533,7 +532,7 @@ double battery_t::calculate_max_discharge_kw(double *max_current_A) {
            && its++ < 5) {
         power_W = voltage->calculate_max_discharge_w(q, qmax, thermal->T_battery(), &current);
         thermal->updateTemperature(current, state->last_idx + 1);
-        qmax = capacity->qmax() * thermal->capacity_percent()  * 0.01 * SOC_ratio;
+        qmax = capacity->qmax() * thermal->capacity_percent()  * 0.01;
     }
     if (max_current_A)
         *max_current_A = current;
