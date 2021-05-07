@@ -226,25 +226,25 @@ protected:
     struct {
         array_type type;
 
-        double dc_nameplate; //units of this variable are W, while input is in kW
-        double dc_ac_ratio;
-        double ac_nameplate;
-        double xfmr_rating;
-        double ac_plant_max;
-        double inv_eff_percent;
-        double dc_loss_percent;
-        double tilt, azimuth;
-        double rotlim;
+        double dc_nameplate;    //nameplate rated capacity of the DC side of the system units of this variable are W, while input is in kW
+        double dc_ac_ratio;     //ratio of DC nameplate capacity to AC nameplate capacity (unitless)
+        double ac_nameplate;    //nameplate rated capacity of the AC side of the system (W)
+        double xfmr_rating;     //rating of the transformer, hardcoded to be equal to ac_nameplate (W)   
+        double ac_plant_max;    //??? is this used?
+        double inv_eff_percent; //inverter efficiency at rated power (percent)
+        double dc_loss_percent; //DC system losses (percent)
+        double tilt, azimuth;   //tilt and azimuth of the system (degrees)
+        double rotlim;          //tracker rotation limit (degrees)
 
-        double xfmr_nll_f;
-        double xfmr_ll_f;
+        double xfmr_nll_f;      //transformer no-load-loss (percent of AC power)
+        double xfmr_ll_f;       //transformer load loss (percent of AC power)
 
-        double inoct;
-        double nmodules;
-        double nmodperstr;
-        int nmodx, nmody, nrows;
-        double row_spacing;
-        double gcr;
+        double inoct;           //module installed nominal operating cell temperature, hardcoded factor depending on array_type         
+        double nmodules;        //number of modules (unitless)
+        double nmodperstr;      //number of modules per string (unitless)
+        int nmodx, nmody, nrows;//number of modules along the bottom of a row, number of modules along the upward direction of a row, number of rows (unitless)
+        double row_spacing;     //row spacing, calculated from other inputs (meters)
+        double gcr;             //ground coverage ratio (unitless)
 
     } pv;
 
