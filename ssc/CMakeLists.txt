@@ -25,6 +25,8 @@ set(SSC_SRC
 		cmod_csp_common_eqns.h
 		cmod_csp_tower_eqns.cpp
 		cmod_csp_tower_eqns.h
+        cmod_csp_trough_eqns.cpp
+		cmod_csp_trough_eqns.h
 		cmod_dsg_flux_preprocess.cpp
 		cmod_etes_electric_resistance.cpp
 		cmod_equpartflip.cpp
@@ -174,6 +176,7 @@ else()
     set(SRC_UNUSED_VARS
             cmod_mhk_eqns.cpp
             cmod_csp_tower_eqns.cpp
+            cmod_csp_trough_eqns.cpp
             cmod_merchantplant.cpp
             cmod_merchantplant_eqns.cpp
             cmod_pvsamv1_eqns.cpp

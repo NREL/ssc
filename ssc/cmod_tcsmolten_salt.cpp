@@ -1198,7 +1198,7 @@ public:
 
                 util::matrix_t<double> cmbd_ind;
 
-                combine_ind_tbl(cmbd_ind, pc->mc_T_htf_ind, pc->mc_m_dot_htf_ind, pc->mc_T_amb_ind,
+                N_udpc_common::combine_ind_tbl(cmbd_ind, pc->mc_T_htf_ind, pc->mc_m_dot_htf_ind, pc->mc_T_amb_ind,
                     pc->m_m_dot_htf_low, 1.0, pc->m_m_dot_htf_high,
                     pc->m_T_htf_low, pc->m_T_htf_hot_ref, pc->m_T_htf_high,
                     pc->m_T_amb_low, pc->m_T_amb_des, pc->m_T_amb_high);
@@ -1457,7 +1457,7 @@ public:
 
                     util::matrix_t<double> cmbd_ind;
 
-                    combine_ind_tbl(cmbd_ind, pc->mc_T_htf_ind, pc->mc_m_dot_htf_ind, pc->mc_T_amb_ind,
+                    N_udpc_common::combine_ind_tbl(cmbd_ind, pc->mc_T_htf_ind, pc->mc_m_dot_htf_ind, pc->mc_T_amb_ind,
                         pc->m_m_dot_htf_low, 1.0, pc->m_m_dot_htf_high,
                         pc->m_T_htf_low, pc->m_T_htf_hot_ref, pc->m_T_htf_high,
                         pc->m_T_amb_low, pc->m_T_amb_des, pc->m_T_amb_high);
