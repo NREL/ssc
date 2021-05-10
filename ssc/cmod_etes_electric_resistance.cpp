@@ -188,6 +188,10 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
     { SSC_OUTPUT, SSC_ARRAY,  "e_ch_tes",                      "TES charge state",                                              "MWht",         "",                                  "",                                         "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_ARRAY,  "q_dot_tes_losses",              "TES thermal losses",                                            "MWt",          "",                                  "",                                         "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_ARRAY,  "q_dot_tes_heater",              "TES freeze protection power",                                   "MWe",          "",                                  "",                                         "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "T_tes_hot",                     "TES hot temperature",                                           "C",            "",                                  "",                                         "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "T_tes_cold",                    "TES cold temperature",                                          "C",            "",                                  "",                                         "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "mass_tes_cold",                 "TES cold tank mass (end)",                                      "kg",           "",                                  "",                                         "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "mass_tes_hot",                  "TES hot tank mass (end)",                                       "kg",           "",                                  "",                                         "*",                                                                "",              "" },
 
         // Cycle outputs
     //{ SSC_OUTPUT, SSC_ARRAY,  "eta_cycle",                     "PC efficiency (no cooling parasitics)",                         "",             "",               "powerblock",     "*",                       "",                      "" },
@@ -447,6 +451,10 @@ public:
         // Set TES cmod outputs
         storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_Q_DOT_LOSS, allocate("q_dot_tes_losses", n_steps_fixed), n_steps_fixed);
         storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_W_DOT_HEATER, allocate("q_dot_tes_heater", n_steps_fixed), n_steps_fixed);
+        storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_TES_T_HOT, allocate("T_tes_hot", n_steps_fixed), n_steps_fixed);
+        storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_TES_T_COLD, allocate("T_tes_cold", n_steps_fixed), n_steps_fixed);
+        storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_MASS_COLD_TANK, allocate("mass_tes_cold", n_steps_fixed), n_steps_fixed);
+        storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_MASS_HOT_TANK, allocate("mass_tes_hot", n_steps_fixed), n_steps_fixed);
 
         // *****************************************************
         // *****************************************************
