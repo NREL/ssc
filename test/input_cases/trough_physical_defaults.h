@@ -292,6 +292,16 @@ ssc_data_t trough_physical_defaults()
     ssc_data_set_matrix(data, "tes_lengths", p_tes_lengths, 1, 11);
     ssc_data_set_number(data, "DP_SGS", 0);
     ssc_data_set_number(data, "adjust:constant", 4);
+    ssc_data_set_number(data, "fluid_dens_outlet_temp", 706.384);
+    ssc_data_set_number(data, "fluid_dens_inlet_temp", 820.811);
+    ssc_data_set_number(data, "radio_sm_or_area", 0);
+    ssc_data_set_number(data, "specified_solar_multiple", 2);
+    ssc_data_set_number(data, "specified_total_aperture", 877000);
+    ssc_data_set_number(data, "non_solar_field_land_area_multiplier", 1.4);
+    ssc_data_set_number(data, "lat", 32.13);
+    ssc_data_set_number(data, "disp_wlim_maxspec", 10.e37);
+    ssc_number_t p_trough_loop_control[25] = { 8, 1, 1, 8, 1, 1, 7, 1, 1, 6, 1, 1, 5, 1, 1, 4, 1, 1, 3, 1, 1, 2, 1, 1, 1 };
+    ssc_data_set_array(data, "trough_loop_control", p_trough_loop_control, 25);
 
     return data;
 }
