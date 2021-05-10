@@ -72,6 +72,7 @@ public:
 	// calculated charges per period
 	std::vector<double>  dc_tou_charge;
 	ssc_number_t dc_flat_charge;
+    bool use_current_month_ratchet;
 
     /*!
      * Data structure organizing all of the utility usage and charges for a given month.
@@ -112,6 +113,12 @@ public:
 	std::vector<ssc_number_t> monthly_dc_fixed;
 	std::vector<ssc_number_t> monthly_dc_tou;
 
+    bool en_dc_ratchets;
+    std::vector<ssc_number_t> prev_peak_demand; // Demand peaks for the 12 months prior to the ur_month array
+    std::vector<ssc_number_t> dc_ratchet_percents;
+    double demand_minimum;
+    int lookback_months;
+
 	bool tou_demand_single_peak;
 
     bool en_ts_buy_rate;
@@ -133,6 +140,8 @@ public:
 	void setup_energy_rates(ssc_number_t* ec_weekday, ssc_number_t* ec_weekend, size_t ec_tou_rows, ssc_number_t* ec_tou_in, bool sell_eq_buy);
     /* Optional function if demand charges are present */
 	void setup_demand_charges(ssc_number_t* dc_weekday, ssc_number_t* dc_weekend, size_t dc_tou_rows, ssc_number_t* dc_tou_in, size_t dc_flat_rows, ssc_number_t* dc_flat_in);
+    /* Optional function if energy charges use a ratchet for the billing demand */
+    void setup_ratcheting_demand(ssc_number_t* ratchet_percent_matrix, ssc_number_t* prior_loads);
 
     /* Populate ur_month objects from those filled out in setup_energy_rates. Called annually in cmod_utility_rate5, other classes may reset ur_month directly */
     void init_energy_rates(bool gen_only);

@@ -28,7 +28,8 @@ ur_month::ur_month() :
 	dc_flat_ub(),
 	dc_flat_ch(),
 	dc_tou_charge(),
-	dc_flat_charge()
+	dc_flat_charge(),
+    use_current_month_ratchet(false)
 {}
 
 ur_month::ur_month(const ur_month& tmp) :
@@ -57,7 +58,8 @@ ur_month::ur_month(const ur_month& tmp) :
 	dc_flat_ub(tmp.dc_flat_ub),
 	dc_flat_ch(tmp.dc_flat_ch),
 	dc_tou_charge(tmp.dc_tou_charge),
-	dc_flat_charge(tmp.dc_flat_charge)
+	dc_flat_charge(tmp.dc_flat_charge),
+    use_current_month_ratchet(tmp.use_current_month_ratchet)
 {}
 
 void ur_month::update_net_and_peak(double energy, double power, size_t step) {
@@ -105,6 +107,11 @@ rate_data::rate_data() :
 	dc_hourly_peak(),
 	monthly_dc_fixed(12),
 	monthly_dc_tou(12),
+    en_dc_ratchets(false),
+    prev_peak_demand(12),
+    dc_ratchet_percents(12),
+    demand_minimum(0.0),
+    lookback_months(1),
 	tou_demand_single_peak(false),
     enable_nm(false),
     nm_credits_w_rollover(false),
@@ -130,6 +137,11 @@ rate_data::rate_data(const rate_data& tmp) :
 	dc_hourly_peak(tmp.dc_hourly_peak),
 	monthly_dc_fixed(tmp.monthly_dc_fixed),
 	monthly_dc_tou(tmp.monthly_dc_tou),
+    en_dc_ratchets(tmp.en_dc_ratchets),
+    prev_peak_demand(tmp.prev_peak_demand),
+    dc_ratchet_percents(tmp.dc_ratchet_percents),
+    demand_minimum(tmp.demand_minimum),
+    lookback_months(tmp.lookback_months),
 	tou_demand_single_peak(tmp.tou_demand_single_peak),
     enable_nm(tmp.enable_nm),
     nm_credits_w_rollover(tmp.nm_credits_w_rollover),
@@ -724,6 +736,22 @@ void rate_data::setup_demand_charges(ssc_number_t* dc_weekday, ssc_number_t* dc_
 
 		}
 	}
+}
+
+void rate_data::setup_ratcheting_demand(ssc_number_t* ratchet_percent_matrix, ssc_number_t* prior_loads)
+{
+    // This means you have to error check this somewhere else - will this always be true?
+    size_t nrows = 12;
+    size_t ncols = 3;
+    util::matrix_t<double> ratchet_matrix(nrows, ncols);
+    ratchet_matrix.assign(ratchet_percent_matrix, nrows, ncols);
+
+    for (int i = 0; i < nrows; i++) {
+        dc_ratchet_percents[i] = ratchet_matrix.at(i, 1);
+        m_month[i].use_current_month_ratchet = ratchet_matrix.at(i, 2) == 1;
+        prev_peak_demand[i] = prior_loads[i];
+    }
+
 }
 
 void rate_data::sort_energy_to_periods(int month, double energy, size_t step) {
