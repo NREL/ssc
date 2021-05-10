@@ -65,20 +65,10 @@ static var_info _cm_vtab_mhk_wave[] = {
 	//{ SSC_INPUT,			SSC_NUMBER,			"calculate_capacity",					"Calculate capacity outside UI?",									"0/1",			"",             "MHKWave",          "?=1",                      "INTEGER,MIN=0,MAX=1",      "" },
 	{ SSC_INPUT,			SSC_NUMBER,			"number_devices",						"Number of wave devices in the system",								"",				"",             "MHKWave",          "?=1",                      "INTEGER",			    	"" },
 	{ SSC_INPUT,			SSC_NUMBER,			"system_capacity",						"System Nameplate Capacity",										"kW",			"",				"MHKWave",			"?=0",						"",							"" },
-    { SSC_INPUT,           SSC_ARRAY,           "number_hours",                "Number of hours in wave time series",                                        "",     "",                       "Weather Reader",      "?",                        "",                            "" },
-    { SSC_INPUT,           SSC_ARRAY,           "number_records",                "Number of records in wave time series",                                        "",     "",                       "Weather Reader",      "?",                        "",                            "" },
+    { SSC_INPUT,           SSC_NUMBER,           "number_hours",                "Number of hours in wave time series",                                        "",     "",                       "Weather Reader",      "?",                        "",                            "" },
+    { SSC_INPUT,           SSC_NUMBER,           "number_records",                "Number of records in wave time series",                                        "",     "",                       "Weather Reader",      "?",                        "",                            "" },
 
-    //time stamps
-    /*
-    { SSC_INPUT,           SSC_ARRAY,           "month",                        "Month",                                                          "",      "",                       "Weather Reader",      "?",                        "",                            "" },
-    { SSC_INPUT,        SSC_ARRAY,       "year",                    "Year",                             "yr",     "",                      "Weather Reader",      "",                       "",               "" },
-    { SSC_INPUT,        SSC_ARRAY,       "day",                     "Day",                              "dy",     "1-365",                 "Weather Reader",      "",                       "",                          "" },
-    { SSC_INPUT,        SSC_ARRAY,       "hour",                    "Hour",                             "hr",     "0-23",                  "Weather Reader",      "",                       "",                          "" },
-    { SSC_INPUT,        SSC_ARRAY,       "minute",                  "Minute",                           "min",    "0-59",                  "Weather Reader",      "",                       "",                          "" },
-    */
-    //{ SSC_INPUT,          SSC_ARRAY,           "time_check",                        "Time check",                                                          "",      "",                       "Weather Reader",      "?",                        "",                            "" },
-
-	{ SSC_INPUT,			SSC_NUMBER,			"device_rated_power",				"Rated capacity of device",													"kW",			"",				"MHKWave",			"*",		"",						"" },
+    { SSC_INPUT,			SSC_NUMBER,			"device_rated_power",				"Rated capacity of device",													"kW",			"",				"MHKWave",			"*",		"",						"" },
     { SSC_INPUT,			SSC_NUMBER,			"fixed_charge_rate",						"FCR from LCOE Cost page",									"",				"",             "MHKWave",         "?=1",                      "",				"" },
     { SSC_INPUT,			SSC_NUMBER,			"device_costs_total",						"Device costs",									"$",				"",             "MHKWave",         "?=1",                      "",				"" },
     { SSC_INPUT,			SSC_NUMBER,			"balance_of_system_cost_total",						"BOS costs",									"$",				"",             "MHKWave",         "?=1",                      "",				"" },
@@ -99,10 +89,8 @@ static var_info _cm_vtab_mhk_wave[] = {
     { SSC_OUTPUT,           SSC_ARRAY,          "gen",                        "Device power generated",                                            "kW",          "", "Time Series",          "",                        "",          "" },
 
     { SSC_OUTPUT,           SSC_ARRAY,          "sig_wave_height_index_mat",            "Wave height index locations for time series",                      "m",                         "", "MHKWave",          "wave_resource_model_choice=1",                        "",          "" },
-    //{ SSC_OUTPUT,           SSC_ARRAY,          "sig_wave_height_index_location",            "Wave height index number for time series",                      "m",                         "", "MHKWave",          "wave_resource_model_choice=1",                        "",          "" },
 
     { SSC_OUTPUT,           SSC_ARRAY,          "energy_period_index_mat",            "Wave period index locations for time series",                      "s",                         "", "MHKWave",          "wave_resource_model_choice=1",                        "",          "" },
-    //{ SSC_OUTPUT,           SSC_ARRAY,          "energy_period_index_location",            "Wave period index number for time series",                      "s",                         "", "MHKWave",          "wave_resource_model_choice=1",                        "",          "" },
 
     { SSC_OUTPUT,           SSC_ARRAY,          "wave_power_index_mat",            "Wave power for time series",                      "kW",                         "", "MHKWave",          "wave_resource_model_choice=1",                        "",          "" },
     { SSC_OUTPUT,			SSC_NUMBER,			"capacity_factor",						"Capacity Factor",													"%",			"",				"MHKWave",			"*",						"",							"" },
@@ -138,8 +126,6 @@ class wave_data_provider
 {
 public:
 
-    //wave_data_provider();
-    //virtual ~wave_data_provider();
 
     std::string name; //Name of system where wave data is pulled from
     std::string city; //City where wave resource is located
@@ -167,7 +153,7 @@ public:
 
     //virtual bool read_line(std::vector<double>& values) = 0;
     //virtual size_t nrecords() = 0;
-    size_t nrecords() { return m_nRecords; }
+    size_t num_records() { return m_nRecords; }
 
 
 
@@ -176,40 +162,20 @@ public:
     bool has_message() { return m_errorMsg.size() > 0; }
     std::string message() { return m_errorMsg; }
 
-
-
-    //bool check_hour_of_year(int hour, int line);
-    //std::vector<double> read(int datatype, double* wave_height[nrecords], double* wave_period);
-    //std::vector<double> read_wave_height(int datatype,)
-    // virtual functions specific to weather data source
-    /// check if the data is available from weather file
-
-
-    /// reads one more record
-    //virtual bool read(weather_record* r) = 0;
-
 protected:
-    /// index of resource type (temp=1,pres=2,speed=3,dir=4) for each measurement height
     std::vector<int> m_dataid;
     size_t m_nRecords = 2920;
     /// measurement height corresponding to each column header; same size as m_dataid
     std::vector<double> m_sigwaveheight;
     std::vector<double> m_waveperiod;
     util::matrix_t<double> m_wave_resource_matrix_data;
-    //ssc_number_t* m_wave_resource_matrix_data;
-    //std::vector<double> m_wave_resource_matrix_data;
-    //std::vector<double> m_resourcematrix;
     std::vector<double> m_relativeHumidity;
     std::string m_errorMsg;
-
-    //bool find_closest(int& closest_index, int id, int ncols, double requested_height, int index_to_exclude = -1);
-    //bool can_interpolate(int index1, int index2, int ncols, double requested_height);
 
 };
 
 class wavedata : public wave_data_provider
 {
-    size_t irecord;
     util::matrix_t<double> wave_resource_matrix_data;
     std::string stdErrorMsg;
 public:
@@ -228,7 +194,6 @@ public:
 
 wavedata::wavedata(int wave_resource_model_choice, var_data* data_table) //wavedata class for specifying wave resource inputs in a table for pysam
 {
-    irecord = 0;
 
     stdErrorMsg = "wave data must be an SSC table variable with fields: "
         "(string): name, city, state, country, sea_bed, data_source, notes, "
@@ -276,12 +241,16 @@ wavedata::wavedata(int wave_resource_model_choice, var_data* data_table) //waved
             m_errorMsg = util::format("number of wave height entries must be same as number of wave period entries"); 
             return;
         }
+        m_nRecords = wave_size;
     }
     else if (wave_resource_model_choice == 0) { //PDF matrix option, required input of 0 or 1
 
         if (var_data* D = data_table->table.lookup("wave_resource_matrix")) { //Check if matrix data was specified
-            if (D->type == SSC_MATRIX) //Is data in a matrix (21x22 matrix)
+            if (D->type == SSC_MATRIX) { //Is data in a matrix (21x22 matrix)
                 m_wave_resource_matrix_data = D->num; //Write data to wave resource matrix data field as matrix
+                //m_nRecords = nrecords(wave_resource_model_choice);
+                m_nRecords = m_wave_resource_matrix_data.nrows();
+            }
         }
         else {
             m_errorMsg = util::format("Must specify 21x22 matrix of wave resource probability for wave periods and wave heights");
@@ -394,7 +363,7 @@ public:
             wave_resource_matrix = as_matrix("wave_resource_matrix");
         else if (!is_assigned("wave_resource_matrix") && wave_resource_model_choice == 0) { //If wave resource matrix is specified in wave_resource_data table
             wave_resource_matrix = wave_dp->wave_matrix();
-            size_t table_records = wave_dp->nrecords();
+            size_t table_records = wave_dp->num_records();
             if (table_records != 21)  //21 rows for jpd matrix
                 throw exec_error("mhk_wave", "Wave resource data from table must be 21x22 matrix" + wave_dp->error());
             
@@ -418,19 +387,9 @@ public:
 		    ssc_number_t *p_annual_energy_dist = allocate("annual_energy_distribution", wave_resource_matrix.nrows(), wave_resource_matrix.ncols());
             
 		    int k = 0; //Iterator going through rows and columns of resource matrix
-		
-		
-		    //Create a vector to store 1st column values of resource and power curve. This is compared against
-		    //the values of 1st column passed by user in UI:
-		    //std::vector<double> _check_column{0, 0.25, 0.75, 1.25, 1.75, 2.25, 2.75, 3.25, 3.75, 4.25, 4.75, 5.25, 5.75, 6.25, 6.75, 7.25, 7.75, 8.25, 8.75, 9.25, 9.75};
-		
+			
 		    for (size_t i = 0; i < (size_t)wave_power_matrix.nrows(); i++) {
 			    for (size_t j = 0; j < (size_t)wave_power_matrix.ncols(); j++) {
-
-				    //Store max power if not set in UI:
-				    /*if(as_integer("calculate_capacity") > 0)
-					    if (_power_vect[i][j] > system_capacity)
-						    system_capacity = _power_vect[i][j];*/
 
 				    //Calculate and allocate annual_energy_distribution:
 				    if (j == 0 || i == 0)	//Where (i = 0) is the row header, and (j =  0) is the column header.
@@ -447,12 +406,6 @@ public:
 				    k++; //Go to next value in wave resource grid
 
 			    }
-
-			    /*//Throw exception if default header column (of power curve and resource) does not match user input header row:
-			    if (_check_column[i] != wave_resource_matrix.at(i, 0))
-				    throw compute_module::exec_error("mhk_wave", "Wave height bins of resource matrix don't match. Reset bins to default");
-			    if (_check_column[i] != wave_power_matrix.at(i,0))
-				    throw compute_module::exec_error("mhk_wave", "Wave height bins of power matrix don't match. Reset bins to default");*/
 		    }
 
             if (resource_vect_checker < 99.5) //Sum of wave resource matrix must be ~= 100%
@@ -475,7 +428,7 @@ public:
                 wave_period_input = as_vector_double("energy_period");
             }
             else if (!is_assigned("significant_wave_height") && !is_assigned("energy_period") && is_assigned("wave_resource_data")) { //Check if height and period variables are assigned in wave resource table data
-                number_records = wave_dp->nrecords();
+                number_records = wave_dp->num_records();
                 number_hours = number_records * 3; //always 3 hour data from wave api calls
                 wave_height_input = wave_dp->wave_heights();
                 if (wave_height_input.empty()) {
@@ -600,7 +553,7 @@ public:
         double wave_resource_end_period = 0;
         double wave_resource_end_height = 0;
         //Find where in wave resource matrix waves start to have a nonzero percentage, where wave distribution ends in grid
-        if (is_assigned("wave_resource_matrix")) { //Check for resource matrix to find ramp on and ramp off values from
+        if (wave_resource_model_choice == 0) { //Check for resource matrix to find ramp on and ramp off values from
             for (size_t l = 1; l < (size_t)wave_power_matrix.nrows(); l++) {
                 for (size_t m = 1; m < (size_t)wave_power_matrix.ncols(); m++) {
 
