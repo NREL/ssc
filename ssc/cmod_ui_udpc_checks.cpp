@@ -67,7 +67,7 @@ public:
 
         try
         {
-            split_ind_tbl(cmbd_ind, T_htf_ind, m_dot_ind, T_amb_ind,
+            N_udpc_common::split_ind_tbl(cmbd_ind, T_htf_ind, m_dot_ind, T_amb_ind,
                 n_T_htf_pars, n_T_amb_pars, n_m_dot_pars,
                 m_dot_low, m_dot_des, m_dot_high,
                 T_htf_low, T_htf_des, T_htf_high,
