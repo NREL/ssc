@@ -22,7 +22,83 @@ public:
 
 	void exec() override
 	{
-		double a_ref = 12.0;
+        // Setup independent variable combinations
+            // HTF inlet temperature
+        double T_htf_des = 565.0;   //[C]
+        double T_htf_low = 545.0;   //[C]
+        double T_htf_high = 575.0;  //[C]
+        size_t n_T_htf = 7;
+        double dT_T_htf = (T_htf_high - T_htf_low) / (double)(n_T_htf - 1);
+        std::vector<double> T_htf_levels = std::vector<double>{ T_htf_low, T_htf_des, T_htf_high };
+
+            // HTF mass flow rate
+        double m_dot_htf_ND_des = 1.0;     //[-] By definition, ND design mass flow is 1.0
+        double m_dot_htf_ND_low = 0.5;     //[-]
+        double m_dot_htf_ND_high = 1.1;    //[-]
+        size_t n_m_dot_htf_ND = 13;
+        double dT_m_dot_htf_ND = (m_dot_htf_ND_high - m_dot_htf_ND_low) / (double)(n_m_dot_htf_ND - 1);
+        std::vector<double> m_dot_htf_ND_levels = std::vector<double>{ m_dot_htf_ND_low, m_dot_htf_ND_des, m_dot_htf_ND_high };
+
+            // Ambient temperature
+        double T_amb_des = 35.0;    //[C]
+        double T_amb_low = 0.0;     //[C]
+        double T_amb_high = 45.0;   //[C]
+        size_t n_T_amb = 10;
+        double dT_T_amb = (T_amb_high - T_amb_low) / (double)(n_T_amb - 1);
+        std::vector<double> T_amb_levels = std::vector<double>{ T_amb_low, T_amb_des, T_amb_high };
+
+        size_t n_levels = 3;    // changing levels would require generalizing interpolation routines
+        size_t n_total = n_levels * (n_T_htf + n_m_dot_htf_ND + n_T_amb);
+        util::matrix_t<double> udpc_data_full(n_total, C_ud_power_cycle::E_COL_M_H2O + 1, std::numeric_limits<double>::quiet_NaN());
+
+        size_t k = 0;
+        for (size_t i = 0; i < n_levels; i++) {
+            for (size_t j = 0; j < n_T_htf; j++) {
+                udpc_data_full(k,C_ud_power_cycle::E_COL_T_HTF) = T_htf_low + j*dT_T_htf;
+                udpc_data_full(k,C_ud_power_cycle::E_COL_M_DOT) = m_dot_htf_ND_levels[i];
+                udpc_data_full(k,C_ud_power_cycle::E_COL_T_AMB) = T_amb_des;
+                k++;
+            }
+        }
+
+        for (size_t i = 0; i < n_levels; i++) {
+            for (size_t j = 0; j < n_m_dot_htf_ND; j++) {
+                udpc_data_full(k, C_ud_power_cycle::E_COL_T_HTF) = T_htf_des;
+                udpc_data_full(k, C_ud_power_cycle::E_COL_M_DOT) = m_dot_htf_ND_low + j*dT_m_dot_htf_ND;
+                udpc_data_full(k, C_ud_power_cycle::E_COL_T_AMB) = T_amb_levels[i];
+                k++;
+            }
+        }
+
+        for (size_t i = 0; i < n_levels; i++) {
+            for (size_t j = 0; j < n_T_amb; j++) {
+                udpc_data_full(k, C_ud_power_cycle::E_COL_T_HTF) = T_htf_levels[i];
+                udpc_data_full(k, C_ud_power_cycle::E_COL_M_DOT) = m_dot_htf_ND_des;
+                udpc_data_full(k, C_ud_power_cycle::E_COL_T_AMB) = T_amb_low + j*dT_T_amb;
+                k++;
+            }
+        }
+
+        // Check that index counter matches expected number of inputs
+        if (k != n_total) {
+            throw(C_csp_exception("udpc setup index counter final value does not match expected"));
+        }
+
+        // Add extra data to test filter
+        bool is_test_extra_data;
+        if (is_test_extra_data) {
+            size_t n_extra = 1;
+            udpc_data_full.resize_preserve(n_total + n_extra, C_ud_power_cycle::E_COL_M_H2O + 1, std::numeric_limits<double>::quiet_NaN());
+            udpc_data_full(n_total,C_ud_power_cycle::E_COL_T_HTF) = T_htf_low + 0.5*dT_T_htf;
+            udpc_data_full(n_total,C_ud_power_cycle::E_COL_M_DOT) = m_dot_htf_ND_levels[1];
+            udpc_data_full(n_total,C_ud_power_cycle::E_COL_T_AMB) = T_amb_des;
+        }
+
+        // If try to pre-process and split table before defining dependent variables, what happens?
+        util::matrix_t<double> T_htf_ind, m_dot_htf_ND_ind, T_amb_ind;
+        N_udpc_common::split_ind_tbl(udpc_data_full, T_htf_ind, m_dot_htf_ND_ind, T_amb_ind);
+
+        double a_ref = 12.0;
 		double b_ref = 13.0;
 		double c_ref = 14.0;
 		double Y_ref = three_var_eqn(a_ref, b_ref, c_ref);
