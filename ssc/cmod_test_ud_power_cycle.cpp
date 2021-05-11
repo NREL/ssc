@@ -85,13 +85,13 @@ public:
         }
 
         // Add extra data to test filter
-        bool is_test_extra_data;
+        bool is_test_extra_data = true;
         if (is_test_extra_data) {
             size_t n_extra = 1;
             udpc_data_full.resize_preserve(n_total + n_extra, C_ud_power_cycle::E_COL_M_H2O + 1, std::numeric_limits<double>::quiet_NaN());
             udpc_data_full(n_total,C_ud_power_cycle::E_COL_T_HTF) = T_htf_low + 0.5*dT_T_htf;
-            udpc_data_full(n_total,C_ud_power_cycle::E_COL_M_DOT) = m_dot_htf_ND_levels[1];
-            udpc_data_full(n_total,C_ud_power_cycle::E_COL_T_AMB) = T_amb_des;
+            udpc_data_full(n_total,C_ud_power_cycle::E_COL_M_DOT) = m_dot_htf_ND_low + 0.5*dT_m_dot_htf_ND;
+            udpc_data_full(n_total,C_ud_power_cycle::E_COL_T_AMB) = T_amb_low + 0.5*dT_T_amb;
         }
 
         // If try to pre-process and split table before defining dependent variables, what happens?

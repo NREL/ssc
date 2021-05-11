@@ -201,24 +201,24 @@ public:
 
 namespace N_udpc_common
 {
-    void get_var_setup(std::vector<double>& vec_unique, std::vector<double>& var_vec,
+    void get_var_setup(const std::vector<double>& vec_unique, const std::vector<double>& var_vec,
         double& var_des, double& var_low, double& var_high);
 
-    bool is_level_in_par(std::vector<std::vector<double>> test_combs,
-        std::vector<std::vector<double>> full_table);
+    bool is_level_in_par(const std::vector<std::vector<double>> test_combs,
+        const std::vector<std::vector<double>> full_table);
 
-    int split_ind_tbl(util::matrix_t<double>& combined, util::matrix_t<double>& T_htf_ind,
+    int split_ind_tbl(const util::matrix_t<double>& combined, util::matrix_t<double>& T_htf_ind,
         util::matrix_t<double>& m_dot_ind, util::matrix_t<double>& T_amb_ind);
 
-    int split_ind_tbl(util::matrix_t<double>& combined, util::matrix_t<double>& T_htf_ind,
+    int split_ind_tbl(const util::matrix_t<double>& combined, util::matrix_t<double>& T_htf_ind,
         util::matrix_t<double>& m_dot_ind, util::matrix_t<double>& T_amb_ind,
         int& n_T_htf_pars, int& n_T_amb_pars, int& n_m_dot_pars,
         double& m_dot_low, double& m_dot_des, double& m_dot_high,
         double& T_htf_low, double& T_htf_des, double& T_htf_high,
         double& T_amb_low, double& T_amb_des, double& T_amb_high);
 
-    int combine_ind_tbl(util::matrix_t<double>& combined, util::matrix_t<double>& T_htf_ind,
-        util::matrix_t<double>& m_dot_ind, util::matrix_t<double>& T_amb_ind,
+    int combine_ind_tbl(util::matrix_t<double>& combined, const util::matrix_t<double>& T_htf_ind,
+        const util::matrix_t<double>& m_dot_ind, const util::matrix_t<double>& T_amb_ind,
         double m_dot_low, double m_dot_des, double m_dot_high,
         double T_htf_low, double T_htf_des, double T_htf_high,
         double T_amb_low, double T_amb_des, double T_amb_high);
