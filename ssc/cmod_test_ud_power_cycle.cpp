@@ -136,7 +136,7 @@ public:
 			c_table(i,3) = three_var_eqn(a_ref,b_high,c_table(i,0))/Y_ref;
 		}
 
-		C_ud_power_cycle c_pc;
+		/*C_ud_power_cycle c_pc;
 
 		c_pc.init(a_table, a_ref, a_low, a_high,
 				b_table, b_ref, b_low, b_high,
@@ -170,7 +170,7 @@ public:
 					}
 				}
 			}
-		}
+		}*/
 	}
 
 	double three_var_eqn(double a, double b, double c)
