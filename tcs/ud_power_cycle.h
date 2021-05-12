@@ -109,6 +109,9 @@ public:
 
 	~C_ud_power_cycle(){};
 
+    void init(const util::matrix_t<double>& udpc_table,
+        double& T_htf_ref_calc /*C*/, double& T_amb_ref_calc /*C*/);
+
 	void init(const util::matrix_t<double> & T_htf_ind, double T_htf_ref /*C*/, double T_htf_low /*C*/, double T_htf_high /*C*/,
 		const util::matrix_t<double> & T_amb_ind, double T_amb_ref /*C*/, double T_amb_low /*C*/, double T_amb_high /*C*/,
 		const util::matrix_t<double> & m_dot_htf_ind, double m_dot_htf_ref /*-*/, double m_dot_htf_low /*-*/, double m_dot_htf_high /*-*/);

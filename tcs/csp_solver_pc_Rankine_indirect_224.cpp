@@ -481,34 +481,24 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 	else
 	{	// Initialization calculations for User Defined power cycle model
 
-        // Import the newer single combined UDPC table if it's populated, otherwise try using the older three separate tables
-        if (!ms_params.mc_combined_ind.is_single())
-        {
-            ms_params.m_T_htf_hot_ref = ms_params.m_T_htf_low = ms_params.m_T_htf_high =
-                ms_params.m_T_amb_des = ms_params.m_T_amb_low = ms_params.m_T_amb_high =
-                ms_params.m_m_dot_htf_low = ms_params.m_m_dot_htf_high = std::numeric_limits<double>::quiet_NaN();
-
-            int n_T_htf_pars, n_T_amb_pars, n_m_dot_pars;
-            n_T_amb_pars = n_T_amb_pars = n_m_dot_pars = 0;
-
-            double m_dot_udpc_des = std::numeric_limits<double>::quiet_NaN();
-
-            N_udpc_common::split_ind_tbl(ms_params.mc_combined_ind, ms_params.mc_T_htf_ind, ms_params.mc_m_dot_htf_ind, ms_params.mc_T_amb_ind,
-                n_T_htf_pars, n_T_amb_pars, n_m_dot_pars,
-                ms_params.m_m_dot_htf_low, m_dot_udpc_des, ms_params.m_m_dot_htf_high,
-                ms_params.m_T_htf_low, ms_params.m_T_htf_hot_ref, ms_params.m_T_htf_high,
-                ms_params.m_T_amb_low, ms_params.m_T_amb_des, ms_params.m_T_amb_high);
-
-        }
-        else if ( ms_params.mc_T_htf_ind.is_single() || ms_params.mc_T_amb_ind.is_single() || ms_params.mc_m_dot_htf_ind.is_single() ) {
-            throw(C_csp_exception("UDPC tables are not set", "UDPC Table Importation"));
+        if(ms_params.mc_combined_ind.is_single()){
+            throw(C_csp_exception("UDPC mode selected by UDPC table is not set"));
         }
 
-		// Load tables into user defined power cycle member class
-			// .init method will throw an error if initialization fails, so catch upstream
-		mc_user_defined_pc.init( ms_params.mc_T_htf_ind, ms_params.m_T_htf_hot_ref, ms_params.m_T_htf_low, ms_params.m_T_htf_high,
-								ms_params.mc_T_amb_ind, ms_params.m_T_amb_des, ms_params.m_T_amb_low, ms_params.m_T_amb_high,
-								ms_params.mc_m_dot_htf_ind, 1.0, ms_params.m_m_dot_htf_low, ms_params.m_m_dot_htf_high );
+        double T_htf_ref_udpc_calc, T_amb_ref_udpc_calc;
+        mc_user_defined_pc.init(ms_params.mc_combined_ind, T_htf_ref_udpc_calc, T_amb_ref_udpc_calc);
+
+        // Set design point ambient temperature to value calculated from UDPC table
+        ms_params.m_T_amb_des = T_amb_ref_udpc_calc;        //[C]
+
+        // Check input design HTF temperature vs design HTF temperature calculated from UDPC table
+        // The input design HTF temperature is related to the heat source and TES designs, so we can't reset it like the design ambient temperature
+        // Report message if different
+        if (std::abs(T_htf_ref_udpc_calc - ms_params.m_T_htf_hot_ref) > 0.1) {
+            m_error_msg = util::format("The input cycle design HTF hot temperature is %lg, but the calculated design HTF hot temperature"
+            " in the UDPC table is %lg. This may result in unexpected cycle performance.", ms_params.m_T_htf_hot_ref, T_htf_ref_udpc_calc);
+            mc_csp_messages.add_message(C_csp_messages::WARNING, m_error_msg);
+        }
 
 		if(ms_params.m_W_dot_cooling_des != ms_params.m_W_dot_cooling_des || ms_params.m_W_dot_cooling_des < 0.0 )
 		{
