@@ -529,7 +529,10 @@ class C_csp_power_cycle
 
 public:
 	
-	// Collector-receiver technology type
+    // Class to save messages for up stream classes
+    C_csp_messages mc_csp_messages;
+
+    // Collector-receiver technology type
 	bool m_is_sensible_htf;		//[-] True = indirect, sensible HTF, e.g. molten salt. False = direct steam
 
 	C_csp_power_cycle()
