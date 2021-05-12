@@ -189,6 +189,39 @@ bool rate_data::check_for_kwh_per_kw_rate(int units) {
     return (units == 1) || (units == 3);
 }
 
+double rate_data::get_billing_demand(int month) {
+    int m = 0;
+    double billing_demand = demand_minimum;
+    int prev_yr_lookback = 11 - (lookback_months - month); // What month do we stop looking back in the prev yr?
+
+    for (m = 11; m >= prev_yr_lookback && m >= 0; m--) {
+        double ratchet_percent = dc_ratchet_percents[m] * 0.01;
+        double months_demand = prev_peak_demand[m] * ratchet_percent;
+        if (months_demand > billing_demand) {
+            billing_demand = months_demand;
+        }
+    }
+
+    int start_month = 0;
+    if (month >= lookback_months) {
+        start_month = month - lookback_months;
+    }
+
+    for (m = start_month; m <= month; m++) {
+        double ratchet_percent = dc_ratchet_percents[m] * 0.01;
+        double months_demand = m_month[m].dc_flat_peak * ratchet_percent;
+        if (months_demand > billing_demand) {
+            billing_demand = months_demand;
+        }
+    }
+
+    if (m_month[month].dc_flat_peak > billing_demand && m_month[month].use_current_month_ratchet) {
+        billing_demand = m_month[month].dc_flat_peak;
+    }
+
+    return billing_demand;
+}
+
 void rate_data::init_energy_rates(bool gen_only) {
 	// calculate the monthly net energy per tier and period based on units
 	for (int m = 0; m < (int)m_month.size(); m++)
@@ -742,14 +775,14 @@ void rate_data::setup_ratcheting_demand(ssc_number_t* ratchet_percent_matrix, ss
 {
     // This means you have to error check this somewhere else - will this always be true?
     size_t nrows = 12;
-    size_t ncols = 3;
+    size_t ncols = 2;
     util::matrix_t<double> ratchet_matrix(nrows, ncols);
     ratchet_matrix.assign(ratchet_percent_matrix, nrows, ncols);
 
     for (int i = 0; i < nrows; i++) {
-        dc_ratchet_percents[i] = ratchet_matrix.at(i, 1);
-        m_month[i].use_current_month_ratchet = ratchet_matrix.at(i, 2) == 1;
-        prev_peak_demand[i] = prior_loads[i];
+        dc_ratchet_percents[i] = ratchet_matrix.at(i, 0);
+        m_month[i].use_current_month_ratchet = ratchet_matrix.at(i, 1) == 1;
+        prev_peak_demand[i] = prior_loads[i]; // TODO: what sign will the values coming in from the GUI have here?
     }
 
 }

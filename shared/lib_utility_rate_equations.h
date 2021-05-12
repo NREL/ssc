@@ -143,7 +143,13 @@ public:
     /* Optional function if energy charges use a ratchet for the billing demand */
     void setup_ratcheting_demand(ssc_number_t* ratchet_percent_matrix, ssc_number_t* prior_loads);
 
-    /* Populate ur_month objects from those filled out in setup_energy_rates. Called annually in cmod_utility_rate5, other classes may reset ur_month directly */
+    /* call ur_month.update_net_and_peak before this, otherwise you'll get low values back */
+    double get_billing_demand(int month);
+    /* Call at end of year - copies data from ur_month array to prev_peak_demand for get_billing_demand to use*/
+    void copy_demand_peaks();
+
+    /* Populate ur_month objects from those filled out in setup_energy_rates. Called annually in cmod_utility_rate5, other classes may reset ur_month directly
+       Can be called right away to create the vectors, but for kWh/kW rates needs to be called once after ur_month.update_net_and_peak to be accurate */
     void init_energy_rates(bool gen_only);
 
 	// Runs each step
