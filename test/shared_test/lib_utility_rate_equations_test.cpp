@@ -449,12 +449,12 @@ TEST(lib_utility_rate_equations_test, test_billing_demand_calcs)
                                           60, 0,
                                           60, 0 };
 
-    data.setup_ratcheting_demand(p_ur_dc_ratchet, year_zero_power);
+    data.setup_ratcheting_demand(p_ur_dc_ratchet);
     data.demand_minimum = 500;
     data.en_dc_ratchets = true;
     data.lookback_months = 11;
 
-    std::vector<double> year_one_power = {  -1200,
+    std::vector<ssc_number_t> year_one_power = {  -1200,
                                             -1100,
                                             -900,
                                             -700,
@@ -478,6 +478,8 @@ TEST(lib_utility_rate_equations_test, test_billing_demand_calcs)
         curr_month.update_net_and_peak(power, power, step);
         data.m_month[month] = curr_month;
     }
+
+    data.setup_prev_demand(year_zero_power);
 
     std::vector<double> billing_demands = { 1092.5,
                                             1092.5,

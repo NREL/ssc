@@ -396,7 +396,7 @@ void rate_setup::setup(var_table* vt, int num_recs_yearly, int nyears, rate_data
     rate.net_metering_credit_month = (int)vt->as_number("ur_nm_credit_month");
     rate.nm_credit_sell_rate = vt->as_number("ur_nm_yearend_sell_rate");
 
-    ssc_number_t* ratchet_matrix = NULL; ssc_number_t* year_zero_peaks = NULL;
+    ssc_number_t* ratchet_matrix = NULL;
     bool ratchets_enabled = vt->as_boolean("ur_dc_enable_ratchet");
     if (ratchets_enabled) {
         rate.en_dc_ratchets = ratchets_enabled;
@@ -411,15 +411,7 @@ void rate_setup::setup(var_table* vt, int num_recs_yearly, int nyears, rate_data
             throw exec_error(cm_name, ss.str());
         }
 
-        year_zero_peaks = vt->as_array("ur_dc_ratchet_yearzero_peaks", &nrows);
-
-        if (nrows != 12) {
-            std::ostringstream ss;
-            ss << "The ur_dc_ratchet_yearzero_peaks array should have 12 rows. Instead it has " << nrows << " rows.";
-            throw exec_error(cm_name, ss.str());
-        }
-
-        rate.setup_ratcheting_demand(ratchet_matrix, year_zero_peaks);
+        rate.setup_ratcheting_demand(ratchet_matrix);
     }
     
 
@@ -583,8 +575,9 @@ public:
 			monthly_salespurchases(12),
 			monthly_load(12), monthly_system_generation(12), monthly_elec_to_grid(12),
 			monthly_elec_needed_from_grid(12),
-			monthly_cumulative_excess_energy(12), monthly_cumulative_excess_dollars(12), monthly_bill(12), monthly_peak(12), monthly_test(12),
+			monthly_cumulative_excess_energy(12), monthly_cumulative_excess_dollars(12), monthly_bill(12), monthly_test(12),
             monthly_two_meter_sales(12),
+            monthly_peak_wo_sys(12), monthly_peak_w_sys(12), // can't re-use these due to their role in billing demand
             monthly_true_up_credits(12); // Realistically only one true-up month will be non-zero, but track them all for monthly outputs
 
 		/* allocate outputs */
@@ -783,7 +776,29 @@ public:
 		{
 			throw exec_error("utilityrate5", "Time series rates are not compatible with net metering. Please disable time series rates or change to net billing / buy all - sell all");
 		}
-		
+
+        // If ratcheting demand charges - populate monthly_peaks with what the user specified as year zero:
+        ssc_number_t* year_zero_peaks = NULL;
+        size_t nrows;
+        bool ratchets_enabled = as_boolean("ur_dc_enable_ratchet");
+        if (ratchets_enabled) {
+
+            year_zero_peaks = as_array("ur_dc_ratchet_yearzero_peaks", &nrows);
+
+            if (nrows != 12) {
+                std::ostringstream ss;
+                ss << "The ur_dc_ratchet_yearzero_peaks array should have 12 rows. Instead it has " << nrows << " rows.";
+                throw exec_error("utilityrate5", ss.str());
+            }
+
+            for (i = 0; i < nrows; i++) {
+                monthly_peak_w_sys[i] = year_zero_peaks[i];
+                monthly_peak_wo_sys[i] = year_zero_peaks[i];
+            }
+        }
+
+
+
 		ur_month last_month;
 		ssc_number_t last_excess_energy = 0;
 		ssc_number_t last_excess_dollars = 0;
@@ -870,6 +885,7 @@ public:
 					&monthly_cumulative_excess_dollars[0], &monthly_bill[0],
                     &monthly_two_meter_sales[0],
                     &monthly_true_up_credits[0],
+                    &monthly_peak_wo_sys[0],
                     rate.rate_scale[i], i,
 					last_excess_dollars);
 			}
@@ -885,7 +901,9 @@ public:
 					&monthly_excess_kwhs_earned[0],
 					&rate.dc_hourly_peak[0], &monthly_cumulative_excess_energy[0],
 					&monthly_cumulative_excess_dollars[0], &monthly_bill[0],
-                    &monthly_true_up_credits[0], rate.rate_scale[i], i,
+                    &monthly_true_up_credits[0],
+                    &monthly_peak_wo_sys[0],
+                    rate.rate_scale[i], i,
 					&last_month, last_excess_energy, last_excess_dollars);
 			}
 
@@ -995,10 +1013,10 @@ public:
 				// peak demand and testing energy use
 				for (int ii = 0; ii < 12; ii++)
 				{
-					monthly_peak[ii] = rate.m_month[ii].dc_flat_peak;
+                    monthly_peak_wo_sys[ii] = rate.m_month[ii].dc_flat_peak;
 					monthly_test[ii] = -rate.m_month[ii].energy_net;
 				}
-				assign("year1_monthly_peak_wo_system", var_data(&monthly_peak[0], 12));
+				assign("year1_monthly_peak_wo_system", var_data(&monthly_peak_wo_sys[0], 12));
 				assign("year1_monthly_use_wo_system", var_data(&monthly_test[0], 12));
 			}
 
@@ -1018,7 +1036,9 @@ public:
 						&monthly_excess_kwhs_earned[0],
                         &monthly_net_billing_credits[0],
 						&rate.dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0],
-                        &monthly_two_meter_sales[0], &monthly_true_up_credits[0], rate.rate_scale[i],
+                        &monthly_two_meter_sales[0], &monthly_true_up_credits[0],
+                        &monthly_peak_w_sys[0],
+                        rate.rate_scale[i],
 						i, last_excess_dollars, false, false, true);
 				}
 				else
@@ -1035,6 +1055,7 @@ public:
 						&rate.dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0],
 						&monthly_bill[0], &monthly_two_meter_sales[0],
                         &monthly_true_up_credits[0],
+                        &monthly_peak_w_sys[0],
                         rate.rate_scale[i], i, last_excess_dollars);
 				}
 			}
@@ -1053,6 +1074,7 @@ public:
 					&monthly_excess_kwhs_earned[0],
 					&rate.dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0],
 					&monthly_bill[0], &monthly_true_up_credits[0],
+                    &monthly_peak_w_sys[0],
                     rate.rate_scale[i], i,
 					&last_month, last_excess_energy, last_excess_dollars);
 			}
@@ -1286,10 +1308,10 @@ public:
 				// peak demand and testing energy use
 				for (int ii = 0; ii < 12; ii++)
 				{
-					monthly_peak[ii] = rate.m_month[ii].dc_flat_peak;
+                    monthly_peak_w_sys[ii] = rate.m_month[ii].dc_flat_peak;
 					monthly_test[ii] = -rate.m_month[ii].energy_net;
 				}
-				assign("year1_monthly_peak_w_system", var_data(&monthly_peak[0], 12));
+				assign("year1_monthly_peak_w_system", var_data(&monthly_peak_w_sys[0], 12));
 				assign("year1_monthly_use_w_system", var_data(&monthly_test[0], 12));
 
 			}
@@ -1417,6 +1439,7 @@ public:
 		ssc_number_t *dc_hourly_peak, ssc_number_t monthly_cumulative_excess_energy[12],
 		ssc_number_t monthly_cumulative_excess_dollars[12], ssc_number_t monthly_bill[12],
         ssc_number_t monthly_true_up_credits[12],
+        ssc_number_t prev_monthly_peaks[12],
 		ssc_number_t rate_esc, size_t year, ur_month* prev_dec, ssc_number_t prev_excess_energy, ssc_number_t prev_excess_dollars, bool include_fixed=true, bool include_min=true, bool gen_only=false)
 
 	{
@@ -1533,6 +1556,10 @@ public:
 
 		if (ec_enabled)
 		{
+            if (rate.en_dc_ratchets) {
+                rate.setup_prev_demand(prev_monthly_peaks);
+            }
+
 			// calculate the monthly net energy per tier and period based on units
 			rate.init_energy_rates(gen_only);
 			c = 0;
@@ -1945,6 +1972,7 @@ public:
 		ssc_number_t *dc_hourly_peak, ssc_number_t monthly_cumulative_excess_energy[12],
 		ssc_number_t monthly_cumulative_excess_dollars[12], ssc_number_t monthly_bill[12],
         ssc_number_t monthly_two_meter_sales[12], ssc_number_t monthly_true_up_credits[12],
+        ssc_number_t prev_monthly_peaks[12],
 		ssc_number_t rate_esc, size_t year, ssc_number_t prev_excess_dollars, bool include_fixed = true, bool include_min = true, bool gen_only = false)
 
 	{
@@ -2033,6 +2061,10 @@ public:
 			if (rate.m_month[m].energy_net > 0 && !gen_only)
 				excess_kwhs_earned[m] = rate.m_month[m].energy_net;
 		}
+
+        if (rate.en_dc_ratchets) {
+            rate.setup_prev_demand(prev_monthly_peaks);
+        }
 
 		if (ec_enabled)
 		{

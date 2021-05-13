@@ -114,7 +114,7 @@ public:
 	std::vector<ssc_number_t> monthly_dc_tou;
 
     bool en_dc_ratchets;
-    std::vector<ssc_number_t> prev_peak_demand; // Demand peaks for the 12 months prior to the ur_month array
+    std::vector<ssc_number_t> prev_peak_demand; // Set before calling init_energy_rates
     std::vector<ssc_number_t> dc_ratchet_percents;
     double demand_minimum;
     int lookback_months;
@@ -141,12 +141,11 @@ public:
     /* Optional function if demand charges are present */
 	void setup_demand_charges(ssc_number_t* dc_weekday, ssc_number_t* dc_weekend, size_t dc_tou_rows, ssc_number_t* dc_tou_in, size_t dc_flat_rows, ssc_number_t* dc_flat_in);
     /* Optional function if energy charges use a ratchet for the billing demand */
-    void setup_ratcheting_demand(ssc_number_t* ratchet_percent_matrix, ssc_number_t* prior_loads);
+    void setup_ratcheting_demand(ssc_number_t* ratchet_percent_matrix);
 
+    void setup_prev_demand(ssc_number_t* prev_demand);
     /* call ur_month.update_net_and_peak before this, otherwise you'll get low values back */
     double get_billing_demand(int month);
-    /* Call at end of year - copies data from ur_month array to prev_peak_demand for get_billing_demand to use*/
-    void copy_demand_peaks();
 
     /* Populate ur_month objects from those filled out in setup_energy_rates. Called annually in cmod_utility_rate5, other classes may reset ur_month directly
        Can be called right away to create the vectors, but for kWh/kW rates needs to be called once after ur_month.update_net_and_peak to be accurate */

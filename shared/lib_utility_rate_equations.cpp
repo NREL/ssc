@@ -222,6 +222,12 @@ double rate_data::get_billing_demand(int month) {
     return billing_demand;
 }
 
+void rate_data::setup_prev_demand(ssc_number_t* prev_demand) {
+    for (size_t i = 0; i < prev_peak_demand.size(); i++) {
+        prev_peak_demand[i] = prev_demand[i];
+    }
+}
+
 void rate_data::init_energy_rates(bool gen_only) {
 	// calculate the monthly net energy per tier and period based on units
 	for (int m = 0; m < (int)m_month.size(); m++)
@@ -250,6 +256,10 @@ void rate_data::init_energy_rates(bool gen_only) {
 
 				// track monthly peak to determine which kWh/kW tier
                 double flat_peak = m_month[m].dc_flat_peak;
+                if (en_dc_ratchets) {
+                    // If ratchets are present the peak used here might be the actual peak, or something based on a previous month.
+                    flat_peak = get_billing_demand(m);
+                }
 
                 // get kWh/kW break points based on actual demand
                 for (size_t i_tier = 0; i_tier < m_month[m].ec_tou_units.ncols(); i_tier++)
@@ -771,7 +781,7 @@ void rate_data::setup_demand_charges(ssc_number_t* dc_weekday, ssc_number_t* dc_
 	}
 }
 
-void rate_data::setup_ratcheting_demand(ssc_number_t* ratchet_percent_matrix, ssc_number_t* prior_loads)
+void rate_data::setup_ratcheting_demand(ssc_number_t* ratchet_percent_matrix)
 {
     // This means you have to error check this somewhere else - will this always be true?
     size_t nrows = 12;
@@ -782,16 +792,8 @@ void rate_data::setup_ratcheting_demand(ssc_number_t* ratchet_percent_matrix, ss
     for (int i = 0; i < nrows; i++) {
         dc_ratchet_percents[i] = ratchet_matrix.at(i, 0);
         m_month[i].use_current_month_ratchet = ratchet_matrix.at(i, 1) == 1;
-        prev_peak_demand[i] = prior_loads[i]; // TODO: what sign will the values coming in from the GUI have here?
     }
 
-}
-
-void rate_data::copy_demand_peaks()
-{
-    for (size_t i = 0; i < prev_peak_demand.size(); i++) {
-        prev_peak_demand[i] = m_month[i].dc_flat_charge;
-    }
 }
 
 void rate_data::sort_energy_to_periods(int month, double energy, size_t step) {
