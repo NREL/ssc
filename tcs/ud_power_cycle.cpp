@@ -824,6 +824,7 @@ int N_udpc_common::split_ind_tbl(const util::matrix_t<double>& cmbd_ind, util::m
 
     // convert combined matrix_t to a vector of vectors
     // inner vector: single row, outer vector: rows
+    // check and throw exception for rows with nan values 
     std::vector<std::vector<double>> cmbd_tbl;
     double* row_start;
     double* row_end;
@@ -833,7 +834,13 @@ int N_udpc_common::split_ind_tbl(const util::matrix_t<double>& cmbd_ind, util::m
         row_end = row_start + i_row.ncols();
 
         std::vector<double> mat_row(row_start, row_end);
-        cmbd_tbl.push_back(mat_row);
+        for (size_t j = 0; j < mat_row.size(); j++) {
+            if(std::isnan(mat_row[j])){
+                throw(C_csp_exception("UDPC table data contains NaN inputs"));
+            }
+        }
+        
+        cmbd_tbl.push_back(mat_row);        
     }
 
     // Check for inputs runs that don't match udpc rules
