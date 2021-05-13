@@ -1,5 +1,5 @@
 # SSC (SAM Simulation Core)
-[![Build Status](https://travis-ci.org/NREL/ssc.svg?branch=develop)](https://travis-ci.org/NREL/ssc)
+[![Build Status](https://travis-ci.com/NREL/ssc.svg?branch=develop)](https://travis-ci.com/NREL/ssc)
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2FNREL%2Fssc.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2FNREL%2Fssc?ref=badge_shield)
 
 The SSC Open Source Project repository contains the source code for the technology and financial models contained within the National Renewable Energy Laboratory's System Advisor Model (SAM). For more details about SAM's capabilities, see the SAM website at [https://sam.nrel.gov/](https://sam.nrel.gov).
