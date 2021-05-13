@@ -787,6 +787,13 @@ void rate_data::setup_ratcheting_demand(ssc_number_t* ratchet_percent_matrix, ss
 
 }
 
+void rate_data::copy_demand_peaks()
+{
+    for (size_t i = 0; i < prev_peak_demand.size(); i++) {
+        prev_peak_demand[i] = m_month[i].dc_flat_charge;
+    }
+}
+
 void rate_data::sort_energy_to_periods(int month, double energy, size_t step) {
 	// accumulate energy per period - place all in tier 0 initially and then
 	// break up according to tier boundaries and number of periods

@@ -861,6 +861,15 @@ var_info vtab_utility_rate_common[] = {
     // ur_dc_tou_flat has 4 columns month, tier, peak demand (kW), demand charge
     // replaces 12(P)*6(T)*(peak+charge) = 144 single inputs
     { SSC_INPUT,        SSC_MATRIX,     "ur_dc_flat_mat",           "Demand rates (flat) table",            "",         "",                     "Electricity Rates",        "ur_dc_enable=1",   "",                             "" },
+
+    // Ratcheting demand charges
+    { SSC_INPUT,        SSC_NUMBER,     "ur_dc_enable_ratchet",     "Optionally enable/disable billing demand ratchets",     "0/1",  "0=disable,1=enable",        "Electricity Rates",        "?=0",                 "INTEGER,MIN=0,MAX=1",       "" },
+    { SSC_INPUT,        SSC_NUMBER,     "dc_ratchet_minimum",       "Minimum billing demand",               "",         "",                     "Electricity Rates",        "ur_dc_enable_ratchet=1",                 "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,     "ur_dc_ratchet_lookback",   "Lookback months for demand ratchets",  "mn",         "",                "Electricity Rates",           "ur_dc_enable_ratchet=1",                 "INTEGER,MIN=0,MAX=12",                             "" },
+    { SSC_INPUT,        SSC_MATRIX,     "ur_dc_ratchet",             "Ratcheting demand charge monthly schedule",       "",         "12x2",      "Electricity Rates",        "ur_dc_enable_ratchet=1",                 "",                             "" },
+    { SSC_INPUT,        SSC_ARRAY,      "ur_dc_ratchet_yearzero_peaks",  "Year zero peaks used for year one ratchet calculations",       "",         "12",                "Electricity Rates",        "ur_dc_enable_ratchet=1",                 "",                             "" },
+
+
     var_info_invalid
 };
 

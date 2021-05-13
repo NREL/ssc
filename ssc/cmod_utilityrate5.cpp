@@ -396,6 +396,33 @@ void rate_setup::setup(var_table* vt, int num_recs_yearly, int nyears, rate_data
     rate.net_metering_credit_month = (int)vt->as_number("ur_nm_credit_month");
     rate.nm_credit_sell_rate = vt->as_number("ur_nm_yearend_sell_rate");
 
+    ssc_number_t* ratchet_matrix = NULL; ssc_number_t* year_zero_peaks = NULL;
+    bool ratchets_enabled = vt->as_boolean("ur_dc_enable_ratchet");
+    if (ratchets_enabled) {
+        rate.en_dc_ratchets = ratchets_enabled;
+        rate.demand_minimum = vt->as_number("dc_ratchet_minimum");
+        rate.lookback_months = vt->as_integer("ur_dc_ratchet_lookback");
+
+        ratchet_matrix = vt->as_matrix("ur_dc_ratchet", &nrows, &ncols);
+        if (nrows != 12 || ncols != 2)
+        {
+            std::ostringstream ss;
+            ss << "The ur_dc_ratchet matrix should have 12 rows and 2 columns. Instead it has " << nrows << " rows and " << ncols << " columns.";
+            throw exec_error(cm_name, ss.str());
+        }
+
+        year_zero_peaks = vt->as_array("ur_dc_ratchet_yearzero_peaks", &nrows);
+
+        if (nrows != 12) {
+            std::ostringstream ss;
+            ss << "The ur_dc_ratchet_yearzero_peaks array should have 12 rows. Instead it has " << nrows << " rows.";
+            throw exec_error(cm_name, ss.str());
+        }
+
+        rate.setup_ratcheting_demand(ratchet_matrix, year_zero_peaks);
+    }
+    
+
     rate.init_energy_rates(false); // TODO: update if rate forecast needs to support two meter
 };
 
