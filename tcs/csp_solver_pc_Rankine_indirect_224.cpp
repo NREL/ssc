@@ -485,8 +485,8 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
             throw(C_csp_exception("UDPC mode selected by UDPC table is not set"));
         }
 
-        double T_htf_ref_udpc_calc, T_amb_ref_udpc_calc;
-        mc_user_defined_pc.init(ms_params.mc_combined_ind, T_htf_ref_udpc_calc, T_amb_ref_udpc_calc);
+        double T_htf_ref_udpc_calc, T_amb_ref_udpc_calc, m_dot_htf_ref_udpc_calc;
+        mc_user_defined_pc.init(ms_params.mc_combined_ind, T_htf_ref_udpc_calc, T_amb_ref_udpc_calc, m_dot_htf_ref_udpc_calc);
 
         // Set design point ambient temperature to value calculated from UDPC table
         ms_params.m_T_amb_des = T_amb_ref_udpc_calc;        //[C]

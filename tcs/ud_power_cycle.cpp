@@ -31,18 +31,18 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <map>
 
 void C_ud_power_cycle::init(const util::matrix_t<double>& udpc_table,
-    double& T_htf_ref_calc /*C*/, double& T_amb_ref_calc /*C*/)
+    double& T_htf_ref_calc /*C*/, double& T_amb_ref_calc /*C*/, double& m_dot_htf_ND_ref_calc)
 {
     util::matrix_t<double> T_htf_ind_table, m_dot_htf_ND_ind_table, T_amb_ind_table;
     int n_T_htf_pars, n_T_amb_pars, n_m_dot_htf_ND_pars;
-    double m_dot_htf_ND_low, m_dot_htf_ND_ref, m_dot_htf_ND_high,
+    double m_dot_htf_ND_low, m_dot_htf_ND_high,
         T_htf_low, T_htf_high,
         T_amb_low, T_amb_high;
 
     N_udpc_common::split_ind_tbl(udpc_table,
         T_htf_ind_table, m_dot_htf_ND_ind_table, T_amb_ind_table,
         n_T_htf_pars, n_T_amb_pars, n_m_dot_htf_ND_pars,
-        m_dot_htf_ND_low, m_dot_htf_ND_ref, m_dot_htf_ND_high,
+        m_dot_htf_ND_low, m_dot_htf_ND_ref_calc, m_dot_htf_ND_high,
         T_htf_low, T_htf_ref_calc, T_htf_high,
         T_amb_low, T_amb_ref_calc, T_amb_high);
 
@@ -100,7 +100,7 @@ void C_ud_power_cycle::init(const util::matrix_t<double>& udpc_table,
     m_T_amb_low = T_amb_low;
     m_T_amb_high = T_amb_high;
 
-    m_m_dot_htf_ref = m_dot_htf_ND_ref;
+    m_m_dot_htf_ref = m_dot_htf_ND_ref_calc;
     m_m_dot_htf_low = m_dot_htf_ND_low;
     m_m_dot_htf_high = m_dot_htf_ND_high;
 
@@ -169,6 +169,8 @@ void C_ud_power_cycle::init(const util::matrix_t<double>& udpc_table,
     // ************************************************************************
 
     // Calculate main effects of each independent variable at its upper and lower levels
+    m_Y_at_ref.resize(4);
+
     m_ME_T_htf_low.resize(4);
     m_ME_T_htf_high.resize(4);
 
@@ -182,14 +184,19 @@ void C_ud_power_cycle::init(const util::matrix_t<double>& udpc_table,
     {
         int i_col = i * 3 + 2;
 
-        m_ME_T_htf_low[i] = mc_T_htf_ind.interpolate_x_col_0(i_col, m_T_htf_low) - 1.0;
-        m_ME_T_htf_high[i] = mc_T_htf_ind.interpolate_x_col_0(i_col, m_T_htf_high) - 1.0;
+        double m_Y_T_htf_ref = mc_T_htf_ind.interpolate_x_col_0(i_col, m_T_htf_ref);
+        double m_Y_T_amb_ref = mc_T_amb_ind.interpolate_x_col_0(i_col, m_T_amb_ref);
+        double m_Y_m_dot_htf_ref = mc_m_dot_htf_ind.interpolate_x_col_0(i_col, m_m_dot_htf_ref);
+        m_Y_at_ref[i] = (m_Y_T_htf_ref + m_Y_T_amb_ref + m_Y_m_dot_htf_ref) / 3.0;
 
-        m_ME_T_amb_low[i] = mc_T_amb_ind.interpolate_x_col_0(i_col, m_T_amb_low) - 1.0;
-        m_ME_T_amb_high[i] = mc_T_amb_ind.interpolate_x_col_0(i_col, m_T_amb_high) - 1.0;
+        m_ME_T_htf_low[i] = mc_T_htf_ind.interpolate_x_col_0(i_col, m_T_htf_low) - m_Y_at_ref[i];
+        m_ME_T_htf_high[i] = mc_T_htf_ind.interpolate_x_col_0(i_col, m_T_htf_high) - m_Y_at_ref[i];
 
-        m_ME_m_dot_htf_low[i] = mc_m_dot_htf_ind.interpolate_x_col_0(i_col, m_m_dot_htf_low) - 1.0;
-        m_ME_m_dot_htf_high[i] = mc_m_dot_htf_ind.interpolate_x_col_0(i_col, m_m_dot_htf_high) - 1.0;
+        m_ME_T_amb_low[i] = mc_T_amb_ind.interpolate_x_col_0(i_col, m_T_amb_low) - m_Y_at_ref[i];
+        m_ME_T_amb_high[i] = mc_T_amb_ind.interpolate_x_col_0(i_col, m_T_amb_high) - m_Y_at_ref[i];
+
+        m_ME_m_dot_htf_low[i] = mc_m_dot_htf_ind.interpolate_x_col_0(i_col, m_m_dot_htf_low) - m_Y_at_ref[i];
+        m_ME_m_dot_htf_high[i] = mc_m_dot_htf_ind.interpolate_x_col_0(i_col, m_m_dot_htf_high) - m_Y_at_ref[i];
     }
 
     // Set up 2D tables to store calculated Interactions	
@@ -216,12 +223,12 @@ void C_ud_power_cycle::init(const util::matrix_t<double>& udpc_table,
             double aa = mc_T_amb_ind.Get_Value(i * 3 + 1, j);
             double bb = m_ME_T_htf_low[i];
             double cc = mc_T_amb_ind.Get_Value(i * 3 + 2, j);
-            T_htf_int_on_T_amb(j, i * 2 + 1) = -(mc_T_amb_ind.Get_Value(i * 3 + 1, j) - 1.0 - m_ME_T_htf_low[i] - (mc_T_amb_ind.Get_Value(i * 3 + 2, j) - 1.0));
+            T_htf_int_on_T_amb(j, i * 2 + 1) = -(mc_T_amb_ind.Get_Value(i * 3 + 1, j) - m_Y_at_ref[i] - m_ME_T_htf_low[i] - (mc_T_amb_ind.Get_Value(i * 3 + 2, j) - m_Y_at_ref[i]));
             // upper level interaction
             aa = mc_T_amb_ind.Get_Value(i * 3 + 3, j);
             bb = m_ME_T_htf_high[i];
             cc = mc_T_amb_ind.Get_Value(i * 3 + 2, j);
-            T_htf_int_on_T_amb(j, i * 2 + 2) = -(mc_T_amb_ind.Get_Value(i * 3 + 3, j) - 1.0 - m_ME_T_htf_high[i] - (mc_T_amb_ind.Get_Value(i * 3 + 2, j) - 1.0));
+            T_htf_int_on_T_amb(j, i * 2 + 2) = -(mc_T_amb_ind.Get_Value(i * 3 + 3, j) - m_Y_at_ref[i] - m_ME_T_htf_high[i] - (mc_T_amb_ind.Get_Value(i * 3 + 2, j) - m_Y_at_ref[i]));
         }
 
         // Ambient temperature interaction on HTF mass flow rate
@@ -235,12 +242,12 @@ void C_ud_power_cycle::init(const util::matrix_t<double>& udpc_table,
             double aa = mc_m_dot_htf_ind.Get_Value(i * 3 + 1, j);
             double bb = m_ME_T_amb_low[i];
             double cc = mc_m_dot_htf_ind.Get_Value(i * 3 + 2, j);
-            T_amb_int_on_m_dot_htf(j, i * 2 + 1) = -(mc_m_dot_htf_ind.Get_Value(i * 3 + 1, j) - 1.0 - m_ME_T_amb_low[i] - (mc_m_dot_htf_ind.Get_Value(i * 3 + 2, j) - 1.0));
+            T_amb_int_on_m_dot_htf(j, i * 2 + 1) = -(mc_m_dot_htf_ind.Get_Value(i * 3 + 1, j) - m_Y_at_ref[i] - m_ME_T_amb_low[i] - (mc_m_dot_htf_ind.Get_Value(i * 3 + 2, j) - m_Y_at_ref[i]));
             // upper level interaction effect
             aa = mc_m_dot_htf_ind.Get_Value(i * 3 + 3, j);
             bb = m_ME_T_amb_high[i];
             cc = mc_m_dot_htf_ind.Get_Value(i * 3 + 2, j);
-            T_amb_int_on_m_dot_htf(j, i * 2 + 2) = -(mc_m_dot_htf_ind.Get_Value(i * 3 + 3, j) - 1.0 - m_ME_T_amb_high[i] - (mc_m_dot_htf_ind.Get_Value(i * 3 + 2, j) - 1.0));
+            T_amb_int_on_m_dot_htf(j, i * 2 + 2) = -(mc_m_dot_htf_ind.Get_Value(i * 3 + 3, j) - m_Y_at_ref[i] - m_ME_T_amb_high[i] - (mc_m_dot_htf_ind.Get_Value(i * 3 + 2, j) - m_Y_at_ref[i]));
         }
 
         // HTF mass flow
@@ -254,12 +261,12 @@ void C_ud_power_cycle::init(const util::matrix_t<double>& udpc_table,
             double aa = mc_T_htf_ind.Get_Value(i * 3 + 1, j);
             double bb = m_ME_m_dot_htf_low[i];
             double cc = mc_T_htf_ind.Get_Value(i * 3 + 2, j);
-            m_dot_htf_int_on_T_htf(j, i * 2 + 1) = -(mc_T_htf_ind.Get_Value(i * 3 + 1, j) - 1.0 - m_ME_m_dot_htf_low[i] - (mc_T_htf_ind.Get_Value(i * 3 + 2, j) - 1.0));
+            m_dot_htf_int_on_T_htf(j, i * 2 + 1) = -(mc_T_htf_ind.Get_Value(i * 3 + 1, j) - m_Y_at_ref[i] - m_ME_m_dot_htf_low[i] - (mc_T_htf_ind.Get_Value(i * 3 + 2, j) - m_Y_at_ref[i]));
             // upper level interaction effect
             aa = mc_T_htf_ind.Get_Value(i * 3 + 3, j);
             bb = m_ME_m_dot_htf_high[i];
             cc = mc_T_htf_ind.Get_Value(i * 3 + 2, j);
-            m_dot_htf_int_on_T_htf(j, i * 2 + 2) = -(mc_T_htf_ind.Get_Value(i * 3 + 3, j) - 1.0 - m_ME_m_dot_htf_high[i] - (mc_T_htf_ind.Get_Value(i * 3 + 2, j) - 1.0));
+            m_dot_htf_int_on_T_htf(j, i * 2 + 2) = -(mc_T_htf_ind.Get_Value(i * 3 + 3, j) - m_Y_at_ref[i] - m_ME_m_dot_htf_high[i] - (mc_T_htf_ind.Get_Value(i * 3 + 2, j) - m_Y_at_ref[i]));
         }
     }
 
@@ -326,9 +333,9 @@ double C_ud_power_cycle::get_interpolated_ND_output(int i_ME /*M.E. table index*
 							double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_htf_ND /*-*/)
 {
 	
-	double ME_T_htf = mc_T_htf_ind.interpolate_x_col_0(i_ME*3+2, T_htf_hot) - 1.0;
-	double ME_T_amb = mc_T_amb_ind.interpolate_x_col_0(i_ME*3+2, T_amb) - 1.0;
-	double ME_m_dot_htf = mc_m_dot_htf_ind.interpolate_x_col_0(i_ME*3+2, m_dot_htf_ND) - 1.0;
+	double ME_T_htf = mc_T_htf_ind.interpolate_x_col_0(i_ME*3+2, T_htf_hot) - m_Y_at_ref[i_ME];
+	double ME_T_amb = mc_T_amb_ind.interpolate_x_col_0(i_ME*3+2, T_amb) - m_Y_at_ref[i_ME];
+	double ME_m_dot_htf = mc_m_dot_htf_ind.interpolate_x_col_0(i_ME*3+2, m_dot_htf_ND) - m_Y_at_ref[i_ME];
 
 	double INT_T_htf_on_T_amb = 0.0;
 	if( T_htf_hot < m_T_htf_ref )
@@ -360,7 +367,7 @@ double C_ud_power_cycle::get_interpolated_ND_output(int i_ME /*M.E. table index*
 		INT_T_amb_on_m_dot_htf = mc_m_dot_htf_on_T_htf.interpolate_x_col_0(i_ME*2+2,T_htf_hot)*(m_dot_htf_ND-m_m_dot_htf_ref)/(m_m_dot_htf_ref-m_m_dot_htf_high);
 	}
 
-	return 1.0 + ME_T_htf + ME_T_amb + ME_m_dot_htf + INT_T_htf_on_T_amb + INT_T_amb_on_m_dot_htf + INT_m_dot_htf_on_T_htf;
+	return m_Y_at_ref[i_ME] + ME_T_htf + ME_T_amb + ME_m_dot_htf + INT_T_htf_on_T_amb + INT_T_amb_on_m_dot_htf + INT_m_dot_htf_on_T_htf;
 }
 
 

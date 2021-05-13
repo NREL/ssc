@@ -94,47 +94,32 @@ public:
             udpc_data_full(n_total,C_ud_power_cycle::E_COL_T_AMB) = T_amb_low + 0.5*dT_T_amb;
         }
 
-        // If try to pre-process and split table before defining dependent variables, what happens?
-        util::matrix_t<double> T_htf_ind, m_dot_htf_ND_ind, T_amb_ind;
-        N_udpc_common::split_ind_tbl(udpc_data_full, T_htf_ind, m_dot_htf_ND_ind, T_amb_ind);
+        // Use example endo-reversible cycle model to calculate cycle performance
+        double adjust = 10.0;
+        C_endo_rev_cycle c_cycle(T_htf_des + adjust, T_amb_des + adjust);
 
-        double a_ref = 12.0;
-		double b_ref = 13.0;
-		double c_ref = 14.0;
-		double Y_ref = three_var_eqn(a_ref, b_ref, c_ref);
+        for (size_t i = 0; i < udpc_data_full.nrows(); i++) {
+            c_cycle.performance(udpc_data_full(i, C_ud_power_cycle::E_COL_T_HTF),
+                udpc_data_full(i, C_ud_power_cycle::E_COL_M_DOT),
+                udpc_data_full(i, C_ud_power_cycle::E_COL_T_AMB),
+                udpc_data_full(i, C_ud_power_cycle::E_COL_W_CYL),
+                udpc_data_full(i, C_ud_power_cycle::E_COL_Q_CYL),
+                udpc_data_full(i, C_ud_power_cycle::E_COL_W_COOL),
+                udpc_data_full(i, C_ud_power_cycle::E_COL_M_H2O));
+        }
 
-		double a_low = 10.0;
-		double a_high = 14.0;
+        // Initialize UDPC model with cycle performance data table
+        C_ud_power_cycle c_udpc;
+        double T_htf_ref_udpc_calc, T_amb_ref_udpc_calc, m_dot_htf_ref_udpc_calc;
+        c_udpc.init(udpc_data_full, T_htf_ref_udpc_calc, T_amb_ref_udpc_calc, m_dot_htf_ref_udpc_calc);
 
-		double b_low = 10.0;
-		double b_high = 16.0;
 
-		double c_low = 10.0;
-		double c_high = 18.0;
+        // Sample UPDC model
+            // at design point
+        double W_dot_ND_calc = c_udpc.get_W_dot_gross_ND(T_htf_des, T_amb_des, 1.0);
+        W_dot_ND_calc = c_udpc.get_W_dot_gross_ND(T_htf_des + adjust, T_amb_des + adjust, 1.0);
 
-		int N_runs = 20;
-
-		util::matrix_t<double> a_table(N_runs, 13, 1.0);
-		util::matrix_t<double> b_table(N_runs, 13, 1.0);
-		util::matrix_t<double> c_table(N_runs, 13, 1.0);
-
-		for(int i = 0; i < N_runs; i++)
-		{
-			a_table(i,0) = a_low + (a_high-a_low)/(double)(N_runs-1)*i;
-			a_table(i,1) = three_var_eqn(a_table(i,0),b_ref,c_low)/Y_ref;
-			a_table(i,2) = three_var_eqn(a_table(i,0),b_ref,c_ref)/Y_ref;
-			a_table(i,3) = three_var_eqn(a_table(i,0),b_ref,c_high)/Y_ref;
-
-			b_table(i,0) = b_low + (b_high-b_low)/(double)(N_runs-1)*i;
-			b_table(i,1) = three_var_eqn(a_low,b_table(i,0),c_ref)/Y_ref;
-			b_table(i,2) = three_var_eqn(a_ref,b_table(i,0),c_ref)/Y_ref;
-			b_table(i,3) = three_var_eqn(a_high,b_table(i,0),c_ref)/Y_ref;
-
-			c_table(i,0) = c_low + (c_high-c_low)/(double)(N_runs-1)*i;
-			c_table(i,1) = three_var_eqn(a_ref,b_low,c_table(i,0))/Y_ref;
-			c_table(i,2) = three_var_eqn(a_ref,b_ref,c_table(i,0))/Y_ref;
-			c_table(i,3) = three_var_eqn(a_ref,b_high,c_table(i,0))/Y_ref;
-		}
+        double abce = 1.23;
 
 		/*C_ud_power_cycle c_pc;
 
@@ -172,6 +157,52 @@ public:
 			}
 		}*/
 	}
+
+    class C_endo_rev_cycle
+    {
+    public:
+
+        double m_T_htf_hot_des;     //[C]
+        double m_T_amb_des;         //[C]        
+        double m_eta_endo_des;
+
+        C_endo_rev_cycle(double T_htf_hot_des /*C*/, double T_amb_des /*-*/)
+        {
+            m_T_htf_hot_des = T_htf_hot_des;
+            m_T_amb_des = T_amb_des;
+
+            m_eta_endo_des = eta_endo(m_T_htf_hot_des, m_T_amb_des);
+        }
+
+        double eta_endo(double T_htf_hot /*C*/, double T_amb /*C*/)
+        {
+            double T_htf_hot_K = T_htf_hot + 273.15;
+            double T_amb_K = T_amb + 273.15;
+
+            return 1.0 - sqrt(T_amb_K / T_htf_hot_K);
+        }
+
+        void performance(double T_htf_hot /*C*/, double m_dot_htf_ND /*-*/, double T_amb /*C*/,
+            double& W_dot_gross_ND, double& Q_dot_ND, double& W_dot_cooling_ND, double& m_dot_water_ND)
+        {
+            // Set constant cooling and water
+            W_dot_cooling_ND = 1.0;
+            m_dot_water_ND = 1.0;
+
+            // Assume heat rate proportional to mass flow
+            // And no ambient temperature dependence
+            Q_dot_ND = m_dot_htf_ND;
+
+            // Calculate new endo-reversible efficiency and adjust for part-load
+            double eta_temp = eta_endo(T_htf_hot, T_amb);
+            double eta_pl = pow(1 - abs(1-Q_dot_ND), 0.2);
+            double eta = eta_temp * eta_pl;
+
+            // calculate power by scaling by ratio of calculated and design endo-reversible efficiencies
+            // eta / eta_des = (W_dot_gross_ND / Q_dot_ND) / (1.0 / 1.0)
+            W_dot_gross_ND = eta / m_eta_endo_des * Q_dot_ND;
+        }
+    };
 
 	double three_var_eqn(double a, double b, double c)
 	{
