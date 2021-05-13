@@ -125,9 +125,6 @@ public:
 	};
 
 	C_csp_reported_outputs mc_reported_outputs;
-
-	// Class to save messages for up stream classes
-	C_csp_messages mc_csp_messages;
 	
 	// Instantiate two fully mixed tanks class for cold storage AND three node model
 	C_csp_cold_tes mc_two_tank_ctes;
