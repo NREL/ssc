@@ -112,7 +112,9 @@ public:
 	~C_ud_power_cycle(){};
 
     void init(const util::matrix_t<double>& udpc_table,
-        double& T_htf_ref_calc /*C*/, double& T_amb_ref_calc /*C*/, double& m_dot_htf_ND_ref_calc);
+        double& T_htf_ref_calc /*C*/, double& T_amb_ref_calc /*C*/, double& m_dot_htf_ND_ref_calc,
+        std::vector<double>& Y_at_T_htf_ref, std::vector<double>& Y_at_T_amb_ref,
+        std::vector<double>& Y_at_m_dot_htf_ND_ref, std::vector<double>& Y_avg_at_refs);
 
 	double get_W_dot_gross_ND( double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_htf_ND /*-*/);
 

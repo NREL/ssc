@@ -31,7 +31,9 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <map>
 
 void C_ud_power_cycle::init(const util::matrix_t<double>& udpc_table,
-    double& T_htf_ref_calc /*C*/, double& T_amb_ref_calc /*C*/, double& m_dot_htf_ND_ref_calc)
+    double& T_htf_ref_calc /*C*/, double& T_amb_ref_calc /*C*/, double& m_dot_htf_ND_ref_calc,
+    std::vector<double>& Y_at_T_htf_ref, std::vector<double>& Y_at_T_amb_ref,
+    std::vector<double>& Y_at_m_dot_htf_ND_ref, std::vector<double>& Y_avg_at_refs)
 {
     util::matrix_t<double> T_htf_ind_table, m_dot_htf_ND_ind_table, T_amb_ind_table;
     int n_T_htf_pars, n_T_amb_pars, n_m_dot_htf_ND_pars;
@@ -169,6 +171,9 @@ void C_ud_power_cycle::init(const util::matrix_t<double>& udpc_table,
     // ************************************************************************
 
     // Calculate main effects of each independent variable at its upper and lower levels
+    Y_at_T_htf_ref.resize(4);
+    Y_at_T_amb_ref.resize(4);
+    Y_at_m_dot_htf_ND_ref.resize(4);
     m_Y_at_ref.resize(4);
 
     m_ME_T_htf_low.resize(4);
@@ -184,10 +189,10 @@ void C_ud_power_cycle::init(const util::matrix_t<double>& udpc_table,
     {
         int i_col = i * 3 + 2;
 
-        double m_Y_T_htf_ref = mc_T_htf_ind.interpolate_x_col_0(i_col, m_T_htf_ref);
-        double m_Y_T_amb_ref = mc_T_amb_ind.interpolate_x_col_0(i_col, m_T_amb_ref);
-        double m_Y_m_dot_htf_ref = mc_m_dot_htf_ind.interpolate_x_col_0(i_col, m_m_dot_htf_ref);
-        m_Y_at_ref[i] = (m_Y_T_htf_ref + m_Y_T_amb_ref + m_Y_m_dot_htf_ref) / 3.0;
+        Y_at_T_htf_ref[i] = mc_T_htf_ind.interpolate_x_col_0(i_col, m_T_htf_ref);
+        Y_at_T_amb_ref[i] = mc_T_amb_ind.interpolate_x_col_0(i_col, m_T_amb_ref);
+        Y_at_m_dot_htf_ND_ref[i] = mc_m_dot_htf_ind.interpolate_x_col_0(i_col, m_m_dot_htf_ref);
+        m_Y_at_ref[i] = (Y_at_T_htf_ref[i] + Y_at_T_amb_ref[i] + Y_at_m_dot_htf_ND_ref[i]) / 3.0;
 
         m_ME_T_htf_low[i] = mc_T_htf_ind.interpolate_x_col_0(i_col, m_T_htf_low) - m_Y_at_ref[i];
         m_ME_T_htf_high[i] = mc_T_htf_ind.interpolate_x_col_0(i_col, m_T_htf_high) - m_Y_at_ref[i];
@@ -198,6 +203,7 @@ void C_ud_power_cycle::init(const util::matrix_t<double>& udpc_table,
         m_ME_m_dot_htf_low[i] = mc_m_dot_htf_ind.interpolate_x_col_0(i_col, m_m_dot_htf_low) - m_Y_at_ref[i];
         m_ME_m_dot_htf_high[i] = mc_m_dot_htf_ind.interpolate_x_col_0(i_col, m_m_dot_htf_high) - m_Y_at_ref[i];
     }
+    Y_avg_at_refs = m_Y_at_ref;
 
     // Set up 2D tables to store calculated Interactions	
     int n_T_htf_runs = mc_T_htf_ind.get_number_of_rows();
