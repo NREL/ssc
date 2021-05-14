@@ -71,9 +71,6 @@ public:
 	
 	C_csp_reported_outputs mc_reported_outputs;
 
-	// Class to save messages for up stream classes
-	C_csp_messages mc_csp_messages;
-
 	struct S_des_par
 	{
 		C_sco2_phx_air_cooler::S_des_par ms_mc_sco2_recomp_params;

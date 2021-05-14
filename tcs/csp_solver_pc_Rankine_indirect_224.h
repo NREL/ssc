@@ -102,17 +102,6 @@ private:
 public:
 	
     enum
-    {
-        E_COL_T_HTF,
-        E_COL_M_DOT,
-        E_COL_T_AMB,
-        E_COL_W_CYL,
-        E_COL_Q_CYL,
-        E_COL_W_COOL,
-        E_COL_M_H2O
-    };
-
-    enum
 	{
 		E_ETA_THERMAL,		//[-] Cycle thermal efficiency (gross)
 		E_Q_DOT_HTF,		//[MWt] Cycle thermal power input
@@ -136,9 +125,6 @@ public:
 	};
 
 	C_csp_reported_outputs mc_reported_outputs;
-
-	// Class to save messages for up stream classes
-	C_csp_messages mc_csp_messages;
 	
 	// Instantiate two fully mixed tanks class for cold storage AND three node model
 	C_csp_cold_tes mc_two_tank_ctes;
@@ -280,28 +266,6 @@ public:
 	virtual void assign(int index, double *p_reporting_ts_array, size_t n_reporting_ts_array);
 
 };
-
-void get_var_setup(std::vector<double> & vec_unique, std::vector<double> & var_vec,
-    double & var_des, double & var_low, double & var_high);
-
-bool is_level_in_par(std::vector<std::vector<double>> test_combs,
-    std::vector<std::vector<double>> full_table);
-
-int split_ind_tbl(util::matrix_t<double> &combined, util::matrix_t<double> &T_htf_ind,
-    util::matrix_t<double> &m_dot_ind, util::matrix_t<double> &T_amb_ind);
-
-int split_ind_tbl(util::matrix_t<double> &combined, util::matrix_t<double> &T_htf_ind,
-    util::matrix_t<double> &m_dot_ind, util::matrix_t<double> &T_amb_ind,
-    int & n_T_htf_pars, int & n_T_amb_pars, int & n_m_dot_pars,
-    double & m_dot_low, double & m_dot_des, double & m_dot_high,
-    double & T_htf_low, double & T_htf_des, double & T_htf_high,
-    double & T_amb_low, double & T_amb_des, double & T_amb_high);
-
-int combine_ind_tbl(util::matrix_t<double>& combined, util::matrix_t<double>& T_htf_ind,
-	util::matrix_t<double>& m_dot_ind, util::matrix_t<double>& T_amb_ind,
-	double m_dot_low, double m_dot_des, double m_dot_high,
-	double T_htf_low, double T_htf_des, double T_htf_high,
-	double T_amb_low, double T_amb_des, double T_amb_high);
 
 
 #endif //__csp_solver_pc_Rankine_indirect_224_

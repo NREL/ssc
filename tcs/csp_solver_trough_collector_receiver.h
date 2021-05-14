@@ -288,8 +288,8 @@ private:
 	// member string for exception messages
 	std::string m_error_msg;
 
-	int m_operating_mode_converged;
-	int m_operating_mode;
+	C_csp_collector_receiver::E_csp_cr_modes m_operating_mode_converged;
+	C_csp_collector_receiver::E_csp_cr_modes m_operating_mode;
 
 	int freeze_protection(const C_csp_weatherreader::S_outputs &weather, 
 					double & T_cold_in /*K*/, double m_dot_loop /*kg/s*/, 
@@ -492,7 +492,7 @@ public:
 	virtual double get_tracking_power();		//MWe
 	virtual double get_col_startup_power();		//MWe-hr
 
-	virtual int get_operating_state();
+	virtual C_csp_collector_receiver::E_csp_cr_modes get_operating_state();
 	
 	virtual void get_design_parameters(C_csp_collector_receiver::S_csp_cr_solved_params & solved_params);
 
@@ -508,13 +508,13 @@ public:
 
 	virtual void on(const C_csp_weatherreader::S_outputs &weather,
 		const C_csp_solver_htf_1state &htf_state_in,
-		double field_control,
+        double q_dot_elec_to_CR_heat /*MWt*/, double field_control,
 		C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
 		const C_csp_solver_sim_info &sim_info);
 
     virtual void steady_state(const C_csp_weatherreader::S_outputs &weather,
         const C_csp_solver_htf_1state &htf_state_in,
-        double field_control,
+        double W_dot_elec_to_CR_heat /*MWe*/, double field_control,
         C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
         const C_csp_solver_sim_info &sim_info);
 

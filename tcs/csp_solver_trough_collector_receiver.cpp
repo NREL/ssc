@@ -478,7 +478,7 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
         troughInfo.m_tou = 1.;
         C_csp_collector_receiver::S_csp_cr_out_solver troughOutputs;
 
-        steady_state(weatherValues, htfInletState, defocus, troughOutputs, troughInfo);
+        steady_state(weatherValues, htfInletState, std::numeric_limits<double>::quiet_NaN(), defocus, troughOutputs, troughInfo);
         solved_params.m_T_htf_hot_des = m_T_field_out;
         solved_params.m_dP_sf = troughOutputs.m_dP_sf;
 
@@ -813,7 +813,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 }
 
 
-int C_csp_trough_collector_receiver::get_operating_state()
+C_csp_collector_receiver::E_csp_cr_modes C_csp_trough_collector_receiver::get_operating_state()
 {
 	return m_operating_mode_converged;	//[-]
 }
@@ -2170,11 +2170,9 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 	cr_out_solver.m_component_defocus = 1.0;
     cr_out_solver.m_is_recirculating = m_is_m_dot_recirc;
 
-	cr_out_solver.m_E_fp_total = m_q_dot_freeze_protection;		//[MWe]
 	cr_out_solver.m_W_dot_col_tracking = m_W_dot_sca_tracking;	//[MWe]
 	cr_out_solver.m_W_dot_htf_pump = m_W_dot_pump;				//[MWe]
-
-    cr_out_solver.m_q_rec_heattrace = m_q_dot_freeze_protection;    //[MWt]
+    cr_out_solver.m_q_dot_heater = m_q_dot_freeze_protection;   //[MWt]
 
 	m_operating_mode = C_csp_collector_receiver::OFF;
 
@@ -2350,14 +2348,13 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	cr_out_solver.m_component_defocus = 1.0;	//[-]
     cr_out_solver.m_is_recirculating = m_is_m_dot_recirc;
 
-		// Shouldn't need freeze protection if in startup, but may want a check on this
-	cr_out_solver.m_E_fp_total = m_q_dot_freeze_protection;		//[MWt]
+		
 		// Is this calculated in the 'optical' method, or a TBD 'metrics' method?
 	cr_out_solver.m_W_dot_col_tracking = m_W_dot_sca_tracking;	//[MWe]
 		// Is this calculated in the 'energy balance' method, or a TBD 'metrics' method?
 	cr_out_solver.m_W_dot_htf_pump = m_W_dot_pump;				//[MWe]
-
-    cr_out_solver.m_q_rec_heattrace = m_q_dot_freeze_protection;    //[MWt]
+        // Shouldn't need freeze protection if in startup, but may want a check on this
+    cr_out_solver.m_q_dot_heater = m_q_dot_freeze_protection;    //[MWt]
 
 	set_output_value();
 }
@@ -2422,7 +2419,7 @@ void C_csp_trough_collector_receiver::apply_component_defocus(double defocus /*-
 
 void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &weather,
 	const C_csp_solver_htf_1state &htf_state_in,
-	double field_control,
+    double q_dot_elec_to_CR_heat /*MWt*/, double field_control,
 	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
 	//C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
 	const C_csp_solver_sim_info &sim_info)
@@ -2615,12 +2612,10 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		// ***********************************************************
 
 		// For now, set parasitic outputs to 0
-		cr_out_solver.m_E_fp_total = 0.0;			//[MW]
 		cr_out_solver.m_W_dot_col_tracking = m_W_dot_sca_tracking;	//[MWe]
 		cr_out_solver.m_W_dot_htf_pump = m_W_dot_pump;				//[MWe]
         cr_out_solver.m_dP_sf = m_dP_total;         //[bar]
-
-        cr_out_solver.m_q_rec_heattrace = m_q_dot_freeze_protection;    //[MWt]
+        cr_out_solver.m_q_dot_heater = m_q_dot_freeze_protection;    //[MWt]
 	}
 	else
 	{	// Solution failed, so tell controller/solver
@@ -2643,12 +2638,11 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		cr_out_solver.m_T_salt_hot = 0.0;			//[C]
 		cr_out_solver.m_component_defocus = 1.0;	//[-]
         cr_out_solver.m_is_recirculating = false;
-		cr_out_solver.m_E_fp_total = 0.0;
 		cr_out_solver.m_W_dot_col_tracking = 0.0;
 		cr_out_solver.m_W_dot_htf_pump = 0.0;
         cr_out_solver.m_dP_sf = 0.0;                //[bar]
 
-        cr_out_solver.m_q_rec_heattrace = m_q_dot_freeze_protection;    //[MWt]
+        cr_out_solver.m_q_dot_heater = m_q_dot_freeze_protection;    //[MWt]
 	}
 
 	set_output_value();
@@ -2658,7 +2652,7 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 
 void C_csp_trough_collector_receiver::steady_state(const C_csp_weatherreader::S_outputs &weather,
     const C_csp_solver_htf_1state &htf_state_in,
-    double field_control,
+    double W_dot_elec_to_CR_heat /*MWe*/, double field_control,
     C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
     const C_csp_solver_sim_info &sim_info)
 {
@@ -2680,7 +2674,7 @@ void C_csp_trough_collector_receiver::steady_state(const C_csp_weatherreader::S_
 
     do
     {
-        this->on(weather, htf_state_in, field_control, cr_out_solver, sim_info);
+        this->on(weather, htf_state_in, W_dot_elec_to_CR_heat, field_control, cr_out_solver, sim_info);
 
         // Calculate metric for deciding whether steady-state is reached
         ss_diff = 0.;
@@ -2839,7 +2833,7 @@ void C_csp_trough_collector_receiver::estimates(const C_csp_weatherreader::S_out
 	{
 		C_csp_collector_receiver::S_csp_cr_out_solver cr_out_solver;
 
-		on(weather, htf_state_in, 1.0, cr_out_solver, sim_info);
+		on(weather, htf_state_in, std::numeric_limits<double>::quiet_NaN(), 1.0, cr_out_solver, sim_info);
 
 		est_out.m_q_dot_avail = cr_out_solver.m_q_thermal;		//[MWt]
 		est_out.m_m_dot_avail = cr_out_solver.m_m_dot_salt_tot;	//[kg/hr]
@@ -3101,11 +3095,10 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 				cr_out_solver.m_q_thermal = 0.0;			//[MWt]
 				cr_out_solver.m_T_salt_hot = m_T_loop_in_des - 273.15;	//[C] Reset to loop inlet temperature, I guess?
 
-				cr_out_solver.m_E_fp_total = 0.0;
 				cr_out_solver.m_W_dot_col_tracking = 0.0;
 				cr_out_solver.m_W_dot_htf_pump = 0.0;
 
-                cr_out_solver.m_q_rec_heattrace = 0.0;    //[MWt]
+                cr_out_solver.m_q_dot_heater = 0.0;    //[MWt]
 
 				//cr_out_report.m_q_dot_field_inc = 0.0;
 				//cr_out_report.m_eta_field = 0.0;
@@ -3905,10 +3898,10 @@ set_outputs_and_return:
 	
 	cr_out_solver.m_W_dot_htf_pump = W_dot_pump_out;	//[MWe] Required solar field pumping power
 	//value(O_W_DOT_PUMP, W_dot_pump_out);		//[MWe] Required solar field pumping power
-	cr_out_solver.m_E_fp_total = E_fp_tot_out;	//[MW] Freeze protection energy
+	cr_out_solver.m_q_dot_heater = E_fp_tot_out;	//[MW] Freeze protection energy
 	//value(O_E_FP_TOT, E_fp_tot_out);			//[MW] Freeze protection energy
 	
-    cr_out_solver.m_q_rec_heattrace = m_q_dot_freeze_protection;    //[MWt]
+    //cr_out_solver.m_q_rec_heattrace = m_q_dot_freeze_protection;    //[MWt]
 
 	//value(O_QQ, m_qq);							//[none] Number of iterations required to solve
 	//value(O_T_SYS_C, T_sys_c_out);				//[C] Collector inlet temperature
