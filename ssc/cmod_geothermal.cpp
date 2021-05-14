@@ -557,12 +557,16 @@ public:
 			double nameplate = geo_inputs.md_DesiredSalesCapacityKW; // Was md_GrossPlantOutputMW*1000 -> now it is md_DesiredSalesCapacityKW
 			double annual_energy = 0.0;
 
+
 			//Loop calculates total energy generation over entire project lifetime (in kWh) 
 			// Why?  Is the annual energy changing from year to year?
 			for (size_t i = 0; i <n_rec ; i++)	{
 				annual_energy += geo_outputs.maf_hourly_power[i];
-				p_gen[i] = geo_outputs.maf_hourly_power[i];
+                p_gen[i] = geo_outputs.maf_hourly_power[i];
 			}
+
+
+            ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, 1);
 
 			if (nameplate > 0) kWhperkW = annual_energy / nameplate;
 			capacity_fac = total_energy / nameplate;

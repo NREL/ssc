@@ -56,8 +56,8 @@ var_info vtab_battery_replacement_cost[] = {
 { SSC_INPUT, SSC_NUMBER , "batt_replacement_option"              , "Enable battery replacement?"                                    , "0=none,1=capacity based,2=user schedule", ""                                      , "BatterySystem"              , "?=0"            , "INTEGER,MIN=0,MAX=2"   , ""},
 { SSC_INPUT, SSC_NUMBER , "battery_per_kWh"                      , "Battery cost"                                                   , "$/kWh"                                  , ""                                      , "BatterySystem"              , "?=0.0"          , ""                      , ""},
 { SSC_INPUT, SSC_NUMBER , "batt_computed_bank_capacity"          , "Battery bank capacity"                                          , "kWh"                                    , ""                                      , "BatterySystem"              , "?=0.0"          , ""                      , ""},
-{ SSC_OUTPUT, SSC_ARRAY , "cf_battery_replacement_cost"          , "Battery replacement cost"                                       , "$"                                      , ""                                      , "Cash Flow"            , "*"              , ""                      , ""},
-{ SSC_OUTPUT, SSC_ARRAY , "cf_battery_replacement_cost_schedule" , "Battery replacement cost schedule"                              , "$"                                  , ""                                      , "Cash Flow"            , "*"              , ""                      , ""},
+{ SSC_OUTPUT, SSC_ARRAY , "cf_battery_replacement_cost"          , "Battery replacement cost"                                       , "$"                                      , ""                                      , "Cash Flow"            , ""              , ""                      , ""},
+{ SSC_OUTPUT, SSC_ARRAY , "cf_battery_replacement_cost_schedule" , "Battery replacement cost schedule"                              , "$"                                  , ""                                      , "Cash Flow"            , ""              , ""                      , ""},
 var_info_invalid };
 
 var_info vtab_financial_grid[] = {
@@ -73,11 +73,11 @@ var_info vtab_fuelcell_replacement_cost[] = {
 { SSC_INPUT, SSC_ARRAY  , "fuelcell_replacement"                 , "Fuel cell replacements per year"                                , "number/year"                            , ""                                      , "Fuel Cell"            , ""               , ""                      , ""},
 { SSC_INPUT, SSC_ARRAY  , "fuelcell_replacement_schedule"        , "Fuel cell replacements per year (user specified)"               , "number/year"                            , ""                                      , "Fuel Cell"            , ""               , ""                      , ""},
 { SSC_INPUT, SSC_NUMBER , "en_fuelcell"                          , "Enable fuel cell storage model"                                 , "0/1"                                    , ""                                      , "Fuel Cell"            , "?=0"            , ""                      , ""},
-{ SSC_INPUT, SSC_NUMBER , "fuelcell_replacement_option"          , "Enable fuel cell replacement?"                                  , "0=none,1=capacity based,2=user schedule", ""                                      , "Fuel Cell"            , "?=0"            , "INTEGER,MIN=0,MAX=2"   , ""},
+{ SSC_INPUT, SSC_NUMBER , "fuelcell_replacement_option"          , "Enable fuel cell replacement?"                                  , "0=none,1=capacity based,2=user schedule", ""                                      , "Fuel Cell"            , ""            , "INTEGER,MIN=0,MAX=2"   , ""},
 { SSC_INPUT, SSC_NUMBER , "fuelcell_per_kWh"                     , "Fuel cell cost"                                                 , "$/kWh"                                  , ""                                      , "Fuel Cell"            , "?=0.0"          , ""                      , ""},
 { SSC_INPUT, SSC_NUMBER , "fuelcell_computed_bank_capacity"      , "Fuel cell capacity"                                             , "kWh"                                    , ""                                      , "Fuel Cell"            , "?=0.0"          , ""                      , ""},
-{ SSC_OUTPUT, SSC_ARRAY , "cf_fuelcell_replacement_cost"         , "Fuel cell replacement cost"                                     , "$"                                      , ""                                      , "Cash Flow"            , "*"              , ""                      , ""},
-{ SSC_OUTPUT, SSC_ARRAY , "cf_fuelcell_replacement_cost_schedule", "Fuel cell replacement cost schedule"                            , "$/kW"                                   , ""                                      , "Cash Flow"            , "*"              , ""                      , ""},
+{ SSC_OUTPUT, SSC_ARRAY , "cf_fuelcell_replacement_cost"         , "Fuel cell replacement cost"                                     , "$"                                      , ""                                      , "Cash Flow"            , ""              , ""                      , ""},
+{ SSC_OUTPUT, SSC_ARRAY , "cf_fuelcell_replacement_cost_schedule", "Fuel cell replacement cost schedule"                            , "$/kW"                                   , ""                                      , "Cash Flow"            , ""              , ""                      , ""},
 var_info_invalid };
 
 var_info vtab_standard_loan[] = {
@@ -523,7 +523,42 @@ var_info vtab_grid_curtailment[] = {
 var_info vtab_technology_outputs[] = {
 	// instantaneous power at each timestep - consistent with sun position
 { SSC_OUTPUT, SSC_ARRAY , "gen"                                  , "System power generated"                                         , "kW"                                     , ""                                      , "Time Series"          , "*"              , ""                      , ""},
-	var_info_invalid };
+{ SSC_OUTPUT, SSC_MATRIX,			"annual_energy_distribution_time",			"Annual energy production as function of time",				"kW",				"",				"Heatmaps",			"",						"",							"" },
+
+    var_info_invalid };
+
+ssc_number_t* gen_heatmap(compute_module* cm, double step_per_hour) {
+    if (!cm)
+        return 0;
+    size_t count = 8760 * step_per_hour;
+    size_t imonth = 0;
+    size_t iday = 0;
+    size_t hour;
+    size_t count_gen;
+    ssc_number_t* p_gen = cm->as_array("gen", &count_gen);
+    ssc_number_t* p_annual_energy_dist_time = cm->allocate("annual_energy_distribution_time", 25, 366);
+    for (size_t i = 0; i < count; i++) {
+        hour = fmod(floor(double(i) / step_per_hour), 24);
+        imonth = util::month_of(double(floor(double(i) / step_per_hour)));
+        iday = floor(double(i) / 24) ;
+        for (size_t d = 0; d < 366; d++) {
+            for (size_t h = 0; h < 25; h++) {
+                if (i == 0) {
+                    p_annual_energy_dist_time[h * 366] = (h - 1);
+                    p_annual_energy_dist_time[d] = d;
+                }
+                if (iday == d && hour == (h - 1) && d != 365) {
+                    p_annual_energy_dist_time[h * 366 + d + 1] += p_gen[i] * 1 / step_per_hour;
+                    break;
+                }
+            }
+        }
+    }
+    p_annual_energy_dist_time[0] = 0;
+    return p_annual_energy_dist_time;
+
+
+}
 
 var_info vtab_p50p90[] = {
         { SSC_INPUT, SSC_NUMBER ,  "total_uncert"                 , "Total uncertainty in energy production as percent of annual energy", "%"                                   , ""                                      , "Uncertainty"          , ""              , "MIN=0,MAX=100"         , ""},

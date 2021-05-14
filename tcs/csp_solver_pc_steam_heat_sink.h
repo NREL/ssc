@@ -48,8 +48,6 @@ private:
 	void check_double_params_are_set();
 
 public:
-	// Class to save messages for up stream classes
-	C_csp_messages mc_csp_messages;
 
 	water_state mc_water_props;
 

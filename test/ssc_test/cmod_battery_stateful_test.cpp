@@ -26,7 +26,7 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, TestStep) {
     EXPECT_NEAR(I, 1, 1e-2);
     EXPECT_NEAR(I_d, 8.21, 1e-2);
     EXPECT_NEAR(I_c, -9.34, 1e-2);
-    EXPECT_NEAR(P_d, 3.82, 1e-2);
+    EXPECT_NEAR(P_d, 3.80, 1e-2);
     EXPECT_NEAR(P_c, -5.32, 1e-2);
     EXPECT_NEAR(SOC, 46.94, 1e-2);
 
@@ -52,7 +52,7 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, TestStep) {
     EXPECT_NEAR(I, 1, 1e-2);
     EXPECT_NEAR(I_d, 7.31, 1e-2);
     EXPECT_NEAR(I_c, -10.34, 1e-2);
-    EXPECT_NEAR(P_d, 3.36, 1e-2);
+    EXPECT_NEAR(P_d, 3.34, 1e-2);
     EXPECT_NEAR(P_c, -5.89, 1e-2);
     EXPECT_NEAR(SOC, 41.79, 1e-2);
 
@@ -75,7 +75,7 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, TestStep) {
     EXPECT_NEAR(I, 1, 1e-2);
     EXPECT_NEAR(I_d, 7.31, 1e-2);
     EXPECT_NEAR(I_c, -10.34, 1e-2);
-    EXPECT_NEAR(P_d, 3.36, 1e-2);
+    EXPECT_NEAR(P_d, 3.34, 1e-2);
     EXPECT_NEAR(P_c, -5.89, 1e-2);
     EXPECT_NEAR(SOC, 41.79, 1e-2);
 }

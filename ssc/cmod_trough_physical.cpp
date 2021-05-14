@@ -283,6 +283,18 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_INPUT,        SSC_MATRIX,      "tes_lengths",               "Custom TES lengths",                                                               "m",            "",               "controller",     "",                        "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "DP_SGS",                    "Pressure drop within the steam generator",                                         "bar",          "",               "controller",     "*",                       "",                      "" },
 
+    // Needed for auto-updating dependent inputs
+    { SSC_INPUT,        SSC_NUMBER,      "fluid_dens_outlet_temp",              "fluid_dens_outlet_temp",                                                 "-",            "",               "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "fluid_dens_inlet_temp",               "fluid_dens_inlet_temp",                                                  "-",            "",               "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "radio_sm_or_area",                    "radio_sm_or_area",                                                       "-",            "",               "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "specified_solar_multiple",            "specified_solar_multiple",                                               "-",            "",               "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "specified_total_aperture",            "specified_total_aperture",                                               "-",            "",               "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "non_solar_field_land_area_multiplier", "non_solar_field_land_area_multiplier",                                  "-",            "",               "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_ARRAY,       "trough_loop_control",                 "trough_loop_control",                                                    "-",            "",               "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "lat",                                 "lat",                                                                    "-",            "",               "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "disp_wlim_maxspec",                   "disp_wlim_maxspec",                                                      "-",            "",               "controller",     "*",                       "",                      "" },
+
+
 
     // *************************************************************************************************
     //    OUTPUTS
@@ -865,7 +877,7 @@ public:
             p_csp_power_cycle = &rankine_pc;
 
             // Set power cycle outputs common to all power cycle technologies
-            p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_ETA_THERMAL, allocate("eta", n_steps_fixed), n_steps_fixed);
+            //p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_ETA_THERMAL, allocate("eta", n_steps_fixed), n_steps_fixed);
             p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_Q_DOT_HTF, allocate("q_pb", n_steps_fixed), n_steps_fixed);
             p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_M_DOT_HTF, allocate("m_dot_pc", n_steps_fixed), n_steps_fixed);
             p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_Q_DOT_STARTUP, allocate("q_dot_pc_startup", n_steps_fixed), n_steps_fixed);
@@ -1216,9 +1228,14 @@ public:
 
         // Do unit post-processing here
         double *p_q_pc_startup = allocate("q_pc_startup", n_steps_fixed);
+        double* p_q_pc_eta = allocate("eta", n_steps_fixed);
         size_t count_pc_su = 0;
+        size_t count_pc_q_dot = 0;
+        size_t count_pc_W_dot_gross = 0;
         ssc_number_t *p_q_dot_pc_startup = as_array("q_dot_pc_startup", &count_pc_su);
-        if ((int)count_pc_su != n_steps_fixed)
+        ssc_number_t *p_q_dot = as_array("q_pb", &count_pc_q_dot);
+        ssc_number_t *p_W_dot_cycle = as_array("P_cycle", &count_pc_W_dot_gross);
+        if ((int)count_pc_su != n_steps_fixed || (int)count_pc_q_dot != n_steps_fixed || (int)count_pc_W_dot_gross != n_steps_fixed)
         {
             log("q_dot_pc_startup array is a different length than 'n_steps_fixed'.", SSC_WARNING);
             return;
@@ -1226,6 +1243,12 @@ public:
         for (int i = 0; i < n_steps_fixed; i++)
         {
             p_q_pc_startup[i] = (float)(p_q_dot_pc_startup[i] * (sim_setup.m_report_step / 3600.0));    //[MWh]
+            if (p_q_dot[i] > 0.0) {
+                p_q_pc_eta[i] = (float)(p_W_dot_cycle[i] / p_q_dot[i]);   //[-]
+            }
+            else {
+                p_q_pc_eta[i] = 0.0;    //[-]
+            }
         }
 
         // Convert mass flow rates from [kg/hr] to [kg/s]
@@ -1285,7 +1308,6 @@ public:
         //ssc_number_t *p_m_dot_tes_ch = as_array("m_dot_tes_ch", &count);
         //if ((int)count != n_steps_fixed)
         //    throw exec_error("trough_physical", "The number of fixed steps for 'm_dot_tes_ch' does not match the length of output data arrays");
-        
         for(int i = 0; i < n_steps_fixed; i++)
         {
             size_t hour = (size_t)ceil(p_time_final_hr[i]);
@@ -1295,8 +1317,9 @@ public:
             p_q_dot_defocus_est[i] = (ssc_number_t)(1.0 - p_SCAs_def[i])*p_q_dot_htf_sf_out[i]; //[MWt]
             //p_m_dot_tes_dc[i] = (ssc_number_t)(p_m_dot_tes_dc[i] / 3600.0);     //[kg/s] convert from kg/hr
             //p_m_dot_tes_ch[i] = (ssc_number_t)(p_m_dot_tes_ch[i] / 3600.0);     //[kg/s] convert from kg/hr
+           
         }
-
+        ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, steps_per_hour);
         // Non-timeseries array outputs
         double P_adj = storage.P_in_des; // slightly adjust all field design pressures to account for pressure drop in TES before hot tank
         transform(c_trough.m_P_rnr_dsn.begin(), c_trough.m_P_rnr_dsn.end(), c_trough.m_P_rnr_dsn.begin(), [P_adj](double x) {return x + P_adj; });

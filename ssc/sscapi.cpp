@@ -62,7 +62,7 @@
 
 SSCEXPORT int ssc_version()
 {
-	return 253;
+	return 256;
 }
 
 SSCEXPORT const char *ssc_build_info()
@@ -133,6 +133,7 @@ extern module_entry_info
 	cm_entry_tcsdish,
 	cm_entry_tcsiscc,
 	cm_entry_tcsmslf,
+    cm_entry_etes_electric_resistance,
 	cm_entry_hcpv,
 	cm_entry_wfcheck,
 	cm_entry_wind_file_reader,
@@ -145,8 +146,6 @@ extern module_entry_info
 	cm_entry_belpe,
 	cm_entry_dsg_flux_preprocess,
 	cm_entry_layoutarea,
-	cm_entry_sco2_design_point,
-	cm_entry_sco2_design_cycle,
 	cm_entry_sco2_csp_system,
 	cm_entry_sco2_csp_ud_pc_tables,
 	cm_entry_sco2_air_cooler,
@@ -230,6 +229,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_tcsdish,
 	&cm_entry_tcsiscc,
 	&cm_entry_tcsmslf,
+    &cm_entry_etes_electric_resistance,
 	&cm_entry_hcpv,
 	&cm_entry_wind_file_reader,
 	&cm_entry_wfcheck,
@@ -242,8 +242,6 @@ static module_entry_info *module_table[] = {
 	&cm_entry_belpe,
 	&cm_entry_dsg_flux_preprocess,
 	&cm_entry_layoutarea,
-	&cm_entry_sco2_design_point,
-	&cm_entry_sco2_design_cycle,
 	&cm_entry_sco2_csp_system,
 	&cm_entry_sco2_csp_ud_pc_tables,
 	&cm_entry_sco2_air_cooler,

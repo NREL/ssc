@@ -588,7 +588,7 @@ public:
 		{
 			p_hourly_energy[i] = hourly_energy[i] * (ssc_number_t)(haf(i)*1000.0);
 		}
-
+        ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, 1);
 		accumulate_annual("gen", "annual_energy"); // already in kWh
 		accumulate_monthly("gen", "monthly_energy"); // already in kWh
 

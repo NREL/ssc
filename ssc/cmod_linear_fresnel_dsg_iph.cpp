@@ -432,6 +432,7 @@ public:
 		system.m_bop_par_0 = 0.0;
 		system.m_bop_par_1 = 0.0;
 		system.m_bop_par_2 = 0.0;
+        system.m_is_field_freeze_protection_electric = false;
 
 		// ********************************
 		// ********************************
@@ -543,6 +544,8 @@ public:
 			p_W_dot_parasitic_tot[i] *= -1.0;			//[kWe] Label is total parasitics, so change to a positive value
 			p_W_dot_par_tot_haf[i] = (ssc_number_t)(p_W_dot_parasitic_tot[i] * haf(hour) * 1.E3);		//[kWe]
 		}
+
+        ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, steps_per_hour);
 
 
 		accumulate_annual_for_year("gen", "annual_field_energy", sim_setup.m_report_step / 3600.0, steps_per_hour);	//[kWt-hr]

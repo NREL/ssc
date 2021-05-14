@@ -220,8 +220,12 @@ class C_csp_tou
 public:
     struct S_csp_tou_params
     {
+        bool m_is_block_dispatch;
+        bool m_is_arbitrage_policy;
+        bool m_dispatch_optimize;
+
+
         bool m_isleapyear;
-		bool m_dispatch_optimize;
         int m_optimize_frequency;
         int m_disp_steps_per_hour;
         int m_optimize_horizon;
@@ -248,7 +252,7 @@ public:
 		
         bool m_is_tod_pc_target_also_pc_max;
 
-		bool m_is_block_dispatch;
+        bool m_is_purchase_mult_same_as_price;
 
 		bool m_use_rule_1;
 		double m_standby_off_buffer;
@@ -260,8 +264,11 @@ public:
 
         S_csp_tou_params()
         {
-            m_isleapyear = false;
+            m_is_block_dispatch = true;			// Either this or m_dispatch_optimize must be true
+            m_is_arbitrage_policy = false;
             m_dispatch_optimize = false;        //Do dispatch optimization
+
+            m_isleapyear = false;
             m_optimize_frequency = 24;          //[hr] Optimization occurs every X hours
             m_disp_steps_per_hour = 1;          //[-] Steps per hour for dispatch optimization
             m_optimize_horizon = 48;            //[hr] Optimization time horizon
@@ -290,8 +297,8 @@ public:
 			
             m_is_tod_pc_target_also_pc_max = false;
 
-			m_is_block_dispatch = true;			// Either this or m_dispatch_optimize must be true
-			
+            m_is_purchase_mult_same_as_price = true;
+
 			// Rule 1: if the sun sets (or does not rise) in m_standby_off_buffer [hours], then do not allow power cycle standby
 			m_use_rule_1 = false;				
 			m_standby_off_buffer = -1.23;		//[hr]
@@ -425,11 +432,13 @@ public:
         bool m_is_recirculating;        //[-] Is field/receiver recirculating?
 			
 		// These are used for the parasitic class call(), so could be zero...
-		double m_E_fp_total;			//[MW] Solar field freeze protection power
+		//double m_E_fp_total;			//[MW] Solar field freeze protection power
 		double m_W_dot_col_tracking;	//[MWe] Collector tracking power
 		double m_W_dot_htf_pump;		//[MWe] HTF pumping power
         double m_dP_sf;                 //[bar] Total field pressure drop
-		double m_q_rec_heattrace;		//[MW] Receiver heat trace parasitic power
+		//double m_q_rec_heattrace;		//[MW] Receiver heat trace parasitic power
+
+        double m_q_dot_heater;          //[MWt] 'external' heat delivered to receiver, e.g. heat trace
 
 		// 07/08/2016, GZ: add new variables for DSG LF 
 		int m_standby_control;		//[-]
@@ -441,10 +450,11 @@ public:
 		S_csp_cr_out_solver()
 		{
 			m_q_thermal = m_q_startup = m_m_dot_salt_tot = m_T_salt_hot = m_W_dot_htf_pump =
-				m_W_dot_col_tracking = m_time_required_su = m_E_fp_total =
+				m_W_dot_col_tracking = m_time_required_su = // m_E_fp_total =
 				m_dP_sf_sh = m_h_htf_hot = m_xb_htf_hot = m_P_htf_hot = std::numeric_limits<double>::quiet_NaN();
 
-			m_q_rec_heattrace = 0.0;
+            m_q_dot_heater = 0.0;
+			//m_q_rec_heattrace = 0.0;
 
 			m_component_defocus = 1.0;
 
@@ -457,7 +467,7 @@ public:
 	virtual void init( const C_csp_collector_receiver::S_csp_cr_init_inputs init_inputs,
 		C_csp_collector_receiver::S_csp_cr_solved_params & solved_params) = 0;
 
-	virtual int get_operating_state() = 0;
+	virtual E_csp_cr_modes get_operating_state() = 0;
 
     virtual double get_startup_time() = 0;
     virtual double get_startup_energy() = 0; //MWh
@@ -478,7 +488,7 @@ public:
 
 	virtual void on(const C_csp_weatherreader::S_outputs &weather,
 		const C_csp_solver_htf_1state &htf_state_in,
-		double field_control,
+		double q_dot_elec_to_CR_heat /*MWt*/, double field_control,
 		C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
 		const C_csp_solver_sim_info &sim_info) = 0;
 
@@ -519,7 +529,10 @@ class C_csp_power_cycle
 
 public:
 	
-	// Collector-receiver technology type
+    // Class to save messages for up stream classes
+    C_csp_messages mc_csp_messages;
+
+    // Collector-receiver technology type
 	bool m_is_sensible_htf;		//[-] True = indirect, sensible HTF, e.g. molten salt. False = direct steam
 
 	C_csp_power_cycle()
@@ -905,6 +918,10 @@ public:
 
         bool m_is_rec_to_coldtank_allowed;
 
+        //[-] True - use in W_dot_net balance, False - assume other heat source
+        // Default true for electricity generation models. IPH will nominally use false
+        bool m_is_field_freeze_protection_electric; 
+
         // If receiver outlet to cold tank is allowed
         //   outlet temps colder than this value go to the cold tank
         //   calculate T_htf_hot_tank_in_min = f*T_hot_des + (1-f)*T_cold_des
@@ -919,6 +936,8 @@ public:
             f_htf_hot_des__T_htf_hot_tank_in_min = std::numeric_limits<double>::quiet_NaN();
 
             m_is_rec_to_coldtank_allowed = false;
+
+            m_is_field_freeze_protection_electric = true;
 		}
 	};
 
@@ -1078,6 +1097,8 @@ public:
 
         bool m_is_rec_outlet_to_hottank;    //[-]
 
+        double m_q_dot_elec_to_CR_heat;   //[MWt]
+
 		double m_q_dot_pc_target;   //[MWt]
 
 		double m_defocus;   //[-]
@@ -1096,6 +1117,7 @@ public:
 
 		C_MEQ__m_dot_tes(E_m_dot_solver_modes solver_mode, C_csp_solver* pc_csp_solver,
             C_csp_power_cycle::E_csp_power_cycle_modes pc_mode, C_csp_collector_receiver::E_csp_cr_modes cr_mode,
+            double q_dot_elec_to_CR_heat /*MWt*/,
             bool is_rec_outlet_to_hottank,
 			double q_dot_pc_target /*MWt*/,
 			double defocus /*-*/, double t_ts /*s*/,
@@ -1107,6 +1129,8 @@ public:
 			mpc_csp_solver = pc_csp_solver;
 			m_pc_mode = pc_mode;    //[-]
 			m_cr_mode = cr_mode;    //[-]
+
+            m_q_dot_elec_to_CR_heat = q_dot_elec_to_CR_heat;    //[MWt]
 
             m_is_rec_outlet_to_hottank = is_rec_outlet_to_hottank;
 
@@ -1138,6 +1162,8 @@ public:
         C_csp_power_cycle::E_csp_power_cycle_modes m_pc_mode;      //[-]
         C_csp_collector_receiver::E_csp_cr_modes m_cr_mode;      //[-]
 
+        double m_q_dot_elec_to_CR_heat;   //[MWt]
+
         bool m_is_rec_outlet_to_hottank;    //[-]
 
 		double m_defocus;   //[-]
@@ -1152,6 +1178,7 @@ public:
 		C_MEQ__T_field_cold(C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode, C_csp_solver* pc_csp_solver,
 			double q_dot_pc_target /*MWt*/,
             C_csp_power_cycle::E_csp_power_cycle_modes pc_mode, C_csp_collector_receiver::E_csp_cr_modes cr_mode,
+            double q_dot_elec_to_CR_heat /*MWt*/,
             bool is_rec_outlet_to_hottank,
 			double defocus /*-*/, double t_ts /*s*/,
 			double P_field_in /*kPa*/, double x_field_in /*-*/)
@@ -1159,6 +1186,7 @@ public:
 			m_solver_mode = solver_mode;
 
 			mpc_csp_solver = pc_csp_solver;
+            m_q_dot_elec_to_CR_heat = q_dot_elec_to_CR_heat;    //[MWt]
 
 			m_q_dot_pc_target = q_dot_pc_target;    //[MWt]
 
@@ -1194,6 +1222,7 @@ public:
 		E_timestep_target_modes m_step_target_mode;
 
 		C_csp_solver* mpc_csp_solver;
+        double m_q_dot_elec_to_CR_heat;   //[MWt]
 
 		double m_q_dot_pc_target;   //[MWt]
 
@@ -1208,6 +1237,7 @@ public:
 			C_csp_solver* pc_csp_solver,
 			double q_dot_pc_target /*MWt*/,
             C_csp_power_cycle::E_csp_power_cycle_modes pc_mode, C_csp_collector_receiver::E_csp_cr_modes cr_mode,
+            double q_dot_elec_to_CR_heat /*MWt*/,
             bool is_rec_outlet_to_hottank,
 			double defocus /*-*/)
 		{
@@ -1216,6 +1246,7 @@ public:
 
 			mpc_csp_solver = pc_csp_solver;
 
+            m_q_dot_elec_to_CR_heat = q_dot_elec_to_CR_heat;    //[MWt]
 			m_q_dot_pc_target = q_dot_pc_target;    //[MWt]
 
 			m_pc_mode = pc_mode;
@@ -1243,6 +1274,7 @@ public:
 
         C_csp_solver *mpc_csp_solver;
 
+        double m_q_dot_elec_to_CR_heat; //[MWt]
         double m_q_dot_pc_target;   //[MWt]
 
         C_csp_power_cycle::E_csp_power_cycle_modes m_pc_mode;      //[-]
@@ -1258,6 +1290,7 @@ public:
             C_csp_solver *pc_csp_solver, 
 			double q_dot_pc_target /*MWt*/,
             C_csp_power_cycle::E_csp_power_cycle_modes pc_mode, C_csp_collector_receiver::E_csp_cr_modes cr_mode,
+            double q_dot_elec_to_CR_heat /*MWt*/,
             bool is_rec_outlet_to_hottank,
             double t_ts_initial /*s*/)
         {
@@ -1267,6 +1300,7 @@ public:
 
             mpc_csp_solver = pc_csp_solver;
 
+            m_q_dot_elec_to_CR_heat = q_dot_elec_to_CR_heat;    //[MWt]
             m_q_dot_pc_target = q_dot_pc_target;    //[MWt]
 
             m_pc_mode = pc_mode;
@@ -1284,7 +1318,8 @@ public:
 	int solve_operating_mode(C_csp_collector_receiver::E_csp_cr_modes cr_mode, C_csp_power_cycle::E_csp_power_cycle_modes pc_mode,
         C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode, C_MEQ__timestep::E_timestep_target_modes step_target_mode,
 		double q_dot_pc_target /*MWt*/, bool is_defocus, bool is_rec_outlet_to_hottank,
-		std::string op_mode_str, double& defocus_solved);
+        double q_dot_elec_to_CR_heat /*MWt*/,
+        std::string op_mode_str, double& defocus_solved);
 
 
     class C_operating_mode_core
@@ -1364,7 +1399,7 @@ public:
             double q_dot_pc_on_dispatch_target /*MWt*/, double q_dot_pc_startup /*MWt*/, double q_dot_pc_standby /*MWt*/,
             double q_dot_pc_min /*MWt*/, double q_dot_pc_max /*MWt*/, double q_dot_pc_startup_max /*MWt*/,
             double m_dot_pc_startup_max /*kg/hr*/, double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
-            double limit_comp_tol /*-*/,
+            double q_dot_elec_to_CR_heat /*MWt*/, double limit_comp_tol /*-*/,
             double& defocus_solved, bool& is_op_mode_avail /*-*/, bool& is_turn_off_plant, bool& is_rec_su_unchanged);
 
     protected:
@@ -1978,7 +2013,7 @@ public:
             double q_dot_pc_on_target /*MWt*/, double q_dot_pc_startup /*MWt*/, double q_dot_pc_standby /*MWt*/,
             double q_dot_pc_min /*MWt*/, double q_dot_pc_max /*MWt*/, double q_dot_pc_startup_max /*MWt*/,
             double m_dot_pc_startup_max /*kg/hr*/, double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
-            double limit_comp_tol /*-*/,
+            double W_dot_elec_to_CR_heat /*MWe*/, double limit_comp_tol /*-*/,
             double& defocus_solved, bool& is_op_mode_avail /*-*/, bool& is_turn_off_plant, bool& is_turn_off_rec_su);
 
         bool is_mode_avail(E_operating_modes op_mode)

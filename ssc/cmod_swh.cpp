@@ -800,12 +800,14 @@ public:
 				Mode[idx] = (ssc_number_t)mode; // save mode for debugging
 
 				out_energy[idx] =  (ssc_number_t)( Q_saved * ts_hour * haf(hour) * watt_to_kw); // kWh energy, with adjustment factors applied
-
+                
 				// accumulate hourly and annual energy
 				annual_kwh += out_energy[idx];
 				idx++;
 			}
 		}
+
+        ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, 1);
 
 		// if an electric load exists, the amount of energy saved cannot exceed it, since can't export savings
 		if (is_assigned("load")) {
