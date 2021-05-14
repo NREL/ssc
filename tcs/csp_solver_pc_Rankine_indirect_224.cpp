@@ -510,6 +510,23 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
             throw(C_csp_exception("UDPC mode selected by UDPC table is not set"));
         }
 
+        // Check UDPC parameters and reset if necessary
+        if (ms_params.m_W_dot_cooling_des != ms_params.m_W_dot_cooling_des || ms_params.m_W_dot_cooling_des < 0.0)
+        {
+            ms_params.m_W_dot_cooling_des = 0.0;
+            m_error_msg = util::format("The cycle cooling electric parasitic at design input for the user-defined power cycle was either not defined or negative."
+                " It was reset to 0.0 for the timeseries simulation");
+            mc_csp_messages.add_message(C_csp_messages::WARNING, m_error_msg);
+        }
+
+        if (ms_params.m_m_dot_water_des != ms_params.m_m_dot_water_des || ms_params.m_m_dot_water_des < 0.0)
+        {
+            ms_params.m_m_dot_water_des = 0.0;
+            m_error_msg = util::format("The cycle water use at design input for the user-defined power cycle was either not defined or negative."
+                " It was reset to 0.0 for the timeseries simulation");
+            mc_csp_messages.add_message(C_csp_messages::WARNING, m_error_msg);
+        }
+
         double T_htf_ref_udpc_calc, T_amb_ref_udpc_calc, m_dot_htf_ref_udpc_calc;
         std::vector<double> Y_at_T_htf_ref, Y_at_T_amb_ref, Y_at_m_dot_htf_ND_ref, Y_avg_at_refs;
         mc_user_defined_pc.init(ms_params.mc_combined_ind, T_htf_ref_udpc_calc, T_amb_ref_udpc_calc, m_dot_htf_ref_udpc_calc,
@@ -524,48 +541,40 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
         double W_dot_cooling_ND_des = mc_user_defined_pc.get_W_dot_cooling_ND(ms_params.m_T_htf_hot_ref, ms_params.m_T_amb_des, 1.0);
         double m_dot_water_ND_des = mc_user_defined_pc.get_m_dot_water_ND(ms_params.m_T_htf_hot_ref, ms_params.m_T_amb_des, 1.0);
 
-        double W_dot_gross_des_UDPC = ms_params.m_P_ref * W_dot_gross_ND_des;   //[MWe]
+        double W_dot_gross_des_UDPC = ms_params.m_P_ref * W_dot_gross_ND_des * 1.E-3;   //[MWe]
         double q_dot_des_UDPC = m_q_dot_design * Q_dot_HTF_ND_des;              //[MWt]
         double W_dot_cooling_des_UDPC = ms_params.m_W_dot_cooling_des * W_dot_cooling_ND_des;   //[MWe]
         double m_dot_water_des_UDPC = ms_params.m_m_dot_water_des * m_dot_water_ND_des;         //[kg/s]
 
-        // Calculate other important metrics
-        //double eta_des_UDPDC = P_cycle / 1.E3 / q_dot_htf;		//[-]
+        // Calculate other important design values
+        double eta_des_UDPDC = W_dot_gross_des_UDPC / q_dot_des_UDPC;		//[-]
+        double T_htf_cold_des_UDPC = ms_params.m_T_htf_hot_ref - q_dot_des_UDPC / (m_m_dot_design / 3600.0 * m_cp_htf_design / 1.E3);		//[MJ/s * hr/kg * s/hr * kg-K/kJ * MJ/kJ] = C/K
 
-        // Want to iterate to fine more accurate cp_htf?
-        //T_htf_cold = T_htf_hot - q_dot_htf / (m_dot_htf / 3600.0 * m_cp_htf_design / 1.E3);		//[MJ/s * hr/kg * s/hr * kg-K/kJ * MJ/kJ] = C/K
+#ifdef _MSC_VER
+#define MySnprintf _snprintf
+#else
+#define MySnprintf snprintf
+#endif
+#define TSTRLEN2 512
 
-
-        // Write UDPC preprocess summary
         std::string udpc_message;
-        udpc_message = "User Defined Power Cycle (UDPC) pre-process summary:\n";
-        udpc_message += util::format("Output \t");
 
-        // Check input design HTF temperature vs design HTF temperature calculated from UDPC table
-        // The input design HTF temperature is related to the heat source and TES designs, so we can't reset it like the design ambient temperature
-        // Report message if different
-        if (std::abs(T_htf_ref_udpc_calc - ms_params.m_T_htf_hot_ref) > 0.1) {
-            m_error_msg = util::format("The input cycle design HTF hot temperature is %lg, but the calculated design HTF hot temperature"
-            " in the UDPC table is %lg. This may result in unexpected cycle performance.", ms_params.m_T_htf_hot_ref, T_htf_ref_udpc_calc);
-            mc_csp_messages.add_message(C_csp_messages::WARNING, m_error_msg);
-        }
-
-		if(ms_params.m_W_dot_cooling_des != ms_params.m_W_dot_cooling_des || ms_params.m_W_dot_cooling_des < 0.0 )
-		{
-			ms_params.m_W_dot_cooling_des = 0.0;
-			m_error_msg = util::format("The cycle cooling electric parasitic at design input for the user-defined power cycle was either not defined or negative."
-									" It was reset to 0.0 for the timeseries simulation");
-			mc_csp_messages.add_message(C_csp_messages::WARNING, m_error_msg);
-		}
-
-		if(ms_params.m_m_dot_water_des != ms_params.m_m_dot_water_des || ms_params.m_m_dot_water_des < 0.0 )
-		{
-			ms_params.m_m_dot_water_des = 0.0;
-			m_error_msg = util::format("The cycle water use at design input for the user-defined power cycle was either not defined or negative."
-				" It was reset to 0.0 for the timeseries simulation");
-			mc_csp_messages.add_message(C_csp_messages::WARNING, m_error_msg);
-		}
-
+        char tstr[TSTRLEN2];
+        MySnprintf(tstr, TSTRLEN2, "%-30s%-15s%s\n", "Outputs", "Inputs", "UDPC");
+        udpc_message.append(tstr);
+        MySnprintf(tstr, TSTRLEN2, "%-30s%-15.1lf%.1lf\n", "Gross power [MWe]", ms_params.m_P_ref*1.E-3, W_dot_gross_des_UDPC );
+        udpc_message.append(tstr);
+        MySnprintf(tstr, TSTRLEN2, "%-30s%-15.1lf%.1lf\n", "Heat input [MWt]", m_q_dot_design, q_dot_des_UDPC);
+        udpc_message.append(tstr);
+        MySnprintf(tstr, TSTRLEN2, "%-30s%-15.1lf%.1lf\n", "Cooling power [MWe]", ms_params.m_W_dot_cooling_des, W_dot_cooling_des_UDPC);
+        udpc_message.append(tstr);
+        MySnprintf(tstr, TSTRLEN2, "%-30s%-15.1lf%.1lf\n", "Water user [kg/s]", ms_params.m_m_dot_water_des, m_dot_water_des_UDPC);
+        udpc_message.append(tstr);
+        MySnprintf(tstr, TSTRLEN2, "%-30s%-15.3lf%.3lf\n", "Gross efficiency", ms_params.m_eta_ref, eta_des_UDPDC);
+        udpc_message.append(tstr);
+        MySnprintf(tstr, TSTRLEN2, "%-30s%-15.1lf%.1lf\n", "HTF cold temp [C]", ms_params.m_T_htf_cold_ref, T_htf_cold_des_UDPC);
+        udpc_message.append(tstr);
+        mc_csp_messages.add_notice(udpc_message);
 	}
     // ***********************************************************************
 
