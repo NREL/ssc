@@ -847,6 +847,13 @@ double C_csp_trough_collector_receiver::get_pumping_parasitic_coef()
     return m_W_dot_pump / (m_q_design * 1.e-6);
 
 }
+
+double C_csp_trough_collector_receiver::get_max_thermal_power()    //MWt
+{
+    throw(C_csp_exception("C_csp_trough_collector_receiver::get_min_power_delivery(...) is not complete"));
+    return std::numeric_limits<double>::quiet_NaN();
+}
+
 double C_csp_trough_collector_receiver::get_min_power_delivery()
 {
     double c_htf_ave = m_htfProps.Cp((m_T_startup + m_T_loop_in_des) / 2.0)*1000.;    //[J/kg-K] Specific heat

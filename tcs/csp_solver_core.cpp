@@ -457,13 +457,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		dispatch.params.e_pb_startup_cold = mc_power_cycle.get_cold_startup_energy()*1000.;
 		//dispatch.params.e_pb_startup_hot = mc_power_cycle.get_hot_startup_energy()*1000.;
 
-		//dispatch.params.dt_rec_startup = mc_collector_receiver.get_startup_time() / 3600.;
-		//dispatch.params.e_rec_startup = mc_collector_receiver.get_startup_energy() * 1000;
+        dispatch.params.dt_rec_startup = mc_collector_receiver.get_startup_time(); // / 3600.;
+		dispatch.params.e_rec_startup = mc_collector_receiver.get_startup_energy() * 1000;
 		//dispatch.params.q_rec_min = mc_collector_receiver.get_min_power_delivery()*1000.;
 		//dispatch.params.w_rec_pump = mc_collector_receiver.get_pumping_parasitic_coef();
 
-        //ispatch.params.q_eh_max = mc_collector_receiver.get_max_thermal_power() * 1000;
-
+        dispatch.params.q_eh_max = mc_collector_receiver.get_max_thermal_power() * 1000;
 
 		dispatch.params.e_tes0 = mc_tes.get_initial_charge_energy() * 1000; //TODO: this doesn't seem to do the job...
 		dispatch.params.e_tes_min = mc_tes.get_min_charge_energy() * 1000;
@@ -923,6 +922,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 dispatch.params.is_pb_operating0 = mc_power_cycle.get_operating_state() == 1;
                 //dispatch.params.is_pb_standby0 = mc_power_cycle.get_operating_state() == 2;
                 //dispatch.params.is_rec_operating0 = mc_collector_receiver.get_operating_state() == C_csp_collector_receiver::ON;
+                dispatch.params.is_eh_operating0 = mc_collector_receiver.get_operating_state() == C_csp_collector_receiver::ON;
                 dispatch.params.q_pb0 = mc_pc_out_solver.m_q_dot_htf * 1000.;
 
                 if(dispatch.params.q_pb0 != dispatch.params.q_pb0 ) //TODO: What is this testing?
@@ -1000,9 +1000,11 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 is_pc_sb_allowed = dispatch.outputs.pb_standby.at( dispatch.m_current_read_step );
                 is_pc_su_allowed = dispatch.outputs.pb_operation.at( dispatch.m_current_read_step ) || is_pc_sb_allowed;
 
-                q_pc_target = (dispatch.outputs.q_pb_target.at( dispatch.m_current_read_step ) 
-                    + dispatch.outputs.q_pb_startup.at( dispatch.m_current_read_step ) )
-                    / 1000. ;
+                q_pc_target = dispatch.outputs.q_pb_target.at( dispatch.m_current_read_step ) / 1000.;
+                    //+ dispatch.outputs.q_pb_startup.at( dispatch.m_current_read_step )
+                          //TODO: Think about why this includes startup power
+
+                q_dot_elec_to_CR_heat = dispatch.outputs.q_sf_expected.at(dispatch.m_current_read_step) / 1000.;
 
                 //quality checks
 				/*

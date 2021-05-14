@@ -134,16 +134,14 @@ C_csp_collector_receiver::E_csp_cr_modes C_csp_cr_electric_resistance::get_opera
     return m_operating_mode_converged;	//[-]
 }
 
-double C_csp_cr_electric_resistance::get_startup_time()
+double C_csp_cr_electric_resistance::get_startup_time() // hr
 {
-    throw(C_csp_exception("C_csp_cr_electric_resistance::get_startup_time(...) is not complete"));
-    return std::numeric_limits<double>::quiet_NaN();
+    return m_t_su_des;
 }
 
-double C_csp_cr_electric_resistance::get_startup_energy() //MWh
+double C_csp_cr_electric_resistance::get_startup_energy() // MWh
 {
-    throw(C_csp_exception("C_csp_cr_electric_resistance::get_startup_energy(...) is not complete"));
-    return std::numeric_limits<double>::quiet_NaN();
+    return m_E_su_des;
 }
 
 double C_csp_cr_electric_resistance::get_pumping_parasitic_coef()  //MWe/MWt
@@ -158,10 +156,10 @@ double C_csp_cr_electric_resistance::get_min_power_delivery()    //MWt
     return std::numeric_limits<double>::quiet_NaN();
 }
 
-//double C_csp_cr_electric_resistance::get_max_thermal_power()    //MWt
-//{
-//    return m_q_dot_heater_des;
-//}
+double C_csp_cr_electric_resistance::get_max_thermal_power()    //MWt
+{
+    return m_q_dot_heater_des;
+}
 
 double C_csp_cr_electric_resistance::get_tracking_power()	//MWe
 {

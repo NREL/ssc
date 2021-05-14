@@ -3,22 +3,33 @@ clear();
 // PPA schedule option
 // 0: Simple step-change TOU block schedule (dispatch_sched_weekday, dispatch_sched_weekend, dispatch_factorX)
 // To test hourly schedule (dispatch_factor_ts)
-var( 'ppa_multiplier_model', 0 );
+var( 'ppa_multiplier_model', 1 );
+var( 'is_dispatch', 1 );
+//var( 'disp_reporting', 4);
 
+tshours = [4., 6., 8., 10., 12., 14.];
+heater_mult = [1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0];
+
+var( 'tshours', 10 );
+var( 'heater_mult', 2.3999999999999999 );
+
+for (i = 0; i< #tshours; i++)
+{
+	var( 'tshours', tshours[i]);
+	for (j = 0; j < #heater_mult; j ++)
+	{
+	var( 'heater_mult', heater_mult[j]);
 
 var( 'T_htf_cold_des', 290 );
 var( 'T_htf_hot_des', 574 );
 var( 'P_ref', 115 );
 var( 'design_eff', 0.41199999999999998 );
-var( 'tshours', 10 );
-var( 'heater_mult', 2.3999999999999999 );
 var( 'tes_fl_code', 17 );
 var( 'ud_tes_fl_props', 
 [ [ 0, 0, 0, 0, 0, 0, 0 ] ] );
 
-var( 'is_dispatch', 0 );
-
 var( 'dispatch_factors_ts', real_array(read_text_file('PPA_mults_v1.csv')));
+//var( 'dispatch_factors_ts', real_array(read_text_file('PPA_mults_removed_zero_pricing.csv')));
 outln(var('dispatch_factors_ts'));
 var( 'dispatch_sched_weekday', 
 [ [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 ], 
@@ -124,13 +135,11 @@ var( 'bop_par_0', 0 );
 var( 'bop_par_1', 0.48299999999999998 );
 var( 'bop_par_2', 0 );
 var( 'is_tod_pc_target_also_pc_max', 0 );
-var( 'is_dispatch', 1 );
-var( 'disp_reporting', 4);
 
 var( 'disp_horizon', 48 );
 var( 'disp_frequency', 24 );
 var( 'disp_max_iter', 35000 );
-var( 'disp_timeout', 10.0 );	//5.0
+var( 'disp_timeout', 5.0 );	//5.0
 var( 'disp_mip_gap', 0.001 );
 var( 'disp_time_weighting', 0.999 );
 var( 'disp_rsu_cost', 950 );
@@ -166,3 +175,28 @@ var( 'adjust:constant', 4 );
 
 run('etes_electric_resistance');
 
+outputs{"dispatch_factors_ts"} = var("dispatch_factors_ts");
+outputs{"W_dot_out_net"} = var("W_dot_out_net");
+outputs{"q_dot_dc_tes"} = var("q_dot_dc_tes");
+outputs{"q_dot_ch_tes"} = var("q_dot_ch_tes");
+outputs{"e_ch_tes"} = var("e_ch_tes");
+
+//Dipsatch outputs
+outputs{"q_pc_target"} = var("q_pc_target");
+outputs{"disp_qsfprod_expect"} = var("disp_qsfprod_expect");
+outputs{"disp_qsfsu_expect"} = var("disp_qsfsu_expect");
+outputs{"disp_wpb_expect"} = var("disp_wpb_expect");
+outputs{"disp_tes_expect"} = var("disp_tes_expect");
+
+outputs{"disp_solve_state"} = var("disp_solve_state");
+outputs{"disp_solve_iter"} = var("disp_solve_iter");
+outputs{"disp_objective"} = var("disp_objective");
+outputs{"disp_rev_expect"} = var("disp_rev_expect");
+outputs{"disp_presolve_nconstr"} = var("disp_presolve_nconstr");
+outputs{"disp_presolve_nvar"} = var("disp_presolve_nvar");
+outputs{"disp_solve_time"} = var("disp_solve_time");
+
+csvwrite("outputs.csv", outputs);
+
+	}
+}
