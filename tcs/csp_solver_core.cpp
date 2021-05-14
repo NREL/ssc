@@ -329,6 +329,7 @@ void C_csp_solver::init()
 		// Power cycle
 	C_csp_power_cycle::S_solved_params pc_solved_params;
 	mc_power_cycle.init(pc_solved_params);
+    mc_csp_messages.transfer_messages(mc_power_cycle.mc_csp_messages);
 	m_cycle_W_dot_des = pc_solved_params.m_W_dot_des;					//[MW]
 	m_cycle_eta_des = pc_solved_params.m_eta_des;						//[-]
 	m_cycle_q_dot_des = pc_solved_params.m_q_dot_des;					//[MW]

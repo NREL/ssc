@@ -1,5 +1,7 @@
 #include <cmath>
 #include <math.h>
+#include <cmath>
+#include <algorithm>
 #include "cmod_csp_common_eqns.h"
 #include "vartab.h"
 #include "csp_system_costs.h"
@@ -135,6 +137,11 @@ HTFProperties GetHtfProperties(int fluid_number, const util::matrix_t<double> &s
 }
 
 
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+// Power Tower //////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////
 
 // Originally from 'MSPT System Design' UI form
 double Nameplate(double P_ref /*MWe*/, double gross_net_conversion_factor /*-*/) {      // MWe
@@ -547,4 +554,527 @@ void Tower_SolarPilot_Capital_Costs_Equations(ssc_data_t data)
     ssc_data_t_set_number(data, "total_indirect_cost", (ssc_number_t)total_indirect_cost);
     ssc_data_t_set_number(data, "total_installed_cost", (ssc_number_t)total_installed_cost);
     ssc_data_t_set_number(data, "csp.pt.cost.installed_per_capacity", (ssc_number_t)estimated_installed_cost_per_cap);
+}
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+// Physical Trough //////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+
+double Solar_mult(int radio_sm_or_area, double field_thermal_output, double q_pb_design, double specified_solar_multiple, double total_aperture, double total_required_aperture_for_SM1)
+{
+    double solar_mult = std::numeric_limits<double>::quiet_NaN();
+
+    if (radio_sm_or_area == -1) {
+        solar_mult = field_thermal_output / q_pb_design;
+    }
+    else if (radio_sm_or_area == 0) {
+        solar_mult = specified_solar_multiple;
+    }
+    else if (radio_sm_or_area == 1) {
+        solar_mult = total_aperture / total_required_aperture_for_SM1;
+    }
+    else {
+        throw std::runtime_error("Physical Trough. Solar multiple calculation failed, invalid option.");
+    }
+
+    return solar_mult;
+}
+
+double Max_field_flow_velocity(double m_dot_htfmax, double fluid_dens_outlet_temp, double min_inner_diameter)
+{
+    return m_dot_htfmax * 4 / (fluid_dens_outlet_temp * M_PI *
+        min_inner_diameter * min_inner_diameter);
+}
+
+double Min_field_flow_velocity(double m_dot_htfmin, double fluid_dens_inlet_temp, double min_inner_diameter)
+{
+    return m_dot_htfmin * 4 / (fluid_dens_inlet_temp * M_PI *
+        min_inner_diameter * min_inner_diameter);
+}
+
+double Field_htf_cp_avg(double T_in /*C*/, double T_out /*C*/, int rec_htf /*-*/,
+    const util::matrix_t<ssc_number_t>& field_fl_props /*-*/)      // [kJ/kg-K]
+{
+    double T_avg = 0.5 * (T_in + T_out);
+    HTFProperties htf_properties = GetHtfProperties(rec_htf, field_fl_props);
+    return htf_properties.Cp(T_avg + 273.15);
+}
+
+double Min_inner_diameter(const util::matrix_t<ssc_number_t>& trough_loop_control, const util::matrix_t<ssc_number_t>& D_2)
+{
+    double minval = D_2[0];
+    int hce_t = -1;
+    for (int i = 0; i < static_cast<int>(trough_loop_control.at(0)); i++)
+    {
+        hce_t = std::min(std::max(static_cast<int>(trough_loop_control.at(i * 3 + 2)), 1), 4) - 1;
+        if (D_2[hce_t] < minval) {
+            minval = D_2[hce_t];
+        }
+    }
+
+    return minval;
+}
+
+double Single_loop_aperature(const util::matrix_t<ssc_number_t>& trough_loop_control, const util::matrix_t<ssc_number_t>& A_aperture)
+{
+    int nsca = static_cast<int>(trough_loop_control.at(0));
+
+    double total_ap = 0.;
+    int sca_t = -1;
+    for (int i = 0; i < nsca; i++)
+    {
+        sca_t = std::min(std::max(static_cast<int>(trough_loop_control.at(1 + i * 3)), 1), 4) - 1;
+        total_ap = total_ap + A_aperture[sca_t];
+    }
+
+    return total_ap;
+}
+
+double Cspdtr_loop_hce_heat_loss(const util::matrix_t<ssc_number_t>& trough_loop_control, double I_bn_des,
+    const util::matrix_t<ssc_number_t>& csp_dtr_hce_design_heat_losses,
+    const util::matrix_t<ssc_number_t>& L_SCA,
+    const util::matrix_t<ssc_number_t>& A_aperture)
+{
+    int ncol = static_cast<int>(trough_loop_control.at(0));
+    double total_len = 0.;
+
+    double derate = 0.;
+    for (int i = 0; i < ncol; i++)
+    {
+        int sca_t = std::min(std::max(static_cast<int>(trough_loop_control.at(1 + i * 3)), 1), 4) - 1;
+        int hce_t = std::min(std::max(static_cast<int>(trough_loop_control.at(2 + i * 3)), 1), 4) - 1;
+        total_len = total_len + L_SCA[sca_t];
+        derate = derate + L_SCA[sca_t] * (1 - (csp_dtr_hce_design_heat_losses[hce_t] / (I_bn_des * A_aperture[sca_t] / L_SCA[sca_t])));
+    }
+
+    if (total_len != 0.0) {
+        derate = derate / total_len;
+    }
+    else {
+        derate = -777.7;
+    }
+
+    return derate;
+}
+
+double Nloops(int radio_sm_or_area, double specified_solar_multiple, double total_required_aperture_for_SM1,
+    double specified_total_aperture, double single_loop_aperture)
+{
+    double total_aperture = std::numeric_limits<double>::quiet_NaN();
+    double n_loops = std::numeric_limits<double>::quiet_NaN();
+
+    if (radio_sm_or_area == -1 || radio_sm_or_area == 0) {    // includes -1 for IPH
+        total_aperture = specified_solar_multiple * total_required_aperture_for_SM1;
+    }
+    else if (radio_sm_or_area == 1) {
+        total_aperture = specified_total_aperture;
+    }
+    else {
+        throw std::runtime_error("Physical Trough. Number of loops calculation failed, invalid option.");
+    }
+
+    n_loops = std::ceil(total_aperture / single_loop_aperture);
+    return n_loops;
+}
+
+double Total_aperture(double single_loop_aperature, double nloops)
+{
+    return single_loop_aperature * nloops;
+};
+
+double Required_number_of_loops_for_SM1(double total_required_aperture_for_SM1, double single_loop_aperature)
+{
+    return std::ceil(total_required_aperture_for_SM1 / single_loop_aperature);
+};
+
+double Loop_optical_efficiency(const util::matrix_t<ssc_number_t>& trough_loop_control,
+    const util::matrix_t<ssc_number_t>& csp_dtr_sca_calc_sca_effs,
+    const util::matrix_t<ssc_number_t>& L_SCA,
+    const util::matrix_t<ssc_number_t>& csp_dtr_hce_optical_effs)
+{
+    int ncol = static_cast<int>(trough_loop_control.at(0));
+
+    if (trough_loop_control.ncells() != ncol * 3 + 1) {
+        return -888.8;
+    }
+
+    double total_len = 0.;
+    double weighted_sca_eff = 0.0;
+    for (int i = 0; i < ncol; i++)
+    {
+        int sca_t = std::min(std::max(static_cast<int>(trough_loop_control.at(1 + i * 3)), 1), 4) - 1;
+        total_len = total_len + L_SCA[sca_t];
+        weighted_sca_eff = weighted_sca_eff + L_SCA[sca_t] * csp_dtr_sca_calc_sca_effs[sca_t];
+    }
+
+    if (total_len != 0.0) {
+        weighted_sca_eff = weighted_sca_eff / total_len;
+    }
+    else {
+        weighted_sca_eff = -777.7;
+    }
+
+    total_len = 0;
+    double weighted_hce_eff = 0.0;
+    for (int i = 0; i < ncol; i++)
+    {
+        int hce_t = std::min(std::max(static_cast<int>(trough_loop_control.at(2 + i * 3)), 1), 4) - 1;
+        int sca_t = std::min(std::max(static_cast<int>(trough_loop_control.at(1 + i * 3)), 1), 4) - 1;
+        total_len = total_len + L_SCA[sca_t];
+        weighted_hce_eff = weighted_hce_eff + L_SCA[sca_t] * csp_dtr_hce_optical_effs[hce_t];
+    }
+
+    if (total_len != 0.0) {
+        weighted_hce_eff = weighted_hce_eff / total_len;
+    }
+    else {
+        weighted_hce_eff = -777.7;
+    }
+
+    return weighted_hce_eff * weighted_sca_eff;
+}
+
+double Total_loop_conversion_efficiency(double loop_optical_efficiency, double cspdtr_loop_hce_heat_loss)
+{
+    return loop_optical_efficiency * cspdtr_loop_hce_heat_loss;
+}
+
+double Field_thermal_output(double I_bn_des, double total_loop_conversion_efficiency, double total_aperture)
+{
+    return I_bn_des * total_loop_conversion_efficiency * total_aperture / 1.E6;  // default now = 626.008
+    //return solar_mult * P_ref / eta_ref;   // default = 623.596
+}
+
+double Total_required_aperture_for_sm1(double q_pb_design, double I_bn_des, double total_loop_conversion_efficiency)
+{
+    return q_pb_design / (I_bn_des * total_loop_conversion_efficiency) * 1000000.0;
+}
+
+double Fixed_land_area(double total_aperture, double row_distance, util::matrix_t<ssc_number_t> sca_info_array,
+    util::matrix_t<ssc_number_t> W_aperture)
+{
+    double max_collector_width = 0.;
+    for (int i = 0; i < sca_info_array.nrows(); i++) {
+        max_collector_width = std::max(max_collector_width, W_aperture.at(sca_info_array.at(i, 0) - 1));
+    }
+
+    return total_aperture * row_distance / max_collector_width * 0.0002471;
+}
+
+double Total_land_area(double fixed_land_area, double non_solar_field_land_area_multiplier)
+{
+    return fixed_land_area * non_solar_field_land_area_multiplier;
+}
+
+util::matrix_t<ssc_number_t> Sca_info_array(const util::matrix_t<ssc_number_t>& trough_loop_control)
+{
+    int assemblies = static_cast<int>(trough_loop_control.at(0));
+    util::matrix_t<ssc_number_t> p1(assemblies, 2, std::numeric_limits<double>::quiet_NaN());
+    for (int i = 0; i < assemblies; i++) {
+        p1.at(i, 1) = static_cast<int>(trough_loop_control.at(1 + 3 * i));
+        p1.at(i, 0) = static_cast<int>(trough_loop_control.at(2 + 3 * i));
+    }
+
+    return p1;
+}
+
+util::matrix_t<ssc_number_t> Sca_defocus_array(const util::matrix_t<ssc_number_t>& trough_loop_control)
+{
+    int assemblies = static_cast<int>(trough_loop_control.at(0));
+    util::matrix_t<ssc_number_t> p1(assemblies, 1, std::numeric_limits<double>::quiet_NaN());
+    for (int i = 0; i < assemblies; i++) {
+        p1.at(i) = static_cast<int>(trough_loop_control.at(3 + 3 * i));
+    }
+
+    return p1;
+}
+
+double Total_tracking_power(int nSCA, int nLoops, double SCA_drives_elec)
+{
+    return nSCA * nLoops * SCA_drives_elec;
+}
+
+util::matrix_t<ssc_number_t> K_Cpnt(int nSCA)
+{
+    std::vector<double> K_cpnt_0 = { 0.9, 0, 0.19, 0, 0.9, -1, -1, -1, -1, -1, -1 };
+    std::vector<double> K_cpnt_1 = { 0, 0.6, 0.05, 0, 0.6, 0, 0.6, 0, 0.42, 0, 0.15 };
+    std::vector<double> K_cpnt_i = { 0.05, 0, 0.42, 0, 0.6, 0, 0.6, 0, 0.42, 0, 0.15 };
+    std::vector<double> K_cpnt_x_2 = { 0.05, 0, 0.42, 0, 0.6, 0, 0.6, 0, 0.15, 0.6, 0 };
+    std::vector<double> K_cpnt_x_1 = { 0.9, 0, 0.19, 0, 0.9, -1, -1, -1, -1, -1, -1 };
+
+    util::matrix_t<ssc_number_t> K(nSCA + 3, 11, std::numeric_limits<double>::quiet_NaN());
+
+    // After cold header before SCAs
+    for (int j = 0; j < K_cpnt_0.size(); j++) {
+        K.at(0, j) = K_cpnt_0.at(j);
+        K.at(1, j) = K_cpnt_1.at(j);
+    }
+
+    // Between SCAs
+    for (int i = 0; i < nSCA - 1; i++) {
+        for (int j = 0; j < K_cpnt_i.size(); j++) {
+            K.at(i + 2, j) = K_cpnt_i.at(j);
+        }
+    }
+
+    // After SCAs before hot header
+    for (int j = 0; j < K_cpnt_x_2.size(); j++) {
+        K.at(nSCA + 1, j) = K_cpnt_x_2.at(j);
+        K.at(nSCA + 2, j) = K_cpnt_x_1.at(j);
+    }
+
+    return K;
+}
+
+util::matrix_t<ssc_number_t> D_Cpnt(int nSCA)
+{
+    std::vector<double> D_cpnt_0 = { 0.085, 0.0635, 0.085, 0.0635, 0.085, -1, -1, -1, -1, -1, -1 };
+    std::vector<double> D_cpnt_1 = { 0.085, 0.085, 0.085, 0.0635, 0.0635, 0.0635, 0.0635, 0.0635, 0.0635, 0.0635, 0.085 };
+    std::vector<double> D_cpnt_i = { 0.085, 0.0635, 0.0635, 0.0635, 0.0635, 0.0635, 0.0635, 0.0635, 0.0635, 0.0635, 0.085 };
+    std::vector<double> D_cpnt_x_2 = { 0.085, 0.0635, 0.0635, 0.0635, 0.0635, 0.0635, 0.0635, 0.0635, 0.085, 0.085, 0.085 };
+    std::vector<double> D_cpnt_x_1 = { 0.085, 0.0635, 0.085, 0.0635, 0.085, -1, -1, -1, -1, -1, -1 };
+
+    util::matrix_t<ssc_number_t> D(nSCA + 3, 11, std::numeric_limits<double>::quiet_NaN());
+
+    // After cold header before SCAs
+    for (int j = 0; j < D_cpnt_0.size(); j++) {
+        D.at(0, j) = D_cpnt_0.at(j);
+        D.at(1, j) = D_cpnt_1.at(j);
+    }
+
+    // Between SCAs
+    for (int i = 0; i < nSCA - 1; i++) {
+        for (int j = 0; j < D_cpnt_i.size(); j++) {
+            D.at(i + 2, j) = D_cpnt_i.at(j);
+        }
+    }
+
+    // After SCAs before hot header
+    for (int j = 0; j < D_cpnt_x_2.size(); j++) {
+        D.at(nSCA + 1, j) = D_cpnt_x_2.at(j);
+        D.at(nSCA + 2, j) = D_cpnt_x_1.at(j);
+    }
+
+    return D;
+}
+
+util::matrix_t<ssc_number_t> L_Cpnt(int nSCA)
+{
+    std::vector<double> L_cpnt_0 = { 0, 0, 0, 0, 0, -1, -1, -1, -1, -1, -1 };
+    std::vector<double> L_cpnt_1 = { 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0 };
+    std::vector<double> L_cpnt_i = { 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0 };
+    std::vector<double> L_cpnt_x_2 = { 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0 };
+    std::vector<double> L_cpnt_x_1 = { 0, 0, 0, 0, 0, -1, -1, -1, -1, -1, -1 };
+
+    util::matrix_t<ssc_number_t> L(nSCA + 3, 11, std::numeric_limits<double>::quiet_NaN());
+
+    // After cold header before SCAs
+    for (int j = 0; j < L_cpnt_0.size(); j++) {
+        L.at(0, j) = L_cpnt_0.at(j);
+        L.at(1, j) = L_cpnt_1.at(j);
+    }
+
+    // Between SCAs
+    for (int i = 0; i < nSCA - 1; i++) {
+        for (int j = 0; j < L_cpnt_i.size(); j++) {
+            L.at(i + 2, j) = L_cpnt_i.at(j);
+        }
+    }
+
+    // After SCAs before hot header
+    for (int j = 0; j < L_cpnt_x_2.size(); j++) {
+        L.at(nSCA + 1, j) = L_cpnt_x_2.at(j);
+        L.at(nSCA + 2, j) = L_cpnt_x_1.at(j);
+    }
+
+    return L;
+}
+
+util::matrix_t<ssc_number_t> Type_Cpnt(int nSCA)
+{
+    std::vector<double> Type_cpnt_0 = { 0, 1, 0, 1, 0, -1, -1, -1, -1, -1, -1 };
+    std::vector<double> Type_cpnt_1 = { 1, 0, 0, 2, 0, 1, 0, 2, 0, 2, 0 };
+    std::vector<double> Type_cpnt_i = { 0, 2, 0, 2, 0, 1, 0, 2, 0, 2, 0 };
+    std::vector<double> Type_cpnt_x_2 = { 0, 2, 0, 2, 0, 1, 0, 2, 0, 0, 1 };
+    std::vector<double> Type_cpnt_x_1 = { 0, 1, 0, 1, 0, -1, -1, -1, -1, -1, -1 };
+
+    util::matrix_t<ssc_number_t> Type(nSCA + 3, 11, std::numeric_limits<double>::quiet_NaN());
+
+    // After cold header before SCAs
+    for (int j = 0; j < Type_cpnt_0.size(); j++) {
+        Type.at(0, j) = Type_cpnt_0.at(j);
+        Type.at(1, j) = Type_cpnt_1.at(j);
+    }
+
+    // Between SCAs
+    for (int i = 0; i < nSCA - 1; i++) {
+        for (int j = 0; j < Type_cpnt_i.size(); j++) {
+            Type.at(i + 2, j) = Type_cpnt_i.at(j);
+        }
+    }
+
+    // After SCAs before hot header
+    for (int j = 0; j < Type_cpnt_x_2.size(); j++) {
+        Type.at(nSCA + 1, j) = Type_cpnt_x_2.at(j);
+        Type.at(nSCA + 2, j) = Type_cpnt_x_1.at(j);
+    }
+
+    return Type;
+}
+
+// Originally from 'Physical Trough Collector Type 1' (and 2, 3, 4)
+util::matrix_t<ssc_number_t> Csp_dtr_sca_ap_lengths(const util::matrix_t<ssc_number_t>& csp_dtr_sca_lengths, const util::matrix_t<ssc_number_t>& csp_dtr_sca_ncol_per_scas) {
+    int n = csp_dtr_sca_lengths.ncells();
+
+    util::matrix_t<ssc_number_t> result(n);             // NOTE!: You must do a separate 'fill', probably with how this is eventually set to an array instead of a matrix. This fails:  result(n, 1, std::numeric_limits<double>::quiet_NaN())
+    result.fill(std::numeric_limits<double>::quiet_NaN());
+    for (int i = 0; i < n; i++) {
+        result.at(i) = csp_dtr_sca_lengths.at(i) / csp_dtr_sca_ncol_per_scas.at(i);
+    }
+    return result;
+}
+
+util::matrix_t<ssc_number_t> Csp_dtr_sca_calc_end_gains(const util::matrix_t<ssc_number_t>& csp_dtr_sca_ave_focal_lens, double csp_dtr_sca_calc_theta, const util::matrix_t<ssc_number_t>& csp_dtr_sca_piping_dists) {
+    int n = csp_dtr_sca_ave_focal_lens.ncells();
+
+    util::matrix_t<ssc_number_t> result(n);             // NOTE!: You must do a separate 'fill', probably with how this is eventually set to an array instead of a matrix. This fails:  result(n, 1, std::numeric_limits<double>::quiet_NaN())
+    result.fill(std::numeric_limits<double>::quiet_NaN());
+    for (int i = 0; i < n; i++) {
+        result.at(i) = std::max(csp_dtr_sca_ave_focal_lens.at(i) * tan(csp_dtr_sca_calc_theta) - csp_dtr_sca_piping_dists.at(i), 0.);
+    }
+    return result;
+}
+
+double Csp_dtr_sca_calc_costh(double csp_dtr_sca_calc_zenith, double tilt, double azimuth) {
+    return  sqrt(1 - pow(cos(1.57 - csp_dtr_sca_calc_zenith - tilt)
+        - cos(tilt)
+        * cos(1.57 - csp_dtr_sca_calc_zenith)
+        * (1. - cos(0. - azimuth)), 2)
+    );
+}
+
+util::matrix_t<ssc_number_t> Csp_dtr_sca_calc_end_losses(const util::matrix_t<ssc_number_t>& csp_dtr_sca_ave_focal_lens, double csp_dtr_sca_calc_theta, double nSCA,
+    const util::matrix_t<ssc_number_t>& csp_dtr_sca_calc_end_gains, const util::matrix_t<ssc_number_t>& csp_dtr_sca_lengths, const util::matrix_t<ssc_number_t>& csp_dtr_sca_ncol_per_scas) {
+    int n = csp_dtr_sca_ave_focal_lens.ncells();
+
+    util::matrix_t<ssc_number_t> result(n);
+    result.fill(std::numeric_limits<double>::quiet_NaN());
+    for (int i = 0; i < n; i++) {
+        result.at(i) =  1 - (csp_dtr_sca_ave_focal_lens.at(i) * tan(csp_dtr_sca_calc_theta)
+            - (nSCA - 1) / nSCA * csp_dtr_sca_calc_end_gains.at(i))
+            / (csp_dtr_sca_lengths.at(i) * csp_dtr_sca_ncol_per_scas.at(i));
+    }
+    return result;
+}
+
+util::matrix_t<ssc_number_t> Csp_dtr_sca_calc_sca_effs(const util::matrix_t<ssc_number_t>& csp_dtr_sca_tracking_errors, const util::matrix_t<ssc_number_t>& csp_dtr_sca_geometry_effects,
+    const util::matrix_t<ssc_number_t>& csp_dtr_sca_clean_reflectivities, const util::matrix_t<ssc_number_t>& csp_dtr_sca_mirror_dirts, const util::matrix_t<ssc_number_t>& csp_dtr_sca_general_errors) {
+    int n = csp_dtr_sca_tracking_errors.ncells();
+
+    util::matrix_t<ssc_number_t> result(n);
+    result.fill(std::numeric_limits<double>::quiet_NaN());
+    for (int i = 0; i < n; i++) {
+        result.at(i) =  csp_dtr_sca_tracking_errors.at(i) * csp_dtr_sca_geometry_effects.at(i) *
+            csp_dtr_sca_clean_reflectivities.at(i) * csp_dtr_sca_mirror_dirts.at(i) * csp_dtr_sca_general_errors.at(i);
+    }
+    return result;
+}
+
+double Csp_dtr_sca_calc_latitude(double lat) {
+    return lat;
+}
+
+double Csp_dtr_sca_calc_zenith(double lat) {
+    return M_PI / 180. * (90. - (90. - (lat - 23.5)));
+}
+
+util::matrix_t<ssc_number_t> Csp_dtr_sca_calc_iams(const util::matrix_t<ssc_number_t>& IAMs, double csp_dtr_sca_calc_theta, double csp_dtr_sca_calc_costh) {
+
+    util::matrix_t<ssc_number_t> result(IAMs.nrows());
+    result.fill(std::numeric_limits<double>::quiet_NaN());
+    for (int i = 0; i < IAMs.nrows(); i++) {
+        if (IAMs.ncols() < 2) {                            // not sure this actually captures varying lengths of the different 1-D arrays in this matrix
+            result.at(i) = IAMs.at(i, 0);
+        }
+        else {
+            double IAM = IAMs.at(i, 0);
+            for (int j = 1; j < IAMs.ncols(); j++) {
+                IAM = IAM + IAMs.at(i, j) * pow(csp_dtr_sca_calc_theta, j) / csp_dtr_sca_calc_costh;
+            }
+            result.at(i) = IAM;
+        }
+    }
+    return result;
+}
+
+double Csp_dtr_sca_calc_theta(double csp_dtr_sca_calc_costh) {
+    return acos(csp_dtr_sca_calc_costh);
+}
+
+
+// Originally from 'Physical Trough Receiver Type 1' (and 2, 3, 4)
+util::matrix_t<ssc_number_t> Csp_dtr_hce_design_heat_losses(
+    const util::matrix_t<ssc_number_t>& HCE_FieldFrac, const util::matrix_t<ssc_number_t>& Design_loss) {
+
+    int n = HCE_FieldFrac.nrows();
+
+    util::matrix_t<ssc_number_t> result(n);
+    result.fill(std::numeric_limits<double>::quiet_NaN());
+    for (int i = 0; i < n; i++) {
+        result.at(i) =
+            HCE_FieldFrac.at(i, 0)
+            * Design_loss.at(i, 0)
+            + HCE_FieldFrac.at(i, 1)
+            * Design_loss.at(i, 1)
+            + HCE_FieldFrac.at(i, 2)
+            * Design_loss.at(i, 2)
+            + HCE_FieldFrac.at(i, 3)
+            * Design_loss.at(i, 3);
+    }
+    return result;
+}
+
+util::matrix_t<ssc_number_t> Csp_dtr_hce_optical_effs(
+    const util::matrix_t<ssc_number_t>& HCE_FieldFrac,
+    const util::matrix_t<ssc_number_t>& Shadowing,
+    const util::matrix_t<ssc_number_t>& Dirt_HCE,
+    const util::matrix_t<ssc_number_t>& alpha_abs,
+    const util::matrix_t<ssc_number_t>& Tau_envelope) {
+
+    int n = HCE_FieldFrac.nrows();
+
+    util::matrix_t<ssc_number_t> result(n);
+    result.fill(std::numeric_limits<double>::quiet_NaN());
+    for (int i = 0; i < n; i++) {
+        result.at(i) =
+            HCE_FieldFrac.at(i, 0)
+            * Shadowing.at(i, 0)
+            * Dirt_HCE.at(i, 0)
+            * alpha_abs.at(i, 0)
+            * Tau_envelope.at(i, 0)
+            + HCE_FieldFrac.at(i, 1)
+            * Shadowing.at(i, 1)
+            * Dirt_HCE.at(i, 1)
+            * alpha_abs.at(i, 1)
+            * Tau_envelope.at(i, 1)
+            + HCE_FieldFrac.at(i, 2)
+            * Shadowing.at(i, 2)
+            * Dirt_HCE.at(i, 2)
+            * alpha_abs.at(i, 2)
+            * Tau_envelope.at(i, 2)
+            + HCE_FieldFrac.at(i, 3)
+            * Shadowing.at(i, 3)
+            * Dirt_HCE.at(i, 3)
+            * alpha_abs.at(i, 3)
+            * Tau_envelope.at(i, 3);
+    }
+    return result;
+}
+
+// Originally from 'Physical Trough System Control'
+double Is_wlim_series(double is_dispatch) {
+    return is_dispatch;
 }
