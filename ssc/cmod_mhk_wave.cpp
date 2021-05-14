@@ -148,11 +148,6 @@ public:
     //std::vector<double> wave_matrix() { return m_wave_resource_matrix_data; }
     util::matrix_t<double> wave_matrix() { return m_wave_resource_matrix_data; }
     std::vector<double> relativeHumidity() { return m_relativeHumidity; }
-    
-
-
-    //virtual bool read_line(std::vector<double>& values) = 0;
-    //virtual size_t nrecords() = 0;
     size_t num_records() { return m_nRecords; }
 
 
@@ -270,20 +265,20 @@ size_t wavedata::nrecords(int wave_resource_model_choice) //Returns array size o
         if (m_nRecords == m_nRecords_period)
             return m_sigwaveheight.size(); 
         else
-            return std::numeric_limits<ssc_number_t>::quiet_NaN(); //Return nan is array sizes do not match
+            return (size_t)std::numeric_limits<ssc_number_t>::quiet_NaN(); //Return nan is array sizes do not match
     }
     else {
         m_nRecords = wave_resource_matrix_data.nrows();
         if (m_nRecords == 21)
             return wave_resource_matrix_data.nrows();
         else
-            return std::numeric_limits<ssc_number_t>::quiet_NaN(); //return NaN if rows != 21
+            return (size_t)std::numeric_limits<ssc_number_t>::quiet_NaN(); //return NaN if rows != 21
     }
 }
 
-ssc_number_t wavedata::get_number(var_data* v, const char* name) //Used to read numeric data from wave_resource_data table, returns NaN if no value specified
+ssc_number_t wavedata::get_number(var_data* v, const char* var_name) //Used to read numeric data from wave_resource_data table, returns NaN if no value specified
 {
-    if (var_data* value = v->table.lookup(name))
+    if (var_data* value = v->table.lookup(var_name))
     {
         if (value->type == SSC_NUMBER)
             return value->num;
@@ -292,22 +287,22 @@ ssc_number_t wavedata::get_number(var_data* v, const char* name) //Used to read 
     return std::numeric_limits<ssc_number_t>::quiet_NaN();
 }
 
-std::string wavedata::get_string(var_data* v, const char* name) //Used to read string data from wave_resource_data table, returns "none" if no value specified
+std::string wavedata::get_string(var_data* v, const char* var_name) //Used to read string data from wave_resource_data table, returns "none" if no value specified
 {
-    if (var_data* value = v->table.lookup(name))
+    if (var_data* value = v->table.lookup(var_name))
     {
         if (value->type == SSC_STRING)
-            return name;
+            return var_name;
     }
 
     return "none";
 }
 
-ssc_number_t* wavedata::get_vector(var_data* v, const char* name, size_t* len) //Used to read vector data from wave_resource_data table, returns "none" if no value specified
+ssc_number_t* wavedata::get_vector(var_data* v, const char* var_name, size_t* len) //Used to read vector data from wave_resource_data table, returns "none" if no value specified
 {
     ssc_number_t* p = 0;
     *len = 0;
-    if (var_data* value = v->table.lookup(name))
+    if (var_data* value = v->table.lookup(var_name))
     {
         if (value->type == SSC_ARRAY)
         {
@@ -371,9 +366,6 @@ public:
         else if (is_assigned("wave_resource_matrix") && as_integer("wave_resource_model_choice") == 1) //If wave resource matrix is assigned but time series option is chosen
             throw exec_error("mhk_wave", "Resource model is set to use JPD and no JPD is given. Change wave_resource_model_choice to 0 to use JPD data");
 
-            
-            
-
         if(as_integer("wave_resource_model_choice")==0) {  //Wave resource PDF matrix option
 		    
 		    //Check to ensure size of wave_power_matrix == wave_resource_matrix :
@@ -416,9 +408,8 @@ public:
         }
 
         if (wave_resource_model_choice==1) { //Time series wave resource option
-
-            int number_records = 2920;//Initialize number of records to 2920 (3 hour annual dataset)
-            int number_hours = 8760; //Initialize number of hours to 8760 (hours in annual dataset)
+            size_t number_records = 2920;//Initialize number of records to 2920 (3 hour annual dataset)
+            size_t number_hours = 8760; //Initialize number of hours to 8760 (hours in annual dataset)
             std::vector<double> wave_height_input;
             std::vector<double> wave_period_input;
             if (is_assigned("significant_wave_height") && is_assigned("energy_period")) { //Check if wave height and period variables are assigned
@@ -454,47 +445,27 @@ public:
             //ssc_number_t* p_annual_energy_dist_time = allocate("annual_energy_distribution_time", 9, 13);
             double ts_significant_wave_height, ts_energy_period;
             double resource_vect_checker = 0;
-            size_t iday = 0;
-            size_t ihour = 0;
-            int hour_step = number_hours / number_records;
-            /* Bilinear interpolation of power matrix for time series analysis*/
-            /* Not sure if this will be used
-            double Q11, Q12, Q21, Q22;
-            double x1, x2, y1, y2;
-            double a0, a1, a2, a3;
-            Q11 = wave_power_matrix.at(1, 1);
-            Q12 = wave_power_matrix.at(1, wave_power_matrix.ncols() - 1);
-            Q21 = wave_power_matrix.at(wave_power_matrix.nrows() - 1, 1);
-            Q22 = wave_power_matrix.at(wave_power_matrix.nrows() - 1, wave_power_matrix.ncols() - 1);
-            x1 = wave_power_matrix.at(1, 0);
-            x2 = wave_power_matrix.at(wave_power_matrix.nrows() - 1, 0);
-            y1 = wave_power_matrix.at(0, 1);
-            y2 = wave_power_matrix.at(0, wave_power_matrix.ncols() - 1);
-
-            a0 = (Q11 * x2 * y2) / ((x1 - x2) * (y1 - y2)) + (Q12 * x2 * y1) / ((x1 - x2) * (y2 - y1)) + (Q21 * x1 * y2) / ((x1 - x2) * (y2 - y1)) + (Q22 * x1 * y1) / ((x1 - x2) * (y1 - y2));
-            a1 = (Q11 * y2) / ((x1 - x2) * (y2 - y1)) + (Q12 * y1) / ((x1 - x2) * (y1 - y2)) + (Q21 * y2) / ((x1 - x2) * (y1 - y2)) + (Q22 * y1) / ((x1 - x2) * (y2 - y1));
-            a2 = (Q11 * x2) / ((x1 - x2) * (y2 - y1)) + (Q12 * x1) / ((x1 - x2) * (y1 - y2)) + (Q21 * x2) / ((x1 - x2) * (y1 - y2)) + (Q22 * x1) / ((x1 - x2) * (y2 - y1));
-            a3 = (Q11) / ((x1 - x2) * (y1 - y2)) + (Q12) / ((x1 - x2) * (y2 - y1)) + (Q21) / ((x1 - x2) * (y2 - y1)) + (Q22) / ((x1 - x2) * (y1 - y2));
-            */
-            
+            double iday = 0;
+            double ihour = 0;
+            size_t hour_step = number_hours / number_records;
             ssc_number_t sig_wave_height_index = 0;
             ssc_number_t energy_period_index = 0;
             
             ssc_number_t* p_annual_energy_dist_time = allocate("annual_energy_distribution_time", 9, 366); //Annual energy distribution 24 hr (3 hour time step) x 365 days for Summary page heatmap
-            for (ssc_number_t j = 0; j < (ssc_number_t)wave_power_matrix.nrows(); j++) { //Build row and column labels of height x period energy distribution matrix
-                p_annual_energy_dist[size_t(j) * 22] = wave_power_matrix.at(j, 0);
+            for (size_t j = 0; j < (size_t)wave_power_matrix.nrows(); j++) { //Build row and column labels of height x period energy distribution matrix
+                p_annual_energy_dist[size_t(j) * 22] = (ssc_number_t)wave_power_matrix.at(j, 0);
             }
-            for (ssc_number_t m = 0; m < (ssc_number_t)wave_power_matrix.ncols(); m++) {
-                p_annual_energy_dist[size_t(m)] = wave_power_matrix.at(0, m);
+            for (size_t m = 0; m < (size_t)wave_power_matrix.ncols(); m++) {
+                p_annual_energy_dist[size_t(m)] = (ssc_number_t)wave_power_matrix.at(0, m);
             }
             for (size_t m = 0; m < 366; m++) { //Build row and column lables for time energy distribution matrix
                 for (size_t h = 0; h < 9; h++) {
-                    p_annual_energy_dist_time[h * 366] = 3 * (h - 1);
-                    p_annual_energy_dist_time[m] = m;
+                    p_annual_energy_dist_time[h * 366] = (ssc_number_t)3 * (h - 1);
+                    p_annual_energy_dist_time[m] = (ssc_number_t)m;
                 }
             }
 
-            for (size_t i = 0; i < number_records; i++) {
+            for (size_t i = 0; i < size_t(number_records); i++) {
                 ts_significant_wave_height = wave_height_input[i];
                 ts_energy_period = wave_period_input[i];
                 for (ssc_number_t j = 0; j < (ssc_number_t)wave_power_matrix.nrows(); j++) {
@@ -540,8 +511,17 @@ public:
             p_annual_energy_dist[0] = 0; //set top left corner of matrix to 0
             p_annual_energy_dist_time[0] = 0; //set top left corner of matrix to 0
 
-            assign("numberRecords", number_records);
-            assign("numberHours", number_hours);
+            for (size_t i = 1; i < (size_t)wave_power_matrix.nrows(); i++) {
+                for (size_t j = 1; j < (size_t)wave_power_matrix.ncols(); j++) {
+                    resource_vect_checker += p_annual_energy_dist[i * 22 + j];
+                }
+            }
+
+            if (resource_vect_checker < 99.5) //Sum of wave resource matrix must be ~= 100%
+                throw exec_error("mhk_wave", "Probability vector does not add up to 100%.");
+
+            assign("numberRecords", var_data((ssc_number_t)number_records));
+            assign("numberHours", var_data((ssc_number_t)number_hours));
             
         }
 
@@ -587,10 +567,8 @@ public:
                     else { //Find instances of nonzero-nonzero-zero data in the row to find the end of the resource in the matrix
                         if ((ssc_number_t)wave_resource_matrix.at(l, m) != 0 && (ssc_number_t)wave_resource_matrix.at(l, m - 1) != 0  && (ssc_number_t)wave_resource_matrix.at(l, m + 1) == 0)
                         {
-                            
                             wave_resource_end_period = wave_resource_matrix.at(0, m);
                             wave_resource_end_height = wave_resource_matrix.at(l, 0);
-                            
                         }
                     }
                 }
@@ -649,13 +627,11 @@ public:
 
         }
 
-        
         assign("wave_power_start_height", var_data((ssc_number_t)wave_power_start_height));
         assign("wave_power_end_height", var_data((ssc_number_t)wave_power_end_height));
         assign("wave_power_start_period", var_data((ssc_number_t)wave_power_start_period));
         assign("wave_power_end_period", var_data((ssc_number_t)wave_power_end_period));
         //End of start height and period to potentially remove
-
 
         //Cost category totals for LCOE contribution calculations
         double device_cost = as_double("device_costs_total");
@@ -695,7 +671,6 @@ public:
 		//Assigning values to outputs:
 		assign("annual_energy", var_data((ssc_number_t)annual_energy));
 		assign("average_power", var_data((ssc_number_t)device_average_power));
-		//assign("system_capacity", var_data((ssc_number_t)system_capacity));
 		assign("capacity_factor", var_data((ssc_number_t)capacity_factor * 100));
 		assign("device_average_power", var_data((ssc_number_t)device_average_power));
 	}

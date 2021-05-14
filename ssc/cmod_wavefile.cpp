@@ -81,7 +81,6 @@ public:
     void exec()
     {
       
-        size_t nstep = 2920;
         std::string file;
         if (is_assigned("wave_resource_filename") && as_integer("wave_resource_model_choice")==0)
         {
@@ -90,7 +89,6 @@ public:
         else if (is_assigned("wave_resource_filename_ts") && as_integer("wave_resource_model_choice")==1)
         {
             file = as_string("wave_resource_filename_ts");
-            //throw exec_error("wave_file_reader", "Time series filename check");
         }
         else
         {
@@ -170,7 +168,7 @@ public:
         if (as_integer("wave_resource_model_choice") == 1)
         {
             size_t numberRecords = 0;
-            size_t year_index = -1, month_index = -1, day_index = -1, hour_index = -1, minute_index = -1, period_index = -1, height_index = -1;
+            int year_index = -1, month_index = -1, day_index = -1, hour_index = -1, minute_index = -1, period_index = -1, height_index = -1;
             getline(ifs, buf); //Skip past column labels for record counting
             while (getline(ifs, buf))
                 numberRecords++;
@@ -190,10 +188,10 @@ public:
             int num_cols = (int)cols.size();
             for (int i = 0; i < num_cols; i++)
             {
-                const std::string name = trimboth(cols[i]);
+                const std::string col_name = trimboth(cols[i]);
                 if (name.length() > 0)
                 {
-                    std::string lowname = util::lower_case(name);
+                    std::string lowname = util::lower_case(col_name);
 
                     if (lowname == "yr" || lowname == "year") year_index = i;
                     else if (lowname == "mo" || lowname == "month") month_index = i;
@@ -208,7 +206,7 @@ public:
             if (year_index == -1 || month_index == -1 || day_index == -1 || hour_index == -1 || minute_index == -1 ||
                 period_index == -1 || height_index == -1)
                 throw exec_error("wave_file_reader", "Data values could not be identified from column headings. Please check for year, month, day, hour, minute, wave period, and wave height columns headings");
-            ssc_number_t hour0, hour1, hourdiff;
+            ssc_number_t hour0 = 0, hour1 = 0, hourdiff = 0;
             ssc_number_t ts_significant_wave_height;
             ssc_number_t ts_energy_period;
             size_t ncols = 22;
@@ -288,8 +286,6 @@ public:
             }
             mat[0] = 0;
             assign("number_hours", int(numberRecords * hourdiff));
-            
-
         }
         else if (as_integer("wave_resource_model_choice") == 0) {
             ssc_number_t* mat = allocate("wave_resource_matrix", 21, 22);
