@@ -39,6 +39,17 @@ public:
         i_m_dot_water
     };
 
+    enum
+    {
+        E_COL_T_HTF,
+        E_COL_M_DOT,
+        E_COL_T_AMB,
+        E_COL_W_CYL,
+        E_COL_Q_CYL,
+        E_COL_W_COOL,
+        E_COL_M_H2O
+    };
+
 private:
 	
 	// Each Linear_Interp Table in C_user_defined_pc shares the following column structure:
@@ -97,6 +108,9 @@ public:
 	C_ud_power_cycle(){};
 
 	~C_ud_power_cycle(){};
+
+    void init(const util::matrix_t<double>& udpc_table,
+        double& T_htf_ref_calc /*C*/, double& T_amb_ref_calc /*C*/);
 
 	void init(const util::matrix_t<double> & T_htf_ind, double T_htf_ref /*C*/, double T_htf_low /*C*/, double T_htf_high /*C*/,
 		const util::matrix_t<double> & T_amb_ind, double T_amb_ref /*C*/, double T_amb_low /*C*/, double T_amb_high /*C*/,
@@ -186,6 +200,31 @@ public:
 	bool(*mf_callback)(std::string &log_msg, std::string &progress_msg, void *data, double progress, int out_type);
 	void *mp_mf_active;
 
+};
+
+namespace N_udpc_common
+{
+    void get_var_setup(const std::vector<double>& vec_unique, const std::vector<double>& var_vec,
+        double& var_des, double& var_low, double& var_high);
+
+    bool is_level_in_par(const std::vector<std::vector<double>> test_combs,
+        const std::vector<std::vector<double>> full_table);
+
+    int split_ind_tbl(const util::matrix_t<double>& combined, util::matrix_t<double>& T_htf_ind,
+        util::matrix_t<double>& m_dot_ind, util::matrix_t<double>& T_amb_ind);
+
+    int split_ind_tbl(const util::matrix_t<double>& combined, util::matrix_t<double>& T_htf_ind,
+        util::matrix_t<double>& m_dot_ind, util::matrix_t<double>& T_amb_ind,
+        int& n_T_htf_pars, int& n_T_amb_pars, int& n_m_dot_pars,
+        double& m_dot_low, double& m_dot_des, double& m_dot_high,
+        double& T_htf_low, double& T_htf_des, double& T_htf_high,
+        double& T_amb_low, double& T_amb_des, double& T_amb_high);
+
+    int combine_ind_tbl(util::matrix_t<double>& combined, const util::matrix_t<double>& T_htf_ind,
+        const util::matrix_t<double>& m_dot_ind, const util::matrix_t<double>& T_amb_ind,
+        double m_dot_low, double m_dot_des, double m_dot_high,
+        double T_htf_low, double T_htf_des, double T_htf_high,
+        double T_amb_low, double T_amb_des, double T_amb_high);
 };
 
 #endif

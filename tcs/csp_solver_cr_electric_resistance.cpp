@@ -112,7 +112,7 @@ void C_csp_cr_electric_resistance::init(const C_csp_collector_receiver::S_csp_cr
 
     // Calculate design startup requirements
     m_q_dot_su_max = m_q_dot_heater_des*m_f_q_dot_des_allowable_su;  //[MWt]
-    m_E_su_des = m_q_dot_su_max*m_hrs_startup_at_max_rate;   //[MWt-hr]
+    m_E_su_des = m_q_dot_su_max*m_hrs_startup_at_max_rate;   //[MWt-hr] 
     m_t_su_des = m_E_su_des / m_q_dot_su_max;   //[hr]
 
     solved_params.m_T_htf_cold_des = m_T_htf_cold_des + 273.15; //[K]
