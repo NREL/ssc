@@ -258,39 +258,8 @@ public:
 		}
 		else
 		{
-			
-			p_params->m_T_amb_des = value(P_UD_T_AMB_DES);						//[C]
 			p_params->m_W_dot_cooling_des = value(P_UD_F_W_DOT_COOL_DES)/100.0*p_params->m_P_ref;	//[MWe]
 			p_params->m_m_dot_water_des = value(P_UD_M_DOT_WATER_COOL_DES);		//[kg/s]
-
-			// Set lower and upper levels for the 3 independent variables...
-			p_params->m_T_htf_low = value(P_UD_T_HTF_LOW);		//[C]
-			p_params->m_T_htf_high = value(P_UD_T_HTF_HIGH);	//[C]
-			p_params->m_T_amb_low = value(P_UD_T_AMB_LOW);		//[C]
-			p_params->m_T_amb_high = value(P_UD_T_AMB_HIGH);	//[C]
-			p_params->m_m_dot_htf_low = value(P_UD_M_DOT_HTF_LOW);	//[-]
-			p_params->m_m_dot_htf_high = value(P_UD_M_DOT_HTF_HIGH);//[-]
-
-			n_rows = n_cols = -1;
-			double *p_T_htf_ind = value(P_UD_T_HTF_IND_OD, &n_rows, &n_cols);
-			p_params->mc_T_htf_ind.resize(n_rows, n_cols);
-			for( int r = 0; r < n_rows; r++ )
-				for( int c = 0; c < n_cols; c++ )
-					p_params->mc_T_htf_ind(r,c) = TCS_MATRIX_INDEX(var(P_UD_T_HTF_IND_OD),r,c);
-
-			n_rows = n_cols = -1;
-			double *p_T_amb_ind = value(P_UD_T_AMB_IND_OD, &n_rows, &n_cols);
-			p_params->mc_T_amb_ind.resize(n_rows, n_cols);
-			for( int r = 0; r < n_rows; r++ )
-				for( int c = 0; c < n_cols; c++ )
-					p_params->mc_T_amb_ind(r,c) = TCS_MATRIX_INDEX(var(P_UD_T_AMB_IND_OD),r,c);
-
-			n_rows = n_cols = -1;
-			double *p_m_dot_htf_ind = value(P_UD_M_DOT_HTF_IND_OD, &n_rows, &n_cols);
-			p_params->mc_m_dot_htf_ind.resize(n_rows, n_cols);
-			for( int r = 0; r < n_rows; r++ )
-				for( int c = 0; c < n_cols; c++ )
-					p_params->mc_m_dot_htf_ind(r,c) = TCS_MATRIX_INDEX(var(P_UD_M_DOT_HTF_IND_OD),r,c);
 
             n_rows = n_cols = -1;
             double *p_ind = value(P_UD_IND_OD, &n_rows, &n_cols);
@@ -298,7 +267,6 @@ public:
             for (int r = 0; r < n_rows; r++)
                 for (int c = 0; c < n_cols; c++)
                     p_params->mc_combined_ind(r, c) = TCS_MATRIX_INDEX(var(P_UD_IND_OD), r, c);
-
 		}
 
 		int out_type = -1;
