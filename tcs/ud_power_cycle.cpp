@@ -31,22 +31,21 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <map>
 
 void C_ud_power_cycle::init(const util::matrix_t<double>& udpc_table,
-    double& T_htf_ref_calc /*C*/, double& T_amb_ref_calc /*C*/, double& m_dot_htf_ND_ref_calc,
+    int& n_T_htf_pars, int& n_T_amb_pars, int& n_m_dot_pars,
+    double& T_htf_ref_calc /*C*/, double& T_htf_low_calc /*C*/, double& T_htf_high_calc /*C*/,
+    double& T_amb_ref_calc /*C*/, double& T_amb_low_calc /*C*/, double& T_amb_high_calc /*C*/,
+    double& m_dot_htf_ND_ref_calc, double& m_dot_htf_ND_low_calc /*-*/, double& m_dot_htf_ND_high_calc /*-*/,
     std::vector<double>& Y_at_T_htf_ref, std::vector<double>& Y_at_T_amb_ref,
     std::vector<double>& Y_at_m_dot_htf_ND_ref, std::vector<double>& Y_avg_at_refs)
 {
     util::matrix_t<double> T_htf_ind_table, m_dot_htf_ND_ind_table, T_amb_ind_table;
-    int n_T_htf_pars, n_T_amb_pars, n_m_dot_htf_ND_pars;
-    double m_dot_htf_ND_low, m_dot_htf_ND_high,
-        T_htf_low, T_htf_high,
-        T_amb_low, T_amb_high;
 
     N_udpc_common::split_ind_tbl(udpc_table,
         T_htf_ind_table, m_dot_htf_ND_ind_table, T_amb_ind_table,
-        n_T_htf_pars, n_T_amb_pars, n_m_dot_htf_ND_pars,
-        m_dot_htf_ND_low, m_dot_htf_ND_ref_calc, m_dot_htf_ND_high,
-        T_htf_low, T_htf_ref_calc, T_htf_high,
-        T_amb_low, T_amb_ref_calc, T_amb_high);
+        n_T_htf_pars, n_T_amb_pars, n_m_dot_pars,
+        m_dot_htf_ND_low_calc, m_dot_htf_ND_ref_calc, m_dot_htf_ND_high_calc,
+        T_htf_low_calc, T_htf_ref_calc, T_htf_high_calc,
+        T_amb_low_calc, T_amb_ref_calc, T_amb_high_calc);
 
     // Set up Linear Interp class
     int error_index = -2;
@@ -95,16 +94,16 @@ void C_ud_power_cycle::init(const util::matrix_t<double>& udpc_table,
 
     // Set member data for reference and upper and lower bounds of independent variables
     m_T_htf_ref = T_htf_ref_calc;
-    m_T_htf_low = T_htf_low;
-    m_T_htf_high = T_htf_high;
+    m_T_htf_low = T_htf_low_calc;
+    m_T_htf_high = T_htf_high_calc;
 
     m_T_amb_ref = T_amb_ref_calc;
-    m_T_amb_low = T_amb_low;
-    m_T_amb_high = T_amb_high;
+    m_T_amb_low = T_amb_low_calc;
+    m_T_amb_high = T_amb_high_calc;
 
     m_m_dot_htf_ref = m_dot_htf_ND_ref_calc;
-    m_m_dot_htf_low = m_dot_htf_ND_low;
-    m_m_dot_htf_high = m_dot_htf_ND_high;
+    m_m_dot_htf_low = m_dot_htf_ND_low_calc;
+    m_m_dot_htf_high = m_dot_htf_ND_high_calc;
 
     // Check that the reference (design) value and upper and lower levels for each independent variable are contained within the x-range of the corresponding table
         // T_HTF

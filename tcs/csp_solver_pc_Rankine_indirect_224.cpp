@@ -526,10 +526,17 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
                 " It was reset to 0.0 for the timeseries simulation");
             mc_csp_messages.add_message(C_csp_messages::WARNING, m_error_msg);
         }
-
-        double T_htf_ref_udpc_calc, T_amb_ref_udpc_calc, m_dot_htf_ref_udpc_calc;
+        
+        int n_T_htf_pars, n_T_amb_pars, n_m_dot_pars;
+        double T_htf_ref_udpc_calc, T_htf_low_udpc_calc, T_htf_high_udpc_calc;
+        double T_amb_ref_udpc_calc, T_amb_low_udpc_calc, T_amb_high_udpc_calc;
+        double m_dot_htf_ref_udpc_calc, m_dot_htf_low_udpc_calc, m_dot_htf_high_udpc_calc;
         std::vector<double> Y_at_T_htf_ref, Y_at_T_amb_ref, Y_at_m_dot_htf_ND_ref, Y_avg_at_refs;
-        mc_user_defined_pc.init(ms_params.mc_combined_ind, T_htf_ref_udpc_calc, T_amb_ref_udpc_calc, m_dot_htf_ref_udpc_calc,
+        mc_user_defined_pc.init(ms_params.mc_combined_ind,
+            n_T_htf_pars, n_T_amb_pars, n_m_dot_pars,
+            T_htf_ref_udpc_calc, T_htf_low_udpc_calc, T_htf_high_udpc_calc,
+            T_amb_ref_udpc_calc, T_amb_low_udpc_calc, T_amb_high_udpc_calc,
+            m_dot_htf_ref_udpc_calc, m_dot_htf_low_udpc_calc, m_dot_htf_high_udpc_calc,
             Y_at_T_htf_ref, Y_at_T_amb_ref, Y_at_m_dot_htf_ND_ref, Y_avg_at_refs);
 
         // Set design point ambient temperature to value calculated from UDPC table
