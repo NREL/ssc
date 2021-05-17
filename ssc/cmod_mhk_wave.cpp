@@ -65,8 +65,8 @@ static var_info _cm_vtab_mhk_wave[] = {
 	//{ SSC_INPUT,			SSC_NUMBER,			"calculate_capacity",					"Calculate capacity outside UI?",									"0/1",			"",             "MHKWave",          "?=1",                      "INTEGER,MIN=0,MAX=1",      "" },
 	{ SSC_INPUT,			SSC_NUMBER,			"number_devices",						"Number of wave devices in the system",								"",				"",             "MHKWave",          "?=1",                      "INTEGER",			    	"" },
 	{ SSC_INPUT,			SSC_NUMBER,			"system_capacity",						"System Nameplate Capacity",										"kW",			"",				"MHKWave",			"?=0",						"",							"" },
-    { SSC_INPUT,           SSC_NUMBER,           "number_hours",                "Number of hours in wave time series",                                        "",     "",                       "Weather Reader",      "?",                        "",                            "" },
-    { SSC_INPUT,           SSC_NUMBER,           "number_records",                "Number of records in wave time series",                                        "",     "",                       "Weather Reader",      "?",                        "",                            "" },
+    { SSC_INPUT,           SSC_NUMBER,           "number_hours",                "Number of hours in wave time series",                                        "",     "",                       "MHKWave",      "?",                        "",                            "" },
+    { SSC_INPUT,           SSC_NUMBER,           "number_records",                "Number of records in wave time series",                                        "",     "",                       "MHKWave",      "?",                        "",                            "" },
 
     { SSC_INPUT,			SSC_NUMBER,			"device_rated_power",				"Rated capacity of device",													"kW",			"",				"MHKWave",			"*",		"",						"" },
     { SSC_INPUT,			SSC_NUMBER,			"fixed_charge_rate",						"FCR from LCOE Cost page",									"",				"",             "MHKWave",         "?=1",                      "",				"" },
@@ -413,10 +413,12 @@ public:
             std::vector<double> wave_height_input;
             std::vector<double> wave_period_input;
             if (is_assigned("significant_wave_height") && is_assigned("energy_period")) { //Check if wave height and period variables are assigned
-                number_records = as_integer("number_records");
-                number_hours = as_integer("number_hours");
+                //number_records = as_integer("number_records");
+                //number_hours = as_integer("number_hours");
                 wave_height_input = as_vector_double("significant_wave_height");
                 wave_period_input = as_vector_double("energy_period");
+                number_records = wave_height_input.size();
+                number_hours = number_records * 3;
             }
             else if (!is_assigned("significant_wave_height") && !is_assigned("energy_period") && is_assigned("wave_resource_data")) { //Check if height and period variables are assigned in wave resource table data
                 number_records = wave_dp->num_records();
