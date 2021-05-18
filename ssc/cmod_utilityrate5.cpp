@@ -795,6 +795,12 @@ public:
         bool ratchets_enabled = as_boolean("ur_dc_enable_ratchet");
         if (ratchets_enabled) {
 
+            if (!has_kwh_per_kw) {
+                std::ostringstream ss;
+                ss << "The option ur_dc_enable_ratchet is only relevant when the energy rates have kWh/kW or kWh/kW daily units, please add those units to your rates structure or set ur_dc_enable_ratchet to false";
+                throw exec_error("utilityrate5", ss.str());
+            }
+
             year_zero_peaks = as_array("ur_dc_ratchet_yearzero_peaks", &nrows);
 
             if (nrows != 12) {
