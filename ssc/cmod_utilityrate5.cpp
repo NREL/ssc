@@ -173,6 +173,11 @@ static var_info vtab_utility_rate5[] = {
     { SSC_OUTPUT, SSC_ARRAY, "year1_two_meter_sales",  "Buy all sell all electricity sales to grid", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
     { SSC_OUTPUT, SSC_ARRAY, "year1_true_up_credits",  "Net annual true-up payments", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
 
+    // Outputs for billing demand calculations
+    { SSC_OUTPUT, SSC_MATRIX, "billing_demand_ym",     "Billing demand for kWh/kw rates", "kW", "", "Charges by Month", "", "", "COL_LABEL=MONTHS,GROUP=UR_AM" },
+    { SSC_OUTPUT, SSC_ARRAY, "year1_billing_demand",  "Billing demand for kWh/kw rates", "kW", "", "Monthly", "", "LENGTH=12", "" },
+
+
 // for Pablo at IRENA 8/8/15
 // first year outputs only per email from Paul 8/9/15
 
@@ -777,7 +782,14 @@ public:
 			throw exec_error("utilityrate5", "Time series rates are not compatible with net metering. Please disable time series rates or change to net billing / buy all - sell all");
 		}
 
-        // If ratcheting demand charges - populate monthly_peaks with what the user specified as year zero:
+        // Assume if the kwh per kw rate exists in January that it exists in all of the months
+        bool has_kwh_per_kw = rate.has_kwh_per_kw_rate(0);
+        ssc_number_t* billing_demand_ym = NULL;
+        if (has_kwh_per_kw) {
+            billing_demand_ym = allocate("billing_demand_ym", nyears + 1, 12);
+        }
+
+        // If billing demand ratchets - populate monthly_peaks with what the user specified as year zero:
         ssc_number_t* year_zero_peaks = NULL;
         size_t nrows;
         bool ratchets_enabled = as_boolean("ur_dc_enable_ratchet");
@@ -981,6 +993,10 @@ public:
 				assign("year1_monthly_dc_fixed_without_system", var_data(&rate.monthly_dc_fixed[0], 12));
 				assign( "year1_monthly_dc_tou_without_system", var_data(&rate.monthly_dc_tou[0], 12) );
 				assign("year1_monthly_ec_charge_without_system", var_data(&monthly_ec_charges[0], 12));
+
+                if (has_kwh_per_kw) {
+                    assign("year1_billing_demand", var_data(&rate.billing_demand[0], 12));
+                }
 
 				// sign reversal based on 9/5/13 meeting, reverse again 9/6/13
 				for (int ii = 0; ii<(int)m_num_rec_yearly; ii++)
@@ -1355,12 +1371,17 @@ public:
 				ch_w_sys_fixed_ym[(i + 1) * 12 + j] = monthly_fixed_charges[j];
 				ch_w_sys_minimum_ym[(i + 1) * 12 + j] = monthly_minimum_charges[j];
 
+                if (has_kwh_per_kw) {
+                    billing_demand_ym[(i + 1) * 12 + j] = rate.billing_demand[j];
+                }
+
 				utility_bill_w_sys[i + 1] += monthly_bill[j];
 				ch_w_sys_dc_fixed[i + 1] += rate.monthly_dc_fixed[j];
 				ch_w_sys_dc_tou[i + 1] += rate.monthly_dc_tou[j];
 				ch_w_sys_ec[i + 1] += monthly_ec_charges[j];
 				ch_w_sys_fixed[i + 1] += monthly_fixed_charges[j];
 				ch_w_sys_minimum[i + 1] += monthly_minimum_charges[j];
+
 			}
 
 

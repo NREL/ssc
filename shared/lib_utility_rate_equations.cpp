@@ -112,6 +112,7 @@ rate_data::rate_data() :
     dc_ratchet_percents(12),
     demand_minimum(0.0),
     lookback_months(1),
+    billing_demand(12),
 	tou_demand_single_peak(false),
     enable_nm(false),
     nm_credits_w_rollover(false),
@@ -142,6 +143,7 @@ rate_data::rate_data(const rate_data& tmp) :
     dc_ratchet_percents(tmp.dc_ratchet_percents),
     demand_minimum(tmp.demand_minimum),
     lookback_months(tmp.lookback_months),
+    billing_demand(tmp.billing_demand),
 	tou_demand_single_peak(tmp.tou_demand_single_peak),
     enable_nm(tmp.enable_nm),
     nm_credits_w_rollover(tmp.nm_credits_w_rollover),
@@ -247,8 +249,7 @@ void rate_data::init_energy_rates(bool gen_only) {
 			// 5. assumption is that tier numbering is correct for the kWh/kW breakdown
 			// That is, first tier must be kWh/kW
             // See example at: https://github.com/NREL/SAM-documentation/blob/master/Unit%20Testing/Utility%20Rates/block_step/GPC_PLL_Tiered_Bill_Calc_Example_v3_btm_tests.xlsx
-			if ((m_month[m].ec_tou_units.ncols() > 0 && m_month[m].ec_tou_units.nrows() > 0)
-				&& check_for_kwh_per_kw_rate(m_month[m].ec_tou_units.at(0, 0)))
+			if (has_kwh_per_kw_rate(m))
 			{
                 std::vector<double> kWh_per_kW_tiers; // Fill this first so we can see where the kWh tiers break
                 std::vector<size_t> tier_numbers;
@@ -260,6 +261,7 @@ void rate_data::init_energy_rates(bool gen_only) {
                     // If ratchets are present the peak used here might be the actual peak, or something based on a previous month.
                     flat_peak = get_billing_demand(m);
                 }
+                billing_demand[m] = flat_peak;
 
                 // get kWh/kW break points based on actual demand
                 for (size_t i_tier = 0; i_tier < m_month[m].ec_tou_units.ncols(); i_tier++)
@@ -992,4 +994,9 @@ void rate_data::compute_surplus(ur_month& curr_month)
         else
             curr_month.ec_energy_use.at(ir, 0) = -curr_month.ec_energy_use.at(ir, 0);
     }
+}
+
+bool rate_data::has_kwh_per_kw_rate(int month) {
+    return (m_month[month].ec_tou_units.ncols() > 0 && m_month[month].ec_tou_units.nrows() > 0)
+        && check_for_kwh_per_kw_rate(m_month[month].ec_tou_units.at(0, 0));
 }

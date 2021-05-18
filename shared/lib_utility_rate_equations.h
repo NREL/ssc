@@ -118,6 +118,7 @@ public:
     std::vector<ssc_number_t> dc_ratchet_percents;
     double demand_minimum;
     int lookback_months;
+    std::vector<ssc_number_t> billing_demand; // Store locally for ssc outputs
 
 	bool tou_demand_single_peak;
 
@@ -162,6 +163,8 @@ public:
     // Returns error codes so compute module can print errors. 0: no error, 10x: error in previous month, 20x: error in current month. x is the period where the error occured
     int transfer_surplus(ur_month& curr_month, ur_month& prev_month); // For net metering rollovers, used between months to copy data
     void compute_surplus(ur_month& curr_month); // For net metering rollovers, used within a single month prior to cost calculations
+
+    bool has_kwh_per_kw_rate(int month);
 
 private:
     bool check_for_kwh_per_kw_rate(int units);
