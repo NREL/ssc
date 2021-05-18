@@ -86,9 +86,9 @@ bool compute_module::evaluate() {
     for (std::size_t i = 0; i < table_length; i++) {
         if (ssc_equation_table[i].cmod == nullptr) continue;
         std::string row_compute_module_name = util::lower_case(ssc_equation_table[i].cmod);
-        std::size_t match = name.find(row_compute_module_name);
+        std::size_t match = name.compare(row_compute_module_name);
 
-        if (match != std::string::npos && ssc_equation_table[i].auto_eval) {
+        if (match == 0 && ssc_equation_table[i].auto_eval) {
             table_indices.push_back(i);
         }
     }

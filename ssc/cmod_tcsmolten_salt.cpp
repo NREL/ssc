@@ -1184,24 +1184,24 @@ public:
                 pc->m_m_dot_water_des = 0.0;        //[kg/s]
 
                 // Also need lower and upper levels for the 3 independent variables...
-                pc->m_T_htf_low = as_double("sco2ud_T_htf_low");            //[C]
-                pc->m_T_htf_high = as_double("sco2ud_T_htf_high");          //[C]
-                pc->m_T_amb_low = as_double("sco2ud_T_amb_low");            //[C]
-                pc->m_T_amb_high = as_double("sco2ud_T_amb_high");          //[C]
-                pc->m_m_dot_htf_low = as_double("sco2ud_m_dot_htf_low");    //[-]
-                pc->m_m_dot_htf_high = as_double("sco2ud_m_dot_htf_high");  //[-]
+                double T_htf_low_sco2ud = as_double("sco2ud_T_htf_low");            //[C]
+                double T_htf_high_sco2ud = as_double("sco2ud_T_htf_high");          //[C]
+                double T_amb_low_sco2ud = as_double("sco2ud_T_amb_low");            //[C]
+                double T_amb_high_sco2ud = as_double("sco2ud_T_amb_high");          //[C]
+                double m_dot_htf_low_sco2ud = as_double("sco2ud_m_dot_htf_low");    //[-]
+                double m_dot_htf_high_sco2ud = as_double("sco2ud_m_dot_htf_high");  //[-]
 
                 // User-Defined Cycle Off-Design Tables 
-                pc->mc_T_htf_ind = as_matrix("sco2ud_T_htf_ind_od");
-                pc->mc_T_amb_ind = as_matrix("sco2ud_T_amb_ind_od");
-                pc->mc_m_dot_htf_ind = as_matrix("sco2ud_m_dot_htf_ind_od");
+                util::matrix_t<double> T_htf_ind_sco2ud = as_matrix("sco2ud_T_htf_ind_od");
+                util::matrix_t<double> T_amb_ind_sco2ud = as_matrix("sco2ud_T_amb_ind_od");
+                util::matrix_t<double> m_dot_htf_ind_sco2ud = as_matrix("sco2ud_m_dot_htf_ind_od");
 
                 util::matrix_t<double> cmbd_ind;
 
-                combine_ind_tbl(cmbd_ind, pc->mc_T_htf_ind, pc->mc_m_dot_htf_ind, pc->mc_T_amb_ind,
-                    pc->m_m_dot_htf_low, 1.0, pc->m_m_dot_htf_high,
-                    pc->m_T_htf_low, pc->m_T_htf_hot_ref, pc->m_T_htf_high,
-                    pc->m_T_amb_low, pc->m_T_amb_des, pc->m_T_amb_high);
+                N_udpc_common::combine_ind_tbl(cmbd_ind, T_htf_ind_sco2ud, m_dot_htf_ind_sco2ud, T_amb_ind_sco2ud,
+                    m_dot_htf_low_sco2ud, 1.0, m_dot_htf_high_sco2ud,
+                    T_htf_low_sco2ud, pc->m_T_htf_hot_ref, m_dot_htf_high_sco2ud,
+                    T_amb_low_sco2ud, pc->m_T_amb_des, T_amb_high_sco2ud);
 
                 size_t ncols_udpc = cmbd_ind.ncols();
                 size_t nrows_udpc = cmbd_ind.nrows();
@@ -1442,25 +1442,14 @@ public:
                     pc->m_W_dot_cooling_des = as_double("fan_power_perc_net") / 100.0*as_double("P_ref");   //[MWe]
                     pc->m_m_dot_water_des = 0.0;        //[kg/s]
 
-                    // Also need lower and upper levels for the 3 independent variables...
-                    pc->m_T_htf_low = T_htf_hot_low;            //[C]
-                    pc->m_T_htf_high = T_htf_hot_high;          //[C]
-                    pc->m_T_amb_low = T_amb_low;                //[C]
-                    pc->m_T_amb_high = T_amb_high;              //[C]
-                    pc->m_m_dot_htf_low = m_dot_htf_ND_low;     //[-]
-                    pc->m_m_dot_htf_high = m_dot_htf_ND_high;   //[-]
-
-                    // User-Defined Cycle Off-Design Tables 
-                    pc->mc_T_htf_ind = T_htf_parametrics;
-                    pc->mc_T_amb_ind = T_amb_parametrics;
-                    pc->mc_m_dot_htf_ind = m_dot_htf_ND_parametrics;
-
                     util::matrix_t<double> cmbd_ind;
 
-                    combine_ind_tbl(cmbd_ind, pc->mc_T_htf_ind, pc->mc_m_dot_htf_ind, pc->mc_T_amb_ind,
-                        pc->m_m_dot_htf_low, 1.0, pc->m_m_dot_htf_high,
-                        pc->m_T_htf_low, pc->m_T_htf_hot_ref, pc->m_T_htf_high,
-                        pc->m_T_amb_low, pc->m_T_amb_des, pc->m_T_amb_high);
+                    N_udpc_common::combine_ind_tbl(cmbd_ind, T_htf_parametrics, m_dot_htf_ND_parametrics, T_amb_parametrics,
+                        m_dot_htf_ND_low, 1.0, m_dot_htf_ND_high,
+                        T_htf_hot_low, pc->m_T_htf_hot_ref, T_htf_hot_high,
+                        T_amb_low, pc->m_T_amb_des, T_amb_high);
+
+                    pc->mc_combined_ind = cmbd_ind;
 
                     size_t ncols_udpc = cmbd_ind.ncols();
                     size_t nrows_udpc = cmbd_ind.nrows();

@@ -135,4 +135,106 @@ double Csp_pt_cost_power_block_mwe(TowerTypes tower_type /*-*/, double p_ref = s
 
 void Tower_SolarPilot_Capital_Costs_Equations(ssc_data_t data);
 
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+// Physical Trough //////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+// Originally from 'Physical Trough System Design'
+double Solar_mult(int radio_sm_or_area, double field_thermal_output, double q_pb_design, double specified_solar_multiple, double total_aperture, double total_required_aperture_for_SM1);
+
+double Nloops(int radio_sm_or_area, double specified_solar_multiple, double total_required_aperture_for_SM1,
+    double specified_total_aperture, double single_loop_aperature);
+
+double Max_field_flow_velocity(double m_dot_htfmax, double fluid_dens_outlet_temp, double min_inner_diameter);
+
+double Min_field_flow_velocity(double m_dot_htfmin, double fluid_dens_inlet_temp, double min_inner_diameter);
+
+double Field_htf_cp_avg(double T_in /*C*/, double T_out /*C*/, int rec_htf /*-*/,
+    const util::matrix_t<ssc_number_t>& field_fl_props /*-*/);      // [kJ/kg-K]
+
+double Min_inner_diameter(const util::matrix_t<ssc_number_t>& trough_loop_control, const util::matrix_t<ssc_number_t>& D_2);
+
+double Single_loop_aperature(const util::matrix_t<ssc_number_t>& trough_loop_control, const util::matrix_t<ssc_number_t>& A_aperture);
+
+double Cspdtr_loop_hce_heat_loss(const util::matrix_t<ssc_number_t>& trough_loop_control, double I_bn_des,
+    const util::matrix_t<ssc_number_t>& csp_dtr_hce_design_heat_losses,
+    const util::matrix_t<ssc_number_t>& L_SCA,
+    const util::matrix_t<ssc_number_t>& A_aperture);
+
+double Total_aperture(double single_loop_aperature, double nloops);
+
+double Required_number_of_loops_for_SM1(double total_required_aperture_for_SM1, double single_loop_aperature);
+
+double Loop_optical_efficiency(const util::matrix_t<ssc_number_t>& trough_loop_control,
+    const util::matrix_t<ssc_number_t>& csp_dtr_sca_calc_sca_effs,
+    const util::matrix_t<ssc_number_t>& L_SCA,
+    const util::matrix_t<ssc_number_t>& csp_dtr_hce_optical_effs);
+
+double Total_loop_conversion_efficiency(double loop_optical_efficiency, double cspdtr_loop_hce_heat_loss);
+
+double Field_thermal_output(double I_bn_des, double total_loop_conversion_efficiency, double total_aperture);
+
+double Total_required_aperture_for_sm1(double q_pb_design, double I_bn_des, double total_loop_conversion_efficiency);
+
+double Fixed_land_area(double total_aperture, double row_distance, util::matrix_t<ssc_number_t> sca_info_array,
+    util::matrix_t<ssc_number_t> W_aperture);
+
+double Total_land_area(double fixed_land_area, double non_solar_field_land_area_multiplier);
+
+util::matrix_t<ssc_number_t> Sca_info_array(const util::matrix_t<ssc_number_t>& trough_loop_control);
+
+util::matrix_t<ssc_number_t> Sca_defocus_array(const util::matrix_t<ssc_number_t>& trough_loop_control);
+
+double Total_tracking_power(int nSCA, int nLoops, double SCA_drives_elec);
+
+util::matrix_t<ssc_number_t> K_Cpnt(int nSCA);
+
+util::matrix_t<ssc_number_t> D_Cpnt(int nSCA);
+
+util::matrix_t<ssc_number_t> L_Cpnt(int nSCA);
+
+util::matrix_t<ssc_number_t> Type_Cpnt(int nSCA);
+
+
+// Originally from 'Physical Trough Collector Type 1' (and 2, 3, 4)
+util::matrix_t<ssc_number_t> Csp_dtr_sca_ap_lengths(const util::matrix_t<ssc_number_t>& csp_dtr_sca_lengths, const util::matrix_t<ssc_number_t>& csp_dtr_sca_ncol_per_scas);
+
+//double Csp_dtr_sca_calc_end_gain(double csp_dtr_sca_ave_focal_len, double csp_dtr_sca_calc_theta, double csp_dtr_sca_piping_dist);
+
+util::matrix_t<ssc_number_t> Csp_dtr_sca_calc_end_gains(const util::matrix_t<ssc_number_t>& csp_dtr_sca_ave_focal_lens, double csp_dtr_sca_calc_theta, const util::matrix_t<ssc_number_t>& csp_dtr_sca_piping_dists);
+
+double Csp_dtr_sca_calc_costh(double csp_dtr_sca_calc_zenith, double tilt, double azimuth);
+
+util::matrix_t<ssc_number_t> Csp_dtr_sca_calc_end_losses(const util::matrix_t<ssc_number_t>& csp_dtr_sca_ave_focal_lens, double csp_dtr_sca_calc_theta, double nSCA,
+    const util::matrix_t<ssc_number_t>& csp_dtr_sca_calc_end_gains, const util::matrix_t<ssc_number_t>& csp_dtr_sca_lengths, const util::matrix_t<ssc_number_t>& csp_dtr_sca_ncol_per_scas);
+
+util::matrix_t<ssc_number_t> Csp_dtr_sca_calc_sca_effs(const util::matrix_t<ssc_number_t>& csp_dtr_sca_tracking_errors, const util::matrix_t<ssc_number_t>& csp_dtr_sca_geometry_effects,
+    const util::matrix_t<ssc_number_t>& csp_dtr_sca_clean_reflectivities, const util::matrix_t<ssc_number_t>& csp_dtr_sca_mirror_dirts, const util::matrix_t<ssc_number_t>& csp_dtr_sca_general_errors);
+
+double Csp_dtr_sca_calc_latitude(double lat);
+
+double Csp_dtr_sca_calc_zenith(double lat);
+
+util::matrix_t<ssc_number_t> Csp_dtr_sca_calc_iams(const util::matrix_t<ssc_number_t>& IAMs, double csp_dtr_sca_calc_theta, double csp_dtr_sca_calc_costh);
+
+double Csp_dtr_sca_calc_theta(double csp_dtr_sca_calc_costh);
+
+
+// Originally from 'Physical Trough Receiver Type 1' (and 2, 3, 4)
+util::matrix_t<ssc_number_t> Csp_dtr_hce_design_heat_losses(
+    const util::matrix_t<ssc_number_t>& HCE_FieldFrac,
+    const util::matrix_t<ssc_number_t>& Design_loss);
+
+util::matrix_t<ssc_number_t> Csp_dtr_hce_optical_effs(
+    const util::matrix_t<ssc_number_t>& HCE_FieldFrac,
+    const util::matrix_t<ssc_number_t>& Shadowing,
+    const util::matrix_t<ssc_number_t>& Dirt_HCE,
+    const util::matrix_t<ssc_number_t>& alpha_abs,
+    const util::matrix_t<ssc_number_t>& Tau_envelope);
+
+// Originally from 'Physical Trough System Control'
+double Is_wlim_series(double is_dispatch);
+
 #endif
