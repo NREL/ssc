@@ -182,6 +182,7 @@ public:
     ssc_number_t get_number(var_data* v, const char* name);
 
     ssc_number_t* get_vector(var_data* v, const char* name, size_t* len);
+    util::matrix_t<double> wavedata::get_matrix(var_data* v, const char* var_name, size_t* nrows, size_t* ncols);
     std::string get_string(var_data* v, const char* name);
 
     std::string get_stdErrorMsg() { return stdErrorMsg; };
@@ -239,18 +240,25 @@ wavedata::wavedata(int wave_resource_model_choice, var_data* data_table) //waved
         m_nRecords = wave_size;
     }
     else if (wave_resource_model_choice == 0) { //PDF matrix option, required input of 0 or 1
-
+        /*
         if (var_data* D = data_table->table.lookup("wave_resource_matrix")) { //Check if matrix data was specified
             if (D->type == SSC_MATRIX) { //Is data in a matrix (21x22 matrix)
                 m_wave_resource_matrix_data = D->num; //Write data to wave resource matrix data field as matrix
                 //m_nRecords = nrecords(wave_resource_model_choice);
                 m_nRecords = m_wave_resource_matrix_data.nrows();
             }
-        }
-        else {
-            m_errorMsg = util::format("Must specify 21x22 matrix of wave resource probability for wave periods and wave heights");
+        }*/
+        if (!data_table->table.lookup("wave_resource_matrix")) {
+            m_errorMsg = util::format("Wave resource matrix not found");
             return;
         }
+        size_t nrows = 0;
+        size_t ncols = 0;
+        util::matrix_t<double> wave_matrix = get_matrix(data_table, "wave_resource_matrix", &nrows, &ncols);
+        /*else {
+            m_errorMsg = util::format("Must specify 21x22 matrix of wave resource probability for wave periods and wave heights");
+            return;
+        }*/
     }
     else { //If neither 0 or 1 is specified (variable not assigned or value >1 given)
         m_errorMsg = util::format("Wave resource model choice must be either 0 (matrix PDF data) or 1 (time series data)");
@@ -313,6 +321,26 @@ ssc_number_t* wavedata::get_vector(var_data* v, const char* var_name, size_t* le
     else
         p = 0;
     return p;
+}
+
+util::matrix_t<double> wavedata::get_matrix(var_data* v, const char* var_name, size_t* nrows, size_t* ncols)
+{
+
+    util::matrix_t<double> p = 0;
+    *nrows = 0;
+    *ncols = 0;
+    if (var_data* value = v->table.lookup(var_name))
+    {
+        if (value->type == SSC_MATRIX)
+        {
+            *nrows = value->num.nrows();
+            *ncols = value->num.ncols();
+            p = value->num;
+        }
+    }
+
+    return p;
+
 }
 
 class cm_mhk_wave : public compute_module
