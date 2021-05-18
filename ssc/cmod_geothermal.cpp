@@ -566,7 +566,7 @@ public:
 			}
 
 
-            ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, 1);
+            gen_heatmap(this, 1);
 
 			if (nameplate > 0) kWhperkW = annual_energy / nameplate;
 			capacity_fac = total_energy / nameplate;
