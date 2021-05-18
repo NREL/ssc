@@ -565,9 +565,6 @@ void dispatch_automatic_behind_the_meter_t::cost_based_target_power(size_t idx, 
     {
         plans[i].dispatch_hours = i;
         plans[i].plannedDispatch.resize(_num_steps);
-        plans[i].plannedGridUse.clear();
-        plans[i].plannedDispatch = std::vector<double>(plans[i].plannedDispatch.size());
-        plans[i].num_cycles = 0;
         plan_dispatch_for_cost(plans[i], idx, E_max, startingEnergy);
         UtilityRateForecast midDispatchForecast(*rate_forecast);
         plans[i].cost = midDispatchForecast.forecastCost(plans[i].plannedGridUse, year, hour_of_year, 0) + cost_to_cycle() * plans[i].num_cycles - plans[i].kWhRemaining * plans[i].lowestMarginalCost;
@@ -586,233 +583,262 @@ void dispatch_automatic_behind_the_meter_t::cost_based_target_power(size_t idx, 
 
 void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(dispatch_plan& plan, size_t idx, double E_max, double startingEnergy)
 {
-    size_t i = 0, index = 0;
-
-    std::sort(sorted_grid.begin(), sorted_grid.end(), byCost());
-    // Iterating over sorted grid
-    double costDuringDispatchHours = 0.0;
-    double costAtStep = 0.0;
-    // Sum no-dispatch cost of top n grid points (dispatch hours * steps per hour). Units: % of cost -> don't need to record this, can re-compute after iteration
-    for (i = 0; (i < plan.dispatch_hours * _steps_per_hour) && (i < sorted_grid.size()); i++)
-    {
-        costAtStep = sorted_grid[i].Cost();
-        // In case forecast is testing hours that include negative cost, don't dispatch during those
-        if (costAtStep > 1e-7)
-        {
-            costDuringDispatchHours += sorted_grid[i].Cost();
-        }
-    }
-    double remainingEnergy = E_max;
-    double powerAtMaxCost = 0;
-    plan.lowestMarginalCost = sorted_grid[0].MarginalCost();
-    for (i = 0; i < (plan.dispatch_hours * _steps_per_hour) && (i < sorted_grid.size()); i++)
-    {
-        costAtStep = sorted_grid[i].Cost();
-        if (costAtStep > 1e-7)
-        {
-            double costPercent = costAtStep / costDuringDispatchHours;
-            double desiredPower = remainingEnergy * costPercent / _dt_hour;
-
-            // Prevent the wierd signals from demand charges from reducing dispatch (maybe fix this upstream in the future)
-            if (desiredPower < powerAtMaxCost && sorted_grid[i].Grid() >= powerAtMaxCost) {
-                desiredPower = powerAtMaxCost;
-            }
-
-            if (desiredPower > sorted_grid[i].Grid())
-            {
-                desiredPower = sorted_grid[i].Grid();
-            }
-            
-            // Account for discharging constraints assuming voltage is constant over forecast period
-            check_power_restrictions(desiredPower);
-
-            // Re-apportion based on actual energy used
-            remainingEnergy -= desiredPower * _dt_hour;
-            costDuringDispatchHours -= costAtStep;
-
-            // Add to dispatch plan
-            index = sorted_grid[i].Hour() * _steps_per_hour + sorted_grid[i].Step(); // Assumes we're always running this function on the hour
-            plan.plannedDispatch[index] = desiredPower;
-
-            if (powerAtMaxCost == 0) {
-                powerAtMaxCost = desiredPower;
-            }
-        }
-    }
-
-    double chargeEnergy = E_max - remainingEnergy;
-
-    // Need to plan on charging extra to account for round trip losses
-    double requiredEnergy = chargeEnergy / (m_batteryPower->singlePointEfficiencyACToDC * m_batteryPower->singlePointEfficiencyDCToAC);
-
-    // Iterating over hours
-    // Apply clipped energy first, if available
-    if (_P_cliploss_dc.size() > 0 && m_batteryPower->canClipCharge)
-    {
-        size_t idx_clip = idx;
-        for (i = 0; i < _num_steps && idx_clip < _P_cliploss_dc.size(); i++)
-        {
-            double clippedPower = _P_cliploss_dc[idx_clip];
-            if (clippedPower > 0)
-            {
-                // Convert to charging sign convention
-                clippedPower *= -1.0;
-                check_power_restrictions(clippedPower);
-                plan.plannedDispatch[i] = clippedPower; // Could overwrite discharge. Not going to be able to use the DC connected battery if we're already clipping
-                requiredEnergy += clippedPower;
-            }
-        }
-    }
-    // Get max grid use during charging. Choose highest percentile < 25% where we aren't planning on discharging
-    std::sort(sorted_grid.begin(), sorted_grid.end(), byGrid());
-    bool lookingForGridUse = true;
-    double peakDesiredGridUse = 0.0;
-    i = _num_steps / 4;
-    while (lookingForGridUse && i < _num_steps)
-    {
-        index = sorted_grid[i].Hour() * _steps_per_hour + sorted_grid[i].Step();
-
-        if (sorted_grid[i].Grid() <= 0)
-        {
-            lookingForGridUse = false;
-        }
-        else if (plan.plannedDispatch[index] < 1e-7)
-        {
-            i++;
-        }
-        else {
-            peakDesiredGridUse = sorted_grid[i].Grid() > 0 ? sorted_grid[i].Grid() : 0.0;
-            lookingForGridUse = false;
-        }
-    }
-
-    // Iterating over sorted grid
-    std::sort(sorted_grid.begin(), sorted_grid.end(), byLowestMarginalCost());
-    // Find m hours to get required energy - hope we got today's energy yesterday (for morning peaks). Apportion between hrs of lowest marginal cost
-    i = 0;
-    while (requiredEnergy > 0 && i < _num_steps)
-    {
-        index = sorted_grid[i].Hour() * _steps_per_hour + sorted_grid[i].Step();
-        // Don't plan to charge if we were already planning to discharge. 0 is no plan, negative is clipped energy
-        if (plan.plannedDispatch[index] <= 0.0)
-        {
-            double requiredPower = 0.0;
-
-            if (m_batteryPower->canGridCharge)
-            {
-                // If can grid charge, plan to take as much energy as needed
-                if (idx + index < _P_pv_ac.size() && _P_pv_ac[idx + index] > 0)
-                {
-                    requiredPower = -_P_pv_ac[idx + index];
-                }
-                else {
-                    requiredPower = -requiredEnergy / _dt_hour;
-                }
-            }
-            else if (m_batteryPower->canSystemCharge)
-            {
-                // Powerflow considerations are different between AC and DC connected batteries for system charging
-                if (m_batteryPower->connectionMode == m_batteryPower->AC_CONNECTED) {
-                    // AC connected assumes PV goes to load first. Need net generation in this case
-                    if (sorted_grid[i].Grid() < 0) {
-                        requiredPower = sorted_grid[i].Grid();
-                    }
-                }
-                else {
-                    // DC connected can charge the battery before sending power to load
-                    if (idx + index < _P_pv_ac.size() && _P_pv_ac[idx + index] > 0) {
-                        requiredPower = -_P_pv_ac[idx + index];
-                    }
-                }
-                
-            }
-
-            if (requiredPower < 0)
-            {
-                check_power_restrictions(requiredPower);
-                // Restrict to up to 25th percentile grid use to avoid creating new peaks
-                double projectedGrid = sorted_grid[i].Grid() - requiredPower;
-                if (projectedGrid > peakDesiredGridUse)
-                {
-                    requiredPower = -(peakDesiredGridUse - sorted_grid[i].Grid());
-                    requiredPower = requiredPower < 0.0 ? requiredPower : 0.0;
-                }
-
-                // Add to existing clipped energy
-                requiredPower += plan.plannedDispatch[index];
-                check_power_restrictions(requiredPower);
-
-                // Clipped energy was already counted once, so subtract that off incase requiredPower + clipped hit a current restriction
-                requiredEnergy += (requiredPower - plan.plannedDispatch[index]) * _dt_hour;
-            }
-
-            plan.plannedDispatch[index] = requiredPower;
-
-        }
-        i++;
-    }
+    size_t i = 0, index = 0, itrs = 0;
 
     double energy = startingEnergy;
+    double remainingEnergy = E_max;
 
-    int cycleState = 0;
-    bool halfCycle = false;
-    // Curtail planned dispatch if not enough energy or capacity is available
-    for (i = 0; i < plan.plannedDispatch.size(); i++)
-    {
-        double projectedEnergy = energy - plan.plannedDispatch[i] * _dt_hour;
-        if (projectedEnergy < 0)
-        {
-            plan.plannedDispatch[i] = energy / _dt_hour;
-        }
-        else if (projectedEnergy > E_max)
-        {
-            plan.plannedDispatch[i] = (energy - E_max) / _dt_hour;
-        }
-        energy -= plan.plannedDispatch[i] * _dt_hour;
+    while (itrs < 2) {
+        // Reset the plan
+        plan.plannedDispatch = std::vector<double>(plan.plannedDispatch.size());
+        plan.plannedGridUse.clear();
+        plan.num_cycles = 0;
 
-        if (fabs(plan.plannedDispatch[i] - 0) < 1e-7) {
-            plan.plannedDispatch[i] = 0;
+        std::sort(sorted_grid.begin(), sorted_grid.end(), byCost());
+        // Iterating over sorted grid
+        double costDuringDispatchHours = 0.0;
+        double costAtStep = 0.0;
+        // Sum no-dispatch cost of top n grid points (dispatch hours * steps per hour). Units: % of cost -> don't need to record this, can re-compute after iteration
+        for (i = 0; (i < plan.dispatch_hours * _steps_per_hour) && (i < sorted_grid.size()); i++)
+        {
+            costAtStep = sorted_grid[i].Cost();
+            // In case forecast is testing hours that include negative cost, don't dispatch during those
+            if (costAtStep > 1e-7)
+            {
+                costDuringDispatchHours += sorted_grid[i].Cost();
+            }
         }
 
-        if (plan.plannedDispatch[i] < 0)
+        double powerAtMaxCost = 0;
+        plan.lowestMarginalCost = sorted_grid[0].MarginalCost();
+        for (i = 0; i < (plan.dispatch_hours * _steps_per_hour) && (i < sorted_grid.size()); i++)
         {
-            if (cycleState != -1) {
-                if (halfCycle) {
-                    plan.num_cycles++;
-                    halfCycle = false;
+            costAtStep = sorted_grid[i].Cost();
+            if (costAtStep > 1e-7)
+            {
+                double costPercent = costAtStep / costDuringDispatchHours;
+                double desiredPower = remainingEnergy * costPercent / _dt_hour;
+
+                // Prevent the wierd signals from demand charges from reducing dispatch (maybe fix this upstream in the future)
+                if (desiredPower < powerAtMaxCost && sorted_grid[i].Grid() >= powerAtMaxCost) {
+                    desiredPower = powerAtMaxCost;
                 }
-                else {
-                    halfCycle = true;
+
+                if (desiredPower > sorted_grid[i].Grid())
+                {
+                    desiredPower = sorted_grid[i].Grid();
+                }
+
+                // Account for discharging constraints assuming voltage is constant over forecast period
+                check_power_restrictions(desiredPower);
+
+                // Re-apportion based on actual energy used
+                remainingEnergy -= desiredPower * _dt_hour;
+                costDuringDispatchHours -= costAtStep;
+
+                // Add to dispatch plan
+                index = sorted_grid[i].Hour() * _steps_per_hour + sorted_grid[i].Step(); // Assumes we're always running this function on the hour
+                plan.plannedDispatch[index] = desiredPower;
+
+                if (powerAtMaxCost == 0) {
+                    powerAtMaxCost = desiredPower;
                 }
             }
-            cycleState = -1;
         }
 
-        if (plan.plannedDispatch[i] > 0) {
-            if (cycleState != 1) {
-                if (halfCycle) {
-                    plan.num_cycles++;
-                    halfCycle = false;
-                }
-                else {
-                    halfCycle = true;
+        double chargeEnergy = E_max - remainingEnergy;
+
+        // Need to plan on charging extra to account for round trip losses
+        double requiredEnergy = chargeEnergy / (m_batteryPower->singlePointEfficiencyACToDC * m_batteryPower->singlePointEfficiencyDCToAC);
+
+        // Track how much energy is actually available during the forecast in case we need to re-plan
+        double energy_available = startingEnergy;
+
+        // Iterating over hours
+        // Apply clipped energy first, if available
+        if (_P_cliploss_dc.size() > 0 && m_batteryPower->canClipCharge)
+        {
+            size_t idx_clip = idx;
+            for (i = 0; i < _num_steps && idx_clip < _P_cliploss_dc.size(); i++)
+            {
+                double clippedPower = _P_cliploss_dc[idx_clip];
+                if (clippedPower > 0)
+                {
+                    // Convert to charging sign convention
+                    clippedPower *= -1.0;
+                    check_power_restrictions(clippedPower);
+                    plan.plannedDispatch[i] = clippedPower; // Could overwrite discharge. Not going to be able to use the DC connected battery if we're already clipping
+                    requiredEnergy += clippedPower;
+                    startingEnergy += -1.0 * clippedPower;
                 }
             }
-            cycleState = 1;
+        }
+        // Get max grid use during charging. Choose highest percentile < 25% where we aren't planning on discharging
+        std::sort(sorted_grid.begin(), sorted_grid.end(), byGrid());
+        bool lookingForGridUse = true;
+        double peakDesiredGridUse = 0.0;
+        i = _num_steps / 4;
+        while (lookingForGridUse && i < _num_steps)
+        {
+            index = sorted_grid[i].Hour() * _steps_per_hour + sorted_grid[i].Step();
+
+            if (sorted_grid[i].Grid() <= 0)
+            {
+                lookingForGridUse = false;
+            }
+            else if (plan.plannedDispatch[index] < 1e-7)
+            {
+                i++;
+            }
+            else {
+                peakDesiredGridUse = sorted_grid[i].Grid() > 0 ? sorted_grid[i].Grid() : 0.0;
+                lookingForGridUse = false;
+            }
         }
 
-        // - is load, + is gen for utility rate code
-        double projectedGrid = -grid[i].Grid() + plan.plannedDispatch[i];
-        // Remove clip loss charging from projected grid use
-        if (i + idx < _P_cliploss_dc.size() && plan.plannedDispatch[i] <= 0)
+        // Iterating over sorted grid
+        std::sort(sorted_grid.begin(), sorted_grid.end(), byLowestMarginalCost());
+        // Find m hours to get required energy - hope we got today's energy yesterday (for morning peaks). Apportion between hrs of lowest marginal cost
+        i = 0;
+        
+        while (requiredEnergy > 0 && i < _num_steps)
         {
-            double clipLoss = -_P_cliploss_dc[i + idx];
-            if (plan.plannedDispatch[i] <= clipLoss)
-                projectedGrid -= clipLoss;
-            else
-                projectedGrid -= plan.plannedDispatch[i];
+            index = sorted_grid[i].Hour() * _steps_per_hour + sorted_grid[i].Step();
+            // Don't plan to charge if we were already planning to discharge. 0 is no plan, negative is clipped energy
+            if (plan.plannedDispatch[index] <= 0.0)
+            {
+                double requiredPower = 0.0;
+
+                if (m_batteryPower->canGridCharge)
+                {
+                    // If can grid charge, plan to take as much energy as needed
+                    if (idx + index < _P_pv_ac.size() && _P_pv_ac[idx + index] > 0)
+                    {
+                        requiredPower = -_P_pv_ac[idx + index];
+                    }
+                    else {
+                        requiredPower = -requiredEnergy / _dt_hour;
+                    }
+                }
+                else if (m_batteryPower->canSystemCharge)
+                {
+                    // Powerflow considerations are different between AC and DC connected batteries for system charging
+                    if (m_batteryPower->connectionMode == m_batteryPower->AC_CONNECTED) {
+                        // AC connected assumes PV goes to load first. Need net generation in this case
+                        if (sorted_grid[i].Grid() < 0) {
+                            requiredPower = sorted_grid[i].Grid();
+                        }
+                    }
+                    else {
+                        // DC connected can charge the battery before sending power to load
+                        if (idx + index < _P_pv_ac.size() && _P_pv_ac[idx + index] > 0) {
+                            requiredPower = -_P_pv_ac[idx + index];
+                        }
+                    }
+
+                }
+
+                if (requiredPower < 0)
+                {
+                    check_power_restrictions(requiredPower);
+                    // Restrict to up to 25th percentile grid use to avoid creating new peaks
+                    double projectedGrid = sorted_grid[i].Grid() - requiredPower;
+                    if (projectedGrid > peakDesiredGridUse)
+                    {
+                        requiredPower = -(peakDesiredGridUse - sorted_grid[i].Grid());
+                        requiredPower = requiredPower < 0.0 ? requiredPower : 0.0;
+                    }
+
+                    // Add to existing clipped energy
+                    requiredPower += plan.plannedDispatch[index];
+                    check_power_restrictions(requiredPower);
+
+                    // Clipped energy was already counted once, so subtract that off incase requiredPower + clipped hit a current restriction
+                    double step_energy = (requiredPower - plan.plannedDispatch[index]) * _dt_hour;
+                    requiredEnergy += step_energy;
+                    energy_available += -1.0 * step_energy;
+                }
+
+                plan.plannedDispatch[index] = requiredPower;
+
+            }
+            i++;
         }
-        plan.plannedGridUse.push_back(projectedGrid);
+
+        energy = startingEnergy;
+
+        bool ranOut = false;
+        int cycleState = 0;
+        bool halfCycle = false;
+        // Curtail planned dispatch if not enough energy or capacity is available
+        for (i = 0; i < plan.plannedDispatch.size(); i++)
+        {
+            double projectedEnergy = energy - plan.plannedDispatch[i] * _dt_hour;
+            if (projectedEnergy < 0)
+            {
+                plan.plannedDispatch[i] = energy / _dt_hour;
+                ranOut = true;
+            }
+            else if (projectedEnergy > E_max)
+            {
+                plan.plannedDispatch[i] = (energy - E_max) / _dt_hour;
+            }
+            energy -= plan.plannedDispatch[i] * _dt_hour;
+
+            if (fabs(plan.plannedDispatch[i] - 0) < 1e-7) {
+                plan.plannedDispatch[i] = 0;
+            }
+
+            if (plan.plannedDispatch[i] < 0)
+            {
+                if (cycleState != -1) {
+                    if (halfCycle) {
+                        plan.num_cycles++;
+                        halfCycle = false;
+                    }
+                    else {
+                        halfCycle = true;
+                    }
+                }
+                cycleState = -1;
+            }
+
+            if (plan.plannedDispatch[i] > 0) {
+                if (cycleState != 1) {
+                    if (halfCycle) {
+                        plan.num_cycles++;
+                        halfCycle = false;
+                    }
+                    else {
+                        halfCycle = true;
+                    }
+                }
+                cycleState = 1;
+            }
+
+            // - is load, + is gen for utility rate code
+            double projectedGrid = -grid[i].Grid() + plan.plannedDispatch[i];
+            // Remove clip loss charging from projected grid use
+            if (i + idx < _P_cliploss_dc.size() && plan.plannedDispatch[i] <= 0)
+            {
+                double clipLoss = -_P_cliploss_dc[i + idx];
+                if (plan.plannedDispatch[i] <= clipLoss)
+                    projectedGrid -= clipLoss;
+                else
+                    projectedGrid -= plan.plannedDispatch[i];
+            }
+            plan.plannedGridUse.push_back(projectedGrid);
+        }
+
+        if (ranOut) {
+            // If we ran out above, re-plan discharge with the amount of energy that is actually available
+            itrs++;
+            remainingEnergy = energy_available;
+        }
+        else {
+            // Exit the loop and use this plan
+            itrs = 2;
+        }
     }
 
     plan.kWhRemaining = energy * m_batteryPower->singlePointEfficiencyDCToAC;
