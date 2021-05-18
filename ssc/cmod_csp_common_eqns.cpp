@@ -70,7 +70,7 @@ SSCEXPORT void ssc_data_t_get_matrix(var_table* vt, std::string name, util::matr
     {
         vt_get_matrix(vt, name, matrix);
     }
-    catch (std::exception& e) {
+    catch (std::exception&) {
     }
 
     // replace any periods in the name with underscores in order to read variables set by the UI
@@ -697,7 +697,7 @@ double Loop_optical_efficiency(const util::matrix_t<ssc_number_t>& trough_loop_c
 {
     int ncol = static_cast<int>(trough_loop_control.at(0));
 
-    if (trough_loop_control.ncells() != ncol * 3 + 1) {
+    if (trough_loop_control.ncells() != (size_t)ncol * 3 + 1) {
         return -888.8;
     }
 
@@ -757,8 +757,8 @@ double Fixed_land_area(double total_aperture, double row_distance, util::matrix_
     util::matrix_t<ssc_number_t> W_aperture)
 {
     double max_collector_width = 0.;
-    for (int i = 0; i < sca_info_array.nrows(); i++) {
-        max_collector_width = std::max(max_collector_width, W_aperture.at(sca_info_array.at(i, 0) - 1));
+    for (size_t i = 0; i < sca_info_array.nrows(); i++) {
+        max_collector_width = std::max(max_collector_width, W_aperture.at((size_t)sca_info_array.at(i, 0) - 1));
     }
 
     return total_aperture * row_distance / max_collector_width * 0.0002471;
@@ -808,20 +808,20 @@ util::matrix_t<ssc_number_t> K_Cpnt(int nSCA)
     util::matrix_t<ssc_number_t> K(nSCA + 3, 11, std::numeric_limits<double>::quiet_NaN());
 
     // After cold header before SCAs
-    for (int j = 0; j < K_cpnt_0.size(); j++) {
+    for (size_t j = 0; j < K_cpnt_0.size(); j++) {
         K.at(0, j) = K_cpnt_0.at(j);
         K.at(1, j) = K_cpnt_1.at(j);
     }
 
     // Between SCAs
-    for (int i = 0; i < nSCA - 1; i++) {
-        for (int j = 0; j < K_cpnt_i.size(); j++) {
+    for (size_t i = 0; i < (size_t)nSCA - 1; i++) {
+        for (size_t j = 0; j < K_cpnt_i.size(); j++) {
             K.at(i + 2, j) = K_cpnt_i.at(j);
         }
     }
 
     // After SCAs before hot header
-    for (int j = 0; j < K_cpnt_x_2.size(); j++) {
+    for (size_t j = 0; j < K_cpnt_x_2.size(); j++) {
         K.at(nSCA + 1, j) = K_cpnt_x_2.at(j);
         K.at(nSCA + 2, j) = K_cpnt_x_1.at(j);
     }
@@ -840,20 +840,20 @@ util::matrix_t<ssc_number_t> D_Cpnt(int nSCA)
     util::matrix_t<ssc_number_t> D(nSCA + 3, 11, std::numeric_limits<double>::quiet_NaN());
 
     // After cold header before SCAs
-    for (int j = 0; j < D_cpnt_0.size(); j++) {
+    for (size_t j = 0; j < D_cpnt_0.size(); j++) {
         D.at(0, j) = D_cpnt_0.at(j);
         D.at(1, j) = D_cpnt_1.at(j);
     }
 
     // Between SCAs
-    for (int i = 0; i < nSCA - 1; i++) {
-        for (int j = 0; j < D_cpnt_i.size(); j++) {
+    for (size_t i = 0; i < (size_t)nSCA - 1; i++) {
+        for (size_t j = 0; j < D_cpnt_i.size(); j++) {
             D.at(i + 2, j) = D_cpnt_i.at(j);
         }
     }
 
     // After SCAs before hot header
-    for (int j = 0; j < D_cpnt_x_2.size(); j++) {
+    for (size_t j = 0; j < D_cpnt_x_2.size(); j++) {
         D.at(nSCA + 1, j) = D_cpnt_x_2.at(j);
         D.at(nSCA + 2, j) = D_cpnt_x_1.at(j);
     }
@@ -872,20 +872,20 @@ util::matrix_t<ssc_number_t> L_Cpnt(int nSCA)
     util::matrix_t<ssc_number_t> L(nSCA + 3, 11, std::numeric_limits<double>::quiet_NaN());
 
     // After cold header before SCAs
-    for (int j = 0; j < L_cpnt_0.size(); j++) {
+    for (size_t j = 0; j < L_cpnt_0.size(); j++) {
         L.at(0, j) = L_cpnt_0.at(j);
         L.at(1, j) = L_cpnt_1.at(j);
     }
 
     // Between SCAs
-    for (int i = 0; i < nSCA - 1; i++) {
-        for (int j = 0; j < L_cpnt_i.size(); j++) {
+    for (size_t i = 0; i < (size_t)nSCA - 1; i++) {
+        for (size_t j = 0; j < L_cpnt_i.size(); j++) {
             L.at(i + 2, j) = L_cpnt_i.at(j);
         }
     }
 
     // After SCAs before hot header
-    for (int j = 0; j < L_cpnt_x_2.size(); j++) {
+    for (size_t j = 0; j < L_cpnt_x_2.size(); j++) {
         L.at(nSCA + 1, j) = L_cpnt_x_2.at(j);
         L.at(nSCA + 2, j) = L_cpnt_x_1.at(j);
     }
@@ -904,20 +904,20 @@ util::matrix_t<ssc_number_t> Type_Cpnt(int nSCA)
     util::matrix_t<ssc_number_t> Type(nSCA + 3, 11, std::numeric_limits<double>::quiet_NaN());
 
     // After cold header before SCAs
-    for (int j = 0; j < Type_cpnt_0.size(); j++) {
+    for (size_t j = 0; j < Type_cpnt_0.size(); j++) {
         Type.at(0, j) = Type_cpnt_0.at(j);
         Type.at(1, j) = Type_cpnt_1.at(j);
     }
 
     // Between SCAs
-    for (int i = 0; i < nSCA - 1; i++) {
-        for (int j = 0; j < Type_cpnt_i.size(); j++) {
+    for (size_t i = 0; i < (size_t)nSCA - 1; i++) {
+        for (size_t j = 0; j < Type_cpnt_i.size(); j++) {
             Type.at(i + 2, j) = Type_cpnt_i.at(j);
         }
     }
 
     // After SCAs before hot header
-    for (int j = 0; j < Type_cpnt_x_2.size(); j++) {
+    for (size_t j = 0; j < Type_cpnt_x_2.size(); j++) {
         Type.at(nSCA + 1, j) = Type_cpnt_x_2.at(j);
         Type.at(nSCA + 2, j) = Type_cpnt_x_1.at(j);
     }
@@ -927,22 +927,22 @@ util::matrix_t<ssc_number_t> Type_Cpnt(int nSCA)
 
 // Originally from 'Physical Trough Collector Type 1' (and 2, 3, 4)
 util::matrix_t<ssc_number_t> Csp_dtr_sca_ap_lengths(const util::matrix_t<ssc_number_t>& csp_dtr_sca_lengths, const util::matrix_t<ssc_number_t>& csp_dtr_sca_ncol_per_scas) {
-    int n = csp_dtr_sca_lengths.ncells();
+    size_t n = csp_dtr_sca_lengths.ncells();
 
     util::matrix_t<ssc_number_t> result(n);             // NOTE!: You must do a separate 'fill', probably with how this is eventually set to an array instead of a matrix. This fails:  result(n, 1, std::numeric_limits<double>::quiet_NaN())
     result.fill(std::numeric_limits<double>::quiet_NaN());
-    for (int i = 0; i < n; i++) {
+    for (size_t i = 0; i < n; i++) {
         result.at(i) = csp_dtr_sca_lengths.at(i) / csp_dtr_sca_ncol_per_scas.at(i);
     }
     return result;
 }
 
 util::matrix_t<ssc_number_t> Csp_dtr_sca_calc_end_gains(const util::matrix_t<ssc_number_t>& csp_dtr_sca_ave_focal_lens, double csp_dtr_sca_calc_theta, const util::matrix_t<ssc_number_t>& csp_dtr_sca_piping_dists) {
-    int n = csp_dtr_sca_ave_focal_lens.ncells();
+    size_t n = csp_dtr_sca_ave_focal_lens.ncells();
 
     util::matrix_t<ssc_number_t> result(n);             // NOTE!: You must do a separate 'fill', probably with how this is eventually set to an array instead of a matrix. This fails:  result(n, 1, std::numeric_limits<double>::quiet_NaN())
     result.fill(std::numeric_limits<double>::quiet_NaN());
-    for (int i = 0; i < n; i++) {
+    for (size_t i = 0; i < n; i++) {
         result.at(i) = std::max(csp_dtr_sca_ave_focal_lens.at(i) * tan(csp_dtr_sca_calc_theta) - csp_dtr_sca_piping_dists.at(i), 0.);
     }
     return result;
@@ -958,11 +958,11 @@ double Csp_dtr_sca_calc_costh(double csp_dtr_sca_calc_zenith, double tilt, doubl
 
 util::matrix_t<ssc_number_t> Csp_dtr_sca_calc_end_losses(const util::matrix_t<ssc_number_t>& csp_dtr_sca_ave_focal_lens, double csp_dtr_sca_calc_theta, double nSCA,
     const util::matrix_t<ssc_number_t>& csp_dtr_sca_calc_end_gains, const util::matrix_t<ssc_number_t>& csp_dtr_sca_lengths, const util::matrix_t<ssc_number_t>& csp_dtr_sca_ncol_per_scas) {
-    int n = csp_dtr_sca_ave_focal_lens.ncells();
+    size_t n = csp_dtr_sca_ave_focal_lens.ncells();
 
     util::matrix_t<ssc_number_t> result(n);
     result.fill(std::numeric_limits<double>::quiet_NaN());
-    for (int i = 0; i < n; i++) {
+    for (size_t i = 0; i < n; i++) {
         result.at(i) =  1 - (csp_dtr_sca_ave_focal_lens.at(i) * tan(csp_dtr_sca_calc_theta)
             - (nSCA - 1) / nSCA * csp_dtr_sca_calc_end_gains.at(i))
             / (csp_dtr_sca_lengths.at(i) * csp_dtr_sca_ncol_per_scas.at(i));
@@ -972,11 +972,11 @@ util::matrix_t<ssc_number_t> Csp_dtr_sca_calc_end_losses(const util::matrix_t<ss
 
 util::matrix_t<ssc_number_t> Csp_dtr_sca_calc_sca_effs(const util::matrix_t<ssc_number_t>& csp_dtr_sca_tracking_errors, const util::matrix_t<ssc_number_t>& csp_dtr_sca_geometry_effects,
     const util::matrix_t<ssc_number_t>& csp_dtr_sca_clean_reflectivities, const util::matrix_t<ssc_number_t>& csp_dtr_sca_mirror_dirts, const util::matrix_t<ssc_number_t>& csp_dtr_sca_general_errors) {
-    int n = csp_dtr_sca_tracking_errors.ncells();
+    size_t n = csp_dtr_sca_tracking_errors.ncells();
 
     util::matrix_t<ssc_number_t> result(n);
     result.fill(std::numeric_limits<double>::quiet_NaN());
-    for (int i = 0; i < n; i++) {
+    for (size_t i = 0; i < n; i++) {
         result.at(i) =  csp_dtr_sca_tracking_errors.at(i) * csp_dtr_sca_geometry_effects.at(i) *
             csp_dtr_sca_clean_reflectivities.at(i) * csp_dtr_sca_mirror_dirts.at(i) * csp_dtr_sca_general_errors.at(i);
     }
@@ -995,13 +995,13 @@ util::matrix_t<ssc_number_t> Csp_dtr_sca_calc_iams(const util::matrix_t<ssc_numb
 
     util::matrix_t<ssc_number_t> result(IAMs.nrows());
     result.fill(std::numeric_limits<double>::quiet_NaN());
-    for (int i = 0; i < IAMs.nrows(); i++) {
+    for (size_t i = 0; i < IAMs.nrows(); i++) {
         if (IAMs.ncols() < 2) {                            // not sure this actually captures varying lengths of the different 1-D arrays in this matrix
             result.at(i) = IAMs.at(i, 0);
         }
         else {
             double IAM = IAMs.at(i, 0);
-            for (int j = 1; j < IAMs.ncols(); j++) {
+            for (size_t j = 1; j < IAMs.ncols(); j++) {
                 IAM = IAM + IAMs.at(i, j) * pow(csp_dtr_sca_calc_theta, j) / csp_dtr_sca_calc_costh;
             }
             result.at(i) = IAM;
@@ -1019,11 +1019,11 @@ double Csp_dtr_sca_calc_theta(double csp_dtr_sca_calc_costh) {
 util::matrix_t<ssc_number_t> Csp_dtr_hce_design_heat_losses(
     const util::matrix_t<ssc_number_t>& HCE_FieldFrac, const util::matrix_t<ssc_number_t>& Design_loss) {
 
-    int n = HCE_FieldFrac.nrows();
+    size_t n = HCE_FieldFrac.nrows();
 
     util::matrix_t<ssc_number_t> result(n);
     result.fill(std::numeric_limits<double>::quiet_NaN());
-    for (int i = 0; i < n; i++) {
+    for (size_t i = 0; i < n; i++) {
         result.at(i) =
             HCE_FieldFrac.at(i, 0)
             * Design_loss.at(i, 0)
@@ -1044,11 +1044,11 @@ util::matrix_t<ssc_number_t> Csp_dtr_hce_optical_effs(
     const util::matrix_t<ssc_number_t>& alpha_abs,
     const util::matrix_t<ssc_number_t>& Tau_envelope) {
 
-    int n = HCE_FieldFrac.nrows();
+    size_t n = HCE_FieldFrac.nrows();
 
     util::matrix_t<ssc_number_t> result(n);
     result.fill(std::numeric_limits<double>::quiet_NaN());
-    for (int i = 0; i < n; i++) {
+    for (size_t i = 0; i < n; i++) {
         result.at(i) =
             HCE_FieldFrac.at(i, 0)
             * Shadowing.at(i, 0)

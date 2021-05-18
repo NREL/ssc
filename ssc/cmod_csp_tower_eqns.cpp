@@ -99,7 +99,7 @@ void Tower_SolarPilot_Solar_Field_Equations(ssc_data_t data)
     ssc_data_t_get_number(data, "helio_height", &helio_height);
     ssc_data_t_get_number(data, "dens_mirror", &dens_mirror);
     ssc_data_t_get_number(data, "n_hel", &n_hel);
-    a_sf_ui = A_sf_UI(helio_width, helio_height, dens_mirror, n_hel);
+    a_sf_ui = A_sf_UI(helio_width, helio_height, dens_mirror, (int)n_hel);
     ssc_data_t_set_number(data, "a_sf_ui", a_sf_ui);
 
     // helio_area_tot
@@ -198,7 +198,7 @@ void MSPT_Receiver_Equations(ssc_data_t data)
     ssc_data_t_get_number(data, "csp.pt.rec.htf_t_avg", &csp_pt_rec_htf_t_avg);
     ssc_data_t_get_number(data, "rec_htf", &rec_htf);
     ssc_data_t_get_matrix(vt, "field_fl_props", field_fl_props);
-    csp_pt_rec_htf_c_avg = Csp_pt_rec_htf_c_avg(csp_pt_rec_htf_t_avg, rec_htf, field_fl_props);
+    csp_pt_rec_htf_c_avg = Csp_pt_rec_htf_c_avg(csp_pt_rec_htf_t_avg, (int)rec_htf, field_fl_props);
     ssc_data_t_set_number(data, "csp.pt.rec.htf_c_avg", csp_pt_rec_htf_c_avg);
 
     // csp_pt_rec_max_flow_to_rec
@@ -290,7 +290,7 @@ void MSPT_System_Control_Equations(ssc_data_t data)
         ssc_data_t_get_number(data, "disp_wlim_max", &disp_wlim_max);
         ssc_data_t_get_number(data, "constant", &constant);
         wlim_series = Wlim_series(disp_wlim_max);
-        ssc_data_t_set_array(data, "wlim_series", wlim_series.data(), wlim_series.ncells());
+        ssc_data_t_set_array(data, "wlim_series", wlim_series.data(), (int)wlim_series.ncells());
     }
 }
 

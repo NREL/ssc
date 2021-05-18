@@ -740,18 +740,18 @@ public:
 			pc->m_m_dot_water_des = as_double("ud_m_dot_water_cool_des");		//[kg/s]
 
 			// Also need lower and upper levels for the 3 independent variables...
-			pc->m_T_htf_low = as_double("ud_T_htf_low");			//[C]
-			pc->m_T_htf_high = as_double("ud_T_htf_high");			//[C]
-			pc->m_T_amb_low = as_double("ud_T_amb_low");			//[C]
-			pc->m_T_amb_high = as_double("ud_T_amb_high");			//[C]
-			pc->m_m_dot_htf_low = as_double("ud_m_dot_htf_low");	//[-]
-			pc->m_m_dot_htf_high = as_double("ud_m_dot_htf_high");	//[-]
+			//pc->m_T_htf_low = as_double("ud_T_htf_low");			//[C]
+			//pc->m_T_htf_high = as_double("ud_T_htf_high");			//[C]
+			//pc->m_T_amb_low = as_double("ud_T_amb_low");			//[C]
+			//pc->m_T_amb_high = as_double("ud_T_amb_high");			//[C]
+			//pc->m_m_dot_htf_low = as_double("ud_m_dot_htf_low");	//[-]
+			//pc->m_m_dot_htf_high = as_double("ud_m_dot_htf_high");	//[-]
 
-			// User-Defined Cycle Off-Design Tables 
-			pc->mc_T_htf_ind = as_matrix("ud_T_htf_ind_od");
-			pc->mc_T_amb_ind = as_matrix("ud_T_amb_ind_od");
-			pc->mc_m_dot_htf_ind = as_matrix("ud_m_dot_htf_ind_od");
-            pc->mc_m_dot_htf_ind = as_matrix("ud_ind_od");
+			//// User-Defined Cycle Off-Design Tables 
+			//pc->mc_T_htf_ind = as_matrix("ud_T_htf_ind_od");
+			//pc->mc_T_amb_ind = as_matrix("ud_T_amb_ind_od");
+			//pc->mc_m_dot_htf_ind = as_matrix("ud_m_dot_htf_ind_od");
+            pc->mc_combined_ind = as_matrix("ud_ind_od");
 		}
 
 		// ********************************

@@ -375,7 +375,7 @@ void cm_battwatts::exec()
             }
         }
         batt->calculate_monthly_and_annual_outputs(*this);
-        ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, double(n_rec_single_year / 8760));
+        gen_heatmap(this, double(n_rec_single_year / 8760));
 
 
         if (resilience) {

@@ -530,7 +530,7 @@ var_info vtab_technology_outputs[] = {
 ssc_number_t* gen_heatmap(compute_module* cm, double step_per_hour) {
     if (!cm)
         return 0;
-    size_t count = 8760 * step_per_hour;
+    size_t count = (size_t)(8760 * step_per_hour);
     size_t imonth = 0;
     size_t iday = 0;
     size_t hour;
@@ -538,14 +538,14 @@ ssc_number_t* gen_heatmap(compute_module* cm, double step_per_hour) {
     ssc_number_t* p_gen = cm->as_array("gen", &count_gen);
     ssc_number_t* p_annual_energy_dist_time = cm->allocate("annual_energy_distribution_time", 25, 366);
     for (size_t i = 0; i < count; i++) {
-        hour = fmod(floor(double(i) / step_per_hour), 24);
+        hour = (size_t)fmod(floor(double(i) / step_per_hour), 24);
         imonth = util::month_of(double(floor(double(i) / step_per_hour)));
-        iday = floor(double(i) / 24) ;
+        iday = (size_t)floor(double(i) / 24) ;
         for (size_t d = 0; d < 366; d++) {
             for (size_t h = 0; h < 25; h++) {
                 if (i == 0) {
-                    p_annual_energy_dist_time[h * 366] = (h - 1);
-                    p_annual_energy_dist_time[d] = d;
+                    p_annual_energy_dist_time[h * 366] = (ssc_number_t)(h - 1);
+                    p_annual_energy_dist_time[d] = (ssc_number_t)d;
                 }
                 if (iday == d && hour == (h - 1) && d != 365) {
                     p_annual_energy_dist_time[h * 366 + d + 1] += p_gen[i] * 1 / step_per_hour;
@@ -1183,7 +1183,7 @@ size_t shading_factor_calculator::get_row_index_for_input(size_t hour_of_year, s
 
 	// then figure out how many row indices to add for the subhourly timeseries entries based on the minute stamp
 	// for example, minute 30 in a half-hour weather file will calculate: floor(30 / (60/2)) = 1 and will add one to the row index, which is correct
-	ndx += floor((int)minute / (60 / (m_steps_per_hour)));
+	ndx += (size_t)floor((int)minute / (60 / (m_steps_per_hour)));
 
 	return ndx;
 }
@@ -1193,7 +1193,7 @@ bool shading_factor_calculator::fbeam(size_t hour_of_year, double minute, double
 {
 	bool ok = false;
 	double factor = 1.0;
-	size_t irow = get_row_index_for_input(hour_of_year, minute);
+	size_t irow = get_row_index_for_input(hour_of_year, (size_t)minute);
 	if (irow < m_beamFactors.nrows() && irow >= 0)
 	{
 		factor = m_beamFactors.at(irow, 0);
@@ -1217,7 +1217,7 @@ bool shading_factor_calculator::fbeam_shade_db(ShadeDB8_mpp * p_shadedb, size_t 
 	bool ok = false;
 	double dc_factor = 1.0;
 	double beam_factor = 1.0;
-	size_t irow = get_row_index_for_input(hour, minute);
+	size_t irow = get_row_index_for_input(hour, (size_t)minute);
 	if (irow < m_beamFactors.nrows())
 	{
 		std::vector<double> shad_fracs;
@@ -1295,7 +1295,7 @@ bool weatherdata::check_continuous_single_year(bool leapyear)
 				for (int tsph = 0; tsph < ts_per_hour; tsph++)
 				{
                     //first check that the index isn't out of bounds
-                    if (idx > m_nRecords - 1)
+                    if (idx > (int)m_nRecords - 1)
                         return false;
                     //if any of the month, day, hour, or minute don't line up with what we've calculated, then it doesn't fit our criteria for a continuous year
                     min += tsph * ts_min;
