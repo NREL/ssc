@@ -329,6 +329,7 @@ void C_csp_solver::init()
 		// Power cycle
 	C_csp_power_cycle::S_solved_params pc_solved_params;
 	mc_power_cycle.init(pc_solved_params);
+    mc_csp_messages.transfer_messages(mc_power_cycle.mc_csp_messages);
 	m_cycle_W_dot_des = pc_solved_params.m_W_dot_des;					//[MW]
 	m_cycle_eta_des = pc_solved_params.m_eta_des;						//[-]
 	m_cycle_q_dot_des = pc_solved_params.m_q_dot_des;					//[MW]
@@ -372,6 +373,10 @@ void C_csp_solver::init()
                                     m_T_htf_hot_tank_in_min < (m_cycle_T_htf_hot_des);
 
     m_is_cr_config_recirc = true;
+
+    if (!mc_tou.mc_dispatch_params.m_is_block_dispatch && !mc_tou.mc_dispatch_params.m_dispatch_optimize && !mc_tou.mc_dispatch_params.m_is_arbitrage_policy) {
+        throw(C_csp_exception("Either block dispatch or dispatch optimization must be specified", "CSP Solver"));
+    }
 
     // Value helps solver get out of T_field_htf_cold iteration when weird conditions cause the solution to be a very cold value
     // Should update with technology-specific htf freeze protection values
@@ -534,7 +539,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
     //-------------------------------
 
         
-	int cr_operating_state = C_csp_collector_receiver::OFF;
+    C_csp_collector_receiver::E_csp_cr_modes cr_operating_state = C_csp_collector_receiver::OFF;
 	int pc_operating_state = C_csp_power_cycle::OFF;
 
 	
@@ -617,11 +622,18 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		
 		// Get tou for timestep
 		mc_tou.call(mc_kernel.mc_sim_info.ms_ts.m_time, mc_tou_outputs);
-		size_t tou_period = mc_tou_outputs.m_csp_op_tou;	//[-]
-		double f_turbine_tou = mc_tou_outputs.m_f_turbine;	//[-]
+		size_t f_turb_tou_period = mc_tou_outputs.m_csp_op_tou;	//[-]
+        size_t pricing_tou_period = mc_tou_outputs.m_pricing_tou;   //[-]
+        mc_kernel.mc_sim_info.m_tou = f_turb_tou_period;	    //[base 1] used ONLY by power cycle model for hybrid cooling - may also want to move this to controller
+        double f_turbine_tou = mc_tou_outputs.m_f_turbine;	//[-]
 		double pricing_mult = mc_tou_outputs.m_price_mult;	//[-]
+        double purchase_mult = pricing_mult;
+        if (!mc_tou.mc_dispatch_params.m_is_purchase_mult_same_as_price) {
+            throw(C_csp_exception("CSP Solver not yet setup to handle purchase schedule separate from price schedule"));
+        }
 
-		// Get collector/receiver & power cycle operating states at start of time step (last time step)
+		// Get collector/receiver & power cycle operating states at start of time step (end of last time step)
+            // collector/receiver
 		cr_operating_state = mc_collector_receiver.get_operating_state();
 		if( cr_operating_state < C_csp_collector_receiver::OFF ||
 			cr_operating_state > C_csp_collector_receiver::ON )
@@ -630,8 +642,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				" values are from %d to %d\n", mc_kernel.mc_sim_info.ms_ts.m_step/ 3600.0, cr_operating_state, C_csp_collector_receiver::OFF, C_csp_collector_receiver::ON);
 			throw(C_csp_exception(msg,"CSP Solver Core"));
 		}
+            // power cycle
 		pc_operating_state = mc_power_cycle.get_operating_state();
-        if (m_is_first_timestep && f_turbine_tou <= 0.) pc_operating_state = C_csp_power_cycle::OFF;
 
 		double q_pb_last = mc_pc_out_solver.m_q_dot_htf * 1000.; //[kWt]
 		double w_pb_last = mc_pc_out_solver.m_P_cycle * 1000.;   //[kWt]
@@ -645,45 +657,18 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		// Get volume of hot tank, for debugging
 		V_hot_tank_frac_initial = mc_tes.get_hot_tank_vol_frac();
 
-		// Get or set decision variables
-		bool is_rec_su_allowed = true;
-		bool is_pc_su_allowed = true;
-		bool is_pc_sb_allowed = true;
-		mc_kernel.mc_sim_info.m_tou = 1;	    //[base 1] used ONLY by power cycle model for hybrid cooling - may also want to move this to controller
 
-		// Get standby fraction and min operating fraction
-			// Could eventually be a method in PC class...
-		double cycle_sb_frac = m_cycle_sb_frac_des;				//[-]
-			
-			// *** If standby not allowed, then reset q_pc_sb = q_pc_min ?? *** 
-                //or is this too confusing and not helpful enough?
-		double q_pc_sb = cycle_sb_frac * m_cycle_q_dot_des;		//[MW]
-		double q_pc_min = m_cycle_cutoff_frac * m_cycle_q_dot_des;	//[MW]
-		m_q_dot_pc_max = m_cycle_max_frac * m_cycle_q_dot_des;		//[MWt]
-		double q_pc_target = m_q_dot_pc_max;							//[MW]
-
-		q_pc_target = f_turbine_tou * m_cycle_q_dot_des;	//[MW]
-
-        if (mc_tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max)
-        {
-            m_q_dot_pc_max = q_pc_target;     //[MW]
-        }
-
-
+        // Get max HTF mass flow rate to the cycle as a function of ambient temperature
 		double m_dot_htf_ND_max = std::numeric_limits<double>::quiet_NaN();
 		double W_dot_ND_max = std::numeric_limits<double>::quiet_NaN();
 		mc_power_cycle.get_max_power_output_operation_constraints(mc_weather.ms_outputs.m_tdry, m_dot_htf_ND_max, W_dot_ND_max);
 		m_m_dot_pc_max = m_dot_htf_ND_max * m_m_dot_pc_des;
 
-
-
-		// Need to call power cycle at ambient temperature to get a guess of HTF return temperature
-		// If the return temperature is hotter than design, then the mass flow from the receiver will be
-		// bigger than expected
+		// Then call power cycle at ambient temperature and min(des_m_dot, max_m_dot) to get a guess of HTF return temperature
 		mc_pc_htf_state_in.m_temp = m_cycle_T_htf_hot_des - 273.15; //[C]
 		mc_pc_htf_state_in.m_pres = m_cycle_P_hot_des;	//[kPa]
 		mc_pc_htf_state_in.m_qual = m_cycle_x_hot_des;	//[-]
-		mc_pc_inputs.m_m_dot = (std::min)(m_m_dot_pc_max, m_m_dot_pc_des);				//[kg/hr] no mass flow rate to power cycle
+		mc_pc_inputs.m_m_dot = (std::min)(m_m_dot_pc_max, m_m_dot_pc_des);				//[kg/hr]
 		// Inputs
 		mc_pc_inputs.m_standby_control = C_csp_power_cycle::ON;
 		//mc_pc_inputs.m_tou = tou_timestep;
@@ -693,7 +678,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			mc_pc_inputs,
 			mc_pc_out_solver,
 			mc_kernel.mc_sim_info);
-		
+
+
+        // Next, estimate receiver performance using estimated power cycle performance
+        // If the return temperature is hotter than design, then the mass flow from the receiver will be bigger than expected
         bool is_rec_outlet_to_hottank = true;
 		m_T_htf_pc_cold_est = mc_pc_out_solver.m_T_htf_cold;	//[C]
 		// Solve collector/receiver at steady state with design inputs and weather to estimate output
@@ -703,8 +691,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			mc_cr_htf_state_in,
 			est_out,
 			mc_kernel.mc_sim_info);
-		double q_dot_cr_startup = est_out.m_q_startup_avail;
-		double q_dot_cr_on = est_out.m_q_dot_avail;
+		double q_dot_cr_startup = est_out.m_q_startup_avail;    //[MWt]
+		double q_dot_cr_on = est_out.m_q_dot_avail;     //[MWt]
 		double m_dot_cr_on = est_out.m_m_dot_avail;		//[kg/hr]
 		double T_htf_hot_cr_on = est_out.m_T_htf_hot;	//[C]
 		if (cr_operating_state != C_csp_collector_receiver::ON)
@@ -716,6 +704,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
             && T_htf_hot_cr_on < m_T_htf_hot_tank_in_min) {
             is_rec_outlet_to_hottank = false;
         }
+
 
 		// Get TES operating state info at end of last time step
 		double q_dot_tes_dc, q_dot_tes_ch;      //[MWt]
@@ -746,15 +735,47 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
         {
             q_dot_tes_dc = 0.0;     //[s
         }
-
-
-
 		// Can add the following code to simulate with no storage charge/discharge, but IDLE calcs
 		//q_dot_tes_dc = q_dot_tes_ch = 0.0;
+
+
+
+
+        // Get standby fraction and min operating fraction
+            // Could eventually be a method in PC class...
+        double cycle_sb_frac = m_cycle_sb_frac_des;				//[-]
+
+            // *** If standby not allowed, then reset q_pc_sb = q_pc_min ?? *** 
+                //or is this too confusing and not helpful enough?
+        double q_pc_sb = cycle_sb_frac * m_cycle_q_dot_des;		//[MW]
+        double q_pc_min = m_cycle_cutoff_frac * m_cycle_q_dot_des;	//[MW]
+
+        // Initialize to NaN - block or dispatch needs to set
+        double q_pc_target = std::numeric_limits<double>::quiet_NaN();
+        m_q_dot_pc_max = q_pc_target;
+
+        // Get or set decision variables
+        bool is_rec_su_allowed = false;
+        bool is_pc_su_allowed = false;
+        bool is_pc_sb_allowed = false;
+
+        double q_dot_elec_to_CR_heat = std::numeric_limits<double>::quiet_NaN();    //[MWt]
 
 		// Optional rules for TOD Block Plant Control
 		if( mc_tou.mc_dispatch_params.m_is_block_dispatch )
 		{
+            is_rec_su_allowed = true;
+            is_pc_su_allowed = true;
+            is_pc_sb_allowed = true;
+
+            // Set PC target and max thermal power
+            q_pc_target = f_turbine_tou * m_cycle_q_dot_des;	//[MW]
+            if (mc_tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max) {
+                m_q_dot_pc_max = q_pc_target;     //[MW]
+            }
+            else {
+                m_q_dot_pc_max = m_cycle_max_frac * m_cycle_q_dot_des;		//[MWt]
+            }
 
 			// Rule 1: if the sun sets (or does not rise) in __ [hours], then do not allow power cycle standby
 				//double standby_time_buffer = 2.0;
@@ -786,24 +807,58 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 					q_pc_target = mc_tou.mc_dispatch_params.m_f_q_dot_pc_overwrite*m_cycle_q_dot_des;
 				}
 			}
+
+            // After rules, reset booleans if necessary
+		    if( q_pc_target < q_pc_min || q_pc_target <= 0. )
+		    {
+			    is_pc_su_allowed = false;
+			    is_pc_sb_allowed = false;
+			    q_pc_target = 0.0;
+		    }
 		}
+        // use simply policy to govern arbitrage operation
+        else if (mc_tou.mc_dispatch_params.m_is_arbitrage_policy) {
 
+            // Check purchase multiplier
+            // If less than 1, then allow charging
+            if (purchase_mult < 1.0 && q_dot_tes_ch > 0.0) {
+                is_rec_su_allowed = true;
+                q_dot_elec_to_CR_heat = m_q_dot_rec_des;    //[MWt]
+            }
+            else {
+                is_rec_su_allowed = false;
+                q_dot_elec_to_CR_heat = 0.0;
+            }
 
+            // Check (sale) price multiplier
+            // If greater than 1, the allow discharging
+            if (pricing_mult > 1.0) {
+                is_pc_su_allowed = true;
+                is_pc_sb_allowed = false;
 
-		// After rules, reset booleans if necessary
-		if( q_pc_target < q_pc_min || q_pc_target <= 0. )
-		{
-			is_pc_su_allowed = false;
-			is_pc_sb_allowed = false;
-			q_pc_target = 0.0;
-		}
+                q_pc_target = m_cycle_q_dot_des;	//[MWt]
+                if (mc_tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max) {
+                    m_q_dot_pc_max = q_pc_target;     //[MWt]
+                }
+                else {
+                    m_q_dot_pc_max = m_cycle_max_frac * m_cycle_q_dot_des;		//[MWt]
+                }
+            }
+            else {
+                is_pc_su_allowed = false;
+                is_pc_sb_allowed = false;
 
+                q_pc_target = 0.0;
+                m_q_dot_pc_max = 0.0;
+            }
 
+            // Do we need to reset q_cr_on for control logic?
 
-        bool opt_complete = false;
+            double abce = 1.23;
 
-        //Run dispatch optimization?
-        if(mc_tou.mc_dispatch_params.m_dispatch_optimize)
+        }
+        // Run dispatch optimization?
+        else if(mc_tou.mc_dispatch_params.m_dispatch_optimize)
         {
 
             //time to reoptimize
@@ -886,7 +941,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 {
                     
                     //call the optimize method
-                    opt_complete = dispatch.m_last_opt_successful = 
+                    bool opt_complete = dispatch.m_last_opt_successful = 
                         dispatch.optimize();
                     
                     if(dispatch.solver_params.disp_reporting && (! dispatch.solver_params.log_message.empty()) )
@@ -1094,7 +1149,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			if (q_dot_cr_on > qmax || m_dot_cr_on > mmax)  // Receiver will need to be defocused
 			{
 				double df = fmin(qmax / q_dot_cr_on, mmax / m_dot_cr_on);
-				mc_collector_receiver.on(mc_weather.ms_outputs, mc_cr_htf_state_in, df, mc_cr_out_solver, mc_kernel.mc_sim_info);
+				mc_collector_receiver.on(mc_weather.ms_outputs, mc_cr_htf_state_in, q_dot_elec_to_CR_heat, df, mc_cr_out_solver, mc_kernel.mc_sim_info);
 				if (mc_cr_out_solver.m_q_thermal == 0.0)  // Receiver solution wasn't successful 
 					is_rec_su_allowed = false;
 			}
@@ -1749,7 +1804,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 q_pc_target, q_dot_pc_su_max, q_pc_sb,
                 q_pc_min, m_q_dot_pc_max, q_dot_pc_su_max,
                 m_m_dot_pc_max_startup, m_m_dot_pc_max, m_m_dot_pc_min,
-                1.E-3,
+                q_dot_elec_to_CR_heat, 1.E-3,
                 defocus_solved, is_op_mode_avail, is_turn_off_plant, is_turn_off_rec_su);
             if (is_turn_off_rec_su) {
                 is_rec_su_allowed = false;
@@ -1792,11 +1847,16 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
             throw(C_csp_exception(error_msg, "System-level parasitics"));
         }
 
+        double W_dot_cr_freeze_protection = 0.0;
+        if (ms_system_params.m_is_field_freeze_protection_electric) {
+            W_dot_cr_freeze_protection = mc_cr_out_solver.m_q_dot_heater;
+        }
+
 		double W_dot_net = mc_pc_out_solver.m_P_cycle - 
 			mc_cr_out_solver.m_W_dot_col_tracking -
 			mc_cr_out_solver.m_W_dot_htf_pump - 
 			(mc_pc_out_solver.m_W_dot_htf_pump + W_dot_tes_pump) -
-			mc_cr_out_solver.m_q_rec_heattrace -
+			W_dot_cr_freeze_protection -
 			mc_pc_out_solver.m_W_cool_par -
 			mc_tes_outputs.m_q_heater - 
 			W_dot_fixed -
@@ -1892,7 +1952,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		}
 		
 
-		mc_reported_outputs.value(C_solver_outputs::TOU_PERIOD, (double)tou_period);        //[-]       
+		mc_reported_outputs.value(C_solver_outputs::TOU_PERIOD, (double)f_turb_tou_period);        //[-]       
 		mc_reported_outputs.value(C_solver_outputs::PRICING_MULT, pricing_mult);	//[-] 
 		mc_reported_outputs.value(C_solver_outputs::PC_Q_DOT_SB, q_pc_sb);          //[MW]     
 		mc_reported_outputs.value(C_solver_outputs::PC_Q_DOT_MIN, q_pc_min);        //[MW]    
@@ -2124,14 +2184,16 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 void C_csp_tou::init_parent()
 {
 	// Check that dispatch logic is reasonable
-	if( !(mc_dispatch_params.m_dispatch_optimize || mc_dispatch_params.m_is_block_dispatch) )
+	if( !(mc_dispatch_params.m_dispatch_optimize || mc_dispatch_params.m_is_block_dispatch || mc_dispatch_params.m_is_arbitrage_policy) )
 	{
 		throw(C_csp_exception("Must select a plant control strategy", "TOU initialization"));
 	}
 
-	if( mc_dispatch_params.m_dispatch_optimize && mc_dispatch_params.m_is_block_dispatch )
+	if( (mc_dispatch_params.m_dispatch_optimize && mc_dispatch_params.m_is_block_dispatch) ||
+        (mc_dispatch_params.m_dispatch_optimize && mc_dispatch_params.m_is_arbitrage_policy) ||
+        (mc_dispatch_params.m_is_block_dispatch && mc_dispatch_params.m_is_arbitrage_policy) )
 	{
-		throw(C_csp_exception("Both plant control strategies were selected. Please select one.", "TOU initialization"));
+		throw(C_csp_exception("Multiple plant control strategies were selected. Please select one.", "TOU initialization"));
 	}
 
 	if( mc_dispatch_params.m_is_block_dispatch )
@@ -2214,7 +2276,7 @@ bool C_csp_solver::C_operating_mode_core::solve(C_csp_solver* pc_csp_solver, boo
     double q_dot_pc_on_dispatch_target /*MWt*/, double q_dot_pc_startup /*MWt*/, double q_dot_pc_standby /*MWt*/,
     double q_dot_pc_min /*MWt*/, double q_dot_pc_max /*MWt*/, double q_dot_pc_startup_max /*MWt*/,
     double m_dot_pc_startup_max /*kg/hr*/, double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
-    double limit_comp_tol /*-*/,
+    double q_dot_elec_to_CR_heat /*MWt*/, double limit_comp_tol /*-*/,
     double& defocus_solved, bool& is_op_mode_avail /*-*/, bool& is_turn_off_plant, bool& is_turn_off_rec_su)
 {
     if (!pc_csp_solver->mc_collector_receiver.m_is_sensible_htf && m_is_sensible_htf_only) {
@@ -2263,6 +2325,7 @@ bool C_csp_solver::C_operating_mode_core::solve(C_csp_solver* pc_csp_solver, boo
 
     int solve_error_code = pc_csp_solver->solve_operating_mode(m_cr_mode, m_pc_mode, m_solver_mode,
         m_step_target_mode, q_dot_pc_solve, m_is_defocus, is_rec_outlet_to_hottank,
+        q_dot_elec_to_CR_heat,
         m_op_mode_name, defocus_solved);
 
     bool is_converged = true;
@@ -3585,14 +3648,14 @@ bool C_csp_solver::C_system_operating_modes::solve(C_system_operating_modes::E_o
     double q_dot_pc_on_target /*MWt*/, double q_dot_pc_startup /*MWt*/, double q_dot_pc_standby /*MWt*/,
     double q_dot_pc_min /*MWt*/, double q_dot_pc_max /*MWt*/, double q_dot_pc_startup_max /*MWt*/,
     double m_dot_pc_startup_max /*kg/hr*/, double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
-    double limit_comp_tol /*-*/,
+    double q_dot_elec_to_CR_heat /*MWt*/, double limit_comp_tol /*-*/,
     double& defocus_solved, bool& is_op_mode_avail /*-*/, bool& is_turn_off_plant, bool& is_turn_off_rec_su)
 {
     return get_pointer_to_op_mode(op_mode)->solve(pc_csp_solver, is_rec_outlet_to_hottank,
         q_dot_pc_on_target, q_dot_pc_startup, q_dot_pc_standby,
         q_dot_pc_min, q_dot_pc_max, q_dot_pc_startup_max,
         m_dot_pc_startup_max, m_dot_pc_max, m_dot_pc_min,
-        limit_comp_tol,
+        q_dot_elec_to_CR_heat, limit_comp_tol,
         defocus_solved, is_op_mode_avail, is_turn_off_plant, is_turn_off_rec_su);
 }
 

@@ -102,17 +102,6 @@ private:
 public:
 	
     enum
-    {
-        E_COL_T_HTF,
-        E_COL_M_DOT,
-        E_COL_T_AMB,
-        E_COL_W_CYL,
-        E_COL_Q_CYL,
-        E_COL_W_COOL,
-        E_COL_M_H2O
-    };
-
-    enum
 	{
 		E_ETA_THERMAL,		//[-] Cycle thermal efficiency (gross)
 		E_Q_DOT_HTF,		//[MWt] Cycle thermal power input
@@ -136,9 +125,6 @@ public:
 	};
 
 	C_csp_reported_outputs mc_reported_outputs;
-
-	// Class to save messages for up stream classes
-	C_csp_messages mc_csp_messages;
 	
 	// Instantiate two fully mixed tanks class for cold storage AND three node model
 	C_csp_cold_tes mc_two_tank_ctes;
@@ -201,21 +187,8 @@ public:
 		std::vector<double> m_F_wc;		//[-] hybrid cooling dispatch fractions 1 thru 9 (array index 0-8)	
 		
 		// Parameters for user-defined power cycle
-			// Lookup table with dependent variables corresponding to parametric on independent variable T_htf_hot [C] (first column)
-		util::matrix_t<double> mc_T_htf_ind;	// At m_dot_htf levels (-, 0, +)
-		double m_T_htf_low;			//[C] Low level of T_htf corresponding to ambient temperature parametric (also must be included within range of independent T_HTF values)
-		double m_T_htf_high;		//[C] High level of T_htf corresponding to ambient temperature parametric (also must be included within range of independent T_HTF values)
-			// Lookup table with dependent variables corresponding to parametric on independent variable T_amb [C] (first column)
-		util::matrix_t<double> mc_T_amb_ind;	// At T_htf levels (-, 0, +)
-		double m_T_amb_low;			//[C] Low level of T_amb corresponding to m_dot_HTF parametric (also must be included within range of independent T_amb values)
-		double m_T_amb_high;		//[C] High level of T_amb corresponding to m_dot_HTF parametric (also must be included within range of independent T_amb values)
-			// Lookup table with dependent variables corresponding to parametric on independent variable m_dot_htf [ND] (first column)
-		util::matrix_t<double> mc_m_dot_htf_ind;	// At T_amb levels (-, 0, +)
-		double m_m_dot_htf_low;		//[-] Low level of m_dot_htf corresponding to T_HTF parametric (also must be included within range of independent T_htf values)
-		double m_m_dot_htf_high;	//[-] High level of m_dot_htf corresponding to T_HTF parametric (also must be included within range of independent T_htf_values)
             // Lookup table that is the combination of the three above T_htf_hot, T_amb, and m_dot_htf tables (this is the newer table format)
         util::matrix_t<double> mc_combined_ind;
-
 		double m_W_dot_cooling_des;		//[MW] Cooling parasitic at design conditions
 		double m_m_dot_water_des;		//[kg/s] Power cycle water use at design conditions
 
@@ -229,10 +202,7 @@ public:
 
 			// Initialize parameters for user-defined power cycle
 			m_is_user_defined_pc = false;
-			
-			m_T_htf_low = m_T_htf_high =
-				m_T_amb_low = m_T_amb_high =
-				m_m_dot_htf_low = m_m_dot_htf_high =				
+				
 				m_W_dot_cooling_des = m_m_dot_water_des = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
@@ -280,28 +250,6 @@ public:
 	virtual void assign(int index, double *p_reporting_ts_array, size_t n_reporting_ts_array);
 
 };
-
-void get_var_setup(std::vector<double> & vec_unique, std::vector<double> & var_vec,
-    double & var_des, double & var_low, double & var_high);
-
-bool is_level_in_par(std::vector<std::vector<double>> test_combs,
-    std::vector<std::vector<double>> full_table);
-
-int split_ind_tbl(util::matrix_t<double> &combined, util::matrix_t<double> &T_htf_ind,
-    util::matrix_t<double> &m_dot_ind, util::matrix_t<double> &T_amb_ind);
-
-int split_ind_tbl(util::matrix_t<double> &combined, util::matrix_t<double> &T_htf_ind,
-    util::matrix_t<double> &m_dot_ind, util::matrix_t<double> &T_amb_ind,
-    int & n_T_htf_pars, int & n_T_amb_pars, int & n_m_dot_pars,
-    double & m_dot_low, double & m_dot_des, double & m_dot_high,
-    double & T_htf_low, double & T_htf_des, double & T_htf_high,
-    double & T_amb_low, double & T_amb_des, double & T_amb_high);
-
-int combine_ind_tbl(util::matrix_t<double>& combined, util::matrix_t<double>& T_htf_ind,
-	util::matrix_t<double>& m_dot_ind, util::matrix_t<double>& T_amb_ind,
-	double m_dot_low, double m_dot_des, double m_dot_high,
-	double T_htf_low, double T_htf_des, double T_htf_high,
-	double T_amb_low, double T_amb_des, double T_amb_high);
 
 
 #endif //__csp_solver_pc_Rankine_indirect_224_
