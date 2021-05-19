@@ -45,7 +45,6 @@ set(TCS_SRC
 		nlopt_callbacks.cpp
 		numeric_solvers.cpp
 		sam_mw_pt_heliostatfield_csp_solver.cpp
-		sam_sco2_recomp_type424.cpp
 		sam_type250_input_generator.cpp
 		sco2_cycle_components.cpp
 		sco2_partialcooling_cycle.cpp

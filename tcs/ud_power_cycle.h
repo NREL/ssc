@@ -94,7 +94,9 @@ private:
 	double m_T_amb_high;	//[C] High level ambient temperature (in m_dot_htf parametric)
 
 	// Can also save main effects of each independent variable at its upper and lower levels
-	std::vector<double> m_ME_T_htf_low;		//[-]
+    std::vector<double> m_Y_at_ref;     //[-]
+
+    std::vector<double> m_ME_T_htf_low;		//[-]
 	std::vector<double> m_ME_T_htf_high;	//[-]
 
 	std::vector<double> m_ME_T_amb_low;		//[-]
@@ -110,11 +112,12 @@ public:
 	~C_ud_power_cycle(){};
 
     void init(const util::matrix_t<double>& udpc_table,
-        double& T_htf_ref_calc /*C*/, double& T_amb_ref_calc /*C*/);
-
-	void init(const util::matrix_t<double> & T_htf_ind, double T_htf_ref /*C*/, double T_htf_low /*C*/, double T_htf_high /*C*/,
-		const util::matrix_t<double> & T_amb_ind, double T_amb_ref /*C*/, double T_amb_low /*C*/, double T_amb_high /*C*/,
-		const util::matrix_t<double> & m_dot_htf_ind, double m_dot_htf_ref /*-*/, double m_dot_htf_low /*-*/, double m_dot_htf_high /*-*/);
+        int& n_T_htf_pars, int& n_T_amb_pars, int& n_m_dot_pars,
+        double& T_htf_ref_calc /*C*/, double& T_htf_low_calc /*C*/, double& T_htf_high_calc /*C*/,
+        double& T_amb_ref_calc /*C*/, double& T_amb_low_calc /*C*/, double& T_amb_high_calc /*C*/,
+        double& m_dot_htf_ND_ref_calc, double& m_dot_htf_ND_low_calc /*-*/, double& m_dot_htf_ND_high_calc /*-*/,
+        std::vector<double>& Y_at_T_htf_ref, std::vector<double>& Y_at_T_amb_ref,
+        std::vector<double>& Y_at_m_dot_htf_ND_ref, std::vector<double>& Y_avg_at_refs);
 
 	double get_W_dot_gross_ND( double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_htf_ND /*-*/);
 

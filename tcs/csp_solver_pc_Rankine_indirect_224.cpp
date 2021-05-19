@@ -108,8 +108,33 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 		throw(C_csp_exception("Power cycle HTF code is not recognized", "Rankine Indirect Power Cycle Initialization"));
 	}
 
+    // ***********************************************************************
+    // ***********************************************************************
+    // Design-point calculations before initializing Rankine or UDPC model
+        // Calculate design point HTF mass flow rate
+    m_cp_htf_design = mc_pc_htfProps.Cp(physics::CelciusToKelvin((ms_params.m_T_htf_hot_ref + ms_params.m_T_htf_cold_ref) / 2.0));		//[kJ/kg-K]
 
-	// Calculations for hardcoded Rankine power cycle model
+    ms_params.m_P_ref *= 1000.0;		//[kW] convert from MW
+    m_q_dot_design = ms_params.m_P_ref / 1000.0 / ms_params.m_eta_ref;	//[MWt]
+    m_m_dot_design = m_q_dot_design * 1000.0 / (m_cp_htf_design * ((ms_params.m_T_htf_hot_ref - ms_params.m_T_htf_cold_ref))) * 3600.0;		//[kg/hr]
+    m_m_dot_min = ms_params.m_cycle_cutoff_frac * m_m_dot_design;		//[kg/hr]
+    m_m_dot_max = ms_params.m_cycle_max_frac * m_m_dot_design;		//[kg/hr]
+
+    // Startup energy
+    m_startup_energy_required = ms_params.m_startup_frac * ms_params.m_P_ref / ms_params.m_eta_ref; // [kWt-hr]
+
+    // Finally, set member model-timestep-tracking variables
+    m_operating_mode_prev = OFF;			// Assume power cycle is off when simulation begins
+    m_startup_energy_remain_prev = m_startup_energy_required;	//[kW-hr]
+    m_startup_time_remain_prev = ms_params.m_startup_time;		//[hr]
+    // ***********************************************************************
+
+
+    // ***********************************************************************
+    // ***********************************************************************
+    // Initialize Rankine or UDPC cycle depending on value of m_is_user_defined_pc
+
+    // Calculations for hardcoded Rankine power cycle model
 	if( !ms_params.m_is_user_defined_pc )
 	{
 		if(ms_params.m_tech_type == 1)
@@ -485,75 +510,105 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
             throw(C_csp_exception("UDPC mode selected by UDPC table is not set"));
         }
 
-        double T_htf_ref_udpc_calc, T_amb_ref_udpc_calc;
-        mc_user_defined_pc.init(ms_params.mc_combined_ind, T_htf_ref_udpc_calc, T_amb_ref_udpc_calc);
+        // Check UDPC parameters and reset if necessary
+        if (ms_params.m_W_dot_cooling_des != ms_params.m_W_dot_cooling_des || ms_params.m_W_dot_cooling_des < 0.0)
+        {
+            ms_params.m_W_dot_cooling_des = 0.0;
+            m_error_msg = util::format("The cycle cooling electric parasitic at design input for the user-defined power cycle was either not defined or negative."
+                " It was reset to 0.0 for the timeseries simulation");
+            mc_csp_messages.add_message(C_csp_messages::WARNING, m_error_msg);
+        }
+
+        if (ms_params.m_m_dot_water_des != ms_params.m_m_dot_water_des || ms_params.m_m_dot_water_des < 0.0)
+        {
+            ms_params.m_m_dot_water_des = 0.0;
+            m_error_msg = util::format("The cycle water use at design input for the user-defined power cycle was either not defined or negative."
+                " It was reset to 0.0 for the timeseries simulation");
+            mc_csp_messages.add_message(C_csp_messages::WARNING, m_error_msg);
+        }
+        
+        int n_T_htf_pars, n_T_amb_pars, n_m_dot_pars;
+        double T_htf_ref_udpc_calc, T_htf_low_udpc_calc, T_htf_high_udpc_calc;
+        double T_amb_ref_udpc_calc, T_amb_low_udpc_calc, T_amb_high_udpc_calc;
+        double m_dot_htf_ref_udpc_calc, m_dot_htf_low_udpc_calc, m_dot_htf_high_udpc_calc;
+        std::vector<double> Y_at_T_htf_ref, Y_at_T_amb_ref, Y_at_m_dot_htf_ND_ref, Y_avg_at_refs;
+        mc_user_defined_pc.init(ms_params.mc_combined_ind,
+            n_T_htf_pars, n_T_amb_pars, n_m_dot_pars,
+            T_htf_ref_udpc_calc, T_htf_low_udpc_calc, T_htf_high_udpc_calc,
+            T_amb_ref_udpc_calc, T_amb_low_udpc_calc, T_amb_high_udpc_calc,
+            m_dot_htf_ref_udpc_calc, m_dot_htf_low_udpc_calc, m_dot_htf_high_udpc_calc,
+            Y_at_T_htf_ref, Y_at_T_amb_ref, Y_at_m_dot_htf_ND_ref, Y_avg_at_refs);
 
         // Set design point ambient temperature to value calculated from UDPC table
         ms_params.m_T_amb_des = T_amb_ref_udpc_calc;        //[C]
 
-        // Check input design HTF temperature vs design HTF temperature calculated from UDPC table
-        // The input design HTF temperature is related to the heat source and TES designs, so we can't reset it like the design ambient temperature
-        // Report message if different
-        if (std::abs(T_htf_ref_udpc_calc - ms_params.m_T_htf_hot_ref) > 0.1) {
-            m_error_msg = util::format("The input cycle design HTF hot temperature is %lg, but the calculated design HTF hot temperature"
-            " in the UDPC table is %lg. This may result in unexpected cycle performance.", ms_params.m_T_htf_hot_ref, T_htf_ref_udpc_calc);
-            mc_csp_messages.add_message(C_csp_messages::WARNING, m_error_msg);
-        }
+        // Get UDPC Y values at *MSPT* design values
+        double W_dot_gross_ND_des = mc_user_defined_pc.get_W_dot_gross_ND(ms_params.m_T_htf_hot_ref, ms_params.m_T_amb_des, 1.0);
+        double Q_dot_HTF_ND_des = mc_user_defined_pc.get_Q_dot_HTF_ND(ms_params.m_T_htf_hot_ref, ms_params.m_T_amb_des, 1.0);
+        double W_dot_cooling_ND_des = mc_user_defined_pc.get_W_dot_cooling_ND(ms_params.m_T_htf_hot_ref, ms_params.m_T_amb_des, 1.0);
+        double m_dot_water_ND_des = mc_user_defined_pc.get_m_dot_water_ND(ms_params.m_T_htf_hot_ref, ms_params.m_T_amb_des, 1.0);
 
-		if(ms_params.m_W_dot_cooling_des != ms_params.m_W_dot_cooling_des || ms_params.m_W_dot_cooling_des < 0.0 )
-		{
-			ms_params.m_W_dot_cooling_des = 0.0;
-			m_error_msg = util::format("The cycle cooling electric parasitic at design input for the user-defined power cycle was either not defined or negative."
-									" It was reset to 0.0 for the timeseries simulation");
-			mc_csp_messages.add_message(C_csp_messages::WARNING, m_error_msg);
-		}
+        double W_dot_gross_des_UDPC = ms_params.m_P_ref * W_dot_gross_ND_des * 1.E-3;   //[MWe]
+        double q_dot_des_UDPC = m_q_dot_design * Q_dot_HTF_ND_des;              //[MWt]
+        double W_dot_cooling_des_UDPC = ms_params.m_W_dot_cooling_des * W_dot_cooling_ND_des;   //[MWe]
+        double m_dot_water_des_UDPC = ms_params.m_m_dot_water_des * m_dot_water_ND_des;         //[kg/s]
 
-		if(ms_params.m_m_dot_water_des != ms_params.m_m_dot_water_des || ms_params.m_m_dot_water_des < 0.0 )
-		{
-			ms_params.m_m_dot_water_des = 0.0;
-			m_error_msg = util::format("The cycle water use at design input for the user-defined power cycle was either not defined or negative."
-				" It was reset to 0.0 for the timeseries simulation");
-			mc_csp_messages.add_message(C_csp_messages::WARNING, m_error_msg);
-		}
+        // Calculate other important design values
+        double eta_des_UDPDC = W_dot_gross_des_UDPC / q_dot_des_UDPC;		//[-]
+        double T_htf_cold_des_UDPC = ms_params.m_T_htf_hot_ref - q_dot_des_UDPC / (m_m_dot_design / 3600.0 * m_cp_htf_design / 1.E3);		//[MJ/s * hr/kg * s/hr * kg-K/kJ * MJ/kJ] = C/K
 
+#ifdef _MSC_VER
+#define MySnprintf _snprintf
+#else
+#define MySnprintf snprintf
+#endif
+#define TSTRLEN2 512
+
+        std::string udpc_message;
+
+        char tstr[TSTRLEN2];
+        MySnprintf(tstr, TSTRLEN2, "%-30s%-15s%s\n", "Outputs", "Inputs", "UDPC");
+        udpc_message.append(tstr);
+        MySnprintf(tstr, TSTRLEN2, "%-30s%-15.1lf%.1lf\n", "Gross power [MWe]", ms_params.m_P_ref*1.E-3, W_dot_gross_des_UDPC );
+        udpc_message.append(tstr);
+        MySnprintf(tstr, TSTRLEN2, "%-30s%-15.1lf%.1lf\n", "Heat input [MWt]", m_q_dot_design, q_dot_des_UDPC);
+        udpc_message.append(tstr);
+        MySnprintf(tstr, TSTRLEN2, "%-30s%-15.1lf%.1lf\n", "Cooling power [MWe]", ms_params.m_W_dot_cooling_des, W_dot_cooling_des_UDPC);
+        udpc_message.append(tstr);
+        MySnprintf(tstr, TSTRLEN2, "%-30s%-15.1lf%.1lf\n", "Water user [kg/s]", ms_params.m_m_dot_water_des, m_dot_water_des_UDPC);
+        udpc_message.append(tstr);
+        MySnprintf(tstr, TSTRLEN2, "%-30s%-15.3lf%.3lf\n", "Gross efficiency", ms_params.m_eta_ref, eta_des_UDPDC);
+        udpc_message.append(tstr);
+        MySnprintf(tstr, TSTRLEN2, "%-30s%-15.1lf%.1lf\n", "HTF cold temp [C]", ms_params.m_T_htf_cold_ref, T_htf_cold_des_UDPC);
+        udpc_message.append(tstr);
+        mc_csp_messages.add_notice(udpc_message);
 	}
+    // ***********************************************************************
 
-	// Calculate design point HTF mass flow rate
-	m_cp_htf_design = mc_pc_htfProps.Cp(physics::CelciusToKelvin((ms_params.m_T_htf_hot_ref + ms_params.m_T_htf_cold_ref) / 2.0));		//[kJ/kg-K]
+	
+    // ***********************************************************************
+    // ***********************************************************************
+    // Finalize outputs
 
-	ms_params.m_P_ref *= 1000.0;		//[kW] convert from MW
-	m_q_dot_design = ms_params.m_P_ref / 1000.0 / ms_params.m_eta_ref;	//[MWt]
-	m_m_dot_design = m_q_dot_design*1000.0 / (m_cp_htf_design*((ms_params.m_T_htf_hot_ref - ms_params.m_T_htf_cold_ref)))*3600.0;		//[kg/hr]
-	m_m_dot_min = ms_params.m_cycle_cutoff_frac*m_m_dot_design;		//[kg/hr]
-	m_m_dot_max = ms_params.m_cycle_max_frac*m_m_dot_design;		//[kg/hr]
-
-	// 8.30.2010 :: Calculate the startup energy needed
-	m_startup_energy_required = ms_params.m_startup_frac * ms_params.m_P_ref / ms_params.m_eta_ref; // [kWt-hr]
-
-	// Finally, set member model-timestep-tracking variables
-	m_operating_mode_prev = OFF;			// Assume power cycle is off when simulation begins
-	m_startup_energy_remain_prev = m_startup_energy_required;	//[kW-hr]
-	m_startup_time_remain_prev = ms_params.m_startup_time;		//[hr]
-
+        // Set call tracker - used when this is called through TCS shell (still used for MSLF)
 	m_ncall = -1;
 
+        // Set solved_params values
 	solved_params.m_W_dot_des = ms_params.m_P_ref / 1000.0;		//[MW], convert from kW
 	solved_params.m_eta_des = ms_params.m_eta_ref;				//[-]
-	//solved_params.m_q_dot_des = solved_params.m_W_dot_des / solved_params.m_eta_des;	//[MW]
 	solved_params.m_q_dot_des = m_q_dot_design;					//[MWt]
 	solved_params.m_q_startup = m_startup_energy_required/1.E3;	//[MWt-hr]
 	solved_params.m_max_frac = ms_params.m_cycle_max_frac;		//[-]
 	solved_params.m_cutoff_frac = ms_params.m_cycle_cutoff_frac;	//[-]
 	solved_params.m_sb_frac = ms_params.m_q_sby_frac;				//[-]
 	solved_params.m_T_htf_hot_ref = ms_params.m_T_htf_hot_ref;			//[C]
-
-	// Calculate design point HTF mass flow rate
-	// double c_htf = mc_pc_htfProps.Cp(physics::CelciusToKelvin((ms_params.m_T_htf_hot_ref + ms_params.m_T_htf_cold_ref) / 2.0));		//[kJ/kg-K]
-	// m_m_dot_design = solved_params.m_q_dot_des*1000.0/(c_htf*((ms_params.m_T_htf_hot_ref - ms_params.m_T_htf_cold_ref)))*3600.0;	//[kg/hr]
 	solved_params.m_m_dot_design = m_m_dot_design;		//[kg/hr]
 	solved_params.m_m_dot_min = m_m_dot_min;			//[kg/hr]
 	solved_params.m_m_dot_max = m_m_dot_max;			//[kg/hr]
 
+    // ***********************************************************************
+    // ***********************************************************************
+    // Initialize cold storage if selected
 
 	// Cold storage and radiator setup ARD
 	if (ms_params.m_CT==4)											//only if radiative cooling chosen.
