@@ -992,6 +992,7 @@ Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
             mountingSpecificCellTemp.TbackInteg = cm->as_double("cec_backside_temp");
             mountingSpecificCellTemp.Lsc = cm->as_double("cec_lacunarity_length");
             mountingSpecificCellTemp.h_lacunarity = cm->as_double("cec_lacunarity_h");
+            mountingSpecificCellTemp.ground_clearance_height = cm->as_double("cec_ground_clearance_height");
             cellTempModel = &mountingSpecificCellTemp;
             mountingSpecificCellTemperatureForceNoPOA = true;
         }
