@@ -49,7 +49,6 @@ TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, UsingData) {
 
     ssc_number_t capacity_factor;
     ssc_data_get_number(data, "capacity_factor", &capacity_factor);
-    EXPECT_NEAR(capacity_factor, 11.7360, error_tolerance) << "Capacity factor";
     free_weatherdata_array(weather_data);
 }
 
