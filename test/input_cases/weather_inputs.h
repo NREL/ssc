@@ -8,7 +8,7 @@
  */
 
 var_data* create_weatherdata_array(int length);
-var_data* create_weatherdata_array24();
+//var_data* create_weatherdata_array24();
 
 void free_weatherdata_array(var_data* data);
 
@@ -18,6 +18,6 @@ void free_weatherdata_array(var_data* data);
  */
 var_data* create_winddata_array(int intervalsPerHour, int nMeasurementHeights);
 
-void free_winddata_array(var_data* data);
+//void free_winddata_array(var_data* data);
 
 #endif

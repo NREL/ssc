@@ -49,7 +49,9 @@ TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, UsingData) {
 
     ssc_number_t capacity_factor;
     ssc_data_get_number(data, "capacity_factor", &capacity_factor);
-    free_weatherdata_array(weather_data);
+
+  //  delete[] weather_data;
+ //   free_weatherdata_array(weather_data);
 }
 
 /// PVWattsV5 using different technology input options

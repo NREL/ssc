@@ -63,7 +63,8 @@ protected:
         wr.m_weather_data_provider = make_shared<weatherdata>(data);
     }
     void TearDown() {
-        free_weatherdata_array(data);
+      //  delete[] data;
+        //    free_weatherdata_array(data);
     }
 };
 

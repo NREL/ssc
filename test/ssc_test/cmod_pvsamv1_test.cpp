@@ -573,7 +573,8 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, InvTempDerate) {
     monthly_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[11];
     EXPECT_NEAR(monthly_energy, 740, 10) << "Month energy of December not reduced";
 
-    free_weatherdata_array(weatherData);
+//    delete [] weatherData;
+//    free_weatherdata_array(weatherData);
 }
 
 /// Test PVSAMv1 multiple MPPT inverter, otherwise using default no financial model inputs
@@ -743,10 +744,11 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NonAnnual)
 {
     //set up a weather data array and unassign the solar resource file
 
-    auto weather_data = create_weatherdata_array24(); // runs without error
-//    auto weather_data = create_weatherdata_array(24); // throws SEH exception in release mode only from cmod_pvsamv1 on Windows
+//    auto weather_data = create_weatherdata_array24(); // runs without error
+    auto weather_data = create_weatherdata_array(24); // throws SEH exception in release mode only from cmod_pvsamv1 on Windows
     ssc_data_unassign(data, "solar_resource_file");
     ssc_data_set_table(data, "solar_resource_data", &weather_data->table);
+    free_weatherdata_array(weather_data);
 
     std::vector<double> load(24, 1);
     ssc_data_set_array(data, "load", &load[0], (int)load.size());
@@ -760,7 +762,8 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NonAnnual)
 
     gen = ssc_data_get_array(data, "gen", nullptr)[12];
     EXPECT_NEAR(gen, 3.0525, 0.01) << "Gen at noon";
-    free_weatherdata_array(weather_data);
+    //delete[] weather_data;
+    //    free_weatherdata_array(weather_data);
 }
 
 //test non-annual run that includes Feb 29
@@ -774,14 +777,14 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NonAnnualWithLeapDay)
     var_data month_vd = var_data(month, length);
     var_data day_vd = var_data(day, length);
 
-    auto weather_data = create_weatherdata_array24(); // runs without error
-//    auto weather_data = create_weatherdata_array(length);// throws SEH exception in release mode  on Windows
+//    auto weather_data = create_weatherdata_array24(); // runs without error
+    auto weather_data = create_weatherdata_array(length);// throws SEH exception in release mode  on Windows
     weather_data->table.assign("month", month_vd);
     weather_data->table.assign("day", day_vd);
 
     ssc_data_unassign(data, "solar_resource_file");
     ssc_data_set_table(data, "solar_resource_data", &weather_data->table);
-
+    free_weatherdata_array(weather_data);
     std::vector<double> load(length, 1);
     ssc_data_set_array(data, "load", &load[0], (int)load.size());
 
@@ -794,7 +797,8 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NonAnnualWithLeapDay)
 
     gen = ssc_data_get_array(data, "gen", nullptr)[12];
     EXPECT_NEAR(gen, 2.6189, 0.01) << "Gen at noon";
-    free_weatherdata_array(weather_data);
+    //delete[] weather_data;
+    //    free_weatherdata_array(weather_data);
 }
 
 

@@ -30,7 +30,8 @@ TEST_F(CMWindPowerIntegration, HubHeightInterpolation_cmod_windpower) {
     ssc_data_get_number(data, "annual_energy", &annual_energy);
     EXPECT_GT(annual_energy, 4e06) << "Annual energy should be higher than height at 90";
 
-    free_winddata_array(windresourcedata);
+//    delete[] windresourcedata;
+//    free_winddata_array(windresourcedata);
 }
 
 /// Using Wind Resource File with various Wake Models
@@ -178,7 +179,8 @@ TEST_F(CMWindPowerIntegration, UsingDataArray_cmod_windpower) {
     monthly_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[11];
     EXPECT_NEAR(monthly_energy, 1972735, relErr / 10.);
 
-    free_winddata_array(windresourcedata);
+    //delete[] windresourcedata;
+    //    free_winddata_array(windresourcedata);
 
     // 15 min data
     ssc_data_unassign(data, "wind_resource_data");
@@ -200,7 +202,8 @@ TEST_F(CMWindPowerIntegration, UsingDataArray_cmod_windpower) {
     ssc_data_get_array(data, "gen", &gen_length);
     EXPECT_EQ(gen_length, 8760 * 4);
 
-    free_winddata_array(windresourcedata);
+ //   delete[] windresourcedata;
+    //    free_winddata_array(windresourcedata);
 }
 
 /// Using Weibull Distribution
@@ -337,7 +340,8 @@ TEST_F(CMWindPowerIntegration, IcingAndLowTempCutoff_cmod_windpower) {
     ssc_data_get_number(data, "cutoff_losses", &losses_percent);
     EXPECT_NEAR(losses_percent, 0.5, 0.01);
 
-    free_winddata_array(windresourcedata);
+   // delete[] windresourcedata;
+    //    free_winddata_array(windresourcedata);
 }
 
 /// Testing Turbine powercurve calculation
