@@ -93,7 +93,7 @@ TEST_F(lib_battery_lifetime_cycle_test, runCycleLifetimeTestKokamProfile) {
     EXPECT_NEAR(s.cycle->rainflow_jlt, 5, tol);
     EXPECT_NEAR(s.cycle_range, 75.07, tol);
     EXPECT_NEAR(s.average_range, 72.03, tol);
-    EXPECT_NEAR(s.n_cycles, 14, tol);
+    EXPECT_NEAR(s.n_cycles, 13, tol);
 }
 
 TEST_F(lib_battery_lifetime_cycle_test, runCycleLifetimeTestWithNoise) {
@@ -122,7 +122,7 @@ TEST_F(lib_battery_lifetime_cycle_test, runCycleLifetimeTestWithNoise) {
     EXPECT_NEAR(s.cycle->q_relative_cycle, 95.06, tol_high);
     EXPECT_NEAR(s.cycle_range, 90.6, tol_high);
     EXPECT_NEAR(s.average_range, 90.02, tol_high);
-    EXPECT_NEAR(s.n_cycles, 2, tol);
+    EXPECT_NEAR(s.n_cycles, 249, tol);
 }
 
 TEST_F(lib_battery_lifetime_cycle_test, replaceBatteryTest) {
