@@ -126,7 +126,7 @@ static void compareState(std::unique_ptr<battery_t>&model, const battery_state_t
     auto lifetime_tested = tested_state.lifetime;
     auto lifetime_expected = expected_state.lifetime;
     EXPECT_NEAR(lifetime_tested->day_age_of_battery, lifetime_expected.day_age_of_battery, tol) << msg;
-    EXPECT_NEAR(lifetime_tested->range, lifetime_expected.range, tol) << msg;
+    EXPECT_NEAR(lifetime_tested->cycle_range, lifetime_expected.cycle_range, tol) << msg;
     EXPECT_NEAR(lifetime_tested->average_range, lifetime_expected.average_range, tol) << msg;
     EXPECT_NEAR(lifetime_tested->n_cycles, lifetime_expected.n_cycles, tol) << msg;
 
