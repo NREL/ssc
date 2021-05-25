@@ -550,7 +550,7 @@ static var_info _cm_vtab_pvsamv1[] = {
     { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_dc_voltage",                 "Subarray 1 Operating DC voltage",                                         "V",      "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_dc_gross",                   "Subarray 1 DC power gross",                                             "kW",      "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_voc",                        "Subarray 1 Open circuit DC voltage",                                      "V",      "", "Time Series (Subarray 1)",       "",                     "",                              "" },
-    { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_isc",                        "Subarray 1 Short circuit DC current",                                     "A",      "", "Time Series (Subarray 1)",       "",                     "",                              "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_isc",                        "Subarray 1 String short circuit DC current",                                     "A",      "", "Time Series (Subarray 1)",       "",                     "",                              "" },
 
     { SSC_OUTPUT,        SSC_ARRAY,      "subarray2_surf_tilt",                  "Subarray 2 Surface tilt",                                              "deg",    "", "Time Series (Subarray 2)",       "",                    "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "subarray2_surf_azi",                   "Subarray 2 Surface azimuth",                                           "deg",    "", "Time Series (Subarray 2)",       "",                    "",                              "" },
@@ -581,7 +581,7 @@ static var_info _cm_vtab_pvsamv1[] = {
     { SSC_OUTPUT,        SSC_ARRAY,      "subarray2_dc_voltage",                 "Subarray 2 Operating DC voltage",                                         "V",      "", "Time Series (Subarray 2)",       "",                    "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "subarray2_dc_gross",                 "Subarray 2 DC power gross",                                         "kW",      "", "Time Series (Subarray 2)",       "",                    "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "subarray2_voc",                        "Subarray 2 Open circuit DC voltage",                                      "V",      "", "Time Series (Subarray 2)",       "",                     "",                              "" },
-    { SSC_OUTPUT,        SSC_ARRAY,      "subarray2_isc",                        "Subarray 2 Short circuit DC current",                                     "A",      "", "Time Series (Subarray 2)",       "",                     "",                              "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "subarray2_isc",                        "Subarray 2 String short circuit DC current",                                     "A",      "", "Time Series (Subarray 2)",       "",                     "",                              "" },
 
     { SSC_OUTPUT,        SSC_ARRAY,      "subarray3_surf_tilt",                  "Subarray 3 Surface tilt",                                              "deg",    "", "Time Series (Subarray 3)",       "",                    "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "subarray3_surf_azi",                   "Subarray 3 Surface azimuth",                                           "deg",    "", "Time Series (Subarray 3)",       "",                    "",                              "" },
@@ -612,7 +612,7 @@ static var_info _cm_vtab_pvsamv1[] = {
     { SSC_OUTPUT,        SSC_ARRAY,      "subarray3_dc_voltage",                 "Subarray 3 Operating DC voltage",                                         "V",      "", "Time Series (Subarray 3)",       "",                    "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "subarray3_dc_gross",                 "Subarray 3 DC power gross",                                         "kW",      "", "Time Series (Subarray 3)",       "",                    "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "subarray3_voc",                        "Subarray 3 Open circuit DC voltage",                                      "V",      "", "Time Series (Subarray 3)",       "",                     "",                              "" },
-    { SSC_OUTPUT,        SSC_ARRAY,      "subarray3_isc",                        "Subarray 3 Short circuit DC current",                                     "A",      "", "Time Series (Subarray 3)",       "",                     "",                              "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "subarray3_isc",                        "Subarray 3 String short circuit DC current",                                     "A",      "", "Time Series (Subarray 3)",       "",                     "",                              "" },
 
     { SSC_OUTPUT,        SSC_ARRAY,      "subarray4_surf_tilt",                  "Subarray 4 Surface tilt",                                              "deg",    "", "Time Series (Subarray 4)",       "",                    "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "subarray4_surf_azi",                   "Subarray 4 Surface azimuth",                                           "deg",    "", "Time Series (Subarray 4)",       "",                    "",                              "" },
@@ -643,7 +643,7 @@ static var_info _cm_vtab_pvsamv1[] = {
     { SSC_OUTPUT,        SSC_ARRAY,      "subarray4_dc_voltage",                 "Subarray 4 Operating DC voltage",                                         "V",      "", "Time Series (Subarray 4)",       "",                    "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "subarray4_dc_gross",                 "Subarray 4 DC power gross",                                         "kW",      "", "Time Series (Subarray 4)",       "",                    "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "subarray4_voc",                        "Subarray 4 Open circuit DC voltage",                                      "V",      "", "Time Series (Subarray 4)",       "",                     "",                              "" },
-    { SSC_OUTPUT,        SSC_ARRAY,      "subarray4_isc",                        "Subarray 4 Short circuit DC current",                                     "A",      "", "Time Series (Subarray 4)",       "",                     "",                              "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "subarray4_isc",                        "Subarray 4 String short circuit DC current",                                     "A",      "", "Time Series (Subarray 4)",       "",                     "",                              "" },
 
     /* aggregate array level outputs */
         { SSC_OUTPUT,        SSC_ARRAY,      "poa_nom",                              "Array POA front-side total radiation nominal",                    "kW",   "",  "Time Series (Array)",       "*",                    "",                              "" },
@@ -993,6 +993,8 @@ void cm_pvsamv1::exec()
 
     // SELF-SHADING MODULE INFORMATION
     double width = sqrt((ref_area_m2 / aspect_ratio));
+    if (width <= 0)
+        throw exec_error("pvsamv1", "Area of PV module must be > 0, but is instead " + util::to_string(width));
     for (size_t nn = 0; nn < num_subarrays; nn++)
     {
         Subarrays[nn]->selfShadingInputs.width = width;
@@ -1239,18 +1241,18 @@ void cm_pvsamv1::exec()
 
                 if (code < 0) //jmf updated 11/30/18 so that negative numbers are errors, positive numbers are warnings, 0 is everything correct. implemented in patch for POA model only, will be added to develop for other irrad models as well
                     throw exec_error("pvsamv1",
-                        util::format("Failed to calculate POA irradiance %d (code: %d) [y:%d m:%d d:%d h:%d]",
-                            nn + 1, code, wf.year, wf.month, wf.day, wf.hour));
+                        util::format("Failed to calculate POA irradiance %d (code: %d) [y:%d m:%d d:%d h:%d minute:%lg]",
+                            nn + 1, code, wf.year, wf.month, wf.day, wf.hour, wf.minute));
 
                 if (code == 40)
-                    log(util::format("POA decomposition model calculated negative direct normal irradiance at time [y:%d m:%d d:%d h:%d], set to zero.",
-                        wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
+                    log(util::format("POA decomposition model calculated negative direct normal irradiance at time [y:%d m:%d d:%d h:%d minute:%lg], set to zero.",
+                        wf.year, wf.month, wf.day, wf.hour, wf.minute), SSC_WARNING, (float)idx);
                 else if (code == 41)
-                    log(util::format("POA decomposition model calculated negative diffuse horizontal irradiance at time [y:%d m:%d d:%d h:%d], set to zero.",
-                        wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
+                    log(util::format("POA decomposition model calculated negative diffuse horizontal irradiance at time [y:%d m:%d d:%d h:%d minute:%lg], set to zero.",
+                        wf.year, wf.month, wf.day, wf.hour, wf.minute), SSC_WARNING, (float)idx);
                 else if (code == 42)
-                    log(util::format("POA decomposition model calculated negative global horizontal irradiance at time [y:%d m:%d d:%d h:%d], set to zero.",
-                        wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
+                    log(util::format("POA decomposition model calculated negative global horizontal irradiance at time [y:%d m:%d d:%d h:%d minute:%lg], set to zero.",
+                        wf.year, wf.month, wf.day, wf.hour, wf.minute), SSC_WARNING, (float)idx);
 
                 // p_irrad_calc is only weather file records long...
                 if (iyear == 0)
@@ -1319,8 +1321,8 @@ void cm_pvsamv1::exec()
                         Irradiance->p_IrradianceCalculated[2][idx] = (ssc_number_t)((wf.gh - wf.df) / cos(solzen * 3.1415926 / 180));
                         if (Irradiance->p_IrradianceCalculated[2][idx] < -1)
                         {
-                            log(util::format("Calculated negative beam irradiance of %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero.",
-                                Irradiance->p_IrradianceCalculated[2][idx], wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
+                            log(util::format("Calculated negative beam irradiance of %lg W/m2 at time [y:%d m:%d d:%d h:%d, minute:%lg], set to zero.",
+                                Irradiance->p_IrradianceCalculated[2][idx], wf.year, wf.month, wf.day, wf.hour, wf.minute), SSC_WARNING, (float)idx);
                             Irradiance->p_IrradianceCalculated[2][idx] = 0;
                         }
                     }
@@ -1331,8 +1333,8 @@ void cm_pvsamv1::exec()
                         Irradiance->p_IrradianceCalculated[0][idx] = (ssc_number_t)(wf.df + wf.dn * cos(solzen * 3.1415926 / 180));
                         if (Irradiance->p_IrradianceCalculated[0][idx] < -1)
                         {
-                            log(util::format("Calculated negative global horizontal irradiance of %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero.",
-                                Irradiance->p_IrradianceCalculated[0][idx], wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
+                            log(util::format("Calculated negative global horizontal irradiance of %lg W/m2 at time [y:%d m:%d d:%d h:%d minute:%lg], set to zero.",
+                                Irradiance->p_IrradianceCalculated[0][idx], wf.year, wf.month, wf.day, wf.hour, wf.minute), SSC_WARNING, (float)idx);
                             Irradiance->p_IrradianceCalculated[0][idx] = 0;
                         }
                     }
@@ -1343,8 +1345,8 @@ void cm_pvsamv1::exec()
                         Irradiance->p_IrradianceCalculated[1][idx] = (ssc_number_t)(wf.gh - wf.dn * cos(solzen * 3.1415926 / 180));
                         if (Irradiance->p_IrradianceCalculated[1][idx] < -1)
                         {
-                            log(util::format("Calculated negative diffuse horizontal irradiance of %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero.",
-                                Irradiance->p_IrradianceCalculated[1][idx], wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
+                            log(util::format("Calculated negative diffuse horizontal irradiance of %lg W/m2 at time [y:%d m:%d d:%d h:%d minute:%lg], set to zero.",
+                                Irradiance->p_IrradianceCalculated[1][idx], wf.year, wf.month, wf.day, wf.hour, wf.minute), SSC_WARNING, (float)idx);
                             Irradiance->p_IrradianceCalculated[1][idx] = 0;
                         }
                     }
@@ -1432,12 +1434,12 @@ void cm_pvsamv1::exec()
                     if (radmode == irrad::POA_R || radmode == irrad::POA_P) {
                         Subarrays[nn]->poa.usePOAFromWF = false;
                         if (Subarrays[nn]->poa.poaShadWarningCount == 0) {
-                            log(util::format("POA irradiance as input with the beam shading losses at time [y:%d m:%d d:%d h:%d]: Using POA decomposition model to calculate incident beam irradiance.",
-                                wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
+                            log(util::format("POA irradiance as input with the beam shading losses at time [y:%d m:%d d:%d h:%d minute:%lg]: Using POA decomposition model to calculate incident beam irradiance.",
+                                wf.year, wf.month, wf.day, wf.hour, wf.minute), SSC_WARNING, (float)idx);
                         }
                         else {
-                            log(util::format("POA irradiance as input with the beam shading losses at time [y:%d m:%d d:%d h:%d]: Using POA decomposition model to calculate incident beam irradiance.",
-                                wf.year, wf.month, wf.day, wf.hour), SSC_NOTICE, (float)idx);
+                            log(util::format("POA irradiance as input with the beam shading losses at time [y:%d m:%d d:%d h:%d minute:%lg]: Using POA decomposition model to calculate incident beam irradiance.",
+                                wf.year, wf.month, wf.day, wf.hour, wf.minute), SSC_NOTICE, (float)idx);
                         }
                         Subarrays[nn]->poa.poaShadWarningCount++;
                     }
@@ -2333,7 +2335,7 @@ void cm_pvsamv1::exec()
 
             if (iyear == 0)
                 annual_energy += (ssc_number_t)(PVSystem->p_systemACPower[idx] * ts_hour);
-            
+
 
         }
         wdprov->rewind();
@@ -2417,7 +2419,7 @@ void cm_pvsamv1::exec()
 
         // accumulate annual and monthly battery model outputs
         if (en_batt) batt->calculate_monthly_and_annual_outputs(*this);
-        else assign("average_battery_roundtrip_efficiency", var_data(0.0f)); // if battery disabled, since it's shown in the metrics table
+        //else assign("average_battery_roundtrip_efficiency", var_data(0.0f)); // if battery disabled, since it's shown in the metrics table
 
         // calculate nominal dc input
         double annual_dc_nominal = (inp_rad * mod_eff / 100.0);
@@ -2705,6 +2707,11 @@ void cm_pvsamv1::exec()
         }
         assign("annual_total_loss_percent", var_data((ssc_number_t)(1. - percent) * 100.));
         // annual_ac_net = system_output
+        //After calculating total loss remove Battery loss percentages from outputs
+        if (!en_batt) {
+            unassign("annual_dc_battery_loss_percent");
+            unassign("annual_ac_battery_loss_percent");
+        }
 
 #ifdef WITH_CHECKS
     // check that ac_net = sys_output at this point

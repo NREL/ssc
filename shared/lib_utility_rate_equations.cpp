@@ -400,7 +400,7 @@ void rate_data::setup_energy_rates(ssc_number_t* ec_weekday, ssc_number_t* ec_we
 	//m_ec_tou_ub, m_ec_tou_units, m_ec_tou_br, ec_tou_sr vectors of vectors
 
     m_ec_periods_tiers_init = std::vector<std::vector<int>>(m_ec_periods.size());
-
+    
 	for (r = 0; r < ec_tou_rows; r++)
 	{
 		period = (int)ec_tou_mat.at(r, 0);
@@ -458,7 +458,7 @@ void rate_data::setup_energy_rates(ssc_number_t* ec_weekday, ssc_number_t* ec_we
 	for (m = 0; m < m_month.size(); m++)
 	{
 		int num_periods = 0;
-		int num_tiers = 0;
+		int num_tiers = 0; 
 
 		for (i = 0; i < m_month[m].ec_periods.size(); i++)
 		{
@@ -467,16 +467,16 @@ void rate_data::setup_energy_rates(ssc_number_t* ec_weekday, ssc_number_t* ec_we
 			if (per_num == m_ec_periods.end())
 			{
 				std::ostringstream ss;
-				ss << "Period " << m_month[m].ec_periods[i] << " is in Month " << m << " but is not defined in the energy rate table. Rates for each period in the Weekday and Weekend schedules must be defined in the energy rate table.";
+				ss << "Period " << m_month[m].ec_periods[i] << " is in a Weekday or Weekend schedule but is not defined in the energy rate table. Each period in the Weekday and Weekend schedules must have a corresponding row in the energy rate table.";
 				throw exec_error("lib_utility_rate_equations", ss.str());
 			}
 			period = (*per_num);
 			int ndx = (int)(per_num - m_ec_periods.begin());
-			num_tiers = (int)m_ec_periods_tiers_init[ndx].size();
 			if (i == 0)
 			{
 				// redimension ec_ field of ur_month class
 				num_periods = (int)m_month[m].ec_periods.size();
+                num_tiers = (int)m_ec_periods_tiers_init[ndx].size();
 				m_month[m].ec_tou_ub.resize_fill(num_periods, num_tiers, (ssc_number_t)1e+38);
 				m_month[m].ec_tou_units.resize_fill(num_periods, num_tiers, 0); // kWh
 				m_month[m].ec_tou_br.resize_fill(num_periods, num_tiers, 0);
@@ -487,8 +487,9 @@ void rate_data::setup_energy_rates(ssc_number_t* ec_weekday, ssc_number_t* ec_we
 				if ((int)m_ec_periods_tiers_init[ndx].size() != num_tiers)
 				{
 					std::ostringstream ss;
-					ss << "The number of tiers in the energy rate table, " << m_ec_periods_tiers_init[ndx].size() << ", is incorrect for Month " << m << " and Period " << m_month[m].ec_periods[i] << ". The correct number of tiers for that month and period is " << num_tiers << ".";
-					throw exec_error("lib_utility_rate_equations", ss.str());
+					//ss << "The energy rate table defines " << m_ec_periods_tiers_init[ndx].size() << " tiers. For Month " << m << " and Period " << m_month[m].ec_periods[i] << " SAM expects " << num_tiers << "tiers. All periods must have the same number of tiers.";
+                    ss << "The energy rate table defines " << m_ec_periods_tiers_init[ndx].size() << " tiers, but one or more periods have " << num_tiers << " tier. All periods must have the same number of tiers.";
+                    throw exec_error("lib_utility_rate_equations", ss.str());
 				}
 			}
 			for (j = 0; j < m_ec_periods_tiers_init[ndx].size(); j++)
@@ -633,7 +634,7 @@ void rate_data::setup_demand_charges(ssc_number_t* dc_weekday, ssc_number_t* dc_
 			if (per_num == m_dc_tou_periods.end())
 			{
 				std::ostringstream ss;
-				ss << "Period " << m_month[m].dc_periods[i] << " is in Month " << m << " but is not defined in the demand rate table.  Rates for each period in the Weekday and Weekend schedules must be defined in the demand rate table.";
+				ss << "Period " << m_month[m].dc_periods[i] << " is defined in the Weekday or Weekend schedule but is not defined in the demand rate table. Each period in the Weekday and Weekend schedule must have a corresponding row in the demand rate table.";
 				throw exec_error("utilityrate5", ss.str());
 			}
 			period = (*per_num);

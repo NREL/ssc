@@ -254,7 +254,18 @@ static var_info _cm_vtab_trough_physical_process_heat[] = {
     //{ SSC_INPUT,        SSC_MATRIX,      "sgs_lengths",               "Custom SGS lengths",                                                               "m",            "",               "controller",     "*",                       "",                      "" },
     //{ SSC_INPUT,        SSC_NUMBER,      "DP_SGS",                    "Pressure drop within the steam generator",                                         "bar",          "",               "controller",     "*",                       "",                      "" },
 
-	
+    // Needed for auto-updating dependent inputs
+    { SSC_INPUT,        SSC_NUMBER,      "fluid_dens_outlet_temp",              "fluid_dens_outlet_temp",                                                 "-",            "",               "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "fluid_dens_inlet_temp",               "fluid_dens_inlet_temp",                                                  "-",            "",               "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "radio_sm_or_area",                    "radio_sm_or_area",                                                       "-",            "",               "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "specified_solar_multiple",            "specified_solar_multiple",                                               "-",            "",               "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "specified_total_aperture",            "specified_total_aperture",                                               "-",            "",               "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "non_solar_field_land_area_multiplier", "non_solar_field_land_area_multiplier",                                  "-",            "",               "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_ARRAY,       "trough_loop_control",                 "trough_loop_control",                                                    "-",            "",               "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "lat",                                 "lat",                                                                    "-",            "",               "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "disp_wlim_maxspec",                   "disp_wlim_maxspec",                                                      "-",            "",               "controller",     "*",                       "",                      "" },
+
+
 
 	// *************************************************************************************************
 	//       OUTPUTS
@@ -855,6 +866,7 @@ public:
         system.m_bop_par_0 = bop_array[2];    //as_double("bop_par_0");
         system.m_bop_par_1 = bop_array[3];    //as_double("bop_par_1");
         system.m_bop_par_2 = bop_array[4];    //as_double("bop_par_2");
+        system.m_is_field_freeze_protection_electric = false;
 
 		// Instantiate Solver
 		C_csp_solver csp_solver(weather_reader, 
