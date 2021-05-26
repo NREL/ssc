@@ -436,7 +436,7 @@ TEST(lib_utility_rate_equations_test, test_billing_demand_calcs)
                                             600,
                                             750 };
 
-    ssc_number_t p_ur_dc_ratchet [24] = { 60, 0,
+    ssc_number_t p_ur_ec_billing_demand_lookback_percentages [24] = { 60, 0,
                                           60, 0,
                                           60, 0,
                                           60, 0,
@@ -449,7 +449,7 @@ TEST(lib_utility_rate_equations_test, test_billing_demand_calcs)
                                           60, 0,
                                           60, 0 };
 
-    data.setup_ratcheting_demand(p_ur_dc_ratchet);
+    data.setup_ratcheting_demand(p_ur_ec_billing_demand_lookback_percentages);
     data.demand_minimum = 500;
     data.en_dc_ratchets = true;
     data.lookback_months = 11;

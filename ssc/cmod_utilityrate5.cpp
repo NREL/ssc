@@ -404,17 +404,17 @@ void rate_setup::setup(var_table* vt, int num_recs_yearly, int nyears, rate_data
     rate.nm_credit_sell_rate = vt->as_number("ur_nm_yearend_sell_rate");
 
     ssc_number_t* ratchet_matrix = NULL;
-    bool ratchets_enabled = vt->as_boolean("ur_dc_enable_ratchet");
+    bool ratchets_enabled = vt->as_boolean("ur_ec_enable_billing_demand");
     if (ratchets_enabled) {
         rate.en_dc_ratchets = ratchets_enabled;
-        rate.demand_minimum = vt->as_number("dc_ratchet_minimum");
-        rate.lookback_months = vt->as_integer("ur_dc_ratchet_lookback");
+        rate.demand_minimum = vt->as_number("ur_ec_billing_demand_minimum");
+        rate.lookback_months = vt->as_integer("ur_ec_billing_demand_lookback_period");
 
-        ratchet_matrix = vt->as_matrix("ur_dc_ratchet", &nrows, &ncols);
+        ratchet_matrix = vt->as_matrix("ur_ec_billing_demand_lookback_percentages", &nrows, &ncols);
         if (nrows != 12 || ncols != 2)
         {
             std::ostringstream ss;
-            ss << "The ur_dc_ratchet matrix should have 12 rows and 2 columns. Instead it has " << nrows << " rows and " << ncols << " columns.";
+            ss << "The ur_ec_billing_demand_lookback_percentages matrix should have 12 rows and 2 columns. Instead it has " << nrows << " rows and " << ncols << " columns.";
             throw exec_error(cm_name, ss.str());
         }
 
@@ -796,20 +796,20 @@ public:
         // If billing demand ratchets - populate monthly_peaks with what the user specified as year zero:
         ssc_number_t* year_zero_peaks = NULL;
         size_t nrows;
-        bool ratchets_enabled = as_boolean("ur_dc_enable_ratchet");
+        bool ratchets_enabled = as_boolean("ur_ec_enable_billing_demand");
         if (ratchets_enabled) {
 
             if (!has_kwh_per_kw) {
                 std::ostringstream ss;
-                ss << "The option ur_dc_enable_ratchet is only relevant when the energy rates have kWh/kW or kWh/kW daily units, please add those units to your rates structure or set ur_dc_enable_ratchet to false";
+                ss << "The option ur_ec_enable_billing_demand is only relevant when the energy rates have kWh/kW or kWh/kW daily units, please add those units to your rates structure or set ur_ec_enable_billing_demand to false";
                 throw exec_error("utilityrate5", ss.str());
             }
 
-            year_zero_peaks = as_array("ur_dc_ratchet_yearzero_peaks", &nrows);
+            year_zero_peaks = as_array("ur_yearzero_usage_peaks", &nrows);
 
             if (nrows != 12) {
                 std::ostringstream ss;
-                ss << "The ur_dc_ratchet_yearzero_peaks array should have 12 rows. Instead it has " << nrows << " rows.";
+                ss << "The ur_yearzero_usage_peaks array should have 12 rows. Instead it has " << nrows << " rows.";
                 throw exec_error("utilityrate5", ss.str());
             }
 
