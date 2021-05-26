@@ -19,7 +19,7 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
+#include <algorithm>  
 #include <cmath>
 
 #include "lib_battery_lifetime_calendar_cycle.h"
@@ -157,8 +157,8 @@ double lifetime_nmc_t::runQneg() {
 void lifetime_nmc_t::integrateDegParams(double dt_day, double DOD, double T_battery) {
     // try to predict range of coming cycle if no cycles have yet elapsed
     double DOD_range = state->nmc_li_neg->DOD_max - state->nmc_li_neg->DOD_min;
-    if (not state->nmc_li_neg->cycle_DOD_range.empty()) {
-        DOD_range = fmax(DOD_range, *max_element(state->nmc_li_neg->cycle_DOD_range.begin(), state->nmc_li_neg->cycle_DOD_range.end()) * 0.01);
+    if (!state->nmc_li_neg->cycle_DOD_range.empty()) {
+        DOD_range = fmax(DOD_range, *std::max_element(state->nmc_li_neg->cycle_DOD_range.begin(), state->nmc_li_neg->cycle_DOD_range.end()) * 0.01);
     }
 
     double SOC_avg = 0;
