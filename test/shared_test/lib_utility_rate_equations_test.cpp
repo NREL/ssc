@@ -450,9 +450,9 @@ TEST(lib_utility_rate_equations_test, test_billing_demand_calcs)
                                           60, 0 };
 
     data.setup_ratcheting_demand(p_ur_ec_billing_demand_lookback_percentages);
-    data.demand_minimum = 500;
-    data.en_dc_ratchets = true;
-    data.lookback_months = 11;
+    data.ec_bd_minimum = 500;
+    data.en_ec_billing_demand = true;
+    data.ec_bd_lookback_months = 11;
 
     std::vector<ssc_number_t> year_one_power = {  -1200,
                                             -1100,

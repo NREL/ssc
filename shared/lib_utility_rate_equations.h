@@ -113,11 +113,11 @@ public:
 	std::vector<ssc_number_t> monthly_dc_fixed;
 	std::vector<ssc_number_t> monthly_dc_tou;
 
-    bool en_dc_ratchets;
+    bool en_ec_billing_demand; // Enable billing demand lookback percentages for kWh/kW energy charges
     std::vector<ssc_number_t> prev_peak_demand; // Set before calling init_energy_rates
-    std::vector<ssc_number_t> dc_ratchet_percents;
-    double demand_minimum;
-    int lookback_months;
+    std::vector<ssc_number_t> ec_bd_lookback_percents;
+    double ec_bd_minimum;
+    int ec_bd_lookback_months;
     std::vector<ssc_number_t> billing_demand; // Store locally for ssc outputs
 
 	bool tou_demand_single_peak;

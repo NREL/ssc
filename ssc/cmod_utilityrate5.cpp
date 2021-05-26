@@ -406,9 +406,9 @@ void rate_setup::setup(var_table* vt, int num_recs_yearly, int nyears, rate_data
     ssc_number_t* ratchet_matrix = NULL;
     bool ratchets_enabled = vt->as_boolean("ur_ec_enable_billing_demand");
     if (ratchets_enabled) {
-        rate.en_dc_ratchets = ratchets_enabled;
-        rate.demand_minimum = vt->as_number("ur_ec_billing_demand_minimum");
-        rate.lookback_months = vt->as_integer("ur_ec_billing_demand_lookback_period");
+        rate.en_ec_billing_demand = ratchets_enabled;
+        rate.ec_bd_minimum = vt->as_number("ur_ec_billing_demand_minimum");
+        rate.ec_bd_lookback_months = vt->as_integer("ur_ec_billing_demand_lookback_period");
 
         ratchet_matrix = vt->as_matrix("ur_ec_billing_demand_lookback_percentages", &nrows, &ncols);
         if (nrows != 12 || ncols != 2)
@@ -1595,7 +1595,7 @@ public:
 
 		if (ec_enabled)
 		{
-            if (rate.en_dc_ratchets) {
+            if (rate.en_ec_billing_demand) {
                 rate.setup_prev_demand(prev_monthly_peaks);
             }
 
@@ -2101,7 +2101,7 @@ public:
 				excess_kwhs_earned[m] = rate.m_month[m].energy_net;
 		}
 
-        if (rate.en_dc_ratchets) {
+        if (rate.en_ec_billing_demand) {
             rate.setup_prev_demand(prev_monthly_peaks);
         }
 
