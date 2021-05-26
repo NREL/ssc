@@ -785,7 +785,7 @@ void rate_data::setup_demand_charges(ssc_number_t* dc_weekday, ssc_number_t* dc_
 
 void rate_data::setup_ratcheting_demand(ssc_number_t* ratchet_percent_matrix)
 {
-    // This means you have to error check this somewhere else - will this always be true?
+    // Error checked in SSC variables
     size_t nrows = 12;
     size_t ncols = 2;
     util::matrix_t<double> ratchet_matrix(nrows, ncols);
