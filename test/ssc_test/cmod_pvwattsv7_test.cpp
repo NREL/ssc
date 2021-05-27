@@ -228,6 +228,81 @@ TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, BifacialTest_cmod_pvwattsv7) {
     EXPECT_GT(annual_energy_bi / annual_energy_mono, 1.04);
 }
 
+TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, SnowModelFixed_cmod_pvwattsv7) {
+
+	// Snow loss for backtracking, low GCR
+	ssc_data_set_number(data, "array_type", 0);
+	ssc_data_set_number(data, "en_snowloss", 1);
+
+	compute();
+	// Snow events in January, February, April, October, and December
+	// Other months seem to unexpectedly end up with a very small boost to total energy.
+	// Without snow loss:                         { 439.755, 485.885, 597.621, 680.543, 724.435, 676.368, 674.804, 658.759, 607.498, 580.084, 460.171, 417.226 };
+	std::vector<double> expected_monthly_energy = { 415.134, 395.622, 597.621, 659.851, 724.460, 676.368, 674.816, 658.761, 607.498, 571.064, 460.186, 386.396 };
+	ValidateMonthlyEnergy(expected_monthly_energy);
+
+	int count;
+	ssc_number_t* hourly_snowderate = ssc_data_get_array(data, "dcsnowderate", &count);
+
+	ASSERT_EQ(8760, count);
+	int startIndex = 24 * 11 + 6;  // starting at noon on Jan. 12th
+
+	// Snow derate should be non-zero during a snow event, and on a fixed system will always be 0, 0.5, or 1.0 due to the assumption of a 2-up installation
+	EXPECT_NEAR((double)hourly_snowderate[270], 0.0, error_tolerance);
+	EXPECT_NEAR((double)hourly_snowderate[271], 0.5, error_tolerance);
+	EXPECT_NEAR((double)hourly_snowderate[272], 0.5, error_tolerance);
+	// ...
+	EXPECT_NEAR((double)hourly_snowderate[275], 0.5, error_tolerance);
+	EXPECT_NEAR((double)hourly_snowderate[276], 0.5, error_tolerance);
+	EXPECT_NEAR((double)hourly_snowderate[277], 1.0, error_tolerance);
+}
+
+TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, SnowModelBacktracking_cmod_pvwattsv7){
+
+	ssc_data_set_number(data, "array_type", 3);
+	ssc_data_set_number(data, "en_snowloss", 1);
+
+	compute();
+
+	// No snow results:                             527.970, 602.337, 741.523, 854.848, 917.762, 861.674, 835.126, 818.089, 763.014, 731.930, 566.034, 511.322
+	// Results with unintentional 2-up assumption:  510.869, 530.704, 741.523, 835.652, 917.816, 861.674, 835.146, 818.115, 763.014, 723.068, 566.095, 484.364
+	std::vector<double> expected_monthly_energy = { 503.775, 504.950, 741.523, 829.441, 917.816, 861.674, 835.146, 818.115, 763.014, 720.299, 566.095, 477.600 };
+	ValidateMonthlyEnergy(expected_monthly_energy);
+
+	// A tracker row is assumed to be nx1 panels, so all derates should be either 0 or 1
+	int count;
+	ssc_number_t* hourly_snowderate = ssc_data_get_array(data, "dcsnowderate", &count);
+	for (int hour = 0; hour < count; hour++)
+	{
+		EXPECT_TRUE(hourly_snowderate[hour] == 0 || hourly_snowderate[hour] == 1);
+	}
+}
+
+TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, SnowModelSingleAxis_cmod_pvwattsv7) {
+
+	ssc_data_set_number(data, "array_type", 2);
+	ssc_data_set_number(data, "en_snowloss", 1);
+
+	compute();
+
+	// No snow results:                             528.405, 604.598, 746.246, 865.370, 929.784, 872.583, 843.064, 827.269, 769.443, 735.272, 567.128, 511.474
+	std::vector<double> expected_monthly_energy = { 508.149, 510.020, 746.246, 839.917, 929.849, 872.583, 843.091, 827.295, 769.443, 723.602, 567.192, 477.753 };
+	ValidateMonthlyEnergy(expected_monthly_energy);
+
+	// A tracker row is assumed to be nx1 panels, so all derates should be either 0 or 1
+	int count;
+	ssc_number_t* hourly_snowderate = ssc_data_get_array(data, "dcsnowderate", &count);
+	for (int hour = 0; hour < count; hour++)
+	{
+		EXPECT_TRUE(hourly_snowderate[hour] == 0 || hourly_snowderate[hour] == 1);
+	}
+}
+
+
+
+
+
+
 /* this test isn't passing currently even though it's working in the UI, so commenting out for now
 /// Test PVWattsV7 with snow model
 TEST_F(CMPvwattsV7Integration, SnowModelTest_cmod_pvwattsv7) {
