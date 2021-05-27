@@ -57,7 +57,7 @@ static var_info _cm_wave_file_reader[] = {
     { SSC_OUTPUT,        SSC_ARRAY,       "minute",                  "Minute",                           "min",    "0-59",                  "Weather Reader",      "wave_resource_model_choice=1",                       "",                          "" },
     
 // weather data records																					            
-	{ SSC_OUTPUT,        SSC_MATRIX,      "wave_resource_matrix",              "Frequency distribution of resource",                                  "m/s",   "",                       "Weather Reader",      "wave_resource_model_choice=0",                        "",                            "" },
+	{ SSC_OUTPUT,        SSC_MATRIX,      "wave_resource_matrix",              "Frequency distribution of resource",                                  "m/s",   "",                       "Weather Reader",      "*",                        "",                            "" },
    // { SSC_OUTPUT,        SSC_ARRAY,       "time_check",                        "Time check",                                                          "",      "",                       "Weather Reader",      "?",                        "",                            "" },
    // { SSC_OUTPUT,        SSC_ARRAY,       "month",                        "Month",                                                          "",      "",                       "Weather Reader",      "?",                        "",                            "" },
 
@@ -168,11 +168,14 @@ public:
         if (as_integer("wave_resource_model_choice") == 1)
         {
             size_t numberRecords = 0;
+            double numberRecords_mat = 0;
             int year_index = -1, month_index = -1, day_index = -1, hour_index = -1, minute_index = -1, period_index = -1, height_index = -1;
             getline(ifs, buf); //Skip past column labels for record counting
-            while (getline(ifs, buf))
+            while (getline(ifs, buf)) {
                 numberRecords++;
-            if (numberRecords < 2920) throw exec_error("wave_file_reader", "Number of records in the wave file must = 2920 (8760 h / 3 h interval)");
+                numberRecords_mat++;
+            }
+            //if (numberRecords < 2920) throw exec_error("wave_file_reader", "Number of records in the wave file must = 2920 (8760 h / 3 h interval)");
             assign("number_records", (int)numberRecords);
             // rewind the file and reposition right after the header information
             ifs.clear();
@@ -275,15 +278,19 @@ public:
                     }
                 }
                 //Add percentage point to resource matrix for matcing wave height and energy period bins
-                mat[sig_wave_height_index * ncols + energy_period_index] += 100 / numberRecords; //1/numberRecords * 100 to make a percentage at each time step
+                double mat_incr = 100 / numberRecords_mat;
+                mat[sig_wave_height_index * ncols + energy_period_index] = mat[sig_wave_height_index * ncols + energy_period_index] + mat_incr; //1/numberRecords * 100 to make a percentage at each time step
                                 
             }
             //Set decimals to 2 places in resource matrix for easier reading in output
+            
             for (size_t r2 = 0; r2 < 21; r2++) {
                 for (size_t c2 = 0; c2 < 22; c2++) {
                     if (r2 != 0 && c2 != 0) mat[r2 * 22 + c2] = round(mat[r2 * 22 + c2] * 100) / 100;
                 }
             }
+            double test_value = mat[28];
+            double test_value2 = mat[187];
             mat[0] = 0;
             assign("number_hours", int(numberRecords * hourdiff));
         }
