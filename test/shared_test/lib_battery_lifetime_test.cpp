@@ -122,7 +122,7 @@ TEST_F(lib_battery_lifetime_cycle_test, runCycleLifetimeTestWithNoise) {
     EXPECT_NEAR(s.cycle->q_relative_cycle, 95.06, tol_high);
     EXPECT_NEAR(s.cycle_range, 90.6, tol_high);
     EXPECT_NEAR(s.average_range, 90.02, tol_high);
-    EXPECT_NEAR(s.n_cycles, 249, tol);
+    EXPECT_NEAR(s.n_cycles, 245, 10);
 }
 
 TEST_F(lib_battery_lifetime_cycle_test, replaceBatteryTest) {
@@ -360,12 +360,16 @@ TEST_F(lib_battery_lifetime_nmc_test, InitTest) {
     EXPECT_EQ(model->get_state().n_cycles, 0);
 
     //check U_neg, and Voc functions (SOC as a fractional input)
+    EXPECT_NEAR(model->calculate_Uneg(0), 1.2868, tol);
+    EXPECT_NEAR(model->calculate_Voc(0), 3, tol);
     EXPECT_NEAR(model->calculate_Uneg(0.1), 0.242, tol);
     EXPECT_NEAR(model->calculate_Voc(0.1), 3.4679, tol);
     EXPECT_NEAR(model->calculate_Uneg(0.5), 0.123, tol);
     EXPECT_NEAR(model->calculate_Voc(0.5), 3.6876, tol);
     EXPECT_NEAR(model->calculate_Uneg(0.9), 0.0876, tol);
     EXPECT_NEAR(model->calculate_Voc(0.9), 4.0668, tol);
+    EXPECT_NEAR(model->calculate_Uneg(1), 0.0859, tol);
+    EXPECT_NEAR(model->calculate_Voc(1), 4.193, tol);
 }
 
 TEST_F(lib_battery_lifetime_nmc_test, CopyTest) {

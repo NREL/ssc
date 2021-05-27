@@ -87,15 +87,21 @@ lifetime_t * lifetime_nmc_t::clone() {
 }
 
 double lifetime_nmc_t::calculate_Uneg(double SOC) {
+    SOC = fmin(1., fmax(0., SOC));
     size_t prev_ind = floor(SOC * 10);
     size_t next_ind = prev_ind + 1;
+    if (next_ind > unegs.size())
+        return unegs.back();
     double Uneg = unegs[prev_ind] + (unegs[next_ind] - unegs[prev_ind]) / 0.1 * (SOC - (double)prev_ind / 10);
     return Uneg;
 }
 
 double lifetime_nmc_t::calculate_Voc(double SOC) {
+    SOC = fmin(1., fmax(0., SOC));
     size_t prev_ind = floor(SOC * 10);
     size_t next_ind = prev_ind + 1;
+    if (next_ind > ocvs.size())
+        return ocvs.back();
     double Voc = ocvs[prev_ind] + (ocvs[next_ind] - ocvs[prev_ind]) / 0.1 * (SOC - (double)prev_ind / 10);
     return Voc;
 }

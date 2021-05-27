@@ -809,7 +809,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelPriceS
 
         auto batt_q_rel = data_vtab->as_vector_ssc_number_t("batt_capacity_percent");
         auto batt_cyc_avg = data_vtab->as_vector_ssc_number_t("batt_DOD_cycle_average");
-        EXPECT_NEAR(batt_q_rel.back(), 97.846, 2e-2);
-        EXPECT_NEAR(batt_cyc_avg.back(), 26.31, 0.5);
+        EXPECT_NEAR(batt_q_rel.back(), 98.034, 2e-2);
+        EXPECT_NEAR(batt_cyc_avg.back(), 27.00, 0.2);
     }
 }
