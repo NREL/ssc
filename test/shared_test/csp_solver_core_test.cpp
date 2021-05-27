@@ -54,6 +54,7 @@ protected:
 
 class UsingDataCaseWeatherReader : public CspWeatherReaderTest {
     var_data* data;
+
 protected:
     void SetUp() {
         CspWeatherReaderTest::SetUp();
@@ -64,7 +65,7 @@ protected:
     }
     void TearDown() {
       //  delete[] data;
-        //    free_weatherdata_array(data);
+        free_weatherdata_array(data);
     }
 };
 

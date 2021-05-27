@@ -538,6 +538,8 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelLosses)
 /// DC production & inverter efficiency both decrease as result
 TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, InvTempDerate) {
     var_data* weatherData = create_weatherdata_array(8760);
+  //  var_data weatherData;
+ //   create_weatherdata_array(weatherData, 8760);
     ssc_data_unassign(data, "solar_resource_file");
     var_table* vt = static_cast<var_table*>(data);
 
@@ -552,7 +554,8 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, InvTempDerate) {
     var_data tdry_vd = var_data(temp, 8760);
     tdry_vd = var_data(temp, 8760);
     weatherData->table.assign("tdry", tdry_vd);
-    vt->assign("solar_resource_data", *weatherData);
+    vt->assign("solar_resource_data", weatherData->table);
+    free_weatherdata_array(weatherData);
 
     EXPECT_FALSE(run_module(data, "pvsamv1"));
 
@@ -746,6 +749,9 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NonAnnual)
 
 //    auto weather_data = create_weatherdata_array24(); // runs without error
     auto weather_data = create_weatherdata_array(24); // throws SEH exception in release mode only from cmod_pvsamv1 on Windows
+   // var_data weather_data;
+   // create_weatherdata_array(weather_data, 24);
+
     ssc_data_unassign(data, "solar_resource_file");
     ssc_data_set_table(data, "solar_resource_data", &weather_data->table);
     free_weatherdata_array(weather_data);
@@ -778,7 +784,10 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NonAnnualWithLeapDay)
     var_data day_vd = var_data(day, length);
 
 //    auto weather_data = create_weatherdata_array24(); // runs without error
-    auto weather_data = create_weatherdata_array(length);// throws SEH exception in release mode  on Windows
+   var_data* weather_data = create_weatherdata_array(length);// throws SEH exception in release mode  on Windows
+//    var_data weather_data;
+    create_weatherdata_array(length);
+
     weather_data->table.assign("month", month_vd);
     weather_data->table.assign("day", day_vd);
 
@@ -807,7 +816,9 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, WeatherDataCases)
 {
     //set up a weather data array assign it to the solar resource data
     const int length = 8760;
-    auto weather_data = create_weatherdata_array(length);
+    var_data* weather_data = create_weatherdata_array(length);
+//    var_data weather_data;
+//    create_weatherdata_array(weather_data, length);
     ssc_data_unassign(data, "solar_resource_file");
     ssc_data_set_table(data, "solar_resource_data", &weather_data->table);
 
@@ -829,7 +840,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, WeatherDataCases)
     weather_data->table.assign("month", month_vd);
     weather_data->table.assign("day", day_vd);
     ssc_data_set_table(data, "solar_resource_data", &weather_data->table);
-
+    free_weatherdata_array(weather_data);
     //run this new case
     EXPECT_FALSE(run_module(data, "pvsamv1"));
     ssc_data_get_number(data, "annual_energy", &annualEnergy);

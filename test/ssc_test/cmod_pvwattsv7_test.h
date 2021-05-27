@@ -15,6 +15,7 @@
 class CMPvwattsV7Integration_cmod_pvwattsv7 : public ::testing::Test {
 protected: //doesn't really matter if this is protected or public, but you need to declare one or the other or it will default to private which doesn't work
 	ssc_data_t data;
+    var_data* weather_data;
 
 	double error_tolerance = 1.0e-3;
 
@@ -23,11 +24,15 @@ protected: //doesn't really matter if this is protected or public, but you need 
 		data = ssc_data_create();
 		int errors = pvwattsv7_nofinancial_testfile(data);
 		EXPECT_FALSE(errors); //make sure that the test ran ok
+        weather_data = create_weatherdata_array(24); // throws SEH exception in release mode only from cmod_pvwattsv7 on Windows
+
 	}
 	void TearDown()
 	{
-		ssc_data_free(data);
-		data = nullptr;
+        free_weatherdata_array(weather_data);
+        ssc_data_free(data);
+        data = nullptr;
+
 	} 
 };
 

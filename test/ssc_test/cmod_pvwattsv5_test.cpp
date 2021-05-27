@@ -41,9 +41,13 @@ TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, DefaultNoFinancialModel) {
 }
 
 TEST_F(CMPvwattsV5Integration_cmod_pvwattsv5, UsingData) {
-    auto weather_data = create_weatherdata_array(8760);
+    var_data* weather_data = create_weatherdata_array(8760);
+    //var_data weather_data;
+    //create_weatherdata_array(weather_data, 8760);
+
     ssc_data_unassign(data, "solar_resource_file");
     ssc_data_set_table(data, "solar_resource_data", &weather_data->table);
+    free_weatherdata_array(weather_data);
     compute();
     //delete weather_data;
 

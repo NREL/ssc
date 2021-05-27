@@ -9,7 +9,7 @@
 
 var_data* create_weatherdata_array(int length);
 //var_data* create_weatherdata_array24();
-
+//void create_weatherdata_array(var_data& input, int length);
 void free_weatherdata_array(var_data* data);
 
 /**

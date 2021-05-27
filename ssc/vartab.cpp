@@ -19,7 +19,7 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON A
 WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
+#include <iterator>
 #include "lib_util.h"
 #include "vartab.h"
 
@@ -220,11 +220,13 @@ var_table &var_table::operator=( const var_table &rhs )
 
 void var_table::clear()
 {
-	for (var_hash::iterator it = m_hash.begin(); it != m_hash.end(); ++it)
+	for (var_hash::iterator it = m_hash.begin(); it != m_hash.begin(); ++it)
 	{
 		// debug heap corruption
+        it->second->clear();
 		delete it->second; // delete the var_data object
 	}
+    m_hash.erase(m_hash.begin(), m_hash.end());
 	if (!m_hash.empty()) m_hash.clear();
 }
 
