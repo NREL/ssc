@@ -128,6 +128,42 @@ TEST_F(ResilienceTest_lib_resilience, DischargeBatteryModelSubHourly)
     }
 }
 
+TEST_F(ResilienceTest_lib_resilience, DischargeBatteryModelSubHourlyWSOCLimits)
+{
+    CreateBattery(false, 2, 0., 1., 1.);
+    batt->battery_model->changeSOCLimits(10, 100);
+    double current = 1;
+    while (batt->battery_model->SOC() > 40)
+        batt->battery_model->run(0, current);
+
+    battery_t initial_batt = battery_t(*batt->battery_model);
+    auto battery = new battery_t(initial_batt);
+
+    double max_current;
+    double max_power = batt->battery_model->calculate_max_discharge_kw(&max_current);
+
+    EXPECT_NEAR(max_power, 8.199, 5);
+
+    double desired_power = 0.;
+    while (desired_power < max_power * 1.2) {
+        double target = desired_power;
+        current = battery->calculate_current_for_power_kw(target);
+        battery->run(1, current);
+        double actual_power = battery->I() * battery->V() / 1000.;
+
+        if (desired_power < max_power) {
+            EXPECT_NEAR(actual_power, desired_power, 1e-2);
+        }
+        else {
+            EXPECT_LT(actual_power, desired_power);
+        }
+
+        desired_power += max_power / 100.;
+        delete battery;
+        battery = new battery_t(initial_batt);
+    }
+}
+
 TEST_F(ResilienceTest_lib_resilience, ChargeBatteryModelHourly)
 {
     CreateBattery(false, 1, 0. ,1., 1.);
@@ -218,7 +254,7 @@ TEST_F(ResilienceTest_lib_resilience, VoltageTable)
     std::vector<double> vals = {99, 0, 50, 2, 0, 3};
     util::matrix_t<double> table(3, 2, &vals);
     double soc_init = 50;
-    auto volt = voltage_table_t(1, 1, 3, table, 0.1, 1);
+    auto volt = voltage_table_t(1, 1, 2, table, 0.1, 1);
     auto cap = capacity_lithium_ion_t(2.25, soc_init, 100, 0, 1);
 
     volt.updateVoltage(cap.q0(), cap.qmax(), cap.I(), 0, 0.);
@@ -255,7 +291,7 @@ TEST_F(ResilienceTest_lib_resilience, DischargeVoltageTable){
     std::vector<double> vals = {99, 0, 50, 2, 0, 3};
     util::matrix_t<double> table(3, 2, &vals);
     double soc_init = 50;
-    auto volt = voltage_table_t(1, 1, 3, table, 0.1, 1);
+    auto volt = voltage_table_t(1, 1, 2, table, 0.1, 1);
     auto cap = capacity_lithium_ion_t(2.25, soc_init, 100, 0, 1);
 
     // test discharging
@@ -300,7 +336,7 @@ TEST_F(ResilienceTest_lib_resilience, ChargeVoltageTable){
     std::vector<double> vals = {99, 0, 50, 2, 0, 3};
     util::matrix_t<double> table(3, 2, &vals);
     double soc_init = 50;
-    auto volt = voltage_table_t(1, 1, 3, table, 0.1, 1);
+    auto volt = voltage_table_t(1, 1, 2, table, 0.1, 1);
     auto cap = capacity_lithium_ion_t(2.25, soc_init, 100, 0, 1);
 
     // test charging

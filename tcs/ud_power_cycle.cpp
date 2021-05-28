@@ -23,245 +23,275 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ud_power_cycle.h"
 #include "csp_solver_util.h"
 
-void C_ud_power_cycle::init(const util::matrix_t<double> & T_htf_ind, double T_htf_ref /*C*/, double T_htf_low /*C*/, double T_htf_high /*C*/,
-	const util::matrix_t<double> & T_amb_ind, double T_amb_ref /*C*/, double T_amb_low /*C*/, double T_amb_high /*C*/,
-	const util::matrix_t<double> & m_dot_htf_ind, double m_dot_htf_ref /*-*/, double m_dot_htf_low /*-*/, double m_dot_htf_high /*-*/)
+#include "sam_csp_util.h"
+#include <algorithm>
+#include <set>
+#include <fstream>
+#include <unordered_set>
+#include <map>
+
+void C_ud_power_cycle::init(const util::matrix_t<double>& udpc_table,
+    int& n_T_htf_pars, int& n_T_amb_pars, int& n_m_dot_pars,
+    double& T_htf_ref_calc /*C*/, double& T_htf_low_calc /*C*/, double& T_htf_high_calc /*C*/,
+    double& T_amb_ref_calc /*C*/, double& T_amb_low_calc /*C*/, double& T_amb_high_calc /*C*/,
+    double& m_dot_htf_ND_ref_calc, double& m_dot_htf_ND_low_calc /*-*/, double& m_dot_htf_ND_high_calc /*-*/,
+    std::vector<double>& Y_at_T_htf_ref, std::vector<double>& Y_at_T_amb_ref,
+    std::vector<double>& Y_at_m_dot_htf_ND_ref, std::vector<double>& Y_avg_at_refs)
 {
+    util::matrix_t<double> T_htf_ind_table, m_dot_htf_ND_ind_table, T_amb_ind_table;
 
-	// Set up Linear Interp class
-	int error_index = -2;
-	int column_index_array[1] = {0};
-	if( !mc_T_htf_ind.Set_1D_Lookup_Table( T_htf_ind, column_index_array, 1, error_index) )
-	{
-		if(error_index == -1)
-		{
-			throw(C_csp_exception("Table representing Hot HTF Temperature parametric results must have"
-							"at least 3 rows", "User defined power cycle initialization"));
-		}
-		else
-		{
-			throw(C_csp_exception("The Hot HTF Temperature must monotonically increase in the table",
-							"User defined power cycle initialization"));
-		}
-	}
+    N_udpc_common::split_ind_tbl(udpc_table,
+        T_htf_ind_table, m_dot_htf_ND_ind_table, T_amb_ind_table,
+        n_T_htf_pars, n_T_amb_pars, n_m_dot_pars,
+        m_dot_htf_ND_low_calc, m_dot_htf_ND_ref_calc, m_dot_htf_ND_high_calc,
+        T_htf_low_calc, T_htf_ref_calc, T_htf_high_calc,
+        T_amb_low_calc, T_amb_ref_calc, T_amb_high_calc);
 
-	if( !mc_T_amb_ind.Set_1D_Lookup_Table(T_amb_ind, column_index_array, 1, error_index) )
-	{
-		if( error_index == -1 )
-		{
-			throw(C_csp_exception("Table representing Ambient Temperature parametric results must have"
-				"at least 3 rows", "User defined power cycle initialization"));
-		}
-		else
-		{
-			throw(C_csp_exception("The Ambient Temperature must monotonically increase in the table",
-				"User defined power cycle initialization"));
-		}
-	}
+    // Set up Linear Interp class
+    int error_index = -2;
+    int column_index_array[1] = { 0 };
+    if (!mc_T_htf_ind.Set_1D_Lookup_Table(T_htf_ind_table, column_index_array, 1, error_index))
+    {
+        if (error_index == -1)
+        {
+            throw(C_csp_exception("Table representing Hot HTF Temperature parametric results must have"
+                "at least 3 rows", "User defined power cycle initialization"));
+        }
+        else
+        {
+            throw(C_csp_exception("The Hot HTF Temperature must monotonically increase in the table",
+                "User defined power cycle initialization"));
+        }
+    }
 
-	if( !mc_m_dot_htf_ind.Set_1D_Lookup_Table(m_dot_htf_ind, column_index_array, 1, error_index) )
-	{
-		if( error_index == -1 )
-		{
-			throw(C_csp_exception("Table representing HTF mass flow rate parametric results must have"
-				"at least 3 rows", "User defined power cycle initialization"));
-		}
-		else
-		{
-			throw(C_csp_exception("The HTF mass flow rate must monotonically increase in the table",
-				"User defined power cycle initialization"));
-		}
-	}
+    if (!mc_T_amb_ind.Set_1D_Lookup_Table(T_amb_ind_table, column_index_array, 1, error_index))
+    {
+        if (error_index == -1)
+        {
+            throw(C_csp_exception("Table representing Ambient Temperature parametric results must have"
+                "at least 3 rows", "User defined power cycle initialization"));
+        }
+        else
+        {
+            throw(C_csp_exception("The Ambient Temperature must monotonically increase in the table",
+                "User defined power cycle initialization"));
+        }
+    }
 
-	// Set member data for reference and upper and lower bounds of independent variables
-	m_T_htf_ref = T_htf_ref;
-	m_T_htf_low = T_htf_low;
-	m_T_htf_high = T_htf_high;
+    if (!mc_m_dot_htf_ind.Set_1D_Lookup_Table(m_dot_htf_ND_ind_table, column_index_array, 1, error_index))
+    {
+        if (error_index == -1)
+        {
+            throw(C_csp_exception("Table representing HTF mass flow rate parametric results must have"
+                "at least 3 rows", "User defined power cycle initialization"));
+        }
+        else
+        {
+            throw(C_csp_exception("The HTF mass flow rate must monotonically increase in the table",
+                "User defined power cycle initialization"));
+        }
+    }
 
-	m_T_amb_ref = T_amb_ref;
-	m_T_amb_low = T_amb_low;
-	m_T_amb_high = T_amb_high;
+    // Set member data for reference and upper and lower bounds of independent variables
+    m_T_htf_ref = T_htf_ref_calc;
+    m_T_htf_low = T_htf_low_calc;
+    m_T_htf_high = T_htf_high_calc;
 
-	m_m_dot_htf_ref = m_dot_htf_ref;
-	m_m_dot_htf_low = m_dot_htf_low;
-	m_m_dot_htf_high = m_dot_htf_high;
+    m_T_amb_ref = T_amb_ref_calc;
+    m_T_amb_low = T_amb_low_calc;
+    m_T_amb_high = T_amb_high_calc;
 
-	// Check that the reference (design) value and upper and lower levels for each independent variable are contained within the x-range of the corresponding table
-		// T_HTF
-	if( !mc_T_htf_ind.check_x_value_x_col_0(m_T_htf_ref) )
-	{
-		m_error_msg = util::format("The user defined power cycle table containing parametric runs on the hot HTF temperature"
-		" must contain the design HTF temperature %lg [C]. %s [C]", m_T_htf_ref, mc_T_htf_ind.get_error_msg().c_str());
-		throw(C_csp_exception(m_error_msg, "User defined power cycle initialization"));
-	}
-	if( !mc_T_htf_ind.check_x_value_x_col_0(m_T_htf_low) )
-	{
-		m_error_msg = util::format("The user defined power cycle table containing parametric runs on the hot HTF temperature"
-			" must contain the lower level HTF temperature %lg [C]. %s [C]", m_T_htf_low, mc_T_htf_ind.get_error_msg().c_str());
-		throw(C_csp_exception(m_error_msg, "User defined power cycle initialization"));
-	}
-	if( !mc_T_htf_ind.check_x_value_x_col_0(m_T_htf_high) )
-	{
-		m_error_msg = util::format("The user defined power cycle table containing parametric runs on the hot HTF temperature"
-			" must contain the upper level HTF temperature %lg [C]. %s [C]", m_T_htf_high, mc_T_htf_ind.get_error_msg().c_str());
-		throw(C_csp_exception(m_error_msg, "User defined power cycle initialization"));
-	}
+    m_m_dot_htf_ref = m_dot_htf_ND_ref_calc;
+    m_m_dot_htf_low = m_dot_htf_ND_low_calc;
+    m_m_dot_htf_high = m_dot_htf_ND_high_calc;
 
-		// T_amb
-	if( !mc_T_amb_ind.check_x_value_x_col_0(m_T_amb_ref) )
-	{
-		m_error_msg = util::format("The user defined power cycle table containing parametric runs on the ambient temperature"
-		" must contain the design ambient temperature %lg [C]. %s [C]", m_T_amb_ref, mc_T_amb_ind.get_error_msg().c_str());
-		throw(C_csp_exception(m_error_msg, "User defined power cycle initialization"));
-	}
-	if( !mc_T_amb_ind.check_x_value_x_col_0(m_T_amb_low) )
-	{
-		m_error_msg = util::format("The user defined power cycle table containing parametric runs on the ambient temperature"
-		" must contain the lower level ambient temperature %lg [C]. %s [C]", m_T_amb_low, mc_T_amb_ind.get_error_msg().c_str());
-		throw(C_csp_exception(m_error_msg, "User defined power cycle initialization"));
-	}
-	if( !mc_T_amb_ind.check_x_value_x_col_0(m_T_amb_high) )
-	{
-		m_error_msg = util::format("The user defined power cycle table containing parametric runs on the ambient temperature"
-		" must contain the upper level ambient temperature %lg [C]. %s [C]", m_T_amb_high, mc_T_amb_ind.get_error_msg().c_str());
-		throw(C_csp_exception(m_error_msg, "User defined power cycle initialization"));
-	}
+    // Check that the reference (design) value and upper and lower levels for each independent variable are contained within the x-range of the corresponding table
+        // T_HTF
+    if (!mc_T_htf_ind.check_x_value_x_col_0(m_T_htf_ref))
+    {
+        m_error_msg = util::format("The user defined power cycle table containing parametric runs on the hot HTF temperature"
+            " must contain the design HTF temperature %lg [C]. %s [C]", m_T_htf_ref, mc_T_htf_ind.get_error_msg().c_str());
+        throw(C_csp_exception(m_error_msg, "User defined power cycle initialization"));
+    }
+    if (!mc_T_htf_ind.check_x_value_x_col_0(m_T_htf_low))
+    {
+        m_error_msg = util::format("The user defined power cycle table containing parametric runs on the hot HTF temperature"
+            " must contain the lower level HTF temperature %lg [C]. %s [C]", m_T_htf_low, mc_T_htf_ind.get_error_msg().c_str());
+        throw(C_csp_exception(m_error_msg, "User defined power cycle initialization"));
+    }
+    if (!mc_T_htf_ind.check_x_value_x_col_0(m_T_htf_high))
+    {
+        m_error_msg = util::format("The user defined power cycle table containing parametric runs on the hot HTF temperature"
+            " must contain the upper level HTF temperature %lg [C]. %s [C]", m_T_htf_high, mc_T_htf_ind.get_error_msg().c_str());
+        throw(C_csp_exception(m_error_msg, "User defined power cycle initialization"));
+    }
 
-		// m_dot_HTF
-	if( !mc_m_dot_htf_ind.check_x_value_x_col_0(m_m_dot_htf_ref) )
-	{
-		m_error_msg = util::format("The user defined power cycle table containing parametric runs on the normalized HTF mass flow rate"
-		" must contain the design normalized HTF mass flow rate %lg [-]. %s [-]", m_m_dot_htf_ref, mc_m_dot_htf_ind.get_error_msg().c_str());
-		throw(C_csp_exception(m_error_msg, "User defined power cycle initialization"));
-	}
-	if( !mc_m_dot_htf_ind.check_x_value_x_col_0(m_m_dot_htf_low) )
-	{
-		m_error_msg = util::format("The user defined power cycle table containing parametric runs on the normalized HTF mass flow rate"
-			" must contain the lower level normalized HTF mass flow rate %lg [-]. %s [-]", m_m_dot_htf_low, mc_m_dot_htf_ind.get_error_msg().c_str());
-		throw(C_csp_exception(m_error_msg, "User defined power cycle initialization"));
-	}
-	if( !mc_m_dot_htf_ind.check_x_value_x_col_0(m_m_dot_htf_high) )
-	{
-		m_error_msg = util::format("The user defined power cycle table containing parametric runs on the normalized HTF mass flow rate"
-			" must contain the upper level normalized HTF mass flow rate %lg [-]. %s [-]", m_m_dot_htf_high, mc_m_dot_htf_ind.get_error_msg().c_str());
-		throw(C_csp_exception(m_error_msg, "User defined power cycle initialization"));
-	}
+    // T_amb
+    if (!mc_T_amb_ind.check_x_value_x_col_0(m_T_amb_ref))
+    {
+        m_error_msg = util::format("The user defined power cycle table containing parametric runs on the ambient temperature"
+            " must contain the design ambient temperature %lg [C]. %s [C]", m_T_amb_ref, mc_T_amb_ind.get_error_msg().c_str());
+        throw(C_csp_exception(m_error_msg, "User defined power cycle initialization"));
+    }
+    if (!mc_T_amb_ind.check_x_value_x_col_0(m_T_amb_low))
+    {
+        m_error_msg = util::format("The user defined power cycle table containing parametric runs on the ambient temperature"
+            " must contain the lower level ambient temperature %lg [C]. %s [C]", m_T_amb_low, mc_T_amb_ind.get_error_msg().c_str());
+        throw(C_csp_exception(m_error_msg, "User defined power cycle initialization"));
+    }
+    if (!mc_T_amb_ind.check_x_value_x_col_0(m_T_amb_high))
+    {
+        m_error_msg = util::format("The user defined power cycle table containing parametric runs on the ambient temperature"
+            " must contain the upper level ambient temperature %lg [C]. %s [C]", m_T_amb_high, mc_T_amb_ind.get_error_msg().c_str());
+        throw(C_csp_exception(m_error_msg, "User defined power cycle initialization"));
+    }
 
-	// ************************************************************************
-	// ************************************************************************
+    // m_dot_HTF
+    if (!mc_m_dot_htf_ind.check_x_value_x_col_0(m_m_dot_htf_ref))
+    {
+        m_error_msg = util::format("The user defined power cycle table containing parametric runs on the normalized HTF mass flow rate"
+            " must contain the design normalized HTF mass flow rate %lg [-]. %s [-]", m_m_dot_htf_ref, mc_m_dot_htf_ind.get_error_msg().c_str());
+        throw(C_csp_exception(m_error_msg, "User defined power cycle initialization"));
+    }
+    if (!mc_m_dot_htf_ind.check_x_value_x_col_0(m_m_dot_htf_low))
+    {
+        m_error_msg = util::format("The user defined power cycle table containing parametric runs on the normalized HTF mass flow rate"
+            " must contain the lower level normalized HTF mass flow rate %lg [-]. %s [-]", m_m_dot_htf_low, mc_m_dot_htf_ind.get_error_msg().c_str());
+        throw(C_csp_exception(m_error_msg, "User defined power cycle initialization"));
+    }
+    if (!mc_m_dot_htf_ind.check_x_value_x_col_0(m_m_dot_htf_high))
+    {
+        m_error_msg = util::format("The user defined power cycle table containing parametric runs on the normalized HTF mass flow rate"
+            " must contain the upper level normalized HTF mass flow rate %lg [-]. %s [-]", m_m_dot_htf_high, mc_m_dot_htf_ind.get_error_msg().c_str());
+        throw(C_csp_exception(m_error_msg, "User defined power cycle initialization"));
+    }
 
-	// Calculate main effects of each independent variable at its upper and lower levels
-	m_ME_T_htf_low.resize(4);
-	m_ME_T_htf_high.resize(4);
+    // ************************************************************************
+    // ************************************************************************
 
-	m_ME_T_amb_low.resize(4);
-	m_ME_T_amb_high.resize(4);
+    // Calculate main effects of each independent variable at its upper and lower levels
+    Y_at_T_htf_ref.resize(4);
+    Y_at_T_amb_ref.resize(4);
+    Y_at_m_dot_htf_ND_ref.resize(4);
+    m_Y_at_ref.resize(4);
 
-	m_ME_m_dot_htf_low.resize(4);
-	m_ME_m_dot_htf_high.resize(4);
+    m_ME_T_htf_low.resize(4);
+    m_ME_T_htf_high.resize(4);
 
-	for(int i = 0; i < 4; i++)
-	{
-		int i_col = i*3+2;
+    m_ME_T_amb_low.resize(4);
+    m_ME_T_amb_high.resize(4);
 
-		m_ME_T_htf_low[i] = mc_T_htf_ind.interpolate_x_col_0(i_col, m_T_htf_low) - 1.0;
-		m_ME_T_htf_high[i] = mc_T_htf_ind.interpolate_x_col_0(i_col, m_T_htf_high) - 1.0;
+    m_ME_m_dot_htf_low.resize(4);
+    m_ME_m_dot_htf_high.resize(4);
 
-		m_ME_T_amb_low[i] = mc_T_amb_ind.interpolate_x_col_0(i_col, m_T_amb_low) - 1.0;
-		m_ME_T_amb_high[i] = mc_T_amb_ind.interpolate_x_col_0(i_col, m_T_amb_high) - 1.0;
+    for (int i = 0; i < 4; i++)
+    {
+        int i_col = i * 3 + 2;
 
-		m_ME_m_dot_htf_low[i] = mc_m_dot_htf_ind.interpolate_x_col_0(i_col, m_m_dot_htf_low) - 1.0;
-		m_ME_m_dot_htf_high[i] = mc_m_dot_htf_ind.interpolate_x_col_0(i_col, m_m_dot_htf_high) - 1.0;
-	}
+        Y_at_T_htf_ref[i] = mc_T_htf_ind.interpolate_x_col_0(i_col, m_T_htf_ref);
+        Y_at_T_amb_ref[i] = mc_T_amb_ind.interpolate_x_col_0(i_col, m_T_amb_ref);
+        Y_at_m_dot_htf_ND_ref[i] = mc_m_dot_htf_ind.interpolate_x_col_0(i_col, m_m_dot_htf_ref);
+        m_Y_at_ref[i] = (Y_at_T_htf_ref[i] + Y_at_T_amb_ref[i] + Y_at_m_dot_htf_ND_ref[i]) / 3.0;
 
-	// Set up 2D tables to store calculated Interactions	
-	int n_T_htf_runs = mc_T_htf_ind.get_number_of_rows();
-	int n_T_amb_runs = mc_T_amb_ind.get_number_of_rows();
-	int n_m_dot_htf_runs = mc_m_dot_htf_ind.get_number_of_rows();
+        m_ME_T_htf_low[i] = mc_T_htf_ind.interpolate_x_col_0(i_col, m_T_htf_low) - m_Y_at_ref[i];
+        m_ME_T_htf_high[i] = mc_T_htf_ind.interpolate_x_col_0(i_col, m_T_htf_high) - m_Y_at_ref[i];
 
-	// 2 interaction effects (upper and lower) for each output
-	util::matrix_t<double> T_htf_int_on_T_amb(n_T_amb_runs, 9);
-	util::matrix_t<double> T_amb_int_on_m_dot_htf(n_m_dot_htf_runs, 9);
-	util::matrix_t<double> m_dot_htf_int_on_T_htf(n_T_htf_runs, 9);
-	
-	// Calculate interaction effects
-	for(int i = 0; i < 4; i++)
-	{
-		// T_HTF interaction on ambient temperature
-		for(int j = 0; j < n_T_amb_runs; j++)
-		{
-			if( i == 0 )
-			{
-				T_htf_int_on_T_amb(j,0) = mc_T_amb_ind.get_x_value_x_col_0(j);
-			}
-				// lower level interaction effect
-			double aa = mc_T_amb_ind.Get_Value(i*3+1,j);
-			double bb = m_ME_T_htf_low[i];
-			double cc = mc_T_amb_ind.Get_Value(i*3+2,j);
-			T_htf_int_on_T_amb(j,i*2+1) = -(mc_T_amb_ind.Get_Value(i*3+1,j)-1.0-m_ME_T_htf_low[i]-(mc_T_amb_ind.Get_Value(i*3+2,j)-1.0));
-				// upper level interaction
-			aa = mc_T_amb_ind.Get_Value(i*3+3,j);
-			bb = m_ME_T_htf_high[i];
-			cc = mc_T_amb_ind.Get_Value(i*3+2,j);
-			T_htf_int_on_T_amb(j,i*2+2) = -(mc_T_amb_ind.Get_Value(i*3+3,j)-1.0-m_ME_T_htf_high[i]-(mc_T_amb_ind.Get_Value(i*3+2,j)-1.0));
-		}
+        m_ME_T_amb_low[i] = mc_T_amb_ind.interpolate_x_col_0(i_col, m_T_amb_low) - m_Y_at_ref[i];
+        m_ME_T_amb_high[i] = mc_T_amb_ind.interpolate_x_col_0(i_col, m_T_amb_high) - m_Y_at_ref[i];
 
-		// Ambient temperature interaction on HTF mass flow rate
-		for(int j = 0; j < n_m_dot_htf_runs; j++)
-		{
-			if( i == 0 )
-			{
-				T_amb_int_on_m_dot_htf(j,0) = mc_m_dot_htf_ind.get_x_value_x_col_0(j);
-			}
-				// lower level interaction effect
-			double aa = mc_m_dot_htf_ind.Get_Value(i*3+1,j);
-			double bb = m_ME_T_amb_low[i];
-			double cc = mc_m_dot_htf_ind.Get_Value(i*3+2,j);
-			T_amb_int_on_m_dot_htf(j,i*2+1) = -(mc_m_dot_htf_ind.Get_Value(i*3+1,j)-1.0-m_ME_T_amb_low[i]-(mc_m_dot_htf_ind.Get_Value(i*3+2,j)-1.0));
-				// upper level interaction effect
-			aa = mc_m_dot_htf_ind.Get_Value(i*3+3,j);
-			bb = m_ME_T_amb_high[i];
-			cc = mc_m_dot_htf_ind.Get_Value(i*3+2,j);
-			T_amb_int_on_m_dot_htf(j,i*2+2) = -(mc_m_dot_htf_ind.Get_Value(i*3+3,j)-1.0-m_ME_T_amb_high[i]-(mc_m_dot_htf_ind.Get_Value(i*3+2,j)-1.0));
-		}
+        m_ME_m_dot_htf_low[i] = mc_m_dot_htf_ind.interpolate_x_col_0(i_col, m_m_dot_htf_low) - m_Y_at_ref[i];
+        m_ME_m_dot_htf_high[i] = mc_m_dot_htf_ind.interpolate_x_col_0(i_col, m_m_dot_htf_high) - m_Y_at_ref[i];
+    }
+    Y_avg_at_refs = m_Y_at_ref;
 
-		// HTF mass flow
-		for(int j = 0; j < n_T_htf_runs; j++)
-		{
-			if( i == 0 )
-			{
-				m_dot_htf_int_on_T_htf(j,0) = mc_T_htf_ind.get_x_value_x_col_0(j);
-			}
-				// lower level interaction effect
-			double aa = mc_T_htf_ind.Get_Value(i*3+1,j);
-			double bb = m_ME_m_dot_htf_low[i];
-			double cc = mc_T_htf_ind.Get_Value(i*3+2,j);
-			m_dot_htf_int_on_T_htf(j,i*2+1) = -(mc_T_htf_ind.Get_Value(i*3+1,j)-1.0-m_ME_m_dot_htf_low[i]-(mc_T_htf_ind.Get_Value(i*3+2,j)-1.0));
-				// upper level interaction effect
-			aa = mc_T_htf_ind.Get_Value(i*3+3,j);
-			bb = m_ME_m_dot_htf_high[i];
-			cc = mc_T_htf_ind.Get_Value(i*3+2,j);
-			m_dot_htf_int_on_T_htf(j,i*2+2) = -(mc_T_htf_ind.Get_Value(i*3+3,j)-1.0-m_ME_m_dot_htf_high[i]-(mc_T_htf_ind.Get_Value(i*3+2,j)-1.0));
-		}
-	}
+    // Set up 2D tables to store calculated Interactions	
+    int n_T_htf_runs = mc_T_htf_ind.get_number_of_rows();
+    int n_T_amb_runs = mc_T_amb_ind.get_number_of_rows();
+    int n_m_dot_htf_runs = mc_m_dot_htf_ind.get_number_of_rows();
 
-	// Initialize Linear_Interp classes for interaction effects
-	if( !mc_T_htf_on_T_amb.Set_1D_Lookup_Table(T_htf_int_on_T_amb, column_index_array, 1, error_index) )
-	{
-		throw(C_csp_exception("Initialization of interpolation table for the interaction effect of T_HTF levels"
-		"on the ambient temperature failed", "User defined power cycle initialization"));
-	}
-	if( !mc_T_amb_on_m_dot_htf.Set_1D_Lookup_Table(T_amb_int_on_m_dot_htf, column_index_array, 1, error_index) )
-	{
-		throw(C_csp_exception("Initialization of interpolation table for the interaction effect of T_amb levels"
-			"on HTF mass flow rate failed", "User defined power cycle initialization"));
-	}
-	if( !mc_m_dot_htf_on_T_htf.Set_1D_Lookup_Table(m_dot_htf_int_on_T_htf, column_index_array, 1, error_index) )
-	{
-		throw(C_csp_exception("Initialization of interpolation table for the interaction effect of m_dot_HTF levels"
-			"on the HTF temperature failed", "User defined power cycle initialization"));
-	}
-	
+    // 2 interaction effects (upper and lower) for each output
+    util::matrix_t<double> T_htf_int_on_T_amb(n_T_amb_runs, 9);
+    util::matrix_t<double> T_amb_int_on_m_dot_htf(n_m_dot_htf_runs, 9);
+    util::matrix_t<double> m_dot_htf_int_on_T_htf(n_T_htf_runs, 9);
+
+    // Calculate interaction effects
+    for (int i = 0; i < 4; i++)
+    {
+        // T_HTF interaction on ambient temperature
+        for (int j = 0; j < n_T_amb_runs; j++)
+        {
+            if (i == 0)
+            {
+                T_htf_int_on_T_amb(j, 0) = mc_T_amb_ind.get_x_value_x_col_0(j);
+            }
+            // lower level interaction effect
+            double aa = mc_T_amb_ind.Get_Value(i * 3 + 1, j);
+            double bb = m_ME_T_htf_low[i];
+            double cc = mc_T_amb_ind.Get_Value(i * 3 + 2, j);
+            T_htf_int_on_T_amb(j, i * 2 + 1) = -(mc_T_amb_ind.Get_Value(i * 3 + 1, j) - m_Y_at_ref[i] - m_ME_T_htf_low[i] - (mc_T_amb_ind.Get_Value(i * 3 + 2, j) - m_Y_at_ref[i]));
+            // upper level interaction
+            aa = mc_T_amb_ind.Get_Value(i * 3 + 3, j);
+            bb = m_ME_T_htf_high[i];
+            cc = mc_T_amb_ind.Get_Value(i * 3 + 2, j);
+            T_htf_int_on_T_amb(j, i * 2 + 2) = -(mc_T_amb_ind.Get_Value(i * 3 + 3, j) - m_Y_at_ref[i] - m_ME_T_htf_high[i] - (mc_T_amb_ind.Get_Value(i * 3 + 2, j) - m_Y_at_ref[i]));
+        }
+
+        // Ambient temperature interaction on HTF mass flow rate
+        for (int j = 0; j < n_m_dot_htf_runs; j++)
+        {
+            if (i == 0)
+            {
+                T_amb_int_on_m_dot_htf(j, 0) = mc_m_dot_htf_ind.get_x_value_x_col_0(j);
+            }
+            // lower level interaction effect
+            double aa = mc_m_dot_htf_ind.Get_Value(i * 3 + 1, j);
+            double bb = m_ME_T_amb_low[i];
+            double cc = mc_m_dot_htf_ind.Get_Value(i * 3 + 2, j);
+            T_amb_int_on_m_dot_htf(j, i * 2 + 1) = -(mc_m_dot_htf_ind.Get_Value(i * 3 + 1, j) - m_Y_at_ref[i] - m_ME_T_amb_low[i] - (mc_m_dot_htf_ind.Get_Value(i * 3 + 2, j) - m_Y_at_ref[i]));
+            // upper level interaction effect
+            aa = mc_m_dot_htf_ind.Get_Value(i * 3 + 3, j);
+            bb = m_ME_T_amb_high[i];
+            cc = mc_m_dot_htf_ind.Get_Value(i * 3 + 2, j);
+            T_amb_int_on_m_dot_htf(j, i * 2 + 2) = -(mc_m_dot_htf_ind.Get_Value(i * 3 + 3, j) - m_Y_at_ref[i] - m_ME_T_amb_high[i] - (mc_m_dot_htf_ind.Get_Value(i * 3 + 2, j) - m_Y_at_ref[i]));
+        }
+
+        // HTF mass flow
+        for (int j = 0; j < n_T_htf_runs; j++)
+        {
+            if (i == 0)
+            {
+                m_dot_htf_int_on_T_htf(j, 0) = mc_T_htf_ind.get_x_value_x_col_0(j);
+            }
+            // lower level interaction effect
+            double aa = mc_T_htf_ind.Get_Value(i * 3 + 1, j);
+            double bb = m_ME_m_dot_htf_low[i];
+            double cc = mc_T_htf_ind.Get_Value(i * 3 + 2, j);
+            m_dot_htf_int_on_T_htf(j, i * 2 + 1) = -(mc_T_htf_ind.Get_Value(i * 3 + 1, j) - m_Y_at_ref[i] - m_ME_m_dot_htf_low[i] - (mc_T_htf_ind.Get_Value(i * 3 + 2, j) - m_Y_at_ref[i]));
+            // upper level interaction effect
+            aa = mc_T_htf_ind.Get_Value(i * 3 + 3, j);
+            bb = m_ME_m_dot_htf_high[i];
+            cc = mc_T_htf_ind.Get_Value(i * 3 + 2, j);
+            m_dot_htf_int_on_T_htf(j, i * 2 + 2) = -(mc_T_htf_ind.Get_Value(i * 3 + 3, j) - m_Y_at_ref[i] - m_ME_m_dot_htf_high[i] - (mc_T_htf_ind.Get_Value(i * 3 + 2, j) - m_Y_at_ref[i]));
+        }
+    }
+
+    // Initialize Linear_Interp classes for interaction effects
+    if (!mc_T_htf_on_T_amb.Set_1D_Lookup_Table(T_htf_int_on_T_amb, column_index_array, 1, error_index))
+    {
+        throw(C_csp_exception("Initialization of interpolation table for the interaction effect of T_HTF levels"
+            "on the ambient temperature failed", "User defined power cycle initialization"));
+    }
+    if (!mc_T_amb_on_m_dot_htf.Set_1D_Lookup_Table(T_amb_int_on_m_dot_htf, column_index_array, 1, error_index))
+    {
+        throw(C_csp_exception("Initialization of interpolation table for the interaction effect of T_amb levels"
+            "on HTF mass flow rate failed", "User defined power cycle initialization"));
+    }
+    if (!mc_m_dot_htf_on_T_htf.Set_1D_Lookup_Table(m_dot_htf_int_on_T_htf, column_index_array, 1, error_index))
+    {
+        throw(C_csp_exception("Initialization of interpolation table for the interaction effect of m_dot_HTF levels"
+            "on the HTF temperature failed", "User defined power cycle initialization"));
+    }
+
 }
 
 double C_ud_power_cycle::get_W_dot_gross_ND(double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_htf_ND /*-*/)
@@ -308,9 +338,9 @@ double C_ud_power_cycle::get_interpolated_ND_output(int i_ME /*M.E. table index*
 							double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_htf_ND /*-*/)
 {
 	
-	double ME_T_htf = mc_T_htf_ind.interpolate_x_col_0(i_ME*3+2, T_htf_hot) - 1.0;
-	double ME_T_amb = mc_T_amb_ind.interpolate_x_col_0(i_ME*3+2, T_amb) - 1.0;
-	double ME_m_dot_htf = mc_m_dot_htf_ind.interpolate_x_col_0(i_ME*3+2, m_dot_htf_ND) - 1.0;
+	double ME_T_htf = mc_T_htf_ind.interpolate_x_col_0(i_ME*3+2, T_htf_hot) - m_Y_at_ref[i_ME];
+	double ME_T_amb = mc_T_amb_ind.interpolate_x_col_0(i_ME*3+2, T_amb) - m_Y_at_ref[i_ME];
+	double ME_m_dot_htf = mc_m_dot_htf_ind.interpolate_x_col_0(i_ME*3+2, m_dot_htf_ND) - m_Y_at_ref[i_ME];
 
 	double INT_T_htf_on_T_amb = 0.0;
 	if( T_htf_hot < m_T_htf_ref )
@@ -342,7 +372,7 @@ double C_ud_power_cycle::get_interpolated_ND_output(int i_ME /*M.E. table index*
 		INT_T_amb_on_m_dot_htf = mc_m_dot_htf_on_T_htf.interpolate_x_col_0(i_ME*2+2,T_htf_hot)*(m_dot_htf_ND-m_m_dot_htf_ref)/(m_m_dot_htf_ref-m_m_dot_htf_high);
 	}
 
-	return 1.0 + ME_T_htf + ME_T_amb + ME_m_dot_htf + INT_T_htf_on_T_amb + INT_T_amb_on_m_dot_htf + INT_m_dot_htf_on_T_htf;
+	return m_Y_at_ref[i_ME] + ME_T_htf + ME_T_amb + ME_m_dot_htf + INT_T_htf_on_T_amb + INT_T_amb_on_m_dot_htf + INT_m_dot_htf_on_T_htf;
 }
 
 
@@ -642,4 +672,410 @@ int C_ud_pc_table_generator::generate_tables(double T_htf_ref /*C*/, double T_ht
 	// ******************************************
 	
 	return 0;
+}
+
+void N_udpc_common::get_var_setup(const std::vector<double>& vec_unique, const std::vector<double>& var_vec,
+    double& var_des, double& var_low, double& var_high)
+{
+    std::unordered_map<double, int> var_val_count;
+    std::vector<int> v_var_count;
+    int n_var_unique = vec_unique.size();
+
+    // For each unique value in vec_unique, count instances in var_vec
+    for (int i = 0; i < n_var_unique; i++)
+    {
+        var_val_count.insert(std::pair<double, int>(vec_unique[i], std::count(var_vec.begin(), var_vec.end(), vec_unique[i])));
+        v_var_count.push_back(std::count(var_vec.begin(), var_vec.end(), vec_unique[i]));
+    }
+
+    // Sort instance counts
+    std::sort(v_var_count.begin(), v_var_count.end());
+    int var_count_max = v_var_count[n_var_unique - 1];      // highest count
+    int var_count_2 = v_var_count[n_var_unique - 2];        // 2nd highest count
+    int var_count_3 = v_var_count[n_var_unique - 3];        // 3rd highest count
+    int var_count_4 = v_var_count[n_var_unique - 4];        // 4th highest count
+
+    // Map independent variable with count, then check against some udpc rules
+    var_des = std::numeric_limits<double>::quiet_NaN();
+    double var_level_1 = std::numeric_limits<double>::quiet_NaN();
+    double var_level_2 = std::numeric_limits<double>::quiet_NaN();
+    std::unordered_map<double, int>::iterator it_map = var_val_count.begin();
+    for (int i = 0; i < n_var_unique; i++)
+    {
+        if (it_map->second == var_count_max)
+        {
+            var_des = it_map->first;
+        }
+        if (it_map->second == var_count_2 && !std::isfinite(var_level_1))
+        {
+            var_level_1 = it_map->first;
+        }
+        if (it_map->second == var_count_3)
+        {
+            var_level_2 = it_map->first;
+        }
+        it_map++;
+    }
+    if (var_level_1 < var_level_2)
+    {
+        var_low = var_level_1;
+        var_high = var_level_2;
+    }
+    else
+    {
+        var_low = var_level_2;
+        var_high = var_level_1;
+    }
+
+    if (var_count_3 < 4) {
+        throw(C_csp_exception("UDPC parametric for each variable must contain at least 4 unique values"));
+    }
+    if (var_count_4 == var_count_3) {
+        throw(C_csp_exception("UDPC parametric must have more instances for 3rd most common var then 4th most common var"));
+    }
+    if (var_count_max == var_count_2) {
+        throw(C_csp_exception("UDPC parametric must have more instances for most common var (design) then 2nd most common var"));
+    }
+}
+
+bool N_udpc_common::is_level_in_par(const std::vector<std::vector<double>> test_combs,
+    const std::vector<std::vector<double>> full_table)
+{
+    int n_tbl_rows = full_table.size();
+    bool des__low = false;
+    bool des__des = false;
+    bool des__high = false;
+    for (int i = 0; i < n_tbl_rows; i++)
+    {
+        // Is T_amb_design in a row with T_htf_low and m_dot_des?
+        if (test_combs[0] == std::vector<double>{ full_table[i][C_ud_power_cycle::E_COL_T_HTF], full_table[i][C_ud_power_cycle::E_COL_M_DOT], full_table[i][C_ud_power_cycle::E_COL_T_AMB] })
+        {
+            des__low = true;
+        }
+        // Is T_amb_design in a row with T_htf_des and m_dot_des?
+        if (test_combs[1] == std::vector<double>{ full_table[i][C_ud_power_cycle::E_COL_T_HTF], full_table[i][C_ud_power_cycle::E_COL_M_DOT], full_table[i][C_ud_power_cycle::E_COL_T_AMB] })
+        {
+            des__des = true;
+        }
+        // Is T_amb_design in a row with T_htf_high and m_dot_des?
+        if (test_combs[2] == std::vector<double>{ full_table[i][C_ud_power_cycle::E_COL_T_HTF], full_table[i][C_ud_power_cycle::E_COL_M_DOT], full_table[i][C_ud_power_cycle::E_COL_T_AMB] })
+        {
+            des__high = true;
+        }
+
+        if (des__low && des__des && des__high)
+        {
+            break;
+        }
+    }
+
+    return des__low && des__des && des__high;
+}
+
+int N_udpc_common::split_ind_tbl(const util::matrix_t<double>& cmbd_ind, util::matrix_t<double>& T_htf_ind,
+    util::matrix_t<double>& m_dot_ind, util::matrix_t<double>& T_amb_ind)
+{
+    int n_T_htf_pars, n_T_amb_pars, n_m_dot_pars;
+    n_T_htf_pars = n_T_amb_pars = n_m_dot_pars = -1;
+    double m_dot_low, m_dot_des, m_dot_high, T_htf_low, T_htf_des, T_htf_high, T_amb_low, T_amb_des, T_amb_high;
+    m_dot_low = m_dot_des = m_dot_high = T_htf_low = T_htf_des = T_htf_high = T_amb_low = T_amb_des = T_amb_high = std::numeric_limits<double>::quiet_NaN();
+
+    return split_ind_tbl(cmbd_ind, T_htf_ind, m_dot_ind, T_amb_ind,
+        n_T_htf_pars, n_T_amb_pars, n_m_dot_pars,
+        m_dot_low, m_dot_des, m_dot_high,
+        T_htf_low, T_htf_des, T_htf_high,
+        T_amb_low, T_amb_des, T_amb_high);
+}
+
+int N_udpc_common::split_ind_tbl(const util::matrix_t<double>& cmbd_ind, util::matrix_t<double>& T_htf_ind,
+    util::matrix_t<double>& m_dot_ind, util::matrix_t<double>& T_amb_ind,
+    int& n_T_htf_pars, int& n_T_amb_pars, int& n_m_dot_pars,
+    double& m_dot_low, double& m_dot_des, double& m_dot_high,
+    double& T_htf_low, double& T_htf_des, double& T_htf_high,
+    double& T_amb_low, double& T_amb_des, double& T_amb_high)
+{
+    // check for minimum length
+    int n_par_min = 4;
+    int n_levels = 3;
+    int n_ind_vars = 3;
+    int n_min_runs = n_par_min * n_levels * n_ind_vars;
+    int n_table_rows = cmbd_ind.nrows();
+    if (n_table_rows < n_min_runs)
+    {
+        throw(C_csp_exception("Not enough UDPC table rows", "UDPC Table Importation"));
+    }
+
+    // get T_htf, m_dot_htf, and T_amb vectors
+    util::matrix_t<double> T_htf_col, m_dot_col, T_amb_col;
+    T_htf_col = cmbd_ind.col(0);
+    m_dot_col = cmbd_ind.col(1);
+    T_amb_col = cmbd_ind.col(2);
+    std::vector<double> T_htf_vec(T_htf_col.data(), T_htf_col.data() + T_htf_col.ncells());
+    std::vector<double> m_dot_vec(m_dot_col.data(), m_dot_col.data() + m_dot_col.ncells());
+    std::vector<double> T_amb_vec(T_amb_col.data(), T_amb_col.data() + T_amb_col.ncells());
+
+    // get unique values for each independent variable
+    set<double, std::less<double>> T_htf_unique(T_htf_col.data(), T_htf_col.data() + T_htf_col.ncells());
+    set<double, std::less<double>> m_dot_unique(m_dot_col.data(), m_dot_col.data() + m_dot_col.ncells());
+    set<double, std::less<double>> T_amb_unique(T_amb_col.data(), T_amb_col.data() + T_amb_col.ncells());
+    std::vector<double> v_T_htf_unique(T_htf_unique.begin(), T_htf_unique.end());
+    std::vector<double> v_m_dot_unique(m_dot_unique.begin(), m_dot_unique.end());
+    std::vector<double> v_T_amb_unique(T_amb_unique.begin(), T_amb_unique.end());
+
+    // Get HTF temperature levels
+    T_htf_des = T_htf_low = T_htf_high = std::numeric_limits<double>::quiet_NaN();
+    get_var_setup(v_T_htf_unique, T_htf_vec, T_htf_des, T_htf_low, T_htf_high);
+
+    // Get HTF mass flow rate levels
+    m_dot_des = m_dot_low = m_dot_high = std::numeric_limits<double>::quiet_NaN();
+    get_var_setup(v_m_dot_unique, m_dot_vec, m_dot_des, m_dot_low, m_dot_high);
+
+    // Get ambient temperature levels
+    T_amb_des = T_amb_low = T_amb_high = std::numeric_limits<double>::quiet_NaN();
+    get_var_setup(v_T_amb_unique, T_amb_vec, T_amb_des, T_amb_low, T_amb_high);
+
+    // convert combined matrix_t to a vector of vectors
+    // inner vector: single row, outer vector: rows
+    // check and throw exception for rows with nan values 
+    std::vector<std::vector<double>> cmbd_tbl;
+    double* row_start;
+    double* row_end;
+    for (std::size_t i = 0; i < cmbd_ind.nrows(); i++) {
+        util::matrix_t<double> i_row = cmbd_ind.row(i);
+        row_start = i_row.data();
+        row_end = row_start + i_row.ncols();
+
+        std::vector<double> mat_row(row_start, row_end);
+        for (size_t j = 0; j < mat_row.size(); j++) {
+            if(std::isnan(mat_row[j])){
+                throw(C_csp_exception("UDPC table data contains NaN inputs"));
+            }
+        }
+        
+        cmbd_tbl.push_back(mat_row);        
+    }
+
+    // Check for inputs runs that don't match udpc rules
+    // e.g. parametric variable not available at all 3 levels of secondary var level with constant var
+    std::vector<std::vector<double>> vv_test(3);
+    std::vector<std::vector<double>::iterator> v_it_erase;
+
+    // Check ambient temperatures
+    for (std::vector<double>::iterator i_it = v_T_amb_unique.begin(); i_it < v_T_amb_unique.end(); i_it++){
+        vv_test[0] = (std::vector<double>{T_htf_low, m_dot_des, * i_it});
+        vv_test[1] = (std::vector<double>{T_htf_des, m_dot_des, * i_it});
+        vv_test[2] = (std::vector<double>{T_htf_high, m_dot_des, * i_it});
+        if (!is_level_in_par(vv_test, cmbd_tbl)){
+            v_it_erase.push_back(i_it);
+        }
+    }
+    for (int i = 0; i < v_it_erase.size(); i++){
+        v_T_amb_unique.erase(v_it_erase[v_it_erase.size() - 1 - i]);
+    }
+    v_it_erase.resize(0);
+
+    // Check HTF temperatures
+    for (std::vector<double>::iterator i_it = v_T_htf_unique.begin(); i_it < v_T_htf_unique.end(); i_it++){
+        vv_test[0] = std::vector<double>{ *i_it, m_dot_low, T_amb_des };
+        vv_test[1] = std::vector<double>{ *i_it, m_dot_des, T_amb_des };
+        vv_test[2] = std::vector<double>{ *i_it, m_dot_high, T_amb_des };
+        if (!is_level_in_par(vv_test, cmbd_tbl)){
+            v_it_erase.push_back(i_it);
+        }
+    }
+    for (int i = 0; i < v_it_erase.size(); i++){
+        v_T_htf_unique.erase(v_it_erase[v_it_erase.size() - 1 - i]);
+    }
+    v_it_erase.resize(0);
+
+    // Check HTF mass flow rates
+    for (std::vector<double>::iterator i_it = v_m_dot_unique.begin(); i_it < v_m_dot_unique.end(); i_it++){
+        vv_test[0] = std::vector<double>{ T_htf_des, *i_it, T_amb_low };
+        vv_test[1] = std::vector<double>{ T_htf_des, *i_it, T_amb_des };
+        vv_test[2] = std::vector<double>{ T_htf_des, *i_it, T_amb_high };
+        if (!is_level_in_par(vv_test, cmbd_tbl)){
+            v_it_erase.push_back(i_it);
+        }
+    }
+    for (int i = 0; i < v_it_erase.size(); i++){
+        v_m_dot_unique.erase(v_it_erase[v_it_erase.size() - 1 - i]);
+    }
+
+    int total_row_check = 3 * (v_m_dot_unique.size() + v_T_amb_unique.size() + v_T_htf_unique.size());
+
+    n_m_dot_pars = v_m_dot_unique.size();
+    n_T_amb_pars = v_T_amb_unique.size();
+    n_T_htf_pars = v_T_htf_unique.size();
+
+    if (n_m_dot_pars < 4 || n_T_amb_pars < 4 || n_T_htf_pars < 4)
+    {
+        throw(C_csp_exception("Filtered UDPC parametric for each variable must contain at least 4 unique values"));
+    }
+
+    // Build tables for each independent variable
+    const int ncols = 13;
+
+    // HTF temperature table w/ HTF mass flow rate levels
+    T_htf_ind.resize_fill(n_T_htf_pars, ncols, 0.0);
+    std::vector<double> m_dot_levels = std::vector<double>{ m_dot_low, m_dot_des, m_dot_high };
+
+    // For each T_htf (i) and m_dot_htf_ND level (j) combination...
+    for (int i = 0; i < n_T_htf_pars; i++)
+    {
+        for (int j = 0; j < m_dot_levels.size(); j++)
+        {
+            // Search through combined table and find corresponding row
+            for (int k = 0; k < n_table_rows; k++)
+            {
+                if (std::vector<double>{v_T_htf_unique[i], m_dot_levels[j], T_amb_des} ==
+                    std::vector<double>{ cmbd_tbl[k][C_ud_power_cycle::E_COL_T_HTF], cmbd_tbl[k][C_ud_power_cycle::E_COL_M_DOT], cmbd_tbl[k][C_ud_power_cycle::E_COL_T_AMB] })
+                {
+                    // Set values in independent variable table
+                    //    Independent |    Gross Power Output   |   HTF Thermal Power	|   Cooling Parasitics  |	 Water Use 
+                    // 0)  Variable   |  1) -   2) 0     3) +   |  4) -   5) 0    6) +  |  7) -    8) 0    9) + | 10) -  11) 0   12) + 
+                    T_htf_ind.set_value(cmbd_tbl[k][C_ud_power_cycle::E_COL_T_HTF], i, 0);
+                    T_htf_ind.set_value(cmbd_tbl[k][C_ud_power_cycle::E_COL_W_CYL], i, 3 * C_ud_power_cycle::i_W_dot_gross + 1 + j);
+                    T_htf_ind.set_value(cmbd_tbl[k][C_ud_power_cycle::E_COL_Q_CYL], i, 3 * C_ud_power_cycle::i_Q_dot_HTF + 1 + j);
+                    T_htf_ind.set_value(cmbd_tbl[k][C_ud_power_cycle::E_COL_W_COOL], i, 3 * C_ud_power_cycle::i_W_dot_cooling + 1 + j);
+                    T_htf_ind.set_value(cmbd_tbl[k][C_ud_power_cycle::E_COL_M_H2O], i, 3 * C_ud_power_cycle::i_m_dot_water + 1 + j);
+                }
+            }
+        }
+    }
+
+    // HTF mass flow rate w/ ambient temperature levels
+    m_dot_ind.resize_fill(n_m_dot_pars, ncols, 0.0);
+    std::vector<double> T_amb_levels = std::vector<double>{ T_amb_low, T_amb_des, T_amb_high };
+
+    // For each m_dot_htf_ND (i) and T_amb level (j) combination...
+    for (int i = 0; i < n_m_dot_pars; i++)
+    {
+        for (int j = 0; j < T_amb_levels.size(); j++)
+        {
+            // Search through combined table and find corresponding row
+            for (int k = 0; k < n_table_rows; k++)
+            {
+                if (std::vector<double>{T_htf_des, v_m_dot_unique[i], T_amb_levels[j]} ==
+                    std::vector<double>{ cmbd_tbl[k][C_ud_power_cycle::E_COL_T_HTF], cmbd_tbl[k][C_ud_power_cycle::E_COL_M_DOT], cmbd_tbl[k][C_ud_power_cycle::E_COL_T_AMB] })
+                {
+                    // Set values in independent variable table
+                    //    Independent |    Gross Power Output   |   HTF Thermal Power	|   Cooling Parasitics  |	 Water Use 
+                    // 0)  Variable   |  1) -   2) 0     3) +   |  4) -   5) 0    6) +  |  7) -    8) 0    9) + | 10) -  11) 0   12) + 
+                    m_dot_ind.set_value(cmbd_tbl[k][C_ud_power_cycle::E_COL_M_DOT], i, 0);
+                    m_dot_ind.set_value(cmbd_tbl[k][C_ud_power_cycle::E_COL_W_CYL], i, 3 * C_ud_power_cycle::i_W_dot_gross + 1 + j);
+                    m_dot_ind.set_value(cmbd_tbl[k][C_ud_power_cycle::E_COL_Q_CYL], i, 3 * C_ud_power_cycle::i_Q_dot_HTF + 1 + j);
+                    m_dot_ind.set_value(cmbd_tbl[k][C_ud_power_cycle::E_COL_W_COOL], i, 3 * C_ud_power_cycle::i_W_dot_cooling + 1 + j);
+                    m_dot_ind.set_value(cmbd_tbl[k][C_ud_power_cycle::E_COL_M_H2O], i, 3 * C_ud_power_cycle::i_m_dot_water + 1 + j);
+                }
+            }
+        }
+    }
+
+    // Ambient temperature w/ HTF temperature levels
+    T_amb_ind.resize_fill(n_T_amb_pars, ncols, 0.0);
+    std::vector<double> T_htf_levels = std::vector<double>{ T_htf_low, T_htf_des, T_htf_high };
+
+    // For each T_amb (i) and T_HTF level (j) combination...
+    for (int i = 0; i < n_T_amb_pars; i++)
+    {
+        for (int j = 0; j < T_htf_levels.size(); j++)
+        {
+            // Search through combined table and find corresponding row
+            for (int k = 0; k < n_table_rows; k++)
+            {
+                if (std::vector<double>{T_htf_levels[j], m_dot_des, v_T_amb_unique[i]} ==
+                    std::vector<double>{ cmbd_tbl[k][C_ud_power_cycle::E_COL_T_HTF], cmbd_tbl[k][C_ud_power_cycle::E_COL_M_DOT], cmbd_tbl[k][C_ud_power_cycle::E_COL_T_AMB] })
+                {
+                    // Set values in independent variable table
+                    //    Independent |    Gross Power Output   |   HTF Thermal Power	|   Cooling Parasitics  |	 Water Use 
+                    // 0)  Variable   |  1) -   2) 0     3) +   |  4) -   5) 0    6) +  |  7) -    8) 0    9) + | 10) -  11) 0   12) + 
+                    T_amb_ind.set_value(cmbd_tbl[k][C_ud_power_cycle::E_COL_T_AMB], i, 0);
+                    T_amb_ind.set_value(cmbd_tbl[k][C_ud_power_cycle::E_COL_W_CYL], i, 3 * C_ud_power_cycle::i_W_dot_gross + 1 + j);
+                    T_amb_ind.set_value(cmbd_tbl[k][C_ud_power_cycle::E_COL_Q_CYL], i, 3 * C_ud_power_cycle::i_Q_dot_HTF + 1 + j);
+                    T_amb_ind.set_value(cmbd_tbl[k][C_ud_power_cycle::E_COL_W_COOL], i, 3 * C_ud_power_cycle::i_W_dot_cooling + 1 + j);
+                    T_amb_ind.set_value(cmbd_tbl[k][C_ud_power_cycle::E_COL_M_H2O], i, 3 * C_ud_power_cycle::i_m_dot_water + 1 + j);
+                }
+            }
+        }
+    }
+
+    return 0;
+}
+
+int N_udpc_common::combine_ind_tbl(util::matrix_t<double>& combined, const util::matrix_t<double>& T_htf_ind,
+    const util::matrix_t<double>& m_dot_ind, const util::matrix_t<double>& T_amb_ind,
+    double m_dot_low, double m_dot_des, double m_dot_high,
+    double T_htf_low, double T_htf_des, double T_htf_high,
+    double T_amb_low, double T_amb_des, double T_amb_high)
+{
+    // Get number of rows in each table
+    int n_T_htf_pars = T_htf_ind.nrows();
+    int n_m_dot_pars = m_dot_ind.nrows();
+    int n_T_amb_pars = T_amb_ind.nrows();
+
+    // Put the low, design, and high ind values in vectors
+    std::vector<double> v_T_htf_levels = std::vector<double>{ T_htf_low, T_htf_des, T_htf_high };
+    std::vector<double> v_m_dot_levels = std::vector<double>{ m_dot_low, m_dot_des, m_dot_high };
+    std::vector<double> v_T_amb_levels = std::vector<double>{ T_amb_low, T_amb_des, T_amb_high };
+
+    size_t total_rows = 3 * (n_T_htf_pars + n_m_dot_pars + n_T_amb_pars);
+    const int ncols = 7;
+
+    combined.resize_fill(total_rows, ncols, std::numeric_limits<double>::quiet_NaN());
+
+    for (int j = 0; j < v_m_dot_levels.size(); j++)
+    {
+        for (int i = 0; i < n_T_htf_pars; i++)
+        {
+            int r_comb = j * n_T_htf_pars + i;
+            double m_dot = v_m_dot_levels[j];
+
+            combined.set_value(T_htf_ind(i, 0), r_comb, C_ud_power_cycle::E_COL_T_HTF);			// Independent variable
+            combined.set_value(m_dot, r_comb, C_ud_power_cycle::E_COL_M_DOT);						// Level variable
+            combined.set_value(T_amb_des, r_comb, C_ud_power_cycle::E_COL_T_AMB);					// Constant variable
+
+            combined.set_value(T_htf_ind(i, 3 * C_ud_power_cycle::i_W_dot_gross + 1 + j), r_comb, C_ud_power_cycle::E_COL_W_CYL);
+            combined.set_value(T_htf_ind(i, 3 * C_ud_power_cycle::i_Q_dot_HTF + 1 + j), r_comb, C_ud_power_cycle::E_COL_Q_CYL);
+            combined.set_value(T_htf_ind(i, 3 * C_ud_power_cycle::i_W_dot_cooling + 1 + j), r_comb, C_ud_power_cycle::E_COL_W_COOL);
+            combined.set_value(T_htf_ind(i, 3 * C_ud_power_cycle::i_m_dot_water + 1 + j), r_comb, C_ud_power_cycle::E_COL_M_H2O);
+        }
+    }
+
+    for (int j = 0; j < v_T_amb_levels.size(); j++)
+    {
+        for (int i = 0; i < n_m_dot_pars; i++)
+        {
+            int r_comb = n_T_htf_pars * v_m_dot_levels.size() + j * n_m_dot_pars + i;
+            double T_amb = v_T_amb_levels[j];
+
+            combined.set_value(m_dot_ind(i, 0), r_comb, C_ud_power_cycle::E_COL_M_DOT);		// Independent variable
+            combined.set_value(T_amb, r_comb, C_ud_power_cycle::E_COL_T_AMB);					// Level variable
+            combined.set_value(T_htf_des, r_comb, C_ud_power_cycle::E_COL_T_HTF);				// Constant variable
+
+            combined.set_value(m_dot_ind(i, 3 * C_ud_power_cycle::i_W_dot_gross + 1 + j), r_comb, C_ud_power_cycle::E_COL_W_CYL);
+            combined.set_value(m_dot_ind(i, 3 * C_ud_power_cycle::i_Q_dot_HTF + 1 + j), r_comb, C_ud_power_cycle::E_COL_Q_CYL);
+            combined.set_value(m_dot_ind(i, 3 * C_ud_power_cycle::i_W_dot_cooling + 1 + j), r_comb, C_ud_power_cycle::E_COL_W_COOL);
+            combined.set_value(m_dot_ind(i, 3 * C_ud_power_cycle::i_m_dot_water + 1 + j), r_comb, C_ud_power_cycle::E_COL_M_H2O);
+        }
+    }
+
+    for (int j = 0; j < v_T_htf_levels.size(); j++)
+    {
+        for (int i = 0; i < n_T_amb_pars; i++)
+        {
+            int r_comb = n_T_htf_pars * v_m_dot_levels.size() + n_m_dot_pars * v_T_amb_levels.size() + j * n_T_amb_pars + i;
+            double T_htf = v_T_htf_levels[j];
+
+            combined.set_value(T_amb_ind(i, 0), r_comb, C_ud_power_cycle::E_COL_T_AMB);		// Independent variable
+            combined.set_value(T_htf, r_comb, C_ud_power_cycle::E_COL_T_HTF);					// Level variable
+            combined.set_value(m_dot_des, r_comb, C_ud_power_cycle::E_COL_M_DOT);				// Constant variable
+
+            combined.set_value(T_amb_ind(i, 3 * C_ud_power_cycle::i_W_dot_gross + 1 + j), r_comb, C_ud_power_cycle::E_COL_W_CYL);
+            combined.set_value(T_amb_ind(i, 3 * C_ud_power_cycle::i_Q_dot_HTF + 1 + j), r_comb, C_ud_power_cycle::E_COL_Q_CYL);
+            combined.set_value(T_amb_ind(i, 3 * C_ud_power_cycle::i_W_dot_cooling + 1 + j), r_comb, C_ud_power_cycle::E_COL_W_COOL);
+            combined.set_value(T_amb_ind(i, 3 * C_ud_power_cycle::i_m_dot_water + 1 + j), r_comb, C_ud_power_cycle::E_COL_M_H2O);
+        }
+    }
+
+    return 0;
 }

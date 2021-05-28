@@ -47,7 +47,8 @@ void free_winddata_array(var_data* data){
 }
 
 void free_weatherdata_array(var_data* data){
-	data->table.unassign("lat");
+
+ 	data->table.unassign("lat");
 	data->table.unassign("lon");
 	data->table.unassign("tz");
 	data->table.unassign("elev");
@@ -55,6 +56,7 @@ void free_weatherdata_array(var_data* data){
 	data->table.unassign("month");
 	data->table.unassign("day");
 	data->table.unassign("hour");
+    data->table.unassign("minute");
 	data->table.unassign("dn");
 	data->table.unassign("df");
 	data->table.unassign("tdry");

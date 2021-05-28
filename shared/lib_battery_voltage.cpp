@@ -83,17 +83,28 @@ voltage_state voltage_t::get_state() { return *state; }
 
 void voltage_table_t::initialize() {
     if (params->voltage_table.empty()) {
-        throw std::runtime_error("voltage_table_t error: empty voltage table");
+        throw std::runtime_error("voltage_table_t error: Empty voltage table.");
     }
     if (params->voltage_table.size() < 2 || params->voltage_table[0].size() != 2)
-        throw std::runtime_error("voltage_table_t error: Battery lifetime matrix must have 2 columns and at least 2 rows");
+        throw std::runtime_error("voltage_table_t error: Battery lifetime matrix must have 2 columns and at least 2 rows.");
 
     // save slope and intercept for every set of points to interpolate between
     std::sort(params->voltage_table.begin(), params->voltage_table.end(),
               [](std::vector<double> a, std::vector<double> b) { return a[1] > b[1]; });
+    bool need_less_than_nom = true;
+    bool need_greater_than_nom = true;
+
     for (size_t i = 0; i != params->voltage_table.size(); i++) {
         double DOD = params->voltage_table[i][0];
         double V = params->voltage_table[i][1];
+
+        if (need_less_than_nom && V < params->Vnom_default) {
+            need_less_than_nom = false;
+        }
+        else if (need_greater_than_nom && V > params->Vnom_default) {
+            need_greater_than_nom = false;
+        }
+
         double slope = 0;
         double intercept = V;
         if (i > 0) {
@@ -104,6 +115,14 @@ void voltage_table_t::initialize() {
         }
         slopes.emplace_back(slope);
         intercepts.emplace_back(intercept);
+    }
+
+    if (need_less_than_nom) {
+        throw std::runtime_error("voltage_table_t error: Voltage table contains no voltages less than the nominal voltage. Change either the values in the voltage table or the nominal voltage.");
+    }
+
+    if (need_greater_than_nom) {
+        throw std::runtime_error("voltage_table_t error: Voltage table contains no voltages greater than nominal voltage. Change either the values in the voltage table or the nominal voltage.e");
     }
 
     // for extrapolation beyond given points
@@ -190,6 +209,8 @@ double voltage_table_t::calculate_max_discharge_w(double q, double qmax, double,
     double max_I = 0;
     for (size_t i = 0; i < slopes.size(); i++) {
         double dod = -(A * slopes[i] + B * intercepts[i]) / (2 * B * slopes[i]);
+        dod = fmin(100, dod);
+        dod = fmax(0, dod);
         double current = qmax * ((1. - DOD0 / 100.) - (1. - dod / 100.)) / params->dt_hr;
         double p = calculate_voltage(dod) * current;
         if (p > max_P) {
