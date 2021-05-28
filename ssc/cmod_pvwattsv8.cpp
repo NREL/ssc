@@ -34,6 +34,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_sandia.h"
 #include "lib_pv_incidence_modifier.h"
 #include "lib_cec6par.h"
+#include "lib_shared_inverter.h"
 
 class lossdiagram
 {
@@ -190,7 +191,12 @@ static var_info _cm_vtab_pvwattsv8[] = {
         { SSC_OUTPUT,       SSC_NUMBER,      "elev",                           "Site elevation",                              "m",         "",                                             "Location",      "*",                       "",                          "" },
 
         { SSC_OUTPUT,       SSC_NUMBER,      "inverter_efficiency",            "Inverter efficiency at rated power",          "%",         "",                                             "PVWatts",      "",                        "",                              "" },
-        { SSC_OUTPUT,       SSC_NUMBER,      "estimated_rows",				   "Estimated number of rows in the system",	  "",          "",                                             "PVWatts",      "",                        "",                              "" },
+        { SSC_OUTPUT,       SSC_NUMBER,      "estimated_nmodules",			   "Estimated number of modules in the system",	  "",          "",                                             "PVWatts",      "",                        "",                              "" },
+        { SSC_OUTPUT,       SSC_NUMBER,      "estimated_nmodperstr",		   "Estimated number of modules per string",	  "",          "",                                             "PVWatts",      "",                        "",                              "" },
+        { SSC_OUTPUT,       SSC_NUMBER,      "estimated_nmodx",				   "Estimated number of modules across a row",	  "",          "",                                             "PVWatts",      "",                        "",                              "" },
+        { SSC_OUTPUT,       SSC_NUMBER,      "estimated_nmody",				   "Estimated number of modules up in a row",	  "",          "",                                             "PVWatts",      "",                        "",                              "" },
+        { SSC_OUTPUT,       SSC_NUMBER,      "estimated_nrows",				   "Estimated number of rows in the system",	  "",          "",                                             "PVWatts",      "",                        "",                              "" },
+        { SSC_OUTPUT,       SSC_NUMBER,      "estimated_row_spacing",		   "Estimated row spacing in the system",	      "m",         "",                                             "PVWatts",      "",                        "",                              "" },
 
         { SSC_OUTPUT,       SSC_NUMBER,      "ts_shift_hours",                 "Time offset for interpreting time series outputs", "hours","",                                             "Miscellaneous", "*",                       "",                          "" },
         { SSC_OUTPUT,       SSC_NUMBER,      "percent_complete",               "Estimated percent of total completed simulation", "%",     "",                                             "Miscellaneous", "",                        "",                          "" },
@@ -527,47 +533,54 @@ public:
             log("The bifacial model is designed for fixed arrays and may not produce reliable results for tracking arrays.", SSC_WARNING);
 
         pv.gcr = as_double("gcr");
+        if (pv.gcr < 0.01 || pv.gcr >= 1.0)
+            throw exec_error("pvwattsv8", "invalid gcr");
 
         bool en_self_shading = (pv.type == FIXED_RACK || pv.type == ONE_AXIS || pv.type == ONE_AXIS_BACKTRACKING);
 
-        if (en_self_shading)
-        {
-            if (pv.gcr < 0.01 || pv.gcr >= 1.0)
-                throw exec_error("pvwattsv8", "invalid gcr for fixed rack or one axis tracking system");
+        // Electrical Layout
+        // modules per string: 7 modules of about 60 Vmp each
+        // gives a nominal DC voltage of about 420 V DC which seems reasonable
+        pv.nmodperstr = 7;
+        pv.nmodules = ceil(pv.dc_nameplate / module.stc_watts); // estimate of # of modules in system
+        // but make sure there's at least one module, in the case where dc_nameplate < stc_watts
+        if (pv.nmodules < 1) pv.nmodules = 1;
 
-            // reasonable estimates of system geometry:
-            // assume a perhaps a ''square'' system layout based on DC nameplate size
+        // Physical Layout
+        // reasonable estimates of system geometry
+        // assume one module high for trackers, 2 modules high for fixed or two-axis
+        if (pv.type == ONE_AXIS || pv.type == ONE_AXIS_BACKTRACKING)
+            pv.nmody = 1; // e.g. Nextracker or ArrayTechnologies single portrait
+        else
+            pv.nmody = 2; // typical fixed 2 up portrait
+        // assume a ''square'' system layout- meaning same number of modules across a row as number of rows
+        // therefore, if rows are 2 up, need to estimate with half the modules
+        pv.nrows = (int)ceil(sqrt(pv.nmodules/pv.nmody)); // estimate of # rows for a square system
 
-            // modules per string: 7 modules of about 60 Vmp each
-            // gives a nominal DC voltage of about 420 V DC which seems reasonable
-            pv.nmodperstr = 7;
-            pv.nmodules = ceil(pv.dc_nameplate / module.stc_watts); // estimate of # of modules in system
-            // fails for pv.modules < 1 that is id dc_nameplate < stc_watts
-            if (pv.nmodules < 1) pv.nmodules = 1;
-            pv.nrows = (int)ceil(sqrt(pv.nmodules)); // estimate of # rows, assuming 1 module in each row
-            assign("estimated_rows", var_data((ssc_number_t)pv.nrows));
+        // number of modules in a row...
+        //   If 1 module per Y dimension, nmodx=nrows.
+        //   If 2 module per Y, then nmodx=nrows/2.
+        pv.nmodx = pv.nrows / pv.nmody; //does this need to be checked to be an integer??? check logic in UI and pvsamv1
+        // shading calculation fails for pv.nmodx < 1
+        if (pv.nmodx < 1) pv.nmodx = 1;
+        pv.row_spacing = module.length * pv.nmody / pv.gcr;
 
-            // see note farther down in code about self-shading for small systems
-            // assume at least some reasonable number of rows.
-            // otherwise self shading model may not really apply very well.
-            // in fact, should have some minimum system size
-            /*if (pv.nrows < 10)
-                log(util::format("system size is too small to accurately estimate regular row-row self shading impacts. (estimates: #modules=%d, #rows=%d).  disabling self-shading calculations.",
-                (int)pv.nmodules, (int)pv.nrows), SSC_WARNING);*/
+        //output the estimated layout
+        assign("estimated_nmodules", var_data((ssc_number_t)pv.nmodules));
+        assign("estimated_nmodperstr", var_data((ssc_number_t)pv.nmodperstr));
+        assign("estimated_nmodx", var_data((ssc_number_t)pv.nmodx));
+        assign("estimated_nmody", var_data((ssc_number_t)pv.nmody));
+        assign("estimated_nrows", var_data((ssc_number_t)pv.nrows));
+        assign("estimated_row_spacing", var_data((ssc_number_t)pv.row_spacing));
 
-            if (pv.type == ONE_AXIS)
-                pv.nmody = 1; // e.g. Nextracker or ArrayTechnologies single portrait
-            else
-                pv.nmody = 2; // typical fixed 2 up portrait
 
-            // number of modules in a row...
-            //   If 1 module per Y dimension, nmodx=nrows.
-            //   If 2 module per Y, then nmodx=nrows/2.
-            pv.nmodx = pv.nrows / pv.nmody;
-            // shading calculation fails for pv.nmodx < 1
-            if (pv.nmodx < 1) pv.nmodx = 1;
-            pv.row_spacing = module.length * pv.nmody / pv.gcr;
-        }
+        // see note farther down in code about self-shading for small systems
+        // assume at least some reasonable number of rows.
+        // otherwise self shading model may not really apply very well.
+        // in fact, should have some minimum system size
+        /*if (pv.nrows < 10)
+            log(util::format("system size is too small to accurately estimate regular row-row self shading impacts. (estimates: #modules=%d, #rows=%d).  disabling self-shading calculations.",
+            (int)pv.nmodules, (int)pv.nrows), SSC_WARNING);*/
 
         pvsnowmodel snowmodel;
         bool en_snowloss = as_boolean("en_snowloss");
@@ -607,7 +620,7 @@ public:
         weather_header hdr;
         wdprov->header(&hdr);
 
-        // assumes instantaneous values, unless hourly file with no minute column specified
+        // assumes instantaneous values, unless hourly file with no minute column specified- same code as lib_pv_io_manager.cpp. can we make this one set of code somehow?
         double ts_shift_hours = 0.0;
         bool instantaneous = true;
         if (wdprov->has_data_column(weather_data_provider::MINUTE))
@@ -719,7 +732,7 @@ public:
         ssc_number_t* p_ac = allocate("ac", nrec);
         ssc_number_t* p_gen = allocate("gen", nlifetime);
 
-        pvwatts_celltemp tccalc(pv.inoct + 273.15, PVWATTS_HEIGHT, ts_hour); //in pvwattsv5 there is some code about previous tcell and poa that doesn't appear to get used, so not adding it here
+        pvwatts_celltemp tccalc(pv.inoct + 273.15, PVWATTS_HEIGHT, ts_hour); 
 
         double annual_kwh = 0;
 
@@ -820,7 +833,7 @@ public:
                 double solazi, solzen, solalt, aoi, stilt, sazi, rot, btd;
                 int sunup;
                 double ibeam = 0.0, iskydiff = 0.0, ignddiff = 0.0, irear = 0.0;
-                double poa = 0, tpoa = 0, tmod = 0, dc = 0, ac = 0;
+                double poa = 0, tpoa = 0, tmod = 0, dc = 0, dcVoltage = 0, ac = 0;
 
                 irr.get_sun(&solazi, &solzen, &solalt, nullptr, nullptr, nullptr, &sunup, nullptr, nullptr, nullptr); //nullptr used when you don't need to retrieve the output
                 irr.get_angles(&aoi, &stilt, &sazi, &rot, &btd);
@@ -1162,6 +1175,7 @@ public:
                     {
                         // basic linear PVWatts model
                         dc = pv.dc_nameplate * (poa_for_power / 1000) * f_temp;
+                        //need to set dcVoltage here!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                     }
 
                     // apply common DC losses here (independent of module model)
@@ -1170,7 +1184,9 @@ public:
                     // apply DC degradation
                     dc *= degradationFactor[y];
 
-                    // inverter efficiency
+                    // inverter calculations
+                    std::unique_ptr<SharedInverter> sharedInverter; //where are these parameters set in pvsamv1??
+                    sharedInverter->calculateACPower(dc, dcVoltage, 0.0); // assume no temperature derates, so set temperature to 0
                     double etanom = pv.inv_eff_percent * 0.01;
                     double etaref = 0.9637;
                     double A = -0.0162;
