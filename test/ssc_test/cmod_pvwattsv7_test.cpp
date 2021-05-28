@@ -245,9 +245,9 @@ TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, SnowModelFixed_cmod_pvwattsv7) {
 	ssc_number_t* hourly_snowderate = ssc_data_get_array(data, "dcsnowderate", &count);
 
 	ASSERT_EQ(8760, count);
-	int startIndex = 24 * 11 + 6;  // starting at noon on Jan. 12th
 
-	// Snow derate should be non-zero during a snow event, and on a fixed system will always be 0, 0.5, or 1.0 due to the assumption of a 2-up installation
+    // Starting at 6 AM Jan. 12th
+    // Snow derate should be non-zero during a snow event, and on a fixed system will always be 0, 0.5, or 1.0 due to the assumption of a 2-up installation
 	EXPECT_NEAR((double)hourly_snowderate[270], 0.0, error_tolerance);
 	EXPECT_NEAR((double)hourly_snowderate[271], 0.5, error_tolerance);
 	EXPECT_NEAR((double)hourly_snowderate[272], 0.5, error_tolerance);
