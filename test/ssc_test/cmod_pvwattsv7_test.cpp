@@ -11,7 +11,7 @@ TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, NonAnnual)
 {
     //set up a weather data array and unassign the solar resource file
 
-//    var_data* weather_data = create_weatherdata_array(24); // runs without error
+    var_data* weather_data = create_weatherdata_array(24); // runs without error
     ssc_data_unassign(data, "solar_resource_file");
     ssc_data_set_table(data, "solar_resource_data", &weather_data->table);
     //   delete weather_data;
@@ -32,7 +32,7 @@ TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, NonAnnual)
     gen = ssc_data_get_array(data, "gen", nullptr)[12];
     EXPECT_NEAR(gen, 2.417, 0.01) << "Gen at noon";
     //    delete[] weather_data;
-    //    free_weatherdata_array(weather_data);
+    free_weatherdata_array(weather_data);
 }
 
 TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, IntermediateOutputTesting)
@@ -40,7 +40,7 @@ TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, IntermediateOutputTesting)
     //set up a weather data array and unassign the solar resource file
 
 //    auto weather_data = create_weatherdata_array(24); // runs without error
-//    var_data* weather_data = create_weatherdata_array(24); // throws SEH exception in release mode only from cmod_pvwattsv7 on Windows
+    var_data* weather_data = create_weatherdata_array(24); // throws SEH exception in release mode only from cmod_pvwattsv7 on Windows
     ssc_data_unassign(data, "solar_resource_file");
     ssc_data_set_table(data, "solar_resource_data", &weather_data->table);
     //   delete weather_data;
@@ -72,7 +72,7 @@ TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, IntermediateOutputTesting)
     EXPECT_NEAR(ac, 2417.375, 0.01) << "AC Energy at noon";
 
     //    delete[] weather_data;
-    //   free_weatherdata_array(weather_data);
+    free_weatherdata_array(weather_data);
 }
 
 

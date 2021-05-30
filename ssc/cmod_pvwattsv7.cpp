@@ -349,14 +349,14 @@ public:
 
     void exec()
     {
-        std::unique_ptr<weather_data_provider> wdprov;
+       std::unique_ptr<weather_data_provider> wdprov;
 
         if (is_assigned("solar_resource_file"))
         {
             const char* file = as_string("solar_resource_file");
             wdprov = std::unique_ptr<weather_data_provider>(new weatherfile(file));
-
             weatherfile* wfile = dynamic_cast<weatherfile*>(wdprov.get());
+            
             if (!wfile->ok()) throw exec_error("pvwattsv7", wfile->message());
             if (wfile->has_message()) log(wfile->message(), SSC_WARNING);
         }

@@ -22,14 +22,12 @@ protected: //doesn't really matter if this is protected or public, but you need 
 	bool compute();
 	void SetUp() { //if you always want to set up with the same default case, this can go in the class. otherwise it probably makes sense in the test itself.
 		data = ssc_data_create();
-		int errors = pvwattsv7_nofinancial_testfile(data);
+        int errors = pvwattsv7_nofinancial_testfile(data);
 		EXPECT_FALSE(errors); //make sure that the test ran ok
-        weather_data = create_weatherdata_array(24); // throws SEH exception in release mode only from cmod_pvwattsv7 on Windows
 
 	}
 	void TearDown()
 	{
-        free_weatherdata_array(weather_data);
         ssc_data_free(data);
         data = nullptr;
 
