@@ -34,7 +34,7 @@ GTEST_API_ int main(int argc, char **argv) {
 //    ::testing::GTEST_FLAG(filter) = "CM_SWH*";
 //   ::testing::GTEST_FLAG(filter) = "CMPvwattsV7Integration_cmod_pvwattsv7.IntermediateOutputTesting:CMPvwattsV7Integration_cmod_pvwattsv7.DefaultNoFinancialModel_cmod_pvwattsv7:CMPvwattsV7Integration_cmod_pvwattsv7.NonAnnual"; //works with 24 only 20 times in a row
 //   ::testing::GTEST_FLAG(filter) = "CMPvwattsV7Integration_cmod_pvwattsv7.IntermediateOutputTesting";
-   ::testing::GTEST_FLAG(filter) = "CMPvwattsV7Integration_cmod_pvwattsv7*";
+//   ::testing::GTEST_FLAG(filter) = "CMPvwattsV7Integration_cmod_pvwattsv7*";
 //   ::testing::GTEST_FLAG(filter) = "Data9999CaseWeatherData*";
 
 
