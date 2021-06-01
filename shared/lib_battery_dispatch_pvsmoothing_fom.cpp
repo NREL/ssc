@@ -30,11 +30,37 @@ dispatch_pvsmoothing_front_of_meter_t::dispatch_pvsmoothing_front_of_meter_t(
     std::vector<double> battReplacementCostPerkWh,
 	int battCycleCostChoice,
     std::vector<double> battCycleCost,
-	std::vector<double> forecast_price_series_dollar_per_kwh,
-	UtilityRate * utilityRate,
+//	std::vector<double> forecast_price_series_dollar_per_kwh,
+//	UtilityRate * utilityRate,
 	double etaPVCharge,
 	double etaGridCharge,
-	double etaDischarge) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max_kwdc, Pd_max_kwdc, Pc_max_kwac, Pd_max_kwac,
+	double etaDischarge,
+    // PVSmoothing inputs
+    double batt_dispatch_pvs_ac_lb,
+    bool batt_dispatch_pvs_ac_lb_enable,
+    double batt_dispatch_pvs_ac_ub,
+    bool batt_dispatch_pvs_ac_ub_enable,
+    // check conversion from fraction of system nameplate from Python code
+    double batt_dispatch_pvs_battery_energy,
+    double batt_dispatch_pvs_battery_power,
+    double batt_dispatch_pvs_battery_rte,
+    bool batt_dispatch_pvs_curtail_as_control,
+    bool batt_dispatch_pvs_curtail_if_violation,
+    double batt_dispatch_pvs_forecast_shift_periods, // may be int or size_t
+    double batt_dispatch_pvs_interconnection_limit,
+    double batt_dispatch_pvs_kf,
+    double batt_dispatch_pvs_ki,
+    double batt_dispatch_pvs_kp,
+    // percent of nameplate or kWh
+    double batt_dispatch_pvs_max_ramp,
+    double batt_dispatch_pvs_nameplate_ac, // basis for all energy and power values in Python code and cmod_pvsmoothing
+    double batt_dispatch_pvs_ramp_interval, // int or size_t
+    bool batt_dispatch_pvs_short_forecast_enable,
+    double batt_dispatch_pvs_soc_rest,
+    double batt_dispatch_pvs_timestep_multiplier, // probable should be restricted to be a reasonable weather file timestep multiplier
+    double batt_dispatch_pvs_wf_timestep // most likely dt above
+
+) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max_kwdc, Pd_max_kwdc, Pc_max_kwac, Pd_max_kwac,
 		t_min, dispatch_mode, pv_dispatch, nyears, look_ahead_hours, dispatch_update_frequency_hours, can_charge, can_clip_charge, can_grid_charge, can_fuelcell_charge,
         battReplacementCostPerkWh, battCycleCostChoice, battCycleCost)
 {
@@ -43,6 +69,8 @@ dispatch_pvsmoothing_front_of_meter_t::dispatch_pvsmoothing_front_of_meter_t(
 		_forecast_hours = 24;
 
 	_inverter_paco = inverter_paco;
+
+    /*
 	_forecast_price_rt_series = forecast_price_series_dollar_per_kwh;
 
 	// only create utility rate calculator if utility rate is defined
@@ -50,7 +78,7 @@ dispatch_pvsmoothing_front_of_meter_t::dispatch_pvsmoothing_front_of_meter_t(
 		std::unique_ptr<UtilityRateCalculator> tmp(new UtilityRateCalculator(utilityRate, _steps_per_hour));
 		m_utilityRateCalculator = std::move(tmp);
 	}
-
+    */
 	m_etaPVCharge = etaPVCharge * 0.01;
 	m_etaGridCharge = etaGridCharge * 0.01;
 	m_etaDischarge = etaDischarge * 0.01;

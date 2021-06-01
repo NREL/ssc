@@ -24,18 +24,15 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "lib_battery_dispatch.h"
 
-/*! Automated Front of Meter DC-connected battery dispatch */
+/*! PV Smoothing Front of Meter battery dispatch */
 class dispatch_pvsmoothing_front_of_meter_t : public dispatch_automatic_t
 {
 public:
 	/**
-	 Class takes forecast information about the PV production and Load Profile, plus PPA sell rate and electricity buy-rate signals
-	 and programs battery to strategically dispatch to maximize economic benefit by:
-	 1. Discharging during times of high PPA sell rates
-	 2. Charging from the grid during times of low electricity buy-rates (if grid charging allowed)
-	 3. Charging from the PV array during times of low PPA sell rates
-	 4. Charging from the PV array during times where the PV power would be clipped due to inverter limits (if DC-connected)
-	*/
+	 Class takes forecast information about the PV production and user inputs and constraints
+	 and programs battery to strategically dispatch to maximize ramp rates to avoid penalties.
+     Developed in conjunction with work from EPRI and Southern Company
+	 */
 	dispatch_pvsmoothing_front_of_meter_t(
 		battery_t * Battery,
 		double dt,
@@ -59,14 +56,38 @@ public:
 		bool can_grid_charge,
 		bool can_fuelcell_charge,
 		double inverter_paco,
-        std::vector<double> battReplacementCostPerkWh,
+        std::vector<double> battReplacementCostPerkWh, // required for base class
 		int battCycleCostChoice,
-        std::vector<double> battCycleCost,
-		std::vector<double> ppa_price_series_dollar_per_kwh,
-		UtilityRate * utilityRate,
+        std::vector<double> battCycleCost, // required for base class
+//		std::vector<double> ppa_price_series_dollar_per_kwh,
+//		UtilityRate * utilityRate,
 		double etaPVCharge,
 		double etaGridCharge,
-		double etaDischarge
+		double etaDischarge,
+        // PVSmoothing inputs
+        double batt_dispatch_pvs_ac_lb,
+        bool batt_dispatch_pvs_ac_lb_enable,
+        double batt_dispatch_pvs_ac_ub,
+        bool batt_dispatch_pvs_ac_ub_enable,
+        // check conversion from fraction of system nameplate from Python code
+        double batt_dispatch_pvs_battery_energy,
+        double batt_dispatch_pvs_battery_power,
+        double batt_dispatch_pvs_battery_rte,
+        bool batt_dispatch_pvs_curtail_as_control,
+        bool batt_dispatch_pvs_curtail_if_violation,
+        double batt_dispatch_pvs_forecast_shift_periods, // may be int or size_t
+        double batt_dispatch_pvs_interconnection_limit,
+        double batt_dispatch_pvs_kf,
+        double batt_dispatch_pvs_ki,
+        double batt_dispatch_pvs_kp,
+        // percent of nameplate or kWh
+        double batt_dispatch_pvs_max_ramp,
+        double batt_dispatch_pvs_nameplate_ac, // basis for all energy and power values in Python code and cmod_pvsmoothing
+        double batt_dispatch_pvs_ramp_interval, // int or size_t
+        bool batt_dispatch_pvs_short_forecast_enable,
+        double batt_dispatch_pvs_soc_rest,
+        double batt_dispatch_pvs_timestep_multiplier, // probable should be restricted to be a reasonable weather file timestep multiplier
+        double batt_dispatch_pvs_wf_timestep // most likely dt above
 		);
 
 	~dispatch_pvsmoothing_front_of_meter_t();
@@ -124,4 +145,4 @@ protected:
 	double revenueToDischarge;
 };
 
-#endif // __LIB_BATTERY_DISPATCH_AUTOMATIC_FOM_H__
+#endif // __LIB_BATTERY_DISPATCH_PVSMOOTHING_FOM_H__
