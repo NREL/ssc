@@ -1396,3 +1396,147 @@ TEST(cmod_utilityrate5_eqns, Test_Commercial_Energy_Tiers_net_billing) {
     tier_usage = tier_matrix.at((size_t)1, (size_t)6);
     EXPECT_NEAR(3014.93, tier_usage, 0.001);
 }
+
+TEST(cmod_utilityrate5_eqns, Test_Commercial_kWh_per_kW_charges_with_billing_demand_percents) {
+    ssc_data_t data = new var_table;
+
+    ssc_data_set_number(data, "en_electricity_rates", 1);
+    ssc_data_set_number(data, "ur_en_ts_sell_rate", 0);
+    ssc_number_t p_ur_ts_buy_rate[1] = { 0 };
+    ssc_data_set_array(data, "ur_ts_buy_rate", p_ur_ts_buy_rate, 1);
+    ssc_data_set_number(data, "inflation_rate", 2.5);
+    ssc_number_t p_degradation[1] = { 0 };
+    ssc_data_set_array(data, "degradation", p_degradation, 1);
+    ssc_number_t p_load_escalation[1] = { 0 };
+    ssc_data_set_array(data, "load_escalation", p_load_escalation, 1);
+    ssc_number_t p_rate_escalation[1] = { 0 };
+    ssc_data_set_array(data, "rate_escalation", p_rate_escalation, 1);
+    ssc_data_set_number(data, "ur_metering_option", 0);
+    ssc_data_set_number(data, "ur_nm_yearend_sell_rate", 0);
+    ssc_data_set_number(data, "ur_nm_credit_month", 11);
+    ssc_data_set_number(data, "ur_nm_credit_rollover", 0);
+    ssc_data_set_number(data, "ur_monthly_fixed_charge", 21);
+    ssc_data_set_number(data, "ur_monthly_min_charge", 0);
+    ssc_data_set_number(data, "ur_annual_min_charge", 0);
+    ssc_number_t  ur_ts_sell_rate[1] = { 0 };
+    ssc_data_set_array(data, "ur_ts_sell_rate", ur_ts_sell_rate, 1);
+    ssc_number_t p_ur_ec_sched_weekday[288] = { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 };
+    ssc_data_set_matrix(data, "ur_ec_sched_weekday", p_ur_ec_sched_weekday, 12, 24);
+    ssc_number_t p_ur_ec_sched_weekend[288] = { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 };
+    ssc_data_set_matrix(data, "ur_ec_sched_weekend", p_ur_ec_sched_weekend, 12, 24);
+    ssc_number_t p_ur_ec_tou_mat[96] = { 1, 1, 200, 1, 0.031718000000000003, 0,
+                                         1, 2, 3000, 0, 0.132655, 0,
+                                         1, 3, 10000, 0, 0.120303, 0,
+                                         1, 4, 200000, 0, 0.102607, 0,
+                                         1, 5, 9.9999999999999998e+37, 0, 0.079109, 0,
+                                         1, 6, 400, 1, 0.013627, 0,
+                                         1, 7, 600, 1, 0.010275, 0,
+                                         1, 8, 9.9999999999999998e+37, 1, 0.00771, 0,
+                                         2, 1, 200, 1, 0.028812999999999998, 0,
+                                         2, 2, 3000, 0, 0.132655, 0,
+                                         2, 3, 10000, 0, 0.120303, 0,
+                                         2, 4, 200000, 0, 0.102607, 0,
+                                         2, 5, 9.9999999999999998e+37, 0, 0.079109, 0,
+                                         2, 6, 400, 1, 0.013627, 0,
+                                         2, 7, 600, 1, 0.010275, 0,
+                                         2, 8, 9.9999999999999998e+37, 1, 0.00771, 0 };
+    ssc_data_set_matrix(data, "ur_ec_tou_mat", p_ur_ec_tou_mat, 16, 6);
+    ssc_data_set_number(data, "ur_dc_enable", 1);
+    ssc_number_t p_ur_dc_sched_weekday[288] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+    ssc_data_set_matrix(data, "ur_dc_sched_weekday", p_ur_dc_sched_weekday, 12, 24);
+    ssc_number_t p_ur_dc_sched_weekend[288] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+    ssc_data_set_matrix(data, "ur_dc_sched_weekend", p_ur_dc_sched_weekend, 12, 24);
+    ssc_number_t p_ur_dc_tou_mat[4] = { 1, 1, 9.9999999999999998e+37, 0 };
+    ssc_data_set_matrix(data, "ur_dc_tou_mat", p_ur_dc_tou_mat, 1, 4);
+    ssc_number_t p_ur_dc_flat_mat[48] = { 0, 1, 9.9999999999999998e+37, 0,
+                                         1, 1, 9.9999999999999998e+37, 0,
+                                         2, 1, 9.9999999999999998e+37, 0,
+                                         3, 1, 9.9999999999999998e+37, 0,
+                                         4, 1, 9.9999999999999998e+37, 0,
+                                         5, 1, 9.9999999999999998e+37, 0,
+                                         6, 1, 9.9999999999999998e+37, 0,
+                                         7, 1, 9.9999999999999998e+37, 0,
+                                         8, 1, 9.9999999999999998e+37, 0,
+                                         9, 1, 9.9999999999999998e+37, 0,
+                                         10, 1, 9.9999999999999998e+37, 0,
+                                         11, 1, 9.9999999999999998e+37, 0 };
+    ssc_data_set_matrix(data, "ur_dc_flat_mat", p_ur_dc_flat_mat, 12, 4);
+
+    ssc_data_set_number(data, "ur_ec_enable_billing_demand", 1);
+    ssc_data_set_number(data, "ur_ec_billing_demand_minimum", 100);
+    ssc_data_set_number(data, "ur_ec_billing_demand_lookback_period", 11);
+
+    ssc_number_t p_ur_ec_billing_demand_lookback_percentages[24] = { 60, 0,
+                                      60, 0,
+                                      60, 0,
+                                      60, 0,
+                                      60, 0,
+                                      95, 1,
+                                      95, 1,
+                                      95, 1,
+                                      95, 1,
+                                      60, 0,
+                                      60, 0,
+                                      60, 0 };
+    ssc_data_set_matrix(data, "ur_ec_billing_demand_lookback_percentages", p_ur_ec_billing_demand_lookback_percentages, 12, 2);
+
+    ssc_number_t year_zero_power[12] = { -1200,
+                                        -1100,
+                                        -900,
+                                        -700,
+                                        -800,
+                                        -950,
+                                        -1050,
+                                        -1150,
+                                        -850,
+                                        -400,
+                                        -600,
+                                        -750 };
+
+    ssc_data_set_array(data, "ur_yearzero_usage_peaks", year_zero_power, 12);
+
+    int analysis_period = 25;
+    ssc_data_set_number(data, "system_use_lifetime_output", 1);
+    ssc_data_set_number(data, "analysis_period", analysis_period);
+    set_array(data, "load", large_load_commercial, 8760);
+    set_array(data, "gen", commercial_gen_path, 8760 * analysis_period);
+
+    int status = run_module(data, "utilityrate5");
+    EXPECT_FALSE(status);
+
+    int nrows;
+    int ncols;
+    ssc_number_t* annual_bills = ssc_data_get_matrix(data, "utility_bill_wo_sys_ym", &nrows, &ncols);
+    util::matrix_t<double> bill_matrix(nrows, ncols);
+    bill_matrix.assign(annual_bills, nrows, ncols);
+
+    double july_year_1 = bill_matrix.at((size_t)1, (size_t)6);
+    EXPECT_NEAR(17755.29, july_year_1, 0.01);
+
+    ssc_data_set_number(data, "ur_metering_option", 2); // Net billing
+    status = run_module(data, "utilityrate5");
+    EXPECT_FALSE(status);
+
+    annual_bills = ssc_data_get_matrix(data, "utility_bill_wo_sys_ym", &nrows, &ncols);
+    bill_matrix.assign(annual_bills, nrows, ncols);
+
+    july_year_1 = bill_matrix.at((size_t)1, (size_t)6);
+    EXPECT_NEAR(17755.29, july_year_1, 0.01);
+
+    ssc_number_t* billing_demand_wo_sys = ssc_data_get_matrix(data, "billing_demand_wo_sys_ym", &nrows, &ncols);
+    util::matrix_t<double> billing_demand_matrix(nrows, ncols);
+    billing_demand_matrix.assign(billing_demand_wo_sys, nrows, ncols);
+
+    double july_yr_1_billing_demand = billing_demand_matrix.at((size_t)1, (size_t)6);
+    EXPECT_NEAR(709.26, july_yr_1_billing_demand, 0.01);
+
+    ssc_number_t* july_tiers = ssc_data_get_matrix(data, "energy_wo_sys_ec_jul_tp", &nrows, &ncols);
+    util::matrix_t<double> tier_matrix(nrows, ncols);
+    tier_matrix.assign(july_tiers, nrows, ncols);
+
+    EXPECT_NEAR(3000.0, tier_matrix.at((size_t)1, 1), 0.01);
+    EXPECT_NEAR(7000.0, tier_matrix.at((size_t)1, 2), 0.01);
+    EXPECT_NEAR(131851.63, tier_matrix.at((size_t)1, 3), 0.01);
+    EXPECT_NEAR(141851.63, tier_matrix.at((size_t)1, 4), 0.01);
+    EXPECT_NEAR(100466.35, tier_matrix.at((size_t)1, 5), 0.01);
+}
