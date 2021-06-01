@@ -262,7 +262,7 @@ static var_info vtab_utility_rate5[] = {
 
 	var_info_invalid };
 
-void rate_setup::setup(var_table* vt, int num_recs_yearly, int nyears, rate_data& rate, std::string cm_name) {
+void rate_setup::setup(var_table* vt, int num_recs_yearly, size_t nyears, rate_data& rate, std::string cm_name) {
     bool dc_enabled = vt->as_boolean("ur_dc_enable");
     rate.en_ts_buy_rate = vt->as_boolean("ur_en_ts_buy_rate");
     rate.en_ts_sell_rate = vt->as_boolean("ur_en_ts_sell_rate");
@@ -645,6 +645,48 @@ public:
 		// tiers and periods determined by input matrices
 
 		rate_setup::setup(m_vartab, (int)m_num_rec_yearly, (int)nyears, rate, "utilityrate5");
+
+        // Check units are intialized properly
+        // This code provides error cecking for rate.init_energy_rates handling of kWh/kW units, but must be done here due to SSC logging
+        bool log_msg = false;
+        int e_month = -1;
+        int e_period = -1;
+        int e_tier = -1;
+        for (int m = 0; m < 12; m++) {
+            ur_month month = rate.m_month[m];
+            int units = month.ec_tou_units.at(0, 0);
+            if (units == 0 || units == 2) {
+                for (i = 0; i < month.ec_periods.size(); i++)
+                {
+                    std::vector<int> tiers = month.ec_periods_tiers[i];
+                    for (j = 0; j < tiers.size(); j++)
+                    {
+                        units = month.ec_tou_units.at(i, j);
+                        if (units == 1 || units == 3) {
+                            log_msg = true;
+                            e_period = (int) i;
+                            e_tier = (int) j;
+                            break;
+                        }
+                    }
+
+                    if (log_msg) {
+                        break;
+                    }
+                }
+            }
+            if (log_msg) {
+                e_month = m;
+                break;
+            }
+        }
+
+        if (log_msg) {
+            std::ostringstream ss;
+            ss << "Period " << e_period << " tier " << e_tier << " of month " << e_month << " has units of kWh/kW or kWh/kW daily. ";
+            ss << "If these units are used, they must appear in the first tier of the first period, and all periods must have the same tier schedule. Please double check the rate schedule.";
+            log(ss.str(), SSC_WARNING);
+        }
 
 		size_t jan_rows = rate.m_month[0].ec_charge.nrows() + 2;
 		size_t jan_cols = rate.m_month[0].ec_charge.ncols() + 2;
@@ -2062,7 +2104,7 @@ public:
 		bool excess_monthly_dollars = (as_integer("ur_metering_option") == 3);
 		int excess_dollars_credit_month = (int)as_number("ur_nm_credit_month");
 
-		bool tou_demand_single_peak = (as_integer("TOU_demand_single_peak") == 1);
+        rate.tou_demand_single_peak = (as_integer("TOU_demand_single_peak") == 1);
 
 
 		size_t steps_per_hour = m_num_rec_yearly / 8760;
