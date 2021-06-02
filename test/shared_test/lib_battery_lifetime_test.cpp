@@ -455,6 +455,27 @@ TEST_F(lib_battery_lifetime_nmc_test, StorageTemp) {
     }
 }
 
+TEST_F(lib_battery_lifetime_nmc_test, StorageTempSmallDt) {
+    std::vector<double> temps = { 0, 10, 15, 40 };
+    std::vector<double> expected_q_li = { 81.73, 93.08, 97.43, 93 };
+
+    dt_hour = 1 / 60.0 / 60.0 * 10.0;
+
+    for (size_t n = 3; n < temps.size(); n++) {
+        model = std::unique_ptr<lifetime_nmc_t>(new lifetime_nmc_t(dt_hour));
+        for (size_t d = 0; d < 5000 + 1; d++) {
+            for (size_t h = 0; h < 24; h++) {
+                size_t hr = d * 24 + h;
+                for (size_t s = 0; s < 600; s++) {
+                    model->runLifetimeModels(hr, false, 50, 50, temps[n]);
+                }
+            }
+        }
+        auto state = model->get_state();
+        EXPECT_NEAR((size_t)state.nmc_li_neg->q_relative_li, expected_q_li[n], 1);
+    }
+}
+
 TEST_F(lib_battery_lifetime_nmc_test, CyclingHighDOD) {
     size_t day = 0;
     double T = 25.15;
