@@ -66,14 +66,13 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
     { SSC_INPUT,  SSC_NUMBER, "dT_cw_ref",                     "Reference condenser cooling water inlet/outlet temperature difference",  "C",    "",                                  "Rankine Cycle",                            "pc_config=0",                                                      "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "T_amb_des",                     "Reference ambient temperature at design point",                          "C",    "",                                  "Rankine Cycle",                            "pc_config=0",                                                      "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "P_boil",                        "Boiler operating pressure",                                              "bar",  "",                                  "Rankine Cycle",                            "pc_config=0",                                                      "",              ""},
-    { SSC_INPUT,  SSC_NUMBER, "CT",                            "Condensor type: 1=evaporative, 2=air, 3=hybrid",                         "",     "",                                  "Rankine Cycle",                            "pc_config=0",                                                      "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "CT",                            "Condensor type: 1=evaporative, 2=air",                                   "",     "",                                  "Rankine Cycle",                            "pc_config=0",                                                      "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "T_approach",                    "Cooling tower approach temperature",                                     "C",    "",                                  "Rankine Cycle",                            "pc_config=0",                                                      "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "T_ITD_des",                     "ITD at design for dry system",                                           "C",    "",                                  "Rankine Cycle",                            "pc_config=0",                                                      "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "P_cond_ratio",                  "Condenser pressure ratio",                                               "",     "",                                  "Rankine Cycle",                            "pc_config=0",                                                      "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "pb_bd_frac",                    "Power block blowdown steam fraction",                                    "",     "",                                  "Rankine Cycle",                            "pc_config=0",                                                      "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "P_cond_min",                    "Minimum condenser pressure",                                             "inHg", "",                                  "Rankine Cycle",                            "pc_config=0",                                                      "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "n_pl_inc",                      "Number of part-load increments for the heat rejection system",           "none", "",                                  "Rankine Cycle",                            "pc_config=0",                                                      "INTEGER",       ""},
-    { SSC_INPUT,  SSC_ARRAY,  "F_wc",                          "TOU array of fractions indicating wet cooling share for hybrid cooling", "",     "",                                  "System Control",                           "pc_config=0",                                                      "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "tech_type",                     "Turbine inlet pressure control 1=Fixed, 3=Sliding",                      "",     "",                                  "Rankine Cycle",                            "pc_config=0",                                                      "",              ""},
         // User Defined cycle
     { SSC_INPUT,  SSC_NUMBER, "ud_f_W_dot_cool_des",           "Percent of user-defined power cycle design gross output consumed by cooling",                     "%",      "",       "User Defined Power Cycle",                 "pc_config=1",                                                      "",              ""},
@@ -114,7 +113,7 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
 
     // Pricing schedules and multipliers
     { SSC_INPUT,  SSC_NUMBER, "ppa_multiplier_model",          "PPA multiplier model",                                          "0/1",          "0=diurnal,1=timestep",              "Time of Delivery Factors",                 "?=0",                                                              "INTEGER,MIN=0", ""},
-    { SSC_INPUT,  SSC_ARRAY,  "dispatch_factors_ts",           "Dispatch payment factor array",                                 "",             "",                                  "Time of Delivery Factors",                 "ppa_multiplier_model=1",                                           "",              ""},
+    { SSC_INPUT,  SSC_ARRAY,  "dispatch_factors_ts",           "Dispatch payment factor timeseries array",                      "",             "",                                  "Time of Delivery Factors",                 "ppa_multiplier_model=1",                                           "",              ""},
     { SSC_INPUT,  SSC_MATRIX, "dispatch_sched_weekday",        "PPA pricing weekday schedule, 12x24",                           "",             "",                                  "Time of Delivery Factors",                 "?=[[1]]",                                                          "",              ""},
     { SSC_INPUT,  SSC_MATRIX, "dispatch_sched_weekend",        "PPA pricing weekend schedule, 12x24",                           "",             "",                                  "Time of Delivery Factors",                 "?=[[1]]",                                                          "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "dispatch_factor1",              "Dispatch payment factor 1",                                     "",             "",                                  "Time of Delivery Factors",                 "?=1",                                                              "",              ""},
@@ -332,9 +331,9 @@ public:
                 pc->m_T_amb_des = as_double("T_amb_des");
                 pc->m_P_boil = as_double("P_boil");
                 pc->m_CT = as_integer("CT");                    // cooling tech type: 1=evaporative, 2=air, 3=hybrid
-                if (pc->m_CT > 3) {
+                if (pc->m_CT > 2) {
                     std::string err_msg = util::format("The specified power cycle cooling tech type, %d, does not exist"
-                        " for the ETES electric resistance heating model. Choose from 1) evaporative, 2) air, or 3) hyrbid\n", pb_tech_type);
+                        " for the ETES electric resistance heating model. Choose from 1) evaporative or 2) air\n", pb_tech_type);
                     log(err_msg, SSC_WARNING);
                     return;
                 }
@@ -353,12 +352,6 @@ public:
                 pc->m_pb_bd_frac = as_double("pb_bd_frac");
                 pc->m_P_cond_min = as_double("P_cond_min");
                 pc->m_n_pl_inc = as_integer("n_pl_inc");
-
-                size_t n_F_wc = 0;
-                ssc_number_t* p_F_wc = as_array("F_wc", &n_F_wc);
-                pc->m_F_wc.resize(n_F_wc, 0.0);
-                for (size_t i = 0; i < n_F_wc; i++)
-                    pc->m_F_wc[i] = (double)p_F_wc[i];
 
                 // Set User Defined cycle parameters to appropriate values
                 pc->m_is_user_defined_pc = false;
