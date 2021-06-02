@@ -17,8 +17,8 @@ var( 'P_ref', 115 );
 var( 'design_eff', 0.41199999999999998 );
 var( 'tshours', 10 );
 var( 'heater_mult', 2.3999999999999999 );
-var( 'tes_fl_code', 17 );
-var( 'ud_tes_fl_props', 
+var( 'hot_htf_code', 17 );
+var( 'ud_hot_htf_props', 
 [ [ 0, 0, 0, 0, 0, 0, 0 ] ] );
 
 var( 'is_dispatch', 0 );
