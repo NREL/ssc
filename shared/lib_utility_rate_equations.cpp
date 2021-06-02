@@ -28,7 +28,8 @@ ur_month::ur_month() :
 	dc_flat_ub(),
 	dc_flat_ch(),
 	dc_tou_charge(),
-	dc_flat_charge()
+	dc_flat_charge(),
+    use_current_month_ratchet(false)
 {}
 
 ur_month::ur_month(const ur_month& tmp) :
@@ -57,7 +58,8 @@ ur_month::ur_month(const ur_month& tmp) :
 	dc_flat_ub(tmp.dc_flat_ub),
 	dc_flat_ch(tmp.dc_flat_ch),
 	dc_tou_charge(tmp.dc_tou_charge),
-	dc_flat_charge(tmp.dc_flat_charge)
+	dc_flat_charge(tmp.dc_flat_charge),
+    use_current_month_ratchet(tmp.use_current_month_ratchet)
 {}
 
 void ur_month::update_net_and_peak(double energy, double power, size_t step) {
@@ -105,6 +107,12 @@ rate_data::rate_data() :
 	dc_hourly_peak(),
 	monthly_dc_fixed(12),
 	monthly_dc_tou(12),
+    en_ec_billing_demand(false),
+    prev_peak_demand(12),
+    ec_bd_lookback_percents(12),
+    ec_bd_minimum(0.0),
+    ec_bd_lookback_months(1),
+    billing_demand(12),
 	tou_demand_single_peak(false),
     enable_nm(false),
     nm_credits_w_rollover(false),
@@ -130,6 +138,12 @@ rate_data::rate_data(const rate_data& tmp) :
 	dc_hourly_peak(tmp.dc_hourly_peak),
 	monthly_dc_fixed(tmp.monthly_dc_fixed),
 	monthly_dc_tou(tmp.monthly_dc_tou),
+    en_ec_billing_demand(tmp.en_ec_billing_demand),
+    prev_peak_demand(tmp.prev_peak_demand),
+    ec_bd_lookback_percents(tmp.ec_bd_lookback_percents),
+    ec_bd_minimum(tmp.ec_bd_minimum),
+    ec_bd_lookback_months(tmp.ec_bd_lookback_months),
+    billing_demand(tmp.billing_demand),
 	tou_demand_single_peak(tmp.tou_demand_single_peak),
     enable_nm(tmp.enable_nm),
     nm_credits_w_rollover(tmp.nm_credits_w_rollover),
@@ -177,6 +191,45 @@ bool rate_data::check_for_kwh_per_kw_rate(int units) {
     return (units == 1) || (units == 3);
 }
 
+double rate_data::get_billing_demand(int month) {
+    int m = 0;
+    double billing_demand = ec_bd_minimum;
+    int prev_yr_lookback = 11 - (ec_bd_lookback_months - month); // What month do we stop looking back in the prev yr?
+
+    for (m = 11; m >= prev_yr_lookback && m >= 0; m--) {
+        double ratchet_percent = ec_bd_lookback_percents[m] * 0.01;
+        double months_demand = prev_peak_demand[m] * ratchet_percent;
+        if (months_demand > billing_demand) {
+            billing_demand = months_demand;
+        }
+    }
+
+    int start_month = 0;
+    if (month >= ec_bd_lookback_months) {
+        start_month = month - ec_bd_lookback_months;
+    }
+
+    for (m = start_month; m <= month; m++) {
+        double ratchet_percent = ec_bd_lookback_percents[m] * 0.01;
+        double months_demand = m_month[m].dc_flat_peak * ratchet_percent;
+        if (months_demand > billing_demand) {
+            billing_demand = months_demand;
+        }
+    }
+
+    if (m_month[month].dc_flat_peak > billing_demand && m_month[month].use_current_month_ratchet) {
+        billing_demand = m_month[month].dc_flat_peak;
+    }
+
+    return billing_demand;
+}
+
+void rate_data::setup_prev_demand(ssc_number_t* prev_demand) {
+    for (size_t i = 0; i < prev_peak_demand.size(); i++) {
+        prev_peak_demand[i] = prev_demand[i];
+    }
+}
+
 void rate_data::init_energy_rates(bool gen_only) {
 	// calculate the monthly net energy per tier and period based on units
 	for (int m = 0; m < (int)m_month.size(); m++)
@@ -196,8 +249,7 @@ void rate_data::init_energy_rates(bool gen_only) {
 			// 5. assumption is that tier numbering is correct for the kWh/kW breakdown
 			// That is, first tier must be kWh/kW
             // See example at: https://github.com/NREL/SAM-documentation/blob/master/Unit%20Testing/Utility%20Rates/block_step/GPC_PLL_Tiered_Bill_Calc_Example_v3_btm_tests.xlsx
-			if ((m_month[m].ec_tou_units.ncols() > 0 && m_month[m].ec_tou_units.nrows() > 0)
-				&& check_for_kwh_per_kw_rate(m_month[m].ec_tou_units.at(0, 0)))
+			if (has_kwh_per_kw_rate(m))
 			{
                 std::vector<double> kWh_per_kW_tiers; // Fill this first so we can see where the kWh tiers break
                 std::vector<size_t> tier_numbers;
@@ -205,6 +257,11 @@ void rate_data::init_energy_rates(bool gen_only) {
 
 				// track monthly peak to determine which kWh/kW tier
                 double flat_peak = m_month[m].dc_flat_peak;
+                if (en_ec_billing_demand) {
+                    // If ratchets are present the peak used here might be the actual peak, or something based on a previous month.
+                    flat_peak = get_billing_demand(m);
+                }
+                billing_demand[m] = flat_peak;
 
                 // get kWh/kW break points based on actual demand
                 for (size_t i_tier = 0; i_tier < m_month[m].ec_tou_units.ncols(); i_tier++)
@@ -726,6 +783,21 @@ void rate_data::setup_demand_charges(ssc_number_t* dc_weekday, ssc_number_t* dc_
 	}
 }
 
+void rate_data::setup_ratcheting_demand(ssc_number_t* ratchet_percent_matrix)
+{
+    // Error checked in SSC variables
+    size_t nrows = 12;
+    size_t ncols = 2;
+    util::matrix_t<double> ratchet_matrix(nrows, ncols);
+    ratchet_matrix.assign(ratchet_percent_matrix, nrows, ncols);
+
+    for (int i = 0; i < nrows; i++) {
+        ec_bd_lookback_percents[i] = ratchet_matrix.at(i, 0);
+        m_month[i].use_current_month_ratchet = ratchet_matrix.at(i, 1) == 1;
+    }
+
+}
+
 void rate_data::sort_energy_to_periods(int month, double energy, size_t step) {
 	// accumulate energy per period - place all in tier 0 initially and then
 	// break up according to tier boundaries and number of periods
@@ -922,4 +994,9 @@ void rate_data::compute_surplus(ur_month& curr_month)
         else
             curr_month.ec_energy_use.at(ir, 0) = -curr_month.ec_energy_use.at(ir, 0);
     }
+}
+
+bool rate_data::has_kwh_per_kw_rate(int month) {
+    return (m_month[month].ec_tou_units.ncols() > 0 && m_month[month].ec_tou_units.nrows() > 0)
+        && check_for_kwh_per_kw_rate(m_month[month].ec_tou_units.at(0, 0));
 }
