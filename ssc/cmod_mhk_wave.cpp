@@ -91,7 +91,7 @@ static var_info _cm_vtab_mhk_wave[] = {
 	{ SSC_OUTPUT,			SSC_NUMBER,			"device_average_power",					"Average power production of a single device",											"kW",			"",				"MHKWave",			"*",						"",							"" },
 	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual energy production of array",											"kWh",			"",				"MHKWave",			"*",						"",							"" },
     { SSC_OUTPUT,           SSC_ARRAY,          "hourly_energy",                        "Hourly energy production of device",                                            "kWh",          "", "Time Series",          "wave_resource_model_choice=1",                        "",          "" },
-    { SSC_OUTPUT,           SSC_ARRAY,          "gen",                        "Device power generated",                                            "kW",          "", "Time Series",          "",                        "",          "" },
+    { SSC_OUTPUT,           SSC_ARRAY,          "gen",                        "System power generated",                                            "kW",          "", "Time Series",          "",                        "",          "" },
 
     { SSC_OUTPUT,           SSC_ARRAY,          "sig_wave_height_index_mat",            "Wave height index locations for time series",                      "m",                         "", "MHKWave",          "wave_resource_model_choice=1",                        "",          "" },
 
