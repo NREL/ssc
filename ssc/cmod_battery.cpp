@@ -428,7 +428,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                 fps.setup(8760 * step_per_hour);
                 batt_vars->forecast_price_series_dollar_per_kwh = fps.forecast_price();
                 outMarketPrice = vt.allocate("market_sell_rate_series_yr1", batt_vars->forecast_price_series_dollar_per_kwh.size());
-                for (size_t i = 0; i < batt_vars->forecast_price_series_dollar_per_kwh.size(); i++) {
+                for (i = 0; i < batt_vars->forecast_price_series_dollar_per_kwh.size(); i++) {
                     outMarketPrice[i] = (ssc_number_t)(batt_vars->forecast_price_series_dollar_per_kwh[i] * 1000.0);
                 }
 
@@ -506,7 +506,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 
                     // extend target power to lifetime internally
                     for (size_t y = 1; y < nyears; y++) {
-                        for (size_t i = 0; i < nrec; i++) {
+                        for (i = 0; i < nrec; i++) {
                             target_power.push_back(target_power[i]);
                         }
                     }
@@ -586,7 +586,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             // If only one variable was specified, use a fixed ambient temperature
             if (batt_vars->T_room.size() == 1) {
                 double T_ambient = batt_vars->T_room[0];
-                batt_vars->T_room = std::vector<double>(T_ambient, nrec);
+                batt_vars->T_room = std::vector<double>(nrec, T_ambient);
             }
 
             // Inverter settings
@@ -1020,7 +1020,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
         util_rate_data = NULL;
         if (batt_vars->ec_rate_defined) {
             util_rate_data = new rate_data();
-            rate_setup::setup(&vt, step_per_year, batt_vars->analysis_period, *util_rate_data, "cmod_batery");
+            rate_setup::setup(&vt, (int)step_per_year, batt_vars->analysis_period, *util_rate_data, "cmod_batery");
         }
         dispatch_model = new dispatch_automatic_behind_the_meter_t(battery_model, dt_hr, batt_vars->batt_minimum_SOC, batt_vars->batt_maximum_SOC,
             batt_vars->batt_current_choice, batt_vars->batt_current_charge_max, batt_vars->batt_current_discharge_max,
@@ -1730,7 +1730,7 @@ public:
                 }
             }
             batt->calculate_monthly_and_annual_outputs(*this);
-            ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, double(n_rec_single_year / 8760));
+            gen_heatmap(this, double(n_rec_single_year / 8760));
 
             // update capacity factor and annual energy
             assign("capacity_factor", var_data(static_cast<ssc_number_t>(annual_energy * 100.0 / (nameplate_in * util::hours_per_year))));
