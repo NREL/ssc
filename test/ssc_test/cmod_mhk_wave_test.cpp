@@ -162,8 +162,12 @@ TEST_F(CM_MHKWave, ReadJson_MatrixFile) {
 
 TEST_F(CM_MHKWave, ReadJson_TSFile) {
     ssc_data_unassign(data, "wave_resource_matrix");
-    std::string js = "{\"use_specific_wf_wave\": 0.0, \"wave_resource_filename_ts\": \"C:/Users/mprillim/Documents/time_series_edited.csv\", \"wave_resource_model_choice\": 1.0}";
+    const char* SSCDIR = std::getenv("SSCDIR");
+    char file[256];
+    sprintf(file, "%s\\test\\input_cases\\mhk\\time_series_edited.csv", SSCDIR);
+    std::string js = "{\"use_specific_wf_wave\": 0.0, \"wave_resource_model_choice\": 1.0}";
     auto copy = json_to_ssc_data(js.c_str());
+    ssc_data_set_string(copy, "wave_resource_filename_ts", file);
     ssc_number_t* significant_wave_height;
     ssc_number_t* wave_period;
     ssc_number_t* year;
