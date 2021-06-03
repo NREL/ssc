@@ -30,6 +30,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_battery_dispatch.h"
 #include "lib_battery_dispatch_automatic_btm.h"
 #include "lib_battery_dispatch_automatic_fom.h"
+#include "lib_battery_dispatch_pvsmoothing_fom.h"
 #include "lib_battery_dispatch_manual.h"
 #include "lib_battery_powerflow.h"
 #include "lib_power_electronics.h"
@@ -156,6 +157,24 @@ var_info vtab_battery_inputs[] = {
     { SSC_INPUT,        SSC_NUMBER,     "batt_auto_gridcharge_max_daily",              "Allowed grid charging percent per day for automated dispatch","kW",  "",                     "BatteryDispatch",       "",                           "",                             "" },
     { SSC_INPUT,        SSC_NUMBER,     "batt_look_ahead_hours",                       "Hours to look ahead in automated dispatch",              "hours",    "",                     "BatteryDispatch",       "",                           "",                             "" },
     { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_update_frequency_hours",        "Frequency to update the look-ahead dispatch",            "hours",    "",                     "BatteryDispatch",       "",                           "",                             "" },
+
+    // PV smoothing specific inputs
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_ac_lb_enable",             "Enable AC lower bound",                                 "0/1",         "",   "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=5",                           "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_ac_lb",                    "AC lower bound",                                        "fraction of nameplate",         "",                     "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=5",                           "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_ac_ub_enable",             "Enable AC upper bound",                                 "0/1",         "",   "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=5",                           "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_ac_ub",                    "AC upper bound",                                        "fraction of nameplate",         "",                     "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=5",                           "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_curtail_as_control",       "Correct up-ramp violations",                            "0/1",         "",   "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=5",                           "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_curtail_if_violation",     "Curtail violations",                                    "0/1",         "",   "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=5",                           "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_short_forecast_enable",    "Enable short term power forecast",                      "0/1",         "",   "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=5",                           "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_forecast_shift_periods",   "Forecasting window",                                    "periods of ramp intervals",         "",                     "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=5",                           "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_timestep_multiplier",      "Ramp timestep multiplier",                              "",         "",                     "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=5",                           "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_max_ramp",                 "Maximum ramp rate",                                     "% of nameplate per ramp interval",         "",                     "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=5",                           "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_soc_rest",                 "Battery resting SOC",                                   "%",         "",                     "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=5",                           "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_kp",                       "Track PV power multiplier (kp)",                        "",         "",                     "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=5",                           "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_ki",                       "Return to rest SOC multiplier (ki)",                    "",         "",                     "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=5",                           "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_kf",                       "Forecast accumulation error multiplier (kf)",           "",         "",                     "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=5",                           "",                             "" },
+
+
 
     // Dispatch forecast - optional parameters used in cmod_pvsamv1
     { SSC_INPUT,        SSC_ARRAY,      "batt_pv_clipping_forecast",                   "PV clipping forecast",                                   "kW",       "",                     "BatteryDispatch",       "",  "",          "" },
@@ -424,46 +443,64 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             // Front of meter
             if (batt_vars->batt_meter_position == dispatch_t::FRONT)
             {
-                forecast_price_signal fps(&vt);
-                fps.setup(8760 * step_per_hour);
-                batt_vars->forecast_price_series_dollar_per_kwh = fps.forecast_price();
-                outMarketPrice = vt.allocate("market_sell_rate_series_yr1", batt_vars->forecast_price_series_dollar_per_kwh.size());
-                for (i = 0; i < batt_vars->forecast_price_series_dollar_per_kwh.size(); i++) {
-                    outMarketPrice[i] = (ssc_number_t)(batt_vars->forecast_price_series_dollar_per_kwh[i] * 1000.0);
+                if (batt_vars->batt_dispatch == dispatch_t::FOM_PV_SMOOTHING) {
+                    batt_vars->batt_dispatch_pvs_ac_lb_enable = vt.as_boolean("batt_dispatch_pvs_ac_lb_enable");
+                    batt_vars->batt_dispatch_pvs_ac_lb = vt.as_double("batt_dispatch_pvs_ac_lb");
+                    batt_vars->batt_dispatch_pvs_ac_ub_enable = vt.as_boolean("batt_dispatch_pvs_ac_ub_enable");
+                    batt_vars->batt_dispatch_pvs_ac_ub = vt.as_double("batt_dispatch_pvs_ac_ub");
+                    batt_vars->batt_dispatch_pvs_curtail_as_control = vt.as_boolean("batt_dispatch_pvs_curtail_as_control");
+                    batt_vars->batt_dispatch_pvs_curtail_if_violation = vt.as_boolean("batt_dispatch_pvs_curtail_if_violation");
+                    batt_vars->batt_dispatch_pvs_short_forecast_enable = vt.as_boolean("batt_dispatch_pvs_short_forecast_enable");
+                    batt_vars->batt_dispatch_pvs_forecast_shift_periods = vt.as_double("batt_dispatch_pvs_forecast_shift_periods");
+                    batt_vars->batt_dispatch_pvs_timestep_multiplier = vt.as_double("batt_dispatch_pvs_timestep_multiplier");
+                    batt_vars->batt_dispatch_pvs_max_ramp = vt.as_double("batt_dispatch_pvs_max_ramp");
+                    batt_vars->batt_dispatch_pvs_soc_rest = vt.as_double("batt_dispatch_pvs_soc_rest");
+                    batt_vars->batt_dispatch_pvs_kp = vt.as_double("batt_dispatch_pvs_kp");
+                    batt_vars->batt_dispatch_pvs_ki = vt.as_double("batt_dispatch_pvs_ki");
+                    batt_vars->batt_dispatch_pvs_kf = vt.as_double("batt_dispatch_pvs_kf");
                 }
+                else {
+                    forecast_price_signal fps(&vt);
+                    fps.setup(8760 * step_per_hour);
+                    batt_vars->forecast_price_series_dollar_per_kwh = fps.forecast_price();
+                    outMarketPrice = vt.allocate("market_sell_rate_series_yr1", batt_vars->forecast_price_series_dollar_per_kwh.size());
+                    for (i = 0; i < batt_vars->forecast_price_series_dollar_per_kwh.size(); i++) {
+                        outMarketPrice[i] = (ssc_number_t)(batt_vars->forecast_price_series_dollar_per_kwh[i] * 1000.0);
+                    }
 
-                // For automated front of meter with electricity rates
-                batt_vars->ec_rate_defined = false;
-                if (vt.is_assigned("en_electricity_rates")) { // Only defined for singleowner
-                    if (vt.as_integer("en_electricity_rates"))
-                    {
-                        batt_vars->ec_use_realtime = vt.as_boolean("ur_en_ts_sell_rate");
-                        if (!batt_vars->ec_use_realtime) {
-                            batt_vars->ec_weekday_schedule = vt.as_matrix_unsigned_long("ur_ec_sched_weekday");
-                            batt_vars->ec_weekend_schedule = vt.as_matrix_unsigned_long("ur_ec_sched_weekend");
-                            batt_vars->ec_tou_matrix = vt.as_matrix("ur_ec_tou_mat");
+                    // For automated front of meter with electricity rates
+                    batt_vars->ec_rate_defined = false;
+                    if (vt.is_assigned("en_electricity_rates")) { // Only defined for singleowner
+                        if (vt.as_integer("en_electricity_rates"))
+                        {
+                            batt_vars->ec_use_realtime = vt.as_boolean("ur_en_ts_sell_rate");
+                            if (!batt_vars->ec_use_realtime) {
+                                batt_vars->ec_weekday_schedule = vt.as_matrix_unsigned_long("ur_ec_sched_weekday");
+                                batt_vars->ec_weekend_schedule = vt.as_matrix_unsigned_long("ur_ec_sched_weekend");
+                                batt_vars->ec_tou_matrix = vt.as_matrix("ur_ec_tou_mat");
+                            }
+                            else {
+                                batt_vars->ec_realtime_buy = vt.as_vector_double("ur_ts_buy_rate");
+                            }
+                            batt_vars->ec_rate_defined = true;
                         }
                         else {
-                            batt_vars->ec_realtime_buy = vt.as_vector_double("ur_ts_buy_rate");
+                            batt_vars->ec_use_realtime = true;
+                            batt_vars->ec_realtime_buy = batt_vars->forecast_price_series_dollar_per_kwh;
                         }
-                        batt_vars->ec_rate_defined = true;
                     }
-                    else {
-                        batt_vars->ec_use_realtime = true;
-                        batt_vars->ec_realtime_buy = batt_vars->forecast_price_series_dollar_per_kwh;
-                    }
-                }
 
-                if (batt_vars->batt_dispatch == dispatch_t::FOM_LOOK_AHEAD ||
-                    batt_vars->batt_dispatch == dispatch_t::FOM_FORECAST ||
-                    batt_vars->batt_dispatch == dispatch_t::FOM_LOOK_BEHIND)
-                {
-                    batt_vars->batt_look_ahead_hours = vt.as_unsigned_long("batt_look_ahead_hours");
-                    batt_vars->batt_dispatch_update_frequency_hours = vt.as_double("batt_dispatch_update_frequency_hours");
-                }
-                else if (batt_vars->batt_dispatch == dispatch_t::FOM_CUSTOM_DISPATCH)
-                {
-                    batt_vars->batt_custom_dispatch = vt.as_vector_double("batt_custom_dispatch");
+                    if (batt_vars->batt_dispatch == dispatch_t::FOM_LOOK_AHEAD ||
+                        batt_vars->batt_dispatch == dispatch_t::FOM_FORECAST ||
+                        batt_vars->batt_dispatch == dispatch_t::FOM_LOOK_BEHIND)
+                    {
+                        batt_vars->batt_look_ahead_hours = vt.as_unsigned_long("batt_look_ahead_hours");
+                        batt_vars->batt_dispatch_update_frequency_hours = vt.as_double("batt_dispatch_update_frequency_hours");
+                    }
+                    else if (batt_vars->batt_dispatch == dispatch_t::FOM_CUSTOM_DISPATCH)
+                    {
+                        batt_vars->batt_custom_dispatch = vt.as_vector_double("batt_custom_dispatch");
+                    }
                 }
             }
             // Automated behind-the-meter
@@ -989,30 +1026,52 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
         if (batt_vars->ec_rate_defined) {
             utilityRate = new UtilityRate(batt_vars->ec_use_realtime, batt_vars->ec_weekday_schedule, batt_vars->ec_weekend_schedule, batt_vars->ec_tou_matrix, batt_vars->ec_realtime_buy);
         }
-        dispatch_model = new dispatch_automatic_front_of_meter_t(battery_model, dt_hr, batt_vars->batt_minimum_SOC, batt_vars->batt_maximum_SOC,
-            batt_vars->batt_current_choice, batt_vars->batt_current_charge_max, batt_vars->batt_current_discharge_max,
-            batt_vars->batt_power_charge_max_kwdc, batt_vars->batt_power_discharge_max_kwdc,
-            batt_vars->batt_power_charge_max_kwac, batt_vars->batt_power_discharge_max_kwac,
-            batt_vars->batt_minimum_modetime,
-            batt_vars->batt_dispatch, batt_vars->batt_meter_position,
-            nyears, batt_vars->batt_look_ahead_hours, batt_vars->batt_dispatch_update_frequency_hours,
-            batt_vars->batt_dispatch_auto_can_charge, batt_vars->batt_dispatch_auto_can_clipcharge, batt_vars->batt_dispatch_auto_can_gridcharge, batt_vars->batt_dispatch_auto_can_fuelcellcharge,
-            batt_vars->inverter_paco, batt_vars->batt_cost_per_kwh,
-            batt_vars->batt_cycle_cost_choice, batt_vars->batt_cycle_cost,
-            batt_vars->forecast_price_series_dollar_per_kwh, utilityRate,
-            eta_pvcharge, eta_gridcharge, eta_discharge);
 
-        if (batt_vars->batt_dispatch == dispatch_t::CUSTOM_DISPATCH)
-        {
-            if (dispatch_automatic_front_of_meter_t* dispatch_fom = dynamic_cast<dispatch_automatic_front_of_meter_t*>(dispatch_model))
+        // PV Smoothing dispatch model
+        if (batt_vars->batt_dispatch == dispatch_t::FOM_PV_SMOOTHING) {
+            dispatch_model = new dispatch_pvsmoothing_front_of_meter_t(battery_model, dt_hr, batt_vars->batt_minimum_SOC, batt_vars->batt_maximum_SOC,
+                batt_vars->batt_current_choice, batt_vars->batt_current_charge_max, batt_vars->batt_current_discharge_max,
+                batt_vars->batt_power_charge_max_kwdc, batt_vars->batt_power_discharge_max_kwdc,
+                batt_vars->batt_power_charge_max_kwac, batt_vars->batt_power_discharge_max_kwac,
+                batt_vars->batt_minimum_modetime,
+                batt_vars->batt_dispatch, batt_vars->batt_meter_position,
+                nyears, batt_vars->batt_look_ahead_hours, batt_vars->batt_dispatch_update_frequency_hours,
+                batt_vars->batt_dispatch_auto_can_charge, batt_vars->batt_dispatch_auto_can_clipcharge, batt_vars->batt_dispatch_auto_can_gridcharge, batt_vars->batt_dispatch_auto_can_fuelcellcharge,
+                batt_vars->inverter_paco, batt_vars->batt_cost_per_kwh,
+                batt_vars->batt_cycle_cost_choice, batt_vars->batt_cycle_cost,
+                eta_pvcharge, eta_gridcharge, eta_discharge,
+                batt_vars->batt_dispatch_pvs_ac_lb, batt_vars->batt_dispatch_pvs_ac_lb_enable, batt_vars->batt_dispatch_pvs_ac_ub,
+                batt_vars->batt_dispatch_pvs_ac_ub_enable, batt_vars->batt_dispatch_pvs_curtail_as_control, batt_vars->batt_dispatch_pvs_curtail_if_violation,
+                batt_vars->batt_dispatch_pvs_forecast_shift_periods, batt_vars->batt_dispatch_pvs_kf, batt_vars->batt_dispatch_pvs_ki, batt_vars->batt_dispatch_pvs_kp,
+                batt_vars->batt_dispatch_pvs_max_ramp, batt_vars->batt_dispatch_pvs_short_forecast_enable,
+                batt_vars->batt_dispatch_pvs_soc_rest, batt_vars->batt_dispatch_pvs_timestep_multiplier);
+
+        }
+        else {
+            dispatch_model = new dispatch_automatic_front_of_meter_t(battery_model, dt_hr, batt_vars->batt_minimum_SOC, batt_vars->batt_maximum_SOC,
+                batt_vars->batt_current_choice, batt_vars->batt_current_charge_max, batt_vars->batt_current_discharge_max,
+                batt_vars->batt_power_charge_max_kwdc, batt_vars->batt_power_discharge_max_kwdc,
+                batt_vars->batt_power_charge_max_kwac, batt_vars->batt_power_discharge_max_kwac,
+                batt_vars->batt_minimum_modetime,
+                batt_vars->batt_dispatch, batt_vars->batt_meter_position,
+                nyears, batt_vars->batt_look_ahead_hours, batt_vars->batt_dispatch_update_frequency_hours,
+                batt_vars->batt_dispatch_auto_can_charge, batt_vars->batt_dispatch_auto_can_clipcharge, batt_vars->batt_dispatch_auto_can_gridcharge, batt_vars->batt_dispatch_auto_can_fuelcellcharge,
+                batt_vars->inverter_paco, batt_vars->batt_cost_per_kwh,
+                batt_vars->batt_cycle_cost_choice, batt_vars->batt_cycle_cost,
+                batt_vars->forecast_price_series_dollar_per_kwh, utilityRate,
+                eta_pvcharge, eta_gridcharge, eta_discharge);
+
+            if (batt_vars->batt_dispatch == dispatch_t::FOM_CUSTOM_DISPATCH)
             {
-                if (batt_vars->batt_custom_dispatch.size() != 8760 * step_per_hour) {
-                    throw exec_error("battery", "Invalid custom dispatch length, must be 8760 * steps_per_hour.");
+                if (dispatch_automatic_front_of_meter_t* dispatch_fom = dynamic_cast<dispatch_automatic_front_of_meter_t*>(dispatch_model))
+                {
+                    if (batt_vars->batt_custom_dispatch.size() != 8760 * step_per_hour) {
+                        throw exec_error("battery", "Invalid custom dispatch length, must be 8760 * steps_per_hour.");
+                    }
+                    dispatch_fom->set_custom_dispatch(batt_vars->batt_custom_dispatch);
                 }
-                dispatch_fom->set_custom_dispatch(batt_vars->batt_custom_dispatch);
             }
         }
-
     }
     /*! Behind-the-meter automated dispatch for peak shaving */
     else

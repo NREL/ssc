@@ -200,6 +200,23 @@ struct batt_variables
 	/* Battery cycle costs */
 	int batt_cycle_cost_choice;
     std::vector<double> batt_cycle_cost;
+
+    /* PV Smoothing */
+    bool batt_dispatch_pvs_ac_lb_enable;
+    ssc_number_t batt_dispatch_pvs_ac_lb;
+    bool batt_dispatch_pvs_ac_ub_enable;
+    ssc_number_t batt_dispatch_pvs_ac_ub;
+    bool batt_dispatch_pvs_curtail_as_control;
+    bool batt_dispatch_pvs_curtail_if_violation;
+    bool batt_dispatch_pvs_short_forecast_enable;
+    ssc_number_t batt_dispatch_pvs_forecast_shift_periods;
+    ssc_number_t batt_dispatch_pvs_timestep_multiplier;
+    ssc_number_t batt_dispatch_pvs_max_ramp;
+    ssc_number_t batt_dispatch_pvs_soc_rest;
+    ssc_number_t batt_dispatch_pvs_kp;
+    ssc_number_t batt_dispatch_pvs_ki;
+    ssc_number_t batt_dispatch_pvs_kf;
+
 };
 
 struct battstor

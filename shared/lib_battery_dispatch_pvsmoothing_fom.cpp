@@ -35,30 +35,22 @@ dispatch_pvsmoothing_front_of_meter_t::dispatch_pvsmoothing_front_of_meter_t(
 	double etaPVCharge,
 	double etaGridCharge,
 	double etaDischarge,
-    // PVSmoothing inputs
     double batt_dispatch_pvs_ac_lb,
     bool batt_dispatch_pvs_ac_lb_enable,
     double batt_dispatch_pvs_ac_ub,
     bool batt_dispatch_pvs_ac_ub_enable,
     // check conversion from fraction of system nameplate from Python code
-    double batt_dispatch_pvs_battery_energy,
-    double batt_dispatch_pvs_battery_power,
-    double batt_dispatch_pvs_battery_rte,
     bool batt_dispatch_pvs_curtail_as_control,
     bool batt_dispatch_pvs_curtail_if_violation,
     double batt_dispatch_pvs_forecast_shift_periods, // may be int or size_t
-    double batt_dispatch_pvs_interconnection_limit,
     double batt_dispatch_pvs_kf,
     double batt_dispatch_pvs_ki,
     double batt_dispatch_pvs_kp,
     // percent of nameplate or kWh
     double batt_dispatch_pvs_max_ramp,
-    double batt_dispatch_pvs_nameplate_ac, // basis for all energy and power values in Python code and cmod_pvsmoothing
-    double batt_dispatch_pvs_ramp_interval, // int or size_t
     bool batt_dispatch_pvs_short_forecast_enable,
     double batt_dispatch_pvs_soc_rest,
-    double batt_dispatch_pvs_timestep_multiplier, // probable should be restricted to be a reasonable weather file timestep multiplier
-    double batt_dispatch_pvs_wf_timestep // most likely dt above
+    double batt_dispatch_pvs_timestep_multiplier // probable should be restricted to be a reasonable weather file timestep multiplier
 
 ) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max_kwdc, Pd_max_kwdc, Pc_max_kwac, Pd_max_kwac,
 		t_min, dispatch_mode, pv_dispatch, nyears, look_ahead_hours, dispatch_update_frequency_hours, can_charge, can_clip_charge, can_grid_charge, can_fuelcell_charge,
