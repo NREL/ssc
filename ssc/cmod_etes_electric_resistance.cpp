@@ -84,8 +84,8 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
 
     // TES
         // Performance
-/*new*/    { SSC_INPUT,  SSC_NUMBER, "tes_fl_code",                   "Receiver HTF, 17=Salt (60% NaNO3, 40% KNO3) 10=Salt (46.5% LiF 11.5% NaF 42% KF) 50=Lookup tables", "", "",           "Thermal Storage",                                      "*",                                                                "",              ""},
-/*new*/    { SSC_INPUT,  SSC_MATRIX, "ud_tes_fl_props",               "User-defined TES fluid property data",                           "-",            "",                                  "Thermal Storage",                                      "*",                                                                "",              ""},
+/*new*/    { SSC_INPUT,  SSC_NUMBER, "hot_htf_code",                   "Receiver HTF, 17=Salt (60% NaNO3, 40% KNO3) 10=Salt (46.5% LiF 11.5% NaF 42% KF) 50=Lookup tables", "", "",           "Thermal Storage",                                      "*",                                                                "",              ""},
+/*new*/    { SSC_INPUT,  SSC_MATRIX, "ud_hot_htf_props",               "User-defined TES fluid property data",                           "-",            "",                                  "Thermal Storage",                                      "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "csp.pt.tes.init_hot_htf_percent", "Initial fraction of available volume that is hot",              "%",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "h_tank",                        "Total height of tank (height of HTF when tank is full)",        "m",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "cold_tank_max_heat",            "Rated heater capacity for cold tank heating",                   "MW",           "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
@@ -261,8 +261,8 @@ public:
         double gross_net_conversion_factor = as_double("gross_net_conversion_factor");
 
         // TES parameters
-        int tes_fl_code = as_integer("tes_fl_code");
-        util::matrix_t<double> ud_tes_fl_props = as_matrix("ud_tes_fl_props");
+        int hot_htf_code = as_integer("hot_htf_code");
+        util::matrix_t<double> ud_hot_htf_props = as_matrix("ud_hot_htf_props");
 
         // System Design Calcs
         double q_dot_pc_des = W_dot_cycle_des / eta_cycle;      //[MWt]
@@ -335,8 +335,8 @@ public:
             pc->m_startup_time = as_double("startup_time");
             pc->m_startup_frac = as_double("startup_frac");
             pc->m_htf_pump_coef = as_double("pb_pump_coef");
-            pc->m_pc_fl = tes_fl_code;      
-            pc->m_pc_fl_props = ud_tes_fl_props;
+            pc->m_pc_fl = hot_htf_code;      
+            pc->m_pc_fl_props = ud_hot_htf_props;
 
             if (pb_tech_type == 0)
             {
@@ -412,7 +412,7 @@ public:
         double hrs_startup_at_max_rate = 0.25;  //[hr]
         C_csp_cr_electric_resistance c_electric_resistance(T_htf_cold_des, T_htf_hot_des, q_dot_heater_des,
             f_q_dot_des_allowable_su, hrs_startup_at_max_rate,
-            tes_fl_code, ud_tes_fl_props);
+            hot_htf_code, ud_hot_htf_props);
 
         // Test init()
         //C_csp_collector_receiver::S_csp_cr_init_inputs init_inputs;
@@ -432,10 +432,10 @@ public:
         // TES
         C_csp_two_tank_tes storage;
         C_csp_two_tank_tes::S_params* tes = &storage.ms_params;
-        tes->m_field_fl = tes_fl_code;
-        tes->m_field_fl_props = ud_tes_fl_props;
-        tes->m_tes_fl = tes_fl_code;
-        tes->m_tes_fl_props = ud_tes_fl_props;
+        tes->m_field_fl = hot_htf_code;
+        tes->m_field_fl_props = ud_hot_htf_props;
+        tes->m_tes_fl = hot_htf_code;
+        tes->m_tes_fl_props = ud_hot_htf_props;
         tes->m_is_hx = false;                       // ETES assumes direct storage, so no user input required here: hardcode = false
         tes->m_W_dot_pc_design = W_dot_cycle_des;   //[MWe]
         tes->m_eta_pc = eta_cycle;                  //[-]

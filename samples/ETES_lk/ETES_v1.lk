@@ -9,6 +9,11 @@ var( 'is_dispatch', 1 );
 
 var( 'tshours', 10 );
 var( 'heater_mult', 2.3999999999999999 );
+// Choose financial mode
+var( 'ppa_soln_mode', 0 );			// 0: calc ppa price to get flip target percent (irr), 1: use ppa price input
+var( 'ppa_price_input', [ 0.06 ] );
+var( 'flip_target_percent', 11 );
+
 
 var( 'T_htf_cold_des', 290 );
 var( 'T_htf_hot_des', 574 );
@@ -60,7 +65,7 @@ var( 'solar_resource_file', '../../test/input_cases/moltensalt_data/daggett_ca_3
 var( 'gross_net_conversion_factor', 0.90000000000000002 );
 
 var( 'cycle_spec_cost', 1040 );
-var( 'heater_spec_cost', var('cycle_spec_cost')/10.0 );
+var( 'heater_spec_cost', var('cycle_spec_cost')*0.1);
 var( 'tes_spec_cost', 22 );
 var( 'bop_spec_cost', 0.0 );
 var( 'contingency_rate', 7 );
@@ -163,8 +168,11 @@ var( 'adjust:constant', 4 );
 
 
 var( 'system_use_lifetime_output', 0 );		// from Degradation page
-var( 'ppa_soln_mode', 0 );
-var( 'ppa_price_input', [ 0.13 ] );
+
+
+
+
+
 var( 'ppa_escalation', 1 );
 var( 'federal_tax_rate', [ 21 ] );
 var( 'state_tax_rate', [ 7 ] );
@@ -352,7 +360,7 @@ var( 'cost_debt_fee', 2.75 );
 var( 'months_working_reserve', 6 );
 var( 'months_receivables_reserve', 0 );
 var( 'cost_other_financing', 0 );
-var( 'flip_target_percent', 11 );
+
 var( 'flip_target_year', 20 );
 var( 'pbi_fed_for_ds', 0 );
 var( 'pbi_sta_for_ds', 0 );
@@ -384,7 +392,7 @@ outputs{"q_dot_dc_tes"} = var("q_dot_dc_tes");
 outputs{"q_dot_ch_tes"} = var("q_dot_ch_tes");
 outputs{"e_ch_tes"} = var("e_ch_tes");
 
-//Dipsatch outputs
+//Dispatch outputs
 outputs{"q_pc_target"} = var("q_pc_target");
 outputs{"disp_qsfprod_expect"} = var("disp_qsfprod_expect");
 outputs{"disp_qsfsu_expect"} = var("disp_qsfsu_expect");
@@ -403,7 +411,15 @@ csvwrite("outputs.csv", outputs);
 
 run('singleowner');
 
+outln("annual_energy ", var("annual_energy"));
+outln("heater spec cost ", var('heater_spec_cost'));
+outln("annual_E_cycle_gross ", var("annual_E_cycle_gross"));
 outln("Project after-tax IRR ", var('project_return_aftertax_irr'));
 outln("Project after-tax NPV ", var('project_return_aftertax_npv'));
+outln("ppa ", var('ppa'));
+outln("lppa_real ", var('lppa_real'));
+outln("lppa_nom ", var('lppa_nom'));
+outln("total_installed_cost ", var('total_installed_cost'));
+
 
 

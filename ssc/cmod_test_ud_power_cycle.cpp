@@ -7,7 +7,7 @@ static var_info _cm_vtab_test_ud_power_cycle[] = {
 	/*   VARTYPE   DATATYPE         NAME               LABEL                                          UNITS     META  GROUP REQUIRED_IF CONSTRAINTS         UI_HINTS*/
 	{SSC_INPUT, SSC_NUMBER, "q_pb_design", "Design point power block thermal power", "MWt", "", "", "", "", ""},
 
-	{SSC_OUTPUT, SSC_NUMBER, "W_dot_fossil", "Electric output with no solar contribution", "MWe", "", "", "", "", ""},
+	{SSC_OUTPUT, SSC_MATRIX, "udpc_table_out", "udpc table defined in cmod", "", "", "", "", "", ""},
 
 	var_info_invalid};
 
@@ -24,12 +24,12 @@ public:
 	{
         // Setup independent variable combinations
             // HTF inlet temperature
-        double T_htf_des = 565.0;   //[C]
+        double T_htf_des_table = 565.0;   //[C]
         double T_htf_low = 545.0;   //[C]
         double T_htf_high = 575.0;  //[C]
         size_t n_T_htf = 7;
         double dT_T_htf = (T_htf_high - T_htf_low) / (double)(n_T_htf - 1);
-        std::vector<double> T_htf_levels = std::vector<double>{ T_htf_low, T_htf_des, T_htf_high };
+        std::vector<double> T_htf_levels = std::vector<double>{ T_htf_low, T_htf_des_table, T_htf_high };
 
             // HTF mass flow rate
         double m_dot_htf_ND_des = 1.0;     //[-] By definition, ND design mass flow is 1.0
@@ -40,12 +40,12 @@ public:
         std::vector<double> m_dot_htf_ND_levels = std::vector<double>{ m_dot_htf_ND_low, m_dot_htf_ND_des, m_dot_htf_ND_high };
 
             // Ambient temperature
-        double T_amb_des = 35.0;    //[C]
+        double T_amb_des_table = 35.0;    //[C]
         double T_amb_low = 0.0;     //[C]
         double T_amb_high = 45.0;   //[C]
         size_t n_T_amb = 10;
         double dT_T_amb = (T_amb_high - T_amb_low) / (double)(n_T_amb - 1);
-        std::vector<double> T_amb_levels = std::vector<double>{ T_amb_low, T_amb_des, T_amb_high };
+        std::vector<double> T_amb_levels = std::vector<double>{ T_amb_low, T_amb_des_table, T_amb_high };
 
         size_t n_levels = 3;    // changing levels would require generalizing interpolation routines
         size_t n_total = n_levels * (n_T_htf + n_m_dot_htf_ND + n_T_amb);
@@ -56,14 +56,14 @@ public:
             for (size_t j = 0; j < n_T_htf; j++) {
                 udpc_data_full(k,C_ud_power_cycle::E_COL_T_HTF) = T_htf_low + j*dT_T_htf;
                 udpc_data_full(k,C_ud_power_cycle::E_COL_M_DOT) = m_dot_htf_ND_levels[i];
-                udpc_data_full(k,C_ud_power_cycle::E_COL_T_AMB) = T_amb_des;
+                udpc_data_full(k,C_ud_power_cycle::E_COL_T_AMB) = T_amb_des_table;
                 k++;
             }
         }
 
         for (size_t i = 0; i < n_levels; i++) {
             for (size_t j = 0; j < n_m_dot_htf_ND; j++) {
-                udpc_data_full(k, C_ud_power_cycle::E_COL_T_HTF) = T_htf_des;
+                udpc_data_full(k, C_ud_power_cycle::E_COL_T_HTF) = T_htf_des_table;
                 udpc_data_full(k, C_ud_power_cycle::E_COL_M_DOT) = m_dot_htf_ND_low + j*dT_m_dot_htf_ND;
                 udpc_data_full(k, C_ud_power_cycle::E_COL_T_AMB) = T_amb_levels[i];
                 k++;
@@ -95,8 +95,9 @@ public:
         }
 
         // Use example endo-reversible cycle model to calculate cycle performance
-        double adjust = 10.0;
-        C_endo_rev_cycle c_cycle(T_htf_des + adjust, T_amb_des + adjust);
+        double T_htf_des_cycle = T_htf_des_table + 10.0;
+        double T_amb_des_cycle = T_amb_des_table + 10.0;
+        C_endo_rev_cycle c_cycle(T_htf_des_cycle, T_amb_des_cycle);
 
         for (size_t i = 0; i < udpc_data_full.nrows(); i++) {
             c_cycle.performance(udpc_data_full(i, C_ud_power_cycle::E_COL_T_HTF),
@@ -107,6 +108,10 @@ public:
                 udpc_data_full(i, C_ud_power_cycle::E_COL_W_COOL),
                 udpc_data_full(i, C_ud_power_cycle::E_COL_M_H2O));
         }
+
+        // Set udpc table output to udpc table defined using endo-reversible cycle model
+        util::matrix_t<ssc_number_t>& udpc_out = allocate_matrix("udpc_table_out", udpc_data_full.nrows(), 7);
+        udpc_out = udpc_data_full;
 
         // Initialize UDPC model with cycle performance data table
         C_ud_power_cycle c_udpc;
@@ -124,47 +129,13 @@ public:
 
 
         // Sample UPDC model
-            // at design point
-        double W_dot_ND_calc = c_udpc.get_W_dot_gross_ND(T_htf_des, T_amb_des, 1.0);
-        W_dot_ND_calc = c_udpc.get_W_dot_gross_ND(T_htf_des + adjust, T_amb_des + adjust, 1.0);
+            // at *table* design point
+        double W_dot_ND_calc = c_udpc.get_W_dot_gross_ND(T_htf_des_table, T_amb_des_table, 1.0);
+        double m_dot_ND_calc = c_udpc.get_m_dot_water_ND(T_htf_des_table, T_amb_des_table, 1.0);
 
-        double abce = 1.23;
-
-		/*C_ud_power_cycle c_pc;
-
-		c_pc.init(a_table, a_ref, a_low, a_high,
-				b_table, b_ref, b_low, b_high,
-				c_table, c_ref, c_low, c_high);
-
-		int n_test = N_runs*N_runs*N_runs;
-		
-		std::vector<double> Y_actual(n_test);
-		std::vector<double> Y_reg(n_test);
-		std::vector<double> E_reg_less_act(n_test);
-
-		double max_err = -1.0;
-
-		for(int i = 0; i < N_runs; i++)
-		{
-			for(int j = 0; j < N_runs; j++)
-			{
-				for(int k = 0; k < N_runs; k++)
-				{
-					int index = i*N_runs*N_runs + j*N_runs + k;
-
-					Y_actual[index] = three_var_eqn(a_table(i,0),b_table(j,0),c_table(k,0));
-
-					Y_reg[index] = c_pc.get_W_dot_gross_ND(a_table(i,0),b_table(j,0),c_table(k,0))*Y_ref;
-
-					E_reg_less_act[index] = (Y_reg[index] - Y_actual[index])/fmax(Y_actual[index],0.0001);
-
-					if(fabs(E_reg_less_act[index]) > max_err)
-					{
-						max_err = fabs(E_reg_less_act[index]);
-					}
-				}
-			}
-		}*/
+            // at *cycle* design point
+        W_dot_ND_calc = c_udpc.get_W_dot_gross_ND(T_htf_des_cycle, T_amb_des_cycle, 1.0);
+        m_dot_ND_calc = c_udpc.get_m_dot_water_ND(T_htf_des_cycle, T_amb_des_cycle, 1.0);
 	}
 
     class C_endo_rev_cycle
@@ -196,7 +167,7 @@ public:
         {
             // Set constant cooling and water
             W_dot_cooling_ND = 1.0;
-            m_dot_water_ND = 1.0;
+            m_dot_water_ND = 0.0;
 
             // Assume heat rate proportional to mass flow
             // And no ambient temperature dependence
