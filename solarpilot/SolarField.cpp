@@ -1396,17 +1396,19 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData *wdata, bool ref
         
 		//Simulate the default design point to ensure equal comparison
         vector<string> vdata = split(Ambient::getDefaultSimStep(), ",");
-        int hour, dom, month;
+        int hour, dom, month, dayofyear, year;
         to_integer(vdata.at(0), &dom);
         to_integer(vdata.at(1), &hour);
         to_integer(vdata.at(2), &month);
+        to_integer(vdata.at(3), &dayofyear);
+        to_integer(vdata.at(4), &year);
         sim_params P;
         //dni, T, P, V, Wt
-        to_double(vdata.at(3), &P.dni);
-        to_double(vdata.at(4), &P.Tamb);
-        to_double(vdata.at(5), &P.Patm);
-        to_double(vdata.at(6), &P.Vwind);
-        to_double(vdata.at(7), &P.Simweight);
+        to_double(vdata.at(5), &P.dni);
+        to_double(vdata.at(6), &P.Tamb);
+        to_double(vdata.at(7), &P.Patm);
+        to_double(vdata.at(8), &P.Vwind);
+        to_double(vdata.at(9), &P.Simweight);
         P.is_layout = true;
         
         DTobj dt;
@@ -1414,6 +1416,8 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData *wdata, bool ref
         dt._mday = dom;
         dt._hour = hour;
         dt._month = month;
+        dt._yday = dayofyear;
+        dt._year = year;
 
         //Calculate the sun position vector
         double az, zen;

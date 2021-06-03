@@ -129,16 +129,18 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
 	{  //2) Single design point=1;
 		V.amb.sim_time_step.Setval(0.);
         vector<string> vdata = split(Ambient::getDefaultSimStep(), ",");
-        int hour, dom, month;
+        int hour, dom, month, dayofyear, year;
         to_integer(vdata.at(0), &dom);
         to_integer(vdata.at(1), &hour);
         to_integer(vdata.at(2), &month);
+        to_integer(vdata.at(3), &dayofyear);
+        to_integer(vdata.at(4), &year);
         sim_params P;
         //dni, T, P, V, Wt
-        to_double(vdata.at(3), &P.dni);
-        to_double(vdata.at(4), &P.Tamb);
-        to_double(vdata.at(5), &P.Patm);
-        to_double(vdata.at(6), &P.Vwind);
+        to_double(vdata.at(5), &P.dni);
+        to_double(vdata.at(6), &P.Tamb);
+        to_double(vdata.at(7), &P.Patm);
+        to_double(vdata.at(8), &P.Vwind);
 
         //calculate total annual DNI energy
         P.Simweight = 0.;

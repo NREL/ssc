@@ -36,7 +36,7 @@ using namespace std;
 
 //-------------------------------AMBIENT CLASS------------------------------------
 
-string Ambient::getDefaultSimStep(){return "20,12,3,950,25,1,0,1";}	//d.o.m., hour, month, dni, pressure, wind, weight factor
+string Ambient::getDefaultSimStep(){return "20,12,3,80,2000,950,25,1,0,1";}	//d.o.m., hour, month, d.o.y., year, dni, pressure, wind, weight factor
 
 
 //----------Calculation methods----------
