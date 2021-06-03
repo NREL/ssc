@@ -197,7 +197,7 @@ public:
     ssc_number_t get_number(var_data* v, const char* name);
 
     ssc_number_t* get_vector(var_data* v, const char* name, size_t* len);
-    util::matrix_t<double> wavedata::get_matrix(var_data* v, const char* var_name, size_t* nrows, size_t* ncols);
+    util::matrix_t<double> get_matrix(var_data* v, const char* var_name, size_t* nrows, size_t* ncols);
     std::string get_string(var_data* v, const char* name);
 
     std::string get_stdErrorMsg() { return stdErrorMsg; };
@@ -534,7 +534,6 @@ public:
                 day = wave_dp->wave_day();
                 hour = wave_dp->wave_hour();
                 minute = wave_dp->wave_minute();
-                const int timecheck_size = number_records;
                 int hour0 = 0;
                 int hour1 = 3;
                 int hourdiff = 3;
@@ -572,10 +571,10 @@ public:
             ssc_number_t* p_annual_energy_dist = allocate("annual_energy_distribution", wave_power_matrix.nrows(), wave_power_matrix.ncols());
             double ts_significant_wave_height, ts_energy_period;
             double resource_vect_checker = 0;
-            int iday = 0;
-            int ihour = 0;
+            size_t iday = 0;
+            size_t ihour = 0;
             bool is_leap = false;
-            int days_in_year = 366;
+            size_t days_in_year = 366;
             std::vector<int> days_in_month = { 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365 };
             if (number_records == 2928) {
                 is_leap = true;
@@ -629,10 +628,10 @@ public:
                     iday = days_in_month[size_t(month[i]) - 2] + day[i];
                 //ihour = fmod(i * 3, 24); //Calculate hour of day
                 ihour = hour[i];
-                for (size_t m = 0; m < days_in_year; m++) {
+                for (size_t d = 0; d < days_in_year; d++) {
                     for (size_t h = 0; h < 9; h++) {
-                        if (iday == m && ihour == 3 * (h - 1)) {
-                            p_annual_energy_dist_time[h * days_in_year + m] += energy_hourly[i]; //Add energy for time step to time distribution matrix at day and hour of current timestep
+                        if (iday == d && ihour == size_t(3 * (h - 1))) {
+                            p_annual_energy_dist_time[h * days_in_year + d] += energy_hourly[i]; //Add energy for time step to time distribution matrix at day and hour of current timestep
                             break; //Get out of loop once day and hour match is found
                         }
                     }
