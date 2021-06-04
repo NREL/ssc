@@ -72,6 +72,7 @@ public:
 	// calculated charges per period
 	std::vector<double>  dc_tou_charge;
 	ssc_number_t dc_flat_charge;
+    bool use_current_month_ratchet;
 
     /*!
      * Data structure organizing all of the utility usage and charges for a given month.
@@ -112,6 +113,13 @@ public:
 	std::vector<ssc_number_t> monthly_dc_fixed;
 	std::vector<ssc_number_t> monthly_dc_tou;
 
+    bool en_ec_billing_demand; // Enable billing demand lookback percentages for kWh/kW energy charges
+    std::vector<ssc_number_t> prev_peak_demand; // Set before calling init_energy_rates
+    std::vector<ssc_number_t> ec_bd_lookback_percents;
+    double ec_bd_minimum;
+    int ec_bd_lookback_months;
+    std::vector<ssc_number_t> billing_demand; // Store locally for ssc outputs
+
 	bool tou_demand_single_peak;
 
     bool en_ts_buy_rate;
@@ -133,8 +141,15 @@ public:
 	void setup_energy_rates(ssc_number_t* ec_weekday, ssc_number_t* ec_weekend, size_t ec_tou_rows, ssc_number_t* ec_tou_in, bool sell_eq_buy);
     /* Optional function if demand charges are present */
 	void setup_demand_charges(ssc_number_t* dc_weekday, ssc_number_t* dc_weekend, size_t dc_tou_rows, ssc_number_t* dc_tou_in, size_t dc_flat_rows, ssc_number_t* dc_flat_in);
+    /* Optional function if energy charges use a ratchet for the billing demand */
+    void setup_ratcheting_demand(ssc_number_t* ratchet_percent_matrix);
 
-    /* Populate ur_month objects from those filled out in setup_energy_rates. Called annually in cmod_utility_rate5, other classes may reset ur_month directly */
+    void setup_prev_demand(ssc_number_t* prev_demand);
+    /* call ur_month.update_net_and_peak before this, otherwise you'll get low values back */
+    double get_billing_demand(int month);
+
+    /* Populate ur_month objects from those filled out in setup_energy_rates. Called annually in cmod_utility_rate5, other classes may reset ur_month directly
+       Can be called right away to create the vectors, but for kWh/kW rates needs to be called once after ur_month.update_net_and_peak to be accurate */
     void init_energy_rates(bool gen_only);
 
 	// Runs each step
@@ -148,6 +163,8 @@ public:
     // Returns error codes so compute module can print errors. 0: no error, 10x: error in previous month, 20x: error in current month. x is the period where the error occured
     int transfer_surplus(ur_month& curr_month, ur_month& prev_month); // For net metering rollovers, used between months to copy data
     void compute_surplus(ur_month& curr_month); // For net metering rollovers, used within a single month prior to cost calculations
+
+    bool has_kwh_per_kw_rate(int month);
 
 private:
     bool check_for_kwh_per_kw_rate(int units);
