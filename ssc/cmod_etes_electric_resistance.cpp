@@ -173,7 +173,14 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
     // ****************************************************************************************************************************************
     // Design Outputs here:
     // ****************************************************************************************************************************************
-    // (should these be INOUT??)
+        // System
+    { SSC_OUTPUT, SSC_NUMBER, "system_capacity",             "System capacity",                         "kWe",          "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "nameplate",                   "Nameplate capacity",                      "MWe",          "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "q_pb_design",                 "Cycle thermal input at design"            "MWt",          "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "q_dot_heater_design",         "Heater thermal output at design",         "MWt",          "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "tshours_heater",              "Hours of TES relative to heater output",  "hr",          "",                                  "System Costs",                             "*",                                                                "",              "" },
+
+        // Costs
     { SSC_OUTPUT, SSC_NUMBER, "heater_cost_calc",            "Heater cost",                             "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "tes_cost_calc",               "TES cost",                                "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "bop_cost_calc",               "BOP cost",                                "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
@@ -186,9 +193,6 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
     { SSC_OUTPUT, SSC_NUMBER, "sales_tax_cost_calc",         "Sales tax cost",                          "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "total_indirect_cost_calc",    "Total indirect cost",                     "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "installed_per_cap_cost_calc", "Installed cost per capacity",             "$/kWe",        "",                                  "System Costs",                             "*",                                                                "",              "" },
-
-
-    { SSC_OUTPUT, SSC_NUMBER, "system_capacity",               "System capacity",                       "kWe",          "",                                  "System Costs",                             "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "total_installed_cost",          "Total installed cost",                  "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "construction_financing_cost",   "Total construction financing cost",     "$",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
 
@@ -672,7 +676,15 @@ public:
             const_per_total1, const_per_total2, const_per_total3, const_per_total4, const_per_total5,
             const_per_percent_total, const_per_principal_total, const_per_interest_total, construction_financing_cost);
 
-        // Assign cmod variables required by downstream models
+        // Assign cmod variables that are required by downstream models or represent design-point
+            // System
+        assign("system_capacity", (ssc_number_t)system_capacity);           //[kWe]
+        assign("nameplate", (ssc_number_t)(system_capacity * 1.E-3));       //[MWe]
+        assign("q_pb_design", (ssc_number_t)q_dot_pc_des);                  //[MWt]
+        assign("q_dot_heater_design", (ssc_number_t)q_dot_heater_des);      //[MWt]
+        assign("tshours_heater", (ssc_number_t)(tshours / heater_mult));    //[hr]
+
+            // Costs
         assign("heater_cost_calc", (ssc_number_t)heater_cost);
         assign("tes_cost_calc", (ssc_number_t)tes_cost);
         assign("bop_cost_calc", (ssc_number_t)bop_cost);
@@ -685,7 +697,6 @@ public:
         assign("sales_tax_cost_calc", (ssc_number_t)sales_tax_cost);
         assign("total_indirect_cost_calc", (ssc_number_t)total_indirect_cost);
         assign("installed_per_cap_cost_calc", (ssc_number_t)(total_installed_cost / system_capacity));
-        assign("system_capacity", (ssc_number_t)system_capacity);     //[kWe]
         assign("total_installed_cost", (ssc_number_t)total_installed_cost);                 //[$]
         assign("construction_financing_cost", (ssc_number_t)construction_financing_cost);   //[$]
         // *****************************************************
