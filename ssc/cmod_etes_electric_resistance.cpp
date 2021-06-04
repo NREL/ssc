@@ -37,6 +37,7 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
     { SSC_INPUT,  SSC_STRING, "solar_resource_file",           "Local weather file path",                                        "",             "",                                  "Solar Resource",                    "?",                                                                "LOCAL_FILE",    ""},
 
     // Simulation Parametes
+    { SSC_INPUT,  SSC_NUMBER, "sim_type",                      "1 (default): timeseries, 2: design only",                        "",             "",                                  "System Control",                           "?=1",                                                              "",    ""},
     { SSC_INPUT,  SSC_NUMBER, "time_start",                    "Simulation start time",                                          "s",            "",                                  "System Control",                           "?=0",                                                              "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "time_stop",                     "Simulation stop time",                                           "s",            "",                                  "System Control",                           "?=31536000",                                                       "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "time_steps_per_hour",           "Number of simulation time steps per hour",                       "",             "",                                  "System Control",                           "?=-1",                                                             "",              ""},
@@ -49,7 +50,7 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
     { SSC_INPUT,  SSC_NUMBER, "P_ref",                         "Reference output electric power at design condition",            "MW",           "",                                  "System Design",                            "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "design_eff",                    "Power cycle efficiency at design",                               "none",         "",                                  "System Design",                            "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "tshours",                       "Equivalent full-load thermal storage hours",                     "hr",           "",                                  "System Design",                            "*",                                                                "",              ""},
-/*new*/    { SSC_INPUT,  SSC_NUMBER, "heater_mult",                   "Heater multiple relative to design cycle thermal power",         "-",            "",                                  "System Design",                            "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "heater_mult",                   "Heater multiple relative to design cycle thermal power",         "-",            "",                                  "System Design",                            "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "gross_net_conversion_factor",   "Estimated gross to net conversion factor",                       "",             "",                                  "System Design",                            "*",                                                                "",              ""},
 
 
@@ -82,9 +83,9 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
 
     // TES
         // Performance
-/*new*/    { SSC_INPUT,  SSC_NUMBER, "hot_htf_code",                   "Receiver HTF, 17=Salt (60% NaNO3, 40% KNO3) 10=Salt (46.5% LiF 11.5% NaF 42% KF) 50=Lookup tables", "", "",           "Thermal Storage",                                      "*",                                                                "",              ""},
-/*new*/    { SSC_INPUT,  SSC_MATRIX, "ud_hot_htf_props",               "User-defined TES fluid property data",                           "-",            "",                                  "Thermal Storage",                                      "*",                                                                "",              ""},
-    { SSC_INPUT,  SSC_NUMBER, "csp.pt.tes.init_hot_htf_percent", "Initial fraction of available volume that is hot",              "%",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "hot_htf_code",                  "Receiver HTF, 17=Salt (60% NaNO3, 40% KNO3) 10=Salt (46.5% LiF 11.5% NaF 42% KF) 50=Lookup tables", "", "",          "Thermal Storage",                          "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_MATRIX, "ud_hot_htf_props",              "User-defined TES fluid property data",                          "-",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "csp.pt.tes.init_hot_htf_percent", "Initial fraction of available volume that is hot",            "%",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "h_tank",                        "Total height of tank (height of HTF when tank is full)",        "m",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "cold_tank_max_heat",            "Rated heater capacity for cold tank heating",                   "MW",           "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "u_tank",                        "Loss coefficient from the tank",                                "W/m2-K",       "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
@@ -169,59 +170,63 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
     { SSC_INPUT,  SSC_NUMBER, "const_per_upfront_rate5",       "Upfront fee on principal, loan 5",                              "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
 
 
-
     // ****************************************************************************************************************************************
-    // Outputs here:
+    // Design Outputs here:
     // ****************************************************************************************************************************************
-        // Simulation outputs
-    { SSC_OUTPUT, SSC_ARRAY,  "time_hr",                       "Time at end of timestep",                                       "hr",           "",                                  "",                                         "*",                                                                "",              ""},
-
-        // Heater outputs
-    { SSC_OUTPUT, SSC_ARRAY,  "W_dot_heater",                  "Heater electricity consumption",                                "MWe",          "",                                  "",                                         "*",                                                                "",              ""},
-    { SSC_OUTPUT, SSC_ARRAY,  "q_dot_heater_to_htf",           "Heater thermal power to HTF",                                   "MWt",          "",                                  "",                                         "*",                                                                "",              "" },
-    { SSC_OUTPUT, SSC_ARRAY,  "q_dot_heater_startup",          "Heater thermal power consumed during startup",                  "MWt",          "",                                  "",                                         "*",                                                                "",              "" },
-
-        // TES outputs
-    { SSC_OUTPUT, SSC_ARRAY,  "q_dot_dc_tes",                  "TES discharge thermal power",                                   "MWt",          "",                                  "",                                         "*",                                                                "",              "" },
-    { SSC_OUTPUT, SSC_ARRAY,  "q_dot_ch_tes",                  "TES charge thermal power",                                      "MWt",          "",                                  "",                                         "*",                                                                "",              "" },
-    { SSC_OUTPUT, SSC_ARRAY,  "e_ch_tes",                      "TES charge state",                                              "MWht",         "",                                  "",                                         "*",                                                                "",              "" },
-    { SSC_OUTPUT, SSC_ARRAY,  "q_dot_tes_losses",              "TES thermal losses",                                            "MWt",          "",                                  "",                                         "*",                                                                "",              "" },
-    { SSC_OUTPUT, SSC_ARRAY,  "q_dot_tes_heater",              "TES freeze protection power",                                   "MWe",          "",                                  "",                                         "*",                                                                "",              "" },
-    { SSC_OUTPUT, SSC_ARRAY,  "T_tes_hot",                     "TES hot temperature",                                           "C",            "",                                  "",                                         "*",                                                                "",              "" },
-    { SSC_OUTPUT, SSC_ARRAY,  "T_tes_cold",                    "TES cold temperature",                                          "C",            "",                                  "",                                         "*",                                                                "",              "" },
-    { SSC_OUTPUT, SSC_ARRAY,  "mass_tes_cold",                 "TES cold tank mass (end)",                                      "kg",           "",                                  "",                                         "*",                                                                "",              "" },
-    { SSC_OUTPUT, SSC_ARRAY,  "mass_tes_hot",                  "TES hot tank mass (end)",                                       "kg",           "",                                  "",                                         "*",                                                                "",              "" },
-
-        // Cycle outputs
-    //{ SSC_OUTPUT, SSC_ARRAY,  "eta_cycle",                     "PC efficiency (no cooling parasitics)",                         "",             "",               "powerblock",     "*",                       "",                      "" },
-    { SSC_OUTPUT, SSC_ARRAY,  "q_dot_cycle",                   "PC thermal power",                                              "MWt",          "",               "powerblock",     "*",                       "",                      "" },
-    { SSC_OUTPUT, SSC_ARRAY,  "W_dot_cycle_gross",             "PC electrical power gross (no cooling parasitics)",             "MWe",          "",               "powerblock",     "*",                       "",                      "" },
-    { SSC_OUTPUT, SSC_ARRAY,  "q_dot_cycle_startup",           "PC startup thermal power",                                      "MWt",          "",                                  "",                                         "*",                                                                "",              "" },
-
-
-        // System outputs
-    { SSC_OUTPUT, SSC_ARRAY,  "W_dot_out_net",                 "Total electric power to grid",                                  "MWe",          "",                                  "",                                         "*",                                                                "",              ""},
-
-    { SSC_OUTPUT, SSC_ARRAY,  "gen",                           "Total electric power to grid with available derate",            "kWe",          "",                                  "",                                         "*",                                                                "",              "" },
-
-
-        // Annual single-value outputs
-    { SSC_OUTPUT, SSC_NUMBER, "annual_energy",                 "Annual total electric power to grid",                           "kWhe",         "",                                  "",                                         "*",                                                                "",              "" },
-    { SSC_OUTPUT, SSC_NUMBER, "annual_energy_full_availability","Annual total electric power to grid w/ full availability",     "MWhe",         "",                                  "",                                         "*",                                                                "",              "" },
-    { SSC_OUTPUT, SSC_NUMBER, "annual_E_heater",               "Annual heater electric energy consumption",                     "MWhe",         "",                                  "",                                         "*",                                                                "",              "" },
-    { SSC_OUTPUT, SSC_NUMBER, "annual_Q_heater_to_htf",        "Annual heater thermal power to HTF",                            "MWhe",         "",                                  "",                                         "*",                                                                "",              "" },
-    { SSC_OUTPUT, SSC_NUMBER, "annual_Q_heater_startup",       "Annual heater thermal energy consumed by startup",              "MWht",         "",                                  "",                                         "*",                                                                "",              "" },
-    { SSC_OUTPUT, SSC_NUMBER, "annual_E_tes_heater",           "Annual TES freeze heater electric energy consumption",          "MWhe",         "",                                  "",                                         "*",                                                                "",              "" },
-    { SSC_OUTPUT, SSC_NUMBER, "annual_Q_tes_losses",           "Annual TES thermal energy lost to ambient",                     "MWht",         "",                                  "",                                         "*",                                                                "",              "" },
-    { SSC_OUTPUT, SSC_NUMBER, "annual_E_cycle_gross",          "Annual cycle gross electric energy generation",                 "MWhe",         "",                                  "",                                         "*",                                                                "",              "" },
-    { SSC_OUTPUT, SSC_NUMBER, "annual_Q_cycle_thermal_in",     "Annual cycle thermal energy input",                             "MWht",         "",                                  "",                                         "*",                                                                "",              "" },
-    { SSC_OUTPUT, SSC_NUMBER, "annual_Q_cycle_thermal_startup","Annual cycle thermal energy consumed by startup",               "MWht",         "",                                  "",                                         "*",                                                                "",              "" },
-
-        // Calculated costs - should these be INOUT?
+        // (should these be INOUT)
     { SSC_OUTPUT, SSC_NUMBER, "system_capacity",               "System capacity",                                               "kWe",          "",                                  "System Costs",                             "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "total_installed_cost",          "Total installed cost",                                          "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "construction_financing_cost",   "Total construction financing cost",                             "$",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
 
+
+    // ****************************************************************************************************************************************
+    // Timeseries Simulation Outputs here:
+    // ****************************************************************************************************************************************
+        // Simulation outputs
+    { SSC_OUTPUT, SSC_ARRAY,  "time_hr",                       "Time at end of timestep",                                       "hr",           "",                                  "",                                         "sim_type=1",                                                                "",              ""},
+
+        // Heater outputs
+    { SSC_OUTPUT, SSC_ARRAY,  "W_dot_heater",                  "Heater electricity consumption",                                "MWe",          "",                                  "",                                         "sim_type=1",                                                                "",              ""},
+    { SSC_OUTPUT, SSC_ARRAY,  "q_dot_heater_to_htf",           "Heater thermal power to HTF",                                   "MWt",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "q_dot_heater_startup",          "Heater thermal power consumed during startup",                  "MWt",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+
+        // TES outputs
+    { SSC_OUTPUT, SSC_ARRAY,  "q_dot_dc_tes",                  "TES discharge thermal power",                                   "MWt",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "q_dot_ch_tes",                  "TES charge thermal power",                                      "MWt",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "e_ch_tes",                      "TES charge state",                                              "MWht",         "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "q_dot_tes_losses",              "TES thermal losses",                                            "MWt",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "q_dot_tes_heater",              "TES freeze protection power",                                   "MWe",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "T_tes_hot",                     "TES hot temperature",                                           "C",            "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "T_tes_cold",                    "TES cold temperature",                                          "C",            "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "mass_tes_cold",                 "TES cold tank mass (end)",                                      "kg",           "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "mass_tes_hot",                  "TES hot tank mass (end)",                                       "kg",           "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+
+        // Cycle outputs
+    //{ SSC_OUTPUT, SSC_ARRAY,  "eta_cycle",                     "PC efficiency (no cooling parasitics)",                         "",             "",                                  "powerblock",                               "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "q_dot_cycle",                   "PC thermal power",                                              "MWt",          "",                                  "powerblock",                               "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "W_dot_cycle_gross",             "PC electrical power gross (no cooling parasitics)",             "MWe",          "",                                  "powerblock",                               "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "q_dot_cycle_startup",           "PC startup thermal power",                                      "MWt",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+
+
+        // System outputs
+    { SSC_OUTPUT, SSC_ARRAY,  "W_dot_out_net",                 "Total electric power to grid",                                  "MWe",          "",                                  "",                                         "sim_type=1",                                                                "",              ""},
+
+    { SSC_OUTPUT, SSC_ARRAY,  "gen",                           "Total electric power to grid with available derate",            "kWe",          "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+
+
+        // Annual single-value outputs
+    { SSC_OUTPUT, SSC_NUMBER, "annual_energy",                 "Annual total electric power to grid",                           "kWhe",         "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "annual_energy_full_availability","Annual total electric power to grid w/ full availability",     "MWhe",         "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "annual_E_heater",               "Annual heater electric energy consumption",                     "MWhe",         "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "annual_Q_heater_to_htf",        "Annual heater thermal power to HTF",                            "MWhe",         "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "annual_Q_heater_startup",       "Annual heater thermal energy consumed by startup",              "MWht",         "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "annual_E_tes_heater",           "Annual TES freeze heater electric energy consumption",          "MWhe",         "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "annual_Q_tes_losses",           "Annual TES thermal energy lost to ambient",                     "MWht",         "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "annual_E_cycle_gross",          "Annual cycle gross electric energy generation",                 "MWhe",         "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "annual_Q_cycle_thermal_in",     "Annual cycle thermal energy input",                             "MWht",         "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "annual_Q_cycle_thermal_startup","Annual cycle thermal energy consumed by startup",               "MWht",         "",                                  "",                                         "sim_type=1",                                                                "",              "" },
+
+    
 
     var_info_invalid };
 
@@ -576,84 +581,7 @@ public:
 
 
         // *****************************************************
-        // Run timeseries simulation
-        update("Begin timeseries simulation...", 0.0);
-
-        try
-        {
-            // Simulate !
-            csp_solver.Ssimulate(sim_setup);
-        }
-        catch (C_csp_exception& csp_exception)
-        {
-            // Report warning before exiting with error
-            while (csp_solver.mc_csp_messages.get_message(&out_type, &out_msg))
-            {
-                log(out_msg);
-            }
-
-            throw exec_error("etes_electric_resistance", csp_exception.m_error_message);
-        }
-
-        // If no exception, then report messages
-        while (csp_solver.mc_csp_messages.get_message(&out_type, &out_msg))
-        {
-            log(out_msg, out_type);
-        }
-        // *****************************************************
-        // *****************************************************
-
-
-        // *****************************************************
-        // Post-process
-        size_t count;
-        ssc_number_t* p_W_dot_net = as_array("W_dot_out_net", &count);
-        ssc_number_t* p_time_final_hr = as_array("time_hr", &count);
-
-        // 'adjustment_factors' class stores factors in hourly array, so need to index as such
-        adjustment_factors haf(this, "adjust");
-        if (!haf.setup())
-            throw exec_error("tcsmolten_salt", "failed to setup adjustment factors: " + haf.error());
-
-        ssc_number_t* p_gen = allocate("gen", count);
-        for (size_t i = 0; i < count; i++)
-        {
-            size_t hour = (size_t)ceil(p_time_final_hr[i]);
-            p_gen[i] = (ssc_number_t)(p_W_dot_net[i] * 1.E3 * haf(hour));           //[kWe]
-        }
-        // *****************************************************
-        // *****************************************************
-
-
-        // *****************************************************
-        // Report simulation metrics
-        ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, steps_per_hour);
-
-        accumulate_annual_for_year("gen", "annual_energy", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);
-        accumulate_annual_for_year("W_dot_out_net", "annual_energy_full_availability", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);
-        accumulate_annual_for_year("W_dot_heater", "annual_E_heater", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour); //[MWhe]
-        accumulate_annual_for_year("q_dot_heater_to_htf", "annual_Q_heater_to_htf", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour); //[MWhe]
-        accumulate_annual_for_year("q_dot_heater_startup", "annual_Q_heater_startup", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour); //[MWht]
-        accumulate_annual_for_year("q_dot_tes_heater", "annual_E_tes_heater", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour); //[MWht]
-        accumulate_annual_for_year("q_dot_tes_losses", "annual_Q_tes_losses", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour); //[MWht]
-        accumulate_annual_for_year("W_dot_cycle_gross", "annual_E_cycle_gross", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour); //[MWhe]
-        accumulate_annual_for_year("q_dot_cycle", "annual_Q_cycle_thermal_in", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour); //[MWht]
-        accumulate_annual_for_year("q_dot_cycle_startup", "annual_Q_cycle_thermal_startup", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour); //[MWht]
-
-        
-        // *****************************************************
-        // Calculate annual metrics
-        double E_heater = as_double("annual_E_heater");
-        double Q_heater_to_htf = as_double("annual_Q_heater_to_htf");
-        double Q_tes_heater = as_double("annual_E_tes_heater");
-        double Q_tes_losses = as_double("annual_Q_tes_losses");
-        double Q_cycle_thermal_in = as_double("annual_Q_cycle_thermal_in");
-
-        double q_balance_rel = (Q_heater_to_htf + Q_tes_heater - Q_tes_losses - Q_cycle_thermal_in) / Q_cycle_thermal_in;
-
-
-        // *****************************************************
-        // Calculate system costs
+        // System design is complete, so calculate final design outputs like cost, capacity, etc.
         double tes_spec_cost = as_double("tes_spec_cost");
         double power_cycle_spec_cost = as_double("cycle_spec_cost");
         double heater_spec_cost = as_double("heater_spec_cost");
@@ -734,6 +662,94 @@ public:
         assign("system_capacity", system_capacity);     //[kWe]
         assign("total_installed_cost", (ssc_number_t)total_installed_cost);                 //[$]
         assign("construction_financing_cost", (ssc_number_t)construction_financing_cost);   //[$]
+        // *****************************************************
+        // *****************************************************
+
+
+        // *****************************************************
+        // If calling cmod to run design only, return here
+        if (as_double("sim_type") != 1) {
+            return;
+        }
+        // *****************************************************
+        // *****************************************************
+
+
+        // *****************************************************
+        // Run timeseries simulation
+        update("Begin timeseries simulation...", 0.0);
+
+        try
+        {
+            // Simulate !
+            csp_solver.Ssimulate(sim_setup);
+        }
+        catch (C_csp_exception& csp_exception)
+        {
+            // Report warning before exiting with error
+            while (csp_solver.mc_csp_messages.get_message(&out_type, &out_msg))
+            {
+                log(out_msg);
+            }
+
+            throw exec_error("etes_electric_resistance", csp_exception.m_error_message);
+        }
+
+        // If no exception, then report messages
+        while (csp_solver.mc_csp_messages.get_message(&out_type, &out_msg))
+        {
+            log(out_msg, out_type);
+        }
+        // *****************************************************
+        // *****************************************************
+
+
+        // *****************************************************
+        // Post-process
+        size_t count;
+        ssc_number_t* p_W_dot_net = as_array("W_dot_out_net", &count);
+        ssc_number_t* p_time_final_hr = as_array("time_hr", &count);
+
+        // 'adjustment_factors' class stores factors in hourly array, so need to index as such
+        adjustment_factors haf(this, "adjust");
+        if (!haf.setup())
+            throw exec_error("tcsmolten_salt", "failed to setup adjustment factors: " + haf.error());
+
+        ssc_number_t* p_gen = allocate("gen", count);
+        for (size_t i = 0; i < count; i++)
+        {
+            size_t hour = (size_t)ceil(p_time_final_hr[i]);
+            p_gen[i] = (ssc_number_t)(p_W_dot_net[i] * 1.E3 * haf(hour));           //[kWe]
+        }
+        // *****************************************************
+        // *****************************************************
+
+
+        // *****************************************************
+        // Report simulation metrics
+        ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, steps_per_hour);
+
+        accumulate_annual_for_year("gen", "annual_energy", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);
+        accumulate_annual_for_year("W_dot_out_net", "annual_energy_full_availability", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);
+        accumulate_annual_for_year("W_dot_heater", "annual_E_heater", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour); //[MWhe]
+        accumulate_annual_for_year("q_dot_heater_to_htf", "annual_Q_heater_to_htf", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour); //[MWhe]
+        accumulate_annual_for_year("q_dot_heater_startup", "annual_Q_heater_startup", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour); //[MWht]
+        accumulate_annual_for_year("q_dot_tes_heater", "annual_E_tes_heater", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour); //[MWht]
+        accumulate_annual_for_year("q_dot_tes_losses", "annual_Q_tes_losses", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour); //[MWht]
+        accumulate_annual_for_year("W_dot_cycle_gross", "annual_E_cycle_gross", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour); //[MWhe]
+        accumulate_annual_for_year("q_dot_cycle", "annual_Q_cycle_thermal_in", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour); //[MWht]
+        accumulate_annual_for_year("q_dot_cycle_startup", "annual_Q_cycle_thermal_startup", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour); //[MWht]
+
+        
+        // *****************************************************
+        // Calculate annual metrics
+        double E_heater = as_double("annual_E_heater");
+        double Q_heater_to_htf = as_double("annual_Q_heater_to_htf");
+        double Q_tes_heater = as_double("annual_E_tes_heater");
+        double Q_tes_losses = as_double("annual_Q_tes_losses");
+        double Q_cycle_thermal_in = as_double("annual_Q_cycle_thermal_in");
+
+        double q_balance_rel = (Q_heater_to_htf + Q_tes_heater - Q_tes_losses - Q_cycle_thermal_in) / Q_cycle_thermal_in;
 
     }
 };
