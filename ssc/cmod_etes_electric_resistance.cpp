@@ -173,10 +173,24 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
     // ****************************************************************************************************************************************
     // Design Outputs here:
     // ****************************************************************************************************************************************
-        // (should these be INOUT)
-    { SSC_OUTPUT, SSC_NUMBER, "system_capacity",               "System capacity",                                               "kWe",          "",                                  "System Costs",                             "*",                                                                "",              "" },
-    { SSC_OUTPUT, SSC_NUMBER, "total_installed_cost",          "Total installed cost",                                          "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
-    { SSC_OUTPUT, SSC_NUMBER, "construction_financing_cost",   "Total construction financing cost",                             "$",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    // (should these be INOUT??)
+    { SSC_OUTPUT, SSC_NUMBER, "heater_cost_calc",            "Heater cost",                             "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "tes_cost_calc",               "TES cost",                                "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "bop_cost_calc",               "BOP cost",                                "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "cycle_cost_calc",             "Cycle cost",                              "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "direct_subtotal_cost_calc",   "Direct subtotal cost",                    "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "contingency_cost_calc",       "Contingency cost",                        "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "total_direct_cost_calc",      "Total direct cost",                       "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "epc_cost_calc",               "EPC cost",                                "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "land_cost_calc",              "Land cost",                               "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "sales_tax_cost_calc",         "Sales tax cost",                          "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "total_indirect_cost_calc",    "Total indirect cost",                     "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "installed_per_cap_cost_calc", "Installed cost per capacity",             "$/kWe",        "",                                  "System Costs",                             "*",                                                                "",              "" },
+
+
+    { SSC_OUTPUT, SSC_NUMBER, "system_capacity",               "System capacity",                       "kWe",          "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "total_installed_cost",          "Total installed cost",                  "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "construction_financing_cost",   "Total construction financing cost",     "$",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
 
 
     // ****************************************************************************************************************************************
@@ -260,7 +274,7 @@ public:
         double q_dot_pc_des = W_dot_cycle_des / eta_cycle;      //[MWt]
         double Q_tes = q_dot_pc_des * tshours;                  //[MWt-hr]
         double q_dot_heater_des = q_dot_pc_des * heater_mult;   //[MWt]
-        double system_capacity = W_dot_cycle_des * gross_net_conversion_factor * 1.E-3; //[kWe]
+        double system_capacity = W_dot_cycle_des * gross_net_conversion_factor * 1.E3; //[kWe]
         // *****************************************************
         // *****************************************************
 
@@ -659,7 +673,19 @@ public:
             const_per_percent_total, const_per_principal_total, const_per_interest_total, construction_financing_cost);
 
         // Assign cmod variables required by downstream models
-        assign("system_capacity", system_capacity);     //[kWe]
+        assign("heater_cost_calc", (ssc_number_t)heater_cost);
+        assign("tes_cost_calc", (ssc_number_t)tes_cost);
+        assign("bop_cost_calc", (ssc_number_t)bop_cost);
+        assign("cycle_cost_calc", (ssc_number_t)power_cycle_cost);
+        assign("direct_subtotal_cost_calc", (ssc_number_t)direct_capital_precontingency_cost);
+        assign("contingency_cost_calc", (ssc_number_t)contingency_cost);
+        assign("total_direct_cost_calc", (ssc_number_t)total_direct_cost);
+        assign("epc_cost_calc", (ssc_number_t)epc_and_owner_cost);
+        assign("land_cost_calc", (ssc_number_t)total_land_cost);
+        assign("sales_tax_cost_calc", (ssc_number_t)sales_tax_cost);
+        assign("total_indirect_cost_calc", (ssc_number_t)total_indirect_cost);
+        assign("installed_per_cap_cost_calc", (ssc_number_t)(total_installed_cost / system_capacity));
+        assign("system_capacity", (ssc_number_t)system_capacity);     //[kWe]
         assign("total_installed_cost", (ssc_number_t)total_installed_cost);                 //[$]
         assign("construction_financing_cost", (ssc_number_t)construction_financing_cost);   //[$]
         // *****************************************************
