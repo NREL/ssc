@@ -85,7 +85,7 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
         // Performance
     { SSC_INPUT,  SSC_NUMBER, "hot_htf_code",                  "Receiver HTF, 17=Salt (60% NaNO3, 40% KNO3) 10=Salt (46.5% LiF 11.5% NaF 42% KF) 50=Lookup tables", "", "",          "Thermal Storage",                          "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_MATRIX, "ud_hot_htf_props",              "User-defined TES fluid property data",                          "-",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
-    { SSC_INPUT,  SSC_NUMBER, "csp.pt.tes.init_hot_htf_percent", "Initial fraction of available volume that is hot",            "%",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "tes_init_hot_htf_percent",      "Initial fraction of available volume that is hot",              "%",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "h_tank",                        "Total height of tank (height of HTF when tank is full)",        "m",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "cold_tank_max_heat",            "Rated heater capacity for cold tank heating",                   "MW",           "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "u_tank",                        "Loss coefficient from the tank",                                "W/m2-K",       "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
@@ -178,7 +178,11 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
     { SSC_OUTPUT, SSC_NUMBER, "nameplate",                   "Nameplate capacity",                      "MWe",          "",                                  "System Costs",                             "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "q_pb_design",                 "Cycle thermal input at design"            "MWt",          "",                                  "System Costs",                             "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "q_dot_heater_design",         "Heater thermal output at design",         "MWt",          "",                                  "System Costs",                             "*",                                                                "",              "" },
-    { SSC_OUTPUT, SSC_NUMBER, "tshours_heater",              "Hours of TES relative to heater output",  "hr",          "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "tshours_heater",              "Hours of TES relative to heater output",  "hr",           "",                                  "System Costs",                             "*",                                                                "",              "" },
+
+        // System
+    { SSC_OUTPUT, SSC_NUMBER, "m_dot_htf_cycle_des",         "Cycle htf mass flow rate at design",      "kg/s",         "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT, SSC_NUMBER, "cp_htf_cycle_des",            "Cycle htf cp at T ave at design",         "kJ/kg-K",      "",                                  "System Costs",                             "*",                                                                "",              "" },
 
         // Costs
     { SSC_OUTPUT, SSC_NUMBER, "heater_cost_calc",            "Heater cost",                             "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
@@ -458,7 +462,7 @@ public:
         tes->m_T_tank_hot_ini = T_htf_hot_des;      //[C]
         tes->m_T_tank_cold_ini = T_htf_cold_des;    //[C]
         tes->m_h_tank_min = as_double("h_tank_min");
-        tes->m_f_V_hot_ini = as_double("csp.pt.tes.init_hot_htf_percent");
+        tes->m_f_V_hot_ini = as_double("tes_init_hot_htf_percent");
         tes->m_htf_pump_coef = as_double("pb_pump_coef");
         tes->tanks_in_parallel = false;     //[-] False: Field HTF always goes to TES. PC HTF always comes from TES. ETES should not simultaneously operate heater and cycle
         tes->V_tes_des = 1.85;              //[m/s]
@@ -599,6 +603,15 @@ public:
 
 
         // *****************************************************
+        // System design is complete, get design parameters from component models as necessary
+
+            // Cycle
+        double m_dot_htf_pc_des;    //[kg/s]
+        double cp_htf_pc_des;       //[kJ/kg-K]
+        rankine_pc.get_design_parameters(m_dot_htf_pc_des, cp_htf_pc_des);
+        m_dot_htf_pc_des /= 3600.0;     // convert from kg/hr to kg/s
+
+        // *****************************************************
         // System design is complete, so calculate final design outputs like cost, capacity, etc.
         double tes_spec_cost = as_double("tes_spec_cost");
         double power_cycle_spec_cost = as_double("cycle_spec_cost");
@@ -683,6 +696,10 @@ public:
         assign("q_pb_design", (ssc_number_t)q_dot_pc_des);                  //[MWt]
         assign("q_dot_heater_design", (ssc_number_t)q_dot_heater_des);      //[MWt]
         assign("tshours_heater", (ssc_number_t)(tshours / heater_mult));    //[hr]
+
+            // Cycle
+        assign("m_dot_htf_cycle_des", m_dot_htf_pc_des);            //[kg/s]
+        assign("cp_htf_cycle_des", cp_htf_pc_des);                  //[kJ/kg-K]
 
             // Costs
         assign("heater_cost_calc", (ssc_number_t)heater_cost);

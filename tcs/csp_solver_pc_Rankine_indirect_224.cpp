@@ -680,6 +680,12 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 	}
 } //init
 
+void C_pc_Rankine_indirect_224::get_design_parameters(double& m_dot_htf_des /*kg/hr*/, double& cp_htf_des_at_T_ave /*kJ/kg-K*/)
+{
+    m_dot_htf_des = m_m_dot_design;         //[kg/hr]
+    cp_htf_des_at_T_ave = m_cp_htf_design;  //[kJ/kg-K]
+}
+
 double C_pc_Rankine_indirect_224::get_cold_startup_time()
 {
     //startup time from cold state

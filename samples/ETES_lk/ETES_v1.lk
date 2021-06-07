@@ -88,7 +88,7 @@ var( 'opt_algorithm', 1 );
 
 
 
-var( 'csp.pt.tes.init_hot_htf_percent', 0.0 );
+var( 'tes_init_hot_htf_percent', 0.0 );
 var( 'h_tank', 12 );
 var( 'cold_tank_max_heat', 15 );
 var( 'u_tank', 0.40000000000000002 );
