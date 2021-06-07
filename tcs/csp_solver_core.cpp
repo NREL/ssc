@@ -245,7 +245,7 @@ C_csp_solver::C_csp_solver(C_csp_weatherreader &weather,
 		m_cycle_sb_frac_des = m_cycle_T_htf_hot_des =
 		m_cycle_P_hot_des = m_cycle_x_hot_des = 
 		m_m_dot_pc_des = m_m_dot_pc_min =
-        m_m_dot_pc_max = m_m_dot_pc_max_startup = m_T_htf_pc_cold_est = std::numeric_limits<double>::quiet_NaN();
+        m_m_dot_pc_max = m_m_dot_pc_max_startup = m_W_dot_bop_design = m_T_htf_pc_cold_est = std::numeric_limits<double>::quiet_NaN();
 
     m_is_cr_config_recirc = true;
 
@@ -383,6 +383,9 @@ void C_csp_solver::init()
     m_T_field_cold_limit = -100.0;      //[C]
     m_T_field_in_hot_limit = (0.9*m_cycle_T_htf_hot_des + 0.1*m_T_htf_cold_des) - 273.15;   //[C]
 
+    double W_dot_ratio_des = 1.0;       //[-]
+    m_W_dot_bop_design = m_cycle_W_dot_des * ms_system_params.m_bop_par * ms_system_params.m_bop_par_f *
+        (ms_system_params.m_bop_par_0 + ms_system_params.m_bop_par_1 * W_dot_ratio_des + ms_system_params.m_bop_par_2 * pow(W_dot_ratio_des, 2));   //[MWe]
 
 	if( mc_collector_receiver.m_is_sensible_htf != mc_power_cycle.m_is_sensible_htf )
 	{
@@ -409,6 +412,11 @@ void C_csp_solver::init()
 
 		mc_tes_outputs.m_m_dot_cold_tank_to_hot_tank = 0.0;
 	}
+}
+
+void C_csp_solver::get_design_parameters(double& W_dot_bop_design /*MWe*/)
+{
+    W_dot_bop_design = m_W_dot_bop_design;      //[MWe]
 }
 
 int C_csp_solver::steps_per_hour()
