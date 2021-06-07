@@ -129,6 +129,11 @@ void C_csp_cr_electric_resistance::init(const C_csp_collector_receiver::S_csp_cr
 
 }
 
+void C_csp_cr_electric_resistance::get_design_parameters(double& E_su_design /*MWt-hr*/)
+{
+    E_su_design = m_E_su_des;      //[MWt-hr]
+}
+
 C_csp_collector_receiver::E_csp_cr_modes C_csp_cr_electric_resistance::get_operating_state()
 {
     return m_operating_mode_converged;	//[-]

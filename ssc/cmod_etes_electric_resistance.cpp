@@ -96,7 +96,9 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
     { SSC_INPUT,  SSC_NUMBER, "hot_tank_max_heat",             "Rated heater capacity for hot tank heating",                    "MW",           "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
 
 
-    // Heater ??
+    // Heater
+    { SSC_INPUT,  SSC_NUMBER, "f_q_dot_des_allowable_su",      "Fraction of design power allowed during startup",               "-",            "",                                  "Heater",                                   "*",                                                                "",              ""},
+    { SSC_INPUT,  SSC_NUMBER, "hrs_startup_at_max_rate",       "Duration of startup at max startup power",                      "hr",           "",                                  "Heater",                                   "*",                                                                "",              ""},
 
 
     // System control
@@ -184,6 +186,9 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
         // Cycle
     { SSC_OUTPUT, SSC_NUMBER, "m_dot_htf_cycle_des",         "Cycle htf mass flow rate at design",      "kg/s",         "",                                  "Cycle Design Calc",                             "*",                                                                "",              "" },
     { SSC_OUTPUT, SSC_NUMBER, "cp_htf_cycle_des",            "Cycle htf cp at T ave at design",         "kJ/kg-K",      "",                                  "Cycle Design Calc",                             "*",                                                                "",              "" },
+
+        // Heater
+    { SSC_OUTPUT, SSC_NUMBER, "E_heater_su_des",             "Heater startup energy",                   "MWt-hr",       "",                                  "Cycle Design Calc",                             "*",                                                                "",              "" },
 
         // TES
     { SSC_OUTPUT, SSC_NUMBER, "V_tes_htf_avail",             "Volume of TES HTF available for heat transfer", "m3",     "",                                  "TES Design Calc",                             "*",                                                                "",              "" },
@@ -428,16 +433,11 @@ public:
         // *****************************************************
         // Electric resistance heater
         // Construct electric resistance heater class
-        double f_q_dot_des_allowable_su = 1.0;  //[-]
-        double hrs_startup_at_max_rate = 0.25;  //[hr]
+        double f_q_dot_des_allowable_su = as_double("f_q_dot_des_allowable_su");    //[-] fraction of design power allowed during startup
+        double hrs_startup_at_max_rate = as_double("hrs_startup_at_max_rate");      //[hr] duration of startup at max startup power
         C_csp_cr_electric_resistance c_electric_resistance(T_htf_cold_des, T_htf_hot_des, q_dot_heater_des,
             f_q_dot_des_allowable_su, hrs_startup_at_max_rate,
             hot_htf_code, ud_hot_htf_props);
-
-        // Test init()
-        //C_csp_collector_receiver::S_csp_cr_init_inputs init_inputs;
-        //C_csp_collector_receiver::S_csp_cr_solved_params solved_params;
-        //c_electric_resistance.init(init_inputs, solved_params);
 
         // Set heater cmod outputs
         c_electric_resistance.mc_reported_outputs.assign(C_csp_cr_electric_resistance::E_W_DOT_HEATER, allocate("W_dot_heater", n_steps_fixed), n_steps_fixed);
@@ -623,6 +623,10 @@ public:
         rankine_pc.get_design_parameters(m_dot_htf_pc_des, cp_htf_pc_des);
         m_dot_htf_pc_des /= 3600.0;     // convert from kg/hr to kg/s
 
+            // Heater
+        double E_heater_su_des;     //[MWt-hr]
+        c_electric_resistance.get_design_parameters(E_heater_su_des);
+
             // TES
         double V_tes_htf_avail /*m3*/, V_tes_htf_total /*m3*/, d_tank /*m*/, q_dot_loss_tes_des /*MWt*/, dens_store_htf_at_T_ave /*kg/m3*/;
         storage.get_design_parameters(V_tes_htf_avail, V_tes_htf_total, d_tank, q_dot_loss_tes_des, dens_store_htf_at_T_ave);        
@@ -721,6 +725,9 @@ public:
             // Cycle
         assign("m_dot_htf_cycle_des", (ssc_number_t)m_dot_htf_pc_des);            //[kg/s]
         assign("cp_htf_cycle_des", (ssc_number_t)cp_htf_pc_des);                  //[kJ/kg-K]
+
+            // Heater
+        assign("E_heater_su_des", (ssc_number_t)E_heater_su_des);       //[MWt-hr]
 
             // TES
         assign("V_tes_htf_avail", V_tes_htf_avail);         //[m3]

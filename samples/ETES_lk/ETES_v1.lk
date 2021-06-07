@@ -86,7 +86,8 @@ var( 'opt_flux_penalty', 0.25 );
 var( 'opt_algorithm', 1 );
 
 
-
+var( 'f_q_dot_des_allowable_su', 1.0);
+var( 'hrs_startup_at_max_rate', 0.25);
 
 var( 'tes_init_hot_htf_percent', 0.0 );
 var( 'h_tank', 12 );
