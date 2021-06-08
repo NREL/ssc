@@ -2441,7 +2441,7 @@ public:
                     }
 
                     tou.mc_dispatch_params.m_is_ignore_elec_heat_dur_off.at(i) = false;
-                    if (n_recsb == n)
+                    if (n_pbeh == n)
                     {
                         tou.mc_dispatch_params.m_is_ignore_elec_heat_dur_off.at(i) = (bool)is_ignore_elec_heat_dur_off[i];
                     }
