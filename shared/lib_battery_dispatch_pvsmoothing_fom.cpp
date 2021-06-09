@@ -50,35 +50,39 @@ dispatch_pvsmoothing_front_of_meter_t::dispatch_pvsmoothing_front_of_meter_t(
     double batt_dispatch_pvs_max_ramp,
     bool batt_dispatch_pvs_short_forecast_enable,
     double batt_dispatch_pvs_soc_rest,
-    double batt_dispatch_pvs_timestep_multiplier // probable should be restricted to be a reasonable weather file timestep multiplier
+    double batt_dispatch_pvs_timestep_multiplier // probably should be restricted to be a reasonable weather file timestep multiplier
 
 ) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max_kwdc, Pd_max_kwdc, Pc_max_kwac, Pd_max_kwac,
 		t_min, dispatch_mode, pv_dispatch, nyears, look_ahead_hours, dispatch_update_frequency_hours, can_charge, can_clip_charge, can_grid_charge, can_fuelcell_charge,
-        battReplacementCostPerkWh, battCycleCostChoice, battCycleCost)
+        battReplacementCostPerkWh, battCycleCostChoice, battCycleCost),
+    m_batt_dispatch_pvs_ac_lb(batt_dispatch_pvs_ac_lb),
+    m_batt_dispatch_pvs_ac_lb_enable(batt_dispatch_pvs_ac_lb_enable),
+    m_batt_dispatch_pvs_ac_ub(batt_dispatch_pvs_ac_ub),
+    m_batt_dispatch_pvs_ac_ub_enable(batt_dispatch_pvs_ac_ub_enable),
+    m_batt_dispatch_pvs_curtail_as_control(batt_dispatch_pvs_curtail_as_control),
+    m_batt_dispatch_pvs_curtail_if_violation(batt_dispatch_pvs_curtail_if_violation),
+    m_batt_dispatch_pvs_forecast_shift_periods(batt_dispatch_pvs_forecast_shift_periods),
+    m_batt_dispatch_pvs_kf(batt_dispatch_pvs_kf),
+    m_batt_dispatch_pvs_ki(batt_dispatch_pvs_ki),
+    m_batt_dispatch_pvs_kp(batt_dispatch_pvs_kp),
+    m_batt_dispatch_pvs_max_ramp(batt_dispatch_pvs_max_ramp),
+    m_batt_dispatch_pvs_short_forecast_enable(batt_dispatch_pvs_short_forecast_enable),
+    m_batt_dispatch_pvs_soc_rest(batt_dispatch_pvs_soc_rest),
+    m_batt_dispatch_pvs_timestep_multiplier(batt_dispatch_pvs_timestep_multiplier)
+
 {
-	// if look behind, only allow 24 hours
-	if (_mode == dispatch_t::FOM_LOOK_BEHIND)
-		_forecast_hours = 24;
 
 	_inverter_paco = inverter_paco;
 
-    /*
-	_forecast_price_rt_series = forecast_price_series_dollar_per_kwh;
-
-	// only create utility rate calculator if utility rate is defined
-	if (utilityRate) {
-		std::unique_ptr<UtilityRateCalculator> tmp(new UtilityRateCalculator(utilityRate, _steps_per_hour));
-		m_utilityRateCalculator = std::move(tmp);
-	}
-    */
 	m_etaPVCharge = etaPVCharge * 0.01;
 	m_etaGridCharge = etaGridCharge * 0.01;
 	m_etaDischarge = etaDischarge * 0.01;
 
 	revenueToClipCharge = revenueToDischarge = revenueToGridCharge = revenueToPVCharge = 0;
 
-    costToCycle();
-	setup_cost_forecast_vector();
+
+//    costToCycle();
+//	setup_cost_forecast_vector();
 }
 dispatch_pvsmoothing_front_of_meter_t::~dispatch_pvsmoothing_front_of_meter_t(){ /* NOTHING TO DO */}
 void dispatch_pvsmoothing_front_of_meter_t::init_with_pointer(const dispatch_pvsmoothing_front_of_meter_t* tmp)

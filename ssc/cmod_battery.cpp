@@ -1139,7 +1139,7 @@ void battstor::parse_configuration()
         }
         else if (batt_meter_position == dispatch_t::FRONT)
         {
-            if (batt_dispatch == dispatch_t::FOM_LOOK_AHEAD) {
+            if (batt_dispatch == dispatch_t::FOM_LOOK_AHEAD || batt_dispatch == dispatch_t::FOM_PV_SMOOTHING) {
                 look_ahead = true;
             }
             else if (batt_dispatch == dispatch_t::FOM_LOOK_BEHIND) {
@@ -1271,6 +1271,11 @@ void battstor::initialize_automated_dispatch(std::vector<ssc_number_t> pv, std::
                 automatic_dispatch_fom->update_pv_data(pv_prediction);
                 automatic_dispatch_fom->update_cliploss_data(cliploss_prediction);
             }
+            else if (dispatch_pvsmoothing_front_of_meter_t* pvsmoothing_dispatch_fom = dynamic_cast<dispatch_pvsmoothing_front_of_meter_t*>(dispatch_model))
+            {
+                pvsmoothing_dispatch_fom->update_pv_data(pv_prediction);
+                pvsmoothing_dispatch_fom->update_cliploss_data(cliploss_prediction);
+            }
         }
     }
 
@@ -1393,6 +1398,8 @@ battstor::battstor(const battstor& orig) {
             dispatch_model = new dispatch_automatic_behind_the_meter_t(*disp_man_BTM);
         else if (auto disp_auto = dynamic_cast<dispatch_automatic_front_of_meter_t*>(orig.dispatch_model))
             dispatch_model = new dispatch_automatic_front_of_meter_t(*disp_auto);
+        else if (auto disp_pvs = dynamic_cast<dispatch_pvsmoothing_front_of_meter_t*>(orig.dispatch_model))
+            dispatch_model = new dispatch_pvsmoothing_front_of_meter_t(*disp_pvs);
         else
             throw general_error("dispatch_model in battstor is not of recognized type.");
 

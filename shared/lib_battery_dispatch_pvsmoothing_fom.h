@@ -80,7 +80,7 @@ public:
         double batt_dispatch_pvs_max_ramp,
         bool batt_dispatch_pvs_short_forecast_enable,
         double batt_dispatch_pvs_soc_rest,
-        double batt_dispatch_pvs_timestep_multiplier // probable should be restricted to be a reasonable weather file timestep multiplier
+        double batt_dispatch_pvs_timestep_multiplier // probably should be restricted to be a reasonable weather file timestep multiplier
 		);
 
 	~dispatch_pvsmoothing_front_of_meter_t();
@@ -136,6 +136,23 @@ protected:
 	double revenueToGridCharge;
 	double revenueToClipCharge;
 	double revenueToDischarge;
+
+    // PVSmoothing inputs
+    double m_batt_dispatch_pvs_ac_lb;
+    bool m_batt_dispatch_pvs_ac_lb_enable;
+    double m_batt_dispatch_pvs_ac_ub;
+    bool m_batt_dispatch_pvs_ac_ub_enable;
+    bool m_batt_dispatch_pvs_curtail_as_control;
+    bool m_batt_dispatch_pvs_curtail_if_violation;
+    double m_batt_dispatch_pvs_forecast_shift_periods;
+    double m_batt_dispatch_pvs_kf;
+    double m_batt_dispatch_pvs_ki;
+    double m_batt_dispatch_pvs_kp;
+    double m_batt_dispatch_pvs_max_ramp;
+    bool m_batt_dispatch_pvs_short_forecast_enable;
+    double m_batt_dispatch_pvs_soc_rest;
+    double m_batt_dispatch_pvs_timestep_multiplier;
+
 };
 
 #endif // __LIB_BATTERY_DISPATCH_PVSMOOTHING_FOM_H__

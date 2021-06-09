@@ -263,7 +263,7 @@ public:
 //                    #check SOC limit - reduce battery power if either soc exceeds either 0 or 100 %
 //                    #check full
             if ((battery_soc - battery_power_terminal * batt_half_round_trip_eff * power_to_energy_conversion_factor) > battery_energy)
-                battery_power_terminal = -1.0 * (battery_energy - battery_soc) / power_to_energy_conversion_factor / batt_half_round_trip_eff; // TODO - check units here - subtrcting soc from battery energy???
+                battery_power_terminal = -1.0 * (battery_energy - battery_soc) / power_to_energy_conversion_factor / batt_half_round_trip_eff; // TODO - check units here - subtracting soc from battery energy???
 //            #check empty
             else if ((battery_soc - battery_power_terminal * power_to_energy_conversion_factor) < 0)
                 battery_power_terminal = battery_soc / power_to_energy_conversion_factor / batt_half_round_trip_eff;
