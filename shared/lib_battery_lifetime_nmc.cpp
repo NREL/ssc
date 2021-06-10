@@ -289,4 +289,6 @@ void lifetime_nmc_t::replaceBattery(double percent_to_replace) {
     state->nmc_li_neg->cycle_DOD_max.clear();
     state->nmc_li_neg->cycle_DOD_range.clear();
     state->q_relative = fmin(state->nmc_li_neg->q_relative_li, state->nmc_li_neg->q_relative_neg);
+    cycle_model->replaceBattery(percent_to_replace);
+    state->cycle->q_relative_cycle = 0;
 }
