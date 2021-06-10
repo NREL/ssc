@@ -78,13 +78,15 @@ dispatch_pvsmoothing_front_of_meter_t::dispatch_pvsmoothing_front_of_meter_t(
 	m_etaGridCharge = etaGridCharge * 0.01;
 	m_etaDischarge = etaDischarge * 0.01;
 
-	revenueToClipCharge = revenueToDischarge = revenueToGridCharge = revenueToPVCharge = 0;
+    m_batt_dispatch_pvs_outpower = m_batt_dispatch_pvs_battpower = m_batt_dispatch_pvs_curtail = m_batt_dispatch_pvs_violation_list = 0.0;
+
 
 
     costToCycle();
 //	setup_cost_forecast_vector();
 }
 dispatch_pvsmoothing_front_of_meter_t::~dispatch_pvsmoothing_front_of_meter_t(){ /* NOTHING TO DO */}
+
 void dispatch_pvsmoothing_front_of_meter_t::init_with_pointer(const dispatch_pvsmoothing_front_of_meter_t* tmp)
 {
 	_forecast_hours = tmp->_forecast_hours;
@@ -96,26 +98,6 @@ void dispatch_pvsmoothing_front_of_meter_t::init_with_pointer(const dispatch_pvs
 	m_etaDischarge = tmp->m_etaDischarge;
 }
 
-void dispatch_pvsmoothing_front_of_meter_t::setup_cost_forecast_vector()
-{
-	std::vector<double> ppa_price_series;
-	ppa_price_series.reserve(_forecast_price_rt_series.size());
-
-	// add elements at beginning, so our forecast is looking at yesterday's prices
-	if (_mode == dispatch_t::FOM_LOOK_BEHIND) {
-		for (size_t i = 0; i != _forecast_hours * _steps_per_hour; i++)
-			ppa_price_series.push_back(0);
-	}
-
-	// add elements at the end, so we have forecast information at end of year
-	for (size_t i = 0; i != _forecast_price_rt_series.size(); i++){
-		ppa_price_series.push_back(_forecast_price_rt_series[i]);
-	}
-	for (size_t i = 0; i != _forecast_hours * _steps_per_hour; i++) {
-		ppa_price_series.push_back(_forecast_price_rt_series[i]);
-	}
-	_forecast_price_rt_series = ppa_price_series;
-}
 
 // deep copy from dispatch to this
 dispatch_pvsmoothing_front_of_meter_t::dispatch_pvsmoothing_front_of_meter_t(const dispatch_t & dispatch) :
@@ -188,9 +170,6 @@ void dispatch_pvsmoothing_front_of_meter_t::update_dispatch(size_t year, size_t 
             energyToStoreClipped = std::accumulate(_P_cliploss_dc.begin() + lifetimeIndex, _P_cliploss_dc.begin() + lifetimeIndex + _forecast_hours * _steps_per_hour, 0.0) * _dt_hour;
         }
 
-        /*! Economic benefit of charging from the grid in current time step to discharge sometime in next X hours ($/kWh)*/
-        revenueToGridCharge = *max_ppa_cost * m_etaDischarge - usage_cost / m_etaGridCharge - m_cycleCost;
-
         /*! Computed revenue to charge from Grid in each of next X hours ($/kWh)*/
         double revenueToGridChargeMax = 0;
         if (m_batteryPower->canGridCharge) {
@@ -209,8 +188,7 @@ void dispatch_pvsmoothing_front_of_meter_t::update_dispatch(size_t year, size_t 
         }
 
         /*! Economic benefit of charging from regular PV in current time step to discharge sometime in next X hours ($/kWh)*/
-        revenueToPVCharge = _P_pv_ac[idx_year1] > 0 ? *max_ppa_cost * m_etaDischarge - ppa_cost / m_etaPVCharge - m_cycleCost : 0;
-
+  
         /*! Computed revenue to charge from PV in each of next X hours ($/kWh)*/
         size_t t_duration = static_cast<size_t>(ceilf( (float)
                 _Battery->energy_nominal() / (float) m_batteryPower->powerBatteryChargeMaxDC));
@@ -229,12 +207,7 @@ void dispatch_pvsmoothing_front_of_meter_t::update_dispatch(size_t year, size_t 
             revenueToPVChargeMax = pv_hours_on >= t_duration ? *std::max_element(std::begin(revenueToPVChargeForecast), std::end(revenueToPVChargeForecast)): 0;
         }
 
-        /*! Economic benefit of charging from clipped PV in current time step to discharge sometime in the next X hours (clipped PV is free) ($/kWh) */
-        revenueToClipCharge = *max_ppa_cost * m_etaDischarge - m_cycleCost;
-
-        /*! Economic benefit of discharging in current time step ($/kWh) */
-        revenueToDischarge = ppa_cost * m_etaDischarge - m_cycleCost;
-
+ 
         /*! Energy need to charge the battery (kWh) */
         double energyNeededToFillBattery = _Battery->energy_to_fill(m_batteryPower->stateOfChargeMax);
 
@@ -245,7 +218,7 @@ void dispatch_pvsmoothing_front_of_meter_t::update_dispatch(size_t year, size_t 
         bool batteryHasDischargeCapacity = _Battery->SOC() >= m_batteryPower->stateOfChargeMin + 1.0;
 
         // Always Charge if PV is clipping
-        if (m_batteryPower->canClipCharge && m_batteryPower->powerSystemClipped > 0 && revenueToClipCharge > 0)
+        if (m_batteryPower->canClipCharge && m_batteryPower->powerSystemClipped > 0 )
         {
             powerBattery = -m_batteryPower->powerSystemClipped;
         }
@@ -253,7 +226,6 @@ void dispatch_pvsmoothing_front_of_meter_t::update_dispatch(size_t year, size_t 
         // Increase charge from system (PV) if it is more valuable later than selling now
         if (m_batteryPower->canSystemCharge &&
             //revenueToPVCharge >= revenueToGridChargeMax &&
-            revenueToPVCharge > 0 &&
             highChargeValuePeriod &&
             m_batteryPower->powerSystem > 0)
         {
@@ -280,9 +252,7 @@ void dispatch_pvsmoothing_front_of_meter_t::update_dispatch(size_t year, size_t 
 
         // Also charge from grid if it is valuable to do so, still leaving EnergyToStoreClipped capacity in battery
         if (m_batteryPower->canGridCharge &&
-            revenueToGridCharge >= revenueToPVChargeMax &&
-            revenueToGridCharge > 0 &&
-            highChargeValuePeriod &&
+             highChargeValuePeriod &&
             energyNeededToFillBattery > 0)
         {
             // leave EnergyToStoreClipped capacity in battery
@@ -299,7 +269,7 @@ void dispatch_pvsmoothing_front_of_meter_t::update_dispatch(size_t year, size_t 
         }
 
         // Discharge if we are in a high-price period and have battery and inverter capacity
-        if (highDischargeValuePeriod && revenueToDischarge > 0 && excessAcCapacity && batteryHasDischargeCapacity) {
+        if (highDischargeValuePeriod &&  excessAcCapacity && batteryHasDischargeCapacity) {
             double loss_kw = _Battery->calculate_loss(m_batteryPower->powerBatteryTarget, lifetimeIndex); // Battery is responsible for covering discharge losses
             if (m_batteryPower->connectionMode == BatteryPower::DC_CONNECTED) {
                 powerBattery = _inverter_paco + loss_kw - m_batteryPower->powerSystem;
@@ -314,7 +284,7 @@ void dispatch_pvsmoothing_front_of_meter_t::update_dispatch(size_t year, size_t 
     // Custom dispatch
 	else
 	{
-		// extract input power by modifying lifetime index to year 1
+ 		// extract input power by modifying lifetime index to year 1
 		m_batteryPower->powerBatteryTarget = _P_battery_use[lifetimeIndex % (8760 * _steps_per_hour)];
         double loss_kw = _Battery->calculate_loss(m_batteryPower->powerBatteryTarget, lifetimeIndex); // Battery is responsible for covering discharge losses
         if (m_batteryPower->connectionMode == AC_CONNECTED){

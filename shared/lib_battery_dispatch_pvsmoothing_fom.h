@@ -102,17 +102,16 @@ public:
 	/// Pass in the PV power forecast [kW]
     void update_pv_data(double_vec P_pv_ac);
 
-	/// Return benefit calculations
-	double benefit_charge(){ return revenueToPVCharge; }
-	double benefit_gridcharge() { return revenueToGridCharge; }
-	double benefit_clipcharge() { return revenueToClipCharge; }
-	double benefit_discharge() { return revenueToDischarge; }
+	/// Return intermediate calculations for validation
+    double batt_dispatch_pvs_outpower() { return m_batt_dispatch_pvs_outpower; };
+    double batt_dispatch_pvs_battpower() { return m_batt_dispatch_pvs_battpower; };
+    double batt_dispatch_pvs_curtail() { return m_batt_dispatch_pvs_curtail; };
+    double batt_dispatch_pvs_violation_list() { return m_batt_dispatch_pvs_violation_list; };
 
 
 protected:
 
 	void init_with_pointer(const dispatch_pvsmoothing_front_of_meter_t* tmp);
-	void setup_cost_forecast_vector();
 
     /*! Calculate the cost to cycle per kWh */
     void costToCycle();
@@ -131,11 +130,11 @@ protected:
 	double m_etaGridCharge;
 	double m_etaDischarge;
 
-	/* Computed benefits to charge, discharge, gridcharge, clipcharge */
-	double revenueToPVCharge;
-	double revenueToGridCharge;
-	double revenueToClipCharge;
-	double revenueToDischarge;
+	/* Computed smoothing outputs */
+	double m_batt_dispatch_pvs_outpower;
+	double m_batt_dispatch_pvs_battpower;
+	double m_batt_dispatch_pvs_curtail;
+	double m_batt_dispatch_pvs_violation_list;
 
     // PVSmoothing inputs
     double m_batt_dispatch_pvs_ac_lb;
