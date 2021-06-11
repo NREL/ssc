@@ -72,7 +72,7 @@ public:
         // check conversion from fraction of system nameplate from Python code
         bool batt_dispatch_pvs_curtail_as_control,
         bool batt_dispatch_pvs_curtail_if_violation,
-        double batt_dispatch_pvs_forecast_shift_periods, // may be int or size_t
+        size_t batt_dispatch_pvs_forecast_shift_periods, // may be int or size_t
         double batt_dispatch_pvs_kf,
         double batt_dispatch_pvs_ki,
         double batt_dispatch_pvs_kp,
@@ -80,7 +80,7 @@ public:
         double batt_dispatch_pvs_max_ramp,
         bool batt_dispatch_pvs_short_forecast_enable,
         double batt_dispatch_pvs_soc_rest,
-        double batt_dispatch_pvs_timestep_multiplier // probably should be restricted to be a reasonable weather file timestep multiplier
+        size_t batt_dispatch_pvs_timestep_multiplier // probably should be restricted to be a reasonable weather file timestep multiplier
 		);
 
 	~dispatch_pvsmoothing_front_of_meter_t();
@@ -105,6 +105,7 @@ public:
 	/// Return intermediate calculations for validation
     double batt_dispatch_pvs_outpower() { return m_batt_dispatch_pvs_outpower; };
     double batt_dispatch_pvs_battpower() { return m_batt_dispatch_pvs_battpower; };
+    double batt_dispatch_pvs_battsoc() { return m_batt_dispatch_pvs_battsoc; };
     double batt_dispatch_pvs_curtail() { return m_batt_dispatch_pvs_curtail; };
     double batt_dispatch_pvs_violation_list() { return m_batt_dispatch_pvs_violation_list; };
 
@@ -126,8 +127,9 @@ protected:
 
 	/* Computed smoothing outputs */
 	double m_batt_dispatch_pvs_outpower;
-	double m_batt_dispatch_pvs_battpower;
-	double m_batt_dispatch_pvs_curtail;
+    double m_batt_dispatch_pvs_battpower;
+    double m_batt_dispatch_pvs_battsoc;
+    double m_batt_dispatch_pvs_curtail;
 	double m_batt_dispatch_pvs_violation_list;
 
     // PVSmoothing inputs
@@ -137,14 +139,14 @@ protected:
     bool m_batt_dispatch_pvs_ac_ub_enable;
     bool m_batt_dispatch_pvs_curtail_as_control;
     bool m_batt_dispatch_pvs_curtail_if_violation;
-    double m_batt_dispatch_pvs_forecast_shift_periods;
+    size_t m_batt_dispatch_pvs_forecast_shift_periods;
     double m_batt_dispatch_pvs_kf;
     double m_batt_dispatch_pvs_ki;
     double m_batt_dispatch_pvs_kp;
     double m_batt_dispatch_pvs_max_ramp;
     bool m_batt_dispatch_pvs_short_forecast_enable;
     double m_batt_dispatch_pvs_soc_rest;
-    double m_batt_dispatch_pvs_timestep_multiplier;
+    size_t m_batt_dispatch_pvs_timestep_multiplier;
 
 };
 

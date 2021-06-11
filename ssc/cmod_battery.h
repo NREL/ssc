@@ -371,7 +371,13 @@ struct battstor
 		*outBenefitCharge,
 		*outBenefitGridcharge,
 		*outBenefitClipcharge,
-		*outBenefitDischarge;
+		*outBenefitDischarge,
+        *outPVS_outpower,
+        *outPVS_battpower,
+        *outPVS_battsoc,
+        *outPVS_curtail,
+        *outPVS_violation_list;
+
 
 	double outAverageCycleEfficiency;
 	double outAverageRoundtripEfficiency;

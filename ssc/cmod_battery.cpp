@@ -241,6 +241,13 @@ var_info vtab_battery_outputs[] = {
     { SSC_OUTPUT,        SSC_ARRAY,      "batt_revenue_discharge",                     "Revenue to discharge",                                  "$/kWh", "",                         "Battery",       "",                           "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "gen_without_battery",                        "Energy produced without the battery or curtailment",    "kW","",                      "Battery",       "",                           "",                              "" },
 
+    // PV Smoothing
+    { SSC_OUTPUT,        SSC_ARRAY,      "batt_pvs_outpower",                          "PV smoothing electricity to/from system",              "kW",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "batt_pvs_battpower",                         "PV smoothing electricity to/from battery",             "kW",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "batt_pvs_battsoc",                           "PV smoothing battery SOC",                             "%",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "batt_pvs_curtail",                           "PV smoothing curtailed power",                         "kW",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "batt_pvs_violation_list",                    "PV smoothing violation",                               "",      "",                       "Battery",       "",                           "",                              "" },
+
 
     // monthly outputs
     { SSC_OUTPUT,        SSC_ARRAY,      "monthly_system_to_load",                     "Energy to load from system",                            "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
@@ -721,6 +728,11 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     outBenefitGridcharge = 0;
     outBenefitClipcharge = 0;
     outBenefitDischarge = 0;
+    outPVS_outpower = 0;
+    outPVS_battpower = 0;
+    outPVS_battsoc = 0;
+    outPVS_curtail = 0;
+    outPVS_violation_list = 0;
 
 
     en = setup_model;
@@ -783,7 +795,14 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     {
         outBatteryToGrid = vt.allocate("batt_to_grid", nrec * nyears);
 
-        if (batt_vars->batt_dispatch != dispatch_t::FOM_MANUAL) {
+        if (batt_vars->batt_dispatch == dispatch_t::FOM_PV_SMOOTHING) {
+            outPVS_outpower = vt.allocate("batt_pvs_outpower", nrec * nyears);
+            outPVS_battpower = vt.allocate("batt_pvs_battpower", nrec * nyears);
+            outPVS_battsoc = vt.allocate("batt_pvs_battsoc", nrec * nyears);
+            outPVS_curtail = vt.allocate("batt_pvs_curtail", nrec * nyears);
+            outPVS_violation_list = vt.allocate("batt_pvs_violation_list", nrec * nyears);
+        }
+        else  if (batt_vars->batt_dispatch != dispatch_t::FOM_MANUAL) {
             outBattPowerTarget = vt.allocate("batt_power_target", nrec * nyears);
             outBenefitCharge = vt.allocate("batt_revenue_charge", nrec * nyears);
             outBenefitGridcharge = vt.allocate("batt_revenue_gridcharge", nrec * nyears);
@@ -1382,6 +1401,14 @@ battstor::battstor(const battstor& orig) {
     outBenefitClipcharge = orig.outBenefitClipcharge;
     outBenefitDischarge = orig.outBenefitDischarge;
 
+    outPVS_outpower = orig.outPVS_outpower;
+    outPVS_battpower = orig.outPVS_battpower;
+    outPVS_battsoc = orig.outPVS_battsoc;
+    outPVS_curtail = orig.outPVS_curtail;
+    outPVS_violation_list = orig.outPVS_violation_list;
+
+
+
     outAverageCycleEfficiency = orig.outAverageCycleEfficiency;
     outAverageRoundtripEfficiency = orig.outAverageRoundtripEfficiency;
     outSystemChargePercent = orig.outSystemChargePercent;
@@ -1541,7 +1568,15 @@ void battstor::outputs_topology_dependent()
     {
         outBatteryToGrid[index] = (ssc_number_t)(dispatch_model->power_battery_to_grid());
 
-        if (batt_vars->batt_dispatch != dispatch_t::FOM_MANUAL) {
+        if (batt_vars->batt_dispatch == dispatch_t::FOM_PV_SMOOTHING) {
+            dispatch_pvsmoothing_front_of_meter_t* dispatch_fom = dynamic_cast<dispatch_pvsmoothing_front_of_meter_t*>(dispatch_model);
+            outPVS_battpower[index] = dispatch_fom->batt_dispatch_pvs_battpower();
+            outPVS_battsoc[index] = dispatch_fom->batt_dispatch_pvs_battsoc();
+            outPVS_curtail[index] = dispatch_fom->batt_dispatch_pvs_curtail();
+            outPVS_outpower[index] = dispatch_fom->batt_dispatch_pvs_outpower();
+            outPVS_violation_list[index] = dispatch_fom->batt_dispatch_pvs_violation_list();
+        }
+        else if (batt_vars->batt_dispatch != dispatch_t::FOM_MANUAL) {
             dispatch_automatic_front_of_meter_t* dispatch_fom = dynamic_cast<dispatch_automatic_front_of_meter_t*>(dispatch_model);
             outBattPowerTarget[index] = (ssc_number_t)(dispatch_model->power_batt_target());
             outBenefitCharge[index] = (ssc_number_t)(dispatch_fom->benefit_charge());

@@ -42,7 +42,7 @@ dispatch_pvsmoothing_front_of_meter_t::dispatch_pvsmoothing_front_of_meter_t(
     // check conversion from fraction of system nameplate from Python code
     bool batt_dispatch_pvs_curtail_as_control,
     bool batt_dispatch_pvs_curtail_if_violation,
-    double batt_dispatch_pvs_forecast_shift_periods, // may be int or size_t
+    size_t batt_dispatch_pvs_forecast_shift_periods, // may be int or size_t
     double batt_dispatch_pvs_kf,
     double batt_dispatch_pvs_ki,
     double batt_dispatch_pvs_kp,
@@ -50,7 +50,7 @@ dispatch_pvsmoothing_front_of_meter_t::dispatch_pvsmoothing_front_of_meter_t(
     double batt_dispatch_pvs_max_ramp,
     bool batt_dispatch_pvs_short_forecast_enable,
     double batt_dispatch_pvs_soc_rest,
-    double batt_dispatch_pvs_timestep_multiplier // probably should be restricted to be a reasonable weather file timestep multiplier
+    size_t batt_dispatch_pvs_timestep_multiplier // probably should be restricted to be a reasonable weather file timestep multiplier
 
 ) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max_kwdc, Pd_max_kwdc, Pc_max_kwac, Pd_max_kwac,
 		t_min, dispatch_mode, pv_dispatch, nyears, look_ahead_hours, dispatch_update_frequency_hours, can_charge, can_clip_charge, can_grid_charge, can_fuelcell_charge,
@@ -79,8 +79,6 @@ dispatch_pvsmoothing_front_of_meter_t::dispatch_pvsmoothing_front_of_meter_t(
 	m_etaDischarge = etaDischarge * 0.01;
 
     m_batt_dispatch_pvs_outpower = m_batt_dispatch_pvs_battpower = m_batt_dispatch_pvs_curtail = m_batt_dispatch_pvs_violation_list = 0.0;
-
-
 
     costToCycle();
 //	setup_cost_forecast_vector();
@@ -154,7 +152,7 @@ void dispatch_pvsmoothing_front_of_meter_t::update_dispatch(size_t year, size_t 
 	{
 
 		// Power to charge (<0) or discharge (>0)
-		double powerBattery = 0;
+        ssc_number_t out_power = 0;
 
         /*! Cost to cycle the battery at all, using maximum DOD or user input */
         costToCycle();
@@ -185,116 +183,146 @@ void dispatch_pvsmoothing_front_of_meter_t::update_dispatch(size_t year, size_t 
             energyToStoreClipped = std::accumulate(_P_cliploss_dc.begin() + lifetimeIndex, _P_cliploss_dc.begin() + lifetimeIndex + _forecast_hours * _steps_per_hour, 0.0) * _dt_hour;
         }
 
-        /*! Computed revenue to charge from Grid in each of next X hours ($/kWh)
-        double revenueToGridChargeMax = 0;
-        if (m_batteryPower->canGridCharge) {
-            std::vector<double> revenueToGridChargeForecast;
-            size_t j = 0;
-            for (size_t i = idx_year1; i < idx_year1 + idx_lookahead; i++) {
-                if (m_utilityRateCalculator) {
-                    revenueToGridChargeForecast.push_back(*max_ppa_cost * m_etaDischarge - usage_cost_forecast[j] / m_etaGridCharge - m_cycleCost);
-                }
-                else {
-                    revenueToGridChargeForecast.push_back(*max_ppa_cost * m_etaDischarge - _forecast_price_rt_series[i] / m_etaGridCharge - m_cycleCost);
-                }
-                j++;
-            }
-            revenueToGridChargeMax = *std::max_element(std::begin(revenueToGridChargeForecast), std::end(revenueToGridChargeForecast));
-        }
-
-        /*! Economic benefit of charging from regular PV in current time step to discharge sometime in next X hours ($/kWh)*/
-  
-        /*! Computed revenue to charge from PV in each of next X hours ($/kWh)
-        size_t t_duration = static_cast<size_t>(ceilf( (float) _Battery->energy_nominal() / (float) m_batteryPower->powerBatteryChargeMaxDC));
-        size_t pv_hours_on;
-        double revenueToPVChargeMax = 0;
-        if (m_batteryPower->canSystemCharge) {
-            std::vector<double> revenueToPVChargeForecast;
-            for (size_t i = idx_year1; i < idx_year1 + idx_lookahead; i++) {
-                // when considering grid charging, require PV output to exceed battery input capacity before accepting as a better option
-                bool system_on = _P_pv_ac[i] >= m_batteryPower->powerBatteryChargeMaxDC ? 1 : 0;
-                if (system_on) {
-                    revenueToPVChargeForecast.push_back(system_on * (*max_ppa_cost * m_etaDischarge - _forecast_price_rt_series[i] / m_etaPVCharge - m_cycleCost));
-                }
-            }
-            pv_hours_on = revenueToPVChargeForecast.size() / _steps_per_hour;
-            revenueToPVChargeMax = pv_hours_on >= t_duration ? *std::max_element(std::begin(revenueToPVChargeForecast), std::end(revenueToPVChargeForecast)): 0;
-        }
-
  
         /*! Energy need to charge the battery (kWh) */
         double energyNeededToFillBattery = _Battery->energy_to_fill(m_batteryPower->stateOfChargeMax);
 
-        /* Booleans to assist decisions
-        bool highDischargeValuePeriod = ppa_cost == *max_ppa_cost;
-        bool highChargeValuePeriod = ppa_cost == *min_ppa_cost;
-        bool excessAcCapacity = _inverter_paco > m_batteryPower->powerSystemThroughSharedInverter;
-        bool batteryHasDischargeCapacity = _Battery->SOC() >= m_batteryPower->stateOfChargeMin + 1.0;
-
+  
         // Always Charge if PV is clipping */
         if (m_batteryPower->canClipCharge && m_batteryPower->powerSystemClipped > 0 )
         {
-            powerBattery = -m_batteryPower->powerSystemClipped;
+            out_power = -m_batteryPower->powerSystemClipped;
         }
 
-        // Increase charge from system (PV) if it is more valuable later than selling now
-        if (m_batteryPower->canSystemCharge &&
-            //revenueToPVCharge >= revenueToGridChargeMax &&
-            //highChargeValuePeriod &&
-            m_batteryPower->powerSystem > 0)
-        {
-            // leave EnergyToStoreClipped capacity in battery
-            if (m_batteryPower->canClipCharge)
-            {
-                if (energyToStoreClipped < energyNeededToFillBattery)
-                {
-                    double energyCanCharge = (energyNeededToFillBattery - energyToStoreClipped);
-                    if (energyCanCharge <= m_batteryPower->powerSystem * _dt_hour)
-                        powerBattery = -std::fmax(energyCanCharge / _dt_hour, m_batteryPower->powerSystemClipped);
-                    else
-                        powerBattery = -std::fmax(m_batteryPower->powerSystem, m_batteryPower->powerSystemClipped);
 
-                    energyNeededToFillBattery = std::fmax(0, energyNeededToFillBattery + (powerBattery * _dt_hour));
-                }
+        // PV Smoothing algorithm modified for single timestep
+        // forecast period number of resampled pv power outputs at weather file timestep multiplier
+        ssc_number_t forecast_pv_energy = 0;
+        std::vector<ssc_number_t> pv_power_input_sampled;
+        pv_power_input_sampled.reserve(m_batt_dispatch_pvs_forecast_shift_periods);
 
+        ssc_number_t  power_to_energy_conversion_factor = m_batt_dispatch_pvs_timestep_multiplier * _dt_hour * 60.0;
+ 
+
+
+        for (size_t i_forecast = 0; i_forecast < m_batt_dispatch_pvs_forecast_shift_periods; i_forecast++) {
+            size_t num_summed = 0;
+            ssc_number_t pv_power = 0;
+            for (size_t i_sampled = 0; i_sampled < m_batt_dispatch_pvs_timestep_multiplier && (lifetimeIndex + i_sampled) < _P_pv_ac.size(); i_sampled++) {
+                pv_power += _P_pv_ac[lifetimeIndex + i_sampled];
+                num_summed++;
             }
-            // otherwise, don't reserve capacity for clipping
-            else {
-                powerBattery = -m_batteryPower->powerSystem;
+            pv_power_input_sampled.push_back( num_summed > 0 ? pv_power / num_summed : pv_power);
+            forecast_pv_energy += pv_power_input_sampled[i_forecast] * power_to_energy_conversion_factor;
+        }
+
+        ssc_number_t pv_power = pv_power_input_sampled[0];
+        ssc_number_t battery_power_terminal = 0;
+        ssc_number_t forecast_power = 0;
+        ssc_number_t previous_power = m_batt_dispatch_pvs_outpower;
+        ssc_number_t battery_soc = _Battery->SOC();
+        ssc_number_t battery_energy = _Battery->energy_nominal(); // check units in equations below 
+        ssc_number_t batt_half_round_trip_eff = sqrt(m_etaDischarge * m_etaPVCharge);  //TODO - check units
+        ssc_number_t battery_power = m_batteryPower->powerBatteryChargeMaxAC;
+
+
+        //            if (en_forecast)
+        forecast_power = forecast_pv_energy;
+        //            for pv_power, forecast_power in np.nditer([PV_ramp_interval.values, forecast_pv_energy.values]) :
+        //                #calculate controller error
+        ssc_number_t delta_power = pv_power - previous_power; //#proportional error
+        ssc_number_t soc_increment = battery_soc + (pv_power - previous_power) * power_to_energy_conversion_factor;// #integral error
+        ssc_number_t future_error = previous_power * m_batt_dispatch_pvs_forecast_shift_periods * power_to_energy_conversion_factor - forecast_power; //#derivitive error
+        ssc_number_t error = m_batt_dispatch_pvs_kp * delta_power + m_batt_dispatch_pvs_ki * (soc_increment - m_batt_dispatch_pvs_soc_rest * battery_energy) - m_batt_dispatch_pvs_kf * future_error;
+
+
+        //                #calculate the desired output power, enforce ramp rate limit
+        if (error > 0)
+            out_power = previous_power + std::min(m_batt_dispatch_pvs_max_ramp, std::abs(error));
+        else
+            out_power = previous_power - std::min(m_batt_dispatch_pvs_max_ramp, std::abs(error));
+
+        //            #enforce grid power limits
+        if (m_batt_dispatch_pvs_ac_ub_enable) {
+            if (out_power > m_batt_dispatch_pvs_ac_ub)
+                out_power = m_batt_dispatch_pvs_ac_ub;
+        }
+        if (m_batt_dispatch_pvs_ac_lb_enable) {
+            if (out_power < m_batt_dispatch_pvs_ac_lb)
+                out_power = m_batt_dispatch_pvs_ac_lb;
+        }
+
+        //                  #calculate desired(unconstrained) battery power
+        battery_power_terminal = out_power - pv_power; //# positive is power leaving battery(discharging)
+
+//                    #adjust battery power to factor in battery constraints
+//                    #check SOC limit - reduce battery power if either soc exceeds either 0 or 100 %
+//                    #check full
+        if ((battery_soc - battery_power_terminal * batt_half_round_trip_eff * power_to_energy_conversion_factor) > battery_energy)
+            battery_power_terminal = -1.0 * (battery_energy - battery_soc) / power_to_energy_conversion_factor / batt_half_round_trip_eff; // TODO - check units here - subtracting soc from battery energy???
+//            #check empty
+        else if ((battery_soc - battery_power_terminal * power_to_energy_conversion_factor) < 0)
+            battery_power_terminal = battery_soc / power_to_energy_conversion_factor / batt_half_round_trip_eff;
+
+        // TODO - use SAM charging and discharging limits (different)
+//            #enforce battery power limits
+//            #discharging too fast
+        if (battery_power_terminal > battery_power)
+            battery_power_terminal = battery_power;
+        //            #charging too fast
+        else if (battery_power_terminal < -1.0 * battery_power)
+            battery_power_terminal = -1.0 * battery_power;
+
+        //            #update output power after battery constraints are applied
+        out_power = pv_power + battery_power_terminal;
+
+        //            #flag if a ramp rate violation has occurred - up or down - because limits of battery prevented smoothing
+        int violation = 0;
+        if (std::abs(out_power - previous_power) > (m_batt_dispatch_pvs_max_ramp + 0.00001)) // check units and scale
+            violation = 1;
+
+
+        //                #curtailment
+        ssc_number_t curtail_power = 0;
+
+        //#if curtailment is considered part of the control - don't count up-ramp violations
+        if (m_batt_dispatch_pvs_curtail_as_control) {
+            if ((out_power - previous_power) > (m_batt_dispatch_pvs_max_ramp - 0.00001)) {
+                out_power = previous_power + m_batt_dispatch_pvs_max_ramp;// #reduce output to a non - violation
+                curtail_power = pv_power + battery_power_terminal - out_power;// #curtail the remainder
+                violation = 0;
             }
         }
 
-        // Also charge from grid if it is valuable to do so, still leaving EnergyToStoreClipped capacity in battery
-        if (m_batteryPower->canGridCharge &&
-            // highChargeValuePeriod &&
-            energyNeededToFillBattery > 0)
-        {
-            // leave EnergyToStoreClipped capacity in battery
-            if (m_batteryPower->canClipCharge)
-            {
-                if (energyToStoreClipped < energyNeededToFillBattery)
-                {
-                    double energyCanCharge = (energyNeededToFillBattery - energyToStoreClipped);
-                    powerBattery -= energyCanCharge / _dt_hour;
-                }
-            }
-            else
-                powerBattery = -energyNeededToFillBattery / _dt_hour;
-        }
-        /*
-        // Discharge if we are in a high-price period and have battery and inverter capacity
-        if (highDischargeValuePeriod &&  excessAcCapacity && batteryHasDischargeCapacity) {
-            double loss_kw = _Battery->calculate_loss(m_batteryPower->powerBatteryTarget, lifetimeIndex); // Battery is responsible for covering discharge losses
-            if (m_batteryPower->connectionMode == BatteryPower::DC_CONNECTED) {
-                powerBattery = _inverter_paco + loss_kw - m_batteryPower->powerSystem;
-            }
-            else {
-                powerBattery = _inverter_paco; // AC connected battery is already maxed out by AC power limit, cannot increase dispatch to ccover losses
+        //            #with this setting, curtail output power upon an upramp violation - rather than sending excess power to the grid
+        //            #curtailment still counts as a violation
+        //            #sum total of energy output is reduced
+        if (m_batt_dispatch_pvs_curtail_if_violation) {
+            if ((out_power - previous_power) > (m_batt_dispatch_pvs_max_ramp - 0.00001)) {
+                out_power = previous_power + m_batt_dispatch_pvs_max_ramp; //#reduce output to a non - violation
+                curtail_power = pv_power + battery_power_terminal - out_power;// #curtail the remainder
             }
         }
-        */
-		// save for extraction
-		m_batteryPower->powerBatteryTarget = powerBattery;
+
+
+        //           #update memory variables
+        if (battery_power_terminal > 0)//:#discharging - efficiency loss increases the amount of energy drawn from the battery
+            battery_soc = battery_soc - battery_power_terminal * power_to_energy_conversion_factor / batt_half_round_trip_eff;
+        else if (battery_power_terminal < 0)//:#charging - efficiency loss decreases the amount of energy put into the battery
+            battery_soc = battery_soc - battery_power_terminal * batt_half_round_trip_eff * power_to_energy_conversion_factor;
+        previous_power = out_power;
+
+        //                #update output variables - TODO in cmod_battery
+      //  total_energy += out_power;
+      //  violation_count += violation;
+
+        m_batt_dispatch_pvs_outpower = out_power;
+        m_batt_dispatch_pvs_battpower = battery_power_terminal;
+        m_batt_dispatch_pvs_battsoc = battery_soc;
+        m_batt_dispatch_pvs_violation_list = violation;
+        m_batt_dispatch_pvs_curtail = curtail_power;
+        // save for extraction
+		m_batteryPower->powerBatteryTarget = out_power;
 	}
     // Custom dispatch
 	else
