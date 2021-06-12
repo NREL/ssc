@@ -202,6 +202,7 @@ struct batt_variables
     std::vector<double> batt_cycle_cost;
 
     /* PV Smoothing */
+    ssc_number_t batt_dispatch_pvs_nameplate_ac;
     bool batt_dispatch_pvs_ac_lb_enable;
     ssc_number_t batt_dispatch_pvs_ac_lb;
     bool batt_dispatch_pvs_ac_ub_enable;

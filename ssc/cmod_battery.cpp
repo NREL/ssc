@@ -159,6 +159,7 @@ var_info vtab_battery_inputs[] = {
     { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_update_frequency_hours",        "Frequency to update the look-ahead dispatch",            "hours",    "",                     "BatteryDispatch",       "",                           "",                             "" },
 
     // PV smoothing specific inputs
+    { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_nameplate_ac",             "Nameplate for pv smoothing",                            "kWac",         "",   "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=5",                           "",                             "" },
     { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_ac_lb_enable",             "Enable AC lower bound",                                 "0/1",         "",   "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=5",                           "",                             "" },
     { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_ac_lb",                    "AC lower bound",                                        "fraction of nameplate",         "",                     "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=5",                           "",                             "" },
     { SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_pvs_ac_ub_enable",             "Enable AC upper bound",                                 "0/1",         "",   "BatteryDispatch",       "en_batt=1&batt_dispatch_choice=5",                           "",                             "" },
@@ -451,6 +452,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             if (batt_vars->batt_meter_position == dispatch_t::FRONT)
             {
                 if (batt_vars->batt_dispatch == dispatch_t::FOM_PV_SMOOTHING) {
+                    batt_vars->batt_dispatch_pvs_nameplate_ac = vt.as_double("batt_dispatch_pvs_nameplate_ac");
                     batt_vars->batt_dispatch_pvs_ac_lb_enable = vt.as_boolean("batt_dispatch_pvs_ac_lb_enable");
                     batt_vars->batt_dispatch_pvs_ac_lb = vt.as_double("batt_dispatch_pvs_ac_lb");
                     batt_vars->batt_dispatch_pvs_ac_ub_enable = vt.as_boolean("batt_dispatch_pvs_ac_ub_enable");
@@ -1058,7 +1060,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                 batt_vars->batt_dispatch_auto_can_charge, batt_vars->batt_dispatch_auto_can_clipcharge, batt_vars->batt_dispatch_auto_can_gridcharge, batt_vars->batt_dispatch_auto_can_fuelcellcharge,
                 batt_vars->inverter_paco, batt_vars->batt_cost_per_kwh,
                 batt_vars->batt_cycle_cost_choice, batt_vars->batt_cycle_cost,
-                eta_pvcharge, eta_gridcharge, eta_discharge,
+                eta_pvcharge, eta_gridcharge, eta_discharge, batt_vars->batt_dispatch_pvs_nameplate_ac,
                 batt_vars->batt_dispatch_pvs_ac_lb, batt_vars->batt_dispatch_pvs_ac_lb_enable, batt_vars->batt_dispatch_pvs_ac_ub,
                 batt_vars->batt_dispatch_pvs_ac_ub_enable, batt_vars->batt_dispatch_pvs_curtail_as_control, batt_vars->batt_dispatch_pvs_curtail_if_violation,
                 batt_vars->batt_dispatch_pvs_forecast_shift_periods, batt_vars->batt_dispatch_pvs_kf, batt_vars->batt_dispatch_pvs_ki, batt_vars->batt_dispatch_pvs_kp,

@@ -30,23 +30,20 @@ dispatch_pvsmoothing_front_of_meter_t::dispatch_pvsmoothing_front_of_meter_t(
     std::vector<double> battReplacementCostPerkWh,
 	int battCycleCostChoice,
     std::vector<double> battCycleCost,
-//	std::vector<double> forecast_price_series_dollar_per_kwh,
-//	UtilityRate * utilityRate,
 	double etaPVCharge,
 	double etaGridCharge,
 	double etaDischarge,
+    double batt_dispatch_pvs_nameplate_ac,
     double batt_dispatch_pvs_ac_lb,
     bool batt_dispatch_pvs_ac_lb_enable,
     double batt_dispatch_pvs_ac_ub,
     bool batt_dispatch_pvs_ac_ub_enable,
-    // check conversion from fraction of system nameplate from Python code
     bool batt_dispatch_pvs_curtail_as_control,
     bool batt_dispatch_pvs_curtail_if_violation,
-    size_t batt_dispatch_pvs_forecast_shift_periods, // may be int or size_t
+    size_t batt_dispatch_pvs_forecast_shift_periods, 
     double batt_dispatch_pvs_kf,
     double batt_dispatch_pvs_ki,
     double batt_dispatch_pvs_kp,
-    // percent of nameplate or kWh
     double batt_dispatch_pvs_max_ramp,
     bool batt_dispatch_pvs_short_forecast_enable,
     double batt_dispatch_pvs_soc_rest,
@@ -55,6 +52,7 @@ dispatch_pvsmoothing_front_of_meter_t::dispatch_pvsmoothing_front_of_meter_t(
 ) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max_kwdc, Pd_max_kwdc, Pc_max_kwac, Pd_max_kwac,
 		t_min, dispatch_mode, pv_dispatch, nyears, look_ahead_hours, dispatch_update_frequency_hours, can_charge, can_clip_charge, can_grid_charge, can_fuelcell_charge,
         battReplacementCostPerkWh, battCycleCostChoice, battCycleCost),
+    m_batt_dispatch_pvs_nameplate_ac(batt_dispatch_pvs_nameplate_ac),
     m_batt_dispatch_pvs_ac_lb(batt_dispatch_pvs_ac_lb),
     m_batt_dispatch_pvs_ac_lb_enable(batt_dispatch_pvs_ac_lb_enable),
     m_batt_dispatch_pvs_ac_ub(batt_dispatch_pvs_ac_ub),
@@ -94,6 +92,7 @@ void dispatch_pvsmoothing_front_of_meter_t::init_with_pointer(const dispatch_pvs
 	m_etaGridCharge = tmp->m_etaGridCharge;
 	m_etaDischarge = tmp->m_etaDischarge;
 
+    m_batt_dispatch_pvs_nameplate_ac = tmp->m_batt_dispatch_pvs_nameplate_ac;
     m_batt_dispatch_pvs_ac_lb = tmp->m_batt_dispatch_pvs_ac_lb;
     m_batt_dispatch_pvs_ac_lb_enable = tmp->m_batt_dispatch_pvs_ac_lb_enable;
     m_batt_dispatch_pvs_ac_ub = tmp->m_batt_dispatch_pvs_ac_ub;
@@ -157,27 +156,7 @@ void dispatch_pvsmoothing_front_of_meter_t::update_dispatch(size_t year, size_t 
         /*! Cost to cycle the battery at all, using maximum DOD or user input */
         costToCycle();
 
-        /*
-        // Compute forecast variables which don't change from year to year
-        size_t idx_year1 = hour_of_year * _steps_per_hour;
-        size_t idx_lookahead = _forecast_hours * _steps_per_hour;
-        auto max_ppa_cost = std::max_element(_forecast_price_rt_series.begin() + idx_year1, _forecast_price_rt_series.begin() + idx_year1 + idx_lookahead);
-        auto min_ppa_cost = std::min_element(_forecast_price_rt_series.begin() + idx_year1, _forecast_price_rt_series.begin() + idx_year1 + idx_lookahead);
-        double ppa_cost = _forecast_price_rt_series[idx_year1];
-
-        double usage_cost = ppa_cost;
-        std::vector<double> usage_cost_forecast;
-        if (m_utilityRateCalculator) {
-            usage_cost = m_utilityRateCalculator->getEnergyRate(hour_of_year);
-            for (size_t i = hour_of_year; i < hour_of_year + _forecast_hours; i++)
-            {
-                for (size_t s = 0; s < _steps_per_hour; s++) {
-                    usage_cost_forecast.push_back(m_utilityRateCalculator->getEnergyRate(i % 8760));
-                }
-            }
-        }
-        */
-        // Compute forecast variables which potentially do change from year to year
+         // Compute forecast variables which potentially do change from year to year
         double energyToStoreClipped = 0;
         if (_P_cliploss_dc.size() > lifetimeIndex + _forecast_hours) {
             energyToStoreClipped = std::accumulate(_P_cliploss_dc.begin() + lifetimeIndex, _P_cliploss_dc.begin() + lifetimeIndex + _forecast_hours * _steps_per_hour, 0.0) * _dt_hour;
@@ -212,6 +191,8 @@ void dispatch_pvsmoothing_front_of_meter_t::update_dispatch(size_t year, size_t 
                 pv_power += _P_pv_ac[lifetimeIndex + i_sampled];
                 num_summed++;
             }
+            // scale by nameplate per ERPI code
+            pv_power = m_batt_dispatch_pvs_nameplate_ac > 0 ? pv_power / m_batt_dispatch_pvs_nameplate_ac : pv_power;
             pv_power_input_sampled.push_back( num_summed > 0 ? pv_power / num_summed : pv_power);
             forecast_pv_energy += pv_power_input_sampled[i_forecast] * power_to_energy_conversion_factor;
         }
@@ -224,6 +205,9 @@ void dispatch_pvsmoothing_front_of_meter_t::update_dispatch(size_t year, size_t 
         ssc_number_t battery_energy = _Battery->energy_nominal(); // check units in equations below 
         ssc_number_t batt_half_round_trip_eff = sqrt(m_etaDischarge * m_etaPVCharge);  //TODO - check units
         ssc_number_t battery_power = m_batteryPower->powerBatteryChargeMaxAC;
+        // scale by nameplate per ERPI code
+        battery_energy = m_batt_dispatch_pvs_nameplate_ac > 0 ? battery_energy / m_batt_dispatch_pvs_nameplate_ac : battery_energy;
+        battery_power = m_batt_dispatch_pvs_nameplate_ac > 0 ? battery_power / m_batt_dispatch_pvs_nameplate_ac : battery_power;
 
 
         //            if (en_forecast)
@@ -310,19 +294,15 @@ void dispatch_pvsmoothing_front_of_meter_t::update_dispatch(size_t year, size_t 
             battery_soc = battery_soc - battery_power_terminal * power_to_energy_conversion_factor / batt_half_round_trip_eff;
         else if (battery_power_terminal < 0)//:#charging - efficiency loss decreases the amount of energy put into the battery
             battery_soc = battery_soc - battery_power_terminal * batt_half_round_trip_eff * power_to_energy_conversion_factor;
-        previous_power = out_power;
 
-        //                #update output variables - TODO in cmod_battery
-      //  total_energy += out_power;
-      //  violation_count += violation;
-
+        // unscaled in public functions
         m_batt_dispatch_pvs_outpower = out_power;
         m_batt_dispatch_pvs_battpower = battery_power_terminal;
         m_batt_dispatch_pvs_battsoc = battery_soc;
         m_batt_dispatch_pvs_violation_list = violation;
         m_batt_dispatch_pvs_curtail = curtail_power;
-        // save for extraction
-		m_batteryPower->powerBatteryTarget = out_power;
+        // save for extraction (unscaled)
+		m_batteryPower->powerBatteryTarget = m_batt_dispatch_pvs_nameplate_ac > 0 ? m_batt_dispatch_pvs_nameplate_ac * out_power : out_power ;
 	}
     // Custom dispatch
 	else
