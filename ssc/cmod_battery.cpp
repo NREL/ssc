@@ -462,8 +462,8 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                     batt_vars->batt_dispatch_pvs_short_forecast_enable = vt.as_boolean("batt_dispatch_pvs_short_forecast_enable");
                     batt_vars->batt_dispatch_pvs_forecast_shift_periods = vt.as_double("batt_dispatch_pvs_forecast_shift_periods");
                     batt_vars->batt_dispatch_pvs_timestep_multiplier = vt.as_double("batt_dispatch_pvs_timestep_multiplier");
-                    batt_vars->batt_dispatch_pvs_max_ramp = vt.as_double("batt_dispatch_pvs_max_ramp");
-                    batt_vars->batt_dispatch_pvs_soc_rest = vt.as_double("batt_dispatch_pvs_soc_rest");
+                    batt_vars->batt_dispatch_pvs_max_ramp = vt.as_double("batt_dispatch_pvs_max_ramp")/100.0;
+                    batt_vars->batt_dispatch_pvs_soc_rest = vt.as_double("batt_dispatch_pvs_soc_rest")/100.0;
                     batt_vars->batt_dispatch_pvs_kp = vt.as_double("batt_dispatch_pvs_kp");
                     batt_vars->batt_dispatch_pvs_ki = vt.as_double("batt_dispatch_pvs_ki");
                     batt_vars->batt_dispatch_pvs_kf = vt.as_double("batt_dispatch_pvs_kf");
