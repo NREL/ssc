@@ -20,7 +20,7 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <algorithm>  
+#include <algorithm>
 #include <cmath>
 #include <memory>
 
@@ -189,12 +189,14 @@ void lifetime_cycle_t::replaceBattery(double replacement_percent) {
     // More work to figure out degradation of multiple-aged battery units
     if (replacement_percent == 100) {
         state->n_cycles = 0;
+        state->cycle_range = 0;
+        state->cycle_DOD = 0;
+        state->average_range = 0;
     }
 
     state->cycle->rainflow_jlt = 0;
     state->cycle->rainflow_Xlt = 0;
     state->cycle->rainflow_Ylt = 0;
-    state->cycle_range = 0;
     state->cycle->rainflow_peaks.clear();
 }
 
