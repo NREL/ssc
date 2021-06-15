@@ -243,8 +243,9 @@ var_info vtab_battery_outputs[] = {
     { SSC_OUTPUT,        SSC_ARRAY,      "gen_without_battery",                        "Energy produced without the battery or curtailment",    "kW","",                      "Battery",       "",                           "",                              "" },
 
     // PV Smoothing
-    { SSC_OUTPUT,        SSC_ARRAY,      "batt_pvs_outpower",                          "PV smoothing electricity to/from system",              "kW",      "",                       "Battery",       "",                           "",                              "" },
-    { SSC_OUTPUT,        SSC_ARRAY,      "batt_pvs_battpower",                         "PV smoothing electricity to/from battery",             "kW",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "batt_pvs_P_pv_ac",                           "PV smoothing PV power before smoothing",              "kW",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "batt_pvs_outpower",                          "PV smoothing outpower",                                "kW",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "batt_pvs_battpower",                         "PV smoothing battpower",                                "kW",      "",                       "Battery",       "",                           "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "batt_pvs_battsoc",                           "PV smoothing battery SOC",                             "%",      "",                       "Battery",       "",                           "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "batt_pvs_curtail",                           "PV smoothing curtailed power",                         "kW",      "",                       "Battery",       "",                           "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "batt_pvs_violation_list",                    "PV smoothing violation",                               "",      "",                       "Battery",       "",                           "",                              "" },
@@ -735,6 +736,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     outPVS_battsoc = 0;
     outPVS_curtail = 0;
     outPVS_violation_list = 0;
+    outPVS_P_pv_ac = 0;
 
 
     en = setup_model;
@@ -803,6 +805,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             outPVS_battsoc = vt.allocate("batt_pvs_battsoc", nrec * nyears);
             outPVS_curtail = vt.allocate("batt_pvs_curtail", nrec * nyears);
             outPVS_violation_list = vt.allocate("batt_pvs_violation_list", nrec * nyears);
+            outPVS_P_pv_ac = vt.allocate("batt_pvs_P_pv_ac", nrec * nyears);
         }
         else  if (batt_vars->batt_dispatch != dispatch_t::FOM_MANUAL) {
             outBattPowerTarget = vt.allocate("batt_power_target", nrec * nyears);
@@ -1408,6 +1411,7 @@ battstor::battstor(const battstor& orig) {
     outPVS_battsoc = orig.outPVS_battsoc;
     outPVS_curtail = orig.outPVS_curtail;
     outPVS_violation_list = orig.outPVS_violation_list;
+    outPVS_P_pv_ac = orig.outPVS_P_pv_ac;
 
 
 
@@ -1577,6 +1581,7 @@ void battstor::outputs_topology_dependent()
             outPVS_curtail[index] = dispatch_fom->batt_dispatch_pvs_curtail();
             outPVS_outpower[index] = dispatch_fom->batt_dispatch_pvs_outpower();
             outPVS_violation_list[index] = dispatch_fom->batt_dispatch_pvs_violation_list();
+            outPVS_P_pv_ac[index] = dispatch_fom->batt_dispatch_pvs_P_pv_ac();
         }
         else if (batt_vars->batt_dispatch != dispatch_t::FOM_MANUAL) {
             dispatch_automatic_front_of_meter_t* dispatch_fom = dynamic_cast<dispatch_automatic_front_of_meter_t*>(dispatch_model);

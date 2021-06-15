@@ -100,11 +100,12 @@ public:
     void update_pv_data(double_vec P_pv_ac);
 
 	/// Return intermediate calculations for validation - unscale by nameplate = min(system ac rating, grid interconnection limit)
-    double batt_dispatch_pvs_outpower() { return (m_batt_dispatch_pvs_nameplate_ac > 0 ) ? m_batt_dispatch_pvs_nameplate_ac * m_batt_dispatch_pvs_outpower : m_batt_dispatch_pvs_outpower; };
+    double batt_dispatch_pvs_outpower() { return (m_batt_dispatch_pvs_nameplate_ac > 0) ? m_batt_dispatch_pvs_nameplate_ac * m_batt_dispatch_pvs_outpower : m_batt_dispatch_pvs_outpower; };
     double batt_dispatch_pvs_battpower() { return  (m_batt_dispatch_pvs_nameplate_ac > 0) ? m_batt_dispatch_pvs_nameplate_ac * m_batt_dispatch_pvs_battpower : m_batt_dispatch_pvs_battpower; };
     double batt_dispatch_pvs_battsoc() { return m_batt_dispatch_pvs_battsoc; };
     double batt_dispatch_pvs_curtail() { return (m_batt_dispatch_pvs_nameplate_ac > 0) ? m_batt_dispatch_pvs_nameplate_ac * m_batt_dispatch_pvs_curtail : m_batt_dispatch_pvs_curtail; };
     double batt_dispatch_pvs_violation_list() { return m_batt_dispatch_pvs_violation_list; };
+    double batt_dispatch_pvs_P_pv_ac() { return m_batt_dispatch_pvs_P_pv_ac; };
 
 
 protected:
@@ -128,6 +129,7 @@ protected:
     double m_batt_dispatch_pvs_battsoc;
     double m_batt_dispatch_pvs_curtail;
 	double m_batt_dispatch_pvs_violation_list;
+    double m_batt_dispatch_pvs_P_pv_ac;
 
     // PVSmoothing inputs
     double m_batt_dispatch_pvs_nameplate_ac;

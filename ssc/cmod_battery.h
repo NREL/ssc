@@ -377,7 +377,8 @@ struct battstor
         *outPVS_battpower,
         *outPVS_battsoc,
         *outPVS_curtail,
-        *outPVS_violation_list;
+        *outPVS_violation_list,
+        *outPVS_P_pv_ac; // testing with input pv output
 
 
 	double outAverageCycleEfficiency;

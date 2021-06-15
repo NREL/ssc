@@ -304,7 +304,7 @@ void dispatch_pvsmoothing_front_of_meter_t::update_dispatch(size_t year, size_t 
         m_batt_dispatch_pvs_curtail = curtail_power;
         // save for extraction (unscaled)
 //        m_batteryPower->powerBatteryTarget = m_batt_dispatch_pvs_nameplate_ac > 0 ? m_batt_dispatch_pvs_nameplate_ac * out_power : out_power;
-        m_batteryPower->powerBatteryTarget = m_batt_dispatch_pvs_nameplate_ac > 0 ? m_batt_dispatch_pvs_nameplate_ac * battery_power_terminal : battery_power_terminal;
+//        m_batteryPower->powerBatteryTarget = m_batt_dispatch_pvs_nameplate_ac > 0 ? m_batt_dispatch_pvs_nameplate_ac * battery_power_terminal : battery_power_terminal;
     }
 	else // same value for next multiplier timesteps. 
 	{
@@ -320,9 +320,10 @@ void dispatch_pvsmoothing_front_of_meter_t::update_dispatch(size_t year, size_t 
             m_batteryPower->powerBatteryTarget += loss_kw;
         }
         */
-        m_batteryPower->powerBatteryTarget = m_batt_dispatch_pvs_nameplate_ac > 0 ? m_batt_dispatch_pvs_nameplate_ac * m_batt_dispatch_pvs_battpower : m_batt_dispatch_pvs_battpower;
+//        m_batteryPower->powerBatteryTarget = m_batt_dispatch_pvs_nameplate_ac > 0 ? m_batt_dispatch_pvs_nameplate_ac * m_batt_dispatch_pvs_battpower : m_batt_dispatch_pvs_battpower;
 	}
-
+    m_batt_dispatch_pvs_P_pv_ac = _P_pv_ac[lifetimeIndex]; // testing unsmoothed pv system output.
+    m_batteryPower->powerBatteryTarget = m_batt_dispatch_pvs_nameplate_ac > 0 ? m_batt_dispatch_pvs_nameplate_ac * m_batt_dispatch_pvs_outpower - _P_pv_ac[lifetimeIndex] : m_batt_dispatch_pvs_outpower - _P_pv_ac[lifetimeIndex];
 	m_batteryPower->powerBatteryDC = m_batteryPower->powerBatteryTarget;
 }
 
