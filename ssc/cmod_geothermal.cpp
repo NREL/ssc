@@ -36,7 +36,7 @@ static var_info _cm_vtab_geothermal[] = {
     { SSC_INPUT,        SSC_NUMBER,      "ui_calculations_only",               "If = 1, only run UI calculations",             "",               "",             "GeoHourly",        "*",                        "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",          "Geothermal lifetime simulation",              "0/1",     "0=SingleYearRepeated,1=RunEveryYear",     "GeoHourly",             "?=0",           "BOOLEAN",                        "" },
 
-    { SSC_INOUT,        SSC_NUMBER,      "baseline_cost",          "Baseline cost",              "$/kW",     "",     "GeoHourly",             "?=0",           "",                        "" },
+    //{ SSC_INOUT,        SSC_NUMBER,      "baseline_cost",          "Baseline cost",              "$/kW",     "",     "GeoHourly",             "?=0",           "",                        "" },
 
     // climate and resource inputs		 								       											   				     
     { SSC_INPUT,        SSC_STRING,      "file_name",                          "local weather file path",                      "",               "",             "GeoHourly",        "ui_calculations_only=0",   "LOCAL_FILE",      "" },
