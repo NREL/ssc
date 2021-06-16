@@ -243,7 +243,10 @@ var_info vtab_battery_outputs[] = {
     { SSC_OUTPUT,        SSC_ARRAY,      "gen_without_battery",                        "Energy produced without the battery or curtailment",    "kW","",                      "Battery",       "",                           "",                              "" },
 
     // PV Smoothing
+    { SSC_OUTPUT,        SSC_ARRAY,      "batt_pvs_PV_ramp_interval",                  "PV smoothing PV power sampled", "kW", "", "Battery", "", "", "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "batt_pvs_forecast_pv_energy",                "PV smoothing PV power forecast",              "kW",      "",                       "Battery",       "",                           "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "batt_pvs_P_pv_ac",                           "PV smoothing PV power before smoothing",              "kW",      "",                       "Battery",       "",                           "",                              "" },
+
     { SSC_OUTPUT,        SSC_ARRAY,      "batt_pvs_outpower",                          "PV smoothing outpower",                                "kW",      "",                       "Battery",       "",                           "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "batt_pvs_battpower",                         "PV smoothing battpower",                                "kW",      "",                       "Battery",       "",                           "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "batt_pvs_battsoc",                           "PV smoothing battery SOC",                             "%",      "",                       "Battery",       "",                           "",                              "" },
@@ -737,6 +740,8 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     outPVS_curtail = 0;
     outPVS_violation_list = 0;
     outPVS_P_pv_ac = 0;
+    outPVS_PV_ramp_interval = 0;
+    outPVS_forecast_pv_energy = 0;
 
 
     en = setup_model;
@@ -806,6 +811,8 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             outPVS_curtail = vt.allocate("batt_pvs_curtail", nrec * nyears);
             outPVS_violation_list = vt.allocate("batt_pvs_violation_list", nrec * nyears);
             outPVS_P_pv_ac = vt.allocate("batt_pvs_P_pv_ac", nrec * nyears);
+            outPVS_PV_ramp_interval = vt.allocate("batt_pvs_PV_ramp_interval", nrec * nyears);
+            outPVS_forecast_pv_energy = vt.allocate("batt_pvs_forecast_pv_energy", nrec * nyears);
         }
         else  if (batt_vars->batt_dispatch != dispatch_t::FOM_MANUAL) {
             outBattPowerTarget = vt.allocate("batt_power_target", nrec * nyears);
@@ -1412,7 +1419,8 @@ battstor::battstor(const battstor& orig) {
     outPVS_curtail = orig.outPVS_curtail;
     outPVS_violation_list = orig.outPVS_violation_list;
     outPVS_P_pv_ac = orig.outPVS_P_pv_ac;
-
+    outPVS_PV_ramp_interval = orig.outPVS_PV_ramp_interval;
+    outPVS_forecast_pv_energy = orig.outPVS_forecast_pv_energy;
 
 
     outAverageCycleEfficiency = orig.outAverageCycleEfficiency;
@@ -1582,6 +1590,8 @@ void battstor::outputs_topology_dependent()
             outPVS_outpower[index] = dispatch_fom->batt_dispatch_pvs_outpower();
             outPVS_violation_list[index] = dispatch_fom->batt_dispatch_pvs_violation_list();
             outPVS_P_pv_ac[index] = dispatch_fom->batt_dispatch_pvs_P_pv_ac();
+            outPVS_PV_ramp_interval[index] = dispatch_fom->batt_dispatch_pvs_PV_ramp_interval();
+            outPVS_forecast_pv_energy[index] = dispatch_fom->batt_dispatch_pvs_forecast_pv_energy();
         }
         else if (batt_vars->batt_dispatch != dispatch_t::FOM_MANUAL) {
             dispatch_automatic_front_of_meter_t* dispatch_fom = dynamic_cast<dispatch_automatic_front_of_meter_t*>(dispatch_model);
