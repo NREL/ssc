@@ -202,29 +202,6 @@ void dispatch_pvsmoothing_front_of_meter_t::update_dispatch(size_t year, size_t 
 
 
 
-//        std::vector<ssc_number_t> pv_power_input_sampled;
-//        pv_power_input_sampled.reserve(m_batt_dispatch_pvs_forecast_shift_periods);
-
-
-/*
-        for (size_t i_forecast = 0; i_forecast < m_batt_dispatch_pvs_forecast_shift_periods; i_forecast++) {
-            size_t num_summed = 0;
-            ssc_number_t pv_power = 0;
-            for (size_t i_sampled = 0; i_sampled < m_batt_dispatch_pvs_timestep_multiplier && (lifetimeIndex + i_sampled) < _P_pv_ac.size(); i_sampled++) {
-                pv_power += _P_pv_ac[lifetimeIndex + i_sampled];
-                num_summed++;
-            }
-            // scale by nameplate per ERPI code
-            pv_power = m_batt_dispatch_pvs_nameplate_ac > 0 ? pv_power / m_batt_dispatch_pvs_nameplate_ac : pv_power;
-            pv_power_input_sampled.push_back( num_summed > 0 ? pv_power / num_summed : pv_power);
-            forecast_pv_energy += pv_power_input_sampled[i_forecast] * power_to_energy_conversion_factor;
-        }
-
-        m_batt_dispatch_pvs_PV_ramp_interval = pv_power_input_sampled[0];
-        m_batt_dispatch_pvs_forecast_pv_energy = forecast_pv_energy;
-*/
-//        ssc_number_t pv_power = pv_power_input_sampled[0];
-
 
         m_batt_dispatch_pvs_PV_ramp_interval = pv_power;
         m_batt_dispatch_pvs_forecast_pv_energy = forecast_pv_energy;
@@ -233,8 +210,8 @@ void dispatch_pvsmoothing_front_of_meter_t::update_dispatch(size_t year, size_t 
         ssc_number_t battery_power_terminal = 0;
         ssc_number_t forecast_power = 0;
         ssc_number_t previous_power = m_batt_dispatch_pvs_outpower;
- //       ssc_number_t previous_power = m_batt_dispatch_pvs_battpower;
-        ssc_number_t battery_soc = _Battery->SOC() /100.0;
+//        ssc_number_t battery_soc = _Battery->SOC() / 100.0;
+        ssc_number_t battery_soc = m_batt_dispatch_pvs_battsoc; 
         ssc_number_t battery_energy = _Battery->energy_nominal(); // check units in equations below 
         ssc_number_t batt_half_round_trip_eff = sqrt(m_etaDischarge * m_etaPVCharge);  //TODO - check units
         ssc_number_t battery_power = m_batteryPower->powerBatteryChargeMaxAC;
@@ -331,29 +308,11 @@ void dispatch_pvsmoothing_front_of_meter_t::update_dispatch(size_t year, size_t 
         // unscaled in public functions
         m_batt_dispatch_pvs_outpower = out_power;
         m_batt_dispatch_pvs_battpower = battery_power_terminal;
-        m_batt_dispatch_pvs_battsoc = (battery_energy > 0 ) ? battery_soc / battery_energy : battery_soc; // plot scaling from Python code
+//        m_batt_dispatch_pvs_battsoc = (battery_energy > 0) ? battery_soc / battery_energy : battery_soc; // plot scaling from Python code
+        m_batt_dispatch_pvs_battsoc = battery_soc; // plot scaling from Python code
         m_batt_dispatch_pvs_violation_list = violation;
         m_batt_dispatch_pvs_curtail = curtail_power;
-        // save for extraction (unscaled)
-//        m_batteryPower->powerBatteryTarget = m_batt_dispatch_pvs_nameplate_ac > 0 ? m_batt_dispatch_pvs_nameplate_ac * out_power : out_power;
-//        m_batteryPower->powerBatteryTarget = m_batt_dispatch_pvs_nameplate_ac > 0 ? m_batt_dispatch_pvs_nameplate_ac * battery_power_terminal : battery_power_terminal;
     }
-	else // same value for next multiplier timesteps. 
-	{
-    /*
-    // extract input power by modifying lifetime index to year 1
-		m_batteryPower->powerBatteryTarget = _P_battery_use[lifetimeIndex % (8760 * _steps_per_hour)];
-        double loss_kw = _Battery->calculate_loss(m_batteryPower->powerBatteryTarget, lifetimeIndex); // Battery is responsible for covering discharge losses
-        if (m_batteryPower->connectionMode == AC_CONNECTED){
-            m_batteryPower->powerBatteryTarget = m_batteryPower->adjustForACEfficiencies(m_batteryPower->powerBatteryTarget, loss_kw);
-        }
-        else if (m_batteryPower->powerBatteryTarget > 0) {
-            // Adjust for DC discharge losses
-            m_batteryPower->powerBatteryTarget += loss_kw;
-        }
-        */
-//        m_batteryPower->powerBatteryTarget = m_batt_dispatch_pvs_nameplate_ac > 0 ? m_batt_dispatch_pvs_nameplate_ac * m_batt_dispatch_pvs_battpower : m_batt_dispatch_pvs_battpower;
-	}
     m_batt_dispatch_pvs_P_pv_ac = _P_pv_ac[lifetimeIndex]; // testing unsmoothed pv system output.
 //    m_batteryPower->powerBatteryTarget = m_batt_dispatch_pvs_nameplate_ac > 0 ? m_batt_dispatch_pvs_nameplate_ac * m_batt_dispatch_pvs_outpower - _P_pv_ac[lifetimeIndex] : m_batt_dispatch_pvs_outpower - _P_pv_ac[lifetimeIndex];
     m_batteryPower->powerBatteryTarget = m_batt_dispatch_pvs_nameplate_ac > 0 ? m_batt_dispatch_pvs_nameplate_ac * m_batt_dispatch_pvs_battpower : m_batt_dispatch_pvs_battpower;
