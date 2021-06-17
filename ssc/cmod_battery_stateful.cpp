@@ -228,6 +228,9 @@ void write_battery_state(const battery_state& state, var_table* vt) {
     if (!lifetime->cycle->rainflow_peaks.empty()) {
         vt->assign_match_case("rainflow_peaks", lifetime->cycle->rainflow_peaks);
     }
+    else {
+        vt->unassign("rainflow_peaks");
+    }
     vt->assign_match_case("rainflow_Xlt", lifetime->cycle->rainflow_Xlt);
     vt->assign_match_case("rainflow_Ylt", lifetime->cycle->rainflow_Ylt);
     vt->assign_match_case("rainflow_jlt", lifetime->cycle->rainflow_jlt);
@@ -253,8 +256,14 @@ void write_battery_state(const battery_state& state, var_table* vt) {
         if (!lifetime->nmc_li_neg->cycle_DOD_max.empty()) {
             vt->assign_match_case("cycle_DOD_max", lifetime->nmc_li_neg->cycle_DOD_max);
         }
+        else {
+            vt->unassign("cycle_DOD_max");
+        }
         if (!lifetime->nmc_li_neg->cycle_DOD_range.empty()) {
             vt->assign_match_case("cycle_DOD_range", lifetime->nmc_li_neg->cycle_DOD_range);
+        }
+        else {
+            vt->unassign("cycle_DOD_range");
         }
     }
 
@@ -324,6 +333,9 @@ void read_battery_state(battery_state& state, var_table* vt) {
         // If not assigned, leave empty
         vt_get_array_vec(vt, "rainflow_peaks", lifetime->cycle->rainflow_peaks);
     }
+    else {
+        lifetime->cycle->rainflow_peaks.clear();
+    }
     if (choice == lifetime_params::CALCYC) {
         vt_get_number(vt, "q_relative_calendar", &lifetime->calendar->q_relative_calendar);
         vt_get_number(vt, "dq_relative_calendar_old", &lifetime->calendar->dq_relative_calendar_old);
@@ -347,9 +359,15 @@ void read_battery_state(battery_state& state, var_table* vt) {
         {
             vt_get_array_vec(vt, "cycle_DOD_range", lifetime->nmc_li_neg->cycle_DOD_range);
         }
+        else {
+            lifetime->nmc_li_neg->cycle_DOD_range.clear();
+        }
         if (vt->is_assigned("cycle_DOD_max"))
         {
             vt_get_array_vec(vt, "cycle_DOD_max", lifetime->nmc_li_neg->cycle_DOD_max);
+        }
+        else {
+            lifetime->nmc_li_neg->cycle_DOD_range.clear();
         }
     }
 
