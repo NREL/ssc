@@ -126,14 +126,14 @@ var_info vtab_battery_state[] = {
     { SSC_INOUT,        SSC_NUMBER,     "cell_voltage",              "Cell voltage",                                             "V",         "",                     "StateCell",        "",                           "",                               ""  },
 
     // thermal
-    { SSC_INOUT,        SSC_NUMBER,     "q_relative_thermal",        "Relative capacity due to thermal effects",                 "Ah",        "",                     "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_NUMBER,     "q_relative_thermal",        "Relative capacity due to thermal effects",                 "%",         "",                     "StateCell",        "",                           "",                               ""  },
     { SSC_INOUT,        SSC_NUMBER,     "T_batt",                    "Battery temperature averaged over time step",              "C",         "",                     "StatePack",        "",                           "",                               ""  },
     { SSC_INOUT,        SSC_NUMBER,     "T_room",                    "Room temperature",                                         "C",         "",                     "StatePack",        "",                           "",                               ""  },
     { SSC_INOUT,        SSC_NUMBER,     "heat_dissipated",           "Heat dissipated due to flux",                              "kW",        "",                     "StatePack",        "",                           "",                               ""  },
     { SSC_INOUT,        SSC_NUMBER,     "T_batt_prev",               "Battery temperature at end of last time step",             "C",         "",                     "StateCell",        "",                           "",                               ""  },
 
     // lifetime
-    { SSC_INOUT,        SSC_NUMBER,     "q_relative",                "Overall relative capacity due to lifetime effects",        "Ah",        "",                     "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_NUMBER,     "q_relative",                "Overall relative capacity due to lifetime effects",        "%",         "",                     "StateCell",        "",                           "",                               ""  },
     { SSC_INOUT,        SSC_NUMBER,     "q_relative_cycle",          "Relative capacity due to cycling effects",                 "%",         "",                     "StateCell",        "",                           "",                               ""  },
     { SSC_INOUT,        SSC_NUMBER,     "n_cycles",                  "Number of cycles",                                         "",          "",                     "StateCell",        "",                           "",                               ""  },
     { SSC_INOUT,        SSC_NUMBER,     "cycle_range",               "Range of last cycle",                                      "%",         "",                     "StateCell",        "",                           "",                               ""  },
