@@ -1,7 +1,9 @@
 #include <gtest/gtest.h>
 #include <random>
+#include <fstream>
 
-//#include "lib_battery_capacity.h"
+#include <json/json.h>
+#include "logger.h"
 #include "lib_battery.h"
 #include "lib_battery_lifetime_test.h"
 
@@ -38,7 +40,7 @@ TEST_F(lib_battery_lifetime_cycle_test, runCycleLifetimeTest) {
     EXPECT_NEAR(s.cycle->rainflow_Xlt, 90, tol);
     EXPECT_NEAR(s.cycle->rainflow_Ylt, 90, tol);
     EXPECT_NEAR(s.cycle->rainflow_jlt, 2, tol);
-    EXPECT_NEAR(s.range, 90, tol);
+    EXPECT_NEAR(s.cycle_range, 90, tol);
     EXPECT_NEAR(s.average_range, 90, tol);
     EXPECT_NEAR(s.n_cycles, 249, tol);
 
@@ -54,7 +56,7 @@ TEST_F(lib_battery_lifetime_cycle_test, runCycleLifetimeTest) {
     EXPECT_NEAR(s.cycle->rainflow_Xlt, 0, tol);
     EXPECT_NEAR(s.cycle->rainflow_Ylt, 0, tol);
     EXPECT_NEAR(s.cycle->rainflow_jlt, 2, tol);
-    EXPECT_NEAR(s.range, 0, tol);
+    EXPECT_NEAR(s.cycle_range, 0, tol);
     EXPECT_NEAR(s.average_range, 44.9098, tol);
     EXPECT_NEAR(s.n_cycles, 499, tol);
 }
@@ -71,7 +73,7 @@ TEST_F(lib_battery_lifetime_cycle_test, runCycleLifetimeTestJaggedProfile) {
     EXPECT_NEAR(s.cycle->rainflow_Xlt, 90, tol);
     EXPECT_NEAR(s.cycle->rainflow_Ylt, 90, tol);
     EXPECT_NEAR(s.cycle->rainflow_jlt, 1, tol);
-    EXPECT_NEAR(s.range, 90, tol);
+    EXPECT_NEAR(s.cycle_range, 90, tol);
     EXPECT_NEAR(s.average_range, 63.75, tol);
     EXPECT_NEAR(s.n_cycles, 4, tol);
 
@@ -89,10 +91,9 @@ TEST_F(lib_battery_lifetime_cycle_test, runCycleLifetimeTestKokamProfile) {
     EXPECT_NEAR(s.cycle->rainflow_Xlt, 75.09, tol);
     EXPECT_NEAR(s.cycle->rainflow_Ylt, 75.27, tol);
     EXPECT_NEAR(s.cycle->rainflow_jlt, 5, tol);
-    EXPECT_NEAR(s.range, 75.07, tol);
+    EXPECT_NEAR(s.cycle_range, 75.07, tol);
     EXPECT_NEAR(s.average_range, 72.03, tol);
     EXPECT_NEAR(s.n_cycles, 13, tol);
-
 }
 
 TEST_F(lib_battery_lifetime_cycle_test, runCycleLifetimeTestWithNoise) {
@@ -119,9 +120,9 @@ TEST_F(lib_battery_lifetime_cycle_test, runCycleLifetimeTestWithNoise) {
     }
     lifetime_state s = cycle_model->get_state();
     EXPECT_NEAR(s.cycle->q_relative_cycle, 95.06, tol_high);
-    EXPECT_NEAR(s.range, 90.6, tol_high);
+    EXPECT_NEAR(s.cycle_range, 90.6, tol_high);
     EXPECT_NEAR(s.average_range, 90.02, tol_high);
-
+    EXPECT_NEAR(s.n_cycles, 245, 10);
 }
 
 TEST_F(lib_battery_lifetime_cycle_test, replaceBatteryTest) {
@@ -142,7 +143,7 @@ TEST_F(lib_battery_lifetime_cycle_test, replaceBatteryTest) {
     EXPECT_NEAR(s.cycle->rainflow_Xlt, 90, tol);
     EXPECT_NEAR(s.cycle->rainflow_Ylt, 90, tol);
     EXPECT_NEAR(s.cycle->rainflow_jlt, 2, tol);
-    EXPECT_NEAR(s.range, 90, tol);
+    EXPECT_NEAR(s.cycle_range, 90, tol);
     EXPECT_NEAR(s.average_range, 90, tol);
     EXPECT_NEAR(s.n_cycles, 749, tol);
 
@@ -153,7 +154,7 @@ TEST_F(lib_battery_lifetime_cycle_test, replaceBatteryTest) {
     EXPECT_NEAR(s.cycle->rainflow_Xlt, 0, tol);
     EXPECT_NEAR(s.cycle->rainflow_Ylt, 0, tol);
     EXPECT_NEAR(s.cycle->rainflow_jlt, 0, tol);
-    EXPECT_NEAR(s.range, 0, tol);
+    EXPECT_NEAR(s.cycle_range, 90, tol);
     EXPECT_NEAR(s.average_range, 90, tol);
     EXPECT_NEAR(s.n_cycles, 749, tol);
 }
@@ -324,7 +325,7 @@ TEST_F(lib_battery_lifetime_test, updateCapacityTest) {
 TEST_F(lib_battery_lifetime_test, runCycleLifetimeTestWithRestPeriod) {
     double tol = 0.01;
 
-    std::vector<double> DOD = { 5, 50, 95, 50, 5, 5, 5, 50, 95, 50, 5, 5, 5, 50, 95, 50, 5 };  // 3 cycles 90% DOD
+    std::vector<double> DOD = { 5, 50, 95, 50, 5, 5, 5, 50, 95, 50, 5, 5, 5, 50, 95, 50, 5 };  // 3 cycles 90% cycle_DOD
     std::vector<bool> charge_changed = { true, false, false, true, false, false, false, true, false, true, false, false, false, true, false, true, false };
     int idx = 0;
     double T_battery = 25; // deg C
@@ -343,7 +344,7 @@ TEST_F(lib_battery_lifetime_test, runCycleLifetimeTestWithRestPeriod) {
     EXPECT_NEAR(s.cycle->rainflow_Xlt, 90, tol);
     EXPECT_NEAR(s.cycle->rainflow_Ylt, 90, tol);
     EXPECT_NEAR(s.cycle->rainflow_jlt, 2, tol);
-    EXPECT_NEAR(s.range, 90, tol);
+    EXPECT_NEAR(s.cycle_range, 90, tol);
     EXPECT_NEAR(s.average_range, 90, tol);
     EXPECT_NEAR(s.n_cycles, 2, tol);
 }
@@ -353,24 +354,51 @@ TEST_F(lib_battery_lifetime_nmc_test, InitTest) {
 
     //check lifetime_nmc_state_initialization
     auto lifetime_state = model->get_state();
-    EXPECT_NEAR(lifetime_state.nmc_li_neg->q_relative_neg, 100.853, tol);
-    EXPECT_NEAR(lifetime_state.nmc_li_neg->q_relative_li, 107.142, tol);
+    EXPECT_NEAR(lifetime_state.nmc_li_neg->q_relative_neg, 100, tol);
+    EXPECT_NEAR(lifetime_state.nmc_li_neg->q_relative_li, 100, tol);
     EXPECT_EQ(model->get_state().day_age_of_battery, 0);
     EXPECT_EQ(model->get_state().n_cycles, 0);
 
     //check U_neg, and Voc functions (SOC as a fractional input)
+    EXPECT_NEAR(model->calculate_Uneg(0), 1.2868, tol);
+    EXPECT_NEAR(model->calculate_Voc(0), 3, tol);
     EXPECT_NEAR(model->calculate_Uneg(0.1), 0.242, tol);
     EXPECT_NEAR(model->calculate_Voc(0.1), 3.4679, tol);
-    EXPECT_NEAR(model->calculate_Uneg(0.5), 0.1726, tol);
-    EXPECT_NEAR(model->calculate_Voc(0.5), 3.6912, tol);
-    EXPECT_NEAR(model->calculate_Uneg(0.9), 0.1032, tol);
-    EXPECT_NEAR(model->calculate_Voc(0.9), 4.0818, tol);
+    EXPECT_NEAR(model->calculate_Uneg(0.5), 0.123, tol);
+    EXPECT_NEAR(model->calculate_Voc(0.5), 3.6876, tol);
+    EXPECT_NEAR(model->calculate_Uneg(0.9), 0.0876, tol);
+    EXPECT_NEAR(model->calculate_Voc(0.9), 4.0668, tol);
+    EXPECT_NEAR(model->calculate_Uneg(1), 0.0859, tol);
+    EXPECT_NEAR(model->calculate_Voc(1), 4.193, tol);
+}
+
+TEST_F(lib_battery_lifetime_nmc_test, CopyTest) {
+    double tol = 0.001;
+
+    // check lifetime_nmc_state get & set
+    auto state = model->get_state();
+    state.nmc_li_neg->cycle_DOD_range = {0, 1};
+    state.nmc_li_neg->cycle_DOD_max = {2, 3};
+    model->set_state(state);
+
+    state = model->get_state();
+    EXPECT_EQ(state.nmc_li_neg->cycle_DOD_range[0], 0);
+    EXPECT_EQ(state.nmc_li_neg->cycle_DOD_range[1], 1);
+    EXPECT_EQ(state.nmc_li_neg->cycle_DOD_max[0], 2);
+    EXPECT_EQ(state.nmc_li_neg->cycle_DOD_max[1], 3);
+
+    auto new_model = lifetime_nmc_t(*model);
+    state = new_model.get_state();
+    EXPECT_EQ(state.nmc_li_neg->cycle_DOD_range[0], 0);
+    EXPECT_EQ(state.nmc_li_neg->cycle_DOD_range[1], 1);
+    EXPECT_EQ(state.nmc_li_neg->cycle_DOD_max[0], 2);
+    EXPECT_EQ(state.nmc_li_neg->cycle_DOD_max[1], 3);
 }
 
 /// run at different days
 TEST_F(lib_battery_lifetime_nmc_test, StorageDays) {
     std::vector<double> days = {0, 10, 50 , 500, 5000};
-    std::vector<double> expected_q_li = {106.50, 104.36, 103.97, 103.72, 102.93};
+    std::vector<double> expected_q_li = {106.50, 104.36, 103.97, 102.835, 99.66};
 
     for (size_t i = 0; i < days.back() + 1; i++) {
         for (size_t h = 0; h < 24; h++) {
@@ -392,7 +420,7 @@ TEST_F(lib_battery_lifetime_nmc_test, StorageMinuteTimestep) {
     model = std::unique_ptr<lifetime_nmc_t>(new lifetime_nmc_t(dt_hr));
 
     std::vector<double> days = {0, 10, 50 , 500, 5000};
-    std::vector<double> expected_q_li = {106.50, 104.36, 103.97, 103.72, 102.93};
+    std::vector<double> expected_q_li = {106.50, 104.36, 103.97, 102.835, 99.66};
 
     auto steps_per_day = (size_t)(24 / dt_hr);
     for (size_t i = 0; i < days.back() + 1; i++) {
@@ -412,7 +440,7 @@ TEST_F(lib_battery_lifetime_nmc_test, StorageMinuteTimestep) {
 /// run at different days at different temperatures
 TEST_F(lib_battery_lifetime_nmc_test, StorageTemp) {
     std::vector<double> temps = {0, 10, 15, 40};
-    std::vector<double> expected_q_li = {81.73, 93.08, 97.43, 102.33};
+    std::vector<double> expected_q_li = {81.73, 93.08, 97.43, 93};
 
     for (size_t n = 3; n < temps.size(); n++) {
         model = std::unique_ptr<lifetime_nmc_t>(new lifetime_nmc_t(dt_hour));
@@ -420,6 +448,27 @@ TEST_F(lib_battery_lifetime_nmc_test, StorageTemp) {
             for (size_t h = 0; h < 24; h++) {
                 size_t hr = d * 24 + h;
                 model->runLifetimeModels(hr, false, 50, 50, temps[n]);
+            }
+        }
+        auto state = model->get_state();
+        EXPECT_NEAR((size_t)state.nmc_li_neg->q_relative_li, expected_q_li[n], 1);
+    }
+}
+
+TEST_F(lib_battery_lifetime_nmc_test, StorageTempSmallDt) {
+    std::vector<double> temps = { 0, 10, 15, 40 };
+    std::vector<double> expected_q_li = { 81.73, 93.08, 97.43, 90 };
+
+    dt_hour = 1 / 60.0 / 60.0 * 10.0;
+
+    for (size_t n = 3; n < temps.size(); n++) {
+        model = std::unique_ptr<lifetime_nmc_t>(new lifetime_nmc_t(dt_hour));
+        for (size_t d = 0; d < 5000 + 1; d++) {
+            for (size_t h = 0; h < 24; h++) {
+                size_t hr = d * 24 + h;
+                for (size_t s = 0; s < 600; s++) {
+                    model->runLifetimeModels(hr, false, 50, 50, temps[n]);
+                }
             }
         }
         auto state = model->get_state();
@@ -448,8 +497,7 @@ TEST_F(lib_battery_lifetime_nmc_test, CyclingHighDOD) {
     auto state = model->get_state();
 
     EXPECT_EQ(state.n_cycles, 86);
-    EXPECT_EQ(state.nmc_li_neg->DOD_max, 50);
-    EXPECT_NEAR(state.nmc_li_neg->q_relative_li, 103.23, 0.5);
+    EXPECT_NEAR(state.nmc_li_neg->q_relative_li, 101.19, 0.5);
     EXPECT_NEAR(state.nmc_li_neg->q_relative_neg, 100.6, 0.5);
     EXPECT_NEAR(state.day_age_of_battery, 87, 1e-3);
 
@@ -471,9 +519,8 @@ TEST_F(lib_battery_lifetime_nmc_test, CyclingHighDOD) {
     state = model->get_state();
 
     EXPECT_EQ(state.n_cycles, 869);
-    EXPECT_EQ(state.nmc_li_neg->DOD_max, 50);
-    EXPECT_NEAR(state.nmc_li_neg->q_relative_li, 99.6, 0.5);
-    EXPECT_NEAR(state.nmc_li_neg->q_relative_neg, 98.00, 0.5);
+    EXPECT_NEAR(state.nmc_li_neg->q_relative_li, 94.09, 0.5);
+    EXPECT_NEAR(state.nmc_li_neg->q_relative_neg, 99.30, 0.5);
     EXPECT_NEAR(state.day_age_of_battery, 870, 1e-3);
 
     while (day < 8700) {
@@ -494,9 +541,10 @@ TEST_F(lib_battery_lifetime_nmc_test, CyclingHighDOD) {
     state = model->get_state();
 
     EXPECT_EQ(state.n_cycles, 8699);
-    EXPECT_EQ(state.nmc_li_neg->DOD_max, 50);
-    EXPECT_NEAR(state.nmc_li_neg->q_relative_li, 84.19, 3);
-    EXPECT_NEAR(state.nmc_li_neg->q_relative_neg, 67.00, 0.5);
+    EXPECT_EQ(state.cycle_range, 80);
+    EXPECT_EQ(state.cycle_DOD, 90);
+    EXPECT_NEAR(state.nmc_li_neg->q_relative_li, 63.42, 3);
+    EXPECT_NEAR(state.nmc_li_neg->q_relative_neg, 84.43, 0.5);
     EXPECT_NEAR(state.day_age_of_battery, 8700, 1e-3);
 }
 
@@ -522,9 +570,8 @@ TEST_F(lib_battery_lifetime_nmc_test, CyclingHighTemp) {
     auto state = model->get_state();
 
     EXPECT_EQ(state.n_cycles, 86);
-    EXPECT_EQ(state.nmc_li_neg->DOD_max, 50);
-    EXPECT_NEAR(state.nmc_li_neg->q_relative_li, 105.45, 0.6);
-    EXPECT_NEAR(state.nmc_li_neg->q_relative_neg, 103.79, 0.5);
+    EXPECT_NEAR(state.nmc_li_neg->q_relative_li, 104.58, 0.6);
+    EXPECT_NEAR(state.nmc_li_neg->q_relative_neg, 103.88, 0.5);
     EXPECT_NEAR(state.day_age_of_battery, 87, 1e-3);
 
     while (day < 870) {
@@ -545,8 +592,7 @@ TEST_F(lib_battery_lifetime_nmc_test, CyclingHighTemp) {
     state = model->get_state();
 
     EXPECT_EQ(state.n_cycles, 869);
-    EXPECT_EQ(state.nmc_li_neg->DOD_max, 50);
-    EXPECT_NEAR(state.nmc_li_neg->q_relative_li, 103.49, 0.5);
+    EXPECT_NEAR(state.nmc_li_neg->q_relative_li, 100.37, 0.5);
     EXPECT_NEAR(state.nmc_li_neg->q_relative_neg, 103.35, 0.5);
     EXPECT_NEAR(state.day_age_of_battery, 870, 1e-3);
 
@@ -568,16 +614,17 @@ TEST_F(lib_battery_lifetime_nmc_test, CyclingHighTemp) {
     state = model->get_state();
 
     EXPECT_EQ(state.n_cycles, 8699);
-    EXPECT_EQ(state.nmc_li_neg->DOD_max, 50);
-    EXPECT_NEAR(state.nmc_li_neg->q_relative_li, 92.38, 0.5);
-    EXPECT_NEAR(state.nmc_li_neg->q_relative_neg, 98.93, 0.5);
+    EXPECT_EQ(state.cycle_range, 40);
+    EXPECT_EQ(state.cycle_DOD, 70);
+    EXPECT_NEAR(state.nmc_li_neg->q_relative_li, 82.11, 0.5);
+    EXPECT_NEAR(state.nmc_li_neg->q_relative_neg, 103.49, 0.5);
     EXPECT_NEAR(state.day_age_of_battery, 8700, 1e-3);
 }
 
 TEST_F(lib_battery_lifetime_nmc_test, CyclingCRate) {
     size_t day = 0;
 
-    // 90 DOD cycle once per day, slower Crate than above
+    // 90 cycle_DOD cycle once per day, slower Crate than above
     std::vector<double> DODs_day = {50., 56.67, 63.33, 70., 76.67, 83.33,
                                     90., 83.33, 76.67, 70., 63.33, 56.67, 50., 43.33, 36.67, 30., 23.33, 16.67,
                                     10., 16.67, 23.33, 30., 36.67, 43.33};
@@ -596,7 +643,7 @@ TEST_F(lib_battery_lifetime_nmc_test, CyclingCRate) {
     auto state = model->get_state();
 
     EXPECT_EQ(state.n_cycles, 86);
-    EXPECT_EQ(state.nmc_li_neg->DOD_max, 43.33);
+//    EXPECT_EQ(state.nmc_li_neg->DOD_min, 43.33);
     EXPECT_NEAR(state.nmc_li_neg->q_relative_li, 103, 1);
     EXPECT_NEAR(state.nmc_li_neg->q_relative_neg, 100, 1);
     EXPECT_NEAR(state.day_age_of_battery, 87, 1e-3);
@@ -615,9 +662,8 @@ TEST_F(lib_battery_lifetime_nmc_test, CyclingCRate) {
     state = model->get_state();
 
     EXPECT_EQ(state.n_cycles, 869);
-    EXPECT_EQ(state.nmc_li_neg->DOD_max, 43.33);
     EXPECT_NEAR(state.nmc_li_neg->q_relative_li, 97.61, 1);
-    EXPECT_NEAR(state.nmc_li_neg->q_relative_neg, 98, 1);
+    EXPECT_NEAR(state.nmc_li_neg->q_relative_neg, 100.17, 1);
     EXPECT_NEAR(state.day_age_of_battery, 870, 1e-3);
 }
 
@@ -628,7 +674,7 @@ TEST_F(lib_battery_lifetime_nmc_test, CyclingCRateMinuteTimestep) {
 
     size_t day = 0;
     size_t idx = 0;
-    // 90 DOD cycle once per day, slower Crate than above
+    // 90 cycle_DOD cycle once per day, slower Crate than above
     std::vector<double> DODs_day = {50., 56.67, 63.33, 70., 76.67, 83.33,
                                     90., 83.33, 76.67, 70., 63.33, 56.67, 50., 43.33, 36.67, 30., 23.33, 16.67,
                                     10., 16.67, 23.33, 30., 36.67, 43.33};
@@ -651,7 +697,7 @@ TEST_F(lib_battery_lifetime_nmc_test, CyclingCRateMinuteTimestep) {
     auto state = model->get_state();
 
     EXPECT_EQ(state.n_cycles, 86);
-    EXPECT_EQ(state.nmc_li_neg->DOD_max, 43.33);
+//    EXPECT_EQ(state.nmc_li_neg->DOD_min, 43.33);
     EXPECT_NEAR(state.nmc_li_neg->q_relative_li, 103, 1);
     EXPECT_NEAR(state.nmc_li_neg->q_relative_neg, 100, 1);
     EXPECT_NEAR(state.day_age_of_battery, 87, 1e-3);
@@ -674,9 +720,8 @@ TEST_F(lib_battery_lifetime_nmc_test, CyclingCRateMinuteTimestep) {
     state = model->get_state();
 
     EXPECT_EQ(state.n_cycles, 869);
-    EXPECT_EQ(state.nmc_li_neg->DOD_max, 43.33);
     EXPECT_NEAR(state.nmc_li_neg->q_relative_li, 97.61, 1);
-    EXPECT_NEAR(state.nmc_li_neg->q_relative_neg, 98, 1);
+    EXPECT_NEAR(state.nmc_li_neg->q_relative_neg, 100.17, 1);
     EXPECT_NEAR(state.day_age_of_battery, 870, 1e-3);
 }
 
@@ -702,7 +747,7 @@ TEST_F(lib_battery_lifetime_nmc_test, CyclingEveryTwoDays) {
     auto state = model->get_state();
 
     EXPECT_EQ(state.n_cycles, 43);
-    EXPECT_NEAR(state.nmc_li_neg->q_relative_li, 103.29, 1);
+    EXPECT_NEAR(state.nmc_li_neg->q_relative_li, 101.88, 1);
     EXPECT_NEAR(state.nmc_li_neg->q_relative_neg, 100.6, 0.5);
     EXPECT_NEAR(state.day_age_of_battery, 88, 1e-3);
 }
@@ -715,8 +760,6 @@ TEST_F(lib_battery_lifetime_nmc_test, CyclingEveryTwoDays) {
 TEST_F(lib_battery_lifetime_nmc_test, IrregularTimeStep) {
     double T = 35.15;
     auto state = model->get_state();
-    EXPECT_NEAR(state.nmc_li_neg->q_relative_li, 106.213, 1);
-    EXPECT_NEAR(state.nmc_li_neg->q_relative_neg, 100.6, 0.5);
 
     auto b_params = std::make_shared<lifetime_params>(model->get_params());
     b_params->dt_hr = 0.5;
@@ -745,8 +788,8 @@ TEST_F(lib_battery_lifetime_nmc_test, IrregularTimeStep) {
     state = model->get_state();
 
     EXPECT_EQ(state.n_cycles, 87);
-    EXPECT_NEAR(state.nmc_li_neg->q_relative_li, 105.966, 1e-3);
-    EXPECT_NEAR(state.nmc_li_neg->q_relative_neg, 103.829, 1e-3);
+    EXPECT_NEAR(state.nmc_li_neg->q_relative_li, 104.553, 1e-3);
+    EXPECT_NEAR(state.nmc_li_neg->q_relative_neg, 103.92, 1e-3);
     EXPECT_NEAR(state.day_age_of_battery, 88, 1e-3);
 
     printf("\n");
@@ -792,7 +835,149 @@ TEST_F(lib_battery_lifetime_nmc_test, IrregularTimeStep) {
     state = subhourly_model->get_state();
 
     EXPECT_EQ(state.n_cycles, 87);
-    EXPECT_NEAR(state.nmc_li_neg->q_relative_li, 105.965, 1e-3);
-    EXPECT_NEAR(state.nmc_li_neg->q_relative_neg, 103.829, 1e-3);
+    EXPECT_NEAR(state.nmc_li_neg->q_relative_li, 104.538, 1e-3);
+    EXPECT_NEAR(state.nmc_li_neg->q_relative_neg, 103.92, 1e-3);
     EXPECT_NEAR(state.day_age_of_battery, 88, 1e-3);
+}
+
+TEST_F(lib_battery_lifetime_nmc_test, TestAgainstKokamData) {
+    const char * SSCDIR = std::getenv("SSCDIR");
+
+    std::string kokam_validation_path = std::string(SSCDIR) + "/test/input_cases/battery_nmc_life/";
+
+    std::vector<int> cells_to_test = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+
+    dt_hour = 1. / 60 / 60 * 10;
+
+    for (auto cell : cells_to_test) {
+        // Get Cell input data
+        std::string file_path = kokam_validation_path + "lifetime_validation_cell_" + std::to_string(cell) + ".json";
+        std::ifstream file(file_path);
+
+        Json::Value root;
+        file >> root;
+
+        std::vector<double> rpt_cycles;
+        for (const auto & i : root["rpt_cycles_cum"])
+            rpt_cycles.push_back(i.asDouble());
+
+        std::vector<int> days_to_test;
+        for (const auto & i : root["rpt_days_cum"])
+            days_to_test.push_back((int)std::round(i.asDouble()));
+
+        std::vector<double> full_soc_profile;
+        for (const auto & i : root["15min_profile"])
+            full_soc_profile.push_back(i.asDouble());
+        dt_hour = 0.25;
+
+        double cell_temp_K = root["temp"].asDouble();
+
+        // Run Life model with the profile, which starts with charging and ends with discharging
+        model = std::unique_ptr<lifetime_nmc_t>(new lifetime_nmc_t(dt_hour));
+
+        // record capacity and cycles elapsed at RPT days, days_to_test
+        std::vector<double> life_model_caps;
+        std::vector<double> life_model_qLi;
+        std::vector<double> life_model_qNeg;
+        std::vector<double> cycs;
+
+        // charging = -1; discharging = 1
+        int charge_mode = -1;
+        int prev_charge_mode = 1;
+
+        for (int i = 1; i < full_soc_profile.size(); i++) {
+            int j = i + 1;
+            if (j > full_soc_profile.size() - 1)
+                j = 0;
+            double prev_SOC = full_soc_profile[i];
+            double SOC = full_soc_profile[j];
+
+            if (SOC - prev_SOC > 1e-5)
+                charge_mode = -1;
+            else if (prev_SOC - SOC > 1e-5)
+                charge_mode = 1;
+
+            bool charge_changed = false;
+
+            if (charge_mode != prev_charge_mode) {
+                charge_changed = true;
+            }
+            model->runLifetimeModels(i, charge_changed, (1. - prev_SOC) * 100, (1. - SOC) * 100., cell_temp_K - 273.15);
+            prev_charge_mode = charge_mode;
+
+            if (model->day_age_of_battery() - days_to_test[0] > -1e-7) {
+                auto s = model->get_state();
+                life_model_caps.push_back(s.q_relative * 0.75);
+                life_model_qLi.push_back(s.nmc_li_neg->q_relative_li * 0.75);
+                life_model_qNeg.push_back(s.nmc_li_neg->q_relative_neg * 0.75);
+                cycs.push_back(s.n_cycles);
+                days_to_test.erase(days_to_test.begin());
+            }
+            if (days_to_test.empty())
+                break;
+        }
+
+        // Get Expected Cycle Count & Model Prediction
+        std::vector<double> sam_cap_Ah;
+        for (const auto & i : root["sam_cap_Ah"])
+            sam_cap_Ah.push_back(i.asDouble());
+
+        std::vector<double> sam_cap_cycles;
+        for (const auto & i : root["sam_cap_cycles"])
+            sam_cap_cycles.push_back(i.asDouble());
+
+        for (size_t n = 0; n < life_model_caps.size(); n++) {
+            EXPECT_NEAR(sam_cap_Ah[n], life_model_caps[n], 1e-3) << "cell" << cell;
+            EXPECT_NEAR(sam_cap_cycles[n], cycs[n], 1e-3) << "cell" << cell;
+        }
+    }
+}
+
+TEST_F(lib_battery_lifetime_nmc_test, replaceBatteryTest) {
+    double tol = 0.01;
+    double T = 25.15;
+    size_t day = 0;
+    while (day < 2000) {
+        for (size_t i = 0; i < 24; i++) {
+            size_t idx = day * 24 + i;
+            if (i == 0)
+                model->runLifetimeModels(idx, false, 50, 90, T);
+            else if (i == 1)
+                model->runLifetimeModels(idx, true, 90, 10, T);
+            else if (i == 3)
+                model->runLifetimeModels(idx, true, 10, 50, T);
+            else
+                model->runLifetimeModels(idx, false, 50, 50, T);
+        }
+        day ++;
+    }
+
+    auto s = model->get_state();
+
+    EXPECT_NEAR(s.nmc_li_neg->q_relative_li, 87.90, tol);
+    EXPECT_NEAR(s.nmc_li_neg->q_relative_neg, 97.15, tol);
+
+    model->replaceBattery(10);
+    s = model->get_state();
+    EXPECT_NEAR(s.nmc_li_neg->q_relative_li, 97.90, tol);
+    EXPECT_NEAR(s.nmc_li_neg->q_relative_neg, 100, tol);
+    EXPECT_NEAR(s.q_relative, 97.90, tol);
+    EXPECT_NEAR(s.cycle->rainflow_Xlt, 0, tol);
+    EXPECT_NEAR(s.cycle->rainflow_Ylt, 0, tol);
+    EXPECT_NEAR(s.cycle->rainflow_jlt, 0, tol);
+    EXPECT_NEAR(s.cycle_range, 80, tol);
+    EXPECT_NEAR(s.average_range, 80, tol);
+    EXPECT_NEAR(s.n_cycles, 1999, tol);
+
+    model->replaceBattery(100);
+    s = model->get_state();
+    EXPECT_NEAR(s.nmc_li_neg->q_relative_li, 100, tol);
+    EXPECT_NEAR(s.nmc_li_neg->q_relative_li, 100, tol);
+    EXPECT_NEAR(s.q_relative, 100, tol);
+    EXPECT_NEAR(s.cycle->rainflow_Xlt, 0, tol);
+    EXPECT_NEAR(s.cycle->rainflow_Ylt, 0, tol);
+    EXPECT_NEAR(s.cycle->rainflow_jlt, 0, tol);
+    EXPECT_NEAR(s.cycle_range, 0, tol);
+    EXPECT_NEAR(s.average_range, 0, tol);
+    EXPECT_NEAR(s.n_cycles, 0, tol);
 }

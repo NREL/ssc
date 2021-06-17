@@ -20,6 +20,7 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <algorithm>
 #include <cmath>
 #include <memory>
 
@@ -32,7 +33,8 @@ extern double low_tolerance;
 
 void lifetime_cycle_t::initialize() {
     state->n_cycles = 0;
-    state->range = 0;
+    state->cycle_range = 0;
+    state->cycle_DOD = 0;
     state->average_range = 0;
     state->cycle->q_relative_cycle = bilinear(0., 0);
     state->cycle->rainflow_jlt = 0;
@@ -152,8 +154,9 @@ int lifetime_cycle_t::rainflow_compareRanges() {
 
     // Step 5: Count range Y, discard peak & valley of Y, go to Step 2
     if (!contained) {
-        state->range = state->cycle->rainflow_Ylt;
-        state->average_range = (state->average_range * state->n_cycles + state->range) / (double)(state->n_cycles + (size_t) 1);
+        state->cycle_range = state->cycle->rainflow_Ylt;
+        state->cycle_DOD = *std::max_element(state->cycle->rainflow_peaks.begin(), state->cycle->rainflow_peaks.end());
+        state->average_range = (state->average_range * state->n_cycles + state->cycle_range) / (double)(state->n_cycles + (size_t) 1);
         state->n_cycles++;
 
         // the capacity percent cannot increase
@@ -186,18 +189,22 @@ void lifetime_cycle_t::replaceBattery(double replacement_percent) {
     // More work to figure out degradation of multiple-aged battery units
     if (replacement_percent == 100) {
         state->n_cycles = 0;
+        state->cycle_range = 0;
+        state->cycle_DOD = 0;
+        state->average_range = 0;
     }
 
     state->cycle->rainflow_jlt = 0;
     state->cycle->rainflow_Xlt = 0;
     state->cycle->rainflow_Ylt = 0;
-    state->range = 0;
     state->cycle->rainflow_peaks.clear();
 }
 
 int lifetime_cycle_t::cycles_elapsed() { return state->n_cycles; }
 
-double lifetime_cycle_t::cycle_range() { return state->range; }
+double lifetime_cycle_t::cycle_range() { return state->cycle_range; }
+
+double lifetime_cycle_t::cycle_depth() { return state->cycle_DOD; }
 
 double lifetime_cycle_t::average_range() { return state->average_range; }
 

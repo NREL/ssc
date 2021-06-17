@@ -51,8 +51,9 @@ struct lifetime_nmc_state;
 struct lifetime_state {
     double q_relative;                      // total lifetime relative capacity %
     int n_cycles;
-    double range;
-    double average_range;
+    double cycle_range;                     // DOD range of last completed cycle, %
+    double cycle_DOD;                       // max DOD of last completed cycle, %
+    double average_range;                   // average cycle_DOD cycle_range of all cycles, %
     double day_age_of_battery;
 
     // CALCYC model state
@@ -93,6 +94,8 @@ public:
     /// Return the relative capacity percentage of nominal (%)
     double capacity_percent();
 
+    double day_age_of_battery();
+
     virtual double estimateCycleDamage() = 0;
 
     virtual void replaceBattery(double percent_to_replace) = 0;
@@ -100,6 +103,8 @@ public:
     lifetime_params get_params();
 
     lifetime_state get_state();
+
+    void set_state(const lifetime_state &new_state);
 
 protected:
 
