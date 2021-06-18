@@ -555,7 +555,7 @@ public:
                 log(util::format("system size is too small to accurately estimate regular row-row self shading impacts. (estimates: #modules=%d, #rows=%d).  disabling self-shading calculations.",
                 (int)pv.nmodules, (int)pv.nrows), SSC_WARNING);*/
 
-            if (pv.type == ONE_AXIS)
+            if (pv.type == ONE_AXIS || pv.type == ONE_AXIS_BACKTRACKING)
                 pv.nmody = 1; // e.g. Nextracker or ArrayTechnologies single portrait
             else
                 pv.nmody = 2; // typical fixed 2 up portrait
