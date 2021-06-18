@@ -252,15 +252,16 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, TestCycleCount) {
     EXPECT_TRUE(ssc_stateful_module_setup(mod, data));
 
     data = json_to_ssc_data(js.c_str()); // Refresh the vtable data since setup overwrites some of the history
-    EXPECT_TRUE(ssc_module_exec(mod, data)); // Executing one step with 0 input_current (default) will trip the next day using the nmc lifetime model
+
+    var_table* vt = static_cast<var_table*>(data);
+
+    EXPECT_TRUE(vt->is_assigned("cycle_DOD_range"));
+    EXPECT_TRUE(vt->is_assigned("cycle_DOD_max"));
+
     EXPECT_TRUE(ssc_module_exec(mod, data)); // Executing one step with 0 input_current (default) will trip the next day using the nmc lifetime model
 
-    int length;
-    ssc_number_t* cycle_range = ssc_data_get_array(data, "cycle_DOD_range", &length);
-    EXPECT_TRUE(length > 0);
-    for (int i = 0; i < length; i++) {
-        EXPECT_TRUE(cycle_range[i] <= 100.0);
-        EXPECT_TRUE(cycle_range[i] >= 0.0);
-    }
+    vt = static_cast<var_table*>(data);
+    EXPECT_FALSE(vt->is_assigned("cycle_DOD_range"));
+    EXPECT_FALSE(vt->is_assigned("cycle_DOD_max"));
 
 }
