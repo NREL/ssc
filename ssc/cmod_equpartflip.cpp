@@ -2475,8 +2475,11 @@ public:
             cf_lcos.at(0, y) = cf.at(CF_battery_replacement_cost, y);
             cf_lcos.at(1, y) = cf.at(CF_battery_replacement_cost_schedule, y);
             cf_lcos.at(2, y) = cf.at(CF_ppa_price, y);
+            cf_lcos.at(6, y) = cf.at(CF_om_fixed1_expense, y); //Fixed OM Battery cost
+            cf_lcos.at(7, y) = cf.at(CF_om_production1_expense, y); //Produciton OM Battery cost
+            cf_lcos.at(8, y) = cf.at(CF_om_capacity1_expense, y); //Capacity OM Battery Cost
         }
-        int grid_charging_cost_version = 2;
+        int grid_charging_cost_version = 2; //FOM systems
         size_t n_multipliers;
         ssc_number_t* ppa_multipliers = as_array("ppa_multipliers", &n_multipliers);
         lcos_calc(this, cf_lcos, nyears, nom_discount_rate, inflation_rate, lcoe_real, cost_prefinancing, disc_real, grid_charging_cost_version, ppa_multipliers);

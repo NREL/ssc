@@ -3319,11 +3319,11 @@ var_info vtab_lcos_inputs[] = {
     { SSC_INPUT,        SSC_NUMBER,      "battery_total_cost_lcos",               "Battery total investment cost",                      "$",      "",                      "Battery",       "",                           "",                               "" },
     { SSC_INPUT,        SSC_ARRAY,      "grid_to_batt",                               "Electricity to grid from battery",                      "kW",      "",                       "Battery",       "",                           "",                              "" },
     { SSC_INPUT,        SSC_ARRAY,      "buy_rate_ts", "TOU buy rate for energy charges (year 1 hourly)", "", "", "Time Series", "", "", "" },
-    { SSC_INPUT, SSC_ARRAY, "year1_monthly_ec_charge_with_system", "Energy charge with system", "$", "", "Charges by Month", "", "", "" },
-    { SSC_INPUT, SSC_ARRAY, "year1_monthly_ec_charge_gross_with_system", "Energy charge with system before credits", "$/mo", "", "Monthly", "", "LENGTH=12", "" },
+    { SSC_INPUT, SSC_ARRAY,             "year1_monthly_ec_charge_with_system", "Energy charge with system", "$", "", "Charges by Month", "", "", "" },
+    { SSC_INPUT, SSC_ARRAY,             "year1_monthly_ec_charge_gross_with_system", "Energy charge with system before credits", "$/mo", "", "Monthly", "", "LENGTH=12", "" },
     { SSC_INPUT,       SSC_ARRAY,      "year1_monthly_electricity_to_grid",    "Electricity to/from grid",           "kWh/mo", "", "Monthly",          "",                         "LENGTH=12",                     "" },
-    { SSC_INPUT, SSC_MATRIX, "charge_w_sys_ec_ym", "Energy charge with system", "$", "", "Charges by Month", "", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
-    { SSC_INPUT, SSC_MATRIX, "true_up_credits_ym",     "Net annual true-up payments", "$", "", "Charges by Month", "", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
+    { SSC_INPUT, SSC_MATRIX,           "charge_w_sys_ec_ym", "Energy charge with system", "$", "", "Charges by Month", "", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
+    { SSC_INPUT, SSC_MATRIX,           "true_up_credits_ym",     "Net annual true-up payments", "$", "", "Charges by Month", "", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
     { SSC_INPUT,        SSC_ARRAY,      "batt_capacity_percent",                      "Battery relative capacity to nameplate",                 "%",        "",                     "Battery",       "",                           "",                              "" },
     { SSC_INPUT,        SSC_ARRAY,      "monthly_grid_to_batt",                       "Energy to battery from grid",                           "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
     { SSC_INPUT,        SSC_ARRAY,      "monthly_batt_to_grid",                       "Energy to grid from battery",                           "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
@@ -3464,8 +3464,8 @@ void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double
             net_annual_true_up = cm->as_matrix("true_up_credits_ym"); //Use net annual true up payments regardless of billing mode ($)
         }
 
-        size_t n_mp_market_price;
-        ssc_number_t* mp_market_price;
+        size_t n_mp_market_price; 
+        ssc_number_t* mp_market_price; //Market revenue for Merchant Plant model
         if (grid_charging_cost_version == 3) //Only if financial model is Merchant Plant
             mp_market_price = cm->as_array("mp_energy_market_price", &n_mp_market_price); //Energy market price (hourly) for lifetime array to calculate grid charging cost for Merchant Plant ($)
 
@@ -3500,9 +3500,7 @@ void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double
         for (int a = 0; a <= nyears; a++) { //Iterate through nyears of the project
 
 
-            if (grid_charging_cost_version == 0) { //0 - Cashloan, BTM
-
-
+            if (grid_charging_cost_version == 0) { //0 - Cashloan, BTM (Residential, Commercial, Third Party - Host Developer)
                 for (size_t m = 0; m < 12; m++) { //monthly iteration for each year
                     if (a != 0 && (monthly_grid_to_load[m] + monthly_grid_to_batt[m]) != 0) {
                         //cf.at(CF_charging_cost_grid_month, a) += monthly_grid_to_batt[m] / (monthly_grid_to_batt[m] + monthly_grid_to_load[m]) * monthly_energy_charge[m] * charged_grid[a] / charged_grid[1] * cf.at(CF_util_escal_rate, a);
@@ -3510,7 +3508,7 @@ void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double
                     }
                 }
             }
-            else if (grid_charging_cost_version == 1) { //Single Owner
+            else if (grid_charging_cost_version == 1) { //Single Owner (FOM)
                 ppa_purchases = !(cm->is_assigned("en_electricity_rates") && cm->as_number("en_electricity_rates") == 1); //Are ppa purchases used or not?
                 if (cm->as_integer("system_use_lifetime_output") == 1) //Lifetime
                 {
@@ -3540,7 +3538,7 @@ void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double
 
                     if (ppa_purchases && a != 0) { //PPA purchases enabled and not in investment year
                         for (size_t h = 0; h < 8760; h++) {
-                            cf.at(CF_charging_cost_grid_lcos, a) += grid_to_batt[h] * ppa_value / 100.0 * ppa_multipliers[h]; //Grid charging cost calculated from PPA price ($)
+                            cf.at(CF_charging_cost_grid_lcos, a) += grid_to_batt[h] * cf.at(CF_degradation_lcos, a) * ppa_value / 100.0 * ppa_multipliers[h]; //Grid charging cost calculated from PPA price ($)
                         }
                     }
                     else if (!ppa_purchases && a != 0) { //No PPA purchases and not in investment year
@@ -3589,7 +3587,6 @@ void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double
                         if (a != 0) { //Not in investment year
                             cf.at(CF_charging_cost_grid_lcos, a) += grid_to_batt[(a - 1) * n_steps_per_year + h] * 8760 / n_steps_per_year * mp_market_price[(a - 1) * n_steps_per_year + h] / (1000); //Grid charging cost from energy market price ($)
                         }
-
                     }
 
 
@@ -3647,6 +3644,7 @@ void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double
         //save_cf(CF_om_fixed1_expense, nyears, "cf_om_batt_fixed_expense", cf, cm);
         //save_cf(CF_battery_replacement_cost, nyears, "cf_batt_replacement_cost", cf, cm);
         save_cf(CF_salvage_cost_lcos_lcos, nyears, "cf_salvage_cost_lcos", cf, cm); //Store salvage value cost in each year in cash flow ($)
+        save_cf(CF_om_production1_expense_lcos, nyears, "cf_om_batt_production_expense", cf, cm);
         double lcos_nom = lcos_numerator / lcos_denominator * 100.0; // cent/kWh Nominal LCOS
         double lcos_real = lcos_numerator / lcos_denominator_real * 100.0; // cents/kWh Real LCOS
         cm->assign("lcos_nom", var_data((ssc_number_t)lcos_nom)); //Store nominal LCOS in outputs
