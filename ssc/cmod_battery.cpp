@@ -1431,7 +1431,7 @@ void battstor::outputs_fixed()
 
     outCycles[index] = (ssc_number_t)(state.lifetime->n_cycles);
     outSOC[index] = (ssc_number_t)(state.capacity->SOC);
-    outDOD[index] = (ssc_number_t)(state.lifetime->range);
+    outDOD[index] = (ssc_number_t)(state.lifetime->cycle_range);
     outDODCycleAverage[index] = (ssc_number_t)(state.lifetime->average_range);
     outCapacityPercent[index] = (ssc_number_t)(state.lifetime->q_relative);
     outCapacityPercentCycle[index] = (ssc_number_t)(state.lifetime->cycle->q_relative_cycle);

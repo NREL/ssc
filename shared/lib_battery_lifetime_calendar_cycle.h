@@ -67,7 +67,7 @@ struct cycle_state {
     };
     double rainflow_Xlt;
     double rainflow_Ylt;
-    int rainflow_jlt;                // last index in Peaks, i.e, if Peaks = [0,1], then jlt = 1
+    int rainflow_jlt;                       // last index in Peaks, i.e, if Peaks = [0,1], then jlt = 1
     std::vector<double> rainflow_peaks;
 
     friend std::ostream &operator<<(std::ostream &os, const cycle_state &p);
@@ -110,6 +110,9 @@ public:
 
     /// Return the range of the last cycle
     double cycle_range();
+
+    /// Return the depth of discharge of the last cycle
+    double cycle_depth();
 
     /// Return the average cycle range
     double average_range();

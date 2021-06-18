@@ -41,7 +41,8 @@ lifetime_params &lifetime_params::operator=(const lifetime_params &rhs) {
 lifetime_state::lifetime_state(){
     q_relative = 0;
     n_cycles = 0;
-    range = 0;
+    cycle_range = 0;
+    cycle_DOD = 0;
     average_range = 0;
     day_age_of_battery = 0;
     cycle = std::make_shared<cycle_state>();
@@ -57,7 +58,8 @@ lifetime_state::lifetime_state(const lifetime_state &rhs) :
 lifetime_state::lifetime_state(const std::shared_ptr<cycle_state>& cyc, const std::shared_ptr<calendar_state>& cal) {
     q_relative = 0;
     n_cycles = 0;
-    range = 0;
+    cycle_range = 0;
+    cycle_DOD = 0;
     average_range = 0;
     day_age_of_battery = 0;
     cycle = cyc;
@@ -68,7 +70,8 @@ lifetime_state::lifetime_state(const std::shared_ptr<cycle_state>& cyc, const st
 lifetime_state::lifetime_state(const std::shared_ptr<lifetime_nmc_state>& nmc) {
     q_relative = 0;
     n_cycles = 0;
-    range = 0;
+    cycle_range = 0;
+    cycle_DOD = 0;
     average_range = 0;
     day_age_of_battery = 0;
     nmc_li_neg = nmc;
@@ -80,7 +83,8 @@ lifetime_state &lifetime_state::operator=(const lifetime_state &rhs) {
     if (this != &rhs) {
         q_relative = rhs.q_relative;
         n_cycles = rhs.n_cycles;
-        range = rhs.range;
+        cycle_range = rhs.cycle_range;
+        cycle_DOD = rhs.cycle_DOD;
         average_range = rhs.average_range;
         day_age_of_battery = rhs.day_age_of_battery;
         *cycle = *rhs.cycle;
@@ -105,10 +109,15 @@ lifetime_t &lifetime_t::operator=(const lifetime_t &rhs) {
 
 double lifetime_t::capacity_percent() { return state->q_relative; }
 
+double lifetime_t::day_age_of_battery() { return state->day_age_of_battery; }
 
 lifetime_params lifetime_t::get_params() { return *params; }
 
 lifetime_state lifetime_t::get_state() {
     lifetime_state state_copy = *state;
     return state_copy;
+}
+
+void lifetime_t::set_state(const lifetime_state& new_state) {
+    *state = new_state;
 }

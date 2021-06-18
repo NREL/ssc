@@ -107,22 +107,23 @@ std::ostream &operator<<(std::ostream &os, const calendar_state &p) {
 
 std::ostream& operator<<(std::ostream& os, const lifetime_nmc_state& p) {
     char buf[1024];
-    sprintf(buf, "\"lifetime_nmc_state\": { \"q_relative_li\": %.3f, "
-        "\"q_relative_neg\": %.3f, \"dq_relative_li_old\": %.3f, \"dq_relative_neg_old\": %.3f, "
-        "\"DOD_max\": %f, \"n_cycles_prev_day\": %d, \"cum_dt\": %.3f, \"b1_dt\": %.3f, "
-        "\"b2_dt\": %.3f, \"b3_dt\": %.3f, \"c0_dt\": %.3f, \"c2_dt\": %.3f }",
-        p.q_relative_li, p.q_relative_neg, p.dq_relative_li_old, p.dq_relative_neg_old, p.DOD_max, p.n_cycles_prev_day,
-        p.cum_dt, p.b1_dt, p.b2_dt, p.b3_dt, p.c0_dt, p.c2_dt);
-    os << buf ;
+    sprintf(buf, "\"lifetime_nmc_state\": { \"q_relative_li\": %.3f, \"q_relative_neg\": %.3f, "
+                 "\"dq_relative_li1\": %.3f, \"dq_relative_li2\": %.3f, \"dq_relative_li3\": %.3f, "
+                 "\"dq_relative_neg\": %.3f, \"DOD_max\": %f, \"DOD_min\": %f, "
+                 "\"cum_dt\": %.3f, \"b1_dt\": %.3f, \"b2_dt\": %.3f, \"b3_dt\": %.3f, \"c0_dt\": %.3f, \"c2_dt\": %.3f, ",
+            p.q_relative_li, p.q_relative_neg, p.dq_relative_li1, p.dq_relative_li2, p.dq_relative_li3,
+            p.dq_relative_neg, p.DOD_max, p.DOD_min,
+            p.cum_dt, p.b1_dt, p.b2_dt, p.b3_dt, p.c0_dt, p.c2_dt);
+    os << buf << R"("cycle_DOD_max": ")" << p.cycle_DOD_max << R"(", cycle_DOD_range": ")" << p.cycle_DOD_range << "}";
     return os;
 }
 
 std::ostream &operator<<(std::ostream &os, const lifetime_state &p) {
     os.precision(3);
     char buf[1024];
-    sprintf(buf, R"("lifetime_state": { "q_relative": %f, "n_cycles": %d, "range": %.3f, "average_range": %.3f,
-                 "day_age_of_battery": %.3f, )",
-            p.q_relative, p.n_cycles, p.range, p.average_range, p.day_age_of_battery);
+    sprintf(buf, R"("lifetime_state": { "q_relative": %f, "n_cycles": %d,"cycle_range": %.3f,  "cycle_DOD": %.3f,
+                  "average_range": %.3f, day_age_of_battery": %.3f, )",
+            p.q_relative, p.n_cycles, p.cycle_DOD, p.cycle_range, p.average_range, p.day_age_of_battery);
     os << buf << *p.cycle << ", " << *p.calendar << ", " << *p.nmc_li_neg << " }";
     return os;
 }
