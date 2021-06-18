@@ -142,7 +142,7 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, ReadJson) {
 
     int length;
     ssc_number_t* rainflow_peaks = ssc_data_get_array(copy, "rainflow_peaks", &length);
-    EXPECT_EQ(length, 4);
+    EXPECT_EQ(length, 1);
 
     EXPECT_TRUE(1);     // means the variable retrievals all succeeded
 }
