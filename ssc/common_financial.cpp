@@ -3507,7 +3507,7 @@ void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double
                     }
                 }
             }
-            else if (grid_charging_cost_version == 1) { //Single Owner (FOM)
+            else if (grid_charging_cost_version == 1) { //Single Owner (FOM), other FOM systems (flip, leaseback)
                 ppa_purchases = !(cm->is_assigned("en_electricity_rates") && cm->as_number("en_electricity_rates") == 1); //Are ppa purchases used or not?
                 if (cm->as_integer("system_use_lifetime_output") == 1) //Lifetime
                 {
@@ -3550,34 +3550,7 @@ void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double
 
                 }
             }
-            else if (grid_charging_cost_version == 2) { //2-PPA Models besides Single Owner
-                if (cm->as_integer("system_use_lifetime_output") == 1) //Lifetime
-                {
-                    double ppa_value = cf.at(CF_ppa_price_lcos, a); //PPA price at year a ($)
-                    for (size_t h = 0; h < n_steps_per_year; h++) {
-                        if (a != 0) {
-                            cf.at(CF_charging_cost_grid_lcos, a) += grid_to_batt[(a - 1) * n_steps_per_year + h] * 8760 / n_steps_per_year * ppa_value / 100.0 * ppa_multipliers[h]; //Grid charging cost from ppa price ($)
-                        }
-
-                    }
-
-
-                }
-                else //Not lifetime
-                {
-
-                    double ppa_value = cf.at(CF_ppa_price_lcos, a);
-                    for (size_t h = 0; h < n_steps_per_year; h++) {
-                        if (a != 0) { //Not in investment year
-                            cf.at(CF_charging_cost_grid_lcos, a) += grid_to_batt[h] * cf.at(CF_degradation_lcos, a) * 8760 / n_steps_per_year * ppa_value / 100.0 * ppa_multipliers[h]; //Grid charging cost from ppa price ($)
-                        }
-
-                    }
-
-
-                }
-            }
-            else if (grid_charging_cost_version == 3) { //Merchant Plant
+            else if (grid_charging_cost_version == 2) { //Merchant Plant
 
 
                 if (cm->as_integer("system_use_lifetime_output") == 1) //Lifetime
