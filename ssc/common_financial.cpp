@@ -3318,7 +3318,6 @@ var_info vtab_lcos_inputs[] = {
 
     { SSC_INPUT,        SSC_NUMBER,      "battery_total_cost_lcos",               "Battery total investment cost",                      "$",      "",                      "Battery",       "",                           "",                               "" },
     { SSC_INPUT,        SSC_ARRAY,      "grid_to_batt",                               "Electricity to grid from battery",                      "kW",      "",                       "Battery",       "",                           "",                              "" },
-    { SSC_INPUT,        SSC_ARRAY,      "buy_rate_ts", "TOU buy rate for energy charges (year 1 hourly)", "", "", "Time Series", "", "", "" },
     { SSC_INPUT, SSC_ARRAY,             "year1_monthly_ec_charge_with_system", "Energy charge with system", "$", "", "Charges by Month", "", "", "" },
     { SSC_INPUT, SSC_ARRAY,             "year1_monthly_ec_charge_gross_with_system", "Energy charge with system before credits", "$/mo", "", "Monthly", "", "LENGTH=12", "" },
     { SSC_INPUT,       SSC_ARRAY,      "year1_monthly_electricity_to_grid",    "Electricity to/from grid",           "kWh/mo", "", "Monthly",          "",                         "LENGTH=12",                     "" },
