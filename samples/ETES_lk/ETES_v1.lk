@@ -86,9 +86,10 @@ var( 'opt_flux_penalty', 0.25 );
 var( 'opt_algorithm', 1 );
 
 
+var( 'f_q_dot_des_allowable_su', 1.0);
+var( 'hrs_startup_at_max_rate', 0.25);
 
-
-var( 'csp.pt.tes.init_hot_htf_percent', 0.0 );
+var( 'tes_init_hot_htf_percent', 0.0 );
 var( 'h_tank', 12 );
 var( 'cold_tank_max_heat', 15 );
 var( 'u_tank', 0.40000000000000002 );
@@ -116,7 +117,6 @@ var( 'P_cond_ratio', 1.0027999999999999 );
 var( 'pb_bd_frac', 0.02 );
 var( 'P_cond_min', 2 );
 var( 'n_pl_inc', 8 );
-var( 'F_wc', [ 0, 0, 0, 0, 0, 0, 0, 0, 0 ] );
 var( 'tech_type', 1 );
 var( 'ud_f_W_dot_cool_des', 0 );
 var( 'ud_m_dot_water_cool_des', 0 );

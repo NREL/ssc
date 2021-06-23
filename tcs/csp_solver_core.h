@@ -1001,6 +1001,9 @@ private:
     bool m_is_rec_to_coldtank_allowed;  //[-] 
         // if 'm_is_rec_to_coldtank_allowed' then T_cr_out < this temp go to cold tank
     double m_T_htf_hot_tank_in_min;     //[C] 
+        
+        // System design
+    double m_W_dot_bop_design;      //[MWe]
 
         // Field-side HTF
     double m_T_field_cold_limit;    //[C]
@@ -1057,6 +1060,8 @@ public:
     void reset_time(double step /*s*/);
 
 	double get_cr_aperture_area();
+
+    void get_design_parameters(double& W_dot_bop_design /*MWe*/);
 
 	// Output vectors
 	// Need to be sure these are always up-to-date as multiple operating modes are tested during one timestep

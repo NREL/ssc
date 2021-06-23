@@ -704,9 +704,8 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 C_csp_two_tank_tes::C_csp_two_tank_tes()
 {
 	m_vol_tank = m_V_tank_active = m_q_pb_design = 
-		m_V_tank_hot_ini = m_mass_total_active = m_cp_field_avg = m_m_dot_tes_des_over_m_dot_field_des = std::numeric_limits<double>::quiet_NaN();
-
-	// m_m_dot_tes_dc_max = m_m_dot_tes_ch_max = std::numeric_limits<double>::quiet_NaN();
+		m_V_tank_hot_ini = m_mass_total_active = m_d_tank = m_q_dot_loss_des =
+        m_cp_field_avg = m_rho_store_avg = m_m_dot_tes_des_over_m_dot_field_des = std::numeric_limits<double>::quiet_NaN();
 
 	mc_reported_outputs.construct(S_output_info);
 }
@@ -835,11 +834,9 @@ void C_csp_two_tank_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs
 
 	double Q_tes_des = m_q_pb_design / 1.E6 * ms_params.m_ts_hours;		//[MWt-hr] TES thermal capacity at design
 
-	double d_tank_temp = std::numeric_limits<double>::quiet_NaN();
-	double q_dot_loss_temp = std::numeric_limits<double>::quiet_NaN();
 	two_tank_tes_sizing(mc_store_htfProps, Q_tes_des, ms_params.m_T_field_out_des, ms_params.m_T_field_in_des,
 		ms_params.m_h_tank_min, ms_params.m_h_tank, ms_params.m_tank_pairs, ms_params.m_u_tank,
-		m_V_tank_active, m_vol_tank, d_tank_temp, q_dot_loss_temp);
+		m_V_tank_active, m_vol_tank, m_d_tank, m_q_dot_loss_des);
 
 	// 5.13.15, twn: also be sure that hx is sized such that it can supply full load to power cycle, in cases of low solar multiples
 	double duty = m_q_pb_design * fmax(1.0, ms_params.m_solarm);		//[W] Allow all energy from the field to go into storage at any time
@@ -855,8 +852,9 @@ void C_csp_two_tank_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs
 	// Calculate initial storage values
 
 	// Initial storage charge based on % mass 
-	double T_tes_ave = 0.5*(ms_params.m_T_field_out_des + ms_params.m_T_field_in_des);
+	double T_tes_ave = 0.5*(ms_params.m_T_field_out_des + ms_params.m_T_field_in_des);  //[K]
 	double cp_ave = mc_store_htfProps.Cp(T_tes_ave);				//[kJ/kg-K] Specific heat at average temperature
+    m_rho_store_avg = mc_store_htfProps.dens(T_tes_ave,1.0);
 	m_mass_total_active = Q_tes_des*3600.0 / (cp_ave / 1000.0 * (ms_params.m_T_field_out_des - ms_params.m_T_field_in_des));  //[kg] Total HTF mass at design point inlet/outlet T
 	double V_inactive = m_vol_tank - m_V_tank_active;
 
@@ -936,6 +934,16 @@ void C_csp_two_tank_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs
 
         //value(O_p_des_sgs_1, DP_before_hot_tank);           // for adjusting field design pressures
     }
+}
+
+void C_csp_two_tank_tes::get_design_parameters(double& vol_one_temp_avail /*m3*/, double& vol_one_temp_total /*m3*/, double& d_tank /*m*/,
+    double& q_dot_loss_des /*MWt*/, double& dens_store_htf_at_T_ave /*kg/m3*/)
+{
+    vol_one_temp_avail = m_V_tank_active;   //[m3]
+    vol_one_temp_total = m_vol_tank;        //[m3]
+    d_tank = m_d_tank;                      //[m]
+    q_dot_loss_des = m_q_dot_loss_des;      //[MWt]
+    dens_store_htf_at_T_ave = m_rho_store_avg;  //[kg/m3]
 }
 
 bool C_csp_two_tank_tes::does_tes_exist()

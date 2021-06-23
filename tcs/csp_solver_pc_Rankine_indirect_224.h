@@ -249,6 +249,7 @@ public:
 
 	virtual void assign(int index, double *p_reporting_ts_array, size_t n_reporting_ts_array);
 
+    void get_design_parameters(double& m_dot_htf_des /*kg/hr*/, double& cp_htf_des_at_T_ave /*kJ/kg-K*/);
 };
 
 
