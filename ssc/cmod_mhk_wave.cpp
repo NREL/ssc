@@ -55,7 +55,7 @@
 
 static var_info _cm_vtab_mhk_wave[] = {
 	//   VARTYPE			DATATYPE			NAME									LABEL																UNITS           META            GROUP              REQUIRED_IF					CONSTRAINTS					UI_HINTS	
-	{ SSC_INPUT,            SSC_NUMBER,         "wave_resource_model_choice",           "Hourly or JPD wave resource data",                                 "0/1",             "",             "MHKWave",          "?=1",                         "INTEGER",                  "" },
+	{ SSC_INPUT,            SSC_NUMBER,         "wave_resource_model_choice",           "Hourly or JPD wave resource data",                                 "0/1",             "",             "MHKWave",          "?=0",                         "INTEGER",                  "" },
     { SSC_INOUT,			SSC_MATRIX,			"wave_resource_matrix",					"Frequency distribution of wave resource as a function of Hs and Te","",			"",             "MHKWave",			"?",						"",							"" },
     { SSC_INPUT,            SSC_TABLE,             "wave_resource_data",                   "Array input of wave_resource_matrix (JPD) or time series (significant_wave_height and energy_period) data", "", "", "MHKWave", "?",             "",                         "" },
     { SSC_INOUT,            SSC_ARRAY,          "significant_wave_height",              "Significant wave height time series data",                         "m",            "",             "MHKWave",          "?", "",                 ""   },
