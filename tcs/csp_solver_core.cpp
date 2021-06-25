@@ -759,7 +759,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		
         bool is_rec_outlet_to_hottank = true;
 		m_T_htf_pc_cold_est = mc_pc_out_solver.m_T_htf_cold;	//[C]
-		// Solve collector/receiver at steady state with design inputs and weather to estimate output
+        // Solve collector/receiver at steady state with design inputs and weather to estimate output
 		mc_cr_htf_state_in.m_temp = m_T_htf_pc_cold_est;	//[C]
 		C_csp_collector_receiver::S_csp_cr_est_out est_out;
 		mc_collector_receiver.estimates(mc_weather.ms_outputs,
@@ -779,6 +779,24 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
             && T_htf_hot_cr_on < m_T_htf_hot_tank_in_min) {
             is_rec_outlet_to_hottank = false;
         }
+
+        // Check the cold-tank recirculation decision if the cycle is not operating, in some cases the cold TES temperature may be much higher than the cycle return temperature
+        if (!is_rec_outlet_to_hottank && m_is_tes && pc_operating_state != C_csp_power_cycle::ON)
+        {
+            double T_cold_est, q_est, m_est;
+            mc_tes.charge_avail_est(T_htf_hot_cr_on + 273.15, mc_kernel.mc_sim_info.ms_ts.m_step, q_est, m_est, T_cold_est);
+            mc_cr_htf_state_in.m_temp = T_cold_est - 273.15; //[C]
+            mc_collector_receiver.estimates(mc_weather.ms_outputs,
+                mc_cr_htf_state_in,
+                est_out,
+                mc_kernel.mc_sim_info);
+
+            if (cr_operating_state != C_csp_collector_receiver::ON || est_out.m_m_dot_avail <= 0.0 || est_out.m_T_htf_hot >= m_T_htf_hot_tank_in_min)
+            {
+                is_rec_outlet_to_hottank = true;
+            }
+        }
+
 
 		// Get TES operating state info at end of last time step
 		double q_dot_tes_dc, q_dot_tes_ch;      //[MWt]
