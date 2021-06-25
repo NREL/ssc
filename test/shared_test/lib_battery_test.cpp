@@ -260,7 +260,7 @@ TEST_F(lib_battery_test, runTestCycleAt1C){
     s.lifetime.q_relative = 93.08;
     s.lifetime.cycle->q_relative_cycle = 92.04;
     s.lifetime.n_cycles = 399;
-    s.lifetime.range = 89.04;
+    s.lifetime.cycle_range = 89.04;
     s.lifetime.average_range = 88.85;
     s.lifetime.cycle->rainflow_Xlt = 89.06;
     s.lifetime.cycle->rainflow_Ylt = 89.30;
@@ -333,7 +333,7 @@ TEST_F(lib_battery_test, runTestCycleAt3C){
     s.lifetime.day_age_of_battery = 2644;
     s.lifetime.cycle->q_relative_cycle = 92.08;
     s.lifetime.n_cycles = 399;
-    s.lifetime.range = 89.07;
+    s.lifetime.cycle_range = 89.07;
     s.lifetime.average_range = 89.00;
     s.lifetime.cycle->rainflow_Xlt = 89.09;
     s.lifetime.cycle->rainflow_Ylt = 89.11;
@@ -762,21 +762,23 @@ TEST_F(lib_battery_test, NMCLifeModel) {
 
     auto state = batteryNMC->get_state().lifetime;
 
-    EXPECT_NEAR(state->q_relative, 100.853, 1e-3);
+    EXPECT_NEAR(state->q_relative, 100, 1e-3);
     EXPECT_NEAR(state->n_cycles, 0, 1e-3);
-    EXPECT_NEAR(state->range, 0, 1e-3);
+    EXPECT_NEAR(state->cycle_range, 0, 1e-3);
     EXPECT_NEAR(state->average_range, 0, 1e-3);
-    EXPECT_NEAR(state->nmc_li_neg->q_relative_li, 107.143, 1e-3);
-    EXPECT_NEAR(state->nmc_li_neg->q_relative_neg, 100.853, 1e-3);
-    EXPECT_NEAR(state->nmc_li_neg->dq_relative_li_old, 0, 1e-3);
-    EXPECT_NEAR(state->nmc_li_neg->dq_relative_neg_old, 0, 1e-3);
-    EXPECT_NEAR(state->nmc_li_neg->DOD_max, 54.05, 1e-3);
-    EXPECT_NEAR(state->nmc_li_neg->n_cycles_prev_day, 0, 1e-3);
-    EXPECT_NEAR(state->nmc_li_neg->b1_dt, 4.046e-6, 1e-9);
+    EXPECT_NEAR(state->nmc_li_neg->q_relative_li, 100, 1e-3);
+    EXPECT_NEAR(state->nmc_li_neg->q_relative_neg, 100, 1e-3);
+    EXPECT_NEAR(state->nmc_li_neg->dq_relative_neg, 0, 1e-3);
+    EXPECT_NEAR(state->nmc_li_neg->dq_relative_li1, 0, 1e-3);
+    EXPECT_NEAR(state->nmc_li_neg->dq_relative_li2, 0, 1e-3);
+    EXPECT_NEAR(state->nmc_li_neg->dq_relative_li3, 0, 1e-3);
+    EXPECT_NEAR(state->nmc_li_neg->DOD_min, 0.5, 1e-3);
+    EXPECT_NEAR(state->nmc_li_neg->DOD_max, 0.54, 1e-3);
+    EXPECT_NEAR(state->nmc_li_neg->b1_dt, 1.779e-5, 1e-9);
     EXPECT_NEAR(state->nmc_li_neg->b2_dt, 8.619e-7, 1e-10);
-    EXPECT_NEAR(state->nmc_li_neg->b3_dt, 9.416e-4, 1e-7);
-    EXPECT_NEAR(state->nmc_li_neg->c0_dt, 3.104, 1e-3);
-    EXPECT_NEAR(state->nmc_li_neg->c2_dt, 1.393e-5, 1e-8);
+    EXPECT_NEAR(state->nmc_li_neg->b3_dt, 8.829e-4, 1e-7);
+    EXPECT_NEAR(state->nmc_li_neg->c0_dt, 3.105, 1e-3);
+    EXPECT_NEAR(state->nmc_li_neg->c2_dt, 3.035e-6, 1e-8);
 }
 
 TEST_F(lib_battery_test, AdaptiveTimestepNMC) {
@@ -868,13 +870,13 @@ TEST_F(lib_battery_test, AdaptiveTimestepNMC) {
 
     }
 
-    EXPECT_NEAR(batteryModel->charge_maximum(), 883.92, 1e-2);
-    EXPECT_NEAR(batt_subhourly->charge_maximum(), 889.71, 1e-2);
-    EXPECT_NEAR(batt_adaptive->charge_maximum(), 887.37, 1e-2);
+    EXPECT_NEAR(batteryModel->charge_maximum(), 901.11, 1e-2);
+    EXPECT_NEAR(batt_subhourly->charge_maximum(), 903.01, 1e-2);
+    EXPECT_NEAR(batt_adaptive->charge_maximum(), 902.01, 1e-2);
 
-    EXPECT_NEAR(batteryModel->SOC(), 86.93, 1e-2);
-    EXPECT_NEAR(batt_subhourly->SOC(), 87.25, 1e-2);
-    EXPECT_NEAR(batt_adaptive->SOC(), 87.46, 1e-2);
+    EXPECT_NEAR(batteryModel->SOC(), 85.42, 1e-2);
+    EXPECT_NEAR(batt_subhourly->SOC(), 86.08, 1e-2);
+    EXPECT_NEAR(batt_adaptive->SOC(), 86.17, 1e-2);
 }
 
 TEST_F(lib_battery_test, AdaptiveTimestepNonIntegerStep) {
