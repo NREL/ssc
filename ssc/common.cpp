@@ -539,8 +539,7 @@ ssc_number_t* gen_heatmap(compute_module* cm, double step_per_hour) {
     ssc_number_t* p_annual_energy_dist_time = cm->allocate("annual_energy_distribution_time", 25, 366);
     for (size_t i = 0; i < count; i++) {
         hour = (size_t)fmod(floor(double(i) / step_per_hour), 24);
-        imonth = util::month_of(double(floor(double(i) / step_per_hour)));
-        iday = (size_t)floor(double(i) / 24) ;
+        iday = (size_t)floor((double(i) / step_per_hour) / 24) ;
         for (size_t d = 0; d < 366; d++) {
             for (size_t h = 0; h < 25; h++) {
                 if (i == 0) {
