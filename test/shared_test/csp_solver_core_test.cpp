@@ -13,6 +13,7 @@
 #include "../tcs/csp_solver_pc_Rankine_indirect_224.h"
 #include "../tcs/csp_solver_two_tank_tes.h"
 #include "../tcs/csp_solver_tou_block_schedules.h"
+#include "../tcs/csp_dispatch.h"
 
 /**
  * This class tests the C_csp_weatherreader's functions and ensures that the interface is the
@@ -123,7 +124,7 @@ TEST_F(UsingFileCaseWeatherReader, IntegrationTest_csp_solver_core) {
     EXPECT_EQ(wr.ms_outputs.m_hour, 11);
     EXPECT_EQ(wr.ms_outputs.m_minute, 30) << "Originally empty, minute column should be set to 30 by weatherfile";
 
-    EXPECT_TRUE(std::isnan(wr.ms_outputs.m_global)) << "Global not in weatherfile\n";
+    EXPECT_TRUE(isnan(wr.ms_outputs.m_global)) << "Global not in weatherfile\n";
     EXPECT_NEAR(wr.ms_outputs.m_beam, 602, e);
     EXPECT_NEAR(wr.ms_outputs.m_diffuse, 315, e);
     EXPECT_NEAR(wr.ms_outputs.m_tdry, 30.6, e);
@@ -133,7 +134,7 @@ TEST_F(UsingFileCaseWeatherReader, IntegrationTest_csp_solver_core) {
     EXPECT_NEAR(wr.ms_outputs.m_wdir, 180, e) << "Values copied from weather file\n";
     EXPECT_NEAR(wr.ms_outputs.m_rhum, 85, e) << "Rhum is 85 in weatherfile\n";
     EXPECT_NEAR(wr.ms_outputs.m_pres, 1007, e) << "Values copied from weather file\n";
-    EXPECT_TRUE(std::isnan(wr.ms_outputs.m_snow)) << "Snow not in weatherfile\n";
+    EXPECT_TRUE(isnan(wr.ms_outputs.m_snow)) << "Snow not in weatherfile\n";
     EXPECT_NEAR(wr.ms_outputs.m_albedo, 0.17, e) << "Values copied from weather file\n";
     EXPECT_NEAR(wr.ms_outputs.m_aod, 0.291, e) << "Values copied from weather file\n";
 
@@ -196,7 +197,7 @@ TEST_F(UsingDataCaseWeatherReader, IntegrationTest_csp_solver_core) {
     EXPECT_EQ(wr.ms_outputs.m_hour, 11);
     EXPECT_EQ(wr.ms_outputs.m_minute, 30) << "Originally empty, minute column should be set to 30 by weatherfile";
 
-    EXPECT_TRUE(std::isnan(wr.ms_outputs.m_global)) << "11th hour, Global not in weatherfile\n";
+    EXPECT_TRUE(isnan(wr.ms_outputs.m_global)) << "11th hour, Global not in weatherfile\n";
     EXPECT_NEAR(wr.ms_outputs.m_beam, 602, e) << "11th hour\n";
     EXPECT_NEAR(wr.ms_outputs.m_diffuse, 315, e) << "11th hour\n";
     EXPECT_NEAR(wr.ms_outputs.m_tdry, 30.6, e) << "11th hour\n";
@@ -206,7 +207,7 @@ TEST_F(UsingDataCaseWeatherReader, IntegrationTest_csp_solver_core) {
     EXPECT_NEAR(wr.ms_outputs.m_wdir, 180, e) << "Values copied from weather file\n";
     EXPECT_NEAR(wr.ms_outputs.m_rhum, 85, e) << "11th hour\n";
     EXPECT_NEAR(wr.ms_outputs.m_pres, 1007, e) << "11th hour\n";
-    EXPECT_TRUE(std::isnan(wr.ms_outputs.m_snow)) << "11th hour, Snow not in weatherfile\n";
+    EXPECT_TRUE(isnan(wr.ms_outputs.m_snow)) << "11th hour, Snow not in weatherfile\n";
     EXPECT_NEAR(wr.ms_outputs.m_albedo, 0.17, e) << "11th hour\n";
     EXPECT_NEAR(wr.ms_outputs.m_aod, 0.291, e) << "11th hour\n";
 
@@ -233,6 +234,7 @@ protected:
     C_csp_tou_block_schedules tou;
     C_csp_solver::S_sim_setup sim_setup;
     C_csp_solver::S_csp_system_params system;
+    csp_dispatch_opt dispatch;
     C_csp_solver* solver;
 
     void SetUp() {
@@ -241,7 +243,7 @@ protected:
         sim_setup.m_sim_time_start = 0;
         sim_setup.m_sim_time_start = 31536000;
         sim_setup.m_report_step = 3600.0;
-        solver = new C_csp_solver(wr, *cr, *pc, tes, tou, system, ssc_cmod_update, (void*)0);
+        solver = new C_csp_solver(wr, *cr, *pc, tes, tou, dispatch, system, ssc_cmod_update, (void*)0);
     }
 };
 
@@ -258,7 +260,7 @@ protected:
     void SetUp() {
         CspSolverCoreTest::SetUp();
         // adjust heliostatfield parameters
-        tou.mc_dispatch_params.m_dispatch_optimize = 1;
+        dispatch.solver_params.dispatch_optimize = 1;
         solver->Ssimulate(sim_setup);
     }
 };

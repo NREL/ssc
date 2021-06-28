@@ -42,6 +42,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "csp_solver_pc_sco2.h"
 #include "csp_solver_two_tank_tes.h"
 #include "csp_solver_tou_block_schedules.h"
+#include "csp_dispatch.h"
 
 #include "csp_system_costs.h"
 
@@ -1365,7 +1366,7 @@ public:
 
                     // Ambient temperature parametric
                     double T_amb_low = 0.0;             //[C]
-                    double T_amb_high = std::max(sco2_rc_csp_par.m_T_amb_des - 273.15 + 5.0, 45.0);         //[C]
+                    double T_amb_high = max(sco2_rc_csp_par.m_T_amb_des - 273.15 + 5.0, 45.0);         //[C]
                     int n_T_amb_in = std::round((T_amb_high - T_amb_low) / 2.0) + 1;     //[-]
 
                     // HTF mass flow rate parametric
@@ -1801,46 +1802,36 @@ public:
         if (tou_params->mc_pricing.mc_weekdays.ncells() == 1) { tou_params->mc_pricing.mc_weekdays.resize_fill(12, 24, 1.); };
         tou_params->mc_pricing.mc_weekends = as_matrix("dispatch_sched_weekend");
         if (tou_params->mc_pricing.mc_weekends.ncells() == 1) { tou_params->mc_pricing.mc_weekends.resize_fill(12, 24, 1.); };
-        tou.mc_dispatch_params.m_dispatch_optimize = as_boolean("is_dispatch");
-        tou.mc_dispatch_params.m_is_write_ampl_dat = as_boolean("is_write_ampl_dat");
-        tou.mc_dispatch_params.m_is_ampl_engine = as_boolean("is_ampl_engine");
-        tou.mc_dispatch_params.m_ampl_data_dir = as_string("ampl_data_dir");
-        tou.mc_dispatch_params.m_ampl_exec_call = as_string("ampl_exec_call");
-        if( tou.mc_dispatch_params.m_dispatch_optimize )
+
+
+        if (true)
         {
-            tou.mc_dispatch_params.m_optimize_frequency = as_integer("disp_frequency");
-            tou.mc_dispatch_params.m_disp_steps_per_hour = as_integer("disp_steps_per_hour");
-            tou.mc_dispatch_params.m_optimize_horizon = as_integer("disp_horizon");
-            tou.mc_dispatch_params.m_max_iterations = as_integer("disp_max_iter");
-            tou.mc_dispatch_params.m_solver_timeout = as_double("disp_timeout");
-            tou.mc_dispatch_params.m_mip_gap = as_double("disp_mip_gap");
-            tou.mc_dispatch_params.m_presolve_type = as_integer("disp_spec_presolve");
-            tou.mc_dispatch_params.m_bb_type = as_integer("disp_spec_bb");
-            tou.mc_dispatch_params.m_disp_reporting = as_integer("disp_reporting");
-            tou.mc_dispatch_params.m_scaling_type = as_integer("disp_spec_scaling");
-            tou.mc_dispatch_params.m_disp_time_weighting = as_double("disp_time_weighting");
-            tou.mc_dispatch_params.m_rsu_cost = as_double("disp_rsu_cost");
-            tou.mc_dispatch_params.m_csu_cost = as_double("disp_csu_cost");
-            tou.mc_dispatch_params.m_pen_delta_w = as_double("disp_pen_delta_w");
-            tou.mc_dispatch_params.m_disp_inventory_incentive = as_double("disp_inventory_incentive");
-            
-            tou.mc_dispatch_params.m_q_rec_standby = as_double("q_rec_standby");
-            tou.mc_dispatch_params.m_w_rec_ht = as_double("q_rec_heattrace");
+            //tou.mc_dispatch_params.m_optimize_frequency = as_integer("disp_frequency");
+            //tou.mc_dispatch_params.m_disp_steps_per_hour = as_integer("disp_steps_per_hour");
+            //tou.mc_dispatch_params.m_optimize_horizon = as_integer("disp_horizon");
+            //tou.mc_dispatch_params.m_disp_time_weighting = as_double("disp_time_weighting");
+            //tou.mc_dispatch_params.m_rsu_cost = as_double("disp_rsu_cost");
+            //tou.mc_dispatch_params.m_csu_cost = as_double("disp_csu_cost");
+            //tou.mc_dispatch_params.m_pen_delta_w = as_double("disp_pen_delta_w");
+            //tou.mc_dispatch_params.m_disp_inventory_incentive = as_double("disp_inventory_incentive");
+
+            //tou.mc_dispatch_params.m_q_rec_standby = as_double("q_rec_standby");
+            //tou.mc_dispatch_params.m_w_rec_ht = as_double("q_rec_heattrace");
 
             if (as_boolean("is_wlim_series"))
             {
                 size_t n_wlim_series = 0;
                 ssc_number_t* wlim_series = as_array("wlim_series", &n_wlim_series);
                 if (n_wlim_series != n_steps_full)
-                    throw exec_error("tcsmolten_salt", "Invalid net electricity generation limit series dimension. Matrix must have "+util::to_string((int)n_steps_full)+" rows.");
+                    throw exec_error("tcsmolten_salt", "Invalid net electricity generation limit series dimension. Matrix must have " + util::to_string((int)n_steps_full) + " rows.");
                 for (size_t i = 0; i < n_steps_full; i++)
                     tou.mc_dispatch_params.m_w_lim_full.at(i) = (double)wlim_series[i];
             }
-
-    
         }
+
+        // TODO: figure out where this should live...
         tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max = as_boolean("is_tod_pc_target_also_pc_max");
-        tou.mc_dispatch_params.m_is_block_dispatch = ! tou.mc_dispatch_params.m_dispatch_optimize;      //mw
+        tou.mc_dispatch_params.m_is_block_dispatch = ! as_boolean("is_dispatch");      //mw
         tou.mc_dispatch_params.m_use_rule_1 = true;
         tou.mc_dispatch_params.m_standby_off_buffer = 2.0;
         tou.mc_dispatch_params.m_use_rule_2 = false;
@@ -1887,12 +1878,25 @@ public:
         system.m_bop_par_1 = as_double("bop_par_1");
         system.m_bop_par_2 = as_double("bop_par_2");
 
+        // *****************************************************
+        // System dispatch
+        csp_dispatch_opt dispatch;
+
+        dispatch.solver_params.set_user_inputs(as_boolean("is_dispatch"), as_integer("disp_steps_per_hour"), as_integer("disp_frequency"), as_integer("disp_horizon"),
+            as_integer("disp_max_iter"), as_double("disp_mip_gap"), as_double("disp_timeout"),
+            as_integer("disp_spec_presolve"), as_integer("disp_spec_bb"), as_integer("disp_reporting"), as_integer("disp_spec_scaling"),
+            as_boolean("is_write_ampl_dat"), as_boolean("is_ampl_engine"), as_string("ampl_data_dir"), as_string("ampl_exec_call"));
+        dispatch.params.set_user_params(as_double("disp_time_weighting"),
+            as_double("disp_rsu_cost"), as_double("disp_csu_cost"), as_double("disp_pen_delta_w"), as_double("disp_inventory_incentive"),
+            as_double("q_rec_standby"), as_double("q_rec_heattrace"));
+
         // Instantiate Solver       
         C_csp_solver csp_solver(weather_reader, 
                         collector_receiver, 
                         *p_csp_power_cycle, 
                         storage, 
-                        tou, 
+                        tou,
+                        dispatch,
                         system,
                         ssc_cmod_update,
                         (void*)(this));

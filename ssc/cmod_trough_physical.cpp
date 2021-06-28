@@ -34,6 +34,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "csp_solver_pc_Rankine_indirect_224.h"
 #include "csp_solver_two_tank_tes.h"
 #include "csp_solver_tou_block_schedules.h"
+#include "csp_dispatch.h"
 
 #include <ctime>
 
@@ -567,7 +568,7 @@ public:
         {
             T_startup_min = T_loop_out_des - 70.0;
         }
-        double T_startup = std::max(T_startup_min, 0.67*T_loop_in_des + 0.33*T_loop_out_des); //[C]
+        double T_startup = max(T_startup_min, 0.67*T_loop_in_des + 0.33*T_loop_out_des); //[C]
         c_trough.m_T_startup = T_startup;                           //[C] The required temperature (converted to K in init) of the system before the power block can be switched on
 
         c_trough.m_m_dot_htfmin = as_double("m_dot_htfmin");        //[kg/s] Minimum loop HTF flow rate
@@ -971,7 +972,7 @@ public:
             // Resize default value from var table to proper dimensions
             tou_params->mc_pricing.mc_weekends = util::matrix_t<double>(12, 24, 1.0);
         }
-        tou.mc_dispatch_params.m_dispatch_optimize = as_boolean("is_dispatch");
+        /*tou.mc_dispatch_params.m_dispatch_optimize = as_boolean("is_dispatch");
         tou.mc_dispatch_params.m_is_write_ampl_dat = as_boolean("is_write_ampl_dat");
         tou.mc_dispatch_params.m_is_ampl_engine    = as_boolean("is_ampl_engine");
         tou.mc_dispatch_params.m_ampl_data_dir     = as_string("ampl_data_dir");
@@ -993,8 +994,7 @@ public:
             tou.mc_dispatch_params.m_csu_cost            = as_double("disp_csu_cost");
             tou.mc_dispatch_params.m_pen_delta_w         = as_double("disp_pen_delta_w");
             tou.mc_dispatch_params.m_q_rec_standby       = as_double("q_rec_standby");
-            tou.mc_dispatch_params.m_w_rec_ht            = as_double("q_rec_heattrace");
-
+            tou.mc_dispatch_params.m_w_rec_ht           = as_double("q_rec_heattrace");
 
             if (as_boolean("is_wlim_series"))
             {
@@ -1005,11 +1005,9 @@ public:
                 for (int i = 0; i < n_wf_records; i++)
                     tou.mc_dispatch_params.m_w_lim_full.at(i) = (double)wlim_series[i];
             }
-
-
-        }
+        } */
         tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max = as_boolean("is_tod_pc_target_also_pc_max");
-        tou.mc_dispatch_params.m_is_block_dispatch    = !tou.mc_dispatch_params.m_dispatch_optimize;      //mw
+        tou.mc_dispatch_params.m_is_block_dispatch    = !as_boolean("is_dispatch");      //mw
         tou.mc_dispatch_params.m_use_rule_1           = true;
         tou.mc_dispatch_params.m_standby_off_buffer   = 2.0;
         tou.mc_dispatch_params.m_use_rule_2           = false;
@@ -1059,12 +1057,26 @@ public:
         system.m_bop_par_1    = bop_array[3];    //as_double("bop_par_1");
         system.m_bop_par_2    = bop_array[4];    //as_double("bop_par_2");
 
+        // *****************************************************
+        // System dispatch
+        csp_dispatch_opt dispatch;
+
+        dispatch.solver_params.set_user_inputs(as_boolean("is_dispatch"), as_integer("disp_steps_per_hour"), as_integer("disp_frequency"), as_integer("disp_horizon"),
+            as_integer("disp_max_iter"), as_double("disp_mip_gap"), as_double("disp_timeout"),
+            as_integer("disp_spec_presolve"), as_integer("disp_spec_bb"), as_integer("disp_reporting"), as_integer("disp_spec_scaling"),
+            as_boolean("is_write_ampl_dat"), as_boolean("is_ampl_engine"), as_string("ampl_data_dir"), as_string("ampl_exec_call"));
+        dispatch.params.set_user_params(as_double("disp_time_weighting"),
+            as_double("disp_rsu_cost"), as_double("disp_csu_cost"), as_double("disp_pen_delta_w"), as_double("disp_inventory_incentive"),
+            as_double("q_rec_standby"), as_double("q_rec_heattrace"));
+
+
         // Instantiate Solver
         C_csp_solver csp_solver(weather_reader, 
                                 c_trough,
                                 *p_csp_power_cycle,
                                 storage, 
-                                tou, 
+                                tou,
+                                dispatch,
                                 system,
                                 ssc_cmod_update,
                                 (void*)(this));

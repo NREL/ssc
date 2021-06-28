@@ -13,6 +13,8 @@ var( 'heater_mult', 2.3999999999999999 );
 var( 'ppa_soln_mode', 0 );			// 0: calc ppa price to get flip target percent (irr), 1: use ppa price input
 var( 'ppa_price_input', [ 0.06 ] );
 var( 'flip_target_percent', 11 );
+var( 'hot_htf_code', 17);
+var('ud_hot_htf_props', []);
 
 
 var( 'T_htf_cold_des', 290 );
