@@ -3465,7 +3465,7 @@ void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double
 
         size_t n_mp_market_price; 
         ssc_number_t* mp_market_price; //Market revenue for Merchant Plant model
-        if (grid_charging_cost_version == 3) //Only if financial model is Merchant Plant
+        if (grid_charging_cost_version == 2) //Only if financial model is Merchant Plant
             mp_market_price = cm->as_array("mp_energy_market_price", &n_mp_market_price); //Energy market price (hourly) for lifetime array to calculate grid charging cost for Merchant Plant ($)
 
         size_t n_degradation;
