@@ -276,6 +276,10 @@ bool var_table::is_assigned( const std::string &name )
 void var_table::unassign( const std::string &name )
 {
 	var_hash::iterator it = m_hash.find( util::lower_case(name) );
+	if (it == m_hash.end())
+	{
+        it = m_hash.find( name );
+	}
 	if (it != m_hash.end())
 	{
 		delete (*it).second; // delete the associated data

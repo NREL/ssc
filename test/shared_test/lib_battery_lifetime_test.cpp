@@ -154,7 +154,7 @@ TEST_F(lib_battery_lifetime_cycle_test, replaceBatteryTest) {
     EXPECT_NEAR(s.cycle->rainflow_Xlt, 0, tol);
     EXPECT_NEAR(s.cycle->rainflow_Ylt, 0, tol);
     EXPECT_NEAR(s.cycle->rainflow_jlt, 0, tol);
-    EXPECT_NEAR(s.cycle_range, 0, tol);
+    EXPECT_NEAR(s.cycle_range, 90, tol);
     EXPECT_NEAR(s.average_range, 90, tol);
     EXPECT_NEAR(s.n_cycles, 749, tol);
 }
