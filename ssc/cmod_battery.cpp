@@ -1573,10 +1573,12 @@ static var_info _cm_vtab_battery[] = {
     { SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",                 "Lifetime simulation",                                     "0/1",        "0=SingleYearRepeated,1=RunEveryYear",   "Lifetime",        "?=0",                   "BOOLEAN",                              "" },
     { SSC_INPUT,        SSC_NUMBER,      "analysis_period",                            "Lifetime analysis period",                                "years",      "The number of years in the simulation", "Lifetime",        "system_use_lifetime_output=1","",                               "" },
     { SSC_INPUT,        SSC_NUMBER,      "en_batt",                                    "Enable battery storage model",                            "0/1",        "",                     "BatterySystem",                      "?=0",                    "",                               "" },
-    { SSC_INOUT,        SSC_ARRAY,       "gen",										  "System power generated",                                  "kW",         "",                     "System Output",                             "",                       "",                               "" },
-    { SSC_INPUT,		SSC_ARRAY,	     "load",			                              "Electricity load (year 1)",                               "kW",	        "",				        "Load",                             "",	                      "",	                            "" },
-    { SSC_INPUT,		SSC_ARRAY,	     "crit_load",			                      "Critical electricity load (year 1)",                      "kW",	        "",				        "Load",                             "",	                      "",	                            "" },
+    { SSC_INOUT,        SSC_ARRAY,       "gen",										   "System power generated",                                  "kW",         "",                     "System Output",                    "",                       "",                               "" },
+    { SSC_INPUT,		SSC_ARRAY,	     "load",			                           "Electricity load (year 1)",                               "kW",	        "",				        "Load",                             "",	                      "",	                            "" },
+    { SSC_INPUT,		SSC_ARRAY,	     "crit_load",			                       "Critical electricity load (year 1)",                      "kW",	        "",				        "Load",                             "",	                      "",	                            "" },
     { SSC_INPUT,        SSC_ARRAY,       "load_escalation",                            "Annual load escalation",                                  "%/year",     "",                     "Load",                             "?=0",                    "",                               "" },
+    { SSC_INPUT,        SSC_ARRAY,       "grid_outage",                                "Timesteps with grid outage",                              "0/1",        "0=GridAvailable,1=GridUnavailable,Length=load", "Load",    "",                       "",                               "" },
+    { SSC_INPUT,        SSC_NUMBER,      "run_resiliency_calcs",                       "Enable resilence calculations for every timestep",        "0/1",        "0=DisableCalcs,1=EnableCalcs",                  "Load",    "?=0",                    "",                               "" },
     { SSC_INOUT,        SSC_NUMBER,      "capacity_factor",                            "Capacity factor",                                         "%",          "",                     "System Output",                             "?=0",                    "",                               "" },
     { SSC_INOUT,        SSC_NUMBER,      "annual_energy",                              "Annual Energy",                                           "kWh",        "",                     "System Output",                      "?=0",                    "",                               "" },
 
@@ -1654,16 +1656,22 @@ public:
             // resilience metrics for battery
             std::unique_ptr<resilience_runner> resilience = nullptr;
             std::vector<ssc_number_t> p_crit_load;
+            bool run_resilience = as_boolean("run_resiliency_calcs");
             if (is_assigned("crit_load")) {
                 p_crit_load = as_vector_ssc_number_t("crit_load");
                 size_t nload = p_crit_load.size();
                 if (nload != n_rec_single_year)
                     throw exec_error("battery", "Electric load profile must have same number of values as weather file, or 8760.");
-                if (!p_crit_load.empty() && *std::max_element(p_crit_load.begin(), p_crit_load.end()) > 0){
-                    resilience = std::unique_ptr<resilience_runner>(new resilience_runner(batt));
-                    auto logs = resilience->get_logs();
-                    if (!logs.empty()) {
-                        log(logs[0], SSC_WARNING);
+                if (run_resilience) {
+                    if (!p_crit_load.empty() && *std::max_element(p_crit_load.begin(), p_crit_load.end()) > 0) {
+                        resilience = std::unique_ptr<resilience_runner>(new resilience_runner(batt));
+                        auto logs = resilience->get_logs();
+                        if (!logs.empty()) {
+                            log(logs[0], SSC_WARNING);
+                        }
+                    }
+                    else {
+                        throw exec_error("battery", "If run_resiliency_calcs is 1, crit_load must have length > 0 and values > 0");
                     }
                 }
             }
