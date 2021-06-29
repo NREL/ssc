@@ -77,7 +77,8 @@ public:
         double batt_dispatch_pvs_max_ramp,
         bool batt_dispatch_pvs_short_forecast_enable,
         double batt_dispatch_pvs_soc_rest,
-        size_t batt_dispatch_pvs_timestep_multiplier // probably should be restricted to be a reasonable weather file timestep multiplier
+        size_t batt_dispatch_pvs_timestep_multiplier, // probably should be restricted to be a reasonable weather file timestep multiplier
+        double batt_dispatch_pvs_initial_SOC
 		);
 
 	~dispatch_pvsmoothing_front_of_meter_t();
@@ -121,6 +122,9 @@ protected:
     /*! Calculate the cost to cycle per kWh */
     void costToCycle();
 
+    /*! Setup PV smoothing ramp interval vectors */
+    void setup_pvsmoothing_ramp_interval_vectors();
+
 	/*! Inverter AC power limit */
 	double _inverter_paco;
 
@@ -155,6 +159,16 @@ protected:
     bool m_batt_dispatch_pvs_short_forecast_enable;
     double m_batt_dispatch_pvs_soc_rest;
     size_t m_batt_dispatch_pvs_timestep_multiplier;
+    double m_batt_dispatch_pvs_initial_SOC;
+
+    // PV Smoothing validation and local ramp interval vectors calculated in setup_pvsmoothing_ramp_interval_vectors
+    double_vec m_pv_power_input_sampled_vec;
+    double_vec m_forecast_pv_energy_vec;
+    double_vec m_batt_dispatch_pvs_outpower_vec;
+    double_vec m_batt_dispatch_pvs_battpower_vec;
+    double_vec m_batt_dispatch_pvs_battsoc_vec;
+    double_vec m_batt_dispatch_pvs_curtail_vec;
+    double_vec m_batt_dispatch_pvs_violation_list_vec;
 
 };
 
