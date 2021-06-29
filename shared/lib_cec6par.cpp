@@ -267,7 +267,98 @@ bool noct_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 }
 
 
+void SuperLac( util::matrix_t<double> data, double test[3][100][100], int n_p, std::vector<double>& L, std::vector<double>& L_n, std::vector<double>& R, std::vector<double>& R_n, util::matrix_t<double>& Z, util::matrix_t<double>& Z_n)
+{
+    std::vector<int> s;
+    int s_max;
+    int dimensions = 2;
+    if (data.at(2, 0) == 0) dimensions = 3;
+    if (data.nrows() < data.ncols()) s_max = data.ncols();
+    else s_max = data.nrows();
 
+    if (n_p > s_max) {
+        return; //Number of points must be less than data size
+    }
+
+    int linspace = (s_max - 1) / (n_p - 1);
+    int R_start = 1;
+    int R_inc = 1;
+    for (int i = 0; i < n_p; i++) {
+        if (i == 0) {
+            R[i] = R_start;
+            L[i] = i;
+            //Z[i] = Nan;
+        }
+        else {
+            R_inc += linspace;
+            R[i] = R_inc;
+            L[i] = i;
+            //Z[i] = Nan
+        }
+    }
+
+    int r = 0;
+    util::matrix_t<double> A = data;
+    util::matrix_t<double> ones;
+    util::matrix_t<double> FA;
+    for (int b = 0; b < R.size(); b++) {
+        r = R[b];
+        A = data;
+        if (r < s_max) { //replace s_max with dimension 1
+            ones.resize_fill(s_max, r, 1.0);
+            FA.resize_fill(A.nrows(), r, 0);
+            for (int i = 0; i < A.nrows(); i++) {
+                for (int j = 0; j < A.ncols(); j++) {
+                    for (int k = 0; k < r; k++) {
+                        FA.at(i,k) += A.at(i,j) * ones.at(j,k);
+                    }
+                }
+            }
+            
+        }
+    }
+
+
+    
+
+}
+
+void SolArrayLog(double res, double baseheight, double GCR, double Lmod, double thick, double angle, double Depth, double row_num, bool showArray)
+{
+    double H_pan = baseheight + (Lmod * sind(angle));
+    double Lmod_x = Lmod * cosd(angle);
+    double S = Lmod / GCR;
+    double Smid = S - Lmod_x;
+    double Ltot_x = row_num * (Lmod_x + Smid);
+
+    int SmidInd = round(Smid / (2 * res));
+    int Sind = round(S / res);
+    int BInd = round(baseheight / res - thick * cosd(angle) / res);
+    int Pcount = 0;
+    int x = Ltot_x / res;
+    const int y = H_pan / res;
+    const int z = Depth / res;
+    int oA = z;
+    int ones_x = floor(Lmod / res);
+    int ones_y = floor(thick / res);
+
+    double*** ArrayLog = new double** [x];
+
+    for (int i = 0; i < x; i++) {
+
+        // Allocate memory blocks for
+        // rows of each 2D array
+        ArrayLog[i] = new double* [y];
+
+        for (int j = 0; j < y; j++) {
+
+            // Allocate memory blocks for
+            // columns of each 2D array
+            ArrayLog[i][j] = new double[z];
+        }
+    }
+
+}
 
 
 
