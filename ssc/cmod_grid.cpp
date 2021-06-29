@@ -168,6 +168,7 @@ void cm_grid::exec()
 	    double gen = gridVars->systemGenerationLifetime_kW[i];
 		double gridNet = gen - gridVars->loadLifetime_kW[i];
 
+        // TODO - curtail if grid outage here
 
 		if (gridVars->enable_interconnection_limit){
 		    p_genPreInterconnect_kW[i] = static_cast<ssc_number_t>(gen);
