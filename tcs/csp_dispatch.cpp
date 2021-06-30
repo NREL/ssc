@@ -211,21 +211,21 @@ bool csp_dispatch_opt::predict_performance(int step_start, int ntimeints, int di
         {
 
             //jump to the current step
-            if(! pointers.m_weather->read_time_step( step_start+i*divs_per_int+j, simloc ) )
+            if(! pointers.m_weather.read_time_step( step_start+i*divs_per_int+j, simloc ) )
                 return false;
 
             //get DNI
-            double dni = pointers.m_weather->ms_outputs.m_beam;
-            if( pointers.m_weather->ms_outputs.m_solzen > 90. || dni < 0. )
+            double dni = pointers.m_weather.ms_outputs.m_beam;
+            if( pointers.m_weather.ms_outputs.m_solzen > 90. || dni < 0. )
                 dni = 0.;
 
             //get optical efficiency
-            double opt_eff = pointers.col_rec->calculate_optical_efficiency(pointers.m_weather->ms_outputs, simloc);
+            double opt_eff = pointers.col_rec->calculate_optical_efficiency(pointers.m_weather.ms_outputs, simloc);
 
             double q_inc = Asf * opt_eff * dni * 1.e-3; //kW
 
             //get thermal efficiency
-            double therm_eff = pointers.col_rec->calculate_thermal_efficiency_approx(pointers.m_weather->ms_outputs, q_inc*0.001);
+            double therm_eff = pointers.col_rec->calculate_thermal_efficiency_approx(pointers.m_weather.ms_outputs, q_inc*0.001);
             therm_eff *= params.sf_effadj;
             therm_eff_ave += therm_eff * ave_weight;
 
@@ -233,21 +233,21 @@ bool csp_dispatch_opt::predict_performance(int step_start, int ntimeints, int di
             q_inc_ave += q_inc * therm_eff * ave_weight;
 
             //store the power cycle efficiency
-            double cycle_eff = params.eff_table_Tdb.interpolate( pointers.m_weather->ms_outputs.m_tdry );
+            double cycle_eff = params.eff_table_Tdb.interpolate( pointers.m_weather.ms_outputs.m_tdry );
             cycle_eff *= params.eta_cycle_ref;  
             cycle_eff_ave += cycle_eff * ave_weight;
 
 			double f_pb_op_lim_local = std::numeric_limits<double>::quiet_NaN();
 			double m_dot_htf_max_local = std::numeric_limits<double>::quiet_NaN();
-            pointers.mpc_pc->get_max_power_output_operation_constraints(pointers.m_weather->ms_outputs.m_tdry, m_dot_htf_max_local, f_pb_op_lim_local);
+            pointers.mpc_pc->get_max_power_output_operation_constraints(pointers.m_weather.ms_outputs.m_tdry, m_dot_htf_max_local, f_pb_op_lim_local);
 			f_pb_op_lim_ave += f_pb_op_lim_local * ave_weight;	//[-]
 
             //store the condenser parasitic power fraction
-            double wcond_f = params.wcondcoef_table_Tdb.interpolate( pointers.m_weather->ms_outputs.m_tdry );
+            double wcond_f = params.wcondcoef_table_Tdb.interpolate( pointers.m_weather.ms_outputs.m_tdry );
             wcond_ave += wcond_f * ave_weight;
 
 		    simloc.ms_ts.m_time += simloc.ms_ts.m_step;
-            pointers.m_weather->converged();
+            pointers.m_weather.converged();
         }
 
         //-----report hourly averages
@@ -1683,7 +1683,7 @@ bool csp_dispatch_opt::optimize()
         pointers.messages->add_message(type, s.str() );
         
         if(return_ok)
-            write_ampl();
+            write_ampl(); //why is this here?
 
         return return_ok;
     }
@@ -1950,7 +1950,7 @@ bool csp_dispatch_opt::set_dispatch_outputs()
             q_pc_target = dispatch.params.q_pb_standby*1.e-3;
         */
 
-        if (disp_outputs.q_pc_target + 1.e-5 < params.q_pb_min)
+        if (disp_outputs.q_pc_target + 1.e-5 < params.q_pb_min) //TODO: etes required a conversion on q_pb_min
         {
             disp_outputs.is_pc_su_allowed = false;
             disp_outputs.q_pc_target = 0.0;
@@ -1964,7 +1964,7 @@ bool csp_dispatch_opt::set_dispatch_outputs()
         else
         {
             double wcond;
-            double eta_corr = pointers.mpc_pc->get_efficiency_at_TPH(pointers.m_weather->ms_outputs.m_tdry, 1., 30., &wcond) / params.eta_pb_des;
+            double eta_corr = pointers.mpc_pc->get_efficiency_at_TPH(pointers.m_weather.ms_outputs.m_tdry, 1., 30., &wcond) / params.eta_pb_des;
             double eta_calc = params.eta_cycle_ref * eta_corr;
             double eta_diff = 1.;
             int i = 0;

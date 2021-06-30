@@ -115,7 +115,6 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
     { SSC_INPUT,  SSC_NUMBER, "disp_reporting",                     "Dispatch optimization reporting level",                                                                                                   "",             "",                                  "System Control",                           "?=-1",                                                             "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "disp_spec_presolve",                 "Dispatch optimization presolve heuristic",                                                                                                "",             "",                                  "System Control",                           "?=-1",                                                             "",              ""},
     { SSC_INPUT,  SSC_NUMBER, "disp_spec_scaling",                  "Dispatch optimization scaling heuristic",                                                                                                 "",             "",                                  "System Control",                           "?=-1",                                                             "",              ""},
-    { SSC_INPUT,  SSC_NUMBER, "disp_time_weighting",                "Dispatch optimization future time discounting factor",                                                                                    "",             "",                                  "System Control",                           "?=0.99",                                                           "",              ""},
 
 
     // System performance
@@ -212,6 +211,11 @@ static var_info _cm_vtab_etes_electric_resistance[] = {
 
         // System
     { SSC_OUTPUT, SSC_NUMBER, "W_dot_bop_design",            "BOP parasitics at design",                "MWe",          "",                                  "System Design Calc",                             "*",                                                                "",              "" },
+
+        // Dispatch
+    { SSC_INPUT,  SSC_NUMBER, "disp_pen_delta_w",                   "Dispatch cycle production change penalty",                                                                                                "$/kWe-change", "",                                  "System Control",                           "is_dispatch=1",                                                    "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "disp_csu_cost",                      "Cycle startup cost",                                                                                                                      "$",            "",                                  "System Control",                           "is_dispatch=1",                                                    "",              "" },
+    { SSC_INPUT,  SSC_NUMBER, "disp_time_weighting",                "Dispatch optimization future time discounting factor",                                                                                    "",             "",                                  "System Control",                           "?=0.99",                                                           "",              "" },
 
         // Costs
     { SSC_OUTPUT, SSC_NUMBER, "heater_cost_calc",            "Heater cost",                             "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
@@ -596,7 +600,7 @@ public:
         dispatch.solver_params.set_user_inputs(as_boolean("is_dispatch"), as_integer("disp_steps_per_hour"), as_integer("disp_frequency"), as_integer("disp_horizon"),
             as_integer("disp_max_iter"), as_double("disp_mip_gap"), as_double("disp_timeout"),
             as_integer("disp_spec_presolve"), as_integer("disp_spec_bb"), as_integer("disp_reporting"), as_integer("disp_spec_scaling"),
-            as_boolean("is_write_ampl_dat"), as_boolean("is_ampl_engine"), as_string("ampl_data_dir"), as_string("ampl_exec_call"));
+            false, false, "", "");
         dispatch.params.set_user_params(as_double("disp_time_weighting"),
             as_double("disp_csu_cost"), as_double("disp_pen_delta_w"));
 
@@ -819,7 +823,6 @@ public:
         assign("construction_financing_cost", (ssc_number_t)construction_financing_cost);   //[$]
         // *****************************************************
         // *****************************************************
-
 
         // *****************************************************
         // If calling cmod to run design only, return here

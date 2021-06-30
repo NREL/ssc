@@ -58,7 +58,7 @@ void etes_dispatch_opt::init(double cycle_q_dot_des, double cycle_eta_des, doubl
 
     params.dt_rec_startup = pointers.col_rec->get_startup_time(); // / 3600.;
     params.e_rec_startup = pointers.col_rec->get_startup_energy() * 1000;
-    params.q_eh_min = pointers.col_rec->get_min_power_delivery() * 1000.;
+    params.q_eh_min = 0.0; //pointers.col_rec->get_min_power_delivery() * 1000.;
     params.q_eh_max = pointers.col_rec->get_max_thermal_power() * 1000;
 
     params.e_tes0 = pointers.tes->get_initial_charge_energy() * 1000; //TODO: this doesn't seem to do the job -> check on this?
@@ -180,7 +180,9 @@ bool etes_dispatch_opt::predict_performance(int step_start, int ntimeints, int d
     m_nstep_opt = ntimeints;
 
     //Predict performance out nstep values. 
-    outputs.clear();
+    outputs.clear();        //TODO: check if this clears too much..
+    params.eta_pb_expected.clear();  // TODO: update csp_dispatch
+    params.w_condf_expected.clear();
 
     if (!check_setup(m_nstep_opt))
         throw C_csp_exception("Dispatch optimization precheck failed.");
@@ -206,36 +208,30 @@ bool etes_dispatch_opt::predict_performance(int step_start, int ntimeints, int d
         {
 
             //jump to the current step
-            if (!pointers.m_weather->read_time_step(step_start + i * divs_per_int + j, simloc))
+            if (!pointers.m_weather.read_time_step(step_start + i * divs_per_int + j, simloc))
                 return false;
 
             //store the power cycle efficiency
-            double cycle_eff = params.eff_table_Tdb.interpolate(pointers.m_weather->ms_outputs.m_tdry);
+            double cycle_eff = params.eff_table_Tdb.interpolate(pointers.m_weather.ms_outputs.m_tdry);
             cycle_eff *= params.eta_cycle_ref;
             cycle_eff_ave += cycle_eff * ave_weight;
 
             double f_pb_op_lim_local = std::numeric_limits<double>::quiet_NaN();
             double m_dot_htf_max_local = std::numeric_limits<double>::quiet_NaN();
-            pointers.mpc_pc->get_max_power_output_operation_constraints(pointers.m_weather->ms_outputs.m_tdry, m_dot_htf_max_local, f_pb_op_lim_local);
+            pointers.mpc_pc->get_max_power_output_operation_constraints(pointers.m_weather.ms_outputs.m_tdry, m_dot_htf_max_local, f_pb_op_lim_local);
             f_pb_op_lim_ave += f_pb_op_lim_local * ave_weight;	//[-]
 
             //store the condenser parasitic power fraction
-            double wcond_f = params.wcondcoef_table_Tdb.interpolate(pointers.m_weather->ms_outputs.m_tdry);
+            double wcond_f = params.wcondcoef_table_Tdb.interpolate(pointers.m_weather.ms_outputs.m_tdry);
             wcond_ave += wcond_f * ave_weight;
 
             simloc.ms_ts.m_time += simloc.ms_ts.m_step;
-            pointers.m_weather->converged();
+            pointers.m_weather.converged();
         }
 
         //-----report hourly averages
-        //thermal efficiency
-        //params.eta_sf_expected.push_back(therm_eff_ave);
-        ////predicted field energy output
-        //params.q_sfavail_expected.push_back(q_inc_ave);
         //power cycle efficiency
         params.eta_pb_expected.push_back(cycle_eff_ave);
-        //// Maximum power cycle output (normalized)
-        //params.f_pb_op_limit.push_back(f_pb_op_lim_ave);		//[-]
         //condenser power
         params.w_condf_expected.push_back(wcond_ave);
     }
@@ -1593,14 +1589,8 @@ bool etes_dispatch_opt::optimize()
         }
 
         pointers.messages->add_message(type, s.str() );
-        
-
-        if(return_ok)
-            write_ampl();
-
 
         return return_ok;
-
     }
     catch(std::exception &e)
     {
@@ -1682,7 +1672,7 @@ bool etes_dispatch_opt::set_dispatch_outputs()
             q_pc_target = dispatch.params.q_pb_standby*1.e-3;
         */
 
-        if (disp_outputs.q_pc_target + 1.e-5 < params.q_pb_min)
+        if (disp_outputs.q_pc_target + 1.e-5 < params.q_pb_min/1.e3)
         {
             disp_outputs.is_pc_su_allowed = false;
             disp_outputs.q_pc_target = 0.0;
@@ -1696,7 +1686,7 @@ bool etes_dispatch_opt::set_dispatch_outputs()
         else
         {
             double wcond;
-            double eta_corr = pointers.mpc_pc->get_efficiency_at_TPH(pointers.m_weather->ms_outputs.m_tdry, 1., 30., &wcond) / params.eta_pb_des;
+            double eta_corr = pointers.mpc_pc->get_efficiency_at_TPH(pointers.m_weather.ms_outputs.m_tdry, 1., 30., &wcond) / params.eta_pb_des;
             double eta_calc = params.eta_cycle_ref * eta_corr;
             double eta_diff = 1.;
             int i = 0;

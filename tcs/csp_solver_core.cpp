@@ -383,7 +383,7 @@ void C_csp_solver::init()
 
     if (mc_dispatch.solver_params.dispatch_optimize)
     {
-        mc_dispatch.pointers.set_pointers(&mc_weather, &mc_collector_receiver, &mc_power_cycle, &mc_tes, &mc_csp_messages, &mc_kernel.mc_sim_info);
+        mc_dispatch.pointers.set_pointers(mc_weather, &mc_collector_receiver, &mc_power_cycle, &mc_tes, &mc_csp_messages, &mc_kernel.mc_sim_info);
         mc_dispatch.init(m_cycle_q_dot_des, m_cycle_eta_des, m_cycle_W_dot_des);
     }
 
@@ -453,18 +453,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 	}
 	
 	mc_kernel.init(sim_setup, wf_step, baseline_step, mc_csp_messages);
-
-    //if (mc_dispatch.solver_params.dispatch_optimize)
-    //{
-    //    mc_dispatch.pointers.set_sim_info(mc_kernel.mc_sim_info);       // TODO: this could be done better...
-    //}
     
     C_csp_collector_receiver::E_csp_cr_modes cr_operating_state = C_csp_collector_receiver::OFF;
 	int pc_operating_state = C_csp_power_cycle::OFF;
-
-	
 	double tol_mode_switching = 0.10;		// Give buffer to account for uncertainty in estimates
-
 
 	// Reset vector that tracks operating modes
 	m_op_mode_tracking.resize(0);
@@ -481,7 +473,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 	double progress_msg_frac_current = progress_msg_interval_frac;
 	double V_hot_tank_frac_initial;
 
-
 	double pc_state_persist = 0.;  // Time [hr] that current pc operating state (on/off/standby) has persisted
 	double rec_state_persist = 0.;  // Time [hr] that current receiver operating state (on/off/standby) has persisted
 	int prev_pc_state = mc_power_cycle.get_operating_state();
@@ -491,30 +482,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 	double w_pb_last = 0.0;   // Cycle gross generation at end of last time step [kWt]
 	double f_op_last = 0.0;	  // Fraction of last time step that cycle was operating or in standby
 
-
-    /* 
-    ************************** MAIN TIME-SERIES LOOP **************************
-    */
-
-    // TODO: dispatch output struct
-    //double disp_time_last = -9999.;
-    ////values to report later on the dispatch algorithm
-    //double disp_qsf_expect = 0.;
-    //double disp_qsfprod_expect = 0.;
-    //double disp_qsfsu_expect = 0.;
-    //double disp_tes_expect = 0.;
-    //double disp_etasf_expect = 0.;
-    //double disp_etapb_expect = 0.;
-    //double disp_qpbsu_expect = 0.;
-    //double disp_wpb_expect = 0.;
-    //double disp_rev_expect = 0.;
-
-    //field efficiency learning parameters => TODO: remove?
-    //double disp_qsf_last = 0.;
-    //double disp_qsf_effadj = 1.;
-    //double disp_effadj_weight = 0.;
-    //int disp_effadj_count = 0;
-
+    //************************** MAIN TIME-SERIES LOOP **************************
 	// Block dispatch saved variables
 	bool is_q_dot_pc_target_overwrite = false;
 
@@ -573,7 +541,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		double q_dot_pc_su_max = mc_power_cycle.get_max_q_pc_startup();		//[MWt]
 
 		// Get weather at this timestep. Should only be called once per timestep. (Except converged() function)
-		mc_weather.timestep_call(mc_kernel.mc_sim_info);
+        mc_weather.timestep_call(mc_kernel.mc_sim_info);
 
 		// Get volume of hot tank, for debugging
 		V_hot_tank_frac_initial = mc_tes.get_hot_tank_vol_frac();
@@ -626,7 +594,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
             is_rec_outlet_to_hottank = false;
         }
 
-
 		// Get TES operating state info at end of last time step
 		double q_dot_tes_dc, q_dot_tes_ch;      //[MWt]
 		q_dot_tes_dc = q_dot_tes_ch = std::numeric_limits<double>::quiet_NaN();
@@ -659,15 +626,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		// Can add the following code to simulate with no storage charge/discharge, but IDLE calcs
 		//q_dot_tes_dc = q_dot_tes_ch = 0.0;
 
-
-
-
         // Get standby fraction and min operating fraction
             // Could eventually be a method in PC class...
         double cycle_sb_frac = m_cycle_sb_frac_des;				//[-]
 
-            // *** If standby not allowed, then reset q_pc_sb = q_pc_min ?? *** 
-                //or is this too confusing and not helpful enough?
+        // *** If standby not allowed, then reset q_pc_sb = q_pc_min ?? *** 
+            //or is this too confusing and not helpful enough?
         double q_pc_sb = cycle_sb_frac * m_cycle_q_dot_des;		//[MW]
         double q_pc_min = m_cycle_cutoff_frac * m_cycle_q_dot_des;	//[MW]
 
@@ -782,18 +746,17 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
         else if(mc_dispatch.solver_params.dispatch_optimize)
         {
             //time to reoptimize
-            int opt_horizon = mc_dispatch.solver_params.optimize_horizon;
-            double hour_now = mc_kernel.mc_sim_info.ms_ts.m_time/3600.;
-
             //reoptimize when the time is equal to multiples of the first time step
 			if( (int)mc_kernel.mc_sim_info.ms_ts.m_time % (int)(3600.*mc_dispatch.solver_params.optimize_frequency) == baseline_step
 				&& mc_dispatch.disp_outputs.time_last != mc_kernel.mc_sim_info.ms_ts.m_time
                 )
             {
+                int opt_horizon = mc_dispatch.solver_params.optimize_horizon;
+                double hour_now = mc_kernel.mc_sim_info.ms_ts.m_time / 3600.;
+
                 //if this is the last day of the year, update the optimization horizon to be no more than the last 24 hours. 
-				
-                if( hour_now >= (8760 - opt_horizon) )
-                    opt_horizon = (int)min((double)opt_horizon, (double)(8761-hour_now));
+                if (hour_now >= (8760. - opt_horizon))
+                    mc_dispatch.solver_params.optimize_horizon = (int)min((double)opt_horizon, (double)(8761. - hour_now));
 
                 //message
                 std::stringstream ss;
@@ -802,9 +765,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 					<< (int)(mc_kernel.mc_sim_info.ms_ts.m_time / 3600.) + mc_dispatch.solver_params.optimize_frequency;
                 
                 mc_csp_messages.add_message(C_csp_messages::NOTICE, ss.str());
-
 				send_callback((float)calc_frac_current*100.f);
-
                 ss.flush();
 
                 // Update horizon parameter values and inital conition parameters
@@ -817,12 +778,11 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 if( 
                     mc_dispatch.predict_performance((int)
                             (mc_kernel.mc_sim_info.ms_ts.m_time/ baseline_step - 1), 
-                            (int)(opt_horizon * mc_dispatch.solver_params.steps_per_hour),
+                            (int)(mc_dispatch.solver_params.optimize_horizon * mc_dispatch.solver_params.steps_per_hour),
                             (int)((3600./baseline_step)/ mc_dispatch.solver_params.steps_per_hour)
                             ) 
                     )
                 {
-                    
                     //call the optimize method
                     bool opt_complete = mc_dispatch.lp_outputs.m_last_opt_successful = mc_dispatch.optimize();
                     
@@ -841,7 +801,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
                 //call again to go back to original state
                 mc_tou.call(mc_kernel.mc_sim_info.ms_ts.m_time, mc_tou_outputs);
-
             }
 
             //running from the optimized profile
@@ -854,98 +813,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
             q_pc_target = mc_dispatch.disp_outputs.q_pc_target;
             q_dot_elec_to_CR_heat = mc_dispatch.disp_outputs.q_dot_elec_to_CR_heat;
             m_q_dot_pc_max = mc_dispatch.disp_outputs.q_dot_pc_max;
-
-    //        if(
-    //            mc_dispatch.lp_outputs.m_last_opt_successful 
-    //            && mc_dispatch.m_current_read_step < (int) mc_dispatch.solver_params.optimize_horizon*mc_dispatch.solver_params.steps_per_hour
-    //            //mc_dispatch.outputs.q_pb_target.size()
-    //            )
-    //        {
-
-    //            ////update the learned field efficiency adjustment factor
-    //            //if(disp_qsf_last > 0.)
-    //            //{
-    //            //    double qopt_last = dispatch.outputs.q_sf_expected.at( dispatch.m_current_read_step )*1.e-3;     //mw
-    //            //    double etanew = disp_qsf_last / qopt_last;
-    //            //    disp_effadj_weight += disp_qsf_last;
-
-    //            //    //disp_effadj_count ++;
-    //            //    //double wfact = disp_effadj_weight / (double)disp_effadj_count;
-    //            //    
-    //            //    disp_qsf_effadj =+ (1. - etanew)/(min(disp_effadj_weight/disp_qsf_last, 5.));       // This code seems to die here TODO: clean up
-    //            //}
-
-    //            //read in other values
-
-    //            //calculate the current read step, account for number of dispatch steps per hour and the simulation time step
-    //            mc_dispatch.m_current_read_step = (int)(mc_kernel.mc_sim_info.ms_ts.m_time * mc_dispatch.solver_params.steps_per_hour / 3600. - .001)
-    //                % (mc_dispatch.solver_params.optimize_frequency * mc_dispatch.solver_params.steps_per_hour);
-
-    //            is_rec_su_allowed = dispatch.outputs.rec_operation.at( dispatch.m_current_read_step );
-    //            is_pc_sb_allowed = dispatch.outputs.pb_standby.at( dispatch.m_current_read_step );
-    //            is_pc_su_allowed = dispatch.outputs.pb_operation.at( dispatch.m_current_read_step ) || is_pc_sb_allowed;
-
-    //            q_pc_target = dispatch.outputs.q_pb_target.at( dispatch.m_current_read_step ) / 1000.;
-    //                //+ dispatch.outputs.q_pb_startup.at( dispatch.m_current_read_step )
-    //                      //TODO: Think about why this includes startup power
-
-    //            q_dot_elec_to_CR_heat = dispatch.outputs.q_sf_expected.at(dispatch.m_current_read_step) / 1000.;
-
-    //            //quality checks
-				///*
-    //            if(!is_pc_sb_allowed && (q_pc_target + 1.e-5 < q_pc_min))
-    //                is_pc_su_allowed = false;
-    //            if(is_pc_sb_allowed)
-    //                q_pc_target = dispatch.params.q_pb_standby*1.e-3; 
-				//*/
-
-
-				//if (q_pc_target + 1.e-5 < q_pc_min)
-				//{
-				//	is_pc_su_allowed = false;
-				//	//is_pc_sb_allowed = false;
-				//	q_pc_target = 0.0;
-				//}
-    //            
-				//// Calculate approximate upper limit for power cycle thermal input at current electricity generation limit
-				//if (mc_dispatch.w_lim.at(dispatch.m_current_read_step) < 1.e-6)
-    //                m_q_dot_pc_max = 0.0;
-				//else
-				//{
-				//	double wcond;
-				//	double eta_corr = mc_power_cycle.get_efficiency_at_TPH(mc_weather.ms_outputs.m_tdry, 1., 30., &wcond) / m_cycle_eta_des; 
-				//	double eta_calc = dispatch.params.eta_cycle_ref * eta_corr;
-				//	double eta_diff = 1.;
-				//	int i = 0;
-				//	while (eta_diff > 0.001 && i<20)
-				//	{
-				//		double q_pc_est = dispatch.w_lim.at(dispatch.m_current_read_step)*1.e-3 / eta_calc;			// Estimated power cycle thermal input at w_lim
-				//		double eta_new = mc_power_cycle.get_efficiency_at_load(q_pc_est / m_cycle_q_dot_des) * eta_corr;		// Calculated power cycle efficiency
-				//		eta_diff = fabs(eta_calc - eta_new);
-				//		eta_calc = eta_new;
-				//		i++;
-				//	}
-				//	m_q_dot_pc_max = fmin(m_q_dot_pc_max, dispatch.w_lim.at(dispatch.m_current_read_step)*1.e-3 / eta_calc); // Restrict max pc thermal input to *approximate* current allowable value (doesn't yet account for parasitics)
-				//	m_q_dot_pc_max = fmax(m_q_dot_pc_max, q_pc_target);													// calculated q_pc_target accounts for parasitics --> can be higher than approximate limit 
-				//}
-
-    //            disp_etasf_expect = dispatch.outputs.eta_sf_expected.at( dispatch.m_current_read_step );
-    //            disp_qsf_expect = dispatch.outputs.q_sfavail_expected.at( dispatch.m_current_read_step )*1.e-3;
-    //            disp_qsfprod_expect = dispatch.outputs.q_sf_expected.at( dispatch.m_current_read_step )*1.e-3;
-    //            disp_qsfsu_expect = dispatch.outputs.q_rec_startup.at( dispatch.m_current_read_step )*1.e-3;
-    //            disp_tes_expect = dispatch.outputs.tes_charge_expected.at( dispatch.m_current_read_step )*1.e-3;
-    //            disp_qpbsu_expect = dispatch.outputs.q_pb_startup.at( dispatch.m_current_read_step )*1.e-3;
-    //            disp_wpb_expect = dispatch.outputs.w_pb_target.at( dispatch.m_current_read_step )*1.e-3;
-    //            disp_rev_expect = disp_wpb_expect * dispatch.params.sell_price.at( dispatch.m_current_read_step );
-    //            disp_etapb_expect = disp_wpb_expect / max(1.e-6, dispatch.outputs.q_pb_target.at( dispatch.m_current_read_step ))* 1.e3 
-    //                                    * ( dispatch.outputs.pb_operation.at( dispatch.m_current_read_step ) ? 1. : 0. );
-
-    //            if(dispatch.m_current_read_step > mc_dispatch.solver_params.optimize_frequency * mc_dispatch.solver_params.steps_per_hour)
-    //                throw C_csp_exception("Counter synchronization error in dispatch optimization routine.", "dispatch");
-    //        }
-    //        
-    //        disp_time_last = mc_kernel.mc_sim_info.ms_ts.m_time;
-                        
         }
 
         // Split up reported q_dot_pc target into 'startup' and 'on' so input dispatch can specify both for a single full timestep
@@ -958,10 +825,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
             q_dot_pc_on_target_reporting = q_pc_target;
         }
 
-
-        /* 
-        ------------ Controller/Solver iteration loop -------------
-        */
+        //------------ Controller/Solver iteration loop -------------
 
 		bool are_models_converged = false;
 
@@ -1019,7 +883,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			} 
 		}
 
-
 		// Check if receiver can be defocused enough to stay under cycle+TES max thermal power and mass flow (if cold recirculation is not enabled)
         // (this will usually be the case unless using clear-sky control or constrained cycle thermal input)
 		if (cr_operating_state == C_csp_collector_receiver::ON && (q_dot_cr_on >0.0 || m_dot_cr_on > 0.0) && is_rec_su_allowed && is_rec_outlet_to_hottank && m_is_tes)
@@ -1045,7 +908,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			}
 
 		}
-
 
 		while(!are_models_converged)		// Solve for correct operating mode and performance in following loop:
 		{

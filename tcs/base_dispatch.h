@@ -34,8 +34,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class base_dispatch_opt
 {
 protected:
-    int  m_nstep_opt;           //number of time steps in the optimized array
-    bool m_is_weather_setup;    //bool indicating whether the weather has been copied
+    int  m_nstep_opt;                   //number of time steps in the optimized array
+    bool m_is_weather_setup;            //bool indicating whether the weather has been copied
     
     void clear_output();
 
@@ -44,12 +44,13 @@ private:
 
 public:
     int m_current_read_step;           //current step to read from optimization results
+    //C_csp_weatherreader m_weather;       //Local copy of weather reader object
 
     s_solver_params solver_params;
 
     struct S_pointers
     {
-        C_csp_weatherreader* m_weather;      //Pointer to weather file
+        C_csp_weatherreader m_weather;      //Pointer to weather file
         C_csp_solver_sim_info *siminfo;      //Pointer to existing simulation info object
         C_csp_collector_receiver *col_rec;   //Pointer to collector/receiver object
 		C_csp_power_cycle *mpc_pc;	         //Pointer to csp power cycle class object
@@ -58,7 +59,7 @@ public:
 
         S_pointers()
         {
-            m_weather = nullptr;
+            //m_weather = nullptr;
             siminfo = nullptr;
             col_rec = nullptr;
             mpc_pc = nullptr;
@@ -66,7 +67,7 @@ public:
             messages = nullptr;
         }
 
-        void set_pointers(C_csp_weatherreader *weather,
+        void set_pointers(C_csp_weatherreader &weather,
             C_csp_collector_receiver *collector_receiver,
             C_csp_power_cycle *power_cycle,
             C_csp_tes *thermal_es,
@@ -162,7 +163,7 @@ public:
     virtual bool set_dispatch_outputs();
 
     //copy the weather data over
-    //bool copy_weather_data(C_csp_weatherreader *weather_source);
+    //bool copy_weather_data(C_csp_weatherreader &weather_source);
 
     //simple string compare
     bool strcompare(std::string a, std::string b);

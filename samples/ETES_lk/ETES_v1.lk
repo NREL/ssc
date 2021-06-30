@@ -14,7 +14,7 @@ var( 'ppa_soln_mode', 0 );			// 0: calc ppa price to get flip target percent (ir
 var( 'ppa_price_input', [ 0.06 ] );
 var( 'flip_target_percent', 11 );
 var( 'hot_htf_code', 17);
-var('ud_hot_htf_props', []);
+var('ud_hot_htf_props', [[0,0,0]]);
 
 
 var( 'T_htf_cold_des', 290 );

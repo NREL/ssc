@@ -68,15 +68,14 @@ void base_dispatch_opt::init(double cycle_q_dot_des, double cycle_eta_des, doubl
 bool base_dispatch_opt::check_setup()
 {
     //check parameters and inputs to make sure everything has been set up correctly
-    if( !m_is_weather_setup ) return false;
     if( !pointers.siminfo ) return false;
     
     return true;
 }
 
-//bool base_dispatch_opt::copy_weather_data(C_csp_weatherreader *weather_source)
+//bool base_dispatch_opt::copy_weather_data(C_csp_weatherreader &weather_source)
 //{
-//    //Copy the weather data
+//    //copy the weather data
 //    m_weather = weather_source;
 //    m_is_weather_setup = true;
 //
