@@ -377,22 +377,22 @@ TEST_F(lib_battery_lifetime_nmc_test, CopyTest) {
 
     // check lifetime_nmc_state get & set
     auto state = model->get_state();
-    state.nmc_li_neg->cycle_DOD_range = {0, 1};
-    state.nmc_li_neg->cycle_DOD_max = {2, 3};
+    state.cycle->cycle_DOD_range = {0, 1};
+    state.cycle->cycle_DOD_max = {2, 3};
     model->set_state(state);
 
     state = model->get_state();
-    EXPECT_EQ(state.nmc_li_neg->cycle_DOD_range[0], 0);
-    EXPECT_EQ(state.nmc_li_neg->cycle_DOD_range[1], 1);
-    EXPECT_EQ(state.nmc_li_neg->cycle_DOD_max[0], 2);
-    EXPECT_EQ(state.nmc_li_neg->cycle_DOD_max[1], 3);
+    EXPECT_EQ(state.cycle->cycle_DOD_range[0], 0);
+    EXPECT_EQ(state.cycle->cycle_DOD_range[1], 1);
+    EXPECT_EQ(state.cycle->cycle_DOD_max[0], 2);
+    EXPECT_EQ(state.cycle->cycle_DOD_max[1], 3);
 
     auto new_model = lifetime_nmc_t(*model);
     state = new_model.get_state();
-    EXPECT_EQ(state.nmc_li_neg->cycle_DOD_range[0], 0);
-    EXPECT_EQ(state.nmc_li_neg->cycle_DOD_range[1], 1);
-    EXPECT_EQ(state.nmc_li_neg->cycle_DOD_max[0], 2);
-    EXPECT_EQ(state.nmc_li_neg->cycle_DOD_max[1], 3);
+    EXPECT_EQ(state.cycle->cycle_DOD_range[0], 0);
+    EXPECT_EQ(state.cycle->cycle_DOD_range[1], 1);
+    EXPECT_EQ(state.cycle->cycle_DOD_max[0], 2);
+    EXPECT_EQ(state.cycle->cycle_DOD_max[1], 3);
 }
 
 /// run at different days

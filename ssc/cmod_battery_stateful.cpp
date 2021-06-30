@@ -238,29 +238,29 @@ void write_battery_state(const battery_state& state, var_table* vt) {
         vt->assign_match_case("q_relative_calendar", lifetime->calendar->q_relative_calendar);
         vt->assign_match_case("dq_relative_calendar_old", lifetime->calendar->dq_relative_calendar_old);
     }
-    else if (choice == lifetime_params::NMCNREL) {
+    else if (choice == lifetime_params::NMC) {
         vt->assign_match_case("q_relative_li", lifetime->nmc_li_neg->q_relative_li);
         vt->assign_match_case("q_relative_neg", lifetime->nmc_li_neg->q_relative_neg);
         vt->assign_match_case("dq_relative_li1", lifetime->nmc_li_neg->dq_relative_li1);
         vt->assign_match_case("dq_relative_li2", lifetime->nmc_li_neg->dq_relative_li2);
         vt->assign_match_case("dq_relative_li3", lifetime->nmc_li_neg->dq_relative_li3);
         vt->assign_match_case("dq_relative_neg", lifetime->nmc_li_neg->dq_relative_neg);
-        vt->assign_match_case("DOD_max", lifetime->nmc_li_neg->DOD_max);
-        vt->assign_match_case("DOD_min", lifetime->nmc_li_neg->DOD_min);
         vt->assign_match_case("cum_dt", lifetime->nmc_li_neg->cum_dt);
         vt->assign_match_case("b1_dt", lifetime->nmc_li_neg->b1_dt);
         vt->assign_match_case("b2_dt", lifetime->nmc_li_neg->b2_dt);
         vt->assign_match_case("b3_dt", lifetime->nmc_li_neg->b3_dt);
         vt->assign_match_case("c0_dt", lifetime->nmc_li_neg->c0_dt);
         vt->assign_match_case("c2_dt", lifetime->nmc_li_neg->c2_dt);
-        if (!lifetime->nmc_li_neg->cycle_DOD_max.empty()) {
-            vt->assign_match_case("cycle_DOD_max", lifetime->nmc_li_neg->cycle_DOD_max);
+        vt->assign_match_case("DOD_max", lifetime->cycle->DOD_max);
+        vt->assign_match_case("DOD_min", lifetime->cycle->DOD_min);
+        if (!lifetime->cycle->cycle_DOD_max.empty()) {
+            vt->assign_match_case("cycle_DOD_max", lifetime->cycle->cycle_DOD_max);
         }
         else {
             vt->unassign("cycle_DOD_max");
         }
-        if (!lifetime->nmc_li_neg->cycle_DOD_range.empty()) {
-            vt->assign_match_case("cycle_DOD_range", lifetime->nmc_li_neg->cycle_DOD_range);
+        if (!lifetime->cycle->cycle_DOD_range.empty()) {
+            vt->assign_match_case("cycle_DOD_range", lifetime->cycle->cycle_DOD_range);
         }
         else {
             vt->unassign("cycle_DOD_range");
@@ -347,27 +347,27 @@ void read_battery_state(battery_state& state, var_table* vt) {
         vt_get_number(vt, "dq_relative_li2", &lifetime->nmc_li_neg->dq_relative_li2);
         vt_get_number(vt, "dq_relative_li3", &lifetime->nmc_li_neg->dq_relative_li3);
         vt_get_number(vt, "dq_relative_neg", &lifetime->nmc_li_neg->dq_relative_neg);
-        vt_get_number(vt, "DOD_min", &lifetime->nmc_li_neg->DOD_min);
-        vt_get_number(vt, "DOD_max", &lifetime->nmc_li_neg->DOD_max);
         vt_get_number(vt, "cum_dt", &lifetime->nmc_li_neg->cum_dt);
         vt_get_number(vt, "b1_dt", &lifetime->nmc_li_neg->b1_dt);
         vt_get_number(vt, "b2_dt", &lifetime->nmc_li_neg->b2_dt);
         vt_get_number(vt, "b3_dt", &lifetime->nmc_li_neg->b3_dt);
         vt_get_number(vt, "c0_dt", &lifetime->nmc_li_neg->c0_dt);
         vt_get_number(vt, "c2_dt", &lifetime->nmc_li_neg->c2_dt);
+        vt_get_number(vt, "DOD_min", &lifetime->cycle->DOD_min);
+        vt_get_number(vt, "DOD_max", &lifetime->cycle->DOD_max);
         if (vt->is_assigned("cycle_DOD_range"))
         {
-            vt_get_array_vec(vt, "cycle_DOD_range", lifetime->nmc_li_neg->cycle_DOD_range);
+            vt_get_array_vec(vt, "cycle_DOD_range", lifetime->cycle->cycle_DOD_range);
         }
         else {
-            lifetime->nmc_li_neg->cycle_DOD_range.clear();
+            lifetime->cycle->cycle_DOD_range.clear();
         }
         if (vt->is_assigned("cycle_DOD_max"))
         {
-            vt_get_array_vec(vt, "cycle_DOD_max", lifetime->nmc_li_neg->cycle_DOD_max);
+            vt_get_array_vec(vt, "cycle_DOD_max", lifetime->cycle->cycle_DOD_max);
         }
         else {
-            lifetime->nmc_li_neg->cycle_DOD_range.clear();
+            lifetime->cycle->cycle_DOD_range.clear();
         }
     }
 
@@ -460,7 +460,7 @@ std::shared_ptr<battery_params> create_battery_params(var_table* vt, double dt_h
             vt_get_matrix(vt, "calendar_matrix", lifetime->cal_cyc->calendar_matrix);
         }
     }
-    else if (lifetime->model_choice == lifetime_params::NMCNREL) {
+    else if (lifetime->model_choice == lifetime_params::NMC) {
         if (chem != battery_params::LITHIUM_ION)
             throw exec_error("battery_stateful", "NMC life model (life_model=1) can only be used with Li-Ion chemistries (batt_chem=1).");
     }

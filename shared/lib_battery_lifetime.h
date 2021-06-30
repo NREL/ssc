@@ -32,7 +32,7 @@ struct lifetime_params {
 
     enum MODEL_CHOICE {
         CALCYC,
-        NMCNREL         // K. Smith: Life Prediction model coefficients
+        NMC,         // K. Smith: Life Prediction model coefficients
     } model_choice;
 
     std::shared_ptr<calendar_cycle_params> cal_cyc;
@@ -60,7 +60,7 @@ struct lifetime_state {
     std::shared_ptr<calendar_state> calendar;
     std::shared_ptr<cycle_state> cycle;
 
-    // NREL NMC model state
+    // NMC model state
     std::shared_ptr<lifetime_nmc_state> nmc_li_neg;
 
     lifetime_state();
