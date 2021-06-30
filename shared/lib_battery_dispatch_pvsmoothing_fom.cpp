@@ -151,28 +151,46 @@ void dispatch_pvsmoothing_front_of_meter_t::update_dispatch(size_t year, size_t 
     double slope, intercept, xval;
     xval = lifetimeIndex % m_batt_dispatch_pvs_timestep_multiplier;
 
-    slope = (m_batt_dispatch_pvs_battpower_vec[ndx_sampled] - m_batt_dispatch_pvs_battpower_vec[ndx_sampled - 1]) / m_batt_dispatch_pvs_timestep_multiplier;
-    intercept = m_batt_dispatch_pvs_battpower_vec[ndx_sampled - 1];
+    if (ndx_sampled == 0)
+        intercept = 0;
+    else 
+        intercept = m_batt_dispatch_pvs_battpower_vec[ndx_sampled - 1];
+    slope = (m_batt_dispatch_pvs_battpower_vec[ndx_sampled] - intercept) / m_batt_dispatch_pvs_timestep_multiplier;
     m_batt_dispatch_pvs_battpower = slope * xval + intercept;
 
-    slope = (m_batt_dispatch_pvs_outpower_vec[ndx_sampled] - m_batt_dispatch_pvs_outpower_vec[ndx_sampled - 1]) / m_batt_dispatch_pvs_timestep_multiplier;
-    intercept = m_batt_dispatch_pvs_outpower_vec[ndx_sampled - 1];
+    if (ndx_sampled == 0)
+        intercept = 0;
+    else
+        intercept = m_batt_dispatch_pvs_outpower_vec[ndx_sampled - 1];
+    slope = (m_batt_dispatch_pvs_outpower_vec[ndx_sampled] - intercept) / m_batt_dispatch_pvs_timestep_multiplier;
     m_batt_dispatch_pvs_outpower = slope * xval + intercept;
 
-    slope = (m_batt_dispatch_pvs_battsoc_vec[ndx_sampled] - m_batt_dispatch_pvs_battsoc_vec[ndx_sampled - 1]) / m_batt_dispatch_pvs_timestep_multiplier;
-    intercept = m_batt_dispatch_pvs_battsoc_vec[ndx_sampled - 1];
+    if (ndx_sampled == 0)
+        intercept = 0;
+    else
+        intercept = m_batt_dispatch_pvs_battsoc_vec[ndx_sampled - 1];
+    slope = (m_batt_dispatch_pvs_battsoc_vec[ndx_sampled] - intercept) / m_batt_dispatch_pvs_timestep_multiplier;
     m_batt_dispatch_pvs_battsoc = slope * xval + intercept;
 
-    slope = (m_batt_dispatch_pvs_curtail_vec[ndx_sampled] - m_batt_dispatch_pvs_curtail_vec[ndx_sampled - 1]) / m_batt_dispatch_pvs_timestep_multiplier;
-    intercept = m_batt_dispatch_pvs_curtail_vec[ndx_sampled - 1];
+    if (ndx_sampled == 0)
+        intercept = 0;
+    else
+        intercept = m_batt_dispatch_pvs_curtail_vec[ndx_sampled - 1];
+    slope = (m_batt_dispatch_pvs_curtail_vec[ndx_sampled] - intercept) / m_batt_dispatch_pvs_timestep_multiplier;
     m_batt_dispatch_pvs_curtail = slope * xval + intercept;
 
-    slope = (m_pv_power_input_sampled_vec[ndx_sampled] - m_pv_power_input_sampled_vec[ndx_sampled - 1]) / m_batt_dispatch_pvs_timestep_multiplier;
-    intercept = m_pv_power_input_sampled_vec[ndx_sampled - 1];
+    if (ndx_sampled == 0)
+        intercept = 0;
+    else
+        intercept = m_pv_power_input_sampled_vec[ndx_sampled - 1];
+    slope = (m_pv_power_input_sampled_vec[ndx_sampled] - intercept) / m_batt_dispatch_pvs_timestep_multiplier;
     m_batt_dispatch_pvs_PV_ramp_interval = slope * xval + intercept;
 
-    slope = (m_forecast_pv_energy_vec[ndx_sampled] - m_forecast_pv_energy_vec[ndx_sampled - 1]) / m_batt_dispatch_pvs_timestep_multiplier;
-    intercept = m_forecast_pv_energy_vec[ndx_sampled - 1];
+    if (ndx_sampled == 0)
+        intercept = 0;
+    else
+        intercept = m_forecast_pv_energy_vec[ndx_sampled - 1];
+    slope = (m_forecast_pv_energy_vec[ndx_sampled] - intercept) / m_batt_dispatch_pvs_timestep_multiplier;
     m_batt_dispatch_pvs_forecast_pv_energy = slope * xval + intercept;
 
     if (xval == m_batt_dispatch_pvs_timestep_multiplier - 1)
@@ -246,14 +264,14 @@ void dispatch_pvsmoothing_front_of_meter_t::setup_pvsmoothing_ramp_interval_vect
             sum += m_pv_power_input_sampled_vec[ndx_sampled + ndx];
             ndx++;
         }
-        m_forecast_pv_energy_vec.push_back(sum * _dt_hour);
+        m_forecast_pv_energy_vec.push_back(sum * m_batt_dispatch_pvs_timestep_multiplier * _dt_hour);
     }
     //}
 
     // main loop from ramp_rate_control.py
     //      #conversion factors
 //    ssc_number_t  power_to_energy_conversion_factor = m_batt_dispatch_pvs_ramp_interval / 60.0;
-    ssc_number_t  power_to_energy_conversion_factor = _dt_hour;
+    ssc_number_t  power_to_energy_conversion_factor = m_batt_dispatch_pvs_timestep_multiplier * _dt_hour;
 
     ssc_number_t  batt_half_round_trip_eff = sqrt(m_etaDischarge * m_etaPVCharge);
 
@@ -405,11 +423,11 @@ void dispatch_pvsmoothing_front_of_meter_t::setup_pvsmoothing_ramp_interval_vect
         total_energy += out_power;
         violation_count += violation;
 
-        m_batt_dispatch_pvs_outpower_vec[ndx_sampled] = out_power;
-        m_batt_dispatch_pvs_battpower_vec[ndx_sampled] = battery_power_terminal;
-        m_batt_dispatch_pvs_battsoc_vec[ndx_sampled] = battery_soc;
-        m_batt_dispatch_pvs_violation_list_vec[ndx_sampled] = violation;
-        m_batt_dispatch_pvs_curtail_vec[ndx_sampled] = curtail_power;
+        m_batt_dispatch_pvs_outpower_vec.push_back( out_power);
+        m_batt_dispatch_pvs_battpower_vec.push_back(battery_power_terminal);
+        m_batt_dispatch_pvs_battsoc_vec.push_back(battery_soc);
+        m_batt_dispatch_pvs_violation_list_vec.push_back(violation);
+        m_batt_dispatch_pvs_curtail_vec.push_back(curtail_power);
     }
 
 }

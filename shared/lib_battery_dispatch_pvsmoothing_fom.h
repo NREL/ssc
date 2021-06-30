@@ -97,6 +97,7 @@ public:
 	/// Compute the updated power to send to the battery over the next N hours
 	void update_dispatch(size_t year, size_t hour_of_year, size_t step, size_t lifetimeIndex);
 
+ 
 	/// Pass in the PV power forecast [kW]
     void update_pv_data(double_vec P_pv_ac);
 
@@ -114,6 +115,14 @@ public:
     double batt_dispatch_pvs_PV_ramp_interval() { return m_batt_dispatch_pvs_PV_ramp_interval; };
     double batt_dispatch_pvs_forecast_pv_energy() { return m_batt_dispatch_pvs_forecast_pv_energy; };
 
+    // validation outputs at ramp interval
+    double_vec batt_dispatch_pvs_outpower_vec() { return m_batt_dispatch_pvs_outpower_vec; };
+    double_vec batt_dispatch_pvs_battpower_vec() { return  m_batt_dispatch_pvs_battpower_vec; };
+    double_vec batt_dispatch_pvs_battsoc_vec() { return m_batt_dispatch_pvs_battsoc_vec; };
+    double_vec batt_dispatch_pvs_curtail_vec() { return  m_batt_dispatch_pvs_curtail_vec; };
+    double_vec batt_dispatch_pvs_violation_list_vec() { return m_batt_dispatch_pvs_violation_list_vec; };
+    double_vec batt_dispatch_pvs_PV_ramp_interval_vec() { return m_pv_power_input_sampled_vec; };
+    double_vec batt_dispatch_pvs_forecast_pv_energy_vec() { return m_forecast_pv_energy_vec; };
 
 protected:
 

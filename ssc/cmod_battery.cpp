@@ -253,6 +253,14 @@ var_info vtab_battery_outputs[] = {
     { SSC_OUTPUT,        SSC_ARRAY,      "batt_pvs_curtail",                           "PV smoothing curtailed power",                         "kW",      "",                       "Battery",       "",                           "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "batt_pvs_violation_list",                    "PV smoothing violation",                               "",      "",                       "Battery",       "",                           "",                              "" },
 
+    { SSC_OUTPUT,        SSC_ARRAY,      "batt_pvs_outpower_vec",                          "PV smoothing outpower at ramp interval",                                "kW",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "batt_pvs_battpower_vec",                         "PV smoothing battpower at ramp interval",                                "kW",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "batt_pvs_battsoc_vec",                           "PV smoothing battery SOC at ramp interval",                             "%",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "batt_pvs_curtail_vec",                           "PV smoothing curtailed power at ramp interval",                         "kW",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "batt_pvs_violation_list_vec",                    "PV smoothing violation at ramp interval",                               "",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "batt_pvs_PV_ramp_interval_vec",                  "PV smoothing sampled power at ramp interval",                         "kW",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "batt_pvs_forecast_pv_energy_vec",                "PV smoothing forecast energy at ramp interval",                               "",      "",                       "Battery",       "",                           "",                              "" },
+
 
     // monthly outputs
     { SSC_OUTPUT,        SSC_ARRAY,      "monthly_system_to_load",                     "Energy to load from system",                            "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
@@ -1681,6 +1689,37 @@ void battstor::calculate_monthly_and_annual_outputs(compute_module& cm)
     else if (batt_vars->batt_meter_position == dispatch_t::FRONT)
     {
         cm.accumulate_monthly_for_year("batt_to_grid", "monthly_batt_to_grid", _dt_hour, step_per_hour);
+        // validation work - all ramp_interval size TODO - remove after validation
+        if (batt_vars->batt_dispatch == dispatch_t::FOM_PV_SMOOTHING) {
+            dispatch_pvsmoothing_front_of_meter_t* dispatch_fom = dynamic_cast<dispatch_pvsmoothing_front_of_meter_t*>(dispatch_model);
+            auto bp_vec = dispatch_fom->batt_dispatch_pvs_battpower_vec();
+            ssc_number_t* bp_vec_ssc = cm.allocate("batt_pvs_battpower_vec", bp_vec.size());
+            auto op_vec = dispatch_fom->batt_dispatch_pvs_outpower_vec();
+            ssc_number_t* op_vec_ssc = cm.allocate("batt_pvs_outpower_vec", op_vec.size());
+            auto cp_vec = dispatch_fom->batt_dispatch_pvs_curtail_vec();
+            ssc_number_t* cp_vec_ssc = cm.allocate("batt_pvs_curtail_vec", cp_vec.size());
+            auto soc_vec = dispatch_fom->batt_dispatch_pvs_battsoc_vec();
+            ssc_number_t* soc_vec_ssc = cm.allocate("batt_pvs_battsoc_vec", soc_vec.size());
+            auto vl_vec = dispatch_fom->batt_dispatch_pvs_violation_list_vec();
+            ssc_number_t* vl_vec_ssc = cm.allocate("batt_pvs_violation_list_vec", vl_vec.size());
+
+            auto pv_vec = dispatch_fom->batt_dispatch_pvs_PV_ramp_interval_vec();
+            ssc_number_t* pv_vec_ssc = cm.allocate("batt_pvs_PV_ramp_interval_vec", pv_vec.size());
+            auto ef_vec = dispatch_fom->batt_dispatch_pvs_forecast_pv_energy_vec();
+            ssc_number_t* ef_vec_ssc = cm.allocate("batt_pvs_forecast_pv_energy_vec", ef_vec.size());
+
+            // TODO - if keep these then check for same size
+            for (size_t i = 0; i < bp_vec.size(); i++) {
+                bp_vec_ssc[i] = bp_vec[i];
+                op_vec_ssc[i] = op_vec[i];
+                cp_vec_ssc[i] = cp_vec[i];
+                soc_vec_ssc[i] = soc_vec[i];
+                vl_vec_ssc[i] = vl_vec[i];
+                pv_vec_ssc[i] = pv_vec[i];
+                ef_vec_ssc[i] = ef_vec[i];
+            }
+       }
+
     }
 }
 
@@ -1860,7 +1899,7 @@ public:
                 resilience->run_surviving_batteries_by_looping(&p_crit_load[0], &power_input_lifetime[0]);
                 calculate_resilience_outputs(this, resilience);
             }
-        }
+         }
         else
             assign("average_battery_roundtrip_efficiency", var_data((ssc_number_t)0.));
     }
