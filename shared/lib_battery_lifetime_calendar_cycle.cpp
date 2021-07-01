@@ -215,11 +215,14 @@ double lifetime_cycle_t::capacity_percent() { return state->cycle->q_relative_cy
 void lifetime_cycle_t::resetDailyCycles() {
     state->cycle->DOD_min = -1;
     state->cycle->DOD_max = -1;
+    state->cycle->cum_dt = 0;
     state->cycle->cycle_DOD_max.clear();
     state->cycle->cycle_DOD_range.clear();
 }
 
-void lifetime_cycle_t::updateDailyCycles(double prev_DOD, double DOD, bool charge_changed) {
+void lifetime_cycle_t::updateDailyCycles(double &prev_DOD, double &DOD, bool charge_changed) {
+    prev_DOD = fmax(fmin(prev_DOD, 100), 0);
+    DOD = fmax(fmin(DOD, 100), 0);
     if (state->cycle->DOD_min == -1) {
         state->cycle->DOD_max = fmax(prev_DOD, DOD) * 0.01;
         state->cycle->DOD_min = fmin(prev_DOD, DOD) * 0.01;
@@ -239,7 +242,7 @@ void lifetime_cycle_t::updateDailyCycles(double prev_DOD, double DOD, bool charg
     }
 }
 
-double lifetime_cycle_t::predictDODRng(double DOD) {
+double lifetime_cycle_t::predictDODRng() {
     // if no cycles have yet elapsed, try to predict range of coming cycle
     double DOD_range = state->cycle->DOD_max - state->cycle->DOD_min;
     // otherwise, use average DOD range of cycles so far this day
@@ -257,7 +260,7 @@ double lifetime_cycle_t::predictAvgSOC(double DOD) {
     if (state->cycle->cycle_DOD_max.empty()) {
         SOC_avg = 1 - DOD * 0.01;
     }
-        // otherwise, get average SOCs of each cycle
+    // otherwise, get average SOCs of each cycle
     else {
         for (size_t i = 0; i < state->cycle->cycle_DOD_max.size(); i++) {
             double cycle_DOD_max = state->cycle->cycle_DOD_max[i] * 0.01;

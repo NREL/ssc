@@ -147,22 +147,29 @@ var_info vtab_battery_state[] = {
     { SSC_INOUT,        SSC_NUMBER,     "day_age_of_battery",        "Day age of battery",                                       "day",       "",                     "StateCell",        "",                           "",                               ""  },
     { SSC_INOUT,        SSC_NUMBER,     "dq_relative_calendar_old",  "Change in capacity of last time step",                     "%",         "",                     "StateCell",        "",                           "",                               ""  },
 
-    { SSC_INOUT,        SSC_NUMBER,     "q_relative_li",             "Relative capacity due to loss of lithium inventory",      "%",         "NREL NMC Life Model",     "StateCell",        "",                           "",                               ""  },
-    { SSC_INOUT,        SSC_NUMBER,     "q_relative_neg",            "Relative capacity due to loss of anode material",         "%",         "NREL NMC Life Model",     "StateCell",        "",                           "",                               ""  },
-    { SSC_INOUT,        SSC_NUMBER,     "dq_relative_li1",           "Cumulative capacity change from time-dependent Li loss",  "1",         "NREL NMC Life Model",     "StateCell",        "",                           "",                               ""  },
-    { SSC_INOUT,        SSC_NUMBER,     "dq_relative_li2",           "Cumulative capacity change from cycle-dependent Li loss", "1",         "NREL NMC Life Model",     "StateCell",        "",                           "",                               ""  },
-    { SSC_INOUT,        SSC_NUMBER,     "dq_relative_li3",           "Cumulative capacity change from BOL Li loss",             "1",         "NREL NMC Life Model",     "StateCell",        "",                           "",                               ""  },
-    { SSC_INOUT,        SSC_NUMBER,     "dq_relative_neg",           "Cumulative capacity change from negative electrode",      "1",         "NREL NMC Life Model",     "StateCell",        "",                           "",                               ""  },
-    { SSC_INOUT,        SSC_NUMBER,     "DOD_max",                   "Max DOD of battery for current day",                      "%",         "NREL NMC Life Model",     "StateCell",        "",                           "",                               ""  },
-    { SSC_INOUT,        SSC_NUMBER,     "DOD_min",                   "Min DOD of battery for current day",                      "%",         "NREL NMC Life Model",     "StateCell",        "",                           "",                               ""  },
-    { SSC_INOUT,        SSC_NUMBER,     "cum_dt",                    "Elapsed time for current day",                            "day",       "NREL NMC Life Model",     "StateCell",        "",                           "",                               ""  },
-    { SSC_INOUT,        SSC_NUMBER,     "b1_dt",                     "b1 coefficient cumulated for current day",                "day^-0.5",  "NREL NMC Life Model",     "StateCell",        "",                           "",                               ""  },
-    { SSC_INOUT,        SSC_NUMBER,     "b2_dt",                     "b2 coefficient cumulated for current day",                "1/cycle",   "NREL NMC Life Model",     "StateCell",        "",                           "",                               ""  },
-    { SSC_INOUT,        SSC_NUMBER,     "b3_dt",                     "b3 coefficient cumulated for current day",                "1",         "NREL NMC Life Model",     "StateCell",        "",                           "",                               ""  },
-    { SSC_INOUT,        SSC_NUMBER,     "c0_dt",                     "c0 coefficient cumulated for current day",                "Ah",        "NREL NMC Life Model",     "StateCell",        "",                           "",                               ""  },
-    { SSC_INOUT,        SSC_NUMBER,     "c2_dt",                     "c2 coefficient cumulated for current day",                "1/cycle",   "NREL NMC Life Model",     "StateCell",        "",                           "",                               ""  },
-    { SSC_INOUT,        SSC_ARRAY,      "cycle_DOD_max",             "Max DODs of cycles concluded in current day",             "%",         "NREL NMC Life Model",     "StateCell",        "",                           "",                               ""  },
-    { SSC_INOUT,        SSC_ARRAY,      "cycle_DOD_range",           "DOD cycle_range of each cycle",                           "%",         "NREL NMC Life Model",     "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_NUMBER,     "DOD_max",                   "Max DOD of battery for current day",                      "%",         "Cycles for Life Model",   "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_NUMBER,     "DOD_min",                   "Min DOD of battery for current day",                      "%",         "Cycles for Life Model",   "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_NUMBER,     "cum_dt",                    "Elapsed time for current day",                            "day",       "Cycles for Life Model",   "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_ARRAY,      "cycle_DOD_max",             "Max DODs of cycles concluded in current day",             "%",         "Cycles for Life Model",   "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_ARRAY,      "cycle_DOD_range",           "DOD cycle_range of each cycle",                           "%",         "NMC Life Model",          "StateCell",        "",                           "",                               ""  },
+
+    { SSC_INOUT,        SSC_NUMBER,     "q_relative_li",             "Relative capacity due to loss of lithium inventory",      "%",         "NMC Life Model",          "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_NUMBER,     "q_relative_neg",            "Relative capacity due to loss of anode material",         "%",         "NMC Life Model",          "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_NUMBER,     "dq_relative_li1",           "Cumulative capacity change from time-dependent Li loss",  "1",         "NMC Life Model",          "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_NUMBER,     "dq_relative_li2",           "Cumulative capacity change from cycle-dependent Li loss", "1",         "NMC Life Model",          "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_NUMBER,     "dq_relative_li3",           "Cumulative capacity change from BOL Li loss",             "1",         "NMC Life Model",          "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_NUMBER,     "dq_relative_neg",           "Cumulative capacity change from negative electrode",      "1",         "NMC Life Model",          "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_NUMBER,     "b1_dt",                     "b1 coefficient cumulated for current day",                "day^-0.5",  "NMC Life Model",          "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_NUMBER,     "b2_dt",                     "b2 coefficient cumulated for current day",                "1/cycle",   "NMC Life Model",          "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_NUMBER,     "b3_dt",                     "b3 coefficient cumulated for current day",                "1",         "NMC Life Model",          "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_NUMBER,     "c0_dt",                     "c0 coefficient cumulated for current day",                "Ah",        "NMC Life Model",          "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_NUMBER,     "c2_dt",                     "c2 coefficient cumulated for current day",                "1/cycle",   "NMC Life Model",          "StateCell",        "",                           "",                               ""  },
+
+    { SSC_INOUT,        SSC_NUMBER,     "dq_relative_cal",           "Cumulative capacity change from calendar degradation",    "%",         "LMO/LTO Life Model",      "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_NUMBER,     "dq_relative_cyc",           "Cumulative capacity change from cycling degradation",     "%",         "LMO/LTO Life Model",      "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_NUMBER,     "EFC",                       "Total Equivalent Full Cycles",                            "1",         "LMO/LTO Life Model",      "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_NUMBER,     "EFC_dt",                    "Equivalent Full Cycles cumulated for current day",        "1",         "LMO/LTO Life Model",      "StateCell",        "",                           "",                               ""  },
+    { SSC_INOUT,        SSC_NUMBER,     "temp_avg",                  "Average temperature for current day",                     "K",         "LMO/LTO Life Model",      "StateCell",        "",                           "",                               ""  },
 
     // losses
     { SSC_INOUT,        SSC_NUMBER,     "loss_kw",                   "Ancillary power loss (kW DC for DC connected, AC for AC connected)", "kW", "",                  "StatePack",          "",                           "",                               ""  },
@@ -238,19 +245,8 @@ void write_battery_state(const battery_state& state, var_table* vt) {
         vt->assign_match_case("q_relative_calendar", lifetime->calendar->q_relative_calendar);
         vt->assign_match_case("dq_relative_calendar_old", lifetime->calendar->dq_relative_calendar_old);
     }
-    else if (choice == lifetime_params::NMC) {
-        vt->assign_match_case("q_relative_li", lifetime->nmc_li_neg->q_relative_li);
-        vt->assign_match_case("q_relative_neg", lifetime->nmc_li_neg->q_relative_neg);
-        vt->assign_match_case("dq_relative_li1", lifetime->nmc_li_neg->dq_relative_li1);
-        vt->assign_match_case("dq_relative_li2", lifetime->nmc_li_neg->dq_relative_li2);
-        vt->assign_match_case("dq_relative_li3", lifetime->nmc_li_neg->dq_relative_li3);
-        vt->assign_match_case("dq_relative_neg", lifetime->nmc_li_neg->dq_relative_neg);
-        vt->assign_match_case("cum_dt", lifetime->nmc_li_neg->cum_dt);
-        vt->assign_match_case("b1_dt", lifetime->nmc_li_neg->b1_dt);
-        vt->assign_match_case("b2_dt", lifetime->nmc_li_neg->b2_dt);
-        vt->assign_match_case("b3_dt", lifetime->nmc_li_neg->b3_dt);
-        vt->assign_match_case("c0_dt", lifetime->nmc_li_neg->c0_dt);
-        vt->assign_match_case("c2_dt", lifetime->nmc_li_neg->c2_dt);
+    else {
+        vt->assign_match_case("cum_dt", lifetime->cycle->cum_dt);
         vt->assign_match_case("DOD_max", lifetime->cycle->DOD_max);
         vt->assign_match_case("DOD_min", lifetime->cycle->DOD_min);
         if (!lifetime->cycle->cycle_DOD_max.empty()) {
@@ -264,6 +260,26 @@ void write_battery_state(const battery_state& state, var_table* vt) {
         }
         else {
             vt->unassign("cycle_DOD_range");
+        }
+        if (choice == lifetime_params::NMC) {
+            vt->assign_match_case("q_relative_li", lifetime->nmc_li_neg->q_relative_li);
+            vt->assign_match_case("q_relative_neg", lifetime->nmc_li_neg->q_relative_neg);
+            vt->assign_match_case("dq_relative_li1", lifetime->nmc_li_neg->dq_relative_li1);
+            vt->assign_match_case("dq_relative_li2", lifetime->nmc_li_neg->dq_relative_li2);
+            vt->assign_match_case("dq_relative_li3", lifetime->nmc_li_neg->dq_relative_li3);
+            vt->assign_match_case("dq_relative_neg", lifetime->nmc_li_neg->dq_relative_neg);
+            vt->assign_match_case("b1_dt", lifetime->nmc_li_neg->b1_dt);
+            vt->assign_match_case("b2_dt", lifetime->nmc_li_neg->b2_dt);
+            vt->assign_match_case("b3_dt", lifetime->nmc_li_neg->b3_dt);
+            vt->assign_match_case("c0_dt", lifetime->nmc_li_neg->c0_dt);
+            vt->assign_match_case("c2_dt", lifetime->nmc_li_neg->c2_dt);
+        }
+        else {
+            vt->assign_match_case("dq_relative_cal", lifetime->lmo_lto->dq_relative_cal);
+            vt->assign_match_case("dq_relative_cyc", lifetime->lmo_lto->dq_relative_cyc);
+            vt->assign_match_case("EFC", lifetime->lmo_lto->EFC);
+            vt->assign_match_case("EFC_dt", lifetime->lmo_lto->EFC_dt);
+            vt->assign_match_case("temp_avg", lifetime->lmo_lto->temp_avg);
         }
     }
 
@@ -341,18 +357,7 @@ void read_battery_state(battery_state& state, var_table* vt) {
         vt_get_number(vt, "dq_relative_calendar_old", &lifetime->calendar->dq_relative_calendar_old);
     }
     else {
-        vt_get_number(vt, "q_relative_li", &lifetime->nmc_li_neg->q_relative_li);
-        vt_get_number(vt, "q_relative_neg", &lifetime->nmc_li_neg->q_relative_neg);
-        vt_get_number(vt, "dq_relative_li1", &lifetime->nmc_li_neg->dq_relative_li1);
-        vt_get_number(vt, "dq_relative_li2", &lifetime->nmc_li_neg->dq_relative_li2);
-        vt_get_number(vt, "dq_relative_li3", &lifetime->nmc_li_neg->dq_relative_li3);
-        vt_get_number(vt, "dq_relative_neg", &lifetime->nmc_li_neg->dq_relative_neg);
-        vt_get_number(vt, "cum_dt", &lifetime->nmc_li_neg->cum_dt);
-        vt_get_number(vt, "b1_dt", &lifetime->nmc_li_neg->b1_dt);
-        vt_get_number(vt, "b2_dt", &lifetime->nmc_li_neg->b2_dt);
-        vt_get_number(vt, "b3_dt", &lifetime->nmc_li_neg->b3_dt);
-        vt_get_number(vt, "c0_dt", &lifetime->nmc_li_neg->c0_dt);
-        vt_get_number(vt, "c2_dt", &lifetime->nmc_li_neg->c2_dt);
+        vt_get_number(vt, "cum_dt", &lifetime->cycle->cum_dt);
         vt_get_number(vt, "DOD_min", &lifetime->cycle->DOD_min);
         vt_get_number(vt, "DOD_max", &lifetime->cycle->DOD_max);
         if (vt->is_assigned("cycle_DOD_range"))
@@ -368,6 +373,26 @@ void read_battery_state(battery_state& state, var_table* vt) {
         }
         else {
             lifetime->cycle->cycle_DOD_range.clear();
+        }
+        if (choice == lifetime_params::NMC) {
+            vt_get_number(vt, "q_relative_li", &lifetime->nmc_li_neg->q_relative_li);
+            vt_get_number(vt, "q_relative_neg", &lifetime->nmc_li_neg->q_relative_neg);
+            vt_get_number(vt, "dq_relative_li1", &lifetime->nmc_li_neg->dq_relative_li1);
+            vt_get_number(vt, "dq_relative_li2", &lifetime->nmc_li_neg->dq_relative_li2);
+            vt_get_number(vt, "dq_relative_li3", &lifetime->nmc_li_neg->dq_relative_li3);
+            vt_get_number(vt, "dq_relative_neg", &lifetime->nmc_li_neg->dq_relative_neg);
+            vt_get_number(vt, "b1_dt", &lifetime->nmc_li_neg->b1_dt);
+            vt_get_number(vt, "b2_dt", &lifetime->nmc_li_neg->b2_dt);
+            vt_get_number(vt, "b3_dt", &lifetime->nmc_li_neg->b3_dt);
+            vt_get_number(vt, "c0_dt", &lifetime->nmc_li_neg->c0_dt);
+            vt_get_number(vt, "c2_dt", &lifetime->nmc_li_neg->c2_dt);
+        }
+        else {
+            vt_get_number(vt, "dq_relative_cal", &lifetime->lmo_lto->dq_relative_cal);
+            vt_get_number(vt, "dq_relative_cyc", &lifetime->lmo_lto->dq_relative_cyc);
+            vt_get_number(vt, "EFC", &lifetime->lmo_lto->EFC);
+            vt_get_number(vt, "EFC_dt", &lifetime->lmo_lto->EFC_dt);
+            vt_get_number(vt, "temp_avg", &lifetime->lmo_lto->temp_avg);
         }
     }
 

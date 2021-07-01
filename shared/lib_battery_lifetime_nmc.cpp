@@ -35,7 +35,6 @@ void lifetime_nmc_t::initialize() {
     state->nmc_li_neg->dq_relative_li2 = 0;
     state->nmc_li_neg->dq_relative_li3 = 0;
     state->nmc_li_neg->dq_relative_neg = 0;
-    state->nmc_li_neg->cum_dt = 0;
     state->nmc_li_neg->b1_dt = 0;
     state->nmc_li_neg->b2_dt = 0;
     state->nmc_li_neg->b3_dt = 0;
@@ -156,7 +155,7 @@ double lifetime_nmc_t::runQneg() {
 }
 
 void lifetime_nmc_t::integrateDegParams(double dt_day, double DOD, double T_battery) {
-    double DOD_range = cycle_model->predictDODRng(DOD);
+    double DOD_range = cycle_model->predictDODRng();
     double SOC_avg = cycle_model->predictAvgSOC(DOD);
     double U_neg = calculate_Uneg(SOC_avg);
     double V_oc = calculate_Voc(SOC_avg);
@@ -185,37 +184,37 @@ void lifetime_nmc_t::integrateDegParams(double dt_day, double DOD, double T_batt
     state->nmc_li_neg->c0_dt += c0_dt_el;
     state->nmc_li_neg->c2_dt += c2_dt_el;
 
-    state->nmc_li_neg->cum_dt += dt_day;
+    state->cycle->cum_dt += dt_day;
 }
 
-void lifetime_nmc_t::integrateDegLoss(double DOD, double T_battery) {
+void lifetime_nmc_t::integrateDegLoss(double T_battery) {
     state->nmc_li_neg->q_relative_li = runQli(T_battery);
     state->nmc_li_neg->q_relative_neg = runQneg();
     state->q_relative = fmin(state->nmc_li_neg->q_relative_li, state->nmc_li_neg->q_relative_neg);
 
     // reset cycle tracking
-    state->nmc_li_neg->cum_dt = 0;
+    state->cycle->cum_dt = 0;
     cycle_model->resetDailyCycles();
 }
 
 void lifetime_nmc_t::runLifetimeModels(size_t _, bool charge_changed, double prev_DOD, double DOD,
                                        double T_battery) {
-    prev_DOD = fmax(fmin(prev_DOD, 100), 0);
-    DOD = fmax(fmin(DOD, 100), 0);
     T_battery += 273.15;
 
     cycle_model->updateDailyCycles(prev_DOD, DOD, charge_changed);
 
-    double dt_day = (1. / (double)util::hours_per_day) * params->dt_hr;
     // Run capacity degradation model after every 24 hours
-    double new_cum_dt = state->nmc_li_neg->cum_dt + dt_day;
+    double dt_day = (1. / (double)util::hours_per_day) * params->dt_hr;
+    double new_cum_dt = state->cycle->cum_dt + dt_day;
+    // Check if adaptive time stepping has caused new timestep to not hit each day-end
+    double dt_day_to_end_of_day = 1 - state->cycle->cum_dt;
     if (new_cum_dt > 1 + 1e-7) {
-        double dt_day_to_end_of_day = 1 - state->nmc_li_neg->cum_dt;
+        // If so, finish the day before, and continue the rest of the time into a new day
         double DOD_at_end_of_day = (DOD - prev_DOD) / dt_day * dt_day_to_end_of_day + prev_DOD;
         state->day_age_of_battery += dt_day_to_end_of_day;
 
         integrateDegParams(dt_day_to_end_of_day, DOD_at_end_of_day, T_battery);
-        integrateDegLoss(DOD_at_end_of_day, T_battery);
+        integrateDegLoss(T_battery);
 
         dt_day = new_cum_dt - 1;
     }
@@ -223,8 +222,8 @@ void lifetime_nmc_t::runLifetimeModels(size_t _, bool charge_changed, double pre
     state->day_age_of_battery += dt_day;
     integrateDegParams(dt_day, DOD, T_battery);
 
-    if (fabs(state->nmc_li_neg->cum_dt - 1.) < 1e-7) {
-        integrateDegLoss(DOD, T_battery);
+    if (fabs(state->cycle->cum_dt - 1.) < 1e-7) {
+        integrateDegLoss(T_battery);
     }
 }
 

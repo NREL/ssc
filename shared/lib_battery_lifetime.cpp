@@ -22,6 +22,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_battery_lifetime.h"
 #include "lib_battery_lifetime_calendar_cycle.h"
 #include "lib_battery_lifetime_nmc.h"
+#include "lib_battery_lifetime_lmolto.h"
 #include <cmath>
 
 lifetime_params::lifetime_params() {
@@ -48,6 +49,7 @@ lifetime_state::lifetime_state(){
     cycle = std::make_shared<cycle_state>();
     calendar = std::make_shared<calendar_state>();
     nmc_li_neg = std::make_shared<lifetime_nmc_state>();
+    lmo_lto = std::make_shared<lifetime_lmolto_state>();
 }
 
 lifetime_state::lifetime_state(const lifetime_state &rhs) :
@@ -78,6 +80,16 @@ lifetime_state::lifetime_state(const std::shared_ptr<lifetime_nmc_state>& nmc) {
     q_relative = fmin(nmc->q_relative_li, nmc->q_relative_neg);
 }
 
+lifetime_state::lifetime_state(const std::shared_ptr<lifetime_lmolto_state> &lmolto) {
+    q_relative = 0;
+    n_cycles = 0;
+    cycle_range = 0;
+    cycle_DOD = 0;
+    average_range = 0;
+    day_age_of_battery = 0;
+    lmo_lto = lmolto;
+    q_relative = 100. - lmo_lto->dq_relative_cal - lmo_lto->dq_relative_cyc;
+}
 
 lifetime_state &lifetime_state::operator=(const lifetime_state &rhs) {
     if (this != &rhs) {
@@ -90,6 +102,7 @@ lifetime_state &lifetime_state::operator=(const lifetime_state &rhs) {
         *cycle = *rhs.cycle;
         *calendar = *rhs.calendar;
         *nmc_li_neg = *rhs.nmc_li_neg;
+        *lmo_lto = *rhs.lmo_lto;
     }
     return *this;
 }

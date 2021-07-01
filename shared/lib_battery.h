@@ -35,6 +35,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_battery_voltage.h"
 #include "lib_battery_lifetime_calendar_cycle.h"
 #include "lib_battery_lifetime_nmc.h"
+#include "lib_battery_lifetime_lmolto.h"
+
 
 /**
 * \class thermal_t
