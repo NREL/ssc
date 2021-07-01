@@ -148,8 +148,8 @@ void dispatch_pvsmoothing_front_of_meter_t::update_dispatch(size_t year, size_t 
 	m_batteryPower->powerBatteryTarget = 0;
 
     size_t ndx_sampled = lifetimeIndex / m_batt_dispatch_pvs_timestep_multiplier;
-    double slope, intercept, xval;
-    xval = lifetimeIndex % m_batt_dispatch_pvs_timestep_multiplier;
+    double slope, intercept;
+    size_t xval = (lifetimeIndex % m_batt_dispatch_pvs_timestep_multiplier);
 
     if (ndx_sampled == 0)
         intercept = 0;
@@ -191,7 +191,7 @@ void dispatch_pvsmoothing_front_of_meter_t::update_dispatch(size_t year, size_t 
     else
         intercept = m_forecast_pv_energy_vec[ndx_sampled - 1];
     slope = (m_forecast_pv_energy_vec[ndx_sampled] - intercept) / m_batt_dispatch_pvs_timestep_multiplier;
-    m_batt_dispatch_pvs_forecast_pv_energy = slope * xval + intercept;
+    m_batt_dispatch_pvs_forecast_pv_energy = slope * (xval - m_batt_dispatch_pvs_timestep_multiplier) + intercept;
 
     if (xval == m_batt_dispatch_pvs_timestep_multiplier - 1)
         m_batt_dispatch_pvs_violation_list = m_batt_dispatch_pvs_violation_list_vec[ndx_sampled];
