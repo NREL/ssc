@@ -120,6 +120,7 @@ public:
 	double powerSystem;				   ///< The power production of the renewable system (PV array) (kW)
 	double powerSystemThroughSharedInverter; ///< The power going through the shared inverter (kW)
 	double powerLoad;			   ///< The power required by the electric load (kW)
+    double powerCritLoad;          ///< The power for critical loads during an outage. Battery will only discharge to this during outage (kW)
 	double powerBatteryDC; 	       ///< The power flow to and from the battery (> 0, discharging, < 0 charging) (kWdc)
 	double powerBatteryAC; 	       ///< The power flow to and from the battery (> 0, discharging, < 0 charging) (kWac)
 	double powerBatteryTarget;	   ///< A user specified or algorithm calculated target dispatch power (kW)
@@ -134,7 +135,8 @@ public:
 	double powerGridToLoad;        ///< The power from the grid to the electric load (kW)
 	double powerBatteryToLoad;     ///< The power from the battery to the electric load (kW)
 	double powerBatteryToGrid;     ///< The power from the battery to the grid (kW)
-	double powerFuelCell;          ///< The power from the fuelcell (kW)
+    double powerCritLoadUnmet;     ///< Output of unmet critical load during outage (kW)
+    double powerFuelCell;          ///< The power from the fuelcell (kW)
 	double powerFuelCellToGrid;    ///< The power from the fuelcell to the grid (kW)
 	double powerFuelCellToLoad;    ///< The power from the fuelcell to the load (kW)
 	double powerFuelCellToBattery; ///< The power from the fuelcell to the battery (kW)
@@ -146,6 +148,8 @@ public:
 	double powerSystemLoss;        ///< The auxiliary power loss in the system (kW)
 	double powerConversionLoss;    ///< The power loss due to conversions in the battery power electronics (kW)
 	double voltageSystem;		   ///< The system voltage
+
+    bool   isOutageStep;
 
 	//double annualEnergySystemLoss;  /// The total annual loss due to user-specified system losses
 	//double annualEnergyConversionLoss;  /// The total annual loss due to power electronic conversions

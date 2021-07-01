@@ -8,6 +8,7 @@ BatteryPower::BatteryPower(double dtHour) :
 		powerSystem(0),
 		powerSystemThroughSharedInverter(0),
 		powerLoad(0),
+        powerCritLoad(0),
 		powerBatteryDC(0),
 		powerBatteryAC(0),
 		powerBatteryTarget(0),
@@ -22,6 +23,7 @@ BatteryPower::BatteryPower(double dtHour) :
 		powerGridToLoad(0),
 		powerBatteryToLoad(0),
 		powerBatteryToGrid(0),
+        powerCritLoadUnmet(0),
 		powerFuelCell(0),
 		powerFuelCellToGrid(0),
 		powerFuelCellToLoad(0),
@@ -33,6 +35,8 @@ BatteryPower::BatteryPower(double dtHour) :
 		powerBatteryDischargeMaxAC(0),
 		powerSystemLoss(0),
 		powerConversionLoss(0),
+        voltageSystem(0),
+        isOutageStep(false),
 		connectionMode(0),
 		singlePointEfficiencyACToDC(0.96),
 		singlePointEfficiencyDCToAC(0.96),
@@ -54,6 +58,7 @@ BatteryPower::BatteryPower(const BatteryPower& orig) {
     powerSystem = orig.powerSystem;
     powerSystemThroughSharedInverter = orig.powerSystemThroughSharedInverter;
     powerLoad = orig.powerLoad;
+    powerCritLoad = orig.powerCritLoad;
     powerBatteryDC = orig.powerBatteryDC;
     powerBatteryAC = orig.powerBatteryAC;
     powerBatteryTarget = orig.powerBatteryTarget;
@@ -68,6 +73,7 @@ BatteryPower::BatteryPower(const BatteryPower& orig) {
     powerGridToLoad = orig.powerGridToLoad;
     powerBatteryToLoad = orig.powerBatteryToLoad;
     powerBatteryToGrid = orig.powerBatteryToGrid;
+    powerCritLoadUnmet = orig.powerCritLoadUnmet;
     powerFuelCell = orig.powerFuelCell;
     powerFuelCellToGrid = orig.powerFuelCellToGrid;
     powerFuelCellToLoad = orig.powerFuelCellToLoad;
@@ -79,6 +85,8 @@ BatteryPower::BatteryPower(const BatteryPower& orig) {
     powerBatteryDischargeMaxAC = orig.powerBatteryDischargeMaxAC;
     powerSystemLoss = orig.powerSystemLoss;
     powerConversionLoss = orig.powerConversionLoss;
+    voltageSystem = orig.voltageSystem;
+    isOutageStep = orig.isOutageStep;
     connectionMode = orig.connectionMode;
     singlePointEfficiencyACToDC = orig.singlePointEfficiencyACToDC;
     singlePointEfficiencyDCToAC = orig.singlePointEfficiencyDCToAC;
@@ -116,6 +124,8 @@ void BatteryPower::reset()
 	powerGridToBattery = 0;
 	powerGridToLoad = 0;
 	powerLoad = 0;
+    powerCritLoad = 0;
+    powerCritLoadUnmet = 0;
 	powerSystem = 0;
 	powerSystemThroughSharedInverter = 0;
 	powerSystemClipped = 0;
@@ -124,6 +134,7 @@ void BatteryPower::reset()
 	powerSystemToGrid = 0;
 	powerSystemToLoad = 0;
 	voltageSystem = 0;
+    isOutageStep = false;
 }
 
 double BatteryPower::adjustForACEfficiencies(double power, double loss) {
