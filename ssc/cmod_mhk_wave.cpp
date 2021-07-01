@@ -286,14 +286,6 @@ wavedata::wavedata(int wave_resource_model_choice, var_data* data_table) //waved
         }
     }
     else if (wave_resource_model_choice == 0) { //PDF matrix option, required input of 0 or 1
-        /*
-        if (var_data* D = data_table->table.lookup("wave_resource_matrix")) { //Check if matrix data was specified
-            if (D->type == SSC_MATRIX) { //Is data in a matrix (21x22 matrix)
-                m_wave_resource_matrix_data = D->num; //Write data to wave resource matrix data field as matrix
-                //m_nRecords = nrecords(wave_resource_model_choice);
-                m_nRecords = m_wave_resource_matrix_data.nrows();
-            }
-        }*/
         if (!data_table->table.lookup("wave_resource_matrix")) {
             m_errorMsg = util::format("Wave resource matrix not found");
             return;
@@ -309,10 +301,6 @@ wavedata::wavedata(int wave_resource_model_choice, var_data* data_table) //waved
         }
         
         m_nRecords = nrows;
-        /*else {
-            m_errorMsg = util::format("Must specify 21x22 matrix of wave resource probability for wave periods and wave heights");
-            return;
-        }*/
     }
     else { //If neither 0 or 1 is specified (variable not assigned or value >1 given)
         m_errorMsg = util::format("Wave resource model choice must be either 0 (matrix PDF data) or 1 (time series data)");
