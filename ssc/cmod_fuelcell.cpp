@@ -169,7 +169,8 @@ void cm_fuelcell::exec()
 				}
 			}
 */
-			for (size_t s = 0; s < fcVars->stepsPerHour; s++) {
+            size_t imonth = util::month_of(double(h));
+            for (size_t s = 0; s < fcVars->stepsPerHour; s++) {
 				fuelCellDispatch->runSingleTimeStep(h, idx_year, fcVars->systemGeneration_kW[idx], fcVars->electricLoad_kW[idx]);
 				p_fuelCellPower_kW[idx] = (ssc_number_t)fuelCellDispatch->getPower();
 				p_fuelCellPowerMaxAvailable_percent[idx] = (ssc_number_t)fuelCellDispatch->getPowerMaxPercent();
@@ -199,7 +200,9 @@ void cm_fuelcell::exec()
 		p_fuelCellReplacements[annual_index] = (ssc_number_t)(fuelCell->getTotalReplacements());
 		fuelCell->resetReplacements();
 	}
+
     ssc_number_t* p_annual_energy_dist_time_fc = gen_heatmap(this, 1);
+
 	// capacity factor update
 	double capacity_factor_in, annual_energy_in, nameplate_in;
 	capacity_factor_in = annual_energy_in = nameplate_in = 0;
