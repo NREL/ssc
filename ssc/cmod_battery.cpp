@@ -399,10 +399,10 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 
 
             // Battery bank replacement
-            if (vt.is_assigned("om_replacement_cost1"))
+            if (vt.is_assigned("om_batt_replacement_cost"))
             {
                 std::vector<ssc_number_t> replacement_cost(nyears);
-                ssc_number_t* parr = vt.as_array("om_replacement_cost1", &cnt);
+                ssc_number_t*  parr = vt.as_array("om_batt_replacement_cost", &cnt);
                 if (cnt == 1)
                 {
                     for (i = 0; i < nyears; i++)
@@ -410,7 +410,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                 }
                 else if (cnt < nyears)
                 {
-                    throw exec_error("battery", "Invalid number for om_replacement_cost1, must be 1 or equal to analysis_period.");
+                    throw exec_error("battery", "Invalid number for om_batt_replacement_cost, must be 1 or equal to analysis_period.");
                 }
                 else {
                     for (i = 0; i < nyears; i++)
