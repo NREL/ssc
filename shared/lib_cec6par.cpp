@@ -267,14 +267,15 @@ bool noct_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 }
 
 
-void SuperLac( util::matrix_t<double> data, double test[3][100][100], int n_p, std::vector<double>& L, std::vector<double>& L_n, std::vector<double>& R, std::vector<double>& R_n, util::matrix_t<double>& Z, util::matrix_t<double>& Z_n)
+void SuperLac( double*** data, double test[3][100][100], int oA, int n_p, std::vector<double>& L, std::vector<double>& L_n, std::vector<double>& R, std::vector<double>& R_n, util::matrix_t<double>& Z, util::matrix_t<double>& Z_n)
 {
     std::vector<int> s;
     int s_max;
-    int dimensions = 2;
-    if (data.at(2, 0) == 0) dimensions = 3;
-    if (data.nrows() < data.ncols()) s_max = data.ncols();
-    else s_max = data.nrows();
+    int dimensions = 3;
+    int x_dim = sizeof(data) / sizeof(data[0]);
+    int y_dim = sizeof(data) / sizeof(data[0][0]);
+    if (y_dim > x_dim) s_max = y_dim;
+    else s_max = x_dim;
 
     if (n_p > s_max) {
         return; //Number of points must be less than data size
@@ -298,24 +299,204 @@ void SuperLac( util::matrix_t<double> data, double test[3][100][100], int n_p, s
     }
 
     int r = 0;
-    util::matrix_t<double> A = data;
+    //double*** A = data;
+    util::matrix_t<double> A;
     util::matrix_t<double> ones;
     util::matrix_t<double> FA;
+    util::matrix_t<double> FA_prime;
+    util::matrix_t<double> F;
+    util::matrix_t<double> Z;
+    Z.resize_fill(R.size(), 4);
+    //std::vector<double> L;
+    int count = 0;
     for (int b = 0; b < R.size(); b++) {
-        r = R[b];
-        A = data;
-        if (r < s_max) { //replace s_max with dimension 1
-            ones.resize_fill(s_max, r, 1.0);
-            FA.resize_fill(A.nrows(), r, 0);
-            for (int i = 0; i < A.nrows(); i++) {
-                for (int j = 0; j < A.ncols(); j++) {
-                    for (int k = 0; k < r; k++) {
-                        FA.at(i,k) += A.at(i,j) * ones.at(j,k);
-                    }
+        util::matrix_t<double> data_reshaped;
+        util::matrix_t<double> FA;
+        data_reshaped.resize_fill(x_dim, y_dim * oA, 0);
+        A.resize_fill(x_dim, y_dim * oA, 0);
+        FA.resize_fill(x_dim, y_dim * oA, 0);
+        for (int z = 0; z < oA; z++) {
+            for (int i = 0; i < x_dim; i++) {
+                for (int j = 0; j < y_dim; j++) {
+                    data_reshaped.at(i, z * y_dim + j) = data[z][i][j];
                 }
             }
+        }
+        r = R[b];
+        A = data_reshaped;
+        if (r < x_dim) { //replace s_max with dimension 1
+            F.resize_fill(x_dim, x_dim, 0);
+            for (int a = 0; a < r; a++) {
+                count = 0;
+                while (a + count < x_dim) {
+                    F.at(count, a+count) = 1; //Filling diagonals with 1's
+                    count++; 
+                }
+            }
+
+            for (int i = 0; i < F.nrows(); i++) {
+                for (int k = 0; k < F.ncols(); i++) {
+                    for (int j = 0; j < A.ncols(); i++) {
+                        FA.at(i, j) += F.at(i, k) * A.at(k, j);
+                        
+                    }
+                    
+                }
+            }
+
+            FA.resize(FA.nrows() - r + 2, FA.ncols());
+            FA_prime.resize(y_dim, (FA.nrows() * FA.ncols()) / y_dim);
+            for (int i = 0; i < FA_prime.nrows(); i++) {
+                for (int j = 0; j < FA_prime.ncols(); j++) {
+                    FA_prime.at(i, j) = FA.at(j, i);
+                }
+            }
+            FA.resize(FA_prime.nrows(), FA_prime.ncols());
+            FA = FA_prime;
             
         }
+        else {
+            F.resize_fill(x_dim, x_dim, 1);
+            for (int i = 0; i < F.nrows(); i++) {
+                for (int k = 0; k < F.ncols(); i++) {
+                    for (int j = 0; j < A.ncols(); i++) {
+                        FA.at(i, j) += F.at(i, k) * A.at(k, j);
+
+                    }
+
+                }
+            }
+            FA.resize(FA.nrows() - r + 2, FA.ncols());
+            FA_prime.resize(y_dim, (FA.nrows() * FA.ncols()) / y_dim);
+            for (int i = 0; i < FA_prime.nrows(); i++) {
+                for (int j = 0; j < FA_prime.ncols(); j++) {
+                    FA_prime.at(i, j) = FA.at(j, i);
+                }
+            }
+            FA.resize(FA_prime.nrows(), FA_prime.ncols());
+            FA = FA_prime;
+        }
+        if (r < y_dim) { //Direction 2
+            F.resize_fill(y_dim, y_dim, 0);
+            for (int a = 0; a < r; a++) {
+                count = 0;
+                while (a + count < y_dim) {
+                    F.at(count, a + count) = 1; //Filling diagonals with 1's
+                    count++;
+                }
+            }
+
+            for (int i = 0; i < F.nrows(); i++) {
+                for (int k = 0; k < F.ncols(); i++) {
+                    for (int j = 0; j < A.ncols(); i++) {
+                        FA.at(i, j) += F.at(i, k) * A.at(k, j);
+
+                    }
+
+                }
+            }
+
+            FA.resize(FA.nrows() - r + 2, FA.ncols());
+            FA_prime.resize(oA, (FA.nrows() * FA.ncols()) / oA);
+            for (int i = 0; i < FA_prime.nrows(); i++) {
+                for (int j = 0; j < FA_prime.ncols(); j++) {
+                    FA_prime.at(i, j) = FA.at(j, i);
+                }
+            }
+            FA.resize(FA_prime.nrows(), FA_prime.ncols());
+            FA = FA_prime;
+        }
+        else {
+            F.resize_fill(y_dim, y_dim, 1);
+            for (int i = 0; i < F.nrows(); i++) {
+                for (int k = 0; k < F.ncols(); i++) {
+                    for (int j = 0; j < A.ncols(); i++) {
+                        FA.at(i, j) += F.at(i, k) * A.at(k, j);
+
+                    }
+
+                }
+            }
+            FA.resize(FA.nrows() - r + 2, FA.ncols());
+            FA_prime.resize(oA, (FA.nrows() * FA.ncols()) / oA);
+            for (int i = 0; i < FA_prime.nrows(); i++) {
+                for (int j = 0; j < FA_prime.ncols(); j++) {
+                    FA_prime.at(i, j) = FA.at(j, i);
+                }
+            }
+            FA.resize(FA_prime.nrows(), FA_prime.ncols());
+            FA = FA_prime;
+        }
+        if (r < oA) {
+            F.resize_fill(oA, oA, 0);
+            for (int a = 0; a < r; a++) {
+                count = 0;
+                while (a + count < oA) {
+                    F.at(count, a + count) = 1; //Filling diagonals with 1's
+                    count++;
+                }
+            }
+
+            for (int i = 0; i < F.nrows(); i++) {
+                for (int k = 0; k < F.ncols(); i++) {
+                    for (int j = 0; j < A.ncols(); i++) {
+                        FA.at(i, j) += F.at(i, k) * A.at(k, j);
+
+                    }
+
+                }
+            }
+
+            FA.resize(FA.nrows() - r + 2, FA.ncols());
+            
+        }
+        else {
+            F.resize_fill(y_dim, y_dim, 1);
+            for (int i = 0; i < F.nrows(); i++) {
+                for (int k = 0; k < F.ncols(); i++) {
+                    for (int j = 0; j < A.ncols(); i++) {
+                        FA.at(i, j) += F.at(i, k) * A.at(k, j);
+
+                    }
+
+                }
+            }
+        }
+        double z1; //Mean
+        double z2; //Variance
+        double z3; //Skewness
+        double z4; //Kurtosis
+        
+        double mean = 0;
+        double variance = 0;
+        double variance_sum = 0;
+        double skewness_sum_denom = 0;
+        double skewness_sum_num = 0;
+        double skewness = 0;
+        double kurtosis_sum_num = 0;
+        double kurtosis_sum_denom = 0;
+        double kurtosis = 0; 
+        for (int i = 0; i < FA.nrows(); i++) {
+            for (int j = 0; j < FA.ncols(); j++) {
+                mean += FA.at(i, j) / (r*(FA.nrows() * FA.ncols()));
+            }
+        }
+        for (int i = 0; i < FA.nrows(); i++) {
+            for (int j = 0; j < FA.ncols(); j++) {
+                variance += pow(abs(FA.at(i,j)/r - mean), 2) / (FA.nrows() * FA.ncols() - 1);
+                skewness_sum_denom += pow(FA.at(i, j) / r - mean, 2) / (FA.nrows() * FA.ncols());
+                skewness_sum_num += pow(FA.at(i, j) / r - mean, 3) / (FA.nrows() * FA.ncols());
+                kurtosis_sum_denom += pow(FA.at(i, j) / r - mean, 2) / (FA.nrows() * FA.ncols());
+                kurtosis_sum_num += pow(FA.at(i, j) / r - mean, 4) / (FA.nrows() * FA.ncols());
+            }
+        }
+        skewness = skewness_sum_num / (pow(pow(skewness_sum_denom, 0.5), 3.0));
+        kurtosis = kurtosis_sum_num / (pow(kurtosis_sum_denom, 2));
+        Z.at(b, 0) = mean;
+        Z.at(b, 1) = variance;
+        Z.at(b, 2) = skewness;
+        Z.at(b, 3) = kurtosis;
+        L[b] = 1 + variance / pow(mean, 2);
     }
 
 
@@ -339,25 +520,133 @@ void SolArrayLog(double res, double baseheight, double GCR, double Lmod, double 
     const int y = H_pan / res;
     const int z = Depth / res;
     int oA = z;
+    const int const_OA = oA;
     int ones_x = floor(Lmod / res);
     int ones_y = floor(thick / res);
+    util::matrix_t<int> ones;
+    ones.resize_fill(ones_x, ones_y, 1);
+    util::matrix_t<int> ones_rotated = imrotate(ones, angle);
+
 
     double*** ArrayLog = new double** [x];
+    double*** Pmat = new double** [x];
 
     for (int i = 0; i < x; i++) {
 
         // Allocate memory blocks for
         // rows of each 2D array
         ArrayLog[i] = new double* [y];
-
+        Pmat[i] = new double* [y];
         for (int j = 0; j < y; j++) {
 
             // Allocate memory blocks for
             // columns of each 2D array
             ArrayLog[i][j] = new double[z];
+            Pmat[i][j] = new double[z];
         }
     }
 
+    for (int z = 0; z < oA; z++) {
+        for (int i = 0; i < ones.nrows(); i++) {
+            for (int j = 0; j < ones.ncols(); j++) {
+                Pmat[z][i][j] = ones_rotated.at(i, j);
+            }
+        }
+    }
+
+    int SmidInd = round(Smid / (2 * res));
+    int SInd = round(S / res);
+    int BInd = floor(baseheight / res - thick * cosd(angle) / res);
+    int Pcount = 0;
+    int xstart;
+    int ystart;
+    for (int jj = 0; jj < row_num; jj++) {
+        for (int z = 0; z < oA; z++) {
+            xstart = SmidInd + SInd * Pcount;
+            for (int i = xstart; i < xstart + ones.nrows(); i++) {
+                ystart = BInd;
+                for (int j = ystart; j < BInd + ones.ncols(); j++) {
+                    ArrayLog[z][i][j] = Pmat[z][i][j];
+                }
+            }
+        }
+        Pcount++;
+    }
+
+}
+
+util::matrix_t<int> imrotate(util::matrix_t<int> image, double degree)
+{
+    if (degree != 0) {
+        double rads = degree * DTOR;
+        //util::matrix_t<double> rotate;
+        double rotate[3][3] = { {cosd(degree), sind(degree), 0}, {sind(degree), cos(degree), 0}, {0, 0, 1} };
+        int twod_size_x = image.nrows();
+        int twod_size_y = image.ncols();
+        double hiA_x = (twod_size_x - 1) / 2;
+        double hiA_y = (twod_size_y - 1) / 2;
+        double loA_x = -hiA_x;
+        double loA_y = -hiA_y;
+        double formfwd[3][3] = { { loA_x, hiA_y, 0}, {hiA_x, hiA_y, 0}, {0,0,1} };
+        int hiB_x_1 = rotate[0][0] * loA_x - rotate[0][1] * hiA_y;
+        int hiB_y_1 = rotate[1][0] * loA_x + rotate[1][1] * hiA_y;
+        int hiB_x_2 = rotate[0][0] * hiA_x - rotate[0][1] * hiA_y;
+        int hiB_y_2 = rotate[1][0] * hiA_x + rotate[1][1] * hiA_y;
+        int hiB_x = (abs(hiB_x_1) < abs(hiB_x_2)) ? hiB_x_2 : hiB_x_1;
+        int hiB_y = (abs(hiB_y_1) < abs(hiB_y_2)) ? hiB_y_2 : hiB_y_1;
+        int loB_x = -hiB_x;
+        int loB_y = -hiB_y;
+        int outputSize_x = hiB_x - loB_x + 1;
+        int outputSize_y = hiB_y - loB_y + 1;
+        int offRow = 0;
+        int RowPad = outputSize_x - twod_size_x;
+        if (RowPad <= 0) {
+            offRow = 1 + abs(RowPad) / 2;
+            RowPad = 1;
+        }
+
+        int ColPad = outputSize_y - twod_size_y;
+        int offCol = 0;
+        if (ColPad <= 0) {
+            offCol = 1 + abs(ColPad) / 2;
+            ColPad = 1;
+        }
+
+        util::matrix_t<int> imagepad;
+        imagepad.resize_fill(twod_size_x + RowPad, twod_size_y + ColPad, 0);
+        for (int i = 0; i < ceil(RowPad / 2) + twod_size_x; i++) {
+            for (int j = 0; j < ceil(ColPad / 2) + twod_size_y; j++) {
+                imagepad.at(i, j) = image.at(i, j);
+            }
+        }
+
+        int midx = ceil(imagepad.nrows() / 2);
+        int midy = ceil(imagepad.ncols() / 2);
+
+        util::matrix_t<int> imagerot;
+        int posi, posj;
+        int x, y;
+        imagerot.resize_fill(outputSize_x, outputSize_y, 0);
+        for (int i = 0; i < outputSize_x; i++) {
+            for (int j = 0; j < outputSize_y; j++) {
+                posi = i - midx + offRow;
+                posj = j - midy + offCol;
+                x = (posi)*cosd(degree) + posj * sind(degree);
+                y = -(posi)*sind(degree) + posj * cosd(degree);
+                x = round(x) + midx;
+                y = round(y) + midy;
+                if (x >= 1 && y >= 1 && x <= imagepad.nrows() && y <= imagepad.ncols())
+                    imagerot.at(i, j) = imagepad.at(i, j);
+
+            }
+        }
+        return imagerot;
+    }
+    else
+        return image;
+
+
+    
 }
 
 
