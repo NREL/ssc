@@ -2098,7 +2098,6 @@ void cm_pvsamv1::exec()
 
     double annual_dc_loss_ond = 0, annual_ac_loss_ond = 0; // (TR)
 
-
     for (size_t iyear = 0; iyear < nyears; iyear++)
     {
         //idx is the current array index in the (possibly subhourly) year of weather data or the non-annual array
@@ -2341,10 +2340,10 @@ void cm_pvsamv1::exec()
 			if (en_batt)
 				batt->update_grid_power(*this, PVSystem->p_systemACPower[idx], p_load_full[idx], idx);
 
-            if (iyear == 0)
+            if (iyear == 0) {
                 annual_energy += (ssc_number_t)(PVSystem->p_systemACPower[idx] * ts_hour);
 
-
+            }
         }
         wdprov->rewind();
     }
