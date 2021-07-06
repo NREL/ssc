@@ -3401,7 +3401,7 @@ void save_cf(int cf_line, int nyears, const std::string& name, util::matrix_t<do
         arrp[i] = (ssc_number_t)cf.at(cf_line, i);
 }
 
-void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double nom_discount_rate, double inflation_rate, double lcoe_real, double total_cost, double real_discount_rate, int grid_charging_cost_version, ssc_number_t* ppa_multipliers = { 0 }) {
+void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double nom_discount_rate, double inflation_rate, double lcoe_real, double total_cost, double real_discount_rate, int grid_charging_cost_version) {
     enum {
         CF_battery_replacement_cost_lcos,
         CF_battery_replacement_cost_schedule_lcos,
@@ -3528,13 +3528,7 @@ void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double
                     double ppa_value = cf.at(CF_ppa_price_lcos, a); //PPA price at year a
                     if (ppa_purchases && a != 0) {
                         for (size_t h = 0; h < n_steps_per_year; h++) {
-                            if (size_t(n_tod_multipliers) > 8760) {
-                                tod_mult_index = h;
-                            }
-                            else {
-                                tod_mult_index = floor(h / 8760);
-                            }
-                            
+                            tod_mult_index = floor(h / (n_steps_per_year/8760));
                             cf.at(CF_charging_cost_grid_lcos, a) += grid_to_batt[(size_t(a) - 1) * n_steps_per_year + h] * 8760 / n_steps_per_year * ppa_value / 100.0 * tod_multipliers[tod_mult_index]; //Grid charging cost from PPA price ($)
                         }
                     }
@@ -3556,12 +3550,8 @@ void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double
 
                     if (ppa_purchases && a != 0) { //PPA purchases enabled and not in investment year
                         for (size_t h = 0; h < 8760; h++) {
-                            if (size_t(n_tod_multipliers) > 8760) {
-                                tod_mult_index = h;
-                            }
-                            else {
-                                tod_mult_index = floor(h / 8760);
-                            }
+                            
+                            tod_mult_index = floor(h / 8760);
                             cf.at(CF_charging_cost_grid_lcos, a) += grid_to_batt[h] * cf.at(CF_degradation_lcos, a) * ppa_value / 100.0 * tod_multipliers[h]; //Grid charging cost calculated from PPA price ($)
                         }
                     }
