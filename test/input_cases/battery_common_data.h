@@ -90,7 +90,7 @@ namespace {
 		ssc_number_t p_batt_replacement_schedule_percent[10] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 100 };
 		ssc_data_set_array(data, "batt_replacement_schedule_percent", p_batt_replacement_schedule_percent, 10);
 		ssc_number_t p_replacement_cost[1] = { 68 };
-		ssc_data_set_array(data, "om_replacement_cost1", p_replacement_cost, 1);
+		ssc_data_set_array(data, "om_batt_replacement_cost", p_replacement_cost, 1);
 		ssc_data_set_number(data, "batt_mass", 15);
 		ssc_data_set_number(data, "batt_surface_area", 11.92);
 		ssc_data_set_number(data, "batt_Cp", 1004);

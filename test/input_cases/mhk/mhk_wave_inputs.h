@@ -12,7 +12,7 @@ void wave_inputs(ssc_data_t &data) {
 
 	set_matrix(data, "wave_resource_matrix", resource_matrix, 21, 22);
 	set_matrix(data, "wave_power_matrix", device_matrix, 21, 22);
-
+    ssc_data_set_number(data, "wave_resource_model_choice", 0);
 	ssc_data_set_number(data, "number_devices", 1);
 	ssc_data_set_number(data, "system_capacity", 286);
 	ssc_data_set_number(data, "device_rated_power", 286);

@@ -111,7 +111,7 @@ void generic_singleowner_battery_60min(ssc_data_t &data)
 	ssc_number_t p_batt_replacement_schedule[1] ={ 0 };
 	ssc_data_set_array( data, "batt_replacement_schedule", p_batt_replacement_schedule, 1 );
 	ssc_number_t p_replacement_cost[1] = { 600 };
-	ssc_data_set_array(data, "om_replacement_cost1", p_replacement_cost, 1);
+	ssc_data_set_array(data, "om_batt_replacement_cost", p_replacement_cost, 1);
 	ssc_data_set_number( data, "batt_mass", 21489202 );
 	ssc_data_set_number( data, "batt_surface_area", 2694 );
 	ssc_data_set_number( data, "batt_Cp", 1004 );
@@ -483,7 +483,7 @@ void generic_commerical_battery_60min(ssc_data_t &data)
 	ssc_number_t p_batt_replacement_schedule[1] = { 0 };
 	ssc_data_set_array(data, "batt_replacement_schedule", p_batt_replacement_schedule, 1);
 	ssc_number_t p_replacement_cost[1] = { 600 };
-	ssc_data_set_array(data, "om_replacement_cost1", p_replacement_cost, 1);
+	ssc_data_set_array(data, "om_batt_replacement_cost", p_replacement_cost, 1);
     ssc_data_set_number(data, "batt_cycle_cost_choice", 0);
     ssc_number_t p_batt_cycle_cost[1] = { 0.1 };
     ssc_data_set_array(data, "batt_cycle_cost", p_batt_cycle_cost, 1);
