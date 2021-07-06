@@ -305,7 +305,6 @@ void SuperLac( double*** data, double test[3][100][100], int oA, int n_p, std::v
     util::matrix_t<double> FA;
     util::matrix_t<double> FA_prime;
     util::matrix_t<double> F;
-    util::matrix_t<double> Z;
     Z.resize_fill(R.size(), 4);
     //std::vector<double> L;
     int count = 0;
@@ -504,76 +503,7 @@ void SuperLac( double*** data, double test[3][100][100], int oA, int n_p, std::v
 
 }
 
-void SolArrayLog(double res, double baseheight, double GCR, double Lmod, double thick, double angle, double Depth, double row_num, bool showArray)
-{
-    double H_pan = baseheight + (Lmod * sind(angle));
-    double Lmod_x = Lmod * cosd(angle);
-    double S = Lmod / GCR;
-    double Smid = S - Lmod_x;
-    double Ltot_x = row_num * (Lmod_x + Smid);
-
-    int SmidInd = round(Smid / (2 * res));
-    int Sind = round(S / res);
-    int BInd = round(baseheight / res - thick * cosd(angle) / res);
-    int Pcount = 0;
-    int x = Ltot_x / res;
-    const int y = H_pan / res;
-    const int z = Depth / res;
-    int oA = z;
-    const int const_OA = oA;
-    int ones_x = floor(Lmod / res);
-    int ones_y = floor(thick / res);
-    util::matrix_t<int> ones;
-    ones.resize_fill(ones_x, ones_y, 1);
-    util::matrix_t<int> ones_rotated = imrotate(ones, angle);
-
-
-    double*** ArrayLog = new double** [x];
-    double*** Pmat = new double** [x];
-
-    for (int i = 0; i < x; i++) {
-
-        // Allocate memory blocks for
-        // rows of each 2D array
-        ArrayLog[i] = new double* [y];
-        Pmat[i] = new double* [y];
-        for (int j = 0; j < y; j++) {
-
-            // Allocate memory blocks for
-            // columns of each 2D array
-            ArrayLog[i][j] = new double[z];
-            Pmat[i][j] = new double[z];
-        }
-    }
-
-    for (int z = 0; z < oA; z++) {
-        for (int i = 0; i < ones.nrows(); i++) {
-            for (int j = 0; j < ones.ncols(); j++) {
-                Pmat[z][i][j] = ones_rotated.at(i, j);
-            }
-        }
-    }
-
-    int SmidInd = round(Smid / (2 * res));
-    int SInd = round(S / res);
-    int BInd = floor(baseheight / res - thick * cosd(angle) / res);
-    int Pcount = 0;
-    int xstart;
-    int ystart;
-    for (int jj = 0; jj < row_num; jj++) {
-        for (int z = 0; z < oA; z++) {
-            xstart = SmidInd + SInd * Pcount;
-            for (int i = xstart; i < xstart + ones.nrows(); i++) {
-                ystart = BInd;
-                for (int j = ystart; j < BInd + ones.ncols(); j++) {
-                    ArrayLog[z][i][j] = Pmat[z][i][j];
-                }
-            }
-        }
-        Pcount++;
-    }
-
-}
+util::matrix_t<int> imrotate(util::matrix_t<int> image, double degree);
 
 util::matrix_t<int> imrotate(util::matrix_t<int> image, double degree)
 {
@@ -646,15 +576,76 @@ util::matrix_t<int> imrotate(util::matrix_t<int> image, double degree)
         return image;
 
 
-    
+
 }
 
 
+void SolArrayLog(double res, double baseheight, double GCR, double Lmod, double thick, double angle, double Depth, double row_num, bool showArray)
+{
+    double H_pan = baseheight + (Lmod * sind(angle));
+    double Lmod_x = Lmod * cosd(angle);
+    double S = Lmod / GCR;
+    double Smid = S - Lmod_x;
+    double Ltot_x = row_num * (Lmod_x + Smid);
+
+    int SmidInd = round(Smid / (2 * res));
+    int SInd = round(S / res);
+    int BInd = round(baseheight / res - thick * cosd(angle) / res);
+    int Pcount = 0;
+    int x = Ltot_x / res;
+    const int y = H_pan / res;
+    const int z = Depth / res;
+    int oA = z;
+    const int const_OA = oA;
+    int ones_x = floor(Lmod / res);
+    int ones_y = floor(thick / res);
+    util::matrix_t<int> ones;
+    ones.resize_fill(ones_x, ones_y, 1);
+    util::matrix_t<int> ones_rotated = imrotate(ones, angle);
 
 
+    double*** ArrayLog = new double** [x];
+    double*** Pmat = new double** [x];
 
+    for (int i = 0; i < x; i++) {
 
+        // Allocate memory blocks for
+        // rows of each 2D array
+        ArrayLog[i] = new double* [y];
+        Pmat[i] = new double* [y];
+        for (int j = 0; j < y; j++) {
 
+            // Allocate memory blocks for
+            // columns of each 2D array
+            ArrayLog[i][j] = new double[z];
+            Pmat[i][j] = new double[z];
+        }
+    }
+
+    for (int z = 0; z < oA; z++) {
+        for (int i = 0; i < ones.nrows(); i++) {
+            for (int j = 0; j < ones.ncols(); j++) {
+                Pmat[z][i][j] = ones_rotated.at(i, j);
+            }
+        }
+    }
+
+    int xstart;
+    int ystart;
+    for (int jj = 0; jj < row_num; jj++) {
+        for (int z = 0; z < oA; z++) {
+            xstart = SmidInd + SInd * Pcount;
+            for (int i = xstart; i < xstart + ones.nrows(); i++) {
+                ystart = BInd;
+                for (int j = ystart; j < BInd + ones.ncols(); j++) {
+                    ArrayLog[z][i][j] = Pmat[z][i][j];
+                }
+            }
+        }
+        Pcount++;
+    }
+
+}
 
 // !*****************************************************************
 static double free_convection_194( double TC, double TA, double SLOPE, double rho_air, 
