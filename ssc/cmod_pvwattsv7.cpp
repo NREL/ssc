@@ -168,18 +168,13 @@ static var_info _cm_vtab_pvwattsv7[] = {
 
         { SSC_OUTPUT,       SSC_ARRAY,       "dc",                             "DC inverter input power",                              "W",         "",                                             "Time Series",      "*",                       "",                          "" },
         { SSC_OUTPUT,       SSC_ARRAY,       "ac",                             "AC inverter output power",                           "W",         "",                                             "Time Series",      "*",                       "",                          "" },
-/*
+
         { SSC_OUTPUT,       SSC_ARRAY,       "poa_monthly",                    "Plane of array irradiance",                   "kWh/m2",    "",                                             "Monthly",          "",                       "LENGTH=12",                          "" },
         { SSC_OUTPUT,       SSC_ARRAY,       "solrad_monthly",                 "Daily average solar irradiance",              "kWh/m2/day","",                                             "Monthly",          "",                       "LENGTH=12",                          "" },
         { SSC_OUTPUT,       SSC_ARRAY,       "dc_monthly",                     "DC output",                             "kWh",       "",                                             "Monthly",          "",                       "LENGTH=12",                          "" },
         { SSC_OUTPUT,       SSC_ARRAY,       "ac_monthly",                     "AC output",                            "kWh",       "",                                             "Monthly",          "",                       "LENGTH=12",                          "" },
         { SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",                 "Monthly energy",                              "kWh",       "",                                             "Monthly",          "",                       "LENGTH=12",                          "" },
-*/
-        { SSC_OUTPUT,       SSC_ARRAY,       "poa_monthly",                    "Plane of array irradiance",                   "kWh/m2",    "",                                             "Monthly",          "",                       "",                          "" },
-        { SSC_OUTPUT,       SSC_ARRAY,       "solrad_monthly",                 "Daily average solar irradiance",              "kWh/m2/day","",                                             "Monthly",          "",                       "",                          "" },
-        { SSC_OUTPUT,       SSC_ARRAY,       "dc_monthly",                     "DC output",                             "kWh",       "",                                             "Monthly",          "",                       "",                          "" },
-        { SSC_OUTPUT,       SSC_ARRAY,       "ac_monthly",                     "AC output",                            "kWh",       "",                                             "Monthly",          "",                       "",                          "" },
-        { SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",                 "Monthly energy",                              "kWh",       "",                                             "Monthly",          "",                       "",                          "" },
+        { SSC_OUTPUT,	    SSC_MATRIX,			"annual_energy_distribution_time",			"Annual energy production as function of Time",				"",				"",				"Heatmaps",			"",						"",							"" },
 
         { SSC_OUTPUT,       SSC_NUMBER,      "solrad_annual",                  "Daily average solar irradiance",              "kWh/m2/day","",                                             "Annual",      "",                       "",                          "" },
         { SSC_OUTPUT,       SSC_NUMBER,      "ac_annual",                      "Annual AC output",                     "kWh",       "",                                             "Annual",      "",                       "",                          "" },

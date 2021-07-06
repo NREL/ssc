@@ -983,12 +983,14 @@ void cashloan_default(ssc_data_t& data)
     ssc_data_set_number(data, "pbi_oth_tax_sta", 1);
     ssc_data_set_number(data, "battery_per_kWh", 500);
     ssc_number_t p_replacement_cost[1] = { 500 };
-    ssc_data_set_array(data, "om_replacement_cost1", p_replacement_cost, 1);
+    ssc_data_set_array(data, "om_batt_replacement_cost", p_replacement_cost, 1);
     ssc_data_set_number(data, "om_replacement_cost_escal", 0);
     ssc_data_set_number(data, "market", 0);
     ssc_data_set_number(data, "mortgage", 1);
     ssc_data_set_number(data, "total_installed_cost", 13758.3671875);
     ssc_data_set_number(data, "salvage_percentage", 0);
+    ssc_data_set_number(data, "batt_salvage_percentage", 0);
+    ssc_data_set_number(data, "battery_total_cost_lcos", 9618.60);
 }
 
 void setup_residential_utility_rates(ssc_data_t& data) {
