@@ -3495,6 +3495,18 @@ void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double
         double lcoe_real_lcos = lcoe_real * capex_lcoe_ratio * (total_cost - lcos_investment_cost) / total_cost; //cents/kWh
         //Using ration of investment cost to lcoe for system+storage and system only to approximate lcoe for system only; Used in PV charging cost calculations
 
+        //Preallocate tod multiplier index
+        size_t tod_mult_index = 0;
+        ssc_number_t* tod_multipliers;
+        size_t* n_tod_multipliers = 0;
+        if (grid_charging_cost_version == 1) {
+            if (cm->is_assigned("ppa_multiplier_model") && cm->as_integer("ppa_multiplier_model") == 0) {
+                tod_multipliers = cm->as_array("ppa_multipliers", n_tod_multipliers);
+            }
+            else if (cm->is_assigned("ppa_multiplier_model") && cm->as_integer("ppa_multiplier_model") == 1) {
+                tod_multipliers = cm->as_array("dispatch_factors_ts", n_tod_multipliers);
+            }
+        }
 
         for (int a = 0; a <= nyears; a++) { //Iterate through nyears of the project
 
@@ -3516,7 +3528,14 @@ void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double
                     double ppa_value = cf.at(CF_ppa_price_lcos, a); //PPA price at year a
                     if (ppa_purchases && a != 0) {
                         for (size_t h = 0; h < n_steps_per_year; h++) {
-                            cf.at(CF_charging_cost_grid_lcos, a) += grid_to_batt[(size_t(a) - 1) * n_steps_per_year + h] * 8760 / n_steps_per_year * ppa_value / 100.0 * ppa_multipliers[h]; //Grid charging cost from PPA price ($)
+                            if (size_t(n_tod_multipliers) > 8760) {
+                                tod_mult_index = h;
+                            }
+                            else {
+                                tod_mult_index = floor(h / 8760);
+                            }
+                            
+                            cf.at(CF_charging_cost_grid_lcos, a) += grid_to_batt[(size_t(a) - 1) * n_steps_per_year + h] * 8760 / n_steps_per_year * ppa_value / 100.0 * tod_multipliers[tod_mult_index]; //Grid charging cost from PPA price ($)
                         }
                     }
                     else if (!ppa_purchases && a != 0) {
@@ -3537,7 +3556,13 @@ void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double
 
                     if (ppa_purchases && a != 0) { //PPA purchases enabled and not in investment year
                         for (size_t h = 0; h < 8760; h++) {
-                            cf.at(CF_charging_cost_grid_lcos, a) += grid_to_batt[h] * cf.at(CF_degradation_lcos, a) * ppa_value / 100.0 * ppa_multipliers[h]; //Grid charging cost calculated from PPA price ($)
+                            if (size_t(n_tod_multipliers) > 8760) {
+                                tod_mult_index = h;
+                            }
+                            else {
+                                tod_mult_index = floor(h / 8760);
+                            }
+                            cf.at(CF_charging_cost_grid_lcos, a) += grid_to_batt[h] * cf.at(CF_degradation_lcos, a) * ppa_value / 100.0 * tod_multipliers[h]; //Grid charging cost calculated from PPA price ($)
                         }
                     }
                     else if (!ppa_purchases && a != 0) { //No PPA purchases and not in investment year

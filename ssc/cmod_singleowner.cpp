@@ -2997,6 +2997,14 @@ public:
             cf_lcos.at(8, y) = cf.at(CF_om_capacity1_expense, y); //Capacity OM Battery Cost
         }
         int grid_charging_cost_version = 1;
+        ssc_number_t* tod_multipliers;
+        size_t* n_tod_multipliers = 0;
+        if (is_assigned("ppa_multiplier_model") && as_integer("ppa_multiplier_model") == 0) {
+            tod_multipliers = ppa_multipliers;
+        }
+        else if (is_assigned("ppa_multiplier_model") && as_integer("ppa_multiplier_model") == 1) {
+            tod_multipliers = as_array("dispatch_factors_ts", n_tod_multipliers);
+        }
         lcos_calc(this, cf_lcos, nyears, nom_discount_rate, inflation_rate, lcoe_real, cost_prefinancing, disc_real, grid_charging_cost_version, ppa_multipliers);
     }
     /////////////////////////////////////////////////////////////////////////////////////////
