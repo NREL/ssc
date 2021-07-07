@@ -2482,7 +2482,7 @@ public:
         int grid_charging_cost_version = 1; //FOM systems
         size_t n_multipliers;
         ssc_number_t* ppa_multipliers = as_array("ppa_multipliers", &n_multipliers);
-        lcos_calc(this, cf_lcos, nyears, nom_discount_rate, inflation_rate, lcoe_real, cost_prefinancing, disc_real, grid_charging_cost_version, ppa_multipliers);
+        lcos_calc(this, cf_lcos, nyears, nom_discount_rate, inflation_rate, lcoe_real, cost_prefinancing, disc_real, grid_charging_cost_version);
     }
     /////////////////////////////////////////////////////////////////////////////////////////
 

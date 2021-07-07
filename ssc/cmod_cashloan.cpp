@@ -1034,7 +1034,7 @@ public:
             cf_lcos.at(8, y) = cf.at(CF_om_capacity1_expense, y); //Capacity OM Battery Cost
         }
         int grid_charging_cost_version = 0;
-        lcos_calc(this, cf_lcos, nyears, nom_discount_rate, inflation_rate, lcoe_real, total_cost, real_discount_rate, grid_charging_cost_version, 0);
+        lcos_calc(this, cf_lcos, nyears, nom_discount_rate, inflation_rate, lcoe_real, total_cost, real_discount_rate, grid_charging_cost_version);
     }
     /////////////////////////////////////////////////////////////////////////////////////////
 
