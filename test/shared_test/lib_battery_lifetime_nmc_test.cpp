@@ -2,6 +2,7 @@
 #include <cmath>
 #include <json/json.h>
 #include <fstream>
+#include <algorithm>
 
 #include "lib_util.h"
 #include "lib_battery_lifetime_nmc.h"
