@@ -1299,12 +1299,12 @@ bool weatherdata::check_continuous_single_year(bool leapyear)
                     if (idx > (int)m_nRecords - 1)
                         return false;
                     //if any of the month, day, hour, or minute don't line up with what we've calculated, then it doesn't fit our criteria for a continuous year
-                    min += tsph * ts_min;
 					if (this->m_data[idx]->month != m || this->m_data[idx]->day != d || this->m_data[idx]->hour != h
 					    || this->m_data[idx]->minute != min)
 						return false;
 					else
 						idx++;
+                    min += ts_min;
 				}
 			}
 		}
