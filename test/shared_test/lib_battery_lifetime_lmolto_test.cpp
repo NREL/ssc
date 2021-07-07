@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <fstream>
+#include <cmath>
 #include <json/json.h>
 #include <json/writer.h>
 
