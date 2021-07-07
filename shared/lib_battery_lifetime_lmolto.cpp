@@ -107,7 +107,9 @@ double lifetime_lmolto_t::runQcyc() {
             dqLossCyc = q3 * q4 * (double)pow(state->lmo_lto->dq_relative_cyc * 0.01 / q3, (q4 - 1) / q4);
         }
     }
-    if (isnan(dqLossCyc * state->lmo_lto->EFC_dt * 100))
+    // this NaN can happen if q3 <0 since pow with a negative base is a complex not real number.
+    // q3 < 0 when DOD_range ~0
+    if (std::isnan(dqLossCyc * state->lmo_lto->EFC_dt * 100))
         dqLossCyc = 0.;
     state->lmo_lto->dq_relative_cyc += dqLossCyc * state->lmo_lto->EFC_dt * 100;
     return state->lmo_lto->dq_relative_cyc;
