@@ -32,7 +32,8 @@ struct lifetime_params {
 
     enum MODEL_CHOICE {
         CALCYC,
-        NMCNREL         // K. Smith: Life Prediction model coefficients
+        NMC,         // K. Smith: Life Prediction model coefficients
+        LMOLTO,
     } model_choice;
 
     std::shared_ptr<calendar_cycle_params> cal_cyc;
@@ -47,6 +48,7 @@ struct lifetime_params {
 struct cycle_state;
 struct calendar_state;
 struct lifetime_nmc_state;
+struct lifetime_lmolto_state;
 
 struct lifetime_state {
     double q_relative;                      // total lifetime relative capacity %
@@ -56,12 +58,17 @@ struct lifetime_state {
     double average_range;                   // average cycle_DOD cycle_range of all cycles, %
     double day_age_of_battery;
 
-    // CALCYC model state
+    // Calendar model state
     std::shared_ptr<calendar_state> calendar;
+
+    // Cycling model state
     std::shared_ptr<cycle_state> cycle;
 
-    // NREL NMC model state
+    // NMC model state
     std::shared_ptr<lifetime_nmc_state> nmc_li_neg;
+
+    // LMO/LTO model state
+    std::shared_ptr<lifetime_lmolto_state> lmo_lto;
 
     lifetime_state();
 
@@ -70,6 +77,8 @@ struct lifetime_state {
     lifetime_state(const std::shared_ptr<cycle_state>& cyc, const std::shared_ptr<calendar_state>& cal);
 
     lifetime_state(const std::shared_ptr<lifetime_nmc_state>& nmc);
+
+    lifetime_state(const std::shared_ptr<lifetime_lmolto_state>& lmolto);
 
     lifetime_state &operator=(const lifetime_state &rhs);
 
